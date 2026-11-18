@@ -140,7 +140,8 @@ test("Asana CSV: sections → columns, completed → Done, subtasks → checklis
   assert.equal(c["Write brief"].notes, "Two\nlines");
   assert.equal(c["Write brief"].due, "2024-03-10");
   assert.equal(info(c["Write brief"], "Assignee"), "Ann Lee");
-  assert.equal(info(c["Write brief"], "Start Date"), "2024-03-04");
+  assert.equal(c["Write brief"].start, "2024-03-04", "the start date is the plan start (Gantt G3)");
+  assert.equal(info(c["Write brief"], "Start Date"), undefined);
   assert.deepEqual(c["Write brief"].subtasks.map((s) => [s.text, s.completed]), [["Gather logos", true], ["Ask legal", false]]);
   assert.equal(c["Pick fonts"].col, "Done");
   assert.equal(info(c["Build pages"], "Blocked By"), "1201");

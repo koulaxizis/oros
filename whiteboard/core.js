@@ -9,11 +9,20 @@
 // Kinds and their own fields:
 //   note   x y w h tx                sticky note, text fitted inside
 //   text   x y w h tx fs             free text, h follows the lines
-//   shape  x y w h tx shp f          rect | round | ellipse | diamond | tri,
-//                                    f = fill none | soft | solid
+//   shape  x y w h tx shp f sym?     rect | round | ellipse | diamond | tri,
+//                                    f = fill none | soft | solid; sym = a
+//                                    symbol of the diagram library (DG1),
+//                                    shp then the nearest basic shape
 //   arrow  ax ay bx by ao bo hd ds tx   ends are points, or stuck to
-//                                    objects (ao / bo = their ids);
-//                                    hd = end | both | none, ds = dashed
+//          rt? ap? bp? ha? hb?       objects (ao / bo = their ids);
+//                                    hd = end | both | none, ds = dashed;
+//                                    DG2 (each written only when set):
+//                                    rt = elbow | curve (else straight),
+//                                    ap / bp = the side t r b l where an
+//                                    elbow or curve leaves its object,
+//                                    ha / hb = the head at the start / end
+//                                    (arrow open tri dia odia dot none; hd
+//                                    is kept to match for older devices)
 //   pen    x y w h pts sw            pts = [x0, y0, x1, y1, …] from x, y
 //   image  x y w h src               a small JPEG / PNG / WebP data URI
 //   frame  x y w h tx                a named area, drawn under the rest
@@ -23,6 +32,10 @@
 // row removes it, a newer edit brings it back (R17); an object whose
 // board is gone is left out; no clock or random inside the merge;
 // serialize() is canonical (rows sorted by id, tombs by key).
+// FORWARD SAFE (DG1): a flat field this version does not know rides
+// along unchanged (see extras()), and on equal stamps the row with
+// more fields wins, so an older device that drops a newer field never
+// takes it away from a newer device.
 // ============================================================
 (function (root) {
   "use strict";
@@ -35,6 +48,37 @@
   var SHAPES = ["rect", "round", "ellipse", "diamond", "tri"];
   var FILLS = ["none", "soft", "solid"];
   var HEADS = ["end", "both", "none"];
+  // Diagram connectors (wave DG2).
+  var ROUTES = ["line", "elbow", "curve"];
+  var SIDES = ["t", "r", "b", "l"];
+  var HEAD_STYLES = ["arrow", "open", "tri", "dia", "odia", "dot", "none"];
+  // Diagram symbols (wave DG1): id: [group, nearest basic shape, w, h].
+  // The drawing of each one is in GEO further down.
+  var SYM_GROUPS = ["flow", "org", "uml", "basic", "net"];
+  var SYMS = {
+    process: ["flow", "rect", 160, 90], decision: ["flow", "diamond", 160, 110], terminator: ["flow", "round", 160, 70],
+    data: ["flow", "rect", 160, 90], document: ["flow", "rect", 160, 100], documents: ["flow", "rect", 170, 110],
+    predefined: ["flow", "rect", 160, 90], "manual-input": ["flow", "rect", 160, 90], "manual-op": ["flow", "rect", 160, 90],
+    preparation: ["flow", "rect", 160, 90], database: ["flow", "rect", 120, 110], delay: ["flow", "round", 150, 90],
+    "off-page": ["flow", "rect", 100, 100], connector: ["flow", "ellipse", 60, 60], merge: ["flow", "rect", 110, 90],
+    person: ["org", "rect", 200, 80], unit: ["org", "rect", 220, 110],
+    "class": ["uml", "rect", 200, 160], "interface": ["uml", "rect", 200, 140], actor: ["uml", "rect", 80, 130],
+    usecase: ["uml", "ellipse", 180, 90], "package": ["uml", "rect", 200, 140], component: ["uml", "rect", 180, 100],
+    comment: ["uml", "rect", 160, 110], node: ["uml", "rect", 180, 130], start: ["uml", "ellipse", 40, 40],
+    end: ["uml", "ellipse", 44, 44],
+    hexagon: ["basic", "rect", 140, 110], octagon: ["basic", "rect", 120, 120], star: ["basic", "rect", 120, 120],
+    cross: ["basic", "rect", 100, 100], "arrow-right": ["basic", "rect", 160, 90], "arrow-both": ["basic", "rect", 180, 90],
+    cloud: ["basic", "ellipse", 180, 120], callout: ["basic", "rect", 180, 120],
+    server: ["net", "rect", 100, 130], router: ["net", "rect", 100, 130], "switch": ["net", "rect", 100, 130],
+    firewall: ["net", "rect", 100, 130], internet: ["net", "rect", 100, 130], laptop: ["net", "rect", 100, 130],
+    desktop: ["net", "rect", 100, 130], phone: ["net", "rect", 100, 130], tablet: ["net", "rect", 100, 130],
+    "db-server": ["net", "rect", 100, 130], storage: ["net", "rect", 100, 130], user: ["net", "rect", 100, 130],
+    printer: ["net", "rect", 100, 130], wifi: ["net", "rect", 100, 130]
+  };
+  var SYM_IDS = Object.keys(SYMS);
+  // A symbol name of this or a later version (kept even when unknown).
+  var SYM_RE = /^[a-z][a-z0-9-]{0,23}$/;
+  function symOf(o) { return o && o.k === "shape" && o.sym && own(SYMS, o.sym) ? o.sym : ""; }
   // name: [strong, soft]. Notes are soft, lines and text are strong.
   var COLORS = {
     yellow: ["#e0a800", "#fff1a8"], orange: ["#e8590c", "#ffd8a8"], pink: ["#d6336c", "#fcc2d7"],
@@ -59,6 +103,26 @@
   function pick(v, list, def) { return list.indexOf(v) >= 0 ? v : def; }
   function idOk(v) { return typeof v === "string" && v.length > 0 && v.length <= 64; }
 
+  // Fields of a later version (FORWARD SAFE): a flat field with a
+  // plain name that this version does not know is kept as it came:
+  // a string up to 500 characters, a finite number, true / false or
+  // a list of up to 64 numbers; at most 16 of them, sorted by name.
+  var KNOWN = {};
+  "id b k z m c x y w h tx fs shp f sym ax ay bx by ao bo hd ds rt ap bp ha hb pts sw src".split(" ").forEach(function (k) { KNOWN[k] = 1; });
+  var EXTRA_RE = /^[a-z][a-zA-Z0-9]{0,15}$/, MAX_EXTRA = 16;
+  function okNum(v) { return typeof v === "number" && isFinite(v) && Math.abs(v) <= 1e9; }
+  function extraOk(v) {
+    if (typeof v === "string") return v.length <= 500;
+    if (typeof v === "boolean") return true;
+    if (Array.isArray(v)) return v.length <= 64 && v.every(okNum);
+    return okNum(v);
+  }
+  function extras(raw, o) {
+    Object.keys(raw).filter(function (k) { return !KNOWN[k] && EXTRA_RE.test(k) && extraOk(raw[k]); })
+      .sort().slice(0, MAX_EXTRA).forEach(function (k) { o[k] = Array.isArray(raw[k]) ? raw[k].slice() : raw[k]; });
+    return o;
+  }
+
   function cleanBoard(raw) {
     if (!raw || typeof raw !== "object" || !idOk(raw.id)) return null;
     return { id: raw.id, name: str(raw.name, MAX_NAME), m: ms(raw.m) };
@@ -80,7 +144,12 @@
       o.hd = pick(raw.hd, HEADS, "end");
       o.ds = raw.ds === true;
       o.tx = str(raw.tx, MAX_NAME);
-      return o;
+      if (raw.rt === "elbow" || raw.rt === "curve") o.rt = raw.rt;          // DG2, written only when set
+      if (SIDES.indexOf(raw.ap) >= 0) o.ap = raw.ap;
+      if (SIDES.indexOf(raw.bp) >= 0) o.bp = raw.bp;
+      if (HEAD_STYLES.indexOf(raw.ha) >= 0) o.ha = raw.ha;
+      if (HEAD_STYLES.indexOf(raw.hb) >= 0) o.hb = raw.hb;
+      return extras(raw, o);
     }
     var x = num(raw.x), y = num(raw.y), w = size(raw.w), h = size(raw.h);
     if (x === null || y === null || w === null || h === null) return null;
@@ -88,7 +157,10 @@
     if (k === "note" || k === "text" || k === "shape") o.tx = str(raw.tx, MAX_TEXT);
     if (k === "frame") o.tx = str(raw.tx, MAX_NAME);
     if (k === "text") { var fs = num(raw.fs); o.fs = fs !== null && fs >= 8 && fs <= 200 ? Math.round(fs) : 24; }
-    if (k === "shape") { o.shp = pick(raw.shp, SHAPES, "rect"); o.f = pick(raw.f, FILLS, "soft"); }
+    if (k === "shape") {
+      o.shp = pick(raw.shp, SHAPES, "rect"); o.f = pick(raw.f, FILLS, "soft");
+      if (typeof raw.sym === "string" && SYM_RE.test(raw.sym)) o.sym = raw.sym;   // written only when set
+    }
     if (k === "pen") {
       var p = raw.pts;
       if (!Array.isArray(p) || p.length < 2 || p.length > MAX_PTS || p.length % 2) return null;
@@ -102,11 +174,17 @@
       if (typeof raw.src !== "string" || raw.src.length > IMG_LEN || !IMG_RE.test(raw.src)) return null;
       o.src = raw.src;
     }
-    return o;
+    return extras(raw, o);
   }
 
+  // Equal stamps: the row with more fields wins, then the larger JSON.
+  // An older version drops the fields it does not know without a new
+  // stamp, so counting fields first keeps the fuller row; it is still
+  // one total order, so merge(a, b) === merge(b, a).
   function newer(a, b) {
     if (a.m !== b.m) return a.m > b.m;
+    var na = Object.keys(a).length, nb = Object.keys(b).length;
+    if (na !== nb) return na > nb;
     return JSON.stringify(a) > JSON.stringify(b);
   }
   function byId(a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; }
@@ -296,10 +374,434 @@
 
   // The two ends of an arrow, after sticking to live objects.
   function ends(a, byIdMap) {
-    var A = a.ao && byIdMap[a.ao] && byIdMap[a.ao].k !== "arrow" ? byIdMap[a.ao] : null;
-    var B = a.bo && byIdMap[a.bo] && byIdMap[a.bo].k !== "arrow" ? byIdMap[a.bo] : null;
+    var r = route(a, byIdMap);
+    return { a: r.pts[0], b: r.pts[r.pts.length - 1] };
+  }
+
+  // ---------- connectors (wave DG2) ----------
+  // route(a, m) → { pts: [{x, y}, …], c?: [c1, c2] }: a straight line
+  // (two points, aimed at the centres as before), an elbow line (right
+  // angles only, around the objects in between) or a curve (one cubic
+  // from pts[0] to pts[1] through c1, c2). Pure and deterministic: the
+  // way is worked out when drawn, never stored.
+  var NORM = { t: { x: 0, y: -1 }, r: { x: 1, y: 0 }, b: { x: 0, y: 1 }, l: { x: -1, y: 0 } };
+  var STUB = 18, PAD = 12, BEND = 30, MAX_OBST = 40;
+  function stuck(id, m) { var o = id && m[id]; return o && o.k !== "arrow" ? o : null; }
+  function portPt(o, side, gap) {
+    var c = center(o), nn = NORM[side], g = gap === undefined ? 6 : gap;
+    var hx = side === "l" || side === "r" ? o.w / 2 : 0, hy = side === "t" || side === "b" ? o.h / 2 : 0;
+    return { x: r2(c.x + nn.x * (hx + g)), y: r2(c.y + nn.y * (hy + g)) };
+  }
+  // The side of o that faces p (auto ports).
+  function facing(o, p) {
+    var c = center(o), dx = p.x - c.x, dy = p.y - c.y;
+    if (Math.abs(dx) / Math.max(1, o.w) >= Math.abs(dy) / Math.max(1, o.h)) return dx >= 0 ? "r" : "l";
+    return dy >= 0 ? "b" : "t";
+  }
+  // The side of o nearest to p when p lies in its outer quarter, else
+  // "" (the app sets ap / bp from where an end is dropped).
+  function portAt(o, p) {
+    var d = { t: p.y - o.y, b: o.y + o.h - p.y, l: p.x - o.x, r: o.x + o.w - p.x }, best = "", bd = Infinity;
+    SIDES.forEach(function (k) { if (d[k] < bd) { bd = d[k]; best = k; } });
+    return bd >= -4 && bd <= Math.min(o.w, o.h) * 0.25 ? best : "";
+  }
+  function dirOf(dx, dy) { return Math.abs(dx) >= Math.abs(dy) ? (dx >= 0 ? "r" : "l") : (dy >= 0 ? "b" : "t"); }
+
+  // The objects lines go around: notes, texts, shapes and pictures
+  // (not frames, arrows or pen lines), once per index.
+  var OBST = typeof WeakMap === "function" ? new WeakMap() : null;
+  function obstacles(m) {
+    var hit = OBST && OBST.get(m);
+    if (hit) return hit;
+    var out = [];
+    Object.keys(m).forEach(function (id) {
+      var o = m[id];
+      if (o && (o.k === "note" || o.k === "text" || o.k === "shape" || o.k === "image") && !(o.k === "shape" && o.w <= 24 && o.h <= 24 && !o.tx)) {
+        out.push({ id: id, x: o.x, y: o.y, w: o.w, h: o.k === "text" ? Math.max(o.h, o.fs * LH) : o.h });
+      }
+    });
+    if (OBST) OBST.set(m, out);
+    return out;
+  }
+
+  var MEMO = {}, MEMO_N = 0;
+  function route(a, m) {
+    m = m || {};
+    var A = stuck(a.ao, m), B = stuck(a.bo, m), rt = a.rt === "elbow" || a.rt === "curve" ? a.rt : "line";
     var pa = A ? center(A) : { x: a.ax, y: a.ay }, pb = B ? center(B) : { x: a.bx, y: a.by };
-    return { a: A ? edge(A, pb) : pa, b: B ? edge(B, pa) : pb };
+    if (rt === "line") return { pts: [A ? edge(A, pb) : pa, B ? edge(B, pa) : pb] };
+    var sa = A ? (a.ap || facing(A, pb)) : "", sb = B ? (a.bp || facing(B, pa)) : "";
+    var s = A ? portPt(A, sa) : pa, e = B ? portPt(B, sb) : pb;
+    if (!sa) sa = dirOf(e.x - s.x, e.y - s.y);
+    if (!sb) sb = dirOf(s.x - e.x, s.y - e.y);
+    if (rt === "curve") {
+      var L = Math.sqrt((e.x - s.x) * (e.x - s.x) + (e.y - s.y) * (e.y - s.y)), k = Math.max(30, Math.min(220, L * 0.4));
+      return { pts: [s, e], c: [{ x: r2(s.x + NORM[sa].x * k), y: r2(s.y + NORM[sa].y * k) }, { x: r2(e.x + NORM[sb].x * k), y: r2(e.y + NORM[sb].y * k) }] };
+    }
+    // elbow: the objects near the way, the two ends' own objects too
+    var x0 = Math.min(s.x, e.x) - 240, x1 = Math.max(s.x, e.x) + 240, y0 = Math.min(s.y, e.y) - 240, y1 = Math.max(s.y, e.y) + 240;
+    var obs = obstacles(m).filter(function (b) { return b.x < x1 && b.x + b.w > x0 && b.y < y1 && b.y + b.h > y0; });
+    if (obs.length > MAX_OBST) {
+      var mx = (s.x + e.x) / 2, my = (s.y + e.y) / 2;
+      obs = obs.map(function (b) { return { b: b, d: Math.abs(b.x + b.w / 2 - mx) + Math.abs(b.y + b.h / 2 - my) }; })
+        .sort(function (p, q) { return p.d - q.d || (p.b.id < q.b.id ? -1 : 1); }).slice(0, MAX_OBST).map(function (p) { return p.b; });
+      [A, B].forEach(function (o) { if (o && !obs.some(function (b) { return b.id === o.id; })) obs.push({ id: o.id, x: o.x, y: o.y, w: o.w, h: o.h }); });
+    }
+    var key = [s.x, s.y, sa, e.x, e.y, sb].join(",") + "|" + obs.map(function (b) { return b.x + "," + b.y + "," + b.w + "," + b.h; }).join(";");
+    if (MEMO[key]) return MEMO[key];
+    var out = { pts: elbow(s, sa, e, sb, obs) };
+    if (MEMO_N > 2000) { MEMO = {}; MEMO_N = 0; }
+    MEMO[key] = out; MEMO_N++;
+    return out;
+  }
+
+  // Right-angle way from s (leaving toward side sa) to e (arriving from
+  // side sb), on a grid made of the obstacles' padded edges: the fewest
+  // bends first, then the shortest (Dijkstra; a bend costs BEND px).
+  function elbow(s, sa, e, sb, obs) {
+    var s1 = { x: s.x + NORM[sa].x * STUB, y: s.y + NORM[sa].y * STUB }, e1 = { x: e.x + NORM[sb].x * STUB, y: e.y + NORM[sb].y * STUB };
+    var boxes = obs.map(function (b) { return { x0: b.x - PAD, y0: b.y - PAD, x1: b.x + b.w + PAD, y1: b.y + b.h + PAD }; });
+    var xs = [s1.x, e1.x, (s1.x + e1.x) / 2], ys = [s1.y, e1.y, (s1.y + e1.y) / 2];
+    boxes.forEach(function (b) { xs.push(b.x0, b.x1); ys.push(b.y0, b.y1); });
+    function uniq(v) { v = v.map(r2).sort(function (p, q) { return p - q; }); return v.filter(function (x, i) { return !i || x !== v[i - 1]; }); }
+    xs = uniq(xs); ys = uniq(ys);
+    function inside(x, y) {
+      for (var i = 0; i < boxes.length; i++) { var b = boxes[i]; if (x > b.x0 + 0.5 && x < b.x1 - 0.5 && y > b.y0 + 0.5 && y < b.y1 - 0.5) return true; }
+      return false;
+    }
+    function clearH(y, xa, xb) {
+      for (var i = 0; i < boxes.length; i++) { var b = boxes[i]; if (y > b.y0 + 0.5 && y < b.y1 - 0.5 && Math.max(xa, xb) > b.x0 + 0.5 && Math.min(xa, xb) < b.x1 - 0.5) return false; }
+      return true;
+    }
+    function clearV(x, ya, yb) {
+      for (var i = 0; i < boxes.length; i++) { var b = boxes[i]; if (x > b.x0 + 0.5 && x < b.x1 - 0.5 && Math.max(ya, yb) > b.y0 + 0.5 && Math.min(ya, yb) < b.y1 - 0.5) return false; }
+      return true;
+    }
+    var NX = xs.length, NY = ys.length, si = xs.indexOf(r2(s1.x)), sj = ys.indexOf(r2(s1.y)), ei = xs.indexOf(r2(e1.x)), ej = ys.indexOf(r2(e1.y));
+    var DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]], dS = { r: 0, l: 1, b: 2, t: 3 }[sa], dE = { r: 1, l: 0, b: 3, t: 2 }[sb];
+    var dist = {}, prev = {}, heap = [];
+    function push(c, st) {
+      heap.push([c, st]);
+      for (var i = heap.length - 1; i > 0;) { var p = (i - 1) >> 1; if (heap[p][0] <= heap[i][0]) break; var tmp = heap[p]; heap[p] = heap[i]; heap[i] = tmp; i = p; }
+    }
+    function pop() {
+      var top = heap[0], last = heap.pop();
+      if (heap.length) {
+        heap[0] = last;
+        for (var i = 0; ;) {
+          var l = 2 * i + 1, r = l + 1, k = i;
+          if (l < heap.length && heap[l][0] < heap[k][0]) k = l;
+          if (r < heap.length && heap[r][0] < heap[k][0]) k = r;
+          if (k === i) break;
+          var tmp = heap[k]; heap[k] = heap[i]; heap[i] = tmp; i = k;
+        }
+      }
+      return top;
+    }
+    var found = null;
+    if (si >= 0 && sj >= 0 && ei >= 0 && ej >= 0) {
+      var st0 = (si * NY + sj) * 4 + dS;
+      dist[st0] = 0; push(0, st0);
+      var steps = 0;
+      while (heap.length && steps++ < 60000) {
+        var cur = pop(), c = cur[0], st = cur[1];
+        if (c > dist[st]) continue;
+        var d = st % 4, node = (st - d) / 4, i = Math.floor(node / NY), j = node % NY;
+        if (i === ei && j === ej) { var fc = c + (d === dE ? 0 : BEND); if (!found || fc < found[0]) found = [fc, st]; continue; }
+        if (found && c >= found[0]) break;
+        for (var nd = 0; nd < 4; nd++) {
+          if ((d ^ 1) === nd && d >> 1 === nd >> 1) continue;          // no turning back
+          var ni = i + DIRS[nd][0], nj = j + DIRS[nd][1];
+          if (ni < 0 || nj < 0 || ni >= NX || nj >= NY) continue;
+          if (inside(xs[ni], ys[nj]) && !(ni === ei && nj === ej)) continue;
+          var ok = DIRS[nd][1] === 0 ? clearH(ys[j], xs[i], xs[ni]) : clearV(xs[i], ys[j], ys[nj]);
+          if (!ok) continue;
+          var nc = c + Math.abs(xs[ni] - xs[i]) + Math.abs(ys[nj] - ys[j]) + (nd === d ? 0 : BEND);
+          var ns = (ni * NY + nj) * 4 + nd;
+          if (dist[ns] === undefined || nc < dist[ns]) { dist[ns] = nc; prev[ns] = st; push(nc, ns); }
+        }
+      }
+    }
+    var pts = [s];
+    if (found) {
+      var chain = [], k2 = found[1];
+      while (k2 !== undefined) { var nn = (k2 - k2 % 4) / 4; chain.push({ x: xs[Math.floor(nn / NY)], y: ys[nn % NY] }); k2 = prev[k2]; }
+      pts = pts.concat(chain.reverse());
+    } else {
+      // no way around: a plain three-part elbow
+      pts.push(s1);
+      if (sa === "l" || sa === "r") { var mxx = r2((s1.x + e1.x) / 2); pts.push({ x: mxx, y: s1.y }, { x: mxx, y: e1.y }); }
+      else { var myy = r2((s1.y + e1.y) / 2); pts.push({ x: s1.x, y: myy }, { x: e1.x, y: myy }); }
+      pts.push(e1);
+    }
+    pts.push(e);
+    // drop repeated and in-line points
+    var outp = [];
+    pts.forEach(function (p) {
+      p = { x: r2(p.x), y: r2(p.y) };
+      var q = outp[outp.length - 1];
+      if (q && q.x === p.x && q.y === p.y) return;
+      var r0 = outp[outp.length - 2];
+      if (q && r0 && ((r0.x === q.x && q.x === p.x) || (r0.y === q.y && q.y === p.y))) outp[outp.length - 1] = p;
+      else outp.push(p);
+    });
+    return outp;
+  }
+
+  // SVG path of a route; and the point halfway along it (the label).
+  function routeD(r) {
+    var p = r.pts, d = "M" + r2(p[0].x) + " " + r2(p[0].y);
+    if (r.c) return d + "C" + r2(r.c[0].x) + " " + r2(r.c[0].y) + " " + r2(r.c[1].x) + " " + r2(r.c[1].y) + " " + r2(p[1].x) + " " + r2(p[1].y);
+    for (var i = 1; i < p.length; i++) d += "L" + r2(p[i].x) + " " + r2(p[i].y);
+    return d;
+  }
+  function bez(r, t) {
+    var a = r.pts[0], b = r.c[0], c = r.c[1], e = r.pts[1], u = 1 - t;
+    return { x: u * u * u * a.x + 3 * u * u * t * b.x + 3 * u * t * t * c.x + t * t * t * e.x, y: u * u * u * a.y + 3 * u * u * t * b.y + 3 * u * t * t * c.y + t * t * t * e.y };
+  }
+  function midOf(r) {
+    if (r.c) return bez(r, 0.5);
+    var p = r.pts, L = 0, i;
+    for (i = 1; i < p.length; i++) L += Math.abs(p[i].x - p[i - 1].x) + Math.abs(p[i].y - p[i - 1].y) || 0;
+    if (p.length === 2) return { x: (p[0].x + p[1].x) / 2, y: (p[0].y + p[1].y) / 2 };
+    var half = L / 2;
+    for (i = 1; i < p.length; i++) {
+      var sl = Math.abs(p[i].x - p[i - 1].x) + Math.abs(p[i].y - p[i - 1].y);
+      if (half <= sl && sl) { var f = half / sl; return { x: p[i - 1].x + (p[i].x - p[i - 1].x) * f, y: p[i - 1].y + (p[i].y - p[i - 1].y) * f }; }
+      half -= sl;
+    }
+    return p[p.length - 1];
+  }
+  function labelAt(a, m) { return midOf(route(a, m)); }
+  // Where each end's head points from (the last bit of the way).
+  function tails(r) {
+    var p = r.pts, n = p.length;
+    if (r.c) return { a: r.c[0], b: r.c[1] };
+    return { a: p[1], b: p[n - 2] };
+  }
+  // The head at each end, from ha / hb, else from hd (older rows).
+  function headsOf(a) {
+    return { a: a.ha || (a.hd === "both" ? "arrow" : "none"), b: a.hb || (a.hd === "none" ? "none" : "arrow") };
+  }
+  // hd that matches ha / hb, for older devices.
+  function hdFor(ha, hb) { return ha !== "none" ? "both" : hb !== "none" ? "end" : "none"; }
+
+  // ---------- auto layout and alignment (wave DG3) ----------
+  // Pure: each returns { id: moved copy } for the objects that move
+  // and the arrows stuck to them (their kept ends brought up to date),
+  // so the app commits it as one undo step and the Assistant as one
+  // command. Frames, pen lines and pictures are never moved by layout.
+  var LAYOUT_KINDS = ["tree", "flow"], LAYOUT_DIRS = ["v", "h"], ALIGN_EDGES = ["l", "c", "r", "t", "m", "b"], SPREAD_DIRS = ["h", "v"];
+  var LAID = { note: 1, text: 1, shape: 1 };
+  // The kept ends of the arrows stuck to the moved objects.
+  function withArrows(list, out) {
+    var m = index(list.map(function (o) { return out[o.id] || o; }));
+    list.forEach(function (a) {
+      if (a.k !== "arrow" || !((a.ao && out[a.ao]) || (a.bo && out[a.bo]))) return;
+      var c = out[a.id] || JSON.parse(JSON.stringify(a)), e = ends(c, m);
+      c.ax = r2(e.a.x); c.ay = r2(e.a.y); c.bx = r2(e.b.x); c.by = r2(e.b.y);
+      out[a.id] = c;
+    });
+    return out;
+  }
+  function moveTo(out, o, x, y) {
+    var dx = r2(x - o.x), dy = r2(y - o.y);
+    if (dx || dy) out[o.id] = moved(o, dx, dy);
+  }
+
+  // Lays the picked notes, texts and shapes out along the arrows that
+  // join them: kind "tree" (each under the one its arrow comes from,
+  // parents centred over their children, as Mind map's org chart),
+  // "flow" (layers by the longest way in, fewer crossings by moving
+  // each toward the middle of its neighbours) or "" (tree when every
+  // object has at most one arrow coming in, else flow); dir "v" (top
+  // to bottom) or "h" (left to right). The laid-out group keeps its
+  // top-left corner. Elbow and curved arrows between them leave from
+  // the side facing the next layer (arrows going back: from the side).
+  function layout(list, ids, opts) {
+    opts = opts || {};
+    var want = {};
+    (ids || list.map(function (o) { return o.id; })).forEach(function (id) { want[id] = 1; });
+    var nodes = list.filter(function (o) { return want[o.id] && LAID[o.k]; });
+    if (nodes.length < 2) return {};
+    var v = opts.dir !== "h", gap = isFinite(opts.gap) && opts.gap >= 0 ? Math.min(2000, +opts.gap) : 40;
+    var mainGap = Math.max(60, gap * 1.5);
+    var N = {}, cs = function (o) { return v ? o.w : o.h; }, ms = function (o) { return v ? o.h : o.w; };
+    var cross0 = function (o) { return v ? o.x + o.w / 2 : o.y + o.h / 2; }, main0 = function (o) { return v ? o.y : o.x; };
+    // reading order: along the main way, then across
+    nodes.sort(function (a, b) { return main0(a) - main0(b) || cross0(a) - cross0(b) || (a.id < b.id ? -1 : 1); });
+    nodes.forEach(function (o, i) { N[o.id] = { o: o, i: i, out: [], inn: [] }; });
+    var seen = {}, arrows = list.filter(function (a) { return a.k === "arrow" && a.ao && a.bo && a.ao !== a.bo && N[a.ao] && N[a.bo]; });
+    // in drawing order; a pair joined both ways is a loop the walk below breaks
+    arrows.sort(function (p, q) { return p.z - q.z || byId(p, q); }).forEach(function (a) {
+      var key = a.ao + ">" + a.bo;
+      if (seen[key]) return;
+      seen[key] = 1;
+      N[a.ao].out.push(a.bo); N[a.bo].inn.push(a.ao);
+    });
+    // break cycles: an arrow back to an object still being walked is left out
+    var state = {}, back = {};
+    nodes.forEach(function (o) {
+      if (state[o.id]) return;
+      var st = [[o.id, 0]];
+      state[o.id] = 1;
+      while (st.length) {
+        var top = st[st.length - 1], u = N[top[0]];
+        if (top[1] >= u.out.length) { state[top[0]] = 2; st.pop(); continue; }
+        var w = u.out[top[1]++];
+        if (state[w] === 1) back[top[0] + ">" + w] = 1;
+        else if (!state[w]) { state[w] = 1; st.push([w, 0]); }
+      }
+    });
+    nodes.forEach(function (o) {
+      var n = N[o.id];
+      n.out = n.out.filter(function (w) { return !back[o.id + ">" + w]; });
+      n.inn = n.inn.filter(function (u) { return !back[u + ">" + o.id]; });
+    });
+    var byCross = function (a, b) { return cross0(N[a].o) - cross0(N[b].o) || N[a].i - N[b].i; };
+    nodes.forEach(function (o) { N[o.id].out.sort(byCross); });
+    var kind = LAYOUT_KINDS.indexOf(opts.kind) >= 0 ? opts.kind : (nodes.every(function (o) { return N[o.id].inn.length <= 1; }) ? "tree" : "flow");
+    // layers: the longest way in (Kahn order)
+    var deg = {}, q = [], order = [];
+    nodes.forEach(function (o) { deg[o.id] = N[o.id].inn.length; N[o.id].L = 0; if (!deg[o.id]) q.push(o.id); });
+    while (q.length) {
+      var u = q.shift();
+      order.push(u);
+      N[u].out.forEach(function (w) {
+        if (kind === "flow") N[w].L = Math.max(N[w].L, N[u].L + 1);
+        if (--deg[w] === 0) q.push(w);
+      });
+    }
+    var cpos = {};
+    if (kind === "tree") {
+      // each object under its first parent; the others' arrows just join
+      var par = {}, kids = {}, roots = [];
+      order.forEach(function (id) { kids[id] = []; });
+      order.forEach(function (id) {
+        var p = N[id].inn.filter(function (u) { return kids[u]; }).sort(function (a, b) { return N[a].i - N[b].i; })[0];
+        if (p) { par[id] = p; kids[p].push(id); } else roots.push(id);
+      });
+      order.forEach(function (id) { kids[id].sort(byCross); });
+      roots.sort(byCross);
+      var blk = {};
+      for (var k = order.length - 1; k >= 0; k--) {
+        var id = order[k], s = 0;
+        kids[id].forEach(function (c, j) { s += blk[c] + (j ? gap : 0); });
+        blk[id] = Math.max(cs(N[id].o), s);
+      }
+      var depth = {};
+      var place = function (list2, from, d) {
+        var x = from;
+        list2.forEach(function (id) {
+          depth[id] = d; cpos[id] = x + blk[id] / 2;
+          var s2 = 0;
+          kids[id].forEach(function (c, j) { s2 += blk[c] + (j ? gap : 0); });
+          place(kids[id], cpos[id] - s2 / 2, d + 1);
+          // over the middle of its first and last child, inside its block
+          var ks = kids[id], half = cs(N[id].o) / 2;
+          if (ks.length) cpos[id] = Math.min(x + blk[id] - half, Math.max(x + half, (cpos[ks[0]] + cpos[ks[ks.length - 1]]) / 2));
+          x += blk[id] + gap;
+        });
+      };
+      place(roots, 0, 0);
+      order.forEach(function (id) { N[id].L = depth[id]; });
+    } else {
+      var layers = [];
+      order.forEach(function (id) { (layers[N[id].L] = layers[N[id].L] || []).push(id); });
+      layers.forEach(function (ly) { ly.sort(byCross); });
+      var at = {};
+      var idx = function () { layers.forEach(function (ly) { ly.forEach(function (id, j) { at[id] = j; }); }); };
+      idx();
+      var mean = function (list2) { var s = 0; list2.forEach(function (x) { s += at[x]; }); return s / list2.length; };
+      for (var sweep = 0; sweep < 8; sweep++) {
+        var down = sweep % 2 === 0;
+        for (var li = down ? 1 : layers.length - 2; down ? li < layers.length : li >= 0; li += down ? 1 : -1) {
+          var key2 = {};
+          layers[li].forEach(function (id) { var nb = down ? N[id].inn : N[id].out; key2[id] = nb.length ? mean(nb) : at[id]; });
+          layers[li].sort(function (a, b) { return key2[a] - key2[b] || at[a] - at[b]; });
+          layers[li].forEach(function (id, j) { at[id] = j; });
+        }
+      }
+      // across: one after another, each pulled toward the middle of
+      // the ones its arrows come from, the layer then centred on them
+      layers.forEach(function (ly, li) {
+        var want2 = ly.map(function (id) {
+          var nb = N[id].inn.filter(function (u) { return cpos[u] !== undefined; });
+          if (!li || !nb.length) return null;
+          var s = 0; nb.forEach(function (u) { s += cpos[u]; }); return s / nb.length;
+        });
+        var x = -Infinity, sum = 0, cnt = 0;
+        ly.forEach(function (id, j) {
+          var w = cs(N[id].o), c = want2[j] !== null ? want2[j] : x === -Infinity ? w / 2 : x + gap + w / 2;
+          if (x !== -Infinity) c = Math.max(c, x + gap + w / 2);
+          cpos[id] = c; x = c + w / 2;
+          if (want2[j] !== null) { sum += want2[j] - c; cnt++; }
+        });
+        var shift = !li ? -(cpos[ly[ly.length - 1]] + cpos[ly[0]]) / 2 : cnt ? sum / cnt : 0;
+        ly.forEach(function (id) { cpos[id] += shift; });
+      });
+    }
+    // along: each layer as deep as its deepest object
+    var lmax = [], lpos = [0];
+    order.forEach(function (id) { var L = N[id].L; lmax[L] = Math.max(lmax[L] || 0, ms(N[id].o)); });
+    for (var L = 1; L < lmax.length; L++) lpos[L] = lpos[L - 1] + (lmax[L - 1] || 0) + mainGap;
+    // keep the group's top-left corner
+    var ox = Infinity, oy = Infinity, nx = Infinity, ny = Infinity, P = {};
+    nodes.forEach(function (o) {
+      var n = N[o.id], c = cpos[o.id], mn = lpos[n.L] + (lmax[n.L] - ms(o)) / 2;
+      P[o.id] = v ? { x: c - o.w / 2, y: mn } : { x: mn, y: c - o.h / 2 };
+      ox = Math.min(ox, o.x); oy = Math.min(oy, o.y); nx = Math.min(nx, P[o.id].x); ny = Math.min(ny, P[o.id].y);
+    });
+    var out = {};
+    nodes.forEach(function (o) { moveTo(out, o, r2(P[o.id].x + ox - nx), r2(P[o.id].y + oy - ny)); });
+    arrows.forEach(function (a) {
+      if (a.rt !== "elbow" && a.rt !== "curve") return;
+      var fwd = N[a.bo].L > N[a.ao].L, rev = N[a.ao].L > N[a.bo].L;
+      if (!fwd && !rev) return;
+      // forward: out of the side facing the next layer; back (a loop):
+      // out and in on the side, round the outside of the boxes between
+      var c = out[a.id] || JSON.parse(JSON.stringify(a)), s1 = v ? "b" : "r", s2 = v ? "t" : "l", side = v ? "r" : "b";
+      c.ap = fwd ? s1 : side; c.bp = fwd ? s2 : side;
+      if (c.ap !== a.ap || c.bp !== a.bp) out[a.id] = c;
+    });
+    return withArrows(list, out);
+  }
+
+  // Lines the picked objects up (edge l|c|r|t|m|b, against the box
+  // round all of them) or spreads them evenly (dist h|v: the same gap
+  // between each two, the first and last stay). Arrows follow.
+  function align(list, ids, edge, dist) {
+    var want = {};
+    ids.forEach(function (id) { want[id] = 1; });
+    var items = list.filter(function (o) { return want[o.id] && o.k !== "arrow"; }), out = {};
+    var bx = items.map(function (o) { return { o: o, b: box(o) }; });
+    if (bx.length < 2) return {};
+    var X = Infinity, Y = Infinity, X2 = -Infinity, Y2 = -Infinity;
+    bx.forEach(function (p) { X = Math.min(X, p.b.x); Y = Math.min(Y, p.b.y); X2 = Math.max(X2, p.b.x + p.b.w); Y2 = Math.max(Y2, p.b.y + p.b.h); });
+    if (ALIGN_EDGES.indexOf(edge) >= 0) {
+      bx.forEach(function (p) {
+        var o = p.o, b = p.b, nx = o.x, ny = o.y;
+        if (edge === "l") nx = o.x + X - b.x;
+        else if (edge === "c") nx = o.x + (X + X2) / 2 - (b.x + b.w / 2);
+        else if (edge === "r") nx = o.x + X2 - (b.x + b.w);
+        else if (edge === "t") ny = o.y + Y - b.y;
+        else if (edge === "m") ny = o.y + (Y + Y2) / 2 - (b.y + b.h / 2);
+        else ny = o.y + Y2 - (b.y + b.h);
+        moveTo(out, o, r2(nx), r2(ny));
+      });
+    } else if (SPREAD_DIRS.indexOf(dist) >= 0 && bx.length >= 3) {
+      var h = dist === "h", lo = h ? "x" : "y", sz = h ? "w" : "h";
+      bx.sort(function (p, q) { return (p.b[lo] + p.b[sz] / 2) - (q.b[lo] + q.b[sz] / 2) || (p.o.id < q.o.id ? -1 : 1); });
+      var first = bx[0].b, last = bx[bx.length - 1].b, total = 0;
+      bx.forEach(function (p) { total += p.b[sz]; });
+      var g = ((last[lo] + last[sz]) - first[lo] - total) / (bx.length - 1), pos = first[lo];
+      bx.forEach(function (p) {
+        var d = pos - p.b[lo];
+        moveTo(out, p.o, r2(p.o.x + (h ? d : 0)), r2(p.o.y + (h ? 0 : d)));
+        pos += p.b[sz] + g;
+      });
+    }
+    return withArrows(list, out);
   }
 
   function index(list) {
@@ -311,9 +813,10 @@
   // Box of one object (text height measured when measure is given).
   function box(o, byIdMap, measure) {
     if (o.k === "arrow") {
-      var e = ends(o, byIdMap || {});
-      var x = Math.min(e.a.x, e.b.x), y = Math.min(e.a.y, e.b.y);
-      return { x: x, y: y, w: Math.max(1, Math.abs(e.a.x - e.b.x)), h: Math.max(1, Math.abs(e.a.y - e.b.y)) };
+      var r = route(o, byIdMap || {}), ps = r.c ? r.pts.concat([bez(r, 0.25), bez(r, 0.5), bez(r, 0.75)]) : r.pts;
+      var x = Infinity, y = Infinity, X = -Infinity, Y = -Infinity;
+      ps.forEach(function (p) { x = Math.min(x, p.x); y = Math.min(y, p.y); X = Math.max(X, p.x); Y = Math.max(Y, p.y); });
+      return { x: x, y: y, w: Math.max(1, X - x), h: Math.max(1, Y - y) };
     }
     if (o.k === "text" && measure) return { x: o.x, y: o.y, w: o.w, h: textHeight(o, measure) };
     if (o.k === "frame") return { x: o.x, y: o.y - 24, w: o.w, h: o.h + 24 };
@@ -427,8 +930,10 @@
   }
   function col(o, i) { return COLORS[o.c] ? COLORS[o.c][i] : COLORS.ink[i]; }
 
-  function textLines(lines, x, y, fs, anchor, fill) {
-    return n("text", { x: x, y: y, "font-size": fs, "font-family": FONT, fill: fill, "text-anchor": anchor },
+  function textLines(lines, x, y, fs, anchor, fill, more) {
+    var a = { x: x, y: y, "font-size": fs, "font-family": FONT, fill: fill, "text-anchor": anchor };
+    if (more) Object.keys(more).forEach(function (k) { a[k] = more[k]; });
+    return n("text", a,
       lines.map(function (l, i) {
         return n("tspan", { x: x, dy: i ? r2(fs * LH) : r2(fs * 0.95) }, null, l || " ");
       }));
@@ -440,6 +945,165 @@
     if (o.shp === "diamond") return n("path", { d: "M" + r2(x + w / 2) + " " + y + "L" + r2(x + w) + " " + r2(y + h / 2) + "L" + r2(x + w / 2) + " " + r2(y + h) + "L" + x + " " + r2(y + h / 2) + "Z" });
     if (o.shp === "tri") return n("path", { d: "M" + r2(x + w / 2) + " " + y + "L" + r2(x + w) + " " + r2(y + h) + "L" + x + " " + r2(y + h) + "Z" });
     return n("rect", { x: x, y: y, width: w, height: h, rx: o.shp === "round" ? Math.min(16, w / 4, h / 4) : 0 });
+  }
+
+  // ---------- diagram symbols: the drawing ----------
+  // Each symbol is drawn in a 100 × 100 grid: m "fit" stretches it to
+  // the object's box, m "icon" keeps it square (icons, and the round
+  // start / end nodes). lab: the text goes under the icon (the icon
+  // takes the top 72 %). tb: the text box as parts of the box
+  // [left, top, right, bottom]. cls: a UML class (1) or interface (2),
+  // with compartments from the text. p: what to draw, in order:
+  //   [role, "M x y L x y C … Q … Z"]   a path (absolute, grid units)
+  //   [role + "c", cx, cy, r]           a circle (an ellipse in "fit")
+  //   [role + "r", x, y, w, h, rx]      a rectangle, rx in pixels or "pill"
+  // Roles: b body (the fill, a strong outline), l a line on the body
+  // (paper-coloured on a full-colour body), L a line that is always
+  // strong, s a dot on the body (paper-coloured on full colour), S a
+  // dot that is always strong, w a paper-filled part with an outline.
+  var STAR = (function () {
+    var d = "";
+    for (var i = 0; i < 10; i++) {
+      var a = -Math.PI / 2 + i * Math.PI / 5, r = i % 2 ? 20 : 50;
+      d += (i ? "L" : "M") + r2(50 + r * Math.cos(a)) + " " + r2(50 + r * Math.sin(a) * 1.05 + 3);
+    }
+    return d + "Z";
+  })();
+  var CYL = [["b", "M0 12C0 -4 100 -4 100 12L100 88C100 104 0 104 0 88Z"], ["l", "M0 12C0 28 100 28 100 12"]];
+  var GEO = {
+    process: { m: "fit", p: [["br", 0, 0, 100, 100, 0]] },
+    decision: { m: "fit", tb: [0.22, 0.22, 0.78, 0.78], p: [["b", "M50 0L100 50L50 100L0 50Z"]] },
+    terminator: { m: "fit", tb: [0.12, 0.08, 0.88, 0.92], p: [["br", 0, 0, 100, 100, "pill"]] },
+    data: { m: "fit", tb: [0.2, 0.06, 0.8, 0.94], p: [["b", "M20 0L100 0L80 100L0 100Z"]] },
+    document: { m: "fit", tb: [0.05, 0.05, 0.95, 0.8], p: [["b", "M0 0L100 0L100 82C80 72 65 72 50 84C35 96 18 96 0 86Z"]] },
+    documents: { m: "fit", tb: [0.05, 0.16, 0.84, 0.82], p: [["L", "M12 6L12 0L100 0L100 70L94 70"], ["L", "M6 12L6 6L94 6L94 76L88 76"],
+      ["b", "M0 12L88 12L88 88C70 80 58 80 44 90C30 100 14 100 0 92Z"]] },
+    predefined: { m: "fit", tb: [0.12, 0.06, 0.88, 0.94], p: [["br", 0, 0, 100, 100, 0], ["l", "M10 0L10 100M90 0L90 100"]] },
+    "manual-input": { m: "fit", tb: [0.05, 0.3, 0.95, 0.95], p: [["b", "M0 28L100 0L100 100L0 100Z"]] },
+    "manual-op": { m: "fit", tb: [0.2, 0.06, 0.8, 0.94], p: [["b", "M0 0L100 0L80 100L20 100Z"]] },
+    preparation: { m: "fit", tb: [0.16, 0.06, 0.84, 0.94], p: [["b", "M15 0L85 0L100 50L85 100L15 100L0 50Z"]] },
+    database: { m: "fit", tb: [0.06, 0.3, 0.94, 0.92], p: CYL },
+    delay: { m: "fit", tb: [0.05, 0.08, 0.8, 0.92], p: [["b", "M0 0L60 0C113 0 113 100 60 100L0 100Z"]] },
+    "off-page": { m: "fit", tb: [0.08, 0.06, 0.92, 0.68], p: [["b", "M0 0L100 0L100 70L50 100L0 70Z"]] },
+    connector: { m: "fit", tb: [0.16, 0.16, 0.84, 0.84], p: [["bc", 50, 50, 50]] },
+    merge: { m: "fit", tb: [0.22, 0.04, 0.78, 0.5], p: [["b", "M0 0L100 0L50 100Z"]] },
+    person: { m: "fit", tb: [0.1, 0.06, 0.96, 0.94], p: [["br", 0, 0, 100, 100, 0], ["sr", 0, 0, 5, 100, 0]] },
+    unit: { m: "fit", tb: [0.05, 0.28, 0.95, 0.94], p: [["br", 0, 0, 100, 100, 0], ["sr", 0, 0, 100, 18, 0]] },
+    "class": { m: "fit", cls: 1, p: [["br", 0, 0, 100, 100, 0]] },
+    "interface": { m: "fit", cls: 2, p: [["br", 0, 0, 100, 100, 0]] },
+    actor: { m: "icon", lab: 1, p: [["Lc", 50, 15, 12], ["L", "M50 27L50 62M22 40L78 40M50 62L28 97M50 62L72 97"]] },
+    usecase: { m: "fit", tb: [0.14, 0.14, 0.86, 0.86], p: [["bc", 50, 50, 50]] },
+    "package": { m: "fit", tb: [0.05, 0.24, 0.95, 0.95], p: [["b", "M0 0L42 0L42 18L0 18Z"], ["b", "M0 18L100 18L100 100L0 100Z"]] },
+    component: { m: "fit", tb: [0.2, 0.06, 0.95, 0.94], p: [["b", "M10 0L100 0L100 100L10 100Z"], ["wr", 0, 18, 20, 16, 0], ["wr", 0, 62, 20, 16, 0]] },
+    comment: { m: "fit", tb: [0.06, 0.08, 0.9, 0.94], p: [["b", "M0 0L82 0L100 18L100 100L0 100Z"], ["l", "M82 0L82 18L100 18"]] },
+    node: { m: "fit", tb: [0.05, 0.22, 0.8, 0.95], p: [["b", "M0 15L15 0L100 0L85 15Z"], ["b", "M85 15L100 0L100 85L85 100Z"], ["b", "M0 15L85 15L85 100L0 100Z"]] },
+    start: { m: "icon", p: [["Sc", 50, 50, 50]] },
+    end: { m: "icon", p: [["Lc", 50, 50, 48], ["Sc", 50, 50, 32]] },
+    hexagon: { m: "fit", tb: [0.2, 0.08, 0.8, 0.92], p: [["b", "M25 0L75 0L100 50L75 100L25 100L0 50Z"]] },
+    octagon: { m: "fit", tb: [0.12, 0.12, 0.88, 0.88], p: [["b", "M30 0L70 0L100 30L100 70L70 100L30 100L0 70L0 30Z"]] },
+    star: { m: "fit", tb: [0.3, 0.36, 0.7, 0.72], p: [["b", STAR]] },
+    cross: { m: "fit", tb: [0.1, 0.36, 0.9, 0.64], p: [["b", "M35 0L65 0L65 35L100 35L100 65L65 65L65 100L35 100L35 65L0 65L0 35L35 35Z"]] },
+    "arrow-right": { m: "fit", tb: [0.04, 0.32, 0.72, 0.68], p: [["b", "M0 30L65 30L65 0L100 50L65 100L65 70L0 70Z"]] },
+    "arrow-both": { m: "fit", tb: [0.2, 0.32, 0.8, 0.68], p: [["b", "M0 50L25 0L25 30L75 30L75 0L100 50L75 100L75 70L25 70L25 100Z"]] },
+    cloud: { m: "fit", tb: [0.16, 0.24, 0.84, 0.84], p: [["b", "M25 90C5 90 0 70 12 60C0 45 15 25 32 32C38 10 68 8 74 28C92 22 104 45 92 58C104 72 92 92 75 88C65 100 38 100 25 90Z"]] },
+    callout: { m: "fit", tb: [0.05, 0.06, 0.95, 0.72], p: [["b", "M0 0L100 0L100 76L45 76L22 100L26 76L0 76Z"]] },
+    server: { m: "icon", lab: 1, p: [["br", 24, 4, 52, 92, 4], ["l", "M32 22L68 22M32 38L68 38M32 54L68 54"], ["sc", 36, 80, 4], ["sc", 50, 80, 4]] },
+    router: { m: "icon", lab: 1, p: [["b", "M4 38C4 22 96 22 96 38L96 64C96 80 4 80 4 64Z"], ["l", "M4 38C4 54 96 54 96 38"],
+      ["l", "M34 34L66 42M66 34L34 42"]] },
+    "switch": { m: "icon", lab: 1, p: [["br", 4, 32, 92, 36, 4], ["sr", 12, 48, 9, 9, 0], ["sr", 26, 48, 9, 9, 0], ["sr", 40, 48, 9, 9, 0],
+      ["sr", 54, 48, 9, 9, 0], ["sr", 68, 48, 9, 9, 0], ["sc", 84, 42, 3]] },
+    firewall: { m: "icon", lab: 1, p: [["br", 6, 12, 88, 76, 0],
+      ["l", "M6 31L94 31M6 50L94 50M6 69L94 69M50 12L50 31M28 31L28 50M72 31L72 50M50 50L50 69M28 69L28 88M72 69L72 88"]] },
+    internet: { m: "icon", lab: 1, p: [["bc", 50, 50, 46], ["l", "M4 50L96 50M50 4C24 24 24 76 50 96M50 4C76 24 76 76 50 96M12 27L88 27M12 73L88 73"]] },
+    laptop: { m: "icon", lab: 1, p: [["br", 16, 16, 68, 50, 3], ["wr", 22, 22, 56, 38, 0], ["b", "M6 70L94 70L100 82L0 82Z"]] },
+    desktop: { m: "icon", lab: 1, p: [["br", 6, 8, 88, 60, 3], ["wr", 12, 14, 76, 48, 0], ["L", "M50 68L50 84M30 90L70 90"]] },
+    phone: { m: "icon", lab: 1, p: [["br", 28, 2, 44, 96, 7], ["l", "M43 10L57 10"], ["sc", 50, 88, 4]] },
+    tablet: { m: "icon", lab: 1, p: [["br", 12, 10, 76, 80, 6], ["wr", 18, 16, 64, 62, 0], ["sc", 50, 84, 3]] },
+    "db-server": { m: "icon", lab: 1, p: [["b", "M14 14C14 2 86 2 86 14L86 86C86 98 14 98 14 86Z"], ["l", "M14 14C14 26 86 26 86 14M14 38C14 50 86 50 86 38M14 62C14 74 86 74 86 62"]] },
+    storage: { m: "icon", lab: 1, p: [["br", 8, 16, 84, 68, 4], ["l", "M8 39L92 39M8 61L92 61M18 28L54 28M18 50L54 50M18 72L54 72"],
+      ["sc", 80, 28, 4], ["sc", 80, 50, 4], ["sc", 80, 72, 4]] },
+    user: { m: "icon", lab: 1, p: [["bc", 50, 28, 20], ["b", "M12 98C12 62 88 62 88 98Z"]] },
+    printer: { m: "icon", lab: 1, p: [["wr", 26, 8, 48, 32, 0], ["br", 8, 36, 84, 40, 6], ["wr", 26, 62, 48, 32, 0], ["sc", 80, 46, 3]] },
+    wifi: { m: "icon", lab: 1, p: [["Sc", 50, 82, 7], ["L", "M30 62C40 51 60 51 70 62M17 47C35 28 65 28 83 47M4 32C30 6 70 6 96 32"]] }
+  };
+
+  // A grid path in pixels: x → ox + x · sx, y → oy + y · sy.
+  function gridPath(d, ox, oy, sx, sy) {
+    var i = 0;
+    return d.replace(/-?\d*\.?\d+/g, function (v) {
+      var out = (i++ % 2) ? oy + parseFloat(v) * sy : ox + parseFloat(v) * sx;
+      return String(r2(out));
+    });
+  }
+
+  function drawSym(o, def, strong, soft, opt, kids) {
+    var X = o.x, Y = o.y, W = o.w, H = o.h, iconH = def.lab ? H * 0.72 : H, sx, sy, ox, oy;
+    if (def.m === "icon") {
+      var side = Math.max(1, Math.min(W, iconH));
+      sx = sy = side / 100; ox = X + (W - side) / 2; oy = Y + (iconH - side) / 2;
+    } else { sx = W / 100; sy = H / 100; ox = X; oy = Y; }
+    var solid = o.f === "solid", fill = solid ? strong : o.f === "soft" ? soft : "none";
+    if (opt.live) kids.push(n("rect", { x: X, y: Y, width: W, height: H, fill: "transparent" }));
+    def.p.forEach(function (pr) {
+      var role = pr[0].charAt(0), type = pr[0].charAt(1), nd;
+      if (type === "c") {
+        nd = def.m === "icon" ? n("circle", { cx: r2(ox + pr[1] * sx), cy: r2(oy + pr[2] * sy), r: r2(pr[3] * sx) })
+          : n("ellipse", { cx: r2(ox + pr[1] * sx), cy: r2(oy + pr[2] * sy), rx: r2(pr[3] * sx), ry: r2(pr[3] * sy) });
+      } else if (type === "r") {
+        var rw = pr[3] * sx, rh = pr[4] * sy;
+        nd = n("rect", { x: r2(ox + pr[1] * sx), y: r2(oy + pr[2] * sy), width: r2(rw), height: r2(rh),
+          rx: pr[5] === "pill" ? r2(Math.min(rw, rh) / 2) : Math.min(pr[5], rw / 4, rh / 4) });
+      } else nd = n("path", { d: gridPath(pr[1], ox, oy, sx, sy) });
+      var a = nd.a;
+      if (role === "b") { a.fill = fill; a.stroke = strong; a["stroke-width"] = 2; a["stroke-linejoin"] = "round"; }
+      else if (role === "w") { a.fill = PAPER; a.stroke = strong; a["stroke-width"] = 2; a["stroke-linejoin"] = "round"; }
+      else if (role === "l" || role === "L") {
+        a.fill = "none"; a.stroke = role === "l" && solid ? PAPER : strong; a["stroke-width"] = 2;
+        a["stroke-linecap"] = "round"; a["stroke-linejoin"] = "round";
+      } else a.fill = role === "s" && solid ? PAPER : strong;
+      kids.push(nd);
+    });
+    var ink = solid && !def.lab ? "#ffffff" : INK;
+    if (def.cls) { drawClass(o, def.cls === 2, strong, solid, ink, opt.measure, kids); return; }
+    if (!o.tx) return;
+    var tb = def.tb || [0.06, 0.06, 0.94, 0.94], bx, by, bw, bh, max = 28;
+    if (def.lab) { bx = X; by = Y + iconH + 2; bw = W; bh = Math.max(10, H - iconH - 2); max = 16; }
+    else { bx = X + tb[0] * W; by = Y + tb[1] * H; bw = (tb[2] - tb[0]) * W; bh = (tb[3] - tb[1]) * H; }
+    var f = fit(o.tx, Math.max(8, bw - 8), Math.max(10, bh - 4), max, opt.measure), th = f.lines.length * f.fs * LH;
+    kids.push(textLines(f.lines, r2(bx + bw / 2), r2(def.lab ? by : by + (bh - th) / 2), f.fs, "middle", ink));
+  }
+
+  // A UML class: the first part of the text is its name, a line of
+  // two or more dashes starts the next compartment (attributes, then
+  // methods). The largest size up to 16 whose lines all fit is used.
+  function drawClass(o, iface, strong, solid, ink, measure, kids) {
+    var secs = [[]];
+    String(o.tx || "").split("\n").forEach(function (l) {
+      if (/^\s*-{2,}\s*$/.test(l)) secs.push([]); else secs[secs.length - 1].push(l);
+    });
+    var head = secs[0].length ? secs[0] : [""], rest = secs.slice(1), W = o.w, H = o.h;
+    if (iface) head = ["«interface»"].concat(head);
+    var pickFs = null, hw, rw, wr;
+    for (var i = 0; i < FIT.length && !pickFs; i++) {
+      var fs = FIT[i];
+      if (fs > 16) continue;
+      wr = function (lines) { var out = []; lines.forEach(function (l) { wrap(l, W - 16, fs, measure).forEach(function (x) { out.push(x); }); }); return out; };
+      hw = wr(head); rw = rest.map(wr);
+      var tot = hw.length * fs * LH + 12;
+      rw.forEach(function (r) { tot += Math.max(1, r.length) * fs * LH + 10; });
+      if (tot <= H || fs === FIT[FIT.length - 1]) pickFs = fs;
+    }
+    var line = solid ? PAPER : strong, y = o.y + 6;
+    kids.push(textLines(hw, r2(o.x + W / 2), r2(y), pickFs, "middle", ink, { "font-weight": 600 }));
+    y += hw.length * pickFs * LH + 6;
+    if (!rw.length) rw = [[]];
+    rw.forEach(function (r) {
+      if (y >= o.y + H - 2) return;
+      kids.push(n("path", { d: "M" + o.x + " " + r2(y) + "L" + r2(o.x + W) + " " + r2(y), stroke: line, "stroke-width": 1.5, fill: "none" }));
+      var room = Math.floor((o.y + H - y - 6) / (pickFs * LH));
+      if (r.length && room > 0) kids.push(textLines(r.slice(0, room), r2(o.x + 8), r2(y + 5), pickFs, "start", ink));
+      y += Math.max(1, r.length) * pickFs * LH + 10;
+    });
   }
 
   function penPath(o) {
@@ -460,6 +1124,20 @@
       "L" + r2(bx + uy * s * 0.55) + " " + r2(by - ux * s * 0.55) + "Z";
   }
 
+  // One arrow head of a style (DG2). Hollow ones are paper-filled, so
+  // they hide the line under them.
+  function headNode(style, tip, from, strong) {
+    var dx = tip.x - from.x, dy = tip.y - from.y, L = Math.sqrt(dx * dx + dy * dy) || 1, ux = dx / L, uy = dy / L;
+    function pt(along, side) { return r2(tip.x - ux * along - uy * side) + " " + r2(tip.y - uy * along + ux * side); }
+    if (style === "arrow") return n("path", { d: head(tip, from, 2.5), fill: strong });
+    if (style === "open") return n("path", { d: "M" + pt(13, 7.5) + "L" + r2(tip.x) + " " + r2(tip.y) + "L" + pt(13, -7.5), fill: "none", stroke: strong, "stroke-width": 2.5, "stroke-linecap": "round", "stroke-linejoin": "round" });
+    if (style === "tri") return n("path", { d: "M" + r2(tip.x) + " " + r2(tip.y) + "L" + pt(15, 8.5) + "L" + pt(15, -8.5) + "Z", fill: PAPER, stroke: strong, "stroke-width": 2, "stroke-linejoin": "round" });
+    if (style === "dia" || style === "odia") return n("path", { d: "M" + r2(tip.x) + " " + r2(tip.y) + "L" + pt(9, 6) + "L" + pt(18, 0) + "L" + pt(9, -6) + "Z",
+      fill: style === "dia" ? strong : PAPER, stroke: strong, "stroke-width": 2, "stroke-linejoin": "round" });
+    if (style === "dot") return n("circle", { cx: r2(tip.x - ux * 4.5), cy: r2(tip.y - uy * 4.5), r: 4.5, fill: strong });
+    return null;
+  }
+
   function draw(o, m, opt) {
     var g = { "data-id": o.id }, kids = [], measure = opt.measure, live = opt.live;
     var strong = col(o, 0), soft = col(o, 1);
@@ -473,6 +1151,8 @@
     } else if (o.k === "text") {
       if (live) kids.push(n("rect", { x: o.x, y: o.y, width: o.w, height: r2(textHeight(o, measure)), fill: "transparent" }));
       kids.push(textLines(wrap(o.tx, o.w, o.fs, measure), o.x, o.y, o.fs, "start", strong));
+    } else if (o.k === "shape" && symOf(o)) {
+      drawSym(o, GEO[o.sym], strong, soft, opt, kids);
     } else if (o.k === "shape") {
       var s = shapePath(o);
       s.a.fill = o.f === "solid" ? strong : o.f === "soft" ? soft : live ? "transparent" : "none";
@@ -487,15 +1167,17 @@
           o.f === "solid" ? "#ffffff" : INK));
       }
     } else if (o.k === "arrow") {
-      var e = ends(o, m), d = "M" + r2(e.a.x) + " " + r2(e.a.y) + "L" + r2(e.b.x) + " " + r2(e.b.y);
+      var rr = route(o, m), d = routeD(rr), tl = tails(rr), hz = headsOf(o), pp = rr.pts;
       if (live) kids.push(n("path", { d: d, stroke: "transparent", "stroke-width": 18, fill: "none" }));
       var line = { d: d, stroke: strong, "stroke-width": 2.5, fill: "none", "stroke-linecap": "round" };
+      if (rr.pts.length > 2) line["stroke-linejoin"] = "round";
       if (o.ds) line["stroke-dasharray"] = "8 6";
       kids.push(n("path", line));
-      if (o.hd !== "none") kids.push(n("path", { d: head(e.b, e.a, 2.5), fill: strong }));
-      if (o.hd === "both") kids.push(n("path", { d: head(e.a, e.b, 2.5), fill: strong }));
+      var hB = headNode(hz.b, pp[pp.length - 1], tl.b, strong), hA = headNode(hz.a, pp[0], tl.a, strong);
+      if (hB) kids.push(hB);
+      if (hA) kids.push(hA);
       if (o.tx) {
-        var mx = (e.a.x + e.b.x) / 2, my = (e.a.y + e.b.y) / 2, lw = (measure || approx)(o.tx, 14) + 12;
+        var mid = midOf(rr), mx = mid.x, my = mid.y, lw = (measure || approx)(o.tx, 14) + 12;
         kids.push(n("rect", { x: r2(mx - lw / 2), y: r2(my - 12), width: r2(lw), height: 24, rx: 6, fill: PAPER }));
         kids.push(textLines([o.tx], r2(mx), r2(my - 9), 14, "middle", strong));
       }
@@ -565,12 +1247,13 @@
   function words(o) { return typeof o.tx === "string" ? o.tx.replace(/\s+/g, " ").trim() : ""; }
 
   var API = {
-    VER: VER, KINDS: KINDS, SHAPES: SHAPES, FILLS: FILLS, HEADS: HEADS, COLORS: COLORS, COLOR_KEYS: COLOR_KEYS,
+    VER: VER, KINDS: KINDS, SHAPES: SHAPES, SYMS: SYMS, SYM_IDS: SYM_IDS, SYM_GROUPS: SYM_GROUPS, GEO: GEO, symOf: symOf, FILLS: FILLS, HEADS: HEADS, COLORS: COLORS, COLOR_KEYS: COLOR_KEYS,
     DEF_COLOR: DEF_COLOR, PAPER: PAPER, FONT: FONT, LH: LH, IMG_LEN: IMG_LEN, MAX_PTS: MAX_PTS, MAX_TEXT: MAX_TEXT,
     empty: empty, normalize: normalize, merge: merge, serialize: serialize, cleanObj: cleanObj,
     uid: uid, apply: apply, putBoard: putBoard, removeBoard: removeBoard, boards: boards, board: board,
     objsOf: objsOf, zTop: zTop, zBottom: zBottom, copies: copies,
-    wrap: wrap, fit: fit, textHeight: textHeight, edge: edge, ends: ends, index: index, box: box, bounds: bounds,
+    wrap: wrap, fit: fit, textHeight: textHeight, edge: edge, ends: ends, route: route, routeD: routeD, labelAt: labelAt, portAt: portAt, headsOf: headsOf, hdFor: hdFor,
+    ROUTES: ROUTES, SIDES: SIDES, HEAD_STYLES: HEAD_STYLES, layout: layout, align: align, LAYOUT_KINDS: LAYOUT_KINDS, LAYOUT_DIRS: LAYOUT_DIRS, ALIGN_EDGES: ALIGN_EDGES, SPREAD_DIRS: SPREAD_DIRS, index: index, box: box, bounds: bounds,
     inRect: inRect, inFrame: inFrame, simplify: simplify, penFrom: penFrom, moved: moved, resized: resized,
     scene: scene, toSvg: toSvg, words: words
   };

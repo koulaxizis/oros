@@ -249,6 +249,16 @@
       "ctr.chip":         "Contract ends {d}",
       "ctr.chipEnded":    "Contract ended",
       "ctr.chipHint":     "Open the contract in CRM",
+      "pd.chip":          "Portal · phase {n}",
+      "pd.chipOff":       "Portal · not sent",
+      "pd.chipHint":      "Shown to its creator in the Author Portal (CRM › Contracts › Production stage…)",
+      "pd.chipWhy":       "Ticked for the Author Portal but not sent: {why} (CRM › Contracts › Production stage…)",
+      "pd.why.noben":     "no creator linked",
+      "pd.why.badid":     "the card id cannot be sent",
+      "pd.why.notitle":   "no title",
+      "pd.why.old":       "released more than 30 days ago",
+      "pd.why.max":       "over 500 works",
+      "pd.why.nophase":   "its column has no phase",
       "export.oros":      "orOS file (.orosboard)",
       "export.json":      "Export board (JSON)",
       "export.csv":       "Export cards (CSV)",
@@ -275,10 +285,39 @@
       "tbl.lane":         "Lane",
       "tbl.sort":         "Sort by",
       "tbl.empty":        "No cards to show.",
-      "tl.empty":         "No cards with a due date. Give a card a due date to see it here.",
-      "tl.nodue":         "Cards without a due date: {n}",
+      "tl.empty":         "No cards with dates. Give a card a start or due date to see it here.",
+      "tl.nodue":         "Cards without dates: {n}",
       "tl.today":         "Today",
-      "tl.hint":          "Drag a card along the dates to change its due date.",
+      "card.deps":        "Depends on",
+      "deps.add":         "Add a card it waits for…",
+      "deps.remove":      "Remove: this card no longer waits for it",
+      "deps.hint":        "Drag the dot after a bar onto another bar: that card then waits for it.",
+      "deps.drag":        "Drag onto the card that waits for this one",
+      "deps.loop":        "Not added: the cards would wait for each other",
+      "deps.added":       "Dependency added",
+      "deps.shift":       "Move the next ones too",
+      "deps.shifted":     "The next cards were moved",
+      "tl.cp":            "Critical path",
+      "tl.pdf":           "Export timeline (PDF)",
+      "tl.pdf.page":      "Page {n} of {m}",
+      "tl.pdf.fail":      "The PDF could not be made. Try again.",
+      "card.start":       "Start",
+      "card.ms":          "Milestone",
+      "card.ms.long":     "Milestone (a diamond on the due date)",
+      "tl.days":          "{n} days",
+      "tl.wdays":         "{n} workdays",
+      "tl.zoom":          "Zoom",
+      "tl.z.d":           "Day",
+      "tl.z.w":           "Week",
+      "tl.z.m":           "Month",
+      "tl.group":         "Groups",
+      "tl.g.col":         "By column",
+      "tl.nolane":        "No lane",
+      "tl.wd":            "Only workdays",
+      "tl.wd.on":         "Only workdays: on for this board",
+      "tl.wd.off":        "Only workdays: off, every day counts",
+      "toast.tlmoved":    "Dates changed",
+      "tl.hint":          "Drag a bar to move it, its ends to change the start or the due date. Arrow keys move the selected bar (Shift: the due date only).",
       "csv.board":        "Board",
       "csv.notes":        "Notes",
       "csv.info":         "Extra info",
@@ -485,6 +524,16 @@
       "ctr.chip":         "Λήξη συμφωνητικού {d}",
       "ctr.chipEnded":    "Έληξε συμφωνητικό",
       "ctr.chipHint":     "Άνοιγμα του συμφωνητικού στο CRM",
+      "pd.chip":          "Portal · φάση {n}",
+      "pd.chipOff":       "Portal · δεν στέλνεται",
+      "pd.chipHint":      "Φαίνεται στον δημιουργό στο Author Portal (CRM › Λήξεις › Στάδιο παραγωγής…)",
+      "pd.chipWhy":       "Τσεκαρισμένη για το Author Portal αλλά δεν στέλνεται: {why} (CRM › Λήξεις › Στάδιο παραγωγής…)",
+      "pd.why.noben":     "δεν έχει συνδεδεμένο δημιουργό",
+      "pd.why.badid":     "το id της κάρτας δεν μπορεί να σταλεί",
+      "pd.why.notitle":   "δεν έχει τίτλο",
+      "pd.why.old":       "κυκλοφόρησε πριν από πάνω από 30 μέρες",
+      "pd.why.max":       "πάνω από 500 έργα",
+      "pd.why.nophase":   "η στήλη της δεν έχει φάση",
       "export.oros":      "Αρχείο orOS (.orosboard)",
       "export.json":      "Εξαγωγή πίνακα (JSON)",
       "export.csv":       "Εξαγωγή καρτών (CSV)",
@@ -511,10 +560,39 @@
       "tbl.lane":         "Λωρίδα",
       "tbl.sort":         "Ταξινόμηση κατά",
       "tbl.empty":        "Δεν υπάρχουν κάρτες για εμφάνιση.",
-      "tl.empty":         "Καμία κάρτα με προθεσμία. Δώσε προθεσμία σε μια κάρτα για να τη δεις εδώ.",
-      "tl.nodue":         "Κάρτες χωρίς προθεσμία: {n}",
+      "tl.empty":         "Καμία κάρτα με ημερομηνίες. Δώσε σε μια κάρτα έναρξη ή προθεσμία για να τη δεις εδώ.",
+      "tl.nodue":         "Κάρτες χωρίς ημερομηνίες: {n}",
       "tl.today":         "Σήμερα",
-      "tl.hint":          "Σύρε μια κάρτα πάνω στις ημερομηνίες για να αλλάξεις την προθεσμία της.",
+      "card.deps":        "Εξαρτάται από",
+      "deps.add":         "Πρόσθεσε κάρτα που περιμένει…",
+      "deps.remove":      "Αφαίρεση: η κάρτα δεν την περιμένει πια",
+      "deps.hint":        "Σύρε την τελεία μετά από μια μπάρα πάνω σε άλλη: εκείνη η κάρτα θα την περιμένει.",
+      "deps.drag":        "Σύρε πάνω στην κάρτα που περιμένει αυτήν",
+      "deps.loop":        "Δεν προστέθηκε: οι κάρτες θα περίμεναν η μία την άλλη",
+      "deps.added":       "Η εξάρτηση προστέθηκε",
+      "deps.shift":       "Μετακίνησε και τις επόμενες",
+      "deps.shifted":     "Οι επόμενες κάρτες μετακινήθηκαν",
+      "tl.cp":            "Κρίσιμη διαδρομή",
+      "tl.pdf":           "Εξαγωγή χρονοδιαγράμματος (PDF)",
+      "tl.pdf.page":      "Σελίδα {n} από {m}",
+      "tl.pdf.fail":      "Το PDF δεν φτιάχτηκε. Δοκίμασε ξανά.",
+      "card.start":       "Έναρξη",
+      "card.ms":          "Ορόσημο",
+      "card.ms.long":     "Ορόσημο (ρόμβος στην προθεσμία)",
+      "tl.days":          "{n} ημέρες",
+      "tl.wdays":         "{n} εργάσιμες",
+      "tl.zoom":          "Ζουμ",
+      "tl.z.d":           "Μέρα",
+      "tl.z.w":           "Εβδομάδα",
+      "tl.z.m":           "Μήνας",
+      "tl.group":         "Ομάδες",
+      "tl.g.col":         "Ανά στήλη",
+      "tl.nolane":        "Χωρίς λωρίδα",
+      "tl.wd":            "Μόνο εργάσιμες",
+      "tl.wd.on":         "Μόνο εργάσιμες: ενεργό σε αυτόν τον πίνακα",
+      "tl.wd.off":        "Μόνο εργάσιμες: ανενεργό, μετρούν όλες οι μέρες",
+      "toast.tlmoved":    "Οι ημερομηνίες άλλαξαν",
+      "tl.hint":          "Σύρε μια μπάρα για να τη μετακινήσεις και τις άκρες της για να αλλάξεις την έναρξη ή την προθεσμία. Τα βελάκια μετακινούν την επιλεγμένη μπάρα (Shift: μόνο η προθεσμία).",
       "csv.board":        "Πίνακας",
       "csv.notes":        "Σημειώσεις",
       "csv.info":         "Επιπλέον στοιχεία",
@@ -953,7 +1031,9 @@
 
   // K1: device-local view of each board (never synced):
   //   { <boardId>: { v: "board"|"table"|"timeline", lanes: ""|"label"|"lane",
-  //                  sort: "status"|"text"|"due"|"labels"|"sub"|"lane", dir: "asc"|"desc" } }
+  //                  sort: "status"|"text"|"due"|"labels"|"sub"|"lane", dir: "asc"|"desc",
+  //                  z: "d"|"w"|"m" (timeline zoom), grp: ""|"col"|"lane" (timeline groups),
+  //                  cp: true (timeline: show the critical path) } }
   var viewPrefs = (function () {
     var v = readPrefs().views;
     return v && typeof v === "object" && !Array.isArray(v) ? v : {};
@@ -964,7 +1044,10 @@
       v: v.v === "table" || v.v === "timeline" ? v.v : "board",
       lanes: v.lanes === "label" || v.lanes === "lane" ? v.lanes : "",
       sort: typeof v.sort === "string" ? v.sort : "status",
-      dir: v.dir === "desc" ? "desc" : "asc"
+      dir: v.dir === "desc" ? "desc" : "asc",
+      z: v.z === "w" || v.z === "m" ? v.z : "d",
+      grp: v.grp === "col" || v.grp === "lane" ? v.grp : "",
+      cp: v.cp === true
     };
   }
   function setView(boardId, patch) {
@@ -977,6 +1060,7 @@
   function save() {
     writeStore();
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
+    pdChanged();
   }
 
   // orosDialog lives in the parent shell (same-origin iframe).
@@ -1154,6 +1238,7 @@
   //   - Columns + cards (όπως πριν, αλλά scoped στο currentBoard)
   
   function renderAll() {
+    pdView = null;
     // Header/board section
     var headerHost = $("board-header");
     if (headerHost) renderBoardHeader();
@@ -2289,6 +2374,101 @@
     });
     return sp;
   }
+  // RS-PROD (W4): the cards CRM sends to the Author Portal (CRM ›
+  // Contracts › Production stage…, the board and the ticked cards are
+  // CRM's cset.pb / cset.pc). Kanban only reads CRM and Publishing: a
+  // chip on each ticked card, and after a change on that board it sends
+  // the list itself (same plan, same last-sent record as CRM, so the two
+  // never send the same list twice), once CRM has sent it at least once.
+  var PD_SENT_KEY = "oros-crm-prod-sent", PD_WAIT = 4000, pdTimer = null, pdView = null;
+  var pdCache = { raw: undefined, data: null };
+  function pdCrm() {
+    var K = window.OrosCrmCore, raw = null;
+    if (!K || typeof K.norm !== "function" || !window.OrosCrmProd) return null;
+    try { raw = localStorage.getItem("oros-crm-data"); } catch (e) { raw = null; }
+    if (raw !== pdCache.raw) {
+      pdCache.raw = raw;
+      pdCache.data = null;
+      try { var d = raw ? JSON.parse(raw) : null; if (d && Array.isArray(d.cust)) pdCache.data = K.norm(d); } catch (e) { pdCache.data = null; }
+    }
+    var c = pdCache.data;
+    return c && c.cset && c.cset.pb ? c : null;
+  }
+  function pdJson(key) { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; } }
+  function pdShops(crm) {
+    var L = linksHost(), list = [];
+    if (L) { try { list = L.list("woo") || []; } catch (e) { list = []; } }
+    var first = list[0] ? list[0].id : "", ids = {};
+    (crm.rsl || []).forEach(function (r) {
+      if (r.n && (crm.cust || []).some(function (c) { return c.id === r.id; })) ids[r.a || first] = 1;
+    });
+    return { list: list.filter(function (a) { return ids[a.id]; }), first: first };
+  }
+  function pdPlanFor(crm, shopId, first) {
+    var cs = crm.cset;
+    return window.OrosCrmProd.plan({ kanban: pdJson(STORAGE_KEY), crm: crm, publish: pdJson("oros-publish-data"), board: cs.pb, map: cs.pm || null,
+                                    chosen: cs.pc || [], shopId: shopId, firstShopId: first, today: localDateStr(new Date()) });
+  }
+  // one plan per render (the first shop's view; the chip is a hint)
+  function pdViewNow() {
+    if (pdView) return pdView;
+    pdView = { on: false };
+    var crm = pdCrm(), board = currentBoard();
+    if (!crm || !board || window.OrosCrmProd.fold(board.name) !== window.OrosCrmProd.fold(crm.cset.pb)) return pdView;
+    var sh = pdShops(crm), shopId = sh.list[0] ? sh.list[0].id : sh.first, x;
+    try { x = pdPlanFor(crm, shopId, sh.first); } catch (e) { return pdView; }
+    var chosen = {}, phase = {}, why = {};
+    (crm.cset.pc || []).forEach(function (id) { chosen[id] = 1; });
+    x.body.works.forEach(function (w) { var id = w.id.replace(/-\d+$/, ""); phase[id] = w.phase; });
+    x.left.forEach(function (l) { if (!phase[l.card]) why[l.card] = l.why; });
+    pdView = { on: true, chosen: chosen, phase: phase, why: why };
+    return pdView;
+  }
+  function pdChip(card) {
+    var v = pdViewNow();
+    if (!v.on || !v.chosen[card.id]) return null;
+    var sp = document.createElement("span"), n = v.phase[card.id], why = v.why[card.id] || "nophase";
+    sp.className = "pd-chip" + (n ? "" : " off");
+    sp.textContent = n ? t("pd.chip", { n: n }) : t("pd.chipOff");
+    sp.title = n ? t("pd.chipHint") : t("pd.chipWhy", { why: t("pd.why." + why) });
+    sp.addEventListener("click", function (e) {
+      e.stopPropagation();
+      e.preventDefault();
+      try { window.parent.__orosOpenAt("crm", { prod: 1 }); } catch (err) {}
+    });
+    return sp;
+  }
+  function pdChanged() {
+    var L = linksHost();
+    if (!L || typeof L.hasRsKey !== "function" || !pdCrm()) return;
+    clearTimeout(pdTimer);
+    pdTimer = setTimeout(function () {
+      var crm = pdCrm(), sent = pdJson(PD_SENT_KEY) || {};
+      if (!crm) return;
+      var sh = pdShops(crm);
+      sh.list.reduce(function (p, shop) {
+        var x, json;
+        return p.then(function () {
+          // only where CRM has sent before, and only a list that changed
+          if (typeof sent[shop.id] !== "string") return false;
+          x = pdPlanFor(crm, shop.id, sh.first);
+          json = JSON.stringify(x.body.works);
+          if (sent[shop.id] === json) return false;
+          return Promise.resolve(L.hasRsKey(shop.id)).catch(function () { return false; });
+        }).then(function (k) {
+          if (!k) return;
+          return Promise.resolve(L.call(shop.id, [window.OrosCrmProd.req(x.body)])).then(function (res) {
+            var r = res && res[0];
+            if (L.statusCode(r) || !window.OrosCrmProd.parseSaved(r.data)) return;
+            var all = pdJson(PD_SENT_KEY) || {};
+            all[shop.id] = json;
+            try { localStorage.setItem(PD_SENT_KEY, JSON.stringify(all)); } catch (e) {}
+          });
+        });
+      }, Promise.resolve()).catch(function () {});
+    }, PD_WAIT);
+  }
+
   function fmtDay(ymd) {
     if (LANG === "en") return ymd;
     var sep = LANG === "de" ? "." : "/";
@@ -2405,6 +2585,8 @@
     }
     var cc = ctrChip(card);
     if (cc) meta.appendChild(cc);
+    var pc = pdChip(card);
+    if (pc) meta.appendChild(pc);
     if (meta.childNodes.length) el.appendChild(meta);
 
     // Extra info preview: μία dim, περικομμένη γραμμή "label: value · …"
@@ -2555,6 +2737,9 @@
     setInputKeep($("c-text"), card.text || "");
     setInputKeep($("c-notes"), card.notes || "");
     setInputKeep($("c-due"), card.due || "");
+    setInputKeep($("c-start"), card.start || "");
+    $("c-ms").checked = !!card.ms;
+    if (document.activeElement !== $("c-deps-add")) renderCardDeps(card);
     setInputKeep($("c-lane"), card.lane || "");
     renderCardCols();
 
@@ -2600,6 +2785,9 @@
     $("c-text").value = card.text;
     $("c-notes").value = card.notes || "";
     $("c-due").value = card.due || "";   // "" = cleared (native date input)
+    $("c-start").value = card.start || "";
+    $("c-ms").checked = !!card.ms;
+    renderCardDeps(card);
     $("c-lane").value = card.lane || "";
     renderLaneList();
     renderCardCols();
@@ -2999,6 +3187,66 @@
     });
     sel.value = editingColId;
   }
+  // Gantt (G2): the cards this one waits for, as chips, and a list to
+  // add one. Cards that would close a loop are left out of the list.
+  function renderCardDeps(card) {
+    var host = $("c-deps-chips"), sel = $("c-deps-add"), board = currentBoard();
+    if (!host || !sel || !board || !card) return;
+    host.innerHTML = "";
+    var idx = {};
+    board.columns.forEach(function (col) { col.cards.forEach(function (c) { idx[c.id] = c; }); });
+    (card.deps || []).forEach(function (id) {
+      var pc = idx[id];
+      if (!pc) return;
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "lbl-chip dep-chip";
+      chip.title = t("deps.remove");
+      var nm = document.createElement("span");
+      nm.textContent = pc.text;
+      chip.appendChild(nm);
+      chip.addEventListener("click", function () { setDep(id, false); });
+      host.appendChild(chip);
+    });
+    sel.innerHTML = "";
+    var o0 = document.createElement("option");
+    o0.value = "";
+    o0.textContent = t("deps.add");
+    sel.appendChild(o0);
+    board.columns.forEach(function (col) {
+      col.cards.forEach(function (c) {
+        if (c.id === card.id || (card.deps || []).indexOf(c.id) !== -1 || T.wouldCycle(board, card.id, c.id)) return;
+        var o = document.createElement("option");
+        o.value = c.id;
+        o.textContent = c.text + " · " + col.name;
+        sel.appendChild(o);
+      });
+    });
+    sel.value = "";
+    sel.disabled = sel.options.length < 2 || (card.deps || []).length >= 20;
+  }
+  // Add or remove "the editing card waits for predId".
+  function setDep(predId, on, succId) {
+    var board = currentBoard();
+    var f = board && T.findCard(board, succId || editingCardId);
+    if (!f) return false;
+    var c = f.card;
+    var list = (c.deps || []).slice();
+    var at = list.indexOf(predId);
+    if (on) {
+      if (at !== -1 || list.length >= 20 || T.wouldCycle(board, c.id, predId)) return false;
+      list.push(predId);
+    } else {
+      if (at === -1) return false;
+      list.splice(at, 1);
+    }
+    if (list.length) c.deps = list; else delete c.deps;
+    stamp(c, ["g"]);
+    save(); scheduleRender();
+    if (c.id === editingCardId) renderCardDeps(c);
+    return true;
+  }
+
   function renderLaneList() {
     var dl = $("c-lane-list"), board = currentBoard();
     if (!dl || !board) return;
@@ -3029,6 +3277,21 @@
     if (!board || !col) return;
     var did = T.applyArrival(board, colId, cardId, todayYmd(), Date.now());
     if (did.length) notifyTransient(t("auto.ran", { col: col.name }));
+    if (T.isDoneCol(board, colId)) doneEvent(board, col, cardId);
+  }
+  // BR-EV-2: a card the person moved into a done column on THIS device
+  // is an Automations signal (kanban.done, key kanban:<card>:<column>:
+  // <its move stamp>, text "Board › Column · card"); a move pulled from
+  // another device is not (that device made it).
+  function doneEvent(board, col, cardId) {
+    var ev = null;
+    try { ev = window.parent && window.parent !== window ? window.parent.orosEvents : null; } catch (e) { ev = null; }
+    if (!ev || typeof ev.emit !== "function") return;
+    var f = T.findCard(board, cardId);
+    if (!f) return;
+    var at = f.card.fm && typeof f.card.fm.p === "number" ? f.card.fm.p : f.card.mtime || Date.now();
+    var said = (board.name || "") + " \u203a " + (col.name || "") + " \u00b7 " + String(f.card.text || "").replace(/\s+/g, " ").slice(0, 200);
+    setTimeout(function () { try { ev.emit("kanban.done", "kanban:" + cardId + ":" + col.id + ":" + at, said); } catch (e) {} }, 0);
   }
 
   // --- Attachments: files on the orOS disk (Files › Kanban › Attachments) ---
@@ -3460,6 +3723,7 @@
     var board = currentBoard();
     if (!board) return;
     var col = newColumnObj(t("new.col"));
+    if (T.boardWorkdays(board)) col.gw = 1;
     col.pos = board.columns.length;
     board.om = Date.now();           // v0.6: η σειρά στηλών ζει στο board
     board.columns.push(col);
@@ -3920,11 +4184,22 @@
   // was reverted everywhere, and a board created and already synced
   // came back at the next pull. Anything the user did not touch keeps
   // its stamp; a thing changed again since the action is left alone.
+  // Compared by content, keys sorted: the live state keeps keys in the
+  // order they were added, the snapshot is canonical (KB-GANTT: a card
+  // that gained `start` or `deps` would otherwise never match and its
+  // Undo did nothing).
+  function sortedKeys(v) {
+    if (Array.isArray(v)) return v.map(sortedKeys);
+    if (!v || typeof v !== "object") return v;
+    var o = {};
+    Object.keys(v).sort().forEach(function (k) { o[k] = sortedKeys(v[k]); });
+    return o;
+  }
   function plain(x, drop) {
     var o = JSON.parse(JSON.stringify(x || {}));
     delete o.pos;
     (drop || []).forEach(function (k) { delete o[k]; });
-    return JSON.stringify(o);
+    return JSON.stringify(sortedKeys(o));
   }
   function indexById(arr) {
     var m = {};
@@ -4058,7 +4333,7 @@
     notifyTransient(t("toast.undone"));
   }
 
-  function showToast(text, withUndo) {
+  function showToast(text, withUndo, action) {
     var el = $("toast");
     if (!el) return;
     el.innerHTML = "";
@@ -4075,13 +4350,20 @@
       b.addEventListener("click", doUndo);
       el.appendChild(b);
     }
+    if (action) {                        // { label, fn }: one more button
+      var ab = document.createElement("button");
+      ab.type = "button";
+      ab.textContent = action.label;
+      ab.addEventListener("click", function () { el.classList.remove("show"); action.fn(); });
+      el.appendChild(ab);
+    }
 
     void el.offsetWidth;                 // επανεκκίνηση transition
     el.classList.add("show");
 
     clearTimeout(toastTimer);
     // Undo toasts stay at least 8 s (Part VII).
-    toastTimer = setTimeout(function () { el.classList.remove("show"); }, withUndo ? 8000 : 5000);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, action ? 12000 : withUndo ? 8000 : 5000);
   }
 
   
@@ -4315,7 +4597,7 @@
           if (lblMap[lid]) cardLabels.push(lblMap[lid]);
         });
         var subtasks = (checkByCard[c.id] || []).slice();
-        cards.push({
+        var nc = {
           id: "imp-t-" + c.id,
           text: c.name || "",
           notes: c.desc || "",
@@ -4325,7 +4607,11 @@
           info: importInfo(c),
           mtime: Date.now(),
           pos: cards.length
-        });
+        };
+        // Gantt G3: Trello's start date → the plan start (at most the due day)
+        var st = importIsoDate(c.start);
+        if (st && (!nc.due || st <= nc.due)) nc.start = st;
+        cards.push(nc);
       });
       columns.push({
         id: "imp-t-" + list.id,
@@ -4857,6 +5143,18 @@
       seg([["", t("lanes.none")], ["label", t("lanes.label")], ["lane", t("lanes.lane")]],
           vw.lanes, function (v) { setView(board.id, { lanes: v }); renderAll(); });
     }
+    if (vw.v === "timeline") {
+      head(t("tl.zoom"));
+      seg([["d", t("tl.z.d")], ["w", t("tl.z.w")], ["m", t("tl.z.m")]],
+          vw.z, function (v) { setView(board.id, { z: v }); renderAll(); });
+      head(t("tl.group"));
+      seg([["", t("lanes.none")], ["col", t("tl.g.col")], ["lane", t("lanes.lane")]],
+          vw.grp, function (v) { setView(board.id, { grp: v }); renderAll(); });
+      var wdOn = T.boardWorkdays(board);
+      item((wdOn ? "\u2713 " : "") + t("tl.wd"), "mp.wd", function () { setWorkdays(board.id, !wdOn); });
+      item((vw.cp ? "\u2713 " : "") + t("tl.cp"), "mp.cp", function () { setView(board.id, { cp: !vw.cp }); renderAll(); });
+      item(t("tl.pdf"), "mp.pdf", exportGanttPdf);
+    }
     var sep = document.createElement("hr");
     sep.className = "dropdown-sep";
     pop.appendChild(sep);
@@ -4867,6 +5165,18 @@
     item(t("tpl.save"), "mp.tplsave", saveTemplateDlg);
     item(t("tpl.new"), "mp.tplnew", openTemplatesDlg);
     item(t("import.title"), "mp.import", openImportDlg);
+  }
+
+  // "Only workdays" (board, synced): gw: 1 on every column of the board.
+  function setWorkdays(boardId, on) {
+    var board = state.boards.filter(function (b) { return b.id === boardId; })[0];
+    if (!board) return;
+    board.columns.forEach(function (c) {
+      if (on && c.gw !== 1) { c.gw = 1; touch(c); }
+      else if (!on && c.gw !== undefined) { delete c.gw; touch(c); }
+    });
+    save(); renderAll();
+    notifyTransient(t(on ? "tl.wd.on" : "tl.wd.off"));
   }
 
   // --- Table view: one sortable row per card, the column as status ---
@@ -4991,14 +5301,28 @@
     }
   }
 
-  // --- Timeline view: cards with a due date on a horizontal date axis ---
-  var TL_DAY = 34;                     // px per day
+  // --- Timeline view (Gantt, wave G1): bars from start to due, milestones,
+  // progress from subtasks, zoom (day / week / month), groups by column
+  // or lane, the board's "Only workdays" switch. Drag a bar to move it,
+  // its ends to change the start or the due date; every change has Undo.
+  var TL_PX = { d: 34, w: 12, m: 4 };          // px per day for each zoom
+  var TL_DAY = TL_PX.d;
   function renderTimeline(host, board, keepScroll) {
     var today = todayYmd();
+    var vw = viewOf(board.id);
+    var px = TL_PX[vw.z] || TL_PX.d;
+    var wd = T.boardWorkdays(board);
     var rows = boardRows(board);
-    var dated = rows.filter(function (r) { return !!r.card.due; });
+    var dated = [];
+    rows.forEach(function (r) {
+      var sp = T.planSpan(r.card);
+      if (sp) { r.span = sp; dated.push(r); }
+    });
     var undated = rows.length - dated.length;
-    dated.sort(function (a, b) { return a.card.due < b.card.due ? -1 : a.card.due > b.card.due ? 1 : (a.colIdx - b.colIdx) || (a.idx - b.idx); });
+    dated.sort(function (a, b) {
+      return a.span.from < b.span.from ? -1 : a.span.from > b.span.from ? 1 :
+             a.span.to < b.span.to ? -1 : a.span.to > b.span.to ? 1 : (a.colIdx - b.colIdx) || (a.idx - b.idx);
+    });
     if (!dated.length) {
       var e = document.createElement("div");
       e.className = "alt-empty";
@@ -5006,14 +5330,77 @@
       host.appendChild(e);
       return;
     }
-    var rg = T.timelineRange(dated.map(function (r) { return r.card.due; }), today);
+    var ends = [];
+    dated.forEach(function (r) { ends.push(r.span.from, r.span.to); });
+    var rg = T.timelineRange(ends, today);
     var wrap = document.createElement("div");
     wrap.className = "tl-wrap";
     var grid = document.createElement("div");
-    grid.className = "tl-grid";
-    grid.style.setProperty("--tl-day", TL_DAY + "px");
-    grid.style.width = "calc(var(--tl-name) + " + (rg.days * TL_DAY) + "px)";
-    // header: months + day numbers
+    grid.className = "tl-grid tl-z" + (vw.z || "d") + (wd ? " tl-wd" : "");
+    grid.style.setProperty("--tl-day", px + "px");
+    grid.style.width = "calc(var(--tl-name) + " + (rg.days * px) + "px)";
+    // weekends as stripes behind the bars (day and week zoom)
+    if (vw.z !== "m") {
+      var sat = 0;
+      while (sat < 7 && !(T.isWeekend(T.addDays(rg.from, sat)) && !T.isWeekend(T.addDays(rg.from, sat - 1)))) sat++;
+      // one week per tile: Saturday + Sunday shaded, the tile starts on the first Saturday
+      grid.style.setProperty("--tl-we", "linear-gradient(90deg, var(--tl-we-c) 0 " + (2 * px) + "px, transparent " + (2 * px) + "px)");
+      grid.style.setProperty("--tl-we-w", (7 * px) + "px");
+      grid.style.setProperty("--tl-we-x", ((sat % 7) * px) + "px");
+    }
+    grid.appendChild(tlHeader(rg, px, vw.z || "d", today));
+    var todayIdx = T.daysBetween(rg.from, today);
+    var lastIdx = board.columns.length - 1;
+    var crit = vw.cp ? T.criticalPath(board, wd).ids : {};
+    var hasDeps = dated.some(function (r) { return (r.card.deps || []).length; });
+    var groups = tlGroups(dated, vw.grp, board);
+    groups.forEach(function (g) {
+      if (g.name !== null) {
+        var gr = document.createElement("div");
+        gr.className = "tl-row tl-grp";
+        var gn = document.createElement("div");
+        gn.className = "tl-name tl-grpname";
+        gn.textContent = g.name + " (" + g.rows.length + ")";
+        gr.appendChild(gn);
+        var gt = document.createElement("div");
+        gt.className = "tl-track";
+        gr.appendChild(gt);
+        grid.appendChild(gr);
+      }
+      g.rows.forEach(function (r) { grid.appendChild(tlRow(r, rg, px, todayIdx, lastIdx, wd, crit[r.card.id])); });
+    });
+    wrap.appendChild(grid);
+    host.appendChild(wrap);
+    var foot = document.createElement("div");
+    foot.className = "alt-foot";
+    foot.textContent = t("tl.hint") + "  " + t("deps.hint") + (wd ? "  ·  " + t("tl.wd") : "") + (vw.cp ? "  ·  " + t("tl.cp") : "") + (undated ? "  ·  " + t("tl.nodue", { n: undated }) : "");
+    host.appendChild(foot);
+    requestAnimationFrame(function () {
+      if (hasDeps) tlArrows(grid, board, wd, crit);
+      if (keepScroll && keepScroll.kind === "tl-wrap") { wrap.scrollLeft = keepScroll.l; wrap.scrollTop = keepScroll.t; }
+      else wrap.scrollLeft = Math.max(0, (todayIdx - 3) * px);
+      if (keepTlFocus) {
+        var fb = null, want = keepTlFocus;
+        keepTlFocus = null;
+        Array.prototype.forEach.call(wrap.querySelectorAll("[data-card]"), function (el) { if (el.getAttribute("data-card") === want) fb = el; });
+        if (fb) fb.focus({ preventScroll: false });
+      }
+    });
+  }
+  // Rows in groups: none (one group without a heading), by column, by lane.
+  function tlGroups(rows, grp, board) {
+    if (grp !== "col" && grp !== "lane") return [{ name: null, rows: rows }];
+    var out = [], at = {};
+    if (grp === "col") board.columns.forEach(function (c) { at[c.id] = { name: c.name, rows: [] }; out.push(at[c.id]); });
+    rows.forEach(function (r) {
+      var key = grp === "col" ? r.col.id : ((r.card.lane || "").trim() || "\u0000");
+      if (!at[key]) { at[key] = { name: key === "\u0000" ? t("tl.nolane") : key, rows: [], last: key === "\u0000" }; out.push(at[key]); }
+      at[key].rows.push(r);
+    });
+    if (grp === "lane") out.sort(function (a, b) { return (a.last ? 1 : 0) - (b.last ? 1 : 0) || a.name.localeCompare(b.name, loc()); });
+    return out.filter(function (g) { return g.rows.length; });
+  }
+  function tlHeader(rg, px, z, today) {
     var hd = document.createElement("div");
     hd.className = "tl-row tl-headrow";
     var corner = document.createElement("div");
@@ -5026,127 +5413,547 @@
       var ymd = T.addDays(rg.from, i);
       var p = ymd.split("-");
       var d = new Date(+p[0], +p[1] - 1, +p[2]);
+      var first = +p[2] === 1 || i === 0;
+      var span = z === "d" ? 1 : z === "w" ? (d.getDay() === 1 || i === 0 ? 7 : 0) : (first ? 31 : 0);
+      if (!span) continue;
       var cell = document.createElement("div");
-      cell.className = "tl-day" + (ymd === today ? " today" : "") + (d.getDay() === 0 || d.getDay() === 6 ? " we" : "");
-      cell.style.left = (i * TL_DAY) + "px";
-      if (+p[2] === 1 || i === 0) {
+      cell.className = "tl-day" + (z === "d" && ymd === today ? " today" : "") + (z === "d" && (d.getDay() === 0 || d.getDay() === 6) ? " we" : "");
+      cell.style.left = (i * px) + "px";
+      if (z !== "d") cell.style.width = (span * px) + "px";
+      if (first || (z === "w" && i === 0)) {
         var mo = document.createElement("span");
         mo.className = "tl-month";
         mo.textContent = d.toLocaleString(mloc, { month: "short" }).replace(".", "") + (+p[1] === 1 || i === 0 ? " " + p[0] : "");
         cell.appendChild(mo);
       }
-      var dn = document.createElement("span");
-      dn.className = "tl-dn";
-      dn.textContent = String(+p[2]);
-      cell.appendChild(dn);
-      if (ymd === today) cell.title = t("tl.today");
+      if (z !== "m") {
+        var dn = document.createElement("span");
+        dn.className = "tl-dn";
+        dn.textContent = String(+p[2]);
+        cell.appendChild(dn);
+      }
+      if (z === "d" && ymd === today) cell.title = t("tl.today");
       track.appendChild(cell);
     }
     hd.appendChild(track);
-    grid.appendChild(hd);
-    var todayIdx = T.daysBetween(rg.from, today);
-    var lastIdx = board.columns.length - 1;
-    dated.forEach(function (r) {
-      var c = r.card;
-      var row = document.createElement("div");
-      row.className = "tl-row";
-      var nm = document.createElement("button");
-      nm.type = "button";
-      nm.className = "tl-name";
-      var cd = document.createElement("span");
-      cd.className = "fl-dot";
-      cd.style.background = tlColor(c);
-      nm.appendChild(cd);
-      var nt = document.createElement("span");
-      nt.className = "tl-text";
-      nt.textContent = c.text;
-      nm.appendChild(nt);
-      nm.title = c.text + " · " + r.col.name;
-      nm.addEventListener("click", function () { openCardDialog(r.col.id, c.id); });
-      row.appendChild(nm);
-      var tr2 = document.createElement("div");
-      tr2.className = "tl-track";
-      if (todayIdx >= 0 && todayIdx < rg.days) {
-        var tm = document.createElement("div");
-        tm.className = "tl-todayline";
-        tm.style.left = (todayIdx * TL_DAY) + "px";
-        tr2.appendChild(tm);
+    return hd;
+  }
+  function tlRow(r, rg, px, todayIdx, lastIdx, wd, isCrit) {
+    var c = r.card, sp = r.span;
+    var row = document.createElement("div");
+    row.className = "tl-row";
+    var nm = document.createElement("button");
+    nm.type = "button";
+    nm.className = "tl-name";
+    var cd = document.createElement("span");
+    cd.className = "fl-dot";
+    cd.style.background = tlColor(c);
+    nm.appendChild(cd);
+    var nt = document.createElement("span");
+    nt.className = "tl-text";
+    nt.textContent = c.text;
+    nm.appendChild(nt);
+    nm.title = c.text + " · " + r.col.name;
+    nm.addEventListener("click", function () { openCardDialog(r.col.id, c.id); });
+    row.appendChild(nm);
+    var tr2 = document.createElement("div");
+    tr2.className = "tl-track";
+    if (todayIdx >= 0 && todayIdx < rg.days) {
+      var tm = document.createElement("div");
+      tm.className = "tl-todayline";
+      tm.style.left = (todayIdx * px) + "px";
+      tr2.appendChild(tm);
+    }
+    var idx = T.daysBetween(rg.from, sp.from);
+    var len = T.daysBetween(sp.from, sp.to) + 1;
+    var done = r.colIdx === lastIdx && lastIdx > 0;
+    var bar = document.createElement("button");
+    bar.type = "button";
+    var dateTxt = sp.from === sp.to ? sp.to : sp.from + " → " + sp.to;
+    var nDays = T.spanDays(sp.from, sp.to, wd);
+    var info = c.text + " · " + dateTxt + (sp.ms ? " · " + t("card.ms") : " · " + t(wd ? "tl.wdays" : "tl.days", { n: nDays })) + " · " + r.col.name;
+    bar.title = info;
+    bar.setAttribute("aria-label", info);
+    var fmt = c.due ? formatDateChip(c.due) : null;
+    var late = fmt && fmt.css === "due-overdue" && !done;
+    var lab = null;
+    if (sp.ms) {
+      bar.className = "tl-ms" + (late ? " due-overdue" : "") + (done ? " done" : "") + (isCrit ? " crit" : "");
+      bar.style.left = (idx * px + px / 2) + "px";
+      bar.style.setProperty("--ms-c", tlColor(c));
+      lab = document.createElement("span");
+      lab.className = "tl-lab";
+      lab.style.left = (idx * px + px / 2 + 14) + "px";
+    } else {
+      var w = Math.max(len * px - 4, 8);
+      bar.className = "tl-pill tl-bar " + (late ? "due-overdue" : "") + (done ? " done" : "") + (isCrit ? " crit" : "");
+      bar.style.left = (idx * px + 2) + "px";
+      bar.style.width = w + "px";
+      bar.style.background = tlColor(c);
+      var pr = done ? 1 : T.progressOf(c);
+      if (pr !== null && pr > 0) {
+        var pg = document.createElement("span");
+        pg.className = "tl-prog";
+        pg.style.width = Math.round(pr * 100) + "%";
+        bar.appendChild(pg);
       }
-      var idx = T.daysBetween(rg.from, c.due);
-      var pill = document.createElement("button");
-      pill.type = "button";
-      var fmt = formatDateChip(c.due);
-      pill.className = "tl-pill " + fmt.css + (r.colIdx === lastIdx && lastIdx > 0 ? " done" : "");
-      pill.style.left = (idx * TL_DAY + 2) + "px";
-      pill.style.background = tlColor(c);
-      pill.title = c.text + " · " + c.due + " · " + r.col.name;
-      pill.setAttribute("aria-label", c.text + ", " + c.due);
-      pill.textContent = c.text;
-      attachPillDrag(pill, r.col.id, c.id, idx);
-      tr2.appendChild(pill);
-      row.appendChild(tr2);
-      grid.appendChild(row);
-    });
-    wrap.appendChild(grid);
-    host.appendChild(wrap);
-    var foot = document.createElement("div");
-    foot.className = "alt-foot";
-    foot.textContent = t("tl.hint") + (undated ? "  ·  " + t("tl.nodue", { n: undated }) : "");
-    host.appendChild(foot);
-    requestAnimationFrame(function () {
-      if (keepScroll && keepScroll.kind === "tl-wrap") { wrap.scrollLeft = keepScroll.l; wrap.scrollTop = keepScroll.t; }
-      else wrap.scrollLeft = Math.max(0, (todayIdx - 3) * TL_DAY);
-    });
+      var bt = document.createElement("span");
+      bt.className = "tl-bt";
+      bt.textContent = c.text;
+      bar.appendChild(bt);
+      if (w < 70) {
+        bar.classList.add("narrow");
+        lab = document.createElement("span");
+        lab.className = "tl-lab";
+        lab.style.left = (idx * px + 2 + w + 6) + "px";
+      }
+      if (w >= 22) {
+        ["l", "r"].forEach(function (side) {
+          var h = document.createElement("span");
+          h.className = "tl-h " + side;
+          h.setAttribute("aria-hidden", "true");
+          bar.appendChild(h);
+        });
+      }
+    }
+    // G2: the dot after the bar: drag it onto another bar = "that one waits for this one"
+    var dot = document.createElement("span");
+    dot.className = "tl-link";
+    dot.setAttribute("aria-hidden", "true");
+    dot.title = t("deps.drag");
+    dot.style.left = (sp.ms ? idx * px + px / 2 + 10 : idx * px + 2 + Math.max(len * px - 4, 8) + 2) + "px";
+    attachLinkDrag(dot, c.id);
+    tr2.appendChild(dot);
+    if (lab) { lab.textContent = c.text; tr2.appendChild(lab); }
+    bar.setAttribute("data-card", c.id);
+    attachBarDrag(bar, r.col.id, c.id, px, wd);
+    tr2.appendChild(bar);
+    row.appendChild(tr2);
+    return row;
   }
   function tlColor(c) {
     if (c.cover && /^#[0-9a-fA-F]{6}$/.test(c.cover)) return c.cover;
     var lb = (c.labels || []).map(labelById).filter(Boolean)[0];
     return lb ? (lb.color || FALLBACK_COLOR) : "var(--accent)";
   }
-  // Drag a pill along the axis: the due date moves by whole days.
-  function attachPillDrag(pill, colId, cardId, idx0) {
-    pill.addEventListener("pointerdown", function (e) {
+  // G3: the Timeline as a PDF (A4 landscape, as many pages as the rows
+  // need). Drawn on a canvas page by page (the system font has Greek),
+  // each page placed as a picture; jsPDF is loaded only on first use,
+  // like Whiteboard. Arrows join bars on the same page.
+  var pdfLib = null;
+  function loadPdf() {
+    if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+    if (pdfLib) return pdfLib;
+    pdfLib = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "../vendor/jspdf.umd.min.js";
+      s.onload = function () { if (window.jspdf && window.jspdf.jsPDF) resolve(window.jspdf.jsPDF); else reject(new Error("jspdf")); };
+      s.onerror = function () { pdfLib = null; reject(new Error("jspdf")); };
+      document.head.appendChild(s);
+    });
+    return pdfLib;
+  }
+  function cssColor(c, probe) {
+    if (!/^var\(/.test(c)) return c;
+    probe.style.color = c;
+    return getComputedStyle(probe).color || "#5b6cff";
+  }
+  // Rows of the PDF in screen order: group headings ({ head }) and cards.
+  function tlPlanRows(board, vw) {
+    var rows = boardRows(board), dated = [];
+    rows.forEach(function (r) { var sp = T.planSpan(r.card); if (sp) { r.span = sp; dated.push(r); } });
+    dated.sort(function (a, b) {
+      return a.span.from < b.span.from ? -1 : a.span.from > b.span.from ? 1 :
+             a.span.to < b.span.to ? -1 : a.span.to > b.span.to ? 1 : (a.colIdx - b.colIdx) || (a.idx - b.idx);
+    });
+    var out = [];
+    tlGroups(dated, vw.grp, board).forEach(function (g) {
+      if (g.name !== null) out.push({ head: g.name + " (" + g.rows.length + ")" });
+      g.rows.forEach(function (r) { out.push(r); });
+    });
+    return { rows: out, dated: dated };
+  }
+  var PDF_W = 842, PDF_H = 595, PDF_K = 2, PDF_M = 28, PDF_NAME = 170, PDF_ROW = 17, PDF_TOP = 64, PDF_FOOT = 22;
+  function ganttPages(board) {
+    var vw = viewOf(board.id), wd = T.boardWorkdays(board), today = todayYmd();
+    var plan = tlPlanRows(board, vw);
+    if (!plan.dated.length) return null;
+    var ends = [];
+    plan.dated.forEach(function (r) { ends.push(r.span.from, r.span.to); });
+    var rg = T.timelineRange(ends, today);
+    var crit = vw.cp ? T.criticalPath(board, wd).ids : {};
+    var lastIdx = board.columns.length - 1;
+    var per = Math.max(1, Math.floor((PDF_H - PDF_TOP - PDF_FOOT - PDF_M) / PDF_ROW));
+    var pages = [];
+    for (var i = 0; i < plan.rows.length; i += per) pages.push(plan.rows.slice(i, i + per));
+    var probe = document.createElement("span");
+    document.body.appendChild(probe);
+    var font = getComputedStyle(document.body).fontFamily || "sans-serif";
+    var trackX = PDF_M + PDF_NAME, trackW = PDF_W - PDF_M - trackX, dayW = trackW / rg.days;
+    var out = pages.map(function (list, pi) {
+      var cv = document.createElement("canvas");
+      cv.width = PDF_W * PDF_K; cv.height = PDF_H * PDF_K;
+      var g = cv.getContext("2d");
+      g.scale(PDF_K, PDF_K);
+      g.fillStyle = "#ffffff"; g.fillRect(0, 0, PDF_W, PDF_H);
+      function txt(s, x, y, size, color, weight, maxW, align) {
+        g.font = (weight || "400") + " " + size + "px " + font;
+        g.fillStyle = color || "#1d1d1f";
+        g.textAlign = align || "left";
+        s = String(s);
+        if (maxW && g.measureText(s).width > maxW) {
+          while (s.length > 1 && g.measureText(s + "…").width > maxW) s = s.slice(0, -1);
+          s += "…";
+        }
+        g.fillText(s, x, y);
+      }
+      var x0 = function (ymd) { return trackX + T.daysBetween(rg.from, ymd) * dayW; };
+      // title and range
+      txt(board.name || "Kanban", PDF_M, PDF_M + 6, 15, "#1d1d1f", "600", PDF_W - 2 * PDF_M - 160);
+      txt(fmtDay(rg.from) + " – " + fmtDay(T.addDays(rg.from, rg.days - 1)) + (wd ? "  ·  " + t("tl.wd") : "") + (vw.cp ? "  ·  " + t("tl.cp") : ""),
+          PDF_W - PDF_M, PDF_M + 6, 9, "#6e6e73", "400", 0, "right");
+      var gridTop = PDF_TOP, gridBot = gridTop + list.length * PDF_ROW;
+      // weekends
+      if (dayW >= 2.5) {
+        g.fillStyle = "#f2f2f5";
+        for (var d = 0; d < rg.days; d++) if (T.isWeekend(T.addDays(rg.from, d))) g.fillRect(trackX + d * dayW, gridTop - 14, dayW, gridBot - gridTop + 14);
+      }
+      // axis: days, weeks (Mondays) or months, whatever fits
+      g.strokeStyle = "#d8d8de"; g.lineWidth = 0.5;
+      for (var a = 0; a < rg.days; a++) {
+        var day = T.addDays(rg.from, a), dt = new Date(day + "T12:00:00"), lab = null;
+        if (dayW >= 13) lab = String(dt.getDate());
+        else if (dayW * 7 >= 30) { if (dt.getDay() === 1) lab = dt.toLocaleDateString(loc(), { day: "numeric", month: "short" }); }
+        else if (dt.getDate() === 1 || a === 0) lab = dt.toLocaleDateString(loc(), { month: "short", year: "2-digit" });
+        if (dt.getDate() === 1 || a === 0) txt(dt.toLocaleDateString(loc(), { month: "long", year: "numeric" }), trackX + a * dayW + 2, gridTop - 20, 8, "#6e6e73", "600", 0);
+        if (lab !== null) {
+          txt(lab, trackX + a * dayW + (dayW >= 13 ? dayW / 2 : 2), gridTop - 5, 7, "#6e6e73", "400", 0, dayW >= 13 ? "center" : "left");
+          g.beginPath(); g.moveTo(trackX + a * dayW, gridTop); g.lineTo(trackX + a * dayW, gridBot); g.stroke();
+        }
+      }
+      // today
+      var ti = T.daysBetween(rg.from, today);
+      if (ti >= 0 && ti < rg.days) {
+        g.strokeStyle = "#e5484d"; g.lineWidth = 1;
+        g.beginPath(); g.moveTo(trackX + (ti + 0.5) * dayW, gridTop - 14); g.lineTo(trackX + (ti + 0.5) * dayW, gridBot); g.stroke();
+      }
+      // rows
+      var at = {};
+      list.forEach(function (r, ri) {
+        var y = gridTop + ri * PDF_ROW;
+        g.strokeStyle = "#ececf0"; g.lineWidth = 0.5;
+        g.beginPath(); g.moveTo(PDF_M, y + PDF_ROW); g.lineTo(PDF_W - PDF_M, y + PDF_ROW); g.stroke();
+        if (r.head) { txt(r.head, PDF_M, y + 12, 9, "#1d1d1f", "600", PDF_NAME + trackW); return; }
+        var c = r.card, sp = r.span, color = cssColor(tlColor(c), probe), done = r.colIdx === lastIdx && lastIdx > 0;
+        txt(c.text, PDF_M, y + 12, 8.5, done ? "#8e8e93" : "#1d1d1f", "400", PDF_NAME - 8);
+        var bx = x0(sp.from), bw = Math.max(dayW, (T.daysBetween(sp.from, sp.to) + 1) * dayW), by = y + 3, bh = PDF_ROW - 6;
+        g.globalAlpha = done ? 0.45 : 1;
+        if (sp.ms) {
+          var cx = bx + dayW / 2, cy = y + PDF_ROW / 2, s = 5.5;
+          g.fillStyle = color;
+          g.beginPath(); g.moveTo(cx, cy - s); g.lineTo(cx + s, cy); g.lineTo(cx, cy + s); g.lineTo(cx - s, cy); g.closePath(); g.fill();
+          if (crit[c.id]) { g.strokeStyle = "#e5484d"; g.lineWidth = 1.2; g.stroke(); }
+          at[c.id] = { l: cx - s, r: cx + s, y: cy };
+        } else {
+          g.fillStyle = color;
+          g.beginPath(); if (g.roundRect) g.roundRect(bx, by, bw, bh, 2.5); else g.rect(bx, by, bw, bh); g.fill();
+          var pr = T.progressOf(c);
+          if (pr !== null && pr > 0) { g.fillStyle = "rgba(0,0,0,.22)"; g.fillRect(bx, by + bh - 2.5, bw * pr, 2.5); }
+          if (crit[c.id]) { g.strokeStyle = "#e5484d"; g.lineWidth = 1.2; g.beginPath(); if (g.roundRect) g.roundRect(bx, by, bw, bh, 2.5); else g.rect(bx, by, bw, bh); g.stroke(); }
+          at[c.id] = { l: bx, r: bx + bw, y: y + PDF_ROW / 2 };
+        }
+        g.globalAlpha = 1;
+      });
+      // arrows between bars on this page
+      var bad = {};
+      T.brokenDeps(board, wd).forEach(function (x) { bad[x.from + ">" + x.to] = 1; });
+      list.forEach(function (r) {
+        if (r.head) return;
+        (r.card.deps || []).forEach(function (pid) {
+          var a1 = at[pid], b1 = at[r.card.id];
+          if (!a1 || !b1) return;
+          var red = bad[pid + ">" + r.card.id] || (crit[pid] && crit[r.card.id]);
+          g.strokeStyle = red ? "#e5484d" : "#8e8e93"; g.fillStyle = g.strokeStyle; g.lineWidth = 0.8;
+          var mx = Math.max(a1.r + 4, Math.min(b1.l - 4, a1.r + 8));
+          g.beginPath(); g.moveTo(a1.r, a1.y); g.lineTo(mx, a1.y); g.lineTo(mx, b1.y); g.lineTo(b1.l - 1, b1.y); g.stroke();
+          g.beginPath(); g.moveTo(b1.l, b1.y); g.lineTo(b1.l - 4, b1.y - 2.5); g.lineTo(b1.l - 4, b1.y + 2.5); g.closePath(); g.fill();
+        });
+      });
+      txt("orOS Kanban  ·  " + fmtDay(today), PDF_M, PDF_H - PDF_M + 10, 7, "#8e8e93");
+      if (pages.length > 1) txt(t("tl.pdf.page", { n: pi + 1, m: pages.length }), PDF_W - PDF_M, PDF_H - PDF_M + 10, 7, "#8e8e93", "400", 0, "right");
+      return cv;
+    });
+    probe.remove();
+    return out;
+  }
+  function fmtDay(ymd) {
+    try { return new Date(ymd + "T12:00:00").toLocaleDateString(loc(), { day: "numeric", month: "short", year: "numeric" }); }
+    catch (e) { return ymd; }
+  }
+  function exportGanttPdf() {
+    var board = currentBoard();
+    if (!board) return;
+    var pages = ganttPages(board);
+    if (!pages) { notifyTransient(t("tl.empty")); return; }
+    loadPdf().then(function (JsPDF) {
+      var doc = new JsPDF({ orientation: "landscape", unit: "pt", format: [PDF_W, PDF_H], compress: true });
+      doc.setProperties({ title: board.name || "Kanban", creator: "orOS Kanban" });
+      pages.forEach(function (cv, i) {
+        if (i) doc.addPage([PDF_W, PDF_H], "landscape");
+        doc.addImage(cv.toDataURL("image/png"), "PNG", 0, 0, PDF_W, PDF_H, undefined, "FAST");
+      });
+      return saveBytes(doc.output("arraybuffer"), "orOS-kanban-" + slug(board.name) + "-" + todayYmd() + ".pdf", "application/pdf", ".pdf");
+    }).then(function (ok) {
+      if (ok) notifyTransient(t("export.done"));
+    }, function (e) { console.error("[orOS] kanban: PDF failed", e); notifyTransient(t("tl.pdf.fail")); });
+  }
+  // G2: dependency arrows, from the end of the first bar to the start of
+  // the next, red when the next one starts too early. Drawn after
+  // layout from the bars' real places, under the sticky name column.
+  var SVGNS = "http://www.w3.org/2000/svg";
+  function tlArrows(grid, board, wd, crit) {
+    var old = grid.querySelector(".tl-arrows");
+    if (old) old.remove();
+    var g0 = grid.getBoundingClientRect();
+    var at = {};
+    Array.prototype.forEach.call(grid.querySelectorAll("[data-card]"), function (el) {
+      var r = el.getBoundingClientRect();
+      at[el.getAttribute("data-card")] = { l: r.left - g0.left, r: r.right - g0.left, y: r.top - g0.top + r.height / 2, ms: el.classList.contains("tl-ms") };
+    });
+    var broken = {};
+    T.brokenDeps(board, wd).forEach(function (d) { broken[d.from + ">" + d.to] = true; });
+    var svg = document.createElementNS(SVGNS, "svg");
+    svg.setAttribute("class", "tl-arrows");
+    svg.setAttribute("width", String(grid.scrollWidth));
+    svg.setAttribute("height", String(grid.scrollHeight));
+    svg.setAttribute("aria-hidden", "true");
+    var defs = document.createElementNS(SVGNS, "defs");
+    ["ok", "bad", "crit"].forEach(function (k) {
+      var m = document.createElementNS(SVGNS, "marker");
+      m.setAttribute("id", "tl-ah-" + k);
+      m.setAttribute("viewBox", "0 0 8 8");
+      m.setAttribute("refX", "7"); m.setAttribute("refY", "4");
+      m.setAttribute("markerWidth", "7"); m.setAttribute("markerHeight", "7");
+      m.setAttribute("orient", "auto-start-reverse");
+      var pth = document.createElementNS(SVGNS, "path");
+      pth.setAttribute("d", "M0,0 L8,4 L0,8 z");
+      pth.setAttribute("class", "tl-ah " + k);
+      m.appendChild(pth);
+      defs.appendChild(m);
+    });
+    svg.appendChild(defs);
+    board.columns.forEach(function (col) {
+      col.cards.forEach(function (c) {
+        (c.deps || []).forEach(function (pid) {
+          var a = at[pid], b = at[c.id];
+          if (!a || !b) return;
+          var k = broken[pid + ">" + c.id] ? "bad" : (crit[pid] && crit[c.id] ? "crit" : "ok");
+          var x1 = a.ms ? a.r - 4 : a.r, y1 = a.y, x2 = b.ms ? b.l + 2 : b.l, y2 = b.y;
+          var d;
+          if (x2 - x1 >= 16) {
+            var mx = x1 + Math.min(10, (x2 - x1) / 2);
+            d = "M" + x1 + "," + y1 + " H" + mx + " V" + y2 + " H" + (x2 - 1);
+          } else {                           // the next bar starts before: go round
+            var ym = y2 > y1 ? y2 - 18 : y2 + 18;
+            d = "M" + x1 + "," + y1 + " h8 V" + ym + " H" + (x2 - 10) + " V" + y2 + " H" + (x2 - 1);
+          }
+          var p = document.createElementNS(SVGNS, "path");
+          p.setAttribute("d", d);
+          p.setAttribute("class", "tl-arrow " + k);
+          p.setAttribute("marker-end", "url(#tl-ah-" + k + ")");
+          svg.appendChild(p);
+        });
+      });
+    });
+    grid.insertBefore(svg, grid.children[1] || null);
+  }
+  // Drag the dot after a bar onto another bar: the target waits for it.
+  function attachLinkDrag(dot, fromId) {
+    dot.addEventListener("pointerdown", function (e) {
       if (e.button !== undefined && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      var grid = dot.closest(".tl-grid");
+      var line = null, g0 = grid.getBoundingClientRect();
+      var sx = e.clientX - g0.left, sy = e.clientY - g0.top, hover = null;
+      try { dot.setPointerCapture(e.pointerId); } catch (er) {}
+      document.body.classList.add("tl-linking");
+      function target(ev) {
+        var el = document.elementFromPoint(ev.clientX, ev.clientY);
+        el = el && el.closest ? el.closest("[data-card]") : null;
+        return el && el.getAttribute("data-card") !== fromId ? el : null;
+      }
+      function move(ev) {
+        ev.preventDefault();
+        if (!line) {
+          line = document.createElement("div");
+          line.className = "tl-linkline";
+          grid.appendChild(line);
+        }
+        var x = ev.clientX - g0.left, y = ev.clientY - g0.top;
+        var len = Math.sqrt((x - sx) * (x - sx) + (y - sy) * (y - sy));
+        line.style.left = sx + "px"; line.style.top = sy + "px";
+        line.style.width = len + "px";
+        line.style.transform = "rotate(" + Math.atan2(y - sy, x - sx) + "rad)";
+        var tg = target(ev);
+        if (hover && hover !== tg) hover.classList.remove("link-target");
+        hover = tg;
+        if (hover) hover.classList.add("link-target");
+      }
+      function done(ev, ok) {
+        dot.removeEventListener("pointermove", move);
+        dot.removeEventListener("pointerup", up);
+        dot.removeEventListener("pointercancel", cancel);
+        document.body.classList.remove("tl-linking");
+        if (line) line.remove();
+        if (hover) hover.classList.remove("link-target");
+        if (!ok) return;
+        var tg = target(ev);
+        if (!tg) return;
+        var toId = tg.getAttribute("data-card");
+        var board = currentBoard();
+        if (T.wouldCycle(board, toId, fromId)) { notifyTransient(t("deps.loop")); return; }
+        var f = T.findCard(board, toId);
+        if (f && (f.card.deps || []).indexOf(fromId) !== -1) return;
+        pushUndo("deps.added");
+        if (setDep(fromId, true, toId)) offerShift(fromId, "deps.added");
+      }
+      function up(ev) { done(ev, true); }
+      function cancel(ev) { done(ev, false); }
+      dot.addEventListener("pointermove", move);
+      dot.addEventListener("pointerup", up);
+      dot.addEventListener("pointercancel", cancel);
+    });
+  }
+  // After a change to a card's dates (or a new dependency): when cards
+  // after it would now start too early, the toast offers to move them
+  // ("Move the next ones too", Chris 2026-11-13); otherwise the arrow
+  // just turns red. The move is its own Undo step.
+  function offerShift(cardId, key, noUndo) {
+    var board = currentBoard();
+    if (!board) return;
+    var wd = T.boardWorkdays(board);
+    if (!T.shiftAfter(board, cardId, wd).length) return;
+    showToast(t(key), !noUndo, { label: t("deps.shift"), fn: function () { shiftNext(cardId); } });
+  }
+  function shiftNext(cardId) {
+    var board = currentBoard();
+    if (!board) return;
+    var moves = T.shiftAfter(board, cardId, T.boardWorkdays(board));
+    if (!moves.length) return;
+    pushUndo("deps.shifted");
+    moves.forEach(function (mv) {
+      var f = T.findCard(board, mv.id);
+      if (!f) return;
+      var groups = applySpan(f.card, mv.from, mv.to, "move");
+      if (groups.length) stamp(f.card, groups);
+    });
+    save(); scheduleRender();
+  }
+
+  // Write a new span back to the card. mode: "move" (both ends), "l"
+  // (start), "r" (due). A card keeps only the dates it uses: a due-only
+  // card that is moved stays due-only, a stretched one gains a start.
+  function applySpan(card, from, to, mode) {
+    var hadS = !!card.start, hadD = !!card.due;
+    var groups = [];
+    if (card.ms) {
+      if (hadD || !hadS) { card.due = to; groups.push("d"); } else { card.start = from; groups.push("g"); }
+      return groups;
+    }
+    if (mode === "move") {
+      if (hadS) { card.start = from; groups.push("g"); }
+      if (hadD) { card.due = to; groups.push("d"); }
+    } else {
+      if (from === to && !(hadS && hadD)) {
+        if (hadD) { card.due = to; groups.push("d"); } else { card.start = from; groups.push("g"); }
+      } else {
+        card.start = from; card.due = to;
+        groups.push("g", "d");
+      }
+    }
+    return groups;
+  }
+  // Drag a bar along the axis (whole days): the body moves it, its ends
+  // change the start or the due date. Arrow keys do the same by one day
+  // (Shift = the due date only).
+  function attachBarDrag(bar, colId, cardId, px, wd) {
+    function commit(mode, delta) {
+      if (!delta) return;
+      var board = currentBoard();
+      var f = board && T.findCard(board, cardId);
+      if (!f) return;
+      var sp = T.planSpan(f.card);
+      if (!sp) return;
+      var from = sp.from, to = sp.to;
+      if (mode === "move" || sp.ms) {
+        var s2 = T.shiftSpan(from, to, delta, wd);
+        from = s2.from; to = s2.to;
+      } else if (mode === "l") {
+        from = T.addDays(from, delta);
+        if (wd) from = T.nextWorkday(from, delta < 0 ? -1 : 1);
+        if (from > to) from = to;
+      } else {
+        to = T.addDays(to, delta);
+        if (wd) to = T.nextWorkday(to, delta < 0 ? -1 : 1);
+        if (to < from) to = from;
+      }
+      if (from === sp.from && to === sp.to) return;
+      pushUndo("toast.tlmoved");
+      var groups = applySpan(f.card, from, to, sp.ms ? "move" : mode);
+      if (groups.length) stamp(f.card, groups);
+      save(); scheduleRender();
+      offerShift(cardId, "toast.tlmoved");
+    }
+    bar.addEventListener("pointerdown", function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      var hh = e.target && e.target.classList && e.target.classList.contains("tl-h") ? e.target : null;
+      var mode = hh ? (hh.classList.contains("l") ? "l" : "r") : "move";
       var sx = e.clientX, started = false, delta = 0;
-      var left0 = parseFloat(pill.style.left) || 0;
+      var left0 = parseFloat(bar.style.left) || 0;
+      var w0 = parseFloat(bar.style.width) || 0;
       function move(ev) {
         var dx = ev.clientX - sx;
         if (!started && Math.abs(dx) < DRAG_THRESHOLD) return;
-        if (!started) { started = true; pill.classList.add("dragging"); try { pill.setPointerCapture(e.pointerId); } catch (er) {} }
+        if (!started) { started = true; bar.classList.add("dragging"); try { bar.setPointerCapture(e.pointerId); } catch (er) {} }
         ev.preventDefault();
-        delta = Math.round(dx / TL_DAY);
-        pill.style.left = (left0 + delta * TL_DAY) + "px";
+        delta = Math.round(dx / px);
+        if (mode === "move") bar.style.left = (left0 + delta * px) + "px";
+        else if (mode === "l") { var dl = Math.min(delta * px, w0 - 8); bar.style.left = (left0 + dl) + "px"; bar.style.width = (w0 - dl) + "px"; }
+        else bar.style.width = Math.max(8, w0 + delta * px) + "px";
+      }
+      function cleanup() {
+        window.removeEventListener("pointermove", move);
+        window.removeEventListener("pointerup", up);
+        window.removeEventListener("pointercancel", cancel);
       }
       function up() {
-        window.removeEventListener("pointermove", move);
-        window.removeEventListener("pointerup", up);
-        window.removeEventListener("pointercancel", cancel);
+        cleanup();
         if (!started) { openCardDialog(colId, cardId); return; }
-        pill.classList.remove("dragging");
-        if (!delta) return;
-        var board = currentBoard();
-        var f = board && T.findCard(board, cardId);
-        if (!f || !f.card.due) return;
-        f.card.due = T.addDays(f.card.due, delta);
-        stamp(f.card, ["d"]);
-        save(); scheduleRender();
+        bar.classList.remove("dragging");
+        commit(mode, delta);
       }
       function cancel() {
-        window.removeEventListener("pointermove", move);
-        window.removeEventListener("pointerup", up);
-        window.removeEventListener("pointercancel", cancel);
-        pill.classList.remove("dragging");
-        pill.style.left = left0 + "px";
+        cleanup();
+        bar.classList.remove("dragging");
+        bar.style.left = left0 + "px";
+        if (w0) bar.style.width = w0 + "px";
       }
       window.addEventListener("pointermove", move);
       window.addEventListener("pointerup", up);
       window.addEventListener("pointercancel", cancel);
     });
-    pill.addEventListener("click", function (e) { e.preventDefault(); });   // the pointerup decides
-    pill.addEventListener("keydown", function (e) {
+    bar.addEventListener("click", function (e) { e.preventDefault(); });   // the pointerup decides
+    bar.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openCardDialog(colId, cardId); }
+      else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        e.preventDefault();
+        keepTlFocus = cardId;
+        commit(e.shiftKey ? "r" : "move", e.key === "ArrowLeft" ? -1 : 1);
+      }
     });
   }
+  var keepTlFocus = null;
 
   // --- Automations dialog: the overdue rule + a summary of column rules ---
   function openAutoDlg() {
@@ -5361,7 +6168,7 @@
     chain.then(function () {
       var words = { due: t("tbl.due"), labels: t("tbl.labels"), lane: t("tbl.lane"), att: t("card.att") };
       var csv = T.boardCsv(snap, [t("csv.board"), t("tbl.col"), t("tbl.card"), t("csv.notes"), t("tbl.due"), t("tbl.labels"),
-                                  t("tbl.sub"), t("tbl.lane"), t("csv.info"), t("card.att")]);
+                                  t("tbl.sub"), t("tbl.lane"), t("csv.info"), t("card.att"), t("card.start"), t("card.ms")]);
       return B.write({
         mime: BUNDLE_MIME, app: "kanban", schema: "kanban/1",
         content: T.packBoard(snap, keys),
@@ -5381,7 +6188,7 @@
     var board = currentBoard();
     if (!board) return;
     var csv = T.boardCsv(board, [t("csv.board"), t("tbl.col"), t("tbl.card"), t("csv.notes"), t("tbl.due"), t("tbl.labels"),
-                                 t("tbl.sub"), t("tbl.lane"), t("csv.info"), t("card.att")]);
+                                 t("tbl.sub"), t("tbl.lane"), t("csv.info"), t("card.att"), t("card.start"), t("card.ms")]);
     saveText(csv, "orOS-kanban-" + slug(board.name) + "-" + todayYmd() + ".csv", "text/csv", ".csv").then(function (ok) {
       if (ok) notifyTransient(t("export.done"));
     });
@@ -6005,27 +6812,58 @@
     // το date input δεν περνάει από text flush στο close handler.
     var cDueInput = $("c-due");
     if (cDueInput) {
-      cDueInput.addEventListener("input", function () {
+      // input + change: the native date input fires either, depending on the browser
+      var onDue = function () {
         var card = editingCard();
         if (!card) return;
         var dv = cDueInput.value || null;     // "" → null (cleared)
         if (card.due === dv) return;
         card.due = dv;
-        stamp(card, ["d"]);
+        var gs = ["d"];
+        // Gantt: a due date before the start pulls the start along
+        if (dv && card.start && card.start > dv) { card.start = dv; gs.push("g"); setInputKeep($("c-start"), dv); }
+        stamp(card, gs);
         save();
         scheduleRender();       // date chip πίσω από το dialog φρεσκάρει
-      });
-      cDueInput.addEventListener("change", function () {
+      };
+      cDueInput.addEventListener("input", onDue);
+      cDueInput.addEventListener("change", onDue);
+    }
+    // Gantt (G1): start date and milestone, field group g
+    var cStartInput = $("c-start");
+    if (cStartInput) {
+      var onStart = function () {
         var card = editingCard();
         if (!card) return;
-        var dv2 = cDueInput.value || null;
-        if (card.due === dv2) return;
-        card.due = dv2;
-        stamp(card, ["d"]);
+        var sv = cStartInput.value || "";
+        if ((card.start || "") === sv) return;
+        if (sv) card.start = sv; else delete card.start;
+        var gs = ["g"];
+        // a start after the due date pushes the due date along
+        if (sv && card.due && card.due < sv) { card.due = sv; gs.push("d"); setInputKeep($("c-due"), sv); }
+        stamp(card, gs);
         save();
         scheduleRender();
-      });
+      };
+      cStartInput.addEventListener("input", onStart);
+      cStartInput.addEventListener("change", onStart);
     }
+    var cDeps = $("c-deps-add");
+    if (cDeps) cDeps.addEventListener("change", function () {
+      var v = cDeps.value;
+      cDeps.value = "";
+      if (v && setDep(v, true)) offerShift(v, "deps.added", true);
+    });
+    var cMs = $("c-ms");
+    if (cMs) cMs.addEventListener("change", function () {
+      var card = editingCard();
+      if (!card) return;
+      if (!!card.ms === cMs.checked) return;
+      if (cMs.checked) card.ms = 1; else delete card.ms;
+      stamp(card, ["g"]);
+      save();
+      scheduleRender();
+    });
 
     var cardForm = $("card-form");
     if (cardForm) {
@@ -6166,12 +7004,14 @@
           pushUndo("toast.coldel");
           var board = currentBoard();
           if (!board) return;
+          var wasWd = T.boardWorkdays(board);
           tombstone(board, col.id);
           col.cards.forEach(function (c) { tombstone(board, c.id); });
           dropFilesLater(filesOfCards(col.cards));
           board.columns = board.columns.filter(function (c) { return c.id !== col.id; });
           if (board.columns.length === 0) {
             var fresh = newColumnObj(t("new.col"));
+            if (wasWd) fresh.gw = 1;
             fresh.pos = 0;
             board.columns.push(fresh);
           }

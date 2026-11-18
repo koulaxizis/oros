@@ -1,0 +1,1058 @@
+// ============================================================
+// orOS Settings › Device (device/view.js) — was the Device Info
+// app (APP-ALIAS since the 2026-11-12 merge 3, old id "device").
+// A read-only look at this device: storage used by each app,
+// battery, network, sync state, screen, browser and the browser
+// features the orOS apps rely on, plus a plain-text report to copy.
+// Loaded by settings/settings.js only when the Device section first
+// opens (with core.js, the engine, view.css and the "device" language
+// pack; this folder keeps the pack name "device"); SettingsDevice.mount(host) builds the cards once and keeps
+// them live, Settings re-attaches the same node on every repaint.
+//   - reads only: never changes another app's data, never syncs,
+//     never sends anything over the network
+//   - asks for no permission; shows the current state where the
+//     browser can tell it without asking
+// Data:
+//   - no synced slice (everything here describes THIS device)
+//   - device-local (R10): oros-device-prefs ({ closed[] }: cards the
+//     user folded). Stored values of other apps are only measured
+//     (length), never shown or copied.
+// Sections:
+//   1. Constants, i18n, helpers
+//   2. Prefs
+//   3. Apps list (apps.json + aliases + shell names)
+//   4. Storage + per-app sizes
+//   5. Battery
+//   6. Network
+//   7. Sync
+//   7b. Running now (OV-2: open apps, places, memory)
+//   8. Screen
+//   9. orOS & browser
+//  10. Features
+//  11. Report + notice
+//  12. Mount
+// ============================================================
+(function () {
+  "use strict";
+
+  var SCRIPT_V = "";
+  (function () {
+    var m = (document.currentScript && document.currentScript.src || "").match(/[?&]v=([^&#]+)/);
+    SCRIPT_V = m ? m[1] : "";
+  })();
+
+  var PREFS_KEY = "oros-device-prefs";
+  // localStorage limit, in UTF-16 code units of key + value. About
+  // 5 million in Chromium and Firefox; Safari is similar. Approximate.
+  var LS_LIMIT = 5 * 1024 * 1024;
+  var APPS_SHOWN = 10;
+  var C = window.DeviceCore;
+
+  // ---------- 1. Constants, i18n, helpers ----------
+  function appLang() {
+    try {
+      var l = localStorage.getItem("oros-lang") ||
+              (window.parent && window.parent.orosLang) || "en";
+      return l === "el" ? "el" : "en";
+    } catch (e) { return "en"; }
+  }
+  // orosI18n (../i18n.js): the full language code, a pack language included.
+  var LANG = window.orosI18n ? window.orosI18n.lang() : appLang();
+  var LOCALE = window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB");
+  var DEC = ".";
+  try { DEC = (1.5).toLocaleString(LOCALE).charAt(1) === "," ? "," : "."; } catch (e) { DEC = LANG === "el" ? "," : "."; }
+
+  var STRINGS = {
+    en: {
+      "btn.refresh": "Refresh", "btn.copy": "Copy report",
+      "c.storage": "Storage", "c.apps": "Space per app", "c.battery": "Battery",
+      "c.network": "Network", "c.sync": "Sync", "c.screen": "Screen",
+      "c.system": "orOS & browser", "c.features": "Browser features",
+      "about": "Read only: this section changes nothing and sends nothing. Everything describes this device.",
+      "na": "Not available", "yes": "Yes", "no": "No", "unknown": "Unknown",
+      "s.used": "{used} of {quota}", "s.other": "Files, databases, offline copies",
+      "s.noEstimate": "This browser does not say how much space orOS files and databases use.",
+      "s.persist": "Protected from automatic clean-up",
+      "s.persistHint": "Without protection, the browser may delete orOS data when the device runs low on space. Your synced data stays in the cloud.",
+      "s.persistAsk": "Ask for protection",
+      "s.persistDenied": "The browser declined. Installing orOS as an app usually helps.",
+      "s.persistOk": "Storage is now protected",
+      "s.ls": "App data (local storage)", "s.idb": "Databases (Files, wallpaper)",
+      "s.caches": "Offline copies and caches", "s.sw": "Service worker",
+      "s.lsLimit": "{p}% of the usual browser limit (approximate)",
+      "s.lsWarn": "Local storage is almost full. When it fills up, apps cannot save. Delete what you no longer need (old games, map tiles) or export a backup.",
+      "s.cache._offline": "orOS files for offline use", "s.cache._other": "Other",
+      "s.entries": "{n} items",
+      "a.hint": "Local storage per app. Tap an app to open it.",
+      "a.showAll": "Show all ({n})", "a.showLess": "Show fewer",
+      "a._shell": "orOS (desktop, settings, sync)", "a._pet": "Screen pet", "a._other": "Other (not orOS)",
+      "b.level": "Level", "b.charging": "Charging", "b.full": "Full in", "b.empty": "Empty in",
+      "b.na": "This browser gives no battery information (Safari and Firefox never do).",
+      "b.hidden": "This browser hides the real battery level and always reports 100% and charging (Brave does this for privacy). orOS cannot read your battery here.",
+      "b.suspect": "The browser reports a full battery on the charger. If your device is not plugged in, this is a placeholder: the browser is hiding the real level, and orOS cannot read it.",
+      "n.state": "Connection", "n.online": "Online", "n.offline": "Offline",
+      "n.type": "Type", "n.speed": "Estimated speed", "n.rtt": "Latency",
+      "n.save": "Data saver", "n.na": "The browser does not share connection details. orOS runs no speed test.",
+      "c.running": "Running now",
+      "r.front": "In front",
+      "r.beside": "Beside",
+      "r.left": "Left {t}",
+      "r.place1": "1 place",
+      "r.placeN": "{n} places",
+      "r.close": "Close",
+      "r.closeLabel": "Close {app}",
+      "r.closeOthers": "Close the others",
+      "r.only": "Only Settings is open right now.",
+      "r.off": "Multitasking is off on this device, so only the app in front stays open.",
+      "r.places": "Places for open apps",
+      "r.placesVal": "{n} of {m}",
+      "r.mem": "Memory of this device",
+      "r.memGB": "About {n} GB",
+      "r.heap": "Memory orOS uses now (approximate)",
+      "r.hint": "Heavy apps (Atelier, Maps, Photo Lab and others) take two places. When there is no room, the app you used longest ago closes. Closing an app here works like × in Open apps.",
+      "r.na": "Open Settings inside orOS to see the open apps.",
+      "y.files": "Files waiting to upload",
+      "y.filesLast": "Last file sync",
+      "y.filesErr": "Last file sync problem",
+      "y.merge": "Apps waiting to merge",
+      "y.connected": "Connected to a cloud", "y.unlocked": "Unlocked on this device",
+      "y.pending": "Changes waiting to upload", "y.every": "Automatic sync",
+      "y.everyN": "every {n} min", "y.off": "Off",
+      "y.backup": "Last cloud backup copy", "y.export": "Automatic backup to a file",
+      "y.exportLast": "Last automatic backup check", "y.folder": "Backup folder",
+      "y.never": "Never", "y.notConnected": "Sync is off on this device. Your data lives only here: export a backup now and then.",
+      "y.where": "Sync settings",
+      "y.daily": "Daily", "y.weekly": "Weekly", "y.monthly": "Monthly",
+      "d.screen": "Screen", "d.window": "Window", "d.ratio": "Pixel ratio",
+      "d.orient": "Orientation", "d.portrait": "Portrait", "d.landscape": "Landscape",
+      "d.color": "Colour depth", "d.bits": "{n}-bit", "d.touch": "Touch",
+      "d.points": "yes, {n} points", "d.dark": "System dark mode", "d.motion": "Reduce motion",
+      "d.mode": "Running as", "d.installed": "Installed app", "d.tab": "Browser tab",
+      "d.screens": "Screens", "d.scrOne": "One (or the screens show the same picture)", "d.scrMany": "More than one, extended",
+      "d.scrNo": "This browser cannot place windows on another screen (Chrome, Edge and the orOS apps can).",
+      "d.scrAsk": "Use the other screen", "d.scrDenied": "orOS may not place windows on other screens. Allow \u201cWindow management\u201d in the site settings of this browser.",
+      "d.scrHere": "this one", "d.scrMain": "main",
+      "d.scrHint": "Duplicate or extend is chosen by the system: on Windows press Win+P, on the orOS Live USB press Ctrl+Alt+Shift+D. With Extend, Ctrl+Alt+Shift+B or Open apps moves an app to the other screen, and Slides puts the audience there by itself.",
+      "o.version": "orOS version", "o.cache": "Offline copy", "o.apps": "Apps",
+      "o.lang": "Language", "o.langName": "English", "o.theme": "Theme", "o.dark": "Dark", "o.light": "Light",
+      "o.browser": "Browser (approx.)", "o.os": "System (approx.)", "o.cores": "CPU cores",
+      "o.memory": "Memory", "o.memoryV": "about {n} GB", "o.tz": "Time zone",
+      "o.locale": "Browser language", "o.secure": "Secure connection (HTTPS)",
+      "o.swOn": "Active", "o.swOff": "Not active (no offline use yet)",
+      "f.hint": "What the orOS apps can use in this browser.",
+      "f.notifications": "Notifications", "f.folder": "Backup folder on disk",
+      "f.share": "Share sheet", "f.clipboard": "Copy to clipboard", "f.vibrate": "Vibration",
+      "f.wakelock": "Keep the screen on", "f.geolocation": "Location",
+      "f.opfs": "Private file storage", "f.serviceworker": "Offline use",
+      "f.crypto": "Encryption", "f.audio": "Sound",
+      "f.missing": "Missing here, affects: {apps}",
+      "f.perm.granted": "allowed", "f.perm.denied": "blocked", "f.perm.prompt": "not asked yet",
+      "f.permission": "Permission: {s}",
+      "toast.copied": "Report copied", "toast.copyFail": "Could not copy",
+      "r.header": "orOS device report · {date}"
+    },
+    el: {
+      "btn.refresh": "Ανανέωση", "btn.copy": "Αντιγραφή αναφοράς",
+      "c.storage": "Χώρος", "c.apps": "Χώρος ανά εφαρμογή", "c.battery": "Μπαταρία",
+      "c.network": "Δίκτυο", "c.sync": "Συγχρονισμός", "c.screen": "Οθόνη",
+      "c.system": "orOS και browser", "c.features": "Δυνατότητες browser",
+      "about": "Μόνο ανάγνωση: η ενότητα δεν αλλάζει και δεν στέλνει τίποτα. Όλα αφορούν αυτή τη συσκευή.",
+      "na": "Μη διαθέσιμο", "yes": "Ναι", "no": "Όχι", "unknown": "Άγνωστο",
+      "s.used": "{used} από {quota}", "s.other": "Αρχεία, βάσεις, offline αντίγραφα",
+      "s.noEstimate": "Ο browser δεν λέει πόσο χώρο πιάνουν τα αρχεία και οι βάσεις του orOS.",
+      "s.persist": "Προστασία από αυτόματο καθάρισμα",
+      "s.persistHint": "Χωρίς προστασία, ο browser μπορεί να σβήσει δεδομένα του orOS όταν η συσκευή μείνει από χώρο. Ό,τι έχει συγχρονιστεί μένει στο cloud.",
+      "s.persistAsk": "Ζήτα προστασία",
+      "s.persistDenied": "Ο browser αρνήθηκε. Συνήθως βοηθά η εγκατάσταση του orOS ως εφαρμογή.",
+      "s.persistOk": "Ο χώρος προστατεύεται πλέον",
+      "s.ls": "Δεδομένα εφαρμογών (local storage)", "s.idb": "Βάσεις δεδομένων (Αρχεία, φόντο)",
+      "s.caches": "Offline αντίγραφα και cache", "s.sw": "Service worker",
+      "s.lsLimit": "{p}% του συνηθισμένου ορίου του browser (κατά προσέγγιση)",
+      "s.lsWarn": "Το local storage σχεδόν γέμισε. Όταν γεμίσει, οι εφαρμογές δεν μπορούν να αποθηκεύσουν. Σβήσε ό,τι δεν χρειάζεσαι (παλιά παιχνίδια, πλακίδια χαρτών) ή κάνε εξαγωγή αντιγράφου.",
+      "s.cache._offline": "Αρχεία orOS για offline χρήση", "s.cache._other": "Άλλα",
+      "s.entries": "{n} στοιχεία",
+      "a.hint": "Local storage ανά εφαρμογή. Πάτα μια εφαρμογή για να ανοίξει.",
+      "a.showAll": "Όλες ({n})", "a.showLess": "Λιγότερες",
+      "a._shell": "orOS (επιφάνεια, ρυθμίσεις, sync)", "a._pet": "Κατοικίδιο οθόνης", "a._other": "Άλλα (όχι orOS)",
+      "b.level": "Φόρτιση", "b.charging": "Φορτίζει", "b.full": "Γεμίζει σε", "b.empty": "Αδειάζει σε",
+      "b.na": "Ο browser δεν δίνει πληροφορίες μπαταρίας (Safari και Firefox ποτέ).",
+      "b.hidden": "Αυτός ο browser κρύβει την πραγματική μπαταρία και δείχνει πάντα 100% και φόρτιση (το κάνει το Brave για ιδιωτικότητα). Το orOS δεν μπορεί να τη διαβάσει εδώ.",
+      "b.suspect": "Ο browser λέει ότι η μπαταρία είναι γεμάτη και στον φορτιστή. Αν η συσκευή δεν φορτίζει, αυτή είναι ψεύτικη τιμή: ο browser κρύβει την πραγματική στάθμη και το orOS δεν μπορεί να τη διαβάσει.",
+      "n.state": "Σύνδεση", "n.online": "Συνδεδεμένη", "n.offline": "Χωρίς σύνδεση",
+      "n.type": "Τύπος", "n.speed": "Εκτιμώμενη ταχύτητα", "n.rtt": "Καθυστέρηση",
+      "n.save": "Εξοικονόμηση δεδομένων", "n.na": "Ο browser δεν δίνει στοιχεία σύνδεσης. Το orOS δεν κάνει τεστ ταχύτητας.",
+      "c.running": "Ανοιχτά τώρα",
+      "r.front": "Μπροστά",
+      "r.beside": "Δίπλα",
+      "r.left": "Έφυγες {t}",
+      "r.place1": "1 θέση",
+      "r.placeN": "{n} θέσεις",
+      "r.close": "Κλείσιμο",
+      "r.closeLabel": "Κλείσιμο: {app}",
+      "r.closeOthers": "Κλείσιμο των άλλων",
+      "r.only": "Αυτή τη στιγμή είναι ανοιχτές μόνο οι Ρυθμίσεις.",
+      "r.off": "Η πολυεργασία είναι κλειστή σε αυτή τη συσκευή, οπότε μένει ανοιχτή μόνο η εφαρμογή που βλέπεις.",
+      "r.places": "Θέσεις για ανοιχτές εφαρμογές",
+      "r.placesVal": "{n} από {m}",
+      "r.mem": "Μνήμη της συσκευής",
+      "r.memGB": "Περίπου {n} GB",
+      "r.heap": "Μνήμη που χρησιμοποιεί τώρα το orOS (περίπου)",
+      "r.hint": "Οι βαριές εφαρμογές (Atelier, Χάρτες, Εργαστήριο εικόνας και άλλες) πιάνουν δύο θέσεις. Όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Το κλείσιμο εδώ κάνει ό,τι το × στις Ανοιχτές εφαρμογές.",
+      "r.na": "Άνοιξε τις Ρυθμίσεις μέσα στο orOS για να δεις τις ανοιχτές εφαρμογές.",
+      "y.files": "Αρχεία που περιμένουν να ανέβουν",
+      "y.filesLast": "Τελευταίος συγχρονισμός αρχείων",
+      "y.filesErr": "Τελευταίο πρόβλημα συγχρονισμού αρχείων",
+      "y.merge": "Εφαρμογές που περιμένουν συγχώνευση",
+      "y.connected": "Σύνδεση με cloud", "y.unlocked": "Ξεκλείδωτο σε αυτή τη συσκευή",
+      "y.pending": "Αλλαγές που περιμένουν upload", "y.every": "Αυτόματος συγχρονισμός",
+      "y.everyN": "κάθε {n} λεπτά", "y.off": "Ανενεργός",
+      "y.backup": "Τελευταίο αντίγραφο στο cloud", "y.export": "Αυτόματο αντίγραφο σε αρχείο",
+      "y.exportLast": "Τελευταίος έλεγχος αυτόματου αντιγράφου", "y.folder": "Φάκελος αντιγράφων",
+      "y.never": "Ποτέ", "y.notConnected": "Ο συγχρονισμός είναι κλειστός σε αυτή τη συσκευή. Τα δεδομένα σου υπάρχουν μόνο εδώ: κάνε πού και πού εξαγωγή αντιγράφου.",
+      "y.where": "Ρυθμίσεις συγχρονισμού",
+      "y.daily": "Καθημερινά", "y.weekly": "Εβδομαδιαία", "y.monthly": "Μηνιαία",
+      "d.screen": "Οθόνη", "d.window": "Παράθυρο", "d.ratio": "Πυκνότητα pixel",
+      "d.orient": "Προσανατολισμός", "d.portrait": "Κάθετος", "d.landscape": "Οριζόντιος",
+      "d.color": "Βάθος χρώματος", "d.bits": "{n}-bit", "d.touch": "Αφή",
+      "d.points": "ναι, {n} σημεία", "d.dark": "Σκούρο θέμα συστήματος", "d.motion": "Λιγότερη κίνηση",
+      "d.mode": "Τρέχει ως", "d.installed": "Εγκατεστημένη εφαρμογή", "d.tab": "Καρτέλα browser",
+      "d.screens": "Οθόνες", "d.scrOne": "Μία (ή οι οθόνες δείχνουν την ίδια εικόνα)", "d.scrMany": "Περισσότερες από μία, σε επέκταση",
+      "d.scrNo": "Αυτός ο browser δεν μπορεί να βάλει παράθυρα σε άλλη οθόνη (μπορούν ο Chrome, ο Edge και οι εφαρμογές orOS).",
+      "d.scrAsk": "Χρήση της άλλης οθόνης", "d.scrDenied": "Το orOS δεν επιτρέπεται να βάζει παράθυρα σε άλλες οθόνες. Επίτρεψε τη «Διαχείριση παραθύρων» στις ρυθμίσεις ιστότοπου του browser.",
+      "d.scrHere": "αυτή", "d.scrMain": "κύρια",
+      "d.scrHint": "Το αν οι οθόνες δείχνουν το ίδιο (διπλότυπο) ή επεκτείνονται το διαλέγει το σύστημα: στα Windows πάτα Win+P, στο orOS Live USB πάτα Ctrl+Alt+Shift+D. Σε επέκταση, το Ctrl+Alt+Shift+B ή οι Ανοιχτές εφαρμογές μετακινούν μια εφαρμογή στην άλλη οθόνη, και τα Slides βάζουν μόνα τους το κοινό εκεί.",
+      "o.version": "Έκδοση orOS", "o.cache": "Offline αντίγραφο", "o.apps": "Εφαρμογές",
+      "o.lang": "Γλώσσα", "o.langName": "Ελληνικά", "o.theme": "Θέμα", "o.dark": "Σκούρο", "o.light": "Φωτεινό",
+      "o.browser": "Browser (περίπου)", "o.os": "Σύστημα (περίπου)", "o.cores": "Πυρήνες CPU",
+      "o.memory": "Μνήμη", "o.memoryV": "περίπου {n} GB", "o.tz": "Ζώνη ώρας",
+      "o.locale": "Γλώσσα browser", "o.secure": "Ασφαλής σύνδεση (HTTPS)",
+      "o.swOn": "Ενεργός", "o.swOff": "Ανενεργός (όχι ακόμα offline)",
+      "f.hint": "Τι μπορούν να χρησιμοποιήσουν οι εφαρμογές του orOS σε αυτόν τον browser.",
+      "f.notifications": "Ειδοποιήσεις", "f.folder": "Φάκελος αντιγράφων στον δίσκο",
+      "f.share": "Κοινοποίηση", "f.clipboard": "Αντιγραφή στο πρόχειρο", "f.vibrate": "Δόνηση",
+      "f.wakelock": "Οθόνη πάντα ανοιχτή", "f.geolocation": "Τοποθεσία",
+      "f.opfs": "Ιδιωτικός χώρος αρχείων", "f.serviceworker": "Offline χρήση",
+      "f.crypto": "Κρυπτογράφηση", "f.audio": "Ήχος",
+      "f.missing": "Λείπει εδώ, επηρεάζει: {apps}",
+      "f.perm.granted": "επιτρέπεται", "f.perm.denied": "μπλοκαρισμένη", "f.perm.prompt": "δεν έχει ζητηθεί",
+      "f.permission": "Άδεια: {s}",
+      "toast.copied": "Η αναφορά αντιγράφηκε", "toast.copyFail": "Η αντιγραφή απέτυχε",
+      "r.header": "Αναφορά συσκευής orOS · {date}"
+    }
+  };
+
+  if (window.orosI18n) window.orosI18n.table(STRINGS, "device", LANG);
+
+  function t(key, vars) {
+    var s = (STRINGS[LANG] && STRINGS[LANG][key]) || STRINGS.en[key] || key;
+    if (vars) {
+      Object.keys(vars).forEach(function (k) {
+        s = s.split("{" + k + "}").join(String(vars[k]));
+      });
+    }
+    return s;
+  }
+
+  var root = null;           // the mounted section (ids are "dv-…")
+  function $(id) { return root ? root.querySelector("#dv-" + id) : null; }
+  function el(tag, cls, text) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = String(text);
+    return n;
+  }
+  function bytes(n) { return C.formatBytes(n, DEC); }
+  function num(n, digits) {
+    try {
+      return Number(n).toLocaleString(LOCALE, { maximumFractionDigits: digits || 0 });
+    } catch (e) { return String(n); }
+  }
+  function when(ms) {
+    if (!(ms > 0)) return t("y.never");
+    try {
+      return new Date(ms).toLocaleString(LOCALE, {
+        year: "numeric", month: "short", day: "numeric",
+        hour: "2-digit", minute: "2-digit", hour12: false
+      });
+    } catch (e) { return new Date(ms).toISOString(); }
+  }
+  function yn(v) { return v ? t("yes") : t("no"); }
+  function parentWin() {
+    try { return (window.parent && window.parent !== window) ? window.parent : null; }
+    catch (e) { return null; }
+  }
+  function syncApi() {
+    try { return (window.parent && window.parent.orosSync) || window.orosSync || null; }
+    catch (e) { return window.orosSync || null; }
+  }
+  function lsGet(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; }
+  }
+
+  // Key/value table. rows: [[label, value, cls?]]; also feeds the report.
+  function kvTable(rows) {
+    var tb = el("table", "kv");
+    rows.forEach(function (r) {
+      var tr = el("tr");
+      var th = el("th", "", r[0]);
+      th.setAttribute("scope", "row");
+      tr.appendChild(th);
+      tr.appendChild(el("td", r[2] || "", r[1]));
+      tb.appendChild(tr);
+    });
+    return tb;
+  }
+  function barEl(pct, level) {
+    var b = el("div", "bar" + (level ? " " + level : ""));
+    var f = el("span");
+    f.style.width = Math.max(0, Math.min(100, pct)).toFixed(1) + "%";
+    b.appendChild(f);
+    return b;
+  }
+  function fill(id, nodes) {
+    var host = $(id);
+    if (!host) return;
+    host.textContent = "";
+    nodes.forEach(function (n) { if (n) host.appendChild(n); });
+  }
+
+  // The report gathers every card's rows here as they render.
+  var report = {};
+
+  // ---------- 2. Prefs ----------
+  var prefs = { closed: [] };
+  function loadPrefs() {
+    try {
+      var p = JSON.parse(lsGet(PREFS_KEY));
+      if (p && Array.isArray(p.closed)) {
+        prefs.closed = p.closed.filter(function (x) { return typeof x === "string"; }).slice(0, 20);
+      }
+    } catch (e) { /* defaults */ }
+  }
+  function savePrefs() {
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) { /* full: folding is cosmetic */ }
+  }
+
+  // ---------- 3. Apps list ----------
+  var apps = [];          // [{ id, name }] from apps.json
+  var aliases = [];       // [{ id, name }]: apps folded into another one (APP-ALIAS)
+  function loadApps() {
+    return fetch("../apps.json").then(function (r) {
+      if (!r.ok) throw new Error("apps.json " + r.status);
+      return r.json();
+    }).then(function (j) {
+      var pick = function (list) {
+        return (Array.isArray(list) ? list : []).filter(function (a) {
+          return a && typeof a.id === "string";
+        }).map(function (a) { return { id: a.id, name: String(a.name || a.id) }; });
+      };
+      apps = pick(j && j.apps);
+      aliases = pick(j && j.aliases);
+    }).catch(function () { apps = []; aliases = []; });
+  }
+  // An old app's data (its keys and slice stay) still counts as its own.
+  function appIds() { return apps.concat(aliases).map(function (a) { return a.id; }); }
+  function ownerName(id) {
+    if (id.charAt(0) === "_") return t("a." + id);
+    var p = parentWin();
+    try {
+      if (p && typeof p.t === "function") {
+        var s = p.t("app." + id);
+        if (s && s !== "app." + id) return s;
+      }
+    } catch (e) { /* standalone */ }
+    var all = apps.concat(aliases);
+    for (var i = 0; i < all.length; i++) if (all[i].id === id) return all[i].name;
+    return id;
+  }
+  function canOpen(id) {
+    var p = parentWin();
+    return !!(p && id.charAt(0) !== "_" && typeof p.__orosOpenApp === "function" &&
+              appIds().indexOf(id) >= 0 && id !== "settings");
+  }
+  function openApp(id) {
+    var p = parentWin();
+    try { if (p && typeof p.__orosOpenApp === "function") p.__orosOpenApp(id); } catch (e) { /* ignore */ }
+  }
+
+  // ---------- 4. Storage + per-app sizes ----------
+  function lsEntries() {
+    var out = [];
+    try {
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k === null) continue;
+        var v = localStorage.getItem(k);
+        out.push({ key: k, len: v ? v.length : 0 });
+      }
+    } catch (e) { /* storage blocked */ }
+    return out;
+  }
+  function sliceRegistry() {
+    try {
+      var r = JSON.parse(lsGet("oros-slices"));
+      return r && typeof r === "object" ? r : {};
+    } catch (e) { return {}; }
+  }
+
+  function cacheInfo() {
+    if (!window.caches || typeof caches.keys !== "function") return Promise.resolve(null);
+    return caches.keys().then(function (names) {
+      return Promise.all(names.map(function (n) {
+        return caches.open(n).then(function (c) { return c.keys(); })
+          .then(function (ks) { return { name: n, count: ks.length }; })
+          .catch(function () { return { name: n, count: 0 }; });
+      }));
+    }).catch(function () { return null; });
+  }
+
+  var appsExpanded = false;
+
+  function renderStorage() {
+    var st = navigator.storage;
+    var est = (st && typeof st.estimate === "function") ? st.estimate().catch(function () { return null; }) : Promise.resolve(null);
+    var per = (st && typeof st.persisted === "function") ? st.persisted().catch(function () { return null; }) : Promise.resolve(null);
+    return Promise.all([est, per, cacheInfo()]).then(function (res) {
+      var e = res[0], persisted = res[1], cachesList = res[2];
+      var nodes = [], rows = [];
+
+      // App data first: it is what the apps save into, and the browser
+      // limit that matters most. (Chromium's estimate() leaves it out.)
+      var lsRows = C.sizeByOwner(lsEntries(), appIds(), sliceRegistry());
+      var lsBytes = C.totalBytes(lsRows);
+      var lsPct = C.percent(lsBytes / 2, LS_LIMIT);
+      var big = el("div", "big", bytes(lsBytes) + " ");
+      big.appendChild(el("small", "", t("s.ls")));
+      nodes.push(big);
+
+      var kv = [];
+      if (e && e.quota > 0) {
+        kv.push([t("s.other"), t("s.used", { used: bytes(e.usage), quota: bytes(e.quota) })]);
+        var d = e.usageDetails;
+        if (d) {
+          if (typeof d.indexedDB === "number") kv.push([t("s.idb"), bytes(d.indexedDB)]);
+          if (typeof d.caches === "number") kv.push([t("s.caches"), bytes(d.caches)]);
+          if (typeof d.serviceWorkerRegistrations === "number") kv.push([t("s.sw"), bytes(d.serviceWorkerRegistrations)]);
+        }
+      }
+      if (persisted !== null) kv.push([t("s.persist"), yn(persisted), persisted ? "ok" : "warn-t"]);
+
+      var lim = el("p", "hint", t("s.lsLimit", { p: num(lsPct, lsPct < 10 ? 1 : 0) }));
+      nodes.push(barEl(lsPct, lsPct > 90 ? "bad" : lsPct > 80 ? "warn" : ""));
+      nodes.push(lim);
+      rows.push([t("s.ls"), bytes(lsBytes) + " · " + t("s.lsLimit", { p: num(lsPct, 1) })]);
+      if (lsPct > 80) nodes.push(el("p", "note bad", t("s.lsWarn")));
+      if (kv.length) nodes.push(kvTable(kv));
+      rows = rows.concat(kv);
+      if (!(e && e.quota > 0)) nodes.push(el("p", "hint", t("s.noEstimate")));
+
+      if (cachesList && cachesList.length) {
+        var ckv = cachesList.map(function (c) {
+          var o = C.cacheOwner(c.name);
+          var label = o.charAt(0) === "_" ? t("s.cache." + o) : ownerName(o);
+          return [label, t("s.entries", { n: num(c.count) })];
+        });
+        nodes.push(el("p", "hint", t("s.caches")));
+        nodes.push(kvTable(ckv));
+        rows = rows.concat(ckv);
+      }
+
+      if (persisted === false) {
+        nodes.push(el("p", "note", t("s.persistHint")));
+        if (typeof st.persist === "function") {
+          var b = el("button", "btn dv-small", t("s.persistAsk"));
+          b.type = "button";
+          b.addEventListener("click", function () {
+            b.disabled = true;
+            st.persist().then(function (ok) {
+              showToast(ok ? t("s.persistOk") : t("s.persistDenied"));
+              renderStorage();
+            }).catch(function () { b.disabled = false; });
+          });
+          nodes.push(b);
+        }
+      }
+      fill("b-storage", nodes);
+      report.storage = rows;
+      renderApps(lsRows);
+    });
+  }
+
+  function renderApps(lsRows) {
+    var max = lsRows.length ? lsRows[0].bytes : 0;
+    var list = el("ul", "apps");
+    var shown = appsExpanded ? lsRows : lsRows.slice(0, APPS_SHOWN);
+    shown.forEach(function (r) {
+      var li = el("li");
+      var open = canOpen(r.owner);
+      var row = el(open ? "button" : "div", "app-row");
+      if (open) {
+        row.type = "button";
+        row.addEventListener("click", function () { openApp(r.owner); });
+      }
+      row.appendChild(el("span", "app-name", ownerName(r.owner)));
+      row.appendChild(el("span", "app-size", bytes(r.bytes)));
+      row.appendChild(barEl(C.percent(r.bytes, max)));
+      li.appendChild(row);
+      list.appendChild(li);
+    });
+    var nodes = [el("p", "hint", t("a.hint")), list];
+    if (lsRows.length > APPS_SHOWN) {
+      var more = el("button", "btn dv-small more",
+        appsExpanded ? t("a.showLess") : t("a.showAll", { n: lsRows.length }));
+      more.type = "button";
+      more.addEventListener("click", function () {
+        appsExpanded = !appsExpanded;
+        renderApps(lsRows);
+      });
+      nodes.push(more);
+    }
+    fill("b-apps", nodes);
+    report.apps = lsRows.map(function (r) { return [ownerName(r.owner), bytes(r.bytes)]; });
+  }
+
+  // ---------- 5. Battery ----------
+  // Never show a number the browser may have made up: Brave always
+  // reports 100% + charging, and Chromium returns the same "full and
+  // charging" default when it has no real data (C.batteryState).
+  var battery = null, batteryReady = false, batteryChanged = false;
+  function fmtDuration(sec) {
+    if (!isFinite(sec) || !(sec > 0)) return "";
+    var h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+    if (m === 60) { h++; m = 0; }
+    return (h ? h + " h " : "") + m + " min";
+  }
+  function isBrave() {
+    try { return !!(navigator.brave && typeof navigator.brave.isBrave === "function"); }
+    catch (e) { return false; }
+  }
+  function renderBattery() {
+    if (!batteryReady) return;
+    var state = C.batteryState(battery, { brave: isBrave(), changed: batteryChanged });
+    if (state === "none" || state === "hidden") {
+      fill("b-battery", [el("p", "hint", t(state === "none" ? "b.na" : "b.hidden"))]);
+      report.battery = [[t("c.battery"), t("na")]];
+      return;
+    }
+    if (state === "suspect") {
+      fill("b-battery", [el("p", "hint", t("b.suspect"))]);
+      report.battery = [[t("c.battery"), t("unknown")]];
+      return;
+    }
+    var pct = Math.round(battery.level * 100);
+    var rows = [[t("b.level"), pct + "%"], [t("b.charging"), yn(battery.charging)]];
+    var eta = battery.charging ? fmtDuration(battery.chargingTime) : fmtDuration(battery.dischargingTime);
+    if (eta) rows.push([battery.charging ? t("b.full") : t("b.empty"), eta]);
+    var big = el("div", "big", pct + "%");
+    fill("b-battery", [big, barEl(pct, pct <= 10 ? "bad" : pct <= 20 ? "warn" : ""), kvTable(rows.slice(1))]);
+    report.battery = rows;
+  }
+  function onBatteryEvent() { batteryChanged = true; renderBattery(); }
+  function initBattery() {
+    if (typeof navigator.getBattery !== "function") { batteryReady = true; renderBattery(); return Promise.resolve(); }
+    return navigator.getBattery().then(function (b) {
+      battery = b;
+      batteryReady = true;
+      ["levelchange", "chargingchange", "chargingtimechange", "dischargingtimechange"].forEach(function (ev) {
+        b.addEventListener(ev, onBatteryEvent);
+      });
+      renderBattery();
+    }).catch(function () { batteryReady = true; renderBattery(); });
+  }
+
+  // ---------- 6. Network ----------
+  function renderNetwork() {
+    var on = navigator.onLine !== false;
+    var rows = [[t("n.state"), on ? t("n.online") : t("n.offline"), on ? "ok" : "bad"]];
+    var c = navigator.connection;
+    if (c) {
+      if (c.type) rows.push([t("n.type"), String(c.type)]);
+      else if (c.effectiveType) rows.push([t("n.type"), String(c.effectiveType).toUpperCase()]);
+      if (typeof c.downlink === "number" && c.downlink > 0) rows.push([t("n.speed"), "≈ " + num(c.downlink, 1) + " Mbps"]);
+      if (typeof c.rtt === "number" && c.rtt > 0) rows.push([t("n.rtt"), "≈ " + num(c.rtt) + " ms"]);
+      if (typeof c.saveData === "boolean") rows.push([t("n.save"), yn(c.saveData)]);
+    }
+    var nodes = [kvTable(rows)];
+    if (!c) nodes.push(el("p", "hint", t("n.na")));
+    fill("b-network", nodes);
+    report.network = rows;
+  }
+
+  // ---------- 7. Sync ----------
+  function renderSync() {
+    var s = syncApi();
+    var rows = [];
+    var connected = false;
+    try { connected = !!(s && s.isConnected && s.isConnected()); } catch (e) { /* ignore */ }
+    rows.push([t("y.connected"), yn(connected), connected ? "ok" : ""]);
+    if (connected) {
+      var unlocked = false, dirty = false, every = 0;
+      try { unlocked = !!(s.hasPassphrase && s.hasPassphrase()); } catch (e) { /* ignore */ }
+      try { dirty = !!(s.isDirty && s.isDirty()); } catch (e) { /* ignore */ }
+      try { every = s.getIntervalMinutes ? s.getIntervalMinutes() : 0; } catch (e) { /* ignore */ }
+      rows.push([t("y.unlocked"), yn(unlocked), unlocked ? "ok" : "warn-t"]);
+      rows.push([t("y.pending"), yn(dirty), dirty ? "warn-t" : ""]);
+      // OV-2: the file queue of Vault Drive and the apps waiting to merge.
+      var vs = null, deferred = 0;
+      try { var pw = parentWin(); vs = pw && pw.orosVault && pw.orosVault.status ? pw.orosVault.status() : null; } catch (e) { /* standalone */ }
+      try { deferred = s.getDeferred ? s.getDeferred().length : 0; } catch (e) { /* ignore */ }
+      if (vs && vs.usable) {
+        rows.push([t("y.files"), num(vs.queued || 0), vs.queued ? "warn-t" : ""]);
+        rows.push([t("y.filesLast"), when(vs.lastOkAt || 0)]);
+        if (vs.lastError) rows.push([t("y.filesErr"), String(vs.lastError).slice(0, 120), "warn-t"]);
+      }
+      if (deferred) rows.push([t("y.merge"), num(deferred), "warn-t"]);
+      rows.push([t("y.every"), every > 0 ? t("y.everyN", { n: every }) : t("y.off")]);
+      rows.push([t("y.backup"), when(parseInt(lsGet("oros-sync-last-backup") || "0", 10))]);
+    }
+    var mode = lsGet("oros-autoexport") || "off";
+    var modeLabel = { daily: t("y.daily"), weekly: t("y.weekly"), monthly: t("y.monthly") }[mode] || t("y.off");
+    rows.push([t("y.export"), modeLabel]);
+    if (mode !== "off" && modeLabel !== t("y.off")) {
+      rows.push([t("y.exportLast"), when(parseInt(lsGet("oros-autoexport-last") || "0", 10))]);
+      var folder = lsGet("oros-fs-folder-name");
+      if (folder) rows.push([t("y.folder"), folder]);
+    }
+    var nodes = [kvTable(rows)];
+    if (!connected) nodes.push(el("p", "note", t("y.notConnected")));
+    // Sync is set up in Settings → Sync (the shell opens it there).
+    var p = parentWin();
+    if (p && p.orosSettings && typeof p.orosSettings.open === "function") {
+      var go = el("button", "btn dv-small", t("y.where"));
+      go.type = "button";
+      go.addEventListener("click", function () { p.orosSettings.open("sync"); });
+      nodes.push(go);
+    }
+    fill("b-sync", nodes);
+    report.sync = rows;
+  }
+
+  // ---------- 7b. Running now (OV-2) ----------
+  // The open apps and the places they take, from the shell's
+  // window.orosMonitor (shell.js 10e); Close works like × in the
+  // shell's Open apps. Repaints on every change while on screen.
+  function monApi() {
+    var p = parentWin();
+    try { return p && p.orosMonitor && typeof p.orosMonitor.snapshot === "function" ? p.orosMonitor : null; }
+    catch (e) { return null; }
+  }
+  function agoText(at) {
+    var sec = Math.max(0, Math.round((Date.now() - at) / 1000));
+    var m = Math.round(sec / 60), h = Math.round(sec / 3600);
+    try {
+      var rtf = new Intl.RelativeTimeFormat(LOCALE, { numeric: "auto" });
+      return sec < 60 ? rtf.format(0, "minute") : m < 60 ? rtf.format(-m, "minute") : rtf.format(-h, "hour");
+    } catch (e) { return m < 60 ? m + " min" : h + " h"; }
+  }
+  var runToken = 0;
+  function renderRunning() {
+    var M = monApi();
+    if (!M) { fill("b-running", [el("p", "note", t("r.na"))]); report.running = null; return Promise.resolve(); }
+    var token = ++runToken;
+    return M.snapshot().then(function (snap) {
+      if (token !== runToken) return;
+      var nodes = [], rows = [];
+      var list = el("ul", "dv-run");
+      snap.apps.forEach(function (a) {
+        var li = el("li");
+        var txt = el("div", "dv-run-txt");
+        txt.appendChild(el("span", "dv-run-name", a.name));
+        var state = a.front ? t("r.front") : a.side ? t("r.beside") : t("r.left", { t: agoText(a.at) });
+        var places = a.weight > 1 ? t("r.placeN", { n: a.weight }) : t("r.place1");
+        txt.appendChild(el("span", "dv-run-sub", state + " · " + places));
+        li.appendChild(txt);
+        rows.push([a.name, state + " · " + places]);
+        if (a.id !== "settings") {
+          var b = el("button", "btn dv-small dv-run-x", t("r.close"));
+          b.type = "button";
+          b.setAttribute("aria-label", t("r.closeLabel", { app: a.name }));
+          b.addEventListener("click", function () { M.close(a.id); });
+          li.appendChild(b);
+        }
+        list.appendChild(li);
+      });
+      var others = snap.apps.filter(function (a) { return a.id !== "settings"; });
+      if (!others.length) nodes.push(el("p", "note", t(snap.multitask ? "r.only" : "r.off")));
+      else nodes.push(list);
+      if (others.length > 1) {
+        var all = el("button", "btn dv-small", t("r.closeOthers"));
+        all.type = "button";
+        all.addEventListener("click", function () { others.forEach(function (a) { M.close(a.id); }); });
+        nodes.push(all);
+      }
+      var kv = [];
+      if (snap.multitask) kv.push([t("r.places"), t("r.placesVal", { n: snap.places.used, m: snap.places.total }),
+                                   snap.places.used > snap.places.total ? "warn-t" : ""]);
+      kv.push([t("r.mem"), snap.memory.device ? t("r.memGB", { n: num(snap.memory.device, 1) }) : t("unknown")]);
+      if (snap.memory.heap) kv.push([t("r.heap"), bytes(snap.memory.heap.used)]);
+      nodes.push(kvTable(kv));
+      if (snap.multitask) nodes.push(el("p", "hint", t("r.hint")));
+      fill("b-running", nodes);
+      report.running = rows.concat(kv);
+    }, function () { /* the shell went away */ });
+  }
+
+  // ---------- 8. Screen ----------
+  function mq(q, win) {
+    try { return !!(win || window).matchMedia(q).matches; } catch (e) { return false; }
+  }
+  function renderScreen() {
+    var p = parentWin() || window;
+    var sc = window.screen || {};
+    var ww = window.innerWidth, wh = window.innerHeight;
+    try { ww = p.innerWidth; wh = p.innerHeight; } catch (e) { /* cross-origin: keep the frame */ }
+    var portrait = (sc.orientation && sc.orientation.type) ?
+      sc.orientation.type.indexOf("portrait") === 0 : (sc.height >= sc.width);
+    var touch = navigator.maxTouchPoints || 0;
+    var installed = mq("(display-mode: standalone)", p) || mq("(display-mode: fullscreen)", p) ||
+                    mq("(display-mode: window-controls-overlay)", p) || !!navigator.standalone;
+    var rows = [
+      [t("d.screen"), num(sc.width) + " × " + num(sc.height)],
+      [t("d.window"), num(ww) + " × " + num(wh)],
+      [t("d.ratio"), num(window.devicePixelRatio || 1, 2) + "×"],
+      [t("d.orient"), portrait ? t("d.portrait") : t("d.landscape")],
+      [t("d.color"), sc.colorDepth ? t("d.bits", { n: sc.colorDepth }) : t("unknown")],
+      [t("d.touch"), touch > 0 ? t("d.points", { n: touch }) : t("no")],
+      [t("d.dark"), yn(mq("(prefers-color-scheme: dark)"))],
+      [t("d.motion"), yn(mq("(prefers-reduced-motion: reduce)"))],
+      [t("d.mode"), installed ? t("d.installed") : t("d.tab")]
+    ];
+    fill("b-screen", [kvTable(rows)]);
+    report.screen = rows;
+    renderScreens(p, rows);
+  }
+  // SS3: the screens (screens.js in the shell, Window Management API).
+  function renderScreens(p, rows) {
+    var S = null;
+    try { S = p.orosScreens || null; } catch (e) { S = null; }
+    var hint = el("p", "hint", t("d.scrHint"));
+    if (!S || !S.supported(p)) {
+      // phones and tablets: nothing to say about a second screen
+      if (mq("(hover: hover) and (pointer: fine)", p)) fill("b-screen", [kvTable(rows), el("p", "hint", t("d.scrNo")), hint]);
+      return;
+    }
+    var ext = false;
+    try { ext = !!(p.screen && p.screen.isExtended); } catch (e) {}
+    var base = rows.concat([[t("d.screens"), ext ? t("d.scrMany") : t("d.scrOne")]]);
+    fill("b-screen", [kvTable(base), hint]);
+    report.screen = base;
+    if (!ext) return;
+    S.permission(p).then(function (st) {
+      if (st === "granted") {
+        S.list(p).then(function (list) {
+          var more = list.map(function (x, i) {
+            var tags = [];
+            if (x.current) tags.push(t("d.scrHere"));
+            if (x.primary) tags.push(t("d.scrMain"));
+            return [(x.label || t("d.screen") + " " + (i + 1)), num(x.w) + " × " + num(x.h) + (tags.length ? " (" + tags.join(", ") + ")" : "")];
+          });
+          fill("b-screen", [kvTable(base.concat(more)), hint]);
+          report.screen = base.concat(more);
+        });
+        return;
+      }
+      if (st === "denied") { fill("b-screen", [kvTable(base), el("p", "hint", t("d.scrDenied")), hint]); return; }
+      var ask = el("button", "btn dv-small", t("d.scrAsk"));
+      ask.type = "button";
+      ask.addEventListener("click", function () {
+        S.details(p).then(function () { renderScreen(); });
+      });
+      fill("b-screen", [kvTable(base), ask, hint]);
+    });
+  }
+
+  // ---------- 9. orOS & browser ----------
+  function swState() {
+    var sw = navigator.serviceWorker;
+    return !!(sw && sw.controller);
+  }
+  function renderSystem(cacheNames) {
+    var ua = navigator.userAgent || "";
+    var hint = (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? "touch-mac" : "";
+    var u = C.parseUA(ua, hint);
+    var offline = "";
+    (cacheNames || []).forEach(function (n) {
+      var m = String(n).match(/^oros-shell-oros-v([\d.]+)$/);
+      if (m) offline = m[1];
+    });
+    var theme = document.documentElement.getAttribute("data-theme") === "light" ? t("o.light") : t("o.dark");
+    var tz = "";
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { /* old engine */ }
+    var rows = [
+      [t("o.version"), lsGet("oros-last-version") || SCRIPT_V || t("unknown")],
+      [t("o.cache"), swState() ? (offline ? t("o.swOn") + " · " + offline : t("o.swOn")) : t("o.swOff"),
+        swState() ? "ok" : "warn-t"],
+      [t("o.apps"), apps.length ? num(apps.length) : t("unknown")],
+      [t("o.lang"), ((window.orosI18n && window.orosI18n.info(LANG)) || {}).name || t("o.langName")],
+      [t("o.theme"), theme],
+      [t("o.browser"), u.browser ? (u.browser + (u.version ? " " + u.version : "")) : t("unknown")],
+      [t("o.os"), u.os ? (u.os + (u.osVersion ? " " + u.osVersion : "")) : t("unknown")],
+      [t("o.cores"), navigator.hardwareConcurrency ? num(navigator.hardwareConcurrency) : t("unknown")],
+      [t("o.memory"), navigator.deviceMemory ? t("o.memoryV", { n: num(navigator.deviceMemory, 2) }) : t("unknown")],
+      [t("o.tz"), tz || t("unknown")],
+      [t("o.locale"), navigator.language || t("unknown")],
+      [t("o.secure"), yn(window.isSecureContext)]
+    ];
+    fill("b-system", [kvTable(rows)]);
+    report.system = rows;
+  }
+
+  // ---------- 10. Features ----------
+  function hasFeature(f) {
+    var p = parentWin() || window;
+    try {
+      switch (f) {
+        case "notifications": return "Notification" in window;
+        case "folder": return typeof p.showDirectoryPicker === "function";
+        case "share": return typeof navigator.share === "function";
+        case "clipboard": return !!(navigator.clipboard && typeof navigator.clipboard.writeText === "function");
+        case "vibrate": return typeof navigator.vibrate === "function";
+        case "wakelock": return !!(navigator.wakeLock && typeof navigator.wakeLock.request === "function");
+        case "geolocation": return !!navigator.geolocation;
+        case "opfs": return !!(navigator.storage && typeof navigator.storage.getDirectory === "function");
+        case "serviceworker": return "serviceWorker" in navigator;
+        case "crypto": return !!(window.crypto && window.crypto.subtle);
+        case "audio": return !!(window.AudioContext || window.webkitAudioContext);
+      }
+    } catch (e) { /* treat as missing */ }
+    return false;
+  }
+  // Current permission state without asking for anything.
+  function permState(f) {
+    if (f === "notifications") {
+      try {
+        var v = window.Notification && Notification.permission;
+        return Promise.resolve(v === "default" ? "prompt" : v || null);
+      } catch (e) { return Promise.resolve(null); }
+    }
+    if (f === "geolocation" && navigator.permissions && typeof navigator.permissions.query === "function") {
+      return navigator.permissions.query({ name: "geolocation" })
+        .then(function (r) { return r.state; }).catch(function () { return null; });
+    }
+    return Promise.resolve(null);
+  }
+  function renderFeatures() {
+    var ids = appIds();
+    return Promise.all(C.FEATURES.map(function (f) {
+      var has = hasFeature(f);
+      return (has ? permState(f) : Promise.resolve(null)).then(function (perm) {
+        return { f: f, has: has, perm: perm };
+      });
+    })).then(function (list) {
+      var ul = el("ul", "feat");
+      var rows = [];
+      list.forEach(function (x) {
+        var li = el("li");
+        li.appendChild(el("span", "mark " + (x.has ? "ok" : "bad"), x.has ? "✓" : "✗"));
+        var txt = el("span", "txt", t("f." + x.f));
+        var sub = "";
+        if (!x.has) {
+          var names = C.featureImpact(x.f, ids).map(ownerName);
+          if (names.length) sub = t("f.missing", { apps: names.join(", ") });
+        } else if (x.perm && STRINGS.en["f.perm." + x.perm]) {
+          sub = t("f.permission", { s: t("f.perm." + x.perm) });
+        }
+        if (sub) txt.appendChild(el("span", "sub", sub));
+        li.appendChild(txt);
+        ul.appendChild(li);
+        rows.push([t("f." + x.f), (x.has ? "✓" : "✗") + (sub ? " (" + sub + ")" : "")]);
+      });
+      fill("b-features", [el("p", "hint", t("f.hint")), ul]);
+      report.features = rows;
+    });
+  }
+
+  // ---------- 11. Report + toast ----------
+  var ORDER = ["running", "storage", "apps", "battery", "network", "sync", "screen", "system", "features"];
+  var TITLES = { running: "c.running", storage: "c.storage", apps: "c.apps", battery: "c.battery", network: "c.network",
+                 sync: "c.sync", screen: "c.screen", system: "c.system", features: "c.features" };
+  function reportText() {
+    return C.buildReport(t("r.header", { date: when(Date.now()) }),
+      ORDER.filter(function (k) { return report[k]; }).map(function (k) {
+        return { title: t(TITLES[k]), rows: report[k] };
+      }));
+  }
+  function copyText(text) {
+    if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+      return navigator.clipboard.writeText(text).catch(function () { return legacyCopy(text); });
+    }
+    return legacyCopy(text);
+  }
+  function legacyCopy(text) {
+    return new Promise(function (resolve, reject) {
+      var ta = el("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.cssText = "position:fixed;left:-9999px;top:0;opacity:0;";
+      (root || document.body).appendChild(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+      ta.parentNode.removeChild(ta);
+      if (ok) resolve(); else reject(new Error("copy"));
+    });
+  }
+  function copyReport() {
+    copyText(reportText()).then(function () { showToast(t("toast.copied")); },
+                                function () { showToast(t("toast.copyFail")); });
+  }
+
+  // A short notice: the shell's transient toast, else the live line.
+  function showToast(text) {
+    try {
+      var n = parentWin() && parentWin().orosNotifs;
+      if (n && typeof n.transient === "function" && n.transient({ ns: "settings", title: String(text) })) return;
+    } catch (e) { /* standalone */ }
+    var box = $("live");
+    if (box) { box.textContent = ""; setTimeout(function () { box.textContent = text; }, 30); }
+  }
+
+  // ---------- 12. Mount ----------
+  var CARDS = ["running", "storage", "apps", "battery", "network", "sync", "screen", "system", "features"];
+  // The refresh icon, built as SVG nodes (no HTML strings in this file).
+  function refreshIcon() {
+    var NS = "http://www.w3.org/2000/svg";
+    var svg = document.createElementNS(NS, "svg");
+    [["width", "18"], ["height", "18"], ["viewBox", "0 0 24 24"], ["fill", "none"], ["stroke", "currentColor"],
+     ["stroke-width", "2.2"], ["stroke-linecap", "round"], ["stroke-linejoin", "round"], ["aria-hidden", "true"]]
+      .forEach(function (a) { svg.setAttribute(a[0], a[1]); });
+    ["M20 11a8 8 0 1 0-2.3 5.7", "M20 4v7h-7"].forEach(function (d) {
+      var p = document.createElementNS(NS, "path");
+      p.setAttribute("d", d);
+      svg.appendChild(p);
+    });
+    return svg;
+  }
+
+  var lastCacheNames = [];
+  var refreshing = false;
+  function refresh() {
+    if (!root || refreshing) return Promise.resolve();
+    refreshing = true;
+    renderNetwork();
+    renderSync();
+    renderRunning();
+    renderScreen();
+    renderBattery();
+    var cn = (window.caches && typeof caches.keys === "function") ?
+      caches.keys().catch(function () { return []; }) : Promise.resolve([]);
+    return Promise.all([renderStorage(), renderFeatures(), cn.then(function (names) {
+      lastCacheNames = names || [];
+      renderSystem(lastCacheNames);
+    })]).catch(function (e) { console.error("device refresh", e); })
+      .then(function () { refreshing = false; });
+  }
+  function shown() { return !!(root && root.isConnected); }
+
+  function build() {
+    var box = el("div", "dv");
+    var bar = el("div", "dv-bar-top");
+    var rb = el("button", "btn dv-icon");
+    rb.type = "button";
+    rb.id = "dv-refresh";
+    rb.appendChild(refreshIcon());
+    rb.setAttribute("aria-label", t("btn.refresh"));
+    rb.title = t("btn.refresh") + " (R)";
+    rb.addEventListener("click", refresh);
+    var cb = el("button", "btn primary", t("btn.copy"));
+    cb.type = "button";
+    cb.id = "dv-copy";
+    cb.addEventListener("click", copyReport);
+    bar.appendChild(rb);
+    bar.appendChild(cb);
+    box.appendChild(bar);
+    var grid = el("div", "dv-grid");
+    CARDS.forEach(function (k) {
+      var d = el("details", "dv-card");
+      d.id = "dv-c-" + k;
+      d.open = prefs.closed.indexOf("c-" + k) < 0;
+      var s = el("summary");
+      s.appendChild(el("h3", "", t("c." + k)));
+      d.appendChild(s);
+      var b = el("div", "dv-body");
+      b.id = "dv-b-" + k;
+      d.appendChild(b);
+      d.addEventListener("toggle", function () {
+        var i = prefs.closed.indexOf("c-" + k);
+        if (d.open && i >= 0) prefs.closed.splice(i, 1);
+        else if (!d.open && i < 0) prefs.closed.push("c-" + k);
+        savePrefs();
+      });
+      grid.appendChild(d);
+    });
+    box.appendChild(grid);
+    box.appendChild(el("p", "hint dv-about", t("about")));
+    var live = el("div", "sr-only");
+    live.id = "dv-live";
+    live.setAttribute("aria-live", "polite");
+    box.appendChild(live);
+    return box;
+  }
+
+  function wire() {
+    window.addEventListener("online", renderNetwork);
+    window.addEventListener("offline", renderNetwork);
+    if (navigator.connection && typeof navigator.connection.addEventListener === "function") {
+      navigator.connection.addEventListener("change", renderNetwork);
+    }
+    var resizeTimer = null;
+    function onResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function () { if (shown()) renderScreen(); }, 150);
+    }
+    window.addEventListener("resize", onResize);
+    try { if (parentWin()) parentWin().addEventListener("resize", onResize); } catch (e) { /* ignore */ }
+    // OV-2: open apps and sync change → repaint while on screen.
+    var M = monApi(), monOff = null, monTimer = null;
+    if (M && typeof M.onChange === "function") {
+      monOff = M.onChange(function () {
+        clearTimeout(monTimer);
+        monTimer = setTimeout(function () { if (shown()) { renderRunning(); renderSync(); } }, 120);
+      });
+    }
+    window.addEventListener("pagehide", function () {
+      try { if (parentWin()) parentWin().removeEventListener("resize", onResize); } catch (e) { /* ignore */ }
+      if (monOff) { monOff(); monOff = null; }
+    });
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && shown()) refresh();
+    });
+    // R: refresh, while the section is on screen (not while typing)
+    document.addEventListener("keydown", function (e) {
+      if (!shown() || e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      var tg = e.target, tag = tg && tg.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || tag === "BUTTON" || tag === "SUMMARY") return;
+      if (e.key === "r" || e.key === "R") { e.preventDefault(); refresh(); }
+    });
+    try {
+      new MutationObserver(function () { if (shown()) renderSystem(lastCacheNames); }).observe(
+        window.parent.document.documentElement,
+        { attributes: true, attributeFilter: ["data-skin", "data-theme"] }
+      );
+    } catch (e) { /* standalone */ }
+  }
+
+  // The section node, built once; Settings appends it on every repaint.
+  function mount(host) {
+    if (!root) {
+      loadPrefs();
+      root = build();
+      host.appendChild(root);
+      wire();
+      renderNetwork();
+      renderSync();
+      renderRunning();
+      renderScreen();
+      loadApps().then(function () {
+        return Promise.all([initBattery(), refresh()]);
+      });
+      return root;
+    }
+    if (root.parentNode !== host) host.appendChild(root);
+    renderSync();       // the sync state may have changed while away
+    renderRunning();
+    return root;
+  }
+
+  window.SettingsDevice = { mount: mount, refresh: refresh, reportText: reportText };
+})();

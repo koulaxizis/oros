@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Stock — the point of sale (stock/pos.js, v1.0.0, wave 46)
+// orOS Stock — the point of sale (stock/pos.js, v1.1.0, wave 46 + F1)
 // A till screen on top of Stock: product grid with search, categories
 // and barcode (scanner or camera), a cart, price lists (retail, plus
 // any the user adds, e.g. wholesale), payment method, cash change, a
@@ -11,6 +11,11 @@
 // Loaded by stock/index.html after pos-core.js; stock.js calls
 // window.OrosStockPos.open(api). Everything shown is textContent;
 // the printed receipt / Z report escape every text (api.esc).
+// F1 (fair till): discounts per line and on the whole sale (% or an
+// amount, with a reason; a device-local cap for a helper's phone),
+// split payment (cash + card), free items typed at the till (no
+// stock) and the receipt as a PDF (jsPDF + Noto, shared or saved) or
+// a QR code of its text, both built on this device only.
 // ============================================================
 (function () {
   "use strict";
@@ -22,7 +27,7 @@
       "pos.title": "Point of sale", pl: "Price list", retail: "Retail", wh: "Warehouse",
       zrep: "Z report", lists: "Price lists", setup: "Receipt settings", close: "Close",
       ph: "Scan or search a product", all: "All", "pos.none": "No products match.", more: "Showing {n} of {t}. Type to narrow.",
-      left: "{q} left", noPrice: "no price",
+      left: "{q} left", noPrice: "no price", odLeft: "On demand",
       cart: "Sale", empty: "Tap a product or scan a barcode.", unknown: "No product with the code \"{c}\".",
       net: "Net", vat: "VAT", total: "Total",
       pay: "Payment", cash: "Cash", card: "Card", other: "Other",
@@ -47,13 +52,45 @@
       stPaper: "Paper", stDev: "Register code", stDevHint: "Two characters at the start of this device's receipt numbers.",
       stLocal: "These settings stay on this device (each register prints its own).", stSaved: "Saved",
       w: "Time", no: "No.", paid: "Paid", givenR: "Given", changeR: "Change", totalR: "TOTAL",
-      notFiscal: "Not a tax receipt."
+      notFiscal: "Not a tax receipt.",
+      discT: "Discount", discLine: "Discount: {n}", discSale: "Discount on the whole sale", discPct: "%", discAmt: "Amount off",
+      discReason: "Reason (optional)", discReasonPh: "Students, author signing…", discApply: "Apply", discNone: "No discount",
+      discBad: "Type a percentage from 1 to 100 or an amount.", discMax: "This device may give at most {p}% off (this sale: {q}%).",
+      was: "was", split: "Split", splitCash: "Cash part", splitCard: "Card: {c}", splitBad: "The cash part must be between 0 and {t}.",
+      otherBtn: "+ Other item", otherT: "Other item (not in stock)", otherName: "Name", otherPrice: "Price with VAT",
+      otherVat: "VAT", otherQty: "Quantity", otherHint: "Sold without stock: it is on the receipt and in the totals only.",
+      otherBad: "Type a name and a price.", otherAdd: "Add",
+      pdf: "PDF", share: "Share PDF", qr: "QR code", qrHint: "The customer scans it with the phone camera and keeps the receipt as text.",
+      pdfFail: "Could not make the PDF.", qrLong: "This receipt is too long for a QR code; use the PDF.",
+      stDmax: "Largest discount on this device (%)", stDmaxHint: "Empty = no limit. Useful on a helper's phone at a stand.",
+      zDisc: "Discounts given", zSplit: "Split payments",
+      evNone: "No event", evBtn: "Events", evTitle: "Events", evHint: "A fair, a launch or a market: the till uses its stand's warehouse and price list, and its sales add up in one report.",
+      evAdd: "New event", evName: "Name", evNameDef: "Book fair", evFrom: "From", evTo: "To", evStand: "Stand's warehouse", evStandNew: "+ New warehouse with the event's name",
+      evPl: "Price list", evFl: "Cash float per day", evEdit: "Edit", evPack: "Pack for the stand", evBack: "Bring back", evRep: "Report",
+      evDel: "Delete", evDelQ: "Delete the event \"{n}\"? Its sales stay, without the event.", evSaved: "Event saved", evBad: "Type a name and the dates.",
+      evNoStand: "Pick a stand's warehouse to pack and bring back.", evNoneYet: "No events yet.", evArch: "Archived", evOn: "Selling at {n}",
+      packT: "Pack: {n}", packHint: "From the main warehouse to {w}. One transfer for everything.", packMain: "{q} in the main warehouse", packGo: "Move to the stand",
+      packNone: "Type at least one quantity.", packDone: "Moved to {w}", backT: "Bring back: {n}", backHint: "Everything still at {w} goes back to the main warehouse.",
+      backNone: "Nothing left at the stand.", backGo: "Bring everything back", backDone: "Back in the main warehouse",
+      repT: "Report: {n}", repDays: "Days", repTitles: "Titles", repTaken: "Taken", repSold: "Sold", repBackC: "Back", repLeft: "Left", repPrint: "Print", repSheet: "Open in Spreadsheet",
+      repNone: "No sales at this event yet.",
+      drFl: "Cash float", drCc: "Cash counted", drCount: "Count…", drExp: "Expected in the drawer: {e}", drDiff: "Difference: {d}", drOk: "The drawer is right.",
+      drCountT: "Count the cash", drTotal: "Total: {t}", drUse: "Use this total",
+      zBudget: "Add to Budget", zBudgetN: "Z #{n} · {d}",
+      ownT: "Owner's PIN", ownTPass: "Owner's passphrase", ownHint: "This device is a till. Ask the owner to type the screen-lock PIN.",
+      ownHintPass: "This device is a till. Ask the owner to type the screen-lock passphrase.", ownOk: "OK", ownWrong: "Wrong PIN or passphrase.",
+      ownWait: "Too many tries. Wait {s} seconds.", ownOff: "The screen lock is off on this device.", ownDisc: "Over this device's limit ({p}%). The owner can allow it.",
+      tillT: "Helper device (till only)", tillHint: "For a helper's phone at the stand: orOS opens straight into this till, with no PIN. Voids, settings, events, a discount over the limit and every other app need the owner's screen-lock PIN. The phone still holds your synced data behind the lock, so give it only to someone you trust.",
+      tillGo: "Make this device a till", tillStop: "Stop till-only mode", tillIs: "This device is a till-only device.",
+      tillNeedLock: "Turn on the screen lock first. Its PIN becomes the owner's PIN.", tillLock: "Screen lock settings",
+      tillQ: "From now on orOS on this device opens only the till. You get back in with the screen-lock PIN (Owner: open orOS). Go on?",
+      tillStopped: "This device is no longer a till."
     },
     el: {
       "pos.title": "Σημείο πώλησης (POS)", pl: "Τιμοκατάλογος", retail: "Λιανική", wh: "Αποθήκη",
       zrep: "Αναφορά Ζ", lists: "Τιμοκατάλογοι", setup: "Ρυθμίσεις απόδειξης", close: "Κλείσιμο",
       ph: "Σάρωση ή αναζήτηση προϊόντος", all: "Όλα", "pos.none": "Κανένα προϊόν δεν ταιριάζει.", more: "Φαίνονται {n} από {t}. Γράψε για να περιορίσεις.",
-      left: "απομένουν {q}", noPrice: "χωρίς τιμή",
+      left: "απομένουν {q}", noPrice: "χωρίς τιμή", odLeft: "Κατά παραγγελία",
       cart: "Πώληση", empty: "Πάτα ένα προϊόν ή σάρωσε barcode.", unknown: "Δεν υπάρχει προϊόν με κωδικό «{c}».",
       net: "Καθαρή αξία", vat: "ΦΠΑ", total: "Σύνολο",
       pay: "Πληρωμή", cash: "Μετρητά", card: "Κάρτα", other: "Άλλο",
@@ -78,11 +115,47 @@
       stPaper: "Χαρτί", stDev: "Κωδικός ταμείου", stDevHint: "Δύο χαρακτήρες στην αρχή των αριθμών απόδειξης αυτής της συσκευής.",
       stLocal: "Οι ρυθμίσεις μένουν σε αυτή τη συσκευή (κάθε ταμείο τυπώνει τις δικές του).", stSaved: "Αποθηκεύτηκε",
       w: "Ώρα", no: "Αρ.", paid: "Πληρωμή", givenR: "Δόθηκαν", changeR: "Ρέστα", totalR: "ΣΥΝΟΛΟ",
-      notFiscal: "Δεν είναι φορολογική απόδειξη."
+      notFiscal: "Δεν είναι φορολογική απόδειξη.",
+      discT: "Έκπτωση", discLine: "Έκπτωση: {n}", discSale: "Έκπτωση σε όλη την πώληση", discPct: "%", discAmt: "Ποσό έκπτωσης",
+      discReason: "Λόγος (προαιρετικά)", discReasonPh: "Φοιτητές, υπογραφή συγγραφέα…", discApply: "Εφαρμογή", discNone: "Χωρίς έκπτωση",
+      discBad: "Γράψε ποσοστό από 1 έως 100 ή ένα ποσό.", discMax: "Αυτή η συσκευή δίνει έως {p}% έκπτωση (αυτή η πώληση: {q}%).",
+      was: "αντί", split: "Μικτή", splitCash: "Μετρητά", splitCard: "Κάρτα: {c}", splitBad: "Τα μετρητά πρέπει να είναι από 0 έως {t}.",
+      otherBtn: "+ Άλλο είδος", otherT: "Άλλο είδος (εκτός αποθέματος)", otherName: "Όνομα", otherPrice: "Τιμή με ΦΠΑ",
+      otherVat: "ΦΠΑ", otherQty: "Ποσότητα", otherHint: "Πωλείται χωρίς απόθεμα: μπαίνει μόνο στην απόδειξη και στα σύνολα.",
+      otherBad: "Γράψε όνομα και τιμή.", otherAdd: "Προσθήκη",
+      pdf: "PDF", share: "Κοινοποίηση PDF", qr: "Κωδικός QR", qrHint: "Ο πελάτης τον σαρώνει με την κάμερα του κινητού και κρατά την απόδειξη ως κείμενο.",
+      pdfFail: "Δεν έγινε το PDF.", qrLong: "Η απόδειξη είναι πολύ μεγάλη για QR· χρησιμοποίησε το PDF.",
+      stDmax: "Μέγιστη έκπτωση σε αυτή τη συσκευή (%)", stDmaxHint: "Κενό = χωρίς όριο. Χρήσιμο στο κινητό βοηθού σε έναν πάγκο.",
+      zDisc: "Εκπτώσεις που δόθηκαν", zSplit: "Μικτές πληρωμές",
+      evNone: "Χωρίς εκδήλωση", evBtn: "Εκδηλώσεις", evTitle: "Εκδηλώσεις", evHint: "Έκθεση, παρουσίαση ή παζάρι: το ταμείο παίρνει την αποθήκη του πάγκου και τον τιμοκατάλογό της, και οι πωλήσεις της αθροίζονται σε μία αναφορά.",
+      evAdd: "Νέα εκδήλωση", evName: "Όνομα", evNameDef: "Έκθεση βιβλίου", evFrom: "Από", evTo: "Έως", evStand: "Αποθήκη πάγκου", evStandNew: "+ Νέα αποθήκη με το όνομα της εκδήλωσης",
+      evPl: "Τιμοκατάλογος", evFl: "Αρχικό ποσό ταμείου ανά ημέρα", evEdit: "Αλλαγή", evPack: "Πακετάρισμα για τον πάγκο", evBack: "Επιστροφή", evRep: "Αναφορά",
+      evDel: "Διαγραφή", evDelQ: "Διαγραφή της εκδήλωσης «{n}»; Οι πωλήσεις της μένουν, χωρίς την εκδήλωση.", evSaved: "Η εκδήλωση αποθηκεύτηκε", evBad: "Γράψε όνομα και ημερομηνίες.",
+      evNoStand: "Διάλεξε αποθήκη πάγκου για πακετάρισμα και επιστροφή.", evNoneYet: "Καμία εκδήλωση ακόμα.", evArch: "Αρχειοθετημένη", evOn: "Πωλήσεις στο {n}",
+      packT: "Πακετάρισμα: {n}", packHint: "Από την κύρια αποθήκη στο {w}. Μία μεταφορά για όλα.", packMain: "{q} στην κύρια αποθήκη", packGo: "Μεταφορά στον πάγκο",
+      packNone: "Γράψε τουλάχιστον μία ποσότητα.", packDone: "Μεταφέρθηκαν στο {w}", backT: "Επιστροφή: {n}", backHint: "Ό,τι έμεινε στο {w} επιστρέφει στην κύρια αποθήκη.",
+      backNone: "Δεν έμεινε τίποτα στον πάγκο.", backGo: "Επιστροφή όλων", backDone: "Επέστρεψαν στην κύρια αποθήκη",
+      repT: "Αναφορά: {n}", repDays: "Ημέρες", repTitles: "Τίτλοι", repTaken: "Πήγαν", repSold: "Πουλήθηκαν", repBackC: "Γύρισαν", repLeft: "Έμειναν", repPrint: "Εκτύπωση", repSheet: "Άνοιγμα στο Υπολογιστικό φύλλο",
+      repNone: "Καμία πώληση σε αυτή την εκδήλωση ακόμα.",
+      drFl: "Αρχικό ποσό ταμείου", drCc: "Μετρητά που μετρήθηκαν", drCount: "Μέτρημα…", drExp: "Αναμενόμενα στο συρτάρι: {e}", drDiff: "Διαφορά: {d}", drOk: "Το ταμείο είναι σωστό.",
+      drCountT: "Μέτρημα μετρητών", drTotal: "Σύνολο: {t}", drUse: "Χρήση του συνόλου",
+      zBudget: "Στα Έσοδα & Έξοδα", zBudgetN: "Ζ #{n} · {d}",
+      ownT: "PIN ιδιοκτήτη", ownTPass: "Συνθηματικό ιδιοκτήτη", ownHint: "Αυτή η συσκευή είναι ταμείο. Ζήτα από τον ιδιοκτήτη να γράψει το PIN του κλειδώματος οθόνης.",
+      ownHintPass: "Αυτή η συσκευή είναι ταμείο. Ζήτα από τον ιδιοκτήτη να γράψει το συνθηματικό του κλειδώματος οθόνης.", ownOk: "OK", ownWrong: "Λάθος PIN ή συνθηματικό.",
+      ownWait: "Πολλές προσπάθειες. Περίμενε {s} δευτερόλεπτα.", ownOff: "Το κλείδωμα οθόνης είναι κλειστό σε αυτή τη συσκευή.", ownDisc: "Πάνω από το όριο της συσκευής ({p}%). Ο ιδιοκτήτης μπορεί να το επιτρέψει.",
+      tillT: "Συσκευή βοηθού (μόνο ταμείο)", tillHint: "Για το κινητό ενός βοηθού στον πάγκο: το orOS ανοίγει κατευθείαν σε αυτό το ταμείο, χωρίς PIN. Ακυρώσεις, ρυθμίσεις, εκδηλώσεις, έκπτωση πάνω από το όριο και κάθε άλλη εφαρμογή θέλουν το PIN του κλειδώματος οθόνης του ιδιοκτήτη. Το κινητό κρατά τα συγχρονισμένα δεδομένα σου πίσω από το κλείδωμα, οπότε δώσ' το μόνο σε άνθρωπο που εμπιστεύεσαι.",
+      tillGo: "Κάνε αυτή τη συσκευή ταμείο", tillStop: "Τέλος λειτουργίας μόνο ταμείου", tillIs: "Αυτή η συσκευή είναι μόνο ταμείο.",
+      tillNeedLock: "Άνοιξε πρώτα το κλείδωμα οθόνης. Το PIN του γίνεται το PIN του ιδιοκτήτη.", tillLock: "Ρυθμίσεις κλειδώματος οθόνης",
+      tillQ: "Από εδώ και πέρα το orOS σε αυτή τη συσκευή ανοίγει μόνο το ταμείο. Ξαναμπαίνεις με το PIN του κλειδώματος οθόνης (Ιδιοκτήτης: άνοιγμα orOS). Συνέχεια;",
+      tillStopped: "Η συσκευή δεν είναι πια ταμείο."
     }
   };
 
-  var api = null, LANG = "en", cart = [], payMode = "cash";
+  var api = null, LANG = "en", cart = [], payMode = "cash", saleDisc = null, saleDc = "";
+  // ?v= of this script, for the libraries loaded on demand (PDF, QR)
+  var SV = (function () {
+    try { var m = /[?&]v=([^&#]+)/.exec(document.currentScript.src); return m ? m[1] : ""; } catch (e) { return ""; }
+  })();
   function t(k, p) {
     var s = (STR[LANG] || STR.en)[k];
     if (s === undefined) s = STR.en[k] !== undefined ? STR.en[k] : k;
@@ -93,9 +166,60 @@
   function el(tag, cls, txt) { return api.el(tag, cls, txt); }
   function btn(label, cls, fn) { return api.button(label, cls, fn); }
   function byItem(id) { return api.byItem(id); }
+  // a cart line's product, or a stand-in for a free item
+  function lineItem(l) {
+    if (l.i === P.OTHER) return { id: P.OTHER, name: l.n, vat: l.vat, unit: "pcs", price: l.p };
+    return byItem(l.i);
+  }
+  var lineSeq = 0;
   function gross(p, vat) { return Math.round(p * (100 + (vat || 0)) / 100); }
   function hm(ms) { var d = new Date(ms), z = function (n) { return (n < 10 ? "0" : "") + n; }; return z(d.getHours()) + ":" + z(d.getMinutes()); }
   function prefs() { return api.posPrefs(); }
+  // F3 helper device (TILL-1): the till is all this device shows
+  function isTill() { return !!(api.till && api.till()); }
+  // fn runs at once, or on a till-only device after the owner's PIN
+  function owner(fn, why) {
+    if (!isTill()) { fn(); return; }
+    var pass = api.lockKind && api.lockKind() === "pass";
+    var dlg = api.makeDialog("st-pos-own", false);
+    dlg.appendChild(el("div", "dlg-title", t(pass ? "ownTPass" : "ownT")));
+    dlg.appendChild(el("p", "dlg-sub", why || t(pass ? "ownHintPass" : "ownHint")));
+    var inp = el("input");
+    inp.type = "password";
+    inp.autocomplete = "off";
+    inp.id = "st-pos-own-in";
+    if (!pass) inp.inputMode = "numeric";
+    inp.setAttribute("aria-label", t(pass ? "ownTPass" : "ownT"));
+    dlg.appendChild(inp);
+    var msg = el("p", "hint warn");
+    msg.setAttribute("role", "status");
+    msg.hidden = true;
+    dlg.appendChild(msg);
+    var acts = el("div", "dlg-actions");
+    var busy = false;
+    function go() {
+      if (busy) return;
+      var v = inp.value;
+      inp.value = "";
+      if (!v) { inp.focus(); return; }
+      busy = true;
+      api.ownerCheck(v).then(function (r) {
+        busy = false;
+        if (r && r.ok) { dlg.close(); fn(); return; }
+        msg.textContent = r && r.code === "wait" ? t("ownWait", { s: Math.ceil((r.wait || 0) / 1000) }) : (r && r.code === "off" ? t("ownOff") : t("ownWrong"));
+        msg.hidden = false;
+        inp.focus();
+      });
+    }
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); go(); } });
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    var okB = btn(t("ownOk"), "primary", go);
+    okB.id = "st-pos-own-ok";
+    acts.appendChild(okB);
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    inp.focus();
+  }
   function plLabel(id) {
     if (!id) return t("retail");
     var pl = (D().pls || []).filter(function (x) { return x.id === id; })[0];
@@ -114,6 +238,36 @@
 
     var top = el("div", "pos-top");
     top.appendChild(el("div", "dlg-title pos-title", "🧾 " + t("pos.title")));
+    // F2: the event this till sells at; it brings its stand and price list
+    var evSel = el("select", "pos-ev");
+    evSel.id = "st-pos-ev";
+    evSel.setAttribute("aria-label", t("evTitle"));
+    function fillEv() {
+      evSel.innerHTML = "";
+      var today = api.todayYmd(), on = P.evsOn(D(), today).map(function (e) { return e.id; });
+      var list = (D().evs || []).filter(function (e) { return !e.arch; }).slice().sort(function (a, b) {
+        return ((on.indexOf(b.id) >= 0) - (on.indexOf(a.id) >= 0)) || (a.from < b.from ? 1 : a.from > b.from ? -1 : 0);
+      });
+      [["", t("evNone")]].concat(list.map(function (e) { return [e.id, e.name]; })).forEach(function (o) {
+        var op = el("option", "", o[1]);
+        op.value = o[0];
+        evSel.appendChild(op);
+      });
+      var want = prefs().ev || "";
+      evSel.value = list.some(function (e) { return e.id === want; }) ? want : "";
+      evSel.hidden = !list.length;
+    }
+    function useEv() {
+      var ev = P.evOf(D(), evSel.value);
+      api.setPosPref("ev", evSel.value);
+      if (ev) {
+        if (ev.pl !== undefined && (ev.pl === "" || (D().pls || []).some(function (x) { return x.id === ev.pl; }))) { plSel.value = ev.pl; api.setPosPref("pl", ev.pl); }
+        if (whSel && ev.w !== undefined) { whSel.value = ev.w; api.setWh(ev.w); }
+      }
+      cart.forEach(function (l) { delete l.p; });
+    }
+    evSel.addEventListener("change", function () { useEv(); paint(); });
+    top.appendChild(evSel);
     var plSel = el("select", "pos-pl");
     plSel.setAttribute("aria-label", t("pl"));
     plSel.id = "st-pos-pl";
@@ -128,6 +282,7 @@
       plSel.value = (D().pls || []).some(function (x) { return x.id === want; }) ? want : "";
     }
     fillPl();
+    fillEv();
     plSel.addEventListener("change", function () { api.setPosPref("pl", plSel.value); cart.forEach(function (l) { delete l.p; }); paint(); });
     top.appendChild(plSel);
     var whSel = null;
@@ -139,10 +294,21 @@
       top.appendChild(whSel);
     }
     var tools = el("div", "pos-tools");
+    var till = isTill();
+    tools.appendChild(btn(t("evBtn"), "", function () {
+      owner(function () { evDialog(function () { fillEv(); fillPl(); if (whSel) { /* a new stand warehouse shows on the next open */ } paint(); }); });
+    }));
     tools.appendChild(btn(t("zrep"), "", function () { zDialog(api.todayYmd()); }));
-    tools.appendChild(btn(t("lists"), "", function () { plDialog(function () { fillPl(); paint(); }); }));
-    tools.appendChild(btn(t("setup"), "", setupDialog));
-    tools.appendChild(btn(t("close"), "", function () { dlg.close(); }));
+    tools.appendChild(btn(t("lists"), "", function () { owner(function () { plDialog(function () { fillPl(); paint(); }); }); }));
+    tools.appendChild(btn(t("setup"), "", function () { owner(setupDialog); }));
+    if (!till) tools.appendChild(btn(t("close"), "", function () { dlg.close(); }));
+    else {
+      // TILL-1: the till never closes; Esc and a tap outside do nothing
+      dlg.classList.add("pos-till");
+      dlg.addEventListener("cancel", function (e) { e.preventDefault(); });
+      dlg.addEventListener("click", function (e) { if (e.target === dlg) e.stopImmediatePropagation(); }, true);
+      dlg.addEventListener("close", function () { setTimeout(function () { if (isTill() && api.reopen) api.reopen(); }, 0); });
+    }
     top.appendChild(tools);
     dlg.appendChild(top);
 
@@ -162,6 +328,8 @@
     left.appendChild(msg);
     var chips = el("div", "chips pos-cats");
     left.appendChild(chips);
+    var otherB = btn(t("otherBtn"), "pos-other", function () { otherDialog(function (l) { cart.push(l); paint(); }); });
+    otherB.id = "st-pos-other";
     var grid = el("div", "pos-grid");
     grid.id = "st-pos-grid";
     left.appendChild(grid);
@@ -180,7 +348,7 @@
     payRow.setAttribute("role", "radiogroup");
     payRow.setAttribute("aria-label", t("pay"));
     var payBtns = {};
-    P.PAYS.forEach(function (k) {
+    P.PAYS.concat(["split"]).forEach(function (k) {
       var b = el("button", "chip pos-paybtn", t(k));
       b.type = "button";
       b.setAttribute("role", "radio");
@@ -203,13 +371,32 @@
     givenWrap.appendChild(chg);
     right.appendChild(givenWrap);
     given.addEventListener("input", paintChange);
+    var splitWrap = el("div", "pos-given pos-split");
+    var splitIn = el("input");
+    splitIn.type = "text";
+    splitIn.inputMode = "decimal";
+    splitIn.autocomplete = "off";
+    splitIn.id = "st-pos-split";
+    var sl = el("label", "dlg-lbl", t("splitCash"));
+    sl.htmlFor = "st-pos-split";
+    splitWrap.appendChild(sl);
+    splitWrap.appendChild(splitIn);
+    var splitOut = el("span", "pos-change");
+    splitWrap.appendChild(splitOut);
+    right.insertBefore(splitWrap, givenWrap);
+    splitIn.addEventListener("input", paintChange);
     var acts = el("div", "dlg-actions pos-acts");
+    var discB = btn(t("discT"), "pos-discbtn", function () {
+      discDialog(t("discSale"), saleDisc, saleDc, true, function (dc, why) { saleDisc = dc; saleDc = why; paint(); });
+    });
+    discB.id = "st-pos-disc";
     var clearB = btn(t("clear"), "", function () {
       if (!cart.length) return;
-      api.confirm(t("clearQ"), t("clear"), true, function () { cart = []; given.value = ""; paint(); scan.focus(); });
+      api.confirm(t("clearQ"), t("clear"), true, function () { reset(); paint(); scan.focus(); });
     });
     var chargeB = btn(t("charge", { t: "" }), "primary pos-charge", function () { charge(false); });
     chargeB.id = "st-pos-charge";
+    acts.appendChild(discB);
     acts.appendChild(clearB);
     acts.appendChild(chargeB);
     right.appendChild(acts);
@@ -217,19 +404,34 @@
     dlg.appendChild(body);
 
     var cat = "";
-    function wh() { return whSel ? whSel.value : ""; }
+    function reset() { cart = []; given.value = ""; splitIn.value = ""; saleDisc = null; saleDc = ""; if (payMode === "split") payMode = "cash"; }
+    function wh() {
+      if (whSel) return whSel.value;
+      var ev = P.evOf(D(), evSel.value);
+      return ev && ev.w ? ev.w : "";
+    }
     function qLeft(id) { return api.qtyAt(id, wh()); }
     function priceFor(it) { return P.priceOf(D(), it, plSel.value); }
+    // the lines as they will be charged: list price (p0), then the
+    // line's own discount and the whole sale's (pos-core applyDisc)
     function cartLines() {
-      return cart.map(function (l) {
-        var it = byItem(l.i);
-        return { i: l.i, q: l.q, p: typeof l.p === "number" ? l.p : priceFor(it), vat: it ? it.vat : 0 };
-      });
+      return P.applyDisc(cart.map(function (l) {
+        var it = lineItem(l);
+        var x = { i: l.i, q: l.q, p0: typeof l.p === "number" ? l.p : priceFor(it), vat: it ? it.vat : 0, k: l.k };
+        if (l.i === P.OTHER) x.n = l.n;
+        if (l.dl) x.dl = l.dl;
+        return x;
+      }), saleDisc);
+    }
+    function splitParts(g) {
+      var c = splitIn.value.trim() ? api.readCents(splitIn) : null;
+      if (c === null || c < 0 || c > g) return null;
+      return { cash: c, card: g - c };
     }
     function add(it, q) {
       msg.hidden = true;
       for (var i = 0; i < cart.length; i++) {
-        if (cart[i].i === it.id) {
+        if (cart[i].i === it.id && it.id !== P.OTHER) {
           cart[i].q += q;
           if (cart[i].q <= 0) cart.splice(i, 1);
           paint();
@@ -238,9 +440,16 @@
         }
       }
       if (q <= 0) return;
-      cart.push({ i: it.id, q: q });
+      cart.push({ k: "l" + (++lineSeq), i: it.id, q: q });
       paint();
       api.live(it.name);
+    }
+    function bump(l, d) {
+      l.q += d;
+      if (l.q <= 0) cart = cart.filter(function (x) { return x !== l; });
+      paint();
+      var it = lineItem(l);
+      api.live(it.name + ": " + (l.q > 0 ? api.fmtQ(l.q, it) : "0"));
     }
     function words() { return api.core.fold(scan.value.trim()).split(" ").filter(Boolean); }
     function paintGrid() {
@@ -258,6 +467,7 @@
           chips.appendChild(b);
         });
       }
+      chips.appendChild(otherB);
       var w = words();
       var list = api.byName(d.items.filter(function (it) {
         return !it.arch && (!cat || it.cat === cat) && api.matchItem(it, w);
@@ -271,41 +481,63 @@
         var p = priceFor(it);
         b.appendChild(el("span", "pos-pp", p ? api.money(gross(p, it.vat)) : t("noPrice")));
         var q = qLeft(it.id);
-        b.appendChild(el("span", "pos-pq" + (q <= 0 ? " bad" : ""), t("left", { q: api.fmtQ(q, it) })));
+        if (api.core.isOd(it)) b.appendChild(el("span", "pos-pq od", t("odLeft")));   // ST-OD: never runs out
+        else b.appendChild(el("span", "pos-pq" + (q <= 0 ? " bad" : ""), t("left", { q: api.fmtQ(q, it) })));
         b.addEventListener("click", function () { add(it, 1000); });
         grid.appendChild(b);
       });
       if (!list.length) grid.appendChild(el("p", "muted pad", t("pos.none")));
       note.textContent = list.length > shown.length ? t("more", { n: shown.length, t: list.length }) : "";
     }
+    // the cash the customer owes: everything, or the cash part of a split
+    function cashDue(gross) {
+      if (payMode === "cash") return gross;
+      if (payMode !== "split") return 0;
+      var sp = splitParts(gross);
+      return sp ? sp.cash : 0;
+    }
     function paintChange() {
       var tt = P.totals(cartLines());
-      if (payMode !== "cash" || !given.value.trim()) { chg.textContent = ""; chg.className = "pos-change"; return; }
+      if (payMode === "split") {
+        var sp = splitParts(tt.gross);
+        splitOut.textContent = sp ? t("splitCard", { c: api.money(sp.card) }) : (splitIn.value.trim() ? t("splitBad", { t: api.money(tt.gross) }) : "");
+        splitOut.className = "pos-change" + (sp ? " good" : (splitIn.value.trim() ? " bad" : ""));
+      }
+      var due = cashDue(tt.gross);
+      if (!due || !given.value.trim()) { chg.textContent = ""; chg.className = "pos-change"; return; }
       var g = api.readCents(given);
       if (g === null) { chg.textContent = ""; return; }
-      var c = P.change(tt.gross, g);
-      chg.textContent = c === null ? t("short", { c: api.money(tt.gross - g) }) : t("change", { c: api.money(c) });
+      var c = P.change(due, g);
+      chg.textContent = c === null ? t("short", { c: api.money(due - g) }) : t("change", { c: api.money(c) });
       chg.className = "pos-change" + (c === null ? " bad" : " good");
     }
     function paint() {
-      cart = cart.filter(function (l) { return byItem(l.i); });
+      cart = cart.filter(function (l) { return lineItem(l); });
       ul.innerHTML = "";
       if (!cart.length) ul.appendChild(el("li", "muted pad", t("empty")));
-      cart.forEach(function (l) {
-        var it = byItem(l.i);
-        var p = typeof l.p === "number" ? l.p : priceFor(it);
+      var charged = cartLines();
+      cart.forEach(function (l, ix) {
+        var it = lineItem(l), cl = charged[ix];
+        var p = cl.p;
         var li = el("li", "row cart-line");
         var bd = el("span", "r-body");
         bd.appendChild(el("span", "r-name", it.name));
         var sub = el("span", "r-sub");
         sub.appendChild(el("span", "", api.money(gross(p, it.vat)) + " · " + it.vat + "%"));
+        if (cl.p0) sub.appendChild(el("span", "pos-was", t("was") + " " + api.money(gross(cl.p0, it.vat))));
         bd.appendChild(sub);
         li.appendChild(bd);
+        var db = el("button", "icon-btn ctr-btn pos-ldisc" + (l.dl ? " on" : ""), "%");
+        db.type = "button";
+        db.setAttribute("aria-label", t("discLine", { n: it.name }));
+        db.addEventListener("click", function () {
+          discDialog(t("discLine", { n: it.name }), l.dl, "", false, function (dc) { if (dc) l.dl = dc; else delete l.dl; paint(); });
+        });
         var qb = el("span", "ctr-q");
         var minus = el("button", "icon-btn ctr-btn", "−");
         minus.type = "button";
         minus.setAttribute("aria-label", t("less") + ": " + it.name);
-        minus.addEventListener("click", function () { add(it, -1000); });
+        minus.addEventListener("click", function () { bump(l, -1000); });
         var qi = el("input", "pos-qty");
         qi.type = "text";
         qi.inputMode = "decimal";
@@ -321,16 +553,17 @@
         var plus = el("button", "icon-btn ctr-btn", "+");
         plus.type = "button";
         plus.setAttribute("aria-label", t("moreOne") + ": " + it.name);
-        plus.addEventListener("click", function () { add(it, 1000); });
+        plus.addEventListener("click", function () { bump(l, 1000); });
         qb.appendChild(minus);
         qb.appendChild(qi);
         qb.appendChild(plus);
         li.appendChild(qb);
+        li.appendChild(db);
         var n = P.lineNet({ q: l.q, p: p });
         li.appendChild(el("span", "r-val", api.money(n + Math.round(n * it.vat / 100))));
         ul.appendChild(li);
       });
-      var tt = P.totals(cartLines());
+      var tt = P.totals(charged), off = P.saved(charged);
       sums.innerHTML = "";
       function sr(k, v, cls) {
         var r = el("div", "pos-sum" + (cls ? " " + cls : ""));
@@ -338,14 +571,18 @@
         r.appendChild(el("span", "", v));
         sums.appendChild(r);
       }
+      if (off > 0) sr(t("discT") + (saleDc ? " · " + saleDc : ""), "−" + api.money(off), "pos-off");
       sr(t("net"), api.money(tt.net));
       tt.byVat.forEach(function (r) { sr(t("vat") + " " + r.rate + "%", api.money(r.vat)); });
       sr(t("total"), api.money(tt.gross), "grand");
-      P.PAYS.forEach(function (k) {
+      Object.keys(payBtns).forEach(function (k) {
         payBtns[k].classList.toggle("on", payMode === k);
         payBtns[k].setAttribute("aria-checked", payMode === k ? "true" : "false");
       });
-      givenWrap.hidden = payMode !== "cash";
+      givenWrap.hidden = payMode !== "cash" && payMode !== "split";
+      splitWrap.hidden = payMode !== "split";
+      discB.disabled = !cart.length;
+      discB.classList.toggle("on", !!saleDisc);
       chargeB.textContent = t("charge", { t: api.money(tt.gross) });
       chargeB.disabled = !cart.length;
       clearB.disabled = !cart.length;
@@ -369,11 +606,12 @@
       else { msg.textContent = t("unknown", { c: q }); msg.hidden = false; paintGrid(); }
     });
 
+    var capOk = false;
     function charge(force) {
       if (!cart.length) return;
       var lines = cartLines();
       if (!force) {
-        var neg = lines.filter(function (l) { var q0 = qLeft(l.i); return q0 - l.q < 0 && q0 - l.q < q0; })[0];
+        var neg = lines.filter(function (l) { if (l.i === P.OTHER || api.core.isOd(byItem(l.i))) return false; var q0 = qLeft(l.i); return q0 - l.q < 0 && q0 - l.q < q0; })[0];
         if (neg) {
           var nit = byItem(neg.i), after = qLeft(neg.i) - neg.q;
           if (D().settings.neg === 0) { msg.textContent = t("neg", { n: nit.name, q: api.fmtQ(after, nit) }) + " " + t("negBlocked"); msg.hidden = false; return; }
@@ -382,21 +620,33 @@
         }
       }
       var tt = P.totals(lines);
-      var g = payMode === "cash" && given.value.trim() ? api.readCents(given) : null;
+      var cap = prefs().dmax, pc = P.discPct(lines);
+      if (cap && pc > cap && !capOk) {
+        if (isTill()) { owner(function () { capOk = true; charge(true); capOk = false; }, t("ownDisc", { p: pc })); return; }
+        msg.textContent = t("discMax", { p: cap, q: pc }); msg.hidden = false; return;
+      }
+      var pays = null;
+      if (payMode === "split") {
+        pays = splitParts(tt.gross);
+        if (!pays) { msg.textContent = t("splitBad", { t: api.money(tt.gross) }); msg.hidden = false; splitIn.focus(); return; }
+      }
+      var due = cashDue(tt.gross);
+      var g = due && given.value.trim() ? api.readCents(given) : null;
       var now = Date.now();
       var r = P.makeSale({
-        data: D(), cart: lines.map(function (l) { return { i: l.i, q: l.q, p: l.p }; }), pl: plSel.value, pay: payMode,
-        given: g !== null && g >= tt.gross ? g : undefined, w: wh(), d: api.todayYmd(), now: now, dev: prefs().dev,
+        data: D(), cart: lines.map(function (l) { return { i: l.i, q: l.q, p: l.p, p0: l.p0, n: l.n, vat: l.vat }; }), pl: plSel.value,
+        pay: pays ? (pays.cash ? "cash" : "card") : payMode, pays: pays,
+        dc: saleDc, given: g !== null && g >= due ? g : undefined, w: wh(), d: api.todayYmd(), now: now, dev: prefs().dev,
+        ev: P.evOf(D(), evSel.value) ? evSel.value : "",
         id: api.newId(), mvId: api.newId()
       });
       if (!r) return;
       var saved = api.addSale(r.sale, r.move);
       if (!saved) return;
-      cart = [];
-      given.value = "";
+      reset();
       paint();
       api.actionToast(t("sold", { n: saved.no, t: api.money(tt.gross) }), t("receipt"), function () { receiptDialog(saved.id); },
-        function () { api.voidSale(saved.id); paint(); });
+        function () { owner(function () { api.voidSale(saved.id); paint(); }); });
       receiptDialog(saved.id);
       scan.focus();
     }
@@ -406,15 +656,509 @@
     scan.focus();
   }
 
+  // ---------- F1: discount and free item dialogs ----------
+  // A discount as % or an amount off (gross); onDone(null) removes it.
+  function discDialog(title, cur, why, withReason, onDone) {
+    var dlg = api.makeDialog("st-pos-dsc");
+    dlg.appendChild(el("div", "dlg-title", title));
+    var kind = api.selectInput([["pct", t("discPct")], ["amt", t("discAmt")]], cur && cur.k === "amt" ? "amt" : "pct");
+    dlg.appendChild(api.field(t("discT"), kind, "st-pos-dk"));
+    var v = el("input");
+    v.type = "text";
+    v.inputMode = "decimal";
+    v.autocomplete = "off";
+    v.value = cur ? (cur.k === "amt" ? api.centsStr(cur.v) : String(cur.v)) : "";
+    dlg.appendChild(api.field(t("discPct") + " / " + t("discAmt"), v, "st-pos-dv"));
+    var reason = null;
+    if (withReason) {
+      reason = el("input");
+      reason.type = "text";
+      reason.maxLength = 40;
+      reason.value = why || "";
+      reason.placeholder = t("discReasonPh");
+      dlg.appendChild(api.field(t("discReason"), reason, "st-pos-dr"));
+    }
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(btn(t("discNone"), "", function () { dlg.close(); onDone(null, ""); }));
+    acts.appendChild(btn(t("discApply"), "primary", function () {
+      var n;
+      if (kind.value === "pct") {
+        n = parseInt(String(v.value).replace(/[^\d]/g, ""), 10);
+        if (!isFinite(n) || n < 1 || n > 100) { err.textContent = t("discBad"); err.hidden = false; return; }
+      } else {
+        n = api.readCents(v);
+        if (n === null || n <= 0) { err.textContent = t("discBad"); err.hidden = false; return; }
+      }
+      dlg.close();
+      onDone({ k: kind.value, v: n }, reason ? reason.value.trim().slice(0, 40) : "");
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    v.focus();
+  }
+  // A free item: typed name, price with VAT and VAT rate; no stock.
+  function otherDialog(onAdd) {
+    var dlg = api.makeDialog("st-pos-oth");
+    dlg.appendChild(el("div", "dlg-title", t("otherT")));
+    dlg.appendChild(el("p", "dlg-sub", t("otherHint")));
+    var name = el("input");
+    name.type = "text";
+    name.maxLength = 80;
+    dlg.appendChild(api.field(t("otherName"), name, "st-pos-on"));
+    var price = el("input");
+    price.type = "text";
+    price.inputMode = "decimal";
+    price.autocomplete = "off";
+    dlg.appendChild(api.field(t("otherPrice"), price, "st-pos-op"));
+    var rates = (api.vatRates || [24, 13, 6, 0]).map(function (r) { return [String(r), r + "%"]; });
+    var vat = api.selectInput(rates, String(api.defVat ? api.defVat() : 24));
+    dlg.appendChild(api.field(t("otherVat"), vat, "st-pos-ov"));
+    var qty = el("input");
+    qty.type = "text";
+    qty.inputMode = "numeric";
+    qty.value = "1";
+    dlg.appendChild(api.field(t("otherQty"), qty, "st-pos-oq"));
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(btn(t("otherAdd"), "primary", function () {
+      var n = name.value.trim(), g = api.readCents(price), r = parseInt(vat.value, 10) || 0;
+      var q = parseInt(String(qty.value).replace(/[^\d]/g, ""), 10);
+      if (!n || g === null || g < 0 || !isFinite(q) || q < 1) { err.textContent = t("otherBad"); err.hidden = false; return; }
+      dlg.close();
+      onAdd({ k: "o" + Date.now().toString(36), i: P.OTHER, q: q * 1000, p: P.netFor(g, r), vat: r, n: n.slice(0, 80) });
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    name.focus();
+  }
+
+  // ---------- F2: events ----------
+  function evDialog(onChange) {
+    var dlg = api.makeDialog("st-pos-evs", true);
+    dlg.appendChild(el("div", "dlg-title", "🎪 " + t("evTitle")));
+    dlg.appendChild(el("p", "dlg-sub", t("evHint")));
+    var box = el("div", "pos-evs");
+    dlg.appendChild(box);
+    function changed() { paint(); if (onChange) onChange(); }
+    function paint() {
+      box.innerHTML = "";
+      var list = (D().evs || []).slice().sort(function (a, b) { return a.from < b.from ? 1 : a.from > b.from ? -1 : 0; });
+      if (!list.length) box.appendChild(el("p", "muted pad", t("evNoneYet")));
+      list.forEach(function (ev) {
+        var r = el("div", "pos-evrow");
+        var bd = el("div", "r-body");
+        bd.appendChild(el("span", "r-name", ev.name + (ev.arch ? " · " + t("evArch") : "")));
+        bd.appendChild(el("span", "r-sub", api.fmtDay(ev.from, true) + (ev.to !== ev.from ? " – " + api.fmtDay(ev.to, true) : "") +
+          (ev.w ? " · " + api.whName(ev.w) : "") + " · " + plLabel(ev.pl)));
+        r.appendChild(bd);
+        var ra = el("div", "dlg-actions tight wrap");
+        ra.appendChild(btn(t("evRep"), "", function () { evReportDialog(ev.id); }));
+        ra.appendChild(btn(t("evPack"), "", function () { packDialog(ev.id, changed); }));
+        ra.appendChild(btn(t("evBack"), "", function () { backDialog(ev.id, changed); }));
+        ra.appendChild(btn(t("evEdit"), "", function () { evEditor(ev, changed); }));
+        r.appendChild(ra);
+        box.appendChild(r);
+      });
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("evAdd"), "", function () { evEditor(null, changed); }));
+    acts.appendChild(btn(t("close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    paint();
+  }
+  function evEditor(cur, onDone) {
+    var dlg = api.makeDialog("st-pos-ev1");
+    dlg.appendChild(el("div", "dlg-title", cur ? cur.name : t("evAdd")));
+    var name = el("input");
+    name.type = "text";
+    name.maxLength = 80;
+    name.value = cur ? cur.name : t("evNameDef");
+    dlg.appendChild(api.field(t("evName"), name, "st-ev-name"));
+    var today = api.todayYmd();
+    var from = el("input"); from.type = "date"; from.value = cur ? cur.from : today;
+    var to = el("input"); to.type = "date"; to.value = cur ? cur.to : today;
+    dlg.appendChild(api.field(t("evFrom"), from, "st-ev-from"));
+    dlg.appendChild(api.field(t("evTo"), to, "st-ev-to"));
+    var whs = api.whList().concat([["__new", t("evStandNew")]]);
+    var stand = api.selectInput(whs, cur ? (cur.w || "") : "__new");
+    dlg.appendChild(api.field(t("evStand"), stand, "st-ev-w"));
+    var pl = api.selectInput([["", t("retail")]].concat((D().pls || []).map(function (x) { return [x.id, x.name]; })), cur ? cur.pl : "");
+    dlg.appendChild(api.field(t("evPl"), pl, "st-ev-pl"));
+    var fl = el("input"); fl.type = "text"; fl.inputMode = "decimal"; fl.autocomplete = "off";
+    fl.value = cur && cur.fl ? api.centsStr(cur.fl) : "";
+    dlg.appendChild(api.field(t("evFl"), fl, "st-ev-fl"));
+    var arch = null;
+    if (cur) {
+      arch = el("input"); arch.type = "checkbox"; arch.checked = cur.arch === 1;
+      var al = el("label", "check-row");
+      al.appendChild(arch);
+      al.appendChild(el("span", "", t("evArch")));
+      dlg.appendChild(al);
+    }
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    var acts = el("div", "dlg-actions wrap");
+    if (cur) acts.appendChild(btn(t("evDel"), "danger", function () {
+      api.confirm(t("evDelQ", { n: cur.name }), t("evDel"), true, function () { api.delEv(cur.id); dlg.close(); if (onDone) onDone(); });
+    }));
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(btn(t("save"), "primary", function () {
+      var n = name.value.trim(), f = from.value, tt = to.value || f;
+      var c = fl.value.trim() ? api.readCents(fl) : 0;
+      if (!n || !api.core.isYmd(f) || !api.core.isYmd(tt) || c === null || c < 0) { err.textContent = t("evBad"); err.hidden = false; return; }
+      var w = stand.value === "__new" ? api.newWh(n) : stand.value;
+      api.putEv({ id: cur ? cur.id : api.newId(), m: cur ? cur.m : 0, name: n, from: f, to: tt < f ? f : tt, w: w, pl: pl.value, fl: c,
+                  arch: arch && arch.checked ? 1 : 0 });
+      api.toast(t("evSaved"));
+      dlg.close();
+      if (onDone) onDone();
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    name.focus();
+  }
+  function packDialog(evId, onDone) {
+    var ev = P.evOf(D(), evId);
+    if (!ev) return;
+    if (!ev.w) { api.toast(t("evNoStand")); return; }
+    var dlg = api.makeDialog("st-pos-pack", true);
+    dlg.appendChild(el("div", "dlg-title", t("packT", { n: ev.name })));
+    dlg.appendChild(el("p", "dlg-sub", t("packHint", { w: api.whName(ev.w) })));
+    var q = el("input");
+    q.type = "search";
+    q.placeholder = t("plSearch");
+    q.setAttribute("aria-label", t("plSearch"));
+    dlg.appendChild(q);
+    var list = el("div", "pick-list pos-plp");
+    dlg.appendChild(list);
+    var qty = {};
+    var err = el("p", "hint warn");
+    err.hidden = true;
+    dlg.appendChild(err);
+    function paint() {
+      list.innerHTML = "";
+      var w = api.core.fold(q.value.trim()).split(" ").filter(Boolean);
+      api.byName(D().items.filter(function (it) { return !it.arch && !api.core.isOd(it) && api.matchItem(it, w); })).slice(0, 80).forEach(function (it) {
+        var r = el("div", "pos-plp-row");
+        var bd = el("span", "r-body");
+        bd.appendChild(el("span", "r-name", it.name));
+        bd.appendChild(el("span", "r-sub", t("packMain", { q: api.fmtQ(api.qtyAt(it.id, ""), it) })));
+        r.appendChild(bd);
+        var inp = el("input", "pos-plp-in");
+        inp.type = "text";
+        inp.inputMode = "decimal";
+        inp.setAttribute("aria-label", it.name);
+        inp.value = qty[it.id] || "";
+        inp.addEventListener("input", function () { qty[it.id] = inp.value; });
+        r.appendChild(inp);
+        list.appendChild(r);
+      });
+    }
+    q.addEventListener("input", paint);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(btn(t("packGo"), "primary", function () {
+      var lines = [];
+      Object.keys(qty).forEach(function (id) {
+        var it = byItem(id);
+        if (!it || !String(qty[id]).trim()) return;
+        var n = api.readQty({ value: qty[id] }, it);
+        if (n !== null && n > 0) lines.push({ i: id, q: n });
+      });
+      var mv = P.packMove(ev, lines, { d: api.todayYmd(), now: Date.now(), id: api.newId() });
+      if (!mv) { err.textContent = t("packNone"); err.hidden = false; return; }
+      if (!api.addMove(mv)) return;
+      api.toast(t("packDone", { w: api.whName(ev.w) }));
+      dlg.close();
+      if (onDone) onDone();
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    paint();
+    q.focus();
+  }
+  function backDialog(evId, onDone) {
+    var ev = P.evOf(D(), evId);
+    if (!ev) return;
+    if (!ev.w) { api.toast(t("evNoStand")); return; }
+    var mv = P.backMove(ev, api.whQty(), { d: api.todayYmd(), now: Date.now(), id: api.newId() });
+    var dlg = api.makeDialog("st-pos-back");
+    dlg.appendChild(el("div", "dlg-title", t("backT", { n: ev.name })));
+    dlg.appendChild(el("p", "dlg-sub", t("backHint", { w: api.whName(ev.w) })));
+    var ul = el("ul", "rows");
+    if (!mv) ul.appendChild(el("li", "muted pad", t("backNone")));
+    else mv.lines.forEach(function (l) {
+      var it = byItem(l.i) || { name: l.i, unit: "pcs" };
+      var li = el("li", "row compact");
+      li.appendChild(el("span", "r-name", it.name));
+      li.appendChild(el("span", "r-val", api.fmtQ(l.q, it, true)));
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    if (mv) acts.appendChild(btn(t("backGo"), "primary", function () {
+      if (!api.addMove(mv)) return;
+      api.toast(t("backDone"));
+      dlg.close();
+      if (onDone) onDone();
+    }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+  }
+  function evReportDialog(evId) {
+    var ev = P.evOf(D(), evId);
+    if (!ev) return;
+    var rep = P.evReport(D(), ev, api.whQty()), m = api.money;
+    var dlg = api.makeDialog("st-pos-evrep", true);
+    dlg.appendChild(el("div", "dlg-title", "📊 " + t("repT", { n: ev.name })));
+    dlg.appendChild(el("p", "dlg-sub", api.fmtDay(ev.from, true) + (ev.to !== ev.from ? " – " + api.fmtDay(ev.to, true) : "") + (ev.w ? " · " + api.whName(ev.w) : "")));
+    var box = el("div", "pos-z");
+    dlg.appendChild(box);
+    function kv(k, v, cls) {
+      var r = el("div", "pos-sum" + (cls ? " " + cls : ""));
+      r.appendChild(el("span", "", k));
+      r.appendChild(el("span", "", v));
+      box.appendChild(r);
+    }
+    if (!rep.n && !rep.titles.length) box.appendChild(el("p", "muted pad", t("repNone")));
+    kv(t("zSales"), String(rep.n));
+    if (rep.voids) kv(t("zVoids"), String(rep.voids));
+    kv(t("zNet"), m(rep.net));
+    kv(t("zVat"), m(rep.vat));
+    if (rep.disc) kv(t("zDisc"), "−" + m(rep.disc));
+    kv(t("zGross"), m(rep.g), "grand");
+    box.appendChild(el("div", "pos-h", t("zByPay")));
+    P.PAYS.forEach(function (k) { if (rep.byPay[k]) kv(t(k), m(rep.byPay[k])); });
+    if (rep.days.length) {
+      box.appendChild(el("div", "pos-h", t("repDays")));
+      rep.days.forEach(function (d) { kv(api.fmtDay(d.d, true) + " · " + d.n, m(d.g)); });
+    }
+    if (rep.titles.length) {
+      box.appendChild(el("div", "pos-h", t("repTitles")));
+      var tb = el("table", "pos-evtab");
+      var hr = el("tr");
+      ["", t("repTaken"), t("repSold"), t("repBackC"), t("repLeft"), t("total")].forEach(function (h) { hr.appendChild(el("th", "", h)); });
+      tb.appendChild(hr);
+      rep.titles.forEach(function (x) {
+        var it = (x.i !== P.OTHER && byItem(x.i)) || { unit: "pcs" };
+        var tr = el("tr");
+        [x.n, x.taken ? api.fmtQ(x.taken, it) : "", x.sold ? api.fmtQ(x.sold, it) : "", x.back ? api.fmtQ(x.back, it) : "",
+         x.i === P.OTHER || !ev.w ? "" : (x.od ? t("odLeft") : api.fmtQ(x.left, it)), x.g ? m(x.g) : ""].forEach(function (v) { tr.appendChild(el("td", "", v)); });
+        tb.appendChild(tr);
+      });
+      var wrap = el("div", "pos-evtabw");
+      wrap.appendChild(tb);
+      box.appendChild(wrap);
+    }
+    box.appendChild(el("p", "muted", t("notFiscal")));
+    function sheetRows() {
+      var head = [t("evName"), t("repTaken"), t("repSold"), t("repBackC"), t("repLeft"), t("total")];
+      return [head].concat(rep.titles.map(function (x) {
+        return [x.n, x.taken / 1000, x.sold / 1000, x.back / 1000, x.i === P.OTHER || x.od ? "" : x.left / 1000, x.g / 100];
+      }));
+    }
+    var acts = el("div", "dlg-actions wrap");
+    acts.appendChild(btn(t("repPrint"), "", function () { api.printHtml(rollHtml(t("repT", { n: ev.name }), evRows(ev, rep), prefs().paper === 80 ? 80 : 58)); }));
+    if (api.openSheet && rep.titles.length) acts.appendChild(btn(t("repSheet"), "", function () { api.openSheet(t("repT", { n: ev.name }), sheetRows().slice(0, 500), [1, 2, 3, 5]); }));
+    acts.appendChild(btn(t("close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+  }
+  function evRows(ev, rep) {
+    var m = api.money, rows = [], pp = prefs();
+    String(pp.head || "").split("\n").map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 8)
+      .forEach(function (x) { rows.push({ k: "head", l: x, r: "" }); });
+    rows.push({ k: "head", l: ev.name, r: "" });
+    rows.push({ k: "meta", l: api.fmtDay(ev.from, true) + (ev.to !== ev.from ? " – " + api.fmtDay(ev.to, true) : ""), r: "" });
+    rows.push({ k: "sum", l: t("zSales"), r: String(rep.n) });
+    if (rep.disc) rows.push({ k: "sum", l: t("zDisc"), r: "−" + m(rep.disc) });
+    rep.byVat.forEach(function (r) { rows.push({ k: "sum", l: t("vat") + " " + r.rate + "%", r: m(r.vat) }); });
+    rows.push({ k: "total", l: t("totalR"), r: m(rep.g) });
+    P.PAYS.forEach(function (k) { if (rep.byPay[k]) rows.push({ k: "sum", l: t(k), r: m(rep.byPay[k]) }); });
+    rep.days.forEach(function (d) { rows.push({ k: "sum", l: api.fmtDay(d.d, true), r: m(d.g) }); });
+    rep.titles.forEach(function (x) {
+      var it = (x.i !== P.OTHER && byItem(x.i)) || { unit: "pcs" };
+      rows.push({ k: "item", l: x.n, r: m(x.g) });
+      rows.push({ k: "sub", l: t("repSold") + " " + api.fmtQ(x.sold, it, true) + (ev.w && x.i !== P.OTHER && !x.od ? " · " + t("repLeft") + " " + api.fmtQ(x.left, it, true) : ""), r: "" });
+    });
+    rows.push({ k: "foot", l: t("notFiscal"), r: "" });
+    return rows;
+  }
+  // cash count by notes and coins
+  function countDialog(onUse) {
+    var dlg = api.makeDialog("st-pos-cnt");
+    dlg.appendChild(el("div", "dlg-title", t("drCountT")));
+    var grid = el("div", "pos-cnt");
+    var ins = [];
+    P.DENOMS.forEach(function (c) {
+      var r = el("label", "pos-cntrow");
+      r.appendChild(el("span", "", api.money(c)));
+      var i = el("input"); i.type = "text"; i.inputMode = "numeric"; i.autocomplete = "off";
+      i.setAttribute("aria-label", api.money(c));
+      i.addEventListener("input", sum);
+      ins.push([c, i]);
+      r.appendChild(i);
+      grid.appendChild(r);
+    });
+    dlg.appendChild(grid);
+    var tot = el("p", "pos-change");
+    dlg.appendChild(tot);
+    function total() {
+      return ins.reduce(function (a, x) { var n = parseInt(String(x[1].value).replace(/[^\d]/g, ""), 10); return a + (isFinite(n) ? n * x[0] : 0); }, 0);
+    }
+    function sum() { tot.textContent = t("drTotal", { t: api.money(total()) }); }
+    sum();
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(btn(t("drUse"), "primary", function () { dlg.close(); onUse(total()); }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    ins[0][1].focus();
+  }
+
+  // ---------- F1: the receipt as a PDF or a QR code ----------
+  function loadScript(src, ready, done) {
+    if (ready()) { done(true); return; }
+    var sc = document.createElement("script");
+    sc.src = src + (SV ? "?v=" + SV : "");
+    sc.onload = function () { done(ready()); };
+    sc.onerror = function () { sc.remove(); done(false); };
+    document.head.appendChild(sc);
+  }
+  var fonts = null;
+  function loadFonts(done) {
+    if (fonts) { done(fonts); return; }
+    function get(path) {
+      return fetch(path).then(function (r) { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(function (buf) {
+        var bytes = new Uint8Array(buf), bin = "";
+        for (var i = 0; i < bytes.length; i += 8192) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 8192));
+        return btoa(bin);
+      });
+    }
+    Promise.all([get("../vendor/noto/NotoSans-Regular.ttf"), get("../vendor/noto/NotoSans-Bold.ttf")])
+      .then(function (r) { fonts = { reg: r[0], bold: r[1] }; done(fonts); })
+      .catch(function () { done(null); });
+  }
+  // 80 mm wide, as long as the rows need: the same rows as the print.
+  function receiptPdf(rows, done) {
+    loadScript("../vendor/jspdf.umd.min.js", function () { return !!(window.jspdf && window.jspdf.jsPDF); }, function (ok) {
+      if (!ok) { done(null); return; }
+      loadFonts(function (f) {
+        try {
+          var W = 80, M = 5, R = W - M, lh = 4.2;
+          var probe = new window.jspdf.jsPDF({ unit: "mm", format: [W, 200] });
+          var FONT = "helvetica";
+          function setup(doc) {
+            if (f) {
+              doc.addFileToVFS("NotoSans-Regular.ttf", f.reg);
+              doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+              doc.addFileToVFS("NotoSans-Bold.ttf", f.bold);
+              doc.addFont("NotoSans-Bold.ttf", "NotoSans", "bold");
+              FONT = "NotoSans";
+            }
+          }
+          setup(probe);
+          function lay(doc, draw) {
+            var y = M + 3;
+            rows.forEach(function (r) {
+              var bold = r.k === "head" || r.k === "item" || r.k === "total" || r.k === "void";
+              doc.setFont(FONT, bold ? "bold" : "normal");
+              doc.setFontSize(r.k === "total" ? 11 : 8.5);
+              if (r.k === "meta" || r.k === "total") { if (draw) doc.line(M, y - 3, R, y - 3); y += 1; }
+              if (r.k === "head" || r.k === "foot" || r.k === "void") {
+                doc.splitTextToSize(String(r.l), R - M).forEach(function (ln) { if (draw) doc.text(ln, W / 2, y, { align: "center" }); y += lh; });
+                return;
+              }
+              var rw = r.r ? doc.getTextWidth(String(r.r)) + 2 : 0;
+              var lines = doc.splitTextToSize(String(r.l), R - M - rw - (r.k === "sub" ? 2 : 0));
+              lines.forEach(function (ln, i) {
+                if (draw) {
+                  doc.text(ln, M + (r.k === "sub" ? 2 : 0), y);
+                  if (i === 0 && r.r) doc.text(String(r.r), R, y, { align: "right" });
+                }
+                y += lh;
+              });
+              if (r.k === "meta" || r.k === "total") { if (draw) doc.line(M, y - 2.5, R, y - 2.5); y += 1; }
+            });
+            return y + M;
+          }
+          var H = Math.max(60, Math.ceil(lay(probe, false)));
+          var doc = new window.jspdf.jsPDF({ unit: "mm", format: [W, H] });
+          setup(doc);
+          doc.setLineDashPattern([0.8, 0.8], 0);
+          lay(doc, true);
+          done(doc.output("blob"));
+        } catch (e) { done(null); }
+      });
+    });
+  }
+  function canShareFiles() {
+    try {
+      return typeof navigator.share === "function" && typeof navigator.canShare === "function" &&
+             navigator.canShare({ files: [new File(["x"], "x.pdf", { type: "application/pdf" })] });
+    } catch (e) { return false; }
+  }
+  function pdfAction(sale, rows) {
+    receiptPdf(rows, function (blob) {
+      if (!blob) { api.toast(t("pdfFail")); return; }
+      var name = (t("receipt") + " " + sale.no).replace(/[\\\/:*?"<>|]+/g, " ") + ".pdf";
+      if (canShareFiles()) {
+        navigator.share({ files: [new File([blob], name, { type: "application/pdf" })], title: name }).catch(function () {});
+        return;
+      }
+      api.saveBlob(blob, name, "application/pdf", "PDF", ".pdf");
+    });
+  }
+  function qrDialog(rows) {
+    var dlg = api.makeDialog("st-pos-qr");
+    dlg.appendChild(el("div", "dlg-title", t("qr")));
+    var box = el("div", "pos-qr");
+    dlg.appendChild(box);
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(btn(t("close"), "primary", function () { dlg.close(); }));
+    dlg.appendChild(acts);
+    api.showDialog(dlg);
+    loadScript("../qr/qr-encode.js", function () { return !!(window.orosQR && typeof window.orosQR.encode === "function"); }, function (ok) {
+      var txt = P.receiptText(rows), q = null;
+      if (ok && txt.length <= 1200) { try { q = window.orosQR.encode(txt, { ecl: "L" }); } catch (e) { q = null; } }
+      if (!q) { box.appendChild(el("p", "hint warn", t("qrLong"))); return; }
+      var NS = "http://www.w3.org/2000/svg", n = q.size + 8;
+      var svg = document.createElementNS(NS, "svg");
+      svg.setAttribute("viewBox", "0 0 " + n + " " + n);
+      svg.setAttribute("role", "img");
+      svg.setAttribute("aria-label", t("qr"));
+      svg.setAttribute("shape-rendering", "crispEdges");
+      var bg = document.createElementNS(NS, "rect");
+      bg.setAttribute("width", n); bg.setAttribute("height", n); bg.setAttribute("fill", "#fff");
+      svg.appendChild(bg);
+      var d = "";
+      for (var r = 0; r < q.size; r++) for (var c = 0; c < q.size; c++) if (q.modules[r][c]) d += "M" + (c + 4) + " " + (r + 4) + "h1v1h-1z";
+      var path = document.createElementNS(NS, "path");
+      path.setAttribute("d", d); path.setAttribute("fill", "#000");
+      svg.appendChild(path);
+      box.appendChild(svg);
+      box.appendChild(el("p", "dlg-sub", t("qrHint")));
+    });
+  }
+
   // ---------- Receipt ----------
   function saleById(id) { return (D().sales || []).filter(function (s) { return s.id === id; })[0] || null; }
   function rowsOf(sale) {
     var pp = prefs();
     return P.receiptRows(sale, {
       head: pp.head, foot: [pp.foot, t("notFiscal")].filter(Boolean).join("\n"), money: api.money,
-      qty: function (l) { return api.fmtQ(l.q, byItem(l.i) || { unit: "pcs" }, true); },
+      qty: function (l) { return api.fmtQ(l.q, (l.i !== P.OTHER && byItem(l.i)) || { unit: "pcs" }, true); },
       when: api.fmtDay(sale.d, true) + " " + hm(sale.at),
-      labels: { no: t("no"), net: t("net"), vat: t("vat"), total: t("totalR"), pay: t("paid"), given: t("givenR"),
+      labels: { no: t("no"), net: t("net"), vat: t("vat"), total: t("totalR"), pay: t("paid"), given: t("givenR"), was: t("was"), disc: t("discT"),
                 change: t("changeR"), payName: { cash: t("cash"), card: t("card"), other: t("other") } }
     });
   }
@@ -462,6 +1206,8 @@
     var pw = prefs().paper === 80 ? 80 : 58;
     acts.appendChild(btn(t(pw === 80 ? "print80" : "print58"), "primary", function () { api.printHtml(rollHtml(t("receiptTitle", { n: sale.no }), rows, pw)); }));
     acts.appendChild(btn(t(pw === 80 ? "print58" : "print80"), "", function () { api.printHtml(rollHtml(t("receiptTitle", { n: sale.no }), rows, pw === 80 ? 58 : 80)); }));
+    acts.appendChild(btn(canShareFiles() ? t("share") : t("pdf"), "", function () { pdfAction(sale, rows); }));
+    acts.appendChild(btn(t("qr"), "", function () { qrDialog(rows); }));
     acts.appendChild(btn(t("newSale"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
     api.showDialog(dlg);
@@ -478,20 +1224,58 @@
     dlg.appendChild(api.field(t("zDay"), dIn, "st-pos-zday"));
     var box = el("div", "pos-z");
     dlg.appendChild(box);
+    // F2: the cash drawer: float + cash sales = expected; counted → difference
+    var drw = el("div", "pos-drawer");
+    var flIn = el("input"); flIn.type = "text"; flIn.inputMode = "decimal"; flIn.autocomplete = "off";
+    var ccIn = el("input"); ccIn.type = "text"; ccIn.inputMode = "decimal"; ccIn.autocomplete = "off";
+    drw.appendChild(api.field(t("drFl"), flIn, "st-pos-fl"));
+    var ccf = api.field(t("drCc"), ccIn, "st-pos-cc");
+    ccf.appendChild(btn(t("drCount"), "", function () { countDialog(function (c) { ccIn.value = api.centsStr(c) || "0"; paintDrawer(); }); }));
+    drw.appendChild(ccf);
+    var drOut = el("p", "pos-change");
+    drw.appendChild(drOut);
+    dlg.appendChild(drw);
+    function centsOf(inp) { return inp.value.trim() ? api.readCents(inp) : null; }
+    function fillDrawer() {
+      var rep = P.zReport(D(), dIn.value), ev = P.evsOn(D(), dIn.value)[0];
+      var fl = rep.z && typeof rep.z.fl === "number" ? rep.z.fl : (ev && ev.fl ? ev.fl : null);
+      flIn.value = fl !== null ? (api.centsStr(fl) || "0") : "";
+      ccIn.value = rep.z && typeof rep.z.cc === "number" ? (api.centsStr(rep.z.cc) || "0") : "";
+      paintDrawer();
+    }
+    function paintDrawer() {
+      var rep = P.zReport(D(), dIn.value), fl = centsOf(flIn), cc = centsOf(ccIn);
+      var dr = P.drawer(rep, fl === null ? 0 : fl, cc === null ? undefined : cc);
+      drOut.textContent = t("drExp", { e: api.money(dr.exp) }) + (dr.diff === null ? "" : " · " + (dr.diff ? t("drDiff", { d: (dr.diff > 0 ? "+" : "−") + api.money(Math.abs(dr.diff)) }) : t("drOk")));
+      drOut.className = "pos-change" + (dr.diff === null ? "" : dr.diff ? " bad" : " good");
+    }
+    flIn.addEventListener("input", paintDrawer);
+    ccIn.addEventListener("input", paintDrawer);
     var acts = el("div", "dlg-actions wrap");
-    var printB = btn(t("zPrint"), "", function () { var rep = P.zReport(D(), dIn.value); api.printHtml(rollHtml(t("zTitle") + " " + rep.d, zRows(rep), prefs().paper === 80 ? 80 : 58)); });
+    var printB = btn(t("zPrint"), "", function () { var rep = P.zReport(D(), dIn.value); api.printHtml(rollHtml(t("zTitle") + " " + rep.d, zRows(rep, centsOf(flIn), centsOf(ccIn)), prefs().paper === 80 ? 80 : 58)); });
     var closeB = btn(t("zClose"), "primary", function () {
       var rep = P.zReport(D(), dIn.value), no = rep.z ? rep.z.no : P.nextZ(D());
+      var fl = centsOf(flIn), cc = centsOf(ccIn);
       api.confirm(t("zCloseQ", { d: api.fmtDay(rep.d, true), n: no }), t("zClose"), false, function () {
-        api.putZ(P.zRow(rep, Date.now(), no));
+        api.putZ(P.zRowDrawer(rep, Date.now(), no, fl === null ? undefined : fl, cc === null ? undefined : cc));
         paint();
       });
     });
+    // F3: one income entry per closed day (Chris 2026-11-13: one per day)
+    var budB = api.budgetReady && api.budgetReady() && !isTill() ? btn(t("zBudget"), "", function () {
+      var rep = P.zReport(D(), dIn.value);
+      if (!rep.z) return;
+      var evs = P.evsOn(D(), rep.d).filter(function (e) { return P.evSales(D(), e.id).some(function (s) { return s.d === rep.d && s.v !== 1; }); });
+      var note = t("zBudgetN", { n: rep.z.no, d: api.fmtDay(rep.d, true) }) + (evs.length ? " · " + evs.map(function (e) { return e.name; }).join(", ") : "");
+      api.sendBudgetZ(rep.z, note);
+    }) : null;
+    if (budB) budB.id = "st-pos-zbud";
     acts.appendChild(printB);
     acts.appendChild(closeB);
+    if (budB) acts.appendChild(budB);
     acts.appendChild(btn(t("close"), "", function () { dlg.close(); }));
     dlg.appendChild(acts);
-    dIn.addEventListener("change", function () { if (api.core.isYmd(dIn.value)) paint(); });
+    dIn.addEventListener("change", function () { if (api.core.isYmd(dIn.value)) { paint(); fillDrawer(); } });
     function kv(parent, k, v, cls) {
       var r = el("div", "pos-sum" + (cls ? " " + cls : ""));
       r.appendChild(el("span", "", k));
@@ -504,6 +1288,7 @@
       printB.disabled = !rep.n && !rep.voids;
       closeB.disabled = !rep.n;
       closeB.hidden = !!rep.z && !rep.after;
+      if (budB) budB.hidden = !rep.z || !(rep.z.g > 0);
       if (rep.z) {
         box.appendChild(el("p", "hint", t("zClosed", { t: hm(rep.z.at), n: rep.z.no, g: api.money(rep.z.g) })));
         if (rep.after) box.appendChild(el("p", "hint warn", t("zAfter", { n: rep.after })));
@@ -515,8 +1300,10 @@
       kv(box, t("zVat"), api.money(rep.vat));
       kv(box, t("zGross"), api.money(rep.g), "grand");
       if (rep.first) box.appendChild(el("p", "muted", t("zFirst", { a: hm(rep.first), b: hm(rep.last) })));
+      if (rep.disc) kv(box, t("zDisc"), "−" + api.money(rep.disc));
       box.appendChild(el("div", "pos-h", t("zByPay")));
       P.PAYS.forEach(function (k) { if (rep.byPay[k]) kv(box, t(k), api.money(rep.byPay[k])); });
+      if (rep.splits) kv(box, t("zSplit"), String(rep.splits));
       box.appendChild(el("div", "pos-h", t("zByVat")));
       rep.byVat.forEach(function (r) { kv(box, r.rate + "%", api.money(r.net) + " + " + api.money(r.vat)); });
       var pls = Object.keys(rep.byPl);
@@ -535,13 +1322,13 @@
         var li = el("li", "row" + (s.v === 1 ? " voided" : ""));
         var bd = el("span", "r-body");
         bd.appendChild(el("span", "r-name", s.no));
-        bd.appendChild(el("span", "r-sub", hm(s.at) + " · " + t(s.pay) + (s.pl ? " · " + plLabel(s.pl) : "") + (s.v === 1 ? " · " + t("isVoid") : "")));
+        bd.appendChild(el("span", "r-sub", hm(s.at) + " · " + (s.pays ? t("split") : t(s.pay)) + (s.pl ? " · " + plLabel(s.pl) : "") + (s.v === 1 ? " · " + t("isVoid") : "")));
         li.appendChild(bd);
         li.appendChild(el("span", "r-val", api.money(tt.gross)));
         var ra = el("span", "pos-sale-acts");
         ra.appendChild(btn(t("reprint"), "", function () { receiptDialog(s.id); }));
         if (s.v !== 1) ra.appendChild(btn(t("void"), "danger", function () {
-          api.confirm(t("voidQ", { n: s.no }), t("void"), true, function () { api.voidSale(s.id); api.toast(t("pos.voided")); paint(); });
+          owner(function () { api.confirm(t("voidQ", { n: s.no }), t("void"), true, function () { api.voidSale(s.id); api.toast(t("pos.voided")); paint(); }); });
         }));
         li.appendChild(ra);
         ul.appendChild(li);
@@ -550,8 +1337,9 @@
     }
     api.showDialog(dlg);
     paint();
+    fillDrawer();
   }
-  function zRows(rep) {
+  function zRows(rep, fl, cc) {
     var pp = prefs(), m = api.money, rows = [];
     String(pp.head || "").split("\n").map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 8)
       .forEach(function (s) { rows.push({ k: "head", l: s, r: "" }); });
@@ -565,6 +1353,16 @@
     });
     rows.push({ k: "total", l: t("totalR"), r: m(rep.g) });
     P.PAYS.forEach(function (k) { if (rep.byPay[k]) rows.push({ k: "sum", l: t(k), r: m(rep.byPay[k]) }); });
+    if (rep.disc) rows.push({ k: "sum", l: t("zDisc"), r: "−" + m(rep.disc) });
+    if (typeof fl === "number" || typeof cc === "number") {
+      var dr = P.drawer(rep, typeof fl === "number" ? fl : 0, typeof cc === "number" ? cc : undefined);
+      if (typeof fl === "number") rows.push({ k: "sum", l: t("drFl"), r: m(fl) });
+      rows.push({ k: "sum", l: t("drExp", { e: "" }).replace(/[:\s]+$/, ""), r: m(dr.exp) });
+      if (dr.cc !== null) {
+        rows.push({ k: "sum", l: t("drCc"), r: m(dr.cc) });
+        rows.push({ k: "sum", l: t("drDiff", { d: "" }).replace(/[:\s]+$/, ""), r: (dr.diff > 0 ? "+" : dr.diff < 0 ? "−" : "") + m(Math.abs(dr.diff)) });
+      }
+    }
     if (rep.z && rep.after) rows.push({ k: "foot", l: t("zAfter", { n: rep.after }), r: "" });
     rows.push({ k: "foot", l: t("notFiscal"), r: "" });
     return rows;
@@ -711,6 +1509,38 @@
     dev.autocomplete = "off";
     dlg.appendChild(api.field(t("stDev"), dev, "st-pos-dev"));
     dlg.appendChild(el("p", "dlg-sub", t("stDevHint") + " " + t("stLocal")));
+    var dmax = el("input");
+    dmax.type = "text";
+    dmax.inputMode = "numeric";
+    dmax.maxLength = 2;
+    dmax.value = pp.dmax ? String(pp.dmax) : "";
+    dlg.appendChild(api.field(t("stDmax"), dmax, "st-pos-dmax"));
+    dlg.appendChild(el("p", "dlg-sub", t("stDmaxHint")));
+    // F3 helper device (TILL-1)
+    if (api.tillTurn) {
+      var tb = el("div", "pos-tillset");
+      tb.appendChild(el("div", "pos-h", t("tillT")));
+      tb.appendChild(el("p", "dlg-sub", t("tillHint")));
+      if (api.tillSet()) {
+        tb.appendChild(el("p", "dlg-sub pos-tillis", t("tillIs")));
+        var stopB = btn(t("tillStop"), "", function () {
+          dlg.close();
+          if (api.tillTurn(false)) api.toast(t("tillStopped"));
+        });
+        stopB.id = "st-pos-till-off";
+        tb.appendChild(stopB);
+      } else if (!api.lockKind()) {
+        tb.appendChild(el("p", "hint warn", t("tillNeedLock")));
+        if (api.openLockSettings) tb.appendChild(btn(t("tillLock"), "", function () { dlg.close(); api.openLockSettings(); }));
+      } else {
+        var goB = btn(t("tillGo"), "", function () {
+          api.confirm(t("tillQ"), t("tillGo"), false, function () { dlg.close(); api.tillTurn(true); });
+        });
+        goB.id = "st-pos-till-on";
+        tb.appendChild(goB);
+      }
+      dlg.appendChild(tb);
+    }
     var acts = el("div", "dlg-actions");
     acts.appendChild(btn(t("cancel"), "", function () { dlg.close(); }));
     acts.appendChild(btn(t("save"), "primary", function () {
@@ -719,6 +1549,8 @@
       api.setPosPref("foot", foot.value.slice(0, 200));
       api.setPosPref("paper", paper.value === "80" ? 80 : 58);
       if (d.length === 2) api.setPosPref("dev", d);
+      var dm = parseInt(String(dmax.value).replace(/[^\d]/g, ""), 10);
+      api.setPosPref("dmax", isFinite(dm) && dm >= 1 && dm <= 99 ? dm : 0);
       api.toast(t("stSaved"));
       dlg.close();
     }));

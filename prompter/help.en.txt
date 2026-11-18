@@ -14,6 +14,7 @@ The three buttons at the top switch between `Browse`, `Statistics` and `Settings
 ## Work with a prompt
 Each card has these buttons:
 - `Use` opens the prompt in [Writer](app:writer) as a new document, so you can start writing right away (with the variation, if it is shown). Opened on its own outside orOS, it copies the prompt instead.
+- `On the typewriter` opens a new page in [Typewriter](app:typewriter) that starts with the prompt, so you write under it one key at a time. The page is saved once you type something.
 - `Copy` copies the prompt to the clipboard.
 - `Variation` (on some prompts) adds an extra twist under the prompt; `Copy` then copies both.
 - `Star` marks it as a favourite (★); `Unstar` removes it.

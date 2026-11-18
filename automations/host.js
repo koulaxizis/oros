@@ -33,6 +33,7 @@
   var DAY_CAP = 20;                              // signal runs per rule per day on this device
   var REF_KEY = "oros-automations-ref";          // device-local: the file a bridge.* run is about (item 25)
   var REF_MAX = 50;
+  var SEEN_MAX = 200;                            // BR-EV-2: signal runs remembered on this device
   var bootAt = Date.now();
   var listeners = [];
 
@@ -100,8 +101,15 @@
       if (o && o.cnt && typeof o.cnt === "object") {
         Object.keys(o.cnt).forEach(function (k) { if (C.ID_RE.test(k) && typeof o.cnt[k] === "number") cnt[k] = o.cnt[k]; });
       }
-      return { done: done, day: day, cnt: cnt };
-    } catch (e) { return { done: {}, day: "", cnt: {} }; }
+      var lk = {};                              // SB2: the last signal run this device handled, per rule
+      if (o && o.lk && typeof o.lk === "object") {
+        Object.keys(o.lk).forEach(function (k) { if (C.ID_RE.test(k) && typeof o.lk[k] === "string" && o.lk[k].length <= 90) lk[k] = o.lk[k]; });
+      }
+      // BR-EV-2: the last signal runs this device handled (any rule), so a
+      // state the shell watches (several overdue invoices) is one run each
+      var sk = o && Array.isArray(o.sk) ? o.sk.filter(function (k) { return typeof k === "string" && k.length <= 90; }).slice(-SEEN_MAX) : [];
+      return { done: done, day: day, cnt: cnt, lk: lk, sk: sk };
+    } catch (e) { return { done: {}, day: "", cnt: {}, lk: {}, sk: [] }; }
   }
   function writeLocal(o) { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(o)); } catch (e) {} }
   function readLog() {
@@ -155,6 +163,7 @@
       if (!d) return;
       local.done[rule.id] = d.key;
       touched = true;
+      runLocal(rule);                                          // SB2: pause / chime on every device
       if (inboxHas("automations:" + d.key)) return;           // another device ran it
       if (!C.runnable(rule, apps)) { log(rule, d.key, d.at, "skip"); return; }   // AUTO-5
       var txt = C.notice(rule, d.at, l, appName);
@@ -172,6 +181,129 @@
     // Forget rules that are gone, so the record stays small.
     Object.keys(local.done).forEach(function (k) { if (!C.find(data, k)) { delete local.done[k]; touched = true; } });
     if (touched) writeLocal(local);
+    watch(data, now);
+  }
+
+  // ---------- SB2: steps this device does by itself ----------
+  // pause = everything that plays in orOS (the shell's
+  // __orosPauseAll: music, podcasts, radio, Sound Mixer); sound = a
+  // short two-note chime (Web Audio, quiet; never under Do Not Disturb).
+  function runLocal(rule) {
+    (rule && rule["do"] || []).forEach(function (a) {
+      if (a.a === "pause" && typeof root.__orosPauseAll === "function") { try { root.__orosPauseAll(); } catch (e) {} }
+      if (a.a === "sound") chime();
+    });
+  }
+  var audio = null;
+  function chime() {
+    var N = root.orosNotifs;
+    try { if (N && N.dnd && N.dnd().on) return; } catch (e) {}
+    var AC = root.AudioContext || root.webkitAudioContext;
+    if (!AC) return;
+    try {
+      audio = audio || new AC();
+      if (audio.state === "suspended" && audio.resume) audio.resume();
+      var t0 = audio.currentTime + 0.02;
+      [[880, 0], [1318.5, 0.18]].forEach(function (n) {
+        var o = audio.createOscillator(), g = audio.createGain();
+        o.type = "sine"; o.frequency.value = n[0];
+        g.gain.setValueAtTime(0.0001, t0 + n[1]);
+        g.gain.exponentialRampToValueAtTime(0.18, t0 + n[1] + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + n[1] + 0.6);
+        o.connect(g); g.connect(audio.destination);
+        o.start(t0 + n[1]); o.stop(t0 + n[1] + 0.65);
+      });
+    } catch (e) {}
+  }
+
+  // ---------- SB2: what the shell watches itself ----------
+  // Only while a rule that is on asks for it, on the clock tick (30 s
+  // throttle). event.soon: timed rows of today's summary (Today,
+  // rebuilt at most every 2 minutes), never rows of apps kept out of
+  // search; goal.spent: this month's expenses in Budget; goal.sales:
+  // today's till sales in Stock (stock/pos-core.js, loaded once). Each
+  // is a signal; matches() compares it with the rule's minutes or amount,
+  // and the signal's key (the row and day, the month, the day) makes it
+  // one run.
+  var todayRes = null, todayAt = 0, todayBusy = false, posLoad = 0;
+  function wants(data) {
+    var o = {};
+    data.rules.forEach(function (r) { if (r.on && r.when.t === "event" && /^(event\.soon|goal\.|invoices\.overdue$)/.test(r.when.ev)) o[r.when.ev] = true; });
+    return o;
+  }
+  function strictOn() { try { return !!(root.orosStrict && root.orosStrict.level()); } catch (e) { return false; } }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function money(cents, cur) {
+    var I = root.orosI18n, loc = "en-GB";
+    try { loc = I ? I.locale(lang()) : loc; } catch (e) {}
+    try { return new Intl.NumberFormat(loc, { style: "currency", currency: cur }).format(cents / 100); }
+    catch (e) { return (cents / 100).toFixed(2) + " " + cur; }
+  }
+  function readJSON(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
+  function watch(data, now) {
+    var w = wants(data);
+    if (w["event.soon"]) watchSoon(now);
+    if (w["goal.spent"]) {
+      var SB = root.orosSmartBar && root.orosSmartBar.model;
+      var d = new Date(now), ym = d.getFullYear() + "-" + pad(d.getMonth() + 1);
+      var sp = SB ? SB.monthSpent(readJSON("oros-budget-data"), ym) : null;
+      if (sp) signal("event", "goal.spent", "spent:" + ym, strictOn() ? "" : money(sp.cents, sp.cur), null, sp.cents);
+    }
+    if (w["invoices.overdue"]) {
+      // BR-EV-2: documents that became overdue (invoices/core.js, in the
+      // shell bundle); the amount stays out in sensitive work mode.
+      var quiet = strictOn();
+      C.overdueList(root.OrosInvoicesCore, readJSON("oros-invoices-data"), C.ymdOf(now)).forEach(function (x) {
+        var said = [x.num, x.party, quiet ? "" : money(x.bal, x.cur)].filter(Boolean).join(" \u00b7 ");
+        signal("event", "invoices.overdue", x.key, said, null, x.late);
+      });
+    }
+    if (w["goal.sales"]) {
+      var P = root.OrosStockPosCore;
+      if (!P) { loadPos(); return; }
+      var st = readJSON("oros-stock-data");
+      if (!st || !Array.isArray(st.sales)) return;
+      var ymd = C.ymdOf(now), rep = null;
+      try { rep = P.zReport(st, ymd); } catch (e) { rep = null; }
+      if (!rep || !rep.n) return;
+      var cur = st.settings && /^[A-Z]{3}$/.test(st.settings.cur || "") ? st.settings.cur : "EUR";
+      signal("event", "goal.sales", "sales:" + ymd, strictOn() ? "" : money(rep.g, cur), null, rep.g);
+    }
+  }
+  function loadPos() {
+    if (posLoad) return;
+    posLoad = 1;
+    var s = document.createElement("script");
+    var v = (document.querySelector('script[src*="automations/host.js"]') || {}).src || "";
+    var m = /[?&]v=([^&#]+)/.exec(v);
+    s.src = "stock/pos-core.js" + (m ? "?v=" + m[1] : "");
+    s.onerror = function () { posLoad = 0; };
+    document.head.appendChild(s);
+  }
+  function watchSoon(now) {
+    var T = root.orosToday;
+    if (!T || typeof T.build !== "function") return;
+    if (!todayBusy && (!todayRes || now - todayAt > 120000)) {
+      todayBusy = true;
+      T.build().then(function (res) { todayBusy = false; todayAt = Date.now(); todayRes = res; soonSignals(Date.now()); },
+        function () { todayBusy = false; todayAt = Date.now(); });
+    }
+    soonSignals(now);
+  }
+  function soonSignals(now) {
+    var res = todayRes;
+    if (!res || !res.groups || res.today !== C.ymdOf(now)) return;
+    var hidden = {};
+    (res.apps || []).forEach(function (a) { if (a.sensitive) hidden[a.id] = true; });
+    var d = new Date(now), nowMin = d.getHours() * 60 + d.getMinutes(), quiet = strictOn();
+    (res.groups.today || []).forEach(function (r) {
+      if (!r || r.kind === "info" || hidden[r.app] || C.BLOCKED_APPS[r.app]) return;
+      var m = /^(\d{2}):(\d{2})$/.exec(r.time || "");
+      if (!m) return;
+      var left = +m[1] * 60 + +m[2] - nowMin;
+      if (left < 0 || left > C.SOON_MAX) return;
+      signal("event", "event.soon", "soon:" + r.key + ":" + res.today + ":" + r.time, quiet ? "" : r.title + " · " + r.time, null, left);
+    });
   }
 
   // ---------- Wave A5: steps that leave the device ----------
@@ -228,7 +360,7 @@
     try { localStorage.setItem(REF_KEY, JSON.stringify(o)); } catch (e) {}
   }
   function refFor(key) { var r = readRefs()[String(key || "")]; return r && typeof r === "object" ? r : null; }
-  function signal(kind, name, key, text, ref) {
+  function signal(kind, name, key, text, ref, num) {
     if (!registered()) return 0;
     if (kind !== "notice" && kind !== "event") return 0;
     if (typeof name !== "string" || typeof key !== "string" || !key) return 0;
@@ -237,12 +369,18 @@
     if (!(N && typeof N.emit === "function")) return 0;
     var said = typeof text === "string" ? text.replace(/\s+/g, " ").trim().slice(0, 300) : "";
     var sig = { kind: kind, name: name, key: key, text: said };
+    if (typeof num === "number" && isFinite(num)) sig.n = num;
     var data = read(), local = readLocal(), now = Date.now(), apps = installed(), l = lang(), n = 0;
     var today = C.ymdOf(now);
     if (local.day !== today) { local.day = today; local.cnt = {}; }
     data.rules.forEach(function (rule) {
       var rk = C.matches(rule, sig, now);
-      if (!rk || inboxHas("automations:" + rk)) return;
+      if (!rk || local.lk[rule.id] === rk || local.sk.indexOf(rk) >= 0) return;   // SB2: this device already handled it
+      local.lk[rule.id] = rk;
+      local.sk.push(rk);
+      if (local.sk.length > SEEN_MAX) local.sk.splice(0, local.sk.length - SEEN_MAX);
+      runLocal(rule);                                          // SB2: pause / chime here
+      if (inboxHas("automations:" + rk)) return;
       if ((local.cnt[rule.id] || 0) >= DAY_CAP) return;
       local.cnt[rule.id] = (local.cnt[rule.id] || 0) + 1;
       if (!C.runnable(rule, apps)) { log(rule, rk, now, "skip"); return; }
@@ -255,6 +393,7 @@
       if (id) sendOut(rule, rk, now, l, said);
       n++;
     });
+    Object.keys(local.lk).forEach(function (k) { if (!C.find(data, k)) delete local.lk[k]; });
     writeLocal(local);
     return n;
   }
@@ -272,6 +411,7 @@
   // person's go-ahead). → true when a receiving app was opened (or, for
   // a file step, its reading started). key = the run, for a file step.
   function runAction(action, at, said, key) {
+    if (action && C.LOCAL[action.a]) { runLocal({ "do": [action] }); return true; }
     var c = C.call(action, at || Date.now(), lang(), C.from(lang()), said);
     if (c && (c.fn === "bridgeFile" || c.fn === "bridgePrint")) return fileStep(c, refFor(key));
     if (!c || installed().indexOf(c.app) < 0) return false;
@@ -359,7 +499,7 @@
   }
 
   root.orosAutomations = {
-    VERSION: "1.2.0",
+    VERSION: "1.3.0",
     rules: function () { return read(); },
     save: save,
     tick: tick,

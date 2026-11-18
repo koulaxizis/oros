@@ -246,6 +246,7 @@
       "tool.held": "you kept {n} back",
       "tool.noneShared": "you shared nothing",
       "tool.apps": "Looked at which apps it may search",
+      "tool.cfFolders": "Looked at which folders it may use", "tool.cfList": "Looked in {path}", "tool.cfRead": "Read {path}",
       "tool.err": "A step didn't work",
       "tool.err.args": "A step didn't work: the AI sent details orOS couldn't read.",
       "tool.err.unknown": "A step didn't work: the AI asked for a tool orOS doesn't have ({name}).",
@@ -294,6 +295,23 @@
       "rb.slaLines": "{n} of {t} lines break as in the PDF ({p} %).",
       "hs.head.learn": "Learn a house style · {app}",
       "hs.head.book": "Lay out a book · {app}",
+      "ep.head": "Make an EPUB · {app}",
+      "ep.byTitle": "The document linked to the Publishing title {t}.",
+      "ep.lay.reflowable": "Reflowable text", "ep.lay.fixed": "Fixed layout, text as text", "ep.lay.pictures": "Fixed layout, pages as pictures",
+      "ep.edition": "Edition: {e}.", "ep.ready": "Then marked ready in Publishing if the check finds no errors.",
+      "ep.hint": "Layout makes the e-book on this device, checks it and keeps a copy in Layout/EPUB on the orOS disk. Nothing is sent to the AI service.",
+      "ep.go": "Make EPUB",
+      "ep.working": "{app} is making the EPUB on this device…",
+      "ep.failed": "{app} could not make the EPUB. Nothing was made.",
+      "ep.noDoc": "{app} found no such document.",
+      "ep.noEdition": "That document has no EPUB edition by that name.",
+      "ep.busy": "{app} was busy with something else. Try again.",
+      "ep.repSum": "{p} pages, {h} headings, {i} pictures, {kb} KB.",
+      "ep.repErr": "{n} errors: e-book stores would refuse it ({list}).",
+      "ep.repOk": "No errors, {n} warnings.",
+      "ep.repAlt": "Pictures without a description on pages {list}.",
+      "ep.repPath": "Saved as {path}.",
+      "ep.repReady": "Marked ready in Publishing.",
       "hs.head.rule": "Add a house rule · {app}",
       "hs.docs": "From: {list}.",
       "hs.in": "In the house style {h}.",
@@ -470,7 +488,7 @@
       "ed.will.spreadsheet": "Changes {n} things in {d} sheets.", "ed.did.spreadsheet": "Changed {n} things in {d} sheets.", "ed.sureDel.spreadsheet": "This deletes rows or columns. Undo on the card brings them back.", "ed.op.set": "Cell values", "ed.op.clear": "Clear cells", "ed.op.format": "Cell format", "ed.op.size": "Column width and row height", "ed.op.insert": "Insert rows or columns", "ed.op.remove.spreadsheet": "Delete rows or columns", "ed.op.sort": "Sort", "ed.op.merge": "Merge cells", "ed.op.unmerge": "Unmerge cells", "ed.op.freeze": "Freeze panes", "ed.f.range": "cells", "ed.f.text.spreadsheet": "values", "ed.f.part": "only", "ed.f.numfmt": "number format", "ed.f.wrap": "wrap text", "ed.f.border": "borders", "ed.f.rows": "rows", "ed.f.cols": "columns", "ed.f.insert.rows": "before row", "ed.f.insert.cols": "before column", "ed.f.insert.end.rows": "rows at the end", "ed.f.insert.end.cols": "columns at the end", "ed.f.by": "by column", "ed.f.desc": "largest or Z first", "ed.f.head": "heading row", "ed.f.cell": "at", "ed.f.each": "merge", "ed.v.part.values": "values", "ed.v.part.format": "format", "ed.v.part.fill": "fill", "ed.v.part.border": "borders", "ed.v.numfmt.gen": "general", "ed.v.numfmt.0": "whole number", "ed.v.numfmt.2": "2 decimals", "ed.v.numfmt.pct": "percent", "ed.v.numfmt.eur": "euro", "ed.v.numfmt.date": "date", "ed.v.wrap.on": "on", "ed.v.wrap.off": "off", "ed.v.border.all": "all", "ed.v.border.outer": "outside", "ed.v.border.bottom": "bottom", "ed.v.border.none": "none", "ed.v.head.on": "yes", "ed.v.head.off": "no", "ed.v.each.row": "each row", "ed.v.each.col": "each column", "ed.note.noCells": "No cell matched in some sheets.", "ed.note.maxDims": "Some rows or columns were not added: a sheet holds at most 10,000 rows and 104 columns.", "ed.note.formulas": "Formulas were left as they are; the Assistant changes a formula by writing it anew.", "ed.note.sortBy": "In some sheets the sort column is outside the cells to sort.", "ed.note.mergeLost": "Merging keeps only the top-left value of each merged area; the other values were removed.", "ed.note.sheetRefs": "Formulas that name the sheet by its old name need the new name.", "ed.note.big": "Some commands cover more cells than can be changed at once.",
       "ed.will.montage": "Changes {n} things in {d} projects.", "ed.did.montage": "Changed {n} things in {d} projects.", "ed.sureDel.montage": "This removes clips. Undo on the card brings them back.", "ed.op.clip": "Clip settings", "ed.op.transition": "Transition", "ed.op.move": "Move", "ed.op.split": "Split", "ed.op.project": "Project settings", "ed.f.ids.montage": "clips:", "ed.f.row": "on row", "ed.f.back": "background", "ed.f.speed": "speed", "ed.f.vol": "volume %", "ed.f.mute": "mute", "ed.f.fi.montage": "fade in", "ed.f.fo": "fade out", "ed.f.secs.montage": "seconds", "ed.f.after": "after", "ed.f.after.start": "to the start", "ed.v.trans.wipe.montage": "wipe", "ed.f.time": "at second", "ed.f.fps": "frames per second", "ed.f.duck": "music ducking %", "ed.v.what.image": "pictures", "ed.v.what.audio": "sounds", "ed.v.row.main": "Main", "ed.v.row.overlay": "Overlay", "ed.v.row.text": "Text", "ed.v.row.music": "Music", "ed.v.row.voice": "Voice", "ed.v.mute.on": "on", "ed.v.mute.off": "off", "ed.v.fit.fit.montage": "whole picture", "ed.v.font.display": "bold", "ed.flt.fade": "faded", "ed.flt.film": "film", "ed.flt.chrome": "chrome", "ed.flt.dusk": "dusk", "ed.flt.golden": "golden", "ed.v.trans.black": "through black", "ed.v.trans.circle": "circle", "ed.v.add.title": "a title", "ed.v.add.card": "a title card", "ed.shp.round": "rounded rectangle", "ed.shp.ellipse": "circle", "ed.note.noClips": "No clip matched in some projects.", "ed.note.maxClips": "Some clips were not added: a project holds at most 2,000 clips.", "ed.note.ramp": "Clips with a speed curve kept their length; change it in Montage.",
       "ed.will.studio": "Changes {n} things in {d} projects.", "ed.did.studio": "Changed {n} things in {d} projects.", "ed.sureDel.studio": "This removes clips or tracks. Undo on the card brings them back.", "ed.op.notes.studio": "MIDI notes", "ed.op.remove.studio": "Remove clips", "ed.op.track": "Track settings", "ed.op.addtrack": "Add a track", "ed.op.deltrack": "Delete tracks", "ed.f.tracks": "tracks", "ed.f.ids.studio": "clips:", "ed.f.gain": "gain dB", "ed.f.fi.studio": "fade in", "ed.f.secs.studio": "length in seconds", "ed.f.bar": "at bar", "ed.f.semis": "semitones", "ed.f.vel": "velocity", "ed.f.vol.studio": "volume dB", "ed.f.pan": "pan", "ed.f.solo": "solo", "ed.f.inst": "instrument", "ed.f.bpm": "tempo BPM", "ed.f.sig": "beats in a bar", "ed.f.loop": "loop", "ed.f.bars": "bars", "ed.v.what.audio.studio": "audio", "ed.v.what.midi": "MIDI", "ed.v.add.audio": "an audio track", "ed.v.add.midi": "an instrument track", "ed.v.solo.on": "on", "ed.v.solo.off": "off", "ed.v.loop.on": "on", "ed.v.loop.off": "off", "ed.v.inst.piano": "piano", "ed.v.inst.epiano": "electric piano", "ed.v.inst.organ": "organ", "ed.v.inst.strings": "strings", "ed.v.inst.lead": "lead synth", "ed.v.inst.bass": "bass", "ed.v.inst.drums": "drum kit", "ed.note.noTrack": "Some tracks named in the commands were not found.", "ed.note.noTracks": "No track matched in some projects.", "ed.note.maxTracks": "Some tracks were not added: a project holds at most 8 tracks.", "ed.note.short": "Some audio clips are shorter than asked: they cannot run past their recording.", "ed.note.drums": "Drum tracks were not transposed: their notes are drum sounds.", "ed.note.range": "Some notes reached the edge of the MIDI range and stopped there.", "ed.note.noLoop": "The loop needs a range of bars; it stays off.",
-      "ed.will.whiteboard": "Changes {n} things on {d} boards.", "ed.did.whiteboard": "Changed {n} things on {d} boards.", "ed.sureDel.whiteboard": "This removes objects from the board. Undo on the card brings them back.", "ed.op.connect": "Connect with an arrow", "ed.op.style.whiteboard": "Look", "ed.op.arrange.whiteboard": "Arrange in a grid", "ed.op.remove.whiteboard": "Remove objects", "ed.f.ids.whiteboard": "objects:", "ed.f.frame": "in frame", "ed.f.dash": "dashed", "ed.f.ends": "arrow heads", "ed.f.n.whiteboard": "columns", "ed.f.sw.whiteboard": "pen width", "ed.f.size.whiteboard": "font size", "ed.f.to.whiteboard": "to", "ed.shp.tri": "triangle", "ed.v.add.note": "a sticky note", "ed.v.add.frame": "a frame", "ed.v.what.note": "notes", "ed.v.what.arrow": "arrows", "ed.v.what.pen": "drawings", "ed.v.what.frame": "frames", "ed.v.dash.on": "yes", "ed.v.dash.off": "no", "ed.v.ends.end": "at the end", "ed.v.ends.both": "at both ends", "ed.v.ends.none": "none", "ed.v.fill.none": "none", "ed.v.fill.soft": "soft", "ed.v.fill.solid": "solid", "ed.note.full": "Some objects were not added: a board holds at most 2000.", "ed.note.noEnd": "Some arrows were not drawn: an object they join was not found.", "ed.note.noFrame": "Some frames named in the commands were not found.",
+      "ed.will.whiteboard": "Changes {n} things on {d} boards.", "ed.did.whiteboard": "Changed {n} things on {d} boards.", "ed.sureDel.whiteboard": "This removes objects from the board. Undo on the card brings them back.", "ed.op.connect": "Connect with an arrow", "ed.op.style.whiteboard": "Look", "ed.op.arrange.whiteboard": "Arrange in a grid", "ed.op.layout.whiteboard": "Lay out as a diagram", "ed.op.mermaid": "Draw from Mermaid text", "ed.note.mermaid": "Some Mermaid text could not be drawn: only flowcharts are read.", "ed.note.mermaidCut": "A Mermaid diagram was cut: at most 500 boxes and 1000 links.", "ed.op.align.whiteboard": "Align or space evenly", "ed.f.kind.whiteboard": "as", "ed.v.kind.tree.whiteboard": "a tree", "ed.v.kind.flow.whiteboard": "a flow", "ed.f.dir.whiteboard": "direction", "ed.op.remove.whiteboard": "Remove objects", "ed.f.ids.whiteboard": "objects:", "ed.f.frame": "in frame", "ed.f.dash": "dashed", "ed.f.ends": "arrow heads", "ed.f.n.whiteboard": "columns", "ed.f.sw.whiteboard": "pen width", "ed.f.size.whiteboard": "font size", "ed.f.to.whiteboard": "to", "ed.shp.tri": "triangle", "ed.f.route": "line", "ed.f.starthead": "head at the start", "ed.f.endhead": "head at the end", "ed.v.route.line": "straight", "ed.v.route.elbow": "right angles", "ed.v.route.curve": "curved", "ed.v.starthead.arrow": "arrow", "ed.v.starthead.open": "open arrow", "ed.v.starthead.tri": "hollow triangle", "ed.v.starthead.dia": "filled diamond", "ed.v.starthead.odia": "hollow diamond", "ed.v.starthead.dot": "dot", "ed.v.starthead.none": "none", "ed.v.endhead.arrow": "arrow", "ed.v.endhead.open": "open arrow", "ed.v.endhead.tri": "hollow triangle", "ed.v.endhead.dia": "filled diamond", "ed.v.endhead.odia": "hollow diamond", "ed.v.endhead.dot": "dot", "ed.v.endhead.none": "none", "ed.shp.process": "process step", "ed.shp.decision": "decision", "ed.shp.terminator": "start or end", "ed.shp.data": "data (input or output)", "ed.shp.document": "document", "ed.shp.documents": "several documents", "ed.shp.predefined": "predefined process", "ed.shp.manual-input": "manual input", "ed.shp.manual-op": "manual operation", "ed.shp.preparation": "preparation", "ed.shp.database": "database", "ed.shp.delay": "delay", "ed.shp.off-page": "link to another page", "ed.shp.connector": "connector", "ed.shp.merge": "merge", "ed.shp.person": "person card", "ed.shp.unit": "team or department", "ed.shp.class": "UML class", "ed.shp.interface": "UML interface", "ed.shp.actor": "actor", "ed.shp.usecase": "use case", "ed.shp.package": "package", "ed.shp.component": "component", "ed.shp.comment": "comment", "ed.shp.node": "node (device)", "ed.shp.start": "start point", "ed.shp.end": "end point", "ed.shp.arrow-right": "block arrow", "ed.shp.arrow-both": "double block arrow", "ed.shp.cloud": "cloud", "ed.shp.callout": "speech bubble", "ed.shp.server": "server", "ed.shp.router": "router", "ed.shp.switch": "network switch", "ed.shp.firewall": "firewall", "ed.shp.internet": "internet", "ed.shp.laptop": "laptop", "ed.shp.desktop": "desktop computer", "ed.shp.phone": "phone", "ed.shp.tablet": "tablet", "ed.shp.db-server": "database server", "ed.shp.storage": "storage", "ed.shp.user": "user", "ed.shp.printer": "printer", "ed.shp.wifi": "Wi-Fi access point", "ed.v.add.note": "a sticky note", "ed.v.add.frame": "a frame", "ed.v.what.note": "notes", "ed.v.what.arrow": "arrows", "ed.v.what.pen": "drawings", "ed.v.what.frame": "frames", "ed.v.dash.on": "yes", "ed.v.dash.off": "no", "ed.v.ends.end": "at the end", "ed.v.ends.both": "at both ends", "ed.v.ends.none": "none", "ed.v.fill.none": "none", "ed.v.fill.soft": "soft", "ed.v.fill.solid": "solid", "ed.note.full": "Some objects were not added: a board holds at most 2000.", "ed.note.noEnd": "Some arrows were not drawn: an object they join was not found.", "ed.note.noFrame": "Some frames named in the commands were not found.",
       "ed.will.mindmap": "Changes {n} things in {d} maps.", "ed.did.mindmap": "Changed {n} things in {d} maps.", "ed.sureDel.mindmap": "This removes ideas with everything under them. Undo on the card brings them back.", "ed.op.add.mindmap": "Add ideas", "ed.op.node": "Idea look and details", "ed.op.move.mindmap": "Move ideas", "ed.op.sort.mindmap": "Sort A-Z", "ed.op.link": "Cross-link", "ed.op.frame": "Boundary", "ed.op.remove.mindmap": "Remove ideas", "ed.op.map": "Map layout", "ed.op.rename.mindmap": "New title", "ed.f.ids.mindmap": "ideas:", "ed.f.branch": "in branch", "ed.f.level": "level", "ed.f.add.to": "under", "ed.f.move.to": "under", "ed.f.link.to": "to", "ed.f.emoji": "emoji", "ed.f.note": "note", "ed.f.url": "link", "ed.f.done": "done", "ed.f.nodesize": "size", "ed.f.kind": "kind", "ed.f.sides": "branches", "ed.f.title.mindmap": "title", "ed.shp.pill": "pill", "ed.shp.hex": "hexagon", "ed.shp.line": "underline", "ed.shp.none": "no shape", "ed.v.fill.tint": "tint", "ed.v.border.thin": "thin", "ed.v.border.thick": "thick", "ed.v.border.dashed": "dashed", "ed.v.done.on": "yes", "ed.v.done.off": "no", "ed.v.nodesize.s": "small", "ed.v.nodesize.m": "normal", "ed.v.nodesize.l": "large", "ed.v.kind.box": "a boundary", "ed.v.kind.brace": "a summary brace", "ed.v.layout.map": "around the centre", "ed.v.layout.org": "org chart", "ed.v.layout.tree": "tree", "ed.v.layout.time": "timeline", "ed.v.sides.both": "both sides", "ed.v.sides.right": "right side only", "ed.note.noIdea": "Some ideas named in the commands were not found.", "ed.note.loop": "Some ideas were not moved: a branch cannot go inside itself.", "ed.note.centre": "The centre of a map stays: delete the map in Mind Map itself.", "ed.note.mapFull": "Some ideas were not added: the map is at its size limit.", "ed.note.frameMax": "A boundary holds at most 50 ideas; the first 50 are in it.",
       "ed.f.title": "name", "ed.v.what.text": "texts", "ed.v.what.photo": "photos", "ed.v.what.video": "videos", "ed.v.what.shape": "shapes", "ed.v.what.icon": "icons",
       "ed.v.what.line": "lines", "ed.v.what.table": "tables", "ed.v.what.chart": "charts", "ed.v.what.bg": "page backgrounds", "ed.v.pos.tl": "top left", "ed.v.pos.t": "top",
@@ -520,12 +538,14 @@
       "f.perweek": "Times a week", "f.permonth": "Times a month", "f.water": "Water every (days)", "f.nextdue": "Next due",
       "f.until": "Last day", "f.platform": "Platform",
       "f.sub": "Subtitle", "f.translator": "Translator", "f.illustrator": "Illustrator", "f.editor": "Editor", "f.series": "Series",
-      "f.release": "Release date", "f.lang": "Language", "f.format": "Edition", "f.pages": "Pages", "f.product": "Shop product", "f.blurb": "Back-cover text",
+      "f.mtype": "Release type", "f.pline": "℗ and © lines", "f.label": "Label", "f.genre": "Genre", "f.track": "Track", "f.upc": "UPC/EAN", "f.release": "Release date", "f.lang": "Language", "f.format": "Edition", "f.pages": "Pages", "f.product": "Shop product", "f.blurb": "Back-cover text",
       "pf.paperback": "Paperback", "pf.hardback": "Hardback", "pf.ebook": "E-book", "pf.audiobook": "Audiobook", "pf.other": "Other",
+      "pf.digital": "Digital", "pf.cd": "CD", "pf.vinyl": "Vinyl", "pf.cassette": "Cassette",
+      "pm.single": "Single", "pm.ep": "EP", "pm.album": "Album", "pm.compilation": "Compilation",
       "st.idea": "Idea", "st.production": "In production", "st.released": "Released", "st.out_of_print": "Out of print",
       "ft.a.run": "Running", "ft.a.walk": "Walking", "ft.a.bike": "Cycling", "ft.a.swim": "Swimming", "ft.a.row": "Rowing",
       "f.deck": "Deck", "f.front": "Front", "f.back": "Back", "f.songs": "Songs", "chg.disk": "The change could not be written to the orOS disk.", "f.read": "Read", "f.played": "Played", "f.queue": "In the queue", "f.price": "Price", "v.read": "read", "v.unread": "not read", "v.played": "played", "v.unplayed": "not played",
-      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.line": "Line", "f.num": "Number", "f.wiki": "Wiki", "f.paid_by": "Paid by", "f.shared_by": "Split between", "f.networks": "Where", "f.book": "About",
+      "f.dose": "Dose", "f.weight": "Weight (kg)", "f.media": "Type", "f.status": "Status", "f.by": "By", "f.year": "Year", "f.rel": "Release date (with the release plan)", "f.isbn": "ISBN", "f.line": "Line", "f.num": "Number", "f.wiki": "Wiki", "f.table": "Table", "f.values": "Fields", "f.paid_by": "Paid by", "f.shared_by": "Split between", "f.networks": "Where", "f.book": "About",
       "f.coords": "Coordinates", "f.query": "Search", "f.group": "Group", "f.paidBy": "Paid by",
       "v.service": "Service done", "v.reminder": "Renewal reminder", "v.vaccine": "Vaccine", "v.deworm": "Deworming",
       "v.visit": "Vet visit", "v.medication": "Medication", "v.weight": "Weight", "v.book": "Book", "v.film": "Film",
@@ -671,6 +691,10 @@
       "do.open": "Open in {app}",
       "do.play": "Play in {app}",
       "do.directions": "Route in {app}",
+      "do.translate": "Translate on the device ({app})",
+      "do.btn.translate": "Translate",
+      "do.f.into": "Into",
+      "do.f.from": "From",
       "do.btn.timer": "Start",
       "do.btn.alarm": "Set the alarm",
       "do.btn.open": "Open",
@@ -713,14 +737,14 @@
       "f.text": "Text", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
       "cr.textLinkItems": "{name} asks to link these CRM partners with their records in other apps. Nothing changes until you press Link; the other apps stay as they are.",
       "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles", "lkk.kb": "Kanban card", "lkk.nt": "Notes page", "lkk.ly": "Layout document", "lkk.at": "Atelier design",
-      "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "entry.text_file": "New file · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
+      "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "entry.form": "New form · {app}", "entry.text_file": "New file · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
       "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
       "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
       "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
       "f.notebook": "Notebook", "f.folder": "Folder", "f.inlist": "List", "cr.rem.d1": "1 day before",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
       "v.done": "done", "v.open": "not done", "v.empty": "(none)", "v.income": "income", "v.expense": "expense",
-      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
+      "f.title": "Title", "f.done": "Status", "f.due": "Due", "f.plan": "Starts", "f.ms": "Milestone", "f.deps": "Depends on", "f.end": "Ends", "f.note": "Note", "f.kind": "Type",
       "f.watered": "Last watered", "f.labels": "Labels", "f.subtasks": "Subtasks", "f.position": "Position"
     },
     el: {
@@ -886,6 +910,7 @@
       "tool.held": "κράτησες {n}",
       "tool.noneShared": "δεν μοιράστηκες τίποτα",
       "tool.apps": "Κοίταξε σε ποιες εφαρμογές μπορεί να ψάξει",
+      "tool.cfFolders": "Κοίταξε ποιους φακέλους μπορεί να χρησιμοποιήσει", "tool.cfList": "Κοίταξε στο {path}", "tool.cfRead": "Διάβασε το {path}",
       "tool.err": "Ένα βήμα δεν δούλεψε",
       "tool.err.args": "Ένα βήμα δεν δούλεψε: η AI έστειλε στοιχεία που το orOS δεν μπόρεσε να διαβάσει.",
       "tool.err.unknown": "Ένα βήμα δεν δούλεψε: η AI ζήτησε ένα εργαλείο που το orOS δεν έχει ({name}).",
@@ -934,6 +959,23 @@
       "rb.slaLines": "{n} από {t} γραμμές σπάνε όπως στο PDF ({p} %).",
       "hs.head.learn": "Εκμάθηση ύφους έκδοσης · {app}",
       "hs.head.book": "Σελιδοποίηση βιβλίου · {app}",
+      "ep.head": "Δημιουργία EPUB · {app}",
+      "ep.byTitle": "Το έγγραφο που συνδέεται με τον τίτλο {t} των Εκδόσεων.",
+      "ep.lay.reflowable": "Κείμενο ελεύθερης ροής", "ep.lay.fixed": "Σταθερή διάταξη, κείμενο ως κείμενο", "ep.lay.pictures": "Σταθερή διάταξη, σελίδες ως εικόνες",
+      "ep.edition": "Έκδοση: {e}.", "ep.ready": "Μετά σημειώνεται έτοιμο στις Εκδόσεις, αν ο έλεγχος δεν βρει σφάλματα.",
+      "ep.hint": "Το Layout φτιάχνει το e-book σε αυτή τη συσκευή, το ελέγχει και κρατά αντίγραφο στο Layout/EPUB του δίσκου του orOS. Τίποτα δεν στέλνεται στην υπηρεσία AI.",
+      "ep.go": "Δημιουργία EPUB",
+      "ep.working": "Το {app} φτιάχνει το EPUB σε αυτή τη συσκευή…",
+      "ep.failed": "Το {app} δεν μπόρεσε να φτιάξει το EPUB. Δεν έγινε τίποτα.",
+      "ep.noDoc": "Το {app} δεν βρήκε τέτοιο έγγραφο.",
+      "ep.noEdition": "Το έγγραφο δεν έχει έκδοση EPUB με αυτό το όνομα.",
+      "ep.busy": "Το {app} ήταν απασχολημένο με κάτι άλλο. Δοκίμασε ξανά.",
+      "ep.repSum": "{p} σελίδες, {h} επικεφαλίδες, {i} εικόνες, {kb} KB.",
+      "ep.repErr": "{n} σφάλματα: τα καταστήματα e-book θα το απέρριπταν ({list}).",
+      "ep.repOk": "Κανένα σφάλμα, {n} προειδοποιήσεις.",
+      "ep.repAlt": "Εικόνες χωρίς περιγραφή στις σελίδες {list}.",
+      "ep.repPath": "Αποθηκεύτηκε ως {path}.",
+      "ep.repReady": "Σημειώθηκε έτοιμο στις Εκδόσεις.",
       "hs.head.rule": "Νέος κανόνας ύφους · {app}",
       "hs.docs": "Από: {list}.",
       "hs.in": "Στο ύφος έκδοσης {h}.",
@@ -1111,7 +1153,7 @@
       "ed.will.spreadsheet": "Αλλάζουν {n} στοιχεία σε {d} φύλλα.", "ed.did.spreadsheet": "Άλλαξαν {n} στοιχεία σε {d} φύλλα.", "ed.sureDel.spreadsheet": "Διαγράφονται γραμμές ή στήλες. Η Αναίρεση στην κάρτα τις επαναφέρει.", "ed.op.set": "Τιμές κελιών", "ed.op.clear": "Καθαρισμός κελιών", "ed.op.format": "Μορφή κελιών", "ed.op.size": "Πλάτος στηλών και ύψος γραμμών", "ed.op.insert": "Εισαγωγή γραμμών ή στηλών", "ed.op.remove.spreadsheet": "Διαγραφή γραμμών ή στηλών", "ed.op.sort": "Ταξινόμηση", "ed.op.merge": "Συγχώνευση κελιών", "ed.op.unmerge": "Διαχωρισμός κελιών", "ed.op.freeze": "Πάγωμα γραμμών και στηλών", "ed.f.range": "κελιά", "ed.f.text.spreadsheet": "τιμές", "ed.f.part": "μόνο", "ed.f.numfmt": "μορφή αριθμού", "ed.f.wrap": "αναδίπλωση κειμένου", "ed.f.border": "περιγράμματα", "ed.f.rows": "γραμμές", "ed.f.cols": "στήλες", "ed.f.insert.rows": "πριν από τη γραμμή", "ed.f.insert.cols": "πριν από τη στήλη", "ed.f.insert.end.rows": "γραμμές στο τέλος", "ed.f.insert.end.cols": "στήλες στο τέλος", "ed.f.by": "κατά τη στήλη", "ed.f.desc": "φθίνουσα", "ed.f.head": "γραμμή επικεφαλίδας", "ed.f.cell": "στο", "ed.f.each": "συγχώνευση", "ed.v.part.values": "τιμές", "ed.v.part.format": "μορφή", "ed.v.part.fill": "γέμισμα", "ed.v.part.border": "περιγράμματα", "ed.v.numfmt.gen": "γενική", "ed.v.numfmt.0": "ακέραιος", "ed.v.numfmt.2": "2 δεκαδικά", "ed.v.numfmt.pct": "ποσοστό", "ed.v.numfmt.eur": "ευρώ", "ed.v.numfmt.date": "ημερομηνία", "ed.v.wrap.on": "ναι", "ed.v.wrap.off": "όχι", "ed.v.border.all": "όλα", "ed.v.border.outer": "εξωτερικά", "ed.v.border.bottom": "κάτω", "ed.v.border.none": "κανένα", "ed.v.head.on": "ναι", "ed.v.head.off": "όχι", "ed.v.each.row": "κάθε γραμμή χωριστά", "ed.v.each.col": "κάθε στήλη χωριστά", "ed.note.noCells": "Σε κάποια φύλλα δεν ταίριαξε κανένα κελί.", "ed.note.maxDims": "Κάποιες γραμμές ή στήλες δεν προστέθηκαν: ένα φύλλο έχει έως 10.000 γραμμές και 104 στήλες.", "ed.note.formulas": "Οι τύποι έμειναν όπως ήταν· ο Βοηθός αλλάζει έναν τύπο γράφοντάς τον από την αρχή.", "ed.note.sortBy": "Σε κάποια φύλλα η στήλη ταξινόμησης είναι έξω από τα κελιά που ταξινομούνται.", "ed.note.mergeLost": "Η συγχώνευση κρατά μόνο την πάνω αριστερή τιμή κάθε περιοχής· οι άλλες τιμές αφαιρέθηκαν.", "ed.note.sheetRefs": "Οι τύποι που αναφέρουν το φύλλο με το παλιό του όνομα χρειάζονται το νέο.", "ed.note.big": "Κάποιες εντολές καλύπτουν περισσότερα κελιά από όσα αλλάζουν με μία φορά.",
       "ed.will.montage": "Αλλάζουν {n} στοιχεία σε {d} έργα.", "ed.did.montage": "Άλλαξαν {n} στοιχεία σε {d} έργα.", "ed.sureDel.montage": "Αφαιρούνται clip. Η Αναίρεση στην κάρτα τα επαναφέρει.", "ed.op.clip": "Ρυθμίσεις clip", "ed.op.transition": "Μετάβαση", "ed.op.move": "Μετακίνηση", "ed.op.split": "Κόψιμο", "ed.op.project": "Ρυθμίσεις έργου", "ed.f.ids.montage": "clip:", "ed.f.row": "στη γραμμή", "ed.f.back": "φόντο", "ed.f.speed": "ταχύτητα", "ed.f.vol": "ένταση %", "ed.f.mute": "σίγαση", "ed.f.fi.montage": "σταδιακή είσοδος", "ed.f.fo": "σταδιακό σβήσιμο", "ed.f.secs.montage": "δευτερόλεπτα", "ed.f.after": "μετά το", "ed.f.after.start": "στην αρχή", "ed.v.trans.wipe.montage": "σκούπισμα", "ed.f.time": "στο δευτερόλεπτο", "ed.f.fps": "καρέ ανά δευτερόλεπτο", "ed.f.duck": "χαμήλωμα μουσικής %", "ed.v.what.image": "εικόνες", "ed.v.what.audio": "ήχους", "ed.v.row.main": "Κύριο", "ed.v.row.overlay": "Επικάλυψη", "ed.v.row.text": "Κείμενο", "ed.v.row.music": "Μουσική", "ed.v.row.voice": "Φωνή", "ed.v.mute.on": "ναι", "ed.v.mute.off": "όχι", "ed.v.fit.fit.montage": "ολόκληρη η εικόνα", "ed.v.font.display": "έντονη", "ed.flt.fade": "ξεθωριασμένο", "ed.flt.film": "φιλμ", "ed.flt.chrome": "χρώμιο", "ed.flt.dusk": "σούρουπο", "ed.flt.golden": "χρυσό", "ed.v.trans.black": "μέσα από μαύρο", "ed.v.trans.circle": "κύκλος", "ed.v.add.title": "τίτλος", "ed.v.add.card": "κάρτα τίτλου", "ed.shp.round": "στρογγυλεμένο ορθογώνιο", "ed.shp.ellipse": "κύκλος", "ed.note.noClips": "Σε κάποια έργα δεν ταίριαξε κανένα clip.", "ed.note.maxClips": "Κάποια clip δεν προστέθηκαν: ένα έργο έχει έως 2.000 clip.", "ed.note.ramp": "Τα clip με καμπύλη ταχύτητας κράτησαν τη διάρκειά τους· άλλαξέ τη στο Μοντάζ.",
       "ed.will.studio": "Αλλάζουν {n} στοιχεία σε {d} έργα.", "ed.did.studio": "Άλλαξαν {n} στοιχεία σε {d} έργα.", "ed.sureDel.studio": "Αφαιρούνται clip ή κανάλια. Η Αναίρεση στην κάρτα τα επαναφέρει.", "ed.op.notes.studio": "Νότες MIDI", "ed.op.remove.studio": "Αφαίρεση clip", "ed.op.track": "Ρυθμίσεις καναλιού", "ed.op.addtrack": "Νέο κανάλι", "ed.op.deltrack": "Διαγραφή καναλιών", "ed.f.tracks": "κανάλια", "ed.f.ids.studio": "clip:", "ed.f.gain": "ενίσχυση dB", "ed.f.fi.studio": "σταδιακή είσοδος", "ed.f.secs.studio": "διάρκεια σε δευτερόλεπτα", "ed.f.bar": "στο μέτρο", "ed.f.semis": "ημιτόνια", "ed.f.vel": "δύναμη", "ed.f.vol.studio": "ένταση dB", "ed.f.pan": "πανοραμική", "ed.f.solo": "σόλο", "ed.f.inst": "όργανο", "ed.f.bpm": "τέμπο BPM", "ed.f.sig": "χτύποι στο μέτρο", "ed.f.loop": "επανάληψη", "ed.f.bars": "μέτρα", "ed.v.what.audio.studio": "ήχος", "ed.v.what.midi": "MIDI", "ed.v.add.audio": "κανάλι ήχου", "ed.v.add.midi": "κανάλι οργάνου", "ed.v.solo.on": "ναι", "ed.v.solo.off": "όχι", "ed.v.loop.on": "ναι", "ed.v.loop.off": "όχι", "ed.v.inst.piano": "πιάνο", "ed.v.inst.epiano": "ηλεκτρικό πιάνο", "ed.v.inst.organ": "όργανο", "ed.v.inst.strings": "έγχορδα", "ed.v.inst.lead": "συνθεσάιζερ lead", "ed.v.inst.bass": "μπάσο", "ed.v.inst.drums": "ντραμς", "ed.note.noTrack": "Κάποια κανάλια που ονομάζουν οι εντολές δεν βρέθηκαν.", "ed.note.noTracks": "Σε κάποια έργα δεν ταίριαξε κανένα κανάλι.", "ed.note.maxTracks": "Κάποια κανάλια δεν προστέθηκαν: ένα έργο έχει έως 8 κανάλια.", "ed.note.short": "Κάποια clip ήχου βγήκαν πιο σύντομα: δεν μπορούν να ξεπεράσουν την ηχογράφησή τους.", "ed.note.drums": "Τα κανάλια ντραμς δεν μεταφέρθηκαν: οι νότες τους είναι κρουστά.", "ed.note.range": "Κάποιες νότες έφτασαν στο όριο του MIDI και έμειναν εκεί.", "ed.note.noLoop": "Η επανάληψη χρειάζεται μέτρα· μένει κλειστή.",
-      "ed.will.whiteboard": "Αλλάζουν {n} στοιχεία σε {d} πίνακες.", "ed.did.whiteboard": "Άλλαξαν {n} στοιχεία σε {d} πίνακες.", "ed.sureDel.whiteboard": "Αφαιρούνται αντικείμενα από τον πίνακα. Η Αναίρεση στην κάρτα τα επαναφέρει.", "ed.op.connect": "Σύνδεση με βέλος", "ed.op.style.whiteboard": "Εμφάνιση", "ed.op.arrange.whiteboard": "Τακτοποίηση σε πλέγμα", "ed.op.remove.whiteboard": "Αφαίρεση αντικειμένων", "ed.f.ids.whiteboard": "αντικείμενα:", "ed.f.frame": "στο πλαίσιο", "ed.f.dash": "διακεκομμένο", "ed.f.ends": "μύτες", "ed.f.n.whiteboard": "στήλες", "ed.f.sw.whiteboard": "πάχος πένας", "ed.f.size.whiteboard": "μέγεθος γραμμάτων", "ed.f.to.whiteboard": "προς", "ed.shp.tri": "τρίγωνο", "ed.v.add.note": "ένα αυτοκόλλητο", "ed.v.add.frame": "ένα πλαίσιο", "ed.v.what.note": "αυτοκόλλητα", "ed.v.what.arrow": "βέλη", "ed.v.what.pen": "σχέδια", "ed.v.what.frame": "πλαίσια", "ed.v.dash.on": "ναι", "ed.v.dash.off": "όχι", "ed.v.ends.end": "στο τέλος", "ed.v.ends.both": "και στις δύο άκρες", "ed.v.ends.none": "καμία", "ed.v.fill.none": "χωρίς", "ed.v.fill.soft": "απαλό", "ed.v.fill.solid": "συμπαγές", "ed.note.full": "Κάποια αντικείμενα δεν προστέθηκαν: ένας πίνακας χωράει έως 2000.", "ed.note.noEnd": "Κάποια βέλη δεν σχεδιάστηκαν: δεν βρέθηκε αντικείμενο που ενώνουν.", "ed.note.noFrame": "Κάποια πλαίσια που ονομάζουν οι εντολές δεν βρέθηκαν.",
+      "ed.will.whiteboard": "Αλλάζουν {n} στοιχεία σε {d} πίνακες.", "ed.did.whiteboard": "Άλλαξαν {n} στοιχεία σε {d} πίνακες.", "ed.sureDel.whiteboard": "Αφαιρούνται αντικείμενα από τον πίνακα. Η Αναίρεση στην κάρτα τα επαναφέρει.", "ed.op.connect": "Σύνδεση με βέλος", "ed.op.style.whiteboard": "Εμφάνιση", "ed.op.arrange.whiteboard": "Τακτοποίηση σε πλέγμα", "ed.op.layout.whiteboard": "Τακτοποίηση ως διάγραμμα", "ed.op.mermaid": "Σχεδίαση από κείμενο Mermaid", "ed.note.mermaid": "Κάποιο κείμενο Mermaid δεν σχεδιάστηκε: διαβάζονται μόνο διαγράμματα ροής.", "ed.note.mermaidCut": "Ένα διάγραμμα Mermaid κόπηκε: έως 500 κουτιά και 1000 συνδέσεις.", "ed.op.align.whiteboard": "Στοίχιση ή ίσες αποστάσεις", "ed.f.kind.whiteboard": "ως", "ed.v.kind.tree.whiteboard": "δέντρο", "ed.v.kind.flow.whiteboard": "ροή", "ed.f.dir.whiteboard": "κατεύθυνση", "ed.op.remove.whiteboard": "Αφαίρεση αντικειμένων", "ed.f.ids.whiteboard": "αντικείμενα:", "ed.f.frame": "στο πλαίσιο", "ed.f.dash": "διακεκομμένο", "ed.f.ends": "μύτες", "ed.f.n.whiteboard": "στήλες", "ed.f.sw.whiteboard": "πάχος πένας", "ed.f.size.whiteboard": "μέγεθος γραμμάτων", "ed.f.to.whiteboard": "προς", "ed.shp.tri": "τρίγωνο", "ed.f.route": "γραμμή", "ed.f.starthead": "μύτη στην αρχή", "ed.f.endhead": "μύτη στο τέλος", "ed.v.route.line": "ευθεία", "ed.v.route.elbow": "ορθές γωνίες", "ed.v.route.curve": "καμπύλη", "ed.v.starthead.arrow": "βέλος", "ed.v.starthead.open": "ανοιχτό βέλος", "ed.v.starthead.tri": "κενό τρίγωνο", "ed.v.starthead.dia": "γεμάτος ρόμβος", "ed.v.starthead.odia": "κενός ρόμβος", "ed.v.starthead.dot": "τελεία", "ed.v.starthead.none": "καμία", "ed.v.endhead.arrow": "βέλος", "ed.v.endhead.open": "ανοιχτό βέλος", "ed.v.endhead.tri": "κενό τρίγωνο", "ed.v.endhead.dia": "γεμάτος ρόμβος", "ed.v.endhead.odia": "κενός ρόμβος", "ed.v.endhead.dot": "τελεία", "ed.v.endhead.none": "καμία", "ed.shp.process": "βήμα διαδικασίας", "ed.shp.decision": "απόφαση", "ed.shp.terminator": "αρχή ή τέλος", "ed.shp.data": "δεδομένα (είσοδος ή έξοδος)", "ed.shp.document": "έγγραφο", "ed.shp.documents": "πολλά έγγραφα", "ed.shp.predefined": "προκαθορισμένη διαδικασία", "ed.shp.manual-input": "χειροκίνητη εισαγωγή", "ed.shp.manual-op": "χειροκίνητη ενέργεια", "ed.shp.preparation": "προετοιμασία", "ed.shp.database": "βάση δεδομένων", "ed.shp.delay": "καθυστέρηση", "ed.shp.off-page": "σύνδεση με άλλη σελίδα", "ed.shp.connector": "σημείο σύνδεσης", "ed.shp.merge": "συγχώνευση", "ed.shp.person": "κάρτα προσώπου", "ed.shp.unit": "ομάδα ή τμήμα", "ed.shp.class": "κλάση UML", "ed.shp.interface": "διεπαφή UML", "ed.shp.actor": "χειριστής", "ed.shp.usecase": "περίπτωση χρήσης", "ed.shp.package": "πακέτο", "ed.shp.component": "στοιχείο λογισμικού", "ed.shp.comment": "σχόλιο", "ed.shp.node": "κόμβος (συσκευή)", "ed.shp.start": "σημείο έναρξης", "ed.shp.end": "σημείο τέλους", "ed.shp.arrow-right": "βέλος-μπλοκ", "ed.shp.arrow-both": "διπλό βέλος-μπλοκ", "ed.shp.cloud": "σύννεφο", "ed.shp.callout": "συννεφάκι λόγου", "ed.shp.server": "διακομιστής", "ed.shp.router": "δρομολογητής", "ed.shp.switch": "μεταγωγέας δικτύου", "ed.shp.firewall": "τείχος προστασίας", "ed.shp.internet": "διαδίκτυο", "ed.shp.laptop": "φορητός υπολογιστής", "ed.shp.desktop": "επιτραπέζιος υπολογιστής", "ed.shp.phone": "κινητό", "ed.shp.tablet": "tablet", "ed.shp.db-server": "διακομιστής βάσης δεδομένων", "ed.shp.storage": "αποθηκευτικός χώρος", "ed.shp.user": "χρήστης", "ed.shp.printer": "εκτυπωτής", "ed.shp.wifi": "σημείο πρόσβασης Wi-Fi", "ed.v.add.note": "ένα αυτοκόλλητο", "ed.v.add.frame": "ένα πλαίσιο", "ed.v.what.note": "αυτοκόλλητα", "ed.v.what.arrow": "βέλη", "ed.v.what.pen": "σχέδια", "ed.v.what.frame": "πλαίσια", "ed.v.dash.on": "ναι", "ed.v.dash.off": "όχι", "ed.v.ends.end": "στο τέλος", "ed.v.ends.both": "και στις δύο άκρες", "ed.v.ends.none": "καμία", "ed.v.fill.none": "χωρίς", "ed.v.fill.soft": "απαλό", "ed.v.fill.solid": "συμπαγές", "ed.note.full": "Κάποια αντικείμενα δεν προστέθηκαν: ένας πίνακας χωράει έως 2000.", "ed.note.noEnd": "Κάποια βέλη δεν σχεδιάστηκαν: δεν βρέθηκε αντικείμενο που ενώνουν.", "ed.note.noFrame": "Κάποια πλαίσια που ονομάζουν οι εντολές δεν βρέθηκαν.",
       "ed.will.mindmap": "Αλλάζουν {n} στοιχεία σε {d} χάρτες.", "ed.did.mindmap": "Άλλαξαν {n} στοιχεία σε {d} χάρτες.", "ed.sureDel.mindmap": "Αφαιρούνται ιδέες μαζί με ό,τι έχουν από κάτω. Η Αναίρεση στην κάρτα τις επαναφέρει.", "ed.op.add.mindmap": "Προσθήκη ιδεών", "ed.op.node": "Εμφάνιση και στοιχεία ιδεών", "ed.op.move.mindmap": "Μετακίνηση ιδεών", "ed.op.sort.mindmap": "Ταξινόμηση Α-Ω", "ed.op.link": "Σύνδεσμος ανάμεσα σε ιδέες", "ed.op.frame": "Πλαίσιο", "ed.op.remove.mindmap": "Αφαίρεση ιδεών", "ed.op.map": "Διάταξη χάρτη", "ed.op.rename.mindmap": "Νέος τίτλος", "ed.f.ids.mindmap": "ιδέες:", "ed.f.branch": "στο κλαδί", "ed.f.level": "επίπεδο", "ed.f.add.to": "κάτω από", "ed.f.move.to": "κάτω από", "ed.f.link.to": "προς", "ed.f.emoji": "emoji", "ed.f.note": "σημείωση", "ed.f.url": "σύνδεσμος", "ed.f.done": "ολοκληρώθηκε", "ed.f.nodesize": "μέγεθος", "ed.f.kind": "είδος", "ed.f.sides": "κλαδιά", "ed.f.title.mindmap": "τίτλος", "ed.shp.pill": "χάπι", "ed.shp.hex": "εξάγωνο", "ed.shp.line": "υπογράμμιση", "ed.shp.none": "χωρίς σχήμα", "ed.v.fill.tint": "απαλή απόχρωση", "ed.v.border.thin": "λεπτό", "ed.v.border.thick": "χοντρό", "ed.v.border.dashed": "διακεκομμένο", "ed.v.done.on": "ναι", "ed.v.done.off": "όχι", "ed.v.nodesize.s": "μικρό", "ed.v.nodesize.m": "κανονικό", "ed.v.nodesize.l": "μεγάλο", "ed.v.kind.box": "ένα πλαίσιο", "ed.v.kind.brace": "ένα άγκιστρο σύνοψης", "ed.v.layout.map": "γύρω από το κέντρο", "ed.v.layout.org": "οργανόγραμμα", "ed.v.layout.tree": "δέντρο", "ed.v.layout.time": "χρονολόγιο", "ed.v.sides.both": "και στις δύο πλευρές", "ed.v.sides.right": "μόνο δεξιά", "ed.note.noIdea": "Κάποιες ιδέες που ονομάζουν οι εντολές δεν βρέθηκαν.", "ed.note.loop": "Κάποιες ιδέες δεν μετακινήθηκαν: ένα κλαδί δεν μπαίνει μέσα στον εαυτό του.", "ed.note.centre": "Το κέντρο ενός χάρτη μένει: τον χάρτη τον σβήνεις στον ίδιο τον Νοητικό χάρτη.", "ed.note.mapFull": "Κάποιες ιδέες δεν προστέθηκαν: ο χάρτης έφτασε το όριό του.", "ed.note.frameMax": "Ένα πλαίσιο χωράει έως 50 ιδέες· μπήκαν οι πρώτες 50.",
       "ed.f.dest": "στη θέση", "ed.f.mm": "mm", "ed.f.title": "όνομα", "ed.v.what.text": "κείμενα", "ed.v.what.photo": "φωτογραφίες", "ed.v.what.video": "βίντεο",
       "ed.v.what.shape": "σχήματα", "ed.v.what.icon": "εικονίδια", "ed.v.what.line": "γραμμές", "ed.v.what.table": "πίνακες", "ed.v.what.chart": "γραφήματα", "ed.v.what.bg": "φόντα σελίδων",
@@ -1164,12 +1206,14 @@
       "f.perweek": "Φορές την εβδομάδα", "f.permonth": "Φορές τον μήνα", "f.water": "Πότισμα κάθε (μέρες)", "f.nextdue": "Επόμενη φορά",
       "f.until": "Τελευταία μέρα", "f.platform": "Πλατφόρμα",
       "f.sub": "Υπότιτλος", "f.translator": "Μετάφραση", "f.illustrator": "Εικονογράφηση", "f.editor": "Επιμέλεια", "f.series": "Σειρά",
-      "f.release": "Ημερομηνία κυκλοφορίας", "f.lang": "Γλώσσα", "f.format": "Έκδοση", "f.pages": "Σελίδες", "f.product": "Προϊόν στο κατάστημα", "f.blurb": "Κείμενο οπισθόφυλλου",
+      "f.mtype": "Είδος κυκλοφορίας", "f.pline": "Γραμμές ℗ και ©", "f.label": "Δισκογραφική", "f.genre": "Είδος μουσικής", "f.track": "Κομμάτι", "f.upc": "UPC/EAN", "f.release": "Ημερομηνία κυκλοφορίας", "f.lang": "Γλώσσα", "f.format": "Έκδοση", "f.pages": "Σελίδες", "f.product": "Προϊόν στο κατάστημα", "f.blurb": "Κείμενο οπισθόφυλλου",
       "pf.paperback": "Χαρτόδετο", "pf.hardback": "Σκληρόδετο", "pf.ebook": "E-book", "pf.audiobook": "Ηχητικό βιβλίο", "pf.other": "Άλλο",
+      "pf.digital": "Ψηφιακή", "pf.cd": "CD", "pf.vinyl": "Βινύλιο", "pf.cassette": "Κασέτα",
+      "pm.single": "Single", "pm.ep": "EP", "pm.album": "Άλμπουμ", "pm.compilation": "Συλλογή",
       "st.idea": "Ιδέα", "st.production": "Σε παραγωγή", "st.released": "Κυκλοφορεί", "st.out_of_print": "Εξαντλημένο",
       "ft.a.run": "Τρέξιμο", "ft.a.walk": "Περπάτημα", "ft.a.bike": "Ποδήλατο", "ft.a.swim": "Κολύμπι", "ft.a.row": "Κωπηλασία",
       "f.deck": "Τράπουλα", "f.front": "Μπροστά", "f.back": "Πίσω", "f.songs": "Τραγούδια", "chg.disk": "Η αλλαγή δεν γράφτηκε στον δίσκο του orOS.", "f.read": "Διαβασμένο", "f.played": "Ακούστηκε", "f.queue": "Στην ουρά", "f.price": "Τιμή", "v.read": "διαβασμένο", "v.unread": "αδιάβαστο", "v.played": "ακούστηκε", "v.unplayed": "δεν ακούστηκε",
-      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.line": "Γραμμή", "f.num": "Αριθμός", "f.wiki": "Wiki", "f.paid_by": "Πλήρωσε", "f.shared_by": "Μοιράζεται σε", "f.networks": "Πού", "f.book": "Για",
+      "f.dose": "Δόση", "f.weight": "Βάρος (kg)", "f.media": "Είδος", "f.status": "Κατάσταση", "f.by": "Από", "f.year": "Έτος", "f.rel": "Κυκλοφορία (με την πορεία έκδοσης)", "f.isbn": "ISBN", "f.line": "Γραμμή", "f.num": "Αριθμός", "f.wiki": "Wiki", "f.table": "Πίνακας", "f.values": "Πεδία", "f.paid_by": "Πλήρωσε", "f.shared_by": "Μοιράζεται σε", "f.networks": "Πού", "f.book": "Για",
       "f.coords": "Συντεταγμένες", "f.query": "Αναζήτηση", "f.group": "Ομάδα", "f.paidBy": "Πλήρωσε",
       "v.service": "Σέρβις που έγινε", "v.reminder": "Υπενθύμιση ανανέωσης", "v.vaccine": "Εμβόλιο", "v.deworm": "Αποπαρασίτωση",
       "v.visit": "Επίσκεψη σε κτηνίατρο", "v.medication": "Φάρμακο", "v.weight": "Βάρος", "v.book": "Βιβλίο", "v.film": "Ταινία",
@@ -1315,6 +1359,10 @@
       "do.open": "Άνοιγμα: {app}",
       "do.play": "Αναπαραγωγή: {app}",
       "do.directions": "Διαδρομή: {app}",
+      "do.translate": "Μετάφραση στη συσκευή ({app})",
+      "do.btn.translate": "Μετάφραση",
+      "do.f.into": "Προς",
+      "do.f.from": "Από",
       "do.btn.timer": "Έναρξη",
       "do.btn.alarm": "Ρύθμιση ξυπνητηριού",
       "do.btn.open": "Άνοιγμα",
@@ -1357,14 +1405,14 @@
       "f.text": "Κείμενο", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
       "cr.textLinkItems": "Το {name} ζητά να συνδεθούν αυτοί οι συνεργάτες του CRM με τις εγγραφές τους σε άλλες εφαρμογές. Τίποτα δεν αλλάζει πριν πατήσεις Σύνδεση· οι άλλες εφαρμογές μένουν όπως είναι.",
       "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)", "lkk.kb": "Κάρτα Kanban", "lkk.nt": "Σελίδα στις Σημειώσεις", "lkk.ly": "Έγγραφο Σελιδοποίησης", "lkk.at": "Σχέδιο στο Atelier",
-      "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "entry.text_file": "Νέο αρχείο · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
+      "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "entry.form": "Νέα φόρμα · {app}", "entry.text_file": "Νέο αρχείο · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
       "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
       "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
       "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
       "f.notebook": "Σημειωματάριο", "f.folder": "Φάκελος", "f.inlist": "Λίστα", "cr.rem.d1": "1 ημέρα πριν",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
       "v.done": "έγινε", "v.open": "εκκρεμεί", "v.empty": "(κενό)", "v.income": "έσοδο", "v.expense": "έξοδο",
-      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
+      "f.title": "Τίτλος", "f.done": "Κατάσταση", "f.due": "Προθεσμία", "f.plan": "Έναρξη", "f.ms": "Ορόσημο", "f.deps": "Εξαρτάται από", "f.end": "Λήξη", "f.note": "Σημείωση", "f.kind": "Είδος",
       "f.watered": "Τελευταίο πότισμα", "f.labels": "Ετικέτες", "f.subtasks": "Υποεργασίες", "f.position": "Θέση"
     }
   };
@@ -2876,9 +2924,10 @@
     var blob = new Blob([b64Bytes(attMem[a.id])], { type: a.type });
     return ocrImage(blob, onProgress);
   }
-  function pdfText(a, onProgress) {
+  function pdfText(a, onProgress) { return pdfBytesText(b64Bytes(attMem[a.id]), onProgress); }
+  function pdfBytesText(bytes, onProgress) {
     return pdfjs().then(function (lib) {
-      return lib.getDocument({ data: b64Bytes(attMem[a.id]), isEvalSupported: false, enableXfa: false,
+      return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false,
                                disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise;
     }).then(function (pdf) {
       var n = Math.min(pdf.numPages, READ_PAGES), parts = [], chain = Promise.resolve();
@@ -3156,8 +3205,8 @@
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn,
-                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps) });
+                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn,
+                                            lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -3177,7 +3226,7 @@
       files: builtin ? "" : "pdf",
       openFile: fileOn,
       rebuild: rbOn,
-      house: rbOn,
+      house: rbOn, epub: rbOn,
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       page: wmode === "native",
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
@@ -3356,12 +3405,14 @@
       });
     }
     if (call.name === "app_summary") return appSummary(c, call.args, apps);
+    if (call.name === "list_fonts") return listFonts(call.args);
     if (LINE_APPS[call.name]) return lineTool(c, call.name, call.args, apps);
     if (call.name === "kanban_add_columns") return kanbanColumns(c, call.args, apps);
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
     if (/^(learn_house_style|layout_book|add_house_rule)$/.test(call.name)) return Promise.resolve(proposeHouse(c, call.name, call.args));
+    if (call.name === "export_epub") return Promise.resolve(proposeEpub(c, call.args));
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "propose_rule") return Promise.resolve(proposeRule(call.args));
     if (call.name === "read_in_app") return readInApp(c, call.args, apps);
@@ -3370,6 +3421,11 @@
     if (call.name === "book_cover") return Promise.resolve(proposeCover(c, call.args));
     if (call.name === "newsletter_check") return Promise.resolve(proposeNlCheck(c, call.args));
     if (call.name === "read_item") return readItem(c, call.args, apps);
+    if (call.name === "files_list") return filesList(c, call.args, apps);
+    if (call.name === "files_read") return filesRead(c, call.args, apps);
+    if (call.name === "files_write") return filesWrite(c, call.args, apps);
+    if (call.name === "files_move") return filesMove(c, call.args, apps);
+    if (call.name === "files_delete") return filesDelete(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "create_items") return createItems(c, call.args, apps);
     if (call.name === "link_contact") return linkContact(c, call.args, apps);
@@ -3657,6 +3713,36 @@
     return true;
   }
 
+  // export_epub (AS-EPUB, Layout LY-EPUB E4): checked now; the card's
+  // button hands it to Layout ({ epubOut }), which makes and checks the
+  // EPUB on the device and leaves its report under the card's key.
+  function proposeEpub(c, args) {
+    if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "epubErr" } };
+    var e = C.normEpub(args);
+    if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "epubErr" } };
+    var ui = { k: "epub", doc: e.doc, title: e.title, edition: e.edition, layout: e.layout, ready: e.ready, key: attId(), st: "" };
+    return { content: "Shown to the user as a card: making an EPUB of \u201c" + (e.doc || e.title) + "\u201d. Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
+  }
+  function runEpub(ui, c) {
+    var p = shell();
+    if (!p || typeof p.__orosOpenAt !== "function") return false;
+    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", title: ui.title || "", edition: ui.edition || "", layout: ui.layout || "", ready: ui.ready === 1 ? 1 : 0 };
+    try { p.__orosOpenAt("layout", { epubOut: rq }); return true; } catch (e) { return false; }
+  }
+  function epubText(rep) {
+    return !rep || rep.failed ? "Layout could not make the EPUB. Nothing was made. Report: " + JSON.stringify(rep)
+      : "Layout made the EPUB on the device; its check report is open in Layout. Report: " + JSON.stringify(rep);
+  }
+  function takeEpub(r, c) {
+    var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
+    if (!rep || ui.st !== "opened") return false;
+    ui.rep = C.epubReport(rep);
+    ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
+    r.content = ui.st === "failed" ? "The user pressed the button, but " + epubText(ui.rep).charAt(0).toLowerCase() + epubText(ui.rep).slice(1) : epubText(ui.rep);
+    saveChat(c).then(function () { delete attRb[key]; }, function () {});
+    return true;
+  }
+
   // Only while this frame is alive: an app opened from a card may take
   // its place, and the report then waits for the next opening.
   function onRb() {
@@ -3664,7 +3750,7 @@
     if (!chat) return;
     var hit = false;
     chat.msgs.forEach(function (m) {
-      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
+      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "epub" && takeEpub(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
     });
     if (hit) renderMessages();
   }
@@ -3719,7 +3805,7 @@
   var EDIT_LAZY = { slides: ["../slides/core.js", "../slides/commands.js"], writer: ["../writer/commands.js"],
     spreadsheet: ["../spreadsheet/functions.js", "../spreadsheet/sheetkit.js", "../spreadsheet/commands.js"],
     montage: ["../montage/core.js", "../montage/commands.js"], studio: ["../studio/core.js", "../studio/commands.js"],
-    whiteboard: ["../whiteboard/core.js", "../whiteboard/commands.js"], mindmap: ["../mindmap/mm-core.js", "../mindmap/commands.js"] }, lazyP = {};
+    whiteboard: ["../whiteboard/core.js", "../whiteboard/diagram.js", "../whiteboard/commands.js"], mindmap: ["../mindmap/mm-core.js", "../mindmap/commands.js"] }, lazyP = {};
   // Loads the catalogs of these apps (in order, once) → Promise (never rejects).
   function editLoadMods(ids) {
     var v = (document.querySelector('script[src*="assistant.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
@@ -3737,6 +3823,25 @@
       }
       return lazyP[id];
     }));
+  }
+  // FORMS-4: Forms' engine and results, for app_summary forms.
+  var formsP = null;
+  function formsMods() {
+    if (window.OrosFormsResults) return Promise.resolve();
+    if (!formsP) {
+      var v = (document.querySelector('script[src*="assistant.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      formsP = ["../forms/engine.js", "../forms/quiz.js", "../forms/results.js"].reduce(function (p, f) {
+        return p.then(function () {
+          return new Promise(function (ok) {
+            var s = document.createElement("script");
+            s.src = f + (m ? "?v=" + m[1] : "");
+            s.onload = ok; s.onerror = ok;
+            document.head.appendChild(s);
+          });
+        });
+      }, Promise.resolve());
+    }
+    return formsP;
   }
   function editCats(apps) {
     var have = installed(), ok = {}, out = {};
@@ -3833,7 +3938,13 @@
     var doc = null;
     ((src.full && src.full.docs) || []).forEach(function (d) { if (d.id === tg.docs[0].id) doc = d; });
     if (!doc) return Promise.resolve({ content: "Error: the " + C.EDIT_APP[n.app].noun + " could not be read from this device's disk yet (it may still be syncing).", err: 1, ui: { k: "editErr" } });
-    var o = mod.outline(doc, EDIT_SRC[n.app].style ? readStore(EDIT_SRC[n.app].style) : null), text = JSON.stringify(o);
+    var o = mod.outline(doc, EDIT_SRC[n.app].style ? readStore(EDIT_SRC[n.app].style) : null);
+    // WR-CAT T2: Writer's book translations (progress, as this device last saw it)
+    if (n.app === "writer" && o && typeof mod.translations === "function") {
+      var tr = mod.translations(readStore("oros-writer-tr-sum"), doc.id);
+      if (tr.length) { o.translations = tr; o.translations_note = "Book translations in Writer (Review › Translations), as last seen on this device; read only."; }
+    }
+    var text = JSON.stringify(o);
     var title = doc.name || t("ed.untitled");
     var okP = app.perm === "always" ? Promise.resolve(true) : askRead(title, app.name, text);
     return okP.then(function (ok) {
@@ -3881,7 +3992,7 @@
     if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette|flow|mono|up|desc)$/.test(k)) return "";
     // a shape's fill (not a colour) and a boundary's kind
     if ((k === "fill" && /^(whiteboard|mindmap)$/.test(app)) || (k === "kind" && app === "mindmap")) return edT(app, "ed.v." + k + "." + v);
-    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|strike|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind|valign|side|start|layout|theme|num|date|tag|paper|lang|part|numfmt|wrap|border|head|each|row|mute|solo|loop|inst|ends|dash|done|nodesize|sides)$/.test(k)) return edT(app, "ed.v." + k + "." + v);
+    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|strike|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind|valign|side|start|layout|theme|num|date|tag|paper|lang|part|numfmt|wrap|border|head|each|row|mute|solo|loop|inst|ends|dash|route|starthead|endhead|done|nodesize|sides)$/.test(k)) return edT(app, "ed.v." + k + "." + v);
     if (k === "id") return edName("ed.flt.", v);
     if (k === "blend") return edName("ed.bl.", v);
     if (k === "deg") return v + "°";
@@ -4251,7 +4362,7 @@
   var READ_MAX = 12000;
   function readItem(c, args, apps) {
     var ref = String(args && args.ref || "").replace(/^oros:/, "").trim();
-    var r = c.refs && /^r\d{1,5}$/.test(ref) ? c.refs[ref] : null;
+    var r = c.refs && /^r\d{1,9}$/.test(ref) ? c.refs[ref] : null;
     if (!r) return Promise.resolve({ content: "Error: unknown ref. Use a ref that search_data returned.", err: 1 });
     var app = null;
     apps.forEach(function (a) { if (a.id === r.app) app = a; });
@@ -4394,6 +4505,317 @@
       });
     });
   }
+  // ---- GATE-FILES (F1): files in the folders the owner lets Claude use ----
+  // assistant/claudefiles.js plans and checks every step; the folders
+  // come from the gate's list (Settings › Connected services › orOS
+  // Gate › Claude's folders), the same here and through the gate
+  // (PARITY). A file's version is the first 16 hex of its SHA-256 (a
+  // cloud-only file's from its manifest entry); a file over 32 MB gets
+  // one from its size and time instead of reading it all.
+  var CF_HASH_MAX = 32 * 1024 * 1024, CF_TEXT_MAX = 50 * 1024 * 1024;
+  // The Assistant offers the files tools once the owner picked folders
+  // and Files may always be read; the changes once Files takes changes.
+  function cfOn(apps, chg) {
+    var f = appOf(apps, "files");
+    if (!f || f.perm !== "always" || !cfRaw().length) return false;
+    return appOf(chg, "files") ? "write" : true;
+  }
+  function cfMod() { return loadOnce("claudefiles.js").then(function () { return window.OrosClaudeFiles || null; }); }
+  function cfRaw() {
+    var g = gateShell();
+    try { var l = g && typeof g.folders === "function" ? g.folders() : []; return Array.isArray(l) ? l : []; } catch (e) { return []; }
+  }
+  function cfFolders(CF) { return CF.cleanFolders(cfRaw()); }
+  function cfVault() {
+    try { var p = shell(), V = p && p.orosVault; return V && typeof V.remoteOnly === "function" && typeof V.peek === "function" ? V : null; } catch (e) { return null; }
+  }
+  function cfCloud(path) {
+    var V = cfVault(), hit = null;
+    try { if (V && V.isRemoteOnly(path)) V.remoteOnly(path).forEach(function (e) { if (e.path === path) hit = e; }); } catch (e) { hit = null; }
+    return hit;
+  }
+  function cfU8(x) { return x instanceof Uint8Array ? x : new Uint8Array(x); }
+  function cfHex(bytes) {
+    return crypto.subtle.digest("SHA-256", bytes).then(function (d) {
+      return Array.prototype.map.call(new Uint8Array(d), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("").slice(0, 16);
+    });
+  }
+  function cfStat(fs, path) {
+    return Promise.resolve().then(function () { return fs.stat(path); }).then(function (s) { return s || null; }, function () { return null; }).then(function (s) {
+      if (s) return s;
+      var c = cfCloud(path);
+      return c ? { path: path, dir: false, size: c.s || 0, mtime: c.m || 0, cloud: true } : null;
+    });
+  }
+  function cfBytes(fs, path) {
+    var V = cfVault();
+    if (cfCloud(path)) return V.peek(path).then(cfU8);
+    return Promise.resolve(fs.read(path)).then(function (b) { return b && typeof b.arrayBuffer === "function" ? b.arrayBuffer() : b; }).then(cfU8);
+  }
+  function cfVer(fs, path) {
+    var c = cfCloud(path);
+    if (c && typeof c.h === "string") return Promise.resolve(c.h.slice(0, 16).toLowerCase());
+    return cfStat(fs, path).then(function (st) {
+      if (!st || st.dir) return "";
+      if (st.size > CF_HASH_MAX) return cfHex(new TextEncoder().encode("size:" + st.size + ":" + (st.mtime || 0)));
+      return cfBytes(fs, path).then(cfHex);
+    });
+  }
+  // The folder's tree, depth levels deep, with the files that are in
+  // the cloud only on this device (orOS Drive folders, VD-OD).
+  function cfWalk(fs, path, depth) {
+    var rows = [], have = {};
+    function go(dir, d) {
+      return Promise.resolve().then(function () { return fs.ls(dir); }).catch(function () { return []; }).then(function (list) {
+        return (list || []).reduce(function (pr, e) {
+          return pr.then(function () {
+            if (rows.length >= 2000 || !e || !e.name || e.name.charAt(0) === ".") return;
+            var p = dir + "/" + e.name;
+            have[p] = 1;
+            if (e.dir) { rows.push({ path: p, dir: true }); return d > 1 ? go(p, d - 1) : null; }
+            return cfStat(fs, p).then(function (st) { rows.push({ path: p, dir: false, size: st ? st.size : 0, mtime: st ? st.mtime : 0 }); });
+          });
+        }, Promise.resolve());
+      });
+    }
+    return go(path, depth).then(function () {
+      var V = cfVault(), lim = path.split("/").length + depth, cloud = [];
+      try { cloud = V ? V.remoteOnly(path) : []; } catch (e) { cloud = []; }
+      cloud.forEach(function (e) {
+        if (!e || typeof e.path !== "string" || e.path.indexOf(path + "/") !== 0 || have[e.path] || e.path.split("/").length > lim) return;
+        var segs = e.path.slice(path.length + 1).split("/");
+        for (var i = 1; i < segs.length; i++) {
+          var dp = path + "/" + segs.slice(0, i).join("/");
+          if (!have[dp]) { have[dp] = 1; rows.push({ path: dp, dir: true }); }
+        }
+        have[e.path] = 1;
+        rows.push({ path: e.path, dir: false, size: e.s || 0, mtime: e.m || 0, cloud: true });
+      });
+      return rows;
+    });
+  }
+  // → Promise<{ CF, fs, folders } | { err }>
+  function cfPrep(apps, write) {
+    var app = appOf(apps, "files");
+    if (app && write && !GATE && !changeApps(apps).some(function (y) { return y.id === "files"; })) app = null;
+    if (!app) return Promise.resolve({ err: write ? "Claude may not change files." : "Claude may not read Files." });
+    var fs = filesFS();
+    if (!fs || typeof fs.read !== "function") return Promise.resolve({ err: "the orOS disk is not reachable right now." });
+    return cfMod().then(function (CF) {
+      if (!CF) return { err: "the file tools could not be loaded right now." };
+      return { CF: CF, fs: fs, app: app, folders: cfFolders(CF) };
+    });
+  }
+  function cfErr(msg) { return { content: "Error: " + msg, err: 1, ui: { k: "toolErr", why: "cf" } }; }
+  function filesList(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    return cfPrep(apps, false).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF;
+      if (a.path == null || String(a.path).trim() === "" || String(a.path).trim() === "/") {
+        if (!x.folders.length) return cfErr(CF.reach("/internal/x", []));
+        return { content: JSON.stringify({ folders: x.folders.map(CF.show), note: "Claude's folders; list one with path." }), ui: { k: "cfList", path: "" } };
+      }
+      var p = CF.normPath(a.path), why = CF.reach(p, x.folders);
+      if (why) return cfErr(why);
+      var depth = Math.max(1, Math.min(CF.DEPTH_MAX, Math.floor(Number(a.depth) || 1)));
+      return cfStat(x.fs, p).then(function (st) {
+        if (!st) return cfErr("\"" + CF.show(p) + "\" is not there.");
+        if (!st.dir) return cfErr("\"" + CF.show(p) + "\" is a file; read it with files_read.");
+        return cfWalk(x.fs, p, depth).then(function (rows) {
+          var out = CF.listOut(p, rows, x.folders, a.offset);
+          return out.entries.reduce(function (pr, e) {
+            return pr.then(function () {
+              if (e.kind === "folder") return;
+              return cfVer(x.fs, p + "/" + e.name).then(function (v) { if (v) e.version = v; }, function () {});
+            });
+          }, Promise.resolve()).then(function () { return { content: JSON.stringify(out), ui: { k: "cfList", path: CF.show(p) } }; });
+        });
+      });
+    });
+  }
+  function filesRead(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    return cfPrep(apps, false).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF, p = CF.normPath(a.path), why = CF.reach(p, x.folders);
+      if (why) return cfErr(why);
+      return cfStat(x.fs, p).then(function (st) {
+        if (!st) return cfErr("\"" + CF.show(p) + "\" is not there.");
+        if (st.dir) return cfErr("\"" + CF.show(p) + "\" is a folder; use files_list.");
+        var name = p.slice(p.lastIndexOf("/") + 1), kind = CF.kindOf(name);
+        var head = { path: CF.show(p), kind: kind, size: st.size || 0 };
+        if (st.mtime) head.modified = new Date(st.mtime).toISOString();
+        if (st.cloud) head.on_device = false;
+        return cfVer(x.fs, p).then(function (v) {
+          head.version = v;
+          var ui = { k: "cfRead", path: CF.show(p) };
+          if (!/^(text|document|pdf)$/.test(kind) || st.size > CF_TEXT_MAX) {
+            head.note = kind === "image" || kind === "media" || kind === "other"
+              ? "Only the details: files_read gives the text of text files, documents and PDFs."
+              : "Only the details: the file is over 50 MB.";
+            return { content: JSON.stringify(head), ui: ui };
+          }
+          return cfBytes(x.fs, p).then(function (bytes) {
+            if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
+            if (kind === "pdf") return pdfBytesText(bytes);
+            if (!DT) throw new Error("doctext");
+            return DT.read(bytes, name, { sheets: sheets, max: CF.READ_MAX * 4 });
+          }).then(function (text) {
+            var pg = CF.page(String(text || ""), a.offset, a.length);
+            Object.keys(pg).forEach(function (k) { head[k] = pg[k]; });
+            return { content: JSON.stringify(head), ui: ui };
+          }, function () { return cfErr("\"" + CF.show(p) + "\" could not be read" + (st.cloud ? " (it is in the cloud only and could not be fetched)." : ".")); });
+        });
+      });
+    });
+  }
+  // files_write, files_move, files_delete: one card in the Assistant;
+  // through the gate the owner's "Claude may also change Files" and the
+  // pause apply, and a delete always asks on the device (never skipped).
+  function cfAsk(x, kind, cards, names) {
+    if (GATE) {
+      var g = gateShell(), why = g && typeof g.writeOk === "function" ? g.writeOk("files") : "orOS Gate is not running.";
+      if (why) { gateNote = why; return Promise.resolve(false); }
+      if (kind !== "delete") return Promise.resolve(true);
+      if (!g || typeof g.askFiles !== "function") { gateNote = "This orOS can't ask the owner on the device; nothing was deleted."; return Promise.resolve(false); }
+      return Promise.resolve(g.askFiles(names)).then(function (yes) {
+        if (!yes) gateNote = "The owner did not confirm on the device; nothing was deleted.";
+        return !!yes;
+      }, function () { gateNote = "The owner did not confirm on the device; nothing was deleted."; return false; });
+    }
+    var pl = cards.length > 1 ? { many: cards, del: kind === "delete" } : { title: cards[0].title, rows: cards[0].rows, del: kind === "delete" };
+    return askChange(x.app.name, pl, kind === "delete" ? "delete" : "update");
+  }
+  function cfApply(c, x, kind, steps, cards, names) {
+    var CF = x.CF, act = kind === "delete" ? "delete" : "update";
+    var base = cards.length > 1 ? { k: "change", app: x.app.name, act: act, title: t("chg.many", { n: cards.length }), many: cards }
+                                : { k: "change", app: x.app.name, act: act, title: cards[0].title, rows: cards[0].rows };
+    return cfAsk(x, kind, cards, names).then(function (ok) {
+      if (!ok) {
+        base.st = "declined";
+        return { content: JSON.stringify({ applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
+      }
+      return CF.run(x.fs, steps, function (p) { return cfVer(x.fs, p); }).then(function (res) {
+        if (!res.done.length) {
+          base.st = "failed";
+          base.msg = res.fail;
+          return { content: "Error: " + res.fail + " Nothing was changed.", err: 1, ui: base };
+        }
+        var uid = newId(), out = { applied: true, items: res.done.length };
+        remember(uid, { app: "files", cf: res.done }, { kind: "change", app: "files", name: x.app.name, act: act, title: base.title, items: cards.map(function (y) { return y.title; }) });
+        res.done.forEach(function (u) { if (u.k === "unmake" || u.k === "unreplace") { out.path = CF.show(u.path); out.version = u.v; } });
+        base.st = "done";
+        base.u = uid;
+        out.note = (kind === "delete" ? "Moved to Files' Trash (restorable there for 30 days)." : kind === "write" && steps[0].k === "replace" ? "Done; the old version is in Files' Trash." : "Done.") +
+          (res.fail ? " Only " + res.done.length + " of " + steps.length + " were done: " + res.fail + " The rest was left as it is." : "") + " They can undo it.";
+        return { content: JSON.stringify(out), ui: base };
+      });
+    });
+  }
+  function cfNoCloud(CF, st, p) { return st && st.cloud ? "\"" + CF.show(p) + "\" is in the cloud only on this device; keep its folder offline in Files first, then try again." : ""; }
+  function filesWrite(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    return cfPrep(apps, true).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF, p = CF.normPath(a.path), why = CF.reach(p, x.folders);
+      if (why) return cfErr(why);
+      return cfStat(x.fs, p).then(function (st) {
+        var nc = cfNoCloud(CF, st, p);
+        if (nc) return cfErr(nc);
+        return (st && !st.dir ? cfVer(x.fs, p) : Promise.resolve("")).then(function (v) {
+          // GATE-FILES F3: written while orOS was closed, and the file changed
+          // since: the text goes next to it as a conflict copy, nothing is replaced.
+          if (GATE && a.__q === 1 && CF.writeConflict(a, { st: st, v: v })) return cfConflict(c, a, apps, x, p, 1);
+          var r = CF.planWrite(a, { st: st, v: v }, x.folders, Date.now());
+          if (!r.ok) return cfErr(r.err);
+          var name = p.slice(p.lastIndexOf("/") + 1), len = a.text.length;
+          var cards = [{ title: name, rows: [{ f: "folder", b: r.step.k === "make" ? "" : CF.show(p.slice(0, p.lastIndexOf("/"))), a: CF.show(p.slice(0, p.lastIndexOf("/"))) },
+                                             { f: "text", b: r.step.k === "make" ? "" : (st.size || 0) + " B", a: len + " chars" }] }];
+          return cfApply(c, x, "write", [r.step], cards, [CF.show(p)]);
+        });
+      });
+    });
+  }
+  function cfConflict(c, a, apps, x, p, n) {
+    var q = x.CF.conflictName(p, Date.now(), n);
+    return cfStat(x.fs, q).then(function (st) {
+      if (st) return n < 9 ? cfConflict(c, a, apps, x, p, n + 1) : cfErr("\"" + x.CF.show(p) + "\" changed since, and no free name was left for a conflict copy. Nothing was written.");
+      return filesWrite(c, { path: q, text: a.text, mode: "create" }, apps);
+    });
+  }
+  function filesMove(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    return cfPrep(apps, true).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF, f = CF.normPath(a.from), to = CF.normPath(a.to), why = CF.reach(f, x.folders) || CF.reach(to, x.folders);
+      if (why) return cfErr(why);
+      return Promise.all([cfStat(x.fs, f), cfStat(x.fs, to)]).then(function (s) {
+        var nc = cfNoCloud(CF, s[0], f);
+        if (nc) return cfErr(nc);
+        return (s[0] && !s[0].dir ? cfVer(x.fs, f) : Promise.resolve("")).then(function (v) {
+          var r = CF.planMove(a, { st: s[0], v: v }, s[1], x.folders);
+          if (!r.ok) return cfErr(r.err);
+          var cards = [{ title: f.slice(f.lastIndexOf("/") + 1), rows: [{ f: "folder", b: CF.show(f), a: CF.show(to) }] }];
+          return cfApply(c, x, "move", [r.step], cards, [CF.show(f)]);
+        });
+      });
+    });
+  }
+  function filesDelete(c, a, apps) {
+    a = a && typeof a === "object" ? a : {};
+    var list = Array.isArray(a.paths) ? a.paths : [];
+    return cfPrep(apps, true).then(function (x) {
+      if (x.err) return cfErr(x.err);
+      var CF = x.CF;
+      if (list.length > CF.PATHS_MAX) return cfErr("At most " + CF.PATHS_MAX + " at a time.");
+      var items = list.map(function (it) {
+        var o = it && typeof it === "object" ? it : { path: it };
+        return { path: CF.normPath(o.path), want: o.if_version };
+      });
+      for (var i = 0; i < items.length; i++) { var why = CF.reach(items[i].path, x.folders); if (why) return cfErr(why); }
+      return items.reduce(function (pr, it) {
+        return pr.then(function () {
+          return cfStat(x.fs, it.path).then(function (st) {
+            it.st = st;
+            return st && !st.dir ? cfVer(x.fs, it.path).then(function (v) { it.v = v; }) : null;
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        for (var j = 0; j < items.length; j++) { var nc = cfNoCloud(CF, items[j].st, items[j].path); if (nc) return cfErr(nc); }
+        var r = CF.planDelete(items, x.folders, Date.now());
+        if (!r.ok) return cfErr(r.err);
+        var cards = r.steps.map(function (s) { return { title: s.from.slice(s.from.lastIndexOf("/") + 1), rows: [{ f: "folder", b: CF.show(s.from.slice(0, s.from.lastIndexOf("/"))), a: null }] }; });
+        return cfApply(c, x, "delete", r.steps, cards, r.names);
+      });
+    });
+  }
+  // GATE-FILES F2: the text of a file for the closed copy's sidecar
+  // (gate/gate.js fileCopy): PDFs and documents, as files_read reads them.
+  // → Promise<{ ok, text } | { ok: false }>
+  function cfText(path) {
+    var fs = filesFS();
+    if (!fs || typeof fs.read !== "function") return Promise.resolve({ ok: false });
+    return cfMod().then(function (CF) {
+      if (!CF) return { ok: false };
+      var p = CF.normPath(path), name = p.slice(p.lastIndexOf("/") + 1), kind = CF.kindOf(name);
+      if (!p || CF.secret(p) || !/^(text|document|pdf)$/.test(kind)) return { ok: false };
+      return cfBytes(fs, p).then(function (bytes) {
+        if (kind === "text") return new TextDecoder("utf-8").decode(bytes);
+        if (kind === "pdf") return pdfBytesText(bytes);
+        if (!DT) throw new Error("doctext");
+        return DT.read(bytes, name, { sheets: sheets, max: 2000000 });
+      }).then(function (text) { return { ok: true, text: String(text || "") }; }, function () { return { ok: false }; });
+    });
+  }
+  function cfUndo(done) {
+    var fs = filesFS();
+    if (!fs || typeof fs.read !== "function") return Promise.resolve(undoFail(t("hist.noMod")));
+    return cfMod().then(function (CF) {
+      if (!CF) return undoFail(t("hist.noMod"));
+      return CF.undo(fs, done, function (p) { return cfVer(fs, p); }, Date.now());
+    });
+  }
   // Wave A3: the changes of some apps (and their cores) load the first
   // time one of their items is changed (assistant/edits2.js).
   function changeItem(c, args, apps) {
@@ -4524,7 +4946,7 @@
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
     var key = E.storageKey(app.id);
-    var pl = E.plan(app.id, readStore(key), r.target, ch, Date.now());
+    var pl = E.plan(app.id, readStore(key), r.target, ch, nowQ());
     if (!pl.ok) return Promise.resolve({ content: "Error: " + pl.err, err: 1, ui: { k: "chgErr", app: app.name } });
     var base = { k: "change", app: app.name, act: ch.action, title: pl.title, rows: pl.rows };
     pl.tick = !pl.del && E.canTick(app.id, pl.rows);
@@ -4535,7 +4957,8 @@
       }
       var left = ok.off && ok.off[0] && ok.off[0].length ? ok.off[0] : [];
       if (left.length) ch = E.without(app.id, ch, left);
-      var res = E.apply(app.id, readStore(key), r.target, ch, Date.now(), pl.before);
+      var d0 = readStore(key), res = E.apply(app.id, d0, r.target, ch, nowQ(), pl.before);
+      if (res.ok && gateLate(d0, res.data)) res = GATE_LATE;
       if (!res.ok) {
         base.st = "failed";
         base.msg = res.conflict ? t("chg.conflict") : res.err;
@@ -4606,7 +5029,7 @@
     }
     if (del && !MANY_DEL_APPS[app.id]) return Promise.resolve({ content: "Error: several items at once can be deleted in Kanban, To-Do, Calendar, Notes, Bookmarks and Contacts only; delete these one at a time with ref.", err: 1 });
     if (mv && !MANY_MOVE_APPS[app.id]) return Promise.resolve({ content: "Error: several items at once can be moved in Kanban, To-Do, Notes, Bookmarks and Calendar only.", err: 1 });
-    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], bad = [], same = [];
+    var key = E.storageKey(app.id), now = nowQ(), data = readStore(key), plans = [], bad = [], same = [];
     chs.forEach(function (x) {
       // Planned one after the other on the same data, as Apply writes them.
       var res = E.apply(app.id, data, x.target, x.ch, now, null);
@@ -4628,11 +5051,12 @@
         base.st = "declined";
         return { content: JSON.stringify({ refs: refs, applied: false, note: "The user did not apply the change. Nothing changed." }), ui: base };
       }
-      var d = readStore(key), undos = [], t2 = Date.now(), fail = null, notes = [];
+      var d = readStore(key), undos = [], t2 = nowQ(), fail = null, notes = [];
       plans.forEach(function (p) {
         if (fail) return;
         var res = E.apply(app.id, d, p.x.target, p.x.ch, t2, p.pl.before);
         if (!res.ok) { fail = res; return; }
+        if (gateLate(d, res.data)) { fail = GATE_LATE; return; }
         d = res.data;
         undos.push(res.undo);
         if (res.disk) p.disk = res.disk;
@@ -4702,7 +5126,7 @@
         ? "Error: items of this app can't be changed by the assistant. Changes work for: " + changeApps(apps).map(function (a) { return a.id; }).join(", ") + "."
         : "Error: the user does not allow this app to be read any more.", err: 1 });
     }
-    var key = E.storageKey(app.id), now = Date.now(), data = readStore(key), plans = [], same = [];
+    var key = E.storageKey(app.id), now = nowQ(), data = readStore(key), plans = [], same = [];
     chs.forEach(function (x) {
       var res = E.apply(app.id, data, x.target, x.ch, now, null);
       if (!res.ok && /^Nothing would change/.test(res.err)) { same.push(x.ch.ref); return; }
@@ -4723,7 +5147,7 @@
         base.st = "declined";
         return { content: JSON.stringify({ refs: plans.map(function (p) { return p.x.ch.ref; }), applied: false, note: "The user did not apply the changes. Nothing changed." }), ui: base };
       }
-      var off = ok.off || {}, d = readStore(key), undos = [], t2 = Date.now(), fail = null, done = [], left = [], shown = [], disks = [];
+      var off = ok.off || {}, d = readStore(key), undos = [], t2 = nowQ(), fail = null, done = [], left = [], shown = [], disks = [];
       plans.forEach(function (p, i) {
         if (fail) return;
         var ch = off[i] && off[i].length ? E.without(app.id, p.x.ch, off[i]) : p.x.ch;
@@ -4731,6 +5155,7 @@
         if (!ch) return;
         var res = E.apply(app.id, d, p.x.target, ch, t2, p.pl.before);
         if (!res.ok) { fail = res; return; }
+        if (gateLate(d, res.data)) { fail = GATE_LATE; return; }
         d = res.data;
         undos.push(res.undo);
         if (res.disk) disks.push(res.disk);
@@ -4966,12 +5391,13 @@
   // Publishing's own core.
   // AS-ADD8 (GATE-PAR P4): invoice drafts and new quotes, same file, with
   // Invoices' and Quote's own cores.
-  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf", "publish", "invoices", "quote", "wiki", "flashcards", "split"];
+  // BASE-1 B4b: a record of a table in Base, same file, with Base's core.
+  var ADD3_IDS = ["habits", "fitness", "garage", "plants", "petcare", "shelf", "publish", "invoices", "quote", "wiki", "flashcards", "split", "base"];
   var ADD3_CORES = { habits: ["OrosHabitsModel", "../habits/model.js"], plants: ["OrosPlantsCore", "../plants/core.js"],
                      petcare: ["OrosPetcareCore", "../petcare/core.js"], garage: ["OrosGarageCore", "../garage/core.js"],
                      publish: ["OrosPublishCore", "../publish/core.js"], invoices: ["OrosInvoicesCore", "../invoices/core.js"],
                      quote: ["OrosQuoteCore", "../quote/core.js"], wiki: ["WikiCore", "../wiki/core.js"],
-                     flashcards: ["FlashcardsCore", "../flashcards/core.js"] };
+                     flashcards: ["FlashcardsCore", "../flashcards/core.js"], base: ["OrosBaseCore", "../base/core.js"] };
   ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD, ADD3_IDS);
   var addScripts = {};
   function loadOnce(src) {
@@ -5144,7 +5570,7 @@
           base.st = "declined";
           return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base };
         }
-        var res = M.apply(app.id, addRead(app.id, key), items, Date.now(), ok.skip, ctx);
+        var res = M.apply(app.id, addRead(app.id, key), items, nowQ(), ok.skip, ctx);
         if (!res.ok) {
           base.st = "failed";
           base.msg = res.err;
@@ -5173,6 +5599,7 @@
         base.st = "done";
         base.u = uid;
         base.added = res.made.map(function (m) { return m.i; });
+        base.made = res.made.map(function (m, j) { return { i: m.i, ref: added[j] ? added[j].ref : "" }; });   // PEND-1: item index → its ref
         return { content: JSON.stringify({ app: app.id, added: added, left_out: left,
           note: "The user added " + added.length + " record(s) to " + app.id + ". They can undo it." +
                 (left.length ? " Left out by the user: " + left.length + "; those marked already are there with that ref (use change_item to add what is new)." : "") }), ui: base };
@@ -5219,7 +5646,7 @@
           base.st = "declined";
           return { content: JSON.stringify({ linked: 0, note: "The user did not link them. Nothing changed." }), ui: base };
         }
-        var res = N.applyLinks(readStore(key), readStore(ctKey), Ls, Date.now(), ok.skip);
+        var res = N.applyLinks(readStore(key), readStore(ctKey), Ls, nowQ(), ok.skip);
         if (!res.ok) {
           base.st = "failed";
           base.msg = res.err;
@@ -5346,6 +5773,8 @@
     if ((f === "record" || f === "media") && STRINGS.en["v." + (v === "renewal" ? "reminder" : v)] !== undefined) return t("v." + (v === "renewal" ? "reminder" : v));
     if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (f === "activity" && STRINGS.en["ft.a." + v] !== undefined) return t("ft.a." + v);
+    // wave M1: a music release's type
+    if (f === "mtype" && STRINGS.en["pm." + v] !== undefined) return t("pm." + v);
     // AS-ADD7: a Publishing format, "paperback|14.50 EUR"
     if (f === "format" && typeof v === "string") {
       var fp = v.split("|");
@@ -5494,6 +5923,7 @@
     var now = Date.now();
     if (mem.edit) return editUndo(mem.edit);
     if (mem.files) return filesUndo(mem.files);
+    if (mem.cf) return cfUndo(mem.cf);
     if (mem.kb) {
       var G = gateCore();
       if (!G) return Promise.resolve(undoFail(t("hist.noMod")));
@@ -5735,6 +6165,7 @@
     if (have.time) out.push("timer", "alarm");
     if (have.music || have.radio || have.podcasts) out.push("play");
     if (have.maps) out.push("directions");
+    if (have.texttools) out.push("translate");
     return out;
   }
   function normDo(args, ref) {
@@ -5753,6 +6184,14 @@
       ui: { k: "do", args: JSON.parse(JSON.stringify(args)), ref: snap, st: "" }
     };
   }
+  // A language code as its name in the app's language (do_action translate).
+  function langLabel(code) {
+    try {
+      var n = new Intl.DisplayNames([LANG], { type: "language" }).of(code);
+      if (n && n !== code) return n.charAt(0).toUpperCase() + n.slice(1);
+    } catch (e) {}
+    return code;
+  }
   function drawDo(host, r, c) {
     var ui = r.ui, have = installed();
     var a = normDo(ui.args, ui.ref);
@@ -5765,7 +6204,8 @@
       var dl = el("dl", "entry-fields");
       v.fields.forEach(function (f) {
         dl.appendChild(el("dt", "", t("do.f." + f[0])));
-        dl.appendChild(el("dd", "", f[0] === "mode" ? t("do.mode." + f[1]) : f[0] === "daily" ? t("do.yes") : f[1]));
+        dl.appendChild(el("dd", "", f[0] === "mode" ? t("do.mode." + f[1]) : f[0] === "daily" ? t("do.yes") :
+          f[0] === "into" || f[0] === "from" ? langLabel(f[1]) : f[1]));
       });
       card.appendChild(dl);
     }
@@ -5790,6 +6230,63 @@
       card.appendChild(acts);
     }
     host.appendChild(card);
+  }
+
+  // ---------- list_fonts (FM-7) ----------
+  // The families of Settings › Fonts: designkit/fonts.js (loaded the
+  // first time) reads the disk's font files and the collections;
+  // overview() does the rest. A file's letters and licence are kept
+  // per file name (the name is its hash, so they never change).
+  var fontsKit = null, fontFacts = {};
+  function fontsCore() {
+    if (window.orosDK && window.orosDK.fonts) return Promise.resolve(window.orosDK.fonts);
+    if (fontsKit) return fontsKit;
+    var chain = Promise.resolve();
+    ["../designkit/text.js", "../designkit/fonts.js"].forEach(function (src) {
+      chain = chain.then(function () {
+        return new Promise(function (resolve) {
+          var sc = document.createElement("script");
+          sc.src = src;
+          sc.onload = sc.onerror = function () { resolve(); };
+          document.head.appendChild(sc);
+        });
+      });
+    });
+    fontsKit = chain.then(function () { return (window.orosDK && window.orosDK.fonts) || null; });
+    fontsKit.then(function (F) { if (!F) fontsKit = null; });
+    return fontsKit;
+  }
+  function fontFact(F, file) {
+    if (fontFacts[file]) return Promise.resolve(fontFacts[file]);
+    return F.fetcher("asset:" + file).then(function (buf) {
+      var r = buf ? F.inspect(buf) : null;
+      if (!r) return null;
+      fontFacts[file] = { cov: { greek: F.level(r.cov.greek), poly: F.level(r.cov.poly) }, lic: r.lic.kind, embed: r.lic.embed };
+      return fontFacts[file];
+    }, function () { return null; });
+  }
+  function listFonts(args) {
+    return fontsCore().then(function (F) {
+      if (!F) return { content: "Error: the fonts could not be read on this device.", err: 1 };
+      var cols = F.cols.normalize(readStore(F.cols.KEY)), ui = readStore("oros-uifont");
+      var free = Object.keys(cols.mem).some(function (k) { return cols.mem[k].on && k.indexOf(":fs_") > 0; });
+      return Promise.all([
+        F.library({ all: true }).then(function (lib) {
+          var fams = F.families(lib);
+          return Promise.all(fams.map(function (e) {
+            return fontFact(F, e.r).then(function (x) {
+              return Object.assign({}, e, { cov: x ? x.cov : null, lic: x ? x.lic : null, embed: x ? x.embed : "" });
+            });
+          }));
+        }, function () { return []; }),
+        free ? F.catalog().then(null, function () { return []; }) : Promise.resolve([])
+      ]).then(function (got) {
+        var res = F.overview({ disk: got[0], cols: cols, catalog: got[1], ui: ui && typeof ui === "object" ? ui : null, lang: LANG }, args || {});
+        if (!res.ok) return { content: "Error: " + res.err, err: 1 };
+        delete res.ok;
+        return { content: JSON.stringify(res) };
+      });
+    });
   }
 
   // ---------- app_summary (assistant/summary.js) ----------
@@ -5884,7 +6381,14 @@
       return Promise.resolve(S.automationsRules(window.OrosAutoCore, readStore("oros-automations-data"), runs,
         { lang: LANG, appName: function (id) { return have[id] || id; } }));
     }
+    // FORMS-4: Forms' list, or one form's results (counts only).
+    if (a.app === "forms" && !a.brief) return formsMods().then(function () {
+      var W = { yes: "Yes", no: "No", other: function (x) { return "Other: " + x; }, otherName: "Other", time: "Time", wait: "Waiting list" };
+      return S.formsSummary(readStore("oros-forms-data"), readStore("oros-forms-answers"), a, a.form ? window.OrosFormsResults : null, W);
+    });
     if (a.app === "crm" && a.partner) return crmPartnerSummary(a.partner, today);
+    // STUDIO-POD P4: the podcast shows and episodes, read only (never a publish)
+    if (a.app === "studio") return Promise.resolve(S.studioShows(readStore("oros-studio-data"), { show: a.show }));
     // CRM 1.10 (CTR-ALL): every contract, then what Today lists for CRM
     if (a.app === "crm" && !a.brief) {
       return crmCores().then(function (ok) {
@@ -5915,6 +6419,42 @@
     // AS-STRUCT: how the app is organised and its items, with refs.
     // One list of To-Do by name; Notes, Bookmarks, Contacts, Media
     // Shelf and Library always (the Briefing keeps only the agenda).
+    // BASE-1 B4b: every base › table with its fields; with table, its
+    // records (formulas need the Spreadsheet's functions).
+    if (a.app === "base") {
+      return Promise.all([window.OrosSheetFx ? null : "../spreadsheet/functions.js", window.OrosBaseCore ? null : "../base/core.js"]
+        .filter(Boolean).map(loadOnce)).then(function () {
+        return S.baseTables(window.OrosBaseCore || null, readStore("oros-base-data"), a);
+      });
+    }
+    // AS-SUM8 (2026-11-17): eight more apps read whole, with their own
+    // cores (the shell's, else the app's folder); read only. The Today
+    // apps among them add what Today lists (coming), as AS-STRUCT does.
+    var SUM8 = { meals: ["OrosMealsCore", "../meals/core.js"], travel: ["OrosTravelCore", "../travel/core.js"],
+                 plants: ["OrosPlantsCore", "../plants/core.js"], garage: ["OrosGarageCore", "../garage/core.js"],
+                 habits: ["OrosHabitsCore", "../habits/core.js"] }[a.app];
+    if (SUM8 && !a.brief) {
+      return coreOf(SUM8[0], SUM8[1]).then(function (X) {
+        var o = { today: today, lang: LANG, now: Date.now() }, st;
+        if (a.app === "meals") st = S.mealsPlan(X, readStore("oros-meals-data"), o);
+        else if (a.app === "travel") st = S.travelTrips(X, readStore("oros-travel-data"), o);
+        else if (a.app === "plants") { o.hemi = X ? X.readPrefs(readStore("oros-plants-prefs")).hemi : "n"; st = S.plantsList(X, readStore("oros-plants-data"), o); }
+        else if (a.app === "garage") { o.prefs = readStore("oros-garage-prefs"); st = S.garageVehicles(X, readStore("oros-garage-data"), o); }
+        else st = S.habitsList(X, readStore("oros-habits-data"), o);
+        if (st.ok === false || !ag) return st;
+        return agendaRows(a.app, a.days).then(function (rows) {
+          var g = S.agenda(a.app, rows, today, a.days);
+          if (g.items && g.items.length) {
+            st.from = g.from; st.to = g.to;
+            st.coming = g.items.map(function (it) { var x = {}; Object.keys(it).forEach(function (k) { if (k !== "target") x[k] = it[k]; }); return x; });
+          }
+          return st;
+        }, function () { return st; });
+      });
+    }
+    if (a.app === "scanpdf") return Promise.resolve(S.scanpdfSigns(readStore("oros-scanpdf-sign"), { now: Date.now() }));
+    if (a.app === "transfer") return Promise.resolve(S.transferHistory(readStore("oros-transfer-data")));
+    if (a.app === "whiteboard") return Promise.resolve(S.whiteboardBoards(readStore("oros-whiteboard-data"), { board: a.board }));
     if (a.app === "todo" && a.list && !a.brief) return Promise.resolve(S.todoList(readStore("oros-todo-data"), { list: a.list, today: today }));
     var STRUCT = { notes: ["oros-notes-data", "notesBooks"], bookmarks: ["oros-bookmarks-data", "bookmarksFolders"],
                    contacts: ["oros-contacts-data", "contactsLabels"], shelf: ["oros-shelf-data", "shelfItems"],
@@ -6823,6 +7363,8 @@
         if (ui.k === "rebuildErr") return;
         if (ui.k === "house") { drawHouse(host, r, c); return; }
         if (ui.k === "houseErr") return;
+        if (ui.k === "epub") { drawEpub(host, r, c); return; }
+        if (ui.k === "epubErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
         if (ui.k === "rule") { drawRule(host, r, c); return; }
@@ -6856,6 +7398,8 @@
         else if (ui.k === "read") txt = t("tool.read", { title: ui.title || "" });
         else if (ui.k === "readNo") txt = t("tool.readNo", { title: ui.title || "" });
         else if (ui.k === "readGone") txt = t("tool.readGone", { title: ui.title || "" });
+        else if (ui.k === "cfList") txt = ui.path ? t("tool.cfList", { path: ui.path }) : t("tool.cfFolders");
+        else if (ui.k === "cfRead") txt = t("tool.cfRead", { path: ui.path || "" });
         else if (ui.k === "sum") txt = t("tool.sum", { app: ui.app || "" });
         else if (ui.k === "sumNo") txt = t("tool.sumNo", { app: ui.app || "" });
         else if (ui.k === "chgErr") txt = t("chg.err", { app: ui.app || "" });
@@ -7191,6 +7735,53 @@
       };
       if (op === "book") acts.appendChild(button(t("hs.all"), "", function () { go(true); }));
       acts.appendChild(button(t("hs.go." + op), "primary", function () { go(false); }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+
+  // An export_epub card: what goes out, then Layout's report.
+  function drawEpub(host, r, c) {
+    var ui = r.ui, have = installed();
+    if (!have.layout) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Layout" }))); return; }
+    takeEpub(r, c);
+    var name = have.layout, card = el("section", "entry-card");
+    card.appendChild(el("h3", "entry-head", t("ep.head", { app: name })));
+    card.appendChild(el("p", "entry-title", ui.doc || ui.title || ""));
+    var bits = [];
+    if (!ui.doc && ui.title) bits.push(t("ep.byTitle", { t: ui.title }));
+    if (ui.edition) bits.push(t("ep.edition", { e: ui.edition }));
+    if (ui.layout) bits.push(t("ep.lay." + ui.layout) + ".");
+    if (ui.ready === 1) bits.push(t("ep.ready"));
+    if (bits.length) card.appendChild(el("p", "dlg-hint", bits.join(" ")));
+    var rp = ui.rep;
+    if (ui.st === "done" && rp) {
+      var ul = el("ul", "entry-list");
+      ul.appendChild(el("li", "", t("ep.repSum", { p: rp.pages, h: rp.headings, i: rp.pictures, kb: Math.max(1, Math.round(rp.bytes / 1024)) })));
+      ul.appendChild(el("li", "", rp.errors.length ? t("ep.repErr", { n: rp.errors.length, list: rp.errors.join(", ") }) : t("ep.repOk", { n: rp.warnings.length })));
+      if (rp.picturesWithoutDescription.length) ul.appendChild(el("li", "", t("ep.repAlt", { list: rp.picturesWithoutDescription.slice(0, 20).join(", ") })));
+      if (rp.path) ul.appendChild(el("li", "", t("ep.repPath", { path: rp.path })));
+      if (rp.markedReady === "yes") ul.appendChild(el("li", "", t("ep.repReady")));
+      card.appendChild(ul);
+    } else if (ui.st === "opened") {
+      card.appendChild(el("p", "entry-state", t("ep.working", { app: name })));
+    } else if (ui.st === "failed") {
+      var why = rp && /^(noDoc|noEdition|busy)$/.test(rp.why) ? "ep." + rp.why : "ep.failed";
+      card.appendChild(el("p", "entry-state err", t(why, { app: name })));
+    } else if (ui.st) {
+      card.appendChild(el("p", "entry-state", t("entry." + ui.st, { app: name })));
+    } else {
+      card.appendChild(el("p", "dlg-hint", t("ep.hint")));
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () { ui.st = "dismissed"; saveChat(c); renderMessages(); }));
+      acts.appendChild(button(t("ep.go"), "primary", function () {
+        ui.st = "opened";
+        // Saved before Layout opens (it may take this frame's place).
+        saveChat(c).then(function () {
+          if (!runEpub(ui, c)) { ui.st = "failed"; r.content = "The request could not be handed to Layout. Nothing was made."; saveChat(c); }
+          renderMessages();
+        });
+      }));
       card.appendChild(acts);
     }
     host.appendChild(card);
@@ -8679,6 +9270,17 @@
 
   // ---------- GATE: Claude's tools through orOS Gate (GATE-ACT) ----------
   var gateConv = { id: "gate", refs: {}, refN: 0, msgs: [] };
+  // PEND-1 (e2, Chris 2026-11-16): a change Claude asked for while orOS
+  // was closed runs with the time Claude asked (gateAt, from the gate's
+  // queue), and is not applied over an item changed at or after that
+  // time (the gate's lateIn on the app's data before and after).
+  var gateAt = 0;
+  function nowQ() { return gateAt || Date.now(); }
+  var GATE_LATE = { ok: false, late: true, err: "The owner changed this item after you asked for the change (orOS was closed then); their change stays and yours was not applied." };
+  function gateLate(before, after) {
+    if (!gateAt) return false;
+    try { var g = shell() && shell().orosGateCore; return !!(g && typeof g.lateIn === "function" && g.lateIn(before, after, gateAt)); } catch (e) { return false; }
+  }
   var gateNote = "", gateCtx = null;
   // Gate refs on the device (5.96.00): { n, refs }, device-local, never
   // synced; the newest GATE_REFS_MAX stay. gateKeys: app|target → ref.
@@ -8691,7 +9293,7 @@
     gateConv.refN = typeof o.n === "number" && o.n > 0 ? o.n : 0;
     Object.keys(o.refs).forEach(function (r) {
       var x = o.refs[r];
-      if (/^r\d{1,6}$/.test(r) && x && typeof x === "object" && typeof x.app === "string") { gateConv.refs[r] = x; gateKeys[gateKey(x)] = r; }
+      if (/^r\d{1,9}$/.test(r) && x && typeof x === "object" && typeof x.app === "string") { gateConv.refs[r] = x; gateKeys[gateKey(x)] = r; }
     });
   }
   // → false when the device could not keep them (R30: the index then
@@ -8725,6 +9327,17 @@
       if (!gateRefsSave()) return { ok: false, c: "This device could not keep the refs (storage full)." };
       return { ok: true, items: out };
     });
+  }
+  // 7.44.00: what these refs are ([{ a: app name, t: title }]), for the
+  // owner's question before a queued deletion (gate.js askQueued).
+  function gatePeek(refs) {
+    var names = {}, out = [];
+    gateApps().read.forEach(function (a) { names[a.id] = a.name; });
+    (Array.isArray(refs) ? refs : []).slice(0, 200).forEach(function (r) {
+      var x = gateConv.refs[String(r)];
+      if (x && typeof x.app === "string") out.push({ a: names[x.app] || x.app, t: String(x.title || x.q || "") });
+    });
+    return out;
   }
   function gateShell() { try { var p = shell(); return p && p.orosGate ? p.orosGate : null; } catch (e) { return null; } }
   // { read: [app], write: [app] } as the gate allows them now.
@@ -8779,20 +9392,23 @@
   // The tool list Claude sees through the gate (MCP shape).
   function gateToolList() {
     var ga = gateApps();
-    var crIds = createApps(ga.write).map(function (a) { return a.id; }).filter(function (id) { return id !== "budget"; });
+    var crIds = createApps(ga.write).map(function (a) { return a.id; }).filter(function (id) { return id !== "budget" && id !== "files"; });
     var chg = changeApps(ga.write).filter(function (a) { return a.id !== "budget" && a.id !== "files"; });
-    var on = ga.write.length > 0, rd = {}, have = installed();
+    // Files at write gives the files_* changes only, not the other apps' tools
+    var wr = ga.write.filter(function (a) { return a.id !== "files"; });
+    var on = wr.length > 0, rd = {}, have = installed();
     ga.read.forEach(function (a) { if (have[a.id]) rd[a.id] = 1; });
-    var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0,
+    var tools = C.toolsFor({ data: ga.read.length > 0, summary: summaryIds(ga.read).length > 0, fonts: ga.read.length > 0,
                              changes: chg.length > 0, creates: crIds,
                              links: crIds.indexOf("crm") >= 0 && crIds.indexOf("contacts") >= 0,
-                             partnerLinks: partnerLinksOn(crIds, ga.write), history: ga.write.length > 0,
+                             partnerLinks: partnerLinksOn(crIds, wr), history: ga.write.length > 0,
                              edits: editCats(ga.read),   // W5: read_in_app (the documents Claude may read)
                              actions: gateKinds(ga),
                              // GATE-PAR P3: work handed to an app's window (gatePress), once some app is at write
                              entries: on && entryKinds().length > 0, recipes: on ? recipeApps().filter(function (a) { return rd[a.id]; }).map(function (a) { return a.id; }) : [],
                              rules: on && rd.automations && !!window.OrosAutoCore, newsletter: on && rd.newsletter, cover: on && rd.layout,
-                             rebuild: on && rd.layout, house: on && rd.layout });
+                             rebuild: on && rd.layout, house: on && rd.layout, epub: on && rd.layout,
+                             files: !cfRaw().length || !rd.files ? false : appOf(ga.write, "files") ? "write" : true });
     // edit_in_app only for the documents Claude may change
     var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
     tools = tools.filter(function (x) { return x.name !== "edit_in_app"; }).concat(ed);
@@ -8801,12 +9417,12 @@
   // do_action's kinds through the gate: offered once the owner lets
   // Claude change some app; play only for apps Claude may read.
   function gateKinds(ga) {
-    if (!ga.write.length) return [];
+    if (!ga.write.some(function (a) { return a.id !== "files"; })) return [];
     var rd = {};
     ga.read.forEach(function (a) { rd[a.id] = 1; });
     return actionKinds().filter(function (k) { return k !== "play" || rd.music || rd.radio || rd.podcasts; });
   }
-  var GATE_WRITE = { change_item: 1, create_items: 1, link_contact: 1, link_items: 1, undo_change: 1, edit_in_app: 1 };
+  var GATE_WRITE = { change_item: 1, create_items: 1, link_contact: 1, link_items: 1, undo_change: 1, edit_in_app: 1, files_write: 1, files_move: 1, files_delete: 1 };
   // One call → Promise<{ ok, c (text), a (apps) }>.
   function gateRun(name, args) {
     if (C.GATE_TOOLS.indexOf(name) < 0) return Promise.resolve({ ok: false, c: "Unknown tool." });
@@ -8837,7 +9453,11 @@
       else if (r.ui && r.ui.apps) used = [];
       var u = r.ui && r.ui.u ? r.ui.u : "";
       // x: the change's undo data, kept by the gate (synced) so Undo works on any device
-      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0 };
+      var made = r.ui && Array.isArray(r.ui.made) ? r.ui.made.map(function (m) {
+        var rec = m && m.ref ? gateConv.refs[m.ref] : null;
+        return rec ? { i: m.i, rec: { app: rec.app, target: rec.target, title: String(rec.title || "").slice(0, 160), id: rec.id } } : null;
+      }).filter(Boolean) : undefined;
+      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0, made: made };
     }, function () { return { ok: false, c: "The call failed on the device." }; });
   }
   // The results speak of "the user" pressing; through the gate nobody did.
@@ -8966,6 +9586,8 @@
       if (!cv.ok) return { ok: false, c: cv.err };
       app = "layout"; call = ["layout", { cover: JSON.parse(JSON.stringify(cv.cover)) }];
       note = "Layout's Book cover window is open on the owner's screen with these details, for the owner to create it there.";
+    } else if (ui.k === "epub") {
+      return gateEpub(ui, apps, Date.now() + 21000);
     } else if (ui.k === "rebuild" || ui.k === "house") {
       app = "layout";
       run = function () { return ui.k === "rebuild" ? runRebuild(ui, gateConv) : runHouse(ui, gateConv, false); };
@@ -8979,6 +9601,31 @@
     var done = run ? run() : runEntry({ call: { fn: "openAt", args: call } });
     if (!done) return { ok: false, c: "The app could not do it on the device." };
     return { ok: true, a: [app], k: 1, c: JSON.stringify({ done: "opened", app: app, note: note }) };
+  }
+  // export_epub through the gate: Layout opens on the owner's screen,
+  // makes the EPUB and its report is the answer (or, past the deadline,
+  // a note that it is still working; read_in_app reads it afterwards).
+  function gateEpub(ui, apps, deadline) {
+    var have = installed(), rd = {};
+    apps.forEach(function (x) { rd[x.id] = 1; });
+    if (!rd.layout) return Promise.resolve({ ok: false, c: "The owner does not let Claude use " + (have.layout || "Layout") + "." });
+    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
+    if (why) return Promise.resolve({ ok: false, c: why });
+    if (!runEpub(ui, gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
+    return new Promise(function (resolve) {
+      var key = ui.key;
+      var timer = setTimeout(function () {
+        delete gateWait[key];
+        resolve({ ok: true, a: ["layout"], k: 1, c: "Layout is open on the owner's screen and still making the EPUB; its report shows there. The file goes to /internal/Layout/EPUB/." });
+      }, Math.max(2000, deadline - Date.now()));
+      gateWait[key] = function (rep) {
+        clearTimeout(timer);
+        delete gateWait[key];
+        var r = C.epubReport(rep);
+        resolve(r && !r.failed ? { ok: true, a: ["layout"], k: 1, c: epubText(r) } : { ok: false, c: epubText(r) });
+      };
+      gateWatch();
+    });
   }
   // The undo data of a change in the history (JSON), or null.
   function gateMem(id) {
@@ -9000,9 +9647,14 @@
     var have = installed(), lazy = Object.keys(EDIT_LAZY).filter(function (id) { return have[id]; });
     Promise.all([histLoad(), editLoadMods(lazy)]).then(function () {
       gateRefsLoad();
-      window.__asGate = { v: 1, run: function (n, a) {
-                            return gateRun(n, a).then(function (r) { if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; });
-                          }, tools: gateToolList, index: gateIndex,
+      window.__asGate = { v: 1, run: function (n, a, opt) {
+                            gateAt = opt && typeof opt.at === "number" && opt.at > 0 ? opt.at : 0;
+                            var end = function (r) { gateAt = 0; return r; };
+                            return gateRun(n, a).then(function (r) { end(); if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; },
+                                                      function (e) { end(); throw e; });
+                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText,
+                          // PEND-1: the ref of an item another device made from a queued create_items
+                          ref: function (rec) { if (!rec || typeof rec !== "object" || typeof rec.app !== "string") return ""; gateRefsLoad(); var r = refFor(gateConv, { app: rec.app, target: rec.target, title: String(rec.title || ""), q: String(rec.title || ""), id: rec.id }); gateRefsSave(); return r; },
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };
       try { var g = gateShell(); if (g && typeof g.frameReady === "function") g.frameReady(); } catch (e) {}
     });

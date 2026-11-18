@@ -678,6 +678,20 @@
         return oa - ob || cmpStr(a.ctr.to || "9999", b.ctr.to || "9999") || cmpStr(fold(a.ctr.t), fold(b.ctr.t)) || cmpStr(a.ctr.id, b.ctr.id);
       });
   }
+  // Counts for the Dashboard: running (on + soon), need a decision (and
+  // of those, ended / ending soon), ended, ended by agreement, and the next end day still
+  // ahead (today included) of a contract that is not ended by agreement.
+  function ctrDash(data, today) {
+    var all = ctrAll(data, today), s = { n: all.length, on: 0, needs: 0, needEnded: 0, needSoon: 0, ended: 0, term: 0, next: null };
+    all.forEach(function (r) {
+      if (r.st === "on" || r.st === "soon") s.on++;
+      if (r.st === "ended") s.ended++;
+      if (r.st === "term") s.term++;
+      if (r.needs) { s.needs++; if (r.st === "ended") s.needEnded++; else s.needSoon++; }
+      if (r.st !== "term" && r.ctr.to && r.ctr.to >= today && (!s.next || r.ctr.to < s.next.ctr.to)) s.next = r;
+    });
+    return s;
+  }
   // Publishing titles ({ id, t, ppl: [{ n }] }) → the title a contract
   // is about: its own link, else the one title with the same name
   // (folded; by the partner's Publishing name when several have it).
@@ -755,7 +769,10 @@
       var title = cleanText(String(r.book || r.ctr.t).replace(/[<>]+/g, " "), 200) || cleanText(String(r.ctr.t).replace(/[<>]+/g, " "), 200) || r.ctr.id;
       list.push({ id: r.ctr.id, ben: rs.n[0], title: title,
                 fmt: r.fmt === "p" ? "print" : (r.fmt === "e" ? "ebook" : ""), from: r.ctr.from, to: r.ctr.to || "",
-                state: PORTAL_STATE[r.st], renewed: r.hist.filter(function (e) { return e.k === "renew" && e.p; }).map(function (e) { return e.p; }).slice(-50) });
+                state: PORTAL_STATE[r.st], renewed: r.hist.filter(function (e) { return e.k === "renew" && e.p; }).map(function (e) { return e.p; }).slice(-50),
+                // Revenue Splitter 1.14.2: the day of each renewal, the end before it, the new end
+                renewals: r.hist.filter(function (e) { return e.k === "renew" && YMD_RE.test(e.d || "") && YMD_RE.test(e.p || "") && YMD_RE.test(e.v || ""); })
+                  .map(function (e) { return { on: e.d, prev_to: e.p, to: e.v }; }).slice(-50) });
     });
     list.sort(function (a, b) { return cmpStr(a.id, b.id); });
     left.sort(function (a, b) { return cmpStr(a.id, b.id); });
@@ -771,6 +788,29 @@
     var o = { m: x.m };
     if (typeof x.lbl === "string" && /^[A-Za-z0-9_-]{1,60}$/.test(x.lbl)) o.lbl = x.lbl;
     put(o, "kb", cleanText(x.kb, 60));
+    // RS-PROD (Author Portal production stage): the Kanban board's name,
+    // the person's column → phase map over the built-in one (crm/prod.js,
+    // folded names, 0 = no phase of its own), and the cards chosen to go
+    put(o, "pb", cleanText(x.pb, 60));
+    if (x.pm && typeof x.pm === "object" && !Array.isArray(x.pm)) {
+      var pm = {}, n = 0;
+      Object.keys(x.pm).sort().forEach(function (k) {
+        var v = x.pm[k];
+        if (n >= 300 || typeof k !== "string" || !k || k.length > 80 || /[\u0000-\u001f]/.test(k)) return;
+        if (typeof v !== "number" || Math.floor(v) !== v || v < 0 || v > 7) return;
+        pm[k] = v;
+        n++;
+      });
+      if (n) o.pm = pm;
+    }
+    if (Array.isArray(x.pc)) {
+      var seen = {}, pc = x.pc.filter(function (id) {
+        if (typeof id !== "string" || !/^[A-Za-z0-9_-]{1,64}$/.test(id) || seen[id]) return false;
+        seen[id] = 1;
+        return true;
+      }).sort().slice(0, 1000);
+      if (pc.length) o.pc = pc;
+    }
     return o;
   }
 
@@ -1175,6 +1215,37 @@
     return null;
   }
 
+  // BR-EV-2: an Automations "Log it in CRM" step opens
+  // __orosOpenAt("crm", { autoLog: { text, k?, who?, from? } }) → the
+  // New history entry form prefilled (saved only by the person), or
+  // null. autoLogCust picks its customer: the name in who (unique),
+  // else the customer an address in the text belongs to, else the one
+  // customer whose name (3+ letters) the text names, longest first.
+  function autoLog(x) {
+    if (!x || typeof x !== "object" || Array.isArray(x)) return null;
+    var text = cleanText(x.text, 2000, true);
+    if (!text) return null;
+    return { text: text, k: ACT_KINDS.indexOf(x.k) >= 0 ? x.k : "note", who: cleanText(x.who, 120) };
+  }
+  function autoLogCust(data, n, emailOf) {
+    if (!n || !data || !Array.isArray(data.cust) || !data.cust.length) return null;
+    var hits = function (want) {
+      var f = fold(want).trim(), found = data.cust.filter(function (c) { return fold(c.name).trim() === f; });
+      return found.length === 1 ? found[0] : null;
+    };
+    if (n.who) { var w = hits(n.who); if (w) return w; }
+    var m = /[^\s@<>"(),;:]{1,64}@[^\s@<>"(),;:]{1,190}\.[a-z]{2,}/i.exec(n.text);
+    if (m) { var e = custByEmail(data, m[0].toLowerCase(), emailOf); if (e) return e; }
+    var txt = fold(n.text), best = null, tie = false;
+    data.cust.forEach(function (c) {
+      var nm = fold(c.name).trim();
+      if (nm.length < 3 || txt.indexOf(nm) < 0) return;
+      if (!best || nm.length > fold(best.name).trim().length) { best = c; tie = false; }
+      else if (nm.length === fold(best.name).trim().length) tie = true;
+    });
+    return best && !tie ? best : null;
+  }
+
   // What CRM hands Invoices (BR-CRM-INV 1) and Quote (BR-Q1). Both
   // apps only prefill a draft; nothing is saved before their Save.
   // Prices go in currency units (cents / 100). A deal is one line:
@@ -1468,14 +1539,14 @@
     stages: stages, stageOf: stageOf, normStg: normStg,
     dealProb: dealProb, isOpen: isOpen, openDeals: openDeals, pipeline: pipeline,
     agenda: agenda, dueNow: dueNow, forgotten: forgotten, dashboard: dashboard,
-    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows, parseCsv: parseCsv, csvImport: csvImport, mailLog: mailLog, custByEmail: custByEmail,
+    customersForBilling: customersForBilling, invoicePrefill: invoicePrefill, quotePrefill: quotePrefill, csvCell: csvCell, csvRows: csvRows, parseCsv: parseCsv, csvImport: csvImport, mailLog: mailLog, custByEmail: custByEmail, autoLog: autoLog, autoLogCust: autoLogCust,
     backup: backup, restore: restore,
     reminders: reminders, reminderText: reminderText, calendarOn: calendarOn, custsForContact: custsForContact,
     ROLES: ROLES, LINK_KINDS: LINK_KINDS, normRoles: normRoles, normLinks: normLinks, pubKey: pubKey,
     ITEM_KINDS: ITEM_KINDS, ITEM_APP: ITEM_APP, normIx: normIx, normItems: normItems, itemsOf: itemsOf, itemKey: itemKey, itemTarget: itemTarget, itemsRow: itemsRow,
     normRsl: normRsl, CS_FIELDS: CS_FIELDS, normCs: normCs, csJoin: csJoin, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     SOON_DAYS: SOON_DAYS, CX_KINDS: CX_KINDS, normCx: normCx, normCset: normCset, cxOf: cxOf, cxRow: cxRow, ctrFmt: ctrFmt, ctrBook: ctrBook, addYears: addYears,
-    ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
+    ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrDash: ctrDash, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
     ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, portalPayload: portalPayload, portalPlan: portalPlan,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove

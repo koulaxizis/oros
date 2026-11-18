@@ -14,7 +14,10 @@
 // week before the last day seen go through bank.js plan() (ids,
 // rules, duplicates, deleted-here-earlier) and only the new ones are
 // added, in one write with Undo. Automatic when Budget opens, at
-// most every 6 hours per device (Chris 2026-11-01 20:44).
+// most every 6 hours per device (Chris 2026-11-01 20:44), or at the
+// times set in Banks › Automatic updates (BK-AT, Chris 2026-11-12):
+// the shell then runs Budget in a hidden frame (?bankbg=1) at each
+// time while orOS is open, and a time missed runs on the next open.
 // Read-only: orOS never asks a bank for payments. Nothing from the
 // bank is run or inserted as HTML.
 // ============================================================
@@ -33,6 +36,8 @@
   var S = {
     en: {
       webOnly: "This orOS isn't opened at useoros.online, so banks and PayPal can't be reached from here yet. Open useoros.online in a browser to connect and update; entries reach this device through sync.",
+      localOnly: "Your banks and PayPal update here too. Connecting a bank or renewing its access works only in orOS opened at useoros.online in a browser, because the bank sends you back there; the accounts then reach this device through sync.",
+      localConnect: "Connect or renew a bank at useoros.online in a browser: the bank sends you back there.",
       bankBal: "Bank balance {a} ({d})", cardBal: "Debt {a} · available {v} ({d})", availBal: "Available {v} ({d})", availShort: "available {v}",
       cardNoLimit: "Type the card's credit limit below to see the debt.", cardLimit: "Credit limit", isCard: "This is a credit card", limitBad: "Type the limit as an amount, e.g. 2000.", balSame: "same in Budget", balBudget: "Budget {a}", balMatch: "Match",
       balMatchHint: "Writes a balance correction on that day so that Budget shows the bank's balance (not income or an expense)",
@@ -65,10 +70,16 @@
       err_noacc: "The bank gave access to no account. In Enable Banking's control panel, link this bank's accounts (same Personal or Business) to your application first.",
       ppT: "PayPal Business", ppNone: "Connect PayPal Business in Settings › Connected services first (Client ID and Secret of your own PayPal app). Then add it here.",
       ppAll: "Your PayPal accounts are connected above.", ppAdd: "Add",
+      atT: "Automatic updates", atMode: "Update by itself", atSix: "When I open Budget, every 6 hours", atSet: "At times I set",
+      atSixHint: "Budget updates when you open it, or come back to it, and the last update is 6 hours old or more.",
+      atHint: "While orOS is open, in any app, your banks update at these times by themselves, on this device or another of yours (one is enough). A time missed while orOS was closed runs the next time you open it. A phone pauses a browser in the background, so there it comes when you return. Banks allow about 4 automatic reads a day, so up to 4 times. You get a notification only when an update fails.",
+      atOne: "Time {n}", atAdd: "Add a time", atRemove: "Remove {v}",
       close: "Close", cancel: "Cancel"
     },
     el: {
       webOnly: "Αυτό το orOS δεν είναι ανοιγμένο στο useoros.online, οπότε οι τράπεζες και το PayPal δεν είναι ακόμα προσβάσιμα από εδώ. Άνοιξε το useoros.online σε browser για σύνδεση και ενημέρωση· οι κινήσεις φτάνουν σε αυτή τη συσκευή μέσω συγχρονισμού.",
+      localOnly: "Οι τράπεζες και το PayPal ενημερώνονται και εδώ. Η σύνδεση τράπεζας ή η ανανέωση της πρόσβασης γίνεται μόνο στο orOS που ανοίγεις στο useoros.online μέσα σε browser, γιατί η τράπεζα σε επιστρέφει εκεί· οι λογαριασμοί φτάνουν μετά σε αυτή τη συσκευή μέσω συγχρονισμού.",
+      localConnect: "Σύνδεση ή ανανέωση τράπεζας γίνεται στο useoros.online μέσα σε browser: η τράπεζα σε επιστρέφει εκεί.",
       bankBal: "Υπόλοιπο τράπεζας {a} ({d})", cardBal: "Χρέος {a} · διαθέσιμο {v} ({d})", availBal: "Διαθέσιμο {v} ({d})", availShort: "διαθέσιμο {v}",
       cardNoLimit: "Γράψε από κάτω το πιστωτικό όριο της κάρτας για να φανεί το χρέος.", cardLimit: "Πιστωτικό όριο", isCard: "Είναι πιστωτική κάρτα", limitBad: "Γράψε το όριο ως ποσό, π.χ. 2000.", balSame: "ίδιο στο Budget", balBudget: "Budget {a}", balMatch: "Ταίριαξε",
       balMatchHint: "Γράφει διόρθωση υπολοίπου εκείνη τη μέρα ώστε το Budget να δείχνει το υπόλοιπο της τράπεζας (όχι έσοδο ή έξοδο)",
@@ -101,6 +112,10 @@
       err_noacc: "Η τράπεζα δεν έδωσε πρόσβαση σε κανέναν λογαριασμό. Στο control panel του Enable Banking κάνε πρώτα link τους λογαριασμούς αυτής της τράπεζας (ίδιο Personal ή Business) στην εφαρμογή σου.",
       ppT: "PayPal Business", ppNone: "Σύνδεσε πρώτα το PayPal Business στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες (Client ID και Secret της δικής σου εφαρμογής PayPal). Μετά πρόσθεσέ το εδώ.",
       ppAll: "Οι λογαριασμοί σου PayPal είναι συνδεδεμένοι παραπάνω.", ppAdd: "Προσθήκη",
+      atT: "Αυτόματη ενημέρωση", atMode: "Ενημέρωση μόνη της", atSix: "Όταν ανοίγω την εφαρμογή, κάθε 6 ώρες", atSet: "Σε ώρες που ορίζω",
+      atSixHint: "Η εφαρμογή ενημερώνεται όταν την ανοίγεις ή επιστρέφεις σε αυτήν και η τελευταία ενημέρωση έγινε πριν από 6 ώρες ή περισσότερο.",
+      atHint: "Όσο το orOS είναι ανοιχτό, σε οποιαδήποτε εφαρμογή, οι τράπεζές σου ενημερώνονται μόνες τους σε αυτές τις ώρες, σε αυτή ή σε άλλη συσκευή σου (αρκεί μία). Μια ώρα που χάθηκε όσο το orOS ήταν κλειστό γίνεται την επόμενη φορά που θα το ανοίξεις. Το κινητό παγώνει τον browser στο παρασκήνιο, οπότε εκεί η ενημέρωση έρχεται όταν επιστρέφεις. Οι τράπεζες επιτρέπουν περίπου 4 αυτόματες αναγνώσεις την ημέρα, γι' αυτό ως 4 ώρες. Ειδοποίηση παίρνεις μόνο όταν μια ενημέρωση αποτύχει.",
+      atOne: "Ώρα {n}", atAdd: "Πρόσθεσε ώρα", atRemove: "Αφαίρεση {v}",
       close: "Κλείσιμο", cancel: "Άκυρο"
     }
   };
@@ -137,6 +152,14 @@
     try { return root.location.origin === "https://useoros.online"; }
     catch (e) { return true; }
   }
+  // The orOS on the person's own computer (installed orOS, Portable,
+  // USB): the relay answers its bank reads (relay LOCAL_OPS), but the
+  // bank's return page is on useoros.online, so it can't connect or renew.
+  function localOrigin() {
+    try { return root.location.origin === "http://localhost:47800"; }
+    catch (e) { return false; }
+  }
+  function canRead() { return webOrigin() || localOrigin(); }
   function live() { return (A.data().bnk || []).slice(); }
   function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
   function load(k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } }
@@ -270,23 +293,67 @@
       busy = false;
       lastErr = errs;
       store(DEV_KEY, { t: Date.now() });
-      Object.keys(moves).forEach(function (id) { A.patchBnk(id, { la: moves[id] }); });
-      Object.keys(lfs).forEach(function (id) { A.patchBnk(id, { lf: lfs[id] }); });
-      Object.keys(bals).forEach(function (id) { A.patchBnk(id, bals[id]); });
+      // one write per row: where it was read with, its last booked day,
+      // the bank's balance and, with set times, when it was read (bt:
+      // the other devices then skip that time)
+      var sched = times().length, at = Date.now(), pat = {};
+      function put(id, f) { pat[id] = Object.assign(pat[id] || {}, f); }
+      Object.keys(moves).forEach(function (id) { put(id, { la: moves[id] }); });
+      Object.keys(lfs).forEach(function (id) { put(id, { lf: lfs[id] }); });
+      Object.keys(bals).forEach(function (id) { put(id, bals[id]); });
+      if (sched) rows.forEach(function (r) { if (!errs[r.id]) put(r.id, { bt: at }); });
+      Object.keys(pat).forEach(function (id) { A.patchBnk(id, pat[id]); });
       if (add.length || Object.keys(adopt).length) A.addEntries(add, t("got", { n: add.length }), adopt);
       else if (!auto && !Object.keys(errs).length) A.showToast(t("gotNone"));
       A.renderAll();
       return { n: add.length, errs: errs };
     }, function (e) { busy = false; throw e; });
   }
-  function autoRefresh() {
+  // BK-AT: the set times (synced), [] = every 6 hours on open
+  function times() { var st = A.data().set || {}; return K.times(st.bat); }
+  // Is an automatic update due on this device now?
+  function isDue(now) {
+    var dev = load(DEV_KEY), ts = times();
+    if (!ts.length) return K.due(dev && dev.t, now);
+    return !!K.slotDue(ts, K.lastRead(live(), dev && dev.t, (A.data().set || {}).bam, now), now);
+  }
+  function canAuto() {
     // not while a bank connection is being made: its accounts get their
     // Budget account first (mapDialog), then the first update runs
-    if (!live().length || !links() || connecting || load(PEND_KEY)) return;
-    var dev = load(DEV_KEY);
-    if (!K.due(dev && dev.t, Date.now())) return;
-    if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+    if (!live().length || !links() || connecting || load(PEND_KEY)) return false;
+    return !(typeof navigator !== "undefined" && navigator.onLine === false);
+  }
+  function autoRefresh() {
+    if (!canAuto() || !isDue(Date.now())) return;
     refresh(true).catch(function () {});
+  }
+  // The shell's hidden run at a set time (?bankbg=1): one update, then
+  // the shell is told and drops the frame. An error worth knowing about
+  // (not a missing key on this device, not offline: Banks says those)
+  // goes with its text, for the shell's notification (Chris: on errors only).
+  var QUIET = { keys: 1, noapp: 1, offline: 1 };
+  function bgDone(r) {
+    var errs = (r && r.errs) || {}, worst = "", text = "";
+    live().some(function (row) {
+      var c = errs[row.id];
+      if (!c || QUIET[c]) return false;
+      worst = c;
+      text = (row.bk || "") + (row.nm ? " · " + row.nm : "") + ": " + errText(c);
+      return true;
+    });
+    try {
+      root.parent.postMessage({ oros: "bank-bg-done", app: "budget", n: (r && r.n) || 0, err: worst, text: text.slice(0, 300) }, root.location.origin);
+    } catch (e) {}
+  }
+  function bgRun() {
+    if (!canRead() || !canAuto() || !isDue(Date.now())) { bgDone(null); return; }
+    refresh(true).then(bgDone, function (e) {
+      var c = code(e);
+      bgDone({ n: 0, errs: live().reduce(function (o, row) { o[row.id] = c; return o; }, {}) });
+    });
+  }
+  function bgMode() {
+    try { return /[?&]bankbg=1(&|$)/.test(root.location.search); } catch (e) { return false; }
   }
 
   // ---------- The bank's answer ----------
@@ -550,6 +617,68 @@
     wrap.appendChild(el("p", "hint", t("ksHint")));
     return wrap;
   }
+  // BK-AT: Automatic updates: every 6 hours on open, or at 1 to 4 set times
+  function timesSection() {
+    var box = el("section", "bk-sec bk-times");
+    box.appendChild(el("h3", "bk-h", t("atT")));
+    var mode = el("select");
+    [["six", t("atSix")], ["set", t("atSet")]].forEach(function (p) { var o = el("option", "", p[1]); o.value = p[0]; mode.appendChild(o); });
+    var list = times().slice();
+    mode.value = list.length ? "set" : "six";
+    box.appendChild(A.field(t("atMode"), mode, "bk-at-mode"));
+    var wrap = el("div", "bk-at-list");
+    box.appendChild(wrap);
+    var hint = el("p", "hint");
+    box.appendChild(hint);
+    // sorted, without twins, as stored
+    function save() { var v = K.timesText(list); A.saveTimes(v); list = K.times(v); }
+    function draw() {
+      wrap.innerHTML = "";
+      hint.textContent = t(mode.value === "set" ? "atHint" : "atSixHint");
+      if (mode.value !== "set") return;
+      list.forEach(function (v, i) {
+        var row = el("div", "bk-at-row");
+        var inp = el("input");
+        inp.type = "time";
+        inp.step = "60";
+        inp.value = v;
+        inp.setAttribute("aria-label", t("atOne", { n: i + 1 }));
+        inp.addEventListener("change", function () {
+          if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(inp.value)) { inp.value = list[i]; return; }
+          list[i] = inp.value;
+          save();
+          draw();
+        });
+        row.appendChild(inp);
+        if (list.length > 1) {
+          var rm = A.button("\u00d7", "mini", function () { list.splice(i, 1); save(); draw(); });
+          rm.setAttribute("aria-label", t("atRemove", { v: v }));
+          rm.title = t("atRemove", { v: v });
+          row.appendChild(rm);
+        }
+        wrap.appendChild(row);
+      });
+      if (list.length < K.MAX_TIMES) {
+        wrap.appendChild(A.button(t("atAdd"), "mini", function () {
+          var last = list.length ? list[list.length - 1] : "08:00";
+          var h = (+last.slice(0, 2) + 12) % 24;
+          var nx = (h < 10 ? "0" : "") + h + last.slice(2);
+          while (list.indexOf(nx) >= 0) { h = (h + 1) % 24; nx = (h < 10 ? "0" : "") + h + last.slice(2); }
+          list.push(nx);
+          save();
+          draw();
+        }));
+      }
+    }
+    mode.addEventListener("change", function () {
+      if (mode.value === "set" && !list.length) list = ["08:00"];
+      if (mode.value === "six") A.saveTimes("");
+      else save();
+      draw();
+    });
+    draw();
+    return box;
+  }
   function accsSection(redraw) {
     var box = el("section", "bk-sec");
     box.appendChild(el("h3", "bk-h", t("accsT")));
@@ -591,6 +720,8 @@
   }
   var waitMsg = null;
   function connect(bank, psu, la) {
+    // the bank's return page is on useoros.online (budget/bankapi.js REDIRECT)
+    if (!webOrigin()) { A.showToast(t("localConnect")); return; }
     var state = K.newState();
     if (!state) { A.showToast(t("err_other")); return; }
     // the window opens now (a click), the address comes after the call
@@ -715,14 +846,17 @@
       nowB.disabled = false;
       nowB.textContent = t("now");
       body.appendChild(el("p", "hint", t("lvIntro")));
-      // the relay (ALLOWED_ORIGINS) and the bank's return page answer
-      // useoros.online only: the installed app and Portable can't connect
-      if (!webOrigin()) body.appendChild(el("p", "err bk-web", t("webOnly")));
+      // the relay answers useoros.online and, for bank reads only, the
+      // installed orOS / Portable / USB (localhost:47800); the bank's
+      // return page is on useoros.online, so only there can a bank connect
+      if (localOrigin()) body.appendChild(el("p", "hint bk-web", t("localOnly")));
+      else if (!webOrigin()) body.appendChild(el("p", "err bk-web", t("webOnly")));
       if (!Lk) { body.appendChild(el("p", "", t("lvNoShell"))); nowB.hidden = true; return; }
       body.appendChild(appSection(dlg, function () { checkKeys().then(draw); }));
       body.appendChild(accsSection(draw));
+      if (live().length) body.appendChild(timesSection());
       nowB.hidden = !live().length;
-      if (app() && keysHere) body.appendChild(connSection());
+      if (app() && keysHere && webOrigin()) body.appendChild(connSection());
       body.appendChild(ppSection(dlg));
     }
     checkKeys().then(draw, draw);
@@ -748,6 +882,8 @@
   function init(api) {
     A = api;
     if (!K || !B) return;
+    // the hidden run takes no bank answers (the open Budget does)
+    if (bgMode()) { setTimeout(bgRun, 0); return; }
     listen();
     setTimeout(autoRefresh, 2500);
     // Back to an orOS left open (a phone in the pocket, a tab overnight):

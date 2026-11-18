@@ -2,7 +2,8 @@
 // orOS Atelier — kit.js: a book's release kit (v1.0.0, publisher
 // wave P9)
 // Publishing's "Release kit in Atelier" sends { releaseKit: { title,
-// sub, author, line, price, imprint, quote, img } } (img = the cover
+// sub, author, line, price, imprint, quote, img, music? } } (music: a
+// release's kit, cover 3000 × 3000, post, story, banner; wave M3) (img = the cover
 // on the orOS disk, under /internal/). Atelier asks once, then makes
 // five ordinary designs in a new folder named after the book:
 //   post 1080 × 1080 · story 1080 × 1920 · banner 1920 × 600 (px)
@@ -33,6 +34,15 @@
     { id: "bookmark", w: 50 * MM, h: 180 * MM, unit: "mm" },
     { id: "poster", w: 297 * MM, h: 420 * MM, unit: "mm" }
   ];
+  // A music release (Publishing wave M3, spec.music): the store cover
+  // 3000 × 3000 px, a square post, a story and a site banner; the
+  // cover is square.
+  var MUSIC_FORMATS = [
+    { id: "cover", w: 3000, h: 3000, unit: "px" },
+    { id: "post", w: 1080, h: 1080, unit: "px" },
+    { id: "story", w: 1080, h: 1920, unit: "px" },
+    { id: "banner", w: 1920, h: 600, unit: "px" }
+  ];
   var DEF_BG = "#1f3a5f";
 
   function line(v, max) {
@@ -50,7 +60,8 @@
   function norm(spec) {
     var s = spec && typeof spec === "object" ? spec : {};
     var o = { title: line(s.title, 200), sub: line(s.sub, 200), author: line(s.author, 200), line: line(s.line, 120),
-              price: line(s.price, 40), imprint: line(s.imprint, 120), quote: line(s.quote, 300), bg: color(s.bg) || DEF_BG };
+              price: line(s.price, 40), imprint: line(s.imprint, 120), quote: line(s.quote, 300), bg: color(s.bg) || DEF_BG,
+              music: s.music === true };
     return o.title ? o : null;
   }
 
@@ -61,8 +72,8 @@
     var s = norm(spec);
     if (!s) return [];
     var ink = inkFor(s.bg), soft = ink === "#ffffff" ? "#dfe6ee" : "#333333";
-    var ar = img && img.iw > 0 && img.ih > 0 ? img.iw / img.ih : 2 / 3;
-    return FORMATS.map(function (f) {
+    var ar = img && img.iw > 0 && img.ih > 0 ? img.iw / img.ih : s.music ? 1 : 2 / 3;
+    return (s.music ? MUSIC_FORMATS : FORMATS).map(function (f) {
       var nm = (s.title + " · " + ((names && names[f.id]) || f.id)).slice(0, 120);
       var d = AX.newDesign({ name: nm, w: f.w, h: f.h, unit: f.unit, bg: s.bg }, now);
       var pg = M.pagesInOrder(d)[0];
@@ -79,7 +90,15 @@
         return it ? y + it.h + size * 0.35 : y;
       }
       var x, y, w, cw;
-      if (f.id === "post") {
+      if (f.id === "cover") {
+        // the store cover: the artwork full size, else the title and
+        // artist on the colour (stores refuse prices and dates here)
+        if (img && img.a) AX.addItem(d, pg.id, { k: "photo", a: img.a, iw: img.iw, ih: img.ih, nm: img.nm || "", x: 0, y: 0, w: W, h: H, fit: "fill" }, now);
+        else {
+          y = text(s.title, 240 * u, H * 0.58, W - 480 * u, 150 * u, { font: "serif", b: 1 });
+          text(s.author, 240 * u, y, W - 480 * u, 80 * u, { caps: 1, tr: 60, fc: soft });
+        }
+      } else if (f.id === "post") {
         cw = cover(90 * u, 140 * u, 800 * u);
         x = 90 * u + cw + 60 * u; w = W - x - 80 * u; y = 220 * u;
         y = text(s.title, x, y, w, 64 * u, { font: "serif", b: 1 });
@@ -129,7 +148,7 @@
     });
   }
 
-  var API = { FORMATS: FORMATS, norm: norm, build: build, inkFor: inkFor };
+  var API = { FORMATS: FORMATS, MUSIC_FORMATS: MUSIC_FORMATS, norm: norm, build: build, inkFor: inkFor };
   if (typeof module !== "undefined" && module.exports) { module.exports = API; return; }
   root.AtelierKit = API;
 
@@ -142,12 +161,16 @@
       "kit.ask": "Make the release kit for “{t}”? Five designs (Instagram post, story, site banner, bookmark, A3 poster) in a new folder.",
       "kit.go": "Make the kit", "kit.done": "Release kit ready: {n} designs in the folder “{f}”.",
       "kit.noPic": "The cover could not be read; the designs have a panel in its place.",
+      "kit.askMus": "Make the release kit for “{t}”? Four designs (store cover 3000 × 3000, Instagram post, story, site banner) in a new folder.",
+      "kit.cover": "Store cover 3000 × 3000",
       "kit.post": "Instagram post", "kit.story": "Story", "kit.banner": "Site banner", "kit.bookmark": "Bookmark", "kit.poster": "Poster A3"
     },
     el: {
       "kit.ask": "Να φτιαχτεί το πακέτο κυκλοφορίας για το «{t}»; Πέντε σχέδια (ανάρτηση Instagram, story, banner για το site, σελιδοδείκτης, αφίσα A3) σε νέο φάκελο.",
       "kit.go": "Φτιάξε το πακέτο", "kit.done": "Το πακέτο κυκλοφορίας είναι έτοιμο: {n} σχέδια στον φάκελο «{f}».",
       "kit.noPic": "Το εξώφυλλο δεν διαβάστηκε· τα σχέδια έχουν ένα πλαίσιο στη θέση του.",
+      "kit.askMus": "Να φτιαχτεί το πακέτο κυκλοφορίας για το «{t}»; Τέσσερα σχέδια (εξώφυλλο καταστημάτων 3000 × 3000, ανάρτηση Instagram, story, banner για το site) σε νέο φάκελο.",
+      "kit.cover": "Εξώφυλλο καταστημάτων 3000 × 3000",
       "kit.post": "Ανάρτηση Instagram", "kit.story": "Story", "kit.banner": "Banner για το site", "kit.bookmark": "Σελιδοδείκτης", "kit.poster": "Αφίσα A3"
     }
   };
@@ -185,13 +208,13 @@
   function make(rk) {
     var s = norm(rk);
     if (!s || document.querySelector("dialog[open]")) return;
-    AT.confirm(t("kit.ask", { t: s.title }), t("kit.go"), function () {
+    AT.confirm(t(s.music ? "kit.askMus" : "kit.ask", { t: s.title }), t("kit.go"), function () {
       var path = typeof rk.img === "string" ? rk.img : "";
       coverAsset(path).then(function (img) {
         return edgeColor(img).then(function (bg) { return { img: img, bg: bg }; });
       }).then(function (r) {
         var now = AT.now(), names = {};
-        FORMATS.forEach(function (f) { names[f.id] = t("kit." + f.id); });
+        (s.music ? MUSIC_FORMATS : FORMATS).forEach(function (f) { names[f.id] = t("kit." + f.id); });
         var docs = build(Object.assign({}, rk, { bg: r.bg || rk.bg }), r.img, now, names);
         if (!docs.length) return;
         var fid = AT.folders && AT.folders.add ? AT.folders.add(s.title.slice(0, 60)) : "";

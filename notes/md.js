@@ -15,6 +15,10 @@
 //      heading, list, task, link, code) on a textarea selection.
 //   4. Wiki-link resolution across notebooks (index + resolve).
 //   5. Templates: fillTemplate, ymd, hm.
+//   6. Voice notes (NOTES-VOICE): with ctx.voice(line) → { name, ms }
+//      | null (notes/voice-core.js voiceLine), a line it accepts is a
+//      block of its own, <div class="md-voice" data-voice data-ms>
+//      (escaped values, no content) that the app fills with a player.
 // Storage never changes: pages stay plain text (Markdown source).
 // ============================================================
 (function (root) {
@@ -223,9 +227,12 @@
     return splitRow(a).length === splitRow(b).length;
   }
 
-  function startsBlock(L, i) {
+  function voiceOf(ctx, s) {
+    return ctx && typeof ctx.voice === "function" ? ctx.voice(s) : null;
+  }
+  function startsBlock(L, i, ctx) {
     var s = L[i].s;
-    return RE_FENCE.test(s) || RE_HEAD.test(s) || RE_HR.test(s) || RE_QUOTE.test(s) ||
+    return !!voiceOf(ctx, s) || RE_FENCE.test(s) || RE_HEAD.test(s) || RE_HR.test(s) || RE_QUOTE.test(s) ||
            RE_ITEM.test(s) || isTableStart(L, i);
   }
 
@@ -262,10 +269,15 @@
       }
       if (RE_ITEM.test(s)) { var lr = list(L, i, ctx, depth); out += lr.html; i = lr.end; continue; }
       if (isTableStart(L, i)) { var tr = table(L, i, ctx, depth); out += tr.html; i = tr.end; continue; }
+      var vo = depth === 0 ? voiceOf(ctx, s) : null;   // top-level lines only, as voice-core listIn
+      if (vo && vo.name) {
+        out += '<div class="md-voice" data-voice="' + esc(vo.name) + '" data-ms="' + (Math.max(0, Math.floor(+vo.ms || 0))) + '"></div>\n';
+        i++; continue;
+      }
       // paragraph
       var para = [L[i].s.replace(/^\s+/, "")];
       i++;
-      while (i < L.length && !blank(L[i].s) && !startsBlock(L, i)) { para.push(L[i].s.replace(/^\s+/, "")); i++; }
+      while (i < L.length && !blank(L[i].s) && !startsBlock(L, i, ctx)) { para.push(L[i].s.replace(/^\s+/, "")); i++; }
       out += "<p>" + inline(para.join("\n").replace(/[ \t]+$/, ""), ctx, depth) + "</p>\n";
     }
     return out;
@@ -328,7 +340,7 @@
       }
       // continuation of the last item: indented, or a lazy line that starts nothing
       var last = itemHost();
-      if (last && last.items.length && (/^[ \t]{2,}/.test(s) || !startsBlock(L, i))) {
+      if (last && last.items.length && (/^[ \t]{2,}/.test(s) || !startsBlock(L, i, ctx))) {
         last.items[last.items.length - 1].lines.push(s.replace(/^\s+/, ""));
         i++; continue;
       }

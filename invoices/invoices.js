@@ -59,8 +59,9 @@
 
   var STRINGS = {
     en: {
-      "app": "Invoices", "settings": "Settings", "back": "Back", "new": "New",
+      "app": "Billing", "settings": "Settings", "back": "Back", "new": "New",
       "ek.go": "New invoice",
+      "tab.quotes": "Quotes", "qt.loading": "Opening Quotes…", "qt.loadFail": "Quotes could not open. Check the connection and try again.",
       "tab.docs": "Invoices", "tab.clients": "Clients", "tab.dash": "Dashboard", "tab.bills": "Received",
       "bl.search": "Search received invoices", "bl.new": "Received invoice", "bl.title": "Received invoice",
       "bl.empty": "No received invoices yet. Record the invoices your suppliers send you: you see what you owe, to whom and by when.",
@@ -107,6 +108,9 @@
       "range.thisYear": "This year", "range.lastYear": "Last year", "range.custom": "Custom",
       "dash.inv": "Invoiced", "dash.col": "Collected", "dash.out": "Outstanding", "dash.over": "Overdue",
       "dash.sub": "{n} documents · net {net} · VAT {vat} · withheld {wht}. Outstanding and overdue count every period.",
+      "dash.quotes": "Quotes", "dash.qSent": "Sent", "dash.qAcc": "Accepted", "dash.qInv": "Invoiced", "dash.qPaid": "Paid",
+      "dash.qRate": "{p}% of the quotes sent were accepted.", "dash.qToInv": "Accepted, not invoiced", "dash.qUnpaid": "Invoiced, not paid",
+      "dash.qNone": "No quotes sent in this period.", "dash.qMonth": "Month",
       "dash.months": "Per month", "dash.top": "Top clients", "dash.vat": "VAT per rate",
       "dash.vatHint": "For reference when you prepare your VAT return; your accountant has the final word.",
       "dash.rate": "Rate", "dash.base": "Net", "dash.vatAmt": "VAT", "dash.other": "Recorded",
@@ -116,7 +120,7 @@
       "ed.subNew": "Not saved yet", "ed.subDraft": "Saved as a draft", "ed.subNext": "Will be {n} when issued",
       "ed.subRecord": "Issued elsewhere: tracked here only",
       "ed.kind": "Kind", "ed.series": "Numbering", "ed.client": "Client", "ed.noClient": "No client (one-off)",
-      "ed.newClient": "New client", "ed.editClient": "Edit client", "ed.date": "Date", "ed.due": "Due",
+      "ed.newClient": "New client", "ed.fromQuotes": "From the quotes' clients", "ed.editClient": "Edit client", "ed.date": "Date", "ed.due": "Due",
       "ed.dueNone": "No due date", "ed.dueNow": "On receipt", "ed.dueDays": "{n} days",
       "ed.cur": "Currency", "ed.lines": "Items", "ed.addLine": "Add item", "ed.code": "Code", "ed.desc": "Description",
       "ed.qty": "Qty", "ed.unit": "Unit", "ed.price": "Unit price", "ed.disc": "Disc. %", "ed.vat": "VAT %",
@@ -139,7 +143,7 @@
       "iss.early": "The date is before {n} ({d}) of the same series.",
       "iss.go": "Issue",
       "vw.pdf": "PDF", "vw.share": "Share PDF", "vw.email": "Email", "vw.pay": "Add payment", "vw.paid": "Mark as paid",
-      "vw.sent": "Mark as sent", "vw.unsent": "Not sent", "vw.dup": "Duplicate", "vw.credit": "Credit note",
+      "vw.sent": "Mark as sent", "vw.unsent": "Not sent", "vw.dup": "Duplicate", "vw.sendApp": "Send the lines to an app…", "vw.credit": "Credit note",
       "ed.prof": "Business", "set.profs": "Business profiles", "set.addBiz": "Add a business profile", "set.newBiz": "New business",
       "set.profsHint": "Another business? Each profile has its own details, logo, bank lines, terms and footer; pick it on each document. Give it its own numbering series below (Profile) to keep separate numbers.",
       "set.delBiz": "Delete this profile", "set.main": "Main", "set.serProf": "Profile", "set.serAny": "Any", "set.editing": "Editing", "toast.bizDel": "Profile deleted",
@@ -151,7 +155,7 @@
       "toast.rcDone": "VAT set to 0 % with the reverse charge note",
       "c.statement": "Statement PDF", "toast.noOpen": "Nothing is owed by this client",
       "vw.remind": "Payment reminder", "rem.text": "Pick a tone. The message opens as a draft you can still edit.", "rem.soft": "Polite", "rem.firm": "Firm",
-      "vw.convert": "Make invoice", "vw.stockOut": "Take out of stock", "vw.stockRet": "Back into stock", "vw.void": "Cancel", "vw.edit": "Edit", "vw.delete": "Delete",
+      "vw.fromQuote": "From quote {n}", "vw.convert": "Make invoice", "vw.stockOut": "Take out of stock", "vw.stockRet": "Back into stock", "vw.void": "Cancel", "vw.edit": "Edit", "vw.delete": "Delete",
       "vw.sentOn": "Sent {d}", "vw.converted": "Turned into {n}", "vw.from": "From", "vw.to": "Bill to",
       "vw.dates": "Date {d} · due {u}", "vw.date": "Date {d}", "vw.corrects": "Corrects {n}", "vw.credits": "Credit notes",
       "vw.pays": "Payments", "vw.noPays": "No payments yet.", "vw.mark": "ΜΑΡΚ", "vw.markEdit": "Edit ΜΑΡΚ",
@@ -170,6 +174,7 @@
       "tpl.repm": "Every month", "tpl.repq": "Every 3 months", "tpl.repy": "Every year", "tpl.start": "First draft on",
       "tpl.repHint": "On that day a draft is made for you to check and issue. Nothing is issued by itself.",
       "tpl.pick": "Templates", "tpl.next": "next {d}", "tpl.del": "Delete template",
+      "set.quotes": "Quotes", "set.quotesHint": "Your business details above are printed on your quotes too.", "set.qPay": "Payment terms texts", "set.qTpl": "Quote templates",
       "set.title": "Settings", "set.biz": "Your business", "set.bizHint": "Printed on every invoice you issue from now on. Issued invoices keep the details they were issued with.",
       "set.name": "Name or company", "set.trade": "Trade name", "set.job": "Profession / business", "set.addr": "Address",
       "set.country": "Country", "set.afm": "Tax number (ΑΦΜ / VAT)", "set.doy": "Tax office (ΔΟΥ)", "set.phone": "Phone",
@@ -219,8 +224,9 @@
       "pdf.draft": "DRAFT", "live.saved": "Saved", "mail.payOnline": "Pay online"
     },
     el: {
-      "app": "Τιμολόγια", "settings": "Ρυθμίσεις", "back": "Πίσω", "new": "Νέο",
+      "app": "Τιμολόγηση", "settings": "Ρυθμίσεις", "back": "Πίσω", "new": "Νέο",
       "ek.go": "Νέο τιμολόγιο",
+      "tab.quotes": "Προσφορές", "qt.loading": "Ανοίγουν οι Προσφορές…", "qt.loadFail": "Οι Προσφορές δεν άνοιξαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "tab.docs": "Παραστατικά", "tab.clients": "Πελάτες", "tab.dash": "Επισκόπηση", "tab.bills": "Λαμβανόμενα",
       "bl.search": "Αναζήτηση λαμβανόμενων", "bl.new": "Λαμβανόμενο", "bl.title": "Λαμβανόμενο τιμολόγιο",
       "bl.empty": "Κανένα λαμβανόμενο τιμολόγιο ακόμη. Κατάγραψε τα τιμολόγια που σου στέλνουν οι προμηθευτές: βλέπεις τι χρωστάς, σε ποιον και ως πότε.",
@@ -267,6 +273,9 @@
       "range.thisYear": "Φέτος", "range.lastYear": "Πέρσι", "range.custom": "Άλλη περίοδος",
       "dash.inv": "Τιμολογήθηκαν", "dash.col": "Εισπράχθηκαν", "dash.out": "Ανεξόφλητα", "dash.over": "Ληξιπρόθεσμα",
       "dash.sub": "{n} παραστατικά · καθαρά {net} · ΦΠΑ {vat} · παρακράτηση {wht}. Τα ανεξόφλητα και τα ληξιπρόθεσμα μετρούν από όλες τις περιόδους.",
+      "dash.quotes": "Προσφορές", "dash.qSent": "Σταλμένες", "dash.qAcc": "Αποδεκτές", "dash.qInv": "Τιμολογημένες", "dash.qPaid": "Πληρωμένες",
+      "dash.qRate": "Έγινε αποδεκτό το {p}% των προσφορών που στάλθηκαν.", "dash.qToInv": "Αποδεκτές, χωρίς τιμολόγιο", "dash.qUnpaid": "Τιμολογημένες, απλήρωτες",
+      "dash.qNone": "Καμία σταλμένη προσφορά σε αυτή την περίοδο.", "dash.qMonth": "Μήνας",
       "dash.months": "Ανά μήνα", "dash.top": "Κορυφαίοι πελάτες", "dash.vat": "ΦΠΑ ανά συντελεστή",
       "dash.vatHint": "Ενδεικτικά, για τη δήλωση ΦΠΑ· τον τελευταίο λόγο τον έχει ο λογιστής σου.",
       "dash.rate": "Συντελεστής", "dash.base": "Καθαρή αξία", "dash.vatAmt": "ΦΠΑ", "dash.other": "Καταχωρισμένα",
@@ -276,7 +285,7 @@
       "ed.subNew": "Δεν έχει αποθηκευτεί", "ed.subDraft": "Αποθηκευμένο ως πρόχειρο", "ed.subNext": "Με την έκδοση θα πάρει τον αριθμό {n}",
       "ed.subRecord": "Εκδόθηκε αλλού· εδώ μόνο παρακολουθείται",
       "ed.kind": "Είδος", "ed.series": "Σειρά αρίθμησης", "ed.client": "Πελάτης", "ed.noClient": "Χωρίς πελάτη (λιανική)",
-      "ed.newClient": "Νέος πελάτης", "ed.editClient": "Επεξεργασία πελάτη", "ed.date": "Ημερομηνία", "ed.due": "Λήξη",
+      "ed.newClient": "Νέος πελάτης", "ed.fromQuotes": "Από τους πελάτες των προσφορών", "ed.editClient": "Επεξεργασία πελάτη", "ed.date": "Ημερομηνία", "ed.due": "Λήξη",
       "ed.dueNone": "Χωρίς λήξη", "ed.dueNow": "Με την παραλαβή", "ed.dueDays": "{n} ημέρες",
       "ed.cur": "Νόμισμα", "ed.lines": "Είδη και υπηρεσίες", "ed.addLine": "Προσθήκη γραμμής", "ed.code": "Κωδικός", "ed.desc": "Περιγραφή",
       "ed.qty": "Ποσ.", "ed.unit": "Μον.", "ed.price": "Τιμή μονάδας", "ed.disc": "Έκπτ. %", "ed.vat": "ΦΠΑ %",
@@ -299,7 +308,7 @@
       "iss.early": "Η ημερομηνία είναι πριν από το {n} ({d}) της ίδιας σειράς.",
       "iss.go": "Έκδοση",
       "vw.pdf": "PDF", "vw.share": "Κοινοποίηση PDF", "vw.email": "Email", "vw.pay": "Νέα πληρωμή", "vw.paid": "Εξόφληση",
-      "vw.sent": "Σημείωση ως σταλμένο", "vw.unsent": "Δεν στάλθηκε", "vw.dup": "Αντίγραφο", "vw.credit": "Πιστωτικό",
+      "vw.sent": "Σημείωση ως σταλμένο", "vw.unsent": "Δεν στάλθηκε", "vw.dup": "Αντίγραφο", "vw.sendApp": "Στείλε τις γραμμές σε εφαρμογή…", "vw.credit": "Πιστωτικό",
       "ed.prof": "Επιχείρηση", "set.profs": "Επιχειρηματικά προφίλ", "set.addBiz": "Προσθήκη προφίλ επιχείρησης", "set.newBiz": "Νέα επιχείρηση",
       "set.profsHint": "Κι άλλη επιχείρηση; Κάθε προφίλ έχει δικά του στοιχεία, λογότυπο, τράπεζες, όρους και υποσέλιδο· το διαλέγεις σε κάθε παραστατικό. Δώσε του δική του σειρά αρίθμησης πιο κάτω (Προφίλ) για χωριστή αρίθμηση.",
       "set.delBiz": "Διαγραφή προφίλ", "set.main": "Κύριο", "set.serProf": "Προφίλ", "set.serAny": "Όλα", "set.editing": "Επεξεργασία", "toast.bizDel": "Το προφίλ διαγράφηκε",
@@ -311,7 +320,7 @@
       "toast.rcDone": "ΦΠΑ 0 % με τη σημείωση αντίστροφης επιβάρυνσης",
       "c.statement": "Καρτέλα σε PDF", "toast.noOpen": "Ο πελάτης δεν οφείλει τίποτα",
       "vw.remind": "Υπενθύμιση πληρωμής", "rem.text": "Διάλεξε ύφος. Το μήνυμα ανοίγει ως πρόχειρο που μπορείς ακόμη να αλλάξεις.", "rem.soft": "Ευγενικό", "rem.firm": "Αυστηρό",
-      "vw.convert": "Μετατροπή σε τιμολόγιο", "vw.stockOut": "Έξοδος από απόθεμα", "vw.stockRet": "Επιστροφή στο απόθεμα", "vw.void": "Ακύρωση", "vw.edit": "Επεξεργασία", "vw.delete": "Διαγραφή",
+      "vw.fromQuote": "Από την προσφορά {n}", "vw.convert": "Μετατροπή σε τιμολόγιο", "vw.stockOut": "Έξοδος από απόθεμα", "vw.stockRet": "Επιστροφή στο απόθεμα", "vw.void": "Ακύρωση", "vw.edit": "Επεξεργασία", "vw.delete": "Διαγραφή",
       "vw.sentOn": "Στάλθηκε {d}", "vw.converted": "Έγινε {n}", "vw.from": "Εκδότης", "vw.to": "Πελάτης",
       "vw.dates": "Ημερομηνία {d} · λήξη {u}", "vw.date": "Ημερομηνία {d}", "vw.corrects": "Διορθώνει το {n}", "vw.credits": "Πιστωτικά",
       "vw.pays": "Πληρωμές", "vw.noPays": "Καμία πληρωμή ακόμη.", "vw.mark": "ΜΑΡΚ", "vw.markEdit": "Αλλαγή ΜΑΡΚ",
@@ -330,6 +339,7 @@
       "tpl.repm": "Κάθε μήνα", "tpl.repq": "Κάθε τρίμηνο", "tpl.repy": "Κάθε χρόνο", "tpl.start": "Πρώτο πρόχειρο στις",
       "tpl.repHint": "Εκείνη τη μέρα φτιάχνεται ένα πρόχειρο για να το ελέγξεις και να το εκδώσεις. Τίποτα δεν εκδίδεται μόνο του.",
       "tpl.pick": "Πρότυπα", "tpl.next": "επόμενο {d}", "tpl.del": "Διαγραφή προτύπου",
+      "set.quotes": "Προσφορές", "set.quotesHint": "Τα στοιχεία της επιχείρησής σου παραπάνω τυπώνονται και στις προσφορές.", "set.qPay": "Κείμενα όρων πληρωμής", "set.qTpl": "Πρότυπα προσφορών",
       "set.title": "Ρυθμίσεις", "set.biz": "Η επιχείρησή σου", "set.bizHint": "Τυπώνονται σε κάθε τιμολόγιο που εκδίδεις από εδώ και πέρα. Όσα έχουν εκδοθεί κρατούν τα στοιχεία της έκδοσής τους.",
       "set.name": "Ονοματεπώνυμο ή επωνυμία", "set.trade": "Διακριτικός τίτλος", "set.job": "Επάγγελμα / δραστηριότητα", "set.addr": "Διεύθυνση",
       "set.country": "Χώρα", "set.afm": "ΑΦΜ", "set.doy": "ΔΟΥ", "set.phone": "Τηλέφωνο",
@@ -468,6 +478,7 @@
     plus:  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
     doc:   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8z"/><path d="M14 2.5V8h5.5M8.5 13h7M8.5 17h5"/></svg>',
     users: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg>',
+    quote: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8z"/><path d="M14 2.5V8h5.5"/><path d="m8.5 14.5 2 2 4-4.5"/></svg>',
     inbox: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></svg>',
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
     x:     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
@@ -508,7 +519,8 @@
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
   }
 
-  var TABS = ["docs", "bills", "clients", "dash"];
+  // "quotes": the Quote app folded in (app merge 7, quote/view.js).
+  var TABS = ["quotes", "docs", "bills", "clients", "dash"];
   var RANGES = ["thisMonth", "lastMonth", "thisQuarter", "thisYear", "lastYear", "custom"];
   function loadPrefs() {
     var v = null;
@@ -567,9 +579,24 @@
   function addPayment(docId, amt, date, how, note) {
     var p = { id: C.newId(), doc: docId, date: date, amt: amt, how: how, note: note || "", m: stamp(0) };
     if (autoBudget()) p.ab = 1;   // BR-B3: Budget turns it into income by itself
+    var was = C.status(data, findDoc(docId));
     data.pays.push(p);
     saveNow();
+    paidEvent(docId, was, p.id);
     return p;
+  }
+  // BR-EV-2: a payment made HERE that settles a document is an
+  // Automations signal (invoices.paid, key invoices:<doc>:paid:<payment>,
+  // text "number · client · total"). A payment pulled from another
+  // device is not: that device made it.
+  function paidEvent(docId, was, payId) {
+    var d = findDoc(docId);
+    if (!d || was === "paid" || C.status(data, d) !== "paid") return;
+    var ev = null;
+    try { ev = window.parent && window.parent !== window ? window.parent.orosEvents : null; } catch (e) { ev = null; }
+    if (!ev || typeof ev.emit !== "function") return;
+    var said = [d.num || kindName(d.kind), C.partyName(data, d), money(C.totals(d).pay, d.cur)].filter(Boolean).join(" \u00b7 ");
+    setTimeout(function () { try { ev.emit("invoices.paid", "invoices:" + d.id + ":paid:" + payId, said); } catch (e) {} }, 0);
   }
   function deletePayment(p) {
     replaceIn(data.pays, tombOf(p));
@@ -652,6 +679,12 @@
     ["docs", "bills", "clients", "dash", "edit", "view", "set"].forEach(function (k) {
       $("v-" + k).hidden = k !== v;
     });
+    var qt = v === "quotes";
+    $("main").hidden = qt;
+    $("v-quotes").hidden = !qt;
+    $("new-btn").hidden = qt;
+    if (qt) showQuotes(null);
+    else if (window.QuoteView) window.QuoteView.flush();
     TABS.forEach(function (k) {
       var b = $("tab-" + k), on = k === v || (k === "docs" && (v === "edit" || v === "view"));
       b.classList.toggle("on", on);
@@ -850,6 +883,56 @@
     }
     return [key(y, 0, 1), key(y, 11, 31)];
   }
+  // K4 (app merge 7): the quotes' way to money, worked out each time
+  // from both slices (OrosQuoteCore.pipeline) and never stored.
+  function quoteInvoiced(qid) {
+    var docs = liveList("docs").filter(function (d) { return d.src === "quote:" + qid && d.st === "issued"; });
+    if (!docs.length) return null;
+    var open = 0;
+    docs.forEach(function (d) { if (C.owes(d)) open += Math.max(0, C.balance(data, d)); });
+    return { paid: open <= 0, open: open };
+  }
+  function renderQuotePipeline(k, cur) {
+    var box = $("d-quotes"), Q = window.OrosQuoteCore;
+    if (!box) return;
+    box.textContent = "";
+    var raw = null;
+    try { raw = JSON.parse(localStorage.getItem("oros-quote-data") || "null"); } catch (e) { raw = null; }
+    if (!Q || typeof Q.pipeline !== "function" || !raw) { box.hidden = true; return; }
+    box.hidden = false;
+    var p = Q.pipeline(raw, k[0], k[1], cur, quoteInvoiced);
+    box.appendChild(el("h3", "sec-h", t("dash.quotes")));
+    if (!p.sent) { box.appendChild(el("p", "hint", t("dash.qNone"))); return; }
+    var tiles = el("div", "tiles");
+    [["qSent", String(p.sent), ""], ["qAcc", String(p.accepted), ""], ["qToInv", money(p.toInvoice, cur), ""],
+     ["qUnpaid", money(p.unpaid, cur), p.unpaid ? "bad" : ""]].forEach(function (x) {
+      var tl = el("div", "tile " + x[2]);
+      tl.appendChild(el("span", "tile-l", t("dash." + x[0])));
+      tl.appendChild(el("span", "tile-v", x[1]));
+      tiles.appendChild(tl);
+    });
+    box.appendChild(tiles);
+    box.appendChild(el("p", "hint", t("dash.qRate", { p: Math.round(p.rate * 100) })));
+    var tb = el("table", "tbl");
+    var hr = el("tr");
+    ["qMonth", "qSent", "qAcc", "qInv", "qPaid"].forEach(function (h, i) { hr.appendChild(el("th", i ? "num" : "", t("dash." + h))); });
+    var th = el("thead");
+    th.appendChild(hr);
+    tb.appendChild(th);
+    var body = el("tbody");
+    p.months.forEach(function (m) {
+      if (!m.sent) return;
+      var tr = el("tr"), lbl = m.ym;
+      try { lbl = C.keyDate(m.ym + "-01").toLocaleDateString(loc(), { month: "short", year: "numeric" }); } catch (e) { lbl = m.ym; }
+      tr.appendChild(el("td", "", lbl));
+      [m.sent, m.accepted, m.invoiced, m.paid].forEach(function (v) { tr.appendChild(el("td", "num", String(v))); });
+      body.appendChild(tr);
+    });
+    tb.appendChild(body);
+    var wrap = el("div", "grid-wrap");
+    wrap.appendChild(tb);
+    box.appendChild(wrap);
+  }
   function renderDash() {
     fillSelect($("d-range"), RANGES.map(function (r) { return [r, t("range." + r)]; }), prefs.dash.range);
     var curs = C.currencies(data);
@@ -894,6 +977,7 @@
       col.appendChild(el("span", "bar-l", lbl));
       bars.appendChild(col);
     });
+    renderQuotePipeline(k, cur);
     var top = $("top");
     top.textContent = "";
     if (!s.top.length) top.appendChild(el("li", "hint", t("dash.noTop")));
@@ -1099,6 +1183,7 @@
     }
     // Client
     var cSel = select(clientOpts(d.kind), d.cli);
+    addQuoteClients(cSel);
     edRefs.cli = cSel;
     var cw = el("div", "cli-pick");
     cw.appendChild(cSel);
@@ -1107,17 +1192,17 @@
     cNew.innerHTML = UI.plus;
     cNew.title = t("ed.newClient");
     cNew.setAttribute("aria-label", t("ed.newClient"));
-    cNew.addEventListener("click", function () {
-      clientDialog(null, function (c) {
-        d.cli = c.id;
-        d.c = C.partyOfClient(c);
-        fillSelect(cSel, clientOpts(d.kind), d.cli);
-        cEdit.hidden = false;
-        rebuildRefs();
-        paintRc();
-        touch();
-      });
-    });
+    function newClientChosen(c) {
+      d.cli = c.id;
+      d.c = C.partyOfClient(c);
+      fillSelect(cSel, clientOpts(d.kind), d.cli);
+      addQuoteClients(cSel);
+      cEdit.hidden = false;
+      rebuildRefs();
+      paintRc();
+      touch();
+    }
+    cNew.addEventListener("click", function () { clientDialog(null, newClientChosen); });
     var cEdit = el("button", "icon-btn", null);
     cEdit.type = "button";
     cEdit.innerHTML = UI.pen;
@@ -1129,6 +1214,7 @@
       clientDialog(d.cli, function (c) {
         d.c = C.partyOfClient(c);
         fillSelect(cSel, clientOpts(d.kind), d.cli);
+        addQuoteClients(cSel);
         paintRc();
         touch();
       });
@@ -1136,6 +1222,13 @@
     cw.appendChild(cEdit);
     cw.appendChild(cNew);
     cSel.addEventListener("change", function () {
+      if (cSel.value.indexOf("q:") === 0) {
+        // a client of the Quotes tab: New client filled in, saved only on Save
+        var qr = quoteClientRows().filter(function (r) { return "q:" + r.key === cSel.value; })[0];
+        cSel.value = d.cli || "";
+        if (qr) clientDialog(null, newClientChosen, qr.c);
+        return;
+      }
       d.cli = cSel.value;
       var c = C.client(data, d.cli);
       d.c = c ? C.partyOfClient(c) : C.normParty({});
@@ -1657,6 +1750,46 @@
   }
 
   // ---------- 8. Viewer ----------
+  // "Send to an app" (shell send/, BR-SEND): the document's lines as a
+  // table (amounts in the currency, not cents), then net, VAT and the
+  // total; a prefill for Spreadsheet, Writer, Mail…
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function linesTable(d) {
+    var lines = (d.lines || []).slice(0, 495);
+    var code = lines.some(function (l) { return l.code; }), unit = lines.some(function (l) { return l.unit; });
+    var head = [t("ed.desc"), t("ed.qty")];
+    if (unit) head.push(t("ed.unit"));
+    head.push(t("ed.price"), t("ed.disc"), t("ed.vat"), t("tot.net"));
+    if (code) head.unshift(t("ed.code"));
+    var rows = [head], pad = head.length - 2;
+    lines.forEach(function (l) {
+      var r = [l.d || "", l.q];
+      if (unit) r.push(l.unit || "");
+      r.push(l.p / 100, l.disc || 0, l.vat || 0, C.lineNet(l) / 100);
+      if (code) r.unshift(l.code || "");
+      rows.push(r);
+    });
+    var tt = C.totals(d);
+    function foot(label, cents) {
+      var r = [label];
+      for (var i = 0; i < pad; i++) r.push("");
+      r.push(cents / 100);
+      if (code) r.unshift("");
+      rows.push(r);
+    }
+    foot(t("tot.net"), tt.net);
+    foot(t("ed.vatAmt"), tt.vat);
+    foot(t("tot.total"), tt.total);
+    return rows;
+  }
+  function sendLines(d) {
+    var api = sendApi();
+    if (!api) return;
+    api.open({ kind: "table", data: { name: (kindName(d.kind) + " " + (d.num || "")).trim(), rows: linesTable(d) } });
+  }
   function openDoc(id) {
     var d = findDoc(id);
     if (!d) { showToast(t("toast.gone")); return; }
@@ -1709,6 +1842,7 @@
     }));
     if (d.kind === "ext") acts.appendChild(btn(t("vw.edit"), "", function () { editDoc(d.id); }));
     if (d.kind !== "ext") acts.appendChild(btn(t("vw.dup"), "", function () { duplicate(d); }));
+    if (d.kind !== "ext" && (d.lines || []).length && sendApi()) acts.appendChild(btn(t("vw.sendApp"), "", function () { sendLines(d); }));
     if (d.st === "issued" && (d.kind === "inv" || d.kind === "rcpt")) acts.appendChild(btn(t("vw.credit"), "", function () { creditFor(d); }));
     if (d.st === "issued" && d.kind === "pro") acts.appendChild(btn(t("vw.convert"), "", function () { convertPro(d); }));
     var stockReq = stockShell() ? C.stockOut(d) : null;
@@ -1716,6 +1850,8 @@
       var sh = stockShell();
       if (sh) sh.__orosOpenAt("stock", { out: stockReq });
     }));
+    var fq = quoteOfDoc(d);
+    if (fq) acts.appendChild(btn(t("vw.fromQuote", { n: fq.num }), "", function () { openQuotes({ tab: "quotes", quote: fq.id }); }));
     if (MD) MD.actions(d, acts);
     if (d.st === "issued" && d.kind !== "ext") acts.appendChild(btn(t("vw.void"), "danger", function () { voidDoc(d); }));
     if (d.kind === "ext") acts.appendChild(btn(t("vw.delete"), "danger", function () { deleteRecord(d.id); }));
@@ -1802,6 +1938,8 @@
     mc.appendChild(mf);
     if (d.kind !== "ext") mc.appendChild(fileField(d, true));
     body.appendChild(mc);
+    // Files › Documents linked to this invoice (DOCS-1 W4, read-only)
+    if (window.OrosDocsLinks) window.OrosDocsLinks.attach(body, "invoices", function (r) { return r && r.invoice === d.id; });
   }
   // The document as a sheet of paper (same content as the PDF).
   function paperOf(d) {
@@ -2096,8 +2234,10 @@
         var x = JSON.parse(JSON.stringify(p));
         x.amt = amt; x.date = dt.value; x.how = how.value; x.note = C.cleanText(note.value, 120);
         x.m = stamp(x.m);
+        var was = C.status(data, d);
         replaceIn(data.pays, x);
         saveNow();
+        paidEvent(d.id, was, x.id);
       } else addPayment(d.id, amt, dt.value, how.value, C.cleanText(note.value, 120));
       dlg.close();
       if (!p) showToast(t("toast.payAdded", { a: money(amt, d.cur) }));
@@ -2582,6 +2722,52 @@
     rows.sort(function (a, b) { return a.title.localeCompare(b.title); });
     pickDialog(t("cli.fromContacts"), rows, importClients, true);
   }
+  // Billing (app merge 7, K2): the two client lists stay apart; the
+  // invoice editor's client list also offers the Quotes tab's clients
+  // that Billing lacks ("q:<id>" options in their own group).
+  function quoteClientRows() {
+    var o = readOther("oros-quote-data", "clients");
+    if (!o) return [];
+    var gone = o.deleted && typeof o.deleted === "object" ? o.deleted : {};
+    var rows = [];
+    o.clients.forEach(function (c) {
+      if (!c || typeof c !== "object" || typeof c.id !== "string" || gone[c.id] || c.del) return;
+      var name = typeof c.name === "string" ? c.name.trim() : "";
+      if (!name) return;
+      var party = { name: name, addr: typeof c.address === "string" ? c.address : "",
+                    afm: typeof c.taxId === "string" ? c.taxId : "",
+                    email: typeof c.email === "string" ? c.email : "", phone: typeof c.phone === "string" ? c.phone : "" };
+      if (haveClient(name, party.afm)) return;
+      rows.push({ key: c.id, title: name, sub: [party.afm, party.email].filter(Boolean).join(" · "), c: party });
+    });
+    rows.sort(function (a, b) { return a.title.localeCompare(b.title); });
+    return rows.slice(0, 200);
+  }
+  function addQuoteClients(sel) {
+    var rows = quoteClientRows();
+    if (!rows.length) return;
+    var g = el("optgroup");
+    g.label = t("ed.fromQuotes");
+    rows.forEach(function (r) {
+      var op = el("option", "", r.title + (r.c.afm ? " · " + r.c.afm : ""));
+      op.value = "q:" + r.key;
+      g.appendChild(op);
+    });
+    sel.appendChild(g);
+  }
+  // K3: the business details Billing prints, for the quotes' PDF
+  // (the main profile; read each time, never copied into the quote slice).
+  function profileForQuotes() {
+    var p = data && data.prof ? data.prof : {};
+    return { name: p.trade || p.name || "", addr: p.addr || "", afm: p.afm || "", doy: p.doy || "",
+             email: p.email || "", phone: p.phone || "", web: p.web || "" };
+  }
+  // The Quotes tab's picker gets Billing's clients the same way.
+  function clientsForQuotes() {
+    return liveList("clients").map(function (c) {
+      return { name: c.name, email: c.email || "", phone: c.phone || "", address: c.addr || "", taxId: c.afm || "" };
+    });
+  }
   function fromQuote() {
     var o = readOther("oros-quote-data", "clients");
     if (!o) return;
@@ -2834,6 +3020,16 @@
       renderSettings();
     });
     body.appendChild(card);
+    // K3 (app merge 7): one settings page; the Quotes tab's own settings
+    // stay in the tab and are reached from here.
+    var qc = el("div", "card");
+    qc.appendChild(el("h3", "sec-h", t("set.quotes")));
+    qc.appendChild(el("p", "hint", t("set.quotesHint")));
+    var qa = el("div", "dlg-actions");
+    qa.appendChild(btn(t("set.qPay"), "", function () { openQuotes({ tab: "quotes", settings: "pay" }); }));
+    qa.appendChild(btn(t("set.qTpl"), "", function () { openQuotes({ tab: "quotes", settings: "tpl" }); }));
+    qc.appendChild(qa);
+    body.appendChild(qc);
     var addBiz = el("button", "link-btn", t("set.addBiz"));
     addBiz.type = "button";
     addBiz.addEventListener("click", function () {
@@ -4138,6 +4334,7 @@
       var tg = e.target, tag = tg && tg.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
       if (document.querySelector("dialog[open]")) return;
+      if (view === "quotes") return;                 // the Quotes tab has its own keys
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && (e.key === "z" || e.key === "Z")) {
         if (undoFn) { e.preventDefault(); runUndo(); }
         return;
@@ -4215,7 +4412,7 @@
       n.textContent = t(n.getAttribute("data-i18n"));
     });
     document.title = t("app") + " · orOS";
-    var icons = { docs: UI.doc, bills: UI.inbox, clients: UI.users, dash: UI.chart };
+    var icons = { quotes: UI.quote, docs: UI.doc, bills: UI.inbox, clients: UI.users, dash: UI.chart };
     TABS.forEach(function (k) {
       var b = $("tab-" + k);
       b.innerHTML = icons[k] + "<span></span>";
@@ -4351,16 +4548,22 @@
     // EMPTY-1: the friendly empty screen (../emptykit.js)
     if (window.orosEmpty) window.orosEmpty.dress($("docs-empty"), { app: "invoices", action: { label: t("ek.go"), run: function () { $("new-btn").click(); } } });
     registerSync();
+    registerQuoteSlice();
     inheritPalette();
     watchPalette();
     runRecurring();
     showView(tab);
     takeShelter();
+    takeQuoteAnswer();
   }
 
   boot();
 
   // Deep links (shell __orosOpenAt / __orosTakeTarget):
+  //   { tab: "quotes", quote? | quoteNew? | openFile? | acc? } the
+  //                           Quotes tab (app merge 7: the old id "quote"
+  //                           is an alias with { tab: "quotes" }), and on
+  //                           to QuoteView.openAt (quote/view.js)
   //   { newDoc: "inv"|"rcpt", notes? } a blank invoice / receipt (single app)
   //   { new: {...} }          BR-INV-NEW prefill (CRM Lite, Quote, Timesheet,
   //                           Assistant): a new invoice draft, saved only
@@ -4378,6 +4581,7 @@
   //                           orOS Bridge watches, read like Import PDF
   //                           (its preview; nothing is saved before Import)
   function openTarget(tg) {
+    if (tg && typeof tg === "object" && tg.tab === "quotes") { openQuotes(tg); return; }
     if (tg && tg.openFile) { if (recFile) recFile.openTarget(tg.openFile); return; }
     if (tg && tg.importPdf && typeof tg.importPdf.token === "string") {
       var pf = null;
@@ -4439,6 +4643,130 @@
       setTab("docs");
     }
   }
+  // ---------- Quotes tab (app merge 7) ----------
+  // The Quote app folded into Billing (APP-ALIAS, old id "quote" →
+  // { tab: "quotes" }). Its code stays in quote/: core.js and
+  // accept-core.js load with this page (the slice), the view
+  // (view.js, view.css, the "quote" pack and what it uses) the first
+  // time the tab opens. Its data (oros-quote-data) is untouched.
+  var QT_JS = ["../vendor/jspdf.umd.min.js", "../units/core.js", "../quote/accept-core.js", "../quote/package.js", "../quote/view.js"];
+  var qtLoad = null, qtPending = [];
+  function qtAsset(src) {
+    var v = window.orosI18n && window.orosI18n.ver;
+    return src + (v ? "?v=" + encodeURIComponent(v) : "");
+  }
+  function qtScript(src) {
+    return new Promise(function (resolve, reject) {
+      if (src.indexOf("jspdf") >= 0 && window.jspdf && window.jspdf.jsPDF) { resolve(); return; }
+      if (src.indexOf("units/core") >= 0 && window.UnitsCore) { resolve(); return; }
+      var sc = document.createElement("script");
+      sc.src = qtAsset(src);
+      sc.onload = resolve; sc.onerror = reject;
+      document.head.appendChild(sc);
+    });
+  }
+  function qtPack(app) {
+    return new Promise(function (resolve) {
+      if (window.orosI18n && typeof window.orosI18n.ensure === "function") window.orosI18n.ensure(LANG, app, resolve);
+      else resolve();
+    });
+  }
+  function loadQuotes() {
+    if (window.QuoteView) return Promise.resolve();
+    if (qtLoad) return qtLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = qtAsset("../quote/view.css");
+    document.head.appendChild(css);
+    qtLoad = qtPack("quote").then(function () {
+      return QT_JS.reduce(function (p, src) { return p.then(function () { return qtScript(src); }); }, Promise.resolve());
+    });
+    qtLoad.catch(function () { qtLoad = null; });
+    return qtLoad;
+  }
+  // K2: the link both ways is the doc's src "quote:<id>" (wave 7),
+  // worked out each time and never stored a second time.
+  function invoicesOfQuote(qid) {
+    if (typeof qid !== "string" || !qid) return [];
+    return liveList("docs").filter(function (d) { return d.src === "quote:" + qid && d.st !== "void"; })
+      .map(function (d) { return { id: d.id, num: d.st === "draft" ? "" : d.num || "" }; });
+  }
+  function quoteOfDoc(d) {
+    if (!d || typeof d.src !== "string" || d.src.indexOf("quote:") !== 0) return null;
+    var id = d.src.slice(6), o = readOther("oros-quote-data", "quotes");
+    var q = o && o.quotes.filter(function (x) { return x && x.id === id && !x.del && !(o.deleted && o.deleted[id]); })[0];
+    return q ? { id: id, num: typeof q.num === "string" && q.num ? q.num.slice(0, 40) : id } : null;
+  }
+  // An accepted quote's "Make invoice": a new invoice on this screen
+  // (BR-INV-NEW prefill, nothing saved until Save or Issue).
+  function quoteToInvoice(payload) {
+    if (document.querySelector("dialog[open]")) return;
+    openTarget({ "new": payload });
+  }
+  function showQuotes(tg) {
+    var host = $("v-quotes");
+    if (tg) qtPending.push(tg);
+    if (window.QuoteView) {
+      window.QuoteView.mount(host, { otherClients: clientsForQuotes, newInvoice: quoteToInvoice, profile: profileForQuotes,
+                                     invoicesFor: invoicesOfQuote, openInvoice: function (id) { openTarget({ invoice: id }); } });
+      var list = qtPending; qtPending = [];
+      list.forEach(function (x) { window.QuoteView.openAt(x); });
+      return;
+    }
+    var w = host.querySelector(".qt-wait");
+    if (!w) {
+      w = el("p", "qt-wait", t("qt.loading"));
+      w.setAttribute("role", "status");
+      host.appendChild(w);
+    } else w.textContent = t("qt.loading");
+    loadQuotes().then(function () {
+      var w2 = host.querySelector(".qt-wait");
+      if (w2) w2.parentNode.removeChild(w2);
+      if (view === "quotes") showQuotes(null);
+    }, function () {
+      var w3 = host.querySelector(".qt-wait");
+      if (w3) w3.textContent = t("qt.loadFail");
+    });
+  }
+  // A deep link for the Quotes tab: what it names goes to the view.
+  function openQuotes(tg) {
+    var rest = {}, k, any = false;
+    for (k in tg) if (k !== "tab" && Object.prototype.hasOwnProperty.call(tg, k)) { rest[k] = tg[k]; any = true; }
+    if (view === "edit" && ed && ed.dirty) {
+      closeEditorThen(function () { setTab("quotes"); if (any) showQuotes(rest); });
+      return;
+    }
+    if (view === "edit") { ed = null; shelter(); }
+    if (any) qtPending.push(rest);
+    setTab("quotes");
+  }
+  // A client's answer link (quote/#acc=…) comes here as #qacc=…
+  // (quote/index.html forwards it).
+  function takeQuoteAnswer() {
+    var h = "";
+    try { h = String(location.hash || ""); } catch (e) {}
+    if (!/^#qacc=/.test(h)) return;
+    try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    openQuotes({ tab: "quotes", acc: h.slice(6, 40000) });
+  }
+  // The slice "quote" (oros-quote-data), the Quote app's own,
+  // unchanged. Before the view is built the stored copy is the slice.
+  function registerQuoteSlice() {
+    var Q = window.OrosQuoteCore, api = syncApi();
+    if (!Q || !api || typeof api.registerSlice !== "function") return;
+    api.registerSlice("quote", function () {
+      var v = window.QuoteView && window.QuoteView.sliceGet();
+      if (v) return v;
+      var d = null;
+      try { d = JSON.parse(localStorage.getItem("oros-quote-data") || "null"); } catch (e) { d = null; }
+      return d && typeof d === "object" ? Q.canonState(Q.merge(d, null)) : null;
+    }, function (incoming) {
+      if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.quotes)) return;
+      if (window.QuoteView && window.QuoteView.sliceGet()) { window.QuoteView.sliceSet(incoming); return; }
+      try { localStorage.setItem("oros-quote-data", JSON.stringify(Q.canonState(incoming))); } catch (e) {}
+    }, "oros-quote-data", Q.merge);
+  }
+
   function prefillNew(raw) {
     var p = C.normPrefill(raw);
     if (!p) return;

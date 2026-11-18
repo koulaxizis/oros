@@ -1,19 +1,23 @@
 // ============================================================
-// orOS designkit — render.js (v1.1.0)
+// orOS designkit — render.js (v1.3.0)
 // Lays out every story of a document (threads, master pages, page
 // numbers, text wrap) and draws pages on a canvas: the editor view,
 // thumbnails and image exports all go through drawPage(), and the
 // PDF writer (pdf.js) reads the same layout, so screen and print
 // agree.
-// Needs orosDK.model + orosDK.text (Node: require).
+// Needs orosDK.model + orosDK.text (Node: require); orosDK.vector for
+// text on a path (LY-TP, wave V3: a text frame with ext.tp = { d, o,
+// s } holds one line of its story laid along the outline d, unit path
+// text in the frame's box; without vector.js it stays a plain frame).
 // Exposes orosDK.render (browser) or module.exports (Node).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var M, T;
-  if (typeof module !== "undefined" && module.exports) { M = require("./model.js"); T = require("./text.js"); }
+  var M, T, VEC = null;
+  if (typeof module !== "undefined" && module.exports) { M = require("./model.js"); T = require("./text.js"); VEC = require("./vector.js"); }
   else { M = root.orosDK.model; T = root.orosDK.text; }
+  function vec() { return VEC || (root.orosDK && root.orosDK.vector) || null; }
 
   // ---------- 1. Geometry ----------
   function rad(d) { return d * Math.PI / 180; }
@@ -69,6 +73,65 @@
     if (!Object.keys(it.ext).length) delete it.ext;
   }
 
+  // ---------- 1b. Text on a path (LY-TP, wave V3) ----------
+  // A text frame's path: { wk (vector.walker of the outline in the
+  // frame's box), o (shift along it, % of its length), s (-1 = the
+  // other side) } or null.
+  function pathOf(it) {
+    var v = it && it.t === "text" && it.ext && it.ext.tp, V = vec();
+    if (!V || !v || typeof v !== "object") return null;
+    var d = Array.isArray(v.d) ? v.d.join("") : v.d;
+    if (typeof d !== "string" || !d) return null;
+    var w = Math.max(0.01, it.w), h = Math.max(0.01, it.h);
+    var cmds = M.parsePath(d).map(function (c) {
+      var o = [c[0]];
+      for (var i = 1; i < c.length; i += 2) o.push(c[i] * w, c[i + 1] * h);
+      return o;
+    });
+    var wk = cmds.length ? V.walker(cmds) : null;
+    if (!wk) return null;
+    var o = typeof v.o === "number" && isFinite(v.o) ? Math.max(0, Math.min(100, v.o)) : 0;
+    return { wk: wk, o: o, s: v.s === -1 ? -1 : 1 };
+  }
+  // The laid-out line of a path frame bent onto its outline: each
+  // run gets g = [{ ch, w, x, y, rot }] (glyph baseline centres in the
+  // frame's box); glyphs past the ends of an open outline are left out.
+  function bend(lines, tp) {
+    var wk = tp.wk, L = wk.len, flip = tp.s === -1;
+    (lines || []).forEach(function (ln) {
+      // open outline: the paragraph's alignment along it, moved by o;
+      // closed: the line centred on the point o
+      var shift = tp.o / 100 * L;
+      if (wk.closed) {
+        var a = Infinity, b = -Infinity;
+        ln.runs.forEach(function (r) { if (r.t) { a = Math.min(a, r.x); b = Math.max(b, r.x + r.w); } });
+        if (a < b) shift -= (a + b) / 2;
+      }
+      ln.runs.forEach(function (r) {
+        if (!r.t) return;
+        var g = [], x = r.x, prev = "";
+        for (var i = 0; i < r.t.length; i++) {
+          var ch = r.t[i];
+          if (r.kern && prev) x += T.kernPair(r.key, prev, ch, r.size);
+          var w = T.measure(r.key, ch, r.size, r.track || 0), d = x + w / 2 + shift;
+          x += w; prev = ch;
+          if (wk.closed) d = ((d % L) + L) % L;
+          else if (d < -1e-6 || d > L + 1e-6) continue;
+          if (!ch.trim()) continue;
+          var q = wk.at(flip ? L - d : d);
+          g.push({ ch: ch, w: w, x: q[0], y: q[1], rot: flip ? q[2] + Math.PI : q[2] });
+        }
+        r.g = g;
+      });
+    });
+  }
+  function bendAll(frames, res) {
+    frames.forEach(function (f) {
+      var tp = pathOf(f);
+      if (tp && res.frames[f.id]) bend(res.frames[f.id].lines, tp);
+    });
+  }
+
   // ---------- 2. Layout of a whole document ----------
   // Result:
   //   { frames: { itemId: { lines } }          page frames
@@ -110,6 +173,8 @@
     }
 
     function geom(it, ctx, ex) {
+      var tp = pathOf(it);
+      if (tp) return { id: it.id, w: tp.wk.len, h: it.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: ctx, story: it.story, one: true };
       return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story };
     }
 
@@ -130,6 +195,7 @@
         return geom(f, { pageLabel: pi.label, pageCount: pages.length, pg: f.pg, no: pi.no }, exclFor(f, owners, pi.side, f.pg));
       });
       var res = T.layoutChain(st || { paras: [] }, g, styles);
+      bendAll(frames, res);
       Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
       if (res.overset) out.overset[sid] = true;
     });
@@ -155,6 +221,7 @@
           return geom(f, { pageLabel: info[p.id].label, pageCount: pages.length, pg: p.id, no: info[p.id].no, sec: secOf[p.id] }, exclFor(f, [p.ms, p.id], side, p.id));
         });
         var res = T.layoutChain(st || { paras: [] }, g, styles);
+        bendAll(frames, res);
         Object.keys(res.frames).forEach(function (fid) { res0[fid] = res.frames[fid]; });
         if (res.overset) out.overset[sid] = true;
       });
@@ -271,9 +338,12 @@
     Object.keys(per).forEach(function (sid) {
       var frames = per[sid].sort(function (a, b) { return a.seq - b.seq || M.cmpStr(a.id, b.id); });
       var g = frames.map(function (f) {
-        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: { pageLabel: master.pre, pageCount: master.pre + "#" } };
+        var c = { pageLabel: master.pre, pageCount: master.pre + "#" }, tp = pathOf(f);
+        if (tp) return { id: f.id, w: tp.wk.len, h: f.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: c, one: true };
+        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c };
       });
       var res = T.layoutChain(M.story(doc, sid) || { paras: [] }, g, styles);
+      bendAll(frames, res);
       Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
       if (res.overset) out.overset[sid] = true;
     });
@@ -354,6 +424,15 @@
         if (!r.t) return;
         ctx.font = r.size + "px " + T.cssStack(r.key);
         ctx.fillStyle = rgba(doc, r.color) || "#000";
+        if (r.g) {                                  // on a path (LY-TP)
+          r.g.forEach(function (gl) {
+            ctx.save();
+            ctx.translate(gl.x, gl.y); ctx.rotate(gl.rot);
+            ctx.fillText(gl.ch, -gl.w / 2, 0);
+            ctx.restore();
+          });
+          return;
+        }
         if (r.track || r.kern) {
           // letter by letter: tracking and pair kerning (LY-KERN) as layout measured them
           var x = r.x, prev = "";
@@ -448,8 +527,12 @@
         drawItem(ctx, doc, it, { lines: function (id) { var f = mframes[id]; return f && f.lines; }, getImage: opts.getImage, preview: true });
       });
     }
+    // opts.skipText(item) true: the frame is drawn without its text
+    // (a fixed-layout EPUB puts that text over the picture as text)
+    var skip = typeof opts.skipText === "function" ? opts.skipText : null;
     M.itemsOn(doc, page.id).forEach(function (it) {
-      drawItem(ctx, doc, it, { lines: function (id) { var f = L.frames[id]; return f && f.lines; }, getImage: opts.getImage, preview: opts.preview, missing: opts.missing });
+      var bare = skip && it.t === "text" && skip(it);
+      drawItem(ctx, doc, it, { lines: function (id) { var f = !bare && L.frames[id]; return f && f.lines; }, getImage: opts.getImage, preview: opts.preview, missing: opts.missing });
     });
   }
 
@@ -473,13 +556,13 @@
     ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.setTransform(scale, 0, 0, scale, b * scale, b * scale);
     if (!opts.bleed) { ctx.beginPath(); ctx.rect(0, 0, s.w, s.h); ctx.clip(); }
-    drawPage(ctx, doc, page, L, { getImage: opts.getImage, preview: true });
+    drawPage(ctx, doc, page, L, { getImage: opts.getImage, preview: true, skipText: opts.skipText });
     return cv;
   }
 
   var api = {
     corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, effectivePpi: effectivePpi, uniform: uniform,
-    computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
+    pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
     drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

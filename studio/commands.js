@@ -82,7 +82,7 @@
     "deltrack: delete the picked tracks and their clips (needs tracks or what)",
     "project: bpm (" + S.MIN_BPM + "-" + S.MAX_BPM + ", MIDI clips keep their bars and beats, audio stays in time), sig (beats in a bar, 2-7), vol (the master, dB), loop on|off, bars (the loop, e.g. \"5-8\" = bars 5 to 8)",
     "rename: the project's name becomes `title`"
-  ].join("\n");
+  ].join("\n") + "\nA project that is a part of an audiobook (opening, chapter or closing credits) is named \"<book> · <part>\" and its outline carries `book` (the book, the part's place, the other parts, the requirements ACX or Storytel, whether it is normalised); the same commands work on it. Checking, normalising and exporting a book are done in Studio's Books window, not by commands.";
 
   // ---------- 1. Checking ----------
   var IDS_RX = /^[\s,a-z0-9]*$/, BARS_RX = /^\s*(\d{1,4})\s*(?:-\s*(\d{1,4}))?\s*$/;
@@ -422,7 +422,9 @@
     if (!dat || typeof dat !== "object" || !Array.isArray(dat.projects)) return { docs: [], data: null };
     var d = S.mergeStudio(dat, dat);
     return { docs: S.newestFirst(d.projects).map(function (p) {
-      var o = { id: p.id, name: p.name, m: p.m };
+      // a part of an audiobook (Studio wave A4) is named with its book, so "named" finds it
+      var bk = p.bk && S.find(d, "books", p.bk);
+      var o = { id: p.id, name: bk ? (bk.name || "") + " · " + (p.name || "") : p.name, m: p.m };
       Object.defineProperty(o, "store", { value: d });   // not copied
       return o;
     }), data: d };
@@ -482,6 +484,16 @@
     var w = { pid: p.id, data: dat }, trs = tracksOf(w), bar = S.barSec(p.bpm, p.sig), all = [];
     var o = { name: p.name, bpm: p.bpm, sig: p.sig, vol: p.vol, length: r3(S.projectEnd(dat.clips.filter(function (c) { return c.p === p.id; }))), barSecs: r3(bar), tracks: [], clips: [] };
     if (p.loop.on) o.loop = { from: r3(p.loop.a), to: r3(p.loop.b) };
+    // a part of an audiobook: its book, its place there and the book's other parts
+    var bk = p.bk && S.find(dat, "books", p.bk);
+    if (bk) {
+      var parts = S.bookParts(dat, bk), at = 0, chs = 0;
+      parts.forEach(function (x, k) { if (x.p.id === p.id) at = k + 1; if (x.kind === "chapter") chs++; });
+      o.book = { name: bk.name, part: p.kind, n: at, of: parts.length, chapters: chs, spec: bk.spec,
+                 parts: parts.map(function (x) { return x.p.name || ""; }), roomTone: !!bk.rt };
+      if (bk.pub && bk.pub.t) o.book.publishingTitle = bk.pub.t;
+      if (p.fx.some(function (f) { return /^fnorm/.test(f.u); })) o.book.normalised = true;
+    }
     if (p.fx.length) o.masterEffects = p.fx.map(function (f) { return f.id; });
     trs.forEach(function (tr, k) {
       var e = { n: k + 1, id: tr.id, name: tr.name, kind: isMidiTrack(w, tr) ? "midi" : "audio", vol: tr.vol, pan: tr.pan, c: tr.color };

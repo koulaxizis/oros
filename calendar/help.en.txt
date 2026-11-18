@@ -39,6 +39,8 @@ On a computer you can drag an event onto another day in the `Month` view, or ont
 
 Tap or click a location to open it in [Maps](app:maps). Maps can also send a planned route to Calendar as a new event.
 
+`Send to an app…` in a saved event's window sends it as text (title, day and time, place, note) to another orOS app, such as [Notes](app:notes), [To-Do](app:todo) or [Mail](app:mail); for an event that repeats, the day you opened goes. The other app only opens with it filled in.
+
 ## Labels and feeds
 The chips above the calendar are your labels. You start with `Personal`, `Work` and `Family`. Tap or click a chip to hide or show those events. `＋ Manage labels` lets you add, rename, recolour and delete labels; a label still used by events can't be deleted. On a phone the chips are folded behind one `Labels & feeds` button that shows how many are on; tap it to open or close the list. Your device remembers whether you left it open.
 
@@ -53,7 +55,7 @@ Filters only hide rows from view; they never change or delete anything.
 Other apps add read-only rows, each with its own chip so you can hide them:
 - `Birthdays`, `Anniversaries` and `Custom Feed` from [Contacts](app:contacts).
 - `To-Do`: unfinished tasks on their due date, from [To-Do](app:todo).
-- `Kanban` cards with a due date, `Habits` you completed, `Mood` entries, `Cycle` periods, `Workouts`, `Plants` care, and `Screen Pet` moments.
+- `Kanban` cards with a due date (and "Starts: …" on the day a planned card starts), `Habits` you completed, `Mood` entries, `Cycle` periods, `Workouts`, `Plants` care, and `Screen Pet` moments.
 - `Garage`: renewals and service due dates from [Garage](app:garage).
 - `Budget`: upcoming recurring entries from [Budget](app:budget).
 - `Pet health`: vaccines, deworming, visits, next due dates and birthdays from [Pet health](app:petcare).
@@ -65,11 +67,11 @@ Other apps add read-only rows, each with its own chip so you can hide them:
 - `Work time`: time per project and day from [Timesheet](app:timesheet).
 - `Meals` planned in [Meal Planner](app:meals), such as "Dinner: Fasolada".
 - `Death anniversaries` from [Family Tree](app:familytree), such as "Maria · 10 years since death", for people with an exact date of death.
-- `Invoices`: unpaid invoices on their due date, from [Invoices](app:invoices).
+- `Invoices`: unpaid invoices on their due date, from [Billing](app:invoices).
 - `Media Shelf`: the day you finished a book, film, album or game, and release dates on your wishlist, from [Media Shelf](app:shelf).
 - `Publishing`: the release date of your titles and the open steps of their release plan, and the social posts you planned, from [Publishing](app:publish).
 - `Holidays` (Greek public holidays), `Name days` of your contacts, and `World days` such as international observances.
-- `Moon & Sky`: moon phases, equinoxes and solstices, meteor showers and eclipses from [Moon & Sky](app:sky). This one starts off: tap or click its chip to turn it on.
+- `Moon & Sky`: moon phases, equinoxes and solstices, meteor showers and eclipses from Weather's [Sky tonight](app:sky). This one starts off: tap or click its chip to turn it on.
 - `Medicines`: the first and last day of a medicine course and the day a medicine you count runs out, from [Health](app:health). Health data is private, so this one starts off too.
 - `Doctor visits`: your doctor's appointments at their time and the day a vaccine's next dose is due, from the `Record` tab of [Health](app:health). It starts off too.
 
@@ -96,6 +98,19 @@ Reminders stay yours: each person picks their own in the event's `Reminder`, and
 `More` › `Share free times…` makes a link with the times you're free, so someone can pick one, like a booking page. Choose what it's for, the length (15 minutes to 2 hours), how many days ahead (3 to 30), the hours of the day, and whether Saturday and Sunday count. Your name and email come from your [Mail](app:mail) account when there is one. The window says how many free times it found, and `Make the link…` opens [Send to someone](help:t/share), where you copy, share or email the link.
 
 Free times are worked out on this device from your own events with a time and from the subscribed calendars you show; all-day events (birthdays, holidays) don't block time, and times already past are left out. The other person opens the link in any browser, sees the times in their own time zone, picks one, and gets `Add to calendar (.ics)`, `Add to my orOS`, and an email back to you, written for them, with the time they chose. Nothing is booked by itself: the time is yours to confirm when the email arrives. Like every shared link, the times travel inside the link; no server keeps them.
+
+## Guests
+A one-off event of your own calendar has `Guests…` in its window (the button shows how many there are). There you keep the guest list of a party, a book launch or a concert. `From Contacts…` adds people from [Contacts](app:contacts): search, show one Contacts label, tick them or `Select all shown`; a contact already on the list can't be added twice. `Add a guest` adds someone by name, with email, phone, plus-ones and a note. Tap a guest to change them or `Remove` them (two taps).
+
+Each guest has an answer: `Coming`, `Maybe`, `No answer`, `Not coming` or `Waiting`. Under `Places` set how many people fit (plus-ones count too; 0 = no limit). When the places are full, someone you mark `Coming` goes on the waiting list instead, first come first served. When a place frees up, the window shows who is next; nobody moves up by themselves: `Give the place` gives it, and then you can let them know by email, SMS (on a phone) or a message to copy.
+
+At the door, search the guest and tap `Check in`; the time shows on the button, and a second tap within a few seconds undoes it. Someone who checks in counts as coming, even when they were waiting. Two phones can check guests in at the same time: each guest merges on their own when they sync, so no check-in is lost.
+
+Every guest has a ticket: open the guest and tap `Ticket…`. It shows a QR code you can `Share…` or `Save image` and send to them; `Print tickets` prints one card per guest who is coming. The code holds only a short guest code and a signature made with a secret key of this event, never a name or email, so it says nothing to anyone who finds it and can't be copied to another event. At the door, `Door` opens the phone's camera: hold a ticket in front of it. A valid ticket checks the guest in and shows a big green welcome (with how many come with them); a ticket that was already used shows when, in orange; a guest who is not marked coming asks `Let in`; anything else is shown in red. The check works without internet, and the counter shows how many are in. The key is made once per event and never changes, so tickets stay valid; make the tickets on one device, as tickets made on two devices before they synced can stop working once they do.
+
+Guests can answer by themselves. Under `Invitation links (RSVP)` tap `Make invitation links` (it needs the internet). Then open a guest and tap `Invitation…`: send them their own link by email, SMS, `Share…` (WhatsApp, Viber and the like on a phone) or copy it. The link opens a page in any browser, no account needed, with the event in their own time zone, a map link, `Coming`, `Maybe` or `Not coming`, how many come with them and a note. Their answer is encrypted in their browser and waits, sealed, until your Calendar picks it up: `Check answers`, or by itself every 10 minutes while the Calendar is open. Someone who answers `Coming` sees their ticket on the page and can add the event to their own calendar (.ics). A personal link changes only that guest's answer. `Open sign-up link` gives one more link for anyone you share it with (a poster, a group chat): each sign-up becomes a new guest. When the places are full, a new "coming" hears at once that they are on the waiting list; the relay keeps in the clear only the number of places and how many said yes. `Places one answer may take` limits how many one answer can bring. `Stop the links` picks up what is waiting and then the links stop working. The links end by themselves a day after the event.
+
+`Export CSV` saves the list for a spreadsheet, `Print list` prints a list for the door (everyone except those not coming, with a box to tick), and `Tasks to To-Do` opens [To-Do](app:todo) with a new list of the usual steps (invitations, reminder, place, door list, thank-you), which you tick before adding. The guest list is kept apart from the event: it syncs encrypted like everything else, but it doesn't go into .ics exports, links, server calendars or household calendars. When you delete the event, its guest list is deleted too.
 
 ## Send your calendar to someone
 `More` › `Send calendar to someone…` puts your own events in a link: all of them or one label's, whole or only some dates (`This month`, `Next 3 months`, `This year`, or `Choose dates…`). The window says how many events go; `Next` opens [Send to someone](help:t/share), where you copy, share or email the link, add a password, or choose how long it lasts. Events from subscriptions and from other apps (birthdays, cycle, habits) stay here. A calendar with many events goes as a link with an expiry. The other person sees it month by month in any browser and can add it to their calendar as an .ics file or to their orOS.
@@ -149,3 +164,4 @@ For a full copy, see [backup](help:t/backup).
 - Exported time zones are written by name only. Most calendar apps understand them; a few older ones may show the time in their own zone.
 - On an older orOS version that hasn't updated yet, the newer repeat choices and time zones show in a simpler form until it updates.
 - An event with a time zone that you edit in the phone's own Calendar keeps its zone only after orOS reads the change back. A file can bring in at most 5000 events and be at most 5 MB.
+- Guests are for one-off events of your own calendar; a repeating event or a household calendar has none. Guests answer you by email or phone for now; links where they answer by themselves come next. An older orOS version that hasn't updated yet doesn't show guests, but keeps them.

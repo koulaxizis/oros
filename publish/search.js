@@ -38,6 +38,20 @@
         }
         return "";
       }
+      // wave M1: a music release is found by its tracks, ISRCs and UPC/EANs
+      var more = {};
+      function add(ti, s) { if (typeof ti === "string" && s) (more[ti] = more[ti] || []).push(s); }
+      (Array.isArray(d.trk) ? d.trk : []).forEach(function (r) {
+        if (!r || tombs[r.id] >= r.m) return;
+        if (typeof r.t === "string") add(r.ti, r.t.slice(0, 200));
+        if (typeof r.isrc === "string" && /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(r.isrc)) {
+          add(r.ti, r.isrc);
+          add(r.ti, r.isrc.slice(0, 2) + "-" + r.isrc.slice(2, 5) + "-" + r.isrc.slice(5, 7) + "-" + r.isrc.slice(7));
+        }
+      });
+      (Array.isArray(d.med) ? d.med : []).forEach(function (r) {
+        if (r && !(tombs[r.id] >= r.m) && typeof r.upc === "string" && /^\d{12,13}$/.test(r.upc)) add(r.ti, r.upc);
+      });
       return d.titles.filter(function (it) {
         return it && typeof it.id === "string" && typeof it.t === "string" && it.t.trim() && !(tombs[it.id] >= it.m);
       }).map(function (it) {
@@ -52,7 +66,7 @@
         });
         var hit = { id: it.id, title: it.t.slice(0, 120), when: it.m, target: { title: it.id } };
         var sub = [it.sub || "", ppl.join(", ")].filter(Boolean).join(" · ");
-        hit.text = [sub, isbns.join(" "), it.ser || "", it.kw || "", String(it.blurb || "").slice(0, 600)].filter(Boolean).join(" · ");
+        hit.text = [sub, isbns.join(" "), (more[it.id] || []).slice(0, 220).join(" "), it.ser || "", it.kw || "", String(it.blurb || "").slice(0, 600)].filter(Boolean).join(" · ");
         return hit;
       });
     }

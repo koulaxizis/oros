@@ -1,0 +1,75 @@
+# Datenbank
+Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den Katalog deiner Bücher, eine Sammlung, die Gäste einer Veranstaltung, die Aufgaben eines Projekts. Jede Datenbank hat Tabellen, jede Tabelle hat Felder mit festem Typ, und dieselben Einträge siehst du als Raster, als Karten, als Galerie, als Kanban-Board, als Kalender oder als Formular.
+
+## Erste Schritte
+- Drück `Neue Datenbank` und wähle eine Vorlage, oder fang mit einer leeren Datenbank an.
+- `Importieren` macht aus Dateien eine neue Datenbank: CSV-, Excel- (.xlsx, .xls) und OpenDocument-Dateien (.ods) oder eine orOS-Datenbankdatei (.orosbase). Die Datenbank errät den Typ jeder Spalte (Zahl, Datum, Auswahl, E-Mail…); prüfe sie in den Spaltenköpfen.
+- Eine Datenbank kann viele Tabellen haben. Mit dem `+` neben den Tabellennamen fügst du eine hinzu.
+
+## Felder
+- Tippe auf einen Spaltenkopf, um das Feld zu bearbeiten, danach zu sortieren, es zu verschieben, in dieser Ansicht auszublenden oder zu löschen. Das `+` am Ende der Kopfzeile fügt ein Feld hinzu.
+- Typen: kurzer und langer Text, Zahl, Betrag, Prozent, Datum (mit oder ohne Uhrzeit), Häkchen, Einfachauswahl, Mehrfachauswahl, Bewertung, E-Mail, Webadresse, Telefon, Anhänge, verknüpfte Einträge, und die, die die Datenbank selbst ausfüllt: laufende Nummer, Erstellt am, Zuletzt geändert am, Nachschlagen, Zusammenfassungen, Anzahl Verknüpfungen und Formeln.
+- Wenn du den Typ eines Felds änderst, werden seine Werte umgewandelt. Werte, die nicht passen, werden geleert, und die Datenbank sagt dir vorher, wie viele es sind. `Rückgängig` holt sie zurück.
+- Ein Anhangfeld hält bis zu 20 Dateien pro Eintrag: Fotos, PDFs und andere Dateien bis 10 MB. Sie liegen auf der orOS-Festplatte (Dateien › Base › Attachments) und kommen mit der Festplatte auf deine anderen Geräte (Sync › Drive). Fotos werden verkleinert und verlieren ihre Standortdaten. Öffne einen Eintrag, um sie hinzuzufügen, zu öffnen, zu speichern oder zu entfernen.
+- Das erste Feld benennt jeden Eintrag. Ein anderes wählst du im Tabellenmenü (`⋯` › Feld, das die Einträge benennt).
+
+## Verknüpfungen zwischen Tabellen
+- Ein Feld `Verknüpfte Einträge` verknüpft einen Eintrag mit Einträgen einer anderen Tabelle derselben Datenbank, zum Beispiel ein Buch mit seinen Autoren. Die andere Tabelle bekommt ein eigenes Feld, das dieselben Verknüpfungen von ihrer Seite zeigt. Hake `Nur ein Eintrag` an für eine Verknüpfung pro Eintrag.
+- Tippe auf eine Verknüpfungszelle (oder drück Enter), um Einträge zu wählen. Suche, tippe zum Verknüpfen oder Lösen, oder lege einen neuen Eintrag mit dem eingegebenen Namen an. Im geöffneten Eintrag öffnet ein Tipp auf den Namen den verknüpften Eintrag.
+- Füge Namen aus einer Tabellenkalkulation in eine Verknüpfungsspalte ein: Die Datenbank verknüpft die Einträge mit diesen Namen und sagt dir, welche sie nicht gefunden hat.
+- `Nachschlagen` zeigt ein Feld der verknüpften Einträge, `Zusammenfassung` fasst sie zusammen (Summe, Durchschnitt, kleinster, größter Wert, Anzahlen, alle als Text, alle oder mindestens einer angehakt), `Anzahl Verknüpfungen` zählt sie. Die Datenbank hält sie selbst aktuell.
+- Wenn zwei Geräte demselben Eintrag verschiedene Verknüpfungen hinzufügen, bleiben beide. Wer ein Verknüpfungsfeld löscht, löscht auch seine andere Seite; `Rückgängig` holt beide mit ihren Verknüpfungen zurück.
+
+## Formeln
+- Ein Feld `Formel` berechnet einen Wert aus den anderen Feldern des Eintrags. Schreib Feldnamen in geschweifte Klammern: `{Preis} * {Exemplare}`, `IF({Seiten} > 300, "lang", "kurz")`, `{Erschienen} + 30` mit `Ergebnis als Datum zeigen`.
+- Die Funktionen sind die der [Tabellenkalkulation](app:spreadsheet) (IF, ROUND, SUM, CONCATENATE, TODAY, YEAR…), auf Englisch, mit Punkt für Dezimalstellen. `Feld einfügen` setzt einen Namen an die Cursorstelle, und die Zeile darunter zeigt das Ergebnis für den ersten Eintrag.
+- Umbenannte Felder lassen Formeln weiter funktionieren. Eine Formel, die sich selbst liest, zeigt `#CYC!`, eine Division durch null `#DIV/0!`; Zellbezüge wie A1 gibt es in Datenbank-Formeln nicht.
+
+## Einträge
+- `Neuer Eintrag` fügt einen Eintrag hinzu und öffnet ihn. Im Raster fügt `Neuer Eintrag` unter der letzten Zeile einen direkt dort hinzu.
+- Im Raster tippst du auf eine Zelle, um sie auszuwählen, und noch einmal (oder Enter), um sie zu bearbeiten. Pfeiltasten und Tab bewegen, Entf leert eine Zelle, Esc bricht ab.
+- Füge einen Block aus einer Tabellenkalkulation in die ausgewählte Zelle ein: Er füllt die Zellen rechts und darunter und legt Einträge an, wenn mehr Zeilen nötig sind.
+- Der Knopf am Anfang einer Zeile, oder Umschalt+Enter, öffnet den ganzen Eintrag. Dort kannst du ihn auch duplizieren oder löschen.
+- Unter seinen Feldern hat ein Eintrag `Kommentare`: Schreib eine Notiz und tippe auf `Kommentar hinzufügen` (oder Strg+Enter). Kommentare werden mit deinen anderen Geräten synchronisiert; das × löscht einen, mit Rückgängig.
+
+## Ansichten
+- Jede Tabelle beginnt mit einer Rasteransicht und einer Kartenansicht. Weitere legst du in der Ansichtsliste an (`Neue Ansicht…`), jede mit eigenen Filtern, Sortierung, Gruppen und Feldern.
+- `Filter` zeigt nur die Einträge, die alle (oder eine) deiner Bedingungen erfüllen. `Sortieren` ordnet sie nach bis zu fünf Feldern, `Gruppieren` stellt sie unter Überschriften nach bis zu drei Feldern; tippe auf eine Überschrift, um sie einzuklappen.
+- `Felder` wählt, welche Felder diese Ansicht zeigt und in welcher Reihenfolge. Ein ausgeblendetes Feld bleibt in der Tabelle und in anderen Ansichten.
+- Das Suchfeld sucht nur in den gezeigten Feldern dieser Ansicht.
+- Ein neuer Eintrag in einer gefilterten Ansicht übernimmt die Werte der „ist“-Bedingungen, damit er in der Ansicht bleibt.
+- Eine Kanban-Ansicht ordnet die Einträge in Spalten nach einem Einfachauswahl-Feld (`Spalten nach`). Ziehe eine Karte in eine andere Spalte, um ihren Wert zu ändern; auf dem Handy halte die Karte zuerst kurz gedrückt. Mit der Tastatur fokussiere eine Karte und drücke Alt + ← oder →. Das `+` oben in einer Spalte fügt einen Eintrag mit diesem Wert hinzu.
+- Eine Galerieansicht zeigt die Einträge als Karten mit Titelbild: dem ersten Foto eines Anhangfelds (`Titelbild aus`).
+- Eine Formularansicht zeigt die Felder der Ansicht als Formular. `Eintrag hinzufügen` speichert einen Eintrag und leert das Formular für den nächsten. Verknüpfungen, Anhänge und berechnete Felder werden danach im Eintrag ausgefüllt.
+- Eine Kalenderansicht legt die Einträge nach einem Datumsfeld auf einen Monat (`Datumsfeld`); Erstellungs- und Änderungszeiten gehen auch. Tippe auf einen Tag für seine Einträge und um dort einen neuen hinzuzufügen. Der angezeigte Monat bleibt nur auf diesem Gerät.
+
+## Import
+- Wähle mehrere Dateien auf einmal für eine Datenbank mit mehreren Tabellen, wie die CSV-Dateien, die Airtable exportiert (eine pro Tabelle). Auch jedes Blatt einer Arbeitsmappe wird eine Tabelle.
+- Eine Spalte, deren Zellen Namen von Einträgen einer anderen Tabelle desselben Imports sind, wird eine Verknüpfung der beiden Tabellen. Haben beide Tabellen so eine Spalte, werden sie die zwei Seiten derselben Verknüpfung. Anhänge aus Airtable kommen als Text mit ihren Webadressen.
+- Datenbankmenü (`⋯`) › Tabellen importieren fügt die Tabellen stattdessen der offenen Datenbank hinzu.
+- In [Tabelle](app:spreadsheet) übernimmt An eine App senden › Datenbank die ausgewählten Zellen (oder das ganze Blatt) als neue Tabelle. Du wählst die Datenbank, bevor etwas hinzugefügt wird.
+
+Eine Liste, die eine andere orOS-App mit `An eine App senden…` schickt (etwa eine Aufgabenliste oder eine Einkaufsliste), öffnet sich im selben Fenster `Als Tabelle hinzufügen`: ein Eintrag pro Element, mit einem Feld Name und, wenn die Elemente Notizen haben, einem Feld Notizen.
+
+## Export
+- Tabellenmenü (`⋯`) › Diese Ansicht als CSV exportieren speichert die Einträge und Felder, die du siehst, in dieser Reihenfolge.
+- Diese Ansicht in Tabelle öffnen schickt sie an [Tabelle](app:spreadsheet) als neues Blatt (bis zu 499 Einträge).
+- Tabellenmenü (`⋯`) › Drucken oder als PDF speichern druckt die Ansicht als Tabelle (die Einträge und Felder, die du siehst, bis 5.000 Einträge); der Druckdialog des Browsers speichert auch ein PDF.
+- Datenbankmenü (`⋯`) › Als orOS-Datei speichern (.orosbase) speichert die ganze Datenbank mit Tabellen, Ansichten und Verknüpfungen als eine Datei, als Kopie oder für ein anderes Gerät (Anhänge gehen mit ihrem Namen; die Dateien bleiben auf der orOS-Festplatte). Beim Öffnen kommt hinzu, was fehlt, und nichts wird gelöscht; Einträge, die schon da sind, bleiben, wie sie sind, außer du hakst `Mit neueren Versionen aktualisieren` an. Die Datei enthält auch eine CSV jeder Tabelle (in `preview/`) und ist nicht verschlüsselt.
+
+Das Menü der Ansicht hat `Als Tabelle an eine App senden…` und `Als Liste an eine App senden…`: Die Einträge auf dem Bildschirm (nach dem Filter der Ansicht und deiner Suche, bis 499 als Tabelle und 200 als Liste) gehen an eine andere orOS-App, eine Tabelle an [Tabelle](app:spreadsheet), [Writer](app:writer) oder [Mail](app:mail), eine Liste (das Hauptfeld als Eintrag, die anderen Felder als seine Notiz) an [Aufgaben](app:todo) oder [Kanban](app:kanban). `An eine App senden…` im Fenster eines Eintrags schickt diesen Eintrag als Text. Die andere App öffnet sich nur damit ausgefüllt.
+
+## Deine Daten
+- Alles bleibt auf diesem Gerät und wird laufend gespeichert. Mit dem orOS-Sync in den [Einstellungen](app:settings) folgen dir deine Datenbanken verschlüsselt auf deine anderen Geräte.
+- Wenn zwei Geräte verschiedene Felder desselben Eintrags ändern, bleiben beide Änderungen erhalten.
+- Die Datenbank hält bis zu 20.000 Einträge auf allen deinen Geräten zusammen; der Startbildschirm zeigt, wie viele du hast.
+- Nach dem Löschen einer Datenbank, Tabelle, eines Felds, einer Ansicht oder eines Eintrags erscheint ein paar Sekunden lang `Rückgängig`.
+
+## Von überall finden
+- Das Suchfeld im Menü findet deine Datenbanken und Einträge. Wählst du einen Eintrag, öffnet er sich in seiner Tabelle.
+
+## Formulare und Kalender
+- Tabellenmenü (`⋯`) › Öffentliches Formular öffnet [Formulare](app:forms) mit einer Frage für jedes Feld, das ein Formular fragen kann. In Formulare schreibt `An Base senden` jede Antwort als Eintrag dieser Tabelle. Eine erneut gesendete Antwort, oder eine, deren Eintrag du hier gelöscht hast, kommt nie zweimal dazu; eine unter „Andere“ getippte Auswahl wird eine neue Auswahl. Die Datenbank sagt dir dann, wie viele Einträge hinzukamen und welche Antworten nicht passten.
+- Ein Datumsfeld kann seine Einträge im [Kalender](app:calendar) zeigen: bearbeite das Feld und hake `Im Kalender zeigen` an (anfangs aus). Sie erscheinen unter dem Label Datenbank; tippst du einen an, öffnet sich der Eintrag hier.
+- Der [Assistent](app:assistant) und Claude über orOS Gate können deine Datenbanken lesen (Tabellen, Felder, die Einträge einer Tabelle) und Einträge hinzufügen, sobald du ihnen die Datenbank erlaubst. Du siehst die Einträge, bevor sie hinzukommen, und kannst sie rückgängig machen. Sie füllen Felder über ihre Namen; Felder, die die Datenbank berechnet, Verknüpfungen und Anhänge füllst du selbst.
+- [Automationen](app:automations) können der Datenbank folgen: `Wenn in der Datenbank ein Eintrag hinzukommt` und `Wenn sich in der Datenbank ein Feld ändert`, mit einem Wort wie dem Namen einer Tabelle oder `Status: Erledigt` (ein angehaktes Kästchen heißt `Bezahlt: true`). Es zählen nur deine eigenen Änderungen hier (auch Antworten, die du aus Formulare übernimmst), bis zu 20 pro Speichern; Importe, Löschungen, Rückgängig und Änderungen von deinen anderen Geräten nicht.

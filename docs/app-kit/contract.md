@@ -54,7 +54,17 @@ frame, so a page that uses `"Nunito"` links the shared stylesheet before
 its own: `<link rel="stylesheet" href="../fonts.css">`. It holds Nunito and
 its Greek companion (the template already has the line).
 
-**Check:** `check-app` (G3, fonts), release guard G3, `tests/fonts-cmap.test.js`.
+Lists follow the palette too: every page loads `<script src="../pickers.js"
+defer></script>` as the last line of `<body>` (after `i18n.js` and the app's own scripts). It replaces the browser's own pop-up list
+of every `<select>` with the orOS list (a sheet from the bottom on phones),
+while the `<select>` keeps its value and its `input` / `change` events, so
+your code stays plain. Date, time and date-with-time fields get the orOS
+calendar and clock the same way, and colour fields the orOS colour picker,
+with the same value formats and events. Put `data-native` on a select (or an ancestor) only
+when it must keep the system list. Never call `.click()` on a select or a date field in a
+test; use `selectOption` / `fill` (the field has `pointer-events: none`).
+
+**Check:** `check-app` (G3, fonts, pickers), release guard G3, `tests/fonts-cmap.test.js`, `tests/pickers.test.js`.
 
 ## 5. Data and sync (Checklist B 6)
 

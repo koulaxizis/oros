@@ -13,6 +13,8 @@ The `Products` tab shows what you have, with the total `Stock value` and how man
 
 Tap or click a product to see its quantity, average cost, value, prices and every movement it ever had. From there: `+ Receive`, `− Sell`, `Count`, `Edit`, `Make a label`, `Archive`.
 
+A product you make to order (a print on demand, a custom piece) can be `On demand (made to order, no stock count)` in `Edit`. Its quantity then shows as `On demand`: it never runs out, is never low, has no minimum, reorder or stock value, and the shop's quantity is neither read into it nor sent from it. The till, the counter and invoices sell it with no below-zero check, it is not packed for a stand, and its sales still count in every report.
+
 > A barcode scanner (USB or Bluetooth) works in the search field: scan a code and the product opens. An unknown code offers `New product` with the SKU filled in.
 
 On a phone, the 📷 button next to a search or scan field reads barcodes with the camera (Chrome on Android). In a receipt, a sale or the counter it stays open, so you can scan one product after another; tap `Done` when you are finished. Where the button doesn't show, the browser can't read barcodes, but a scanner still works.
@@ -44,14 +46,36 @@ When you sell, a product with lots offers a `Lot` choice; leave it on `First to 
 `New` › `Point of sale (till)` is a full-screen till for a shop. On the left: a search box (a scanner or the 📷 camera adds the product straight away), category chips and a grid of products with their price and what is left. On the right: the sale, with − and + or a typed quantity per line, the net, the VAT per rate and the total.
 
 1. Pick a `Price list` at the top. `Retail` uses each product's sale price. Under `Price lists` you can add others, such as `Wholesale`: a percentage on the sale price (−10 means 10% off) and, with `Prices…`, a price of its own for any product.
-2. Choose `Cash`, `Card` or `Other`. For cash you can type `Cash given` to see the change.
+2. Choose `Cash`, `Card`, `Other` or `Split` (part cash, part card: type the `Cash part`, the rest is card). For cash you can type `Cash given` to see the change.
 3. Press `Charge`. The products come off stock (from the warehouse shown at the top, when you have several), and the receipt opens: print it on 58 mm or 80 mm roll paper. `Undo` in the message voids the sale right away.
 
-`Receipt settings` holds the receipt's header (shop name, address, VAT number) and footer, the paper width and the `Register code`: two characters at the start of the receipt numbers (like AB-261014-001), so two tills never print the same number. These settings stay on each device.
+Discounts: the `%` button on a line gives that line a percentage or an amount off; `Discount` under the total does the same for the whole sale, with an optional reason (students, an author signing) that is printed on the receipt. The receipt shows the price before the discount. `+ Other item` sells something that is not in Stock (a poster, a ticket, a donation): type its name, price with VAT and VAT rate; it is on the receipt and in the totals but never in stock.
+
+After a sale the receipt can also go to the customer without paper: `Share PDF` (or `PDF` on a computer) makes an 80 mm PDF, and `QR code` shows the receipt's text as a code the customer scans with the phone camera. Both are made on this device; nothing is sent anywhere.
+
+`Receipt settings` holds the receipt's header (shop name, address, VAT number) and footer, the paper width and the `Register code`: two characters at the start of the receipt numbers (like AB-261014-001), so two tills never print the same number. `Largest discount on this device (%)` caps the discounts this device may give (for a helper's phone at a stand); empty means no limit. These settings stay on each device.
 
 `Z report` shows a day's sales: how many, net, VAT per rate, by payment method and price list, the best sellers and every receipt (reprint or `Void` from there; a voided sale's products go back into stock). `Close the day` keeps the day's totals as a numbered Z; sales made after it show apart. `Print Z report` prints it on the roll.
 
 Every sale is also an ordinary `Sale` movement, so stock, reports and sync work as with any sale. Two tills selling at the same time never lose a sale.
+
+#### Fairs, launches and markets
+`Events` in the till keeps a fair, a book launch or a market: its `Name`, the days (`From`, `To`), the `Stand's warehouse` (pick one, or let Stock make a new warehouse with the event's name), a `Price list` and the `Cash float per day`. Then:
+1. `Pack for the stand`: type how many of each product you take; one transfer moves them from the main warehouse to the stand.
+2. At the stand, pick the event at the top of the till: it uses the stand's warehouse and the event's price list, and every sale counts for the event. Two phones at the same stand can sell at once, even offline; they meet when they sync.
+3. At the end of each day open `Z report`: the `Cash float` is filled in from the event; type the `Cash counted` (or `Count…` note by note and coin by coin) to see what the drawer should hold and any difference, then `Close the day`. `Add to Budget` then opens one income entry for the day's total in [Budget](app:budget), filled in for you to save.
+4. `Report` shows the whole event, all days together: sales, net, VAT, discounts, by payment, per day, and per title what went to the stand, what sold, what came back and what is left. Print it on the roll or open it in Spreadsheet.
+5. `Bring back` moves everything still at the stand back to the main warehouse in one transfer.
+
+Devices that still run an older orOS sell without events and see their sales without the event; update every phone you take to the stand.
+
+#### A helper's phone (till only)
+A helper can sell on their own phone without seeing the rest of orOS. On that phone, sign in to your sync, turn on [Settings › Screen lock](app:settings) with a PIN only you know, then in the till open `Receipt settings` and choose `Make this device a till`. Set `Largest discount on this device (%)` there too.
+- From then on orOS on that phone opens straight into the till, with no PIN. The desktop, every other app, help, notifications and the quick settings are hidden.
+- A void, `Receipt settings`, `Events`, `Price lists` and a discount over the limit ask for your PIN. `Add to Budget` is not offered on the till.
+- `Owner: open orOS` in the top bar shows the lock screen: your PIN opens the whole orOS; `Back to the till` returns. Locking orOS, leaving the phone idle or starting orOS again goes back to the till. Fingerprint unlock is not offered on the till, because the fingerprints on the phone are the helper's.
+- To stop: open orOS with your PIN, then `Receipt settings` › `Stop till-only mode`. Turning the screen lock off stops it too.
+- The phone still holds your synced data, kept from the screen but not from someone who can read its storage. Give it only to someone you trust.
 
 ### Stock count
 In a `Stock count` you type what you `Counted`. Stock saves the difference from what it expected, so a sale on another device at the same moment still counts.
@@ -75,7 +99,7 @@ Reorder, minimums and the total value stay for the whole business. A warehouse t
 A shop that sells your goods and pays you for what sold (a bookshop, a gallery, a deli) is a warehouse with consignment on. In Settings › `Warehouses`, add the shop and choose `Consignment…` next to it: the shop's discount %, a reminder every few months and, if different, the name to invoice.
 - Send stock there with `New` › `Transfer`: it is still yours, only somewhere else.
 - When the shop tells you what is left, open the `Consignment` tile on the Products tab and choose `Settle…`. Type what is still on the shelf; the rest is recorded as sold at each product's sale price.
-- After `Record`, `Make the invoice` opens Invoices with the shop as client and the lines at its discount. The lines carry no product code, so Invoices doesn't take the stock out a second time.
+- After `Record`, `Make the invoice` opens Billing with the shop as client and the lines at its discount. The lines carry no product code, so Billing doesn't take the stock out a second time.
 - Tick `Bring what is left back` to end the consignment: the rest moves back to the main warehouse.
 - The tile turns yellow when a settlement is due, and [Today](app:today) reminds you. Void the sale movement to undo a settlement.
 
@@ -123,7 +147,7 @@ If a WooCommerce shop is connected, `Send to the shop` then sets the new prices 
 Connect your WooCommerce shop once in Settings › [Connected services](app:settings), then open `Shop (WooCommerce)` from `New` or from Settings here.
 - `Products`: `Get products from the shop` reads every product and variation. `Import into Stock` adds the new ones and updates name, SKU, sale price and category of those you already have (matched by the shop product, then SKU, then name). Tick the box under it to also set the quantities here to the shop's, as one stock count.
 - `Quantities that differ` lists the products whose stock the shop manages and whose quantity is different here. `Send to shop` sets the shop's quantity to yours; `Take the shop's` counts yours at the shop's.
-- `Orders`: the shop's orders of the last 30 days. For each one: `Record the sale` opens a sale with its lines (it shows `Sale recorded` once saved, so you don't record it twice), `Invoice` opens a new invoice in [Invoices](app:invoices), `Customer in CRM` logs it on the customer in [CRM](app:crm), `Add to Budget` logs the income in [Budget](app:budget), and `Mark completed` completes the order in the shop.
+- `Orders`: the shop's orders of the last 30 days. For each one: `Record the sale` opens a sale with its lines (it shows `Sale recorded` once saved, so you don't record it twice), `Invoice` opens a new invoice in [Billing](app:invoices), `Customer in CRM` logs it on the customer in [CRM](app:crm), `Add to Budget` logs the income in [Budget](app:budget), and `Mark completed` completes the order in the shop.
 
 Nothing is sent to the shop without a button, and nothing is saved here or in another app until you save it there.
 
@@ -146,7 +170,7 @@ Products, movements, suppliers, categories, units and settings sync between your
 ## Tips
 - Set a `Location` such as "Shelf B3": it shows in the list and in search.
 - Archive products you no longer sell: their history stays.
-- From a product: `New quote` starts a quote in [Quote](app:quote) with that product and its sale price (in Stock's currency). `Quote from products` in `New` takes several.
+- From a product: `New quote` starts a quote in [Billing's Quotes](app:quote) with that product and its sale price (in Stock's currency). `Quote from products` in `New` takes several.
 - Open a receipt or a sale and choose `Add to Budget` to log its total in [Budget](app:budget).
 - Units with decimals (kg, L, m) take quantities like 2,5; you can add your own units in Settings.
 

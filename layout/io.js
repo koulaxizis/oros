@@ -8,6 +8,8 @@
 //     older JSON packages (images as base64) still open, and so does
 //     an unzipped bundle folder. Opened as a NEW document, every image
 //     checked against its hash and decoded before it is stored.
+//   - EPUB 3, reflowable (LY-EPUB: layout/epub.js, checked by
+//     layout/epubcheck.js), saved, or previewed in Library.
 //   - PNG / JPG of one page (72, 150 or 300 dpi, at most 16 MP).
 //   - Scribus .sla / .sla.gz import (layout/sla.js) into a new document.
 //   - Rebuild a print PDF with its original pictures (layout/rebuild.js)
@@ -154,7 +156,9 @@
   }
 
   // A PDF of any document (not only the open one) → Promise<Blob>.
-  // opts: pages (ids, default all), spreads, bleed, marks, ppi.
+  // opts: pages (ids, default all), spreads, bleed, marks, ppi; and for
+  // an e-book (LY-OUT): rgb, lang, links, outline, layout (of `doc`),
+  // cover ({ doc, page } a Book cover's page: its front panel first).
   function pdfBlob(doc, opts) {
     var images = {}, JsPDF;
     var pages = opts.pages || M.pagesInOrder(doc).map(function (p) { return p.id; });
@@ -166,10 +170,288 @@
       });
       return chain;
     }).then(function () {
-      var L = doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc);
-      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name },
-        { jsPDF: JsPDF, layout: L, images: images });
+      return opts.cover ? coverPage(JsPDF, doc, opts.cover, opts.ppi || 150) : null;
+    }).then(function (first) {
+      var L = opts.layout || (doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc));
+      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "" },
+        { jsPDF: JsPDF, layout: L, images: images, pdf: first, links: opts.links, outline: opts.outline });
       return pdf.output("blob");
+    });
+  }
+
+  // The front panel of a Book cover document (designkit/cover.js keeps
+  // its trim, spine and flaps in setup.ext.cover, mm) as a JPEG, at
+  // `ppi` (at most 16 MP for the whole spread) or `maxH` px high.
+  // → Promise<{ blob, fw, fh (pt) } | null>
+  function frontPanel(cd, ppi, maxH) {
+    var g = cd && cd.setup && cd.setup.ext && cd.setup.ext.cover;
+    var page = cd && M.pagesInOrder(cd)[0];
+    if (!g || !page) return Promise.resolve(null);
+    var MM = M.PT_PER.mm;   // the page is the trimmed spread: [flap] back · spine · front [flap]
+    var fx = ((g.flap || 0) + g.w + (g.spine || 0)) * MM, fw = g.w * MM, fh = g.h * MM;
+    var chain = Promise.resolve();
+    imageItems(cd, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
+    return chain.then(function () {
+      var scale = Math.min(maxH ? maxH / fh : ppi / 72, Math.sqrt(16e6 / (cd.setup.w * cd.setup.h)));
+      var full = LY.R.renderPage(cd, page, LY.R.computeLayout(cd), scale, { getImage: A.get, background: "#fff" });
+      var cv = document.createElement("canvas");
+      cv.width = Math.max(1, Math.round(fw * scale)); cv.height = Math.max(1, Math.round(fh * scale));
+      cv.getContext("2d").drawImage(full, -fx * scale, 0);
+      return toBlob(cv, "image/jpeg", 0.9).then(function (blob) { return { blob: blob, fw: fw, fh: fh, w: cv.width, h: cv.height }; });
+    });
+  }
+  // ...as the first page of an e-book PDF, the size of the book's page.
+  function coverPage(JsPDF, book, cov, ppi) {
+    return frontPanel(cov.doc, ppi).then(function (fp) {
+      if (!fp) return null;
+      return fp.blob.arrayBuffer().then(function (ab) {
+        var W = book.setup.w, H = book.setup.h, fw = fp.fw, fh = fp.fh;
+        var pdf = new JsPDF({ unit: "pt", format: [W, H], orientation: W > H ? "l" : "p", compress: true });
+        pdf.setProperties({ title: book.name, creator: "orOS Layout" });
+        // the picture keeps its proportions, centred on the page
+        var k = Math.min(W / fw, H / fh), w = fw * k, h = fh * k;
+        pdf.addImage(new Uint8Array(ab), "JPEG", (W - w) / 2, (H - h) / 2, w, h, "cover", "FAST");
+        return pdf;
+      });
+    });
+  }
+
+  // The book's Publishing title data (read only; R19: the Publishing
+  // app owns it).
+  function publishData() {
+    try { return JSON.parse(localStorage.getItem("oros-publish-data") || "null"); } catch (e) { return null; }
+  }
+  LY.publishData = publishData;
+
+  // An output profile of the open document (LY-OUT): its edition (the
+  // format's ISBN), its pages, and for an e-book PDF RGB, /Lang, the
+  // contents as links and the headings as bookmarks.
+  function exportProfile(prof) {
+    var doc = LY.doc, O = window.LY_OUT;
+    if (!doc || exporting || !O) return;
+    if (prof.k === "epub") { exportEpub(prof); return; }
+    LY.flushStory && LY.flushStory();
+    var data = publishData(), ed = O.edition(doc, prof, data), d = ed.doc;
+    var L = ed.changed ? LY.R.computeLayout(d) : (ED.L || LY.R.computeLayout(d));
+    var pages = O.pagesFor(d, prof);
+    if (!pages.length) { LY.toast(t("out.noPages")); return; }
+    var opts = { pages: pages, layout: L, ppi: prof.q === "screen" ? 150 : 300 };
+    if (prof.k === "print") {
+      opts.bleed = !!prof.bleed; opts.marks = !!prof.marks; opts.spreads = !!(prof.spreads && d.setup.facing);
+    } else {
+      var heads = O.headings(d, L);
+      opts.rgb = true;
+      opts.lang = O.lang(d, ed.pub);
+      opts.outline = heads;
+      opts.links = O.tocLinks(d, L, heads);
+      var cd = prof.cover ? LY.data().docs.filter(function (x) { return x.id === prof.cover && !x.del; })[0] : null;
+      if (cd) opts.cover = { doc: cd };
+    }
+    exporting = true;
+    LY.toast(t("exp.working"));
+    var suffix = prof.k === "ebook" ? "-ebook" : "";
+    pdfBlob(d, opts).then(function (blob) {
+      return saveBlob(blob, fileName(doc, suffix + ".pdf"), "application/pdf", "PDF", ".pdf");
+    }).then(function (ok) {
+      exporting = false;
+      if (ok) LY.toast(ed.isbn ? t("out.doneIsbn", { isbn: ed.isbn }) : t("exp.done"));
+    }, function (e) {
+      exporting = false;
+      try { console.error("[orOS] layout: PDF export failed", e); } catch (x) {}
+      LY.toast(t("exp.fail"));
+    });
+  }
+
+  // ---------- EPUB (LY-EPUB, wave L7 E2) ----------
+  // The converter (epub.js), the check (epubcheck.js) and the ZIP
+  // writer (atelier/zip.js) load on first use.
+  function epubLibs() {
+    return script("../atelier/zip.js", "AtelierZip").then(function () {
+      return script("epub.js", "LY_EPUB");
+    }).then(function () { return script("epubcheck.js", "LY_EPUBCHECK"); });
+  }
+  function sha1(bytes) {
+    return crypto.subtle.digest("SHA-1", bytes).then(function (ab) { return new Uint8Array(ab); });
+  }
+  function diskFs() {
+    try {
+      var f = window.parent && window.parent !== window ? window.parent.orosFS : window.orosFS;
+      return f && typeof f.writeBlob === "function" && typeof f.readBlob === "function" ? f : null;
+    } catch (e) { return null; }
+  }
+  // The pictures of the pages that go out (no master items: running
+  // heads, ornaments of the master stay in print), cut to their frames,
+  // at most 2400 px on the long side.
+  function epubImages(doc, pages, q) {
+    var want = {}, out = {}, chain = Promise.resolve();
+    pages.forEach(function (id) { want[id] = 1; });
+    doc.items.forEach(function (it) {
+      if (it.t !== "img" || !it.a || it.hide || !want[it.pg]) return;
+      var crop = P.imageCrop(it);
+      if (!crop) return;
+      var ppi = Math.min(q === "print" ? 300 : 150, window.LY_EPUB.MAX_IMG * 72 / Math.max(1, crop.rect.w, crop.rect.h));
+      chain = chain.then(function () { return cropImage(it, ppi); }).then(function (im) {
+        if (im) out[it.id] = { data: im.data, type: im.fmt === "PNG" ? "image/png" : "image/jpeg" };
+      }, function () {});
+    });
+    return chain.then(function () { return out; });
+  }
+  // The cover: the front panel of the chosen Book cover (2560 px high),
+  // else the Publishing title's cover picture.
+  function epubCover(prof, pub) {
+    var cd = prof.cover ? LY.data().docs.filter(function (x) { return x.id === prof.cover && !x.del; })[0] : null;
+    if (cd) return frontPanel(cd, 0, 2560).then(function (fp) {
+      return fp ? fp.blob.arrayBuffer().then(function (ab) { return { data: new Uint8Array(ab), type: "image/jpeg", w: fp.w, h: fp.h, from: "layout" }; }) : null;
+    });
+    var fs = diskFs(), cov = pub && typeof pub.cov === "string" && /^[a-z0-9-]{1,80}\.(jpg|png)$/.test(pub.cov) ? pub.cov : "";
+    if (!fs || !cov) return Promise.resolve(null);
+    return Promise.resolve(fs.readBlob("/internal/Publishing/Covers/" + cov)).then(function (b) {
+      return b ? b.arrayBuffer().then(function (ab) { return { data: new Uint8Array(ab), type: /\.png$/.test(cov) ? "image/png" : "image/jpeg", from: "publish" }; }) : null;
+    }, function () { return null; });
+  }
+  // The font files of a face (open TrueType parts only).
+  function epubFonts(key) {
+    var parts = T.faceParts(key).filter(function (p) { return !p.cff; });
+    return parts.length ? parts.map(function (p) { return { data: p.bytes(), range: p.range }; }) : null;
+  }
+  // Fixed layout (E3): each page's picture, at 150 ppi (screen) or 300
+  // (print), at most 16 MP; "text" mode leaves out the text that the
+  // EPUB carries as text (LY_EPUB.live frames).
+  function epubBackgrounds(d, pages, L, prof) {
+    var out = {}, chain = Promise.resolve(), w = d.setup.w, h = d.setup.h;
+    var scale = (prof.q === "print" ? 300 : 150) / 72;
+    if (w * h * scale * scale > IMG_MAX_PX) scale = Math.sqrt(IMG_MAX_PX / (w * h));
+    var skip = prof.fx === 2 ? null : window.LY_EPUB.live, cv = document.createElement("canvas");
+    imageItems(d, pages).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }).catch(function () {}); });
+    pages.forEach(function (id) {
+      chain = chain.then(function () {
+        var page = M.find(d.pages, id);
+        if (!page) return null;
+        LY.R.renderPage(d, page, L, scale, { getImage: A.get, background: "#fff", skipText: skip, canvas: cv });
+        return toBlob(cv, "image/jpeg", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) { out[id] = { data: new Uint8Array(ab), type: "image/jpeg" }; });
+      });
+    });
+    return chain.then(function () { cv.width = cv.height = 1; return out; });
+  }
+  function ymdOf(d) { return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+  // → Promise<{ bytes, report, check, name, ed, pub, cover }>
+  function epubOf(doc, prof) {
+    var O = window.LY_OUT, data = publishData();
+    return epubLibs().then(function () {
+      var ed = O.edition(doc, prof, data), d = ed.doc, pub = ed.pub;
+      var L = ed.changed ? LY.R.computeLayout(d) : (ED.L || LY.R.computeLayout(d));
+      var pages = O.pagesFor(d, prof);
+      if (!pages.length) throw new Error("nopages");
+      var meta = pub ? {
+        title: pub.t || d.name, sub: pub.sub, ser: pub.ser, sn: pub.sn, lang: O.lang(d, pub), ppl: pub.ppl, isbn: ed.isbn, printIsbn: ed.printIsbn,
+        publisher: data && data.set && data.set.imp, date: /^\d{4}-\d\d-\d\d$/.test(pub.rel || "") ? pub.rel : ymdOf(new Date()), desc: pub.blurb, kw: pub.kw
+      } : { title: d.name, lang: O.lang(d, null), date: ymdOf(new Date()) };
+      if (prof.fx) {
+        return Promise.all([epubBackgrounds(d, pages, L, prof), epubCover(prof, pub)]).then(function (r) {
+          return window.LY_EPUB.buildFixed(d, {
+            L: L, pages: pages, meta: meta, modified: new Date().toISOString().replace(/\.\d+Z$/, "Z"), mode: prof.fx === 2 ? "image" : "text",
+            backgrounds: r[0], cover: r[1], fontFiles: prof.nf ? null : epubFonts, zip: window.AtelierZip, sha1: sha1
+          }).then(function (res) {
+            return window.LY_EPUBCHECK.check(res.bytes, window.AtelierZip).then(function (chk) {
+              return { bytes: res.bytes, report: res.report, check: chk, name: fileName(doc, ".epub"), ed: ed, pub: pub, cover: r[1] || (r[0][pages[0]] ? { fx: 1, w: Math.round(d.setup.w * (prof.q === "print" ? 300 : 150) / 72), h: Math.round(d.setup.h * (prof.q === "print" ? 300 : 150) / 72) } : null) };
+            });
+          });
+        });
+      }
+      return Promise.all([epubImages(d, pages, prof.q), epubCover(prof, pub)]).then(function (r) {
+        return window.LY_EPUB.build(d, {
+          L: L, pages: pages, meta: meta, modified: new Date().toISOString().replace(/\.\d+Z$/, "Z"),
+          images: r[0], cover: r[1], fontFiles: prof.nf ? null : epubFonts, pageList: !prof.npl, zip: window.AtelierZip, sha1: sha1
+        }).then(function (res) {
+          return window.LY_EPUBCHECK.check(res.bytes, window.AtelierZip).then(function (chk) {
+            return { bytes: res.bytes, report: res.report, check: chk, name: fileName(doc, ".epub"), ed: ed, pub: pub, cover: r[1] };
+          });
+        });
+      });
+    });
+  }
+  // Export › an EPUB profile: build, check, then the report (save,
+  // preview in Library, mark it in Publishing).
+  function exportEpub(prof) {
+    var doc = LY.doc;
+    if (!doc || exporting) return;
+    LY.flushStory && LY.flushStory();
+    exporting = true;
+    LY.toast(t("ep.working"));
+    epubOf(doc, prof).then(function (res) {
+      exporting = false;
+      LY.panels.epubReport(res, prof);
+    }, function (e) {
+      exporting = false;
+      try { console.error("[orOS] layout: EPUB export failed", e); } catch (x) {}
+      LY.toast(t(e && e.message === "nopages" ? "out.noPages" : "ep.fail"));
+    });
+  }
+  function saveEpub(res) {
+    var blob = new Blob([res.bytes], { type: "application/epub+zip" });
+    return saveBlob(blob, res.name, "application/epub+zip", "EPUB", ".epub");
+  }
+  // A copy on the orOS disk, /internal/Layout/EPUB/, then Library shows
+  // it without adding it.
+  function previewEpub(res) {
+    var fs = diskFs();
+    if (!fs) { LY.toast(t("ep.noDisk")); return Promise.resolve(false); }
+    // an ASCII name: some browsers' private disk refuses other letters
+    // (Library reads the title from the book, not from the file name)
+    var base = res.name.replace(/\.epub$/i, "").replace(/[^A-Za-z0-9 ._-]+/g, "").replace(/\s+/g, " ").trim();
+    if (!/[A-Za-z0-9]/.test(base)) base = "book-" + String((LY.doc && LY.doc.id) || Date.now()).replace(/[^A-Za-z0-9-]+/g, "").slice(-24);
+    var path = "/internal/Layout/EPUB/" + base.slice(0, 120) + ".epub";
+    return Promise.resolve(fs.writeBlob(path, new Blob([res.bytes], { type: "application/epub+zip" }))).then(function () {
+      res.path = path;
+      if (res.quiet) { res.quiet = false; return true; }
+      var p = window.parent;
+      try { if (p && p !== window && typeof p.__orosOpenAt === "function") { p.__orosOpenAt("library", { preview: { path: path } }); return true; } } catch (e) {}
+      LY.toast(t("ep.savedAt", { path: path }));
+      return true;
+    }, function () { LY.toast(t("ep.noDisk")); return false; });
+  }
+  // More › Check an EPUB…: any EPUB, from anywhere.
+  function checkEpubFile() {
+    pickFile(".epub,application/epub+zip").then(function (f) {
+      if (!f) return null;
+      if (f.size > 300 * 1024 * 1024) { LY.toast(t("ep.tooBig")); return null; }
+      return Promise.all([epubLibs(), f.arrayBuffer()]).then(function (r) {
+        return window.LY_EPUBCHECK.check(new Uint8Array(r[1]), window.AtelierZip);
+      }).then(function (chk) { LY.panels.epubReport({ check: chk, name: f.name, only: true }); });
+    }).catch(function () { LY.toast(t("ep.fail")); });
+  }
+
+  // "Send to an app…" (BR-SEND-12): the PDF goes to Files › Layout › PDF
+  // (a free name, never over another file), then the shell's "Send
+  // to…" sheet offers it to Mail, Transfer, Scan & PDF, Library…
+  var PDF_DIR = "/internal/Layout/PDF";
+  function sendApi() {
+    try { var p = window.parent; return p && p !== window && p.orosSend && typeof p.orosSend.open === "function" ? p.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function canSendPdf() { return !!(sendApi() && diskFs()); }
+  function freePdfPath(fs, name) {
+    var base = name.replace(/\.pdf$/i, ""), n = 1;
+    function next() {
+      var p = PDF_DIR + "/" + (n === 1 ? base : base + " (" + n + ")") + ".pdf";
+      return Promise.resolve(fs.stat(p)).then(function (st) { return !!st; }, function () { return false; }).then(function (taken) {
+        if (!taken) return p;
+        n++;
+        return n > 500 ? null : next();
+      });
+    }
+    return next();
+  }
+  function sendPdf(blob, name) {
+    var fs = diskFs(), api = sendApi();
+    if (!fs || !api) return Promise.reject(new Error("nosend"));
+    return Promise.resolve(fs.mkdir ? fs.mkdir(PDF_DIR) : null).then(null, function () {}).then(function () { return freePdfPath(fs, name); }).then(function (p) {
+      if (!p) throw new Error("full");
+      return Promise.resolve(fs.writeBlob(p, blob)).then(function () {
+        LY.toast(t("exp.sentAt", { path: p.slice("/internal/".length) }));
+        api.open({ kind: "files", data: { items: [{ path: p, name: p.slice(p.lastIndexOf("/") + 1) }] } });
+        return "sent";
+      });
     });
   }
 
@@ -181,14 +463,60 @@
     exporting = true;
     LY.toast(t("exp.working"));
     pdfBlob(doc, opts).then(function (blob) {
+      if (opts && opts.send) return sendPdf(blob, fileName(doc, ".pdf"));
       return saveBlob(blob, fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
     }).then(function (ok) {
       exporting = false;
+      if (ok === "sent") return;
       if (ok) LY.toast(t("exp.done"));
     }, function (e) {
       exporting = false;
       try { console.error("[orOS] layout: PDF export failed", e); } catch (x) {}
       LY.toast(t("exp.fail"));
+    });
+  }
+
+  // ---------- SVG (VEC-4, svgout.js loaded on first use) ----------
+  // A page or some of its items as one SVG; pictures cut to their
+  // frames at 150 ppi, embedded.
+  function svgOf(doc, page, ids) {
+    return script("svgout.js", "LY_SVGOUT").then(function (SO) {
+      var imgs = {}, chain = Promise.resolve();
+      imageItems(doc, [page.id]).forEach(function (it) {
+        if (ids && ids.indexOf(it.id) < 0) return;
+        chain = chain.then(function () { return cropImage(it, 150); }).then(function (im) { if (im) imgs[it.id] = im; }, function () {});
+      });
+      return chain.then(function () { return SO.build(doc, page, doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc), { ids: ids }, { images: imgs }); });
+    });
+  }
+  function exportSvg(page) {
+    var doc = LY.doc, order = M.pagesInOrder(doc), n = order.indexOf(page) + 1;
+    return svgOf(doc, page, null).then(function (r) {
+      if (!r) return false;
+      return saveBlob(new Blob([r.svg], { type: "image/svg+xml" }), fileName(doc, (order.length > 1 ? "-" + n : "") + ".svg"), "image/svg+xml", "SVG", ".svg");
+    });
+  }
+  // The picked items: "copy" (clipboard, as SVG and as text) or "save".
+  function svgSelection(mode) {
+    var doc = LY.doc, page = ED.curPage && ED.curPage(), ids = (ED.sel || []).slice();
+    if (!doc || !page || !ids.length) return;
+    LY.flushStory && LY.flushStory();
+    svgOf(doc, page, ids).then(function (r) {
+      if (!r) { LY.toast(t("svg.none")); return; }
+      if (mode === "save") {
+        return saveBlob(new Blob([r.svg], { type: "image/svg+xml" }), fileName(doc, ".svg"), "image/svg+xml", "SVG", ".svg")
+          .then(function (ok) { if (ok) LY.toast(t("exp.done")); });
+      }
+      var cb = navigator.clipboard, done = function () { LY.toast(t("svg.copied")); };
+      if (!cb) { LY.toast(t("svg.noClip")); return; }
+      var plain = function () { return cb.writeText(r.svg).then(done); };
+      if (typeof ClipboardItem === "function" && cb.write && ClipboardItem.supports && ClipboardItem.supports("image/svg+xml")) {
+        return cb.write([new ClipboardItem({ "image/svg+xml": new Blob([r.svg], { type: "image/svg+xml" }), "text/plain": new Blob([r.svg], { type: "text/plain" }) })]).then(done, plain);
+      }
+      return plain();
+    }).then(null, function (e) {
+      try { console.error("[orOS] layout: svg failed", e); } catch (x) {}
+      LY.toast(t("svg.noClip"));
     });
   }
 
@@ -207,6 +535,17 @@
     var chain = Promise.resolve();
     imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
     var jpg = opts.fmt === "jpg", n = order.indexOf(page) + 1;
+    if (opts.fmt === "svg") {
+      chain.then(function () { return exportSvg(page); }).then(function (ok) {
+        exporting = false;
+        if (ok) LY.toast(t("exp.done"));
+      }, function (e) {
+        exporting = false;
+        try { console.error("[orOS] layout: svg export failed", e); } catch (x) {}
+        LY.toast(t("exp.fail"));
+      });
+      return;
+    }
     chain.then(function () {
       var cv = LY.R.renderPage(doc, page, ED.L, scale, { getImage: A.get, background: "#fff" });
       return toBlob(cv, jpg ? "image/jpeg" : "image/png", 0.92);
@@ -1081,7 +1420,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

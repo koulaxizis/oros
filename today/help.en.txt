@@ -76,10 +76,14 @@ A row shows in one place only: with the `To-dos` widget on the screen, To-Do tas
 - [Mood](app:mood) (off until you switch it on): a check-in row while you haven't logged a mood today.
 - [Minimalism](app:minimalism): a row while today's proposal is neither done nor skipped. Its text stays in the app.
 - [Family Tree](app:familytree): death anniversaries of today and the next three days.
-- [Moon & Sky](app:sky): main moon phases, equinoxes and solstices, meteor shower peaks and eclipses; today's as top lines.
+- Weather's [Sky tonight](app:sky): main moon phases, equinoxes and solstices, meteor shower peaks and eclipses; today's as top lines.
 - The screen pet's birthday comes with the Calendar, unless you turned off the pet's Calendar feed on this device.
 - [Game Center](app:gamecenter): a top line with how many of today's game challenges are done.
 - [Mail](app:mail): only the number of unread messages in each account's Inbox, never a sender or a subject. Mail rows have no Assistant button; inside Mail you can still ask about one message.
+- [Scanner & PDF](app:scanpdf): a top line with how many signature requests still wait, one for each request signed or declined in the last 24 hours, and the day and hour a signing link ends when that is in the next three days. Tapping one opens `Signature requests`.
+- [Transfer](app:transfer): a top line for each transfer that arrived in the last 24 hours (it opens the folder in Files when it came to the orOS disk), and the hour a link you sent through your Dropbox from this device stops working, when that is in the next three days.
+- [Base](app:base): the records of today and the next three days, from the date fields you turned `Show in Calendar` on for (the same switch as the Base chip in Calendar; off at first). Tapping one opens the record.
+- While [Sensitive work](help:t/sensitive) is on, Scanner & PDF, Transfer and Base give plain lines ("A transfer arrived", "Base record") without the names of documents, people, files or records.
 
 ## The daily notice
 On your first open of orOS each day after the start time (06:00 unless you change it), Today leaves one notice in the bell when something is late or due today. It only shows numbers, for example "2 overdue · 1 today", never the names of your tasks. Opening it brings you here.
@@ -100,7 +104,7 @@ When the Assistant reads an app (and Claude through orOS Gate), it gets the same
 Open them with the gear button:
 - `Daily summary` turns the daily notice on or off. The Today tab works either way.
 - `From` is the start time, from 00:00 to 12:00.
-- `Quiet the morning reminders the summary covers`: once the summary has come, the separate reminders of Plant Care, Chore Wheel, Pet Health Book, Garage, To-Do, Quote, Minimalism, name days and the weather briefing stay quiet. Reminders at a set time, such as alarms or medicine doses, still ring.
+- `Quiet the morning reminders the summary covers`: once the summary has come, the separate reminders of Plant Care, Chore Wheel, Pet Health Book, Garage, To-Do, Billing's quotes, Minimalism, name days and the weather briefing stay quiet. Reminders at a set time, such as alarms or medicine doses, still ring.
 - `Apps in the summary`: choose which apps take part. Apps marked `sensitive` show only when you want them: Health, Baby and Budget are on, Cycle and Mood are off until you switch them on.
 
 ## Sync and backup

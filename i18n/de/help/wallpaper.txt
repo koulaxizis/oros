@@ -6,13 +6,24 @@ Die große Vorschau rechts (auf dem Handy oben) zeigt dein Hintergrundbild im Fo
 
 ## Stil und Palette
 - `Stil`: `Wellen`, `Strömung`, `Umlaufbahnen`, `Raster`, `Nebel` oder `Baum`.
-- `Baum` zeichnet einen Baum aus dem [Baumzeichner](app:trees) in den Farben der Palette. `Dichte` bestimmt die Blätter und `Chaos` den Zufall. `Baum im Baumzeichner formen` öffnet ihn dort, wo du Baumart, Jahreszeit und Äste wählst; der Knopf `Als Hintergrundbild` dieser App bringt ihn hierher zurück.
+- `Baum` lässt einen Baum wachsen, wie von Hand gezeichnet, in den Farben der Palette. Seine eigenen Einstellungen erscheinen weiter unten (siehe „Baum“). Der Baumzeichner, früher eine eigene App, ist jetzt hier.
 - `Palette`: `Glut`, `Ozean`, `Wald`, `Dämmerung`, `Pastell`, `Mono` und `orOS-Skin`, die ihre Farben von deinem orOS-Skin nimmt und sich mit ihm ändert.
 
 Unter `Einstellungen`:
 - Die Regler `Dichte` und `Chaos` ändern, wie viel gezeichnet wird und wie wild es wird.
 - `Filmkorn` fügt eine feine, körnige Struktur hinzu.
 - `Heller Hintergrund` zeichnet auf hellem statt dunklem Grund. `Nebel` ist immer dunkel (`Ein Nebel wird immer bei Nacht gezeichnet.`).
+
+## Baum
+Mit dem Stil `Baum` erscheinen unter `Einstellungen` der Abschnitt `Baum` und `Meine Bäume`. Derselbe Startwert mit denselben Einstellungen ergibt immer denselben Baum, probier deinen Namen.
+- `Baumart`: `Eiche`, `Weide`, `Zypresse`, `Olivenbaum`, `Bonsai` oder `Wild`. Die Wahl setzt auch die Regler passend.
+- `Jahreszeit`: `Frühling` mit Blüten, `Sommer` mit vollem Laub, `Herbst` mit orangen Blättern, `Winter` mit kahlen Ästen und Schnee. Zypresse, Olivenbaum und Bonsai behalten ihr Laub das ganze Jahr.
+- `Gezeichnet mit`: `Bleistift`, `Tusche`, `Kreide` oder `Farbe`.
+- `Boden`: `Keiner`, `Gras` oder `Hügel`.
+- `Äste` bestimmt, wie oft sich die Äste teilen, von 4 bis 11; `Winkel`, wie weit sie sich öffnen; `Wind` neigt den Baum nach links oder rechts.
+- Beim Stil Baum heißt der Regler `Dichte` `Blätter` (bei 0 ist der Baum kahl) und `Chaos` heißt `Zufall`, von ordentlich bis wild.
+- `Meine Bäume`: Gib einen Namen ein und tippe auf `Baum speichern`; ohne Namen nimmt er den Startwert. Tippe auf einen gespeicherten Baum, um ihn in der aktuellen Palette zu öffnen, oder auf das ×, um ihn zu löschen; `Rückgängig` holt ihn zurück. Gespeichert werden nur die Einstellungen, kein Bild. Deine Bäume folgen dir auf alle deine Geräte, auch die aus dem Baumzeichner.
+- `Exportieren` bietet auch `SVG · der Baum als Zeichnung`: saubere Linien, die du in jeder Größe drucken oder in einem Zeichenprogramm öffnen kannst, im eigenen Zeichenstil des Baums statt in der Palette.
 
 ## Lebendige Landschaft
 Der Reiter `Lebendige Landschaft` oben probiert das Hintergrundbild Lebendige Landschaft aus. Wähle einen Stil (`Inseln`, `Hügel` oder `Garten`) und eine Form: Gib unter `Form` eine Zahl von 0 bis 999999 ein oder tippe auf den Würfel (R) für eine zufällige. Die Vorschau zeigt einen Beispiel-Desktop mit blassen Verknüpfungen und einem Widget; auf deinem eigenen Desktop wächst die Landschaft um das, was wirklich dort ist. Der Stern behält die Landschaft in deinen Favoriten, und `Als Hintergrundbild` macht sie zu deinem Desktop. Die sanfte Bewegung bleibt, wie du sie unter Einstellungen › Darstellung › Hintergrundbild eingestellt hast. Deine Lieblingslandschaften werden mit deinen anderen Geräten synchronisiert, wie deine Lieblingsmuster.
@@ -46,4 +57,5 @@ Nutze die orOS-[Sicherung](help:t/backup), um eine Kopie zu behalten.
 
 ## Grenzen
 - Sehr große Exporte brauchen viel Speicher. Auf einem Handy können sie mit `Export fehlgeschlagen: nicht genug Speicher für diese Größe` scheitern.
-- Du kannst bis zu 60 Favoriten behalten.
+- Du kannst bis zu 60 Favoriten und 200 Bäume behalten.
+- Wird derselbe gespeicherte Baum auf zwei Geräten geändert, bevor sie synchronisieren, gewinnt die neueste Änderung.

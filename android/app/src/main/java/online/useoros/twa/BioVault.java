@@ -58,12 +58,15 @@ final class BioVault {
     // ---- the request the page announced ----
     static final class Want {
         final String act, kid, n;
+        /** "lock" = the orOS screen lock asks (BR-PHONE v11), else Passwords. */
+        final boolean lock;
         final long at;
 
-        Want(String act, String kid, String n, long at) {
+        Want(String act, String kid, String n, boolean lock, long at) {
             this.act = act;
             this.kid = kid;
             this.n = n;
+            this.lock = lock;
             this.at = at;
         }
     }
@@ -71,9 +74,9 @@ final class BioVault {
     private static Want want;
 
     /** {op:"want"} from the page: replaces any earlier one. */
-    static synchronized boolean announce(String act, String kid, String n) {
+    static synchronized boolean announce(String act, String kid, String n, String use) {
         if (!("seal".equals(act) || "open".equals(act)) || !validKid(kid) || n == null || !NONCE.matcher(n).matches()) return false;
-        want = new Want(act, kid, n, System.currentTimeMillis());
+        want = new Want(act, kid, n, "lock".equals(use), System.currentTimeMillis());
         return true;
     }
 

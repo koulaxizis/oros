@@ -1,8 +1,442 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 6.18.02
+## Version 7.49.01
 - **Newsletters and mail fit the phone.** Formatted mail and newsletter issues sent from orOS now tell phone mail apps to use the screen width, so they no longer open zoomed out in a narrow column.
+
+## Version 7.49.00
+- **Ask the Assistant and Claude about eight more apps.** The Assistant and Claude through orOS Gate can now give you a summary of Meal Planner (this week's plan and what in the pantry is close to its date), Travel (your trips and what is still open), Plant Care (what needs water or care), Garage (each vehicle's renewals, service and costs), Habits (today and your streaks), Scanner & PDF (where each signature request stands), Transfer (your transfer history, never the files themselves) and Whiteboard (your boards and the text of their notes). It only reads: nothing is changed. Claude reads an app only where you allow it in orOS Gate. Transfer history is now also found by search.
+
+## Version 7.48.00
+- **Claude's deletions are asked where you are.** When Claude asks to delete something and the orOS that gets the request has nobody at its screen (running in the background, in a hidden window or behind the lock), it no longer says no on your behalf: the request waits and the question appears on the device where orOS is on screen, now or as soon as you open it.
+
+## Version 7.47.01
+- **Contracts on the CRM Dashboard.** The Dashboard now starts with your contracts: how many are in force, how many need a decision and the next end day, then the first five that need a decision with their quick actions. The sales tiles and the stage bars show only once you have a deal in `Pipeline`, so you no longer see a row of zeros.
+- **Pick the Kanban board for contract cards from a list.** In CRM Settings › Contracts, `Kanban board for contract cards` now lists your boards instead of asking you to type a name.
+
+## Version 7.47.00
+- **More apps in Today:** Scanner & PDF shows how many signature requests still wait, those signed or declined in the last day and a signing link about to end; Transfer shows what arrived in the last day and when a link you sent through your Dropbox stops working; Base shows records of today and the next three days from date fields with `Show in Calendar` on. With Sensitive work on, these lines name no document, person or file.
+
+## Version 7.45.00
+- **Send to an app from more apps:** To-Do, Calendar, Contacts, One-Sentence Diary, CRM, Billing, Base, Forms, Library, Meal Planner, Travel and Sticky Notes now have `Send to an app`: a task or list, an event, a contact, a quote's lines, answers or a highlight go to another app, filled in there and saved only when you save.
+- **More apps take what you send:** a link or text becomes a QR code, a list becomes sticky notes on the Whiteboard, the questions of a new form, or a table in Base, and a text becomes a note on a customer in CRM.
+
+## Version 7.44.00
+- **Claude can delete with orOS closed, and you still decide.** When Claude asks through orOS Gate to delete something while orOS is closed (or asleep in the background), the request now waits, encrypted, instead of failing. When you open orOS you see what would go (the app and the titles), once for the whole request, and nothing is deleted unless you press `Delete`. If you don't answer, it asks again later. Deletions can be undone in Settings › Connected services › orOS Gate.
+
+## Version 7.43.00
+- **More reminders with orOS closed:** on the orOS Android app and with `Notifications with orOS closed`, Plant Care, Pet Health Book, Garage, Chore Wheel, CRM follow-ups, Billing documents due, Kanban cards due and Sticky Notes now ring too, never twice with the notice inside orOS.
+- **Kanban reminds you:** cards due today or late get one notice at 09:00 (not those in the last column); tap it to open the card.
+- An app you switch off in `Settings` › `Notifications` stays quiet on the phone too.
+
+## Version 7.42.00
+- **Share files to Transfer and Scanner & PDF:** installed as their own apps, orOS Transfer takes any files you share (up to ten) ready to send, and orOS Scanner & PDF opens PDFs and pictures from Share and Open with, as pages.
+- **New icon shortcuts:** `Send files` for orOS Transfer and `New form` for orOS Forms.
+- **draw.io and Visio files open from your system:** with orOS installed, `Open with` › orOS opens a .drawio or .vsdx file in Whiteboard.
+
+## Version 7.41.00
+- **Send files to more apps:** `Send to an app…` now hands files to Transfer, Photo Lab, Scanner & PDF, Library, Music and Atelier, and a picture can become the wallpaper of this device (it asks first).
+- **Studio, Screen Capture and Layout send too:** a mix, a screenshot or recording, and a Layout PDF go straight to `Send to an app…`.
+- **Fixed:** files sent from Files to Scanner & PDF now really appear as pages.
+
+## Version 7.40.00
+- **Four more apps install on their own:** orOS Transfer, Scanner & PDF, Stock and Forms, each with its own icon and window, also as Android apps. Invoices is now **orOS Billing**.
+- **New users see every app:** each app is now in at least one starting profile, and help and settings name the merged apps by their new home (Billing › Quotes, Calculator › Convert, Weather › Sky tonight).
+
+## Version 7.39.01
+- **Billing:** the quote's currency field no longer runs off narrow phone screens.
+
+## Version 7.39.00
+- **Billing: see how your quotes turn into money.** The Overview shows quotes sent, accepted, invoiced and paid each month, and what is still waiting.
+
+## Version 7.38.00
+- **Billing: one settings page for quotes and invoices.** Your business details from Billing now also appear on the quotes' PDF.
+
+## Version 7.37.00
+- **orOS Gate can stay open on your computer.** With the installed orOS Portable, Settings › orOS Gate › `Keep the Gate open on this computer while orOS is closed` (off by default) keeps orOS running in the background, without a window, while every orOS window there is closed: Claude gets live answers and its changes are made at once instead of waiting. On orOS USB the same place lets the Gate work behind the screen lock. Anything that needs you on screen still waits, every change still notifies you and can be undone, and Sensitive work turns it off. See [Settings](app:settings).
+
+## Version 7.36.00
+- **Billing: turn an accepted quote into an invoice in one step.** The invoice opens filled in, and the quote and invoice link to each other. Clients from quotes and invoices can be picked in both.
+
+## Version 7.35.00
+- **Audiobooks as one M4B with chapters.** In a Studio book, `One M4B with chapters` makes a single audiobook file, with a chapter for each part and the title, author, narrator and cover, ready for Apple Books and audiobook players. Choose 64, 96 or 128 kbit/s. `Write the length to Publishing` then puts its length into the audiobook edition of the title, after you say yes there. See [Studio](app:studio).
+
+## Version 7.34.00
+- **Smart cards on your phone, and nine more.** On a phone the top bar's smart cards now sit behind one button with their number: tap it and they unfold under the bar. On a wider screen they stay in the bar, and the ones without room go behind the same button. New cards: habits, plants, chores and Kanban cards for today, the Timesheet timer, overdue invoices, your next trip, today's meals and the book you are reading. Turn them on in [Settings](app:settings) › Appearance › Top bar.
+
+## Version 7.33.00
+- **Claude's changes with orOS closed look made at once.** When every orOS is closed, what Claude adds or changes through orOS Gate still waits, sealed, until a device opens orOS, but Claude now sees it as made: a new contact or item shows up in its searches marked as waiting, Claude can change it straight away or call it off. When orOS opens, each change is made with the time Claude asked, so your own later edit wins, and if you changed the same item after Claude asked, your version stays. When changes have waited more than 6 hours, you get one notification a day. See [Settings](app:settings).
+
+## Version 7.32.01
+- **Contacts fits on wide screens.** The row of buttons at the top now wraps onto more lines, so every button is on screen without scrolling sideways.
+
+## Version 7.32.00
+- **Quote is now part of Billing (the new name of Invoices).** Your quotes are in its Quotes tab, and old links and shortcuts to Quote open it there.
+
+## Version 7.30.00
+- **Machine suggestions for book translation.** In Writer's translation editor, `⋯` › `Machine suggestions: off…` turns on drafts for each segment from the same on-device translator as Text Tools (Alt+0 to use it), and `Fill empty segments…` drafts the rest for you to check. Off until you turn it on.
+
+## Version 7.29.00
+- **Base grows up.** Send Forms answers into a table and make a public form from a table, see date fields in the Calendar (a switch per field), let the Assistant and Claude read your bases and add records, let Automations follow new records and changed fields, and leave comments on records.
+
+## Version 7.28.01
+- **Suggested VPNs on the Start page.** Under the VPN extension link, a quiet row names a few well-known VPNs with a free plan (Proton VPN, Windscribe, hide.me, TunnelBear) and PIA (paid only). Each opens the provider's own site. You choose and sign in with your own account.
+
+## Version 7.28.00
+- **Pickers in orOS colours.** Every list you choose from, every date, time and colour field now opens in the colours of your orOS instead of the browser's grey boxes: a sheet from the bottom on phones, a panel under the field on a computer, with search in long lists, a calendar that starts on Monday, and a colour picker with your own colours. Questions such as "Make a new address?" are orOS windows too. Same on the site, the installed app, Portable, orOS USB and the Android app.
+
+## Version 7.27.00
+- **Who helps with your data.** In [Settings](app:settings), choose who may use your orOS data: both the Assistant and Claude, the Assistant only (Claude's access through orOS Gate turns off on all your devices), or Claude only (the Assistant hides, and its shortcuts open Claude with your question copied, ready to paste).
+
+## Version 7.26.01
+- **Shared links that arrive damaged.** A song, list or note someone sent you now opens even when a chat app added a space, a line break or a full stop to its link. If part of the link went missing on the way, the page says so plainly and shows how much arrived, so the sender can send it again.
+
+## Version 7.26.00
+- **Automations follow your day and your figures.** New "When": some minutes before an event of your day, when today's till sales reach an amount, when this month's spending passes one. Two new steps happen by themselves: `Pause sounds` and `Play a sound`. Try the ready-made `Quiet before a meeting`. See [Automations](app:automations).
+- **Looks for the top bar.** In `Settings › Appearance › Top bar`, `Look of the bar`: Glass, Midnight or Solid float the bar as a rounded strip; Classic stays as it was.
+- **The smart bar on the Windows desktop** (with the next orOS for Windows): the tray icon's menu gets `Smart bar on the desktop`, the same bar at the top of the screen, even with the orOS window closed.
+
+## Version 7.25.00
+- **The Assistant and orOS Gate find your documents.** When you let them read Files, they see each document's details (type, date, sender, tags, amount, dates, file) and the first 300 characters of its text, nothing more. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never reach them. Documents also show up in the menu search. See [Files](app:files).
+
+## Version 7.24.00
+- **Prompter and Publishing link to other apps.** In Prompter, `On the typewriter` opens a new Typewriter page that starts with the prompt. In Publishing, `Is it public domain?` checks a title in the Public Domain Calculator.
+
+## Version 7.23.00
+- **Check and deliver an audiobook from Studio.** In a book, `Check all` measures every chapter against ACX (Audible) or Storytel and shows which pass and what to fix. `Normalise all` brings every part to the loudness ACX wants, with its peaks held safe, and can be taken out again; noise is only pointed out, never changed for you. `Export the book` makes one MP3 per chapter with the title, author, narrator, ISBN and cover from Publishing, plus the large cover and a report. See [Studio](app:studio).
+
+## Version 7.22.00
+- **Book translations meet Publishing and Calendar.** In a Writer translation, `Publishing title…` links it to a title in Publishing: its progress shows in that title's release plan, and you can add yourself as the translator there in one step. `Deadline and goal…` sets a due date and how many words a day you want to translate (or lets orOS work it out); a line under the progress bar shows the days left and today's words, and Calendar can remind you every morning until the deadline. See [Writer](app:writer).
+
+## Version 7.21.00
+- **Base: more ways to see a table.** New views: kanban (cards in columns by a choice field, drag them across), calendar (records on a month by a date field), gallery (cards with a picture) and a form for typing records one after another. A new Attachments field keeps photos and files with a record on the orOS disk. Print a view, or save it as a PDF.
+
+## Version 7.20.00
+- **Default apps.** Settings › Default apps: pick the app for .txt, .md, .csv, .pptx and .opml files. Your picks follow you to every device, and Files opens those files there.
+- **Change your shortcuts.** Settings › System › Keyboard shortcuts: change the key of any orOS shortcut or turn it off, with Reset all to go back. Every orOS shortcut is now Ctrl+Alt+Shift + a key. Plain Ctrl+K no longer opens the command bar: use Ctrl+Alt+Shift+K. Shortcuts inside apps stay as they were.
+
+## Version 7.19.00
+- **Second screen.** With two screens set to Extend (on Windows: Win+P), Ctrl+Alt+Shift+B or the two-screens button in Open apps moves an app to the other screen, and the same keys bring it back. Slides puts the audience on the other screen and keeps the speaker view on yours. Settings › Device › Screen shows your screens. Works in Chrome, Edge and the orOS apps.
+
+## Version 7.18.00
+- **Clipboard history and emoji.** Clipboard history (Settings › System, off until you turn it on): orOS keeps the text you copy inside its apps on this device; Ctrl+Alt+Shift+V or Clipboard in Quick settings brings it back, with pins, search and Paste into the field you were in. Never Passwords, nothing in Sensitive work. New emoji picker: Ctrl+Alt+Shift+. or Emoji in Quick settings, search in English, Greek or German. See [Privacy](help:t/privacy).
+
+## Version 7.17.01
+- **VPN extension on the Start page.** The Internet window's Start page now links a guide to adding a VPN browser extension with your own account. With the next releases of orOS Portable and orOS USB, the Internet window can install extensions from the Chrome Web Store, and extensions you add can no longer read orOS's own pages (on Portable, on Windows).
+
+## Version 7.17.00
+- **Night Light.** A warmer screen in the evening, with less blue light. Turn it on in Settings › Appearance › Night Light and choose when: from sunset to sunrise (worked out offline for the place of the top-bar weather), your own hours, or always, and how warm. It fades in and out over 20 minutes. The new Night Light button in Quick settings turns it on now or off until the next evening. On orOS USB the screen's own colours change, once its next release is out. See [Appearance](help:t/appearance).
+
+## Version 7.16.00
+- **Overview: everything on one screen.** Ctrl+Alt+Shift+E shows the search field, your open apps, your recent files and a small System strip (memory, storage, sync). Start typing to search; click an app to go back to it or × to close it. In Settings › System › Overview you can also open it from the top-left corner or with the Super key alone (both off at first). See [The menu](help:t/menu#overview).
+- **See what is running.** Settings › Device has a new Running now card: every open app, the places it takes, Close, Close the others, and the device's memory. The Sync card now also shows files waiting to upload and the last file sync.
+
+## Version 7.15.00
+- **Text on a path, SVG and text to outlines in Atelier and Layout.** Pick a text and a shape or line and choose `Text on path`: the text runs along the outline, and you can move it, flip it or release it. Both apps now save SVG files of a page or of what you picked, with texts kept as text, and `Copy as SVG` pastes into Inkscape, Affinity or Figma. Atelier opens an SVG as editable shapes or as a picture. `Text to outlines` turns a title or a logo into shapes whose points you can edit, and automations and the Assistant can do it too. See [Atelier](app:atelier) and [Layout](app:layout).
+
+## Version 7.14.00
+- **Claude, and Claude desktop.** `Settings` › `Connected services` has a new `Claude` card. `Open Claude in a window` opens claude.ai, where you use your own Claude account. On a computer, `Get Claude desktop` opens Anthropic's download page (Windows, macOS, and a beta for Ubuntu and Debian). On orOS USB and orOS Portable, once their next release is out, the card installs, opens and removes Claude desktop for you, downloaded from Anthropic and checked against Anthropic's signature. orOS never carries the app itself. A connector you add on claude.ai, such as orOS Gate, works in Claude desktop too. See [Settings](app:settings).
+
+## Version 7.13.00
+- **Smart top bar.** The top bar can now show live items next to the clock: your next event with a countdown, the focus timer, today's tasks, water, what you spent this month and today's till sales. Each one shows only when it has something to say, and a tap opens its app. Turn them on and set their order in `Settings`, under `Appearance`, in `Top bar`; this stays on this device. See [Appearance](help:t/appearance).
+
+## Version 7.12.01
+- **Play on free music pages.** On a free music page in Music (a genre such as World, a mood or a shelf), Play and Shuffle no longer say that a song is not on this device while the songs are still loading. They now start the songs as soon as they arrive. A genre page with no songs plays an album from the Internet Archive, and a page with nothing at all says so. See [Music](app:music).
+
+## Version 7.12.00
+- **Products made to order in Stock.** In a product's editor, turn on `On demand (made to order, no stock count)`. Such a product has no count: it never runs out, never shows as low and has no stock value, and the list and the till say `On demand`. The till sells it without the below-zero warning. Your WooCommerce shop's quantity is never read into it or sent back, so you set this in Stock yourself. Its sales still count in your sales reports.
+
+## Version 7.11.00
+- **Link documents to the items they belong to.** In Files › Documents, `Link to…` links a document to an entry in Budget, an invoice, a vehicle or renewal in Garage, a record in Health or a customer in CRM. Tap the link to open that item; the item in turn shows its `Documents`, and a tap there brings you back. A document linked to Health is private, like medical ones. See [Files](app:files).
+
+## Version 7.10.00
+- **Dice & Coin and Wheel of Fate are now one app, Chance.** It has two tabs, `Dice & coin` and `Wheel`. Your saved wheels are kept, and old links and shortcuts to Wheel of Fate open the Wheel tab.
+
+## Version 7.09.00
+- **Transfer takes the background picture from the orOS disk too.** Next to `Background picture…`, `Picture from the orOS disk` opens your disk with only folders and pictures. Tap one and it becomes the background, made smaller on your device and without camera details, as before.
+
+## Version 7.08.00
+- **draw.io and Mermaid in Whiteboard.** `More` › `Open a draw.io or Visio file…` opens .drawio files (compressed too) from draw.io and diagrams.net, each page as a new board with flowchart, UML and network shapes, lanes as frames and joined lines. `Export` › `draw.io` saves a board for draw.io. `More` › `Draw from Mermaid text…` draws a Mermaid flowchart, and the Assistant can too.
+- **Visio files in Whiteboard.** The same `More` › `Open a draw.io or Visio file…` opens .vsdx files: each page a board, flowchart, org chart, UML and network shapes by their names, with text, colours and connectors. Other Visio shapes come in as rectangles with their text.
+
+## Version 7.07.00
+- **Record audiobooks in Studio.** `Projects` › `Books` holds books of chapters: each chapter is an ordinary Studio project, with opening and closing credits, and a new book starts with a `Voice` track and NULL effects for speech. Link a book to its title in Publishing for the author, narrator and ISBN, and choose ACX (Audible) or Storytel. Takes in a book are saved as lossless 24-bit FLAC, about half the size of a WAV. Record the quiet room once as room tone, and `Fill the gaps` puts it wherever the voice stops, so no digital silence is left. See [Studio](app:studio).
+
+## Version 7.06.00
+- **Book translations go back into the Word file, and out as XLIFF.** A translation started from a Word file can now be saved with `Save as Word (.docx)…`: the translated text goes into a copy of your original file, and its pictures, tables, styles, headers and footers stay exactly as they were. To work with a translator who uses another tool (Trados, memoQ, OmegaT…), use `Export XLIFF 1.2…` or `Export XLIFF 2.0…`, and `Import XLIFF…` to read their work back. See [Writer](app:writer).
+
+## Version 7.05.00
+- **Studio: transcripts for podcast episodes, and publishing on your own Nextcloud.** Each episode has `Transcript`: when you ask, the speech becomes text on your device (nothing is sent anywhere), you correct it, and it goes on the site and into the feed for podcast apps. `Publish on Nextcloud or WebDAV` puts the show's site into a folder on your own server; podcast apps read it through the folder's public link. The Assistant and orOS Gate can now tell you about your shows and episodes (they never publish).
+
+## Version 7.04.00
+- **Base: bring in Airtable and Excel, keep a base as a file.** `Import` takes several files at once: CSV, Excel and ODS files become the tables of one base, and Airtable's columns that name records of another table become real links. Base menu › `Save as orOS file (.orosbase)` keeps a whole base, with its tables, views and links, for a copy or another device; opening it adds what is missing and never deletes. In Spreadsheet, `Send to an app` › Base turns the selected cells into a new table.
+
+## Version 7.03.00
+- **Publishing: your distributor's sales report becomes royalty statements.** In Royalties, `Import sales report…` reads the report you download from DistroKid (Bank › See Excel version) as it is, and any other CSV, TSV or spreadsheet after you choose its columns once. Each line finds its track by ISRC, else its release by UPC/EAN. Tracks with master ownership pay their owners, the others the release's royalty terms. One statement per person and currency, nothing converted; lines that match nothing are listed, and you can link one to a track. The file stays on your device and no formula in it ever runs.
+
+## Version 7.02.00
+- **Your font for all of orOS.** On a font's page in Settings › Fonts, `Use for orOS` makes it the font of the menus, buttons and apps on this device, instead of Nunito, for example a font that is easier for you to read. Letters it does not have stay in Nunito, and documents keep their own fonts. Accessibility shows the font in use and takes you back to Nunito.
+- **Where a font is used.** `Find where it's used` on a font's page lists the Layout, Atelier and Writer documents that use it, each with Open, and it looks by itself before you remove a font.
+- **The Assistant knows your fonts.** The Assistant, and Claude through orOS Gate, can read your fonts, with their Greek and polytonic letters, licence and collections, to suggest one for a book or a design. They only read the list.
+
+## Version 7.01.00
+- **A helper's phone that opens only Stock's till.** In the till's `Receipt settings`, under `Helper device (till only)`, tap `Make this device a till`. From then on the phone starts straight on the till with no PIN, so a helper at a stand can sell. Anything more needs your screen-lock PIN: another app, events, price lists, settings, voiding a closed day, undoing a sale and a discount over the limit. With Sensitive work at Hardcore the phone still asks for the PIN at every start.
+- **A closed day goes to Budget as one entry.** After `Close the day`, `Add to Budget` opens one income entry for the day's total, filled in for you to save.
+
+## Version 7.00.00
+- **Sensitive work, complete.** In [Settings](app:settings) › `Sensitive work`: a panic lock (Esc three times), a duress PIN that erases this device (and, if you choose, the cloud), a discreet tab, travel mode (everything leaves the device and stays in your encrypted cloud), a dead-man switch, a `Security checkup` card, and on Android widgets and reminders without titles. See [Sensitive work](help:t/sensitive).
+- **Remove hidden details** in [Files](app:files): a clean copy of a photo, PDF or Office file without GPS, author, dates or the program used.
+- **Pages and files that delete themselves**: `Delete itself…` in a page's menu in [Notes](app:notes) or a file's menu in Files, after 1 hour to 30 days, on every device.
+
+## Version 6.99.00
+- **Ask the Assistant for an e-book.** Say "make an EPUB of …" with the name of a Layout document or its title in Publishing (add "fixed layout" for a picture book or comic, or "mark it ready in Publishing"). The card `Make an EPUB · Layout` has Layout make and check the EPUB on this device, keep a copy in Layout/EPUB and show its report; the conversation gets only the numbers, never the book. Claude can do the same through orOS Gate.
+
+## Version 6.98.00
+- **Chord diagrams in Lyric Sync.** Every chord of a song now shows how to play it on guitar, ukulele or piano, left-handed too: under the sheet, in the chord picker, with a tap on the stage, and in the PDF. See [Lyric Sync](app:lyricsync).
+
+## Version 6.97.00
+- **Documents remind you of their dates.** In Files › Documents, orOS tells you 30 and 7 days before a document expires, on the day itself, and when its keep-until date has passed (from 09:00 on this device; `⋯` › `Reminders of dates` changes the hour or turns them off). The same dates show in Today and as `Documents` in Calendar; a private document shows only its type there. A ready rule in Automations turns each reminder into a To-Do. Nothing is ever deleted. See [Files](app:files).
+
+## Version 6.96.00
+- **Email Signature is now part of Mail.** Open `Email signatures` in Mail to make and keep your signatures, even with no mail account set up. Your signatures are kept, and old links and shortcuts to Email Signature open that view.
+
+## Version 6.95.00
+- **Several people sign one PDF.** In Scanner & PDF up to 5 people can sign the same document. In the editor choose a field and press `Signer 1` to give it to the next signer; each signer's fields have their own colour. `Ask to sign` gives each person their own link with only their fields. `Signature requests` shows the document once with everyone's state, and when the last one has signed orOS makes one PDF with all the signatures and a certificate for each signer, in Files › PDF › Signatures. See [Scanner & PDF](app:scanpdf).
+
+## Version 6.94.00
+- **SOS now also reaches the copies outside orOS.** After an SOS the orOS browser add-on forgets its copy of Passwords the next time an orOS tab opens in that browser (add-on 2.2.0), the orOS Android app clears its autofill copy and fingerprint secrets, the CRM web form stops taking messages, and orOS Drive on a computer erases its own copies once it can confirm the SOS with the vault key. Every factory reset now also clears the Android app's autofill copy. See [Settings](app:settings).
+
+## Version 6.93.00
+- **See what your forms got back.** In [Forms](app:forms), `Answers` opens on a summary with a chart for each question; `Show only` keeps one kind of answer, and `Open in Spreadsheet` or `Download CSV` takes them with you. Each answer can go to Contacts or the CRM in one press, a form made from a Base table sends its answers back there, the Assistant drafts forms and tells you how they add up, and a form can be a quiz with right answers, points and scores.
+
+## Version 6.92.00
+- **Lay out diagrams in Whiteboard.** Select shapes joined by arrows and press `Lay out as a diagram`: a tree for org charts or a flow for processes, top to bottom or left to right (`More` › `Lay out the board…` for everything). `Align and space` lines objects up by an edge or centre and spaces them evenly. One Undo puts it back.
+
+## Version 6.91.00
+- **Kanban plans leave the Timeline.** `Export timeline (PDF)` prints the Gantt chart with milestones, arrows and the critical path. Start dates show in [Calendar](app:calendar) and Today, the Assistant can set start dates, milestones and dependencies, and start dates come along when you import from Trello or Jira. See [Kanban](app:kanban).
+
+## Version 6.90.00
+- **Podcast episodes carry their chapters and cover.** The MP3 that Studio makes for an episode now holds its title, show, number, date, language, show notes, cover and the chapters from your markers, so podcast apps and players show them even when they play the file directly. Every MP3 from Studio uses the same up-to-date tags (ID3v2.4). See [Studio](app:studio).
+
+## Version 6.89.00
+- **Glossary and checks for book translations in Writer.** Keep the terms of a book in a glossary: when a sentence has one, its translation shows under it and Alt+G puts it in. `Add a term…` takes the selected words, and terms can be marked as never to be used. As you type, Writer warns about a missing or forbidden term, numbers, formatting marks, spaces, end punctuation and a sentence translated two ways; `Check the translation…` lists every warning. Warnings never stop you. Glossaries import and export as CSV and TBX. See [Writer](app:writer).
+
+## Version 6.88.00
+- **Transfer can send your own picture as the background.** `Background picture…` on the send card puts one of your pictures behind the files on the other person's screen. It is made smaller on your device and saved again without camera details such as the place, then sent encrypted with the files. The matching shapes that show you are connected move to a small circle next to the title.
+
+## Version 6.87.00
+- **Translate from Mail, Reader, Notes and Montage.** A Translate button under a message, above an article, at the end of the Notes formatting bar and in Montage's `Subtitles` translates on the device, as in Text Tools. In Notes you replace the text or add the translation below it; in Montage every subtitle is translated at once and keeps its timing, with Undo. The Assistant can also open a translation on the device for you.
+
+## Version 6.86.00
+- **Base: link records between tables.** A `Link to records` field links a record to records of another table, for example a book to its authors, and the other table shows the same links from its side. `Lookup`, `Rollup` and `Count of links` fields show, add up or count what the links point to, and `Formula` fields work out a value from the other fields, such as `{Price} * {Copies}`, with the Spreadsheet's functions.
+
+## Version 6.85.00
+- **Studio: publish your podcast on GitHub Pages.** In `Publish as podcast`, write your GitHub repository and paste a token of yours, and Studio puts the whole site there itself; GitHub Pages serves it for free. Publishing again sends only what changed and never drops an episode that is already online. The token stays on this device only.
+
+## Version 6.84.00
+- **Publishing: a release plan for music, and links to the other apps.** `Make the plan` on a single, EP or album dates every step back from the release day: master, artwork, metadata and codes, upload to the distributor, editorial pitch, pre-save and posts, first week. A track's `Lyrics` opens its song in Lyric Sync, and the MP3 copy from there now carries the track's ISRC. `In Music` finds the track in Music, `Item in Stock` puts a CD, vinyl or cassette edition into Stock with its barcode, and `Release kit in Atelier` makes the store cover (3000 × 3000), a post, a story and a banner.
+
+## Version 6.83.00
+- **Atelier and Layout: combine shapes and outline strokes.** Pick two or more shapes and choose Unite, Subtract front, Intersect or Exclude overlap: you get one shape with points you can edit, looking like the shape at the back. Outline stroke turns a stroke (dashes and arrow heads too) into a filled shape.
+
+## Version 6.82.00
+- **Font collections.** In Settings › Fonts › Collections, group the fonts of a project, such as a book or a series of covers, from your own fonts and the free ones, and download a collection's free fonts for offline use. Layout's Fonts dialog and Atelier's font panel list the document's collection first. Each font can also keep a note, such as where you bought it. Collections and notes sync to all your devices.
+- **Your computer's fonts in orOS.** Settings › Fonts › On this device (Chrome and Edge on a computer) lists the fonts installed on this computer, with a sample, their Greek and polytonic letters and what their licence says. Copy one into orOS, after a confirmation, to use it in Layout and Atelier on all your devices; a font whose licence forbids embedding is never copied.
+- **Writer fonts.** Choose a font for text and one for headings in Writer's Page settings, from your font collections and the fonts on your orOS disk; they show on screen, in print and in the PDF.
+
+## Version 6.81.00
+- **Stock's till now follows you to a fair.** Make an event with its dates, the stand's warehouse, a price list and a cash float. Pack books for the stand in one step and bring back what is left at the end. Every sale is tagged with the event, and the event report shows what sold each day, per title, and what is left at the stand. When you close the day you can count the cash drawer by notes and coins, and the till shows how much it is over or short.
+
+## Version 6.80.00
+- **Claude changes its folders with orOS closed.** Claude can now also write, move and delete files in its folders while every orOS is closed: the change waits, sealed, and is made the next time orOS opens. If a file changed meanwhile, the new text is saved next to it as a copy with Claude and the date in its name, and nothing is moved or deleted. Deleting still asks you on the device first, and waits until you answer. A link from Claude to a file now opens a page with a Download button, so a link preview can't use it up. See [Settings](app:settings).
+
+## Version 6.79.00
+- **Guests answer by themselves.** In the Calendar, an event's `Guests…` now makes invitation links: every guest gets their own link to answer Coming, Maybe or Not coming (with plus-ones and a note) in any browser, and sees their QR ticket when they come. An open sign-up link fills the places and the waiting list for you. Answers come back encrypted, by themselves. See [Calendar](app:calendar).
+
+## Version 6.78.00
+- **Claude reads its folders with orOS closed.** An open orOS now keeps a sealed copy of Claude's folders in your Dropbox (up to 250 MB unless you change it, kept 7 days), so Claude can list and read them even when every orOS is closed, and can give you a link to one file that works once, for 15 minutes. Changes still wait for an open orOS. `Delete the copy now` in Settings › orOS Gate removes it; nothing is copied during Sensitive work. Dropbox may ask you to sign in again once for this. See [Settings](app:settings).
+
+## Version 6.77.00
+- **Keep a folder on all your devices.** In Files › orOS Drive, `Keep on all my devices` keeps a folder downloaded on every device where you use orOS with sync, not only this one, so it works offline everywhere and orOS Drive mirrors all of it. Turn it off the same way. See [Files](app:files).
+
+## Version 6.76.00
+- **Fixed-layout e-books from Layout.** An EPUB edition now has a `Layout` choice (`Export` › `Editions` › `Edit editions…`): `Fixed: pages as in print, text as text` keeps every page exactly as designed, for picture books, comics, cookbooks and art books, with the text as real text readers can search and have read aloud; `Fixed: pages as pictures` puts each page in as one picture. Facing pages open side by side, and every page is in the book's page list. Library now opens fixed-layout EPUBs too, each page scaled to the screen.
+
+## Version 6.75.00
+- **Setlists, PDF and print in Lyric Sync.** Put songs in a set for a gig or a rehearsal, each in its own key, and play the whole set on the stage, one song after the other. Make a PDF or print a song or a set with the chords above the words, in Greek too, and send a dated set to Calendar. See [Lyric Sync](app:lyricsync).
+
+## Version 6.74.00
+- **Documents can now be searched by their text.** Files › Documents reads the words of a PDF, and with your OK recognises the text of scans and photos on this device (Greek and English). Search finds a document by any word in it, `From the text:` suggests its type, date, amount and expiry, and in Scanner & PDF `Also add it to Documents` files a new scan straight away. See [Files](app:files).
+
+## Version 6.73.00
+- **Unit Converter is now part of the Calculator.** Open the `Convert` mode in the Calculator for every unit, currency and cooking conversion, with your favourites and recent ones kept. Old links and shortcuts to Unit Converter open that mode.
+
+## Version 6.72.00
+- **Signed PDFs come back on their own.** When you ask someone to sign a PDF in Scanner & PDF, the signed copy now comes back to your orOS by itself: no need to paste the reply link any more. Requests that wait have a `Remind` button that writes a short reminder for your email app. If the automatic way cannot be used, the signer still gets a reply link to send you, as before. See [Scanner & PDF](app:scanpdf).
+
+## Version 6.71.00
+- **Claude's folders.** In Settings › Connected services › orOS Gate you can now choose `Claude's folders`: folders of the orOS disk (for example the ones orOS Drive mirrors from your computer) that Claude may list and read, and with `May change` on Files also write, move and rename text files in. Every change can be undone, a replaced file goes to the Trash first, and deleting always asks you on the device. Key and secret files are never shown. The Assistant gets the same folders. See [Settings](app:settings).
+
+## Version 6.70.01
+- **Banks in the installed orOS.** Budget's banks and PayPal now update in the installed orOS, orOS Portable and orOS USB too: with Update now, when you open Budget and at the times you set. Connecting a bank or renewing its access still happens at useoros.online in a browser, because the bank sends you back there.
+
+## Version 6.70.00
+- **Photos in Files.** Files has a new **Photos** place: every picture and video on your disk in one timeline by the date it was taken, with a full-screen viewer. Make **albums** without moving any file (they sync to your other devices), see your photos on a **map** from the place they were taken, and find **duplicates** and near-duplicates so you can keep the best one and send the rest to the Trash. Photos that are only in the cloud download when you look at them. See [Files](app:files).
+
+## Version 6.69.00
+- **SOS: erase everywhere.** If you think someone got into your orOS, Settings › System › `SOS: erase everywhere` closes the cloud and erases orOS on every device that syncs with your passphrase, closes your shared links, sign-in link, notifications, orOS Gate, webhook and households, and then shows what you still have to do (Dropbox password and connected apps, deleted files, passwords). Type SOS and your passphrase; you have 10 seconds to cancel. In Sensitive work mode the shield gives you the SOS button directly. After a **Factory reset** your other devices now stop and ask whether to erase themselves too or keep their data, instead of filling the cloud again. See [Settings](app:settings).
+
+## Version 6.68.00
+- **Sensitive work.** A new page in Settings for journalists, their sources and anyone whose work must not leak. One switch, on this device only, tightens the screen lock, keeps no sync passphrase here, turns off push, sign-in links and fetching through the relay. `Hardcore` goes further: a passphrase lock only, and this device reaches nothing but your sync cloud. A shield in the top bar shows it is on; turning it off brings your earlier settings back. See [Sensitive work and sources](help:t/sensitive), a new help page that also says plainly what orOS cannot protect.
+
+## Version 6.67.00
+- **Share a form with a link.** In Forms open a form and `Share`: `Publish` gives a link, a QR code and a code to put the form on your website. People fill it in on a page that needs no orOS; their answers are locked in their browser so only your orOS can read them, and they show up in `Answers`. You can close the form, set when it opens and closes, allow one answer per browser and add a button to your page after sending. Waiting answers show in Today, as an orOS notice and, where it is on, as a push notice. See [Forms](app:forms).
+
+## Version 6.66.00
+- **Sign in a new browser later with a link.** On a signed-in device open Settings › Sync › `Send a sign-in link`. Send yourself the link (copy, share or your own email app) and keep the 8-character code it shows: the code is never in the link. Open the link on the new browser within 15 minutes and type the code; it connects your Dropbox or WebDAV, unlocks and syncs. The link works once and the device that sent it shows when it was used. See [Sync](help:t/sync).
+
+## Version 6.65.00
+- **Diagram connectors in Whiteboard.** A selected arrow's `Line shape` can be `Right angles, around shapes` (it finds its way around the shapes in between and follows them when they move) or `Curved`. `Start of the arrow` and `End of the arrow` set each head on its own, with the UML heads (hollow triangle, filled and hollow diamond). On a right-angled or curved line, drop an end near a side to keep it on that side.
+
+## Version 6.64.00
+- **Dependencies in the Kanban Timeline.** In a card, `Depends on` lists the cards it waits for, or drag the dot after a bar onto another bar. Arrows join them and turn red when the next card starts too early; the message then offers `Move the next ones too`, with its own Undo. `Critical path` in the view menu outlines the cards that set the end of the plan. See [Kanban](app:kanban).
+
+## Version 6.63.00
+- **A loudness meter in Studio.** `LUFS` on the master strip (or `Loudness…` in the export window on a phone) measures your song by EBU R128, the way NULL Loudness Meter does: momentary, short-term and integrated loudness, range and true peak while it plays. `Measure the song` mixes and measures all of it, `Measure a file…` does the same for any audio file, and `Target` says what Spotify, Apple Music, YouTube, podcast apps or broadcast will do with it. The audiobook targets (ACX, Storytel) check RMS, peaks, noise floor and room tone. `Choose a reference…` plays a song you like at your song's loudness, so you compare only the sound. See [Studio](app:studio).
+
+## Version 6.62.00
+- **Translation memory in Writer.** Every sentence you confirm in a book translation is kept in a memory for that language pair. When a new sentence is like one you translated before, the earlier translation appears under it with how close it is and what changed; an exact match fills an empty sentence as a draft. `Search the memory…` finds a word or phrase in all your earlier translations, and a sentence that comes again in the book fills itself when you confirm the first one. Memories import and export as TMX, the format other translation tools use. See [Writer](app:writer).
+
+## Version 6.61.00
+- **Choose how long Transfer keeps your files in Dropbox.** With `Send through my Dropbox`, pick `Keep in Dropbox for` 4, 12, 24, 48, 60, 72, 84 or 96 hours. Longer than 4 hours needs one more Dropbox sign-in on each device, the first time. When the time is up, the link stops working and orOS deletes the files.
+
+## Version 6.60.00
+- **Translate between 22 languages on the device.** Text Tools › Translate now covers 21 languages besides English (German, French, Spanish, Italian, Portuguese, Dutch, Polish, Russian, Turkish, Albanian, Bulgarian, Chinese, Japanese and more); languages without a direct model go through English. It recognises the language of the text by itself. Settings › Language & search › Translation on this device shows the downloaded languages with their size and removes them. Where no model fits, you can let the Assistant's AI translate (off by default, this device only).
+
+## Version 6.59.00
+- **Decode JWT and test regular expressions in Pad.** In `Tools…` (Alt+T), `Decode JWT` shows a token's header, payload and expiry (the signature is not checked). `Regex tester` tries a pattern on the file as you type, with groups, a replace preview and `Select all matches`; a pattern that runs for over a second is stopped.
+
+## Version 6.58.00
+- **New app: Base.** Keep records with structure in Office › Base: a catalogue, a collection, a project. Make tables with typed fields (text, numbers, money, dates, choices, ratings and more), see them as a grid or as cards, and filter, sort and group them. Start from one of six templates, from scratch or from a CSV file, and send any view to Spreadsheet or save it as CSV. Two devices editing different cells of the same record both keep their change.
+
+## Version 6.57.00
+- **Studio: publish your podcast.** `Publish as podcast` next to Export makes a show with its cover and turns each project into an episode. Markers on the timeline (press M) become chapters. Studio then makes the feed and a small site you download as a ZIP and upload to your own space, for example GitHub Pages. Apple Podcasts, Spotify and the Podcasts app can follow it there.
+
+## Version 6.56.00
+- **Publishing: credits and splits for music releases.** Each track keeps who played, wrote, produced, mixed and mastered it, the songwriting shares (with collecting society and IPI) and who owns the recording. A red line shows when shares don't add up to 100 %. `Split sheet in Writer` turns a track into a document for everyone to sign, and `Same credits and splits on every track` saves typing on an album. The Assistant and Claude can change a release's label, genre, ℗ and © lines, tracks and editions too.
+
+## Version 6.55.00
+- **Atelier and Layout: draw with a pen and edit points.** Tap to place corner points, drag for curves, tap the first point to close the shape. Double-click any shape (or choose Edit points) to move its points and handles, add or remove points, make them corner or smooth, break or join the outline. Press P for the pen.
+
+## Version 6.54.00
+- **Settings › Fonts: your own font files and the free fonts in one place,** with a sample in your own text, which Greek and polytonic letters each font has and what its licence says. Add .ttf, .otf, .woff and now .woff2 files (Layout and Atelier take .woff2 too); remove a font to the Trash.
+
+## Version 6.53.00
+- **The Author Portal and orOS now talk both ways (Revenue Splitter 1.18.0).** When a creator asks in the Author Portal for a new text on their page or for author copies, CRM brings the request in as a follow-up for today on their card, with the new text, the text on the page now and any new photo saved in their folder. When you tick it done, write a short reply that the creator reads in the Portal. In CRM › Contracts › `Production stage…`, tick the cards of your Kanban board that the Portal may show: each creator then sees which of the seven phases their work is in, its release day and only the text after `For the creator:` in the card. Kanban shows `Portal · phase N` on those cards and sends the change by itself when a card moves.
+
+## Version 6.52.00
+- **Stock's till is ready for book fairs and markets.** Give a discount on one line or on the whole sale, as a percentage or an amount, with a reason printed on the receipt. You can also cap the largest discount on a device. A customer can pay part in cash and part by card, and the change is worked out from the cash part. `+ Other item` sells something that is not a Stock product, such as a tote bag or a donation, with a typed name and price. The receipt can be shared as a PDF or shown as a QR code instead of printed. It still says it is not a tax receipt.
+
+## Version 6.51.00
+- **Transfer has a new look and its own page.** Each transfer now comes with a picture drawn from its code. Both sides see the same shapes, so a small copy on the sender's screen lets you check at a glance that the right person is connected. Add files with the big plus or drop them anywhere, and add an optional title and message, which travel encrypted with the files. Transfer now speaks German too, and useoros.online/transfer/about/ explains it to people who do not use orOS.
+
+## Version 6.50.00
+- **Voice notes: trim, transcribe, send to Studio.** A recording's `⋯` menu can now trim it (the trimmed part is saved as a new file and the old one goes to the Trash), turn its speech into text on this device with the Whisper model that Montage and Lyric Sync use (only when you press `Transcribe`; the sound never leaves the device), and open it in Studio.
+
+## Version 6.49.00
+- **Layout makes EPUB e-books.** `Export` › `Editions` › `EPUB` turns the same document into an EPUB 3 e-book whose text flows to the reader's screen: chapters from the headings, the contents from the heading levels, the styles as the book's look, pictures with their descriptions and captions, the fonts inside, the cover, and the ISBN, title, people and description from the linked Publishing title. The print edition's page numbers ride along, so a reader can go to "page 87 of the book". A report lists what went in, pictures without a description and what e-book stores usually ask for. `Preview in Library` opens it without adding it, `Mark ready in Publishing` records it on the e-book format, and `More` › `Check an EPUB…` checks any EPUB file.
+
+## Version 6.48.00
+- **Lyric Sync has a stage.** Press `Stage` on a song to play it live: big words with the chords above them, full screen, the screen kept on. It scrolls with the recording when the song is synced, or by itself at the song's tempo, and a foot pedal or Page Down turns the page.
+
+## Version 6.47.00
+- **Documents in Files: an archive of your papers.** Receipts, bills, contracts, warranties and certificates get a type, tags, a date, the company, an amount, an expiry date and a keep-until date, and you find them again by any of these. Any file can be a document and stays where it is; new ones go to `Documents` › (this year). Export everything as a .zip with a spreadsheet, and import it on another device. See [Files](app:files).
+
+## Version 6.46.00
+- **Moon & Sky is now in Weather.** Open the `Sky tonight` tab in Weather for the Moon, planets and stars over your Weather city. Old links and shortcuts to Moon & Sky open that tab.
+
+## Version 6.45.00
+- **Guest lists, QR tickets and a door check-in for your events.** A one-off event of your own calendar now has `Guests…`: add people from Contacts or by name, keep their answers, set the places (plus-ones count) and keep a waiting list; when a place frees up, the Calendar shows who is next and gives it only when you tap. Every guest gets a QR ticket to share, save or print, and `Door` checks tickets with the phone's camera, even without internet, with a big green welcome. Export CSV, print the door list, or send the usual event tasks to To-Do. See [Calendar](app:calendar).
+
+## Version 6.44.00
+- **Ask someone to sign a PDF.** In Scanner & PDF, put boxes on the pages for the other person to fill (signature, initials, name, date, text, tick), then `Ask to sign`: they get an encrypted link that ends in 1, 7 or 30 days, can be locked with an access code, and opens in any browser with no account. They sign there and keep their signed copy; you get the same signed PDF, with a certificate page and the signing record inside, in Files › PDF › Signatures. `Signature requests` lists them all. A simple electronic signature under the EU eIDAS rules. See [Scanner & PDF](app:scanpdf).
+
+## Version 6.43.00
+- **New app: Forms.** Make surveys, sign-up sheets and order forms in Office: many kinds of questions, pages, questions that show only for some answers and jumps between pages, with a preview that works exactly like the real form. Start blank or from six templates. Sharing a form and collecting answers come in the next update. See [Forms](app:forms).
+
+## Version 6.42.00
+- **Diagrams in Whiteboard.** `More` › `Diagram shapes…` (or L) opens a library of 49 shapes: flowchart, org chart, UML (classes with compartments), basic shapes and network and IT icons, with search. Selected shapes can be turned into another one with `Shape` › `More shapes`. On a device with an older orOS they show as plain shapes with the same text until it updates.
+
+## Version 6.41.00
+- **The Kanban Timeline is a Gantt chart.** A card can have a `Start` date and be a `Milestone`. In the Timeline every card is a bar from its start to its due date: drag it to move it, drag its ends to change the dates, and `Undo` brings them back. Bars show how many subtasks are done. The view menu has `Zoom` (Day, Week, Month), `Groups` (by column or lane) and `Only workdays`, kept for the board on every device. See [Kanban](app:kanban).
+
+## Version 6.40.00
+- **Studio is ready for audiobooks.** Studio now keeps everything a newer Studio writes, so books, chapters and podcast shows made on one device stay whole on a device that has not updated yet.
+
+## Version 6.39.00
+- **Translate a book in Writer.** `Review` › `Translate this document…` puts the book side by side, one sentence a row: the source on the left, your translation on the right, with its bold, italics and footnotes kept as small marks. Each sentence is new, a draft, confirmed or reviewed; the bar shows how much is done. `Build document` makes the translated book as a normal Writer document. The project stays on the orOS disk and syncs, and two devices can work on it. See [Writer](app:writer).
+
+## Version 6.38.00
+- **Translation on the device in Text Tools.** The new `Translate` group turns the whole text from Greek into English or from English into Greek with Mozilla's Firefox Translations models. Your text never leaves the device. The first time, the button says how much it downloads (about 15 MB per direction, plus 5 MB once); after that it works offline, and a short text translates as you type. See [Text Tools](app:texttools).
+
+## Version 6.37.00
+- **Developer tools in Pad.** `Tools…` (Alt+T) is now a searchable list: check and format JSON and YAML (comments kept), sort JSON keys, JSON ↔ YAML in a new tab, MD5 and SHA hashes of the file exactly as saved with `Compare with`, UUID v4 and v7, time stamps, number bases and CSS colours. Base64 and URL stay in Text Tools, one click away.
+
+## Version 6.36.00
+- **Transfer through your Dropbox.** With orOS sync on Dropbox, `Send through my Dropbox` encrypts the files on this device, uploads them to your Dropbox and gives you a link and a QR code. You can close the page: the other person has about 4 hours to download them, with no Dropbox account and no orOS. Dropbox only stores encrypted bytes, and the files are deleted afterwards.
+## Version 6.35.00
+- **Music releases in Publishing.** A new title can now be a single, EP, album or compilation, with its tracks (ISRC, length, version) and editions (digital, CD, vinyl, cassette with UPC/EAN and barcode). The ISBN tab is now Codes and also keeps your ISRC and UPC/EAN prefixes, offering the next free code.
+
+## Version 6.34.00
+- **Voice notes in Notes.** The microphone button next to a page's title records into the page. The recording is kept on the orOS disk and syncs like your other files; a player appears under the page and in Preview, with speeds up to 2×. If the tab closes mid-recording, Notes offers to save what was recorded. Deleting a recording moves it to the Trash in Files.
+
+## Version 6.33.00
+- **Layout editions: one document for every edition.** Export now starts with Editions: the print PDF and an e-book PDF from the same document, each with its own ISBN and price from Publishing, and pages you leave out (empty pages, the contents). The e-book PDF has links from the contents, bookmarks and the book's language. Pictures can have a description (alt text) in Properties, and paragraph styles a heading level.
+
+## Version 6.32.00
+- **Netizen ID makes a link-in-bio page.** Press `Page` to turn a card into a page with all your links, headings and eight styles. Export it as one HTML file for any free host, share it as a link, or print its QR code. The page has no trackers and loads nothing from outside.
+
+## Version 6.31.00
+- **Songbook in Lyric Sync.** Turn on `Chords` in Lyrics to write chords over the words, paste a chord sheet or open a ChordPro file, tap a word to put a chord, and transpose to any key with the capo helper. A song can now start from its words only, without a recording. Search the menu for songbook or chords to find it.
+
+## Version 6.30.00
+- **Device info is now in Settings.** Open Settings › Device for the same cards about your browser, screen, storage and connection, with Copy report. Old links and shortcuts to Device Info open it there.
+
+## Version 6.29.00
+- **Tree Sketcher is now part of the Wallpaper Generator.** Pick the `Tree` style to get all its settings and your saved trees, and export the tree as an SVG drawing. Old links and shortcuts to Tree Sketcher open it there.
+
+## Version 6.28.00
+- **Transfer keeps going.** If the direct link drops in the middle, Transfer reconnects and goes on from where it stopped. When two devices cannot connect directly at all, transfers up to 50 MB go through the orOS relay, still end-to-end encrypted. In Files, `Send with Transfer…` sends the selected files and folders, and Transfer has a `History` of finished transfers that syncs with your devices.
+
+## Version 6.27.00
+- **Case Converter is now part of Text Tools.** Its conversions are the new group `Letters & accents` in Text Tools, next to the other tools you can chain. Your words are kept, and old links and shortcuts to Case Converter open that group.
+
+## Version 6.26.00
+- **New app: Transfer.** Send big files and whole folders from the orOS disk straight to another browser. Pick them in Transfer, create a link and send it, or show the QR code. The other person needs no orOS: they open the link, see the files and accept. Everything goes directly between the two devices, end-to-end encrypted, and each file is checked when it arrives.
+
+## Version 6.25.00
+- **Claude can tick Kanban subtasks.** Through orOS Gate, Claude can add subtasks to a card, tick, untick or reword them, and read a whole card with its ticks. It never removes a subtask, and you can undo each change in `Claude's changes`.
+
+## Version 6.24.00
+- **Mix your own icons.** Settings › Appearance › Icons has a new pack, `Mix your own`: choose the shape of the tiles, their fill and how bold the lines are.
+
+## Version 6.23.00
+- **Weather on the desktop.** Turn on Settings › Wallpaper › `Weather on the desktop` to see gentle rain, snow, clouds, fog, sun or stars over your wallpaper, from your Weather city. It stops while an app is open and on a low battery.
+
+## Version 6.22.00
+- **Sign in a new browser in one step.** When orOS is already signed in on your phone or another computer, a new browser needs neither the Dropbox sign-in nor your passphrase. On the new browser open Settings › Sync › `I have orOS on another device`; on the signed-in device open Settings › Sync › `Add a browser` and scan the QR code or type the code. Check that both show the same number and tap `Approve`. Everything travels end-to-end encrypted. On a shared computer tick `Only for this session`.
+
+## Version 6.21.00
+- **Unlock with your fingerprint, face or Windows Hello.** The screen lock now opens with a fingerprint or face in the orOS app on Android, and with Windows Hello or a fingerprint reader in orOS Portable, the desktop apps and orOS USB. Turn it on in Settings › Screen lock. Your PIN or passphrase is still asked every 14 days. In a plain browser the lock keeps the PIN or passphrase.
+
+## Version 6.20.00
+- **Light of the day on Living land.** The Living land wallpaper now follows the time on your device: a deep blue at night, rose at dawn, clear by day and golden in the evening. Turn it off in Settings › Wallpaper with `Light of the day`.
+
+## Version 6.19.01
+- **Contracts key.** For Revenue Splitter 1.14.2 the contracts go to the shop with their own contracts key: make it in WP admin › Noxpress › RS Συμφωνητικά and add it in Settings › Connected services › `Contracts key`. Your WooCommerce key can go back to Read only. Each contract now also tells the shop the day of each renewal and the old end day. CRM Help has the steps.
+
+## Version 6.19.00
+- **Budget: banks update at times you set.** In Budget › `Banks` › `Automatic updates`, pick `At times I set` and choose up to 4 times a day, such as 08:00 and 20:00. While orOS is open, in any app, your banks then update by themselves at those times, even with Budget closed; one of your devices is enough. A time missed while orOS was closed runs the next time you open it. You get a notification only when an update fails.
 
 ## Version 6.18.01
 - **Passwords add-on 2.1.** The orOS add-on window is wide enough again (Brave and other Chromium browsers squeezed it). Under the master password there is `Remember on this device`: tick it on your own computer and the add-on opens without asking until you press `Lock`. The copy of your vault now keeps itself fresh: from open orOS tabs every few minutes, and when it is over an hour old the add-on opens orOS in a background tab for one sync and closes it; `Update` does it at once. When a newer add-on is out, its button shows `↑` and its window a `Download` link; unzip the new zip over the old folder (an add-on installed by hand cannot replace itself).

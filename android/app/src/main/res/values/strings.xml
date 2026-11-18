@@ -70,4 +70,7 @@
     <string name="bio_title_on">Turn on fingerprint unlock</string>
     <string name="bio_sub">Use your fingerprint or face</string>
     <string name="bio_use_pw">Use master password</string>
+    <string name="bio_title_lock">Unlock orOS</string>
+    <string name="bio_title_on_lock">Turn on fingerprint unlock for orOS</string>
+    <string name="bio_use_lock">Use PIN or passphrase</string>
 </resources>

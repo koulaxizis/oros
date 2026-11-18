@@ -1,7 +1,7 @@
 {
-  "name": "orOS Invoices",
-  "short_name": "Invoices",
-  "description": "orOS Invoices: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
+  "name": "orOS Billing",
+  "short_name": "Billing",
+  "description": "orOS Billing: the orOS app on its own. Works offline, no cookies, no tracking; encrypted sync only if you turn it on.",
   "id": "/invoices/solo.html",
   "start_url": "/invoices/solo.html",
   "scope": "/invoices/",

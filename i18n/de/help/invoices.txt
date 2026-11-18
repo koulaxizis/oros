@@ -1,4 +1,6 @@
-# Rechnungen
+# Abrechnung
+Abrechnung hält deine Angebote und deine Rechnungen in einer App. Der Tab `Angebote` enthält die Angebote, die du in Angebot geschrieben hast (alle sind hier, nichts wurde verschoben); die anderen Tabs sind deine Rechnungen, erhaltenen Rechnungen, Kunden und die Übersicht. Abrechnung öffnet sich mit dem Tab, den du zuletzt benutzt hast.
+
 Rechnungen erstellt Rechnungen, Quittungen, Proformas und Gutschriften mit MwSt. und automatischer Nummerierung, als PDF. Die App verfolgt, wer bezahlt hat und wer noch schuldet, zeigt deine Einnahmen und verwaltet deine Kunden. Rechnungen, die du anderswo ausstellst (zum Beispiel in myDATA), kannst du hier ebenfalls erfassen, sodass alle Zahlungen an einem Ort sind.
 
 >! orOS sendet nichts an ΑΑΔΕ / myDATA. Griechische B2B-Rechnungen, die elektronisch ausgestellt werden müssen, werden in myDATA oder bei deinem Anbieter ausgestellt; erfasse sie hier mit `Neu` › `Anderswo ausgestellte Rechnung erfassen`. Was du ausstellen musst, entscheidet am Ende deine Steuerberatung.
@@ -46,6 +48,8 @@ Der Tab `Eingang` sammelt die Rechnungen, die dir deine Lieferanten schicken: so
 ## PDF, Versenden und Teilen
 `PDF` speichert das Dokument als PDF mit deinem Logo und deinen Daten; `PDF teilen` gibt es an eine andere App weiter, wo dein Gerät das erlaubt. `E-Mail` öffnet eine neue Nachricht in [Mail](app:mail) (oder deiner E-Mail-App) mit Betreff und Text. In Mail ist das PDF schon angehängt (eine erfasste Rechnung bringt ihr offizielles PDF mit) und eine Kopie bleibt auf der orOS-Disk unter Invoices; in einer anderen E-Mail-App hängst du das gespeicherte PDF an. `Als versendet markieren` notiert das Datum, an dem du sie versendet hast.
 
+`Positionen an eine App senden…` bei einer Rechnung, und dieselbe Schaltfläche unter einem Angebot in `Angebote`, schickt die Positionen als Tabelle (Beschreibung, Menge, Einzelpreis, Rabatt, MwSt. und Betrag, danach Netto, MwSt. und Summe) an eine andere orOS-App, etwa [Tabelle](app:spreadsheet), [Writer](app:writer) oder [Mail](app:mail). Die andere App öffnet sich nur damit ausgefüllt; das Dokument ändert sich nicht.
+
 ### Online bezahlen
 Trag deinen eigenen Zahlungslink in `Einstellungen` › `Link zum Online-Bezahlen` ein: einen Stripe Payment Link (https://buy.stripe.com/…, erstellt in deinem Stripe-Dashboard) oder eine andere https-Zahlungsseite. Jede Rechnung oder Proforma, auf der noch etwas zu zahlen ist, zeigt dann `Online bezahlen` auf ihrem PDF, als Link und QR-Code, und die E-Mail bekommt eine Zeile mit dem Link. Mit einem Stripe-Link geht die Rechnungsnummer als Verwendungszweck mit, und die E-Mail des Kunden ist auf der Zahlungsseite schon eingetragen. orOS fragt nie nach einem Zahlungsschlüssel und sieht die Zahlung nie: Wenn das Geld ankommt, erfasse es wie gewohnt mit `Als bezahlt markieren` oder `Zahlung hinzufügen`. Jedes Unternehmensprofil kann einen eigenen Link haben.
 
@@ -68,6 +72,8 @@ Lege unter `Kunden` einen `Neuer Kunde` mit Name, Beruf, ΑΦΜ, ΔΟΥ, Adresse
 ## Übersicht
 `Übersicht` zeigt für einen `Zeitraum`, wie viel du `Berechnet` und `Eingenommen` hast, was `Offen` und `Überfällig` ist, einen Balken pro Monat, deine Top-Kunden und die MwSt. pro Satz. Wähle die `Währung`, wenn du in mehreren abrechnest. `Dokumente exportieren (CSV)` und `Zahlungen exportieren (CSV)` speichern sie für eine Tabellenkalkulation oder deine Steuerberatung. Innerhalb von orOS öffnet `In Tabelle öffnen` die Dokumente des Zeitraums direkt in einem neuen Blatt in [Tabelle](app:spreadsheet), mit Netto, MwSt. und Gesamt als Zahlen und ihren Summen unten, wenn der Zeitraum nur eine Währung hat.
 
+Der Teil `Angebote` der Übersicht verfolgt deine Angebote desselben Zeitraums und derselben Währung bis zur Zahlung: wie viele du gesendet hast und wie viele angenommen, in Rechnung gestellt und bezahlt wurden, Monat für Monat, den Anteil der Annahmen, was angenommen, aber noch nicht in Rechnung gestellt ist, und was ihre Rechnungen noch offen haben. Es wird bei jedem Blick neu berechnet; nichts wird gespeichert. Ein Angebot zählt als in Rechnung gestellt, sobald eine mit `Rechnung erstellen` daraus gemachte Rechnung ausgestellt ist.
+
 ### Der Monat für deine Steuerberatung
 `Paket für die Steuerberatung…` in der Übersicht erstellt ein ZIP für einen Monat (der letzte Monat ist vorgewählt): `summary.txt` mit den Summen des Monats, die CSV der Dokumente und Zahlungen, ein PDF für jedes hier ausgestellte Dokument und, aus den anderen Apps auf diesem Gerät, die Einträge aus [Budget](app:budget) mit ihren Belegdateien, Einkäufe und Verkäufe aus [Bestand](app:stock) und die Bestellungen des Monats aus deinem WooCommerce-Shop (gelesen, wenn du das Paket erstellst; Einstellungen › [Verbundene Dienste](app:settings)). Entferne die Haken bei dem, was du nicht willst. Das ZIP wird in [Dateien](app:files) unter Invoices/Accountant gespeichert; danach öffnet `E-Mail an die Steuerberatung` [Mail](app:mail) mit einer Nachricht an die eingegebene Adresse (bleibt auf diesem Gerät), der Zusammenfassung als Text und dem ZIP im Anhang. Nichts wird gesendet, bevor du es in Mail sendest. Ein Paket über 7 MB ist zu groß für eine E-Mail: Teile es stattdessen aus Dateien.
 
@@ -79,7 +85,7 @@ Lege unter `Kunden` einen `Neuer Kunde` mit Name, Beruf, ΑΦΜ, ΔΟΥ, Adresse
 ## Budget, Angebot, Zeiterfassung und CRM
 - Jede Zahlung, die du erfasst, kommt von selbst als freiberufliche Einnahme in [Budget](app:budget) (mit ihrem Partner und der Rechnungsnummer): Die Zahlung zeigt `Im Budget (automatisch)`. Sie erscheint, sobald Budget das nächste Mal auf einem Gerät öffnet, auf dem du auch Rechnungen nutzt. Änderst du hier Betrag oder Datum, folgt Budget; löschst du die Zahlung, verschwindet auch die Einnahme. Was du in Budget änderst oder löschst, bleibt so, wie du es hinterlassen hast. Ausschalten unter `Einstellungen` › `Zahlungen kommen von selbst ins Budget`; vorher erfasste Zahlungen bleiben, wie sie waren.
 - Wenn diese Einstellung aus ist (und bei älteren Zahlungen), öffnet neben jeder Zahlung `Zu Budget hinzufügen` [Budget](app:budget) mit der Zahlung als freiberufliche Einnahme; prüfe und speichere sie dort. Die Taste erscheint, wenn die Zahlung in der Währung von Budget ist, und merkt sich, dass du sie gesendet hast.
-- `Rechnung erstellen` bei einem angenommenen [Angebot](app:quote) und `Rechnung erstellen` in einem Bericht der [Zeiterfassung](app:timesheet) öffnen hier eine neue Rechnung mit Kunde und Positionen.
+- `Rechnung erstellen` bei einem angenommenen Angebot im Tab `Angebote` und `Rechnung erstellen` in einem Bericht der [Zeiterfassung](app:timesheet) öffnen hier eine neue Rechnung mit Kunde und Positionen.
 - Unter `Kunden` holt `Aus CRM` Kunden aus [CRM](app:crm); jeder bleibt verknüpft, sodass CRM seine Rechnungen zeigen kann.
 - Bei einer ausgestellten Rechnung oder Quittung, deren Positionen einen Produktcode haben, öffnet `Aus dem Bestand nehmen` einen Verkauf in [Bestand](app:stock) mit diesen Produkten und Preisen; eine Gutschrift bietet `Zurück in den Bestand` für eine Rückgabe. In Bestand ändert sich nichts, bis du dort speicherst. Die Taste erscheint erst, wenn du Bestand nutzt.
 
@@ -89,6 +95,74 @@ Lege unter `Kunden` einen `Neuer Kunde` mit Name, Beruf, ΑΦΜ, ΔΟΥ, Adresse
 - Ist der Kunde ein Unternehmen (mit USt-IdNr.) in einem anderen EU-Land, bietet der Editor Reverse Charge an: `Leistungen, 0 % MwSt.` oder `Waren, 0 % MwSt.` setzen jede Position auf 0 % MwSt. und tragen den Standardhinweis als MwSt.-Befreiung ein. Prüfe das mit deiner Steuerberatung; nichts wird angewendet, solange du nicht darauf tippst.
 - Ein PDF in Euro zeigt einen Zahlungs-QR-Code (EPC / SEPA, den Banking-Apps scannen) mit deiner ersten IBAN, dem noch offenen Betrag und der Dokumentnummer. Schalte ihn in `Einstellungen` (Standardwerte) aus.
 - Mehr als ein Unternehmen? In `Einstellungen` legt `Unternehmensprofil hinzufügen` einen weiteren Satz Daten, Logo, Bankzeilen, Bedingungen und Fußzeile an. Wähle das Unternehmen auf jedem Dokument (`Unternehmen`, sichtbar ab zwei). Verknüpfe einen Nummernkreis mit einem Profil (`Profil`, neben jeder Serie), damit jedes Unternehmen eigene Nummern behält. Vorlagen und Kopien behalten ihr Unternehmen.
+
+## Angebote
+Alles in diesem Abschnitt war die App Angebot. Alte Links und Verknüpfungen zu Angebot öffnen diesen Tab. `Einstellungen` (das Zahnrad) ist eine Seite für beides: Ihr Teil `Angebote` öffnet die Texte für Zahlungsbedingungen und die Angebotsvorlagen.
+Mit Angebot schreibst du Preisangebote für deine Kunden: Positionen mit Rabatten und USt., Zahlungsbedingungen, Raten und ein PDF zum Versenden.
+
+### Erste Schritte
+Der Tab `Erstellen` ist ein leeres Angebot. Es bekommt automatisch eine Nummer wie OFF-2026-001; der runde Pfeil neben `Angebot Nr.` gibt ihm erneut die nächste freie Nummer. Fülle `Datum`, `Fällig`, `Status` und `Währung` aus und tippe dann auf `Speichern`. Jede Währung geht: Die gängigen stehen oben in der Liste, und Beträge werden so gezeigt, wie die Währung sie schreibt (beim Yen zum Beispiel ohne Nachkommastellen).
+
+Bis du auf `Speichern` tippst, ist ein neues Angebot ein Entwurf, der nur auf diesem Gerät liegt. Schließt du die App, wird er beim nächsten Mal wiederhergestellt. Nach dem ersten Speichern wird jede Änderung beim Tippen gespeichert.
+
+Ein Angebot kann auch in einer anderen App beginnen: `Angebot erstellen` in einem Bericht der [Zeiterfassung](app:timesheet) füllt ein neues Angebot für dich aus. Prüfe es und tippe auf `Speichern`.
+
+### Kunden
+Tippe oder klicke auf `Kunde wählen`, um einen Kunden auszuwählen, oder auf das **+** daneben, um einen hinzuzufügen. `Kundendaten` enthält `Name`, `E-Mail`, `Telefon`, `Adresse` und `Steuer-Nr. / USt-IdNr.`. Der Stift bearbeitet den gewählten Kunden; `Löschen` in diesem Fenster entfernt den Kunden nach einer Bestätigung. Angebote und Rechnungen haben eigene Kundenlisten: Die Liste zeigt unter `Aus den Kunden der Rechnungen` auch die Rechnungskunden, die deine Angebote noch nicht haben; wählst du einen, öffnet sich `Kundendaten` ausgefüllt (hinzugefügt wird er erst beim Speichern). Die Liste `Kunde` im Rechnungseditor macht dasselbe mit den Kunden der Angebote.
+
+### Positionen und Summen
+Tippe auf **+** neben `Positionen`, um eine Zeile mit `Code/SKU`, `Beschreibung`, `Menge`, `Einzelpreis`, `Rabatt %` und `USt. %` hinzuzufügen. Beträge kannst du mit Komma oder Punkt eingeben.
+
+Unter den Positionen siehst du `Zwischensumme`, `USt.` und `Gesamt`. `Rabatt (%)` zieht einen Rabatt vom ganzen Angebot ab. Änderst du dort `USt. (%)`, gilt derselbe Satz für jede Zeile, und neue Zeilen übernehmen ihn auch.
+
+`Summe anzeigen in` zeigt die Summe zusätzlich in einer anderen Währung, zum Tageskurs der Europäischen Zentralbank (dieselben Kurse wie im Modus [Umrechnen](app:units) des Rechners). Das ist nur eine Orientierung für dich: Angebot, PDF und E-Mail bleiben in der Währung des Angebots. Die Auswahl bleibt auf diesem Gerät.
+
+### Raten
+Lege unter `Raten` eine `Anzahl` fest und tippe auf `Erzeugen`, um die Summe gleichmäßig aufzuteilen. Danach kannst du jedes Datum und jeden `Betrag` ändern; eine Zeile darunter sagt dir, ob die Summe zum Gesamtbetrag passt.
+
+### Zahlungsbedingungen, Notizen und Vorlagen
+Tippe oder klicke auf eine Zahlungsvorlage (`Banküberweisung`, `PayPal`, `IRIS`, `Bar`), um ihren Text zu den `Zahlungsbedingungen` hinzuzufügen. Mit dem Stift änderst du die Texte der Vorlagen, zum Beispiel um deine IBAN einzutragen. Nutze `Notizen` für alle anderen Bedingungen.
+
+`Als Vorlage speichern` legt Positionen, Rabatt, Zahlungsbedingungen, Notizen und Raten unter einem Namen ab. Die Schaltfläche `Vorlagenbibliothek` öffnet deine Vorlagen, wo du mit `Verwenden` von einer ausgehst. `Duplizieren` erstellt eine Kopie mit neuer Nummer und dem Status `Entwurf`. Bei einem als `Angenommen` markierten Angebot öffnet `Rechnung erstellen` gleich hier, im Tab `Rechnungen`, eine neue Rechnung mit demselben Kunden und denselben Positionen; prüfe sie und stelle sie aus. Gespeichert wird erst mit `Entwurf speichern` oder `Ausstellen`.
+
+### Deine Angebote, PDF und E-Mail
+Der Tab `Angebote` listet alle deine Angebote auf. Suche nach Nummer, Kunde, Position, Notizen oder Zahlungsbedingungen, und filtere mit dem Trichter nach Status. Tippe oder klicke auf ein Angebot, um es zu öffnen.
+
+Ist ein Angebot geöffnet, kannst du mit den Schaltflächen oben:
+- `PDF exportieren`: das Angebot als A4-PDF speichern. Deine Daten aus `Einstellungen` › `Dein Unternehmen` stehen oben rechts.
+- `Per E-Mail senden`: Hast du ein Konto in [Mail](app:mail), öffnet sich dort eine neue Nachricht mit der Adresse des Kunden, der Angebotsnummer, dem Fälligkeitsdatum und der Summe, und das PDF ist schon angehängt. Ohne Mail-Konto öffnet sich stattdessen dein eigenes E-Mail-Programm, und du hängst das PDF selbst an.
+
+### Annahme per Link
+Dein Kunde kann ein Angebot online annehmen, ohne Konto und ohne dass etwas auf einem Server gespeichert wird.
+
+1. Speichere das Angebot und tippe auf `Zur Annahme senden`. Gib deinen Namen oder deine Firma ein und, wenn du willst, deine E-Mail für die Antwort, dann `Link erstellen`.
+2. Sende den Link: `Link kopieren`, `Teilen…` oder `E-Mail mit PDF` (die Nachricht enthält das PDF und den Link).
+3. Dein Kunde öffnet den Link in einem beliebigen Browser, sieht das Angebot, gibt seinen Namen ein und tippt auf `Annehmen`. Er bekommt einen Antwort-Link, den er dir zurückschickt.
+4. Öffne den Antwort-Link, oder tippe auf `Annahme erfassen` und füge ihn ein. orOS prüft ihn gegen das gesendete Angebot und bietet `Als angenommen markieren` an, danach `Rechnung erstellen`.
+
+Das ganze Angebot steckt im Link (nach dem `#`, den Browser nie an einen Server senden). Jeder Link trägt einen Zufallscode und einen Fingerabdruck (SHA-256) des Angebots; die Antwort muss beides zurückbringen. Eine Antwort zählt also nur für genau die Version, die du gesendet hast: Hat jemand den Inhalt des Links verändert, oder hast du das Angebot geändert und einen neuen Link erstellt, sagt orOS dir das und zählt sie nicht.
+
+### Synchronisierung und Sicherung
+Angebote, Kunden, Vorlagen und Zahlungsvorlagen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Ein nicht gespeicherter Entwurf und das zuletzt geöffnete Angebot bleiben auf diesem Gerät. Die orOS-[Sicherung](help:t/backup) bewahrt eine Kopie von allem.
+
+### orOS-Datei speichern und öffnen
+Im Tab `Angebote` öffnet die Ordner-Schaltfläche `Speichern und öffnen`. `orOS-Datei (.orosquote)` speichert jedes Angebot (mit Positionen und Raten), jeden Kunden und jede Vorlage als eine `.orosquote`-Datei, zum Beispiel um sie ohne Synchronisierung auf ein anderes Gerät zu bringen oder einer Kollegin deine Angebote zu geben. Die Datei ist eine einfache ZIP-Datei: Entpackt enthält sie die Daten als `content.json` und dazu `preview/quotes.md` (jedes Angebot und jede Vorlage als Text, mit Summen). Die Zahlungsvorlagen und die Codes der Annahme-Links bleiben auf diesem Gerät und sind nicht in der Datei. Sie ist nicht verschlüsselt, bewahre sie also sicher auf.
+
+`orOS-Datei öffnen…` (oder `Entpackter orOS-Ordner…` oder „Öffnen mit“ orOS am Computer) zeigt, wie viele Einträge neu und wie viele schon da sind; dann fügt `Hinzufügen` nur die neuen hinzu, mit ihren eigenen IDs: Dieselbe Datei erneut zu öffnen, fügt nichts hinzu. Ein schon vorhandenes Angebot bleibt, wie es ist, und eines, das du hier gelöscht hast, bleibt gelöscht; eine Datei löscht nie etwas. Hake `Mit neueren Versionen aktualisieren` an, damit Angebote, die in der Datei später geändert wurden, deine Kopie ersetzen. `Rückgängig` in der Meldung entfernt, was hinzugefügt wurde.
+
+`Als Kopie öffnen…` fügt die Angebote und Vorlagen der Datei als neue hinzu, auch solche, die du schon hast: Jedes Angebot bekommt eine neue Nummer und beginnt als `Entwurf`. Nutze das, wenn eine Datei eine Sammlung von Angeboten als Ausgangspunkt ist. Kunden kommen wie gewohnt hinzu (nur die, die du noch nicht hast). `Rückgängig` entfernt die Kopien.
+
+### Tastenkürzel
+- [[Alt+N]] beginnt ein neues Angebot (wenn du nicht gerade in ein Feld tippst).
+
+### Tipps
+- orOS erinnert dich, wenn ein als `Gesendet` oder `Angenommen` markiertes Angebot innerhalb von zwei Tagen fällig oder überfällig ist; ein Tipp auf die Erinnerung öffnet das Angebot. Siehe [Benachrichtigungen](help:t/notifications).
+- Halte den Status aktuell: Stelle ihn auf `Abgelehnt` oder `Abgelaufen`, dann hören die Erinnerungen auf.
+
+### Grenzen
+- Die Summe in einer anderen Währung dient nur zur Information und braucht eine Verbindung für die Tageskurse (die letzten bleiben für die Offline-Nutzung erhalten).
+- Das PDF wird nur in [Mail](app:mail) automatisch angehängt; bei einem anderen E-Mail-Programm hängst du es selbst an. Sehr große Angebote können auch zu lang für einen Annahme-Link sein: Sende dann das PDF.
+- Die Annahme per Link ist keine Unterschrift: Sie beweist, dass die Antwort zum gesendeten Angebot passt, nicht, wer den Namen eingegeben hat. Jeder mit dem Link kann das Angebot sehen. Für eine verbindliche Vereinbarung bitte um eine unterschriebene Kopie.
 
 ## Einstellungen
 Die Zahnrad-Taste öffnet `Einstellungen`: deine Unternehmensdaten und dein Logo, die Standardwerte für neue Dokumente (Währung, MwSt. %, Zahlungsziel, Quellensteuer, PDF-Sprache, Zahlungsbedingungen, Fußzeile), die Nummernkreise und deine Vorlagen.

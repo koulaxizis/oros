@@ -7,8 +7,8 @@
   <script>if (window.top === window.self && !/[?&]standalone\b/.test(location.search)) location.replace("../?open=automations" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Automations · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=6.18.00">
-  <link rel="stylesheet" href="app.css?v=6.18.00">
+  <link rel="stylesheet" href="../fonts.css?v=7.49.00">
+  <link rel="stylesheet" href="app.css?v=7.49.00">
 </head>
 <body>
 
@@ -81,6 +81,10 @@
           <select id="f-napp"></select></label>
         <label class="fld" id="ev-row"><span data-i18n="f.ev">What</span>
           <select id="f-ev"></select></label>
+        <label class="fld" id="min-row" hidden><span data-i18n="f.min">Minutes before</span>
+          <input type="number" id="f-min" min="1" max="120" step="1" inputmode="numeric"></label>
+        <label class="fld" id="amount-row" hidden><span data-i18n="f.amount">Amount</span>
+          <input type="text" id="f-amount" inputmode="decimal" maxlength="12"></label>
         <label class="fld" id="word-row"><span data-i18n="f.word">Only when it says (optional)</span>
           <input type="text" id="f-word" maxlength="60"></label>
         <div id="if-box">
@@ -155,9 +159,10 @@
   </dialog>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=6.18.00" data-app="automations"></script>
-  <script src="core.js?v=6.18.00"></script>
-  <script src="app.js?v=6.18.00"></script>
+  <script src="../i18n.js?v=7.49.00" data-app="automations"></script>
+  <script src="core.js?v=7.49.00"></script>
+  <script src="app.js?v=7.49.00"></script>
 
+  <script src="../pickers.js?v=7.49.00" defer></script>
 </body>
 </html>

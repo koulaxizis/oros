@@ -59,7 +59,7 @@ Count the time you have spent together with someone you love: days, weeks, month
 - `+ Meeting` adds the next time you see each other: the day, a time if you like (in your time or theirs) and the place. A countdown runs to the next one, and the meetings show in the Calendar too.
 
 ## Fun numbers, confetti and the share card
-- `Fun numbers` counts the sunrises, the weekends and the full moons you have had together (from [Moon & Sky](app:sky)), and how far you travelled around the Sun.
+- `Fun numbers` counts the sunrises, the weekends and the full moons you have had together (from Weather's [Sky tonight](app:sky)), and how far you travelled around the Sun.
 - On a big day (an anniversary, 100 days, a fun number) a little confetti falls once. Switch it off in `Settings`; it never shows when your device asks for less motion.
 - `Share card` makes an image with your names and your days, weeks or years together, on your photo. Save it in Files, download it, or share it with the apps of your phone. Only the image leaves orOS.
 - In `Moments`, `Slideshow` shows the photos of your moments one after the other (arrows, swipe, or pause).

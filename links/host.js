@@ -22,12 +22,14 @@
 // firewall), through the orOS relay's "ext" operation (relay/ext.js),
 // which checks the same list and keeps nothing.
 // Errors are codes ("offline", "auth", "notfound", "keys", "relay",
-// "network", "denied", "server", "bad", "unknown", "big"), never text from
+// "network", "denied", "server", "bad", "unknown", "big", "rskey"), never text from
 // the other side. "unknown" = a write that must not run twice (an
 // invoicing provider's SendInvoices) may or may not have arrived: it is
 // never retried another way; the app looks it up before trying again.
 // "big" = a body too large for the relay (a long contracts list) that the
-// shop did not take straight from the browser.
+// shop did not take straight from the browser. "rskey" = a Revenue
+// Splitter contracts call (links/core.js RS_ROUTE) and no contracts key
+// on this device.
 // Platforms with fixed hosts (timologisi.online, MailerLite, Mailchimp,
 // Brevo) take a key instead of a site; the relay gets the same env or
 // key, never a host. Mailchimp doesn't answer browsers: always relay.
@@ -287,38 +289,41 @@
   }
   // New keys on this device (they become the newest copy everywhere
   // when key sync is on).
-  // A WooCommerce shop's write key (RS-CTR) stays when only the
-  // first key is replaced.
+  // A WooCommerce shop's contracts key (RS-CTR) stays when only the
+  // WooCommerce key is replaced.
   function setKeys(id, keys) {
     var a = L.find(read(), id);
     if (!a || a.d === 1) return Promise.reject(err("gone"));
     var chk = L.checkKeys(a.p, keys);
     if (!chk.ok) return Promise.reject(err("keys", chk.bad));
     setMode(id, "");
+    setMode(id + ":rs", "");
     return openLocal(id).then(function (local) {
       var next = chk.keys;
-      if (a.p === "woo" && !next.wck && local && local.keys && local.keys.wck && local.keys.wcs) {
-        next = { ck: next.ck, cs: next.cs, wck: local.keys.wck, wcs: local.keys.wcs };
+      if (a.p === "woo" && !next.rsk && local && local.keys && local.keys.rsk) {
+        next = { ck: next.ck, cs: next.cs, rsk: local.keys.rsk };
       }
       return sealLocal(id, next, Date.now());
     }).then(function () { changed(); keySync(); return true; });
   }
-  // RS-CTR: a WooCommerce shop's second key, with Read/Write permission,
-  // for Revenue Splitter's contracts only. pair = { ck, cs } or null
-  // (removed). Rejects "gone" | "keys" (no first key here, or a bad pair).
-  function setWriteKeys(id, pair) {
+  // RS-CTR: a WooCommerce shop's contracts key for Revenue Splitter
+  // 1.14.2+ (rsc_…, made in WP admin › Noxpress › RS Συμφωνητικά), or
+  // null (removed). Rejects "gone" | "keys" (no WooCommerce key here, or
+  // a key of another shape: extra = ["rsk"]).
+  function setRsKey(id, key) {
     var a = L.find(read(), id);
     if (!a || a.d === 1 || a.p !== "woo") return Promise.reject(err("gone"));
     return openLocal(id).then(function (local) {
       if (!local || !local.keys) throw err("keys");
       var next = { ck: local.keys.ck, cs: local.keys.cs };
-      if (pair) { next.wck = pair.ck; next.wcs = pair.cs; }
+      if (key) next.rsk = key;
       var chk = L.checkKeys("woo", next);
-      if (!chk.ok) throw err("keys", chk.bad.filter(function (k) { return k === "wck" || k === "wcs"; }));
+      if (!chk.ok) throw err("keys", chk.bad.filter(function (k) { return k === "rsk"; }));
+      setMode(id + ":rs", "");
       return sealLocal(id, chk.keys, Date.now());
     }).then(function () { changed(); keySync(); return true; });
   }
-  function hasWriteKeys(id) { return openLocal(id).then(function (l) { return !!(l && l.keys && l.keys.wck && l.keys.wcs); }); }
+  function hasRsKey(id) { return openLocal(id).then(function (l) { return !!(l && l.keys && l.keys.rsk); }); }
   function hasKeys(id) { return openLocal(id).then(function (l) { return !!l; }); }
   function setKeySync(id, on) {
     var a = L.find(read(), id);
@@ -426,19 +431,52 @@
   function direct(a, keys, r, how) {
     var url = L.apiUrl(a.p, a, r.path, keys);
     var headers = { Accept: "application/json" };
-    if (a.p === "woo" && how === "query") url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
+    if (a.p === "woo" && how === "query" && !keys.rsk) url += (r.path.indexOf("?") < 0 ? "?" : "&") + "consumer_key=" + keys.ck + "&consumer_secret=" + keys.cs;
     else { var h = L.authHeader(a.p, keys); headers[h[0]] = h[1]; }
     var ex = L.extraHeaders(a.p, a, keys);
     Object.keys(ex).forEach(function (k) { headers[k] = ex[k]; });
     var init = { method: r.m, headers: headers, mode: "cors", credentials: "omit", cache: "no-store",
                  redirect: "error", referrerPolicy: "no-referrer" };
     if (r.body) { headers["Content-Type"] = "application/json"; init.body = JSON.stringify(r.body); }
+    var photo = L.rsPhoto && L.rsPhoto(a.p, r.path);
+    if (photo) headers.Accept = "image/webp,image/png,image/jpeg";
     return withTimeout(timeoutOf(a.p), function (signal) {
       init.signal = signal;
       return fetch(url, init).then(function (res) {
+        if (photo) return photoOf(res);
         return res.text().then(function (t) { return parse(res.status, t); });
       });
     });
+  }
+  // RS-PF W2: a creator's photo → { status, type, blob } | { status, err }.
+  // Read up to RS_PHOTO_MAX, its type only from its first bytes (JPEG,
+  // PNG, WebP); a non-2xx answer is only its status.
+  function photoOf(res) {
+    function drop() { try { if (res.body) res.body.cancel(); } catch (e) {} }
+    if (res.status < 200 || res.status > 299) { drop(); return { status: res.status }; }
+    var reader = res.body && res.body.getReader ? res.body.getReader() : null;
+    if (!reader) return { status: res.status, err: "photo-type" };
+    var chunks = [], size = 0;
+    function step() {
+      return reader.read().then(function (x) {
+        if (x.done) return null;
+        size += x.value.length;
+        if (size > L.RS_PHOTO_MAX) { try { reader.cancel(); } catch (e) {} return "big"; }
+        chunks.push(x.value);
+        return step();
+      });
+    }
+    return step().then(function (big) {
+      if (big) return { status: res.status, err: "photo-big" };
+      var all = new Uint8Array(size), o = 0;
+      chunks.forEach(function (c) { all.set(c, o); o += c.length; });
+      return photoBlob(res.status, all);
+    });
+  }
+  function photoBlob(status, bytes) {
+    var type = L.photoType(bytes);
+    if (!type) return { status: status, err: "photo-type" };
+    return { status: status, type: type, blob: new Blob([bytes], { type: type }) };
   }
   function viaRelay(a, keys, reqs) {
     var body = { op: "ext", p: a.p };
@@ -453,7 +491,9 @@
       if (a.db) body.db = a.db;
     } else {
       var parts = L.siteParts(a.site);
-      body.host = parts.host; body.base = parts.base; body.ck = keys.ck; body.cs = keys.cs;
+      body.host = parts.host; body.base = parts.base;
+      if (keys.rsk) body.rsk = keys.rsk;                 // the contracts routes: only the contracts key
+      else { body.ck = keys.ck; body.cs = keys.cs; }
     }
     body.reqs = reqs.map(function (r) { var o = { m: r.m, path: r.path }; if (r.body) o.body = JSON.stringify(r.body); if (r.img === 1) o.img = 1; return o; });
     return withTimeout(timeoutOf(a.p) + 30000, function (signal) {
@@ -464,8 +504,17 @@
     }).then(function (j) {
       // the relay's own reason (origin, rate, bad-request…) helps tell a setup fault apart
       if (!j || !j.ok || !j.data || !Array.isArray(j.data.res)) throw err("relay", j && j.error && typeof j.error.code === "string" ? j.error.code.slice(0, 40) : "");
-      return j.data.res.map(function (x) {
+      return j.data.res.map(function (x, i) {
         if (x && x.err) return { status: x.status || 0, err: x.err };
+        if (reqs[i] && L.rsPhoto && L.rsPhoto(a.p, reqs[i].path)) {
+          // checked again here: the bytes decide the type, never the relay's word
+          if (!x || typeof x.b64 !== "string") return { status: (x && x.status) || 0 };
+          var bin;
+          try { bin = atob(x.b64); } catch (e) { return { status: x.status, err: "photo-type" }; }
+          var u8 = new Uint8Array(bin.length);
+          for (var k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+          return photoBlob(x.status, u8);
+        }
         if (x && typeof x.b64 === "string") return { status: x.status, type: String(x.type || ""), b64: x.b64 };   // a product picture
         return parse(x.status, x.body);
       });
@@ -480,6 +529,9 @@
     if (!reqs.length || reqs.length > 10) return Promise.reject(err("bad"));
     for (var i = 0; i < reqs.length; i++) if (L.checkReq(a.p, reqs[i])) return Promise.reject(err("denied"));
     if (typeof navigator !== "undefined" && navigator.onLine === false) return Promise.reject(err("offline"));
+    if (L.rsCall(a.p, reqs) === "mixed") return Promise.reject(err("bad"));   // RS-CTR: other keys, other routes
+    // RS-PF W2: a creator's photo travels alone in its call
+    if (reqs.length > 1 && L.rsPhoto && reqs.some(function (r) { return L.rsPhoto(a.p, r.path); })) return Promise.reject(err("bad"));
     var pl = L.PLATFORMS[a.p];
     // Product pictures (WooCommerce, Newsletter wave E4) only come this
     // way when the app could not read them itself: straight to the relay.
@@ -521,8 +573,10 @@
     }
     return openLocal(id).then(function (local) {
       if (!local) throw err("keys");
-      // RS-CTR: a shop's second, Read/Write key only for its routes
-      return callWith(a, id, pl, reqs, L.keysFor(a.p, local.keys, reqs), once);
+      // RS-CTR: the contracts routes go only with the contracts key
+      var rs = L.rsCall(a.p, reqs) === "all";
+      if (rs && !local.keys.rsk) throw err("rskey");
+      return callWith(a, rs ? id + ":rs" : id, pl, reqs, L.keysFor(a.p, local.keys, reqs), once);
     });
   }
   function callWith(a, id, pl, reqs, keys, once) {
@@ -544,7 +598,7 @@
     }
     return all(mode).then(function (res) {
       // 401 with the header: some servers drop it; try the address
-      if (a.p === "woo" && mode === "direct" && res[0] && res[0].status === 401) {
+      if (a.p === "woo" && !keys.rsk && mode === "direct" && res[0] && res[0].status === 401) {
         return all("query").then(function (r2) {
           if (r2[0] && r2[0].status !== 401) { setMode(id, "query"); return r2; }
           return res;
@@ -586,7 +640,7 @@
 
   root.orosLinks = {
     list: list, get: get, add: add, edit: edit, setKeys: setKeys, hasKeys: hasKeys,
-    setWriteKeys: setWriteKeys, hasWriteKeys: hasWriteKeys,
+    setRsKey: setRsKey, hasRsKey: hasRsKey,
     setKeySync: setKeySync, canKeySync: canKeySync, remove: remove,
     call: call, test: test, statusCode: statusCode, mode: mode, onChange: onChange,
     platforms: function () { return L.PLATFORM_IDS.map(function (p) { return { id: p, name: L.PLATFORMS[p].name, apps: L.PLATFORMS[p].apps.slice(), site: !!L.PLATFORMS[p].site, db: !!L.PLATFORMS[p].db, ownUi: L.PLATFORMS[p].ownUi || ""}; }); }

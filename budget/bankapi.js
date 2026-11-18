@@ -290,6 +290,63 @@
     return d !== null && d < WARN_DAYS;
   }
   function due(lastRun, now) { return !lastRun || now - lastRun >= REFRESH_MS; }
+  // BK-AT (Chris 2026-11-12): automatic updates at times the person
+  // sets, instead of every 6 hours on open. set.bat = "HH:MM" local
+  // times, space-separated, 1 to 4 (PSD2: a bank answers about 4
+  // unattended reads a day), sorted and unique; set.bam = when they were
+  // last saved (a time saved after its slot is not due today). A bank
+  // row's bt = when a device last read it (synced), so one device's
+  // read covers the slot for the others. The shell runs the slot with
+  // Budget closed (shell.js 10f, hidden frame ?bankbg=1, while orOS is
+  // open); a slot missed while orOS was closed runs on the next open.
+  var MAX_TIMES = 4;
+  var TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+  var TIMES_RE = /^([01]\d|2[0-3]):[0-5]\d( ([01]\d|2[0-3]):[0-5]\d){0,3}$/;
+  // "20:00 08:00" → ["08:00", "20:00"]; anything else → []
+  function times(s) {
+    if (typeof s !== "string" || !TIMES_RE.test(s)) return [];
+    var seen = {};
+    return s.split(" ").filter(function (x) { if (seen[x]) return false; seen[x] = 1; return true; }).sort();
+  }
+  // The other way: a list from the form → the stored string ("" = none)
+  function timesText(list) {
+    var seen = {};
+    return (list || []).filter(function (x) {
+      if (typeof x !== "string" || !TIME_RE.test(x) || seen[x]) return false;
+      seen[x] = 1;
+      return true;
+    }).sort().slice(0, MAX_TIMES).join(" ");
+  }
+  // The latest set time at or before now, within the last day (local
+  // time, so a summer-time change keeps the clock time), ms; 0 = none.
+  function lastSlot(ts, now) {
+    var best = 0, d = new Date(now);
+    (ts || []).forEach(function (x) {
+      var h = +x.slice(0, 2), mi = +x.slice(3, 5);
+      var at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, mi, 0, 0).getTime();
+      if (at > now) at = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1, h, mi, 0, 0).getTime();
+      if (at > best) best = at;
+    });
+    return best;
+  }
+  // When the banks were last read for the schedule: this device's own
+  // last update, any device's read of a row (bt), the times' saving.
+  // A stamp from the future (another device's clock) is not counted: it
+  // would hold every slot back.
+  function lastRead(rows, devT, bam, now) {
+    var m = 0;
+    function take(v) { if (typeof v === "number" && isFinite(v) && v > m && v <= now) m = v; }
+    take(devT);
+    take(bam);
+    (rows || []).forEach(function (r) { if (r) take(r.bt); });
+    return m;
+  }
+  // The slot (ms) to run now, or 0: the latest set time is past and no
+  // read happened since.
+  function slotDue(ts, last, now) {
+    var s = lastSlot(ts, now);
+    return s && (!last || last < s) ? s : 0;
+  }
   // Rows of a renewed (or repeated) consent: an account already linked
   // (same identification hash, else same bank + last four + currency)
   // keeps its row, Budget account and fetch point; a new one gets a row.
@@ -407,7 +464,8 @@
     COUNTRIES: COUNTRIES, REDIRECT: REDIRECT, REFRESH_MS: REFRESH_MS, WARN_DAYS: WARN_DAYS, MAX_PAGES: MAX_PAGES,
     banks: banks, newState: newState, authBody: authBody, session: session, tail: tail,
     items: items, balance: balance, available: available, view: view, isCard: isCard, recard: recard, uniqueFits: uniqueFits, fromDate: fromDate, lastBooked: lastBooked,
-    daysLeft: daysLeft, needsRenew: needsRenew, due: due, matchLink: matchLink, ymdOf: ymdOf,
+    daysLeft: daysLeft, needsRenew: needsRenew, due: due,
+    MAX_TIMES: MAX_TIMES, times: times, timesText: timesText, lastSlot: lastSlot, lastRead: lastRead, slotDue: slotDue, matchLink: matchLink, ymdOf: ymdOf,
     PP_PAGE: PP_PAGE, ppStamp: ppStamp, ppWindows: ppWindows, ppPath: ppPath, ppPage: ppPage, ppKind: ppKind, ppItems: ppItems
   };
   if (NODE) module.exports = api;

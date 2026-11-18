@@ -10,7 +10,8 @@
 //
 // Rows: the same reminders, keys and links the shell engines use
 // (phone.js reminderRows: Clock alarms and timers, Water, To-Do,
-// Habits, Health) plus Calendar reminders (calendarRows). sw.js shows
+// Habits, Health, Plants, Pet care, Garage, Chores, CRM, Billing,
+// Kanban, Sticky Notes) plus Calendar reminders (calendarRows). sw.js shows
 // them with tag = dedupKey, and not at all while an orOS window is on
 // screen (the in-app engine rings then).
 //
@@ -289,6 +290,7 @@
   // Every device on the list gets the schedule when it changed (or once
   // a day, so no box goes idle). At most once a minute unless forced.
   function schedule(force) {
+    if (strictOn()) return Promise.resolve(false);              // Sensitive work: nothing through the relay
     if (busy || inApp() || !(root.crypto && crypto.subtle)) return Promise.resolve(false);   // any device may refresh the others
     // BOOT-L1: the rows need app cores from the shell's late bundle; a
     // list sent without them would replace the full one at the relay.
@@ -353,7 +355,15 @@
     }).catch(function () {});
   }
 
+  // Sensitive work (lock.js, "oros-strict"): no push while it is on.
+  function strictOn() {
+    try {
+      var r = JSON.parse(localStorage.getItem("oros-strict") || "null");
+      return !!(r && r.v === 1 && (r.level === "on" || r.level === "hard"));
+    } catch (e) { return false; }
+  }
   function enable() {
+    if (strictOn()) return Promise.reject(fail("strict"));
     if (!supported() || inApp()) return Promise.reject(fail("unsupported"));
     var key;
     return Promise.resolve(Notification.requestPermission()).then(function (perm) {

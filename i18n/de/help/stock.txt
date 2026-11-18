@@ -13,6 +13,8 @@ Der Tab `Produkte` zeigt, was du hast, mit dem gesamten `Bestandswert` und wie v
 
 Tippe oder klicke auf ein Produkt, um Menge, Durchschnittskosten, Wert, Preise und jede Bewegung zu sehen, die es je hatte. Von dort: `+ Eingang`, `− Verkauf`, `Zählen`, `Bearbeiten`, `Etikett erstellen`, `Archivieren`.
 
+Ein Produkt, das du auf Bestellung fertigst (Druck auf Bestellung, ein Einzelstück), kann unter `Bearbeiten` `Auf Bestellung (wird gefertigt, kein Bestand gezählt)` sein. Seine Menge zeigt dann `Auf Bestellung`: Es geht nie aus, ist nie knapp, hat kein Minimum, keine Nachbestellung und keinen Lagerwert, und die Menge des Shops wird weder hineingelesen noch gesendet. Kasse, Theke und Rechnungen verkaufen es ohne Prüfung unter null, es wird nicht für einen Stand gepackt, und seine Verkäufe zählen in jedem Bericht.
+
 > Ein Barcode-Scanner (USB oder Bluetooth) funktioniert im Suchfeld: Scanne einen Code und das Produkt öffnet sich. Bei einem unbekannten Code wird `Neues Produkt` mit ausgefüllter SKU angeboten.
 
 Auf dem Handy liest die 📷-Taste neben einem Such- oder Scanfeld Barcodes mit der Kamera (Chrome auf Android). In einem Eingang, einem Verkauf oder der Kasse bleibt sie offen, damit du ein Produkt nach dem anderen scannen kannst; tippe auf `Fertig`, wenn du durch bist. Wo die Taste nicht erscheint, kann der Browser keine Barcodes lesen, ein Scanner funktioniert aber trotzdem.
@@ -44,14 +46,36 @@ Beim Verkauf bietet ein Produkt mit Chargen eine Auswahl `Charge`; lass sie auf 
 `Neu` › `Kassensystem (Kasse)` ist eine Vollbild-Kasse für einen Laden. Links: ein Suchfeld (ein Scanner oder die 📷-Kamera fügt das Produkt sofort hinzu), Kategorie-Chips und ein Raster der Produkte mit Preis und Restmenge. Rechts: der Verkauf, mit − und + oder einer eingetippten Menge je Zeile, dem Nettobetrag, der MwSt. je Satz und der Summe.
 
 1. Wähle oben eine `Preisliste`. `Einzelhandel` nutzt den Verkaufspreis jedes Produkts. Unter `Preislisten` kannst du weitere anlegen, etwa `Großhandel`: ein Prozentsatz auf den Verkaufspreis (−10 heißt 10 % weniger) und, mit `Preise…`, ein eigener Preis für jedes Produkt.
-2. Wähle `Bar`, `Karte` oder `Sonstige`. Bei Barzahlung kannst du `Gegeben (bar)` eintippen, um das Rückgeld zu sehen.
+2. Wähle `Bar`, `Karte`, `Sonstige` oder `Geteilt` (ein Teil bar, der Rest mit Karte: tippe den Baranteil ein). Bei Barzahlung kannst du `Gegeben (bar)` eintippen, um das Rückgeld zu sehen.
 3. Tippe auf `Kassieren`. Die Produkte werden vom Bestand abgebucht (aus dem oben gezeigten Lager, wenn du mehrere hast), und der Beleg öffnet sich: Drucke ihn auf 58-mm- oder 80-mm-Rollenpapier. `Rückgängig` in der Meldung storniert den Verkauf sofort.
 
-`Beleg-Einstellungen` enthält den Belegkopf (Shopname, Adresse, USt-IdNr.) und den Belegfuß, die Papierbreite und den `Kassencode`: zwei Zeichen am Anfang der Belegnummern (etwa AB-261014-001), damit zwei Kassen nie dieselbe Nummer drucken. Diese Einstellungen bleiben auf jedem Gerät.
+Rabatte: Die Taste `%` an einer Zeile gibt dieser Zeile einen Prozentsatz oder einen Betrag Rabatt; `Rabatt` unter der Summe tut das für den ganzen Verkauf, mit einem optionalen Grund, der auf dem Beleg steht. Der Beleg zeigt auch den Preis vor dem Rabatt. `+ Anderer Artikel` verkauft etwas, das nicht im Bestand ist (ein Plakat, eine Eintrittskarte): Name, Preis inkl. MwSt. und Satz; er steht auf dem Beleg und in den Summen, nie im Bestand.
+
+Nach dem Verkauf kann der Beleg auch ohne Papier zum Kunden: `PDF teilen` (oder `PDF` am Computer) erstellt ein 80-mm-PDF, und `QR-Code` zeigt den Text des Belegs als Code für die Handykamera. Beides entsteht auf diesem Gerät; nichts wird verschickt.
+
+`Beleg-Einstellungen` enthält den Belegkopf (Shopname, Adresse, USt-IdNr.) und den Belegfuß, die Papierbreite und den `Kassencode`: zwei Zeichen am Anfang der Belegnummern (etwa AB-261014-001), damit zwei Kassen nie dieselbe Nummer drucken. `Höchster Rabatt auf diesem Gerät` begrenzt die Rabatte, die dieses Gerät geben darf (für das Handy einer Hilfe am Stand); leer heißt keine Grenze. Diese Einstellungen bleiben auf jedem Gerät.
 
 `Z-Bericht` zeigt die Verkäufe eines Tages: wie viele, netto, MwSt. je Satz, nach Zahlungsart und Preisliste, die Bestseller und jeden Beleg (von dort neu drucken oder `Stornieren`; die Produkte eines stornierten Verkaufs gehen zurück in den Bestand). `Tag abschließen` speichert die Tagessummen als nummerierten Z; Verkäufe danach erscheinen getrennt. `Z-Bericht drucken` druckt ihn auf die Rolle.
 
 Jeder Verkauf ist auch eine normale Bewegung `Verkauf`, also funktionieren Bestand, Berichte und Synchronisierung wie bei jedem Verkauf. Zwei Kassen, die gleichzeitig verkaufen, verlieren nie einen Verkauf.
+
+#### Messen, Buchvorstellungen und Märkte
+`Veranstaltungen` in der Kasse hält eine Messe, eine Buchvorstellung oder einen Markt fest: `Name`, die Tage (`Von`, `Bis`), das `Lager des Stands` (wähle eins, oder Bestand legt ein neues Lager mit dem Namen der Veranstaltung an), eine `Preisliste` und das `Wechselgeld pro Tag`. Dann:
+1. `Für den Stand packen`: Gib ein, wie viele du von jedem Produkt mitnimmst; eine Umbuchung bringt sie vom Hauptlager zum Stand.
+2. Am Stand wähle oben in der Kasse die Veranstaltung: Sie nutzt das Lager des Stands und die Preisliste der Veranstaltung, und jeder Verkauf zählt für sie. Zwei Handys am selben Stand können gleichzeitig verkaufen, auch offline; beim Synchronisieren kommt alles zusammen.
+3. Öffne am Ende jedes Tages den `Z-Bericht`: Das `Wechselgeld` kommt aus der Veranstaltung; gib das `Gezählte Bargeld` ein (oder `Zählen…` Schein für Schein), um zu sehen, was in der Kasse sein sollte und ob etwas fehlt, und dann `Tag abschließen`. `Zu Budget hinzufügen` öffnet danach eine Einnahme mit der Tagessumme in [Budget](app:budget), ausgefüllt zum Speichern.
+4. `Bericht` zeigt die ganze Veranstaltung über alle Tage: Verkäufe, Netto, MwSt., Rabatte, nach Zahlungsart, pro Tag und pro Titel, was zum Stand ging, was verkauft wurde, was zurückkam und was übrig ist. Drucke ihn auf der Rolle oder öffne ihn in Tabellen.
+5. `Zurückholen` bringt alles, was noch am Stand ist, mit einer Umbuchung zurück ins Hauptlager.
+
+Geräte mit einem älteren orOS verkaufen ohne Veranstaltungen; aktualisiere jedes Handy, das du zum Stand mitnimmst.
+
+#### Das Handy einer Hilfe (nur Kasse)
+Eine Hilfe kann auf dem eigenen Handy verkaufen, ohne den Rest von orOS zu sehen. Melde dich auf diesem Handy bei deiner Synchronisierung an, schalte [Einstellungen › Bildschirmsperre](app:settings) mit einer PIN ein, die nur du kennst, und wähle dann in der Kasse unter `Beleg-Einstellungen` `Dieses Gerät zur Kasse machen`. Stelle dort auch den `Höchster Rabatt auf diesem Gerät (%)` ein.
+- Ab dann öffnet orOS auf diesem Handy direkt die Kasse, ohne PIN. Schreibtisch, alle anderen Apps, Hilfe, Benachrichtigungen und Schnelleinstellungen sind ausgeblendet.
+- Ein Storno, `Beleg-Einstellungen`, `Veranstaltungen`, `Preislisten` und ein Rabatt über der Grenze fragen nach deiner PIN. `Zu Budget hinzufügen` gibt es in der Kasse nicht.
+- `Inhaber: orOS öffnen` oben in der Leiste zeigt den Sperrbildschirm: Deine PIN öffnet das ganze orOS; `Zurück zur Kasse` kehrt zurück. Sperren, ein unbenutztes Handy oder ein neuer Start von orOS führen zurück zur Kasse. Entsperren per Fingerabdruck gibt es an der Kasse nicht, denn die Fingerabdrücke auf dem Handy sind die der Hilfe.
+- Beenden: orOS mit deiner PIN öffnen, dann `Beleg-Einstellungen` › `Nur-Kasse-Modus beenden`. Auch das Ausschalten der Bildschirmsperre beendet ihn.
+- Das Handy hält weiter deine synchronisierten Daten, vor dem Bildschirm verborgen, nicht vor jemandem, der seinen Speicher lesen kann. Gib es nur jemandem, dem du vertraust.
 
 ### Inventur
 In einer `Inventur` gibst du ein, was du `Gezählt` hast. Bestand speichert die Differenz zu dem, was es erwartet hat, sodass ein Verkauf auf einem anderen Gerät im selben Moment trotzdem zählt.
@@ -75,7 +99,7 @@ Nachbestellen, Mindestmengen und der Gesamtwert gelten für das ganze Geschäft.
 Ein Laden, der deine Waren verkauft und dich für das Verkaufte bezahlt (eine Buchhandlung, eine Galerie, ein Feinkostladen), ist ein Lager mit eingeschalteter Kommission. Lege den Laden unter Einstellungen › `Lager` an und wähle daneben `Kommission…`: den Rabatt des Ladens, eine Erinnerung alle paar Monate und, falls abweichend, den Namen für die Rechnung.
 - Schicke Bestand mit `Neu` › `Umlagerung` dorthin: er gehört weiter dir, nur an einem anderen Ort.
 - Wenn der Laden meldet, was übrig ist, öffne die Kachel `Kommission` im Tab Produkte und wähle `Abrechnen…`. Gib ein, was noch im Regal steht; der Rest wird zum Verkaufspreis des Produkts als verkauft gebucht.
-- Nach `Buchen` öffnet `Rechnung erstellen` die Rechnungen mit dem Laden als Kunde und den Zeilen zu seinem Rabatt. Die Zeilen tragen keinen Produktcode, damit Rechnungen den Bestand nicht ein zweites Mal abbucht.
+- Nach `Buchen` öffnet `Rechnung erstellen` die Abrechnung mit dem Laden als Kunde und den Zeilen zu seinem Rabatt. Die Zeilen tragen keinen Produktcode, damit die Abrechnung den Bestand nicht ein zweites Mal abbucht.
 - Hake `Den Rest zurück … holen` an, um die Kommission zu beenden: der Rest geht ins Hauptlager zurück.
 - Die Kachel wird gelb, wenn eine Abrechnung fällig ist, und [Heute](app:today) erinnert dich daran. Storniere die Verkaufsbewegung, um eine Abrechnung rückgängig zu machen.
 
@@ -123,7 +147,7 @@ Ist ein WooCommerce-Shop verbunden, setzt `An den Shop senden` danach die neuen 
 Verbinde deinen WooCommerce-Shop einmal unter Einstellungen › [Verbundene Dienste](app:settings), dann öffne `Shop (WooCommerce)` über `Neu` oder hier in den Einstellungen.
 - `Produkte`: `Produkte aus dem Shop holen` liest jedes Produkt und jede Variante. `In Bestand importieren` fügt die neuen hinzu und aktualisiert Name, SKU, Verkaufspreis und Kategorie der vorhandenen (zugeordnet über das Shop-Produkt, dann SKU, dann Name). Hake das Kästchen darunter an, um auch die Mengen hier auf die des Shops zu setzen, als eine Inventur.
 - `Abweichende Mengen` listet die Produkte, deren Bestand der Shop verwaltet und deren Menge hier anders ist. `An den Shop senden` setzt die Menge im Shop auf deine; `Die des Shops übernehmen` zählt deine auf die des Shops.
-- `Bestellungen`: die Bestellungen des Shops der letzten 30 Tage. Für jede: `Verkauf erfassen` öffnet einen Verkauf mit ihren Zeilen (danach steht dort `Verkauf erfasst`, damit du ihn nicht doppelt erfasst), `Rechnung` öffnet eine neue Rechnung in [Rechnungen](app:invoices), `Kunde im CRM` vermerkt sie beim Kunden in [CRM](app:crm), `Zu Budget hinzufügen` trägt die Einnahme in [Budget](app:budget) ein, und `Als erledigt markieren` schließt die Bestellung im Shop ab.
+- `Bestellungen`: die Bestellungen des Shops der letzten 30 Tage. Für jede: `Verkauf erfassen` öffnet einen Verkauf mit ihren Zeilen (danach steht dort `Verkauf erfasst`, damit du ihn nicht doppelt erfasst), `Rechnung` öffnet eine neue Rechnung in der [Abrechnung](app:invoices), `Kunde im CRM` vermerkt sie beim Kunden in [CRM](app:crm), `Zu Budget hinzufügen` trägt die Einnahme in [Budget](app:budget) ein, und `Als erledigt markieren` schließt die Bestellung im Shop ab.
 
 Ohne Tastendruck wird nichts an den Shop gesendet, und nichts wird hier oder in einer anderen App gespeichert, bevor du es dort speicherst.
 
@@ -146,7 +170,7 @@ Produkte, Bewegungen, Lieferanten, Kategorien, Einheiten und Einstellungen werde
 ## Tipps
 - Lege einen `Lagerplatz` wie „Regal B3“ fest: Er erscheint in der Liste und in der Suche.
 - Archiviere Produkte, die du nicht mehr verkaufst: Ihr Verlauf bleibt.
-- Aus einem Produkt: `Neues Angebot` startet ein Angebot in [Angebot](app:quote) mit diesem Produkt und seinem Verkaufspreis (in der Währung von Bestand). `Angebot aus Produkten` unter `Neu` nimmt mehrere.
+- Aus einem Produkt: `Neues Angebot` startet ein Angebot in den [Angeboten der Abrechnung](app:quote) mit diesem Produkt und seinem Verkaufspreis (in der Währung von Bestand). `Angebot aus Produkten` unter `Neu` nimmt mehrere.
 - Öffne einen Eingang oder einen Verkauf und wähle `Zu Budget hinzufügen`, um seine Summe in [Budget](app:budget) einzutragen.
 - Einheiten mit Dezimalstellen (kg, l, m) nehmen Mengen wie 2,5; eigene Einheiten kannst du in den Einstellungen anlegen.
 

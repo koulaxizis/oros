@@ -103,6 +103,56 @@
       "proj.title": "Projects", "proj.empty": "No projects yet.", "proj.desc": "{n} tracks · {t}",
       "name.project": "Name of the project", "name.track": "Name of the track",
       "export.title": "Export", "sec.bits": "Bit depth", "sec.rate": "Sample rate",
+      "mk.btn": "Markers",
+      "tr.btn": "Transcript", "tr.hint": "Studio turns the episode's speech into text on this device, with the same speech model as Montage; the sound never leaves the device. Check the text and correct it, then Save: the site and the feed carry the saved transcript (WebVTT), and podcast apps can show it.", "tr.text": "Text (one line per cue: [minutes:seconds] words)", "tr.make": "Make the transcript", "tr.remake": "Make it again", "tr.del": "Delete the transcript", "tr.save": "Save", "tr.has": "Transcript saved.", "tr.none": "No transcript yet.", "tr.reading": "Reading…", "tr.loaded": "{n} lines. Edit them and Save.", "tr.replaceAsk": "Make a new transcript? The text in the box is replaced (the saved one stays until you Save).", "tr.needAsk": "The speech model (about {mb} MB) is downloaded once and kept on this device; it then works offline. Download it now?", "tr.download": "Download", "tr.noAsr": "This browser cannot run the speech model.", "tr.decoding": "Reading the episode file…", "tr.dl": "Downloading the speech model… {p}%", "tr.run": "Listening… {p}%", "tr.empty": "No speech was found in the episode.", "tr.made": "{n} lines. Check and correct them, then Save.", "tr.stopped": "Stopped.", "tr.gone": "The episode file is not on this device. Make it again here first.", "tr.net": "The speech model could not be downloaded. Check the connection and try again.", "tr.fail": "The transcript could not be made.", "tr.badText": "Nothing to save: each line starts with a time, like [1:05.5].", "tr.saved": "Saved, {n} lines. The next site or publish carries it.", "tr.saveFail": "The orOS disk did not accept the change.", "tr.delAsk": "Delete the saved transcript? The site keeps the old one until you publish again.", "tr.deleted": "The transcript is deleted.", "tr.dropAsk": "Close without saving the changes to the transcript?", "tr.drop": "Close without saving",
+      "mk.hint": "Markers name places on the timeline. In a podcast episode they become its chapters. Press M to add one at the playhead.",
+      "mk.none": "No markers yet.", "mk.add": "Add at the playhead", "mk.default": "Chapter {n}", "mk.added": "Marker at {time}",
+      "mk.max": "A project has up to {n} markers", "mk.go": "Go to {time}", "mk.name": "Marker name", "mk.here": "To the playhead", "mk.del": "Delete",
+      "mk.delName": "Delete marker {name}", "pod.btn": "Publish as podcast",
+      "pod.intro.hint": "Make a show, turn this project into one of its episodes, and download a ready site (feed, episodes, chapters, cover) to put on GitHub Pages, Netlify, Cloudflare Pages or a server of your own. Podcast apps follow its feed address.",
+      "pod.sec.show": "Show", "pod.f.show": "Show", "pod.newShow": "New show…", "pod.untitledShow": "Untitled show", "pod.f.title": "Title",
+      "pod.f.author": "Made by", "pod.f.desc": "Description", "pod.f.lang": "Language", "pod.f.type": "Order", "pod.type.episodic": "Newest first",
+      "pod.type.serial": "In order (series)", "pod.f.cat": "Category", "pod.catNone": "No category", "pod.f.explicit": "Explicit content",
+      "pod.f.url": "Site address",
+      "pod.urlHint": "Where you will upload the site, for example https://yourname.github.io/show/. It must start with https. The feed is this address plus feed.xml.",
+      "pod.f.email": "Owner e-mail (optional, public)",
+      "pod.emailHint": "Apple Podcasts and other directories use it to check the show is yours. It is written in the feed, so anyone can read it.",
+      "pod.f.fund": "Support link (optional)", "pod.f.cover": "Cover", "pod.coverNone": "No cover yet.", "pod.coverPick": "Choose a picture",
+      "pod.coverAtelier": "Design it in Atelier",
+      "pod.coverHint": "A square picture of at least 1400 × 1400 pixels. Studio cuts it square, makes it at most 3000 × 3000 and removes the photo's hidden details (place, camera).",
+      "pod.coverBusy": "Preparing the cover…", "pod.atelierHint": "Atelier opens a 3000 × 3000 design. Save it as a picture in Files, then choose it here.",
+      "pod.save": "Save show", "pod.del": "Delete show", "pod.saved": "Saved",
+      "pod.delAsk": "Delete the show “{name}”? Its {n} episodes stay as projects; they only leave the show.", "pod.sec.ep": "This project as an episode",
+      "pod.epAdd": "Add to this show", "pod.epOther": "This project is an episode of “{name}”.", "pod.f.n": "Episode number", "pod.f.se": "Season",
+      "pod.f.epType": "Kind", "pod.f.date": "Date", "pod.epType.full": "Episode", "pod.epType.trailer": "Trailer", "pod.epType.bonus": "Bonus",
+      "pod.f.epTitle": "Episode title", "pod.f.epDesc": "Show notes", "pod.f.sound": "Sound", "pod.mono": "Mono", "pod.stereo": "Stereo",
+      "pod.sizeHint": "About {s} an hour.", "pod.chapters": "{n} chapters from the markers",
+      "pod.noChapters": "No chapters: add markers on the timeline to make them.", "pod.intro": "Intro", "pod.chapter": "Chapter",
+      "pod.fileNone": "No episode file yet.", "pod.fileReady": "Episode file ready: {d}, {s}.",
+      "pod.stale": "The markers changed since: make the file again so its chapters match.", "pod.make": "Make the episode file",
+      "pod.remake": "Make the file again", "pod.fileMade": "The episode file is ready", "pod.epSave": "Save", "pod.epLeave": "Take out of the show",
+      "pod.leaveAsk": "Take this project out of the show? Its episode file stays on the disk until you delete the project.", "pod.untitledEp": "Episode",
+      "pod.sec.eps": "Episodes", "pod.epsNone": "No episodes yet. Open a project and add it to this show.", "pod.draft": "draft",
+      "pod.staleShort": "make again", "pod.sec.site": "The site",
+      "pod.siteHint": "The ZIP holds everything the show needs. Upload what is inside it to the site address, keeping the folders. After each new episode, download it again and upload it over the old one.",
+      "pod.feedIs": "Feed address:", "pod.noFeed": "set the site address first", "pod.copy": "Copy the feed address", "pod.copied": "Feed address copied",
+      "pod.subscribe": "Follow in Podcasts", "pod.zip": "Download the site (ZIP)", "pod.zipBusy": "Making the ZIP…",
+      "pod.zipDone": "Done. Upload its contents to {url}", "pod.staleAsk": "{n} episodes have chapters older than their markers. Make the site anyway?",
+      "pod.miss.title": "Give the show a title", "pod.miss.author": "Say who makes it", "pod.miss.desc": "Write a description",
+      "pod.miss.url": "Set the site address", "pod.miss.cover": "Choose a cover", "pod.miss.eps": "Make at least one episode file",
+      "pod.err.title": "The show needs a title.", "pod.err.url": "The site address must be a full https address.",
+      "pod.err.email": "That e-mail address does not look right.", "pod.err.fund": "The support link must be an http or https address.",
+      "pod.err.noDisk": "The orOS disk is not available here.", "pod.err.cover": "That picture could not be read.",
+      "pod.err.coverSmall": "The picture is smaller than 1400 × 1400 pixels.", "pod.err.long": "An episode can be at most one hour long.",
+      "pod.err.missing": "These files are not on this device: {list}. Make the episode files again here, or wait until the disk syncs.",
+      "pod.err.big": "The site is larger than 4 GB, which a ZIP cannot hold.",
+      "pod.gh.h": "Publish on GitHub Pages", "pod.gh.hint": "Studio puts the site straight into a GitHub repository of yours and GitHub Pages serves it, free. Use a repository just for the show. The token needs access to that repository only, with Contents and Pages set to Read and write.", "pod.gh.newToken": "Make a token on GitHub", "pod.gh.repo": "Repository (owner/name)", "pod.gh.token": "Token", "pod.gh.tokenSet": "A token is saved on this device only. It is never synced.", "pod.gh.forget": "Forget the token", "pod.gh.go": "Publish", "pod.gh.forgot": "The token is gone from this device.", "pod.gh.other": "Your site address is {url}, but GitHub Pages serves this repository at {pages}. The feed only works at the address it was made for.", "pod.gh.step.repo": "Opening the repository…", "pod.gh.step.feed": "Reading the published feed…", "pod.gh.step.file": "Sending file {i} of {n}…", "pod.gh.step.commit": "Saving the new version…", "pod.gh.step.pages": "Checking GitHub Pages…", "pod.gh.done": "Published. In a minute or two it is online at {url}", "pod.gh.same": "Nothing had changed. The site is at {url}", "pod.gh.pagesOff": "Turn on GitHub Pages in the settings of {repo} (Pages, branch main, folder / root).", "pod.gh.err.repo": "That repository was not found. Write it as owner/name, and check that the token may use it.", "pod.gh.err.token": "Paste a GitHub token (it starts with github_pat_).", "pod.gh.err.store": "This browser cannot keep the token (private window?). Nothing was sent.", "pod.gh.err.auth": "GitHub did not accept the token. It may have expired; make a new one.", "pod.gh.err.perm": "The token may not write to this repository. Give it Contents: Read and write for it.", "pod.gh.err.rate": "GitHub asks to wait a while before more requests. Try again later.", "pod.gh.err.net": "GitHub could not be reached. Check the connection and try again.", "pod.gh.err.big": "A file is larger than 75 MB, which GitHub does not take. Make the episode shorter or at a lower bitrate.", "pod.gh.err.http": "GitHub answered with an error. Nothing was lost; try again.", "pod.gh.err.moved": "The repository changed while publishing. Nothing was lost; try again.", "pod.gh.err.name": "A file name cannot be used on GitHub.", "pod.dav.h": "Publish on Nextcloud or WebDAV", "pod.dav.hint": "Studio puts the site into a folder on your own server (Nextcloud, ownCloud or any WebDAV server) with your account. In Nextcloud make a folder just for the show, share it with a public link (no password, downloads allowed) and make an app password in Settings › Security. Podcast apps read the site through the public link (Nextcloud 29 or newer).", "pod.dav.url": "The show's folder (WebDAV address)", "pod.dav.share": "Public link of that folder", "pod.dav.user": "User name", "pod.dav.pass": "App password", "pod.dav.passSet": "A password is saved on this device only. It is never synced.", "pod.dav.relay": "Through the orOS relay", "pod.dav.relayHint": "Turn it on when the server cannot be reached from the browser (most servers send no CORS headers). The files and the app password then pass through the orOS relay on their way; nothing is kept there. A file can be at most 95 MB.", "pod.dav.forget": "Forget the password", "pod.dav.go": "Publish", "pod.dav.forgot": "The password is gone from this device.", "pod.dav.other": "Your site address is {url}, but the public link serves this folder at {pub}. The feed only works at the address it was made for.", "pod.dav.step.folder": "Opening the folder…", "pod.dav.step.feed": "Reading the published feed…", "pod.dav.done": "Published. It is online at {url}", "pod.dav.err.url": "Write the folder's WebDAV address, starting with https:// (in Nextcloud: Files › Settings › WebDAV, then the folder's path).", "pod.dav.err.share": "Paste the folder's public link, like https://cloud.example.com/s/AbCdEf123.", "pod.dav.err.user": "Write your user name on that server.", "pod.dav.err.pass": "Paste an app password for that account.", "pod.dav.err.store": "This browser cannot keep the password (private window?). Nothing was sent.", "pod.dav.err.auth": "The server did not accept the user name or app password.", "pod.dav.err.perm": "This account may not write to that folder.", "pod.dav.err.folder": "That folder was not found. Check the WebDAV address.", "pod.dav.err.moved": "The feed changed on the server while publishing (another device?). Nothing was lost; try again.", "pod.dav.err.big": "A file is too large for the server or the relay (at most 95 MB through the relay). Make the episode shorter or at a lower bitrate.", "pod.dav.err.full": "The server has no space left for these files.", "pod.dav.err.http": "The server answered with an error. Nothing was lost; try again.", "pod.dav.err.net": "The server could not be reached through the relay. Check the connection and try again later.", "pod.dav.err.cors": "The server could not be reached from the browser. Turn on Through the orOS relay, or check the connection.", "pod.dav.err.target": "The relay only reaches servers at an https address on the usual ports.", "pod.dav.err.notdav": "That address is not a WebDAV folder.", "pod.dav.err.name": "A file name cannot be used on the server.", "pod.page.feed": "RSS feed", "pod.page.support": "Support",
+      "pod.page.episode": "Episode", "pod.page.season": "Season", "pod.page.credit": "Made with orOS Studio", "pod.cat.Arts": "Arts",
+      "pod.cat.Business": "Business", "pod.cat.Comedy": "Comedy", "pod.cat.Education": "Education", "pod.cat.Fiction": "Fiction",
+      "pod.cat.Government": "Government", "pod.cat.History": "History", "pod.cat.Health & Fitness": "Health & Fitness",
+      "pod.cat.Kids & Family": "Kids & Family", "pod.cat.Leisure": "Leisure", "pod.cat.Music": "Music", "pod.cat.News": "News",
+      "pod.cat.Religion & Spirituality": "Religion & Spirituality", "pod.cat.Science": "Science", "pod.cat.Society & Culture": "Society & Culture",
+      "pod.cat.Sports": "Sports", "pod.cat.Technology": "Technology", "pod.cat.True Crime": "True Crime", "pod.cat.TV & Film": "TV & Film",
       "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44.1 kHz", "rate.48000": "48 kHz",
       "export.loop": "The loop: {a} to {b}.", "export.all": "The whole song: {a} to {b}.",
       "export.busy": "Mixing…", "export.empty": "There is nothing to export yet.",
@@ -177,9 +227,31 @@
       "fx.keyHint": "The effect listens to that track, after its effects and before its fader, so a muted track still works as the key.",
       "sec.format": "Format", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Bitrate", "kbps": "{n} kbit/s",
       "export.encoding": "Encoding… {n}%", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
-      "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV.",
+      "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV. For speech 64–96 kbit/s is enough.",
       "toast.exportFail": "The export did not finish",
-      "btn.toMusic": "Add to Music", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
+      "ld.title": "Loudness", "ld.open": "Loudness…", "ld.m": "Momentary", "ld.s": "Short-term", "ld.i": "Integrated", "ld.lra": "Range", "ld.tp": "True peak",
+      "ld.hint": "Measured as the listener hears the master, by EBU R128. The live numbers count while the song plays.",
+      "ld.target": "Target", "ld.reset": "Reset", "ld.song": "Measure the song", "ld.file": "Measure a file…",
+      "ld.busy": "Measuring… {n}%", "ld.mixing": "Mixing the song…", "ld.fail": "That could not be measured.", "ld.empty": "There is nothing to measure yet.",
+      "ld.colSong": "This song", "ld.colFile": "{name}", "ld.colRef": "Reference",
+      "ld.r.i": "Integrated (LUFS)", "ld.r.lra": "Range (LU)", "ld.r.smax": "Loudest 3 s (LUFS)", "ld.r.tp": "True peak (dBTP)", "ld.r.sp": "Sample peak (dBFS)",
+      "ld.r.rms": "RMS (dBFS)", "ld.r.floor": "Noise floor (dBFS)", "ld.r.dur": "Length",
+      "ld.t.spotify": "Spotify (-14 LUFS)", "ld.t.apple": "Apple Music (-16 LUFS)", "ld.t.youtube": "YouTube (-14 LUFS)", "ld.t.podcast": "Podcast (-16 LUFS)",
+      "ld.t.ebu": "Broadcast, EBU R128 (-23 LUFS)", "ld.t.acx": "Audiobook: ACX (Audible)", "ld.t.storytel": "Audiobook: Storytel",
+      "ld.v.down": "{p} will play it {n} dB quieter.", "ld.v.up": "{p} will play it {n} dB louder.", "ld.v.same": "{p} will play it as it is.",
+      "ld.v.peak": "The true peak is above {n} dBTP: it may distort after the service encodes it.", "ld.v.none": "Play the song or measure it to see how {p} will play it.",
+      "ld.v.spec": "Measure the song to check it against {p}.", "ld.v.specOk": "Everything {p} checks passes.", "ld.v.specBad": "{n} of the checks for {p} do not pass yet.", "ld.v.specBad1": "1 of the checks for {p} does not pass yet.",
+      "ld.c.rms": "RMS {v} dBFS (needs {lo} to {hi})", "ld.c.peak": "Peak {v} dB (at most {hi})", "ld.c.floor": "Noise floor {v} dBFS (at most {hi})",
+      "ld.c.head": "Room tone at the start {v} s ({lo} to {hi} s)", "ld.c.tail": "Room tone at the end {v} s ({lo} to {hi} s)",
+      "ld.c.zero": "Digital silence {v} s (use room tone instead)", "ld.c.dur": "Length {v} min (at most {hi} min)", "ld.c.clip": "Clipped samples: {v}",
+      "ld.c.gain": "To reach RMS {to} dBFS it needs {g} dB.", "ld.c.limit": "Its peaks would then pass {hi} dB, so a limiter has to catch them.",
+      "ld.c.noisy": "Its noise floor would rise to {f} dBFS: reduce the noise first.",
+      "ld.ref": "Reference track", "ld.refHint": "Compare with a song you like: its numbers stand next to yours, and it plays at your song's loudness so you hear only the difference in sound.",
+      "ld.refPick": "Choose a reference…", "ld.refPlay": "Play it at the song's loudness", "ld.refStop": "Stop the reference", "ld.refDrop": "Remove",
+      "ld.refNoMatch": "Measure the song first, so the reference can play at its loudness.", "ld.refGain": "The reference plays {n} dB {dir}.", "ld.louder": "louder", "ld.quieter": "quieter",
+      "bk.deliver": "Check and deliver", "bk.aac": "M4B for the book", "bk.aacN": "{n} kbit/s AAC, mono, 44.1 kHz", "bk.m4b": "One M4B with chapters", "bk.m4bMixing": "Mixing {i} of {n}: {name}…", "bk.m4bEncoding": "Encoding {i} of {n}: {name}", "bk.m4bEmpty": "Every part is empty: there is nothing to export.", "bk.m4bDone": "{name} is in {path} on the orOS disk: {d}, {n} chapters.", "bk.dur": "Write the length to Publishing ({n} min)", "bk.durSame": "Publishing has this length ({n} min)", "bk.check": "Check all", "bk.checking": "Checking {i} of {n}: {name}…", "bk.norm": "Normalise all", "bk.norming": "Normalising {i} of {n}: {name}…", "bk.normDone": "Every part is at RMS -20 dBFS, its peaks held at -3.5 dB", "bk.normHint": "Normalising adds a gain and the NULL Limiter (true peak, -3.5 dB) at the end of each part's master chain. The recordings stay as they are, and Remove normalising takes both out again.", "bk.unnorm": "Remove normalising", "bk.sample": "Use this chapter's loop as the retail sample", "bk.sampleSet": "Retail sample: {name}, {a} to {b}", "bk.sampleNone": "No retail sample yet: set a loop of 1 to 5 minutes in a chapter and press the button.", "bk.sampleBad": "Set a loop of 1 to 5 minutes in a chapter of this book first.", "bk.kbps": "MP3 for the book", "bk.kbpsN": "{n} kbit/s CBR, mono, 44.1 kHz", "bk.export": "Export the book", "bk.exporting": "Exporting {i} of {n}: {name}…", "bk.exported": "{n} files are in {path} on the orOS disk, with report.txt.", "bk.exportDone": "The book is exported", "bk.emptyPart": "{name} is empty: it was left out.", "bk.noCover": "No cover: link the book to a Publishing title with a cover.", "bk.missing": "Some sounds of “{name}” are not on this device yet.", "bk.fullFx": "The master chain of “{name}” is full.", "bk.failPart": "“{name}” could not be mixed.", "bk.st.ok": "{spec}: passes", "bk.st.bad": "{spec}: {n} checks do not pass", "bk.st.bad1": "{spec}: 1 check does not pass", "bk.st.old": "changed since the check", "bk.sumOk": "Every part passes {spec}.", "bk.sumBad": "{n} parts do not pass {spec} yet. Open one and its Loudness window shows what to fix.", "bk.sumBad1": "1 part does not pass {spec} yet. Open it and its Loudness window shows what to fix.", "ld.go": "Go there",
+      "bk.view": "Show", "bk.songs": "Songs", "bk.books": "Books", "bk.new": "New book", "bk.all": "All books", "bk.empty": "No books yet. A book is a row of chapters, each one a project of its own, with opening and closing credits.", "bk.nameAsk": "Name of the book", "bk.rename": "Rename", "bk.desc": "{n} chapters · {t} · {spec}", "bk.pub": "Title in Publishing", "bk.pubNone": "None (fill in below)", "bk.pubInfo": "Author: {a} · Narrator: {n} · Audiobook ISBN: {isbn}", "bk.pubMissing": "That title is no longer in Publishing.", "bk.author": "Author", "bk.narrator": "Narrator", "bk.spec": "Requirements", "bk.spec.acx": "ACX (Audible)", "bk.spec.storytel": "Storytel", "bk.parts": "Chapters", "bk.open": "Opening credits", "bk.close": "Closing credits", "bk.chapterN": "Chapter {n}", "bk.addCh": "New chapter", "bk.partDesc": "{k} · {t}", "bk.k.open": "Opening", "bk.k.close": "Closing", "bk.k.chapter": "Chapter {n}", "bk.up": "Move up", "bk.down": "Move down", "bk.delCh": "Delete", "bk.openPart": "Open", "bk.rt": "Room tone", "bk.rtHint": "Record about 30 seconds of the quiet room with the same microphone and settings, select that clip and press the button below. Gaps between takes are then filled with it, because ACX rejects digital silence.", "bk.rtUse": "Use the selected clip as room tone", "bk.rtNone": "No room tone yet.", "bk.rtOk": "Room tone {d} s, noise floor {f} dBFS: the room is quiet enough.", "bk.rtBad": "Room tone {d} s, noise floor {f} dBFS: above -60 dBFS, so the recordings will be too noisy. Quieten the room, or try NULL Noise Reduction or Gate.", "bk.rtShort": "Select an audio clip of at least 5 seconds first.", "bk.rtSaved": "Room tone saved", "bk.fill": "Fill the gaps in “{name}”", "bk.fillNone": "Fill the gaps of a chapter", "bk.filled": "{n} gaps filled with room tone", "bk.noGaps": "There are no gaps to fill", "bk.notChapter": "Open a chapter of this book first.", "bk.needRt": "Choose the room tone first.", "bk.rtTrack": "Room tone", "bk.voice": "Voice", "bk.del": "Delete book", "bk.deleted": "Book deleted", "bk.maxBooks": "You have {n} books, more do not fit", "bk.maxCh": "Books hold up to {n} chapters together", "bk.flac": "Saving the take (FLAC)… {n}%", "bk.sub": "{book} · {part}", "bk.fail": "That did not work",
+      "btn.toMusic": "Add to Music", "btn.sendApp": "Send to an app…", "btn.toLyrics": "Sync lyrics", "toast.toMusic": "Added to Music", "toast.toMusicFail": "Could not add it to Music",
       "btn.ringtone": "Make a ringtone", "toast.ringNoNotes": "Ringtone Composer needs notes: add an instrument track.",
       "au.btn": "A", "au.show": "Automation", "au.title": "Automation: {name}", "au.param": "Parameter",
       "au.vol": "Volume", "au.pan": "Pan", "au.on": "Lane on", "au.delPt": "Delete point", "au.clear": "Clear lane",
@@ -264,6 +336,62 @@
       "proj.title": "Έργα", "proj.empty": "Κανένα έργο ακόμη.", "proj.desc": "{n} κανάλια · {t}",
       "name.project": "Όνομα του έργου", "name.track": "Όνομα του καναλιού",
       "export.title": "Εξαγωγή", "sec.bits": "Βάθος bit", "sec.rate": "Συχνότητα δειγματοληψίας",
+      "mk.btn": "Σημάδια",
+      "tr.btn": "Απομαγνητοφώνηση", "tr.hint": "Το Studio κάνει τον λόγο του επεισοδίου κείμενο σε αυτή τη συσκευή, με το ίδιο μοντέλο ομιλίας που χρησιμοποιεί το Montage· ο ήχος δεν φεύγει ποτέ από τη συσκευή. Έλεγξε και διόρθωσε το κείμενο και πάτα Αποθήκευση: το site και το feed παίρνουν την αποθηκευμένη απομαγνητοφώνηση (WebVTT), και οι εφαρμογές podcast μπορούν να τη δείχνουν.", "tr.text": "Κείμενο (μία γραμμή ανά φράση: [λεπτά:δευτερόλεπτα] λόγια)", "tr.make": "Δημιουργία απομαγνητοφώνησης", "tr.remake": "Νέα δημιουργία", "tr.del": "Διαγραφή απομαγνητοφώνησης", "tr.save": "Αποθήκευση", "tr.has": "Υπάρχει αποθηκευμένη απομαγνητοφώνηση.", "tr.none": "Δεν υπάρχει ακόμα απομαγνητοφώνηση.", "tr.reading": "Ανάγνωση…", "tr.loaded": "{n} γραμμές. Διόρθωσέ τες και πάτα Αποθήκευση.", "tr.replaceAsk": "Να γίνει νέα απομαγνητοφώνηση; Το κείμενο στο πλαίσιο αντικαθίσταται (η αποθηκευμένη μένει μέχρι να πατήσεις Αποθήκευση).", "tr.needAsk": "Το μοντέλο ομιλίας (περίπου {mb} MB) κατεβαίνει μία φορά και μένει σε αυτή τη συσκευή· μετά δουλεύει και χωρίς σύνδεση. Να κατέβει τώρα;", "tr.download": "Λήψη", "tr.noAsr": "Αυτός ο browser δεν μπορεί να τρέξει το μοντέλο ομιλίας.", "tr.decoding": "Ανάγνωση του αρχείου του επεισοδίου…", "tr.dl": "Λήψη του μοντέλου ομιλίας… {p}%", "tr.run": "Ακρόαση… {p}%", "tr.empty": "Δεν βρέθηκε ομιλία στο επεισόδιο.", "tr.made": "{n} γραμμές. Έλεγξε και διόρθωσέ τες και μετά πάτα Αποθήκευση.", "tr.stopped": "Σταμάτησε.", "tr.gone": "Το αρχείο του επεισοδίου δεν είναι σε αυτή τη συσκευή. Φτιάξ' το πρώτα ξανά εδώ.", "tr.net": "Το μοντέλο ομιλίας δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.", "tr.fail": "Η απομαγνητοφώνηση δεν έγινε.", "tr.badText": "Δεν υπάρχει κάτι για αποθήκευση: κάθε γραμμή ξεκινά με χρόνο, όπως [1:05.5].", "tr.saved": "Αποθηκεύτηκε, {n} γραμμές. Μπαίνει στο επόμενο site ή στην επόμενη δημοσίευση.", "tr.saveFail": "Ο δίσκος του orOS δεν δέχτηκε την αλλαγή.", "tr.delAsk": "Να διαγραφεί η αποθηκευμένη απομαγνητοφώνηση; Το site κρατά την παλιά μέχρι να δημοσιεύσεις ξανά.", "tr.deleted": "Η απομαγνητοφώνηση διαγράφηκε.", "tr.dropAsk": "Κλείσιμο χωρίς αποθήκευση των αλλαγών στην απομαγνητοφώνηση;", "tr.drop": "Κλείσιμο χωρίς αποθήκευση",
+      "mk.hint": "Τα σημάδια ονομάζουν σημεία στη γραμμή χρόνου. Σε επεισόδιο podcast γίνονται τα κεφάλαιά του. Πάτα M για να προσθέσεις ένα στον δείκτη.",
+      "mk.none": "Δεν υπάρχουν σημάδια ακόμη.", "mk.add": "Προσθήκη στον δείκτη", "mk.default": "Κεφάλαιο {n}", "mk.added": "Σημάδι στο {time}",
+      "mk.max": "Ένα έργο έχει έως {n} σημάδια", "mk.go": "Μετάβαση στο {time}", "mk.name": "Όνομα σημαδιού", "mk.here": "Στον δείκτη", "mk.del": "Διαγραφή",
+      "mk.delName": "Διαγραφή του σημαδιού {name}", "pod.btn": "Δημοσίευση ως podcast",
+      "pod.intro.hint": "Φτιάξε μια εκπομπή, κάνε αυτό το έργο επεισόδιό της και κατέβασε έτοιμο site (feed, επεισόδια, κεφάλαια, εξώφυλλο) για να το ανεβάσεις σε GitHub Pages, Netlify, Cloudflare Pages ή δικό σου server. Οι εφαρμογές podcast ακολουθούν τη διεύθυνση του feed.",
+      "pod.sec.show": "Εκπομπή", "pod.f.show": "Εκπομπή", "pod.newShow": "Νέα εκπομπή…", "pod.untitledShow": "Εκπομπή χωρίς τίτλο", "pod.f.title": "Τίτλος",
+      "pod.f.author": "Δημιουργός", "pod.f.desc": "Περιγραφή", "pod.f.lang": "Γλώσσα", "pod.f.type": "Σειρά", "pod.type.episodic": "Πρώτα τα νεότερα",
+      "pod.type.serial": "Με τη σειρά (σειρά επεισοδίων)", "pod.f.cat": "Κατηγορία", "pod.catNone": "Χωρίς κατηγορία",
+      "pod.f.explicit": "Περιεχόμενο για ενήλικες", "pod.f.url": "Διεύθυνση του site",
+      "pod.urlHint": "Εκεί που θα ανεβάσεις το site, για παράδειγμα https://onoma.github.io/ekpompi/. Πρέπει να ξεκινά με https. Το feed είναι αυτή η διεύθυνση και μετά feed.xml.",
+      "pod.f.email": "Email ιδιοκτήτη (προαιρετικό, δημόσιο)",
+      "pod.emailHint": "Το Apple Podcasts και άλλοι κατάλογοι το χρησιμοποιούν για να ελέγξουν ότι η εκπομπή είναι δική σου. Γράφεται στο feed, άρα μπορεί να το διαβάσει οποιοσδήποτε.",
+      "pod.f.fund": "Σύνδεσμος υποστήριξης (προαιρετικό)", "pod.f.cover": "Εξώφυλλο", "pod.coverNone": "Δεν υπάρχει εξώφυλλο ακόμη.",
+      "pod.coverPick": "Επιλογή εικόνας", "pod.coverAtelier": "Σχεδίασέ το στο Atelier",
+      "pod.coverHint": "Τετράγωνη εικόνα τουλάχιστον 1400 × 1400 pixel. Το Studio την κόβει τετράγωνη, την κάνει το πολύ 3000 × 3000 και σβήνει τα κρυφά στοιχεία της φωτογραφίας (τόπο, κάμερα).",
+      "pod.coverBusy": "Ετοιμάζεται το εξώφυλλο…",
+      "pod.atelierHint": "Το Atelier ανοίγει σχέδιο 3000 × 3000. Αποθήκευσέ το ως εικόνα στα Αρχεία και διάλεξέ το εδώ.", "pod.save": "Αποθήκευση εκπομπής",
+      "pod.del": "Διαγραφή εκπομπής", "pod.saved": "Αποθηκεύτηκε",
+      "pod.delAsk": "Διαγραφή της εκπομπής «{name}»; Τα {n} επεισόδιά της μένουν ως έργα, απλώς φεύγουν από την εκπομπή.",
+      "pod.sec.ep": "Αυτό το έργο ως επεισόδιο", "pod.epAdd": "Προσθήκη σε αυτή την εκπομπή",
+      "pod.epOther": "Αυτό το έργο είναι επεισόδιο της εκπομπής «{name}».", "pod.f.n": "Αριθμός επεισοδίου", "pod.f.se": "Σεζόν", "pod.f.epType": "Είδος",
+      "pod.f.date": "Ημερομηνία", "pod.epType.full": "Επεισόδιο", "pod.epType.trailer": "Τρέιλερ", "pod.epType.bonus": "Μπόνους",
+      "pod.f.epTitle": "Τίτλος επεισοδίου", "pod.f.epDesc": "Σημειώσεις επεισοδίου", "pod.f.sound": "Ήχος", "pod.mono": "Μονοφωνικό",
+      "pod.stereo": "Στερεοφωνικό", "pod.sizeHint": "Περίπου {s} την ώρα.", "pod.chapters": "{n} κεφάλαια από τα σημάδια",
+      "pod.noChapters": "Χωρίς κεφάλαια: πρόσθεσε σημάδια στη γραμμή χρόνου για να γίνουν.", "pod.intro": "Εισαγωγή", "pod.chapter": "Κεφάλαιο",
+      "pod.fileNone": "Δεν υπάρχει αρχείο επεισοδίου ακόμη.", "pod.fileReady": "Το αρχείο του επεισοδίου είναι έτοιμο: {d}, {s}.",
+      "pod.stale": "Τα σημάδια άλλαξαν από τότε: φτιάξε ξανά το αρχείο για να ταιριάζουν τα κεφάλαια.", "pod.make": "Δημιουργία αρχείου επεισοδίου",
+      "pod.remake": "Νέα δημιουργία αρχείου", "pod.fileMade": "Το αρχείο του επεισοδίου είναι έτοιμο", "pod.epSave": "Αποθήκευση",
+      "pod.epLeave": "Αφαίρεση από την εκπομπή",
+      "pod.leaveAsk": "Να αφαιρεθεί αυτό το έργο από την εκπομπή; Το αρχείο του επεισοδίου μένει στον δίσκο μέχρι να διαγράψεις το έργο.",
+      "pod.untitledEp": "Επεισόδιο", "pod.sec.eps": "Επεισόδια",
+      "pod.epsNone": "Δεν υπάρχουν επεισόδια ακόμη. Άνοιξε ένα έργο και πρόσθεσέ το σε αυτή την εκπομπή.", "pod.draft": "πρόχειρο",
+      "pod.staleShort": "θέλει νέο αρχείο", "pod.sec.site": "Το site",
+      "pod.siteHint": "Το ZIP έχει όλα όσα χρειάζεται η εκπομπή. Ανέβασε ό,τι περιέχει στη διεύθυνση του site, με τους φακέλους του. Μετά από κάθε νέο επεισόδιο κατέβασέ το ξανά και ανέβασέ το πάνω στο παλιό.",
+      "pod.feedIs": "Διεύθυνση feed:", "pod.noFeed": "όρισε πρώτα τη διεύθυνση του site", "pod.copy": "Αντιγραφή διεύθυνσης feed",
+      "pod.copied": "Η διεύθυνση του feed αντιγράφηκε", "pod.subscribe": "Παρακολούθηση στο Podcasts", "pod.zip": "Λήψη του site (ZIP)",
+      "pod.zipBusy": "Φτιάχνεται το ZIP…", "pod.zipDone": "Έτοιμο. Ανέβασε το περιεχόμενό του στο {url}",
+      "pod.staleAsk": "{n} επεισόδια έχουν κεφάλαια παλιότερα από τα σημάδια τους. Να γίνει το site έτσι κι αλλιώς;",
+      "pod.miss.title": "Δώσε τίτλο στην εκπομπή", "pod.miss.author": "Γράψε ποιος τη φτιάχνει", "pod.miss.desc": "Γράψε περιγραφή",
+      "pod.miss.url": "Όρισε τη διεύθυνση του site", "pod.miss.cover": "Διάλεξε εξώφυλλο", "pod.miss.eps": "Φτιάξε τουλάχιστον ένα αρχείο επεισοδίου",
+      "pod.err.title": "Η εκπομπή χρειάζεται τίτλο.", "pod.err.url": "Η διεύθυνση του site πρέπει να είναι πλήρης διεύθυνση https.",
+      "pod.err.email": "Αυτό το email δεν μοιάζει σωστό.", "pod.err.fund": "Ο σύνδεσμος υποστήριξης πρέπει να είναι διεύθυνση http ή https.",
+      "pod.err.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "pod.err.cover": "Η εικόνα δεν διαβάστηκε.",
+      "pod.err.coverSmall": "Η εικόνα είναι μικρότερη από 1400 × 1400 pixel.", "pod.err.long": "Ένα επεισόδιο μπορεί να είναι έως μία ώρα.",
+      "pod.err.missing": "Αυτά τα αρχεία δεν είναι σε αυτή τη συσκευή: {list}. Φτιάξε ξανά τα αρχεία των επεισοδίων εδώ ή περίμενε να συγχρονιστεί ο δίσκος.",
+      "pod.err.big": "Το site είναι πάνω από 4 GB και δεν χωρά σε ZIP.",
+      "pod.gh.h": "Δημοσίευση στο GitHub Pages", "pod.gh.hint": "Το Studio βάζει το site κατευθείαν σε ένα δικό σου repository στο GitHub, και το GitHub Pages το σερβίρει δωρεάν. Χρησιμοποίησε ένα repository μόνο για την εκπομπή. Το token χρειάζεται πρόσβαση μόνο σε αυτό, με Contents και Pages σε Read and write.", "pod.gh.newToken": "Φτιάξε token στο GitHub", "pod.gh.repo": "Repository (κάτοχος/όνομα)", "pod.gh.token": "Token", "pod.gh.tokenSet": "Υπάρχει αποθηκευμένο token μόνο σε αυτή τη συσκευή. Δεν συγχρονίζεται ποτέ.", "pod.gh.forget": "Ξέχνα το token", "pod.gh.go": "Δημοσίευση", "pod.gh.forgot": "Το token σβήστηκε από αυτή τη συσκευή.", "pod.gh.other": "Η διεύθυνση του site σου είναι {url}, αλλά το GitHub Pages σερβίρει αυτό το repository στο {pages}. Το feed δουλεύει μόνο στη διεύθυνση για την οποία φτιάχτηκε.", "pod.gh.step.repo": "Άνοιγμα του repository…", "pod.gh.step.feed": "Ανάγνωση του δημοσιευμένου feed…", "pod.gh.step.file": "Αποστολή αρχείου {i} από {n}…", "pod.gh.step.commit": "Αποθήκευση της νέας έκδοσης…", "pod.gh.step.pages": "Έλεγχος του GitHub Pages…", "pod.gh.done": "Δημοσιεύτηκε. Σε ένα με δύο λεπτά είναι online στο {url}", "pod.gh.same": "Δεν είχε αλλάξει τίποτα. Το site είναι στο {url}", "pod.gh.pagesOff": "Άνοιξε το GitHub Pages στις ρυθμίσεις του {repo} (Pages, branch main, φάκελος / root).", "pod.gh.err.repo": "Το repository δεν βρέθηκε. Γράψ' το ως κάτοχος/όνομα και έλεγξε ότι το token έχει πρόσβαση σε αυτό.", "pod.gh.err.token": "Επικόλλησε ένα token του GitHub (ξεκινά με github_pat_).", "pod.gh.err.store": "Αυτός ο browser δεν μπορεί να κρατήσει το token (ιδιωτικό παράθυρο;). Δεν στάλθηκε τίποτα.", "pod.gh.err.auth": "Το GitHub δεν δέχτηκε το token. Ίσως έληξε· φτιάξε καινούργιο.", "pod.gh.err.perm": "Το token δεν μπορεί να γράψει σε αυτό το repository. Δώσε του Contents: Read and write για αυτό.", "pod.gh.err.rate": "Το GitHub ζητά να περιμένεις λίγο πριν από άλλα αιτήματα. Δοκίμασε αργότερα.", "pod.gh.err.net": "Δεν υπήρξε σύνδεση με το GitHub. Έλεγξε τη σύνδεση και δοκίμασε ξανά.", "pod.gh.err.big": "Ένα αρχείο είναι πάνω από 75 MB, που το GitHub δεν το δέχεται. Κάνε το επεισόδιο πιο σύντομο ή με χαμηλότερο bitrate.", "pod.gh.err.http": "Το GitHub απάντησε με σφάλμα. Δεν χάθηκε τίποτα· δοκίμασε ξανά.", "pod.gh.err.moved": "Το repository άλλαξε κατά τη δημοσίευση. Δεν χάθηκε τίποτα· δοκίμασε ξανά.", "pod.gh.err.name": "Ένα όνομα αρχείου δεν γίνεται δεκτό στο GitHub.", "pod.dav.h": "Δημοσίευση σε Nextcloud ή WebDAV", "pod.dav.hint": "Το Studio βάζει το site σε έναν φάκελο στον δικό σου server (Nextcloud, ownCloud ή οποιονδήποτε server WebDAV) με τον λογαριασμό σου. Στο Nextcloud φτιάξε έναν φάκελο μόνο για την εκπομπή, μοιράσου τον με δημόσιο σύνδεσμο (χωρίς κωδικό, με επιτρεπτή λήψη) και φτιάξε έναν κωδικό εφαρμογής στις Ρυθμίσεις › Ασφάλεια. Οι εφαρμογές podcast διαβάζουν το site από τον δημόσιο σύνδεσμο (Nextcloud 29 ή νεότερο).", "pod.dav.url": "Ο φάκελος της εκπομπής (διεύθυνση WebDAV)", "pod.dav.share": "Δημόσιος σύνδεσμος του φακέλου", "pod.dav.user": "Όνομα χρήστη", "pod.dav.pass": "Κωδικός εφαρμογής", "pod.dav.passSet": "Υπάρχει αποθηκευμένος κωδικός μόνο σε αυτή τη συσκευή. Δεν συγχρονίζεται ποτέ.", "pod.dav.relay": "Μέσω του relay του orOS", "pod.dav.relayHint": "Άνοιξέ το όταν ο server δεν φτάνει από τον browser (οι περισσότεροι δεν στέλνουν κεφαλίδες CORS). Τότε τα αρχεία και ο κωδικός εφαρμογής περνούν από το relay του orOS στον δρόμο τους· τίποτα δεν κρατιέται εκεί. Κάθε αρχείο μπορεί να είναι έως 95 MB.", "pod.dav.forget": "Ξέχνα τον κωδικό", "pod.dav.go": "Δημοσίευση", "pod.dav.forgot": "Ο κωδικός σβήστηκε από αυτή τη συσκευή.", "pod.dav.other": "Η διεύθυνση του site σου είναι {url}, αλλά ο δημόσιος σύνδεσμος σερβίρει αυτόν τον φάκελο στο {pub}. Το feed δουλεύει μόνο στη διεύθυνση για την οποία φτιάχτηκε.", "pod.dav.step.folder": "Άνοιγμα του φακέλου…", "pod.dav.step.feed": "Ανάγνωση του δημοσιευμένου feed…", "pod.dav.done": "Δημοσιεύτηκε. Είναι online στο {url}", "pod.dav.err.url": "Γράψε τη διεύθυνση WebDAV του φακέλου, που ξεκινά με https:// (στο Nextcloud: Αρχεία › Ρυθμίσεις › WebDAV και μετά η διαδρομή του φακέλου).", "pod.dav.err.share": "Επικόλλησε τον δημόσιο σύνδεσμο του φακέλου, όπως https://cloud.example.com/s/AbCdEf123.", "pod.dav.err.user": "Γράψε το όνομα χρήστη σου σε αυτόν τον server.", "pod.dav.err.pass": "Επικόλλησε έναν κωδικό εφαρμογής για αυτόν τον λογαριασμό.", "pod.dav.err.store": "Αυτός ο browser δεν μπορεί να κρατήσει τον κωδικό (ιδιωτικό παράθυρο;). Δεν στάλθηκε τίποτα.", "pod.dav.err.auth": "Ο server δεν δέχτηκε το όνομα χρήστη ή τον κωδικό εφαρμογής.", "pod.dav.err.perm": "Αυτός ο λογαριασμός δεν μπορεί να γράψει σε αυτόν τον φάκελο.", "pod.dav.err.folder": "Ο φάκελος δεν βρέθηκε. Έλεγξε τη διεύθυνση WebDAV.", "pod.dav.err.moved": "Το feed άλλαξε στον server την ώρα της δημοσίευσης (άλλη συσκευή;). Δεν χάθηκε τίποτα· δοκίμασε ξανά.", "pod.dav.err.big": "Ένα αρχείο είναι πολύ μεγάλο για τον server ή το relay (έως 95 MB μέσω του relay). Κάνε το επεισόδιο πιο σύντομο ή με χαμηλότερο bitrate.", "pod.dav.err.full": "Ο server δεν έχει άλλο χώρο για αυτά τα αρχεία.", "pod.dav.err.http": "Ο server απάντησε με σφάλμα. Δεν χάθηκε τίποτα· δοκίμασε ξανά.", "pod.dav.err.net": "Ο server δεν βρέθηκε μέσω του relay. Έλεγξε τη σύνδεση και δοκίμασε αργότερα.", "pod.dav.err.cors": "Ο server δεν φτάνει από τον browser. Άνοιξε το «Μέσω του relay του orOS» ή έλεγξε τη σύνδεση.", "pod.dav.err.target": "Το relay φτάνει μόνο σε servers με διεύθυνση https στις συνηθισμένες θύρες.", "pod.dav.err.notdav": "Αυτή η διεύθυνση δεν είναι φάκελος WebDAV.", "pod.dav.err.name": "Ένα όνομα αρχείου δεν γίνεται δεκτό στον server.", "pod.page.feed": "Feed RSS", "pod.page.support": "Υποστήριξη",
+      "pod.page.episode": "Επεισόδιο", "pod.page.season": "Σεζόν", "pod.page.credit": "Φτιαγμένο με το orOS Studio", "pod.cat.Arts": "Τέχνες",
+      "pod.cat.Business": "Επιχειρήσεις", "pod.cat.Comedy": "Κωμωδία", "pod.cat.Education": "Εκπαίδευση", "pod.cat.Fiction": "Μυθοπλασία",
+      "pod.cat.Government": "Δημόσια διοίκηση", "pod.cat.History": "Ιστορία", "pod.cat.Health & Fitness": "Υγεία & φυσική κατάσταση",
+      "pod.cat.Kids & Family": "Παιδιά & οικογένεια", "pod.cat.Leisure": "Ελεύθερος χρόνος", "pod.cat.Music": "Μουσική", "pod.cat.News": "Ειδήσεις",
+      "pod.cat.Religion & Spirituality": "Θρησκεία & πνευματικότητα", "pod.cat.Science": "Επιστήμη", "pod.cat.Society & Culture": "Κοινωνία & πολιτισμός",
+      "pod.cat.Sports": "Αθλητισμός", "pod.cat.Technology": "Τεχνολογία", "pod.cat.True Crime": "Αληθινά εγκλήματα",
+      "pod.cat.TV & Film": "Τηλεόραση & κινηματογράφος",
       "bits.16": "16 bit", "bits.24": "24 bit", "rate.44100": "44,1 kHz", "rate.48000": "48 kHz",
       "export.loop": "Το loop: από {a} έως {b}.", "export.all": "Όλο το τραγούδι: από {a} έως {b}.",
       "export.busy": "Γίνεται η μίξη…", "export.empty": "Δεν υπάρχει ακόμη κάτι για εξαγωγή.",
@@ -338,9 +466,31 @@
       "fx.keyHint": "Το εφέ ακούει εκείνο το κανάλι, μετά τα εφέ του και πριν από τον fader του, οπότε και ένα κανάλι σε σίγαση κάνει για κλειδί.",
       "sec.format": "Μορφή", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Ρυθμός bit", "kbps": "{n} kbit/s",
       "export.encoding": "Κωδικοποίηση… {n}%", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
-      "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV.",
+      "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV. Για ομιλία αρκούν 64–96 kbit/s.",
       "toast.exportFail": "Η εξαγωγή δεν ολοκληρώθηκε",
-      "btn.toMusic": "Στη Μουσική", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
+      "ld.title": "Ένταση", "ld.open": "Ένταση…", "ld.m": "Στιγμιαία", "ld.s": "Σύντομη", "ld.i": "Συνολική", "ld.lra": "Εύρος", "ld.tp": "Πραγματική κορυφή",
+      "ld.hint": "Μετριέται όπως ακούει ο ακροατής το master, κατά EBU R128. Οι ζωντανές τιμές μετράνε όσο παίζει το τραγούδι.",
+      "ld.target": "Στόχος", "ld.reset": "Μηδενισμός", "ld.song": "Μέτρηση τραγουδιού", "ld.file": "Μέτρηση αρχείου…",
+      "ld.busy": "Μέτρηση… {n}%", "ld.mixing": "Γίνεται η μίξη του τραγουδιού…", "ld.fail": "Δεν ήταν δυνατή η μέτρηση.", "ld.empty": "Δεν υπάρχει ακόμη κάτι για μέτρηση.",
+      "ld.colSong": "Αυτό το τραγούδι", "ld.colFile": "{name}", "ld.colRef": "Αναφορά",
+      "ld.r.i": "Συνολική (LUFS)", "ld.r.lra": "Εύρος (LU)", "ld.r.smax": "Πιο δυνατά 3 s (LUFS)", "ld.r.tp": "Πραγματική κορυφή (dBTP)", "ld.r.sp": "Κορυφή δείγματος (dBFS)",
+      "ld.r.rms": "RMS (dBFS)", "ld.r.floor": "Θόρυβος βάθους (dBFS)", "ld.r.dur": "Διάρκεια",
+      "ld.t.spotify": "Spotify (-14 LUFS)", "ld.t.apple": "Apple Music (-16 LUFS)", "ld.t.youtube": "YouTube (-14 LUFS)", "ld.t.podcast": "Podcast (-16 LUFS)",
+      "ld.t.ebu": "Εκπομπή, EBU R128 (-23 LUFS)", "ld.t.acx": "Ηχητικό βιβλίο: ACX (Audible)", "ld.t.storytel": "Ηχητικό βιβλίο: Storytel",
+      "ld.v.down": "Το {p} θα το παίξει {n} dB πιο σιγά.", "ld.v.up": "Το {p} θα το παίξει {n} dB πιο δυνατά.", "ld.v.same": "Το {p} θα το παίξει όπως είναι.",
+      "ld.v.peak": "Η πραγματική κορυφή περνά τα {n} dBTP: μπορεί να παραμορφωθεί όταν το κωδικοποιήσει η υπηρεσία.", "ld.v.none": "Παίξε ή μέτρησε το τραγούδι για να δεις πώς θα το παίξει το {p}.",
+      "ld.v.spec": "Μέτρησε το τραγούδι για να το ελέγξεις με τις απαιτήσεις του {p}.", "ld.v.specOk": "Όλοι οι έλεγχοι του {p} περνούν.", "ld.v.specBad": "{n} από τους ελέγχους του {p} δεν περνούν ακόμη.", "ld.v.specBad1": "1 από τους ελέγχους του {p} δεν περνά ακόμη.",
+      "ld.c.rms": "RMS {v} dBFS (χρειάζεται {lo} έως {hi})", "ld.c.peak": "Κορυφή {v} dB (το πολύ {hi})", "ld.c.floor": "Θόρυβος βάθους {v} dBFS (το πολύ {hi})",
+      "ld.c.head": "Room tone στην αρχή {v} s ({lo} έως {hi} s)", "ld.c.tail": "Room tone στο τέλος {v} s ({lo} έως {hi} s)",
+      "ld.c.zero": "Ψηφιακή σιωπή {v} s (βάλε room tone στη θέση της)", "ld.c.dur": "Διάρκεια {v} λεπτά (το πολύ {hi})", "ld.c.clip": "Δείγματα με clipping: {v}",
+      "ld.c.gain": "Για RMS {to} dBFS χρειάζεται {g} dB.", "ld.c.limit": "Τότε οι κορυφές του θα περνούσαν τα {hi} dB, άρα πρέπει να τις πιάσει ένας limiter.",
+      "ld.c.noisy": "Ο θόρυβος βάθους θα ανέβαινε στα {f} dBFS: μείωσε πρώτα τον θόρυβο.",
+      "ld.ref": "Κομμάτι αναφοράς", "ld.refHint": "Σύγκρινε με ένα τραγούδι που σου αρέσει: οι τιμές του μπαίνουν δίπλα στις δικές σου και παίζει στην ένταση του τραγουδιού σου, ώστε να ακούς μόνο τη διαφορά στον ήχο.",
+      "ld.refPick": "Επιλογή αναφοράς…", "ld.refPlay": "Παίξε το στην ένταση του τραγουδιού", "ld.refStop": "Σταμάτα την αναφορά", "ld.refDrop": "Αφαίρεση",
+      "ld.refNoMatch": "Μέτρησε πρώτα το τραγούδι, για να παίξει η αναφορά στην ένταση του.", "ld.refGain": "Η αναφορά παίζει {n} dB {dir}.", "ld.louder": "πιο δυνατά", "ld.quieter": "πιο σιγά",
+      "bk.deliver": "Έλεγχος και παράδοση", "bk.aac": "M4B για το βιβλίο", "bk.aacN": "{n} kbit/s AAC, mono, 44,1 kHz", "bk.m4b": "Ένα M4B με κεφάλαια", "bk.m4bMixing": "Μίξη {i} από {n}: {name}…", "bk.m4bEncoding": "Κωδικοποίηση {i} από {n}: {name}", "bk.m4bEmpty": "Όλα τα μέρη είναι άδεια: δεν υπάρχει τίποτα για εξαγωγή.", "bk.m4bDone": "Το αρχείο {name} είναι στο {path} στον δίσκο του orOS: {d}, {n} κεφάλαια.", "bk.dur": "Γράψε τη διάρκεια στο Publishing ({n} λεπ.)", "bk.durSame": "Το Publishing έχει αυτή τη διάρκεια ({n} λεπ.)", "bk.check": "Έλεγχος όλων", "bk.checking": "Έλεγχος {i} από {n}: {name}…", "bk.norm": "Κανονικοποίηση όλων", "bk.norming": "Κανονικοποίηση {i} από {n}: {name}…", "bk.normDone": "Όλα τα μέρη είναι σε RMS -20 dBFS, με τις κορυφές κρατημένες στα -3,5 dB", "bk.normHint": "Η κανονικοποίηση βάζει ένα κέρδος και τον NULL Limiter (true peak, -3,5 dB) στο τέλος της αλυσίδας master κάθε μέρους. Οι ηχογραφήσεις μένουν όπως είναι, και η Αφαίρεση κανονικοποίησης τα βγάζει πάλι.", "bk.unnorm": "Αφαίρεση κανονικοποίησης", "bk.sample": "Το loop αυτού του κεφαλαίου ως δείγμα", "bk.sampleSet": "Δείγμα: {name}, {a} έως {b}", "bk.sampleNone": "Δεν υπάρχει ακόμη δείγμα: βάλε ένα loop 1 έως 5 λεπτών σε ένα κεφάλαιο και πάτα το κουμπί.", "bk.sampleBad": "Βάλε πρώτα ένα loop 1 έως 5 λεπτών σε ένα κεφάλαιο αυτού του βιβλίου.", "bk.kbps": "MP3 για το βιβλίο", "bk.kbpsN": "{n} kbit/s CBR, mono, 44,1 kHz", "bk.export": "Εξαγωγή βιβλίου", "bk.exporting": "Εξαγωγή {i} από {n}: {name}…", "bk.exported": "{n} αρχεία είναι στο {path} στον δίσκο του orOS, μαζί με το report.txt.", "bk.exportDone": "Το βιβλίο εξήχθη", "bk.emptyPart": "Το {name} είναι άδειο: έμεινε έξω.", "bk.noCover": "Χωρίς εξώφυλλο: σύνδεσε το βιβλίο με έναν τίτλο του Publishing που έχει εξώφυλλο.", "bk.missing": "Κάποιοι ήχοι του «{name}» δεν είναι ακόμη σε αυτή τη συσκευή.", "bk.fullFx": "Η αλυσίδα master του «{name}» είναι γεμάτη.", "bk.failPart": "Η μίξη του «{name}» δεν έγινε.", "bk.st.ok": "{spec}: περνά", "bk.st.bad": "{spec}: {n} έλεγχοι δεν περνούν", "bk.st.bad1": "{spec}: 1 έλεγχος δεν περνά", "bk.st.old": "άλλαξε μετά τον έλεγχο", "bk.sumOk": "Όλα τα μέρη περνούν το {spec}.", "bk.sumBad": "{n} μέρη δεν περνούν ακόμη το {spec}. Άνοιξε ένα και το παράθυρο Ένταση δείχνει τι να διορθώσεις.", "bk.sumBad1": "1 μέρος δεν περνά ακόμη το {spec}. Άνοιξέ το και το παράθυρο Ένταση δείχνει τι να διορθώσεις.", "ld.go": "Πήγαινε εκεί",
+      "bk.view": "Εμφάνιση", "bk.songs": "Τραγούδια", "bk.books": "Βιβλία", "bk.new": "Νέο βιβλίο", "bk.all": "Όλα τα βιβλία", "bk.empty": "Δεν υπάρχουν ακόμη βιβλία. Ένα βιβλίο είναι μια σειρά κεφαλαίων, το καθένα δικό του έργο, με εισαγωγή και κλείσιμο.", "bk.nameAsk": "Όνομα του βιβλίου", "bk.rename": "Μετονομασία", "bk.desc": "{n} κεφάλαια · {t} · {spec}", "bk.pub": "Τίτλος στο Publishing", "bk.pubNone": "Κανένας (συμπλήρωσε παρακάτω)", "bk.pubInfo": "Συγγραφέας: {a} · Αφηγητής: {n} · ISBN ηχητικού βιβλίου: {isbn}", "bk.pubMissing": "Αυτός ο τίτλος δεν υπάρχει πια στο Publishing.", "bk.author": "Συγγραφέας", "bk.narrator": "Αφηγητής", "bk.spec": "Προδιαγραφές", "bk.spec.acx": "ACX (Audible)", "bk.spec.storytel": "Storytel", "bk.parts": "Κεφάλαια", "bk.open": "Εισαγωγή", "bk.close": "Κλείσιμο", "bk.chapterN": "Κεφάλαιο {n}", "bk.addCh": "Νέο κεφάλαιο", "bk.partDesc": "{k} · {t}", "bk.k.open": "Εισαγωγή", "bk.k.close": "Κλείσιμο", "bk.k.chapter": "Κεφάλαιο {n}", "bk.up": "Πάνω", "bk.down": "Κάτω", "bk.delCh": "Διαγραφή", "bk.openPart": "Άνοιγμα", "bk.rt": "Room tone", "bk.rtHint": "Ηχογράφησε περίπου 30 δευτερόλεπτα το ήσυχο δωμάτιο με το ίδιο μικρόφωνο και τις ίδιες ρυθμίσεις, επίλεξε εκείνο το clip και πάτα το κουμπί από κάτω. Τα κενά ανάμεσα στις λήψεις γεμίζουν μετά με αυτό, γιατί η ACX απορρίπτει την ψηφιακή σιωπή.", "bk.rtUse": "Το επιλεγμένο clip ως room tone", "bk.rtNone": "Δεν υπάρχει ακόμη room tone.", "bk.rtOk": "Room tone {d} s, θόρυβος βάθους {f} dBFS: το δωμάτιο είναι αρκετά ήσυχο.", "bk.rtBad": "Room tone {d} s, θόρυβος βάθους {f} dBFS: πάνω από -60 dBFS, άρα οι ηχογραφήσεις θα έχουν πολύ θόρυβο. Κάνε πιο ήσυχο το δωμάτιο ή δοκίμασε το NULL Noise Reduction ή το Gate.", "bk.rtShort": "Επίλεξε πρώτα ένα clip ήχου τουλάχιστον 5 δευτερολέπτων.", "bk.rtSaved": "Το room tone αποθηκεύτηκε", "bk.fill": "Γέμισμα κενών στο «{name}»", "bk.fillNone": "Γέμισμα κενών ενός κεφαλαίου", "bk.filled": "{n} κενά γέμισαν με room tone", "bk.noGaps": "Δεν υπάρχουν κενά για γέμισμα", "bk.notChapter": "Άνοιξε πρώτα ένα κεφάλαιο αυτού του βιβλίου.", "bk.needRt": "Διάλεξε πρώτα το room tone.", "bk.rtTrack": "Room tone", "bk.voice": "Φωνή", "bk.del": "Διαγραφή βιβλίου", "bk.deleted": "Το βιβλίο διαγράφηκε", "bk.maxBooks": "Έχεις {n} βιβλία, δεν χωράνε άλλα", "bk.maxCh": "Τα βιβλία χωράνε έως {n} κεφάλαια συνολικά", "bk.flac": "Αποθήκευση λήψης (FLAC)… {n}%", "bk.sub": "{book} · {part}", "bk.fail": "Αυτό δεν έγινε",
+      "btn.toMusic": "Στη Μουσική", "btn.sendApp": "Στείλε σε εφαρμογή…", "btn.toLyrics": "Συγχρονισμός στίχων", "toast.toMusic": "Μπήκε στη Μουσική", "toast.toMusicFail": "Δεν μπόρεσε να μπει στη Μουσική",
       "btn.ringtone": "Κάνε το ήχο κλήσης", "toast.ringNoNotes": "Ο Ήχος κλήσης χρειάζεται νότες: πρόσθεσε ένα κανάλι οργάνου.",
       "au.btn": "A", "au.show": "Αυτοματισμός", "au.title": "Αυτοματισμός: {name}", "au.param": "Παράμετρος",
       "au.vol": "Ένταση", "au.pan": "Pan", "au.on": "Λωρίδα ενεργή", "au.delPt": "Διαγραφή σημείου", "au.clear": "Καθαρισμός λωρίδας",
@@ -457,6 +607,8 @@
     piano: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M8 4v16M12 4v16M16 4v16"/><path d="M6.5 4h3v8h-3zM14.5 4h3v8h-3z" fill="currentColor"/></svg>',
     minus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12M12 6v12"/></svg>',
+    up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6"/></svg>',
+    down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
     pencil: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20l4-1L19 8l-3-3L5 16z"/><path d="M14 7l3 3"/></svg>',
     cursor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M5 3l14 8-6 2-3 6z"/></svg>',
     copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg>',
@@ -544,7 +696,7 @@
       bits: p.bits === 16 ? 16 : 24,
       rate: p.rate === 44100 ? 44100 : 48000,
       fmt: p.fmt === "mp3" || p.fmt === "opus" ? p.fmt : "wav",
-      kbps: [128, 192, 320].indexOf(p.kbps) >= 0 ? p.kbps : 192,
+      kbps: [64, 96, 112, 128, 192, 320].indexOf(p.kbps) >= 0 ? p.kbps : 192,
       okbps: [96, 128, 160, 256].indexOf(p.okbps) >= 0 ? p.okbps : 160,
       auto: idMap(p.auto, function (v) { return v === true; }),
       autoSel: idMap(p.autoSel, function (v) { return typeof v === "string" && v.length <= 40; }),
@@ -558,7 +710,10 @@
       prVel: int(p.prVel, 1, 127, 100),
       lpG: typeof p.lpG === "string" && /^[a-z]{0,12}$/.test(p.lpG) ? p.lpG : "",
       lpK: p.lpK === "drums" || p.lpK === "bass" || p.lpK === "keys" ? p.lpK : "",
-      lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : ""
+      lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : "",
+      ldT: typeof p.ldT === "string" && /^[a-z]{1,12}$/.test(p.ldT) ? p.ldT : "",
+      bkKbps: [192, 256, 320].indexOf(p.bkKbps) >= 0 ? p.bkKbps : 192,
+      bkAac: [64, 96, 128].indexOf(p.bkAac) >= 0 ? p.bkAac : 64
     };
   }
   // { trackId: value } kept for at most 64 tracks
@@ -689,7 +844,7 @@
   // A project is made on the first real action (R16, R28).
   function ensureProject() {
     if (proj) return true;
-    if (data.projects.length >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return false; }
+    if (C.songCount(data) >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return false; }
     var p = C.normProject({ id: C.newId("p", Math.random), m: 0, name: t("proj.default", { n: data.projects.length + 1 }), bpm: C.DEFAULT.bpm, sig: C.DEFAULT.sig });
     put("projects", p);
     openProject(C.find(data, "projects", p.id));
@@ -992,6 +1147,8 @@
     $("title-view").textContent = proj ? (proj.name || t("proj.untitled")) : t("app.name");
     var n = tracks().length, tt = C.fmtTime(songLen()).replace(/\.\d+$/, "");
     $("title-sub").textContent = !n ? t("sub.none") : n === 1 ? t("sub.tracks1", { t: tt }) : t("sub.tracks", { n: n, t: tt });
+    var bk = proj && proj.bk ? findBook(proj.bk) : null;
+    if (bk) $("title-sub").textContent = t("bk.sub", { book: bk.name || t("bk.new"), part: $("title-sub").textContent });
     $("undo-btn").disabled = !undoStack.length || recording;
     $("redo-btn").disabled = !redoStack.length || recording;
   }
@@ -1228,6 +1385,14 @@
       m.style.left = (i * bar * z) + "px";
       r.appendChild(m);
     }
+    // markers (chapters of a podcast episode), wave P1
+    var PD = window.StudioPodcast;
+    (proj && PD ? PD.normMarkers(proj.mk) : []).forEach(function (x) {
+      var f = el("span", "mk", x.n);
+      f.style.left = (x.t * z) + "px";
+      f.title = C.fmtTime(x.t) + (x.n ? " · " + x.n : "");
+      r.appendChild(f);
+    });
     if (proj && (proj.loop.b > proj.loop.a)) {
       var lp = el("div", "loop" + (proj.loop.on ? " on" : ""));
       lp.style.left = (proj.loop.a * z) + "px";
@@ -1895,6 +2060,7 @@
     if (!loop && fromSec >= end) { if (opts.open) end = C.MAX_SEC; else fromSec = 0; }
     var t0 = a.currentTime + 0.06;
     playing = { t0: t0, loop: loop, passes: [newPass(fromSec, end, t0)], sources: [], clicks: [] };
+    ldRun(true);
     timeAt(trackNodes, t0, fromSec);
     schedAuto(a, trackNodes, fromSec, end, t0, true);
     if (projClips().some(function (c) { return !C.isMidi(c) && state[c.s] !== "ok"; })) showToast(t("toast.missing"));
@@ -1991,6 +2157,7 @@
     trackNodes = {};
     if (FX) FX.disconnect();
     playing = null;
+    ldRun(false);
   }
   function pause() {
     if (!playing) return;
@@ -2144,10 +2311,9 @@
     if (!tr || !proj || tr.p !== proj.id) { showToast(t("toast.recFail")); return; }
     if (projClips().length >= C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
     busy(t("busy.saveTake"));
-    var blob = new Blob([C.wavBytes(chans, rate, 24)], { type: "audio/wav" });
     var name = (tr.name || "take") + " " + new Date().toTimeString().slice(0, 5).replace(":", ".");
     var before = snapshot();
-    addSource(name, "wav", blob, buf).then(function (src) {
+    takeBlob(chans, rate).then(function (tk) { return addSource(name, tk.ext, tk.blob, buf); }).then(function (src) {
       put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: tr.id, s: src.id, at: at, off: 0, len: buf.duration }));
       undoStack.push(before); redoStack = [];
       playhead = from;
@@ -2562,7 +2728,7 @@
       var buf = a.createBuffer(g.length, g[0].length, r.sr);
       g.forEach(function (d, k) { buf.copyToChannel(d, k); });
       var name = (dest.name || "take") + " " + stamp;
-      return addSource(name, "wav", new Blob([C.wavBytes(g, r.sr, 24)], { type: "audio/wav" }), buf).then(function (src) {
+      return takeBlob(g, r.sr).then(function (tk) { return addSource(name, tk.ext, tk.blob, buf); }).then(function (src) {
         put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: proj.id, t: dest.id, s: src.id, at: at, off: 0, len: buf.duration }));
         saved++;
         // recorded dry through a live plugin: the track keeps that plugin and its sound, ready to freeze
@@ -3070,6 +3236,43 @@
     var tid = laneAt(x, y), row = tid && document.querySelector('#rows .row.track[data-t="' + tid + '"]');
     if (row) row.classList.add("drop");
   }
+  // ---------- Publish as podcast (podcast.js + podcastui.js, wave P1) ----------
+  var Pod = null;
+  function podSetProject(fields, opts) {
+    var pid = opts && opts.pid || (proj && proj.id), p = pid && C.find(data, "projects", pid);
+    if (!p) return;
+    var n = Object.assign({}, p);
+    Object.keys(fields).forEach(function (k) { if (fields[k] === undefined) delete n[k]; else n[k] = fields[k]; });
+    if (proj && pid === proj.id) edit(function () { put("projects", n); });
+    else { put("projects", n); save(); }
+  }
+  function makePodcast() {
+    if (!window.StudioPodcastUI || !window.StudioPodcast) return;
+    Pod = window.StudioPodcastUI({
+      t: t, lang: LANG, encoder: E,
+      data: function () { return data; }, proj: function () { return proj; },
+      setProject: podSetProject,
+      putShow: function (x) { if (!Array.isArray(data.shows)) data.shows = []; put("shows", Object.assign({}, x)); save(); },
+      removeShow: function (id) { if (Array.isArray(data.shows)) { remove("shows", id); save(); } },
+      newId: function (kind) { return C.newId(kind, Math.random); },
+      playhead: function () { return playing ? position() : playhead; },
+      seek: function (sec) { seek(sec); },
+      fmtTime: C.fmtTime,
+      renderMix: function (r, rate) { return renderMix(r, rate); },
+      mixRange: function () { return proj ? C.exportRange(proj, projClips()) : null; },
+      mixProblem: function () {
+        var clips = projClips(), seq = proj && proj.loop.on && tracks().some(function (tr) { return !!nxOf(tr); });
+        if (!proj || !(clips.length || seq)) return "export.empty";
+        var r = C.exportRange(proj, clips);
+        if (r.b - r.a < C.MIN_LEN) return "export.empty";
+        if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) return "toast.missing";
+        if (!(window.OfflineAudioContext || window.webkitOfflineAudioContext)) return "toast.noAudio";
+        return "";
+      },
+      fs: musicFs, dialog: dialogHost, pickLocal: function (accept) { return localPickFiles(accept).then(function (l) { return l && l[0] || null; }); },
+      saveFile: saveFileP, toast: showToast, showDlg: showDlg, hideDlg: hideDlg, radioChips: radioChips, shellOpen: shellOpen
+    });
+  }
   function makeRoll() {
     Roll = window.StudioRoll({
       C: C, N: N, M: M, L: L, t: t, el: el, setLabel: setLabel, ICON: ICON, numTxt: numTxt,
@@ -3191,6 +3394,7 @@
     $("export-music").hidden = !musicFs() || !shellHas();
     $("export-lyrics").hidden = !musicFs() || !shellHas();
     $("export-ring").hidden = !shellHas();
+    $("export-send").hidden = !musicFs() || !sendApi();
     renderExportChips();
     renderCredits();
     showDlg("export-dlg");
@@ -3203,7 +3407,7 @@
     if (opusChip && opusOk === false) { opusChip.disabled = true; opusChip.setAttribute("aria-disabled", "true"); }
     radioChips($("export-bits"), [16, 24], prefs.bits, function (v) { return t("bits." + v); }, function (v) { prefs.bits = v; savePrefs(); renderExportChips(); });
     radioChips($("export-rate"), [44100, 48000], prefs.rate, function (v) { return t("rate." + v); }, function (v) { prefs.rate = v; savePrefs(); renderExportChips(); });
-    var kb = fmt === "opus" ? [96, 128, 160, 256] : [128, 192, 320], cur = fmt === "opus" ? prefs.okbps : prefs.kbps;
+    var kb = fmt === "opus" ? [96, 128, 160, 256] : [64, 96, 112, 128, 192, 320], cur = fmt === "opus" ? prefs.okbps : prefs.kbps;
     radioChips($("export-kbps"), kb, cur, function (v) { return t("kbps", { n: v }); }, function (v) {
       if (fmt === "opus") prefs.okbps = v; else prefs.kbps = v;
       savePrefs(); renderExportChips();
@@ -3692,7 +3896,7 @@
       return new Promise(function (res) { oc.oncomplete = function (e) { res(e.renderedBuffer); }; });
     }).then(function (out) { return [out.getChannelData(0).subarray(skip, skip + len), out.getChannelData(1).subarray(skip, skip + len)]; });
   }
-  function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring"].forEach(function (id) { $(id).disabled = on; }); }
+  function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring", "export-send"].forEach(function (id) { $(id).disabled = on; }); }
   // dest "music": the file goes onto the orOS disk under /internal/Music
   // and plays in Music ("lyrics": opens in Lyric Sync instead);
   // otherwise the save dialog, as always.
@@ -3714,7 +3918,8 @@
         exportBusy(false);
         $("export-status").textContent = "";
         hideDlg("export-dlg");
-        if (dest === "music" || dest === "lyrics") addToMusic(new Blob([bytes], { type: mime }), C.fileName(title, ext), dest === "lyrics" ? title : null);
+        if (dest === "send") sendMix(new Blob([bytes], { type: mime }), C.fileName(title, ext));
+        else if (dest === "music" || dest === "lyrics") addToMusic(new Blob([bytes], { type: mime }), C.fileName(title, ext), dest === "lyrics" ? title : null);
         else saveBlob(new Blob([bytes], { type: mime }), C.fileName(title, ext), mime, desc, "." + ext);
       };
       var broke = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.exportFail")); };
@@ -3773,6 +3978,23 @@
       showToast(t("toast.toMusic"));
       if (lyricsFor != null) shellOpen("lyricsync", { musicPath: p, title: String(lyricsFor).slice(0, 200) });
       else shellOpen("music", { playPath: p });
+    }, function () { showToast(t("toast.toMusicFail")); });
+  }
+  // "Send to an app…" (BR-SEND-12): the mix goes to /internal/Music like
+  // Add to Music, then the shell's "Send to…" sheet offers it (Transfer,
+  // Mail, Music…). The share item lets "Send to someone…" send it too.
+  function sendApi() {
+    try { var w = window.parent; return w && w !== window && w.orosSend && typeof w.orosSend.open === "function" ? w.orosSend : null; } catch (e) { return null; }
+  }
+  function sendMix(blob, name) {
+    var fs = musicFs(), api = sendApi();
+    if (!fs || !api) { showToast(t("toast.toMusicFail")); return; }
+    Promise.resolve(fs.mkdir(MUSIC_DIR)).then(function () { return freeMusicPath(fs, name); }).then(function (p) {
+      if (!p) throw new Error("full");
+      return Promise.resolve(fs.writeBlob(p, blob)).then(function () { return p; });
+    }).then(function (p) {
+      showToast(t("toast.toMusic"));
+      api.open({ kind: "files", data: { items: [{ path: p, name: p.split("/").pop() }] } });
     }, function () { showToast(t("toast.toMusicFail")); });
   }
   // The audible instrument notes of the export range (no drum kit) as
@@ -4003,9 +4225,10 @@
   function addOros(r, name) {
     var SP = window.StudioPackage, parsed;
     try {
-      parsed = SP.parse(r.content, { newId: function (k) { return C.newId(k, Math.random); }, now: Date.now(), title: r.meta && r.meta.title });
+      parsed = SP.parse(r.content, { newId: function (k) { return C.newId(k, Math.random); }, now: Date.now(), title: r.meta && r.meta.title,
+                                     hasBook: function (id) { return !!findBook(id); } });
     } catch (e) { orosFail(name)(e); return; }
-    if (data.projects.length >= C.MAX_PROJECTS) { busy(null); showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
+    if (C.songCount(data) >= C.MAX_PROJECTS) { busy(null); showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
     var fs = fsApi(), files = parsed.files.filter(function (x) { return r.media[x.key]; }), written = [];
     if (files.length && !fs) { busy(null); showToast(t("toast.noDisk")); return; }
     if (!parsed.project.name) parsed.project.name = t("proj.default", { n: data.projects.length + 1 });
@@ -4142,6 +4365,914 @@
     edit(function () { put("clips", C.normClip(Object.assign({}, c, fields))); }, burst(field + c.id));
   }
 
+  // ---------- 9b. Loudness (meter.js, Studio wave A1) ----------
+  // The live meter is an AudioWorklet on the master after its effects
+  // (what the speakers get); it counts only while the song plays. Measuring
+  // the song renders the mix (renderMix) and analyses it a slice at a time;
+  // a file or a reference track is decoded and analysed the same way.
+  var SM = window.StudioMeter;
+  var LD_TARGETS = ["spotify", "apple", "youtube", "podcast", "ebu", "acx", "storytel"];
+  var ld = { node: null, loading: null, live: null, cur: null, curName: "", curPid: "", ref: null, src: null, job: 0 };
+  function ldNode() {
+    var a = audio();
+    if (ld.node) return Promise.resolve(ld.node);
+    if (!a || !SM || !a.audioWorklet || typeof AudioWorkletNode === "undefined") return Promise.resolve(null);
+    if (!ld.loading) {
+      ld.loading = a.audioWorklet.addModule("meter.js").then(function () { return a.audioWorklet.addModule("meter.worklet.js"); }).then(function () {
+        var n = new AudioWorkletNode(a, "studio-loudness", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1],
+                                                             channelCount: 2, channelCountMode: "explicit", channelInterpretation: "speakers" });
+        var mute = a.createGain(); mute.gain.value = 0;   // a worklet runs only while it reaches the output
+        analyser.connect(n); n.connect(mute); mute.connect(a.destination);
+        n.port.onmessage = function (e) { if (e.data && typeof e.data === "object") { ld.live = e.data; ldShowLive(); } };
+        n.port.postMessage(playing ? "run" : "pause");
+        ld.node = n;
+        return n;
+      }).then(null, function () { ld.loading = null; return null; });
+    }
+    return ld.loading;
+  }
+  function ldRun(on) {
+    if (ld.node) { try { ld.node.port.postMessage(on ? "run" : "pause"); } catch (e) {} }
+    if (on) ldRefStop();
+  }
+  function ldOk(v, lo) { return typeof v === "number" && isFinite(v) && v > (lo == null ? -70 : lo); }
+  function ldNum(v, d, lo) { return ldOk(v, lo) ? numTxt(v, d) : "–"; }
+  function ldTarget() {
+    var s = $("loud-dlg").open ? $("ld-target").value : "";
+    if (LD_TARGETS.indexOf(s) >= 0) return s;
+    return LD_TARGETS.indexOf(prefs.ldT) >= 0 ? prefs.ldT : "spotify";
+  }
+  function ldName(id) {
+    if (SM.SPECS[id]) return SM.SPECS[id].name;
+    var p = SM.PLATFORMS.filter(function (x) { return x.id === id; })[0];
+    return (p && p.name) || t("ld.t." + id).replace(/\s*\(.*\)\s*$/, "");
+  }
+  function ldShowLive() {
+    var r = ld.live;
+    if (!$("loud-dlg").open) return;
+    $("ld-m").textContent = r ? ldNum(r.m, 1) : "–";
+    $("ld-s").textContent = r ? ldNum(r.s, 1) : "–";
+    $("ld-i").textContent = r ? ldNum(r.i, 1) : "–";
+    $("ld-lra").textContent = r && ldOk(r.i) ? numTxt(r.lra, 1) : "–";
+    $("ld-tp").textContent = r && r.tp > 0 ? numTxt(SM.db(r.tp), 1) : "–";
+    if (!ld.cur) ldVerdict();
+  }
+  function ldLine(ul, cls, text) {
+    var li = el("li", cls), mk = el("span", "ld-mark", cls === "ok" ? "\u2713" : cls === "bad" ? "\u2717" : cls === "warn" ? "!" : "\u2192");
+    mk.setAttribute("aria-hidden", "true");
+    li.appendChild(mk); li.appendChild(el("span", "", text));
+    ul.appendChild(li);
+    return li;
+  }
+  // what the chosen target says about the measured song (or file), else the live numbers
+  function ldVerdict() {
+    var id = ldTarget(), name = ldName(id), out = $("ld-verdict"), ul = $("ld-checks");
+    ul.textContent = ""; ul.hidden = true;
+    if (SM.SPECS[id]) {
+      if (!ld.cur) { out.textContent = t("ld.v.spec", { p: name }); return; }
+      var rows = SM.check(ld.cur, id), s = SM.SPECS[id], bad = 0;
+      rows.forEach(function (c) {
+        if (!c.ok) bad++;
+        var v = c.k === "dur" ? numTxt(c.v / 60, 1) : c.k === "clip" ? String(c.v) : ldNum(c.v, c.k === "head" || c.k === "tail" || c.k === "zero" ? 2 : 1, -Infinity);
+        var li = ldLine(ul, c.ok ? "ok" : "bad", t("ld.c." + c.k, { v: v, lo: c.lo == null ? "" : numTxt(c.lo, 1), hi: c.k === "dur" ? numTxt(c.hi / 60, 0) : numTxt(c.hi, c.k === "clip" ? 0 : 1) }));
+        if (!c.ok && typeof c.at === "number" && c.at >= 0 && proj && ld.curPid === proj.id) {     // go to the problem (wave A3)
+          var go = el("button", "link-btn", t("ld.go")), at = (ld.curFrom || 0) + c.at;
+          go.type = "button";
+          go.addEventListener("click", function () { if (playing) pause(); playhead = Math.max(0, at - 1); closeLoudness(); renderPlayhead(); followPlayhead(playhead); });
+          li.appendChild(go);
+        }
+      });
+      // a book part is brought to -20 dBFS by Normalise all, so the hint names the same target
+      var to = proj && proj.bk ? NORM_TO : (s.rms[0] + s.rms[1]) / 2, g = SM.gainFor(ld.cur, id, to);
+      if (g && !rows[0].ok) {
+        ldLine(ul, "", t("ld.c.gain", { to: numTxt(to, 1), g: (g.gain > 0 ? "+" : "") + numTxt(g.gain, 1) }));
+        if (g.limit) ldLine(ul, "warn", t("ld.c.limit", { hi: numTxt(s.peak, 1) }));
+        if (g.noisy) ldLine(ul, "warn", t("ld.c.noisy", { f: numTxt(g.floor, 1) }));
+      }
+      ul.hidden = false;
+      out.textContent = bad ? t(bad === 1 ? "ld.v.specBad1" : "ld.v.specBad", { n: bad, p: name }) : t("ld.v.specOk", { p: name });
+      return;
+    }
+    var rep = ld.cur || (ld.live && ldOk(ld.live.i) ? { i: ld.live.i, tp: ld.live.tp > 0 ? SM.db(ld.live.tp) : -Infinity } : null);
+    var pf = rep ? SM.platform(rep, id) : null;
+    if (!pf) { out.textContent = t("ld.v.none", { p: name }); return; }
+    var n = numTxt(Math.abs(pf.gain), 1);
+    var txt = pf.gain < 0 ? t("ld.v.down", { p: name, n: n }) : pf.gain > 0 ? t("ld.v.up", { p: name, n: n }) : t("ld.v.same", { p: name });
+    if (pf.over) txt += " " + t("ld.v.peak", { n: numTxt(pf.tp, 0) });
+    out.textContent = txt;
+  }
+  var LD_ROWS = [["i", 1], ["lra", 1], ["smax", 1], ["tp", 1], ["sp", 1], ["rms", 1], ["floor", 1], ["dur", 0]];
+  function ldCell(rep, k, d) {
+    if (!rep) return "";
+    if (k === "dur") return C.fmtTime(rep.dur);
+    if (k === "lra") return ldOk(rep.i) ? numTxt(rep.lra, d) : "–";
+    return ldNum(rep[k], d, k === "i" || k === "smax" ? -70 : -Infinity);
+  }
+  function ldReport() {
+    var a = ld.cur, b = ld.ref && ld.ref.rep;
+    $("ld-report").hidden = !a && !b;
+    $("ld-col-a").textContent = a ? ld.curName : "";
+    $("ld-col-b").textContent = t("ld.colRef");
+    $("ld-col-b").hidden = !b;
+    var body = $("ld-rows");
+    body.textContent = "";
+    LD_ROWS.forEach(function (r) {
+      var tr = el("tr");
+      tr.appendChild(el("th", "", t("ld.r." + r[0]))).scope = "row";
+      tr.appendChild(el("td", "", ldCell(a, r[0], r[1])));
+      if (b) tr.appendChild(el("td", "", ldCell(b, r[0], r[1])));
+      body.appendChild(tr);
+    });
+    $("ld-refplay").hidden = !b;
+    $("ld-refdrop").hidden = !b;
+    ldVerdict();
+  }
+  function ldBusy(on) { ["ld-song", "ld-file", "ld-ref"].forEach(function (id) { $(id).disabled = on; }); }
+  // chans → report, a slice at a time; done(rep) or done(null)
+  function ldAnalyse(chans, rate, done) {
+    var job = ++ld.job, A;
+    try { A = new SM.Analysis(chans, rate); } catch (e) { done(null); return; }
+    var step = function () {
+      if (job !== ld.job) return;
+      try { if (A.step(rate * 4)) { done(A.result()); return; } } catch (e) { done(null); return; }
+      $("ld-status").textContent = t("ld.busy", { n: Math.floor(A.progress() * 100) });
+      setTimeout(step, 0);
+    };
+    step();
+  }
+  function ldFinish(rep, set) {
+    ldBusy(false);
+    $("ld-status").textContent = rep ? "" : t("ld.fail");
+    if (rep) set(rep);
+    ldReport();
+  }
+  function ldMeasureSong() {
+    var seq = proj && proj.loop.on && tracks().some(function (tr) { return !!nxOf(tr); });
+    if (!proj || !(projClips().length || seq)) { $("ld-status").textContent = t("ld.empty"); return; }
+    var clips = projClips(), r = C.exportRange(proj, clips);
+    if (r.b - r.a < C.MIN_LEN) { $("ld-status").textContent = t("ld.empty"); return; }
+    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
+    ldBusy(true);
+    $("ld-status").textContent = t("ld.mixing");
+    var pid = proj.id, name = t("ld.colSong");
+    renderMix(r, 48000).then(function (chans) {
+      ldAnalyse(chans, 48000, function (rep) { ldFinish(rep, function (x) { if (proj && proj.id === pid) { ld.cur = x; ld.curName = name; ld.curPid = pid; ld.curFrom = r.a; } }); });
+    }, function () { ldFinish(null); });
+  }
+  function ldDecodeFile(f, done) {
+    if (!f) { done(null); return; }
+    if (f.size > MAX_FILE) { showToast(t("toast.tooBig", { name: f.name })); done(null); return; }
+    ldBusy(true);
+    $("ld-status").textContent = t("ld.busy", { n: 0 });
+    f.arrayBuffer().then(decode).then(function (buf) {
+      var chans = [];
+      for (var c = 0; c < Math.min(2, buf.numberOfChannels); c++) chans.push(buf.getChannelData(c));
+      ldAnalyse(chans, buf.sampleRate, function (rep) { done(rep, buf); });
+    }).then(null, function () { done(null); });
+  }
+  var LD_ACCEPT = "audio/*,.wav,.mp3,.ogg,.oga,.opus,.flac,.m4a,.m4b,.aac,.webm";
+  function ldMeasureFile() {
+    pickFilesP(LD_ACCEPT).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      ldDecodeFile(f, function (rep) { ldFinish(rep, function (x) { ld.cur = x; ld.curPid = ""; ld.curName = t("ld.colFile", { name: String(f.name).slice(0, 60) }); }); });
+    });
+  }
+  function ldPickRef() {
+    pickFilesP(LD_ACCEPT).then(function (files) {
+      var f = files && files[0];
+      if (!f) return;
+      ldDecodeFile(f, function (rep, buf) { ldRefStop(); ldFinish(rep, function (x) { ld.ref = { rep: x, buf: buf, name: String(f.name).slice(0, 60) }; }); });
+    });
+  }
+  // the reference plays at the song's loudness, past the master (it is not part of the mix)
+  function ldRefPlay() {
+    if (ld.src) { ldRefStop(); return; }
+    var a = audio(), ref = ld.ref, songI = ld.cur ? ld.cur.i : ld.live ? ld.live.i : -200;
+    if (!a || !ref || !ref.buf) return;
+    if (!ldOk(songI) || !ldOk(ref.rep.i)) { $("ld-status").textContent = t("ld.refNoMatch"); return; }
+    if (playing) pause();
+    resume();
+    var gdb = clamp(songI - ref.rep.i, -40, 24), g = a.createGain(), s = a.createBufferSource();
+    g.gain.value = C.dbToGain(gdb);
+    s.buffer = ref.buf; s.connect(g); g.connect(a.destination);
+    s.onended = function () { if (ld.src === s) ldRefStop(); };
+    s.start();
+    ld.src = s;
+    var b = $("ld-refplay");
+    b.setAttribute("aria-pressed", "true"); b.textContent = t("ld.refStop");
+    $("ld-status").textContent = t("ld.refGain", { n: numTxt(Math.abs(gdb), 1), dir: t(gdb >= 0 ? "ld.louder" : "ld.quieter") });
+  }
+  function ldRefStop() {
+    var s = ld.src;
+    ld.src = null;
+    if (s) { try { s.onended = null; s.stop(); } catch (e) {} try { s.disconnect(); } catch (e) {} }
+    var b = $("ld-refplay");
+    if (b) { b.setAttribute("aria-pressed", "false"); b.textContent = t("ld.refPlay"); }
+  }
+  function openLoudness() {
+    if (!SM) { showToast(t("ld.fail")); return; }
+    var sel = $("ld-target");
+    if (!sel.options.length) LD_TARGETS.forEach(function (id) { var o = el("option", "", t("ld.t." + id)); o.value = id; sel.appendChild(o); });
+    sel.value = ldTarget();
+    if (ld.curPid && (!proj || proj.id !== ld.curPid)) { ld.cur = null; ld.curPid = ""; }   // another song is open now
+    var bkOf = proj && proj.bk ? findBook(proj.bk) : null;
+    if (bkOf) {                                   // a chapter: its book's spec, and the book check when it is still true
+      sel.value = bkOf.spec;
+      var fr = freshCheck(proj.id);
+      if (fr && !ld.cur) { ld.cur = fr; ld.curPid = proj.id; ld.curName = proj.name || t("proj.untitled"); ld.curFrom = 0; }
+    }
+    $("ld-status").textContent = "";
+    showDlg("loud-dlg");
+    ldShowLive();
+    ldReport();
+    ldNode();
+  }
+  function closeLoudness() { ldRefStop(); hideDlg("loud-dlg"); }
+
+  // ---------- 9c. Books (Studio wave A2) ----------
+  // A book is chapters, each an ordinary project (bk + kind), with opening
+  // and closing credits. Its takes are stored as 24-bit FLAC (flac.js),
+  // half the size of the WAV, bit for bit the same sound. Room tone: a
+  // take of the quiet room chosen once per book; "fill the gaps" puts it
+  // on a track of its own wherever the voice stops, so no digital silence
+  // is left (ACX rejects it). Publishing is only read (its titles, people
+  // and ISBN); the book keeps the link, never a copy.
+  // flac.js loads on the first take in a book, so songs never pay for it
+  var flacP = null;
+  function flacLoad() {
+    if (window.StudioFlac) return Promise.resolve(window.StudioFlac);
+    if (!flacP) {
+      flacP = new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = "flac.js?v=" + VER;
+        s.onload = function () { if (window.StudioFlac) ok(window.StudioFlac); else fail(new Error("flac")); };
+        s.onerror = function () { fail(new Error("flac.js")); };
+        document.head.appendChild(s);
+      });
+      flacP.catch(function () { flacP = null; });
+    }
+    return flacP;
+  }
+  var RT_NAME = "roomtone";        // the name of a chapter's room tone source (and its file)
+  var bookOpen = "", projTab = "songs", rtBufs = {};
+  function findBook(id) { return C.books(data).filter(function (b) { return b.id === id; })[0] || null; }
+  function putBook(b) { var x = C.normBook(Object.assign({}, b)); if (x) { put("books", x); save(); } }
+  // a take as FLAC for a book, else WAV as always
+  function takeBlob(chans, rate) {
+    var wav = function () { return { blob: new Blob([C.wavBytes(chans, rate, 24)], { type: "audio/wav" }), ext: "wav" }; };
+    if (!proj || !proj.bk) return Promise.resolve(wav());
+    // a take is never lost: if flac.js cannot load (offline before it was cached), it is kept as WAV
+    return flacLoad().then(function (FL) {
+      return flacBlob(FL, chans, rate, function (x) { busy(t("bk.flac", { n: Math.floor(x * 100) })); }).then(function (blob) { return { blob: blob, ext: "flac" }; });
+    }, wav);
+  }
+  function flacBlob(FL, chans, rate, pct) {
+    return new Promise(function (res, rej) {
+      var enc;
+      try { enc = new FL.Encoder(chans, rate, 24); } catch (e) { rej(e); return; }
+      var step = function () {
+        try { if (enc.step(24)) { res(new Blob([enc.bytes()], { type: "audio/flac" })); return; } } catch (e) { rej(e); return; }
+        if (pct) pct(enc.progress());
+        setTimeout(step, 0);
+      };
+      step();
+    });
+  }
+  // the effects a new chapter's voice track starts with (all NULL JSFX):
+  // high-pass at 80 Hz, de-esser, a gentle compressor; the gate waits off
+  // until the room needs it (Chris: noise handling only on a click)
+  function voiceChain() {
+    var u = function () { return C.newId("f", Math.random); };
+    return [
+      { u: u(), id: "filter", on: true, s: { "1": 80, "2": 0.7, "4": 1, "5": 1 } },
+      { u: u(), id: "deesser", on: true, s: {} },
+      { u: u(), id: "gate", on: false, s: { "1": -55, "5": -12 } },
+      { u: u(), id: "dynamics", on: true, s: { "2": -24, "3": 2.5, "5": 15, "6": 120 } }
+    ];
+  }
+  function makePart(bk, kind, name) {
+    var p = C.normProject({ id: C.newId("p", Math.random), m: 0, name: name, bpm: C.DEFAULT.bpm, sig: C.DEFAULT.sig, bk: bk, kind: kind });
+    put("projects", p);
+    put("tracks", C.normTrack({ id: C.newId("t", Math.random), m: 0, p: p.id, name: t("bk.voice"), ord: 0, fx: voiceChain() }));
+    return p.id;
+  }
+  function partLen(pid) { return C.fmtTime(C.projectEnd(C.ofProject(data, "clips", pid))).replace(/\.\d+$/, ""); }
+  function newBook() {
+    if (C.books(data).length >= C.MAX_BOOKS) { showToast(t("bk.maxBooks", { n: C.MAX_BOOKS })); return; }
+    if (C.chapterCount(data) + 3 > C.MAX_CHAPTERS) { showToast(t("bk.maxCh", { n: C.MAX_CHAPTERS })); return; }
+    askName(t("bk.nameAsk"), "", function (v) {
+      var id = C.newId("b", Math.random), name = String(v || "").trim() || t("bk.new");
+      var open = makePart(id, "open", t("bk.open")), ch1 = makePart(id, "chapter", t("bk.chapterN", { n: 1 })), close = makePart(id, "close", t("bk.close"));
+      putBook({ id: id, m: 0, name: name, ch: [ch1], open: open, close: close, spec: "acx" });
+      hideDlg("proj-dlg");
+      openProject(C.find(data, "projects", ch1));
+      openBook(id);
+    });
+  }
+  function addChapter() {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    if (C.chapterCount(data) >= C.MAX_CHAPTERS) { showToast(t("bk.maxCh", { n: C.MAX_CHAPTERS })); return; }
+    var n = C.bookParts(data, b).filter(function (x) { return x.kind === "chapter"; }).length + 1;
+    var pid = makePart(b.id, "chapter", t("bk.chapterN", { n: n }));
+    putBook(Object.assign({}, b, { ch: b.ch.concat([pid]) }));
+    renderBook();
+  }
+  function moveChapter(pid, d) {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    var ids = C.bookParts(data, b).filter(function (x) { return x.kind === "chapter"; }).map(function (x) { return x.p.id; });
+    var i = ids.indexOf(pid), j = i + d;
+    if (i < 0 || j < 0 || j >= ids.length) return;
+    ids[i] = ids[j]; ids[j] = pid;
+    putBook(Object.assign({}, b, { ch: ids }));
+    renderBook();
+    var btn = document.querySelector('#book-parts [data-pid="' + pid + '"][data-d="' + d + '"]');
+    if (btn && !btn.disabled) btn.focus();
+  }
+  // ---- Publishing (read only) ----
+  function pubData() {
+    var d = null;
+    try { d = JSON.parse(localStorage.getItem("oros-publish-data") || "null"); } catch (e) { d = null; }
+    if (!d || typeof d !== "object" || !Array.isArray(d.titles)) return [];
+    var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
+    return d.titles.filter(function (x) {
+      return x && typeof x.id === "string" && typeof x.t === "string" && !(typeof tombs[x.id] === "number" && tombs[x.id] >= (Number(x.m) || 0));
+    }).sort(function (a, b) { return a.t.localeCompare(b.t); }).slice(0, 500);
+  }
+  function abEdition(ti, eid) {
+    var f = (Array.isArray(ti.fmts) ? ti.fmts : []).filter(function (x) { return x && x.k === "ab"; });
+    return f.filter(function (x) { return x.id === eid; })[0] || f[0] || null;
+  }
+  function people(ti, r) {
+    return (Array.isArray(ti.ppl) ? ti.ppl : []).filter(function (p) { return p && p.r === r && typeof p.n === "string"; }).map(function (p) { return p.n; }).join(", ");
+  }
+  // ---- the dialogs ----
+  function setProjTab(tab) {
+    projTab = tab === "books" ? "books" : "songs";
+    $("proj-tab-songs").setAttribute("aria-pressed", String(projTab === "songs"));
+    $("proj-tab-books").setAttribute("aria-pressed", String(projTab === "books"));
+    $("songs-pane").hidden = projTab !== "songs";
+    $("books-pane").hidden = projTab !== "books";
+  }
+  function renderBooks() {
+    var host = $("book-list"), list = C.books(data).slice().sort(function (a, b) { return b.m - a.m; });
+    host.textContent = "";
+    $("book-empty").hidden = list.length > 0;
+    list.forEach(function (b) {
+      var li = el("li", "row-item" + (proj && proj.bk === b.id ? " on" : "")), open = el("button", "row-open");
+      open.type = "button";
+      var parts = C.bookParts(data, b), sec = 0;
+      parts.forEach(function (x) { sec += C.projectEnd(C.ofProject(data, "clips", x.p.id)); });
+      open.appendChild(el("span", "row-title", b.name || t("bk.new")));
+      open.appendChild(el("span", "row-desc", t("bk.desc", { n: parts.filter(function (x) { return x.kind === "chapter"; }).length,
+        t: C.fmtTime(sec).replace(/\.\d+$/, ""), spec: t("bk.spec." + b.spec) })));
+      open.addEventListener("click", function () { hideDlg("proj-dlg"); openBook(b.id); });
+      li.appendChild(open);
+      host.appendChild(li);
+    });
+  }
+  function openBook(id) {
+    if (!findBook(id)) return;
+    bookOpen = id;
+    renderBook();
+    showDlg("book-dlg");
+  }
+  function iconBtn(icon, label, fn) {
+    var b = el("button", "icon-btn small");
+    b.type = "button"; b.innerHTML = ICON[icon]; setLabel(b, label);
+    b.addEventListener("click", fn);
+    return b;
+  }
+  function renderBook() {
+    var b = findBook(bookOpen);
+    if (!b) { if ($("book-dlg").open) hideDlg("book-dlg"); return; }
+    $("book-title").textContent = b.name || t("bk.new");
+    // Publishing
+    var titles = pubData(), sel = $("book-pub"), ti = b.pub ? titles.filter(function (x) { return x.id === b.pub.t; })[0] : null;
+    sel.textContent = "";
+    var none = el("option", "", t("bk.pubNone")); none.value = ""; sel.appendChild(none);
+    titles.forEach(function (x) { var o = el("option", "", C.clipLine(x.t, 80)); o.value = x.id; sel.appendChild(o); });
+    if (b.pub && !ti) { var miss = el("option", "", "?"); miss.value = b.pub.t; sel.appendChild(miss); }
+    sel.value = b.pub ? b.pub.t : "";
+    var ed = ti ? abEdition(ti, b.pub.e) : null;
+    $("book-pub-info").textContent = b.pub && !ti ? t("bk.pubMissing")
+      : ti ? t("bk.pubInfo", { a: people(ti, "a") || "–", n: people(ti, "n") || "–", isbn: (ed && ed.isbn) || "–" }) : "";
+    $("book-own").hidden = !!ti;
+    var mt = b.meta || {};
+    if (document.activeElement !== $("book-author")) $("book-author").value = mt.author || "";
+    if (document.activeElement !== $("book-narrator")) $("book-narrator").value = mt.narrator || "";
+    var spec = $("book-spec");
+    if (!spec.options.length) C.BOOK_SPECS.forEach(function (k) { var o = el("option", "", t("bk.spec." + k)); o.value = k; spec.appendChild(o); });
+    spec.value = b.spec;
+    // the parts
+    var host = $("book-parts"), parts = C.bookParts(data, b), chs = parts.filter(function (x) { return x.kind === "chapter"; });
+    host.textContent = "";
+    var n = 0;
+    parts.forEach(function (x) {
+      var p = x.p, li = el("li", "row-item" + (proj && proj.id === p.id ? " on" : "")), open = el("button", "row-open");
+      open.type = "button";
+      var k = x.kind === "chapter" ? t("bk.k.chapter", { n: ++n }) : t("bk.k." + x.kind);
+      open.appendChild(el("span", "row-title", p.name || k));
+      var ck = freshCheck(p.id), st = !ck ? (bookChecks[p.id] ? t("bk.st.old") : "") : SM.check(ck, b.spec).filter(function (c) { return !c.ok; }).length;
+      var stTxt = typeof st === "number" ? (st ? t(st === 1 ? "bk.st.bad1" : "bk.st.bad", { spec: t("bk.spec." + b.spec), n: st }) : t("bk.st.ok", { spec: t("bk.spec." + b.spec) })) : st;
+      open.appendChild(el("span", "row-desc" + (typeof st === "number" ? (st ? " bad" : " ok") : ""), t("bk.partDesc", { k: k, t: partLen(p.id) }) + (stTxt ? " · " + stTxt : "")));
+      if (proj && proj.id === p.id) open.setAttribute("aria-current", "true");
+      setLabel(open, t("bk.openPart") + ": " + (p.name || k));
+      open.addEventListener("click", function () { hideDlg("book-dlg"); openProject(C.find(data, "projects", p.id)); });
+      li.appendChild(open);
+      if (x.kind === "chapter") {
+        var i = chs.indexOf(x);
+        var up = iconBtn("up", t("bk.up") + ": " + (p.name || k), function () { moveChapter(p.id, -1); });
+        var dn = iconBtn("down", t("bk.down") + ": " + (p.name || k), function () { moveChapter(p.id, 1); });
+        up.disabled = i === 0; dn.disabled = i === chs.length - 1;
+        up.setAttribute("data-pid", p.id); up.setAttribute("data-d", "-1");
+        dn.setAttribute("data-pid", p.id); dn.setAttribute("data-d", "1");
+        li.appendChild(up); li.appendChild(dn);
+        if (chs.length > 1) {
+          var del = iconBtn("close", t("bk.delCh") + ": " + (p.name || k), function () { deleteProject(p.id); renderBook(); });
+          del.classList.add("del-btn");
+          li.appendChild(del);
+        }
+      }
+      host.appendChild(li);
+    });
+    // room tone
+    $("book-rt-state").textContent = !b.rt ? t("bk.rtNone")
+      : t(b.rt.floor != null && b.rt.floor > -60 ? "bk.rtBad" : "bk.rtOk", { d: numTxt(b.rt.dur, 1), f: b.rt.floor != null ? numTxt(b.rt.floor, 1) : "–" });
+    var here = proj && proj.bk === b.id, fill = $("book-fill");
+    fill.textContent = here ? t("bk.fill", { name: proj.name || t("proj.untitled") }) : t("bk.fillNone");
+    fill.disabled = !here || !b.rt;
+    // delivery (wave A3)
+    $("book-unnorm").hidden = !bookNormed(b);
+    var kb = $("book-kbps");
+    if (!kb.options.length) [192, 256, 320].forEach(function (n) { var o = el("option", "", t("bk.kbpsN", { n: n })); o.value = String(n); kb.appendChild(o); });
+    kb.value = String([192, 256, 320].indexOf(prefs.bkKbps) >= 0 ? prefs.bkKbps : 192);
+    var ka = $("book-aac");
+    if (!ka.options.length) [64, 96, 128].forEach(function (n) { var o = el("option", "", t("bk.aacN", { n: n })); o.value = String(n); ka.appendChild(o); });
+    ka.value = String(prefs.bkAac);
+    // the length back to Publishing (wave A4), once an export measured it
+    var len = bookLen[b.id], ti = b.pub ? pubData().filter(function (x) { return x.id === b.pub.t; })[0] : null, ed = ti ? abEdition(ti, b.pub.e) : null;
+    var dur = $("book-dur");
+    dur.hidden = !(len && ed && shellHas());
+    if (!dur.hidden) {
+      var mins = Math.max(1, Math.round(len / 60));
+      dur.textContent = t(ed.dur === mins ? "bk.durSame" : "bk.dur", { n: mins });
+      dur.disabled = ed.dur === mins;
+    }
+    var sp = b.sample ? C.find(data, "projects", b.sample.p) : null;
+    $("book-sample-state").textContent = sp ? t("bk.sampleSet", { name: sp.name || t("proj.untitled"), a: C.fmtTime(b.sample.a).replace(/\.\d+$/, ""), b: C.fmtTime(b.sample.b).replace(/\.\d+$/, "") }) : t("bk.sampleNone");
+    $("book-sample").disabled = !here;
+    bookBtns(bookBusy);
+  }
+  function bookField(fn) {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    var x = JSON.parse(JSON.stringify(b));
+    fn(x);
+    putBook(x);
+    renderBook();
+  }
+  // ---- room tone ----
+  function useRoomTone() {
+    var b = findBook(bookOpen), fs = fsApi();
+    if (!b) return;
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    var c = selClip ? C.find(data, "clips", selClip) : null, buf = c && !C.isMidi(c) ? buffers[c.s] : null;
+    if (!buf || c.len < 5) { showToast(t("bk.rtShort")); return; }
+    var sr = buf.sampleRate, a0 = Math.max(0, Math.round(c.off * sr)), n = Math.min(Math.round(c.len * sr), buf.length - a0);
+    if (n < sr * 5) { showToast(t("bk.rtShort")); return; }
+    var mono = new Float32Array(n), chs = buf.numberOfChannels;
+    for (var ch = 0; ch < chs; ch++) { var d = buf.getChannelData(ch); for (var i = 0; i < n; i++) mono[i] += d[a0 + i] / chs; }
+    var rep = SM ? SM.analyse([mono], sr) : null, floor = rep && isFinite(rep.rms) ? rep.rms : null;
+    var path = C.sourcePath(C.newId("r", Math.random), RT_NAME + " " + (b.name || ""), "flac"), old = b.rt && b.rt.path;
+    busy(t("bk.flac", { n: 0 }));
+    flacLoad().then(function (FL) {
+      return flacBlob(FL, [mono], sr, function (x) { busy(t("bk.flac", { n: Math.floor(x * 100) })); });
+    }).then(function (blob) {
+      return Promise.resolve(fs.writeBlob(path, blob));
+    }).then(function () {
+      busy(null);
+      var a = audio();
+      if (a) { var rb = a.createBuffer(1, n, sr); rb.copyToChannel(mono, 0); rtBufs[path] = rb; }
+      bookField(function (x) { x.rt = { path: path, dur: n / sr }; if (floor != null) x.rt.floor = Math.max(-200, floor); });
+      // the chapters keep copies of their own, so the old file can go
+      if (old && old !== path && typeof fs.rm === "function") { try { Promise.resolve(fs.rm(old)).catch(function () {}); } catch (e) {} }
+      showToast(t("bk.rtSaved"));
+    }, function () { busy(null); showToast(t("bk.fail")); });
+  }
+  function rtBuffer(b) {
+    if (rtBufs[b.rt.path]) return Promise.resolve(rtBufs[b.rt.path]);
+    var fs = fsApi();
+    if (!fs) return Promise.reject(new Error("nodisk"));
+    return Promise.resolve(fs.readBlob(b.rt.path)).then(function (blob) { return blob.arrayBuffer(); }).then(decode).then(function (buf) { rtBufs[b.rt.path] = buf; return buf; });
+  }
+  // the spans of the chapter where no voice clip plays, from 0 to the end,
+  // plus a 2 s tail: [[a, b]] (seconds)
+  function voiceGaps(clips, end) {
+    var iv = clips.map(function (c) { return [c.at, C.clipEnd(c)]; }).sort(function (x, y) { return x[0] - y[0]; }), out = [], pos = 0;
+    iv.forEach(function (v) { if (v[0] - pos >= 0.02) out.push([pos, v[0]]); pos = Math.max(pos, v[1]); });
+    if (iv.length) out.push([pos, Math.min(C.MAX_SEC, pos + 2)]);
+    else if (end > 0) out.push([0, end]);
+    return out.filter(function (g) { return g[1] - g[0] >= 0.02; });
+  }
+  function fillGaps() {
+    var b = findBook(bookOpen);
+    if (!b || !proj || proj.bk !== b.id) { showToast(t("bk.notChapter")); return; }
+    if (!b.rt) { showToast(t("bk.needRt")); return; }
+    var fs = fsApi();
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    var pid = proj.id, src = C.ofProject(data, "sources", pid).filter(function (s) { return s.name === RT_NAME; })[0];
+    busy(t("busy.saveTake"));
+    rtBuffer(b).then(function (rbuf) {
+      if (src) return { src: src, buf: rbuf };
+      return Promise.resolve(fs.readBlob(b.rt.path)).then(function (blob) { return addSource(RT_NAME, "flac", blob, rbuf); }).then(function (s) { return { src: s, buf: rbuf }; });
+    }).then(function (r) {
+      busy(null);
+      if (!proj || proj.id !== pid) return;
+      var srcIds = {};
+      C.ofProject(data, "sources", pid).forEach(function (s) { if (s.name === RT_NAME) srcIds[s.id] = 1; });
+      var all = projClips(), rtTr = tracks().filter(function (tr) { var cs = clipsOf(tr.id); return cs.length && cs.every(function (c) { return srcIds[c.s]; }); })[0];
+      var voice = all.filter(function (c) { return !C.isMidi(c) && !srcIds[c.s]; });
+      var gaps = voiceGaps(voice, songLen()), dur = r.buf.duration, count = 0;
+      if (!gaps.length) { showToast(t("bk.noGaps")); return; }
+      var old = rtTr ? clipsOf(rtTr.id).length : 0, need = 0;
+      gaps.forEach(function (g) { need += Math.ceil((g[1] - g[0]) / Math.max(0.5, dur - 0.5)); });
+      if (all.length - old + need > C.MAX_CLIPS) { showToast(t("toast.maxClips", { n: C.MAX_CLIPS })); return; }
+      edit(function () {
+        if (!rtTr) rtTr = addTrack(t("bk.rtTrack"));
+        if (!rtTr) return;
+        clipsOf(rtTr.id).forEach(function (c) { remove("clips", c.id); });
+        var k = 0;
+        gaps.forEach(function (g) {
+          var pos = g[0];
+          while (g[1] - pos >= 0.005) {
+            var off = dur > 2 ? ((k * 7.31) % (dur - 1)) : 0, len = Math.min(g[1] - pos, dur - off), f = Math.min(0.01, len / 4);
+            put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: pid, t: rtTr.id, s: r.src.id, at: pos, off: off, len: len, fi: f, fo: f }));
+            pos += len; k++;
+          }
+          count++;
+        });
+      });
+      showToast(t("bk.filled", { n: count }));
+      renderBook();
+    }, function (e) { busy(null); showToast(e && e.message === "nodisk" ? t("toast.noDisk") : t("bk.fail")); });
+  }
+  // ---- deleting a whole book (with undo, like a project) ----
+  function deleteBook() {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    var pids = C.bookParts(data, b).map(function (x) { return x.p.id; }), keep = { books: [Object.assign({}, b)] };
+    C.LISTS.forEach(function (key) {
+      keep[key] = key === "projects" ? pids.map(function (id) { return Object.assign({}, C.find(data, "projects", id)); })
+        : data[key].filter(function (x) { return pids.indexOf(x.p) >= 0; }).map(function (x) { return Object.assign({}, x); });
+    });
+    var paths = keep.sources.map(function (s) { return s.path; }).concat(b.rt ? [b.rt.path] : []);
+    if (proj && proj.bk === b.id) openProject(null);
+    hideDlg("book-dlg");
+    var part = C.emptyData(), now = Date.now();
+    Object.keys(keep).forEach(function (key) { keep[key].forEach(function (x) { part.tombs[x.id] = Math.max(now, x.m); }); });
+    data = C.mergeStudio(data, part);
+    save();
+    renderAll();
+    var timer = setTimeout(function () {
+      if (findBook(b.id)) return;
+      var fs = fsApi();
+      if (fs && typeof fs.rm === "function") paths.forEach(function (p) { try { Promise.resolve(fs.rm(p)).catch(function () {}); } catch (e) {} });
+    }, 9000);
+    undoToast(t("bk.deleted"), function () {
+      clearTimeout(timer);
+      var back = C.emptyData();
+      back.books = [];
+      Object.keys(keep).forEach(function (key) {
+        keep[key].forEach(function (x) { x.m = Math.max(Date.now(), (data.tombs[x.id] || 0) + 1); back[key].push(x); });
+      });
+      data = C.mergeStudio(data, back);
+      save();
+      renderAll();
+      openBook(b.id);
+    });
+  }
+
+  // ---------- 9d. Check, normalise and deliver a book (Studio wave A3) ----------
+  // Every part is mixed as the export would (offline, the whole project,
+  // effects and master), measured by meter.js and checked against the
+  // book's spec. Normalising adds two NULL effects at the end of a part's
+  // master chain, a gain (channel_utility) that brings the RMS to -20 dBFS
+  // and a true-peak limiter at -3.5 dB, so the takes never change and one
+  // click takes them out again. Delivery writes MP3 (CBR, mono, 44.1 kHz,
+  // full ID3) per part, the retail sample, a 2400 px cover and a report to
+  // /internal/Studio/Books/<book>/, and checks each MP3 again after encoding.
+  var NORM_TO = -20, NORM_CEIL = -3.5, BOOK_RATE = 44100, BOOKS_DIR = "/internal/Studio/Books";
+  var bookChecks = {};             // project id → { rep, sig } (this device only, never synced)
+  var bookBusy = false;
+  function projSig(pid) {
+    return JSON.stringify({ project: C.find(data, "projects", pid), tracks: C.ofProject(data, "tracks", pid),
+      sources: C.ofProject(data, "sources", pid), clips: C.ofProject(data, "clips", pid) }, function (k, v) { return k === "m" ? undefined : v; });
+  }
+  function freshCheck(pid) { var c = bookChecks[pid]; return c && c.sig === projSig(pid) ? c.rep : null; }
+  function isNormFx(x) { return /^fnorm/.test(x.u); }
+  // open a part and wait for its audio
+  function openPart(pid) {
+    if (!proj || proj.id !== pid) openProject(C.find(data, "projects", pid));
+    return loadProjectAudio().then(function () { return proj && proj.id === pid; });
+  }
+  // the open part as heard, whole (a loop does not cut it): [L, R] or null when empty
+  function mixPart(rate) {
+    var clips = projClips(), r = C.exportRange(Object.assign({}, proj, { loop: { on: false, a: 0, b: 0 } }), clips);
+    if (r.b - r.a < C.MIN_LEN) return Promise.resolve(null);
+    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) return Promise.reject(new Error("missing"));
+    return renderMix(r, rate);
+  }
+  function analyseP(chans, rate) {
+    return new Promise(function (res, rej) {
+      var A;
+      try { A = new SM.Analysis(chans, rate); } catch (e) { rej(e); return; }
+      var step = function () {
+        try { if (A.step(rate * 4)) { res(A.result()); return; } } catch (e) { rej(e); return; }
+        setTimeout(step, 0);
+      };
+      step();
+    });
+  }
+  function monoOf(chans) {
+    if (chans.length < 2) return chans[0];
+    var a = chans[0], b = chans[1], m = new Float32Array(a.length);
+    for (var i = 0; i < a.length; i++) m[i] = (a[i] + b[i]) * 0.5;
+    return m;
+  }
+  function checkPart(pid) {
+    return mixPart(BOOK_RATE).then(function (chans) {
+      if (!chans) { delete bookChecks[pid]; return null; }
+      return analyseP([monoOf(chans)], BOOK_RATE).then(function (rep) { bookChecks[pid] = { rep: rep, sig: projSig(pid) }; return rep; });
+    });
+  }
+  // fn(part, i, n) → Promise, one part after another; the project that was open comes back
+  function eachPart(b, label, fn) {
+    if (bookBusy) return Promise.resolve();
+    var parts = C.bookParts(data, b), back = proj ? proj.id : "", i = 0, problems = [];
+    bookBusy = true; bookBtns(true);
+    var next = function () {
+      if (i >= parts.length) return Promise.resolve();
+      var x = parts[i], name = x.p.name || t("proj.untitled");
+      $("book-check-state").textContent = t(label, { i: i + 1, n: parts.length, name: name });
+      busy(t(label, { i: i + 1, n: parts.length, name: name }));
+      return openPart(x.p.id).then(function (ok) { return ok ? fn(x, i, parts.length) : null; }).then(null, function (e) {
+        problems.push(t(e && e.message === "missing" ? "bk.missing" : e && e.message === "fullfx" ? "bk.fullFx" : "bk.failPart", { name: name }));
+      }).then(function () { i++; return next(); });
+    };
+    return next().then(function () {
+      bookBusy = false; bookBtns(false); busy(null);
+      if (back && C.find(data, "projects", back) && (!proj || proj.id !== back)) openProject(C.find(data, "projects", back));
+      renderBook();
+      if (problems.length) $("book-check-state").textContent = problems.join(" ");
+      return problems;
+    });
+  }
+  function bookBtns(on) { ["book-check", "book-norm", "book-unnorm", "book-export", "book-m4b", "book-addch", "book-fill", "book-rt-use", "book-del"].forEach(function (id) { if ($(id)) $(id).disabled = on; }); }
+  function checkBook() {
+    var b = findBook(bookOpen);
+    if (b) eachPart(b, "bk.checking", function (x) { return checkPart(x.p.id); }).then(function (pr) { if (!pr || !pr.length) bookSummary(b); });
+  }
+  function bookSummary(b) {
+    var bad = 0, done = 0;
+    C.bookParts(data, b).forEach(function (x) {
+      var rep = freshCheck(x.p.id);
+      if (!rep) return;
+      done++;
+      if (SM.check(rep, b.spec).some(function (c) { return !c.ok; })) bad++;
+    });
+    $("book-check-state").textContent = !done ? "" : bad ? t(bad === 1 ? "bk.sumBad1" : "bk.sumBad", { n: bad, spec: t("bk.spec." + b.spec) }) : t("bk.sumOk", { spec: t("bk.spec." + b.spec) });
+  }
+  function normFx(g) {
+    var gin = clamp(Math.round(g * 10) / 10, -12, 18), gout = clamp(Math.round((g - gin) * 10) / 10, -12, 12);
+    return [{ u: C.newId("fnormg", Math.random), id: "channel_utility", on: true, s: { "2": gin, "6": 0, "12": gout } },
+            // threshold = ceiling: the NULL Limiter drives by ceiling - threshold, so 0 dB drive here
+            { u: C.newId("fnorml", Math.random), id: "limiter", on: true, s: { "1": 0, "2": NORM_CEIL, "3": NORM_CEIL, "4": 200, "5": 2, "6": 1 } }];
+  }
+  function normaliseBook() {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    eachPart(b, "bk.norming", function (x) {
+      var pid = x.p.id;
+      setProject({ fx: proj.fx.filter(function (f) { return !isNormFx(f); }) });
+      return mixPart(BOOK_RATE).then(function (chans) {
+        if (!chans) return null;
+        return analyseP([monoOf(chans)], BOOK_RATE).then(function (rep) {
+          var g = SM.gainFor(rep, b.spec, NORM_TO);
+          if (!g || !isFinite(g.gain)) return null;
+          if (proj.fx.length + 2 > C.MAX_FX) throw new Error("fullfx");
+          setProject({ fx: proj.fx.concat(normFx(g.gain)) });
+          return checkPart(pid);
+        });
+      });
+    }).then(function (pr) { if (!pr || !pr.length) { bookSummary(b); showToast(t("bk.normDone")); } });
+  }
+  function unnormaliseBook() {
+    var b = findBook(bookOpen);
+    if (!b || bookBusy) return;
+    C.bookParts(data, b).forEach(function (x) {
+      var p = C.find(data, "projects", x.p.id);
+      if (p.fx.some(isNormFx)) put("projects", Object.assign({}, p, { fx: p.fx.filter(function (f) { return !isNormFx(f); }) }));
+    });
+    save(); renderAll(); renderBook();
+  }
+  function bookNormed(b) { return C.bookParts(data, b).some(function (x) { return x.p.fx.some(isNormFx); }); }
+  function setSample() {
+    var b = findBook(bookOpen);
+    if (!b) return;
+    if (!proj || proj.bk !== b.id || !proj.loop.on || proj.loop.b - proj.loop.a < 60 || proj.loop.b - proj.loop.a > 300) { showToast(t("bk.sampleBad")); return; }
+    bookField(function (x) { x.sample = { p: proj.id, a: proj.loop.a, b: proj.loop.b }; });
+  }
+  // ---- what Publishing (or the book itself) says about the book ----
+  var LANG3 = { el: "ell", en: "eng", de: "deu", fr: "fra", es: "spa", it: "ita" };
+  function bookMeta(b) {
+    var ti = b.pub ? pubData().filter(function (x) { return x.id === b.pub.t; })[0] : null, mt = b.meta || {};
+    var ed = ti ? abEdition(ti, b.pub.e) : null;
+    var year = ti && /^\d{4}/.test(ti.rel || "") ? ti.rel.slice(0, 4) : mt.year ? String(mt.year) : "";
+    var lang = ti && LANG3[String(ti.lang || "").slice(0, 2)] || (mt.lang && (LANG3[mt.lang] || (mt.lang.length === 3 ? mt.lang : ""))) || "";
+    return { title: (ti && ti.t) || b.name, author: ti ? people(ti, "a") : mt.author || "", narrator: ti ? people(ti, "n") : mt.narrator || "",
+             isbn: (ed && ed.isbn) || "", year: year, lang: lang, cov: ti && ti.cov ? "/internal/Publishing/Covers/" + ti.cov : "" };
+  }
+  // the cover as a square JPEG of `size` px (the picture fits inside, white around it)
+  function coverJpeg(path, size) {
+    var fs = fsApi();
+    if (!path || !fs || typeof createImageBitmap !== "function") return Promise.resolve(null);
+    return Promise.resolve(fs.readBlob(path)).then(function (blob) { return blob ? createImageBitmap(blob) : null; }).then(function (img) {
+      if (!img) return null;
+      var cv = document.createElement("canvas"); cv.width = cv.height = size;
+      var g = cv.getContext("2d"), k = Math.min(size / img.width, size / img.height), w = img.width * k, h = img.height * k;
+      g.fillStyle = "#fff"; g.fillRect(0, 0, size, size);
+      g.imageSmoothingQuality = "high";
+      g.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+      return new Promise(function (res) { cv.toBlob(function (bl) { res(bl); }, "image/jpeg", 0.9); });
+    }).then(function (bl) { return bl ? bl.arrayBuffer().then(function (ab) { return new Uint8Array(ab); }) : null; }, function () { return null; });
+  }
+  function encodeMp3(mono, kbps, tags) {
+    return new Promise(function (res, rej) {
+      var enc;
+      try { enc = new E.Mp3Encoder([mono], BOOK_RATE, kbps, { title: tags.title, tags: tags }); } catch (e) { rej(e); return; }
+      var step = function () {
+        try { if (enc.step(80)) { res(enc.bytes()); return; } } catch (e) { rej(e); return; }
+        setTimeout(step, 0);
+      };
+      step();
+    });
+  }
+  function reportLine(name, rep, spec) {
+    var rows = SM.check(rep, spec), bad = rows.filter(function (c) { return !c.ok; });
+    return name + "  " + C.fmtTime(rep.dur).replace(/\.\d+$/, "") + "  RMS " + numTxt(rep.rms, 1) + " dBFS  " + t("ld.r.tp") + " " + numTxt(rep.tp, 1) +
+      "  " + t("ld.r.floor") + " " + (isFinite(rep.floor) ? numTxt(rep.floor, 1) : "–") + "  " +
+      (bad.length ? t(bad.length === 1 ? "bk.st.bad1" : "bk.st.bad", { spec: t("bk.spec." + spec), n: bad.length }) + ": " + bad.map(function (c) { return t("ld.c." + c.k, { v: c.k === "dur" ? numTxt(c.v / 60, 1) : c.k === "clip" ? String(c.v) : numTxt(c.v, 1), lo: c.lo == null ? "" : numTxt(c.lo, 1), hi: c.k === "dur" ? numTxt(c.hi / 60, 0) : numTxt(c.hi, 1) }); }).join("; ")
+        : t("bk.st.ok", { spec: t("bk.spec." + spec) }));
+  }
+  function exportBook() {
+    var b = findBook(bookOpen), fs = fsApi();
+    if (!b) return;
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    var back = proj ? proj.id : "";
+    var meta = bookMeta(b), kbps = [192, 256, 320].indexOf(prefs.bkKbps) >= 0 ? prefs.bkKbps : 192;
+    var dir = BOOKS_DIR + "/" + C.fileName(b.name || meta.title, "x").replace(/\.x$/, ""), lines = [], apic = null, wrote = 0, total = 0;
+    var mk = function (p) { return Promise.resolve(fs.mkdir ? fs.mkdir(p) : null).then(null, function () {}); };
+    var put2 = function (name, bytes, type) { return Promise.resolve(fs.writeBlob(dir + "/" + name, new Blob([bytes], { type: type }))).then(function () { wrote++; }); };
+    var pad = function (n) { return n < 10 ? "0" + n : String(n); };
+    var tagsFor = function (title, track) {
+      var tg = { title: title, album: meta.title, artist: meta.author, albumArtist: meta.author, composer: meta.narrator, genre: "Audiobook",
+                 date: meta.year, lang: meta.lang, tool: "orOS Studio" };
+      if (track) tg.track = track;
+      if (meta.isbn) tg.txxx = [{ desc: "ISBN", value: meta.isbn }];
+      if (apic) tg.cover = { mime: "image/jpeg", bytes: apic, type: 3 };
+      return tg;
+    };
+    lines.push(meta.title + (meta.author ? " · " + meta.author : "") + (meta.narrator ? " · " + t("bk.narrator") + ": " + meta.narrator : ""));
+    lines.push(t("bk.spec") + ": " + t("bk.spec." + b.spec) + " · MP3 " + kbps + " kbit/s CBR, mono, 44.1 kHz");
+    lines.push("");
+    mk(BOOKS_DIR).then(function () { return mk(dir); }).then(function () {
+      return coverJpeg(meta.cov, 1400).then(function (c) { apic = c; });
+    }).then(function () {
+      return eachPart(b, "bk.exporting", function (x, i, n) {
+        var name = C.fileName(pad(i + 1) + " " + (x.p.name || t("proj.untitled")), "mp3");
+        return mixPart(BOOK_RATE).then(function (chans) {
+          if (!chans) { lines.push(t("bk.emptyPart", { name: x.p.name })); return null; }
+          return encodeMp3(monoOf(chans), kbps, tagsFor(x.p.name || name, (i + 1) + "/" + n)).then(function (bytes) {
+            return put2(name, bytes, "audio/mpeg").then(function () { return decode(bytes.slice().buffer); });
+          }).then(function (buf) {
+            total += buf.duration;
+            return analyseP([buf.getChannelData(0)], buf.sampleRate);        // the file as it will be heard
+          }).then(function (rep) { lines.push(reportLine(name, rep, b.spec)); });
+        });
+      });
+    }).then(function () {
+      var s = b.sample;
+      if (!s || !C.find(data, "projects", s.p)) return null;
+      return openPart(s.p).then(function (ok) {
+        if (!ok) return null;
+        var clips = projClips();
+        if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > s.a && c.at < s.b && !buffers[c.s]; })) return null;
+        return renderMix({ a: s.a, b: s.b }, BOOK_RATE).then(function (chans) {
+          return encodeMp3(monoOf(chans), kbps, tagsFor(meta.title + " (sample)", ""));
+        }).then(function (bytes) { lines.push("retail-sample.mp3  " + C.fmtTime(s.b - s.a).replace(/\.\d+$/, "")); return put2("retail-sample.mp3", bytes, "audio/mpeg"); });
+      });
+    }).then(function () {
+      return coverJpeg(meta.cov, 2400).then(function (c) { if (c) { lines.push("cover.jpg  2400 × 2400"); return put2("cover.jpg", c, "image/jpeg"); } lines.push(t("bk.noCover")); });
+    }).then(function () {
+      return put2("report.txt", new TextEncoder().encode(lines.join("\n") + "\n"), "text/plain");
+    }).then(function () {
+      if (back && C.find(data, "projects", back) && (!proj || proj.id !== back)) openProject(C.find(data, "projects", back));
+      if (total) { bookLen[b.id] = total; renderBook(); }
+      $("book-check-state").textContent = t("bk.exported", { n: wrote, path: dir });
+      showToast(t("bk.exportDone"));
+    }, function () { bookBusy = false; bookBtns(false); busy(null); showToast(t("bk.fail")); });
+  }
+
+  // One M4B for the whole book (wave A4): every part mixed in turn, encoded by our own AAC
+  // encoder into one stream (a chapter starts where its part starts), then written by
+  // studio/mp4.js with both kinds of chapters, the tags and the cover.
+  var bookLen = {};                // book id → seconds of the last export (this device, never synced)
+  // aac.js and mp4.js load on the first M4B export, so opening Studio never pays for them
+  var AAC = null, MP4 = null, m4bP = null;
+  function m4bLoad() {
+    if (window.StudioAac && window.StudioMp4) { AAC = window.StudioAac; MP4 = window.StudioMp4; return Promise.resolve(); }
+    if (!m4bP) {
+      var load = function (f, name) {
+        if (window[name]) return Promise.resolve();
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = f + "?v=" + VER;
+          s.onload = function () { if (window[name]) ok(); else fail(new Error(f)); };
+          s.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(s);
+        });
+      };
+      m4bP = load("aac.js", "StudioAac").then(function () { return load("mp4.js", "StudioMp4"); }).then(function () {
+        AAC = window.StudioAac; MP4 = window.StudioMp4;
+      });
+      m4bP.catch(function () { m4bP = null; });
+    }
+    return m4bP;
+  }
+  function pushSlices(st, mono, done) {
+    var at = 0, step = BOOK_RATE * 5;
+    return new Promise(function (res, rej) {
+      var go = function () {
+        try {
+          st.push([mono.subarray(at, Math.min(mono.length, at + step))]);
+          at += step;
+          if (done) done(Math.min(1, at / mono.length));
+          if (at >= mono.length) { res(); return; }
+        } catch (e) { rej(e); return; }
+        setTimeout(go, 0);
+      };
+      go();
+    });
+  }
+  function exportM4b() {
+    var b = findBook(bookOpen), fs = fsApi();
+    if (!b || bookBusy) return;
+    if (!fs) { showToast(t("toast.noDisk")); return; }
+    m4bLoad().then(function () { m4bRun(b, fs); }, function () { showToast(t("bk.fail")); });
+  }
+  function m4bRun(b, fs) {
+    if (!findBook(b.id) || bookBusy) return;
+    var meta = bookMeta(b), kbps = prefs.bkAac, st = new AAC.Stream(1, BOOK_RATE, kbps), chapters = [], cover = null;
+    var dir = BOOKS_DIR + "/" + C.fileName(b.name || meta.title, "x").replace(/\.x$/, ""), name = C.fileName(meta.title || b.name, "m4b");
+    var mk = function (p) { return Promise.resolve(fs.mkdir ? fs.mkdir(p) : null).then(null, function () {}); };
+    mk(BOOKS_DIR).then(function () { return mk(dir); }).then(function () {
+      return coverJpeg(meta.cov, 1400).then(function (c) { cover = c; });
+    }).then(function () {
+      return eachPart(b, "bk.m4bMixing", function (x, i, n) {
+        return mixPart(BOOK_RATE).then(function (chans) {
+          if (!chans) return null;
+          chapters.push({ at: st.n / BOOK_RATE, title: x.p.name || t("proj.untitled") });
+          var label = t("bk.m4bEncoding", { i: i + 1, n: n, name: x.p.name || t("proj.untitled") });
+          return pushSlices(st, monoOf(chans), function (f) { busy(label + " " + Math.floor(f * 100) + "%"); });
+        });
+      });
+    }).then(function (problems) {
+      if (problems && problems.length) return null;
+      if (!st.n) { showToast(t("bk.m4bEmpty")); return null; }
+      st.end();
+      var out = MP4.audiobook({ asc: st.asc(), rate: BOOK_RATE, ch: 1, delay: st.delay, samples: st.n, units: st.units(), chapters: chapters,
+        tags: { title: meta.title, artist: meta.author, album: meta.title, composer: meta.narrator, year: meta.year, genre: "Audiobook" },
+        cover: cover ? { bytes: cover } : null });
+      return Promise.resolve(fs.writeBlob(dir + "/" + name, new Blob(out.parts, { type: "audio/mp4" }))).then(function () {
+        bookLen[b.id] = out.secs;
+        renderBook();
+        $("book-check-state").textContent = t("bk.m4bDone", { name: name, path: dir, n: out.chapters.length, d: C.fmtTime(out.secs).replace(/\.\d+$/, "") });
+        showToast(t("bk.exportDone"));
+      });
+    }).then(null, function () { bookBusy = false; bookBtns(false); busy(null); showToast(t("bk.fail")); });
+  }
+  // Publishing asks before it writes the length into the audiobook edition
+  function bookDurToPublishing() {
+    var b = findBook(bookOpen), len = b && bookLen[b.id];
+    if (!b || !len || !b.pub) return;
+    var ti = pubData().filter(function (x) { return x.id === b.pub.t; })[0], ed = ti ? abEdition(ti, b.pub.e) : null;
+    if (!ed) return;
+    shellOpen("publish", { abDur: { title: ti.id, fmt: ed.id, min: Math.max(1, Math.round(len / 60)), from: b.name || "" } });
+  }
+
   // ---------- 10. Dialogs ----------
   function showDlg(id) {
     var d = $(id);
@@ -4174,9 +5305,10 @@
   }
 
   // Projects
-  function openProjects() { renderProjects(); showDlg("proj-dlg"); }
+  function openProjects() { setProjTab(proj && proj.bk ? "books" : projTab); renderProjects(); showDlg("proj-dlg"); }
   function renderProjects() {
-    var host = $("proj-list"), list = C.newestFirst(data.projects);
+    var host = $("proj-list"), list = C.newestFirst(data.projects.filter(function (p) { return !p.bk; }));
+    renderBooks();
     if ($("oros-save")) $("oros-save").disabled = !proj;
     host.innerHTML = "";
     $("proj-empty").hidden = list.length > 0;
@@ -4201,7 +5333,7 @@
     });
   }
   function newProject() {
-    if (data.projects.length >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
+    if (C.songCount(data) >= C.MAX_PROJECTS) { showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
     hideDlg("proj-dlg");
     proj = null;
     ensureProject();
@@ -4212,6 +5344,8 @@
     var keep = {};
     C.LISTS.forEach(function (key) { keep[key] = key === "projects" ? [p] : C.ofProject(data, key, pid).map(function (x) { return Object.assign({}, x); }); });
     var paths = keep.sources.map(function (s) { return s.path; });
+    var pep = window.StudioPodcast ? window.StudioPodcast.normEp(p.ep) : null;
+    if (pep && pep.file) paths.push(pep.file, pep.file.replace(/\.mp3$/, ".vtt"));
     if (proj && proj.id === pid) openProject(null);
     var part = C.emptyData(), now = Date.now();
     C.LISTS.forEach(function (key) { keep[key].forEach(function (x) { part.tombs[x.id] = Math.max(now, x.m); }); });
@@ -4427,6 +5561,7 @@
       else if (lk === "r") { e.preventDefault(); startRecording(); }
       else if (lk === "l") { e.preventDefault(); toggleLoop(); }
       else if (lk === "k") { e.preventDefault(); toggleMetro(); }
+      else if (lk === "m" && Pod) { e.preventDefault(); Pod.addMarkerHere(); }
       else if (lk === "s" && selClip) { e.preventDefault(); splitSel(); }
       else if (lk === "d" && selClip) { e.preventDefault(); dupSel(); }
       else if ((k === "Delete" || k === "Backspace") && selClip) { e.preventDefault(); delSel(); }
@@ -4513,6 +5648,7 @@
     if ($("proj-dlg").open) renderProjects();
     if ($("track-dlg").open) renderTrackDlg();
     FX.render();
+    if (Pod) Pod.refresh();
     if (playing && !recording) replayIfPlaying();
   }
 
@@ -4533,7 +5669,7 @@
                  ["home-btn", "home", "btn.home"], ["stop-btn", "stop", "btn.stop"], ["rec-btn", "rec", "btn.rec"],
                  ["loop-btn", "loop", "btn.loop"], ["zoom-in", "zin", "btn.zoomIn"], ["zoom-out", "zout", "btn.zoomOut"],
                  ["clip-close", "close", "btn.close"], ["proj-close", "close", "btn.close"], ["track-close", "close", "btn.close"],
-                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"],
+                 ["export-close", "close", "btn.close"], ["more-close", "close", "btn.close"], ["fx-close", "close", "btn.close"], ["loud-close", "close", "btn.close"], ["book-close", "close", "btn.close"],
                  ["add-close", "close", "btn.close"], ["pr-play", "play", "pr.play"]];
     icons.forEach(function (x) { $(x[0]).innerHTML = ICON[x[1]]; setLabel($(x[0]), t(x[2])); });
     var sig = $("sig-in");
@@ -4692,6 +5828,60 @@
     Roll.wire();
     $("track-auto").addEventListener("click", function () { var id = dlgTrack; hideDlg("track-dlg"); prefs.auto[id] = true; savePrefs(); renderRows(); });
     $("export-close").addEventListener("click", function () { hideDlg("export-dlg"); });
+    $("master-loud").addEventListener("click", openLoudness);
+    $("proj-tab-songs").addEventListener("click", function () { setProjTab("songs"); });
+    $("proj-tab-books").addEventListener("click", function () { setProjTab("books"); });
+    $("book-new").addEventListener("click", newBook);
+    $("book-close").addEventListener("click", function () { hideDlg("book-dlg"); });
+    $("book-back").addEventListener("click", function () { hideDlg("book-dlg"); setProjTab("books"); openProjects(); });
+    $("book-rename").addEventListener("click", function () {
+      var b = findBook(bookOpen);
+      if (b) askName(t("bk.nameAsk"), b.name, function (v) { if (v) bookField(function (x) { x.name = v; }); renderHead(); });
+    });
+    $("book-pub").addEventListener("change", function () {
+      var v = this.value, ti = pubData().filter(function (x) { return x.id === v; })[0];
+      bookField(function (x) {
+        if (!ti) { delete x.pub; return; }
+        var ed = abEdition(ti);
+        x.pub = { t: ti.id };
+        if (ed && typeof ed.id === "string") x.pub.e = ed.id;
+      });
+    });
+    ["author", "narrator"].forEach(function (k) {
+      $("book-" + k).addEventListener("change", function () {
+        var v = this.value.trim();
+        bookField(function (x) { x.meta = x.meta || {}; if (v) x.meta[k] = v; else delete x.meta[k]; });
+      });
+    });
+    $("book-spec").addEventListener("change", function () { var v = this.value; bookField(function (x) { x.spec = v; }); });
+    $("book-addch").addEventListener("click", addChapter);
+    $("book-rt-use").addEventListener("click", useRoomTone);
+    $("book-fill").addEventListener("click", fillGaps);
+    $("book-del").addEventListener("click", deleteBook);
+    $("book-check").addEventListener("click", checkBook);
+    $("book-norm").addEventListener("click", normaliseBook);
+    $("book-unnorm").addEventListener("click", unnormaliseBook);
+    $("book-export").addEventListener("click", exportBook);
+    $("book-sample").addEventListener("click", setSample);
+    $("book-kbps").addEventListener("change", function () { prefs.bkKbps = +this.value; savePrefs(); });
+    $("book-aac").addEventListener("change", function () { prefs.bkAac = +this.value; savePrefs(); });
+    $("book-m4b").addEventListener("click", exportM4b);
+    $("book-dur").addEventListener("click", bookDurToPublishing);
+    $("export-loud").addEventListener("click", function () { hideDlg("export-dlg"); openLoudness(); });
+    $("loud-close").addEventListener("click", closeLoudness);
+    $("loud-dlg").addEventListener("close", function () { ldRefStop(); ld.job++; ldBusy(false); });
+    $("ld-target").addEventListener("change", function () { prefs.ldT = this.value; savePrefs(); ldVerdict(); });
+    $("ld-reset").addEventListener("click", function () {
+      if (ld.node) { try { ld.node.port.postMessage("reset"); } catch (e) {} }
+      if (ld.live) ld.live = Object.assign({}, ld.live, { i: -200, lra: 0, mmax: -200, smax: -200, tp: 0, sp: 0 });
+      ld.cur = null; ld.curPid = "";
+      ldShowLive(); ldReport();
+    });
+    $("ld-song").addEventListener("click", ldMeasureSong);
+    $("ld-file").addEventListener("click", ldMeasureFile);
+    $("ld-ref").addEventListener("click", ldPickRef);
+    $("ld-refplay").addEventListener("click", ldRefPlay);
+    $("ld-refdrop").addEventListener("click", function () { ldRefStop(); ld.ref = null; $("ld-status").textContent = ""; ldReport(); });
     $("export-go").addEventListener("click", function () { doExport("file"); });
     $("export-cr-copy").addEventListener("click", copyCredits);
     $("export-cr-save").addEventListener("click", saveCredits);
@@ -4701,6 +5891,9 @@
     $("export-music").addEventListener("click", function () { doExport("music"); });
     $("export-lyrics").addEventListener("click", function () { doExport("lyrics"); });
     $("export-ring").addEventListener("click", makeRingtone);
+    $("export-send").addEventListener("click", function () { doExport("send"); });
+    $("export-pod").addEventListener("click", function () { if (!Pod) return; hideDlg("export-dlg"); Pod.open(); });
+    $("export-mk").addEventListener("click", function () { if (!Pod) return; hideDlg("export-dlg"); Pod.markers(); });
     $("more-close").addEventListener("click", function () { hideDlg("more-dlg"); });
     $("more-dlg").addEventListener("close", ioTestOff);
     $("io-mode").addEventListener("change", function () { prefs.io.on = $("io-mode").value === "br"; savePrefs(); renderIo(); });
@@ -4856,6 +6049,7 @@
     makeRemote();
     applyI18n();
     wire();
+    makePodcast();
     Remote.wire();
     registerSync();
     inheritPalette();

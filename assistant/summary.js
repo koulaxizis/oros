@@ -48,6 +48,11 @@
 //                                 run?"): every rule in words and the
 //                                 device's recent runs with what came of
 //                                 them; never what a notice said
+//   baseTables(C, raw, opts)     Base (BASE-1 B4b): every base with its
+//                                 tables, their fields (name, type,
+//                                 choices) and how many records; with
+//                                 table its records (every field as
+//                                 Base shows it) with a ref
 //   preview(sum, lang)           → [line] what the consent card shows
 // Exposes window.OrosAssistSummary and, under Node, module.exports.
 // ============================================================
@@ -61,7 +66,10 @@
   // Apps with a summary of their own; any other app needs a Today provider.
   var OWN = { budget: "month", timesheet: "month", todo: "lists", stock: "month", kanban: "boards",
               notes: "notebooks", bookmarks: "folders", contacts: "labels", shelf: "kinds", library: "books",
-              automations: "rules" };   // AS-STRUCT
+              automations: "rules", studio: "shows", base: "tables",
+              // AS-SUM8 (2026-11-17): read only
+              meals: "recipes", travel: "trips", plants: "plants", garage: "vehicles", habits: "habits",
+              scanpdf: "signatures", transfer: "history", whiteboard: "boards" };   // AS-STRUCT; studio: STUDIO-POD P4; base: BASE-1 B4b
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function arr(a) { return Array.isArray(a) ? a : []; }
@@ -103,7 +111,10 @@
     if (app === "crm" && typeof args.partner === "string" && args.partner.trim()) {
       out.partner = args.partner.replace(/\s+/g, " ").trim().slice(0, 120);
     }
-    if (app === "kanban" && typeof args.board === "string" && args.board.trim()) {
+    if (app === "forms" && typeof args.form === "string" && args.form.trim()) {
+      out.form = args.form.replace(/\s+/g, " ").trim().slice(0, 200);
+    }
+    if ((app === "kanban" || app === "whiteboard") && typeof args.board === "string" && args.board.trim()) {
       out.board = args.board.replace(/\s+/g, " ").trim().slice(0, 120);
     }
     // AS-STRUCT: the group of an app to list (a name, as the user said it).
@@ -111,7 +122,7 @@
       return typeof args[k] === "string" && args[k].trim() ? args[k].replace(/\s+/g, " ").trim().slice(0, max || 120) : "";
     }
     var grp = { todo: ["list"], notes: ["notebook"], bookmarks: ["folder", "tag"], contacts: ["label"],
-                shelf: ["kind", "status", "tag"], library: ["status", "tag"] }[app] || [];
+                shelf: ["kind", "status", "tag"], library: ["status", "tag"], studio: ["show"], base: ["base", "table"] }[app] || [];
     grp.forEach(function (k) {
       var v = word(k, k === "folder" ? 240 : 120);
       if (v) out[k] = k === "kind" || k === "status" ? v.toLowerCase() : v;
@@ -120,6 +131,56 @@
       out.monthSet = monthSet;
       if (typeof args.label === "string" && args.label.trim()) out.label = args.label.replace(/\s+/g, " ").trim().slice(0, 40);
     }
+    return out;
+  }
+
+  // ---------- Studio: podcast shows and their episodes (STUDIO-POD P4) ----------
+  // Read only: Claude (Assistant or Gate) never publishes; an upload always
+  // needs the owner's own tap in Studio. No password, token or file path.
+  var SHOW_ID = /^h[a-z0-9]{6,20}$/, MAX_EPS = 200;
+  function studioShows(raw, opts) {
+    raw = isObj(raw) ? raw : {};
+    opts = opts || {};
+    var tombs = isObj(raw.tombs) ? raw.tombs : {};
+    var shows = arr(raw.shows).filter(function (x) { return isObj(x) && SHOW_ID.test(x.id || "") && !tombs.hasOwnProperty(x.id); });
+    var want = str(opts.show, 120).toLowerCase();
+    if (want) {
+      var hit = shows.filter(function (x) { return str(x.title, 120).toLowerCase() === want || x.id === want; });
+      if (!hit.length) return { ok: false, err: "No show is called \"" + str(opts.show, 120) + "\". The shows: " + (shows.map(function (x) { return str(x.title, 120) || "(untitled)"; }).join(", ") || "none") + "." };
+      shows = hit;
+    }
+    shows.sort(function (a, b) { var x = str(a.title, 120).toLowerCase(), y = str(b.title, 120).toLowerCase(); return x < y ? -1 : x > y ? 1 : 0; });
+    var ids = {};
+    shows.forEach(function (x) { ids[x.id] = x; });
+    var per = {}, items = [];
+    arr(raw.projects).forEach(function (p) {
+      if (!isObj(p) || !ids[p.sh] || !isObj(p.ep) || tombs.hasOwnProperty(p.id)) return;
+      var e = p.ep, sh = ids[p.sh], made = typeof e.file === "string" && /\.mp3$/.test(e.file);
+      var d = typeof e.date === "number" && e.date > 0 ? new Date(e.date).toISOString().slice(0, 10) : "";
+      var kind = e.type === "trailer" || e.type === "bonus" ? e.type : "episode";
+      var dur = made && typeof e.dur === "number" && e.dur > 0 ? Math.floor(e.dur / 60) + ":" + pad(Math.floor(e.dur % 60)) : "";
+      var c = per[sh.id] || (per[sh.id] = { episodes: 0, ready: 0, latest: "" });
+      c.episodes++;
+      if (made) c.ready++;
+      if (made && d > c.latest) c.latest = d;
+      items.push({ title: str(e.title, 120) || str(p.name, 120) || "(untitled)", date: d, by: str(sh.title, 120),
+                   text: [kind + (e.n ? " " + e.n : "") + (e.se ? ", season " + e.se : ""), made ? "episode file made" + (dur ? ", " + dur : "") : "no episode file yet"].join(" · "),
+                   n: typeof e.n === "number" ? e.n : 0 });
+    });
+    items.sort(function (a, b) { return a.by < b.by ? -1 : a.by > b.by ? 1 : (b.date > a.date ? 1 : b.date < a.date ? -1 : b.n - a.n); });
+    items.forEach(function (it) { delete it.n; });
+    var out = {
+      ok: true, app: "studio",
+      shows: shows.map(function (x) {
+        var url = typeof x.url === "string" && /^https:\/\/[^\s<>"]+\/$/.test(x.url) ? x.url : "";
+        var c = per[x.id] || { episodes: 0, ready: 0, latest: "" };
+        return { title: str(x.title, 120) || "(untitled)", author: str(x.author, 120), site: url, feed: url ? url + "feed.xml" : "",
+                 episodes: c.episodes, files_made: c.ready, latest: c.latest };
+      }),
+      items: items.slice(0, MAX_EPS),
+      note: "Read only. Publishing (ZIP, GitHub Pages, Nextcloud) is done by the owner in Studio › Export › Publish as podcast."
+    };
+    if (items.length > MAX_EPS) out.more_items = items.length - MAX_EPS;
     return out;
   }
 
@@ -451,7 +512,7 @@
           var ln = arr(k.labels).map(function (id) { return lbl[id] || ""; }).filter(Boolean);
           if (ln.length) it.labels = ln.slice(0, 10);
           var st = arr(k.subtasks).filter(isObj);
-          if (st.length) it.subtasks = st.filter(function (x) { return x.done; }).length + "/" + st.length;
+          if (st.length) it.subtasks = st.filter(function (x) { return x.done || x.completed; }).length + "/" + st.length;
           it.target = { board: b.id, col: c.id, card: k.id };   // → a ref (assistant.js)
           items.push(it);
         });
@@ -969,26 +1030,36 @@
           lbls: "Labels", lbl: "Label", nolbl: "No label", stMain: "Own stock", stSold: "sold",
           pick: "Which one", over: "overdue", nopart: "No partner called “{q}”", owes: "Owes you", owe: "You owe", settle: "settlement due",
           orders: "open orders", roy: "Royalties to pay", ctr: "Contract", next: "Next follow-up", ctrs: "Contracts", ctrNeed: "need a decision",
-          kbCard: "card", kbCards: "cards", kbArch: "Archived",
+          kbCard: "card", kbCards: "cards", kbArch: "Archived", bsRec: "record", bsRecs: "records",
           stLists: "Lists", stNbs: "Notebooks", stPages: "pages", stFolders: "Folders", stUnsorted: "Unsorted", stTags: "Tags",
           stBm: "bookmarks", stCt: "contacts", stFav: "favourites", stItems: "items", stBooks: "books",
           stReading: "reading", stFinished: "finished", stUnread: "unread", stWant: "want", stNow: "in progress", stDrop: "dropped",
           kBook: "Books", kFilm: "Films", kSeries: "Series", kAlbum: "Music", kPodcast: "Podcasts", kGame: "Games",
           auRules: "rules", auOn: "on", auRuns: "Recent runs on this device", auOff: "off", auGone: "deleted",
-          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened", "au.outErr": "push or webhook not delivered" },
+          "au.sent": "notice shown", "au.late": "shown late", "au.off": "notices off", "au.skip": "skipped, an app is missing", "au.run": "opened", "au.outErr": "push or webhook not delivered", podEps: "episodes", podMade: "files made",
+          mlRecipes: "recipes", mlReady: "ready recipes", mlPantry: "in the pantry", mlSoon: "Use soon",
+          trNow: "now", trUp: "upcoming", trPast: "past", trNoDates: "no dates", trPack: "to pack",
+          plPlants: "plants", grNeeds: "need attention", hbHabits: "habits", hbDone: "{a} of {b} done today",
+          sgReq: "signature requests", sgWait: "waiting", sgSigned: "signed", sgDecl: "declined",
+          tfSent: "sent", tfRecv: "received", wbBoards: "boards", wbObjs: "objects" },
     el: { inc: "Έσοδα", exp: "Έξοδα", net: "Υπόλοιπο", ent: "καταχωρήσεις", h: "ώ", bill: "χρεώσιμες",
           open: "ανοιχτές", done: "έγιναν", late: "εκπρόθεσμες", today: "για σήμερα", none: "Τίποτα σε αυτή την περίοδο.",
           run: "Τρέχει τώρα", more: "+{n} ακόμη", uncat: "Χωρίς κατηγορία", toInv: "Προς τιμολόγηση",
           lbls: "Ετικέτες", lbl: "Ετικέτα", nolbl: "Χωρίς ετικέτα", stMain: "Δικό σου απόθεμα", stSold: "πουλήθηκαν",
           pick: "Ποιος από αυτούς", over: "ληξιπρόθεσμα", nopart: "Κανένας συνεργάτης με όνομα «{q}»", owes: "Σου χρωστά", owe: "Του χρωστάς", settle: "οφείλεται εκκαθάριση",
           orders: "ανοιχτές παραγγελίες", roy: "Δικαιώματα προς πληρωμή", ctr: "Συμφωνητικό", next: "Επόμενο follow-up", ctrs: "Συμφωνητικά", ctrNeed: "θέλουν απόφαση",
-          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο",
+          kbCard: "κάρτα", kbCards: "κάρτες", kbArch: "Στο αρχείο", bsRec: "εγγραφή", bsRecs: "εγγραφές",
           stLists: "Λίστες", stNbs: "Τετράδια", stPages: "σελίδες", stFolders: "Φάκελοι", stUnsorted: "Χωρίς φάκελο", stTags: "Ετικέτες",
           stBm: "σελιδοδείκτες", stCt: "επαφές", stFav: "αγαπημένες", stItems: "στοιχεία", stBooks: "βιβλία",
           stReading: "διαβάζεις", stFinished: "τελείωσαν", stUnread: "αδιάβαστα", stWant: "θέλω", stNow: "σε εξέλιξη", stDrop: "παρατημένα",
           kBook: "Βιβλία", kFilm: "Ταινίες", kSeries: "Σειρές", kAlbum: "Μουσική", kPodcast: "Podcasts", kGame: "Παιχνίδια",
           auRules: "κανόνες", auOn: "ενεργοί", auRuns: "Πρόσφατες εκτελέσεις σε αυτή τη συσκευή", auOff: "ανενεργός", auGone: "διαγράφηκε",
-          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες", "au.outErr": "η ειδοποίηση ή το webhook δεν παραδόθηκε" }
+          "au.sent": "εμφανίστηκε ειδοποίηση", "au.late": "εμφανίστηκε αργότερα", "au.off": "ειδοποιήσεις κλειστές", "au.skip": "παραλείφθηκε, λείπει εφαρμογή", "au.run": "το άνοιξες", "au.outErr": "η ειδοποίηση ή το webhook δεν παραδόθηκε", podEps: "επεισόδια", podMade: "με αρχείο",
+          mlRecipes: "συνταγές", mlReady: "έτοιμες συνταγές", mlPantry: "στο ντουλάπι", mlSoon: "Να καταναλωθούν σύντομα",
+          trNow: "τώρα", trUp: "έρχεται", trPast: "έγινε", trNoDates: "χωρίς ημερομηνίες", trPack: "για τη βαλίτσα",
+          plPlants: "φυτά", grNeeds: "θέλουν προσοχή", hbHabits: "συνήθειες", hbDone: "{a} από {b} έγιναν σήμερα",
+          sgReq: "αιτήματα υπογραφής", sgWait: "σε αναμονή", sgSigned: "υπογράφηκαν", sgDecl: "απορρίφθηκαν",
+          tfSent: "στάλθηκαν", tfRecv: "ελήφθησαν", wbBoards: "πίνακες", wbObjs: "αντικείμενα" }
   };
   // A pack language (orosI18n, ../i18n.js) gets its tables here; in Node
   // (tests) there is no window and only en / el exist.
@@ -1092,6 +1163,41 @@
       out.push(w.ctrs + ": " + s.contracts_total + " · " + w.ctrNeed + ": " + s.need_decision);
       s.contracts.slice(0, 8).forEach(function (k) { out.push(k.title + (k.partner ? " · " + k.partner : "") + (k.to ? " → " + k.to : "")); });
       more((s.contracts.length > 8 ? s.contracts.length - 8 : 0) + (s.more_contracts || 0));
+    } else if (s.app === "studio" && Array.isArray(s.shows)) {
+      s.shows.forEach(function (x) { out.push(x.title + ": " + x.episodes + " " + w.podEps + " · " + x.files_made + " " + w.podMade + (x.feed ? " · " + x.feed : "")); });
+      if (!s.shows.length) out.push(w.none);
+    } else if (s.app === "base" && Array.isArray(s.bases)) {
+      s.bases.forEach(function (b) {
+        out.push(b.name + ": " + (b.tables.length ? b.tables.map(function (t) { return t.name + " (" + t.records + " " + (t.records === 1 ? w.bsRec : w.bsRecs) + ")"; }).join(", ") : "—"));
+      });
+      if (!s.bases.length) out.push(w.none);
+    } else if (s.app === "base" && s.table) {
+      out.push(s.base + " › " + s.table + ": " + s.records + " " + (s.records === 1 ? w.bsRec : w.bsRecs));
+    } else if (s.app === "meals" && Array.isArray(s.plan)) {   // AS-SUM8
+      out.push(s.recipes + " " + w.mlRecipes + " · " + s.ready_recipes + " " + w.mlReady + " · " + s.pantry_items + " " + w.mlPantry);
+      s.plan.forEach(function (p) { out.push(p.date + " · " + p.meals.join(" · ")); });
+      if (s.pantry_soon.length) out.push(w.mlSoon + ": " + s.pantry_soon.map(function (p) { return p.name + " (" + p.best_before + ")"; }).join(", "));
+    } else if (s.app === "travel" && Array.isArray(s.trips)) {
+      var TS = { now: w.trNow, upcoming: w.trUp, past: w.trPast, "no dates": w.trNoDates };
+      s.trips.forEach(function (x) {
+        out.push(x.name + ": " + [x.from ? x.from + (x.to && x.to !== x.from ? " → " + x.to : "") : "", TS[x.state], x.to_pack ? x.to_pack + " " + w.trPack : ""].filter(Boolean).join(" · "));
+      });
+      more(s.more_trips);
+    } else if (s.app === "plants" && typeof s.plants === "number") {
+      out.push(s.plants + " " + w.plPlants + " · " + s.late + " " + w.late + " · " + s.due_today + " " + w.today);
+      if (s.rooms.length) out.push(s.rooms.map(function (r) { return r.name + " (" + r.n + ")"; }).join(", "));
+    } else if (s.app === "garage" && Array.isArray(s.vehicles)) {
+      s.vehicles.forEach(function (v) { out.push(v.name + (v.km !== undefined ? " · " + v.km + " km" : "") + " · " + amt(v.costs_this_year.total, s.currency)); });
+      out.push(s.needs_attention + " " + w.grNeeds);
+    } else if (s.app === "habits" && typeof s.habits === "number") {
+      out.push(s.habits + " " + w.hbHabits + " · " + w.hbDone.replace("{a}", s.done_today).replace("{b}", s.due_today + s.done_today));
+    } else if (s.app === "scanpdf" && typeof s.requests === "number") {
+      out.push(s.requests + " " + w.sgReq + " · " + s.waiting + " " + w.sgWait + " · " + s.signed + " " + w.sgSigned + " · " + s.declined + " " + w.sgDecl);
+    } else if (s.app === "transfer" && typeof s.sent === "number") {
+      out.push(s.sent + " " + w.tfSent + " (" + s.sent_mb + " MB) · " + s.received + " " + w.tfRecv + " (" + s.received_mb + " MB)");
+    } else if (s.app === "whiteboard" && Array.isArray(s.boards)) {
+      s.boards.forEach(function (b) { out.push(b.name + ": " + b.objects + " " + w.wbObjs); });
+      if (!s.boards.length) out.push(w.none);
     } else if (s.app === "calendar" && Array.isArray(s.labels)) {
       out.push(w.lbls + ": " + s.labels.map(function (l) { return l.name + " (" + l.events + ")"; })
         .concat([w.nolbl + " (" + s.no_label + ")"]).join(", "));
@@ -1118,11 +1224,439 @@
     return out;
   }
 
+  // FORMS-4: Forms. Every live form with its questions, whether it is
+  // shared and open, how many answers and how many new; with opts.form
+  // (a title, or a form id) that form's results as Forms' own summary
+  // shows them (forms/results.js, passed as R with its words): counts,
+  // shares and averages only. Never the people's written answers, names,
+  // e-mails or phones (other people's data). Target: { form } (search.js).
+  function formsSummary(d, ans, opts, R, words) {
+    opts = opts || {};
+    var forms = (d && Array.isArray(d.forms) ? d.forms : []).filter(function (f) { return f && !f.del && typeof f.id === "string"; });
+    var rs = ans && Array.isArray(ans.rs) ? ans.rs.filter(function (r) { return r && !r.del && typeof r.f === "string"; }) : [];
+    var seen = ans && ans.seen && typeof ans.seen === "object" ? ans.seen : {};
+    var by = {};
+    rs.forEach(function (r) { (by[r.f] = by[r.f] || []).push(r); });
+    var str = function (v, n) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, n) : ""; };
+    var row = function (f) {
+      var mine = by[f.id] || [], x = f.x && typeof f.x === "object" ? f.x : {}, last = 0, nw = 0, sn = +seen[f.id] || 0;
+      mine.forEach(function (r) { var at = +r.at || 0; if (at > last) last = at; if (at > sn) nw++; });
+      var o = { title: str(f.title, 200), questions: (Array.isArray(f.qs) ? f.qs : []).filter(function (q) { return q && q.t !== "page" && q.t !== "info"; }).length,
+                shared: !!x.k, answers: mine.length, target: { form: f.id } };
+      if (x.k) o.open = x.open !== 0 && (!x.close || x.close > Date.now());
+      if (nw) o["new"] = nw;
+      if (last) o.last = new Date(last).toISOString().slice(0, 10);
+      return o;
+    };
+    var out = { app: "forms", forms: forms.map(row).sort(function (a, b) { return (b.last || "").localeCompare(a.last || ""); }).slice(0, 200) };
+    if (forms.length > 200) out.more_forms = forms.length - 200;
+    if (!opts.form) return out;
+    var want = String(opts.form).toLowerCase();
+    var f = forms.filter(function (x) { return x.id === opts.form; })[0] ||
+            forms.filter(function (x) { return str(x.title, 200).toLowerCase() === want; })[0] ||
+            forms.filter(function (x) { return str(x.title, 200).toLowerCase().indexOf(want) >= 0; })[0];
+    if (!f) return { ok: false, err: "No form called \"" + opts.form + "\". The forms: " + out.forms.map(function (x) { return x.title || "(untitled)"; }).slice(0, 30).join(", ") };
+    if (!R) return { ok: false, err: "Forms' results could not be read on this device." };
+    var res = { app: "forms", form: row(f), results: R.summary(f, by[f.id] || [], words).map(function (it) {
+      var o = { question: it.label || "", answered: it.n, of: it.of };
+      if (it.kind === "bars" || it.kind === "hist") o.counts = it.bars.map(function (b) { return { option: b.label, n: b.n, pct: b.pct }; });
+      if (it.avg !== undefined) o.average = it.avg;
+      if (it.kind === "hist" && it.n) { o.min = it.min; o.max = it.max; }
+      if (it.kind === "grid") o.grid = { columns: it.cols, rows: it.rows.map(function (r) { return { row: r.label, counts: r.counts }; }) };
+      if (it.right !== undefined) o.right = it.right;
+      if (it.kind === "list") o.note = "written answers: count only";
+      if (it.t === "multi") o.note = "several may be ticked; pct is of those who answered";
+      return o;
+    }) };
+    var qa = typeof R.quizAvg === "function" ? R.quizAvg(f, by[f.id] || []) : null;
+    if (qa && qa.n) res.quiz = { average: qa.avg, of: qa.max, scored: qa.n };
+    return res;
+  }
+
+  // ---------- Base (BASE-1 B4b) ----------
+  // C = OrosBaseCore. Every base › table with its fields (name, type,
+  // the labels of a choice field, at most 40) and how many records;
+  // with opts.table (and opts.base when names repeat) that table's
+  // records: the primary field as title and every other field as Base
+  // shows it (200 characters each), with a ref. Attachments by name.
+  var BS_TYPE = { long: "long text", check: "checkbox", select: "choice", multi: "several choices", auto: "autonumber",
+                  ctime: "created", mtime: "modified", file: "attachments" };
+  function baseTables(C, d, opts) {
+    opts = opts || {};
+    if (!C) return { ok: false, err: "Base could not be read on this device." };
+    if (!isObj(d) || !Array.isArray(d.bases)) return { app: "base", bases: [], note: "Base has not been opened on this device yet." };
+    d = C.normalize(d);
+    var ix = C.index(d), fold = C.fold;
+    var bases = d.bases.slice().sort(function (a, b) { return (a.ord || 0) - (b.ord || 0) || (a.name < b.name ? -1 : 1); });
+    function fieldsOf(tb) {
+      return (ix.tbFields[tb.id] || []).slice(0, 60).map(function (f) {
+        var o = { name: str(f.name, 120), type: BS_TYPE[f.type] || f.type };
+        if ((f.type === "select" || f.type === "multi") && f.opt && f.opt.ch) o.choices = f.opt.ch.slice(0, 40).map(function (c) { return str(c.n, 120); });
+        if (f.type === "date" && f.opt && f.opt.time) o.time = true;
+        if (C.NOSTORE[f.type]) o.read_only = true;
+        return o;
+      });
+    }
+    var out = { app: "base", bases: bases.map(function (b) {
+      return { name: str(b.name, 120), tables: (ix.baseTables[b.id] || []).map(function (tb) {
+        return { name: str(tb.name, 120), records: (ix.tbRecs[tb.id] || []).length, fields: fieldsOf(tb) };
+      }) };
+    }) };
+    if (!opts.table) return out;
+    var hits = [];
+    bases.forEach(function (b) {
+      if (opts.base && fold(b.name) !== fold(opts.base)) return;
+      (ix.baseTables[b.id] || []).forEach(function (tb) { if (fold(tb.name) === fold(opts.table)) hits.push({ b: b, tb: tb }); });
+    });
+    if (!hits.length) return { ok: false, err: "No table called \"" + opts.table + "\"" + (opts.base ? " in the base " + opts.base : "") + ". The tables: " +
+      bases.map(function (b) { return (ix.baseTables[b.id] || []).map(function (tb) { return b.name + " › " + tb.name; }).join(", "); }).filter(Boolean).join(", ").slice(0, 2000) };
+    if (hits.length > 1) return { ok: false, err: "Several bases have a table called \"" + opts.table + "\" (" + hits.map(function (h) { return h.b.name; }).join(", ") + "); give base." };
+    var h = hits[0], pf = C.primary(ix, h.tb.id), fs = (ix.tbFields[h.tb.id] || []).slice(0, 30);
+    var items = (ix.tbRecs[h.tb.id] || []).map(function (r) {
+      var vals = {};
+      fs.forEach(function (f) {
+        if (pf && f.id === pf.id) return;
+        var t = "";
+        try { t = C.text(ix, r, f); } catch (e) { t = ""; }
+        t = str(t, 200);
+        if (t) vals[str(f.name, 120)] = t;
+      });
+      var title = "";
+      try { title = pf ? str(C.text(ix, r, pf), 160) : ""; } catch (e) { title = ""; }
+      return { title: title || "—", values: vals, target: { base: h.b.id, table: h.tb.id, rec: r.id } };
+    });
+    var res = { app: "base", base: str(h.b.name, 120), table: str(h.tb.name, 120), records: items.length, fields: fieldsOf(h.tb) };
+    return capItems(res, items);
+  }
+
+  // ---------- AS-SUM8 (gap review proposal 8, 2026-11-17) ----------
+  // Eight more apps get a summary of their own, read only, the same
+  // for the Assistant and orOS Gate (the gate's frame runs these). Each
+  // takes the app's own core (C, from the shell or the app's folder) so
+  // the numbers are the app's. Never another person's e-mail, a link
+  // code, a reply-box key, a file's contents or a picture.
+  var MEAL_SLOT = { b: "Breakfast", l: "Lunch", d: "Dinner", s: "Snack", x: "Extra" };
+  // Meal Planner: the stored recipes (with a ref), how many ready ones,
+  // the plan of this week and the next, pantry items near their
+  // best-before day. opts { today, lang }.
+  function mealsPlan(C, raw, opts) {
+    opts = opts || {};
+    if (!C || typeof C.mergeMeals !== "function") return { ok: false, err: "Meal Planner could not be read on this device." };
+    var today = opts.today, lang = opts.lang || "en";
+    var d = C.mergeMeals(isObj(raw) ? raw : {}, isObj(raw) ? raw : {});
+    var tagN = {}, items = [];
+    arr(d.rc).forEach(function (r) {
+      var tags = arr(r.tg).map(function (x) { return str(x, 40); }).filter(Boolean);
+      tags.forEach(function (x) { tagN[x] = (tagN[x] || 0) + 1; });
+      var row = { title: str(r.t, 120) || "Untitled recipe" };
+      if (tags.length) row.labels = tags.slice(0, 10);
+      if (r.sv) row.servings = r.sv;
+      var mins = (r.pt || 0) + (r.ct || 0);
+      if (mins > 0) row.minutes = mins;
+      row.ingredients = arr(r.ig).length;
+      if (r.fv === 1) row.favorite = true;
+      row.target = { recipe: r.id };
+      items.push(row);
+    });
+    items.sort(function (a, b) { var x = foldName(a.title), y = foldName(b.title); return x < y ? -1 : x > y ? 1 : 0; });
+    var ready = 0;
+    try { ready = C.allRecipes(d, lang).length - arr(d.rc).length; } catch (e) { ready = 0; }
+    var start = C.weekStartOf(today, d.set && d.set.ws), byDay = {};
+    try { byDay = C.planByDay(d, lang); } catch (e) { byDay = {}; }
+    var nm = d.set && isObj(d.set.nm) ? d.set.nm : {}, plan = [];
+    for (var i = 0; i < 14; i++) {
+      var day = addDays(start, i), rows = arr(byDay[day]).slice().sort(function (a, b) { return a.order - b.order; });
+      if (!rows.length) continue;
+      plan.push({ date: day, meals: rows.map(function (r) { return (str(nm[r.slot], 24) || MEAL_SLOT[r.slot] || r.slot) + ": " + r.what.map(function (w) { return str(w, 80); }).join(", "); }) });
+    }
+    var soon = addDays(today, 7), pantry = [];
+    arr(d.pa).forEach(function (p) {
+      if (!p || !p.bb || p.bb > soon) return;
+      var o = { name: str(p.n, 60), best_before: p.bb, where: p.l };
+      if (p.bb < today) o.late = true;
+      pantry.push(o);
+    });
+    pantry.sort(function (a, b) { return a.best_before < b.best_before ? -1 : a.best_before > b.best_before ? 1 : 0; });
+    var out = { app: "meals", recipes: items.length, ready_recipes: Math.max(0, ready),
+                tags: Object.keys(tagN).sort(function (a, b) { return tagN[b] - tagN[a] || (a < b ? -1 : 1); }).map(function (k) { return { name: k, n: tagN[k] }; }),
+                week_from: start, plan: plan, pantry_items: arr(d.pa).length, pantry_soon: pantry.slice(0, 40) };
+    capList(out, "tags", MAX_LISTS);
+    return capItems(out, items);
+  }
+
+  // Travel: every trip (dates, now / upcoming / past, what is left to
+  // pack), and the itinerary of the trips not over yet, with a ref.
+  // opts { today, lang }.
+  function travelTrips(C, raw, opts) {
+    opts = opts || {};
+    if (!C || typeof C.trips !== "function") return { ok: false, err: "Travel could not be read on this device." };
+    var today = opts.today, lang = opts.lang || "en", trips = C.trips(raw), items = [];
+    var rows = trips.map(function (t) {
+      var st = !t.start ? "no dates" : (t.end || t.start) < today ? "past" : t.start > today ? "upcoming" : "now";
+      var name = str(C.label(t), 100) || "Untitled trip";
+      var o = { name: name, state: st };
+      if (t.name && t.dest) o.destination = str(t.dest, 100);
+      if (t.start) o.from = t.start;
+      if (t.end) o.to = t.end;
+      o.packing_items = t.pack.n;
+      if (t.pack.left) o.to_pack = t.pack.left;
+      if (t.pack.before) o.before_leaving = t.pack.before;
+      o.plan_entries = t.plan.length;
+      if (st !== "past") t.plan.forEach(function (p) {
+        var it = { title: str(C.entryTitle(p, lang), 120), kind: p.kind, by: name };
+        if (p.day) it.date = p.day;
+        if (p.t1) it.time = p.t1;
+        var more = [p.num ? p.num : "", p.ref ? "booking " + p.ref : "", p.day2 ? "until " + p.day2 + (p.t2 ? " " + p.t2 : "") : ""].filter(Boolean);
+        if (more.length) it.text = more.join(" · ");
+        it.target = { trip: t.id, tab: "plan", item: p.id };
+        items.push(it);
+      });
+      return o;
+    });
+    var rank = { now: 0, upcoming: 1, "no dates": 2, past: 3 };
+    rows.sort(function (a, b) {
+      return rank[a.state] - rank[b.state] || (a.state === "past" ? ((b.from || "") < (a.from || "") ? -1 : 1) : ((a.from || "") < (b.from || "") ? -1 : (a.from || "") > (b.from || "") ? 1 : 0));
+    });
+    var out = { app: "travel", trips: rows.slice(0, 60) };
+    if (rows.length > 60) out.more_trips = rows.length - 60;
+    return capItems(out, items);
+  }
+
+  // Plant Care: every plant with its room, species, how often and when
+  // it was last watered and its next care days (late ones marked).
+  // opts { today, hemi, lang, now }.
+  function plantsList(C, raw, opts) {
+    opts = opts || {};
+    if (!C || typeof C.merge !== "function") return { ok: false, err: "Plant Care could not be read on this device." };
+    var today = opts.today, hemi = opts.hemi, lang = opts.lang || "en";
+    var d = C.merge(isObj(raw) ? raw : {}, isObj(raw) ? raw : {}, opts.now || Date.now());
+    var last = C.lastByKind(d), rooms = {}, items = [], late = 0, due = 0;
+    arr(d.plants).forEach(function (pl) {
+      var row = { title: str(pl.name, 60) || "Unnamed plant" };
+      var room = str(pl.room, 30);
+      if (room) { row.room = room; rooms[room] = (rooms[room] || 0) + 1; }
+      var pr = pl.sp && C.PRESETS && Object.prototype.hasOwnProperty.call(C.PRESETS, pl.sp) ? C.PRESETS[pl.sp] : null;
+      var sp = pr && (pr[lang] || pr.en);
+      if (sp && sp[0]) row.species = str(sp[0], 80);
+      if (pl.sci) row.scientific = str(pl.sci, 80);
+      if (pl.out) row.outdoors = true;
+      var lp = last[pl.id] || {}, next = {}, isLate = false, isDue = false;
+      C.KINDS.forEach(function (k) {
+        var n = C.nextDue(pl, k, lp[k], hemi);
+        if (!n) return;
+        next[k === "fert" ? "fertilize" : k] = n;
+        if (n < today) isLate = true; else if (n === today) isDue = true;
+      });
+      var ev = C.interval(pl, "water", today, hemi);
+      if (ev) row.water_every_days = ev;
+      if (lp.water) row.last_watered = lp.water;
+      row.next = next;
+      if (isLate) { row.late = true; late++; } else if (isDue) due++;
+      if (pl.notes) row.note = str(pl.notes, 200);
+      row.target = pl.id;
+      items.push(row);
+    });
+    items.sort(function (a, b) { var x = foldName(a.title), y = foldName(b.title); return x < y ? -1 : x > y ? 1 : 0; });
+    var out = { app: "plants", plants: items.length, late: late, due_today: due,
+                rooms: Object.keys(rooms).sort().map(function (k) { return { name: k, n: rooms[k] }; }) };
+    capList(out, "rooms", MAX_LISTS);
+    return capItems(out, items);
+  }
+
+  // Garage: every vehicle (not archived) with its km and this year's
+  // costs; its renewals and service plans with their due day or km and
+  // a level (ok, soon, due / expired), with refs. opts { today, lang,
+  // prefs, now }.
+  function garageVehicles(C, raw, opts) {
+    opts = opts || {};
+    if (!C || typeof C.merge !== "function") return { ok: false, err: "Garage could not be read on this device." };
+    var today = opts.today, lang = opts.lang || "en";
+    var d = C.merge(isObj(raw) ? raw : {}, isObj(raw) ? raw : {}, opts.now || Date.now());
+    var cur = d.settings && d.settings.cur || "EUR", veh = {}, items = [], y0 = today.slice(0, 4) + "-01-01";
+    var vehicles = arr(d.vehicles).filter(function (v) { return v.arch !== 1; }).map(function (v) {
+      var name = str(v.name, 40) || "Unnamed vehicle";
+      veh[v.id] = name;
+      var o = { name: name };
+      var mm = [str(v.make, 40), str(v.model, 40)].filter(Boolean).join(" ");
+      if (mm) o.model = mm;
+      if (v.year) o.year = v.year;
+      if (v.plate) o.plate = str(v.plate, 16);
+      var km = C.currentKm(d, v.id);
+      if (km !== null) o.km = km;
+      var c = C.costs(d, v.id, y0, today);
+      o.costs_this_year = { fuel: money(c.fuel), service: money(c.service), other: money(c.other), total: money(c.total) };
+      return o;
+    });
+    arr(d.renewals).forEach(function (r) {
+      if (!veh[r.v]) return;
+      var s = C.renewalStatus(r, today);
+      var kind = C.renewalName(r.kind, lang), lb = str(r.label, 40);
+      var it = { title: r.kind === "other" && lb ? lb : [kind, lb].filter(Boolean).join(" · "), by: veh[r.v], date: r.exp,
+                 level: s.level === "expired" ? "expired" : s.level, days_left: s.daysLeft };
+      if (r.prov) it.text = str(r.prov, 40);
+      it.target = r.id;
+      items.push(it);
+    });
+    arr(d.plans).forEach(function (p) {
+      if (!veh[p.v]) return;
+      var s = C.planStatus(p, d, today);
+      var it = { title: [C.itemName(p.item, lang), str(p.label, 40)].filter(Boolean).join(" · "), by: veh[p.v], level: s.level };
+      if (s.when) it.date = s.when;
+      if (s.dueKm !== null) it.due_km = s.dueKm;
+      if (s.leftKm !== null) it.km_left = s.leftKm;
+      it.target = p.id;
+      items.push(it);
+    });
+    items.sort(function (a, b) { var x = a.date || "9999", y = b.date || "9999"; return x < y ? -1 : x > y ? 1 : 0; });
+    var out = { app: "garage", currency: cur, vehicles: vehicles,
+                needs_attention: items.filter(function (x) { return x.level !== "ok"; }).length };
+    return capItems(out, items);
+  }
+
+  // Habits: every habit with its schedule, whether today is done, the
+  // streak and the score (Habits' own rules, habits/core.js). Read only.
+  var HB_DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  function habitsList(H, raw, opts) {
+    opts = opts || {};
+    if (!H || typeof H.index !== "function") return { ok: false, err: "Habits could not be read on this device." };
+    var today = opts.today;
+    if (!isObj(raw)) return { app: "habits", habits: 0, due_today: 0, done_today: 0, items: [], listed: 0 };
+    var ix = H.index(raw), dueIds = {};
+    H.dueOn(ix, today).forEach(function (h) { dueIds[h.id] = 1; });
+    var done = 0, items = H.living(raw).map(function (h) {
+      var pr = H.perOf(h), sched;
+      if (pr) sched = pr.n + (pr.n === 1 ? " time a " : " times a ") + (pr.p === "w" ? "week" : "month");
+      else if (H.isFixed(h)) sched = h.days.length === 7 ? "every day" : h.days.slice().sort().map(function (i) { return HB_DAYS[i]; }).join(", ");
+      else sched = "any day";
+      var row = { title: str(h.name, 80), schedule: sched };
+      if (H.isNum(h)) {
+        row.goal = (h.num.c === "le" ? "at most " : "at least ") + h.num.t + (h.num.u ? " " + str(h.num.u, 20) : "");
+        var v = H.valueOn(ix, h.id, today);
+        row.today_value = v === null ? 0 : v;
+      }
+      var isD = H.isDone(ix, h.id, today);
+      row.today = isD ? "done" : H.isSkipped(ix, h.id, today) ? "skipped" : dueIds[h.id] ? "to do" : "not due";
+      if (isD) done++;
+      if (pr) { var pc = H.periodCount(ix, h, today); row.this_period = pc.done + " of " + pr.n; }
+      var st = H.streaks(ix, h, today);
+      var u = st.unit === "w" ? "week" : st.unit === "m" ? "month" : "day";
+      row.streak = st.cur + " " + u + (st.cur === 1 ? "" : "s");
+      row.best_streak = st.best + " " + u + (st.best === 1 ? "" : "s");
+      row.score = H.score(ix, h, today);
+      row.target = { habit: h.id };
+      return row;
+    });
+    return capItems({ app: "habits", habits: items.length, due_today: Object.keys(dueIds).length, done_today: done }, items);
+  }
+
+  // Scanner & PDF: the signature requests (sign-core.js item, sync
+  // slice scanpdfSign) by document and signer with their status, the
+  // same rule as the app (ScanPdfSign.status). Never an e-mail, the
+  // link code, the revoke secret or the reply box. Target { signList }.
+  function scanpdfSigns(raw, opts) {
+    opts = opts || {};
+    var now = opts.now || Date.now(), src = isObj(raw) && isObj(raw.items) ? raw.items : {}, groups = {}, items = [];
+    var count = { waiting: 0, signed: 0, declined: 0, revoked: 0, expired: 0 };
+    function iso(ms) { return typeof ms === "number" && ms > 0 ? new Date(ms).toISOString().slice(0, 10) : ""; }
+    Object.keys(src).map(function (id) { return src[id]; }).filter(function (it) {
+      return isObj(it) && !it.gone && isObj(it.q) && typeof it.q.n === "string";
+    }).sort(function (x, y) { return (y.a || 0) - (x.a || 0) || (x.id < y.id ? -1 : 1); }).forEach(function (it) {
+      var st = it.got ? (it.got.st === "declined" ? "declined" : "signed") : it.rv ? "revoked" : it.x && it.x <= now ? "expired" : "waiting";
+      var row = { title: str(it.q.n, 120), signer: str(it.q.to, 80), status: st, sent: iso(it.a) };
+      if (it.x && st === "waiting") row.expires = iso(it.x);
+      if (it.got && it.got.at) row.answered = iso(it.got.at);
+      if (isObj(it.g) && it.g.n > 1) {
+        row.signer_place = (it.g.i + 1) + " of " + it.g.n;
+        if (isObj(it.all) && it.all.at) row.all_signed = iso(it.all.at);
+        groups[it.g.id] = 1;
+      }
+      row.target = { signList: 1 };
+      count[st]++;
+      items.push(row);
+    });
+    var out = { app: "scanpdf", requests: items.length, documents_with_several_signers: Object.keys(groups).length,
+                waiting: count.waiting, signed: count.signed, declined: count.declined, revoked: count.revoked, expired: count.expired,
+                note: "Read only. Asking for a signature, taking a request back or saving a signed PDF is the owner's own tap in Scanner & PDF." };
+    return capItems(out, items);
+  }
+
+  // Transfer: the history (sent and received, how many files, sizes,
+  // the device, the path, how it ended). Never the files or where they
+  // were saved; `what` holds at most three top names (core.js).
+  function transferHistory(raw, opts) {
+    opts = opts || {};
+    var items = [], sent = 0, recv = 0, bytesS = 0, bytesR = 0;
+    arr(isObj(raw) ? raw.items : null).forEach(function (x) {
+      if (!isObj(x) || typeof x.id !== "string" || !(x.at > 0)) return;
+      if (isObj(raw.tombs) && raw.tombs[x.id]) return;
+      var dir = x.dir === "recv" ? "received" : "sent";
+      var n = Math.max(0, Math.floor(+x.n || 0)), b = Math.max(0, Math.floor(+x.bytes || 0));
+      if (dir === "sent") { sent++; bytesS += b; } else { recv++; bytesR += b; }
+      var row = { title: str(x.what, 120) || "(files)", date: ymdOf(x.at), direction: dir, files: n, mb: Math.round(b / 10485.76) / 100,
+                  path: x.mode === "relay" ? "orOS relay" : x.mode === "cloud" ? "own cloud link" : "direct" };
+      var dev = str(x.dev, 60); if (dev) row.device = dev;
+      if (dir === "received" && (x.dest === "disk" || x.dest === "device")) row.saved = x.dest === "disk" ? "orOS disk" : "this device";
+      if (x.end === "stopped") row.stopped = true;
+      if (+x.bad > 0) row.files_not_whole = Math.floor(+x.bad);
+      row.target = { tab: "hist" };
+      row._at = x.at;
+      items.push(row);
+    });
+    items.sort(function (a, b) { return b._at - a._at; });
+    items.forEach(function (r) { delete r._at; });
+    var out = { app: "transfer", sent: sent, received: recv, sent_mb: Math.round(bytesS / 10485.76) / 100, received_mb: Math.round(bytesR / 10485.76) / 100,
+                note: "History only: which transfers happened, never what the files hold. Sending is always the owner's own tap in Transfer." };
+    return capItems(out, items);
+  }
+
+  // Whiteboard: every board with how many notes, texts, shapes,
+  // arrows, drawings, pictures and frames it holds; the texts of its
+  // notes, text boxes, shapes, frames and arrow labels with a ref (of
+  // one board with opts.board). Pictures and drawings by count only.
+  var WB_TEXT = { note: 1, text: 1, shape: 1, frame: 1, arrow: 1 };
+  function whiteboardBoards(raw, opts) {
+    opts = opts || {};
+    var d = isObj(raw) ? raw : {}, tombs = isObj(d.tombs) ? d.tombs : {};
+    function dead(r) { return Object.prototype.hasOwnProperty.call(tombs, r.id) && tombs[r.id] >= (Number(r.m) || 0); }
+    var boards = {}, order = [];
+    arr(d.boards).forEach(function (b) {
+      if (!isObj(b) || typeof b.id !== "string" || dead(b) || boards[b.id]) return;
+      boards[b.id] = { name: str(b.name, 120) || "Untitled board", objects: 0, notes: 0, texts: 0, shapes: 0, arrows: 0, drawings: 0, pictures: 0, frames: 0, last_changed: ymdOf(b.m), _id: b.id };
+      order.push(boards[b.id]);
+    });
+    var want = str(opts.board, 120), pick = null;
+    if (want) {
+      var f = foldName(want);
+      pick = order.filter(function (b) { return foldName(b.name) === f || b._id === want; })[0] || null;
+      if (!pick) return { ok: false, err: "No board is called \"" + want + "\". The boards: " + (order.map(function (b) { return b.name; }).join(", ") || "none") + "." };
+    }
+    var KEY = { note: "notes", text: "texts", shape: "shapes", arrow: "arrows", pen: "drawings", image: "pictures", frame: "frames" }, items = [];
+    arr(d.objs).forEach(function (o) {
+      if (!isObj(o) || typeof o.id !== "string" || !boards[o.b] || dead(o) || !KEY[o.k]) return;
+      var b = boards[o.b];
+      b.objects++; b[KEY[o.k]]++;
+      var mo = ymdOf(o.m); if (mo > b.last_changed) b.last_changed = mo;
+      if (pick && b !== pick) return;
+      if (!WB_TEXT[o.k] || typeof o.tx !== "string") return;
+      var tx = o.tx.replace(/\s+/g, " ").trim();
+      if (!tx) return;
+      items.push({ title: tx.slice(0, 300), kind: o.k === "shape" && typeof o.sym === "string" ? "shape (" + o.sym + ")" : o.k, by: b.name, target: { board: o.b, obj: o.id }, _z: Number(o.z) || 0 });
+    });
+    items.sort(function (a, b) { return a.by < b.by ? -1 : a.by > b.by ? 1 : a._z - b._z; });
+    items.forEach(function (it) { delete it._z; });
+    order.sort(function (a, b) { return a.last_changed < b.last_changed ? 1 : a.last_changed > b.last_changed ? -1 : 0; });
+    var out = { app: "whiteboard", boards: (pick ? [pick] : order).map(function (b) { var o = {}; Object.keys(b).forEach(function (k) { if (k !== "_id") o[k] = b[k]; }); return o; }) };
+    if (pick) out.board = pick.name;
+    return capItems(out, items);
+  }
+
   var API = {
     VERSION: "1.2.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
     todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, notesBooks: notesBooks,
-    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
+    bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, studioShows: studioShows, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, formsSummary: formsSummary, baseTables: baseTables,
+    mealsPlan: mealsPlan, travelTrips: travelTrips, plantsList: plantsList, garageVehicles: garageVehicles, habitsList: habitsList,
+    scanpdfSigns: scanpdfSigns, transferHistory: transferHistory, whiteboardBoards: whiteboardBoards, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root && root.document) root.OrosAssistSummary = API;

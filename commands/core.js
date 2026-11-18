@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — commands/core.js (command bar, pure core, v1.4.0)
+// orOS — commands/core.js (command bar, pure core, v1.5.0)
 // One line of plain words (English and Greek, mixed freely) → one
 // action in an orOS app, on the device, without AI:
 //   "ραντεβού αύριο 10 οδοντίατρος" · "dentist fri 9:30"   → Calendar
@@ -65,7 +65,9 @@
 //   opts.offset (minutes east of UTC here) fix the clock in tests.
 //   K5: setting → { fn: "setting", args: [name, value] } (the shell
 //   applies it through the same setters as Settings); "lock" only when
-//   opts.lockOn is true.
+//   opts.lockOn is true. 1.5.0: "πρόχειρο" · "clipboard history" →
+//   { name: "clip", value: true } opens the clipboard history
+//   (cliphist.js), only when opts.clipOn is true.
 //   K6: random → { fn: "copy", args: [the draw, secret] }; secret is
 //   true for a password (the shell's note then leaves it out). Every
 //   draw comes from crypto.getRandomValues (never Math.random), drawn
@@ -79,7 +81,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.4.0";
+  var VER = "1.5.0";
   var MAX_IN = 300;              // longer lines are searches, not commands
   var MAX_TITLE = 200;
   var MAX_ITEM = 300;
@@ -714,13 +716,15 @@
     [new RegExp("^(?:ειδοποιησεισ " + SET_OFF + ")$"), "notifs", false],
     [new RegExp("^(?:(?:turn )?notifications on|ανοιξε τισ ειδοποιησεισ|ειδοποιησεισ " + SET_ON + ")$"), "notifs", true],
     [new RegExp("^(?:(?:ωρεσ ησυχιασ|quiet hours) " + SET_ON + "|(?:ανοιξε|ενεργοποιησε) τισ ωρεσ ησυχιασ|(?:turn on|enable) quiet hours)$"), "quiet", true],
-    [new RegExp("^(?:(?:ωρεσ ησυχιασ|quiet hours) " + SET_OFF + "|(?:κλεισε|απενεργοποιησε) τισ ωρεσ ησυχιασ|(?:turn off|disable) quiet hours)$"), "quiet", false]
+    [new RegExp("^(?:(?:ωρεσ ησυχιασ|quiet hours) " + SET_OFF + "|(?:κλεισε|απενεργοποιησε) τισ ωρεσ ησυχιασ|(?:turn off|disable) quiet hours)$"), "quiet", false],
+    [/^(?:(?:ανοιξε (?:το )?)?(?:ιστορικο )?προχειρο(?:υ)?|ιστορικο προχειρου|(?:open )?(?:the )?clipboard(?: history)?|zwischenablage(?:-verlauf)?)$/, "clip", true]
   ];
   function parseSetting(f, o) {
     var g = f.replace(/[.!]+$/, "").trim();
     for (var i = 0; i < SETTINGS.length; i++) {
       if (!SETTINGS[i][0].test(g)) continue;
       if (SETTINGS[i][1] === "lock" && o.lockOn !== true) return null;
+      if (SETTINGS[i][1] === "clip" && o.clipOn !== true) return null;
       return { kind: "setting", app: "settings", data: { name: SETTINGS[i][1], value: SETTINGS[i][2] } };
     }
     return null;
@@ -964,7 +968,7 @@
       case "convert":
         return typeof d.answer === "string" && d.answer ? { fn: "copy", args: [d.answer.slice(0, 200)] } : null;
       case "setting": {
-        var ok = (d.name === "theme" && (d.value === "dark" || d.value === "light")) || (d.name === "lock" && d.value === true) ||
+        var ok = (d.name === "theme" && (d.value === "dark" || d.value === "light")) || (d.name === "lock" && d.value === true) || (d.name === "clip" && d.value === true) ||
                  ((d.name === "notifs" || d.name === "quiet") && typeof d.value === "boolean");
         return ok ? { fn: "setting", args: [d.name, d.value] } : null;
       }
@@ -1004,7 +1008,7 @@
           y1: "1 year", yN: "{n} years", after: "in {d}", ago: "{d} ago", until: "until {date}", since: "since {date}",
           week: "Week {n}", same: "same time as here", behind: "{h} h behind", behind1: "1 hour behind",
           ahead: "{h} h ahead", ahead1: "1 hour ahead",
-          "set.dark": "Dark theme", "set.light": "Light theme", "set.lock": "Lock orOS now",
+          "set.dark": "Dark theme", "set.light": "Light theme", "set.lock": "Lock orOS now", "set.clip": "Clipboard history",
           "set.notifs.off": "Notifications off", "set.notifs.on": "Notifications on",
           "set.notifs.note": "Nothing pops up or is saved until you turn them on again",
           "set.quiet.on": "Quiet hours on", "set.quiet.off": "Quiet hours off",
@@ -1025,7 +1029,7 @@
           y1: "1 χρόνος", yN: "{n} χρόνια", after: "σε {d}", ago: "πριν από {d}", until: "ως {date}", since: "από {date}",
           week: "Εβδομάδα {n}", same: "ίδια ώρα με εδώ", behind: "{h} ώρες πίσω", behind1: "1 ώρα πίσω",
           ahead: "{h} ώρες μπροστά", ahead1: "1 ώρα μπροστά",
-          "set.dark": "Σκοτεινό θέμα", "set.light": "Φωτεινό θέμα", "set.lock": "Κλείδωμα του orOS τώρα",
+          "set.dark": "Σκοτεινό θέμα", "set.light": "Φωτεινό θέμα", "set.lock": "Κλείδωμα του orOS τώρα", "set.clip": "Ιστορικό προχείρου",
           "set.notifs.off": "Ειδοποιήσεις κλειστές", "set.notifs.on": "Ειδοποιήσεις ανοιχτές",
           "set.notifs.note": "Δεν εμφανίζεται ούτε κρατιέται τίποτα μέχρι να τις ανοίξεις ξανά",
           "set.quiet.on": "Ώρες ησυχίας ανοιχτές", "set.quiet.off": "Ώρες ησυχίας κλειστές",
@@ -1130,7 +1134,7 @@
       case "calc":
       case "convert": return { verb: d.text, detail: "", hint: S.copy };
       case "setting": {
-        var k = d.name === "theme" ? "set." + d.value : d.name === "lock" ? "set.lock" : "set." + d.name + (d.value ? ".on" : ".off");
+        var k = d.name === "theme" ? "set." + d.value : d.name === "lock" ? "set.lock" : d.name === "clip" ? "set.clip" : "set." + d.name + (d.value ? ".on" : ".off");
         return { verb: S[k] || "", detail: d.name === "notifs" && !d.value ? S["set.notifs.note"] : "" };
       }
       case "random": {

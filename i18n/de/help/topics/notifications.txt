@@ -34,6 +34,7 @@ Auch andere Apps senden Erinnerungen, zum Beispiel für fällige oder überfäll
 - Wecker und Timer aus [Zeit](app:time).
 - Erinnerungen aus [Kalender](app:calendar).
 - Fällige Aufgaben aus [Aufgaben](app:todo) (um 09:00) sowie Erinnerungen aus [Wasser](app:water), [Gewohnheiten](app:habits) und [Gesundheit](app:health).
+- [Pflanzenpflege](app:plants), [Tier-Gesundheitspass](app:petcare), [Garage](app:garage) und [Hausarbeitsrad](app:chores) zur Erinnerungszeit der jeweiligen App, fällige Dokumente aus [Abrechnung](app:invoices) und Karten aus [Kanban](app:kanban) (um 09:00), Follow-ups aus [CRM](app:crm) und [Haftnotizen](app:stickies) zu ihrer Zeit.
 
 So funktioniert es: orOS legt die Erinnerungen der nächsten 7 Tage im orOS-Relay ab, und zur jeweiligen Zeit schickt das Relay sie an den Push-Dienst deines Browsers, der dein Gerät weckt. Der Push-Dienst gehört dem Hersteller deines Browsers: **Google** in Chrome und auf Android, **Microsoft** in Edge, **Mozilla** in Firefox. Jede Erinnerung wird zuerst auf deinem Gerät verschlüsselt, daher sehen Push-Dienst und Relay nur ein verschlüsseltes Paket und den Zeitpunkt, an dem es gesendet wird, nie den Inhalt. Änderst oder löschst du eine Erinnerung auf einem deiner Geräte, ändert sich die wartende Kopie auch oder verschwindet. Öffne orOS ab und zu, damit es die kommenden Tage hinzufügen kann.
 
@@ -52,9 +53,10 @@ In der orOS-App für Android gibt es unter `Einstellungen` › `Benachrichtigung
 
 - Wecker und Timer aus [Zeit](app:time), mit dem Weckton des Handys, bis du sie beendest.
 - Erinnerungen aus [Wasser](app:water).
-- Fällige Aufgaben aus [Aufgaben](app:todo), um 09:00 am jeweiligen Tag.
+- Fällige Aufgaben aus [Aufgaben](app:todo), um 09:00 am jeweiligen Tag, und Erinnerungen aus [Gewohnheiten](app:habits) und [Gesundheit](app:health).
+- [Pflanzenpflege](app:plants), [Tier-Gesundheitspass](app:petcare), [Garage](app:garage) und [Hausarbeitsrad](app:chores) zur Erinnerungszeit der jeweiligen App, fällige Dokumente aus [Abrechnung](app:invoices) und Karten aus [Kanban](app:kanban) (um 09:00), Follow-ups aus [CRM](app:crm) und [Haftnotizen](app:stickies) zu ihrer Zeit.
 
-Tippe auf eine, um orOS dort zu öffnen, worauf sie zeigt. Die App kennt die nächsten zwei Tage, also öffne orOS ab und zu. Meldet Android, dass Erinnerungen ein paar Minuten zu spät kommen können, tippe noch einmal auf `Erlauben` und schalte Wecker für orOS ein. Solange orOS auf dem Bildschirm ist, zeigt es Erinnerungen wie gewohnt selbst an. Kalendertermine klingeln stattdessen über den Kalender des Handys (siehe die Hilfe zu [Kalender](app:calendar)).
+Eine App, die du unter `Welche Apps benachrichtigen dürfen` ausgeschaltet hast, bleibt auch auf dem Handy still. Tippe auf eine, um orOS dort zu öffnen, worauf sie zeigt. Die App kennt die nächsten zwei Tage, also öffne orOS ab und zu. Meldet Android, dass Erinnerungen ein paar Minuten zu spät kommen können, tippe noch einmal auf `Erlauben` und schalte Wecker für orOS ein. Solange orOS auf dem Bildschirm ist, zeigt es Erinnerungen wie gewohnt selbst an. Kalendertermine klingeln stattdessen über den Kalender des Handys (siehe die Hilfe zu [Kalender](app:calendar)).
 
 ## Systembenachrichtigungen
 Wenn dein Browser es erlaubt, zeigt orOS Benachrichtigungen auch über dein System an, damit du sie siehst, während orOS im Hintergrund ist. orOS fragt nach dieser Erlaubnis erst, wenn du einen Kalendertermin mit Erinnerung speicherst. Du kannst sie auch jederzeit in den Website-Einstellungen deines Browsers erlauben oder blockieren. Ein Klick auf eine solche Benachrichtigung holt orOS nach vorn und öffnet, worauf sie zeigt, zum Beispiel den Termin. Ohne diese Erlaubnis erscheinen Benachrichtigungen trotzdem in orOS.

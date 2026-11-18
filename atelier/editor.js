@@ -9,6 +9,8 @@
 //   - text: edited in place (a textarea over the element)
 //   - crop: double-tap a photo, drag / zoom it inside its frame
 //   - pages strip: switch, add, duplicate, delete, reorder
+//   - the pen and point editing (vector.js) take the pointer, the
+//     keys and the drawing over the page while they are on
 // Every change goes through AT.op / AT.editItems (undo, R27 stamps).
 // ============================================================
 (function () {
@@ -136,14 +138,14 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (hoverId && ED.sel.indexOf(hoverId) < 0) {
       var hv = find(hoverId);
-      if (hv) outline(hv, "rgba(77,163,255,0.8)", 1);
+      if (hv && !vecOn()) outline(hv, "rgba(77,163,255,0.8)", 1);
     }
     if (dropId) {
       var dt = find(dropId);
       if (dt) { outline(dt, accent(), 3); }
     }
     var sel = selItems();
-    if (sel.length === 1 && !ED.editId) drawHandles(sel[0]);
+    if (sel.length === 1 && !ED.editId && !vecOn()) drawHandles(sel[0]);
     else if (sel.length > 1) {
       sel.forEach(function (it) { outline(it, "rgba(77,163,255,0.6)", 1); });
       var b = selBox(sel), a = toScreen(b.x, b.y);
@@ -164,7 +166,10 @@
       ctx.fillRect(mx, my, Math.abs(marquee.x1 - marquee.x0), Math.abs(marquee.y1 - marquee.y0));
       ctx.strokeRect(mx, my, Math.abs(marquee.x1 - marquee.x0), Math.abs(marquee.y1 - marquee.y0));
     }
+    if (vecOn()) ED.vec.paint(ctx);
   }
+  // the pen or point editing (vector.js) has the stage
+  function vecOn() { return !!(ED.vec && ED.vec.active()); }
 
   // While cropping: the parts of the photo outside its frame, faint.
   function cropGhost(ci) {
@@ -220,7 +225,8 @@
     if (it.t === "line") return [{ id: "p0", x: it.x, y: it.y }, { id: "p1", x: it.x + it.w, y: it.y + it.h }];
     var k = it.ax.k, out = [];
     var list = [["nw", -1, -1], ["ne", 1, -1], ["se", 1, 1], ["sw", -1, 1]];
-    if (k === "text") { if (!it.ax.cv) list.push(["e", 1, 0], ["w", -1, 0]); }
+    if (k === "text" && AX.tpOf(it)) list.push(["n", 0, -1], ["e", 1, 0], ["s", 0, 1], ["w", -1, 0]);
+    else if (k === "text") { if (!it.ax.cv) list.push(["e", 1, 0], ["w", -1, 0]); }
     else if (k !== "icon") list.push(["n", 0, -1], ["e", 1, 0], ["s", 0, 1], ["w", -1, 0]);
     var cx = it.x + it.w / 2, cy = it.y + it.h / 2, a = (it.rot || 0) * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
     function at(lx, ly) { return { x: cx + lx * c - ly * s, y: cy + lx * s + ly * c }; }
@@ -386,6 +392,7 @@
     var ids = Object.keys(pointers);
     if (ids.length === 2) {
       // second finger: pinch (cancel any drag, keep what it did)
+      if (drag && drag.kind === "vec") { drag = null; ED.vec.up(e, sp); }
       endDrag(true);
       var a = pointers[ids[0]], b = pointers[ids[1]];
       pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: ED.zoom, mx: (a.x + b.x) / 2, my: (a.y + b.y) / 2, ox: ED.ox, oy: ED.oy,
@@ -397,6 +404,11 @@
     var touch = e.pointerType !== "mouse";
     var p = toPage(sp.x, sp.y);
     if (e.button === 1 || spaceDown) { drag = { kind: "pan", sx: sp.x, sy: sp.y, ox: ED.ox, oy: ED.oy }; return; }
+    if (vecOn()) {
+      if (ED.vec.down(e, sp)) drag = { kind: "vec" };
+      else drag = { kind: "pan", sx: sp.x, sy: sp.y, ox: ED.ox, oy: ED.oy, tap: true, vec: true };
+      return;
+    }
 
     if (ED.editId) exitText();
     if (ED.cropId) {
@@ -449,6 +461,8 @@
       clampView(); zoomLabel(); positionOverlays(); redraw();
       return;
     }
+    if (drag && drag.kind === "vec") { ED.vec.move(e, sp); return; }
+    if (!drag && vecOn()) { ED.vec.move(e, sp); return; }
     if (!drag) {
       if (e.pointerType === "mouse") {
         var hp = toPage(sp.x, sp.y), hh = hitItem(hp.x, hp.y, false);
@@ -501,6 +515,7 @@
       return;
     }
     if (!drag) return;
+    if (drag.kind === "vec") { drag = null; ED.vec.up(e, evPos(e)); return; }
     var d = drag;
     // a collage box dropped on another: swap their photos (same gesture)
     if (d.kind === "move" && d.moved && !d.locked && d.start.length === 1 && AT.collage) {
@@ -511,7 +526,7 @@
     if (d.moved) return;
     // taps
     var nowT = Date.now();
-    if (d.kind === "pan" && d.tap) { select([]); return; }
+    if (d.kind === "pan" && d.tap) { if (d.vec) { if (vecOn()) ED.vec.tapEmpty(); } else select([]); return; }
     if (d.kind === "marquee") { select(d.add); return; }
     if (d.kind === "move") {
       var it = find(d.hit);
@@ -520,6 +535,7 @@
       lastTap = { t: nowT, id: it.id };
       if (it.ax.k === "text" && !it.lock && (d.was || dbl)) { enterText(it.id); return; }
       if (it.ax.k === "photo" && it.a && !it.lock && dbl) { enterCrop(it.id); return; }
+      if (it.ax.k === "shape" && dbl && ED.vec && ED.vec.canEdit(it)) { ED.vec.edit(it.id); return; }
       if (d.was && AT.collage && AT.collage.tapEmpty(it)) return;
     }
   }
@@ -611,7 +627,7 @@
         var c2 = rotate(x0 + nw / 2 - s.w / 2, y0b + th / 2 - s.h / 2, a);
         it.h = th;
         it.x = s.x + s.w / 2 + c2.x - nw / 2; it.y = s.y + s.h / 2 + c2.y - th / 2;
-        if (it.ax.cv) { it.w = AX.curveLayout(M.normItem(it)).w; }
+        if (it.ax.cv && !AX.tpOf(it)) { it.w = AX.curveLayout(M.normItem(it)).w; }
       }
       if (s.ax.k === "photo" && s.fit === "custom") {
         if (corner) { it.isc = s.isc * k; it.ix = s.ix * k; it.iy = s.iy * k; }
@@ -782,7 +798,7 @@
       AX.editRuns(it, it.ax.tx || "", v);
       it.ax.tx = v;
       // a new text box grows with what is typed (up to the page)
-      if (growId === id && !it.ax.cv) {
+      if (growId === id && !AX.isCurved(it)) {
         var nw = Math.min(d.setup.w * 0.9, Math.max(it.w, AX.textWidth(it.ax, it)));
         if (nw > it.w) { it.x -= (nw - it.w) / 2; it.w = nw; }
       }
@@ -800,7 +816,7 @@
       var key = AX.fontKeyOf(ax, it), size = ax.size || 48;
       var p = toScreen(it.x, it.y);
       ta.style.left = p.x + "px"; ta.style.top = p.y + "px";
-      var w = ax.cv ? Math.max(it.w, AX.textWidth(ax, it)) : it.w;
+      var w = AX.isCurved(it) ? Math.max(it.w, AX.textWidth(ax, it)) : it.w;
       ta.style.width = (w * z + 2) + "px";
       ta.style.height = Math.max(it.h, size * (ax.lh || 120) / 100) * z + "px";
       ta.style.transform = it.rot ? "rotate(" + it.rot + "deg)" : "";
@@ -844,6 +860,7 @@
     if (!doc() || $("editor").hidden || $("dlg").open) return;
     if (e.key === " " && !typing(e)) { spaceDown = e.type === "keydown"; return; }
     if (e.type !== "keydown") return;
+    if (vecOn() && !typing(e) && ED.vec.key(e)) { e.preventDefault(); return; }
     if (ED.editId) {
       if (e.key === "Escape") { e.preventDefault(); exitText(); cv.focus(); }
       return;
@@ -861,6 +878,7 @@
     if (mod && k === "-") { e.preventDefault(); ED.zoomBy(0.8); return; }
     if (mod && k === "0") { e.preventDefault(); fit(); return; }
     if (e.key === "Escape") { if (ED.cropId) exitCrop(); else select([]); return; }
+    if (e.code === "KeyP" && !e.shiftKey && !e.altKey && ED.vec) { e.preventDefault(); ED.vec.pen(); return; }
     if (e.key === "Delete" || e.key === "Backspace") { if (ED.sel.length) { e.preventDefault(); ED.remove(); } return; }
     if (e.key === "Enter") {
       var one = selItems();
@@ -1090,8 +1108,10 @@
     cv.addEventListener("wheel", onWheel, { passive: false });
     cv.addEventListener("dblclick", function (e) {
       var sp = evPos(e), p = toPage(sp.x, sp.y), it = hitItem(p.x, p.y, false);
+      if (vecOn()) return;
       if (it && it.ax.k === "photo") enterCrop(it.id);
       else if (it && it.ax.k === "text") enterText(it.id);
+      else if (it && it.ax.k === "shape" && ED.vec && ED.vec.canEdit(it)) ED.vec.edit(it.id);
     });
     cv.addEventListener("contextmenu", function (e) { e.preventDefault(); });
     document.addEventListener("keydown", onKey);

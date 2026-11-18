@@ -292,6 +292,56 @@ test("orOS Music: liked and shuffle shortcuts, audio links shared in, songs open
    ["music/music.js", /else if \(tg\.liked\)/], ["music/music.js", /SV\.AUDIO_RE\.test\(bare\)/]].forEach(([f, re]) => assert.match(read(f), re, f));
 });
 
+test("wave 8 (APP-LISTS L4): Transfer, Scanner & PDF, Stock and Forms; no shares, shortcuts reach their receivers", () => {
+  ["transfer", "scanpdf", "stock", "forms"].forEach((id) => {
+    assert.ok(S.ids().includes(id), id);
+    assert.ok(!S.APPS[id].share, id + " takes no shared text");
+    const st = S.manifestFor(id, F.table(), BASE).share_target;
+    // Stock still takes a shared .orosstock file (its own file type), never text
+    if (id === "stock") assert.deepEqual(st.params.files[0].accept, ["application/x-oros-stock", ".orosstock"]);
+    // Gap review proposal 2: Transfer takes any shared file, Scanner & PDF PDFs and pictures
+    else if (id === "transfer") assert.deepEqual(st.params.files[0].accept, ["*/*"]);
+    else if (id === "scanpdf") assert.ok(st.params.files[0].accept.includes(".pdf") && st.params.files[0].accept.includes("image/jpeg"));
+    else assert.equal(st, undefined, id);
+  });
+  assert.equal(S.nameOf("transfer", "el"), "orOS Μεταφορά");
+  assert.equal(S.nameOf("invoices", "en"), "orOS Billing");
+  assert.equal(S.nameOf("invoices", "el"), "orOS Τιμολόγηση");
+  assert.equal(S.pkgOf("scanpdf"), "online.useoros.scanner");
+  assert.deepEqual(S.shortcut("scanpdf", "sign").target, { signList: true });
+  assert.deepEqual(S.shortcut("stock", "reorder").target, { view: "reorder" });
+  assert.deepEqual(S.shortcut("stock", "reports").target, { view: "reports" });
+  assert.match(read("scanpdf/scanpdf.js"), /if \(target\.signList\)/);
+  assert.match(read("stock/stock.js"), /if \(target\.view === "reorder"\)/);
+  assert.match(read("stock/stock.js"), /if \(target\.view === "reports"\)/);
+  // Gap review proposal 2 (SOLO-1): shortcuts and "Open with"
+  assert.deepEqual(S.shortcut("transfer", "send").target, { tab: "send" });
+  assert.deepEqual(S.shortcut("forms", "new").target, { newForm: true });
+  const sp = S.manifestFor("scanpdf", F.table(), BASE).file_handlers[0].accept;
+  assert.deepEqual(sp["application/pdf"], [".pdf"]);
+  assert.deepEqual(sp["image/png"], [".png"]);
+  assert.equal(S.manifestFor("transfer", F.table(), BASE).file_handlers, undefined);
+  assert.ok(F.soloTakes("scanpdf", ".PDF") && F.soloTakes("scanpdf", ".jpg") && !F.soloTakes("scanpdf", ".txt"));
+  assert.match(read("transfer/app.js"), /target\.tab === "send"/);
+  assert.match(read("transfer/app.js"), /target\.openFiles/);
+  assert.match(read("scanpdf/scanpdf.js"), /target\.openFiles/);
+  assert.match(read("forms/app.js"), /\.newForm === true/);
+  // Stock's .orosstock files open with the Stock app, not the whole orOS
+  assert.ok(S.manifestFor("stock", F.table(), BASE).file_handlers[0].accept["application/x-oros-stock"]);
+});
+
+test("the download page lists every single app and its APK, in English and Greek (APP-LISTS L4)", () => {
+  const html = read("download/index.html");
+  const i = html.indexOf('<article lang="el"');
+  assert.ok(i > 0);
+  [html.slice(0, i), html.slice(i)].forEach((part, k) => {
+    const solo = [...part.matchAll(/href="\/([a-z]+)\/solo\.html\?install"/g)].map((m) => m[1]).sort();
+    const apk = [...part.matchAll(/android-apks\/oros-([a-z]+)\.apk"><img/g)].map((m) => m[1]).sort();
+    assert.deepEqual(solo, S.ids().slice().sort(), (k ? "el" : "en") + " single apps");
+    assert.deepEqual(apk, S.ids().slice().sort(), (k ? "el" : "en") + " APKs");
+  });
+});
+
 test("wave 6: orOS Games — every game in one app, Daily shortcuts, .pgn through Chess", () => {
   assert.equal(S.nameOf("gamecenter", "el"), "orOS Παιχνίδια");
   assert.deepEqual(S.APPS.gamecenter.shortcuts.map((x) => x.target.play), ["wordle", "crossword", "sudoku", "chess"]);

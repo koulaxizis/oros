@@ -1434,6 +1434,8 @@
     registered: registered,
     data: function () { flushText(); return clone(cur()); },
     prefs: prefs,
+    // the app's words (phone.js reminder rows: "note", "note.empty")
+    text: function (k) { return T(String(k)); },
     setPref: setPref,
     newNote: function () { return newNote(); },
     create: function (text) {

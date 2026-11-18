@@ -30,7 +30,7 @@
   // that are of no use without an account of the person's own (P3: an
   // app with an account linked already has its data, so it counts as
   // opened anyway).
-  var NEVER = ["settings", "help", "today", "device", "automations", "assistant",
+  var NEVER = ["settings", "help", "today", "automations", "assistant",
     "mail", "newsletter", "publish"];
 
   function isInt(v) { return typeof v === "number" && isFinite(v) && Math.floor(v) === v; }

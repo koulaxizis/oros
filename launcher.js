@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.4.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.5.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -24,6 +24,8 @@
 //     and the Dock. Synced as its own slice "menu" (section 1b).
 //     1.4.0: a first-run profile (profiles.js) hides apps through
 //     menuPreset (mtime 1: any real choice wins the merge).
+//   • 1.5.0: a shortcut of an app that became an alias (apps.json
+//     "aliases") shows its new home and opens it at the old place.
 //
 // Data (synced, slice "launcher", key oros-launcher-data):
 //   { ver:1, items:[{ id, desk, dock, mtime }] }
@@ -45,7 +47,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.4.0";
+  var VER = "1.5.0";
   var DATA_KEY = "oros-launcher-data";
   var MENU_KEY = "oros-menu-apps";
   var MAX_ITEMS = 500;
@@ -585,7 +587,9 @@
   function appById(id) {
     var a = apps();
     for (var i = 0; i < a.length; i++) if (a[i].id === id) return a[i];
-    return null;
+    // 1.5.0 APP-ALIAS: a shortcut of an app that moved into another
+    // one shows that app (shell aliasHost); the item keeps its old id.
+    return (host && typeof host.aliasHost === "function" && host.aliasHost(id)) || null;
   }
   function labelOf(app) { return host && host.label ? host.label(app) : app.name; }
   function iconOf(app) {
@@ -599,10 +603,18 @@
   function launch(id) {
     var app = appById(id);
     if (!app || runningId() === id) return;     // never reload the open app
+    if (app.id !== id && host.openAlias && host.openAlias(id)) return;   // APP-ALIAS: opens at the old app's place
     host.open(app);
   }
+  // An alias and its new home pinned both show once (the first one).
   function shown(place) {
-    return list(load(), place).filter(function (id) { return !!appById(id); });
+    var seen = {};
+    return list(load(), place).filter(function (id) {
+      var app = appById(id);
+      if (!app || seen[app.id]) return false;
+      seen[app.id] = true;
+      return true;
+    });
   }
   function switchRow(text, checked, onChange, key) {
     var sw = doc.createElement("label");
@@ -1160,7 +1172,8 @@
 
   // ---------- 12. Public API ----------
   // host = { apps(), open(app), running(), label(app), icons, lang(), desktop,
-  //          menuChanged(), isOpen(id) optional: alive behind (multitasking) }
+  //          menuChanged(), isOpen(id) optional: alive behind (multitasking),
+  //          aliasHost(id) / openAlias(id) optional: APP-ALIAS (1.5.0) }
   function attach(h) {
     if (host) return;
     host = h || {};

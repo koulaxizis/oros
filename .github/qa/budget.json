@@ -1,16 +1,16 @@
 {
   "note": "Size budget of the quality gate (.github/qa/budget.js). The gate fails at precache.bytes + 10 % and at an app's bytes + 20 % (ms is a warning only). Raise a value only for an intended growth: node .github/qa/budget.js [--precache] --update-budget.",
   "precache": {
-    "bytes": 56152414
+    "bytes": 61794052
   },
   "apps": {
     "assistant": {
-      "bytes": 1389567,
-      "ms": 205
+      "bytes": 1669272,
+      "ms": 175
     },
     "atelier": {
-      "bytes": 2462541,
-      "ms": 507
+      "bytes": 2955373,
+      "ms": 469
     },
     "aura": {
       "bytes": 243711,
@@ -89,7 +89,7 @@
       "ms": 53
     },
     "crm": {
-      "bytes": 773119,
+      "bytes": 932059,
       "ms": 123
     },
     "crossword": {
@@ -103,10 +103,6 @@
     "cycle": {
       "bytes": 492543,
       "ms": 63
-    },
-    "device": {
-      "bytes": 283647,
-      "ms": 45
     },
     "diary": {
       "bytes": 480255,
@@ -133,8 +129,8 @@
       "ms": 132
     },
     "files": {
-      "bytes": 522628,
-      "ms": 52
+      "bytes": 630522,
+      "ms": 100
     },
     "fitness": {
       "bytes": 623615,
@@ -153,7 +149,7 @@
       "ms": 41
     },
     "gamecenter": {
-      "bytes": 168959,
+      "bytes": 207962,
       "ms": 60
     },
     "garage": {
@@ -177,8 +173,8 @@
       "ms": 66
     },
     "help": {
-      "bytes": 1557101,
-      "ms": 51
+      "bytes": 1874330,
+      "ms": 42
     },
     "hexagon": {
       "bytes": 186367,
@@ -193,16 +189,16 @@
       "ms": 44
     },
     "kanban": {
-      "bytes": 626687,
-      "ms": 51
+      "bytes": 760259,
+      "ms": 120
     },
     "labels": {
       "bytes": 296959,
       "ms": 52
     },
     "layout": {
-      "bytes": 1798687,
-      "ms": 472
+      "bytes": 2172099,
+      "ms": 329
     },
     "library": {
       "bytes": 677887,
@@ -293,7 +289,7 @@
       "ms": 52
     },
     "notes": {
-      "bytes": 584689,
+      "bytes": 708910,
       "ms": 55
     },
     "oracle": {
@@ -348,10 +344,6 @@
       "bytes": 349183,
       "ms": 64
     },
-    "quote": {
-      "bytes": 702189,
-      "ms": 121
-    },
     "radio": {
       "bytes": 312319,
       "ms": 54
@@ -385,24 +377,16 @@
       "ms": 43
     },
     "settings": {
-      "bytes": 481234,
-      "ms": 83
+      "bytes": 594055,
+      "ms": 76
     },
     "shelf": {
       "bytes": 510975,
       "ms": 61
     },
-    "signature": {
-      "bytes": 430079,
-      "ms": 47
-    },
     "simon": {
       "bytes": 153599,
       "ms": 37
-    },
-    "sky": {
-      "bytes": 281599,
-      "ms": 64
     },
     "slider": {
       "bytes": 153599,
@@ -445,8 +429,8 @@
       "ms": 51
     },
     "studio": {
-      "bytes": 1042431,
-      "ms": 135
+      "bytes": 1285288,
+      "ms": 243
     },
     "sudoku": {
       "bytes": 308223,
@@ -460,13 +444,9 @@
       "bytes": 184319,
       "ms": 54
     },
-    "textcase": {
-      "bytes": 239615,
-      "ms": 47
-    },
     "texttools": {
-      "bytes": 357375,
-      "ms": 50
+      "bytes": 439565,
+      "ms": 84
     },
     "tictactoe": {
       "bytes": 207871,
@@ -492,21 +472,13 @@
       "bytes": 614399,
       "ms": 55
     },
-    "trees": {
-      "bytes": 244735,
-      "ms": 80
-    },
     "typewriter": {
       "bytes": 211967,
       "ms": 40
     },
-    "units": {
-      "bytes": 276479,
-      "ms": 54
-    },
     "wallpaper": {
-      "bytes": 275455,
-      "ms": 64
+      "bytes": 338445,
+      "ms": 112
     },
     "water": {
       "bytes": 320511,
@@ -523,10 +495,6 @@
     "whack": {
       "bytes": 158719,
       "ms": 53
-    },
-    "wheel": {
-      "bytes": 225279,
-      "ms": 57
     },
     "wiki": {
       "bytes": 611327,

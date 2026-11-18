@@ -29,6 +29,7 @@ Im selben Fenster lässt `Verschwinden` eine Notiz von selbst verblassen: `In 1 
 Im selben Fenster:
 - `An Aufgaben senden` öffnet [Aufgaben](app:todo) mit der Notiz zum Hinzufügen: Jede offene `[ ]`-Zeile wird eine Aufgabe; eine Notiz ohne Kästchen wird eine Aufgabe (die erste Zeile, der Rest als ihre Notiz). Nichts wird hinzugefügt, bis du dort `Hinzufügen` drückst.
 - `In Notizen kopieren` legt eine neue Seite in [Notizen](app:notes) an, mit der ersten Zeile der Notiz als Titel. Die Haftnotiz bleibt, wie sie ist.
+- `An eine App senden…` an einer Notiz in der App schickt sie als Text, so wie sie geschrieben ist, an jede andere orOS-App, die Text nimmt, etwa [Writer](app:writer), [Mail](app:mail) oder [Kanban](app:kanban).
 
 ## Von überall finden
 - Das Suchfeld im Menü findet deine Haftnotizen über ihre Wörter (verblasste Notizen nicht). Wählst du eine, kommt sie auf dem Desktop nach vorn.

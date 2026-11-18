@@ -50,10 +50,10 @@ test("items and table: caps, junk dropped, nothing usable → null", () => {
 test("the sheet offers installed apps only, never the sender, in ORDER", () => {
   const text = { title: "T", text: "hello\nworld" };
   assert.deepEqual(C.appsFor("text", text, ALL, "notes"),
-    ["todo", "writer", "mail", "kanban", "slides", "wiki", "diary", "mindmap", "prompter", "flashcards", "typing", "assistant", "texttools", "textcase"]);
+    ["todo", "writer", "mail", "kanban", "whiteboard", "slides", "forms", "crm", "wiki", "diary", "mindmap", "prompter", "flashcards", "typing", "qr", "assistant", "texttools"]);
   assert.deepEqual(C.appsFor("text", text, ["writer", "mail", "calculator"], ""), ["writer", "mail"]);
-  assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "diary", "assistant"]);
-  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "diary", "mindmap", "flashcards", "texttools"]);
+  assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "diary", "qr", "assistant"]);
+  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "whiteboard", "slides", "spreadsheet", "base", "forms", "wiki", "diary", "mindmap", "flashcards", "texttools"]);
   assert.deepEqual(C.appsFor("table", { rows: [["a"]] }, ALL, ""), ["writer", "mail", "spreadsheet", "texttools"]);
   assert.deepEqual(C.appsFor("text", { text: "" }, ALL, ""), []);
 });
@@ -76,7 +76,6 @@ test("targets are each app's own deep-link shapes", () => {
   assert.deepEqual(C.target("assistant", "text", text), { ask: text.text });
   assert.deepEqual(C.target("wiki", "text", text), { addArticle: { t: "Plan", x: text.text } });
   assert.deepEqual(C.target("texttools", "text", text), { text: text.text });
-  assert.deepEqual(C.target("textcase", "text", text), { text: text.text });
   assert.equal(C.target("bookmarks", "text", text), null);
   assert.equal(C.target("spreadsheet", "text", text), null);
 
@@ -123,8 +122,8 @@ test("every receiver's app code takes the target it is sent", () => {
     bookmarks: ["bookmarks/bookmarks.js", ["t.add"]],
     wiki: ["wiki/wiki.js", ["target.addArticle", "o.t", "o.x"]],
     spreadsheet: ["spreadsheet/spreadsheet.js", ["tg.newSheet", "p.rows", "p.sum"]],
+    base: ["base/app.js", ["tg.newTable", "nt.rows", "nt.name"]],
     texttools: ["texttools/texttools.js", ["tg.text"]],
-    textcase: ["textcase/textcase.js", ["target.text"]],
     labels: ["labels/labels.js", ["target.text"]],
     slides: ["slides/app.js", ["tg.outline", "tg.title"]],
     mindmap: ["mindmap/mindmap.js", ["t.pasteText", "t.pasteText.text"]],
@@ -137,18 +136,40 @@ test("every receiver's app code takes the target it is sent", () => {
     contacts: ["contacts/contacts.js", ["target.cardText", "ctx.text"]],
     maps: [["maps/maps.js", "maps/tracks.js"], ["target.asNew", "x.query", "pendingTarget"]],
     invoices: ["invoices/invoices.js", ['tg["new"]', "prefillNew"]],
-    diary: ["diary/diary.js", ["target.write", "w.date", "w.text"]]
+    diary: ["diary/diary.js", ["target.write", "w.date", "w.text"]],
+    // files wave (BR-SEND-12)
+    transfer: ["transfer/app.js", ["target.send", "takeSend"]],
+    photolab: ["photolab/app.js", ["target.openFile", "openDiskPath"]],
+    scanpdf: [["scanpdf/scanpdf.js", "scanpdf/core.js"], ["t.paths", "addPaths"]],
+    library: ["library/app.js", ["target.path", "LIB.home.openPath"]],
+    // gap review proposal 5
+    qr: ["qr/qr.js", ["tg.make", "mk.fields", "newDraft"]],
+    whiteboard: ["whiteboard/app.js", ["target.addNotes", "addNotes(target.addNotes.notes)"]],
+    forms: ["forms/app.js", ["tg.draft", "LK.fromDraft"]],
+    crm: ["crm/crm.js", ["x.logNote", "x.logNote.text"]]
+  };
+  // Through the shell: Music and Atelier take a File as a token (BR-FO-4).
+  const viaFile = {
+    music: ["music/music.js", ["tg.playPath", "openFileTarget", "__orosTakeFile"]],
+    atelier: ["atelier/core.js", ["tg.openFile", "takeOpenFile", "__orosTakeFile"]]
   };
   // Calendar and Budget open through the shell's openers (C.via), tested
   // in tests/send-detect.test.js.
   const via = Object.keys(C.RECEIVERS).filter((id) => C.via(id));
-  assert.deepEqual(via.sort(), ["budget", "calendar"]);
+  assert.deepEqual(via.sort(), ["atelier", "budget", "calendar", "music", "wallpaper"]);
+  for (const app of Object.keys(viaFile)) {
+    assert.equal(C.via(app), "file");
+    const s = src(viaFile[app][0]);
+    for (const k of viaFile[app][1]) assert.ok(s.includes(k), app + " reads " + k);
+  }
   assert.deepEqual(Object.keys(need).concat(via).sort(), Object.keys(C.RECEIVERS).sort());
   for (const app of Object.keys(need)) {
     const [file, keys] = need[app];
     const s = [].concat(file).map(src).join("\n");
     assert.match(s, /window\.__orosOpenAt\s*=/, app + " has a live deep-link receiver");
-    assert.match(s, new RegExp("__orosTakeTarget\\(\\s*['\"]" + app + "['\"]"), app + " takes a staged target at boot");
+    const staged = new RegExp("__orosTakeTarget\\(\\s*['\"]" + app + "['\"]").test(s) ||
+      (/__orosTakeTarget\(\s*APP_ID\s*\)/.test(s) && new RegExp("APP_ID\\s*=\\s*['\"]" + app + "['\"]").test(s));
+    assert.ok(staged, app + " takes a staged target at boot");
     for (const k of keys) assert.ok(s.includes(k), app + " reads " + k);
   }
 });
@@ -167,7 +188,7 @@ test("shell and sheet: loaded on demand, no innerHTML from data", () => {
 test("senders: Writer, Notes, Wiki, Mail, Bookmarks, Feeds and the office apps call orosSend", () => {
   for (const f of ["writer/writer.js", "notes/notes.js", "wiki/wiki.js", "mail/mail.js", "bookmarks/bookmarks.js", "feeds/feeds.js",
     "spreadsheet/spreadsheet.js", "slides/editor.js", "mindmap/mindmap.js", "kanban/kanban.js",
-    "pixel/pixel.js", "photolab/io.js", "atelier/io.js"]) {
+    "pixel/pixel.js", "photolab/io.js", "atelier/io.js", "studio/studio.js", "capture/app.js", "layout/io.js"]) {
     assert.match(src(f), /orosSend/, f);
   }
 });
@@ -191,8 +212,113 @@ test("Flashcards takes text, lists, articles and two-column tables (Flashcards w
 
 test("Layout takes one picture from the disk (wave 5)", () => {
   const one = { items: [{ path: "/internal/Pictures/cat.png", name: "cat.png" }] };
-  assert.deepEqual(C.appsFor("files", one, ALL, ""), ["mail", "layout"]);
+  assert.deepEqual(C.appsFor("files", one, ALL, ""), ["mail", "transfer", "photolab", "scanpdf", "layout", "atelier", "wallpaper"]);
   assert.deepEqual(C.target("layout", "files", one), { placeImage: { path: "/internal/Pictures/cat.png", name: "cat.png" } });
   assert.equal(C.target("layout", "files", { items: [{ path: "/internal/Docs/a.pdf", name: "a.pdf" }] }), null);
   assert.equal(C.target("layout", "files", { items: [one.items[0], { path: "/internal/Pictures/b.jpg", name: "b.jpg" }] }), null);
+});
+
+test("files wave: Transfer, Photo Lab, Scan & PDF, Music, Library, Atelier, Wallpaper (BR-SEND-12)", () => {
+  const f = (p) => ({ path: p, name: p.replace(/^.*\//, "") });
+  const pdf = { items: [f("/internal/Layout/PDF/Book.pdf")] };
+  assert.deepEqual(C.appsFor("files", pdf, ALL, "layout"), ["mail", "transfer", "scanpdf", "library"]);
+  assert.deepEqual(C.target("scanpdf", "files", pdf), { paths: ["/internal/Layout/PDF/Book.pdf"] });
+  assert.deepEqual(C.target("library", "files", pdf), { path: "/internal/Layout/PDF/Book.pdf" });
+  // Transfer takes any files (up to the kind's 10), Scan & PDF only when all are PDFs or pictures.
+  const mixed = { items: [f("/internal/Docs/a.zip"), f("/internal/Pictures/b.png")] };
+  assert.deepEqual(C.appsFor("files", mixed, ALL, ""), ["mail", "transfer"]);
+  assert.deepEqual(C.target("transfer", "files", mixed), { send: ["/internal/Docs/a.zip", "/internal/Pictures/b.png"] });
+  const many = { items: Array.from({ length: 14 }, (_, i) => f("/internal/Pictures/p" + i + ".jpg")) };
+  assert.equal(C.target("transfer", "files", many).send.length, 10);
+  assert.equal(C.target("scanpdf", "files", many).paths.length, 10);
+  assert.equal(C.target("photolab", "files", many), null);
+  // Photo Lab reads the disk itself; a video is not a picture.
+  assert.deepEqual(C.target("photolab", "files", { items: [f("/internal/Pictures/x.psd")] }), { openFile: "/internal/Pictures/x.psd" });
+  assert.equal(C.target("photolab", "files", { items: [f("/internal/Videos/x.webm")] }), null);
+  assert.deepEqual(C.appsFor("files", { items: [f("/internal/Videos/Capture.webm")] }, ALL, "capture"), ["mail", "transfer"]);
+  // Music: a song in the music folder plays by path, any other one is handed over.
+  assert.deepEqual(C.target("music", "files", { items: [f("/internal/Music/Mix.mp3")] }), { playPath: "/internal/Music/Mix.mp3" });
+  assert.deepEqual(C.target("music", "files", { items: [f("/internal/Downloads/a.flac")] }),
+    { openFile: { path: "/internal/Downloads/a.flac", name: "a.flac", max: 500 * 1024 * 1024 } });
+  assert.equal(C.target("music", "files", { items: [f("/internal/Music/a.mp3"), f("/internal/Music/b.mp3")] }), null);
+  assert.deepEqual(C.appsFor("files", { items: [f("/internal/Music/Mix.wav")] }, ALL, "studio"), ["mail", "transfer", "music"]);
+  // Atelier: pictures, .pptx and designs; Wallpaper: a picture, after the sheet asks.
+  assert.deepEqual(C.target("atelier", "files", { items: [f("/internal/Docs/Talk.pptx")] }),
+    { openFile: { path: "/internal/Docs/Talk.pptx", name: "Talk.pptx", max: 50 * 1024 * 1024 } });
+  assert.deepEqual(C.target("wallpaper", "files", { items: [f("/internal/Pictures/sea.jpg")] }),
+    { picture: { path: "/internal/Pictures/sea.jpg", name: "sea.jpg", max: 20 * 1024 * 1024 } });
+  assert.equal(C.target("wallpaper", "files", { items: [f("/internal/Pictures/a.svg")] }), null);
+  // Paths stay on the orOS disk (BR-SEND-2 diskPath).
+  assert.equal(C.norm("files", { items: [{ path: "/internal/../etc/x.png" }] }), null);
+});
+
+test("files wave: the shell hands disk files over and asks before a wallpaper", () => {
+  const shell = src("shell.js"), sheet = src("send/sheet.js");
+  assert.match(shell, /file: sendFileHand/);
+  assert.match(shell, /wallpaper: sendWallpaper/);
+  assert.match(shell, /orosFileOpen\.hand\(file\)/);
+  assert.match(shell, /orosWallpaper\.setImage\(/);
+  assert.match(sheet, /via === "wallpaper"\) askWallpaper/);
+  assert.match(sheet, /wallYes/);
+  // Senders: Studio's export dialog, Capture's two result views, Layout's export dialog.
+  assert.match(src("studio/index.html"), /id="export-send"/);
+  assert.match(src("capture/index.html"), /id="b-send"/);
+  assert.match(src("capture/index.html"), /id="b-rsend"/);
+  assert.match(src("layout/panels.js"), /exp-send/);
+  assert.match(src("layout/io.js"), /\/internal\/Layout\/PDF/);
+});
+
+test("data apps send to an app (gap review proposal 4)", () => {
+  // Each sender asks for parent.orosSend and shows its entry only inside orOS.
+  for (const f of ["todo/todo.js", "calendar/calendar.js", "contacts/contacts.js", "diary/diary.js", "crm/crm.js",
+    "invoices/invoices.js", "quote/view.js", "base/app.js", "forms/app.js", "library/app.js", "meals/meals.js",
+    "travel/travel.js", "stickies/stickies.js"]) {
+    assert.match(src(f), /parent\.orosSend/, f);
+    assert.match(src(f), /\{ kind: "(text|items|table)", data: /, f);
+  }
+  assert.match(src("todo/index.html"), /id="list-send" hidden/);
+  assert.match(src("todo/index.html"), /id="f-send" hidden/);
+  assert.match(src("calendar/index.html"), /id="ev-send"[^>]*hidden/);
+  assert.match(src("diary/index.html"), /id="send-btn"[^>]*hidden/);
+  assert.match(src("meals/index.html"), /id="sh-send" hidden/);
+  assert.match(src("quote/view.js"), /qv-send-app/);
+  assert.match(src("library/reader.js"), /LIB\.sendQuote\(/);
+  assert.match(src("library/home.js"), /export\.sendApp/);
+  assert.match(src("base/app.js"), /sendView\("table"\)/);
+  assert.match(src("base/app.js"), /sendView\("items"\)/);
+  assert.match(src("travel/travel.js"), /sendPlan\(id\)/);
+  // Passwords stays out.
+  for (const f of fs.readdirSync(path.join(ROOT, "passwords")).filter((x) => /\.js$/.test(x))) assert.doesNotMatch(src("passwords/" + f), /orosSend/, f);
+  // What they send is a valid item of its kind.
+  assert.ok(C.norm("table", { name: "Invoice 12", rows: [["Description", "Qty", "Unit price", "Net"], ["Design", 2, 40.5, 81], ["Total", "", "", 100.44]] }));
+  assert.ok(C.norm("items", { title: "Groceries", items: [{ text: "2 eggs", note: "From: Omelette" }, { text: "milk" }] }));
+  assert.deepEqual(C.target("todo", "text", { title: "Shop", text: "[ ] eggs\n[x] milk\nbread" }).addItems.items.map((i) => i.text), ["eggs", "milk", "bread"]);
+});
+
+test("new receivers: QR, Whiteboard, Forms, CRM, Base lists (gap review proposal 5)", () => {
+  // QR: a link → URL code, a text → Text code (the QR app's 2000 limit).
+  assert.deepEqual(C.target("qr", "link", { url: "https://a.b/c", title: "A" }), { make: { type: "url", fields: { url: "https://a.b/c" } } });
+  assert.deepEqual(C.target("qr", "text", { title: "Wi", text: "Hello" }), { make: { type: "text", fields: { text: "Hello" } } });
+  assert.equal(C.target("qr", "text", { text: "x".repeat(2001) }), null);
+  assert.equal(C.target("qr", "items", { items: ["a"] }), null);
+  // Whiteboard: one sticky note per item (text + note) or line, ≤ 50.
+  assert.deepEqual(C.target("whiteboard", "items", { title: "L", items: [{ text: "Idea", note: "why" }, "Two"] }),
+    { addNotes: { notes: [{ tx: "Idea\nwhy" }, { tx: "Two" }] } });
+  assert.deepEqual(C.target("whiteboard", "text", { text: "- one\n- two" }).addNotes.notes, [{ tx: "one" }, { tx: "two" }]);
+  const many = { items: Array.from({ length: 120 }, (_, i) => "q" + i) };
+  assert.equal(C.target("whiteboard", "items", many).addNotes.notes.length, 50);
+  // Forms: one question per item, ≤ 100 (links.js MAX_DRAFT), the Assistant's draft.
+  assert.deepEqual(C.target("forms", "items", { title: "Sign-up", items: ["Name", { text: "E-mail", note: "x" }] }),
+    { draft: { title: "Sign-up", questions: [{ label: "Name" }, { label: "E-mail" }] } });
+  assert.equal(C.target("forms", "items", many).draft.questions.length, 100);
+  assert.equal(require(path.join(ROOT, "forms/links.js")).MAX_DRAFT, 100);
+  // CRM: a text → a Note in the history window; the title goes first.
+  assert.deepEqual(C.target("crm", "text", { title: "Call notes", text: "Wants a quote" }), { logNote: { text: "Call notes\nWants a quote" } });
+  assert.deepEqual(C.target("crm", "text", { title: "Acme", text: "Acme\nCompany" }), { logNote: { text: "Acme\nCompany" } });
+  assert.equal(C.target("crm", "text", { text: "x".repeat(3000) }).logNote.text.length, 2000);
+  // Base: a list becomes a table for "Add as a table", column names in the person's language.
+  assert.deepEqual(C.target("base", "items", { title: "Books", items: [{ text: "Odyssey", note: "Homer" }, "Iliad"] }, "", "el"),
+    { newTable: { name: "Books", rows: [["Όνομα", "Σημειώσεις"], ["Odyssey", "Homer"], ["Iliad", ""]] } });
+  assert.deepEqual(C.target("base", "items", { title: "B", items: ["a"] }), { newTable: { name: "B", rows: [["Name"], ["a"]] } });
+  assert.match(src("send/sheet.js"), /C\.target\(id, kind, d, env\.from, window\.orosLang\)/);
 });

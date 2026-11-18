@@ -241,11 +241,12 @@
       frow.appendChild(fname);
       body.appendChild(frow);
       var meta = { title: pre ? String(pre.name || "") : "", subtitle: "", author: "", isbn: "", year: "", editor: "", publisher: "" }, inputs = {};
-      var pubs = pubTitles();
+      var pubs = pubTitles(), pubId = "";
       if (pubs.length) {
         body.appendChild(LY.ui.field(t("au.pub"), LY.ui.select([["", t("au.pubNone")]].concat(pubs.map(function (x) { return [x.id, x.title]; })), "", function (v) {
           var x = pubs.filter(function (y) { return y.id === v; })[0];
           Object.keys(meta).forEach(function (k) { if (x && x[k] !== undefined) { meta[k] = x[k]; inputs[k].value = meta[k]; } });
+          pubId = x ? x.id : "";
         })));
       }
       Object.keys(meta).forEach(function (k) {
@@ -263,7 +264,7 @@
       var go = LY.ui.btn(t("au.go"), function () {
         var house = houses.filter(function (d) { return d.id === cur; })[0];
         close();
-        build(house, file, meta, keepFront, null, "", { sheet: pre ? pre.sheet : null });
+        build(house, file, Object.assign({ pub: pubId }, meta), keepFront, null, "", { sheet: pre ? pre.sheet : null });
       }, "primary");
       go.disabled = true;
       act.appendChild(go);
@@ -286,6 +287,11 @@
       });
       if (!res) { fail(); return; }
       if (ask && ask.missed) res.report.pictures = (res.report.pictures || 0) + ask.missed;
+      // the Publishing title it came from (LY-OUT: each edition's ISBN)
+      if (typeof meta.pub === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(meta.pub)) {
+        res.doc.setup.ext = res.doc.setup.ext || {};
+        res.doc.setup.ext.pub = meta.pub;
+      }
       LY.addDoc(res.doc);
       autoReport(res.report, chat);
       if (done) done(res.report);
@@ -711,6 +717,7 @@
     ["title", "subtitle", "author", "isbn", "year", "publisher"].forEach(function (k) { if (typeof given[k] === "string" && given[k].trim()) meta[k] = given[k].trim().slice(0, 200); });
     var pub = meta.title ? pubTitles().filter(function (x) { return x.title.trim().toLocaleLowerCase() === meta.title.toLocaleLowerCase(); })[0] : null;
     if (pub) ["subtitle", "author", "isbn", "year"].forEach(function (k) { if (!meta[k] && pub[k]) meta[k] = pub[k]; });
+    if (pub) meta.pub = pub.id;   // the title it belongs to (LY-OUT)
     // the book's questions (LY-IN): the Assistant's answers over the
     // series'; "All the questions…" shows them first
     var ask = I ? { sheet: overSheet(I.defaults(house), rq.sheet), quiet: rq.all !== 1, files: Array.isArray(photos) ? photos : [], missed: missed > 0 ? missed : 0 } : null;

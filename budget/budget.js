@@ -188,7 +188,7 @@
       "ar.title": "Areas", "ar.hint": "An area is a part of your life or work that entries belong to: publishing, a second job, personal. Its words put a bank line in it when you import a statement (for example: viva, stripe, box now; the longest word found wins). A line that no word fits waits under Without an area in Entries for you to pick one; what you pick stays.",
       "ar.name": "Name", "ar.words": "Words in the bank's text", "ar.words.ph": "viva, stripe, box now", "ar.add": "New area", "ar.del": "Delete area",
       "ar.saved": "Areas saved", "ar.full": "Up to 12 areas", "ar.keep": "Entries of a deleted area stay, without an area.",
-      "ar.iv": "Invoices series whose payments come here", "ar.kind.inv": "invoices", "ar.kind.rcpt": "receipts",
+      "ar.iv": "Billing series whose payments come here", "ar.kind.inv": "invoices", "ar.kind.rcpt": "receipts",
       "ar.ps": "Personal (not part of the business result)",
       "av.all": "All areas", "av.label": "Area to show", "lim.areaTotal": "All expenses of {a}",
       "ar.sh": "Shared costs (costs of all your work together)", "ar.pc": "Share of the shared costs (%)",
@@ -350,7 +350,7 @@
       "ar.title": "Τομείς", "ar.hint": "Τομέας είναι ένα κομμάτι της ζωής ή της δουλειάς σου στο οποίο ανήκουν κινήσεις: εκδόσεις, μια δεύτερη δουλειά, προσωπικά. Οι λέξεις του βάζουν μια γραμμή της τράπεζας σε αυτόν όταν φέρνεις κίνηση (για παράδειγμα: viva, stripe, box now· κερδίζει η μεγαλύτερη λέξη που βρέθηκε). Μια γραμμή που δεν ταιριάζει σε καμία λέξη περιμένει στο «Χωρίς τομέα» στις Κινήσεις να διαλέξεις εσύ· ό,τι διαλέξεις μένει.",
       "ar.name": "Όνομα", "ar.words": "Λέξεις στο κείμενο της τράπεζας", "ar.words.ph": "viva, stripe, box now, τυπογραφείο", "ar.add": "Νέος τομέας", "ar.del": "Διαγραφή τομέα",
       "ar.saved": "Οι τομείς αποθηκεύτηκαν", "ar.full": "Έως 12 τομείς", "ar.keep": "Οι κινήσεις ενός τομέα που διαγράφεται μένουν, χωρίς τομέα.",
-      "ar.iv": "Σειρές του Invoices που οι πληρωμές τους έρχονται εδώ", "ar.kind.inv": "τιμολόγια", "ar.kind.rcpt": "αποδείξεις",
+      "ar.iv": "Σειρές της Τιμολόγησης που οι πληρωμές τους έρχονται εδώ", "ar.kind.inv": "τιμολόγια", "ar.kind.rcpt": "αποδείξεις",
       "ar.ps": "Προσωπικός τομέας (έξω από το αποτέλεσμα της επιχείρησης)",
       "av.all": "Όλοι οι τομείς", "av.label": "Τομέας που βλέπεις", "lim.areaTotal": "Όλα τα έξοδα: {a}",
       "ar.sh": "Κοινά έξοδα (έξοδα για όλες τις δουλειές σου μαζί)", "ar.pc": "Μερίδιο από τα κοινά έξοδα (%)",
@@ -765,6 +765,7 @@
   var MK_RE = /^\d{4}-(0[1-9]|1[0-2])$/;
   var OV_SET_RE = /^-?[a-z]{2,8}(,-?[a-z]{2,8}){0,15}$/;
   var PL_SET_RE = /^[a-z0-9]{8,24}( [a-z0-9]{8,24}){0,4}$/;
+  var BAT_RE = /^([01]\d|2[0-3]):[0-5]\d( ([01]\d|2[0-3]):[0-5]\d){0,3}$/;
   function normSet(x) {
     if (!x || typeof x !== "object" || !okStamp(x.m)) return null;
     var y = Object.assign({}, x);
@@ -779,6 +780,10 @@
     if (!(typeof y.plco === "string" && ID_RE.test(y.plco))) delete y.plco;
     // PL-2: pld = the area new shop entries get
     if (!(typeof y.pld === "string" && ID_RE.test(y.pld))) delete y.pld;
+    // BK-AT: bat = the times banks update by themselves ("08:00 20:00",
+    // 1 to 4, sorted; none = every 6 hours on open), bam = when they were saved
+    if (!(typeof y.bat === "string" && BAT_RE.test(y.bat))) delete y.bat;
+    if (!(isInt(y.bam) && y.bam > 0 && y.bam < 1e14)) delete y.bam;
     return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, y);
   }
 
@@ -2745,6 +2750,8 @@
       if (offer) localToast(t("learn.ask"), null, offer);
     });
     dlg.appendChild(form);
+    // Files › Documents linked to this entry (DOCS-1 W4, read-only)
+    if (x && window.OrosDocsLinks) window.OrosDocsLinks.attach(form, "budget", function (r) { return r && r.tx === x.id; });
     document.body.appendChild(dlg);
     dlg.showModal();
     if (!x) (pre ? ok : amt).focus();
@@ -3747,6 +3754,15 @@
       });
     } finally { autoBusy = false; }
   }
+  // BK-AT: the times banks update by themselves ("" = every 6 hours on
+  // open); synced in set, like the currency.
+  function saveBankTimes(bat) {
+    if ((data.set.bat || "") === bat) return;
+    data.set.m = stamp(data.set.m);   // in place: keeps a newer version's fields
+    if (bat) data.set.bat = bat; else delete data.set.bat;
+    data.set.bam = Date.now();
+    commit();
+  }
   function initBankLive() {
     if (!BANKLIVE) return;
     BANKLIVE.init({
@@ -3754,7 +3770,7 @@
       showDialog: function (dlg) { document.body.appendChild(dlg); dlg.showModal(); },
       accSelect: accSelect, data: function () { return data; }, cur: cur, dateShort: dateShort,
       pickFile: pickFile, showToast: showToast, addEntries: addEntries, renderAll: renderAll,
-      newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk,
+      newId: newId, saveBnk: saveBnk, patchBnk: patchBnk, dropBnk: dropBnk, saveTimes: saveBankTimes,
       accBalAt: accBalAt, accCur: accCurOf, correct: correctBal, money: money,
       parseAmount: parseAmount, centsToInput: function (c) { return centsToInput(c, LANG); }
     });

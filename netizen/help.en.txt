@@ -37,6 +37,31 @@ Keep up to 20 cards, for example one for work and one for gaming. Choose a card 
 
 >! The share link carries everything shown on the card, so anyone who has it can read it. Hidden fields stay out, and nothing is sent to a server.
 
+## Link-in-bio page
+Each card can also be a page with all your links, for the link in your social media bio. Press `Page` in the toolbar to switch between the card and its page; on a phone, `Edit` and `Preview` switch between the settings and the page. Press `Page` again to go back to the card.
+
+The page is made from the card: avatar, name, username, pronouns, location, motto, bio, tags, the card's links and your website. Under `On the page`, untick what the page should leave out. Anything hidden on the card stays off the page too. Email and phone start unticked, because the page is public.
+
+### Page links and headings
+`Add link` adds a link that is only on the page, after the card's links, with an optional icon (an emoji or a letter). The star makes a link stand out: bigger, and always filled. `Add heading` adds a heading between links, for example "Books" or "Music". Move them up or down, or remove them.
+
+Only web addresses, email (`mailto:`) and phone (`tel:`) links go on the page. An address without `https://` gets it added; anything else is left out.
+
+### Look
+Pick one of eight styles: the five card styles and `Dark`, `Gradient` and `Minimal`. `Button colour` changes the colour of the buttons, and `Style colour` puts the style's own colour back. Buttons can be `Rounded`, `Square` or `Outline`. The text on a button is always black or white, whichever reads better.
+
+### Publish your page
+`Export` › `Page · HTML (index.html)` saves the page as one file. It has no code, no trackers and loads nothing from anywhere else, so it works on any host and never counts visitors. Upload it to a free host, for example:
+- [Neocities](https://neocities.org): sign up, open `Edit site`, upload `index.html` in place of the one that is there. Your page is at `https://your-name.neocities.org`.
+- [GitHub Pages](https://pages.github.com) or [Codeberg Pages](https://codeberg.page): put `index.html` in a repository and turn Pages on.
+- Your own site: upload `index.html` to a folder, for example `/links/`.
+
+Then type the address under `Publishing` › `Page address`. The QR code and search engines use it. `Page title` replaces the title shown in the browser tab and in link previews. `Save contact button` adds a button that saves you as a contact, with only what the page shows. After every change, export again and upload the new file.
+
+`Share link` gives a link that carries the page itself, with no server and no expiry. It is long, and it changes when you change the page. `Export` also offers the page's QR code as `QR code · PNG` or `QR code · SVG`: it opens the page address, or the share link when there is no address yet.
+
+>! The page is public: anyone who has its address or link sees everything it shows. The `orOS` style takes its colours from your orOS colours when you export.
+
 ## Sync and backup
 Your cards sync between your devices through [orOS sync](help:t/sync). The card that's open, the phone tab and the side shown stay on each device. The exports above are your copies outside orOS; there's no import, but the orOS [backup](help:t/backup) includes your cards.
 
@@ -46,5 +71,5 @@ Your cards sync between your devices through [orOS sync](help:t/sync). The card 
 - Try `New face` a few times until you like one, then fine-tune it pixel by pixel.
 
 ## Limits
-- Up to 20 cards, 8 links and 12 tags per card. The bio is up to 280 characters and the motto up to 100.
+- Up to 20 cards, 8 links and 12 tags per card. A page adds up to 16 links and 8 headings. The bio is up to 280 characters and the motto up to 100.
 - `Copy card image` doesn't work in every browser.

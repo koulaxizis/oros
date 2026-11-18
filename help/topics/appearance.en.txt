@@ -13,6 +13,17 @@ The button at the right end of the top bar (the network and power symbols) opens
 
 On a narrow screen, when the top bar is full, the language button moves into Quick settings.
 
+## Night Light
+Night Light makes the screen warmer in the evening, with less blue light, which is easier on the eyes and on sleep. Turn it on in `Settings`, under `Appearance`, with `Warm screen at night`, then choose `When`:
+
+- `Sunset to sunrise`: from this evening's sunset to the next sunrise where you are. orOS works the times out itself, without the internet, from the place of the top-bar weather (the first city of the [Weather](app:weather) app). Without a city it runs from 20:00 to 07:00.
+- `Set hours`: from and to the hours you pick, in half hours.
+- `Always`: warm all the time.
+
+`Warmth` sets how warm it gets. The screen turns warm slowly, over 20 minutes, and goes back the same way. In Quick settings, the `Night Light` button turns it on now (until the next morning or the end of your hours) or off until the next evening; its arrow opens the settings. It is set on this device only.
+
+On orOS USB the computer changes the screen's own colours, so the Internet window and Tor Browser turn warm too. In a browser or orOS Portable, orOS tints its own window: a video in full screen inside an app shows its own colours.
+
 ## Desktop widgets
 Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a month; tap a day to open it in the Calendar), `Today` (what is late and what is due today, from the [Today](app:today) summary; tap a line to open it), `Weather` (the place of the top-bar weather), `Playing` (Play / Pause for music, podcasts, radio or the Sound Mixer) and `Sync` (its state and Sync now).
 
@@ -26,6 +37,29 @@ When you start orOS for the first time, a `First steps` card waits on the deskto
 
 On a computer, First steps also has `Use orOS on your phone too`. It adds an `On your phone` card with a QR code: scan it with the phone's camera to open orOS there. The code holds only the address of orOS (this site, or useoros.online when orOS runs from a local copy), never your data. To see the same things on both, turn on sync on each device with the same passphrase. The card can be removed like any widget.
 
+## Smart top bar
+The top bar can show a few live items next to the clock. Tick them in `Settings`, under `Appearance`, in `Top bar`, and set their order with the arrows. None is on at first, and your choice stays on this device.
+- `Next event`: the next timed item of today from [Today](app:today) (your Calendar events and the other apps that give Today a time). From an hour before, it counts down ("in 20 min"); while it runs it says `Now`. Tap it to open the event.
+- `Focus timer`: the minutes left of the Pomodoro running in [Time](app:time), focus or break.
+- `Tasks for today`: how many tasks are late or due today.
+- `Water today`: what you drank against your goal in [Water](app:water).
+- `Spent this month`: this month's expenses in [Budget](app:budget).
+- `Till sales today`: today's sales at the till in [Stock](app:stock).
+- `Habits left today`, `Plants to look after`, `Chores for today` and `Kanban cards due`: how many are for today or late in [Habits](app:habits), [Plant Care](app:plants), [Chore Wheel](app:chores) and [Kanban](app:kanban).
+- `Timesheet timer`: the time on the [Timesheet](app:timesheet) timer while it runs, and its project.
+- `Overdue invoices`: how many invoices and bills in [Billing](app:invoices) are past their day and unpaid.
+- `Next trip`: in how many days your next trip in [Travel](app:travel) starts (up to a month ahead).
+- `Today's meals`: today's meals from your plan in [Meal Planner](app:meals).
+- `The book you are reading`: the book open in [Library](app:library) and how far you are.
+
+Each item shows only when it has something to say, and a tap opens its app. On a phone they all sit behind one button with a small stack of cards and their number: tap it and they unfold under the bar, each with its full text. On a wider screen they stay in the bar; when it is full, the last ones move into the same button (it then reads `+2` and so on). Tap an item in the list to open its app; `Esc` or a tap elsewhere folds it again. While `Sensitive work` is on, the money items (and overdue invoices), meals, the book and the names of events and trips are hidden. Events of apps kept out of search (Health, Cycle, One-Sentence Diary and the like) never appear in the bar.
+
+The same figures can start a rule in [Automations](app:automations): a few minutes before an event (for example, pause the music), or when the till sales or the month's spending reach an amount (a chime and a notice).
+
+Under `Look of the bar` you can float the bar as a rounded strip: `Glass` lets the colours behind it through, `Midnight` stays dark even in a light theme, `Solid` follows your theme. `Classic` is the bar as it always was. High contrast always keeps the classic bar.
+
+On Windows, with orOS installed, the tray icon's menu has `Smart bar on the desktop`: the same bar, with your chips and look, stays at the top of the screen even when the orOS window is closed, and a tap opens that app in orOS.
+
 ## Greeting at the start
 The first time you start orOS each day, a short greeting appears over the desktop: good morning, afternoon or evening (with your name, if you set one under `Your name`), the date and, when [Today](app:today) has something, how many things are due and late. Tap that line to open Today. The greeting goes by itself after a few seconds, or when you tap anywhere, press a key or open an app. It never shows over an app or on your very first day. Turn it off in `Settings`, under `Appearance`, with `Greet me when orOS starts`; this stays on this device.
 
@@ -33,7 +67,7 @@ The first time you start orOS each day, a short greeting appears over the deskto
 If you are new to orOS, the first time you open each app a short tip from its guide appears: at the bottom of the screen on a computer, under the top bar on a phone. `More in Help` opens that app's full guide, `×` closes it, and it also goes once you start using the app. Each app shows its tip once. `Show a tip the first time I open an app`, in `Settings` under `Appearance`, turns the tips on or off; turning them on again shows every app's tip again. This stays on this device. Games have their own first-game tours instead.
 
 ### An example in an empty app
-When To-Do, Kanban, Bookmarks, Invoices, Contacts, Budget, Notes or Meal Planner has nothing in it yet, its empty screen also has `Show me an example`. It shows a few made-up items, so you can see what the app looks like in use. The example is only a picture: nothing is saved, nothing syncs and your data is not touched. `Start my own` closes it and starts your first item; `Close` just closes it.
+When To-Do, Kanban, Bookmarks, Billing, Contacts, Budget, Notes or Meal Planner has nothing in it yet, its empty screen also has `Show me an example`. It shows a few made-up items, so you can see what the app looks like in use. The example is only a picture: nothing is saved, nothing syncs and your data is not touched. `Start my own` closes it and starts your first item; `Close` just closes it.
 
 To-Do and Kanban also offer a few ready lists under `Or start from a template:`. In To-Do, `Packing list` or `Moving house` makes a new list with its tasks already in it; in Kanban, `Trip`, `Moving house` or `Personal` makes a board with its columns and a few cards. These are real items you can change or delete, and `Undo` takes them back.
 
@@ -71,14 +105,18 @@ The first tile, `Mine`, is a wallpaper you make yourself.
 Each device draws your wallpaper to fit its own screen, so it stays sharp on a phone and on a big monitor.
 
 ### Icon packs
-Settings › Appearance › `Icons` changes how app icons look on the desktop, in the Dock, the menu and search. `Classic` is the orOS look. `Colourful` gives every menu category its own colour, `Colour mix` gives the icons different colours from each other (on the desktop and in the Dock they follow their place, so neighbours always differ), `Rainbow` puts each icon on a dark tile with a rainbow rim and a glyph in a bright colour that runs through the spectrum, `Glass` makes see-through frosted tiles, `Thin` drops the tiles for a fine line, `Paper` puts a dark ink icon on a cream card, and `Round` uses circles in your system colour. The pack you pick is the same on all your devices. High contrast always shows `Classic`.
+Settings › Appearance › `Icons` changes how app icons look on the desktop, in the Dock, the menu and search. `Classic` is the orOS look. `Colourful` gives every menu category its own colour, `Colour mix` gives the icons different colours from each other (on the desktop and in the Dock they follow their place, so neighbours always differ), `Rainbow` puts each icon on a dark tile with a rainbow rim and a glyph in a bright colour that runs through the spectrum, `Glass` makes see-through frosted tiles, `Thin` drops the tiles for a fine line, `Paper` puts a dark ink icon on a cream card, and `Round` uses circles in your system colour. The pack you pick is the same on all your devices. High contrast always shows `Classic`. `Mix your own` lets you build your own pack: pick a `Shape` (`Square`, `Rounded` or `Circle`), a `Fill` (`Accent`, `Colour mix`, `By category`, `Dark`, `Light` or `Outline`) and the `Lines` of the glyph (`Thin`, `Normal` or `Bold`); its preview shows your mix.
 
 ### Living land
 `Living land` (the second tile) draws a small landscape around what is on your desktop: your shortcuts, widgets and sticky notes stand on islands, and the gaps between them become water. Add or remove a shortcut, move a sticky note or change your widgets, and the land re-forms and fades in. Its colours follow your skin and your light or dark theme.
 - Under the wallpapers, `Style` picks `Islands` (mostly water), `Hills` (meadows rising to terraces, with a winding river) or `Garden` (a lawn with flowers, hedges and ponds), and `New shape` draws another land. Your choice and its shape follow you to your other devices; every device draws the land for its own screen.
 - The land is still: it only changes when your desktop does, so it costs no battery while you work. With reduced motion it changes without fading.
 - `Gentle motion` (off at first) adds glints on the water and a drifting cloud shadow. It stops while an app is open, with reduced motion, on a low battery (under 20 % and not charging) and on a device too slow for it.
+- `Light of the day` (on at first) colours the land with the time on this device: a deep blue at night, rose at dawn, clear by day and golden in the evening, changing slowly through the day. It is drawn once over the land and costs no battery.
 - High contrast shows the plain desktop instead.
+
+### Weather on the desktop
+Settings › Wallpaper › `Weather on the desktop` (off at first, on this device only) shows the weather over any wallpaper: sun or stars when it is clear, a few clouds, overcast, fog, gentle rain, snow, or a storm with heavier rain under darker clouds (never a flash). It follows the weather of your [Weather](app:weather) city, the same as the top bar. With no weather yet, or weather older than three hours, nothing shows. It stops while an app is open, and stays still with reduced motion, on a low battery (under 20 % and not charging) and on a device too slow for it. High contrast hides it.
 
 ## Seasonal decorations
 At some times of the year your desktop dresses up on its own: snow, a string of lights and a tree at Christmas, gold sparkles and a pomegranate at New Year (with fireworks from 23:55 to 00:10 on New Year's Eve), pumpkins, bats and a spider's web at Halloween.

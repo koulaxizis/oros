@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Kanban — sync model (v1.0.0): canonical form + merge
+// orOS Kanban — sync model (v1.1.0): canonical form + merge
 // Pure: no DOM, no storage. Loaded by kanban/index.html before
 // kanban.js (window.OrosKanbanModel) and by tests/kanban-*.test.js
 // (module.exports).
@@ -9,6 +9,7 @@
 // written:
 //   t text · n notes · d due · l labels · s subtasks · x extra info
 //   p column (placement) · a attachments · c cover · k lane
+//   g plan (Gantt, wave G1): start, ms (milestone), deps
 // Subtasks and attachments merge per item (`m` stamp on the item,
 // deletions as board tombstones "<cardId>/<itemId>").
 // A card whose fm is missing or whose fm.m differs from its mtime was
@@ -20,7 +21,14 @@
 //   · ver stays 5; the card/column/label/board key order is the old
 //     canonOrder (old known keys, then unknown keys sorted), so an
 //     older device re-canonicalises our data to the same bytes;
-//   · new card keys (att, cover, fm, lane) appear only when set;
+//   · new card keys (att, cover, fm, lane, start, ms, deps) appear only
+//     when set;
+//   · the plan group g is newer than the other stamps: a version that
+//     does not know it keeps start/ms/deps (unknown card keys ride on
+//     the whole card) but rebuilds fm without g in a mixed merge. A
+//     valid fm without g counts g at the due stamp d (a Gantt move
+//     stamps both), and our mixed result (mtime + 1) wins every tie
+//     on the older device, so the fleet converges (tests/kanban-gantt).
 //   · nothing new lives on the board or the root (old merges drop
 //     unknown keys there): WIP limits and arrival rules live on the
 //     column, the overdue rule on its label (label.auto), templates
@@ -33,11 +41,13 @@
 
   var DATA_VER = 5;
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
-  var GROUPS = ["a", "c", "d", "k", "l", "n", "p", "s", "t", "x"];
+  var GROUPS = ["a", "c", "d", "g", "k", "l", "n", "p", "s", "t", "x"];
   // group → card field (p is the placement, outside the card object)
   var FIELD = { a: "att", c: "cover", d: "due", k: "lane", l: "labels",
                 n: "notes", s: "subtasks", t: "text", x: "info" };
   var LIST_GROUPS = { s: true, a: true };
+  var PLAN_KEYS = ["start", "ms", "deps"];          // group g
+  var YMD = /^\d{4}-\d{2}-\d{2}$/;
 
   function clone(x) { return x === undefined ? undefined : JSON.parse(JSON.stringify(x)); }
   function isTpl(b) { return !!b && typeof b.id === "string" && b.id.indexOf("tpl-") === 0; }
@@ -48,10 +58,33 @@
               typeof card.fm.m === "number" && card.fm.m === (card.mtime || 0));
   }
   function eff(card, g) {
-    if (fmValid(card)) { var v = card.fm[g]; return typeof v === "number" ? v : 0; }
+    if (fmValid(card)) {
+      var v = card.fm[g];
+      if (typeof v === "number") return v;
+      if (g === "g" && typeof card.fm.d === "number") return card.fm.d;   // fm from an older version
+      return 0;
+    }
     return card.mtime || 0;
   }
+  // The plan fields as one value: only the keys that are set.
+  function planOf(card) {
+    var o = {};
+    if (typeof card.start === "string" && YMD.test(card.start)) o.start = card.start;
+    if (card.ms === 1 || card.ms === true) o.ms = 1;
+    var d = cleanDeps(card.deps, card.id);
+    if (d.length) o.deps = d;
+    return o;
+  }
+  function cleanDeps(list, selfId) {
+    if (!Array.isArray(list)) return [];
+    var out = [];
+    list.forEach(function (id) {
+      if (typeof id === "string" && id && id !== selfId && id.length <= 64 && out.indexOf(id) === -1 && out.length < 20) out.push(id);
+    });
+    return out;
+  }
   function fieldVal(card, g) {
+    if (g === "g") return planOf(card);
     var v = card[FIELD[g]];
     if (g === "t" || g === "n" || g === "k") return typeof v === "string" ? v : "";
     if (g === "d" || g === "c") return typeof v === "string" && v ? v : null;
@@ -62,6 +95,11 @@
     if (g === "t" || g === "n") { card[f] = typeof v === "string" ? v : ""; return; }
     if (g === "d") { card.due = v || null; return; }
     if (g === "l" || g === "s" || g === "x") { card[f] = Array.isArray(v) ? v : []; return; }
+    if (g === "g") {
+      var pv = v && typeof v === "object" ? v : {};
+      PLAN_KEYS.forEach(function (k) { if (pv[k] !== undefined) card[k] = clone(pv[k]); else delete card[k]; });
+      return;
+    }
     // optional keys: only present when set (older cards stay canonical)
     if (g === "k" || g === "c") { if (v) card[f] = v; else delete card[f]; return; }
     if (g === "a") { if (Array.isArray(v) && v.length) card.att = v; else delete card.att; }
@@ -399,6 +437,9 @@
     if (c.fm && typeof c.fm === "object") c.fm = canonFm(c.fm);
     if (c.lane === "" || c.lane === null) delete c.lane;
     if (c.cover === "" || c.cover === null) delete c.cover;
+    if (c.start !== undefined && !(typeof c.start === "string" && YMD.test(c.start))) delete c.start;
+    if (c.ms !== undefined) { if (c.ms === 1 || c.ms === true) c.ms = 1; else delete c.ms; }
+    if (c.deps !== undefined) { var dl = cleanDeps(c.deps, c.id); if (dl.length) c.deps = dl; else delete c.deps; }
     return canonOrder(c, CARD_KEYS);
   }
   function canonCol(col, ci) {
@@ -432,7 +473,7 @@
   var api = {
     DATA_VER: DATA_VER, TOMB_LIFETIME_MS: TOMB_LIFETIME_MS, GROUPS: GROUPS,
     isTpl: isTpl, fmValid: fmValid, eff: eff, stampCard: stampCard, stampItem: stampItem,
-    freshFm: freshFm, itemTomb: itemTomb,
+    freshFm: freshFm, itemTomb: itemTomb, planOf: planOf, cleanDeps: cleanDeps, PLAN_KEYS: PLAN_KEYS,
     mergeCard: mergeCard, mergeItems: mergeItems, mergeBoardBody: mergeBoardBody,
     mergeKanbanStates: mergeKanbanStates, canonState: canonState
   };

@@ -1,7 +1,8 @@
 // ============================================================
-// orOS Stock — core.js (shared logic, v1.8.0; 1.7 adds the point of
+// orOS Stock — core.js (shared logic, v1.9.0; 1.7 adds the point of
 // sale lists sales / pls / zs, see "Point of sale" below; 1.8 the
-// consignment list cons, see "Consignment" below)
+// consignment list cons, see "Consignment" below; 1.9 discounts,
+// split payments and free items on sales)
 // Business inventory: products with SKU / barcode, suppliers and a
 // ledger of stock movements. One file holds the rules, so the app,
 // the shell's low-stock check and the search provider can never
@@ -234,7 +235,7 @@
     var name = cleanText(x.name, NAME_LEN, false);
     if (!name) return null;
     var unit = has(UNITS, x.unit) || ID_RE.test(String(x.unit || "")) ? String(x.unit) : "pcs";
-    return {
+    var o = {
       id: x.id, m: x.m, name: name,
       sku: cleanText(x.sku, SKU_LEN, false),
       bc: cleanText(x.bc, BC_LEN, false).replace(/\s+/g, ""),
@@ -246,7 +247,13 @@
       loc: cleanText(x.loc, LOC_LEN, false), note: cleanText(x.note, NOTE_LEN, true),
       arch: x.arch === 1 ? 1 : 0
     };
+    // ST-OD (data 1.10): made to order, no real count. Written only
+    // when on, so other items stay byte-identical.
+    if (x.od === 1) o.od = 1;
+    return o;
   }
+  // An on-demand item never runs out: no count, no minimum, no value.
+  function isOd(it) { return !!(it && it.od === 1); }
   function normCat(x) {
     if (!base(x)) return null;
     var name = cleanText(x.name, NAME_LEN, false);
@@ -420,6 +427,25 @@
   //          no, n, g, net, vat, cash, card, other } — the totals as
   //          they were when the day was closed.
   var PAYS = ["cash", "card", "other"];
+  //   1.9 (fair till, wave F1): a line may carry p0 (list price
+  //          before a discount; p is always what was charged), a sale
+  //          dc (the discount's reason ≤ 40) and pays { cash, card,
+  //          other } (a split payment, two or more parts; pay stays
+  //          the largest part). A 1.8 device drops them on its own
+  //          merge: its totals and stock stay right (p is the price
+  //          charged); a tie on m prefers the copy that has them.
+  //          Lines with i = POS_OTHER ("xother") are free items typed
+  //          at the till: they are on the receipt and in the totals
+  //          but never in the movement (no stock).
+  //   1.9 (wave F2): evs = events (a fair, a launch) LWW + tombs:
+  //          { id, m, name, from, to, w (the stand's warehouse, "" =
+  //          main), pl (price list), fl (cash float per day, cents),
+  //          arch }. A sale may carry ev (the event it was made at); a
+  //          closed day zs may carry fl (float) and cc (cash counted).
+  //          Packing for the stand and bringing back are ordinary
+  //          transfers with src "ev:<event id>". A 1.8 device drops
+  //          evs and these fields (its totals stay right).
+  var POS_OTHER = "xother", DC_LEN = 40, MAX_EVS = 200, EV_SRC = "ev:";
   var SALE_NO_LEN = 24, MAX_SALES = 50000, MAX_PLS = 50, MAX_ZS = 4000;
   var Z_RE = /^z\d{8}$/;
   function normSale(x) {
@@ -431,7 +457,11 @@
       var q = clampInt(l.q, 1, Q_MAX), p = clampInt(l.p, 0, C_MAX);
       if (q === null || p === null) continue;
       var vat = clampInt(l.vat, 0, 100);
-      lines.push({ i: l.i, q: q, p: p, vat: vat === null ? 0 : vat, n: cleanText(l.n, NAME_LEN, false) });
+      var ln = { i: l.i, q: q, p: p, vat: vat === null ? 0 : vat, n: cleanText(l.n, NAME_LEN, false) };
+      // 1.9: p0 = the list price before a discount (only when higher)
+      var p0 = clampInt(l.p0, 0, C_MAX);
+      if (p0 !== null && p0 > p) ln.p0 = p0;
+      lines.push(ln);
     }
     if (!lines.length) return null;
     var out = {
@@ -444,8 +474,24 @@
     if (ref(x.mv)) out.mv = x.mv;
     var w = whRef(x.w);
     if (w) out.w = w;
+    // 1.9: dc = the discount's reason; pays = a split payment
+    var dc = cleanText(x.dc, DC_LEN, false);
+    if (dc) out.dc = dc;
+    if (ref(x.ev)) out.ev = x.ev;
+    if (x.pays && typeof x.pays === "object" && !Array.isArray(x.pays)) {
+      var pays = {}, parts = 0;
+      PAYS.forEach(function (k) {
+        var c = clampInt(x.pays[k], 0, C_MAX);
+        if (c) { pays[k] = c; parts++; }
+      });
+      if (parts > 1) out.pays = pays;
+    }
     if (x.v === 1) out.v = 1;
     return out;
+  }
+  // the copy that knows its discount / split (a 1.8 device strips them)
+  function saleRicher(x) {
+    return !!(x.dc || x.pays || x.ev || x.lines.some(function (l) { return l.p0; }));
   }
   function normPl(x) {
     if (!base(x)) return null;
@@ -462,11 +508,24 @@
   function normZ(x) {
     if (!base(x) || !Z_RE.test(x.id) || !isYmd(x.d) || x.id !== "z" + x.d.replace(/-/g, "")) return null;
     function c(v) { var n = clampInt(v, -C_MAX, C_MAX); return n === null ? 0 : n; }
-    return {
+    var z = {
       id: x.id, m: x.m, d: x.d, at: clampInt(x.at, 0, 4102444800000) || 0, no: clampInt(x.no, 1, 1000000) || 1,
       n: clampInt(x.n, 0, MAX_SALES) || 0, g: c(x.g), net: c(x.net), vat: c(x.vat),
       cash: c(x.cash), card: c(x.card), other: c(x.other)
     };
+    // F2: the drawer (float and cash counted), only when given
+    var fl = clampInt(x.fl, 0, C_MAX), cc = clampInt(x.cc, 0, C_MAX);
+    if (fl !== null) z.fl = fl;
+    if (cc !== null) z.cc = cc;
+    return z;
+  }
+  function normEv(x) {
+    if (!base(x) || !isYmd(x.from)) return null;
+    var name = cleanText(x.name, NAME_LEN, false);
+    if (!name) return null;
+    var to = isYmd(x.to) && x.to >= x.from ? x.to : x.from;
+    var out = { id: x.id, m: x.m, name: name, from: x.from, to: to, w: whRef(x.w), pl: ref(x.pl), fl: clampInt(x.fl, 0, C_MAX) || 0, arch: x.arch === 1 ? 1 : 0 };
+    return out;
   }
   // union by id; a void is final (the voided copy wins whatever its m)
   function mergeSales(la, lb) {
@@ -479,6 +538,8 @@
         var cur = best[x.id];
         if (!cur) { best[x.id] = x; return; }
         if ((x.v === 1) !== (cur.v === 1)) { if (x.v === 1) best[x.id] = x; return; }
+        var xr = saleRicher(x), cr = saleRicher(cur);
+        if (x.m === cur.m && xr !== cr) { if (xr) best[x.id] = x; return; }
         lww(best, x);
       });
     });
@@ -593,6 +654,8 @@
     if (zs.length) out.zs = zs;
     var cons = pick("cons", normCons, MAX_CONS);
     if (cons.length) out.cons = cons;
+    var evs = pick("evs", normEv, MAX_EVS);
+    if (evs.length) out.evs = evs;
     var sa = normSettings(a.settings), sb = normSettings(b.settings);
     out.settings = sb.m > sa.m || (sb.m === sa.m && canon(sb) > canon(sa)) ? sb : sa;
     var sortedTombs = {};
@@ -670,6 +733,7 @@
     var q = qtyMap(data), avg = costMap(data);
     return ((data && data.items) || []).map(function (it) {
       var qq = q[it.id] || 0, a = avg[it.id] || 0;
+      if (isOd(it)) return { item: it, q: qq, avg: a, value: 0, low: false, out: false, od: true };
       return {
         item: it, q: qq, avg: a,
         value: qq > 0 ? Math.round(qq * a / 1000) : 0,
@@ -1630,7 +1694,7 @@
     normItem: normItem, normCat: normCat, normUnit: normUnit, normSup: normSup,
     normMove: normMove, normSettings: normSettings, merge: merge,
     unitDec: unitDec, qtyMap: qtyMap, costMap: costMap, stockRows: stockRows,
-    suggestQty: suggestQty, lowList: lowList, outRate: outRate, itemMoves: itemMoves,
+    isOd: isOd, suggestQty: suggestQty, lowList: lowList, outRate: outRate, itemMoves: itemMoves,
     hasMoves: hasMoves, findByCode: findByCode, toNotify: toNotify,
     csvCell: csvCell, parseCsv: parseCsv, headKey: headKey, importPlan: importPlan,
     csvProducts: csvProducts, csvMoves: csvMoves, readPrefs: readPrefs,
@@ -1644,7 +1708,7 @@
     LOT_LEN: LOT_LEN, lotsOf: lotsOf, allLots: allLots, expiring: expiring, lotNames: lotNames,
     OPEN_ID: OPEN_ID, normClose: normClose, openMove: openMove, closeInfo: closeInfo, closePeriod: closePeriod,
     ARCHIVE_DIR: ARCHIVE_DIR, ARCH_RE: ARCH_RE, archivePath: archivePath,
-    PAYS: PAYS, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales,
+    PAYS: PAYS, POS_OTHER: POS_OTHER, DC_LEN: DC_LEN, EV_SRC: EV_SRC, normEv: normEv, normSale: normSale, normPl: normPl, normZ: normZ, mergeSales: mergeSales,
     CONS_SRC: CONS_SRC, normCons: normCons, consOf: consOf, consList: consList, lastSettle: lastSettle,
     consDue: consDue, settleMove: settleMove, consInvoice: consInvoice, addMonths: addMonths
   };

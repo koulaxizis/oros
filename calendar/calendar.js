@@ -130,6 +130,7 @@
       "ev.logTime": "Log time",
       "ev.mail": "Email",
       "ev.share": "Send…",
+      "ev.sendApp": "Send to an app…",
       "ev.delete.confirm": "Delete this event?",
       "ev.none": "No events",
       "ev.untitled": "(untitled)",
@@ -175,7 +176,7 @@
       "lbl.feed.cycle": "Cycle",
       "lbl.feed.mood": "Mood",
       "lbl.feed.habits": "Habits",
-      "lbl.feed.kanban": "Kanban",
+      "lbl.feed.kanban": "Kanban", "feed.kb.start": "Starts: {t}",
       "lbl.feed.todo": "To-Do",
       "lbl.feed.fitness": "Workouts",
       "feed.cycle.period": "Period",
@@ -190,6 +191,8 @@
       "feed.meals.b": "Breakfast", "feed.meals.l": "Lunch", "feed.meals.d": "Dinner", "feed.meals.s": "Snack", "feed.meals.x": "Extra",
       "lbl.feed.budget": "Budget", "feed.budLoan": "{n}: installment", "feed.budCard": "{n}: card payment due",
       "lbl.feed.shelf": "Media Shelf", "lbl.feed.publish": "Publishing",
+      "lbl.feed.docs": "Documents",
+      "lbl.feed.base": "Base",
       "lbl.feed.inv": "Invoices", "feed.inv.due": "{n} due · {a}",
       "feed.garage.exp": "{vehicle}: {what} expires",
       "feed.garage.expired": "{vehicle}: {what} expired",
@@ -384,6 +387,7 @@
       "ev.logTime": "Καταγραφή χρόνου",
       "ev.mail": "Email",
       "ev.share": "Αποστολή…",
+      "ev.sendApp": "Στείλε σε εφαρμογή…",
       "ev.delete.confirm": "Να διαγραφεί αυτό το συμβάν;",
       "ev.none": "Κανένα συμβάν",
       "ev.untitled": "(χωρίς τίτλο)",
@@ -429,7 +433,7 @@
       "lbl.feed.cycle": "Κύκλος",
       "lbl.feed.mood": "Διάθεση",
       "lbl.feed.habits": "Συνήθειες",
-      "lbl.feed.kanban": "Kanban",
+      "lbl.feed.kanban": "Kanban", "feed.kb.start": "Ξεκινά: {t}",
       "lbl.feed.todo": "Εργασίες",
       "lbl.feed.fitness": "Προπόνηση",
       "feed.cycle.period": "Περίοδος",
@@ -444,6 +448,8 @@
       "feed.meals.b": "Πρωινό", "feed.meals.l": "Μεσημεριανό", "feed.meals.d": "Βραδινό", "feed.meals.s": "Σνακ", "feed.meals.x": "Άλλο",
       "lbl.feed.budget": "Προϋπολογισμός", "feed.budLoan": "{n}: δόση", "feed.budCard": "{n}: λήξη πληρωμής κάρτας",
       "lbl.feed.shelf": "Το ράφι μου", "lbl.feed.publish": "Εκδόσεις",
+      "lbl.feed.docs": "Έγγραφα",
+      "lbl.feed.base": "Βάση",
       "lbl.feed.inv": "Τιμολόγια", "feed.inv.due": "Λήγει το {n} · {a}",
       "feed.garage.exp": "{vehicle}: λήγει {what}",
       "feed.garage.expired": "{vehicle}: έληξε {what}",
@@ -879,6 +885,287 @@
       "mm.ofolder": "Αποσυμπιεσμένος φάκελος orOS…"
     }
   });
+  // Events with guests (wave E1, calendar/guests.js + guestsui.js).
+  (function (more) {
+    ["en", "el"].forEach(function (l) {
+      Object.keys(more[l]).forEach(function (k) { STR[l][k] = more[l][k]; });
+    });
+  })({
+    en: {
+      "gu.btn": "Guests…",
+      "gu.btn.n": "Guests ({n})",
+      "gu.title": "Guests",
+      "gu.cap": "Places",
+      "gu.cap.hint": "0 = no limit",
+      "gu.s.i": "No answer",
+      "gu.s.y": "Coming",
+      "gu.s.m": "Maybe",
+      "gu.s.n": "Not coming",
+      "gu.s.w": "Waiting",
+      "gu.sum.places": "{s} of {cap} places taken",
+      "gu.sum.people": "{s} people coming",
+      "gu.sum.parts": "{y} coming · {m} maybe · {i} no answer · {n} not coming · {w} waiting",
+      "gu.sum.in": "Checked in: {n} ({s} people)",
+      "gu.free": "{f} free places. Next on the waiting list: {name}",
+      "gu.free1": "1 free place. Next on the waiting list: {name}",
+      "gu.give": "Give the place",
+      "gu.tell": "{name} has the place now. Let them know:",
+      "gu.tell.msg": "Good news: a place is free for you at “{t}”, {when}. See you there!",
+      "gu.tell.mail": "Email",
+      "gu.tell.sms": "SMS",
+      "gu.tell.copy": "Copy the message",
+      "gu.tell.copied": "Message copied",
+      "gu.add.contacts": "From Contacts…",
+      "gu.add.one": "Add a guest",
+      "gu.edit": "Change guest",
+      "gu.search": "Search guests…",
+      "gu.filter": "Show",
+      "gu.f.all": "Everyone",
+      "gu.f.in": "Checked in",
+      "gu.f.name": "Name",
+      "gu.f.mail": "Email",
+      "gu.f.phone": "Phone",
+      "gu.f.plus": "Plus-ones",
+      "gu.f.note": "Note",
+      "gu.f.answer": "Answer",
+      "gu.save": "Save",
+      "gu.del": "Remove",
+      "gu.del.sure": "Remove for sure?",
+      "gu.removed": "{name} removed from the guests",
+      "gu.in": "Check in",
+      "gu.in.at": "In {time}",
+      "gu.in.undo": "Undo the check-in of {name}?",
+      "gu.in.undo1": "Undo?",
+      "gu.plus": "+{k}",
+      "gu.waitpos": "#{n} waiting",
+      "gu.full": "No free place: {name} is on the waiting list. Raise the places to let them in.",
+      "gu.none": "No guests yet. Add them from Contacts or one by one.",
+      "gu.nomatch": "No guest matches.",
+      "gu.todo": "Tasks to To-Do",
+      "gu.csv": "Export CSV",
+      "gu.print": "Print list",
+      "gu.todo.list": "Event · {t}",
+      "gu.todo.1": "Send the invitations",
+      "gu.todo.2": "Remind those who have not answered",
+      "gu.todo.3": "Confirm the place and what is needed",
+      "gu.todo.4": "Print the guest list for the door",
+      "gu.todo.5": "Thank the guests after the event",
+      "gu.csv.name": "Name",
+      "gu.csv.mail": "Email",
+      "gu.csv.phone": "Phone",
+      "gu.csv.answer": "Answer",
+      "gu.csv.plus": "Plus-ones",
+      "gu.csv.wait": "Waiting since",
+      "gu.csv.in": "Checked in",
+      "gu.csv.note": "Note",
+      "gu.csv.done": "Guest list saved",
+      "gu.pr.title": "Guest list",
+      "gu.pr.in": "In",
+      "gu.pick.title": "Guests from Contacts",
+      "gu.pick.search": "Search contacts…",
+      "gu.pick.lbl": "Contacts label",
+      "gu.pick.lblall": "All contacts",
+      "gu.pick.all": "Select all shown",
+      "gu.pick.go": "Add {n}",
+      "gu.pick.go0": "Add",
+      "gu.pick.none": "No contacts to show",
+      "gu.pick.had": "already a guest",
+      "gu.pick.added": "{n} guests added",
+      "gu.pick.bumped": "{n} of them are on the waiting list (no free place)",
+      "gu.err.name": "Write a name",
+      "gu.err.lists": "Too many guest lists on this device (500)",
+      "gu.err.full": "This guest list is full (2,000 guests)",
+      "gu.err.cap": "Places: a whole number, 0 for no limit",
+      "gu.tix": "Ticket…",
+      "gu.tix.title": "Ticket",
+      "gu.tix.qr": "Ticket code",
+      "gu.tix.hint": "Show this code at the door. It works only for this event.",
+      "gu.tix.share": "Share…",
+      "gu.tix.save": "Save image",
+      "gu.tix.saved": "Ticket saved",
+      "gu.tix.file": "Ticket",
+      "gu.tix.fail": "The ticket could not be made on this device",
+      "gu.tixall": "Print tickets",
+      "gu.tixall.none": "No one is coming yet",
+      "gu.door": "Door",
+      "gu.door.count": "{n} of {y} in ({s} people)",
+      "gu.door.cam.on": "Start camera",
+      "gu.door.cam.off": "Stop camera",
+      "gu.door.wait": "Starting the camera…",
+      "gu.door.aim": "Hold a ticket in front of the camera",
+      "gu.door.nocam": "No camera here. Use the guest list: search and tap Check in.",
+      "gu.door.denied": "The camera is not allowed. Allow it in the browser, or check guests in from the list.",
+      "gu.door.ok": "Welcome, {name}",
+      "gu.door.plus": "with {k} more",
+      "gu.door.in": "Already in at {time}: {name}",
+      "gu.door.bad": "Not a ticket for this event",
+      "gu.door.removed": "This guest was removed from the list",
+      "gu.door.ask": "{name} is on the list as “{s}”. Let in?",
+      "gu.door.let": "Let in",
+      "gu.door.skip": "Not now",
+      "gu.rv": "Invitation links (RSVP)",
+      "gu.rv.none": "Each guest gets their own link to answer Coming, Maybe or Not coming. Answers come back here by themselves, encrypted.",
+      "gu.rv.make": "Make invitation links",
+      "gu.rv.made": "Invitation links are ready",
+      "gu.rv.check": "Check answers",
+      "gu.rv.last": "Links are on. Last checked {time}.",
+      "gu.rv.never": "Links are on. No answers checked yet.",
+      "gu.rv.got": "{n} new answers",
+      "gu.rv.nothing": "No new answers",
+      "gu.rv.stop": "Stop the links",
+      "gu.rv.stop.sure": "Tap again to stop",
+      "gu.rv.stopped": "The links don't work any more",
+      "gu.rv.ms": "Places one answer may take (with plus-ones)",
+      "gu.rv.op": "Open sign-up link: anyone with it can sign up",
+      "gu.rv.copy": "Copy the sign-up link",
+      "gu.rv.copied": "Link copied",
+      "gu.rv.share": "Share…",
+      "gu.rv.msg.open": "Sign up for “{t}”, {when}: {link}",
+      "gu.rv.msg": "Hi {name}, you're invited to “{t}”, {when}. Please answer here: {link}",
+      "gu.rv.send": "Send {name} the invitation:",
+      "gu.rv.err": "The invitation links could not be updated. Try again later.",
+      "gu.rv.err.net": "No connection. The links need the internet.",
+      "gu.rv.err.full": "The invitation service is full right now. Try again later.",
+      "gu.inv": "Invitation…",
+    },
+    el: {
+      "gu.btn": "Καλεσμένοι…",
+      "gu.btn.n": "Καλεσμένοι ({n})",
+      "gu.title": "Καλεσμένοι",
+      "gu.cap": "Θέσεις",
+      "gu.cap.hint": "0 = χωρίς όριο",
+      "gu.s.i": "Χωρίς απάντηση",
+      "gu.s.y": "Έρχεται",
+      "gu.s.m": "Ίσως",
+      "gu.s.n": "Δεν έρχεται",
+      "gu.s.w": "Σε αναμονή",
+      "gu.sum.places": "{s} από {cap} θέσεις πιασμένες",
+      "gu.sum.people": "Έρχονται {s} άτομα",
+      "gu.sum.parts": "{y} έρχονται · {m} ίσως · {i} χωρίς απάντηση · {n} δεν έρχονται · {w} σε αναμονή",
+      "gu.sum.in": "Είσοδοι: {n} ({s} άτομα)",
+      "gu.free": "{f} ελεύθερες θέσεις. Επόμενος στην αναμονή: {name}",
+      "gu.free1": "1 ελεύθερη θέση. Επόμενος στην αναμονή: {name}",
+      "gu.give": "Δώσε τη θέση",
+      "gu.tell": "Η θέση είναι τώρα του/της {name}. Ενημέρωσέ τον/την:",
+      "gu.tell.msg": "Καλά νέα: ελευθερώθηκε θέση για σένα στο «{t}», {when}. Τα λέμε εκεί!",
+      "gu.tell.mail": "Email",
+      "gu.tell.sms": "SMS",
+      "gu.tell.copy": "Αντιγραφή μηνύματος",
+      "gu.tell.copied": "Το μήνυμα αντιγράφηκε",
+      "gu.add.contacts": "Από τις Επαφές…",
+      "gu.add.one": "Νέος καλεσμένος",
+      "gu.edit": "Αλλαγή καλεσμένου",
+      "gu.search": "Αναζήτηση καλεσμένων…",
+      "gu.filter": "Εμφάνιση",
+      "gu.f.all": "Όλοι",
+      "gu.f.in": "Μπήκαν",
+      "gu.f.name": "Όνομα",
+      "gu.f.mail": "Email",
+      "gu.f.phone": "Τηλέφωνο",
+      "gu.f.plus": "Συνοδοί",
+      "gu.f.note": "Σημείωση",
+      "gu.f.answer": "Απάντηση",
+      "gu.save": "Αποθήκευση",
+      "gu.del": "Αφαίρεση",
+      "gu.del.sure": "Σίγουρα αφαίρεση;",
+      "gu.removed": "Ο/Η {name} βγήκε από τους καλεσμένους",
+      "gu.in": "Είσοδος",
+      "gu.in.at": "Μπήκε {time}",
+      "gu.in.undo": "Ακύρωση της εισόδου του/της {name};",
+      "gu.in.undo1": "Ακύρωση;",
+      "gu.plus": "+{k}",
+      "gu.waitpos": "#{n} στην αναμονή",
+      "gu.full": "Δεν υπάρχει ελεύθερη θέση: ο/η {name} μπήκε στην αναμονή. Αύξησε τις θέσεις για να μπει.",
+      "gu.none": "Δεν υπάρχουν καλεσμένοι ακόμα. Πρόσθεσέ τους από τις Επαφές ή έναν-έναν.",
+      "gu.nomatch": "Κανένας καλεσμένος δεν ταιριάζει.",
+      "gu.todo": "Εργασίες στο To-Do",
+      "gu.csv": "Εξαγωγή CSV",
+      "gu.print": "Εκτύπωση λίστας",
+      "gu.todo.list": "Εκδήλωση · {t}",
+      "gu.todo.1": "Στείλε τις προσκλήσεις",
+      "gu.todo.2": "Υπενθύμιση σε όσους δεν απάντησαν",
+      "gu.todo.3": "Επιβεβαίωση χώρου και ό,τι χρειάζεται",
+      "gu.todo.4": "Εκτύπωση της λίστας για την πόρτα",
+      "gu.todo.5": "Ευχαριστήριο στους καλεσμένους μετά την εκδήλωση",
+      "gu.csv.name": "Όνομα",
+      "gu.csv.mail": "Email",
+      "gu.csv.phone": "Τηλέφωνο",
+      "gu.csv.answer": "Απάντηση",
+      "gu.csv.plus": "Συνοδοί",
+      "gu.csv.wait": "Σε αναμονή από",
+      "gu.csv.in": "Είσοδος",
+      "gu.csv.note": "Σημείωση",
+      "gu.csv.done": "Η λίστα καλεσμένων αποθηκεύτηκε",
+      "gu.pr.title": "Λίστα καλεσμένων",
+      "gu.pr.in": "Μπήκε",
+      "gu.pick.title": "Καλεσμένοι από τις Επαφές",
+      "gu.pick.search": "Αναζήτηση επαφών…",
+      "gu.pick.lbl": "Ετικέτα επαφών",
+      "gu.pick.lblall": "Όλες οι επαφές",
+      "gu.pick.all": "Επιλογή όλων όσων φαίνονται",
+      "gu.pick.go": "Προσθήκη {n}",
+      "gu.pick.go0": "Προσθήκη",
+      "gu.pick.none": "Δεν υπάρχουν επαφές",
+      "gu.pick.had": "ήδη καλεσμένος",
+      "gu.pick.added": "Προστέθηκαν {n} καλεσμένοι",
+      "gu.pick.bumped": "Οι {n} από αυτούς μπήκαν στην αναμονή (δεν υπάρχει ελεύθερη θέση)",
+      "gu.err.name": "Γράψε ένα όνομα",
+      "gu.err.lists": "Πάρα πολλές λίστες καλεσμένων σε αυτή τη συσκευή (500)",
+      "gu.err.full": "Η λίστα είναι γεμάτη (2.000 καλεσμένοι)",
+      "gu.err.cap": "Θέσεις: ακέραιος αριθμός, 0 για χωρίς όριο",
+      "gu.tix": "Εισιτήριο…",
+      "gu.tix.title": "Εισιτήριο",
+      "gu.tix.qr": "Κωδικός εισιτηρίου",
+      "gu.tix.hint": "Δείξε αυτόν τον κωδικό στην πόρτα. Ισχύει μόνο για αυτή την εκδήλωση.",
+      "gu.tix.share": "Κοινοποίηση…",
+      "gu.tix.save": "Αποθήκευση εικόνας",
+      "gu.tix.saved": "Το εισιτήριο αποθηκεύτηκε",
+      "gu.tix.file": "Εισιτήριο",
+      "gu.tix.fail": "Δεν μπόρεσε να φτιαχτεί το εισιτήριο σε αυτή τη συσκευή",
+      "gu.tixall": "Εκτύπωση εισιτηρίων",
+      "gu.tixall.none": "Δεν έρχεται κανείς ακόμα",
+      "gu.door": "Πόρτα",
+      "gu.door.count": "Μπήκαν {n} από {y} ({s} άτομα)",
+      "gu.door.cam.on": "Άνοιγμα κάμερας",
+      "gu.door.cam.off": "Κλείσιμο κάμερας",
+      "gu.door.wait": "Ανοίγει η κάμερα…",
+      "gu.door.aim": "Κράτα ένα εισιτήριο μπροστά στην κάμερα",
+      "gu.door.nocam": "Δεν υπάρχει κάμερα εδώ. Χρησιμοποίησε τη λίστα: αναζήτηση και «Είσοδος».",
+      "gu.door.denied": "Η κάμερα δεν επιτρέπεται. Επίτρεψέ την στον browser ή κάνε την είσοδο από τη λίστα.",
+      "gu.door.ok": "Καλώς ήρθες, {name}",
+      "gu.door.plus": "με {k} ακόμα",
+      "gu.door.in": "Μπήκε ήδη στις {time}: {name}",
+      "gu.door.bad": "Δεν είναι εισιτήριο αυτής της εκδήλωσης",
+      "gu.door.removed": "Αυτός ο καλεσμένος βγήκε από τη λίστα",
+      "gu.door.ask": "Ο/Η {name} είναι στη λίστα ως «{s}». Να μπει;",
+      "gu.door.let": "Να μπει",
+      "gu.door.skip": "Όχι τώρα",
+      "gu.rv": "Links πρόσκλησης (RSVP)",
+      "gu.rv.none": "Κάθε καλεσμένος παίρνει δικό του link για να απαντήσει Έρχομαι, Ίσως ή Δεν έρχομαι. Οι απαντήσεις έρχονται εδώ μόνες τους, κρυπτογραφημένες.",
+      "gu.rv.make": "Φτιάξε links πρόσκλησης",
+      "gu.rv.made": "Τα links πρόσκλησης είναι έτοιμα",
+      "gu.rv.check": "Έλεγχος απαντήσεων",
+      "gu.rv.last": "Τα links λειτουργούν. Τελευταίος έλεγχος {time}.",
+      "gu.rv.never": "Τα links λειτουργούν. Δεν έγινε ακόμα έλεγχος απαντήσεων.",
+      "gu.rv.got": "{n} νέες απαντήσεις",
+      "gu.rv.nothing": "Καμία νέα απάντηση",
+      "gu.rv.stop": "Σταμάτα τα links",
+      "gu.rv.stop.sure": "Πάτα ξανά για διακοπή",
+      "gu.rv.stopped": "Τα links δεν λειτουργούν πια",
+      "gu.rv.ms": "Θέσεις ανά απάντηση (μαζί με τους συνοδούς)",
+      "gu.rv.op": "Ανοιχτό link εγγραφής: όποιος το έχει μπορεί να γραφτεί",
+      "gu.rv.copy": "Αντιγραφή link εγγραφής",
+      "gu.rv.copied": "Το link αντιγράφηκε",
+      "gu.rv.share": "Κοινοποίηση…",
+      "gu.rv.msg.open": "Εγγραφή για «{t}», {when}: {link}",
+      "gu.rv.msg": "Γεια σου {name}, είσαι καλεσμένος/η στο «{t}», {when}. Απάντησε εδώ: {link}",
+      "gu.rv.send": "Στείλε την πρόσκληση στον/στην {name}:",
+      "gu.rv.err": "Τα links πρόσκλησης δεν ενημερώθηκαν. Δοκίμασε ξανά αργότερα.",
+      "gu.rv.err.net": "Δεν υπάρχει σύνδεση. Τα links θέλουν internet.",
+      "gu.rv.err.full": "Η υπηρεσία προσκλήσεων είναι γεμάτη αυτή τη στιγμή. Δοκίμασε ξανά αργότερα.",
+      "gu.inv": "Πρόσκληση…",
+    }
+  });
   // A pack language (German, …): STR[LANG] = English + the pack, and
   // weekday / month names from Intl in that language's locale.
   if (window.orosI18n) {
@@ -1026,6 +1313,8 @@ function transientNote(title, body) {
     { id: "lbl-feed-shelf",  color: "#d16ba5" },   // berry — Media Shelf finishes + wishlist release dates
     { id: "lbl-feed-publish", color: "#b5835a" },  // bronze — Publishing release dates + release-plan steps
     { id: "lbl-feed-inv",    color: "#e5a54b" },   // ochre — Invoices: unpaid documents on their due date
+    { id: "lbl-feed-docs",   color: "#a0a8b8" },   // paper grey — Files Documents: expiry + keep-until dates
+    { id: "lbl-feed-base",   color: "#6fa8dc" },   // steel blue — Base: date fields with "Show in Calendar" on
     { id: "lbl-feed-baby",   color: "#f4a3c8" },   // soft pink — Baby milestones, health, monthly age
     { id: "lbl-feed-together", color: "#ef5d8a" }, // rose — Together anniversaries, milestones, moments
     { id: "lbl-feed-custom", color: "#c8a96e" },    // brown — Contacts custom event types
@@ -1060,6 +1349,8 @@ function transientNote(title, body) {
     if (l.id === "lbl-feed-shelf") return t("lbl.feed.shelf");
     if (l.id === "lbl-feed-publish") return t("lbl.feed.publish");
     if (l.id === "lbl-feed-inv") return t("lbl.feed.inv");
+    if (l.id === "lbl-feed-docs") return t("lbl.feed.docs");
+    if (l.id === "lbl-feed-base") return t("lbl.feed.base");
     if (l.id === "lbl-feed-fitness") return t("lbl.feed.fitness");
     if (l.id === "lbl-feed-hol") return t("lbl.feed.hol");
     if (l.id === "lbl-feed-nameday") return t("lbl.feed.nameday");
@@ -2031,12 +2322,17 @@ function transientNote(title, body) {
     if (!KC) return [];
     // kanban/core.js: archived boards skipped (#6); every column,
     // the last one included, shows on the Calendar.
-    return KC.dueCards(data, dateStr, dateStr).map(function (x) {
-      var bd = x.board, col = x.col, card = x.card;
+    // Gantt G3: a planned start (card.start) shows a "starts" mark on
+    // its day; the span in between stays on the Kanban Timeline.
+    var starts = typeof KC.startCards === "function" ? KC.startCards(data, dateStr, dateStr) : [];
+    var due = KC.dueCards(data, dateStr, dateStr);
+    return due.concat(starts).map(function (x, i) {
+      var bd = x.board, col = x.col, card = x.card, st = i >= due.length;
+      var text = (card.text || "").slice(0, 60);
       return {
-        id: "kb-" + card.id + "-" + dateStr,   // per-render key, never stored
+        id: "kb-" + card.id + "-" + dateStr + (st ? "-s" : ""),   // per-render key, never stored
         title: (col.name || "").slice(0, 24) + " · " +
-               (card.text || "").slice(0, 60),
+               (st ? t("feed.kb.start").replace("{t}", text) : text),
         labelId: "lbl-feed-kanban",
         start: null,                           // all-day event
         note: (card.notes || "").slice(0, 500),
@@ -2844,6 +3140,78 @@ function transientNote(title, body) {
     return out;
   }
 
+  // Files › Documents read-only feed (DOCS-1 W3, files/docs-due.js,
+  // loaded by index.html: the same reading as the shell reminder and
+  // Today). An all-day row on each document's expiry date and on its
+  // keep-until date; a private document shows its type only. Rows are
+  // never stored; micro-cached ~1s like the other feeds. Click → the
+  // document in Files.
+  var docsCache = { when: 0, rows: null };
+  function docsRows() {
+    var now = Date.now(), D = window.OrosDocsDue;
+    if (!D) return null;
+    if (now - docsCache.when > 1000) {
+      docsCache.rows = null;
+      try {
+        var raw = JSON.parse(localStorage.getItem(D.KEY));
+        if (raw && Array.isArray(raw.docs) && raw.docs.length) docsCache.rows = D.feedRows(raw, LANG);
+      } catch (e) { docsCache.rows = null; }
+      docsCache.when = now;
+    }
+    return docsCache.rows;
+  }
+  function docsFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-docs")) return [];
+    var rows = docsRows(), out = [];
+    if (!rows) return out;
+    rows.forEach(function (r) {
+      if (r.day !== dateStr) return;
+      out.push({
+        id: "doc-" + r.key + "-" + dateStr,     // per-render key, never stored
+        title: r.title,
+        labelId: "lbl-feed-docs",
+        start: null,                            // all-day
+        _feed: true,
+        _openAt: { app: "files", target: { doc: r.id } }
+      });
+    });
+    return out;
+  }
+
+  // Base read-only feed (base/feed.js, loaded by index.html): records
+  // of the date fields that have "Show in Calendar" on (off by default,
+  // per field). Title "<record> · <field>"; timed fields at their time.
+  // Never stored; micro-cached ~1s. Click → the record in Base.
+  var baseFeedCache = { when: 0, days: null };
+  function baseFeedDays() {
+    var now = Date.now(), F = window.OrosBaseFeed;
+    if (!F) return null;
+    if (now - baseFeedCache.when > 1000) {
+      baseFeedCache.days = null;
+      try {
+        var d = JSON.parse(localStorage.getItem(F.KEY));
+        if (d && typeof d === "object") baseFeedCache.days = F.byDay(d);
+      } catch (e) { baseFeedCache.days = null; }
+      baseFeedCache.when = now;
+    }
+    return baseFeedCache.days;
+  }
+  function baseFeedOn(dateStr) {
+    if (!labelVisible("lbl-feed-base")) return [];
+    var days = baseFeedDays();
+    if (!days || !days[dateStr]) return [];
+    return days[dateStr].map(function (r) {
+      return {
+        id: "bas-" + r.rec + "-" + dateStr + "-" + r.field.length,   // per-render key, never stored
+        title: (r.title || r.tname) + " · " + r.field,
+        labelId: "lbl-feed-base",
+        start: r.time,                                    // null = all-day
+        _feed: true,
+        _openAt: { app: "base", target: { base: r.base, table: r.table, rec: r.rec } }
+      };
+    });
+  }
+
   // Travel read-only feed (travel/core.js, loaded by index.html: the
   // same reading as the shell reminder). Each trip shows on every day
   // of its dates (all-day, "Rome · day 2/5"); itinerary entries that
@@ -3251,6 +3619,8 @@ function transientNote(title, body) {
     .concat(choresFeedOn(dateStr))
     .concat(petcareFeedOn(dateStr))
     .concat(garageFeedOn(dateStr))
+    .concat(docsFeedOn(dateStr))
+    .concat(baseFeedOn(dateStr))
     .concat(travelFeedOn(dateStr))
     .concat(mealsFeedOn(dateStr))
     .concat(budgetFeedOn(dateStr))
@@ -5187,6 +5557,84 @@ function transientNote(title, body) {
     });
   }
 
+  // "Send to an app" (shell send/, BR-SEND): the SAVED event (this
+  // occurrence of a series) as text; Send to someone rides along.
+  var dlgSend = null;
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function sendFromEvent(ev, ymd) {
+    var lc = loc();
+    var when = new Date(dparse(ymd)).toLocaleDateString(lc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    if (ev.start) when += ", " + ev.start + (ev.end ? "\u2013" + ev.end : "");
+    if (ev.dateEnd && ev.dateEnd > ymd) {
+      when += " \u2013 " + new Date(dparse(ev.dateEnd)).toLocaleDateString(lc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    }
+    var title = String(ev.title || t("ev.untitled"));
+    var lines = [title, when];
+    if (ev.location) lines.push(ev.location);
+    if (ev.note) lines.push("", ev.note);
+    return { title: title.slice(0, 200), text: lines.join("\n") };
+  }
+  if ($("ev-send")) {
+    $("ev-send").addEventListener("click", function () {
+      var api = sendApi(), d = dlgSend, sh = dlgShare;
+      if (!api || !d) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      var arg = { kind: "text", data: d };
+      if (sh && shareApi()) arg.share = { kind: "event", data: sh };
+      api.open(arg);
+    });
+  }
+
+  // Events with guests (wave E1): the guest list of a SAVED, one-off
+  // event of the person's own calendar (not a repeating one, not a
+  // household calendar). calendar/guestsui.js owns the window.
+  var guestsUi = null;
+  function guestsCan(e) {
+    return !!(e && !e._feed && !isHhEv(e) && !validRecur(e.recur) && findEvent(e.id) === e);
+  }
+  function guestsWhen(e) {
+    var s = longDate(e.date);
+    if (e.dateEnd && e.dateEnd !== e.date) s += " \u2013 " + longDate(e.dateEnd);
+    if (e.start) s += ", " + e.start + (e.end ? "\u2013" + e.end : "");
+    if (e.location) s += " · " + e.location;
+    return s;
+  }
+  // The event for the RSVP page (wave E2): times in ms (UTC), all-day
+  // days as UTC midnights (the page shows them as dates).
+  function guestsEvInfo(e) {
+    var o = { t: e.title || t("ev.untitled"), loc: e.location || "", d: e.note || "" };
+    var p = e.date.split("-").map(Number);
+    if (!e.start) {
+      var q = (e.dateEnd || e.date).split("-").map(Number);
+      o.s = Date.UTC(p[0], p[1] - 1, p[2]);
+      o.e = Date.UTC(q[0], q[1] - 1, q[2]) + 86400000;
+      o.ad = 1;
+      return o;
+    }
+    o.s = OCC.startTs(e, e.date);
+    var hm = function (x) { var a = x.split(":"); return (+a[0]) * 60 + (+a[1]); };
+    var days = 0;
+    if (e.dateEnd) {
+      var q2 = e.dateEnd.split("-").map(Number);
+      days = Math.round((Date.UTC(q2[0], q2[1] - 1, q2[2]) - Date.UTC(p[0], p[1] - 1, p[2])) / 86400000);
+    }
+    var mins = days * 1440 + (e.end ? hm(e.end) - hm(e.start) : 60);
+    o.e = o.s + Math.max(0, mins) * 60000;
+    if (e.tz) o.tz = e.tz;
+    return o;
+  }
+  if ($("ev-guests")) {
+    $("ev-guests").addEventListener("click", function () {
+      var id = editingId;
+      if (!guestsUi || !id) return;
+      $("ev-dlg").close();     // unsaved edits are left behind, like Cancel
+      guestsUi.open(id);
+    });
+  }
+
   if ($("ev-mail")) {
     $("ev-mail").addEventListener("click", function () {
       var p = shellOpenAt(), target = dlgMail;
@@ -5257,6 +5705,16 @@ function transientNote(title, body) {
     dlgShare = existing && shareApi() ? sharePayload(existing, occ) : null;
     var shareBtn = $("ev-share");
     if (shareBtn) shareBtn.hidden = !dlgShare;
+    dlgSend = existing && sendApi()
+      ? sendFromEvent(localView(existing, occ), occ ? OCC.instance(existing, occ).date : OCC.instance(existing, existing.date).date) : null;
+    var sendBtn = $("ev-send");
+    if (sendBtn) sendBtn.hidden = !dlgSend;
+    var guBtn = $("ev-guests");
+    if (guBtn) {
+      guBtn.hidden = !(guestsUi && existing && mode !== "occ" && guestsCan(existing));
+      var gn = guBtn.hidden ? 0 : guestsUi.count(existing.id);
+      guBtn.textContent = gn ? t("gu.btn.n").replace("{n}", String(gn)) : t("gu.btn");
+    }
     var mailBtn = $("ev-mail");
     if (mailBtn) mailBtn.hidden = !dlgMail;
     // CA-8: what the dialog showed at open — a pull may update every
@@ -6796,6 +7254,9 @@ function transientNote(title, body) {
     }, 60);
   }
   window.__calNewEvent = __orosCalendarNew;
+  // the shell's live path (__orosOpenCalendarNew with Calendar already
+  // open) calls this name; without it the form never opened there
+  window.__orosCalendarNew = __orosCalendarNew;
 
 
   /* ---------- 7h. Wave 8: subscribed calendars (ICS by address) ----------
@@ -8533,6 +8994,22 @@ function transientNote(title, body) {
     // visible in the console instead of a silently dead sync.
     console.warn("[Calendar] sync registration failed:", e);
   }
+
+  // Events with guests (wave E1): own slice "calguests".
+  try {
+    if (window.OrosCalGuestsUI && window.OrosCalGuests) {
+      guestsUi = window.OrosCalGuestsUI.init({
+        t: t, loc: loc, note: transientNote, findEvent: findEvent, canHave: guestsCan,
+        whenText: guestsWhen, shellOpenAt: shellOpenAt, mailReady: mailReady,
+        dialogHost: dialogHost, contacts: contactsRaw, ctName: ctName, evInfo: guestsEvInfo,
+        lang: function () { return LANG; }
+      });
+      var guGone = {}, guHave = {};
+      state.events.forEach(function (e) { guHave[e.id] = 1; });
+      state.deleted.forEach(function (d) { if (!guHave[d.id]) guGone[d.id] = 1; });
+      guestsUi.cleanup(guGone);
+    }
+  } catch (e) { console.warn("[Calendar] guests failed to start:", e); }
 
   // A deep link staged while the Calendar was closed (one-shot take).
   try {

@@ -14,9 +14,9 @@ test.before(async () => { R = await import("../relay/gate.js"); });
 
 // Every Assistant tool (all options on).
 function assistantTools() {
-  return C.toolsFor({ data: 1, summary: 1, entries: 1, openFile: 1, rebuild: 1, house: 1, changes: 1, creates: ["todo"], links: 1,
+  return C.toolsFor({ data: 1, summary: 1, entries: 1, openFile: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo"], links: 1,
                       partnerLinks: 1, actions: ["timer"], history: 1, edits: { writer: 1 }, recipes: ["layout"], newsletter: 1,
-                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1 });
+                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write", fonts: 1 });
 }
 
 // A tool on one side only: { twin: [tools on the other side that do the
@@ -31,7 +31,9 @@ const GATE_ONLY = {
   budget_transfer: { why: "Turning entries into a transfer replaces them with an item of another collection in one undoable step; inside orOS the owner does it from the entry (It's a transfer)." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
-  kanban_change_card: { twin: ["change_item"] }
+  kanban_change_card: { twin: ["change_item"] },
+  // GATE-FILES F2: the Assistant runs on the device and reads the live disk (files_read); a download link is for a cloud thread with orOS closed
+  files_link: { why: "A one-time download link from the owner's sealed copy is for Claude working from outside with orOS closed; the Assistant runs on the device and reads the live file with files_read." }
 };
 const ASSISTANT_ONLY = {
   web_search: { why: "Claude has its own web search; the gate reads and changes orOS, not the web." },
@@ -90,11 +92,30 @@ test("the Assistant's list tools run the gate's own cores", () => {
 });
 
 test("the relay takes the device's whole tool list", () => {
-  const t = C.gateTools(C.toolsFor({ data: 1, summary: 1, entries: 1, rebuild: 1, house: 1, changes: 1, creates: ["todo", "calendar", "notes"],
+  const t = C.gateTools(C.toolsFor({ data: 1, summary: 1, entries: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo", "calendar", "notes"],
     links: 1, partnerLinks: 1, actions: ["timer", "open"], history: 1, edits: { writer: { CATALOG: {} } }, recipes: ["layout", "atelier"],
     newsletter: 1, cover: 1, rules: 1 }));
   const own = new Set(R.TOOLS.map((x) => x.name));
   assert.deepEqual(R.cleanDevTools(t).map((x) => x.name), t.map((x) => x.name).filter((n) => !own.has(n)), "none dropped (the relay keeps its own search_data, app_summary, read_item)");
   t.forEach((x) => assert.ok(x.description.length <= 8000, x.name + ": the relay cuts descriptions at 8000"));
   assert.ok(C.GATE_TOOLS.length <= R.DEV_TOOLS_MAX, "DEV_TOOLS_MAX holds every gate tool");
+});
+
+// FM-7: the families of Settings › Fonts, read only, on both sides.
+test("list_fonts: the Assistant's and the gate's, read only, the same filters", () => {
+  const G = require("../gate/gate.js");
+  const a = assistantTools().find((t) => t.name === "list_fonts");
+  assert.ok(a, "the Assistant has list_fonts");
+  assert.ok(C.GATE_TOOLS.indexOf("list_fonts") >= 0 && G.ACT_TOOLS.indexOf("list_fonts") >= 0, "the gate has list_fonts");
+  assert.equal(G.ACT_WRITE.indexOf("list_fonts"), -1);
+  assert.equal(G.ACT_OPEN.indexOf("list_fonts"), -1, "it opens no app");
+  assert.deepEqual(G.ACT_OPEN, C.GATE_OPEN, "the tools that open an app are the same on both sides");
+  const g = C.gateTools([a])[0];
+  assert.equal(g.annotations.readOnlyHint, true);
+  assert.deepEqual(Object.keys(g.inputSchema.properties).sort(), ["collection", "kind", "letters", "query", "source"]);
+  assert.deepEqual(g.inputSchema.properties.letters["enum"], ["greek", "polytonic"]);
+  // offered through the gate once the owner lets Claude read some app
+  const src = require("fs").readFileSync(require("path").join(__dirname, "../assistant/assistant.js"), "utf8");
+  assert.match(src, /summary: summaryIds\(ga\.read\)\.length > 0, fonts: ga\.read\.length > 0,/);
+  assert.match(src, /if \(call\.name === "list_fonts"\) return listFonts\(call\.args\);/);
 });

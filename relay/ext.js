@@ -12,6 +12,9 @@
 // keys are used for this call only: never stored, logged or echoed.
 //
 // Request:  POST /v1 { op: "ext", p: "woo", host, base, ck, cs, reqs: [...] }   (≤ 10)
+//           POST /v1 { op: "ext", p: "woo", host, base, rsk, reqs: [...] }   (Revenue Splitter
+//             1.14.2 contracts and 1.18.0 profile-requests / production routes only,
+//             RS_ROUTE: the contracts key, never ck/cs)
 //           POST /v1 { op: "ext", p: "tol", env: "test" | "live", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "mlite" | "mchimp" | "brevo" | "hubspot" | "pdrive" | "stripe" | "todoist" | "github" | "raindrop" | "notion" | "ebank", key, reqs: [...] }
 //           POST /v1 { op: "ext", p: "trello" | "paypal", key, token, reqs: [...] }
@@ -50,7 +53,8 @@
 //   (Newsletter, when the shop doesn't let a browser read its pictures);
 //   ≤ 512 KB, alone in its call (base64 costs relay CPU);
 //   answer { status, type, b64 } or { status, err: "type" | "too-big" }
-//   WooCommerce: https://<host><base>/wp-json/wc/v3<path>
+//   WooCommerce: https://<host><base>/wp-json/wc/v3<path>; the contracts routes
+//   "/rs/contract…" go to https://<host><base>/wp-json/rs/v1/contract… with X-RS-Key
 //   timologisi.online (Greek e-invoicing provider, fixed hosts):
 //     https://provider-dev.timologisi.online/api/v1/Provider<path> (test)
 //     https://provider.timologisi.online/api/v1/Provider<path>     (live)
@@ -89,7 +93,7 @@ function lim(p, k) { return LIMITS_BY[p] && LIMITS_BY[p][k] !== undefined ? LIMI
 export const RS_RELAY_BYTES = 256 * 1024;
 function rsPush(p, reqs) {
   return p === "woo" && Array.isArray(reqs) && reqs.length === 1 && !!reqs[0] &&
-    reqs[0].m === "POST" && reqs[0].path === "/rs/contracts";
+    reqs[0].m === "POST" && (reqs[0].path === "/rs/contracts" || reqs[0].path === "/rs/production");
 }
 function bodyCap(p, reqs) { return rsPush(p, reqs) ? RS_RELAY_BYTES : lim(p, "reqBytes"); }
 // The largest "ext" request JSON a call can need (relay/core.js): its
@@ -176,13 +180,45 @@ const RS_ID = /^[A-Za-z0-9_-]{1,64}$/, RS_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
       RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"],
       RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000;
 const rsText = (v, max) => typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v);
+const RS_RENEWAL = ["on", "prev_to", "to"];
+// RS-CTR: Revenue Splitter 1.14.2's contracts routes and key (= links/core.js)
+const RS_ROUTE = /^\/rs\/(contract(s|-requests)|profile-requests|production)(\/|\?|$)/, RS_KEY = /^rsc_[A-Za-z0-9_-]{16,128}$/;
+function rsRoute(p, path) { return p === "woo" && typeof path === "string" && RS_ROUTE.test(path); }
+// RS-PF W2 (Revenue Splitter 1.18.0): a creator's photo, binary. Only
+// JPEG, PNG or WebP by its first bytes (never the shop's Content-Type),
+// at most imgOut, alone in its call; larger only straight to the shop.
+const RS_PHOTO = /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}\/photo$/;
+function rsPhoto(p, path) { return p === "woo" && typeof path === "string" && RS_PHOTO.test(path); }
+export function photoType(u8) {
+  if (!u8 || u8.length < 12) return "";
+  if (u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) return "image/jpeg";
+  const png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];
+  if (png.every((v, i) => u8[i] === v)) return "image/png";
+  const at = (o, s) => [...s].every((c, i) => u8[o + i] === c.charCodeAt(0));
+  if (at(0, "RIFF") && at(8, "WEBP")) return "image/webp";
+  return "";
+}
 function okRsCtr(x) {
-  if (!onlyKeys(x, RS_CTR_KEYS) || !RS_CTR_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
+  if (!onlyKeys(x, RS_CTR_KEYS.concat("renewals")) || !RS_CTR_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
   if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
   if (RS_FMT.indexOf(x.fmt) < 0 || RS_ST.indexOf(x.state) < 0) return false;
   if (typeof x.from !== "string" || !RS_DAY.test(x.from)) return false;
   if (x.to !== "" && !(typeof x.to === "string" && RS_DAY.test(x.to))) return false;
-  return listOf(x.renewed, 0, 50, (d) => typeof d === "string" && RS_DAY.test(d));
+  if (!listOf(x.renewed, 0, 50, (d) => typeof d === "string" && RS_DAY.test(d))) return false;
+  // 1.14.2: each renewal's day, the end before it and the new end
+  return x.renewals === undefined || listOf(x.renewals, 0, 50, (e) =>
+    onlyKeys(e, RS_RENEWAL) && RS_RENEWAL.every((k) => typeof e[k] === "string" && RS_DAY.test(e[k])));
+}
+// RS-PF / RS-PROD (Revenue Splitter 1.18.0, = links/core.js rsLong, okRsWork)
+const rsLong = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f<>]/.test(v);
+const RS_WORK_KEYS = ["id", "ben", "title", "phase", "since", "release", "note"], RS_WORKS = 500;
+const rsDay = (v) => typeof v === "string" && RS_DAY.test(v);
+function okRsWork(x) {
+  if (!onlyKeys(x, RS_WORK_KEYS) || !RS_WORK_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
+  if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
+  if (!Number.isInteger(x.phase) || x.phase < 1 || x.phase > 7) return false;
+  if (!rsDay(x.since) || !(x.release === "" || rsDay(x.release))) return false;
+  return rsLong(x.note, 1000);
 }
 function okMlItem(x) {
   if (!onlyKeys(x, ["method", "path", "body"]) || x.method !== "POST" || x.path !== "api/subscribers") return false;
@@ -253,6 +289,12 @@ const WHOLE = {
     new Set(b.contracts.map((x) => x.id)).size === b.contracts.length &&
     new TextEncoder().encode(JSON.stringify(b)).length <= RS_BYTES,
   rsrq: (b) => Object.keys(b).length === 1,
+  // RS-PF: "oros" alone; done / declined may carry the creator's reply
+  rspf: (b) => "state" in b && (b.state !== "oros" || Object.keys(b).length === 1),
+  // RS-PROD: all three parts, unique ids, ≤ 1 MB (UTF-8)
+  rsp: (b) => "v" in b && "sent" in b && "works" in b &&
+    new Set(b.works.map((x) => x.id)).size === b.works.length &&
+    new TextEncoder().encode(JSON.stringify(b)).length <= RS_BYTES,
   // "subscribed" only for new addresses: never over someone who left
   mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
   // Odoo: the fixed filter and fields must be there (without them
@@ -275,7 +317,7 @@ export const PLATFORMS = {
   woo: {
     root: "/wp-json/wc/v3",
     keys: { ck: /^ck_[a-f0-9]{40}$/, cs: /^cs_[a-f0-9]{40}$/ },
-    auth: (b) => ["Authorization", "Basic " + btoa(b.ck + ":" + b.cs)],
+    auth: (b) => (b.rsk ? ["X-RS-Key", b.rsk] : ["Authorization", "Basic " + btoa(b.ck + ":" + b.cs)]),
     allow: [
       ["GET", /^\/system_status$/, null, null],
       ["GET", /^\/products$/, q({ status: WORDS, type: WORDS, modified_after: DT, sku: SKU }), null],
@@ -300,6 +342,13 @@ export const PLATFORMS = {
       ["POST", /^\/rs\/contracts$/, null, { v: "rsv", sent: "rsday", contracts: "rsctrs" }, "rsc"],
       ["GET", /^\/rs\/contract-requests$/, { state: RS_RQ_Q }, null],
       ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rsrqst" }, "rsrq"],
+      // RS-PF / RS-PROD (1.18.0): page and author-copy requests, production stage
+      ["GET", /^\/rs\/profile-requests$/, { state: RS_RQ_Q }, null],
+      ["POST", /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rspfst", reply: "rsreply" }, "rspf"],
+      // RS-PF W2: the creator's new photo, GET alone in its call, no query
+      ["GET", RS_PHOTO, null, null],
+      ["GET", /^\/rs\/production$/, null, null],
+      ["POST", /^\/rs\/production$/, null, { v: "rsv", sent: "rsday", works: "rsworks" }, "rsp"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
@@ -603,6 +652,9 @@ function okVal(kind, v) {
   if (kind === "rsday") return typeof v === "string" && RS_DAY.test(v);
   if (kind === "rsctrs") return listOf(v, 0, RS_MAX, okRsCtr);
   if (kind === "rsrqst") return v === "oros" || v === "closed";
+  if (kind === "rspfst") return v === "oros" || v === "done" || v === "declined";
+  if (kind === "rsreply") return rsText(v, 500);
+  if (kind === "rsworks") return listOf(v, 0, RS_WORKS, okRsWork);
   if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
     Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));
   if (kind === "tolinv") return okInvoice(v);
@@ -687,12 +739,22 @@ export function validExt(b) {
   }
   // a database name only where the platform has one (Odoo)
   if (b.db !== undefined && !(pl.db && typeof b.db === "string" && DB_RE.test(b.db))) return "db";
-  for (const k of Object.keys(pl.keys)) if (typeof b[k] !== "string" || !pl.keys[k].test(b[k])) return "key";
   if (!Array.isArray(b.reqs) || !b.reqs.length || b.reqs.length > EXT_LIMITS.reqs) return "reqs";
+  // RS-CTR: a call of the contracts routes is only those, with only the contracts key
+  const rsN = b.reqs.filter(r => r && rsRoute(b.p, r.path)).length;
+  if (rsN && rsN !== b.reqs.length) return "reqs";
+  if (rsN) {
+    if (typeof b.rsk !== "string" || !RS_KEY.test(b.rsk) || b.ck !== undefined || b.cs !== undefined) return "key";
+  } else {
+    if (b.rsk !== undefined) return "key";
+    for (const k of Object.keys(pl.keys)) if (typeof b[k] !== "string" || !pl.keys[k].test(b[k])) return "key";
+  }
   // a write that must happen once (an invoice) travels alone in its call
   if (pl.once && b.reqs.length > 1 && b.reqs.some(r => r && r.m !== "GET")) return "reqs";
   // a product picture travels alone in its call (CPU: base64 runs on the relay)
   if (b.reqs.length > 1 && b.reqs.some(r => r && r.img !== undefined)) return "reqs";
+  // so does a creator's photo (RS-PF W2)
+  if (b.reqs.length > 1 && b.reqs.some(r => r && rsPhoto(b.p, r.path))) return "reqs";
   for (const r of b.reqs) {
     if (r && r.body !== undefined) {
       if (typeof r.body !== "string" || r.body.length > bodyCap(b.p, b.reqs)) return "body";
@@ -715,7 +777,9 @@ function target(b, path, img) {
   const fixed = !!(pl.env || pl.host || pl.hostOf);
   const host = pl.env ? pl.env[b.env] : pl.host ? pl.host : pl.hostOf ? pl.hostOf(b) : b.host.toLowerCase();
   if (!host) return null;
-  const baseHref = "https://" + host + (fixed ? "" : b.base) + (img ? "" : pl.root);
+  const rs = rsRoute(b.p, path);
+  if (rs) path = path.slice(3);                  // "/rs/contracts" → rs/v1 "/contracts"
+  const baseHref = "https://" + host + (fixed ? "" : b.base) + (img ? "" : rs ? "/wp-json/rs/v1" : pl.root);
   const u = new URL(baseHref + path);
   if (u.protocol !== "https:" || u.port !== "" || u.username || u.password) return null;
   if (u.hostname !== host || u.href !== baseHref + path) return null;
@@ -744,6 +808,18 @@ function b64(bytes) {
   let s = "";
   for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   return btoa(s);
+}
+// A creator's photo (RS-PF W2): the contracts key, no redirect; only a
+// 2xx with a JPEG, PNG or WebP by its first bytes comes back, as base64
+// with the type read from those bytes. Nothing else from the shop.
+async function onePhoto(url, headers, fetchFn, signal, room) {
+  const res = await fetchFn(url, { method: "GET", headers, redirect: "manual", signal });
+  if (res.status < 200 || res.status > 299) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status }; }
+  const bytes = room > 0 ? await readBytes(res, room) : null;
+  if (!bytes) { try { if (res.body) await res.body.cancel(); } catch (e) {} return { status: res.status, err: "photo-big" }; }
+  const type = photoType(bytes);
+  if (!type) return { status: res.status, err: "photo-type" };
+  return { status: res.status, type, b64: b64(bytes), n: bytes.length };
 }
 // One product picture: no keys, no cookies, only an image back.
 async function oneImg(url, fetchFn, signal, room) {
@@ -824,6 +900,26 @@ export async function runExt(b, fetchFn, now) {
     headers[auth[0]] = auth[1];
     const extra = pl.extraOf ? pl.extraOf(b) : pl.extra;
     if (extra) Object.keys(extra).forEach((k) => { headers[k] = extra[k]; });
+    if (rsPhoto(b.p, r.path)) {
+      headers.Accept = "image/webp,image/png,image/jpeg";
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), Math.min(lim(b.p, "timeout"), left));
+      const room = Math.max(0, Math.min(EXT_LIMITS.imgOut, Math.floor((EXT_LIMITS.totalOut - outBytes) * 3 / 4)));
+      outBytes += room;
+      try {
+        const x = await onePhoto(url, headers, fetchFn, ctl.signal, room);
+        outBytes -= room;
+        outBytes += x.b64 ? x.b64.length : 0;
+        delete x.n;
+        out[i] = x;
+      } catch (e) {
+        outBytes -= room;
+        out[i] = { err: ctl.signal.aborted ? "timeout" : "network" };
+      } finally {
+        clearTimeout(timer);
+      }
+      return;
+    }
     let body;
     if (r.body !== undefined) { headers["Content-Type"] = "application/json"; body = r.body; }
     const ctl = new AbortController();

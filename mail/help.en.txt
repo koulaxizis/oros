@@ -105,6 +105,16 @@ After `Send`, the message waits a few seconds with an `Undo` button at the botto
 ### Offline: the Outbox
 Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
 
+## Email signatures
+`Email signatures` was the Email Signature app; old links and shortcuts to it open it here. Open it with `Email signatures` in the side panel (or on the first screen, before you add an account: it works without one), and go back with the arrow at the top left. Make a professional signature once and use it everywhere: Gmail, Outlook, Thunderbird, Apple Mail, your phone and orOS Mail. It is built from your details, so it looks right in every mail app and never carries hidden code.
+- `Make a signature` (or [[+]] for another one), fill in `Your details`, pick a `Layout`, a `Main colour` and a font under `Look`. `Fill in from orOS` takes your business profile (Billing), a card in Contacts or your brand kit (Atelier); `Undo` puts everything back.
+- `Logo and photo` keeps pictures on your orOS disk. Gmail and Outlook on the web drop pictures put inside a signature: for those, also fill in `Address on your website`. Social profiles (up to 8), a button that Outlook shows too, a `Banner` shown only between two dates, a QR code with your contact card and legal text are there too.
+- `Preview and use` (the second tab on a phone): `Where will you use it?` changes the preview and the steps under `How to add it`. `Copy signature` copies it with its formatting; `Copy HTML code`, `Save .html` and `Save .txt` are for apps that want code or plain text. `Check` lists what to fix (links, pale colours, dropped pictures, Gmail's 10,000-character limit).
+- `Use in orOS Mail` asks which of your accounts gets the signature; nothing changes before `Use`. It is the same signature as the account's own `Signature`, cleaned the same way.
+- In [[⋯]]: `Duplicate this signature`, `Signatures for a team (CSV)` (one .html per person in a .zip), `orOS file (.orossignature)` to save every signature with its pictures, and `Open orOS file…` to add the signatures this device lacks (a file never deletes anything; `Update with newer versions` lets newer ones replace yours).
+- Up to 30 signatures, synced to your devices encrypted and part of the orOS export. Nothing is sent anywhere. [[Ctrl+Shift+C]] copies the signature, [[Esc]] closes a window.
+- The orOS menu search finds your signatures by name, person, company, email or phone; a tap opens them here.
+
 ## Encryption (OpenPGP)
 Mail can sign and encrypt messages with OpenPGP, the standard used by Thunderbird, Proton Mail, GnuPG and others, so only the people you write to can read them and they can tell the message really comes from you.
 - Open the gear button and press `Keys` under `Encryption (OpenPGP)`. `Create my key` makes a key for one of your accounts, locked with a `Passphrase` you choose (at least 8 characters). Nobody can recover the passphrase for you: write it down somewhere safe.
@@ -126,6 +136,9 @@ Mail can sign and encrypt messages with OpenPGP, the standard used by Thunderbir
 - `Log in CRM`: opens [CRM](app:crm) with a new log entry for the other person (the sender, or who you wrote to), with the subject, the start of the text and the date filled in; you save it there.
 - `Summary by the Assistant` and `Reply drafted by the Assistant` open the [AI Assistant](app:assistant) with the question ready, using the key you set there. Very long messages are cut to fit; you press send there, and you copy the reply into Mail yourself.
 From the other side, an email address on a contact's card in Contacts and `Email` on a saved event in [Calendar](app:calendar) open a new message here (when Mail has an account on this device).
+
+## Translate a message
+`Translate` under an open message translates its subject and text on this device with Mozilla's models, the same as [Text Tools](app:texttools) › Translate. The first time for two languages it says how big the download is; after that it works offline, and the message never leaves the device. `Copy` copies the translation; nothing is saved.
 
 ## Accounts and settings
 The gear button opens `Mail settings`: your `Accounts` (with `Edit`), `Always show plain text`, `Group messages by conversation` and the `Relay address`. In an account you can change its details or `Remove account`; your mail stays on the server.

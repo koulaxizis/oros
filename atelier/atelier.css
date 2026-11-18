@@ -102,6 +102,8 @@ button:disabled { cursor: default; opacity: 0.4; }
 .btn.ghost { background: transparent; }
 .btn.small { min-height: 30px; padding: 2px 10px; font-size: 12px; }
 .btn.block { display: flex; width: 100%; margin-top: 6px; }
+.btn.block.two { flex-direction: column; align-items: flex-start; gap: 2px; padding: 8px 12px; white-space: normal; text-align: left; }
+.btn.block.two .hint { margin: 0; font-weight: 400; color: inherit; opacity: 0.8; }
 .btn.danger { color: var(--danger); }
 .btn.danger:hover { border-color: var(--danger); }
 
@@ -314,6 +316,20 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
   font-size: 13px; z-index: 6;
 }
 .crop-hint { max-width: 340px; color: var(--text-dim); }
+.pe-bar { gap: 4px; padding: 6px; flex-wrap: nowrap; overflow-x: auto; max-width: calc(100% - 16px); }
+.pe-b {
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  min-height: 36px; padding: 4px 10px; border-radius: 8px;
+  background: transparent; color: var(--text); border: 1px solid transparent; font: inherit; font-size: 12px; cursor: pointer;
+}
+.pe-b:hover:not(:disabled) { background: var(--hover, rgba(127,127,127,0.15)); }
+.pe-b.on { border-color: var(--accent); color: var(--accent); }
+.pe-b.primary { background: var(--accent); color: var(--accent-ink, #fff); }
+.pe-b:disabled { opacity: 0.4; cursor: default; }
+.pe-b:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.pen-tile { color: var(--text); }
+@media (max-width: 760px) { .pe-l { display: none; } .pe-b { padding: 4px 8px; min-width: 40px; justify-content: center; } }
+@media (pointer: coarse) { .pe-b { min-height: 44px; } }
 .banner .rng { width: 140px; }
 #pages {
   display: flex; align-items: center; gap: 8px;
@@ -427,6 +443,10 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .fn-row.busy { opacity: 0.7; }
 .fn-name { flex: 1; min-width: 0; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fn-badge { flex: none; font-size: 11px; color: var(--text-dim); }
+.fn-col { display: flex; flex-direction: column; gap: 4px; margin: 0 0 8px; }
+.fn-colh { margin: 8px 0 4px; font-weight: 700; font-size: 13px; }
+.fn-col .inp.sm { min-height: 40px; }
+.fn-row:disabled { cursor: default; opacity: .6; }
 .ctx-font { max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Brand kit */

@@ -214,16 +214,31 @@ test("helpers: dates, compass, crossings", () => {
   assert.equal(xs[0].up, false);
 });
 
-test("app wiring: palette contract, prefs, no sync slice, deep links", () => {
-  const js = fs.readFileSync(path.join(ROOT, "sky/sky.js"), "utf8");
-  assert.ok(js.includes("inheritPalette") && js.includes("watchPalette"));
+test("Weather › Sky tonight wiring (merge 4): prefs, no sync slice, lazy load, alias", () => {
+  const js = fs.readFileSync(path.join(ROOT, "sky/view.js"), "utf8");
   assert.ok(js.includes('"oros-sky-prefs"'));
   assert.ok(!js.includes("registerSlice"));
-  assert.ok(js.includes('__orosTakeTarget("sky")'));
-  assert.equal((js.match(/window\.__orosOpenAt\s*=(?!=)/g) || []).length, 1);
+  assert.ok(!js.includes("__orosTakeTarget") && !/window\.__orosOpenAt\s*=(?!=)/.test(js));
+  assert.ok(js.includes("window.SkyView = { mount: mount, setPlace: setPlace, openAt: openAt }"));
+  const css = fs.readFileSync(path.join(ROOT, "sky/view.css"), "utf8");
+  // every rule is scoped to the tab (nothing leaks into Weather)
+  css.replace(/\/\*[\s\S]*?\*\//g, "").split("}").forEach((blk) => {
+    const sel = blk.split("{")[0].trim();
+    if (!sel || sel.startsWith("@") || /^(from|to|\d+%)$/.test(sel)) return;
+    sel.split(",").forEach((one) => assert.ok(/^\.sky\b/.test(one.trim()) || /^@/.test(one.trim()), "unscoped: " + one));
+  });
+  const wx = fs.readFileSync(path.join(ROOT, "weather/weather.js"), "utf8");
+  ["../sky/core.js", "../sky/stars.js", "../sky/view.js", "../sky/view.css"].forEach((f) => assert.ok(wx.includes('"' + f + '"'), f));
+  assert.ok(wx.includes('ensure(LANG, "sky"'));
+  const wxh = fs.readFileSync(path.join(ROOT, "weather/index.html"), "utf8");
+  assert.ok(wxh.includes('id="wxt-sky"') && wxh.includes('id="sky-host"') && !wxh.includes("sky/view.js?v="));
   const html = fs.readFileSync(path.join(ROOT, "sky/index.html"), "utf8");
-  ["core.js", "stars.js", "sky.js", "sky.css"].forEach((f) => assert.ok(html.includes(f + "?v=")));
+  assert.ok(html.includes('"../?open=sky"') && !html.includes("<script src"));
+  ["sky.js", "sky.css", "help.en.txt", "help.el.txt", "today.js"].forEach((f) => assert.ok(!fs.existsSync(path.join(ROOT, "sky", f)), f));
   assert.ok(fs.existsSync(path.join(ROOT, "sky/LICENSE-d3-celestial.txt")));
+  const apps = JSON.parse(fs.readFileSync(path.join(ROOT, "apps.json"), "utf8"));
+  assert.ok(!apps.apps.some((a) => a.id === "sky"));
+  assert.deepEqual(apps.aliases.find((a) => a.id === "sky"), { id: "sky", name: "Moon & Sky", to: "weather", target: { sky: true } });
 });
 
 test("Time links to Moon & Sky and takes the location deep link", () => {

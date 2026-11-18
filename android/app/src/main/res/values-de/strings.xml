@@ -68,4 +68,7 @@
     <string name="bio_title_on">Entsperren per Fingerabdruck einschalten</string>
     <string name="bio_sub">Mit Fingerabdruck oder Gesicht</string>
     <string name="bio_use_pw">Master-Passwort nutzen</string>
+    <string name="bio_title_lock">orOS entsperren</string>
+    <string name="bio_title_on_lock">Entsperren von orOS per Fingerabdruck einschalten</string>
+    <string name="bio_use_lock">PIN oder Kennwort</string>
 </resources>

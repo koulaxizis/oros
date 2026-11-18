@@ -53,6 +53,7 @@
   var NAME_LEN = 60, SITE_LEN = 200, SEAL_LEN = 9000;
   var MAX_ACCTS = 50;
   var VAT_RE = /^[0-9]{9}$/;
+  var RS_KEY = /^rsc_[A-Za-z0-9_-]{16,128}$/;   // = relay/ext.js
   var DB_RE = /^[A-Za-z0-9][A-Za-z0-9_.-]{0,62}$/;
 
   // Platforms. fields: what the Add dialog asks for (keys = secrets).
@@ -64,12 +65,10 @@
       keys: [
         { k: "ck", re: /^ck_[a-f0-9]{40}$/ },
         { k: "cs", re: /^cs_[a-f0-9]{40}$/ },
-        // RS-CTR (Revenue Splitter 1.14+): an optional second key with
-        // Read/Write permission, used only for the routes in WRITE_KEY
-        // (the contracts list and the renewal requests' state). Both or
-        // neither; absent, those routes go with the key above.
-        { k: "wck", re: /^ck_[a-f0-9]{40}$/, opt: 1 },
-        { k: "wcs", re: /^cs_[a-f0-9]{40}$/, opt: 1 }
+        // RS-CTR (Revenue Splitter 1.14.2+): the optional, narrow
+        // contracts key (WP admin › Noxpress › RS Συμφωνητικά), the only
+        // key the contracts routes take (RS_ROUTE); the key above stays Read
+        { k: "rsk", re: RS_KEY, opt: 1 }
       ],
       apps: ["stock", "newsletter", "publish", "budget", "crm"],
       probe: "/products?per_page=1"
@@ -452,37 +451,54 @@
       if (!f.re.test(v)) bad.push(f.k);
       else out[f.k] = v;
     });
-    // optional keys come as a whole set or not at all (WooCommerce's
-    // write key: both its parts)
+    // optional keys come as a whole set or not at all
     var given = pl.keys.filter(function (f) { return f.opt && has(out, f.k); }).length;
     if (given && opt.length) bad = bad.concat(opt);
     return { ok: !bad.length, keys: bad.length ? null : out, bad: bad };
   }
-  // RS-CTR: the keys a call goes with. A WooCommerce call that carries
-  // a write of Revenue Splitter's contracts (WRITE_KEY) uses the
-  // shop's second, Read/Write key when it has one; every other call,
-  // and every call of a shop without one, the first key. → { ck, cs }
-  var WRITE_KEY = {
-    woo: [["POST", /^\/rs\/contracts$/], ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/]]
-  };
-  function usesWriteKey(p, reqs) {
-    var rules = WRITE_KEY[p] || [];
-    return (Array.isArray(reqs) ? reqs : [reqs]).some(function (r) {
-      return !!r && rules.some(function (w) { return r.m === w[0] && typeof r.path === "string" && w[1].test(r.path.split("?")[0]); });
-    });
+  // RS-CTR: Revenue Splitter 1.14.2's contracts routes. Apps name them
+  // "/rs/contracts…" like the other WooCommerce paths; they live at
+  // <site>/wp-json/rs/v1/contracts… and take only the contracts key
+  // (header X-RS-Key), never the WooCommerce key. A call is all of them
+  // or none of them.
+  // RS-PF / RS-PROD (Revenue Splitter 1.18.0): the Author Portal's page
+  // and author-copy requests and the production stage take the same key.
+  var RS_ROUTE = /^\/rs\/(contract(s|-requests)|profile-requests|production)(\/|\?|$)/;
+  function rsRoute(p, path) { return p === "woo" && typeof path === "string" && RS_ROUTE.test(path); }
+  // RS-PF W2: a creator's photo (binary). Its type comes only from its
+  // first bytes: JPEG, PNG or WebP (= relay/ext.js photoType).
+  var RS_PHOTO = /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}\/photo$/, RS_PHOTO_MAX = 10 * 1024 * 1024;
+  function rsPhoto(p, path) { return p === "woo" && typeof path === "string" && RS_PHOTO.test(path); }
+  function photoType(u8) {
+    if (!u8 || u8.length < 12) return "";
+    if (u8[0] === 0xff && u8[1] === 0xd8 && u8[2] === 0xff) return "image/jpeg";
+    var png = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], i;
+    for (i = 0; i < 8 && u8[i] === png[i]; i++) {}
+    if (i === 8) return "image/png";
+    function at(o, s) { for (var j = 0; j < s.length; j++) if (u8[o + j] !== s.charCodeAt(j)) return false; return true; }
+    if (at(0, "RIFF") && at(8, "WEBP")) return "image/webp";
+    return "";
+  }
+  // → "all" | "none" | "mixed"
+  function rsCall(p, reqs) {
+    var list = Array.isArray(reqs) ? reqs : [reqs], n = 0;
+    list.forEach(function (r) { if (r && rsRoute(p, r.path)) n++; });
+    return !n ? "none" : (n === list.length ? "all" : "mixed");
   }
   // RS-CTR: a contracts list the relay would refuse (relay/ext.js
   // RS_RELAY_BYTES, its CPU budget) is sent only straight to the shop
   function relayTooBig(p, reqs) {
     return p === "woo" && Array.isArray(reqs) && reqs.some(function (r) {
-      return r && r.m === "POST" && r.path === "/rs/contracts" && r.body !== undefined &&
+      return r && r.m === "POST" && (r.path === "/rs/contracts" || r.path === "/rs/production") && r.body !== undefined &&
         JSON.stringify(r.body).length > RS_RELAY_BYTES;
     });
   }
+  // The keys a call goes with: a contracts call only the contracts key
+  // ({ rsk }, which may be missing), every other WooCommerce call { ck, cs }.
   function keysFor(p, keys, reqs) {
     if (!keys || typeof keys !== "object") return keys;
     if (p !== "woo") return keys;
-    if (usesWriteKey(p, reqs) && keys.wck && keys.wcs) return { ck: keys.wck, cs: keys.wcs };
+    if (rsCall(p, reqs) === "all") return keys.rsk ? { rsk: keys.rsk } : {};
     return { ck: keys.ck, cs: keys.cs };
   }
 
@@ -655,17 +671,36 @@
   var RS_ID = /^[A-Za-z0-9_-]{1,64}$/, RS_DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/,
       RS_FMT = ["print", "ebook", ""], RS_ST = ["on", "soon", "ended", "ended_by_agreement"],
       RS_CTR_KEYS = ["id", "ben", "title", "fmt", "from", "to", "state", "renewed"],
+      RS_RENEWAL = ["on", "prev_to", "to"],
       RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000,
-      RS_RELAY_BYTES = 256 * 1024;   // = relay/ext.js: larger lists go only straight to the shop
+      RS_RELAY_BYTES = 256 * 1024,   // = relay/ext.js: larger lists go only straight to the shop
+      // RS-PROD: the production list (POST /rs/production, RS 1.18.0)
+      RS_WORK_KEYS = ["id", "ben", "title", "phase", "since", "release", "note"], RS_WORKS = 500;
   function rsText(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v); }
   function okRsCtr(x) {
-    if (!onlyKeys(x, RS_CTR_KEYS)) return false;
+    if (!onlyKeys(x, RS_CTR_KEYS.concat("renewals"))) return false;
     for (var i = 0; i < RS_CTR_KEYS.length; i++) if (!has(x, RS_CTR_KEYS[i])) return false;
     if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
     if (RS_FMT.indexOf(x.fmt) < 0 || RS_ST.indexOf(x.state) < 0) return false;
     if (typeof x.from !== "string" || !RS_DAY.test(x.from)) return false;
     if (x.to !== "" && !(typeof x.to === "string" && RS_DAY.test(x.to))) return false;
-    return listOf(x.renewed, 0, 50, function (d) { return typeof d === "string" && RS_DAY.test(d); });
+    if (!listOf(x.renewed, 0, 50, function (d) { return typeof d === "string" && RS_DAY.test(d); })) return false;
+    // 1.14.2: each renewal's day, the end before it and the new end
+    return x.renewals === undefined || listOf(x.renewals, 0, 50, function (e) {
+      return onlyKeys(e, RS_RENEWAL) && RS_RENEWAL.every(function (k) { return typeof e[k] === "string" && RS_DAY.test(e[k]); });
+    });
+  }
+  // RS-PROD: the note for the creator (≤ 1000, line breaks allowed, no <>)
+  function rsLong(v, max) { return typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f<>]/.test(v); }
+  // RS-PROD: one work of the production list
+  function okRsWork(x) {
+    if (!onlyKeys(x, RS_WORK_KEYS)) return false;
+    for (var i = 0; i < RS_WORK_KEYS.length; i++) if (!has(x, RS_WORK_KEYS[i])) return false;
+    if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
+    if (!isInt(x.phase) || x.phase < 1 || x.phase > 7) return false;
+    if (typeof x.since !== "string" || !RS_DAY.test(x.since)) return false;
+    if (x.release !== "" && !(typeof x.release === "string" && RS_DAY.test(x.release))) return false;
+    return rsLong(x.note, 1000);
   }
   // UTF-8 bytes of a text (the shop counts bytes)
   function utf8Len(t) {
@@ -678,6 +713,10 @@
   }
   // Rules across a whole body (after the per-key checks).
   var WHOLE = {
+    // Production Ledger 1.3+: the fields each write needs
+    plrate: function (b) { return has(b, "key") && has(b, "from") && has(b, "net"); },
+    plpromo: function (b) { return has(b, "product_id") && has(b, "date"); },
+    plsale: function (b) { return has(b, "date") && has(b, "event") && has(b, "payment") && has(b, "lines"); },
     // Revenue Splitter's contracts: all three parts, unique ids, ≤ 1 MB
     rsc: function (b) {
       if (!has(b, "v") || !has(b, "sent") || !has(b, "contracts")) return false;
@@ -689,6 +728,18 @@
       return utf8Len(JSON.stringify(b)) <= RS_BYTES;
     },
     rsrq: function (b) { return Object.keys(b).length === 1; },
+    // RS-PF: "oros" alone; done / declined may carry the creator's reply (one line, ≤ 500)
+    rspf: function (b) { return has(b, "state") && (b.state !== "oros" || Object.keys(b).length === 1); },
+    // RS-PROD: all three parts, unique ids, ≤ 1 MB
+    rsp: function (b) {
+      if (!has(b, "v") || !has(b, "sent") || !has(b, "works")) return false;
+      var seen = {};
+      for (var i = 0; i < b.works.length; i++) {
+        if (has(seen, b.works[i].id)) return false;
+        seen[b.works[i].id] = 1;
+      }
+      return utf8Len(JSON.stringify(b)) <= RS_BYTES;
+    },
     // adding someone as "subscribed" must never overwrite a person who
     // already left: only new addresses are added that way
     mcbatch: function (b) {
@@ -783,10 +834,29 @@
       ["POST", /^\/rs\/contracts$/, null, { v: "rsv", sent: "rsday", contracts: "rsctrs" }, "rsc"],
       ["GET", /^\/rs\/contract-requests$/, { state: RS_RQ_Q }, null],
       ["POST", /^\/rs\/contract-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rsrqst" }, "rsrq"],
+      // RS-PF (1.18.0): page and author-copy requests, read, then marked
+      // "oros", closed "done" / "declined" with a reply for the creator
+      ["GET", /^\/rs\/profile-requests$/, { state: RS_RQ_Q }, null],
+      ["POST", /^\/rs\/profile-requests\/[A-Za-z0-9_-]{1,64}$/, null, { state: "rspfst", reply: "rsreply" }, "rspf"],
+      // RS-PF W2: the creator's new photo (binary, alone in its call)
+      ["GET", RS_PHOTO, null, null],
+      // RS-PROD (1.18.0): the production stage of the works (the whole
+      // list each time, Kanban board → seven public phases)
+      ["GET", /^\/rs\/production$/, null, null],
+      ["POST", /^\/rs\/production$/, null, { v: "rsv", sent: "rsday", works: "rsworks" }, "rsp"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
       ["GET", /^\/pl\/report$/, { from: DAY, to: DAY }, null],
+      // Publishing «Title analysis» (P16): Production Ledger 1.3+'s channels,
+      // delivery, free copies and promotion per material, read; and its
+      // three typed writes: a dated material price, the promotion package
+      // on a title (idempotent on the site), a sale at an event
+      ["GET", /^\/pl\/analysis$/, { from: DAY, to: DAY }, null],
+      ["GET", /^\/pl\/rates$/, null, null],
+      ["POST", /^\/pl\/rates$/, null, { key: "plkey", from: "plday", net: "plnet", vat_rate: "plvat", label: "pl80", supplier: "pl120", invoice: "pl60", note: "pl200" }, "plrate"],
+      ["POST", /^\/pl\/promo-apply$/, null, { product_id: "plpid", date: "plday", dry_run: "bool" }, "plpromo"],
+      ["POST", /^\/pl\/event-sale$/, null, { date: "plday", event: "pl120", payment: "plpay", lines: "pllines", note: "pl300", dry_run: "bool" }, "plsale"],
       // Newsletter N1: coupons, looked up by code and created (never changed or deleted)
       ["GET", /^\/coupons$/, { code: CPN_CODE }, null],
       ["POST", /^\/coupons\/batch$/, null, { create: "cpns" }]
@@ -907,6 +977,33 @@
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
+  // Production Ledger 1.3+ write values (wave P16)
+  var PL_KEY = /^[a-z0-9_]{1,40}$/, PL_NET = /^[0-9]{1,6}(\.[0-9]{1,4})?$/, PL_VAT = /^([0-9]{1,2}(\.[0-9]{1,2})?|100(\.00?)?)$/,
+      PL_PRICE = /^[0-9]{1,7}(\.[0-9]{1,2})?$/;
+  function plText(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f]/.test(v); }
+  function plPid(v) { return isInt(v) && v > 0 && v < 1e12; }
+  function okPlLine(l) {
+    if (!l || typeof l !== "object" || Array.isArray(l)) return false;
+    var ks = Object.keys(l);
+    if (!has(l, "product_id") || !has(l, "qty")) return false;
+    return ks.every(function (k) {
+      if (k === "product_id") return plPid(l[k]);
+      if (k === "qty") return isInt(l[k]) && l[k] >= 1 && l[k] <= 999;
+      if (k === "price") return typeof l[k] === "string" && PL_PRICE.test(l[k]);
+      return false;
+    });
+  }
+  function okPlVal(kind, v) {
+    if (kind === "plkey") return typeof v === "string" && PL_KEY.test(v);
+    if (kind === "plday") return typeof v === "string" && DAY.test(v);
+    if (kind === "plnet") return typeof v === "string" && PL_NET.test(v);
+    if (kind === "plvat") return typeof v === "string" && PL_VAT.test(v);
+    if (kind === "plpid") return plPid(v);
+    if (kind === "plpay") return v === "cash" || v === "card";
+    if (kind === "pllines") return listOf(v, 1, 50, okPlLine);
+    var m = /^pl([0-9]{2,3})$/.exec(kind);
+    return !!m && plText(v, +m[1]);
+  }
   function okVal(kind, v) {
     if (kind === "int") return isInt(v) && v >= -1000000000 && v <= 1000000000;
     if (kind === "bool") return v === true || v === false;
@@ -926,6 +1023,9 @@
     if (kind === "rsday") return typeof v === "string" && RS_DAY.test(v);
     if (kind === "rsctrs") return listOf(v, 0, RS_MAX, okRsCtr);
     if (kind === "rsrqst") return v === "oros" || v === "closed";
+    if (kind === "rspfst") return v === "oros" || v === "done" || v === "declined";
+    if (kind === "rsreply") return rsText(v, 500);
+    if (kind === "rsworks") return listOf(v, 0, RS_WORKS, okRsWork);
     if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
     if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);
     if (kind === "bvrows") return listOf(v, 1, 250, okBvRow);
@@ -936,6 +1036,7 @@
     if (kind === "nlim") return isInt(v) && v >= 1 && v <= 100;
     if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
     if (kind === "sfvars") return okSfVars(v);
+    if (kind.slice(0, 2) === "pl") return okPlVal(kind, v);
     if (kind.slice(0, 2) === "eb") return okEbVal(kind, v);
     // "=a" or "=a|b": exactly one of the fixed values
     if (kind[0] === "=") return kind.slice(1).split("|").some(function (k) { return has(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]; });
@@ -1003,7 +1104,7 @@
   // acct = the account row (or, for WooCommerce, its site string).
   // keys: needed only where the host comes from the key (Mailchimp).
   function apiUrl(p, acct, path, keys) {
-    if (p === "woo") return (typeof acct === "string" ? acct : acct.site) + "/wp-json/wc/v3" + path;
+    if (p === "woo") return (typeof acct === "string" ? acct : acct.site) + (rsRoute(p, path) ? "/wp-json/rs/v1" + path.slice(3) : "/wp-json/wc/v3" + path);
     var pl = PLATFORMS[p];
     if (!pl) return null;
     if (pl.site) { var s = typeof acct === "string" ? acct : acct && acct.site; return s ? s + pl.root + path : null; }
@@ -1014,7 +1115,7 @@
   }
   // The auth header of a direct call → [name, value].
   function authHeader(p, keys) {
-    if (p === "woo") return ["Authorization", "Basic " + btoa(keys.ck + ":" + keys.cs)];
+    if (p === "woo") return keys.rsk ? ["X-RS-Key", keys.rsk] : ["Authorization", "Basic " + btoa(keys.ck + ":" + keys.cs)];
     if (p === "tol") return ["API-KEY", keys.key];
     if (p === "mlite") return ["Authorization", "Bearer " + keys.key];
     if (p === "mchimp") return ["Authorization", "Basic " + btoa("oros:" + keys.key)];
@@ -1059,7 +1160,7 @@
     ORDER_ST: ORDER_ST, NAME_LEN: NAME_LEN, VAT_RE: VAT_RE, DB_RE: DB_RE, TOL_TYPES: TOL_TYPES, ODOO: ODOO,
     validHost: validHost, normSite: normSite, siteParts: siteParts,
     normAcct: normAcct, merge: merge, live: live, find: find, checkKeys: checkKeys,
-    extId: extId, checkReq: checkReq, keysFor: keysFor, usesWriteKey: usesWriteKey, utf8Len: utf8Len, relayTooBig: relayTooBig, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, RS_RELAY_BYTES: RS_RELAY_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
+    extId: extId, checkReq: checkReq, rsPhoto: rsPhoto, photoType: photoType, RS_PHOTO_MAX: RS_PHOTO_MAX, keysFor: keysFor, rsRoute: rsRoute, rsCall: rsCall, utf8Len: utf8Len, relayTooBig: relayTooBig, RS_MAX: RS_MAX, RS_BYTES: RS_BYTES, RS_RELAY_BYTES: RS_RELAY_BYTES, SHOPIFY_Q: SHOPIFY_Q, query: query, apiUrl: apiUrl, authHeader: authHeader, extraHeaders: extraHeaders, probeReq: probeReq, cleanText: cleanText,
     okEmail: okEmail
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

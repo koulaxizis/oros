@@ -141,10 +141,55 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 ## Export
 `Export` (the up arrow) mixes the song into one stereo file: the loop if it is on, else everything from the start to the end of the last clip. Instrument tracks, effects, sidechain and automation are all in it.
 - `WAV`: 16 or 24 bit, 44.1 or 48 kHz. Lossless, the best choice for further work.
-- `MP3`: 128 to 320 kbit/s. Plays everywhere; Studio's own encoder makes it on this device, and players start and end it without a gap.
+- `MP3`: 64 to 320 kbit/s (64–96 is enough for speech). Plays everywhere; Studio's own encoder makes it on this device, and players start and end it without a gap.
 - `Opus (OGG)`: a smaller file at the same quality, always 48 kHz. Offered where the browser can encode Opus (Chrome, Edge, Firefox).
 - `Add to Music` makes the same file in the chosen format, puts it in the Music folder on the orOS disk and plays it in Music.
+- `Send to an app…` does the same and then opens `Send to an app`: send the file to Transfer, Mail or another app of yours.
 - `Make a ringtone` turns the notes of the instrument tracks (not the drum kit) into a one-voice melody and opens it in Ringtone Composer: where notes overlap the highest one wins, and you press `Import` there to keep it.
+
+## Loudness
+`LUFS` on the master strip (or `Loudness…` in the export window, on a phone) opens the loudness meter. It measures by EBU R128 (ITU BS.1770), the same way as NULL Loudness Meter, on what the master sends to the speakers.
+- While the song plays it shows momentary (400 ms) and short-term (3 s) loudness, the integrated loudness of everything played so far, the loudness range (LRA) and the true peak. Stopping does not pull the integrated value down; `Reset` starts it again.
+- `Measure the song` mixes the song as the export would and measures all of it: integrated loudness, range, the loudest 3 seconds, true and sample peak, RMS and noise floor. `Measure a file…` does the same for any audio file.
+- `Target` says what a service will do with it. Spotify, Apple Music, YouTube and podcast apps play every track at about their own loudness, so a louder master only gets turned down; broadcast uses EBU R128 (-23 LUFS). A true peak above -1 dBTP may distort once the service encodes it.
+- The audiobook targets (ACX for Audible, Storytel) check what they reject: RMS -23 to -18 dBFS, peaks at most -3 dB, noise floor at most -60 dBFS, room tone at the start (0.5 to 1 s) and end (1 to 5 s), no digital silence, no clipping, at most 120 minutes. Storytel publishes no numbers of its own, so it starts from ACX's.
+- `Choose a reference…` measures a song you like: its numbers stand next to yours, and `Play it at the song's loudness` plays it turned to your song's integrated loudness, so you compare the sound and not the volume.
+
+## Markers
+- A marker names a place on the timeline: press [[M]] to put one at the playhead, or open `Markers` in `Export`. They show on the ruler.
+- In `Markers` you rename one, move it to the playhead (`To the playhead`), jump to it (its time) or delete it. A project has up to 50.
+- In a podcast episode the markers become its chapters (see below). The first chapter always starts at the beginning; a marker under half a second from the one before it is skipped.
+
+## Publish as podcast
+`Export` › `Publish as podcast` makes a podcast from your projects. Each episode is one Studio project; the show holds them together.
+- `Show`: its title, who makes it, a description, the language, the order (newest first or a series in order), an Apple Podcasts category and whether it is explicit. `Site address` is where you will put the site, for example `https://yourname.github.io/show/` (https only); the feed is that address plus `feed.xml`. The owner e-mail is optional and public: directories use it to check the show is yours. `Support link` can be your Ko-fi page.
+- `Cover`: a square picture of at least 1400 × 1400 pixels. Studio cuts it square, makes it at most 3000 × 3000 and drops hidden photo details (place, camera). `Design it in Atelier` opens a 3000 × 3000 design; save it as a picture and choose it here.
+- `This project as an episode`: `Add to this show`, then the number, season, kind (episode, trailer, bonus), date, title and show notes. `Sound`: mono for speech, 64, 96 or 128 kbit/s (96 mono is about 43 MB an hour).
+- `Make the episode file` mixes the project (as Export does) into an MP3 with its title, show, number, date, cover and chapters, and keeps it on the orOS disk under `Studio/Podcasts`. Change the sound or the markers later and make it again.
+- `Transcript` (once the episode file is made) turns the episode's speech into text when you ask for it, on this device, with the same speech model as Montage: the sound never leaves the device. The model (about 50 MB) is downloaded once, after you agree, and then works offline. The text comes one line per cue, `[minutes:seconds] words`; correct the words, change a time, or join lines (a line without a time joins the one before), then `Save`. The saved transcript (WebVTT, next to the MP3 under `Studio/Podcasts`) goes into the next ZIP or publish, and podcast apps can show it. Nothing is made on its own.
+- `Download the site (ZIP)` gives one ZIP with `feed.xml` (RSS 2.0 with the Apple Podcasts and Podcasting 2.0 tags), the episodes, a chapters file for each, the cover and a small page with a player (no scripts, nothing from other sites). Upload what is inside to the site address, keeping the folders: GitHub Pages, Netlify, Cloudflare Pages or a server of your own. After each new episode download it again and upload it over the old one.
+- `Publish on GitHub Pages` puts the site straight into a GitHub repository of yours, and GitHub Pages serves it for free. Make an empty repository just for the show and a fine-grained token on GitHub for that repository only, with Contents and Pages set to Read and write. Write the repository as `owner/name` and paste the token. The token stays on this device only and is never synced; `Forget the token` removes it. With no site address yet, the show takes the repository's GitHub Pages address. Each publish is one new version of the repository: files that did not change are not sent again, and nothing is ever deleted. Episodes that are already online but not on this device (made on another device) stay in the feed. Files can be at most 75 MB.
+- `Publish on Nextcloud or WebDAV` puts the site into a folder on your own server with your account. In Nextcloud (29 or newer) make a folder just for the show, share it with a public link (no password, downloads allowed) and make an app password in Settings › Security. Write the folder's WebDAV address (Files › Settings › WebDAV, then the folder's path), paste the public link, your user name and the app password. The password stays on this device only and is never synced; `Forget the password` removes it. Most servers cannot be reached from a browser: then turn on `Through the orOS relay`, and the files and the password pass through the orOS relay on their way (nothing is kept there; at most 95 MB a file). With no site address yet, the show takes the public link's address. Nothing is ever deleted on the server, files that did not change are not sent again, and the feed is never written over a newer one another device published.
+- Then add the feed address once to Apple Podcasts, Spotify and the Podcast Index; podcast apps follow it from there. `Follow in Podcasts` adds your show to [Podcasts](app:podcasts) like any other.
+- Each show and episode keeps one id forever (podcast:guid), so subscribers never see an episode twice, even if the show moves to another address. Nothing goes through orOS: the files go from your device to your host.
+
+## Audiobooks
+A book is a row of chapters, and every chapter is an ordinary Studio project: tracks, effects, automation and recording through orOS Bridge all work as in a song. Open `Projects` and choose `Books`.
+- `New book` makes the opening credits, Chapter 1 and the closing credits, each with a `Voice` track that starts with NULL effects for speech: a high-pass filter at 80 Hz, the de-esser and a gentle compressor (the gate is there but off until your room needs it).
+- In the book's window you rename it, add chapters, put them in order with the arrows, and open any part. Up to 200 chapters fit in all books together, besides the 50 songs.
+- `Title in Publishing` links the book to its title in Publishing: the author, narrator and audiobook ISBN are read from there whenever they are needed, so a fix in Publishing reaches the book. Without Publishing, fill in author and narrator here.
+- `Requirements`: ACX (Audible) or Storytel. The Loudness window checks a chapter against them.
+- Takes in a chapter are saved as 24-bit FLAC: lossless, about half the size of a WAV, and they sync with Vault Drive. Songs keep WAV.
+- Room tone: record about 30 seconds of the quiet room with the same microphone and settings, select that clip, open the book and press `Use the selected clip as room tone`. Studio measures its noise floor (ACX wants -60 dBFS or lower).
+- `Fill the gaps` puts the room tone on a track of its own wherever the voice stops in the open chapter, plus 2 seconds at the end, so no digital silence is left. Press it again after editing: it starts afresh.
+- `Check all` mixes every part as the export would and checks it against the requirements: RMS, true peak, noise floor, room tone at the start and the end, digital silence, length and clipping. Each part shows whether it passes, and its Loudness window says what to fix, with `Go there` on a peak or a clip.
+- `Normalise all` brings every part to RMS -20 dBFS with a gain and the NULL Limiter (true peak, -3.5 dB) at the end of its master chain. The recordings never change, and `Remove normalising` takes both out again. A noise floor above -60 dBFS is not hidden: try NULL Noise Reduction or the gate on the Voice track.
+- `Use this chapter's loop as the retail sample` takes a loop of 1 to 5 minutes as the sample that the stores play.
+- `Export the book` writes one MP3 per part (CBR, mono, 44.1 kHz, at the bit rate under `MP3 for the book`) with the title, author, narrator, ISBN, track number and cover, plus `retail-sample.mp3`, a 2400 × 2400 `cover.jpg` and `report.txt` with the measurements of every file, into `Studio/Books`, in a folder named after the book, in [Files](app:files). Each MP3 is measured again after encoding.
+- A chapter is mixed in one piece in memory, so very long chapters (over an hour) need a device with plenty of memory.
+- `One M4B with chapters` makes the whole book one audiobook file, the kind Apple Books, VLC and most Android players open: Studio's own AAC encoder (64, 96 or 128 kbit/s mono under `M4B for the book`), a chapter at the start of every part, the title, author, narrator, year and the cover. It lands next to the MP3s.
+- After an export, a book linked to a Publishing title shows `Write the length to Publishing`: Publishing opens that title and asks before it puts the minutes into the audiobook edition.
+- The Assistant (and Claude through orOS Gate) can read a book's parts: each is named "book · part" and says where it sits in the book.
 
 ## Sync and backup
 - Projects, tracks and clips, the notes of MIDI clips too, follow you to your other devices through orOS sync.
@@ -157,7 +202,7 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - Audio that is not on this device yet (still on its way with Vault Drive) is left out of the file, and Studio says so.
 
 ## Keyboard shortcuts
-- [[Space]] play and pause, [[R]] record, [[L]] loop, [[K]] click, [[Home]] back to the start. [[Space]] also plays while the effects window is open.
+- [[Space]] play and pause, [[R]] record, [[L]] loop, [[K]] click, [[M]] marker at the playhead, [[Home]] back to the start. [[Space]] also plays while the effects window is open.
 - [[S]] split, [[D]] duplicate, [[Delete]] delete the selected clip, [[E]] or [[Enter]] edit the notes of a MIDI clip, [[Esc]] deselect.
 - In the piano roll: [[B]] draw, [[V]] select, [[Q]] quantize, [[Ctrl+A]] [[Ctrl+C]] [[Ctrl+X]] [[Ctrl+V]] [[Ctrl+D]] select all, copy, cut, paste, duplicate, [[Delete]] delete, the arrow keys move the selected notes (by a bar or an octave with [[Shift]]), [[Space]] play, [[Esc]] close.
 - [[+]] and [[-]] zoom, [[Ctrl+Z]] undo, [[Ctrl+Y]] redo.
@@ -188,7 +233,8 @@ Ask the Assistant to change your songs in words, such as "turn the vocals down 3
 - Loops are in 4/4. Audio clips do not stretch with the tempo; only MIDI clips follow it.
 - An older Studio on another device does not show MIDI clips, and when it saves an instrument track, the track plays as piano until its sound is chosen again. It plays a NULL Drum Machine track with the built-in drum kit, and when it saves the track the drawn `User` pattern is lost.
 - Automation has straight lines only, and the master has no lanes. An older Studio on another device drops lanes and sidechain choices when it saves that track.
-- The MP3 encoder is simple and has constant bitrate: at 128 kbit/s it sounds less clean than other encoders, so choose 192 or more.
+- The MP3 encoder is simple and has constant bitrate: at 128 kbit/s it sounds less clean than other encoders, so choose 192 or more for music (64–96 kbit/s is fine for speech).
+- An episode is one project, so at most one hour. GitHub Pages takes files up to 75 MB and a site up to about 1 GB; through the orOS relay a WebDAV server gets files up to 95 MB.
 - Effects reset when playback starts, as in a desktop studio.
 - Audio of deleted clips stays in the `Studio` folder; deleting a project removes its files.
 - When the same clip is changed on two devices before they sync, the most recent change wins.

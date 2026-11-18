@@ -61,6 +61,8 @@ Inside orOS, `Add to Budget` in the Shopping tab asks what you paid and opens a 
 
 `To To-Do` sends the unticked items to the `Groceries` list in [To-Do](app:todo), each with the recipes it is for. To-Do shows them first: you can pick another list, and items already on it start unticked. Nothing is added until you press `Add`, and your ticks here don't change.
 
+`Send to an app…` in the Shopping tab sends what is still to buy (everything when all is ticked) as a list to another orOS app, such as [Kanban](app:kanban), [Notes](app:notes) or [Mail](app:mail). The other app only opens with it filled in.
+
 ## Pantry
 The `Pantry` tab is what you have at home, by where it is kept: `Fridge`, `Freezer` or `Cupboard`. Type what you have in the box, like "1 l milk" or "6 eggs", and press Enter; an item with the same name and no best-before date simply gets the extra amount. Tap an item to change its name, amount, place or `Best before` date, or to `Remove` it. Things that reach their date within three days, or are past it, are listed first under `Use soon`.
 

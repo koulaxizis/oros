@@ -566,7 +566,7 @@
     detectEol: detectEol, toLf: toLf, withEol: withEol, detectIndent: detectIndent,
     safeName: safeName, copyName: copyName, untitledName: untitledName,
     cleanTab: cleanTab, cleanSession: cleanSession, cleanLoc: cleanLoc, sameLoc: sameLoc, addRecent: addRecent, hash: hash, hashBytes: hashBytes,
-    jsonFormat: jsonFormat, sortLines: sortLines, uniqueLines: uniqueLines, trimTrailing: trimTrailing
+    jsonTokens: jsonTokens, jsonFormat: jsonFormat, sortLines: sortLines, uniqueLines: uniqueLines, trimTrailing: trimTrailing
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.PadCore = api;

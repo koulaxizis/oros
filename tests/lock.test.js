@@ -163,3 +163,127 @@ test("checkPassphrase: an empty cloud or no connection cannot tell (null)", asyn
   C.sync.forgetPassphrase();
   assert.equal(await C.sync.checkPassphrase("anything"), null);
 });
+
+// Sensitive work (STRICT, oros-strict): the record, the limits each
+// level puts on the lock, and the hooks that read it.
+test("sensitive work: the record is read defensively", () => {
+  const rec = { v: 1, level: "hard", at: 5, prev: { idle: 10, hidden: false, push: true } };
+  assert.deepEqual(L.parseStrict(JSON.stringify(rec)), rec);
+  assert.equal(L.parseStrict(null), null);
+  assert.equal(L.parseStrict("{"), null);
+  assert.equal(L.parseStrict(JSON.stringify({ v: 1, level: "max" })), null);
+  assert.equal(L.parseStrict(JSON.stringify({ v: 2, level: "on" })), null);
+  const odd = L.parseStrict(JSON.stringify({ v: 1, level: "on", prev: { idle: 7, hidden: "yes", push: 1 } }));
+  assert.deepEqual(odd.prev, { idle: L.DEFAULT_IDLE, hidden: false, push: false });
+});
+
+test("sensitive work: Normal caps the lock at 2 min, Hardcore at 1, both lock on leaving", () => {
+  const c = { v: 1, kind: "pin", idle: 0, hidden: false };
+  assert.deepEqual([L.clampCfg(c, "on").idle, L.clampCfg(c, "on").hidden], [2, true]);
+  assert.equal(L.clampCfg(c, "hard").idle, 1);
+  assert.equal(c.idle, 0, "the stored object is not changed");
+  const tight = { v: 1, kind: "pass", idle: 1, hidden: true };
+  assert.equal(L.clampCfg(tight, "on"), tight, "already within the limits");
+  assert.equal(L.clampCfg(c, null), c);
+  assert.equal(L.loosens("on", "idle", 0), true);
+  assert.equal(L.loosens("on", "idle", 5), true);
+  assert.equal(L.loosens("on", "idle", 1), false);
+  assert.equal(L.loosens("hard", "idle", 2), true);
+  assert.equal(L.loosens("on", "hidden", false), true);
+  assert.equal(L.loosens(null, "idle", 60), false);
+  assert.equal(L.strictCaps("hard").pass, true);
+  assert.equal(L.strictCaps("on").pass, false);
+  assert.equal(L.strictCaps("hard").bio, false);
+});
+
+test("sensitive work: sync, push, link details and the worker read the same key", () => {
+  assert.match(read("sync.js"), /oros-strict/);
+  assert.match(read("webpush.js"), /oros-strict/);
+  assert.match(read("feeds/fetch.js"), /oros-strict/);
+  assert.match(read("sw.js"), /"oros-strict"/);
+  assert.match(read("shell.js"), /t: "oros-strict"/);
+});
+
+test("sensitive work: the duress record is read defensively", () => {
+  const d = { v: 1, kind: "pin", salt: "c2FsdA==", hash: "aGFzaA==", i: 600000, cloud: true };
+  assert.deepEqual(L.parseDuress(JSON.stringify(d)), d);
+  assert.equal(L.parseDuress(JSON.stringify(Object.assign({}, d, { cloud: "yes" }))).cloud, false, "cloud wipe only on true");
+  assert.equal(L.parseDuress(null), null);
+  assert.equal(L.parseDuress("{"), null);
+  assert.equal(L.parseDuress(JSON.stringify(Object.assign({}, d, { kind: "face" }))), null);
+  assert.equal(L.parseDuress(JSON.stringify(Object.assign({}, d, { i: 1e9 }))), null);
+  assert.equal(L.parseDuress(JSON.stringify(Object.assign({}, d, { hash: "" }))), null);
+});
+
+test("sensitive work: panic lock reaches app frames, duress goes through the reset paths", () => {
+  const sh = read("shell.js");
+  assert.match(sh, /function strictPanicKey/);
+  assert.match(sh, /w\.addEventListener\("keydown", function \(e\) \{\s*strictPanicKey\(e\);/);
+  assert.match(sh, /duress: strictDuress/);
+  assert.match(sh, /scFactoryReset\(btn, "follow"\)/);
+});
+
+test("sensitive work: the dead-man record is read defensively and is due only after its days", () => {
+  const day = 86400000, now = 100 * day;
+  const d = { v: 1, days: 3, alive: now - 2 * day };
+  assert.deepEqual(L.parseDms(JSON.stringify(d)), d);
+  assert.equal(L.parseDms(JSON.stringify(Object.assign({}, d, { days: 5 }))), null, "only the listed days");
+  assert.equal(L.parseDms(JSON.stringify(Object.assign({}, d, { alive: "x" }))), null);
+  assert.equal(L.parseDms(JSON.stringify(Object.assign({}, d, { v: 2 }))), null);
+  assert.equal(L.parseDms("{"), null);
+  assert.equal(L.dmsDue(d, now), false);
+  assert.equal(L.dmsDue(Object.assign({}, d, { alive: now - 3 * day - 1 }), now), true);
+  assert.equal(L.dmsDue(Object.assign({}, d, { alive: now + 9 * day }), now), false, "a clock far ahead never wipes");
+  assert.equal(L.dmsDue(null, now), false);
+  assert.deepEqual(L.DMS_DAYS, [1, 3, 7, 14, 30]);
+});
+
+test("sensitive work: travel erases nothing before the passphrase and the uploads are proven", () => {
+  const sh = read("shell.js");
+  const fn = sh.slice(sh.indexOf("function strictTravel"), sh.indexOf("// Panic lock (STRICT-2)"));
+  assert.ok(fn.indexOf("checkPassphrase") < fn.indexOf("scFactoryReset"));
+  assert.match(fn, /if \(S\.isDirty\(\) \|\| q\) return \{ ok: false, code: "unsynced" \}/);
+  assert.match(sh, /travel: strictTravel/);
+  assert.match(sh, /deadman: function \(\) \{ strictDuress\(false\); \}/);
+});
+
+test("sensitive work: every checkup item has its words in EN, EL and DE and a real place to go", () => {
+  const lk = read("lock.js");
+  const fn = lk.slice(lk.indexOf("function strictAudit"), lk.indexOf("function strictHosts"));
+  const ids = [...fn.matchAll(/id: "([A-Za-z]+)"/g)].map((m) => m[1]);
+  assert.ok(ids.length >= 14, "items listed");
+  assert.match(lk, /audit: strictAudit/);
+  const core = read("settings/core.js"), de = read("i18n/de/settings.js");
+  const cut = core.indexOf("\n    el: {"), en = core.slice(0, cut), el = core.slice(cut);
+  for (const id of ids) {
+    for (const [name, src] of [["en", en], ["el", el], ["de", de]]) {
+      assert.ok(src.includes('"sv.i.' + id + '"'), name + " sv.i." + id);
+    }
+  }
+  for (const st of ["ok", "advice", "info", "check"]) {
+    for (const src of [en, el, de]) assert.ok(src.includes('"sv.st.a.' + st + '"'), "sv.st.a." + st);
+  }
+  const C = require("../settings/core.js");
+  const ss = read("settings/settings.js");
+  const go = ss.slice(ss.indexOf("var AUDIT_GO"), ss.indexOf("function secAudit"));
+  for (const m of go.matchAll(/: "([a-z]+)"/g)) assert.ok(C.isSection(m[1]), "section " + m[1]);
+});
+
+test("sensitive work: widgets and reminders handed to Android carry no titles while the mode is on", () => {
+  const ph = read("phone.js");
+  assert.match(ph, /function strictVeil\(\)/);
+  const rem = ph.slice(ph.indexOf("function pushReminders"), ph.indexOf("function pushReminders") + 2500);
+  assert.ok(rem.indexOf("veilReminders(items)") > 0 && rem.indexOf("veilReminders(items)") < rem.indexOf('t: "reminders"'), "veiled before it is sent");
+  for (const fn of ["function pushToday", "function pushAgenda"]) {
+    const body = ph.slice(ph.indexOf(fn), ph.indexOf(fn) + 1600);
+    assert.ok(body.indexOf("strictVeil()") > 0 && body.indexOf("strictVeil()") < body.indexOf(".then("), fn + " checks before reading any rows");
+  }
+  const vm = require("vm");
+  const src = ph.slice(ph.indexOf("function veilReminders"), ph.indexOf("function veilReminders") + 400);
+  const ctx = { tx: (k, fb) => fb };
+  vm.runInNewContext(src.slice(0, src.indexOf("\n  }\n") + 4) + ";this.v = veilReminders;", ctx);
+  const out = ctx.v([{ id: "a", at: 5, kind: "note", ns: "calendar", title: "Meet source at 9", body: "Café X", link: "calendar:1" }]);
+  assert.equal(out[0].title, "Reminder");
+  assert.equal(JSON.stringify(out).indexOf("source"), -1);
+  assert.equal(out[0].link, "calendar:1");
+});
