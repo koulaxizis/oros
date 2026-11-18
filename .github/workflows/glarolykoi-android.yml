@@ -71,7 +71,8 @@ jobs:
             echo "== $apk"
             "$aapt2" dump permissions "$apk" | tee perms.txt
             if grep -Ei 'AD_ID|com\.google|c2dm' perms.txt; then echo "::error::$apk asks for a Google permission"; found=1; fi
-            extra=$(grep -Eo "permission: [^ ]+" perms.txt | grep -Ev 'android\.permission\.(INTERNET|ACCESS_NETWORK_STATE)$|DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION' || true)
+            # aapt2 prints "uses-permission: name='android.permission.INTERNET'".
+            extra=$(sed -n "s/^uses-permission[^:]*: name='\([^']*\)'.*/\1/p" perms.txt | grep -Ev '^android\.permission\.(INTERNET|ACCESS_NETWORK_STATE)$|DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION$' || true)
             if [ -n "$extra" ]; then echo "::error::$apk asks for more than INTERNET and ACCESS_NETWORK_STATE: $extra"; found=1; fi
             rm -rf dex && mkdir dex && unzip -q -o "$apk" 'classes*.dex' -d dex
             if strings dex/*.dex | grep -E 'Lcom/google/(android/gms|firebase)|Lcom/google/firebase|Landroidx/' | head -5 | grep .; then
