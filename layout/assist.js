@@ -133,6 +133,10 @@
         function envAt(i, now) {
           var e = pp.envs && LY.pro ? LY.pro.envOf(pp.envs[i]) : {};
           e.now = now; e.grey = ctx.grey;
+          // house_pages: the house documents and the book's details
+          e.docs = LY.data().docs;
+          if (LY.pro && LY.pro.metaFor) e.meta = LY.pro.metaFor(cur);
+          if (window.LY_AUTO) e.fill = window.LY_AUTO.fillFields;
           return e;
         }
         var before = JSON.parse(JSON.stringify(cur)), work = JSON.parse(JSON.stringify(cur)), nw = LY.now(), k = 0;
