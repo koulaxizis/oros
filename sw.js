@@ -235,6 +235,7 @@ var PRECACHE_URLS = [
   "./cliphist.js",
   "./continue.js",
   "./textrepl.js",
+  "./localroots.js",
   "./emoji.js",
   "emoji/data.js",
   "./fileopen.js",

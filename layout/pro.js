@@ -165,6 +165,7 @@
       var pg = ins[k++], idx = order.indexOf(pg), f = frameFor(doc, M.sideOf(doc, idx), st.fit, pg);
       var it = { id: nid("it"), m: now, t: "img", pg: pg.id, x: r3(f.x), y: r3(f.y), w: r3(f.w), h: r3(f.h), a: p.a, nm: String(p.nm || "").slice(0, 120),
                  iw: p.iw, ih: p.ih, fit: f.fit, sw: 0, z: (z += 16) };
+      if (p.lc) it.ext = { lc: 1 };   // LOCAL-1: copied in from a local folder
       doc.items.push(it);
       ids.push(it.id);
     });
@@ -639,7 +640,7 @@
       if (it.t !== "img" || !pos[it.pg]) return;
       var ppi = it.a && ppiOf ? Math.round(ppiOf(it)) : 0;
       var state = !it.a ? "empty" : isMissing && isMissing(it.a) ? "missing" : ppi && ppi < (low || 200) ? "low" : "ok";
-      out.push({ id: it.id, page: pos[it.pg], name: it.nm || "", ppi: ppi, state: state, flip: it.ext && it.ext.fl || "" });
+      out.push({ id: it.id, page: pos[it.pg], name: it.nm || "", ppi: ppi, state: state, flip: it.ext && it.ext.fl || "", local: !!(it.ext && it.ext.lc) });
     });
     return out.sort(function (a, b) { return a.page - b.page || M.cmpStr(a.name, b.name); });
   }

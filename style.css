@@ -2204,3 +2204,9 @@ html[data-oros-zoom] #app-menu > * { zoom: var(--oros-zoom, 1); }
 #oros-safe button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 html[data-oros-contrast="high"] #oros-safe { border: 2px solid currentColor; box-shadow: none; }
 @media (max-width: 480px) { #oros-safe { left: 16px; right: 16px; width: auto; } }
+
+/* LOCAL-1: the local-folder bridge is on (localroots.js) */
+#oros-local-bar { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2147483000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  max-width: calc(100vw - 32px); padding: 6px 10px; border-radius: 10px; background: var(--panel-bg, #1d1b16); color: var(--text, #eee); border: 1px solid var(--accent, #d4af37);
+  font: 12px/1.35 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+#oros-local-bar button { font: inherit; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border, #555); background: transparent; color: inherit; cursor: pointer; }

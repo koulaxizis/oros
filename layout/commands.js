@@ -49,7 +49,7 @@
     sort: { t: "enum", v: ["natural", "name", "given"], def: "natural" }, fit: { t: "enum", v: ["trim", "bleed", "margins", "proportional"], def: "trim" },
     at: { t: "enum", v: ["end", "before", "after"], def: "end" }, page: { t: "int", lo: 0, hi: 9999, def: 0 }, side: { t: "enum", v: ["any", "right", "left"], def: "any" } } };
   CATALOG.bleedfill = { kind: "async", args: { pages: { t: "str", max: 60 }, mode: { t: "enum", v: ["smart", "mirror", "stretch"], def: "smart" } } };
-  CATALOG.thumbs = { kind: "out", args: { pages: { t: "str", max: 60 }, spreads: { t: "bool", def: 1 }, dpi: { t: "num", lo: 36, hi: 150, def: 96 } } };
+  CATALOG.thumbs = { kind: "out", args: { pages: { t: "str", max: 60 }, spreads: { t: "bool", def: 1 }, dpi: { t: "num", lo: 36, hi: 150, def: 96 }, out: { t: "str", max: 1030 } } };
   // LY-PRO W2 (items 5, 17, 18, 21): styles made by name (nested
   // styles too), a set of play styles, text frames, a story's new text
   // and the house's front and back pages, padded to a multiple of pages.
@@ -96,11 +96,11 @@
     "\ncreate: a new document (only as the first command, with designs new): title, w and h the trim in u mm|pt|in|px, n pages, facing (facing pages, default true), " +
     "side right|left (the side of the first page), mm the bleed on every side in mm, or bt bb bi bo for top, bottom, inside and outside (-1 = as mm), slug in mm, " +
     "margins t b i o in mm (-1 = 15), ncol columns, gut the gutter in mm, grid a baseline grid step in pt (0 = none), color rgb|cmyk, icc fogra39 (the print profile for cmyk)" +
-    "\nimages: one new page per picture, in order: paths (files on the orOS disk inside Claude's folders, as files_list shows them) or folder (every picture in it), " +
+    "\nimages: one new page per picture, in order: paths (files on the orOS disk inside Claude's folders, as files_list shows them, or local:<root>/<path> in a local folder the owner opened for Claude) or folder (every picture in it), " +
     "sort natural (1_A, 2_a … 10, 27) | name | given (paths as listed), fit trim (the picture fills the trim) | bleed (it fills trim and bleed) | margins | proportional (whole picture, no crop), " +
     "at end | before | after page `page`, side any | right | left (a blank page goes first when the first picture would land on the other side); Layout copies the pictures into the document, the folder is never changed" +
     "\nbleedfill: the full-page pictures on `pages` that stop at the trim get a bleed: mode smart (the texture of paper, wood or cloth carried on) | mirror | stretch; the original picture is kept for undo" +
-    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders); changes nothing" +
+    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders), out local:<root>/<folder> also saves them in a local write folder the owner opened; changes nothing" +
     "\ndefstyle: makes or changes a style by `name`: kind para (paragraph) | char (character), base the style it is based on, font a family as list_fonts shows it, " +
     "size, lead (leading) and track in pt (0 = as it is), align l|c|r|j, sb sa (space before, after) fi (first line indent) li ri (left, right indent) in pt (-1 = as it is), " +
     "bold ital caps under on|off, color #rrggbb, a nested style: nest_cs a character style for the start of each paragraph up to and including the first nest_to (e.g. \":\" for a speaker; nest_cs none removes it), " +
@@ -164,7 +164,7 @@
     if (steps.some(function (st, i) { return st.op === "create" && i > 0; })) return { ok: false, err: "create can only be the first command" };
     var bad = steps.filter(function (st) { return st.op === "images" && !(st.paths && st.paths.length) && !st.folder; });
     if (bad.length) return { ok: false, err: "images needs paths or folder" };
-    if (steps.some(function (st) { return st.op === "images" && (st.paths || []).some(function (p) { return !PRO.normPath(p); }); })) return { ok: false, err: "images: every path is a file on the orOS disk (/internal/… or as files_list shows it)" };
+    if (steps.some(function (st) { return st.op === "images" && (st.paths || []).some(function (p) { return !/^local:/i.test(String(p).trim()) && !PRO.normPath(p); }); })) return { ok: false, err: "images: every path is a file on the orOS disk (/internal/… or as files_list shows it)" };
     if (steps.some(function (st) { return st.op === "retext" && !st.frame && !st.story; })) return { ok: false, err: "retext needs frame or story" };
     return { ok: true, steps: steps };
   }
