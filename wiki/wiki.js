@@ -508,7 +508,32 @@
     hideSugg();
     render();
     if (!opts.keepScroll) $("main").scrollTop = 0;
+    contNote();
   }
+  // CONT-1 W3: tell the shell which article is open (continue.js keeps
+  // the reference and the title only, never the text). On going to an
+  // article, and once at the first tap or key after the start; nothing
+  // before that, so a restored article never hides the other device's.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var a = W && view && view.v === "art" && view.a ? C.byId(data, view.a) : null;
+      if (a && a.t) W.note("wiki", { target: { a: a.id }, title: String(a.t) });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   function back() {
     var v = stack.pop();
     if (!v) return;
@@ -520,6 +545,7 @@
     ed = null;
     view = v;
     render();
+    contNote();
   }
   function openArt(a, extra) {
     if (!a) return;
