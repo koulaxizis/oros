@@ -18,7 +18,7 @@
   // (its key cannot travel) stay on the device.
   // The menu's app list rides in the launcher's "menu" slice.
   var SCOPE = {
-    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device",
+    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device", wpaccent: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
     fopen: "all", keys: "all", multitask: "device", pcfiles: "device", clip: "device", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
@@ -42,6 +42,7 @@
     ["skin", "appearance", "a.skin"],
     ["icons", "appearance", "a.icons"],
     ["wallpaper", "appearance", "a.wallpaper"],
+    ["wpaccent", "appearance", "a.wpacc", "a.skin"],
     ["me", "appearance", "a.me"],
     ["greet", "appearance", "a.greet"],
     ["tips", "appearance", "a.tips"],
@@ -204,6 +205,12 @@
 
       "a.theme": "Theme", "a.dark": "Dark", "a.light": "Light",
       "a.skin": "System colour", "a.wallpaper": "Wallpaper",
+      "a.wpacc": "Accent from wallpaper",
+      "a.wpacc.hint": "Buttons, selections and links take a colour from your wallpaper, adjusted so text stays easy to read in light and dark. The rest of the system colour stays. On this device only.",
+      "a.wpacc.pick": "Colours from the wallpaper",
+      "a.wpacc.n": "Colour {n}",
+      "a.wpacc.none": "This wallpaper has no clear colour, so the system colour stays.",
+      "a.wpacc.high": "High contrast keeps its own colours. The wallpaper colour comes back when you switch it off.",
       "a.icons": "Icons",
       "a.icons.classic": "Classic",
       "a.icons.colourful": "Colourful",
@@ -1317,6 +1324,7 @@
       "find.results": "Search results",
       "w.theme": "dark light mode night day",
       "w.skin": "colour color accent palette skin",
+      "w.wpaccent": "accent wallpaper colour color material you dynamic",
       "w.icons": "icons icon pack tiles look",
       "w.greet": "greeting good morning welcome start hello",
       "w.tips": "tips tip hints first open guide help",
@@ -1499,6 +1507,12 @@
 
       "a.theme": "Θέμα", "a.dark": "Σκοτεινό", "a.light": "Φωτεινό",
       "a.skin": "Χρώμα συστήματος", "a.wallpaper": "Ταπετσαρία",
+      "a.wpacc": "Χρώμα έμφασης από την ταπετσαρία",
+      "a.wpacc.hint": "Τα κουμπιά, οι επιλογές και οι σύνδεσμοι παίρνουν ένα χρώμα από την ταπετσαρία σου, ρυθμισμένο ώστε το κείμενο να διαβάζεται εύκολα σε φωτεινό και σκοτεινό. Τα υπόλοιπα χρώματα του συστήματος μένουν. Μόνο σε αυτή τη συσκευή.",
+      "a.wpacc.pick": "Χρώματα από την ταπετσαρία",
+      "a.wpacc.n": "Χρώμα {n}",
+      "a.wpacc.none": "Αυτή η ταπετσαρία δεν έχει καθαρό χρώμα, οπότε μένει το χρώμα του συστήματος.",
+      "a.wpacc.high": "Η υψηλή αντίθεση κρατά τα δικά της χρώματα. Το χρώμα της ταπετσαρίας επιστρέφει όταν την κλείσεις.",
       "a.icons": "Εικονίδια",
       "a.icons.classic": "Κλασικό",
       "a.icons.colourful": "Πολύχρωμο",
@@ -2611,6 +2625,7 @@
       "find.results": "Αποτελέσματα αναζήτησης",
       "w.theme": "σκοτεινό φωτεινό λειτουργία νύχτα μέρα σκούρο ανοιχτό",
       "w.skin": "χρώμα χρώματα παλέτα απόχρωση",
+      "w.wpaccent": "χρώμα έμφασης ταπετσαρία απόχρωση δυναμικό",
       "w.icons": "εικονίδια πακέτο εικονιδίων όψη",
       "w.greet": "χαιρετισμός καλημέρα καλωσόρισμα εκκίνηση γεια",
       "w.tips": "συμβουλές συμβουλή υποδείξεις πρώτο άνοιγμα οδηγός βοήθεια",

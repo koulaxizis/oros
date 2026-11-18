@@ -500,6 +500,7 @@
   function applyTheme() {
     document.documentElement.setAttribute("data-theme", state.theme);
     if (state.wallpaper === "land" && document.getElementById("oros-desktop")) applyWallpaper();   // land colours follow the theme
+    wpAccApply(); wpAccRefresh();            // WPACC-1: fitted to this theme's backgrounds
   }
 
   // ---------- 5. Skin ----------
@@ -517,6 +518,7 @@
     }
     // the "orOS" palette of the "Mine" wallpaper follows the skin
     if ((state.wallpaper === "custom" || state.wallpaper === "land") && document.getElementById("oros-desktop")) applyWallpaper();
+    wpAccApply(); wpAccRefresh();            // WPACC-1: fitted to this skin's backgrounds
   }
 
   // ---------- 5b. Wallpaper ----------
@@ -539,6 +541,7 @@
     }
     desktop.classList.add("wp-" + state.wallpaper);
     wpLiveSync();
+    wpAccRefresh();                          // WPACC-1
   }
 
   // ---------- 5b'. "Mine" — the Wallpaper Generator wallpaper ----------
@@ -652,6 +655,7 @@
     if (wpShown && wpShown.url) URL.revokeObjectURL(wpShown.url);
     wpShown = { key: rec.key, w: rec.w, h: rec.h, url: url };
     desktop.style.background = wpBg(bgCss, url);
+    wpAccRefresh();                          // WPACC-1: the picture is drawn now
     var th = document.querySelector(".wp-thumb.wp-custom");   // menu open: refresh in place
     if (th && !th.classList.contains("wp-make")) th.style.background = wpBg(bgCss, url);
   }
@@ -862,6 +866,301 @@
     applyWallpaper();
     noteLocalChange();
     renderMenu();
+  }
+
+  // The colour maths of "Accent from wallpaper" (WPACC-1), pure: no
+  // DOM, so tests/wallpaper-accent.test.js runs it as it is.
+  //   swatches(px, n)  px = flat RGBA bytes (a 64×64 drawing or the
+  //                    preset's colour stops); up to n { h, c } (OKLCH
+  //                    hue in degrees, chroma), best first; [] when the
+  //                    picture has no clear colour (grey wallpapers keep
+  //                    the skin accent, WPACC-1 decision 4).
+  //   stops(css)       the colours of a CSS gradient as such pixels.
+  //   palette(sw, theme, bgs)  { accent, hover, soft, ink } for the
+  //                    theme, with the accent at least 4.5:1 against
+  //                    every colour in bgs (--bg, --panel-bg) and the
+  //                    ink at least 4.5:1 on the accent; null if no
+  //                    lightness reaches that.
+  var WpAcc = (function () {
+    var GREY_C = 0.018;          // below this chroma a pixel counts as grey
+    var MIN_SHARE = 0.03;        // colourful pixels needed, of all pixels
+    var BUCKETS = 24;            // 15° hue groups
+    var MIN_APART = 35;          // degrees between two swatches
+    function lin(v) { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+    function unlin(v) { v = v <= 0.0031308 ? 12.92 * v : 1.055 * Math.pow(v, 1 / 2.4) - 0.055; return Math.round(Math.max(0, Math.min(1, v)) * 255); }
+    function toLab(r, g, b) {
+      r = lin(r); g = lin(g); b = lin(b);
+      var l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+      var m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+      var s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+      return [0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+              1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+              0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s];
+    }
+    // OKLCH → linear sRGB (may be out of gamut)
+    function toLin(L, c, h) {
+      var a = c * Math.cos(h * Math.PI / 180), b = c * Math.sin(h * Math.PI / 180);
+      var l = Math.pow(L + 0.3963377774 * a + 0.2158037573 * b, 3);
+      var m = Math.pow(L - 0.1055613458 * a - 0.0638541728 * b, 3);
+      var s = Math.pow(L - 0.0894841775 * a - 1.2914855480 * b, 3);
+      return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+              -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+              -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s];
+    }
+    function inGamut(v) { return v[0] >= -1e-4 && v[0] <= 1.0001 && v[1] >= -1e-4 && v[1] <= 1.0001 && v[2] >= -1e-4 && v[2] <= 1.0001; }
+    // the colour at L, h with the most chroma up to c that sRGB shows
+    function rgbAt(L, c, h) {
+      var v = toLin(L, c, h);
+      while (!inGamut(v) && c > 0) { c = Math.max(0, c - 0.004); v = toLin(L, c, h); }
+      return [unlin(v[0]), unlin(v[1]), unlin(v[2])];
+    }
+    function hex(rgb) { return "#" + rgb.map(function (x) { return (x < 16 ? "0" : "") + x.toString(16); }).join(""); }
+    function parse(s) {
+      s = String(s || "").trim().toLowerCase();
+      var m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/.exec(s);
+      if (m) {
+        var x = m[1].length === 3 ? m[1].replace(/./g, "$&$&") : m[1];
+        return [parseInt(x.slice(0, 2), 16), parseInt(x.slice(2, 4), 16), parseInt(x.slice(4, 6), 16), 1];
+      }
+      m = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+%?))?\s*\)$/.exec(s);
+      if (!m) return null;
+      var a = m[4] == null ? 1 : (/%$/.test(m[4]) ? parseFloat(m[4]) / 100 : parseFloat(m[4]));
+      return [Math.round(+m[1]), Math.round(+m[2]), Math.round(+m[3]), a];
+    }
+    function lum(rgb) { return 0.2126 * lin(rgb[0]) + 0.7152 * lin(rgb[1]) + 0.0722 * lin(rgb[2]); }
+    function contrast(a, b) {
+      var x = lum(a), y = lum(b);
+      return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+    }
+    function stops(css) {
+      var out = [], re = /#[0-9a-f]{6}\b|#[0-9a-f]{3}\b|rgba?\([^)]*\)/gi, m;
+      while ((m = re.exec(String(css || "")))) {
+        var c = parse(m[0]);
+        if (c && c[3] > 0) out.push(c[0], c[1], c[2], Math.round(c[3] * 255));
+      }
+      return out;
+    }
+    function swatches(px, n) {
+      var sum = [], all = 0, col = 0, i, k;
+      for (k = 0; k < BUCKETS; k++) sum.push({ w: 0, a: 0, b: 0 });
+      for (i = 0; i + 3 < px.length; i += 4) {
+        var al = px[i + 3] / 255;
+        if (al <= 0) continue;
+        all += al;
+        var o = toLab(px[i], px[i + 1], px[i + 2]), c = Math.sqrt(o[1] * o[1] + o[2] * o[2]);
+        if (c < GREY_C) continue;
+        col += al;
+        var h = (Math.atan2(o[2], o[1]) * 180 / Math.PI + 360) % 360;
+        var s = sum[Math.floor(h / (360 / BUCKETS)) % BUCKETS], w = al * c;
+        s.w += w; s.a += o[1] * w; s.b += o[2] * w;
+      }
+      if (!all || col / all < MIN_SHARE) return [];
+      var list = sum.filter(function (s) { return s.w > 0; }).map(function (s) {
+        var a = s.a / s.w, b = s.b / s.w;
+        return { h: Math.round((Math.atan2(b, a) * 180 / Math.PI + 360) % 360), c: Math.sqrt(a * a + b * b), w: s.w };
+      }).sort(function (x, y) { return y.w - x.w; });
+      var top = list.length ? list[0].w : 0, out = [];
+      for (i = 0; i < list.length && out.length < (n || 4); i++) {
+        if (list[i].w < top * 0.05) break;
+        var far = out.every(function (o) { var d = Math.abs(o.h - list[i].h) % 360; return Math.min(d, 360 - d) >= MIN_APART; });
+        if (far) out.push({ h: list[i].h, c: Math.round(list[i].c * 1000) / 1000 });
+      }
+      return out;
+    }
+    function palette(sw, theme, bgs) {
+      if (!sw || typeof sw.h !== "number") return null;
+      var dark = theme !== "light", rgbs = (bgs || []).map(parse).filter(Boolean);
+      if (!rgbs.length) rgbs = [dark ? [19, 19, 19] : [250, 250, 250]];
+      var c = Math.max(0.09, Math.min(0.19, (sw.c || 0) * 2.2));
+      var ink1 = [255, 255, 255], ink2 = [20, 20, 20];
+      function ok(rgb) {
+        for (var j = 0; j < rgbs.length; j++) if (contrast(rgb, rgbs[j]) < 4.5) return false;
+        return Math.max(contrast(rgb, ink1), contrast(rgb, ink2)) >= 4.5;
+      }
+      var L = dark ? 0.74 : 0.52, step = dark ? 0.01 : -0.01, rgb = null;
+      for (var t = 0; t < 60; t++, L += step) {
+        if (L <= 0.02 || L >= 0.98) break;
+        var x = rgbAt(L, c, sw.h);
+        if (ok(x)) { rgb = x; break; }
+      }
+      if (!rgb) return null;
+      var hov = rgbAt(Math.max(0.05, Math.min(0.95, L + (dark ? 0.06 : -0.06))), c, sw.h);
+      var ink = contrast(rgb, ink1) >= contrast(rgb, ink2) ? "#ffffff" : "#141414";
+      return {
+        accent: hex(rgb), hover: hex(hov), ink: ink,
+        soft: "rgba(" + rgb.join(", ") + ", " + (dark ? "0.16" : "0.12") + ")"
+      };
+    }
+    return { swatches: swatches, stops: stops, palette: palette, contrast: contrast, parse: parse };
+  })();
+
+  // ---------- 5b'''. Accent from wallpaper (WPACC-1) ----------
+  // Settings › Appearance › System colour: off by default and THIS
+  // device only, never synced (the "Mine" picture is per device too,
+  // WPACC-1 decision 3). On, the four accent variables of the shell
+  // root come from the wallpaper on screen (inline style beats the
+  // skin's block); backgrounds, panels, text and borders stay the
+  // skin's. Apps copy them with inheritPalette, which watchPalette
+  // re-runs when data-skin is set again (as the contrast switch does).
+  // High contrast keeps its own accent (decision 1); a wallpaper with
+  // no clear colour keeps the skin's (decision 4); the person can pick
+  // one of up to four colours found (decision 2). wpAccent() and
+  // window.orosAppTheme stay the SKIN colour, so a drawn wallpaper
+  // never chases its own accent. Colours are read once per wallpaper
+  // (64×64), never per frame; the swatches found are kept here so a
+  // start shows the right colour at once.
+  var WPACC_KEY = "oros-wpaccent";            // { on, pick, key } this device
+  var WPACC_CACHE = "oros-wpaccent-sw";       // { key, sw } the last wallpaper read here
+  var WPACC_VARS = ["--accent", "--accent-hover", "--accent-soft", "--accent-ink"];
+  var WPACC_SIDE = 64;
+  var wpAccSw = wpAccCacheRead();
+  var wpAccGen = 0;
+  var wpAccLast = "";                         // the palette on the root now ("" = the skin's)
+
+  function wpAccPref() {
+    var p = null;
+    try { p = JSON.parse(localStorage.getItem(WPACC_KEY)); } catch (e) {}
+    p = (p && typeof p === "object") ? p : {};
+    var pick = (typeof p.pick === "number" && p.pick >= 0 && p.pick < 4) ? Math.floor(p.pick) : 0;
+    return { on: p.on === true, pick: pick, key: typeof p.key === "string" ? p.key.slice(0, 200) : "" };
+  }
+  function wpAccPrefWrite(p) {
+    try { localStorage.setItem(WPACC_KEY, JSON.stringify(p)); return true; } catch (e) { return false; }
+  }
+  function wpAccCacheRead() {
+    try {
+      var c = JSON.parse(localStorage.getItem(WPACC_CACHE));
+      if (!c || typeof c.key !== "string" || !Array.isArray(c.sw)) return null;
+      var sw = c.sw.filter(function (s) {
+        return s && typeof s.h === "number" && typeof s.c === "number" && isFinite(s.h) && isFinite(s.c);
+      }).slice(0, 4);
+      return { key: c.key, sw: sw };
+    } catch (e) { return null; }
+  }
+
+  // The wallpaper on screen as a key, and how to read its colours
+  // (RGBA bytes, or a promise of them; null = not drawn yet).
+  function wpAccSource() {
+    var pic = wpPic();
+    if (state.wallpaper === "custom" || pic) {
+      if (!wpShown || !wpShown.url) return null;
+      var url = wpShown.url;
+      return { key: "img:" + wpShown.key, read: function () { return wpAccImage(url); } };
+    }
+    if (state.wallpaper === "land") {
+      var cvs = document.querySelectorAll("#wp-land canvas.wp-land-c");
+      var cv = cvs.length ? cvs[cvs.length - 1] : null;
+      if (!cv || !cv.width) return null;
+      return { key: "land:" + JSON.stringify(wpLandNow()) + ":" + state.theme + ":" + state.skin,
+               read: function () { return wpAccPixels(cv); } };
+    }
+    var w = findWallpaper(state.wallpaper);
+    return { key: "wp:" + (w ? w.id : ""), read: function () { return WpAcc.stops(w ? w.css : ""); } };
+  }
+  function wpAccPixels(src) {
+    try {
+      var cv = document.createElement("canvas");
+      cv.width = cv.height = WPACC_SIDE;
+      var ctx = cv.getContext("2d", { willReadFrequently: true });
+      if (!ctx) return null;
+      ctx.drawImage(src, 0, 0, WPACC_SIDE, WPACC_SIDE);
+      var px = ctx.getImageData(0, 0, WPACC_SIDE, WPACC_SIDE).data;
+      cv.width = cv.height = 0;
+      for (var i = 3; i < px.length; i += 4) if (px[i]) return px;
+      return null;                                     // nothing painted yet
+    } catch (e) { return null; }
+  }
+  function wpAccImage(url) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () { resolve(wpAccPixels(img)); };
+      img.onerror = function () { resolve(null); };
+      img.src = url;
+    });
+  }
+
+  // Puts the palette on the shell root (or takes it off). True when
+  // something changed, so the caller lets open apps copy it again.
+  function wpAccApply() {
+    var root = document.documentElement, p = wpAccPref(), pal = null;
+    if (p.on && wpAccSw && wpAccSw.sw.length && !a11yHigh()) {
+      var cs = getComputedStyle(root);
+      pal = WpAcc.palette(wpAccSw.sw[Math.min(p.pick, wpAccSw.sw.length - 1)], state.theme,
+        [cs.getPropertyValue("--bg"), cs.getPropertyValue("--panel-bg")]);
+    }
+    var next = pal ? [pal.accent, pal.hover, pal.soft, pal.ink].join("|") : "";
+    if (next === wpAccLast) return false;
+    wpAccLast = next;
+    var vals = pal ? [pal.accent, pal.hover, pal.soft, pal.ink] : null;
+    WPACC_VARS.forEach(function (v, i) {
+      if (vals) root.style.setProperty(v, vals[i]);
+      else root.style.removeProperty(v);
+    });
+    return true;
+  }
+  function wpAccPoke() {
+    if (wpAccApply()) document.documentElement.setAttribute("data-skin", state.skin);
+  }
+
+  // The wallpaper changed (or is now drawn): read its colours again.
+  function wpAccRefresh() {
+    if (!wpAccPref().on) return;                     // nothing is read while off
+    var gen = ++wpAccGen;
+    setTimeout(function () { wpAccRun(gen, 0); }, 150);
+  }
+  function wpAccRun(gen, tries) {
+    if (gen !== wpAccGen) return;
+    var again = function () {
+      if (tries < 8) { setTimeout(function () { wpAccRun(gen, tries + 1); }, 600); return; }
+      wpAccSw = null;                                // never drawn: the skin accent, not the last wallpaper's
+      wpAccPoke();
+    };
+    var src = wpAccSource();
+    if (!src) { again(); return; }
+    if (wpAccSw && wpAccSw.key === src.key) { wpAccPoke(); settingsNotify(); return; }
+    Promise.resolve(src.read()).then(function (px) {
+      if (gen !== wpAccGen) return;
+      if (!px) { again(); return; }
+      wpAccSw = { key: src.key, sw: WpAcc.swatches(px, 4) };
+      try { localStorage.setItem(WPACC_CACHE, JSON.stringify(wpAccSw)); } catch (e) {}
+      var p = wpAccPref();
+      if (p.key !== src.key) { p.pick = 0; p.key = src.key; wpAccPrefWrite(p); }   // a new wallpaper starts at its best colour
+      wpAccPoke();
+      settingsNotify();
+    }, function () {});
+  }
+
+  // Settings: "wpaccent:on" true/false, "wpaccent:pick" 0-3.
+  function wpAccSetUser(what, value) {
+    var p = wpAccPref();
+    if (what === "on") {
+      if (!!value === p.on) return;
+      p.on = !!value;
+    } else if (what === "pick") {
+      var n = Number(value);
+      if (!(n >= 0 && n < 4) || Math.floor(n) !== n || n === p.pick) return;
+      p.pick = n;
+    } else return;
+    if (!wpAccPrefWrite(p)) { scToast("err", window.t("a11y.savefail")); return; }
+    wpAccPoke();
+    if (p.on) wpAccRefresh();
+    settingsNotify();
+  }
+  // For Settings: the colours to pick from, as they look in this theme.
+  function wpAccSnapshot() {
+    if (SOLO) return null;
+    var p = wpAccPref(), sw = [], root = document.documentElement;
+    var ready = !!(p.on && wpAccSw);
+    if (ready) {
+      var cs = getComputedStyle(root);
+      var bgs = [cs.getPropertyValue("--bg"), cs.getPropertyValue("--panel-bg")];
+      wpAccSw.sw.forEach(function (s) {
+        var pal = WpAcc.palette(s, state.theme, bgs);
+        if (pal) sw.push({ color: pal.accent });
+      });
+    }
+    return { on: p.on, pick: Math.min(p.pick, Math.max(0, sw.length - 1)), sw: sw,
+             none: ready && !sw.length, high: a11yHigh() };
   }
 
   // Public API for the Wallpaper Generator app (same origin iframe).
@@ -1087,7 +1386,10 @@
     appFrames().forEach(a11yFrame);
     // Open apps copy the palette again (their watchPalette observes
     // data-skin; setting the same value still notifies).
-    if (a11yWasHigh !== null && hi !== a11yWasHigh) root.setAttribute("data-skin", state.skin);
+    // WPACC-1: high contrast keeps its own accent, so the wallpaper's
+    // goes off and comes back with it.
+    var accCh = wpAccApply();
+    if ((a11yWasHigh !== null && hi !== a11yWasHigh) || accCh) root.setAttribute("data-skin", state.skin);
     a11yWasHigh = hi;
   }
   function a11ySetUser(name, value) {
@@ -12150,6 +12452,7 @@
       dock: settingsDock(),
       seasonal: settingsSeasonal(),
       wxdesk: (!SOLO && window.orosWxDesk) ? window.orosWxDesk.snapshot() : null,   // WX-DESK-1
+      wpaccent: wpAccSnapshot(),                                                     // WPACC-1, this device
       me: { name: meName(), max: ME_MAX },
       greet: SOLO ? null : { on: greetOn() },
       tips: SOLO ? null : { on: !!tipsRead().on },
@@ -12233,6 +12536,8 @@
       case "wpland:motion": wpLandNewShape({ motion: value ? 1 : 0 }); settingsNotify(); return;
       case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
       case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
+      case "wpaccent:on":   wpAccSetUser("on", value); return;      // WPACC-1, this device
+      case "wpaccent:pick": wpAccSetUser("pick", value); return;
     }
     if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
       var L = settingsLauncher();
