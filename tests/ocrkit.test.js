@@ -108,3 +108,26 @@ test("Files loads the kit only on the Text press, never in its page", () => {
   ["pv.text", "pv.textTip", "pv.textFail"].forEach((k) => assert.match(read("i18n/de/files.js"), new RegExp('"' + k.replace(".", "\\.") + '"')));
   assert.match(read("i18n/de/files.js"), /"ph\.text"/);
 });
+
+test("Capture and Photo Lab: Text loads the kit on use; strings in EN, EL and DE", () => {
+  const cap = read("capture/app.js"), capHtml = read("capture/index.html");
+  assert.match(capHtml, /id="b-text"[^>]*data-i18n="btn\.text"/);
+  assert.doesNotMatch(capHtml, /ocrkit/);
+  assert.match(cap, /"\.\.\/ocrkit\.js"/);
+  assert.match(cap, /region: region/);
+  ["btn.text", "err.text"].forEach((k) => {
+    assert.equal((cap.match(new RegExp('"' + k.replace(".", "\\.") + '":', "g")) || []).length, 2, k);
+    assert.match(read("i18n/de/capture.js"), new RegExp('"' + k.replace(".", "\\.") + '"'));
+  });
+  const pan = read("photolab/panels.js"), str = read("photolab/strings.js");
+  assert.match(pan, /\{ id: "ocrText", run: copyTextOfPicture, on: has \}/);
+  assert.match(pan, /K\.open\(\{ canvas: c/);
+  assert.doesNotMatch(read("photolab/index.html"), /ocrkit/);
+  ["menu.ocrText", "msg.ocrFail"].forEach((k) => {
+    assert.equal((str.match(new RegExp('"' + k.replace(".", "\\.") + '":', "g")) || []).length, 2, k);
+    assert.match(read("i18n/de/photolab.js"), new RegExp('"' + k.replace(".", "\\.") + '"'));
+  });
+  const ui = read("ocrkit-ui.js");
+  assert.match(ui, /o\.region/);
+  assert.match(ui, /if \(stage && e\.key !== "Escape"\) e\.stopPropagation\(\)/);
+});

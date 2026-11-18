@@ -3,8 +3,12 @@
 // ------------------------------------------------------------
 // Loaded by ocrkit.js (OrosOcr.open) on the first press of a Text
 // button, with ocrkit-ui.css. Exposes window.OrosOcrUI.open(o, K):
-//   o.el       the <img> or <canvas> on screen (required)
-//   o.source   what is read (default o.el): <img>, <canvas>, Blob
+//   o.el       the <img> or <canvas> on screen, or
+//   o.canvas   a picture to show in a stage of its own (full window,
+//              the app's keys held back while it is open; Photo Lab)
+//   o.source   what is read (default o.el / o.canvas): <img>, <canvas>, Blob
+//   o.region   { x, y, w, h } fractions of the picture that o.source
+//              shows (Capture's crop); the marks go inside it
 //   o.key      a name for the picture: what was found is kept for
 //              this page's session, so pressing Text again is instant
 //   o.title    the item's name for Send to…
@@ -110,7 +114,25 @@
 
   function open(o, K) {
     if (active) active.close();
-    var img = o.el;
+    var img = o.el, stage = null;
+    if (!img && o.canvas) {
+      stage = el("div", "ocx-stage");
+      stage.setAttribute("role", "dialog");
+      stage.setAttribute("aria-modal", "true");
+      stage.setAttribute("aria-label", T("label"));
+      var frame = el("div", "ocx-sframe");
+      img = o.canvas;
+      img.classList.add("ocx-simg");
+      frame.appendChild(img);
+      stage.appendChild(frame);
+      ["pointerdown", "pointermove", "pointerup", "click", "dblclick", "wheel", "contextmenu"].forEach(function (ev) {
+        stage.addEventListener(ev, function (e) { e.stopPropagation(); });
+      });
+      stage.tabIndex = -1;
+      doc.body.appendChild(stage);
+      try { stage.focus({ preventScroll: true }); } catch (e) {}
+      if (!o.source) o.source = img;
+    }
     if (!img || !img.parentNode) return null;
     var host = img.parentNode;
     var hostMarked = false;
@@ -174,8 +196,10 @@
         if (fitMode === "scale-down") s = Math.min(1, s);
         dw = n[0] * s; dh = n[1] * s;
       }
-      box.style.left = (W - dw) / 2 + "px";
-      box.style.top = (H - dh) / 2 + "px";
+      var bx = (W - dw) / 2, by = (H - dh) / 2, R = o.region;
+      if (R && R.w > 0 && R.h > 0) { bx += R.x * dw; by += R.y * dh; dw *= R.w; dh *= R.h; }
+      box.style.left = bx + "px";
+      box.style.top = by + "px";
       box.style.width = dw + "px";
       box.style.height = dh + "px";
     }
@@ -372,6 +396,8 @@
     function onKey(e) {
       if (closed) return;
       var inArea = e.target === area;
+      // the stage covers the app: none of its shortcuts act behind it
+      if (stage && e.key !== "Escape") e.stopPropagation();
       if (e.key === "Escape") {
         e.preventDefault(); e.stopPropagation();
         if (e.stopImmediatePropagation) e.stopImmediatePropagation();
@@ -397,6 +423,7 @@
       try { if (ro) ro.disconnect(); if (mo) mo.disconnect(); } catch (e) {}
       layer.remove();
       dock.remove();
+      if (stage) stage.remove();
       if (hostMarked) host.classList.remove("ocx-host");
       if (active === ctl) active = null;
       if (typeof o.onClose === "function") try { o.onClose(); } catch (e) {}

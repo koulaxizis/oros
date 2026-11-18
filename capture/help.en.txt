@@ -13,6 +13,7 @@ Take a picture of your whole screen, one window or a browser tab, crop it, and k
 - `Send to an app…` saves it the same way, then lets you pick the app: Photo Lab, Transfer, Mail, Layout…
 - With `Open in Photo Lab after saving` switched on, the picture opens in [Photo Lab](app:photolab) to draw on it or add text.
 - `Copy` puts the picture on the clipboard, to paste it in another app.
+- `Copy text` reads the text in the picture (or in the part you cropped) on this device and marks the words on it: select them by dragging, or tap a line, then `Copy`, `Copy all`, `Text` (all of it in a box you can correct) or `Send to…`. The first time orOS asks before it downloads its text recognition engine (about 7 MB, Greek and English, the same one Files and Scanner & PDF use); after that it works offline. Esc closes it.
 - `Take another` goes back to the live view; `Discard` drops the picture.
 
 ## Record a video
