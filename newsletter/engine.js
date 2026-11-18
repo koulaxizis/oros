@@ -537,6 +537,7 @@
         var cur = C.list(d, listId);
         if (!cur || !cur.form) return false;
         var y = copy(cur); y.form = null;
+        if (!y.ocAsk) y.ocAsk = Date.now();     // MV-1: turned off on purpose, so no one-click offer
         put(d, "lists", y);
       });
     });

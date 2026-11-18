@@ -93,6 +93,9 @@
     // token). Proton isn't made for bulk mail and limits by reputation:
     // slow defaults the user may raise (W4 2026-11).
     proton:     { host: "smtp.protonmail.ch", port: 587, rate: 15, cap: 150 },
+    // The mail of a web hosting plan (cPanel, Plesk): mail.<domain>, the
+    // host's own limits (usually per hour), so slow defaults (MV-1 2026-11).
+    hosting:    { host: "", port: 465, rate: 10, cap: 300 },
     other:      { host: "", port: 587, rate: 6, cap: 450 }
   };
   var MAIL_DEFAULTS = { rate: 6, cap: 450 };   // an ordinary mailbox (Mail account)
@@ -205,6 +208,61 @@
     return o;
   }
   function isApi(ch) { return !!ch && ch.kind === "smtp" && ch.via === "api"; }
+  // The host the "hosting" preset suggests: mail.<domain> of the user name
+  // (hosting plans log in with the full address) or else of a From.
+  function hostingHost(user, from) {
+    var a = [user, from].map(function (v) { return String(v || "").trim().toLowerCase().split("@"); })
+      .filter(function (p) { return p.length === 2 && validHost(p[1]) && p[1].indexOf(".") > 0; })[0];
+    return a ? "mail." + a[1] : "";
+  }
+  // ---------- moving from another platform (MV-1) ----------
+  // a sending account + domain, a test, import, linked group, one issue
+  // from orOS, old forms off, export archived, old account closed
+  var MOVE_STEPS = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  function normMove(v) {
+    if (typeof v !== "string") return "";
+    return MOVE_STEPS.filter(function (k) { return v.indexOf(k) >= 0; }).join("");
+  }
+  function moveTick(l, step, on) {
+    var cur = normMove(l && l.mv);
+    if (MOVE_STEPS.indexOf(step) < 0) return cur;
+    return normMove(on ? cur + step : cur.split(step).join(""));
+  }
+  var PREV_KEYS = ["pvOpen", "pvClick", "pvUnsub"];
+  function pct(v) {
+    if (typeof v === "string" && v.trim()) v = +v.trim().replace(",", ".").replace(/%$/, "");
+    if (typeof v !== "number" || !isFinite(v) || v < 0 || v > 100) return null;
+    return Math.round(v * 10) / 10;
+  }
+  // The previous platform's figures of a list, or null when none.
+  function prevFigures(l) {
+    if (!l) return null;
+    var o = { open: l.pvOpen, click: l.pvClick, unsub: l.pvUnsub, note: l.pvNote || "" };
+    return PREV_KEYS.some(function (k) { return typeof l[k] === "number"; }) || o.note ? o : null;
+  }
+  // Lists the one-time one-click offer is for: no relay registration yet
+  // and the offer never answered.
+  function oneClickOffers(d) {
+    return live(d.lists).filter(function (l) { return !l.form && !l.ocAsk; });
+  }
+  // Has the list sent an issue from orOS yet (imported past issues don't count)?
+  function firstSend(d, x) {
+    return !live(d.issues).some(function (y) {
+      return y.id !== x.id && y.list === x.list && !y.imp && (y.st === "sent" || y.st === "sending" || y.st === "paused");
+    });
+  }
+  // The domain check of the From (DNS-over-HTTPS) as findings: rec =
+  // { spf, dmarc, dkim (strings, "" = none), fail (couldn't read) } or
+  // null (not looked at: a public mailbox, or no From).
+  var DNS_TTL = DAY;
+  function domFindings(rec) {
+    if (!rec) return [];
+    if (rec.fail) return [{ lvl: "warn", k: "domUnread" }];
+    var out = [];
+    if (!rec.spf) out.push({ lvl: "warn", k: "noSpf" });
+    if (!rec.dmarc) out.push({ lvl: "warn", k: "noDmarc" });
+    return out;
+  }
   function normList(x) {
     var o = {
       id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name),
@@ -237,6 +295,16 @@
     // "issue sent" notice (N3): an https address and the key it is signed with
     var hu = typeof x.hookUrl === "string" && x.hookUrl.length <= 500 && /^https:\/\/[^\s<>"']+$/i.test(x.hookUrl) ? x.hookUrl : "";
     if (hu && typeof x.hookKey === "string" && SHOP_KEY.test(x.hookKey)) { o.hookUrl = hu; o.hookKey = x.hookKey; }
+    // MV-1 (2026-11, moving from another platform): when the one-time
+    // one-click offer was answered, the ticked steps of the moving
+    // checklist (letters of MOVE_STEPS), the previous platform's figures
+    // (percent, one decimal) and a note. Scalars, so an older orOS keeps them.
+    if (nat(x.ocAsk)) o.ocAsk = nat(x.ocAsk);
+    var mv = normMove(x.mv);
+    if (mv) o.mv = mv;
+    PREV_KEYS.forEach(function (k) { var v = pct(x[k]); if (v !== null) o[k] = v; });
+    var pn = oneLine(x.pvNote, 200);
+    if (pn) o.pvNote = pn;
     return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
@@ -332,7 +400,8 @@
                     "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec",
                     "code", "dt", "amt", "exp", "min", "made"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
-                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt", "buyAt", "buyCur", "buyAcct", "hookUrl", "hookKey"];
+                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt", "buyAt", "buyCur", "buyAcct", "hookUrl", "hookKey",
+                   "ocAsk", "mv", "pvOpen", "pvClick", "pvUnsub", "pvNote"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -1691,7 +1760,8 @@
     L.push("END:VEVENT", "END:VCALENDAR");
     return L.map(fold).join("\r\n") + "\r\n";
   }
-  // info: { imgBytes, chan (resolved or null), inbox (bool), aud (number) }
+  // info: { imgBytes, chan (resolved or null), inbox (bool), aud (number), relay (bool),
+  //         dom (the From domain check, see domFindings) }
   // → [{ lvl: "err"|"warn", k }]
   function preflight(d, x, info) {
     info = info || {};
@@ -1756,6 +1826,8 @@
     if (!l || !l.addr) add("err", "noAddr");
     // info.relay: the app can turn on one-click unsubscribe (the relay's /nl)
     if (info.relay && l && !l.form) add("warn", "noOneClick");
+    // MV-1: the From domain's SPF / DMARC (never an error: DNS may just be unreadable)
+    domFindings(info.dom).forEach(function (r) { add(r.lvl, r.k); });
     if (!l || !l.from) add("err", "noFrom");
     if (!info.chan) add("err", "noChan");
     // Brevo's API can't carry pictures inside a message (no Content-ID)
@@ -2067,6 +2139,8 @@
     csvCell: csvCell, subsCsv: subsCsv, personData: personData,
     preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
     toBackup: toBackup, fromBackup: fromBackup,
+    hostingHost: hostingHost, MOVE_STEPS: MOVE_STEPS, normMove: normMove, moveTick: moveTick, pct: pct, PREV_KEYS: PREV_KEYS, prevFigures: prevFigures,
+    oneClickOffers: oneClickOffers, firstSend: firstSend, domFindings: domFindings, DNS_TTL: DNS_TTL,
     normForm: normForm, formPub: formPub, unsubPath: unsubPath, formHtml: formHtml,
     API_PROVS: API_PROVS, API_BATCH: API_BATCH, isApi: isApi, nextSubs: nextSubs,
     apiCheckReq: apiCheckReq, apiEventReqs: apiEventReqs, apiEvents: apiEvents, apiOutcome: apiOutcome,
