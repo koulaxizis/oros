@@ -61,7 +61,8 @@ def wait_for(pred, what, seconds=120):
     while time.time() < end:
         root = dump()
         got = pred(root)
-        if got:
+        # An Element without children is falsy, so test for None/False.
+        if got is not None and got is not False:
             return root, got
         time.sleep(2)
     path = shot("timeout")
