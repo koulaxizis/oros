@@ -79,7 +79,10 @@
   CATALOG.masterpages = { kind: "doc", args: { pages: RANGE, master: { t: "str", max: 60 } } };
   CATALOG.defmaster = { kind: "doc", args: { name: { t: "str", max: 60, req: 1 }, prefix: { t: "str", max: 8 }, base: { t: "str", max: 60 } } };
   CATALOG.pagesize = { kind: "doc", args: { pages: RANGE, w: MMv(0, 5080, 0), h: MMv(0, 5080, 0) } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize"];
+  // LY-PRO W4 (items 9, 10): picture frames
+  CATALOG.picture = { kind: "doc", args: { frame: { t: "str", max: 400 }, pages: { t: "str", max: 60 },
+    flip: { t: "enum", v: ["", "none", "h", "v", "hv"], def: "" }, corner: MMv(-1, 500, -1), fit: { t: "enum", v: ["", "fit", "fill", "frame"], def: "" } } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -115,7 +118,8 @@
     "\nduppages: copies of the pages `pages` (with their own copy of the text) go after the last of them" +
     "\nmasterpages: the pages `pages` (all, odd, even or 3-10) get the master `master` by name (\"\" = none)" +
     "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)" +
-    "\npagesize: the pages `pages` get their own trim w × h in mm (a fold-out, a smaller insert; at least 13 mm); w 0 and h 0 = the document's size again; the PDF, the pictures and the editor follow";
+    "\npagesize: the pages `pages` get their own trim w × h in mm (a fold-out, a smaller insert; at least 13 mm); w 0 and h 0 = the document's size again; the PDF, the pictures and the editor follow" +
+    "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width)";
 
   // ---------- 1. Checking ----------
   function given(v) { return v !== null && v !== undefined && v !== ""; }
@@ -213,6 +217,11 @@
       return PRO.masterPages(doc, S.pageTest(st.pages), msx ? msx.id : "", now);
     }
     if (st.op === "defmaster") return PRO.defMaster(doc, st, now, env.idf);
+    if (st.op === "picture") {
+      var fids = st.frame ? String(st.frame).split(/[\s,]+/).filter(Boolean) : [];
+      if (!fids.length && !st.pages) return 0;
+      return PRO.setPicture(doc, fids, st.pages ? S.pageTest(st.pages) : null, { flip: st.flip, corner: st.corner >= 0 ? st.corner * PT_PER_MM : -1, fit: st.fit }, now);
+    }
     if (st.op === "pagesize") return PRO.setPageSize(doc, S.pageTest(st.pages), (st.w || 0) * PT_PER_MM, (st.h || 0) * PT_PER_MM, now);
     if (!hasEngine()) {
       if (st.op === "fit") { if (env.notes && env.notes.indexOf("fitLater") < 0) env.notes.push("fitLater"); return 1; }

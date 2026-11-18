@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.65.00
+- **Pictures in Layout: mirror, corners and Links.** A picture can be mirrored left to right or top to bottom in its frame, and `Frame to picture` gives the frame the picture's proportions. `Links (pictures)…` in the More menu lists every picture with its page, its resolution and whether its file is here, with `Go to` and `Replace picture…`. The PDF, page pictures and data merge show the mirrored picture too. The Assistant and Claude (through orOS Gate) can mirror, round and fit picture frames by frame or by page.
+
 ## Version 7.64.00
 - **Page sizes and creep in Layout.** A page can have its own size, for a fold-out or a smaller insert: `Page size…` under the page list, for this page or a range. The editor, the pictures, the page pictures and the PDF follow it. For a saddle-stitched book, `Creep in mm` in the PDF export moves the inner pages' content towards the spine so nothing is cut after folding. The Assistant and Claude (through orOS Gate) can do both.
 
