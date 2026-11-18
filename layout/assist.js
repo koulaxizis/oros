@@ -89,24 +89,44 @@
   }
   function title(d) { return d.name || t("doc.untitled"); }
 
-  var busy = false, WATCH_MS = 60000;
-  var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1 };
+  // busy: the run now (Chris 2026-11-18: name the command that holds
+  // Layout, and let it be stopped): { ops, since, ctl, stop }
+  var busy = false, WATCH_MS = 60000, run = null;
+  function holder() {
+    if (!run) return null;
+    return { ops: run.ops.slice(0, 8), since: run.since, at: run.ctl.at ? String(run.ctl.at).slice(0, 200) : "", idle: Math.round((Date.now() - run.ctl.last) / 1000) };
+  }
+  // Stops the run now: nothing more is changed, what it changed so far stays (with Undo).
+  function stopRun(by) { if (run && run.stop) run.stop(by); }
+  var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1, addfont: 1 };
+  // defstyle with a font Layout must look up (the disk, Fontsource)
+  function slowStep(st) { return PRO_ASYNC[st.op] || (st.op === "defstyle" && st.font && window.LayoutPro && !window.LayoutPro.fontFor({ setup: {} }, st.font)); }
   function edit(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "";
     var chk = C.check(rq && rq.steps);
+    // cancel (alone): stops the run that holds Layout
+    if (chk.ok && chk.steps[0].op === "cancel") {
+      var was = holder();
+      if (was) stopRun("Claude");
+      back(key, { ok: 1, n: 0, d: 0, per: [], cut: 0, notes: [was ? "cancelled: " + was.ops.join(", ") + (was.at ? " (it was waiting for " + was.at + ")" : "") : "nothing was running"], tok: "" });
+      return;
+    }
     // LY-PRO W1: create makes the document first (designs new)
     var fresh = chk.ok && chk.steps[0].op === "create";
     var ids = rq && Array.isArray(rq.docs) ? rq.docs.filter(function (id) { return typeof id === "string" && LY.findDoc(id); }).slice(0, 500) : [];
     if (!chk.ok || (!ids.length && !fresh) || busy) {
-      LY.toast(t("as.bad"));
-      back(key, { failed: 1, why: !chk.ok ? "bad" : busy ? "busy" : "gone" });
+      if (busy) LY.toast(t("as.busy"), t("btn.stop"), function () { stopRun("owner"); });
+      else LY.toast(t("as.bad"));
+      var no = { failed: 1, why: !chk.ok ? "bad" : busy ? "busy" : "gone" };
+      if (busy) no.holder = holder();
+      back(key, no);
       return;
     }
     busy = true;
     LY.flushStory && LY.flushStory();
     var steps = chk.steps, notes = [], snaps = [], per = [], total = 0, saved = [], made = 0, why = "";
     var ctl = { signal: { aborted: false } };
-    var slow = steps.some(function (st) { return PRO_ASYNC[st.op]; });
+    var slow = steps.some(slowStep);
     if (fresh) {
       var nd = window.LayoutPro.makeDoc(steps[0], LY.now());
       if (!LY.addNewDoc || !LY.addNewDoc(nd)) { busy = false; back(key, { failed: 1, why: "error" }); return; }
@@ -115,15 +135,24 @@
       steps = steps.slice(1);
       snaps.push({ id: nd.id, made: 1 });
     }
-    if (slow) LY.toast(t("as.working"));
+    var stopToast = function () { stopRun("owner"); };
+    if (slow) LY.toast(t("as.working"), t("btn.stop"), stopToast);
     // LOCAL-1 bug (2026-11-18): a step that never answers (a local file,
     // a picture that does not decode) may not keep Layout busy for ever.
     // 60 s without progress stops the run; nothing more is changed and
     // the report says "timeout" with the file it waited for.
-    var last = Date.now(), ended = false;
-    ctl.tick = function (at) { last = Date.now(); if (at) ctl.at = at; };
+    var ended = false;
+    ctl.last = Date.now();
+    ctl.tick = function (at) { ctl.last = Date.now(); if (at) ctl.at = at; };
+    run = { ops: chk.steps.map(function (st) { return st.op; }), since: Date.now(), ctl: ctl, stop: function (by) {
+      if (ended) return;
+      ctl.signal.aborted = true;
+      why = "cancelled";
+      notes.push("cancelled by " + by + (ctl.at ? " (it was waiting for " + String(ctl.at).slice(0, 200) + ")" : ""));
+      finish({ why: "cancelled" });
+    } };
     var dog = setInterval(function () {
-      if (ended || Date.now() - last < WATCH_MS) return;
+      if (ended || Date.now() - ctl.last < WATCH_MS) return;
       ctl.signal.aborted = true;
       why = "timeout";
       notes.push("timeout: no answer for " + Math.round(WATCH_MS / 1000) + " s" + (ctl.at ? " (" + String(ctl.at).slice(0, 200) + ")" : ""));
@@ -181,6 +210,7 @@
       ended = true;
       clearInterval(dog);
       busy = false;
+      run = null;
       snaps.forEach(function (x) { if (x.made && !x.fp) x.fp = fp(LY.findDoc(x.id)); });
       var rec = snaps.length ? { tok: newTok(), at: Date.now(), docs: snaps } : null;
       return (rec ? put(rec) : Promise.resolve()).then(function () {
@@ -219,5 +249,5 @@
     });
   }
 
-  LY.assist = { edit: edit, undo: undo, fp: fp };
+  LY.assist = { edit: edit, undo: undo, fp: fp, holder: holder, stop: stopRun };
 })();

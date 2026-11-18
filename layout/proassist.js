@@ -235,7 +235,7 @@
   }
   // envs[i] = { base, i, pics?, fills? }; envOf(envs[i]) gives a fresh
   // id sequence each time, so every copy gets the same new ids.
-  function envOf(e) { return e ? Object.assign({}, e, { idf: idfFor(e.base, e.i) }) : {}; }
+  function envOf(e) { return e ? Object.assign({}, e, { idf: idfFor(e.base, e.i), prepared: 1 }) : {}; }
   function prepare(doc, steps, ctx, notes, ctl) {
     var base = newBase(), envs = steps.map(function (st, i) { return { base: base, i: i }; });
     var scratch = JSON.parse(JSON.stringify(doc)), saved = [];
@@ -265,6 +265,13 @@
           list.forEach(function (it) { c3 = c3.then(function () { if (ctl && ctl.tick) ctl.tick(); return fillOne(it, st.mode).then(function (f) { if (f) fills[it.id] = f; }); }); });
           return c3.then(function () { env.fills = fills; LY_DOC_FOR_FILL = null; }, function (e) { LY_DOC_FOR_FILL = null; throw e; });
         }
+        if (st.op === "addfont") return addFont(st, notes, ctl || {}).then(function (e) { env.font = e; });
+        if (st.op === "defstyle" && st.font && !PRO.fontFor(scratch, st.font)) {
+          if (ctl && ctl.tick) ctl.tick(st.font);
+          return lib().then(function (l) { return LY.F.match(st.font, l); }).then(function (e) {
+            if (e) { env.fonts = {}; env.fonts[PRO.fontKey(st.font)] = e; }
+          }, function () {});
+        }
         if (st.op === "thumbs") {
           TICK = ctl && ctl.tick ? function () { ctl.tick(); } : null;
           return thumbs(scratch, st).then(function (list) { TICK = null; saved = saved.concat(list); }, function (e) { TICK = null; throw e; });
@@ -275,6 +282,68 @@
       });
     });
     return chain.then(function () { return { envs: envs, saved: saved }; });
+  }
+
+  // ---------- fonts (Chris 2026-11-18: "fonts_add") ----------
+  // addfont: a Fontsource family (its files kept in the cache for
+  // offline use) or a font file from a local folder (into the owner's
+  // fonts, /internal/Fonts) goes into the owner's collection `collection`
+  // (the synced "fonts" slice, so list_fonts shows it); the document
+  // lists it in C.apply. → Promise of the entry, or null with a note.
+  var libP = null;
+  function lib() {
+    if (!libP) libP = LY.F.library({ all: true }).then(null, function () { libP = null; return []; });
+    return libP;
+  }
+  function intoCollection(e, name) {
+    var CB = LY.fonts && LY.fonts.cols, F = LY.F;
+    if (!CB) return false;
+    var lang = LY.LANG || "en";
+    CB.edit(function (d) {
+      var r = F.cols.add(d, name || "Claude", Date.now(), Math.random(), lang);
+      if (!r.id) return d;
+      return F.cols.set(r.d, r.id, { id: e.id, name: e.name, fb: e.fb }, 1, Date.now());
+    });
+    return true;
+  }
+  var VAR_NAME = { r: "regular", b: "bold", i: "italic", bi: "bold italic" };
+  function addFont(st, notes, ctl) {
+    var F = LY.F, col = st.collection || "Claude";
+    function said(e, extra) { notes.push("fontAdded: " + e.name + " in the collection " + col + (extra ? ", " + extra : "")); }
+    if (st.source === "local") {
+      var name = String(st.path).replace(/\\/g, "/").split("/").pop();
+      if (ctl.tick) ctl.tick(st.path);
+      return readBytes(st.path).then(function (blob) {
+        if (ctl.tick) ctl.tick();
+        return F.importFile(new File([blob], name, { type: blob.type || "font/ttf" }));
+      }, function (e) { throw { why: localWhy(e), path: st.path }; }).then(function (r) {
+        if (!r || r.err) { notes.push("fontBad: " + name + " is not a font file orOS can use (" + ((r && r.err) || "type") + ")"); return null; }
+        libP = null;
+        return lib().then(function (l) {
+          var k = PRO.fontKey(r.family), fam = F.families(l).filter(function (f) { return PRO.fontKey(f.name) === k; })[0];
+          if (!fam) { notes.push("fontBad: " + name); return null; }
+          intoCollection(fam, col);
+          said(fam, "styles " + ["r", "b", "i", "bi"].filter(function (v) { return fam[v]; }).map(function (v) { return VAR_NAME[v]; }).join(", "));
+          return fam;
+        });
+      });
+    }
+    if (ctl.tick) ctl.tick(st.family);
+    return F.catalog().then(function (cat) {
+      if (!cat.length) { notes.push("fontsOffline: the Fontsource list could not be read (offline?)"); return null; }
+      var k = PRO.fontKey(st.family), id = F.fsIdOf(st.family);
+      var c = cat.filter(function (x) { return x.id === id; })[0] || cat.filter(function (x) { return PRO.fontKey(x.family) === k; })[0];
+      if (!c) { notes.push("noFont: " + String(st.family).slice(0, 60) + " is not a Fontsource family (names as fontsource.org shows them)"); return null; }
+      var want = C.fontVars(st.styles), have = c.vars || [], vars = want.length ? want.filter(function (v) { return have.indexOf(v) >= 0; }) : have.slice();
+      if (want.length > vars.length) notes.push("fontStyles: " + c.family + " has only " + have.map(function (v) { return VAR_NAME[v]; }).join(", "));
+      var e = { id: c.id, name: c.family, fb: c.cat };
+      return F.cols.keepOffline([{ id: c.id, vars: vars.length ? vars : ["r"] }], function () { if (ctl.tick) ctl.tick(); }).then(function (res) {
+        if (res && res.failed) notes.push("fontFiles: " + res.failed + " files of " + c.family + " could not be fetched now; they load when the device is online");
+        intoCollection(e, col);
+        said(e, "Greek " + (c.greek ? "full" : "none") + ", polytonic " + (c.poly ? "full" : "none") + ", licence " + (c.lic || "open"));
+        return e;
+      });
+    });
   }
 
   // The book's details for house_pages: the Publishing app's title of

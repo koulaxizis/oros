@@ -369,8 +369,38 @@
   // defstyle: a paragraph (kind para) or character style made or
   // changed by name. Lengths in pt; nest_cs + nest_to: a nested style.
   // → number of styles made or changed (0 when nothing differs).
-  var PS_SET = { font: 1, size: 1, lead: 1, align: 1, track: 1, sb: 1, sa: 1, fi: 1, li: 1, ri: 1 };
-  function defStyle(doc, st, now, idf) {
+  // A font by the name list_fonts shows (Chris 2026-11-18: "defstyle
+  // font Carlito"): the built-in families by key or name, a family the
+  // document lists (setup.ext.fonts), or one Layout found before the
+  // run (found: { key: entry }, from the disk or Fontsource, as
+  // fonts.js match()). → { font, fam?, entry? } or null.
+  var BUILT_FONT = { serif: "serif", sans: "sans", mono: "mono", notoserif: "serif", notosans: "sans", notosansmono: "mono" };
+  var FAM_ID = /^(fs|uf)_[a-z0-9]+(_[a-z0-9]+)*$/;
+  function fontKey(name) { return fold(name).replace(/[^a-z0-9]/g, ""); }
+  function fontFor(doc, name, found) {
+    var k = fontKey(name);
+    if (!k) return null;
+    if (BUILT_FONT[k]) return { font: BUILT_FONT[k] };
+    var list = (doc.setup && doc.setup.ext && Array.isArray(doc.setup.ext.fonts)) ? doc.setup.ext.fonts : [];
+    var e = list.filter(function (x) { return x && (x.id === name || fontKey(x.name) === k); })[0] || (found && found[k]) || null;
+    if (!e || !FAM_ID.test(e.id)) return null;
+    return { font: BUILT_FONT[e.fb] || "serif", fam: e.id, entry: e };
+  }
+  // The family in the document's list (setup.ext.fonts, at most 40):
+  // → 1 when the list changed.
+  function listFont(doc, e) {
+    if (!e || !FAM_ID.test(e.id)) return 0;
+    doc.setup.ext = doc.setup.ext || {};
+    var list = Array.isArray(doc.setup.ext.fonts) ? doc.setup.ext.fonts : [];
+    var o = { id: e.id, name: String(e.name || e.id).replace(/[\u0000-\u001F]/g, "").slice(0, 60), fb: BUILT_FONT[e.fb] || "serif" };
+    if (e.id.indexOf("uf_") === 0) ["r", "b", "i", "bi"].forEach(function (v) { if (typeof e[v] === "string" && /^[0-9a-f]{64}\.ttf$/.test(e[v])) o[v] = e[v]; });
+    var cur = list.filter(function (x) { return x && x.id === o.id; })[0];
+    if (cur && JSON.stringify(cur) === JSON.stringify(o)) return 0;
+    doc.setup.ext.fonts = list.filter(function (x) { return !x || x.id !== o.id; }).concat([o]).slice(-40);
+    return 1;
+  }
+  var PS_SET = { size: 1, lead: 1, align: 1, track: 1, sb: 1, sa: 1, fi: 1, li: 1, ri: 1 };
+  function defStyle(doc, st, now, idf, env) {
     var para = st.kind !== "char", list = para ? doc.pstyles : doc.cstyles, pre = para ? "ps" : "cs";
     if (!st.name) return 0;
     var cur = styleNamed(list, st.name), made = 0;
@@ -382,16 +412,25 @@
     var set = {};
     if (st.base) { var b = styleNamed(list, st.base); if (b && b.id !== cur.id) set.base = b.id; }
     Object.keys(PS_SET).forEach(function (k) {
-      if (!para && !{ font: 1, size: 1, track: 1 }[k]) return;
+      if (!para && !{ size: 1, track: 1 }[k]) return;
       if (st[k] === undefined || st[k] === null || st[k] === "" || (typeof st[k] === "number" && st[k] < 0)) return;
       if ((k === "size" || k === "lead" || k === "track") && st[k] === 0) return;   // 0: as it is (as the style command)
       set[k] = st[k];
     });
     [["bold", "b"], ["ital", "i"], ["caps", "caps"], ["under", "u"]].forEach(function (kv) { var v = st[kv[0]]; if (v === "on" || v === "off") set[kv[1]] = v === "on" ? 1 : 0; });
     if (st.color) { var sw = swatchFor(doc, st.color, now); if (sw) set.color = sw; }
+    var fam;   // undefined: as it is; "": a built-in; an id: that family
+    if (st.font) {
+      var ff = fontFor(doc, st.font, env && env.fonts);
+      // before Layout looked (the card's preview) a family it may still find counts as a change
+      if (!ff && !(env && env.prepared)) made = 1;
+      else if (!ff) { if (env.notes) { var nf = "noFont: " + String(st.font).slice(0, 60); if (env.notes.indexOf(nf) < 0) env.notes.push(nf); } }
+      else { set.font = ff.font; fam = ff.fam || ""; if (ff.entry) listFont(doc, ff.entry); }
+    }
     var n = made;
     Object.keys(set).forEach(function (k) { if (cur[k] !== set[k]) { cur[k] = set[k]; n = 1; } });
     var x = cur.ext || {};
+    if (fam !== undefined && (x.fam || "") !== fam) { if (fam) x.fam = fam; else delete x.fam; n = 1; }
     if (para && st.nest_cs && st.nest_cs !== "none") {
       var cs = styleNamed(doc.cstyles, st.nest_cs), to = String(st.nest_to || ":").slice(0, 4);
       if (cs) {
@@ -743,7 +782,7 @@
 
   var api = { setPicture: setPicture, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
-              styleNamed: styleNamed, defStyle: defStyle, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
+              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;
   else root.LayoutPro = api;
 })(typeof window !== "undefined" ? window : this);
