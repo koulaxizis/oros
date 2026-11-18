@@ -34,6 +34,7 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - The pencil next to a tag (or a right-click on it) renames it, gives it one of twelve colours, or deletes it. Deleting a tag takes it off every item; the files themselves stay as they are.
 - It is one list with `Documents`: a tag made here shows there, and a document's tags are the tags of its file.
 - Tags follow a rename or a move made in Files, stay with an item in the `Trash` so a restore brings them back, and are synced to your other devices. A file moved on another device is found again by its content. In `Photos`, the photos show their tags, `Select` › `Tags…` tags many at once, and `⋯` › `Show a tag…` shows only the photos with one tag.
+- The search in the orOS menu, the Assistant and orOS Gate find an item by its tag names too (names only; a private document's tags never show).
 
 ### Smart folders
 - A smart folder is a saved search: it always shows the items that fit right now. Nothing is copied or moved, so a file can show in several smart folders and still have one place on the disk.

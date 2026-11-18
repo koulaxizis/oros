@@ -34,6 +34,7 @@ Links stehen die Ordner, rechts der Inhalt des aktuellen Ordners. Auf dem Handy 
 - Der Stift neben einem Schlagwort (oder ein Rechtsklick darauf) benennt es um, gibt ihm eine von zwölf Farben oder löscht es. Löschen nimmt das Schlagwort von jedem Element; die Dateien selbst bleiben, wie sie sind.
 - Es ist eine Liste mit `Dokumente`: Ein hier angelegtes Schlagwort erscheint auch dort, und die Schlagwörter eines Dokuments sind die seiner Datei.
 - Schlagwörter folgen einer Umbenennung oder Verschiebung in Dateien, bleiben im `Papierkorb` beim Element, sodass Wiederherstellen sie zurückbringt, und werden mit deinen anderen Geräten synchronisiert. Eine auf einem anderen Gerät verschobene Datei wird an ihrem Inhalt wiedererkannt. In `Fotos` zeigen die Fotos ihre Schlagwörter, `Auswählen` › `Schlagwörter…` versieht viele auf einmal, und `⋯` › `Ein Schlagwort zeigen…` zeigt nur die Fotos mit einem Schlagwort.
+- Die Suche im orOS-Menü, der Assistent und orOS Gate finden ein Element auch über die Namen seiner Schlagwörter (nur die Namen; die Schlagwörter eines privaten Dokuments erscheinen nie).
 
 ### Intelligente Ordner
 - Ein intelligenter Ordner ist eine gespeicherte Suche: Er zeigt immer, was gerade passt. Nichts wird kopiert oder verschoben, so kann eine Datei in mehreren intelligenten Ordnern erscheinen und hat doch nur einen Platz auf der Disk.
