@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.67.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.68.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -5527,7 +5527,9 @@
     catch (e) { return d.toISOString().slice(0, 10); }
   }
 
+  var stMenuKey = "";   // ST-1 S2: the hourglasses the menu was drawn with
   function renderMenu() {
+    if (window.orosScreenTime && window.orosScreenTime.overKey) stMenuKey = window.orosScreenTime.overKey();
     var menu = document.getElementById("app-menu");
     // SH-B3 (form rebuild discipline): this function rebuilds the whole
     // menu, and it is called by background events too (sync messages,
@@ -6050,6 +6052,15 @@
               '<span>' + escapeHtml(label) + '</span>';
           } else {
             btn.textContent = label;
+          }
+          // ST-1 S2: past today's screen time limit on this device: an hourglass.
+          if (!app._alias && window.orosScreenTime && window.orosScreenTime.over && window.orosScreenTime.over(app.id)) {
+            var stO = document.createElement("span");
+            stO.className = "menu-st-over";
+            stO.textContent = "\u231B";
+            stO.title = window.t("st.over");
+            stO.setAttribute("aria-label", window.t("st.over"));
+            btn.appendChild(stO);
           }
           btn.addEventListener("click", function () { openApp(app); });
           // Favourites (launcher.js): the star at the end of the row.
@@ -12360,6 +12371,7 @@
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       night: window.orosNight ? window.orosNight.snapshot() : null,   // NIGHT-1, this device
+      screentime: window.orosScreenTime ? window.orosScreenTime.snapshot() : null,   // ST-1, this device
       smartbar: !SOLO && window.orosSmartBar && window.orosSmartBar.snapshot ? window.orosSmartBar.snapshot() : null,
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
@@ -12427,6 +12439,14 @@
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
         return;
       case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
+      case "screentime":      if (window.orosScreenTime) { window.orosScreenTime.setOn(!!value); settingsNotify(); } return;   // ST-1
+      case "screentimeClear": if (window.orosScreenTime) { window.orosScreenTime.clear(); settingsNotify(); } return;
+      case "screentimeLimit":   // S2: { id, min } (0 = no limit)
+        if (window.orosScreenTime && window.orosScreenTime.setLimit && value && typeof value === "object") {
+          window.orosScreenTime.setLimit(String(value.id || ""), Number(value.min) || 0);
+          settingsNotify();
+        }
+        return;
       case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
@@ -13389,6 +13409,17 @@
     return { on: mtOn(), slots: mtSlotsHere(), open: mt.hidden.length };
   }
 
+  // ST-1: the app in front for Screen time: with side by side, the one
+  // whose frame has the focus; "" on the desktop.
+  function stFront() {
+    if (!state.running) return "";
+    if (mt && mt.side && document.activeElement === mt.side.el) return mt.side.app.id;
+    return state.running.id;
+  }
+  function stNote() {
+    if (window.orosScreenTime) { try { window.orosScreenTime.note(); } catch (e) {} }
+  }
+
   // ---------- 10z. App zoom (ZOOM-1) ----------
   // An app grows out of what it was opened from (a desktop shortcut, a
   // Dock icon, a menu or search row) and, when it closes, a panel the
@@ -13590,6 +13621,7 @@
       return;
     }
     var prev = state.running;
+    stNote();   // ST-1: the time so far goes to the app leaving
     state.running = app;
     gameLastNote(app, false);   // GR-1
     if (window.orosDiscover) { try { window.orosDiscover.seen(app.id); } catch (e) {} }   // CH-2: first open
@@ -13621,6 +13653,7 @@
   function returnToDesktop() {
     if (SOLO && soloHome()) return;   // a single app has no desktop
     var prev = state.running;
+    stNote();   // ST-1
     var zoomFromRect = prev && !mt.side ? zoomRect() : null;   // ZOOM-1: the app's place, before it goes
     mtSideEnd(true);   // home ends side by side; the side app waits behind
     state.running = null;
@@ -14864,7 +14897,11 @@
     closeNotifPanel();
     if (SOLO) { soloMenuButton(); return; }
     if (state.running) { returnToDesktop(); return; }
-    document.getElementById("app-menu").classList.toggle("open");
+    var menuEl = document.getElementById("app-menu");
+    // ST-1 S2: the menu is drawn once; redraw when an hourglass changed.
+    if (!menuEl.classList.contains("open") && window.orosScreenTime && window.orosScreenTime.overKey &&
+        window.orosScreenTime.overKey() !== stMenuKey) renderMenu();
+    menuEl.classList.toggle("open");
   }
   function closeMenu() {
     document.getElementById("app-menu").classList.remove("open");
@@ -16739,6 +16776,26 @@
     window.orosNight.attach({ loc: wxLoc });
     window.orosNight.onChange(function () { settingsNotify(); });
   }
+  // Screen time (screentime.js, ST-1, late bundle): how long each app
+  // was in front, on this device only, off by default. The shell says
+  // which app is in front, whether orOS is locked, in Sensitive work
+  // or playing sound, and which app documents to listen to for input.
+  lateWhen(function () {
+    if (!window.orosScreenTime) return;
+    window.orosScreenTime.attach({
+      front: stFront,
+      locked: function () { var L = window.orosLock; return !!(L && L.isLocked && L.isLocked()); },
+      sensitive: function () { return !!strictLevelNow(); },
+      media: function () { return qsMedia().some(function (m) { return m.playing; }); },
+      docs: function () { return window.__orosAppDocs(); },
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      // S2: the quiet toast 5 minutes before a limit, and the card's "Go to the desktop".
+      toast: function (title, body) {
+        if (window.orosNotifs && window.orosNotifs.transient) window.orosNotifs.transient({ ns: "screentime", title: title, body: body });
+      },
+      home: function () { returnToDesktop(); }
+    });
+  });
   // Desktop widgets (widgets.js, a shell component like launcher.js):
   // clock, calendar, Today, weather, playing, sync on the desktop. A
   // single app has no desktop, so it gets none.

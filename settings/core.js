@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device"];
+  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device", "screentime"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -21,7 +21,7 @@
     theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device", zoom: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    fopen: "all", keys: "all", multitask: "device", continue: "device", pcfiles: "device", clip: "device", textrepl: "all", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
+    fopen: "all", keys: "all", multitask: "device", continue: "device", pcfiles: "device", clip: "device", textrepl: "all", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", screentime: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
   };
 
   // Search settings: one row per setting, in page order.
@@ -156,7 +156,11 @@
     ["dv-network", "device", "dv.network"],
     ["dv-screen", "device", "dv.screen"],
     ["dv-features", "device", "dv.features"],
-    ["dv-report", "device", "dv.report"]
+    ["dv-report", "device", "dv.report"],
+    ["screentime", "screentime", "st.on"],
+    ["screentime-week", "screentime", "st.week", null, "st.on"],
+    ["screentime-limits", "screentime", "st.limits", null, "st.on"],
+    ["screentime-clear", "screentime", "st.clear", null, "st.on"]
   ];
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -1569,7 +1573,24 @@
       "w.dv-network": "device info network connection online offline speed",
       "w.dv-screen": "device info screen resolution window pixel ratio touch screens monitor second screen projector extend duplicate",
       "w.dv-features": "device info browser features permissions notifications location missing",
-      "w.dv-report": "device info report problem copy support"
+      "w.dv-report": "device info report problem copy support",
+      "s.screentime": "Screen time",
+      "d.screentime": "Time in each app, on this device only",
+      "st.on": "Count screen time on this device",
+      "st.week": "Last 7 days",
+      "st.h": "{h} h",
+      "st.hm": "{h} h {m} min",
+      "st.m": "{m} min",
+      "st.lt1": "under 1 min",
+      "st.clear": "Clear history",
+      "st.limits": "Daily limits",
+      "st.wait": "Screen time starts a few seconds after orOS. Open this section again in a moment.",
+      "st.loading": "Loading screen time…",
+      "st.link": "Screen time: time in each app",
+      "w.screentime": "screen time usage wellbeing digital how long apps time spent minutes hours habit",
+      "w.screentime-week": "screen time week days chart history",
+      "w.screentime-clear": "screen time clear delete history erase",
+      "w.screentime-limits": "screen time limit daily limit break reminder time limit"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -2973,7 +2994,24 @@
       "w.dv-network": "πληροφορίες συσκευής δίκτυο σύνδεση ίντερνετ ταχύτητα",
       "w.dv-screen": "πληροφορίες συσκευής οθόνη ανάλυση παράθυρο αφή οθόνες δεύτερη οθόνη προβολέας επέκταση διπλότυπο",
       "w.dv-features": "πληροφορίες συσκευής δυνατότητες browser άδειες ειδοποιήσεις τοποθεσία",
-      "w.dv-report": "πληροφορίες συσκευής αναφορά πρόβλημα αντιγραφή"
+      "w.dv-report": "πληροφορίες συσκευής αναφορά πρόβλημα αντιγραφή",
+      "s.screentime": "Χρόνος οθόνης",
+      "d.screentime": "Χρόνος σε κάθε εφαρμογή, μόνο σε αυτή τη συσκευή",
+      "st.on": "Μέτρηση χρόνου οθόνης σε αυτή τη συσκευή",
+      "st.week": "Τελευταίες 7 ημέρες",
+      "st.h": "{h} ώρ.",
+      "st.hm": "{h} ώρ. {m} λεπ.",
+      "st.m": "{m} λεπ.",
+      "st.lt1": "κάτω από 1 λεπ.",
+      "st.clear": "Σβήσε το ιστορικό",
+      "st.limits": "Όρια ανά ημέρα",
+      "st.wait": "Ο χρόνος οθόνης ξεκινά λίγα δευτερόλεπτα μετά το orOS. Άνοιξε ξανά την ενότητα σε λίγο.",
+      "st.loading": "Φορτώνω τον χρόνο οθόνης…",
+      "st.link": "Χρόνος οθόνης: χρόνος σε κάθε εφαρμογή",
+      "w.screentime": "χρόνος οθόνης χρήση ψηφιακή ευεξία πόση ώρα εφαρμογές λεπτά ώρες συνήθεια screen time",
+      "w.screentime-week": "χρόνος οθόνης εβδομάδα ημέρες γράφημα ιστορικό",
+      "w.screentime-clear": "χρόνος οθόνης σβήσιμο διαγραφή ιστορικό",
+      "w.screentime-limits": "χρόνος οθόνης όριο ημερήσιο όριο διάλειμμα υπενθύμιση"
     }
   };
 
@@ -3117,6 +3155,15 @@
   }
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  // ST-1: seconds of screen time as "2 h 5 min", "12 min", "under 1 min".
+  function stDur(lang, secs) {
+    var m = Math.floor((Number(secs) || 0) / 60);
+    if (m < 1) return t(lang, "st.lt1");
+    if (m < 60) return t(lang, "st.m", { m: m });
+    if (m % 60 === 0) return t(lang, "st.h", { h: m / 60 });
+    return t(lang, "st.hm", { h: Math.floor(m / 60), m: m % 60 });
+  }
   function hourLabel(h) { return pad2(h) + ":00"; }
 
   // The same full shape the menu writes (isQuietHour reads the numbers,
@@ -3171,6 +3218,7 @@
   var api = {
     SECTIONS: SECTIONS, SCOPE: SCOPE, STRINGS: STRINGS, FIND: FIND,
     usersPassOk: usersPassOk,
+    stDur: stDur,
     POSITIONS: POSITIONS, STYLES: STYLES, SOUNDS: SOUNDS, DURATIONS: DURATIONS,
     t: t, langOf: langOf, isSection: isSection, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,
