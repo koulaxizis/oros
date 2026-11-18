@@ -108,6 +108,11 @@ const PLAY = {
     await p.keyboard.press("Enter"); await p.waitForTimeout(400);
     for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(300);
   },
+  // Crossword and Sudoku: the selected cell can be a given one, which
+  // depends on the day's puzzle (crossword and the daily sudoku change at
+  // midnight), so type into the next cells until one takes the entry
+  crossword: async (p, inProg) => { await typeAlong(p, inProg, "KeyE"); },
+  sudoku: async (p, inProg) => { await typeAlong(p, inProg, "Digit5"); },
   // a word search counts as under way after 15 s of play
   wordsearch: async (p) => { await p.waitForTimeout(16000); }
 };
@@ -116,6 +121,13 @@ async function tap(p, sel) {
   const el = await p.$(sel);
   if (el) await el.click({ timeout: 1500, force: true }).catch(() => {});
   await p.waitForTimeout(250);
+}
+async function typeAlong(p, inProg, key) {
+  for (let i = 0; i < 24; i++) {
+    await p.keyboard.press(key); await p.waitForTimeout(200);
+    if (await inProg()) return;
+    await p.keyboard.press(i % 12 === 11 ? "ArrowDown" : "ArrowRight"); await p.waitForTimeout(120);
+  }
 }
 async function tapAll(p, sel, inProg, reverse) {
   let els = await p.$$(sel);
