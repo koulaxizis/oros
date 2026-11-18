@@ -806,5 +806,10 @@ orosPack("de", "stock", {
  "tillNeedLock": "Schalte zuerst die Bildschirmsperre ein. Ihre PIN wird die PIN des Inhabers.",
  "tillLock": "Einstellungen der Bildschirmsperre",
  "tillQ": "Ab jetzt öffnet orOS auf diesem Gerät nur die Kasse. Zurück kommst du mit der PIN der Bildschirmsperre (Inhaber: orOS öffnen). Weiter?",
- "tillStopped": "Dieses Gerät ist keine Kasse mehr."
+ "tillStopped": "Dieses Gerät ist keine Kasse mehr.",
+ "autoDone": "{n} bezahlte Shop-Bestellungen als Verkäufe erfasst",
+ "autoNoSave": "Bestand konnte auf diesem Gerät nicht speichern, wann er den Shop zuletzt gelesen hat.",
+ "onlyPub": "Nur veröffentlichte Produkte ({n} von {all}; Entwürfe und private bleiben draußen)",
+ "brand": "Marke",
+ "allBrands": "Alle Marken"
 });

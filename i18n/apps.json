@@ -187,6 +187,13 @@
    ]
   },
   {
+   "app": "commands",
+   "files": [
+    "commands/bar.js",
+    "commands/core.js"
+   ]
+  },
+  {
    "app": "connect4",
    "files": [
     "connect4/connect4.js"
@@ -273,6 +280,12 @@
    "app": "dice",
    "files": [
     "dice/dice.js"
+   ]
+  },
+  {
+   "app": "discover",
+   "files": [
+    "discover/host.js"
    ]
   },
   {
@@ -854,7 +867,8 @@
    "app": "ringtones",
    "files": [
     "ringtones/core.js",
-    "ringtones/ringtones.js"
+    "ringtones/ringtones.js",
+    "ringtones/search.js"
    ]
   },
   {
@@ -917,6 +931,14 @@
    ]
   },
   {
+   "app": "shop",
+   "files": [
+    "shop/app.js",
+    "shop/search.js",
+    "shop/today.js"
+   ]
+  },
+  {
    "app": "signature",
    "files": [
     "signature/core.js",
@@ -966,6 +988,12 @@
    ]
   },
   {
+   "app": "solo",
+   "files": [
+    "solo.js"
+   ]
+  },
+  {
    "app": "split",
    "files": [
     "split/package.js",
@@ -987,6 +1015,12 @@
     "spreadsheet/platforms.js",
     "spreadsheet/search.js",
     "spreadsheet/spreadsheet.js"
+   ]
+  },
+  {
+   "app": "startpage",
+   "files": [
+    "startpage/startpage.js"
    ]
   },
   {
@@ -1132,8 +1166,7 @@
    "app": "typing",
    "files": [
     "typing/app.js",
-    "typing/due.js",
-    "typing/layouts.js"
+    "typing/due.js"
    ]
   },
   {

@@ -52,6 +52,11 @@ Aufnahmen sind nur für deinen privaten Gebrauch. Radiosendungen sind urheberrec
 ### Mit einem Sender aufwachen
 Wähle unter `Mit diesem Sender aufwachen` eine `Uhrzeit` und ob sie sich wiederholt (`Einmal` oder `Täglich`), dann `Wecker stellen`. Der Wecker erscheint in [Zeit](app:time), und wenn er klingelt, startet der Sender, erst leise. Du kannst auch einen vorhandenen Wecker aus Zeit wählen und `Nutzen` drücken. `Entfernen` nimmt einen Sender von einem Wecker.
 
+## Lichtshow
+`Lichtshow` im `⋯`-Menü des Players füllt das Fenster mit Licht, das sich mit dem Sender bewegt. `Licht:` wählt den Stil (Leuchten, Ringe, Balken, Welle), und `Nur das Licht` blendet die Steuerung aus; tippe irgendwohin oder drücke eine Taste, um sie zurückzuholen.
+
+Das Licht folgt dem Ton nur, wenn der Server des Senders einer Webseite das Zuhören erlaubt; dann lädt der Stream noch einmal, mit einer kurzen Lücke. Bei anderen Sendern bewegt sich das Licht von selbst, und eine Zeile sagt das. Nichts wird aufgenommen oder gesendet. Das Licht bleibt still bei reduzierter Bewegung, schwachem Akku oder ausgelastetem Gerät, und es blinkt nie.
+
 ## Synchronisierung und Sicherung
 Deine Favoriten und Wecksender werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Song-Verlauf, zuletzt gehörte Sender und die vorübergehend gespeicherten Senderlisten bleiben auf diesem Gerät. Sender kannst du importieren (siehe `Sender importieren` oben), nicht exportieren; Favoriten sind Teil der orOS-[Sicherung](help:t/backup).
 

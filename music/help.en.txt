@@ -71,6 +71,13 @@ For other songs Music can ask LRCLIB (lrclib.net, a free and open lyrics library
 
 These settings stay on this device.
 
+## Light show
+`Light show` (the sun button at the top of the full player) fills the window with light that moves with the music. `Light:` picks the style: Glow, Rings, Bars or Wave. `Light only` hides the controls; tap anywhere or press a key to bring them back. Music remembers your choice on this device.
+
+The light follows the sound of songs on this device, offline copies and songs from your own WebDAV or Dropbox. Many sites that stream music do not let a web page listen to their sound; with those the light moves on its own, and a line under the controls says so. Everything happens on this device: nothing is recorded or sent.
+
+The light stays still when reduced motion is on, when the battery is low (under 20 % and not charging) or when the device is too busy. It never flashes: it brightens and fades smoothly.
+
 ## Play on a speaker or TV
 In the full player, the button with the screen-and-waves icon (`Play on…`) chooses where the music plays: another output of this device, a Bluetooth speaker paired in your system settings, Chromecast or AirPlay through the browser, or a smart TV or network speaker through orOS Bridge.
 - **Smart TV or network speaker (DLNA):** with [orOS Bridge](https://useoros.online/download/) 0.10.0 or newer running on a Windows or Linux computer at home, the same window lists the smart TVs, Kodi boxes and network speakers on your network. The first time, `Connect to orOS Bridge` asks for the 6-digit code the bridge shows (Studio and Scanner & PDF use the same pairing). Choose a device and it plays; the window then has pause, volume and `Back to this device`. The device fetches the stream itself, so only http and https addresses go. `Search again` looks once more.

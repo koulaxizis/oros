@@ -204,17 +204,25 @@
   //   fonts: { PDF font name: { id, name, fb } } (families already
   //   registered and loaded in designkit/text.js) }
   // → { doc, report }
+  // Style names the rebuild writes into the document. A pack language
+  // (German…) reads them from the "layout" pack: names(code) below.
   var NAMES = {
-    en: { body: "Body text", pn: "Page number", fit: "Line fit", al: { j: "justified", l: "left", c: "centre", r: "right" }, b: "bold", i: "italic", fi: "indent", sb: "above" },
+    en: { body: "Body text", pn: "Page number", fit: "Line fit",
+          "al.j": "justified", "al.l": "left", "al.c": "centre", "al.r": "right", b: "bold", i: "italic", fi: "indent", sb: "above" },
     el: { body: "Σώμα κειμένου", pn: "Αριθμός σελίδας", fit: "Ταίριασμα γραμμής",
-          al: { j: "πλήρης", l: "αριστερά", c: "κέντρο", r: "δεξιά" },
+          "al.j": "πλήρης", "al.l": "αριστερά", "al.c": "κέντρο", "al.r": "δεξιά",
           b: "έντονα", i: "πλάγια", fi: "εσοχή", sb: "πάνω" }
   };
+  function names(code) {
+    if (code === "en" || code === "el") return NAMES[code];
+    var I = typeof window !== "undefined" ? window.orosI18n : null;
+    return I && I.known(code) ? I.table(NAMES, "layout", code) : NAMES.en;
+  }
   function hex(c) { return "#" + c.map(function (v) { return ("0" + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2); }).join(""); }
 
   function build(src, opts) {
     opts = opts || {};
-    var now = opts.now || 1, W = src.w, H = src.h, N = NAMES[opts.lang === "el" ? "el" : "en"];
+    var now = opts.now || 1, W = src.w, H = src.h, N = opts.names || NAMES[opts.lang === "el" ? "el" : "en"];
     var pagesIn = src.pages.slice(0, MAX_PAGES);
     if (!pagesIn.length) return null;
     var FONTS = opts.fonts || {}, famUsed = {};
@@ -592,7 +600,7 @@
     base.ext.kern = 1;
     var taken = {};
     list.forEach(function (s, k) {
-      var nm = k === 0 ? N.body : s.size + "/" + Math.round(s.lead * 10) / 10 + " " + N.al[s.align] + (s.b ? " " + N.b : "") + (s.i ? " " + N.i : "") +
+      var nm = k === 0 ? N.body : s.size + "/" + Math.round(s.lead * 10) / 10 + " " + N["al." + s.align] + (s.b ? " " + N.b : "") + (s.i ? " " + N.i : "") +
         (s.fi ? " " + N.fi + " " + Math.round(s.fi) : "") + (s.sb ? " +" + Math.round(s.sb) + " " + N.sb : "");
       while (taken[nm]) nm += "′";
       taken[nm] = 1;
@@ -966,7 +974,7 @@
           pages.forEach(function (p) { p.spans.forEach(function (s) { if (s.font) names[s.font] = 1; }); });
           return opts.matchFonts ? opts.matchFonts(Object.keys(names)).then(null, function () { return {}; }) : {};
         }).then(function (fonts) {
-          var out = build({ w: W, h: H, bleed: bleed, pages: pages }, { now: opts.now, name: opts.name, lang: opts.lang, words: words, fonts: fonts, thread: !!opts.thread });
+          var out = build({ w: W, h: H, bleed: bleed, pages: pages }, { now: opts.now, name: opts.name, lang: opts.lang, names: opts.names, words: words, fonts: fonts, thread: !!opts.thread });
           if (out) { out.report.total = pdf.numPages; out.report.cut = pdf.numPages > n; out.report.sources = cands.length; if (af) out.report.af = af; }
           pdf.destroy();
           return out;
@@ -1113,7 +1121,7 @@
     return f ? String(f.name || "").replace(/^[A-Z]{6}\+/, "").slice(0, 60) : "";
   }
 
-  var api = { toLines: toLines, measure: measure, build: build, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
+  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_REBUILD = api;
 })(typeof window !== "undefined" ? window : this);

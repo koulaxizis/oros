@@ -290,5 +290,6 @@ orosPack("de", "notes", {
  "view.edit": "Bearbeiten",
  "view.group": "Seitenansicht",
  "view.preview": "Vorschau",
- "view.split": "Nebeneinander"
+ "view.split": "Nebeneinander",
+ "page.delete.kids": "Ihre {n} Unterseite(n) rücken eine Ebene nach oben und bleiben erhalten."
 });
