@@ -285,6 +285,8 @@
         var sc = it.fit === "fit" ? Math.min(it.w / (it.iw || 1), it.h / (it.ih || 1)) : it.fit === "fill" ? Math.max(it.w / (it.iw || 1), it.h / (it.ih || 1)) : (it.isc || 1) * (it.w / (it.iw || 1));
         f.effective_ppi = sc > 0 ? Math.round(72 / sc) : 0;
         if (it.ext && it.ext.bf) f.bleed_fill = it.ext.bf.mode;
+        if (it.ext && it.ext.fl) f.flip = it.ext.fl;
+        if (it.r) f.corner_mm = mm(it.r);
         if (it.mf) f.merge_field = it.mf;
       }
       if (it.t === "text") { f.story = it.story; f.columns = it.cols || 1; }
@@ -602,6 +604,45 @@
     M.touch(pg, now);
     return 1;
   }
+  // picture (W4): the picture frames `ids` (or every picture on the
+  // pages `want` picks): flip none|h|v|hv, corner radius (pt, −1 = as
+  // it is), fit fit|fill|frame (frame: the frame takes the picture's
+  // proportions, keeping its width). → number changed
+  function setPicture(doc, ids, want, st, now) {
+    var on = {}, n = 0;
+    if (want) M.pagesInOrder(doc).forEach(function (p, i) { if (want(i + 1)) on[p.id] = 1; });
+    var pick = ids && ids.length ? function (it) { return ids.indexOf(it.id) >= 0; } : function (it) { return !!on[it.pg]; };
+    doc.items.forEach(function (it) {
+      if (it.t !== "img" || it.lock || !pick(it)) return;
+      var before = JSON.stringify([it.ext && it.ext.fl, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]);
+      if (st.flip) {
+        var x = it.ext || {};
+        if (st.flip === "none") delete x.fl; else x.fl = st.flip;
+        if (Object.keys(x).length) it.ext = x; else delete it.ext;
+      }
+      if (st.corner >= 0) it.r = r3(Math.min(st.corner, Math.min(it.w, it.h) / 2));
+      if (st.fit === "fit" || st.fit === "fill") { it.fit = st.fit; it.ix = 0; it.iy = 0; it.isc = 1; }
+      else if (st.fit === "frame" && it.iw && it.ih) { it.h = r3(it.w * it.ih / it.iw); it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1; }
+      if (it.ext && it.ext.iscy !== undefined && st.fit) { delete it.ext.iscy; if (!Object.keys(it.ext).length) delete it.ext; }
+      if (JSON.stringify([it.ext && it.ext.fl, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]) === before) return;
+      M.touch(it, now);
+      n++;
+    });
+    return n;
+  }
+  // Every picture frame for the Links list: [{ id, page (1-based),
+  // name, ppi, state ok|missing|empty|low, flip }] in page order.
+  function links(doc, isMissing, ppiOf, low) {
+    var pos = {}, out = [];
+    M.pagesInOrder(doc).forEach(function (p, i) { pos[p.id] = i + 1; });
+    doc.items.forEach(function (it) {
+      if (it.t !== "img" || !pos[it.pg]) return;
+      var ppi = it.a && ppiOf ? Math.round(ppiOf(it)) : 0;
+      var state = !it.a ? "empty" : isMissing && isMissing(it.a) ? "missing" : ppi && ppi < (low || 200) ? "low" : "ok";
+      out.push({ id: it.id, page: pos[it.pg], name: it.nm || "", ppi: ppi, state: state, flip: it.ext && it.ext.fl || "" });
+    });
+    return out.sort(function (a, b) { return a.page - b.page || M.cmpStr(a.name, b.name); });
+  }
   // pagesize (W3b): the pages `want` picks get their own trim w × h
   // (pt, 36-14400); 0 × 0 = the document's again. → number changed
   function setPageSize(doc, want, w, h, now) {
@@ -697,7 +738,7 @@
     return n;
   }
 
-  var api = { setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
+  var api = { setPicture: setPicture, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
               styleNamed: styleNamed, defStyle: defStyle, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;

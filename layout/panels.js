@@ -424,6 +424,18 @@
       s.appendChild(seg([["fit", t("props.fit")], ["fill", t("props.fillf")]], it.fit === "custom" ? "" : it.fit, function (v) {
         editSel(function (x) { if (x.t !== "img") return false; x.fit = v; R.uniform(x); });
       }));
+      // mirrored, and the frame to the picture's proportions (W4)
+      var fl = R.flipOf(it), fr = el("div", "grid2");
+      function flipTo(h, v) {
+        var f = (h ? "h" : "") + (v ? "v" : "");
+        LY.op(function (d2, now) { return window.LayoutPro.setPicture(d2, ED.sel.slice(), null, { flip: f || "none" }, now) ? undefined : false; });
+      }
+      fr.appendChild(check(t("props.flipH"), fl.h, function (v) { flipTo(v, fl.v); }));
+      fr.appendChild(check(t("props.flipV"), fl.v, function (v) { flipTo(fl.h, v); }));
+      s.appendChild(fr);
+      s.appendChild(btn(t("props.frameToPic"), function () {
+        LY.op(function (d2, now) { return window.LayoutPro.setPicture(d2, ED.sel.slice(), null, { fit: "frame" }, now) ? undefined : false; });
+      }, "small"));
       var r = R.imageRect(it);
       var sc = it.iw ? r.w / it.iw : 1;
       var g = el("div", "grid2");
@@ -664,6 +676,35 @@
       act.appendChild(btn(t("btn.save"), function () { apply(0); }, "primary"));
       body.appendChild(act);
     });
+  }
+  // Links (W4): every picture of the document with its page, its
+  // resolution and whether its file is here; go to it or replace it.
+  function linksDlg() {
+    var doc = LY.doc;
+    if (!doc || !window.LayoutPro) return;
+    LY.openDialog(t("links.title"), function (body, close) {
+      var list = window.LayoutPro.links(doc, LY.A.isMissing, R.effectivePpi, 200);
+      var labels = M.pageLabels(doc), miss = list.filter(function (x) { return x.state === "missing" || x.state === "empty"; }).length;
+      body.appendChild(el("p", "hint" + (miss ? " warn" : ""), list.length ? t("links.sum", { n: list.length, m: miss }) : t("links.none")));
+      var ul = el("ul", "links-list");
+      list.slice(0, 500).forEach(function (x) {
+        var li = el("li", "links-row" + (x.state !== "ok" ? " warn" : ""));
+        li.appendChild(el("span", "links-name", x.name || t("links.noName")));
+        li.appendChild(el("span", "links-meta", t("links.page", { n: labels[x.page - 1] ? labels[x.page - 1].label : x.page }) + " · " +
+          (x.ppi ? x.ppi + " ppi" : "—") + " · " + t("links.s." + x.state) + (x.flip ? " · ⇋" : "")));
+        var acts = el("span", "links-acts");
+        acts.appendChild(btn(t("links.go"), function () { close(); ED.select([x.id]); ED.scrollToItem(x.id); }, "small"));
+        acts.appendChild(btn(t("props.replace"), function () { close(); LY.io.placeImage(x.id); }, "small"));
+        li.appendChild(acts);
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      var act = el("div", "dlg-actions");
+      if (miss && LY.io.relinkPick) act.appendChild(btn(t("sla.find"), function () { close(); LY.io.relinkPick(); }));
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.close"), close, "primary"));
+      body.appendChild(act);
+    }, true);
   }
   // A master based on another: its objects show under this one's.
   function baseDlg(msId) {
@@ -1766,7 +1807,7 @@
     }, true);
   }
 
-  LY.dlg = { newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg };
+  LY.dlg = { links: linksDlg, newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg };
   LY.panels = Object.assign(LY.panels || {}, { epubReport: epubReport, epubMarkReady: markInPublishing });
   // the small widgets, for dialogs in other files (mergeui.js)
   LY.ui = { field: field, select: select, check: check, seg: seg, btn: btn };
@@ -1778,6 +1819,7 @@
       { label: t("more.setup"), fn: setupDlg },
       { label: t("more.story"), disabled: !(it && it.t === "text"), fn: function () { LY.story.open(it.id); } },
       { label: t("more.text"), fn: function () { LY.io.importText(); } },
+      { label: t("more.links"), fn: linksDlg },
       { label: t("more.house"), fn: function () { LY.house.open(); } },
       { label: t("more.auto"), fn: function () { LY.house.auto(); } },
       { label: t("more.toc"), disabled: !LY.house.hasToc(doc), fn: function () { LY.house.updateToc(); } },

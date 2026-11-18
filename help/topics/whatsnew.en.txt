@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 7.65.00
+## Version 7.66.00
 - **Continue from another device.** orOS remembers where you were in each app (the document, page, board, book or project, never its content) and offers it on your other devices: a row in the Overview, a card in Today and, if you tick it, a chip in the smart bar. One tap opens the app at that item. After a restart orOS also brings your apps back, each at its own item. Settings › System › Continue on your other devices: two switches, the name of this device and Forget for the others. Never for Passwords, Mail, Diary, Health and the other private apps, and nothing while Sensitive work is on.
+
+## Version 7.65.00
+- **Pictures in Layout: mirror, corners and Links.** A picture can be mirrored left to right or top to bottom in its frame, and `Frame to picture` gives the frame the picture's proportions. `Links (pictures)…` in the More menu lists every picture with its page, its resolution and whether its file is here, with `Go to` and `Replace picture…`. The PDF, page pictures and data merge show the mirrored picture too. The Assistant and Claude (through orOS Gate) can mirror, round and fit picture frames by frame or by page.
 
 ## Version 7.64.00
 - **Page sizes and creep in Layout.** A page can have its own size, for a fold-out or a smaller insert: `Page size…` under the page list, for this page or a range. The editor, the pictures, the page pictures and the PDF follow it. For a saddle-stitched book, `Creep in mm` in the PDF export moves the inner pages' content towards the spine so nothing is cut after folding. The Assistant and Claude (through orOS Gate) can do both.

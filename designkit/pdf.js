@@ -449,10 +449,13 @@
     var x0 = Math.max(0, r.x), y0 = Math.max(0, r.y);
     var x1 = Math.min(it.w, r.x + r.w), y1 = Math.min(it.h, r.y + r.h);
     if (x1 <= x0 || y1 <= y0) return null;
-    var sx = it.iw / r.w, sy = it.ih / r.h;
+    var sx = it.iw / r.w, sy = it.ih / r.h, fl = R.flipOf ? R.flipOf(it) : { h: false, v: false };
+    // a mirrored picture (W4): the cut comes from the other side, and
+    // the caller draws it mirrored (fh, fv)
     return {
       rect: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 },
-      src: { x: (x0 - r.x) * sx, y: (y0 - r.y) * sy, w: (x1 - x0) * sx, h: (y1 - y0) * sy }
+      src: { x: (fl.h ? r.x + r.w - x1 : x0 - r.x) * sx, y: (fl.v ? r.y + r.h - y1 : y0 - r.y) * sy, w: (x1 - x0) * sx, h: (y1 - y0) * sy },
+      fh: fl.h, fv: fl.v
     };
   }
 

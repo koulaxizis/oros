@@ -135,6 +135,12 @@
     return out;
   }
 
+  // A mirrored picture (W4): the cut is drawn flipped.
+  function mirror(cx, crop, cw, ch) {
+    if (!crop.fh && !crop.fv) return;
+    cx.translate(crop.fh ? cw : 0, crop.fv ? ch : 0);
+    cx.scale(crop.fh ? -1 : 1, crop.fv ? -1 : 1);
+  }
   // The visible part of one image, resampled to `ppi` (never up).
   function cropImage(it, ppi) {
     var crop = P.imageCrop(it);
@@ -148,9 +154,11 @@
       var cv = document.createElement("canvas");
       cv.width = cw; cv.height = ch;
       var png = /\.png$/.test(it.a);
-      cv.getContext("2d").drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
+      var cx = cv.getContext("2d");
+      mirror(cx, crop, cw, ch);
+      cx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
       return toBlob(cv, png ? "image/png" : "image/jpeg", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
-        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi, down: cw < Math.round(src.w) - 1 };
+        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (crop.fh ? "h" : "") + (crop.fv ? "v" : ""), down: cw < Math.round(src.w) - 1 };
       });
     });
   }
@@ -1430,7 +1438,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
