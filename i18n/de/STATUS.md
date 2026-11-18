@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 47378 of 47378 (100%)
+- Strings: 47857 of 47857 (100%)
 - Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 1951 / 1951 |
+| assistant | 100% | 2122 / 2122 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 322 / 322 |
@@ -39,7 +39,7 @@ en and el); translators change them there, not in a pack.
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 342 / 342 |
 | converter | 100% | 68 / 68 |
-| crm | 100% | 838 / 838 |
+| crm | 100% | 893 / 893 |
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
@@ -74,7 +74,7 @@ en and el); translators change them there, not in a pack.
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 358 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 1106 / 1106 |
+| layout | 100% | 1151 / 1151 |
 | library | 100% | 330 / 330 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
@@ -109,14 +109,14 @@ en and el); translators change them there, not in a pack.
 | photolab | 100% | 781 / 781 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
-| podcasts | 100% | 348 / 348 |
+| podcasts | 100% | 349 / 349 |
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 334 / 334 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 100% | 822 / 822 |
+| publish | 100% | 827 / 827 |
 | qr | 100% | 249 / 249 |
 | quote | 100% | 236 / 236 |
-| radio | 100% | 103 / 103 |
+| radio | 100% | 104 / 104 |
 | realm | 100% | 199 / 199 |
 | recipes | 100% | 178 / 178 |
 | recordpkg | 100% | 21 / 21 |
@@ -127,10 +127,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 1705 / 1705 |
+| settings | 100% | 1858 / 1858 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1383 / 1383 |
+| shell | 100% | 1428 / 1428 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -155,7 +155,7 @@ en and el); translators change them there, not in a pack.
 | tictactoe | 100% | 54 / 54 |
 | time | 100% | 410 / 410 |
 | timesheet | 100% | 382 / 382 |
-| today | 100% | 155 / 155 |
+| today | 100% | 158 / 158 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
 | transfer | 100% | 144 / 144 |

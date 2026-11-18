@@ -305,7 +305,9 @@
       (st.paras || []).forEach(function (p) {
         if (paras >= MAX_PARAS) return;
         paras++;
-        var t = paraText(p), q = { style: psName[p.ps || "ps-base"] || p.ps || "", text: t.length > MAX_PARA ? t.slice(0, MAX_PARA) + "…" : t };
+        // opts.full (Chris 2026-11-18): whole paragraphs, for proofreading
+        var cap = opts.full ? 20000 : MAX_PARA;
+        var t = paraText(p), q = { style: psName[p.ps || "ps-base"] || p.ps || "", text: t.length > cap ? t.slice(0, cap) + "…" : t };
         var cs = (p.runs || []).filter(function (r) { return r.cs || r.b || r.i; }).slice(0, 10).map(function (r) {
           var d = {};
           if (r.cs) d.style = csName[r.cs] || r.cs;
@@ -342,6 +344,7 @@
     o.swatches = (doc.swatches || []).map(function (w) { return { name: nameOf(w.name) || w.id, mode: w.mode, value: w.v }; });
     if (opts.fonts) o.fonts_in_use = opts.fonts;
     if (opts.problems) o.preflight = opts.problems;
+    if (opts.livePf) o.preflight_now = opts.livePf;
     if (opts.lastExport) o.last_export = opts.lastExport;
     return o;
   }
@@ -509,6 +512,8 @@
   // frame: a text frame with its own story on a page (1-based), at a
   // box in mm (x/y/w/h −1: the page's margins), above what is there.
   // → { id, story } or null
+  // the commands' t|m|b (j as t: no vertical justify yet) → the model's t|c|b
+  function vaOf(v) { return v === "m" || v === "c" ? "c" : v === "b" ? "b" : "t"; }
   function addFrame(doc, st, now, idf) {
     var nid = idf || M.newId, order = M.pagesInOrder(doc), pg = order[(st.page || 1) - 1];
     if (!pg) return null;
@@ -522,7 +527,7 @@
     doc.stories.push({ id: sid, m: now, h: [], paras: paras.length ? paras : [{ ps: "ps-base", runs: [] }] });
     var z = doc.items.reduce(function (a, it) { return it.pg === pg.id ? Math.max(a, it.z || 0) : a; }, 0) + 16;
     var it = { id: id, m: now, t: "text", pg: pg.id, story: sid, x: r3(x), y: r3(y), w: r3(Math.max(5, w)), h: r3(Math.max(5, h)), z: z,
-               cols: st.ncol || 1, gut: r3((st.gut >= 0 ? st.gut : 5) * MM), ins: r3((st.ins > 0 ? st.ins : 0) * MM), va: st.va || "t", sw: 0 };
+               cols: st.ncol || 1, gut: r3((st.gut >= 0 ? st.gut : 5) * MM), ins: r3((st.ins > 0 ? st.ins : 0) * MM), va: vaOf(st.va), sw: 0 };
     if (st.fill) { var f = swatchFor(doc, st.fill, now); if (f) it.fill = f; }
     if (st.opacity >= 0 && st.opacity < 100) it.op = st.opacity;
     doc.items.push(it);
@@ -547,7 +552,7 @@
         if (st.ncol > 0) set.cols = st.ncol;
         if (st.gut >= 0) set.gut = r3(st.gut * MM);
         if (st.ins >= 0) set.ins = r3(st.ins * MM);
-        if (st.va) set.va = st.va;
+        if (st.va) set.va = vaOf(st.va);
       }
       if (st.fill) { var f = swatchFor(doc, st.fill, now); if (f) set.fill = f; }
       if (st.opacity >= 0) set.op = st.opacity;
@@ -802,6 +807,78 @@
   }
   // defmaster: a master made or changed by name: its prefix (1-3
   // letters) and the master it is based on (base "none" = none).
+  // masterfield (Chris 2026-11-18, P1): page numbers or a running head
+  // on a master's pages, as text frames of the master (ext.mfk "pn" |
+  // "rh", one per side), set again in place by a second call; hide
+  // (a page list) keeps them off chosen pages (a hidden copy that
+  // detaches them there, ext.mfh), show puts them back; remove takes
+  // them off the master. → number of things changed, -1 no master.
+  var MF_NAME = { el: { pn: "Αριθμός σελίδας", rh: "Τρέχων τίτλος", L: " (αριστερή)", R: " (δεξιά)" }, en: { pn: "Page number", rh: "Running head", L: " (left)", R: " (right)" } };
+  function masterField(doc, st, now, idf, pagesOf) {
+    var ms = styleNamed(doc.masters, st.master);
+    if (!ms) return -1;
+    var nid = idf || M.newId, kind = st.kind === "runhead" ? "rh" : "pn", n = 0;
+    if (!doc.tombs) doc.tombs = {};
+    var mine = doc.items.filter(function (it) { return it.pg === ms.id && it.ext && it.ext.mfk === kind; });
+    function drop(list) {
+      var ids = {};
+      list.forEach(function (it) { ids[it.id] = 1; doc.tombs[it.id] = Math.max(now, doc.tombs[it.id] || 0); if (it.story) { doc.tombs[it.story] = Math.max(now, doc.tombs[it.story] || 0); } n++; });
+      var sids = {};
+      list.forEach(function (it) { if (it.story) sids[it.story] = 1; });
+      doc.items = doc.items.filter(function (it) { return !ids[it.id]; });
+      doc.stories = doc.stories.filter(function (x) { return !sids[x.id]; });
+    }
+    if (st.remove) {
+      var mids = {};
+      mine.forEach(function (it) { mids[it.id] = 1; });
+      drop(mine.concat(doc.items.filter(function (it) { return it.ov && mids[it.ov] && it.ext && it.ext.mfh; })));
+      return n;
+    }
+    var lang = MF_NAME[st.lang] ? st.lang : "el", N = MF_NAME[lang], s = doc.setup;
+    var sides = s.facing ? ["L", "R"] : [""], pos = st.pos || "bc", top = pos.charAt(0) === "t", where = pos.charAt(1);
+    var size = st.size > 0 ? st.size : 9, dist = (st.from_edge >= 0 ? st.from_edge : 10) * MM, h = r3(size * 2.2);
+    var text = kind === "rh" ? String(st.text || "{title}").replace(/\{title\}/g, doc.name || "") : "";
+    if (kind === "rh" && !text.trim()) return 0;
+    sides.forEach(function (sd) {
+      var al = where === "c" ? "c" : (where === "o") === (sd !== "L") ? "r" : "l";
+      var sname = N[kind] + (where === "c" || !sd ? "" : N[sd]);
+      var spec = { kind: "para", name: sname, size: size, align: al, hyph: "off" };
+      if (st.font) spec.font = st.font;
+      n += defStyle(doc, spec, now, idf, st.env);
+      var ps = styleNamed(doc.pstyles, sname);
+      var mg = M.margins(doc, sd || "R");
+      var geo = { x: r3(mg.l), w: r3(Math.max(10, s.w - mg.l - mg.r)), h: h, y: r3(top ? dist : s.h - dist - h) };
+      var paras = [{ ps: ps ? ps.id : "ps-base", runs: kind === "pn" ? [{ f: "pn" }] : [{ t: text.slice(0, 200) }] }];
+      var it = mine.filter(function (x) { return (x.side || "") === sd; })[0];
+      if (!it) {
+        var sid = nid("st"), id = nid("it");
+        doc.stories.push({ id: sid, m: now, h: [], paras: paras });
+        doc.items.push(Object.assign({ id: id, m: now, t: "text", pg: ms.id, side: sd, story: sid, z: 1e6, cols: 1, gut: 12, ins: 0, va: top ? "t" : "b", sw: 0, ext: { mfk: kind } }, geo));
+        n++;
+        return;
+      }
+      var k = 0;
+      Object.keys(geo).forEach(function (g) { if (it[g] !== geo[g]) { it[g] = geo[g]; k = 1; } });
+      var story = M.find(doc.stories, it.story);
+      if (story && JSON.stringify(story.paras) !== JSON.stringify(paras)) { story.paras = paras; M.touch(story, now); k = 1; }
+      if (k) { M.touch(it, now); n++; }
+    });
+    // hide on pages (a list of page indexes from 0), show again
+    var fields = doc.items.filter(function (it) { return it.pg === ms.id && it.ext && it.ext.mfk === kind; });
+    var order = M.pagesInOrder(doc);
+    function copiesOn(pg) { return doc.items.filter(function (it) { return it.pg === pg.id && it.ov && it.ext && it.ext.mfh === kind; }); }
+    (pagesOf ? pagesOf(st.hide) : []).forEach(function (i) {
+      var pg = order[i];
+      if (!pg || pg.ms !== ms.id || copiesOn(pg).length) return;
+      var sd = s.facing ? M.sideOf(doc, i) : "";
+      fields.filter(function (f) { return (f.side || "") === sd; }).forEach(function (f) {
+        doc.items.push({ id: nid("it"), m: now, t: "rect", pg: pg.id, ov: f.id, x: f.x, y: f.y, w: 1, h: 1, z: 0, hide: 1, sw: 0, ext: { mfh: kind } });
+        n++;
+      });
+    });
+    (pagesOf ? pagesOf(st.show) : []).forEach(function (i) { var pg = order[i]; if (pg) drop(copiesOn(pg)); });
+    return n;
+  }
   function defMaster(doc, st, now, idf) {
     if (!st.name) return 0;
     var cur = styleNamed(doc.masters, st.name), n = 0;
@@ -829,7 +906,7 @@
 
   var api = { setPicture: setPicture, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
-              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
+              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, masterField: masterField, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;
   else root.LayoutPro = api;
 })(typeof window !== "undefined" ? window : this);

@@ -834,6 +834,8 @@ body {
 }
 
 .menu-item:hover { background: var(--accent-soft); }
+/* ST-1 S2: past today's screen time limit (this device) */
+.menu-item .menu-st-over { margin-left: auto; padding-left: 8px; font-size: 13px; opacity: 0.8; }
 
 /* Button labels never wrap — they ellipsize instead (the sync
    buttons' Greek labels sit right at the width limit). */

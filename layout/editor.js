@@ -294,12 +294,34 @@
     var doc = LY.inframe ? LY.inframe.layoutDoc(LY.doc) : LY.doc;
     ED.L = R.computeLayout(doc);
     ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing });
+    keepPf();
     if (ED.master) {
       var ms = M.find(LY.doc.masters, ED.master);
       ED.ML = { L: ms ? R.computeMasterLayout(LY.doc, ms, "L") : null, R: ms ? R.computeMasterLayout(LY.doc, ms, "R") : null, B: ms ? R.computeMasterLayout(LY.doc, ms, "") : null };
     }
   }
   ED.relayout = relayout;
+  // The preflight of the open document, kept on this device for Claude
+  // (read_in_app preflight_now, Chris 2026-11-18): page numbers, at most
+  // 200 problems, 30 documents.
+  var pfTimer = 0;
+  function keepPf() {
+    clearTimeout(pfTimer);
+    pfTimer = setTimeout(function () {
+      var doc = LY.doc;
+      if (!doc || !Array.isArray(ED.pf) || ED.master) return;
+      var pos = {};
+      M.pagesInOrder(doc).forEach(function (p, i) { pos[p.id] = i + 1; });
+      var list = ED.pf.slice(0, 200).map(function (x) { var o = { severity: x.sev, problem: x.code }; if (x.id) o.frame = x.id; if (pos[x.pg]) o.page = pos[x.pg]; return o; });
+      try {
+        var all = JSON.parse(localStorage.getItem("oros-layout-pf") || "{}") || {};
+        all[doc.id] = { at: Date.now(), m: doc.m, n: ED.pf.length, list: list };
+        var ids = Object.keys(all).sort(function (a, b) { return (all[b].at || 0) - (all[a].at || 0); });
+        ids.slice(30).forEach(function (k) { delete all[k]; });
+        localStorage.setItem("oros-layout-pf", JSON.stringify(all));
+      } catch (e) {}
+    }, 1500);
+  }
 
   function readPalette() {
     var cs = getComputedStyle(document.documentElement);

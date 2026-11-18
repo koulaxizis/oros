@@ -115,7 +115,7 @@ test("framemod (Chris 2026-11-18, P0): one frame moved, resized, restyled; one r
   const MM = 72 / 25.4;
   assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: a.id, x: 20, y: 30, w: 100, h: 50, va: "m", ncol: 2, ins: 2, fill: "#eeeeee", opacity: 80 }])[0], { now: 40 }), 1);
   const fa = d.items.find((it) => it.id === a.id);
-  assert.ok(Math.abs(fa.x - 20 * MM) < 0.01 && Math.abs(fa.w - 100 * MM) < 0.01 && fa.va === "m" && fa.cols === 2 && fa.op === 80 && fa.fill);
+  assert.ok(Math.abs(fa.x - 20 * MM) < 0.01 && Math.abs(fa.w - 100 * MM) < 0.01 && fa.va === "c" && fa.cols === 2 && fa.op === 80 && fa.fill);
   assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: a.id, x: 20 }])[0], { now: 41 }), 0, "as it is: nothing");
   assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: a.id, nofill: true, opacity: 100 }])[0], { now: 42 }), 1);
   assert.ok(!fa.fill && fa.op === undefined);
@@ -125,4 +125,62 @@ test("framemod (Chris 2026-11-18, P0): one frame moved, resized, restyled; one r
   assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: b.id + ", nope", del: true }])[0], { now: 44 }), 1);
   assert.ok(!d.stories.some((s) => s.id === a.story) && d.tombs[a.story] === 44, "with its last frame the story goes");
   assert.match(CMD.check([{ op: "framemod" }]).err, /frame is missing/);
+});
+
+test("masterfield (P1): page numbers outside on both sides, a running head, hidden on chosen pages, set again in place", () => {
+  const d = book(), ms = d.masters[0], name = "A-Master";
+  let notes = [];
+  const run = (o) => CMD.apply(d, steps([Object.assign({ op: "masterfield", master: name }, o)])[0], { now: 50, notes: notes, idf: ((n) => (p) => p + "-mf" + (++n))(Math.floor(Math.random() * 1e6)) });
+  assert.ok(run({ pos: "bo", size: 10 }) > 0);
+  const pn = d.items.filter((it) => it.pg === ms.id && it.ext && it.ext.mfk === "pn");
+  assert.equal(pn.length, 2, "one per side");
+  const L = pn.find((it) => it.side === "L"), R = pn.find((it) => it.side === "R");
+  const psOf = (it) => d.pstyles.find((p) => p.id === d.stories.find((s) => s.id === it.story).paras[0].ps);
+  assert.equal(psOf(L).align, "l"); assert.equal(psOf(R).align, "r");
+  assert.deepEqual(d.stories.find((s) => s.id === R.story).paras[0].runs, [{ f: "pn" }]);
+  assert.ok(R.y > d.setup.h / 2, "at the bottom");
+  // a second call changes it in place
+  assert.ok(run({ pos: "bc", size: 9 }) > 0);
+  assert.equal(d.items.filter((it) => it.pg === ms.id && it.ext && it.ext.mfk === "pn").length, 2);
+  assert.equal(psOf(L).align, "c");
+  // the running head with the title, at the top
+  run({ kind: "runhead", text: "{title}", pos: "tc" });
+  const rh = d.items.filter((it) => it.pg === ms.id && it.ext && it.ext.mfk === "rh");
+  assert.equal(rh.length, 2);
+  assert.equal(d.stories.find((s) => s.id === rh[0].story).paras[0].runs[0].t, "Στην καρδιά του βυθού");
+  assert.ok(rh[0].y < d.setup.h / 2);
+  // hidden on pages 1-3, shown again on 2
+  run({ hide: "1-3" });
+  const M = require(path.join(ROOT, "designkit/model.js"));
+  const order = M.pagesInOrder(d);
+  const shows = (i) => M.masterItems(d, order[i], d.setup.facing ? M.sideOf(d, i) : undefined).some((it) => it.ext && it.ext.mfk === "pn");
+  assert.ok(!shows(0) && !shows(1) && !shows(2) && shows(3), "hidden on 1-3 only");
+  run({ show: "2" });
+  assert.ok(shows(1) && !shows(0));
+  assert.match(CMD.check([{ op: "masterfield", master: "A", hide: "front" }]).err, /page lists/);
+  // remove
+  assert.ok(run({ remove: true }) > 0);
+  assert.equal(d.items.filter((it) => it.pg === ms.id && it.ext && it.ext.mfk === "pn").length, 0);
+  assert.ok(!d.items.some((it) => it.ext && it.ext.mfh === "pn"), "the hidden copies go too");
+  run({ master: "No such" }); assert.ok(notes.includes("noMaster"));
+});
+
+test("colormode (P1), full read-back, flow report wiring", () => {
+  const d = book();
+  assert.equal(CMD.apply(d, steps([{ op: "colormode", color: "cmyk" }])[0], { now: 60 }), 1);
+  assert.equal(d.setup.ext.cm, "cmyk"); assert.equal(d.setup.ext.icc, "fogra39");
+  assert.equal(CMD.apply(d, steps([{ op: "colormode", color: "cmyk" }])[0], { now: 61 }), 0);
+  assert.equal(CMD.apply(d, steps([{ op: "colormode", color: "rgb" }])[0], { now: 62 }), 1);
+  assert.ok(!d.setup.ext.cm);
+  const long = "Λέξη ".repeat(200);
+  CMD.apply(d, steps([{ op: "frame", page: 2, lines: [long] }])[0], { now: 63, idf: ((n) => (p) => p + "-cm" + (++n))(0) });
+  const cut = CMD.outline(d, null, {}), whole = CMD.outline(d, null, { full: true, livePf: { problems: [] } });
+  const tx = (o) => o.stories.map((s) => s.paragraphs.map((p) => p.text).join("")).join("");
+  assert.ok(tx(cut).length < long.length && /…$/.test(tx(cut)));
+  assert.equal(tx(whole), long);
+  assert.deepEqual(whole.preflight_now, { problems: [] });
+  const fs = require("fs");
+  assert.match(fs.readFileSync(path.join(ROOT, "layout/assist.js"), "utf8"), /pagesNote\(before, now2, notes\)/);
+  assert.match(fs.readFileSync(path.join(ROOT, "layout/editor.js"), "utf8"), /oros-layout-pf/);
+  assert.match(fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8"), /full: a\.full === true/);
 });

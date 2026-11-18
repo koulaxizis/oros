@@ -90,9 +90,15 @@
   CATALOG.framemod = { kind: "doc", args: { frame: { t: "str", max: 400, req: 1 }, x: MMv(-1, 5000, -1), y: MMv(-1, 5000, -1), w: MMv(-1, 5000, -1), h: MMv(-1, 5000, -1),
     ncol: { t: "int", lo: 0, hi: 20, def: 0 }, gut: MMv(-1, 100, -1), ins: MMv(-1, 50, -1), va: { t: "enum", v: ["", "t", "m", "b", "j"], def: "" },
     fill: { t: "color" }, nofill: { t: "bool", def: 0 }, opacity: { t: "int", lo: -1, hi: 100, def: -1 }, del: { t: "bool", def: 0 } } };
+  // colormode (Chris 2026-11-18, P1): the document's colour after create
+  CATALOG.colormode = { kind: "doc", args: { color: { t: "enum", v: ["rgb", "cmyk"], def: "cmyk", req: 1 }, icc: { t: "enum", v: ["", "fogra39"], def: "" } } };
+  // masterfield (Chris 2026-11-18, P1): page numbers and running heads
+  CATALOG.masterfield = { kind: "doc", args: { master: { t: "str", max: 60, req: 1 }, kind: { t: "enum", v: ["pagenum", "runhead"], def: "pagenum" }, text: { t: "str", max: 200 },
+    pos: { t: "enum", v: ["bc", "bo", "bi", "tc", "to", "ti"], def: "bc" }, from_edge: MMv(-1, 100, -1), font: { t: "str", max: 80 }, size: { t: "num", lo: 0, hi: 72, def: 0 },
+    hide: { t: "str", max: 60 }, show: { t: "str", max: 60 }, remove: { t: "bool", def: 0 }, lang: { t: "enum", v: ["el", "en"], def: "el" } } };
   // cancel (alone): stops the commands that hold Layout ("busy")
   CATALOG.cancel = { kind: "doc", args: {} };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "framemod", "addfont", "cancel"];
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "framemod", "masterfield", "colormode", "addfont", "cancel"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -117,7 +123,7 @@
     "keep on = keep with the next paragraph, brk any|col|page|odd|even (start the paragraph there), hyph on|off" +
     "\nstyleset: set play makes the styles of a play (lang el|en names): Speaker (character), Cast list heading, Cast list, Act heading (new page), Scene heading, Dialogue (speaker up to \":\" nested), Stage direction, Song; changes no existing style" +
     "\nframe: a new text frame on page `page`: x y w h in mm from the page's top left (-1 = the margins), lines the paragraphs, one per entry (\"[Style name] text\" picks a paragraph style, " +
-    "\"{Character style|words}\" a character style; style is the default paragraph style), ncol columns, gut the gutter in mm, ins the inset in mm, va t|m|b|j vertical alignment, " +
+    "\"{Character style|words}\" a character style; style is the default paragraph style), ncol columns, gut the gutter in mm, ins the inset in mm, va t|m|b vertical alignment (top, middle, bottom), " +
     "fill #rrggbb, opacity 0-100, clear true = what is on the page goes first (for a picture of a text page retypeset as live text)" +
     "\nretext: the paragraphs of a story (story id, or the frame id of one of its frames, as the document's frames list shows) become `lines` (same marks as frame; style the default)" +
     "\nhouse_pages: the front and back pages of the house style document `house` (or the only one) are added before and after the book, scaled to its trim, their fields " +
@@ -130,8 +136,12 @@
     "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)" +
     "\npagesize: the pages `pages` get their own trim w × h in mm (a fold-out, a smaller insert; at least 13 mm); w 0 and h 0 = the document's size again; the PDF, the pictures and the editor follow" +
     "\nframemod: the frames `frame` (ids as the document's frames list shows, comma-separated; text or picture) get x y (mm from the page's top left) w h (mm; -1 = as it is), " +
-    "ncol columns (0 = as it is), gut the gutter and ins the inset in mm (-1 = as it is), va t|m|b|j, fill #rrggbb or nofill true, opacity 0-100 (-1 = as it is); del true removes them " +
+    "ncol columns (0 = as it is), gut the gutter and ins the inset in mm (-1 = as it is), va t|m|b, fill #rrggbb or nofill true, opacity 0-100 (-1 = as it is); del true removes them " +
     "(a story goes with its last frame; with other frames in its chain the text flows on in them)" +
+    "\nmasterfield: on the master `master` (by name), kind pagenum = the page number | runhead = a running head with `text` ({title} = the document's name), " +
+    "pos bc|bo|bi (bottom centre, outside, inside) | tc|to|ti (top), from_edge the distance from the trim edge in mm (-1 = 10), font and size (pt, 0 = 9) as defstyle; a second call changes it in place; " +
+    "hide a page list (e.g. 1-6,23) keeps it off those pages of that master (front matter, picture pages), show puts it back there; remove true takes it off the master; lang el|en names its style" +
+    "\ncolormode: the document's colour becomes color cmyk (for print; icc fogra39, Coated FOGRA39, the default) or rgb (screen); swatches keep their values, the print PDF converts pictures and RGB colours to the profile" +
     "\naddfont: a font family into the owner's font collection `collection` (default Claude; list_fonts then shows it) and this document's fonts, so defstyle font can use it: " +
     "source free = a Fontsource family by `family` (e.g. Carlito, as fontsource.org names it; its files are kept on the device for offline use), styles regular|bold|italic|bold italic (or 400, 700, 400i, 700i; default all it has); " +
     "source local = the font file `path` local:<root>/<file>.ttf|.otf in a local folder the owner opened (one file per command: add the bold and italic files too), kept in the owner's fonts" +
@@ -188,6 +198,7 @@
     if (errs.length) return { ok: false, err: errs.slice(0, 6).join(". ") };
     if (steps.some(function (st, i) { return st.op === "create" && i > 0; })) return { ok: false, err: "create can only be the first command" };
     if (steps.length > 1 && steps.some(function (st) { return st.op === "cancel"; })) return { ok: false, err: "cancel goes alone" };
+    if (steps.some(function (st) { return st.op === "masterfield" && ((st.hide && !S.pageTest(st.hide)) || (st.show && !S.pageTest(st.show))); })) return { ok: false, err: "masterfield: hide and show are page lists such as 1-6,23" };
     var bad = steps.filter(function (st) { return st.op === "images" && !(st.paths && st.paths.length) && !st.folder; });
     if (bad.length) return { ok: false, err: "images needs paths or folder" };
     if (steps.some(function (st) { return st.op === "images" && (st.paths || []).some(function (p) { return !/^local:/i.test(String(p).trim()) && !PRO.normPath(p); }); })) return { ok: false, err: "images: every path is a file on the orOS disk (/internal/… or as files_list shows it)" };
@@ -253,6 +264,24 @@
       var fids = st.frame ? String(st.frame).split(/[\s,]+/).filter(Boolean) : [];
       if (!fids.length && !st.pages) return 0;
       return PRO.setPicture(doc, fids, st.pages ? S.pageTest(st.pages) : null, { flip: st.flip, corner: st.corner >= 0 ? st.corner * PT_PER_MM : -1, fit: st.fit }, now);
+    }
+    if (st.op === "masterfield") {
+      var mfr = PRO.masterField(doc, Object.assign({}, st, { env: env }), now, env.idf, function (list) {
+        if (!list) return [];
+        var test = S.pageTest(list), out = [];
+        M.pagesInOrder(doc).forEach(function (pg, i) { if (test(i + 1, M.pagesInOrder(doc).length)) out.push(i); });
+        return out;
+      });
+      if (mfr < 0) { if (env.notes && env.notes.indexOf("noMaster") < 0) env.notes.push("noMaster"); return 0; }
+      return mfr;
+    }
+    if (st.op === "colormode") {
+      doc.setup.ext = doc.setup.ext || {};
+      var cx = doc.setup.ext, cm = st.color === "cmyk" ? "cmyk" : "", ic = cm ? st.icc || "fogra39" : "";
+      if ((cx.cm || "") === cm && (cx.icc || "") === ic) return 0;
+      if (cm) { cx.cm = cm; cx.icc = ic; } else { delete cx.cm; delete cx.icc; }
+      doc.m = Math.max(now, (doc.m || 0) + 1);
+      return 1;
     }
     if (st.op === "framemod") return PRO.modFrame(doc, String(st.frame).split(/[\s,]+/).filter(Boolean).slice(0, 200), st, now);
     if (st.op === "pagesize") return PRO.setPageSize(doc, S.pageTest(st.pages), (st.w || 0) * PT_PER_MM, (st.h || 0) * PT_PER_MM, now);

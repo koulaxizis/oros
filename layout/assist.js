@@ -91,6 +91,27 @@
 
   // busy: the run now (Chris 2026-11-18: name the command that holds
   // Layout, and let it be stopped): { ops, since, ctl, stop }
+  // Pages the commands added or removed, and where (Chris 2026-11-18:
+  // flow and fit say how many pages they added, so left and right stay
+  // under control): "pages: 10 → 14, new pp. 7-10 (p. 7 right, p. 10 left)".
+  function pagesNote(before, after, notes) {
+    var o0 = M.pagesInOrder(before), o1 = M.pagesInOrder(after);
+    if (o0.length === o1.length && o0.every(function (p, i) { return o1[i].id === p.id; })) return;
+    var had = {};
+    o0.forEach(function (p) { had[p.id] = 1; });
+    var nw = [];
+    o1.forEach(function (p, i) { if (!had[p.id]) nw.push(i); });
+    var side = function (i) { var sd = M.sideOf(after, i); return sd === "L" ? "left" : sd === "R" ? "right" : ""; };
+    var runs = [];
+    nw.forEach(function (i) { var r = runs[runs.length - 1]; if (r && r[1] === i - 1) r[1] = i; else runs.push([i, i]); });
+    var txt = "pages: " + o0.length + " → " + o1.length;
+    if (runs.length) txt += ", new " + runs.slice(0, 12).map(function (r) {
+      return r[0] === r[1] ? "p. " + (r[0] + 1) + (side(r[0]) ? " " + side(r[0]) : "") : "pp. " + (r[0] + 1) + "-" + (r[1] + 1) + (side(r[0]) ? " (p. " + (r[0] + 1) + " " + side(r[0]) + ", p. " + (r[1] + 1) + " " + side(r[1]) + ")" : "");
+    }).join(", ");
+    var gone = o0.length + nw.length - o1.length;
+    if (gone > 0) txt += ", " + gone + " removed";
+    if (notes.length < 40) notes.push(txt);
+  }
   var busy = false, WATCH_MS = 60000, run = null;
   function holder() {
     if (!run) return null;
@@ -100,7 +121,7 @@
   function stopRun(by) { if (run && run.stop) run.stop(by); }
   var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1, addfont: 1 };
   // defstyle with a font Layout must look up (the disk, Fontsource)
-  function slowStep(st) { return PRO_ASYNC[st.op] || (st.op === "defstyle" && st.font && window.LayoutPro && !window.LayoutPro.fontFor({ setup: {} }, st.font)); }
+  function slowStep(st) { return PRO_ASYNC[st.op] || ((st.op === "defstyle" || st.op === "masterfield") && st.font && window.LayoutPro && !window.LayoutPro.fontFor({ setup: {} }, st.font)); }
   function edit(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "";
     var chk = C.check(rq && rq.steps);
@@ -192,6 +213,7 @@
         var mine = snaps.filter(function (x) { return x.id === id; })[0];
         if (mine) mine.fp = fp(now2);
         else snaps.push({ id: id, before: before, fp: fp(now2) });
+        pagesNote(before, now2, notes);
         per.push({ name: title(now2), n: k });
         total += k;
       });

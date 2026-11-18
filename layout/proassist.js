@@ -273,7 +273,7 @@
           return c3.then(function () { env.fills = fills; LY_DOC_FOR_FILL = null; }, function (e) { LY_DOC_FOR_FILL = null; throw e; });
         }
         if (st.op === "addfont") return addFont(st, notes, ctl || {}).then(function (e) { env.font = e; });
-        if (st.op === "defstyle" && st.font && !PRO.fontFor(scratch, st.font)) {
+        if ((st.op === "defstyle" || st.op === "masterfield") && st.font && !PRO.fontFor(scratch, st.font)) {
           if (ctl && ctl.tick) ctl.tick(st.font);
           return lib().then(function (l) { return LY.F.match(st.font, l); }).then(function (e) {
             if (e) { env.fonts = {}; env.fonts[PRO.fontKey(st.font)] = e; }
