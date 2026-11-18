@@ -126,7 +126,7 @@ Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für einge
 ## Fernsteuerung
 Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während der Ton am PC spielt.
 1. Öffne am PC die Einstellungen (die drei Punkte oben) und drück `Tablet oder Handy verbinden`, dann `Code anzeigen`. Studio zeigt einen 6-stelligen Code und einen QR-Code.
-2. Scanne auf dem Tablet oder Handy den QR-Code mit der Kamera, oder öffne dort Studio, wähle in den Einstellungen `Studio auf anderem Gerät steuern` und gib den Code ein.
+2. Scanne auf dem Tablet oder Handy den QR-Code mit der Kamera, oder öffne die App Remote for orOS Studio (oder Studio, `Studio auf anderem Gerät steuern` in den Einstellungen) und drück `QR-Code scannen` oder gib den Code ein.
 3. Drück am PC `Erlauben`. Ist ein Gerät erlaubt, kann kein anderes mehr mit diesem Code beitreten.
 - Die Fernsteuerung zeigt Abspielen, Stopp, Aufnahme, Loop, Klick, Tempo und eine Positionsleiste, dazu pro Spur einen Streifen mit Fader, Panorama, `M` `S` `R`, Effekt an/aus und Pegelanzeige, plus den Master.
 - `FX` auf einem Streifen öffnet die Effekte dieser Spur wie am PC: die eigene Oberfläche des Effekts mit ihren Anzeigen, jeden Regler, an/aus, Reihenfolge, Hinzufügen und Entfernen. Dateien für Effekte (etwa die IR von Convolution) werden am PC gewählt.
@@ -134,6 +134,8 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 - Zieh einen Fader, um ihn von seiner Stelle aus zu bewegen; ein Doppeltipp setzt ihn auf 0 dB zurück. Jede Bewegung ist eine normale Änderung am PC, also macht [[Ctrl+Z]] sie dort rückgängig.
 - Im selben Netzwerk sprechen die beiden Geräte direkt miteinander. Über ein VPN oder in verschiedenen Netzwerken (etwa ein Handy im 4G-Netz) sprechen sie stattdessen über das orOS-Relay, mit etwas mehr Verzögerung. So oder so ist die Verbindung mit dem Code verschlüsselt, und das Relay leitet sie nur weiter.
 - `Trennen` am PC beendet die Verbindung sofort. Bricht die Verbindung ab, verbindet sich die Fernsteuerung von selbst neu, solange Studio am PC offen bleibt.
+- Der Bildschirm des Tablets oder Handys bleibt an, solange er das Mischpult zeigt, und ein Handy gibt ein kurzes Ticken, wenn du einen Fader greifst, 0 dB überschreitest oder einen Knopf drückst.
+- **Remote for orOS Studio** ist die Fernsteuerung als eigene App für Android ([F-Droid-Repository](https://koulaxizis.github.io/oros-fdroid/) von orOS, Droid-ify, Obtainium oder die Download-Seite von orOS) und unter useoros.online/studio/remote/ in jedem Browser. Sie merkt sich den letzten Code nur auf diesem Gerät: Nach `Steuerung beenden` oder wenn du zur App zurückkommst, verbindet `Verbinden` wieder mit demselben PC, ohne neues `Erlauben`, solange Studio dort noch diesen Code zeigt. Von deinen Projekten speichert sie nichts.
 >! Drück `Erlauben` nur, wenn dein eigenes Gerät fragt. Hast du nicht gerade irgendwo den Code eingegeben, drück `Ablehnen`.
 
 ## Exportieren
@@ -144,6 +146,14 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 - `Zu Musik hinzufügen` erstellt dieselbe Datei im gewählten Format, legt sie in den Ordner Music auf der orOS-Disk und spielt sie in Musik ab.
 - `An eine App senden…` macht dasselbe und öffnet dann `An eine App senden`: sende die Datei an Transfer, Mail oder eine andere deiner Apps.
 - `Klingelton machen` macht aus den Noten der Instrumentenspuren (ohne Schlagzeug) eine einstimmige Melodie und öffnet sie im Klingelton-Komponisten: Wo Noten sich überlappen, gewinnt die höchste, und du drückst dort `Importieren`, um sie zu behalten.
+
+## Lautheit
+`LUFS` auf dem Master-Streifen (oder `Lautheit…` im Exportfenster, auf einem Handy) öffnet den Lautheitsmesser. Er misst nach EBU R128 (ITU BS.1770), genau wie NULL Loudness Meter, das, was der Master an die Lautsprecher schickt.
+- Während der Song spielt, zeigt er die momentane (400 ms) und kurzzeitige (3 s) Lautheit, die integrierte Lautheit von allem bisher Gespielten, den Lautheitsumfang (LRA) und den True Peak. Stoppen zieht den integrierten Wert nicht nach unten; `Zurücksetzen` beginnt ihn neu.
+- `Song messen` mischt den Song wie beim Export und misst ihn ganz: integrierte Lautheit, Umfang, die lautesten 3 Sekunden, True Peak und Sample Peak, RMS und Grundrauschen. `Datei messen…` tut dasselbe für jede Audiodatei.
+- `Ziel` sagt, was ein Dienst damit tun wird. Spotify, Apple Music, YouTube und Podcast-Apps spielen jeden Titel etwa in ihrer eigenen Lautheit, ein lauteres Master wird also nur leiser gedreht; der Rundfunk nutzt EBU R128 (-23 LUFS). Ein True Peak über -1 dBTP kann verzerren, sobald der Dienst ihn kodiert.
+- Die Hörbuch-Ziele (ACX für Audible, Storytel) prüfen, was sie ablehnen: RMS -23 bis -18 dBFS, Spitzen höchstens -3 dB, Grundrauschen höchstens -60 dBFS, Raumton am Anfang (0,5 bis 1 s) und am Ende (1 bis 5 s), keine digitale Stille, kein Clipping, höchstens 120 Minuten. Storytel veröffentlicht keine eigenen Zahlen, also geht es von denen von ACX aus.
+- `Referenz wählen…` misst einen Song, den du magst: Seine Zahlen stehen neben deinen, und `In der Lautheit des Songs spielen` spielt ihn auf die integrierte Lautheit deines Songs gedreht, damit du den Klang vergleichst und nicht die Lautstärke.
 
 ## Marker
 - Ein Marker benennt eine Stelle auf der Zeitleiste: Drücke [[M]], um einen an der Abspielposition zu setzen, oder öffne `Marker` in `Exportieren`. Sie erscheinen auf dem Lineal.
@@ -162,6 +172,24 @@ Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während
 - `Auf Nextcloud oder WebDAV veröffentlichen` legt die Website mit deinem Konto in einen Ordner auf deinem eigenen Server. Erstelle in Nextcloud (29 oder neuer) einen Ordner nur für die Sendung, teile ihn per öffentlichem Link (ohne Passwort, Herunterladen erlaubt) und erstelle unter Einstellungen › Sicherheit ein App-Passwort. Schreibe die WebDAV-Adresse des Ordners (Dateien › Einstellungen › WebDAV, dann der Pfad des Ordners) und füge den öffentlichen Link, deinen Benutzernamen und das App-Passwort ein. Das Passwort bleibt nur auf diesem Gerät und wird nie synchronisiert; `Passwort vergessen` löscht es. Die meisten Server sind vom Browser aus nicht erreichbar: Schalte dann `Über das orOS-Relay` ein, und die Dateien und das Passwort laufen auf ihrem Weg durch das orOS-Relay (dort wird nichts gespeichert; höchstens 95 MB pro Datei). Gibt es noch keine Website-Adresse, bekommt die Sendung die Adresse des öffentlichen Links. Auf dem Server wird nie etwas gelöscht, unveränderte Dateien werden nicht erneut gesendet, und der Feed wird nie über einen neueren geschrieben, den ein anderes Gerät veröffentlicht hat.
 - Trage danach die Feed-Adresse einmal bei Apple Podcasts, Spotify und im Podcast Index ein; Podcast-Apps folgen ihr von dort. `In Podcasts folgen` fügt deine Sendung wie jede andere zu [Podcasts](app:podcasts) hinzu.
 - Jede Sendung und jede Folge behält für immer eine Kennung (podcast:guid), damit Abonnenten keine Folge doppelt sehen, auch wenn die Sendung an eine andere Adresse umzieht. Nichts läuft über orOS: Die Dateien gehen von deinem Gerät zu deinem Host.
+
+## Hörbücher
+Ein Buch ist eine Reihe von Kapiteln, und jedes Kapitel ist ein gewöhnliches Studio-Projekt: Spuren, Effekte, Automation und Aufnahme über orOS Bridge funktionieren wie in einem Song. Öffne `Projekte` und wähle `Bücher`.
+- `Neues Buch` erstellt den Vorspann, Kapitel 1 und den Abspann, jedes mit einer Spur `Stimme`, die mit NULL-Effekten für Sprache beginnt: ein Hochpassfilter bei 80 Hz, der De-Esser und ein sanfter Kompressor (das Gate ist da, aber aus, bis dein Raum es braucht).
+- Im Fenster des Buchs benennst du es um, fügst Kapitel hinzu, ordnest sie mit den Pfeilen und öffnest jeden Teil. Bis zu 200 Kapitel passen in alle Bücher zusammen, neben den 50 Songs.
+- `Titel in Publishing` verknüpft das Buch mit seinem Titel im Verlag: Autor, Sprecher und Hörbuch-ISBN werden von dort gelesen, wann immer sie gebraucht werden, also erreicht eine Korrektur im Verlag das Buch. Ohne den Verlag trägst du Autor und Sprecher hier ein.
+- `Anforderungen`: ACX (Audible) oder Storytel. Das Fenster Lautheit prüft ein Kapitel danach.
+- Takes in einem Kapitel werden als 24-Bit-FLAC gespeichert: verlustfrei, etwa halb so groß wie eine WAV, und sie synchronisieren mit Vault Drive. Songs behalten WAV.
+- Raumton: Nimm etwa 30 Sekunden des stillen Raums mit demselben Mikrofon und denselben Einstellungen auf, wähle diesen Clip aus, öffne das Buch und drück `Ausgewählten Clip als Raumton nehmen`. Studio misst sein Grundrauschen (ACX will -60 dBFS oder weniger).
+- „Lücken füllen“ legt den Raumton auf eine eigene Spur, überall dort, wo die Stimme im offenen Kapitel aufhört, plus 2 Sekunden am Ende, damit keine digitale Stille bleibt. Drück es nach dem Bearbeiten erneut: Es beginnt von vorn.
+- `Alle prüfen` mischt jeden Teil wie beim Export und prüft ihn gegen die Anforderungen: RMS, True Peak, Grundrauschen, Raumton am Anfang und am Ende, digitale Stille, Länge und Clipping. Jeder Teil zeigt, ob er besteht, und sein Fenster Lautheit sagt, was zu korrigieren ist, mit `Hingehen` bei einer Spitze oder einem Clip.
+- `Alle normalisieren` bringt jeden Teil mit einer Verstärkung und dem NULL Limiter (True Peak, -3,5 dB) am Ende seiner Master-Kette auf RMS -20 dBFS. Die Aufnahmen ändern sich nie, und `Normalisieren entfernen` nimmt beides wieder heraus. Ein Grundrauschen über -60 dBFS wird nicht versteckt: Versuch NULL Noise Reduction oder das Gate auf der Spur Stimme.
+- `Loop dieses Kapitels als Hörprobe` nimmt einen Loop von 1 bis 5 Minuten als die Hörprobe, die die Shops abspielen.
+- `Buch exportieren` schreibt eine MP3 pro Teil (CBR, mono, 44,1 kHz, mit der Bitrate unter `MP3 für das Buch`) mit Titel, Autor, Sprecher, ISBN, Titelnummer und Cover, dazu `retail-sample.mp3`, ein `cover.jpg` mit 2400 × 2400 und `report.txt` mit den Messwerten jeder Datei, nach `Studio/Books`, in einen Ordner mit dem Namen des Buchs, in [Dateien](app:files). Jede MP3 wird nach dem Kodieren erneut gemessen.
+- Ein Kapitel wird in einem Stück im Arbeitsspeicher gemischt, sehr lange Kapitel (über eine Stunde) brauchen also ein Gerät mit viel Speicher.
+- `Ein M4B mit Kapiteln` macht das ganze Buch zu einer Hörbuchdatei, wie sie Apple Books, VLC und die meisten Android-Player öffnen: der eigene AAC-Encoder von Studio (64, 96 oder 128 kbit/s mono unter `M4B für das Buch`), ein Kapitel am Anfang jedes Teils, Titel, Autor, Sprecher, Jahr und das Cover. Es landet neben den MP3s.
+- Nach einem Export zeigt ein Buch, das mit einem Titel im Verlag verknüpft ist, „Länge in Publishing eintragen“: Der Verlag öffnet diesen Titel und fragt, bevor er die Minuten in die Hörbuchausgabe einträgt.
+- Der Assistent (und Claude über orOS Gate) kann die Teile eines Buchs lesen: Jeder heißt „Buch · Teil“ und sagt, wo er im Buch steht.
 
 ## Synchronisierung und Sicherung
 - Projekte, Spuren und Clips, auch die Noten von MIDI-Clips, folgen dir über die orOS-Synchronisierung auf deine anderen Geräte.

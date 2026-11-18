@@ -55,7 +55,10 @@
     ["a4", 210, 297], ["a5", 148, 210], ["a3", 297, 420], ["a6", 105, 148],
     ["b5", 176, 250], ["letter", 215.9, 279.4], ["legal", 215.9, 355.6],
     ["card", 85, 55], ["dl", 99, 210], ["square", 1080 * 25.4 / 72, 1080 * 25.4 / 72],
-    ["poster", 500, 700]
+    ["poster", 500, 700],
+    // book trims (LY-PRO W1)
+    ["bk120x190", 120, 190], ["bk140x210", 140, 210], ["bk170x240", 170, 240],
+    ["bk180x250", 180, 250], ["bk215x215", 215, 215]
   ];
   function preset(id) {
     for (var i = 0; i < PRESETS.length; i++) if (PRESETS[i][0] === id) {
@@ -212,6 +215,49 @@
   function firstNumber(doc) {
     var x = doc && doc.setup && doc.setup.ext, v = x ? Math.floor(Number(x.pnStart)) : 1;
     return isFinite(v) && v >= 0 && v <= 9999 ? v : 1;
+  }
+
+  // Sections (LY-PRO W3, page.ext.sec, absent = the book goes on):
+  // a page that opens a section restarts or keeps the count (n, −1 =
+  // go on), in a number style (f: 1 | i | I | a | A) with a prefix
+  // (pre, up to 8 characters: "A-" for an appendix).
+  var SEC_FMT = { "1": 1, i: 1, I: 1, a: 1, A: 1 };
+  function secOfPage(p) {
+    var v = p && p.ext && p.ext.sec;
+    if (!v || typeof v !== "object") return null;
+    var n = Math.floor(Number(v.n));
+    return { n: isFinite(n) && n >= 0 && n <= 9999 ? n : -1, f: SEC_FMT[v.f] ? v.f : "1", pre: typeof v.pre === "string" ? v.pre.replace(/[\u0000-\u001f]/g, "").slice(0, 8) : "" };
+  }
+  function roman(n) {
+    if (n <= 0 || n > 3999) return String(n);
+    var R = [[1000, "m"], [900, "cm"], [500, "d"], [400, "cd"], [100, "c"], [90, "xc"], [50, "l"], [40, "xl"], [10, "x"], [9, "ix"], [5, "v"], [4, "iv"], [1, "i"]], out = "";
+    R.forEach(function (r) { while (n >= r[0]) { out += r[1]; n -= r[0]; } });
+    return out;
+  }
+  function letters(n) {
+    if (n <= 0) return String(n);
+    var out = "";
+    while (n > 0) { n--; out = String.fromCharCode(97 + n % 26) + out; n = Math.floor(n / 26); }
+    return out;
+  }
+  function numFmt(n, f) {
+    if (f === "i") return roman(n);
+    if (f === "I") return roman(n).toUpperCase();
+    if (f === "a") return letters(n);
+    if (f === "A") return letters(n).toUpperCase();
+    return String(n);
+  }
+  // Every page's number and label, in order: [{ id, no, label, sec }]
+  // (sec: the index of the page's section, 0 = before any).
+  function pageLabels(doc) {
+    var no = firstNumber(doc), f = "1", pre = "", k = 0;
+    return pagesInOrder(doc).map(function (p, i) {
+      var sc = secOfPage(p);
+      if (sc) { k++; f = sc.f; pre = sc.pre; if (sc.n >= 0) no = sc.n; }
+      else if (i > 0) no++;
+      if (sc && sc.n < 0 && i > 0) no++;
+      return { id: p.id, no: no, label: pre + numFmt(no, f), sec: k };
+    });
   }
 
   function normPage(p) {
@@ -675,14 +721,36 @@
     return doc.pages.slice().sort(function (a, b) { return a.pos - b.pos || cmpStr(a.id, b.id); });
   }
   // Side of the n-th page (0-based): a facing document starts on a
-  // right-hand page.
-  function sideOf(doc, idx) { return doc.setup.facing ? (idx % 2 === 0 ? "R" : "L") : "R"; }
+  // right-hand page, or on a left-hand one with setup.ext.first "L"
+  // (LY-PRO W1, R39: absent = right).
+  function firstLeft(doc) { var x = doc && doc.setup && doc.setup.ext; return !!(x && x.first === "L" && doc.setup.facing); }
+  function sideOf(doc, idx) {
+    if (!doc.setup.facing) return "R";
+    return (idx % 2 === 0) !== firstLeft(doc) ? "R" : "L";
+  }
   function spreads(doc) {
     var pages = pagesInOrder(doc), out = [];
     if (!doc.setup.facing) { pages.forEach(function (p) { out.push([p]); }); return out; }
-    if (pages.length) out.push([pages[0]]);
-    for (var i = 1; i < pages.length; i += 2) out.push(pages.slice(i, i + 2));
+    var i = 0;
+    if (!firstLeft(doc)) { if (pages.length) out.push([pages[0]]); i = 1; }
+    for (; i < pages.length; i += 2) out.push(pages.slice(i, i + 2));
     return out;
+  }
+  // The bleed of each side in points (LY-PRO W1): setup.ext.bl
+  // { t, b, i, o } (inside / outside, as the margins), else setup.bleed
+  // on every side. `side` "L" swaps inside and outside to left / right.
+  function bleeds(doc, side) {
+    var s = doc.setup, x = s.ext && s.ext.bl, d = s.bleed;
+    function v(k) { var n = x && typeof x[k] === "number" && isFinite(x[k]) ? x[k] : d; return Math.max(0, Math.min(72, n)); }
+    var o = { t: v("t"), b: v("b"), i: v("i"), o: v("o") };
+    var lr = s.facing && side === "L" ? { l: o.o, r: o.i } : { l: o.i, r: o.o };
+    return { t: o.t, b: o.b, i: o.i, o: o.o, l: lr.l, r: lr.r };
+  }
+  // The slug (room for marks and notes outside the bleed) in points:
+  // setup.ext.slug, else 0.
+  function slugOf(doc) {
+    var x = doc.setup.ext, n = x && typeof x.slug === "number" && isFinite(x.slug) ? x.slug : 0;
+    return Math.max(0, Math.min(144, n));
   }
   // Margins in page coordinates (left/right swap on left pages).
   function margins(doc, side) {
@@ -702,7 +770,17 @@
     if (!page || !page.ms) return [];
     var gone = {};
     doc.items.forEach(function (it) { if (it.pg === page.id && it.ov) gone[it.ov] = 1; });
-    return itemsOn(doc, page.ms, side).filter(function (it) { return !gone[it.id]; });
+    // a master based on another (master.ext.base, LY-PRO W3): the
+    // base's items first, up to 8 levels, never in a loop
+    var chainIds = [], cur = page.ms, seen = {};
+    while (cur && !seen[cur] && chainIds.length < 8) {
+      seen[cur] = 1; chainIds.unshift(cur);
+      var ms = find(doc.masters, cur);
+      cur = ms && ms.ext && typeof ms.ext.base === "string" ? ms.ext.base : "";
+    }
+    var out = [];
+    chainIds.forEach(function (id) { if (find(doc.masters, id)) out = out.concat(itemsOn(doc, id, side)); });
+    return out.filter(function (it) { return !gone[it.id]; });
   }
   // Frames of a story, in reading order.
   function chain(doc, storyId) {
@@ -737,7 +815,7 @@
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
-    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstNumber: firstNumber, spreads: spreads, margins: margins,
+    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, pageLabels: pageLabels, numFmt: numFmt, secOfPage: secOfPage, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
     swatchColor: swatchColor, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })

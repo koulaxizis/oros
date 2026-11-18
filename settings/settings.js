@@ -422,6 +422,12 @@
           return { value: k, label: t("k.size." + k) };
         }), d.size, "dock:size", function (v) { set("dock:size", v); }, t("k.size")));
         c5.appendChild(sizeRow);
+        if (d.pos && d.positions && d.positions.length) {      // launcher 1.6.0: which edge
+          c5.appendChild(row(t("k.pos"), segmented(d.positions.map(function (k) {
+            return { value: k, label: t("k.pos." + k) };
+          }), d.pos, "dock:pos", function (v) { set("dock:pos", v); }, t("k.pos")),
+            { stack: true, hint: d.side && d.side !== d.pos ? t("k.pos.narrow") : t("k.pos.hint") }));
+        }
         if (d.style && d.styles && d.styles.length) {
           var stRow = row(t("k.style"), select(d.styles.map(function (k) {
             return { value: k, label: t("k.style." + k) };
@@ -504,6 +510,14 @@
       host.appendChild(cb2);
     }
 
+    // ZOOM-1: apps grow out of their icon and shrink back (this device)
+    if (s.zoom) {
+      var cz = card(null);
+      cz.appendChild(row(t("a.zoom"), switchBtn(!!s.zoom.on, "zoom", function (v) { set("zoom", v); }, t("a.zoom")),
+        { scope: "zoom", hint: t("a.zoom.hint") }));
+      host.appendChild(cz);
+    }
+
     if (s.pet.available) {
       var c4 = card(null);
       c4.appendChild(row(t("a.pet"), switchBtn(s.pet.on, "pet", function (v) { set("pet", v); }, t("a.pet")),
@@ -568,8 +582,9 @@
   }
 
   // ---------- 4a. Section: Accessibility ----------
-  // Text size, high contrast and the focus ring (shell.js 5e). All
-  // three stay on this device; older shells send no s.a11y.
+  // Text size, high contrast, the focus ring, the colour filter and the
+  // pointer size (shell.js 5e, a11yfx.js). All stay on this device;
+  // older shells send no s.a11y.
   function secAccessibility(host, s) {
     var a = s.a11y;
     if (!a) { host.appendChild(el("p", "hint card-note", t("noShell"))); return; }
@@ -594,6 +609,36 @@
     c3.appendChild(row(t("ac.focus"), switchBtn(a.focus, "focusRing", function (v) { set("focusRing", v); }, t("ac.focus")),
       { scope: "a11y", hint: t("ac.focus.hint") }));
     host.appendChild(c3);
+
+    // Colour filter and pointer size (a11yfx.js); an older bundle sends no fx.
+    if (a.fx) {
+      var c5 = card(t("ac.filter"), "a11y");
+      c5.appendChild(row(t("ac.filter.pick"), select(a.filters.map(function (k) {
+        return { value: k, label: t("ac.filter." + k) };
+      }), a.filter, "colourFilter", function (v) { set("colourFilter", v); }), { forId: "f-colourFilter" }));
+      // Sample colours: the pairs each filter is about, under the filter.
+      var sw = el("div", "a11y-swatches");
+      sw.setAttribute("role", "img");
+      sw.setAttribute("aria-label", t("ac.filter.sample"));
+      for (var si = 1; si <= 6; si++) sw.appendChild(el("span", "a11y-sw a11y-sw" + si));
+      c5.appendChild(sw);
+      if (a.filter !== "off" && a.filter !== "invert") {
+        c5.appendChild(segRow(t("ac.filter.strength"), segmented(a.strengths.map(function (n) {
+          return { value: n, label: n + "%" };
+        }), a.strength, "filterStrength", function (v) { set("filterStrength", v); }, t("ac.filter.strength"))));
+      }
+      c5.appendChild(el("p", "hint", t("ac.filter.hint")));
+      host.appendChild(c5);
+
+      if (a.fine) {
+        var c6 = card(t("ac.pointer"), "a11y");
+        c6.appendChild(segmented(a.pointers.map(function (k) {
+          return { value: k, label: t("ac.pointer." + k) };
+        }), a.pointer, "pointerSize", function (v) { set("pointerSize", v); }, t("ac.pointer")));
+        c6.appendChild(el("p", "hint", t("ac.pointer.hint")));
+        host.appendChild(c6);
+      }
+    }
 
     // FM-5: the font of orOS (chosen on a font's page in Fonts)
     if ("font" in a) {
@@ -3454,6 +3499,7 @@
     host.appendChild(c1);
 
     if (s.osk) secOsk(host, s.osk);
+    if (textRepl()) secTextRepl(host);
 
     // Help translate (settings/translate.js, loaded on demand).
     if (window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; })) {
@@ -3563,6 +3609,190 @@
       c.appendChild(el("p", "hint", t("o.layouts.hint")));
     }
     host.appendChild(c);
+  }
+
+  // Text replacements (textrepl.js in the shell, TEXTREPL-1): codes and
+  // their texts, synced. The editor keeps its draft here so a repaint
+  // (a sync, another setting) never takes what is being typed. It is
+  // marked data-oros-noexpand (and Settings is never wired anyway), so
+  // typing a code into the text never replaces it.
+  function textRepl() {
+    var p = parentWin();
+    try {
+      var R = p && p.orosTextRepl;
+      return (R && typeof R.list === "function" && typeof R.put === "function") ? R : null;
+    } catch (e) { return null; }
+  }
+  var rpDraft = { id: "", k: "", t: "", err: "" }, rpQ = "", rpMsg = null, rpBusy = false;
+  function secTextRepl(host) {
+    var R = textRepl();
+    var c = card(t("rp.title"), "textrepl");
+    c.setAttribute("data-oros-noexpand", "");
+    c.appendChild(el("p", "hint", t("rp.hint")));
+    c.appendChild(el("p", "hint", t("rp.hint.ph")));
+    if (R.paused && R.paused()) c.appendChild(el("p", "hint warn", t("rp.paused")));
+
+    // The form: code + text, Add (or Save / Cancel while editing).
+    var form = el("div", "rp-form");
+    var code = el("input");
+    code.id = "f-rp-code";
+    code.type = "text";
+    code.autocomplete = "off";
+    code.spellcheck = false;
+    code.maxLength = (R.limits && R.limits.code) || 32;
+    code.placeholder = t("rp.code.ph");
+    code.value = rpDraft.k;
+    code.setAttribute("data-k", "rp:code");
+    code.addEventListener("input", function () { rpDraft.k = code.value; });
+    form.appendChild(labelled(t("rp.code"), "rp-code", code));
+    var text = el("textarea");
+    text.id = "f-rp-text";
+    text.rows = 3;
+    text.maxLength = (R.limits && R.limits.text) || 4000;
+    text.placeholder = t("rp.text.ph");
+    text.value = rpDraft.t;
+    text.setAttribute("data-k", "rp:text");
+    text.addEventListener("input", function () { rpDraft.t = text.value; });
+    form.appendChild(labelled(t("rp.text"), "rp-text", text));
+    if (rpDraft.err) {
+      var err = el("p", "msg msg-err", t("rp.err." + rpDraft.err));
+      err.setAttribute("role", "alert");
+      form.appendChild(err);
+    }
+    function save() {
+      var why = R.put({ id: rpDraft.id || undefined, k: rpDraft.k, t: rpDraft.t });
+      rpDraft = why ? { id: rpDraft.id, k: rpDraft.k, t: rpDraft.t, err: why } : { id: "", k: "", t: "", err: "" };
+      render();
+      if (!why) { var f = $("f-rp-code"); if (f) f.focus(); }
+    }
+    code.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); text.focus(); } });
+    form.appendChild(actions(
+      button(rpDraft.id ? t("rp.save") : t("rp.add"), "rp:save", save, "primary"),
+      rpDraft.id ? button(t("rp.cancel"), "rp:cancel", function () { rpDraft = { id: "", k: "", t: "", err: "" }; render(); }) : null));
+    c.appendChild(form);
+
+    // The list: search once there are more than 8, then one row each.
+    var all = R.list(""), dup = R.dupes ? R.dupes() : {};
+    if (all.length > 8) {
+      var q = el("input", "rp-q");
+      q.type = "search";
+      q.id = "f-rp-q";
+      q.placeholder = t("rp.search");
+      q.setAttribute("aria-label", t("rp.search"));
+      q.value = rpQ;
+      q.setAttribute("data-k", "rp:q");
+      q.addEventListener("input", function () { rpQ = q.value; render(); });
+      c.appendChild(q);
+    }
+    var shown = rpQ ? R.list(rpQ) : all;
+    if (!all.length) c.appendChild(el("p", "hint", t("rp.empty")));
+    else if (!shown.length) c.appendChild(el("p", "hint", t("rp.nomatch")));
+    var ul = el("ul", "rp-list");
+    shown.forEach(function (it) {
+      var li = el("li", "rp-item");
+      var head = el("div", "rp-main");
+      head.appendChild(el("code", "rp-code", it.k));
+      var one = it.t.replace(/\s+/g, " ").trim();
+      head.appendChild(el("span", "rp-text", one.length > 90 ? one.slice(0, 89) + "…" : one));
+      li.appendChild(head);
+      if (dup[it.k]) li.appendChild(el("p", "hint warn", t("rp.dupe")));
+      li.appendChild(actions(
+        button(t("rp.edit"), "rp:edit:" + it.id, function () {
+          rpDraft = { id: it.id, k: it.k, t: it.t, err: "" };
+          render();
+          var f = $("f-rp-text"); if (f) f.focus();
+        }, "btn-sm"),
+        confirmBtn(t("rp.del"), t("rp.del.confirm"), "rp:del:" + it.id, function () {
+          R.remove(it.id);
+          if (rpDraft.id === it.id) rpDraft = { id: "", k: "", t: "", err: "" };
+          render();
+        }, "btn-sm danger")));
+      ul.appendChild(li);
+    });
+    if (shown.length) c.appendChild(ul);
+    if (all.length) c.appendChild(el("p", "hint", t("rp.count", { n: all.length, max: (R.limits && R.limits.live) || 500 })));
+
+    // W2 (card 5): our own file out; our file, Gboard or macOS/iOS in
+    // (merge only: nothing here is replaced or deleted).
+    if (typeof R.importText === "function") {
+      var io = el("div", "rp-io");
+      io.appendChild(el("p", "hint", t("rp.io.hint")));
+      if (rpMsg) {
+        var m = el("p", "msg " + rpMsg.cls, rpMsg.text);
+        m.setAttribute("role", "status");
+        io.appendChild(m);
+      }
+      var bImp = button(t("rp.import"), "rp:import", rpImport, "btn-sm");
+      if (rpBusy) bImp.disabled = true;
+      io.appendChild(actions(
+        all.length ? button(t("rp.export"), "rp:export", rpExport, "btn-sm") : null, bImp));
+      c.appendChild(io);
+    }
+    c.appendChild(el("p", "hint", t("rp.never")));
+    host.appendChild(c);
+  }
+  function rpDialog() {
+    var p = parentWin();
+    try { return p && p.orosDialog; } catch (e) { return null; }
+  }
+  function rpExport() {
+    var R = textRepl(), D = rpDialog();
+    if (!R) return;
+    var text = R.exportText(), name = "orOS-text-replacements.json";
+    var ok = function (r) { if (r && r.ok) { rpMsg = { cls: "msg-ok", text: t("rp.export.ok", { f: name }) }; render(); } };
+    var fail = function () { rpMsg = { cls: "msg-err", text: t("rp.export.fail") }; render(); };
+    if (D && typeof D.saveFile === "function") { D.saveFile({ text: text, filename: name, mime: "application/json" }).then(ok, fail); return; }
+    try {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+      a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      ok({ ok: true });
+    } catch (e) { fail(); }
+  }
+  // A file's text: Gboard's export is a zip with dictionary.txt in it.
+  var RP_MAX = 2 * 1024 * 1024;
+  function rpRead(file) {
+    if (!file) return Promise.resolve(null);
+    if (file.size > 20 * 1024 * 1024) return Promise.reject(new Error("big"));
+    return file.slice(0, 4).arrayBuffer().then(function (ab) {
+      var b = new Uint8Array(ab);
+      if (!(b[0] === 0x50 && b[1] === 0x4b && b[2] === 3 && b[3] === 4)) {
+        if (file.size > RP_MAX) throw new Error("big");
+        return file.text();
+      }
+      return (window.orosZipIn ? Promise.resolve() : loadScript("../designkit/zipin.js")).then(function () {
+        return window.orosZipIn.list(file);
+      }).then(function (entries) {
+        var e = (entries || []).filter(function (x) { return /(^|\/)dictionary\.txt$/i.test(x.name); })[0];
+        if (!e) throw new Error("none");
+        return e.get(RP_MAX).then(function (blob) { return blob.text(); });
+      });
+    });
+  }
+  function rpImport() {
+    var R = textRepl(), D = rpDialog();
+    if (!R || rpBusy) return;
+    var pick = D && typeof D.openFile === "function" ? D.openFile(".json,.txt,.plist,.zip,application/json,text/plain,application/zip,application/x-plist")
+      : Promise.resolve(null);
+    pick.then(function (file) {
+      if (!file) return;
+      rpBusy = true; rpMsg = null; render();
+      return rpRead(file).then(function (text) {
+        var r = R.importText(text || "");
+        if (!r.format) rpMsg = { cls: "msg-err", text: t("rp.import.none") };
+        else if (r.store) rpMsg = { cls: "msg-err", text: t("rp.err.store") };
+        else {
+          var parts = [t("rp.import.added", { n: r.added })];
+          if (r.same) parts.push(t("rp.import.same", { n: r.same }));
+          if (r.kept) parts.push(t("rp.import.kept", { n: r.kept }));
+          if (r.full) parts.push(t("rp.import.full", { n: r.full }));
+          if (r.bad) parts.push(t("rp.import.bad", { n: r.bad }));
+          rpMsg = { cls: r.added ? "msg-ok" : "msg-dim", text: t("rp.import.from." + r.format) + " " + parts.join(" ") };
+        }
+      }, function () { rpMsg = { cls: "msg-err", text: t("rp.import.none") }; });
+    }).then(function () { rpBusy = false; render(); }, function () { rpBusy = false; render(); });
   }
 
   // ---------- 8b. Section: Opening files ----------
@@ -4626,7 +4856,7 @@
     var ae = document.activeElement;
     var keepKey = ae && ae.getAttribute ? ae.getAttribute("data-k") : null;
     var caret = null;
-    if (ae && ae.tagName === "INPUT" && /^(text|password)$/.test(ae.type)) {
+    if (ae && ((ae.tagName === "INPUT" && /^(text|password|search)$/.test(ae.type)) || ae.tagName === "TEXTAREA")) {
       try { caret = [ae.selectionStart, ae.selectionEnd]; } catch (e) {}
     }
     var top = page.scrollTop;
@@ -4670,6 +4900,9 @@
   function findOk(s, need) {
     if (need.indexOf("app:") === 0) return (s.apps || []).indexOf(need.slice(4)) !== -1;
     if (need === "phone") return !!phone();
+    if (need === "textrepl") return !!textRepl();
+    if (need === "a11yfx") return !!(s.a11y && s.a11y.fx);
+    if (need === "a11yfine") return !!(s.a11y && s.a11y.fx && s.a11y.fine);
     if (need === "push") return !!webPush() && !phone();
     if (need === "translate") return !!(window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; }));
     return !!s[need];

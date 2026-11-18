@@ -218,23 +218,92 @@
     pdf.restoreGraphicsState();
   }
 
-  function cropMarks(pdf, x0, y0, w, h, bleed) {
+  // marks: true (crop marks, as before) or { crop, bleed, reg, bars,
+  // info } (LY-PRO W1); every mark sits outside the bleed.
+  function markSet(opts) {
+    var m = opts.marks;
+    if (!m) return {};
+    if (m === true) return { crop: 1 };
+    return { crop: !!m.crop, bleed: !!m.bleed, reg: !!m.reg, bars: !!m.bars, info: !!m.info };
+  }
+  function regInk(pdf) { pdf.setDrawColor(1, 1, 1, 1); pdf.setLineWidth(0.25); pdf.setLineDashPattern([], 0); }   // registration: all inks
+  function cropMarks(pdf, x0, y0, w, h, b) {
     pdf.saveGraphicsState();
-    pdf.setDrawColor(1, 1, 1, 1);           // registration: all inks
-    pdf.setLineWidth(0.25);
-    pdf.setLineDashPattern([], 0);
-    var off = bleed + 3, len = 12;
+    regInk(pdf);
+    var len = 12;
     [[x0, y0], [x0 + w, y0], [x0, y0 + h], [x0 + w, y0 + h]].forEach(function (c, i) {
       var sx = i % 2 === 0 ? -1 : 1, sy = i < 2 ? -1 : 1;
-      pdf.line(c[0] + sx * off, c[1], c[0] + sx * (off + len), c[1]);
-      pdf.line(c[0], c[1] + sy * off, c[0], c[1] + sy * (off + len));
+      var offX = (sx < 0 ? b.l : b.r) + 3, offY = (sy < 0 ? b.t : b.b) + 3;
+      pdf.line(c[0] + sx * offX, c[1], c[0] + sx * (offX + len), c[1]);
+      pdf.line(c[0], c[1] + sy * offY, c[0], c[1] + sy * (offY + len));
     });
     pdf.restoreGraphicsState();
   }
+  // short lines at the bleed's corners, outside it
+  function bleedMarks(pdf, x0, y0, w, h, b) {
+    pdf.saveGraphicsState();
+    regInk(pdf);
+    pdf.setLineDashPattern([2, 1.5], 0);
+    var L0 = x0 - b.l, R0 = x0 + w + b.r, T0 = y0 - b.t, B0 = y0 + h + b.b, len = 6;
+    [[L0, T0, -1, -1], [R0, T0, 1, -1], [L0, B0, -1, 1], [R0, B0, 1, 1]].forEach(function (c) {
+      pdf.line(c[0] + c[2] * 3, c[1], c[0] + c[2] * (3 + len), c[1]);
+      pdf.line(c[0], c[1] + c[3] * 3, c[0], c[1] + c[3] * (3 + len));
+    });
+    pdf.restoreGraphicsState();
+  }
+  function target(pdf, cx, cy) {
+    var r = 4;
+    pdf.circle(cx, cy, r, "S");
+    pdf.circle(cx, cy, r / 2, "S");
+    pdf.line(cx - r - 2, cy, cx + r + 2, cy);
+    pdf.line(cx, cy - r - 2, cx, cy + r + 2);
+  }
+  // registration targets in the middle of each side, in the slug
+  function regMarks(pdf, x0, y0, w, h, b, slug) {
+    if (slug < 12) return;
+    pdf.saveGraphicsState();
+    regInk(pdf);
+    var mid = slug / 2;
+    target(pdf, x0 + w / 2, y0 - b.t - mid);
+    target(pdf, x0 + w / 2, y0 + h + b.b + mid);
+    target(pdf, x0 - b.l - mid, y0 + h / 2);
+    target(pdf, x0 + w + b.r + mid, y0 + h / 2);
+    pdf.restoreGraphicsState();
+  }
+  // CMYK patches (solids and 50 % tints) along the bottom slug
+  var BARS = [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [0.5, 0, 0, 0], [0, 0.5, 0, 0], [0, 0, 0.5, 0], [0, 0, 0, 0.5], [1, 1, 0, 0], [0, 1, 1, 0], [1, 0, 1, 0]];
+  function colourBars(pdf, x0, y0, w, h, b, slug) {
+    if (slug < 12) return;
+    var sz = Math.min(8, slug / 2 - 2), y = y0 + h + b.b + (slug - sz) / 2, x = x0 + w * 0.6;
+    if (x + BARS.length * sz > x0 + w + b.r) x = x0 + w + b.r - BARS.length * sz;
+    pdf.saveGraphicsState();
+    pdf.setLineWidth(0);
+    BARS.forEach(function (c, i) { pdf.setFillColor(c[0], c[1], c[2], c[3]); pdf.rect(x + i * sz, y, sz, sz, "F"); });
+    pdf.restoreGraphicsState();
+  }
+  // document name, pages, date in the top slug (registration black),
+  // in the embedded Noto Sans (PDF/X wants every font embedded: no
+  // built-in font); left out while that face is not loaded
+  function pageInfo(pdf, x0, y0, w, h, b, slug, text) {
+    if (slug < 10 || !text || !T.faceParts("sans-r").length) return;
+    var name = fontOf(pdf, "sans-r", 0);
+    if (!name) return;
+    pdf.saveGraphicsState();
+    pdf.setTextColor(0, 0, 0, 1);
+    pdf.setFont(name, "normal");
+    pdf.setFontSize(6);
+    pdf.text(String(text).slice(0, 200), x0, y0 - b.t - slug / 2 + 2);
+    pdf.restoreGraphicsState();
+  }
 
-  // opts: { pages: [pageId] (default all), spreads, bleed, marks,
-  //         title, lang (BCP 47: the PDF's /Lang), rgb (every colour
-  //         as RGB: an e-book) }
+  // opts: { pages: [pageId] (default all), spreads, bleed, marks
+  //         (true = crop marks, or { crop, bleed, reg, bars, info }),
+  //         slug (keep the document's slug without marks), stamp (text
+  //         after the page numbers in the info line), title, lang
+  //         (BCP 47: the PDF's /Lang), rgb (every colour as RGB: an
+  //         e-book) }
+  // The result's orosBoxes = [{ w, h, trim [x0,y0,x1,y1], bleed }] per
+  // PDF page, in points (pdfx.js and the export report read it).
   // deps: { jsPDF, layout (computeLayout result, optional),
   //         images: { itemId: { data, fmt, rect, alias } },
   //         clip: { itemId: { x, y, w, h } } (page coordinates: the
@@ -268,13 +337,20 @@
     } else all.forEach(function (p) { if (want[p.id]) groups.push([p]); });
     if (!groups.length) throw new Error("no pages");
 
-    var b = opts.bleed || opts.marks ? s.bleed : 0;
-    var slug = opts.marks ? SLUG : 0;
+    // bleed per side (model bleeds(), LY-PRO W1); marks need room
+    var useB = !!(opts.bleed || opts.marks);
+    var slug = opts.marks ? Math.max(SLUG, M.slugOf ? M.slugOf(doc) : 0) : (opts.slug && M.slugOf ? M.slugOf(doc) : 0);
+    var marks = markSet(opts);
 
     var pdf = deps.pdf || null, gstates = pdf ? (pdf.orosGstates = pdf.orosGstates || {}) : {};
     var at = {};   // page id → { n (PDF page number), dx (its x on a spread) }
+    var boxes = [];
     groups.forEach(function (g) {
-      var W = s.w * g.length + 2 * (b + slug), H = s.h + 2 * (b + slug);
+      var sides = g.map(function (p) { return M.sideOf(doc, L.pageOf[p.id]); });
+      var bl0 = M.bleeds ? M.bleeds(doc, sides[0]) : { t: s.bleed, b: s.bleed, l: s.bleed, r: s.bleed };
+      var bl1 = M.bleeds ? M.bleeds(doc, sides[sides.length - 1]) : bl0;
+      var b = useB ? { t: Math.max(bl0.t, bl1.t), b: Math.max(bl0.b, bl1.b), l: bl0.l, r: bl1.r } : { t: 0, b: 0, l: 0, r: 0 };
+      var W = s.w * g.length + b.l + b.r + 2 * slug, H = s.h + b.t + b.b + 2 * slug;
       var orient = W > H ? "l" : "p";
       if (!pdf) {
         pdf = new JsPDF({ unit: "pt", format: [W, H], orientation: orient, compress: true });
@@ -287,17 +363,20 @@
       }
       var info = pdf.internal.getCurrentPageInfo().pageContext;
       var box = function (x0, y0, x1, y1) { return { bottomLeftX: x0, bottomLeftY: y0, topRightX: x1, topRightY: y1 }; };
-      info.trimBox = box(b + slug, b + slug, W - b - slug, H - b - slug);
-      if (b) info.bleedBox = box(slug, slug, W - slug, H - slug);
+      // PDF y goes up: the bottom bleed is at the bottom
+      var tx0 = slug + b.l, ty0 = slug + b.b, tx1 = tx0 + s.w * g.length, ty1 = ty0 + s.h;
+      info.trimBox = box(tx0, ty0, tx1, ty1);
+      if (b.t || b.b || b.l || b.r) info.bleedBox = box(slug, slug, W - slug, H - slug);
+      boxes.push({ w: W, h: H, trim: [tx0, ty0, tx1, ty1], bleed: [slug, slug, W - slug, H - slug] });
 
       g.forEach(function (page, k) {
-        var ox = slug + b + k * s.w, oy = slug + b;
+        var ox = slug + b.l + k * s.w, oy = slug + b.t;
         at[page.id] = { n: pdf.internal.getNumberOfPages(), dx: ox, dy: oy };
         var idx = L.pageOf[page.id], side = M.sideOf(doc, idx);
         pdf.saveGraphicsState();
         // clip to this page's trim + bleed (outer sides only on a spread)
-        var cx0 = ox - (k === 0 ? b : 0), cx1 = ox + s.w + (k === g.length - 1 ? b : 0);
-        pdf.rect(cx0, oy - b, cx1 - cx0, s.h + 2 * b, null); pdf.clip(); pdf.discardPath();
+        var cx0 = ox - (k === 0 ? b.l : 0), cx1 = ox + s.w + (k === g.length - 1 ? b.r : 0);
+        pdf.rect(cx0, oy - b.t, cx1 - cx0, s.h + b.t + b.b, null); pdf.clip(); pdf.discardPath();
         if (page.ms) {
           var mf = L.master[page.id] || {};
           M.masterItems(doc, page, side).forEach(function (it) {
@@ -309,8 +388,17 @@
         });
         pdf.restoreGraphicsState();
       });
-      if (opts.marks) cropMarks(pdf, b + slug, b + slug, s.w * g.length, s.h, b);
+      if (opts.marks) {
+        var ox0 = slug + b.l, oy0 = slug + b.t, tw = s.w * g.length;
+        if (marks.crop) cropMarks(pdf, ox0, oy0, tw, s.h, b);
+        if (marks.bleed && (b.t || b.b || b.l || b.r)) bleedMarks(pdf, ox0, oy0, tw, s.h, b);
+        if (marks.reg) regMarks(pdf, ox0, oy0, tw, s.h, b, slug);
+        if (marks.bars) colourBars(pdf, ox0, oy0, tw, s.h, b, slug);
+        if (marks.info) pageInfo(pdf, ox0, oy0, tw, s.h, b, slug, (opts.title || doc.name || "") + "  ·  " +
+          g.map(function (p) { var lb = L.labels && L.labels[L.pageOf[p.id]]; return lb ? lb.label : String(L.pageOf[p.id] + M.firstNumber(doc)); }).join("-") + (opts.stamp ? "  ·  " + opts.stamp : ""));
+      }
     });
+    pdf.orosBoxes = boxes;
     addLinks(pdf, deps.links, at);
     addOutline(pdf, deps.outline, at);
     return pdf;

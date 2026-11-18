@@ -412,7 +412,7 @@
     "#qm-dlg .qm-check{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px;cursor:pointer}",
     "#qm-dlg .qm-check input{width:18px;height:18px;accent-color:var(--accent);margin:0}",
     // the mini window (z 960: over a running app at 900 and the Dock at 950, under the menu at 999)
-    "#qa-mini{position:fixed;z-index:960;right:16px;bottom:calc(16px + var(--tb-h,0px) + env(safe-area-inset-bottom,0px));",
+    "#qa-mini{position:fixed;z-index:960;right:calc(16px + var(--ld-sr,0px));bottom:calc(16px + var(--tb-h,0px) + env(safe-area-inset-bottom,0px));",
     "width:min(420px,calc(100vw - 32px));height:min(620px,calc(100vh - 88px));display:flex;flex-direction:column;overflow:hidden;",
     "background:var(--panel-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px var(--shadow)}",
     "#qa-mini .qa-head{flex:0 0 auto;display:flex;align-items:center;gap:2px;padding:4px 4px 4px 14px;border-bottom:1px solid var(--border)}",

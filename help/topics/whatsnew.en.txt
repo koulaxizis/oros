@@ -1,6 +1,51 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.63.00
+- **Text replacements.** Type a short code like `;addr` and a space or punctuation in any orOS app and it becomes your full text; [[Backspace]] right after puts the code back. `{date}`, `{time}` and `{cursor}` work in the text. It works in Writer, Mail and Slides too, and the on-screen keyboard shows the text above the keys. Settings › Language & search › Text replacements; import your list from Gboard or from a Mac or iPhone. Synced to your devices, encrypted; never in Passwords or while Sensitive work is on.
+
+## Version 7.62.00
+- **Sections and master pages in Layout.** Any page can start a section with its own numbers: roman numerals for the front matter, 1 again for the book, letters with a prefix for an appendix. Page numbers, running heads, the contents and the PDF follow. A master can be based on another master and add to it. The Assistant and Claude (through orOS Gate) can do all of this too, and move, copy and give masters to whole ranges of pages.
+
+## Version 7.61.00
+- **What each contract grants, in CRM.** A contract now keeps its rights: what it grants, the formats it covers, each right with its share (print, e-book, audio, translation, stage and screen, merchandise), the territory, sell-off after the end and the Creative Commons licence. The new `Rights` chip in `Contracts` shows what is on sale with no running right, rights with no release yet (an e-book or audiobook you could make) and the renewals of the next 90 days with what happens after the end. Publishing shows a short rights line on each title. Claude or the Assistant fill them in from your contracts, each change on a card with Undo.
+
+## Version 7.60.00
+- **Colour filters and a larger pointer.** In Settings › Accessibility, `Colour filter` turns the whole screen grey, helps tell red from green or blue from yellow (with a strength), or inverts the colours while photos and videos stay as they are. `Pointer size` makes the mouse pointer Large or Extra large. A new `Colour filter` button in Quick settings turns the last filter on and off. Both stay on this device.
+
+## Version 7.59.00
+- **Layout sets plays and finishes books.** Paragraph styles can give the start of each paragraph its own character style, up to a character you choose: a play's speaker in bold capitals up to the colon. `Styles for a play` under Paragraph styles adds the cast list, act, scene, dialogue, stage direction and song styles in one go. The Assistant and Claude (through orOS Gate) can now make and change styles, add text frames (also over a page picture, to retypeset it as live text), give a story new text, and add your house style's front and back pages to a book, with the title, author and ISBN filled in and blank pages so the page count comes out right for the printer.
+
+## Version 7.58.00
+- **Layout makes print-ready books.** New book sizes (120×190, 140×210, 170×240, 180×250 and 215×215 mm), a different bleed on each side, and a first page on the left when you need it. Print PDFs can carry crop, bleed and registration marks, colour bars and a page information line. The Assistant and Claude (through orOS Gate) can start a book from nothing, put a folder of page pictures on pages in reading order, fill the bleed of pictures that stop at the page edge, make page pictures to look at, and make a PDF/X-4 for the printer with the Coated FOGRA39 profile, saved in Files › Layout › PDF.
+
+## Version 7.57.00
+- **Apps open from their icon.** An app now grows out of the icon, Dock button or menu row you opened it from, and when you close it, it shrinks back into its icon or into the Dock, on whichever edge the Dock sits. It is on from the start; Settings › Appearance › `Animate apps opening and closing` turns it off on this device. It never moves with reduced motion, Energy saver or a low battery.
+
+## Version 7.56.00
+- **A light show for your music.** In Music's full player, the sun button fills the window with light that moves with the song: Glow, Rings, Bars or Wave, and `Light only` hides the controls. Radio (in the player's `⋯` menu) and Podcasts (the sun button in the full player) have it too. It listens to the sound where the source allows it, otherwise the light moves on its own. Everything stays on your device, and the light never flashes.
+
+## Version 7.55.00
+- **The Dock at any edge.** The Dock can now sit at the left, right or top of the screen as well as the bottom: Settings › Appearance › Dock › `Position`. Shortcuts, widgets and notes on the desktop make room for it. On a phone or a small window it stays at the bottom.
+
+## Version 7.54.00
+- **New app: Shop.** Your own WooCommerce shop's figures inside orOS: today's orders and sales, this month and this year, the products that sell and stock that runs out. With the free orOS Connect plugin also costs and result, partners' shares and consignments. It only reads, keeps totals only (never customer data) and opens offline with the last read. Connect your shop in Settings › Connected services.
+
+## Version 7.53.00
+- **The menu search finds more of your things.** Type in the menu's search box to find your households (by name, the people in them and what you share), your saved labels in Label Maker and your melodies in Ringtone Composer. Choosing one opens that household, label or melody.
+
+## Version 7.52.00
+- **Claude can record invoices you issued elsewhere.** Through orOS Gate, Claude can now add invoices and receipts you issued with another provider (or in myDATA) to Invoices as recorded documents: their own number, client, amounts with withholding, lines, payment, ΜΑΡΚ and Budget area. They are never drafts, never take a number from your orOS series and nothing is sent anywhere; a document already in Invoices is skipped. It works only where you let Claude change Invoices, you are told of each change and you can undo it.
+
+## Version 7.51.00
+- **German everywhere again.** Every German text and help page is up to date again, including the browser start page and the names Layout gives a rebuilt document. German has not yet been read by a native speaker, so tell us what sounds wrong.
+
+## Version 7.50.00
+- **Library and Base as their own apps.** orOS Library and orOS Base now install on their own, with their own icon and window, and as Android apps (APK, and in the orOS F-Droid repository). Books, comics and PDFs (.epub, .pdf, .fb2, .cbz, .cbr) open with Library from your file manager, and .orosbase files with Base. Long-press the icon for `Continue reading` and `Free books` in Library, or `New base` and `Last base` in Base.
+
+## Version 7.49.00
+- **Ask the Assistant and Claude about eight more apps.** The Assistant and Claude through orOS Gate can now give you a summary of Meal Planner (this week's plan and what in the pantry is close to its date), Travel (your trips and what is still open), Plant Care (what needs water or care), Garage (each vehicle's renewals, service and costs), Habits (today and your streaks), Scanner & PDF (where each signature request stands), Transfer (your transfer history, never the files themselves) and Whiteboard (your boards and the text of their notes). It only reads: nothing is changed. Claude reads an app only where you allow it in orOS Gate. Transfer history is now also found by search.
+
 ## Version 7.48.00
 - **Claude's deletions are asked where you are.** When Claude asks to delete something and the orOS that gets the request has nobody at its screen (running in the background, in a hidden window or behind the lock), it no longer says no on your behalf: the request waits and the question appears on the device where orOS is on screen, now or as soon as you open it.
 
