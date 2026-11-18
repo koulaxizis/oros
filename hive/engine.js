@@ -18,7 +18,10 @@
 //     lv: { box, ent, trough, wind, queen, terr },
 //     slots: [ null | { f: flower id, p: minute planted, l: tending } ] (18),
 //     yk: the year the kinds belong to, kinds: { <flower>: honey made },
-//     cl: 1 while the colony is clustered (stores ran out), acts }
+//     cl: 1 while the colony is clustered (stores ran out), acts,
+//     hs: the hillside, y0: the year this hive was founded, hv: swarms
+//     so far, tr: [trait ids] (one per swarm), ap: [{ hs, y, h }] the
+//     old hives of the apiary (newest last, at most AP_MAX) }
 //   br = reset stamp (Start over), at = wall clock of the state (ms),
 //   life = honey made over the whole game (only grows), min = game
 //   minutes since the start (the start is 1 March, year 1).
@@ -46,7 +49,9 @@
     { id: "thyme",    m: [5, 6, 7],    y: 1.6, c: 120, est: 2 },
     { id: "chestnut", m: [5],          y: 1.3, c: 80,  est: 1 },
     { id: "pine",     m: [7, 8, 9],    y: 1.0, c: 90,  est: 1 },
-    { id: "heather",  m: [8, 9, 10],   y: 0.9, c: 70,  est: 1 }
+    { id: "heather",  m: [8, 9, 10],   y: 0.9, c: 70,  est: 1 },
+    // only with the "sage" trait (a swarm's gift)
+    { id: "sage",     m: [3, 4],       y: 1.4, c: 150, est: 1, trait: "sage" }
   ];
   var FL = {};
   FLOWERS.forEach(function (f) { FL[f.id] = f; });
@@ -66,6 +71,20 @@
       }
     }
   })();
+  // Hillsides (a swarm moves to one): flowers that do not grow there,
+  // flowers that give more, and the weather's odds (rain; heat in June
+  // to August).
+  var HILLS = {
+    hill:     { no: [], mult: {}, rain: 0.15, heat: 0.30 },
+    island:   { no: ["almond", "chestnut"], mult: { orange: 1.2, thyme: 1.2 }, rain: 0.10, heat: 0.35 },
+    mountain: { no: ["orange"], mult: { chestnut: 1.3, pine: 1.3, heather: 1.2 }, rain: 0.25, heat: 0.10 },
+    plain:    { no: [], mult: { wild: 1.3 }, rain: 0.15, heat: 0.45 }
+  };
+  var HILL_IDS = ["hill", "island", "mountain", "plain"];
+  // Traits: one chosen from three at every swarm, kept for good.
+  var TRAITS = ["hardy", "swift", "fertile", "frugal", "sturdy", "sage"];
+  var SWARM_BEES = 20000, SWARM_MONTH = 4;   // May
+  var APIARY_F = 0.02, AP_MAX = 50;
   var RING_F = { 1: 1, 2: 0.75 };      // flight distance: ring 2 gives less
   var PATCH_BEES = 800;                // bees one patch can feed
   var PER_BEE = 0.01;                  // honey per bee-minute at factor 1
@@ -128,11 +147,13 @@
   // Weather of a month of a year: fair, rain (a 15% chance, foraging
   // ×0.7) or, in June to August, heat (a 30% chance, ×0.8 without the
   // water trough). Seeded, so every device and every replay agrees.
-  function weather(seed, y, m) {
+  // The odds change with the hillside (HILLS; the first one 15% / 30%).
+  function weather(seed, y, m, hs) {
     if (isWinter(m)) return "fair";
+    var h = HILLS[hs] || HILLS.hill;
     var r = rand01(seed + "|" + y + "|" + m);
-    if (r < 0.15) return "rain";
-    if (m >= 5 && m <= 7 && r < 0.45) return "heat";
+    if (r < h.rain) return "rain";
+    if (m >= 5 && m <= 7 && r < h.rain + h.heat) return "heat";
     return "fair";
   }
   function weatherF(s, w) {
@@ -143,6 +164,21 @@
 
   // ---------- the hive ----------
   function capacity(s) { return BASE_CAP + FRAME_CAP * s.frames; }
+  function traitN(s, id) { var n = 0; for (var i = 0; i < s.tr.length; i++) if (s.tr[i] === id) n++; return n; }
+  // Can this flower be planted on this hive's hillside?
+  function flowerOk(s, fid) {
+    var f = FL[fid];
+    if (!f) return false;
+    if (f.trait && traitN(s, f.trait) < 1) return false;
+    return (HILLS[s.hs] || HILLS.hill).no.indexOf(fid) < 0;
+  }
+  function flowerY(s, fid) { return FL[fid].y * ((HILLS[s.hs] || HILLS.hill).mult[fid] || 1); }
+  // Everything that multiplies the honey a bee brings, but the weather
+  // and the patch: entrance, variety, swift foragers, the apiary.
+  function honeyMult(s) {
+    return PER_BEE * (1 + 0.1 * s.lv.ent) * varietyF(s) * (1 + 0.15 * traitN(s, "swift")) *
+      (1 + APIARY_F * Math.min(AP_MAX, s.hv));
+  }
   function slotsOpen(s) { return s.lv.terr ? SLOTS.length : 6; }
   function established(s, slot) { return s.min - slot.p >= FL[slot.f].est * MONTH_MIN; }
   function blooms(fid, m) { return FL[fid].m.indexOf(m) >= 0; }
@@ -155,7 +191,7 @@
     for (var i = 0; i < open; i++) {
       var sl = s.slots[i];
       if (!sl || !established(s, sl) || !blooms(sl.f, m)) continue;
-      list.push({ i: i, f: sl.f, y: FL[sl.f].y * RING_F[SLOTS[i].ring] * (1 + 0.1 * sl.l),
+      list.push({ i: i, f: sl.f, y: flowerY(s, sl.f) * RING_F[SLOTS[i].ring] * (1 + 0.1 * sl.l),
                   cap: PATCH_BEES * (1 + sl.l), bees: 0 });
     }
     list.sort(function (a, b) { return b.y - a.y || a.i - b.i; });
@@ -166,7 +202,7 @@
   // Honey per minute right now, by kind (for the status line).
   function rates(s) {
     var m = monthOf(s.min), y = yearOf(s.min);
-    var mult = PER_BEE * (1 + 0.1 * s.lv.ent) * weatherF(s, weather(s.seed, y, m)) * varietyF(s);
+    var mult = honeyMult(s) * weatherF(s, weather(s.seed, y, m, s.hs));
     var out = { honey: 0, kinds: {}, fed: 0, eat: 0 };
     if (!isWinter(m)) {
       forage(s, m).forEach(function (p) {
@@ -178,13 +214,14 @@
     out.eat = eatRate(s, m, out.fed > 0);
     return out;
   }
+  function eatF(s) { return (1 - 0.15 * s.lv.wind) * Math.pow(0.8, traitN(s, "hardy")); }
   function eatRate(s, m, fed) {
-    var base = s.bees * EAT * (1 - 0.15 * s.lv.wind);
+    var base = s.bees * EAT * eatF(s);
     if (isWinter(m)) return base;
     return fed ? 0 : base / 2;
   }
   // Honey the hive needs to come through the next winter (its 60 minutes).
-  function winterNeed(s) { return s.bees * EAT * (1 - 0.15 * s.lv.wind) * 2 * MONTH_MIN; }
+  function winterNeed(s) { return s.bees * EAT * eatF(s) * 2 * MONTH_MIN; }
 
   // One game minute.
   function step(s, out) {
@@ -193,7 +230,7 @@
     var winter = isWinter(m);
     var fed = false;
     if (!winter) {
-      var mult = PER_BEE * (1 + 0.1 * s.lv.ent) * weatherF(s, weather(s.seed, y, m)) * varietyF(s);
+      var mult = honeyMult(s) * weatherF(s, weather(s.seed, y, m, s.hs));
       var made = 0;
       forage(s, m).forEach(function (p) {
         var h = p.bees * p.y * mult;
@@ -209,7 +246,7 @@
       // The queen lays while there is room and honey to feed the brood.
       var room = capacity(s) - s.bees;
       if (room > 0) {
-        var n = Math.min(room, LAY * (1 + 0.25 * s.lv.queen), s.honey / LAY_COST);
+        var n = Math.min(room, LAY * (1 + 0.25 * s.lv.queen) * (1 + 0.25 * traitN(s, "fertile")), s.honey / LAY_COST);
         if (n > 0) { s.bees += n; s.honey -= n * LAY_COST; if (out) out.laid += n; }
       }
     }
@@ -258,7 +295,41 @@
   function plantCost(s, fid) {
     var n = 0;
     s.slots.forEach(function (sl) { if (sl && sl.f === fid) n++; });
-    return FL[fid].c * Math.pow(1.15, n);
+    return FL[fid].c * Math.pow(1.15, n) * Math.pow(0.9, traitN(s, "frugal"));
+  }
+  // ---------- the swarm ----------
+  // In May, with SWARM_BEES bees, half the colony may leave with the old
+  // queen; you follow it to a new hillside with one new trait.
+  function canSwarm(s) { return monthOf(s.min) === SWARM_MONTH && s.bees >= SWARM_BEES; }
+  // The three traits offered at the next swarm (seeded; sage only once).
+  function offer(s) {
+    var pool = TRAITS.filter(function (t) { return t !== "sage" || traitN(s, "sage") < 1; });
+    var out = [], k = 0;
+    while (out.length < 3 && k < 50) {
+      var t = pool[Math.floor(rand01(s.seed + "|t|" + s.hv + "|" + k) * pool.length)];
+      if (out.indexOf(t) < 0) out.push(t);
+      k++;
+    }
+    for (var i = 0; out.length < 3 && i < pool.length; i++) if (out.indexOf(pool[i]) < 0) out.push(pool[i]);
+    return out;
+  }
+  function swarm(s, hs, tr) {
+    s.ap.push({ hs: s.hs, y: Math.max(1, yearOf(s.min) - s.y0 + 1), h: s.life - s.l0 });
+    if (s.ap.length > AP_MAX) s.ap.splice(0, s.ap.length - AP_MAX);
+    s.hv++;
+    s.tr.push(tr);
+    s.hs = hs;
+    s.y0 = yearOf(s.min);
+    s.l0 = s.life;
+    var bees = s.bees / 2, honey = s.honey * 0.1;
+    s.frames = Math.min(10, 2 + 2 * traitN(s, "sturdy"));
+    s.lv = { box: 1, ent: 0, queen: 0, terr: 0, trough: 0, wind: 0 };
+    s.honey = 30 + honey; s.wax = 5;
+    s.bees = Math.min(capacity(s), bees);
+    s.slots = [];
+    for (var i = 0; i < SLOTS.length; i++) s.slots.push(null);
+    s.slots[0] = { f: "wild", p: s.min - MONTH_MIN, l: 0 };
+    s.kinds = {}; s.yk = yearOf(s.min); s.cl = 0;
   }
   // Tending a patch: level l → l + 1 (more bees fed, +10% honey).
   function tendInfo(s, i) {
@@ -280,6 +351,7 @@
       if (typeof i !== "number" || Math.floor(i) !== i) return "bad";
       if (!(i >= 0 && i < slotsOpen(s))) return "locked";
       if (!FL[a.f]) return "bad";
+      if (!flowerOk(s, a.f)) return "nogrow";
       var cur = s.slots[i];
       if (cur && cur.f === a.f) return "same";
       var c = plantCost(s, a.f);
@@ -297,6 +369,13 @@
       if (s.honey < ti.h) return "honey";
       s.honey -= ti.h;
       s.slots[j].l++;
+      s.acts++;
+      return "";
+    }
+    if (a.t === "swarm") {
+      if (!canSwarm(s)) return "noswarm";
+      if (!HILLS[a.hs] || offer(s).indexOf(a.tr) < 0) return "bad";
+      swarm(s, a.hs, a.tr);
       s.acts++;
       return "";
     }
@@ -321,7 +400,8 @@
       v: V, seed: String(seed || "hive"), br: isNum(br) ? br : 0, at: isNum(now) ? now : 0,
       life: 0, min: 0, ms: 0, honey: 30, wax: 5, bees: 500, frames: 2,
       lv: { box: 1, ent: 0, queen: 0, terr: 0, trough: 0, wind: 0 },
-      slots: [], yk: 0, kinds: {}, cl: 0, acts: 0
+      slots: [], yk: 0, kinds: {}, cl: 0, acts: 0,
+      hs: "hill", y0: 0, l0: 0, hv: 0, tr: [], ap: []
     };
     for (var i = 0; i < SLOTS.length; i++) s.slots.push(null);
     s.slots[0] = { f: "wild", p: -MONTH_MIN, l: 0 };   // one meadow patch, already in flower
@@ -353,8 +433,22 @@
       honey: num(x.honey, 0, 1e30, 0), wax: num(x.wax, 0, 1e30, 0),
       bees: 0, frames: int(x.frames, 2, 40 * lv.box, 2), lv: lv,
       slots: slots, yk: int(x.yk, 0, 1e7, yearOf(min)), kinds: kinds,
-      cl: x.cl ? 1 : 0, acts: int(x.acts, 0, 1e9, 0)
+      cl: x.cl ? 1 : 0, acts: int(x.acts, 0, 1e9, 0),
+      hs: HILLS[x.hs] ? x.hs : "hill", y0: int(x.y0, 0, 1e7, 0), l0: 0,
+      hv: int(x.hv, 0, 1e6, 0), tr: [], ap: []
     };
+    s.l0 = num(x.l0, 0, s.life, 0);
+    (Array.isArray(x.tr) ? x.tr : []).forEach(function (t) {
+      if (TRAITS.indexOf(t) >= 0 && s.tr.length < 1e4 && (t !== "sage" || s.tr.indexOf("sage") < 0)) s.tr.push(t);
+    });
+    (Array.isArray(x.ap) ? x.ap : []).forEach(function (h) {
+      h = obj(h);
+      if (h && HILLS[h.hs]) s.ap.push({ hs: h.hs, y: int(h.y, 1, 1e7, 1), h: num(h.h, 0, 1e30, 0) });
+    });
+    if (s.ap.length > AP_MAX) s.ap.splice(0, s.ap.length - AP_MAX);
+    if (s.hv < s.ap.length) s.hv = s.ap.length;
+    // a flower that cannot grow here (an old save) leaves its patch
+    for (var j = 0; j < slots.length; j++) if (slots[j] && !flowerOk(s, slots[j].f)) slots[j] = null;
     s.frames = Math.min(s.frames, 10 * lv.box);
     s.bees = num(x.bees, 0, capacity(s), 0);
     return s;
@@ -381,7 +475,10 @@
     weather: weather, capacity: capacity, slotsOpen: slotsOpen, established: established,
     blooms: blooms, varietyF: varietyF, rates: rates, winterNeed: winterNeed,
     advance: advance, catchUp: catchUp, plantCost: plantCost, upInfo: upInfo, tendInfo: tendInfo, act: act, TEND_MAX: TEND_MAX,
-    newGame: newGame, normalize: normalize, merge: merge, clone: clone, rand01: rand01
+    newGame: newGame, normalize: normalize, merge: merge, clone: clone, rand01: rand01,
+    HILLS: HILLS, HILL_IDS: HILL_IDS, TRAITS: TRAITS, SWARM_BEES: SWARM_BEES, SWARM_MONTH: SWARM_MONTH,
+    APIARY_F: APIARY_F, AP_MAX: AP_MAX, forage: forage, flowerOk: flowerOk, flowerY: flowerY, traitN: traitN,
+    canSwarm: canSwarm, offer: offer
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.HiveEngine = api;

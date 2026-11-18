@@ -204,3 +204,120 @@ test("hive: a hive in progress can be played for days without numbers going wron
   assert.ok(n.bees <= E.capacity(n));
   assert.equal(J(E.normalize(n)), J(n));
 });
+
+// ---------- W2: swarms, hillsides, traits ----------
+function ready(seed = "sw") {
+  const s = fresh(seed);
+  s.min = 2 * E.MONTH_MIN;                 // May of year 1 (the game starts in March)
+  s.bees = E.SWARM_BEES; s.frames = 40; s.lv.box = 4;
+  s.honey = 5000; s.life = 9000;
+  return s;
+}
+
+test("hive: the colony swarms only in May with enough bees", () => {
+  const s = ready();
+  assert.ok(E.canSwarm(s));
+  const a = E.clone(s); a.min = 5 * E.MONTH_MIN;
+  assert.equal(E.act(a, { t: "swarm", hs: "island", tr: E.offer(a)[0] }), "noswarm");
+  const b = E.clone(s); b.bees = E.SWARM_BEES - 1;
+  assert.equal(E.act(b, { t: "swarm", hs: "island", tr: E.offer(b)[0] }), "noswarm");
+  assert.equal(E.act(E.clone(s), { t: "swarm", hs: "moon", tr: E.offer(s)[0] }), "bad");
+  const off = E.offer(s);
+  const notOffered = E.TRAITS.find((t) => off.indexOf(t) < 0);
+  assert.equal(E.act(E.clone(s), { t: "swarm", hs: "island", tr: notOffered }), "bad");
+});
+
+test("hive: a swarm founds a new hive and keeps the old one in the apiary", () => {
+  const s = ready();
+  const tr = E.offer(s)[0];
+  assert.equal(E.act(s, { t: "swarm", hs: "mountain", tr }), "");
+  assert.equal(s.hs, "mountain");
+  assert.equal(s.hv, 1);
+  assert.deepEqual(s.tr, [tr]);
+  assert.equal(s.ap.length, 1);
+  assert.equal(s.ap[0].hs, "hill");
+  assert.equal(s.ap[0].h, 9000);
+  assert.equal(s.life, 9000, "the honey made in all is kept");
+  assert.ok(s.bees <= E.capacity(s) && s.bees > 0);
+  assert.equal(s.slots[0].f, "wild");
+  assert.ok(E.established(s, s.slots[0]));
+  assert.equal(s.slots.filter(Boolean).length, 1);
+  assert.equal(J(E.normalize(s)), J(s), "a hive after a swarm is canonical");
+  assert.ok(!E.canSwarm(s), "the new hive is too small to swarm again");
+});
+
+test("hive: the trait offer is seeded, three distinct, and sage comes once", () => {
+  const s = ready("offer");
+  assert.equal(J(E.offer(s)), J(E.offer(E.clone(s))));
+  assert.equal(new Set(E.offer(s)).size, 3);
+  const t = E.clone(s); t.tr = ["sage"];
+  assert.ok(E.offer(t).indexOf("sage") < 0);
+  for (let hv = 0; hv < 30; hv++) {
+    const u = E.clone(s); u.hv = hv;
+    const o = E.offer(u);
+    assert.equal(new Set(o).size, 3);
+    o.forEach((x) => assert.ok(E.TRAITS.indexOf(x) >= 0));
+  }
+});
+
+test("hive: hillsides decide which flowers grow and how much they give", () => {
+  const s = fresh();
+  s.hs = "island";
+  assert.ok(!E.flowerOk(s, "almond"));
+  assert.ok(!E.flowerOk(s, "chestnut"));
+  assert.ok(E.flowerOk(s, "thyme"));
+  assert.ok(!E.flowerOk(s, "sage"), "sage needs the trait");
+  s.honey = 1e6;
+  assert.equal(E.act(s, { t: "plant", slot: 1, f: "almond" }), "nogrow");
+  const hill = fresh();
+  assert.ok(E.flowerY(s, "thyme") > E.flowerY(hill, "thyme"));
+  s.hs = "mountain";
+  assert.ok(!E.flowerOk(s, "orange"));
+  // a patch of a flower that does not grow here is dropped on load
+  const n = fresh(); n.hs = "island"; n.slots[1] = { f: "almond", p: 0, l: 0 };
+  assert.equal(E.normalize(n).slots[1], null);
+  E.HILL_IDS.forEach((h) => assert.ok(E.HILLS[h]));
+});
+
+test("hive: traits change the rules and add up", () => {
+  const s = fresh(); s.honey = 1e6;
+  const base = E.plantCost(s, "thyme");
+  s.tr = ["frugal"];
+  assert.ok(Math.abs(E.plantCost(s, "thyme") - base * 0.9) < 1e-9);
+  s.tr = ["sage"];
+  assert.ok(E.flowerOk(s, "sage"));
+  assert.equal(E.act(s, { t: "plant", slot: 1, f: "sage" }), "");
+  const a = ready(), b = ready();
+  b.tr = ["sturdy", "sturdy"];
+  E.act(a, { t: "swarm", hs: "plain", tr: E.offer(a)[0] });
+  const bt = E.offer(b)[0];
+  E.act(b, { t: "swarm", hs: "plain", tr: bt });
+  assert.ok(b.frames >= a.frames + 4 || b.frames === 10);
+  // swift: more honey per minute in bloom
+  const c = fresh(), d = fresh(); d.tr = ["swift"];
+  c.min = d.min = 2 * E.MONTH_MIN; c.bees = d.bees = 600;
+  assert.ok(E.rates(d).honey > E.rates(c).honey);
+});
+
+test("hive: the apiary adds honey for good, and normalize keeps the new fields sane", () => {
+  const c = fresh(), d = fresh();
+  c.min = d.min = 2 * E.MONTH_MIN; c.bees = d.bees = 600;
+  d.hv = 5; d.ap = [1, 2, 3, 4, 5].map(() => ({ hs: "hill", y: 1, h: 10 }));
+  const ratio = E.rates(d).honey / E.rates(c).honey;
+  assert.ok(Math.abs(ratio - (1 + 5 * E.APIARY_F)) < 1e-9);
+  const x = E.normalize(Object.assign(fresh(), { hs: "moon", tr: ["nope", "swift"], hv: -3,
+    ap: [{ hs: "moon", y: 1, h: 1 }, { hs: "plain", y: 2, h: 5 }] }));
+  assert.equal(x.hs, "hill");
+  assert.deepEqual(x.tr, ["swift"]);
+  assert.equal(x.ap.length, 1);
+  assert.ok(x.hv >= x.ap.length);
+});
+
+test("hive: merge keeps the hive that swarmed when it is further ahead", () => {
+  const a = ready(), b = E.clone(a);
+  E.act(b, { t: "swarm", hs: "island", tr: E.offer(b)[0] });
+  E.advance(b, 10 * MIN, 10 * MIN);
+  assert.equal(E.merge(a, b).hs, "island");
+  assert.equal(E.merge(b, a).hs, "island");
+  assert.equal(J(E.merge(a, b)), J(E.merge(b, a)));
+});

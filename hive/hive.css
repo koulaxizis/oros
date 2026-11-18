@@ -268,6 +268,20 @@ dialog.hv-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
 .dlg-row span { color: var(--text-dim); }
 .dlg-row strong { color: var(--accent); font-variant-numeric: tabular-nums; text-align: right; }
 .dlg-msg { font-size: 14px; line-height: 1.45; margin-bottom: 6px; }
+.tb-hill { font-size: 12px; color: var(--text-dim); white-space: nowrap; }
+.dlg-sub { font-size: 13px; font-weight: 800; color: var(--text); margin-top: 12px; }
+.ap-list { margin: 4px 0 0; padding-left: 18px; font-size: 13px; color: var(--text); max-height: 140px; overflow-y: auto; }
+.ap-list li { margin: 2px 0; }
+.dlg-check { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 14px; color: var(--text); cursor: pointer; min-height: 32px; }
+.dlg-check input { width: 18px; height: 18px; accent-color: var(--accent); }
+.sw-group { border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px 8px; margin: 10px 0 0; }
+.sw-group legend { font-size: 13px; font-weight: 800; color: var(--text); padding: 0 4px; }
+.sw-opt { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; cursor: pointer; }
+.sw-opt input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.sw-opt .tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sw-opt .nm { font-size: 14px; font-weight: 700; color: var(--text); }
+.sw-opt .fx { font-size: 12px; color: var(--text-dim); line-height: 1.35; }
+.pn-swarm { margin-top: 6px; }
 .dlg-note { font-size: 12px; color: var(--text-dim); margin-top: 8px; line-height: 1.4; }
 .dlg-actions { display: flex; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
 .dlg-btn {
@@ -363,6 +377,7 @@ dialog.hv-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   .icon-btn, .main-btn, .dlg-btn, .opt { min-height: 44px; }
   .icon-btn { width: 44px; }
   #toast button { min-height: 44px; }
+  .sw-opt, .dlg-check { min-height: 44px; }
 }
 /* Phone held sideways: the panel joins the left column (gamekit/layout.css). */
 @media (orientation: landscape) and (max-height: 520px) {

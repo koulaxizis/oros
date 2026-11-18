@@ -102,7 +102,7 @@
       "up.wind": "Windbreak", "up.wind.fx": "The hive eats 15% less in winter.",
       "up.trough": "Water trough", "up.trough.fx": "Hot months no longer slow the bees.",
       "up.terr": "Terraces", "up.terr.fx": "12 more patches up the hill. They give a quarter less honey.",
-      "up.note": "Honey made per minute: {r}. Honey kinds this year: {k} of 7 (+{p}%).",
+      "up.note": "Honey made per minute: {r}. Honey kinds this year: {k} of {n} (+{p}%).",
       "rec.title": "Records", "rec.year": "Year", "rec.life": "Honey made in all", "rec.kinds": "Honey kinds this year",
       "rec.patches": "Patches planted", "rec.bees": "Bees", "rec.acts": "Things you did",
       "rec.note": "The hive lives on every device you use orOS on. If two devices play at the same time, the one further ahead is kept.",
@@ -121,6 +121,29 @@
       "toast.honey": "Not enough honey yet", "toast.wax": "Not enough wax yet", "toast.max": "Already done",
       "toast.locked": "This patch opens with the Terraces", "toast.same": "Already planted here",
       "toast.save": "Not saved: the browser's storage is full",
+      "fl.sage": "Sage",
+      "hs.hill": "Hill", "hs.island": "Island", "hs.mountain": "Mountain", "hs.plain": "Plain",
+      "hs.hill.fx": "Every flower grows. Rain 15%, summer heat 30%.",
+      "hs.island.fx": "No almond or chestnut; orange blossom and thyme give 20% more. Less rain, more heat.",
+      "hs.mountain.fx": "No orange blossom; chestnut and pine give 30% more, heather 20%. Much rain, little heat.",
+      "hs.plain.fx": "Wildflowers give 30% more. Hot summers.",
+      "tr.hardy": "Hardy", "tr.hardy.fx": "The hive eats 20% less in winter.",
+      "tr.swift": "Swift foragers", "tr.swift.fx": "15% more honey from every patch.",
+      "tr.fertile": "Fertile queens", "tr.fertile.fx": "The queen lays 25% faster.",
+      "tr.frugal": "Frugal", "tr.frugal.fx": "Flowers cost 10% less.",
+      "tr.sturdy": "Sturdy hives", "tr.sturdy.fx": "Every new hive starts with 2 more frames.",
+      "tr.sage": "Sage", "tr.sage.fx": "A new flower: sage, April and May, rich.",
+      "btn.swarm": "Swarm", "btn.swarmKey": "Swarm (W)",
+      "sw.title": "The colony is ready to swarm",
+      "sw.msg": "It is May and the hive is full. Half the colony can leave with the old queen and found a new hive. You follow it: the new hive starts small on a new hillside, with as many bees as its frames hold, a little honey and one meadow patch. The old hive stays in the apiary and gives +2% honey for good, and the colony keeps one new trait.",
+      "sw.hill": "Where to", "sw.trait": "One trait for good", "sw.go": "Let it swarm", "sw.later": "Not now",
+      "sw.note": "There is no hurry: the colony can swarm every May while the hive has {n} bees. Undo takes it back for a few seconds.",
+      "pn.swarm": "The colony is ready to swarm: open Swarm to see the choice. There is no hurry.",
+      "rec.hives": "Hives founded", "rec.hill": "Hillside", "rec.traits": "Traits", "rec.apiary": "Apiary",
+      "rec.apItem": "Hive {n} · {hs} · {y} years · {h} honey", "rec.apNone": "No old hives yet: the first swarm starts the apiary.",
+      "rec.apBonus": "+{p}% honey from the apiary", "rec.none": "none yet", "rec.hum": "The hum of the hive",
+      "toast.swarm": "The swarm found a new home: {hs}", "toast.nogrow": "That flower does not grow on this hillside",
+      "toast.noswarm": "The colony swarms only in May, with {n} bees",
       "live.sel": "{p}. {s}"
     },
     el: {
@@ -165,7 +188,7 @@
       "up.wind": "Ανεμοφράκτης", "up.wind.fx": "Η κυψέλη τρώει 15% λιγότερο τον χειμώνα.",
       "up.trough": "Ποτίστρα", "up.trough.fx": "Οι ζεστοί μήνες δεν κόβουν πια τη δουλειά.",
       "up.terr": "Πεζούλες", "up.terr.fx": "12 κομμάτια ακόμα ψηλά στην πλαγιά. Δίνουν ένα τέταρτο λιγότερο μέλι.",
-      "up.note": "Μέλι ανά λεπτό: {r}. Είδη μελιού φέτος: {k} από 7 (+{p}%).",
+      "up.note": "Μέλι ανά λεπτό: {r}. Είδη μελιού φέτος: {k} από {n} (+{p}%).",
       "rec.title": "Αρχείο", "rec.year": "Χρονιά", "rec.life": "Μέλι συνολικά", "rec.kinds": "Είδη μελιού φέτος",
       "rec.patches": "Φυτεμένα κομμάτια", "rec.bees": "Μέλισσες", "rec.acts": "Κινήσεις σου",
       "rec.note": "Η κυψέλη είναι ίδια σε κάθε συσκευή όπου χρησιμοποιείς το orOS. Αν παίξουν δύο συσκευές ταυτόχρονα, κρατιέται αυτή που έχει προχωρήσει περισσότερο.",
@@ -184,6 +207,29 @@
       "toast.honey": "Δεν φτάνει ακόμα το μέλι", "toast.wax": "Δεν φτάνει ακόμα το κερί", "toast.max": "Έχει ήδη γίνει",
       "toast.locked": "Αυτό το κομμάτι ανοίγει με τις Πεζούλες", "toast.same": "Είναι ήδη φυτεμένο εδώ",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος του προγράμματος περιήγησης γέμισε",
+      "fl.sage": "Φασκόμηλο",
+      "hs.hill": "Λόφος", "hs.island": "Νησί", "hs.mountain": "Βουνό", "hs.plain": "Κάμπος",
+      "hs.hill.fx": "Φυτρώνουν όλα τα λουλούδια. Βροχή 15%, καύσωνας το καλοκαίρι 30%.",
+      "hs.island.fx": "Χωρίς αμυγδαλιά και καστανιά. Ο ανθός πορτοκαλιάς και το θυμάρι δίνουν 20% περισσότερο. Λιγότερη βροχή, περισσότερη ζέστη.",
+      "hs.mountain.fx": "Χωρίς ανθό πορτοκαλιάς. Η καστανιά και το πεύκο δίνουν 30% περισσότερο, το ρείκι 20%. Πολλή βροχή, λίγη ζέστη.",
+      "hs.plain.fx": "Τα αγριολούλουδα δίνουν 30% περισσότερο. Ζεστά καλοκαίρια.",
+      "tr.hardy": "Ανθεκτικές", "tr.hardy.fx": "Η κυψέλη τρώει 20% λιγότερο τον χειμώνα.",
+      "tr.swift": "Γρήγορες συλλέκτριες", "tr.swift.fx": "15% περισσότερο μέλι από κάθε κομμάτι.",
+      "tr.fertile": "Γόνιμες βασίλισσες", "tr.fertile.fx": "Η βασίλισσα γεννά 25% πιο γρήγορα.",
+      "tr.frugal": "Οικονόμες", "tr.frugal.fx": "Τα λουλούδια κοστίζουν 10% λιγότερο.",
+      "tr.sturdy": "Γερές κυψέλες", "tr.sturdy.fx": "Κάθε νέα κυψέλη ξεκινά με 2 πλαίσια ακόμα.",
+      "tr.sage": "Φασκόμηλο", "tr.sage.fx": "Ένα νέο λουλούδι: το φασκόμηλο, Απρίλιο και Μάιο, πλούσιο.",
+      "btn.swarm": "Σμηνουργία", "btn.swarmKey": "Σμηνουργία (W)",
+      "sw.title": "Το μελίσσι είναι έτοιμο να σμηνουργήσει",
+      "sw.msg": "Είναι Μάιος και η κυψέλη γέμισε. Το μισό μελίσσι μπορεί να φύγει με την παλιά βασίλισσα και να φτιάξει νέα κυψέλη. Το ακολουθείς: η νέα κυψέλη ξεκινά μικρή σε μια νέα πλαγιά, με όσες μέλισσες χωρούν τα πλαίσιά της, λίγο μέλι και ένα κομμάτι με αγριολούλουδα. Η παλιά κυψέλη μένει στο μελισσοκομείο και δίνει για πάντα +2% μέλι, και το μελίσσι κρατά ένα νέο χαρακτηριστικό.",
+      "sw.hill": "Πού θα πάει", "sw.trait": "Ένα χαρακτηριστικό για πάντα", "sw.go": "Άφησέ το να σμηνουργήσει", "sw.later": "Όχι τώρα",
+      "sw.note": "Δεν βιάζεσαι: το μελίσσι μπορεί να σμηνουργήσει κάθε Μάιο όσο η κυψέλη έχει {n} μέλισσες. Η Αναίρεση την παίρνει πίσω για λίγα δευτερόλεπτα.",
+      "pn.swarm": "Το μελίσσι είναι έτοιμο να σμηνουργήσει: άνοιξε τη Σμηνουργία για να δεις την επιλογή. Δεν βιάζεσαι.",
+      "rec.hives": "Κυψέλες που ιδρύθηκαν", "rec.hill": "Πλαγιά", "rec.traits": "Χαρακτηριστικά", "rec.apiary": "Μελισσοκομείο",
+      "rec.apItem": "Κυψέλη {n} · {hs} · {y} χρονιές · {h} μέλι", "rec.apNone": "Δεν υπάρχουν ακόμα παλιές κυψέλες: η πρώτη σμηνουργία ξεκινά το μελισσοκομείο.",
+      "rec.apBonus": "+{p}% μέλι από το μελισσοκομείο", "rec.none": "κανένα ακόμα", "rec.hum": "Το βουητό της κυψέλης",
+      "toast.swarm": "Το σμήνος βρήκε νέο σπίτι: {hs}", "toast.nogrow": "Αυτό το λουλούδι δεν φυτρώνει σε αυτή την πλαγιά",
+      "toast.noswarm": "Το μελίσσι σμηνουργεί μόνο τον Μάιο, με {n} μέλισσες",
       "live.sel": "{p}. {s}"
     }
   };
@@ -242,6 +288,8 @@
     return t("mon." + ms[0]) + "–" + t("mon." + ms[ms.length - 1]);
   }
   function flName(id) { return t("fl." + id); }
+  // The flowers that grow on this hive's hillside, in the fixed order.
+  function avail() { return FLOWER_IDS.filter(function (f) { return E.flowerOk(live, f); }); }
 
   function newSeed() {
     var abc = "abcdefghjkmnpqrstuvwxyz23456789", buf = new Uint32Array(8), s = "";
@@ -355,6 +403,7 @@
     renderCal();
     refreshPanel();
     refreshDialog();
+    if (hum || humOn()) updateHum();
     if (reduced || document.hidden) draw();
   }
 
@@ -365,7 +414,7 @@
     var snap = E.clone(live);
     var err = E.act(live, a);
     if (err) {
-      showToast(t("toast." + (err === "bad" ? "honey" : err)));
+      showToast(t("toast." + (err === "bad" ? "honey" : err), { n: fmt(E.SWARM_BEES) }));
       sfx("no");
       return false;
     }
@@ -419,7 +468,10 @@
   var sel = -1;                         // the chosen patch, -1 none
   var reduced = false;
   var C = {};
-  var FCOL = { almond: "#f4b6c8", orange: "#ffb347", wild: "#e06c9f", thyme: "#9b7fe0",
+  // The hillside shows in the grass: sand on the island, stone on the
+  // mountain, sun on the plain.
+  var HILL_TINT = { island: "rgba(232,205,140,0.22)", mountain: "rgba(120,135,160,0.25)", plain: "rgba(235,225,110,0.16)" };
+  var FCOL = { sage: "#7fc4b0", almond: "#f4b6c8", orange: "#ffb347", wild: "#e06c9f", thyme: "#9b7fe0",
                chestnut: "#d9c27a", pine: "#5fae6b", heather: "#c77dd6" };
 
   function readColors() {
@@ -459,6 +511,7 @@
     if (f === "almond") c.arc(x, y, r, 0, Math.PI * 2);
     else if (f === "orange") c.rect(x - r * 0.85, y - r * 0.85, r * 1.7, r * 1.7);
     else if (f === "wild") { c.moveTo(x, y - r); c.lineTo(x + r, y + r * 0.8); c.lineTo(x - r, y + r * 0.8); c.closePath(); }
+    else if (f === "sage") { c.arc(x, y, r, 0, Math.PI * 2); c.moveTo(x + r * 0.45, y); c.arc(x, y, r * 0.45, 0, Math.PI * 2, true); }
     else if (f === "thyme") { c.moveTo(x, y - r); c.lineTo(x + r, y); c.lineTo(x, y + r); c.lineTo(x - r, y); c.closePath(); }
     else if (f === "chestnut") {
       for (var k = 0; k < 10; k++) {
@@ -477,13 +530,14 @@
     ctx.fillRect(0, 0, W, H);
     var m = E.monthOf(live.min), winter = E.isWinter(m), open = E.slotsOpen(live);
     var fed = {};
-    if (!winter) forageNow().forEach(function (p) { fed[p.i] = p.bees; });
+    if (!winter) E.forage(live, m).forEach(function (p) { fed[p.i] = p.bees; });
     // patches
     for (var i = 0; i < E.SLOTS.length; i++) {
       var xy = slotXY(i), sl = live.slots[i], locked = i >= open;
       hexPath(xy[0], xy[1], size * 0.94);
       ctx.fillStyle = locked ? C["hv-lock"] : (E.SLOTS[i].ring === 1 ? C["hv-grass2"] : C["hv-grass"]);
       ctx.fill();
+      if (!locked && HILL_TINT[live.hs]) { ctx.fillStyle = HILL_TINT[live.hs]; ctx.fill(); }
       if (winter && !locked) { ctx.fillStyle = "rgba(200,220,235,0.18)"; ctx.fill(); }
       ctx.lineWidth = 1; ctx.strokeStyle = C.border; ctx.stroke();
       if (locked) {
@@ -526,20 +580,6 @@
     }
     drawHive(winter);
     if (!winter) drawBees(fed, time || 0);
-  }
-  function forageNow() {
-    // the same choice the engine makes: richest patches first
-    var m = E.monthOf(live.min), out = [], open = E.slotsOpen(live);
-    for (var i = 0; i < open; i++) {
-      var sl = live.slots[i];
-      if (sl && E.established(live, sl) && E.blooms(sl.f, m)) {
-        out.push({ i: i, y: E.FL[sl.f].y * (E.SLOTS[i].ring === 1 ? 1 : 0.75) * (1 + 0.1 * sl.l), cap: E.PATCH_BEES * (1 + sl.l), bees: 0 });
-      }
-    }
-    out.sort(function (a, b) { return b.y - a.y || a.i - b.i; });
-    var left = live.bees;
-    out.forEach(function (p) { p.bees = Math.min(p.cap, left); left -= p.bees; });
-    return out.filter(function (p) { return p.bees > 0; });
   }
   function drawLock(x, y, r) {
     ctx.strokeStyle = C["text-dim"]; ctx.lineWidth = 2;
@@ -663,7 +703,9 @@
       if (ev.ctrlKey || ev.altKey || ev.metaKey) return;
       if ($("dlg").open) return;
       var k = ev.key.toLowerCase();
-      if (/^[1-7]$/.test(k) && sel >= 0 && sel < E.slotsOpen(live)) { plant(sel, FLOWER_IDS[+k - 1]); ev.preventDefault(); }
+      var av = avail();
+      if (/^[1-9]$/.test(k) && +k <= av.length && sel >= 0 && sel < E.slotsOpen(live)) { plant(sel, av[+k - 1]); ev.preventDefault(); }
+      else if (k === "w") { swarmDialog(); ev.preventDefault(); }
       else if (k === "t" && sel >= 0 && live.slots[sel]) { tend(sel); ev.preventDefault(); }
       else if (k === "u") { upDialog(); ev.preventDefault(); }
       else if (k === "s") { recDialog(); ev.preventDefault(); }
@@ -691,10 +733,13 @@
     $("s-bees").querySelector(".v").textContent = fmt(live.bees) + "/" + fmt(E.capacity(live));
     $("s-bees").title = t("st.bees");
     $("s-month").querySelector(".v").textContent = t("st.month", { m: t("mon." + m), y: y });
-    var w = E.weather(live.seed, y - 1, m);
+    var w = E.weather(live.seed, y - 1, m, live.hs);
     $("s-month").title = t("monl." + m) + ": " + wxText(w);
     var low = E.monthOf(live.min) >= 8 && E.monthOf(live.min) <= 10 && live.honey < E.winterNeed(live);
     h.classList.toggle("low", low || !!live.cl);
+    var can = E.canSwarm(live), swb = $("sw-btn");
+    if (swb.hidden === can) swb.hidden = !can;
+    $("tb-hill").textContent = t("hs." + live.hs);
   }
   function wxText(w) { return t(w === "heat" && live.lv.trough ? "wx.heatOk" : "wx." + w); }
   var calKey = "";
@@ -710,7 +755,7 @@
     for (var mo = 0; mo < 12; mo++) {
       // the months gone this year show next year's weather
       var yy = mo < m ? y + 1 : y;
-      var w = E.weather(live.seed, yy, mo);
+      var w = E.weather(live.seed, yy, mo, live.hs);
       var cell = el("div", "cm" + (mo === m ? " now" : "") + (E.isWinter(mo) ? " winter" : ""));
       cell.setAttribute("role", "listitem");
       cell.appendChild(el("span", "", t("mon." + mo)));
@@ -775,6 +820,13 @@
       box.appendChild(el("p", "pn-hint", t("pn.hint")));
       var note = seasonNote();
       if (note) box.appendChild(el("p", "pn-hint" + (note.warn ? " warn" : ""), note.text));
+      if (note && note.swarm) {
+        var swb = el("button", "opt wide pn-swarm");
+        swb.type = "button";
+        swb.appendChild(el("span", "tx")).appendChild(el("span", "nm", t("btn.swarm")));
+        swb.addEventListener("click", swarmDialog);
+        box.appendChild(swb);
+      }
       return;
     }
     var head = el("div", "pn-head");
@@ -806,7 +858,7 @@
       tb.addEventListener("click", function () { tend(sel); });
       grid.appendChild(tb);
     }
-    FLOWER_IDS.forEach(function (f, n) {
+    avail().forEach(function (f, n) {
       var b = el("button", "opt" + (sl && sl.f === f ? " cur" : ""));
       b.type = "button";
       b.setAttribute("data-k", f);
@@ -815,7 +867,7 @@
       b.appendChild(sw);
       var tx2 = el("span", "tx");
       tx2.appendChild(el("span", "nm", flName(f)));
-      tx2.appendChild(el("span", "fx", t("pn.fx", { r: monthRange(E.FL[f].m), y: String(E.FL[f].y).replace(".", t("num.dec")) })));
+      tx2.appendChild(el("span", "fx", t("pn.fx", { r: monthRange(E.FL[f].m), y: String(Math.round(E.flowerY(live, f) * 100) / 100).replace(".", t("num.dec")) })));
       b.appendChild(tx2);
       b.appendChild(el("span", "cost"));
       b.title = (sl ? t("pn.replace") : t("pn.plant")) + ": " + flName(f) + " (" + (n + 1) + ")";
@@ -833,7 +885,7 @@
       if (force || key !== lastPanelKey) {
         lastPanelKey = key;
         var ps = box.querySelectorAll(".pn-hint");
-        if (ps.length !== (note ? 2 : 1)) { renderPanel(); return; }
+        if (ps.length !== (note ? 2 : 1) || !box.querySelector(".pn-swarm") !== !(note && note.swarm)) { renderPanel(); return; }
         if (note) { ps[1].textContent = note.text; ps[1].classList.toggle("warn", !!note.warn); }
       }
       return;
@@ -858,6 +910,7 @@
   }
   function seasonNote() {
     var m = E.monthOf(live.min);
+    if (E.canSwarm(live)) return { text: t("pn.swarm"), swarm: true };
     if (live.cl) return { text: t("pn.cluster") };
     if (E.isWinter(m)) return { text: t("pn.winter") };
     var need = E.winterNeed(live);
@@ -948,7 +1001,7 @@
     });
     var r = E.rates(live), k = Object.keys(live.kinds).length;
     var note = d.querySelector(".up-note");
-    if (note) note.textContent = t("up.note", { r: fmtRate(r.honey), k: k, p: Math.round(k * 5) });
+    if (note) note.textContent = t("up.note", { r: fmtRate(r.honey), k: k, n: avail().length, p: Math.round(k * 5) });
   }
   function recDialog() {
     E.catchUp(live, nowMs());
@@ -958,10 +1011,32 @@
       d.appendChild(el("div", "dlg-title", t("rec.title")));
       rowKV(d, t("rec.year"), String(E.yearOf(live.min) + 1));
       rowKV(d, t("rec.life"), fmt(live.life));
-      rowKV(d, t("rec.kinds"), Object.keys(live.kinds).length + " / 7");
+      rowKV(d, t("rec.kinds"), Object.keys(live.kinds).length + " / " + avail().length);
       rowKV(d, t("rec.patches"), planted + " / " + E.slotsOpen(live));
       rowKV(d, t("rec.bees"), fmt(live.bees));
       rowKV(d, t("rec.acts"), fmt(live.acts));
+      rowKV(d, t("rec.hill"), t("hs." + live.hs));
+      rowKV(d, t("rec.hives"), fmt(live.hv + 1));
+      var cnt = {};
+      live.tr.forEach(function (x) { cnt[x] = (cnt[x] || 0) + 1; });
+      rowKV(d, t("rec.traits"), Object.keys(cnt).map(function (x) { return t("tr." + x) + (cnt[x] > 1 ? " ×" + cnt[x] : ""); }).join(", ") || t("rec.none"));
+      d.appendChild(el("div", "dlg-sub", t("rec.apiary")));
+      if (live.ap.length) {
+        var ul = el("ul", "ap-list");
+        live.ap.forEach(function (h, n) {
+          ul.appendChild(el("li", "", t("rec.apItem", { n: n + 1, hs: t("hs." + h.hs), y: h.y, h: fmt(h.h) })));
+        });
+        d.appendChild(ul);
+        d.appendChild(el("p", "dlg-note", t("rec.apBonus", { p: Math.round(Math.min(E.AP_MAX, live.hv) * E.APIARY_F * 100) })));
+      } else d.appendChild(el("p", "dlg-note", t("rec.apNone")));
+      var hl = el("label", "dlg-check");
+      var hc = el("input");
+      hc.type = "checkbox";
+      hc.checked = humOn();
+      hc.addEventListener("change", function () { setHum(hc.checked); });
+      hl.appendChild(hc);
+      hl.appendChild(el("span", "", t("rec.hum")));
+      d.appendChild(hl);
       d.appendChild(el("p", "dlg-note", t("rec.note")));
       actions(d, [
         { label: t("btn.start"), cls: "danger", fn: askStart },
@@ -976,6 +1051,47 @@
       actions(d, [
         { label: t("btn.cancel"), fn: closeDialog },
         { label: t("btn.startYes"), cls: "danger", fn: startOver }
+      ]);
+    });
+  }
+  // The swarm: one hillside and one trait, both chosen here.
+  function swarmDialog() {
+    E.catchUp(live, nowMs());
+    if (!E.canSwarm(live)) { showToast(t("toast.noswarm", { n: fmt(E.SWARM_BEES) })); sfx("no"); return; }
+    var pick = { hs: E.HILL_IDS.filter(function (h) { return h !== live.hs; })[0], tr: E.offer(live)[0] };
+    openDialog("swarm", function (d) {
+      d.setAttribute("aria-label", t("sw.title"));
+      d.appendChild(el("div", "dlg-title", t("sw.title")));
+      d.appendChild(el("p", "dlg-msg", t("sw.msg")));
+      function group(title, name, ids, prefix, key) {
+        var fs = el("fieldset", "sw-group");
+        fs.appendChild(el("legend", "", title));
+        ids.forEach(function (id) {
+          var lb = el("label", "sw-opt");
+          var r = el("input");
+          r.type = "radio"; r.name = name; r.value = id;
+          r.checked = pick[key] === id;
+          r.addEventListener("change", function () { if (r.checked) pick[key] = id; });
+          lb.appendChild(r);
+          var tx = el("span", "tx");
+          tx.appendChild(el("span", "nm", t(prefix + id) + (key === "hs" && id === live.hs ? " ✓" : "")));
+          tx.appendChild(el("span", "fx", t(prefix + id + ".fx")));
+          lb.appendChild(tx);
+          fs.appendChild(lb);
+        });
+        d.appendChild(fs);
+      }
+      group(t("sw.hill"), "sw-hs", E.HILL_IDS, "hs.", "hs");
+      group(t("sw.trait"), "sw-tr", E.offer(live), "tr.", "tr");
+      d.appendChild(el("p", "dlg-note", t("sw.note", { n: fmt(E.SWARM_BEES) })));
+      actions(d, [
+        { label: t("sw.later"), fn: closeDialog },
+        { label: t("sw.go"), cls: "primary", fn: function () {
+          var hs = pick.hs, tr = pick.tr;
+          closeDialog();
+          sel = -1;
+          doAct({ t: "swarm", hs: hs, tr: tr }, t("toast.swarm", { hs: t("hs." + hs) }));
+        } }
       ]);
     });
   }
@@ -1064,6 +1180,50 @@
       else if (kind === "undo") { tone(392, 0, 0.08, "sine", 0.07); tone(330, 0.06, 0.1, "sine", 0.06); }
       else if (kind === "no") tone(170, 0, 0.14, "sawtooth", 0.05);
       else if (kind === "toggle") { tone(1047, 0, 0.05, "sine", 0.08); tone(1319, 0.04, 0.07, "sine", 0.07); }
+    } catch (e) { /* no audio → silent */ }
+  }
+  // The hum: off by default, a soft drone that follows the fed bees.
+  var HUM_KEY = "oros-hive-hum", hum = null;
+  function humOn() {
+    try { return localStorage.getItem(HUM_KEY) === "1"; } catch (e) { return false; }
+  }
+  function setHum(on) {
+    try { localStorage.setItem(HUM_KEY, on ? "1" : "0"); } catch (e) {}
+    updateHum();
+  }
+  function humLevel() {
+    if (!live || document.hidden || E.isWinter(E.monthOf(live.min)) || live.cl) return 0;
+    var fed = 0;
+    E.forage(live, E.monthOf(live.min)).forEach(function (p) { fed += p.bees; });
+    return fed > 0 ? Math.min(0.05, 0.012 + fed / 400000) : 0;
+  }
+  function updateHum() {
+    var want = humOn() ? humLevel() : 0;
+    if (!want && !hum) return;
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!audio) audio = new AC();
+      if (audio.state === "suspended") audio.resume();
+      if (!hum) {
+        var lp = audio.createBiquadFilter(), g = audio.createGain();
+        lp.type = "lowpass"; lp.frequency.value = 420;
+        g.gain.value = 0;
+        lp.connect(g); g.connect(audio.destination);
+        var os = [118, 121.5, 236.8].map(function (f) {
+          var o = audio.createOscillator();
+          o.type = "sawtooth"; o.frequency.value = f;
+          o.connect(lp); o.start();
+          return o;
+        });
+        hum = { g: g, os: os };
+      }
+      hum.g.gain.setTargetAtTime(want, audio.currentTime, 0.8);
+      if (!want) {
+        var h = hum;
+        hum = null;
+        setTimeout(function () { h.os.forEach(function (o) { try { o.stop(); } catch (e) {} }); }, 4000);
+      }
     } catch (e) { /* no audio → silent */ }
   }
   function toggleSfx() {
@@ -1173,7 +1333,8 @@
     if (!live) return "{}";
     var m = E.monthOf(live.min), y = E.yearOf(live.min), r = E.rates(live), open = E.slotsOpen(live);
     return JSON.stringify({
-      mode: dlgKind || "play", year: y + 1, month: m, weather: E.weather(live.seed, y, m),
+      mode: dlgKind || "play", year: y + 1, month: m, weather: E.weather(live.seed, y, m, live.hs),
+      hill: live.hs, hives: live.hv, traits: live.tr, canSwarm: E.canSwarm(live), offer: E.offer(live),
       winter: E.isWinter(m), honey: Math.floor(live.honey), wax: Math.floor(live.wax),
       bees: Math.floor(live.bees), room: E.capacity(live), perMin: Math.round(r.honey * 100) / 100,
       kinds: Object.keys(live.kinds), clustered: !!live.cl, sel: sel, lv: live.lv, frames: live.frames,
@@ -1195,6 +1356,9 @@
       n.textContent = t(n.getAttribute("data-i18n"));
     });
     canvas.setAttribute("aria-label", t("view.label"));
+    var wb = $("sw-btn");
+    wb.querySelector(".ic").innerHTML = ICONS.bees;
+    wb.title = t("btn.swarmKey");
     var ub = $("up-btn");
     ub.querySelector(".ic").innerHTML = ICONS.hive;
     ub.title = t("btn.upKey");
@@ -1209,6 +1373,8 @@
   }
   function wire() {
     $("up-btn").addEventListener("click", upDialog);
+    $("sw-btn").addEventListener("click", swarmDialog);
+    document.addEventListener("pointerdown", function () { if (humOn()) updateHum(); }, { once: true });
     $("stats-btn").addEventListener("click", recDialog);
     $("sfx-btn").addEventListener("click", toggleSfx);
     $("dlg").addEventListener("close", function () { dlgKind = ""; });
