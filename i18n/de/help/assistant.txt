@@ -400,6 +400,7 @@ Hol deinen Verlauf aus einem anderen KI-Chat. Drücke in den Einstellungen des A
 
 ## Tipps
 - `Neuer Chat` beginnt eine neue Unterhaltung; ältere stehen in der Liste links oder auf dem Handy hinter der Menüschaltfläche.
+- Der Assistent öffnet immer mit einer neuen Unterhaltung, auch das kleine Fenster. Mit etwas zum Fragen geöffnet (markierter Text, etwas Geteiltes, eine Aufgabe, das Briefing), beginnt er diese neue Unterhaltung damit. Um eine frühere fortzusetzen, wähle sie in der Liste.
 - `Diesen Monat genutzt` in den Einstellungen zeigt, wie viele Tokens dieses Gerät pro Dienst verbraucht hat.
 - Sagt ein Dienst, der Schlüssel oder das Modell sei falsch, öffne die Einstellungen und drücke `Modelle laden`, um beides zu prüfen.
 

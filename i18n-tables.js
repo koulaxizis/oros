@@ -96,8 +96,21 @@
       const elOpen = enEnd + next[0].length - 1;
       const elEnd = blockEnd(s, elOpen);
       if (elEnd < 0) continue;
-      out.push({ at: rel + ":" + line(s, open), en: entries(s, open, enEnd), el: entries(s, elOpen, elEnd), range: [open, elEnd] });
-      re.lastIndex = elEnd;
+      // A shared module or a public page may carry a pack language inline
+      // right after el (de: {…}), because no app pack is loaded where it
+      // runs: kept as inline[code], counted by the coverage report.
+      const inline = {};
+      let end = elEnd;
+      for (;;) {
+        const more = /^\s*,\s*(?:\/\/[^\n]*\n\s*|\/\*[\s\S]*?\*\/\s*)*["']?([a-z]{2,3})["']?\s*:\s*\{/.exec(s.slice(end, end + 400));
+        if (!more || more[1] === "en" || more[1] === "el") break;
+        const o = end + more[0].length - 1, e = blockEnd(s, o);
+        if (e < 0) break;
+        inline[more[1]] = entries(s, o, e);
+        end = e;
+      }
+      out.push({ at: rel + ":" + line(s, open), en: entries(s, open, enEnd), el: entries(s, elOpen, elEnd), inline: inline, range: [open, elEnd] });
+      re.lastIndex = end;
     }
     // Keys added after the table: NAME.en["k"] = … / NAME.el["k"] = …
     const added = {};
