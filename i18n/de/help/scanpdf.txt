@@ -91,6 +91,7 @@ Wenn die Antwort als Link kommt, öffne ihn oder füg ihn in `Signaturanfragen` 
 Das unterschriebene PDF endet mit einer Zertifikatsseite (auf Englisch und Griechisch): das Dokument und sein SHA-256-Fingerabdruck, wer es an wen gesendet hat, der Name, den die unterschreibende Person eingegeben hat, wie sie erkannt wurde (der Link und der Zugangscode), wann es geöffnet, zugestimmt und unterschrieben wurde, ihre Zeitzone und ihr Browser. Der vollständige Bericht liegt im PDF als `signing-record.json`. `Ein unterschriebenes PDF prüfen` sagt, ob ein PDF eine deiner unterschriebenen Kopien ist, unverändert, oder das Original, das du gesendet hast.
 Das ist eine einfache elektronische Signatur nach den eIDAS-Regeln der EU: Sie gilt als Beweismittel und darf nicht nur deshalb abgelehnt werden, weil sie elektronisch ist, aber sie ist keine fortgeschrittene oder qualifizierte Signatur. Wo das Gesetz eine qualifizierte Signatur verlangt (manche Verträge, Behörden), nutze einen qualifizierten Anbieter. Die Zeiten kommen vom Gerät jeder Person.
 Die Antwort bleibt 30 Tage auf dem orOS-Server; öffne sie vorher. Ein PDF zum Senden darf bis zu 24 MB groß sein.
+[Heute](app:today) zeigt, wie viele Anfragen noch warten, jede, die in den letzten 24 Stunden beantwortet wurde, und einen Signaturlink, der in den nächsten drei Tagen abläuft.
 
 ## Seitenzahlen, Wasserzeichen und Details
 Die Schaltfläche `Optionen` unten legt fest, was auf jede Seite der PDFs kommt, die du speicherst oder teilst:

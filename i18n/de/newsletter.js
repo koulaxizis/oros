@@ -1001,5 +1001,10 @@ orosPack("de", "newsletter", {
  "as.shop": "{n} Produkte aus deinem Shop hinzugefügt.",
  "as.shop1": "1 Produkt aus deinem Shop hinzugefügt.",
  "as.shopFail": "Die Produkte aus deinem Shop konnten nicht hinzugefügt werden:",
- "as.noDraft": "Es gibt noch keinen Entwurf zum Prüfen."
+ "as.noDraft": "Es gibt noch keinen Entwurf zum Prüfen.",
+ "cpnOff": "{v} Rabatt",
+ "cpnCode": "Dein Code",
+ "cpnUntil": "Gültig bis {d}",
+ "cpnMin": "Für Bestellungen ab {m}",
+ "cpnTest": "Jeder Leser bekommt seinen eigenen Code."
 });

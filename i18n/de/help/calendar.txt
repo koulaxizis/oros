@@ -44,6 +44,14 @@ Tippe oder klicke auf einen Ort, um ihn in [Karten](app:maps) zu öffnen. Karten
 ## Labels und Feeds
 Die Chips über dem Kalender sind deine Labels. Am Anfang hast du `Privat`, `Arbeit` und `Familie`. Tippe oder klicke auf einen Chip, um diese Termine aus- oder einzublenden. `＋ Labels verwalten` lässt dich Labels hinzufügen, umbenennen, umfärben und löschen; ein Label, das noch von Terminen benutzt wird, kann nicht gelöscht werden. Auf einem Handy sind die Chips hinter einem Knopf `Labels & Feeds` zusammengefaltet, der zeigt, wie viele an sind; tippe darauf, um die Liste zu öffnen oder zu schließen. Dein Gerät merkt sich, ob du sie offen gelassen hast.
 
+Filter:
+- `Kein Label`: Deine Termine ohne Label haben einen eigenen Chip. Schalte alles andere aus, um nur sie zu sehen.
+- Nur ein Chip: Drück lange auf einen Chip (Handy) oder klick ihn mit der rechten Maustaste oder mit Alt an (Computer), und jeder andere Chip geht aus. Mach es noch einmal auf demselben Chip, und alle kommen zurück.
+- `Alle` schaltet jeden Chip ein. `Mond & Himmel`, `Medikamente` und `Arzttermine` bleiben, wie sie sind; sie gehen nur über ihren eigenen Chip an.
+- `Keine` schaltet jeden Chip aus, damit du nur die einschalten kannst, die du willst.
+- `Meine Termine` zeigt nur deine eigenen Termine (jedes Label und `Kein Label`) und blendet alle Feeds aus.
+Filter blenden Zeilen nur aus; sie ändern oder löschen nie etwas.
+
 Andere Apps fügen schreibgeschützte Zeilen hinzu, jede mit eigenem Chip, damit du sie ausblenden kannst:
 - `Geburtstage`, `Jahrestage` und `Eigener Feed` aus [Kontakte](app:contacts).
 - `Aufgaben`: unerledigte Aufgaben an ihrem Fälligkeitstag, aus [Aufgaben](app:todo).

@@ -1019,7 +1019,7 @@
     var stop = false;
     LY.toast(t("rb.start", { n: sources.length }), t("btn.cancel"), function () { stop = true; });
     return pdf.arrayBuffer().then(function (buf) {
-      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, thread: !!(opts && opts.thread), cancelled: function () { return stop; }, matchFonts: matchFonts }, A.importFile, function (k, n) {
+      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, names: RB.names(LY.LANG), thread: !!(opts && opts.thread), cancelled: function () { return stop; }, matchFonts: matchFonts }, A.importFile, function (k, n) {
         LY.toast(t("rb.working", { n: k, t: n }), t("btn.cancel"), function () { stop = true; });
       });
     }).then(function (res) {
