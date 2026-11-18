@@ -554,6 +554,8 @@
     if (cur && !ED.master && window.LayoutPro) {
       var sc0 = M.secOfPage(cur);
       body.appendChild(btn(sc0 ? t("pages.secEdit") : t("pages.secNew"), function () { sectionDlg(cur.id); }, "small"));
+      // this page's own size (W3b): a fold-out, a smaller insert
+      body.appendChild(btn(M.pageSize(doc, cur).own ? t("pages.sizeOwn") : t("pages.size"), function () { pageSizeDlg(cur.id); }, "small"));
     }
     var labels = M.pageLabels(doc);
 
@@ -567,7 +569,7 @@
         var tile = el("button", "pg-tile" + (cur && cur.id === p.id && !ED.master ? " on" : ""));
         tile.type = "button";
         tile.setAttribute("aria-label", t("st.page", { n: n, c: doc.pages.length }));
-        var ratio = doc.setup.h / doc.setup.w;
+        var psz = M.pageSize(doc, p), ratio = psz.h / psz.w;
         var tw = 54, th = Math.round(tw * ratio);
         var holder = el("span", "pg-thumb");
         holder.style.width = tw + "px"; holder.style.height = th + "px";
@@ -635,6 +637,34 @@
       body.appendChild(act);
     });
   }
+  // A page's own trim size (LY-PRO W3b): this page, or the pages listed.
+  function pageSizeDlg(pgId) {
+    var pg = M.find(LY.doc.pages, pgId);
+    if (!pg) return;
+    var cur = M.pageSize(LY.doc, pg), w = cur.w, h = cur.h;
+    LY.openDialog(t("pages.sizeTitle"), function (body, close) {
+      var g = el("div", "grid2");
+      g.appendChild(field(t("new.w"), numInput(w, function (v) { w = v; })));
+      g.appendChild(field(t("new.h"), numInput(h, function (v) { h = v; })));
+      body.appendChild(g);
+      var pos = M.pagesInOrder(LY.doc).findIndex(function (p) { return p.id === pgId; }) + 1;
+      var rng = el("input", "inp"); rng.type = "text"; rng.maxLength = 60; rng.value = String(pos); rng.placeholder = t("exp.rangeHint");
+      body.appendChild(field(t("pages.sizePages"), rng));
+      var act = el("div", "dlg-actions");
+      function apply(reset) {
+        var test = window.LayoutRecipes && window.LayoutRecipes.pageTest(rng.value.replace(/\s+/g, "") || String(pos));
+        if (!test) { LY.toast(t("exp.badRange")); return; }
+        if (!reset && !(w >= 36 && w <= 14400 && h >= 36 && h <= 14400)) { LY.toast(t("pages.sizeBad")); return; }
+        close();
+        LY.op(function (d2, now) { return window.LayoutPro.setPageSize(d2, test, reset ? 0 : w, reset ? 0 : h, now) ? undefined : false; });
+      }
+      act.appendChild(btn(t("pages.sizeDoc"), function () { apply(1); }));
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.cancel"), close));
+      act.appendChild(btn(t("btn.save"), function () { apply(0); }, "primary"));
+      body.appendChild(act);
+    });
+  }
   // A master based on another: its objects show under this one's.
   function baseDlg(msId) {
     var m = M.find(LY.doc.masters, msId);
@@ -658,11 +688,11 @@
 
   function thumbImg(doc, p, L, tw) {
     if (!L) return null;
-    var key = p.id + ":" + JSON.stringify(M.itemsOn(doc, p.id)).length + ":" + M.maxM(doc) + ":" + (p.ms || "");
+    var key = p.id + ":" + JSON.stringify(M.itemsOn(doc, p.id)).length + ":" + M.maxM(doc) + ":" + (p.ms || "") + ":" + M.pageSize(doc, p).w;
     var c = thumbCache[p.id];
     if (!c || c.key !== key) {
       try {
-        var cvs = R.renderPage(doc, p, L, tw * 2 / doc.setup.w, { getImage: LY.A.get });
+        var cvs = R.renderPage(doc, p, L, tw * 2 / M.pageSize(doc, p).w, { getImage: LY.A.get });
         c = thumbCache[p.id] = { key: key, url: cvs.toDataURL("image/png") };
       } catch (e) { return null; }
     }
@@ -1345,6 +1375,13 @@
       if (doc.setup.facing) body.appendChild(check(t("exp.spreads"), expPrefs.spreads, function (v) { expPrefs.spreads = v; }));
       body.appendChild(check(t("exp.bleed"), expPrefs.bleed, function (v) { expPrefs.bleed = v; }));
       body.appendChild(check(t("exp.marks"), expPrefs.marks, function (v) { expPrefs.marks = v; }));
+      // creep for a saddle-stitched book (W3b), in mm
+      if (doc.setup.facing && doc.pages.length >= 8) {
+        var cr = el("input", "inp num"); cr.type = "number"; cr.min = 0; cr.max = 5; cr.step = 0.05; cr.value = expPrefs.creep || "";
+        cr.placeholder = "0";
+        cr.addEventListener("input", function () { var v = parseFloat(cr.value); expPrefs.creep = isFinite(v) ? Math.max(0, Math.min(5, v)) : 0; });
+        body.appendChild(field(t("exp.creep"), cr));
+      }
       var qWrap = el("div");
       function drawQ() { qWrap.innerHTML = ""; qWrap.appendChild(seg([["print", t("exp.print")], ["screen", t("exp.screen")]], expPrefs.q, function (v) { expPrefs.q = v; drawQ(); })); }
       drawQ();
@@ -1356,7 +1393,7 @@
         var pages = pickPages(doc);
         if (!pages) { LY.toast(t("exp.badRange")); return; }
         close();
-        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150 });
+        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4 });
       }, "primary"));
       body.appendChild(act);
       // the same PDF, saved in Files › Layout › PDF and offered to an app
@@ -1365,7 +1402,7 @@
           var pages = pickPages(doc);
           if (!pages) { LY.toast(t("exp.badRange")); return; }
           close();
-          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150 });
+          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4 });
         }, "block");
         sendB.id = "exp-send";
         sendB.setAttribute("aria-haspopup", "dialog");

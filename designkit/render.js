@@ -316,6 +316,8 @@
       var paints = it.t === "img" ? !!it.a : it.t === "line" ? false : !!(it.fill || it.gr);
       if (paints && bleed > 0 && order[it.pg] < 100000) {
         var b = itemBox(it), e = 0.5, side = M.sideOf(doc, order[it.pg]);
+        var psz = M.pageSize ? M.pageSize(doc, M.find(doc.pages, it.pg)) : null;
+        if (psz) { W = psz.w; H = psz.h; }
         var left = !(facing && side === "R"), right = !(facing && side === "L");
         if ((left && short(b.x <= e, b.x <= -bleed + e)) || (right && short(b.x + b.w >= W - e, b.x + b.w >= W + bleed - e)) ||
             short(b.y <= e, b.y <= -bleed + e) || short(b.y + b.h >= H - e, b.y + b.h >= H + bleed - e)) add("warn", "bleed", it);
@@ -547,7 +549,7 @@
   // A page on a fresh canvas (thumbnails, PNG/JPG). scale = px per pt.
   function renderPage(doc, page, L, scale, opts) {
     opts = opts || {};
-    var s = doc.setup, b = opts.bleed ? s.bleed : 0;
+    var s = M.pageSize ? M.pageSize(doc, page) : doc.setup, b = opts.bleed ? doc.setup.bleed : 0;
     var cv = opts.canvas || document.createElement("canvas");
     cv.width = Math.max(1, Math.round((s.w + 2 * b) * scale));
     cv.height = Math.max(1, Math.round((s.h + 2 * b) * scale));

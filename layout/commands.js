@@ -78,7 +78,8 @@
   CATALOG.duppages = { kind: "doc", args: { pages: RANGE } };
   CATALOG.masterpages = { kind: "doc", args: { pages: RANGE, master: { t: "str", max: 60 } } };
   CATALOG.defmaster = { kind: "doc", args: { name: { t: "str", max: 60, req: 1 }, prefix: { t: "str", max: 8 }, base: { t: "str", max: 60 } } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster"];
+  CATALOG.pagesize = { kind: "doc", args: { pages: RANGE, w: MMv(0, 5080, 0), h: MMv(0, 5080, 0) } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -113,7 +114,8 @@
     "\nmovepages: the pages `pages` (e.g. 3-5,9) go, in their order, before page `before` (0 = to the end)" +
     "\nduppages: copies of the pages `pages` (with their own copy of the text) go after the last of them" +
     "\nmasterpages: the pages `pages` (all, odd, even or 3-10) get the master `master` by name (\"\" = none)" +
-    "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)";
+    "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)" +
+    "\npagesize: the pages `pages` get their own trim w × h in mm (a fold-out, a smaller insert; at least 13 mm); w 0 and h 0 = the document's size again; the PDF, the pictures and the editor follow";
 
   // ---------- 1. Checking ----------
   function given(v) { return v !== null && v !== undefined && v !== ""; }
@@ -211,6 +213,7 @@
       return PRO.masterPages(doc, S.pageTest(st.pages), msx ? msx.id : "", now);
     }
     if (st.op === "defmaster") return PRO.defMaster(doc, st, now, env.idf);
+    if (st.op === "pagesize") return PRO.setPageSize(doc, S.pageTest(st.pages), (st.w || 0) * PT_PER_MM, (st.h || 0) * PT_PER_MM, now);
     if (!hasEngine()) {
       if (st.op === "fit") { if (env.notes && env.notes.indexOf("fitLater") < 0) env.notes.push("fitLater"); return 1; }
       if (st.op === "pages" && st.flow) st = Object.assign({}, st, { flow: 0 });
@@ -293,7 +296,7 @@
   // masters by name, and per page the master and the start of each
   // text and the pictures, without file data.
   var OUT_PAGES = 400, OUT_TEXT = 160;
-  var PT_MM = 25.4 / 72;
+  var PT_MM = 25.4 / 72, PT_PER_MM = 72 / 25.4;
   function mm(v) { return Math.round((v || 0) * PT_MM * 10) / 10; }
   function nameOf(n) { return n && typeof n === "object" ? n.en || n.el || n[Object.keys(n)[0]] || "" : String(n || ""); }
   function textOf(st) {

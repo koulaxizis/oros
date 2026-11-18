@@ -29,7 +29,8 @@
     var mk = {}, any = false, src = rq.marks && typeof rq.marks === "object" ? rq.marks : {};
     MARKS.forEach(function (k) { if (src[k]) { mk[k] = true; any = true; } });
     return { doc: clean(rq.doc, 200), preset: preset, pages: pages === "all" ? "" : pages, bleed: !!rq.bleed,
-             marks: any ? mk : null, spreads: !!rq.spreads, down: rq.down !== 0 };
+             marks: any ? mk : null, spreads: !!rq.spreads, down: rq.down !== 0,
+             creep: Math.max(0, Math.min(5, Number(rq.creep) || 0)) };
   }
   // the document by name: the same name first, else a part of it; the
   // newest one wins
@@ -118,7 +119,8 @@
     var L = doc === LY.doc && LY.ed && LY.ed.L ? LY.ed.L : LY.R.computeLayout(doc);
     var stat = {}, print = q.preset !== "screen";
     var opts = { pages: ids, layout: L, spreads: !!(q.spreads && doc.setup.facing), bleed: print && q.bleed, marks: print ? q.marks : null,
-                 ppi: !q.down ? 2400 : q.preset === "screen" ? 150 : 300, rgb: q.preset === "screen", imgStat: stat };
+                 ppi: !q.down ? 2400 : q.preset === "screen" ? 150 : 300, rgb: q.preset === "screen", imgStat: stat,
+                 creep: print && q.creep ? q.creep * 72 / 25.4 : 0 };
     var fontP = LY.T && LY.T.load ? Promise.resolve(LY.T.load(["sans-r"])).then(null, function () {}) : Promise.resolve();
     var libs = q.preset === "pdfx4" ? pdfxLib() : Promise.resolve(null);
     return Promise.all([fontP, libs]).then(function (r) {

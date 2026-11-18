@@ -152,14 +152,17 @@
       var chain = Promise.resolve();
       groups.forEach(function (g) {
         chain = chain.then(function () {
-          var w = Math.round(doc.setup.w * scale), h = Math.round(doc.setup.h * scale);
+          // each page at its own size, side by side, tops aligned
+          var sz = g.map(function (p) { var z = M.pageSize(doc, p); return { w: Math.round(z.w * scale), h: Math.round(z.h * scale) }; });
           var cv = document.createElement("canvas");
-          cv.width = w * g.length; cv.height = h;
+          cv.width = sz.reduce(function (a, z) { return a + z.w; }, 0); cv.height = Math.max.apply(null, sz.map(function (z) { return z.h; }));
           var cx = cv.getContext("2d");
           cx.fillStyle = "#ffffff"; cx.fillRect(0, 0, cv.width, cv.height);
+          var x0 = 0;
           g.forEach(function (p, k) {
             var pc = LY.R.renderPage(doc, p, L, scale, { getImage: A.get, background: "#fff" });
-            cx.drawImage(pc, k * w, 0, w, h);
+            cx.drawImage(pc, x0, 0, sz[k].w, sz[k].h);
+            x0 += sz[k].w;
           });
           var nums = g.map(function (p) { return ("00" + (order.indexOf(p) + 1)).slice(-3); }).join("-");
           return new Promise(function (ok, no) { cv.toBlob(function (b) { if (b) ok(b); else no({ why: "encode" }); }, "image/png"); }).then(function (blob) {
