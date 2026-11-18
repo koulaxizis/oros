@@ -116,6 +116,8 @@ const DRAFT_BODY = {
   description: "desc", short_description: "desc", weight: "dec", dimensions: "dims",
   virtual: "bool", manage_stock: "bool"
 };
+// orOS Connect's digest areas (= links/core.js OC_AREAS)
+const OC_AREAS = /^(sales|titles|stock|splits|costs|bookstores)(,(sales|titles|stock|splits|costs|bookstores)){0,5}$/;
 const VAT_RE = /^[0-9]{9}$/, DAY = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/, UID = /^[A-F0-9]{40}$/, MARK = /^[0-9]{1,20}$/,
       SERIES = /^[A-Za-z0-9._-]{1,50}$/, AA = /^[0-9]{1,15}$/, ITYPE = /^[0-9]{1,2}\.[0-9]$/;
 const TOL_TYPES = ["1.1", "1.2", "1.3", "2.1", "2.2", "2.3", "5.1", "5.2", "11.1", "11.2", "11.4"];
@@ -334,6 +336,11 @@ export const PLATFORMS = {
       // Newsletter wave E4: the shop's customers become subscribers
       ["GET", /^\/customers$/, q({ role: /^(all|customer)$/ }), null],
       ["GET", /^\/data\/currencies\/current$/, null, null],
+      // Shop (SHOP-1): WooCommerce's own reports (every shop) and orOS
+      // Connect 1.4+'s read-only digest of the shop's figures, read only
+      ["GET", /^\/reports\/(sales|top_sellers)$/, { date_min: DAY, date_max: DAY }, null],
+      ["GET", /^\/oros\/status$/, null, null],
+      ["GET", /^\/oros\/digest$/, { areas: OC_AREAS, fresh: /^1$/ }, null],
       // partner card W6: Revenue Splitter 1.11+ (noxpress), read only
       ["GET", /^\/rs\/balances$/, null, null],
       ["GET", /^\/rs\/report$/, { date_start: DAY, date_end: DAY }, null],

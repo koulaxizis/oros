@@ -64,6 +64,15 @@ For totals and overviews, such as "how much did I spend on groceries this month?
 - So the assistant knows the real names of your lists, notebooks, folders, labels and boards before it uses one, and tells you when a name you gave does not exist instead of picking another. Every item in these summaries can also be opened or changed.
 - CRM: "what is open with …?" for one partner: what they owe you and you owe them, stock on consignment, orders, hours not billed, royalties, contracts and the next follow-up. When several partners match, the assistant asks which one.
 - Calendar, Habits, Plant Care and the other apps that appear in `Today`: what is late, today and in the next days.
+- Meal Planner: your own recipes, how many ready ones there are, the plan of this week and the next, and pantry items close to their best-before day.
+- Travel: every trip with its dates, whether it is now, coming or past, and what is left to pack; the itinerary of the trips that are not over.
+- Plant Care: every plant with its room and species, how often you water it, when you last did, and its next care days. Late ones are marked.
+- Garage: every vehicle with its kilometres and this year's costs, and its renewals and services with their day and whether they are soon or due. Policy numbers are not in the summary.
+- Habits: every habit with its days, whether today is done, your streak, your best streak and the score.
+- Scanner & PDF: your signature requests by document and signer, and whether each one is waiting, signed, declined, taken back or expired. E-mail addresses and links are not in the summary.
+- Transfer: your History, what was sent or received, how many files, their size and from which device. Never the files themselves.
+- Whiteboard: every board with how many notes, shapes and pictures it has, and the texts on its notes and shapes. Ask for one board by its name.
+- These eight are only read: the assistant changes nothing in them through a summary. orOS Gate reads them the same way, for the apps you allow there.
 
 For an app set to `Ask first` you see the summary on a card before it is shared; press `Share` or `Don't share`. Only those lines leave the device, not the entries themselves. Budget starts at `Never`, so allow it in `Settings` → `Your data` first.
 
