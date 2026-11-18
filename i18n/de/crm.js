@@ -837,6 +837,7 @@ orosPack("de", "crm", {
  "d.ctrNone": "keines in Sicht",
  "d.ctrList": "Verträge, die eine Entscheidung brauchen",
  "d.ctrAll": "Alle Verträge",
+ "cx.st.perp": "Digital, für immer unter seiner CC-Lizenz",
  "rt.chip": "Rechte",
  "rt.sold": "Im Verkauf ohne laufendes Recht",
  "rt.soldHint": "Ein Format, das in Publishing mit einem Shop-Produkt verknüpft ist, dessen Vertrag abgelaufen, einvernehmlich beendet ist oder es nicht abdeckt.",

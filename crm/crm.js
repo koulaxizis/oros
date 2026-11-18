@@ -175,7 +175,7 @@
       "cx.renew3": "Renew +3 years", "cx.renew5": "Renew +5 years", "cx.renewD": "Renew until…", "cx.post7": "Put off the decision 7 days", "cx.post30": "Put off the decision 30 days", "cx.postD": "Put off the decision until…",
       "cx.end": "End by agreement…", "cx.reopen": "It runs again", "cx.mail": "Email {name}", "cx.call": "Call {name}", "cx.file": "Open the contract file", "cx.task": "Kanban card", "cx.note": "Note…",
       "cx.edit": "Edit the contract", "cx.partner": "Partner card", "cx.hist": "History",
-      "rt.chip": "Rights", "rt.sold": "On sale with no running right", "rt.soldHint": "A format linked to a shop product in Publishing whose contract has ended, was ended by agreement or does not cover it.",
+      "cx.st.perp": "Digital, for ever under its CC licence", "rt.chip": "Rights", "rt.sold": "On sale with no running right", "rt.soldHint": "A format linked to a shop product in Publishing whose contract has ended, was ended by agreement or does not cover it.",
       "rt.free": "Free, under CC", "rt.freeHint": "Free releases under CC BY-NC-SA with no running contract. Usually fine; ask a lawyer when unsure.",
       "rt.unrel": "Rights with no release", "rt.unrelHint": "A running contract grants it, and the title has no such format in Publishing.",
       "rt.renew": "Renewal decisions within 90 days", "rt.all": "All titles", "rt.none": "Nothing here.",
@@ -507,7 +507,7 @@
       "cx.renew3": "Ανανέωση +3 έτη", "cx.renew5": "Ανανέωση +5 έτη", "cx.renewD": "Ανανέωση έως…", "cx.post7": "Αναβολή απόφασης 7 ημέρες", "cx.post30": "Αναβολή απόφασης 30 ημέρες", "cx.postD": "Αναβολή απόφασης έως…",
       "cx.end": "Λύση ή ακύρωση…", "cx.reopen": "Ισχύει ξανά", "cx.mail": "Email σε {name}", "cx.call": "Κλήση σε {name}", "cx.file": "Άνοιγμα αρχείου συμφωνητικού", "cx.task": "Κάρτα στο Kanban", "cx.note": "Σημείωση…",
       "cx.edit": "Επεξεργασία συμφωνητικού", "cx.partner": "Καρτέλα συνεργάτη", "cx.hist": "Ιστορικό",
-      "rt.chip": "Δικαιώματα", "rt.sold": "Πουλιέται χωρίς ενεργό δικαίωμα", "rt.soldHint": "Μορφή συνδεδεμένη με προϊόν του καταστήματος στο Publishing, ενώ το συμφωνητικό της έληξε, λύθηκε ή δεν την καλύπτει.",
+      "cx.st.perp": "Ψηφιακό, αέναο με την άδεια CC", "rt.chip": "Δικαιώματα", "rt.sold": "Πουλιέται χωρίς ενεργό δικαίωμα", "rt.soldHint": "Μορφή συνδεδεμένη με προϊόν του καταστήματος στο Publishing, ενώ το συμφωνητικό της έληξε, λύθηκε ή δεν την καλύπτει.",
       "rt.free": "Δωρεάν, με CC", "rt.freeHint": "Δωρεάν εκδόσεις με CC BY-NC-SA χωρίς ενεργό συμφωνητικό. Συνήθως είναι εντάξει· αν έχεις αμφιβολία, ρώτα δικηγόρο.",
       "rt.unrel": "Δικαίωμα χωρίς έκδοση", "rt.unrelHint": "Ενεργό συμφωνητικό το παραχωρεί, αλλά ο τίτλος δεν έχει τέτοια μορφή στο Publishing.",
       "rt.renew": "Απόφαση ανανέωσης μέσα σε 90 μέρες", "rt.all": "Όλοι οι τίτλοι", "rt.none": "Τίποτα εδώ.",
@@ -1825,6 +1825,7 @@
   function ctrStText(r) {
     var k = r.ctr;
     if (r.st === "term") return t("cx.st.term", { d: fmtDate(r.x.end) });
+    if (r.perp) return t("cx.st.perp");
     if (r.st === "ended") return t("cx.st.ended", { d: fmtDate(k.to) });
     if (r.st === "soon") return r.days === 0 ? t("cx.st.today") : t("cx.st.soon", { d: fmtDate(k.to), n: r.days });
     return k.to ? t("ct.until", { d: fmtDate(k.to) }) : t("ct.noEnd");

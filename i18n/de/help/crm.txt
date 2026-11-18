@@ -112,6 +112,8 @@ Der Chip `Rechte` in `Verträge` ordnet sie deinen Titeln in [Publishing](app:pu
 - `Verlängerungen in den nächsten 90 Tagen`, jede mit dem, was nach dem Ende gilt (Abverkaufsmonate, Verlängerung nur nach Vereinbarung).
 - `Alle Titel`, mit ✓ eingeräumt, ± mit Zustimmung, ○ nur kostenlos und – nicht erwähnt oder nicht erfasst für jedes Recht.
 
+Ein reiner Digitalvertrag unter einer unbefristeten Creative-Commons-Lizenz erscheint als `Digital, für immer unter seiner CC-Lizenz`: Sein Ende braucht keine Entscheidung und schickt keine Erinnerung, und seine digitalen Ausgaben bleiben erlaubt. Druckverträge behalten ihr Enddatum.
+
 Das ist eine Aufzeichnung dessen, was die Verträge sagen, keine Rechtsberatung.
 
 `An den Shop senden…` (mit einem WooCommerce-Shop unter Einstellungen › Verbundene Dienste) sendet die Enddaten an den Revenue Splitter des Shops (1.14.2 oder neuer), der jeder Urheberin und jedem Urheber die eigenen Verträge in seinem Author Portal zeigt. Gesendet werden nur Namen, Titel, Formate, Daten und Status, nie eine Notiz, ein Betrag oder eine Datei.

@@ -171,3 +171,32 @@ test("CRM search: a contract's hit carries its id, so its rights can be changed"
   const hits = P.search({ q: "book", words: ["book"], fold: C.fold, lang: "en", code: "en", readJSON: (k) => store[k] || null });
   assert.deepEqual(hits.find((h) => h.id === "ctr0001").target, { cust: "aaaaaa1", ctr: "ctr0001" });
 });
+
+test("a digital contract under a perpetual CC licence: no decision, no reminder, its digital formats stay allowed", () => {
+  const d = C.norm({ cust: [cust("aaaaaa1", "A")], ctr: [
+    ctr("ctr0001", { t: "«Pdf Book» (Digital)", to: "2026-03-09" }),
+    ctr("ctr0002", { t: "«Soon Book» (Digital)", to: "2026-12-14" }),
+    ctr("ctr0003", { t: "«Print Book» (Print)", to: "2026-09-01" })
+  ], rt: [
+    { id: "ctr0001", m: 20, grant: "free", cov: ["e"], cc: true, ccp: true },
+    { id: "ctr0002", m: 20, grant: "free", cov: ["e"], cc: true, ccp: true, r: { audio: { s: "free" } } },
+    { id: "ctr0003", m: 20, grant: "all", cov: ["p"], cc: true, ccp: true }
+  ] });
+  const info = C.ctrAll(d, today);
+  const by = (id) => info.find((r) => r.ctr.id === id);
+  assert.equal(by("ctr0001").perp, true);
+  assert.equal(by("ctr0001").needs, false);
+  assert.equal(by("ctr0002").needs, false);
+  assert.equal(by("ctr0003").perp, false, "print still ends");
+  assert.equal(by("ctr0003").needs, true);
+  assert.ok(!C.ctrHeal(d, today).some((p) => p.ctr.id === "ctr0002"), "no reminder for the perpetual one");
+  const titles = [
+    { id: "t1", t: "Pdf Book", ppl: [], fmts: [{ k: "eb", price: 0, wp: { a: "s", id: 1 } }] },
+    { id: "t2", t: "Soon Book", ppl: [], fmts: [{ k: "eb", price: 0, wp: { a: "s", id: 2 } }, { k: "ab", price: 0, wp: { a: "s", id: 3 } }] },
+    { id: "t3", t: "Print Book", ppl: [], fmts: [{ k: "pb", price: 8, wp: { a: "s", id: 4 } }] }
+  ];
+  const b = C.rightsBoard(d, today, titles);
+  assert.deepEqual(b.sold.map((x) => x.ti), ["t3"]);
+  assert.deepEqual(b.freeCc, []);
+  assert.deepEqual(b.renew, [], "a perpetual digital contract needs no renewal");
+});

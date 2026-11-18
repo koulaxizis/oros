@@ -714,6 +714,7 @@ orosPack("de", "publish", {
  "ctr.noEnd": "kein Enddatum",
  "ctr.snz": "Entscheidung am {d}",
  "ctr.fmt.p": "Druck",
+ "ctr.perp": "für immer unter seiner CC-Lizenz",
  "ctr.rights": "Rechte: {v}",
  "ctr.rt.print": "Druck",
  "ctr.rt.ebook": "E-Book",

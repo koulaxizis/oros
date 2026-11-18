@@ -661,8 +661,8 @@
     var cu = byId(data.cust, c.cust);
     return {
       ctr: c, x: x, st: st, fmt: ctrFmt(data, c), book: ctrBook(c), cust: cu, who: cu ? custName(cu) : "",
-      days: c.to ? dayDiff(today, c.to) : null, snooze: snz,
-      needs: (st === "soon" || st === "ended") && !snz,
+      days: c.to ? dayDiff(today, c.to) : null, snooze: snz, perp: rtPerp(data, c),
+      needs: (st === "soon" || st === "ended") && !snz && !rtPerp(data, c),
       hist: x && x.h ? x.h.slice() : []
     };
   }
@@ -884,6 +884,16 @@
     row.m = o.m;
     return { row: row };
   }
+  // A digital-only contract released under a perpetual CC licence
+  // (Chris 2026-11-18: digital editions run for ever under their
+  // licence, the contract's end does not apply to them): its end needs
+  // no decision and its digital formats stay allowed.
+  function rtPerp(data, c) {
+    var x = rtOf(data, c.id);
+    if (!x || !x.cc || !x.ccp) return false;
+    var cov = rtCovers(data, c);
+    return cov.length === 1 && cov[0] === "e";
+  }
   // Publishing formats → print / digital / audio
   var PUB_KIND = { pb: "p", hb: "p", eb: "e", ab: "a" };
   // May a contract sell format f (p | e | a) on this day, paid or free?
@@ -892,6 +902,8 @@
   function rtAllows(data, r, f, paid, today) {
     var c = r.ctr, x = rtOf(data, c.id), cov = rtCovers(data, c);
     var on = r.st === "on" || r.st === "soon";
+    // a digital edition under a perpetual CC licence outlives the contract (not an ended-by-agreement one)
+    if (!on && f !== "p" && r.st === "ended" && x && x.cc && x.ccp) on = true;
     if (!on && f === "p" && r.st === "ended" && x && x.so && c.to && today <= addMonths(c.to, x.so)) on = true;
     if (!on) return false;
     if (f === "a") {
@@ -931,7 +943,7 @@
       var info = ctrInfo(data, c, today);
       var xr = rtOf(data, c.id);
       if (!xr || Object.keys(xr).length <= 2) out.unfilled++;   // none, or emptied by an Undo
-      if (info.st === "soon") { var x = rtOf(data, c.id); out.renew.push({ info: info, so: x && x.so ? x.so : 0, ext: x && x.ext ? x.ext : "" }); }
+      if (info.st === "soon" && !info.perp) { var x = rtOf(data, c.id); out.renew.push({ info: info, so: x && x.so ? x.so : 0, ext: x && x.ext ? x.ext : "" }); }
       var tt = ctrTitle(data, c, list);
       if (!tt) { out.unlinked++; return; }
       if (!groups[tt.id]) { groups[tt.id] = { tt: tt, list: [] }; order.push(tt.id); }
@@ -991,7 +1003,7 @@
   function ctrHeal(data, today) {
     var out = [];
     (data.ctr || []).forEach(function (c) {
-      if (!byId(data.cust, c.cust)) return;
+      if (!byId(data.cust, c.cust) || rtPerp(data, c)) return;
       var x = cxOf(data, c.id), d = ctrFupDay(c, x, today);
       if (!d) return;
       var f = c.fup ? byId(data.fups, c.fup) : null;
@@ -1814,7 +1826,7 @@
     normRsl: normRsl, CS_FIELDS: CS_FIELDS, normCs: normCs, csJoin: csJoin, rsOf: rsOf, rsRow: rsRow, normCtr: normCtr, ctrRemindDay: ctrRemindDay, contractsOf: contractsOf, ctrState: ctrState, balance: balance,
     SOON_DAYS: SOON_DAYS, CX_KINDS: CX_KINDS, normCx: normCx, normCset: normCset, cxOf: cxOf, cxRow: cxRow, ctrFmt: ctrFmt, ctrBook: ctrBook, addYears: addYears,
     ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrDash: ctrDash, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
-    RT_RIGHTS: RT_RIGHTS, RT_STATUS: RT_STATUS, normRt: normRt, rtOf: rtOf, rtRow: rtRow, rtStatus: rtStatus, rtCovers: rtCovers, rightsBoard: rightsBoard,
+    RT_RIGHTS: RT_RIGHTS, RT_STATUS: RT_STATUS, normRt: normRt, rtPerp: rtPerp, rtOf: rtOf, rtRow: rtRow, rtStatus: rtStatus, rtCovers: rtCovers, rightsBoard: rightsBoard,
     ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, portalPayload: portalPayload, portalPlan: portalPlan,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove

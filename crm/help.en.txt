@@ -112,6 +112,8 @@ The `Rights` chip in `Contracts` matches them to your [Publishing](app:publish) 
 - `Renewal decisions within 90 days`, each with what happens after the end (sell-off months, extension only by agreement).
 - `All titles`, with ✓ granted, ± with consent, ○ free only and – not mentioned or not recorded for each right.
 
+A digital-only contract released under a perpetual Creative Commons licence shows as `Digital, for ever under its CC licence`: its end needs no decision and sends no reminder, and its digital editions stay allowed. Print contracts keep their end day.
+
 This is a record of what the contracts say, not legal advice.
 
 `Send to the shop…` (with a WooCommerce shop in Settings › Connected services) sends the end days to the shop's Revenue Splitter (1.14.2 or later), which shows each creator their own contracts in its Author Portal. Only names, titles, formats, days and states are sent, never a note, a value or a file.
