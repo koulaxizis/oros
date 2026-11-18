@@ -27,6 +27,7 @@ The wheel button at the top shows the letter wheel, as on the real machine. The 
 - `New label` starts an empty tape with the same colour and size.
 - In the list, tap a label to open it. The copy button makes a duplicate, and the × deletes it; `Undo` brings it back.
 - `Recent` shows the last 10 labels you made on this device, saved or not. Tap one to start a new label from it.
+- The menu's search box finds your saved labels by their text. Choosing one opens it on the tape.
 
 ## Download, copy and print
 - `Download PNG` saves the label as an image with a transparent background, sharp enough to print.
