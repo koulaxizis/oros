@@ -49,11 +49,15 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 - Datenbankmenü (`⋯`) › Tabellen importieren fügt die Tabellen stattdessen der offenen Datenbank hinzu.
 - In [Tabelle](app:spreadsheet) übernimmt An eine App senden › Datenbank die ausgewählten Zellen (oder das ganze Blatt) als neue Tabelle. Du wählst die Datenbank, bevor etwas hinzugefügt wird.
 
+Eine Liste, die eine andere orOS-App mit `An eine App senden…` schickt (etwa eine Aufgabenliste oder eine Einkaufsliste), öffnet sich im selben Fenster `Als Tabelle hinzufügen`: ein Eintrag pro Element, mit einem Feld Name und, wenn die Elemente Notizen haben, einem Feld Notizen.
+
 ## Export
 - Tabellenmenü (`⋯`) › Diese Ansicht als CSV exportieren speichert die Einträge und Felder, die du siehst, in dieser Reihenfolge.
 - Diese Ansicht in Tabelle öffnen schickt sie an [Tabelle](app:spreadsheet) als neues Blatt (bis zu 499 Einträge).
 - Tabellenmenü (`⋯`) › Drucken oder als PDF speichern druckt die Ansicht als Tabelle (die Einträge und Felder, die du siehst, bis 5.000 Einträge); der Druckdialog des Browsers speichert auch ein PDF.
 - Datenbankmenü (`⋯`) › Als orOS-Datei speichern (.orosbase) speichert die ganze Datenbank mit Tabellen, Ansichten und Verknüpfungen als eine Datei, als Kopie oder für ein anderes Gerät (Anhänge gehen mit ihrem Namen; die Dateien bleiben auf der orOS-Festplatte). Beim Öffnen kommt hinzu, was fehlt, und nichts wird gelöscht; Einträge, die schon da sind, bleiben, wie sie sind, außer du hakst `Mit neueren Versionen aktualisieren` an. Die Datei enthält auch eine CSV jeder Tabelle (in `preview/`) und ist nicht verschlüsselt.
+
+Das Menü der Ansicht hat `Als Tabelle an eine App senden…` und `Als Liste an eine App senden…`: Die Einträge auf dem Bildschirm (nach dem Filter der Ansicht und deiner Suche, bis 499 als Tabelle und 200 als Liste) gehen an eine andere orOS-App, eine Tabelle an [Tabelle](app:spreadsheet), [Writer](app:writer) oder [Mail](app:mail), eine Liste (das Hauptfeld als Eintrag, die anderen Felder als seine Notiz) an [Aufgaben](app:todo) oder [Kanban](app:kanban). `An eine App senden…` im Fenster eines Eintrags schickt diesen Eintrag als Text. Die andere App öffnet sich nur damit ausgefüllt.
 
 ## Deine Daten
 - Alles bleibt auf diesem Gerät und wird laufend gespeichert. Mit dem orOS-Sync in den [Einstellungen](app:settings) folgen dir deine Datenbanken verschlüsselt auf deine anderen Geräte.
@@ -67,5 +71,6 @@ Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den 
 ## Formulare und Kalender
 - Tabellenmenü (`⋯`) › Öffentliches Formular öffnet [Formulare](app:forms) mit einer Frage für jedes Feld, das ein Formular fragen kann. In Formulare schreibt `An Base senden` jede Antwort als Eintrag dieser Tabelle. Eine erneut gesendete Antwort, oder eine, deren Eintrag du hier gelöscht hast, kommt nie zweimal dazu; eine unter „Andere“ getippte Auswahl wird eine neue Auswahl. Die Datenbank sagt dir dann, wie viele Einträge hinzukamen und welche Antworten nicht passten.
 - Ein Datumsfeld kann seine Einträge im [Kalender](app:calendar) zeigen: bearbeite das Feld und hake `Im Kalender zeigen` an (anfangs aus). Sie erscheinen unter dem Label Datenbank; tippst du einen an, öffnet sich der Eintrag hier.
+- Derselbe Schalter bringt diese Einträge in [Heute](app:today), für heute und die nächsten drei Tage.
 - Der [Assistent](app:assistant) und Claude über orOS Gate können deine Datenbanken lesen (Tabellen, Felder, die Einträge einer Tabelle) und Einträge hinzufügen, sobald du ihnen die Datenbank erlaubst. Du siehst die Einträge, bevor sie hinzukommen, und kannst sie rückgängig machen. Sie füllen Felder über ihre Namen; Felder, die die Datenbank berechnet, Verknüpfungen und Anhänge füllst du selbst.
 - [Automationen](app:automations) können der Datenbank folgen: `Wenn in der Datenbank ein Eintrag hinzukommt` und `Wenn sich in der Datenbank ein Feld ändert`, mit einem Wort wie dem Namen einer Tabelle oder `Status: Erledigt` (ein angehaktes Kästchen heißt `Bezahlt: true`). Es zählen nur deine eigenen Änderungen hier (auch Antworten, die du aus Formulare übernimmst), bis zu 20 pro Speichern; Importe, Löschungen, Rückgängig und Änderungen von deinen anderen Geräten nicht.

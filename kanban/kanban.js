@@ -3277,6 +3277,21 @@
     if (!board || !col) return;
     var did = T.applyArrival(board, colId, cardId, todayYmd(), Date.now());
     if (did.length) notifyTransient(t("auto.ran", { col: col.name }));
+    if (T.isDoneCol(board, colId)) doneEvent(board, col, cardId);
+  }
+  // BR-EV-2: a card the person moved into a done column on THIS device
+  // is an Automations signal (kanban.done, key kanban:<card>:<column>:
+  // <its move stamp>, text "Board › Column · card"); a move pulled from
+  // another device is not (that device made it).
+  function doneEvent(board, col, cardId) {
+    var ev = null;
+    try { ev = window.parent && window.parent !== window ? window.parent.orosEvents : null; } catch (e) { ev = null; }
+    if (!ev || typeof ev.emit !== "function") return;
+    var f = T.findCard(board, cardId);
+    if (!f) return;
+    var at = f.card.fm && typeof f.card.fm.p === "number" ? f.card.fm.p : f.card.mtime || Date.now();
+    var said = (board.name || "") + " \u203a " + (col.name || "") + " \u00b7 " + String(f.card.text || "").replace(/\s+/g, " ").slice(0, 200);
+    setTimeout(function () { try { ev.emit("kanban.done", "kanban:" + cardId + ":" + col.id + ":" + at, said); } catch (e) {} }, 0);
   }
 
   // --- Attachments: files on the orOS disk (Files › Kanban › Attachments) ---

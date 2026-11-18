@@ -139,7 +139,7 @@
       "tpl.none": "No templates", "tpl.row": "Item {n}", "tpl.del": "Remove item {n}",
       "import.found": "In the file: trips {trips}, templates {tpls}. They are merged with yours; nothing is overwritten.",
       "menu.export": "Export all (JSON)", "menu.import": "Import (orOS file or JSON)", "menu.edit": "Edit trip",
-      "menu.text": "Copy as text", "menu.share": "Share as text", "menu.ics": "Export for a calendar (.ics)",
+      "menu.text": "Copy as text", "menu.sendTrip": "Send the trip to an app…", "menu.sendPlan": "Send the itinerary to an app…", "send.planTitle": "Itinerary: {trip}", "menu.share": "Share as text", "menu.ics": "Export for a calendar (.ics)",
       "menu.print": "Print", "menu.dup": "Copy trip", "menu.tpl": "Save as template", "menu.del": "Delete trip",
       "menu.oros": "orOS file (.orostrip)", "menu.folder": "Unzipped orOS folder…",
       "toast.tripIn": "Trip added: {name}", "toast.newer": "This file was made by a newer orOS. Update orOS to open it.",
@@ -285,7 +285,7 @@
       "tpl.none": "Κανένα πρότυπο", "tpl.row": "Είδος {n}", "tpl.del": "Αφαίρεση είδους {n}",
       "import.found": "Στο αρχείο: ταξίδια {trips}, πρότυπα {tpls}. Ενώνονται με τα δικά σου· τίποτα δεν αντικαθίσταται.",
       "menu.export": "Εξαγωγή όλων (JSON)", "menu.import": "Εισαγωγή (αρχείο orOS ή JSON)", "menu.edit": "Επεξεργασία ταξιδιού",
-      "menu.text": "Αντιγραφή ως κείμενο", "menu.share": "Κοινοποίηση ως κείμενο", "menu.ics": "Εξαγωγή για ημερολόγιο (.ics)",
+      "menu.text": "Αντιγραφή ως κείμενο", "menu.sendTrip": "Στείλε το ταξίδι σε εφαρμογή…", "menu.sendPlan": "Στείλε το πρόγραμμα σε εφαρμογή…", "send.planTitle": "Πρόγραμμα: {trip}", "menu.share": "Κοινοποίηση ως κείμενο", "menu.ics": "Εξαγωγή για ημερολόγιο (.ics)",
       "menu.print": "Εκτύπωση", "menu.dup": "Αντίγραφο ταξιδιού", "menu.tpl": "Αποθήκευση ως πρότυπο", "menu.del": "Διαγραφή ταξιδιού",
       "menu.oros": "Αρχείο orOS (.orostrip)", "menu.folder": "Αποσυμπιεσμένος φάκελος orOS…",
       "toast.tripIn": "Προστέθηκε το ταξίδι: {name}", "toast.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.",
@@ -3940,6 +3940,8 @@
         { label: t("menu.fuel"), fn: function () { fuelDialog(id); } },
         { label: t("menu.gpx"), fn: function () { exportGpx(id, ""); } },
         splitBridge() ? { label: t("menu.split"), fn: function () { sendToSplit(id); } } : null,
+        sendApi() ? { label: t("menu.sendTrip"), fn: function () { sendTrip(id); } } : null,
+        sendApi() && planItems(id).length ? { label: t("menu.sendPlan"), fn: function () { sendPlan(id); } } : null,
         todoItems(id, true).length ? { label: t("menu.todoBefore"), fn: function () { sendToTodo(id, true); } } : null,
         todoItems(id, false).length ? { label: t("menu.todoPack"), fn: function () { sendToTodo(id, false); } } : null,
         { label: t("menu.print"), fn: function () { printTrip(id); } },
@@ -3989,6 +3991,37 @@
         newList: line(t(before ? "todo.before" : "todo.pack", { trip: trip.name || trip.dest }), 60),
         from: t("app"), items: items } });
     } catch (e) {}
+  }
+
+  // "Send to an app" (shell send/, BR-SEND): the whole trip as text
+  // (the same text as Copy as text), or the itinerary as items (one per
+  // entry, its day and note as the note). A prefill only.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function planItems(tripId) {
+    var trip = findTrip(tripId), out = [];
+    if (!trip) return out;
+    planSections(trip).forEach(function (sec) {
+      sec.items.forEach(function (p) {
+        if (out.length >= 200) return;
+        var note = [sec.label, p.note ? String(p.note).trim() : ""].filter(Boolean).join("\n");
+        out.push({ text: line(entryLine(p), 300), note: note });
+      });
+    });
+    return out;
+  }
+  function sendTrip(tripId) {
+    commitNotes();
+    var api = sendApi(), trip = findTrip(tripId);
+    if (!api || !trip) return;
+    api.open({ kind: "text", data: { title: trip.name || trip.dest || t("app"), text: tripText(trip) } });
+  }
+  function sendPlan(tripId) {
+    var api = sendApi(), trip = findTrip(tripId), items = planItems(tripId);
+    if (!api || !trip || !items.length) return;
+    api.open({ kind: "items", data: { title: line(t("send.planTitle", { trip: trip.name || trip.dest }), 120), items: items } });
   }
 
   // R33: every file goes through orosDialog (local fallback when standalone).

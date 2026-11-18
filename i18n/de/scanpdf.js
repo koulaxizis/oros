@@ -543,5 +543,18 @@ orosPack("de", "scanpdf", {
  "sg.others": "Ebenfalls um Unterschrift gebeten",
  "sg.doneAuto": "Deine unterschriebene Kopie wurde heruntergeladen. Bewahre sie auf: Sie ist dein Nachweis. Deine Antwort ging von selbst an {f} zurück: Du musst nichts weiter tun.",
  "sg.declinedAuto": "Deine Antwort ging von selbst an {f} zurück: Du musst nichts weiter tun.",
- "sg.autoNote": "Sie wartet verschlüsselt auf dem orOS-Server auf {f} und verschwindet, wenn sie orOS öffnen (höchstens 30 Tage nach dem Ende des Links)."
+ "sg.autoNote": "Sie wartet verschlüsselt auf dem orOS-Server auf {f} und verschwindet, wenn sie orOS öffnen (höchstens 30 Tage nach dem Ende des Links).",
+ "td.wait1": "1 Signaturanfrage wartet",
+ "td.wait": "{n} Signaturanfragen warten",
+ "td.signed": "Unterschrieben: {doc}",
+ "td.signedAll": "Von allen unterschrieben: {doc}",
+ "td.declined": "Abgelehnt: {doc}",
+ "td.some": "{k} von {n} unterschrieben: {doc}",
+ "td.by": "Von {nm}",
+ "td.ends": "Signaturlink endet: {doc}",
+ "td.to": "An {to}",
+ "td.doc": "ein Dokument",
+ "td.back": "Eine Signaturanfrage wurde beantwortet",
+ "td.endsAny": "Ein Signaturlink endet",
+ "td.tipEnds": "Noch hat niemand unterschrieben: schick eine Erinnerung oder eine neue Anfrage, bevor der Link endet."
 });

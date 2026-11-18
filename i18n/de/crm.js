@@ -1,4 +1,5 @@
 orosPack("de", "crm", {
+ "act.sendApp": "An eine App senden…",
  "ac.bill": "+ Eingangsrechnung",
  "ac.folder": "Ordner",
  "ac.hours": "Stunden",
@@ -827,5 +828,13 @@ orosPack("de", "crm", {
  "td.ctrEnded": "{n} beendet",
  "td.ctrSoon": "{n} enden innerhalb von {d} Tagen",
  "td.ctrEnd": "endet {d}",
- "td.ctrGone": "beendet {d}"
+ "td.ctrGone": "beendet {d}",
+ "d.ctrOn": "Laufende Verträge",
+ "d.ctrOnSub": "von {n}",
+ "d.ctrNeeds": "Brauchen eine Entscheidung",
+ "d.ctrNeedsSub": "{e} beendet · {s} enden bald",
+ "d.ctrNext": "Nächstes Enddatum",
+ "d.ctrNone": "keines in Sicht",
+ "d.ctrList": "Verträge, die eine Entscheidung brauchen",
+ "d.ctrAll": "Alle Verträge"
 });

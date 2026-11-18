@@ -76,6 +76,11 @@
       "a.pause": "Pause sounds", "ev.soonPick": "Some minutes before an event of my day", "a.sound": "Play a sound", "f.min": "Minutes before", "f.amount": "Amount",
       "h.local": "Happens by itself on every device the rule runs on, without a tap.", "btn.now": "Try it", "run.local": "{step}: done by itself",
       "x.fileHint": "The file opens there and nothing is saved until you save it.",
+      "a.card": "Add a card to Kanban", "a.crm": "Log it in CRM", "a.record": "Add a record to Base",
+      "x.board": "Board (name, optional)", "x.column": "Column (name, optional)", "x.crmKind": "Kind",
+      "x.crmWho": "Customer (name, optional)", "x.table": "Table (name, optional)", "x.recName": "Name of the record",
+      "k.call": "Call", "k.mail": "E-mail", "k.meet": "Meeting", "k.msg": "Message", "k.note": "Note",
+      "x.tapHint": "The app opens with this filled in; nothing is saved until you save it there.",
       "btn.pc": "Computer folders", "pc.title": "Folders on this computer",
       "pc.hint": "With orOS Bridge on this computer, a new PDF or photo in a folder you choose can start a rule: open it in Scan PDF, Files or Billing, or print it. Only you choose the folders, on this computer.",
       "pc.on": "Watch folders on this computer", "pc.st.off": "Off on this device.",
@@ -148,6 +153,11 @@
       "a.pause": "Παύση ήχων", "ev.soonPick": "Λίγα λεπτά πριν από ένα ραντεβού της ημέρας μου", "a.sound": "Ένας ήχος", "f.min": "Λεπτά πριν", "f.amount": "Ποσό",
       "h.local": "Γίνεται μόνο του σε κάθε συσκευή όπου τρέχει ο κανόνας, χωρίς πάτημα.", "btn.now": "Δοκιμή", "run.local": "{step}: έγινε μόνο του",
       "x.fileHint": "Το αρχείο ανοίγει εκεί και δεν αποθηκεύεται τίποτα πριν το αποθηκεύσεις εσύ.",
+      "a.card": "Νέα κάρτα στο Kanban", "a.crm": "Καταγραφή στο CRM", "a.record": "Νέα εγγραφή στη Βάση",
+      "x.board": "Πίνακας (όνομα, προαιρετικά)", "x.column": "Στήλη (όνομα, προαιρετικά)", "x.crmKind": "Είδος",
+      "x.crmWho": "Πελάτης (όνομα, προαιρετικά)", "x.table": "Πίνακας (όνομα, προαιρετικά)", "x.recName": "Όνομα της εγγραφής",
+      "k.call": "Κλήση", "k.mail": "E-mail", "k.meet": "Συνάντηση", "k.msg": "Μήνυμα", "k.note": "Σημείωση",
+      "x.tapHint": "Η εφαρμογή ανοίγει συμπληρωμένη· δεν αποθηκεύεται τίποτα πριν το αποθηκεύσεις εσύ εκεί.",
       "btn.pc": "Φάκελοι υπολογιστή", "pc.title": "Φάκελοι σε αυτόν τον υπολογιστή",
       "pc.hint": "Με το orOS Bridge σε αυτόν τον υπολογιστή, ένα νέο PDF ή μια νέα φωτογραφία σε φάκελο που διαλέγεις μπορεί να ξεκινήσει έναν κανόνα: να ανοίξει στο Scan PDF, στα Αρχεία ή στην Τιμολόγηση, ή να εκτυπωθεί. Τους φακέλους τους διαλέγεις μόνο εσύ, σε αυτόν τον υπολογιστή.",
       "pc.on": "Παρακολούθηση φακέλων σε αυτόν τον υπολογιστή", "pc.st.off": "Κλειστό σε αυτή τη συσκευή.",
@@ -547,6 +557,25 @@
         inp = field(tbox, t("x.project"), textIn(a.project, 80)); inp.addEventListener("input", set("project"));
       } else if (a.a === "ask") {
         inp = field(li, t("x.question"), area(a.text, 2000, 3)); inp.addEventListener("input", set("text"));
+      } else if (a.a === "card") {             // BR-EV-2 tap steps
+        inp = field(li, t("x.title"), textIn(a.title, 200)); inp.addEventListener("input", set("title"));
+        inp = field(li, t("x.board"), textIn(a.board, 80)); inp.addEventListener("input", set("board"));
+        inp = field(li, t("x.column"), textIn(a.column, 80)); inp.addEventListener("input", set("column"));
+        inp = field(li, t("x.note"), area(a.note, 2000, 2)); inp.addEventListener("input", set("note"));
+        li.appendChild(el("p", "hint", t("x.tapHint")));
+      } else if (a.a === "crm") {
+        var ck = el("select");
+        C.CRM_KINDS.forEach(function (k2) { ck.appendChild(new Option(t("k." + k2), k2)); });
+        ck.value = C.CRM_KINDS.indexOf(a.k) >= 0 ? a.k : "note";
+        a.k = ck.value;
+        field(li, t("x.crmKind"), ck).addEventListener("change", set("k"));
+        inp = field(li, t("x.text"), area(a.text, 2000, 3)); inp.addEventListener("input", set("text"));
+        inp = field(li, t("x.crmWho"), textIn(a.who, 120)); inp.addEventListener("input", set("who"));
+        li.appendChild(el("p", "hint", t("x.tapHint")));
+      } else if (a.a === "record") {
+        inp = field(li, t("x.recName"), textIn(a.text, 200)); inp.addEventListener("input", set("text"));
+        inp = field(li, t("x.table"), textIn(a.table, 120)); inp.addEventListener("input", set("table"));
+        li.appendChild(el("p", "hint", t("x.tapHint")));
       } else if (a.a === "file") {
         var fs = el("select"), have = installed();
         C.FILE_TO.filter(function (id) { return !have.length || have.indexOf(id) >= 0; })

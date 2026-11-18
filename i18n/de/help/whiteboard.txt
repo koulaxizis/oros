@@ -76,6 +76,8 @@ Whiteboard ist ein endloses Board für Ideen: Haftnotizen, Text, Formen, Pfeile,
 - `Mehr` › `Mindmap übernehmen…` legt eine deiner Maps aus Mind map als Haftnotizen aus, verbunden mit Pfeilen, jeder Hauptzweig in seiner eigenen Farbe (bis zu 250 Ideen). Die Mindmap selbst ändert sich nicht.
 - Ein ausgewählter Rahmen hat `In Atelier öffnen` in seiner Leiste: Der Rahmen wird zu einem Bild und einem neuen Design in Atelier, um ihn als Poster, Beitrag oder Folien fertigzustellen.
 
+`An eine App senden…` in einer anderen orOS-App kann eine Liste oder einen Text hierher schicken: Jeder Eintrag oder jede Zeile wird eine Haftnotiz (bis 50) in der Mitte der offenen Tafel, alle ausgewählt, damit du sie zusammen verschieben kannst. `Rückgängig` in der Meldung oder die Rückgängig-Schaltfläche nimmt sie wieder weg.
+
 ## Der Assistent
 Bitte den Assistenten, deine Boards mit Worten zu ändern, etwa „drei Haftnotizen mit Ideen für den Start“, „alle Haftnotizen im Rahmen Ideen grün“, „Start mit Budget durch einen gestrichelten Pfeil verbinden“, „die Haftnotizen in einem Raster mit 4 Spalten anordnen“ oder „2026 statt 2025 auf dem ganzen Board“. Er zeigt die Änderungen zuerst auf einer Karte; `Anwenden` macht sie hier und öffnet das Board. `Rückgängig` in der Meldung hier oder auf der Karte des Assistenten stellt das Board wieder her, solange es seitdem nicht geändert wurde. In der Hilfe des Assistenten steht alles, was er kann.
 

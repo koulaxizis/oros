@@ -713,6 +713,10 @@
   }
   // Rules across a whole body (after the per-key checks).
   var WHOLE = {
+    // Production Ledger 1.3+: the fields each write needs
+    plrate: function (b) { return has(b, "key") && has(b, "from") && has(b, "net"); },
+    plpromo: function (b) { return has(b, "product_id") && has(b, "date"); },
+    plsale: function (b) { return has(b, "date") && has(b, "event") && has(b, "payment") && has(b, "lines"); },
     // Revenue Splitter's contracts: all three parts, unique ids, ≤ 1 MB
     rsc: function (b) {
       if (!has(b, "v") || !has(b, "sent") || !has(b, "contracts")) return false;
@@ -844,6 +848,15 @@
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
       ["GET", /^\/pl\/report$/, { from: DAY, to: DAY }, null],
+      // Publishing «Title analysis» (P16): Production Ledger 1.3+'s channels,
+      // delivery, free copies and promotion per material, read; and its
+      // three typed writes: a dated material price, the promotion package
+      // on a title (idempotent on the site), a sale at an event
+      ["GET", /^\/pl\/analysis$/, { from: DAY, to: DAY }, null],
+      ["GET", /^\/pl\/rates$/, null, null],
+      ["POST", /^\/pl\/rates$/, null, { key: "plkey", from: "plday", net: "plnet", vat_rate: "plvat", label: "pl80", supplier: "pl120", invoice: "pl60", note: "pl200" }, "plrate"],
+      ["POST", /^\/pl\/promo-apply$/, null, { product_id: "plpid", date: "plday", dry_run: "bool" }, "plpromo"],
+      ["POST", /^\/pl\/event-sale$/, null, { date: "plday", event: "pl120", payment: "plpay", lines: "pllines", note: "pl300", dry_run: "bool" }, "plsale"],
       // Newsletter N1: coupons, looked up by code and created (never changed or deleted)
       ["GET", /^\/coupons$/, { code: CPN_CODE }, null],
       ["POST", /^\/coupons\/batch$/, null, { create: "cpns" }]
@@ -964,6 +977,33 @@
     ]
   };
   var ORDER_ST = ["pending", "processing", "on-hold", "completed", "cancelled", "refunded", "failed"];
+  // Production Ledger 1.3+ write values (wave P16)
+  var PL_KEY = /^[a-z0-9_]{1,40}$/, PL_NET = /^[0-9]{1,6}(\.[0-9]{1,4})?$/, PL_VAT = /^([0-9]{1,2}(\.[0-9]{1,2})?|100(\.00?)?)$/,
+      PL_PRICE = /^[0-9]{1,7}(\.[0-9]{1,2})?$/;
+  function plText(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f]/.test(v); }
+  function plPid(v) { return isInt(v) && v > 0 && v < 1e12; }
+  function okPlLine(l) {
+    if (!l || typeof l !== "object" || Array.isArray(l)) return false;
+    var ks = Object.keys(l);
+    if (!has(l, "product_id") || !has(l, "qty")) return false;
+    return ks.every(function (k) {
+      if (k === "product_id") return plPid(l[k]);
+      if (k === "qty") return isInt(l[k]) && l[k] >= 1 && l[k] <= 999;
+      if (k === "price") return typeof l[k] === "string" && PL_PRICE.test(l[k]);
+      return false;
+    });
+  }
+  function okPlVal(kind, v) {
+    if (kind === "plkey") return typeof v === "string" && PL_KEY.test(v);
+    if (kind === "plday") return typeof v === "string" && DAY.test(v);
+    if (kind === "plnet") return typeof v === "string" && PL_NET.test(v);
+    if (kind === "plvat") return typeof v === "string" && PL_VAT.test(v);
+    if (kind === "plpid") return plPid(v);
+    if (kind === "plpay") return v === "cash" || v === "card";
+    if (kind === "pllines") return listOf(v, 1, 50, okPlLine);
+    var m = /^pl([0-9]{2,3})$/.exec(kind);
+    return !!m && plText(v, +m[1]);
+  }
   function okVal(kind, v) {
     if (kind === "int") return isInt(v) && v >= -1000000000 && v <= 1000000000;
     if (kind === "bool") return v === true || v === false;
@@ -996,6 +1036,7 @@
     if (kind === "nlim") return isInt(v) && v >= 1 && v <= 100;
     if (kind === "ncur") return typeof v === "string" && NT_ID.test(v);
     if (kind === "sfvars") return okSfVars(v);
+    if (kind.slice(0, 2) === "pl") return okPlVal(kind, v);
     if (kind.slice(0, 2) === "eb") return okEbVal(kind, v);
     // "=a" or "=a|b": exactly one of the fixed values
     if (kind[0] === "=") return kind.slice(1).split("|").some(function (k) { return has(ODOO_J, k) && JSON.stringify(v) === ODOO_J[k]; });

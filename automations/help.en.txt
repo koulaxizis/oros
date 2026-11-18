@@ -22,6 +22,16 @@ In its texts, `{text}` becomes what the notice or the event said: the task, the 
 
 The `Timesheet timer` step starts a timer in [Timesheet](app:timesheet) with the title you give (and the project of that name, if you have one), or stops the timer that is running. A start never stops a timer that is already running. Like every step, it runs when you tap the rule's notice.
 
+### Forms, Billing, Kanban, Stock, Scan PDF and Transfer
+More apps tell your rules what happens:
+- `When a form gets a new answer` ([Forms](app:forms), `{text}` = the form's title), when this device picks the answer up.
+- `When an invoice is paid in full` and `When an invoice becomes overdue` ([Billing](app:invoices), `{text}` = number · client · amount). Overdue counts an invoice in its first 7 days past the due date, so a new rule does not bring up old debts.
+- `When a card reaches a done column in Kanban`: a column whose arrival rule ticks all subtasks, or the board's last column when no column has that rule.
+- `When a product runs low in Stock`: it falls to its minimum (`{text}` = product · quantity left).
+- `When a signature request comes back signed` ([Scanner & PDF](app:scanpdf), `{text}` = document · signer) and `When files arrive through Transfer`.
+
+Three more steps open an app with things filled in, and nothing is saved until you save it there: `Add a card to Kanban` (title, and the board and column by name), `Log it in CRM` (a call, e-mail, meeting, message or note; the customer is the one you name, or the one the text names) and `Add a record to Base` (its name, and the table by name). The ready-made rules `Paid invoice into CRM`, `Overdue invoice to To-Do`, `Low stock to To-Do` and `Signed document back` show them.
+
 ### Before an event, and goals
 - `{n} min before an event of my day`: a timed item of today in [Today](app:today) (your Calendar and the other apps that give Today a time) is about to start. Set the minutes, from 1 to 120. Items of apps kept out of search (Health, Cycle and the like) never count, and while `Sensitive work` is on, `{text}` stays empty instead of the event's name.
 - `When today's till sales reach…`: the day's sales at the till in [Stock](app:stock) reach the amount you set. `When this month's spending passes…`: this month's expenses in [Budget](app:budget) pass it. Each runs once a day (sales) or once a month (spending).

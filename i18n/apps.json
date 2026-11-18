@@ -66,7 +66,8 @@
   {
    "app": "base",
    "files": [
-    "base/app.js"
+    "base/app.js",
+    "base/today.js"
    ]
   },
   {
@@ -886,7 +887,8 @@
    "files": [
     "scanpdf/scanpdf.js",
     "scanpdf/search.js",
-    "scanpdf/sign.js"
+    "scanpdf/sign.js",
+    "scanpdf/today.js"
    ]
   },
   {
@@ -1130,7 +1132,8 @@
   {
    "app": "transfer",
    "files": [
-    "transfer/app.js"
+    "transfer/app.js",
+    "transfer/today.js"
    ]
   },
   {

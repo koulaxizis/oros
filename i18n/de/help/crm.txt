@@ -4,7 +4,7 @@ CRM ist ein kleines Kundenbuch für Selbstständige oder kleine Firmen: deine Ku
 ## Erste Schritte
 Tippe oder klicke auf `Ersten Kunden hinzufügen`. Wähle `Firma` oder `Person`, gib den Namen ein und wähle einen `Status`: `Lead` (noch kein Kunde), `Aktiv` oder `Ehemalig`. Unter `Rechnungsdaten` kannst du `USt-IdNr. (ΑΦΜ)`, `Finanzamt (ΔΟΥ)`, `Beruf`, `Adresse` und `Land` speichern. Bei einer griechischen Steuernummer prüft die App die Prüfziffer und warnt, wenn ein anderer Kunde sie schon hat.
 
-Die Tabs heißen `Kunden`, `Pipeline`, `Agenda` und `Dashboard`. Auf dem Telefon liegen sie unten am Bildschirm.
+Die Tabs heißen `Kunden`, `Pipeline`, `Agenda`, `Verträge` und `Dashboard`. Auf dem Telefon liegen sie unten am Bildschirm.
 
 ## Kunden und Personen
 Die Liste hat ein Suchfeld, ein Sortiermenü und Filter: `Leads`, `Aktiv`, `Ehemalige`, `Mit Stern`, `Nicht kontaktiert` und deine Tags. Tippe auf einen Kunden, um seine Seite zu öffnen, mit `Anrufen`, `E-Mail`, `Karte`, `Kontakt notieren`, `Wiedervorlage`, `Deal`, `Rechnung` und `Angebot`.
@@ -12,6 +12,8 @@ Die Liste hat ein Suchfeld, ein Sortiermenü und Filter: `Leads`, `Aktiv`, `Ehem
 Tippe unter `Personen` auf `+ Person`. Wähle jemanden `Aus Kontakte` (Telefon und E-Mail werden aus [Kontakte](app:contacts) gelesen und bleiben aktuell) oder gib einen Namen mit Telefon und E-Mail ein. `Zu Kontakte hinzufügen` öffnet Kontakte mit dieser Person ausgefüllt; gespeichert wird dort erst, wenn du auf Speichern tippst.
 
 Ein Kunde der Art `Privatperson`, der mit einem Kontakt verknüpft ist, bleibt in beide Richtungen mit ihm synchron: Ändere Name, Telefon, E-Mail, Website, Beruf, Adresse oder Land in einer der beiden Apps, und die andere folgt (die neuere Änderung gewinnt; Steuernummer, Notizen und Tags bleiben getrennt). Wird eine Firma umbenannt, folgen ihre verknüpften Personen, deren Firmenfeld noch den alten Namen nennt. Unterschieden sich die beiden schon vor der Verknüpfung, zeigt die Kundenseite `Abweichungen in Kontakte`: Nichts ändert sich, bis du `Dies behalten` oder `Die des Kontakts behalten` wählst.
+
+`An eine App senden…` bei den Schaltflächen eines Kunden schickt den Kunden als Text (Angaben, Personen und Notizen) an eine andere orOS-App, etwa [Notizen](app:notes), [Mail](app:mail) oder [Kanban](app:kanban). Die andere App öffnet sich nur damit ausgefüllt.
 
 ## Verlauf, Wiedervorlagen und die Agenda
 `Kontakt notieren` hält einen Anruf, eine E-Mail, ein Treffen, eine Nachricht oder eine Notiz fest, mit Datum und Uhrzeit, mit wem du gesprochen hast und um welchen Deal es ging. Wähle `Nächste Wiedervorlage`, um im selben Fenster den nächsten Schritt zu planen.
@@ -21,6 +23,8 @@ Ein Kunde der Art `Privatperson`, der mit einem Kontakt verknüpft ist, bleibt i
 Eine Wiedervorlage hat einen Tag, eine optionale Uhrzeit und das, was zu tun ist. `Agenda` zeigt die überfälligen, die von heute und die der nächsten 7 Tage. Tippe auf den Kreis, um eine als erledigt zu markieren; die Meldung, die dann erscheint, bietet `Notieren` an. Das Menü einer Wiedervorlage verschiebt sie auf `Morgen` oder `In einer Woche` oder sendet sie an [Aufgaben](app:todo).
 
 Offene Wiedervorlagen erscheinen auch in [Heute](app:today), wo das Häkchen sie in CRM erledigt, und im [Kalender](app:calendar) unter `Kunden`, zusammen mit dem erwarteten Abschlusstag offener Deals. Ein Kontakt, der Person eines Kunden ist, bekommt in [Kontakte](app:contacts) eine Taste `Kunde:`.
+
+`An eine App senden…` in einer anderen orOS-App kann einen Text hierher schicken: Ein neuer Verlaufseintrag der Art `Notiz` öffnet sich damit, für den hier offenen Kunden (oder wähle einen anderen). Nichts wird gespeichert, bevor du `Speichern` drückst.
 
 ## Pipeline
 Ein Deal hat einen Titel, einen Wert, eine Phase (`Neu`, `Kontaktiert`, `Angebot`, `Verhandlung`, `Gewonnen`, `Verloren`), eine Chance in Prozent und einen erwarteten Abschlusstag. Auf einem breiten Bildschirm ziehst du eine Karte in eine andere Spalte. Auf dem Telefon wählst du oben eine Phase und verschiebst einen Deal mit seiner Taste `⋯`. Die Summen zeigen den Wert und den gewichteten Wert (Wert × Chance).
@@ -33,7 +37,7 @@ Unter `Einstellungen` › `Pipeline-Phasen` kannst du eine Phase umbenennen, ihr
 Der Tab `Dokumente` eines Kunden listet seine Rechnungen mit dem, was berechnet, bezahlt und noch offen ist, und die Angebote für einen Kunden mit gleichem Namen oder gleicher USt-IdNr. Tippe auf eines, um es zu öffnen. CRM liest sie nur; du änderst sie in ihrer eigenen App.
 
 ## Dashboard
-Offene Pipeline, gewonnen diesen Monat und dieses Jahr, Abschlussquote, überfällige Wiedervorlagen, Kunden, die du länger nicht kontaktiert hast, neue Leads und, sobald du aus CRM abrechnest, was deine Kunden noch schulden. Tippe auf eine Kachel, um die Liste dahinter zu sehen.
+Mit Verträgen zeigt der obere Teil, wie viele laufen, wie viele eine Entscheidung brauchen (beendet oder bald endend) und das nächste Enddatum, dann die ersten fünf, die eine Entscheidung brauchen, mit ihren Schnellaktionen. Die Verkaufskacheln (offene Pipeline, gewonnen diesen Monat und dieses Jahr, Abschlussquote) und die Phasenbalken erscheinen erst, wenn du einen Deal in `Pipeline` hast, einen möglichen Auftrag, den du verfolgst, bis er gewonnen oder verloren ist. Danach kommen überfällige Wiedervorlagen, Kunden, die du länger nicht kontaktiert hast, neue Leads und, sobald du aus CRM abrechnest, was deine Kunden noch schulden. Tippe auf eine Kachel, um die Liste dahinter zu sehen.
 
 ## Synchronisierung und Sicherung
 Kunden, Personen, Verlauf, Wiedervorlagen, Deals, Tags und die Währung werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Der offene Tab, die Filter und die Sortierung bleiben auf jedem Gerät.

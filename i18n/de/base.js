@@ -1,4 +1,7 @@
 orosPack("de", "base", {
+ "menu.sendTable": "Als Tabelle an eine App senden…",
+ "menu.sendList": "Als Liste an eine App senden…",
+ "rec.sendApp": "An eine App senden…",
  "app": "Datenbank",
  "base.rec1": "1 Eintrag",
  "base.recs": "{n} Einträge",
@@ -168,6 +171,11 @@ orosPack("de", "base", {
  "nt.info": "„{x}“: {r} Zeilen, {c} Spalten. Die erste Zeile benennt die Felder.",
  "nt.base": "In",
  "nt.add": "Tabelle hinzufügen",
+ "ar.title": "Neuer Eintrag aus den Automatisierungen",
+ "ar.table": "Tabelle",
+ "ar.text": "Name des Eintrags",
+ "ar.add": "Eintrag hinzufügen",
+ "ar.none": "Lege zuerst eine Tabelle an: Es gibt keinen Ort für den Eintrag.",
  "imp.skipped": "{n} Zeilen blieben draußen: Die Datenbank hält höchstens {max} Einträge.",
  "kind.cards": "Karten",
  "kind.grid": "Raster (Zeilen und Spalten)",
@@ -391,5 +399,6 @@ orosPack("de", "base", {
  "view": "Ansicht",
  "view.kind": "Einträge zeigen als",
  "view.name": "Name der Ansicht",
- "view.new": "Neue Ansicht…"
+ "view.new": "Neue Ansicht…",
+ "td.rec": "Datenbank-Eintrag"
 });

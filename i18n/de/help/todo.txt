@@ -66,6 +66,8 @@ Eigene Ansichten: Öffne die Trichter-Schaltfläche und wähl `Neuer gespeichert
 
 `Erledigte ausblenden` blendet abgehakte Aufgaben in dieser Ansicht aus. `Erledigte entfernen` löscht alle abgehakten Aufgaben der offenen Liste. Nach einem Löschen oder Entfernen erscheint ein paar Sekunden lang `Rückgängig`.
 
+Die Schaltfläche mit den vier Quadraten daneben (`Liste an eine App senden…`) schickt die offene Liste an eine andere orOS-App, etwa [Kanban](app:kanban) oder [Notizen](app:notes): die offenen Aufgaben, oder alle, wenn alle erledigt sind, mit ihren Notizen und Unteraufgaben. Im Fenster `Aufgabe` schickt `An eine App senden…` nur diese Aufgabe. Die andere App öffnet sich nur damit ausgefüllt; hier ändert sich nichts.
+
 ## Labels, Suche und Filter
 Öffne in einer Aufgabe `Labels hinzufügen / verwalten`, um Labels mit Name und Farbe anzulegen, und tippe auf ein Label, um es zuzuordnen. Tippe auf ein Label in der Aufgabe, um es zu entfernen.
 

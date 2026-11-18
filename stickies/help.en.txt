@@ -29,6 +29,7 @@ In the same window, `Vanish` makes a note fade away by itself: `In 1 hour`, `At 
 In the same window:
 - `Send to To-Do` opens [To-Do](app:todo) with the note ready to add: every open `[ ]` line becomes a task; a note without tick boxes becomes one task (the first line, the rest as its note). Nothing is added until you press `Add` there.
 - `Copy to Notes` makes a new page in [Notes](app:notes), titled with the note's first line. The sticky note stays as it is.
+- `Send to an app…` on a note in the app sends it as text, as written, to any other orOS app that takes text, such as [Writer](app:writer), [Mail](app:mail) or [Kanban](app:kanban).
 
 ## Find it from anywhere
 - The menu's search box finds your sticky notes by their words (faded notes are left out). Choosing one brings it to the front on the desktop.

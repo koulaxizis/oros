@@ -1,4 +1,5 @@
 orosPack("de", "qr", {
+ "pick.sent": "Ein neuer Code aus dem, was du gesendet hast: prüfe ihn und speichere ihn",
  "app.bookmarks": "Lesezeichen",
  "app.calendar": "Kalender",
  "app.contacts": "Kontakte",

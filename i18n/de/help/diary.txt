@@ -8,6 +8,8 @@ Ein Satz pro Tag, geschrieben in zehn Sekunden. Unter der Zeile jedes Tages sieh
 - Du schreibst nach Mitternacht? Bis 03:00 fragt die App, ob die Zeile zu `Gestern` oder `Heute` gehört.
 - Wenn du den Text leerst oder `Diesen Tag löschen` wählst, wird der Tag entfernt; `Rückgängig` in der Meldung holt ihn zurück.
 
+`An eine App senden…` unter der Zeile schickt diesen Tag als Text (das Datum, die Zeile mit ihrem Emoji und den längeren Eintrag; Fotos bleiben hier) an eine andere orOS-App, etwa [Notizen](app:notes) oder [Writer](app:writer). Es erscheint erst nach der PIN-Sperre und sendet nur, wenn du es drückst.
+
 ## Andere Tage
 - Die Pfeile neben dem Datum gehen zum Tag davor oder danach; `Zurück zu heute` kehrt zurück. Du kannst jeden vergangenen Tag schreiben oder korrigieren, aber keinen, der noch nicht gekommen ist.
 - Die Stern-Schaltfläche oben öffnet `Eine zufällige Erinnerung` aus deinem Tagebuch.

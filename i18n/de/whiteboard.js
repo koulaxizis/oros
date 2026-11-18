@@ -1,4 +1,6 @@
 orosPack("de", "whiteboard", {
+ "send.note1": "1 Haftnotiz hinzugefügt.",
+ "send.notes": "{n} Haftnotizen hinzugefügt.",
  "al.b": "Untere Kanten ausrichten",
  "al.c": "Mitten ausrichten",
  "al.l": "Linke Kanten ausrichten",

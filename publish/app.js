@@ -249,6 +249,100 @@
       "cost.noCosts": "No costs recorded for this book yet.", "cost.who": "Who gets a share",
       "cost.vat": "VAT", "cost.vatOut": "VAT on sales", "cost.vatIn": "VAT on costs", "cost.vatDue": "Difference (owed to the tax office)",
       "cost.vatHint": "VAT is not income or cost: it passes through to the tax office. The result above is without it.",
+      "ana.sec": "Title analysis",
+      "ana.none": "Title analysis needs Production Ledger 1.3 or later on the shop.",
+      "ana.sold": "{n} copies sold, {v} net",
+      "ana.free": "{n} free",
+      "ana.stock": "{n} in stock",
+      "ana.ch": "Sales channels",
+      "ana.dl": "Delivery",
+      "ana.events": "Events:",
+      "ana.stores": "Consignments per bookstore",
+      "ana.freeWhere": "Where the free copies went",
+      "ana.freeHint": "From Revenue Splitter's copies register: outside the shares, taken off the stock.",
+      "ana.dlHint": "Copies handed over in person count when the order has «Delivered by the publisher» and in every event sale. Old imported sales have no delivery data.",
+      "ana.promo": "Promotion cost per material",
+      "ana.noPromo": "No promotion cost entered for this title yet.",
+      "ana.other": "Other promotion cost",
+      "ana.col.ch": "Channel",
+      "ana.col.dl": "Method",
+      "ana.col.q": "Copies",
+      "ana.col.net": "Net",
+      "ana.col.vat": "VAT",
+      "ana.col.item": "Material",
+      "ana.col.store": "Bookstore",
+      "ana.col.given": "Given",
+      "ana.col.sold": "Sold",
+      "ana.col.ret": "Returned",
+      "ana.col.shelf": "On the shelf",
+      "ana.col.owed": "Owed",
+      "ana.col.year": "Year",
+      "ana.col.unit": "Unit cost",
+      "ana.ch.full": "e-shop, full price",
+      "ana.ch.discount": "e-shop, discounted",
+      "ana.ch.bundle": "e-shop, in a bundle",
+      "ana.ch.free_order": "e-shop, free order",
+      "ana.ch.import": "Old sales (import)",
+      "ana.ch.event": "Fairs and festivals",
+      "ana.ch.trade": "Bookstores, direct purchase",
+      "ana.ch.consignment": "Bookstores, consignment (sold)",
+      "ana.ch.author_buy": "Bought by the author",
+      "ana.ch.free": "Free copies (register)",
+      "ana.dl.allover": "Shipped with Allover",
+      "ana.dl.boxnow": "Shipped with BOX NOW",
+      "ana.dl.warehouse": "Pickup from the warehouse",
+      "ana.dl.grafo": "Pickup from GrafoExMachina",
+      "ana.dl.pickup_other": "Other pickup",
+      "ana.dl.hand": "Hand to hand by the publisher",
+      "ana.dl.none": "No delivery data",
+      "ana.dl.other": "Other method",
+      "ana.ft.promo": "Promotion / gift",
+      "ana.ft.review": "Review / press",
+      "ana.ft.legal": "Legal deposit",
+      "ana.ft.author_free": "Author copies",
+      "ana.day": "Date",
+      "ana.apply": "Enter the promotion package ({v})",
+      "ana.badDay": "Pick a date.",
+      "ana.promoPrev": "{n} promotion entries, {v} in all, will be written on the shop.",
+      "ana.promoNone": "The package was already entered for this title on that day: nothing to write.",
+      "ana.promoDone": "{n} promotion entries written on the shop, {v} in all.",
+      "ana.confirm": "Confirm",
+      "ana.cancel": "Cancel",
+      "ana.fail": "The shop refused it ({why}). Nothing was written.",
+      "ana.sale": "Sale at an event",
+      "ana.event": "Event",
+      "ana.qty": "Copies",
+      "ana.price": "Unit price incl. VAT",
+      "ana.priceShop": "shop price",
+      "ana.pay": "Payment",
+      "ana.cash": "Cash",
+      "ana.card": "Card",
+      "ana.note": "Note",
+      "ana.saleGo": "Check the sale",
+      "ana.badSale": "Fill in the event, a date not in the future, 1–999 copies and a valid price.",
+      "ana.salePrev": "A completed order «{e}» of {v} will be created on the shop.",
+      "ana.saleDone": "Recorded as order #{n}, {v}.",
+      "ana.saleHint": "It becomes a normal completed order with hand delivery: stock and Revenue Splitter's shares count as always. No e-mail is sent.",
+      "ana.rates": "Promotion price list",
+      "ana.mats": "Promotion cost per material and year",
+      "ana.inPkg": "{n} per title",
+      "ana.from": "from {d}",
+      "ana.vatR": "VAT {r}%",
+      "ana.pkg": "The promotion package costs {v} today ({n} net).",
+      "ana.newPrice": "New price or new material",
+      "ana.newItem": "New material…",
+      "ana.key": "Key (a-z, 0-9, _)",
+      "ana.label": "Name",
+      "ana.from0": "Valid from",
+      "ana.net": "Unit price (net)",
+      "ana.vat": "VAT %",
+      "ana.sup": "Supplier",
+      "ana.inv": "Invoice",
+      "ana.save": "Save price",
+      "ana.badRate": "Check the material, the date and the amount (up to 4 decimals).",
+      "ana.ratePrev": "{k}: {v} net from {d}, VAT {r}%. The old prices stay in the history.",
+      "ana.rateDone": "Price saved on the shop.",
+      "ana.rateHint": "A new price never erases the old one: it starts from a date, so the cost change shows year by year.",
       "cost.other": "Other products in the shop ({n})", "cost.general": "General expenses",
       "cost.err.nopl": "This shop doesn't answer as Production Ledger. Install it (1.0 or later) and turn on its orOS module.",
       "cost.err.cur": "The shop counts in {c}, Publishing in {cur}: nothing read. Change the currency in Publishing's settings.",
@@ -611,6 +705,100 @@
       "cost.noCosts": "Δεν έχουν καταγραφεί ακόμα κόστη για αυτό το βιβλίο.", "cost.who": "Ποιος παίρνει μερίδιο",
       "cost.vat": "ΦΠΑ", "cost.vatOut": "ΦΠΑ πωλήσεων", "cost.vatIn": "ΦΠΑ εξόδων", "cost.vatDue": "Διαφορά (οφείλεται στην εφορία)",
       "cost.vatHint": "Ο ΦΠΑ δεν είναι έσοδο ούτε κόστος: περνά στην εφορία. Το αποτέλεσμα πιο πάνω είναι χωρίς αυτόν.",
+      "ana.sec": "Ανάλυση τίτλου",
+      "ana.none": "Η ανάλυση τίτλου θέλει Production Ledger 1.3 ή νεότερο στο κατάστημα.",
+      "ana.sold": "{n} αντίτυπα πουλήθηκαν, {v} καθαρά",
+      "ana.free": "{n} δωρεάν",
+      "ana.stock": "{n} σε στοκ",
+      "ana.ch": "Κανάλια πώλησης",
+      "ana.dl": "Τρόπος παράδοσης",
+      "ana.events": "Εκδηλώσεις:",
+      "ana.stores": "Παρακαταθήκες ανά βιβλιοπωλείο",
+      "ana.freeWhere": "Πού πήγαν τα δωρεάν αντίτυπα",
+      "ana.freeHint": "Από το μητρώο αντιτύπων του Revenue Splitter: εκτός ποσοστών, αφαιρούνται από το στοκ.",
+      "ana.dlHint": "Τα αντίτυπα που δίνεις χέρι με χέρι μετρούν όταν η παραγγελία έχει «Παράδοση από τον εκδότη» και σε κάθε πώληση σε εκδήλωση. Οι παλιές πωλήσεις από εισαγωγή δεν έχουν στοιχείο παράδοσης.",
+      "ana.promo": "Κόστος προώθησης ανά υλικό",
+      "ana.noPromo": "Δεν έχει περαστεί ακόμη κόστος προώθησης για αυτόν τον τίτλο.",
+      "ana.other": "Άλλο έξοδο προώθησης",
+      "ana.col.ch": "Κανάλι",
+      "ana.col.dl": "Τρόπος",
+      "ana.col.q": "Αντίτυπα",
+      "ana.col.net": "Καθαρά",
+      "ana.col.vat": "ΦΠΑ",
+      "ana.col.item": "Υλικό",
+      "ana.col.store": "Βιβλιοπωλείο",
+      "ana.col.given": "Δόθηκαν",
+      "ana.col.sold": "Πουλήθηκαν",
+      "ana.col.ret": "Επιστράφηκαν",
+      "ana.col.shelf": "Στο ράφι",
+      "ana.col.owed": "Οφείλεται",
+      "ana.col.year": "Έτος",
+      "ana.col.unit": "Κόστος τεμαχίου",
+      "ana.ch.full": "e-shop, πλήρης τιμή",
+      "ana.ch.discount": "e-shop, με έκπτωση",
+      "ana.ch.bundle": "e-shop, σε πακέτο (bundle)",
+      "ana.ch.free_order": "e-shop, δωρεάν παραγγελία",
+      "ana.ch.import": "Παλιές πωλήσεις (εισαγωγή)",
+      "ana.ch.event": "Εκθέσεις και φεστιβάλ",
+      "ana.ch.trade": "Βιβλιοπωλεία, απευθείας αγορά",
+      "ana.ch.consignment": "Βιβλιοπωλεία, παρακαταθήκη (πουλήθηκαν)",
+      "ana.ch.author_buy": "Αγορά από τον συγγραφέα",
+      "ana.ch.free": "Δωρεάν αντίτυπα (μητρώο)",
+      "ana.dl.allover": "Αποστολή με Allover",
+      "ana.dl.boxnow": "Αποστολή με BOX NOW",
+      "ana.dl.warehouse": "Παραλαβή από την αποθήκη",
+      "ana.dl.grafo": "Παραλαβή από το GrafoExMachina",
+      "ana.dl.pickup_other": "Άλλη παραλαβή",
+      "ana.dl.hand": "Χέρι με χέρι από τον εκδότη",
+      "ana.dl.none": "Χωρίς στοιχείο παράδοσης",
+      "ana.dl.other": "Άλλος τρόπος",
+      "ana.ft.promo": "Προώθηση / δώρο",
+      "ana.ft.review": "Κριτική / Τύπος",
+      "ana.ft.legal": "Νόμιμη κατάθεση",
+      "ana.ft.author_free": "Αντίτυπα συγγραφέα",
+      "ana.day": "Ημερομηνία",
+      "ana.apply": "Πέρασε το πακέτο προώθησης ({v})",
+      "ana.badDay": "Διάλεξε ημερομηνία.",
+      "ana.promoPrev": "Θα γραφτούν στο κατάστημα {n} καταχωρίσεις προώθησης, σύνολο {v}.",
+      "ana.promoNone": "Το πακέτο είχε ήδη περαστεί για αυτόν τον τίτλο εκείνη τη μέρα: δεν γράφεται τίποτα.",
+      "ana.promoDone": "Γράφτηκαν στο κατάστημα {n} καταχωρίσεις προώθησης, σύνολο {v}.",
+      "ana.confirm": "Επιβεβαίωση",
+      "ana.cancel": "Άκυρο",
+      "ana.fail": "Το κατάστημα το αρνήθηκε ({why}). Δεν γράφτηκε τίποτα.",
+      "ana.sale": "Πώληση σε εκδήλωση",
+      "ana.event": "Εκδήλωση",
+      "ana.qty": "Αντίτυπα",
+      "ana.price": "Τιμή τεμαχίου με ΦΠΑ",
+      "ana.priceShop": "τιμή καταστήματος",
+      "ana.pay": "Πληρωμή",
+      "ana.cash": "Μετρητά",
+      "ana.card": "Κάρτα",
+      "ana.note": "Σημείωση",
+      "ana.saleGo": "Έλεγχος πώλησης",
+      "ana.badSale": "Συμπλήρωσε την εκδήλωση, ημερομηνία όχι στο μέλλον, 1–999 αντίτυπα και σωστή τιμή.",
+      "ana.salePrev": "Θα γίνει στο κατάστημα ολοκληρωμένη παραγγελία «{e}» αξίας {v}.",
+      "ana.saleDone": "Καταγράφηκε ως παραγγελία #{n}, {v}.",
+      "ana.saleHint": "Γίνεται κανονική ολοκληρωμένη παραγγελία με παράδοση χέρι με χέρι: το στοκ και τα μερίδια του Revenue Splitter μετράνε όπως πάντα. Δεν φεύγει κανένα e-mail.",
+      "ana.rates": "Τιμοκατάλογος προώθησης",
+      "ana.mats": "Κόστος προώθησης ανά υλικό και έτος",
+      "ana.inPkg": "{n} ανά τίτλο",
+      "ana.from": "από {d}",
+      "ana.vatR": "ΦΠΑ {r}%",
+      "ana.pkg": "Το πακέτο προώθησης κοστίζει σήμερα {v} ({n} καθαρά).",
+      "ana.newPrice": "Νέα τιμή ή νέο υλικό",
+      "ana.newItem": "Νέο υλικό…",
+      "ana.key": "Κλειδί (a-z, 0-9, _)",
+      "ana.label": "Όνομα",
+      "ana.from0": "Ισχύει από",
+      "ana.net": "Τιμή τεμαχίου (καθαρή)",
+      "ana.vat": "ΦΠΑ %",
+      "ana.sup": "Προμηθευτής",
+      "ana.inv": "Τιμολόγιο",
+      "ana.save": "Αποθήκευση τιμής",
+      "ana.badRate": "Έλεγξε υλικό, ημερομηνία και ποσό (έως 4 δεκαδικά).",
+      "ana.ratePrev": "{k}: {v} καθαρά από {d}, ΦΠΑ {r}%. Οι παλιές τιμές μένουν στο ιστορικό.",
+      "ana.rateDone": "Η τιμή αποθηκεύτηκε στο κατάστημα.",
+      "ana.rateHint": "Μια νέα τιμή δεν σβήνει την παλιά: ξεκινά από μια ημερομηνία, ώστε να φαίνεται η αλλαγή του κόστους από χρονιά σε χρονιά.",
       "cost.other": "Άλλα προϊόντα του καταστήματος ({n})", "cost.general": "Γενικά έξοδα",
       "cost.err.nopl": "Αυτό το κατάστημα δεν απαντά ως Production Ledger. Εγκατάστησέ το (1.0 ή νεότερο) και άνοιξε τη λειτουργία orOS.",
       "cost.err.cur": "Το κατάστημα μετρά σε {c}, οι Εκδόσεις σε {cur}: δεν διαβάστηκε τίποτα. Άλλαξε το νόμισμα στις ρυθμίσεις των Εκδόσεων.",
@@ -2717,7 +2905,7 @@
   var COST_PERS = ["all", "year", "last"];
   var costPer = "all";
   function costEmpty(acct) {
-    return { acct: acct || "", at: 0, recs: null, start: "", rs: null, rep: null, repErr: "", sku: {}, busy: false,
+    return { acct: acct || "", at: 0, recs: null, start: "", rs: null, rep: null, repErr: "", ana: null, anaErr: "", sku: {}, busy: false,
              err: "", errP: null, rsErr: false, skuErr: false };
   }
   var costS = costEmpty("");
@@ -2766,6 +2954,14 @@
       return j;
     });
   }
+  // Production Ledger 1.3+: the title analysis for the same period (optional)
+  function costAna(a) {
+    var sp = costSpan();
+    return costAsk(a)(CO.anaReq(sp[0], sp[1])).then(function (j) {
+      if (!CO.okAna(j)) throw { code: "noana" };
+      return j;
+    });
+  }
   function costRead(a) {
     var Lk = links();
     if (!Lk || !a || costS.busy) return;
@@ -2781,6 +2977,7 @@
         st.rsErr = true; return null;
       }, function () { st.rsErr = true; return null; });
       var repP = costReport(a).then(null, function (e) { st.repErr = e && e.code === "cur" ? "cur" : "norep"; return null; });
+      var anaP = costAna(a).then(null, function () { st.anaErr = "noana"; return null; });
       // products no format points at: their SKU, ten at a time
       var ids = CO.unknownPids(g.recs, data, a.id), sku = {};
       var chain = Promise.resolve();
@@ -2796,10 +2993,10 @@
         })(ids.slice(i, i + 10));
       }
       var skuP = chain.then(function () { return sku; }, function () { st.skuErr = true; return sku; });
-      return Promise.all([rsP, repP, skuP]);
+      return Promise.all([rsP, repP, skuP, anaP]);
     }).then(function (x) {
       if (costS !== st) return;
-      st.recs = got.recs; st.start = got.start; st.rs = x[0]; st.rep = x[1]; st.sku = x[2];
+      st.recs = got.recs; st.start = got.start; st.rs = x[0]; st.rep = x[1]; st.sku = x[2]; st.ana = x[3];
       st.at = Date.now(); st.busy = false;
       costRefresh();
     }).catch(function (e) {
@@ -2816,8 +3013,10 @@
     var st = costS;
     st.busy = true;
     costRefresh();
-    costReport(a).then(function (j) { st.rep = j; st.repErr = ""; }, function (e) { st.rep = null; st.repErr = e && e.code === "cur" ? "cur" : "norep"; })
-      .then(function () { st.busy = false; if (costS === st) costRefresh(); });
+    Promise.all([
+      costReport(a).then(function (j) { st.rep = j; st.repErr = ""; }, function (e) { st.rep = null; st.repErr = e && e.code === "cur" ? "cur" : "norep"; }),
+      costAna(a).then(function (j) { st.ana = j; st.anaErr = ""; }, function () { st.ana = null; st.anaErr = "noana"; })
+    ]).then(function () { st.busy = false; if (costS === st) costRefresh(); });
   }
   function cents(c) { return money(Math.round(c) / 100); }
   // The head both views share: the shop, the period, when read, a button;
@@ -2912,6 +3111,7 @@
     if (!Object.keys(pids).length) { box.appendChild(el("p", "muted", t("cost.noFmt"))); return; }
     if (costS.rep) costFull(box, CO.titleReport(costS.rep, costS.recs, costS.rs, tt, pids, data.set));
     else costDirect(box, CO.forTitle(costS.recs, pids, costS.rs, data.set));
+    anaSec(box, a, tt, pids);
   }
   // With the ledger's report: the whole picture
   function costFull(box, f) {
@@ -2997,6 +3197,288 @@
     costNotes(box, false);
   }
 
+  // ---------- 6e. Title analysis (wave P16, Production Ledger 1.3+) ----------
+  // Read with Cost & result (same period): copies per sales channel and
+  // per delivery method, free copies and where they went, consignments,
+  // promotion cost per material, the material price list. Three writes
+  // go back to the ledger (its typed routes): the promotion package on
+  // a title, a sale at an event, a new dated price. Each is first sent
+  // as a dry run, shown, and written only on «Confirm». Nothing is kept
+  // here: the shop holds it, and the next reading shows it.
+  var anaW = { busy: false, msg: "", bad: false, prev: null, kind: "" };
+  function anaCall(a, req) {
+    return costAsk(a)(req);
+  }
+  function anaMsg(box) {
+    if (!anaW.msg) return;
+    var p = el("p", "cost-st" + (anaW.bad ? " bad" : " muted small"), anaW.msg);
+    p.setAttribute("role", "status");
+    box.appendChild(p);
+  }
+  function anaFail(e) {
+    anaW.busy = false; anaW.prev = null;
+    anaW.msg = t("ana.fail", { why: (e && e.code) || "other" }); anaW.bad = true;
+    costRefresh();
+  }
+  // dry run → preview → confirm → write → read again
+  function anaWrite(a, kind, req, done) {
+    anaW.busy = true; anaW.msg = ""; anaW.bad = false;
+    costRefresh();
+    anaCall(a, req).then(function (j) {
+      anaW.busy = false;
+      if (req.body.dry_run) { anaW.prev = { kind: kind, req: req, res: j, done: done }; costRefresh(); return; }
+      anaW.prev = null;
+      anaW.msg = done(j); anaW.bad = false;
+      costAna(a).then(function (x) { costS.ana = x; costS.anaErr = ""; }, function () {}).then(costRefresh);
+    }).catch(anaFail);
+  }
+  function anaConfirm(box, a, kind, text) {
+    if (!anaW.prev || anaW.prev.kind !== kind) return;
+    var w = el("div", "send-row");
+    w.appendChild(el("span", "", text));
+    var req = anaW.prev.req, done = anaW.prev.done;
+    var ok = button(t("ana.confirm"), "btn small primary", function () {
+      var body = Object.assign({}, req.body);
+      if (Object.prototype.hasOwnProperty.call(body, "dry_run")) body.dry_run = false;
+      anaWrite(a, kind, { m: "POST", path: req.path, body: body }, done);
+    });
+    ok.disabled = anaW.busy;
+    w.appendChild(ok);
+    w.appendChild(button(t("ana.cancel"), "btn small", function () { anaW.prev = null; costRefresh(); }));
+    box.appendChild(w);
+  }
+  function anaTable(box, head, rows) {
+    var wrap = el("div", "cost-wrap");
+    var tb = el("table", "cost-tbl");
+    var tr = el("tr");
+    head.forEach(function (h) { var c = el("th", h[1] || "", h[0]); c.scope = "col"; tr.appendChild(c); });
+    var th = el("thead"); th.appendChild(tr); tb.appendChild(th);
+    var body = el("tbody");
+    rows.forEach(function (r) {
+      var x = el("tr");
+      r.forEach(function (v, i) { x.appendChild(el("td", head[i][1] || "", v)); });
+      body.appendChild(x);
+    });
+    tb.appendChild(body);
+    wrap.appendChild(tb);
+    box.appendChild(wrap);
+  }
+  function num(n) { return new Intl.NumberFormat(LOCALE).format(n); }
+  function pct(v) { return (v > 0 ? "+" : "") + String(v).replace(".", LANG === "en" ? "." : ",") + "%"; }
+  function anaKey(pre, k) { var x = t(pre + k); return x === pre + k ? k : x; }
+
+  // A title's section: under Cost & result
+  function anaSec(box, a, tt, pids) {
+    if (costS.anaErr || !costS.ana) {
+      if (costS.anaErr) box.appendChild(el("p", "muted small", t("ana.none")));
+      return;
+    }
+    var f = CO.anaSum(costS.ana, pids);
+    box.appendChild(el("h4", "", t("ana.sec")));
+    if (!f.any) box.appendChild(el("p", "muted", t("cost.nothing")));
+    else {
+      var bits = [t("ana.sold", { n: num(f.sold), v: cents(f.rev) })];
+      if (f.free) bits.push(t("ana.free", { n: num(f.free) }));
+      if (f.stock !== null) bits.push(t("ana.stock", { n: num(f.stock) }));
+      box.appendChild(el("p", "", bits.join(" · ")));
+      if (f.channels.length) {
+        box.appendChild(el("h5", "", t("ana.ch")));
+        anaTable(box, [[t("ana.col.ch")], [t("ana.col.q"), "num"], [t("ana.col.net"), "num"]],
+          f.channels.map(function (c) { return [anaKey("ana.ch.", c.key), num(c.q), c.a ? cents(c.a) : ""]; }));
+      }
+      if (f.events.length) {
+        box.appendChild(el("p", "muted small", t("ana.events") + " " + f.events.map(function (e) { return e.n + " (" + num(e.q) + ")"; }).join(", ")));
+      }
+      if (f.delivery.length) {
+        box.appendChild(el("h5", "", t("ana.dl")));
+        anaTable(box, [[t("ana.col.dl")], [t("ana.col.q"), "num"]],
+          f.delivery.map(function (d) { return [anaKey("ana.dl.", d.key), num(d.q)]; }));
+        box.appendChild(el("p", "muted small", t("ana.dlHint")));
+      }
+      if (f.stores.length) {
+        box.appendChild(el("h5", "", t("ana.stores")));
+        anaTable(box, [[t("ana.col.store")], [t("ana.col.given"), "num"], [t("ana.col.sold"), "num"], [t("ana.col.ret"), "num"], [t("ana.col.shelf"), "num"], [t("ana.col.owed"), "num"]],
+          f.stores.map(function (x) { return [x.n, num(x.given), num(x.sold), num(x.ret), num(x.shelf), cents(x.owed)]; }));
+      }
+      if (f.freeList.length) {
+        var d = el("details", "cost-cat");
+        var su = el("summary");
+        su.appendChild(el("span", "", t("ana.freeWhere")));
+        su.appendChild(el("span", "cost-amt", num(f.free)));
+        d.appendChild(su);
+        var ul = el("ul", "cost-list");
+        f.freeList.forEach(function (x) {
+          var li = el("li", "cost-row");
+          li.appendChild(el("span", "", [x.d ? fmtDate(x.d) : "", anaKey("ana.ft.", x.type), x.to || x.ben].filter(Boolean).join(" · ")));
+          li.appendChild(el("span", "cost-amt", num(x.q)));
+          ul.appendChild(li);
+        });
+        d.appendChild(ul);
+        d.appendChild(el("p", "muted small", t("ana.freeHint")));
+        box.appendChild(d);
+      }
+    }
+    // promotion per material
+    box.appendChild(el("h5", "", t("ana.promo")));
+    if (!f.promo.length) box.appendChild(el("p", "muted small", t("ana.noPromo")));
+    else {
+      anaTable(box, [[t("ana.col.item")], [t("ana.col.q"), "num"], [t("ana.col.net"), "num"], [t("ana.col.vat"), "num"]],
+        f.promo.map(function (l) { return [l.item === "_other" ? t("ana.other") : l.label, num(l.q), cents(l.net), cents(l.vat)]; })
+          .concat([[t("cost.total"), "", cents(f.promoNet), cents(f.promoVat)]]));
+    }
+    var pk = CO.pkg(costS.ana);
+    var main = Object.keys(pids).map(Number).sort(function (x, y) { return x - y; })[0];
+    if (pk && main) {
+      var row = el("div", "send-row");
+      var day = input("date", todayYmd(), { "aria-label": t("ana.day") });
+      row.appendChild(field(t("ana.day"), day));
+      var go = button(t("ana.apply", { v: cents(pk.gross) }), "btn small", function () {
+        var b = CO.promoBody(main, day.value, true);
+        if (!b) { anaW.msg = t("ana.badDay"); anaW.bad = true; costRefresh(); return; }
+        anaWrite(a, "promo", { m: "POST", path: "/pl/promo-apply", body: b }, promoDone);
+      });
+      go.disabled = anaW.busy;
+      row.appendChild(go);
+      box.appendChild(row);
+      if (anaW.prev && anaW.prev.kind === "promo" && anaW.prev.req.body.product_id === main) {
+        var r = anaW.prev.res || {};
+        anaW.prev.done = promoDone;
+        var n = Array.isArray(r.lines) ? r.lines.length : 0;
+        anaConfirm(box, a, "promo", n ? t("ana.promoPrev", { n: n, v: cents(Math.round((r.gross || 0) * 100)) }) : t("ana.promoNone"));
+      }
+    }
+    // a sale at an event, of this title
+    if (main) anaSale(box, a, main);
+    anaMsg(box);
+  }
+  function promoDone(j) {
+    var n = j && Array.isArray(j.lines) ? j.lines.length : 0;
+    return n ? t("ana.promoDone", { n: n, v: cents(Math.round(((j && j.gross) || 0) * 100)) }) : t("ana.promoNone");
+  }
+  function saleDone(j) { return t("ana.saleDone", { n: (j && j.order) || "?", v: money((j && j.total) || 0) }); }
+  function anaSale(box, a, main) {
+    var d = el("details", "cost-cat");
+    d.appendChild(el("summary", "", t("ana.sale")));
+    d.open = !!(anaW.prev && anaW.prev.kind === "sale" && anaW.prev.req.body.lines[0].product_id === main);
+    var g = el("div", "send-row");
+    var ev = input("text", "", { maxlength: "120" });
+    var day = input("date", todayYmd());
+    var qty = input("number", "1", { min: "1", max: "999", step: "1" });
+    var pr = input("text", "", { inputmode: "decimal", placeholder: t("ana.priceShop") });
+    var pay = select([["cash", t("ana.cash")], ["card", t("ana.card")]], "cash");
+    var note = input("text", "", { maxlength: "300" });
+    if (d.open) {
+      var pb = anaW.prev.req.body;
+      ev.value = pb.event; day.value = pb.date; qty.value = String(pb.lines[0].qty); pr.value = pb.lines[0].price || "";
+      pay.value = pb.payment; note.value = pb.note || "";
+    }
+    g.appendChild(field(t("ana.event"), ev));
+    g.appendChild(field(t("ana.day"), day));
+    g.appendChild(field(t("ana.qty"), qty));
+    g.appendChild(field(t("ana.price"), pr));
+    g.appendChild(field(t("ana.pay"), pay));
+    g.appendChild(field(t("ana.note"), note));
+    d.appendChild(g);
+    var go = button(t("ana.saleGo"), "btn small", function () {
+      var b = CO.saleBody({ date: day.value, event: ev.value, payment: pay.value, note: note.value, dry_run: true,
+                            lines: [{ product_id: main, qty: Math.floor(+qty.value), price: pr.value.trim() }] });
+      if (!b || day.value > todayYmd()) { anaW.msg = t("ana.badSale"); anaW.bad = true; costRefresh(); return; }
+      anaWrite(a, "sale", { m: "POST", path: "/pl/event-sale", body: b }, saleDone);
+    });
+    go.disabled = anaW.busy;
+    d.appendChild(go);
+    if (anaW.prev && anaW.prev.kind === "sale" && anaW.prev.req.body.lines[0].product_id === main) {
+      var r = anaW.prev.res || {};
+      anaW.prev.done = saleDone;
+      anaConfirm(d, a, "sale", t("ana.salePrev", { e: r.event || "", v: money(r.total || 0) }));
+    }
+    d.appendChild(el("p", "muted small", t("ana.saleHint")));
+    box.appendChild(d);
+  }
+
+  // The tab: promotion cost per material and year, and the price list
+  function anaTab(box, a) {
+    if (!costS.ana) return;
+    box.appendChild(el("h3", "", t("ana.rates")));
+    var mats = Array.isArray(costS.ana.materials) ? costS.ana.materials : [];
+    if (mats.length) {
+      box.appendChild(el("h4", "", t("ana.mats")));
+      anaTable(box, [[t("ana.col.item")], [t("ana.col.year")], [t("ana.col.q"), "num"], [t("ana.col.net"), "num"], [t("ana.col.unit"), "num"]],
+        mats.reduce(function (out, m) {
+          (Array.isArray(m && m.years) ? m.years : []).forEach(function (y) {
+            out.push([String(m.label || m.item || ""), String(y.year || ""), num(+y.qty || 0), money(+y.net || 0),
+                      typeof y.unit === "number" ? money(y.unit) : ""]);
+          });
+          return out;
+        }, []));
+    }
+    var list = CO.rates(costS.ana);
+    list.forEach(function (it) {
+      var d = el("details", "cost-cat");
+      var su = el("summary");
+      su.appendChild(el("span", "", it.label + (it.inPkg ? " · " + t("ana.inPkg", { n: it.inPkg }) : "")));
+      su.appendChild(el("span", "cost-amt", it.cur === null ? "" : money(it.cur)));
+      d.appendChild(su);
+      var ul = el("ul", "cost-list");
+      it.vers.slice().reverse().forEach(function (v) {
+        var li = el("li", "cost-row");
+        li.appendChild(el("span", "", [t("ana.from", { d: fmtDate(v.from) }), v.sup, v.inv ? t("cost.inv", { n: v.inv }) : "",
+          t("ana.vatR", { r: String(v.rate) }), v.chg === null ? "" : pct(v.chg), v.note].filter(Boolean).join(" · ")));
+        li.appendChild(el("span", "cost-amt", money(v.net)));
+        ul.appendChild(li);
+      });
+      d.appendChild(ul);
+      box.appendChild(d);
+    });
+    var pk = CO.pkg(costS.ana);
+    if (pk) box.appendChild(el("p", "muted small", t("ana.pkg", { v: cents(pk.gross), n: cents(pk.net) })));
+    // a new dated price, or a new material
+    var f = el("details", "cost-cat");
+    f.appendChild(el("summary", "", t("ana.newPrice")));
+    f.open = !!(anaW.prev && anaW.prev.kind === "rate");
+    var g = el("div", "send-row");
+    var opts = list.map(function (it) { return [it.key, it.label]; }).concat([["", t("ana.newItem")]]);
+    var key = select(opts, opts[0][0]);
+    var nk = input("text", "", { maxlength: "40", pattern: "[a-z0-9_]{1,40}" });
+    var lab = input("text", "", { maxlength: "80" });
+    var from = input("date", todayYmd());
+    var net = input("text", "", { inputmode: "decimal" });
+    var vat = input("text", "24", { inputmode: "decimal" });
+    var sup = input("text", "", { maxlength: "120" });
+    var inv = input("text", "", { maxlength: "60" });
+    var note = input("text", "", { maxlength: "200" });
+    g.appendChild(field(t("ana.col.item"), key));
+    var nkF = field(t("ana.key"), nk), labF = field(t("ana.label"), lab);
+    g.appendChild(nkF); g.appendChild(labF);
+    function sync() { nkF.hidden = labF.hidden = key.value !== ""; }
+    key.addEventListener("change", sync); sync();
+    g.appendChild(field(t("ana.from0"), from));
+    g.appendChild(field(t("ana.net"), net));
+    g.appendChild(field(t("ana.vat"), vat));
+    g.appendChild(field(t("ana.sup"), sup));
+    g.appendChild(field(t("ana.inv"), inv));
+    g.appendChild(field(t("ana.note"), note));
+    f.appendChild(g);
+    var go = button(t("ana.save"), "btn small", function () {
+      var b = CO.rateBody({ key: key.value || nk.value, label: key.value ? "" : lab.value, from: from.value, net: net.value,
+                            rate: vat.value, supplier: sup.value, invoice: inv.value, note: note.value });
+      if (!b || (!key.value && !b.label)) { anaW.msg = t("ana.badRate"); anaW.bad = true; costRefresh(); return; }
+      // a price has no dry run on the site: the preview is here
+      anaW.prev = { kind: "rate", req: { m: "POST", path: "/pl/rates", body: b }, res: null, done: rateDone };
+      anaW.msg = ""; costRefresh();
+    });
+    go.disabled = anaW.busy;
+    f.appendChild(go);
+    if (anaW.prev && anaW.prev.kind === "rate") {
+      var rb = anaW.prev.req.body;
+      anaConfirm(f, a, "rate", t("ana.ratePrev", { k: rb.label || rb.key, d: fmtDate(rb.from), v: money(+rb.net), r: rb.vat_rate }));
+    }
+    f.appendChild(el("p", "muted small", t("ana.rateHint")));
+    box.appendChild(f);
+    anaMsg(box);
+  }
+  function rateDone() { return t("ana.rateDone"); }
+
   // The tab: every title with figures in the shop
   function renderCost() {
     var sec = $("view-cost");
@@ -3060,6 +3542,7 @@
     box.appendChild(wrap);
     if (rows.some(function (r) { return r.est; })) box.appendChild(el("p", "muted small", "* " + t("cost.royHint")));
     costNotes(box, !!costS.rep);
+    anaTab(box, a);
   }
 
   // ---------- 6c. Royalties (wave P6) ----------

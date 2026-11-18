@@ -105,7 +105,7 @@ test("the Calendar feed shows only date fields with Show in Calendar on, and sur
   d = C.putRow(d, "fields", Object.assign({}, f, { opt: { cal: true } }), 300);
   assert.equal(d.fields.find((x) => x.id === "fday").opt.cal, true);
   const days = F.byDay(d);
-  assert.deepEqual(days["2026-12-01"], [{ rec: "r1", base: "b1", table: "t1", title: "Ann", field: "Day", tname: "Guests", time: null }]);
+  assert.deepEqual(days["2026-12-01"], [{ rec: "r1", base: "b1", table: "t1", title: "Ann", fid: "fday", field: "Day", tname: "Guests", time: null }]);
   // a device before B4 keeps the field without cal at the same stamp: cal wins the tie
   const old = JSON.parse(JSON.stringify(d));
   old.fields.find((x) => x.id === "fday").opt = {};

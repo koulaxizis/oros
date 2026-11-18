@@ -50,10 +50,10 @@ test("items and table: caps, junk dropped, nothing usable → null", () => {
 test("the sheet offers installed apps only, never the sender, in ORDER", () => {
   const text = { title: "T", text: "hello\nworld" };
   assert.deepEqual(C.appsFor("text", text, ALL, "notes"),
-    ["todo", "writer", "mail", "kanban", "slides", "wiki", "diary", "mindmap", "prompter", "flashcards", "typing", "assistant", "texttools"]);
+    ["todo", "writer", "mail", "kanban", "whiteboard", "slides", "forms", "crm", "wiki", "diary", "mindmap", "prompter", "flashcards", "typing", "qr", "assistant", "texttools"]);
   assert.deepEqual(C.appsFor("text", text, ["writer", "mail", "calculator"], ""), ["writer", "mail"]);
-  assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "diary", "assistant"]);
-  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "slides", "spreadsheet", "wiki", "diary", "mindmap", "flashcards", "texttools"]);
+  assert.deepEqual(C.appsFor("link", { url: "https://a.b" }, ALL, "bookmarks"), ["notes", "todo", "writer", "mail", "kanban", "diary", "qr", "assistant"]);
+  assert.deepEqual(C.appsFor("items", { items: ["a"] }, ALL, ""), ["notes", "todo", "writer", "mail", "kanban", "whiteboard", "slides", "spreadsheet", "base", "forms", "wiki", "diary", "mindmap", "flashcards", "texttools"]);
   assert.deepEqual(C.appsFor("table", { rows: [["a"]] }, ALL, ""), ["writer", "mail", "spreadsheet", "texttools"]);
   assert.deepEqual(C.appsFor("text", { text: "" }, ALL, ""), []);
 });
@@ -141,7 +141,12 @@ test("every receiver's app code takes the target it is sent", () => {
     transfer: ["transfer/app.js", ["target.send", "takeSend"]],
     photolab: ["photolab/app.js", ["target.openFile", "openDiskPath"]],
     scanpdf: [["scanpdf/scanpdf.js", "scanpdf/core.js"], ["t.paths", "addPaths"]],
-    library: ["library/app.js", ["target.path", "LIB.home.openPath"]]
+    library: ["library/app.js", ["target.path", "LIB.home.openPath"]],
+    // gap review proposal 5
+    qr: ["qr/qr.js", ["tg.make", "mk.fields", "newDraft"]],
+    whiteboard: ["whiteboard/app.js", ["target.addNotes", "addNotes(target.addNotes.notes)"]],
+    forms: ["forms/app.js", ["tg.draft", "LK.fromDraft"]],
+    crm: ["crm/crm.js", ["x.logNote", "x.logNote.text"]]
   };
   // Through the shell: Music and Atelier take a File as a token (BR-FO-4).
   const viaFile = {
@@ -261,4 +266,59 @@ test("files wave: the shell hands disk files over and asks before a wallpaper", 
   assert.match(src("capture/index.html"), /id="b-rsend"/);
   assert.match(src("layout/panels.js"), /exp-send/);
   assert.match(src("layout/io.js"), /\/internal\/Layout\/PDF/);
+});
+
+test("data apps send to an app (gap review proposal 4)", () => {
+  // Each sender asks for parent.orosSend and shows its entry only inside orOS.
+  for (const f of ["todo/todo.js", "calendar/calendar.js", "contacts/contacts.js", "diary/diary.js", "crm/crm.js",
+    "invoices/invoices.js", "quote/view.js", "base/app.js", "forms/app.js", "library/app.js", "meals/meals.js",
+    "travel/travel.js", "stickies/stickies.js"]) {
+    assert.match(src(f), /parent\.orosSend/, f);
+    assert.match(src(f), /\{ kind: "(text|items|table)", data: /, f);
+  }
+  assert.match(src("todo/index.html"), /id="list-send" hidden/);
+  assert.match(src("todo/index.html"), /id="f-send" hidden/);
+  assert.match(src("calendar/index.html"), /id="ev-send"[^>]*hidden/);
+  assert.match(src("diary/index.html"), /id="send-btn"[^>]*hidden/);
+  assert.match(src("meals/index.html"), /id="sh-send" hidden/);
+  assert.match(src("quote/view.js"), /qv-send-app/);
+  assert.match(src("library/reader.js"), /LIB\.sendQuote\(/);
+  assert.match(src("library/home.js"), /export\.sendApp/);
+  assert.match(src("base/app.js"), /sendView\("table"\)/);
+  assert.match(src("base/app.js"), /sendView\("items"\)/);
+  assert.match(src("travel/travel.js"), /sendPlan\(id\)/);
+  // Passwords stays out.
+  for (const f of fs.readdirSync(path.join(ROOT, "passwords")).filter((x) => /\.js$/.test(x))) assert.doesNotMatch(src("passwords/" + f), /orosSend/, f);
+  // What they send is a valid item of its kind.
+  assert.ok(C.norm("table", { name: "Invoice 12", rows: [["Description", "Qty", "Unit price", "Net"], ["Design", 2, 40.5, 81], ["Total", "", "", 100.44]] }));
+  assert.ok(C.norm("items", { title: "Groceries", items: [{ text: "2 eggs", note: "From: Omelette" }, { text: "milk" }] }));
+  assert.deepEqual(C.target("todo", "text", { title: "Shop", text: "[ ] eggs\n[x] milk\nbread" }).addItems.items.map((i) => i.text), ["eggs", "milk", "bread"]);
+});
+
+test("new receivers: QR, Whiteboard, Forms, CRM, Base lists (gap review proposal 5)", () => {
+  // QR: a link → URL code, a text → Text code (the QR app's 2000 limit).
+  assert.deepEqual(C.target("qr", "link", { url: "https://a.b/c", title: "A" }), { make: { type: "url", fields: { url: "https://a.b/c" } } });
+  assert.deepEqual(C.target("qr", "text", { title: "Wi", text: "Hello" }), { make: { type: "text", fields: { text: "Hello" } } });
+  assert.equal(C.target("qr", "text", { text: "x".repeat(2001) }), null);
+  assert.equal(C.target("qr", "items", { items: ["a"] }), null);
+  // Whiteboard: one sticky note per item (text + note) or line, ≤ 50.
+  assert.deepEqual(C.target("whiteboard", "items", { title: "L", items: [{ text: "Idea", note: "why" }, "Two"] }),
+    { addNotes: { notes: [{ tx: "Idea\nwhy" }, { tx: "Two" }] } });
+  assert.deepEqual(C.target("whiteboard", "text", { text: "- one\n- two" }).addNotes.notes, [{ tx: "one" }, { tx: "two" }]);
+  const many = { items: Array.from({ length: 120 }, (_, i) => "q" + i) };
+  assert.equal(C.target("whiteboard", "items", many).addNotes.notes.length, 50);
+  // Forms: one question per item, ≤ 100 (links.js MAX_DRAFT), the Assistant's draft.
+  assert.deepEqual(C.target("forms", "items", { title: "Sign-up", items: ["Name", { text: "E-mail", note: "x" }] }),
+    { draft: { title: "Sign-up", questions: [{ label: "Name" }, { label: "E-mail" }] } });
+  assert.equal(C.target("forms", "items", many).draft.questions.length, 100);
+  assert.equal(require(path.join(ROOT, "forms/links.js")).MAX_DRAFT, 100);
+  // CRM: a text → a Note in the history window; the title goes first.
+  assert.deepEqual(C.target("crm", "text", { title: "Call notes", text: "Wants a quote" }), { logNote: { text: "Call notes\nWants a quote" } });
+  assert.deepEqual(C.target("crm", "text", { title: "Acme", text: "Acme\nCompany" }), { logNote: { text: "Acme\nCompany" } });
+  assert.equal(C.target("crm", "text", { text: "x".repeat(3000) }).logNote.text.length, 2000);
+  // Base: a list becomes a table for "Add as a table", column names in the person's language.
+  assert.deepEqual(C.target("base", "items", { title: "Books", items: [{ text: "Odyssey", note: "Homer" }, "Iliad"] }, "", "el"),
+    { newTable: { name: "Books", rows: [["Όνομα", "Σημειώσεις"], ["Odyssey", "Homer"], ["Iliad", ""]] } });
+  assert.deepEqual(C.target("base", "items", { title: "B", items: ["a"] }), { newTable: { name: "B", rows: [["Name"], ["a"]] } });
+  assert.match(src("send/sheet.js"), /C\.target\(id, kind, d, env\.from, window\.orosLang\)/);
 });

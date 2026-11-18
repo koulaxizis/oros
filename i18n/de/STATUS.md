@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 47048 of 47048 (100%)
+- Strings: 47242 of 47242 (100%)
 - Help pages: 155 of 155 (100%)
 - Shown in the language list: yes
 
@@ -15,18 +15,18 @@ en and el); translators change them there, not in a pack.
 | assistant | 100% | 1930 / 1930 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 283 / 283 |
+| automations | 100% | 322 / 322 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 100% | 393 / 393 |
+| base | 100% | 402 / 402 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
 | bubble | 100% | 54 / 54 |
 | budget | 100% | 1182 / 1182 |
 | calculator | 100% | 170 / 170 |
-| calendar | 100% | 637 / 637 (49 in the code) |
+| calendar | 100% | 638 / 638 (49 in the code) |
 | capture | 100% | 56 / 56 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -37,15 +37,15 @@ en and el); translators change them there, not in a pack.
 | chores | 100% | 207 / 207 |
 | commands | 100% | 82 / 82 |
 | connect4 | 100% | 62 / 62 |
-| contacts | 100% | 341 / 341 |
+| contacts | 100% | 342 / 342 |
 | converter | 100% | 68 / 68 |
-| crm | 100% | 829 / 829 |
+| crm | 100% | 838 / 838 |
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
 | designkit | 100% | 214 / 214 |
 | device | 100% | 153 / 153 |
-| diary | 100% | 236 / 236 |
+| diary | 100% | 237 / 237 |
 | dice | 100% | 57 / 57 |
 | discover | 100% | 3 / 3 |
 | dots | 100% | 55 / 55 |
@@ -58,7 +58,7 @@ en and el); translators change them there, not in a pack.
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
-| forms | 100% | 380 / 380 |
+| forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
 | gamecenter | 100% | 158 / 158 |
 | garage | 100% | 437 / 437 |
@@ -70,12 +70,12 @@ en and el); translators change them there, not in a pack.
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 60 / 60 |
 | household | 100% | 143 / 143 |
-| invoices | 100% | 692 / 692 |
+| invoices | 100% | 693 / 693 |
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 358 / 358 |
 | labels | 100% | 88 / 88 |
 | layout | 100% | 1106 / 1106 |
-| library | 100% | 327 / 327 |
+| library | 100% | 329 / 329 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
@@ -84,7 +84,7 @@ en and el); translators change them there, not in a pack.
 | mancala | 100% | 61 / 61 |
 | maps | 100% | 1286 / 1286 |
 | mastermind | 100% | 74 / 74 |
-| meals | 100% | 465 / 465 |
+| meals | 100% | 466 / 466 |
 | memory | 100% | 77 / 77 |
 | mindmap | 100% | 285 / 285 |
 | minesweeper | 100% | 75 / 75 |
@@ -113,9 +113,9 @@ en and el); translators change them there, not in a pack.
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 334 / 334 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 100% | 728 / 728 |
-| qr | 100% | 248 / 248 |
-| quote | 100% | 234 / 234 |
+| publish | 100% | 822 / 822 |
+| qr | 100% | 249 / 249 |
+| quote | 100% | 236 / 236 |
 | radio | 100% | 103 / 103 |
 | realm | 100% | 199 / 199 |
 | recipes | 100% | 178 / 178 |
@@ -125,12 +125,12 @@ en and el); translators change them there, not in a pack.
 | ringtones | 100% | 107 / 107 |
 | roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
-| scanpdf | 100% | 545 / 545 |
+| scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
 | settings | 100% | 1705 / 1705 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1380 / 1380 |
+| shell | 100% | 1382 / 1382 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |
@@ -143,7 +143,7 @@ en and el); translators change them there, not in a pack.
 | spot | 100% | 55 / 55 |
 | spreadsheet | 100% | 495 / 495 |
 | startpage | 100% | 18 / 18 |
-| stickies | 100% | 124 / 124 |
+| stickies | 100% | 125 / 125 |
 | stock | 100% | 813 / 813 |
 | storage | 100% | 179 / 179 |
 | studio | 100% | 936 / 936 |
@@ -155,10 +155,10 @@ en and el); translators change them there, not in a pack.
 | time | 100% | 410 / 410 |
 | timesheet | 100% | 382 / 382 |
 | today | 100% | 155 / 155 |
-| todo | 100% | 271 / 271 |
+| todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 130 / 130 |
-| travel | 100% | 555 / 555 |
+| transfer | 100% | 139 / 139 |
+| travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |
 | units | 100% | 214 / 214 |
@@ -168,7 +168,7 @@ en and el); translators change them there, not in a pack.
 | weather | 100% | 190 / 190 |
 | whack | 100% | 51 / 51 |
 | wheel | 100% | 107 / 107 |
-| whiteboard | 100% | 302 / 302 |
+| whiteboard | 100% | 304 / 304 |
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
