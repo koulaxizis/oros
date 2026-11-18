@@ -1063,12 +1063,15 @@
   }
   function a11yMark(doc) {
     var r = doc.documentElement;
-    if (!doc.getElementById("oros-a11y-css")) {
-      var s = doc.createElement("style");
+    var s = doc.getElementById("oros-a11y-css");
+    if (!s) {
+      s = doc.createElement("style");
       s.id = "oros-a11y-css";
-      s.textContent = A11Y_CSS + (window.orosA11yFx ? window.orosA11yFx.css() : "");
       (doc.head || r).appendChild(s);
     }
+    // a11yfx.js may arrive after a document was marked: its CSS joins then.
+    var css = A11Y_CSS + (window.orosA11yFx ? window.orosA11yFx.css() : "");
+    if (s.textContent !== css) s.textContent = css;
     a11yAttr(r, "data-oros-contrast", a11yHigh() ? "high" : null);
     a11yAttr(r, "data-oros-focus", a11y.focus ? "on" : null);
     if (window.orosA11yFx) window.orosA11yFx.mark(doc);       // smart invert, pointer
@@ -1094,8 +1097,28 @@
   function a11yWireFrame(frame) {
     frame.addEventListener("load", function () { a11yFrame(frame); });
   }
+  // a11yfx.js (colour filter, pointer) loads only once one of them is
+  // on or another feature asks for an overlay, so start-up carries no
+  // extra script.
+  var a11yFxP = null;
+  function a11yFxWanted() { return a11y.filter !== "off" || a11y.pointer !== "normal"; }
+  function a11yFxLoad() {
+    if (window.orosA11yFx) return Promise.resolve(window.orosA11yFx);
+    if (!a11yFxP) {
+      a11yFxP = new Promise(function (ok, fail) {
+        var sc = document.createElement("script");
+        sc.src = "a11yfx.js?v=" + APP_VERSION;
+        sc.onload = function () { if (window.orosA11yFx) ok(window.orosA11yFx); else fail(new Error("a11yfx")); };
+        sc.onerror = function () { sc.remove(); fail(new Error("a11yfx")); };
+        document.head.appendChild(sc);
+      });
+      a11yFxP.catch(function () { a11yFxP = null; });
+    }
+    return a11yFxP;
+  }
   function a11yApply() {
     var root = document.documentElement, z = a11yZoom(), hi = a11yHigh();
+    if (!window.orosA11yFx && a11yFxWanted()) a11yFxLoad().then(a11yApply, function () {});
     if (window.orosA11yFx) window.orosA11yFx.apply(a11y);   // before marking documents
     a11yMark(document);
     if (z !== 1) root.style.setProperty("--oros-zoom", String(z));
@@ -1143,12 +1166,13 @@
       high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
       capped: a11yZoom() < a11y.size / 100,
       font: uifGet(),                                      // FM-5: null = Nunito
-      // Colour filter and pointer (a11yfx.js; absent = an older bundle)
-      fx: !!window.orosA11yFx,
+      // Colour filter and pointer (a11yfx.js, loaded on demand; absent
+      // = an older bundle that has no such options)
+      fx: true,
       filter: a11y.filter, filters: A11Y_FILTERS.slice(), last: a11y.last,
       strength: a11y.strength, strengths: A11Y_STRENGTHS.slice(),
       pointer: a11y.pointer, pointers: A11Y_POINTERS.slice(),
-      fine: !!(window.orosA11yFx && window.orosA11yFx.finePointer())
+      fine: a11yMq("(any-pointer: fine)")
     };
   }
   // For other features (Screen time's Bedtime): a temporary filter on
@@ -1156,7 +1180,11 @@
   // null, { fadeMs }) → true when taken.
   window.orosA11y = {
     overlayFilter: function (name, kind, opts) {
-      return !!(window.orosA11yFx && window.orosA11yFx.overlay(name, kind, opts));
+      if (!name || (kind !== null && kind !== "grey")) return false;
+      if (window.orosA11yFx) return window.orosA11yFx.overlay(name, kind, opts);
+      if (!kind) return true;                              // nothing to take off yet
+      a11yFxLoad().then(function (F) { F.apply(a11y); F.overlay(name, kind, opts); }, function () {});
+      return true;
     }
   };
   // ---------- The font of orOS (FM-5, uifont.js) ----------

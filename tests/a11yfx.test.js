@@ -151,12 +151,12 @@ test("shell: oros-a11y fields, setters, snapshot, overlay API, script order", ()
   assert.match(s, /pointer: A11Y_POINTERS\.indexOf\(v\.pointer\) !== -1 \? v\.pointer : "normal"/);
   assert.match(s, /if \(value === "toggle"\) value = a11y\.filter === "off" \? a11y\.last : "off";/);
   assert.match(s, /case "colourFilter":\s+case "filterStrength":\s+case "pointerSize":\s+a11ySetUser\(name, value\); return;/);
-  assert.match(s, /s\.textContent = A11Y_CSS \+ \(window\.orosA11yFx \? window\.orosA11yFx\.css\(\) : ""\);/);
+  assert.match(s, /var css = A11Y_CSS \+ \(window\.orosA11yFx \? window\.orosA11yFx\.css\(\) : ""\);\s+if \(s\.textContent !== css\) s\.textContent = css;/);
   assert.match(s, /window\.orosA11y = \{\s+overlayFilter: function/);
-  const html = read("index.html");
-  const fxAt = html.indexOf('<script src="a11yfx.js'), shAt = html.indexOf('<script src="shell.js');
-  assert.ok(fxAt > 0 && fxAt < shAt, "a11yfx.js loads before shell.js");
-  assert.ok(html.indexOf('<link rel="preload" as="script" href="a11yfx.js') > 0);
+  // Loaded on demand only (start-up script budget): never a <script> in index.html.
+  assert.ok(!read("index.html").includes("a11yfx.js"));
+  assert.match(s, /sc\.src = "a11yfx\.js\?v=" \+ APP_VERSION;/);
+  assert.match(s, /if \(!window\.orosA11yFx && a11yFxWanted\(\)\) a11yFxLoad\(\)\.then\(a11yApply, function \(\) \{\}\);/);
 });
 
 test("Quick settings and Settings wiring, strings in EN, EL and DE", () => {

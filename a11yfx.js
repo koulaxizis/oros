@@ -1,11 +1,12 @@
 // ============================================================
 // orOS — a11yfx.js (colour filters and the large pointer, v1.0.0)
 // ------------------------------------------------------------
-// A shell component, like nightlight.js: it runs IN the shell
-// document. shell.js (section 5e, Accessibility) keeps the choice in
-// its device-local "oros-a11y" and calls apply() whenever it changes;
-// this file stores nothing. A bundle without it draws exactly what it
-// drew before (the options then do nothing).
+// A shell component: it runs IN the shell document, loaded on demand
+// by shell.js (section 5e, Accessibility) only while a filter or a
+// pointer size is on or an overlay is asked for, so start-up carries
+// no extra script. shell.js keeps the choice in its device-local
+// "oros-a11y" and calls apply() whenever it changes; this file stores
+// nothing.
 //
 //   • Colour filter: ONE CSS filter on the shell's root element. The
 //     root is exempt from "a filter makes a containing block", so
