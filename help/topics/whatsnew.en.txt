@@ -1,6 +1,8 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.61.00
+- **What each contract grants, in CRM.** A contract now keeps its rights: what it grants, the formats it covers, each right with its share (print, e-book, audio, translation, stage and screen, merchandise), the territory, sell-off after the end and the Creative Commons licence. The new `Rights` chip in `Contracts` shows what is on sale with no running right, rights with no release yet (an e-book or audiobook you could make) and the renewals of the next 90 days with what happens after the end. Publishing shows a short rights line on each title. Claude or the Assistant fill them in from your contracts, each change on a card with Undo.
 ## Version 7.60.00
 - **Colour filters and a larger pointer.** In Settings › Accessibility, `Colour filter` turns the whole screen grey, helps tell red from green or blue from yellow (with a strength), or inverts the colours while photos and videos stay as they are. `Pointer size` makes the mouse pointer Large or Extra large. A new `Colour filter` button in Quick settings turns the last filter on and off. Both stay on this device.
 
