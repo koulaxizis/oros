@@ -4198,8 +4198,29 @@
       } finally { appsResuming = false; }
       appsBooted = true;
       appsLastNote(true);
+      appsUntouched = true;
+      var touched = function () {
+        appsUntouched = false;
+        window.removeEventListener("pointerdown", touched, true);
+        window.removeEventListener("keydown", touched, true);
+        window.removeEventListener("blur", touched);
+      };
+      window.addEventListener("pointerdown", touched, true);
+      window.addEventListener("keydown", touched, true);
+      window.addEventListener("blur", touched);   // a tap inside an app's frame
     });
   }
+  // RS-1 + SW-2: apps that RS-1 reopened and nobody has touched since
+  // are not "work in progress", so a waiting update may reload over
+  // them (index.html safeToReload). The record is written again first
+  // without the settle mark, so they come back after that reload too.
+  var appsUntouched = false;
+  window.__orosRsSafe = function () {
+    if (!appsUntouched) return false;
+    if (appsSettle) { clearTimeout(appsSettle); appsSettle = null; }
+    appsLastNote(false);
+    return true;
+  };
 
   // "oros <words>" in the browser's address bar (Send to orOS add-on,
   // extension/): "/?search=<words>" opens the menu with the words in

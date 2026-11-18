@@ -347,3 +347,13 @@ test("wiring W2: Overview section, Today card and the smart bar kind use the sam
     assert.ok(fs.readFileSync(path.join(ROOT, "i18n", "de", "shell.js"), "utf8").includes('"' + k + '"'), k + " DE");
   }
 });
+
+test("RS-1 + SW-2: apps reopened by the start and untouched since let a waiting update reload", () => {
+  const fs = require("fs"), path = require("path");
+  const shell = fs.readFileSync(path.join(__dirname, "..", "shell.js"), "utf8");
+  const page = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
+  assert.match(shell, /window\.__orosRsSafe = function \(\) \{\n\s*if \(!appsUntouched\) return false;/);
+  assert.match(shell, /window\.addEventListener\("blur", touched\);/, "a tap inside a frame counts as touched");
+  assert.match(page, /var rsSafe = typeof window\.__orosRsSafe === "function" && window\.__orosRsSafe\(\);/);
+  assert.match(page, /run\.classList\.contains\("active"\) && !soloHidden && !rsSafe\) return false;/);
+});
