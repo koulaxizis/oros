@@ -55,7 +55,8 @@
 //     button under text selected by touch or in a field becomes "Read
 //     aloud" and reads at once. Each selection carries lang (the lang
 //     attribute around it, below the page) and secret (inside
-//     data-oros-noclip: never read).
+//     data-oros-noclip: never read); win (READ-1 W2) lets Read aloud
+//     take the selection again with its place, to light up the sentence.
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -944,7 +945,7 @@
     var lg = at && at.closest ? at.closest("[lang]") : null;
     return { text: text, editable: editable, app: frameApp(w), rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
              lang: lg && lg !== d.documentElement ? lg.getAttribute("lang") || "" : "",
-             secret: !!(at && at.closest && at.closest("[data-oros-noclip]")) };
+             secret: !!(at && at.closest && at.closest("[data-oros-noclip]")), win: w };
   }
 
   function copyText(text) {
@@ -979,7 +980,7 @@
       // READ-1: the whole selection (not the cut one), read on this device
       if (readOn()) {
         item(tr("sel.read"), IC_READ, function () {
-          root.orosRead.read({ text: s.text, lang: s.lang || "", app: s.app || "", secret: !!s.secret });
+          root.orosRead.read({ text: s.text, lang: s.lang || "", app: s.app || "", secret: !!s.secret, win: s.win });
         });
       }
       sep();
@@ -1026,7 +1027,7 @@
     b.addEventListener("click", function () {
       var r = b.getBoundingClientRect(), cur = chip ? chip.sel : s;
       hideChip();
-      if (readOnly) { if (readOn()) root.orosRead.read({ text: cur.text, lang: cur.lang || "", app: cur.app || "", secret: !!cur.secret }); return; }
+      if (readOnly) { if (readOn()) root.orosRead.read({ text: cur.text, lang: cur.lang || "", app: cur.app || "", secret: !!cur.secret, win: cur.win }); return; }
       openSelMenu(cur, r.left, r.bottom + 4);
     });
     doc.body.appendChild(b);

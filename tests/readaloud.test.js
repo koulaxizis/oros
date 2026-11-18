@@ -17,11 +17,13 @@ const L = require(path.join(ROOT, "library", "core.js"));
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 test("prefs: off unless { v:1, on:1 }; the speed is one of the list", () => {
-  assert.deepEqual(R.parsePrefs(null), { on: false, rate: 1 });
-  assert.deepEqual(R.parsePrefs("{"), { on: false, rate: 1 });
-  assert.deepEqual(R.parsePrefs({ v: 1, on: true }), { on: false, rate: 1 });
-  assert.deepEqual(R.parsePrefs(JSON.stringify({ v: 1, on: 1, rate: 1.4 })), { on: true, rate: 1.4 });
-  assert.deepEqual(R.parsePrefs({ v: 1, on: 1, rate: 7 }), { on: true, rate: 1 });
+  assert.deepEqual(R.parsePrefs(null), { on: false, rate: 1, vo: {} });
+  assert.deepEqual(R.parsePrefs("{"), { on: false, rate: 1, vo: {} });
+  assert.deepEqual(R.parsePrefs({ v: 1, on: true }), { on: false, rate: 1, vo: {} });
+  assert.deepEqual(R.parsePrefs(JSON.stringify({ v: 1, on: 1, rate: 1.4 })), { on: true, rate: 1.4, vo: {} });
+  assert.deepEqual(R.parsePrefs({ v: 1, on: 1, rate: 7 }), { on: true, rate: 1, vo: {} });
+  assert.deepEqual(R.parsePrefs({ v: 1, on: 1, rate: 1, vo: { el: "x", fr: "y", de: 3, en: "z".repeat(201) } }).vo, { el: "x" });
+  assert.deepEqual(R.prefsRecord({ on: true, rate: 1, vo: { el: "x" } }), { v: 1, on: 1, rate: 1, vo: { el: "x" } });
   assert.equal(R.prefsRecord({ on: false, rate: 2 }), null, "off = no key at all");
   assert.deepEqual(R.prefsRecord({ on: true, rate: 2 }), { v: 1, on: 1, rate: 2 });
   assert.equal(R.nextRate(2), 0.8);
@@ -97,6 +99,38 @@ test("Passwords, password and one-time code fields, data-oros-noclip are never r
   assert.equal(R.fieldSecret(elOf("P", {}, true)), true);
   assert.equal(R.fieldSecret(elOf("P", {})), false);
   assert.equal(R.fieldSecret(null), false);
+});
+
+test("W2 voices: the chosen one while it is local and of the language, else automatic", () => {
+  const voices = [
+    { lang: "el-GR", localService: true, name: "Μελίνα", voiceURI: "melina" },
+    { lang: "el-GR", localService: true, name: "Νίκος", voiceURI: "nikos", default: true },
+    { lang: "el-GR", localService: false, name: "Online", voiceURI: "online-el" },
+    { lang: "en-GB", localService: true, name: "Hazel", voiceURI: "hazel" }
+  ];
+  assert.equal(R.pickVoice(voices, "el", "melina").name, "Μελίνα");
+  assert.equal(R.pickVoice(voices, "el", "").name, "Νίκος");
+  assert.equal(R.pickVoice(voices, "el", "online-el").name, "Νίκος", "an online voice is never taken");
+  assert.equal(R.pickVoice(voices, "el", "hazel").name, "Νίκος", "a voice of another language is not taken");
+  assert.equal(R.pickVoice(voices, "el", "gone").name, "Νίκος");
+  assert.deepEqual(R.voicesOf(voices, "el").map((v) => v.uri), ["melina", "nikos"]);
+  assert.deepEqual(R.voicesOf(voices, "de"), []);
+  for (const l of R.VOICE_LANGS) assert.ok(R.SAMPLES[l], l + " sample");
+});
+
+test("W2 locate: a place in the text → its text node and offset", () => {
+  const segs = [{ ts: 0, len: 5 }, { ts: 6, len: 4 }, { ts: 10, len: 3 }];   // "Hello\nWorldFoo"
+  assert.deepEqual(R.locate(segs, 0), { i: 0, off: 0 });
+  assert.deepEqual(R.locate(segs, 4), { i: 0, off: 4 });
+  assert.deepEqual(R.locate(segs, 5, true), { i: 0, off: 5 }, "an end at a node's end stays in it");
+  assert.deepEqual(R.locate(segs, 5), { i: 1, off: 0 }, "the inserted line end belongs to the next node");
+  assert.deepEqual(R.locate(segs, 8), { i: 1, off: 2 });
+  assert.deepEqual(R.locate(segs, 13, true), { i: 2, off: 3 });
+  assert.deepEqual(R.locate(segs, 99), { i: 2, off: 3 });
+  assert.equal(R.locate([], 1), null);
+  for (const sel of ["button", "nav", "input", "[data-oros-noclip]", "[aria-hidden=true]", "[role=toolbar]"]) {
+    assert.ok(R.PAGE_SKIP.split(",").includes(sel), sel + " is never read in a page");
+  }
 });
 
 // ---------- the engine in a small stand-in page ----------
@@ -178,6 +212,9 @@ test("engine: refused texts, no local voice, Sensitive work and the lock", () =>
   let x = engine();
   assert.equal(x.E.read(null), false);
   assert.deepEqual(x.toasts, ["ra.nosel"]);
+  assert.equal(x.E.test("el", ""), true, "Test speaks a sample");
+  assert.equal(x.spoken[0].text, R.SAMPLES.el);
+  x.spoken.length = 0;
   assert.equal(x.E.read({ text: "secret", app: "notes", secret: true }), false);
   assert.equal(x.E.read({ text: "", app: "passwords" }), false);
   assert.equal(x.toasts.filter((t) => t === "ra.blocked").length, 2);
@@ -209,6 +246,8 @@ test("wiring: lazy engine, shortcut, settings, Quick settings, selection menu", 
   assert.match(shell, /read: window\.orosRead \? window\.orosRead\.snapshot\(\) : null/);
   assert.match(shell, /case "readAloud":/);
   assert.match(shell, /case "readRate":/);
+  assert.match(shell, /case "readVoice":/);
+  assert.match(shell, /case "read\.test":/);
   assert.match(shell, /var RA_KEY = "oros-readaloud"/);
   const qm = read("quickmenu.js");
   assert.match(qm, /function selMenuOk\(\) \{ return hasAssistant\(\) \|\| readOn\(\); \}/);
@@ -239,7 +278,8 @@ test("strings in English, Greek and German", () => {
     assert.ok(keys.includes(k), k + " is in the list above");
   }
   const sc = read("settings/core.js"), sde = read("i18n/de/settings.js");
-  for (const k of ["ac.read", "ac.read.on", "ac.read.hint", "ac.read.rate", "ac.read.none", "ac.read.strict", "w.readaloud", "w.readaloud-rate"]) {
+  for (const k of ["ac.read", "ac.read.on", "ac.read.hint", "ac.read.rate", "ac.read.none", "ac.read.strict", "w.readaloud", "w.readaloud-rate",
+    "ac.read.voice.en", "ac.read.voice.el", "ac.read.voice.de", "ac.read.auto", "ac.read.test", "ac.read.novoices", "ac.read.voices.hint", "w.readaloud-voice"]) {
     assert.equal(sc.split('"' + k + '":').length - 1, 2, k + " in Settings EN and EL");
     assert.ok(sde.includes('"' + k + '":'), k + " in Settings DE");
   }

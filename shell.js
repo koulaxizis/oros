@@ -12224,6 +12224,7 @@
       case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "readAloud":  if (window.orosRead) window.orosRead.setOn(!!value); return;      // READ-1
       case "readRate":   if (window.orosRead) window.orosRead.setRate(Number(value)); return;
+      case "readVoice":  if (window.orosRead && value && typeof value === "object") window.orosRead.setVoice(String(value.lang), String(value.uri || "")); return;
       case "textSize":
       case "contrast":
       case "focusRing":    a11ySetUser(name, value); return;
@@ -12316,6 +12317,7 @@
       case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
       case "clip.clear":      if (window.orosClip) window.orosClip.clear(); return;   // CLIP-1
       case "clip.open":       if (window.orosClip) window.orosClip.open(); return;
+      case "read.test":       if (window.orosRead) window.orosRead.test(String(arg)); return;   // READ-1 W2
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -16249,19 +16251,47 @@
   // loads readaloud.js (precached) and attaches it.
   (function () {
     var RA_KEY = "oros-readaloud", RA_RATES = [0.8, 1, 1.2, 1.4, 1.6, 2];
+    // vo (W2) = { en|el|de: voiceURI }, the voice chosen per language.
+    var RA_LANGS = ["en", "el", "de"];
     function raPrefs() {
       var o = null;
       try { o = JSON.parse(localStorage.getItem(RA_KEY) || "null"); } catch (e) { o = null; }
-      var on = !!(o && o.v === 1 && o.on === 1);
-      return { on: on, rate: on && RA_RATES.indexOf(o.rate) !== -1 ? o.rate : 1 };
+      var on = !!(o && o.v === 1 && o.on === 1), vo = {};
+      if (on && o.vo && typeof o.vo === "object") RA_LANGS.forEach(function (l) {
+        if (typeof o.vo[l] === "string" && o.vo[l] && o.vo[l].length <= 200) vo[l] = o.vo[l];
+      });
+      return { on: on, rate: on && RA_RATES.indexOf(o.rate) !== -1 ? o.rate : 1, vo: vo };
     }
     function raWrite(p) {
       try {
-        if (p.on) localStorage.setItem(RA_KEY, JSON.stringify({ v: 1, on: 1, rate: p.rate }));
+        var rec = { v: 1, on: 1, rate: p.rate };
+        if (p.vo && Object.keys(p.vo).length) rec.vo = p.vo;
+        if (p.on) localStorage.setItem(RA_KEY, JSON.stringify(rec));
         else localStorage.removeItem(RA_KEY);
       } catch (e) { return false; }
       return true;
     }
+    // The device's own voices per language (W2, Settings): local only.
+    function raVoices() {
+      var all = [];
+      try { all = window.speechSynthesis ? window.speechSynthesis.getVoices() || [] : []; } catch (e) { all = []; }
+      var p = raPrefs();
+      return RA_LANGS.map(function (l) {
+        var list = [];
+        for (var i = 0; i < all.length; i++) {
+          var v = all[i];
+          if (!v || v.localService !== true || String(v.lang || "").toLowerCase().split(/[-_]/)[0] !== l) continue;
+          list.push({ name: String(v.name || v.voiceURI || ""), uri: String(v.voiceURI || v.name || ""), lang: String(v.lang || "") });
+        }
+        list.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+        return { lang: l, list: list, pick: p.vo[l] || "" };
+      });
+    }
+    try {   // Chrome fills the list a moment later: Settings repaints
+      if (window.speechSynthesis && window.speechSynthesis.addEventListener) {
+        window.speechSynthesis.addEventListener("voiceschanged", function () { if (raPrefs().on) settingsNotify(); });
+      }
+    } catch (e) {}
     function raAvailable() { return !!(window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function"); }
     var raEngine = null, raLoading = null;
     var raHost = {
@@ -16269,6 +16299,7 @@
       lang: function () { return state.lang; },
       rate: function () { return raPrefs().rate; },
       setRate: function (r) { var p = raPrefs(); if (p.on && RA_RATES.indexOf(r) !== -1) { p.rate = r; raWrite(p); settingsNotify(); } },
+      voice: function (l) { return raPrefs().vo[l] || ""; },
       toast: function (kind, msg) { scToast(kind, msg); },
       changed: function () { settingsNotify(); }
     };
@@ -16312,16 +16343,26 @@
       // Settings › Accessibility
       snapshot: function () {
         var p = raPrefs();
-        return { on: p.on, rate: p.rate, rates: RA_RATES.slice(), strict: !!strictLevelNow(), available: raAvailable() };
+        return { on: p.on, rate: p.rate, rates: RA_RATES.slice(), strict: !!strictLevelNow(), available: raAvailable(),
+                 voices: p.on ? raVoices() : [] };
       },
       setOn: function (on) {
         var p = raPrefs();
         if (!!on === p.on) return;
         if (!on && raEngine) raEngine.stop();
-        raWrite({ on: !!on, rate: p.rate });
+        raWrite({ on: !!on, rate: p.rate, vo: on ? p.vo : {} });
         settingsNotify();
       },
       setRate: function (r) { raHost.setRate(Number(r)); if (raEngine) raEngine.refresh(); },
+      // W2: the voice for a language ("" = automatic), and Test
+      setVoice: function (l, uri) {
+        var p = raPrefs();
+        if (!p.on || RA_LANGS.indexOf(l) === -1) return;
+        if (typeof uri === "string" && uri && uri.length <= 200) p.vo[l] = uri; else delete p.vo[l];
+        raWrite(p);
+        settingsNotify();
+      },
+      test: function (l) { if (RA_LANGS.indexOf(l) !== -1) raThen(function (e) { e.test(l, raPrefs().vo[l] || ""); }); },
       refresh: function () { if (raEngine) raEngine.refresh(); }
     };
   })();

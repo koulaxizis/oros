@@ -608,6 +608,22 @@
           return { value: n, label: String(n).replace(".", dec) + "\u00d7" };
         }), r.rate, "readRate", function (v) { set("readRate", v); }, t("ac.read.rate"))));
       }
+      // W2: a voice per language, from this device's own voices, with Test
+      if (r.on && r.voices && r.voices.length) {
+        r.voices.forEach(function (g) {
+          var vr = row(t("ac.read.voice." + g.lang), null, g.list.length ? null : { hint: t("ac.read.novoices") });
+          if (g.list.length) {
+            var opts = [{ value: "", label: t("ac.read.auto") }].concat(g.list.map(function (v) {
+              return { value: v.uri, label: v.name + (v.lang ? " (" + v.lang + ")" : "") };
+            }));
+            var sel = select(opts, g.pick, "readVoice-" + g.lang, function (val) { set("readVoice", { lang: g.lang, uri: val }); });
+            sel.setAttribute("aria-label", t("ac.read.voice." + g.lang));
+            vr.appendChild(actions(sel, button(t("ac.read.test"), "readTest-" + g.lang, function () { act("read.test", g.lang); })));
+          }
+          c5.appendChild(vr);
+        });
+        c5.appendChild(el("p", "hint", t("ac.read.voices.hint")));
+      }
       if (!r.available) c5.appendChild(el("p", "hint", t("ac.read.none")));
       if (r.strict) c5.appendChild(el("p", "hint", t("ac.read.strict")));
       host.appendChild(c5);

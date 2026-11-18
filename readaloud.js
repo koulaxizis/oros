@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — readaloud.js (Read aloud, shell component, v1.0.0) [READ-1]
+// orOS — readaloud.js (Read aloud, shell component, v1.1.0) [READ-1]
 // ------------------------------------------------------------
 // Chris 2026-11-17 (big-OS ideas, item 4; plan
 // /mnt/project-files/read-aloud/plan.md): text selected in any orOS
@@ -32,6 +32,13 @@
 //     German when it reads like German, else English; no letters: the
 //     orOS language. No local voice for it → a note, nothing is read.
 //
+//   • 1.1.0 (W2): the sentence being read is lit up in the app (CSS
+//     Custom Highlight API: the app's DOM is never changed) and the
+//     page scrolls to it; nothing selected → the app's main text is
+//     read (not menus, buttons, fields, navigation or hidden parts;
+//     Chris 23:29 "Ναι, στο W2"); a voice per language (en, el, de)
+//     chosen in Settings › Accessibility, with Test (prefs vo).
+//
 // The pure part (section 1) is the same code as Library's
 // library/core.js speechParts / localVoice / speechText / guessLang;
 // tests/readaloud.test.js checks that both give the same results.
@@ -41,7 +48,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var KEY = "oros-readaloud";
   var RATES = [0.8, 1, 1.2, 1.4, 1.6, 2];
   var MAX_TEXT = 20000;
@@ -52,16 +59,29 @@
   // ---------- 1. Model (pure) ----------
   // The stored switch: { v:1, on:1, rate } → { on, rate }; anything
   // else is off at 1×.
+  // W2: vo = { <language>: voiceURI } for VOICE_LANGS, chosen in Settings.
+  var VOICE_LANGS = ["en", "el", "de"];
+  function cleanVo(vo) {
+    var out = {};
+    if (!vo || typeof vo !== "object" || Array.isArray(vo)) return out;
+    VOICE_LANGS.forEach(function (l) {
+      if (typeof vo[l] === "string" && vo[l] && vo[l].length <= 200) out[l] = vo[l];
+    });
+    return out;
+  }
   function parsePrefs(raw) {
     var o = null;
     try { o = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { o = null; }
     var on = !!(o && typeof o === "object" && o.v === 1 && o.on === 1);
     var rate = o && typeof o === "object" ? o.rate : 1;
-    return { on: on, rate: RATES.indexOf(rate) !== -1 ? rate : 1 };
+    return { on: on, rate: RATES.indexOf(rate) !== -1 ? rate : 1, vo: cleanVo(o && o.vo) };
   }
   function prefsRecord(p) {
     if (!p || !p.on) return null;                   // off = no key at all
-    return { v: 1, on: 1, rate: RATES.indexOf(p.rate) !== -1 ? p.rate : 1 };
+    var r = { v: 1, on: 1, rate: RATES.indexOf(p.rate) !== -1 ? p.rate : 1 };
+    var vo = cleanVo(p.vo);
+    if (Object.keys(vo).length) r.vo = vo;
+    return r;
   }
 
   // A text cut into parts to speak: sentences (". ! ? …", in Greek
@@ -185,19 +205,64 @@
     return /(^|\s)(one-time-code|current-password|new-password)(\s|$)/.test(ac);
   }
   function nextRate(r) { var i = RATES.indexOf(r); return RATES[(i + 1) % RATES.length]; }
+  // W2: the voice chosen for the language (voiceURI), when it is still
+  // installed, local and of that language; else localVoice.
+  function pickVoice(voices, lang, uri) {
+    var base = String(lang || "").toLowerCase().split(/[-_]/)[0];
+    if (uri && voices) {
+      for (var i = 0; i < (voices.length || 0); i++) {
+        var v = voices[i];
+        if (v && v.localService === true && v.voiceURI === uri &&
+            String(v.lang || "").toLowerCase().split(/[-_]/)[0] === base) return v;
+      }
+    }
+    return localVoice(voices, lang);
+  }
+  // The device's local voices of one language, for the Settings list.
+  function voicesOf(voices, lang) {
+    var out = [];
+    for (var i = 0; i < ((voices && voices.length) || 0); i++) {
+      var v = voices[i];
+      if (!v || v.localService !== true) continue;
+      if (String(v.lang || "").toLowerCase().split(/[-_]/)[0] !== lang) continue;
+      out.push({ name: String(v.name || v.voiceURI || ""), uri: String(v.voiceURI || v.name || ""), lang: String(v.lang || "") });
+    }
+    return out.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+  }
+  // What Test says, in the voice's own language.
+  var SAMPLES = { en: "This is how orOS reads aloud.", el: "Έτσι διαβάζει φωναχτά το orOS.", de: "So liest orOS vor." };
+  // W2: a place in the collected text → { i: segment, off: inside it }.
+  // segs = [{ ts: start in the text, len }], in order.
+  function locate(segs, pos, end) {
+    if (!segs || !segs.length) return null;
+    for (var i = 0; i < segs.length; i++) {
+      var g = segs[i];
+      if (pos < g.ts + g.len || (end && pos === g.ts + g.len)) return { i: i, off: Math.max(0, pos - g.ts) };
+    }
+    var last = segs[segs.length - 1];
+    return { i: segs.length - 1, off: last.len };
+  }
+  // W2, reading a whole page: the parts never read (selector for
+  // Element.closest) and the tags whose start begins a new line.
+  var PAGE_SKIP = "script,style,noscript,template,svg,button,input,select,textarea,option,nav,iframe,canvas,video,audio," +
+    "[aria-hidden=true],[hidden],[role=navigation],[role=toolbar],[role=menu],[role=menubar],[role=tablist],[role=tab]," +
+    "[role=button],[role=dialog]:not([open]),dialog:not([open]),[data-oros-noclip],[data-oros-noread]";
+  var BLOCK_TAGS = /^(P|DIV|LI|UL|OL|DL|DT|DD|H[1-6]|TR|TD|TH|TABLE|SECTION|ARTICLE|MAIN|HEADER|FOOTER|ASIDE|BLOCKQUOTE|PRE|FIGCAPTION|FORM|FIELDSET|DETAILS|SUMMARY|LABEL|HR|BR)$/;
 
   var model = { VER: VER, KEY: KEY, RATES: RATES, MAX_TEXT: MAX_TEXT, SKIP_APPS: SKIP_APPS,
                 parsePrefs: parsePrefs, prefsRecord: prefsRecord, speechParts: speechParts,
                 localVoice: localVoice, speechText: speechText, guessLang: guessLang,
                 germanish: germanish, langOf: langOf, prepare: prepare, appOk: appOk,
-                appOfPath: appOfPath, fieldSecret: fieldSecret, nextRate: nextRate };
+                appOfPath: appOfPath, fieldSecret: fieldSecret, nextRate: nextRate,
+                VOICE_LANGS: VOICE_LANGS, cleanVo: cleanVo, pickVoice: pickVoice, voicesOf: voicesOf,
+                SAMPLES: SAMPLES, locate: locate, PAGE_SKIP: PAGE_SKIP };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
   // ---------- 2. Shell side ----------
   var doc = document;
   var host = null, synth = root.speechSynthesis || null;
-  // st: { text, lang, parts, k, playing, gen, spoken }
+  // st: { text, lang, parts, k, playing, gen, spoken, win, segs }
   var st = null, gen = 0, bar = null, voicesWaited = false;
 
   function t(k, vars) {
@@ -244,7 +309,60 @@
     var n = sel.anchorNode, f = sel.focusNode;
     var ne = n && (n.nodeType === 1 ? n : n.parentElement), fe = f && (f.nodeType === 1 ? f : f.parentElement);
     var secret = !appOk(app) || fieldSecret(ne) || fieldSecret(fe);
-    return { text: secret ? "" : s, lang: langAt(n, d), app: app };
+    if (secret) return { text: "", lang: "", app: app };
+    // W2: the text with its place in the page, so the sentence read can
+    // be lit up; a part inside data-oros-noclip refuses the whole of it.
+    var c = call(function () { return collect(w, sel.getRangeAt(0), false); });
+    if (c && c.secret) return { text: "", lang: "", app: app };
+    if (c && /\S/.test(c.text)) return { text: c.text, lang: langAt(n, d), app: app, win: w, segs: c.segs };
+    return { text: s, lang: langAt(n, d), app: app };
+  }
+  // W2: the text nodes under root (inside range when given) as one
+  // text, a new line where a block starts, and where each node sits in
+  // it: { text, segs: [{ node, ns, ts, len }], secret }. page: a whole
+  // page, without the parts PAGE_SKIP names or that are not shown.
+  function blockOf(node, stop) {
+    for (var e = node.parentElement; e && e !== stop; e = e.parentElement) if (BLOCK_TAGS.test(e.tagName)) return e;
+    return stop;
+  }
+  function collect(w, range, page) {
+    var d = w.document;
+    var root = range ? range.commonAncestorContainer : (d.querySelector("main, [role=main], article") || d.body);
+    if (!root) return null;
+    if (root.nodeType === 3) root = root.parentNode;
+    var text = "", segs = [], lastBlock = null, secret = false;
+    var tw = d.createTreeWalker(root, 4, null);   // NodeFilter.SHOW_TEXT
+    for (var n = tw.nextNode(); n; n = tw.nextNode()) {
+      if (range && !range.intersectsNode(n)) continue;
+      var e = n.parentElement;
+      if (!e) continue;
+      if (/^(SCRIPT|STYLE|NOSCRIPT|TEMPLATE)$/.test(e.tagName)) continue;
+      if (page) {
+        if (e.closest(PAGE_SKIP)) continue;
+        if (!e.getClientRects().length) continue;      // not shown
+      } else if (e.closest("[data-oros-noclip]")) { secret = true; break; }
+      var a = 0, b = n.data.length;
+      if (range && n === range.startContainer) a = range.startOffset;
+      if (range && n === range.endContainer) b = range.endOffset;
+      if (b <= a) continue;
+      var blk = blockOf(n, root);
+      if (lastBlock && blk !== lastBlock && text && !/\n$/.test(text)) text += "\n";
+      lastBlock = blk;
+      segs.push({ node: n, ns: a, ts: text.length, len: b - a });
+      text += n.data.slice(a, b).replace(/\r/g, " ");   // same length: the places stay right
+      if (text.length > MAX_TEXT) break;
+    }
+    return { text: text, segs: segs, secret: secret };
+  }
+  // W2: nothing selected → the main text of the app in front.
+  function pageOf(f) {
+    var w = f && f.contentWindow, app;
+    try { app = appOfPath(w.location.pathname); } catch (e) { return null; }
+    if (!appOk(app)) return { text: "", lang: "", app: app };
+    var c = call(function () { return collect(w, null, true); });
+    if (!c || !/\S/.test(c.text)) return null;
+    var root = w.document.querySelector("main, [role=main], article") || w.document.body;
+    return { text: c.text, lang: langAt(root, w.document), app: app, win: w, segs: c.segs, page: true };
   }
   // The app in front first (the focused frame), then any app on screen
   // with text selected.
@@ -261,6 +379,12 @@
       var s = call(function () { return selIn(f.contentWindow); });
       if (s) return s;
     }
+    // W2: no selection anywhere: the page of the app in front
+    for (var j = 0; j < list.length; j++) {
+      var g = list[j], gr = g.getBoundingClientRect ? g.getBoundingClientRect() : null;
+      if ((g.closest && g.closest("#qa-mini")) || (gr && (!gr.width || !gr.height))) continue;
+      return pageOf(g);
+    }
     return null;
   }
 
@@ -269,7 +393,8 @@
     if (!synth || !lang) return null;
     var list = [];
     try { list = synth.getVoices() || []; } catch (e) { list = []; }
-    return localVoice(list, lang);
+    var uri = host && host.voice ? call(function () { return host.voice(lang.split("-")[0]); }) : "";
+    return pickVoice(list, lang, uri);
   }
   // Chrome fills the list a moment after the first ask: wait once.
   function waitVoices(cb) {
@@ -289,6 +414,11 @@
   function rate() { var r = host && host.rate ? call(host.rate) : 1; return RATES.indexOf(r) !== -1 ? r : 1; }
   // Read a selection { text, lang, app }; false when it was refused.
   function read(sel) {
+    // the selection menu's text: take it again with its place in the page
+    if (sel && sel.win && !sel.segs && sel.text) {
+      var again = call(function () { return selIn(sel.win); });
+      sel = again && again.text && again.segs ? again : { text: sel.text, lang: sel.lang, app: sel.app };
+    }
     if (!sel) { toast("", "ra.nosel"); return false; }
     if (strictOn()) { toast("err", "ra.strict"); return false; }
     if (locked()) return false;
@@ -300,7 +430,8 @@
     var parts = speechParts(p.text, p.breaks, lang.split("-")[0]);
     if (!parts.length) { toast("", "ra.nosel"); return false; }
     stop(true);
-    st = { text: p.text, lang: lang, parts: parts, k: 0, playing: true, gen: ++gen, spoken: 0 };
+    st = { text: p.text, lang: lang, parts: parts, k: 0, playing: true, gen: ++gen, spoken: 0,
+           win: sel.segs ? sel.win : null, segs: sel.segs || null };
     if (p.cut) toast("", "ra.cut", { n: MAX_TEXT.toLocaleString() });
     draw();
     speak();
@@ -342,7 +473,61 @@
       toast("err", "ra.fail");
     };
     try { if (synth.speaking || synth.pending) synth.cancel(); } catch (e) {}
+    mark(p);
     synth.speak(u);
+  }
+  // ---------- 5b. The sentence lit up in the app (W2) ----------
+  // CSS Custom Highlight API: a highlight over a Range, no change to the
+  // app's DOM (so never to its data); browsers without it read unlit.
+  var HL = "oros-read";
+  function mark(p) {
+    if (!st || !st.segs || !st.win) return;
+    var w = st.win;
+    call(function () {
+      if (!w.CSS || !w.CSS.highlights || typeof w.Highlight !== "function") return;
+      var a = locate(st.segs, p.a, false), b = locate(st.segs, p.b, true);
+      if (!a || !b) return;
+      var sa = st.segs[a.i], sb = st.segs[b.i];
+      if (!sa.node.isConnected || !sb.node.isConnected) { clearMark(); return; }
+      var r = w.document.createRange();
+      r.setStart(sa.node, sa.ns + Math.min(a.off, sa.len));
+      r.setEnd(sb.node, sb.ns + Math.min(b.off, sb.len));
+      if (!w.document.getElementById("oros-read-hl")) {
+        var css = w.document.createElement("style");
+        css.id = "oros-read-hl";
+        css.textContent = "::highlight(" + HL + "){background-color:rgba(255,196,0,.42);color:inherit}" +
+          "@media (forced-colors:active){::highlight(" + HL + "){background-color:Highlight;color:HighlightText}}";
+        (w.document.head || w.document.documentElement).appendChild(css);
+      }
+      w.CSS.highlights.set(HL, new w.Highlight(r));
+      // the page follows the voice
+      var box = r.getBoundingClientRect();
+      if (box && (box.top < 0 || box.bottom > w.innerHeight)) {
+        var el = sa.node.parentElement;
+        var still = call(function () { return w.matchMedia("(prefers-reduced-motion: reduce)").matches; });
+        if (el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: still ? "auto" : "smooth" });
+      }
+    });
+  }
+  function clearMark(w) {
+    w = w || (st && st.win);
+    if (w) call(function () { w.CSS.highlights.delete(HL); });
+  }
+  // Test (Settings): a short sentence in that language and voice.
+  function test(lang, uri) {
+    if (!available() || strictOn() || locked()) return false;
+    stop(true);
+    var list = [];
+    try { list = synth.getVoices() || []; } catch (e) {}
+    var v = pickVoice(list, lang, uri);
+    if (!v) { toast("err", "ra.novoice"); return false; }
+    var u = new root.SpeechSynthesisUtterance(SAMPLES[lang] || SAMPLES.en);
+    u.lang = v.lang || lang;
+    u.voice = v;
+    u.rate = rate();
+    try { synth.cancel(); } catch (e) {}
+    synth.speak(u);
+    return true;
   }
   // A pause is a cancel that keeps the sentence (pause() is not
   // reliable on Android); play reads that sentence again.
@@ -365,6 +550,7 @@
   }
   function stop(quiet) {
     var was = !!st;
+    if (was) clearMark(st.win);
     st = null;
     gen++;
     if (was) { try { synth.cancel(); } catch (e) {} }
@@ -471,7 +657,8 @@
 
   // ---------- 7. Public API ----------
   // host = { frames() → app iframes, lang() → "en"|"el"|"de",
-  //          rate(), setRate(r), toast(kind, msg), changed() }
+  //          rate(), setRate(r), voice(lang) → voiceURI or "" (W2),
+  //          toast(kind, msg), changed() }
   function attach(h) {
     if (host) return;
     host = h || {};
@@ -493,6 +680,7 @@
     // a selection the menu already took: { text, lang, app, secret }
     read: function (s) { return read(s && s.secret ? { text: "", lang: "", app: s.app } : s); },
     stop: function () { stop(); },
+    test: test,
     pause: pause,
     play: play,
     active: function () { return !!st; },
