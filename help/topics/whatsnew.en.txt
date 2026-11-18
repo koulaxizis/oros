@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.60.00
+- **Colour filters and a larger pointer.** In Settings › Accessibility, `Colour filter` turns the whole screen grey, helps tell red from green or blue from yellow (with a strength), or inverts the colours while photos and videos stay as they are. `Pointer size` makes the mouse pointer Large or Extra large. A new `Colour filter` button in Quick settings turns the last filter on and off. Both stay on this device.
+
 ## Version 7.59.00
 - **Layout sets plays and finishes books.** Paragraph styles can give the start of each paragraph its own character style, up to a character you choose: a play's speaker in bold capitals up to the colon. `Styles for a play` under Paragraph styles adds the cast list, act, scene, dialogue, stage direction and song styles in one go. The Assistant and Claude (through orOS Gate) can now make and change styles, add text frames (also over a page picture, to retypeset it as live text), give a story new text, and add your house style's front and back pages to a book, with the title, author and ISBN filled in and blank pages so the page count comes out right for the printer.
 
