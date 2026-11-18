@@ -40,6 +40,7 @@ So funktioniert es: orOS legt die Erinnerungen der nächsten 7 Tage im orOS-Rela
 
 Gut zu wissen:
 - Auf einem Computer muss der Browser im Hintergrund weiterlaufen, das orOS-Fenster selbst darf aber geschlossen sein. Chrome und Edge unter Windows machen das standardmäßig. Unter Linux und in Firefox lass den Browser offen.
+- Brave hat seinen Push-Dienst standardmäßig aus: Schalte unter `brave://settings/privacy` „Use Google services for push messaging“ ein, starte Brave neu und schalte dann den Schalter ein. Erinnerungen laufen dann verschlüsselt über Google.
 - Android-Handys bekommen sie auch bei geschlossenem Chrome. In der orOS-App für Android ist dieser Schalter ausgeblendet, weil die App Erinnerungen selbst klingeln lässt (siehe unten).
 - Der Ton ist der Benachrichtigungston deines Systems, nicht der orOS-Klingelton. Wecker bleiben auf dem Bildschirm, bis du darauf tippst.
 - Solange orOS auf dem Bildschirm ist, zeigt es Erinnerungen selbst an, du bekommst also nie dieselbe doppelt.

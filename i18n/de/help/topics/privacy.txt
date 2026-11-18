@@ -85,3 +85,6 @@ orOS speichert sich und seine Apps auf deinem Gerät, deshalb öffnet und funkti
 - Was das Internet braucht, wartet darauf. Das Wettersymbol zeigt eine durchgestrichene Wolke statt einer erfundenen Temperatur, und Online-Dienste wie Karten, Radio- und TV-Kataloge kommen zurück, sobald du online bist.
 - Änderungen, die du offline machst, bleiben auf dem Gerät. Mit eingeschalteter Synchronisierung werden sie gesendet, sobald du wieder online bist.
 - Wurde eine App noch nicht für die Offline-Nutzung gespeichert, siehst du stattdessen eine kurze Meldung. Öffne sie einmal, während du online bist.
+
+## Nutzung auf eigene Gefahr
+orOS und alle seine Apps, die Synchronisierung, die Installer, orOS Portable, der orOS USB, orOS Drive und die Android-Apps sind freie Software, bereitgestellt „wie besehen“, ohne jede Gewährleistung (MIT-Lizenz). Für deine eigenen Daten bist du selbst verantwortlich: Mach [Sicherungen](help:t/backup) und lass die [Synchronisierung](help:t/sync) eingeschaltet. Soweit gesetzlich zulässig, übernehmen die Macher von orOS und alle, die dazu beitragen, keine Haftung für Datenverlust oder andere Schäden aus der Nutzung von orOS. Der vollständige Text steht in der [Datenschutzerklärung](https://useoros.online/privacy.html?lang=en#disclaimer).

@@ -32,6 +32,8 @@ const GATE_ONLY = {
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
   kanban_change_card: { twin: ["change_item"] },
+  // INV-EXT (Chris 2026-11-18 card «Νέο εργαλείο στο Gate»)
+  invoices_record: { why: "Recording a batch of documents issued at another provider is bookkeeping import Claude does from outside (an export of that provider); inside orOS the owner records one with Invoices › New › Record an invoice issued elsewhere." },
   // GATE-FILES F2: the Assistant runs on the device and reads the live disk (files_read); a download link is for a cloud thread with orOS closed
   files_link: { why: "A one-time download link from the owner's sealed copy is for Claude working from outside with orOS closed; the Assistant runs on the device and reads the live file with files_read." }
 };
