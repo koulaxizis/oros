@@ -69,8 +69,18 @@
   CATALOG.house_pages = { kind: "doc", args: { house: { t: "str", max: 120 }, where: { t: "enum", v: ["both", "front", "back", "none"], def: "both" },
     pad: { t: "enum", v: [0, 2, 4, 8, 16], def: 0 }, keep_side: { t: "bool", def: 1 },
     title: { t: "str", max: 120 }, subtitle: { t: "str", max: 200 }, author: { t: "str", max: 200 }, isbn: { t: "str", max: 20 }, year: { t: "str", max: 4 }, publisher: { t: "str", max: 120 } } };
-  var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"];
-  var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"]);
+  // LY-PRO W3 (items 3, 4): sections with their own numbering, pages
+  // moved and copied by range, masters by range and based on masters.
+  var RANGE = { t: "str", max: 60, req: 1 };
+  CATALOG.section = { kind: "doc", args: { page: { t: "int", lo: 1, hi: 9999, def: 1, req: 1 }, start: { t: "int", lo: -1, hi: 9999, def: -1 },
+    numstyle: { t: "enum", v: ["1", "i", "I", "a", "A"], def: "1" }, prefix: { t: "str", max: 8 }, off: { t: "bool", def: 0 } } };
+  CATALOG.movepages = { kind: "doc", args: { pages: RANGE, before: { t: "int", lo: 0, hi: 9999, def: 0 } } };
+  CATALOG.duppages = { kind: "doc", args: { pages: RANGE } };
+  CATALOG.masterpages = { kind: "doc", args: { pages: RANGE, master: { t: "str", max: 60 } } };
+  CATALOG.defmaster = { kind: "doc", args: { name: { t: "str", max: 60, req: 1 }, prefix: { t: "str", max: 8 }, base: { t: "str", max: 60 } } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster"];
+  var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
+  var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
   var MAX_STEPS = 40;
 
@@ -98,7 +108,12 @@
     "\nretext: the paragraphs of a story (story id, or the frame id of one of its frames, as the document's frames list shows) become `lines` (same marks as frame; style the default)" +
     "\nhouse_pages: the front and back pages of the house style document `house` (or the only one) are added before and after the book, scaled to its trim, their fields " +
     "({title} {subtitle} {author} {isbn} {year} {publisher}) filled from title subtitle author isbn year publisher or the Publishing app's title of that name; " +
-    "where both|front|back|none, pad 0|2|4|8|16 adds blank pages before the back pages so the page count is a multiple of pad, keep_side true keeps the first page of the book on its side";
+    "where both|front|back|none, pad 0|2|4|8|16 adds blank pages before the back pages so the page count is a multiple of pad, keep_side true keeps the first page of the book on its side" +
+    "\nsection: page `page` opens a section: start the number it gets (-1 = the count goes on), numstyle 1 | i | I (roman) | a | A (letters), prefix (up to 8 characters, e.g. A-); off true removes the section (page numbers and contents follow)" +
+    "\nmovepages: the pages `pages` (e.g. 3-5,9) go, in their order, before page `before` (0 = to the end)" +
+    "\nduppages: copies of the pages `pages` (with their own copy of the text) go after the last of them" +
+    "\nmasterpages: the pages `pages` (all, odd, even or 3-10) get the master `master` by name (\"\" = none)" +
+    "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)";
 
   // ---------- 1. Checking ----------
   function given(v) { return v !== null && v !== undefined && v !== ""; }
@@ -187,6 +202,15 @@
       var hp = PRO.housePages(doc, house, meta, { where: st.where, pad: st.pad, keep: st.keep_side }, now, env.idf, env.fill || null);
       return hp.front + hp.back + hp.blank;
     }
+    if (st.op === "section") return PRO.setSection(doc, st, now);
+    if (st.op === "movepages") return PRO.movePages(doc, S.pageTest(st.pages), st.before, now);
+    if (st.op === "duppages") return PRO.dupPages(doc, S.pageTest(st.pages), now, env.idf);
+    if (st.op === "masterpages") {
+      var msx = st.master ? PRO.styleNamed(doc.masters, st.master) : null;
+      if (st.master && !msx) { if (env.notes && env.notes.indexOf("noMaster") < 0) env.notes.push("noMaster"); return 0; }
+      return PRO.masterPages(doc, S.pageTest(st.pages), msx ? msx.id : "", now);
+    }
+    if (st.op === "defmaster") return PRO.defMaster(doc, st, now, env.idf);
     if (!hasEngine()) {
       if (st.op === "fit") { if (env.notes && env.notes.indexOf("fitLater") < 0) env.notes.push("fitLater"); return 1; }
       if (st.op === "pages" && st.flow) st = Object.assign({}, st, { flow: 0 });

@@ -550,6 +550,12 @@
     });
     body.appendChild(tools);
     if (cur && !ED.master) body.appendChild(field(t("props.pageMaster"), masterSelect(cur)));
+    // sections (LY-PRO W3): this page opens a section with its own numbers
+    if (cur && !ED.master && window.LayoutPro) {
+      var sc0 = M.secOfPage(cur);
+      body.appendChild(btn(sc0 ? t("pages.secEdit") : t("pages.secNew"), function () { sectionDlg(cur.id); }, "small"));
+    }
+    var labels = M.pageLabels(doc);
 
     var list = el("div", "spreads");
     var L = ED.L;
@@ -569,7 +575,7 @@
         if (img) holder.appendChild(img);
         tile.appendChild(holder);
         var ms = p.ms ? M.find(doc.masters, p.ms) : null;
-        tile.appendChild(el("span", "pg-n", (ms ? ms.pre + " · " : "") + n));
+        tile.appendChild(el("span", "pg-n", (ms ? ms.pre + " · " : "") + labels[n - 1].label + (M.secOfPage(p) ? " §" : "")));
         tile.addEventListener("click", function () { if (ED.master) ED.enterMaster(null); ED.scrollToPage(p.id); setTimeout(function () { refresh(true); }, 30); });
         srow.appendChild(tile);
       });
@@ -590,6 +596,7 @@
         LY.menu(more, [
           { label: t("pages.renameMaster"), fn: function () { renameMaster(m.id); } },
           { label: t("pages.applyMaster"), disabled: !cur || !!ED.master, fn: function () { LY.op(function (doc2, now) { var p = M.find(doc2.pages, cur.id); p.ms = m.id; M.touch(p, now); }); } },
+          { label: t("pages.baseMaster"), fn: function () { baseDlg(m.id); } },
           { label: t("pages.delMaster"), danger: true, fn: function () { delMaster(m.id); } }
         ]);
       });
@@ -598,6 +605,55 @@
     });
     ms.appendChild(btn(t("pages.newMaster"), newMaster, "small"));
     body.appendChild(ms);
+  }
+
+  // A section: start number (empty = the count goes on), number style
+  // and prefix; Remove takes it away.
+  function sectionDlg(pgId) {
+    var pg = M.find(LY.doc.pages, pgId);
+    if (!pg) return;
+    var sc = M.secOfPage(pg) || { n: -1, f: "1", pre: "" }, had = !!M.secOfPage(pg);
+    LY.openDialog(t("pages.secTitle"), function (body, close) {
+      var start = el("input", "inp num"); start.type = "number"; start.min = 0; start.max = 9999; start.value = sc.n >= 0 ? sc.n : "";
+      start.placeholder = t("pages.secGoOn");
+      body.appendChild(field(t("pages.secStart"), start));
+      var f = sc.f;
+      body.appendChild(field(t("pages.secStyle"), select([["1", "1, 2, 3"], ["i", "i, ii, iii"], ["I", "I, II, III"], ["a", "a, b, c"], ["A", "A, B, C"]], f, function (v) { f = v; })));
+      var pre = el("input", "inp"); pre.type = "text"; pre.maxLength = 8; pre.value = sc.pre;
+      body.appendChild(field(t("pages.secPrefix"), pre));
+      var act = el("div", "dlg-actions");
+      function apply(off) {
+        close();
+        var n = start.value === "" ? -1 : Math.max(0, Math.min(9999, Math.floor(+start.value) || 0));
+        var pos = M.pagesInOrder(LY.doc).findIndex(function (p) { return p.id === pgId; }) + 1;
+        LY.op(function (d2, now) { return window.LayoutPro.setSection(d2, { page: pos, start: n, numstyle: f, prefix: pre.value, off: off }, now) ? undefined : false; });
+      }
+      if (had) act.appendChild(btn(t("pages.secRemove"), function () { apply(1); }, "danger"));
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.cancel"), close));
+      act.appendChild(btn(t("btn.save"), function () { apply(0); }));
+      body.appendChild(act);
+    });
+  }
+  // A master based on another: its objects show under this one's.
+  function baseDlg(msId) {
+    var m = M.find(LY.doc.masters, msId);
+    if (!m) return;
+    var cur = m.ext && m.ext.base ? m.ext.base : "";
+    LY.openDialog(t("pages.baseMaster"), function (body, close) {
+      var opts = [["", t("pages.baseNone")]].concat(LY.doc.masters.filter(function (x) { return x.id !== msId; }).map(function (x) { return [x.id, x.pre + " · " + LY.label(x.name)]; }));
+      var v = cur;
+      body.appendChild(field(LY.label(m.name), select(opts, cur, function (x) { v = x; })));
+      var act = el("div", "dlg-actions");
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.cancel"), close));
+      act.appendChild(btn(t("btn.save"), function () {
+        close();
+        var b = v ? M.find(LY.doc.masters, v) : null;
+        LY.op(function (d2, now) { return window.LayoutPro.defMaster(d2, { name: msId, base: b ? b.id : "none" }, now) ? undefined : false; });
+      }));
+      body.appendChild(act);
+    });
   }
 
   function thumbImg(doc, p, L, tw) {
