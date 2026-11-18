@@ -1554,6 +1554,7 @@ var PRECACHE_URLS = [
   "emptykit.js",
   "emptykit.css",
   "emptykit-ex.js",
+  "vizkit.js",
   "bundle.js",
   "recordpkg.js",
   "habits/package.js",
