@@ -857,6 +857,21 @@ body {
 }
 #oros-running.active { display: block; }
 #oros-running iframe { width: 100%; height: 100%; border: none; display: block; }
+/* ZOOM-1: the panel that shrinks into the icon or the Dock when an
+   app closes (shell.js zoomClose; drawn only when motion is allowed).
+   Above the running view, under the Dock (950) and its edge (949). */
+#oros-zoom {
+  position: fixed;
+  z-index: 940;
+  pointer-events: none;
+  transform-origin: 0 0;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel-bg, var(--bg)));
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 34px var(--shadow, rgba(0,0,0,.35));
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) { #oros-zoom { display: none; } }
 
 /* ---------- 7. Appearance controls (in menu) ---------- */
 .skin-section {

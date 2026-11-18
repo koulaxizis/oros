@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 47275 of 47275 (100%)
-- Help pages: 155 of 155 (100%)
+- Strings: 47378 of 47378 (100%)
+- Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
 "in the code": a shared module or a public page that runs where no
@@ -130,7 +130,8 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 1705 / 1705 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1382 / 1382 |
+| shell | 100% | 1383 / 1383 |
+| shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |

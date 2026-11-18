@@ -888,3 +888,8 @@ body.tr-open { overflow: hidden; }
 .rp-item .actions { margin: 0; }
 
 .rp-io { margin-top: 12px; display: grid; gap: 6px; }
+/* Accessibility › Colour filter: sample colours (shown through the filter). */
+.a11y-swatches { display: flex; gap: 6px; margin: 4px 0 10px; }
+.a11y-sw { flex: 1 1 0; height: 22px; border-radius: 6px; border: 1px solid var(--border, rgba(127,127,127,.35)); }
+.a11y-sw1 { background: #d62828; } .a11y-sw2 { background: #2a9d3c; } .a11y-sw3 { background: #e9c46a; }
+.a11y-sw4 { background: #1d6fd1; } .a11y-sw5 { background: #8e44ad; } .a11y-sw6 { background: #f08c00; }
