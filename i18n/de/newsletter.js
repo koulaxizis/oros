@@ -1058,5 +1058,6 @@ orosPack("de", "newsletter", {
  "fm.popHtml": "HTML des Pop-ups",
  "pop.title": "Bleib in Kontakt mit {l}",
  "pop.text": "Ab und zu Neuigkeiten, direkt in dein Postfach. Abmelden geht mit einem Klick.",
- "pop.close": "Schließen"
+ "pop.close": "Schließen",
+ "fm.ocOnly": "Abmelden mit einem Klick ist für diese Liste schon an, aber das öffentliche Formular ist zu: das Relay weist Anmeldungen ab, bis du es hier einrichtest."
 });

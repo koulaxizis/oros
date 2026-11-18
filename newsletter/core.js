@@ -327,7 +327,10 @@
     var back = safeUrl(f.back);
     return { k: f.k, sec: f.sec, priv: priv, back: /^https:\/\//i.test(back) && back.length <= 300 ? back : "",
              dev: typeof f.dev === "string" && /^[a-z0-9]{6,20}$/.test(f.dev) ? f.dev : "", at: nat(f.at),
-             shk: typeof f.shk === "string" && SHOP_KEY.test(f.shk) ? f.shk : "" };
+             shk: typeof f.shk === "string" && SHOP_KEY.test(f.shk) ? f.shk : "",
+             // MV-1 W3: registered for one-click unsubscribe only (the relay
+             // refuses sign-ups until the form is set up); 0 = the form is open
+             oc: f.oc === 1 ? 1 : 0 };
   }
   // N2: the shop key a checkout sign-up is signed with (orOS Connect:
   // sig = HMAC-SHA256(key, lower-case e-mail + "|" + ts), ts in seconds).

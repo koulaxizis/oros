@@ -133,7 +133,7 @@ In `Anmeldelink` macht `Formular einrichten` ein Formular für deine eigene Webs
 
 Ist das Formular an, hat jede Ausgabe auch einen Ein-Klick-Abmeldelink, und Gmail und andere Mail-Apps zeigen ihren eigenen Abmelden-Knopf.
 
-Auch ohne Formular auf deiner Website bietet `Prüfen` `Abmeldung mit einem Klick einschalten` an, wenn eine Liste sie nicht hat: die Liste wird beim Relay genauso angemeldet, und jede Ausgabe bekommt den Ein-Klick-Link. Eine neue Liste bekommt die Abmeldung mit einem Klick, sobald sie angelegt ist (ohne öffentliches Formular), und eine ältere Liste bietet sie unter `Listen` einmal an.
+Auch ohne Formular auf deiner Website bietet `Prüfen` `Abmeldung mit einem Klick einschalten` an, wenn eine Liste sie nicht hat: die Liste wird beim Relay genauso angemeldet, und jede Ausgabe bekommt den Ein-Klick-Link. Eine neue Liste bekommt die Abmeldung mit einem Klick, sobald sie angelegt ist (ohne öffentliches Formular), und eine ältere Liste bietet sie unter `Listen` einmal an. Bis du das Formular einrichtest, weist das Relay Anmeldungen für eine solche Liste ab; nur die Ein-Klick-Links funktionieren.
 
 >! Anmeldungen werden auf einem Gerät abgeholt, dem, das das Formular eingerichtet hat. Mit `Hier abholen` änderst du das. `Formular ausschalten` löscht, was das Relay hält, und die Ein-Klick-Links in schon versendeten Ausgaben funktionieren nicht mehr; der Weg per E-Mail funktioniert weiter.
 

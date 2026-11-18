@@ -72,7 +72,7 @@ test("oneClickOffers: lists without the relay registration whose offer was never
 
 test("one-click at creation: a new list registers with the relay, turning the form off sets ocAsk", () => {
   const ui = read("newsletter/newsletter.js"), en = read("newsletter/engine.js");
-  assert.match(ui, /if \(!l\) E\.formOn\(rec\.id, ""\)/);
+  assert.match(ui, /if \(!l\) E\.formOn\(rec\.id, "", 1\)/);
   assert.match(en, /y\.form = null;\s*\n\s*if \(!y\.ocAsk\) y\.ocAsk = Date\.now\(\);/);
 });
 
@@ -188,4 +188,20 @@ test("pop-up strings exist in English, Greek and German", () => {
     assert.equal(ui.split('"' + k + '": ').length - 1, 2, k + " in EN and EL");
     assert.ok(de.indexOf('"' + k + '": ') >= 0, k + " in DE");
   });
+});
+
+// ---------- W3: one-click only at the relay ----------
+test("one-click-only lists: oc kept in the form, sent to the relay only when chosen", () => {
+  const f = { k: "abcdefghij012345", sec: "A".repeat(32), priv: { kty: "RSA", n: "n", e: "AQAB", d: "d", p: "p", q: "q", dp: "dp", dq: "dq", qi: "qi" } };
+  assert.equal(C.normForm(Object.assign({}, f, { oc: 1 })).oc, 1);
+  assert.equal(C.normForm(f).oc, 0);
+  assert.equal(C.normForm(Object.assign({}, f, { oc: "1" })).oc, 0);
+  const ui = read("newsletter/newsletter.js"), en = read("newsletter/engine.js");
+  // creation, the offer and Check ask for one-click only; "Set up the form" opens it
+  assert.equal((ui.match(/E\.formOn\([a-z.]+, "", 1\)/g) || []).length, 3);
+  assert.match(ui, /E\.formOn\(l\.id, l\.form \? l\.form\.back : "", 0\)/);
+  assert.match(ui, /if \(!l\.form \|\| l\.form\.oc\)/);
+  assert.match(en, /if \(oc === 0 \|\| oc === 1\) req\.oc = oc;/);
+  assert.equal(ui.split('"fm.ocOnly": ').length - 1, 2);
+  assert.ok(read("i18n/de/newsletter.js").indexOf('"fm.ocOnly": ') >= 0);
 });

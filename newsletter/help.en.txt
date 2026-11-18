@@ -133,7 +133,7 @@ In `Subscribe link`, `Set up the form` makes a form for your own website: copy i
 
 With the form on, every issue also has a one-click unsubscribe link, and Gmail and other mail apps show their own Unsubscribe button.
 
-Even without the form on your site, `Check` offers `Turn on one-click unsubscribe` when a list doesn't have it: the list is registered with the relay the same way, and every issue gets the one-click link. A new list gets one-click unsubscribe as soon as it is made (no public form opens), and a list from before offers it once on `Lists`.
+Even without the form on your site, `Check` offers `Turn on one-click unsubscribe` when a list doesn't have it: the list is registered with the relay the same way, and every issue gets the one-click link. A new list gets one-click unsubscribe as soon as it is made (no public form opens), and a list from before offers it once on `Lists`. Until you use `Set up the form`, the relay turns sign-ups for such a list away, so only the one-click links work.
 
 >! Sign-ups are collected on one device, the one that set the form up. Use `Collect here` to change it. `Turn the form off` deletes what the relay holds, and the one-click links in issues already sent stop working; the e-mail way keeps working.
 
