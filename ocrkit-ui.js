@@ -39,7 +39,9 @@
       fail: "The text could not be read.", again: "Try again", close: "Close", hint: "Drag over the text to select it",
       sel1: "1 word selected", seln: "{n} words selected", copy: "Copy", copyAll: "Copy all", text: "Text", send: "Send to…",
       copied: "Copied", copyFail: "This browser could not copy. Select the text in the Text panel instead.",
-      panel: "All text found (you can correct it before copying)", panelCopy: "Copy this text"
+      panel: "All text found (you can correct it before copying)", panelCopy: "Copy this text",
+      found: "Found in the text", c_url: "Open {v}", c_event: "Add to Calendar: {v}", c_email: "Write to {v} in Mail",
+      c_phone: "Call {v}", c_contact: "Add to Contacts", contact: "New contact"
     },
     el: {
       label: "Κείμενο στην εικόνα", ask: "Για να διαβάσει κείμενο, το orOS κατεβάζει μία φορά τη μηχανή αναγνώρισης κειμένου (Tesseract, περίπου 7 MB, ελληνικά και αγγλικά) από τη δική του σελίδα. Μετά δουλεύει χωρίς σύνδεση και τίποτα δεν φεύγει από αυτή τη συσκευή.",
@@ -48,7 +50,9 @@
       fail: "Το κείμενο δεν διαβάστηκε.", again: "Ξανά", close: "Κλείσιμο", hint: "Σύρε πάνω στο κείμενο για να το επιλέξεις",
       sel1: "Επιλέχθηκε 1 λέξη", seln: "Επιλέχθηκαν {n} λέξεις", copy: "Αντιγραφή", copyAll: "Αντιγραφή όλων", text: "Κείμενο", send: "Αποστολή σε…",
       copied: "Αντιγράφηκε", copyFail: "Αυτός ο browser δεν αντέγραψε. Επίλεξε το κείμενο στο πλαίσιο Κείμενο.",
-      panel: "Όλο το κείμενο που βρέθηκε (μπορείς να το διορθώσεις πριν το αντιγράψεις)", panelCopy: "Αντιγραφή αυτού του κειμένου"
+      panel: "Όλο το κείμενο που βρέθηκε (μπορείς να το διορθώσεις πριν το αντιγράψεις)", panelCopy: "Αντιγραφή αυτού του κειμένου",
+      found: "Βρέθηκαν στο κείμενο", c_url: "Άνοιγμα {v}", c_event: "Προσθήκη στο Ημερολόγιο: {v}", c_email: "Γράψε στο {v} από το Mail",
+      c_phone: "Κλήση {v}", c_contact: "Προσθήκη στις Επαφές", contact: "Νέα επαφή"
     },
     de: {
       label: "Text im Bild", ask: "Um Text zu lesen, lädt orOS einmal seine Texterkennung (Tesseract, etwa 7 MB, Griechisch und Englisch) von der eigenen Seite. Danach funktioniert sie offline, und nichts verlässt dieses Gerät.",
@@ -57,7 +61,9 @@
       fail: "Der Text konnte nicht gelesen werden.", again: "Erneut", close: "Schließen", hint: "Zum Auswählen über den Text ziehen",
       sel1: "1 Wort ausgewählt", seln: "{n} Wörter ausgewählt", copy: "Kopieren", copyAll: "Alles kopieren", text: "Text", send: "Senden an…",
       copied: "Kopiert", copyFail: "Dieser Browser konnte nicht kopieren. Wähle den Text stattdessen im Textfeld aus.",
-      panel: "Der ganze gefundene Text (du kannst ihn vor dem Kopieren korrigieren)", panelCopy: "Diesen Text kopieren"
+      panel: "Der ganze gefundene Text (du kannst ihn vor dem Kopieren korrigieren)", panelCopy: "Diesen Text kopieren",
+      found: "Im Text gefunden", c_url: "{v} öffnen", c_event: "Zum Kalender hinzufügen: {v}", c_email: "In Mail an {v} schreiben",
+      c_phone: "{v} anrufen", c_contact: "Zu Kontakten hinzufügen", contact: "Neuer Kontakt"
     }
   };
   function lang() {
@@ -154,6 +160,11 @@
     var status = el("div", "ocx-status");
     status.setAttribute("aria-live", "polite");
     var acts = el("div", "ocx-acts");
+    var chipRow = el("div", "ocx-chips");
+    chipRow.hidden = true;
+    chipRow.setAttribute("role", "group");
+    chipRow.setAttribute("aria-label", T("found"));
+    bar.appendChild(chipRow);
     bar.appendChild(status);
     bar.appendChild(acts);
     var panel = el("div", "ocx-panel");
@@ -366,12 +377,70 @@
         paintDone();
       }
     }
+    // ---------- W3: links, days, e-mail addresses and phones ----------
+    function shell() { try { return win.parent !== win ? win.parent : null; } catch (e) { return null; } }
+    function today() { var d = new Date(); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
+    function chipAct(c, all) {
+      var P = shell();
+      if (c.k === "url") {
+        if (!/^https?:\/\//i.test(c.v)) return;
+        var w2 = win.open(c.v, "_blank", "noopener,noreferrer");
+        if (w2) try { w2.opener = null; } catch (e) {}
+      } else if (c.k === "email") {
+        if (P && typeof P.__orosOpenAt === "function") P.__orosOpenAt("mail", { compose: { to: c.v } });
+        else win.location.href = "mailto:" + encodeURIComponent(c.v);
+      } else if (c.k === "phone") {
+        var a = el("a");
+        a.href = "tel:" + c.v.replace(/[^+0-9]/g, "");
+        doc.body.appendChild(a); a.click(); a.remove();
+      } else if (c.k === "contact") {
+        if (P && typeof P.__orosOpenAt === "function") P.__orosOpenAt("contacts", { cardText: { text: all.slice(0, 4000) } });
+      } else if (c.k === "event") {
+        if (!P || typeof P.__orosOpenCalendarNew !== "function") return;
+        var ev = c.ev, ls = all.split("\n").map(function (l) { return l.replace(/\s+/g, " ").trim(); }).filter(Boolean);
+        var first = ls[0] || "";
+        var p = { date: ev.date, title: (first && first !== ev.line ? first : ev.title || ev.line || "").slice(0, 80) };
+        if (ev.start) p.start = ev.start;
+        if (ev.end) p.end = ev.end;
+        if (ev.dateEnd) p.dateEnd = ev.dateEnd;
+        if (ev.location) p.location = String(ev.location).slice(0, 150);
+        var note = ls.filter(function (l) { return l !== ev.line && l !== p.title; }).join("\n").slice(0, 2000);
+        if (note) p.note = note;
+        P.__orosOpenCalendarNew(p);
+      }
+    }
+    function paintChips() {
+      chipRow.innerHTML = "";
+      chipRow.hidden = true;
+      var all = K.textOf(words);
+      if (!all || !K.helpers) return;
+      K.helpers().then(function (D) {
+        if (closed) return;
+        var list = K.chips(all, D, today()), P = shell();
+        list = list.filter(function (c) {
+          if (c.k === "event") return !!(P && typeof P.__orosOpenCalendarNew === "function");
+          if (c.k === "contact") return !!(P && typeof P.__orosOpenAt === "function");
+          return true;
+        });
+        list.forEach(function (c) {
+          var b = el("button", "ocx-chip k-" + c.k, c.k === "contact" ? T("contact") : c.label);
+          b.type = "button";
+          b.addEventListener("click", function (e) { e.stopPropagation(); chipAct(c, all); });
+          var tip = T("c_" + c.k, { v: c.label });
+          b.title = tip;
+          b.setAttribute("aria-label", tip);
+          chipRow.appendChild(b);
+        });
+        chipRow.hidden = !list.length;
+      }, function () {});
+    }
     function got(res) {
       words = res.words || [];
       if (o.key) found[o.key] = { words: words };
       area.value = K.textOf(words);
       paintWords();
       show(words.length ? "done" : "none");
+      if (words.length) paintChips();
       layer.classList.toggle("lit", words.length > 0);
     }
     function run() {

@@ -59,6 +59,7 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 ### Copy text from a picture
 - In a picture's preview, and in the Photos viewer, press `Text` (the frame with a T; in Photos the round button at the bottom right). orOS reads the text in the picture on this device: the words found are marked on the picture.
 - Drag from one word to another, or draw a box over the text, to select it; a tap selects a line, a second tap its paragraph. Then `Copy`. `Copy all` copies everything, `Text` shows the whole text in a box where you can correct it before copying, and `Send to…` hands it to Notes, To-Do, Writer, Mail and the other apps that take text. On a keyboard, Ctrl+A selects all the words, Ctrl+C copies, Esc closes.
+- Above the buttons, what the text holds that another app can use shows as small buttons: a web address opens in a new tab, a day and time opens a new event in Calendar, an e-mail address a new message in Mail, a phone number calls it (where the device can), and `New contact` opens a new contact in Contacts filled from the text. Nothing is saved until you save it there.
 - The first time, orOS asks before it downloads its text recognition engine (Tesseract, about 7 MB, Greek and English) from its own site; it is the same download as Documents and Scanner & PDF, so one yes is enough. After that it works offline. The picture and its text never leave your device.
 - Printed text reads best. Handwriting, very small or decorative letters and text at a strong angle are often read wrongly; check the text before you use it.
 

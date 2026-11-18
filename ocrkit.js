@@ -32,6 +32,14 @@
 //       closest to, the point (fractions of the picture); -1 if none.
 //   fit(w, h, side) -> the scale that puts the long side at `side`
 //       (at most 2: small pictures are enlarged, which reads better).
+//   links(text) -> ["https://…"]: up to MAX_LINKS web addresses in the
+//       text (http(s):// or www.), trailing punctuation cut off.
+//   chips(text, D, today) -> [{ k, v, label, ev? }] (wave W3): what the
+//       text holds that another app can act on, in this order: k "url"
+//       (links), "event" (the first day / time, D.event = send/
+//       detect.js with calendar/quickadd.js), "email", "phone" (D.card
+//       with contacts/cardtext.js) and one "contact" when there is a
+//       phone or an e-mail. Without D only the links.
 //   allowed() / allow(): the device-local yes to the engine download,
 //       shared with Documents (FLAG).
 //   read(source, o) -> Promise<{ words, text, w, h }>: source an
@@ -157,6 +165,55 @@
     return best;
   }
 
+  // ---------- W3: what the text holds ----------
+  var MAX_LINKS = 3, MAX_EACH = 2;
+  var URL_RE = /(?:https?:\/\/|www\.)[^\s<>"'\u00ab\u00bb\u201c\u201d]+/gi;
+  var HOST_RE = /^[a-z0-9\u00a1-\uffff]([a-z0-9\u00a1-\uffff-]*[a-z0-9\u00a1-\uffff])?(\.[a-z0-9\u00a1-\uffff]([a-z0-9\u00a1-\uffff-]*[a-z0-9\u00a1-\uffff])?)+$/i;
+  function links(text) {
+    var out = [], m, src = String(text == null ? "" : text).slice(0, 20000);
+    URL_RE.lastIndex = 0;
+    while ((m = URL_RE.exec(src)) && out.length < MAX_LINKS) {
+      var u = m[0].replace(/[.,;:!?\u00b7\u2026)\]}]+$/, "");
+      if (/^www\./i.test(u)) u = "https://" + u;
+      var hm = u.match(/^https?:\/\/([^\/?#:@]+)(:\d{1,5})?([\/?#]|$)/i);
+      if (!hm || !HOST_RE.test(hm[1]) || !/[a-z\u00a1-\uffff]{2,}$/i.test(hm[1])) continue;
+      if (u.length > 500 || out.indexOf(u) !== -1) continue;
+      out.push(u);
+    }
+    return out;
+  }
+  function shortUrl(u) {
+    var s = u.replace(/^https?:\/\//i, "").replace(/\/$/, "");
+    return s.length > 40 ? s.slice(0, 39) + "\u2026" : s;
+  }
+  function pad2(n) { return (n < 10 ? "0" : "") + n; }
+  function chips(text, D, today) {
+    var out = [];
+    links(text).forEach(function (u) { out.push({ k: "url", v: u, label: shortUrl(u) }); });
+    if (!D) return out;
+    var ev = null, card = null;
+    try { ev = typeof D.event === "function" ? D.event(text, today) : null; } catch (e) { ev = null; }
+    try { card = typeof D.card === "function" ? D.card(text) : null; } catch (e) { card = null; }
+    if (ev && /^\d{4}-\d{2}-\d{2}$/.test(ev.date)) {
+      var p = ev.date.split("-");
+      out.push({ k: "event", v: ev.date, label: p[2] + "/" + p[1] + "/" + p[0] + (ev.start ? " " + ev.start : ""), ev: ev });
+    }
+    var any = false;
+    if (card) {
+      arr(card.emails).slice(0, MAX_EACH).forEach(function (e) {
+        // the links found inside an address are not links of their own
+        out = out.filter(function (c) { return !(c.k === "url" && e.indexOf(c.label) !== -1); });
+        out.push({ k: "email", v: e, label: e.length > 40 ? e.slice(0, 39) + "\u2026" : e }); any = true;
+      });
+      arr(card.phones).slice(0, MAX_EACH).forEach(function (ph) {
+        var v = String(ph).replace(/[^+0-9]/g, "");
+        if (v.length >= 5) { out.push({ k: "phone", v: v, label: ph }); any = true; }
+      });
+    }
+    if (any) out.push({ k: "contact", v: "", label: "" });
+    return out;
+  }
+
   function fit(w, h, side) {
     var m = Math.max(num(w), num(h));
     return m > 0 ? Math.min(2, (side || SIDE) / m) : 1;
@@ -164,7 +221,7 @@
 
   var pure = { VERSION: VERSION, FLAG: FLAG, MIN_CONF: MIN_CONF, SIDE: SIDE, fixText: fixText,
     wordsOf: wordsOf, textOf: textOf, between: between, lineOf: lineOf, paraOf: paraOf,
-    inRect: inRect, nearest: nearest, fit: fit };
+    inRect: inRect, nearest: nearest, fit: fit, links: links, chips: chips };
   if (typeof module !== "undefined" && module.exports) { module.exports = pure; return; }
   if (root.OrosOcr && root.OrosOcr.VERSION) return;
 
@@ -309,5 +366,29 @@
   var api = {};
   Object.keys(pure).forEach(function (k) { api[k] = pure[k]; });
   api.allowed = allowed; api.allow = allow; api.read = read; api.release = release; api.open = open;
+  // W3: the readers of days, phones and e-mail addresses that "Send to…"
+  // already uses (precached), loaded only when a text was found.
+  var helpP = null;
+  function helpers() {
+    if (window.OrosSendDetect && window.OrosCalQuick && window.OrosContactsCard) return Promise.resolve(window.OrosSendDetect);
+    if (helpP) return helpP;
+    function load(src, has) {
+      if (has()) return Promise.resolve();
+      return new Promise(function (res) {
+        var s = document.createElement("script");
+        s.src = HERE + src + VQ;
+        s.onload = res;
+        s.onerror = function () { s.remove(); res(); };
+        document.head.appendChild(s);
+      });
+    }
+    helpP = Promise.all([
+      load("calendar/quickadd.js", function () { return !!window.OrosCalQuick; }),
+      load("contacts/cardtext.js", function () { return !!window.OrosContactsCard; })
+    ]).then(function () { return load("send/detect.js", function () { return !!window.OrosSendDetect; }); })
+      .then(function () { helpP = null; return window.OrosSendDetect || null; });
+    return helpP;
+  }
+  api.helpers = helpers;
   root.OrosOcr = api;
 })(typeof window !== "undefined" ? window : this);

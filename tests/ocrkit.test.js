@@ -131,3 +131,34 @@ test("Capture and Photo Lab: Text loads the kit on use; strings in EN, EL and DE
   assert.match(ui, /o\.region/);
   assert.match(ui, /if \(stage && e\.key !== "Escape"\) e\.stopPropagation\(\)/);
 });
+
+test("W3 links: http(s) and www addresses, punctuation cut, nothing that is not a host", () => {
+  assert.deepEqual(K.links("see www.useoros.online. and https://example.org/a?b=1), then https://example.org/a?b=1"),
+    ["https://www.useoros.online", "https://example.org/a?b=1"]);
+  assert.deepEqual(K.links("http://x and https://1.2 and javascript:alert(1) and www.-bad-.com"), []);
+  assert.deepEqual(K.links("ftp://example.org data:text/html,hi"), []);
+  assert.equal(K.links("a https://a.gr b https://b.gr c https://c.gr d https://d.gr").length, 3);
+  assert.deepEqual(K.links("«https://λεξικό.gr/λήμμα»"), ["https://λεξικό.gr/λήμμα"]);
+  assert.deepEqual(K.links(null), []);
+});
+
+test("W3 chips: link, day, e-mail, phone and one contact, through Send to's own readers", () => {
+  globalThis.OrosCalQuick = require(path.join(ROOT, "calendar/quickadd.js"));
+  globalThis.OrosContactsCard = require(path.join(ROOT, "contacts/cardtext.js"));
+  const D = require(path.join(ROOT, "send/detect.js"));
+  const c = K.chips("ΣΥΝΑΥΛΙΑ\nΠέμπτη 20 Νοεμβρίου 21:00\nΚρατήσεις 210 1234567\ninfo@example.org\nwww.useoros.online", D, "2026-11-18");
+  assert.deepEqual(c.map((x) => x.k), ["url", "event", "email", "phone", "contact"]);
+  assert.equal(c[1].v, "2026-11-20");
+  assert.equal(c[1].label, "20/11/2026 21:00");
+  assert.equal(c[3].v, "2101234567");
+  assert.deepEqual(K.chips("Hello world", D, "2026-11-18"), []);
+  // without the readers only the links
+  assert.deepEqual(K.chips("www.useoros.online 210 1234567", null).map((x) => x.k), ["url"]);
+  // a reader that throws finds nothing, never breaks the bar
+  assert.deepEqual(K.chips("x", { event() { throw new Error("x"); }, card() { throw new Error("y"); } }), []);
+  const ui = read("ocrkit-ui.js");
+  assert.match(ui, /if \(!\/\^https\?:\\\/\\\/\/i\.test\(c\.v\)\) return;/);
+  assert.match(ui, /"noopener,noreferrer"/);
+  assert.match(ui, /__orosOpenCalendarNew\(p\)/);
+  assert.match(ui, /cardText: \{ text: all\.slice\(0, 4000\) \}/);
+});
