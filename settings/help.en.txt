@@ -90,6 +90,9 @@ It also works in formatted text such as Writer, Mail, Notes and Slides, where [[
 ### Overview
 `System` also has `Overview`, for this device only. [[Ctrl+Alt+Shift+E]] always opens the overview (search, open apps, recent files and how the system is doing); here you can add one more way: `Open it by pushing the mouse into the top-left corner`, off at first. See [The menu](help:t/menu#overview).
 
+### Continue on your other devices
+`System` also has `Continue on your other devices`. orOS remembers the last item you had open in each app: only its name and where it is, never its content, encrypted with your sync. Private apps (Passwords, Mail, the Diary, Mood, Cycle, Health, Baby, Workouts, the Assistant and the apps hidden from search, such as Budget) are never kept, and nothing is kept or shown while Sensitive work is on. `Show what I was doing on my other devices` is on at first. `Reopen my apps after a restart` (on at first, this device only) brings back the app you had open, at the same item; with multitasking on, your other open apps too, up to 6. An app that closes orOS as it opens is not reopened again. `Name of this device` is what your other devices show (empty = the kind of device, such as Windows PC), and `Your other devices` lists the others with `Forget`.
+
 ### This computer
 In orOS Portable and in the orOS apps for Windows and Linux, `System` has `This computer`, for this computer only: `Show this computer's files in orOS` adds This computer to [Files](help:a/files) (your home folder and the computer's disks) and lets every app open and save there. orOS Portable asks once on each computer; the orOS apps have it on from the start. Nothing on the computer is synced. On the orOS USB stick the files always show, so the switch is not there.
 

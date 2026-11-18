@@ -4389,6 +4389,53 @@
     return b;
   }
 
+  // ---------- System › Continue on your other devices (CONT-1, RS-1) ----------
+  // continue.js: the name of this device (synced, shown elsewhere; empty =
+  // its kind in the viewer's language), the two switches (this device
+  // only) and the devices seen, with Forget. Text through textContent.
+  function contKind(k) {
+    var key = "ct.kind." + (k || "other"), v = t(key);
+    return v === key ? t("ct.kind.other") : v;
+  }
+  function secContinue(host, ct) {
+    var c = card(t("ct.title"), "continue");
+    c.appendChild(el("p", "hint", t("ct.hint")));
+    if (ct.strict) c.appendChild(el("p", "hint warn", t("ct.strict")));
+    c.appendChild(row(t("ct.on"), switchBtn(!!ct.on, "cont:on", function (v) { set("cont:on", v); }, t("ct.on"))));
+    c.appendChild(row(t("ct.reopen"), switchBtn(!!ct.reopen, "cont:reopen", function (v) { set("cont:reopen", v); }, t("ct.reopen")),
+      { hint: t("ct.reopen.hint") }));
+    var box = el("div", "dav-field");
+    var inp = el("input");
+    inp.id = "f-ct-name";
+    inp.type = "text";
+    inp.autocomplete = "off";
+    inp.maxLength = ct.max || 40;
+    inp.value = ct.name || "";
+    inp.placeholder = contKind(ct.kind);
+    inp.setAttribute("aria-label", t("ct.name"));
+    inp.setAttribute("aria-describedby", "f-ct-name-hint");
+    inp.setAttribute("data-k", "cont:name");
+    inp.addEventListener("change", function () { set("cont:name", inp.value); });
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") inp.blur(); });
+    box.appendChild(inp);
+    var nr = row(t("ct.name"), box, { forId: "f-ct-name", stack: true });
+    var h = el("div", "hint", t("ct.name.hint", { kind: contKind(ct.kind) }));
+    h.id = "f-ct-name-hint";
+    nr.appendChild(h);
+    c.appendChild(nr);
+    var devs = (ct.devices || []).filter(function (d) { return !d.self; });
+    if (devs.length) {
+      c.appendChild(el("h4", "sub", t("ct.devs")));
+      devs.forEach(function (d) {
+        var when = "";
+        try { when = new Date(d.at).toLocaleDateString(LANG === "el" ? "el-GR" : LANG, { day: "numeric", month: "short" }); } catch (e) {}
+        c.appendChild(row(d.name || contKind(d.kind), button(t("ct.forget"), "cont:forget", function () { set("cont:forget", d.id); }),
+          { hint: t("ct.seen", { date: when }) }));
+      });
+    }
+    host.appendChild(c);
+  }
+
   // ---------- Section: Device (was the Device Info app) ----------
   // ../device/core.js + view.js + view.css and the "device" language
   // pack load on the first open only (Settings size budget);
@@ -4519,6 +4566,9 @@
       }
       host.appendChild(chc);
     }
+
+    // CONT-1 + RS-1: continue on other devices, reopen after a restart (this device; on by default)
+    if (s.cont) secContinue(host, s.cont);
 
     // Overview (OV-1): hot corner, this device only, off by default (no Super key: one combo for all, Chris 2026-11-16).
     if (s.overview) {

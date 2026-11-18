@@ -116,7 +116,7 @@ test("greeting: hours as the Start page, Today's line, the guards", () => {
   assert.match(may, /L\.isLocked\(\)/);
   assert.ok(may.indexOf("greetMark();") < may.indexOf("greetShow();"), "marked before it shows: once a day even if it fails");
   assert.match(cut(SHELL, "greetStart"), /if \(SOLO\) return;/);
-  assert.match(SHELL, /gameResumeStart\(\);\n        greetStart\(\);/);
+  assert.match(SHELL, /gameResumeStart\(\);\n        appsResumeStart\(\);   \/\/ RS-1\n        greetStart\(\);/);
   const show = cut(SHELL, "greetShow");
   assert.doesNotMatch(show, /innerHTML/, "text only through textContent (the name is the person's text)");
   assert.match(show, /hi\.textContent = window\.t\("greet\." \+ greetPart\(now\.getHours\(\)\)\) \+ \(name \? ", " \+ name : ""\);/);

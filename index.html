@@ -28,12 +28,13 @@
   <link rel="preload" as="script" href="widgets.js?v=7.65.00">
   <link rel="preload" as="script" href="smartbar.js?v=7.65.00">
   <link rel="preload" as="script" href="cliphist.js?v=7.65.00">
+  <link rel="preload" as="script" href="continue.js?v=7.65.00">
   <link rel="preload" as="script" href="phone.js?v=7.65.00">
   <link rel="preload" as="script" href="shell.js?v=7.65.00">
   <link rel="preload" as="script" href="notifications.js?v=7.65.00">
   <link rel="preload" as="script" href="webpush.js?v=7.65.00">
   <!-- /BOOT-P1 -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VPHyDFuRJXqfe2q0meITZbVd8yUrQwNq1Ba7/dB0LNY=' 'sha256-6LdBgqvGbVusCPLusq4Rm4DmT3X+MUcH7kLnVIljHI8='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VPHyDFuRJXqfe2q0meITZbVd8yUrQwNq1Ba7/dB0LNY=' 'sha256-qxXzmGYNFvn/t02WXXl8/T9xdnJVICU/m2FnUyO4sZ8='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="orOS — A static operating system in your browser. Mobile-friendly, works offline, no cookies, no tracking.">
   <title>orOS</title>
@@ -319,7 +320,9 @@
       // its window is in the background instead.
       var soloHidden = !!(document.body && document.body.classList.contains("solo-mode")) &&
         document.visibilityState === "hidden";
-      if (run && run.classList.contains("active") && !soloHidden) return false;   // an app is open
+      // RS-1: apps the start reopened by itself, untouched since, do not count
+      var rsSafe = typeof window.__orosRsSafe === "function" && window.__orosRsSafe();
+      if (run && run.classList.contains("active") && !soloHidden && !rsSafe) return false;   // an app is open
       var menu = document.getElementById("app-menu");
       if (menu && menu.classList.contains("open")) return false;      // user is in the menu
       if (document.querySelector("dialog[open]")) return false;        // a dialog is open
@@ -498,6 +501,7 @@
   <script src="widgets.js?v=7.65.00"></script>
   <script src="smartbar.js?v=7.65.00"></script>
   <script src="cliphist.js?v=7.65.00"></script>
+  <script src="continue.js?v=7.65.00"></script>
   <script src="phone.js?v=7.65.00"></script>
   <script src="shell.js?v=7.65.00"></script>
   <script src="notifications.js?v=7.65.00"></script>

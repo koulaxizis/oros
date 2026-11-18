@@ -670,7 +670,32 @@
     $("filter").value = "";
     setPref("deck", id);
     show("deck");
+    contNote();
   }
+  // CONT-1 W3: tell the shell which deck is open (continue.js keeps the
+  // reference and the name only, never the cards). On opening, and once
+  // at the first tap or key after the start; nothing before that, so a
+  // restored deck never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (W && typeof curDeck === "string" && (deckById(curDeck) || curDeck === C.DEFAULT_DECK) && (view === "deck" || view === "study"))
+        W.note("flashcards", { target: { deck: curDeck }, title: deckName(curDeck) });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   function cardState(key) {
     var c = sched[key];
     if (c && c.sus) return t("s.sus");
