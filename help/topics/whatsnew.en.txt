@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.56.00
+- **A light show for your music.** In Music's full player, the sun button fills the window with light that moves with the song: Glow, Rings, Bars or Wave, and `Light only` hides the controls. Radio (in the player's `⋯` menu) and Podcasts (the sun button in the full player) have it too. It listens to the sound where the source allows it, otherwise the light moves on its own. Everything stays on your device, and the light never flashes.
+
 ## Version 7.55.00
 - **The Dock at any edge.** The Dock can now sit at the left, right or top of the screen as well as the bottom: Settings › Appearance › Dock › `Position`. Shortcuts, widgets and notes on the desktop make room for it. On a phone or a small window it stays at the bottom.
 
