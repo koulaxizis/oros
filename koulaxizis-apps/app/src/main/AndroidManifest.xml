@@ -9,6 +9,8 @@
     <!-- The daily check (APPS-M2): one quiet notice when updates are ready,
          and the check stays in place after a restart. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- JobScheduler needs it for a job that waits for a network. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- To see which of our apps are installed (version, signing key). Only

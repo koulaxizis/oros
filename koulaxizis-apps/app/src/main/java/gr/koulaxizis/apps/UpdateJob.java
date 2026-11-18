@@ -46,6 +46,14 @@ public final class UpdateJob extends JobService {
             return;
         }
         if (js.getPendingJob(JOB) != null) return;
+        try {
+            schedule(ctx, js);
+        } catch (RuntimeException e) {
+            // Refused by this Android: the screen and the manual check still work.
+        }
+    }
+
+    private static void schedule(Context ctx, JobScheduler js) {
         js.schedule(new JobInfo.Builder(JOB, new ComponentName(ctx, UpdateJob.class))
             .setPeriodic(DAY, DAY / 4)
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
