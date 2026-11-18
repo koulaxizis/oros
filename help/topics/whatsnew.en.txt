@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.61.00
+- **Text replacements.** Type a short code like `;addr` and a space or punctuation in any orOS app and it becomes your full text; [[Backspace]] right after puts the code back. `{date}`, `{time}` and `{cursor}` work in the text. It works in Writer, Mail and Slides too, and the on-screen keyboard shows the text above the keys. Settings › Language & search › Text replacements; import your list from Gboard or from a Mac or iPhone. Synced to your devices, encrypted; never in Passwords or while Sensitive work is on.
+
 ## Version 7.60.00
 - **Colour filters and a larger pointer.** In Settings › Accessibility, `Colour filter` turns the whole screen grey, helps tell red from green or blue from yellow (with a strength), or inverts the colours while photos and videos stay as they are. `Pointer size` makes the mouse pointer Large or Extra large. A new `Colour filter` button in Quick settings turns the last filter on and off. Both stay on this device.
 
