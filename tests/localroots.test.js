@@ -135,3 +135,15 @@ test("wired in: late bundle, offline cache, Gate log, strings in three languages
   const src = read("localroots.js");
   assert.match(src, /function write\(dirPath[\s\S]{0,400}"w"/);
 });
+
+test("pcPath: a typed computer folder → the launcher's path (orOS Setup route)", () => {
+  assert.equal(L.pcPath("C:\\Users\\Chris\\Desktop\\Vythos"), "/disks/C/Users/Chris/Desktop/Vythos");
+  assert.equal(L.pcPath("d:/Books/"), "/disks/D/Books");
+  assert.equal(L.pcPath("~/Pictures"), "/home/Pictures");
+  assert.equal(L.pcPath("/home/Desktop"), "/home/Desktop");
+  for (const bad of ["C:\\a\\..\\b", "C:\\a\\.\\b", "/etc/passwd", "Vythos", "\\\\server\\share", "C:\\a\\b:c", ""]) assert.equal(L.pcPath(bad), "", bad);
+  // the launcher route sends under=<root> on every call
+  const src = read("localroots.js");
+  assert.match(src, /"&under=" \+ encodeURIComponent\(under\)/);
+  assert.match(src, /j\.under === true/);
+});

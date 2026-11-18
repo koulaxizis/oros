@@ -18,6 +18,14 @@
 //     per session;
 //   - handles live in this device's IndexedDB only, never synced.
 //
+// orOS Setup / Portable route: where the orOS launcher serves this
+// computer's files (/__oros/fs/, oros-portable computerfs.go) and its
+// roots answer says `under: true`, a root can also be a real folder of
+// the computer typed by its path (C:\Users\…\Vythos). No browser
+// permission prompt; every call sends under=<root>, so the launcher
+// refuses anything outside the folder and any symbolic link or junction
+// below it, and a write never replaces a file there either.
+//
 // window.orosLocal (browser) and module.exports (the pure parts, Node).
 (function (root) {
   "use strict";
@@ -61,10 +69,23 @@
     for (var k = 2; k < 1000; k++) { var n = base + "-" + k + ext; if (!has[n.toLowerCase()]) return n; }
     return null;
   }
+  // A typed computer folder → the launcher's path ("/disks/C/…" or
+  // "/home/…"), or "" when it is not one. Windows "C:\a\b", "~/a", and
+  // the API's own "/home/…" and "/disks/<name>/…".
+  function pcPath(typed) {
+    var s = String(typed || "").trim().replace(/\\/g, "/").replace(/\/+/g, "/").replace(/\/$/, "").normalize("NFC");
+    var m = /^([A-Za-z]):(\/.*)?$/.exec(s);
+    if (m) s = "/disks/" + m[1].toUpperCase() + (m[2] || "");
+    else if (/^~(\/|$)/.test(s)) s = "/home" + s.slice(1);
+    if (!/^\/(home|disks\/[^\/]+)(\/|$)/.test(s) || s.length > 1000) return "";
+    var segs = s.split("/").slice(1);
+    for (var i = 0; i < segs.length; i++) if (!segOk(segs[i])) return "";
+    return s;
+  }
   // A root as the owner and Claude see it (no handle).
   function shown(r, now) {
     var left = r.exp ? r.exp - now : Infinity;
-    return { id: r.id, name: r.name, label: r.label || "", mode: r.mode, exp: r.exp || 0, expired: left <= 0, soon: left > 0 && left < WARN_DAYS * DAY };
+    return { id: r.id, name: r.name, label: r.label || "", mode: r.mode, exp: r.exp || 0, expired: left <= 0, soon: left > 0 && left < WARN_DAYS * DAY, pc: !!r.pc };
   }
   // A root name from a folder name, unique among the others.
   function rootName(want, others) {
@@ -112,7 +133,7 @@
     }
     return r.w ? r : null;
   }
-  var PURE = { imageInfo: imageInfo, parse: parse, isLocal: isLocal, segOk: segOk, freeName: freeName, shown: shown, rootName: rootName, norm: norm, DEF_DAYS: DEF_DAYS, MAX_ROOTS: MAX_ROOTS };
+  var PURE = { pcPath: pcPath, imageInfo: imageInfo, parse: parse, isLocal: isLocal, segOk: segOk, freeName: freeName, shown: shown, rootName: rootName, norm: norm, DEF_DAYS: DEF_DAYS, MAX_ROOTS: MAX_ROOTS };
   if (typeof module !== "undefined" && module.exports) { module.exports = PURE; return; }
 
   // ---------- this device ----------
@@ -146,8 +167,32 @@
   function changed() { listeners.slice().forEach(function (fn) { try { fn(); } catch (e) { void e; } }); banner(); }
   function paused() { try { return localStorage.getItem(PAUSE_KEY) === "1"; } catch (e) { return false; } }
   function supported() { return typeof root.showDirectoryPicker === "function"; }
+  // ---------- the launcher's computer files (orOS Setup / Portable) ----------
+  var API = "/__oros/fs/", pcP = null;
+  function pcCall(call, path, under, init) {
+    var q = API + call + "?path=" + encodeURIComponent(path) + (under ? "&under=" + encodeURIComponent(under) : "");
+    var o = Object.assign({ credentials: "same-origin" }, init || {});
+    o.headers = Object.assign({ "X-Oros-FS": "1" }, o.headers || {});
+    return root.fetch(q, o).then(function (res) {
+      if (res.ok) return res;
+      return res.json().then(function (j) { return j; }, function () { return {}; }).then(function (j) {
+        var code = j && j.error, why = code === "notAllowedRoot" ? "notAllowedRoot" : code === "link" ? "notAllowedRoot" : res.status === 404 ? "notThere" : res.status === 409 ? "nameTaken" : code === "off" ? "needsReconnect" : "badPath";
+        throw fail(why, path);
+      });
+    });
+  }
+  // → true when this launcher serves the computer's files with the
+  // under= checks (asked once per page)
+  function pcOn() {
+    if (!pcP) pcP = typeof root.fetch !== "function" ? Promise.resolve(false) : root.fetch(API + "roots", { credentials: "same-origin", headers: { "X-Oros-FS": "1" } }).then(function (r) {
+      return r.ok ? r.json().then(function (j) { return !!(j && j.under === true); }) : false;
+    }).then(null, function () { return false; });
+    return pcP;
+  }
+  function pcJoin(x, rel) { return x.root.pc + (rel.length ? "/" + rel.join("/") : ""); }
   function tr(k, v) { var s = typeof root.t === "function" ? root.t(k) : k; Object.keys(v || {}).forEach(function (x) { s = s.split("{" + x + "}").join(v[x]); }); return s; }
   function perm(r, ask) {
+    if (r.pc) return pcOn();
     var o = { mode: r.mode === "w" ? "readwrite" : "read" };
     var q = ask ? r.handle.requestPermission(o) : r.handle.queryPermission(o);
     return Promise.resolve(q).then(function (s) { return s === "granted"; }, function () { return false; });
@@ -177,6 +222,11 @@
   }
   // The entry at a path: { kind: "dir" | "file", handle }
   function entry(x) {
+    if (x.root.pc) {
+      return pcCall("stat", pcJoin(x, x.rel), x.root.pc).then(function (r) { return r.json(); }).then(function (e) {
+        return { kind: e.dir ? "dir" : "file", pc: pcJoin(x, x.rel), size: e.size || 0, mtime: e.mtime || 0 };
+      });
+    }
     if (!x.rel.length) return Promise.resolve({ kind: "dir", handle: x.root.handle });
     var parent = x.rel.slice(0, -1), leaf = x.rel[x.rel.length - 1];
     return walk(x.root.handle, parent).then(function (d) {
@@ -193,6 +243,31 @@
       return entry(x).then(function (e) {
         if (e.kind !== "dir") throw fail("notFolder", path);
         var out = [], max = Math.max(1, Math.min(3, depth || 1));
+        function goPc(dir, rel, lv) {
+          if (out.length >= 2000) return Promise.resolve();
+          return pcCall("list", dir, x.root.pc).then(function (r) { return r.json(); }).then(function (l) {
+            var kids = (Array.isArray(l) ? l : []).filter(function (k) { return k && segOk(k.name); });
+            kids.sort(function (a, b) { return (a.dir === b.dir ? 0 : a.dir ? -1 : 1) || a.name.localeCompare(b.name); });
+            return kids.reduce(function (p, k) {
+              return p.then(function () {
+                if (out.length >= 2000) return;
+                var r2 = rel.concat([k.name]), kp = dir + "/" + k.name;
+                if (k.dir) {
+                  out.push({ path: shownPath(x, x.rel.concat(r2)), name: r2.join("/"), dir: true });
+                  return lv < max ? goPc(kp, r2, lv + 1) : null;
+                }
+                var row = { path: shownPath(x, x.rel.concat(r2)), name: r2.join("/"), dir: false, size: k.size || 0, mtime: k.mtime || 0, type: "" };
+                out.push(row);
+                if (!/\.(jpe?g|png)$/i.test(k.name)) return;
+                return pcCall("raw", kp, x.root.pc, { headers: { Range: "bytes=0-262143" } }).then(function (res) { return res.arrayBuffer(); }).then(function (ab) {
+                  var im = imageInfo(new Uint8Array(ab));
+                  if (im && im.w) { row.px = { w: im.w, h: im.h }; if (im.ppi) row.ppi = im.ppi; }
+                }, function () {});
+              });
+            }, Promise.resolve());
+          });
+        }
+        if (e.pc) return goPc(e.pc, [], 1).then(function () { log("list", path, out.length, cmd); return out; });
         function go(h, rel, lv) {
           if (out.length >= 2000) return Promise.resolve();
           var kids = [];
@@ -238,8 +313,15 @@
     return open(path).then(function (x) {
       return entry(x).then(function (e) {
         if (e.kind !== "file") throw fail("notFile", path);
+        if (e.pc) {
+          return pcCall("raw", e.pc, x.root.pc).then(function (res) { return res.blob(); }).then(function (b) {
+            var f = new File([b], x.rel[x.rel.length - 1], { type: b.type || "", lastModified: e.mtime || Date.now() });
+            log("read", path, f.size, cmd);
+            return f;
+          });
+        }
         return e.handle.getFile().then(function (f) { log("read", path, f.size, cmd); return f; });
-      }, function () { throw fail("notThere", path); });
+      }, function (er) { throw er && er.why ? er : fail("notThere", path); });
     });
   }
   // write(dirPath, name, blob) → the path written (write roots only;
@@ -247,6 +329,7 @@
   function write(dirPath, name, blob, cmd) {
     if (!segOk(name)) return Promise.reject(fail("badPath", name));
     return open(dirPath, "w").then(function (x) {
+      if (x.root.pc) return pcWrite(x, name, blob, cmd);
       return x.rel.reduce(function (p, s) { return p.then(function (d) { return d.getDirectoryHandle(s, { create: true }); }); }, Promise.resolve(x.root.handle)).then(function (d) {
         var taken = [], it = d.keys();
         function next() { return it.next().then(function (r) { if (r.done) return; taken.push(r.value); return next(); }); }
@@ -264,6 +347,63 @@
           });
         });
       });
+    });
+  }
+  // A write into a computer folder: missing folders are made one by one
+  // (each parent checked with under= first), the name is free in the
+  // folder's listing, and the launcher refuses to replace a file anyway.
+  function pcWrite(x, name, blob, cmd) {
+    var base = x.root.pc;
+    return x.rel.reduce(function (p, s) {
+      return p.then(function (dir) {
+        var next = dir + "/" + s;
+        return pcCall("stat", next, base).then(function (r) { return r.json(); }).then(function (e) {
+          if (!e.dir) throw fail("notFolder", next);
+          return next;
+        }, function (err) {
+          if (!err || err.why !== "notThere") throw err;
+          return pcCall("stat", dir, base).then(function () {
+            return root.fetch(API + "op", { method: "POST", credentials: "same-origin", headers: { "X-Oros-FS": "1", "Content-Type": "application/json" }, body: JSON.stringify({ op: "mkdir", path: next }) });
+          }).then(function (res) { if (!res.ok) throw fail("badPath", next); return next; });
+        });
+      });
+    }, Promise.resolve(base)).then(function (dir) {
+      return pcCall("list", dir, base).then(function (r) { return r.json(); }).then(function (l) {
+        var taken = (Array.isArray(l) ? l : []).map(function (e) { return e.name; });
+        function put(tries) {
+          var n = freeName(name, taken);
+          if (!n) throw fail("nameTaken", name);
+          return pcCall("raw", dir + "/" + n, base, { method: "PUT", body: blob }).then(function () {
+            var p = shownPath(x, x.rel.concat([n]));
+            log("write", p, blob.size, cmd);
+            return p;
+          }, function (e) {
+            if (e && e.why === "nameTaken" && tries < 5) { taken.push(n); return put(tries + 1); }
+            throw e;
+          });
+        }
+        return put(0);
+      });
+    });
+  }
+  // add a computer folder by its path (orOS Setup / Portable)
+  function addPc(typed, o) {
+    o = o || {};
+    var pc = pcPath(typed);
+    if (!pc) return Promise.reject(fail("badPath"));
+    return ready().then(function () {
+      if (roots.length >= MAX_ROOTS) throw fail("tooMany");
+      return pcOn();
+    }).then(function (on) {
+      if (!on) throw fail("needsReconnect");
+      return pcCall("stat", pc, pc).then(function (r) { return r.json(); });
+    }).then(function (e) {
+      if (!e || !e.dir) throw fail("notFolder");
+      var mode = o.mode === "w" ? "w" : "r", days = Math.max(1, Math.min(90, Math.floor(o.days || DEF_DAYS)));
+      var leaf = pc.slice(pc.lastIndexOf("/") + 1);
+      var r = { id: "lr" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: rootName(o.name || leaf, roots), label: norm(String(typed).trim()).slice(0, 400),
+                mode: mode, exp: Date.now() + days * DAY, added: Date.now(), pc: pc };
+      return tx("readwrite", function (st) { st.put(r); }).then(function () { roots.push(r); changed(); return shown(r, Date.now()); });
     });
   }
   // add a root from a handle the owner just picked (Settings frame)
@@ -355,5 +495,5 @@
   else if (root.document) root.document.addEventListener("DOMContentLoaded", boot);
 
   root.orosLocal = Object.assign({ supported: supported, ready: ready, list: list, add: add, remove: remove, extend: extend, paused: paused, setPaused: setPaused,
-    reconnect: reconnect, ls: ls, read: read, write: write, copyIn: copyIn, onChange: onChange, reload: function () { return load().then(changed); } }, PURE);
+    reconnect: reconnect, addPc: addPc, pcOn: pcOn, ls: ls, read: read, write: write, copyIn: copyIn, onChange: onChange, reload: function () { return load().then(changed); } }, PURE);
 })(typeof window !== "undefined" ? window : this);

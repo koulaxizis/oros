@@ -1476,7 +1476,7 @@
   // Layout may read through orOS Gate (read roots) and write proofs and
   // print PDFs to (write roots), picked with the browser's folder
   // picker; localroots.js in the shell keeps them (this device only).
-  var locRoots = null, locBusy = false, locWired = false, locMsg = "";
+  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null;
   function localApi() { var p = parentWin(); try { return p && p.orosLocal ? p.orosLocal : null; } catch (e) { return null; } }
   function localSection(c, G) {
     var L = localApi();
@@ -1490,7 +1490,9 @@
     box.appendChild(el("div", "pair-label", t("gt.loc.title")));
     box.appendChild(el("div", "hint", t("gt.loc.hint")));
     if (locMsg) box.appendChild(el("div", "hint", locMsg));
-    var canPick = typeof window.showDirectoryPicker === "function" && L.supported();
+    // orOS Setup / Portable: real folders of the computer by their path
+    if (locPc === null && typeof L.pcOn === "function") { locPc = false; L.pcOn().then(function (v) { if (v) { locPc = true; render(); } }); }
+    var canPick = locPc || typeof window.showDirectoryPicker === "function" && L.supported();
     if (!canPick) box.appendChild(el("div", "hint", t("gt.loc.unsupported")));
     (locRoots || []).forEach(function (r) {
       var ln = el("div", "gt-chg-row gt-loc-row");
@@ -1513,8 +1515,15 @@
     var lab = el("input", "dav-input");
     lab.id = "f-gt-loc-label"; lab.type = "text"; lab.autocomplete = "off"; lab.spellcheck = false;
     lab.placeholder = "C:\\Users\\…\\Final Images";   // i18n-inline-ok: an example path
-    if (canPick) box.appendChild(row(t("gt.loc.label"), lab, { hint: t("gt.loc.labelHint"), forId: "f-gt-loc-label", stack: true }));
+    if (canPick) box.appendChild(row(t(locPc ? "gt.loc.pcPath" : "gt.loc.label"), lab, { hint: t(locPc ? "gt.loc.pcHint" : "gt.loc.labelHint"), forId: "f-gt-loc-label", stack: true }));
     function pick(mode) {
+      if (locPc) {
+        if (!lab.value.trim()) { gateNote = "gt.loc.pcNeed"; render(); return; }
+        L.addPc(lab.value.trim(), { mode: mode, days: 30 }).then(function () { gateNote = ""; render(); }, function (e) {
+          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && /^(badPath|notFolder|notThere|notAllowedRoot)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
+        });
+        return;
+      }
       window.showDirectoryPicker({ mode: mode === "w" ? "readwrite" : "read" }).then(function (h) {
         return L.add(h, { mode: mode, label: lab.value.trim(), days: 30 });
       }).then(function () { gateNote = ""; render(); }, function (e) {
