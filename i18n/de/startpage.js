@@ -1,0 +1,20 @@
+orosPack("de", "startpage", {
+ "title": "Start",
+ "morning": "Guten Morgen",
+ "afternoon": "Guten Tag",
+ "evening": "Guten Abend",
+ "q": "Im Web suchen",
+ "qPh": "Mit DuckDuckGo suchen oder Adresse eingeben",
+ "qHint": "Mit „oros “ beginnen, um in orOS zu suchen",
+ "favs": "Favoriten",
+ "all": "Alle Lesezeichen",
+ "none": "Markiere ein Lesezeichen in Lesezeichen mit einem Stern, dann erscheint es hier.",
+ "locked": "Mit aktiver Bildschirmsperre bleiben deine Favoriten in orOS.",
+ "tor": "Neues Tor-Fenster",
+ "torHint": "öffnet den Tor Browser",
+ "oros": "orOS öffnen",
+ "vpn": "VPN-Erweiterung",
+ "vpnHint": "so fügst du eine hinzu",
+ "picks": "Empfohlene VPNs:",
+ "paid": "nur kostenpflichtig"
+});

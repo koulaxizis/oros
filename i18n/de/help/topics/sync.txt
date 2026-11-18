@@ -92,5 +92,31 @@ Dateien, die du in [Dateien](app:files) löschst oder ersetzt, lassen ihre alten
 
 Damit deine Dateien sicher bleiben, entfernt es nichts, wenn die Cloud keine Dateiliste hat, wenn Kopien deiner Dateien fehlen oder ohne deinen Vault-Schlüssel, und es hält an, wenn ein anderes Gerät inzwischen deine Dateien ändert (prüfe erneut, um fortzufahren). orOS räumt nie von selbst auf. Die App orOS Drive folgt denselben Regeln.
 
+Ein großes Aufräumen dauert ein paar Minuten, eine Kopie nach der anderen, und die Karte zählt, wie viele weg sind. Lass orOS auf dieser Seite offen, bis es fertig ist. Bittet deine Cloud orOS, langsamer zu machen, oder bricht die Verbindung kurz ab, wartet orOS und versucht es von selbst noch einmal. Geht es trotzdem nicht weiter, sagt die Karte, warum und wie viele Kopien sie entfernt hat; diese bleiben entfernt, und erneutes `Aufräumen` macht mit dem Rest weiter.
+
 ## Ein zweites Gerät hinzufügen
 Öffne orOS auf dem anderen Gerät, öffne `Einstellungen`, tippe auf `Mit Dropbox verbinden`, melde dich beim **selben** Dropbox-Konto an und tippe **dieselbe** Passphrase ein. Deine Daten kommen herunter und werden mit dem zusammengeführt, was schon da ist. Etwas hat nicht geklappt? Sieh unter [Fehlerbehebung](help:t/troubleshooting) nach.
+
+### Einen neuen Browser in einem Schritt anmelden
+Ist orOS auf deinem Handy oder einem anderen Computer schon angemeldet, braucht ein neuer Browser weder die Dropbox-Anmeldung noch die Passphrase:
+1. Öffne im neuen Browser `Einstellungen` › `Synchronisierung` und tippe auf `Ich habe orOS auf einem anderen Gerät`. Ein QR-Code und ein 12-stelliger Code erscheinen.
+2. Öffne auf dem angemeldeten Gerät `Einstellungen` › `Synchronisierung` › `Browser hinzufügen`. Tippe auf `Code scannen` (oder scanne den QR-Code mit der Kamera-App des Handys), oder tippe den Code ein und dann auf `Verbinden`.
+3. Beide Bildschirme zeigen dieselbe vierstellige Bestätigungszahl. Stimmen sie überein, tippe auf dem angemeldeten Gerät auf `Bestätigen`.
+4. Der neue Browser meldet sich an, merkt sich die Passphrase und synchronisiert.
+
+Der Code gilt 2 Minuten und nur einmal. Anmeldung und Passphrase reisen Ende-zu-Ende verschlüsselt, mit einem Schlüssel aus dem Code; das orOS-Relay leitet nur verschlüsselte Daten weiter und behält nichts. Auf einem geteilten Computer hake im neuen Browser `Nur für diese Sitzung` an: Kommst du nach dem Schließen dieses Tabs zu orOS zurück, ist er abgemeldet und die Passphrase vergessen.
+
+>! Bestätige nur einen Browser, der vor dir steht und dieselbe Zahl zeigt. Bestätige nie einen Code, den dir jemand geschickt hat: Wer diesen Browser hat, bekommt deine Daten.
+
+Der neue Browser teilt die Dropbox- (oder Server-)Anmeldung des angemeldeten Geräts. Ab dann meldet `Trennen` auf einem der beiden nur dieses Gerät ab, und das andere bleibt angemeldet. Um die geteilte Anmeldung auf allen Geräten auf einmal aufzuheben, entferne orOS sync unter Dropbox › Settings › Connected apps (bei Nextcloud: Einstellungen › Sicherheit › Geräte & Sitzungen).
+
+### Später mit einem Link anmelden
+Ist das angemeldete Gerät nicht zur Hand, schick dir stattdessen einen Anmeldelink:
+1. Öffne auf dem angemeldeten Gerät `Einstellungen` › `Synchronisierung` › `Anmeldelink senden`. Ein Link und ein 8-stelliger Code erscheinen.
+2. Schick dir den Link mit `Link kopieren`, `Teilen` oder `Per E-Mail an mich` (deine eigene Mail-App). Der Code bleibt auf diesem Bildschirm: Schreib ihn auf oder behalte das Gerät in der Nähe.
+3. Öffne den Link innerhalb von 15 Minuten im neuen Browser, tippe den Code ein und dann auf `Anmelden`.
+4. Der neue Browser meldet sich an, merkt sich die Passphrase (auf einem geteilten Computer hake zuerst `Nur für diese Sitzung` an) und synchronisiert.
+
+Der Link gilt einmal: Der neue Browser löscht ihn im Moment der Anmeldung, und nach 15 Minuten ist er ohnehin weg. `Link widerrufen` löscht ihn früher. Anmeldung und Passphrase warten auf dem orOS-Relay, verschlossen mit Link und Code zusammen, also können weder das Relay noch dein E-Mail-Anbieter noch jemand, der die E-Mail liest, sie ohne den Code öffnen. Das angemeldete Gerät zeigt, wann der Link benutzt wurde.
+
+>! Schick den Code nie zusammen mit dem Link, und tippe nie einen Code ein, den dir jemand anders gegeben hat. Sagt das angemeldete Gerät, der Link sei benutzt worden, und du warst es nicht, ändere deine Passphrase und entferne orOS sync unter Dropbox › Settings › Connected apps.

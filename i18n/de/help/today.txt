@@ -80,6 +80,10 @@ Eine Zeile erscheint nur an einer Stelle: Ist das Widget `Aufgaben` auf dem Bild
 - Der Geburtstag des Bildschirm-Haustiers kommt mit dem Kalender, außer du hast den Kalender-Feed des Haustiers auf diesem Gerät ausgeschaltet.
 - [Spielecenter](app:gamecenter): eine Zeile oben, wie viele der heutigen Spiel-Herausforderungen geschafft sind.
 - [Mail](app:mail): nur die Zahl der ungelesenen Nachrichten im Posteingang jedes Kontos, nie ein Absender oder Betreff. Mail-Zeilen haben keinen Assistenten-Button; in Mail selbst kannst du trotzdem zu einer Nachricht fragen.
+- [Scanner & PDF](app:scanpdf): eine obere Zeile mit der Zahl der Signaturanfragen, die noch warten, eine für jede Anfrage, die in den letzten 24 Stunden unterschrieben oder abgelehnt wurde, und Tag und Uhrzeit, an denen ein Signaturlink abläuft, wenn das in den nächsten drei Tagen ist. Ein Tippen öffnet `Signaturanfragen`.
+- [Transfer](app:transfer): eine obere Zeile für jeden Transfer, der in den letzten 24 Stunden ankam (sie öffnet den Ordner in Dateien, wenn er auf die orOS-Disk kam), und die Uhrzeit, ab der ein Link, den du von diesem Gerät über deine Dropbox gesendet hast, nicht mehr funktioniert, wenn das in den nächsten drei Tagen ist.
+- [Datenbank](app:base): die Einträge von heute und den nächsten drei Tagen, aus den Datumsfeldern, bei denen du `Im Kalender zeigen` eingeschaltet hast (derselbe Schalter wie der Datenbank-Chip im Kalender; anfangs aus). Ein Tippen öffnet den Eintrag.
+- Solange [Sensible Arbeit](help:t/sensitive) an ist, geben Scanner & PDF, Transfer und Datenbank einfache Zeilen („Ein Transfer ist angekommen“, „Datenbank-Eintrag“) ohne die Namen von Dokumenten, Personen, Dateien oder Einträgen.
 
 ## Die tägliche Benachrichtigung
 Beim ersten Öffnen von orOS jeden Tag nach der Startzeit (06:00, außer du änderst sie) hinterlässt Heute eine Benachrichtigung in der Glocke, wenn etwas überfällig oder heute fällig ist. Sie zeigt nur Zahlen, zum Beispiel „2 überfällig · 1 heute“, nie die Namen deiner Aufgaben. Sie öffnet diese Seite.
