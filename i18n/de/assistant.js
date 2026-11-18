@@ -682,6 +682,7 @@ orosPack("de", "assistant", {
  "ed.op.defmaster": "Musterseite",
  "ed.op.pagesize": "Seitenformat",
  "ed.op.picture": "Bildrahmen",
+ "ed.f.out": "auch in den lokalen Ordner",
  "ed.f.corner": "Eckenradius (mm)",
  "ed.v.flip.hv": "in beide Richtungen",
  "ed.v.fit.frame": "Rahmen an das Bild",

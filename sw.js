@@ -234,6 +234,7 @@ var PRECACHE_URLS = [
   "./smartbar-apps.js",
   "./cliphist.js",
   "./textrepl.js",
+  "./localroots.js",
   "./emoji.js",
   "emoji/data.js",
   "./fileopen.js",

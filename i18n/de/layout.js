@@ -589,6 +589,7 @@ orosPack("de", "layout", {
  "links.s.missing": "Datei fehlt",
  "links.s.empty": "leerer Rahmen",
  "links.s.low": "niedrige Auflösung",
+ "links.local": "eingebettet (aus einem lokalen Ordner)",
  "pages.size": "Seitenformat…",
  "pages.sizeOwn": "Seitenformat (eigenes)…",
  "pages.sizeTitle": "Seitenformat",

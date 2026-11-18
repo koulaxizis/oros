@@ -691,7 +691,7 @@
         var li = el("li", "links-row" + (x.state !== "ok" ? " warn" : ""));
         li.appendChild(el("span", "links-name", x.name || t("links.noName")));
         li.appendChild(el("span", "links-meta", t("links.page", { n: labels[x.page - 1] ? labels[x.page - 1].label : x.page }) + " · " +
-          (x.ppi ? x.ppi + " ppi" : "—") + " · " + t("links.s." + x.state) + (x.flip ? " · ⇋" : "")));
+          (x.ppi ? x.ppi + " ppi" : "—") + " · " + t("links.s." + x.state) + (x.local ? " · " + t("links.local") : "") + (x.flip ? " · ⇋" : "")));
         var acts = el("span", "links-acts");
         acts.appendChild(btn(t("links.go"), function () { close(); ED.select([x.id]); ED.scrollToItem(x.id); }, "small"));
         acts.appendChild(btn(t("props.replace"), function () { close(); LY.io.placeImage(x.id); }, "small"));

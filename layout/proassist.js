@@ -34,7 +34,16 @@
     var V = vault();
     try { return !!(V && V.isRemoteOnly && V.isRemoteOnly(path)); } catch (e) { return false; }
   }
+  // LOCAL-1: the local-folder bridge (localroots.js in the shell)
+  function local() { try { return shellWin().orosLocal || null; } catch (e) { return null; } }
+  function isLocal(p) { return typeof p === "string" && /^local:/i.test(p.trim()); }
+  function localWhy(e) { return e && /^(notAllowedRoot|badPath|bridgePaused|needsReconnect|notThere|notFile|notFolder)$/.test(e.why) ? e.why : "unreadable"; }
   function readBytes(path) {
+    if (isLocal(path)) {
+      var L = local();
+      if (!L) return Promise.reject({ why: "noBridge", path: path });
+      return L.read(path, "layout");
+    }
     if (cloudOnly(path)) return vault().peek(path).then(function (b) { return new Blob([b]); });
     return Promise.resolve(fs().read(path)).then(function (b) { return b instanceof Blob ? b : new Blob([b]); });
   }
@@ -60,6 +69,8 @@
   // A step's files in order → [path] | throws { why }
   function pathsOf(st) {
     var fl = folders();
+    var anyLocal = isLocal(st.folder) || (st.paths || []).some(isLocal);
+    if (anyLocal) return localPaths(st);
     if (!fl.length) return Promise.reject({ why: "noFolders" });
     if (st.folder) {
       var dir = PRO.normPath(st.folder), w = PRO.pathOk(dir, fl, true);
@@ -81,12 +92,38 @@
     else if (st.sort === "name") list.sort();
     return Promise.resolve(list);
   }
+  // pictures from a local folder (or local paths): the bridge checks
+  // every one against the owner's roots
+  function localPaths(st) {
+    var L = local();
+    if (!L) return Promise.reject({ why: "noBridge" });
+    if (st.folder) {
+      if (!isLocal(st.folder)) return Promise.reject({ why: "outside", path: st.folder });
+      return L.ls(st.folder, 1, "layout").then(function (rows) {
+        var map = {};
+        rows.forEach(function (e) { if (!e.dir && e.name.indexOf("/") < 0 && PRO.PIC.test(e.name)) map[e.name] = e.path; });
+        var names = Object.keys(map);
+        names = st.sort === "name" ? names.sort() : PRO.natSort(names);
+        if (!names.length) throw { why: "empty", path: st.folder };
+        return names.map(function (n) { return map[n]; });
+      }, function (e) { throw { why: localWhy(e), path: st.folder }; });
+    }
+    var list = [];
+    for (var i = 0; i < st.paths.length; i++) {
+      if (!isLocal(st.paths[i])) return Promise.reject({ why: "outside", path: st.paths[i] });
+      list.push(String(st.paths[i]).trim());
+    }
+    var base = function (p) { return p.replace(/\\/g, "/").slice(p.replace(/\\/g, "/").lastIndexOf("/") + 1); };
+    if (st.sort === "natural") list = PRO.natSort(list.map(function (p) { return base(p) + "\u0000" + p; })).map(function (x) { return x.split("\u0000")[1]; });
+    else if (st.sort === "name") list.sort();
+    return Promise.resolve(list);
+  }
   function importPath(path) {
     return readBytes(path).then(function (blob) {
       if (blob.size > MAX_BYTES) throw { why: "tooBig", path: path };
-      var name = path.slice(path.lastIndexOf("/") + 1);
-      return A.importFile(new File([blob], name, { type: blob.type || "" })).then(function (r) { return { a: r.id, iw: r.w, ih: r.h, nm: name }; });
-    }, function () { throw { why: "unreadable", path: path }; });
+      var name = path.replace(/\\/g, "/").slice(path.replace(/\\/g, "/").lastIndexOf("/") + 1);
+      return A.importFile(new File([blob], name, { type: blob.type || "" })).then(function (r) { return { a: r.id, iw: r.w, ih: r.h, nm: name, lc: isLocal(path) ? 1 : 0 }; });
+    }, function (e) { throw { why: isLocal(path) ? localWhy(e) : "unreadable", path: path }; });
   }
 
   // ---------- bleed ----------
@@ -167,7 +204,13 @@
           var nums = g.map(function (p) { return ("00" + (order.indexOf(p) + 1)).slice(-3); }).join("-");
           return new Promise(function (ok, no) { cv.toBlob(function (b) { if (b) ok(b); else no({ why: "encode" }); }, "image/png"); }).then(function (blob) {
             var path = dir + "/page-" + nums + ".png";
-            return Promise.resolve(F.write(path, blob)).then(function () { saved.push(path); });
+            return Promise.resolve(F.write(path, blob)).then(function () {
+              saved.push(path);
+              // LOCAL-1: also in a local write folder (new names only)
+              var L = local();
+              if (!st.out || !isLocal(st.out) || !L) return;
+              return L.write(st.out, safeName(doc.name) + " page-" + nums + ".png", blob, "thumbs").then(function (lp) { saved.push(lp); }, function (e) { throw { why: localWhy(e), path: st.out }; });
+            });
           });
         });
       });
