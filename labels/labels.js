@@ -15,7 +15,8 @@
 //   - device-local (R10): oros-labels-prefs (mode, sound, tape,
 //     width, ends, margin, wheel set, copies, recent, side panel)
 // Deep link: __orosOpenAt("labels", { text }) starts a new label with
-// that text (Storage's "Label" button); { openFile: { token } } opens
+// that text (Storage's "Label" button); { label: id } opens a saved
+// label (menu search); { openFile: { token } } opens
 // an .oroslabels file from the system's "Open with".
 // Sections:
 //   1. Constants, i18n, helpers
@@ -1202,6 +1203,13 @@
         if (p && p !== window && typeof p.__orosTakeFile === "function") f = p.__orosTakeFile(target.openFile.token);
       } catch (e) { f = null; }
       if (f) readFile(f);
+      return;
+    }
+    // { label: id } (menu search, labels/search.js): that saved label
+    // on the tape; nothing while a dialog is open (unsaved edits win).
+    if (target && typeof target.label === "string") {
+      var l = C.findLabel(data, target.label);
+      if (l && !document.querySelector("dialog[open]")) openLabel(l);
       return;
     }
     if (!target || typeof target.text !== "string") return;

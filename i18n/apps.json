@@ -867,7 +867,8 @@
    "app": "ringtones",
    "files": [
     "ringtones/core.js",
-    "ringtones/ringtones.js"
+    "ringtones/ringtones.js",
+    "ringtones/search.js"
    ]
   },
   {
