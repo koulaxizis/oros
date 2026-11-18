@@ -593,6 +593,34 @@
     });
   };
 
+  // CONT-1 W4: tell the shell which book is open (continue.js keeps the
+  // book's id and title only; the reading place travels with the books
+  // as always). When the reader is ready, and once at the first tap or
+  // key after the start; nothing before that, so a restored book never
+  // hides the one from the other device. A preview is not a book yet.
+  var contLive = false;
+  LIB.contNote = function () {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var c = W && LIB.reader && LIB.reader.current();
+      var b = c && c.book;
+      if (b && !b.preview && b.title && typeof b.id === "string" && C.BOOK_ID_RE.test(b.id))
+        W.note("library", { target: { book: b.id }, title: String(b.title) });
+    } catch (e) {}
+  };
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      LIB.contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
+
   // ---------- Boot ----------
   function boot() {
     load();

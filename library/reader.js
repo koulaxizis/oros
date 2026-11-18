@@ -113,6 +113,7 @@
           c.book = LIB.putBook({ id: book.id, pages: info.pages }) || c.book;
         }
         c.ready = true;
+        if (LIB.contNote) LIB.contNote();   // CONT-1 W4
         c.engine.applyPrefs(LIB.prefs);
         c.engine.paint(LIB.marksOf(book.id));
         LIB.busy(false);
