@@ -1,6 +1,12 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.54.00
+- **The Dock at any edge.** The Dock can now sit at the left, right or top of the screen as well as the bottom: Settings › Appearance › Dock › `Position`. Shortcuts, widgets and notes on the desktop make room for it. On a phone or a small window it stays at the bottom.
+
+## Version 7.53.00
+- **The menu search finds more of your things.** Type in the menu's search box to find your households (by name, the people in them and what you share), your saved labels in Label Maker and your melodies in Ringtone Composer. Choosing one opens that household, label or melody.
+
 ## Version 7.52.00
 - **Claude can record invoices you issued elsewhere.** Through orOS Gate, Claude can now add invoices and receipts you issued with another provider (or in myDATA) to Invoices as recorded documents: their own number, client, amounts with withholding, lines, payment, ΜΑΡΚ and Budget area. They are never drafts, never take a number from your orOS series and nothing is sent anywhere; a document already in Invoices is skipped. It works only where you let Claude change Invoices, you are told of each change and you can undo it.
 
