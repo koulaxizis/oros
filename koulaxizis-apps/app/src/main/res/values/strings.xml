@@ -26,4 +26,15 @@
     <string name="err_older">the repository answered with an older list than before, so it was not used.</string>
     <string name="err_format">the repository list could not be read.</string>
     <string name="err_empty">No apps for this phone yet.</string>
+    <string name="daily_check">Check daily</string>
+    <string name="channel_updates">Updates</string>
+    <string name="self_update">New version of this app: %1$s</string>
+    <plurals name="update_all">
+        <item quantity="one">Update %d app</item>
+        <item quantity="other">Update all (%d)</item>
+    </plurals>
+    <plurals name="updates_ready">
+        <item quantity="one">%d update ready</item>
+        <item quantity="other">%d updates ready</item>
+    </plurals>
 </resources>

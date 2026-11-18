@@ -1,6 +1,7 @@
 package gr.koulaxizis.apps;
 
 import android.app.Activity;
+import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -21,8 +22,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -34,11 +37,20 @@ import java.util.concurrent.Executors;
  * The one screen: every project with its apps, each with Install, Update
  * or Open (APPS-M1). Lists come from the repositories' signed indexes,
  * first from the copy on the phone, then fresh from the network.
+ * "Update all" updates one app after the other; the manager's own update
+ * shows in its own bar (APPS-M2).
  */
 public final class MainActivity extends Activity implements InstallReceiver.Listener {
     private final ExecutorService work = Executors.newSingleThreadExecutor();
     private final Set<String> busy = new HashSet<>();
     private List<Rows.Row> rows = new ArrayList<>();
+    /** Updates waiting their turn after "Update all" (main thread only). */
+    private final Deque<AppInfo> queue = new ArrayDeque<>();
+    private List<AppInfo> pending = new ArrayList<>();
+    /** The manager as the repositories offer it, and that offer when it is newer than this copy. */
+    private AppInfo self, mine;
+    private Button updateAll;
+    private View selfBar;
     private Catalog catalog;
     private Icons icons;
     private TextView status;
@@ -50,30 +62,52 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         super.onCreate(state);
         setContentView(R.layout.main);
         status = findViewById(R.id.status);
+        updateAll = findViewById(R.id.update_all);
+        updateAll.setOnClickListener(v -> updateAll());
+        selfBar = findViewById(R.id.self_bar);
+        findViewById(R.id.self_update).setOnClickListener(v -> {
+            if (mine != null) act(mine, Installed.UPDATE);
+        });
         ListView list = findViewById(R.id.list);
         adapter = new Adapter();
         list.setAdapter(adapter);
         catalog = new Catalog(this);
         icons = new Icons(this);
+        // Set for the screen's whole life: results arrive while Android's
+        // own question is on top and this screen is paused.
+        InstallReceiver.listener = this;
+        UpdateJob.schedule(this);
+        askNotificationsOnce();
         refresh(true);
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        InstallReceiver.listener = this;
-        adapter.notifyDataSetChanged(); // installed versions may have changed
+        updateBars(); // installed versions may have changed
+        adapter.notifyDataSetChanged();
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
         if (InstallReceiver.listener == this) InstallReceiver.listener = null;
+        work.shutdown();
+        super.onDestroy();
+    }
+
+    /** Android 13+: asked once, for the daily check's notice; a no is kept. */
+    private void askNotificationsOnce() {
+        if (android.os.Build.VERSION.SDK_INT < 33 || !UpdateJob.enabled(this)) return;
+        if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return;
+        if (UpdateJob.prefs(this).getBoolean("asked_notes", false)) return;
+        UpdateJob.prefs(this).edit().putBoolean("asked_notes", true).apply();
+        requestPermissions(new String[] {Manifest.permission.POST_NOTIFICATIONS}, 1);
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
+        menu.findItem(R.id.daily).setChecked(UpdateJob.enabled(this));
         return true;
     }
 
@@ -81,6 +115,14 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     public boolean onOptionsItemSelected(MenuItem item) {
         if (item.getItemId() == R.id.refresh) {
             refresh(false);
+            return true;
+        }
+        if (item.getItemId() == R.id.daily) {
+            boolean on = !item.isChecked();
+            item.setChecked(on);
+            UpdateJob.prefs(this).edit().putBoolean("daily", on).apply();
+            UpdateJob.schedule(this);
+            if (on) askNotificationsOnce();
             return true;
         }
         return super.onOptionsItemSelected(item);
@@ -96,14 +138,18 @@ public final class MainActivity extends Activity implements InstallReceiver.List
                 catalog.loadCached();
                 List<Rows.Row> cached = build();
                 long at = catalog.checkedAt;
-                runOnUiThread(() -> show(cached, at));
+                AppInfo me = catalog.self;
+                runOnUiThread(() -> show(cached, at, me));
             }
             catalog.refresh();
             List<Rows.Row> fresh = build();
             long at = catalog.checkedAt;
+            AppInfo me = catalog.self;
             runOnUiThread(() -> {
                 refreshing = false;
-                show(fresh, at);
+                show(fresh, at, me);
+                // What the screen shows counts as told: no notice for it later.
+                UpdateJob.announce(this, pending, mine, false);
             });
         });
     }
@@ -112,8 +158,10 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         return Rows.build(Source.ALL, catalog.apps, catalog.errors, Locale.getDefault());
     }
 
-    private void show(List<Rows.Row> next, long checkedAt) {
+    private void show(List<Rows.Row> next, long checkedAt, AppInfo me) {
         rows = next;
+        self = me;
+        updateBars();
         adapter.notifyDataSetChanged();
         if (refreshing) {
             status.setText(R.string.checking);
@@ -124,6 +172,54 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         } else {
             status.setText(R.string.no_list);
         }
+    }
+
+    /** The "Update all" button and the manager's own bar, from what the phone has now. */
+    private void updateBars() {
+        List<AppInfo> offers = new ArrayList<>();
+        for (Rows.Row r : rows) if (r.app != null) offers.add(r.app);
+        pending = Updates.pending(offers, pkg -> Installed.of(getPackageManager(), pkg));
+        int waiting = 0;
+        for (AppInfo a : pending) if (!busy.contains(a.pkg)) waiting++;
+        if (pending.size() >= 2) {
+            updateAll.setVisibility(View.VISIBLE);
+            updateAll.setText(getResources().getQuantityString(R.plurals.update_all, pending.size(), pending.size()));
+            updateAll.setEnabled(waiting > 0 && queue.isEmpty());
+        } else {
+            updateAll.setVisibility(View.GONE);
+        }
+        mine = Updates.self(self, getPackageName().equals(Catalog.OWN)
+            ? Installed.of(getPackageManager(), Catalog.OWN) : null);
+        selfBar.setVisibility(mine == null ? View.GONE : View.VISIBLE);
+        if (mine != null) {
+            ((TextView) findViewById(R.id.self_text)).setText(getString(R.string.self_update, mine.versionName));
+            Button b = findViewById(R.id.self_update);
+            b.setEnabled(!busy.contains(mine.pkg));
+            b.setText(busy.contains(mine.pkg) ? R.string.working : R.string.update);
+        }
+    }
+
+    private void updateAll() {
+        if (!mayInstall()) return;
+        queue.clear();
+        for (AppInfo a : pending) if (!busy.contains(a.pkg)) queue.add(a);
+        next();
+    }
+
+    /** Starts the next queued update; each waits for the one before it to finish. */
+    private void next() {
+        AppInfo a = queue.poll();
+        if (a != null) act(a, Installed.UPDATE);
+        updateBars();
+    }
+
+    private boolean mayInstall() {
+        if (getPackageManager().canRequestPackageInstalls()) return true;
+        new AlertDialog.Builder(this).setTitle(R.string.allow_title).setMessage(R.string.allow_text)
+            .setPositiveButton(R.string.allow_open, (d, w) -> startActivity(new Intent(
+                Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))))
+            .setNegativeButton(android.R.string.cancel, null).show();
+        return false;
     }
 
     private void act(AppInfo app, int state) {
@@ -137,14 +233,12 @@ public final class MainActivity extends Activity implements InstallReceiver.List
                 .setPositiveButton(android.R.string.ok, null).show();
             return;
         }
-        if (!getPackageManager().canRequestPackageInstalls()) {
-            new AlertDialog.Builder(this).setTitle(R.string.allow_title).setMessage(R.string.allow_text)
-                .setPositiveButton(R.string.allow_open, (d, w) -> startActivity(new Intent(
-                    Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName()))))
-                .setNegativeButton(android.R.string.cancel, null).show();
+        if (!mayInstall()) {
+            queue.clear();
             return;
         }
         busy.add(app.pkg);
+        updateBars();
         adapter.notifyDataSetChanged();
         work.execute(() -> {
             String err = null;
@@ -159,6 +253,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
                     busy.remove(app.pkg);
                     adapter.notifyDataSetChanged();
                     Toast.makeText(this, getString(R.string.install_failed, app.name, note(code)), Toast.LENGTH_LONG).show();
+                    next();
                 }
             });
         });
@@ -168,10 +263,13 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     public void onInstallResult(String pkg, boolean ok, String message) {
         busy.remove(pkg);
         adapter.notifyDataSetChanged();
-        if (ok) return;
-        String name = pkg;
-        for (Rows.Row r : rows) if (r.app != null && r.app.pkg.equals(pkg)) name = r.app.name;
-        if (message != null) Toast.makeText(this, getString(R.string.install_failed, name, message), Toast.LENGTH_LONG).show();
+        if (!ok) {
+            String name = pkg;
+            for (Rows.Row r : rows) if (r.app != null && r.app.pkg.equals(pkg)) name = r.app.name;
+            if (message != null) Toast.makeText(this, getString(R.string.install_failed, name, message), Toast.LENGTH_LONG).show();
+        }
+        next(); // a "no" to one update does not stop the others
+        if (queue.isEmpty()) UpdateJob.announce(this, pending, mine, false); // takes a done notice away
     }
 
     private String note(String code) {

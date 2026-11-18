@@ -26,4 +26,15 @@
     <string name="err_older">Die Quelle lieferte eine ältere Liste als zuvor, daher wurde sie nicht verwendet.</string>
     <string name="err_format">Die Liste der Quelle konnte nicht gelesen werden.</string>
     <string name="err_empty">Noch keine Apps für dieses Telefon.</string>
+    <string name="daily_check">Täglich prüfen</string>
+    <string name="channel_updates">Updates</string>
+    <string name="self_update">Neue Version dieser App: %1$s</string>
+    <plurals name="update_all">
+        <item quantity="one">%d App aktualisieren</item>
+        <item quantity="other">Alle aktualisieren (%d)</item>
+    </plurals>
+    <plurals name="updates_ready">
+        <item quantity="one">%d Update bereit</item>
+        <item quantity="other">%d Updates bereit</item>
+    </plurals>
 </resources>

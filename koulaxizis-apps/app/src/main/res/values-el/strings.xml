@@ -26,4 +26,15 @@
     <string name="err_older">το αποθετήριο έδωσε παλαιότερη λίστα από πριν, οπότε δεν χρησιμοποιήθηκε.</string>
     <string name="err_format">δεν ήταν δυνατή η ανάγνωση της λίστας του αποθετηρίου.</string>
     <string name="err_empty">Δεν υπάρχουν ακόμη εφαρμογές για αυτό το κινητό.</string>
+    <string name="daily_check">Έλεγχος κάθε μέρα</string>
+    <string name="channel_updates">Ενημερώσεις</string>
+    <string name="self_update">Νέα έκδοση αυτής της εφαρμογής: %1$s</string>
+    <plurals name="update_all">
+        <item quantity="one">Ενημέρωση %d εφαρμογής</item>
+        <item quantity="other">Ενημέρωση όλων (%d)</item>
+    </plurals>
+    <plurals name="updates_ready">
+        <item quantity="one">%d ενημέρωση έτοιμη</item>
+        <item quantity="other">%d ενημερώσεις έτοιμες</item>
+    </plurals>
 </resources>

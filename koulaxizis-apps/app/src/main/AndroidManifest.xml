@@ -6,6 +6,11 @@
          Android asks the person before each first install. -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- The daily check (APPS-M2): one quiet notice when updates are ready,
+         and the check stays in place after a restart. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <!-- To see which of our apps are installed (version, signing key). Only
          launchable apps are visible this way; the list never leaves the phone. -->
     <queries>
@@ -37,5 +42,10 @@
         <receiver
             android:name=".InstallReceiver"
             android:exported="false" />
+
+        <service
+            android:name=".UpdateJob"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

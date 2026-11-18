@@ -4,7 +4,7 @@ One place on an Android phone to install and update every app of our
 projects: orOS, NULL JSFX and Noxpress (Glarolykoi once its own app
 exists). Package `gr.koulaxizis.apps` (permanent). Free and open source
 (MIT), no ads, no account, no Google services. Bible: `OROS_BIBLE.md`
-APPS-M1.
+APPS-M1, APPS-M2.
 
 ## How it works
 
@@ -27,6 +27,11 @@ APPS-M1.
 - **Screen** (`MainActivity.java`, `Rows.java`): one section per project,
   featured apps first, then "More apps"; Install, Update, Open, or Why? for
   a copy signed with another key.
+- **Updates** (`Updates.java`, `UpdateJob.java`, APPS-M2): "Update all" one
+  app after the other; a daily check (JobScheduler, network, battery not
+  low) shows one quiet notification for a new set of updates and never
+  installs by itself; the manager's own new version shows in a bar at the
+  top (signed build only).
 - Languages: English, Greek, German.
 
 ## Adding a project

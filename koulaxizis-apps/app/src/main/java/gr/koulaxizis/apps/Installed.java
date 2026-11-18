@@ -17,7 +17,7 @@ final class Installed {
     final String versionName;
     final Set<String> signers;
 
-    private Installed(long versionCode, String versionName, Set<String> signers) {
+    Installed(long versionCode, String versionName, Set<String> signers) {
         this.versionCode = versionCode;
         this.versionName = versionName;
         this.signers = signers;

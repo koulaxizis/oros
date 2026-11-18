@@ -103,6 +103,8 @@ def main():
     adb("install", "-r", sys.argv[1])
     # The one-time "install unknown apps" switch the person turns on.
     adb("shell", "appops", "set", PKG, "REQUEST_INSTALL_PACKAGES", "allow")
+    # Android 13+ asks once for notices (the daily check); answered here.
+    adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS", check=False)
     adb("shell", "am", "start", "-W", "-n", f"{PKG}/gr.koulaxizis.apps.MainActivity")
 
     def loaded(root):
@@ -111,6 +113,11 @@ def main():
 
     wait_for(loaded, "the verified orOS list")
     shot("list-top")
+    # The daily check is in place (APPS-M2).
+    jobs = adb("shell", "dumpsys", "jobscheduler", PKG, check=False)
+    if "UpdateJob" not in jobs:
+        print(jobs[-3000:])
+        raise SystemExit("the daily check was not scheduled")
     # The other projects are further down the one list (a small screen).
     scroll_to("NULL JSFX")
     scroll_to("Remote for DAWs")

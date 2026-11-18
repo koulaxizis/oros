@@ -28,6 +28,13 @@ final class Catalog {
     final Map<String, String> errors = new HashMap<>();
     /** Newest accepted entry timestamp over all repositories, or 0. */
     long checkedAt;
+    /** The manager itself as a repository offers it (newest over all), or null; never in {@link #apps}. */
+    AppInfo self;
+
+    /** The package of the signed manager (the debug build adds ".debug" and never updates it). */
+    static final String OWN = "gr.koulaxizis.apps";
+    /** The screen and the daily check share the files on the phone. */
+    private static final Object LOCK = new Object();
 
     private final Context ctx;
     private final SharedPreferences prefs;
@@ -39,6 +46,12 @@ final class Catalog {
 
     /** From the copies kept on the phone only; no network. */
     void loadCached() {
+        synchronized (LOCK) {
+            loadCachedLocked();
+        }
+    }
+
+    private void loadCachedLocked() {
         for (Source s : Source.ALL) {
             File f = indexFile(s);
             if (!f.exists()) continue;
@@ -53,12 +66,14 @@ final class Catalog {
 
     /** Network: refreshes every repository; a failing one keeps its last good list and gets an error. */
     void refresh() {
-        errors.clear();
-        for (Source s : Source.ALL) {
-            try {
-                refresh(s);
-            } catch (RepoException e) {
-                errors.put(s.id, e.code);
+        synchronized (LOCK) {
+            errors.clear();
+            for (Source s : Source.ALL) {
+                try {
+                    refresh(s);
+                } catch (RepoException e) {
+                    errors.put(s.id, e.code);
+                }
             }
         }
     }
@@ -109,8 +124,14 @@ final class Catalog {
         List<Locale> phone = new ArrayList<>();
         android.os.LocaleList ll = ctx.getResources().getConfiguration().getLocales();
         for (int i = 0; i < ll.size(); i++) phone.add(ll.get(i));
-        return IndexParser.parse(json, s, Locales.chain(phone), Build.VERSION.SDK_INT,
-            Arrays.asList(Build.SUPPORTED_ABIS), ctx.getPackageName().replace(".debug", ""));
+        List<AppInfo> all = IndexParser.parse(json, s, Locales.chain(phone), Build.VERSION.SDK_INT,
+            Arrays.asList(Build.SUPPORTED_ABIS), null);
+        List<AppInfo> list = new ArrayList<>();
+        for (AppInfo a : all) {
+            if (!a.pkg.equals(OWN)) list.add(a);
+            else if (self == null || a.versionCode > self.versionCode) self = a;
+        }
+        return list;
     }
 
     private File indexFile(Source s) {
