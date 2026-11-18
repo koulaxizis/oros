@@ -187,6 +187,12 @@ test("SB4 bar window: only the bar, its title kept, apps open in the main window
   assert.match(sh, /if \(d\.id && !BAR_APP_RE\.test\(String\(d\.id\)\)\) return;/);
   assert.match(sh, /fetch\("\/__oros-open"[^)]*\)[^;]*method: "POST", headers: \{ "X-Oros-Bar": "1" \}/);
   assert.match(css, /html\.barwin body > \*:not\(#oros-bar\) \{ display: none !important; \}/);
+  // every open path hands over (chips go through __orosOpenAt and openApp), only on a tap,
+  // with the chip's target; nothing renames the bar window
+  assert.match(sh, /if \(BARWIN\) \{ if \(app && app\.id && barwinTapped\(\)\) barwinOpen\(app\.id\); return; \}/);
+  assert.match(sh, /if \(BARWIN\) \{ if \(barwinTapped\(\)\) barwinOpen\(appId, t\); return; \}/);
+  assert.match(sh, /document\.title = BARWIN \? "orOS bar" : "orOS";/);
+  assert.match(sh, /window\.__orosOpenAt\(String\(d\.id\), d\.target\)/);
   // behind the screen lock the chips go (no lock screen over the bar window)
   assert.match(src, /var lk = locked\(\);\s+if \(box\.hidden !== lk\)/);
 });

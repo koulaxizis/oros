@@ -4173,6 +4173,7 @@
     if (!app || app.type !== "internal") return;
     var t = null;
     try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
+    if (BARWIN) { if (barwinTapped()) barwinOpen(appId, t); return; }   // SB4: the main window opens it, at its target
     if (appLive(appId)) {
       closeMenu();
       menuReset();
@@ -5211,8 +5212,14 @@
   })();
   try { barCh = typeof BroadcastChannel === "function" ? new BroadcastChannel("oros-barwin") : null; } catch (e) { barCh = null; }
   var BAR_APP_RE = /^[a-z0-9-]{1,40}$/;
-  // In the bar window: hand the app over. → true (always handled there).
-  function barwinOpen(id) {
+  // A person's tap just now (Chromium's user activation); older browsers
+  // count every call as one.
+  function barwinTapped() {
+    try { var u = navigator.userActivation; return !u || !!u.isActive; } catch (e) { return true; }
+  }
+  // In the bar window: hand the app over, with its target (a chip's row)
+  // when a main window takes it. → true (always handled there).
+  function barwinOpen(id, target) {
     id = BAR_APP_RE.test(String(id || "")) ? String(id) : "";
     var asked = Date.now(), got = false;
     if (barCh) {
@@ -5221,7 +5228,7 @@
         if (d && d.t === "ok" && d.at === asked) { got = true; barCh.removeEventListener("message", off); }
       };
       barCh.addEventListener("message", off);
-      barCh.postMessage({ t: "open", id: id, at: asked });
+      barCh.postMessage({ t: "open", id: id, at: asked, target: target === undefined ? null : target });
       setTimeout(function () {
         barCh.removeEventListener("message", off);
         if (!got) barwinLauncher(id);
@@ -5242,7 +5249,9 @@
     if (d.id && !BAR_APP_RE.test(String(d.id))) return;
     barCh.postMessage({ t: "ok", at: d.at });
     try { window.focus(); } catch (e) {}
-    if (d.id) openAppById(String(d.id));
+    if (!d.id) return;
+    if (d.target != null && typeof window.__orosOpenAt === "function") window.__orosOpenAt(String(d.id), d.target);
+    else openAppById(String(d.id));
   });
   if (BARWIN) {
     // The menu button, the clock and the date: their app (or orOS
@@ -13174,6 +13183,7 @@
       if (first) lateWhen(function () { var o = late.open; late.open = null; if (o) openApp(o[0], o[1]); });
       return;
     }
+    if (BARWIN) { if (app && app.id && barwinTapped()) barwinOpen(app.id); return; }   // SB4: only a tap hands over (Bible "SB4-FIX")
     // TILL-1: on a till-only device anything but Stock needs the owner.
     if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
     if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
@@ -13241,7 +13251,7 @@
     document.getElementById("btn-menu-label").textContent = window.t("bar.menu");
     mb.setAttribute("data-i18n-title", "bar.menu");
     mb.setAttribute("title", window.t("bar.menu"));   // paint NOW — don't wait for applyLang()
-    document.title = "orOS";                 // v0.18.2: back to the bare OS title
+    document.title = BARWIN ? "orOS bar" : "orOS";   // v0.18.2: back to the bare OS title (SB4: the bar keeps its own)
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
     if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather moves again
     wpLandRefresh();   // the desktop may have changed while hidden
