@@ -46,6 +46,11 @@ Im großen Player (tippe auf die Player-Leiste) wählt die Taste mit dem Bildsch
 - **Smart-TV oder Netzwerklautsprecher (DLNA):** Läuft [orOS Bridge](https://useoros.online/download/) 0.10.0 oder neuer auf einem Windows- oder Linux-Computer zu Hause, zeigt dasselbe Fenster die Smart-TVs, Kodi-Boxen und Netzwerklautsprecher in deinem Netzwerk. Beim ersten Mal fragt `Mit orOS Bridge verbinden` nach dem 6-stelligen Code, den die Bridge zeigt (dieselbe Kopplung wie Studio und Scanner & PDF). Wähle ein Gerät, und es spielt; das Fenster hat dann Pause, Lautstärke und `Zurück zu diesem Gerät`. Das Gerät holt den Stream selbst, also gehen nur http- und https-Adressen. `Erneut suchen` sucht noch einmal.
 Das Gerät bekommt die eigene Adresse der Folge: Eine heruntergeladene Kopie geht nicht, und ein Fernseher oder Lautsprecher über orOS Bridge beginnt die Folge von vorn. Solange sie dort läuft, bleibt Podcasts hier pausiert.
 
+## Lichtshow
+`Lichtshow` (die Sonnen-Schaltfläche im großen Player) füllt das Fenster mit Licht, das sich mit der Folge bewegt. `Licht:` wählt den Stil (Leuchten, Ringe, Balken, Welle), und `Nur das Licht` blendet die Steuerung aus; tippe irgendwohin oder drücke eine Taste, um sie zurückzuholen.
+
+Das Licht folgt dem Ton heruntergeladener Folgen und von Sendungen, deren Server einer Webseite das Zuhören erlaubt (dieselben, bei denen Stille überspringen und Stimmverstärkung funktionieren); beim Einschalten kann die Folge an derselben Stelle noch einmal laden. Bei anderen Sendungen bewegt sich das Licht von selbst, und eine Zeile sagt das. Nichts wird aufgenommen oder gesendet. Das Licht bleibt still bei reduzierter Bewegung, schwachem Akku oder ausgelastetem Gerät, und es blinkt nie.
+
 ## Downloads
 Wähle `Herunterladen` im Menü einer Folge. Der Tab `Downloads` zeigt, wie viel Platz sie belegen und wie viel frei ist. `Downloads vor automatischem Aufräumen schützen` bittet den Browser, sie zu behalten; `Gehörte Downloads löschen` räumt auf.
 

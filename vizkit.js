@@ -40,7 +40,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var STYLES = ["glow", "rings", "bars", "wave"];
   var FPS_GAP = 1000 / 30;
   var SLOW_MS = 55, SLOW_N = 90;
@@ -51,7 +51,7 @@
       btn: "Light show", on: "Light show on", off: "Light show off",
       style: "Light: {s}", next: "Next light style",
       glow: "Glow", rings: "Rings", bars: "Bars", wave: "Wave",
-      immersive: "Light only", back: "Show the controls",
+      immersive: "Light only", back: "Show the controls", close: "Close", play: "Play", pause: "Pause",
       calm: "This source does not let orOS listen to the sound, so the light moves on its own.",
       reduced: "Reduced motion is on, so the light stays still.",
       battery: "The battery is low, so the light stays still.",
@@ -61,7 +61,7 @@
       btn: "Φωτορυθμικό", on: "Φωτορυθμικό ενεργό", off: "Φωτορυθμικό ανενεργό",
       style: "Φως: {s}", next: "Επόμενο στυλ φωτός",
       glow: "Λάμψη", rings: "Κύκλοι", bars: "Στήλες", wave: "Κύμα",
-      immersive: "Μόνο το φως", back: "Εμφάνιση χειριστηρίων",
+      immersive: "Μόνο το φως", back: "Εμφάνιση χειριστηρίων", close: "Κλείσιμο", play: "Αναπαραγωγή", pause: "Παύση",
       calm: "Αυτή η πηγή δεν αφήνει το orOS να ακούσει τον ήχο, γι' αυτό το φως κινείται μόνο του.",
       reduced: "Οι μειωμένες κινήσεις είναι ενεργές, γι' αυτό το φως μένει ακίνητο.",
       battery: "Η μπαταρία είναι χαμηλή, γι' αυτό το φως μένει ακίνητο.",
@@ -71,7 +71,7 @@
       btn: "Lichtshow", on: "Lichtshow an", off: "Lichtshow aus",
       style: "Licht: {s}", next: "Nächster Lichtstil",
       glow: "Leuchten", rings: "Ringe", bars: "Balken", wave: "Welle",
-      immersive: "Nur das Licht", back: "Steuerung zeigen",
+      immersive: "Nur das Licht", back: "Steuerung zeigen", close: "Schließen", play: "Abspielen", pause: "Pause",
       calm: "Diese Quelle lässt orOS den Ton nicht hören, darum bewegt sich das Licht von selbst.",
       reduced: "Reduzierte Bewegung ist an, darum bleibt das Licht still.",
       battery: "Der Akku ist schwach, darum bleibt das Licht still.",
@@ -445,8 +445,136 @@
     };
   }
 
+  // ---------- The stage (Radio, Podcasts: wave 2) ----------
+  // A full-window light show over an app that has no big player of its
+  // own: the light, the title, play / pause, the style, "Light only"
+  // and the note, in the kit's own markup and style (.ovz-…).
+  //   var s = OrosViz.stage({ lang, title(), sub(), playing(), toggle(),
+  //     source(), colors(), style, onStyle(id), onClose() });
+  //   s.paint() after every player change; s.close().
+  var ICON = {
+    close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+    light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="3.5"/></svg>',
+    expand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
+  };
+  var CSS = [
+    ".ovz-stage{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;padding:0;border:0;border-radius:0;background:#08080d;color:#f3f3f8;color-scheme:dark;overflow:hidden;font:inherit}",
+    ".ovz-stage::backdrop{background:#08080d}",
+    ".ovz-c{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}",
+    ".ovz-top,.ovz-bot{position:absolute;left:0;right:0;z-index:1;padding:max(10px,env(safe-area-inset-top)) 16px 0}",
+    ".ovz-top{top:0;display:flex;align-items:center;gap:8px}",
+    ".ovz-bot{bottom:0;padding:0 16px calc(18px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}",
+    ".ovz-b{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-width:44px;min-height:44px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:rgba(8,8,13,.55);color:inherit;font:inherit;font-size:14px;padding:0 14px;cursor:pointer}",
+    ".ovz-b svg{width:22px;height:22px;flex:none}",
+    ".ovz-b:focus-visible{outline:2px solid #fff;outline-offset:2px}",
+    ".ovz-x{border:0;background:transparent;padding:0}",
+    ".ovz-p{width:64px;height:64px;padding:0;background:#f3f3f8;color:#08080d;border:0}",
+    ".ovz-p svg{width:30px;height:30px}",
+    ".ovz-t{font-size:22px;font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 4px #000}",
+    ".ovz-s{font-size:14px;opacity:.8;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 4px #000}",
+    ".ovz-row{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}",
+    ".ovz-note{font-size:13px;opacity:.8;max-width:460px;line-height:1.4;margin:0;text-shadow:0 1px 3px #000}",
+    ".ovz-note[hidden]{display:none}",
+    ".ovz-back{display:none;position:absolute;z-index:2;top:max(10px,env(safe-area-inset-top));left:10px;opacity:.7}",
+    ".ovz-imm .ovz-top,.ovz-imm .ovz-bot{visibility:hidden}",
+    ".ovz-imm .ovz-back{display:inline-flex}",
+    "@media (max-width:380px){.ovz-b{font-size:13px;padding:0 10px}.ovz-t{font-size:19px}}"
+  ].join("\n");
+  function stage(o) {
+    o = o || {};
+    var doc = o.doc || root.document, l = o.lang;
+    if (!doc.getElementById("ovz-css")) {
+      var css = doc.createElement("style");
+      css.id = "ovz-css";
+      css.textContent = CSS;
+      (doc.head || doc.documentElement).appendChild(css);
+    }
+    var mk = function (tag, cls, text) { var e = doc.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+    var btn = function (cls, icon, text, label, fn) {
+      var b = mk("button", "ovz-b " + cls);
+      b.type = "button";
+      b.innerHTML = ICON[icon];
+      if (text) b.appendChild(mk("span", "", text));
+      b.setAttribute("aria-label", label); b.title = label;
+      b.addEventListener("click", fn);
+      return b;
+    };
+    var style = normStyle(o.style), v = null, why = "", live = true;
+    var dlg = mk("dialog", "ovz-stage");
+    dlg.setAttribute("aria-label", label("btn", l));
+    var cv = mk("canvas", "ovz-c"); cv.setAttribute("aria-hidden", "true");
+    var top = mk("div", "ovz-top"), bot = mk("div", "ovz-bot");
+    top.appendChild(btn("ovz-x", "close", "", label("close", l), function () { dlg.close(); }));
+    var tt = mk("div", "ovz-t"), ts = mk("div", "ovz-s");
+    var play = btn("ovz-p", "play", "", label("play", l), function () { try { o.toggle(); } catch (e) {} paint(); });
+    var stB = btn("ovz-st", "light", label("style", l, { s: label(style, l) }), "", function () {
+      style = nextStyle(style);
+      if (v) v.setStyle(style);
+      try { if (o.onStyle) o.onStyle(style); } catch (e) {}
+      paint();
+    });
+    var imB = btn("ovz-im", "expand", label("immersive", l), label("immersive", l), function () { imm(true); });
+    var row = mk("div", "ovz-row");
+    row.appendChild(play); row.appendChild(stB); row.appendChild(imB);
+    var note = mk("p", "ovz-note"); note.setAttribute("aria-live", "polite"); note.hidden = true;
+    bot.appendChild(tt); bot.appendChild(ts); bot.appendChild(row); bot.appendChild(note);
+    var back = btn("ovz-back ovz-x", "close", "", label("back", l), function (e) { e.stopPropagation(); imm(false); });
+    dlg.appendChild(cv); dlg.appendChild(top); dlg.appendChild(bot); dlg.appendChild(back);
+    function imm(on) {
+      dlg.classList.toggle("ovz-imm", !!on);
+      try { (on ? back : imB).focus({ preventScroll: true }); } catch (e) {}
+    }
+    dlg.addEventListener("cancel", function (e) { if (dlg.classList.contains("ovz-imm")) { e.preventDefault(); imm(false); } });
+    dlg.addEventListener("click", function (e) { if (dlg.classList.contains("ovz-imm") && !back.contains(e.target)) { e.stopImmediatePropagation(); imm(false); } }, true);
+    dlg.addEventListener("keydown", function (e) { if (dlg.classList.contains("ovz-imm") && e.key !== "Escape" && e.key !== "Tab") imm(false); });
+    function playing() { try { return !!o.playing(); } catch (e) { return false; } }
+    function paint() {
+      var t1 = "", t2 = "";
+      try { t1 = o.title ? o.title() || "" : ""; t2 = o.sub ? o.sub() || "" : ""; } catch (e) {}
+      if (tt.textContent !== t1) tt.textContent = t1;
+      if (ts.textContent !== t2) ts.textContent = t2;
+      var p = playing();
+      if (play._p !== p) {
+        play._p = p;
+        play.innerHTML = ICON[p ? "pause" : "play"];
+        play.setAttribute("aria-label", label(p ? "pause" : "play", l)); play.title = play.getAttribute("aria-label");
+      }
+      stB.lastChild.textContent = label("style", l, { s: label(style, l) });
+      stB.setAttribute("aria-label", label("style", l, { s: label(style, l) }) + " · " + label("next", l));
+      if (p) {
+        var fr = null;
+        try { fr = o.source ? o.source() : null; } catch (e) {}
+        live = !!(fr && fr.live);
+      } else live = true;
+      var msg = why ? label(why, l) : !live ? label("calm", l) : "";
+      if (note.textContent !== msg) note.textContent = msg;
+      note.hidden = !msg;
+      if (v && p) v.wake();
+    }
+    dlg.addEventListener("close", function () {
+      if (v) { v.destroy(); v = null; }
+      try { dlg.remove(); } catch (e) {}
+      try { if (o.onClose) o.onClose(); } catch (e) {}
+    });
+    doc.body.appendChild(dlg);
+    try { dlg.showModal(); } catch (e) { dlg.setAttribute("open", ""); }
+    v = create(cv, {
+      style: style, source: o.source, playing: playing, colors: o.colors,
+      area: function () {
+        if (dlg.classList.contains("ovz-imm")) return null;
+        var a = top.getBoundingClientRect(), b = bot.getBoundingClientRect(), d = dlg.getBoundingClientRect();
+        return { x: 0, y: a.bottom - d.top, w: d.width, h: Math.max(0, b.top - a.bottom) };
+      },
+      onState: function (r) { why = r; paint(); }
+    });
+    paint();
+    return { el: dlg, paint: paint, close: function () { try { dlg.close(); } catch (e) {} }, style: function () { return style; } };
+  }
+
   var api = {
-    v: VER, STYLES: STYLES, create: create, label: label, normStyle: normStyle, nextStyle: nextStyle,
+    v: VER, STYLES: STYLES, create: create, stage: stage, label: label, normStyle: normStyle, nextStyle: nextStyle,
     bands: bands, smooth: smooth, gain: gain, idle: idle, stillReason: stillReason, isSlow: isSlow,
     rgb: rgb, palette: palette, fit: fit, bars: bars, STR: STR
   };

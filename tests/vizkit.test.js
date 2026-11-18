@@ -119,3 +119,45 @@ test("help: Light show section in EN, EL, DE", () => {
   assert.match(read("music/help.el.txt"), /^## Φωτορυθμικό$/m);
   assert.match(read("i18n/de/help/music.txt"), /^## Lichtshow$/m);
 });
+
+// ---------- Wave 2: Radio and Podcasts ----------
+test("stage: kit markup through textContent, own style once, Esc leaves Light only first", () => {
+  const s = read("vizkit.js");
+  assert.match(s, /function stage\(o\)/);
+  assert.match(s, /css\.id = "ovz-css";/);
+  assert.match(s, /if \(tt\.textContent !== t1\) tt\.textContent = t1;/);
+  assert.match(s, /if \(dlg\.classList\.contains\("ovz-imm"\)\) \{ e\.preventDefault\(\); imm\(false\); \}/);
+  assert.ok(["close", "play", "pause"].every((k) => V.STR.en[k] && V.STR.el[k] && V.STR.de[k]));
+});
+
+test("Radio host: a copy of the sound, never rerouted; crossOrigin only with the light on, retried plain", () => {
+  const s = read("radio/radio.js");
+  assert.match(s, /typeof audio\.captureStream !== "function"/);
+  assert.doesNotMatch(s, /mozCaptureStream\(/);
+  assert.doesNotMatch(s, /createMediaElementSource/);
+  assert.doesNotMatch(s, /viz\.an\.connect\(/);
+  assert.match(s, /var ok = viz\.on && viz\.ok\[vizOrigin\(u\)\] === true;\n    if\(ok\) audio\.crossOrigin = "anonymous";\n    else audio\.removeAttribute\("crossorigin"\);/);
+  assert.match(s, /vizBefore\(url\);\n      audio\.src = url;/);
+  assert.match(s, /if\(vizRetry\(\)\) return;/);
+  assert.match(s, /mode: "cors", credentials: "omit"/);
+  assert.match(s, /onClose: function\(\)\{ vizStage = null; try\{ unsub\(\); \}catch\(e\)\{\} try\{ host\.api\.viz\(false\); \}catch\(e\)\{\} \}/);
+});
+
+test("Podcasts host: the light show wires like the effects, its frame needs a wired element", () => {
+  const s = read("podcasts/host.js");
+  assert.match(s, /function fxWanted\(\) \{ return !!\(vizOn \|\| C\.prefOf\(data, "sil"\) \|\| C\.prefOf\(data, "vb"\)\); \}/);
+  assert.match(s, /fx\.el === audio && fx\.state === "on"/);
+  assert.match(s, /viz: function \(on\) \{ return vizSet\(on\); \},\n    vizFrame: vizFrame,/);
+  const a = read("podcasts/podcasts.js");
+  assert.match(a, /lsB\.id = "fp-viz"/);
+  assert.match(a, /onClose: function \(\) \{ vizStage = null; try \{ H\.viz\(false\); \} catch \(e\) \{\} \}/);
+  assert.match(a, /\["glow", "rings", "bars", "wave"\]\.indexOf\(o\.vz\) >= 0/);
+});
+
+test("help: Light show in Radio and Podcasts, EN, EL, DE", () => {
+  for (const app of ["radio", "podcasts"]) {
+    assert.match(read(app + "/help.en.txt"), /^## Light show$/m);
+    assert.match(read(app + "/help.el.txt"), /^## Φωτορυθμικό$/m);
+    assert.match(read("i18n/de/help/" + app + ".txt"), /^## Lichtshow$/m);
+  }
+});
