@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Podcasts — host.js (player + data owner, v1.2.0)
+// orOS Podcasts — host.js (player + data owner, v1.3.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so playback, the
 // position, the queue and sync keep working while the Podcasts
@@ -389,7 +389,24 @@
   // Skip silence polls the analyser every 100 ms while playing; quiet
   // stretches play at core.silenceRate (the screen keeps showing the
   // listening speed, fx.base). Saved time goes to the statistics.
-  function fxWanted() { return !!(C.prefOf(data, "sil") || C.prefOf(data, "vb")); }
+  // The light show (MU-VIZ wave 2) reads the same analyser: while it is
+  // on, the element is wired like for the effects (CORS-probed hosts
+  // and downloads only), and nothing else changes in what is heard.
+  var vizOn = false, vizF = null, vizW = null;
+  function fxWanted() { return !!(vizOn || C.prefOf(data, "sil") || C.prefOf(data, "vb")); }
+  function vizSet(on) {
+    vizOn = !!on;
+    fxSync();
+    return vizOn;
+  }
+  // → { live, f, w, rate } (arrays of this window, read only) or null.
+  function vizFrame() {
+    if (!vizOn) return null;
+    var an = fx.an, live = !!(an && fx.el === audio && fx.state === "on" && !audio.paused && fx.ctx && fx.ctx.state === "running");
+    if (an && (!vizF || vizF.length !== an.frequencyBinCount)) { vizF = new Uint8Array(an.frequencyBinCount); vizW = new Uint8Array(an.fftSize); }
+    if (live) { try { an.getByteFrequencyData(vizF); an.getByteTimeDomainData(vizW); } catch (e) { live = false; } }
+    return { live: live, f: vizF, w: vizW, rate: fx.ctx ? fx.ctx.sampleRate : 48000 };
+  }
   function setBase(r) {
     fx.base = +r > 0 ? +r : 1;
     try { audio.playbackRate = fx.fastOn ? C.silenceRate(fx.base) : fx.base; } catch (e) {}
@@ -798,6 +815,9 @@
         fx: { state: fx.state, sil: !!C.prefOf(data, "sil"), vb: !!C.prefOf(data, "vb"), saved: Math.round(fx.saved), fast: fx.fastOn }
       };
     },
+    // MU-VIZ: the light show (see vizFrame).
+    viz: function (on) { return vizSet(on); },
+    vizFrame: vizFrame,
     subscribe: function (fn) {
       subs.push(fn);
       return function () { var i = subs.indexOf(fn); if (i >= 0) subs.splice(i, 1); };

@@ -103,6 +103,19 @@ The end day also shows in [Publishing](app:publish) (on each title, with a badge
 
 A contract added by the [Assistant](app:assistant) or orOS Gate gets its reminder the next time CRM opens.
 
+### Rights: what each contract grants
+A contract's quick actions show its `Rights`: the template, what it grants (every economic right, an exclusive licence or free digital posting only), the formats it covers, each right with its share (print, e-book, audio, translation, stage, film and TV, merchandise, free digital posting, excerpts and promotion), the territory, how long stock may still be sold after the end, the Creative Commons licence and where the terms come from (the PDF, an oral agreement or a paper not found). Claude fills them in from your contracts through orOS Gate, or the [Assistant](app:assistant) does, each change on a card with Undo.
+
+The `Rights` chip in `Contracts` matches them to your [Publishing](app:publish) titles and shows:
+- `On sale with no running right`: a format linked to a shop product while its contract has ended, was ended by agreement or does not cover it (a print edition stays fine during its sell-off months). Free releases under CC BY-NC-SA show apart, under `Free, under CC`. A price of 0 in Publishing counts as free.
+- `Rights with no release`: a running contract grants the e-book or the audiobook and the title has no such format.
+- `Renewal decisions within 90 days`, each with what happens after the end (sell-off months, extension only by agreement).
+- `All titles`, with ✓ granted, ± with consent, ○ free only and – not mentioned or not recorded for each right.
+
+A digital-only contract released under a perpetual Creative Commons licence shows as `Digital, for ever under its CC licence`: its end needs no decision and sends no reminder, and its digital editions stay allowed. Print contracts keep their end day.
+
+This is a record of what the contracts say, not legal advice.
+
 `Send to the shop…` (with a WooCommerce shop in Settings › Connected services) sends the end days to the shop's Revenue Splitter (1.14.2 or later), which shows each creator their own contracts in its Author Portal. Only names, titles, formats, days and states are sent, never a note, a value or a file.
 
 Only partners linked to a Revenue Splitter beneficiary (`Link beneficiary` on the partner's card) and contracts with a start day are sent, under the beneficiary's name; the window says which ones stay behind and why. The shop replaces its whole list with this one, and lists what it did not take (for example a beneficiary name it does not know) right there, so you can fix the name and send again.

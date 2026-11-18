@@ -1567,8 +1567,33 @@
     $("ed-name").textContent = docTitle(d);
     T.load(AT.draw.fontKeys(d)).then(function () { emit("fonts"); }, function () {});
     emit("open");
+    contNote();
   }
   AT.openDoc = openDoc;
+
+  // CONT-1 W4: tell the shell which design is open (continue.js keeps the
+  // reference and the name only, never the picture). On opening, and once
+  // at the first tap or key after the start; nothing before that, so a
+  // restored design never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (W && AT.doc) W.note("atelier", { target: { doc: AT.doc.id }, title: docTitle(AT.doc) });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   function goHome() {
     AT.endGesture();

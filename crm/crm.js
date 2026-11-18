@@ -175,6 +175,23 @@
       "cx.renew3": "Renew +3 years", "cx.renew5": "Renew +5 years", "cx.renewD": "Renew until…", "cx.post7": "Put off the decision 7 days", "cx.post30": "Put off the decision 30 days", "cx.postD": "Put off the decision until…",
       "cx.end": "End by agreement…", "cx.reopen": "It runs again", "cx.mail": "Email {name}", "cx.call": "Call {name}", "cx.file": "Open the contract file", "cx.task": "Kanban card", "cx.note": "Note…",
       "cx.edit": "Edit the contract", "cx.partner": "Partner card", "cx.hist": "History",
+      "cx.st.perp": "Digital, for ever under its CC licence", "rt.chip": "Rights", "rt.sold": "On sale with no running right", "rt.soldHint": "A format linked to a shop product in Publishing whose contract has ended, was ended by agreement or does not cover it.",
+      "rt.free": "Free, under CC", "rt.freeHint": "Free releases under CC BY-NC-SA with no running contract. Usually fine; ask a lawyer when unsure.",
+      "rt.unrel": "Rights with no release", "rt.unrelHint": "A running contract grants it, and the title has no such format in Publishing.",
+      "rt.renew": "Renewal decisions within 90 days", "rt.all": "All titles", "rt.none": "Nothing here.",
+      "rt.noPub": "Rights are matched to Publishing's titles. Open Publishing on this device once to see them here.",
+      "rt.left": "{n} contracts without rights recorded · {u} not matched to a Publishing title",
+      "rt.legend": "✓ granted · ± with consent · ○ free only · – not mentioned or not recorded",
+      "rt.f.p": "Print", "rt.f.e": "E-book", "rt.f.a": "Audiobook", "rt.paid": "{v} · product {id}", "rt.gratis": "free · product {id}",
+      "rt.after.so": "stock may be sold for {n} months after the end", "rt.after.no": "no sell-off after the end", "rt.after.ext": "extension only by mutual agreement",
+      "rt.r.print": "Print", "rt.r.ebook": "E-book", "rt.r.audio": "Audio", "rt.r.transl": "Translation", "rt.r.adapt": "Stage, film, TV", "rt.r.merch": "Merchandise", "rt.r.free": "Free digital posting", "rt.r.promo": "Excerpts, promotion",
+      "rt.s.granted": "granted", "rt.s.consent": "with consent", "rt.s.free": "free only", "rt.s.none": "not mentioned",
+      "rt.sec": "Rights", "rt.unset": "No rights recorded yet. Claude fills them in from the contracts through orOS Gate, or the Assistant does.",
+      "rt.tpl": "Template {v}", "rt.g.all": "every economic right", "rt.g.excl": "exclusive licence", "rt.g.free": "free digital posting only",
+      "rt.cov": "Covers: {v}", "rt.cov.p": "print", "rt.cov.e": "digital", "rt.ter.gr": "Greece", "rt.ter.none": "no territory set",
+      "rt.so": "sell-off {n} months", "rt.cd": "sales stop within {n} days", "rt.ext": "extension by agreement",
+      "rt.cc": "CC BY-NC-SA", "rt.ccp": "CC BY-NC-SA, for ever", "rt.rev": "rights return if out of print",
+      "rt.src.pdf": "read from the PDF", "rt.src.oral": "oral agreement", "rt.src.lost": "the paper is not found", "rt.chk": "checked {d}",
       "cx.h.renew": "Renewed until {v} (was {p})", "cx.h.post": "Decision put off to {v}", "cx.h.end": "Ended by agreement {v}", "cx.h.reopen": "Runs again", "cx.h.note": "Note", "cx.h.mail": "Email drafted", "cx.h.call": "Called", "cx.h.task": "Kanban card made",
       "cx.endT": "End «{t}» by agreement", "cx.endD": "Ended on", "cx.endN": "Note (optional)", "cx.endOk": "End it",
       "cx.renewT": "Renew «{t}» until", "cx.postT": "Put off the decision on «{t}» until", "cx.dayBad": "Pick a day after today.", "cx.renewBad": "The new end must come after {d}.", "cx.ok": "OK",
@@ -490,6 +507,23 @@
       "cx.renew3": "Ανανέωση +3 έτη", "cx.renew5": "Ανανέωση +5 έτη", "cx.renewD": "Ανανέωση έως…", "cx.post7": "Αναβολή απόφασης 7 ημέρες", "cx.post30": "Αναβολή απόφασης 30 ημέρες", "cx.postD": "Αναβολή απόφασης έως…",
       "cx.end": "Λύση ή ακύρωση…", "cx.reopen": "Ισχύει ξανά", "cx.mail": "Email σε {name}", "cx.call": "Κλήση σε {name}", "cx.file": "Άνοιγμα αρχείου συμφωνητικού", "cx.task": "Κάρτα στο Kanban", "cx.note": "Σημείωση…",
       "cx.edit": "Επεξεργασία συμφωνητικού", "cx.partner": "Καρτέλα συνεργάτη", "cx.hist": "Ιστορικό",
+      "cx.st.perp": "Ψηφιακό, αέναο με την άδεια CC", "rt.chip": "Δικαιώματα", "rt.sold": "Πουλιέται χωρίς ενεργό δικαίωμα", "rt.soldHint": "Μορφή συνδεδεμένη με προϊόν του καταστήματος στο Publishing, ενώ το συμφωνητικό της έληξε, λύθηκε ή δεν την καλύπτει.",
+      "rt.free": "Δωρεάν, με CC", "rt.freeHint": "Δωρεάν εκδόσεις με CC BY-NC-SA χωρίς ενεργό συμφωνητικό. Συνήθως είναι εντάξει· αν έχεις αμφιβολία, ρώτα δικηγόρο.",
+      "rt.unrel": "Δικαίωμα χωρίς έκδοση", "rt.unrelHint": "Ενεργό συμφωνητικό το παραχωρεί, αλλά ο τίτλος δεν έχει τέτοια μορφή στο Publishing.",
+      "rt.renew": "Απόφαση ανανέωσης μέσα σε 90 μέρες", "rt.all": "Όλοι οι τίτλοι", "rt.none": "Τίποτα εδώ.",
+      "rt.noPub": "Τα δικαιώματα αντιστοιχίζονται στους τίτλους του Publishing. Άνοιξε μία φορά το Publishing σε αυτή τη συσκευή για να φανούν εδώ.",
+      "rt.left": "{n} συμφωνητικά χωρίς καταγεγραμμένα δικαιώματα · {u} χωρίς τίτλο στο Publishing",
+      "rt.legend": "✓ παραχωρείται · ± με συναίνεση · ○ μόνο δωρεάν · – δεν αναφέρεται ή δεν έχει καταγραφεί",
+      "rt.f.p": "Έντυπο", "rt.f.e": "Ebook", "rt.f.a": "Ηχητικό", "rt.paid": "{v} · προϊόν {id}", "rt.gratis": "δωρεάν · προϊόν {id}",
+      "rt.after.so": "διάθεση αποθέματος {n} μήνες μετά τη λήξη", "rt.after.no": "χωρίς διάθεση αποθέματος μετά τη λήξη", "rt.after.ext": "επέκταση μόνο με αμοιβαία συμφωνία",
+      "rt.r.print": "Έντυπο", "rt.r.ebook": "Ebook", "rt.r.audio": "Ηχητικό", "rt.r.transl": "Μετάφραση", "rt.r.adapt": "Θέατρο, κινηματογράφος, TV", "rt.r.merch": "Εμπορικά", "rt.r.free": "Δωρεάν ψηφιακή ανάρτηση", "rt.r.promo": "Αποσπάσματα, προώθηση",
+      "rt.s.granted": "παραχωρείται", "rt.s.consent": "με συναίνεση", "rt.s.free": "μόνο δωρεάν", "rt.s.none": "δεν αναφέρεται",
+      "rt.sec": "Δικαιώματα", "rt.unset": "Δεν έχουν καταγραφεί ακόμα δικαιώματα. Τα συμπληρώνει ο Claude από τα συμφωνητικά μέσω του orOS Gate, ή ο Βοηθός.",
+      "rt.tpl": "Πρότυπο {v}", "rt.g.all": "όλα τα περιουσιακά δικαιώματα", "rt.g.excl": "αποκλειστική άδεια", "rt.g.free": "μόνο δωρεάν ψηφιακή ανάρτηση",
+      "rt.cov": "Καλύπτει: {v}", "rt.cov.p": "έντυπο", "rt.cov.e": "ψηφιακό", "rt.ter.gr": "Ελλάδα", "rt.ter.none": "χωρίς περιοχή",
+      "rt.so": "διάθεση αποθέματος {n} μήνες", "rt.cd": "παύση πωλήσεων σε {n} μέρες", "rt.ext": "επέκταση με συμφωνία",
+      "rt.cc": "CC BY-NC-SA", "rt.ccp": "CC BY-NC-SA, για πάντα", "rt.rev": "επιστροφή δικαιωμάτων αν εξαντληθεί",
+      "rt.src.pdf": "από το PDF", "rt.src.oral": "προφορική συμφωνία", "rt.src.lost": "το έντυπο δεν βρίσκεται", "rt.chk": "έλεγχος {d}",
       "cx.h.renew": "Ανανεώθηκε έως {v} (ήταν {p})", "cx.h.post": "Η απόφαση μετατέθηκε στις {v}", "cx.h.end": "Λύθηκε στις {v}", "cx.h.reopen": "Ισχύει ξανά", "cx.h.note": "Σημείωση", "cx.h.mail": "Πρόχειρο email", "cx.h.call": "Κλήση", "cx.h.task": "Κάρτα στο Kanban",
       "cx.endT": "Λύση «{t}»", "cx.endD": "Ημερομηνία λύσης", "cx.endN": "Σημείωση (προαιρετικά)", "cx.endOk": "Λύση",
       "cx.renewT": "Ανανέωση «{t}» έως", "cx.postT": "Αναβολή απόφασης για «{t}» έως", "cx.dayBad": "Διάλεξε ημερομηνία μετά τη σημερινή.", "cx.renewBad": "Η νέα λήξη πρέπει να είναι μετά τις {d}.", "cx.ok": "OK",
@@ -847,7 +881,7 @@
       var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (p && typeof p === "object") {
         if (TABS.indexOf(p.tab) >= 0) prefs.tab = p.tab;
-        if (CTR_FILTERS.indexOf(p.cf) >= 0) prefs.cf = p.cf;
+        if (CTR_FILTERS.indexOf(p.cf) >= 0 || p.cf === "rights") prefs.cf = p.cf;
         if (typeof p.sel === "string") prefs.sel = p.sel;
         if (["all", "lead", "active", "past", "star", "forgot"].indexOf(p.filter) >= 0) prefs.filter = p.filter;
         if (typeof p.tag === "string") prefs.tag = p.tag;
@@ -1791,6 +1825,7 @@
   function ctrStText(r) {
     var k = r.ctr;
     if (r.st === "term") return t("cx.st.term", { d: fmtDate(r.x.end) });
+    if (r.perp) return t("cx.st.perp");
     if (r.st === "ended") return t("cx.st.ended", { d: fmtDate(k.to) });
     if (r.st === "soon") return r.days === 0 ? t("cx.st.today") : t("cx.st.soon", { d: fmtDate(k.to), n: r.days });
     return k.to ? t("ct.until", { d: fmtDate(k.to) }) : t("ct.noEnd");
@@ -1847,6 +1882,13 @@
       b.addEventListener("click", function () { prefs.cf = f; savePrefs(); renderCtrs(); });
       chips.appendChild(b);
     });
+    // RIGHTS (1.11): the Rights view, its count = what is sold with no running right
+    var rb = rightsNow(), rn = rb ? rb.sold.length : 0;
+    var rc = el("button", "chip" + (prefs.cf === "rights" ? " on" : ""), t("rt.chip") + (rn ? " · " + rn : ""));
+    rc.type = "button";
+    rc.setAttribute("aria-pressed", prefs.cf === "rights" ? "true" : "false");
+    rc.addEventListener("click", function () { prefs.cf = "rights"; savePrefs(); renderCtrs(); });
+    chips.appendChild(rc);
     if (shops().length) {
       var send = el("button", "link-btn", t("cx.portal"));
       send.type = "button";
@@ -1855,11 +1897,107 @@
       if (window.OrosCrmProd) chips.appendChild(prodBtn());
     }
     box.appendChild(chips);
+    if (prefs.cf === "rights") { renderRights(box, rb); return; }
     var list = prefs.cf === "all" ? all : C.ctrAll(data, today, prefs.cf);
     var rows = el("div", "rows");
     if (!list.length) rows.appendChild(el("p", "hint", t("cx.empty")));
     list.forEach(function (r) { rows.appendChild(ctrRowEl(r, true)); });
     box.appendChild(rows);
+  }
+
+  // ----- Rights (1.11, RIGHTS) -----
+  // What each contract grants (crm/core.js rt, filled in through orOS
+  // Gate or the Assistant), matched to Publishing's titles (read only,
+  // through its own core): the three flags, then every title.
+  // null = Publishing's core or data is not on this device.
+  function rightsNow() {
+    var pd = pubData();
+    if (!pd && coresMissing().some(function (x) { return x[0] === PUB_KEY; })) {
+      loadCores(function () { if (prefs.tab === "ctr" && pubData()) renderCtrs(); });
+      return null;
+    }
+    return pd ? C.rightsBoard(data, todayYmd(), pd.titles || []) : null;
+  }
+  var RT_MARK = { granted: "✓", consent: "±", free: "○", none: "–", "": "–" };
+  function rtLine(row, sub, fn) {
+    var b = el("button", "person ctr-row");
+    b.type = "button";
+    b.addEventListener("click", fn);
+    var m = el("span", "row-main");
+    m.appendChild(el("span", "row-title", row));
+    if (sub) m.appendChild(el("span", "row-sub", sub));
+    b.appendChild(m);
+    return b;
+  }
+  function rtOpen(ctrId) { return function () { if (ctrId) ctrActions(ctrId); }; }
+  function rtShop(x) {
+    var p = x.price > 0 ? t("rt.paid", { v: money(Math.round(x.price * 100)), id: x.wp }) : t("rt.gratis", { id: x.wp });
+    return t("rt.f." + x.f) + " · " + p;
+  }
+  function rtSection(box, title, hint, rows) {
+    var s = el("div", "sec");
+    s.appendChild(secHead(title + " · " + rows.length));
+    if (hint) s.appendChild(el("p", "hint", hint));
+    var list = el("div", "rows");
+    if (!rows.length) list.appendChild(el("p", "hint", t("rt.none")));
+    rows.forEach(function (n) { list.appendChild(n); });
+    s.appendChild(list);
+    box.appendChild(s);
+  }
+  function renderRights(box, b) {
+    if (!b) { box.appendChild(el("p", "hint", t("rt.noPub"))); return; }
+    rtSection(box, t("rt.sold"), t("rt.soldHint"), b.sold.map(function (x) {
+      return rtLine(x.t, rtShop(x), rtOpen(x.ctr));
+    }));
+    rtSection(box, t("rt.unrel"), t("rt.unrelHint"), b.unreleased.map(function (x) {
+      return rtLine(x.t, t("rt.f." + x.f), rtOpen(x.ctr));
+    }));
+    rtSection(box, t("rt.renew"), "", b.renew.map(function (x) {
+      var bits = [ctrStText(x.info), x.so ? t("rt.after.so", { n: x.so }) : t("rt.after.no")];
+      if (x.ext === "agree") bits.push(t("rt.after.ext"));
+      return rtLine(x.info.ctr.t, bits.join(" · "), rtOpen(x.info.ctr.id));
+    }));
+    if (b.freeCc.length) rtSection(box, t("rt.free"), t("rt.freeHint"), b.freeCc.map(function (x) {
+      return rtLine(x.t, rtShop(x), rtOpen(x.ctr));
+    }));
+    var all = el("div", "sec");
+    all.appendChild(secHead(t("rt.all") + " · " + b.titles.length));
+    all.appendChild(el("p", "hint", t("rt.legend")));
+    var rows = el("div", "rows");
+    b.titles.forEach(function (x) {
+      var marks = C.RT_RIGHTS.map(function (k) { return t("rt.r." + k) + " " + RT_MARK[x.best[k]]; }).join(" · ");
+      rows.appendChild(rtLine(x.t, marks, rtOpen(x.list[0] && x.list[0].ctr.id)));
+    });
+    all.appendChild(rows);
+    if (b.unfilled || b.unlinked) all.appendChild(el("p", "hint", t("rt.left", { n: b.unfilled, u: b.unlinked })));
+    box.appendChild(all);
+  }
+  // The contract card's Rights: one chip per term recorded
+  function rightsChips(k) {
+    var x = C.rtOf(data, k.id), wrap = el("div", "chips rt-chips");
+    if (!x || Object.keys(x).length <= 2) { wrap.appendChild(el("p", "hint", t("rt.unset"))); return wrap; }
+    var bits = [];
+    if (x.tpl) bits.push(t("rt.tpl", { v: x.tpl }));
+    if (x.grant) bits.push(t("rt.g." + x.grant));
+    var cov = C.rtCovers(data, k);
+    if (cov.length) bits.push(t("rt.cov", { v: cov.map(function (f) { return t("rt.cov." + f); }).join(", ") }));
+    C.RT_RIGHTS.forEach(function (r) {
+      var s = C.rtStatus(data, k, r);
+      if (!s || s === "none") return;
+      var e = x.r && x.r[r];
+      bits.push(t("rt.r." + r) + ": " + t("rt.s." + s) + (e && e.sh ? " " + e.sh : ""));
+    });
+    if (x.ter) bits.push(t("rt.ter." + x.ter));
+    if (x.so) bits.push(t("rt.so", { n: x.so }));
+    if (x.cd) bits.push(t("rt.cd", { n: x.cd }));
+    if (x.ext === "agree") bits.push(t("rt.ext"));
+    if (x.cc) bits.push(t(x.ccp ? "rt.ccp" : "rt.cc"));
+    if (x.rev) bits.push(t("rt.rev"));
+    if (x.src) bits.push(t("rt.src." + x.src));
+    if (x.chk) bits.push(t("rt.chk", { d: fmtDate(x.chk) }));
+    bits.forEach(function (s) { wrap.appendChild(el("span", "chip tag", s)); });
+    if (x.note) wrap.appendChild(el("p", "hint", x.note));
+    return wrap;
   }
 
   // A quick action: the ctr, cx and follow-up rows it changes in one
@@ -2057,6 +2195,8 @@
     item("edit", t("cx.edit"), function () { ctrEditor(k, c); });
     item("users", t("cx.partner"), function () { prefs.sub = "ov"; selectCust(c.id); });
     dlg.appendChild(list);
+    dlg.appendChild(el("span", "dlg-lbl", t("rt.sec")));
+    dlg.appendChild(rightsChips(k));
     if (r.hist.length) {
       dlg.appendChild(el("span", "dlg-lbl", t("cx.hist")));
       var h = el("ul", "ctr-hist");
@@ -5169,11 +5309,11 @@
     // Single app icon shortcut: an empty New customer form.
     if (x.newCust) { setTab("cust"); custEditor(null, {}); return true; }
     // 1.10: { ctr } a contract's quick actions (Publishing, Calendar,
-    // Today, Kanban, search), { ctrs: filter } the Contracts tab
+    // Today, Kanban, search), { ctrs: filter | "rights" } the Contracts tab
     // RS-PROD: { prod: 1 } the Production stage window (Kanban's chip)
     if (x.prod) { setTab("ctr"); prodDialog(); return true; }
     if (x.ctrs !== undefined) {
-      if (CTR_FILTERS.indexOf(x.ctrs) >= 0) prefs.cf = x.ctrs;
+      if (CTR_FILTERS.indexOf(x.ctrs) >= 0 || x.ctrs === "rights") prefs.cf = x.ctrs;
       savePrefs();
       setTab("ctr");
       return true;

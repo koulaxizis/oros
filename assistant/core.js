@@ -1871,6 +1871,8 @@
   // Wave 48: changes to records the user already shared (assistant/
   // edits.js). The user sees a before → after card and presses Apply;
   // nothing changes before that.
+  // RIGHTS (CRM 1.11): one right of a contract (crm/core.js rtRow)
+  var RT_ONE = { type: "object", properties: { status: { type: "string", "enum": ["granted", "consent", "free_only", "not_mentioned"] }, share: { type: "string" } } };
   var TOOL_CHANGE = {
     name: "change_item",
     description: "Propose a change to an existing item that search_data or app_summary returned in this " +
@@ -1890,7 +1892,7 @@
       "crm (a customer, update: title = name / nickname = alias / job_title / tax_id = VAT or tax number / tax_office / " +
       "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles / rs_beneficiary; bank " +
       "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
-      "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start) · " +
+      "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start; a contract, update: rights) · " +
       "kanban (reschedule: date = due, update: title / date / note / labels / plan_start / milestone / depends_on, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
@@ -1963,6 +1965,24 @@
                           description: "crm customer: the partner's beneficiary name(s) in the shop's Revenue Splitter, exactly as written there (replaces; [] unlinks). Not together with roles." },
         stage: { type: "string", description: "crm deal: the pipeline stage's name, e.g. Proposal, Won, Lost." },
         probability: { type: "integer", description: "crm deal: chance to win, 0-100." },
+        rights: { type: "object", description: "crm contract (a contract's ref): what it grants, alone in its change; only the keys given change, null clears one. Never guess a term the contract does not say.",
+                  properties: {
+                    template: { type: "string", "enum": ["A", "B", "C", "D"] },
+                    grant: { type: "string", "enum": ["all_economic", "exclusive_licence", "free_posting_only"] },
+                    covers: { type: "array", items: { type: "string", "enum": ["print", "digital"] }, description: "the formats the contract covers" },
+                    per_right: { type: "object", description: "merges right by right; each { status: granted | consent | free_only | not_mentioned, share: e.g. 10%, 50/50 }",
+                                 properties: { print: RT_ONE, ebook: RT_ONE, audio: RT_ONE, translation: RT_ONE, adaptation: RT_ONE, merch: RT_ONE, free_posting: RT_ONE, excerpts: RT_ONE } },
+                    territory: { type: "string", "enum": ["greece", "not_set"] },
+                    extend: { type: "string", "enum": ["by_agreement", "not_mentioned"] },
+                    sell_off_months: { type: "integer", description: "months the stock may be sold after the end (0 = none)" },
+                    cease_days: { type: "integer", description: "days within which sales stop after the end (0 = none)" },
+                    cc: { type: "boolean", description: "released under CC BY-NC-SA" },
+                    cc_perpetual: { type: "boolean" },
+                    reversion_oop: { type: "boolean", description: "rights return when out of print" },
+                    source: { type: "string", "enum": ["pdf", "oral", "lost"] },
+                    checked: { type: "string", description: "YYYY-MM-DD" },
+                    note: { type: "string" }
+                  } },
         reason: { type: "string", description: "crm deal at stage Lost: why it was lost." },
         org: { type: "string", description: "contacts: new organisation / company." },
         phone: { type: "string", description: "contacts: a phone number to add (the old ones stay); stock supplier: the phone (replaces)." },
@@ -2371,7 +2391,8 @@
     name: "files_list",
     description: "List a folder on the orOS disk: subfolders first, then files with kind (text, document, pdf, image, media, other), size and modified time; " +
       "on_device false = a file of an orOS Drive folder that is in the cloud only (files_read still reads it)." + FILES_WHERE +
-      " Without path: the owner's folders for Claude.",
+      " Without path: the owner's folders for Claude, and the local folders of the owner's device opened for Claude (temporary, local_folders): list one with path local:<root>/<folder>; " +
+      "its pictures also give pixels and ppi. Layout commands take those local: paths and copy what they use into the document.",
     params: {
       type: "object",
       properties: {
@@ -2786,7 +2807,7 @@
         price: { type: "string", description: "The price as printed, with the currency (e.g. \u20ac14.90)." },
         pages: { type: "integer", description: "Number of pages (for the spine)." },
         trim: { type: "string", "enum": COVER_SIZES, description: "Trim size in mm, width x height (default 140x210)." },
-        front_picture: { type: "string", description: "The front cover picture: its number (1 = first picture of the latest message with pictures) or file name." },
+        front_picture: { type: "string", description: "The front cover picture: its number (1 = first picture of the latest message with pictures) or file name, or local:<root>/<path> in a local folder the owner opened for Claude." },
         logo: { type: "string", description: "The publisher's logo picture: its number or file name." }
       },
       required: ["title"]
@@ -2819,7 +2840,7 @@
     if (pg > 0 && pg <= 5000) cv.pages = pg;
     var tr = COVER_SIZES.indexOf(args.trim) >= 0 ? args.trim : "140x210";
     cv.w = +tr.split("x")[0]; cv.h = +tr.split("x")[1];
-    function pic(v) { return typeof v === "number" && v >= 1 && v <= 20 ? String(Math.round(v)) : line(v, 120); }
+    function pic(v) { return typeof v === "number" && v >= 1 && v <= 20 ? String(Math.round(v)) : typeof v === "string" && /^local:/i.test(v.trim()) ? diskPath(v) : line(v, 120); }
     var pics = { front: pic(args.front_picture), logo: pic(args.logo) };
     var view = [["title", title]];
     if (cv.sub) view.push(["sub", cv.sub]);
@@ -2966,8 +2987,11 @@
       }
     }
   };
+  // LOCAL-1: also local:<root>/<path> (a local folder the owner opened
+  // for Claude, temporary; Layout checks it against the owner's roots)
   function diskPath(v) {
     var p = typeof v === "string" ? v.replace(/\s+/g, " ").trim().replace(/\/+$/, "") : "";
+    if (/^local:/i.test(p)) return p.length <= 1030 && !/(^|[\/\\])\.\.([\/\\]|$)/.test(p) && !/[\u0000-\u001f]/.test(p) ? p.replace(/[\/\\]+$/, "") : "";
     return p.indexOf("/internal/") === 0 && !/(^|\/)\.\.(\/|$)/.test(p) && p.length <= 400 ? p : "";
   }
   function findFile(list, want) {
@@ -3027,7 +3051,7 @@
     var folder = "";
     if (args.folder != null && args.folder !== "") {
       folder = diskPath(args.folder);
-      if (!folder) return { ok: false, err: "folder must be a folder on the orOS disk, starting with /internal/." };
+      if (!folder) return { ok: false, err: "folder must be a folder on the orOS disk, starting with /internal/, or local:<root>/<path> in a local folder the owner opened for Claude." };
     }
     return { ok: true, pdf: pdf, sla: sla, src: src, folder: folder, thread: args.thread === true && !sla };
   }
@@ -3369,6 +3393,85 @@
     return o;
   }
 
+  // export_pdf (LY-PRO W1, item 31): a print PDF of a Layout document,
+  // made on the device (PDF/X-4 with the print profile as its output
+  // intent, or print / screen), saved under /internal/Layout/PDF/; the
+  // report has the path, pages, boxes in mm, size and the preflight.
+  var PDF_PRESETS = ["print", "screen", "pdfx4"], PDF_MARKS = ["crop", "bleed", "reg", "bars", "info"];
+  var TOOL_PDF = {
+    name: "export_pdf",
+    description: "Make a print PDF of a Layout document on the device: preset pdfx4 (PDF/X-4 for the printer: the print profile Coated FOGRA39 as output intent, " +
+      "TrimBox and BleedBox on every page, fonts embedded, pictures as they are), print (300 ppi) or screen (150 ppi, RGB). " +
+      "bleed true takes the document's bleed (per side as set in Layout); marks crop, bleed, reg (registration), bars (colour bars), info (name, pages, date) sit outside the bleed; " +
+      "spreads puts facing pages side by side; pages picks some (\"\" all, odd, even or positions like 1-4,9). Layout saves it under /internal/Layout/PDF/ and checks it first " +
+      "(missing pictures, low resolution under 300 ppi, text that does not fit, full-page pictures that stop at the trim, an empty ISBN); you never get the file itself here. " +
+      "The user gets a card and presses Make PDF; the report (path, pages, TrimBox and BleedBox in mm, size, preflight) is added to this tool's result. " +
+      "To look at the file, make sure /internal/Layout/PDF is one of Claude's folders and use files_link.",
+    params: {
+      type: "object",
+      properties: {
+        document: { type: "string", description: "The Layout document's name, as the user calls it." },
+        preset: { type: "string", "enum": PDF_PRESETS, description: "pdfx4 for the printer (default), print, or screen." },
+        pages: { type: "string", description: "Which pages: \"\" all (default), odd, even, or positions like 1-4,9 (1 = the first page)." },
+        bleed: { type: "boolean", description: "Include the bleed (default true for pdfx4 and print)." },
+        marks: { type: "array", items: { type: "string", "enum": PDF_MARKS }, description: "Printer's marks, outside the bleed (default for pdfx4: crop)." },
+        spreads: { type: "boolean", description: "Facing pages side by side (default false: single pages, as printers want)." },
+        downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." },
+        creep: { type: "number", description: "Creep for a saddle-stitched book in mm, 0-5 (default 0): the innermost pages' content moves this far towards the spine, the outer ones less." },
+        out: { type: "string", description: "Also save the PDF in a local write folder the owner opened for Claude: local:<root>/<folder> (files_list without path lists them; a taken name gets -2, -3). Temporary." }
+      }
+    }
+  };
+  // args → { ok, doc, preset, pages, bleed, marks{}, spreads, down } | { ok: false, err }
+  function normPdf(args) {
+    var a = isObj(args) ? args : {};
+    var doc = hsStr(a.document, EP_NAME);
+    if (!doc) return { ok: false, err: "Give the Layout document's name (document)." };
+    var preset = a.preset === undefined || a.preset === null || a.preset === "" ? "pdfx4" : a.preset;
+    if (PDF_PRESETS.indexOf(preset) < 0) return { ok: false, err: "preset is pdfx4, print or screen." };
+    var pages = typeof a.pages === "string" ? a.pages.replace(/\s+/g, "").toLowerCase().slice(0, 60) : "";
+    if (pages && !/^(all|odd|even|\d{1,4}(-\d{1,4})?(,\d{1,4}(-\d{1,4})?)*)$/.test(pages)) return { ok: false, err: "pages is \"\", odd, even or positions like 1-4,9." };
+    var marks = {};
+    if (a.marks !== undefined && a.marks !== null) {
+      if (!Array.isArray(a.marks)) return { ok: false, err: "marks is a list of crop, bleed, reg, bars, info." };
+      for (var i = 0; i < a.marks.length && i < 10; i++) {
+        if (PDF_MARKS.indexOf(a.marks[i]) < 0) return { ok: false, err: "marks are crop, bleed, reg, bars or info." };
+        marks[a.marks[i]] = 1;
+      }
+    } else if (preset === "pdfx4") marks.crop = 1;
+    var bleed = typeof a.bleed === "boolean" ? a.bleed : preset !== "screen";
+    var creep = a.creep === undefined || a.creep === null || a.creep === "" ? 0 : Number(a.creep);
+    if (!isFinite(creep) || creep < 0 || creep > 5) return { ok: false, err: "creep is 0-5 (mm)." };
+    var out = a.out == null || a.out === "" ? "" : diskPath(a.out);
+    if (out && !/^local:/i.test(out) || a.out && !out) return { ok: false, err: "out is a local write folder the owner opened for Claude: local:<root>/<folder>." };
+    return { ok: true, doc: doc, preset: preset, pages: pages === "all" ? "" : pages, bleed: bleed ? 1 : 0, marks: marks,
+             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, out: out };
+  }
+  var PDF_PATH = /^\/internal\/Layout\/PDF\/[^\/]{1,200}\.pdf$/, PF_CODE = /^[a-z][a-zA-Z0-9]{0,19}$/;
+  // Layout's report → what the model gets (numbers, codes and pages only).
+  function pdfReport(rep) {
+    if (!isObj(rep)) return null;
+    var n = function (v) { v = Number(v); return isFinite(v) && v >= 0 ? Math.round(v * 10) / 10 : 0; };
+    if (rep.failed) return { failed: true, why: hsStr(rep.why, 20) || "failed" };
+    var box = function (b) { return isObj(b) ? { w_mm: n(b.w), h_mm: n(b.h) } : null; };
+    var o = { document: hsStr(rep.doc, EP_NAME), preset: PDF_PRESETS.indexOf(rep.preset) >= 0 ? rep.preset : "print",
+              path: typeof rep.path === "string" && PDF_PATH.test(rep.path) ? rep.path : "", bytes: Math.floor(n(rep.bytes)), pdf_pages: Math.floor(n(rep.pages)),
+              trim_box: box(rep.trim), bleed_box: box(rep.bleedBox) };
+    if (rep.intent) o.output_intent = hsStr(rep.intent, 60);
+    if (rep.pdfx) o.pdfx = hsStr(rep.pdfx, 20);
+    var pf = (Array.isArray(rep.problems) ? rep.problems : []).filter(isObj).slice(0, 80).map(function (p) {
+      var e = { severity: p.sev === "err" ? "error" : "warning", code: typeof p.code === "string" && PF_CODE.test(p.code) ? p.code : "other" };
+      if (p.page) e.page = Math.floor(n(p.page));
+      if (p.id && /^[a-z]{1,4}-[a-z0-9]{1,24}$/.test(p.id)) e.frame = p.id;
+      return e;
+    });
+    o.preflight = { errors: pf.filter(function (p) { return p.severity === "error"; }).length, warnings: pf.filter(function (p) { return p.severity === "warning"; }).length, problems: pf };
+    if (rep.down) o.pictures_downsampled = Math.floor(n(rep.down));
+    if (typeof rep.local === "string" && /^local:[^\u0000-\u001f]{1,1100}$/.test(rep.local)) o.local_copy = rep.local;
+    if (typeof rep.localWhy === "string" && PF_CODE.test(rep.localWhy)) o.local_copy_failed = rep.localWhy;
+    return o;
+  }
+
   // The tools phase 1 offered (searching only); kept for the tests.
   // AS-EDIT (wave AC1): change anything in an app's documents with a
   // fixed list of commands. cats: { app: its commands module (for
@@ -3494,7 +3597,7 @@
     if (opts.openFile) out.push(TOOL_OPEN_FILE);
     if (opts.rebuild) out.push(TOOL_REBUILD);
     if (opts.house) out.push(TOOL_HS_LEARN, TOOL_HS_BOOK, TOOL_HS_RULE);
-    if (opts.epub) out.push(TOOL_EPUB);
+    if (opts.epub) out.push(TOOL_EPUB, TOOL_PDF);
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     if (opts.creates && opts.creates.length) out.push(createTool(opts.creates));
     if (opts.data && opts.links) out.push(TOOL_LINK);
@@ -3526,7 +3629,7 @@
   // do_action too; the app opens on the owner's screen and does it there.
   var GATE_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                     "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub",
+                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf",
                     "files_list", "files_read", "files_write", "files_move", "files_delete"];
   // GATE-PAR P3 (2026-11-08): the Assistant's tools that hand work to an
   // app's own window. Through the gate the app opens on the owner's
@@ -3535,12 +3638,12 @@
   // Chris's card 13:39). Their sentences about cards and presses are
   // left out and GATE_OPEN_SAY is said instead.
   var GATE_OPEN = ["propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub"];
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf"];
   var GATE_OPEN_HEAD = { newsletter_check: "When the owner says a newsletter issue is ready (or asks to send it), open Newsletter's pre-send check of the draft (missing pictures or links, sending account, the list); the owner sends it there." };
   var GATE_OPEN_SAY = " Through orOS Gate it opens at once on the owner's screen in that app (unless the owner paused Claude's changes): " +
     "Layout's own work (rebuild, house style, book) runs there and its report comes back; a new entry, document, recipe, cover or newsletter content " +
     "is filled into the app's own form or editor for the owner to check and save; an automation rule comes in turned off. " +
-    "Files come only as paths on the orOS disk (/internal/…): there are no attachments through the gate. Nothing is sent from here.";
+    "Files come only as paths on the orOS disk (/internal/…) or, while the owner has a local folder open for Claude, as local:<root>/<path> (files_list without path shows those roots): there are no attachments through the gate. Nothing is sent from here.";
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],
     [" The user may be asked first.", ""],
@@ -3871,6 +3974,7 @@
       if (opts.rebuild) lines.push("When the user wants a printed book, magazine or brochure back in Layout (from its print PDF, with or without its original pictures and texts), call rebuild_in_layout; a Scribus file (.sla) opens in Layout through rebuild_in_layout with sla, with its pictures and, when attached, its print PDF as pdf; an Affinity file (.af) goes in sources next to its print PDF. Never retype a printed document or rebuild it by hand with other tools. When its result has the report, say honestly what came out the same and what did not (lines in place, pictures from originals, fonts replaced, pages to check); afterwards, changes to the document go through propose_automation for Layout (styles by name, find and replace, margins, masters, export), and do_action open with app layout and page opens a page to check. Files marked as staying on the device can only be handed to an app: you cannot read them.");
       if (opts.openFile) lines.push("To bring a document the user attached into Writer as it is (its formatting, headings, alignment, lists, numbering and every word), call open_file with its name, one call per file. Never retype an attached document into propose_entry document: that loses its formatting and may change words. propose_entry document is for text you write yourself, in Markdown.");
     }
+    if (opts.epub) lines.push("When the user wants a PDF of a Layout document for the printer, call export_pdf (preset pdfx4 unless they ask for print or screen); never make the PDF another way. When the report comes back, give the path, the TrimBox and BleedBox in mm and the preflight's errors and warnings with their pages honestly.");
     if (opts.epub) lines.push("When the user wants an e-book (EPUB) of a book they set in Layout, call export_epub with the document's name or its Publishing title; never make an EPUB by hand with other tools. Pick layout only when the user asks or the book is clearly a picture book or comic (fixed); otherwise the edition decides. When the report comes back, say honestly what came out: the check's errors (stores would refuse the file) and warnings, pictures without a description and their pages, fonts missing, no ISBN or a small cover, and where the file is; to fix a missing description or an ISBN, the user does it in Layout (Properties › Description) or Publishing, then exports again.");
     if (opts.house) lines.push("For books of a series in Layout: learn_house_style learns the series' house style from earlier books that are Layout documents (rebuild them first with rebuild_in_layout when the user has only print PDFs or Scribus files); layout_book lays out a new book from its manuscript in that house style; add_house_rule adds a rule of the user's own. Give layout_book the title; Layout fills the author, ISBN and year from the Publishing app's title of that name, so ask for them only when the user has no such title there. Before layout_book, ask the book's questions in one short message instead of laying it out at once: is everything as in the series, or does something differ (page size and margins, where chapters start, parts, chapter titles and first paragraphs, scene breaks, page numbers, contents, sections such as acknowledgements, dedication and motto, the type of each part, hyphenation and widows, and, when there are photos, where they go, their size, captions and black and white)? Ask only about what the material has; put only the answers that differ into layout_book (answers, margins, sections, typography…), never guess one, and pass attached photos that are not in the manuscript as photos. The card also offers the user every question in Layout. When a report comes back, say honestly what came out (pages, titles, titles that were guessed, quotes and dashes fixed, photos placed or left out, text that does not fit, pages to check); words are never changed, only quotes, dashes, ellipses and spaces.");
     var canChange = !opts.builtin && !opts.chatOnly && opts.apps && opts.apps.length && opts.changes && opts.changes.length;
@@ -5057,7 +5161,7 @@ normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: r
         normAutomation: normAutomation, normRule: normRule, TOOL_RULE: TOOL_RULE, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
-    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
+    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
     DEV_MAX: DEV_MAX, DEV_FILE: DEV_FILE, DEV_TOTAL: DEV_TOTAL, DEV_PHONE: DEV_PHONE, checkDev: checkDev
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

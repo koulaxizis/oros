@@ -517,7 +517,32 @@
     renderForm();
     showTab(prefs.tab);
     ensureStage().then(function () { layoutStage(); pushAll(); });
+    contNote();
   }
+  // CONT-1 W4: tell the shell which mockup is open (continue.js keeps the
+  // reference and the name only, never the pictures). On opening, and
+  // once at the first tap or key after the start; nothing before that, so
+  // a restored mockup never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (W && cur && typeof cur.id === "string" && C.byId(data, cur.id))
+        W.note("mockups", { target: { id: cur.id }, title: label(cur) });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   function newPrj(init) {
     var p = C.blank(C.newId(), Date.now());
     if (init) init(p);

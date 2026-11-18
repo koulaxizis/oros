@@ -116,7 +116,7 @@
       "set.save": "Save", "set.cancel": "Cancel",
       "pl.speed": "Playback speed", "pl.sleep": "Sleep timer", "pl.sleepOff": "Off", "pl.sleepMin": "{n} min",
       "pl.sleepEnd": "End of episode", "pl.sleepLeft": "Stops in {t}", "pl.back": "Back {n} s", "pl.fwd": "Forward {n} s",
-      "pl.stop": "Stop", "pl.next": "Next in queue", "pl.open": "Open player", "pl.close": "Close",
+      "pl.stop": "Stop", "viz.btn": "Light show", "pl.next": "Next in queue", "pl.open": "Open player", "pl.close": "Close",
       "pl.seek": "Position", "pl.buffer": "Loading…", "pl.err": "This episode could not be played.",
       "find.ph": "Search podcasts", "find.go": "Search", "find.add": "Feed, website, Apple Podcasts or Spotify address",
       "find.addBtn": "Add", "find.subscribe": "Subscribe", "find.subscribed": "Subscribed",
@@ -246,7 +246,7 @@
       "set.save": "Αποθήκευση", "set.cancel": "Άκυρο",
       "pl.speed": "Ταχύτητα", "pl.sleep": "Χρονοδιακόπτης ύπνου", "pl.sleepOff": "Όχι", "pl.sleepMin": "{n} λεπτά",
       "pl.sleepEnd": "Τέλος επεισοδίου", "pl.sleepLeft": "Σταματά σε {t}", "pl.back": "Πίσω {n} δευτ.", "pl.fwd": "Μπροστά {n} δευτ.",
-      "pl.stop": "Διακοπή", "pl.next": "Επόμενο στην ουρά", "pl.open": "Άνοιγμα player", "pl.close": "Κλείσιμο",
+      "pl.stop": "Διακοπή", "viz.btn": "Φωτορυθμικό", "pl.next": "Επόμενο στην ουρά", "pl.open": "Άνοιγμα player", "pl.close": "Κλείσιμο",
       "pl.seek": "Θέση", "pl.buffer": "Φόρτωση…", "pl.err": "Δεν ήταν δυνατή η αναπαραγωγή του επεισοδίου.",
       "find.ph": "Αναζήτηση podcasts", "find.go": "Αναζήτηση", "find.add": "Διεύθυνση feed, ιστότοπου, Apple Podcasts ή Spotify",
       "find.addBtn": "Προσθήκη", "find.subscribe": "Εγγραφή", "find.subscribed": "Εγγεγραμμένο",
@@ -437,12 +437,13 @@
     share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>',
     stats: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
     pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="3.5"/></svg>',
     notes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>'
   };
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "now", filter: "all", sortOld: {}, br: { m: "top", cc: "", g: "", chip: "" }, fd: C.normFind(null), rs: [] };
+    var p = { tab: "now", filter: "all", sortOld: {}, br: { m: "top", cc: "", g: "", chip: "" }, fd: C.normFind(null), rs: [], vz: "glow" };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
@@ -458,6 +459,8 @@
         // Find shows (2026-11-04): search filters + recent searches.
         p.fd = C.normFind(o.fd);
         p.rs = C.addRecent(o.rs, "", "all");
+        // MU-VIZ wave 2: the light show's style.
+        if (["glow", "rings", "bars", "wave"].indexOf(o.vz) >= 0) p.vz = o.vz;
       }
     } catch (e) {}
     return p;
@@ -764,6 +767,18 @@
     var x = C.stateOf(D(), { id: id, s: m.s, pd: m.pd });
     H.play(m, x.x ? 0 : undefined);
     rememberQueue();
+    contNote(m);
+  }
+  // CONT-1 W4: tell the shell which episode is playing (continue.js keeps
+  // the show, the episode and its title only; the place in the episode
+  // travels with the podcasts as always). Only when the person starts
+  // one, and only for a show they follow (not a Discover preview).
+  function contNote(m) {
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (W && m && m.title && C.findShow(D(), m.s))
+        W.note("podcasts", { target: { show: m.s, ep: m.id, play: true }, title: String(m.title) });
+    } catch (e) {}
   }
   function queue(id, where) {
     var m = metaOf(id);
@@ -1289,6 +1304,7 @@
     extra.appendChild(nB);
     var cb = castButton();
     if (cb) extra.appendChild(cb);
+    if (hasViz()) { var lsB = button(vizLabel(), "icon-btn", lightShow, UI.light); lsB.id = "fp-viz"; extra.appendChild(lsB); }
     extra.appendChild(button(t("pl.next"), "icon-btn", function () { H.next(); }, UI.next));
     extra.appendChild(button(t("pl.stop"), "icon-btn", function () { dlg.close(); H.stop(); }, UI.stop));
     dlg.appendChild(extra);
@@ -1341,7 +1357,46 @@
     }
     return castBtn;
   }
+  // MU-VIZ wave 2: the light show (../vizkit.js, loaded on first use with
+  // this app's ?v=): a full-window stage over the app. The host reads the
+  // sound only where the effects could (downloads, hosts that allow CORS).
+  var vizStage = null, vizWait = null;
+  function hasViz() { return !!(H && typeof H.viz === "function" && typeof H.vizFrame === "function"); }
+  function vizLabel() { return t("viz.btn"); }
+  function vizKit() {
+    if (window.OrosViz) return Promise.resolve(window.OrosViz);
+    if (vizWait) return vizWait;
+    var ver = (document.querySelector('script[src*="podcasts.js"]') || {}).src || "";
+    var q = (ver.match(/\?v=[^"&]+/) || [""])[0];
+    vizWait = new Promise(function (resolve) {
+      var sc = document.createElement("script");
+      sc.src = "../vizkit.js" + q;
+      sc.onload = function () { resolve(window.OrosViz || null); };
+      sc.onerror = function () { vizWait = null; sc.remove(); resolve(null); };
+      document.head.appendChild(sc);
+    });
+    return vizWait;
+  }
+  function lightShow() {
+    if (!hasViz() || vizStage) return;
+    H.viz(true);
+    vizKit().then(function (V) {
+      if (!V || vizStage) { if (!V) H.viz(false); return; }
+      vizStage = V.stage({
+        lang: LANG, style: prefs.vz,
+        title: function () { var c = H.getState().cur; return c ? c.title : ""; },
+        sub: function () { var c = H.getState().cur; return c ? c.show : ""; },
+        playing: function () { return H.getState().playing; },
+        toggle: function () { H.toggle(); },
+        source: function () { return H.vizFrame(); },
+        colors: function () { return { a: (getComputedStyle(document.documentElement).getPropertyValue("--accent") || "").trim(), bg: "#08080d" }; },
+        onStyle: function (id) { prefs.vz = id; savePrefs(); },
+        onClose: function () { vizStage = null; try { H.viz(false); } catch (e) {} }
+      });
+    });
+  }
   function paintFull(st, first) {
+    if (vizStage) { if (st.cur) vizStage.paint(); else vizStage.close(); }
     var dlg = $("pc-full");
     if (!dlg || !dlg.open) return;
     if (!st.cur) { dlg.close(); return; }

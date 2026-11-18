@@ -1786,11 +1786,11 @@
                 "files_write", "files_move", "files_delete"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub"].concat(FILE_READ, FILE_WRITE);
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf"].concat(FILE_READ, FILE_WRITE);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
-  var ACT_OPEN = ACT_TOOLS.slice(13, 24);
+  var ACT_OPEN = ACT_TOOLS.slice(13, 25);
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"].concat(FILE_WRITE);
   var DOC_WRITE = ["edit_in_app", "undo_change"];
   function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }
@@ -3797,6 +3797,16 @@
     reconnect: function () { if (!ws) { retry = 0; connect(); } },
     // GATE-HOST: this computer's background Gate (orOS Portable / USB)
     host: { state: function () { return hostState(); }, set: function (on) { return hostSet(on); }, active: function () { return HOST.ok; } },
+    // LOCAL-1: a read or write through the local-folder bridge
+    // (localroots.js): kind list|read|write, the local: path, bytes, the
+    // command that asked
+    localLog: function (e) {
+      if (!isObj(e)) return;
+      var kind = /^(list|read|write)$/.test(e.kind) ? e.kind : "read";
+      writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: "local-" + kind, a: [], k: 1, ok: 1,
+        lp: String(e.path || "").slice(0, 300), sz: Math.max(0, Math.floor(+e.size || 0)), c: String(e.cmd || "").slice(0, 40) }));
+      changed();
+    },
     log: function () { var l = readJSON(LOG_KEY); return Array.isArray(l) ? l.slice().reverse() : []; },
     clearLog: function () { try { localStorage.removeItem(LOG_KEY); } catch (e) {} changed(); },
     onChange: function (fn) {
