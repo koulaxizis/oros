@@ -1093,5 +1093,16 @@ orosPack("de", "layout", {
  "fp.cols": "Sammlungen",
  "fp.docCol": "Sammlung dieses Dokuments (steht oben)",
  "fp.docCol.none": "Keine",
- "fp.notHere": "noch nicht auf diesem Gerät"
+ "fp.notHere": "noch nicht auf diesem Gerät",
+ "body": "Fließtext",
+ "pn": "Seitenzahl",
+ "fit": "Zeileneinpassung",
+ "al.j": "Blocksatz",
+ "al.l": "links",
+ "al.c": "zentriert",
+ "al.r": "rechts",
+ "b": "fett",
+ "i": "kursiv",
+ "fi": "Einzug",
+ "sb": "oben"
 });

@@ -138,6 +138,7 @@ orosPack("de", "shell", {
  "app.base": "Datenbank",
  "app.forms": "Formulare",
  "app.stickies": "Haftnotizen",
+ "app.shop": "Shop",
  "app.stock": "Bestand",
  "app.storage": "Inventar",
  "app.studio": "Studio",
@@ -1375,5 +1376,10 @@ orosPack("de", "shell", {
  "sos.after.ok": "OK",
  "sync.err.cloud-sos": "Die Cloud wurde von einem anderen Gerät mit SOS geschlossen",
  "sync.err.cloud-reset": "orOS wurde auf einem anderen Gerät zurückgesetzt. Wähle unter Einstellungen › Sync, was mit den Daten dieses Geräts geschieht",
- "sync.err.cloud-closed": "Die Cloud wurde von einem Gerät mit einer anderen Passphrase geschlossen. Es wurde nichts gelöscht oder gesendet"
+ "sync.err.cloud-closed": "Die Cloud wurde von einem Gerät mit einer anderen Passphrase geschlossen. Es wurde nichts gelöscht oder gesendet",
+ "app.transfer": "Transfer",
+ "cr.enablebanking": "Budget › Banken: deine Bankkonten, nur lesend (Open Banking)",
+ "cr.paypal-api": "Budget › Banken: deine PayPal-Business-Zahlungen, nur lesend",
+ "cr.lic.enablebanking": "Ihre Bedingungen, deine eigene Anwendung und dein eigener Schlüssel",
+ "cr.lic.paypal-api": "Ihre Bedingungen, deine eigene App"
 });
