@@ -38,6 +38,11 @@
   function local() { try { return shellWin().orosLocal || null; } catch (e) { return null; } }
   function isLocal(p) { return typeof p === "string" && /^local:/i.test(p.trim()); }
   function localWhy(e) { return e && /^(notAllowedRoot|badPath|bridgePaused|needsReconnect|notThere|notFile|notFolder|timeout)$/.test(e.why) ? e.why : "unreadable"; }
+  function outOf(L) {
+    var w = [];
+    try { w = L && typeof L.names === "function" ? L.names().filter(function (r) { return r && r.mode === "w"; }) : []; } catch (e) { w = []; }
+    return w.length === 1 ? "local:" + w[0].name + "/Proofs" : "";
+  }
   function readBytes(path) {
     if (isLocal(path)) {
       var L = local();
@@ -208,9 +213,11 @@
             return Promise.resolve(F.write(path, blob)).then(function () {
               saved.push(path);
               // LOCAL-1: also in a local write folder (new names only)
-              var L = local();
-              if (!st.out || !isLocal(st.out) || !L) return;
-              return L.write(st.out, safeName(doc.name) + " page-" + nums + ".png", blob, "thumbs").then(function (lp) { saved.push(lp); }, function (e) { throw { why: localWhy(e), path: st.out }; });
+              // Chris 2026-11-18 (P0): with one local write folder open and no
+              // out, the proofs go there too (<root>/Proofs), so Claude sees them
+              var L = local(), out = st.out && isLocal(st.out) ? st.out : outOf(L);
+              if (!out || !L) return;
+              return L.write(out, safeName(doc.name) + " page-" + nums + ".png", blob, "thumbs").then(function (lp) { saved.push(lp); }, function (e) { throw { why: localWhy(e), path: out }; });
             });
           });
         });

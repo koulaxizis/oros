@@ -16,7 +16,7 @@ const CMD = require(path.join(ROOT, "layout/commands.js"));
 const T = require(path.join(ROOT, "designkit/text.js"));
 
 function steps(list) { const c = CMD.check(list); assert.ok(c.ok, c.err); return c.steps; }
-function book() { return PRO.makeDoc(steps([{ op: "create", title: "Στην καρδιά του βυθού", w: 180, h: 250, mm: 3 }])[0], 10); }
+function book() { return PRO.makeDoc(steps([{ op: "create", title: "Στην καρδιά του βυθού", w: 180, h: 250, n: 10, mm: 3 }])[0], 10); }
 const CARLITO = { id: "fs_carlito", name: "Carlito", fb: "sans" };
 
 test("addfont: checked", () => {
@@ -101,4 +101,28 @@ test("busy (Chris 2026-11-18): cancel goes alone and changes nothing; the gate n
   assert.match(a, /function busyText/);
   assert.match(a, /out\.edit_jobs = jobs/);
   assert.match(a, /!p\.pv\.ctl/);
+});
+
+test("framemod (Chris 2026-11-18, P0): one frame moved, resized, restyled; one removed; a chain keeps its text", () => {
+  const d = book();
+  const idf = ((n) => (p) => p + "-fm" + (++n))(0);
+  const add = (page) => PRO.addFrame(d, steps([{ op: "frame", page: page, lines: ["Ένα κείμενο."] }])[0], 30, idf);
+  const a = add(2), b = add(3);
+  // b continues a's story (a chain of two)
+  const fb = d.items.find((it) => it.id === b.id);
+  const sb = fb.story; fb.story = a.story; fb.seq = 2; d.items.find((it) => it.id === a.id).seq = 1;
+  d.stories = d.stories.filter((s) => s.id !== sb);
+  const MM = 72 / 25.4;
+  assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: a.id, x: 20, y: 30, w: 100, h: 50, va: "m", ncol: 2, ins: 2, fill: "#eeeeee", opacity: 80 }])[0], { now: 40 }), 1);
+  const fa = d.items.find((it) => it.id === a.id);
+  assert.ok(Math.abs(fa.x - 20 * MM) < 0.01 && Math.abs(fa.w - 100 * MM) < 0.01 && fa.va === "m" && fa.cols === 2 && fa.op === 80 && fa.fill);
+  assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: a.id, x: 20 }])[0], { now: 41 }), 0, "as it is: nothing");
+  assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: a.id, nofill: true, opacity: 100 }])[0], { now: 42 }), 1);
+  assert.ok(!fa.fill && fa.op === undefined);
+  assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: a.id, del: true }])[0], { now: 43 }), 1);
+  assert.ok(!d.items.some((it) => it.id === a.id) && d.tombs[a.id] === 43);
+  assert.ok(d.stories.some((s) => s.id === a.story), "the story stays with the other frame of its chain");
+  assert.equal(CMD.apply(d, steps([{ op: "framemod", frame: b.id + ", nope", del: true }])[0], { now: 44 }), 1);
+  assert.ok(!d.stories.some((s) => s.id === a.story) && d.tombs[a.story] === 44, "with its last frame the story goes");
+  assert.match(CMD.check([{ op: "framemod" }]).err, /frame is missing/);
 });

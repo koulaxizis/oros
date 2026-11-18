@@ -86,9 +86,13 @@
   // document (the gate has no room for a fonts_add tool)
   CATALOG.addfont = { kind: "doc", args: { family: { t: "str", max: 60 }, source: { t: "enum", v: ["free", "local"], def: "free" }, path: { t: "str", max: 600 },
     styles: { t: "list", of: { t: "str", max: 12 }, max: 4 }, collection: { t: "str", max: 60 } } };
+  // framemod (Chris 2026-11-18, P0): change or remove frames by id
+  CATALOG.framemod = { kind: "doc", args: { frame: { t: "str", max: 400, req: 1 }, x: MMv(-1, 5000, -1), y: MMv(-1, 5000, -1), w: MMv(-1, 5000, -1), h: MMv(-1, 5000, -1),
+    ncol: { t: "int", lo: 0, hi: 20, def: 0 }, gut: MMv(-1, 100, -1), ins: MMv(-1, 50, -1), va: { t: "enum", v: ["", "t", "m", "b", "j"], def: "" },
+    fill: { t: "color" }, nofill: { t: "bool", def: 0 }, opacity: { t: "int", lo: -1, hi: 100, def: -1 }, del: { t: "bool", def: 0 } } };
   // cancel (alone): stops the commands that hold Layout ("busy")
   CATALOG.cancel = { kind: "doc", args: {} };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "addfont", "cancel"];
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "framemod", "addfont", "cancel"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -106,7 +110,7 @@
     "sort natural (1_A, 2_a … 10, 27) | name | given (paths as listed), fit trim (the picture fills the trim) | bleed (it fills trim and bleed) | margins | proportional (whole picture, no crop), " +
     "at end | before | after page `page`, side any | right | left (a blank page goes first when the first picture would land on the other side); Layout copies the pictures into the document, the folder is never changed" +
     "\nbleedfill: the full-page pictures on `pages` that stop at the trim get a bleed: mode smart (the texture of paper, wood or cloth carried on) | mirror | stretch; the original picture is kept for undo" +
-    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders), out local:<root>/<folder> also saves them in a local write folder the owner opened; changes nothing" +
+    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders), out local:<root>/<folder> also saves them in a local write folder the owner opened (with no out and exactly one write folder open, they also go to local:<that root>/Proofs, which Claude can look at); changes nothing" +
     "\ndefstyle: makes or changes a style by `name`: kind para (paragraph) | char (character), base the style it is based on, font a family as list_fonts shows it (serif, sans, mono, a family the document or the owner's fonts have, or any Fontsource family by name: Layout adds it to the document), " +
     "size, lead (leading) and track in pt (0 = as it is), align l|c|r|j, sb sa (space before, after) fi (first line indent) li ri (left, right indent) in pt (-1 = as it is), " +
     "bold ital caps under on|off, color #rrggbb, a nested style: nest_cs a character style for the start of each paragraph up to and including the first nest_to (e.g. \":\" for a speaker; nest_cs none removes it), " +
@@ -125,6 +129,9 @@
     "\nmasterpages: the pages `pages` (all, odd, even or 3-10) get the master `master` by name (\"\" = none)" +
     "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)" +
     "\npagesize: the pages `pages` get their own trim w × h in mm (a fold-out, a smaller insert; at least 13 mm); w 0 and h 0 = the document's size again; the PDF, the pictures and the editor follow" +
+    "\nframemod: the frames `frame` (ids as the document's frames list shows, comma-separated; text or picture) get x y (mm from the page's top left) w h (mm; -1 = as it is), " +
+    "ncol columns (0 = as it is), gut the gutter and ins the inset in mm (-1 = as it is), va t|m|b|j, fill #rrggbb or nofill true, opacity 0-100 (-1 = as it is); del true removes them " +
+    "(a story goes with its last frame; with other frames in its chain the text flows on in them)" +
     "\naddfont: a font family into the owner's font collection `collection` (default Claude; list_fonts then shows it) and this document's fonts, so defstyle font can use it: " +
     "source free = a Fontsource family by `family` (e.g. Carlito, as fontsource.org names it; its files are kept on the device for offline use), styles regular|bold|italic|bold italic (or 400, 700, 400i, 700i; default all it has); " +
     "source local = the font file `path` local:<root>/<file>.ttf|.otf in a local folder the owner opened (one file per command: add the bold and italic files too), kept in the owner's fonts" +
@@ -247,6 +254,7 @@
       if (!fids.length && !st.pages) return 0;
       return PRO.setPicture(doc, fids, st.pages ? S.pageTest(st.pages) : null, { flip: st.flip, corner: st.corner >= 0 ? st.corner * PT_PER_MM : -1, fit: st.fit }, now);
     }
+    if (st.op === "framemod") return PRO.modFrame(doc, String(st.frame).split(/[\s,]+/).filter(Boolean).slice(0, 200), st, now);
     if (st.op === "pagesize") return PRO.setPageSize(doc, S.pageTest(st.pages), (st.w || 0) * PT_PER_MM, (st.h || 0) * PT_PER_MM, now);
     if (!hasEngine()) {
       if (st.op === "fit") { if (env.notes && env.notes.indexOf("fitLater") < 0) env.notes.push("fitLater"); return 1; }

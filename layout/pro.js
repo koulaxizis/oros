@@ -528,6 +528,53 @@
     doc.items.push(it);
     return { id: id, story: sid };
   }
+  // framemod (Chris 2026-11-18, P0): frames by id (as the document's
+  // frames list shows them) get a new place or size (mm from the page's
+  // top left, -1 = as it is), columns, gutter, inset, vertical
+  // alignment, fill (nofill: none), opacity; del removes them (a story
+  // goes with its last frame, its text stays in the other frames of the
+  // chain). → the number of frames changed.
+  function modFrame(doc, ids, st, now) {
+    var n = 0, gone = {};
+    if (!doc.tombs) doc.tombs = {};
+    ids.forEach(function (id) {
+      var it = M.find(doc.items, id);
+      if (!it) return;
+      if (st.del) { gone[it.id] = it; n++; return; }
+      var set = {};
+      ["x", "y", "w", "h"].forEach(function (k) { if (st[k] >= 0 && (k === "x" || k === "y" || st[k] > 0)) set[k] = r3(Math.max(k === "w" || k === "h" ? 1 : -1e6, st[k] * MM)); });
+      if (it.t === "text") {
+        if (st.ncol > 0) set.cols = st.ncol;
+        if (st.gut >= 0) set.gut = r3(st.gut * MM);
+        if (st.ins >= 0) set.ins = r3(st.ins * MM);
+        if (st.va) set.va = st.va;
+      }
+      if (st.fill) { var f = swatchFor(doc, st.fill, now); if (f) set.fill = f; }
+      if (st.opacity >= 0) set.op = st.opacity;
+      var k = 0;
+      Object.keys(set).forEach(function (key) { if (it[key] !== set[key]) { it[key] = set[key]; k = 1; } });
+      if (st.nofill && it.fill) { delete it.fill; k = 1; }
+      if (st.opacity === 100 && it.op !== undefined) { delete it.op; k = 1; }
+      if (k) { M.touch(it, now); n++; }
+    });
+    var ids2 = Object.keys(gone);
+    if (ids2.length) {
+      var stories = {};
+      doc.items = doc.items.filter(function (it) {
+        if (!gone[it.id]) return true;
+        doc.tombs[it.id] = Math.max(now, doc.tombs[it.id] || 0);
+        if (it.story) stories[it.story] = 1;
+        return false;
+      });
+      doc.items.forEach(function (it) { if (it.story) delete stories[it.story]; });
+      doc.stories = doc.stories.filter(function (sx) {
+        if (!stories[sx.id]) return true;
+        doc.tombs[sx.id] = Math.max(now, doc.tombs[sx.id] || 0);
+        return false;
+      });
+    }
+    return n;
+  }
   // Everything on a page goes (tombstones, so the deletion syncs); a
   // story goes with its last frame.
   function clearPage(doc, pgId, now) {
@@ -782,7 +829,7 @@
 
   var api = { setPicture: setPicture, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
-              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
+              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;
   else root.LayoutPro = api;
 })(typeof window !== "undefined" ? window : this);
