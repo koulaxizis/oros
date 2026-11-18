@@ -275,13 +275,99 @@
     }
     return true;
   }
+  // A rich text field (W2: Writer, Mail, Notes, Slides, Layout,
+  // Signature…): contentEditable, never a code editor or an opt-out.
+  function richOk(el) {
+    if (!el || el.nodeType !== 1 || !el.isContentEditable) return false;
+    if (el.closest && el.closest("[data-oros-noexpand],[data-oros-noclip],.cm-editor,.CodeMirror,[contenteditable=false]")) return false;
+    return String(el.getAttribute("role") || "").toLowerCase() !== "searchbox";
+  }
+
+  // ---------- 1b. Import and export (W2, card 5) ----------
+  // Our own file: { format: "oros-textrepl", v: 1, items: [{ k, t }] }.
+  function exportText(data) {
+    return JSON.stringify({ format: "oros-textrepl", v: 1,
+      items: list(data).map(function (it) { return { k: it.k, t: it.t }; }) }, null, 1);
+  }
+  function xmlText(x) {
+    return String(x).replace(/&#x([0-9a-f]+);/gi, function (m, h) { var n = parseInt(h, 16); return n < 0x110000 ? String.fromCodePoint(n) : ""; })
+      .replace(/&#([0-9]+);/g, function (m, d) { var n = parseInt(d, 10); return n < 0x110000 ? String.fromCodePoint(n) : ""; })
+      .replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'").replace(/&amp;/g, "&");
+  }
+  // A file's text → { format, items: [{ k, t }], bad } (never throws;
+  // nothing in it is ever run: plain text, JSON.parse and a regex read).
+  //   • our own JSON;
+  //   • Gboard's personal dictionary (dictionary.txt in its export zip):
+  //     "# Gboard Dictionary version:1", then "shortcut<TAB>word<TAB>language";
+  //   • macOS / iOS text replacements ("Text Substitutions.plist", dragged
+  //     out of System Settings › Keyboard › Text Replacements): an array
+  //     of <dict> with the keys "shortcut" and "phrase".
+  function parseImport(text) {
+    var s = String(text || "").replace(/^\uFEFF/, ""), out = [], bad = 0, format = "";
+    function take(k, t) {
+      var c = cleanCode(String(k || "").trim()), x = cleanText(String(t || ""));
+      if (c && x) out.push({ k: c, t: x }); else bad++;
+    }
+    var head = s.slice(0, 200).trim();
+    if (head.charAt(0) === "{") {
+      var o = null;
+      try { o = JSON.parse(s); } catch (e) { o = null; }
+      if (o && o.format === "oros-textrepl" && Array.isArray(o.items)) {
+        format = "oros";
+        o.items.forEach(function (it) { if (it && typeof it === "object") take(it.k, it.t); else bad++; });
+      }
+    } else if (/<plist[\s>]/.test(s) || /^<\?xml/.test(head)) {
+      format = "plist";
+      var dicts = s.match(/<dict>[\s\S]*?<\/dict>/g) || [];
+      dicts.forEach(function (d) {
+        var k = null, t = null, re = /<key>([^<]*)<\/key>\s*<string>([\s\S]*?)<\/string>/g, m;
+        while ((m = re.exec(d))) {
+          var name = m[1].trim();
+          if (name === "shortcut") k = xmlText(m[2]);
+          else if (name === "phrase") t = xmlText(m[2]);
+        }
+        if (k !== null || t !== null) take(k, t);
+      });
+    } else {
+      format = "gboard";
+      s.split(/\r?\n/).forEach(function (line) {
+        if (!line.trim() || line.charAt(0) === "#") return;
+        var c = line.split("\t");
+        if (c.length < 2) { bad++; return; }
+        // shortcut first; a line written the other way round still reads
+        if (!cleanCode(c[0].trim()) && cleanCode(c[1].trim())) take(c[1], c[0]);
+        else take(c[0], c[1]);
+      });
+    }
+    if (out.length > MAX_LIVE * 2) out = out.slice(0, MAX_LIVE * 2);
+    return { format: format, items: out, bad: bad };
+  }
+  // Merge only (never deletes, never replaces): a code already here with
+  // the same text counts as "same", with another text as "kept" (yours
+  // stays); new codes are added while there is room.
+  function importInto(data, items, now, rnd) {
+    var d = normalize(data), map = table(d), r = { data: d, added: 0, same: 0, kept: 0, full: 0 };
+    var seen = {};
+    (items || []).forEach(function (it, i) {
+      var k = cleanCode(it.k), t = cleanText(it.t);
+      if (!k || !t) return;
+      if (Object.prototype.hasOwnProperty.call(map, k)) { if (map[k] === t) r.same++; else r.kept++; return; }
+      if (seen[k]) { r.kept++; return; }
+      var entry = { id: newId(rnd) + i.toString(36), k: k, t: t };
+      if (invalid(r.data, entry)) { r.full++; return; }
+      seen[k] = 1;
+      r.data = put(r.data, entry, now);
+      r.added++;
+    });
+    return r;
+  }
 
   var model = { VER: VER, KEY: KEY, SLICE: SLICE, MAX_LIVE: MAX_LIVE, MAX_DEAD: MAX_DEAD, MAX_CODE: MAX_CODE,
                 MIN_CODE: MIN_CODE, MAX_TEXT: MAX_TEXT, MAX_TOTAL: MAX_TOTAL, SKIP_APPS: SKIP_APPS,
                 cleanCode: cleanCode, cleanText: cleanText, normalize: normalize, merge: merge, list: list,
                 dupes: dupes, table: table, invalid: invalid, put: put, remove: remove, matchAt: matchAt,
                 fill: fill, expansion: expansion, stamp: stamp, appOfPath: appOfPath, appOk: appOk,
-                fieldOk: fieldOk, fold: fold, UNDO_MS: UNDO_MS };
+                fieldOk: fieldOk, richOk: richOk, exportText: exportText, parseImport: parseImport, importInto: importInto, fold: fold, UNDO_MS: UNDO_MS };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -359,9 +445,11 @@
     if (busy || e.isComposing) return;
     var f = e.target;
     var type = e.inputType || "";
-    if (type !== "insertText" && type !== "insertLineBreak") return;
+    if (type !== "insertText" && type !== "insertLineBreak" && type !== "insertParagraph") return;
     if (type === "insertText" && (typeof e.data !== "string" || e.data.length !== 1)) return;
-    if (!fieldOk(f) || strictOn() || locked()) return;
+    if (strictOn() || locked()) return;
+    if (richOk(f)) { if (type === "insertText") onRich(w, f); return; }
+    if (!fieldOk(f) || type === "insertParagraph") return;
     var map = codes();
     if (!Object.keys(map).length) return;
     var caret = f.selectionStart;
@@ -377,11 +465,65 @@
     last = { el: f, start: m.start, end: m.start + x.text.length, caret: m.start + x.caret,
              undo: m.code + m.delim, value: f.value, at: Date.now() };
   }
+  // A rich text field (W2): the code must sit in the text node at the
+  // caret. The code + delimiter are selected and replaced through
+  // insertText, so the editor's own input handling and Undo see it.
+  function onRich(w, hostEl) {
+    var sel = call(function () { return w.getSelection(); });
+    if (!sel || !sel.isCollapsed || !sel.anchorNode || sel.anchorNode.nodeType !== 3) return;
+    var map = codes();
+    if (!Object.keys(map).length) return;
+    var node = sel.anchorNode, off = sel.anchorOffset;
+    var m = matchAt(node.data, off, map);
+    if (!m) return;
+    var x = expansion(map[m.code], m.delim, stamp(Date.now(), host && host.lang ? host.lang() : "en"));
+    var d = w.document;
+    busy = true;
+    try {
+      var r = d.createRange();
+      r.setStart(node, m.start);
+      r.setEnd(node, off);
+      sel.removeAllRanges();
+      sel.addRange(r);
+      var ok = false;
+      try { ok = d.execCommand("insertText", false, x.text); } catch (e1) { ok = false; }
+      if (!ok) {
+        r.deleteContents();
+        var tn = d.createTextNode(x.text);
+        r.insertNode(tn);
+        r.setStartAfter(tn);
+        r.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(r);
+        hostEl.dispatchEvent(new w.InputEvent("input", { bubbles: true, inputType: "insertReplacementText", data: x.text }));
+      }
+      var back = x.text.length - x.caret;
+      for (var i = 0; i < back && sel.modify; i++) sel.modify("move", "backward", "character");
+    } catch (e) {} finally { busy = false; }
+    // Backspace puts the code back only for a one-line text with the
+    // caret at its end (the browser's Undo covers the rest).
+    last = (!/\n/.test(x.text) && x.caret === x.text.length)
+      ? { el: hostEl, rich: true, len: x.text.length, undo: m.code + m.delim, sig: hostEl.textContent, at: Date.now() }
+      : null;
+  }
+  function richUndo(w, e, L) {
+    var sel = call(function () { return w.getSelection(); });
+    if (!sel || !sel.isCollapsed || !sel.modify || L.el.textContent !== L.sig) return;
+    e.preventDefault();
+    busy = true;
+    try {
+      for (var i = 0; i < L.len; i++) sel.modify("extend", "backward", "character");
+      if (String(sel).length !== L.len || !w.document.execCommand("insertText", false, L.undo)) sel.collapseToEnd();
+    } catch (er) {} finally { busy = false; }
+  }
+
   // Backspace right after a replacement puts the code back.
   function onBeforeInput(w, e) {
     if (!last || e.inputType !== "deleteContentBackward" || e.target !== last.el) return;
     var L = last, f = L.el;
     last = null;
+    if (Date.now() - L.at > UNDO_MS) return;
+    if (L.rich) { richUndo(w, e, L); return; }
     if (Date.now() - L.at > UNDO_MS || f.value !== L.value) return;
     if (f.selectionStart !== L.caret || f.selectionEnd !== L.caret) return;
     e.preventDefault();
@@ -443,6 +585,31 @@
     },
     remove: function (id) { return edit(remove(load(), id, Date.now())); },
     paused: function () { return strictOn(); },
+    // W2: our own file, and a merge-only import (own file, Gboard, macOS/iOS).
+    exportText: function () { return exportText(load()); },
+    importText: function (text) {
+      var p = parseImport(text);
+      if (!p.format) return { format: "", added: 0, same: 0, kept: 0, full: 0, bad: p.bad };
+      var r = importInto(load(), p.items, Date.now());
+      if (r.added && !edit(r.data)) return { format: p.format, added: 0, same: r.same, kept: r.kept, full: r.full, bad: p.bad, store: true };
+      return { format: p.format, added: r.added, same: r.same, kept: r.kept, full: r.full, bad: p.bad };
+    },
+    // W2: the on-screen keyboard's chip. The code right before the caret
+    // in this field (no delimiter typed yet) → { code, text } or null.
+    pending: function (w, el) {
+      if (strictOn() || locked() || !w || !el) return null;
+      var app = call(function () { return appOfPath(w.location.pathname); }) || "";
+      if (!appOk(app) || !w.__orosReplHooked) return null;
+      var map = codes(), v = null, at = 0;
+      if (fieldOk(el)) { v = el.value; at = el.selectionStart; if (at !== el.selectionEnd) return null; }
+      else if (richOk(el)) {
+        var sel = call(function () { return w.getSelection(); });
+        if (!sel || !sel.isCollapsed || !sel.anchorNode || sel.anchorNode.nodeType !== 3) return null;
+        v = sel.anchorNode.data; at = sel.anchorOffset;
+      } else return null;
+      var m = matchAt(String(v).slice(0, at) + " ", at + 1, map);
+      return m ? { code: m.code, text: fill(map[m.code], stamp(Date.now(), host && host.lang ? host.lang() : "en")).text } : null;
+    },
     limits: { live: MAX_LIVE, code: MAX_CODE, text: MAX_TEXT },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};

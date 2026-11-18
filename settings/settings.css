@@ -887,3 +887,4 @@ body.tr-open { overflow: hidden; }
 .rp-text { color: var(--text-dim); min-width: 0; overflow-wrap: anywhere; flex: 1 1 12em; }
 .rp-item .actions { margin: 0; }
 
+.rp-io { margin-top: 12px; display: grid; gap: 6px; }

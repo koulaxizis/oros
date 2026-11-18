@@ -137,7 +137,12 @@ test("never: Passwords, Settings, secret and search fields, code editors, opt-ou
   assert.equal(R.fieldOk(el("TEXTAREA", null, ["[data-oros-noexpand]"])), false);
   assert.equal(R.fieldOk(el("TEXTAREA", null, ["[data-oros-noclip]"])), false);
   assert.equal(R.fieldOk(el("TEXTAREA", null, [".cm-editor"])), false);
-  assert.equal(R.fieldOk(el("DIV")), false, "rich text editors come in W2");
+  assert.equal(R.fieldOk(el("DIV")), false, "rich text goes through richOk");
+  const ce = (attrs, inside) => Object.assign(el("DIV", attrs, inside), { isContentEditable: true });
+  assert.equal(R.richOk(ce()), true, "W2: contenteditable editors");
+  assert.equal(R.richOk(el("DIV")), false, "not editable");
+  assert.equal(R.richOk(ce({ role: "searchbox" })), false);
+  for (const m of ["[data-oros-noexpand]", "[data-oros-noclip]", ".cm-editor", ".CodeMirror"]) assert.equal(R.richOk(ce(null, [m])), false, m);
   const src = read("textrepl.js");
   assert.match(src, /strictOn\(\) \|\| locked\(\)/, "paused under Sensitive work and the screen lock");
   assert.match(src, /e\.isComposing/, "never during IME composition");
@@ -181,4 +186,56 @@ test("wiring: start-up script, sync slice with a merge, frames, Settings › Lan
   for (const dir of ["assistant", "gate"].filter((d) => fs.existsSync(path.join(ROOT, d)))) {
     for (const f of walk(dir)) assert.ok(!/orosTextRepl|oros-textrepl/.test(read(f)), f);
   }
+});
+
+test("import: our own file, Gboard and macOS/iOS; merge only, never replaces", () => {
+  let d = R.normalize(null);
+  d = R.put(d, { id: "a1", k: ";addr", t: "12 Long Street" }, 1000);
+  d = R.put(d, { id: "a2", k: ";sig", t: "Best,\nChris" }, 1000);
+  // our own file round trip
+  const out = R.exportText(d), back = R.parseImport(out);
+  assert.equal(back.format, "oros");
+  assert.deepEqual(back.items.map((x) => x.k).sort(), [";addr", ";sig"]);
+  assert.equal(JSON.parse(out).items.some((x) => "id" in x || "m" in x), false, "no ids or times in the file");
+  // Gboard dictionary.txt (a reversed line still reads; comments and blanks skipped)
+  const g = R.parseImport("# Gboard Dictionary version:1\n;tel\t+30 210 1234567\tel-GR\n\nomw\ton my way\ten-US\nShort text\t;st\nbroken line\n");
+  assert.equal(g.format, "gboard");
+  assert.deepEqual(g.items, [{ k: ";tel", t: "+30 210 1234567" }, { k: "omw", t: "on my way" }, { k: ";st", t: "Short text" }]);
+  assert.equal(g.bad, 1);
+  // macOS / iOS plist, entities decoded, never run
+  const pl = R.parseImport('<?xml version="1.0"?><plist version="1.0"><array>' +
+    '<dict><key>phrase</key><string>Tom &amp; Jerry &lt;3</string><key>shortcut</key><string>;tj</string></dict>' +
+    '<dict><key>phrase</key><string>no code</string><key>shortcut</key><string></string></dict></array></plist>');
+  assert.equal(pl.format, "plist");
+  assert.deepEqual(pl.items, [{ k: ";tj", t: "Tom & Jerry <3" }]);
+  assert.equal(pl.bad, 1);
+  assert.equal(R.parseImport("").format, "gboard");
+  assert.equal(R.parseImport('{"x":1}').format, "", "a JSON file that is not ours");
+  // merge only
+  const r = R.importInto(d, [{ k: ";addr", t: "12 Long Street" }, { k: ";sig", t: "Other" }, { k: ";new", t: "New" }, { k: ";new", t: "Again" }], 2000, () => 0.5);
+  assert.deepEqual([r.added, r.same, r.kept, r.full], [1, 1, 2, 0]);
+  const map = R.table(r.data);
+  assert.equal(map[";sig"], "Best,\nChris", "yours stays");
+  assert.equal(map[";new"], "New");
+  assert.equal(R.list(r.data).length, 3);
+});
+
+test("W2 wiring: rich text editors, the keyboard chip, import and export in Settings", () => {
+  const src = read("textrepl.js"), osk = read("osk.js"), set = read("settings/settings.js");
+  assert.match(src, /richOk\(/);
+  assert.match(src, /pending: function \(w, el\)/);
+  assert.match(osk, /root\.orosTextRepl\.pending\(t\.w, t\.el\)/);
+  assert.match(osk, /typeChar\(" "\)/, "a tap types the space that replaces it");
+  assert.match(set, /R\.importText\(/);
+  assert.match(set, /R\.exportText\(\)/);
+  assert.match(set, /loadScript\("\.\.\/designkit\/zipin\.js"\)/);
+  const C = require(path.join(ROOT, "settings/core.js")), de = read("i18n/de/settings.js");
+  const keys = ["rp.io.hint", "rp.export", "rp.import", "rp.export.ok", "rp.export.fail", "rp.import.none", "rp.import.from.oros",
+    "rp.import.from.gboard", "rp.import.from.plist", "rp.import.added", "rp.import.same", "rp.import.kept", "rp.import.full", "rp.import.bad"];
+  for (const k of keys) {
+    assert.ok(C.STRINGS.en[k], "en " + k);
+    assert.ok(C.STRINGS.el[k], "el " + k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  }
+  for (const f of ["translations.js", "i18n/de/shell.js"]) assert.ok(read(f).includes('"osk.repl":'), f);
 });

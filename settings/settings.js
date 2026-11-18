@@ -3578,7 +3578,7 @@
       return (R && typeof R.list === "function" && typeof R.put === "function") ? R : null;
     } catch (e) { return null; }
   }
-  var rpDraft = { id: "", k: "", t: "", err: "" }, rpQ = "";
+  var rpDraft = { id: "", k: "", t: "", err: "" }, rpQ = "", rpMsg = null, rpBusy = false;
   function secTextRepl(host) {
     var R = textRepl();
     var c = card(t("rp.title"), "textrepl");
@@ -3666,8 +3666,88 @@
     });
     if (shown.length) c.appendChild(ul);
     if (all.length) c.appendChild(el("p", "hint", t("rp.count", { n: all.length, max: (R.limits && R.limits.live) || 500 })));
+
+    // W2 (card 5): our own file out; our file, Gboard or macOS/iOS in
+    // (merge only: nothing here is replaced or deleted).
+    if (typeof R.importText === "function") {
+      var io = el("div", "rp-io");
+      io.appendChild(el("p", "hint", t("rp.io.hint")));
+      if (rpMsg) {
+        var m = el("p", "msg " + rpMsg.cls, rpMsg.text);
+        m.setAttribute("role", "status");
+        io.appendChild(m);
+      }
+      var bImp = button(t("rp.import"), "rp:import", rpImport, "btn-sm");
+      if (rpBusy) bImp.disabled = true;
+      io.appendChild(actions(
+        all.length ? button(t("rp.export"), "rp:export", rpExport, "btn-sm") : null, bImp));
+      c.appendChild(io);
+    }
     c.appendChild(el("p", "hint", t("rp.never")));
     host.appendChild(c);
+  }
+  function rpDialog() {
+    var p = parentWin();
+    try { return p && p.orosDialog; } catch (e) { return null; }
+  }
+  function rpExport() {
+    var R = textRepl(), D = rpDialog();
+    if (!R) return;
+    var text = R.exportText(), name = "orOS-text-replacements.json";
+    var ok = function (r) { if (r && r.ok) { rpMsg = { cls: "msg-ok", text: t("rp.export.ok", { f: name }) }; render(); } };
+    var fail = function () { rpMsg = { cls: "msg-err", text: t("rp.export.fail") }; render(); };
+    if (D && typeof D.saveFile === "function") { D.saveFile({ text: text, filename: name, mime: "application/json" }).then(ok, fail); return; }
+    try {
+      var a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+      a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+      ok({ ok: true });
+    } catch (e) { fail(); }
+  }
+  // A file's text: Gboard's export is a zip with dictionary.txt in it.
+  var RP_MAX = 2 * 1024 * 1024;
+  function rpRead(file) {
+    if (!file) return Promise.resolve(null);
+    if (file.size > 20 * 1024 * 1024) return Promise.reject(new Error("big"));
+    return file.slice(0, 4).arrayBuffer().then(function (ab) {
+      var b = new Uint8Array(ab);
+      if (!(b[0] === 0x50 && b[1] === 0x4b && b[2] === 3 && b[3] === 4)) {
+        if (file.size > RP_MAX) throw new Error("big");
+        return file.text();
+      }
+      return (window.orosZipIn ? Promise.resolve() : loadScript("../designkit/zipin.js")).then(function () {
+        return window.orosZipIn.list(file);
+      }).then(function (entries) {
+        var e = (entries || []).filter(function (x) { return /(^|\/)dictionary\.txt$/i.test(x.name); })[0];
+        if (!e) throw new Error("none");
+        return e.get(RP_MAX).then(function (blob) { return blob.text(); });
+      });
+    });
+  }
+  function rpImport() {
+    var R = textRepl(), D = rpDialog();
+    if (!R || rpBusy) return;
+    var pick = D && typeof D.openFile === "function" ? D.openFile(".json,.txt,.plist,.zip,application/json,text/plain,application/zip,application/x-plist")
+      : Promise.resolve(null);
+    pick.then(function (file) {
+      if (!file) return;
+      rpBusy = true; rpMsg = null; render();
+      return rpRead(file).then(function (text) {
+        var r = R.importText(text || "");
+        if (!r.format) rpMsg = { cls: "msg-err", text: t("rp.import.none") };
+        else if (r.store) rpMsg = { cls: "msg-err", text: t("rp.err.store") };
+        else {
+          var parts = [t("rp.import.added", { n: r.added })];
+          if (r.same) parts.push(t("rp.import.same", { n: r.same }));
+          if (r.kept) parts.push(t("rp.import.kept", { n: r.kept }));
+          if (r.full) parts.push(t("rp.import.full", { n: r.full }));
+          if (r.bad) parts.push(t("rp.import.bad", { n: r.bad }));
+          rpMsg = { cls: r.added ? "msg-ok" : "msg-dim", text: t("rp.import.from." + r.format) + " " + parts.join(" ") };
+        }
+      }, function () { rpMsg = { cls: "msg-err", text: t("rp.import.none") }; });
+    }).then(function () { rpBusy = false; render(); }, function () { rpBusy = false; render(); });
   }
 
   // ---------- 8b. Section: Opening files ----------

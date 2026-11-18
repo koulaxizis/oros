@@ -431,6 +431,7 @@ orosPack("de", "shell", {
  "osk.lang": "Nächstes Layout: {name}",
  "osk.left": "Nach links",
  "osk.right": "Nach rechts",
+ "osk.repl": "Ersetzen durch: {text}",
  "osk.hide": "Tastatur ausblenden",
  "osk.tonos": "Akzent (΄)",
  "osk.dia": "Trema (¨)",
