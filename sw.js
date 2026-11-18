@@ -229,6 +229,7 @@ var PRECACHE_URLS = [
   "./qsettings.js",
   "./widgets.js",
   "./nightlight.js",
+  "./a11yfx.js",
   "./smartbar.js",
   "./smartbar-apps.js",
   "./cliphist.js",
