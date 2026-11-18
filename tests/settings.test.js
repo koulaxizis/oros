@@ -117,8 +117,8 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
   sets.forEach((n) => {
     if (n.endsWith(":")) return;                 // "search:" + id, checked below
     if (/^dock:/.test(n)) {                      // matched by one pattern in the shell
-      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\|style\|hover\)\$/);
-      assert.match(n, /^dock:(on|size|magnify|autohide|over|style|hover)$/, n);
+      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\|style\|hover\|pos\)\$/);
+      assert.match(n, /^dock:(on|size|magnify|autohide|over|style|hover|pos)$/, n);
       return;
     }
     if (/^seasonal:/.test(n)) {                  // passed on to seasonal.js by prefix
