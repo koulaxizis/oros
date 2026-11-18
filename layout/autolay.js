@@ -208,7 +208,7 @@
     // the heading of the contents ("Contents") stays above the entries
     var before = [];
     for (var i = 0; i < st.paras.length && !TOC_TAIL.test(textOf(st.paras[i])); i++) before.push(st.paras[i]);
-    var order = M.pagesInOrder(d), first = M.firstNumber(d), pgIdx = {};
+    var order = M.pagesInOrder(d), first = M.firstNumber(d), pgIdx = {}, labels = M.pageLabels ? M.pageLabels(d) : null;
     order.forEach(function (p, k) { pgIdx[p.id] = k; });
     var entries = [];
     d.stories.forEach(function (s) {
@@ -220,7 +220,7 @@
       });
       s.paras.forEach(function (p, k) {
         if (!heads[p.ps] || !textOf(p).trim() || at[k] === undefined) return;
-        entries.push({ t: textOf(p).replace(/\s+/g, " ").trim(), no: at[k] + first, k: at[k] });
+        entries.push({ t: textOf(p).replace(/\s+/g, " ").trim(), no: labels ? labels[at[k]].label : at[k] + first, k: at[k] });
       });
     });
     entries.sort(function (a, b) { return a.k - b.k; });

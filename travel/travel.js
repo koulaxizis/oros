@@ -1753,7 +1753,33 @@
     savePrefs();
     render();
     $("main").scrollTop = 0;
+    contNote();
   }
+  // CONT-1 W4: tell the shell which trip is open (continue.js keeps the
+  // reference and the trip's name only, never its plan or bookings). On
+  // opening, and once at the first tap or key after the start; nothing
+  // before that, so a restored trip never hides the other device's.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var tr = W && prefs.view === "trip" && prefs.trip ? findTrip(prefs.trip) : null;
+      var name = tr ? String(tr.name || tr.dest || "").trim() : "";
+      if (name) W.note("travel", { target: { trip: tr.id, tab: null, item: null }, title: name });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   function goBack() {
     commitNotes();
     prefs.view = "list";

@@ -170,12 +170,13 @@ Tippe oder klicke auf das Symbol, um [Wetter](app:weather) zu öffnen; in Wetter
 Bist du offline oder ist der Wert älter als 3 Stunden, zeigt das Symbol eine durchgestrichene Wolke und keine Temperatur. orOS zeigt nie eine Temperatur, die es nicht hat. Die Wetterdaten kommen von Open-Meteo (siehe [Datenschutz](help:t/privacy)).
 
 ## Dock
-Das Dock ist eine Leiste mit deinen Lieblings-Apps am unteren Rand des Desktops. Füge eine App mit dem ☆ neben ihr im Menü hinzu. In den `Einstellungen` unter `Darstellung` › `Dock`:
+Das Dock ist eine Leiste mit deinen Lieblings-Apps an einem Rand des Desktops, unten, solange du keinen anderen wählst. Füge eine App mit dem ☆ neben ihr im Menü hinzu. In den `Einstellungen` unter `Darstellung` › `Dock`:
 - `Dock anzeigen` schaltet es an oder aus.
 - `Größe` ist `Klein`, `Mittel` oder `Groß`.
+- `Position` setzt es `Unten`, `Links`, `Rechts` oder `Oben` an den Bildschirm. Auf einem Handy oder in einem kleinen Fenster bleibt es unten; auf einem größeren Bildschirm geht es wieder an deine Wahl. An der Seite lässt sich ein langes Dock nach oben und unten scrollen.
 - `Stil` ändert sein Aussehen: `Klassisch`, `Glas`, `Milchglas`, `Rauch`, `Transparent`, `Deckend`, `3D-Regal` oder `Neon`.
 - `Beim Darüberfahren vergrößern` lässt Symbole unter der Maus wachsen (nur mit Maus oder Trackpad).
-- `Automatisch ausblenden` versteckt es, bis du die Maus an den unteren Rand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
+- `Automatisch ausblenden` versteckt es, bis du die Maus an seinen Bildschirmrand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
 - `Über offenen Apps zeigen` lässt es sichtbar, während eine App offen ist. Es ist aus, bis du es einschaltest, damit Apps den ganzen Bildschirm bekommen.
 
 ## Barrierefreiheit
@@ -183,8 +184,10 @@ In den `Einstellungen` › `Barrierefreiheit`, für orOS und jede App:
 - `Textgröße` macht den Text und alles drumherum größer: `100%`, `115%`, `130%` oder `150%`. Sie gilt in jeder App, in den Einstellungen, in der Hilfe und im Menü, wie ein Zoom der Seite; die obere Leiste und der Desktop behalten ihre Größe (das Dock hat seine eigene `Größe`). Auf einem schmalen Bildschirm vergrößert orOS nur so weit, dass jede App noch hineinpasst (mindestens 320 Pixel breit), und die Karte sagt es dir.
 - `Hoher Kontrast` stellt orOS und die Apps auf Schwarz und Weiß mit einer kräftigen Farbe um, mit klaren Rahmen, unterstrichenen Links und einem schlichten Desktop ohne Hintergrundbild. `Automatisch` (die Voreinstellung) schaltet ihn ein, solange dein Gerät mehr Kontrast verlangt, zum Beispiel mit dem hohen Kontrast von Windows; mit `An` und `Aus` entscheidest du selbst. Wenn Windows eigene Kontrastfarben erzwingt, folgt orOS ihnen und markiert gewählte Optionen mit einem Rahmen.
 - `Fokusrahmen immer zeigen` zeichnet einen dicken Rahmen um das, was den Tastaturfokus hat, wenn du dich mit der Taste [[Tab]] bewegst, auch in Apps, die nur einen blassen zeigen.
+- `Farbfilter` ändert die Farben des ganzen Bildschirms: `Grau`, `Rot-Grün, schwaches Rot (Protanopie)`, `Rot-Grün, schwaches Grün (Deuteranopie)`, `Blau-Gelb (Tritanopie)` oder `Farben umkehren`. Die Filter Rot-Grün und Blau-Gelb rücken schwer unterscheidbare Farben weiter auseinander; `Stärke` (25% bis 100%) legt fest, wie sehr, auch für `Grau`. Der farbige Streifen unter der Liste zeigt das Ergebnis sofort. `Farben umkehren` macht helle Bildschirme dunkel, lässt aber Fotos, Videos und Zeichnungen in den orOS-Apps, wie sie sind (Seiten anderer Websites, etwa Kartenkacheln, werden ganz umgekehrt). Gespeicherte und exportierte Dateien behalten ihre echten Farben; ein Bildschirmfoto oder eine Bildschirmaufnahme zeigt den Bildschirm, wie du ihn siehst. Die Taste `Farbfilter` in den Schnelleinstellungen schaltet den zuletzt gewählten Filter ein und aus; ihr Pfeil öffnet diese Einstellungen.
+- `Zeigergröße` (nur mit Maus oder Touchpad): `Normal`, `Groß` oder `Sehr groß`, in orOS und jeder App. Chrome und Edge blenden `Sehr groß` aus, solange er den Fensterrand berührt. Spiele und Zeichenwerkzeuge mit eigenem Zeiger behalten ihn.
 
-Diese drei bleiben auf diesem Gerät: ein Handy und ein großer Bildschirm brauchen oft eine andere Größe.
+Diese Einstellungen bleiben auf diesem Gerät: ein Handy und ein großer Bildschirm brauchen oft eine andere Größe.
 
 ## Dein Name
 Unter Einstellungen › Darstellung › `Dein Name` schreibst du, wie orOS dich nennen soll. Anfangs ist das Feld leer. Mit einem Namen begrüßen dich [Heute](app:today) und die Startseite damit, zum Beispiel `Guten Abend, Maria`. Der Name bleibt auf deinen Geräten: Mit eingeschalteter [Synchronisierung](help:t/sync) geht er verschlüsselt auf deine anderen Geräte, wie deine übrigen Einstellungen. Er geht nie an den [Assistenten](app:assistant) oder sonstwohin. Leere das Feld, um ihn zu entfernen.

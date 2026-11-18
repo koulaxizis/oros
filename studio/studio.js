@@ -862,7 +862,31 @@
     fixSelection();
     renderAll();
     if (proj) loadProjectAudio();
+    contNote();
   }
+  // CONT-1 W4: tell the shell which project is open (continue.js keeps the
+  // reference and the name only, never the audio). On opening, and once at
+  // the first tap or key after the start; nothing before that, so a
+  // restored project never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (W && proj && proj.id) W.note("studio", { target: { project: proj.id }, title: String(proj.name || "") || "Studio" });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   function fixSelection() {
     var trs = tracks();
     if (selClip && !C.find(data, "clips", selClip)) selClip = "";

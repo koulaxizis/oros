@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.54.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.68.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -998,6 +998,14 @@
   //            high contrast).
   //   focus    true: a strong ring on every keyboard focus, also where
   //            an app hides its own.
+  //   filter   "off" | "grey" | "protan" | "deutan" | "tritan" | "invert":
+  //            one CSS filter on the shell root (a11yfx.js), which also
+  //            colours every app frame; "invert" is smart (pictures are
+  //            turned back in same-origin documents). strength 25-100
+  //            for grey and the corrections; last = the filter the
+  //            Quick settings button turns on again.
+  //   pointer  "normal" | "large" | "xl": big SVG cursors, only with a
+  //            mouse or touchpad.
   // A11Y_CSS goes into the shell and into every same-origin app
   // document (on load and on every change) and only acts through the
   // data-oros-* attributes of that document's root, so nothing looks
@@ -1005,6 +1013,9 @@
   var A11Y_KEY = "oros-a11y";
   var A11Y_SIZES = [100, 115, 130, 150];
   var A11Y_MIN_W = 320;
+  var A11Y_FILTERS = ["off", "grey", "protan", "deutan", "tritan", "invert"];
+  var A11Y_STRENGTHS = [25, 50, 75, 100];
+  var A11Y_POINTERS = ["normal", "large", "xl"];
   var A11Y_CSS =
     "html[data-oros-focus] :focus-visible, html[data-oros-contrast] :focus-visible {" +
     " outline: 3px solid var(--accent, Highlight) !important; outline-offset: 2px !important; }\n" +
@@ -1025,7 +1036,11 @@
     return {
       size: A11Y_SIZES.indexOf(v.size) !== -1 ? v.size : 100,
       contrast: (v.contrast === "on" || v.contrast === "off") ? v.contrast : "auto",
-      focus: v.focus === true
+      focus: v.focus === true,
+      filter: A11Y_FILTERS.indexOf(v.filter) !== -1 ? v.filter : "off",
+      strength: A11Y_STRENGTHS.indexOf(v.strength) !== -1 ? v.strength : 100,
+      last: A11Y_FILTERS.indexOf(v.last) > 0 ? v.last : "grey",
+      pointer: A11Y_POINTERS.indexOf(v.pointer) !== -1 ? v.pointer : "normal"
     };
   }
   function a11yMq(q) {
@@ -1049,14 +1064,18 @@
   }
   function a11yMark(doc) {
     var r = doc.documentElement;
-    if (!doc.getElementById("oros-a11y-css")) {
-      var s = doc.createElement("style");
+    var s = doc.getElementById("oros-a11y-css");
+    if (!s) {
+      s = doc.createElement("style");
       s.id = "oros-a11y-css";
-      s.textContent = A11Y_CSS;
       (doc.head || r).appendChild(s);
     }
+    // a11yfx.js may arrive after a document was marked: its CSS joins then.
+    var css = A11Y_CSS + (window.orosA11yFx ? window.orosA11yFx.css() : "");
+    if (s.textContent !== css) s.textContent = css;
     a11yAttr(r, "data-oros-contrast", a11yHigh() ? "high" : null);
     a11yAttr(r, "data-oros-focus", a11y.focus ? "on" : null);
+    if (window.orosA11yFx) window.orosA11yFx.mark(doc);       // smart invert, pointer
   }
   // One app frame. Chromium and WebKit scale a zoomed frame's page
   // themselves; an engine that only grows the box (its page keeps the
@@ -1079,8 +1098,29 @@
   function a11yWireFrame(frame) {
     frame.addEventListener("load", function () { a11yFrame(frame); });
   }
+  // a11yfx.js (colour filter, pointer) loads only once one of them is
+  // on or another feature asks for an overlay, so start-up carries no
+  // extra script.
+  var a11yFxP = null;
+  function a11yFxWanted() { return a11y.filter !== "off" || a11y.pointer !== "normal"; }
+  function a11yFxLoad() {
+    if (window.orosA11yFx) return Promise.resolve(window.orosA11yFx);
+    if (!a11yFxP) {
+      a11yFxP = new Promise(function (ok, fail) {
+        var sc = document.createElement("script");
+        sc.src = "a11yfx.js?v=" + APP_VERSION;
+        sc.onload = function () { if (window.orosA11yFx) ok(window.orosA11yFx); else fail(new Error("a11yfx")); };
+        sc.onerror = function () { sc.remove(); fail(new Error("a11yfx")); };
+        document.head.appendChild(sc);
+      });
+      a11yFxP.catch(function () { a11yFxP = null; });
+    }
+    return a11yFxP;
+  }
   function a11yApply() {
     var root = document.documentElement, z = a11yZoom(), hi = a11yHigh();
+    if (!window.orosA11yFx && a11yFxWanted()) a11yFxLoad().then(a11yApply, function () {});
+    if (window.orosA11yFx) window.orosA11yFx.apply(a11y);   // before marking documents
     a11yMark(document);
     if (z !== 1) root.style.setProperty("--oros-zoom", String(z));
     else root.style.removeProperty("--oros-zoom");
@@ -1102,6 +1142,19 @@
     } else if (name === "focusRing") {
       if (!!value === a11y.focus) return;
       a11y.focus = !!value;
+    } else if (name === "colourFilter") {
+      // "toggle" (Quick settings): off ↔ the last filter chosen.
+      if (value === "toggle") value = a11y.filter === "off" ? a11y.last : "off";
+      if (A11Y_FILTERS.indexOf(value) === -1 || value === a11y.filter) return;
+      a11y.filter = value;
+      if (value !== "off") a11y.last = value;
+    } else if (name === "filterStrength") {
+      var st = Number(value);
+      if (A11Y_STRENGTHS.indexOf(st) === -1 || st === a11y.strength) return;
+      a11y.strength = st;
+    } else if (name === "pointerSize") {
+      if (A11Y_POINTERS.indexOf(value) === -1 || value === a11y.pointer) return;
+      a11y.pointer = value;
     } else return;
     try { localStorage.setItem(A11Y_KEY, JSON.stringify(a11y)); }
     catch (e) { scToast("err", window.t("a11y.savefail")); }
@@ -1113,9 +1166,28 @@
       size: a11y.size, sizes: A11Y_SIZES.slice(), contrast: a11y.contrast, focus: a11y.focus,
       high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
       capped: a11yZoom() < a11y.size / 100,
-      font: uifGet()                                       // FM-5: null = Nunito
+      font: uifGet(),                                      // FM-5: null = Nunito
+      // Colour filter and pointer (a11yfx.js, loaded on demand; absent
+      // = an older bundle that has no such options)
+      fx: true,
+      filter: a11y.filter, filters: A11Y_FILTERS.slice(), last: a11y.last,
+      strength: a11y.strength, strengths: A11Y_STRENGTHS.slice(),
+      pointer: a11y.pointer, pointers: A11Y_POINTERS.slice(),
+      fine: a11yMq("(any-pointer: fine)")
     };
   }
+  // For other features (Screen time's Bedtime): a temporary filter on
+  // top of the person's own, never stored. overlayFilter(name, "grey" |
+  // null, { fadeMs }) → true when taken.
+  window.orosA11y = {
+    overlayFilter: function (name, kind, opts) {
+      if (!name || (kind !== null && kind !== "grey")) return false;
+      if (window.orosA11yFx) return window.orosA11yFx.overlay(name, kind, opts);
+      if (!kind) return true;                              // nothing to take off yet
+      a11yFxLoad().then(function (F) { F.apply(a11y); F.overlay(name, kind, opts); }, function () {});
+      return true;
+    }
+  };
   // ---------- The font of orOS (FM-5, uifont.js) ----------
   // A family of the person's (Settings › Fonts) instead of Nunito, on
   // this device only (like the text size). uifont.js and the designkit
@@ -3808,6 +3880,7 @@
         searchFromLaunchParam();
         deliverShare();
         gameResumeStart();
+        appsResumeStart();   // RS-1
         greetStart();
         safeStart();
         if (SOLO) soloStart();
@@ -4040,6 +4113,114 @@
       });
     });
   }
+
+  // RS-1 (reopen after a restart, Chris 2026-11-17: "Όλες οι ανοιχτές,
+  // έως 6", on by default): GR-1 for every app. APPS_LAST (device-local
+  // oros-apps-last, continue.js lastRecord) names the app in front and,
+  // with multitasking on, the other open apps (the one left last
+  // first); written on every open/leave/close (mtChanged). The next
+  // start reopens them (at most 6): the others first, hidden, then the
+  // front one at its own last item here (orosContinue.lastOwn, through
+  // __orosOpenAt). Games stay with GR-1 (a game record there = RS-1
+  // waits); Passwords, Sensitive work, SOLO and the switch in Settings ›
+  // System (orosContinue prefs().reopen) write and reopen nothing. Same
+  // guards as GR-1: never over a launch link, a share, a file or the
+  // tour, and `a: 1` until the front app stayed 15 s, so an app that
+  // takes orOS down as it opens is not reopened again.
+  var APPS_LAST = "oros-apps-last";
+  var appsSettle = null;
+  var appsResuming = false;
+  var appsBooted = false;      // nothing is written before the start has read the record
+  function appsReopenable(id) {
+    if (id === "passwords") return false;
+    for (var i = 0; i < state.apps.length; i++) {
+      var a = state.apps[i];
+      if (a.id === id) return a.type === "internal" && a.category !== "Games";
+    }
+    return false;
+  }
+  function appsLastOn() {
+    var C = window.orosContinue;
+    return !SOLO && !!C && C.prefs().reopen && strictLevelNow() === null;
+  }
+  function appsLastNote(auto) {
+    if (appsResuming || !appsBooted) return;
+    var C = window.orosContinue;
+    if (!C) return;
+    if (!appsLastOn()) { try { localStorage.removeItem(APPS_LAST); } catch (e) {} return; }
+    if (appsSettle && !auto) { clearTimeout(appsSettle); appsSettle = null; }
+    var front = state.running && appsReopenable(state.running.id) ? state.running.id : null;
+    var others = [];
+    try {
+      mtOpenList().forEach(function (r) { if (!r.front && r.app && appsReopenable(r.app.id)) others.push(r.app.id); });
+    } catch (e) {}
+    var rec = C.core.lastRecord(front, others, Date.now(), auto);
+    try {
+      if (!rec.f && !rec.o.length) localStorage.removeItem(APPS_LAST);
+      else localStorage.setItem(APPS_LAST, JSON.stringify(rec));
+    } catch (e) {}
+    if (auto && rec.f) {
+      appsSettle = setTimeout(function () {
+        appsSettle = null;
+        if (state.running && state.running.id === rec.f) appsLastNote(false);
+      }, C.core.SETTLE_MS);
+    }
+  }
+  function appsResumeStart() {
+    var C = window.orosContinue;
+    if (SOLO || !C) return;
+    var booted = function () { appsBooted = true; appsLastNote(false); };
+    var rec = null;
+    try { rec = JSON.parse(localStorage.getItem(APPS_LAST) || "null"); } catch (e) {}
+    if (!rec) { booted(); return; }
+    if (rec.a || !appsLastOn()) { try { localStorage.removeItem(APPS_LAST); } catch (e) {} booted(); return; }
+    if (gameLastRead()) { lateWhen(booted); return; }   // GR-1 reopens its game
+    lateWhen(function () {
+      var tour = false;
+      try { tour = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) {}
+      if (state.running || late.open || tour) { booted(); return; }   // a link, a share, a file, a tap
+      var plan = C.core.reopenPlan(rec, { allow: appsReopenable, multitask: mtActive() });
+      if (!plan) { booted(); return; }
+      var byId = function (id) {
+        for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === id) return state.apps[i];
+        return null;
+      };
+      appsResuming = true;
+      try {
+        plan.back.slice().reverse().forEach(function (id) { var a = byId(id); if (a) openApp(a); });
+        if (plan.front) {
+          var last = C.lastOwn(plan.front);
+          if (last && last.target !== null) window.__orosOpenAt(plan.front, last.target);
+          else { var f = byId(plan.front); if (f) openApp(f); }
+        } else if (state.running) {
+          returnToDesktop();                   // the open apps wait hidden, as they were
+        }
+      } finally { appsResuming = false; }
+      appsBooted = true;
+      appsLastNote(true);
+      appsUntouched = true;
+      var touched = function () {
+        appsUntouched = false;
+        window.removeEventListener("pointerdown", touched, true);
+        window.removeEventListener("keydown", touched, true);
+        window.removeEventListener("blur", touched);
+      };
+      window.addEventListener("pointerdown", touched, true);
+      window.addEventListener("keydown", touched, true);
+      window.addEventListener("blur", touched);   // a tap inside an app's frame
+    });
+  }
+  // RS-1 + SW-2: apps that RS-1 reopened and nobody has touched since
+  // are not "work in progress", so a waiting update may reload over
+  // them (index.html safeToReload). The record is written again first
+  // without the settle mark, so they come back after that reload too.
+  var appsUntouched = false;
+  window.__orosRsSafe = function () {
+    if (!appsUntouched) return false;
+    if (appsSettle) { clearTimeout(appsSettle); appsSettle = null; }
+    appsLastNote(false);
+    return true;
+  };
 
   // "oros <words>" in the browser's address bar (Send to orOS add-on,
   // extension/): "/?search=<words>" opens the menu with the words in
@@ -5346,7 +5527,9 @@
     catch (e) { return d.toISOString().slice(0, 10); }
   }
 
+  var stMenuKey = "";   // ST-1 S2: the hourglasses the menu was drawn with
   function renderMenu() {
+    if (window.orosScreenTime && window.orosScreenTime.overKey) stMenuKey = window.orosScreenTime.overKey();
     var menu = document.getElementById("app-menu");
     // SH-B3 (form rebuild discipline): this function rebuilds the whole
     // menu, and it is called by background events too (sync messages,
@@ -5869,6 +6052,15 @@
               '<span>' + escapeHtml(label) + '</span>';
           } else {
             btn.textContent = label;
+          }
+          // ST-1 S2: past today's screen time limit on this device: an hourglass.
+          if (!app._alias && window.orosScreenTime && window.orosScreenTime.over && window.orosScreenTime.over(app.id)) {
+            var stO = document.createElement("span");
+            stO.className = "menu-st-over";
+            stO.textContent = "\u231B";
+            stO.title = window.t("st.over");
+            stO.setAttribute("aria-label", window.t("st.over"));
+            btn.appendChild(stO);
           }
           btn.addEventListener("click", function () { openApp(app); });
           // Favourites (launcher.js): the star at the end of the row.
@@ -8425,6 +8617,12 @@
         { name: "@pdf-lib/fontkit 1.1.1", url: "https://github.com/Hopding/fontkit",
           by: "Devon Govett, Andrew Dillon & contributors", lic: "MIT",
           k: "cr.pdf-lib-2" },
+        { name: "ISO Coated v2 (ECI) ICC profile", url: "https://www.eci.org/en/downloads",
+          by: "Heidelberger Druckmaschinen AG, European Color Initiative", lic: "HEIDELBERG ICC profile licence",
+          k: "cr.icc-fogra39" },
+        { name: "sRGB IEC61966-2.1 ICC profile", url: "https://color.org/srgbprofiles.xalter",
+          by: "Hewlett-Packard Company", lic: "sRGB profile licence",
+          k: "cr.icc-srgb" },
         { name: "CodeMirror 6", url: "https://codemirror.net/",
           by: "Marijn Haverbeke & contributors", lic: "MIT",
           k: "cr.codemirror" },
@@ -10361,6 +10559,18 @@
   function initSyncIntegration() {
     registerShellSlice();
     registerMeSlice();
+    // CONT-1 (continue.js): the "continue" slice, lazy flush
+    if (window.orosContinue) {
+      window.orosContinue.init({
+        sync: window.orosSync,
+        apps: function () { return state.apps; },
+        strict: strictLevelNow
+      });
+      window.orosContinue.onChange(function () {   // W2: a pull or a dismiss repaints what shows it
+        if (ov) ovRenderCont();
+        if (window.orosSmartBar && window.orosSmartBar.refresh) { try { window.orosSmartBar.refresh(); } catch (e) {} }
+      });
+    }
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
     registerRadioProxySlice();
@@ -12000,6 +12210,9 @@
                over: !!p.over, fine: !!p.fine, pinned: Number(p.pinned) || 0,
                style: typeof p.style === "string" ? p.style : null,
                hover: typeof p.hover === "string" ? p.hover : null,
+               pos: typeof p.pos === "string" ? p.pos : null,
+               side: typeof p.side === "string" ? p.side : null,
+               positions: Array.isArray(p.positions) ? p.positions.filter(function (k) { return typeof k === "string"; }) : [],
                hovers: Array.isArray(p.hovers) ? p.hovers.filter(function (k) { return typeof k === "string"; }) : [],
                styles: Array.isArray(p.styles) ? p.styles.filter(function (k) { return typeof k === "string"; }) : [] };
     } catch (e) { return null; }
@@ -12154,9 +12367,11 @@
       me: { name: meName(), max: ME_MAX },
       greet: SOLO ? null : { on: greetOn() },
       tips: SOLO ? null : { on: !!tipsRead().on },
+      zoom: SOLO ? null : { on: zoomOn() },   // ZOOM-1 (this device)
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       night: window.orosNight ? window.orosNight.snapshot() : null,   // NIGHT-1, this device
+      screentime: window.orosScreenTime ? window.orosScreenTime.snapshot() : null,   // ST-1, this device
       smartbar: !SOLO && window.orosSmartBar && window.orosSmartBar.snapshot ? window.orosSmartBar.snapshot() : null,
       menu: settingsMenuApps(),
       menuProfiles: !!profilesL(),
@@ -12164,6 +12379,7 @@
       // Clipboard history (cliphist.js, CLIP-1): this device only.
       clip: window.orosClip ? window.orosClip.snapshot() : null,
       overview: ovSnapshot(),       // OV-1: hot corner, this device only
+      cont: contSnapshot(),         // CONT-1 + RS-1: this device's switches, its name, the devices seen
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
       pcfiles: state.pcFiles && !state.pcFiles.fixed ? { on: state.pcFiles.state === "on" } : null,
@@ -12212,6 +12428,10 @@
       case "multitask":
         if (!SOLO) { mtSetUser(!!value); settingsNotify(); }
         return;
+      case "cont:on":     if (!SOLO && window.orosContinue) { window.orosContinue.setPref("cont", !!value); settingsNotify(); } return;
+      case "cont:reopen": if (!SOLO && window.orosContinue) { window.orosContinue.setPref("reopen", !!value); appsLastNote(false); settingsNotify(); } return;
+      case "cont:name":   if (window.orosContinue) { window.orosContinue.setName(String(value || "")); settingsNotify(); } return;
+      case "cont:forget": if (window.orosContinue) { window.orosContinue.forget(String(value || "")); settingsNotify(); } return;
       case "overview:corner":
         if (!SOLO) { ovSetPref(OV_CORNER_KEY, !!value); settingsNotify(); }
         return;
@@ -12219,14 +12439,26 @@
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
         return;
       case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
+      case "screentime":      if (window.orosScreenTime) { window.orosScreenTime.setOn(!!value); settingsNotify(); } return;   // ST-1
+      case "screentimeClear": if (window.orosScreenTime) { window.orosScreenTime.clear(); settingsNotify(); } return;
+      case "screentimeLimit":   // S2: { id, min } (0 = no limit)
+        if (window.orosScreenTime && window.orosScreenTime.setLimit && value && typeof value === "object") {
+          window.orosScreenTime.setLimit(String(value.id || ""), Number(value.min) || 0);
+          settingsNotify();
+        }
+        return;
       case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
-      case "focusRing":    a11ySetUser(name, value); return;
+      case "focusRing":
+      case "colourFilter":
+      case "filterStrength":
+      case "pointerSize":  a11ySetUser(name, value); return;
       case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
       case "tips":         tipsSetUser(!!value); return;
+      case "zoom":         zoomSetUser(!!value); return;   // ZOOM-1
       case "wpland:new":   wpLandNewShape(); settingsNotify(); return;
       case "wpland:style":
         if (WP_LAND_STYLES.indexOf(value) >= 0) { wpLandNewShape({ style: value }); settingsNotify(); }
@@ -12235,7 +12467,7 @@
       case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
       case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
     }
-    if (/^dock:(on|size|magnify|autohide|over|style|hover)$/.test(name)) {
+    if (/^dock:(on|size|magnify|autohide|over|style|hover|pos)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
       return;
@@ -12843,6 +13075,7 @@
   var mtNoKeep = false;      // the switcher closes the app in front
   function mtChanged() {
     if (typeof mtOnChange === "function") { try { mtOnChange(); } catch (e) {} }
+    if (typeof appsLastNote === "function") appsLastNote(false);   // RS-1: what is open, for the next start (absent in the section-10 test sandbox)
   }
 
   // Out of the experiment (Chris 2026-10-27, after the load tests in
@@ -12927,6 +13160,7 @@
     extWireFrame(f);
     a11yWireFrame(f);
     if (window.orosClip) window.orosClip.wire(f);   // CLIP-1
+    if (window.orosTextRepl) window.orosTextRepl.wire(f);   // TEXTREPL-1
     return f;
   }
   function mtDrop(el) {
@@ -13159,9 +13393,197 @@
     if (!on) mtDropAll();
     else mtChanged();
   }
+  // CONT-1 + RS-1 (continue.js): Settings › System card.
+  function contSnapshot() {
+    var C = window.orosContinue;
+    if (SOLO || !C) return null;
+    var p = C.prefs();
+    return {
+      on: p.cont, reopen: p.reopen, name: C.deviceName(), kind: C.kind(), max: C.core.NAME_MAX,
+      strict: strictLevelNow() !== null,
+      devices: C.devices().map(function (d) { return { id: d.id, name: d.name, kind: d.kind, at: d.at, self: d.id === C.deviceId() }; })
+    };
+  }
   function mtSnapshot() {
     if (SOLO) return null;
     return { on: mtOn(), slots: mtSlotsHere(), open: mt.hidden.length };
+  }
+
+  // ST-1: the app in front for Screen time: with side by side, the one
+  // whose frame has the focus; "" on the desktop.
+  function stFront() {
+    if (!state.running) return "";
+    if (mt && mt.side && document.activeElement === mt.side.el) return mt.side.app.id;
+    return state.running.id;
+  }
+  function stNote() {
+    if (window.orosScreenTime) { try { window.orosScreenTime.note(); } catch (e) {} }
+  }
+
+  // ---------- 10z. App zoom (ZOOM-1) ----------
+  // An app grows out of what it was opened from (a desktop shortcut, a
+  // Dock icon, a menu or search row) and, when it closes, a panel the
+  // size of the app shrinks back into its Dock icon, its desktop
+  // shortcut or the Dock, wherever the Dock sits (only rectangles are
+  // read, never a side). On by default; Settings › Appearance turns it
+  // off on this device (oros-zoom = "0", device-local, never synced).
+  // Never with reduced motion, on a low battery (where the browser
+  // tells: not charging and under 20 %, as seasonal.js), in a
+  // single-app window, side by side, or with the tab hidden. Transform
+  // and opacity only (Web Animations API, 240 ms open / 200 ms close);
+  // nothing waits for it and no state depends on it: openApp and
+  // returnToDesktop do their work first, the motion is drawn after.
+  var ZOOM_KEY = "oros-zoom", ZOOM_OPEN_MS = 240, ZOOM_CLOSE_MS = 200;
+  var zoom = { from: null, anim: null, ghost: null, lowBat: false, batAsked: false, wired: false };
+  function zoomOn() {
+    try { return localStorage.getItem(ZOOM_KEY) !== "0"; } catch (e) { return true; }
+  }
+  function zoomSetUser(on) {
+    try {
+      if (on) localStorage.removeItem(ZOOM_KEY);
+      else localStorage.setItem(ZOOM_KEY, "0");
+    } catch (e) {}
+    if (!on) zoomStop();
+    settingsNotify();
+  }
+  function zoomReduced() {
+    try { return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches); } catch (e) { return false; }
+  }
+  function zoomBattery() {
+    if (zoom.batAsked) return;
+    zoom.batAsked = true;
+    var nav = window.navigator || {};
+    if (typeof nav.getBattery !== "function") return;
+    try {
+      nav.getBattery().then(function (b) {
+        function chk() { zoom.lowBat = !b.charging && b.level < 0.2; }
+        b.addEventListener("levelchange", chk);
+        b.addEventListener("chargingchange", chk);
+        chk();
+      }).catch(function () {});
+    } catch (e) {}
+  }
+  function zoomCan() {
+    zoomBattery();
+    if (SOLO || !zoomOn() || zoom.lowBat || document.hidden || zoomReduced()) return false;
+    var de = document.documentElement;                           // Energy saver (#1113): html[data-oros-saver="1"]
+    if (de && de.getAttribute && de.getAttribute("data-oros-saver") === "1") return false;
+    if (mt.side) return false;                                   // side by side: two frames, no zoom
+    return typeof Element !== "undefined" && typeof Element.prototype.animate === "function";
+  }
+  function zoomStop() {
+    if (zoom.anim) { try { zoom.anim.cancel(); } catch (e) {} zoom.anim = null; }
+    if (zoom.ghost) { zoom.ghost.remove(); zoom.ghost = null; }
+  }
+  function zoomBox(r) { return { left: r.left, top: r.top, width: r.width, height: r.height }; }
+  // A rectangle worth growing from or shrinking into: on screen, small.
+  function zoomUsable(r) {
+    if (!r || !(r.width > 0) || !(r.height > 0)) return false;
+    var vw = window.innerWidth || 0, vh = window.innerHeight || 0;
+    if (r.left + r.width <= 0 || r.top + r.height <= 0 || r.left >= vw || r.top >= vh) return false;
+    return r.width * r.height < vw * vh * 0.35;
+  }
+  function zoomVisible(el) {
+    if (!el || !el.isConnected) return null;
+    var cs = window.getComputedStyle(el);
+    if (cs.display === "none" || cs.visibility === "hidden" || +cs.opacity === 0) return null;
+    var r = el.getBoundingClientRect();
+    return zoomUsable(r) ? zoomBox(r) : null;
+  }
+  // The app's own icon: the Dock first, then the desktop.
+  function zoomIcon(id) {
+    if (!id || !/^[a-z0-9_-]+$/i.test(id)) return null;
+    var dock = document.getElementById("ld-dock");
+    if (dock && dock.classList.contains("ld-hidden")) dock = null;
+    var sel = '[data-app="' + id + '"]';
+    return (dock && zoomVisible(dock.querySelector(sel))) ||
+           zoomVisible(document.querySelector("#ld-desk " + sel));
+  }
+  // Remember what was clicked or tapped (a click also comes from Enter
+  // or Space on a focused button), as a rectangle: a menu row is gone
+  // by the time the app opens.
+  function zoomWire() {
+    if (zoom.wired || SOLO || typeof document.addEventListener !== "function") return;
+    zoom.wired = true;
+    document.addEventListener("click", function (e) {
+      var t = e.target && e.target.closest ? e.target.closest("[data-app], button, a, [role=button], [role=option], [role=menuitem], li") : null;
+      if (!t || t.closest("#oros-running")) { zoom.from = null; return; }
+      var r = t.getBoundingClientRect();
+      zoom.from = zoomUsable(r) ? { r: zoomBox(r), at: Date.now() } : null;
+    }, true);
+  }
+  zoomWire();   // at load: remember what opens an app
+
+  // Open: the running view grows from the source to its own place.
+  function zoomOpen(app) {
+    var f = zoom.from;
+    zoom.from = null;
+    zoomStop();
+    if (!zoomCan()) return;
+    var run = document.getElementById("oros-running");
+    if (!run) return;
+    var to = run.getBoundingClientRect();
+    if (!(to.width > 0) || !(to.height > 0)) return;
+    var src = (f && Date.now() - f.at < 1500) ? f.r : zoomIcon(app && app.id);
+    var start;
+    if (src) {
+      start = "translate(" + (src.left - to.left) + "px," + (src.top - to.top) + "px) scale(" +
+        Math.max(0.02, src.width / to.width) + "," + Math.max(0.02, src.height / to.height) + ")";
+    } else {
+      start = "translate(" + (to.width * 0.04) + "px," + (to.height * 0.04) + "px) scale(0.92)";   // nothing to grow from: a short lift
+    }
+    try {
+      zoom.anim = run.animate([
+        { transformOrigin: "0 0", transform: start, opacity: 0, borderRadius: "18px" },
+        { transformOrigin: "0 0", opacity: 1, offset: 0.45 },
+        { transformOrigin: "0 0", transform: "none", opacity: 1, borderRadius: "0px" }
+      ], { duration: ZOOM_OPEN_MS, easing: "cubic-bezier(.2,.8,.2,1)" });
+      var a = zoom.anim;
+      a.onfinish = a.oncancel = function () { if (zoom.anim === a) zoom.anim = null; };
+    } catch (e) { zoom.anim = null; }
+  }
+  // Close: the app is gone already; a panel of its size shrinks into
+  // its icon, else into the Dock (or its edge strip), else downwards.
+  function zoomRect() {
+    var run = document.getElementById("oros-running");
+    if (!run || !run.classList.contains("active")) return null;
+    var r = run.getBoundingClientRect();
+    return (r.width > 0 && r.height > 0) ? zoomBox(r) : null;
+  }
+  function zoomClose(app, from) {
+    zoomStop();
+    zoom.from = null;
+    if (!from || !zoomCan()) return;
+    var dock = document.getElementById("ld-dock"), bar = dock && !dock.classList.contains("ld-hidden") ? (dock.querySelector(".ld-bar") || dock) : null;
+    var to = zoomIcon(app && app.id) || zoomVisible(bar) || zoomVisible(document.getElementById("ld-edge"));
+    if (!to) {
+      var vw = window.innerWidth || from.width, vh = window.innerHeight || from.height;
+      to = { left: vw / 2 - 24, top: vh - 56, width: 48, height: 48 };
+    }
+    var g = document.createElement("div");
+    g.id = "oros-zoom";
+    g.setAttribute("aria-hidden", "true");
+    g.style.left = from.left + "px";
+    g.style.top = from.top + "px";
+    g.style.width = from.width + "px";
+    g.style.height = from.height + "px";
+    document.body.appendChild(g);
+    zoom.ghost = g;
+    var end = "translate(" + (to.left - from.left) + "px," + (to.top - from.top) + "px) scale(" +
+      Math.max(0.02, to.width / from.width) + "," + Math.max(0.02, to.height / from.height) + ")";
+    try {
+      var a = g.animate([
+        { transform: "none", opacity: 0.95, borderRadius: "0px" },
+        { opacity: 0.85, offset: 0.6 },
+        { transform: end, opacity: 0, borderRadius: "40px" }
+      ], { duration: ZOOM_CLOSE_MS, easing: "cubic-bezier(.4,0,.6,1)" });
+      zoom.anim = a;
+      a.onfinish = a.oncancel = function () {
+        if (zoom.anim === a) zoom.anim = null;
+        if (zoom.ghost === g) zoom.ghost = null;
+        g.remove();
+      };
+    } catch (e) { g.remove(); zoom.ghost = null; }
   }
 
   function openApp(app, at) {
@@ -13199,6 +13621,7 @@
       return;
     }
     var prev = state.running;
+    stNote();   // ST-1: the time so far goes to the app leaving
     state.running = app;
     gameLastNote(app, false);   // GR-1
     if (window.orosDiscover) { try { window.orosDiscover.seen(app.id); } catch (e) {} }   // CH-2: first open
@@ -13224,11 +13647,14 @@
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations pause under an app
     if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather pauses too
     wpLandRefresh();
+    zoomOpen(app);   // ZOOM-1: drawn after the work is done
   }
 
   function returnToDesktop() {
     if (SOLO && soloHome()) return;   // a single app has no desktop
     var prev = state.running;
+    stNote();   // ST-1
+    var zoomFromRect = prev && !mt.side ? zoomRect() : null;   // ZOOM-1: the app's place, before it goes
     mtSideEnd(true);   // home ends side by side; the side app waits behind
     state.running = null;
     gameLastNote(null, false);   // GR-1
@@ -13248,6 +13674,7 @@
     wpLandRefresh();   // the desktop may have changed while hidden
     tourMaybe();   // a first-run tour put off by a launch-param app
     tipEnd();
+    zoomClose(prev, zoomFromRect);   // ZOOM-1: shrinks into its icon or the Dock
   }
 
   // ---------- 10e. CalDAV / CardDAV background pass (CalDAV wave 6) ----------
@@ -14079,6 +14506,90 @@
     });
     body.appendChild(all);
   }
+  // CONT-1 W2: "Continue from your other devices" (continue.js shown():
+  // other devices' items, never the sensitive apps, nothing under
+  // Sensitive work or with the switch off). Text through textContent.
+  function contItems(max) {
+    var C = window.orosContinue;
+    if (SOLO || !C) return [];
+    var out = [];
+    try {
+      C.shown().forEach(function (it) {
+        if (out.length >= max) return;
+        for (var i = 0; i < state.apps.length; i++) {
+          if (state.apps[i].id === it.app) { it.appObj = state.apps[i]; out.push(it); return; }
+        }
+      });
+    } catch (e) {}
+    return out;
+  }
+  function contFrom(it) {
+    if (it.name) return it.name;
+    var k = "cont.kind." + (it.kind || "other"), v = window.t(k);
+    return v === k ? window.t("cont.kind.other") : v;
+  }
+  function contAgo(at) {
+    var d = Math.floor((Date.now() - at) / 86400000);
+    if (d < 1) return mtAgo(at);
+    try { return new Intl.RelativeTimeFormat(state.lang || "en", { numeric: "auto" }).format(-d, "day"); } catch (e) { return d + " d"; }
+  }
+  function contLine(it) {
+    return window.t("cont.from").replace("{app}", mtLabel(it.appObj)).replace("{device}", contFrom(it)).replace("{ago}", contAgo(it.at));
+  }
+  function contOpen(it) { window.__orosOpenAt(it.app, it.target); }
+  window.orosContinueUi = {                    // Today and the smart bar draw the same items
+    items: function (max) {
+      return contItems(max || 4).map(function (it) {
+        return { dev: it.dev, app: it.app, at: it.at, title: it.title, line: contLine(it), from: contFrom(it), appName: mtLabel(it.appObj),
+                 tip: window.t("cont.tip").replace("{t}", it.title).replace("{app}", mtLabel(it.appObj)).replace("{device}", contFrom(it)) };
+      });
+    },
+    open: function (dev, app) {
+      var it = contItems(8).filter(function (x) { return x.dev === dev && x.app === app; })[0];
+      if (it) contOpen(it);
+      return !!it;
+    },
+    dismiss: function (dev, app, at) { return !!(window.orosContinue && window.orosContinue.dismiss(dev, app, at)); },
+    onChange: function (fn) { if (window.orosContinue && typeof fn === "function") window.orosContinue.onChange(fn); }
+  };
+  function ovRenderCont() {
+    if (!ov) return;
+    var sec = ov.el.querySelector(".ov-cont");
+    if (!sec) return;
+    var list = contItems(4);
+    sec.hidden = !list.length;
+    var body = sec.querySelector(".ov-body");
+    body.textContent = "";
+    var ul = document.createElement("div");
+    ul.className = "ov-flist";
+    ul.setAttribute("role", "list");
+    list.forEach(function (it) {
+      var r = document.createElement("div");
+      r.className = "ov-crow";
+      r.setAttribute("role", "listitem");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ov-file ov-cgo";
+      b.innerHTML = '<span class="app-ico ov-cico" data-cat="' + iconCat(it.appObj) + '" data-hue="' + iconHue(it.appObj) + '" aria-hidden="true">' + (ICONS[it.appObj.icon] || "") + '</span>' +
+        '<span class="ov-fname"></span><span class="ov-fwhere"></span>';
+      b.querySelector(".ov-fname").textContent = it.title;
+      b.querySelector(".ov-fwhere").textContent = contLine(it);
+      b.title = window.t("cont.tip").replace("{t}", it.title).replace("{app}", mtLabel(it.appObj)).replace("{device}", contFrom(it));
+      b.addEventListener("click", function () { ovClose(); contOpen(it); });
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "mt-sw-x ov-x";
+      x.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      var xl = window.t("cont.hide").replace("{t}", it.title);
+      x.setAttribute("aria-label", xl);
+      x.title = xl;
+      x.addEventListener("click", function () { window.orosContinue.dismiss(it.dev, it.app, it.at); ovRenderCont(); });
+      r.appendChild(b);
+      r.appendChild(x);
+      ul.appendChild(r);
+    });
+    body.appendChild(ul);
+  }
   function ovTile(label, value, pct, level) {
     var d = document.createElement("div");
     d.className = "ov-tile" + (level ? " ov-" + level : "");
@@ -14181,6 +14692,7 @@
     cols.appendChild(ovSection("ov-apps", "mt.sw.title"));
     var side = document.createElement("div");
     side.className = "ov-side";
+    side.appendChild(ovSection("ov-cont", "cont.title"));   // CONT-1 W2 (hidden when empty)
     if (hasApp("files")) side.appendChild(ovSection("ov-files", "ov.files.title"));
     side.appendChild(ovSection("ov-sys", "ov.sys.title"));
     cols.appendChild(side);
@@ -14219,6 +14731,7 @@
     document.addEventListener("keydown", onKey, true);
     ov = { el: el, onKey: onKey, back: document.activeElement };
     ovRenderApps();
+    ovRenderCont();
     if (hasApp("files")) ovRenderFiles();
     ovRenderSys();
     // The app left last has the focus (shortcut + Enter = back to it),
@@ -14384,7 +14897,11 @@
     closeNotifPanel();
     if (SOLO) { soloMenuButton(); return; }
     if (state.running) { returnToDesktop(); return; }
-    document.getElementById("app-menu").classList.toggle("open");
+    var menuEl = document.getElementById("app-menu");
+    // ST-1 S2: the menu is drawn once; redraw when an hourglass changed.
+    if (!menuEl.classList.contains("open") && window.orosScreenTime && window.orosScreenTime.overKey &&
+        window.orosScreenTime.overKey() !== stMenuKey) renderMenu();
+    menuEl.classList.toggle("open");
   }
   function closeMenu() {
     document.getElementById("app-menu").classList.remove("open");
@@ -16195,6 +16712,22 @@
     });
     window.orosClip.onChange(settingsNotify);
   }
+  // Text replacements (textrepl.js, TEXTREPL-1): ";addr" + space becomes
+  // the whole text in every app's text fields; synced (slice "textrepl"),
+  // edited in Settings › Language. A single app gets it too.
+  // textrepl.js is in the late bundle (BOOT-L1: nothing on the first
+  // screen needs it, and an app opens only after the bundle), so it is
+  // attached and wired when the bundle is in; frames made later are wired
+  // by mtNewFrame.
+  window.orosLate.when(function () {
+    if (!window.orosTextRepl) return;
+    window.orosTextRepl.attach({
+      lang: function () { return state.lang || "en"; },   // {date}/{time} in the orOS language
+      toast: function (kind, msg) { scToast(kind, msg); }
+    });
+    window.orosTextRepl.onChange(settingsNotify);
+    appFrames().forEach(window.orosTextRepl.wire);
+  });
   // Emoji picker (emoji.js, CLIP-1 W3): Ctrl+Alt+Shift+. and Quick settings.
   // Not a start-up script (the quality gate's boot budget): this stand-in
   // answers as window.orosEmoji until the first open, which loads emoji.js
@@ -16243,6 +16776,26 @@
     window.orosNight.attach({ loc: wxLoc });
     window.orosNight.onChange(function () { settingsNotify(); });
   }
+  // Screen time (screentime.js, ST-1, late bundle): how long each app
+  // was in front, on this device only, off by default. The shell says
+  // which app is in front, whether orOS is locked, in Sensitive work
+  // or playing sound, and which app documents to listen to for input.
+  lateWhen(function () {
+    if (!window.orosScreenTime) return;
+    window.orosScreenTime.attach({
+      front: stFront,
+      locked: function () { var L = window.orosLock; return !!(L && L.isLocked && L.isLocked()); },
+      sensitive: function () { return !!strictLevelNow(); },
+      media: function () { return qsMedia().some(function (m) { return m.playing; }); },
+      docs: function () { return window.__orosAppDocs(); },
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      // S2: the quiet toast 5 minutes before a limit, and the card's "Go to the desktop".
+      toast: function (title, body) {
+        if (window.orosNotifs && window.orosNotifs.transient) window.orosNotifs.transient({ ns: "screentime", title: title, body: body });
+      },
+      home: function () { returnToDesktop(); }
+    });
+  });
   // Desktop widgets (widgets.js, a shell component like launcher.js):
   // clock, calendar, Today, weather, playing, sync on the desktop. A
   // single app has no desktop, so it gets none.
