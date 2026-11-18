@@ -97,7 +97,7 @@ test("never while locked, in a single app or on a till; corner off by default, n
   assert.match(SEC, /if \(!ovPref\(OV_CORNER_KEY\) \|\| ov\) return;/);
   // no Super key (Chris 2026-11-16: one Ctrl+Alt+Shift combo for all)
   assert.doesNotMatch(SHELL, /oros-ov-super|ovWireFrame|overview:super/);
-  assert.match(SHELL, /a11yWireFrame\(f\);\s+(?:if \(window\.orosClip\) window\.orosClip\.wire\(f\);[^\n]*\s+)?return f;/);
+  assert.match(SHELL, /a11yWireFrame\(f\);\s+(?:if \(window\.oros(?:Clip|TextRepl)\) window\.oros(?:Clip|TextRepl)\.wire\(f\);[^\n]*\s+)*return f;/);
 });
 
 test("recent file names: text only, hidden during sensitive work", () => {
