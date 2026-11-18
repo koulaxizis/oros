@@ -1450,7 +1450,7 @@ orosPack("de", "settings", {
  "w.widgets": "widgets uhr kalender heute wetter desktop karten",
  "w.xmas": "weihnachten baum boot",
  "x.about": "Über orOS, Mitwirkende und Lizenzen",
- "x.mediakit": "Medienpaket (Logos, Hintergründe, Pressetexte)",
+ "x.mediakit": "Medienpaket (Logos, Pressetexte)",
  "x.apps": "Einstellungen in Apps",
  "x.device": "Geräteinfo",
  "x.install": "orOS als App installieren",
