@@ -13106,6 +13106,7 @@
     if (state.running && state.running.type === "internal") out.push({ app: state.running, at: 0, front: true });
     if (mt.side) out.push({ app: mt.side.app, at: 0, front: false, side: true });
     mtList().slice().sort(function (a, b) { return b.at - a.at; }).forEach(function (r) {
+      if (appHiddenNow(r.app.id)) return;   // APPLOCK-1 W3: a hidden app left behind is not listed (switcher, Overview)
       out.push({ app: r.app, at: r.at, front: false });
     });
     return out;
@@ -13196,6 +13197,20 @@
     try { return !!(A && A.state(id)); } catch (e) { return true; }
   }
   window.__orosAppLocked = appLockSet;
+  // W3: a reminder that leaves the screen (Web Push, the Android app)
+  // for an app set as locked carries only its name ("orOS" for a hidden
+  // one) and "New notification". → a new row, or the same row.
+  window.__orosLockMask = function (r) {
+    if (!r || typeof r !== "object" || !appLockSet(String(r.ns || ""))) return r;
+    var A = appLockApi(), hid = false, app = null;
+    try { hid = A.state(r.ns) === "hide"; } catch (e) { hid = true; }
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === r.ns) app = state.apps[i];
+    var out = {};
+    Object.keys(r).forEach(function (k) { out[k] = r[k]; });
+    out.title = hid || !app ? "orOS" : appLockName(app);
+    out.body = window.t("applock.notice");
+    return out;
+  };
   // W2: set as hidden and not unlocked now: out of every list (menu,
   // menu search, Dock, desktop, desktop menu, command bar, suggestions).
   function appHiddenNow(id) {

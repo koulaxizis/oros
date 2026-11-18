@@ -140,3 +140,34 @@ test("W2 hidden apps: out of every list until the PIN shows them for a minute", 
     assert.ok(sd.includes('"' + k + '":'), k + " DE");
   }
 });
+
+test("W3: Calendar, Mood, the switcher and reminders that leave the screen leave a locked app out", () => {
+  const cal = read("calendar/calendar.js");
+  assert.match(cal, /function feedsOn\(dateStr\) \{\n\s+return feedLockFilter\(feedsAll\(dateStr\)\);/);
+  // every feed label of an app names that app; only app-less feeds stay unnamed
+  const labels = cal.slice(cal.indexOf("var FEED_LABELS"), cal.indexOf("];", cal.indexOf("var FEED_LABELS"))).match(/"lbl-feed-[a-z]+"/g);
+  const mapSrc = cal.slice(cal.indexOf("var FEED_APP = {"), cal.indexOf("};", cal.indexOf("var FEED_APP = {")) + 2);
+  const filterSrc = cal.slice(cal.indexOf("function feedLockFilter(rows)"), cal.indexOf("function feedsOn(dateStr)"));
+  const MAP = new Function(mapSrc + " return FEED_APP;")();
+  for (const l of labels) {
+    const id = JSON.parse(l);
+    if (["lbl-feed-pet", "lbl-feed-hol", "lbl-feed-obs"].includes(id)) assert.ok(!MAP[id], id + " has no app");
+    else assert.ok(MAP[id], id + " names its app");
+  }
+  assert.equal(MAP["lbl-feed-sky"], "sky");
+  assert.equal(MAP["lbl-feed-meds"], "health");
+  const run = (allowed, rows) => new Function("window", mapSrc + filterSrc + " return feedLockFilter;")(
+    { parent: allowed ? { orosLock: { apps: { allowed } } } : null })(rows);
+  const rows = [{ labelId: "lbl-feed-meds" }, { labelId: "lbl-feed-hol" }, { labelId: "lbl-feed-budget" }, { labelId: "work" }];
+  assert.deepEqual(run((id) => id !== "health", rows).map((r) => r.labelId), ["lbl-feed-hol", "lbl-feed-budget", "work"]);
+  assert.equal(run(null, rows).length, 4, "standalone Calendar: no shell, nothing to ask");
+  assert.deepEqual(run(() => { throw new Error("x"); }, rows).map((r) => r.labelId), ["lbl-feed-hol", "work"], "fails closed");
+  assert.match(read("mood/mood.js"), /var craw = cycleShown\(\) \? localStorage\.getItem\("oros-cycle-data"\) : null;/);
+  const sh = read("shell.js");
+  assert.match(sh, /if \(appHiddenNow\(r\.app\.id\)\) return;\s+\/\/ APPLOCK-1 W3/);
+  assert.match(sh, /window\.__orosLockMask = function \(r\) \{/);
+  assert.match(read("phone.js"), /items = items\.map\(root\.__orosLockMask\);/);
+  const wp = read("webpush.js");
+  assert.match(wp, /function payload\(r\) \{\n\s+\/\/ APPLOCK-1 W3[^\n]*\n\s+try \{ if \(root && typeof root\.__orosLockMask === "function"\) r = root\.__orosLockMask\(r\); \} catch \(e\) \{\}/);
+  assert.match(wp, /APPLOCK-1: locking an app sends again/);
+});
