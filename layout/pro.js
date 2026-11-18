@@ -112,6 +112,8 @@
     return hit;
   }
   function r3(n) { return Math.round(n * 1000) / 1000; }
+  // to the nearest 0.5 pt (a play's sizes and spaces: 16.8 → 17, 12.075 → 12)
+  function h5(n) { return Math.round(n * 2) / 2; }
 
   // ---------- pages from pictures ----------
   function renumber(order, now) {
@@ -435,13 +437,13 @@
     function cs(key, o) { if (M.find(doc.cstyles, "cs-play" + key)) return; doc.cstyles.push(Object.assign({ id: "cs-play" + key, m: now, name: N[key] }, o)); n++; }
     function ps(key, o, x) { if (M.find(doc.pstyles, "ps-play" + key)) return; var e = Object.assign({ id: "ps-play" + key, m: now, name: N[key], base: "ps-base" }, o); if (x) e.ext = x; doc.pstyles.push(e); n++; }
     cs("speaker", { b: 1, caps: 1, track: 20 });
-    ps("cast_h", { size: r3(sz * 1.25), b: 1, align: "c", sa: r3(sz) }, { kwn: 1, hyph: 0 });
-    ps("cast", { sa: r3(sz * 0.3) }, { hyph: 0 });
-    ps("act", { size: r3(sz * 1.6), b: 1, caps: 1, align: "c", sb: r3(sz * 2), sa: r3(sz) }, { kwn: 1, hyph: 0, brk: "page" });
-    ps("scene", { size: r3(sz * 1.15), b: 1, align: "c", sb: r3(sz), sa: r3(sz * 0.5) }, { kwn: 1, hyph: 0 });
-    ps("line", { sa: r3(sz * 0.35) }, { nest: [{ cs: "cs-playspeaker", to: ":" }] });
-    ps("dir", { i: 1, li: r3(sz * 1.6), sa: r3(sz * 0.35) });
-    ps("song", { i: 1, li: r3(sz * 3.2), sa: 0 }, { hyph: 0 });
+    ps("cast_h", { size: h5(sz * 1.25), b: 1, align: "c", sa: h5(sz) }, { kwn: 1, hyph: 0 });
+    ps("cast", { sa: h5(sz * 0.3) }, { hyph: 0 });
+    ps("act", { size: h5(sz * 1.6), b: 1, caps: 1, align: "c", sb: h5(sz * 2), sa: h5(sz) }, { kwn: 1, hyph: 0, brk: "page" });
+    ps("scene", { size: h5(sz * 1.15), b: 1, align: "c", sb: h5(sz), sa: h5(sz * 0.5) }, { kwn: 1, hyph: 0 });
+    ps("line", { sa: h5(sz * 0.35) }, { nest: [{ cs: "cs-playspeaker", to: ":" }] });
+    ps("dir", { i: 1, li: h5(sz * 1.6), sa: h5(sz * 0.35) });
+    ps("song", { i: 1, li: h5(sz * 3.2), sa: 0 }, { hyph: 0 });
     return n;
   }
   // Paragraphs as the model writes them: "[Style] text" picks the

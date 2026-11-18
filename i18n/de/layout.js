@@ -635,7 +635,7 @@ orosPack("de", "layout", {
  "toast.diskRead": "Dateien in Dateien › Layout, die nicht gelesen werden konnten: {n}. Sie bleiben, wie sie sind.",
  "toast.diskOff": "Die orOS-Festplatte kann gerade nicht gelesen werden: Die Dokumente bleiben bis zum nächsten Start in diesem Browser.",
  "tool.ell": "Ellipse (E)",
- "tool.hand": "Hand (H)",
+ "tool.hand": "Hand (H, oder Leertaste halten). Doppelklick: Doppelseite einpassen",
  "tool.image": "Bildrahmen (F)",
  "tool.line": "Linie (L)",
  "tool.rect": "Rechteck (R)",
