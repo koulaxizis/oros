@@ -715,6 +715,7 @@
       "category": "Internet",
       "icon": "transfer",
       "url": "transfer/",
+      "search": "search.js",
       "type": "internal",
       "today": ["core.js", "today.js"]
     },

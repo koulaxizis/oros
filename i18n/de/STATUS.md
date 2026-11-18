@@ -2,31 +2,31 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 46636 of 47147 (98%)
+- Strings: 47275 of 47275 (100%)
 - Help pages: 155 of 155 (100%)
 - Shown in the language list: yes
 
-Apps marked "English for now" do not load language packs yet: their
-text is still written in the code. They switch over wave by wave
-(see the plan in docs/translate/README.md).
+"in the code": a shared module or a public page that runs where no
+app pack is loaded keeps these lines in its own table (de: {…} after
+en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1926 / 1930 |
+| assistant | 100% | 1951 / 1951 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 322 / 322 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 99% | 401 / 402 |
+| base | 100% | 402 / 402 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
 | bubble | 100% | 54 / 54 |
-| budget | 90% | 1065 / 1182 |
+| budget | 100% | 1182 / 1182 |
 | calculator | 100% | 170 / 170 |
-| calendar | 90% | 579 / 638 |
+| calendar | 100% | 638 / 638 (49 in the code) |
 | capture | 100% | 56 / 56 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -35,11 +35,11 @@ text is still written in the code. They switch over wave by wave
 | checkers | 100% | 73 / 73 |
 | chess | 100% | 406 / 406 |
 | chores | 100% | 207 / 207 |
-| commands | English for now | 82 / 82 |
+| commands | 100% | 82 / 82 |
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 342 / 342 |
 | converter | 100% | 68 / 68 |
-| crm | 89% | 746 / 830 |
+| crm | 100% | 838 / 838 |
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
@@ -47,14 +47,14 @@ text is still written in the code. They switch over wave by wave
 | device | 100% | 153 / 153 |
 | diary | 100% | 237 / 237 |
 | dice | 100% | 57 / 57 |
-| discover | English for now | 3 / 3 |
+| discover | 100% | 3 / 3 |
 | dots | 100% | 55 / 55 |
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 96% | 770 / 796 |
+| files | 100% | 796 / 796 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -69,13 +69,13 @@ text is still written in the code. They switch over wave by wave
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 60 / 60 |
-| household | 99% | 142 / 143 |
-| invoices | 97% | 679 / 693 |
+| household | 100% | 143 / 143 |
+| invoices | 100% | 693 / 693 |
 | jigsaw | 100% | 90 / 90 |
-| kanban | 99% | 355 / 358 |
+| kanban | 100% | 358 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 99% | 1095 / 1103 |
-| library | 100% | 329 / 329 |
+| layout | 100% | 1106 / 1106 |
+| library | 100% | 330 / 330 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
@@ -94,15 +94,15 @@ text is still written in the code. They switch over wave by wave
 | montage | 100% | 383 / 383 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
-| music | 99% | 540 / 541 |
+| music | 100% | 541 / 541 |
 | names | 100% | 40 / 40 |
-| netizen | 98% | 172 / 175 |
-| newsletter | 99% | 1003 / 1008 |
+| netizen | 100% | 175 / 175 |
+| newsletter | 100% | 1008 / 1008 |
 | nonogram | 100% | 70 / 70 |
-| notes | 99% | 292 / 293 |
+| notes | 100% | 293 / 293 |
 | oracle | 100% | 38 / 38 |
 | pad | 100% | 307 / 307 |
-| passwords | 99% | 467 / 468 |
+| passwords | 100% | 468 / 468 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
@@ -113,7 +113,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 334 / 334 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 704 / 728 |
+| publish | 100% | 822 / 822 |
 | qr | 100% | 249 / 249 |
 | quote | 100% | 236 / 236 |
 | radio | 100% | 103 / 103 |
@@ -127,10 +127,10 @@ text is still written in the code. They switch over wave by wave
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 99% | 1690 / 1705 |
+| settings | 100% | 1705 / 1705 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1377 / 1382 |
+| shell | 100% | 1382 / 1382 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |
@@ -138,29 +138,29 @@ text is still written in the code. They switch over wave by wave
 | slides | 100% | 427 / 427 |
 | snake | 100% | 53 / 53 |
 | solitaire | 100% | 103 / 103 |
-| solo | English for now | 101 / 101 |
+| solo | 100% | 107 / 107 |
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
-| spreadsheet | 82% | 409 / 495 |
-| startpage | English for now | 0 / 18 |
+| spreadsheet | 100% | 495 / 495 |
+| startpage | 100% | 18 / 18 |
 | stickies | 100% | 125 / 125 |
-| stock | 99% | 808 / 813 |
+| stock | 100% | 813 / 813 |
 | storage | 100% | 179 / 179 |
 | studio | 100% | 936 / 936 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 85 / 85 |
 | tetris | 100% | 60 / 60 |
-| texttools | 96% | 415 / 432 |
+| texttools | 100% | 432 / 432 |
 | tictactoe | 100% | 54 / 54 |
 | time | 100% | 410 / 410 |
-| timesheet | 99% | 379 / 382 |
+| timesheet | 100% | 382 / 382 |
 | today | 100% | 155 / 155 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 139 / 139 |
+| transfer | 100% | 144 / 144 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
-| typing | 94% | 170 / 180 |
+| typing | 100% | 170 / 170 |
 | units | 100% | 214 / 214 |
 | wallpaper | 100% | 130 / 130 |
 | water | 100% | 94 / 94 |
@@ -175,26 +175,3 @@ text is still written in the code. They switch over wave by wave
 | writer | 100% | 601 / 601 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
-
-## Lines to fix
-
-These show English until fixed (usually the English text changed).
-
-- de/base: fld.exprHint must keep the placeholders {Copies}|{Price}
-- de/budget: unknown key cy.guess
-- de/passwords: af.apps must keep the same HTML tags as English
-- de/settings: u.vault.removeWarn must keep the placeholders {name}|{name}
-- de/help/automations.txt: links or key caps differ from automations/help.en.txt
-- de/help/base.txt: links or key caps differ from base/help.en.txt
-- de/help/budget.txt: links or key caps differ from budget/help.en.txt
-- de/help/publish.txt: links or key caps differ from publish/help.en.txt
-- de/help/scanpdf.txt: links or key caps differ from scanpdf/help.en.txt
-- de/help/settings.txt: links or key caps differ from settings/help.en.txt
-- de/help/studio.txt: links or key caps differ from studio/help.en.txt
-- de/help/today.txt: links or key caps differ from today/help.en.txt
-- de/help/transfer.txt: links or key caps differ from transfer/help.en.txt
-- de/help/whiteboard.txt: links or key caps differ from whiteboard/help.en.txt
-- de/help/topics/appearance.txt: links or key caps differ from help/topics/appearance.en.txt
-- de/help/topics/menu.txt: links or key caps differ from help/topics/menu.en.txt
-- de/help/topics/privacy.txt: links or key caps differ from help/topics/privacy.en.txt
-- de/help/topics/sensitive.txt: links or key caps differ from help/topics/sensitive.en.txt

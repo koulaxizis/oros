@@ -624,10 +624,22 @@
     }
   }
   function remember() {
-    if (cur.base) prefs.at.base = cur.base;
+    if (cur.base) prefs.at.base = prefs.at.last = cur.base;
     if (cur.base && cur.table) prefs.at[cur.base] = cur.table;
     if (cur.table && cur.view) prefs.at["v:" + cur.table] = cur.view;
     savePrefs();
+  }
+  // The base for "Last base": the one opened last here (prefs.at.last
+  // stays when Back goes home), else the one whose row changed last.
+  function lastBaseId() {
+    var l = prefs.at.last || prefs.at.base;
+    if (l && ix.bases[l]) return l;
+    var best = "", bm = -1;
+    Object.keys(ix.bases).forEach(function (id) {
+      var m = +ix.bases[id].m || 0;
+      if (m > bm || (m === bm && id < best)) { best = id; bm = m; }
+    });
+    return best;
   }
   function goHome() {
     closeEditor(false);
@@ -3487,7 +3499,8 @@
     } catch (e) { /* standalone */ }
   }
 
-  // target = { base, table?, view?, rec? }
+  // target = { base, table?, view?, rec? } | { newBase: true } |
+  // { lastBase: true } | { newTable } | { addRecords } | { openFile }
   window.__orosOpenAt = function (target) {
     if (!target || typeof target !== "object") return;
     // "Open with" an .orosbase file (fileopen.js)
@@ -3495,6 +3508,17 @@
     var tg = target;
     if (tg.newTable) { closeAllDialogs(); newTableDialog(tg.newTable); return; }
     if (tg.addRecords) { closeAllDialogs(); takeForms(tg.addRecords); return; }
+    // Single app "orOS Base" icon shortcuts (SOLO-1): New base opens
+    // the New base dialog (nothing is saved until a template is picked);
+    // Last base opens the base opened last on this device, else the
+    // one changed last, else the dialog when there is none.
+    if (tg.newBase === true) { closeAllDialogs(); goHome(); newBaseDialog(); return; }
+    if (tg.lastBase === true) {
+      closeAllDialogs();
+      var lb = lastBaseId();
+      if (lb) openBase(lb); else { goHome(); newBaseDialog(); }
+      return;
+    }
     if (tg.newRecord) { closeAllDialogs(); autoRecord(tg.newRecord); return; }
     var b = typeof target.base === "string" ? target.base : "";
     if (!ix.bases[b]) {

@@ -129,13 +129,13 @@ export const TOOLS = [
   {
     name: "app_summary",
     description: "Worked out on the device. budget: one month's income, expenses, per category; stock: one month's units and amounts sold, per product and place; kanban: every open board with its columns and card counts, late and due today, and the cards with column, due date, labels and subtasks done (with board, only that board, every column with its id); studio: the podcast shows (feed address, episodes, how many have their file) and every episode with show, number, date and whether its file is made (with show, only that show; read only, publishing is always the owner's own tap in Studio). " +
-      "The other apps list_apps marks with app_summary (GATE-ACT): todo (open, late, due today per list; with list every task with a ref), calendar (labels; with month or label the events with a ref), notes (notebooks and pages with refs), bookmarks, contacts (no phone or e-mail), shelf, library, timesheet (hours per project of a month), crm (with partner: everything open with them), and for the rest what is late, today and in the next days.",
+      "The other apps list_apps marks with app_summary (GATE-ACT): todo (open, late, due today per list; with list every task with a ref), calendar (labels; with month or label the events with a ref), notes (notebooks and pages with refs), bookmarks, contacts (no phone or e-mail), shelf, library, timesheet (hours per project of a month), crm (with partner: everything open with them), meals (recipes, this and next week's plan, pantry near best-before), travel (trips, what is left to pack, the itinerary of trips not over), plants (every plant with its next care days), garage (vehicles with km and this year's costs, renewals and service plans with due day and level), habits (schedule, today, streak, score), scanpdf (signature requests and their status; never an e-mail or link), transfer (the History; never the files), whiteboard (boards and the texts of their notes and shapes; with board only that board), all read only, and for the rest what is late, today and in the next days.",
     inputSchema: {
       type: "object",
       properties: {
         app: { type: "string", description: "The app id (from list_apps)." },
         month: { type: "string", description: "budget, stock, timesheet: YYYY-MM (this month when left out). calendar: that month's events." },
-        board: { type: "string", description: "kanban: only this board's cards (its name), with every column of that board in order and its id." },
+        board: { type: "string", description: "kanban: only this board's cards (its name), with every column of that board in order and its id. whiteboard: only this board's texts." },
         show: { type: "string", description: "studio: only this podcast show (its title)." },
         label: { type: "string", description: "calendar, contacts: only this label (\"none\": without one)." },
         list: { type: "string", description: "todo: one list's name." },

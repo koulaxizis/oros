@@ -38,6 +38,8 @@ Transfer sendet große Dateien und ganze Ordner von der orOS-Disk oder von diese
 ## Verlauf
 - `Verlauf` listet die abgeschlossenen Übertragungen, die neuesten zuerst: wann, an oder von welchem Gerät, wie viele Dateien und wie groß, und wohin sie gingen. `Öffnen` zeigt einen Ordner, der auf der orOS-Disk angekommen ist.
 - Der Verlauf behält nur die Namen der obersten Dateien und Ordner, nie ihren Inhalt, und synchronisiert sich mit deinen anderen Geräten. `Verlauf löschen` (zweimal drücken) leert ihn überall.
+- Die Suche im orOS-Menü findet Übertragungen im Verlauf über diese Namen oder das Gerät. Wenn du Transfer für den [Assistenten](app:assistant) oder orOS Gate erlaubst, können sie den Verlauf genauso lesen, nie die Dateien.
+- [Heute](app:today) zeigt jeden Transfer, der in den letzten 24 Stunden ankam, und wann ein Link, den du von diesem Gerät über deine Dropbox gesendet hast, nicht mehr funktioniert (in den nächsten drei Tagen). Diese Liste der Links bleibt auf diesem Gerät.
 
 ## Privatsphäre und Grenzen
 - Aus dem Code entsteht der Schlüssel. Er bleibt im Link nach dem #-Zeichen, das ein Browser nie an einen Server schickt. Das orOS-Relay stellt die beiden Browser nur einander vor und sieht nur versiegelte Nachrichten.
