@@ -2,6 +2,7 @@ package net.glarolykoi.android;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
@@ -36,6 +37,7 @@ import android.widget.Toast;
  */
 public class MainActivity extends Activity {
     private static final int PICK_FILE = 1;
+    private static final int ASK_NOTIFY = 2;
     private static final String SHARE_SHIM =
         "(function(){if(navigator.share)return;navigator.share=function(d){d=d||{};"
         + "GlarolykoiApp.share(String(d.title||''),String(d.text||''),String(d.url||location.href));"
@@ -83,6 +85,8 @@ public class MainActivity extends Activity {
             getOnBackInvokedDispatcher().registerOnBackInvokedCallback(
                     OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::back);
         }
+
+        ReleaseJob.schedule(this);
 
         if (state != null && web.restoreState(state) != null) return;
         String start = startUrl(getIntent());
@@ -247,6 +251,40 @@ public class MainActivity extends Activity {
         Toast.makeText(this, getString(R.string.downloading, name), Toast.LENGTH_SHORT).show();
     }
 
+    /**
+     * GL-NEW is off until the person says yes, asked once after the first
+     * page has loaded. Android's own app settings turn it off again.
+     */
+    private void askNotifyOnce() {
+        android.content.SharedPreferences p = ReleaseJob.prefs(this);
+        if (p.getBoolean(ReleaseJob.KEY_ASKED, false) || isFinishing()) return;
+        p.edit().putBoolean(ReleaseJob.KEY_ASKED, true).apply();
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.ask_title)
+                .setMessage(R.string.ask_text)
+                .setPositiveButton(R.string.ask_yes, (d, w) -> enableNotify())
+                .setNegativeButton(R.string.ask_no, null)
+                .show();
+    }
+
+    private void enableNotify() {
+        ReleaseJob.prefs(this).edit().putBoolean(ReleaseJob.KEY_ON, true).apply();
+        ReleaseJob.schedule(this);
+        if (Build.VERSION.SDK_INT >= 33
+                && checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[] {android.Manifest.permission.POST_NOTIFICATIONS}, ASK_NOTIFY);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int request, String[] perms, int[] results) {
+        if (request == ASK_NOTIFY && (results.length == 0 || results[0] != android.content.pm.PackageManager.PERMISSION_GRANTED)) {
+            // Said no to Android's question: stop checking.
+            ReleaseJob.prefs(this).edit().putBoolean(ReleaseJob.KEY_ON, false).apply();
+            ReleaseJob.schedule(this);
+        }
+    }
+
     @Override
     protected void onActivityResult(int request, int result, Intent data) {
         if (request == PICK_FILE && pendingFiles != null) {
@@ -286,6 +324,7 @@ public class MainActivity extends Activity {
             progress.setVisibility(View.GONE);
             if (url != null && Links.isSiteHost(Uri.parse(url).getHost())) {
                 view.evaluateJavascript(SHARE_SHIM, null);
+                askNotifyOnce();
             }
         }
 
