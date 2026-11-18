@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Γλαρόλυκοι</string>
+    <string name="offline_title">Δεν υπάρχει σύνδεση</string>
+    <string name="offline_text">Αυτή η σελίδα θέλει ίντερνετ. Οι σελίδες που έχεις ήδη ανοίξει δουλεύουν κανονικά.</string>
+    <string name="retry">Δοκίμασε ξανά</string>
+    <string name="no_app">Καμία εφαρμογή στο κινητό δεν ανοίγει αυτόν τον σύνδεσμο.</string>
+    <string name="downloading">Λήψη: %1$s</string>
+</resources>

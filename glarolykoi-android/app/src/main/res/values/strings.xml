@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glarolykoi</string>
+    <string name="offline_title">No connection</string>
+    <string name="offline_text">This page needs the internet. Pages you have already opened still work.</string>
+    <string name="retry">Try again</string>
+    <string name="no_app">No app on this phone can open this link.</string>
+    <string name="downloading">Downloading %1$s</string>
+</resources>
