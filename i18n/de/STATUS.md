@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 46636 of 47147 (98%)
+- Strings: 46662 of 47275 (98%)
 - Help pages: 155 of 155 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ text is still written in the code. They switch over wave by wave
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 1926 / 1930 |
+| assistant | 99% | 1947 / 1951 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 322 / 322 |
@@ -39,7 +39,7 @@ text is still written in the code. They switch over wave by wave
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 342 / 342 |
 | converter | 100% | 68 / 68 |
-| crm | 89% | 746 / 830 |
+| crm | 89% | 746 / 838 |
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
@@ -113,7 +113,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 334 / 334 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 704 / 728 |
+| publish | 85% | 704 / 822 |
 | qr | 100% | 249 / 249 |
 | quote | 100% | 236 / 236 |
 | radio | 100% | 103 / 103 |
@@ -157,7 +157,7 @@ text is still written in the code. They switch over wave by wave
 | today | 100% | 155 / 155 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 139 / 139 |
+| transfer | 100% | 144 / 144 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 94% | 170 / 180 |

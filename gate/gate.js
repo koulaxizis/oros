@@ -43,6 +43,9 @@
   var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mail", "mood"];
   function sensitive(id) { return SENSITIVE.indexOf(id) >= 0; }
   var SUMMARY = { budget: 1, stock: 1, kanban: 1, studio: 1 };   // studio: STUDIO-POD P4, read only
+  // AS-SUM8 (2026-11-17): apps outside ACT whose app_summary the frame
+  // answers (assistant/summary.js), read only: never a change tool.
+  var SUM_READ = ["scanpdf", "transfer", "whiteboard"];
   // App-specific line tools (wave 2: Invoices, Stock, Publishing).
   var LINES = { budget: "budget_lines", invoices: "invoice_list", stock: "stock_items", publish: "publish_titles" };
   var PAGE = 500, TEXT_MAX = 1500, HITS_MAX = 60, SPAN_DAYS = 400;
@@ -402,7 +405,7 @@
   }
   function toolsOf(id) {
     var t = ["search_data", "read_item"];
-    if (SUMMARY[id] || ACT.indexOf(id) >= 0) t.push("app_summary");
+    if (SUMMARY[id] || ACT.indexOf(id) >= 0 || SUM_READ.indexOf(id) >= 0) t.push("app_summary");
     if (DOCS.indexOf(id) >= 0) t.push("read_in_app");
     if (LINES[id]) t.push(LINES[id]);
     if (id === "files") t = t.concat(FILE_READ);
@@ -2270,7 +2273,7 @@
         }
       }
       // GATE-ACT: the everyday apps' summaries (the frame answers them)
-      else if (ACT.indexOf(id) >= 0) calls.push(["app_summary", { app: id }]);
+      else if (ACT.indexOf(id) >= 0 || SUM_READ.indexOf(id) >= 0) calls.push(["app_summary", { app: id }]);
       // budget_lines needs a range: since 6.05.02 the copy keeps its lines
       // of about 400 days (ans.__bgl, bglCopy) and the relay answers any range
       if (LINES[id] && id !== "budget") calls.push([LINES[id], {}]);

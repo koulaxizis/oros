@@ -233,6 +233,7 @@ orosPack("de", "library", {
  "msg.hlDeleted": "Markierung gelöscht",
  "msg.hlFail": "Diese Markierung konnte nicht gespeichert werden.",
  "msg.noBook": "Dieses Buch ist nicht mehr in der Bibliothek.",
+ "msg.noResume": "Du liest noch kein Buch. Öffne eines aus dem Regal.",
  "msg.nofs": "Die orOS-Disk ist hier nicht verfügbar, daher lassen sich keine Bücher von ihr lesen.",
  "msg.openFail": "Dieses Buch konnte nicht geöffnet werden. Die Datei ist vielleicht beschädigt oder kein echtes EPUB / PDF.",
  "msg.removed": "„{title}“ aus der Bibliothek entfernt",
