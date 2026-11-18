@@ -741,3 +741,4 @@ button.pick-row:hover { border-color: var(--accent); background: var(--accent-so
 .mv-step .mini-btn { margin-left: 28px; }
 .pv-card { margin-top: 10px; }
 .pv-card .dlg-h { margin-top: 0; }
+.pop-box { margin: 14px 0; padding-top: 12px; border-top: 1px solid var(--border); }

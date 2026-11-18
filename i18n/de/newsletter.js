@@ -1044,5 +1044,19 @@ orosPack("de", "newsletter", {
  "pf.unsub": "Abmeldungen",
  "pf.note": "Notiz",
  "pf.notePh": "Zum Beispiel: Durchschnitt der letzten 12 Versände",
- "pf.here": "Diese Ausgabe: Abmeldungen {u}"
+ "pf.here": "Diese Ausgabe: Abmeldungen {u}",
+ "fm.pop": "Pop-up (jede Website)",
+ "fm.popHint": "Dasselbe Formular als Pop-up: füge es einmal in die Seiten deiner Website ein, zum Beispiel vor </body>, anstelle des Pop-ups einer gehosteten Plattform. Es erscheint nach der gewählten Zeit, schließt mit seinem Knopf, Esc oder einem Klick daneben und erscheint in diesem Browser für die gewählten Tage nicht wieder (auch nach einer Anmeldung). Keine Cookies und kein anderer Dienst: nur das Formular geht an das Relay, und die Bestätigung läuft weiter per E-Mail.",
+ "fm.popDelay": "Zeigen nach",
+ "fm.popDelayN": "{n} Sekunden",
+ "fm.popNow": "Sofort",
+ "fm.popDays": "Nach dem Schließen ausblenden für",
+ "fm.popDaysN": "{n} Tage",
+ "fm.popDay1": "1 Tag",
+ "fm.popTitle": "Titel des Pop-ups",
+ "fm.popText": "Text des Pop-ups (optional)",
+ "fm.popHtml": "HTML des Pop-ups",
+ "pop.title": "Bleib in Kontakt mit {l}",
+ "pop.text": "Ab und zu Neuigkeiten, direkt in dein Postfach. Abmelden geht mit einem Klick.",
+ "pop.close": "Schließen"
 });

@@ -140,3 +140,52 @@ test("no tracking: the domain check goes to DNS-over-HTTPS only, nothing per rea
   assert.match(ui, /var DNS_KEY = "oros-newsletter-dns";/);
   assert.doesNotMatch(ui, /\/nl\/c\//);
 });
+
+// ---------- W2: the pop-up sign-up snippet ----------
+const POP_LIST = Object.assign(C.normList(Object.assign({}, LIST, { lang: "el", color: "#AA3300" })),
+  { form: { k: "abcdefghij012345" } });
+const WORDS = { title: "Stay <close> & \"well\"", text: "News now and then", email: "Your e-mail", name: "Your name", btn: "Subscribe", close: "Close" };
+
+test("popupHtml: the relay form as an accessible pop-up, words escaped", () => {
+  assert.equal(C.popupHtml(C.normList(LIST), "https://relay.example", WORDS), "");
+  const h = C.popupHtml(POP_LIST, "https://relay.example", WORDS, { delay: 5, days: 7 });
+  assert.match(h, /^<div id="onl-abcdefghij012345" hidden role="dialog" aria-modal="true" aria-labelledby="onl-abcdefghij012345-t" lang="el">/);
+  assert.match(h, /<form method="post" action="https:\/\/relay\.example\/nl\/s\/abcdefghij012345">/);
+  assert.match(h, /<input type="hidden" name="lang" value="el">/);
+  assert.match(h, /name="website" tabindex="-1"/);                         // the same honeypot
+  assert.match(h, /<label for="onl-abcdefghij012345-e">Your e-mail<\/label>/);
+  assert.match(h, /aria-label="Close"/);
+  assert.match(h, /Stay &lt;close&gt; &amp; &quot;well&quot;/);
+  assert.doesNotMatch(h, /<close>/);
+  assert.match(h, /setTimeout\(show,5000\)/);
+  assert.match(h, /D=7,/);
+  assert.match(h, /"Escape"/);
+  assert.match(h, /"Tab"/);
+  assert.match(h, /prefers-color-scheme:dark/);
+  assert.match(h, /background:#aa3300/);
+  assert.ok(h.length < 4096, "small: " + h.length);
+});
+
+test("popupHtml: no cookies, no third parties, unknown options fall back", () => {
+  const h = C.popupHtml(POP_LIST, "https://relay.example", WORDS, { delay: 7, days: 1000 });
+  assert.doesNotMatch(h, /cookie/i);
+  assert.doesNotMatch(h, /fetch\(|XMLHttpRequest|sendBeacon|<img|<iframe|src=/);
+  const urls = h.match(/https?:\/\/[^"'\s)]+/g);
+  assert.deepEqual(urls, ["https://relay.example/nl/s/abcdefghij012345"]);
+  assert.match(h, /setTimeout\(show,20000\)/);
+  assert.match(h, /D=30,/);
+  assert.deepEqual(C.POP_DELAYS, [0, 5, 10, 20, 30, 60]);
+  assert.deepEqual(C.POP_DAYS, [1, 7, 30, 90]);
+  assert.match(C.popupHtml(POP_LIST, "https://relay.example", WORDS, { delay: 0 }), /setTimeout\(show,0\)/);
+  // without a text there is no empty paragraph
+  assert.doesNotMatch(C.popupHtml(POP_LIST, "https://relay.example", Object.assign({}, WORDS, { text: "" })), /<p><\/p>/);
+});
+
+test("pop-up strings exist in English, Greek and German", () => {
+  const ui = read("newsletter/newsletter.js"), de = read("i18n/de/newsletter.js");
+  ["fm.pop", "fm.popHint", "fm.popDelay", "fm.popDelayN", "fm.popNow", "fm.popDays", "fm.popDaysN", "fm.popDay1", "fm.popTitle",
+   "fm.popText", "fm.popHtml", "pop.title", "pop.text", "pop.close"].forEach((k) => {
+    assert.equal(ui.split('"' + k + '": ').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.indexOf('"' + k + '": ') >= 0, k + " in DE");
+  });
+});
