@@ -256,9 +256,12 @@
       colour: x.cm === "cmyk" ? { mode: "cmyk", profile: x.icc || "fogra39" } : { mode: "rgb" },
       first_page_number: first, pages: order.length
     };
+    var labels = M.pageLabels(doc);
     o.page_list = order.slice(0, MAX_PAGES_OUT).map(function (p, i) {
-      var e = { page: i + 1, number: String(i + first), side: M.sideOf(doc, i) === "L" ? "left" : "right", id: p.id };
+      var e = { page: i + 1, number: labels[i].label, side: M.sideOf(doc, i) === "L" ? "left" : "right", id: p.id };
       if (p.ms) e.master = msName[p.ms] || "";
+      var sc = M.secOfPage(p);
+      if (sc) e.section = { start: sc.n >= 0 ? sc.n : "continues", numstyle: sc.f, prefix: sc.pre };
       return e;
     });
     var frames = [];
@@ -324,6 +327,7 @@
       return e;
     });
     o.masters = (doc.masters || []).map(function (m) { return msName[m.id]; });
+    o.master_list = (doc.masters || []).map(function (m) { var e = { name: msName[m.id], prefix: m.pre }; if (m.ext && m.ext.base && msName[m.ext.base]) e.based_on = msName[m.ext.base]; return e; });
     o.swatches = (doc.swatches || []).map(function (w) { return { name: nameOf(w.name) || w.id, mode: w.mode, value: w.v }; });
     if (opts.fonts) o.fonts_in_use = opts.fonts;
     if (opts.problems) o.preflight = opts.problems;
@@ -578,7 +582,99 @@
     return out;
   }
 
-  var api = { natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
+  // ---------- W3: pages, sections and masters ----------
+  // section: page `page` (1-based) opens a section: start (−1 = the
+  // count goes on), numstyle 1|i|I|a|A, prefix; off removes it.
+  function setSection(doc, st, now) {
+    var pg = M.pagesInOrder(doc)[(st.page || 1) - 1];
+    if (!pg) return 0;
+    var x = pg.ext || {}, before = JSON.stringify(x.sec || null);
+    if (st.off) delete x.sec;
+    else x.sec = { n: st.start >= 0 ? st.start : -1, f: st.numstyle || "1", pre: String(st.prefix || "").slice(0, 8) };
+    if (JSON.stringify(x.sec || null) === before) return 0;
+    if (Object.keys(x).length) pg.ext = x; else delete pg.ext;
+    M.touch(pg, now);
+    return 1;
+  }
+  // movepages: the pages `want` picks (1-based) go, in their order,
+  // before page `to` (0 = to the end). → number moved
+  function movePages(doc, want, to, now) {
+    var order = M.pagesInOrder(doc), pick = [], rest = [];
+    order.forEach(function (p, i) { (want(i + 1) ? pick : rest).push(p); });
+    if (!pick.length || pick.length === order.length) return 0;
+    var anchor = to > 0 ? order[to - 1] : null;
+    while (anchor && pick.indexOf(anchor) >= 0) { var k = order.indexOf(anchor) + 1; anchor = order[k] || null; }
+    var at = anchor ? rest.indexOf(anchor) : rest.length;
+    var next = rest.slice(0, at).concat(pick, rest.slice(at));
+    if (next.every(function (p, i) { return p === order[i]; })) return 0;
+    renumber(next, now);
+    return pick.length;
+  }
+  // duppages: copies of the pages `want` picks, after the last of them,
+  // each frame with its own copy of the text it shows.
+  function dupPages(doc, want, now, idf) {
+    var nid = idf || M.newId, order = M.pagesInOrder(doc), pick = order.filter(function (p, i) { return want(i + 1); });
+    if (!pick.length || order.length + pick.length > M.MAX_PAGES) return 0;
+    var last = order.indexOf(pick[pick.length - 1]), made = [], storyMap = {};
+    pick.forEach(function (p) {
+      var np = { id: nid("pg"), m: now, pos: 0, ms: p.ms || "" };
+      if (p.ext) { np.ext = JSON.parse(JSON.stringify(p.ext)); delete np.ext.sec; if (!Object.keys(np.ext).length) delete np.ext; }
+      made.push(np);
+      doc.items.filter(function (it) { return it.pg === p.id; }).forEach(function (it) {
+        var c = JSON.parse(JSON.stringify(it));
+        c.id = nid("it"); c.m = now; c.pg = np.id;
+        if (c.t === "text") {
+          if (!storyMap[c.story]) {
+            var s0 = M.find(doc.stories, c.story);
+            var sc = { id: nid("st"), m: now, h: [], paras: s0 ? JSON.parse(JSON.stringify(s0.paras)) : [{ ps: "ps-base", runs: [] }] };
+            doc.stories.push(sc);
+            storyMap[c.story] = sc.id;
+          }
+          c.story = storyMap[c.story];
+        }
+        if (c.grp) c.grp = "";
+        doc.items.push(c);
+      });
+      (doc.guides || []).forEach(function (g) { if (g.pg === p.id) doc.guides.push({ id: nid("gd"), m: now, pg: np.id, o: g.o, p: g.p }); });
+    });
+    doc.pages = doc.pages.concat(made);
+    renumber(order.slice(0, last + 1).concat(made, order.slice(last + 1)), now);
+    return made.length;
+  }
+  // masterpages: the pages `want` picks get master `ms` ("" = none).
+  function masterPages(doc, want, ms, now) {
+    var n = 0;
+    M.pagesInOrder(doc).forEach(function (p, i) { if (want(i + 1) && (p.ms || "") !== ms) { p.ms = ms; M.touch(p, now); n++; } });
+    return n;
+  }
+  // defmaster: a master made or changed by name: its prefix (1-3
+  // letters) and the master it is based on (base "none" = none).
+  function defMaster(doc, st, now, idf) {
+    if (!st.name) return 0;
+    var cur = styleNamed(doc.masters, st.name), n = 0;
+    if (!cur) {
+      var used = {}, pre = "";
+      doc.masters.forEach(function (m) { used[m.pre] = 1; });
+      for (var c = 65; c < 91 && !pre; c++) if (!used[String.fromCharCode(c)]) pre = String.fromCharCode(c);
+      cur = { id: (idf || M.newId)("ms"), m: now, name: String(st.name).slice(0, 60), pre: pre || "Z" };
+      doc.masters.push(cur); n = 1;
+    }
+    var want = String(st.prefix || "").replace(/[^A-Za-zΑ-Ωα-ω0-9]/g, "").toUpperCase().slice(0, 3);
+    if (want && cur.pre !== want) { cur.pre = want; n = 1; }
+    if (st.base) {
+      var x = cur.ext || {}, b = st.base === "none" ? null : styleNamed(doc.masters, st.base), bid = b && b.id !== cur.id ? b.id : "";
+      // never a loop: the base may not be based on this one
+      for (var k = bid, guard = 0; k && guard < 9; guard++) { if (k === cur.id) { bid = ""; break; } var bm = M.find(doc.masters, k); k = bm && bm.ext ? bm.ext.base : ""; }
+      if (st.base === "none" || bid) {
+        if ((x.base || "") !== bid) { if (bid) x.base = bid; else delete x.base; n = 1; }
+        if (Object.keys(x).length) cur.ext = x; else delete cur.ext;
+      }
+    }
+    if (n) M.touch(cur, now);
+    return n;
+  }
+
+  var api = { setSection: setSection, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
               styleNamed: styleNamed, defStyle: defStyle, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;
