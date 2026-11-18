@@ -8,7 +8,7 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device"];
+  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device", "screentime"];
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -21,7 +21,7 @@
     theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device", zoom: "device",
     notifications: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
-    fopen: "all", keys: "all", multitask: "device", pcfiles: "device", clip: "device", textrepl: "all", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
+    fopen: "all", keys: "all", multitask: "device", continue: "device", pcfiles: "device", clip: "device", textrepl: "all", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", screentime: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
   };
 
   // Search settings: one row per setting, in page order.
@@ -142,6 +142,9 @@
     ["multitask", "system", "mt.on", "mt.title", null, "multitask"],
     ["clip", "system", "ch.on", "ch.title", "ch.strict", "clip"],
     ["clip-keep", "system", "ch.keep", "ch.title", "ch.on", "clip"],
+    ["continue", "system", "ct.on", "ct.title", null, "cont"],
+    ["reopen", "system", "ct.reopen", "ct.title", null, "cont"],
+    ["device-name", "system", "ct.name", "ct.title", null, "cont"],
     ["overview", "system", "ov.corner", "ov.title", null, "overview"],
     ["pcfiles", "system", "pc.on", "pc.title", null, "pcfiles"],
     ["sos", "system", "x.sos"],
@@ -153,7 +156,11 @@
     ["dv-network", "device", "dv.network"],
     ["dv-screen", "device", "dv.screen"],
     ["dv-features", "device", "dv.features"],
-    ["dv-report", "device", "dv.report"]
+    ["dv-report", "device", "dv.report"],
+    ["screentime", "screentime", "st.on"],
+    ["screentime-week", "screentime", "st.week", null, "st.on"],
+    ["screentime-limits", "screentime", "st.limits", null, "st.on"],
+    ["screentime-clear", "screentime", "st.clear", null, "st.on"]
   ];
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
@@ -409,6 +416,35 @@
       "gt.fold.addHint": "Its path on the orOS disk, as Files shows it, e.g. Drive/ckdesktop/Invoices.",
       "gt.fold.go": "Add",
       "gt.fold.bad": "That folder could not be added: check the path (no folder inside one already on the list, no key or secret folder).",
+      "gt.loc.title": "Local folders for Claude (temporary)",
+      "gt.loc.hint": "Folders of this computer that Layout may use through orOS Gate until the material is on the orOS disk. Read folders are only read: Layout copies what it uses into the document and never changes, renames or deletes anything there. Write folders only get new files (a taken name gets -2, -3). Each folder ends after 30 days; Pause stops them all at once. Every read and write is in the log below. This computer only, never synced.",
+      "gt.loc.unsupported": "This browser cannot give orOS a folder of the computer. Use orOS in Chrome, Edge or the orOS Setup window.",
+      "gt.loc.read": "Read",
+      "gt.loc.write": "Write",
+      "gt.loc.expired": "ended",
+      "gt.loc.until": "until {when}",
+      "gt.loc.needs": "press Reconnect",
+      "gt.loc.extend": "30 more days",
+      "gt.loc.copyIn": "Move into Claude's folders",
+      "gt.loc.copying": "Copying the folder onto the orOS disk…",
+      "gt.loc.copied": "{n} files copied to {path}, now one of Claude's folders. You can remove the local folder.",
+      "gt.loc.label": "Its full path (optional)",
+      "gt.loc.labelHint": "Type the folder's path as Windows or macOS shows it, so Claude may name it that way too; the browser does not tell orOS.",
+      "gt.loc.pcPath": "Folder on this computer",
+      "gt.loc.pcHint": "Its full path, as Windows shows it (C:\\Users\\…\\Final Images). orOS checks every call against it: nothing outside it, no shortcuts or links that lead elsewhere.",
+      "gt.loc.pcNeed": "Type the folder's path first.",
+      "gt.loc.pcBad": "orOS cannot open that folder. Check the path (a folder, not a file; not a Windows folder or a hidden one).",
+      "gt.loc.addRead": "Add a folder to read…",
+      "gt.loc.addWrite": "Add a folder to write to…",
+      "gt.loc.tooMany": "At most 8 local folders.",
+      "gt.loc.proofsHint": "So that Claude can look at Layout's page pictures and PDFs, Layout/Proofs and Layout/PDF must be among Claude's folders.",
+      "gt.loc.proofs": "Let Claude see Layout's proofs and PDFs",
+      "gt.loc.log.list": "Local folder listed",
+      "gt.loc.log.read": "Local file read",
+      "gt.loc.log.write": "Local file written",
+      "loc.reconnect": "Reconnect",
+      "loc.pause": "Pause",
+      "loc.resume": "Resume",
       "gt.fcopy.none": "No copy for orOS closed yet: it is made within a few minutes while orOS is open here (Dropbox sync on, Files allowed above).",
       "gt.fcopy.at": "Copy for orOS closed: {when}, {used} MB of {quota} MB in your Dropbox (sealed; only Claude's live link opens it, for 7 days).",
       "gt.fcopy.scope": "Dropbox needs one more permission for this copy: sign in to Dropbox again (Settings › Sync).",
@@ -1370,6 +1406,20 @@
       "mt.on": "Keep apps open when you leave them",
       "mt.hint": "An app you leave stays open in the background and comes back as you left it. Up to {n} at a time on this device; when there is no room, the one you used longest ago closes. Mail, Calendar, Passwords, Settings and apps that use the camera or microphone still close when you leave them. On by default on computers, off on phones and tablets.",
       "mt.open": "Open in the background now: {n}",
+      "ct.title": "Continue on your other devices",
+      "ct.hint": "orOS remembers the last item you had open in each app (only its name and where it is, never its content) and offers it on your other devices: Continue «Chapter 3» in Writer, from your phone. Private apps (Passwords, Mail, Diary, Health, Budget and the like) are never kept. It travels encrypted with your sync.",
+      "ct.strict": "Off while Sensitive work is on: nothing is kept or shown.",
+      "ct.on": "Show what I was doing on my other devices",
+      "ct.reopen": "Reopen my apps after a restart",
+      "ct.reopen.hint": "The app you had open comes back at the same item; with multitasking on, your other open apps too (up to 6). Only on this device.",
+      "ct.name": "Name of this device",
+      "ct.name.hint": "Shown on your other devices. Leave it empty for «{kind}».",
+      "ct.devs": "Your other devices",
+      "ct.seen": "Last used {date}",
+      "ct.forget": "Forget",
+      "ct.kind.aphone": "Android phone", "ct.kind.atablet": "Android tablet", "ct.kind.chromebook": "Chromebook",
+      "ct.kind.ipad": "iPad", "ct.kind.iphone": "iPhone", "ct.kind.linux": "Linux PC", "ct.kind.mac": "Mac",
+      "ct.kind.other": "Device", "ct.kind.windows": "Windows PC",
       "ov.title": "Overview",
       "ov.hint": "Ctrl+Alt+Shift+E shows the search, your open apps, your recent files and how the system is doing on one screen. Two more ways to open it, on this device only:",
       "ov.corner": "Open it by pushing the mouse into the top-left corner",
@@ -1510,6 +1560,9 @@
       "w.clip-keep": "clipboard history keep how long hour day week",
       "w.multitask": "windows keep open background switch apps",
       "w.overview": "overview activities hot corner recent files system monitor",
+      "w.continue": "continue handoff other device phone pc resume last item",
+      "w.reopen": "reopen restore restart session open apps again",
+      "w.device-name": "device name rename phone pc computer",
       "w.pcfiles": "this computer files disks drives home folder windows linux",
       "w.sos": "sos emergency hacked stolen lost breach compromised panic remote wipe erase everywhere",
       "w.reset": "erase delete everything factory wipe",
@@ -1520,7 +1573,24 @@
       "w.dv-network": "device info network connection online offline speed",
       "w.dv-screen": "device info screen resolution window pixel ratio touch screens monitor second screen projector extend duplicate",
       "w.dv-features": "device info browser features permissions notifications location missing",
-      "w.dv-report": "device info report problem copy support"
+      "w.dv-report": "device info report problem copy support",
+      "s.screentime": "Screen time",
+      "d.screentime": "Time in each app, on this device only",
+      "st.on": "Count screen time on this device",
+      "st.week": "Last 7 days",
+      "st.h": "{h} h",
+      "st.hm": "{h} h {m} min",
+      "st.m": "{m} min",
+      "st.lt1": "under 1 min",
+      "st.clear": "Clear history",
+      "st.limits": "Daily limits",
+      "st.wait": "Screen time starts a few seconds after orOS. Open this section again in a moment.",
+      "st.loading": "Loading screen time…",
+      "st.link": "Screen time: time in each app",
+      "w.screentime": "screen time usage wellbeing digital how long apps time spent minutes hours habit",
+      "w.screentime-week": "screen time week days chart history",
+      "w.screentime-clear": "screen time clear delete history erase",
+      "w.screentime-limits": "screen time limit daily limit break reminder time limit"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -1768,6 +1838,35 @@
       "gt.fold.addHint": "Η διαδρομή του στον δίσκο του orOS, όπως τη δείχνουν τα Αρχεία, π.χ. Drive/ckdesktop/Τιμολόγια.",
       "gt.fold.go": "Προσθήκη",
       "gt.fold.bad": "Ο φάκελος δεν προστέθηκε: έλεγξε τη διαδρομή (όχι φάκελος μέσα σε άλλον της λίστας, όχι φάκελος κλειδιών ή μυστικών).",
+      "gt.loc.title": "Τοπικοί φάκελοι για τον Claude (προσωρινά)",
+      "gt.loc.hint": "Φάκελοι αυτού του υπολογιστή που η Σελιδοποίηση μπορεί να χρησιμοποιεί μέσω του orOS Gate, μέχρι το υλικό να μπει στον δίσκο του orOS. Οι φάκελοι ανάγνωσης μόνο διαβάζονται: η Σελιδοποίηση αντιγράφει ό,τι χρησιμοποιεί μέσα στο έγγραφο και δεν αλλάζει, δεν μετονομάζει και δεν σβήνει τίποτα εκεί. Στους φακέλους εγγραφής μπαίνουν μόνο νέα αρχεία (αν το όνομα υπάρχει, παίρνει -2, -3). Κάθε φάκελος λήγει σε 30 ημέρες· η Παύση τους σταματά όλους αμέσως. Κάθε ανάγνωση και εγγραφή φαίνεται στο ιστορικό παρακάτω. Μόνο σε αυτόν τον υπολογιστή, δεν συγχρονίζεται.",
+      "gt.loc.unsupported": "Αυτός ο browser δεν μπορεί να δώσει στο orOS φάκελο του υπολογιστή. Άνοιξε το orOS σε Chrome, Edge ή στο παράθυρο του orOS Setup.",
+      "gt.loc.read": "Ανάγνωση",
+      "gt.loc.write": "Εγγραφή",
+      "gt.loc.expired": "έληξε",
+      "gt.loc.until": "ως {when}",
+      "gt.loc.needs": "πάτησε Επανασύνδεση",
+      "gt.loc.extend": "Άλλες 30 ημέρες",
+      "gt.loc.copyIn": "Μεταφορά στους φακέλους του Claude",
+      "gt.loc.copying": "Αντιγραφή του φακέλου στον δίσκο του orOS…",
+      "gt.loc.copied": "{n} αρχεία αντιγράφηκαν στο {path}, που είναι πλέον φάκελος του Claude. Μπορείς να αφαιρέσεις τον τοπικό φάκελο.",
+      "gt.loc.label": "Η πλήρης διαδρομή του (προαιρετικά)",
+      "gt.loc.labelHint": "Γράψε τη διαδρομή όπως τη δείχνουν τα Windows ή το macOS, για να μπορεί να τη χρησιμοποιεί και ο Claude· ο browser δεν τη λέει στο orOS.",
+      "gt.loc.pcPath": "Φάκελος αυτού του υπολογιστή",
+      "gt.loc.pcHint": "Η πλήρης διαδρομή του, όπως τη δείχνουν τα Windows (C:\\Users\\…\\Final Images). Το orOS ελέγχει κάθε κλήση με βάση αυτήν: τίποτα έξω από τον φάκελο, καμία συντόμευση ή σύνδεσμος που οδηγεί αλλού.",
+      "gt.loc.pcNeed": "Γράψε πρώτα τη διαδρομή του φακέλου.",
+      "gt.loc.pcBad": "Το orOS δεν μπορεί να ανοίξει αυτόν τον φάκελο. Έλεγξε τη διαδρομή (φάκελος, όχι αρχείο· όχι φάκελος των Windows ή κρυφός).",
+      "gt.loc.addRead": "Προσθήκη φακέλου για ανάγνωση…",
+      "gt.loc.addWrite": "Προσθήκη φακέλου για εγγραφή…",
+      "gt.loc.tooMany": "Το πολύ 8 τοπικοί φάκελοι.",
+      "gt.loc.proofsHint": "Για να βλέπει ο Claude τις εικόνες σελίδων και τα PDF της Σελιδοποίησης, τα Layout/Proofs και Layout/PDF πρέπει να είναι στους φακέλους του Claude.",
+      "gt.loc.proofs": "Να βλέπει ο Claude τα δοκίμια και τα PDF της Σελιδοποίησης",
+      "gt.loc.log.list": "Λίστα τοπικού φακέλου",
+      "gt.loc.log.read": "Ανάγνωση τοπικού αρχείου",
+      "gt.loc.log.write": "Εγγραφή τοπικού αρχείου",
+      "loc.reconnect": "Επανασύνδεση",
+      "loc.pause": "Παύση",
+      "loc.resume": "Συνέχεια",
       "gt.fcopy.none": "Δεν υπάρχει ακόμη αντίγραφο για κλειστό orOS: φτιάχνεται μέσα σε λίγα λεπτά όσο το orOS είναι ανοιχτό εδώ (με συγχρονισμό Dropbox και τα Αρχεία ανοιχτά παραπάνω).",
       "gt.fcopy.at": "Αντίγραφο για κλειστό orOS: {when}, {used} MB από {quota} MB στο Dropbox σου (σφραγισμένο· το ανοίγει μόνο η ενεργή σύνδεση του Claude, για 7 ημέρες).",
       "gt.fcopy.scope": "Το Dropbox θέλει μία ακόμη άδεια για αυτό το αντίγραφο: συνδέσου ξανά στο Dropbox (Ρυθμίσεις › Συγχρονισμός).",
@@ -2729,6 +2828,20 @@
       "mt.on": "Οι εφαρμογές μένουν ανοιχτές όταν φεύγεις",
       "mt.hint": "Μια εφαρμογή που αφήνεις μένει ανοιχτή στο παρασκήνιο και ξαναβγαίνει όπως την άφησες. Έως {n} μαζί σε αυτή τη συσκευή· όταν δεν χωράει άλλη, κλείνει αυτή που χρησιμοποίησες πιο παλιά. Η Αλληλογραφία, το Ημερολόγιο, οι Κωδικοί, οι Ρυθμίσεις και οι εφαρμογές με κάμερα ή μικρόφωνο κλείνουν όπως πριν όταν φεύγεις. Ανοιχτή από default στους υπολογιστές, κλειστή σε κινητά και tablet.",
       "mt.open": "Ανοιχτές στο παρασκήνιο τώρα: {n}",
+      "ct.title": "Συνέχεια στις άλλες συσκευές σου",
+      "ct.hint": "Το orOS θυμάται το τελευταίο στοιχείο που είχες ανοιχτό σε κάθε εφαρμογή (μόνο το όνομά του και πού βρίσκεται, ποτέ το περιεχόμενο) και σου το προτείνει στις άλλες συσκευές σου: Συνέχισε το «Κεφάλαιο 3» στο Writer, από το κινητό. Οι ιδιωτικές εφαρμογές (Passwords, Mail, Ημερολόγιο μιας πρότασης, Υγεία, Έσοδα & Έξοδα κ.ά.) δεν καταγράφονται ποτέ. Ταξιδεύει κρυπτογραφημένο με τον συγχρονισμό σου.",
+      "ct.strict": "Κλειστό όσο είναι ανοιχτή η Ευαίσθητη εργασία: τίποτα δεν κρατιέται ούτε φαίνεται.",
+      "ct.on": "Δείξε τι έκανα στις άλλες συσκευές μου",
+      "ct.reopen": "Άνοιξε ξανά τις εφαρμογές μου μετά από επανεκκίνηση",
+      "ct.reopen.hint": "Η εφαρμογή που είχες ανοιχτή επιστρέφει στο ίδιο στοιχείο. Με το multitasking ανοιχτό, επιστρέφουν και οι άλλες ανοιχτές εφαρμογές (έως 6). Μόνο σε αυτή τη συσκευή.",
+      "ct.name": "Όνομα αυτής της συσκευής",
+      "ct.name.hint": "Φαίνεται στις άλλες συσκευές σου. Άφησέ το κενό για «{kind}».",
+      "ct.devs": "Οι άλλες συσκευές σου",
+      "ct.seen": "Τελευταία χρήση {date}",
+      "ct.forget": "Ξέχασέ τη",
+      "ct.kind.aphone": "Κινητό Android", "ct.kind.atablet": "Tablet Android", "ct.kind.chromebook": "Chromebook",
+      "ct.kind.ipad": "iPad", "ct.kind.iphone": "iPhone", "ct.kind.linux": "PC Linux", "ct.kind.mac": "Mac",
+      "ct.kind.other": "Συσκευή", "ct.kind.windows": "PC Windows",
       "ov.title": "Επισκόπηση",
       "ov.hint": "Το Ctrl+Alt+Shift+E δείχνει σε μία οθόνη την αναζήτηση, τις ανοιχτές εφαρμογές, τα πρόσφατα αρχεία και πώς πάει το σύστημα. Δύο ακόμα τρόποι να ανοίγει, μόνο σε αυτή τη συσκευή:",
       "ov.corner": "Άνοιγμα όταν σπρώχνεις το ποντίκι στην πάνω αριστερή γωνία",
@@ -2868,6 +2981,9 @@
       "w.clip-keep": "πρόχειρο ιστορικό πόσο καιρό ώρα μέρα εβδομάδα",
       "w.multitask": "πολυεργασία παράθυρα ανοιχτές παρασκήνιο",
       "w.overview": "επισκόπηση δραστηριότητες γωνία πρόσφατα αρχεία παρακολούθηση συστήματος",
+      "w.continue": "συνέχισε συνέχεια άλλη συσκευή κινητό υπολογιστής τελευταίο στοιχείο",
+      "w.reopen": "επαναφορά επανεκκίνηση άνοιγμα ξανά εφαρμογές συνεδρία",
+      "w.device-name": "όνομα συσκευής μετονομασία κινητό υπολογιστής",
       "w.pcfiles": "αυτός ο υπολογιστής αρχεία δίσκοι προσωπικός φάκελος windows linux",
       "w.sos": "sos έκτακτη ανάγκη παραβίαση χάκερ κλοπή χαμένο κλεμμένο πανικός απομακρυσμένο σβήσιμο παντού",
       "w.reset": "διαγραφή σβήσιμο όλα εργοστασιακή",
@@ -2878,7 +2994,24 @@
       "w.dv-network": "πληροφορίες συσκευής δίκτυο σύνδεση ίντερνετ ταχύτητα",
       "w.dv-screen": "πληροφορίες συσκευής οθόνη ανάλυση παράθυρο αφή οθόνες δεύτερη οθόνη προβολέας επέκταση διπλότυπο",
       "w.dv-features": "πληροφορίες συσκευής δυνατότητες browser άδειες ειδοποιήσεις τοποθεσία",
-      "w.dv-report": "πληροφορίες συσκευής αναφορά πρόβλημα αντιγραφή"
+      "w.dv-report": "πληροφορίες συσκευής αναφορά πρόβλημα αντιγραφή",
+      "s.screentime": "Χρόνος οθόνης",
+      "d.screentime": "Χρόνος σε κάθε εφαρμογή, μόνο σε αυτή τη συσκευή",
+      "st.on": "Μέτρηση χρόνου οθόνης σε αυτή τη συσκευή",
+      "st.week": "Τελευταίες 7 ημέρες",
+      "st.h": "{h} ώρ.",
+      "st.hm": "{h} ώρ. {m} λεπ.",
+      "st.m": "{m} λεπ.",
+      "st.lt1": "κάτω από 1 λεπ.",
+      "st.clear": "Σβήσε το ιστορικό",
+      "st.limits": "Όρια ανά ημέρα",
+      "st.wait": "Ο χρόνος οθόνης ξεκινά λίγα δευτερόλεπτα μετά το orOS. Άνοιξε ξανά την ενότητα σε λίγο.",
+      "st.loading": "Φορτώνω τον χρόνο οθόνης…",
+      "st.link": "Χρόνος οθόνης: χρόνος σε κάθε εφαρμογή",
+      "w.screentime": "χρόνος οθόνης χρήση ψηφιακή ευεξία πόση ώρα εφαρμογές λεπτά ώρες συνήθεια screen time",
+      "w.screentime-week": "χρόνος οθόνης εβδομάδα ημέρες γράφημα ιστορικό",
+      "w.screentime-clear": "χρόνος οθόνης σβήσιμο διαγραφή ιστορικό",
+      "w.screentime-limits": "χρόνος οθόνης όριο ημερήσιο όριο διάλειμμα υπενθύμιση"
     }
   };
 
@@ -3022,6 +3155,15 @@
   }
 
   function pad2(n) { return (n < 10 ? "0" : "") + n; }
+
+  // ST-1: seconds of screen time as "2 h 5 min", "12 min", "under 1 min".
+  function stDur(lang, secs) {
+    var m = Math.floor((Number(secs) || 0) / 60);
+    if (m < 1) return t(lang, "st.lt1");
+    if (m < 60) return t(lang, "st.m", { m: m });
+    if (m % 60 === 0) return t(lang, "st.h", { h: m / 60 });
+    return t(lang, "st.hm", { h: Math.floor(m / 60), m: m % 60 });
+  }
   function hourLabel(h) { return pad2(h) + ":00"; }
 
   // The same full shape the menu writes (isQuietHour reads the numbers,
@@ -3076,6 +3218,7 @@
   var api = {
     SECTIONS: SECTIONS, SCOPE: SCOPE, STRINGS: STRINGS, FIND: FIND,
     usersPassOk: usersPassOk,
+    stDur: stDur,
     POSITIONS: POSITIONS, STYLES: STYLES, SOUNDS: SOUNDS, DURATIONS: DURATIONS,
     t: t, langOf: langOf, isSection: isSection, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,

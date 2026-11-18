@@ -61,8 +61,8 @@ function run(d, list, notes, grey) {
 const texts = (d) => d.stories[0].paras.map((p) => p.runs.map((r) => r.t !== undefined ? r.t : "[" + r.f + "]").join(""));
 
 test("the catalog is Layout's automation steps without preflight and export, plus rename", () => {
-  assert.deepEqual(CMD.ORDER, ["create", "text", "pstyle", "style", "master", "margins", "pages", "delpages", "fit", "numbering", "bleed", "grey", "imgfit", "rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages", "section", "movepages", "duppages", "masterpages", "defmaster"]);
-  CMD.ORDER.forEach((op) => { if (["rename", "create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages", "section", "movepages", "duppages", "masterpages", "defmaster"].indexOf(op) < 0) assert.equal(CMD.CATALOG[op], S.CATALOG[op], op); });
+  assert.deepEqual(CMD.ORDER, ["create", "text", "pstyle", "style", "master", "margins", "pages", "delpages", "fit", "numbering", "bleed", "grey", "imgfit", "rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages", "section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture"]);
+  CMD.ORDER.forEach((op) => { if (["rename", "create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages", "section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture"].indexOf(op) < 0) assert.equal(CMD.CATALOG[op], S.CATALOG[op], op); });
   assert.ok(!CMD.CATALOG.export && !CMD.CATALOG.problems, "no export or preflight");
 });
 

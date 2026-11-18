@@ -49,7 +49,7 @@
     sort: { t: "enum", v: ["natural", "name", "given"], def: "natural" }, fit: { t: "enum", v: ["trim", "bleed", "margins", "proportional"], def: "trim" },
     at: { t: "enum", v: ["end", "before", "after"], def: "end" }, page: { t: "int", lo: 0, hi: 9999, def: 0 }, side: { t: "enum", v: ["any", "right", "left"], def: "any" } } };
   CATALOG.bleedfill = { kind: "async", args: { pages: { t: "str", max: 60 }, mode: { t: "enum", v: ["smart", "mirror", "stretch"], def: "smart" } } };
-  CATALOG.thumbs = { kind: "out", args: { pages: { t: "str", max: 60 }, spreads: { t: "bool", def: 1 }, dpi: { t: "num", lo: 36, hi: 150, def: 96 } } };
+  CATALOG.thumbs = { kind: "out", args: { pages: { t: "str", max: 60 }, spreads: { t: "bool", def: 1 }, dpi: { t: "num", lo: 36, hi: 150, def: 96 }, out: { t: "str", max: 1030 } } };
   // LY-PRO W2 (items 5, 17, 18, 21): styles made by name (nested
   // styles too), a set of play styles, text frames, a story's new text
   // and the house's front and back pages, padded to a multiple of pages.
@@ -78,7 +78,11 @@
   CATALOG.duppages = { kind: "doc", args: { pages: RANGE } };
   CATALOG.masterpages = { kind: "doc", args: { pages: RANGE, master: { t: "str", max: 60 } } };
   CATALOG.defmaster = { kind: "doc", args: { name: { t: "str", max: 60, req: 1 }, prefix: { t: "str", max: 8 }, base: { t: "str", max: 60 } } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster"];
+  CATALOG.pagesize = { kind: "doc", args: { pages: RANGE, w: MMv(0, 5080, 0), h: MMv(0, 5080, 0) } };
+  // LY-PRO W4 (items 9, 10): picture frames
+  CATALOG.picture = { kind: "doc", args: { frame: { t: "str", max: 400 }, pages: { t: "str", max: 60 },
+    flip: { t: "enum", v: ["", "none", "h", "v", "hv"], def: "" }, corner: MMv(-1, 500, -1), fit: { t: "enum", v: ["", "fit", "fill", "frame"], def: "" } } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -92,11 +96,11 @@
     "\ncreate: a new document (only as the first command, with designs new): title, w and h the trim in u mm|pt|in|px, n pages, facing (facing pages, default true), " +
     "side right|left (the side of the first page), mm the bleed on every side in mm, or bt bb bi bo for top, bottom, inside and outside (-1 = as mm), slug in mm, " +
     "margins t b i o in mm (-1 = 15), ncol columns, gut the gutter in mm, grid a baseline grid step in pt (0 = none), color rgb|cmyk, icc fogra39 (the print profile for cmyk)" +
-    "\nimages: one new page per picture, in order: paths (files on the orOS disk inside Claude's folders, as files_list shows them) or folder (every picture in it), " +
+    "\nimages: one new page per picture, in order: paths (files on the orOS disk inside Claude's folders, as files_list shows them, or local:<root>/<path> in a local folder the owner opened for Claude) or folder (every picture in it), " +
     "sort natural (1_A, 2_a … 10, 27) | name | given (paths as listed), fit trim (the picture fills the trim) | bleed (it fills trim and bleed) | margins | proportional (whole picture, no crop), " +
     "at end | before | after page `page`, side any | right | left (a blank page goes first when the first picture would land on the other side); Layout copies the pictures into the document, the folder is never changed" +
     "\nbleedfill: the full-page pictures on `pages` that stop at the trim get a bleed: mode smart (the texture of paper, wood or cloth carried on) | mirror | stretch; the original picture is kept for undo" +
-    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders); changes nothing" +
+    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders), out local:<root>/<folder> also saves them in a local write folder the owner opened; changes nothing" +
     "\ndefstyle: makes or changes a style by `name`: kind para (paragraph) | char (character), base the style it is based on, font a family as list_fonts shows it, " +
     "size, lead (leading) and track in pt (0 = as it is), align l|c|r|j, sb sa (space before, after) fi (first line indent) li ri (left, right indent) in pt (-1 = as it is), " +
     "bold ital caps under on|off, color #rrggbb, a nested style: nest_cs a character style for the start of each paragraph up to and including the first nest_to (e.g. \":\" for a speaker; nest_cs none removes it), " +
@@ -113,7 +117,9 @@
     "\nmovepages: the pages `pages` (e.g. 3-5,9) go, in their order, before page `before` (0 = to the end)" +
     "\nduppages: copies of the pages `pages` (with their own copy of the text) go after the last of them" +
     "\nmasterpages: the pages `pages` (all, odd, even or 3-10) get the master `master` by name (\"\" = none)" +
-    "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)";
+    "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)" +
+    "\npagesize: the pages `pages` get their own trim w × h in mm (a fold-out, a smaller insert; at least 13 mm); w 0 and h 0 = the document's size again; the PDF, the pictures and the editor follow" +
+    "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width)";
 
   // ---------- 1. Checking ----------
   function given(v) { return v !== null && v !== undefined && v !== ""; }
@@ -158,7 +164,7 @@
     if (steps.some(function (st, i) { return st.op === "create" && i > 0; })) return { ok: false, err: "create can only be the first command" };
     var bad = steps.filter(function (st) { return st.op === "images" && !(st.paths && st.paths.length) && !st.folder; });
     if (bad.length) return { ok: false, err: "images needs paths or folder" };
-    if (steps.some(function (st) { return st.op === "images" && (st.paths || []).some(function (p) { return !PRO.normPath(p); }); })) return { ok: false, err: "images: every path is a file on the orOS disk (/internal/… or as files_list shows it)" };
+    if (steps.some(function (st) { return st.op === "images" && (st.paths || []).some(function (p) { return !/^local:/i.test(String(p).trim()) && !PRO.normPath(p); }); })) return { ok: false, err: "images: every path is a file on the orOS disk (/internal/… or as files_list shows it)" };
     if (steps.some(function (st) { return st.op === "retext" && !st.frame && !st.story; })) return { ok: false, err: "retext needs frame or story" };
     return { ok: true, steps: steps };
   }
@@ -211,6 +217,12 @@
       return PRO.masterPages(doc, S.pageTest(st.pages), msx ? msx.id : "", now);
     }
     if (st.op === "defmaster") return PRO.defMaster(doc, st, now, env.idf);
+    if (st.op === "picture") {
+      var fids = st.frame ? String(st.frame).split(/[\s,]+/).filter(Boolean) : [];
+      if (!fids.length && !st.pages) return 0;
+      return PRO.setPicture(doc, fids, st.pages ? S.pageTest(st.pages) : null, { flip: st.flip, corner: st.corner >= 0 ? st.corner * PT_PER_MM : -1, fit: st.fit }, now);
+    }
+    if (st.op === "pagesize") return PRO.setPageSize(doc, S.pageTest(st.pages), (st.w || 0) * PT_PER_MM, (st.h || 0) * PT_PER_MM, now);
     if (!hasEngine()) {
       if (st.op === "fit") { if (env.notes && env.notes.indexOf("fitLater") < 0) env.notes.push("fitLater"); return 1; }
       if (st.op === "pages" && st.flow) st = Object.assign({}, st, { flow: 0 });
@@ -293,7 +305,7 @@
   // masters by name, and per page the master and the start of each
   // text and the pictures, without file data.
   var OUT_PAGES = 400, OUT_TEXT = 160;
-  var PT_MM = 25.4 / 72;
+  var PT_MM = 25.4 / 72, PT_PER_MM = 72 / 25.4;
   function mm(v) { return Math.round((v || 0) * PT_MM * 10) / 10; }
   function nameOf(n) { return n && typeof n === "object" ? n.en || n.el || n[Object.keys(n)[0]] || "" : String(n || ""); }
   function textOf(st) {

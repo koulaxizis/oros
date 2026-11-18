@@ -3838,6 +3838,16 @@
     reconnect: function () { if (!ws) { retry = 0; connect(); } },
     // GATE-HOST: this computer's background Gate (orOS Portable / USB)
     host: { state: function () { return hostState(); }, set: function (on) { return hostSet(on); }, active: function () { return HOST.ok; } },
+    // LOCAL-1: a read or write through the local-folder bridge
+    // (localroots.js): kind list|read|write, the local: path, bytes, the
+    // command that asked
+    localLog: function (e) {
+      if (!isObj(e)) return;
+      var kind = /^(list|read|write)$/.test(e.kind) ? e.kind : "read";
+      writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: "local-" + kind, a: [], k: 1, ok: 1,
+        lp: String(e.path || "").slice(0, 300), sz: Math.max(0, Math.floor(+e.size || 0)), c: String(e.cmd || "").slice(0, 40) }));
+      changed();
+    },
     log: function () { var l = readJSON(LOG_KEY); return Array.isArray(l) ? l.slice().reverse() : []; },
     clearLog: function () { try { localStorage.removeItem(LOG_KEY); } catch (e) {} changed(); },
     onChange: function (fn) {

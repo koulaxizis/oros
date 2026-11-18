@@ -1,8 +1,23 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 7.64.00
+## Version 7.69.00
 - **Budget: your banks update by themselves while orOS is open.** Every 6 hours now runs in any app, even with Budget closed: when you open orOS, then every 6 hours. In Budget › `Banks` › `Automatic updates` you can also turn them off. Claude can ask for a bank update through orOS Gate while orOS is open, so a check no longer has to ask you to press `Update now`. See [Budget](help:a/budget).
+
+## Version 7.68.00
+- **Screen time.** Settings › Screen time counts how long each app is in front of you, on this device only: today's apps, the last 7 days as columns, and `Clear history`. It is off until you turn it on, never synced, never in a backup and never seen by the Assistant or orOS Gate; only minutes per app and day are kept, for 4 weeks. `Daily limits` gives any app a limit from 15 minutes to 8 hours: a quiet notice 5 minutes before, then a `Time for a break?` card over the app, which stays open under it (`15 more minutes`, `No more reminders today` or `Go to the desktop`). A limit never closes or blocks an app, and an app past its limit shows a small hourglass in the menu.
+
+## Version 7.67.00
+- **Local folders for Claude (temporary).** Until the material is on the orOS disk, Settings › Connected services › orOS Gate › `Local folders for Claude (temporary)` lets Layout use folders of this computer through orOS Gate. A read folder is only read: Layout copies what it uses into the document and never changes, renames or deletes anything there. A write folder only takes new files (a name that exists gets -2, -3), such as the print PDF and page proofs. Each folder ends after 30 days (`30 more days`), a bar shows while folders are open, `Pause` stops them all at once, and every read and write shows in the Gate history. `Move to Claude's folders` copies a folder onto the orOS disk. Works in Chrome and Edge on a computer, and in the orOS window of orOS Setup and orOS Portable, where a folder is added by its path (C:\Users\…) and needs no permission again after a restart.
+
+## Version 7.66.00
+- **Continue from another device.** orOS remembers where you were in each app (the document, page, board, book or project, never its content) and offers it on your other devices: a row in the Overview, a card in Today and, if you tick it, a chip in the smart bar. One tap opens the app at that item. After a restart orOS also brings your apps back, each at its own item. Settings › System › Continue on your other devices: two switches, the name of this device and Forget for the others. Never for Passwords, Mail, Diary, Health and the other private apps, and nothing while Sensitive work is on.
+
+## Version 7.65.00
+- **Pictures in Layout: mirror, corners and Links.** A picture can be mirrored left to right or top to bottom in its frame, and `Frame to picture` gives the frame the picture's proportions. `Links (pictures)…` in the More menu lists every picture with its page, its resolution and whether its file is here, with `Go to` and `Replace picture…`. The PDF, page pictures and data merge show the mirrored picture too. The Assistant and Claude (through orOS Gate) can mirror, round and fit picture frames by frame or by page.
+
+## Version 7.64.00
+- **Page sizes and creep in Layout.** A page can have its own size, for a fold-out or a smaller insert: `Page size…` under the page list, for this page or a range. The editor, the pictures, the page pictures and the PDF follow it. For a saddle-stitched book, `Creep in mm` in the PDF export moves the inner pages' content towards the spine so nothing is cut after folding. The Assistant and Claude (through orOS Gate) can do both.
 
 ## Version 7.63.00
 - **Text replacements.** Type a short code like `;addr` and a space or punctuation in any orOS app and it becomes your full text; [[Backspace]] right after puts the code back. `{date}`, `{time}` and `{cursor}` work in the text. It works in Writer, Mail and Slides too, and the on-screen keyboard shows the text above the keys. Settings › Language & search › Text replacements; import your list from Gboard or from a Mac or iPhone. Synced to your devices, encrypted; never in Passwords or while Sensitive work is on.

@@ -509,7 +509,31 @@
     renderForm();
     setTab(tab || "edit");
     window.scrollTo(0, 0);
+    contNote();
   }
+  // CONT-1 W3: tell the shell which form is open (continue.js keeps the
+  // reference and the title only, never the questions or answers). On
+  // opening, and once at the first tap or key after the start; nothing
+  // before that, so a restored form never hides the other device's.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (W && cur && cur.id && !cur.del) W.note("forms", { target: { form: cur.id }, title: cur.title || t("f.untitled") });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   // gone = the form was deleted (here or on another device): nothing of
   // it is saved again.
   function closeForm(gone) {

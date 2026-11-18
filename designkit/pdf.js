@@ -350,7 +350,11 @@
       var bl0 = M.bleeds ? M.bleeds(doc, sides[0]) : { t: s.bleed, b: s.bleed, l: s.bleed, r: s.bleed };
       var bl1 = M.bleeds ? M.bleeds(doc, sides[sides.length - 1]) : bl0;
       var b = useB ? { t: Math.max(bl0.t, bl1.t), b: Math.max(bl0.b, bl1.b), l: bl0.l, r: bl1.r } : { t: 0, b: 0, l: 0, r: 0 };
-      var W = s.w * g.length + b.l + b.r + 2 * slug, H = s.h + b.t + b.b + 2 * slug;
+      // each page's own size (M.pageSize, LY-PRO W3b): a spread is as
+      // wide as its pages and as tall as the tallest
+      var sz = g.map(function (p) { return M.pageSize ? M.pageSize(doc, p) : { w: s.w, h: s.h }; });
+      var TW = sz.reduce(function (a, z) { return a + z.w; }, 0), TH = Math.max.apply(null, sz.map(function (z) { return z.h; }));
+      var W = TW + b.l + b.r + 2 * slug, H = TH + b.t + b.b + 2 * slug;
       var orient = W > H ? "l" : "p";
       if (!pdf) {
         pdf = new JsPDF({ unit: "pt", format: [W, H], orientation: orient, compress: true });
@@ -364,19 +368,25 @@
       var info = pdf.internal.getCurrentPageInfo().pageContext;
       var box = function (x0, y0, x1, y1) { return { bottomLeftX: x0, bottomLeftY: y0, topRightX: x1, topRightY: y1 }; };
       // PDF y goes up: the bottom bleed is at the bottom
-      var tx0 = slug + b.l, ty0 = slug + b.b, tx1 = tx0 + s.w * g.length, ty1 = ty0 + s.h;
+      var tx0 = slug + b.l, ty0 = slug + b.b, tx1 = tx0 + TW, ty1 = ty0 + TH;
       info.trimBox = box(tx0, ty0, tx1, ty1);
       if (b.t || b.b || b.l || b.r) info.bleedBox = box(slug, slug, W - slug, H - slug);
       boxes.push({ w: W, h: H, trim: [tx0, ty0, tx1, ty1], bleed: [slug, slug, W - slug, H - slug] });
 
+      var x0k = slug + b.l;
       g.forEach(function (page, k) {
-        var ox = slug + b.l + k * s.w, oy = slug + b.t;
-        at[page.id] = { n: pdf.internal.getNumberOfPages(), dx: ox, dy: oy };
+        var pw = sz[k].w, ph = sz[k].h, ox = x0k, oy = slug + b.t;
+        x0k += pw;
         var idx = L.pageOf[page.id], side = M.sideOf(doc, idx);
+        // creep (saddle stitch): the content moves towards the spine,
+        // the trim and the clip stay
+        var cr = opts.creep && M.creepOf ? M.creepOf(doc, idx, all.length, opts.creep) : 0;
+        at[page.id] = { n: pdf.internal.getNumberOfPages(), dx: ox + cr, dy: oy };
         pdf.saveGraphicsState();
         // clip to this page's trim + bleed (outer sides only on a spread)
-        var cx0 = ox - (k === 0 ? b.l : 0), cx1 = ox + s.w + (k === g.length - 1 ? b.r : 0);
-        pdf.rect(cx0, oy - b.t, cx1 - cx0, s.h + b.t + b.b, null); pdf.clip(); pdf.discardPath();
+        var cx0 = ox - (k === 0 ? b.l : 0), cx1 = ox + pw + (k === g.length - 1 ? b.r : 0);
+        pdf.rect(cx0, oy - b.t, cx1 - cx0, ph + b.t + b.b, null); pdf.clip(); pdf.discardPath();
+        ox += cr;
         if (page.ms) {
           var mf = L.master[page.id] || {};
           M.masterItems(doc, page, side).forEach(function (it) {
@@ -389,12 +399,12 @@
         pdf.restoreGraphicsState();
       });
       if (opts.marks) {
-        var ox0 = slug + b.l, oy0 = slug + b.t, tw = s.w * g.length;
-        if (marks.crop) cropMarks(pdf, ox0, oy0, tw, s.h, b);
-        if (marks.bleed && (b.t || b.b || b.l || b.r)) bleedMarks(pdf, ox0, oy0, tw, s.h, b);
-        if (marks.reg) regMarks(pdf, ox0, oy0, tw, s.h, b, slug);
-        if (marks.bars) colourBars(pdf, ox0, oy0, tw, s.h, b, slug);
-        if (marks.info) pageInfo(pdf, ox0, oy0, tw, s.h, b, slug, (opts.title || doc.name || "") + "  ·  " +
+        var ox0 = slug + b.l, oy0 = slug + b.t, tw = TW;
+        if (marks.crop) cropMarks(pdf, ox0, oy0, tw, TH, b);
+        if (marks.bleed && (b.t || b.b || b.l || b.r)) bleedMarks(pdf, ox0, oy0, tw, TH, b);
+        if (marks.reg) regMarks(pdf, ox0, oy0, tw, TH, b, slug);
+        if (marks.bars) colourBars(pdf, ox0, oy0, tw, TH, b, slug);
+        if (marks.info) pageInfo(pdf, ox0, oy0, tw, TH, b, slug, (opts.title || doc.name || "") + "  ·  " +
           g.map(function (p) { var lb = L.labels && L.labels[L.pageOf[p.id]]; return lb ? lb.label : String(L.pageOf[p.id] + M.firstNumber(doc)); }).join("-") + (opts.stamp ? "  ·  " + opts.stamp : ""));
       }
     });
@@ -439,10 +449,13 @@
     var x0 = Math.max(0, r.x), y0 = Math.max(0, r.y);
     var x1 = Math.min(it.w, r.x + r.w), y1 = Math.min(it.h, r.y + r.h);
     if (x1 <= x0 || y1 <= y0) return null;
-    var sx = it.iw / r.w, sy = it.ih / r.h;
+    var sx = it.iw / r.w, sy = it.ih / r.h, fl = R.flipOf ? R.flipOf(it) : { h: false, v: false };
+    // a mirrored picture (W4): the cut comes from the other side, and
+    // the caller draws it mirrored (fh, fv)
     return {
       rect: { x: x0, y: y0, w: x1 - x0, h: y1 - y0 },
-      src: { x: (x0 - r.x) * sx, y: (y0 - r.y) * sy, w: (x1 - x0) * sx, h: (y1 - y0) * sy }
+      src: { x: (fl.h ? r.x + r.w - x1 : x0 - r.x) * sx, y: (fl.v ? r.y + r.h - y1 : y0 - r.y) * sy, w: (x1 - x0) * sx, h: (y1 - y0) * sy },
+      fh: fl.h, fv: fl.v
     };
   }
 

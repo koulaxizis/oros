@@ -829,6 +829,8 @@ body.tr-open { overflow: hidden; }
 .gt-chg-list { padding: 0 12px; }
 .gt-chg-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--border); }
 .gt-chg-row > .hint { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.gt-loc-row { flex-wrap: wrap; }
+.gt-loc-row > .gt-loc-name { flex: 1 1 100%; min-width: 0; overflow-wrap: anywhere; }
 .gt-chg > .hint { padding: 6px 12px 10px; }
 .btn.btn-sm, .gt-chg-row > .btn { flex: none; min-height: 36px; padding: 0 12px; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .gt-chg > summary::before { transition: none; } }

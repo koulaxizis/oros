@@ -60,6 +60,12 @@
     var w = iw * s, h = ih * s;
     return { x: (it.w - w) / 2, y: (it.h - h) / 2, w: w, h: h };
   }
+  // A picture mirrored in its frame (LY-PRO W4, it.ext.fl "h" | "v" |
+  // "hv"): → { h, v } (booleans).
+  function flipOf(it) {
+    var f = it && it.ext && typeof it.ext.fl === "string" ? it.ext.fl : "";
+    return { h: f.indexOf("h") >= 0, v: f.indexOf("v") >= 0 };
+  }
   // Effective resolution of a placed image (pixels per inch).
   function effectivePpi(it) {
     if (!it.iw) return 0;
@@ -316,6 +322,8 @@
       var paints = it.t === "img" ? !!it.a : it.t === "line" ? false : !!(it.fill || it.gr);
       if (paints && bleed > 0 && order[it.pg] < 100000) {
         var b = itemBox(it), e = 0.5, side = M.sideOf(doc, order[it.pg]);
+        var psz = M.pageSize ? M.pageSize(doc, M.find(doc.pages, it.pg)) : null;
+        if (psz) { W = psz.w; H = psz.h; }
         var left = !(facing && side === "R"), right = !(facing && side === "L");
         if ((left && short(b.x <= e, b.x <= -bleed + e)) || (right && short(b.x + b.w >= W - e, b.x + b.w >= W + bleed - e)) ||
             short(b.y <= e, b.y <= -bleed + e) || short(b.y + b.h >= H - e, b.y + b.h >= H + bleed - e)) add("warn", "bleed", it);
@@ -490,8 +498,13 @@
       ctx.save();
       roundRectPath(ctx, it.x, it.y, it.w, it.h, it.r);
       ctx.clip();
-      var r = imageRect(it);
-      ctx.drawImage(img, it.x + r.x, it.y + r.y, r.w, r.h);
+      var r = imageRect(it), fl = flipOf(it);
+      if (fl.h || fl.v) {
+        // mirrored about the picture's own centre
+        ctx.translate(it.x + r.x + r.w / 2, it.y + r.y + r.h / 2);
+        ctx.scale(fl.h ? -1 : 1, fl.v ? -1 : 1);
+        ctx.drawImage(img, -r.w / 2, -r.h / 2, r.w, r.h);
+      } else ctx.drawImage(img, it.x + r.x, it.y + r.y, r.w, r.h);
       ctx.restore();
       return;
     }
@@ -547,7 +560,7 @@
   // A page on a fresh canvas (thumbnails, PNG/JPG). scale = px per pt.
   function renderPage(doc, page, L, scale, opts) {
     opts = opts || {};
-    var s = doc.setup, b = opts.bleed ? s.bleed : 0;
+    var s = M.pageSize ? M.pageSize(doc, page) : doc.setup, b = opts.bleed ? doc.setup.bleed : 0;
     var cv = opts.canvas || document.createElement("canvas");
     cv.width = Math.max(1, Math.round((s.w + 2 * b) * scale));
     cv.height = Math.max(1, Math.round((s.h + 2 * b) * scale));
@@ -562,7 +575,7 @@
   }
 
   var api = {
-    corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, effectivePpi: effectivePpi, uniform: uniform,
+    corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, flipOf: flipOf, effectivePpi: effectivePpi, uniform: uniform,
     pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
     drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };
