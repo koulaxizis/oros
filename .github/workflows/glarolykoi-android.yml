@@ -6,10 +6,10 @@ name: Glarolykoi Android app
 # fails if anything from Google, Firebase or AndroidX, or the
 # advertising ID, ends up in the app.
 #
-# Signing (Settings → Secrets and variables → Actions), the Glarolykoi
-# key, not the orOS key; without them the release stays unsigned:
-#   GLAROLYKOI_KEYSTORE_BASE64   base64 of the keystore
-#   GLAROLYKOI_KEYSTORE_PASSWORD, GLAROLYKOI_KEY_ALIAS, GLAROLYKOI_KEY_PASSWORD
+# This workflow only checks. The signed release is built by android.yml
+# on main (orOS key, decision 2026-11-18), published as
+# oros-glarolykoi.apk in the android-apks release and in the orOS
+# F-Droid repository.
 
 on:
   push:
@@ -21,10 +21,6 @@ on:
 
 permissions:
   contents: read
-
-env:
-  # Raise for every release (1.2.3 → versionCode 1002003).
-  GLAROLYKOI_VERSION: 1.0.0
 
 jobs:
   build:
@@ -43,22 +39,6 @@ jobs:
       # The runner image ships the Android SDK (ANDROID_HOME).
       - name: Unit tests, debug APK and unsigned release
         run: gradle -p glarolykoi-android --no-daemon testDebugUnitTest assembleDebug assembleRelease
-
-      - name: Sign the release
-        if: github.event_name != 'pull_request'
-        env:
-          KS_B64: ${{ secrets.GLAROLYKOI_KEYSTORE_BASE64 }}
-          GLAROLYKOI_KEYSTORE_PASSWORD: ${{ secrets.GLAROLYKOI_KEYSTORE_PASSWORD }}
-          GLAROLYKOI_KEY_ALIAS: ${{ secrets.GLAROLYKOI_KEY_ALIAS }}
-          GLAROLYKOI_KEY_PASSWORD: ${{ secrets.GLAROLYKOI_KEY_PASSWORD }}
-        run: |
-          if [ -z "$KS_B64" ]; then
-            echo "::notice::No Glarolykoi signing secrets: release left unsigned."
-            exit 0
-          fi
-          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/glarolykoi.keystore"
-          GLAROLYKOI_KEYSTORE_FILE="$RUNNER_TEMP/glarolykoi.keystore" gradle -p glarolykoi-android --no-daemon assembleRelease
-          rm -f "$RUNNER_TEMP/glarolykoi.keystore"
 
       # GL-NOGOOGLE: the promise of this app. Checks the code (dex) and
       # the permissions of every APK built.

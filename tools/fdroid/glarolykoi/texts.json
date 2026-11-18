@@ -1,0 +1,14 @@
+{
+  "category": "Reading",
+  "screenshotsLater": true,
+  "en": {
+    "name": "Glarolykoi",
+    "summary": "Glarolykoi bookshop: new books and e-books, no Google, no tracking",
+    "description": "The app of Glarolykoi, an independent Greek publisher: the glarolykoi.net bookshop in an app of its own.\n\nBrowse and buy books, e-books and gifts with the same cart, account and payments as the site. E-books download to your phone. Links to other sites open in your browser, so you always see where you are.\n\nIf you want, the app checks the shop once a day and tells you when something new arrives, without Google or Firebase: it asks first, and sends nothing about you.\n\nNo Google libraries, no advertising ID, no analytics, no account with anyone. Free and open source (MIT), free forever."
+  },
+  "el": {
+    "name": "Γλαρόλυκοι",
+    "summary": "Το βιβλιοπωλείο των Γλαρόλυκων, χωρίς Google και παρακολούθηση",
+    "description": "Η εφαρμογή των Γλαρόλυκων, ανεξάρτητων εκδόσεων: το βιβλιοπωλείο του glarolykoi.net σε δική του εφαρμογή.\n\nΒρίσκεις και αγοράζεις βιβλία, e-books και δώρα με το ίδιο καλάθι, τον ίδιο λογαριασμό και τις ίδιες πληρωμές με το site. Τα e-books κατεβαίνουν στο κινητό σου. Οι σύνδεσμοι προς άλλα sites ανοίγουν στον browser σου, ώστε να ξέρεις πάντα πού βρίσκεσαι.\n\nΑν θέλεις, η εφαρμογή κοιτάζει το κατάστημα μία φορά τη μέρα και σου λέει όταν έρχεται κάτι νέο, χωρίς Google ή Firebase: σε ρωτάει πρώτα και δεν στέλνει τίποτα για σένα.\n\nΧωρίς βιβλιοθήκες της Google, χωρίς διαφημιστικό αναγνωριστικό, χωρίς στατιστικά, χωρίς λογαριασμό πουθενά. Δωρεάν και ανοιχτού κώδικα (MIT), δωρεάν για πάντα."
+  }
+}

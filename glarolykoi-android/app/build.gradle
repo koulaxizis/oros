@@ -2,19 +2,20 @@ plugins {
     id 'com.android.application'
 }
 
-// The version comes from GLAROLYKOI_VERSION ("1.2.3" → versionCode
-// 1002003); a build without it is 1.0.0. Raise it in
-// .github/workflows/glarolykoi-android.yml for each release.
+// The version is in glarolykoi-android/VERSION ("1.2.3" → versionCode
+// 1002003). Raise it for every release: F-Droid and the phones update
+// only to a higher versionCode.
 def appVersion = {
-    def v = System.getenv('GLAROLYKOI_VERSION') ?: '1.0.0'
+    def v = rootProject.file('VERSION').text.trim()
     def m = (v =~ /^v?(\d+)\.(\d+)\.(\d+)$/)
-    if (!m.find()) throw new GradleException("GLAROLYKOI_VERSION must look like 1.2.3, not ${v}")
+    if (!m.find()) throw new GradleException("VERSION must look like 1.2.3, not ${v}")
     [name: "${m.group(1)}.${m.group(2)}.${m.group(3)}",
      code: Math.max(1, (m.group(1) as int) * 1000000 + (m.group(2) as int) * 1000 + (m.group(3) as int))]
 }()
 
-// Release signing comes from the environment (GitHub secrets in CI),
-// never from a file in the repository.
+// Release signing comes from the environment, never from a file in the
+// repository: the orOS key (decision 2026-11-18), which android.yml
+// hands over from the OROS_KEYSTORE_* secrets.
 def ks = System.getenv('GLAROLYKOI_KEYSTORE_FILE')
 
 android {
