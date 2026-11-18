@@ -9026,7 +9026,8 @@
         '<div class="sc-foot"><span>' + escapeHtml(window.t("sc.info.repo")) + ': <a href="https://github.com/koulaxizis/oros" ' +
           'target="_blank" rel="noopener">koulaxizis/oros</a> · <a href="download/" target="_blank" rel="noopener">' +
           escapeHtml(window.t("sc.info.download")) + '</a> · <a href="privacy.html" target="_blank" rel="noopener">' +
-          escapeHtml(window.t("sc.info.privacy")) + '</a></span>' +
+          escapeHtml(window.t("sc.info.privacy")) + '</a> · <a href="media-kit/?lang=' + (window.orosLang === "el" ? "el" : "en") +
+          '" target="_blank" rel="noopener">' + escapeHtml(window.t("sc.info.mediakit")) + '</a></span>' +
           // Use-at-your-own-risk line (Bible IX, 2026-11-02): the full text
           // is the Disclaimer section of privacy.html, in the shell language.
           '<div class="sc-cred" id="sc-disc">' + escapeHtml(window.t("sc.info.disclaimer")) +
