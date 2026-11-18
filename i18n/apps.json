@@ -454,6 +454,12 @@
    ]
   },
   {
+   "app": "hive",
+   "files": [
+    "hive/hive.js"
+   ]
+  },
+  {
    "app": "household",
    "files": [
     "household/app.js",
