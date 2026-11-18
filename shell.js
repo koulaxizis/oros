@@ -5345,7 +5345,9 @@
     catch (e) { return d.toISOString().slice(0, 10); }
   }
 
+  var stMenuKey = "";   // ST-1 S2: the hourglasses the menu was drawn with
   function renderMenu() {
+    if (window.orosScreenTime && window.orosScreenTime.overKey) stMenuKey = window.orosScreenTime.overKey();
     var menu = document.getElementById("app-menu");
     // SH-B3 (form rebuild discipline): this function rebuilds the whole
     // menu, and it is called by background events too (sync messages,
@@ -5868,6 +5870,15 @@
               '<span>' + escapeHtml(label) + '</span>';
           } else {
             btn.textContent = label;
+          }
+          // ST-1 S2: past today's screen time limit on this device: an hourglass.
+          if (!app._alias && window.orosScreenTime && window.orosScreenTime.over && window.orosScreenTime.over(app.id)) {
+            var stO = document.createElement("span");
+            stO.className = "menu-st-over";
+            stO.textContent = "\u231B";
+            stO.title = window.t("st.over");
+            stO.setAttribute("aria-label", window.t("st.over"));
+            btn.appendChild(stO);
           }
           btn.addEventListener("click", function () { openApp(app); });
           // Favourites (launcher.js): the star at the end of the row.
@@ -12221,6 +12232,12 @@
       case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
       case "screentime":      if (window.orosScreenTime) { window.orosScreenTime.setOn(!!value); settingsNotify(); } return;   // ST-1
       case "screentimeClear": if (window.orosScreenTime) { window.orosScreenTime.clear(); settingsNotify(); } return;
+      case "screentimeLimit":   // S2: { id, min } (0 = no limit)
+        if (window.orosScreenTime && window.orosScreenTime.setLimit && value && typeof value === "object") {
+          window.orosScreenTime.setLimit(String(value.id || ""), Number(value.min) || 0);
+          settingsNotify();
+        }
+        return;
       case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
@@ -14399,7 +14416,11 @@
     closeNotifPanel();
     if (SOLO) { soloMenuButton(); return; }
     if (state.running) { returnToDesktop(); return; }
-    document.getElementById("app-menu").classList.toggle("open");
+    var menuEl = document.getElementById("app-menu");
+    // ST-1 S2: the menu is drawn once; redraw when an hourglass changed.
+    if (!menuEl.classList.contains("open") && window.orosScreenTime && window.orosScreenTime.overKey &&
+        window.orosScreenTime.overKey() !== stMenuKey) renderMenu();
+    menuEl.classList.toggle("open");
   }
   function closeMenu() {
     document.getElementById("app-menu").classList.remove("open");
@@ -16270,7 +16291,12 @@
       sensitive: function () { return !!strictLevelNow(); },
       media: function () { return qsMedia().some(function (m) { return m.playing; }); },
       docs: function () { return window.__orosAppDocs(); },
-      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; }
+      appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
+      // S2: the quiet toast 5 minutes before a limit, and the card's "Go to the desktop".
+      toast: function (title, body) {
+        if (window.orosNotifs && window.orosNotifs.transient) window.orosNotifs.transient({ ns: "screentime", title: title, body: body });
+      },
+      home: function () { returnToDesktop(); }
     });
   });
   // Desktop widgets (widgets.js, a shell component like launcher.js):

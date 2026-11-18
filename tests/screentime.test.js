@@ -31,7 +31,7 @@ test("days: local date keys, adding days across months and DST", () => {
 
 test("normalize: junk falls back, off by default, later fields ride along", () => {
   const n = M.normalize(null, "2026-11-17");
-  assert.deepEqual(n, { v: 1, on: false, days: {} });
+  assert.deepEqual(n, { v: 1, on: false, days: {}, limits: {}, remind: { day: "2026-11-17", apps: {} } });
   const p = M.normalize({ on: "yes", days: { "2026-11-17": { notes: 60, "Bad Id": 5, x: -3, todo: "12.9" } }, limits: { notes: 30 } }, "2026-11-17");
   assert.equal(p.on, false);
   assert.deepEqual(p.days, { "2026-11-17": { notes: 60, todo: 12 } });
@@ -166,6 +166,143 @@ test("shell side: ticks count the front app, write at most once a minute, add to
   assert.equal(JSON.parse(store["oros-screentime"]).on, false);
 });
 
+test("limits (S2): steps only, never Settings or the desktop, reminders per day", () => {
+  assert.deepEqual(M.LIMITS, [15, 30, 45, 60, 90, 120, 180, 240, 300, 360, 480]);
+  assert.ok(M.limitable("notes"));
+  assert.ok(!M.limitable("settings") && !M.limitable("~desk") && !M.limitable("~sens") && !M.limitable("Bad Id"));
+  const n = M.normalize({ limits: { notes: 30, todo: 17, settings: 60, "~desk": 15, reader: "60" },
+    remind: { day: "2026-11-17", apps: { notes: { w: 1, s: 99999, d: 2 }, settings: { d: 1 } } } }, "2026-11-17");
+  assert.deepEqual(n.limits, { notes: 30, reader: 60 });
+  assert.deepEqual(n.remind.apps, { notes: { w: 1, s: 86400 } });
+  // Yesterday's reminders do not carry over.
+  assert.deepEqual(M.normalize({ remind: { day: "2026-11-16", apps: { notes: { d: 1 } } } }, "2026-11-17").remind,
+    { day: "2026-11-17", apps: {} });
+  let p = M.normalize({ limits: { notes: 30 } }, "2026-11-17");
+  assert.equal(M.due(p, "notes", 24 * 60), "");
+  assert.equal(M.due(p, "notes", 25 * 60), "warn");
+  assert.equal(M.due(p, "todo", 9999), "", "no limit, nothing due");
+  p = M.answered(p, "notes", "warned", 25 * 60);
+  assert.equal(M.due(p, "notes", 26 * 60), "", "the warning comes once");
+  assert.equal(M.due(p, "notes", 30 * 60), "card");
+  p = M.answered(p, "notes", "more", 30 * 60);
+  assert.equal(p.remind.apps.notes.s, 45 * 60);
+  assert.equal(M.due(p, "notes", 44 * 60), "", "no second warning inside the 15 more minutes");
+  assert.equal(M.due(p, "notes", 45 * 60), "card");
+  p = M.answered(p, "notes", "done", 45 * 60);
+  assert.equal(M.due(p, "notes", 8 * 3600), "", "no more today");
+  // The shortest limit (15 minutes) still warns 5 minutes before.
+  const q = M.normalize({ limits: { todo: 15 } }, "2026-11-17");
+  assert.equal(M.due(q, "todo", 10 * 60), "warn");
+});
+
+function fakeDom() {
+  const mk = (tag) => {
+    const e = { tagName: tag.toUpperCase(), children: [], attrs: {}, listeners: {}, textContent: "", open: false,
+      get firstChild() { return this.children[0] || null; },
+      appendChild(c) { this.children.push(c); c.parentNode = this; return c; },
+      removeChild(c) { this.children.splice(this.children.indexOf(c), 1); return c; },
+      setAttribute(k, v) { this.attrs[k] = String(v); if (k === "open") this.open = true; },
+      addEventListener(ev, fn) { (this.listeners[ev] = this.listeners[ev] || []).push(fn); },
+      focus() { focused = this; },
+      showModal() { this.open = true; },
+      close() { this.open = false; },
+      click() { (this.listeners.click || []).forEach((f) => f({})); }
+    };
+    return e;
+  };
+  let focused = null;
+  return { mk, head: mk("head"), body: mk("body"), focused: () => focused };
+}
+
+test("shell side (S2): warning toast, the pause card, its answers and the hourglass", () => {
+  const store = {};
+  let now = at(2026, 11, 17, 10, 0);
+  const listeners = {};
+  const dom = fakeDom();
+  const doc = {
+    visibilityState: "visible",
+    hasFocus: () => true,
+    head: dom.head, body: dom.body,
+    createElement: dom.mk,
+    addEventListener: (ev, fn) => { (listeners[ev] = listeners[ev] || []).push(fn); },
+    querySelectorAll: () => []
+  };
+  const timers = [];
+  const RealDate = Date;
+  class FakeDate extends RealDate {
+    constructor(...a) { if (a.length) super(...a); else super(now); }
+    static now() { return now; }
+  }
+  const win = {};
+  const ctx = {
+    document: doc, Date: FakeDate, Math, JSON, Object, Array, Number, String, isFinite, WeakSet,
+    localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } },
+    setInterval: (fn) => { timers.push(fn); return 1; },
+    addEventListener: () => {},
+    t: (k) => k
+  };
+  win.window = win;
+  Object.assign(win, ctx);
+  vm.createContext(win);
+  vm.runInContext(SRC.replace('typeof window !== "undefined" ? window : globalThis', "window"), win);
+  const ST = win.orosScreenTime;
+  const toasts = [];
+  let homes = 0, sensitive = false;
+  ST.attach({ front: () => "notes", locked: () => false, sensitive: () => sensitive, media: () => false, docs: () => [],
+    appName: () => "Notes", toast: (a, b) => toasts.push([a, b]), home: () => { homes++; } });
+  const tick = timers[0];
+  const step = (n) => { for (let i = 0; i < n; i++) { now += M.TICK; listeners.pointerdown[0](); tick(); } };
+  ST.setOn(true);
+  ST.setLimit("notes", 15);
+  ST.setLimit("notes", 17);                      // not a step: ignored
+  ST.setLimit("settings", 15);                   // never limited
+  assert.deepEqual(JSON.parse(store["oros-screentime"]).limits, { notes: 15 });
+  step(10 * 4);                                  // 10 minutes
+  assert.equal(toasts.length, 1, "one quiet warning 5 minutes before");
+  assert.equal(toasts[0][0], "st.warn.title");
+  step(4 * 4);
+  assert.equal(toasts.length, 1);
+  const dlg = () => dom.body.children.find((c) => c.attrs && c.tagName === "DIALOG");
+  assert.equal(dlg(), undefined);
+  assert.equal(ST.over("notes"), false);
+  step(4);                                       // 15 minutes: the card
+  const d = dlg();
+  assert.ok(d && d.open, "the pause card is open");
+  assert.equal(d.attrs["aria-labelledby"], "oros-st-pause-t");
+  const acts = d.children[3].children;
+  assert.deepEqual(acts.map((b) => b.textContent), ["st.pause.more", "st.pause.done", "st.pause.home"]);
+  assert.equal(dom.focused(), acts[0], "focus starts on \"15 more minutes\"");
+  now += 6000;
+  assert.equal(ST.over("notes"), true, "the hourglass shows past the limit");
+  // Escape is "15 more minutes".
+  const ev = { prevented: false, preventDefault() { this.prevented = true; } };
+  d.listeners.cancel[0](ev);
+  assert.ok(ev.prevented && !d.open);
+  step(14 * 4);
+  assert.ok(!d.open, "quiet for 15 minutes");
+  step(4);
+  assert.ok(d.open, "the card comes back after 15 more minutes");
+  d.children[3].children[2].click();             // go to the desktop
+  assert.equal(homes, 1);
+  assert.ok(!d.open);
+  step(15 * 4);
+  assert.ok(d.open);
+  d.children[3].children[1].click();             // no more today
+  step(60 * 4);
+  assert.ok(!d.open, "no more reminders today");
+  // Sensitive work: no reminders at all.
+  ST.setLimit("notes", 30);
+  sensitive = true;
+  step(60 * 4);
+  assert.ok(!d.open);
+  // Off: nothing.
+  sensitive = false;
+  ST.setOn(false);
+  step(4);
+  assert.ok(!d.open);
+  assert.equal(ST.over("notes"), false);
+});
+
 test("privacy: device-local only, never in sync, backups, Assistant, Gate, Today or Automations", () => {
   assert.doesNotMatch(SRC, /registerSlice|markDirty|fetch\(|XMLHttpRequest|sendBeacon|WebSocket|orosSync/);
   const offLimits = ["sync.js", "davsync.js", "vault.js", "gate/gate.js", "today/agg.js", "today/host.js",
@@ -178,7 +315,7 @@ test("privacy: device-local only, never in sync, backups, Assistant, Gate, Today
   });
   // In the shell only the attach, note() and the Settings bridge use it.
   const uses = SHELL.match(/orosScreenTime/g) || [];
-  assert.ok(uses.length >= 4 && uses.length <= 10, "shell uses: " + uses.length);
+  assert.ok(uses.length >= 4 && uses.length <= 30, "shell uses: " + uses.length);
   assert.doesNotMatch(SHELL, /oros-screentime/);
   assert.equal(C.scopeOf("screentime"), "device");
 });
@@ -234,7 +371,7 @@ test("settings: section, search rows, strings in EN/EL/DE, durations", () => {
   assert.equal(C.stDur("en", 0), "under 1 min");
   assert.equal(C.stDur("en", 59 * 60 + 59), "59 min");
   assert.equal(C.stDur("en", 2 * 3600 + 5 * 60), "2 h 5 min");
-  assert.equal(C.stDur("el", 3600), "1 ώρ. 0 λεπ.");
+  assert.equal(C.stDur("el", 3600), "1 ώρ.");
   assert.deepEqual(C.findSettings("el", "χρόνος οθόνης", () => true).slice(0, 1).map((r) => r.section), ["screentime"]);
   assert.deepEqual(C.findSettings("en", "screen time", () => true).slice(0, 1).map((r) => r.section), ["screentime"]);
   // Text goes in as text: the section writes no innerHTML.

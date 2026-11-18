@@ -24,7 +24,11 @@
       "st.sens": "Sensitive work",
       "st.dayAria": "{day}: {time}",
       "st.clearSure": "Tap again to clear",
-      "st.clear.hint": "Removes every counted day from this device."
+      "st.clear.hint": "Removes every counted day from this device.",
+      "st.limits.hint": "5 minutes before a limit you get a quiet notice. At the limit a card asks whether to take a break: the app stays open under it, nothing is lost, and one tap goes on. Settings has no limit.",
+      "st.limit.none": "No limit",
+      "st.limit.used": "{used} of {limit} today",
+      "st.limits.empty": "The apps you use appear here once they have been counted."
     },
     el: {
       "st.hint": "Μετράει την εφαρμογή που είναι μπροστά, όσο το orOS φαίνεται, είναι ξεκλείδωτο και το χρησιμοποιείς (ή παίζει ήχος ή βίντεο). Μένει σε αυτή τη συσκευή: δεν συγχρονίζεται, δεν μπαίνει σε αντίγραφο ασφαλείας και δεν το βλέπουν ποτέ ο Βοηθός ή το orOS Gate. Κρατιέται 4 εβδομάδες.",
@@ -37,7 +41,11 @@
       "st.sens": "Ευαίσθητη δουλειά",
       "st.dayAria": "{day}: {time}",
       "st.clearSure": "Πάτησε ξανά για σβήσιμο",
-      "st.clear.hint": "Σβήνει όλες τις ημέρες που μετρήθηκαν από αυτή τη συσκευή."
+      "st.clear.hint": "Σβήνει όλες τις ημέρες που μετρήθηκαν από αυτή τη συσκευή.",
+      "st.limits.hint": "5 λεπτά πριν από ένα όριο βγαίνει μια ήσυχη ειδοποίηση. Στο όριο μια κάρτα ρωτά αν θέλεις διάλειμμα: η εφαρμογή μένει ανοιχτή από κάτω, δεν χάνεται τίποτα και ένα πάτημα συνεχίζει. Οι Ρυθμίσεις δεν έχουν όριο.",
+      "st.limit.none": "Χωρίς όριο",
+      "st.limit.used": "{used} από {limit} σήμερα",
+      "st.limits.empty": "Οι εφαρμογές που χρησιμοποιείς εμφανίζονται εδώ μόλις μετρηθούν."
     }
   };
   var C0 = window.SettingsCore;
@@ -47,7 +55,7 @@
     });
   }
 
-  var C, LANG, t, el, card, row, switchBtn, actions, confirmBtn, set, render;
+  var C, LANG, t, el, card, row, switchBtn, actions, confirmBtn, set, render, select;
 
   var stPick = null;
   function stLocale() { return LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB"; }
@@ -134,6 +142,35 @@
     c3.appendChild(el("p", "hint", t("st.weekHint")));
     host.appendChild(c3);
 
+    // S2: a daily limit per app (the apps of the last 7 days, most
+    // used first, and every app that has a limit). Older shells send
+    // no `limits`: no card.
+    if (st.limits && select) {
+      var c5 = card(t("st.limits"), "screentime");
+      c5.appendChild(el("p", "hint", t("st.limits.hint")));
+      var tot = {}, names = {}, no = st.noLimit || [];
+      days.forEach(function (d) {
+        d.apps.forEach(function (a) {
+          if (a.id.charAt(0) === "~" || no.indexOf(a.id) !== -1) return;
+          tot[a.id] = (tot[a.id] || 0) + a.secs;
+          names[a.id] = a.name || a.id;
+        });
+      });
+      Object.keys(st.limits).forEach(function (id) { if (!(id in tot)) { tot[id] = 0; } });
+      var ids = Object.keys(tot).sort(function (a, b) { return tot[b] - tot[a] || (a < b ? -1 : 1); }).slice(0, 40);
+      if (!ids.length) c5.appendChild(el("p", "hint", t("st.limits.empty")));
+      var opts = [{ value: "0", label: t("st.limit.none") }].concat((st.choices || []).map(function (m) {
+        return { value: String(m), label: C.stDur(LANG, m * 60) };
+      }));
+      ids.forEach(function (id) {
+        var lim = st.limits[id] || 0;
+        var sel = select(opts, String(lim), "st-limit:" + id, function (v) { set("screentimeLimit", { id: id, min: Number(v) }); });
+        var hint = lim ? t("st.limit.used", { used: C.stDur(LANG, (st.used && st.used[id]) || 0), limit: C.stDur(LANG, lim * 60) }) : null;
+        c5.appendChild(row(names[id] || (st.limitNames && st.limitNames[id]) || id, sel, { forId: sel.id, hint: hint }));
+      });
+      host.appendChild(c5);
+    }
+
     if (st.has) {
       var c4 = card(null);
       c4.appendChild(row(t("st.clear"), null, { hint: t("st.clear.hint") }));
@@ -150,6 +187,7 @@
     draw: function (host, s, ctx) {
       C = ctx.C; LANG = ctx.LANG; t = ctx.t; el = ctx.el; card = ctx.card; row = ctx.row;
       switchBtn = ctx.switchBtn; actions = ctx.actions; confirmBtn = ctx.confirmBtn; set = ctx.set; render = ctx.render;
+      select = ctx.select;
       secScreenTime(host, s);
     }
   };

@@ -31,9 +31,19 @@
 // key's size only), never read by Assistant, orOS Gate, Today or
 // Automations, never sent anywhere.
 //
+// Daily limits (S2, Chris 2026-11-17 decision 1): a limit per app in
+// minutes. 5 minutes before it a quiet toast; at the limit a
+// «Time for a break?» card over the app (a modal <dialog> in the
+// shell): the app stays open and loaded under it, nothing is lost,
+// one tap goes on: "15 more minutes" (Escape too) or "No more
+// reminders today", or "Go to the desktop". Never a block, never on
+// Settings. The menu marks an app past its limit with an hourglass.
+//
 // Storage: device-local "oros-screentime" = { v: 1, on, days:
-// { "YYYY-MM-DD": { <app id>: seconds } } }; other top-level fields
-// (limits, bedtime: later waves) are kept as they are. Days older
+// { "YYYY-MM-DD": { <app id>: seconds } }, limits: { <app id>:
+// minutes }, remind: { day, apps: { <id>: { w: 1 warned, s: seconds
+// of the next card, d: 1 no more today } } } }; other top-level
+// fields (bedtime: a later wave) are kept as they are. Days older
 // than 4 weeks (KEEP_DAYS, Chris 2026-11-17) are dropped. Seconds
 // collect in memory and are written at most once a minute (and when
 // orOS goes out of sight), added to what is stored, so two windows
@@ -53,6 +63,10 @@
   var MAX_APPS = 300;             // ids per day, a guard against junk
   var DESK = "~desk", SENS = "~sens";
   var ID_RE = /^(~desk|~sens|[a-z0-9][a-z0-9_-]{0,47})$/;
+  var LIMITS = [15, 30, 45, 60, 90, 120, 180, 240, 300, 360, 480];   // minutes
+  var NO_LIMIT = ["settings"];     // never limited
+  var WARN = 5 * 60;               // seconds before the limit: a quiet toast
+  var MORE = 15 * 60;              // "15 more minutes"
   var DAY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
 
   // ---------- 1. Model (pure) ----------
@@ -99,15 +113,66 @@
     });
     return out;
   }
+  function limitable(id) { return validId(id) && id.charAt(0) !== "~" && NO_LIMIT.indexOf(id) === -1; }
+  function cleanLimits(v) {
+    var o = {};
+    if (!v || typeof v !== "object" || Array.isArray(v)) return o;
+    Object.keys(v).forEach(function (id) {
+      var m = Number(v[id]);
+      if (limitable(id) && LIMITS.indexOf(m) !== -1) o[id] = m;
+    });
+    return o;
+  }
+  // Reminder state belongs to one day; another day starts clean.
+  function cleanRemind(v, today) {
+    var o = { day: today, apps: {} };
+    if (!v || typeof v !== "object" || v.day !== today || !v.apps || typeof v.apps !== "object") return o;
+    Object.keys(v.apps).forEach(function (id) {
+      var r = v.apps[id];
+      if (!limitable(id) || !r || typeof r !== "object") return;
+      var c = {};
+      if (r.w === 1) c.w = 1;
+      if (r.d === 1) c.d = 1;
+      var sn = Math.floor(Number(r.s));
+      if (isFinite(sn) && sn > 0) c.s = Math.min(86400, sn);
+      if (c.w || c.d || c.s) o.apps[id] = c;
+    });
+    return o;
+  }
   // An unreadable or old value falls back field by field; fields of
   // later waves ride along untouched.
   function normalize(p, today) {
     var o = {};
     p = p && typeof p === "object" && !Array.isArray(p) ? p : {};
-    Object.keys(p).forEach(function (k) { if (k !== "v" && k !== "on" && k !== "days") o[k] = p[k]; });
+    Object.keys(p).forEach(function (k) { if (["v", "on", "days", "limits", "remind"].indexOf(k) === -1) o[k] = p[k]; });
     o.v = 1;
     o.on = p.on === true;
     o.days = prune(p.days, today);
+    o.limits = cleanLimits(p.limits);
+    o.remind = cleanRemind(p.remind, today);
+    return o;
+  }
+  // What is due for `id` that has been used `used` seconds today:
+  // "card" (at the limit, or at the end of "15 more minutes"), "warn"
+  // (5 minutes before, once), or "" (nothing, no limit, no more today).
+  function due(p, id, used) {
+    var lim = (p.limits || {})[id];
+    if (!lim || !limitable(id)) return "";
+    var r = (p.remind && p.remind.apps && p.remind.apps[id]) || {};
+    if (r.d) return "";
+    var at = r.s || lim * 60;
+    if (used >= at) return "card";
+    if (!r.w && !r.s && lim * 60 > WARN && used >= lim * 60 - WARN) return "warn";
+    return "";
+  }
+  // The reminder state after an answer: "warned", "more" (15 more
+  // minutes from `used`), "done" (no more today).
+  function answered(p, id, what, used) {
+    var o = normalize(p, p.remind ? p.remind.day : "");
+    var r = o.remind.apps[id] || (o.remind.apps[id] = {});
+    if (what === "warned") r.w = 1;
+    else if (what === "more") r.s = Math.min(86400, Math.floor(used) + MORE);
+    else if (what === "done") r.d = 1;
     return o;
   }
   // Seconds added: { day: { id: secs } } onto p.days (a copy).
@@ -163,7 +228,8 @@
   var model = { VER: VER, KEY: KEY, KEEP_DAYS: KEEP_DAYS, TICK: TICK, MAX_STEP: MAX_STEP, IDLE: IDLE,
                 DESK: DESK, SENS: SENS, dayKey: dayKey, dayMs: dayMs, addDays: addDays, validId: validId,
                 prune: prune, normalize: normalize, addAll: addAll, counts: counts, bucket: bucket,
-                stepOf: stepOf, dayView: dayView, lastDays: lastDays };
+                stepOf: stepOf, dayView: dayView, lastDays: lastDays,
+                LIMITS: LIMITS, NO_LIMIT: NO_LIMIT, WARN: WARN, MORE: MORE, limitable: limitable, due: due, answered: answered };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -276,6 +342,148 @@
   function tick() {
     accrue(isOn());
     if (Date.now() - lastFlush >= FLUSH) flush();
+    checkLimit();
+  }
+
+  // ---------- 3. Daily limits (S2) ----------
+  function tr(key, vars) {
+    var v = key;
+    try { v = typeof root.t === "function" ? root.t(key) : key; } catch (e) {}
+    Object.keys(vars || {}).forEach(function (k) { v = v.split("{" + k + "}").join(vars[k]); });
+    return v;
+  }
+  function dur(secs) {
+    var m = Math.max(0, Math.floor(secs / 60));
+    if (m < 60) return tr("st.fmt.m", { m: m });
+    if (m % 60 === 0) return tr("st.fmt.h", { h: m / 60 });
+    return tr("st.fmt.hm", { h: Math.floor(m / 60), m: m % 60 });
+  }
+  function nameOf(id) {
+    var n = "";
+    if (host && typeof host.appName === "function") { try { n = host.appName(id) || ""; } catch (e) {} }
+    return n || id;
+  }
+  function usedToday(p, id) {
+    var t = today(), d = p.days[t] || {}, secs = d[id] || 0;
+    if (pend[t] && pend[t][id]) secs += pend[t][id] / 1000;
+    return secs;
+  }
+  var dlg = null, dlgFor = "";
+  function checkLimit() {
+    if (!host || (dlg && dlg.open)) return;
+    if (doc.visibilityState !== "visible" || call("locked", false) || call("sensitive", false)) return;
+    var id = call("front", "");
+    if (!limitable(id)) return;
+    var p = read();
+    if (!p.on || !p.limits[id]) return;
+    var used = usedToday(p, id), what = due(p, id, used);
+    if (what === "warn") {
+      write(answered(p, id, "warned", used));
+      var nm = nameOf(id);
+      if (host && typeof host.toast === "function") {
+        try { host.toast(tr("st.warn.title", { app: nm }), tr("st.warn.body", { app: nm, limit: dur(p.limits[id] * 60) })); } catch (e) {}
+      }
+    } else if (what === "card") showCard(id, used, p.limits[id]);
+    overAt = 0;
+  }
+  function answer(what) {
+    var id = dlgFor;
+    if (!id) return;
+    var p = read();
+    write(answered(p, id, what === "home" ? "more" : what, usedToday(p, id)));
+    dlgFor = "";
+    overAt = 0;
+    try { if (dlg.open) dlg.close(); } catch (e) {}
+    if (what === "home" && host && typeof host.home === "function") { try { host.home(); } catch (e) {} }
+  }
+  function btn(cls, key, what) {
+    var b = doc.createElement("button");
+    b.type = "button";
+    b.className = cls;
+    b.textContent = tr(key);
+    b.addEventListener("click", function () { answer(what); });
+    return b;
+  }
+  var CSS =
+    "#oros-st-pause{border:1px solid var(--border,#322d20);border-radius:18px;padding:22px 20px 18px;max-width:min(420px,calc(100vw - 32px));" +
+    "background:var(--panel-bg,#1d1a13);color:var(--text,#f0ead9);box-shadow:0 18px 50px var(--shadow,rgba(0,0,0,.5));font:inherit}" +
+    "#oros-st-pause::backdrop{background:rgba(0,0,0,.45)}" +
+    "#oros-st-pause h2{margin:0 0 8px;font-size:20px;outline:none}" +
+    "#oros-st-pause p{margin:0 0 8px;line-height:1.45;font-size:15px}" +
+    "#oros-st-pause .st-p-note{color:var(--text-dim,#a89f8a);font-size:13px}" +
+    "#oros-st-pause .st-p-acts{display:flex;flex-direction:column;gap:8px;margin-top:14px}" +
+    "#oros-st-pause button{min-height:44px;border-radius:12px;border:1px solid var(--border,#322d20);background:none;color:inherit;font:inherit;font-weight:700;cursor:pointer;padding:8px 14px}" +
+    "#oros-st-pause button.st-p-main{background:var(--accent,#d4af37);border-color:var(--accent,#d4af37);color:var(--accent-ink,#14120d)}" +
+    "#oros-st-pause button:focus-visible{outline:2px solid var(--accent,#d4af37);outline-offset:2px}";
+  function showCard(id, used, lim) {
+    if (!doc.body) return;
+    if (!dlg) {
+      var st = doc.createElement("style");
+      st.textContent = CSS;
+      doc.head.appendChild(st);
+      dlg = doc.createElement("dialog");
+      dlg.id = "oros-st-pause";
+      dlg.setAttribute("aria-labelledby", "oros-st-pause-t");
+      dlg.setAttribute("aria-describedby", "oros-st-pause-b");
+      // Escape is "15 more minutes": the card never traps anyone.
+      // Browsers may close a modal on Escape without a cancelable
+      // cancel (no user activation), so a close the card did not make
+      // is "15 more minutes" too.
+      dlg.addEventListener("cancel", function (e) { e.preventDefault(); answer("more"); });
+      dlg.addEventListener("keydown", function (e) { if (e.key === "Escape") { e.preventDefault(); answer("more"); } });
+      dlg.addEventListener("close", function () { if (dlgFor) answer("more"); });
+      doc.body.appendChild(dlg);
+    }
+    dlgFor = id;
+    while (dlg.firstChild) dlg.removeChild(dlg.firstChild);
+    var h = doc.createElement("h2");
+    h.id = "oros-st-pause-t";
+    h.tabIndex = -1;
+    h.textContent = tr("st.pause.title");
+    var b = doc.createElement("p");
+    b.id = "oros-st-pause-b";
+    b.textContent = tr("st.pause.body", { app: nameOf(id), used: dur(used), limit: dur(lim * 60) });
+    var n = doc.createElement("p");
+    n.className = "st-p-note";
+    n.textContent = tr("st.pause.note");
+    var acts = doc.createElement("div");
+    acts.className = "st-p-acts";
+    var more = btn("st-p-main", "st.pause.more", "more");
+    acts.appendChild(more);
+    acts.appendChild(btn("", "st.pause.done", "done"));
+    acts.appendChild(btn("", "st.pause.home", "home"));
+    dlg.appendChild(h);
+    dlg.appendChild(b);
+    dlg.appendChild(n);
+    dlg.appendChild(acts);
+    try { if (typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open", ""); } catch (e) { dlg.setAttribute("open", ""); }
+    try { more.focus(); } catch (e) {}
+  }
+
+  // Apps past today's limit, for the menu's hourglass (cached 5 s).
+  var overAt = 0, overSet = {};
+  function over(id) {
+    var now = Date.now();
+    if (now - overAt > 5000) {
+      overAt = now;
+      overSet = {};
+      var p = read();
+      if (p.on) Object.keys(p.limits).forEach(function (a) { if (usedToday(p, a) >= p.limits[a] * 60) overSet[a] = 1; });
+    }
+    return !!overSet[id];
+  }
+  // The apps past their limit, for the menu to know when to redraw.
+  function overKey() { over(""); return Object.keys(overSet).sort().join(","); }
+  function setLimit(id, mins) {
+    var p = read();
+    mins = Number(mins) || 0;
+    if (!limitable(id)) return;
+    if (mins && LIMITS.indexOf(mins) === -1) return;
+    if ((p.limits[id] || 0) === mins) return;
+    if (mins) p.limits[id] = mins; else delete p.limits[id];
+    delete p.remind.apps[id];      // a new limit starts its reminders again
+    write(p);
+    overAt = 0;
   }
 
   // Right before the app in front changes (shell.js openApp,
@@ -297,7 +505,10 @@
     var days = lastDays(p, t, 7).map(function (d) {
       return { day: d.day, total: d.total, apps: d.apps.map(function (a) { return { id: a.id, name: name(a.id), secs: a.secs }; }) };
     });
-    return { on: p.on, today: t, days: days, has: Object.keys(p.days).length > 0, keep: KEEP_DAYS };
+    var used = {}, limitNames = {};
+    Object.keys(p.limits).forEach(function (id) { used[id] = Math.floor(usedToday(p, id)); limitNames[id] = name(id); });
+    return { on: p.on, today: t, days: days, has: Object.keys(p.days).length > 0, keep: KEEP_DAYS,
+             limits: p.limits, used: used, limitNames: limitNames, choices: LIMITS.slice(), noLimit: NO_LIMIT.slice() };
   }
 
   function setOn(v) {
@@ -340,6 +551,9 @@
     note: note,
     snapshot: snapshot,
     setOn: setOn,
-    clear: clear
+    clear: clear,
+    setLimit: setLimit,
+    over: over,
+    overKey: overKey
   };
 })(typeof window !== "undefined" ? window : globalThis);

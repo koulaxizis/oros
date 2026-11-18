@@ -151,6 +151,7 @@
     ["dv-report", "device", "dv.report"],
     ["screentime", "screentime", "st.on"],
     ["screentime-week", "screentime", "st.week", null, "st.on"],
+    ["screentime-limits", "screentime", "st.limits", null, "st.on"],
     ["screentime-clear", "screentime", "st.clear", null, "st.on"]
   ];
 
@@ -1459,16 +1460,19 @@
       "d.screentime": "Time in each app, on this device only",
       "st.on": "Count screen time on this device",
       "st.week": "Last 7 days",
+      "st.h": "{h} h",
       "st.hm": "{h} h {m} min",
       "st.m": "{m} min",
       "st.lt1": "under 1 min",
       "st.clear": "Clear history",
+      "st.limits": "Daily limits",
       "st.wait": "Screen time starts a few seconds after orOS. Open this section again in a moment.",
       "st.loading": "Loading screen time…",
       "st.link": "Screen time: time in each app",
       "w.screentime": "screen time usage wellbeing digital how long apps time spent minutes hours habit",
       "w.screentime-week": "screen time week days chart history",
-      "w.screentime-clear": "screen time clear delete history erase"
+      "w.screentime-clear": "screen time clear delete history erase",
+      "w.screentime-limits": "screen time limit daily limit break reminder time limit"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -2767,16 +2771,19 @@
       "d.screentime": "Χρόνος σε κάθε εφαρμογή, μόνο σε αυτή τη συσκευή",
       "st.on": "Μέτρηση χρόνου οθόνης σε αυτή τη συσκευή",
       "st.week": "Τελευταίες 7 ημέρες",
+      "st.h": "{h} ώρ.",
       "st.hm": "{h} ώρ. {m} λεπ.",
       "st.m": "{m} λεπ.",
       "st.lt1": "κάτω από 1 λεπ.",
       "st.clear": "Σβήσε το ιστορικό",
+      "st.limits": "Όρια ανά ημέρα",
       "st.wait": "Ο χρόνος οθόνης ξεκινά λίγα δευτερόλεπτα μετά το orOS. Άνοιξε ξανά την ενότητα σε λίγο.",
       "st.loading": "Φορτώνω τον χρόνο οθόνης…",
       "st.link": "Χρόνος οθόνης: χρόνος σε κάθε εφαρμογή",
       "w.screentime": "χρόνος οθόνης χρήση ψηφιακή ευεξία πόση ώρα εφαρμογές λεπτά ώρες συνήθεια screen time",
       "w.screentime-week": "χρόνος οθόνης εβδομάδα ημέρες γράφημα ιστορικό",
-      "w.screentime-clear": "χρόνος οθόνης σβήσιμο διαγραφή ιστορικό"
+      "w.screentime-clear": "χρόνος οθόνης σβήσιμο διαγραφή ιστορικό",
+      "w.screentime-limits": "χρόνος οθόνης όριο ημερήσιο όριο διάλειμμα υπενθύμιση"
     }
   };
 
@@ -2926,6 +2933,7 @@
     var m = Math.floor((Number(secs) || 0) / 60);
     if (m < 1) return t(lang, "st.lt1");
     if (m < 60) return t(lang, "st.m", { m: m });
+    if (m % 60 === 0) return t(lang, "st.h", { h: m / 60 });
     return t(lang, "st.hm", { h: Math.floor(m / 60), m: m % 60 });
   }
   function hourLabel(h) { return pad2(h) + ":00"; }
