@@ -13211,6 +13211,8 @@
   function zoomCan() {
     zoomBattery();
     if (SOLO || !zoomOn() || zoom.lowBat || document.hidden || zoomReduced()) return false;
+    var de = document.documentElement;                           // Energy saver (#1113): html[data-oros-saver="1"]
+    if (de && de.getAttribute && de.getAttribute("data-oros-saver") === "1") return false;
     if (mt.side) return false;                                   // side by side: two frames, no zoom
     return typeof Element !== "undefined" && typeof Element.prototype.animate === "function";
   }

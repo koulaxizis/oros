@@ -31,7 +31,7 @@ test("zoom: on by default, off only by its own device key", () => {
 
 test("zoom: never with reduced motion, low battery, SOLO, side by side or a hidden tab", () => {
   const can = body("zoomCan");
-  ["SOLO", "!zoomOn()", "zoom.lowBat", "document.hidden", "zoomReduced()", "mt.side", "Element.prototype.animate"].forEach((g) => {
+  ["SOLO", "!zoomOn()", "zoom.lowBat", "document.hidden", "zoomReduced()", "data-oros-saver\") === \"1\"", "mt.side", "Element.prototype.animate"].forEach((g) => {
     assert.ok(can.includes(g), g);
   });
   assert.match(body("zoomReduced"), /prefers-reduced-motion: reduce/);
