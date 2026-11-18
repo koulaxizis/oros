@@ -836,28 +836,7 @@
       { forId: "f-n.duration" }));
     host.appendChild(c2);
 
-    var q = C.readQuiet(N.getSetting("quietHours", {}));
-    var c3 = card(null);
-    c3.appendChild(row(t("n.quiet"), switchBtn(q.enabled, "n.quiet", function (v) {
-      nSet("quietHours", C.quietValue(v, q.start, q.end));
-    }, t("n.quiet")), { hint: t("n.quiet.hint") }));
-    var hours = [];
-    for (var h = 0; h <= 23; h++) hours.push({ value: h, label: C.hourLabel(h) });
-    var qRow = el("div", "pair");
-    var fromLab = el("label", "pair-label", t("n.from"));
-    fromLab.htmlFor = "f-n.from";
-    qRow.appendChild(fromLab);
-    qRow.appendChild(select(hours, q.start, "n.from", function (v) {
-      nSet("quietHours", C.quietValue(q.enabled, parseInt(v, 10), q.end));
-    }));
-    var toLab = el("label", "pair-label", t("n.to"));
-    toLab.htmlFor = "f-n.to";
-    qRow.appendChild(toLab);
-    qRow.appendChild(select(hours, q.end, "n.to", function (v) {
-      nSet("quietHours", C.quietValue(q.enabled, q.start, parseInt(v, 10)));
-    }));
-    c3.appendChild(qRow);
-    host.appendChild(c3);
+    secFocus(host, N);
 
     var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
     if (known.length) {
@@ -880,6 +859,121 @@
       c4.appendChild(list);
       host.appendChild(c4);
     }
+  }
+
+  // Focus modes (FOCUS-1, focus.js in the shell). Do Not Disturb and
+  // quiet hours became modes (Chris 2026-11-17, D2): quiet hours are
+  // the Sleep mode's schedule. The active mode holds on all devices
+  // (D1). Mode names are the person's text: textContent / value only.
+  var focusSel = "dnd";
+  function focusApi() {
+    var p = parentWin();
+    try { var F = p && p.orosFocus; return (F && typeof F.list === "function") ? F : null; } catch (e) { return null; }
+  }
+  function secFocus(host, N) {
+    var F = focusApi();
+    var q = C.readQuiet(N.getSetting("quietHours", {}));
+    var c3 = card(t("n.focus"), "notifications");
+    if (F) c3.appendChild(el("p", "hint", t("n.focus.hint")));
+    if (F) {
+      var a = F.active();
+      var nowTxt = !a ? t("n.focus.none")
+        : a.until ? t("n.focus.until", { name: a.name, t: linkTime(a.until) })
+        : t("n.focus.on", { name: a.name });
+      var nowRow = row(t("n.focus.now"), a ? button(t("n.focus.stop"), "n.focus.stop", function () { F.stop(); render(); }) : null);
+      nowRow.appendChild(el("div", "hint", nowTxt));
+      c3.appendChild(nowRow);
+    }
+    // The Sleep schedule = quiet hours (old devices keep reading it).
+    c3.appendChild(row(t("n.quiet"), switchBtn(q.enabled, "n.quiet", function (v) {
+      nSet("quietHours", C.quietValue(v, q.start, q.end));
+    }, t("n.quiet")), { hint: t(F ? "n.quiet.hint2" : "n.quiet.hint") }));
+    var hours = [];
+    for (var h = 0; h <= 23; h++) hours.push({ value: h, label: C.hourLabel(h) });
+    var qRow = el("div", "pair");
+    var fromLab = el("label", "pair-label", t("n.from"));
+    fromLab.htmlFor = "f-n.from";
+    qRow.appendChild(fromLab);
+    qRow.appendChild(select(hours, q.start, "n.from", function (v) {
+      nSet("quietHours", C.quietValue(q.enabled, parseInt(v, 10), q.end));
+    }));
+    var toLab = el("label", "pair-label", t("n.to"));
+    toLab.htmlFor = "f-n.to";
+    qRow.appendChild(toLab);
+    qRow.appendChild(select(hours, q.end, "n.to", function (v) {
+      nSet("quietHours", C.quietValue(q.enabled, q.start, parseInt(v, 10)));
+    }));
+    c3.appendChild(qRow);
+    host.appendChild(c3);
+    if (!F) return;
+
+    // One mode at a time: pick it, start it, change it.
+    var modes = F.list();
+    if (!modes.some(function (m) { return m.id === focusSel; })) focusSel = modes[0].id;
+    var m = modes.filter(function (x) { return x.id === focusSel; })[0];
+    var c5 = card(t("n.focus.modes"));
+    c5.appendChild(row(t("n.focus.mode"), select(modes.map(function (x) {
+      return { value: x.id, label: x.name };
+    }), focusSel, "n.focus.mode", function (v) { focusSel = v; render(); }), { forId: "f-n.focus.mode" }));
+    var running = a && a.id === m.id;
+    c5.appendChild(actions(
+      running ? button(t("n.focus.stop"), "n.focus.stop2", function () { F.stop(); render(); })
+              : button(t("n.focus.start"), "n.focus.start", function () { F.start(m.id, { until: 0 }); render(); }, "primary"),
+      modes.length - 4 < F.model.MAX_OWN ? button(t("n.focus.add"), "n.focus.add", function () {
+        var id = F.add(t("n.focus.newname", { n: modes.length - 3 }), "star");
+        if (id) focusSel = id;
+        render();
+      }) : null));
+
+    var nameIn = el("input");
+    nameIn.id = "f-n.focus.name";
+    nameIn.type = "text";
+    nameIn.maxLength = 40;
+    nameIn.autocomplete = "off";
+    nameIn.setAttribute("data-k", "n.focus.name");
+    nameIn.value = m.own || "";
+    nameIn.placeholder = m.builtin ? t("n.focus.m." + m.id) : "";
+    nameIn.addEventListener("change", function () { F.edit(m.id, { name: nameIn.value }); render(); });
+    var nameBox = el("div", "pass-row");
+    nameBox.appendChild(nameIn);
+    c5.appendChild(row(t("n.focus.name"), nameBox, { forId: "f-n.focus.name", hint: m.builtin ? t("n.focus.name.hint") : null }));
+    c5.appendChild(row(t("n.focus.icon"), select(F.model.ICONS.map(function (ic) {
+      return { value: ic, label: t("n.focus.ic." + ic) };
+    }), m.icon, "n.focus.icon", function (v) { F.edit(m.id, { icon: v }); render(); }), { forId: "f-n.focus.icon" }));
+
+    if (m.locked) {
+      c5.appendChild(row(t("n.focus.allow"), null, { hint: t("n.focus.allow.none") }));
+    } else {
+      var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
+      var allowRow = row(t("n.focus.allow"), null, { hint: t("n.focus.allow.hint") });
+      var list = el("div", "checks");
+      known.forEach(function (id) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = m.allow.indexOf(id) >= 0;
+        cb.setAttribute("data-k", "n.focus.allow:" + id);
+        cb.addEventListener("change", function () {
+          var next = m.allow.filter(function (x) { return x !== id; });
+          if (cb.checked) next.push(id);
+          F.edit(m.id, { allow: next });
+          render();
+        });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, id === "system" ? "orOS" : id === "discover" ? t("n.discover") : appName(id)));
+        list.appendChild(lab);
+      });
+      allowRow.appendChild(list);
+      c5.appendChild(allowRow);
+    }
+    if (!m.builtin) {
+      c5.appendChild(actions(confirmBtn(t("n.focus.remove"), t("n.focus.remove.sure"), "n.focus.remove", function () {
+        F.remove(m.id);
+        focusSel = "dnd";
+        render();
+      }, "danger")));
+    }
+    host.appendChild(c5);
   }
 
   // In the orOS Android app only (BR-PHONE v3): the phone rings

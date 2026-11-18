@@ -10,15 +10,25 @@ Neue Benachrichtigungen erscheinen für ein paar Sekunden auf dem Bildschirm (st
 - Der Schalter `Benachrichtigungen` schaltet alle Benachrichtigungen ein oder aus.
 - `Test senden` zeigt ein Beispiel, damit du siehst, wie es aussieht.
 - `Position auf dem Bildschirm`, `Stil`, `Ton`, `Lautstärke` und `Bleibt sichtbar` ändern, wo Pop-ups erscheinen, wie sie aussehen, welchen Ton sie machen (standardmäßig `Keiner`; deine Melodien aus dem [Klingelton-Komponisten](app:ringtones) stehen auch in der Liste, so können Erinnerungen aus Gewohnheiten, Gesundheit und jeder anderen App damit klingeln) und wie lange sie bleiben.
-- `Ruhezeiten` hält Pop-ups und Töne zwischen den Uhrzeiten `Von` und `Bis` fern (standardmäßig 22:00 bis 08:00). Benachrichtigungen kommen trotzdem im Posteingang an.
+- `Fokus` enthält die Fokus-Modi, siehe unten.
 - Unter `Welche Apps benachrichtigen dürfen` kannst du Benachrichtigungen für einzelne Apps ausschalten. `orOS` steht für Meldungen von orOS selbst, etwa zu Synchronisierung und Updates. `Wöchentlicher App-Vorschlag` ist der Montagsvorschlag einer App, die du noch nicht geöffnet hast ([Heute](app:today)).
 
 Diese Einstellungen reisen mit der [Synchronisierung](help:t/sync) mit, sie sind also auf all deinen Geräten gleich.
 
+## Fokus-Modi
+Ein Fokus-Modus hält Benachrichtigungen still, während du arbeitest, schläfst oder Zeit für dich hast. Solange ein Modus an ist, zeigen sich und klingen nur die Apps, die er durchlässt; alle anderen Benachrichtigungen kommen trotzdem in die Liste der Glocke, es geht also nichts verloren.
+
+- orOS hat vier Modi: `Nicht stören` (lässt nichts durch), `Schlafen`, `Arbeit` und `Privat`, und mit `Neuer Modus` kannst du bis zu 10 eigene anlegen.
+- In den [Einstellungen](app:settings) › `Benachrichtigungen` › `Fokus-Modi` wählst du einen Modus, um ihn umzubenennen, ihm ein Symbol zu geben, die `Apps, die sich zeigen dürfen` festzulegen, ihn jetzt einzuschalten oder einen eigenen zu löschen.
+- `Schlafen in den Ruhezeiten` schaltet den Modus Schlafen zwischen den Uhrzeiten `Von` und `Bis` selbst ein (standardmäßig 22:00 bis 08:00). Schaltest du ihn in der Nacht aus, bleibt er bis zum Morgen aus.
+- In den Schnelleinstellungen (die Schaltfläche am rechten Ende der oberen Leiste) schaltet `Fokus` den zuletzt genutzten Modus mit einem Tippen ein oder aus. Sein Pfeil zeigt alle Modi und wie lange: `Für eine Stunde`, `Bis 8 Uhr morgens` oder `Bis du es ausschaltest`.
+- Ein Modus, den du einschaltest, gilt auf allen deinen Geräten, die synchronisieren. Solange einer an ist, zeigt die obere Leiste eine durchgestrichene Glocke.
+- Wecker der Uhr und klingelnde Kalender-Erinnerungen klingeln immer, in jedem Modus.
+
 ## Wecker
 Wecker stellst du in der App [Zeit](app:time). Wenn ein Wecker klingelt, erscheint oben rechts auf dem Bildschirm ein Feld mit `Wecker`, und es piept. Tippe auf `Schlummern 9 Min.`, um ihn in 9 Minuten wieder zu hören, oder auf `Schließen`, um ihn zu stoppen. Nach 30 Sekunden hört er von selbst auf und bleibt in deinem Posteingang.
 
-Wecker gehören zu orOS, nicht zur App Zeit, deshalb klingeln sie in jeder App und auf dem Desktop. Das Wecker-Feld erscheint auch während der Ruhezeiten.
+Wecker gehören zu orOS, nicht zur App Zeit, deshalb klingeln sie in jeder App und auf dem Desktop. Das Wecker-Feld erscheint auch, solange ein Fokus-Modus an ist.
 
 ## Kalender-Erinnerungen
 Wähle in der App [Kalender](app:calendar) eine Zeit bei `Erinnerung`, wenn du einen Termin hinzufügst oder bearbeitest. Die Erinnerung kommt zu dieser Zeit als Benachrichtigung an, auch wenn der Kalender geschlossen ist. Öffnest du orOS nach der Erinnerungszeit, aber vor Beginn des Termins, bekommst du sie trotzdem. Hat der Termin schon begonnen, wird sie übersprungen.

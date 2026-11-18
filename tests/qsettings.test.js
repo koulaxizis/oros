@@ -55,10 +55,11 @@ test("battery shows only when the device runs on it or is not full", () => {
   assert.equal(Q.bigOn(150), true);
 });
 
-test("notifications.js: DND is device-local and silences toasts like quiet hours", () => {
+test("notifications.js: DND is a focus mode (FOCUS-1); the old device-local key is migrated once", () => {
   const n = read("notifications.js");
   assert.match(n, /const DND_KEY = 'oros-dnd';/);
-  assert.match(n, /function isQuietHour\(now\) \{\n    if \(getDnd\(now\)\.on\) return true;/);
+  assert.match(n, /function isQuietHour\(now\) \{\n    if \(oldDnd\(now\)\.on\) return true;/);
+  assert.match(n, /if \(v === 'on' \|\| v === true\) F\.start\('dnd', \{ until: 0 \}\);/);
   assert.match(n, /dnd: \(\) => getDnd\(Date\.now\(\)\),\n    setDnd,/);
 });
 

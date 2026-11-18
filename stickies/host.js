@@ -441,6 +441,7 @@
     try {
       if (typeof N.getSetting === "function" && N.getSetting("enabled", true) === false) return false;
       if (typeof N.getAppToggle === "function" && !N.getAppToggle("stickies")) return false;
+      if (typeof N.silent === "function") return !N.silent("stickies");   // focus modes (FOCUS-1)
       var qh = typeof N.getSetting === "function" ? N.getSetting("quietHours", {}) : {};
       if (qh && qh.enabled) {
         var h = new Date(now).getHours(), s = qh.quietHoursStart, e = qh.quietHoursEnd;
