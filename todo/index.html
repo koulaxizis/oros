@@ -7,9 +7,9 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=todo" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>To-Do · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=7.43.00">
-  <link rel="stylesheet" href="../emptykit.css?v=7.43.00">
-  <link rel="stylesheet" href="todo.css?v=7.43.00">
+  <link rel="stylesheet" href="../fonts.css?v=7.48.00">
+  <link rel="stylesheet" href="../emptykit.css?v=7.48.00">
+  <link rel="stylesheet" href="todo.css?v=7.48.00">
 </head>
 <body>
 
@@ -63,6 +63,8 @@
     <button class="ctrl-btn" id="clear-completed" data-i18n="clear.completed">Clear completed</button>
     <button class="ctrl-btn icon" id="list-share" hidden
             data-i18n-title="list.share"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
+    <button class="ctrl-btn icon" id="list-send" hidden
+            data-i18n-title="list.sendApp"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><path d="M14 10l7-7M15 3h6v6"/></svg></button>
     <button class="ctrl-btn icon" id="list-settings"
             data-i18n-title="list.settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
   </div>
@@ -184,6 +186,7 @@
       <menu>
         <button type="button" id="f-delete" class="danger" data-i18n="item.delete">Delete</button>
         <span class="spacer"></span>
+        <button type="button" id="f-send" hidden data-i18n="item.sendApp">Send to an app…</button>
         <button type="button" id="f-track" hidden data-i18n="item.track">Track time</button>
         <button type="submit" data-i18n="save">Save</button>
       </menu>
@@ -339,23 +342,23 @@
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=7.43.00" data-app="todo,recordpkg,google-import,links"></script>
-  <script src="../links/core.js?v=7.43.00"></script>
-  <script src="../links/todo.js?v=7.43.00"></script>
-  <script src="platforms.js?v=7.43.00"></script>
-  <script src="../google-import.js?v=7.43.00"></script>
-  <script src="gtasks.js?v=7.43.00"></script>
-  <script src="../atelier/zip.js?v=7.43.00"></script>
-  <script src="../importkit.js?v=7.43.00"></script>
-  <script src="../emptykit.js?v=7.43.00"></script>
-  <script src="import.js?v=7.43.00"></script>
-  <script src="model.js?v=7.43.00"></script>
-  <script src="../bundle.js?v=7.43.00"></script>
-  <script src="../recordpkg.js?v=7.43.00"></script>
-  <script src="package.js?v=7.43.00"></script>
-  <script src="../household/core.js?v=7.43.00"></script>
-  <script src="house.js?v=7.43.00"></script>
-  <script src="todo.js?v=7.43.00"></script>
-  <script src="../pickers.js?v=7.43.00" defer></script>
+  <script src="../i18n.js?v=7.48.00" data-app="todo,recordpkg,google-import,links"></script>
+  <script src="../links/core.js?v=7.48.00"></script>
+  <script src="../links/todo.js?v=7.48.00"></script>
+  <script src="platforms.js?v=7.48.00"></script>
+  <script src="../google-import.js?v=7.48.00"></script>
+  <script src="gtasks.js?v=7.48.00"></script>
+  <script src="../atelier/zip.js?v=7.48.00"></script>
+  <script src="../importkit.js?v=7.48.00"></script>
+  <script src="../emptykit.js?v=7.48.00"></script>
+  <script src="import.js?v=7.48.00"></script>
+  <script src="model.js?v=7.48.00"></script>
+  <script src="../bundle.js?v=7.48.00"></script>
+  <script src="../recordpkg.js?v=7.48.00"></script>
+  <script src="package.js?v=7.48.00"></script>
+  <script src="../household/core.js?v=7.48.00"></script>
+  <script src="house.js?v=7.48.00"></script>
+  <script src="todo.js?v=7.48.00"></script>
+  <script src="../pickers.js?v=7.48.00" defer></script>
 </body>
 </html>

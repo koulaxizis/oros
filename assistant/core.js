@@ -2516,19 +2516,29 @@
   // where they check and save it; nothing is saved by this call.
   // Passwords is never a source or a target (AUTO-4).
   var RULE_WHEN = ["day", "month", "year", "once", "open", "notice", "event"];
-  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "file", "print", "track", "pause", "sound"];
+  var RULE_DO = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "file", "print", "track", "pause", "sound", "card", "crm", "record"];
+  // BR-EV-2 (2026-11-17): events of Forms, Billing, Kanban, Stock, Scan PDF and Transfer.
+  var RULE_EVENTS = ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in", "bridge.pdf", "bridge.photo", "bridge.file",
+                     "timesheet.start", "timesheet.stop", "event.soon", "goal.sales", "goal.spent", "base.add", "base.change",
+                     "forms.answer", "invoices.paid", "invoices.overdue", "kanban.done", "stock.low", "scanpdf.signed", "transfer.received"];
   var TOOL_RULE = {
     name: "propose_rule",
     description: "Write an automation rule for the Automations app: when something happens, do some steps. " +
       "when.type: day (every day, or only on weekdays; at HH:MM), month (day_of_month 1-31, -1 = last day; at), year (date MM-DD; at), " +
       "once (date YYYY-MM-DD; at), open (when orOS opens), notice (a notice arrives from app, any app when app is empty; word = only when it has this word), " +
-      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, webhook.in = the incoming webhook set up in Automations gets a message, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; timesheet.start / timesheet.stop = a Timesheet timer starts / stops; event.soon = minutes_before (1-120) an event of the day starts; goal.sales = today's till sales in Stock reach goal; goal.spent = this month's spending in Budget passes goal (goal in money units, required for goal.*); base.add / base.change = a record is added / a field changes in Base, text 'Base › Table · Title · Field: value'; word optional, matched in the file name for bridge.* and in the text for base.*, not used for event.soon or goal.*). " +
+      "event (event: todo.done = a task is done, habits.done = a habit is ticked, water.goal = the water goal is reached, fitness.done = a workout ends, webhook.in = the incoming webhook set up in Automations gets a message, bridge.pdf / bridge.photo / bridge.file = a new PDF, photo or other file lands in a folder Bridge watches on the computer; timesheet.start / timesheet.stop = a Timesheet timer starts / stops; event.soon = minutes_before (1-120) an event of the day starts; goal.sales = today's till sales in Stock reach goal; goal.spent = this month's spending in Budget passes goal (goal in money units, required for goal.*); base.add / base.change = a record is added / a field changes in Base, text 'Base › Table · Title · Field: value'; " +
+      "forms.answer = a form gets a new answer (text: the form's title); invoices.paid = an invoice is paid in full (text 'number · client · total'); " +
+      "invoices.overdue = an invoice becomes overdue (same text with what is still owed); kanban.done = a card reaches a done column (text 'Board › Column · card'); " +
+      "stock.low = a product falls to its reorder level in Stock (text 'product · quantity'); scanpdf.signed = a signature request comes back signed (text 'document · signer'); " +
+      "transfer.received = files arrive through Transfer (text 'files · from'); word optional, matched in the file name for bridge.* and in the text for base.*, not used for event.soon or goal.*). " +
       "For notice and event rules only_days and from/to (HH:MM) limit when it runs. " +
       "Steps (do): notify (text: the notice), todo (items, list = a new list name, optional), event (title, days_later, start HH:MM: a Calendar event), " +
       "note (title, text), mail (subject, body, to: a draft), budget (amount in euros, income true for money in, note), open (app id), timer (minutes, label), ask (text: a question for the Assistant), " +
       "file (to: scanpdf, files or invoices: hand the new file to that app) and print (print the new file on the computer), both only after a bridge.* event. " +
       "track (a Timesheet timer: title = what is worked on, project = one of the user's project names, optional; or stop true = stop the running timer). " +
       "pause (pause everything playing in orOS: music, podcasts, radio, Sound Mixer) and sound (a short chime): both happen by themselves, no fields. " +
+      "card (a Kanban card: title, board and column = names, optional, note), crm (a CRM history entry: text, kind = call, mail, meet, msg or note, customer = a name, optional; " +
+      "without one CRM guesses it from the text), record (a Base record: text = its name, table = a table name, optional): the app opens filled in and the user saves it there. " +
       "Texts may use {date}, {weekday}, {month}, {year}, and {text} = the notice or event's words. " +
       "The user sees the rule on a card and opens it in Automations, where they check and save it; nothing is saved or run by this call, so never say it is set. " +
       "Passwords can never be used.",
@@ -2543,7 +2553,7 @@
           day_of_month: { type: "number" },
           date: { type: "string" },
           app: { type: "string", description: "notice: the app id the notice comes from." },
-          event: { type: "string", "enum": ["todo.done", "habits.done", "water.goal", "fitness.done", "webhook.in", "bridge.pdf", "bridge.photo", "bridge.file", "timesheet.start", "timesheet.stop", "event.soon", "goal.sales", "goal.spent", "base.add", "base.change"] },
+          event: { type: "string", "enum": RULE_EVENTS.slice() },
           minutes_before: { type: "number", description: "event.soon: 1-120, default 10." },
           goal: { type: "number", description: "goal.sales / goal.spent: the amount in money units (euros)." },
           word: { type: "string" },
@@ -2558,7 +2568,9 @@
           subject: { type: "string" }, body: { type: "string" }, to: { type: "string" },
           amount: { type: "number" }, income: { type: "boolean" }, note: { type: "string" },
           app: { type: "string" }, minutes: { type: "number" }, label: { type: "string" },
-          project: { type: "string" }, stop: { type: "boolean" }
+          project: { type: "string" }, stop: { type: "boolean" },
+          board: { type: "string" }, column: { type: "string" }, kind: { type: "string", "enum": ["call", "mail", "meet", "msg", "note"] },
+          customer: { type: "string" }, table: { type: "string" }
         }, required: ["do"] } }
       },
       required: ["when", "steps"]
@@ -4983,6 +4995,9 @@
       else if (a.a === "timer") { a.min = x.minutes; a.label = x.label; }
       else if (a.a === "track") { if (x.stop === true) a.stop = true; else { a.title = x.title; a.project = x.project; } }
       else if (a.a === "file") a.to = x.to || x.app;
+      else if (a.a === "card") { a.title = x.title; a.board = x.board; a.column = x.column; a.note = x.note || x.text; }
+      else if (a.a === "crm") { a.text = x.text; a.k = x.kind; a.who = x.customer; }
+      else if (a.a === "record") { a.text = x.text || x.title; a.table = x.table; }
       var c = AC.cleanAction(a);
       if (c && AC.FILE_ACTS && AC.FILE_ACTS[c.a] && !(when.t === "event" && AC.bridgeEvent(when.ev))) {
         bad.push("step " + (i + 1) + " (" + c.a + ") needs a bridge.pdf, bridge.photo or bridge.file event."); return;

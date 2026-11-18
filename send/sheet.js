@@ -154,7 +154,7 @@
       b.appendChild(ico);
       b.appendChild(el("span", "osd-nm", names[id] || id));
       b.addEventListener("click", function () {
-        var tg = C.target(id, kind, d, env.from);
+        var tg = C.target(id, kind, d, env.from, window.orosLang);
         dlg.close();
         if (!tg) { toast(T("failed")); return; }
         // Calendar and Budget open through the shell's own openers

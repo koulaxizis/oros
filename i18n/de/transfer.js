@@ -133,5 +133,14 @@ orosPack("de", "transfer", {
  "sx.recv": "Empfangen",
  "sx.files": "{n} Dateien",
  "sx.file": "1 Datei",
- "sx.some": "Dateien"
+ "sx.some": "Dateien",
+ "td.recv": "Empfangen: {what}",
+ "td.recvAny": "Eine Übertragung ist angekommen",
+ "td.files1": "1 Datei",
+ "td.files": "{n} Dateien",
+ "td.from": "von {dev}",
+ "td.bad": "{n} kamen nicht vollständig an",
+ "td.ends": "Übertragungslink endet: {what}",
+ "td.endsAny": "Ein Übertragungslink endet",
+ "td.tipEnds": "Danach werden die Dateien aus deiner Dropbox gelöscht und der Link funktioniert nicht mehr."
 });

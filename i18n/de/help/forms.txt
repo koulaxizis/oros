@@ -6,6 +6,8 @@ Formulare erstellt Umfragen, Anmeldelisten und Bestellformulare: Fragen vieler A
 - Gib dem Formular einen Titel und, wenn du magst, eine Beschreibung. Beides steht oben im Formular.
 - Jede Änderung wird beim Tippen gespeichert und wie der Rest von orOS mit deinen anderen Geräten synchronisiert.
 
+`An eine App senden…` in einer anderen orOS-App kann eine Liste oder einen Text hierher schicken: Ein neues Formular öffnet sich mit einer Kurzantwort-Frage pro Eintrag oder Zeile (bis 100). Ändere die Fragen nach Belieben; nichts wird geteilt, bevor du es teilst.
+
 ## Fragen
 - `Frage hinzufügen` öffnet die Liste der Arten. Die neue Frage kommt nach der geöffneten Frage oder ans Ende.
 - Arten: `Kurzantwort`, `Absatz`, `E-Mail`, `Telefon`, `Zahl`, `Datum`, `Uhrzeit`, `Eine Auswahl`, `Kontrollkästchen`, `Drop-down`, `Lineare Skala` (zum Beispiel 1 bis 5 oder 0 bis 10 mit einer Beschriftung an jedem Ende), `Bewertung` (Sterne), `Ja / Nein` und `Raster` (Zeilen und Spalten, eine oder mehrere Antworten pro Zeile).
@@ -53,6 +55,7 @@ Formulare erstellt Umfragen, Anmeldelisten und Bestellformulare: Fragen vieler A
 - Unter jeder Antwort in `Jede Antwort` öffnen `Zu Kontakten hinzufügen` und `Zum CRM hinzufügen` einen neuen Kontakt oder Kunden mit Name, E-Mail und Telefon aus dieser Antwort. Gespeichert wird erst, wenn du dort auf Speichern tippst. Der Name kommt aus einer Frage, deren Text „Name“ sagt (sonst der ersten Kurzantwort).
 - Der Assistent kann dir ein Formular entwerfen („mach ein Anmeldeformular für den Markt mit Name, E-Mail und Tag“). Seine Karte zeigt die Fragen; `Öffnen` legt das Formular hier an, geteilt wird es erst, wenn du es veröffentlichst. Der Assistent kann dir auch sagen, wie viele geantwortet haben und wie die Antworten ausfallen, nie, was die Leute geschrieben haben, und nie ihre Kontaktdaten.
 - Die Menüsuche findet deine Formulare nach Titel, Beschreibung und Fragen.
+- `An eine App senden…` schickt dieselbe Tabelle (die Antworten, die dein Filter zeigt, die neuesten 499) an eine andere orOS-App, etwa [Writer](app:writer), [Mail](app:mail) oder [Karteikarten](app:flashcards). Die andere App öffnet sich nur damit ausgefüllt.
 
 ## Quiz
 - In `Einstellungen` gibt `Das ist ein Quiz: Antworten bewerten` jeder Frage mit einer richtigen Antwort (Einfachauswahl, Auswahlliste, Mehrfachauswahl, Ja/Nein, Zahl, Kurzantwort) ein Feld `Richtige Antwort` und `Punkte` (standardmäßig 1). Kurzantworten nehmen bis zu 10 akzeptierte Antworten, eine pro Zeile, verglichen ohne Groß- und Kleinschreibung, Akzente oder zusätzliche Leerzeichen. Mehrfachauswahl zählt nur als richtig, wenn genau die richtigen Kästchen angekreuzt sind.

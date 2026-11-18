@@ -66,7 +66,7 @@
       "btn.rand": "A random memory", "btn.more": "Diary settings", "btn.close": "Close",
       "btn.prev": "Day before", "btn.next": "Day after", "btn.today": "Back to today",
       "btn.mprev": "Month before", "btn.mnext": "Month after",
-      "btn.delete": "Delete this day", "btn.print": "Print",
+      "btn.delete": "Delete this day", "btn.print": "Print", "btn.sendApp": "Send to an app…",
       "btn.txt": "Text", "btn.csv": "CSV", "btn.json": "JSON", "btn.import": "Choose a file",
       "sec.oros": "orOS file", "oros.hint": "Every day, longer entry, photo and question in one file. Opening one adds the days this device lacks. The file is not encrypted.",
       "oros.save": "orOS file (.orosdiary)", "oros.open": "Open orOS file…", "oros.folder": "Unzipped orOS folder…",
@@ -167,7 +167,7 @@
       "btn.rand": "Μια τυχαία ανάμνηση", "btn.more": "Ρυθμίσεις ημερολογίου", "btn.close": "Κλείσιμο",
       "btn.prev": "Προηγούμενη μέρα", "btn.next": "Επόμενη μέρα", "btn.today": "Πίσω στο σήμερα",
       "btn.mprev": "Προηγούμενος μήνας", "btn.mnext": "Επόμενος μήνας",
-      "btn.delete": "Διαγραφή μέρας", "btn.print": "Εκτύπωση",
+      "btn.delete": "Διαγραφή μέρας", "btn.print": "Εκτύπωση", "btn.sendApp": "Στείλε σε εφαρμογή…",
       "btn.txt": "Κείμενο", "btn.csv": "CSV", "btn.json": "JSON", "btn.import": "Επιλογή αρχείου",
       "sec.oros": "Αρχείο orOS", "oros.hint": "Κάθε μέρα, μεγαλύτερο κείμενο, φωτογραφία και ερώτηση σε ένα αρχείο. Το άνοιγμά του προσθέτει τις μέρες που λείπουν από αυτή τη συσκευή. Το αρχείο δεν είναι κρυπτογραφημένο.",
       "oros.save": "Αρχείο orOS (.orosdiary)", "oros.open": "Άνοιγμα αρχείου orOS…", "oros.folder": "Αποσυμπιεσμένος φάκελος orOS…",
@@ -484,6 +484,7 @@
     ta.placeholder = day === today ? t("ph.today") : t("ph.day");
     $("status").textContent = "";
     $("del-btn").hidden = !cur;
+    renderSendBtn();
     renderCount();
     renderEmojis();
     renderLate();
@@ -495,7 +496,30 @@
     renderHead();
   }
 
+  // "Send to an app" (shell send/, BR-SEND): this day's line and its
+  // longer entry as text. Only on the person's own press, after the
+  // PIN lock; nothing is written here.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function renderSendBtn() {
+    $("send-btn").hidden = !(sendApi() && (lineOf(day) || C.hasLong(data, day)));
+  }
+  function sendDay() {
+    var api = sendApi();
+    if (!api) return;
+    flush();
+    var cur = lineOf(day), L = C.longOf(data, day), parts = [];
+    if (cur && cur.t) parts.push((cur.e ? cur.e + " " : "") + cur.t);
+    if (C.hasLong(data, day) && L.md && String(L.md).trim()) parts.push(String(L.md).trim());
+    if (!parts.length) return;
+    var title = longDate(day);
+    api.open({ kind: "text", data: { title: title, text: title + "\n\n" + parts.join("\n\n") } });
+  }
+
   function renderAfterEdit() {
+    renderSendBtn();
     $("del-btn").hidden = !lineOf(day);
     renderStats(); renderHead();
     calDirty = yearDirty = true;
@@ -2163,6 +2187,7 @@
     $("next-btn").addEventListener("click", function () { stepDay(1); });
     $("today-btn").addEventListener("click", function () { lateChoice = null; openDay(C.writingDay(data, new Date()).day, true); });
     $("del-btn").addEventListener("click", deleteDay);
+    $("send-btn").addEventListener("click", sendDay);
     $("mprev-btn").addEventListener("click", function () { moveMonth(-1); });
     $("mnext-btn").addEventListener("click", function () { moveMonth(1); });
     $("q").addEventListener("input", function () { clearTimeout(qTimer); qTimer = setTimeout(renderSearch, 150); });

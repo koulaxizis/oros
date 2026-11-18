@@ -226,6 +226,7 @@
       "icon": "base",
       "url": "base/",
       "type": "internal",
+      "today": ["feed.js", "today.js"],
       "search": "search.js"
     },
     {
@@ -295,7 +296,8 @@
       "icon": "scanpdf",
       "url": "scanpdf/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "sign-core.js", "today.js"]
     },
     {
       "id": "flashcards",
@@ -714,7 +716,8 @@
       "icon": "transfer",
       "url": "transfer/",
       "search": "search.js",
-      "type": "internal"
+      "type": "internal",
+      "today": ["core.js", "today.js"]
     },
     {
       "id": "dice",

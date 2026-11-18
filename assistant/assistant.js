@@ -9328,6 +9328,17 @@
       return { ok: true, items: out };
     });
   }
+  // 7.44.00: what these refs are ([{ a: app name, t: title }]), for the
+  // owner's question before a queued deletion (gate.js askQueued).
+  function gatePeek(refs) {
+    var names = {}, out = [];
+    gateApps().read.forEach(function (a) { names[a.id] = a.name; });
+    (Array.isArray(refs) ? refs : []).slice(0, 200).forEach(function (r) {
+      var x = gateConv.refs[String(r)];
+      if (x && typeof x.app === "string") out.push({ a: names[x.app] || x.app, t: String(x.title || x.q || "") });
+    });
+    return out;
+  }
   function gateShell() { try { var p = shell(); return p && p.orosGate ? p.orosGate : null; } catch (e) { return null; } }
   // { read: [app], write: [app] } as the gate allows them now.
   function gateApps() {
@@ -9641,7 +9652,7 @@
                             var end = function (r) { gateAt = 0; return r; };
                             return gateRun(n, a).then(function (r) { end(); if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; },
                                                       function (e) { end(); throw e; });
-                          }, tools: gateToolList, index: gateIndex, text: cfText,
+                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText,
                           // PEND-1: the ref of an item another device made from a queued create_items
                           ref: function (rec) { if (!rec || typeof rec !== "object" || typeof rec.app !== "string") return ""; gateRefsLoad(); var r = refFor(gateConv, { app: rec.app, target: rec.target, title: String(rec.title || ""), q: String(rec.title || ""), id: rec.id }); gateRefsSave(); return r; },
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };

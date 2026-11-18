@@ -1,4 +1,5 @@
 orosPack("de", "meals", {
+ "sh.sendApp": "An eine App senden…",
  "aisle.bakery": "Backwaren",
  "aisle.dairy": "Milchprodukte & Eier",
  "aisle.drinks": "Getränke",
