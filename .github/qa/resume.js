@@ -86,6 +86,15 @@ const PLAY = {
     await p.keyboard.press("Escape"); await p.waitForTimeout(300);
     for (let i = 0; i < 4 && !(await inProg()); i++) await tap(p, "#wait-btn");
   },
+  // Windmill ridge: close the first-run tour, open the first ridge,
+  // build a sling post on the first pad (arrow, then 1)
+  ridge: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await tap(p, ".ridge-card"); await p.waitForTimeout(400);
+    await p.focus("#view"); await p.keyboard.press("ArrowRight"); await p.keyboard.press("Digit1");
+    for (let i = 0; i < 10 && !(await inProg()); i++) await p.waitForTimeout(300);
+  },
   // Roots: close the first-run tour, then end the first turn
   roots: async (p, inProg) => {
     await p.waitForTimeout(700);
