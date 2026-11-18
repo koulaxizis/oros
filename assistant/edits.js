@@ -384,6 +384,12 @@
       if (rsl.length > 5) return bad("A customer links at most 5 Revenue Splitter beneficiaries.");
       set.rs_beneficiary = rsl.sort(cmpStr);
     }
+    // RIGHTS (CRM 1.11): a contract's rights, in crm/core.js rtRow's
+    // words, checked there against the stored row (crmRightsChange).
+    if (has(args, "rights") && args.rights !== null && args.rights !== undefined) {
+      if (!isObj(args.rights) || !Object.keys(args.rights).length) return bad("rights must be an object, e.g. { template: \"C\", grant: \"all_economic\" }.");
+      set.rights = clone(args.rights);
+    }
     if (has(args, "stage") && args.stage !== null && args.stage !== undefined && args.stage !== "") {
       var sg = line(String(args.stage), 30);
       if (!sg) return bad("stage must not be empty.");
@@ -2231,6 +2237,10 @@
   function crmChange(d, target, ch, now) {
     if (isObj(target) && typeof target.deal === "string") return crmDealChange(d, target, ch, now);
     if (isObj(target) && typeof target.fup === "string") return crmFupChange(d, target, ch, now);
+    if (has(ch.set, "rights")) {
+      if (!isObj(target) || typeof target.ctr !== "string") return bad("rights belong to a contract: give the ref of a CRM contract from search_data (app crm).");
+      return crmRightsChange(d, target, ch, now);
+    }
     var h = crmFind(d, target);
     if (!h) return bad(isObj(target) && target.cust ? "That customer is no longer in CRM." : "A CRM customer, deal or follow-up can be changed here, not a history entry.");
     if (ch.action !== "update") return bad("A CRM customer can only be updated here; delete it in CRM.");
@@ -2361,7 +2371,7 @@
   }
   // A row put in (or replaced) the way crm/core.js stores it: the list
   // sorted by id, a new list (pt) where CRM's norm puts it.
-  var CRM_LISTS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "rsl"];
+  var CRM_LISTS = ["cust", "deals", "acts", "fups", "tags", "stg", "pt", "ctr", "cx", "rt", "rsl"];
   function crmPut(d, list, row) {
     if (!Array.isArray(d[list])) {
       var keep = {};
@@ -2467,6 +2477,49 @@
     return { ok: true, title: before.title, before: before, after: after, del: false,
              undo: { t: "set", app: "crm", target: { cust: id }, prev: {}, next: {}, pt: { t: "set", list: "rsl", prev: prev, next: clone(row) },
                      cust: r1 ? r1.undo : null } };
+  }
+  // RIGHTS (CRM 1.11): a contract's rights → its rt row, built by CRM's
+  // own core (crm/core.js rtRow, loaded before CRM changes), so the
+  // stored row is the one CRM's norm() keeps. The card shows one row
+  // per term (f "rt…"; values are codes the card puts in words).
+  var RT_VIEW = ["print", "ebook", "audio", "transl", "adapt", "merch", "free", "promo"];
+  function rtView(c, x) {
+    x = x || {};
+    var v = { title: crmText(c.t, 120), rtpl: x.tpl || "", rtgrant: x.grant ? "grant." + x.grant : "",
+              rtcovers: (x.cov || []).map(function (f) { return "cov." + f; }).join(" ") };
+    RT_VIEW.forEach(function (k) {
+      var e = x.r && x.r[k];
+      v["rt" + k] = e ? "st." + e.s + (e.sh ? " " + e.sh : "") : "";
+    });
+    v.rtterr = x.ter ? "ter." + x.ter : "";
+    v.rtext = x.ext ? "ext." + x.ext : "";
+    v.rtselloff = x.so ? String(x.so) : "";
+    v.rtcease = x.cd ? String(x.cd) : "";
+    v.rtcc = x.cc ? (x.ccp ? "cc.ever" : "cc.yes") : "";
+    v.rtrev = x.rev ? "yes" : "";
+    v.rtsource = x.src ? "src." + x.src : "";
+    v.rtchecked = x.chk || "";
+    v.rtnote = x.note || "";
+    return v;
+  }
+  function crmRightsChange(d, target, ch, now) {
+    var CC = (root && root.OrosCrmCore) || (typeof globalThis !== "undefined" ? globalThis.OrosCrmCore : null);
+    if (!CC || typeof CC.rtRow !== "function") return bad("CRM is not loaded yet; try again.");
+    if (ch.action !== "update") return bad("A contract's rights change with update.");
+    if (Object.keys(ch.set).length > 1) return bad("Change a contract's rights alone, in a change of their own.");
+    var hc = crmRow(d, "ctr", target.ctr);
+    if (!hc || !crmFind(d, { cust: hc.x.cust })) return bad("That contract is no longer in CRM.");
+    var hr = crmRow(d, "rt", target.ctr);
+    var cur = { ctr: d.ctr, rt: hr ? [hr.x] : [] };
+    var r = CC.rtRow(cur, target.ctr, ch.set.rights);
+    if (r.err) return bad(r.err);
+    var before = rtView(hc.x, hr ? hr.x : null), after = rtView(hc.x, r.row);
+    if (JSON.stringify(before) === JSON.stringify(after)) return bad("Nothing would change: the contract's rights already look like that.");
+    var row = r.row;
+    row.m = crmStamp(d, row.id, hr ? hr.x.m : 0, now);
+    crmPut(d, "rt", row);
+    return { ok: true, title: before.title, before: before, after: after, del: false,
+             undo: { t: "set", app: "crm", list: "rt", prev: hr ? clone(hr.x) : { id: row.id }, next: clone(row) } };
   }
   var STAGE_IDS = ["new", "contact", "proposal", "nego"];
   // crm/crm.js / i18n "stage.*": a built-in stage by any of its names

@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.60.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.62.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -998,6 +998,14 @@
   //            high contrast).
   //   focus    true: a strong ring on every keyboard focus, also where
   //            an app hides its own.
+  //   filter   "off" | "grey" | "protan" | "deutan" | "tritan" | "invert":
+  //            one CSS filter on the shell root (a11yfx.js), which also
+  //            colours every app frame; "invert" is smart (pictures are
+  //            turned back in same-origin documents). strength 25-100
+  //            for grey and the corrections; last = the filter the
+  //            Quick settings button turns on again.
+  //   pointer  "normal" | "large" | "xl": big SVG cursors, only with a
+  //            mouse or touchpad.
   // A11Y_CSS goes into the shell and into every same-origin app
   // document (on load and on every change) and only acts through the
   // data-oros-* attributes of that document's root, so nothing looks
@@ -1005,6 +1013,9 @@
   var A11Y_KEY = "oros-a11y";
   var A11Y_SIZES = [100, 115, 130, 150];
   var A11Y_MIN_W = 320;
+  var A11Y_FILTERS = ["off", "grey", "protan", "deutan", "tritan", "invert"];
+  var A11Y_STRENGTHS = [25, 50, 75, 100];
+  var A11Y_POINTERS = ["normal", "large", "xl"];
   var A11Y_CSS =
     "html[data-oros-focus] :focus-visible, html[data-oros-contrast] :focus-visible {" +
     " outline: 3px solid var(--accent, Highlight) !important; outline-offset: 2px !important; }\n" +
@@ -1025,7 +1036,11 @@
     return {
       size: A11Y_SIZES.indexOf(v.size) !== -1 ? v.size : 100,
       contrast: (v.contrast === "on" || v.contrast === "off") ? v.contrast : "auto",
-      focus: v.focus === true
+      focus: v.focus === true,
+      filter: A11Y_FILTERS.indexOf(v.filter) !== -1 ? v.filter : "off",
+      strength: A11Y_STRENGTHS.indexOf(v.strength) !== -1 ? v.strength : 100,
+      last: A11Y_FILTERS.indexOf(v.last) > 0 ? v.last : "grey",
+      pointer: A11Y_POINTERS.indexOf(v.pointer) !== -1 ? v.pointer : "normal"
     };
   }
   function a11yMq(q) {
@@ -1049,14 +1064,18 @@
   }
   function a11yMark(doc) {
     var r = doc.documentElement;
-    if (!doc.getElementById("oros-a11y-css")) {
-      var s = doc.createElement("style");
+    var s = doc.getElementById("oros-a11y-css");
+    if (!s) {
+      s = doc.createElement("style");
       s.id = "oros-a11y-css";
-      s.textContent = A11Y_CSS;
       (doc.head || r).appendChild(s);
     }
+    // a11yfx.js may arrive after a document was marked: its CSS joins then.
+    var css = A11Y_CSS + (window.orosA11yFx ? window.orosA11yFx.css() : "");
+    if (s.textContent !== css) s.textContent = css;
     a11yAttr(r, "data-oros-contrast", a11yHigh() ? "high" : null);
     a11yAttr(r, "data-oros-focus", a11y.focus ? "on" : null);
+    if (window.orosA11yFx) window.orosA11yFx.mark(doc);       // smart invert, pointer
   }
   // One app frame. Chromium and WebKit scale a zoomed frame's page
   // themselves; an engine that only grows the box (its page keeps the
@@ -1079,8 +1098,29 @@
   function a11yWireFrame(frame) {
     frame.addEventListener("load", function () { a11yFrame(frame); });
   }
+  // a11yfx.js (colour filter, pointer) loads only once one of them is
+  // on or another feature asks for an overlay, so start-up carries no
+  // extra script.
+  var a11yFxP = null;
+  function a11yFxWanted() { return a11y.filter !== "off" || a11y.pointer !== "normal"; }
+  function a11yFxLoad() {
+    if (window.orosA11yFx) return Promise.resolve(window.orosA11yFx);
+    if (!a11yFxP) {
+      a11yFxP = new Promise(function (ok, fail) {
+        var sc = document.createElement("script");
+        sc.src = "a11yfx.js?v=" + APP_VERSION;
+        sc.onload = function () { if (window.orosA11yFx) ok(window.orosA11yFx); else fail(new Error("a11yfx")); };
+        sc.onerror = function () { sc.remove(); fail(new Error("a11yfx")); };
+        document.head.appendChild(sc);
+      });
+      a11yFxP.catch(function () { a11yFxP = null; });
+    }
+    return a11yFxP;
+  }
   function a11yApply() {
     var root = document.documentElement, z = a11yZoom(), hi = a11yHigh();
+    if (!window.orosA11yFx && a11yFxWanted()) a11yFxLoad().then(a11yApply, function () {});
+    if (window.orosA11yFx) window.orosA11yFx.apply(a11y);   // before marking documents
     a11yMark(document);
     if (z !== 1) root.style.setProperty("--oros-zoom", String(z));
     else root.style.removeProperty("--oros-zoom");
@@ -1102,6 +1142,19 @@
     } else if (name === "focusRing") {
       if (!!value === a11y.focus) return;
       a11y.focus = !!value;
+    } else if (name === "colourFilter") {
+      // "toggle" (Quick settings): off ↔ the last filter chosen.
+      if (value === "toggle") value = a11y.filter === "off" ? a11y.last : "off";
+      if (A11Y_FILTERS.indexOf(value) === -1 || value === a11y.filter) return;
+      a11y.filter = value;
+      if (value !== "off") a11y.last = value;
+    } else if (name === "filterStrength") {
+      var st = Number(value);
+      if (A11Y_STRENGTHS.indexOf(st) === -1 || st === a11y.strength) return;
+      a11y.strength = st;
+    } else if (name === "pointerSize") {
+      if (A11Y_POINTERS.indexOf(value) === -1 || value === a11y.pointer) return;
+      a11y.pointer = value;
     } else return;
     try { localStorage.setItem(A11Y_KEY, JSON.stringify(a11y)); }
     catch (e) { scToast("err", window.t("a11y.savefail")); }
@@ -1113,9 +1166,28 @@
       size: a11y.size, sizes: A11Y_SIZES.slice(), contrast: a11y.contrast, focus: a11y.focus,
       high: a11yHigh(), forced: a11yMq("(forced-colors: active)"),
       capped: a11yZoom() < a11y.size / 100,
-      font: uifGet()                                       // FM-5: null = Nunito
+      font: uifGet(),                                      // FM-5: null = Nunito
+      // Colour filter and pointer (a11yfx.js, loaded on demand; absent
+      // = an older bundle that has no such options)
+      fx: true,
+      filter: a11y.filter, filters: A11Y_FILTERS.slice(), last: a11y.last,
+      strength: a11y.strength, strengths: A11Y_STRENGTHS.slice(),
+      pointer: a11y.pointer, pointers: A11Y_POINTERS.slice(),
+      fine: a11yMq("(any-pointer: fine)")
     };
   }
+  // For other features (Screen time's Bedtime): a temporary filter on
+  // top of the person's own, never stored. overlayFilter(name, "grey" |
+  // null, { fadeMs }) → true when taken.
+  window.orosA11y = {
+    overlayFilter: function (name, kind, opts) {
+      if (!name || (kind !== null && kind !== "grey")) return false;
+      if (window.orosA11yFx) return window.orosA11yFx.overlay(name, kind, opts);
+      if (!kind) return true;                              // nothing to take off yet
+      a11yFxLoad().then(function (F) { F.apply(a11y); F.overlay(name, kind, opts); }, function () {});
+      return true;
+    }
+  };
   // ---------- The font of orOS (FM-5, uifont.js) ----------
   // A family of the person's (Settings › Fonts) instead of Nunito, on
   // this device only (like the text size). uifont.js and the designkit
@@ -12232,7 +12304,10 @@
       case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
       case "textSize":
       case "contrast":
-      case "focusRing":    a11ySetUser(name, value); return;
+      case "focusRing":
+      case "colourFilter":
+      case "filterStrength":
+      case "pointerSize":  a11ySetUser(name, value); return;
       case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;

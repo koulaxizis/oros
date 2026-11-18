@@ -582,8 +582,9 @@
   }
 
   // ---------- 4a. Section: Accessibility ----------
-  // Text size, high contrast and the focus ring (shell.js 5e). All
-  // three stay on this device; older shells send no s.a11y.
+  // Text size, high contrast, the focus ring, the colour filter and the
+  // pointer size (shell.js 5e, a11yfx.js). All stay on this device;
+  // older shells send no s.a11y.
   function secAccessibility(host, s) {
     var a = s.a11y;
     if (!a) { host.appendChild(el("p", "hint card-note", t("noShell"))); return; }
@@ -608,6 +609,36 @@
     c3.appendChild(row(t("ac.focus"), switchBtn(a.focus, "focusRing", function (v) { set("focusRing", v); }, t("ac.focus")),
       { scope: "a11y", hint: t("ac.focus.hint") }));
     host.appendChild(c3);
+
+    // Colour filter and pointer size (a11yfx.js); an older bundle sends no fx.
+    if (a.fx) {
+      var c5 = card(t("ac.filter"), "a11y");
+      c5.appendChild(row(t("ac.filter.pick"), select(a.filters.map(function (k) {
+        return { value: k, label: t("ac.filter." + k) };
+      }), a.filter, "colourFilter", function (v) { set("colourFilter", v); }), { forId: "f-colourFilter" }));
+      // Sample colours: the pairs each filter is about, under the filter.
+      var sw = el("div", "a11y-swatches");
+      sw.setAttribute("role", "img");
+      sw.setAttribute("aria-label", t("ac.filter.sample"));
+      for (var si = 1; si <= 6; si++) sw.appendChild(el("span", "a11y-sw a11y-sw" + si));
+      c5.appendChild(sw);
+      if (a.filter !== "off" && a.filter !== "invert") {
+        c5.appendChild(segRow(t("ac.filter.strength"), segmented(a.strengths.map(function (n) {
+          return { value: n, label: n + "%" };
+        }), a.strength, "filterStrength", function (v) { set("filterStrength", v); }, t("ac.filter.strength"))));
+      }
+      c5.appendChild(el("p", "hint", t("ac.filter.hint")));
+      host.appendChild(c5);
+
+      if (a.fine) {
+        var c6 = card(t("ac.pointer"), "a11y");
+        c6.appendChild(segmented(a.pointers.map(function (k) {
+          return { value: k, label: t("ac.pointer." + k) };
+        }), a.pointer, "pointerSize", function (v) { set("pointerSize", v); }, t("ac.pointer")));
+        c6.appendChild(el("p", "hint", t("ac.pointer.hint")));
+        host.appendChild(c6);
+      }
+    }
 
     // FM-5: the font of orOS (chosen on a font's page in Fonts)
     if ("font" in a) {
@@ -4634,6 +4665,8 @@
   function findOk(s, need) {
     if (need.indexOf("app:") === 0) return (s.apps || []).indexOf(need.slice(4)) !== -1;
     if (need === "phone") return !!phone();
+    if (need === "a11yfx") return !!(s.a11y && s.a11y.fx);
+    if (need === "a11yfine") return !!(s.a11y && s.a11y.fx && s.a11y.fine);
     if (need === "push") return !!webPush() && !phone();
     if (need === "translate") return !!(window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; }));
     return !!s[need];
