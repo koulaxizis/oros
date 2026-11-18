@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 47378 of 47378 (100%)
+- Strings: 47403 of 47403 (100%)
 - Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
@@ -80,7 +80,7 @@ en and el); translators change them there, not in a pack.
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
 | mahjong | 100% | 70 / 70 |
-| mail | 100% | 502 / 502 |
+| mail | 100% | 504 / 504 |
 | mancala | 100% | 61 / 61 |
 | maps | 100% | 1286 / 1286 |
 | mastermind | 100% | 74 / 74 |
@@ -109,14 +109,14 @@ en and el); translators change them there, not in a pack.
 | photolab | 100% | 781 / 781 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
-| podcasts | 100% | 348 / 348 |
+| podcasts | 100% | 349 / 349 |
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 334 / 334 |
 | pubdomain | 100% | 120 / 120 |
 | publish | 100% | 822 / 822 |
 | qr | 100% | 249 / 249 |
 | quote | 100% | 236 / 236 |
-| radio | 100% | 103 / 103 |
+| radio | 100% | 104 / 104 |
 | realm | 100% | 199 / 199 |
 | recipes | 100% | 178 / 178 |
 | recordpkg | 100% | 21 / 21 |
@@ -127,7 +127,7 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 1705 / 1705 |
+| settings | 100% | 1713 / 1713 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
 | shell | 100% | 1383 / 1383 |
@@ -158,7 +158,7 @@ en and el); translators change them there, not in a pack.
 | today | 100% | 155 / 155 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 144 / 144 |
+| transfer | 100% | 157 / 157 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |

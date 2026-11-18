@@ -101,6 +101,7 @@ In an account, `Signature` adds a few lines under each new message and reply. It
 ### Undo send and Send later
 After `Send`, the message waits a few seconds with an `Undo` button at the bottom: `Undo` brings it back to the composer. Choose how long, or turn it off, under `Undo send` in `Mail settings` (this device).
 `Send later` (next to `Attach files`) picks a time: `In an hour`, `Tomorrow morning`, `Monday morning` or any `Date and time` up to a year ahead. The message waits in `Outbox` and goes out at that time while orOS is open on this device, also with Mail closed (orOS shows a notice when it is sent); if orOS is closed then, it goes out as soon as orOS opens. In `Outbox` you can `Send now`, `Edit` or `Delete` it until it starts sending.
+Other apps can hand Mail a message with a time already chosen (Transfer does, for a link emailed at a set time): the `Send` button then shows that time, and nothing goes out until you press it. `Send later` still lets you pick another time. A message sent with `Send later` always raises a notice when it has gone, also with Mail open.
 
 ### Offline: the Outbox
 Messages you send while offline wait in `Outbox` in the side panel and go out by themselves when you are back online. If one is refused (for example a wrong address), it stays there with the reason: open `Outbox` to `Edit`, `Send now` or `Delete` it.
