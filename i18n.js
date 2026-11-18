@@ -23,18 +23,8 @@
 // Versioning: orOS-wide version lives ONLY in shell.js.
 // ============================================================
 
-// ---- Reduce motion (A11Y-FX W2, Settings › Accessibility) ----------
-// Runs first in the shell and in every app that loads this file, before
-// the app's own scripts: while the device-local switch "oros-a11y"
-// .motion is on, window.matchMedia answers "(prefers-reduced-motion:
-// reduce)" with matches: true (and "no-preference" with false), so the
-// app code that already honours the system setting follows orOS's
-// switch too, with no change of its own. Lists that were asked for
-// before a change get a "change" event: on the "storage" event (another
-// document wrote the key) or when the shell calls
-// window.__orosMotion.refresh(). The shell installs the same wrapper
-// (window.__orosMotionShim) in an app frame that does not load this
-// file. Every other query goes to the real matchMedia untouched.
+// Reduce motion (A11Y-FX W2): while oros-a11y.motion is on, matchMedia
+// answers prefers-reduced-motion as "reduce" (Bible A11Y-FX).
 (function (root) {
   "use strict";
   function motionShim(w) {
