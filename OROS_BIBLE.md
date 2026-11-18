@@ -12482,3 +12482,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **What:** a deletion Claude asks for (live or queued) that reaches an orOS with nobody at its screen (background host, hidden window, lock, or no answer in 20 s) is no longer refused or held where nobody sees it: it waits in the box and is asked on whichever device has orOS on screen, now or when one comes on screen. Chris 2026-11-17: 73 Calendar events, "The owner did not confirm…", no question ever shown.
 - **Files:** gate/gate.js (`askDelete` `askLast`, `onCall` `__held`, `applyQueue` `cqh`), relay/gate.js (`__held` in tools/call and late answers, `markHeld`, `sendHeld`, `queueChange` `hd`, `v1`), shell.js (APP_VERSION), help/topics/whatsnew.{en,el}.txt, tests/gate-ask-screen.test.js (new), tests/gate-relay.test.js, OROS_BIBLE.md.
 - **Tests:** full `node --test tests/*.test.js`; tests/gate-ask-screen.test.js (3, real shell in Chromium: on screen asked and deleted; hidden → `__held`, then asked when shown; queued hidden → `cqh`, then asked with the titles). Not tested: the real GATE-HOST background browser on Windows.
+
+### 2026-11-18 — Games resume check survives the day's puzzle (#1112) — CI only, no APP_VERSION
+
+- **What:** from 00:00 UTC 2026-11-18 GR-2 (`.github/qa/resume.js`, quality apps shard 3) failed on main and every PR for Crossword: the day's puzzle left the cursor on its given cell after the generic keys, so nothing was typed. The daily Sudoku can do the same (a given cell under the cursor). Both now type into the next cells until one takes the entry.
+- **Files:** `.github/qa/resume.js` (`PLAY.crossword`, `PLAY.sudoku`, `typeAlong`), Bible.
+- **Tests:** `node .github/qa/resume.js` 43/43; Crossword + Sudoku with the browser clock moved -3..+5 days all pass (the old check failed only on 2026-11-18); full `node --test tests/*.test.js` green; quality.yml green on GitHub. Nothing shipped to users.
+
