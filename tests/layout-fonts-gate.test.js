@@ -182,5 +182,6 @@ test("colormode (P1), full read-back, flow report wiring", () => {
   const fs = require("fs");
   assert.match(fs.readFileSync(path.join(ROOT, "layout/assist.js"), "utf8"), /pagesNote\(before, now2, notes\)/);
   assert.match(fs.readFileSync(path.join(ROOT, "layout/editor.js"), "utf8"), /oros-layout-pf/);
-  assert.match(fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8"), /full: a\.full === true/);
+  assert.match(fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8"), /if \(a\.full === true\) r\.full = true;/);
+  assert.match(fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8"), /if \(a\.dry_run === true\) r\.dry = true;/);
 });

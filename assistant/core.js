@@ -3565,7 +3565,9 @@
     if (chk.steps[0].op === "create") { designs = "new"; name = chk.steps[0].title || name; }
     else if (designs === "new") return bad("designs new needs create as the first command.");
     if (designs !== "named" && designs !== "open" && designs !== "new" && chk.steps.some(function (s) { return s.op === "rename"; })) return bad("rename works on one " + EDIT_APP[app].noun + " (designs open or named).");
-    return { ok: true, app: app, designs: designs, name: name, steps: chk.steps, dry: a.dry_run === true };
+    var r = { ok: true, app: app, designs: designs, name: name, steps: chk.steps };
+    if (a.dry_run === true) r.dry = true;
+    return r;
   }
   function normReadApp(args, cats) {
     var a = isObj(args) ? args : {}, app = String(a.app || "");
@@ -3574,7 +3576,9 @@
     if (designs !== "open" && designs !== "named" && !(designs === "style" && app === "atelier")) return bad("designs must be open or named" + (app === "atelier" ? " (or style)" : "") + ".");
     var name = squash(a.name || "").slice(0, 120);
     if (designs === "named" && !name) return bad("give the " + EDIT_APP[app].noun + "'s name.");
-    return { ok: true, app: app, designs: designs, name: name, full: a.full === true };
+    var r = { ok: true, app: app, designs: designs, name: name };
+    if (a.full === true) r.full = true;
+    return r;
   }
 
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
