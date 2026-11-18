@@ -153,7 +153,9 @@
 
   // ---------- Building ----------
   // → Promise<{ today, lang, groups, facts, counts, apps: [{ id, name, sensitive, on }], at }>
-  function build() {
+  // notice = true: the daily notice (APPLOCK-1: never an app set as
+  // locked, even when it is open in this tab).
+  function build(notice) {
     var e = env(), version = "";
     try { version = e ? e.version : ""; } catch (x) {}
     var data = read(), apps = todayApps(), now = Date.now(), today = A.ymdOf(new Date(now)), l = lang();
@@ -165,8 +167,8 @@
       var ctx = { today: today, horizon: A.HORIZON, now: now, lang: l, readJSON: readJSON, readRaw: readRaw,
                   addDays: A.addDays, diff: A.diff, strict: strictOn() };
       var en = function (id) { return !!on[id]; };
-      facts = A.collectFacts(root.orosTodayProviders, ctx, en);   // BR-TODAY-16
-      return A.run(root.orosTodayProviders, ctx, { enabled: en });
+      facts = A.collectFacts(root.orosTodayProviders, ctx, en, notice === true);   // BR-TODAY-16
+      return A.run(root.orosTodayProviders, ctx, { enabled: en, lockSet: notice === true });
     }).then(function (res) {
       var order = apps.map(function (a) { return a.id; });
       var g = A.trim(A.group(res.rows, today, A.HORIZON, order));
@@ -201,7 +203,7 @@
       if (!p) return [];
       var ctx = { today: today, horizon: days, now: now, lang: lang(), readJSON: readJSON, readRaw: readRaw,
                   addDays: A.addDays, diff: A.diff, strict: strictOn() };
-      return A.run([p], ctx, {}).then(function (res) { return res.rows; });
+      return A.run([p], ctx, { lockSet: true }).then(function (res) { return res.rows; });   // APPLOCK-1: the Assistant never reads a locked app
     });
   }
   // The week ahead at a glance (T3, BR-TODAY-17): how many rows each
@@ -295,7 +297,7 @@
       settled: isSettled(now), emptyAt: emptyAt, syncAt: sync.at
     });
     if (step !== "build") return;
-    building = build().then(function (res) {
+    building = build(true).then(function (res) {
       building = null;
       if (res.today !== A.ymdOf(new Date())) return;      // midnight passed while building
       if (!A.worthNotice(res.counts)) { emptyAt = Date.now(); return; }

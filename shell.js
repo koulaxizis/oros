@@ -4171,6 +4171,7 @@
       if (state.apps[i].id === appId) { app = state.apps[i]; break; }
     }
     if (!app || app.type !== "internal") return;
+    if (!appLockOk(appId)) { appLockAsk(app, function () { window.__orosOpenAt(appId, target); }); return; }   // APPLOCK-1
     var t = null;
     try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
     if (appLive(appId)) {
@@ -4764,7 +4765,7 @@
   // result leaves the device). Read-only like every provider; the
   // menu's per-app switches are the menu's, not the assistant's.
   window.orosAssistApps = function () {
-    return searchApps().map(function (a) {
+    return searchApps().filter(function (a) { return !appLockSet(a.id); }).map(function (a) {   // APPLOCK-1
       var k = "app." + a.id, v = window.t(k);
       return { id: a.id, name: v === k ? (a.name || a.id) : v, sensitive: a.searchOff === true };
     });
@@ -4806,7 +4807,7 @@
     var S = window.orosSearch;
     if (!S) return Promise.resolve([]);
     var allow = {};
-    (Array.isArray(ids) ? ids : []).forEach(function (id) { allow[String(id)] = true; });
+    (Array.isArray(ids) ? ids : []).forEach(function (id) { if (!appLockSet(String(id))) allow[String(id)] = true; });   // APPLOCK-1: never a locked app
     var apps = searchApps().filter(function (a) { return allow[a.id]; });
     if (!apps.length) return Promise.resolve([]);
     if (!searchReader) searchReader = S.makeReader(localStorage);
@@ -13163,6 +13164,92 @@
     return { on: mtOn(), slots: mtSlotsHere(), open: mt.hidden.length };
   }
 
+  // APPLOCK-1: an app locked in Settings › Screen lock asks the lock's
+  // PIN / passphrase (lock.js orosLock.apps) before it loads; it never
+  // loads behind the box. Opened, it counts as in front; left, it locks
+  // again a minute later. A locked app in front that locks again (idle
+  // time with "only the chosen apps") is covered (#applock-cover).
+  function appLockApi() {
+    var L = window.orosLock;
+    return (L && L.apps && typeof L.apps.allowed === "function") ? L.apps : null;
+  }
+  // Set as locked (or hidden) on this device, open or not: the
+  // Assistant and orOS Gate never read such an app.
+  function appLockSet(id) {
+    var A = appLockApi();
+    try { return !!(A && A.state(id)); } catch (e) { return true; }
+  }
+  window.__orosAppLocked = appLockSet;
+  function appLockOk(id) {
+    var A = appLockApi();
+    try { return !A || A.allowed(id); } catch (e) { return false; }
+  }
+  function appLockName(app) {
+    var k = "app." + app.id, v = window.t(k);
+    return v === k ? app.name : v;
+  }
+  function appLockAsk(app, then) {
+    var A = appLockApi();
+    if (!A) return;
+    A.ask(app.id, { name: appLockName(app), cancel: !(SOLO && app.id === SOLO) }).then(function (ok) { if (ok) then(); });
+  }
+  function appLockFront(prev, app) {
+    var A = appLockApi();
+    if (!A) return;
+    try {
+      if (prev && (!app || prev.id !== app.id)) A.leave(prev.id);
+      if (app) A.enter(app.id);
+    } catch (e) {}
+    appLockCover();
+  }
+  // The cover over the app area while the app in front (or the side
+  // app) may not show; its button asks the PIN.
+  function appLockCover() {
+    var run = document.getElementById("oros-running");
+    if (!run) return;
+    var hid = null;
+    if (state.running && state.running.type === "internal" && !appLockOk(state.running.id)) hid = state.running;
+    else if (typeof mt !== "undefined" && mt && mt.side && mt.side.app && !appLockOk(mt.side.app.id)) hid = mt.side.app;
+    var cv = document.getElementById("applock-cover");
+    var frames = run.querySelectorAll("iframe");
+    if (!hid) {
+      if (cv) cv.hidden = true;
+      Array.prototype.forEach.call(frames, function (f) { if (f.hasAttribute("data-applock")) { f.removeAttribute("inert"); f.removeAttribute("data-applock"); } });
+      return;
+    }
+    if (!cv) {
+      cv = document.createElement("div");
+      cv.id = "applock-cover";
+      var ico = document.createElement("div");
+      ico.className = "lk-ico";
+      ico.innerHTML = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor"/></svg>';   // static icon
+      cv.appendChild(ico);
+      cv.appendChild(document.createElement("p"));
+      var b = document.createElement("button");
+      b.type = "button";
+      cv.appendChild(b);
+      run.appendChild(cv);
+    }
+    cv.querySelector("p").textContent = window.t("applock.cover").split("{app}").join(appLockName(hid));
+    var btn = cv.querySelector("button");
+    btn.textContent = window.t("applock.unlock");
+    btn.onclick = function () {
+      var A = appLockApi(), app = hid;
+      if (!A) return;
+      A.ask(app.id, { name: appLockName(app), cancel: true }).then(function (ok) {
+        if (!ok) return;
+        try { if (state.running && state.running.id === app.id) A.enter(app.id); } catch (e) {}
+        appLockCover();
+      });
+    };
+    cv.hidden = false;
+    Array.prototype.forEach.call(frames, function (f) {
+      if (!f.hasAttribute("inert")) { f.setAttribute("inert", ""); f.setAttribute("data-applock", "1"); }
+    });
+    try { var ae = document.activeElement; if (ae && ae.tagName === "IFRAME" && ae.blur) ae.blur(); } catch (e) {}
+  }
+  if (window.orosLock && typeof window.orosLock.onChange === "function") window.orosLock.onChange(function () { appLockCover(); });
+
   function openApp(app, at) {
     if (app && app._alias) { window.__orosOpenAt(app._alias, null); return; }   // APP-ALIAS menu search row
     // BOOT-L1: an app opened before the late bundle is in (a launch
@@ -13176,6 +13263,7 @@
     }
     // TILL-1: on a till-only device anything but Stock needs the owner.
     if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
+    if (app && app.type === "internal" && !appLockOk(app.id)) { appLockAsk(app, function () { openApp(app, at); }); return; }   // APPLOCK-1
     if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
     if (app && app.id === "assistant" && aiHelper() === "claude") { claudeInstead(""); return; }   // HELPER-1 (desktop, Dock, links)
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
@@ -13199,6 +13287,7 @@
     }
     var prev = state.running;
     state.running = app;
+    appLockFront(prev, app);    // APPLOCK-1
     gameLastNote(app, false);   // GR-1
     if (window.orosDiscover) { try { window.orosDiscover.seen(app.id); } catch (e) {} }   // CH-2: first open
     safeEnd();       // SAFE-1: the card goes when an app opens
@@ -13230,6 +13319,7 @@
     var prev = state.running;
     mtSideEnd(true);   // home ends side by side; the side app waits behind
     state.running = null;
+    appLockFront(prev, null);   // APPLOCK-1: the minute starts
     gameLastNote(null, false);   // GR-1
     document.body.classList.remove("app-running");
     if (!(mtActive() && mtLeave(prev))) frameGo(document.getElementById("app-frame"), "about:blank");

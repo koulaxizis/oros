@@ -392,12 +392,20 @@
     return out;
   }
 
+  // APPLOCK-1: an app locked (or hidden) in Settings › Screen lock on
+  // this device is never offered, open or not (shell.js
+  // __orosAppLocked; none in Node).
+  function lockedHere(id) {
+    var f = root && root.__orosAppLocked;
+    try { return typeof f === "function" && !!f(id); } catch (e) { return true; }
+  }
+  function barred(id) { return NEVER.indexOf(id) >= 0 || lockedHere(id); }
   // The apps Claude may read: offered (searchable and installed), not
-  // NEVER, and set to "read" on this device.
+  // NEVER or locked here, and set to "read" on this device.
   function allowed(offered, lv) {
     var l = isObj(lv) ? lv : {};
     return (Array.isArray(offered) ? offered : []).filter(function (a) {
-      return a && NEVER.indexOf(a.id) < 0 && (l[a.id] === "read" || l[a.id] === "write");
+      return a && !barred(a.id) && (l[a.id] === "read" || l[a.id] === "write");
     });
   }
   function toolsOf(id) {
@@ -1605,7 +1613,7 @@
   // change an app set to "write", unless the owner paused changes
   // (hold = paused until, ms). Every change is notified and undoable.
   function canWrite(lv, hold, id, now) {
-    return !!(isObj(lv) && lv[id] === "write" && writable(id) && NEVER.indexOf(id) < 0 && !(typeof hold === "number" && hold > now));
+    return !!(isObj(lv) && lv[id] === "write" && writable(id) && !barred(id) && !(typeof hold === "number" && hold > now));
   }
 
   // The copy's key for a call (= relay/gate.js stableArgs).
@@ -3285,7 +3293,7 @@
     levels: function () {
       var p = pref(), out = {};
       if (!p.on || !isObj(p.lv)) return out;
-      Object.keys(p.lv).forEach(function (id) { if (NEVER.indexOf(id) < 0 && (p.lv[id] === "read" || p.lv[id] === "write")) out[id] = p.lv[id]; });
+      Object.keys(p.lv).forEach(function (id) { if (!barred(id) && (p.lv[id] === "read" || p.lv[id] === "write")) out[id] = p.lv[id]; });
       return out;
     },
     // "" = Claude may change this app now; else why not (sent to Claude).
@@ -3303,7 +3311,7 @@
       if (!p.on) return "The gate is off.";
       if (away()) return HOST_TXT;
       if (locked()) return "orOS is locked on the owner's device.";
-      if (!id || NEVER.indexOf(id) >= 0) return "Claude may never open " + (id || "this app") + ".";
+      if (!id || barred(id)) return "Claude may never open " + (id || "this app") + ".";
       if (typeof p.hold === "number" && p.hold > now) return "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was done.";
       return "";
     },
@@ -3382,7 +3390,7 @@
     },
     apps: function () {
       var lv = pref().lv || {};
-      return offered().filter(function (a) { return NEVER.indexOf(a.id) < 0; }).map(function (a) {
+      return offered().filter(function (a) { return !barred(a.id); }).map(function (a) {
         return { id: a.id, name: a.name, read: lv[a.id] === "read" || lv[a.id] === "write", write: lv[a.id] === "write",
                  canWrite: writable(a.id), sensitive: sensitive(a.id), tools: toolsOf(a.id) };
       });

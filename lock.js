@@ -29,6 +29,11 @@
 //     "oros-strict". It keeps the lock on and within its limits,
 //     Hardcore takes a passphrase only and no biometrics; sync.js,
 //     webpush.js, feeds/fetch.js and sw.js read the same key.
+//   - App lock (APPLOCK-1, 2026-11-18, section 3b / 4b): chosen apps
+//     ask the same PIN / passphrase (or fingerprint) when they open,
+//     even while orOS is unlocked; device-local "oros-applock". The
+//     lock itself may cover all of orOS (scope "all") or only those
+//     apps (scope "apps": orOS starts without the PIN).
 //   - Honest limit: it keeps people away from the screen. Anyone who
 //     can read the disk, or open the browser's developer tools, gets
 //     past it; the data on the device is not encrypted by it.
@@ -95,7 +100,55 @@
     if (typeof c.i !== "number" || c.i !== Math.floor(c.i) || c.i < ITER_MIN || c.i > ITER_MAX) return null;
     return { v: 1, kind: c.kind, salt: c.salt, hash: c.hash, i: c.i,
              idle: IDLES.indexOf(c.idle) !== -1 ? c.idle : DEFAULT_IDLE,
-             hidden: c.hidden === true };
+             hidden: c.hidden === true, scope: c.scope === "apps" ? "apps" : "all" };
+  }
+
+  // ----- App lock (APPLOCK-1) -----
+  // Device-local "oros-applock" = { v:1, apps: { <app id>: "lock" | "hide" } }.
+  // No record = no app locked. A record that cannot be read keeps every
+  // app but Settings behind the PIN until it is saved again (fail
+  // closed: a broken list must not open the diary).
+  var APPS_KEY = "oros-applock";
+  var APPS_OPEN_KEY = "oros-applock-open";   // sessionStorage: { id: left at (0 = in front) }
+  var APP_ID_RE = /^[a-z0-9][a-z0-9_-]{0,40}$/;
+  var APPS_FREE = ["settings"];              // where the list is changed: never locked
+  var APPS_MAX = 300;
+  var RELOCK_MS = 60000;                     // an app left alone this long locks again
+  function parseApps(raw) {
+    if (raw === null || raw === undefined || raw === "") return { apps: {}, broken: false };
+    var o;
+    try { o = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { return { apps: {}, broken: true }; }
+    if (!o || typeof o !== "object" || o.v !== 1 || !o.apps || typeof o.apps !== "object" || Array.isArray(o.apps)) return { apps: {}, broken: true };
+    var out = {}, n = 0;
+    Object.keys(o.apps).sort().forEach(function (id) {
+      var v = o.apps[id];
+      if (n >= APPS_MAX || !APP_ID_RE.test(id) || APPS_FREE.indexOf(id) !== -1) return;
+      if (v !== "lock" && v !== "hide") return;
+      out[id] = v;
+      n++;
+    });
+    return { apps: out, broken: false };
+  }
+  // "lock" | "hide" | "" for one app in a parsed list.
+  function appState(list, id) {
+    id = String(id || "");
+    if (!list || APPS_FREE.indexOf(id) !== -1) return "";
+    if (list.broken) return APP_ID_RE.test(id) ? "lock" : "";
+    return list.apps[id] || "";
+  }
+  // The open set read from the tab: entries left more than RELOCK_MS
+  // ago (or stamped in the future) are gone.
+  function parseOpen(raw, now) {
+    var o, out = {};
+    try { o = typeof raw === "string" ? JSON.parse(raw) : raw; } catch (e) { return out; }
+    if (!o || typeof o !== "object") return out;
+    Object.keys(o).forEach(function (id) {
+      var at = o[id];
+      if (!APP_ID_RE.test(id) || typeof at !== "number" || !isFinite(at) || at < 0) return;
+      if (at > 0 && (at > now + 1000 || now - at >= RELOCK_MS)) return;
+      out[id] = at;
+    });
+    return out;
   }
 
   function parseTill(raw) {
@@ -195,11 +248,12 @@
     var k = strictCaps(level);
     if (!c || !k) return c;
     var idle = (c.idle === 0 || c.idle > k.idle) ? k.idle : c.idle;
-    if (idle === c.idle && c.hidden === k.hidden) return c;
+    if (idle === c.idle && c.hidden === k.hidden && c.scope !== "apps") return c;
     var out = {};
     for (var f in c) if (Object.prototype.hasOwnProperty.call(c, f)) out[f] = c[f];
     out.idle = idle;
     out.hidden = k.hidden;
+    if (out.scope === "apps") out.scope = "all";     // Sensitive work locks all of orOS
     return out;
   }
   // Would this lock option loosen the level's limits?
@@ -208,6 +262,7 @@
     if (!k) return false;
     if (name === "idle") return Number(value) === 0 || Number(value) > k.idle;
     if (name === "hidden") return !value;
+    if (name === "scope") return value === "apps";
     return false;
   }
 
@@ -242,7 +297,9 @@
     norm: norm, secretProblem: secretProblem, parseCfg: parseCfg, parseTries: parseTries, parseTill: parseTill,
     afterFail: afterFail, waitLeft: waitLeft, stillOpen: stillOpen, sameText: sameText,
     STRICT_KEY: STRICT_KEY, parseStrict: parseStrict, strictCaps: strictCaps, clampCfg: clampCfg, loosens: loosens,
-    parseDuress: parseDuress, DMS_DAYS: DMS_DAYS, parseDms: parseDms, dmsDue: dmsDue
+    parseDuress: parseDuress, DMS_DAYS: DMS_DAYS, parseDms: parseDms, dmsDue: dmsDue,
+    APPS_KEY: APPS_KEY, APPS_OPEN_KEY: APPS_OPEN_KEY, APPS_FREE: APPS_FREE, RELOCK_MS: RELOCK_MS,
+    parseApps: parseApps, appState: appState, parseOpen: parseOpen
   };
 
   // ---------- 2. Crypto ----------
@@ -274,7 +331,8 @@
     root.crypto.getRandomValues(salt);
     return derive(secret, salt, ITER).then(function (hash) {
       return { v: 1, kind: kind, salt: b64(salt), hash: hash, i: ITER,
-               idle: prev ? prev.idle : DEFAULT_IDLE, hidden: prev ? prev.hidden : false };
+               idle: prev ? prev.idle : DEFAULT_IDLE, hidden: prev ? prev.hidden : false,
+               scope: prev && prev.scope === "apps" ? "apps" : "all" };
     });
   }
   function matches(cfg, secret) {
@@ -434,6 +492,54 @@
   }
   // The till is in front: only Stock's till shows, nothing locks.
   function tillActive() { return tillOn() && !isOwner(); }
+
+  // ----- 3b. App lock (APPLOCK-1) -----
+  // Which apps ask the PIN (device-local list) and which of them are
+  // open in this tab (sessionStorage, so an update reload keeps them).
+  function appsList() {
+    var raw = null;
+    try { raw = root.localStorage.getItem(APPS_KEY); } catch (e) { raw = "x"; }   // storage refused: fail closed
+    return parseApps(raw);
+  }
+  function appsWrite(apps) {
+    try {
+      if (!apps || !Object.keys(apps).length) root.localStorage.removeItem(APPS_KEY);
+      else root.localStorage.setItem(APPS_KEY, JSON.stringify({ v: 1, apps: apps }));
+      return true;
+    } catch (e) { return false; }
+  }
+  // Configured: "lock" | "hide" | "" (nothing is locked without the lock).
+  function appIs(id) { return cfg || load() ? appState(appsList(), id) : ""; }
+  function openGet() {
+    try { return parseOpen(root.sessionStorage.getItem(APPS_OPEN_KEY), Date.now()); } catch (e) { return {}; }
+  }
+  function openPut(o) {
+    try {
+      if (o && Object.keys(o).length) root.sessionStorage.setItem(APPS_OPEN_KEY, JSON.stringify(o));
+      else root.sessionStorage.removeItem(APPS_OPEN_KEY);
+    } catch (e) {}
+  }
+  // May the app show now? Not locked, or unlocked in this tab and not
+  // left alone for a minute; never while the whole lock is up.
+  function appAllowed(id) {
+    id = String(id || "");
+    if (!appIs(id)) return true;
+    if (locked) return false;
+    return Object.prototype.hasOwnProperty.call(openGet(), id);
+  }
+  // all = true: every unlocked app (idle in scope "apps", Lock apps
+  // now); false: only the ones in the background.
+  function appsRelock(all) {
+    var o = openGet(), n = {}, changed = false;
+    Object.keys(o).forEach(function (id) {
+      if (all || o[id] > 0) changed = true;
+      else n[id] = o[id];
+    });
+    if (!changed) return false;
+    openPut(n);
+    emit();
+    return true;
+  }
 
   function emit() {
     listeners.slice().forEach(function (fn) {
@@ -616,6 +722,7 @@
     if (now === bioSeen) return;
     bioSeen = now;
     if (ui && !ui.bioBusy) fillBio();
+    if (appUi && !appUi.busy) appFillBio();
     emit();
   }
   desk.onChange(bioChanged);
@@ -641,7 +748,7 @@
   function tick() {
     if (!cfg || locked) return;
     hookFrames(doc, 0);
-    if (idleDue()) { lock("idle"); return; }
+    if (idleDue() && (lock("idle") || cfg.scope !== "apps")) return;   // scope "apps": the apps lock again, orOS stays open
     markSeen();
   }
 
@@ -937,12 +1044,21 @@
       // The till itself never locks; only the owner's own ask does.
       if (reason !== "owner") return false;
     }
+    // APPLOCK-1, scope "apps": orOS itself does not lock; a start, idle
+    // time or a hidden page locks the opened apps again instead. Lock
+    // now (here or in another tab) still locks the whole screen.
+    if (cfg.scope === "apps" && reason !== "now" && reason !== "remote" && reason !== "owner") {
+      appsRelock(true);
+      return false;
+    }
     if (!doc.body) {
       doc.addEventListener("DOMContentLoaded", function () { lock(reason); });
       return false;
     }
     locked = true;
     clearSeen();
+    appsRelock(false);       // apps left in the background lock again; the one in front opens with the screen
+    appClose(false);         // an app's own PIN box gives way to the lock screen
     view = "main";
     resetArmed = 0;
     blurAll();
@@ -1017,44 +1133,67 @@
     if (!had && view === "main" && !busy) focusField();
   }
 
-  // Must run inside the tap: the app's prompt opens from an intent
-  // link, which Chrome follows only on a user gesture.
-  function tryBio() {
-    if (busy || !ui || ui.bioBusy || !bioReady()) return;
-    var r = bioRec(), p = phone(), b = ui.bioBtn;
-    ui.bioBusy = true;
-    if (b) b.disabled = true;
-    say(ui.msg, bioKind() === "finger" ? "lock.bio.touch" : null, "dim");
-    var asked;
+  // The fingerprint asked once: Promise<"ok" | code>. Must run inside
+  // the tap: the app's prompt opens from an intent link, which Chrome
+  // follows only on a user gesture. A secret that no longer opens the
+  // record ends fingerprint unlock here. Used by the lock screen and by
+  // an app's own PIN box (APPLOCK-1).
+  function bioAttempt() {
+    var r = bioRec(), p = phone(), asked;
     try { asked = p.bio.open(r.kid, "lock"); } catch (e) { asked = Promise.reject(e); }
-    asked.then(function (d64) {
+    return asked.then(function (d64) {
       var d;
       try { d = unb64(d64); } catch (e) { throw new Error("bio-wrong"); }
       return bioOpens(r, d).then(function (ok) {
         d.fill(0);
         if (!ok) throw new Error("bio-wrong");
       });
-    }).then(function () {
-      if (!ui) return;
-      ui.bioBusy = false;
-      clearTries();
-      unlock();
-    }, function (e) {
-      if (!ui) return;
-      ui.bioBusy = false;
+    }).then(function () { clearTries(); return "ok"; }, function (e) {
       var c = bioCode(e);
-      if (c === "invalidated" || c === "none" || c === "wrong") {
-        bioForget();
-        say(ui.msg, c === "invalidated" ? "lock.bio.err.invalidated" : bioKind() === "phone" ? "lock.bio.err.none" : "lock.bio.err.nonePc", "err");
-      } else if (c === "cancel") {
-        say(ui.msg, null);
-      } else {
-        say(ui.msg, c === "lockout" ? "lock.bio.err.lockout" : c === "timeout" ? "lock.bio.err.timeout" : "lock.bio.err.failed", "err");
-      }
+      if (c === "invalidated" || c === "none" || c === "wrong") bioForget();
+      return c;
+    });
+  }
+  // The message for a failed fingerprint (null for a cancel).
+  function bioErrKey(c) {
+    if (c === "cancel") return null;
+    if (c === "invalidated") return "lock.bio.err.invalidated";
+    if (c === "none" || c === "wrong") return bioKind() === "phone" ? "lock.bio.err.none" : "lock.bio.err.nonePc";
+    return c === "lockout" ? "lock.bio.err.lockout" : c === "timeout" ? "lock.bio.err.timeout" : "lock.bio.err.failed";
+  }
+  function tryBio() {
+    if (busy || !ui || ui.bioBusy || !bioReady()) return;
+    var b = ui.bioBtn;
+    ui.bioBusy = true;
+    if (b) b.disabled = true;
+    say(ui.msg, bioKind() === "finger" ? "lock.bio.touch" : null, "dim");
+    bioAttempt().then(function (c) {
+      if (!ui) return;
+      ui.bioBusy = false;
+      if (c === "ok") { unlock(); return; }
+      say(ui.msg, bioErrKey(c), c === "cancel" ? null : "err");
       fillBio();
       if (ui.bioBtn) ui.bioBtn.disabled = false;
       if (c !== "cancel") { try { ui.input.focus(); } catch (x) {} }
     });
+  }
+
+  // The lock's secret, or the duress secret (STRICT-2): Promise<true |
+  // "duress" | false>. Nothing is counted here.
+  function secretVerdict(secret) {
+    return matches(cfg, secret).then(function (ok) {
+      if (ok) return ok;
+      var d = duressLive();
+      if (!d || typeof hooks.duress !== "function") return false;
+      return matches(d, secret).then(function (hit) { return hit ? "duress" : false; });
+    });
+  }
+  // The duress secret was typed: the wipe starts and it looks like any
+  // other unlock; the reload then opens a fresh orOS.
+  function duressGo() {
+    var d = duressRec();
+    resetting = true;
+    try { hooks.duress(!!(d && d.cloud)); } catch (e) {}
   }
 
   function tryUnlock(secret) {
@@ -1064,20 +1203,8 @@
     if (!load()) { unlock(); return; }       // the lock was turned off in another tab
     setBusy(true);
     say(ui.msg, "lock.msg.checking", "dim");
-    matches(cfg, secret).then(function (ok) {
-      if (ok) return ok;
-      var d = duressLive();
-      if (!d || typeof hooks.duress !== "function") return false;
-      return matches(d, secret).then(function (hit) { return hit ? "duress" : false; });
-    }).then(function (ok) {
-      if (ok === "duress") {
-        // Looks like any other unlock while the wipe runs; the reload
-        // then opens a fresh orOS.
-        var d = duressRec();
-        resetting = true;
-        try { hooks.duress(!!(d && d.cloud)); } catch (e) {}
-        return;
-      }
+    secretVerdict(secret).then(function (ok) {
+      if (ok === "duress") { duressGo(); return; }
       setBusy(false);
       if (ok) { clearTries(); bioTyped(); if (tillActive()) setOwner(true); unlock(); return; }
       failOnce();
@@ -1104,6 +1231,8 @@
         clearTries();
         save(null);
         bioForget();
+        appsWrite(null);
+        openPut(null);
         unlock();
         if (hooks.recovered) { try { hooks.recovered(); } catch (e) {} }
         return;
@@ -1132,6 +1261,155 @@
       setBusy(false);
       ui.rbtn.textContent = t("lock.reset");
     }
+  }
+
+  // ---------- 4b. An app's own PIN box (APPLOCK-1) ----------
+  // A card over the shell (not the full lock screen): the same PIN /
+  // passphrase, fingerprint, tries and duress secret. The shell asks it
+  // before a locked app loads (orosLock.apps.ask) and never loads the
+  // app behind it.
+  var appUi = null;
+  function appClose(ok) {
+    if (!appUi) return;
+    var a = appUi;
+    appUi = null;              // the close handler sees no appUi
+    try { if (a.dlg.open && typeof a.dlg.close === "function") a.dlg.close(); } catch (e) {}
+    if (a.dlg.parentNode) a.dlg.parentNode.removeChild(a.dlg);
+    try { a.done(!!ok); } catch (e) {}
+  }
+  function appSay(key, kind, vars) { if (appUi) say(appUi.msg, key, kind, vars); }
+  function appOpened(id) {
+    var o = openGet();
+    o[id] = 0;
+    openPut(o);
+    clearTries();
+    lastActive = Date.now();
+    emit();
+  }
+  function appFillBio() {
+    if (!appUi) return;
+    var box = appUi.bioBox;
+    box.textContent = "";
+    appUi.bioBtn = null;
+    if (!bioReady()) return;
+    var k = bioKind();
+    var b = node("button", "lk-btn lk-primary lk-bio-btn", t(k === "hello" ? "lock.bio.unlockHello" : k === "finger" ? "lock.bio.unlockFinger" : "lock.bio.unlock"));
+    b.type = "button";
+    b.addEventListener("click", appTryBio);
+    box.appendChild(b);
+    appUi.bioBtn = b;
+  }
+  function appTryBio() {
+    var a = appUi;
+    if (!a || a.busy || !bioReady()) return;
+    a.busy = true;
+    if (a.bioBtn) a.bioBtn.disabled = true;
+    appSay(bioKind() === "finger" ? "lock.bio.touch" : null, "dim");
+    bioAttempt().then(function (c) {
+      if (appUi !== a) return;
+      a.busy = false;
+      if (c === "ok") { appOpened(a.id); appClose(true); return; }
+      appSay(bioErrKey(c), c === "cancel" ? null : "err");
+      appFillBio();
+      if (c !== "cancel") { try { a.input.focus(); } catch (x) {} }
+    });
+  }
+  function appTry(secret) {
+    var a = appUi;
+    if (!a || a.busy) return;
+    if (waitMs()) { sayWait(a.msg); return; }
+    if (!load()) { appClose(true); return; }       // the lock was turned off in another tab
+    if (!secret) { appSay(cfg.kind === "pass" ? "lock.msg.emptyPass" : "lock.msg.emptyPin", "err"); return; }
+    a.busy = true;
+    a.go.disabled = true;
+    appSay("lock.msg.checking", "dim");
+    secretVerdict(secret).then(function (ok) {
+      if (ok === "duress") { duressGo(); return; }
+      if (appUi !== a) return;
+      a.busy = false;
+      a.go.disabled = false;
+      if (ok) { bioTyped(); appOpened(a.id); appClose(true); return; }
+      failOnce();
+      if (waitMs()) sayWait(a.msg);
+      else appSay(cfg.kind === "pass" ? "lock.msg.wrongPass" : "lock.msg.wrongPin", "err");
+      try { a.input.focus(); } catch (x) {}
+    }, function () {
+      if (appUi !== a) return;
+      a.busy = false;
+      a.go.disabled = false;
+      appSay("lock.msg.error", "err");
+    });
+  }
+  // → Promise<boolean> (true = the app may open now). opts.name: the
+  // app's shown name ("" = a neutral title); opts.cancel false: no way
+  // out (a single app, where nothing else is behind it).
+  function appAsk(id, opts) {
+    id = String(id || "");
+    opts = opts || {};
+    if (appAllowed(id)) return Promise.resolve(true);
+    if (locked || resetting || !doc.body || !load()) return Promise.resolve(false);
+    appClose(false);
+    var stay = opts.cancel === false;
+    return new Promise(function (done) {
+      var dlg = node("dialog", "lk lk-app");
+      dlg.id = "oros-applock";
+      dlg.setAttribute("aria-labelledby", "oros-applock-title");
+      var box = node("div", "lk-box");
+      var ico = node("div", "lk-ico");
+      ico.innerHTML = LOCK_SVG;                          // static icon
+      box.appendChild(ico);
+      var name = typeof opts.name === "string" ? opts.name.slice(0, 80) : "";
+      var title = node("h2", "lk-title", name ? t("lock.app.title", { app: name }) : t("lock.app.titleAny"));
+      title.id = "oros-applock-title";
+      box.appendChild(title);
+      var form = node("form", "lk-view");
+      form.setAttribute("autocomplete", "off");
+      var bioBox = node("div", "lk-bio");
+      form.appendChild(bioBox);
+      var lab = node("label", "lk-label", t(cfg.kind === "pin" ? "lock.enterPin" : "lock.enterPass"));
+      lab.htmlFor = "oros-applock-input";
+      form.appendChild(lab);
+      var input = secretField("oros-applock-input", cfg.kind);
+      form.appendChild(input);
+      var go = node("button", "lk-btn lk-primary", t("lock.app.open"));
+      go.type = "submit";
+      form.appendChild(go);
+      var msg = node("p", "lk-msg");
+      msg.setAttribute("role", "status");
+      msg.setAttribute("aria-live", "polite");
+      form.appendChild(msg);
+      if (!stay) {
+        var cancel = node("button", "lk-link", t("lock.app.cancel"));
+        cancel.type = "button";
+        cancel.addEventListener("click", function () { if (appUi && !appUi.busy) appClose(false); });
+        form.appendChild(cancel);
+      }
+      box.appendChild(form);
+      dlg.appendChild(box);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var v = input.value;
+        input.value = "";
+        appTry(v);
+      });
+      dlg.addEventListener("cancel", function (e) {
+        e.preventDefault();
+        if (!stay && appUi && appUi.dlg === dlg && !appUi.busy) appClose(false);
+      });
+      dlg.addEventListener("close", function () {
+        if (!appUi || appUi.dlg !== dlg) return;
+        if (stay) { try { dlg.showModal(); } catch (e) {} return; }
+        appClose(false);
+      });
+      blurAll();
+      appUi = { dlg: dlg, id: id, done: done, input: input, msg: msg, go: go, bioBox: bioBox, bioBtn: null, busy: false };
+      doc.body.appendChild(dlg);
+      try { dlg.showModal(); } catch (e) { dlg.setAttribute("open", ""); }
+      bioWatch();
+      appFillBio();
+      if (waitMs()) sayWait(msg);
+      try { (appUi.bioBtn || input).focus(); } catch (e) {}
+    });
   }
 
   // While locked: no shell shortcut (Ctrl+Alt+Shift+…, Ctrl+K) may run
@@ -1189,7 +1467,7 @@
     snapshot: function () {
       var c = load();
       return { available: available(), on: !!c, kind: c ? c.kind : null,
-               idle: c ? c.idle : DEFAULT_IDLE, hidden: c ? c.hidden : false,
+               idle: c ? c.idle : DEFAULT_IDLE, hidden: c ? c.hidden : false, scope: c ? c.scope : "all",
                idles: IDLES.slice(), busy: busy, locked: locked, wait: waitMs() };
     },
     // Turn the lock on (no lock yet) with a new PIN / passphrase.
@@ -1234,6 +1512,8 @@
         if (!r.ok) return r;
         if (!save(null)) return { ok: false, code: "storage" };
         bioForget();
+        appsWrite(null);                   // APPLOCK-1: no lock, no locked apps
+        openPut(null);
         return { ok: true };
       }));
     },
@@ -1245,6 +1525,7 @@
       if (loosens(strictLevel(), name, value)) return false;     // Sensitive work keeps its limits
       if (name === "idle" && IDLES.indexOf(Number(value)) !== -1) c.idle = Number(value);
       else if (name === "hidden") c.hidden = !!value;
+      else if (name === "scope" && (value === "all" || value === "apps")) c.scope = value;   // APPLOCK-1
       else return false;
       var ok = save(c);
       lastActive = Date.now();
@@ -1252,6 +1533,65 @@
       return ok;
     },
     lock: function () { return lock("now"); },
+    // App lock (APPLOCK-1): chosen apps ask the PIN / passphrase (or
+    // fingerprint) before they open. Device-local list; nothing is
+    // locked while the lock itself is off.
+    apps: {
+      free: APPS_FREE.slice(),
+      relockMs: RELOCK_MS,
+      // "lock" | "hide" | "" as set on this device.
+      state: function (id) { return appIs(id); },
+      list: function () {
+        var l = appsList();
+        return { on: !!load(), broken: l.broken, apps: JSON.parse(JSON.stringify(l.apps)) };
+      },
+      // May it show now (not locked, or unlocked in this tab)?
+      allowed: function (id) { return appAllowed(id); },
+      // value "lock" | "hide" | "". Locking more needs nothing; opening
+      // an app up (or repairing a list that could not be read) needs
+      // the current PIN / passphrase. → Promise { ok, code }: off, id,
+      // value, wrong, wait, busy, storage.
+      set: function (id, value, current) {
+        id = String(id || "");
+        if (!load()) return Promise.resolve({ ok: false, code: "off" });
+        if (!APP_ID_RE.test(id) || APPS_FREE.indexOf(id) !== -1) return Promise.resolve({ ok: false, code: "id" });
+        if (value !== "lock" && value !== "hide" && value !== "") return Promise.resolve({ ok: false, code: "value" });
+        if (busy) return Promise.resolve({ ok: false, code: "busy" });
+        var l = appsList(), was = appState(l, id), rank = { "": 0, lock: 1, hide: 2 };
+        if (was === value && !l.broken) return Promise.resolve({ ok: true });
+        function write() {
+          var apps = l.broken ? {} : l.apps;
+          if (value) apps[id] = value; else delete apps[id];
+          var ok = appsWrite(apps);
+          emit();
+          return ok ? { ok: true } : { ok: false, code: "storage" };
+        }
+        if (!l.broken && rank[value] >= rank[was]) return Promise.resolve(write());
+        return run(checkCurrent(current).then(function (r) { return r.ok ? write() : r; }));
+      },
+      // The app's own PIN box → Promise<boolean>.
+      ask: function (id, opts) { return appAsk(id, opts); },
+      // The shell: the app came to the front / left it (the minute
+      // starts). Only apps unlocked in this tab are kept.
+      enter: function (id) {
+        id = String(id || "");
+        if (!appIs(id) || !appAllowed(id)) return false;
+        var o = openGet();
+        o[id] = 0;
+        openPut(o);
+        return true;
+      },
+      leave: function (id) {
+        id = String(id || "");
+        var o = openGet();
+        if (!Object.prototype.hasOwnProperty.call(o, id) || o[id] > 0) return false;
+        o[id] = Date.now();
+        openPut(o);
+        return true;
+      },
+      // Every unlocked app locks again (Settings › Lock apps now).
+      relock: function () { return appsRelock(true); }
+    },
     // Fingerprint or face on this phone (LK-BIO): Settings › Screen lock.
     bio: {
       // linked: the orOS app's bridge answers; can: what the phone says
@@ -1622,7 +1962,7 @@
     }
   } catch (e) { bc = null; }
   root.addEventListener("storage", function (e) {
-    if (e.key !== KEY && e.key !== BIO_KEY && e.key !== STRICT_KEY && e.key !== TILL_KEY && e.key !== null) return;
+    if (e.key !== KEY && e.key !== BIO_KEY && e.key !== STRICT_KEY && e.key !== TILL_KEY && e.key !== APPS_KEY && e.key !== null) return;
     load();
     if (!cfg && locked) unlock();
     emit();

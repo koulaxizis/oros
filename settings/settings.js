@@ -2483,7 +2483,8 @@
   // The lock lives in the shell (lock.js, window.parent.orosLock): it
   // keeps only a slow hash on this device. The typed PIN / passphrase
   // stays in `lk` until it is handed over, then it is cleared.
-  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", bio: "", msg: null, bioMsg: null, bioSlow: false, bioT: null };
+  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", bio: "", msg: null, bioMsg: null, bioSlow: false, bioT: null,
+             appPend: null, appCur: "", appMsg: null };
 
   function lockApi() {
     var p = parentWin();
@@ -2580,7 +2581,7 @@
     return form;
   }
 
-  function secLock(host) {
+  function secLock(host, s) {
     var L = lockApi();
     var c1 = card(null);
     c1.appendChild(el("p", "hint", t("l.intro")));
@@ -2642,6 +2643,7 @@
       if (caps && caps.hidden) hsw.disabled = true;     // Sensitive work keeps it on
       c2.appendChild(row(t("l.hidden"), hsw, { hint: t("l.hidden.hint") }));
       host.appendChild(c2);
+      if (L.apps) secLockApps(host, L, k, s, strict);
     }
 
     if (k.on && strict !== "hard" && L.bio && typeof L.bio.state === "function" && L.bio.state().linked) secLockBio(host, L, k);
@@ -2650,6 +2652,104 @@
     c3.appendChild(el("p", "hint", t("l.honest")));
     c3.appendChild(el("p", "hint", t("l.forgot")));
     host.appendChild(c3);
+  }
+
+  // App lock (APPLOCK-1, lock.js orosLock.apps): which apps ask the PIN
+  // even while orOS is unlocked, and whether the lock covers all of orOS
+  // or only them. Locking an app needs nothing; opening one up again
+  // needs the current PIN / passphrase (lk.appCur, cleared after use).
+  function lockAppResult(r, okKey, vars) {
+    lk.appCur = "";
+    if (r && r.ok) { lk.appPend = null; lk.appMsg = { kind: "ok", key: okKey, vars: vars || null }; }
+    else {
+      var code = (r && r.code) || "crypto";
+      if (code === "wait") lk.appMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
+      else lk.appMsg = { kind: "err", key: "l.msg." + (/^(wrong|storage|busy)$/.test(code) ? code : "crypto") };
+    }
+    render();
+  }
+  function secLockApps(host, L, k, s, strict) {
+    var c = card(t("l.apps"), "lock-apps");
+    c.appendChild(el("p", "hint", t("l.apps.hint")));
+    // Scope: all of orOS, or only the chosen apps.
+    var sr = row(t("l.scope"), null, { hint: t(k.scope === "apps" ? "l.scope.apps.hint" : "l.scope.all.hint") });
+    var seg = segmented([
+      { value: "all", label: t("l.scope.all") }, { value: "apps", label: t("l.scope.apps") }
+    ], k.scope || "all", "lk-scope", function (v) { L.option("scope", v); render(); }, t("l.scope"));
+    if (strict) Array.prototype.forEach.call(seg.querySelectorAll("button"), function (b) { b.disabled = true; });
+    sr.appendChild(seg);
+    c.appendChild(sr);
+    var names = {};
+    (s && Array.isArray(s.menu) ? s.menu : []).forEach(function (a) { if (a && typeof a.id === "string") names[a.id] = String(a.name || a.id); });
+    var st = L.apps.list(), free = L.apps.free || [];
+    if (st.broken) c.appendChild(el("p", "msg msg-err", t("l.apps.broken")));
+    var ids = Object.keys(st.apps).sort(function (a, b) { return String(names[a] || a).localeCompare(String(names[b] || b)); });
+    if (!ids.length) c.appendChild(el("p", "hint", t("l.apps.none")));
+    ids.forEach(function (id) {
+      var r = row(names[id] || id, null, { scope: "lock-app:" + id });
+      r.appendChild(button(t("l.apps.remove"), "lk-app-off:" + id, function () {
+        lk.appPend = { id: id, value: "" };
+        lk.appCur = "";
+        lk.appMsg = null;
+        render();
+        var f = $("f-lk-appcur"); if (f) f.focus();
+      }));
+      c.appendChild(r);
+    });
+    if (lk.appPend && (lk.appPend.value !== "" || st.apps[lk.appPend.id] || st.broken)) {
+      var form = el("form", "pass dav-form");
+      form.setAttribute("autocomplete", "off");
+      var kind = k.kind || "pin";
+      form.appendChild(el("p", "hint", t("l.apps.askPin", { app: names[lk.appPend.id] || lk.appPend.id })));
+      var wrap = el("div", "dav-field");
+      var lab = el("label", "row-label", t("l.current." + kind));
+      lab.htmlFor = "f-lk-appcur";
+      wrap.appendChild(lab);
+      var inp = el("input");
+      inp.id = "f-lk-appcur";
+      inp.type = "password";
+      inp.autocomplete = "off";
+      inp.spellcheck = false;
+      inp.setAttribute("autocapitalize", "off");
+      if (kind === "pin") { inp.inputMode = "numeric"; inp.maxLength = 12; inp.setAttribute("pattern", "[0-9]*"); }
+      else inp.maxLength = 256;
+      inp.setAttribute("data-k", "lk-appcur");
+      inp.addEventListener("input", function () { lk.appCur = inp.value; });
+      wrap.appendChild(inp);
+      form.appendChild(wrap);
+      var go = el("button", "btn primary", t("l.apps.removeGo"));
+      go.type = "submit";
+      go.setAttribute("data-k", "lk-app-go");
+      form.appendChild(actions(go, button(t("l.cancel"), "lk-app-cancel", function () { lk.appPend = null; lk.appCur = ""; render(); })));
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (lockApi() !== L || !lk.appPend) return;
+        var p = lk.appPend, cur = lk.appCur;
+        lk.appCur = "";
+        L.apps.set(p.id, p.value, cur).then(function (r) { lockAppResult(r, "l.apps.removed", { app: names[p.id] || p.id }); },
+                                            function () { lockAppResult(null); });
+      });
+      c.appendChild(form);
+    }
+    // Add one: every installed app not locked yet (Settings never).
+    var opts = [{ value: "", label: t("l.apps.pick") }];
+    Object.keys(names).filter(function (id) { return !st.apps[id] && free.indexOf(id) === -1; })
+      .sort(function (a, b) { return names[a].localeCompare(names[b]); })
+      .forEach(function (id) { opts.push({ value: id, label: names[id] }); });
+    var pick = { v: "" };
+    var add = row(t("l.apps.add"), select(opts, "", "lk-app-add", function (v) { pick.v = v; }), { forId: "f-lk-app-add" });
+    c.appendChild(add);
+    c.appendChild(actions(
+      button(t("l.apps.lock"), "lk-app-lock", function () {
+        var id = pick.v || ($("f-lk-app-add") || {}).value;
+        if (!id) return;
+        L.apps.set(id, "lock").then(function (r) { lockAppResult(r, "l.apps.locked", { app: names[id] || id }); },
+                                    function () { lockAppResult(null); });
+      }, "primary"),
+      ids.length ? button(t("l.apps.now"), "lk-app-now", function () { L.apps.relock(); lk.appMsg = { kind: "ok", key: "l.apps.nowDone" }; render(); }) : null));
+    if (lk.appMsg) c.appendChild(el("p", "msg msg-" + lk.appMsg.kind, t(lk.appMsg.key, lk.appMsg.vars)));
+    c.appendChild(el("p", "hint", t("l.apps.honest")));
+    host.appendChild(c);
   }
 
   // Fingerprint or face on this phone (LK-BIO): only in the orOS app and
