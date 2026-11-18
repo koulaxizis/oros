@@ -38,6 +38,8 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 ## History
 - `History` lists the finished transfers, newest first: when, to or from which device, how many files and how big, and where they went. `Open` shows a folder that arrived on the orOS disk.
 - The history keeps only the names of the top files and folders, never their contents, and syncs with your other devices. `Clear history` (press it twice) empties it everywhere.
+- The orOS menu search finds transfers in the history by those names or the device. When you allow Transfer for the [Assistant](app:assistant) or orOS Gate, they can read the history the same way, never the files.
+- [Today](app:today) shows each transfer that arrived in the last 24 hours, and when a link you sent through your Dropbox from this device stops working (in the next three days). That list of links stays on this device.
 
 ## Privacy and limits
 - The code makes the encryption key. It stays in the link after the # sign, which a browser never sends to a server. The orOS relay only introduces the two browsers to each other and sees only sealed messages.

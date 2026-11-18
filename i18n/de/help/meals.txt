@@ -61,6 +61,8 @@ In orOS fragt `Ins Budget` im Tab Einkauf, was du bezahlt hast, und öffnet eine
 
 `In Aufgaben` schickt die nicht abgehakten Artikel an die Liste `Einkäufe` in [Aufgaben](app:todo), jeweils mit den Rezepten, für die sie sind. Aufgaben zeigt sie dir zuerst: Du kannst eine andere Liste wählen, und Artikel, die schon darauf stehen, sind nicht angehakt. Nichts wird hinzugefügt, bis du `Hinzufügen` drückst, und deine Haken hier ändern sich nicht.
 
+`An eine App senden…` im Tab Einkauf schickt, was noch zu kaufen ist (alles, wenn alles abgehakt ist), als Liste an eine andere orOS-App, etwa [Kanban](app:kanban), [Notizen](app:notes) oder [Mail](app:mail). Die andere App öffnet sich nur damit ausgefüllt.
+
 ## Vorrat
 Der Tab `Vorrat` ist das, was du zu Hause hast, danach, wo es aufbewahrt wird: `Kühlschrank`, `Gefrierfach` oder `Schrank`. Tipp ins Feld, was du hast, etwa „1 l Milch“ oder „6 Eier“, und drück Enter; ein Artikel mit demselben Namen und ohne Mindesthaltbarkeitsdatum bekommt einfach die zusätzliche Menge. Tipp auf einen Artikel, um Name, Menge, Ort oder `Mindestens haltbar bis` zu ändern oder ihn zu `Entfernen`. Was innerhalb von drei Tagen sein Datum erreicht oder darüber ist, steht zuerst unter `Bald verbrauchen`.
 

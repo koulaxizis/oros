@@ -295,6 +295,9 @@
   //   app share), kanban {addCards} and prompter {newPrompt} (new here),
   //   writer {newDoc:{title, rows}} (a table, new here); Flashcards
   //   wave 4: flashcards {make:{title, text | rows}}.
+  var QR_MAX = 2000, WB_MAX = 50, FORMS_MAX = 100, CRM_MAX = 2000;
+  // Base's column names for a list, in the person's language.
+  var BASE_HEAD = { en: { name: "Name", note: "Notes" }, el: { name: "Όνομα", note: "Σημειώσεις" }, de: { name: "Name", note: "Notizen" } };
   var RECEIVERS = {
     notes: {
       kinds: ["text", "link", "items"],
@@ -352,11 +355,58 @@
       }
     },
     // Base: the table opens in "Add as a table" (which base, how many
-    // rows); nothing is saved before Add table (Base wave B2b).
+    // rows); nothing is saved before Add table (Base wave B2b). A list
+    // (gap review proposal 5) goes the same way as a two-column table
+    // (Name, Note; the Note column only when an item has one).
     base: {
-      kinds: ["table"],
-      ok: function (k, d) { return d.rows.length >= 2; },
-      build: function (k, d) { return { newTable: { name: d.name, rows: d.rows } }; }
+      kinds: ["table", "items"],
+      ok: function (k, d) { return k === "items" ? d.items.length >= 1 : d.rows.length >= 2; },
+      build: function (k, d, from, lang) {
+        if (k === "table") return { newTable: { name: d.name, rows: d.rows } };
+        var notes = d.items.some(function (it) { return it.note; }), H = BASE_HEAD[lang] || BASE_HEAD.en;
+        var rows = [notes ? [H.name, H.note] : [H.name]].concat(d.items.map(function (it) {
+          return notes ? [it.text, it.note.replace(/\s+/g, " ").trim()] : [it.text];
+        }));
+        return { newTable: { name: line(d.title, 100), rows: rows } };
+      }
+    },
+    // Gap review proposal 5: QR (a NEW unsaved code: a link → URL, a
+    // text → Text, ≤ 2000 characters, the QR app's own field limit),
+    // Whiteboard (one sticky note per item / line, ≤ 50, on the open
+    // board with Undo), Forms (one short-answer question per item /
+    // line, ≤ 100, a new unpublished form: the Assistant's { draft }),
+    // CRM (a text as a new history entry of kind Note, ≤ 2000, the
+    // customer picked in the window, nothing saved before Save).
+    qr: {
+      kinds: ["link", "text"],
+      ok: function (k, d) { return k === "link" || d.text.length <= QR_MAX; },
+      build: function (k, d) {
+        if (k === "link") return { make: { type: "url", fields: { url: d.url } } };
+        return { make: { type: "text", fields: { text: d.text } } };
+      }
+    },
+    whiteboard: {
+      kinds: ["items", "text"],
+      ok: function (k, d) { return !!asItems(k, d); },
+      build: function (k, d) {
+        return { addNotes: { notes: asItems(k, d).slice(0, WB_MAX).map(function (it) {
+          return { tx: it.note ? it.text + "\n" + it.note : it.text };
+        }) } };
+      }
+    },
+    forms: {
+      kinds: ["items", "text"],
+      ok: function (k, d) { return !!asItems(k, d); },
+      build: function (k, d) {
+        return { draft: { title: line(d.title, 200), questions: asItems(k, d).slice(0, FORMS_MAX).map(function (it) { return { label: line(it.text, 300) }; }) } };
+      }
+    },
+    crm: {
+      kinds: ["text"],
+      build: function (k, d) {
+        var tx = d.title && d.text.indexOf(d.title) !== 0 ? d.title + "\n" + d.text : d.text;
+        return { logNote: { text: tx.slice(0, CRM_MAX) } };
+      }
     },
     texttools: {
       kinds: ["text", "items", "table"],
@@ -552,8 +602,8 @@
     }
   };
   // The sheet's order: the everyday places first.
-  var ORDER = ["notes", "todo", "writer", "mail", "transfer", "kanban", "slides", "bookmarks", "spreadsheet", "base", "invoices", "wiki", "diary", "mindmap", "prompter",
-    "flashcards", "typing", "photolab", "scanpdf", "library", "music", "layout", "atelier", "wallpaper", "assistant", "texttools", "labels"];
+  var ORDER = ["notes", "todo", "writer", "mail", "transfer", "kanban", "whiteboard", "slides", "bookmarks", "spreadsheet", "base", "forms", "crm", "invoices", "wiki", "diary", "mindmap", "prompter",
+    "flashcards", "typing", "qr", "photolab", "scanpdf", "library", "music", "layout", "atelier", "wallpaper", "assistant", "texttools", "labels"];
   // Shown before ORDER: they take an item only when it holds what they
   // need, so when they show they are the likely pick.
   var SMART = ["calendar", "budget", "contacts", "maps"];
@@ -573,10 +623,12 @@
     (installed || []).forEach(function (id) { have[id] = true; });
     return SMART.concat(ORDER).filter(function (id) { return have[id] && id !== self && accepts(id, kind, d); });
   }
-  function target(app, kind, data, from) {
+  // lang (optional): "en" | "el" | "de", for the few receivers that
+  // write words of their own (Base's column names).
+  function target(app, kind, data, from, lang) {
     var d = norm(kind, data);
     if (!d || !accepts(app, kind, d)) return null;
-    return RECEIVERS[app].build(kind, d, from || "");
+    return RECEIVERS[app].build(kind, d, from || "", lang || "en");
   }
   function via(app) { return own(RECEIVERS, app) && RECEIVERS[app].via ? RECEIVERS[app].via : ""; }
 

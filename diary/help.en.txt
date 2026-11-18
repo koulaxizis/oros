@@ -8,6 +8,8 @@ Open the app and type. The line saves itself as you type (`Saved` appears under 
 - Writing after midnight? Until 03:00 the app asks whether the line is for `Yesterday` or `Today`.
 - Clearing the text, or `Delete this day`, removes the day; `Undo` in the message brings it back.
 
+`Send to an app…` under the line sends this day as text (the date, the line with its emoji and the longer entry; photos stay here) to another orOS app, such as [Notes](app:notes) or [Writer](app:writer). It shows only after the PIN lock, and only when you press it.
+
 ## Other days
 - The arrows next to the date go to the day before or after; `Back to today` returns. You can write or fix any past day, but not a day that has not come yet.
 - The star button at the top opens `A random memory` from your diary.

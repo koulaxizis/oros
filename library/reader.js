@@ -273,6 +273,12 @@
       cur.engine.clearSel();
       hideSel();
     }));
+    if (LIB.sendApi()) pop.appendChild(LIB.btn("icon-btn", t("hl.send"), UI.send, function () {
+      var s = cur && cur.engine.selection();
+      cur.engine.clearSel();
+      hideSel();
+      if (s) LIB.sendQuote(cur.book, s.q, s.label || "", "");
+    }));
     pop.appendChild(LIB.btn("icon-btn", t("look.title"), UI.dict, function () {
       var s = cur && cur.engine.selection();
       cur.engine.clearSel();
@@ -332,6 +338,7 @@
     })(c);
     pop.appendChild(LIB.btn("icon-btn", t(k.n ? "hl.editNote" : "hl.note"), UI.note, function () { hidePop(); noteDialog(id); }));
     pop.appendChild(LIB.btn("icon-btn", t("hl.copy"), UI.copy, function () { hidePop(); LIB.copyText(k.q || ""); }));
+    if (LIB.sendApi()) pop.appendChild(LIB.btn("icon-btn", t("hl.send"), UI.send, function () { hidePop(); LIB.sendQuote(cur.book, k.q, k.lbl || "", k.n || ""); }));
     pop.appendChild(LIB.btn("icon-btn danger", t("hl.delete"), UI.trash, function () { hidePop(); LIB.delMark(id); }));
     if (k.n) {
       var n = el("p", "pop-note", k.n);
@@ -521,6 +528,7 @@
       li.appendChild(b);
       var acts = el("div", "mark-acts");
       acts.appendChild(LIB.btn("icon-btn small", t(k.n ? "hl.editNote" : "hl.note"), UI.note, function () { noteDialog(k.id); }));
+      if (k.q && LIB.sendApi()) acts.appendChild(LIB.btn("icon-btn small", t("hl.send"), UI.send, function () { LIB.sendQuote(cur.book, k.q, k.lbl || "", k.n || ""); }));
       acts.appendChild(LIB.btn("icon-btn small", t("hl.delete"), UI.trash, function () { LIB.delMark(k.id); }));
       li.appendChild(acts);
       ul.appendChild(li);

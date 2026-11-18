@@ -621,11 +621,18 @@ test("orOS closed, full work (5.96.00): search over the copy's index, a board by
   assert.equal(r.isError, false);
   assert.match(r.content[0].text, /"queued":true/);
   assert.match((await tc("change_item", { ref: "r3", action: "update", text_add: "x" })).content[0].text, /"queued":true/);
-  assert.match((await tc("change_item", { ref: "r3", action: "delete" })).content[0].text, /Deleting waits/);
-  assert.match((await tc("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true })).content[0].text, /Deleting waits/);
+  // 7.43.00 (Chris 2026-11-11): deletions wait too, for the owner's Delete on the device
+  const del = (await tc("change_item", { ref: "r3", action: "delete" })).content[0].text;
+  assert.match(del, /"queued":true|this deletion waits/);
+  assert.match(del, /nothing is deleted without their Delete/);
+  assert.match((await tc("link_items", { links: [{ customer: "r1", item: "r2" }], unlink: true })).content[0].text, /waits/);
+  assert.equal(G.isDeletion("change_item", { refs: ["r116155"], action: "delete" }), true);
+  assert.equal(G.isDeletion("budget_delete", { ids: ["a"] }), true);
+  assert.equal(G.isDeletion("link_items", { unlink: true }), false, "an unlink deletes no item");
+  assert.deepEqual(G.refsIn({ refs: ["r116155", "r110954"] }), ["r116155", "r110954"], "refs of 6 digits");
   assert.match((await tc("link_contact", { links: [{ customer: "r1", contact: "r4" }] })).content[0].text, /may not change contacts/);
   assert.match((await tc("change_item", { ref: "r99", action: "update" })).content[0].text, /Unknown ref r99/);
-  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 4);
   assert.deepEqual(G.refsIn({ ref: "oros:r1", refs: ["r2", "x"], changes: [{ ref: "r3" }], links: [{ customer: "r4", item: "r5" }] }), ["r1", "r2", "r3", "r4", "r5"]);
 });
 
@@ -793,4 +800,43 @@ test("orOS closed, waiting changes shown as made (PEND-1): p- refs, search, summ
   assert.ok(b.st.alarm > Date.now() + 23 * 3600000, "the next reminder is a day later");
   await b.box.alarm();
   assert.equal(woke.length, 2, "not twice the same day");
+});
+
+test("a deletion nobody could answer on screen waits for a screen, it is not refused (7.48.00)", async () => {
+  // Chris 2026-11-17 «Η ερώτηση δεν εμφανίστηκε ποτέ»: 73 Calendar events, orOS open, no question shown
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], __g: { th: hex(TOK), v: 1, at: 1 }, send(x) {
+    this.sent.push(x);
+    const q = JSON.parse(x);
+    if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1);
+    else if (q.q && q.n === "change_item") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: false, c: "__held" })), 1);
+  }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const obj = { type: "object", properties: {} };
+  await b.st.storage.put("devtools", [{ name: "change_item", description: "c", inputSchema: obj, annotations: { readOnlyHint: false, destructiveHint: true } }]);
+  const r = (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "change_item", arguments: { refs: ["r85148", "r85149"], action: "delete" } } })).json()).result;
+  assert.equal(r.isError, false, r.content[0].text);
+  const out = JSON.parse(r.content[0].text);
+  assert.equal(out.queued, true);
+  assert.match(out.note, /Nothing is deleted without it/);
+  const rows = [...(await b.st.storage.list({ prefix: "q:" })).values()];
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].hd, 1, "marked as waiting for a screen");
+  const cqs = () => sock.sent.map((x) => { try { return JSON.parse(x); } catch (e) { return {}; } }).filter((o) => Array.isArray(o.cq));
+  assert.equal(cqs().length, 1, "offered at once to the device on screen");
+  assert.equal(cqs()[0].cq[0].id, out.change_id);
+  await b.box.webSocketMessage(sock, "v0");
+  await b.box.webSocketMessage(sock, "v1");
+  assert.equal(cqs().length, 2, "offered again when a device comes on screen");
+  await b.box.webSocketMessage(sock, "v1");
+  assert.equal(cqs().length, 2, "not again while it stays on screen");
+  // a device reports a queued deletion held (cqh): kept, not acknowledged
+  await b.box.webSocketMessage(sock, JSON.stringify({ cqa: [], cqh: [out.change_id] }));
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 1);
+  await b.box.webSocketMessage(sock, JSON.stringify({ cqa: [out.change_id] }));
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0, "gone once a device decided it");
 });

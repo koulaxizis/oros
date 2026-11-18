@@ -48,6 +48,8 @@ The `Received` tab keeps the invoices your suppliers send you, so you see what y
 ## PDF, sending and sharing
 `PDF` saves the document as a PDF with your logo and details; `Share PDF` hands it to another app where your device allows it. `Email` opens a new message in [Mail](app:mail) (or your email app) with the subject and text filled in. In Mail the PDF is already attached (a recorded invoice brings its official PDF) and a copy stays on the orOS disk under Invoices; in another email app, attach the PDF you saved. `Mark as sent` notes the date you sent it.
 
+`Send the lines to an app…` on an invoice, and the same button under a quote in `Quotes`, sends the lines as a table (description, quantity, unit price, discount, VAT and amount, then net, VAT and total) to another orOS app, such as [Spreadsheet](app:spreadsheet), [Writer](app:writer) or [Mail](app:mail). The other app only opens with it filled in; the document doesn't change.
+
 ### Pay online
 Put your own payment link in `Settings` › `Pay online link`: a Stripe Payment Link (https://buy.stripe.com/…, made in your Stripe dashboard) or any other https payment page. Every invoice or proforma that still has something to pay then shows `Pay online` on its PDF, as a link and a QR code, and the email gets a line with the link. With a Stripe link, the invoice number goes along as the payment's reference and the client's email is filled in on the payment page. orOS never asks for a payment key and never sees the payment: when the money arrives, record it with `Mark as paid` or `Add payment` as usual. Each business profile can have its own link.
 

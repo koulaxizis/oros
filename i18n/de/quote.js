@@ -1,4 +1,6 @@
 orosPack("de", "quote", {
+ "actions.send_app": "Positionen an eine App senden…",
+ "items.amount": "Betrag",
  "acc.already": "Schon erfasst.",
  "acc.bad_code": "Das ist keine Antwort auf ein Angebot oder sie ist unvollständig.",
  "acc.check": "Prüfen",

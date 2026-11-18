@@ -138,6 +138,12 @@
     return null;
   }
 
+  // Sensitive work (STRICT-1): providers that name people, files or
+  // documents give plain lines instead while it is on (ctx.strict).
+  function strictOn() {
+    try { var S = root.orosStrict; return !!(S && typeof S.level === "function" && S.level()); } catch (e) { return false; }
+  }
+
   function readRaw(key) {
     try { return localStorage.getItem(key); } catch (e) { return null; }
   }
@@ -157,7 +163,7 @@
       return loadApp(a, version);
     })).then(function () {
       var ctx = { today: today, horizon: A.HORIZON, now: now, lang: l, readJSON: readJSON, readRaw: readRaw,
-                  addDays: A.addDays, diff: A.diff };
+                  addDays: A.addDays, diff: A.diff, strict: strictOn() };
       var en = function (id) { return !!on[id]; };
       facts = A.collectFacts(root.orosTodayProviders, ctx, en);   // BR-TODAY-16
       return A.run(root.orosTodayProviders, ctx, { enabled: en });
@@ -194,7 +200,7 @@
       var p = provider(appId);
       if (!p) return [];
       var ctx = { today: today, horizon: days, now: now, lang: lang(), readJSON: readJSON, readRaw: readRaw,
-                  addDays: A.addDays, diff: A.diff };
+                  addDays: A.addDays, diff: A.diff, strict: strictOn() };
       return A.run([p], ctx, {}).then(function (res) { return res.rows; });
     });
   }
@@ -210,7 +216,7 @@
     apps.forEach(function (a) { on[a.id] = A.appOn(data, a.id); });
     return Promise.all(apps.filter(function (a) { return on[a.id]; }).map(function (a) { return loadApp(a, version); })).then(function () {
       var ctx = { today: today, horizon: days, now: now, lang: lang(), readJSON: readJSON, readRaw: readRaw,
-                  addDays: A.addDays, diff: A.diff };
+                  addDays: A.addDays, diff: A.diff, strict: strictOn() };
       return A.run(root.orosTodayProviders, ctx, { enabled: function (id) { return !!on[id]; } });
     }).then(function (res) {
       var n = {}, last = A.addDays(today, days);

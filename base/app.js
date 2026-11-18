@@ -85,7 +85,7 @@
       "tables": "Tables", "table.new": "New table", "table.name": "Table name", "table.defName": "Table {n}",
       "table.fromCsv": "Import a file as a table (CSV, Excel, ODS)",
       "menu.renameTable": "Rename table", "menu.primary": "Field that names records", "menu.exportCsv": "Export this view as CSV",
-      "menu.sheet": "Open this view in Spreadsheet", "menu.renameView": "Rename view", "menu.dupView": "Duplicate view",
+      "menu.sheet": "Open this view in Spreadsheet", "menu.sendTable": "Send as a table to an app…", "menu.sendList": "Send as a list to an app…", "menu.renameView": "Rename view", "menu.dupView": "Duplicate view",
       "menu.newView": "New view", "menu.delView": "Delete view", "menu.delTable": "Delete table",
       "menu.renameBase": "Rename base", "menu.colorBase": "Colour", "menu.importTable": "Import tables (CSV, Excel, ODS)",
       "menu.saveFile": "Save as orOS file (.orosbase)",
@@ -153,7 +153,7 @@
       "del.view": "Delete the view “{x}”? The records stay.", 
       "deleted": "Deleted", "deleted.rec": "Record deleted", "cleared": "Cleared", "pasted": "Pasted into {n} cells",
       "dup.done": "Duplicated", "copyOf": "{x} (copy)",
-      "rec.title": "Record", "rec.created": "Created {x}", "rec.modified": "Changed {x}", "rec.dup": "Duplicate",
+      "rec.title": "Record", "rec.created": "Created {x}", "rec.modified": "Changed {x}", "rec.dup": "Duplicate", "rec.sendApp": "Send to an app…",
       "cm.title": "Comments", "cm.none": "No comments yet.", "cm.ph": "Write a comment (Ctrl+Enter adds it)", "cm.add": "Add comment",
       "cm.del": "Delete comment", "cm.deleted": "Comment deleted", "cm.full": "Base keeps 20,000 comments; delete some first.",
       "rec.expand": "Open record", "rec.prev": "Previous record", "rec.next": "Next record",
@@ -233,6 +233,8 @@
       "imp.lib": "The Excel reader is missing.",
       "nt.title": "Add as a table", "nt.info": "“{x}”: {r} rows, {c} columns. The first row names the fields.",
       "nt.base": "Into", "nt.add": "Add table",
+      "ar.title": "New record from Automations", "ar.table": "Table", "ar.text": "Name of the record", "ar.add": "Add record",
+      "ar.none": "Make a table first: there is nowhere to add the record.",
       "exp.done": "Exported", "sheet.cap": "Only the first {n} records went to the Spreadsheet. Export a CSV for all of them.",
       "sheet.none": "This view has no records.", "sheet.off": "Open orOS to send this view to Spreadsheet.",
       "grid.add": "Add a field", "grid.addRow": "New record", "grid.label": "Records",
@@ -277,7 +279,7 @@
       "tables": "Πίνακες", "table.new": "Νέος πίνακας", "table.name": "Όνομα πίνακα", "table.defName": "Πίνακας {n}",
       "table.fromCsv": "Εισαγωγή αρχείου ως πίνακα (CSV, Excel, ODS)",
       "menu.renameTable": "Μετονομασία πίνακα", "menu.primary": "Πεδίο που ονομάζει τις εγγραφές", "menu.exportCsv": "Εξαγωγή αυτής της προβολής σε CSV",
-      "menu.sheet": "Άνοιγμα αυτής της προβολής στο Υπολογιστικό φύλλο", "menu.renameView": "Μετονομασία προβολής", "menu.dupView": "Αντίγραφο προβολής",
+      "menu.sheet": "Άνοιγμα αυτής της προβολής στο Υπολογιστικό φύλλο", "menu.sendTable": "Στείλε ως πίνακα σε εφαρμογή…", "menu.sendList": "Στείλε ως λίστα σε εφαρμογή…", "menu.renameView": "Μετονομασία προβολής", "menu.dupView": "Αντίγραφο προβολής",
       "menu.newView": "Νέα προβολή", "menu.delView": "Διαγραφή προβολής", "menu.delTable": "Διαγραφή πίνακα",
       "menu.renameBase": "Μετονομασία βάσης", "menu.colorBase": "Χρώμα", "menu.importTable": "Εισαγωγή πινάκων (CSV, Excel, ODS)",
       "menu.saveFile": "Αποθήκευση ως αρχείο orOS (.orosbase)",
@@ -345,7 +347,7 @@
       "del.view": "Να διαγραφεί η προβολή «{x}»; Οι εγγραφές μένουν.", 
       "deleted": "Διαγράφηκε", "deleted.rec": "Η εγγραφή διαγράφηκε", "cleared": "Καθαρίστηκε", "pasted": "Επικολλήθηκε σε {n} κελιά",
       "dup.done": "Έγινε αντίγραφο", "copyOf": "{x} (αντίγραφο)",
-      "rec.title": "Εγγραφή", "rec.created": "Δημιουργήθηκε {x}", "rec.modified": "Άλλαξε {x}", "rec.dup": "Αντίγραφο",
+      "rec.title": "Εγγραφή", "rec.created": "Δημιουργήθηκε {x}", "rec.modified": "Άλλαξε {x}", "rec.dup": "Αντίγραφο", "rec.sendApp": "Στείλε σε εφαρμογή…",
       "cm.title": "Σχόλια", "cm.none": "Κανένα σχόλιο ακόμη.", "cm.ph": "Γράψε σχόλιο (το Ctrl+Enter το προσθέτει)", "cm.add": "Προσθήκη σχολίου",
       "cm.del": "Διαγραφή σχολίου", "cm.deleted": "Το σχόλιο διαγράφηκε", "cm.full": "Η Βάση κρατά 20.000 σχόλια· σβήσε μερικά πρώτα.",
       "rec.expand": "Άνοιγμα εγγραφής", "rec.prev": "Προηγούμενη εγγραφή", "rec.next": "Επόμενη εγγραφή",
@@ -425,6 +427,8 @@
       "imp.lib": "Λείπει το πρόγραμμα ανάγνωσης Excel.",
       "nt.title": "Προσθήκη ως πίνακα", "nt.info": "«{x}»: {r} γραμμές, {c} στήλες. Η πρώτη γραμμή δίνει τα ονόματα των πεδίων.",
       "nt.base": "Σε", "nt.add": "Προσθήκη πίνακα",
+      "ar.title": "Νέα εγγραφή από τους Αυτοματισμούς", "ar.table": "Πίνακας", "ar.text": "Όνομα της εγγραφής", "ar.add": "Προσθήκη εγγραφής",
+      "ar.none": "Φτιάξε πρώτα έναν πίνακα: δεν υπάρχει πού να μπει η εγγραφή.",
       "exp.done": "Η εξαγωγή έγινε", "sheet.cap": "Στο Υπολογιστικό φύλλο πήγαν μόνο οι πρώτες {n} εγγραφές. Για όλες, κάνε εξαγωγή σε CSV.",
       "sheet.none": "Αυτή η προβολή δεν έχει εγγραφές.", "sheet.off": "Άνοιξε το orOS για να στείλεις την προβολή στο Υπολογιστικό φύλλο.",
       "grid.add": "Προσθήκη πεδίου", "grid.addRow": "Νέα εγγραφή", "grid.label": "Εγγραφές",
@@ -901,6 +905,8 @@
       v && { label: t("menu.print"), fn: printView },
       sheetOpener() && { label: t("menu.form"), fn: publicForm },
       v && sheetOpener() && { label: t("menu.sheet"), fn: openInSheet },
+      v && sendApi() && { label: t("menu.sendTable"), fn: function () { sendView("table"); } },
+      v && sendApi() && { label: t("menu.sendList"), fn: function () { sendView("items"); } },
       v && views.length > 1 && { label: t("menu.delView"), danger: true, fn: function () {
         confirmDlg(t("del.view", { x: v.name }), t("btn.delete"), function () { deleteRow(v.id); });
       } },
@@ -2346,6 +2352,7 @@
         var r = C.addRecord(data, rec.t, vals, now);
         if (save(C.copyLinks(r.data, rec.id, r.id, now))) { recDlg.id = r.id; fillRecord(); toast(t("dup.done")); }
       }),
+      sendApi() ? btn("chip", t("rec.sendApp"), function () { var r = ix.recs[recDlg.id]; d.close(); sendRecord(r); }) : null,
       btn("chip pri", t("btn.done"), function () { d.close(); }));
     void tb;
     void focusField;
@@ -3321,6 +3328,51 @@
     p.__orosOpenAt("spreadsheet", { newSheet: { name: (tb.name || t("app")).slice(0, 31), rows: C.toTable(ix, fields, recs) } });
   }
 
+  // ---------- 10a. Send to an app (shell send/, BR-SEND) ----------
+  // The records on screen (the view's filter and search = the
+  // selection) as a table (same columns as Spreadsheet) or as a list
+  // (primary field = the item, the other fields its note); one record
+  // from its window as text. A prefill for the other app only.
+  function sendApi() {
+    try { return window.parent !== window && window.parent.orosSend ? window.parent.orosSend : null; }
+    catch (e) { return null; }
+  }
+  function recLines(rec, fields, skip) {
+    var out = [];
+    fields.forEach(function (f) {
+      if (skip && f.id === skip.id) return;
+      var x = C.text(ix, rec, f, fmt());
+      if (x !== "" && x != null) out.push((f.name || t("f.untitled")) + ": " + x);
+    });
+    return out;
+  }
+  function sendView(kind) {
+    var api = sendApi(), v = curView(), tb = curTable();
+    if (!api || !v) return;
+    if (!shown.length) { toast(t("sheet.none")); return; }
+    var fields = C.visibleFields(ix, v).slice(0, 64);
+    var name = (tb && tb.name) || t("app");
+    if (kind === "table") {
+      var recs = shown;
+      if (recs.length > SHEET_ROWS) { toast(t("sheet.cap", { n: fmtNum(SHEET_ROWS) })); recs = recs.slice(0, SHEET_ROWS); }
+      api.open({ kind: "table", data: { name: name.slice(0, 100), rows: C.toTable(ix, fields, recs) } });
+      return;
+    }
+    var pf = C.primary(ix, tb.id), list = shown.slice(0, 200);
+    if (shown.length > 200) toast(t("sheet.cap", { n: fmtNum(200) }));
+    api.open({ kind: "items", data: { title: name, items: list.map(function (rec) {
+      var head = (pf && C.text(ix, rec, pf, fmt())) || t("f.untitled");
+      return { text: head, note: recLines(rec, fields, pf).join("\n") };
+    }) } });
+  }
+  function sendRecord(rec) {
+    var api = sendApi();
+    if (!api || !rec) return;
+    var fields = ix.tbFields[rec.t] || [], pf = C.primary(ix, rec.t);
+    var title = (pf && C.text(ix, rec, pf, fmt())) || t("f.untitled");
+    api.open({ kind: "text", data: { title: title, text: [title].concat(recLines(rec, fields, pf)).join("\n") } });
+  }
+
   // ---------- 10b. Forms bridge (B4) ----------
   // Public form: Forms makes a form from this table's fields
   // ({ fromTable }); its answers come back as { addRecords } (one record
@@ -3356,6 +3408,59 @@
     }
     d.foot(btn("chip pri", t("btn.ok"), function () { d.close(); }));
     d.open();
+  }
+
+  // ---------- 10c. Automations "Add a record to Base" (BR-EV-2) ----------
+  // { newRecord: { text, table? } }: a dialog with the table (matched
+  // by "Table" or "Base › Table" name when exactly one does, else the
+  // open one) and the record's name prefilled; nothing is written
+  // before Add (AUTO-2). The name goes into the primary field, or the
+  // table's first text field when the primary field is not text.
+  function autoRecord(x) {
+    if (!x || typeof x !== "object") return;
+    var text = typeof x.text === "string" ? x.text.replace(/[\r\n\t]+/g, " ").trim().slice(0, 200) : "";
+    var tbs = Object.keys(ix.tables).map(function (id) { return ix.tables[id]; }).filter(function (tb) { return ix.bases[tb.base]; });
+    if (!tbs.length) { toast(t("ar.none")); return; }
+    var label = function (tb) { return (ix.bases[tb.base].name || t("f.untitled")) + " \u203a " + (tb.name || t("f.untitled")); };
+    tbs.sort(function (a, b) { return label(a).localeCompare(label(b), LANG); });
+    var want = C.fold(typeof x.table === "string" ? x.table.trim() : ""), pick = null;
+    if (want) {
+      var m = tbs.filter(function (tb) { return C.fold(tb.name).trim() === want || C.fold(label(tb)).trim() === want; });
+      if (m.length === 1) pick = m[0];
+    }
+    if (!pick) pick = curTable() || tbs[0];
+    var d = dialog(t("ar.title"));
+    var s = document.createElement("select");
+    tbs.forEach(function (tb) {
+      var o = document.createElement("option");
+      o.value = tb.id; o.textContent = label(tb);
+      s.appendChild(o);
+    });
+    s.value = pick.id;
+    var inp = document.createElement("input");
+    inp.type = "text"; inp.maxLength = 200; inp.value = text;
+    d.body.appendChild(fld(t("ar.table"), s));
+    d.body.appendChild(fld(t("ar.text"), inp));
+    function nameField(tbId) {
+      var pf = C.primary(ix, tbId);
+      if (pf && (pf.type === "text" || pf.type === "long")) return pf;
+      var list = (ix.tbFields[tbId] || []).filter(function (f) { return f.type === "text" || f.type === "long"; });
+      return list[0] || null;
+    }
+    function ok() {
+      var tb = ix.tables[s.value];
+      if (!tb || !roomFor(1)) return;
+      var f = nameField(tb.id), vals = {}, v = inp.value.trim();
+      if (f && v) vals[f.id] = v;
+      var r = C.addRecord(data, tb.id, vals, Date.now());
+      if (!save(r.data)) return;
+      d.close();
+      openBase(tb.base, tb.id, "");
+      openRecord(r.id);
+    }
+    d.foot(btn("chip", t("btn.cancel"), function () { d.close(); }), btn("chip pri", t("ar.add"), ok));
+    d.open();
+    inp.focus();
   }
 
   // ---------- 11. Toast, palette, deep link, boot ----------
@@ -3414,6 +3519,7 @@
       if (lb) openBase(lb); else { goHome(); newBaseDialog(); }
       return;
     }
+    if (tg.newRecord) { closeAllDialogs(); autoRecord(tg.newRecord); return; }
     var b = typeof target.base === "string" ? target.base : "";
     if (!ix.bases[b]) {
       if (typeof target.rec === "string" && ix.recs[target.rec]) {

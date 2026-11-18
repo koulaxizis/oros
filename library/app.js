@@ -98,6 +98,25 @@
     try { if (p && typeof p.__orosOpenAt === "function") { p.__orosOpenAt(app, target); return true; } } catch (e) {}
     return false;
   };
+  // "Send to an app" (shell send/, BR-SEND): parent.orosSend or null.
+  LIB.sendApi = function () {
+    var p = LIB.parentWin();
+    try { return p && p.orosSend ? p.orosSend : null; } catch (e) { return null; }
+  };
+  // A passage as text: the quote, who wrote it, the person's note.
+  LIB.quoteText = function (book, q, label, note) {
+    var src = [book && book.title, book && book.by].filter(Boolean).join(", ");
+    if (label) src += (src ? " · " : "") + label;
+    var L = ["\u201c" + LIB.C.squash(q || "") + "\u201d"];
+    if (src) L.push("\u2014 " + src);
+    if (note) L.push("", note);
+    return L.join("\n");
+  };
+  LIB.sendQuote = function (book, q, label, note) {
+    var api = LIB.sendApi();
+    if (!api || !String(q || "").trim()) return;
+    api.open({ kind: "text", data: { title: (book && book.title) || "", text: LIB.quoteText(book, q, label, note) } });
+  };
   LIB.readShelf = function () {
     try { return JSON.parse(localStorage.getItem("oros-shelf-data") || "null"); } catch (e) { return null; }
   };
@@ -124,6 +143,7 @@
     book: svg("<path d=\"M4 19.5A2.5 2.5 0 016.5 17H20\"/><path d=\"M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z\"/>"),
     disk: svg("<path d=\"M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z\"/>"),
     device: svg("<path d=\"M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4\"/><path d=\"M7 10l5 5 5-5\"/><path d=\"M12 15V3\"/>"),
+    send: svg("<rect x=\"3\" y=\"3\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\" rx=\"1.5\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\" rx=\"1.5\"/><path d=\"M14 10l7-7M15 3h6v6\"/>"),
     copy: svg("<rect x=\"9\" y=\"9\" width=\"13\" height=\"13\" rx=\"2\"/><path d=\"M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1\"/>"),
     trash: svg("<path d=\"M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6\"/>"),
     note: svg("<path d=\"M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z\"/>"),

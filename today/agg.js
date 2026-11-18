@@ -42,7 +42,9 @@
 //     (Weather: today's max / min / rain chance; Water: today's total
 //     and goal). Same read-only rules as collect; > 500 chars dropped.
 //   • ctx = { today, horizon, now, lang, readJSON(key), readRaw(key),
-//     addDays, diff }.
+//     addDays, diff, strict }. strict: Sensitive work is on (STRICT-1);
+//     a provider that names people, files or documents (Scanner & PDF,
+//     Transfer, Base) then gives plain lines instead.
 //   • A provider that throws or answers later than TIMEOUT_MS is left
 //     out of that summary; one app never breaks the summary.
 // ============================================================

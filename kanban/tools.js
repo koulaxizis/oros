@@ -101,6 +101,15 @@
     }
     return done;
   }
+  // BR-EV-2 (Automations kanban.done): a "done" column is one whose
+  // arrival rule ticks all subtasks; a board with no such column
+  // counts its last column (of two or more) as done.
+  function isDoneCol(board, colId) {
+    var cols = arr(board && board.columns);
+    var ticked = cols.filter(function (c) { return c && c.auto && c.auto.done; });
+    if (ticked.length) return ticked.some(function (c) { return c.id === colId; });
+    return cols.length > 1 && cols[cols.length - 1].id === colId;
+  }
   function hasRules(col) {
     var a = col && col.auto;
     return !!(a && (a.done || a.today || a.top || a.label));
@@ -929,7 +938,7 @@
   var api = {
     ATT_DIR: ATT_DIR, FILE_RE: FILE_RE, ymdOf: ymdOf, addDays: addDays, dueEndMs: dueEndMs, daysBetween: daysBetween,
     attPath: attPath, findCard: findCard,
-    applyArrival: applyArrival, hasRules: hasRules, overdueLabel: overdueLabel, applyOverdue: applyOverdue,
+    applyArrival: applyArrival, isDoneCol: isDoneCol, hasRules: hasRules, overdueLabel: overdueLabel, applyOverdue: applyOverdue,
     laneKey: laneKey, lanes: lanes,
     isWeekend: isWeekend, nextWorkday: nextWorkday, spanDays: spanDays, planSpan: planSpan, shiftSpan: shiftSpan,
     progressOf: progressOf, boardWorkdays: boardWorkdays,

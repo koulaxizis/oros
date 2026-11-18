@@ -1,4 +1,6 @@
 orosPack("de", "todo", {
+ "list.sendApp": "Liste an eine App senden…",
+ "item.sendApp": "An eine App senden…",
  "item.track": "Zeit erfassen",
  "item.tsSpent": "Erfasste Zeit: {t}",
  "srch.labels": "Labels: ",

@@ -11,6 +11,8 @@ Die Liste hat ein Suchfeld, ein Sortiermenü und Filter: `Leads`, `Aktiv`, `Ehem
 
 Tippe unter `Personen` auf `+ Person`. Wähle jemanden `Aus Kontakte` (Telefon und E-Mail werden aus [Kontakte](app:contacts) gelesen und bleiben aktuell) oder gib einen Namen mit Telefon und E-Mail ein. `Zu Kontakte hinzufügen` öffnet Kontakte mit dieser Person ausgefüllt; gespeichert wird dort erst, wenn du auf Speichern tippst.
 
+`An eine App senden…` bei den Schaltflächen eines Kunden schickt den Kunden als Text (Angaben, Personen und Notizen) an eine andere orOS-App, etwa [Notizen](app:notes), [Mail](app:mail) oder [Kanban](app:kanban). Die andere App öffnet sich nur damit ausgefüllt.
+
 ## Verlauf, Wiedervorlagen und die Agenda
 `Kontakt notieren` hält einen Anruf, eine E-Mail, ein Treffen, eine Nachricht oder eine Notiz fest, mit Datum und Uhrzeit, mit wem du gesprochen hast und um welchen Deal es ging. Wähle `Nächste Wiedervorlage`, um im selben Fenster den nächsten Schritt zu planen.
 
@@ -19,6 +21,8 @@ Tippe unter `Personen` auf `+ Person`. Wähle jemanden `Aus Kontakte` (Telefon u
 Eine Wiedervorlage hat einen Tag, eine optionale Uhrzeit und das, was zu tun ist. `Agenda` zeigt die überfälligen, die von heute und die der nächsten 7 Tage. Tippe auf den Kreis, um eine als erledigt zu markieren; die Meldung, die dann erscheint, bietet `Notieren` an. Das Menü einer Wiedervorlage verschiebt sie auf `Morgen` oder `In einer Woche` oder sendet sie an [Aufgaben](app:todo).
 
 Offene Wiedervorlagen erscheinen auch in [Heute](app:today), wo das Häkchen sie in CRM erledigt, und im [Kalender](app:calendar) unter `Kunden`, zusammen mit dem erwarteten Abschlusstag offener Deals. Ein Kontakt, der Person eines Kunden ist, bekommt in [Kontakte](app:contacts) eine Taste `Kunde:`.
+
+`An eine App senden…` in einer anderen orOS-App kann einen Text hierher schicken: Ein neuer Verlaufseintrag der Art `Notiz` öffnet sich damit, für den hier offenen Kunden (oder wähle einen anderen). Nichts wird gespeichert, bevor du `Speichern` drückst.
 
 ## Pipeline
 Ein Deal hat einen Titel, einen Wert, eine Phase (`Neu`, `Kontaktiert`, `Angebot`, `Verhandlung`, `Gewonnen`, `Verloren`), eine Chance in Prozent und einen erwarteten Abschlusstag. Auf einem breiten Bildschirm ziehst du eine Karte in eine andere Spalte. Auf dem Telefon wählst du oben eine Phase und verschiebst einen Deal mit seiner Taste `⋯`. Die Summen zeigen den Wert und den gewichteten Wert (Wert × Chance).

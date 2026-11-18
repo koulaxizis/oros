@@ -1,6 +1,26 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.49.00
+- **Ask the Assistant and Claude about eight more apps.** The Assistant and Claude through orOS Gate can now give you a summary of Meal Planner (this week's plan and what in the pantry is close to its date), Travel (your trips and what is still open), Plant Care (what needs water or care), Garage (each vehicle's renewals, service and costs), Habits (today and your streaks), Scanner & PDF (where each signature request stands), Transfer (your transfer history, never the files themselves) and Whiteboard (your boards and the text of their notes). It only reads: nothing is changed. Claude reads an app only where you allow it in orOS Gate. Transfer history is now also found by search.
+
+## Version 7.48.00
+- **Claude's deletions are asked where you are.** When Claude asks to delete something and the orOS that gets the request has nobody at its screen (running in the background, in a hidden window or behind the lock), it no longer says no on your behalf: the request waits and the question appears on the device where orOS is on screen, now or as soon as you open it.
+
+## Version 7.47.01
+- **Contracts on the CRM Dashboard.** The Dashboard now starts with your contracts: how many are in force, how many need a decision and the next end day, then the first five that need a decision with their quick actions. The sales tiles and the stage bars show only once you have a deal in `Pipeline`, so you no longer see a row of zeros.
+- **Pick the Kanban board for contract cards from a list.** In CRM Settings › Contracts, `Kanban board for contract cards` now lists your boards instead of asking you to type a name.
+
+## Version 7.47.00
+- **More apps in Today:** Scanner & PDF shows how many signature requests still wait, those signed or declined in the last day and a signing link about to end; Transfer shows what arrived in the last day and when a link you sent through your Dropbox stops working; Base shows records of today and the next three days from date fields with `Show in Calendar` on. With Sensitive work on, these lines name no document, person or file.
+
+## Version 7.45.00
+- **Send to an app from more apps:** To-Do, Calendar, Contacts, One-Sentence Diary, CRM, Billing, Base, Forms, Library, Meal Planner, Travel and Sticky Notes now have `Send to an app`: a task or list, an event, a contact, a quote's lines, answers or a highlight go to another app, filled in there and saved only when you save.
+- **More apps take what you send:** a link or text becomes a QR code, a list becomes sticky notes on the Whiteboard, the questions of a new form, or a table in Base, and a text becomes a note on a customer in CRM.
+
+## Version 7.44.00
+- **Claude can delete with orOS closed, and you still decide.** When Claude asks through orOS Gate to delete something while orOS is closed (or asleep in the background), the request now waits, encrypted, instead of failing. When you open orOS you see what would go (the app and the titles), once for the whole request, and nothing is deleted unless you press `Delete`. If you don't answer, it asks again later. Deletions can be undone in Settings › Connected services › orOS Gate.
+
 ## Version 7.43.00
 - **More reminders with orOS closed:** on the orOS Android app and with `Notifications with orOS closed`, Plant Care, Pet Health Book, Garage, Chore Wheel, CRM follow-ups, Billing documents due, Kanban cards due and Sticky Notes now ring too, never twice with the notice inside orOS.
 - **Kanban reminds you:** cards due today or late get one notice at 09:00 (not those in the last column); tap it to open the card.

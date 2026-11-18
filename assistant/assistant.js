@@ -6427,6 +6427,34 @@
         return S.baseTables(window.OrosBaseCore || null, readStore("oros-base-data"), a);
       });
     }
+    // AS-SUM8 (2026-11-17): eight more apps read whole, with their own
+    // cores (the shell's, else the app's folder); read only. The Today
+    // apps among them add what Today lists (coming), as AS-STRUCT does.
+    var SUM8 = { meals: ["OrosMealsCore", "../meals/core.js"], travel: ["OrosTravelCore", "../travel/core.js"],
+                 plants: ["OrosPlantsCore", "../plants/core.js"], garage: ["OrosGarageCore", "../garage/core.js"],
+                 habits: ["OrosHabitsCore", "../habits/core.js"] }[a.app];
+    if (SUM8 && !a.brief) {
+      return coreOf(SUM8[0], SUM8[1]).then(function (X) {
+        var o = { today: today, lang: LANG, now: Date.now() }, st;
+        if (a.app === "meals") st = S.mealsPlan(X, readStore("oros-meals-data"), o);
+        else if (a.app === "travel") st = S.travelTrips(X, readStore("oros-travel-data"), o);
+        else if (a.app === "plants") { o.hemi = X ? X.readPrefs(readStore("oros-plants-prefs")).hemi : "n"; st = S.plantsList(X, readStore("oros-plants-data"), o); }
+        else if (a.app === "garage") { o.prefs = readStore("oros-garage-prefs"); st = S.garageVehicles(X, readStore("oros-garage-data"), o); }
+        else st = S.habitsList(X, readStore("oros-habits-data"), o);
+        if (st.ok === false || !ag) return st;
+        return agendaRows(a.app, a.days).then(function (rows) {
+          var g = S.agenda(a.app, rows, today, a.days);
+          if (g.items && g.items.length) {
+            st.from = g.from; st.to = g.to;
+            st.coming = g.items.map(function (it) { var x = {}; Object.keys(it).forEach(function (k) { if (k !== "target") x[k] = it[k]; }); return x; });
+          }
+          return st;
+        }, function () { return st; });
+      });
+    }
+    if (a.app === "scanpdf") return Promise.resolve(S.scanpdfSigns(readStore("oros-scanpdf-sign"), { now: Date.now() }));
+    if (a.app === "transfer") return Promise.resolve(S.transferHistory(readStore("oros-transfer-data")));
+    if (a.app === "whiteboard") return Promise.resolve(S.whiteboardBoards(readStore("oros-whiteboard-data"), { board: a.board }));
     if (a.app === "todo" && a.list && !a.brief) return Promise.resolve(S.todoList(readStore("oros-todo-data"), { list: a.list, today: today }));
     var STRUCT = { notes: ["oros-notes-data", "notesBooks"], bookmarks: ["oros-bookmarks-data", "bookmarksFolders"],
                    contacts: ["oros-contacts-data", "contactsLabels"], shelf: ["oros-shelf-data", "shelfItems"],
@@ -9300,6 +9328,17 @@
       return { ok: true, items: out };
     });
   }
+  // 7.44.00: what these refs are ([{ a: app name, t: title }]), for the
+  // owner's question before a queued deletion (gate.js askQueued).
+  function gatePeek(refs) {
+    var names = {}, out = [];
+    gateApps().read.forEach(function (a) { names[a.id] = a.name; });
+    (Array.isArray(refs) ? refs : []).slice(0, 200).forEach(function (r) {
+      var x = gateConv.refs[String(r)];
+      if (x && typeof x.app === "string") out.push({ a: names[x.app] || x.app, t: String(x.title || x.q || "") });
+    });
+    return out;
+  }
   function gateShell() { try { var p = shell(); return p && p.orosGate ? p.orosGate : null; } catch (e) { return null; } }
   // { read: [app], write: [app] } as the gate allows them now.
   function gateApps() {
@@ -9613,7 +9652,7 @@
                             var end = function (r) { gateAt = 0; return r; };
                             return gateRun(n, a).then(function (r) { end(); if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; },
                                                       function (e) { end(); throw e; });
-                          }, tools: gateToolList, index: gateIndex, text: cfText,
+                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText,
                           // PEND-1: the ref of an item another device made from a queued create_items
                           ref: function (rec) { if (!rec || typeof rec !== "object" || typeof rec.app !== "string") return ""; gateRefsLoad(); var r = refFor(gateConv, { app: rec.app, target: rec.target, title: String(rec.title || ""), q: String(rec.title || ""), id: rec.id }); gateRefsSave(); return r; },
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };

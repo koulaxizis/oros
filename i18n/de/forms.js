@@ -1,4 +1,5 @@
 orosPack("de", "forms", {
+ "an.sendApp": "An eine App senden…",
  "an.count": "{n} Antworten",
  "an.count1": "1 Antwort",
  "an.csv": "CSV herunterladen",

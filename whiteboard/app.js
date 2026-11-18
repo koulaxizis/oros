@@ -77,6 +77,7 @@
       "toast.picBudget": "The pictures on your boards have reached their limit. Remove a picture first.",
       "toast.undo": "Undo", "toast.deleted": "Deleted", "toast.nothingUndo": "Nothing to undo", "toast.nothingRedo": "Nothing to redo",
       "toast.limit": "This board is full (2000 items). Start a new board.",
+      "send.note1": "Added 1 sticky note.", "send.notes": "Added {n} sticky notes.",
       "as.done": "The Assistant changed {n} things on {d} boards.", "as.done1": "The Assistant changed {n} things on the board.",
       "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
       "as.undone": "The Assistant's change was undone.", "as.changed": "The board was changed since, so the Assistant's change was not undone.",
@@ -175,6 +176,7 @@
       "toast.picBudget": "Οι εικόνες στους πίνακές σου έφτασαν το όριο. Αφαίρεσε πρώτα μια εικόνα.",
       "toast.undo": "Αναίρεση", "toast.deleted": "Διαγράφηκε", "toast.nothingUndo": "Δεν υπάρχει κάτι για αναίρεση", "toast.nothingRedo": "Δεν υπάρχει κάτι για επανάληψη",
       "toast.limit": "Ο πίνακας γέμισε (2000 στοιχεία). Ξεκίνα νέο πίνακα.",
+      "send.note1": "Προστέθηκε 1 αυτοκόλλητο.", "send.notes": "Προστέθηκαν {n} αυτοκόλλητα.",
       "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} πίνακες.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στον πίνακα.",
       "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
       "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Ο πίνακας άλλαξε στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
@@ -2469,6 +2471,10 @@
       if (f) readDiagram(f); else toast(t("dio.bad"));
       return;
     }
+    // "Send to an app" (BR-SEND): { addNotes: { notes: [{ tx }] ≤ 50 } }:
+    // sticky notes in a grid at the middle of the open board's view,
+    // selected, one step of Undo (the toast offers it too).
+    if (target && target.addNotes && Array.isArray(target.addNotes.notes)) { addNotes(target.addNotes.notes); return; }
     if (!target || typeof target.board !== "string" || !C.board(data, target.board)) return;
     if (editing || document.querySelector("dialog[open]")) return;
     if (target.board !== board) openBoard(target.board);
@@ -2478,6 +2484,27 @@
       setTimeout(function () { reveal(target.obj, true); announce(); render(); }, 0);
     }
   };
+
+  function addNotes(list) {
+    var notes = list.filter(function (n) { return n && typeof n.tx === "string" && n.tx.trim(); }).slice(0, 50);
+    if (!notes.length) return;
+    endEdit(true);
+    if (!ensureBoard()) return;
+    var r = stageRect(), mid = toWorld(r.left + r.width / 2, r.top + r.height / 2);
+    var cols = Math.min(5, Math.ceil(Math.sqrt(notes.length))), gap = 220;
+    var rows = Math.ceil(notes.length / cols), rows2 = {}, ids = [], z = zTop();
+    notes.forEach(function (n, i) {
+      var id = newId(), cx = i % cols, cy = Math.floor(i / cols);
+      rows2[id] = { id: id, b: board, k: "note", x: r1(mid.x - cols * gap / 2 + cx * gap + 10), y: r1(mid.y - rows * gap / 2 + cy * gap + 10),
+        w: 200, h: 200, tx: n.tx.replace(/\r\n?/g, "\n").slice(0, C.MAX_TEXT), c: prefs.note, z: z + i };
+      ids.push(id);
+    });
+    if (!commit(rows2)) return;
+    setTool("select");
+    sel = ids;
+    render();
+    toast(t(ids.length === 1 ? "send.note1" : "send.notes").replace("{n}", String(ids.length)), undo);
+  }
 
   // The Assistant's changes (AS-EDIT, assist.js), loaded on the first
   // request with commands.js.
