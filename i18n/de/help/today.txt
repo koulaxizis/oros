@@ -86,6 +86,9 @@ Beim ersten Öffnen von orOS jeden Tag nach der Startzeit (06:00, außer du änd
 
 Die Benachrichtigung kommt einmal am Tag, auch mit mehreren Geräten: Alle sehen dieselbe. Ist die Synchronisierung an, wartet sie, bis deine Daten synchronisiert sind, damit sie nie den Stand von gestern meldet. An einem Tag ohne Überfälliges oder Fälliges kommt keine Benachrichtigung.
 
+## Auf deinen anderen Geräten weitermachen
+Wenn du auf einem anderen deiner Geräte etwas in einer App offen hattest, etwa ein Kapitel in Writer auf dem Handy, sagt eine Karte oben, was, wo und wann. `Weitermachen` öffnet es hier, `Ausblenden` blendet es aus, bis das Gerät etwas Neueres hat. Dieselben Einträge zeigt die [Übersicht](help:t/menu#overview) und, wenn du es ankreuzt, die smarte Leiste. Private Apps erscheinen nie; ausschalten kannst du es in [Einstellungen › System](app:settings).
+
 ## Vorschlag der Woche
 Einmal pro Woche, ab Montag 10:00, schlägt dir orOS eine App oder ein Spiel vor, das du auf keinem deiner Geräte je geöffnet hast: eine Benachrichtigung in der Glocke und eine Karte oben in Heute, mit dem, was es kann. `Ausprobieren` öffnet es. `Nicht für mich` heißt, diese App wird nie wieder vorgeschlagen. `Vorschläge stummschalten` beendet die Benachrichtigung und die Karte auf allen deinen Geräten; du schaltest sie mit `Wöchentlicher App-Vorschlag` unter [Einstellungen › Benachrichtigungen](help:t/notifications) wieder ein. Alle deine Geräte bekommen in dieser Woche denselben Vorschlag, und Apps, die du schon nutzt, die System-Apps und Apps, die ein eigenes Konto brauchen, werden nie vorgeschlagen. Wenn du alles ausprobiert hast, kommt nichts mehr.
 

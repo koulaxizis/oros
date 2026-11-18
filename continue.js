@@ -72,6 +72,7 @@
   var NAME_KEY = "oros-device-name";
   var PREFS_KEY = "oros-continue-prefs";
   var LAST_KEY = "oros-apps-last";
+  var SEEN_KEY = "oros-continue-seen";   // W2: items dismissed here { "<dev>:<app>": at }, device-local
 
   // ---------- pure helpers ----------
   function obj(v) { return v && typeof v === "object" && !Array.isArray(v) ? v : null; }
@@ -339,7 +340,7 @@
     KEEP_MS: KEEP_MS, SHOW_MS: SHOW_MS, MAX_APPS: MAX_APPS, MAX_DEVS: MAX_DEVS, TITLE_MAX: TITLE_MAX,
     TARGET_MAX: TARGET_MAX, NAME_MAX: NAME_MAX, RENOTE_MS: RENOTE_MS, FLUSH_MS: FLUSH_MS,
     REOPEN_MAX: REOPEN_MAX, SETTLE_MS: SETTLE_MS, NEVER: NEVER, KINDS: KINDS,
-    DATA_KEY: DATA_KEY, DEV_KEY: DEV_KEY, NAME_KEY: NAME_KEY, PREFS_KEY: PREFS_KEY, LAST_KEY: LAST_KEY,
+    DATA_KEY: DATA_KEY, DEV_KEY: DEV_KEY, NAME_KEY: NAME_KEY, PREFS_KEY: PREFS_KEY, LAST_KEY: LAST_KEY, SEEN_KEY: SEEN_KEY,
     kindOf: kindOf, norm: norm, merge: merge, note: note, clear: clear, rename: rename, forget: forget,
     shown: shown, devices: devices, lastOwn: lastOwn, lastRecord: lastRecord, reopenPlan: reopenPlan
   };
@@ -453,6 +454,26 @@
     return true;
   }
 
+  // W2: an item dismissed here (× on a card) stays hidden until that
+  // device has something newer in that app. Pruned after SHOW_MS.
+  function seenRead() {
+    var src = obj(readJSON(SEEN_KEY)) || {}, now = Date.now(), out = {};
+    Object.keys(src).forEach(function (k) {
+      var v = num(src[k]);
+      if (v && now - v <= SHOW_MS + DAY && /^[a-z0-9]{8,16}:[a-z0-9-]{1,40}$/.test(k)) out[k] = v;
+    });
+    return out;
+  }
+  function dismiss(dev, app, at) {
+    var k = String(dev || "") + ":" + String(app || "");
+    if (!/^[a-z0-9]{8,16}:[a-z0-9-]{1,40}$/.test(k)) return false;
+    var s = seenRead();
+    s[k] = Math.max(num(at) || Date.now(), s[k] || 0);
+    try { localStorage.setItem(SEEN_KEY, JSON.stringify(s)); } catch (e) { return false; }
+    changed();
+    return true;
+  }
+
   // Slice
   function sliceGet() {
     var raw = null;
@@ -499,11 +520,11 @@
     setName: setName,
     forget: forgetDev,
     devices: function () { return devices(data(), devId(), Date.now()); },
-    shown: function (opts) {
+    shown: function () {
       if (strictOn() || !prefs().cont) return [];
-      opts = obj(opts) || {};
-      return shown(data(), devId(), { now: Date.now(), ok: allowed, seen: opts.seen });
+      return shown(data(), devId(), { now: Date.now(), ok: allowed, seen: seenRead() });
     },
+    dismiss: dismiss,              // (devId, appId, at) — × on a card (W2)
     lastOwn: function (app) { return lastOwn(data(), devId(), app, Date.now()); },
     onChange: function (fn) { if (typeof fn === "function") listeners.push(fn); },
     flush: flush

@@ -313,3 +313,37 @@ test("wiring: the shell calls init; once index.html loads continue.js, it comes 
   const shell = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
   assert.match(shell, /orosContinue\.init\(/);
 });
+
+// ---------- W2: where the items show ----------
+test("browser: × on a card hides that item here until the device has something newer", () => {
+  const w = fakeWindow(APPS);
+  const C2 = w.win.orosContinue;
+  const at = Date.now() - MIN;
+  w.slice.set(noted(null, B, "writer", "From the phone", at, { kind: "aphone" }));
+  assert.equal(C2.shown().length, 1);
+  assert.equal(C2.dismiss(B, "writer", at), true);
+  assert.equal(C2.shown().length, 0);
+  assert.equal(w.dirty, 0, "a dismiss stays on this device");
+  w.slice.set(noted(JSON.parse(w.store.get("oros-continue")), B, "writer", "Next chapter", at + 2 * MIN, { kind: "aphone" }));
+  assert.equal(C2.shown()[0].title, "Next chapter");
+  assert.equal(C2.dismiss("BAD", "writer", at), false);
+});
+
+test("wiring W2: Overview section, Today card and the smart bar kind use the same items", () => {
+  const shell = fs.readFileSync(path.join(ROOT, "shell.js"), "utf8");
+  assert.match(shell, /ovSection\("ov-cont", "cont\.title"\)/);
+  assert.match(shell, /window\.orosContinueUi = \{/);
+  // titles only through textContent
+  const ov = shell.slice(shell.indexOf("function ovRenderCont()"), shell.indexOf("function ovTile("));
+  assert.match(ov, /\.ov-fname"\)\.textContent = it\.title/);
+  assert.doesNotMatch(ov, /innerHTML[^;]*it\.title/);
+  const sb = fs.readFileSync(path.join(ROOT, "smartbar.js"), "utf8");
+  assert.match(sb, /"reading", "continue"\]/);
+  assert.match(sb, /continue: function \(now\)/);
+  const today = fs.readFileSync(path.join(ROOT, "today", "today.js"), "utf8");
+  assert.match(today, /var cc = contCard\(\);/);
+  for (const k of ["cont.title", "cont.from", "cont.tip", "cont.hide", "sb.k.continue"]) {
+    assert.ok(shell.length && fs.readFileSync(path.join(ROOT, "translations.js"), "utf8").split('"' + k + '"').length === 3, k + " EN + EL");
+    assert.ok(fs.readFileSync(path.join(ROOT, "i18n", "de", "shell.js"), "utf8").includes('"' + k + '"'), k + " DE");
+  }
+});

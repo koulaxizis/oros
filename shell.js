@@ -10455,6 +10455,10 @@
         apps: function () { return state.apps; },
         strict: strictLevelNow
       });
+      window.orosContinue.onChange(function () {   // W2: a pull or a dismiss repaints what shows it
+        if (ov) ovRenderCont();
+        if (window.orosSmartBar && window.orosSmartBar.refresh) { try { window.orosSmartBar.refresh(); } catch (e) {} }
+      });
     }
     fdMigrateLegacy();          // FILES-V: one-time cleanup of the blob model
     legacyLsMove();             // SY-Q2: retired snapshots out of localStorage
@@ -14191,6 +14195,90 @@
     });
     body.appendChild(all);
   }
+  // CONT-1 W2: "Continue from your other devices" (continue.js shown():
+  // other devices' items, never the sensitive apps, nothing under
+  // Sensitive work or with the switch off). Text through textContent.
+  function contItems(max) {
+    var C = window.orosContinue;
+    if (SOLO || !C) return [];
+    var out = [];
+    try {
+      C.shown().forEach(function (it) {
+        if (out.length >= max) return;
+        for (var i = 0; i < state.apps.length; i++) {
+          if (state.apps[i].id === it.app) { it.appObj = state.apps[i]; out.push(it); return; }
+        }
+      });
+    } catch (e) {}
+    return out;
+  }
+  function contFrom(it) {
+    if (it.name) return it.name;
+    var k = "cont.kind." + (it.kind || "other"), v = window.t(k);
+    return v === k ? window.t("cont.kind.other") : v;
+  }
+  function contAgo(at) {
+    var d = Math.floor((Date.now() - at) / 86400000);
+    if (d < 1) return mtAgo(at);
+    try { return new Intl.RelativeTimeFormat(state.lang || "en", { numeric: "auto" }).format(-d, "day"); } catch (e) { return d + " d"; }
+  }
+  function contLine(it) {
+    return window.t("cont.from").replace("{app}", mtLabel(it.appObj)).replace("{device}", contFrom(it)).replace("{ago}", contAgo(it.at));
+  }
+  function contOpen(it) { window.__orosOpenAt(it.app, it.target); }
+  window.orosContinueUi = {                    // Today and the smart bar draw the same items
+    items: function (max) {
+      return contItems(max || 4).map(function (it) {
+        return { dev: it.dev, app: it.app, at: it.at, title: it.title, line: contLine(it), from: contFrom(it), appName: mtLabel(it.appObj),
+                 tip: window.t("cont.tip").replace("{t}", it.title).replace("{app}", mtLabel(it.appObj)).replace("{device}", contFrom(it)) };
+      });
+    },
+    open: function (dev, app) {
+      var it = contItems(8).filter(function (x) { return x.dev === dev && x.app === app; })[0];
+      if (it) contOpen(it);
+      return !!it;
+    },
+    dismiss: function (dev, app, at) { return !!(window.orosContinue && window.orosContinue.dismiss(dev, app, at)); },
+    onChange: function (fn) { if (window.orosContinue && typeof fn === "function") window.orosContinue.onChange(fn); }
+  };
+  function ovRenderCont() {
+    if (!ov) return;
+    var sec = ov.el.querySelector(".ov-cont");
+    if (!sec) return;
+    var list = contItems(4);
+    sec.hidden = !list.length;
+    var body = sec.querySelector(".ov-body");
+    body.textContent = "";
+    var ul = document.createElement("div");
+    ul.className = "ov-flist";
+    ul.setAttribute("role", "list");
+    list.forEach(function (it) {
+      var r = document.createElement("div");
+      r.className = "ov-crow";
+      r.setAttribute("role", "listitem");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ov-file ov-cgo";
+      b.innerHTML = '<span class="app-ico ov-cico" data-cat="' + iconCat(it.appObj) + '" data-hue="' + iconHue(it.appObj) + '" aria-hidden="true">' + (ICONS[it.appObj.icon] || "") + '</span>' +
+        '<span class="ov-fname"></span><span class="ov-fwhere"></span>';
+      b.querySelector(".ov-fname").textContent = it.title;
+      b.querySelector(".ov-fwhere").textContent = contLine(it);
+      b.title = window.t("cont.tip").replace("{t}", it.title).replace("{app}", mtLabel(it.appObj)).replace("{device}", contFrom(it));
+      b.addEventListener("click", function () { ovClose(); contOpen(it); });
+      var x = document.createElement("button");
+      x.type = "button";
+      x.className = "mt-sw-x ov-x";
+      x.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+      var xl = window.t("cont.hide").replace("{t}", it.title);
+      x.setAttribute("aria-label", xl);
+      x.title = xl;
+      x.addEventListener("click", function () { window.orosContinue.dismiss(it.dev, it.app, it.at); ovRenderCont(); });
+      r.appendChild(b);
+      r.appendChild(x);
+      ul.appendChild(r);
+    });
+    body.appendChild(ul);
+  }
   function ovTile(label, value, pct, level) {
     var d = document.createElement("div");
     d.className = "ov-tile" + (level ? " ov-" + level : "");
@@ -14293,6 +14381,7 @@
     cols.appendChild(ovSection("ov-apps", "mt.sw.title"));
     var side = document.createElement("div");
     side.className = "ov-side";
+    side.appendChild(ovSection("ov-cont", "cont.title"));   // CONT-1 W2 (hidden when empty)
     if (hasApp("files")) side.appendChild(ovSection("ov-files", "ov.files.title"));
     side.appendChild(ovSection("ov-sys", "ov.sys.title"));
     cols.appendChild(side);
@@ -14331,6 +14420,7 @@
     document.addEventListener("keydown", onKey, true);
     ov = { el: el, onKey: onKey, back: document.activeElement };
     ovRenderApps();
+    ovRenderCont();
     if (hasApp("files")) ovRenderFiles();
     ovRenderSys();
     // The app left last has the focus (shortcut + Enter = back to it),
