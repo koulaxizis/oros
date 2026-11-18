@@ -14192,7 +14192,7 @@
     btn.id = "mt-btn";
     btn.type = "button";
     btn.hidden = true;
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="14" height="12" rx="2"/><path d="M17 19H5a2 2 0 0 1-2-2V8"/></svg><span class="mt-count">0</span>';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="14" height="13" rx="2"/><path d="M3 12h14"/><path d="M7 8V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg><span class="mt-count">0</span>';
     btn.setAttribute("data-i18n-title", "mt.sw.tip");
     btn.setAttribute("title", window.t("mt.sw.tip"));
     btn.addEventListener("click", function (e) { e.stopPropagation(); mtSwitcher(); });
