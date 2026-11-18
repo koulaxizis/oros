@@ -183,7 +183,7 @@
       return opts.cover ? coverPage(JsPDF, doc, opts.cover, opts.ppi || 150) : null;
     }).then(function (first) {
       var L = opts.layout || (doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc));
-      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "" },
+      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "", creep: opts.creep || 0 },
         { jsPDF: JsPDF, layout: L, images: images, pdf: first, links: opts.links, outline: opts.outline });
       return pdf;
     });
@@ -540,7 +540,7 @@
     LY.flushStory && LY.flushStory();
     exporting = true;
     LY.toast(t("exp.working"));
-    var scale = (opts.dpi || 150) / 72, w = doc.setup.w, h = doc.setup.h, capped = false;
+    var psz = M.pageSize(doc, page), scale = (opts.dpi || 150) / 72, w = psz.w, h = psz.h, capped = false;
     if (w * h * scale * scale > IMG_MAX_PX) { scale = Math.sqrt(IMG_MAX_PX / (w * h)); capped = true; }
     var chain = Promise.resolve();
     imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
@@ -607,7 +607,7 @@
     var chain = Promise.resolve();
     imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
     return chain.then(function () {
-      var cv = LY.R.renderPage(doc, page, ED.L, 512 / Math.max(doc.setup.w, doc.setup.h), { getImage: A.get, background: "#fff" });
+      var cv = LY.R.renderPage(doc, page, ED.L, 512 / Math.max(M.pageSize(doc, page).w, M.pageSize(doc, page).h), { getImage: A.get, background: "#fff" });
       return toBlob(cv, "image/png");
     }).then(null, function () { return null; });
   }
@@ -1283,7 +1283,7 @@
       var P0 = ED.curP(), made = null;
       if (!P0) { LY.toast(t("img.fail")); return false; }
       LY.op(function (doc, now) {
-        var mb = ED.marginBox(doc, P0.side);
+        var mb = ED.marginBox(doc, P0.side, P0.page);
         var k = Math.min(mb.w / res.w, mb.h / res.h), w = res.w * k, h = res.h * k;
         made = ED.addItem(doc, { t: "img", pg: P0.id, side: P0.master ? P0.side : "",
                                  x: mb.x + (mb.w - w) / 2, y: mb.y + (mb.h - h) / 2, w: w, h: h }, now);
@@ -1421,7 +1421,7 @@
       }
       var P0 = ED.curP();
       if (!P0) return false;
-      var mb = ED.marginBox(doc, P0.side);
+      var mb = ED.marginBox(doc, P0.side, P0.page);
       var st2 = ED.newStory(doc, now, paras);
       made = ED.addItem(doc, { t: "text", pg: P0.id, side: P0.master ? P0.side : "", x: mb.x, y: mb.y, w: mb.w, h: mb.h, story: st2.id, cols: doc.setup.cols, gut: doc.setup.gut }, now);
       if (!made) return false;

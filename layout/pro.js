@@ -118,8 +118,8 @@
     order.forEach(function (p, i) { if (p.pos !== (i + 1) * 1024) { p.pos = (i + 1) * 1024; M.touch(p, now); } });
   }
   // The frame of a picture on a page of side `sd` for fit mode `fit`.
-  function frameFor(doc, sd, fit) {
-    var s = doc.setup;
+  function frameFor(doc, sd, fit, pg) {
+    var s = M.pageSize(doc, pg);
     if (fit === "bleed") { var b = M.bleeds(doc, sd); return { x: -b.l, y: -b.t, w: s.w + b.l + b.r, h: s.h + b.t + b.b, fit: "fill" }; }
     if (fit === "margins") { var m = M.margins(doc, sd); return { x: m.l, y: m.t, w: Math.max(10, s.w - m.l - m.r), h: Math.max(10, s.h - m.t - m.b), fit: "fit" }; }
     if (fit === "proportional") return { x: 0, y: 0, w: s.w, h: s.h, fit: "fit" };
@@ -162,7 +162,7 @@
     var ids = [], k = blank;
     var z = doc.items.reduce(function (a, it) { return Math.max(a, it.z || 0); }, 0);
     pics.slice(0, room - blank).forEach(function (p) {
-      var pg = ins[k++], idx = order.indexOf(pg), f = frameFor(doc, M.sideOf(doc, idx), st.fit);
+      var pg = ins[k++], idx = order.indexOf(pg), f = frameFor(doc, M.sideOf(doc, idx), st.fit, pg);
       var it = { id: nid("it"), m: now, t: "img", pg: pg.id, x: r3(f.x), y: r3(f.y), w: r3(f.w), h: r3(f.h), a: p.a, nm: String(p.nm || "").slice(0, 120),
                  iw: p.iw, ih: p.ih, fit: f.fit, sw: 0, z: (z += 16) };
       doc.items.push(it);
@@ -174,8 +174,12 @@
   // ---------- bleed of full-page pictures ----------
   var EPS = 0.75;   // points
   // A picture that covers the whole trim of its page.
+  function pageOfItem(doc, it) {
+    for (var i = 0; i < doc.pages.length; i++) if (doc.pages[i].id === it.pg) return doc.pages[i];
+    return null;
+  }
   function fullPage(doc, it) {
-    var s = doc.setup;
+    var s = M.pageSize(doc, pageOfItem(doc, it));
     return it.t === "img" && !!it.a && !it.rot && it.x <= EPS && it.y <= EPS && it.x + it.w >= s.w - EPS && it.y + it.h >= s.h - EPS;
   }
   function sideOfItem(doc, it) {
@@ -187,7 +191,7 @@
   function shortBy(doc, it) {
     var sd = sideOfItem(doc, it);
     if (!sd) return null;
-    var b = M.bleeds(doc, sd), s = doc.setup;
+    var b = M.bleeds(doc, sd), s = M.pageSize(doc, pageOfItem(doc, it));
     var o = { l: Math.max(0, b.l + it.x), t: Math.max(0, b.t + it.y), r: Math.max(0, s.w + b.r - (it.x + it.w)), b: Math.max(0, s.h + b.b - (it.y + it.h)) };
     return o.l > EPS || o.t > EPS || o.r > EPS || o.b > EPS ? o : null;
   }
@@ -262,6 +266,8 @@
       if (p.ms) e.master = msName[p.ms] || "";
       var sc = M.secOfPage(p);
       if (sc) e.section = { start: sc.n >= 0 ? sc.n : "continues", numstyle: sc.f, prefix: sc.pre };
+      var ps = M.pageSize(doc, p);
+      if (ps.own) e.trim_mm = { w: mm(ps.w), h: mm(ps.h) };
       return e;
     });
     var frames = [];
@@ -462,7 +468,7 @@
   function addFrame(doc, st, now, idf) {
     var nid = idf || M.newId, order = M.pagesInOrder(doc), pg = order[(st.page || 1) - 1];
     if (!pg) return null;
-    var idx = order.indexOf(pg), mg = M.margins(doc, M.sideOf(doc, idx)), s = doc.setup;
+    var idx = order.indexOf(pg), mg = M.margins(doc, M.sideOf(doc, idx)), s = M.pageSize(doc, pg);
     var box = { x: mg.l, y: mg.t, w: s.w - mg.l - mg.r, h: s.h - mg.t - mg.b };
     var x = st.x >= 0 ? st.x * MM : box.x, y = st.y >= 0 ? st.y * MM : box.y;
     var w = st.w > 0 ? st.w * MM : (st.x >= 0 ? s.w - mg.r - x : box.w), h = st.h > 0 ? st.h * MM : (st.y >= 0 ? s.h - mg.b - y : box.h);
@@ -596,6 +602,23 @@
     M.touch(pg, now);
     return 1;
   }
+  // pagesize (W3b): the pages `want` picks get their own trim w × h
+  // (pt, 36-14400); 0 × 0 = the document's again. → number changed
+  function setPageSize(doc, want, w, h, now) {
+    var off = !(w > 0) && !(h > 0), n = 0;
+    if (!off && !(w >= 36 && w <= 14400 && h >= 36 && h <= 14400)) return 0;
+    var same = !off && Math.abs(w - doc.setup.w) < 0.01 && Math.abs(h - doc.setup.h) < 0.01;
+    M.pagesInOrder(doc).forEach(function (p, i) {
+      if (!want(i + 1)) return;
+      var x = p.ext || {}, before = JSON.stringify(x.sz || null);
+      if (off || same) delete x.sz; else x.sz = { w: r3(w), h: r3(h) };
+      if (JSON.stringify(x.sz || null) === before) return;
+      if (Object.keys(x).length) p.ext = x; else delete p.ext;
+      M.touch(p, now);
+      n++;
+    });
+    return n;
+  }
   // movepages: the pages `want` picks (1-based) go, in their order,
   // before page `to` (0 = to the end). → number moved
   function movePages(doc, want, to, now) {
@@ -674,7 +697,7 @@
     return n;
   }
 
-  var api = { setSection: setSection, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
+  var api = { setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
               styleNamed: styleNamed, defStyle: defStyle, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;

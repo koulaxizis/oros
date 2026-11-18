@@ -680,6 +680,7 @@ orosPack("de", "assistant", {
  "ed.op.masterpages": "Musterseite für Seiten",
  "ed.f.master": "Musterseite",
  "ed.op.defmaster": "Musterseite",
+ "ed.op.pagesize": "Seitenformat",
  "ed.note.noMaster": "Eine Musterseite aus den Befehlen wurde nicht gefunden.",
  "ed.op.create": "Neues Design",
  "ed.op.crop": "Zuschneiden",
