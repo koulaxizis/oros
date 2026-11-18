@@ -917,6 +917,14 @@
    ]
   },
   {
+   "app": "shop",
+   "files": [
+    "shop/app.js",
+    "shop/search.js",
+    "shop/today.js"
+   ]
+  },
+  {
    "app": "signature",
    "files": [
     "signature/core.js",

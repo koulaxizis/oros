@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.49.00
+- **New app: Shop.** Your own WooCommerce shop's figures inside orOS: today's orders and sales, this month and this year, the products that sell and stock that runs out. With the free orOS Connect plugin also costs and result, partners' shares and consignments. It only reads, keeps totals only (never customer data) and opens offline with the last read. Connect your shop in Settings › Connected services.
+
 ## Version 7.48.00
 - **Claude's deletions are asked where you are.** When Claude asks to delete something and the orOS that gets the request has nobody at its screen (running in the background, in a hidden window or behind the lock), it no longer says no on your behalf: the request waits and the question appears on the device where orOS is on screen, now or as soon as you open it.
 

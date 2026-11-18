@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 46636 of 47147 (98%)
-- Help pages: 155 of 155 (100%)
+- Strings: 46739 of 47352 (98%)
+- Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -39,7 +39,7 @@ text is still written in the code. They switch over wave by wave
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 342 / 342 |
 | converter | 100% | 68 / 68 |
-| crm | 89% | 746 / 830 |
+| crm | 89% | 746 / 838 |
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
@@ -113,7 +113,7 @@ text is still written in the code. They switch over wave by wave
 | pong | 100% | 65 / 65 |
 | prompter | 100% | 334 / 334 |
 | pubdomain | 100% | 120 / 120 |
-| publish | 96% | 704 / 728 |
+| publish | 85% | 704 / 822 |
 | qr | 100% | 249 / 249 |
 | quote | 100% | 236 / 236 |
 | radio | 100% | 103 / 103 |
@@ -130,7 +130,8 @@ text is still written in the code. They switch over wave by wave
 | settings | 99% | 1690 / 1705 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 99% | 1377 / 1382 |
+| shell | 99% | 1378 / 1383 |
+| shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
 | sky | 100% | 375 / 375 |

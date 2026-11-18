@@ -169,7 +169,23 @@ const CASES = [
   [{ m: "POST", path: "/coupons/batch", body: { update: [{ id: 5, amount: "90" }] } }, "body"],
   [{ m: "POST", path: "/coupons/batch", body: { create: [], delete: [5] } }, "body"],
   [{ m: "POST", path: "/coupons", body: { code: "NEWS-10" } }, "path"],
-  [{ m: "PUT", path: "/coupons/5", body: { amount: "90" } }, "path"]
+  [{ m: "PUT", path: "/coupons/5", body: { amount: "90" } }, "path"],
+  // Shop (SHOP-1): WooCommerce reports and orOS Connect's digest, read only
+  [{ m: "GET", path: "/reports/sales?date_min=2026-11-01&date_max=2026-11-18" }, ""],
+  [{ m: "GET", path: "/reports/top_sellers?date_min=2026-01-01&date_max=2026-11-18" }, ""],
+  [{ m: "GET", path: "/reports/sales" }, ""],
+  [{ m: "GET", path: "/reports/sales?period=year" }, "query"],
+  [{ m: "GET", path: "/reports/customers" }, "path"],
+  [{ m: "GET", path: "/reports/orders/totals" }, "path"],
+  [{ m: "GET", path: "/oros/status" }, ""],
+  [{ m: "GET", path: "/oros/digest" }, ""],
+  [{ m: "GET", path: "/oros/digest?fresh=1" }, ""],
+  [{ m: "GET", path: "/oros/digest?areas=sales,titles,bookstores&fresh=1" }, ""],
+  [{ m: "GET", path: "/oros/digest?areas=customers" }, "query"],
+  [{ m: "GET", path: "/oros/digest?areas=sales,,titles" }, "query"],
+  [{ m: "GET", path: "/oros/digest?fresh=true" }, "query"],
+  [{ m: "GET", path: "/oros/item?id=5" }, "path"],
+  [{ m: "POST", path: "/oros/digest", body: { areas: "sales" } }, "path"]
 ];
 test("checkReq (app) and checkExtReq (relay) agree on every case", () => {
   for (const [r, want] of CASES) {
