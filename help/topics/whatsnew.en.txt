@@ -1,8 +1,11 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-## Version 7.58.00
+## Version 7.59.00
 - **Colour filters and a larger pointer.** In Settings › Accessibility, `Colour filter` turns the whole screen grey, helps tell red from green or blue from yellow (with a strength), or inverts the colours while photos and videos stay as they are. `Pointer size` makes the mouse pointer Large or Extra large. A new `Colour filter` button in Quick settings turns the last filter on and off. Both stay on this device.
+
+## Version 7.58.00
+- **Layout makes print-ready books.** New book sizes (120×190, 140×210, 170×240, 180×250 and 215×215 mm), a different bleed on each side, and a first page on the left when you need it. Print PDFs can carry crop, bleed and registration marks, colour bars and a page information line. The Assistant and Claude (through orOS Gate) can start a book from nothing, put a folder of page pictures on pages in reading order, fill the bleed of pictures that stop at the page edge, make page pictures to look at, and make a PDF/X-4 for the printer with the Coated FOGRA39 profile, saved in Files › Layout › PDF.
 
 ## Version 7.57.00
 - **Apps open from their icon.** An app now grows out of the icon, Dock button or menu row you opened it from, and when you close it, it shrinks back into its icon or into the Dock, on whichever edge the Dock sits. It is on from the start; Settings › Appearance › `Animate apps opening and closing` turns it off on this device. It never moves with reduced motion, Energy saver or a low battery.

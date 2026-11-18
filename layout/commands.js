@@ -24,6 +24,7 @@
 
   var node = typeof module !== "undefined" && module.exports;
   var R = node ? require("../recipes/core.js") : root.orosRecipes;
+  var PRO = node ? require("./pro.js") : root.LayoutPro;
   var S = node ? require("./recipesteps.js") : root.LayoutRecipes;
   var SH = node ? require("../recipes/share.js") : root.orosRecipeShare;
   var M = node ? require("../designkit/model.js") : root.orosDK && root.orosDK.model;
@@ -34,14 +35,39 @@
   var CATALOG = {};
   OPS.forEach(function (op) { CATALOG[op] = S.CATALOG[op]; });
   CATALOG.rename = { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } };
-  var ORDER = OPS.concat(["rename"]);
+  // LY-PRO W1 (Chris's spec v2, items 2, 8, 13, 38): a new document,
+  // pages from pictures in Claude's folders, the bleed of full-page
+  // pictures and page pictures for Claude to look at.
+  var MMv = function (lo, hi, def) { return { t: "num", lo: lo, hi: hi, def: def }; };
+  CATALOG.create = { kind: "new", args: { title: { t: "str", max: 120 }, w: { t: "num", lo: 10, hi: 5000, def: 210, req: 1 }, h: { t: "num", lo: 10, hi: 5000, def: 297, req: 1 },
+    u: { t: "enum", v: ["mm", "pt", "in", "px"], def: "mm" }, n: { t: "int", lo: 1, hi: 999, def: 1 }, facing: { t: "bool", def: 1 }, side: { t: "enum", v: ["right", "left"], def: "right" },
+    mm: MMv(0, 25, 3), bt: MMv(-1, 25, -1), bb: MMv(-1, 25, -1), bi: MMv(-1, 25, -1), bo: MMv(-1, 25, -1), slug: MMv(0, 50, 0),
+    t: MMv(-1, 500, -1), b: MMv(-1, 500, -1), i: MMv(-1, 500, -1), o: MMv(-1, 500, -1),
+    ncol: { t: "int", lo: 1, hi: 20, def: 1 }, gut: MMv(-1, 100, -1), grid: MMv(0, 72, 0),
+    color: { t: "enum", v: ["rgb", "cmyk"], def: "rgb" }, icc: { t: "enum", v: ["", "fogra39"], def: "" } } };
+  CATALOG.images = { kind: "async", args: { paths: { t: "list", of: { t: "str", max: 1024 }, max: 400 }, folder: { t: "str", max: 1024 },
+    sort: { t: "enum", v: ["natural", "name", "given"], def: "natural" }, fit: { t: "enum", v: ["trim", "bleed", "margins", "proportional"], def: "trim" },
+    at: { t: "enum", v: ["end", "before", "after"], def: "end" }, page: { t: "int", lo: 0, hi: 9999, def: 0 }, side: { t: "enum", v: ["any", "right", "left"], def: "any" } } };
+  CATALOG.bleedfill = { kind: "async", args: { pages: { t: "str", max: 60 }, mode: { t: "enum", v: ["smart", "mirror", "stretch"], def: "smart" } } };
+  CATALOG.thumbs = { kind: "out", args: { pages: { t: "str", max: 60 }, spreads: { t: "bool", def: 1 }, dpi: { t: "num", lo: 36, hi: 150, def: 96 } } };
+  var PRO_OPS = ["create", "images", "bleedfill", "thumbs"];
+  var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs"]);
+  var MAX_PICS = 400;
   var MAX_STEPS = 40;
 
   // What each command does, for the model (the automation guide's
   // words, a test checks that every op and field is named).
   var GUIDE = "Layout commands (documents are print layouts: books, magazines, brochures; styles and masters by name, e.g. Body text; pages by position, 1 = the first page; null or \"\" leaves a field as it is):\n" +
     OPS.map(function (op) { return op + ": " + SH.GUIDE.layout.ops[op]; }).join("\n") +
-    "\nrename: the document's name becomes `title`";
+    "\nrename: the document's name becomes `title`" +
+    "\ncreate: a new document (only as the first command, with designs new): title, w and h the trim in u mm|pt|in|px, n pages, facing (facing pages, default true), " +
+    "side right|left (the side of the first page), mm the bleed on every side in mm, or bt bb bi bo for top, bottom, inside and outside (-1 = as mm), slug in mm, " +
+    "margins t b i o in mm (-1 = 15), ncol columns, gut the gutter in mm, grid a baseline grid step in pt (0 = none), color rgb|cmyk, icc fogra39 (the print profile for cmyk)" +
+    "\nimages: one new page per picture, in order: paths (files on the orOS disk inside Claude's folders, as files_list shows them) or folder (every picture in it), " +
+    "sort natural (1_A, 2_a … 10, 27) | name | given (paths as listed), fit trim (the picture fills the trim) | bleed (it fills trim and bleed) | margins | proportional (whole picture, no crop), " +
+    "at end | before | after page `page`, side any | right | left (a blank page goes first when the first picture would land on the other side); Layout copies the pictures into the document, the folder is never changed" +
+    "\nbleedfill: the full-page pictures on `pages` that stop at the trim get a bleed: mode smart (the texture of paper, wood or cloth carried on) | mirror | stretch; the original picture is kept for undo" +
+    "\nthumbs: page pictures (PNG, dpi 36-150) of `pages`, spreads true = facing pages side by side, saved under /internal/Layout/Proofs/ (read them with files_link when that folder is one of Claude's folders); changes nothing";
 
   // ---------- 1. Checking ----------
   function given(v) { return v !== null && v !== undefined && v !== ""; }
@@ -64,7 +90,11 @@
     });
     Object.keys(def.args).forEach(function (k) { if (def.args[k].req && !given(raw[k])) bad.push(k + " is missing"); });
     if (typeof raw.pages === "string" && !S.pageTest(raw.pages)) bad.push("pages " + JSON.stringify(raw.pages) + " is not a page list");
-    var st = bad.length ? null : R.normStep(raw, wrap(raw.op));
+    // an optional list left out is an empty list (recipes/core.js arg
+    // refuses a missing list: images with a folder and no paths)
+    var full = Object.assign({}, raw);
+    Object.keys(def.args).forEach(function (k) { if (def.args[k].t === "list" && !def.args[k].req && !given(full[k])) full[k] = []; });
+    var st = bad.length ? null : R.normStep(full, wrap(raw.op));
     if (!st) return { err: raw.op + ": " + (bad.join("; ") || "not valid") };
     return { step: st };
   }
@@ -79,6 +109,10 @@
       else steps.push(r.step);
     });
     if (errs.length) return { ok: false, err: errs.slice(0, 6).join(". ") };
+    if (steps.some(function (st, i) { return st.op === "create" && i > 0; })) return { ok: false, err: "create can only be the first command" };
+    var bad = steps.filter(function (st) { return st.op === "images" && !(st.paths && st.paths.length) && !st.folder; });
+    if (bad.length) return { ok: false, err: "images needs paths or folder" };
+    if (steps.some(function (st) { return st.op === "images" && (st.paths || []).some(function (p) { return !PRO.normPath(p); }); })) return { ok: false, err: "images: every path is a file on the orOS disk (/internal/… or as files_list shows it)" };
     return { ok: true, steps: steps };
   }
 
@@ -92,6 +126,21 @@
       doc.name = st.title;
       doc.m = Math.max(now, (doc.m || 0) + 1);
       return 1;
+    }
+    if (st.op === "create" || st.op === "thumbs") return 0;
+    if (st.op === "images") {
+      // env.pics: the pictures Layout read and stored, in order
+      if (!env.pics) return (st.paths && st.paths.length) || 1;
+      var r = PRO.placePictures(doc, env.pics, st, now, env.idf);
+      if (r.blank && env.notes && env.notes.indexOf("blankFirst") < 0) env.notes.push("blankFirst");
+      return r.items.length;
+    }
+    if (st.op === "bleedfill") {
+      var list = PRO.bleedTargets(doc, S.pageTest(st.pages));
+      if (!env.fills) return list.length;
+      var k = 0;
+      list.forEach(function (it) { var f = env.fills[it.id]; if (f) k += PRO.applyFill(doc, it, f, now); });
+      return k;
     }
     if (!hasEngine()) {
       if (st.op === "fit") { if (env.notes && env.notes.indexOf("fitLater") < 0) env.notes.push("fitLater"); return 1; }
@@ -109,6 +158,7 @@
   // folders: none in Layout, open: the open (or last opened) document's
   // id. designs: open | named | all; name: the document's name.
   function targets(data, folders, open, designs, name) {
+    if (designs === "new") return { ok: true, docs: [{ id: "", name: String(name || "") }], fresh: 1 };
     var docs = docsOf(data);
     if (!docs.length) return { ok: false, err: "the user has no documents in Layout yet" };
     var list = [];
@@ -135,7 +185,15 @@
   // name, n}], cut: 0, notes[] }. Black and white counts the pictures
   // it would change (their copies are made when Layout applies it).
   function preview(data, ids, steps) {
-    var docs = docsOf(data), out = { n: 0, d: 0, per: [], cut: 0, notes: [] };
+    var docs = docsOf(data), out = { n: 0, d: 0, per: [], cut: 0, made: 0, files: 0, notes: [] };
+    if (steps.length && steps[0].op === "create") {
+      var nd = PRO.makeDoc(steps[0], 1), k0 = 0;
+      out.made = 1;
+      steps.slice(1).forEach(function (st) { if (st.op === "thumbs") out.files++; else k0 += apply(nd, st, { now: 1, notes: out.notes, grey: {} }); });
+      out.n = k0;
+      out.per.push({ id: "", name: steps[0].title || "", n: k0 });
+      return out;
+    }
     ids.forEach(function (id) {
       var src = null;
       docs.forEach(function (d) { if (d.id === id) src = d; });
@@ -143,6 +201,7 @@
       var w = JSON.parse(JSON.stringify(src)), k = 0, grey = {};
       steps.forEach(function (st) {
         if (st.op === "grey") S.greyAssets(w, st).forEach(function (a) { grey[a] = a + "~"; });
+        if (st.op === "thumbs") { out.files++; return; }
         k += apply(w, st, { now: 1, notes: out.notes, grey: grey });
       });
       out.n += k;
@@ -161,7 +220,7 @@
   function textOf(st) {
     return (st && st.paras || []).map(function (p) { return (p.runs || []).map(function (r) { return typeof r.t === "string" ? r.t : ""; }).join(""); }).join(" ").replace(/\s+/g, " ").trim();
   }
-  function outline(doc) {
+  function outline(doc, L, opts) {
     var u = doc.setup || {}, order = M.pagesInOrder(doc), used = {}, msName = {};
     (doc.stories || []).forEach(function (s) { (s.paras || []).forEach(function (p) { var k = p.ps || "ps-base"; used[k] = (used[k] || 0) + 1; }); });
     (doc.masters || []).forEach(function (m) { msName[m.id] = nameOf(m.name) || m.id; });
@@ -195,6 +254,15 @@
       o.page_list.push(e);
     });
     if (order.length > OUT_PAGES) o.note = "Only the first " + OUT_PAGES + " pages are listed.";
+    // LY-PRO W1 (item 37): every frame, story, style, swatch and the
+    // page sides; L (the text layout) and opts (preflight, fonts, the
+    // last export) when Layout itself answers
+    var full = PRO.outline(doc, L || null, opts || {});
+    Object.keys(full).forEach(function (k) {
+      if (k === "page_list") full.page_list.forEach(function (e, i) { if (o.page_list[i]) o.page_list[i] = Object.assign(e, o.page_list[i]); });
+      else if (k === "paragraph_styles") full.paragraph_styles.forEach(function (e, i) { if (o.paragraph_styles[i]) o.paragraph_styles[i] = Object.assign(e, o.paragraph_styles[i]); });
+      else if (!(k in o)) o[k] = full[k];
+    });
     return o;
   }
 

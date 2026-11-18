@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.58.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.59.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -8497,6 +8497,12 @@
         { name: "@pdf-lib/fontkit 1.1.1", url: "https://github.com/Hopding/fontkit",
           by: "Devon Govett, Andrew Dillon & contributors", lic: "MIT",
           k: "cr.pdf-lib-2" },
+        { name: "ISO Coated v2 (ECI) ICC profile", url: "https://www.eci.org/en/downloads",
+          by: "Heidelberger Druckmaschinen AG, European Color Initiative", lic: "HEIDELBERG ICC profile licence",
+          k: "cr.icc-fogra39" },
+        { name: "sRGB IEC61966-2.1 ICC profile", url: "https://color.org/srgbprofiles.xalter",
+          by: "Hewlett-Packard Company", lic: "sRGB profile licence",
+          k: "cr.icc-srgb" },
         { name: "CodeMirror 6", url: "https://codemirror.net/",
           by: "Marijn Haverbeke & contributors", lic: "MIT",
           k: "cr.codemirror" },

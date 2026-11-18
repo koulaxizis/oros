@@ -368,6 +368,8 @@ orosPack("de", "shell", {
  "cr.pdf-js": "PDF-Dateien öffnen (Seitenlayout); PDF-Text auf dem Gerät lesen (Assistent)",
  "cr.pdf-lib": "PDFs zusammenfügen, teilen und erstellen (Scanner & PDF)",
  "cr.pdf-lib-2": "Griechischer und anderer Text in PDFs: Seitenzahlen, Wasserzeichen, Notizen (Scanner & PDF)",
+ "cr.icc-fogra39": "Die Druckbedingung von PDF/X-4-Dateien (Layout)",
+ "cr.icc-srgb": "RGB-Farben und Bilder in PDF/X-4-Dateien (Layout)",
  "cr.pdmp3-mp3": "Tabellen für den MP3-Export (Studio)",
  "cr.photon": "Ortssuche (Karten); Firmen in „Online aktualisieren“ (Kontakte, CRM)",
  "cr.pixabay": "Optionale Fotos und Videos (Atelier)",
