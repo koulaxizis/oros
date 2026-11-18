@@ -203,7 +203,7 @@ test("settings: section, search rows, strings in EN/EL/DE, durations", () => {
   assert.match(APP, /ICON = \{[\s\S]*?\n    screentime: '<svg/);
   assert.match(APP, /go\("screentime", true\)/, "a link from Settings › Device");
   const keys = Object.keys(C.STRINGS.en).filter((k) => /^(st\.|s\.screentime|d\.screentime|w\.screentime)/.test(k));
-  assert.ok(keys.length >= 20, "strings: " + keys.length);
+  assert.ok(keys.length >= 12, "strings: " + keys.length);
   const de = {};
   global.orosPack = (l, n, o) => Object.assign(de, o);
   require("../i18n/de/settings.js");
@@ -212,8 +212,25 @@ test("settings: section, search rows, strings in EN/EL/DE, durations", () => {
     assert.ok(C.STRINGS.el[k], "el " + k);
     assert.ok(de[k], "de " + k);
   });
-  // every st.* key the app uses exists
-  [...APP.matchAll(/t\("(st\.[a-zA-Z.]+)"/g)].forEach((m) => assert.ok(C.STRINGS.en[m[1]], m[1]));
+  // The section itself loads on first open (settings/screentime.js +
+  // screentime.css, Settings size budget); its own strings join the tables.
+  const MOD = read("settings/screentime.js");
+  const w = { SettingsCore: { STRINGS: { en: {}, el: {} } } };
+  vm.runInNewContext(MOD, { window: w });
+  const own = w.SettingsScreenTime.STRINGS;
+  assert.equal(typeof w.SettingsScreenTime.draw, "function");
+  assert.ok(Object.keys(own.en).length >= 8);
+  Object.keys(own.en).forEach((k) => {
+    assert.ok(own.el[k], "el " + k);
+    assert.ok(de[k], "de " + k);
+    assert.equal(C.STRINGS.en[k], undefined, k + " lives in one place");
+  });
+  assert.equal(w.SettingsCore.STRINGS.en["st.hint"], own.en["st.hint"], "merged on load");
+  assert.match(APP, /loadScript\("screentime\.js"\)/);
+  assert.match(APP, /css\.href = "screentime\.css"/);
+  assert.ok(fs.existsSync(path.join(ROOT, "settings/screentime.css")));
+  // every st.* key the page and the section use exists
+  [...(APP + MOD).matchAll(/t\("(st\.[a-zA-Z.]+)"/g)].forEach((m) => assert.ok(C.STRINGS.en[m[1]] || own.en[m[1]], m[1]));
   assert.equal(C.stDur("en", 0), "under 1 min");
   assert.equal(C.stDur("en", 59 * 60 + 59), "59 min");
   assert.equal(C.stDur("en", 2 * 3600 + 5 * 60), "2 h 5 min");
@@ -221,6 +238,6 @@ test("settings: section, search rows, strings in EN/EL/DE, durations", () => {
   assert.deepEqual(C.findSettings("el", "χρόνος οθόνης", () => true).slice(0, 1).map((r) => r.section), ["screentime"]);
   assert.deepEqual(C.findSettings("en", "screen time", () => true).slice(0, 1).map((r) => r.section), ["screentime"]);
   // Text goes in as text: the section writes no innerHTML.
-  const sec = APP.slice(APP.indexOf("function secScreenTime("), APP.indexOf("// ---------- Section: Fonts (FM-1)"));
-  assert.doesNotMatch(sec, /innerHTML/);
+  assert.doesNotMatch(MOD, /innerHTML|localStorage/);
+  for (const m of MOD.matchAll(/\.style\.(\w+)\s*=\s*([^;]+);/g)) assert.match(m[2].trim(), /^stPct\(/, m[0]);
 });

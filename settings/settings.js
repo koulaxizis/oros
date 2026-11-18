@@ -4198,104 +4198,35 @@
   }
 
   // ---------- Section: Screen time (ST-1) ----------
-  // screentime.js through the shell: the switch, today or a picked day
-  // (its apps, longest first), the last 7 days as columns and Clear
-  // history. Everything stays on this device. The picked day lives in
-  // memory only (R10).
-  var stPick = null;
-  function stLocale() { return LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB"; }
-  function stDayDate(key) {
-    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(key);
-    return m ? new Date(+m[1], +m[2] - 1, +m[3]) : new Date();
+  // settings/screentime.js + screentime.css load on the first open only
+  // (Settings size budget), like Device and Fonts; the section is drawn
+  // there with this page's helpers.
+  var stLoad = null;
+  function loadScreenTime() {
+    if (window.SettingsScreenTime) return Promise.resolve();
+    if (stLoad) return stLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    var v = window.orosI18n && window.orosI18n.ver;
+    css.href = "screentime.css" + (v ? "?v=" + encodeURIComponent(v) : "");
+    document.head.appendChild(css);
+    stLoad = loadScript("screentime.js");
+    stLoad.catch(function () { stLoad = null; });
+    return stLoad;
   }
-  function stDayName(key, today, long) {
-    if (key === today && long) return t("st.today");   // a column keeps its weekday (narrow screens)
-    try { return stDayDate(key).toLocaleDateString(stLocale(), long ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short" }); }
-    catch (e) { return key; }
-  }
-  function stPct(part, whole, min) {   // a bar's length: 0-100 %
-    var v = whole > 0 ? Math.round(part / whole * 100) : 0;
-    if (part > 0) v = Math.max(min || 0, v);
-    return Math.max(0, Math.min(100, v)) + "%";
-  }
-  function stAppName(a) {
-    return a.id === "~desk" ? t("st.desk") : a.id === "~sens" ? t("st.sens") : (a.name || a.id);
+  function stCtx() {
+    return { C: C, LANG: LANG, t: t, el: el, card: card, row: row, switchBtn: switchBtn, actions: actions,
+             confirmBtn: confirmBtn, set: set, render: render };
   }
   function secScreenTime(host, s) {
-    var st = s.screentime;
-    if (!st) { host.appendChild(el("p", "hint card-note", t("st.wait"))); return; }
-    var c1 = card(null);
-    c1.appendChild(row(t("st.on"), switchBtn(st.on, "screentime", function (v) { set("screentime", v); }, t("st.on")),
-      { scope: "screentime", hint: t("st.hint") }));
-    if (!st.on && st.has) c1.appendChild(el("p", "hint", t("st.offKept")));
-    host.appendChild(c1);
-    if (!st.on && !st.has) return;
-
-    var days = st.days || [];
-    var pick = null;
-    days.forEach(function (d) { if (d.day === stPick) pick = d; });
-    if (!pick) { pick = days[days.length - 1] || { day: st.today, total: 0, apps: [] }; stPick = null; }
-
-    // The picked day: its total and its apps.
-    var c2 = card(stDayName(pick.day, st.today, true));
-    var tot = el("div", "st-total");
-    tot.appendChild(el("span", "st-total-num", C.stDur(LANG, pick.total)));
-    tot.appendChild(el("span", "hint", t("st.total")));
-    c2.appendChild(tot);
-    if (!pick.apps.length) c2.appendChild(el("p", "hint", t("st.none")));
-    else {
-      var ul = el("ul", "st-list");
-      var top = pick.apps[0].secs || 1;
-      pick.apps.forEach(function (a) {
-        var li = el("li", "st-app");
-        var hd = el("div", "st-app-head");
-        hd.appendChild(el("span", "st-app-name", stAppName(a)));
-        hd.appendChild(el("span", "st-app-time", C.stDur(LANG, a.secs)));
-        li.appendChild(hd);
-        var bar = el("div", "st-bar");
-        var fill = el("span", "st-bar-fill");
-        fill.style.width = stPct(a.secs, top, 2);
-        bar.appendChild(fill);
-        li.appendChild(bar);
-        ul.appendChild(li);
-      });
-      c2.appendChild(ul);
-    }
-    host.appendChild(c2);
-
-    // The last 7 days: one column each, the picked one marked.
-    var c3 = card(t("st.week"));
-    var max = 1;
-    days.forEach(function (d) { if (d.total > max) max = d.total; });
-    var wk = el("div", "st-week");
-    days.forEach(function (d) {
-      var b = el("button", "st-col" + (d.day === pick.day ? " on" : "") + (d.day === st.today ? " today" : ""));
-      b.type = "button";
-      b.setAttribute("data-k", "st-day:" + d.day);
-      b.setAttribute("aria-pressed", d.day === pick.day ? "true" : "false");
-      b.setAttribute("aria-label", t("st.dayAria", { day: stDayName(d.day, st.today, true), time: C.stDur(LANG, d.total) }));
-      var col = el("span", "st-col-bar");
-      var f = el("span", "st-col-fill");
-      f.style.height = stPct(d.total, max, 4);
-      col.appendChild(f);
-      b.appendChild(col);
-      b.appendChild(el("span", "st-col-day", stDayName(d.day, st.today, false)));
-      b.addEventListener("click", function () { stPick = d.day; render(); });
-      wk.appendChild(b);
-    });
-    c3.appendChild(wk);
-    c3.appendChild(el("p", "hint", t("st.weekHint")));
-    host.appendChild(c3);
-
-    if (st.has) {
-      var c4 = card(null);
-      c4.appendChild(row(t("st.clear"), null, { hint: t("st.clear.hint") }));
-      c4.appendChild(actions(confirmBtn(t("st.clear"), t("st.clearSure"), "st.clear", function () {
-        stPick = null;
-        set("screentimeClear", true);
-      }, "danger")));
-      host.appendChild(c4);
-    }
+    if (window.SettingsScreenTime) { window.SettingsScreenTime.draw(host, s, stCtx()); return; }
+    var wait = el("p", "hint", t("st.loading"));
+    host.appendChild(wait);
+    loadScreenTime().then(function () {
+      if (current !== "screentime" || !host.isConnected) return;
+      render();
+      if (lit && lit.row[1] === "screentime" && Date.now() < lit.until) lightUp(true);
+    }, function () { wait.textContent = t("dv.loadFail"); });
   }
 
   // ---------- Section: Fonts (FM-1) ----------

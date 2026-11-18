@@ -682,26 +682,6 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 }
 @media (prefers-reduced-motion: reduce) { .svc-tile { transition: none; } }
 
-/* Screen time (ST-1): the day's total, its apps with bars, the week as columns */
-.st-total { display: flex; align-items: baseline; gap: 10px; margin: 2px 0 10px; }
-.st-total-num { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
-.st-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
-.st-app-head { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; }
-.st-app-name { font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.st-app-time { color: var(--text-dim); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.st-bar { height: 6px; border-radius: 3px; background: var(--accent-soft); margin-top: 4px; overflow: hidden; }
-.st-bar-fill { display: block; height: 100%; border-radius: 3px; background: var(--accent); }
-.st-week { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; margin: 4px 0 8px; }
-.st-col { display: flex; flex-direction: column; align-items: center; gap: 6px; min-height: 44px; padding: 6px 2px;
-  background: none; border: 1px solid transparent; border-radius: 8px; color: var(--text); font: inherit; cursor: pointer; }
-.st-col:hover { background: var(--accent-soft); }
-.st-col.on { border-color: var(--accent); }
-.st-col-bar { position: relative; width: 60%; max-width: 28px; height: 90px; border-radius: 4px; background: var(--accent-soft); overflow: hidden; }
-.st-col-fill { position: absolute; left: 0; right: 0; bottom: 0; background: var(--accent); border-radius: 4px; }
-.st-col-day { font-size: 12px; color: var(--text-dim); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.st-col.on .st-col-day { color: var(--accent); font-weight: 700; }
-.st-col.today .st-col-day { text-decoration: underline; text-underline-offset: 3px; }
-
 /* ---------- 8. Narrow screens + reduced motion ---------- */
 @media (max-width: 719px) {
   #nav {

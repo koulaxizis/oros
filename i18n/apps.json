@@ -890,6 +890,7 @@
    "files": [
     "settings/core.js",
     "settings/fonts.js",
+    "settings/screentime.js",
     "settings/search.js"
    ]
   },

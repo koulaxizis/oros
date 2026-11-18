@@ -424,6 +424,7 @@ orosPack("de", "settings", {
  "st.desk": "Schreibtisch",
  "st.hint": "Zählt die App im Vordergrund, solange orOS sichtbar, entsperrt und in Gebrauch ist (oder Ton oder Video läuft). Bleibt auf diesem Gerät: nie synchronisiert, nie in einer Sicherung, nie für den Assistenten oder orOS Gate sichtbar. Wird 4 Wochen aufbewahrt.",
  "st.hm": "{h} Std. {m} Min.",
+ "st.loading": "Bildschirmzeit wird geladen…",
  "st.link": "Bildschirmzeit: Zeit in jeder App",
  "st.lt1": "unter 1 Min.",
  "st.m": "{m} Min.",
