@@ -12441,6 +12441,8 @@
       case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
       case "screentime":      if (window.orosScreenTime) { window.orosScreenTime.setOn(!!value); settingsNotify(); } return;   // ST-1
       case "screentimeClear": if (window.orosScreenTime) { window.orosScreenTime.clear(); settingsNotify(); } return;
+      case "screentimeBed":     if (window.orosScreenTime && window.orosScreenTime.setBed) { window.orosScreenTime.setBed(value); settingsNotify(); } return;   // S3: { on, from, to, days, sleep } (any of them)
+      case "screentimeBedSkip": if (window.orosScreenTime && window.orosScreenTime.bedSkip) { window.orosScreenTime.bedSkip(!!value); settingsNotify(); } return;   // S3: Not tonight
       case "screentimeLimit":   // S2: { id, min } (0 = no limit)
         if (window.orosScreenTime && window.orosScreenTime.setLimit && value && typeof value === "object") {
           window.orosScreenTime.setLimit(String(value.id || ""), Number(value.min) || 0);
@@ -16790,10 +16792,16 @@
       docs: function () { return window.__orosAppDocs(); },
       appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
       // S2: the quiet toast 5 minutes before a limit, and the card's "Go to the desktop".
-      toast: function (title, body) {
-        if (window.orosNotifs && window.orosNotifs.transient) window.orosNotifs.transient({ ns: "screentime", title: title, body: body });
+      toast: function (title, body, action) {
+        if (window.orosNotifs && window.orosNotifs.transient) window.orosNotifs.transient({ ns: "screentime", title: title, body: body, action: action || undefined });
       },
-      home: function () { returnToDesktop(); }
+      home: function () { returnToDesktop(); },
+      // S3 bedtime: the grey overlay after the person's own colour filter
+      // (a11yfx.js loads on demand), and Sleep focus when focus.js is there.
+      grey: function (on, fadeMs) {
+        if (window.orosA11y && window.orosA11y.overlayFilter) window.orosA11y.overlayFilter("bedtime", on ? "grey" : null, { fadeMs: fadeMs });
+      },
+      focus: function () { return window.orosFocus || null; }
     });
   });
   // Desktop widgets (widgets.js, a shell component like launcher.js):

@@ -160,6 +160,7 @@
     ["screentime", "screentime", "st.on"],
     ["screentime-week", "screentime", "st.week", null, "st.on"],
     ["screentime-limits", "screentime", "st.limits", null, "st.on"],
+    ["screentime-bed", "screentime", "st.bed", null, "st.on"],
     ["screentime-clear", "screentime", "st.clear", null, "st.on"]
   ];
 
@@ -1584,13 +1585,15 @@
       "st.lt1": "under 1 min",
       "st.clear": "Clear history",
       "st.limits": "Daily limits",
+      "st.bed": "Bedtime",
       "st.wait": "Screen time starts a few seconds after orOS. Open this section again in a moment.",
       "st.loading": "Loading screen time…",
       "st.link": "Screen time: time in each app",
       "w.screentime": "screen time usage wellbeing digital how long apps time spent minutes hours habit",
       "w.screentime-week": "screen time week days chart history",
       "w.screentime-clear": "screen time clear delete history erase",
-      "w.screentime-limits": "screen time limit daily limit break reminder time limit"
+      "w.screentime-limits": "screen time limit daily limit break reminder time limit",
+      "w.screentime-bed": "bedtime sleep night grey greyscale gray wind down not tonight"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -3005,13 +3008,15 @@
       "st.lt1": "κάτω από 1 λεπ.",
       "st.clear": "Σβήσε το ιστορικό",
       "st.limits": "Όρια ανά ημέρα",
+      "st.bed": "Ώρα για ύπνο",
       "st.wait": "Ο χρόνος οθόνης ξεκινά λίγα δευτερόλεπτα μετά το orOS. Άνοιξε ξανά την ενότητα σε λίγο.",
       "st.loading": "Φορτώνω τον χρόνο οθόνης…",
       "st.link": "Χρόνος οθόνης: χρόνος σε κάθε εφαρμογή",
       "w.screentime": "χρόνος οθόνης χρήση ψηφιακή ευεξία πόση ώρα εφαρμογές λεπτά ώρες συνήθεια screen time",
       "w.screentime-week": "χρόνος οθόνης εβδομάδα ημέρες γράφημα ιστορικό",
       "w.screentime-clear": "χρόνος οθόνης σβήσιμο διαγραφή ιστορικό",
-      "w.screentime-limits": "χρόνος οθόνης όριο ημερήσιο όριο διάλειμμα υπενθύμιση"
+      "w.screentime-limits": "χρόνος οθόνης όριο ημερήσιο όριο διάλειμμα υπενθύμιση",
+      "w.screentime-bed": "ύπνος ώρα για ύπνο νύχτα γκρι ασπρόμαυρο όχι απόψε"
     }
   };
 
