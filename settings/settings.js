@@ -4934,6 +4934,10 @@
     var c2 = card(t("x.more"));
     c2.appendChild(linkRow(t("x.device"), "x.device", function () { go("device", true); }));   // was the Device Info app
     c2.appendChild(linkRow(t("x.about"), "x.about", function () { act("info"); }));
+    // MEDIA-KIT: the site page (EN/EL only; German opens the English one).
+    c2.appendChild(linkRow(t("x.mediakit"), "x.mediakit", function () {
+      window.open("../media-kit/?lang=" + (LANG === "el" ? "el" : "en"), "_blank", "noopener");
+    }));
     c2.appendChild(linkRow(t("x.sharelinks"), "x.sharelinks", function () { act("shareLinks"); }));
     if (has.weather) c2.appendChild(linkRow(t("x.weather"), "x.weather", function () { act("openApp", "weather"); }));
     if (has.wallpaper) c2.appendChild(linkRow(t("x.wallgen"), "x.wallgen", function () { act("openApp", "wallpaper"); }));
