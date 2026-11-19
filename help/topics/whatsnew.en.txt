@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.76.03
+- **The media kit is inside orOS.** Logos, wallpapers and press texts for writing about orOS: Settings › System › Media kit, or the link at the bottom of About orOS.
+
 ## Version 7.76.02
 - **Studio effects from NULL JSFX 4.0.** 18 new plugins: Closer, Echo One, Smoother, Warmer, Lo-Fi Comp, Room Tone, Binaural Panner, Bloom Delay, Key Detect, Null Test, Phase Distortion and Spectral Blur in the effects, Choir, Modal Piano, String Ensemble and Wind as instruments, and MIDI Monitor and Strum for instrument tracks. The other effects have the 4.0 improvements. See [Studio](help:a/studio).
 

@@ -1,6 +1,9 @@
 # Τι νέο υπάρχει στο orOS
 Οι πιο πρόσφατες αλλαγές είναι πρώτες. Όταν το orOS ενημερώνεται, η ειδοποίηση ενημέρωσης ανοίγει αυτή τη σελίδα.
 
+## Έκδοση 7.76.03
+- **Το media kit μέσα στο orOS.** Λογότυπα, wallpapers και κείμενα τύπου για όποιον γράφει για το orOS: Ρυθμίσεις › Σύστημα › Media kit, ή ο σύνδεσμος στο κάτω μέρος του «Σχετικά με το orOS».
+
 ## Έκδοση 7.76.02
 - **Εφέ του Studio από το NULL JSFX 4.0.** 18 νέα plugins: Closer, Echo One, Smoother, Warmer, Lo-Fi Comp, Room Tone, Binaural Panner, Bloom Delay, Key Detect, Null Test, Phase Distortion και Spectral Blur στα εφέ, Choir, Modal Piano, String Ensemble και Wind ως όργανα, και MIDI Monitor και Strum για κομμάτια οργάνων. Τα υπόλοιπα εφέ έχουν τις βελτιώσεις της 4.0. Δες [Studio](help:a/studio).
 
