@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.76.01
+- **Smart bar on the desktop fixed (Windows).** With orOS Setup 0.9.2 or newer, `Smart bar on the desktop` in the orOS tray menu shows a thin strip at the top of the screen instead of a small orOS window, and a chip on it opens its app in the main orOS window.
+
 ## Version 7.76.00
 - **Lock and hide single apps.** In Settings › Screen lock › `App lock`, choose apps that ask your screen-lock PIN, passphrase or fingerprint every time they open, even while orOS is unlocked; they lock again a minute after you leave them. Hide an app and it leaves the menu, search, the Dock and Today until `Hidden apps` at the end of the menu shows it. If you want, `Lock screen info` shows the time of your next event, music buttons and how many notifications you have, never what they say. It protects the screen, not the disk.
 
