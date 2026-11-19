@@ -125,6 +125,19 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             if (on) askNotificationsOnce();
             return true;
         }
+        if (item.getItemId() == R.id.support) {
+            // SUP-1: the shared support page of all the projects (merch, a
+            // one-time donation, services), a plain link in the browser.
+            // The page speaks Greek and English.
+            String url = "https://koulaxizis.gr/support/?lang="
+                    + ("el".equals(Locale.getDefault().getLanguage()) ? "el" : "en");
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+            } catch (android.content.ActivityNotFoundException e) {
+                Toast.makeText(this, url, Toast.LENGTH_LONG).show();
+            }
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 

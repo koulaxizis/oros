@@ -103,6 +103,8 @@
       "all.g.arcade": "Arcade",
       "all.g.strategy": "Strategy",
       "all.g.rpg": "RPG & Adventure",
+      "all.g.idle": "Idle",
+      "all.g.defense": "Tower defense",
       "ach.title": "Achievements",
       "ach.note": "{n} of {k}",
       "ach.done": "Done",
@@ -197,6 +199,8 @@
       "all.g.arcade": "Arcade",
       "all.g.strategy": "Στρατηγική",
       "all.g.rpg": "RPG και περιπέτεια",
+      "all.g.idle": "Χαλαρά",
+      "all.g.defense": "Άμυνα",
       "ach.title": "Επιτεύγματα",
       "ach.note": "{n} από {k}",
       "ach.done": "Έγινε",
@@ -249,7 +253,7 @@
       bubble: "Bubble Shooter", simon: "Simon Says", whack: "Whack-a-Mole", pong: "Pong", chess: "Chess",
       checkers: "Checkers", reversi: "Reversi", gomoku: "Gomoku", connect4: "Connect 4",
       dots: "Dots & Boxes", tictactoe: "Tic-Tac-Toe", mancala: "Mancala", backgammon: "Backgammon",
-      battleship: "Battleship", rps: "Rock Paper Scissors", xeri: "Xeri", realm: "Realm", banner: "Banner", crypt: "Crypt", wayfarers: "Wayfarers", fieldwarden: "Fieldwarden", roots: "Roots" },
+      battleship: "Battleship", rps: "Rock Paper Scissors", xeri: "Xeri", realm: "Realm", banner: "Banner", crypt: "Crypt", wayfarers: "Wayfarers", fieldwarden: "Fieldwarden", roots: "Roots", hive: "Hive", ridge: "Windmill ridge" },
     el: { wordle: "Λεξούλα", crossword: "Σταυρόλεξο", sudoku: "Σουντόκου", nonogram: "Νονόγραμμα",
       flow: "Ένωσε τα χρώματα", minesweeper: "Ναρκαλιευτής", wordsearch: "Κρυπτόλεξο", solitaire: "Πασιέντζα",
       mahjong: "Μαντζόνγκ", jigsaw: "Παζλ", spot: "Βρες τις διαφορές", hexagon: "Εξάγωνα",
@@ -258,7 +262,7 @@
       bubble: "Φούσκες", simon: "Ο Σάιμον λέει", whack: "Χτύπα τον τυφλοπόντικα", pong: "Πονγκ", chess: "Σκάκι",
       checkers: "Ντάμα", reversi: "Ρεβέρσι", gomoku: "Πέντε στη σειρά", connect4: "Τέσσερα στη σειρά",
       dots: "Τελείες & Κουτιά", tictactoe: "Τρίλιζα", mancala: "Μαγκάλα", backgammon: "Τάβλι (Πόρτες)",
-      battleship: "Ναυμαχία", rps: "Πέτρα, ψαλίδι, χαρτί", xeri: "Ξερή", realm: "Επικράτεια", banner: "Λάβαρο", crypt: "Κρύπτη", wayfarers: "Οδοιπόροι", fieldwarden: "Αγροφύλακας", roots: "Ρίζες" }
+      battleship: "Ναυμαχία", rps: "Πέτρα, ψαλίδι, χαρτί", xeri: "Ξερή", realm: "Επικράτεια", banner: "Λάβαρο", crypt: "Κρύπτη", wayfarers: "Οδοιπόροι", fieldwarden: "Αγροφύλακας", roots: "Ρίζες", hive: "Κυψέλη", ridge: "Η ράχη με τους ανεμόμυλους" }
   };
   if (window.orosI18n) {
     window.orosI18n.table(STRINGS, "gamecenter", LANG);

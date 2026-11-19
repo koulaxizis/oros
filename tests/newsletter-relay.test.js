@@ -15,19 +15,25 @@ const K = "abcdefgh12345678";
 const SEC = "A".repeat(16) + "b".repeat(16);
 
 // A D1 that understands exactly the statements in NL.SQL.
-function fakeD1() {
+// opts.noOc: a table deployed before MV-1 W3 (no oc column until the ALTER).
+function fakeD1(opts) {
   const lists = new Map(), rows = [];
-  let seq = 0;
+  let seq = 0, hasOc = !(opts && opts.noOc);
   const log = [];
   function exec(sql, a) {
     const S = NL.SQL;
     log.push(sql);
+    if (!hasOc && sql === S.addList) throw new Error("D1_ERROR: table nl_list has no column named oc: SQLITE_ERROR");
+    if (!hasOc && (sql === S.getList || sql === S.setList)) throw new Error("D1_ERROR: no such column: oc: SQLITE_ERROR");
     switch (sql) {
       case S.list: case S.queue: case S.index: return { meta: {} };
-      case S.getList: { const l = lists.get(a[0]); return { first: l ? { pub: l.pub, sec: l.sec, back: l.back } : null }; }
+      case S.addOc:
+        if (hasOc) throw new Error("D1_ERROR: duplicate column name: oc: SQLITE_ERROR");
+        hasOc = true; lists.forEach((l) => { l.oc = 0; }); return { meta: {} };
+      case S.getList: { const l = lists.get(a[0]); return { first: l ? { pub: l.pub, sec: l.sec, back: l.back, oc: l.oc } : null }; }
       case S.countLists: return { first: { n: lists.size } };
-      case S.addList: lists.set(a[0], { pub: a[1], sec: a[2], back: a[3], at: a[4] }); return { meta: { changes: 1 } };
-      case S.setList: { const l = lists.get(a[0]); Object.assign(l, { pub: a[1], back: a[2], at: a[3] }); return { meta: { changes: 1 } }; }
+      case S.addList: lists.set(a[0], { pub: a[1], sec: a[2], back: a[3], at: a[4], oc: a[5] }); return { meta: { changes: 1 } };
+      case S.setList: { const l = lists.get(a[0]); Object.assign(l, { pub: a[1], back: a[2], at: a[3], oc: a[4] === null ? l.oc : a[4] }); return { meta: { changes: 1 } }; }
       case S.countRows: return { first: { n: rows.filter((r) => r.k === a[0]).length } };
       case S.addRow: rows.push({ id: ++seq, k: a[0], kind: a[1], v: a[2], at: a[3] }); return { meta: { changes: 1 } };
       case S.seenUnsub: { const r = rows.find((x) => x.k === a[0] && x.kind === "u" && x.v === a[1] && x.at > a[2]); return { first: r ? { id: r.id } : null }; }
@@ -47,7 +53,8 @@ function fakeD1() {
       _run: () => exec(sql, args || [])
     };
   }
-  return { lists, rows, log, prepare: (sql) => stmt(sql), batch: async (ss) => ss.map((s) => s._run()) };
+  return { lists, rows, log, prepare: (sql) => stmt(sql), batch: async (ss) => ss.map((s) => s._run()),
+           old: (k, l) => lists.set(k, l) };
 }
 
 let ip = 0;
@@ -296,4 +303,76 @@ test("N3: nlhook posts only the fixed, signed notice to a public https address",
   const down = await handle(new Request("https://relay.example/v1", { method: "POST", headers: { Origin: ORIGIN, "Content-Type": "application/json", "CF-Connecting-IP": nextIp() },
     body: JSON.stringify(Object.assign({ op: "nlhook" }, ok)) }), env, null, Date.now(), async () => { throw new Error("dns"); });
   assert.deepEqual((await down.json()).data, { status: 0, err: "network" });
+});
+
+// ---------- MV-1 W3: one-click-only lists (oc) ----------
+test("oc: a table from before gets the column once, old rows read as 0 and keep working", async () => {
+  const D = fakeD1({ noOc: true });
+  const env = { ALLOWED_ORIGINS: ORIGIN, NL_DB: D };
+  const kp = await keys();
+  // a list registered before the change (no oc column)
+  D.old(K, { pub: JSON.stringify(kp.pub), sec: await NL.sha256Hex(SEC), back: "", at: 1 });
+  const p = await pub(env, "/nl/s/" + K, form({ email: "a@x.gr" }));
+  assert.equal(p.status, 200);
+  assert.equal(D.lists.get(K).oc, 0);
+  assert.equal(D.rows.length, 1);
+  assert.equal(D.log.filter((x) => x === NL.SQL.addOc).length, 1);
+  // a reg without oc keeps the stored value
+  const r = await app(env, { act: "reg", pub: kp.pub, back: "" });
+  assert.equal(r.body.ok, true, JSON.stringify(r.body));
+  assert.equal(D.lists.get(K).oc, 0);
+  assert.equal(D.log.filter((x) => x === NL.SQL.addOc).length, 1);
+});
+
+test("oc: a new table on a fresh isolate also adds it lazily (insert path)", async () => {
+  const D = fakeD1({ noOc: true });
+  const env = { ALLOWED_ORIGINS: ORIGIN, NL_DB: D };
+  const kp = await keys();
+  const K2 = "zyxwvuts98765432";
+  const r = await app(env, { act: "reg", k: K2, pub: kp.pub, back: "", oc: 1 });
+  assert.equal(r.body.ok, true, JSON.stringify(r.body));
+  assert.equal(D.lists.get(K2).oc, 1);
+});
+
+test("oc = 1: sign-ups get exactly the unknown-list answer and write nothing; one-click unsubscribe still works", async () => {
+  const D = fakeD1();
+  const env = { ALLOWED_ORIGINS: ORIGIN, NL_DB: D };
+  const kp = await keys();
+  const r = await app(env, { act: "reg", pub: kp.pub, back: "https://my.site/thanks", oc: 1 });
+  assert.equal(r.body.ok, true);
+  assert.equal(D.lists.get(K).oc, 1);
+  const a = await pub(env, "/nl/s/" + K, form({ email: "a@x.gr", lang: "el" }));
+  const b = await pub(env, "/nl/s/zzzzzzzzzzzzzzzz", form({ email: "a@x.gr", lang: "el" }));
+  assert.equal(a.status, 404);
+  assert.equal(a.status, b.status);
+  assert.equal(a.text, b.text);
+  assert.deepEqual([...a.headers.entries()].sort(), [...b.headers.entries()].sort());
+  assert.equal(D.rows.length, 0);
+  const bot = await pub(env, "/nl/s/" + K, form({ email: "a@x.gr", website: "x" }));
+  assert.equal(bot.status, 404);
+  assert.equal(D.rows.length, 0);
+  // unsubscribe is untouched
+  const u = await pub(env, "/nl/u/" + K + "/tok12345", { method: "POST", body: "List-Unsubscribe=One-Click" });
+  assert.equal(u.status, 200);
+  assert.equal(D.rows.length, 1);
+  assert.equal(D.rows[0].kind, "u");
+  // opening the form (oc 0) lets sign-ups in; it needs the list's secret
+  const wrong = await app(env, { act: "reg", pub: kp.pub, back: "", oc: 0, sec: "C".repeat(32) });
+  assert.equal(wrong.status, 403);
+  assert.equal(D.lists.get(K).oc, 1);
+  await app(env, { act: "reg", pub: kp.pub, back: "", oc: 0 });
+  assert.equal(D.lists.get(K).oc, 0);
+  assert.equal((await pub(env, "/nl/s/" + K, form({ email: "a@x.gr" }))).status, 200);
+});
+
+test("oc: anything but 0 or 1 is refused", async () => {
+  const D = fakeD1();
+  const env = { ALLOWED_ORIGINS: ORIGIN, NL_DB: D };
+  const kp = await keys();
+  for (const oc of [2, "1", true, -1, null]) {
+    const r = await app(env, { act: "reg", pub: kp.pub, back: "", oc });
+    assert.equal(r.status, 400, "oc " + JSON.stringify(oc));
+  }
+  assert.equal(D.lists.size, 0);
+  assert.equal(NL.validNl({ act: "reg", k: K, sec: SEC, pub: kp.pub, back: "", oc: 2 }), "oc");
 });

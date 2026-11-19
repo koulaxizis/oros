@@ -61,6 +61,15 @@
       "btn.makeLink": "Create link",
       "btn.makeCloud": "Send through my Dropbox", "btn.cloudDel": "Delete now",
       "hold.lab": "Keep in Dropbox for", "hold.h": "{n} hours",
+      "later.lab": "Email the link at a set day and time", "later.to": "To (email address)", "later.at": "Day and time",
+      "later.copy": "Send me a copy too, as confirmation",
+      "later.hint": "orOS Mail sends it with your own account, from this device: orOS must be open here at that time (any app), else it goes the next time orOS opens. The hours above count from then.",
+      "btn.makeLater": "Upload and schedule the email", "btn.laterMail": "Open the email", "btn.laterOut": "Mail's Outbox",
+      "later.badTo": "Write the email address the link goes to.",
+      "later.badAt": "Choose a day and time from 5 minutes to 14 days from now.",
+      "later.subj": "Files for you",
+      "later.body": "Hello,\n\n{msg}I am sending you files with orOS Transfer. Open this link to download them (no account needed):\n\n{link}\n\nThe link works until {until}. Anyone who has it can download the files, so please do not forward it.",
+      "later.ready": "Ready. The email waits in Mail: check it and press “Send: {when}”. The files stay until {t}. If you delete them now, the link in the email will not work.",
       "btn.resign": "Sign in to Dropbox again",
       "err.scope": "Keeping files longer than 4 hours needs a new Dropbox permission. Sign in to Dropbox again once (your data stays as it is), then send again. 4 hours works without it.",
       "err.sharecheck": "Dropbox did not let this browser download a test file through a shared link, so only 4 hours works here. Nothing was uploaded.",
@@ -165,6 +174,15 @@
       "btn.makeLink": "Δημιουργία συνδέσμου",
       "btn.makeCloud": "Αποστολή μέσω του Dropbox μου", "btn.cloudDel": "Διαγραφή τώρα",
       "hold.lab": "Διατήρηση στο Dropbox για", "hold.h": "{n} ώρες",
+      "later.lab": "Αποστολή του συνδέσμου με email σε ορισμένη μέρα και ώρα", "later.to": "Προς (διεύθυνση email)", "later.at": "Μέρα και ώρα",
+      "later.copy": "Στείλε κι εμένα αντίγραφο, ως επιβεβαίωση",
+      "later.hint": "Η Αλληλογραφία του orOS το στέλνει με τον δικό σου λογαριασμό, από αυτή τη συσκευή: το orOS πρέπει να είναι ανοιχτό εδώ εκείνη την ώρα (οποιαδήποτε εφαρμογή), αλλιώς φεύγει μόλις ξανανοίξει. Οι ώρες παραπάνω μετρούν από τότε.",
+      "btn.makeLater": "Ανέβασμα και προγραμματισμός του email", "btn.laterMail": "Άνοιγμα του email", "btn.laterOut": "Εξερχόμενα Αλληλογραφίας",
+      "later.badTo": "Γράψε τη διεύθυνση email όπου πάει ο σύνδεσμος.",
+      "later.badAt": "Διάλεξε μέρα και ώρα από 5 λεπτά έως 14 μέρες από τώρα.",
+      "later.subj": "Αρχεία για σένα",
+      "later.body": "Γεια σου,\n\n{msg}Σου στέλνω αρχεία με το orOS Transfer. Άνοιξε αυτόν τον σύνδεσμο για να τα κατεβάσεις (χωρίς λογαριασμό):\n\n{link}\n\nΟ σύνδεσμος ισχύει έως {until}. Όποιος τον έχει μπορεί να κατεβάσει τα αρχεία, γι' αυτό μην τον προωθήσεις.",
+      "later.ready": "Έτοιμο. Το email περιμένει στην Αλληλογραφία: έλεγξέ το και πάτησε «Αποστολή: {when}». Τα αρχεία μένουν έως {t}. Αν τα σβήσεις τώρα, ο σύνδεσμος στο email δεν θα δουλεύει.",
       "btn.resign": "Σύνδεση ξανά στο Dropbox",
       "err.scope": "Για διατήρηση πάνω από 4 ώρες χρειάζεται μια νέα άδεια του Dropbox. Συνδέσου ξανά στο Dropbox μία φορά (τα δεδομένα σου μένουν ως έχουν) και στείλε ξανά. Οι 4 ώρες δουλεύουν και χωρίς αυτήν.",
       "err.sharecheck": "Το Dropbox δεν άφησε αυτόν τον browser να κατεβάσει ένα δοκιμαστικό αρχείο μέσω κοινόχρηστου συνδέσμου, οπότε εδώ δουλεύουν μόνο οι 4 ώρες. Δεν ανέβηκε τίποτα.",
@@ -575,6 +593,7 @@
     var mc = $("make-cloud");
     if (mc) { mc.hidden = !cloudApi() || !X; mc.disabled = true; }
     if ($("hold-field")) $("hold-field").hidden = !mc || mc.hidden;
+    if ($("later-field")) { $("later-field").hidden = !mc || mc.hidden || !mailApi(); laterShow(); }
     var seq = ++expandSeq;
     expanded = null;
     $("chosen-sum").textContent = chosen.length ? t("send.counting") : "";
@@ -765,7 +784,7 @@
   }
   var CLOUD_OK = "oros-transfer-cloud-ok";
   function cloudShare(on) {
-    show("share-code-lab", !on); show("share-code", !on); show("cloud-del", false);
+    show("share-code-lab", !on); show("share-code", !on); show("cloud-del", false); show("later-mail", false); show("later-out", false);
     $("share-keep").textContent = t("share.keep");
     if (on) { $("share-link").value = ""; $("share-qr").textContent = ""; $("share-code").textContent = ""; }
   }
@@ -795,10 +814,60 @@
     });
     el.onchange = function () { try { localStorage.setItem(HOLD_KEY, String(holdNow())); } catch (e) {} };
   }
+  // ---------- TR-LATER: email the link at a set day and time ----------
+  // The files go up now (hold counted from the email's time, cloud.js
+  // send({ start })); orOS Mail sends the email from its Outbox
+  // (mail/outbox.js: with Mail closed the shell's checker does, while
+  // orOS is open). Mail opens with everything filled in and the time on
+  // its Send button: nothing is sent without that press (Mail's rule for
+  // deep links). Edit or cancel in Mail's Outbox; "Delete now" here
+  // removes the files. Nothing new is stored anywhere else.
+  var LATER_MIN = 5 * 60000;
+  function mailApi() {
+    var p = shell();
+    try { return p && typeof p.__orosOpenAt === "function" ? p : null; } catch (e) { return null; }
+  }
+  function laterOn() { var f = $("later-field"), c = $("later-on"); return !!(f && !f.hidden && c && c.checked); }
+  function p2(n) { return (n < 10 ? "0" : "") + n; }
+  function localInput(ms) { var d = new Date(ms); return d.getFullYear() + "-" + p2(d.getMonth() + 1) + "-" + p2(d.getDate()) + "T" + p2(d.getHours()) + ":" + p2(d.getMinutes()); }
+  function laterShow() {
+    var on = laterOn(), at = $("later-at");
+    show("later-box", on);
+    var mc = $("make-cloud");
+    if (mc) mc.textContent = t(on ? "btn.makeLater" : "btn.makeCloud");
+    if (!on || !at) return;
+    var now = Date.now();
+    at.min = localInput(now + LATER_MIN);
+    at.max = localInput(now + (X && X.LATER_MAX || 14 * 86400000));
+    if (!at.value) { var d = new Date(now + 86400000); d.setHours(9, 0, 0, 0); at.value = localInput(d.getTime()); }
+  }
+  // → { to, at, copy } or null (the reason shown under the fields)
+  function laterVals() {
+    var e = $("later-err"), to = String($("later-to").value || "").trim(), at = new Date($("later-at").value).getTime(), now = Date.now();
+    e.textContent = "";
+    if (!C.okEmail(to)) { e.textContent = t("later.badTo"); $("later-to").focus(); return null; }
+    if (!(at >= now + LATER_MIN - 60000) || at > now + (X && X.LATER_MAX || 14 * 86400000)) { e.textContent = t("later.badAt"); $("later-at").focus(); return null; }
+    return { to: to, at: at, copy: !!$("later-copy").checked };
+  }
+  function laterCompose(lt, url, exp, meta) {
+    var p = mailApi();
+    if (!p) return;
+    var msg = meta && meta.m ? meta.m + "\n\n" : "";
+    try {
+      p.__orosOpenAt("mail", { compose: {
+        to: lt.to, subject: (meta && meta.t ? meta.t : t("later.subj")).slice(0, 300),
+        body: t("later.body", { msg: msg, link: url, until: when(exp) }).slice(0, 20000),
+        sendAt: lt.at, bccSelf: lt.copy
+      } });
+    } catch (e) {}
+  }
+
   var cloudSend = null;                   // { stop, id, drop } while one runs or waits
   function startCloud() {
     var drop = cloudApi();
     if (!drop || !X || !expanded || !expanded.length || sender || cloudSend) return;
+    var lt = null;
+    if (laterOn()) { lt = laterVals(); if (!lt) return; }
     var fs = FS(), list = expanded.slice(), manifest = C.buildManifest(list), src = [];
     list.forEach(function (f) { if (C.cleanPath(f.path)) src.push(f); });
     var code = C.newCode(), st = $("send-status"), job = { stop: false, id: "", drop: drop }, meta = metaNow();
@@ -818,7 +887,7 @@
       return p.then(function (bl) { return bl.slice(a, b).arrayBuffer(); }).then(function (buf) { return new Uint8Array(buf); });
     }
     var need = manifest.reduce(function (n, f) { return n + X.packLen(f.s); }, 0);
-    var hold = holdNow(), shared = hold > 4, okKey = shared ? SHARE_OK : CLOUD_OK;
+    var hold = holdNow(), shared = hold > 4 || !!lt, okKey = shared ? SHARE_OK : CLOUD_OK;
     show("resign", false);
     var checked = false;
     try { checked = localStorage.getItem(okKey) === "1"; } catch (e) {}
@@ -831,7 +900,7 @@
     }).then(function (sp) {
       if (sp && sp.allocated - sp.used < need) { var e = new Error("full"); e.code = "full"; throw e; }
       return X.send({
-        code: code, hold: hold, files: manifest, meta: meta, bg: bgBytes, read: read, drop: drop, temp: S.temp,
+        code: code, hold: hold, start: lt ? lt.at : 0, files: manifest, meta: meta, bg: bgBytes, read: read, drop: drop, temp: S.temp,
         cancelled: function () { return job.stop; },
         onProgress: function (pr) {
           setProg("send-prog", pr.bytes, pr.total);
@@ -851,6 +920,12 @@
       st.className = "status ok";
       $("share-keep").textContent = t("cloud.keep", { t: hhmm(r.exp) });
       show("send-cancel", false); show("cloud-del", true); show("send-again", true);
+      if (lt) {
+        st.textContent = t("later.ready", { when: when(lt.at), t: hhmm(r.exp) });
+        show("later-mail", true); show("later-out", true);
+        $("later-mail").onclick = function () { laterCompose(lt, url, r.exp, meta); };
+        laterCompose(lt, url, r.exp, meta);
+      }
       busy = false; stayAwake(false);
       record({ dir: "sent", files: manifest, dev: "", mode: "cloud", end: "done" });
       keepLink(r.id, r.exp, manifest);
@@ -863,7 +938,7 @@
           st.textContent = t("cloud.deleted"); st.className = "status";
           $("share-link").value = ""; $("share-qr").textContent = ""; $("share-keep").textContent = "";
           shareNative("", null);
-          show("cloud-del", false);
+          show("cloud-del", false); show("later-mail", false);
         }, function () { toast(t("err.dropbox")); });
       };
     }).catch(function (e) {
@@ -1248,6 +1323,11 @@
       });
       $("make-link").addEventListener("click", startSend);
       $("make-cloud").addEventListener("click", startCloud);
+      if ($("later-on")) $("later-on").addEventListener("change", laterShow);
+      if ($("later-out")) $("later-out").addEventListener("click", function () {
+        var p = mailApi();
+        try { if (p) p.__orosOpenAt("mail", { outbox: true }); } catch (e) {}
+      });
       fillHold();
       if ($("resign")) $("resign").addEventListener("click", function () {
         try { var p = shell(); if (p && p.orosSync && p.orosSync.connect) p.orosSync.connect(); } catch (e) {}
