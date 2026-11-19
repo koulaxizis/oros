@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.69.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.70.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -13819,7 +13819,12 @@
   // runs when Budget or orOS opens next). Notifications only on errors
   // (Chris), one per error a day. The schedule maths is budget/bankapi.js
   // (loaded by index.html, the same file Budget runs).
-  //   oros-budget-bank-bg  { at: the last time slot tried here } (device-local)
+  // BK-AO (Chris 2026-11-18 «ρύθμισε το orOS ώστε να κάνει αυτόματα την
+  // ενημέρωση»): the 6-hour mode runs here too (on orOS open, then every
+  // 6 hours while it is open), Automatic updates can be off (set.bao),
+  // and window.__orosBankNow() runs one update now for the Gate's
+  // budget_refresh (gate/gate.js), whatever the mode.
+  //   oros-budget-bank-bg  { at: the last slot or 6-hour run tried here } (device-local)
   var BANKBG_LIMIT = 120000;
   var bankBg = null;                 // { el, timer } while the frame runs
   var bankBgLastTick = 0;
@@ -13835,32 +13840,68 @@
   }
   function bankBgTick() {
     var K = window.OrosBudgetBankApi;
-    if (!K || typeof K.slotDue !== "function" || bankBg || SOLO || navigator.onLine === false) return;
+    if (!K || typeof K.autoDue !== "function" || bankBg || SOLO || navigator.onLine === false) return;
     if (appLive("budget")) return;
     var app = davBgApp("budget");
     if (!app) return;
     var d = bankBgJson(BUDGET_DATA_KEY);
     if (!d || !Array.isArray(d.bnk) || !d.bnk.length || !d.set) return;
-    var ts = K.times(d.set.bat);
-    if (!ts.length) return;
     // a bank connection waiting for the bank's answer: not now
     if (bankBgJson("oros-budget-bank-pend")) return;
     var now = Date.now(), dev = bankBgJson("oros-budget-bank-dev") || {}, mine = bankBgJson("oros-budget-bank-bg") || {};
-    var last = Math.max(K.lastRead(d.bnk, dev.t, d.set.bam, now), typeof mine.at === "number" ? mine.at : 0);
-    var slot = K.slotDue(ts, last, now);
+    var slot = K.autoDue(d.set, d.bnk, dev.t, mine.at, now);
     if (!slot) return;
     try { localStorage.setItem("oros-budget-bank-bg", JSON.stringify({ at: slot })); } catch (e) { return; }
+    bankBgStart(app, "bankbg=1", null);
+  }
+  function bankBgStart(app, q, cb) {
     var f = bgFrame("bankbg");
-    bankBg = { el: f };
+    bankBg = { el: f, cb: cb };
     bankBg.timer = setTimeout(function () { bankBgEnd(null); }, BANKBG_LIMIT);
     document.body.appendChild(f);
-    frameGo(f, bgUrl(app, "bankbg=1"));
+    frameGo(f, bgUrl(app, q));
   }
+  // BK-AO: one update now (Gate budget_refresh) → Promise<{ n, err,
+  // text, errs[{ c, text }], last (this device's last update, ms) } or
+  // { why }>: "nobanks", "offline", "noapp", "busy" (an update is
+  // already running), "pending" (a bank connection is being made),
+  // "slow" (still running after waitMs: it goes on and its entries come in).
+  window.__orosBankNow = function (waitMs) {
+    var wait = typeof waitMs === "number" && waitMs > 0 ? Math.min(waitMs, BANKBG_LIMIT) : 20000;
+    var app = davBgApp("budget");
+    var d = bankBgJson(BUDGET_DATA_KEY);
+    function lastT() { var v = bankBgJson("oros-budget-bank-dev"); return v && typeof v.t === "number" ? v.t : 0; }
+    if (!app) return Promise.resolve({ why: "noapp" });
+    if (!d || !Array.isArray(d.bnk) || !d.bnk.length) return Promise.resolve({ why: "nobanks" });
+    if (navigator.onLine === false) return Promise.resolve({ why: "offline", last: lastT() });
+    if (bankBgJson("oros-budget-bank-pend")) return Promise.resolve({ why: "pending", last: lastT() });
+    return new Promise(function (done) {
+      var over = false;
+      var t0 = setTimeout(function () { over = true; done({ why: "slow", last: lastT() }); }, wait);
+      function fin(r) {
+        if (over) return;
+        clearTimeout(t0);
+        if (r && r.why) { done({ why: r.why, last: lastT() }); return; }
+        done({ n: r && r.n || 0, err: r && r.err || "", text: r && r.text || "", errs: r && Array.isArray(r.errs) ? r.errs : [], last: lastT() });
+      }
+      // Budget open (in front or hidden): its own update
+      var fr = appFrameOf("budget"), L = null;
+      try { L = fr && fr.contentWindow && fr.contentWindow.OrosBudgetBankLive; } catch (e) { L = null; }
+      if (fr) {
+        if (!L || typeof L.runNow !== "function") { fin({ why: "busy" }); return; }
+        Promise.resolve(L.runNow()).then(function (r) { fin(r && r.busy ? { why: "busy" } : r && r.skip ? { why: "offline" } : r); }, function () { fin({ n: 0, err: "other", text: "", errs: [] }); });
+        return;
+      }
+      if (bankBg) { fin({ why: "busy" }); return; }
+      bankBgStart(app, "bankbg=1&bankforce=1", fin);
+    });
+  };
   function bankBgEnd(r) {
     if (!bankBg) return;
     var b = bankBg;
     bankBg = null;
     clearTimeout(b.timer);
+    if (b.cb) { try { b.cb(r || { n: 0, err: "timeout", text: "", errs: [] }); } catch (e) {} }
     if (r && r.text) {
       var N = window.orosNotifs;
       var title = window.t("app.budget");
@@ -13882,7 +13923,9 @@
     if (!bankBg || !d || d.oros !== "bank-bg-done" || ev.origin !== location.origin) return;
     if (ev.source !== bankBg.el.contentWindow || d.app !== "budget") return;
     var err = typeof d.err === "string" && /^[a-z_]{1,24}$/.test(d.err) ? d.err : "";
-    bankBgEnd({ err: err, text: err && typeof d.text === "string" ? d.text.slice(0, 300) : "" });
+    var errs = Array.isArray(d.errs) ? d.errs.slice(0, 10).filter(function (x) { return x && typeof x.c === "string" && typeof x.text === "string"; })
+      .map(function (x) { return { c: x.c.replace(/[^a-z_]/g, "").slice(0, 24), text: x.text.slice(0, 300) }; }) : [];
+    bankBgEnd({ n: typeof d.n === "number" && d.n >= 0 ? Math.floor(d.n) : 0, err: err, text: err && typeof d.text === "string" ? d.text.slice(0, 300) : "", errs: errs });
   });
   function bankBgStop(id) {
     if (id === "budget" && bankBg) bankBgEnd(null);
