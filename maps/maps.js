@@ -4135,6 +4135,13 @@
     routeOutdoor: function () { return routeLine ? lastOutdoor : null; },
     reroute: function () { if (routeFrom && routeTo && !navActive) calcRoute(); },
     navActive: function () { return navActive; },
+    // Wave H4 (tracks.js follow alerts): say a sentence with the
+    // device's own voice only (never a network voice), cutting in.
+    speak: function (text) {
+      var m = navMuted;   // follow alerts have their own switch, not the navigation mute
+      navMuted = false;
+      try { return speak(String(text || "").slice(0, 200), true); } finally { navMuted = m; }
+    },
     // Wave H1 (trails.js): an overlay of its own (trail and cycling
     // routes) in the layer switcher.
     addOverlay: function (id, layer, label) {
