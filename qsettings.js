@@ -79,7 +79,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.4.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -259,6 +259,8 @@
     "  border: none; border-radius: 10px; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }",
     ".qs-menu-item:hover, .qs-menu-item:focus-visible { background: rgba(127,127,127,.18); outline: none; }",
     ".qs-menu-item svg { width: 18px; height: 18px; flex: none; }",
+    ".qs-menu-item.on { background: var(--accent); color: var(--qs-on, #fff); font-weight: 700; }",
+    ".qs-focus-modes { display: flex; flex-direction: column; }",
     "#qs-sys-pills { display: contents; }",
     ".qs-media { display: flex; flex-direction: column; gap: 8px; }",
     ".qs-media-row { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; border-radius: 16px; background: var(--accent-soft); }",
@@ -340,9 +342,17 @@
     }) || null;
   }
   function dnd() { return call(function () { return root.orosNotifs && root.orosNotifs.dnd ? root.orosNotifs.dnd() : null; }); }
+  function focus() { var F = root.orosFocus; return (F && typeof F.active === "function" && root.orosNotifs && root.orosNotifs.silent) ? F : null; }
 
+  var focusHooked = false;
   function paintBtn() {
     if (!btn) return;
+    // A focus mode started or stopped (here or on another device);
+    // focus.js loads after this file, so hook it on the first paint.
+    if (!focusHooked && focus()) {
+      focusHooked = true;
+      call(function () { root.orosFocus.onChange(function () { paintBtn(); if (panel) paint(); }); });
+    }
     var online = navigator.onLine !== false;
     var d = dnd();
     var html = (online ? IC.net : IC.netOff);
@@ -355,7 +365,7 @@
     html += IC.power;
     if (btn.__qsHtml !== html) { btn.innerHTML = html; btn.__qsHtml = html; }
     var label = t("qs.title") + " · " + t(online ? "qs.net.on" : "qs.net.off") +
-      (d && d.on ? " · " + t("qs.dnd") : "") +
+      (d && d.on ? " · " + ((focus() && call(function () { var a = focus().active(); return a && a.name; })) || t("qs.dnd")) : "") +
       (aw.on ? " · " + t("qs.awake") : "") + (sv.on ? " · " + t("qs.saver") : "") +
       (batteryShown(b) ? " · " + t("qs.battery").replace("{p}", batteryPct(b)) : "");
     btn.setAttribute("aria-label", label);
@@ -556,10 +566,16 @@
     }, then(function () {
       call(function () { root.__orosOpenAt("settings", { section: "appearance", item: "night" }); });
     }), t("qs.night.more"));
+    // Focus (focus.js, FOCUS-1; Do Not Disturb is one of its modes):
+    // tap = stop the running mode, or start the last one until turned
+    // off; the arrow = the modes, how long, Settings.
     parts.dnd = pill(IC.bellOff, function () {
-      var d = dnd();
-      setDnd(d && d.on ? false : "on");
-    }, function () { setSub(sub === "dnd" ? "" : "dnd"); }, t("qs.dnd.more"));
+      var F = focus();
+      if (!F) { var d = dnd(); setDnd(d && d.on ? false : "on"); return; }
+      if (F.active()) F.stop(); else F.start(F.last(), { until: 0 });
+      paintBtn();
+      paint();
+    }, function () { setSub(sub === "dnd" ? "" : "dnd"); }, t("qs.focus.more"));
     parts.big = pill(IC.text, function () {
       host.a11y.set("textSize", bigOn(host.a11y.get().size) ? 100 : 130); paint();
     });
@@ -605,14 +621,33 @@
 
     parts.dndMenu = el("div", "qs-menu");
     parts.dndMenu.setAttribute("role", "group");
-    parts.dndMenu.appendChild(el("h3")).textContent = t("qs.dnd");
+    parts.dndMenu.appendChild(el("h3")).textContent = focus() ? t("qs.focus") : t("qs.dnd");
+    parts.focusModes = el("div", "qs-focus-modes");
+    parts.focusModes.setAttribute("role", "group");
+    parts.focusModes.setAttribute("aria-label", t("qs.focus.modes"));
+    parts.dndMenu.appendChild(parts.focusModes);
+    parts.focusHow = el("h3");
+    parts.focusHow.textContent = t("qs.focus.how");
+    parts.focusHow.hidden = !focus();
+    parts.dndMenu.appendChild(parts.focusHow);
+    // How long: the running mode, else the last one used.
     parts.dndItems = [["hour", "qs.dnd.hour"], ["morning", "qs.dnd.morning"], ["on", "qs.dnd.untiloff"]].map(function (c) {
-      var it = menuItem("", t(c[1]), function () { setDnd(dndUntil(c[0], Date.now())); setSub(""); });
+      var it = menuItem("", t(c[1]), function () {
+        var F = focus(), u = dndUntil(c[0], Date.now());
+        if (F) { var a = F.active(); F.start(a ? a.id : F.last(), { until: u === "on" ? 0 : u }); paintBtn(); }
+        else setDnd(u);
+        setSub("");
+      });
       parts.dndMenu.appendChild(it);
       return it;
     });
     parts.dndOff = menuItem("", t("qs.dnd.turnoff"), function () { setDnd(false); setSub(""); });
     parts.dndMenu.appendChild(parts.dndOff);
+    parts.focusSet = menuItem("", t("qs.focus.settings"), then(function () {
+      call(function () { root.__orosOpenAt("settings", { section: "notifications", item: "focusmodes" }); });
+    }));
+    parts.focusSet.hidden = !focus();
+    parts.dndMenu.appendChild(parts.focusSet);
     panel.appendChild(parts.dndMenu);
 
     parts.awakeMenu = el("div", "qs-menu");
@@ -720,7 +755,9 @@
 
     var d = dnd();
     parts.dnd.box.hidden = !d;
-    if (d) setPill(parts.dnd, t("qs.dnd"), dndSub(d, now, fmtTime, t), d.on, true);
+    var F = focus(), fa = F ? call(function () { return F.active(now); }) : null;
+    if (d) setPill(parts.dnd, fa ? fa.name : (F ? t("qs.focus") : t("qs.dnd")), dndSub(d, now, fmtTime, t), d.on, true);
+    if (F) paintFocus(F, fa);
     parts.dndMenu.hidden = sub !== "dnd" || !d;
     if (parts.dnd.more) parts.dnd.more.setAttribute("aria-expanded", sub === "dnd" ? "true" : "false");
     parts.dndOff.hidden = !(d && d.on);
@@ -771,6 +808,33 @@
     if (root.orosEmoji) setPill(parts.emoji, t("qs.emoji"), "", false, false);
 
     paintMedia();
+  }
+
+  // The mode rows of the focus menu (rebuilt only when they change).
+  function paintFocus(F, fa) {
+    var list = call(function () { return F.list(); }) || [];
+    var icon = fa ? (list.filter(function (m) { return m.id === fa.id; })[0] || {}).icon : "bell";
+    var svg = F.model.svg(icon || "bell");
+    if (parts.dnd.__icon !== svg) {
+      parts.dnd.__icon = svg;
+      var txt = parts.dnd.title.parentNode;
+      parts.dnd.main.innerHTML = svg;
+      parts.dnd.main.appendChild(txt);
+    }
+    var key = JSON.stringify([list.map(function (m) { return [m.id, m.name, m.icon]; }), fa && fa.id]);
+    if (parts.focusModes.__key === key) return;
+    parts.focusModes.__key = key;
+    parts.focusModes.textContent = "";
+    list.forEach(function (m) {
+      var it = menuItem(F.model.svg(m.icon), m.name, function () {
+        F.start(m.id, { until: 0 });
+        paintBtn();
+        setSub("");
+      });
+      it.setAttribute("aria-pressed", fa && fa.id === m.id ? "true" : "false");
+      if (fa && fa.id === m.id) it.classList.add("on");
+      parts.focusModes.appendChild(it);
+    });
   }
 
   function paintMedia() {

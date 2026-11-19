@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.73.00
+- **Focus modes.** Do Not Disturb, Sleep, Work, Personal and up to 10 of your own. While one is on, only the apps it lets through pop up and sound; the rest still wait in the bell. Turn one on from Quick settings (`Focus`) and it holds on all your devices. Quiet hours are now the Sleep mode's hours. Settings › Notifications › `Focus modes`. See [Focus modes](help:t/notifications).
+
 ## Version 7.72.00
 - **The Pocket.** Keep a text, a link, a list, a table or files with `Keep in pocket` in Send to an app (or in the menu of selected text), then send it into another app later. Its button shows at the end of the Dock, or in the top bar, only while it holds something; Ctrl+Alt+Shift+, opens it. Up to 20 items, kept on this device until you take them out; never Passwords or Settings. See [Send to someone](help:t/share).
 
