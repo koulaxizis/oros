@@ -50,7 +50,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     /** The manager as the repositories offer it, and that offer when it is newer than this copy. */
     private AppInfo self, mine;
     private Button updateAll;
-    private View selfBar;
+    private View selfBar, notesBar;
     private Catalog catalog;
     private Icons icons;
     private TextView status;
@@ -65,6 +65,8 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         updateAll = findViewById(R.id.update_all);
         updateAll.setOnClickListener(v -> updateAll());
         selfBar = findViewById(R.id.self_bar);
+        notesBar = findViewById(R.id.notes_bar);
+        findViewById(R.id.notes_on).setOnClickListener(v -> openNoticeSettings());
         findViewById(R.id.self_update).setOnClickListener(v -> {
             if (mine != null) act(mine, Installed.UPDATE);
         });
@@ -85,6 +87,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     protected void onResume() {
         super.onResume();
         updateBars(); // installed versions may have changed
+        updateNotesBar(); // notices may have been turned on in Android's settings
         adapter.notifyDataSetChanged();
     }
 
@@ -93,6 +96,28 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         if (InstallReceiver.listener == this) InstallReceiver.listener = null;
         work.shutdown();
         super.onDestroy();
+    }
+
+    /** Shown while the daily check is on but its notices cannot appear. */
+    private void updateNotesBar() {
+        notesBar.setVisibility(UpdateJob.enabled(this) && !UpdateJob.canNotify(this) ? View.VISIBLE : View.GONE);
+    }
+
+    /** Android's notification page of this app (its own switch and the updates channel). */
+    private void openNoticeSettings() {
+        Intent i = new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS)
+            .putExtra(Settings.EXTRA_APP_PACKAGE, getPackageName());
+        try {
+            startActivity(i);
+        } catch (android.content.ActivityNotFoundException e) {
+            startActivity(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + getPackageName())));
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int code, String[] perms, int[] results) {
+        super.onRequestPermissionsResult(code, perms, results);
+        updateNotesBar();
     }
 
     /** Android 13+: asked once, for the daily check's notice; a no is kept. */
@@ -123,6 +148,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             UpdateJob.prefs(this).edit().putBoolean("daily", on).apply();
             UpdateJob.schedule(this);
             if (on) askNotificationsOnce();
+            updateNotesBar();
             return true;
         }
         if (item.getItemId() == R.id.support) {
