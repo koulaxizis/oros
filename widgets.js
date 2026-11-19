@@ -808,7 +808,14 @@
       clearTimeout(rz);
       rz = setTimeout(function () { var was = strip(); if (box && was === wide()) render(); else if (!box && list().length) render(); }, 150);
     });
-    timer = setInterval(function () { paintAll(false); }, 1000);
+    // Energy saver (qsettings.js 1.3.0): once a minute instead.
+    var lastMin = -1;
+    timer = setInterval(function () {
+      var m = Math.floor(Date.now() / 60000);
+      if (doc.documentElement.getAttribute("data-oros-saver") === "1" && m === lastMin) return;
+      lastMin = m;
+      paintAll(false);
+    }, 1000);
     if (root.orosToday && root.orosToday.onChange) root.orosToday.onChange(function () { todayAt = 0; });
     // The desktop menu (quickmenu.js) lists "Widgets…".
     (root.__orosDeskItems = root.__orosDeskItems || []).push(function () {

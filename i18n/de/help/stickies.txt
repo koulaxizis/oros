@@ -18,7 +18,7 @@ Kleine farbige Notizen, die auf dem orOS-Desktop sitzen. Eine Notiz kann zu eine
 - Zu dieser Zeit wackelt die Notiz, ein Ton erklingt und eine Meldung landet in der Glocke.
 - `Fertig` beendet das Klingeln. `10 Min. schlummern` klingelt in zehn Minuten noch einmal.
 - `Wiederholen` (sobald ein Klingeln eingestellt ist): `Jeden Tag`, `Jeden Werktag (Mo–Fr)` oder `Jede Woche`. `Fertig` schiebt das Klingeln dann auf seine nächste Zeit, und Schlummern ändert den Plan nicht. Eine wiederholte Notiz verschwindet nie bei `Fertig`.
-- Der Ton folgt der Benachrichtigungslautstärke und den Ruhezeiten, und du kannst Haftnotizen in den [Einstellungen](app:settings) › `Benachrichtigungen` ausschalten.
+- Der Ton folgt der Benachrichtigungslautstärke und den Fokus-Modi, und du kannst Haftnotizen in den [Einstellungen](app:settings) › `Benachrichtigungen` ausschalten.
 
 ## Verschwinden
 Im selben Fenster lässt `Verschwinden` eine Notiz von selbst verblassen: `In 1 Stunde`, `Am Ende des Tages`, `Morgen am Ende des Tages`, `In einer Woche` oder `Zu einer Zeit meiner Wahl…`.

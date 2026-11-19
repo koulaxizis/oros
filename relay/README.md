@@ -448,7 +448,7 @@ App operation `POST /v1 { op: "nl", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
 
 | act | Extra fields | Returns |
 |---|---|---|
-| `reg` | `pub` (RSA-OAEP-256 JWK, 2048-bit), `back` ("" or https ≤300) | `{ ok }`. A new `k` takes this `sec` (only its SHA-256 is kept; at most 5,000 lists); an existing one needs the same `sec` |
+| `reg` | `pub` (RSA-OAEP-256 JWK, 2048-bit), `back` ("" or https ≤300), `oc?` (0 or 1, anything else 400) | `{ ok }`. A new `k` takes this `sec` (only its SHA-256 is kept; at most 5,000 lists); an existing one needs the same `sec`. `oc: 1` = one-click unsubscribe only: `POST /nl/s/<k>` then gets exactly the unknown-list answer and nothing is stored; `oc: 0` opens the form; left out keeps it (a new list 0). Column `nl_list.oc` is added lazily on a table from before (MV-1 W3) |
 | `pull` | `after` (row id) | `{ rows[{ id, kind: "s"\|"u", v, at }], more }` (≤200) |
 | `ack` | `upto` (row id) | `{ n }`: deletes the list's rows up to that id |
 | `drop` | | `{ ok }`: deletes the list and its rows |

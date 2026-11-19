@@ -1,0 +1,70 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Release signing comes from the environment (GitHub secrets in CI): the
+// orOS key, the same one as the orOS apps and the NULL JSFX remotes.
+def ks = System.getenv('OROS_KEYSTORE_FILE')
+
+android {
+    namespace 'gr.koulaxizis.apps'
+    compileSdk 36
+
+    defaultConfig {
+        // Permanent (Chris 2026-11-17): never changes after the first release.
+        applicationId 'gr.koulaxizis.apps'
+        minSdk 26
+        targetSdk 36
+        // Own version, not the web app's: versionCode = major*10000 + minor*100 + patch.
+        versionCode 10001
+        versionName '1.0.1'
+    }
+
+    signingConfigs {
+        if (ks) {
+            release {
+                storeFile file(ks)
+                storePassword System.getenv('OROS_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('OROS_KEY_ALIAS')
+                keyPassword System.getenv('OROS_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Installs next to the signed app and never updates it.
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (ks) signingConfig signingConfigs.release
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    // F-Droid and reproducible builds: no dependency metadata blob.
+    dependenciesInfo {
+        includeInApk false
+        includeInBundle false
+    }
+
+    testOptions {
+        unitTests.all {
+            useJUnit()
+        }
+    }
+}
+
+dependencies {
+    // Unit tests only: the real org.json (android.jar has stubs).
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
+}

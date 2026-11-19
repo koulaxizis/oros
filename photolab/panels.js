@@ -588,6 +588,37 @@
 
   // ---------- Menus ----------
   function has() { return !!st.doc; }
+  // ---------- LIVE-TEXT: Image › Copy text from picture ----------
+  // The picture as it looks (all visible layers) or the selection's
+  // box of it, read on this device by ../ocrkit.js (loaded on first use)
+  // and shown in the kit's own stage over the editor.
+  var OCR_V = (function () {
+    var m = ((document.currentScript && document.currentScript.src) || "").match(/[?&]v=([^&#]+)/);
+    return m ? "?v=" + m[1] : "";
+  })();
+  var ocrP = null;
+  function ocrKit() {
+    if (window.OrosOcr) return Promise.resolve(window.OrosOcr);
+    if (ocrP) return ocrP;
+    ocrP = new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = "../ocrkit.js" + OCR_V;
+      s.onload = function () { window.OrosOcr ? res(window.OrosOcr) : rej(new Error("ocr")); };
+      s.onerror = function () { ocrP = null; s.remove(); rej(new Error("ocr")); };
+      document.head.appendChild(s);
+    });
+    return ocrP;
+  }
+  function copyTextOfPicture() {
+    var d = st.doc;
+    if (!d) return;
+    var r = st.sel && PL.S ? PL.S.bounds(st.sel) : null;      // an empty selection reads the whole picture
+    var bw = r ? r.w : d.w, bh = r ? r.h : d.h;
+    var c = PL.view.flatten(r, Math.min(1, 2400 / Math.max(1, bw, bh)));
+    ocrKit().then(function (K) {
+      return K.open({ canvas: c, title: C.cleanName(d.name) || "" });
+    }).then(null, function () { PL.toast(t("msg.ocrFail")); });
+  }
   function hasSel() { return !!st.sel; }
   function hasMask() { var L = st.doc && PL.layer(); return !!(L && L.mk); }
   // Browsers keep Ctrl+N, Ctrl+T and Ctrl+Shift+N, so New, Free
@@ -634,7 +665,9 @@
       { id: "flipV", run: function () { ops().flipImage(false); }, on: has },
       "-",
       { id: "cropSel", run: function () { ops().cropToSel(); }, on: hasSel },
-      { id: "trim", run: function () { ops().trim(); }, on: has }
+      { id: "trim", run: function () { ops().trim(); }, on: has },
+      "-",
+      { id: "ocrText", run: copyTextOfPicture, on: has }
     ] },
     { id: "layer", items: [
       { id: "newLayer", k: "Alt+Shift+N", run: function () { ops().newLayer(); }, on: has },
