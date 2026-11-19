@@ -72,6 +72,13 @@ Inside a single app, the button at the top left carries the app's name. It opens
 
 > A single app updates by itself, like orOS, while its window is in the background.
 
+## Koulaxizis Apps (Android)
+**Koulaxizis Apps** is a small Android app that installs and updates the orOS Android apps (orOS, the single apps, orOS Drive) and those of NULL JSFX and Noxpress, one section per project. Get it from [useoros.online/download](https://useoros.online/download/#koulaxizis-apps) or the orOS F-Droid repository.
+- **Install and update:** press `Install` or `Update` next to an app, or `Update all` to update every app one after the other. Android asks you to confirm each one.
+- **Daily check:** once a day, with a network and enough battery, it looks for updates and shows one quiet notification. It never installs anything by itself. Turn it off with `Check daily` in its menu.
+- **Checked:** each list comes from the project's own signed F-Droid repository, and each APK is checked for its size, checksum and signer before Android installs it.
+- **Quiet orOS:** while Koulaxizis Apps is installed, the orOS APKs no longer show their own `A new version of the … app is out` bar; Koulaxizis Apps tells you instead.
+
 ## How updates arrive
 You never need to download updates yourself. orOS checks for a new version every time it starts, every hour while it stays open, and when you come back to it or get your connection back.
 

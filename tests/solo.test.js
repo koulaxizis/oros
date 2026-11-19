@@ -432,13 +432,17 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   assert.equal(S.apkCode("?source=pwa&apk=2025007"), 2025007);
   assert.equal(S.apkCode("?apk=x1"), 0);
   assert.equal(S.apkCode(""), 0);
+  assert.equal(S.apkManaged("?apk=2025007&mgr=1"), true);
+  assert.equal(S.apkManaged("?apk=2025007"), false);
+  assert.equal(S.apkManaged("?mgr=yes"), false);
   // The metadata tool covers exactly the APKs the android workflow publishes
   const M = require(path.join(ROOT, "tools", "fdroid-metadata.js"));
   const l = M.list();
   // orOS Drive (DRIVE-APP) is built from koulaxizis/oros-drive by the same workflow
   // page apps (STUDIO-RA, android/page-apps.json) are built as flavours too
   const pg = JSON.parse(read("android/page-apps.json")).apps;
-  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
+  // Koulaxizis Apps (APPS-M3) comes from its own workflow and release
+  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk", "koulaxizis-apps.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
   Object.keys(pg).forEach((id) => {
     const a = l.find((x) => x.id === id);
     assert.equal(a.pkg, pg[id].package);
@@ -551,4 +555,45 @@ test("APK links leave the Android app through BrowserActivity (default browser, 
   assert.ok(!/\["activity", "\.BrowserActivity"\]/.test(gen), "single apps keep BrowserActivity");
   // The menu's Get orOS row uses it in the orOS app
   assert.match(read("shell.js"), /S\.browserHref\("https:\/\/useoros\.online\/" \+ page, pkg\)/);
+});
+
+test("Koulaxizis Apps in the orOS repository (APPS-M3): metadata, release APK, quiet APK notice", () => {
+  const M = require(path.join(ROOT, "tools", "fdroid-metadata.js"));
+  const a = M.list().find((x) => x.id === "koulaxizis-apps");
+  assert.equal(a.pkg, "gr.koulaxizis.apps");
+  assert.equal(a.apk, "koulaxizis-apps.apk");
+  assert.equal(M.texts(a, "en").name, "Koulaxizis Apps");
+  assert.equal(M.texts(a, "el").name, "Εφαρμογές Koulaxizis");
+  assert.deepEqual(M.langs(JSON.parse(read("tools/fdroid/koulaxizis-apps/texts.json"))), ["en", "el", "de"]);
+  assert.ok(fs.existsSync(a.icon.replace(/-512\.png$/, "-192.png")));
+  // The repository takes the APK from the manager's own release and
+  // republishes when its bytes change; its build triggers a publish
+  const wf = read(".github/workflows/fdroid.yml");
+  assert.match(wf, /workflows: \['Android app', 'Koulaxizis Apps'\]/);
+  assert.match(wf, /gh release download koulaxizis-apps --pattern koulaxizis-apps\.apk --dir "\$mgr"/);
+  assert.match(wf, /echo "koulaxizis-apps\.apk \$\(sha256sum "\$mgr\/koulaxizis-apps\.apk"/);
+  assert.match(wf, /cp "\$RUNNER_TEMP\/mgr\/koulaxizis-apps\.apk" "\$fd\/repo\/"/);
+  assert.match(read(".github/workflows/koulaxizis-apps.yml"), /gh release upload koulaxizis-apps "\$f"/);
+  assert.match(read("koulaxizis-apps/app/build.gradle"), /applicationId 'gr\.koulaxizis\.apps'/);
+  // The APKs say on their start address that the manager is installed,
+  // and then orOS tells nothing about new APKs itself
+  const la = read("android/app/src/main/java/online/useoros/twa/LauncherActivity.java");
+  assert.match(la, /MANAGER = "gr\.koulaxizis\.apps"/);
+  assert.match(la, /u\.getQueryParameter\("apk"\) == null \|\| !hasManager\(\)/);
+  assert.match(la, /appendQueryParameter\("mgr", "1"\)/);
+  assert.match(read("android/tools/gen.js"), /<package android:name="gr\.koulaxizis\.apps" \/>/);
+  const win = () => {
+    const m = {};
+    return { m, calls: 0, localStorage: { getItem: (k) => m[k] || null, setItem: (k, v) => { m[k] = v; } },
+      fetch() { this.calls++; return new Promise(() => {}); } };
+  };
+  const w = win();
+  S.apkNotice(w, "notes", 7071000, true);
+  S.apkNotice(w, "notes", 0, false);
+  assert.equal(w.calls, 0, "managed: no versions.json, no bar");
+  S.apkNotice(w, "notes", 7071000, false);
+  assert.equal(w.calls, 1, "the manager is gone: the APK tells again");
+  assert.deepEqual(JSON.parse(w.m["oros-apk"]).mgr, {});
+  // The single app window does not hand mgr to the app inside
+  assert.ok(!/mgr/.test(S.frameSrc("notes", "?apk=7071000&mgr=1")));
 });

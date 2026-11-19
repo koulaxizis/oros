@@ -53,6 +53,14 @@ builds, the emulator test against the live repositories; on main the signed
 APK as `koulaxizis-apps.apk` on the release `koulaxizis-apps`). The debug
 build is `gr.koulaxizis.apps.debug` and never replaces the signed app.
 
+## Where phones get it
+
+The signed APK from the `koulaxizis-apps` release is also in the orOS F-Droid
+repository (`.github/workflows/fdroid.yml`, store texts and pictures in
+`tools/fdroid/koulaxizis-apps/`), so the manager updates itself from there.
+Raise `versionCode` with every change, or phones keep the old one. The
+download page links it under "Koulaxizis Apps".
+
 ## Signing
 
 Release APKs are signed with the orOS key from the environment

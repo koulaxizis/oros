@@ -863,24 +863,37 @@
     try { v = new URLSearchParams(String(search || "")).get("apk") || ""; } catch (e) { v = ""; }
     return /^\d{1,10}$/.test(v) ? Number(v) : 0;
   }
+  // The APK's start address carries mgr=1 while Koulaxizis Apps (the
+  // app manager, APPS-M3, gr.koulaxizis.apps) is installed: the manager
+  // then tells about new APKs, so this app stays quiet.
+  function apkManaged(search) {
+    try { return new URLSearchParams(String(search || "")).get("mgr") === "1"; } catch (e) { return false; }
+  }
 
 
-  var APK_KEY = "oros-apk";           // { installed: {pkg: code}, seen: {pkg: code}, repo: {at, v} }
+  var APK_KEY = "oros-apk";           // { installed: {pkg: code}, seen: {pkg: code}, mgr: {pkg: 1}, repo: {at, v} }
   var DAY = 864e5;
   // Remembers the installed versionCode (when the launch carried it) and,
   // at most once a day, asks the repo for the published one. A newer one
-  // is told once per version, in a bar that closes for good.
-  function apkNotice(win, id, code) {
+  // is told once per version, in a bar that closes for good. Never
+  // while the app manager is installed (each APK launch says so: mgr).
+  function apkNotice(win, id, code, mgr) {
     var pkg = pkgOf(id), st = {}, ls = null;
     if (!pkg) return;
     try { ls = win.localStorage; st = JSON.parse(ls.getItem(APK_KEY) || "{}") || {}; } catch (e) { return; }
     st.installed = st.installed || {};
     st.seen = st.seen || {};
-    if (code) st.installed[pkg] = code;
+    st.mgr = st.mgr || {};
+    if (code) {
+      st.installed[pkg] = code;
+      if (mgr) st.mgr[pkg] = 1;
+      else delete st.mgr[pkg];
+    }
     function save() { try { ls.setItem(APK_KEY, JSON.stringify(st)); } catch (e) {} }
     save();
     var have = st.installed[pkg];
     if (!have) return;              // not the APK (a browser-installed app)
+    if (st.mgr[pkg]) return;        // Koulaxizis Apps tells about updates
     function check(v) {
       var pub = v && Number(v[pkg]);
       if (!pub || pub <= have || st.seen[pkg] === pub) return;
@@ -1034,6 +1047,7 @@
     if (!id) { win.location.replace("/"); return; }
     var asked = /(^|[?&])install(=|&|$)/.test(win.location.search);
     var code = apkCode(win.location.search);
+    var mgr = apkManaged(win.location.search);
     var src = frameSrc(id, win.location.search);
     // The launch parameters are one-shots: out of the address bar, so
     // a reload of this window is a plain start.
@@ -1046,7 +1060,7 @@
     frame.src = src;
     doc.body.appendChild(frame);
     installBar(win, id, asked);
-    setTimeout(function () { apkNotice(win, id, code); }, 3000);
+    setTimeout(function () { apkNotice(win, id, code, mgr); }, 3000);
     // Keyboard focus into the app, unless the app already took it
     // (a shortcut that focuses an input): focusing the frame again
     // would blur that input.
@@ -1188,6 +1202,8 @@
     repoPage: REPO,
     obtainiumLink: obtainiumLink,
     apkCode: apkCode,
+    apkManaged: apkManaged,
+    apkNotice: apkNotice,
     id: "",
     share: null,
     word: ""
@@ -1210,14 +1226,16 @@
     // address carries ?apk=<versionCode> too.
     else if (root.top === root && root.location.pathname === "/") {
       var mainCode = apkCode(root.location.search);
+      var mainMgr = apkManaged(root.location.search);
       if (mainCode) {
         try {
           var mu = new URL(root.location.href);
           mu.searchParams.delete("apk");
+          mu.searchParams.delete("mgr");
           root.history.replaceState(root.history.state, "", mu.pathname + mu.search + mu.hash);
         } catch (e) {}
       }
-      var later = function () { setTimeout(function () { apkNotice(root, "oros", mainCode); }, 5000); };
+      var later = function () { setTimeout(function () { apkNotice(root, "oros", mainCode, mainMgr); }, 5000); };
       if (root.document.readyState === "complete") later();
       else root.addEventListener("load", later);
     }

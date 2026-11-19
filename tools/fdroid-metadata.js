@@ -55,8 +55,11 @@ const TEXT = {
 // shows English to German phones for the others.
 const LOCALE = { en: "en-US", el: "el", de: "de-DE" };
 
-// Every APK the android workflow publishes: oros.apk, oros-<id>.apk and
+// Every APK the repository publishes: oros.apk, oros-<id>.apk and
 // oros-drive.apk (orOS Drive, DRIVE-APP: its own source repository)
+// from the android workflow, and koulaxizis-apps.apk (Koulaxizis Apps,
+// APPS-M3: the app manager in koulaxizis-apps/, its own workflow and
+// release "koulaxizis-apps")
 function list() {
   const out = [{ id: "oros", pkg: "online.useoros.twa", apk: "oros.apk", icon: path.join(ROOT, "icons", "icon-512.png") }];
   for (const [id, pkg] of Object.entries(APPS)) {
@@ -68,6 +71,8 @@ function list() {
   }
   out.push({ id: "drive", pkg: "online.useoros.drive", apk: "oros-drive.apk", icon: path.join(ROOT, "icons", "icon-512.png"),
     name: "orOS Drive", source: "https://github.com/koulaxizis/oros-drive", web: WEB + "download/" });
+  out.push({ id: "koulaxizis-apps", pkg: "gr.koulaxizis.apps", apk: "koulaxizis-apps.apk", icon: path.join(STORE, "koulaxizis-apps", "icon-512.png"),
+    name: "Koulaxizis Apps", web: WEB + "download/#koulaxizis-apps" });
   return out;
 }
 
