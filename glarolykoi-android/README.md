@@ -64,7 +64,11 @@ Free, MIT, no ads, no account with anyone, no tracking.
   the app apart (for the notice in the old app, wave G3).
 - Signing only from the environment (GitHub secrets
   `GLAROLYKOI_KEYSTORE_*`); a keystore is never committed.
-- EN and EL for every string (`values`, `values-el`).
+- **GL-LANG** the app is Greek only: its strings live in `values/strings.xml`
+  in Greek, with no other language folders, so a phone set to English or
+  any other language still shows the app in Greek (Chris 2026-11-19; 1.0.0
+  had English as the default and showed it on his English phone). Android's
+  own dialogs (the notification permission) follow the phone's language.
 
 ## Build
 
