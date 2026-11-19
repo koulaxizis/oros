@@ -194,8 +194,10 @@
   // invoice_list: C = OrosInvoicesCore, raw = oros-invoices-data.
   // Issued documents (drafts left out) between two days, or with
   // received: true the invoices received from suppliers.
-  function invoiceList(C, raw, args, today) {
+  function invoiceList(C, raw, args, today, budgetRaw) {
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
+    var areaNames = null;
+    if (isObj(budgetRaw)) { areaNames = {}; liveAreas(budgetRaw).forEach(function (a) { areaNames[a.id] = a.n; }); }
     var sp = span(args);
     if (sp.err) return { ok: false, err: sp.err };
     var d = C.normalize(isObj(raw) ? raw : null), rows;
@@ -225,8 +227,17 @@
           if (tt.wht) o.withheld = cents(sg * tt.wht);
           o.to_pay = cents(sg * tt.pay); o.paid = cents(C.paidOf(d, x.id)); o.balance = cents(C.balance(d, x));
           put(o, "mark", x.mark);
-          if (Array.isArray(x.lines) && x.lines.length) {
-            o.lines = x.lines.slice(0, 50).map(function (l) {
+          // INV-EXT: what invoices_record kept with a document issued elsewhere
+          if (x.kind === "ext") {
+            if (typeof x.dm === "string" && areaNames && areaNames[x.dm]) o.area = areaNames[x.dm];
+            put(o, "source", typeof x.xs === "string" ? x.xs : "");
+            put(o, "provider_uid", typeof x.xu === "string" ? x.xu : "");
+            put(o, "auth_code", typeof x.xa === "string" ? x.xa : "");
+            put(o, "mydata_type", typeof x.xt === "string" ? x.xt : "");
+          }
+          var shown = x.kind === "ext" ? x.xl : x.lines;
+          if (Array.isArray(shown) && shown.length) {
+            o.lines = shown.slice(0, 50).map(function (l) {
               var r = { text: String(l.d || ""), qty: (Number(l.q) || 0), price: cents(l.p || 0), vat_rate: Number(l.vat) || 0 };
               put(r, "code", l.code);
               if (l.disc) r.discount = Number(l.disc);
@@ -241,6 +252,182 @@
     var data = { kind: args.received === true ? "received" : "issued", from: sp.from, to: sp.to, total: pg.total, documents: pg.rows };
     if (pg.next_offset) data.next_offset = pg.next_offset;
     return { ok: true, data: data };
+  }
+
+  // INV-EXT (7.52.00, thread «Καταγραφή εξωτερικών τιμολογίων στο orOS»,
+  // Chris 2026-11-18 card «Νέο εργαλείο στο Gate»): invoices_record —
+  // documents ISSUED ELSEWHERE (another invoicing provider, myDATA)
+  // recorded in Invoices as kind "ext": issued at once, never a draft,
+  // no orOS series or number, nothing sent anywhere. C =
+  // OrosInvoicesCore, raw = oros-invoices-data, budgetRaw =
+  // oros-budget-data (its areas), now = the stamp, at most XR.docs per
+  // call, checked all or none; a document whose number (or provider
+  // uid) Invoices already has is skipped, not refused. A client is
+  // matched as Invoices does (tax id, then name) or made. paid adds one
+  // payment of the whole amount, never one that goes to Budget by
+  // itself (no ab: Budget gets the money from the bank lines).
+  // → { ok, data, ids, skipped, undo } | { ok: false, err }
+  var XR = { docs: 100, lines: 50, text: 500, num: 40, name: 120, afm: 60, mark: 60, src: 60, uid: 80, note: 2000, all: 20000 };
+  var XT_RE = /^\d{1,2}\.\d{1,2}$/, XR_HOWS = ["bank", "cash", "card", "iris", "paypal", "other"];
+  function zCents(v) {                           // a decimal ≥ 0 → cents, else null
+    var s = typeof v === "number" ? String(v) : String(v == null ? "" : v).trim();
+    if (!/^\d{1,10}(\.\d{1,2})?$/.test(s)) return null;
+    return Math.round(parseFloat(s) * 100);
+  }
+  function xText(v, max) { return typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim().slice(0, max) : ""; }
+  function numKey(s) { return fold(s).replace(/[\s.\-_\/]+/g, ""); }
+  function whtRate(net, w) {                     // the % (2 decimals) that gives w on net, or null
+    if (!w) return 0;
+    if (!net) return null;
+    var r0 = Math.round(w / net * 10000);
+    for (var k = 0; k <= 2; k++) {
+      var c = [r0 - k, r0 + k];
+      for (var j = 0; j < 2; j++) { var r = c[j] / 100; if (r > 0 && r <= 100 && Math.round(net * r / 100) === w) return r; }
+    }
+    return null;
+  }
+  function invoicesRecord(C, raw, budgetRaw, args, now) {
+    if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
+    var list = args.documents;
+    if (!Array.isArray(list) || !list.length || list.length > XR.docs) return { ok: false, err: "documents must be a list of 1 to " + XR.docs + " documents." };
+    if (raw != null && !(isObj(raw) && Array.isArray(raw.docs))) return { ok: false, err: "Invoices' data on this device could not be read; nothing was recorded." };
+    var d = C.normalize(isObj(raw) ? raw : C.empty());
+    var areas = isObj(budgetRaw) ? liveAreas(budgetRaw).map(function (a) { return { id: a.id, n: a.n }; }) : [];
+    var have = {}, uids = {};
+    C.live(d.docs).forEach(function (x) {
+      if (x.st === "draft") return;
+      if (x.num) have[numKey(x.num)] = x.id;
+      if (typeof x.xu === "string" && x.xu) uids[x.xu] = x.id;
+    });
+    var rows = [], skipped = [], seen = {};
+    for (var i = 0; i < list.length; i++) {
+      var e = list[i], w = "documents[" + i + "]: ";
+      if (!isObj(e)) return { ok: false, err: w + "must be an object." };
+      var num = xText(e.number, XR.num);
+      if (!num) return { ok: false, err: w + "number is required (series and number as printed, e.g. \"ΤΠΥ0148\")." };
+      var date = String(e.date || "");
+      if (!YMD.test(date) || isNaN(Date.parse(date))) return { ok: false, err: w + "date must be a day as YYYY-MM-DD." };
+      var name = xText(e.client, XR.name);
+      if (!name) return { ok: false, err: w + "client is required (the name on the document)." };
+      var afm = xText(e.client_vat_id, XR.afm).replace(/\s+/g, "");
+      var net = zCents(e.net), vat = zCents(e.vat);
+      if (net === null) return { ok: false, err: w + "net must be an amount such as \"600.00\" (0 or more)." };
+      if (vat === null) return { ok: false, err: w + "vat must be an amount such as \"144.00\" (0 or more)." };
+      var wa = e.withholding === undefined || e.withholding === null || e.withholding === "" ? 0 : zCents(e.withholding);
+      if (wa === null) return { ok: false, err: w + "withholding must be an amount such as \"120.00\"." };
+      var rate = whtRate(net, wa);
+      if (rate === null) return { ok: false, err: w + "withholding " + cents(wa) + " is no whole percentage of net " + cents(net) + "." };
+      var pay = net + vat - Math.round(net * rate / 100);
+      if (e.total_payable !== undefined && e.total_payable !== null && e.total_payable !== "") {
+        var tp = zCents(e.total_payable);
+        if (tp === null || tp !== pay) return { ok: false, err: w + "total_payable " + String(e.total_payable).slice(0, 20) + " is not net + vat − withholding = " + cents(pay) + "." };
+      }
+      var cur = e.currency === undefined || e.currency === "" ? "EUR" : String(e.currency);
+      if (!C.curOk(cur)) return { ok: false, err: w + "currency must be a 3-letter ISO code such as EUR." };
+      var lines = [];
+      if (e.lines !== undefined) {
+        if (!Array.isArray(e.lines) || e.lines.length > XR.lines) return { ok: false, err: w + "lines is a list of at most " + XR.lines + " lines." };
+        for (var j = 0; j < e.lines.length; j++) {
+          var L = e.lines[j], lw = w + "lines[" + j + "]: ";
+          if (!isObj(L)) return { ok: false, err: lw + "must be an object with text." };
+          var tx = xText(L.text, XR.text);
+          if (!tx) return { ok: false, err: lw + "text is required." };
+          var q = L.qty === undefined || L.qty === null || L.qty === "" ? 1 : Number(L.qty);
+          if (!isFinite(q) || q <= 0 || q > 1000000) return { ok: false, err: lw + "qty must be more than 0." };
+          var pr = L.price === undefined || L.price === null || L.price === "" ? 0 : zCents(L.price);
+          if (pr === null) return { ok: false, err: lw + "price must be an amount before VAT such as \"25.00\"." };
+          var vr = L.vat_rate === undefined || L.vat_rate === null || L.vat_rate === "" ? 0 : Number(L.vat_rate);
+          if (!isFinite(vr) || vr < 0 || vr > 100) return { ok: false, err: lw + "vat_rate must be a % from 0 to 100." };
+          lines.push({ code: "", d: tx, q: Math.round(q * 1000) / 1000, unit: "", p: pr, disc: 0, vat: Math.round(vr * 100) / 100 });
+        }
+      }
+      var dm = "";
+      if (e.area !== undefined && e.area !== "") {
+        var ar = findIn(areas, e.area);
+        if (!ar) return { ok: false, err: w + (areas.length ? "no Budget area \"" + String(e.area).slice(0, 60) + "\". Areas: " + areas.map(function (a) { return a.n; }).join(", ") : "Budget has no areas on this device (or Claude may not read Budget); leave area out.") };
+        dm = ar.id;
+      }
+      var xt = e.mydata_type === undefined || e.mydata_type === "" ? "" : String(e.mydata_type).trim();
+      if (xt && !XT_RE.test(xt)) return { ok: false, err: w + "mydata_type is a myDATA document type such as \"2.1\" or \"11.1\"." };
+      var paid = null;
+      if (e.paid !== undefined && e.paid !== null) {
+        if (!isObj(e.paid) || XR_HOWS.indexOf(e.paid.method) < 0) return { ok: false, err: w + "paid must be { method: " + XR_HOWS.join(" | ") + ", date? }." };
+        var pd = e.paid.date === undefined || e.paid.date === "" ? date : String(e.paid.date);
+        if (!YMD.test(pd) || isNaN(Date.parse(pd))) return { ok: false, err: w + "paid.date must be a day as YYYY-MM-DD." };
+        if (pay <= 0) return { ok: false, err: w + "a document with nothing to pay takes no paid." };
+        paid = { how: e.paid.method, date: pd };
+      }
+      var uid = xText(e.provider_uid, XR.uid);
+      var key = numKey(num);
+      if (have[key] || (uid && uids[uid])) { skipped.push({ i: i, number: num, id: have[key] || uids[uid], why: "already in Invoices" }); continue; }
+      if (seen[key] !== undefined) { skipped.push({ i: i, number: num, why: "twice in this call (as documents[" + seen[key] + "])" }); continue; }
+      seen[key] = i;
+      if (uid) uids[uid] = "new";
+      rows.push({ i: i, num: num, date: date, name: name, afm: afm, net: net, vat: vat, rate: rate, cur: cur, lines: lines, dm: dm, xt: xt, paid: paid, uid: uid,
+                  mark: xText(e.mark, XR.mark), src: xText(e.source, XR.src), auth: xText(e.auth_code, XR.uid), note: typeof e.note === "string" ? e.note.slice(0, XR.note) : "" });
+    }
+    if (C.live(d.docs).length + rows.length > XR.all) return { ok: false, err: "Invoices would hold more than " + XR.all + " documents; nothing was recorded." };
+    var s = stampAfter(now, 0), ids = [], undo = { app: "invoices", docs: [], pays: [], clients: [] };
+    rows.forEach(function (o) {
+      var cl = C.matchClient(d, { afm: o.afm, name: o.name }), id;
+      if (!cl) {
+        do { id = C.newId(); } while (C.anyId(d.clients, id));
+        cl = C.normClient({ id: id, name: o.name, afm: o.afm, doy: "", job: "", addr: "", country: "", email: "", phone: "", note: "", m: s });
+        d.clients.push(cl);
+        undo.clients.push({ id: cl.id, m: cl.m });
+      }
+      do { id = C.newId(); } while (C.anyId(d.docs, id));
+      var party = C.partyOfClient(cl);
+      if (o.afm) party.afm = o.afm;
+      var x = { id: id, kind: "ext", st: "issued", ser: "", seq: 0, num: o.num, date: o.date, due: "", cur: o.cur, cli: cl.id,
+                c: party, lines: [], gDisc: 0, wht: o.rate, exempt: "", terms: "", notes: o.note, ref: "", crm: cl.crm || "",
+                mark: o.mark, file: "", sent: "", plang: "", xnet: o.net, xvat: o.vat, m: s };
+      if (o.lines.length) x.xl = o.lines;
+      if (o.dm) x.dm = o.dm;
+      if (o.src) x.xs = o.src;
+      if (o.uid) x.xu = o.uid;
+      if (o.auth) x.xa = o.auth;
+      if (o.xt) x.xt = o.xt;
+      var nd = C.normDoc(x);
+      if (!nd) return;
+      d.docs.push(nd);
+      ids.push({ i: o.i, id: id, number: o.num });
+      undo.docs.push({ id: id, m: nd.m });
+      if (o.paid) {
+        var pid;
+        do { pid = C.newId(); } while (C.anyId(d.pays, pid));
+        var np = C.normPay({ id: pid, doc: id, date: o.paid.date, amt: C.totals(nd).pay, how: o.paid.how, note: "", m: s });
+        if (np) { d.pays.push(np); undo.pays.push({ id: pid, m: np.m }); }
+      }
+    });
+    if (!ids.length) return { ok: true, data: null, ids: [], skipped: skipped, undo: null };
+    return { ok: true, data: C.normalize(d), ids: ids, skipped: skipped, undo: undo };
+  }
+  // Undo of invoices_record: tombstones what it made while unchanged
+  // since (a client only while no other live document uses it).
+  // → { ok, data, n, kept } | { ok: false }
+  function invoicesUndo(C, raw, u, now) {
+    if (!isObj(u) || !Array.isArray(u.docs) || !isObj(raw) || !Array.isArray(raw.docs)) return { ok: false };
+    var d = C.normalize(raw), n = 0, kept = 0;
+    function drop(listName, rec) {
+      var cur = C.anyId(d[listName], rec.id);
+      if (!cur || cur.del) return false;
+      if (cur.m !== rec.m) { kept++; return false; }
+      d[listName] = d[listName].map(function (y) { return y.id === rec.id ? { id: y.id, m: stampAfter(now, y.m), del: 1 } : y; });
+      return true;
+    }
+    (u.pays || []).forEach(function (r) { if (isObj(r)) drop("pays", r); });
+    u.docs.forEach(function (r) {
+      if (!isObj(r)) return;
+      if (C.live(d.pays).some(function (p) { return p.doc === r.id; })) { kept++; return; }   // a payment the owner added since
+      if (drop("docs", r)) n++;
+    });
+    (u.clients || []).forEach(function (r) {
+      if (!isObj(r)) return;
+      if (C.live(d.docs).some(function (x) { return x.cli === r.id; })) return;
+      drop("clients", r);
+    });
+    return { ok: true, data: C.normalize(d), n: n, kept: kept };
   }
 
   // stock_items: S = OrosStockCore, raw = oros-stock-data. Products
@@ -395,12 +582,20 @@
     return out;
   }
 
+  // APPLOCK-1: an app locked (or hidden) in Settings › Screen lock on
+  // this device is never offered, open or not (shell.js
+  // __orosAppLocked; none in Node).
+  function lockedHere(id) {
+    var f = root && root.__orosAppLocked;
+    try { return typeof f === "function" && !!f(id); } catch (e) { return true; }
+  }
+  function barred(id) { return NEVER.indexOf(id) >= 0 || lockedHere(id); }
   // The apps Claude may read: offered (searchable and installed), not
-  // NEVER, and set to "read" on this device.
+  // NEVER or locked here, and set to "read" on this device.
   function allowed(offered, lv) {
     var l = isObj(lv) ? lv : {};
     return (Array.isArray(offered) ? offered : []).filter(function (a) {
-      return a && NEVER.indexOf(a.id) < 0 && (l[a.id] === "read" || l[a.id] === "write");
+      return a && !barred(a.id) && (l[a.id] === "read" || l[a.id] === "write");
     });
   }
   function toolsOf(id) {
@@ -1565,7 +1760,10 @@
     return out;
   }
   // Apps whose items Claude may change, and the tools for them.
-  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas", "budget_categories", "budget_transfer", "budget_balances"],
+  // INV-EXT: gate tools for apps that are also in ACT (their other
+  // changes go through the Assistant's tools).
+  var OWN_WRITES = { invoices: ["invoices_record"] };
+  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_refresh"],
                  kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
   // GATE-ACT (2026-11-08): the apps Claude may change with the
   // Assistant's own tools, run in a hidden Assistant frame
@@ -1589,17 +1787,18 @@
   // budget_transfer (it deletes entries too), and
   // create_items. applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
+                "invoices_record",   // INV-EXT
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact",
                 // GATE-FILES F3: checked against the closed copy's index; deletes wait for the owner's yes here
                 "files_write", "files_move", "files_delete"];
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub"].concat(FILE_READ, FILE_WRITE);
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf"].concat(FILE_READ, FILE_WRITE);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
-  var ACT_OPEN = ACT_TOOLS.slice(13, 24);
+  var ACT_OPEN = ACT_TOOLS.slice(13, 25);
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"].concat(FILE_WRITE);
   var DOC_WRITE = ["edit_in_app", "undo_change"];
   function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }
@@ -1607,8 +1806,36 @@
   // One rule, orOS open or closed (Chris 08/11, 5.78.00): Claude may
   // change an app set to "write", unless the owner paused changes
   // (hold = paused until, ms). Every change is notified and undoable.
+  // BK-AO (Chris 2026-11-18 «ρύθμισε το orOS ώστε να κάνει αυτόματα την
+  // ενημέρωση»): budget_refresh asks Budget's banks for new bookings now,
+  // as Update now does (shell.js __orosBankNow). Never queued: the bank
+  // key is on the device. At most once per BANK_GAP per device (banks
+  // allow about 4 unattended reads a day). r = __orosBankNow's answer.
+  var BANK_GAP = 10 * 60000;
+  var BANK_WHY = {
+    nobanks: "Budget has no bank connected (Budget › More › Banks). Nothing was read.",
+    noapp: "Budget is not installed on this device. Nothing was read.",
+    offline: "The owner's device is offline (or cannot reach the banks from here). Nothing was read.",
+    busy: "A bank update is already running on the device; read budget_lines in a minute.",
+    pending: "The owner is connecting a bank right now; try again in a few minutes.",
+    slow: "The update started and is still running on the device; its entries come into Budget by themselves. Read budget_lines in a minute."
+  };
+  function bankNowText(r, now) {
+    var o = isObj(r) ? r : {};
+    var last = typeof o.last === "number" && o.last > 0 ? new Date(o.last).toISOString() : null;
+    if (o.gap) return { ok: true, c: JSON.stringify({ done: "Not read again: the banks were read on this device at " + last + ", less than 10 minutes ago. Use budget_lines.", last_update: last }) };
+    if (o.why) return { ok: o.why === "slow" || o.why === "busy", c: JSON.stringify({ done: BANK_WHY[o.why] || "Nothing was read.", last_update: last }) };
+    var errs = Array.isArray(o.errs) ? o.errs.slice(0, 10).map(function (x) { return { code: String(x.c || ""), text: String(x.text || "").slice(0, 300) }; }) : [];
+    var n = typeof o.n === "number" && o.n > 0 ? Math.floor(o.n) : 0;
+    var out = { done: n ? n + " new entries from the banks are in Budget." : "The banks have nothing new.", new_entries: n, last_update: last || new Date(now).toISOString() };
+    if (errs.length) {
+      out.failed = errs;
+      out.note = "These bank accounts could not be read (the others were). consent = the owner renews the bank's access in Budget › More › Banks; keys = this device has no bank key (another device of the owner's may).";
+    }
+    return { ok: true, c: JSON.stringify(out) };
+  }
   function canWrite(lv, hold, id, now) {
-    return !!(isObj(lv) && lv[id] === "write" && writable(id) && NEVER.indexOf(id) < 0 && !(typeof hold === "number" && hold > now));
+    return !!(isObj(lv) && lv[id] === "write" && writable(id) && !barred(id) && !(typeof hold === "number" && hold > now));
   }
 
   // The copy's key for a call (= relay/gate.js stableArgs).
@@ -1666,21 +1893,21 @@
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
           tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer", budget_balances: "matched Budget's account balances",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
-                   kanban_add_columns: "added Kanban columns",
+                   kanban_add_columns: "added Kanban columns", invoices_record: "recorded invoices issued elsewhere",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
-                   kanban_add_columns: "πρόσθεσε στήλες στο Kanban",
+                   kanban_add_columns: "πρόσθεσε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
-                   kanban_add_columns: "Kanban-Spalten hinzugefügt",
+                   kanban_add_columns: "Kanban-Spalten hinzugefügt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
                    link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };
@@ -1848,7 +2075,7 @@
     return { app: apps.join(", "), list: list };
   }
 
-  var core = { delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, stockItems: stockItems, publishTitles: publishTitles,
+  var core = { delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, bankNowText: bankNowText, BANK_GAP: BANK_GAP, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, invoicesRecord: invoicesRecord, invoicesUndo: invoicesUndo, OWN_WRITES: OWN_WRITES, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
@@ -2594,6 +2821,7 @@
           if (p.lv[a.id] === "write" && writable(a.id)) {
             o.change_tools = WRITES[a.id] ? WRITES[a.id].slice() : DOCS.indexOf(a.id) >= 0 ? DOC_WRITE.slice() : a.id === "files" ? FILE_WRITE.concat("undo_change")
               : ACT_WRITE.filter(function (n) { return n !== "edit_in_app" && FILE_WRITE.indexOf(n) < 0; });
+            if (OWN_WRITES[a.id]) o.change_tools = o.change_tools.concat(OWN_WRITES[a.id]);
             o.changes = canWrite(p.lv, p.hold, a.id, Date.now()) ? "allowed (the owner is notified of each change)" : "paused by the owner until " + new Date(p.hold).toISOString();
           }
           return o;
@@ -2683,7 +2911,7 @@
       if (okIds.indexOf(line) < 0) return Promise.resolve({ ok: false, c: "The owner does not let Claude read " + (names[line] || line) + "." });
       var r;
       if (line === "budget") r = budgetLines(readStore("oros-budget-data"), args, root.OrosBudgetLoans || null);
-      else if (line === "invoices") r = root.OrosInvoicesCore ? invoiceList(root.OrosInvoicesCore, readStore("oros-invoices-data"), args, localDay()) : null;
+      else if (line === "invoices") r = root.OrosInvoicesCore ? invoiceList(root.OrosInvoicesCore, readStore("oros-invoices-data"), args, localDay(), okIds.indexOf("budget") >= 0 ? readStore("oros-budget-data") : null) : null;
       else if (line === "stock") r = root.OrosStockCore ? stockItems(root.OrosStockCore, readStore("oros-stock-data"), args) : null;
       else r = publishTitles(readStore("oros-publish-data"), args);
       if (!r) return Promise.resolve({ ok: false, c: "This app is not loaded on the device yet; try again in a moment." });
@@ -2691,10 +2919,24 @@
       var dd = r.data, k = (dd.lines || dd.documents || dd.items || dd.titles || []).length;
       return Promise.resolve({ ok: true, a: [line], k: k, c: JSON.stringify(dd) });
     }
+    if (name === "budget_refresh") {
+      var nowB = Date.now();
+      if (okIds.indexOf("budget") < 0) return Promise.resolve({ ok: false, c: "The owner does not let Claude read Budget." });
+      if (!canWrite(p.lv, p.hold, "budget", nowB)) return Promise.resolve({ ok: false, c: closedMsg(p, "budget", names.budget || "Budget") });
+      if (typeof root.__orosBankNow !== "function") return Promise.resolve({ ok: false, c: "This device's orOS is too old for budget_refresh. Nothing was read." });
+      var devB = null;
+      try { devB = JSON.parse(localStorage.getItem("oros-budget-bank-dev") || "null"); } catch (e) { devB = null; }
+      var lastB = devB && typeof devB.t === "number" ? devB.t : 0;
+      if (lastB && nowB - lastB >= 0 && nowB - lastB < BANK_GAP) return Promise.resolve(Object.assign({ a: ["budget"], k: 0 }, bankNowText({ gap: 1, last: lastB }, nowB)));
+      return Promise.resolve(root.__orosBankNow(20000)).then(function (r) {
+        return Object.assign({ a: ["budget"], k: r && typeof r.n === "number" ? r.n : 0 }, bankNowText(r, Date.now()));
+      }, function () { return { ok: false, c: "The bank update failed on the device. Nothing was read." }; });
+    }
     var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas", budget_categories: "cats", budget_transfer: "xfer", budget_balances: "bal" }[name];
     if (op) return change(op, args, p, names, opt.at);
     var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
     if (kop) return kanbanChange(kop, args, p, names, opt.at);
+    if (name === "invoices_record") return invoicesChange(args, p, names, okIds, opt.at);
     return Promise.resolve({ ok: false, c: "Unknown tool." });
     }
   }
@@ -2787,6 +3029,24 @@
       var uid = remember("budget", { cats: "budget_categories", xfer: "budget_transfer", bal: "budget_balances" }[op] || "budget_" + op, r.undo, now, r.ids.length);
       return { ok: true, a: ["budget"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
     });
+  }
+  // INV-EXT: invoices_record on this device (Invoices set to «may
+  // change»; Budget's areas only when Claude may read Budget).
+  function invoicesChange(args, p, names, okIds, at) {
+    var now = Date.now(), C = root.OrosInvoicesCore;
+    if (!canWrite(p.lv, p.hold, "invoices", now)) return Promise.resolve({ ok: false, c: closedMsg(p, "invoices", names.invoices || "Invoices") });
+    if (!C) return Promise.resolve({ ok: false, c: "Invoices is not loaded on the device yet; try again in a moment. Nothing was recorded." });
+    var iv = readStore("oros-invoices-data");
+    var r = invoicesRecord(C, iv, okIds.indexOf("budget") >= 0 ? readStore("oros-budget-data") : null, args, at || now);
+    if (!r.ok) return Promise.resolve({ ok: false, c: r.err });
+    var out = { recorded: r.ids, skipped: r.skipped };
+    if (!r.data) return Promise.resolve({ ok: true, a: ["invoices"], k: 0, c: JSON.stringify(Object.assign(out, { note: "Nothing new: every document is in Invoices already." })) });
+    if (at && lateIn(iv, r.data, at)) return Promise.resolve({ ok: false, late: 1, c: LATE_TXT });
+    if (!writeJSON("oros-invoices-data", r.data)) return Promise.resolve({ ok: false, c: "orOS could not save the change on the device; nothing was recorded." });
+    try { if (root.orosSync && typeof root.orosSync.adoptKey === "function") root.orosSync.adoptKey("oros-invoices-data"); } catch (e0) {}
+    try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
+    var uid = remember("invoices", "invoices_record", r.undo, now, r.ids.length);
+    return Promise.resolve({ ok: true, a: ["invoices"], k: r.ids.length, u: uid, c: JSON.stringify(out) });
   }
   // Kanban's sync model (kanban/model.js), loaded on first use.
   var modelP = null;
@@ -3288,7 +3548,7 @@
     levels: function () {
       var p = pref(), out = {};
       if (!p.on || !isObj(p.lv)) return out;
-      Object.keys(p.lv).forEach(function (id) { if (NEVER.indexOf(id) < 0 && (p.lv[id] === "read" || p.lv[id] === "write")) out[id] = p.lv[id]; });
+      Object.keys(p.lv).forEach(function (id) { if (!barred(id) && (p.lv[id] === "read" || p.lv[id] === "write")) out[id] = p.lv[id]; });
       return out;
     },
     // "" = Claude may change this app now; else why not (sent to Claude).
@@ -3306,7 +3566,7 @@
       if (!p.on) return "The gate is off.";
       if (away()) return HOST_TXT;
       if (locked()) return "orOS is locked on the owner's device.";
-      if (!id || NEVER.indexOf(id) >= 0) return "Claude may never open " + (id || "this app") + ".";
+      if (!id || barred(id)) return "Claude may never open " + (id || "this app") + ".";
       if (typeof p.hold === "number" && p.hold > now) return "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was done.";
       return "";
     },
@@ -3385,7 +3645,7 @@
     },
     apps: function () {
       var lv = pref().lv || {};
-      return offered().filter(function (a) { return NEVER.indexOf(a.id) < 0; }).map(function (a) {
+      return offered().filter(function (a) { return !barred(a.id); }).map(function (a) {
         return { id: a.id, name: a.name, read: lv[a.id] === "read" || lv[a.id] === "write", write: lv[a.id] === "write",
                  canWrite: writable(a.id), sensitive: sensitive(a.id), tools: toolsOf(a.id) };
       });
@@ -3467,6 +3727,14 @@
       var e = l.filter(function (x) { return x.id === uid && x.x && !x.done; })[0];
       if (!e) return { ok: false };
       if (isObj(e.x) && typeof e.x.a === "string") return actUndo(e);   // GATE-ACT: a Promise
+      if (e.app === "invoices") {                     // INV-EXT: invoices_record
+        var IC = root.OrosInvoicesCore, ir = IC ? invoicesUndo(IC, readStore("oros-invoices-data"), e.x, Date.now()) : { ok: false };
+        if (!ir.ok || !writeJSON("oros-invoices-data", ir.data)) return { ok: false };
+        try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e3) {}
+        if (writeJSON(CHG_KEY, chgMerge(l, [Object.assign({}, e, { done: Date.now() })]))) dirty();
+        changed();
+        return { ok: true, n: ir.n, kept: ir.kept };
+      }
       var kb = e.app === "kanban", M = root.OrosKanbanModel;
       if (kb && !M) { kanbanModel().then(changed, function () {}); return { ok: false, later: true }; }
       var key = kb ? "oros-kanban-data" : "oros-budget-data";
@@ -3578,6 +3846,16 @@
     reconnect: function () { if (!ws) { retry = 0; connect(); } },
     // GATE-HOST: this computer's background Gate (orOS Portable / USB)
     host: { state: function () { return hostState(); }, set: function (on) { return hostSet(on); }, active: function () { return HOST.ok; } },
+    // LOCAL-1: a read or write through the local-folder bridge
+    // (localroots.js): kind list|read|write, the local: path, bytes, the
+    // command that asked
+    localLog: function (e) {
+      if (!isObj(e)) return;
+      var kind = /^(list|read|write)$/.test(e.kind) ? e.kind : "read";
+      writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: "local-" + kind, a: [], k: 1, ok: 1,
+        lp: String(e.path || "").slice(0, 300), sz: Math.max(0, Math.floor(+e.size || 0)), c: String(e.cmd || "").slice(0, 40) }));
+      changed();
+    },
     log: function () { var l = readJSON(LOG_KEY); return Array.isArray(l) ? l.slice().reverse() : []; },
     clearLog: function () { try { localStorage.removeItem(LOG_KEY); } catch (e) {} changed(); },
     onChange: function (fn) {

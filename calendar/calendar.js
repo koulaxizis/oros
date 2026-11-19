@@ -3605,8 +3605,43 @@ function transientNote(title, body) {
       return a.start < b.start ? -1 : 1;
     });
   }
-  // The other apps' read-only rows on that day (unsorted).
+  // The other apps' read-only rows on that day (unsorted). A row whose
+  // app is locked in Settings › Screen lock (APPLOCK-1, the shell's
+  // orosLock.apps) is left out while it is locked. Feeds of no app of
+  // their own (pet, holidays, observances, subscriptions) always show.
+  var FEED_APP = {
+    "lbl-feed-bday": "contacts", "lbl-feed-anniv": "contacts", "lbl-feed-custom": "contacts",
+    "lbl-feed-nameday": "contacts", "lbl-feed-cycle": "cycle", "lbl-feed-mood": "mood",
+    "lbl-feed-habits": "habits", "lbl-feed-kanban": "kanban", "lbl-feed-todo": "todo",
+    "lbl-feed-fitness": "fitness", "lbl-feed-plants": "plants", "lbl-feed-chores": "chores",
+    "lbl-feed-petcare": "petcare", "lbl-feed-garage": "garage", "lbl-feed-travel": "travel",
+    "lbl-feed-meals": "meals", "lbl-feed-budget": "budget", "lbl-feed-shelf": "shelf",
+    "lbl-feed-publish": "publish", "lbl-feed-inv": "invoices", "lbl-feed-docs": "files",
+    "lbl-feed-base": "base", "lbl-feed-baby": "baby", "lbl-feed-together": "together",
+    "lbl-feed-time": "timesheet", "lbl-feed-famtree": "familytree", "lbl-feed-crm": "crm",
+    "lbl-feed-meds": "health", "lbl-feed-appts": "health", "lbl-feed-sky": "sky"
+  };
+  function feedLockFilter(rows) {
+    var A = null;
+    try {
+      var p = window.parent;
+      A = p && p !== window && p.orosLock && p.orosLock.apps;
+    } catch (e) { A = null; }
+    if (!A || typeof A.allowed !== "function") return rows;
+    var seen = {};
+    return rows.filter(function (r) {
+      var app = r && FEED_APP[r.labelId];
+      if (!app) return true;
+      if (!(app in seen)) {
+        try { seen[app] = !!A.allowed(app); } catch (e) { seen[app] = false; }
+      }
+      return seen[app];
+    });
+  }
   function feedsOn(dateStr) {
+    return feedLockFilter(feedsAll(dateStr));
+  }
+  function feedsAll(dateStr) {
     return contactsFeedOn(dateStr)
     .concat(habitsFeedOn(dateStr))
     .concat(cycleFeedOn(dateStr))

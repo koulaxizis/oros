@@ -46,6 +46,11 @@ In the full player (tap the player bar), the button with the screen-and-waves ic
 - **Smart TV or network speaker (DLNA):** with [orOS Bridge](https://useoros.online/download/) 0.10.0 or newer running on a Windows or Linux computer at home, the same window lists the smart TVs, Kodi boxes and network speakers on your network. The first time, `Connect to orOS Bridge` asks for the 6-digit code the bridge shows (Studio and Scanner & PDF use the same pairing). Choose a device and it plays; the window then has pause, volume and `Back to this device`. The device fetches the stream itself, so only http and https addresses go. `Search again` looks once more.
 The device gets the episode's own address: a downloaded copy cannot go, and a TV or speaker found through orOS Bridge starts the episode from the beginning. While it plays there, Podcasts here stays paused.
 
+## Light show
+`Light show` (the sun button in the full player) fills the window with light that moves with the episode. `Light:` picks the style (Glow, Rings, Bars, Wave) and `Light only` hides the controls; tap anywhere or press a key to bring them back.
+
+The light follows the sound of downloaded episodes and of shows whose server allows a web page to listen to them (the same ones where skip silence and voice boost work); turning it on may load the episode once more where it is. With other shows the light moves on its own, and a line says so. Nothing is recorded or sent. The light stays still with reduced motion, a low battery or a busy device, and it never flashes.
+
 ## Downloads
 Choose `Download` from an episode's menu. The `Downloads` tab shows how much space they take and how much is free. `Keep downloads safe from automatic clean-up` asks the browser to keep them; `Delete played downloads` tidies up.
 

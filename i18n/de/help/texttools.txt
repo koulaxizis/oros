@@ -13,6 +13,7 @@ Unter dem Text siehst du, wie viele Zeichen, Wörter und Zeilen er hat. Tippe od
 
 ## Werkzeuge
 - `Zeilen`: `Sortieren` (A → Z mit Griechisch und Englisch in der richtigen Reihenfolge, natürliche Reihenfolge, damit 2 vor 10 kommt, nach Zahl, nach Länge oder zufällig), `Umkehren`, `Duplikate entfernen`, `Nur Duplikate`, `Zeilen zählen`, `Leere Zeilen entfernen`, `Eine leere Zeile`, `Zeilen behalten / entfernen`, die einen Text enthalten, damit beginnen oder enden, `Zeilen verbinden` und `In Zeilen teilen`.
+- `Buchstaben & Akzente`: Großbuchstaben, Kleinbuchstaben, Akzente und Griechisch in lateinischen Buchstaben (siehe unten).
 - `Aufräumen`: `Leerzeichen trimmen`, `Leerzeichen kürzen`, `Tabs ↔ Leerzeichen`, `Zeilen zusammenführen` (eine Zeile pro Absatz), `Zeilen umbrechen`, `Versteckte Zeichen` (unsichtbare Zeichen, seltsame Leerzeichen, typografische Anführungszeichen) und `Zeilenenden` (LF oder CRLF für Windows).
 - `Nummern`: `Zeilen nummerieren` mit eigenem Start, Schritt und Stil, `Nummern / Punkte entfernen` und `Präfix / Suffix` mit fertigen Vorlagen wie Aufzählungspunkten oder «…».
 - `Spalten` für CSV-ähnliche Tabellen: `Trennzeichen ändern` (Komma, Semikolon, Tabulator, senkrechter Strich oder dein eigenes; Anführungszeichen werden beachtet), `Spalten wählen` (zum Beispiel 3,1 oder 2-4, in der Reihenfolge, in der du sie schreibst), `Zeilen ↔ Spalten`, `Markdown-Tabelle` und `JSON`.
@@ -20,9 +21,20 @@ Unter dem Text siehst du, wie viele Zeichen, Wörter und Zeilen er hat. Tippe od
 - `Kodieren`: `URL` (Ελλάδα wird zu %CE%95… und zurück), `Base64` (der ganze Text oder jede Zeile), `HTML-Entitäten` (&amp; und &#233; und zurück) und `Slug`, das einen Titel in einen webtauglichen Namen wie kali-chronia verwandelt.
 - `Vergleichen`: `Texte vergleichen` stellt deinen Text Zeile für Zeile neben einen zweiten. Füge den zweiten Text in das Feld `Vergleichen mit` unter den Optionen ein oder öffne eine Datei dafür; die Pfeil-Schaltfläche tauscht die beiden Texte. Mit `-` markierte Zeilen stehen nur in deinem Text, mit `+` markierte nur im zweiten. Du kannst nur die Änderungen anzeigen, nur hinzugefügte oder entfernte Zeilen oder nur die Zeilen, die beide Texte gemeinsam haben.
 
-`Groß/Klein ignorieren` und `Akzente ignorieren` ändern nur, wie Zeilen verglichen werden; dein Text behält seine eigenen Buchstaben. Um Großbuchstaben oder Akzente zu ändern, nutze Groß/Klein.
+`Groß/Klein ignorieren` und `Akzente ignorieren` ändern nur, wie Zeilen verglichen werden; dein Text behält seine eigenen Buchstaben. Um Großbuchstaben oder Akzente zu ändern, nutze `Buchstaben & Akzente`.
 
 In Feldern für Trennzeichen, Präfix und Suffix bedeutet `\t` einen Tabulator und `\n` eine neue Zeile.
+
+## Buchstaben & Akzente
+Diese Gruppe ist die frühere App Groß/Klein: Eine alte Verknüpfung, ein Link oder Lesezeichen von Groß/Klein öffnet sie hier, und deine `Meine Wörter` sind dieselben.
+- `GROSSBUCHSTABEN`, `kleinbuchstaben`, `Satzanfang groß` (ein Großbuchstabe am Anfang jedes Satzes), `Titelschreibung` (kleine Wörter wie „of“, „the“, „και“, „του“ bleiben klein), `Jedes Wort Groß`, `uMKEHREN` (repariert Text, der mit eingeschalteter Feststelltaste getippt wurde) und `aBwEcHsElNd`. Griechisch wird richtig behandelt: Großbuchstaben verlieren ihre Akzente, behalten aber das Trema (τσάι → ΤΣΑΪ, Μάιος → ΜΑΪΟΣ), und ein End-ς kommt in Kleinbuchstaben zurück.
+- `Akzente entfernen` (auch Tremata und die Akzente anderer Sprachen), `Griechisch → Latein` nach ELOT 743 wie in griechischen Reisepässen (Θεσσαλονίκη → Thessaloniki) oder lockeres Greeklish, und `Gemischte Buchstaben korrigieren`, das lateinische Buchstaben findet, die sich in griechischen Wörtern verstecken (ein englisches A in ΑΘΗΝΑ), und umgekehrt.
+- `Namen für Code`: camelCase, PascalCase, snake_case, kebab-case, CONSTANT_CASE, dot.case, path/case und Train-Case, ein Name pro Zeile. Griechisch wird in lateinischen Buchstaben geschrieben, außer du hakst `Griechische Buchstaben behalten` an.
+- `Schmuckbuchstaben`: fette, kursive, nichtproportionale, doppelt gestrichene Buchstaben, Kapitälchen, volle Breite, eingekreiste, durchgestrichene und unterstrichene Buchstaben für Beiträge. „Einfacher Text“ macht sie wieder normal.
+
+`Sprache` steht anfangs auf `Automatisch`: Die Buchstaben entscheiden. Wähle `Türkçe` für das türkische i und İ, oder `Deutsch`, wenn der Text es braucht. Hake `Nur Auswahl` an und markiere einen Teil des Textes: Nur dieser Teil ändert sich, der Rest des Ergebnisses bleibt, wie er ist.
+
+`Meine Wörter`, unter den Optionen von `Satzanfang groß`, `Titelschreibung` und `Jedes Wort Groß`, enthält Wörter, die immer ihre Großbuchstaben behalten, etwa iPhone, NASA oder ΔΕΗ. Tippe ein Wort und drücke `Hinzufügen`; das × neben einem Wort entfernt es (`Rückgängig` holt es zurück). Ein paar häufige Wörter sind anfangs schon da.
 
 ## Übersetzen
 `Übersetzen` überträgt den ganzen Text in eine andere Sprache, direkt auf diesem Gerät, mit den Firefox-Translations-Modellen von Mozilla (denselben, die der Firefox-Browser nutzt). Dein Text verlässt das Gerät nie, und du brauchst kein Konto. Es kennt Englisch und 21 weitere Sprachen, darunter Griechisch, Deutsch, Französisch, Spanisch, Italienisch, Türkisch, Bulgarisch, Albanisch, Rumänisch, Ukrainisch und Arabisch; zwei Sprachen außer Englisch gehen über Englisch (zwei Modelle, wie in Firefox). Russisch wird vorerst nur in andere Sprachen übersetzt, Chinesisch und Japanisch nur aus anderen.
@@ -46,7 +58,6 @@ Jedes Werkzeug ist ein Schritt. Tippe auf `+ Schritt`, um einen weiteren hinzuzu
 - [Notizen](app:notes): eine neue Seite mit dem Ergebnis.
 - [Tabelle](app:spreadsheet): ein neues Blatt, eine Zeile pro Zeile und eine Spalte pro Feld.
 - [Aufgaben](app:todo): eine Aufgabe pro Zeile. Aufgaben zeigt sie zuerst an und fügt sie erst hinzu, wenn du bestätigst.
-- Groß/Klein, wenn es installiert ist.
 
 ## Synchronisierung und Sicherung
 Deine Rezepte werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. In `Rezepte` kannst du sie auch in eine Datei `Exportieren` und auf einem anderen Gerät `Importieren`; importierte Rezepte kommen zu deinen dazu.
@@ -59,11 +70,14 @@ Deine Rezepte werden über die [orOS-Synchronisierung](help:t/sync) zwischen dei
 ## Tipps
 - Du räumst eine Liste aus einem Onlineshop oder einer E-Mail auf? Probiere `Versteckte Zeichen`, dann `Leerzeichen trimmen`, dann `Duplikate entfernen`.
 - Für eine Excel-Datei auf Griechisch (oder Deutsch) ändere das Trennzeichen auf `Semikolon ;`, bevor du sie dort öffnest.
+- Du schreibst einen Titel in griechischen Großbuchstaben? Nimm `GROSSBUCHSTABEN`: Die Akzente verschwinden von selbst, und die Tremata bleiben, wo sie hingehören.
 
 ## Grenzen
 - Bis zu 2.000.000 Zeichen Text. Über 200.000 ist das Ergebnis nicht live: tippe auf `Anwenden` (oder [[Ctrl+Enter]]).
 - Ein Muster, das länger als zwei Sekunden läuft, wird gestoppt.
 - Der Text bei `Vergleichen mit` wird nicht in Rezepten gespeichert; wie dein Text bleibt er nur, solange orOS offen ist. Wenn zwei lange Texte fast überall verschieden sind, markiert der Vergleich eventuell ein paar Zeilen mehr als nötig als geändert.
 - Bis zu 100 Rezepte mit je bis zu 30 Schritten.
+- Kleinbuchstaben können die Akzente eines in Großbuchstaben geschriebenen Textes nicht zurückholen (ΚΑΛΗΜΕΡΑ → καλημερα), und Greeklish lässt sich nicht zurück ins Griechische verwandeln.
+- Viele Screenreader lesen `Schmuckbuchstaben` schlecht vor; nimm sie nur für kurze Titel. Buchstaben, für die ein Stil keine Form hat, etwa Griechisch in nichtproportionaler Schrift, bleiben, wie sie sind.
 - `Übersetzen` kennt vorerst Griechisch und Englisch; weitere Sprachen kommen.
 - Notizen erhält bis zu 20.000 Zeichen, Tabelle bis zu 500 Zeilen und 64 Spalten, Aufgaben bis zu 200 Aufgaben.

@@ -1,0 +1,27 @@
+# Shop
+Shop zeigt in orOS die Zahlen deines eigenen WooCommerce-Shops: die heutigen Bestellungen, diesen Monat und dieses Jahr, die Produkte, die sich verkaufen, und mit dem kostenlosen Plugin orOS Connect auch Kosten und Ergebnis, Anteile der Partner, Kommissionen und Bestand. Es liest nur: Nichts in Shop verändert deinen Shop.
+
+## Erste Schritte
+1. Öffne im WordPress-Admin WooCommerce › Einstellungen › Erweitert › REST-API und erstelle einen Schlüssel mit der Berechtigung `Read` für einen Nutzer, der den Shop verwaltet.
+2. Öffne in orOS [Einstellungen](app:settings) › `Verbundene Dienste`, füge WooCommerce mit der Adresse deines Shops hinzu und gib dort die beiden Schlüssel ein. Sie bleiben verschlüsselt auf diesem Gerät.
+3. Öffne Shop. Es liest den Shop sofort und danach alle 15 Minuten, solange es auf dem Bildschirm ist. `Aktualisieren` liest ihn jetzt erneut.
+
+Hast du mehr als einen Shop, wähle oben einen aus.
+
+## Was du siehst
+- `Heute`: der heutige Umsatz, dieser Monat und dieses Jahr, mit der Zahl der Bestellungen und der durchschnittlichen Bestellung. Mit orOS Connect auch die Bestellungen, die auf Zahlung warten, Stornierungen, Erstattungen und die Produkte, die ausverkauft sind oder knapp werden.
+- `Geld`: der Monat und das Jahr, was Partnern geschuldet wird, und mit orOS Connect Kosten und Ergebnis pro Produkt.
+- `Produkte`: was dieses Jahr verkauft wurde, das meistverkaufte zuerst. Tippe in das Feld, um eines zu finden.
+- `Partneranteile` und `Kommissionen` erscheinen nur, wenn dein Shop sie hat (orOS Connect mit einem Plugin für Umsatzaufteilung oder Kommissionen).
+
+## orOS Connect (optional)
+Ohne es zeigt Shop die eigenen Berichte von WooCommerce, die jeder Shop hat. orOS Connect 1.4 oder neuer fügt den Rest hinzu: Installiere es in deinem Shop, schalte das Modul `Data for orOS` ein und wähle die Bereiche, die du sehen willst. Es gibt nur Summen weiter, nie den Namen, die E-Mail, das Telefon oder die Adresse eines Kunden. Eine Zeile unter den Zahlen sagt dir, wenn ein Bereich in deinem Shop keine Quelle hat.
+
+## Deine Daten
+- Behalten werden nur Summen: Umsätze, Produkte mit ihren Zahlen, Namen von Partnern und Verkaufsstellen mit ihren Beträgen. Kundendaten werden nie gespeichert.
+- Mit eingeschalteter orOS-Synchronisierung in den [Einstellungen](app:settings) folgt dir der letzte Abruf verschlüsselt auf deine anderen Geräte, sodass Shop auch offline öffnet und zeigt, wann gelesen wurde.
+- Die Schlüssel werden nie synchronisiert, außer du wählst das in Verbundene Dienste.
+
+## Von überall finden
+- Die Zahlen von Shop sind finanziell, deshalb findet die Suche im Menü sie erst, nachdem du Shop unter `Suchen in` neben dem Suchfeld des Menüs angehakt hast. Dann öffnet ein Produkt, ein Partner oder eine Verkaufsstelle Shop in dieser Zeile.
+- Heute zeigt den heutigen Umsatz, ausverkaufte Produkte und Kommissionen zum Abrechnen.

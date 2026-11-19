@@ -28,7 +28,7 @@ If the sync dot stays orange, your changes haven't reached the cloud yet. Tap or
 Your browser gives orOS a limited amount of space. [Export a backup](help:t/backup), then delete data you no longer need. See [Your data and files](help:t/data).
 
 ## Notifications don't appear
-In `Settings`, under `Notifications`, check that the `Notifications` switch is on, that the app is on under `Which apps may notify`, and that `Quiet hours` isn't on. Remember that orOS must be open for alarms and reminders to work. See [Notifications, alarms and reminders](help:t/notifications).
+In `Settings`, under `Notifications`, check that the `Notifications` switch is on, that the app is on under `Which apps may notify`, and that no focus mode keeps the app quiet (`Focus` in Quick settings, `Sleep in quiet hours` in Settings). Remember that orOS must be open for alarms and reminders to work. See [Notifications, alarms and reminders](help:t/notifications).
 
 ## Report a problem
 If something is still wrong, open an issue on GitHub: [github.com/koulaxizis/oros/issues](https://github.com/koulaxizis/oros/issues). Say which browser and device you use, what you did, and what happened.

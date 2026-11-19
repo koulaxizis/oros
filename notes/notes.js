@@ -1334,7 +1334,34 @@
     // Mobile: close the tree so the note fills the screen. Desktop
     // shows the tree via @media — the class is a no-op there.
     document.getElementById("notes-app").classList.remove("tree-open");
+    contNote();
   }
+
+  // CONT-1 W3: tell the shell which page is open (continue.js keeps the
+  // reference and the title only, never the text). On a switch, and once
+  // at the first tap or key after the start: a sync re-render is not the
+  // person opening the page.
+  var contLive = false;   // nothing before the first tap or key: a restored item must not hide the other device's
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var C = window.parent !== window ? window.parent.orosContinue : null;
+      var p = C && prefs.current ? pageById(prefs.current) : null;
+      if (p) C.note("notes", { target: { page: p.id, nb: typeof p.nb === "string" ? p.nb : null },
+                               title: p.title || t("page.untitled") });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   var lastRenderedPage = null;   // #7: caret/scroll preservation state
   function syncField(el, value) {

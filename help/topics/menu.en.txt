@@ -32,6 +32,7 @@ You can also search from your browser's address bar. Add a site search (custom s
 
 - **Search** at the top. Start typing and you go straight to the menu's search, with the same results: apps, commands and your data.
 - **Open apps**: the app in front and, with multitasking on, the ones waiting in the background. Click one to go back to it, or × to close it. On wide screens you can also put one beside the app in front.
+- **Continue from your other devices**: what you last had open in an app on another of your devices, such as a note on your phone, with the app, the device and when. Click one to open it here; × hides it until that device has something newer. Private apps never show, and nothing shows during sensitive work or with the switch in `Settings › System › Continue on your other devices` off.
 - **Recent files**: the last files you opened, saved or downloaded in [Files](app:files) on this device. Click one to open it in Files. During sensitive work they stay hidden.
 - **System**: how many of this device's places for open apps are in use, how much storage orOS uses, and whether sync is up to date or has files waiting. `Details in Settings › Device` opens the full picture.
 

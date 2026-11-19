@@ -155,12 +155,21 @@
       acts: cleanActs(r.acts, app)
     };
   }
+  // APPLOCK-1: a locked app gives nothing while it is locked (lock.js
+  // orosLock.apps, in the shell). set = true: nothing from an app set
+  // as locked even when it is open now (the daily notice, which syncs).
+  function lockSkip(id, set) {
+    var L = root && root.orosLock;
+    if (!L || !L.apps || typeof L.apps.allowed !== "function") return false;
+    try { return set ? !!L.apps.state(id) : !L.apps.allowed(id); } catch (e) { return true; }
+  }
   // Provider facts (BR-TODAY-16): app id → small plain object.
-  function collectFacts(providers, ctx, enabled) {
+  function collectFacts(providers, ctx, enabled, lockSet) {
     var out = {};
     (Array.isArray(providers) ? providers : []).forEach(function (p) {
       if (!p || typeof p.id !== "string" || !ID_RE.test(p.id) || typeof p.facts !== "function") return;
       if (typeof enabled === "function" && !enabled(p.id)) return;
+      if (lockSkip(p.id, lockSet)) return;
       var f = null;
       try { f = cleanTarget(p.facts(ctx)); } catch (e) { f = null; }
       if (isObj(f)) out[p.id] = f;
@@ -306,6 +315,7 @@
       if (!p || typeof p.id !== "string" || !ID_RE.test(p.id) || typeof p.collect !== "function") return;
       if (seen[p.id]) return;
       if (opts.enabled && !opts.enabled(p.id)) return;
+      if (lockSkip(p.id, opts.lockSet)) return;
       seen[p.id] = true;
       list.push(p);
     });

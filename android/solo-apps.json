@@ -39,6 +39,8 @@
     "transfer": "online.useoros.transfer",
     "scanpdf": "online.useoros.scanner",
     "stock": "online.useoros.stock",
-    "forms": "online.useoros.forms"
+    "forms": "online.useoros.forms",
+    "library": "online.useoros.library",
+    "base": "online.useoros.base"
   }
 }

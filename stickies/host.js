@@ -441,6 +441,7 @@
     try {
       if (typeof N.getSetting === "function" && N.getSetting("enabled", true) === false) return false;
       if (typeof N.getAppToggle === "function" && !N.getAppToggle("stickies")) return false;
+      if (typeof N.silent === "function") return !N.silent("stickies");   // focus modes (FOCUS-1)
       var qh = typeof N.getSetting === "function" ? N.getSetting("quietHours", {}) : {};
       if (qh && qh.enabled) {
         var h = new Date(now).getHours(), s = qh.quietHoursStart, e = qh.quietHoursEnd;
@@ -462,7 +463,7 @@
 
   // ---------- 4. Desktop ----------
   var CSS = [
-    "#sn-layer{position:fixed;top:calc(40px + env(safe-area-inset-top,0px));left:0;right:0;bottom:var(--tb-h,0px);",
+    "#sn-layer{position:fixed;top:calc(40px + env(safe-area-inset-top,0px) + var(--ld-st,0px));left:var(--ld-sl,0px);right:var(--ld-sr,0px);bottom:var(--tb-h,0px);",
     "z-index:2;pointer-events:none}",
     ".sn-note{position:absolute;display:flex;flex-direction:column;pointer-events:auto;border-radius:4px 4px 10px 4px;",
     "box-shadow:0 6px 18px rgba(0,0,0,.28),0 1px 2px rgba(0,0,0,.2);color:#2b2620;overflow:hidden;",
@@ -503,7 +504,7 @@
     ".sn-flash{animation:sn-flash .9s ease-in-out 2}",
     "@keyframes sn-wiggle{0%,100%{transform:rotate(0)}15%{transform:rotate(-3deg)}30%{transform:rotate(3deg)}45%{transform:rotate(-2deg)}60%{transform:rotate(2deg)}75%{transform:rotate(0)}}",
     "@keyframes sn-flash{50%{box-shadow:0 0 0 4px var(--accent,#e5a50a),0 6px 18px rgba(0,0,0,.28)}}",
-    "#sn-add{position:fixed;left:14px;bottom:calc(var(--tb-h,0px) + 14px + env(safe-area-inset-bottom,0px));z-index:3;",
+    "#sn-add{position:fixed;left:calc(14px + var(--ld-sl,0px));bottom:calc(var(--tb-h,0px) + 14px + env(safe-area-inset-bottom,0px));z-index:3;",
     "width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:color-mix(in srgb,var(--panel-bg) 80%,transparent);",
     "color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;pointer-events:auto;",
     "box-shadow:0 2px 8px var(--shadow);opacity:.75}",

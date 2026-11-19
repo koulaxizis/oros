@@ -377,5 +377,8 @@ orosPack("de", "timesheet", {
  "week.total": "Gesamt",
  "wnext": "Nächste Woche",
  "wprev": "Vorherige Woche",
- "yesterday": "Gestern"
+ "yesterday": "Gestern",
+ "bill": "Abzurechnen: {d}",
+ "bill1": "1 Kunde",
+ "billN": "{n} Kunden"
 });
