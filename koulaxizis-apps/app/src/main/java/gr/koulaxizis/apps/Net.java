@@ -18,7 +18,7 @@ import java.security.MessageDigest;
 final class Net {
     private Net() {}
 
-    static final String UA = "KoulaxizisApps/1";
+    static final String UA = Variant.TEST ? "KoulaxizisApps/1 (test)" : "KoulaxizisApps/1";
 
     /** Our repositories on GitHub Pages, and the counter in front of them (APPS-DL). */
     static final String PAGES = "https://koulaxizis.github.io/";

@@ -25,6 +25,7 @@ const ASSETS = /*ASSETS*/ {};
 
 export function channel(ua) {
   ua = String(ua || "");
+  if (/^KoulaxizisApps\/\d+ \(test\)/.test(ua)) return null; // the manager's debug build in CI
   if (/^KoulaxizisApps\//.test(ua)) return "manager";
   if (/obtainium/i.test(ua)) return "obtainium";
   if (/droid-?ify|com\.looker\.droidify/i.test(ua)) return "droidify";
@@ -85,8 +86,8 @@ async function proxy(req, env, ctx, repo, rest) {
   const out = new Headers();
   for (const k of KEEP) if (up.headers.get(k)) out.set(k, up.headers.get(k));
   const pkg = apkPackage(rest);
-  if (pkg && counts(req.method, up.status, req.headers.get("range"))) {
-    const ch = channel(req.headers.get("user-agent"));
+  const ch = channel(req.headers.get("user-agent"));
+  if (pkg && ch && counts(req.method, up.status, req.headers.get("range"))) {
     ctx.waitUntil(env.DB.prepare("INSERT INTO dl (pkg, ch, n) VALUES (?1, ?2, 1) ON CONFLICT (pkg, ch) DO UPDATE SET n = n + 1")
       .bind(pkg, ch).run().catch(() => {}));
   }

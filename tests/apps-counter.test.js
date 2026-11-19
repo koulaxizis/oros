@@ -14,6 +14,7 @@ new Function("exports", SRC.replace(/^export default /m, "exports.default = ").r
 
 test("channels come only from the user agent", () => {
   assert.equal(mod.channel("KoulaxizisApps/1"), "manager");
+  assert.equal(mod.channel("KoulaxizisApps/1 (test)"), null);
   assert.equal(mod.channel("F-Droid 1.21.1"), "fdroid");
   assert.equal(mod.channel("Droid-ify/0.6.3"), "droidify");
   assert.equal(mod.channel("com.looker.droidify/0.6"), "droidify");
