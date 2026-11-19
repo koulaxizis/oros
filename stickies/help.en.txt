@@ -18,7 +18,7 @@ Open a note's options (the `…` button, or tap the card on a phone) and choose 
 - At that time the note wiggles, a chime plays and a notice lands in the bell.
 - `Done` clears the ring. `Snooze 10 min` rings again in ten minutes.
 - `Repeat` (once a ring is set): `Every day`, `Every weekday (Mon–Fri)` or `Every week`. `Done` then moves the ring to its next time, and a snooze does not change the plan. A repeating note never vanishes on `Done`.
-- The chime follows the notification volume and quiet hours, and you can turn Sticky Notes off in [Settings](app:settings) › `Notifications`.
+- The chime follows the notification volume and the focus modes, and you can turn Sticky Notes off in [Settings](app:settings) › `Notifications`.
 
 ## Vanish
 In the same window, `Vanish` makes a note fade away by itself: `In 1 hour`, `At the end of today`, `At the end of tomorrow`, `In a week` or `At a time I pick…`.

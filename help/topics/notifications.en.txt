@@ -10,15 +10,25 @@ Open the menu, choose `Settings` and go to `Notifications`:
 - The `Notifications` switch turns all notifications on or off.
 - `Send a test` shows a sample so you can check how it looks.
 - `Position on screen`, `Style`, `Sound`, `Volume` and `Stays on screen` change where pop-ups appear, how they look, the sound they make (`None` by default; your melodies from [Ringtone Composer](app:ringtones) are in the list too, so reminders from Habits, Health and every other app can ring with one) and how long they stay.
-- `Quiet hours` keeps pop-ups and sounds away between the `From` and `To` hours (22:00 to 08:00 by default). Notifications still arrive in the inbox.
+- `Focus` holds the focus modes, below.
 - `Which apps may notify` lets you switch notifications off for single apps. `orOS` stands for messages from orOS itself, such as sync and updates. `Weekly app suggestion` is the Monday suggestion of an app you have not opened yet ([Today](app:today)).
 
 These settings travel with [sync](help:t/sync), so they are the same on all your devices.
 
+## Focus modes
+A focus mode keeps notifications quiet while you work, sleep or have time for yourself. While a mode is on, only the apps it lets through pop up and sound; every other notification still arrives in the bell's list, so nothing is lost.
+
+- orOS has four modes: `Do Not Disturb` (lets nothing through), `Sleep`, `Work` and `Personal`, and you can make up to 10 of your own with `New mode`.
+- In [Settings](app:settings) › `Notifications` › `Focus modes`, pick a mode to rename it, give it an icon, choose `Apps that may pop up`, turn it on now, or delete one of your own.
+- `Sleep in quiet hours` turns the Sleep mode on by itself between the `From` and `To` hours (22:00 to 08:00 by default). Turning it off during the night keeps it off until the morning.
+- In Quick settings (the button at the right end of the top bar), `Focus` turns the last mode on or off with one tap. Its arrow lists every mode and sets how long: `For one hour`, `Until 8 in the morning` or `Until you turn it off`.
+- A mode you turn on holds on all your devices that sync. The top bar shows a crossed bell while one is on.
+- Clock alarms and ringing Calendar reminders always ring, in every mode.
+
 ## Alarms
 Set alarms in the [Time](app:time) app. When an alarm goes off, a box with `Alarm` appears at the top right of the screen and beeps. Tap `Snooze 9m` to hear it again in 9 minutes, or `Dismiss` to stop it. It stops by itself after 30 seconds and stays in your inbox.
 
-Alarms belong to orOS, not to the Time app, so they ring while you're in any app or on the desktop. The alarm box shows even during quiet hours.
+Alarms belong to orOS, not to the Time app, so they ring while you're in any app or on the desktop. The alarm box shows even while a focus mode is on.
 
 ## Calendar reminders
 In the [Calendar](app:calendar) app, choose a `Reminder` time when you add or edit an event. The reminder arrives as a notification at that time, even if the Calendar app is closed. If you open orOS after the reminder time but before the event starts, you still get it. Once the event has started, it's skipped.

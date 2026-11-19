@@ -28,7 +28,7 @@ Bleibt der Sync-Punkt orange, sind deine Änderungen noch nicht in der Cloud. Ti
 Dein Browser gibt orOS nur begrenzt Platz. [Exportiere eine Sicherung](help:t/backup) und lösche dann Daten, die du nicht mehr brauchst. Siehe [Deine Daten und Dateien](help:t/data).
 
 ## Benachrichtigungen erscheinen nicht
-Prüfe in den `Einstellungen` unter `Benachrichtigungen`, ob der Schalter `Benachrichtigungen` an ist, ob die App unter `Welche Apps benachrichtigen dürfen` an ist und ob `Ruhezeiten` nicht an ist. Denk daran, dass orOS offen sein muss, damit Wecker und Erinnerungen funktionieren. Siehe [Benachrichtigungen, Wecker und Erinnerungen](help:t/notifications).
+Prüfe in den `Einstellungen` unter `Benachrichtigungen`, ob der Schalter `Benachrichtigungen` an ist, ob die App unter `Welche Apps benachrichtigen dürfen` an ist und ob kein Fokus-Modus die App still hält (`Fokus` in den Schnelleinstellungen, `Schlafen in den Ruhezeiten` in den Einstellungen). Denk daran, dass orOS offen sein muss, damit Wecker und Erinnerungen funktionieren. Siehe [Benachrichtigungen, Wecker und Erinnerungen](help:t/notifications).
 
 ## Ein Problem melden
 Stimmt immer noch etwas nicht, eröffne ein Issue auf GitHub: [github.com/koulaxizis/oros/issues](https://github.com/koulaxizis/oros/issues). Schreib dazu, welchen Browser und welches Gerät du nutzt, was du getan hast und was passiert ist.

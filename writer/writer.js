@@ -1664,6 +1664,7 @@ function createDoc(opts) {
     EL.editor.focus();
   }
   if (!opts.silent) showToast(t('doc.created'));
+  contNote();                        // CONT-1 W3
   return doc;
 }
 
@@ -1689,7 +1690,28 @@ function activateTab(id) {
   }
   renderEditor();
   EL.editor.focus();
+  contNote();                        // CONT-1 W3
 }
+
+// CONT-1 W3: tell the shell which document is open (continue.js keeps
+// its id and title only, never the text). On a switch of tab, and once
+// at the first tap or key after the start (a sync re-render is not the
+// person opening it, so nothing is noted before that: a restored or
+// reopened document must not hide the one from the other device).
+var contLive = false;   // var, not let: activateTab can run before this line at boot
+function contNote() {
+  if (!contLive) return;
+  try {
+    const C = window.parent !== window ? window.parent.orosContinue : null;
+    const d = activeDoc();
+    if (C && d && !d.del) C.note('writer', { target: { doc: d.id }, title: d.title || t('tab.untitled') });
+  } catch (e) {}
+}
+(function () {
+  const once = () => { document.removeEventListener('pointerdown', once, true); document.removeEventListener('keydown', once, true); contLive = true; contNote(); };
+  document.addEventListener('pointerdown', once, true);
+  document.addEventListener('keydown', once, true);
+})();
 
 function closeDoc(id) {
   flushSave();

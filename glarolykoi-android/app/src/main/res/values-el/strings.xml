@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Γλαρόλυκοι</string>
+    <string name="offline_title">Δεν υπάρχει σύνδεση</string>
+    <string name="offline_text">Αυτή η σελίδα θέλει ίντερνετ. Οι σελίδες που έχεις ήδη ανοίξει δουλεύουν κανονικά.</string>
+    <string name="retry">Δοκίμασε ξανά</string>
+    <string name="no_app">Καμία εφαρμογή στο κινητό δεν ανοίγει αυτόν τον σύνδεσμο.</string>
+    <string name="downloading">Λήψη: %1$s</string>
+    <string name="channel_new">Νέα στο κατάστημα</string>
+    <string name="new_one">Νέο στο κατάστημα των Γλαρόλυκων</string>
+    <string name="new_many">%1$d νέα στο κατάστημα των Γλαρόλυκων</string>
+    <string name="ask_title">Νέα βιβλία;</string>
+    <string name="ask_text">Μία φορά τη μέρα το app μπορεί να κοιτάζει το κατάστημα και να σου λέει όταν έρχεται κάτι νέο. Δεν στέλνει τίποτα για σένα. Το σβήνεις όποτε θέλεις από τις ρυθμίσεις του Android για την εφαρμογή.</string>
+    <string name="ask_yes">Ναι, πες μου</string>
+    <string name="ask_no">Όχι, ευχαριστώ</string>
+</resources>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Εφαρμογές Koulaxizis</string>
+    <string name="refresh">Έλεγχος για ενημερώσεις</string>
+    <string name="checking">Έλεγχος των αποθετηρίων…</string>
+    <string name="repos_from">Τα αποθετήρια ενημερώθηκαν %1$s</string>
+    <string name="no_list">Δεν υπάρχει ακόμη λίστα. Συνδεθείτε στο διαδίκτυο και ελέγξτε ξανά.</string>
+    <string name="more_apps">Περισσότερες εφαρμογές</string>
+    <string name="install">Εγκατάσταση</string>
+    <string name="update">Ενημέρωση</string>
+    <string name="open">Άνοιγμα</string>
+    <string name="why">Γιατί;</string>
+    <string name="working">Γίνεται…</string>
+    <string name="version_size">%1$s · %2$s</string>
+    <string name="version_beta">%1$s beta · %2$s</string>
+    <string name="installed_version">έχετε την %1$s</string>
+    <string name="other_key">υπογραφή με άλλο κλειδί</string>
+    <string name="other_key_long">Το αντίγραφο σε αυτό το κινητό έχει υπογραφή με άλλο κλειδί (για παράδειγμα δοκιμαστική έκδοση ή από άλλη πηγή), οπότε το Android δεν επιτρέπει να ενημερωθεί από εδώ. Για να αλλάξετε, απεγκαταστήστε το πρώτα και εγκαταστήστε το ξανά από εδώ· μια εφαρμογή με συγχρονισμό παίρνει πίσω τα δεδομένα της μόλις συνδεθείτε.</string>
+    <string name="allow_title">Άδεια εγκατάστασης εφαρμογών</string>
+    <string name="allow_text">Το Android ρωτά μία φορά: να επιτρέπεται στις Εφαρμογές Koulaxizis να εγκαθιστούν εφαρμογές. Μετά από αυτό, το Android σας ρωτά ξανά πριν από κάθε νέα εφαρμογή.</string>
+    <string name="allow_open">Άνοιγμα ρυθμίσεων</string>
+    <string name="install_failed">Το %1$s δεν εγκαταστάθηκε: %2$s</string>
+    <string name="err_network">δεν ήταν δυνατή η σύνδεση με το αποθετήριο. Εμφανίζεται η τελευταία λίστα του κινητού.</string>
+    <string name="err_signature">η υπογραφή δεν ταίριαζε με το κλειδί μας, οπότε δεν χρησιμοποιήθηκε τίποτα από αυτό.</string>
+    <string name="err_hash">το αρχείο δεν ταίριαζε με τη λίστα του αποθετηρίου, οπότε δεν χρησιμοποιήθηκε.</string>
+    <string name="err_older">το αποθετήριο έδωσε παλαιότερη λίστα από πριν, οπότε δεν χρησιμοποιήθηκε.</string>
+    <string name="err_format">δεν ήταν δυνατή η ανάγνωση της λίστας του αποθετηρίου.</string>
+    <string name="err_empty">Δεν υπάρχουν ακόμη εφαρμογές για αυτό το κινητό.</string>
+    <string name="daily_check">Έλεγχος κάθε μέρα</string>
+    <string name="channel_updates">Ενημερώσεις</string>
+    <string name="self_update">Νέα έκδοση αυτής της εφαρμογής: %1$s</string>
+    <plurals name="update_all">
+        <item quantity="one">Ενημέρωση %d εφαρμογής</item>
+        <item quantity="other">Ενημέρωση όλων (%d)</item>
+    </plurals>
+    <plurals name="updates_ready">
+        <item quantity="one">%d ενημέρωση έτοιμη</item>
+        <item quantity="other">%d ενημερώσεις έτοιμες</item>
+    </plurals>
+    <string name="support">Στήριξε τα projects</string>
+</resources>

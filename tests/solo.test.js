@@ -438,7 +438,7 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   // orOS Drive (DRIVE-APP) is built from koulaxizis/oros-drive by the same workflow
   // page apps (STUDIO-RA, android/page-apps.json) are built as flavours too
   const pg = JSON.parse(read("android/page-apps.json")).apps;
-  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
+  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk", "oros-glarolykoi.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
   Object.keys(pg).forEach((id) => {
     const a = l.find((x) => x.id === id);
     assert.equal(a.pkg, pg[id].package);
@@ -448,6 +448,13 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   const dr = l.find((a) => a.id === "drive");
   assert.equal(dr.pkg, "online.useoros.drive");
   assert.equal(M.texts(dr, "el").name, "orOS Drive");
+  // The Glarolykoi app (GL-1, glarolykoi-android/) is built by the same workflow
+  assert.ok(!pk.glarolykoi, "a single app called glarolykoi would publish a second oros-glarolykoi.apk");
+  const gl = l.find((a) => a.id === "glarolykoi");
+  assert.equal(gl.pkg, "net.glarolykoi.android");
+  assert.equal(M.texts(gl, "el").name, "Γλαρόλυκοι");
+  assert.match(read("glarolykoi-android/app/build.gradle"), /applicationId 'net\.glarolykoi\.android'/);
+  assert.match(read(".github/workflows/android.yml"), /app-glarolykoi-release\.apk/);
   l.forEach((a) => {
     assert.ok(fs.existsSync(a.icon), a.icon);
     ["en", "el"].forEach((lg) => {
