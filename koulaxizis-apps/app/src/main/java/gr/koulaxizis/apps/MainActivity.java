@@ -125,6 +125,15 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             if (on) askNotificationsOnce();
             return true;
         }
+        if (item.getItemId() == R.id.support) {
+            // KOFI-1: our apps are funded only on Ko-fi; a plain link in the browser.
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/koulaxizis")));
+            } catch (android.content.ActivityNotFoundException e) {
+                Toast.makeText(this, "https://ko-fi.com/koulaxizis", Toast.LENGTH_LONG).show();
+            }
+            return true;
+        }
         return super.onOptionsItemSelected(item);
     }
 

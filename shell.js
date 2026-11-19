@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.79.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.79.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -4192,6 +4192,7 @@
         appsResumeStart();   // RS-1
         greetStart();
         safeStart();
+        supportAskStart();   // KOFI-1: once, after 30 days
         if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
@@ -6667,6 +6668,20 @@
     infoRow.appendChild(infoBtn);
     menu.appendChild(infoRow);
 
+    // KOFI-1 (Chris 2026-11-19): Support orOS, the Info window's Support
+    // section. A plain row like Info: no badge, no count, never coloured.
+    var supRow = document.createElement("div");
+    supRow.className = "install-section";
+    var supBtn = document.createElement("button");
+    supBtn.className = "menu-item install-row";
+    supBtn.textContent = window.t("menu.support");
+    supBtn.addEventListener("click", function () {
+      closeMenu();
+      showSupportSection();
+    });
+    supRow.appendChild(supBtn);
+    menu.appendChild(supRow);
+
     menu.scrollTop = keepTop;
     settingsNotify();            // the Settings app repaints too
   }
@@ -9029,6 +9044,47 @@
       k:   "sup.supporters"
     }
   ];
+
+  // The Info window, scrolled to its Support section (Start menu row,
+  // the KOFI-1 notice).
+  function showSupportSection() {
+    if (!scInfoClose) showInfoModal();
+    var sec = document.getElementById("sc-support");
+    if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: "start" });
+  }
+
+  // KOFI-1 / A2 (Chris 2026-11-19, changes the no-nags rule once): one
+  // quiet notice after 30 days of use on this device, never again.
+  // Device-local keys, never synced: SUP_SINCE (first start seen, set on
+  // the first start after this version, so people who were here before
+  // get it 30 days from now), SUP_ASKED (the notice was shown). Not in a
+  // single-app window, not during the tour, never over an open app: it
+  // waits for a start that lands on the desktop.
+  var SUP_SINCE = "oros-support-since", SUP_ASKED = "oros-support-asked";
+  var SUP_AFTER_MS = 30 * 24 * 3600 * 1000;
+  function supportAskStart() {
+    if (SOLO) return;
+    var since = 0;
+    try {
+      if (localStorage.getItem(SUP_ASKED) === "1") return;
+      since = parseInt(localStorage.getItem(SUP_SINCE), 10) || 0;
+      if (!since) { localStorage.setItem(SUP_SINCE, String(Date.now())); return; }
+    } catch (e) { return; }
+    if (Date.now() - since < SUP_AFTER_MS) return;
+    lateWhen(function () {
+      var tour = false;
+      try { tour = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) {}
+      if (state.running || late.open || tour) return;
+      if (!window.orosNotifs || !window.orosNotifs.transient) return;
+      var id = window.orosNotifs.transient({
+        ns: "system",
+        title: window.t("sup.ask.title"),
+        body: window.t("sup.ask.body"),
+        action: { label: window.t("sup.ask.act"), fn: showSupportSection }
+      });
+      if (id) { try { localStorage.setItem(SUP_ASKED, "1"); } catch (e) {} }
+    });
+  }
 
   function wireSupportSection(ov) {
     var box = ov.querySelector(".sc-box");
