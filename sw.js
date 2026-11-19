@@ -881,6 +881,8 @@ var PRECACHE_URLS = [
   "files/docs-due.js",
   "files/today.js",
   "files/docs-links.js",
+  "files/tags-core.js",
+  "files/tags.js",
   "files/photos-core.js",
   "files/albums-core.js",
   "files/photos.js",

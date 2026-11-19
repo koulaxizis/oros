@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.71.00
+- **Tags in Files.** Give any file or folder coloured tags (`Tags…` in its menu), find everything with one tag under `Tags` in the tree, also in Photos. It is one list with Documents, and it is synced. See [Files](help:a/files).
+
 ## Version 7.70.00
 - **Read aloud, in every app.** Turn on `Read aloud` in Settings › Accessibility (it is off until you do, on this device only), then select text in any orOS app and press Ctrl+Alt+Shift+Z, right-click it and choose `Read aloud`, or use Quick settings › `Read aloud`. With nothing selected, it reads the main text of the app in front. The sentence being read is lit up and the page follows it; a bar goes back or on by a sentence, pauses, changes the speed and stops. Only the voices installed on this device are used, never online ones, and you can pick one per language (English, Greek, German) and hear it with `Test`. Never in Passwords, password fields or while Sensitive work is on.
 

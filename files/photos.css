@@ -150,3 +150,7 @@ body.ph-selecting .ph-check { display: block; }
 @media (pointer: coarse) {
   .ph-map.leaflet-container .leaflet-bar.leaflet-control-zoom a { width: 44px; height: 44px; line-height: 44px; }
 }
+/* Tags (files/tags.js): the dots on a tile. */
+.ph-tile .tag-dots { position: absolute; right: 4px; top: 4px; margin: 0; padding: 2px 4px; border-radius: 9px; background: rgba(0,0,0,.55); }
+.ph-tile .tag-dots .tag-more { color: #fff; }
+.ph-arow .tag-dot { margin-right: 4px; }
