@@ -339,7 +339,7 @@
           "sc.gamecenter.crossword": "Today's crossword",
           "sc.gamecenter.sudoku": "Today's Sudoku",
           "sc.gamecenter.chess": "Chess",
-          "apk.note": "A new version of the {n} app is out. Update it where you installed it from (F-Droid, Droid-ify or Obtainium), or download the APK.",
+          "apk.note": "A new version of the {n} app is out. Koulaxizis Apps installs it and keeps every orOS app up to date in one place.",
           "apk.get": "Download",
           "apk.close": "Close",
           "bar.ask": "Install {n} on this device",
@@ -446,7 +446,7 @@
           "sc.gamecenter.crossword": "Το σημερινό σταυρόλεξο",
           "sc.gamecenter.sudoku": "Το σημερινό Sudoku",
           "sc.gamecenter.chess": "Σκάκι",
-          "apk.note": "Βγήκε νέα έκδοση της εφαρμογής {n}. Ενημέρωσέ τη από εκεί που την εγκατέστησες (F-Droid, Droid-ify ή Obtainium) ή κατέβασε το APK.",
+          "apk.note": "Βγήκε νέα έκδοση της εφαρμογής {n}. Οι Εφαρμογές Koulaxizis την εγκαθιστούν και κρατούν όλες τις εφαρμογές του orOS ενημερωμένες σε ένα σημείο.",
           "apk.get": "Λήψη",
           "apk.close": "Κλείσιμο",
           "bar.ask": "Εγκατάσταση του {n} σε αυτή τη συσκευή",
@@ -809,7 +809,14 @@
   // 2.30.01 lack it, and the link then opens as before). Otherwise
   // (Chrome's installed orOS) an intent asks Chrome for a real tab.
   function apkHref(id, ua, inWindow, apkPkg) {
-    var u = id === "oros" ? APK_BASE + "oros.apk" : apkUrl(id);
+    return hrefFor(id === "oros" ? APK_BASE + "oros.apk" : apkUrl(id), ua, inWindow, apkPkg);
+  }
+  // Koulaxizis Apps (APPS-M4, Chris 2026-11-19: the one place our
+  // Android apps are installed and updated from): its APK and page.
+  var MANAGER_APK = "https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk";
+  var MANAGER_PAGE = "https://useoros.online/download/#koulaxizis-apps";
+  function managerHref(ua, inWindow, apkPkg) { return hrefFor(MANAGER_APK, ua, inWindow, apkPkg); }
+  function hrefFor(u, ua, inWindow, apkPkg) {
     if (!u || !inWindow || !/Android/i.test(String(ua || ""))) return u;
     if (apkPkg) return browserHref(u, apkPkg);
     return "intent://" + u.replace(/^https:\/\//, "") + "#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=" +
@@ -927,7 +934,7 @@
     txt.textContent = T("note").replace("{n}", id === "oros" ? "orOS" : nameOf(id, lng));
     bar.appendChild(txt);
     var a = doc.createElement("a");
-    a.href = apkHref(id, win.navigator.userAgent, true, pkgOf(id));
+    a.href = managerHref(win.navigator.userAgent, true, pkgOf(id));
     a.rel = "noopener";
     a.textContent = T("get");
     a.style.cssText = "border-radius:8px;padding:8px 14px;background:#d4af37;color:#1b1a18;font-weight:600;text-decoration:none;white-space:nowrap";
@@ -1200,6 +1207,9 @@
     pkgOf: pkgOf,
     repoLink: repoLink,
     repoPage: REPO,
+    managerHref: managerHref,
+    managerApk: MANAGER_APK,
+    managerPage: MANAGER_PAGE,
     obtainiumLink: obtainiumLink,
     apkCode: apkCode,
     apkManaged: apkManaged,

@@ -73,10 +73,10 @@ In einer Einzel-App trägt die Taste oben links den Namen der App. Sie öffnet e
 > Eine Einzel-App aktualisiert sich von selbst, wie orOS, während ihr Fenster im Hintergrund ist.
 
 ## Koulaxizis Apps (Android)
-**Koulaxizis Apps** ist eine kleine Android-App, die die Android-Apps von orOS (orOS, die Einzel-Apps, orOS Drive) sowie die von NULL JSFX und Noxpress installiert und aktualisiert, ein Abschnitt pro Projekt. Du bekommst sie auf [useoros.online/download](https://useoros.online/download/#koulaxizis-apps) oder im F-Droid-Repository von orOS.
+**Koulaxizis Apps** ist eine kleine Android-App, die die Android-Apps von orOS (orOS, die Einzel-Apps, orOS Drive) sowie die von NULL JSFX, Noxpress und Glarolykoi installiert und aktualisiert, ein Abschnitt pro Projekt. Du bekommst sie auf [useoros.online/download](https://useoros.online/download/#koulaxizis-apps). Sie ist der eine Ort, an dem du unsere Android-Apps bekommst und aktualisierst.
 - **Installieren und aktualisieren:** Tippe neben einer App auf `Installieren` oder `Aktualisieren`, oder auf `Alle aktualisieren`, um alle Apps nacheinander zu aktualisieren. Android fragt bei jeder nach.
 - **Tägliche Prüfung:** Einmal am Tag, mit Netz und genug Akku, sucht sie nach Updates und zeigt eine stille Benachrichtigung. Sie installiert nie etwas von selbst. Ausschalten mit `Täglich prüfen` in ihrem Menü.
-- **Geprüft:** Jede Liste kommt aus dem eigenen signierten F-Droid-Repository des Projekts, und jede APK wird vor der Installation auf Größe, Prüfsumme und Signatur geprüft.
+- **Geprüft:** Jede Liste kommt aus dem eigenen signierten Repository des Projekts, und jede APK wird vor der Installation auf Größe, Prüfsumme und Signatur geprüft.
 - **Stilles orOS:** Solange Koulaxizis Apps installiert ist, zeigen die orOS-APKs ihre eigene Leiste für eine neuere Version nicht mehr; das übernimmt Koulaxizis Apps.
 
 ## So kommen Updates an

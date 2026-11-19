@@ -467,7 +467,14 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
     });
   });
   // Settings shows the repo links; the workflow uses the same key alias and address
-  assert.match(read("settings/settings.js"), /S\.repoLink\(\)/);
+  // APPS-M4 (Chris 2026-11-19): Settings points to Koulaxizis Apps only
+  assert.match(read("settings/settings.js"), /S\.managerHref\(navigator\.userAgent, !inBrowserTab\(\), phone\(\) \? "online\.useoros\.twa" : ""\)/);
+  assert.ok(!/S\.repoLink\(\)|S\.obtainiumLink\(/.test(read("settings/settings.js")));
+  assert.equal(S.managerApk, "https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk");
+  const andUa = "Mozilla/5.0 (Linux; Android 14) Chrome/140 Mobile";
+  assert.equal(S.managerHref(andUa, false), S.managerApk);
+  assert.match(S.managerHref(andUa, true), /^intent:\/\/github\.com\/koulaxizis\/oros\/releases\/download\/koulaxizis-apps\/koulaxizis-apps\.apk#Intent;scheme=https;package=com\.android\.chrome;/);
+  assert.match(read("solo.js"), /a\.href = managerHref\(win\.navigator\.userAgent, true, pkgOf\(id\)\)/);
   const wf = read(".github/workflows/fdroid.yml");
   assert.match(wf, /repo_keyalias: orosrepo/);
   assert.match(wf, /SITE: https:\/\/koulaxizis\.github\.io\/oros-fdroid/);
