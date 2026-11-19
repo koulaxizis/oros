@@ -4973,35 +4973,39 @@
     if (!bar) return;
     var n = strictLevelNow() ? 0 : pocketCount();
     var chip = document.getElementById("pocket-chip");
-    if (!n || pocketDockShows()) { if (chip) { chip.remove(); queueFitBar(); } return; }
+    var drag = !!pocketDrag && !strictLevelNow();       // W2: shown while something is dragged
+    if ((!n && !drag) || pocketDockShows()) { if (chip) { chip.remove(); queueFitBar(); } return; }
     if (!chip) {
       chip = document.createElement("button");
       chip.id = "pocket-chip";
       chip.type = "button";
       chip.innerHTML = POCKET_IC + '<span class="pk-n"></span>';   // static shell icon, not data
       chip.addEventListener("click", function (e) { e.stopPropagation(); window.orosPocket.open(); });
+      pocketDropWire(chip);
       bar.insertBefore(chip, document.getElementById("btn-lang"));
       queueFitBar();
     }
-    chip.lastChild.textContent = String(n);
-    chip.setAttribute("aria-label", pocketLabel(n));
-    chip.title = pocketLabel(n);
+    chip.lastChild.textContent = n ? String(n) : "+";
+    chip.classList.toggle("pk-drag", drag);
+    chip.setAttribute("aria-label", drag ? window.t("pk.drop") : pocketLabel(n));
+    chip.title = drag ? window.t("pk.drop") : pocketLabel(n);
   }
   // The Dock's last button (launcher.js host.dockExtra), or null.
   function pocketDockButton() {
     var n = strictLevelNow() ? 0 : pocketCount();
-    if (!n) return null;
+    var drag = !!pocketDrag && !strictLevelNow();       // W2: shown while something is dragged
+    if (!n && !drag) return null;
     var b = document.createElement("button");
     b.type = "button";
-    b.className = "ld-dk ld-pocket";
-    b.setAttribute("aria-label", pocketLabel(n));
+    b.className = "ld-dk ld-pocket" + (drag ? " pk-drag" : "");
+    b.setAttribute("aria-label", drag ? window.t("pk.drop") : pocketLabel(n));
     var tile = document.createElement("span");
     tile.className = "ld-tile ld-pk-tile";
     tile.innerHTML = POCKET_IC;                       // static shell icon, not data
     b.appendChild(tile);
     var badge = document.createElement("span");
     badge.className = "ld-pk-n";
-    badge.textContent = String(n);
+    badge.textContent = n ? String(n) : "+";
     b.appendChild(badge);
     var dot = document.createElement("span");
     dot.className = "ld-dot";
@@ -5009,10 +5013,134 @@
     var tip = document.createElement("span");
     tip.className = "ld-tip";
     tip.setAttribute("aria-hidden", "true");
-    tip.textContent = window.t("pk.title");
+    tip.textContent = drag ? window.t("pk.drop") : window.t("pk.title");
     b.appendChild(tip);
     b.addEventListener("click", function () { window.orosPocket.open(); });
+    pocketDropWire(b);
     return b;
+  }
+  // ---- W2: drag to the Pocket ----
+  // While a text, a link or files of the orOS disk are dragged (from an
+  // app frame, the shell or another program), the button shows (with
+  // "+" when empty) and takes the drop. pocketDrag = { app } or null.
+  var pocketDrag = null, pocketDragTimer = null;
+  var POCKET_TYPES = ["application/x-oros-paths", "text/uri-list", "text/plain"];
+  function pocketDragOk(dt) {
+    var ty = dt && dt.types ? Array.prototype.slice.call(dt.types) : [];
+    if (ty.indexOf("application/x-oros-pocket") !== -1) return false;   // dragged out of the Pocket itself
+    return POCKET_TYPES.some(function (k) { return ty.indexOf(k) !== -1; });
+  }
+  function pocketDragStart(app) {
+    if (strictLevelNow() || pocketLocked()) return;
+    clearTimeout(pocketDragTimer);
+    pocketDragTimer = setTimeout(pocketDragEnd, 120000);   // never left showing
+    if (pocketDrag) { if (app) pocketDrag.app = app; return; }
+    pocketDrag = { app: app || "" };
+    pocketRepaint();
+  }
+  function pocketDragEnd() {
+    clearTimeout(pocketDragTimer);
+    if (!pocketDrag) return;
+    pocketDrag = null;
+    pocketRepaint();
+  }
+  function pocketRepaint() {
+    if (window.orosLauncher && window.orosLauncher.refreshDock) window.orosLauncher.refreshDock();
+    pocketPaint();
+  }
+  function pocketDropWire(el) {
+    el.addEventListener("dragover", function (e) {
+      if (!pocketDragOk(e.dataTransfer)) return;
+      e.preventDefault();
+      try { e.dataTransfer.dropEffect = "copy"; } catch (x) {}
+      el.classList.add("pk-over");
+    });
+    el.addEventListener("dragleave", function () { el.classList.remove("pk-over"); });
+    el.addEventListener("drop", function (e) {
+      el.classList.remove("pk-over");
+      if (!pocketDragOk(e.dataTransfer)) return;
+      e.preventDefault();
+      var app = pocketDrag ? pocketDrag.app : "";
+      pocketDropped(e.dataTransfer, app);
+      pocketDragEnd();
+    });
+  }
+  // What was dropped → one Pocket item (files, a link or a text).
+  function pocketDropped(dt, app) {
+    if (!window.orosPocket.canKeep(app)) { scToast("err", window.t("pk.noapp")); return; }
+    var get = function (k) { try { return dt.getData(k) || ""; } catch (e) { return ""; } };
+    var paths = null;
+    try { paths = JSON.parse(get("application/x-oros-paths") || "null"); } catch (e) { paths = null; }
+    if (Array.isArray(paths) && paths.length) {
+      var F = window.orosFS;
+      var list = paths.filter(function (p) { return typeof p === "string" && p.indexOf("/internal/") === 0; }).slice(0, 10);
+      Promise.all(list.map(function (p) {
+        return Promise.resolve(F ? F.stat(p) : null).then(function (st) { return st && !st.dir ? p : null; }, function () { return null; });
+      })).then(function (ps) {
+        ps = ps.filter(Boolean);
+        if (!ps.length) { scToast("err", window.t("pk.nodirs")); return; }
+        window.orosPocket.keep("files", { items: ps.map(function (p) { return { path: p }; }) }, app || "files");
+      });
+      return;
+    }
+    var uri = get("text/uri-list").split(/\r?\n/).filter(function (l) { return l && l.charAt(0) !== "#"; })[0] || "";
+    var txt = get("text/plain");
+    if (/^https?:\/\//i.test(uri)) {
+      window.orosPocket.keep("link", { url: uri.trim(), title: txt && txt.trim() !== uri.trim() ? txt.trim().slice(0, 200) : "" }, app);
+    } else if (/^https?:\/\/\S+$/i.test(txt.trim())) {
+      window.orosPocket.keep("link", { url: txt.trim() }, app);
+    } else if (/\S/.test(txt)) {
+      window.orosPocket.keep("text", { text: txt }, app);
+    } else {
+      scToast("err", window.t("pk.noimport"));
+    }
+  }
+  // An app frame: its own drags start the Pocket's drop target (the
+  // shell document gets no events while the pointer is over the frame).
+  function pocketWireFrame(f) {
+    if (!f || f.__orosPocketWired) return;
+    f.__orosPocketWired = true;
+    var hook = function () {
+      var w = null;
+      try { w = f.contentWindow; if (!w || !w.document) w = null; } catch (e) { w = null; }
+      if (!w || w.__orosPocketHooked) return;
+      w.__orosPocketHooked = true;
+      var app = "";
+      try {
+        var parts = String(w.location.pathname).split("/").filter(Boolean);
+        if (parts.length && parts[parts.length - 1].indexOf(".") !== -1) parts.pop();
+        app = parts.length ? parts[parts.length - 1] : "";
+      } catch (e) {}
+      w.addEventListener("dragstart", function (e) { if (pocketDragOk(e.dataTransfer)) pocketDragStart(app); }, true);
+      w.addEventListener("dragend", function () { setTimeout(pocketDragEnd, 50); }, true);
+    };
+    f.addEventListener("load", hook);
+    hook();
+  }
+  // ---- W2: a file moved in Files keeps its place in the Pocket ----
+  function pocketMoved(src, dst) {
+    if (typeof src !== "string" || typeof dst !== "string") return;
+    if (/\/\.trash(\/|$)/.test(dst)) return;    // into the bin: the row shows it as gone
+    var o = null;
+    try { o = JSON.parse(localStorage.getItem(POCKET_KEY) || "null"); } catch (e) { o = null; }
+    if (!o || o.v !== 1 || !Array.isArray(o.items)) return;
+    var hit = false;
+    o.items.forEach(function (it) {
+      if (!it || it.k !== "files" || !it.d || !Array.isArray(it.d.items)) return;
+      it.d.items.forEach(function (fi) {
+        if (!fi || typeof fi.path !== "string") return;
+        if (fi.path === src || fi.path.indexOf(src + "/") === 0) {
+          var np = dst + fi.path.slice(src.length);
+          if (fi.name === fi.path.replace(/^.*\//, "")) fi.name = np.replace(/^.*\//, "");
+          fi.path = np;
+          hit = true;
+        }
+      });
+    });
+    if (!hit) return;
+    try { localStorage.setItem(POCKET_KEY, JSON.stringify(o)); } catch (e) { return; }
+    pocketChanged();
+    if (window.__orosPocketImpl) window.__orosPocketImpl.repaint();
   }
   var pocketQueued = false;
   function pocketPaint() {
@@ -5067,6 +5195,12 @@
     var run = document.getElementById("oros-running");
     if (run && window.MutationObserver) {
       new MutationObserver(pocketPaint).observe(run, { attributes: true, attributeFilter: ["class"] });
+      // W2: every new app frame (multitasking and side by side too) takes part in drags
+      new MutationObserver(function (ms) {
+        ms.forEach(function (m) {
+          Array.prototype.forEach.call(m.addedNodes, function (n) { if (n.tagName === "IFRAME") pocketWireFrame(n); });
+        });
+      }).observe(run, { childList: true });
       new MutationObserver(function (ms) {
         for (var i = 0; i < ms.length; i++) {
           var nodes = Array.prototype.slice.call(ms[i].addedNodes).concat(Array.prototype.slice.call(ms[i].removedNodes));
@@ -5074,6 +5208,25 @@
         }
       }).observe(document.body, { childList: true });
     }
+    // W2: drags in the shell document itself (from another program, or
+    // from the shell's own panels) and their end.
+    document.addEventListener("dragenter", function (e) { if (pocketDragOk(e.dataTransfer)) pocketDragStart(pocketDrag ? pocketDrag.app : ""); }, true);
+    document.addEventListener("dragend", function () { setTimeout(pocketDragEnd, 50); }, true);
+    document.addEventListener("drop", function () { setTimeout(pocketDragEnd, 50); }, true);
+    document.addEventListener("dragleave", function (e) {
+      // the pointer left the window (not into a frame: that fires no
+      // drop here, and the frame's own dragend ends it)
+      if (!e.relatedTarget && (e.clientX <= 0 || e.clientY <= 0 || e.clientX >= window.innerWidth || e.clientY >= window.innerHeight)) pocketDragEnd();
+    }, true);
+    // W2: a move in Files (orosFS.mv) carries the Pocket's paths along.
+    try {
+      var FS = window.orosFS, mv0 = FS && FS.mv;
+      if (typeof mv0 === "function") {
+        FS.mv = function (src, dst) {
+          return Promise.resolve(mv0.apply(FS, arguments)).then(function (r) { pocketMoved(src, dst); return r; });
+        };
+      }
+    } catch (e) {}
     // The desktop menu (quickmenu.js) lists "Pocket…" while it holds something.
     (window.__orosDeskItems = window.__orosDeskItems || []).push(function () {
       return pocketCount() && !strictLevelNow() ? [{ label: window.t("pk.desk"), run: window.orosPocket.open }] : [];
@@ -5670,6 +5823,7 @@
   appFrames().forEach(extWireFrame);
   appFrames().forEach(a11yWireFrame);
   if (window.orosClip) appFrames().forEach(window.orosClip.wire);   // CLIP-1
+  appFrames().forEach(pocketWireFrame);                               // POCKET-1 W2
 
   // Ctrl+Alt+Shift+F: the menu opens with the cursor in the field,
   // from the desktop or from inside an app.

@@ -1798,6 +1798,13 @@ body.till-mode #pocket-chip { display: none !important; }
   border-radius: 9px; background: var(--accent); color: var(--bg, #fff); font-size: 11px; font-weight: 700;
   line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none;
 }
+/* W2: while something is dragged, both buttons show as a drop place */
+#pocket-chip.pk-drag { outline: 1.5px dashed var(--accent); outline-offset: -4px; }
+#pocket-chip.pk-over, #ld-dock .ld-pocket.pk-over .ld-pk-tile { background: var(--accent); color: var(--bg, #fff); }
+#ld-dock .ld-pocket.pk-over .ld-pk-tile { border-style: solid; }
+@media (prefers-reduced-motion: no-preference) {
+  #pocket-chip.pk-drag, #ld-dock .ld-pocket.pk-drag .ld-pk-tile { transition: background .12s ease, color .12s ease; }
+}
 /* Sensitive work: shield in the bar while the mode is on */
 #strict-badge {
   display: inline-flex; align-items: center; justify-content: center;
