@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.80.00
+- **Email a Transfer link at a set day and time.** When you send through your Dropbox, tick Email the link at a set day and time, write the address and pick when (up to 14 days ahead). Mail opens with the email ready; press Send and it waits in the Outbox, then goes out from your orOS with your own account. You get a notification when it has gone and, if you like, a copy in your inbox. The hours the files stay count from the email. Change or cancel it in Mail's Outbox.
+
 ## Version 7.79.02
 - **Support orOS without Ko-fi.** Info › Support now has three plain links to the new page useoros.online/support/: buy an orOS t-shirt, mug or sticker from the Glarolykoi shop, make a one-time donation, or hire me. Ko-fi, the coffees and the monthly memberships are gone. The one notice after a month of use stays the same: once, and never again. The download page shows its support step at most once every 30 days, with Don't show this again.
 
