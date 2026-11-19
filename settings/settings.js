@@ -1064,6 +1064,7 @@
     }), m.icon, "n.focus.icon", function (v) { F.edit(m.id, { icon: v }); render(); }), { forId: "f-n.focus.icon" }));
 
     focusWhen(c5, F, m);
+    focusHide(c5, F, m);
 
     if (m.locked) {
       c5.appendChild(row(t("n.focus.allow"), null, { hint: t("n.focus.allow.none") }));
@@ -1098,6 +1099,50 @@
       }, "danger")));
     }
     host.appendChild(c5);
+  }
+
+  // What a mode hides while it runs (Focus F3, D3: the desktop and the
+  // Dock only; the menu and search still find every app).
+  function focusHide(c5, F, m) {
+    var p = parentWin();
+    var hide = m.hide || { widgets: [], apps: [] };
+    var put = function (k, id, on) {
+      var next = { widgets: hide.widgets.slice(), apps: hide.apps.slice() };
+      next[k] = next[k].filter(function (x) { return x !== id; });
+      if (on) next[k].push(id);
+      F.edit(m.id, { hide: next });
+      render();
+    };
+    var box = function (k, id, label) {
+      var lab = el("label", "check");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = hide[k].indexOf(id) >= 0;
+      cb.setAttribute("data-k", "n.focus.hide." + k + ":" + id);
+      cb.addEventListener("change", function () { put(k, id, cb.checked); });
+      lab.appendChild(cb);
+      lab.appendChild(el("span", null, label));
+      return lab;
+    };
+    var ws = null, pl = null;
+    try { ws = p && p.orosWidgets && p.orosWidgets.snapshot(); } catch (e) {}
+    try { pl = p && p.orosLauncher && typeof p.orosLauncher.placed === "function" ? p.orosLauncher.placed() : null; } catch (e) {}
+    var wl = el("div", "checks");
+    var wNames = {};
+    ((ws && ws.list) || []).forEach(function (w) { wNames[w.id] = w.name; });
+    var kinds = ((ws && ws.list) || []).filter(function (w) { return w.on; }).map(function (w) { return w.id; });
+    hide.widgets.forEach(function (k) { if (kinds.indexOf(k) < 0) kinds.push(k); });
+    kinds.forEach(function (k) { wl.appendChild(box("widgets", k, wNames[k] || k)); });
+    var ids = [];
+    if (pl) pl.desk.concat(pl.dock).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    hide.apps.forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    var al = el("div", "checks");
+    ids.forEach(function (id) { al.appendChild(box("apps", id, appName(id))); });
+    var r = row(t("n.focus.hide"), null, { hint: t("n.focus.hide.hint") });
+    if (kinds.length) { r.appendChild(el("div", "hint", t("n.focus.hide.widgets"))); r.appendChild(wl); }
+    if (ids.length) { r.appendChild(el("div", "hint", t("n.focus.hide.apps"))); r.appendChild(al); }
+    if (!kinds.length && !ids.length) r.appendChild(el("div", "hint", t("n.focus.hide.none")));
+    c5.appendChild(r);
   }
 
   // When a mode turns on by itself (Focus F2): a weekly schedule
