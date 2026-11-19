@@ -1,0 +1,5 @@
+// Glarolykoi for Android (net.glarolykoi.android): glarolykoi.net in our
+// own small WebView app, no Google libraries. See README.md.
+plugins {
+    id 'com.android.application' version '8.9.1' apply false
+}

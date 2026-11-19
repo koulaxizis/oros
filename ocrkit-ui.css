@@ -1,0 +1,99 @@
+/* ============================================================
+   orOS Core — ocrkit-ui.css: the Text mode over a picture (LIVE-TEXT)
+   Loaded with ocrkit-ui.js on the first press of Text. Colours come
+   from the app's palette (--accent, --panel-bg, …, G3), with dark
+   fallbacks.
+   ============================================================ */
+.ocx-host { position: relative; }
+.ocx-layer {
+  position: absolute; z-index: 5; touch-action: none; cursor: text;
+  -webkit-user-select: none; user-select: none; transform-origin: 50% 50%;
+}
+.ocx-box { position: absolute; }
+.ocx-layer.lit .ocx-box { background: rgba(0, 0, 0, .18); border-radius: 4px; }
+.ocx-w {
+  position: absolute; box-sizing: border-box; border-radius: 3px;
+  background: rgba(255, 255, 255, .22);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .55), 0 0 0 2px rgba(0, 0, 0, .25);
+}
+.ocx-w.on {
+  background: color-mix(in srgb, var(--accent, #6d4aff) 45%, transparent);
+  box-shadow: 0 0 0 2px var(--accent, #6d4aff);
+}
+.ocx-band {
+  position: absolute; border: 1px dashed var(--accent, #6d4aff);
+  background: color-mix(in srgb, var(--accent, #6d4aff) 12%, transparent); pointer-events: none;
+}
+.ocx-layer.scan .ocx-box {
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, .22) 50%, transparent 70%) 0 0 / 250% 100%;
+  animation: ocx-scan 1.6s linear infinite;
+}
+@keyframes ocx-scan { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .ocx-layer.scan .ocx-box { animation: none; background: rgba(255, 255, 255, .12); }
+}
+
+.ocx-stage {
+  position: fixed; inset: 0; z-index: 2147482000; background: rgba(0, 0, 0, .95);
+  display: flex; align-items: center; justify-content: center; padding: 12px 12px 150px; box-sizing: border-box;
+}
+.ocx-sframe { position: relative; max-width: 100%; max-height: 100%; display: flex; }
+.ocx-simg { display: block; max-width: 100%; max-height: calc(100vh - 170px); width: auto; height: auto; object-fit: contain; border-radius: 4px; background: #fff; }
+.ocx-dock {
+  position: fixed; z-index: 2147483000; left: 50%; bottom: max(12px, env(safe-area-inset-bottom));
+  transform: translateX(-50%); width: min(680px, calc(100vw - 16px)); box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 8px;
+  font: 14px/1.4 Nunito, "M PLUS Rounded 1c", system-ui, sans-serif; color: var(--text, #eee);
+}
+.ocx-bar, .ocx-panel {
+  background: var(--panel-bg, #1e1d22); border: 1px solid var(--border, #2c2b31); border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .35); box-sizing: border-box;
+}
+.ocx-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 10px 12px; }
+.ocx-chips { flex: 1 1 100%; min-width: 0; display: flex; flex-wrap: nowrap; gap: 6px; overflow-x: auto; scrollbar-width: thin; padding-bottom: 2px; }
+.ocx-chip { flex: 0 0 auto; }
+.ocx-chips[hidden] { display: none; }
+.ocx-chip {
+  font: inherit; font-size: 13px; min-height: 32px; max-width: 100%; padding: 4px 10px 4px 26px; border-radius: 16px; cursor: pointer;
+  border: 1px solid var(--accent, #6d4aff); color: var(--text, #eee); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  background: var(--accent-soft, rgba(109, 74, 255, .2));
+}
+.ocx-chip:hover { background-color: color-mix(in srgb, var(--accent, #6d4aff) 35%, transparent); }
+.ocx-chip:focus-visible { outline: 2px solid var(--accent, #6d4aff); outline-offset: 2px; }
+.ocx-chip::before {
+  content: ""; position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; background: currentColor;
+  -webkit-mask: var(--ocx-i) no-repeat center / contain; mask: var(--ocx-i) no-repeat center / contain;
+}
+.ocx-chip.k-url { --ocx-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1'/%3E%3C/svg%3E"); }
+.ocx-chip.k-event { --ocx-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Crect x='3' y='5' width='18' height='16' rx='2'/%3E%3Cpath d='M3 10h18M8 3v4M16 3v4'/%3E%3C/svg%3E"); }
+.ocx-chip.k-email { --ocx-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linejoin='round'%3E%3Crect x='3' y='5' width='18' height='14' rx='2'/%3E%3Cpath d='M3 7l9 6 9-6'/%3E%3C/svg%3E"); }
+.ocx-chip.k-phone { --ocx-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linejoin='round'%3E%3Cpath d='M5 3h4l2 5-3 2a11 11 0 0 0 6 6l2-3 5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z'/%3E%3C/svg%3E"); }
+.ocx-chip.k-contact { --ocx-i: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.4' stroke-linecap='round'%3E%3Ccircle cx='10' cy='8' r='4'/%3E%3Cpath d='M3 21a7 7 0 0 1 14 0M19 8v6M16 11h6'/%3E%3C/svg%3E"); }
+.ocx-status { flex: 1 1 180px; min-width: 0; color: var(--text-dim, #aaa); overflow-wrap: anywhere; }
+.ocx-acts { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: flex-end; }
+.ocx-chip { position: relative; }
+.ocx-btn {
+  font: inherit; font-weight: 600; min-height: 36px; padding: 6px 12px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--border, #2c2b31); background: transparent; color: var(--text, #eee);
+}
+.ocx-btn:hover { background: var(--accent-soft, rgba(109, 74, 255, .2)); }
+.ocx-btn.primary { background: var(--accent, #6d4aff); color: var(--accent-ink, #fff); border-color: transparent; }
+.ocx-btn.primary:hover { background: var(--accent-hover, #7d5aff); }
+.ocx-btn.on { border-color: var(--accent, #6d4aff); background: var(--accent-soft, rgba(109, 74, 255, .2)); }
+.ocx-btn:disabled { opacity: .45; cursor: default; }
+.ocx-btn:focus-visible { outline: 2px solid var(--accent, #6d4aff); outline-offset: 2px; }
+.ocx-x { min-width: 36px; padding: 6px 8px; font-size: 18px; line-height: 1; }
+.ocx-panel { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.ocx-plab { color: var(--text-dim, #aaa); font-size: 13px; }
+.ocx-area {
+  width: 100%; box-sizing: border-box; min-height: 120px; height: min(34vh, 260px); resize: vertical;
+  font: 15px/1.5 Nunito, "M PLUS Rounded 1c", system-ui, sans-serif; color: var(--text, #eee);
+  background: var(--bg, #141317); border: 1px solid var(--border, #2c2b31); border-radius: 8px; padding: 8px 10px;
+}
+.ocx-area:focus { outline: 2px solid var(--accent, #6d4aff); outline-offset: 0; }
+.ocx-pacts { display: flex; justify-content: flex-end; }
+@media (max-width: 420px) {
+  .ocx-bar { padding: 8px; }
+  .ocx-btn { padding: 6px 10px; }
+  .ocx-acts { justify-content: flex-start; }
+}

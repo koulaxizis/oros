@@ -108,3 +108,28 @@ test("ALLOW.woo: the analysis reads and the three typed writes go, nothing else"
   assert.notEqual(ok({ m: "GET", path: "/pl/analysis?product_id=1" }), "");
   assert.notEqual(ok({ m: "PUT", path: "/pl/rates", body: { key: "a", from: "2027-01-01", net: "1" } }), "");
 });
+
+test("the relay allows exactly the same Production Ledger calls", async () => {
+  const X = await import("../relay/ext.js");
+  const reqs = [
+    K.anaReq("2026-09-01", "2026-11-17"),
+    { m: "GET", path: "/pl/rates" },
+    { m: "POST", path: "/pl/rates", body: K.rateBody({ key: "bookmark", from: "2027-01-01", net: "0,12", rate: "24", supplier: "ektyposi.gr" }) },
+    { m: "POST", path: "/pl/promo-apply", body: K.promoBody(86658, "2026-11-17", true) },
+    { m: "POST", path: "/pl/event-sale", body: K.saleBody({ date: "2026-11-17", event: "Φεστιβάλ", payment: "card",
+      lines: [{ product_id: 77144, qty: 2 }, { product_id: 85020, qty: 1, price: "4,5" }], dry_run: true }) }
+  ];
+  for (const r of reqs) {
+    assert.equal(L.checkReq("woo", r), "", r.path);
+    assert.equal(X.checkExtReq("woo", r), "", "relay " + r.path);
+  }
+  const bad = [
+    { m: "POST", path: "/pl/package", body: { pkg: { bookmark: 3 } } },
+    { m: "POST", path: "/pl/rates", body: { key: "bookmark", from: "2027-01-01", net: "1", x: 1 } },
+    { m: "POST", path: "/pl/event-sale", body: { date: "2026-11-17", event: "F", payment: "cash", lines: [{ product_id: 1, qty: 1, price: 5 }] } }
+  ];
+  for (const r of bad) {
+    assert.notEqual(L.checkReq("woo", r), "", r.path);
+    assert.notEqual(X.checkExtReq("woo", r), "", "relay " + r.path);
+  }
+});

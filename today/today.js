@@ -59,6 +59,7 @@
   var I18N = {
     en: {
       app: "Today", refresh: "Refresh", settings: "Settings", close: "Close",
+      "cont.title": "Continue from your other devices", "cont.go": "Continue", "cont.hide": "Hide",
       "disc.title": "Suggestion of the week", "disc.game": "A game you have not played yet.",
       "disc.app": "An app you have not opened yet.", "disc.open": "Open", "disc.try": "Try it",
       "disc.opened": "You opened it this week.", "disc.no": "Not for me", "disc.mute": "Mute suggestions",
@@ -125,6 +126,7 @@
     },
     el: {
       app: "Σήμερα", refresh: "Ανανέωση", settings: "Ρυθμίσεις", close: "Κλείσιμο",
+      "cont.title": "Συνέχισε από τις άλλες συσκευές σου", "cont.go": "Συνέχισε", "cont.hide": "Απόκρυψη",
       "disc.title": "Πρόταση της εβδομάδας", "disc.game": "Ένα παιχνίδι που δεν έχεις παίξει ακόμα.",
       "disc.app": "Μια εφαρμογή που δεν έχεις ανοίξει ακόμα.", "disc.open": "Άνοιγμα", "disc.try": "Δοκίμασέ το",
       "disc.opened": "Το άνοιξες αυτή την εβδομάδα.", "disc.no": "Δεν με ενδιαφέρει", "disc.mute": "Σίγαση προτάσεων",
@@ -275,6 +277,43 @@
     box.appendChild(acts);
     return box;
   }
+  // CONT-1 W2: the newest item from another device (the shell's
+  // orosContinueUi: never the sensitive apps, nothing under Sensitive
+  // work or with the switch off). Text through textContent.
+  function contUi() { var p = parentWin(); try { return p && p.orosContinueUi ? p.orosContinueUi : null; } catch (e) { return null; } }
+  var contHooked = false;
+  function contCard() {
+    if (editing) return null;
+    var U = contUi(), it = null;
+    try { it = U ? U.items(1)[0] : null; } catch (e) { it = null; }
+    if (U && !contHooked && typeof U.onChange === "function") {
+      contHooked = true;
+      U.onChange(function () { try { if (last && document.body) render(); } catch (e) {} });   // a pull while Today is open
+    }
+    if (!it) return null;
+    var box = el("section", "disc cont");
+    box.setAttribute("aria-label", t("cont.title"));
+    var head = el("div", "disc-head");
+    head.appendChild(iconFor(it.app));
+    var txt = el("div", "disc-txt");
+    txt.appendChild(el("span", "disc-kicker", t("cont.title")));
+    txt.appendChild(el("strong", "disc-name", it.title));
+    txt.appendChild(el("span", "disc-line", it.line));
+    head.appendChild(txt);
+    box.appendChild(head);
+    var acts = el("div", "disc-acts");
+    var go = el("button", "txt-btn primary", t("cont.go"));
+    go.type = "button";
+    go.title = it.tip;
+    go.addEventListener("click", function () { try { U.open(it.dev, it.app); } catch (e) {} });
+    acts.appendChild(go);
+    var no = el("button", "txt-btn", t("cont.hide"));
+    no.type = "button";
+    no.addEventListener("click", function () { try { U.dismiss(it.dev, it.app, it.at); } catch (e) {} render(); });
+    acts.appendChild(no);
+    box.appendChild(acts);
+    return box;
+  }
   function env() { var p = parentWin(); try { return p && p.orosTodayEnv ? p.orosTodayEnv : null; } catch (e) { return null; } }
 
   function dateLong(ymd) {
@@ -395,6 +434,8 @@
       main.appendChild(el("div", "note", t("oldNote", { d: dateLong(oldDay) })));
     }
     if (set && !set.on.v) main.appendChild(el("div", "note", t("off")));
+    var cc = contCard();
+    if (cc) main.appendChild(cc);
     var dc = discCard();
     if (dc) main.appendChild(dc);
     var on = L.ids(layout);

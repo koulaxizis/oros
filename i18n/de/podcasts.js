@@ -232,6 +232,7 @@ orosPack("de", "podcasts", {
  "pl.sleepOff": "Aus",
  "pl.speed": "Wiedergabetempo",
  "pl.stop": "Stopp",
+ "viz.btn": "Lichtshow",
  "pv.moreBy": "Mehr von {by}",
  "s.autoNext": "Nächste Folge der Warteschlange abspielen",
  "s.back": "Zurückspringen",

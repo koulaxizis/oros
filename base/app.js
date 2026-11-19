@@ -656,7 +656,33 @@
     remember();
     render();
     $("content").scrollTop = 0; $("content").scrollLeft = 0;
+    contNote();
   }
+  // CONT-1 W4: tell the shell which base is open (continue.js keeps the
+  // reference and the base's name only, never its records). On opening,
+  // and once at the first tap or key after the start; nothing before
+  // that, so a restored base never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var b = W ? curBase() : null;
+      var name = b && typeof b.name === "string" ? b.name.trim() : "";
+      if (name) W.note("base", { target: { base: b.id }, title: name });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   // ---------- 3. Home ----------
   function render() {

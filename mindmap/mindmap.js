@@ -2478,7 +2478,31 @@
     hits = null;
     closeFind();
     refresh();
+    contNote();
   }
+  // CONT-1 W3: tell the shell which map is open (continue.js keeps the
+  // reference and the title only, never the nodes). On opening, and once
+  // at the first tap or key after the start; nothing before that, so a
+  // restored map never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var C = window.parent !== window ? window.parent.orosContinue : null;
+      if (C && curMap()) C.note("mindmap", { target: { map: prefs.map }, title: mapTitle(prefs.map) });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   function textDialog(title, lbl, value, ph, onOk) {
     var dlg = makeDialog("mm-name", title);
     var form = el("form");

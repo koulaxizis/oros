@@ -516,7 +516,33 @@
     else { view = { x: 0, y: 0, s: 1 }; if (board) setTimeout(fit, 0); }
     savePrefs();
     render();
+    contNote();
   }
+
+  // CONT-1 W3: tell the shell which board is open (continue.js keeps the
+  // reference and the name only, never the drawing). On opening, and once
+  // at the first tap or key after the start: a sync re-render is not the
+  // person opening the board.
+  var contLive = false;   // nothing before the first tap or key: a restored item must not hide the other device's
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var b = W && board ? C.board(data, board) : null;
+      if (b) W.note("whiteboard", { target: { board: b.id }, title: b.name || t("board.untitled") });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   // The board on first use: made with the first object, so opening
   // the app on a new device never adds an empty board to sync.
