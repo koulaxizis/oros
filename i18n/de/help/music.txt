@@ -71,6 +71,13 @@ Für andere Songs kann Musik LRCLIB fragen (lrclib.net, eine freie und offene So
 
 Diese Einstellungen bleiben auf diesem Gerät.
 
+## Lichtshow
+`Lichtshow` (die Sonnen-Schaltfläche oben im großen Player) füllt das Fenster mit Licht, das sich mit der Musik bewegt. `Licht:` wählt den Stil: Leuchten, Ringe, Balken oder Welle. `Nur das Licht` blendet die Steuerung aus; tippe irgendwohin oder drücke eine Taste, um sie zurückzuholen. Musik merkt sich deine Wahl auf diesem Gerät.
+
+Das Licht folgt dem Ton von Songs auf diesem Gerät, von Offline-Kopien und von Songs aus deinem eigenen WebDAV oder Dropbox. Viele Seiten, die Musik streamen, lassen eine Webseite ihren Ton nicht hören; bei diesen bewegt sich das Licht von selbst, und eine Zeile unter der Steuerung sagt das. Alles geschieht auf diesem Gerät: Nichts wird aufgenommen oder gesendet.
+
+Das Licht bleibt still, wenn reduzierte Bewegung an ist, wenn der Akku schwach ist (unter 20 % und nicht am Laden) oder wenn das Gerät zu ausgelastet ist. Es blinkt nie: Es wird sanft heller und dunkler.
+
 ## Auf einem Lautsprecher oder Fernseher abspielen
 Im großen Player wählt die Taste mit dem Bildschirm und den Wellen (`Abspielen auf…`), wo die Musik läuft: eine andere Ausgabe dieses Geräts, ein in den Systemeinstellungen gekoppelter Bluetooth-Lautsprecher, Chromecast oder AirPlay über den Browser oder ein Smart-TV oder Netzwerklautsprecher über orOS Bridge.
 - **Smart-TV oder Netzwerklautsprecher (DLNA):** Läuft [orOS Bridge](https://useoros.online/download/) 0.10.0 oder neuer auf einem Windows- oder Linux-Computer zu Hause, zeigt dasselbe Fenster die Smart-TVs, Kodi-Boxen und Netzwerklautsprecher in deinem Netzwerk. Beim ersten Mal fragt `Mit orOS Bridge verbinden` nach dem 6-stelligen Code, den die Bridge zeigt (dieselbe Kopplung wie Studio und Scanner & PDF). Wähle ein Gerät, und es spielt; das Fenster hat dann Pause, Lautstärke und `Zurück zu diesem Gerät`. Das Gerät holt den Stream selbst, also gehen nur http- und https-Adressen. `Erneut suchen` sucht noch einmal.

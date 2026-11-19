@@ -1852,6 +1852,32 @@
     // Today, Calendar and the reminder (W3): one document, or a list.
     show: function (flag) { q.flag = flag === "soon" || flag === "keep" ? flag : ""; if (!active) enter(); else paint(); },
     isDocument: function (p, h) { return CORE.isDocument(state, p, h); },
+    // Tags on every file (files/tags.js, TAGS v1): the one tag list
+    // of Files is this slice's `tags`; a file that is a document keeps
+    // its tags on the document (one set, never two).
+    tagList: function () { return CORE.tagsSorted(state, LANG); },
+    docRows: function () { return state.docs; },
+    setDocTags: function (id, ids) {
+      var d0 = CORE.getDoc(state, id);
+      if (!d0) return false;
+      var d = JSON.parse(JSON.stringify(d0));
+      d.tg = (ids || []).filter(function (x, i, a) { return a.indexOf(x) === i; }).slice(0, 20);
+      return commit(CORE.putDoc(state, d, Date.now()));
+    },
+    ensureTag: function (name) {
+      var r = CORE.ensureTag(state, name, Date.now());
+      commit(r.state);
+      return r.id;
+    },
+    putTag: function (id, n, c) {
+      var tg = null;
+      state.tags.forEach(function (x) { if (x.id === id) tg = x; });
+      if (!tg) return false;
+      var row = { id: id, n: n || tg.n };
+      if (c != null) row.c = c;
+      return commit(CORE.putTag(state, row, Date.now()));
+    },
+    dropTag: function (id) { return commit(CORE.dropTag(state, id, Date.now())); },
     t: t
   };
 })();

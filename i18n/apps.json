@@ -342,7 +342,8 @@
     "files/dropbox.js",
     "files/files.js",
     "files/gmedia.js",
-    "files/photos.js"
+    "files/photos.js",
+    "files/tags.js"
    ]
   },
   {
@@ -867,7 +868,8 @@
    "app": "ringtones",
    "files": [
     "ringtones/core.js",
-    "ringtones/ringtones.js"
+    "ringtones/ringtones.js",
+    "ringtones/search.js"
    ]
   },
   {
@@ -903,6 +905,7 @@
    "files": [
     "settings/core.js",
     "settings/fonts.js",
+    "settings/screentime.js",
     "settings/search.js"
    ]
   },
@@ -927,6 +930,14 @@
    "app": "shell",
    "files": [
     "translations.js"
+   ]
+  },
+  {
+   "app": "shop",
+   "files": [
+    "shop/app.js",
+    "shop/search.js",
+    "shop/today.js"
    ]
   },
   {

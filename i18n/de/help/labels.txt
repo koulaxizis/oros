@@ -27,6 +27,7 @@ Der Rad-Button oben zeigt das Buchstabenrad, wie am echten Gerät. Die Tastatur 
 - `Neues Etikett` beginnt ein leeres Band in derselben Farbe und Größe.
 - Tippe in der Liste auf ein Etikett, um es zu öffnen. Der Kopier-Button macht ein Duplikat, und das × löscht es; `Rückgängig` holt es zurück.
 - `Zuletzt` zeigt die letzten 10 Etiketten, die du auf diesem Gerät gemacht hast, gespeichert oder nicht. Tippe auf eines, um daraus ein neues Etikett zu beginnen.
+- Die Suche im Menü findet deine gespeicherten Etiketten über ihren Text. Wählst du eines, öffnet es sich auf dem Band.
 
 ## Herunterladen, kopieren und drucken
 - `PNG herunterladen` speichert das Etikett als Bild mit transparentem Hintergrund, scharf genug zum Drucken.

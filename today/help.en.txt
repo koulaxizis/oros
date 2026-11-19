@@ -90,6 +90,9 @@ On your first open of orOS each day after the start time (06:00 unless you chang
 
 The notice comes once a day, even with several devices: they all see the same one. When sync is on, it waits until your data has synced, so it never announces yesterday's state. On a day with nothing late or due, no notice comes.
 
+## Continue from your other devices
+When you had something open in an app on another of your devices, such as a chapter in Writer on your phone, a card at the top says what, where and when. `Continue` opens it here, `Hide` hides it until that device has something newer. The same items show in the [overview](help:t/menu#overview) and, if you tick it, in the smart top bar. Private apps never show; turn it off in [Settings › System](app:settings).
+
 ## Suggestion of the week
 Once a week, from Monday 10:00, orOS suggests one app or game you have never opened on any of your devices: a notice in the bell and a card at the top of Today, with what it does. `Try it` opens it. `Not for me` means that app is never suggested again. `Mute suggestions` stops the notice and the card on all your devices; turn them back on with `Weekly app suggestion` in [Settings › Notifications](help:t/notifications). Your devices all get the same suggestion that week, and apps you already use, the system apps and apps that need an account of your own are never suggested. When you have tried everything, nothing comes.
 

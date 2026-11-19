@@ -71,7 +71,7 @@ test("search: a matching partner leads with its balance; contracts are found", (
     assert.equal(hits.find((h) => h.id === "cust003").text, "", "a customer that does not match is not worked out");
     const k = hits.find((h) => h.id === "ctr0001");
     assert.equal(k.title, "Consignment 2026");
-    assert.deepEqual(k.target, { cust: "cust001" });
+    assert.deepEqual(k.target, { cust: "cust001", ctr: "ctr0001" });
     const el = P.search({ q: "alpha books", words, fold: C.fold, lang: "el", code: "el", readJSON: (k2) => store[k2] || null });
     assert.ok(el.find((h) => h.id === "cust001").text.startsWith("Σου χρωστά"));
   } finally {

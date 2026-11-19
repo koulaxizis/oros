@@ -360,6 +360,31 @@ dl.info dd { overflow-wrap: anywhere; }
   * { transition: none !important; animation: none !important; }
 }
 
+/* ---------- Light show (MU-VIZ) ----------
+   A canvas behind the whole full player, always on a dark ground (the
+   light adds up, so it needs the dark), whatever the theme. */
+.fp-viz { display: none; position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
+.full-dlg.viz-on {
+  --bg: #08080d; --panel-bg: #08080d; --text: #f3f3f8; --text-dim: #c3c3d2; --border: rgba(255, 255, 255, 0.2);
+  color: var(--text); background: #08080d; position: fixed; overflow: hidden; color-scheme: dark;
+}
+.full-dlg.viz-on .fp-viz { display: block; }
+.full-dlg.viz-on > :not(.fp-viz) { position: relative; z-index: 1; }
+.full-dlg.viz-on .fp-art > * { visibility: hidden; }
+.full-dlg.viz-on .fp-t, .full-dlg.viz-on .fp-a, .full-dlg.viz-on .fp-times, .full-dlg.viz-on .fp-from { text-shadow: 0 1px 4px rgba(0, 0, 0, 0.85); }
+.fp-vizbar { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+.fp-vizbar[hidden], .fp-viz-note[hidden] { display: none; }
+.full-dlg.viz-on .fp-pill { background: rgba(8, 8, 13, 0.55); }
+.fp-viz-note { text-align: center; margin: -4px auto 0; max-width: 460px; line-height: 1.4; text-shadow: 0 1px 3px #000; }
+.fp-viz-back { display: none; }
+.full-dlg.fp-imm > :not(.fp-viz):not(.fp-viz-back) { visibility: hidden; }
+.full-dlg.fp-imm .fp-viz-back {
+  display: inline-flex; position: absolute; top: max(10px, env(safe-area-inset-top)); left: 10px;
+  background: rgba(8, 8, 13, 0.45); color: var(--text); opacity: 0.7;
+}
+.full-dlg.fp-imm .fp-viz-back:hover, .full-dlg.fp-imm .fp-viz-back:focus-visible { opacity: 1; }
+@media (forced-colors: active) { .full-dlg.viz-on .fp-viz { display: none; } }
+
 /* ---------- Servers (wave 4) ---------- */
 .sv-msg { margin: 6px 0; min-height: 1em; }
 .sv-msg.err { color: var(--danger); }
@@ -427,3 +452,8 @@ dl.info dd { overflow-wrap: anywhere; }
 .play-bar > .big-play, .play-bar > .icon-btn { flex: 0 0 auto; }
 .play-bar > .pill { padding: 0 14px; }
 @media (max-width: 380px) { .play-bar { gap: 4px; } }
+@media (max-width: 420px) {
+  /* Six buttons in the full player's head (MU-VIZ added one): a little closer. */
+  .fp-head { gap: 0; }
+  .fp-head .icon-btn { width: 40px; }
+}
