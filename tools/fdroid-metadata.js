@@ -21,7 +21,7 @@ const STORE = path.join(__dirname, "fdroid");
 
 const WEB = "https://useoros.online/";
 const SOURCE = "https://github.com/koulaxizis/oros";
-const DONATE = "https://ko-fi.com/koulaxizis";
+const DONATE = "https://useoros.online/support/";
 
 const TEXT = {
   en: {
@@ -205,7 +205,7 @@ a { color: var(--accent); }
 ${apps.map(row).join("\n")}
 </ul>
 </section>
-<p class="muted">More about orOS: <a href="${WEB}">useoros.online</a> · source: <a href="${SOURCE}">github.com/koulaxizis/oros</a> · support: <a href="${DONATE}">Ko-fi</a></p>
+<p class="muted">More about orOS: <a href="${WEB}">useoros.online</a> · source: <a href="${SOURCE}">github.com/koulaxizis/oros</a> · support: <a href="${DONATE}">useoros.online/support</a></p>
 </main>
 </body>
 </html>

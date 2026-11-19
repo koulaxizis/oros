@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.78.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.85.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1312,6 +1312,14 @@
   //            Quick settings button turns on again.
   //   pointer  "normal" | "large" | "xl": big SVG cursors, only with a
   //            mouse or touchpad.
+  //   motion   true: reduce motion on top of the system's own setting
+  //            (W2). data-oros-motion on every document stills CSS
+  //            animations and transitions, and i18n.js makes
+  //            matchMedia("(prefers-reduced-motion: reduce)") match in
+  //            the shell and every app, so code that honours the
+  //            system setting follows this switch too.
+  //   transp   true: reduce transparency (no blur, solid panels);
+  //            also on while the system asks for it.
   // A11Y_CSS goes into the shell and into every same-origin app
   // document (on load and on every change) and only acts through the
   // data-oros-* attributes of that document's root, so nothing looks
@@ -1323,6 +1331,14 @@
   var A11Y_STRENGTHS = [25, 50, 75, 100];
   var A11Y_POINTERS = ["normal", "large", "xl"];
   var A11Y_CSS =
+    // Reduce motion (W2): CSS animations and transitions end at once
+    // (transitionend/animationend still fire, so code waiting on them goes on).
+    "html[data-oros-motion] *, html[data-oros-motion] *::before, html[data-oros-motion] *::after {" +
+    " animation-duration: 0.01ms !important; animation-delay: 0s !important; animation-iteration-count: 1 !important;" +
+    " transition-duration: 0.01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }\n" +
+    // Reduce transparency (W2): no blur behind panels.
+    "html[data-oros-transparency] *, html[data-oros-transparency] *::before, html[data-oros-transparency] *::after {" +
+    " -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }\n" +
     "html[data-oros-focus] :focus-visible, html[data-oros-contrast] :focus-visible {" +
     " outline: 3px solid var(--accent, Highlight) !important; outline-offset: 2px !important; }\n" +
     "html[data-oros-contrast] a[href] { text-decoration: underline !important; }\n" +
@@ -1346,12 +1362,16 @@
       filter: A11Y_FILTERS.indexOf(v.filter) !== -1 ? v.filter : "off",
       strength: A11Y_STRENGTHS.indexOf(v.strength) !== -1 ? v.strength : 100,
       last: A11Y_FILTERS.indexOf(v.last) > 0 ? v.last : "grey",
-      pointer: A11Y_POINTERS.indexOf(v.pointer) !== -1 ? v.pointer : "normal"
+      pointer: A11Y_POINTERS.indexOf(v.pointer) !== -1 ? v.pointer : "normal",
+      motion: v.motion === true,
+      transp: v.transp === true
     };
   }
   function a11yMq(q) {
     try { return !!(window.matchMedia && window.matchMedia(q).matches); } catch (e) { return false; }
   }
+  function a11yLessTransp() { return a11y.transp || a11yMq("(prefers-reduced-transparency: reduce)"); }
+  function a11yLessMotion() { return a11y.motion || a11yMq("(prefers-reduced-motion: reduce)"); }
   function a11yHigh() {
     if (a11y.contrast === "on") return true;
     if (a11y.contrast === "off") return false;
@@ -1381,6 +1401,12 @@
     if (s.textContent !== css) s.textContent = css;
     a11yAttr(r, "data-oros-contrast", a11yHigh() ? "high" : null);
     a11yAttr(r, "data-oros-focus", a11y.focus ? "on" : null);
+    a11yAttr(r, "data-oros-motion", a11y.motion ? "reduce" : null);
+    a11yAttr(r, "data-oros-transparency", a11yLessTransp() ? "reduce" : null);
+    // matchMedia follows the switch (i18n.js); an app without i18n.js gets it now.
+    var w = doc.defaultView;
+    if (w && !w.__orosMotion && window.__orosMotionShim) { try { window.__orosMotionShim(w); } catch (e) {} }
+    if (w && w.__orosMotion) { try { w.__orosMotion.refresh(); } catch (e) {} }
     if (window.orosA11yFx) window.orosA11yFx.mark(doc);       // smart invert, pointer
   }
   // One app frame. Chromium and WebKit scale a zoomed frame's page
@@ -1461,6 +1487,12 @@
       var st = Number(value);
       if (A11Y_STRENGTHS.indexOf(st) === -1 || st === a11y.strength) return;
       a11y.strength = st;
+    } else if (name === "reduceMotion") {
+      if (!!value === a11y.motion) return;
+      a11y.motion = !!value;
+    } else if (name === "reduceTransparency") {
+      if (!!value === a11y.transp) return;
+      a11y.transp = !!value;
     } else if (name === "pointerSize") {
       if (A11Y_POINTERS.indexOf(value) === -1 || value === a11y.pointer) return;
       a11y.pointer = value;
@@ -1482,12 +1514,24 @@
       filter: a11y.filter, filters: A11Y_FILTERS.slice(), last: a11y.last,
       strength: a11y.strength, strengths: A11Y_STRENGTHS.slice(),
       pointer: a11y.pointer, pointers: A11Y_POINTERS.slice(),
-      fine: a11yMq("(any-pointer: fine)")
+      fine: a11yMq("(any-pointer: fine)"),
+      // Reduce motion and transparency (W2): the switch, and whether the
+      // system already asks for it (the real query, not the switch)
+      motion: a11y.motion, motionSys: a11ySysMotion(),
+      transp: a11y.transp, transpSys: a11yMq("(prefers-reduced-transparency: reduce)")
     };
   }
   // For other features (Screen time's Bedtime): a temporary filter on
   // top of the person's own, never stored. overlayFilter(name, "grey" |
   // null, { fadeMs }) → true when taken.
+  // The system's own motion setting, past i18n.js's wrapper.
+  function a11ySysMotion() {
+    try { return !!(window.__orosRealMatchMedia || window.matchMedia)("(prefers-reduced-motion: reduce)").matches; }
+    catch (e) { return false; }
+  }
+  // For new code (the app open/close animation, ...): true while motion
+  // should be reduced, by this switch or by the system.
+  window.orosMotion = { reduced: a11yLessMotion };
   window.orosA11y = {
     overlayFilter: function (name, kind, opts) {
       if (!name || (kind !== null && kind !== "grey")) return false;
@@ -1560,7 +1604,8 @@
   // The system's own contrast switch and a resize (the 320 px cap)
   // apply at once.
   function a11yWatch() {
-    ["(prefers-contrast: more)", "(forced-colors: active)"].forEach(function (q) {
+    ["(prefers-contrast: more)", "(forced-colors: active)", "(prefers-reduced-transparency: reduce)",
+     "(prefers-reduced-motion: reduce)"].forEach(function (q) {
       var mq = window.matchMedia ? window.matchMedia(q) : null;
       if (!mq) return;
       var on = function () { a11yApply(); settingsNotify(); };
@@ -4192,6 +4237,7 @@
         appsResumeStart();   // RS-1
         greetStart();
         safeStart();
+        supportAskStart();   // SUP-1: once, after 30 days
         if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
@@ -6667,6 +6713,20 @@
     infoRow.appendChild(infoBtn);
     menu.appendChild(infoRow);
 
+    // SUP-1 (Chris 2026-11-19): Support orOS, the Info window's Support
+    // section. A plain row like Info: no badge, no count, never coloured.
+    var supRow = document.createElement("div");
+    supRow.className = "install-section";
+    var supBtn = document.createElement("button");
+    supBtn.className = "menu-item install-row";
+    supBtn.textContent = window.t("menu.support");
+    supBtn.addEventListener("click", function () {
+      closeMenu();
+      showSupportSection();
+    });
+    supRow.appendChild(supBtn);
+    menu.appendChild(supRow);
+
     menu.scrollTop = keepTop;
     settingsNotify();            // the Settings app repaints too
   }
@@ -9005,30 +9065,69 @@
     }
   }
   
-    // ---------- Support / donations (Info modal only — no footer) ----------
-  // Plain <a> links, NEVER platform widgets: embeds mean third-party
-  // scripts/requests — violates the no-tracking doctrine. Opened in
-  // a new tab with rel=noopener (same contract as the repo link).
+    // ---------- Support (Info modal only — no footer) ----------
+  // SUP-1 (Chris 2026-11-19, replaces KOFI-1): orOS is supported by buying
+  // something from the Glarolykoi shop, a one-time donation (Viva) or
+  // hiring Christos; nothing is unlocked. Plain <a> links, NEVER platform
+  // widgets: embeds mean third-party scripts/requests (no-tracking
+  // doctrine). New tab, rel=noopener, fixed URLs. All three cards go to
+  // a section of useoros.online/support/, never straight to the shop or
+  // the payment page: where support goes can change there with no new
+  // orOS release.
   // i18n: words in translations.js (sup.*), German in the shell pack.
+  var SUPPORT_PAGE = "https://useoros.online/support/";
   var SUPPORT_OPTS = [
-    {
-      name: "Ko-fi",
-      url:  "https://ko-fi.com/koulaxizis",
-      k:    "sup.kofi"
-    }
+    { hash: "#buy",    nk: "sup.buy",  k: "sup.buy.d" },
+    { hash: "#donate", nk: "sup.once", k: "sup.once.d" },
+    { hash: "#hire",   nk: "sup.hire", k: "sup.hire.d" }
   ];
-  // Extra plain links shown under the Ko-fi card (same rules: fixed
-  // URLs, new tab, rel=noopener, no fetch/embed/widget).
-  var SUPPORT_LINKS = [
-    {
-      url: "https://ko-fi.com/koulaxizis/tiers",
-      k:   "sup.tiers"
-    },
-    {
-      url: "https://nulljsfx.tech/supporters/",
-      k:   "sup.supporters"
-    }
-  ];
+  // The page speaks English and Greek; German reads the English one.
+  function supportHref(opt) {
+    return SUPPORT_PAGE + "?lang=" + langBase() + opt.hash;
+  }
+
+  // The Info window, scrolled to its Support section (Start menu row,
+  // the SUP-1 notice).
+  function showSupportSection() {
+    if (!scInfoClose) showInfoModal();
+    var sec = document.getElementById("sc-support");
+    if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: "start" });
+  }
+
+  // SUP-1 (was KOFI-1 / A2, Chris 2026-11-19, changes the no-nags rule
+  // once): one quiet notice after 30 days of use on this device, never
+  // again (so it can never repeat: stricter than "at most once per 30
+  // days, with Don't show again").
+  // Device-local keys, never synced: SUP_SINCE (first start seen, set on
+  // the first start after this version, so people who were here before
+  // get it 30 days from now), SUP_ASKED (the notice was shown). Not in a
+  // single-app window, not during the tour, never over an open app: it
+  // waits for a start that lands on the desktop.
+  var SUP_SINCE = "oros-support-since", SUP_ASKED = "oros-support-asked";
+  var SUP_AFTER_MS = 30 * 24 * 3600 * 1000;
+  function supportAskStart() {
+    if (SOLO) return;
+    var since = 0;
+    try {
+      if (localStorage.getItem(SUP_ASKED) === "1") return;
+      since = parseInt(localStorage.getItem(SUP_SINCE), 10) || 0;
+      if (!since) { localStorage.setItem(SUP_SINCE, String(Date.now())); return; }
+    } catch (e) { return; }
+    if (Date.now() - since < SUP_AFTER_MS) return;
+    lateWhen(function () {
+      var tour = false;
+      try { tour = localStorage.getItem(TOUR_KEY) === "1"; } catch (e) {}
+      if (state.running || late.open || tour) return;
+      if (!window.orosNotifs || !window.orosNotifs.transient) return;
+      var id = window.orosNotifs.transient({
+        ns: "system",
+        title: window.t("sup.ask.title"),
+        body: window.t("sup.ask.body"),
+        action: { label: window.t("sup.ask.act"), fn: showSupportSection }
+      });
+      if (id) { try { localStorage.setItem(SUP_ASKED, "1"); } catch (e) {} }
+    });
+  }
 
   function wireSupportSection(ov) {
     var box = ov.querySelector(".sc-box");
@@ -9054,7 +9153,7 @@
       "display:flex;flex-direction:column;gap:6px;margin-bottom:8px;";
     SUPPORT_OPTS.forEach(function (opt) {
       var a = document.createElement("a");
-      a.href = opt.url;
+      a.href = supportHref(opt);
       a.target = "_blank";
       a.rel = "noopener";
       a.style.cssText =
@@ -9063,7 +9162,7 @@
         "border-radius:8px;color:var(--text);text-decoration:none;" +
         "font-size:12.5px;font-weight:600;flex-wrap:wrap;";
       var nm = document.createElement("span");
-      nm.textContent = opt.name;
+      nm.textContent = window.t(opt.nk);
       var ds = document.createElement("span");
       ds.style.cssText =
         "font-size:11px;color:var(--text-dim);font-weight:400;";
@@ -9074,20 +9173,6 @@
     });
     sec.appendChild(cards);
 
-    var links = document.createElement("div");
-    links.id = "sc-support-links";
-    links.style.cssText =
-      "display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:0 0 8px;";
-    SUPPORT_LINKS.forEach(function (l) {
-      var a = document.createElement("a");
-      a.href = l.url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      a.style.cssText = "color:var(--accent);";
-      a.textContent = window.t(l.k);
-      links.appendChild(a);
-    });
-    sec.appendChild(links);
 
     if (resetWrap) box.insertBefore(sec, resetWrap);
     else box.appendChild(sec);
@@ -12960,6 +13045,8 @@
       case "clip":       if (window.orosClip) window.orosClip.setOn(!!value); return;
       case "screentime":      if (window.orosScreenTime) { window.orosScreenTime.setOn(!!value); settingsNotify(); } return;   // ST-1
       case "screentimeClear": if (window.orosScreenTime) { window.orosScreenTime.clear(); settingsNotify(); } return;
+      case "screentimeBed":     if (window.orosScreenTime && window.orosScreenTime.setBed) { window.orosScreenTime.setBed(value); settingsNotify(); } return;   // S3: { on, from, to, days, sleep } (any of them)
+      case "screentimeBedSkip": if (window.orosScreenTime && window.orosScreenTime.bedSkip) { window.orosScreenTime.bedSkip(!!value); settingsNotify(); } return;   // S3: Not tonight
       case "screentimeLimit":   // S2: { id, min } (0 = no limit)
         if (window.orosScreenTime && window.orosScreenTime.setLimit && value && typeof value === "object") {
           window.orosScreenTime.setLimit(String(value.id || ""), Number(value.min) || 0);
@@ -12975,7 +13062,9 @@
       case "focusRing":
       case "colourFilter":
       case "filterStrength":
-      case "pointerSize":  a11ySetUser(name, value); return;
+      case "pointerSize":
+      case "reduceMotion":
+      case "reduceTransparency": a11ySetUser(name, value); return;
       case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
@@ -14883,7 +14972,7 @@
     btn.id = "mt-btn";
     btn.type = "button";
     btn.hidden = true;
-    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="3" width="14" height="12" rx="2"/><path d="M17 19H5a2 2 0 0 1-2-2V8"/></svg><span class="mt-count">0</span>';
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="8" width="14" height="13" rx="2"/><path d="M3 12h14"/><path d="M7 8V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/></svg><span class="mt-count">0</span>';
     btn.setAttribute("data-i18n-title", "mt.sw.tip");
     btn.setAttribute("title", window.t("mt.sw.tip"));
     btn.addEventListener("click", function (e) { e.stopPropagation(); mtSwitcher(); });
@@ -17639,10 +17728,16 @@
       docs: function () { return window.__orosAppDocs(); },
       appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
       // S2: the quiet toast 5 minutes before a limit, and the card's "Go to the desktop".
-      toast: function (title, body) {
-        if (window.orosNotifs && window.orosNotifs.transient) window.orosNotifs.transient({ ns: "screentime", title: title, body: body });
+      toast: function (title, body, action) {
+        if (window.orosNotifs && window.orosNotifs.transient) window.orosNotifs.transient({ ns: "screentime", title: title, body: body, action: action || undefined });
       },
-      home: function () { returnToDesktop(); }
+      home: function () { returnToDesktop(); },
+      // S3 bedtime: the grey overlay after the person's own colour filter
+      // (a11yfx.js loads on demand), and Sleep focus when focus.js is there.
+      grey: function (on, fadeMs) {
+        if (window.orosA11y && window.orosA11y.overlayFilter) window.orosA11y.overlayFilter("bedtime", on ? "grey" : null, { fadeMs: fadeMs });
+      },
+      focus: function () { return window.orosFocus || null; }
     });
   });
   // Desktop widgets (widgets.js, a shell component like launcher.js):

@@ -31,7 +31,7 @@ test("days: local date keys, adding days across months and DST", () => {
 
 test("normalize: junk falls back, off by default, later fields ride along", () => {
   const n = M.normalize(null, "2026-11-17");
-  assert.deepEqual(n, { v: 1, on: false, days: {}, limits: {}, remind: { day: "2026-11-17", apps: {} } });
+  assert.deepEqual(n, { v: 1, on: false, days: {}, limits: {}, remind: { day: "2026-11-17", apps: {} }, bed: M.BED_DEFAULT });
   const p = M.normalize({ on: "yes", days: { "2026-11-17": { notes: 60, "Bad Id": 5, x: -3, todo: "12.9" } }, limits: { notes: 30 } }, "2026-11-17");
   assert.equal(p.on, false);
   assert.deepEqual(p.days, { "2026-11-17": { notes: 60, todo: 12 } });
@@ -301,6 +301,103 @@ test("shell side (S2): warning toast, the pause card, its answers and the hourgl
   step(4);
   assert.ok(!d.open);
   assert.equal(ST.over("notes"), false);
+});
+
+test("bedtime (S3): nights across midnight, chosen evenings, Not tonight, the notice, Sleep focus", () => {
+  assert.deepEqual(M.cleanBed(null), M.BED_DEFAULT);
+  assert.equal(M.cleanBed({ from: 1385, to: 99999 }).from, 1380, "half hours only");
+  assert.equal(M.cleanBed({ from: 600, to: 600 }).to, 630, "never a night of no length");
+  assert.deepEqual(M.cleanBed({ days: [5, 5, 9, "1", 0] }).days, [0, 5]);
+  const b = { on: true, from: 23 * 60, to: 7 * 60 };
+  assert.equal(M.bedNight({ ...b, on: false }, at(2026, 11, 18, 23, 30)).active, false, "off: nothing");
+  let n = M.bedNight(b, at(2026, 11, 18, 23, 30));
+  assert.equal(n.active, true);
+  assert.equal(n.key, "2026-11-18");
+  assert.equal(n.end, at(2026, 11, 19, 7, 0));
+  assert.equal(M.bedNight(b, at(2026, 11, 19, 6, 59)).key, "2026-11-18", "the morning belongs to the evening before");
+  n = M.bedNight(b, at(2026, 11, 19, 7, 0));
+  assert.equal(n.active, false);
+  assert.equal(n.next, at(2026, 11, 19, 23, 0));
+  // Only Friday and Saturday evenings (2026-11-20 is a Friday).
+  const we = { ...b, days: [5, 6] };
+  assert.equal(M.bedNight(we, at(2026, 11, 19, 23, 30)).active, false);
+  assert.equal(M.bedNight(we, at(2026, 11, 19, 23, 30)).nextKey, "2026-11-20");
+  assert.equal(M.bedNight(we, at(2026, 11, 21, 2, 0)).key, "2026-11-20");
+  // A night inside one day (21:00-23:30) and one across the clock change.
+  assert.equal(M.bedNight({ on: true, from: 1260, to: 1410 }, at(2026, 11, 18, 23, 45)).active, false);
+  assert.equal(M.bedNight(b, at(2026, 10, 25, 6, 30)).key, "2026-10-24", "EU winter time ends that night");
+  // What is due.
+  assert.equal(M.bedWants(b, at(2026, 11, 18, 22, 44)).warn, false);
+  assert.equal(M.bedWants(b, at(2026, 11, 18, 22, 45)).warn, true, "15 minutes before");
+  assert.equal(M.bedWants({ ...b, warned: "2026-11-18" }, at(2026, 11, 18, 22, 50)).warn, false, "once a night");
+  assert.equal(M.bedWants({ ...b, skip: "2026-11-18" }, at(2026, 11, 18, 22, 50)).warn, false);
+  assert.equal(M.bedWants(b, at(2026, 11, 18, 23, 1)).grey, true);
+  assert.equal(M.bedWants({ ...b, skip: "2026-11-18" }, at(2026, 11, 19, 1, 0)).grey, false, "Not tonight");
+  assert.equal(M.bedWants({ ...b, skip: "2026-11-18" }, at(2026, 11, 19, 23, 1)).grey, true, "back the next evening");
+  assert.equal(M.bedWants(b, at(2026, 11, 18, 23, 1)).sleep, false, "Sleep focus only when chosen");
+  assert.equal(M.bedWants({ ...b, sleep: true }, at(2026, 11, 18, 23, 1)).sleep, true);
+  assert.equal(M.bedWants({ ...b, sleep: true, slept: "2026-11-18" }, at(2026, 11, 18, 23, 30)).sleep, false, "started once a night");
+});
+
+test("shell side (S3): grey fades in and out, the notice with Not tonight, Sleep focus starts and stops", () => {
+  const store = {};
+  let now = at(2026, 11, 18, 22, 40);
+  const doc = { visibilityState: "visible", hasFocus: () => true, head: { appendChild() {} }, body: { appendChild() {} },
+    createElement: () => ({}), addEventListener: () => {}, querySelectorAll: () => [] };
+  const timers = [];
+  const RealDate = Date;
+  class FakeDate extends RealDate {
+    constructor(...a) { if (a.length) super(...a); else super(now); }
+    static now() { return now; }
+  }
+  const win = {};
+  Object.assign(win, { document: doc, Date: FakeDate, Math, JSON, Object, Array, Number, String, isFinite, WeakSet,
+    localStorage: { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } },
+    setInterval: (fn) => { timers.push(fn); return 1; }, addEventListener: () => {}, t: (k) => k });
+  win.window = win;
+  vm.createContext(win);
+  vm.runInContext(SRC.replace('typeof window !== "undefined" ? window : globalThis', "window"), win);
+  const ST = win.orosScreenTime;
+  const grey = [], toasts = [], focus = [];
+  let running = null;
+  const F = { start: (id, o) => { focus.push(["start", id, o.until]); running = { id }; }, stop: () => { focus.push(["stop"]); running = null; },
+    active: () => running };
+  ST.attach({ front: () => "", locked: () => false, sensitive: () => false, media: () => false, docs: () => [],
+    grey: (on, ms) => grey.push([on, ms]), toast: (a, b, act) => toasts.push([a, b, act]), focus: () => F });
+  const tick = timers[0];
+  assert.deepEqual(grey, [[false, 60000]], "off: no grey (counting is off too: bedtime works on its own)");
+  ST.setBed({ on: true, sleep: true });
+  assert.equal(ST.bed().on, true);
+  assert.equal(toasts.length, 0);
+  now = at(2026, 11, 18, 22, 46); tick();
+  assert.equal(toasts.length, 1, "the notice 15 minutes before");
+  assert.equal(toasts[0][1], "st.bed.warn.body".replace("{time}", "23:00"));
+  assert.equal(toasts[0][2].label, "st.bed.skip");
+  tick();
+  assert.equal(toasts.length, 1, "once");
+  now = at(2026, 11, 18, 23, 0); tick();
+  assert.deepEqual(grey[grey.length - 1], [true, 60000], "grey, faded over a minute");
+  assert.deepEqual(focus, [["start", "sleep", at(2026, 11, 19, 7, 0)]], "Sleep focus until the night ends");
+  tick();
+  assert.equal(focus.length, 1);
+  const s = ST.bed();
+  assert.equal(s.active && s.grey && !s.skipped && s.focus, true);
+  ST.bedSkip(true);                     // Not tonight (Quick settings or Settings)
+  assert.deepEqual(grey[grey.length - 1], [false, 60000]);
+  assert.deepEqual(focus[1], ["stop"], "the Sleep focus bedtime started stops with it");
+  assert.equal(ST.bed().skipped, true);
+  ST.bedSkip(false);                    // on again tonight
+  assert.deepEqual(grey[grey.length - 1], [true, 60000]);
+  assert.equal(focus.length, 2, "not started twice in one night");
+  now = at(2026, 11, 19, 7, 0); tick();
+  assert.deepEqual(grey[grey.length - 1], [false, 60000], "morning: colour back");
+  // A Sleep focus someone else started is never stopped by Not tonight.
+  ST.setBed({ sleep: false });
+  running = { id: "work" };
+  now = at(2026, 11, 19, 23, 5); tick();
+  ST.bedSkip(true);
+  assert.equal(running && running.id, "work", "only the Sleep focus bedtime started tonight is stopped");
+  assert.deepEqual(JSON.parse(store["oros-screentime"]).days, {}, "bedtime writes no counted time");
 });
 
 test("privacy: device-local only, never in sync, backups, Assistant, Gate, Today or Automations", () => {

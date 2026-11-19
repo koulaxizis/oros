@@ -71,6 +71,8 @@
     ["uifont", "accessibility", "ac.font"],
     ["contrast", "accessibility", "ac.contrast"],
     ["focus", "accessibility", "ac.focus"],
+    ["motion", "accessibility", "ac.motion"],
+    ["transp", "accessibility", "ac.transp"],
     ["colourfilter", "accessibility", "ac.filter.pick", "ac.filter", null, "a11yfx"],
     ["pointer", "accessibility", "ac.pointer", null, null, "a11yfine"],
     ["readaloud", "accessibility", "ac.read.on", "ac.read", null, "read"],
@@ -169,6 +171,7 @@
     ["screentime", "screentime", "st.on"],
     ["screentime-week", "screentime", "st.week", null, "st.on"],
     ["screentime-limits", "screentime", "st.limits", null, "st.on"],
+    ["screentime-bed", "screentime", "st.bed", null, "st.on"],
     ["screentime-clear", "screentime", "st.clear", null, "st.on"]
   ];
 
@@ -222,6 +225,12 @@
       "ac.font.choose": "Choose in Fonts",
       "ac.font.hint": "The font of menus, buttons and the apps, on this device. Open a font in Settings › Fonts and press Use for orOS. Documents keep their own fonts.",
       "ac.font.nunito": "Nunito (the orOS font)",
+      "ac.motion": "Reduce motion",
+      "ac.motion.hint": "Stops animations and moving effects in orOS and every app: the live wallpaper, seasonal decorations, apps opening from their icon, sliding panels. Games still play.",
+      "ac.motion.sys": "Your device already asks for less motion, so orOS reduces it even with this switch off.",
+      "ac.transp": "Reduce transparency",
+      "ac.transp.hint": "Solid backgrounds instead of see-through, blurred ones for the top bar, the Dock, the menu, widgets and the apps' panels. Easier to read on a busy wallpaper.",
+      "ac.transp.sys": "Your device already asks for less transparency, so orOS follows it even with this switch off.",
       "ac.filter": "Colour filter",
       "ac.filter.pick": "Filter",
       "ac.filter.off": "Off",
@@ -1562,6 +1571,8 @@
       "w.uifont": "orOS font system font interface typeface dyslexia readable legible nunito menus",
       "w.contrast": "black white accessibility forced colors colours",
       "w.focus": "keyboard tab outline accessibility",
+      "w.motion": "animation animations movement motion reduce still accessibility",
+      "w.transp": "transparency blur glass solid see-through accessibility",
       "w.colourfilter": "color colour blind daltonism greyscale grayscale invert protanopia deuteranopia tritanopia accessibility",
       "w.pointer": "mouse cursor pointer big large accessibility",
       "w.readaloud": "read aloud speak voice text to speech tts listen selected",
@@ -1695,13 +1706,15 @@
       "st.lt1": "under 1 min",
       "st.clear": "Clear history",
       "st.limits": "Daily limits",
+      "st.bed": "Bedtime",
       "st.wait": "Screen time starts a few seconds after orOS. Open this section again in a moment.",
       "st.loading": "Loading screen time…",
       "st.link": "Screen time: time in each app",
       "w.screentime": "screen time usage wellbeing digital how long apps time spent minutes hours habit",
       "w.screentime-week": "screen time week days chart history",
       "w.screentime-clear": "screen time clear delete history erase",
-      "w.screentime-limits": "screen time limit daily limit break reminder time limit"
+      "w.screentime-limits": "screen time limit daily limit break reminder time limit",
+      "w.screentime-bed": "bedtime sleep night grey greyscale gray wind down not tonight"
     },
     el: {
       "app": "Ρυθμίσεις", "back": "Πίσω", "sections": "Ενότητες ρυθμίσεων",
@@ -1746,6 +1759,12 @@
       "ac.font.choose": "Επιλογή στις Γραμματοσειρές",
       "ac.font.hint": "Η γραμματοσειρά των μενού, των κουμπιών και των εφαρμογών, σε αυτή τη συσκευή. Άνοιξε μια γραμματοσειρά στις Ρυθμίσεις › Γραμματοσειρές και πάτα Χρήση για το orOS. Τα έγγραφα κρατούν τις δικές τους γραμματοσειρές.",
       "ac.font.nunito": "Nunito (η γραμματοσειρά του orOS)",
+      "ac.motion": "Λιγότερη κίνηση",
+      "ac.motion.hint": "Σταματά τα animations και τα κινούμενα εφέ στο orOS και σε κάθε εφαρμογή: τη ζωντανή ταπετσαρία, τα εποχιακά στολίδια, το άνοιγμα των εφαρμογών από το εικονίδιό τους, τα πάνελ που γλιστρούν. Τα παιχνίδια παίζονται κανονικά.",
+      "ac.motion.sys": "Η συσκευή σου ζητά ήδη λιγότερη κίνηση, οπότε το orOS τη μειώνει ακόμη κι αν αυτός ο διακόπτης είναι κλειστός.",
+      "ac.transp": "Λιγότερη διαφάνεια",
+      "ac.transp.hint": "Συμπαγές φόντο αντί για διάφανο και θολό στην πάνω μπάρα, στο Dock, στο μενού, στα widgets και στα πάνελ των εφαρμογών. Διαβάζεται πιο εύκολα πάνω σε πολύχρωμη ταπετσαρία.",
+      "ac.transp.sys": "Η συσκευή σου ζητά ήδη λιγότερη διαφάνεια, οπότε το orOS την ακολουθεί ακόμη κι αν αυτός ο διακόπτης είναι κλειστός.",
       "ac.filter": "Φίλτρο χρωμάτων",
       "ac.filter.pick": "Φίλτρο",
       "ac.filter.off": "Ανενεργό",
@@ -3085,6 +3104,8 @@
       "w.uifont": "γραμματοσειρά του orOS γραμματοσειρά συστήματος δυσλεξία ευανάγνωστη nunito μενού",
       "w.contrast": "αντίθεση μαύρο άσπρο προσβασιμότητα",
       "w.focus": "πληκτρολόγιο tab περίγραμμα εστίαση προσβασιμότητα",
+      "w.motion": "animation κίνηση κινούμενα εφέ ακίνητο προσβασιμότητα",
+      "w.transp": "διαφάνεια θόλωμα γυαλί συμπαγές προσβασιμότητα",
       "w.colourfilter": "χρώμα χρώματα αχρωματοψία δαλτονισμός γκρι αντιστροφή πρωτανωπία δευτερανωπία τριτανωπία προσβασιμότητα",
       "w.pointer": "ποντίκι κέρσορας δείκτης μεγάλος προσβασιμότητα",
       "w.readaloud": "ανάγνωση φωναχτά ομιλία φωνή εκφώνηση ακρόαση επιλεγμένο",
@@ -3218,13 +3239,15 @@
       "st.lt1": "κάτω από 1 λεπ.",
       "st.clear": "Σβήσε το ιστορικό",
       "st.limits": "Όρια ανά ημέρα",
+      "st.bed": "Ώρα για ύπνο",
       "st.wait": "Ο χρόνος οθόνης ξεκινά λίγα δευτερόλεπτα μετά το orOS. Άνοιξε ξανά την ενότητα σε λίγο.",
       "st.loading": "Φορτώνω τον χρόνο οθόνης…",
       "st.link": "Χρόνος οθόνης: χρόνος σε κάθε εφαρμογή",
       "w.screentime": "χρόνος οθόνης χρήση ψηφιακή ευεξία πόση ώρα εφαρμογές λεπτά ώρες συνήθεια screen time",
       "w.screentime-week": "χρόνος οθόνης εβδομάδα ημέρες γράφημα ιστορικό",
       "w.screentime-clear": "χρόνος οθόνης σβήσιμο διαγραφή ιστορικό",
-      "w.screentime-limits": "χρόνος οθόνης όριο ημερήσιο όριο διάλειμμα υπενθύμιση"
+      "w.screentime-limits": "χρόνος οθόνης όριο ημερήσιο όριο διάλειμμα υπενθύμιση",
+      "w.screentime-bed": "ύπνος ώρα για ύπνο νύχτα γκρι ασπρόμαυρο όχι απόψε"
     }
   };
 

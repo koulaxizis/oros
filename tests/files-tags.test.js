@@ -183,3 +183,47 @@ test("wiring: tags load with Documents, sync their own slice, draw with textCont
   assert.match(read("files/photos.js"), /tagsChanged: tagsChanged/);
   ["files/help.en.txt", "files/help.el.txt", "i18n/de/help/files.txt"].forEach((p) => assert.match(read(p), /^### (Tags|Ετικέτες|Schlagwörter)$/m, p));
 });
+
+test("T2 matches: tags any/all, kind, name words (accents, final sigma), dates, size, folder", () => {
+  const now = new Date(2026, 10, 17, 12).getTime();
+  const e = { path: "/internal/Bills/Λογαριασμός ρεύματος.pdf", name: "Λογαριασμός ρεύματος.pdf", dir: false, size: 2048, mtime: now - 3 * 86400000 };
+  assert.equal(T.matches({ tg: ["tg-a", "tg-b"] }, e, ["tg-b"], now), true, "any");
+  assert.equal(T.matches({ tg: ["tg-a", "tg-b"], all: true }, e, ["tg-b"], now), false, "all");
+  assert.equal(T.matches({ kind: ["pdf"] }, e, [], now), true);
+  assert.equal(T.matches({ kind: ["image", "folder"] }, e, [], now), false);
+  assert.equal(T.matches({ name: "λογαριασμος ΡΕΥΜΑΤΟΣ" }, e, [], now), true, "folded words in any order");
+  assert.equal(T.matches({ name: "νερού" }, e, [], now), false);
+  assert.equal(T.matches({ days: 7 }, e, [], now), true);
+  assert.equal(T.matches({ days: 2 }, e, [], now), false);
+  assert.equal(T.matches({ from: "2026-11-14", to: "2026-11-14" }, e, [], now), true, "the whole day of `to` counts");
+  assert.equal(T.matches({ from: "2026-11-15" }, e, [], now), false);
+  assert.equal(T.matches({ min: 1000, max: 4096 }, e, [], now), true);
+  assert.equal(T.matches({ min: 4097 }, e, [], now), false);
+  assert.equal(T.matches({ min: 1 }, { path: "/internal/A", name: "A", dir: true }, [], now), false, "a folder has no size");
+  assert.equal(T.matches({ kind: ["folder"] }, { path: "/internal/A", name: "A", dir: true }, [], now), true);
+  assert.equal(T.matches({ dir: "/internal/Bills", kind: ["pdf"] }, e, [], now), true);
+  assert.equal(T.matches({ dir: "/internal/Bill", kind: ["pdf"] }, e, [], now), false, "a folder prefix is not the folder");
+  assert.equal(T.matches({ days: 7 }, { path: "/internal/x", name: "x" }, [], now), false, "no time known: no match");
+  assert.equal(T.needsStat({ kind: ["pdf"], name: "x" }), false);
+  assert.equal(T.needsStat({ days: 3 }), true);
+  assert.equal(T.hasCondition({ dir: "/internal/Bills" }), false);
+  assert.equal(T.hasCondition({ min: 0 }), true);
+  assert.equal(T.kindOf("photo.JPEG"), "image");
+  assert.equal(T.kindOf("README"), "");
+});
+
+test("T2 wiring: smart folders in the tree, their view, saved from a search, help in three languages", () => {
+  const read = (p) => require("fs").readFileSync(require("path").join(__dirname, "..", p), "utf8");
+  const files = read("files/files.js");
+  assert.match(files, /if \(view === "smart"\) \{ renderSmartView\(\); return; \}/);
+  assert.match(files, /tg\.smartList\(\)\.forEach\(function \(x\) \{ sec\.appendChild\(makeSmartNode\(x\)\); \}\)/);
+  assert.match(files, /tg\.smartRun\(smartView,/, "the view runs the saved search");
+  assert.match(files, /smartNew\(\{ n: q0, q: q \}\)/, "a finished search can be saved");
+  assert.match(files, /pickFolder: pickFolderDialog,\n\s+onChange/, "the dialog can choose a folder");
+  assert.match(files, /!tg\.smartFind\(smartView\)\) \{ leaveSmartView\(\)/, "a smart folder deleted elsewhere closes its view");
+  const v = read("files/tags.js");
+  ["smartList", "smartFind", "smartRun", "smartEdit"].forEach((k) => assert.match(v, new RegExp(k + ": " + k), k));
+  const de = read("i18n/de/files.js");
+  ["sf.titleNew", "sf.looking", "tree.smart", "search.saveSmart"].forEach((k) => assert.ok(de.includes('"' + k + '"'), "German " + k));
+  ["files/help.en.txt", "files/help.el.txt", "i18n/de/help/files.txt"].forEach((p) => assert.match(read(p), /^### (Smart folders|Έξυπνοι φάκελοι|Intelligente Ordner)$/m, p));
+});

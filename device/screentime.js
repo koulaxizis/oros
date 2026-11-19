@@ -139,17 +139,71 @@
     });
     return o;
   }
+  // ---------- Bedtime (S3) ----------
+  // { on, from, to (minutes after midnight, half hours), days (weekdays
+  // of the evening it starts, 0 = Sunday), sleep (also Sleep focus),
+  // skip / warned / slept (the evening's day key: "Not tonight", the
+  // notice 15 minutes before, Sleep focus started) }.
+  var BED_DEFAULT = { on: false, from: 23 * 60, to: 7 * 60, days: [0, 1, 2, 3, 4, 5, 6], sleep: false };
+  var BED_WARN = 15 * 60000;
+  var BED_FADE = 60000;
+  function halfHour(v, dflt) {
+    var n = Number(v);
+    return isFinite(n) && n >= 0 && n < 1440 && n % 30 === 0 ? n : dflt;
+  }
+  function cleanBed(v) {
+    v = v && typeof v === "object" && !Array.isArray(v) ? v : {};
+    var o = { on: v.on === true, from: halfHour(v.from, BED_DEFAULT.from), to: halfHour(v.to, BED_DEFAULT.to),
+              days: BED_DEFAULT.days.slice(), sleep: v.sleep === true };
+    if (Array.isArray(v.days)) {
+      o.days = [0, 1, 2, 3, 4, 5, 6].filter(function (d) { return v.days.indexOf(d) !== -1; });
+    }
+    if (o.from === o.to) o.to = (o.from + 30) % 1440;    // never a night of no length
+    ["skip", "warned", "slept"].forEach(function (k) { if (typeof v[k] === "string" && isFinite(dayMs(v[k]))) o[k] = v[k]; });
+    return o;
+  }
+  // The night around `now`: { active, key (its evening), end, next
+  // (the next start), nextKey }. Local time, so a night across a clock
+  // change keeps its wall-clock hours.
+  function bedNight(bed, now) {
+    var b = cleanBed(bed), out = { active: false, key: "", end: 0, next: 0, nextKey: "" };
+    if (!b.on || !b.days.length) return out;
+    var base = new Date(now);
+    for (var i = -1; i <= 7; i++) {
+      var y = base.getFullYear(), m = base.getMonth(), d = base.getDate() + i;
+      var st = new Date(y, m, d, Math.floor(b.from / 60), b.from % 60).getTime();
+      var wd = new Date(y, m, d).getDay();
+      if (b.days.indexOf(wd) === -1) continue;
+      var en = new Date(y, m, d + (b.to <= b.from ? 1 : 0), Math.floor(b.to / 60), b.to % 60).getTime();
+      var key = dayKey(new Date(y, m, d).getTime());
+      if (now >= st && now < en && !out.active) { out.active = true; out.key = key; out.end = en; }
+      if (st > now && !out.next) { out.next = st; out.nextKey = key; }
+    }
+    return out;
+  }
+  // What bedtime wants now: grey on, the notice due, Sleep focus due.
+  function bedWants(bed, now) {
+    var b = cleanBed(bed), n = bedNight(b, now);
+    return {
+      night: n,
+      grey: n.active && b.skip !== n.key,
+      warn: !n.active && !!n.next && n.next - now <= BED_WARN && b.warned !== n.nextKey && b.skip !== n.nextKey,
+      sleep: n.active && b.sleep && b.skip !== n.key && b.slept !== n.key
+    };
+  }
+
   // An unreadable or old value falls back field by field; fields of
   // later waves ride along untouched.
   function normalize(p, today) {
     var o = {};
     p = p && typeof p === "object" && !Array.isArray(p) ? p : {};
-    Object.keys(p).forEach(function (k) { if (["v", "on", "days", "limits", "remind"].indexOf(k) === -1) o[k] = p[k]; });
+    Object.keys(p).forEach(function (k) { if (["v", "on", "days", "limits", "remind", "bed"].indexOf(k) === -1) o[k] = p[k]; });
     o.v = 1;
     o.on = p.on === true;
     o.days = prune(p.days, today);
     o.limits = cleanLimits(p.limits);
     o.remind = cleanRemind(p.remind, today);
+    o.bed = cleanBed(p.bed);
     return o;
   }
   // What is due for `id` that has been used `used` seconds today:
@@ -229,7 +283,8 @@
                 DESK: DESK, SENS: SENS, dayKey: dayKey, dayMs: dayMs, addDays: addDays, validId: validId,
                 prune: prune, normalize: normalize, addAll: addAll, counts: counts, bucket: bucket,
                 stepOf: stepOf, dayView: dayView, lastDays: lastDays,
-                LIMITS: LIMITS, NO_LIMIT: NO_LIMIT, WARN: WARN, MORE: MORE, limitable: limitable, due: due, answered: answered };
+                LIMITS: LIMITS, NO_LIMIT: NO_LIMIT, WARN: WARN, MORE: MORE, limitable: limitable, due: due, answered: answered,
+                BED_DEFAULT: BED_DEFAULT, BED_WARN: BED_WARN, cleanBed: cleanBed, bedNight: bedNight, bedWants: bedWants };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -343,6 +398,7 @@
     accrue(isOn());
     if (Date.now() - lastFlush >= FLUSH) flush();
     checkLimit();
+    checkBed();
   }
 
   // ---------- 3. Daily limits (S2) ----------
@@ -460,6 +516,82 @@
     try { more.focus(); } catch (e) {}
   }
 
+  // ---------- 4. Bedtime (S3) ----------
+  // Every tick, counting on or off: the grey overlay (through the
+  // colour filters' overlay, host.grey; it fades in and out over a
+  // minute), the quiet notice 15 minutes before with "Not tonight",
+  // and, if chosen, Sleep focus until the night ends (host.focus()).
+  var greyOn = null;
+  function hm(mins) { var h = Math.floor(mins / 60), m = mins % 60; return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m; }
+  function focusApi() {
+    var F = host && typeof host.focus === "function" ? call("focus", null) : null;
+    return F && typeof F.start === "function" ? F : null;
+  }
+  function setGrey(on) {
+    if (greyOn === on) return;
+    greyOn = on;
+    if (host && typeof host.grey === "function") { try { host.grey(on, BED_FADE); } catch (e) {} }
+  }
+  function checkBed() {
+    if (!host) return;
+    var p = read(), now = Date.now(), w = bedWants(p.bed, now);
+    setGrey(w.grey);
+    if (w.warn) {
+      p.bed.warned = w.night.nextKey;
+      write(p);
+      var key = w.night.nextKey;
+      if (typeof host.toast === "function") {
+        try {
+          host.toast(tr("st.bed.warn.title"), tr("st.bed.warn.body", { time: hm(p.bed.from) }),
+            { label: tr("st.bed.skip"), fn: function () { bedSkip(true, key); } });
+        } catch (e) {}
+      }
+    }
+    if (w.sleep) {
+      var F = focusApi();
+      if (F) {
+        p.bed.slept = w.night.key;
+        write(p);
+        try { F.start("sleep", { until: w.night.end }); } catch (e) {}
+      }
+    }
+  }
+  // "Not tonight": the night that runs now or comes next; false = on again.
+  function bedSkip(on, key) {
+    var p = read(), n = bedNight(p.bed, Date.now());
+    key = key || (n.active ? n.key : n.nextKey);
+    if (!key) return;
+    if (on) {
+      p.bed.skip = key;
+      // Sleep focus that bedtime started tonight ends with it.
+      var F = focusApi();
+      if (F && p.bed.slept === key && n.active && n.key === key) {
+        try { var a = F.active(Date.now()); if (a && a.id === "sleep") F.stop(); } catch (e) {}
+      }
+    } else if (p.bed.skip === key) delete p.bed.skip;
+    write(p);
+    checkBed();
+  }
+  function setBed(patch) {
+    var p = read(), b = p.bed;
+    patch = patch && typeof patch === "object" ? patch : {};
+    if ("on" in patch) b.on = patch.on === true;
+    if ("from" in patch) b.from = halfHour(patch.from, b.from);
+    if ("to" in patch) b.to = halfHour(patch.to, b.to);
+    if (Array.isArray(patch.days)) b.days = patch.days;
+    if ("sleep" in patch) b.sleep = patch.sleep === true;
+    p.bed = cleanBed(b);
+    write(p);
+    checkBed();
+  }
+  function bedSnapshot() {
+    var p = read(), now = Date.now(), n = bedNight(p.bed, now), b = p.bed;
+    return { on: b.on, from: b.from, to: b.to, days: b.days.slice(), sleep: b.sleep,
+             active: n.active, end: n.end, next: n.next,
+             skipped: !!b.skip && b.skip === (n.active ? n.key : n.nextKey),
+             grey: n.active && b.skip !== n.key, focus: !!focusApi() };
+  }
+
   // Apps past today's limit, for the menu's hourglass (cached 5 s).
   var overAt = 0, overSet = {};
   function over(id) {
@@ -508,7 +640,7 @@
     var used = {}, limitNames = {};
     Object.keys(p.limits).forEach(function (id) { used[id] = Math.floor(usedToday(p, id)); limitNames[id] = name(id); });
     return { on: p.on, today: t, days: days, has: Object.keys(p.days).length > 0, keep: KEEP_DAYS,
-             limits: p.limits, used: used, limitNames: limitNames, choices: LIMITS.slice(), noLimit: NO_LIMIT.slice() };
+             limits: p.limits, used: used, limitNames: limitNames, choices: LIMITS.slice(), noLimit: NO_LIMIT.slice(), bed: bedSnapshot() };
   }
 
   function setOn(v) {
@@ -542,6 +674,7 @@
     root.addEventListener("pagehide", function () { accrue(isOn(), true); flush(); });
     root.addEventListener("focus", poke);
     root.addEventListener("storage", function (e) { if (e.key === KEY) onCache.at = 0; });
+    checkBed();     // a night already running greys the screen from the start
   }
 
   root.orosScreenTime = {
@@ -554,6 +687,9 @@
     clear: clear,
     setLimit: setLimit,
     over: over,
-    overKey: overKey
+    overKey: overKey,
+    bed: bedSnapshot,
+    setBed: setBed,
+    bedSkip: function (on) { bedSkip(!!on); }
   };
 })(typeof window !== "undefined" ? window : globalThis);

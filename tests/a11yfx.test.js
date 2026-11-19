@@ -150,7 +150,7 @@ test("shell: oros-a11y fields, setters, snapshot, overlay API, script order", ()
   assert.match(s, /filter: A11Y_FILTERS\.indexOf\(v\.filter\) !== -1 \? v\.filter : "off"/);
   assert.match(s, /pointer: A11Y_POINTERS\.indexOf\(v\.pointer\) !== -1 \? v\.pointer : "normal"/);
   assert.match(s, /if \(value === "toggle"\) value = a11y\.filter === "off" \? a11y\.last : "off";/);
-  assert.match(s, /case "colourFilter":\s+case "filterStrength":\s+case "pointerSize":\s+a11ySetUser\(name, value\); return;/);
+  assert.match(s, /case "colourFilter":\s+case "filterStrength":\s+case "pointerSize":\s+(?:case "\w+":\s+)*a11ySetUser\(name, value\); return;/);
   assert.match(s, /var css = A11Y_CSS \+ \(window\.orosA11yFx \? window\.orosA11yFx\.css\(\) : ""\);\s+if \(s\.textContent !== css\) s\.textContent = css;/);
   assert.match(s, /window\.orosA11y = \{\s+overlayFilter: function/);
   // Loaded on demand only (start-up script budget): never a <script> in index.html.
