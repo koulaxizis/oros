@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 48451 of 48451 (100%)
-- Help pages: 158 of 158 (100%)
+- Strings: 48576 of 48576 (100%)
+- Help pages: 159 of 159 (100%)
 - Shown in the language list: yes
 
 "in the code": a shared module or a public page that runs where no
@@ -60,7 +60,7 @@ en and el); translators change them there, not in a pack.
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 162 / 162 |
+| gamecenter | 100% | 163 / 163 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -85,6 +85,7 @@ en and el); translators change them there, not in a pack.
 | mancala | 100% | 61 / 61 |
 | maps | 100% | 1286 / 1286 |
 | mastermind | 100% | 74 / 74 |
+| maze | 100% | 123 / 123 |
 | meals | 100% | 466 / 466 |
 | memory | 100% | 77 / 77 |
 | mindmap | 100% | 285 / 285 |
@@ -132,7 +133,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 1962 / 1962 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1512 / 1512 |
+| shell | 100% | 1513 / 1513 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

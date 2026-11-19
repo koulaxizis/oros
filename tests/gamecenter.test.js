@@ -236,13 +236,25 @@ test("gamecenter: Windmill ridge is in the Tower defense group; nights and wins 
     aaaaaa: { b: 1, s: { m: [4, 2], n: [2, 1] }, f: 90 },
     bbbbbb: { b: 1, s: { h: [3, 0] }, f: 20 },
     oldold: { b: 0, s: { h: [9, 9] }, f: 99 } } };
-  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge"]);
+  assert.ok(C.GROUPS.find((g) => g.id === "defense").games.includes("ridge"));
   assert.ok(C.GAMES.includes("ridge"));
   const s = sum({ "oros-ridge-data": rd });
   assert.deepEqual([s.games.ridge.p, s.games.ridge.w], [9, 3], "rows from before the reset do not count");
   assert.ok(!ach(s, "hard").done, "no Hard night won yet");
   rd.rows.bbbbbb.s.h = [4, 1];
   assert.ok(ach(sum({ "oros-ridge-data": rd }), "hard").done);
+});
+
+test("gamecenter: Lantern maze is in the Tower defense group after Windmill ridge; nights and wins from every device", () => {
+  const mz = { ver: 1, br: 1, maps: { q1: { b: 1, s: 2, e: 0 } }, rows: {
+    aaaaaa: { b: 1, s: { n: [5, 3] }, f: 120 },
+    bbbbbb: { b: 1, s: { h: [2, 1] }, f: 40 },
+    oldold: { b: 0, s: { m: [9, 9] }, f: 99 } } };
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge", "maze"]);
+  assert.ok(C.GAMES.includes("maze"));
+  const s = sum({ "oros-maze-data": mz });
+  assert.deepEqual([s.games.maze.p, s.games.maze.w], [7, 4], "rows from before the reset do not count");
+  assert.ok(ach(s, "hard").done, "a Hard night won");
 });
 
 test("gamecenter: Fieldwarden counts years and finished years from every device; a Harsh finish is a hard win", () => {

@@ -1208,6 +1208,14 @@
       "type": "internal"
     },
     {
+      "id": "maze",
+      "name": "Lantern maze",
+      "category": "Games",
+      "icon": "maze",
+      "url": "maze/",
+      "type": "internal"
+    },
+    {
       "id": "wayfarers",
       "name": "Wayfarers",
       "category": "Games",

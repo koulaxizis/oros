@@ -87,6 +87,7 @@ orosPack("de", "shell", {
  "app.mancala": "Mancala",
  "app.maps": "Karten",
  "app.mastermind": "Mastermind",
+ "app.maze": "Laternenlabyrinth",
  "app.meals": "Essensplaner",
  "app.memory": "Memory",
  "app.mindmap": "Mindmap",
