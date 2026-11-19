@@ -72,6 +72,8 @@ final class Catalog {
                 try {
                     refresh(s);
                 } catch (RepoException e) {
+                    // The reason, for adb logcat; no addresses or data of the phone.
+                    android.util.Log.w("KoulaxizisApps", s.id + ": " + e.getMessage(), e.getCause());
                     errors.put(s.id, e.code);
                 }
             }

@@ -67,7 +67,7 @@ def wait_for(pred, what, seconds=120):
         time.sleep(2)
     path = shot("timeout")
     seen = "\n".join(texts(dump()))
-    log = adb("logcat", "-d", "-v", "brief", "AndroidRuntime:E", "System.err:W", "PackageInstaller:*", "*:S", check=False)
+    log = adb("logcat", "-d", "-v", "brief", "AndroidRuntime:E", "System.err:W", "PackageInstaller:*", "KoulaxizisApps:*", "*:S", check=False)
     with open(path + ".txt", "w") as f:
         f.write(seen + "\n\n" + log)
     print("--- screen texts ---\n" + seen + "\n--- logcat ---\n" + log[-6000:])
@@ -105,6 +105,17 @@ def main():
     adb("shell", "appops", "set", PKG, "REQUEST_INSTALL_PACKAGES", "allow")
     # Android 13+ asks once for notices (the daily check); answered here.
     adb("shell", "pm", "grant", PKG, "android.permission.POST_NOTIFICATIONS", check=False)
+    # A freshly booted emulator can need a while before its Wi-Fi carries
+    # traffic; the app's first check would then rightly show "could not reach".
+    end = time.time() + 120
+    while time.time() < end:
+        # Android marks a network VALIDATED once it reached the internet
+        # (ICMP ping is blocked on hosted runners, so no ping here).
+        if "VALIDATED" in adb("shell", "dumpsys", "connectivity", check=False):
+            break
+        time.sleep(3)
+    else:
+        print("network not up after 120 s:", adb("shell", "dumpsys", "connectivity", check=False)[-2000:])
     adb("shell", "am", "start", "-W", "-n", f"{PKG}/gr.koulaxizis.apps.MainActivity")
 
     def loaded(root):
