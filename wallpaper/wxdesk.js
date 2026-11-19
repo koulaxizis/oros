@@ -95,13 +95,19 @@
   var host = null, layer = null, canvas = null, ctx = null;
   var shown = "", scene = null, raf = 0, lastTs = 0, ema = 33, slowFrames = 0;
   var lowBattery = false, slow = false, mqReduce = null, t0 = 0;
+  // Energy saver (qsettings.js 1.3.0): <html data-oros-saver> "1"/"0"
+  // replaces the own low-battery rule; missing = the rule as before.
+  function saverOr(low) {
+    var v = typeof document !== "undefined" ? document.documentElement.getAttribute("data-oros-saver") : null;
+    return v === null ? !!low : v === "1";
+  }
 
   function isOn() {
     try { return localStorage.getItem(KEY) === "on"; } catch (e) { return false; }
   }
   function reduced() { return !!(mqReduce && mqReduce.matches); }
   function running() { return !!(host && host.running && host.running()); }
-  function why() { return stillReason({ reduced: reduced(), battery: lowBattery, slow: slow }); }
+  function why() { return stillReason({ reduced: reduced(), battery: saverOr(lowBattery), slow: slow }); }
 
   function current() {
     if (!host || !isOn()) return "";
@@ -328,6 +334,7 @@
       }).catch(function () {});
     }
     document.addEventListener("visibilitychange", function () { if (!document.hidden) update(); else stopLoop(); });
+    document.addEventListener("oros-power", function () { shown = ""; update(); });
     root.addEventListener("resize", function () {
       clearTimeout(resizeT);
       resizeT = setTimeout(function () { shown = ""; update(); }, 250);

@@ -187,7 +187,7 @@
   // ---------- SB2: steps this device does by itself ----------
   // pause = everything that plays in orOS (the shell's
   // __orosPauseAll: music, podcasts, radio, Sound Mixer); sound = a
-  // short two-note chime (Web Audio, quiet; never under Do Not Disturb).
+  // short two-note chime (Web Audio, quiet; never while a focus mode keeps Automations silent).
   function runLocal(rule) {
     (rule && rule["do"] || []).forEach(function (a) {
       if (a.a === "pause" && typeof root.__orosPauseAll === "function") { try { root.__orosPauseAll(); } catch (e) {} }
@@ -197,7 +197,7 @@
   var audio = null;
   function chime() {
     var N = root.orosNotifs;
-    try { if (N && N.dnd && N.dnd().on) return; } catch (e) {}
+    try { if (N && (N.silent ? N.silent("automations") : (N.dnd && N.dnd().on))) return; } catch (e) {}
     var AC = root.AudioContext || root.webkitAudioContext;
     if (!AC) return;
     try {

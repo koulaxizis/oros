@@ -1192,6 +1192,14 @@
       "type": "internal"
     },
     {
+      "id": "hive",
+      "name": "Hive",
+      "category": "Games",
+      "icon": "hive",
+      "url": "hive/",
+      "type": "internal"
+    },
+    {
       "id": "ridge",
       "name": "Windmill ridge",
       "category": "Games",

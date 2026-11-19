@@ -1,0 +1,105 @@
+{
+ "source": "hand-written: two hives from hive/engine.js, B behind A (tests/hive.test.js covers the merge)",
+ "a": {
+  "v": 1,
+  "seed": "deva",
+  "br": 0,
+  "at": 1763472600000,
+  "life": 295.04615000000007,
+  "min": 90,
+  "ms": 0,
+  "honey": 296.44614999999993,
+  "wax": 64.00923000000004,
+  "bees": 761,
+  "frames": 2,
+  "lv": {
+   "box": 1,
+   "ent": 0,
+   "queen": 0,
+   "terr": 0,
+   "trough": 0,
+   "wind": 0
+  },
+  "slots": [
+   {
+    "f": "wild",
+    "p": -30,
+    "l": 0
+   },
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "yk": 0,
+  "kinds": {
+   "wild": 295.04615000000007
+  },
+  "cl": 0,
+  "acts": 0
+ },
+ "b": {
+  "v": 1,
+  "seed": "devb",
+  "br": 0,
+  "at": 1763469600000,
+  "life": 30.444680000000005,
+  "min": 40,
+  "ms": 0,
+  "honey": 29.844680000000007,
+  "wax": 11.088936,
+  "bees": 611,
+  "frames": 2,
+  "lv": {
+   "box": 1,
+   "ent": 0,
+   "queen": 0,
+   "terr": 0,
+   "trough": 0,
+   "wind": 0
+  },
+  "slots": [
+   {
+    "f": "wild",
+    "p": -30,
+    "l": 0
+   },
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "yk": 0,
+  "kinds": {
+   "wild": 30.444680000000005
+  },
+  "cl": 0,
+  "acts": 0
+ }
+}

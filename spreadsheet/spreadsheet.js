@@ -2851,7 +2851,33 @@ function switchTo(id) {
   renderGrid();
   renderSelection();
   $("grid-wrap").focus();
+  contNote();
 }
+
+/* CONT-1 W3: tell the shell which sheet is open (continue.js keeps the
+   reference and the name only, never the cells). On a switch, and once
+   at the first tap or key after the start: a sync re-render is not the
+   person opening the sheet. */
+var contLive = false;   // nothing before the first tap or key: a restored item must not hide the other device's
+function contNote() {
+  if (!contLive) return;
+  try {
+    var C = window.parent !== window ? window.parent.orosContinue : null;
+    var sh = C ? getSheetById(actSID) : null;
+    if (sh) C.note("spreadsheet", { target: { sheet: sh.id }, title: displayName(sh) });
+  } catch (e) {}
+}
+(function () {
+  if (typeof document === "undefined") return;   // Node tests load parts of this file
+  var once = function () {
+    document.removeEventListener("pointerdown", once, true);
+    document.removeEventListener("keydown", once, true);
+    contLive = true;
+    contNote();
+  };
+  document.addEventListener("pointerdown", once, true);
+  document.addEventListener("keydown", once, true);
+})();
 
 function addSheet() {
   var n = nextSheetNumber();

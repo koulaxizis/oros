@@ -1,0 +1,136 @@
+name: Koulaxizis Apps
+
+# The Android app manager for all our projects (koulaxizis-apps/, APPS-M1,
+# package gr.koulaxizis.apps). Every run: unit tests (signed-index checks
+# against real repository snapshots), the debug APK, an unsigned release
+# (proves the R8 rules), and the debug APK in an emulator against the live
+# orOS, NULL JSFX and Noxpress repositories, installing one real app.
+# On main with the orOS signing secrets (the same as android.yml), the
+# signed APK goes to the release "koulaxizis-apps" with a fixed name:
+#   https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk
+
+on:
+  push:
+    branches: [main]
+    paths: ['koulaxizis-apps/**', '.github/workflows/koulaxizis-apps.yml']
+  pull_request:
+    paths: ['koulaxizis-apps/**', '.github/workflows/koulaxizis-apps.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+        with:
+          gradle-version: 8.11.1
+      - name: Unit tests, debug APK, unsigned release
+        run: gradle -p koulaxizis-apps --no-daemon testDebugUnitTest assembleDebug assembleRelease
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: koulaxizis-apps-debug
+          path: koulaxizis-apps/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 14
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: failure()
+        with:
+          name: koulaxizis-apps-test-report
+          path: koulaxizis-apps/app/build/reports/tests/
+          retention-days: 14
+
+  device:
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: koulaxizis-apps-debug
+          path: apk
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: The manager in an emulator against the live repositories
+        timeout-minutes: 20
+        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -no-snapshot
+          script: python3 koulaxizis-apps/tests/device_test.py apk/app-debug.apk device-shots
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        if: always()
+        with:
+          name: koulaxizis-apps-emulator
+          path: device-shots/
+          retention-days: 14
+
+  publish:
+    needs: [build, device]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    concurrency:
+      group: koulaxizis-apps-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5
+        with:
+          gradle-version: 8.11.1
+      - name: Signed release APK
+        env:
+          KS_B64: ${{ secrets.OROS_KEYSTORE_BASE64 }}
+          OROS_KEYSTORE_PASSWORD: ${{ secrets.OROS_KEYSTORE_PASSWORD }}
+          OROS_KEY_ALIAS: ${{ secrets.OROS_KEY_ALIAS }}
+          OROS_KEY_PASSWORD: ${{ secrets.OROS_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KS_B64" ]; then
+            echo "::notice::No signing secrets: nothing published."
+            exit 0
+          fi
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/oros.keystore"
+          OROS_KEYSTORE_FILE="$RUNNER_TEMP/oros.keystore" gradle -p koulaxizis-apps --no-daemon assembleRelease
+          rm -f "$RUNNER_TEMP/oros.keystore"
+          cp koulaxizis-apps/app/build/outputs/apk/release/app-release.apk "$RUNNER_TEMP/koulaxizis-apps.apk"
+      - name: Publish to the koulaxizis-apps release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          f="$RUNNER_TEMP/koulaxizis-apps.apk"
+          [ -f "$f" ] || exit 0
+          ver=$(sed -n "s/.*versionName '\([0-9.]*\)'.*/\1/p" koulaxizis-apps/app/build.gradle)
+          sha=$(sha256sum "$f" | cut -d' ' -f1)
+          notes="Koulaxizis Apps $ver: installs and updates the Android apps of orOS, NULL JSFX and Noxpress from their own signed F-Droid repositories. Free and open source (MIT). Install: open the .apk on the phone and allow installing from this source. SHA-256: $sha"
+          if ! gh release view koulaxizis-apps -R "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create koulaxizis-apps -R "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease --latest=false --title "Koulaxizis Apps $ver" --notes "$notes"
+          fi
+          gh release upload koulaxizis-apps "$f" -R "$GITHUB_REPOSITORY" --clobber
+          gh release edit koulaxizis-apps -R "$GITHUB_REPOSITORY" --title "Koulaxizis Apps $ver" --notes "$notes"

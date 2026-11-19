@@ -1,0 +1,65 @@
+# Hive
+Hive is a calm idle game for one person. You keep a beehive on a Greek hillside through the year. The bees fly out to the flower patches that are in bloom and bring back honey, and you spend the honey on new patches, on tending them and on improvements to the hive. The hive goes on by itself while orOS is closed: there is nothing to miss, nothing to collect and no notifications. Come back when you like.
+
+## How to play
+- The hive sits in the middle of the hillside, with six patches around it. Tap a patch to choose it, then plant one of the flowers in the panel below, or tend what grows there.
+- The bees fly to the patches in bloom. The richest patches are fed first, and one patch feeds up to 800 bees (more when it is tended). Bees left over have nothing to do, so plant more patches as the hive grows.
+- A new patch takes a month to root (thyme two) before it gives honey.
+- One month on the hillside lasts 30 minutes, so a year is 6 hours. The status row shows the honey and how much comes in each minute, the wax, the bees against the room in the hive, and the month.
+- `Undo` in the message after every purchase takes it back.
+
+## The flowers
+Every flower blooms in its own months. The calendar at the top shows, for each month, what you have planted that will be in bloom, and a red dot marks a month with nothing.
+- **Almond:** February. The first honey of the year.
+- **Orange blossom:** March and April. Rich.
+- **Wildflowers:** April to June. Cheap, the one you start with.
+- **Thyme:** June to August. The richest, and slow to root.
+- **Chestnut:** June. Rich, for a single month.
+- **Pine honeydew:** August to October.
+- **Heather:** September to November. The last before winter.
+- **Sage:** April and May. Rich; it comes with the Sage trait (see Swarms).
+
+Every different honey kind the hive makes in a year adds 5% to all its honey that year (up to 40% with sage), so a full calendar is worth more than the best flower everywhere. The comb in the middle shows the honey: it fills as the stores grow, tinted by the kinds made this year. Each flower also has its own shape, so you never need the colours.
+
+## Tending and improvements
+- **Tend** a patch to feed 800 more bees there and get 10% more honey from it, up to 20 times. A small number on the patch shows how often it was tended.
+- **Improvements** (the button in the toolbar, or tap the hive):
+  - **Frame:** room for 500 more bees. A box holds 10 frames.
+  - **Hive box:** another box on top, room for 10 more frames (up to 4 boxes).
+  - **Wide entrance:** the bees bring 10% more honey.
+  - **Queen care:** the queen lays 25% faster.
+  - **Windbreak:** the hive eats 15% less in winter.
+  - **Water trough:** hot months no longer slow the bees.
+  - **Terraces:** 12 more patches farther up the hill. They are a longer flight and give a quarter less honey.
+- The queen lays new bees while there is room in the hive and honey to feed them, all year except winter.
+- Wax comes with the honey and buys frames and the larger improvements.
+
+## Weather and winter
+- Each month has its weather, shown in the calendar ahead of time: rain (the bees bring 30% less) and, in summer, heat (20% less without a water trough). It is the same on every device.
+- In December and January nothing blooms and the bees live on the stores. In autumn the panel tells you how much honey the winter needs, so keep some back. In a month with nothing in bloom the bees also eat a little.
+- If the stores run out, the bees huddle together until spring and the hive waits. No bee is lost and nothing is taken away.
+
+## Swarms and hillsides
+- In May, when the hive has 20,000 bees, the colony is ready to swarm. A `Swarm` button appears in the toolbar and in the panel. There is no hurry: it can swarm in any May while the hive is that full, or never.
+- When it swarms you choose where the new hive goes and one trait the colony keeps for good. The new hive starts small: two frames full of bees, a little honey and one wildflower patch. The improvements and the patches stay with the old hive.
+- Every old hive stays in the apiary and adds 2% to all honey for good (up to 100%). `Records` lists them.
+- **Hillsides:** the hill grows every flower. The island has no almond or chestnut, but its orange blossom and thyme give 20% more; less rain, more heat. The mountain has no orange blossom, but its chestnut and pine give 30% more and heather 20%; much rain, little heat. The plain gives 30% more from wildflowers and has hot summers. A flower that does not grow on the hillside is not in the panel.
+- **Traits** (three to choose from at each swarm; the same trait can be kept again and adds up): Hardy (20% less eaten in winter), Swift foragers (15% more honey), Fertile queens (25% faster laying), Frugal (flowers cost 10% less), Sturdy hives (2 more frames in every new hive) and Sage (a new flower, only once).
+
+## While you were away
+When you open Hive after a while, a card shows how long you were away, how many months passed on the hillside and the honey made. For the first 7 days away the hive works in full; after that it goes on at half pace. It never stops, it only slows.
+
+## Records and sync
+`Records` shows the year, all the honey made, the honey kinds of this year, the patches, the bees, the hillside, the hives founded, the traits and the apiary. `The hum of the hive` there turns on a soft hum that follows the bees at work; it is off at first and silent in winter. The hive syncs between your devices through [orOS sync](help:t/sync): it is the same hive on your phone and your computer. If two devices play at the same time, the hive that is further ahead is kept, and the other device's last minutes are lost. A purchase is saved a few seconds after you make it, and is sent at most every 5 minutes and when you leave. `Start over` in Records begins a new hive on every device, with `Undo` for a few seconds. Hive is in the Idle group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+
+## Keyboard
+- Arrow keys choose a patch on the hillside; [[Enter]] moves to the panel and [[Escape]] lets go of the patch.
+- [[1]] to [[8]]: plant the flowers in the order the panel shows them, on the chosen patch.
+- [[W]]: Swarm (in May, when the colony is ready). [[T]]: tend the chosen patch. [[U]]: Improvements. [[S]]: Records. [[M]]: sound. [[Z]]: undo the last purchase.
+
+## Tips
+- Early on, wildflowers and orange blossom pay for themselves fastest. Thyme is worth it once the hive has bees to spare.
+- Look at the calendar: a month with nothing in bloom is a month of honey lost.
+- Frames first while the hive is full of bees; tending once the patches are full.
+- In September, check the winter line in the panel before a big purchase.
+- Before a swarm, look at the hillsides: a new hillside changes which flowers pay best.
