@@ -9,7 +9,9 @@
 //   GET  /nl/u/<k>/<tok>    a page with one button (never unsubscribes)
 //   POST /nl/u/<k>/<tok>    unsubscribe (List-Unsubscribe=One-Click or the button)
 // App (POST /v1, origin-gated): { op: "nl", act, k, sec, ... }
-//   reg { pub, back } → { ok }        pull { after } → { rows, more }
+//   reg { pub, back, oc? } → { ok }   pull { after } → { rows, more }
+//     (oc 1 = one-click only: /nl/s answers like an unknown list; 0 = the
+//     form is open; left out = keep, a new list 0)
 //   ack { upto } → { n }              drop → { ok }
 // A sign-up is stored only encrypted for the list (AES-256-GCM, its key
 // wrapped with the list's RSA-OAEP-256 public key); an unsubscribe only
@@ -34,10 +36,13 @@ export const SQL = {
   list: "CREATE TABLE IF NOT EXISTS nl_list (k TEXT PRIMARY KEY, pub TEXT NOT NULL, sec TEXT NOT NULL, back TEXT, at INTEGER NOT NULL)",
   queue: "CREATE TABLE IF NOT EXISTS nl_q (id INTEGER PRIMARY KEY AUTOINCREMENT, k TEXT NOT NULL, kind TEXT NOT NULL, v TEXT NOT NULL, at INTEGER NOT NULL)",
   index: "CREATE INDEX IF NOT EXISTS nl_q_k ON nl_q (k, id)",
-  getList: "SELECT pub, sec, back FROM nl_list WHERE k = ?1",
+  getList: "SELECT pub, sec, back, oc FROM nl_list WHERE k = ?1",
   countLists: "SELECT COUNT(*) AS n FROM nl_list",
-  addList: "INSERT INTO nl_list (k, pub, sec, back, at) VALUES (?1, ?2, ?3, ?4, ?5)",
-  setList: "UPDATE nl_list SET pub = ?2, back = ?3, at = ?4 WHERE k = ?1",
+  addList: "INSERT INTO nl_list (k, pub, sec, back, at, oc) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+  setList: "UPDATE nl_list SET pub = ?2, back = ?3, at = ?4, oc = COALESCE(?5, oc) WHERE k = ?1",
+  // MV-1 W3: oc = 1 is a one-click-only list (its /nl/s answers like an
+  // unknown list). Added lazily to a table deployed before it.
+  addOc: "ALTER TABLE nl_list ADD COLUMN oc INTEGER NOT NULL DEFAULT 0",
   countRows: "SELECT COUNT(*) AS n FROM nl_q WHERE k = ?1",
   addRow: "INSERT INTO nl_q (k, kind, v, at) VALUES (?1, ?2, ?3, ?4)",
   seenUnsub: "SELECT id FROM nl_q WHERE k = ?1 AND kind = 'u' AND v = ?2 AND at > ?3 LIMIT 1",
@@ -66,6 +71,23 @@ function db(env) {
   return schemaP.then(() => d);
 }
 function q(d, sql, ...args) { return d.prepare(sql).bind(...args); }
+// A statement on nl_list that names oc: on a table from before MV-1 W3
+// the column is added once (a "duplicate column" from a racing isolate is
+// fine) and the statement runs again. Nothing else is swallowed.
+let ocAdded = null;
+async function withOc(d, fn) {
+  try { return await fn(); } catch (e) {
+    if (!/no such column:?\s*oc\b|has no column named oc\b/i.test(String(e && e.message || e))) throw e;
+    if (ocAdded !== d) {
+      try { await d.prepare(SQL.addOc).run(); } catch (e2) {
+        if (!/duplicate column/i.test(String(e2 && e2.message || e2))) throw e2;
+      }
+      ocAdded = d;
+    }
+    return fn();
+  }
+}
+function listRow(d, k) { return withOc(d, () => q(d, SQL.getList, k).first()); }
 
 // ---------- small helpers ----------
 function b64(bytes) {
@@ -135,6 +157,7 @@ export function validNl(b) {
   if (b.act === "reg") {
     if (!validPub(b.pub)) return "pub";
     if (!validBack(b.back)) return "back";
+    if (b.oc !== undefined && b.oc !== 0 && b.oc !== 1) return "oc";
   }
   if (b.act === "pull" && !(Number.isSafeInteger(b.after) && b.after >= 0)) return "after";
   if (b.act === "ack" && !(Number.isSafeInteger(b.upto) && b.upto >= 0)) return "upto";
@@ -142,7 +165,7 @@ export function validNl(b) {
 }
 
 async function owned(d, k, sec) {
-  const row = await q(d, SQL.getList, k).first();
+  const row = await listRow(d, k);
   if (!row) throw new NlError("gone", 404, "unknown list");
   if (!sameHex(row.sec, await sha256Hex(sec))) throw new NlError("auth", 403, "wrong list secret");
   return row;
@@ -154,16 +177,17 @@ export async function runNl(b, env, now) {
     try { await importPub(b.pub); } catch (e) { throw new NlError("bad-request", 400, "invalid pub"); }
     const pub = JSON.stringify({ kty: "RSA", alg: "RSA-OAEP-256", e: b.pub.e, n: b.pub.n });
     const back = b.back || "";
-    const row = await q(d, SQL.getList, b.k).first();
+    const oc = b.oc === 1 ? 1 : b.oc === 0 ? 0 : null;     // null = keep (an older app)
+    const row = await listRow(d, b.k);
     const hash = await sha256Hex(b.sec);
     if (row) {
       if (!sameHex(row.sec, hash)) throw new NlError("auth", 403, "wrong list secret");
-      await q(d, SQL.setList, b.k, pub, back, now).run();
+      await withOc(d, () => q(d, SQL.setList, b.k, pub, back, now, oc).run());
       return { ok: true };
     }
     const n = await q(d, SQL.countLists).first();
     if (n && n.n >= NL_LIMITS.lists) throw new NlError("full", 200, "no room for more lists");
-    await q(d, SQL.addList, b.k, pub, hash, back, now).run();
+    await withOc(d, () => q(d, SQL.addList, b.k, pub, hash, back, now, oc === null ? 0 : oc).run());
     return { ok: true };
   }
   await owned(d, b.k, b.sec);
@@ -295,8 +319,9 @@ export async function handleNl(request, env, url, now) {
 async function afterRead(request, env, url, now, kind, k, tok, lang, text) {
   const method = request.method;
   const d = await db(env);
-  const list = await q(d, SQL.getList, k).first();
-  if (!list) return page(404, lang, "gone");
+  const list = await listRow(d, k);
+  // a one-click-only list (MV-1 W3) takes the unknown-list answer for sign-ups
+  if (!list || (kind === "s" && list.oc === 1)) return page(404, lang, "gone");
 
   if (kind === "u") {
     if (method !== "POST") return page(200, lang, "ask", url.pathname);

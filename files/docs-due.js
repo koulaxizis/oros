@@ -251,6 +251,40 @@
     return out;
   }
 
+  // TAGS-1 wave T3 (Chris 2026-11-17 «Ναι, μόνο τα ονόματα»): the tag
+  // names of every disk item, for the universal search and so the
+  // Assistant and orOS Gate. tagsRaw is the files-tags slice (TAGS v1),
+  // raw the files-docs slice (the names). → { "/internal/…": [names] }.
+  // A row counts at its last known path; a tag counts while its stamp
+  // is positive and the tag itself is live. A document's file has its
+  // document's tags; a private document's file gets none at all, not
+  // even tags from rows of its own, and the Trash and Documents' texts
+  // never show.
+  function fileTags(tagsRaw, raw, lang) {
+    var out = {}, priv = {}, MAXP = 2048;
+    function okP(p) { return typeof p === "string" && p.length <= MAXP && p.indexOf("/internal/") === 0 && !/^\/internal\/\.(trash|docs)(\/|$)/.test(p); }
+    function add(p, id) {
+      var g = liveRow(raw, "tags", id), n = g ? label(g.n, lang) : "";
+      if (!n) return;
+      var l = out[p] || (out[p] = []);
+      if (l.indexOf(n) === -1 && l.length < 20) l.push(n);
+    }
+    docs(raw).forEach(function (d) {
+      if (!okP(d.p)) return;
+      if (isPrivate(raw, d)) { priv[d.p] = true; return; }
+      (Array.isArray(d.tg) ? d.tg : []).forEach(function (id) { if (typeof id === "string") add(d.p, id); });
+    });
+    var rows = isObj(tagsRaw) && Array.isArray(tagsRaw.files) ? tagsRaw.files : [];
+    rows.slice(0, 22000).forEach(function (r) {
+      if (!isObj(r) || !okP(r.p) || priv[r.p] || !isObj(r.t)) return;
+      Object.keys(r.t).forEach(function (id) { if (/^tg-/.test(id) && Number(r.t[id]) > 0) add(r.p, id); });
+    });
+    Object.keys(priv).forEach(function (p) { delete out[p]; });
+    return out;
+  }
+
+  function tagsWord(lang) { return table(lang).sTags; }
+
   function readPrefs(o) {
     var r = isObj(o) ? Number(o.remind) : 9;
     if (!isFinite(r) || Math.floor(r) !== r || r < -1 || r > 23) r = 9;
@@ -258,12 +292,12 @@
   }
 
   var API = {
-    VERSION: "1.1.0",
+    VERSION: "1.2.0",
     KEY: KEY, PREFS_KEY: PREFS_KEY, NOTIFIED_KEY: NOTIFIED_KEY, STEPS: STEPS.slice(),
     docs: docs, isPrivate: isPrivate, nameOf: nameOf,
     alerts: alerts, toNotify: toNotify, nextNotified: nextNotified, alertLine: alertLine,
     feedRows: feedRows, readPrefs: readPrefs, dayDiff: dayDiff,
-    SNIPPET: SNIPPET, snippet: snippet, searchHits: searchHits
+    SNIPPET: SNIPPET, snippet: snippet, searchHits: searchHits, fileTags: fileTags, tagsWord: tagsWord
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosDocsDue = API;

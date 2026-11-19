@@ -23,6 +23,68 @@
 // Versioning: orOS-wide version lives ONLY in shell.js.
 // ============================================================
 
+// Reduce motion (A11Y-FX W2): while oros-a11y.motion is on, matchMedia
+// answers prefers-reduced-motion as "reduce" (Bible A11Y-FX).
+(function (root) {
+  "use strict";
+  function motionShim(w) {
+    if (!w || typeof w.matchMedia !== "function" || w.__orosMotion) return;
+    var real = w.matchMedia.bind(w), watched = [];
+    w.__orosRealMatchMedia = real;
+    function stored() {
+      try { var v = JSON.parse(w.localStorage.getItem("oros-a11y") || "null"); return !!(v && v.motion === true); }
+      catch (e) { return false; }
+    }
+    var on = stored();
+    function kind(q) {
+      var s = String(q).replace(/\s+/g, "").toLowerCase();
+      if (s === "(prefers-reduced-motion:reduce)" || s === "(prefers-reduced-motion)") return "reduce";
+      if (s === "(prefers-reduced-motion:no-preference)") return "none";
+      return "";
+    }
+    w.matchMedia = function (q) {
+      var mql = real(q), k = kind(q);
+      if (!k) return mql;
+      var ls = [], fake = { media: mql.media, onchange: null };
+      var val = function () { return on ? k === "reduce" : mql.matches; };
+      Object.defineProperty(fake, "matches", { get: val, enumerable: true });
+      var last = val();
+      fake.__fire = function () {
+        var now = val();
+        if (now === last) return;
+        last = now;
+        var ev = { type: "change", matches: now, media: fake.media };
+        if (typeof fake.onchange === "function") { try { fake.onchange(ev); } catch (e) {} }
+        ls.slice().forEach(function (f) { try { f.call(fake, ev); } catch (e) {} });
+      };
+      fake.addEventListener = function (t, f) {
+        if (t !== "change" || typeof f !== "function") return;
+        if (ls.indexOf(f) === -1) ls.push(f);
+        if (watched.indexOf(fake) === -1) {
+          watched.push(fake);
+          try {
+            if (mql.addEventListener) mql.addEventListener("change", fake.__fire);
+            else if (mql.addListener) mql.addListener(fake.__fire);
+          } catch (e) {}
+        }
+      };
+      fake.removeEventListener = function (t, f) { ls = ls.filter(function (x) { return x !== f; }); };
+      fake.addListener = function (f) { fake.addEventListener("change", f); };
+      fake.removeListener = function (f) { fake.removeEventListener("change", f); };
+      fake.dispatchEvent = function () { return true; };
+      return fake;
+    };
+    function refresh() {
+      on = stored();
+      watched.forEach(function (f) { f.__fire(); });
+    }
+    try { w.addEventListener("storage", function (e) { if (!e || !e.key || e.key === "oros-a11y") refresh(); }); } catch (e) {}
+    w.__orosMotion = { refresh: refresh, on: function () { return on; } };
+  }
+  root.__orosMotionShim = motionShim;
+  motionShim(root);
+})(window);
+
 // i18n-inline-ok: language names in their own language (LANGS) are data
 (function () {
   "use strict";

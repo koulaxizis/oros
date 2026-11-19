@@ -1612,7 +1612,7 @@
       "only some of them, or none. Use short keyword queries (1-3 words), in the language the " +
       "data is probably written in; search again with other words if nothing comes back. Each result shows " +
       "its labels; with label it returns only items with that label, or with none. " +
-      "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear.",
+      "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Files and folders on the disk also show their tag names (Tags: …), so a tag name finds them. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear, and neither do their tags.",
     params: {
       type: "object",
       properties: {
@@ -3649,6 +3649,7 @@
   var GATE_OPEN_SAY = " Through orOS Gate it opens at once on the owner's screen in that app (unless the owner paused Claude's changes): " +
     "Layout's own work (rebuild, house style, book) runs there and its report comes back; a new entry, document, recipe, cover or newsletter content " +
     "is filled into the app's own form or editor for the owner to check and save; an automation rule comes in turned off. " +
+    "If nobody sees orOS at that moment (a hidden tab, orOS in the background or closed), the call waits, encrypted, and runs the next time orOS is on the owner's screen; its report comes then. " +
     "Files come only as paths on the orOS disk (/internal/…) or, while the owner has a local folder open for Claude, as local:<root>/<path> (files_list without path shows those roots): there are no attachments through the gate. Nothing is sent from here.";
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],

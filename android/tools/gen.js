@@ -179,6 +179,8 @@ function build(manifest) {
         <package android:name="com.google.android.apps.healthdata" />
         <!-- orOS Drive (DRIVE-APP): Files › orOS Drive opens it when installed. -->
         <package android:name="online.useoros.drive" />
+        <!-- Koulaxizis Apps (APPS-M3): while it is installed, it tells about new APKs. -->
+        <package android:name="gr.koulaxizis.apps" />
     </queries>
 
     <application

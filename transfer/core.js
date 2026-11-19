@@ -26,13 +26,14 @@
    1.1.0 (W2): PROTO 2, splitManifest(files, max), b64 / unb64.
    1.2.0 (D1): cleanMeta, the sender's title and message (TRANSFER-META).
    1.3.0 (D3): picType / BG_MAX, the sender's own background picture (TRANSFER-BG).
+   1.4.0 (TR-LATER): okEmail, the address of a scheduled email.
 
    window.OrosTransferCore (browser) / module.exports (Node).
    ============================================================ */
 (function (root) {
   "use strict";
 
-  var VERSION = "1.3.0";
+  var VERSION = "1.4.0";
   var PROTO = 2;                      // 2: relay path, resume (W2)
   var NS = "oros-transfer/v1";
   var ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -574,7 +575,14 @@
     return { v: 1, items: cur.items.filter(function (x) { return x.id !== id; }) };
   }
 
+  // 1.4.0 (TR-LATER): one plain address for the scheduled email (no name, no list, no line breaks)
+  function okEmail(s) {
+    s = String(s || "");
+    return s.length <= 254 && /^[^\s@<>(),;:"\[\]\\]+@[^\s@<>(),;:"\[\]\\.]+(\.[^\s@<>(),;:"\[\]\\.]+)+$/.test(s);
+  }
+
   var api = {
+    okEmail: okEmail,
     VERSION: VERSION, PROTO: PROTO, NS: NS, CODE_RE: CODE_RE, PIECE: PIECE, HEAD: HEAD, MAX_CTRL: MAX_CTRL,
     MAX_FILES: MAX_FILES, DISK_MAX: DISK_MAX, MEM_MAX: MEM_MAX,
     cleanMeta: cleanMeta, META_T: META_T, META_M: META_M, BG_MAX: BG_MAX, picType: picType,

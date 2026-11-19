@@ -10,6 +10,8 @@ orosPack("de", "capture", {
  "btn.stop": "Freigabe beenden",
  "btn.take": "Aufnehmen",
  "btn.uncrop": "Ganzes Bild",
+ "btn.text": "Text kopieren",
+ "err.text": "Die Texterkennung konnte nicht starten. Versuche es erneut, wenn du online bist.",
  "err.copy": "Dieser Browser kann keine Bilder kopieren. Speichere es stattdessen.",
  "err.denied": "Die Freigabe wurde nicht erlaubt, also gibt es nichts aufzunehmen.",
  "err.empty": "Die Quelle hat noch kein Bild gesendet. Warte kurz und versuch es noch einmal.",

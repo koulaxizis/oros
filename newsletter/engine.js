@@ -499,7 +499,9 @@
     for (var i = 0; i < n; i++) out += abc.charAt(b[i] % abc.length);
     return out;
   }
-  function formOn(listId, back) {
+  // oc (MV-1 W3): 1 = one-click unsubscribe only, the relay refuses
+  // sign-ups; 0 = the public form is open; left out = as it is.
+  function formOn(listId, back, oc) {
     var l = C.list(read(), listId);
     if (!l) return Promise.reject({ code: "gone" });
     var dev = devState().dev;
@@ -512,10 +514,13 @@
         });
       });
     return made.then(function (f) {
+      var keepOc = oc === 0 || oc === 1 ? oc : (l.form ? l.form.oc : 0);
       var form = C.normForm({ k: f.k, sec: f.sec, priv: f.priv, back: back || "", dev: (l.form && l.form.dev) || dev, at: Date.now(),
-                              shk: (l.form && l.form.shk) || "" });
+                              shk: (l.form && l.form.shk) || "", oc: keepOc });
       if (!form) throw { code: "bad-request" };
-      return relay({ op: "nl", act: "reg", k: form.k, sec: form.sec, pub: C.formPub(form), back: form.back }).then(function () {
+      var req = { op: "nl", act: "reg", k: form.k, sec: form.sec, pub: C.formPub(form), back: form.back };
+      if (oc === 0 || oc === 1) req.oc = oc;
+      return relay(req).then(function () {
         change(function (d) {
           var cur = C.list(d, listId);
           if (!cur) return false;
@@ -537,6 +542,7 @@
         var cur = C.list(d, listId);
         if (!cur || !cur.form) return false;
         var y = copy(cur); y.form = null;
+        if (!y.ocAsk) y.ocAsk = Date.now();     // MV-1: turned off on purpose, so no one-click offer
         put(d, "lists", y);
       });
     });

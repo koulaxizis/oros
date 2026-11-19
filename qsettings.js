@@ -79,7 +79,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.4.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -143,6 +143,15 @@
     var k = n.active ? "qs.night.until" : "qs.night.from";
     return t(k).replace("{t}", fmt(new Date(n.until)));
   }
+  // The second line of the Bedtime button (screentime.js S3): until
+  // when tonight's runs, from when it starts, or "Off tonight".
+  function bedSub(b, fmt, t) {
+    if (!b || !b.on) return "";
+    if (b.skipped) return t("qs.bed.off");
+    if (b.active && b.end) return t("qs.night.until").replace("{t}", fmt(new Date(b.end)));
+    if (b.next) return t("qs.night.from").replace("{t}", fmt(new Date(b.next)));
+    return "";
+  }
   // Large text: on from 130 % up to the largest; off = 100 %.
   function bigOn(size) { return size >= 130; }
 
@@ -192,7 +201,7 @@
   var model = { VER: VER, dndUntil: dndUntil, dndSub: dndSub, syncKey: syncKey,
                 batteryShown: batteryShown, batteryPct: batteryPct, batteryAttr: batteryAttr, bigOn: bigOn, onAccent: onAccent, nightSub: nightSub,
                 awakeUntil: awakeUntil, awakeState: awakeState, awakeSub: awakeSub, lowBattery: lowBattery,
-                saverState: saverState, saverToggle: saverToggle, saverStored: saverStored };
+                saverState: saverState, saverToggle: saverToggle, saverStored: saverStored, bedSub: bedSub };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -259,6 +268,8 @@
     "  border: none; border-radius: 10px; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }",
     ".qs-menu-item:hover, .qs-menu-item:focus-visible { background: rgba(127,127,127,.18); outline: none; }",
     ".qs-menu-item svg { width: 18px; height: 18px; flex: none; }",
+    ".qs-menu-item.on { background: var(--accent); color: var(--qs-on, #fff); font-weight: 700; }",
+    ".qs-focus-modes { display: flex; flex-direction: column; }",
     "#qs-sys-pills { display: contents; }",
     ".qs-media { display: flex; flex-direction: column; gap: 8px; }",
     ".qs-media-row { display: flex; align-items: center; gap: 10px; padding: 6px 6px 6px 14px; border-radius: 16px; background: var(--accent-soft); }",
@@ -288,6 +299,7 @@
     lock: SV + '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     sync: SV + '<path d="M21 12a9 9 0 0 1-15.4 6.4L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.4 5.6L21 8"/><path d="M21 3v5h-5"/></svg>',
     moon: SV + '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    bed: SV + '<path d="M3 18V6"/><path d="M3 14h18v4"/><path d="M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="1.6"/></svg>',
     night: SV + '<path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 2v7"/><path d="M4.2 10.2l1.4 1.4"/><path d="M1 18h2"/><path d="M21 18h2"/><path d="M18.4 11.6l1.4-1.4"/><path d="M23 22H1"/><path d="M16 5l-4 4-4-4"/></svg>',
     bellOff: SV + '<path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M18.6 13A17.9 17.9 0 0 1 18 8"/><path d="M6.3 6.3A6 6 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.3-5"/><path d="M3 3l18 18"/></svg>',
     text: SV + '<path d="M4 7V5h11v2"/><path d="M9.5 5v14"/><path d="M7 19h5"/><path d="M14 13v-1.5h7V13"/><path d="M17.5 11.5V19"/><path d="M16 19h3"/></svg>',
@@ -340,9 +352,17 @@
     }) || null;
   }
   function dnd() { return call(function () { return root.orosNotifs && root.orosNotifs.dnd ? root.orosNotifs.dnd() : null; }); }
+  function focus() { var F = root.orosFocus; return (F && typeof F.active === "function" && root.orosNotifs && root.orosNotifs.silent) ? F : null; }
 
+  var focusHooked = false;
   function paintBtn() {
     if (!btn) return;
+    // A focus mode started or stopped (here or on another device);
+    // focus.js loads after this file, so hook it on the first paint.
+    if (!focusHooked && focus()) {
+      focusHooked = true;
+      call(function () { root.orosFocus.onChange(function () { paintBtn(); if (panel) paint(); }); });
+    }
     var online = navigator.onLine !== false;
     var d = dnd();
     var html = (online ? IC.net : IC.netOff);
@@ -355,7 +375,7 @@
     html += IC.power;
     if (btn.__qsHtml !== html) { btn.innerHTML = html; btn.__qsHtml = html; }
     var label = t("qs.title") + " · " + t(online ? "qs.net.on" : "qs.net.off") +
-      (d && d.on ? " · " + t("qs.dnd") : "") +
+      (d && d.on ? " · " + ((focus() && call(function () { var a = focus().active(); return a && a.name; })) || t("qs.dnd")) : "") +
       (aw.on ? " · " + t("qs.awake") : "") + (sv.on ? " · " + t("qs.saver") : "") +
       (batteryShown(b) ? " · " + t("qs.battery").replace("{p}", batteryPct(b)) : "");
     btn.setAttribute("aria-label", label);
@@ -556,10 +576,24 @@
     }, then(function () {
       call(function () { root.__orosOpenAt("settings", { section: "appearance", item: "night" }); });
     }), t("qs.night.more"));
+    // Bedtime (screentime.js S3): tap = "Not tonight" / on again
+    // tonight; the arrow = Settings › Screen time. Shown only when on.
+    parts.bed = pill(IC.bed, function () {
+      call(function () { var b = root.orosScreenTime.bed(); root.orosScreenTime.bedSkip(!b.skipped); });
+      paint();
+    }, then(function () {
+      call(function () { root.__orosOpenAt("settings", { section: "screentime", item: "screentime-bed" }); });
+    }), t("qs.bed.more"));
+    // Focus (focus.js, FOCUS-1; Do Not Disturb is one of its modes):
+    // tap = stop the running mode, or start the last one until turned
+    // off; the arrow = the modes, how long, Settings.
     parts.dnd = pill(IC.bellOff, function () {
-      var d = dnd();
-      setDnd(d && d.on ? false : "on");
-    }, function () { setSub(sub === "dnd" ? "" : "dnd"); }, t("qs.dnd.more"));
+      var F = focus();
+      if (!F) { var d = dnd(); setDnd(d && d.on ? false : "on"); return; }
+      if (F.active()) F.stop(); else F.start(F.last(), { until: 0 });
+      paintBtn();
+      paint();
+    }, function () { setSub(sub === "dnd" ? "" : "dnd"); }, t("qs.focus.more"));
     parts.big = pill(IC.text, function () {
       host.a11y.set("textSize", bigOn(host.a11y.get().size) ? 100 : 130); paint();
     });
@@ -600,19 +634,38 @@
     parts.awake = pill(IC.cup, function () { setAwake(awake().on ? "" : "on"); },
       function () { setSub(sub === "awake" ? "" : "awake"); }, t("qs.awake.more"));
     parts.saver = pill(IC.leaf, toggleSaver, null);
-    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
+    [parts.net, parts.sync, parts.dark, parts.night, parts.bed, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.dndMenu = el("div", "qs-menu");
     parts.dndMenu.setAttribute("role", "group");
-    parts.dndMenu.appendChild(el("h3")).textContent = t("qs.dnd");
+    parts.dndMenu.appendChild(el("h3")).textContent = focus() ? t("qs.focus") : t("qs.dnd");
+    parts.focusModes = el("div", "qs-focus-modes");
+    parts.focusModes.setAttribute("role", "group");
+    parts.focusModes.setAttribute("aria-label", t("qs.focus.modes"));
+    parts.dndMenu.appendChild(parts.focusModes);
+    parts.focusHow = el("h3");
+    parts.focusHow.textContent = t("qs.focus.how");
+    parts.focusHow.hidden = !focus();
+    parts.dndMenu.appendChild(parts.focusHow);
+    // How long: the running mode, else the last one used.
     parts.dndItems = [["hour", "qs.dnd.hour"], ["morning", "qs.dnd.morning"], ["on", "qs.dnd.untiloff"]].map(function (c) {
-      var it = menuItem("", t(c[1]), function () { setDnd(dndUntil(c[0], Date.now())); setSub(""); });
+      var it = menuItem("", t(c[1]), function () {
+        var F = focus(), u = dndUntil(c[0], Date.now());
+        if (F) { var a = F.active(); F.start(a ? a.id : F.last(), { until: u === "on" ? 0 : u }); paintBtn(); }
+        else setDnd(u);
+        setSub("");
+      });
       parts.dndMenu.appendChild(it);
       return it;
     });
     parts.dndOff = menuItem("", t("qs.dnd.turnoff"), function () { setDnd(false); setSub(""); });
     parts.dndMenu.appendChild(parts.dndOff);
+    parts.focusSet = menuItem("", t("qs.focus.settings"), then(function () {
+      call(function () { root.__orosOpenAt("settings", { section: "notifications", item: "focusmodes" }); });
+    }));
+    parts.focusSet.hidden = !focus();
+    parts.dndMenu.appendChild(parts.focusSet);
     panel.appendChild(parts.dndMenu);
 
     parts.awakeMenu = el("div", "qs-menu");
@@ -718,9 +771,15 @@
     parts.night.box.hidden = !nl;
     if (nl) setPill(parts.night, t("qs.night"), nightSub(nl, fmtTime, t), nl.active, true);
 
+    var bd = call(function () { return root.orosScreenTime && root.orosScreenTime.bed ? root.orosScreenTime.bed() : null; });
+    parts.bed.box.hidden = !(bd && bd.on);
+    if (bd && bd.on) setPill(parts.bed, t("qs.bed"), bedSub(bd, fmtTime, t), bd.active && !bd.skipped, true);
+
     var d = dnd();
     parts.dnd.box.hidden = !d;
-    if (d) setPill(parts.dnd, t("qs.dnd"), dndSub(d, now, fmtTime, t), d.on, true);
+    var F = focus(), fa = F ? call(function () { return F.active(now); }) : null;
+    if (d) setPill(parts.dnd, fa ? fa.name : (F ? t("qs.focus") : t("qs.dnd")), dndSub(d, now, fmtTime, t), d.on, true);
+    if (F) paintFocus(F, fa);
     parts.dndMenu.hidden = sub !== "dnd" || !d;
     if (parts.dnd.more) parts.dnd.more.setAttribute("aria-expanded", sub === "dnd" ? "true" : "false");
     parts.dndOff.hidden = !(d && d.on);
@@ -771,6 +830,33 @@
     if (root.orosEmoji) setPill(parts.emoji, t("qs.emoji"), "", false, false);
 
     paintMedia();
+  }
+
+  // The mode rows of the focus menu (rebuilt only when they change).
+  function paintFocus(F, fa) {
+    var list = call(function () { return F.list(); }) || [];
+    var icon = fa ? (list.filter(function (m) { return m.id === fa.id; })[0] || {}).icon : "bell";
+    var svg = F.model.svg(icon || "bell");
+    if (parts.dnd.__icon !== svg) {
+      parts.dnd.__icon = svg;
+      var txt = parts.dnd.title.parentNode;
+      parts.dnd.main.innerHTML = svg;
+      parts.dnd.main.appendChild(txt);
+    }
+    var key = JSON.stringify([list.map(function (m) { return [m.id, m.name, m.icon]; }), fa && fa.id]);
+    if (parts.focusModes.__key === key) return;
+    parts.focusModes.__key = key;
+    parts.focusModes.textContent = "";
+    list.forEach(function (m) {
+      var it = menuItem(F.model.svg(m.icon), m.name, function () {
+        F.start(m.id, { until: 0 });
+        paintBtn();
+        setSub("");
+      });
+      it.setAttribute("aria-pressed", fa && fa.id === m.id ? "true" : "false");
+      if (fa && fa.id === m.id) it.classList.add("on");
+      parts.focusModes.appendChild(it);
+    });
   }
 
   function paintMedia() {

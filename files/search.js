@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Files — universal search provider (v1.1.0)
+// orOS Files — universal search provider (v1.2.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: lists the local disk through the shell's
 // window.orosFS (ls only; file contents are never read). One hit
@@ -15,6 +15,10 @@
 // are read in the background, at most 4 at a time, and kept in memory
 // by the time they were read; a search never waits for them.
 // Opens the document in Files: target { doc }.
+// T3 (TAGS-1; Chris 2026-11-17 «Ναι, μόνο τα ονόματα»): a disk hit
+// also carries its tag names ("Tags: …", OrosDocsDue.fileTags), so a
+// search for a tag finds its files. Names only; a private document's
+// file never gets any.
 // ============================================================
 (function (root) {
   "use strict";
@@ -88,7 +92,7 @@
 
   var PROVIDER = {
     id: "files",
-    keys: ["oros-files-docs"],
+    keys: ["oros-files-docs", "oros-files-tags"],
     search: function (ctx) {
       var fs = root.orosFS, docs = [];
       try { docs = docHits(ctx, fs); } catch (e) { docs = []; }
@@ -100,12 +104,21 @@
       var slow = new Promise(function (r) { setTimeout(function () { r(null); }, WALK_WAIT); });
       return Promise.race([listing(fs), slow]).then(function (l) {
         if (!l) return docs;
+        var tg = {}, word = "Tags";
+        try {
+          var D = root.OrosDocsDue;
+          if (D && typeof D.fileTags === "function") {
+            tg = D.fileTags(ctx.readJSON("oros-files-tags"), ctx.readJSON(D.KEY), ctx.code || ctx.lang) || {};
+            word = D.tagsWord ? D.tagsWord(ctx.code || ctx.lang) : word;
+          }
+        } catch (e) { tg = {}; }
         return docs.concat(l.map(function (e) {
           var where = e.parent === ROOT ? "/" : e.parent.slice(ROOT.length);
+          var names = Object.prototype.hasOwnProperty.call(tg, e.path) ? tg[e.path] : null;
           return {
             id: e.path,
             title: e.name + (e.dir ? "/" : ""),
-            text: where,
+            text: names && names.length ? where + "\n" + word + ": " + names.join(", ") : where,
             target: { path: e.path, dir: e.dir }
           };
         }));

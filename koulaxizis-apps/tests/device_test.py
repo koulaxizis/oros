@@ -118,11 +118,27 @@ def main():
         print("network not up after 120 s:", adb("shell", "dumpsys", "connectivity", check=False)[-2000:])
     adb("shell", "am", "start", "-W", "-n", f"{PKG}/gr.koulaxizis.apps.MainActivity")
 
+    # "VALIDATED" can also be read in a request list before any network
+    # carries traffic, so the first check may still fail (seen in CI:
+    # "network" for all three while the repositories answered). Like a
+    # person would, press Refresh while every repository is unreachable.
+    tapped = [time.time()]
+
     def loaded(root):
         t = texts(root)
-        return "orOS" in t and "orOS Drive" in t and any(x.startswith("Repositories updated") for x in t)
+        if "orOS" in t and "orOS Drive" in t and any(x.startswith("Repositories updated") for x in t):
+            return True
+        unreachable = sum(1 for x in t if x.startswith("Could not reach the repository"))
+        if root is not None and unreachable >= 3 and time.time() - tapped[0] > 15:
+            for n in root.iter("node"):
+                if (n.get("resource-id") or "").endswith(":id/refresh") or n.get("content-desc") == "Check for updates":
+                    adb("shell", "input", "tap", *map(str, center(n)), check=False)
+                    tapped[0] = time.time()
+                    print("all repositories unreachable: pressed Refresh")
+                    break
+        return False
 
-    wait_for(loaded, "the verified orOS list")
+    wait_for(loaded, "the verified orOS list", 240)
     shot("list-top")
     # The daily check is in place (APPS-M2).
     jobs = adb("shell", "dumpsys", "jobscheduler", PKG, check=False)
@@ -136,6 +152,9 @@ def main():
     shot("list-noxpress")
     for name in ("Site Bridge", "Live Operator"):
         scroll_to(name)
+    # Glarolykoi is its own section at the end, read from the orOS repository (APPS-M3).
+    scroll_to("Glarolykoi")
+    shot("list-glarolykoi")
     # Back up to NULL JSFX and install Remote for Mixers through the manager.
     for _ in range(40):
         swipe(False)

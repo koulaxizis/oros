@@ -268,7 +268,7 @@ test("A2 host: an app event posts one notice, its text reaches the tap; unknown 
 test("A2 wiring: Notifications hands its own notices over; the apps send their events", () => {
   const src = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
   const n = src("notifications.js");
-  assert.match(n, /A\.notice\(item\.ns, item\.dedupKey, item\.title \+ ' ' \+ item\.body\)/);
+  assert.match(n, /A\.notice\(item\.ns, item\.dedupKey, (?:lockHidesNs\(item\.ns, true\) \? lockNotice\(\) : )?item\.title \+ ' ' \+ item\.body\)/);
   assert.match(n, /item\.ns !== 'automations' && item\.ns !== 'passwords'/);
   for (const [f, ev] of [["todo/todo.js", "todo.done"], ["habits/habits.js", "habits.done"], ["water/water.js", "water.goal"], ["fitness/fitness.js", "fitness.done"]]) {
     const s = src(f);

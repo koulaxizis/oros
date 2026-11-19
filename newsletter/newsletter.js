@@ -252,7 +252,7 @@
       "ck.title": "Check", "ck.ok": "Ready to send.", "ck.err": "Must fix", "ck.warn": "Worth a look",
       "ck.noSubj": "The subject is empty.", "ck.longSubj": "The subject is long: phones show about 40 characters.",
       "ck.shouty": "Capitals or !!! in the subject look like spam to filters.", "ck.noBody": "The issue is empty.",
-      "ck.noOneClick": "No one-click unsubscribe: Gmail and Yahoo ask bulk senders for it, and their own Unsubscribe button shows only with it.", "ck.oneClickOn": "Turn on one-click unsubscribe", "ck.oneClickDone": "One-click unsubscribe is on for this list.", "l.wel": "Welcome mail", "l.welNone": "None", "l.welHint": "Sent once to each person who signs up through the form or by e-mail, after they confirm. People already on the list and people you import or add don't get it.", "l.welNoTpl": "Save an issue as a template first (Save as template), then pick it here.", "vw.bounces": "Bounced", "vw.spam": "Spam complaints", "vw.repHint": "Counted from the start until {d} days after it went out, on this list. Opens and clicks are not counted.",
+      "ck.noOneClick": "No one-click unsubscribe: Gmail and Yahoo ask bulk senders for it, and their own Unsubscribe button shows only with it.", "ck.oneClickOn": "Turn on one-click unsubscribe", "ck.oneClickDone": "One-click unsubscribe is on for this list.", "fm.ocOnly": "One-click unsubscribe is already on for this list, but the public form is closed: the relay turns sign-ups away until you set it up here.", "fm.pop": "Pop-up (any site)", "fm.popHint": "The same form as a pop-up: paste it once into your site's pages, for example before </body>, in place of a hosted platform's pop-up. It shows after the time you pick, closes with its button, Esc or a click outside, and isn't shown again on that browser for the days you pick (also after someone signs up). No cookies and no other service: only the form goes to the relay, and people still confirm by e-mail.", "fm.popDelay": "Show after", "fm.popDelayN": "{n} seconds", "fm.popNow": "Right away", "fm.popDays": "After it is closed, hide it for", "fm.popDaysN": "{n} days", "fm.popDay1": "1 day", "fm.popTitle": "Pop-up title", "fm.popText": "Pop-up text (optional)", "fm.popHtml": "Pop-up HTML", "pop.title": "Stay in touch with {l}", "pop.text": "News now and then, straight to your inbox. You can leave with one click.", "pop.close": "Close", "p.hosting": "Hosting mail (cPanel, Plesk)", "ch.hostingHint": "The mail of your web hosting plan: the server is usually mail.your-domain (filled in from the user name), port 465 or 587, and the user name is the full address. Hosting plans limit mail per hour: ask your host for the real limit and set the two numbers below to fit.", "ck.noSpf": "The From domain has no SPF record: many inboxes will send the issue to spam. Use Check domain.", "ck.noDmarc": "The From domain has no DMARC record: Gmail and Yahoo ask bulk senders for one. Use Check domain.", "ck.domUnread": "The From domain's records (SPF, DMARC) could not be read just now. You can still send.", "ck.domFirst": "This is the first issue of this list from orOS, and {d} is missing SPF or DMARC. Fix that before you send, or many people won't see it.", "oc.offer": "One-click unsubscribe is off for this list. Gmail and Yahoo ask bulk senders for it. Turning it on doesn't open a public sign-up form.", "oc.later": "Not now", "mv.btn": "Moving here", "mv.title": "Moving from another platform", "mv.hint": "The steps of moving a list here from a hosted newsletter platform, in order. Tick each one when it is done; the ticks are kept with the list. Nothing here sends anything.", "mv.goChan": "Account and domain", "mv.goTest": "New list", "mv.goIssue": "New issue", "mv.a": "Sending account and domain", "mv.aHint": "Add the account that sends (Settings › Sending accounts) and use Check domain: SPF, DKIM and DMARC of the From.", "mv.b": "Test list and test send", "mv.bHint": "Make a small list with your own addresses, then use Send a test to your own phone and to a Gmail address. Check that it lands in the inbox and the unsubscribe link works.", "mv.c": "Import each status file", "mv.cHint": "Import every file of the old platform's export (active, unsubscribed, bounced, junk). People who left only go on the do-not-send list.", "mv.d": "Link the old platform's group", "mv.dHint": "While both run side by side, link the old group so sign-ups and unsubscribes reach both sides.", "mv.e": "Send one issue from orOS", "mv.eHint": "Send one real issue from here while the old platform stays as it is.", "mv.f": "Remove the old forms and pop-up", "mv.fHint": "Take the old platform's forms, pop-up and links off your site and put this list's form in their place.", "mv.g": "Archive the export", "mv.gHint": "Keep the export files somewhere safe: they are the record of consent from before.", "mv.h": "Close the old account", "mv.hHint": "Last of all, once everything here works: close the account at the old platform.", "pf.title": "Figures from the previous platform", "pf.hint": "Optional: the old platform's average figures per send, to compare with. You type them in; orOS doesn't count opens or clicks.", "pf.open": "Opens", "pf.click": "Clicks", "pf.unsub": "Unsubscribes", "pf.note": "Note", "pf.notePh": "For example: average of the last 12 sends", "pf.here": "This issue: unsubscribes {u}", "l.wel": "Welcome mail", "l.welNone": "None", "l.welHint": "Sent once to each person who signs up through the form or by e-mail, after they confirm. People already on the list and people you import or add don't get it.", "l.welNoTpl": "Save an issue as a template first (Save as template), then pick it here.", "vw.bounces": "Bounced", "vw.spam": "Spam complaints", "vw.repHint": "Counted from the start until {d} days after it went out, on this list. Opens and clicks are not counted.",
       "tpl.html": "From HTML file", "toast.htmlBig": "That file is too big for an issue (about 100 KB of HTML at most).", "toast.htmlBad": "Nothing usable in that file: an issue needs HTML with text or pictures.", "toast.htmlIn": "Opened as an HTML issue: scripts, forms and tracking pixels were removed.", "ed.html": "HTML", "ed.htmlHint": "Your own e-mail HTML, sent as it is after cleaning: tables, inline styles, links and https pictures stay; scripts, forms, outside style sheets and tracking pixels go. {$unsubscribe} or {{UNSUBSCRIBE}} in a link becomes the unsubscribe link; without one, the list's footer is added below. Fill every other {{SLOT}} before sending.", "ed.txt": "Plain text", "ed.txtPh": "Empty: made from the HTML when it is sent", "ed.txtHint": "The text-only part of the e-mail, for mail apps that don't show HTML. Leave it empty and it is made from the HTML.", "ed.htmlOpen": "Replace with an HTML file", "ed.txtOpen": "Open a .txt file", "ed.txtMake": "Make from the HTML", "ck.slots": "Some {{SLOTS}} are still empty: fill them in the HTML or the plain text.", "ck.webImgs": "Pictures load from the web: some mail apps show them only when the reader allows it.",
       "ck.noAddr": "The list has no postal address for the footer (Lists › Edit).", "ck.noFrom": "The list has no From address.",
       "ck.noChan": "The list's sending account is missing or has no password on this device.",
@@ -486,7 +486,7 @@
       "ck.title": "Έλεγχος", "ck.ok": "Έτοιμο για αποστολή.", "ck.err": "Πρέπει να διορθωθεί", "ck.warn": "Αξίζει μια ματιά",
       "ck.noSubj": "Το θέμα είναι κενό.", "ck.longSubj": "Το θέμα είναι μεγάλο: τα κινητά δείχνουν περίπου 40 χαρακτήρες.",
       "ck.shouty": "Κεφαλαία ή !!! στο θέμα μοιάζουν με spam στα φίλτρα.", "ck.noBody": "Το τεύχος είναι κενό.",
-      "ck.noOneClick": "Δεν υπάρχει διαγραφή με ένα κλικ: το Gmail και το Yahoo τη ζητούν από όσους στέλνουν μαζικά, και το δικό τους κουμπί διαγραφής φαίνεται μόνο με αυτήν.", "ck.oneClickOn": "Ενεργοποίηση διαγραφής με ένα κλικ", "ck.oneClickDone": "Η διαγραφή με ένα κλικ ενεργοποιήθηκε για αυτή τη λίστα.", "l.wel": "Email καλωσορίσματος", "l.welNone": "Κανένα", "l.welHint": "Στέλνεται μία φορά σε όποιον εγγράφεται από τη φόρμα ή με email, αφού επιβεβαιώσει. Όσοι είναι ήδη στη λίστα και όσοι εισάγεις ή προσθέτεις δεν το λαμβάνουν.", "l.welNoTpl": "Αποθήκευσε πρώτα ένα τεύχος ως πρότυπο (Αποθήκευση ως πρότυπο) και διάλεξέ το εδώ.", "vw.bounces": "Επιστροφές", "vw.spam": "Αναφορές spam", "vw.repHint": "Μετρημένα από την έναρξη έως {d} ημέρες μετά την αποστολή, σε αυτή τη λίστα. Ανοίγματα και κλικ δεν μετριούνται.",
+      "ck.noOneClick": "Δεν υπάρχει διαγραφή με ένα κλικ: το Gmail και το Yahoo τη ζητούν από όσους στέλνουν μαζικά, και το δικό τους κουμπί διαγραφής φαίνεται μόνο με αυτήν.", "ck.oneClickOn": "Ενεργοποίηση διαγραφής με ένα κλικ", "ck.oneClickDone": "Η διαγραφή με ένα κλικ ενεργοποιήθηκε για αυτή τη λίστα.", "fm.ocOnly": "Η διαγραφή με ένα κλικ είναι ήδη ενεργή για αυτή τη λίστα, αλλά η δημόσια φόρμα είναι κλειστή: το relay δεν δέχεται εγγραφές μέχρι να τη δημιουργήσεις εδώ.", "fm.pop": "Pop-up (για κάθε site)", "fm.popHint": "Η ίδια φόρμα ως pop-up: επικόλλησέ τη μία φορά στις σελίδες του site σου, για παράδειγμα πριν το </body>, στη θέση του pop-up μιας άλλης πλατφόρμας. Εμφανίζεται μετά τον χρόνο που διαλέγεις, κλείνει με το κουμπί του, με Esc ή με κλικ έξω, και δεν ξαναβγαίνει σε εκείνον τον browser για όσες μέρες διαλέξεις (και αφού κάποιος εγγραφεί). Χωρίς cookies και χωρίς άλλη υπηρεσία: μόνο η φόρμα πηγαίνει στο relay, και η επιβεβαίωση γίνεται πάντα με email.", "fm.popDelay": "Εμφάνιση μετά από", "fm.popDelayN": "{n} δευτερόλεπτα", "fm.popNow": "Αμέσως", "fm.popDays": "Όταν κλείσει, να μην ξαναβγαίνει για", "fm.popDaysN": "{n} ημέρες", "fm.popDay1": "1 ημέρα", "fm.popTitle": "Τίτλος του pop-up", "fm.popText": "Κείμενο του pop-up (προαιρετικό)", "fm.popHtml": "HTML του pop-up", "pop.title": "Μείνε σε επαφή με {l}", "pop.text": "Νέα πότε πότε, κατευθείαν στο email σου. Φεύγεις με ένα κλικ όποτε θες.", "pop.close": "Κλείσιμο", "p.hosting": "Mail του hosting (cPanel, Plesk)", "ch.hostingHint": "Το mail του πακέτου φιλοξενίας σου: ο διακομιστής είναι συνήθως mail.το-domain-σου (συμπληρώνεται από το όνομα χρήστη), θύρα 465 ή 587, και όνομα χρήστη η πλήρης διεύθυνση. Τα πακέτα φιλοξενίας περιορίζουν τα μηνύματα ανά ώρα: ρώτα τον πάροχό σου για το πραγματικό όριο και ρύθμισε ανάλογα τους δύο αριθμούς παρακάτω.", "ck.noSpf": "Το domain του αποστολέα δεν έχει εγγραφή SPF: πολλά γραμματοκιβώτια θα στείλουν το τεύχος στα ανεπιθύμητα. Χρησιμοποίησε τον Έλεγχο domain.", "ck.noDmarc": "Το domain του αποστολέα δεν έχει εγγραφή DMARC: το Gmail και το Yahoo τη ζητούν από όσους στέλνουν μαζικά. Χρησιμοποίησε τον Έλεγχο domain.", "ck.domUnread": "Οι εγγραφές του domain του αποστολέα (SPF, DMARC) δεν διαβάστηκαν αυτή τη στιγμή. Μπορείς να στείλεις κανονικά.", "ck.domFirst": "Αυτό είναι το πρώτο τεύχος της λίστας από το orOS, και στο {d} λείπει το SPF ή το DMARC. Διόρθωσέ το πριν στείλεις, αλλιώς πολλοί δεν θα το δουν.", "oc.offer": "Η διαγραφή με ένα κλικ είναι κλειστή για αυτή τη λίστα. Το Gmail και το Yahoo τη ζητούν από όσους στέλνουν μαζικά. Η ενεργοποίηση δεν ανοίγει δημόσια φόρμα εγγραφής.", "oc.later": "Όχι τώρα", "mv.btn": "Μετακόμιση εδώ", "mv.title": "Μετακόμιση από άλλη πλατφόρμα", "mv.hint": "Τα βήματα για να φέρεις εδώ μια λίστα από άλλη πλατφόρμα newsletter, με τη σειρά. Τσέκαρε το καθένα όταν γίνει· τα τικ μένουν στη λίστα. Τίποτα εδώ δεν στέλνει κάτι.", "mv.goChan": "Λογαριασμός και domain", "mv.goTest": "Νέα λίστα", "mv.goIssue": "Νέο τεύχος", "mv.a": "Λογαριασμός αποστολής και domain", "mv.aHint": "Πρόσθεσε τον λογαριασμό που στέλνει (Ρυθμίσεις › Λογαριασμοί αποστολής) και κάνε Έλεγχο domain: SPF, DKIM και DMARC του αποστολέα.", "mv.b": "Δοκιμαστική λίστα και δοκιμαστική αποστολή", "mv.bHint": "Φτιάξε μια μικρή λίστα με δικές σου διευθύνσεις και στείλε δοκιμή στο κινητό σου και σε μια διεύθυνση Gmail. Δες ότι φτάνει στα εισερχόμενα και ότι ο σύνδεσμος διαγραφής δουλεύει.", "mv.c": "Εισαγωγή κάθε αρχείου κατάστασης", "mv.cHint": "Εισήγαγε κάθε αρχείο της εξαγωγής της παλιάς πλατφόρμας (ενεργοί, διαγραμμένοι, επιστροφές, ανεπιθύμητα). Όσοι έφυγαν μπαίνουν μόνο στη λίστα «μην στέλνεις».", "mv.d": "Σύνδεση της ομάδας της παλιάς πλατφόρμας", "mv.dHint": "Όσο τρέχουν και οι δύο παράλληλα, σύνδεσε την παλιά ομάδα ώστε εγγραφές και διαγραφές να φτάνουν και στις δύο πλευρές.", "mv.e": "Αποστολή ενός τεύχους από το orOS", "mv.eHint": "Στείλε ένα πραγματικό τεύχος από εδώ, ενώ η παλιά πλατφόρμα μένει όπως είναι.", "mv.f": "Αφαίρεση των παλιών φορμών και του pop-up", "mv.fHint": "Βγάλε από το site σου τις φόρμες, το pop-up και τους συνδέσμους της παλιάς πλατφόρμας και βάλε στη θέση τους τη φόρμα αυτής της λίστας.", "mv.g": "Αρχειοθέτηση της εξαγωγής", "mv.gHint": "Φύλαξε τα αρχεία της εξαγωγής σε ασφαλές μέρος: είναι το αρχείο συγκατάθεσης από πριν.", "mv.h": "Κλείσιμο του παλιού λογαριασμού", "mv.hHint": "Τελευταίο απ' όλα, όταν όλα εδώ δουλεύουν: κλείσε τον λογαριασμό στην παλιά πλατφόρμα.", "pf.title": "Νούμερα από την προηγούμενη πλατφόρμα", "pf.hint": "Προαιρετικά: τα μέσα νούμερα της παλιάς πλατφόρμας ανά αποστολή, για σύγκριση. Τα γράφεις εσύ· το orOS δεν μετρά ανοίγματα ή κλικ.", "pf.open": "Ανοίγματα", "pf.click": "Κλικ", "pf.unsub": "Διαγραφές", "pf.note": "Σημείωση", "pf.notePh": "Για παράδειγμα: μέσος όρος των τελευταίων 12 αποστολών", "pf.here": "Αυτό το τεύχος: διαγραφές {u}", "l.wel": "Email καλωσορίσματος", "l.welNone": "Κανένα", "l.welHint": "Στέλνεται μία φορά σε όποιον εγγράφεται από τη φόρμα ή με email, αφού επιβεβαιώσει. Όσοι είναι ήδη στη λίστα και όσοι εισάγεις ή προσθέτεις δεν το λαμβάνουν.", "l.welNoTpl": "Αποθήκευσε πρώτα ένα τεύχος ως πρότυπο (Αποθήκευση ως πρότυπο) και διάλεξέ το εδώ.", "vw.bounces": "Επιστροφές", "vw.spam": "Αναφορές spam", "vw.repHint": "Μετρημένα από την έναρξη έως {d} ημέρες μετά την αποστολή, σε αυτή τη λίστα. Ανοίγματα και κλικ δεν μετριούνται.",
       "tpl.html": "Από αρχείο HTML", "toast.htmlBig": "Το αρχείο είναι πολύ μεγάλο για τεύχος (έως περίπου 100 KB HTML).", "toast.htmlBad": "Τίποτα χρήσιμο σε αυτό το αρχείο: ένα τεύχος θέλει HTML με κείμενο ή εικόνες.", "toast.htmlIn": "Άνοιξε ως τεύχος HTML: αφαιρέθηκαν scripts, φόρμες και pixel παρακολούθησης.", "ed.html": "HTML", "ed.htmlHint": "Το δικό σου HTML του email, στέλνεται όπως είναι μετά τον καθαρισμό: πίνακες, inline στυλ, σύνδεσμοι και εικόνες https μένουν· scripts, φόρμες, εξωτερικά style sheets και pixel παρακολούθησης φεύγουν. Το {$unsubscribe} ή {{UNSUBSCRIBE}} σε σύνδεσμο γίνεται ο σύνδεσμος διαγραφής· χωρίς αυτό, μπαίνει από κάτω το υποσέλιδο της λίστας. Συμπλήρωσε κάθε άλλο {{SLOT}} πριν την αποστολή.", "ed.txt": "Απλό κείμενο", "ed.txtPh": "Κενό: φτιάχνεται από το HTML κατά την αποστολή", "ed.txtHint": "Το μέρος του email μόνο με κείμενο, για εφαρμογές που δεν δείχνουν HTML. Άφησέ το κενό και φτιάχνεται από το HTML.", "ed.htmlOpen": "Αντικατάσταση με αρχείο HTML", "ed.txtOpen": "Άνοιγμα αρχείου .txt", "ed.txtMake": "Φτιάξ' το από το HTML", "ck.slots": "Κάποια {{SLOTS}} είναι ακόμη κενά: συμπλήρωσέ τα στο HTML ή στο απλό κείμενο.", "ck.webImgs": "Οι εικόνες φορτώνουν από το διαδίκτυο: κάποιες εφαρμογές τις δείχνουν μόνο αν το επιτρέψει ο αναγνώστης.",
       "ck.noAddr": "Η λίστα δεν έχει ταχυδρομική διεύθυνση για το κάτω μέρος (Λίστες › Επεξεργασία).", "ck.noFrom": "Η λίστα δεν έχει διεύθυνση αποστολέα.",
       "ck.noChan": "Ο λογαριασμός αποστολής της λίστας λείπει ή δεν έχει κωδικό σε αυτή τη συσκευή.",
@@ -871,6 +871,9 @@
     sc.onload = go;
     document.head.appendChild(sc);
   }
+  function pctText(v) {
+    try { return new Intl.NumberFormat(LANG, { maximumFractionDigits: 1 }).format(v) + " %"; } catch (e) { return v + " %"; }
+  }
   function mini(label, fn) {
     var b = el("button", "mini-btn", label);
     b.type = "button";
@@ -901,7 +904,10 @@
       acts.appendChild(mini(t("lists.subLink"), function () { linkDialog(l.id); }));
       acts.appendChild(mini(t("lists.rss") + (rssOf(l.id).length ? " (" + rssOf(l.id).length + ")" : ""), function () { rssListDialog(l.id); }));
       if (l.from) acts.appendChild(mini(t("lists.check"), function () { domainDialog(l.from); }));
+      var mvN = C.normMove(l.mv).length;
+      acts.appendChild(mini(t("mv.btn") + (mvN ? " (" + mvN + "/" + C.MOVE_STEPS.length + ")" : ""), function () { moveDialog(l.id); }));
       card.appendChild(acts);
+      if (!l.form && !l.ocAsk) card.appendChild(oneClickOffer(l));
       box.appendChild(card);
     });
     $("add-list").innerHTML = UI.plus + "<span></span>";
@@ -2306,6 +2312,20 @@
     if (rep.spam) tile(t("vw.spam"), rep.spam, "bad");
     body.appendChild(tiles);
     body.appendChild(el("p", "hint", t("vw.repHint", { d: rep.days })));
+    // MV-1: the previous platform's figures next to this issue's
+    var pv = C.prevFigures(C.list(data, x.list));
+    if (pv) {
+      var pvBox = el("div", "card pv-card");
+      var parts = [];
+      if (typeof pv.open === "number") parts.push(t("pf.open") + " " + pctText(pv.open));
+      if (typeof pv.click === "number") parts.push(t("pf.click") + " " + pctText(pv.click));
+      if (typeof pv.unsub === "number") parts.push(t("pf.unsub") + " " + pctText(pv.unsub));
+      pvBox.appendChild(el("p", "dlg-h", t("pf.title")));
+      if (parts.length) pvBox.appendChild(el("p", "row-sub", parts.join(" · ")));
+      if (pv.note) pvBox.appendChild(el("p", "row-sub", pv.note));
+      if (p.sent) pvBox.appendChild(el("p", "row-sub", t("pf.here", { u: pctText(Math.round(1000 * rep.unsub / p.sent) / 10) })));
+      body.appendChild(pvBox);
+    }
     if (x.st !== "sent" && p.total) {
       var bar = el("div", "prog");
       var fillB = el("span", "prog-fill");
@@ -2570,6 +2590,9 @@
       savePrefs();
       dlg.close();
       renderAll();
+      // MV-1: a new list gets one-click unsubscribe at once (relay registration,
+      // no public form); if the relay can't be reached the list offers it later
+      if (!l) E.formOn(rec.id, "", 1).then(function () { data = E.read(); renderAll(); }, function () {});
     });
     openDialog(dlg, f.name);
   }
@@ -2677,6 +2700,44 @@
     actionsRow(dlg, [], "", null);
     openDialog(dlg);
   }
+  // MV-1 W2: the form as a pop-up for any site, in the list's language
+  function tIn(lang, key, params) {
+    var p = STRINGS[lang] || STRINGS.en;
+    return fill(p[key] !== undefined ? p[key] : (STRINGS.en[key] !== undefined ? STRINGS.en[key] : key), params);
+  }
+  function popupField(l) {
+    var box = el("div", "pop-box");
+    box.appendChild(el("p", "dlg-h", t("fm.pop")));
+    box.appendChild(el("p", "hint", t("fm.popHint")));
+    var f = {};
+    var r = el("div", "fld-row");
+    f.delay = sel(C.POP_DELAYS.map(function (n) { return [String(n), n ? t("fm.popDelayN", { n: n }) : t("fm.popNow")]; }), "20");
+    r.appendChild(field(t("fm.popDelay"), f.delay));
+    f.days = sel(C.POP_DAYS.map(function (n) { return [String(n), n === 1 ? t("fm.popDay1") : t("fm.popDaysN", { n: n })]; }), "30");
+    r.appendChild(field(t("fm.popDays"), f.days));
+    box.appendChild(r);
+    f.title = inp("text", tIn(l.lang, "pop.title", { l: l.name }), 120);
+    box.appendChild(field(t("fm.popTitle"), f.title));
+    f.text = inp("text", tIn(l.lang, "pop.text"), 300);
+    box.appendChild(field(t("fm.popText"), f.text));
+    var ta = area("", 7);
+    ta.readOnly = true;
+    var make = function () {
+      ta.value = C.popupHtml(l, E.relayUrl(), {
+        title: f.title.value.trim() || tIn(l.lang, "pop.title", { l: l.name }), text: f.text.value.trim(),
+        email: tIn(l.lang, "fm.email"), name: tIn(l.lang, "fm.name"), btn: tIn(l.lang, "lk.btn"), close: tIn(l.lang, "pop.close")
+      }, { delay: +f.delay.value, days: +f.days.value });
+    };
+    [f.delay, f.days, f.title, f.text].forEach(function (x) { x.addEventListener(x.tagName === "SELECT" ? "change" : "input", make); });
+    make();
+    var w = field(t("fm.popHtml"), ta);
+    w.appendChild(mini(t("lk.copy"), function () {
+      var done = function () { showToast(t("lk.copied")); };
+      try { navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); }); } catch (e) { ta.select(); }
+    }));
+    box.appendChild(w);
+    return box;
+  }
   // The web sign-up form (kept by the relay until orOS collects it).
   function formCard(l, dlg) {
     var c = el("div", "card form-card");
@@ -2690,11 +2751,13 @@
       });
     };
     var reopen = function () { dlg.close(); data = E.read(); renderAll(); linkDialog(l.id); };
-    if (!l.form) {
+    // a list with one-click only (MV-1 W3) sets the form up the same way
+    if (!l.form || l.form.oc) {
       c.appendChild(el("p", "dlg-text", t("fm.text")));
+      if (l.form) c.appendChild(el("p", "hint", t("fm.ocOnly")));
       var a = el("div", "acts");
       var on = btn(t("fm.on"), "primary", function () {
-        busyBtn(on, E.formOn(l.id, "")).then(function () { showToast(t("fm.ready")); reopen(); }, function () {});
+        busyBtn(on, E.formOn(l.id, l.form ? l.form.back : "", 0)).then(function () { showToast(t("fm.ready")); reopen(); }, function () {});
       });
       a.appendChild(on);
       c.appendChild(a);
@@ -2709,6 +2772,7 @@
       try { navigator.clipboard.writeText(html).then(done, function () { ta.select(); }); } catch (e) { ta.select(); }
     }));
     c.appendChild(w);
+    c.appendChild(popupField(l));
     var back = inp("url", l.form.back, 300);
     back.placeholder = "https://…";
     var bw = field(t("fm.back"), back, t("fm.backHint"));
@@ -2750,6 +2814,109 @@
     acts.appendChild(off);
     c.appendChild(acts);
     return c;
+  }
+
+  // MV-1: one-click unsubscribe is offered once for a list made before it
+  // was turned on at creation (the same relay registration as the form).
+  function oneClickOffer(l) {
+    var box = el("div", "banner info oc-offer");
+    box.appendChild(el("p", "", t("oc.offer")));
+    var acts = el("div", "acts");
+    var on = mini(t("ck.oneClickOn"), function () {
+      on.disabled = true;
+      E.formOn(l.id, "", 1).then(function () {
+        data = E.read(); renderAll(); showToast(t("ck.oneClickDone"));
+      }, function (e) {
+        on.disabled = false;
+        showToast(e && e.code === "nostore" ? t("fm.nostore") : t("fm.fail", { e: errText(e) }));
+      });
+    });
+    acts.appendChild(on);
+    acts.appendChild(mini(t("oc.later"), function () {
+      var cur = C.list(data, l.id);
+      if (!cur) return;
+      var y = copy(cur); y.ocAsk = Date.now();
+      put("lists", C.normList(y));
+      renderAll();
+    }));
+    box.appendChild(acts);
+    return box;
+  }
+  // MV-1: the "Moving from another platform" checklist of a list (ticks
+  // stored in the list, synced) and the previous platform's figures.
+  // Nothing here sends anything.
+  function moveDialog(id) {
+    var l = C.list(data, id);
+    if (!l) return;
+    var dlg = makeDialog("nl-move", t("mv.title"), true);
+    dlg.appendChild(el("p", "hint", t("mv.hint")));
+    var go = {
+      a: [t("mv.goChan"), function () { dlg.close(); if (C.chan(data, l.chan)) domainDialog(l.from); else chanDialog(null); }],
+      b: [t("mv.goTest"), function () { dlg.close(); listDialog(null); }],
+      c: [t("subs.csv"), function () { dlg.close(); prefs.list = l.id; savePrefs(); importCsv(); }],
+      d: P && P.has() ? [P.label(), function () { dlg.close(); prefs.list = l.id; savePrefs(); P.open(); }] : null,
+      e: [t("mv.goIssue"), function () { dlg.close(); prefs.list = l.id; savePrefs(); newIssue(); }]
+    };
+    var ul = el("ul", "plain mv-list");
+    C.MOVE_STEPS.forEach(function (k) {
+      var li = el("li", "mv-step");
+      var lab = el("label", "mv-lbl");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = C.normMove(l.mv).indexOf(k) >= 0;
+      cb.addEventListener("change", function () {
+        var cur = C.list(data, id);
+        if (!cur) return;
+        var y = copy(cur); y.mv = C.moveTick(cur, k, cb.checked);
+        if (!y.mv) delete y.mv;
+        put("lists", C.normList(y));
+        renderAll();
+      });
+      lab.appendChild(cb);
+      var tx = el("span", "mv-txt");
+      tx.appendChild(el("span", "mv-name", t("mv." + k)));
+      tx.appendChild(el("span", "row-sub", t("mv." + k + "Hint")));
+      lab.appendChild(tx);
+      li.appendChild(lab);
+      if (go[k]) li.appendChild(mini(go[k][0], go[k][1]));
+      ul.appendChild(li);
+    });
+    dlg.appendChild(ul);
+    // the previous platform's figures, to compare with (typed in by the user)
+    dlg.appendChild(el("p", "dlg-h", t("pf.title")));
+    dlg.appendChild(el("p", "hint", t("pf.hint")));
+    var f = {};
+    var row = el("div", "fld-row");
+    [["pvOpen", "pf.open"], ["pvClick", "pf.click"], ["pvUnsub", "pf.unsub"]].forEach(function (p) {
+      // text, so "32,5" works as well as "32.5" (C.pct reads both)
+      f[p[0]] = inp("text", typeof l[p[0]] === "number" ? String(l[p[0]]).replace(".", LANG === "en" ? "." : ",") : "", 6);
+      f[p[0]].inputMode = "decimal";
+      f[p[0]].placeholder = "%";
+      var w = field(t(p[1]), f[p[0]]);
+      w.classList.add("narrow");
+      row.appendChild(w);
+    });
+    dlg.appendChild(row);
+    f.note = inp("text", l.pvNote || "", 200);
+    f.note.placeholder = t("pf.notePh");
+    dlg.appendChild(field(t("pf.note"), f.note));
+    actionsRow(dlg, [], t("dlg.save"), function () {
+      var cur = C.list(data, id);
+      if (!cur) { dlg.close(); return; }
+      var y = copy(cur), bad = false;
+      C.PREV_KEYS.forEach(function (k) {
+        var raw = f[k].value.trim(), v = raw ? C.pct(raw) : null;
+        f[k].classList.toggle("bad", !!raw && v === null);
+        if (raw && v === null) bad = true;
+        if (v === null) delete y[k]; else y[k] = v;
+      });
+      if (bad) return;
+      if (f.note.value.trim()) y.pvNote = f.note.value; else delete y.pvNote;
+      put("lists", C.normList(y));
+      dlg.close();
+      renderAll();
+    });
+    openDialog(dlg);
   }
 
   // A sending account: new (id null) or existing.
@@ -2799,6 +2966,17 @@
     f.user.autocomplete = "off";
     var userF = field(t("ch.user"), f.user);
     smtpBox.appendChild(userF);
+    // MV-1: the hosting preset suggests mail.<domain> of the user name
+    var hostingP = el("p", "hint", t("ch.hostingHint"));
+    smtpBox.appendChild(hostingP);
+    var autoHost = "";
+    var hostingFill = function () {
+      if (f.preset.value !== "hosting" || (f.host.value && f.host.value !== autoHost)) return;
+      var firstFrom = (C.live(data.lists)[0] || {}).from || "";
+      autoHost = C.hostingHost(f.user.value, firstFrom);
+      f.host.value = autoHost;
+    };
+    f.user.addEventListener("input", hostingFill);
     f.pass = inp("password", "", 512);
     f.pass.autocomplete = "new-password";
     var passF = field(t("ch.pass"), f.pass, t("ch.passHint"));
@@ -2827,6 +3005,7 @@
       r1.hidden = api;
       userF.hidden = api;
       passLbl.textContent = api ? t("ch.key") : t("ch.pass");
+      hostingP.hidden = f.preset.value !== "hosting";
     };
     f.via.addEventListener("change", sync);
     f.kind.addEventListener("change", function () {
@@ -2840,6 +3019,7 @@
       f.port.value = String(p.port);
       if (p.user) f.user.value = p.user;
       f.rate.value = p.rate; f.cap.value = p.cap;
+      if (f.preset.value === "hosting") { f.host.value = ""; autoHost = ""; hostingFill(); }
       sync();
     });
     sync();
@@ -3328,12 +3508,16 @@
     var l = C.list(data, x.list);
     var ch = l ? C.chan(data, l.chan) : null;
     var credsP = ch ? sendCreds(ch).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
-    credsP.then(function (chanOk) {
+    // MV-1: the From domain's SPF / DMARC (cached a day; never blocks sending)
+    var domP = l && l.from ? domainRec(l.from, false)["catch"](function () { return { fail: true }; }) : Promise.resolve(null);
+    Promise.all([credsP, domP]).then(function (r2) {
+      var chanOk = r2[0];
       var aud = C.audience(data, x).length;
-      var res = C.preflight(data, x, { chan: chanOk ? ch : null, inbox: !!inboxAccount(ch), imgBytes: imgBytes(x), aud: aud, relay: true });
+      var res = C.preflight(data, x, { chan: chanOk ? ch : null, inbox: !!inboxAccount(ch), imgBytes: imgBytes(x), aud: aud, relay: true, dom: r2[1] });
       var errs = res.filter(function (r) { return r.lvl === "err"; });
       if (send && !errs.length) { sendDialog(x, l, ch, aud, res); return; }
       var dlg = makeDialog("nl-check", t("ck.title"), true);
+      domBanner(dlg, x, l, res);
       if (!res.length) dlg.appendChild(el("p", "banner info", t("ck.ok")));
       [["err", t("ck.err")], ["warn", t("ck.warn")]].forEach(function (g) {
         var items = res.filter(function (r) { return r.lvl === g[0]; });
@@ -3348,7 +3532,7 @@
       if (l && !l.form && res.some(function (r) { return r.k === "noOneClick"; })) {
         var oc = btn(t("ck.oneClickOn"), "", function () {
           oc.disabled = true;
-          E.formOn(l.id, "").then(function () {
+          E.formOn(l.id, "", 1).then(function () {
             data = E.read(); renderAll(); dlg.close(); showToast(t("ck.oneClickDone"));
           }, function (e) {
             oc.disabled = false;
@@ -3378,8 +3562,20 @@
     d.setHours(9, 0, 0, 0);
     return d.getTime();
   }
+  // MV-1: before a list's first issue from orOS, a missing SPF or DMARC is
+  // shown at the top (it is still only a warning).
+  function domBanner(dlg, x, l, res) {
+    if (!l || !C.firstSend(data, x) || !res.some(function (r) { return r.k === "noSpf" || r.k === "noDmarc"; })) return;
+    var b = el("div", "banner dom-first");
+    b.appendChild(el("p", "", t("ck.domFirst", { d: String(l.from).split("@")[1] || "" })));
+    var a = el("div", "acts");
+    a.appendChild(mini(t("lists.check"), function () { domainDialog(l.from); }));
+    b.appendChild(a);
+    dlg.appendChild(b);
+  }
   function sendDialog(x, l, ch, aud, res) {
     var dlg = makeDialog("nl-send", t("sd.title"), true);
+    domBanner(dlg, x, l, res);
     var warns = res.filter(function (r) { return r.lvl === "warn"; });
     if (warns.length) {
       var ul = el("ul", "ck-list warn");
@@ -3930,6 +4126,38 @@
         .map(function (a) { return String(a.data || "").replace(/"\s*"/g, "").replace(/^"|"$/g, ""); });
     });
   }
+  // The From domain's SPF, DMARC and DKIM (one of the usual selectors) via
+  // DNS-over-HTTPS → Promise<{ at, spf, dmarc, dkim } | { fail: true } |
+  // null (a public mailbox or no domain)>. Kept a day per domain on this
+  // device only ("oros-newsletter-dns"); a failed read is never kept.
+  var DNS_KEY = "oros-newsletter-dns";
+  function dnsCache() {
+    try { var o = JSON.parse(localStorage.getItem(DNS_KEY) || "null"); return o && typeof o === "object" && !Array.isArray(o) ? o : {}; }
+    catch (e) { return {}; }
+  }
+  function domainRec(from, fresh) {
+    var dom = (String(from || "").split("@")[1] || "").toLowerCase();
+    if (!dom || !C.validHost(dom) || PUBLIC_MAIL.test(dom)) return Promise.resolve(null);
+    var hit = dnsCache()[dom], now = Date.now();
+    if (!fresh && hit && typeof hit.at === "number" && hit.at <= now && now - hit.at < C.DNS_TTL) return Promise.resolve(hit);
+    if (!navigator.onLine) return Promise.resolve({ fail: true });
+    var look = Promise.all([
+      dnsTxt(dom).then(function (a) { return a.filter(function (v) { return /^v=spf1/i.test(v); })[0] || ""; }),
+      dnsTxt("_dmarc." + dom).then(function (a) { return a.filter(function (v) { return /^v=DMARC1/i.test(v); })[0] || ""; }),
+      Promise.all(DKIM_SELECTORS.map(function (s) {
+        return dnsTxt(s + "._domainkey." + dom).then(function (a) { return a.some(function (v) { return /p=/.test(v); }) ? s : ""; }, function () { return ""; });
+      })).then(function (r) { return r.filter(Boolean)[0] || ""; })
+    ]);
+    var late = new Promise(function (res, rej) { setTimeout(function () { rej({ code: "timeout" }); }, 8000); });
+    return Promise.race([look, late]).then(function (r) {
+      var rec = { at: Date.now(), spf: r[0].slice(0, 200), dmarc: r[1].slice(0, 200), dkim: r[2] };
+      var c = dnsCache();
+      c[dom] = rec;
+      Object.keys(c).sort(function (a, b) { return (c[b].at || 0) - (c[a].at || 0); }).slice(20).forEach(function (k) { delete c[k]; });
+      try { localStorage.setItem(DNS_KEY, JSON.stringify(c)); } catch (e) {}
+      return rec;
+    }, function () { return { fail: true }; });
+  }
   function domainDialog(from) {
     var dom = String(from).split("@")[1] || "";
     var dlg = makeDialog("nl-domain", t("dom.title", { d: dom }), true);
@@ -3947,20 +4175,12 @@
       r.appendChild(el("span", "dom-v", text));
       return r;
     };
-    Promise.all([
-      dnsTxt(dom).then(function (a) { return a.filter(function (v) { return /^v=spf1/i.test(v); })[0] || ""; }),
-      dnsTxt("_dmarc." + dom).then(function (a) { return a.filter(function (v) { return /^v=DMARC1/i.test(v); })[0] || ""; }),
-      Promise.all(DKIM_SELECTORS.map(function (s) {
-        return dnsTxt(s + "._domainkey." + dom).then(function (a) { return a.some(function (v) { return /p=/.test(v); }) ? s : ""; }, function () { return ""; });
-      })).then(function (r) { return r.filter(Boolean)[0] || ""; })
-    ]).then(function (r) {
+    domainRec(from, true).then(function (r) {
       out.innerHTML = "";
-      out.appendChild(line(t("dom.spf"), !!r[0], r[0] ? t("dom.spfOk", { v: r[0].slice(0, 200) }) : t("dom.spfNo")));
-      out.appendChild(line(t("dom.dkim"), !!r[2], r[2] ? t("dom.dkimOk", { s: r[2] }) : t("dom.dkimNo")));
-      out.appendChild(line(t("dom.dmarc"), !!r[1], r[1] ? t("dom.dmarcOk", { v: r[1].slice(0, 200) }) : t("dom.dmarcNo")));
-    }, function () {
-      out.innerHTML = "";
-      out.appendChild(el("p", "dlg-text", t("dom.fail")));
+      if (!r || r.fail) { out.appendChild(el("p", "dlg-text", t("dom.fail"))); return; }
+      out.appendChild(line(t("dom.spf"), !!r.spf, r.spf ? t("dom.spfOk", { v: r.spf }) : t("dom.spfNo")));
+      out.appendChild(line(t("dom.dkim"), !!r.dkim, r.dkim ? t("dom.dkimOk", { s: r.dkim }) : t("dom.dkimNo")));
+      out.appendChild(line(t("dom.dmarc"), !!r.dmarc, r.dmarc ? t("dom.dmarcOk", { v: r.dmarc }) : t("dom.dmarcNo")));
     });
   }
 

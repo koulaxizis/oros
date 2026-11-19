@@ -34,6 +34,14 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - The pencil next to a tag (or a right-click on it) renames it, gives it one of twelve colours, or deletes it. Deleting a tag takes it off every item; the files themselves stay as they are.
 - It is one list with `Documents`: a tag made here shows there, and a document's tags are the tags of its file.
 - Tags follow a rename or a move made in Files, stay with an item in the `Trash` so a restore brings them back, and are synced to your other devices. A file moved on another device is found again by its content. In `Photos`, the photos show their tags, `Select` › `Tags…` tags many at once, and `⋯` › `Show a tag…` shows only the photos with one tag.
+- The search in the orOS menu, the Assistant and orOS Gate find an item by its tag names too (names only; a private document's tags never show).
+
+### Smart folders
+- A smart folder is a saved search: it always shows the items that fit right now. Nothing is copied or moved, so a file can show in several smart folders and still have one place on the disk.
+- Make one with the `+` next to `Smart folders` in the tree, or finish a search and choose `Save as smart folder…` under the results.
+- It can ask for tags (any of them, or all together), kinds (pictures, videos, sound, documents, PDF, spreadsheets, text, archives, code, folders), when the item changed (last 7 or 30 days, last year, or between two dates), words in the name, a folder to look in, and a size in MB. Every condition you fill in must fit.
+- Smart folders look at names, tags, dates and sizes, not inside files. They cover the disk of orOS, not `This computer` or Dropbox.
+- The pencil next to a smart folder (or a right-click on it) changes it or deletes it; deleting it removes only the saved search. Smart folders are synced to your other devices.
 
 ### Remove hidden details
 - `Remove hidden details` (in the menu) makes a clean copy, "name (clean).ext", next to each selected photo (JPEG, PNG, WebP), PDF, or Word, Excel, PowerPoint or OpenDocument file. The original stays as it is.
@@ -62,6 +70,13 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - Tap `Import files` to pick one or more files, or drop files from your computer onto the list. If a file with the same name already exists, choose `Overwrite` or `Keep both`.
 - Open a file to preview it. Images (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) are shown as pictures. Markdown files are shown formatted, with a `Source` button for the raw text.
 - Tap `Edit` to change a text file and `Save` to write it to the disk. Markdown files show a live preview next to the editor. Closing with unsaved changes warns you first; close again to discard them.
+
+### Copy text from a picture
+- In a picture's preview, and in the Photos viewer, press `Text` (the frame with a T; in Photos the round button at the bottom right). orOS reads the text in the picture on this device: the words found are marked on the picture.
+- Drag from one word to another, or draw a box over the text, to select it; a tap selects a line, a second tap its paragraph. Then `Copy`. `Copy all` copies everything, `Text` shows the whole text in a box where you can correct it before copying, and `Send to…` hands it to Notes, To-Do, Writer, Mail and the other apps that take text. On a keyboard, Ctrl+A selects all the words, Ctrl+C copies, Esc closes.
+- Above the buttons, what the text holds that another app can use shows as small buttons: a web address opens in a new tab, a day and time opens a new event in Calendar, an e-mail address a new message in Mail, a phone number calls it (where the device can), and `New contact` opens a new contact in Contacts filled from the text. Nothing is saved until you save it there.
+- The first time, orOS asks before it downloads its text recognition engine (Tesseract, about 7 MB, Greek and English) from its own site; it is the same download as Documents and Scanner & PDF, so one yes is enough. After that it works offline. The picture and its text never leave your device.
+- Printed text reads best. Handwriting, very small or decorative letters and text at a strong angle are often read wrongly; check the text before you use it.
 
 ## Open a file in another app
 - A file the preview cannot show (a Word or orOS document, a spreadsheet, a song, a video, an e-book…) opens straight in the orOS app that reads it when you double-click it, or tap it twice on a touch screen. Text, pictures and ZIP files still open in the preview, unless you picked an app for that type in [Settings](app:settings) › `Default apps` (for example Pad for .txt): then they open there.
@@ -134,7 +149,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 ## Photos
 `Photos` in the folder list shows every photo and video on the disk by the day it was taken, newest first, like a phone's gallery. The files stay where they are.
 - The date comes from the camera (the photo's details), else from the video, else from a name like `IMG_20261112_143015.jpg`, else from the file's time. `Details` in the viewer says which.
-- Tap a photo to open it. Swipe or use the arrows to go to the next one, double-tap to zoom in, and play videos right there. The buttons at the top are `Edit in Photo Lab`, `Show in folder`, `Send…`, `Details` (camera, size, place) and `Move to Trash`.
+- Tap a photo to open it. Swipe or use the arrows to go to the next one, double-tap to zoom in, and play videos right there. The round `Text` button at the bottom right copies the text in the photo (see Copy text from a picture). The buttons at the top are `Edit in Photo Lab`, `Show in folder`, `Send…`, `Details` (camera, size, place) and `Move to Trash`.
 - `−` and `+` make the pictures smaller or bigger. On a wide screen the years on the right jump to that year.
 - `Select` (or a long press on a phone) picks several. `Send…` sends the photos with a link, as `Send photos to someone…` does in Files. `Move to Trash` asks first; they can be restored from `Trash` for 30 days.
 - Photos that orOS Drive keeps only in the cloud (for example your phone's `Camera backup`) show a cloud mark. When one comes into view it is downloaded once for its small picture, then it goes back to the cloud, so the disk does not fill up.
@@ -155,7 +170,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 - To delete a folder or a file, tap the bin at the end of its row (or select the row and press Delete) and confirm. It is deleted everywhere, including in the cloud: copies on this device go to the `Trash`, and orOS Drive on your computers and phones moves its copies to its own trash. Files that are only in the cloud can't go to this Trash, so the dialog says how many leave orOS for good.
 - Deleting a downloaded file elsewhere in Files deletes it everywhere too, including on the computer it came from. Deleting a Drive folder elsewhere in Files removes only the files this device holds, so use the bin in `orOS Drive` for whole folders.
 - On a computer, deleting a file or folder inside a mirrored folder deletes it in orOS as well (more than 50 files at once wait for your OK in orOS Drive's settings). `Stop mirroring` in orOS Drive's settings deletes nothing.
-- On Android, orOS Drive is an app of its own (from the orOS F-Droid repository or the download page); the phone button in the orOS Android app opens it, or its download. It backs up folders of the phone the same way, in the background every 15 minutes (on Wi-Fi only, unless you change it), keeps files or folders offline (press and hold one), takes files from Share › orOS Drive, and can back up new camera photos and videos to `Drive › (phone name) › Camera backup` (upload only).
+- On Android, orOS Drive is an app of its own (from Koulaxizis Apps or the download page); the phone button in the orOS Android app opens it, or its download. It backs up folders of the phone the same way, in the background every 15 minutes (on Wi-Fi only, unless you change it), keeps files or folders offline (press and hold one), takes files from Share › orOS Drive, and can back up new camera photos and videos to `Drive › (phone name) › Camera backup` (upload only).
 - With orOS Drive signed in and unlocked, the whole orOS disk also appears as «orOS» in the phone's Files app and in every app that opens or saves files. A file downloads when you open it and uploads when the app saves it; if it changed in orOS meanwhile, both versions are kept, and a notification tells you.
 
 ## This computer
