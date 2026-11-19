@@ -91,7 +91,7 @@ test("banklive: reads and the set times run locally; connecting and renewing sta
   const lv = read("budget/banklive.js");
   assert.match(lv, /function localOrigin\(\) \{\s*try \{ return root\.location\.origin === "http:\/\/localhost:47800"; \}/);
   assert.match(lv, /function canRead\(\) \{ return webOrigin\(\) \|\| localOrigin\(\); \}/);
-  assert.match(lv, /function bgRun\(\) \{\s*if \(!canRead\(\) \|\| !canAuto\(\)/);
+  assert.match(lv, /function bgRun\(\) \{\s*var force = bgForce\(\);\s*if \(!canRead\(\) \|\| !canAuto\(\)/);
   assert.match(lv, /function connect\(bank, psu, la\) \{[\s\S]{0,140}if \(!webOrigin\(\)\) \{ A\.showToast\(t\("localConnect"\)\); return; \}/);
   assert.match(lv, /if \(app\(\) && keysHere && webOrigin\(\)\) body\.appendChild\(connSection\(\)\);/);
   assert.match(lv, /if \(localOrigin\(\)\) body\.appendChild\(el\("p", "hint bk-web", t\("localOnly"\)\)\);\s*else if \(!webOrigin\(\)\)/);

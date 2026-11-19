@@ -767,6 +767,18 @@
     var x = C.stateOf(D(), { id: id, s: m.s, pd: m.pd });
     H.play(m, x.x ? 0 : undefined);
     rememberQueue();
+    contNote(m);
+  }
+  // CONT-1 W4: tell the shell which episode is playing (continue.js keeps
+  // the show, the episode and its title only; the place in the episode
+  // travels with the podcasts as always). Only when the person starts
+  // one, and only for a show they follow (not a Discover preview).
+  function contNote(m) {
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (W && m && m.title && C.findShow(D(), m.s))
+        W.note("podcasts", { target: { show: m.s, ep: m.id, play: true }, title: String(m.title) });
+    } catch (e) {}
   }
   function queue(id, where) {
     var m = metaOf(id);

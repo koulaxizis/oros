@@ -225,6 +225,40 @@
     return out;
   }
 
+  // Web and e-mail addresses in the text → link areas for the screen
+  // and e-book PDF (Chris 2026-11-18: the links page clickable):
+  // [{ pg, x, y, w, h, url }], one per line a link runs over.
+  var URL_RE = /(?:https?:\/\/|www\.)[^\s<>«»"]*[^\s<>«»".,;:!?)\]]|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g;
+  function urlLinks(doc, L) {
+    var out = [];
+    framesInOrder(doc, L).forEach(function (f) {
+      var st = M.story(doc, f.it.story);
+      if (!st) return;
+      var spans = {};
+      (st.paras || []).forEach(function (p, pi) {
+        var tx = paraText(p), m, list = [];
+        URL_RE.lastIndex = 0;
+        while ((m = URL_RE.exec(tx)) && list.length < 50) {
+          var u = m[0], url = /@/.test(u) && !/^(https?:|www\.)/i.test(u) ? "mailto:" + u : /^www\./i.test(u) ? "https://" + u : u;
+          list.push({ a: m.index, b: m.index + u.length, url: url });
+        }
+        if (list.length) spans[pi] = list;
+      });
+      if (!Object.keys(spans).length) return;
+      L.frames[f.it.id].lines.forEach(function (ln) {
+        (spans[ln.p] || []).forEach(function (sp) {
+          var x0 = Infinity, x1 = -Infinity;
+          (ln.runs || []).forEach(function (r) {
+            if (typeof r.o !== "number" || r.p !== ln.p) return;
+            if (r.o < sp.b && r.o + (r.n || 0) > sp.a) { x0 = Math.min(x0, r.x); x1 = Math.max(x1, r.x + (r.w || 0)); }
+          });
+          if (x1 > x0 && out.length < 2000) out.push({ pg: f.pg, x: f.it.x + x0, y: f.it.y + ln.y - ln.h + (ln.d || 0), w: x1 - x0, h: ln.h, url: sp.url });
+        });
+      });
+    });
+    return out;
+  }
+
   // ---------- pages ----------
   function blankPage(doc, pageId) {
     return !M.itemsOn(doc, pageId).some(function (it) {
@@ -342,7 +376,7 @@
 
   var api = {
     KINDS: KINDS, MAX: MAX, LANGS: LANGS, norm: norm, defaults: defaults, stored: stored, list: list, save: save, newId: newId,
-    okLang: okLang, lang: lang, setLevel: setLevel, guessLevel: guessLevel, level: level, headings: headings, tocLinks: tocLinks,
+    okLang: okLang, lang: lang, setLevel: setLevel, guessLevel: guessLevel, level: level, headings: headings, tocLinks: tocLinks, urlLinks: urlLinks,
     pagesFor: pagesFor, blankPage: blankPage, tocPage: tocPage, pubOf: pubOf, formatOf: formatOf, edition: edition, fold: fold,
     framesInOrder: framesInOrder, paraText: paraText
   };

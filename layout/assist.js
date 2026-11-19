@@ -89,35 +89,131 @@
   }
   function title(d) { return d.name || t("doc.untitled"); }
 
-  var busy = false;
+  // busy: the run now (Chris 2026-11-18: name the command that holds
+  // Layout, and let it be stopped): { ops, since, ctl, stop }
+  // Pages the commands added or removed, and where (Chris 2026-11-18:
+  // flow and fit say how many pages they added, so left and right stay
+  // under control): "pages: 10 → 14, new pp. 7-10 (p. 7 right, p. 10 left)".
+  function pagesNote(before, after, notes) {
+    var o0 = M.pagesInOrder(before), o1 = M.pagesInOrder(after);
+    if (o0.length === o1.length && o0.every(function (p, i) { return o1[i].id === p.id; })) return;
+    var had = {};
+    o0.forEach(function (p) { had[p.id] = 1; });
+    var nw = [];
+    o1.forEach(function (p, i) { if (!had[p.id]) nw.push(i); });
+    var side = function (i) { var sd = M.sideOf(after, i); return sd === "L" ? "left" : sd === "R" ? "right" : ""; };
+    var runs = [];
+    nw.forEach(function (i) { var r = runs[runs.length - 1]; if (r && r[1] === i - 1) r[1] = i; else runs.push([i, i]); });
+    var txt = "pages: " + o0.length + " → " + o1.length;
+    if (runs.length) txt += ", new " + runs.slice(0, 12).map(function (r) {
+      return r[0] === r[1] ? "p. " + (r[0] + 1) + (side(r[0]) ? " " + side(r[0]) : "") : "pp. " + (r[0] + 1) + "-" + (r[1] + 1) + (side(r[0]) ? " (p. " + (r[0] + 1) + " " + side(r[0]) + ", p. " + (r[1] + 1) + " " + side(r[1]) + ")" : "");
+    }).join(", ");
+    var gone = o0.length + nw.length - o1.length;
+    if (gone > 0) txt += ", " + gone + " removed";
+    if (notes.length < 40) notes.push(txt);
+  }
+  var busy = false, WATCH_MS = 60000, run = null;
+  function holder() {
+    if (!run) return null;
+    return { ops: run.ops.slice(0, 8), since: run.since, at: run.ctl.at ? String(run.ctl.at).slice(0, 200) : "", idle: Math.round((Date.now() - run.ctl.last) / 1000) };
+  }
+  // Stops the run now: nothing more is changed, what it changed so far stays (with Undo).
+  function stopRun(by) { if (run && run.stop) run.stop(by); }
+  var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1, addfont: 1 };
+  // defstyle with a font Layout must look up (the disk, Fontsource)
+  function slowStep(st) { return PRO_ASYNC[st.op] || ((st.op === "defstyle" || st.op === "masterfield") && st.font && window.LayoutPro && !window.LayoutPro.fontFor({ setup: {} }, st.font)); }
   function edit(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "";
     var chk = C.check(rq && rq.steps);
+    // cancel (alone): stops the run that holds Layout
+    if (chk.ok && chk.steps[0].op === "cancel") {
+      var was = holder();
+      if (was) stopRun("Claude");
+      back(key, { ok: 1, n: 0, d: 0, per: [], cut: 0, notes: [was ? "cancelled: " + was.ops.join(", ") + (was.at ? " (it was waiting for " + was.at + ")" : "") : "nothing was running"], tok: "" });
+      return;
+    }
+    // LY-PRO W1: create makes the document first (designs new)
+    var fresh = chk.ok && chk.steps[0].op === "create";
     var ids = rq && Array.isArray(rq.docs) ? rq.docs.filter(function (id) { return typeof id === "string" && LY.findDoc(id); }).slice(0, 500) : [];
-    if (!chk.ok || !ids.length || busy) {
-      LY.toast(t("as.bad"));
-      back(key, { failed: 1, why: !chk.ok ? "bad" : busy ? "busy" : "gone" });
+    if (!chk.ok || (!ids.length && !fresh) || busy) {
+      if (busy) LY.toast(t("as.busy"), t("btn.stop"), function () { stopRun("owner"); });
+      else LY.toast(t("as.bad"));
+      var no = { failed: 1, why: !chk.ok ? "bad" : busy ? "busy" : "gone" };
+      if (busy) no.holder = holder();
+      back(key, no);
       return;
     }
     busy = true;
     LY.flushStory && LY.flushStory();
-    var steps = chk.steps, notes = [], snaps = [], per = [], total = 0;
+    var steps = chk.steps, notes = [], snaps = [], per = [], total = 0, saved = [], made = 0, why = "";
     var ctl = { signal: { aborted: false } };
+    var slow = steps.some(slowStep);
+    if (fresh) {
+      var nd = window.LayoutPro.makeDoc(steps[0], LY.now());
+      if (!LY.addNewDoc || !LY.addNewDoc(nd)) { busy = false; back(key, { failed: 1, why: "error" }); return; }
+      ids = [nd.id];
+      made = 1;
+      steps = steps.slice(1);
+      snaps.push({ id: nd.id, made: 1 });
+    }
+    var stopToast = function () { stopRun("owner"); };
+    if (slow) LY.toast(t("as.working"), t("btn.stop"), stopToast);
+    // LOCAL-1 bug (2026-11-18): a step that never answers (a local file,
+    // a picture that does not decode) may not keep Layout busy for ever.
+    // 60 s without progress stops the run; nothing more is changed and
+    // the report says "timeout" with the file it waited for.
+    var ended = false;
+    ctl.last = Date.now();
+    ctl.tick = function (at) { ctl.last = Date.now(); if (at) ctl.at = at; };
+    run = { ops: chk.steps.map(function (st) { return st.op; }), since: Date.now(), ctl: ctl, stop: function (by) {
+      if (ended) return;
+      ctl.signal.aborted = true;
+      why = "cancelled";
+      notes.push("cancelled by " + by + (ctl.at ? " (it was waiting for " + String(ctl.at).slice(0, 200) + ")" : ""));
+      finish({ why: "cancelled" });
+    } };
+    var dog = setInterval(function () {
+      if (ended || Date.now() - ctl.last < WATCH_MS) return;
+      ctl.signal.aborted = true;
+      why = "timeout";
+      notes.push("timeout: no answer for " + Math.round(WATCH_MS / 1000) + " s" + (ctl.at ? " (" + String(ctl.at).slice(0, 200) + ")" : ""));
+      finish({ why: "timeout" });
+    }, 2000);
     function oneDoc(id) {
       var cur = LY.findDoc(id);
       if (!cur) return Promise.resolve();
-      return LY.recipeGrey(cur, steps.filter(function (s) { return s.op !== "rename"; }), ctl).then(function (ctx) {
+      var editing = steps.filter(function (s) { return s.op !== "rename"; });
+      return LY.recipeGrey(cur, editing, ctl).then(function (ctx) {
+        cur = LY.findDoc(id);
+        if (!cur) return null;
+        if (!slow || !LY.pro) return { ctx: ctx, envs: null };
+        return LY.pro.prepare(cur, steps, ctx, notes, ctl).then(function (pr) { saved = saved.concat(pr.saved); return { ctx: ctx, envs: pr.envs }; });
+      }).then(function (pp) {
+        if (!pp || ctl.signal.aborted) return;
+        var ctx = pp.ctx;
         cur = LY.findDoc(id);   // it may have changed while the copies were made
         if (!cur) return;
+        function envAt(i, now) {
+          var e = pp.envs && LY.pro ? LY.pro.envOf(pp.envs[i]) : {};
+          e.now = now; e.grey = ctx.grey;
+          // house_pages: the house documents and the book's details
+          e.docs = LY.data().docs;
+          if (LY.pro && LY.pro.metaFor) e.meta = LY.pro.metaFor(cur);
+          if (window.LY_AUTO) e.fill = window.LY_AUTO.fillFields;
+          return e;
+        }
         var before = JSON.parse(JSON.stringify(cur)), work = JSON.parse(JSON.stringify(cur)), nw = LY.now(), k = 0;
-        steps.forEach(function (st) { k += C.apply(work, st, { now: nw, grey: ctx.grey, notes: notes }); });
+        steps.forEach(function (st, i) { var e = envAt(i, nw); e.notes = notes; k += C.apply(work, st, e); });
         if (!k) return;
         var done = cur === LY.doc
-          ? LY.op(function (w, now) { var n = 0; steps.forEach(function (st) { n += C.apply(w, st, { now: now, grey: ctx.grey }); }); return n ? undefined : false; })
+          ? LY.op(function (w, now) { var n = 0; steps.forEach(function (st, i) { n += C.apply(w, st, envAt(i, now)); }); return n ? undefined : false; })
           : LY.putDoc(work);
         if (!done) return;
         var now2 = LY.findDoc(id);
-        snaps.push({ id: id, before: before, fp: fp(now2) });
+        var mine = snaps.filter(function (x) { return x.id === id; })[0];
+        if (mine) mine.fp = fp(now2);
+        else snaps.push({ id: id, before: before, fp: fp(now2) });
+        pagesNote(before, now2, notes);
         per.push({ name: title(now2), n: k });
         total += k;
       });
@@ -125,11 +221,19 @@
     var chain = Promise.resolve();
     ids.forEach(function (id) { chain = chain.then(function () { return oneDoc(id); }); });
     chain.then(function () { return finish(null); }, function (e) {
-      try { console.error("[orOS] layout: the Assistant's change failed", e); } catch (x) {}
+      if (ended) return;
+      why = e && typeof e.why === "string" ? e.why : "";
+      if (why) notes.push(why + (e.path ? ": " + String(e.path).slice(0, 200) : ""));
+      else { try { console.error("[orOS] layout: the Assistant's change failed", e); } catch (x) {} }
       return finish(e);
     });
     function finish(err) {
+      if (ended) return Promise.resolve();
+      ended = true;
+      clearInterval(dog);
       busy = false;
+      run = null;
+      snaps.forEach(function (x) { if (x.made && !x.fp) x.fp = fp(LY.findDoc(x.id)); });
       var rec = snaps.length ? { tok: newTok(), at: Date.now(), docs: snaps } : null;
       return (rec ? put(rec) : Promise.resolve()).then(function () {
         // the changed document opens, so the user sees what changed
@@ -137,10 +241,11 @@
           if (LY.doc) LY.goHome();
           LY.openDoc(snaps[0].id);
         } else if (!LY.doc) LY.renderHome();
-        var rep = err && !snaps.length ? { failed: 1, why: "error" }
-          : { ok: 1, n: total, d: snaps.length, per: per.slice(0, 50), cut: 0, notes: notes.slice(), tok: rec ? rec.tok : "" };
+        var rep = err && !snaps.length && !saved.length ? { failed: 1, why: why || "error", notes: notes.slice() }
+          : { ok: 1, n: total, d: snaps.filter(function (x) { return !x.made || total; }).length, per: per.slice(0, 50), cut: 0, made: made, files: saved.length, saved: saved.slice(0, 60), notes: notes.slice(), tok: rec ? rec.tok : "" };
+        if (err && rep.ok) rep.stopped = 1;
         back(key, rep);
-        var msg = !total ? t("as.done0") : snaps.length === 1 ? t("as.done1", { n: total }) : t("as.done", { n: total, d: snaps.length });
+        var msg = !total ? (made ? t("as.made1") : t("as.done0")) : snaps.length === 1 ? t("as.done1", { n: total }) : t("as.done", { n: total, d: snaps.length });
         if (rec) LY.toast(msg, t("btn.undo"), function () { undo({ tok: rec.tok }); });
         else LY.toast(msg);
       });
@@ -155,7 +260,7 @@
       LY.flushStory && LY.flushStory();
       var changed = rec.docs.some(function (s) { var d = LY.findDoc(s.id); return !d || fp(d) !== s.fp; });
       if (changed) { LY.toast(t("as.changed")); back(key, { failed: 1, why: "changed" }); return; }
-      rec.docs.forEach(function (s) { LY.restoreDoc(s.before); });
+      rec.docs.forEach(function (s) { if (s.made) { if (LY.dropDoc) LY.dropDoc(s.id); } else LY.restoreDoc(s.before); });
       rec.st = "undone";
       rec.docs = rec.docs.map(function (s) { return { id: s.id }; });   // nothing left to undo: the copies go
       return put(rec).then(function () {
@@ -166,5 +271,5 @@
     });
   }
 
-  LY.assist = { edit: edit, undo: undo, fp: fp };
+  LY.assist = { edit: edit, undo: undo, fp: fp, holder: holder, stop: stopRun };
 })();

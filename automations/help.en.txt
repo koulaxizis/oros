@@ -36,7 +36,7 @@ Three more steps open an app with things filled in, and nothing is saved until y
 - `{n} min before an event of my day`: a timed item of today in [Today](app:today) (your Calendar and the other apps that give Today a time) is about to start. Set the minutes, from 1 to 120. Items of apps kept out of search (Health, Cycle and the like) never count, and while `Sensitive work` is on, `{text}` stays empty instead of the event's name.
 - `When today's till sales reach…`: the day's sales at the till in [Stock](app:stock) reach the amount you set. `When this month's spending passes…`: this month's expenses in [Budget](app:budget) pass it. Each runs once a day (sales) or once a month (spending).
 
-Two steps happen by themselves, with no tap: `Pause sounds` pauses what is playing in orOS (Music, Podcasts, Radio, Sound Mixer), and `Play a sound` plays a short chime (never under Do Not Disturb). They happen on every device where the rule runs, even when another device already showed the notice. The ready-made rules `Quiet before a meeting` and `Sales goal reached` show both.
+Two steps happen by themselves, with no tap: `Pause sounds` pauses what is playing in orOS (Music, Podcasts, Radio, Sound Mixer), and `Play a sound` plays a short chime (never while a focus mode keeps Automations quiet). They happen on every device where the rule runs, even when another device already showed the notice. The ready-made rules `Quiet before a meeting` and `Sales goal reached` show both.
 
 ## Folders on your computer
 With [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) (free, Windows and Linux) running on your computer, a rule can follow a folder there, for example the folder your scanner saves into or your Downloads.

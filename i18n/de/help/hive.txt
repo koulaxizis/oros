@@ -1,0 +1,65 @@
+# Bienenstock
+Bienenstock ist ein ruhiges Idle-Spiel für eine Person. Du hältst einen Bienenstock an einem griechischen Hang durch das ganze Jahr. Die Bienen fliegen zu den Blumenbeeten, die gerade blühen, und bringen Honig zurück, und du gibst den Honig für neue Beete, für ihre Pflege und für Verbesserungen am Stock aus. Der Stock macht von selbst weiter, während orOS geschlossen ist: Du verpasst nichts, musst nichts einsammeln und bekommst keine Benachrichtigungen. Komm, wann du magst.
+
+## So wird gespielt
+- Der Stock steht in der Mitte des Hangs, mit sechs Beeten rundherum. Tippe auf ein Beet, um es zu wählen, und pflanze dann im Feld darunter eine der Blumen, oder pflege, was dort wächst.
+- Die Bienen fliegen zu den blühenden Beeten. Die reichsten werden zuerst versorgt, und ein Beet ernährt bis zu 800 Bienen (mehr, wenn es gepflegt ist). Übrige Bienen haben nichts zu tun, also pflanze mehr Beete, wenn der Stock wächst.
+- Ein neues Beet braucht einen Monat zum Wurzeln (Thymian zwei), bevor es Honig gibt.
+- Ein Monat am Hang dauert 30 Minuten, ein Jahr also 6 Stunden. Die Statuszeile zeigt den Honig und wie viel pro Minute hereinkommt, das Wachs, die Bienen im Verhältnis zum Platz im Stock und den Monat.
+- `Rückgängig` in der Meldung nach jedem Kauf nimmt ihn zurück.
+
+## Die Blumen
+Jede Blume blüht in ihren eigenen Monaten. Der Kalender oben zeigt für jeden Monat, was du gepflanzt hast und dann blüht, und ein roter Punkt markiert einen Monat ohne Blüte.
+- **Mandel:** Februar. Der erste Honig des Jahres.
+- **Orangenblüte:** März und April. Ergiebig.
+- **Wildblumen:** April bis Juni. Günstig, mit ihnen beginnst du.
+- **Thymian:** Juni bis August. Am ergiebigsten und langsam beim Wurzeln.
+- **Kastanie:** Juni. Ergiebig, für einen einzigen Monat.
+- **Kiefernhonig:** August bis Oktober.
+- **Heide:** September bis November. Die letzte vor dem Winter.
+- **Salbei:** April und Mai. Ergiebig; er kommt mit der Eigenschaft Salbei (siehe Schwärme).
+
+Jede andere Honigsorte, die der Stock in einem Jahr macht, bringt 5 % mehr auf allen Honig dieses Jahres (bis zu 40 % mit Salbei), also ist ein voller Kalender mehr wert als die beste Blume überall. Die Wabe in der Mitte zeigt den Honig: Sie füllt sich mit den Vorräten, getönt nach den Sorten dieses Jahres. Jede Blume hat auch ihre eigene Form, damit du nie auf die Farben angewiesen bist.
+
+## Pflege und Verbesserungen
+- **Pflegen** eines Beets ernährt dort 800 Bienen mehr und gibt 10 % mehr Honig, bis zu 20 Mal. Eine kleine Zahl auf dem Beet zeigt, wie oft es gepflegt wurde.
+- **Verbesserungen** (die Taste in der Werkzeugleiste, oder tippe auf den Stock):
+  - **Rähmchen:** Platz für 500 Bienen mehr. Eine Zarge fasst 10 Rähmchen.
+  - **Zarge:** eine weitere Zarge oben drauf, Platz für 10 Rähmchen mehr (bis zu 4 Zargen).
+  - **Breites Flugloch:** Die Bienen bringen 10 % mehr Honig.
+  - **Königinnenpflege:** Die Königin legt 25 % schneller.
+  - **Windschutz:** Der Stock frisst im Winter 15 % weniger.
+  - **Tränke:** Heiße Monate bremsen die Bienen nicht mehr.
+  - **Terrassen:** 12 Beete mehr weiter oben am Hang. Der Flug ist länger, und sie geben ein Viertel weniger Honig.
+- Die Königin legt neue Bienen, solange Platz im Stock ist und Honig, um sie zu ernähren, das ganze Jahr außer im Winter.
+- Wachs kommt mit dem Honig und kauft Rähmchen und die größeren Verbesserungen.
+
+## Wetter und Winter
+- Jeder Monat hat sein Wetter, im Kalender schon vorher zu sehen: Regen (die Bienen bringen 30 % weniger) und im Sommer Hitze (20 % weniger ohne Tränke). Es ist auf jedem Gerät gleich.
+- Im Dezember und Januar blüht nichts und die Bienen leben von den Vorräten. Im Herbst sagt dir das Feld, wie viel Honig der Winter braucht, also leg etwas zurück. In einem Monat ohne Blüte fressen die Bienen auch ein wenig.
+- Gehen die Vorräte aus, drängen sich die Bienen bis zum Frühling zusammen und der Stock wartet. Keine Biene geht verloren und nichts wird weggenommen.
+
+## Schwärme und Hänge
+- Im Mai, wenn der Stock 20.000 Bienen hat, ist das Volk bereit zu schwärmen. In der Werkzeugleiste und im Feld erscheint eine Taste `Schwärmen`. Keine Eile: Es kann in jedem Mai schwärmen, in dem der Stock so voll ist, oder nie.
+- Beim Schwärmen wählst du, wohin der neue Stock kommt, und eine Eigenschaft, die das Volk für immer behält. Der neue Stock beginnt klein: zwei Rähmchen voller Bienen, etwas Honig und ein Wildblumenbeet. Die Verbesserungen und die Beete bleiben beim alten Stock.
+- Jeder alte Stock bleibt im Bienenhaus und bringt für immer 2 % mehr auf allen Honig (bis zu 100 %). Die `Bilanz` listet sie auf.
+- **Hänge:** Am Hügel wächst jede Blume. Die Insel hat keine Mandel und keine Kastanie, aber Orangenblüte und Thymian geben dort 20 % mehr; weniger Regen, mehr Hitze. Der Berg hat keine Orangenblüte, aber Kastanie und Kiefer geben 30 % mehr und Heide 20 %; viel Regen, wenig Hitze. Die Ebene gibt 30 % mehr von Wildblumen und hat heiße Sommer. Eine Blume, die am Hang nicht wächst, steht nicht im Feld.
+- **Eigenschaften** (drei zur Wahl bei jedem Schwarm; dieselbe kann wieder gewählt werden und zählt dann doppelt): Robust (20 % weniger Futter im Winter), Flinke Sammlerinnen (15 % mehr Honig), Fruchtbare Königinnen (25 % schneller legen), Sparsam (Blumen kosten 10 % weniger), Feste Stöcke (2 Rähmchen mehr in jedem neuen Stock) und Salbei (eine neue Blume, nur einmal).
+
+## Während du weg warst
+Wenn du Bienenstock nach einer Weile öffnest, zeigt eine Karte, wie lange du weg warst, wie viele Monate am Hang vergangen sind und wie viel Honig entstanden ist. In den ersten 7 Tagen arbeitet der Stock voll, danach mit halbem Tempo weiter. Er hört nie auf, er wird nur langsamer.
+
+## Bilanz und Synchronisierung
+`Bilanz` zeigt das Jahr, den ganzen Honig, die Honigsorten dieses Jahres, die Beete, die Bienen, den Hang, die gegründeten Stöcke, die Eigenschaften und das Bienenhaus. Dort schaltet `Das Summen des Stocks` ein leises Summen ein, das den arbeitenden Bienen folgt; es ist zuerst aus und schweigt im Winter. Der Stock wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen: Es ist derselbe Stock auf Handy und Computer. Spielen zwei Geräte gleichzeitig, bleibt der Stock, der weiter ist, und die letzten Minuten des anderen Geräts gehen verloren. Ein Kauf wird ein paar Sekunden danach gespeichert und höchstens alle 5 Minuten sowie beim Verlassen gesendet. `Neu beginnen` in der Bilanz startet auf allen Geräten einen neuen Stock, mit `Rückgängig` für ein paar Sekunden. Bienenstock steht in der Gruppe Entspannt im [Game Center](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+
+## Tastatur
+- Die Pfeiltasten wählen ein Beet am Hang; [[Enter]] springt ins Feld darunter und [[Escape]] lässt das Beet los.
+- [[1]] bis [[8]]: die Blumen in der Reihenfolge des Felds auf das gewählte Beet pflanzen.
+- [[W]]: Schwärmen (im Mai, wenn das Volk bereit ist). [[T]]: das gewählte Beet pflegen. [[U]]: Verbesserungen. [[S]]: Bilanz. [[M]]: Ton. [[Z]]: den letzten Kauf rückgängig machen.
+
+## Tipps
+- Am Anfang zahlen sich Wildblumen und Orangenblüte am schnellsten aus. Thymian lohnt sich, sobald der Stock Bienen übrig hat.
+- Schau auf den Kalender: Ein Monat ohne Blüte ist ein Monat verlorener Honig.
+- Erst Rähmchen, solange der Stock voller Bienen ist, Pflege, wenn die Beete voll sind.
+- Im September schau vor einem großen Kauf auf die Winterzeile im Feld.
+- Schau vor einem Schwarm auf die Hänge: Ein neuer Hang ändert, welche Blumen sich am meisten lohnen.

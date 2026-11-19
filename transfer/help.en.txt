@@ -35,6 +35,13 @@ Transfer sends big files and whole folders from the orOS disk, or from this devi
 - The first time on a device, Transfer checks with a small test file that this browser can download from a Dropbox link (once for 4 hours and once for longer times). If it cannot, it says so and uploads nothing.
 - The files take space in your Dropbox until they are deleted. Transfer checks the free space first.
 
+## Email the link at a set time
+- With `Send through my Dropbox`, tick `Email the link at a set day and time`, write the other person's email address and pick the day and time (from 5 minutes to 14 days ahead). `Send me a copy too, as confirmation` puts your own address in Bcc, so the same email reaches you when it goes out.
+- `Upload and schedule the email` uploads the files now. The hours in `Keep in Dropbox for` count from the time of the email, so the other person gets the whole time. Scheduled links always use Dropbox shared links (the Dropbox permission of longer times).
+- Then [Mail](app:mail) opens with the email written: the link, until when it works, and your title and message. Check it and press `Send:` with the time. Nothing is sent before you press it. `Open the email` opens it again if you closed it.
+- Mail sends it with your own account from this device: orOS must be open here at that time (any app, Mail may be closed). If orOS is closed, it goes out the next time orOS opens on this device. You get a notification when it has gone.
+- To change or cancel it before then, use `Mail's Outbox` (`Edit` or `Delete`). `Delete now` deletes the files: the link in the email then no longer works.
+
 ## History
 - `History` lists the finished transfers, newest first: when, to or from which device, how many files and how big, and where they went. `Open` shows a folder that arrived on the orOS disk.
 - The history keeps only the names of the top files and folders, never their contents, and syncs with your other devices. `Clear history` (press it twice) empties it everywhere.

@@ -244,7 +244,7 @@ test("mcp: 401 with resource metadata, then initialize and tools/list", async ()
   assert.equal(note.status, 202);
   const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json();
   assert.deepEqual(list.result.tools.map((x) => x.name), ["list_apps", "search_data", "app_summary", "budget_lines",
-    "invoice_list", "stock_items", "publish_titles", "budget_add", "budget_change", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_delete",
+    "invoice_list", "stock_items", "publish_titles", "budget_add", "budget_change", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_refresh", "budget_delete",
     "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "invoices_record", "files_link"]);
   const ro = list.result.tools.filter((x) => x.annotations.readOnlyHint).map((x) => x.name);
   assert.equal(ro.length, 8, "only the budget_*, kanban_* and invoices_record writers are not read-only (+ files_link, GATE-FILES F2)");
@@ -589,7 +589,8 @@ test("orOS closed, the device's own tools (GATE-ACT): reads from the copy, creat
   assert.match((await tc("create_items", { app: "crm_activity", items: [{ text: "x" }] })).content[0].text, /"queued":true/, "crm_* is CRM");
   assert.match((await tc("create_items", { app: "notes", items: [{ text: "x" }] })).content[0].text, /may not change notes/);
   assert.match((await tc("change_item", { ref: "r1" })).content[0].text, /needs orOS open/);
-  assert.match((await tc("edit_in_app", { app: "writer", steps: [] })).content[0].text, /needs orOS open/);
+  // GATE-SCREEN (2026-11-19): edit_in_app waits for a screen now, by the copy's switches (writer is not allowed here)
+  assert.match((await tc("edit_in_app", { app: "writer", steps: [] })).content[0].text, /may not use writer/);
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
 });
 
@@ -839,4 +840,67 @@ test("a deletion nobody could answer on screen waits for a screen, it is not ref
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 1);
   await b.box.webSocketMessage(sock, JSON.stringify({ cqa: [out.change_id] }));
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0, "gone once a device decided it");
+});
+
+test("GATE-SCREEN: Layout's work with nobody at a screen waits for one, live or closed (Chris 2026-11-19)", async () => {
+  // «Τα εγκρίνω και τα 3»: a hidden tab or the background host answers __screen; orOS closed queues it from the copy
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 0, at: 1 }, send(x) {
+    this.sent.push(x);
+    const q = JSON.parse(x);
+    if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1);
+    else if (q.q && q.n === "rebuild_in_layout") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: false, c: "__screen" })), 1);
+  }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const obj = { type: "object", properties: {} };
+  await b.st.storage.put("devtools", ["rebuild_in_layout", "export_pdf", "edit_in_app", "do_action"].map((name) => ({ name, description: "c", inputSchema: obj, annotations: { readOnlyHint: false } })));
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  const cqs = () => sock.sent.map((x) => { try { return JSON.parse(x); } catch (e) { return {}; } }).filter((o) => Array.isArray(o.cq));
+  // live, hidden: kept for a screen, not refused
+  let r = await tc("rebuild_in_layout", { document: "Κύκλοι" });
+  assert.equal(r.isError, false, r.content[0].text);
+  let out = JSON.parse(r.content[0].text);
+  assert.equal(out.queued, true);
+  assert.match(out.note, /open but not on screen[\s\S]*next time orOS is on screen/);
+  let rows = [...(await b.st.storage.list({ prefix: "q:" })).values()];
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].hd, 1);
+  assert.equal(JSON.parse(await G.openText(K, rows[0].c)).n, "rebuild_in_layout");
+  assert.equal(cqs().length, 0, "not sent to a device that is not on screen");
+  await b.box.webSocketMessage(sock, "v1");
+  assert.equal(cqs().length, 1, "sent once a device shows orOS");
+  await b.box.webSocketMessage(sock, JSON.stringify({ cqa: [out.change_id] }));
+  // orOS closed: the copy's switches decide
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify({ at: 1e12, lv: { layout: "write", budget: "read" }, hold: 0, ans: {} })) }));
+  sock.closed = true;
+  r = await tc("export_pdf", { document: "Κύκλοι", proof: true });
+  assert.equal(r.isError, false, r.content[0].text);
+  assert.match(JSON.parse(r.content[0].text).note, /^orOS is closed\. [\s\S]*proofs and previews come only then/);
+  rows = [...(await b.st.storage.list({ prefix: "q:" })).values()];
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].hd, 1);
+  assert.match((await tc("edit_in_app", { app: "budget", commands: [] })).content[0].text, /may not change budget/);
+  assert.match((await tc("edit_in_app", { app: "layout", dry_run: true, commands: [] })).content[0].text, /dry run needs orOS open/);
+  assert.match((await tc("do_action", { app: "music" })).content[0].text, /needs orOS open/, "do_action is never kept for later");
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 1);
+  assert.equal((await tc("edit_in_app", { app: "layout", commands: [{ op: "set" }] })).isError, false);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 2);
+});
+
+test("GATE-SCREEN: the copy's switches and pause refuse a screen call before it is kept", () => {
+  const when = "2026-11-19T08:00:00.000Z";
+  assert.equal(G.isScreenTool("layout_book", {}), true);
+  assert.equal(G.isScreenTool("edit_in_app", { dry_run: true }), false);
+  assert.equal(G.isScreenTool("do_action", {}), false);
+  assert.equal(G.screenRefusal("rebuild_in_layout", {}, { layout: "write" }, 0, 1, when), "");
+  assert.equal(G.screenRefusal("propose_entry", { kind: "todo" }, { todo: "write" }, 0, 1, when), "");
+  assert.match(G.screenRefusal("rebuild_in_layout", {}, { layout: "read" }, 0, 1, when), /change no app/);
+  assert.match(G.screenRefusal("export_epub", {}, { budget: "write" }, 0, 1, when), /may not use layout/);
+  assert.match(G.screenRefusal("rebuild_in_layout", {}, { layout: "write" }, 5, 1, when), /paused/);
+  assert.equal(G.pendApp("export_pdf", {}), "layout");
+  assert.equal(G.pendApp("edit_in_app", { app: "Writer" }), "writer");
 });

@@ -21,7 +21,7 @@ const STORE = path.join(__dirname, "fdroid");
 
 const WEB = "https://useoros.online/";
 const SOURCE = "https://github.com/koulaxizis/oros";
-const DONATE = "https://ko-fi.com/koulaxizis";
+const DONATE = "https://useoros.online/support/";
 
 const TEXT = {
   en: {
@@ -55,8 +55,9 @@ const TEXT = {
 // shows English to German phones for the others.
 const LOCALE = { en: "en-US", el: "el", de: "de-DE" };
 
-// Every APK the android workflow publishes: oros.apk, oros-<id>.apk and
-// oros-drive.apk (orOS Drive, DRIVE-APP: its own source repository)
+// Every APK the android workflow publishes: oros.apk, oros-<id>.apk,
+// oros-drive.apk (orOS Drive, DRIVE-APP: its own source repository) and
+// oros-glarolykoi.apk (the Glarolykoi app, GL-1: glarolykoi-android/)
 function list() {
   const out = [{ id: "oros", pkg: "online.useoros.twa", apk: "oros.apk", icon: path.join(ROOT, "icons", "icon-512.png") }];
   for (const [id, pkg] of Object.entries(APPS)) {
@@ -68,6 +69,10 @@ function list() {
   }
   out.push({ id: "drive", pkg: "online.useoros.drive", apk: "oros-drive.apk", icon: path.join(ROOT, "icons", "icon-512.png"),
     name: "orOS Drive", source: "https://github.com/koulaxizis/oros-drive", web: WEB + "download/" });
+  out.push({ id: "glarolykoi", pkg: "net.glarolykoi.android", apk: "oros-glarolykoi.apk",
+    icon: path.join(STORE, "glarolykoi", "icon-512.png"), name: "Glarolykoi",
+    author: "Glarolykoi", authorWeb: "https://glarolykoi.net/", web: "https://glarolykoi.net/",
+    source: SOURCE + "/tree/main/glarolykoi-android", issues: SOURCE + "/issues" });
   return out;
 }
 
@@ -119,12 +124,12 @@ function yml(a) {
     "Categories:",
     "  - " + category(a),
     "License: MIT",
-    "AuthorName: orOS",
-    "AuthorWebSite: " + WEB,
+    "AuthorName: " + (a.author || "orOS"),
+    "AuthorWebSite: " + (a.authorWeb || WEB),
     "WebSite: " + (a.web || WEB + (a.id === "oros" ? "" : a.id + "/")),
     "SourceCode: " + (a.source || SOURCE),
-    "IssueTracker: " + (a.source || SOURCE) + "/issues",
-    "Translation: " + (a.source || SOURCE),
+    "IssueTracker: " + (a.issues || (a.source || SOURCE) + "/issues"),
+    "Translation: " + (a.issues ? SOURCE : a.source || SOURCE),
     "Donate: " + DONATE,
     ""
   ].join("\n");
@@ -195,7 +200,7 @@ a { color: var(--accent); }
 ${apps.map(row).join("\n")}
 </ul>
 </section>
-<p class="muted">More about orOS: <a href="${WEB}">useoros.online</a> · source: <a href="${SOURCE}">github.com/koulaxizis/oros</a> · support: <a href="${DONATE}">Ko-fi</a></p>
+<p class="muted">More about orOS: <a href="${WEB}">useoros.online</a> · source: <a href="${SOURCE}">github.com/koulaxizis/oros</a> · support: <a href="${DONATE}">useoros.online/support</a></p>
 </main>
 </body>
 </html>

@@ -582,6 +582,51 @@
     if (x.brk !== undefined) out.brk = BRK[x.brk] ? x.brk : "";
     if (x.sink !== undefined) { var k = Number(x.sink); out.sink = isFinite(k) ? Math.max(0, Math.min(600, k)) : 0; }
     if (x.sec !== undefined) out.sec = x.sec ? 1 : 0;
+    if (x.nest !== undefined) out.nest = nestOf(x.nest);
+  }
+  // Nested styles (LY-PRO W2, ext.nest): [{ cs, to }] up to 4, each a
+  // character style from where the last one stopped through the first
+  // `to` (1-4 characters, included): a play's speaker in caps up to
+  // the ":". Not found: that one and the rest do not apply. A run with
+  // its own character style keeps it.
+  function nestOf(v) {
+    if (!Array.isArray(v)) return null;
+    var out = v.filter(function (n) { return n && typeof n.cs === "string" && n.cs && typeof n.to === "string" && n.to.length >= 1 && n.to.length <= 4; })
+      .slice(0, 4).map(function (n) { return { cs: n.cs, to: n.to }; });
+    return out.length ? out : null;
+  }
+  function nestRuns(runs, nest) {
+    var text = "";
+    runs.forEach(function (r) { text += r.f ? "\uFFFC" : String(r.t || ""); });
+    var cuts = [], at = 0;
+    for (var i = 0; i < nest.length; i++) {
+      var k = text.indexOf(nest[i].to, at);
+      if (k < 0) break;
+      cuts.push({ a: at, b: k + nest[i].to.length, cs: nest[i].cs });
+      at = k + nest[i].to.length;
+    }
+    if (!cuts.length) return runs;
+    var out = [], base = 0;
+    runs.forEach(function (r) {
+      var len = r.f ? 1 : String(r.t || "").length, end = base + len;
+      if (r.cs || r.f || r.ext || !len) {
+        // a field takes the style of the place it is in
+        if (r.f && !r.cs) { var c0 = cuts.filter(function (c) { return base >= c.a && base < c.b; })[0]; out.push(c0 ? Object.assign({}, r, { cs: c0.cs }) : r); }
+        else out.push(r);
+        base = end; return;
+      }
+      var pos = base, t = String(r.t);
+      while (pos < end) {
+        var c = cuts.filter(function (x) { return pos >= x.a && pos < x.b; })[0];
+        var stop = c ? Math.min(end, c.b) : Math.min(end, cuts.reduce(function (m, x) { return x.a > pos && x.a < m ? x.a : m; }, end));
+        var piece = Object.assign({}, r, { t: t.slice(pos - base, stop - base) });
+        if (c) piece.cs = c.cs;
+        out.push(piece);
+        pos = stop;
+      }
+      base = end;
+    });
+    return out;
   }
   // A family of the document (ext.fam: "fs_…" Fontsource, "uf_…" a
   // font file of the user's) goes with the style's own `font`, which
@@ -718,9 +763,10 @@
   // caret through them.
   function tokenize(para, ps, csMap) {
     var toks = [], word = null, base = 0;
+    var runs = ps.nest && para.runs && para.runs.length ? nestRuns(para.runs, ps.nest) : (para.runs || []);
     function flush() { if (word) { toks.push(word); word = null; } }
     function part(t, a, o, n) { if (!word) word = { k: "w", parts: [] }; word.parts.push({ t: caseOf(a, t), a: a, o: o, n: n }); }
-    (para.runs || []).forEach(function (run) {
+    runs.forEach(function (run) {
       var cs = run.cs ? resolveCs(csMap, run.cs) : {};
       var a = runAttrs(ps, cs, run);
       if (run.f) {
@@ -1173,7 +1219,7 @@
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
     resolvePs: resolvePs, resolveCs: resolveCs, runAttrs: runAttrs, byId: byId,
-    layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
+    nestRuns: nestRuns, layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.text = api; }
