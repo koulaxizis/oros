@@ -65,6 +65,21 @@ Forgot it? On the lock screen choose `Forgot your PIN?`. If sync is connected on
 
 What it doesn't do: it protects the screen, not the disk. Anyone who can read this device's storage, or open the browser's developer tools, can get past it, and your data on the device is not encrypted by it. Only a slow, salted hash of the PIN is kept on the device; it is never synced and never goes into a backup file.
 
+### App lock
+Under `App lock`, choose apps that ask for the same PIN or passphrase (or your fingerprint, face or Windows Hello) every time they open, even while orOS is unlocked: for example Diary, Health or Cycle. Pick one in `Lock an app` and press `Lock`. `Stop locking` asks for the current PIN or passphrase first.
+
+- A locked app does not load until you unlock it, wherever you open it from: the menu, the Dock, a desktop shortcut, a link, a notification, `?standalone` or a single app.
+- Once open, it stays open until you leave it for a minute; then it asks again. `Lock apps now` locks every unlocked app at once.
+- While it is locked, its items stay out of search, Today and widgets, and its notifications show only the app's name and `New notification`. The Assistant and orOS Gate never read a locked app, even while you have it open.
+- `Lock` › `Only the chosen apps` lets orOS start without the PIN, so only those apps ask for it. Leaving orOS alone or hiding the page locks them again. `Lock now` still locks all of orOS. With `Sensitive work` on, the lock always covers all of orOS.
+
+- `Hide` (on a locked app, or next to `Lock` when you add one) also takes the app out of the menu and its search, the Dock, desktop shortcuts, the desktop menu, the command bar, Today and the weekly suggestion; its notifications say only `orOS` and `New notification`. Find it under `Hidden apps` at the end of the menu: that row asks for the PIN and then shows the hidden apps for a minute. `Show in lists` asks for the PIN first. A hidden app always stays locked too.
+
+The list stays on this device and is never synced; set it on each device where you want it. Like the screen lock, it protects the screen, not the disk. Calendar leaves out the rows of a locked app (a Health appointment, Cycle's days, a Budget payment), Mood leaves out Cycle's days, the app switcher and Overview leave out a hidden app, and reminders that reach your phone or push notifications carry only the app's name. Some apps still read what they need from another one: locking Contacts protects the Contacts app, while Mail, Invoices or CRM still suggest your contacts.
+
+### Lock screen info
+Settings › Screen lock › Lock screen info is off until you switch it on. It can show three things under the clock: the time of your next event today or tomorrow (never its title or place), buttons to play, pause or skip what Music, Podcasts or Radio already play (never the song), and how many notifications you have (never what they say). An app you locked gives nothing. With Sensitive work on, or on a till, the lock screen shows none of it.
+
 ### Users
 With orOS Portable, orOS USB or the orOS app installed on a computer, everyone who shares it can have their own orOS: their own apps, files, settings, password and sync account. Nobody sees anyone else's data, because each person gets a browser profile of their own.
 

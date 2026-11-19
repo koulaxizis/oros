@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.75.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.76.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -4660,6 +4660,7 @@
       if (state.apps[i].id === appId) { app = state.apps[i]; break; }
     }
     if (!app || app.type !== "internal") return;
+    if (!appLockOk(appId)) { appLockAsk(app, function () { window.__orosOpenAt(appId, target); }); return; }   // APPLOCK-1
     var t = null;
     try { t = JSON.parse(JSON.stringify(target === undefined ? null : target)); } catch (e) { t = null; }
     if (appLive(appId)) {
@@ -5431,7 +5432,7 @@
   // result leaves the device). Read-only like every provider; the
   // menu's per-app switches are the menu's, not the assistant's.
   window.orosAssistApps = function () {
-    return searchApps().map(function (a) {
+    return searchApps().filter(function (a) { return !appLockSet(a.id); }).map(function (a) {   // APPLOCK-1
       var k = "app." + a.id, v = window.t(k);
       return { id: a.id, name: v === k ? (a.name || a.id) : v, sensitive: a.searchOff === true };
     });
@@ -5441,7 +5442,7 @@
   // language and each app's static shell icon (shell markup, not data).
   window.orosTodayEnv = {
     apps: function () {
-      return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+      return shownApps().filter(function (a) { return a && a.type === "internal"; }).map(function (a) {   // APPLOCK-1 W2: Today, suggestions
         var k = "app." + a.id, v = window.t(k);
         return { id: a.id, name: v === k ? (a.name || a.id) : v, type: a.type, url: a.url,
                  today: Array.isArray(a.today) ? a.today.slice() : a.today, searchOff: a.searchOff === true };
@@ -5473,7 +5474,7 @@
     var S = window.orosSearch;
     if (!S) return Promise.resolve([]);
     var allow = {};
-    (Array.isArray(ids) ? ids : []).forEach(function (id) { allow[String(id)] = true; });
+    (Array.isArray(ids) ? ids : []).forEach(function (id) { if (!appLockSet(String(id))) allow[String(id)] = true; });   // APPLOCK-1: never a locked app
     var apps = searchApps().filter(function (a) { return allow[a.id]; });
     if (!apps.length) return Promise.resolve([]);
     if (!searchReader) searchReader = S.makeReader(localStorage);
@@ -5517,7 +5518,7 @@
   // Installed apps (id + shown name): the assistant offers an entry
   // card only for an app that is there (Part VI, AS-E).
   window.orosAssistInstalled = function () {
-    var list = state.apps.filter(function (a) { return a && a.type !== "external"; }).map(function (a) {
+    var list = state.apps.filter(function (a) { return a && a.type !== "external" && !appLockSet(a.id); }).map(function (a) {   // APPLOCK-1
       var k = "app." + a.id, v = window.t(k);
       return { id: a.id, name: v === k ? (a.name || a.id) : v };
     });
@@ -5631,7 +5632,7 @@
   }
   // The installed apps with the names a user may type (EN, EL, apps.json).
   function cmdApps() {
-    return state.apps.filter(function (a) { return a && a.type === "internal"; }).map(function (a) {
+    return shownApps().filter(function (a) { return a && a.type === "internal"; }).map(function (a) {   // APPLOCK-1 W2
       var names = [a.name, cmdAppName(a.id)];
       var TR = window.OROS_TRANSLATIONS || {}, en = TR.en, el = TR.el;
       if (en && en["app." + a.id]) names.push(en["app." + a.id]);
@@ -6413,6 +6414,7 @@
       var claudeOnly = aiHelper() === "claude";   // HELPER-1: no Assistant in the menu, not even in a search
       state.apps.forEach(function (app) {
         if (claudeOnly && app.id === "assistant") return;
+        if (appHiddenNow(app.id)) return;   // APPLOCK-1 W2: a hidden app is not even found
         if (hideOk && L.menuHidden(app.id)) {
           hiddenCount++;
           if (!q) return;
@@ -6568,6 +6570,21 @@
           if (window.orosSettings) window.orosSettings.open("menu");
         });
         appsHost.appendChild(hidBtn);
+      }
+      // APPLOCK-1 W2: the hidden apps (Settings › Screen lock) behind
+      // the lock's PIN; they then show for a minute.
+      var LA = appLockApi(), lockHid = 0;
+      try { lockHid = LA && typeof LA.hiddenCount === "function" ? LA.hiddenCount() : 0; } catch (e) { lockHid = 0; }
+      if (!q && lockHid && state.apps.some(function (a) { return appHiddenNow(a.id); })) {
+        var lhBtn = document.createElement("button");
+        lhBtn.type = "button";
+        lhBtn.className = "menu-hidden-row";
+        lhBtn.setAttribute("data-applock-hidden", "1");
+        lhBtn.textContent = window.t("applock.hiddenRow");
+        lhBtn.addEventListener("click", function () {
+          LA.reveal().then(function (ok) { if (ok) renderMenu(); });
+        });
+        appsHost.appendChild(lhBtn);
       }
     }
     }   // renderAppList
@@ -13822,6 +13839,7 @@
     if (state.running && state.running.type === "internal") out.push({ app: state.running, at: 0, front: true });
     if (mt.side) out.push({ app: mt.side.app, at: 0, front: false, side: true });
     mtList().slice().sort(function (a, b) { return b.at - a.at; }).forEach(function (r) {
+      if (appHiddenNow(r.app.id)) return;   // APPLOCK-1 W3: a hidden app left behind is not listed (switcher, Overview)
       out.push({ app: r.app, at: r.at, front: false });
     });
     return out;
@@ -13906,6 +13924,122 @@
     if (SOLO) return null;
     return { on: mtOn(), slots: mtSlotsHere(), open: mt.hidden.length };
   }
+
+  // APPLOCK-1: an app locked in Settings › Screen lock asks the lock's
+  // PIN / passphrase (lock.js orosLock.apps) before it loads; it never
+  // loads behind the box. Opened, it counts as in front; left, it locks
+  // again a minute later. A locked app in front that locks again (idle
+  // time with "only the chosen apps") is covered (#applock-cover).
+  function appLockApi() {
+    var L = window.orosLock;
+    return (L && L.apps && typeof L.apps.allowed === "function") ? L.apps : null;
+  }
+  // Set as locked (or hidden) on this device, open or not: the
+  // Assistant and orOS Gate never read such an app.
+  function appLockSet(id) {
+    var A = appLockApi();
+    try { return !!(A && A.state(id)); } catch (e) { return true; }
+  }
+  window.__orosAppLocked = appLockSet;
+  // W3: a reminder that leaves the screen (Web Push, the Android app)
+  // for an app set as locked carries only its name ("orOS" for a hidden
+  // one) and "New notification". → a new row, or the same row.
+  window.__orosLockMask = function (r) {
+    if (!r || typeof r !== "object" || !appLockSet(String(r.ns || ""))) return r;
+    var A = appLockApi(), hid = false, app = null;
+    try { hid = A.state(r.ns) === "hide"; } catch (e) { hid = true; }
+    for (var i = 0; i < state.apps.length; i++) if (state.apps[i].id === r.ns) app = state.apps[i];
+    var out = {};
+    Object.keys(r).forEach(function (k) { out[k] = r[k]; });
+    out.title = hid || !app ? "orOS" : appLockName(app);
+    out.body = window.t("applock.notice");
+    return out;
+  };
+  // W2: set as hidden and not unlocked now: out of every list (menu,
+  // menu search, Dock, desktop, desktop menu, command bar, suggestions).
+  function appHiddenNow(id) {
+    var A = appLockApi();
+    try { return !!(A && A.state(id) === "hide" && !A.allowed(id)); } catch (e) { return true; }
+  }
+  function shownApps() { return state.apps.filter(function (a) { return a && !appHiddenNow(a.id); }); }
+  function appLockOk(id) {
+    var A = appLockApi();
+    try { return !A || A.allowed(id); } catch (e) { return false; }
+  }
+  function appLockName(app) {
+    var k = "app." + app.id, v = window.t(k);
+    return v === k ? app.name : v;
+  }
+  function appLockAsk(app, then) {
+    var A = appLockApi();
+    if (!A) return;
+    var hid = false;
+    try { hid = A.state(app.id) === "hide"; } catch (e) { hid = true; }
+    A.ask(app.id, { name: hid ? "" : appLockName(app), cancel: !(SOLO && app.id === SOLO) }).then(function (ok) { if (ok) then(); });   // W2: a hidden app is not named
+  }
+  function appLockFront(prev, app) {
+    var A = appLockApi();
+    if (!A) return;
+    try {
+      if (prev && (!app || prev.id !== app.id)) A.leave(prev.id);
+      if (app) A.enter(app.id);
+    } catch (e) {}
+    appLockCover();
+  }
+  // The cover over the app area while the app in front (or the side
+  // app) may not show; its button asks the PIN.
+  function appLockCover() {
+    var run = document.getElementById("oros-running");
+    if (!run) return;
+    var hid = null;
+    if (state.running && state.running.type === "internal" && !appLockOk(state.running.id)) hid = state.running;
+    else if (typeof mt !== "undefined" && mt && mt.side && mt.side.app && !appLockOk(mt.side.app.id)) hid = mt.side.app;
+    var cv = document.getElementById("applock-cover");
+    var frames = run.querySelectorAll("iframe");
+    if (!hid) {
+      if (cv) cv.hidden = true;
+      Array.prototype.forEach.call(frames, function (f) { if (f.hasAttribute("data-applock")) { f.removeAttribute("inert"); f.removeAttribute("data-applock"); } });
+      return;
+    }
+    if (!cv) {
+      cv = document.createElement("div");
+      cv.id = "applock-cover";
+      var ico = document.createElement("div");
+      ico.className = "lk-ico";
+      ico.innerHTML = '<svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="currentColor"/></svg>';   // static icon
+      cv.appendChild(ico);
+      cv.appendChild(document.createElement("p"));
+      var b = document.createElement("button");
+      b.type = "button";
+      cv.appendChild(b);
+      run.appendChild(cv);
+    }
+    var hidden = false;
+    try { hidden = appLockApi().state(hid.id) === "hide"; } catch (e) { hidden = true; }
+    cv.querySelector("p").textContent = hidden ? window.t("applock.coverAny") : window.t("applock.cover").split("{app}").join(appLockName(hid));
+    var btn = cv.querySelector("button");
+    btn.textContent = window.t("applock.unlock");
+    btn.onclick = function () {
+      var A = appLockApi(), app = hid;
+      if (!A) return;
+      A.ask(app.id, { name: hidden ? "" : appLockName(app), cancel: true }).then(function (ok) {
+        if (!ok) return;
+        try { if (state.running && state.running.id === app.id) A.enter(app.id); } catch (e) {}
+        appLockCover();
+      });
+    };
+    cv.hidden = false;
+    Array.prototype.forEach.call(frames, function (f) {
+      if (!f.hasAttribute("inert")) { f.setAttribute("inert", ""); f.setAttribute("data-applock", "1"); }
+    });
+    try { var ae = document.activeElement; if (ae && ae.tagName === "IFRAME" && ae.blur) ae.blur(); } catch (e) {}
+  }
+  if (window.orosLock && typeof window.orosLock.onChange === "function") window.orosLock.onChange(function () {
+    appLockCover();
+    // W2: a hidden app shown for a minute goes again (desktop, Dock, open menu)
+    try { if (window.orosLauncher && typeof window.orosLauncher.refresh === "function") window.orosLauncher.refresh(); } catch (e) {}
+    try { var m = document.getElementById("app-menu"); if (m && m.classList.contains("open")) renderMenu(); } catch (e) {}
+  });
 
   // ST-1: the app in front for Screen time: with side by side, the one
   // whose frame has the focus; "" on the desktop.
@@ -14097,6 +14231,7 @@
     }
     // TILL-1: on a till-only device anything but Stock needs the owner.
     if (TILL && app && app.id !== "stock") { window.orosLock.till.ask(); return; }
+    if (app && app.type === "internal" && !appLockOk(app.id)) { appLockAsk(app, function () { openApp(app, at); }); return; }   // APPLOCK-1
     if (typeof scrWins !== "undefined" && scrElsewhere(app)) return;   // SS1: it lives on the other screen
     if (app && app.id === "assistant" && aiHelper() === "claude") { claudeInstead(""); return; }   // HELPER-1 (desktop, Dock, links)
     if (app && app.type === "internal") { davBgStop(app.id); bankBgStop(app.id); }   // 10e/10f: the background frame of this app goes first
@@ -14121,6 +14256,7 @@
     var prev = state.running;
     stNote();   // ST-1: the time so far goes to the app leaving
     state.running = app;
+    appLockFront(prev, app);    // APPLOCK-1
     gameLastNote(app, false);   // GR-1
     if (window.orosDiscover) { try { window.orosDiscover.seen(app.id); } catch (e) {} }   // CH-2: first open
     safeEnd();       // SAFE-1: the card goes when an app opens
@@ -14155,6 +14291,7 @@
     var zoomFromRect = prev && !mt.side ? zoomRect() : null;   // ZOOM-1: the app's place, before it goes
     mtSideEnd(true);   // home ends side by side; the side app waits behind
     state.running = null;
+    appLockFront(prev, null);   // APPLOCK-1: the minute starts
     gameLastNote(null, false);   // GR-1
     document.body.classList.remove("app-running");
     if (!(mtActive() && mtLeave(prev))) frameGo(document.getElementById("app-frame"), "about:blank");
@@ -16997,7 +17134,7 @@
   // shortcuts and their sync slice. A bundle without it draws nothing.
   if (window.orosLauncher) {
     window.orosLauncher.attach({
-      apps: function () { return state.apps; },
+      apps: function () { return shownApps(); },   // APPLOCK-1 W2: no hidden app on the desktop or the Dock
       open: openApp,
       // APP-ALIAS: a shortcut kept for an app that moved into another
       // one shows that app and opens it at the old app's place.
@@ -17022,7 +17159,7 @@
   if (window.orosQuick && !SOLO) {
     window.orosQuick.attach({
       desktop: document.getElementById("oros-desktop"),
-      apps: function () { return state.apps; },
+      apps: function () { return shownApps(); },   // APPLOCK-1 W2
       open: openApp,
       running: function () { return state.running || null; },
       isOpen: function (id) { return mtActive() && appLive(id); },   // multitasking: alive behind
@@ -17088,14 +17225,16 @@
       var ms = mu.getState();
       if (ms && ms.cur) out.push({ id: "music", name: label("music"), playing: !!ms.playing,
         title: (ms.cur.t || "") + (ms.cur.a ? " · " + ms.cur.a : ""),
-        toggle: function () { mu.toggle(); }, open: function () { openAppById("music"); } });
+        toggle: function () { mu.toggle(); }, open: function () { openAppById("music"); },
+        next: ms.hasNext ? function () { mu.next(); } : null, prev: function () { mu.prev(); } });
     }
     var pc = window.__orosPodcastsHost;
     if (pc && typeof pc.getState === "function") {
       var ps = pc.getState();
       if (ps && ps.cur) out.push({ id: "podcasts", name: label("podcasts"), playing: !!ps.playing,
         title: (ps.cur.title || "") + (ps.cur.show ? " · " + ps.cur.show : ""),
-        toggle: function () { pc.toggle(); }, open: function () { openAppById("podcasts"); } });
+        toggle: function () { pc.toggle(); }, open: function () { openAppById("podcasts"); },
+        next: function () { pc.next(); } });
     }
     var rx = window.__orosRadioHost;
     if (rx && rx.audio && rx.api && typeof rx.api.getState === "function") {
@@ -17116,6 +17255,36 @@
     }
     return out;
   }
+  // Lock-screen info (APPLOCK-1 wave 4, lock.js paintInfo): what the
+  // lock screen may show when the owner switched it on. Never a title,
+  // a place, a song or an app's name: the next event's rows go to lock.js
+  // only to read the time, players of a locked or hidden app give no
+  // buttons, notices give a number.
+  window.__orosLockInfo = {
+    next: function () {
+      var T = window.orosToday;
+      if (!T || typeof T.agenda !== "function" || appLockSet("calendar")) return Promise.resolve([]);
+      return T.agenda("calendar", 1).then(function (rows) {
+        return (rows || []).map(function (r) { return { id: String(r.id || "").slice(0, 3), due: r.due, time: r.time }; });
+      }, function () { return []; });
+    },
+    count: function () {
+      var N = window.orosNotifs;
+      try { return N && typeof N.unread === "function" ? N.unread() : 0; } catch (e) { return 0; }
+    },
+    media: function () {
+      var list = qsMedia().filter(function (m) { return !appLockSet(m.id); });
+      var m = list.filter(function (x) { return x.playing; })[0] || list[0];
+      return m ? { playing: !!m.playing, next: !!m.next, prev: !!m.prev } : null;
+    },
+    cmd: function (c) {
+      var list = qsMedia().filter(function (m) { return !appLockSet(m.id); });
+      var m = list.filter(function (x) { return x.playing; })[0] || list[0];
+      if (!m) return;
+      if (c === "toggle") m.toggle();
+      else if ((c === "next" || c === "prev") && typeof m[c] === "function") m[c]();
+    }
+  };
   // SB2: the Automations step "Pause sounds" (automations/host.js).
   // Pauses every player that is playing; nothing else.
   window.__orosPauseAll = function () {

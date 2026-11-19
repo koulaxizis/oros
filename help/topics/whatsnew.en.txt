@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.76.00
+- **Lock and hide single apps.** In Settings › Screen lock › `App lock`, choose apps that ask your screen-lock PIN, passphrase or fingerprint every time they open, even while orOS is unlocked; they lock again a minute after you leave them. Hide an app and it leaves the menu, search, the Dock and Today until `Hidden apps` at the end of the menu shows it. If you want, `Lock screen info` shows the time of your next event, music buttons and how many notifications you have, never what they say. It protects the screen, not the disk.
+
 ## Version 7.75.00
 - **Accent from your wallpaper.** Turn on `Accent from wallpaper` in Settings › Appearance › System colour, and buttons, selections and links take a colour from your wallpaper, adjusted so text stays easy to read in light and dark. When the wallpaper has several colours you can pick one of up to four. Off until you turn it on, on this device only.
 
