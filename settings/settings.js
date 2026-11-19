@@ -4226,26 +4226,23 @@
       c1.appendChild(r);
     });
     host.appendChild(c1);
-    // FDROID-1: updates for the APKs through the orOS F-Droid repository
-    if (S.repoLink) {
+    // APPS-M4: updates for the APKs through Koulaxizis Apps, the app
+    // manager (Chris 2026-11-19: the one place we point people to)
+    if (S.managerHref) {
       var cu = card(t("so.upd"));
       cu.appendChild(el("p", "hint", t("so.upd.hint")));
       var page = el("a", "btn", t("so.upd.page"));
-      page.href = S.repoPage;
+      page.href = S.managerPage;
       page.target = "_blank";
       page.rel = "noopener";
       if (/Android/i.test(navigator.userAgent)) {
-        var fd = el("a", "btn", t("so.upd.fdroid"));
-        fd.href = S.repoLink();
-        fd.title = t("so.upd.fdroid.title");
-        var ob = el("a", "btn", t("so.upd.obtainium"));
-        ob.href = S.obtainiumLink("oros");
-        ob.title = t("so.upd.obtainium.title");
-        var r2 = row(t("so.upd.add"), fd);
-        fd.parentNode.appendChild(ob);
-        cu.appendChild(r2);
+        var mg = el("a", "btn", t("so.upd.get"));
+        mg.href = S.managerHref(navigator.userAgent, !inBrowserTab(), phone() ? "online.useoros.twa" : "");
+        mg.title = t("so.upd.get.title");
+        mg.rel = "noopener";
+        cu.appendChild(row(t("so.upd.mgr"), mg));
       }
-      cu.appendChild(row(t("so.upd.addr"), page, { hint: S.repoPage }));
+      cu.appendChild(row(t("so.upd.more"), page));
       host.appendChild(cu);
     }
     var c2 = card(t("so.how"));

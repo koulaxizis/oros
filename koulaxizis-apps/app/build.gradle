@@ -16,8 +16,8 @@ android {
         minSdk 26
         targetSdk 36
         // Own version, not the web app's: versionCode = major*10000 + minor*100 + patch.
-        versionCode 10001
-        versionName '1.0.1'
+        versionCode 10200
+        versionName '1.2.0'
     }
 
     signingConfigs {
