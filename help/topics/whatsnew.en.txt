@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.72.00
+- **The Pocket.** Keep a text, a link, a list, a table or files with `Keep in pocket` in Send to an app (or in the menu of selected text), then send it into another app later. Its button shows at the end of the Dock, or in the top bar, only while it holds something; Ctrl+Alt+Shift+, opens it. Up to 20 items, kept on this device until you take them out; never Passwords or Settings. See [Send to someone](help:t/share).
+
 ## Version 7.71.01
 - **Keep awake and Energy saver in Quick settings.** `Keep awake` keeps the screen on for 1 hour, 2 hours or until you turn it off (on orOS USB the computer does not sleep either). `Energy saver` stops what moves on the desktop and refreshes widgets once a minute; it also turns on by itself under 20 % battery. Both are for this device only. See [Appearance](help:t/appearance).
 

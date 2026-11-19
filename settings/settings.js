@@ -4715,6 +4715,19 @@
       host.appendChild(chc);
     }
 
+    // The Pocket (POCKET-1): this device only; the count, Open, Empty.
+    if (s.pocket) {
+      var pkc = card(t("pk.title"), "pocket");
+      pkc.appendChild(el("p", "hint", t("pk.hint")));
+      if (s.pocket.strict) pkc.appendChild(el("p", "hint", t("pk.strict")));
+      else {
+        pkc.appendChild(el("p", "hint", s.pocket.n ? t("pk.count", { n: s.pocket.n }) : t("pk.none")));
+        if (s.pocket.n) pkc.appendChild(actions(
+          button(t("pk.open"), "pk.open", function () { act("pocket.open"); }),
+          button(t("pk.clear"), "pk.clear", function () { act("pocket.clear"); })));
+      }
+      host.appendChild(pkc);
+    }
     // CONT-1 + RS-1: continue on other devices, reopen after a restart (this device; on by default)
     if (s.cont) secContinue(host, s.cont);
 
