@@ -55,13 +55,17 @@
     var idx = 0;
     M.spreads(doc).forEach(function (sp) {
       var ps = [];
-      var x0 = s.facing ? (sp.length === 2 ? -s.w : (idx === 0 ? 0 : -s.w)) : -s.w / 2;
+      // each page its own size (M.pageSize, LY-PRO W3b); the spine at x 0
+      var sz = sp.map(function (p) { return M.pageSize(doc, p); });
+      var x0 = s.facing ? (sp.length === 2 ? -sz[0].w : (M.sideOf(doc, idx) === "R" ? 0 : -sz[0].w)) : -sz[0].w / 2;
+      var hh = 0, xx = x0;
       sp.forEach(function (p, k) {
-        ps.push({ id: p.id, page: p, x: x0 + k * s.w, y: y, w: s.w, h: s.h, side: M.sideOf(doc, idx), idx: idx, master: false });
+        ps.push({ id: p.id, page: p, x: xx, y: y, w: sz[k].w, h: sz[k].h, side: M.sideOf(doc, idx), idx: idx, master: false });
+        xx += sz[k].w; hh = Math.max(hh, sz[k].h);
         idx++;
       });
-      world.push({ pages: ps, x: ps[0].x, y: y, w: s.w * ps.length, h: s.h });
-      y += s.h + GAP;
+      world.push({ pages: ps, x: ps[0].x, y: y, w: xx - x0, h: hh });
+      y += hh + GAP;
     });
   }
   function allP() { var o = []; world.forEach(function (sp) { o = o.concat(sp.pages); }); return o; }
@@ -197,8 +201,8 @@
   ED.addPageAfter = addPageAfter;
 
   // Margin box of a page side, in page coordinates.
-  function marginBox(doc, side) {
-    var m = M.margins(doc, side), s = doc.setup;
+  function marginBox(doc, side, pg) {
+    var m = M.margins(doc, side), s = pg ? M.pageSize(doc, pg) : doc.setup;
     return { x: m.l, y: m.t, w: Math.max(10, s.w - m.l - m.r), h: Math.max(10, s.h - m.t - m.b) };
   }
   ED.marginBox = marginBox;
@@ -290,12 +294,34 @@
     var doc = LY.inframe ? LY.inframe.layoutDoc(LY.doc) : LY.doc;
     ED.L = R.computeLayout(doc);
     ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing });
+    keepPf();
     if (ED.master) {
       var ms = M.find(LY.doc.masters, ED.master);
       ED.ML = { L: ms ? R.computeMasterLayout(LY.doc, ms, "L") : null, R: ms ? R.computeMasterLayout(LY.doc, ms, "R") : null, B: ms ? R.computeMasterLayout(LY.doc, ms, "") : null };
     }
   }
   ED.relayout = relayout;
+  // The preflight of the open document, kept on this device for Claude
+  // (read_in_app preflight_now, Chris 2026-11-18): page numbers, at most
+  // 200 problems, 30 documents.
+  var pfTimer = 0;
+  function keepPf() {
+    clearTimeout(pfTimer);
+    pfTimer = setTimeout(function () {
+      var doc = LY.doc;
+      if (!doc || !Array.isArray(ED.pf) || ED.master) return;
+      var pos = {};
+      M.pagesInOrder(doc).forEach(function (p, i) { pos[p.id] = i + 1; });
+      var list = ED.pf.slice(0, 200).map(function (x) { var o = { severity: x.sev, problem: x.code }; if (x.id) o.frame = x.id; if (pos[x.pg]) o.page = pos[x.pg]; return o; });
+      try {
+        var all = JSON.parse(localStorage.getItem("oros-layout-pf") || "{}") || {};
+        all[doc.id] = { at: Date.now(), m: doc.m, n: ED.pf.length, list: list };
+        var ids = Object.keys(all).sort(function (a, b) { return (all[b].at || 0) - (all[a].at || 0); });
+        ids.slice(30).forEach(function (k) { delete all[k]; });
+        localStorage.setItem("oros-layout-pf", JSON.stringify(all));
+      } catch (e) {}
+    }, 1500);
+  }
 
   function readPalette() {
     var cs = getComputedStyle(document.documentElement);
@@ -306,10 +332,18 @@
     palette.rulerLine = cs.getPropertyValue("--border").trim() || "#2c313a";
   }
 
+  // A resize (window, panels, the shell) keeps the middle of the view
+  // where it was; while the view is still a fit (nobody panned or
+  // zoomed since), it fits again, so the pages stay in the middle.
   function resize() {
     var st = $("stage");
     dpr = window.devicePixelRatio || 1;
+    var w0 = W, h0 = H;
     W = st.clientWidth; H = st.clientHeight;
+    if (LY.doc && w0 > 40 && h0 > 40 && (W !== w0 || H !== h0) && !ED.fitTo) {
+      ED.camX += (w0 - W) / 2 / scale(); ED.camY += (h0 - H) / 2 / scale();
+    }
+    if (LY.doc && ED.fitTo && W > 40 && H > 40 && (W !== w0 || H !== h0)) { var ft = ED.fitTo; fitBox(ft[0], ft[1], ft[2], ft[3], ft[4]); }
     cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
     cv.style.width = W + "px"; cv.style.height = H + "px";
     ED.render();
@@ -358,11 +392,12 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawOverlay();
     if (!ED.preview) drawRulers();
+    bars();
     LY.emit("drawn");
   }
 
   function drawGuides(P, sc) {
-    var doc = LY.doc, s = doc.setup;
+    var doc = LY.doc, s = Object.assign({}, doc.setup, { w: P.w, h: P.h });   // the page's own size (W3b)
     var m = M.margins(doc, P.side || "R");
     ctx.setTransform(sc * dpr, 0, 0, sc * dpr, (P.x - ED.camX) * sc * dpr, (P.y - ED.camY) * sc * dpr);
     ctx.lineWidth = 1 / sc;
@@ -477,6 +512,71 @@
     for (var i = 0; i < steps.length; i++) if (steps[i] * u * sc >= 50) return steps[i];
     return 1000;
   }
+  // ---------- Scrollbars ----------
+  // Two bars over the canvas (DOM, so they take the pointer): the thumb
+  // shows the view's place in the pasteboard of all spreads; dragging
+  // it pans, a press on the bar moves one view that way.
+  var sb = null;
+  function barsInit() {
+    var st = $("stage");
+    sb = {};
+    ["h", "v"].forEach(function (o) {
+      var bar = el("div", "ed-sb " + o), th = el("div", "ed-sb-th");
+      bar.appendChild(th);
+      bar.setAttribute("aria-hidden", "true");
+      bar.hidden = true;
+      st.appendChild(bar);
+      sb[o] = { bar: bar, th: th, r: null };
+      bar.addEventListener("pointerdown", function (e) {
+        e.preventDefault(); e.stopPropagation();
+        var r = sb[o].r;
+        if (!r) return;
+        var rect = bar.getBoundingClientRect(), len = o === "h" ? rect.width : rect.height;
+        var at = o === "h" ? e.clientX - rect.left : e.clientY - rect.top;
+        var s = scale(), view = (o === "h" ? W : H) / s;
+        if (e.target !== th) {
+          // a page of view towards the press
+          var mid = (o === "h" ? ED.camX : ED.camY) + view / 2, want = r[0] + at / len * (r[1] - r[0]);
+          var step = view * 0.9 * (want < mid ? -1 : 1);
+          if (o === "h") ED.camX += step; else ED.camY += step;
+          moved(); ED.render(); LY.emit("view");
+          return;
+        }
+        var c0 = o === "h" ? ED.camX : ED.camY, p0 = o === "h" ? e.clientX : e.clientY, k = (r[1] - r[0]) / len;
+        try { bar.setPointerCapture(e.pointerId); } catch (x) {}
+        bar.classList.add("on");
+        function mv(ev) {
+          var d = ((o === "h" ? ev.clientX : ev.clientY) - p0) * k;
+          if (o === "h") ED.camX = c0 + d; else ED.camY = c0 + d;
+          moved(); ED.render(); LY.emit("view");
+        }
+        function up() { bar.classList.remove("on"); bar.removeEventListener("pointermove", mv); bar.removeEventListener("pointerup", up); bar.removeEventListener("pointercancel", up); }
+        bar.addEventListener("pointermove", mv);
+        bar.addEventListener("pointerup", up);
+        bar.addEventListener("pointercancel", up);
+      });
+    });
+  }
+  function bars() {
+    if (!sb) barsInit();
+    var ex = extent(), s = scale(), off = ED.preview ? 0 : RULER;
+    [["h", 0, 2, ED.camX + off / s, W - off], ["v", 1, 3, ED.camY + off / s, H - off]].forEach(function (d) {
+      var b = sb[d[0]];
+      if (!ex) { b.bar.hidden = true; return; }
+      var v0 = d[3], v1 = d[3] + d[4] / s, a = Math.min(ex[d[1]], v0), z = Math.max(ex[d[2]], v1);
+      b.r = [a, z];
+      // nothing outside the view: no bar
+      var need = ex[d[1]] < v0 - 0.5 || ex[d[2]] > v1 + 0.5;
+      b.bar.hidden = !need;
+      if (!need) return;
+      var f0 = (v0 - a) / (z - a), f1 = (v1 - a) / (z - a);
+      b.bar.style[d[0] === "h" ? "left" : "top"] = off + "px";
+      if (d[0] === "h") { b.th.style.left = (f0 * 100) + "%"; b.th.style.width = Math.max(4, (f1 - f0) * 100) + "%"; }
+      else { b.th.style.top = (f0 * 100) + "%"; b.th.style.height = Math.max(4, (f1 - f0) * 100) + "%"; }
+    });
+  }
+  ED.view = function () { var ex = extent(); return { zoom: ED.zoom, s: scale(), camX: ED.camX, camY: ED.camY, W: W, H: H, fit: !!ED.fitTo, ext: ex, h: sb && !sb.h.bar.hidden, v: sb && !sb.v.bar.hidden }; };
+
   function drawRulers() {
     var P = curP();
     if (!P) return;
@@ -544,7 +644,7 @@
     }
     var w = toWorld(p[0], p[1]), P = pageAt(w[0], w[1], true);
     if (!P) return;
-    var s = LY.doc.setup, b = s.bleed;
+    var s = Object.assign({}, LY.doc.setup, { w: P.w, h: P.h }), b = s.bleed;
     var pos = d.o === "v" ? w[0] - P.x : w[1] - P.y;
     pos = Math.round(Math.max(-b, Math.min((d.o === "v" ? s.w : s.h) + b, pos)) * 100) / 100;
     LY.op(function (doc, now) {
@@ -620,21 +720,40 @@
     z = Math.max(0.05, Math.min(16, z));
     if (sx === undefined) { sx = W / 2; sy = H / 2; }
     var wp = toWorld(sx, sy);
-    ED.zoom = z;
+    ED.zoom = z; moved();
     ED.camX = wp[0] - sx / scale(); ED.camY = wp[1] - sy / scale();
     ED.render();
     LY.emit("view");
   };
-  function fitBox(x, y, w, h) {
+  // Fit a box; across, the column of spreads is centred (the spine in
+  // the middle, as other layout programs do) when it fits at that zoom.
+  function fitBox(x, y, w, h, one) {
+    ED.fitTo = [x, y, w, h, one];
     var b = LY.doc.setup.bleed + 12, pad = 24 + (ED.preview ? 0 : RULER);
     var z = Math.min((W - 2 * pad) / ((w + 2 * b) * K), (H - 2 * pad) / ((h + 2 * b) * K));
     ED.zoom = Math.max(0.05, Math.min(16, z));
-    var s2 = scale();
-    ED.camX = x + w / 2 - (W + (ED.preview ? 0 : RULER)) / 2 / s2;
+    var s2 = scale(), col = colX(), cx = x + w / 2;
+    if (!one && col && (col[1] - col[0] + 2 * b) * s2 <= W - 2 * pad) cx = (col[0] + col[1]) / 2;
+    ED.camX = cx - (W + (ED.preview ? 0 : RULER)) / 2 / s2;
     ED.camY = y + h / 2 - (H + (ED.preview ? 0 : RULER)) / 2 / s2;
     ED.render();
     LY.emit("view");
   }
+  // The world's extent across and down: [x0, x1] and [x0, y0, x1, y1].
+  function colX() {
+    if (!world.length) return null;
+    var a = Infinity, z = -Infinity;
+    world.forEach(function (sp) { a = Math.min(a, sp.x); z = Math.max(z, sp.x + sp.w); });
+    return [a, z];
+  }
+  function extent() {
+    var c = colX();
+    if (!c) return null;
+    var last = world[world.length - 1], b = LY.doc.setup.bleed + 24;
+    return [c[0] - b, world[0].y - b, c[1] + b, last.y + last.h + b];
+  }
+  // The view changed by hand: a resize no longer fits again.
+  function moved() { ED.fitTo = null; }
   // Fit the spread of P (default: the one in the middle of the view).
   ED.fit = function (P) {
     P = P || curP();
@@ -645,7 +764,7 @@
   };
   ED.fitPage = function () {
     var P = curP();
-    if (P) fitBox(P.x, P.y, P.w, P.h);
+    if (P) fitBox(P.x, P.y, P.w, P.h, 1);
   };
   function zoomMenu() {
     LY.menu($("ed-zoom"), [
@@ -832,7 +951,7 @@
 
   // Snap candidates for an owner P (owner coordinates).
   function snapLines(P, excludeIds) {
-    var doc = LY.doc, s = doc.setup, xs = [0, s.w / 2, s.w], ys = [0, s.h / 2, s.h];
+    var doc = LY.doc, s = Object.assign({}, doc.setup, { w: P.w, h: P.h }), xs = [0, s.w / 2, s.w], ys = [0, s.h / 2, s.h];
     var m = M.margins(doc, P.side || "R");
     xs.push(m.l, s.w - m.r); ys.push(m.t, s.h - m.b);
     if (s.cols > 1) {
@@ -998,7 +1117,7 @@
       if (ids.length < 2) return;
       var a = pointers[ids[0]], b = pointers[ids[1]];
       var d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, mid = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-      ED.zoom = Math.max(0.05, Math.min(16, pinch.z0 * d / pinch.d0));
+      ED.zoom = Math.max(0.05, Math.min(16, pinch.z0 * d / pinch.d0)); moved();
       var s = scale();
       ED.camX = pinch.w0[0] - mid[0] / s; ED.camY = pinch.w0[1] - mid[1] / s;
       ED.render(); LY.emit("view");
@@ -1014,7 +1133,7 @@
     var tol = 6 / scale();
     if (drag.kind === "pan") {
       var s2 = scale();
-      ED.camX = drag.cam[0] - dxs / s2; ED.camY = drag.cam[1] - dys / s2;
+      ED.camX = drag.cam[0] - dxs / s2; ED.camY = drag.cam[1] - dys / s2; moved();
       ED.render(); LY.emit("view");
     } else if (drag.kind === "guide") {
       ED.gdrag = { o: drag.o, at: drag.o === "v" ? p[0] : p[1] };
@@ -1201,7 +1320,7 @@
       var x = Math.min(x0, x1), y = Math.min(y0, y1), ww = Math.abs(x1 - x0), hh = Math.abs(y1 - y0);
       if (small) {
         if (typ === "text") {
-          var mb = marginBox(LY.doc, P.side || "R");
+          var mb = marginBox(LY.doc, P.side || "R", P.page);
           ww = Math.min(mb.w, 220); hh = 120;
         } else { ww = 100; hh = typ === "img" ? 75 : 100; }
       }
@@ -1349,7 +1468,7 @@
     var doc = LY.doc, target;
     if (items.length === 1) {
       var P = pOf(items[0]);
-      target = marginBox(doc, P ? P.side || "R" : "R");
+      target = marginBox(doc, P ? P.side || "R" : "R", P ? P.page : null);
     } else {
       target = null;
       items.forEach(function (it) { var b = R.itemBox(it); target = target ? union(target, b) : b; });
@@ -1526,6 +1645,7 @@
       b.setAttribute("data-tool", d[0]);
       b.setAttribute("aria-pressed", "false");
       b.addEventListener("click", function () { ED.setTool(d[0]); });
+      if (d[0] === "hand") b.addEventListener("dblclick", function () { ED.fit(); });
       host.appendChild(b);
     });
   }
@@ -1607,6 +1727,7 @@
       var p = evPos(e);
       if (e.ctrlKey || e.metaKey) { ED.setZoom(ED.zoom * Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.002)), p[0], p[1]); return; }
       var k = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? H : 1, s = scale();
+      moved();
       if (e.shiftKey) ED.camX += (e.deltaY || e.deltaX) * k / s;
       else { ED.camX += e.deltaX * k / s; ED.camY += e.deltaY * k / s; }
       ED.render(); LY.emit("view");

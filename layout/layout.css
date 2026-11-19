@@ -194,6 +194,16 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
   touch-action: none;
 }
 #cv { position: absolute; left: 0; top: 0; display: block; touch-action: none; outline: none; }
+/* scrollbars over the canvas (editor.js bars) */
+.ed-sb { position: absolute; z-index: 2; background: transparent; touch-action: none; }
+.ed-sb.h { left: 0; right: 12px; bottom: 0; height: 12px; }
+.ed-sb.v { top: 0; bottom: 12px; right: 0; width: 12px; }
+.ed-sb-th { position: absolute; border-radius: 6px; background: var(--text-dim, #888); opacity: 0.45; cursor: default; }
+.ed-sb.h .ed-sb-th { top: 3px; bottom: 3px; min-width: 24px; }
+.ed-sb.v .ed-sb-th { left: 3px; right: 3px; min-height: 24px; }
+.ed-sb:hover .ed-sb-th, .ed-sb.on .ed-sb-th { opacity: 0.75; }
+.ed-sb:hover { background: color-mix(in srgb, var(--panel-bg, #1b1e24) 60%, transparent); }
+@media (pointer: coarse) { .ed-sb.h { height: 16px; } .ed-sb.v { width: 16px; } }
 .ctx-anchor { position: absolute; width: 1px; height: 1px; pointer-events: none; }
 .banner {
   position: absolute; left: 50%; top: 10px; transform: translateX(-50%);
@@ -610,3 +620,11 @@ body.inframe #cv { cursor: text; }
 .out-row + .btn.block, .out-row + button { margin-top: 10px; }
 .out-box { border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 8px; }
 .inp.bad { border-color: var(--danger, #d33); }
+
+/* Links (LY-PRO W4) */
+.links-list { list-style: none; margin: 0 0 12px; padding: 0; max-height: 60vh; overflow: auto; }
+.links-row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.links-name { flex: 1 1 160px; min-width: 0; overflow-wrap: anywhere; font-weight: 600; }
+.links-meta { flex: 1 1 160px; color: var(--text-dim); font-size: .9em; }
+.links-row.warn .links-meta { color: var(--danger); }
+.links-acts { display: flex; gap: 6px; }

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.3.2)
+// orOS — quickmenu.js (desktop menu: Assistant tasks + apps, mini Assistant, selected text, from outside, v1.4.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -49,6 +49,14 @@
 //     new one (AS-FRESH).
 //   • 1.3.2: the selection menu's Copy also goes into the clipboard
 //     history (cliphist.js note(), only while it is on; CLIP-1).
+//   • 1.4.0: "Read aloud" (READ-1, shell.js window.orosRead) under Copy
+//     while Read aloud is on for this device. Then the selection menu
+//     opens without the Assistant too (Copy + Read aloud), and the
+//     button under text selected by touch or in a field becomes "Read
+//     aloud" and reads at once. Each selection carries lang (the lang
+//     attribute around it, below the page) and secret (inside
+//     data-oros-noclip: never read); win (READ-1 W2) lets Read aloud
+//     take the selection again with its place, to light up the sentence.
 //
 // Data (synced, slice "quickmenu", key oros-quick-menu):
 //   { ver:1, items:[{ id, k, n, p, app, send, o, d, m }] }
@@ -70,7 +78,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.2";
+  var VER = "1.4.0";
   var DATA_KEY = "oros-quick-menu";
   var MAX_ITEMS = 200;          // stored, tombstones included
   var MAX_SHOWN = 24;           // in the menu
@@ -312,6 +320,15 @@
   }
   function labelOf(app) { return host && host.label ? host.label(app) : app.name; }
   function hasAssistant() { return !!appById("assistant"); }
+  // Read aloud (READ-1, shell.js window.orosRead) is on for this device.
+  function readOn() {
+    var R = root.orosRead;
+    try { return !!(R && R.isOn()); } catch (e) { return false; }
+  }
+  // The selection menu has something to offer: the Assistant's
+  // actions, or Read aloud (Chris 2026-11-17: without the Assistant
+  // too, while Read aloud is on).
+  function selMenuOk() { return hasAssistant() || readOn(); }
   function nameOf(it) {
     if (it.n) return it.n;
     if (it.k === "app") { var a = appById(it.app); return a ? labelOf(a) : it.app; }
@@ -412,7 +429,7 @@
     "#qm-dlg .qm-check{display:flex;align-items:center;gap:10px;min-height:40px;font-size:14px;cursor:pointer}",
     "#qm-dlg .qm-check input{width:18px;height:18px;accent-color:var(--accent);margin:0}",
     // the mini window (z 960: over a running app at 900 and the Dock at 950, under the menu at 999)
-    "#qa-mini{position:fixed;z-index:960;right:16px;bottom:calc(16px + var(--tb-h,0px) + env(safe-area-inset-bottom,0px));",
+    "#qa-mini{position:fixed;z-index:960;right:calc(16px + var(--ld-sr,0px));bottom:calc(16px + var(--tb-h,0px) + env(safe-area-inset-bottom,0px));",
     "width:min(420px,calc(100vw - 32px));height:min(620px,calc(100vh - 88px));display:flex;flex-direction:column;overflow:hidden;",
     "background:var(--panel-bg);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px var(--shadow)}",
     "#qa-mini .qa-head{flex:0 0 auto;display:flex;align-items:center;gap:2px;padding:4px 4px 4px 14px;border-bottom:1px solid var(--border)}",
@@ -443,6 +460,7 @@
   var IC_ASK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3l1.6 4.4L16 9l-4.4 1.6L10 15l-1.6-4.4L4 9l4.4-1.6z"/><path d="M18 13l.8 2.2L21 16l-2.2.8L18 19l-.8-2.2L15 16l2.2-.8z"/></svg>';
   var IC_TASK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>';
   var IC_WALL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>';
+  var IC_READ = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>';
   var IC_EDIT = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
 
   function appIcon(app) {
@@ -920,7 +938,14 @@
       editable = !!(n && n.isContentEditable);
     }
     if (!text || !/\S/.test(text) || !rect) return null;
-    return { text: text, editable: editable, app: frameApp(w), rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom } };
+    // READ-1: the language around the text and whether it may be read
+    // (a data-oros-noclip part, as in the Clipboard history).
+    var at = a && (a.tagName === "TEXTAREA" || a.tagName === "INPUT") ? a : null;
+    if (!at) { var sn = w.getSelection().anchorNode; at = sn && (sn.nodeType === 1 ? sn : sn.parentElement); }
+    var lg = at && at.closest ? at.closest("[lang]") : null;
+    return { text: text, editable: editable, app: frameApp(w), rect: { left: rect.left, top: rect.top, right: rect.right, bottom: rect.bottom },
+             lang: lg && lg !== d.documentElement ? lg.getAttribute("lang") || "" : "",
+             secret: !!(at && at.closest && at.closest("[data-oros-noclip]")), win: w };
   }
 
   function copyText(text) {
@@ -952,6 +977,12 @@
         copyText(c.text);
         if (root.orosClip) root.orosClip.note(c.text, s.app || "");   // clipboard history (cliphist.js)
       });
+      // READ-1: the whole selection (not the cut one), read on this device
+      if (readOn()) {
+        item(tr("sel.read"), IC_READ, function () {
+          root.orosRead.read({ text: s.text, lang: s.lang || "", app: s.app || "", secret: !!s.secret, win: s.win });
+        });
+      }
       sep();
       if (!hasAssistant()) return;
       SEL_ACTS.forEach(function (k) {
@@ -984,15 +1015,19 @@
     if (!fr.width || !fr.height) return;
     var b = el("button", "qm-chip");
     b.type = "button";
+    // READ-1: without the Assistant the button is "Read aloud" and reads
+    // at once (Copy stays the device's own, under the text).
+    var readOnly = !hasAssistant();
     var ic = el("span", "qm-ic");
-    ic.innerHTML = IC_ASK;                      // static shell icon, not data
+    ic.innerHTML = readOnly ? IC_READ : IC_ASK;   // static shell icon, not data
     b.appendChild(ic);
-    b.appendChild(el("span", "", tr("sel.chip")));
-    b.setAttribute("aria-label", tr("sel.title"));
+    b.appendChild(el("span", "", tr(readOnly ? "sel.read" : "sel.chip")));
+    b.setAttribute("aria-label", tr(readOnly ? "sel.read" : "sel.title"));
     b.addEventListener("pointerdown", function (e) { e.preventDefault(); });   // the selection keeps its focus
     b.addEventListener("click", function () {
       var r = b.getBoundingClientRect(), cur = chip ? chip.sel : s;
       hideChip();
+      if (readOnly) { if (readOn()) root.orosRead.read({ text: cur.text, lang: cur.lang || "", app: cur.app || "", secret: !!cur.secret, win: cur.win }); return; }
       openSelMenu(cur, r.left, r.bottom + 4);
     });
     doc.body.appendChild(b);
@@ -1016,7 +1051,7 @@
       clearTimeout(chipTimer);
       chipTimer = setTimeout(function () {
         chipTimer = null;
-        if (down || menu || !chipOn() || !hasAssistant() || !frameOk(f)) return;
+        if (down || menu || !chipOn() || !selMenuOk() || !frameOk(f)) return;
         var s = selOf(w);
         if (!s || (ptr === "mouse" && !s.editable)) return;     // with a mouse, a right-click does it
         showChip(f, s, ptr !== "mouse");
@@ -1038,7 +1073,7 @@
     w.addEventListener("keydown", function (e) { if (e.key !== "Shift") ptr = "mouse"; if (chip) hideChip(); }, true);
     w.addEventListener("scroll", function () { if (chip) hideChip(); }, true);
     w.addEventListener("contextmenu", function (e) {
-      if (e.defaultPrevented || e.shiftKey || !hasAssistant() || !frameOk(f)) return;
+      if (e.defaultPrevented || e.shiftKey || !selMenuOk() || !frameOk(f)) return;
       var kb = !e.clientX && !e.clientY;          // the context-menu key
       if (ptr !== "mouse" && !kb) return;         // touch: the button under the text does it
       var s = selOf(w);

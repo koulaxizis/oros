@@ -194,9 +194,9 @@
   }
 
   var CSS = [
-    "#wg-col { position: absolute; top: 16px; right: 16px; width: 300px; display: flex; flex-direction: column; gap: 12px;",
+    "#wg-col { position: absolute; top: calc(16px + var(--ld-st, 0px)); right: calc(16px + var(--ld-sr, 0px)); width: 300px; display: flex; flex-direction: column; gap: 12px;",
     "  z-index: 2; padding-bottom: calc(110px + var(--tb-h, 0px)); }",
-    "body.wg-col #ld-desk { margin-right: 332px; }",
+    "body.wg-col #ld-desk { margin-right: calc(332px + var(--ld-sr, 0px)); }",
     "#wg-col.wg-strip { position: static; width: auto; flex-direction: row; align-items: flex-start; overflow-x: auto; padding: 12px 10px 4px;",
     "  scroll-snap-type: x proximity; scrollbar-width: thin; }",
     "#wg-col.wg-strip .wg-card { flex: 0 0 min(280px, 82vw); scroll-snap-align: start; }",

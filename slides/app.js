@@ -911,8 +911,34 @@
     $("editor").hidden = false;
     $("ed-name").textContent = deckTitle(data.decks[id]);
     emit("open");
+    contNote();
   }
   SL.openDeck = openDeck;
+
+  // CONT-1 W3: tell the shell which deck is open (continue.js keeps the
+  // reference and the title only, never the slides). On opening, and once
+  // at the first tap or key after the start: a sync re-render is not the
+  // person opening the deck.
+  var contLive = false;   // nothing before the first tap or key: a restored item must not hide the other device's
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var C = window.parent !== window ? window.parent.orosContinue : null;
+      var d = C && SL.deck ? data.decks[SL.deck] : null;
+      if (d) C.note("slides", { target: { deck: SL.deck }, title: deckTitle(d) });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   function goHome() {
     emit("flush");

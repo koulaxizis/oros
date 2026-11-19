@@ -185,7 +185,9 @@
   //   → { bin, messageId, rcpt[] }
   // With html: multipart/alternative (text first, then HTML); inline
   // pictures (referenced as cid: in the HTML) make the HTML side a
-  // multipart/related.
+  // multipart/related. The HTML side carries a viewport meta so phone
+  // clients (Android WebView-based apps) lay it out at the screen width
+  // instead of a zoomed-out ~980 px desktop page.
   // The message's content (text, HTML, pictures, files) as one MIME
   // part { head, body }, without the message headers. o.safe: see
   // textPart (for PGP/MIME signing).
@@ -193,7 +195,7 @@
     var safe = !!o.safe;
     var part = textPart("text/plain", o.text, safe);
     if (typeof o.html === "string" && o.html) {
-      var html = textPart("text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body>" + o.html + "</body></html>", safe);
+      var html = textPart("text/html", "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"></head><body>" + o.html + "</body></html>", safe);
       var imgs = (Array.isArray(o.inline) ? o.inline : []).filter(function (x) {
         return x && /^[A-Za-z0-9._-]{1,60}(@[A-Za-z0-9.-]{1,60})?$/.test(x.cid) && /^image\/(png|jpeg|gif)$/.test(x.type) && x.bin;
       });

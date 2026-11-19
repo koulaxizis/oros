@@ -93,15 +93,15 @@ test("set.bat / set.bam: kept when valid, dropped otherwise, merged with the set
 
 test("banklive: set times replace the 6-hour rule, bt is written only with set times, the hidden run reports", () => {
   const lv = read("budget/banklive.js");
-  assert.match(lv, /function isDue\(now\)[\s\S]*?if \(!ts\.length\) return K\.due\(/);
-  assert.match(lv, /K\.slotDue\(ts, K\.lastRead\(live\(\), dev && dev\.t, \(A\.data\(\)\.set \|\| \{\}\)\.bam, now\), now\)/);
+  // BK-AO: the mode (off / set times / every 6 hours) is bankapi.js autoDue, as in the shell
+  assert.match(lv, /function isDue\(now\) \{\s*var dev = load\(DEV_KEY\);\s*return !!K\.autoDue\(A\.data\(\)\.set, live\(\), dev && dev\.t, 0, now\);/);
   assert.match(lv, /if \(sched\) rows\.forEach\(function \(r\) \{ if \(!errs\[r\.id\]\) put\(r\.id, \{ bt: at \}\); \}\);/);
   assert.match(lv, /oros: "bank-bg-done", app: "budget"/);
   assert.match(lv, /var QUIET = \{ keys: 1, noapp: 1, offline: 1 \};/);
   // the hidden run takes no bank answers and runs nothing else
   assert.match(lv, /if \(bgMode\(\)\) \{ setTimeout\(bgRun, 0\); return; \}\s*listen\(\);/);
   // every Banks string in both languages
-  ["atT", "atMode", "atSix", "atSet", "atSixHint", "atHint", "atOne", "atAdd", "atRemove"].forEach((k) => {
+  ["atT", "atMode", "atSix", "atSet", "atOff", "atSixHint", "atOffHint", "atHint", "atOne", "atAdd", "atRemove"].forEach((k) => {
     assert.equal((lv.match(new RegExp("\\b" + k + ": \"", "g")) || []).length, 2, k);
   });
   assert.match(src, /saveTimes: saveBankTimes/);
@@ -111,7 +111,9 @@ test("shell 10f: ticks, opens Budget hidden with ?bankbg=1, stops when Budget op
   const sh = read("shell.js");
   assert.match(sh, /tickSafe\("bankBgTick", bankBgTickThrottled\)/);
   assert.match(sh, /davBgStop\(app\.id\); bankBgStop\(app\.id\);/);
-  assert.match(sh, /frameGo\(f, bgUrl\(app, "bankbg=1"\)\)/);
+  assert.match(sh, /bankBgStart\(app, "bankbg=1", null\)/);
+  assert.match(sh, /frameGo\(f, bgUrl\(app, q\)\)/);
+  assert.match(sh, /var slot = K\.autoDue\(d\.set, d\.bnk, dev\.t, mine\.at, now\);/);
   assert.match(sh, /if \(appLive\("budget"\)\) return;/);
   assert.match(sh, /localStorage\.setItem\("oros-budget-bank-bg", JSON\.stringify\(\{ at: slot \}\)\)/);
   assert.match(sh, /if \(r && r\.text\) \{/);
