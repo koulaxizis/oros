@@ -1871,6 +1871,8 @@
   // Wave 48: changes to records the user already shared (assistant/
   // edits.js). The user sees a before → after card and presses Apply;
   // nothing changes before that.
+  // RIGHTS (CRM 1.11): one right of a contract (crm/core.js rtRow)
+  var RT_ONE = { type: "object", properties: { status: { type: "string", "enum": ["granted", "consent", "free_only", "not_mentioned"] }, share: { type: "string" } } };
   var TOOL_CHANGE = {
     name: "change_item",
     description: "Propose a change to an existing item that search_data or app_summary returned in this " +
@@ -1890,7 +1892,7 @@
       "crm (a customer, update: title = name / nickname = alias / job_title / tax_id = VAT or tax number / tax_office / " +
       "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles / rs_beneficiary; bank " +
       "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
-      "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start) · " +
+      "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start; a contract, update: rights) · " +
       "kanban (reschedule: date = due, update: title / date / note / labels / plan_start / milestone / depends_on, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
@@ -1963,6 +1965,24 @@
                           description: "crm customer: the partner's beneficiary name(s) in the shop's Revenue Splitter, exactly as written there (replaces; [] unlinks). Not together with roles." },
         stage: { type: "string", description: "crm deal: the pipeline stage's name, e.g. Proposal, Won, Lost." },
         probability: { type: "integer", description: "crm deal: chance to win, 0-100." },
+        rights: { type: "object", description: "crm contract (a contract's ref): what it grants, alone in its change; only the keys given change, null clears one. Never guess a term the contract does not say.",
+                  properties: {
+                    template: { type: "string", "enum": ["A", "B", "C", "D"] },
+                    grant: { type: "string", "enum": ["all_economic", "exclusive_licence", "free_posting_only"] },
+                    covers: { type: "array", items: { type: "string", "enum": ["print", "digital"] }, description: "the formats the contract covers" },
+                    per_right: { type: "object", description: "merges right by right; each { status: granted | consent | free_only | not_mentioned, share: e.g. 10%, 50/50 }",
+                                 properties: { print: RT_ONE, ebook: RT_ONE, audio: RT_ONE, translation: RT_ONE, adaptation: RT_ONE, merch: RT_ONE, free_posting: RT_ONE, excerpts: RT_ONE } },
+                    territory: { type: "string", "enum": ["greece", "not_set"] },
+                    extend: { type: "string", "enum": ["by_agreement", "not_mentioned"] },
+                    sell_off_months: { type: "integer", description: "months the stock may be sold after the end (0 = none)" },
+                    cease_days: { type: "integer", description: "days within which sales stop after the end (0 = none)" },
+                    cc: { type: "boolean", description: "released under CC BY-NC-SA" },
+                    cc_perpetual: { type: "boolean" },
+                    reversion_oop: { type: "boolean", description: "rights return when out of print" },
+                    source: { type: "string", "enum": ["pdf", "oral", "lost"] },
+                    checked: { type: "string", description: "YYYY-MM-DD" },
+                    note: { type: "string" }
+                  } },
         reason: { type: "string", description: "crm deal at stage Lost: why it was lost." },
         org: { type: "string", description: "contacts: new organisation / company." },
         phone: { type: "string", description: "contacts: a phone number to add (the old ones stay); stock supplier: the phone (replaces)." },
@@ -2371,7 +2391,8 @@
     name: "files_list",
     description: "List a folder on the orOS disk: subfolders first, then files with kind (text, document, pdf, image, media, other), size and modified time; " +
       "on_device false = a file of an orOS Drive folder that is in the cloud only (files_read still reads it)." + FILES_WHERE +
-      " Without path: the owner's folders for Claude.",
+      " Without path: the owner's folders for Claude, and the local folders of the owner's device opened for Claude (temporary, local_folders): list one with path local:<root>/<folder>; " +
+      "its pictures also give pixels and ppi. Layout commands take those local: paths and copy what they use into the document.",
     params: {
       type: "object",
       properties: {
@@ -2786,7 +2807,7 @@
         price: { type: "string", description: "The price as printed, with the currency (e.g. \u20ac14.90)." },
         pages: { type: "integer", description: "Number of pages (for the spine)." },
         trim: { type: "string", "enum": COVER_SIZES, description: "Trim size in mm, width x height (default 140x210)." },
-        front_picture: { type: "string", description: "The front cover picture: its number (1 = first picture of the latest message with pictures) or file name." },
+        front_picture: { type: "string", description: "The front cover picture: its number (1 = first picture of the latest message with pictures) or file name, or local:<root>/<path> in a local folder the owner opened for Claude." },
         logo: { type: "string", description: "The publisher's logo picture: its number or file name." }
       },
       required: ["title"]
@@ -2819,7 +2840,7 @@
     if (pg > 0 && pg <= 5000) cv.pages = pg;
     var tr = COVER_SIZES.indexOf(args.trim) >= 0 ? args.trim : "140x210";
     cv.w = +tr.split("x")[0]; cv.h = +tr.split("x")[1];
-    function pic(v) { return typeof v === "number" && v >= 1 && v <= 20 ? String(Math.round(v)) : line(v, 120); }
+    function pic(v) { return typeof v === "number" && v >= 1 && v <= 20 ? String(Math.round(v)) : typeof v === "string" && /^local:/i.test(v.trim()) ? diskPath(v) : line(v, 120); }
     var pics = { front: pic(args.front_picture), logo: pic(args.logo) };
     var view = [["title", title]];
     if (cv.sub) view.push(["sub", cv.sub]);
@@ -2966,8 +2987,11 @@
       }
     }
   };
+  // LOCAL-1: also local:<root>/<path> (a local folder the owner opened
+  // for Claude, temporary; Layout checks it against the owner's roots)
   function diskPath(v) {
     var p = typeof v === "string" ? v.replace(/\s+/g, " ").trim().replace(/\/+$/, "") : "";
+    if (/^local:/i.test(p)) return p.length <= 1030 && !/(^|[\/\\])\.\.([\/\\]|$)/.test(p) && !/[\u0000-\u001f]/.test(p) ? p.replace(/[\/\\]+$/, "") : "";
     return p.indexOf("/internal/") === 0 && !/(^|\/)\.\.(\/|$)/.test(p) && p.length <= 400 ? p : "";
   }
   function findFile(list, want) {
@@ -3027,7 +3051,7 @@
     var folder = "";
     if (args.folder != null && args.folder !== "") {
       folder = diskPath(args.folder);
-      if (!folder) return { ok: false, err: "folder must be a folder on the orOS disk, starting with /internal/." };
+      if (!folder) return { ok: false, err: "folder must be a folder on the orOS disk, starting with /internal/, or local:<root>/<path> in a local folder the owner opened for Claude." };
     }
     return { ok: true, pdf: pdf, sla: sla, src: src, folder: folder, thread: args.thread === true && !sla };
   }
@@ -3392,7 +3416,9 @@
         bleed: { type: "boolean", description: "Include the bleed (default true for pdfx4 and print)." },
         marks: { type: "array", items: { type: "string", "enum": PDF_MARKS }, description: "Printer's marks, outside the bleed (default for pdfx4: crop)." },
         spreads: { type: "boolean", description: "Facing pages side by side (default false: single pages, as printers want)." },
-        downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." }
+        downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." },
+        creep: { type: "number", description: "Creep for a saddle-stitched book in mm, 0-5 (default 0): the innermost pages' content moves this far towards the spine, the outer ones less." },
+        out: { type: "string", description: "Also save the PDF in a local write folder the owner opened for Claude: local:<root>/<folder> (files_list without path lists them; a taken name gets -2, -3). Temporary." }
       }
     }
   };
@@ -3414,8 +3440,12 @@
       }
     } else if (preset === "pdfx4") marks.crop = 1;
     var bleed = typeof a.bleed === "boolean" ? a.bleed : preset !== "screen";
+    var creep = a.creep === undefined || a.creep === null || a.creep === "" ? 0 : Number(a.creep);
+    if (!isFinite(creep) || creep < 0 || creep > 5) return { ok: false, err: "creep is 0-5 (mm)." };
+    var out = a.out == null || a.out === "" ? "" : diskPath(a.out);
+    if (out && !/^local:/i.test(out) || a.out && !out) return { ok: false, err: "out is a local write folder the owner opened for Claude: local:<root>/<folder>." };
     return { ok: true, doc: doc, preset: preset, pages: pages === "all" ? "" : pages, bleed: bleed ? 1 : 0, marks: marks,
-             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1 };
+             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, out: out };
   }
   var PDF_PATH = /^\/internal\/Layout\/PDF\/[^\/]{1,200}\.pdf$/, PF_CODE = /^[a-z][a-zA-Z0-9]{0,19}$/;
   // Layout's report → what the model gets (numbers, codes and pages only).
@@ -3437,6 +3467,8 @@
     });
     o.preflight = { errors: pf.filter(function (p) { return p.severity === "error"; }).length, warnings: pf.filter(function (p) { return p.severity === "warning"; }).length, problems: pf };
     if (rep.down) o.pictures_downsampled = Math.floor(n(rep.down));
+    if (typeof rep.local === "string" && /^local:[^\u0000-\u001f]{1,1100}$/.test(rep.local)) o.local_copy = rep.local;
+    if (typeof rep.localWhy === "string" && PF_CODE.test(rep.localWhy)) o.local_copy_failed = rep.localWhy;
     return o;
   }
 
@@ -3496,7 +3528,8 @@
           app: { type: "string", "enum": apps },
           designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets, for Montage video projects, for Studio song projects, for Whiteboard boards, for Mind map maps: open, named or all." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
-          steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } }
+          steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } },
+          dry_run: { type: "boolean", description: "Only through orOS Gate: say what the commands would change (per document, with notes) without changing anything." }
         },
         required: ["app", "steps"]
       }
@@ -3512,7 +3545,8 @@
         properties: {
           app: { type: "string", "enum": apps.slice().sort() },
           designs: { type: "string", "enum": ["open", "named", "style"], description: "open (the one open in the app, the default) or named. Atelier only: style reads the user's own style (fonts by role, sizes, colours, alignment of their designs, worked out on their device) for one kind of design named in `name` (square, 4:5, 9:16, 16:9, A portrait, bookmark, banner) or, without a name, every kind; use it before making a new design in their style." },
-          name: { type: "string", description: "designs named: the document's name; designs style: the kind of design." }
+          name: { type: "string", description: "designs named: the document's name; designs style: the kind of design." },
+          full: { type: "boolean", description: "Layout: whole paragraphs (not cut at 400 characters, for proofreading) and the preflight Layout last found, without an export." }
         },
         required: ["app"]
       }
@@ -3531,7 +3565,9 @@
     if (chk.steps[0].op === "create") { designs = "new"; name = chk.steps[0].title || name; }
     else if (designs === "new") return bad("designs new needs create as the first command.");
     if (designs !== "named" && designs !== "open" && designs !== "new" && chk.steps.some(function (s) { return s.op === "rename"; })) return bad("rename works on one " + EDIT_APP[app].noun + " (designs open or named).");
-    return { ok: true, app: app, designs: designs, name: name, steps: chk.steps };
+    var r = { ok: true, app: app, designs: designs, name: name, steps: chk.steps };
+    if (a.dry_run === true) r.dry = true;
+    return r;
   }
   function normReadApp(args, cats) {
     var a = isObj(args) ? args : {}, app = String(a.app || "");
@@ -3540,7 +3576,9 @@
     if (designs !== "open" && designs !== "named" && !(designs === "style" && app === "atelier")) return bad("designs must be open or named" + (app === "atelier" ? " (or style)" : "") + ".");
     var name = squash(a.name || "").slice(0, 120);
     if (designs === "named" && !name) return bad("give the " + EDIT_APP[app].noun + "'s name.");
-    return { ok: true, app: app, designs: designs, name: name };
+    var r = { ok: true, app: app, designs: designs, name: name };
+    if (a.full === true) r.full = true;
+    return r;
   }
 
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
@@ -3611,7 +3649,8 @@
   var GATE_OPEN_SAY = " Through orOS Gate it opens at once on the owner's screen in that app (unless the owner paused Claude's changes): " +
     "Layout's own work (rebuild, house style, book) runs there and its report comes back; a new entry, document, recipe, cover or newsletter content " +
     "is filled into the app's own form or editor for the owner to check and save; an automation rule comes in turned off. " +
-    "Files come only as paths on the orOS disk (/internal/…): there are no attachments through the gate. Nothing is sent from here.";
+    "If nobody sees orOS at that moment (a hidden tab, orOS in the background or closed), the call waits, encrypted, and runs the next time orOS is on the owner's screen; its report comes then. " +
+    "Files come only as paths on the orOS disk (/internal/…) or, while the owner has a local folder open for Claude, as local:<root>/<path> (files_list without path shows those roots): there are no attachments through the gate. Nothing is sent from here.";
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],
     [" The user may be asked first.", ""],

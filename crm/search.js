@@ -1,5 +1,5 @@
 // ============================================================
-// orOS CRM — universal search provider (v1.2.0)
+// orOS CRM — universal search provider (v1.3.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"; "searchOff": true, so it starts switched off: the data
 // is about other people). Read-only: reads oros-crm-data, never
@@ -12,14 +12,15 @@
 //     shown is the expected close (open) or the close day
 //   • an open follow-up: its text; customer as text; its day
 //   • a history entry with text: its first line; customer; its day
-//   • a contract (W4): its title; customer, end day, note; opens the
-//     customer
+//   • a contract (W4): its title; customer, end day, note; opens its
+//     quick actions (target { cust, ctr }: 1.11, so the Assistant and
+//     orOS Gate can change its rights; cust keeps the older readers)
 // A customer that matches leads its text with its balance in Invoices
 // (W5, OrosCrmCore.balance with OrosInvoicesCore, both in the shell).
 // A row hidden by a tombstone (tomb ≥ m) or whose customer is gone
 // is skipped, the way the merge hides it.
 // Opens through the generic deep link: __orosOpenAt("crm",
-// { cust | deal | fup | act: id }).
+// { cust | ctr | deal | fup | act: id }).
 // ============================================================
 (function (root) {
   "use strict";
@@ -102,7 +103,7 @@
       rows(d.ctr, function (x, cn) {
         if (!str(x.t)) return null;
         return { id: x.id, title: str(x.t), text: [cn, W["ct.sec"], YMD.test(x.to || "") ? W["ct.until"].replace("{d}", x.to) : "", str(x.note)].filter(Boolean).join(" · "),
-                 when: dayMs(x.to || x.from), target: { cust: x.cust } };
+                 when: dayMs(x.to || x.from), target: { cust: x.cust, ctr: x.id } };
       });
       function rows(list, f) {
         arr(list).forEach(function (x) {

@@ -1016,7 +1016,33 @@
     view.activeList = id;
     view.smart = null;              // a list was asked for: leave any smart list
     saveView();
+    contNote();
   }
+  // CONT-1 W4: tell the shell which list is open (continue.js keeps the
+  // reference and the list's name only, never its tasks). On a switch,
+  // and once at the first tap or key after the start; nothing before
+  // that, so a restored list never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var l = W && !view.smart && view.activeList ? listById(view.activeList) : null;
+      var name = l && typeof l.name === "string" ? l.name.trim() : "";
+      if (name) W.note("todo", { target: { list: l.id }, title: name });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   function setSmart(id) {
     view.smart = id;
     saveView();

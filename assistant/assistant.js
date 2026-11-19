@@ -490,7 +490,7 @@
       "ed.f.h": "height", "ed.f.dx": "move right", "ed.f.dy": "move down", "ed.f.pct": "scale %", "ed.f.rot": "rotation", "ed.f.opacity": "opacity", "ed.f.pos": "place",
       "ed.f.gap": "gap", "ed.f.edge": "edge", "ed.f.dist": "spread", "ed.f.rel": "against", "ed.f.order": "order", "ed.f.lock": "lock", "ed.f.hide": "hide", "ed.f.n": "how many",
       "ed.f.at": "where", "ed.f.page": "page", "ed.f.dup": "as copies", "ed.f.first": "from page", "ed.f.last": "to page", "ed.f.dest": "to position", "ed.f.mm": "mm",
-      "ed.op.create.layout": "New document", "ed.v.u.mm": "mm", "ed.v.u.pt": "pt", "ed.v.u.in": "in", "ed.v.u.px": "px", "ed.f.facing": "facing pages", "ed.v.side.right": "first on a right-hand page", "ed.v.side.left": "first on a left-hand page", "ed.v.side.any": "on any side", "ed.f.bt": "bleed top (mm)", "ed.f.bb": "bleed bottom (mm)", "ed.f.bi": "bleed inside (mm)", "ed.f.bo": "bleed outside (mm)", "ed.f.slug": "slug (mm)", "ed.f.ncol": "columns", "ed.f.gut": "gutter (mm)", "ed.f.grid": "baseline grid (pt)", "ed.f.color": "colour", "ed.v.color.rgb": "RGB", "ed.v.color.cmyk": "CMYK", "ed.f.icc": "print profile", "ed.v.icc.fogra39": "Coated FOGRA39", "ed.op.images": "Pages from pictures", "ed.f.paths": "pictures", "ed.nFiles": "{n} files", "ed.f.folder": "folder", "ed.f.sort": "order", "ed.v.sort.natural": "natural (1, 2 … 10)", "ed.v.sort.name": "by name", "ed.v.sort.given": "as listed", "ed.v.fit.trim": "to the trim", "ed.v.fit.bleed": "to the bleed", "ed.v.fit.margins": "within the margins", "ed.v.fit.proportional": "whole picture", "ed.op.bleedfill": "Bleed for full-page pictures", "ed.v.mode.smart": "smart", "ed.v.mode.mirror": "mirror", "ed.v.mode.stretch": "stretch", "ed.op.thumbs": "Page pictures for a check", "ed.f.spreads": "as spreads", "ed.note.blankFirst": "A blank page went first so the first picture is on the side asked for.", "ed.op.defstyle": "Style", "ed.v.kind.para": "paragraph style", "ed.v.kind.char": "character style", "ed.f.base": "based on", "ed.f.li": "left indent (pt)", "ed.f.ri": "right indent (pt)", "ed.f.nest_cs": "nested style", "ed.f.nest_to": "up to", "ed.f.keep": "keep with next", "ed.v.keep.on": "yes", "ed.v.keep.off": "no", "ed.op.styleset": "Ready-made styles", "ed.f.set": "set", "ed.v.set.play": "for a play", "ed.f.style": "style", "ed.op.frame.layout": "New text frame", "ed.f.ins": "inset (mm)", "ed.f.va": "vertical alignment", "ed.v.va.t": "top", "ed.v.va.m": "middle", "ed.v.va.b": "bottom", "ed.v.va.j": "justified", "ed.f.clear": "replacing what is on the page", "ed.nLines": "{n} paragraphs", "ed.f.lines": "text", "ed.op.retext": "New text for a story", "ed.f.story": "story", "ed.op.house_pages": "House front and back pages", "ed.f.house": "house style", "ed.f.where": "where", "ed.v.where.both": "front and back", "ed.v.where.front": "front only", "ed.v.where.back": "back only", "ed.v.where.none": "none (blank pages only)", "ed.f.pad": "pages a multiple of", "ed.v.pad.0": "as they come", "ed.v.pad.2": "2", "ed.v.pad.4": "4", "ed.v.pad.8": "8", "ed.v.pad.16": "16", "ed.f.keep_side": "first page keeps its side", "ed.f.subtitle": "subtitle", "ed.f.isbn": "ISBN", "ed.f.year": "year", "ed.f.publisher": "publisher", "ed.note.noHouse": "No house style document was found for the front and back pages (Layout › House style).", "ed.op.animate": "Animation", "ed.op.pagetime": "Page timing", "ed.op.add": "Add", "ed.op.brand": "Brand kit", "ed.op.resize": "New sizes", "ed.op.export": "Download", "ed.op.create": "New design", "ed.f.anim": "entrance", "ed.f.secs": "seconds per page", "ed.f.trans": "transition", "ed.f.icon": "icon", "ed.f.fonts": "fonts", "ed.f.palette": "colours", "ed.f.sizes": "sizes", "ed.f.copies": "as copies", "ed.f.fmt": "as", "ed.f.scale": "scale", "ed.f.dpi": "dpi", "ed.f.u": "unit", "ed.v.anim.none": "none", "ed.v.anim.fade": "fade in", "ed.v.anim.rise": "rise", "ed.v.anim.pop": "pop", "ed.v.anim.wipe": "wipe", "ed.v.anim.type": "typewriter", "ed.v.trans.none": "none", "ed.v.trans.fade": "fade", "ed.v.trans.slide": "slide", "ed.v.trans.push": "push", "ed.v.trans.zoom": "zoom", "ed.v.add.text": "a text", "ed.v.add.shape": "a shape", "ed.v.add.icon": "an icon", "ed.v.add.line": "a line", "ed.willMake": "Makes {n} new designs.", "ed.willFiles": "Makes files of {n} designs for you to save.", "ed.madeDone": "New designs: {n}.", "ed.filesDone": "Files: {n}.", "ed.note.noBrand": "There is no brand kit yet (Atelier › Brand kit).", "ed.note.noBrandFonts": "The brand kit has no fonts.", "ed.note.noBrandColors": "The brand kit has no colours.",
+      "ed.op.create.layout": "New document", "ed.v.u.mm": "mm", "ed.v.u.pt": "pt", "ed.v.u.in": "in", "ed.v.u.px": "px", "ed.f.facing": "facing pages", "ed.v.side.right": "first on a right-hand page", "ed.v.side.left": "first on a left-hand page", "ed.v.side.any": "on any side", "ed.f.bt": "bleed top (mm)", "ed.f.bb": "bleed bottom (mm)", "ed.f.bi": "bleed inside (mm)", "ed.f.bo": "bleed outside (mm)", "ed.f.slug": "slug (mm)", "ed.f.ncol": "columns", "ed.f.gut": "gutter (mm)", "ed.f.grid": "baseline grid (pt)", "ed.f.color": "colour", "ed.v.color.rgb": "RGB", "ed.v.color.cmyk": "CMYK", "ed.f.icc": "print profile", "ed.v.icc.fogra39": "Coated FOGRA39", "ed.op.images": "Pages from pictures", "ed.f.paths": "pictures", "ed.nFiles": "{n} files", "ed.f.folder": "folder", "ed.f.sort": "order", "ed.v.sort.natural": "natural (1, 2 … 10)", "ed.v.sort.name": "by name", "ed.v.sort.given": "as listed", "ed.v.fit.trim": "to the trim", "ed.v.fit.bleed": "to the bleed", "ed.v.fit.margins": "within the margins", "ed.v.fit.proportional": "whole picture", "ed.op.bleedfill": "Bleed for full-page pictures", "ed.v.mode.smart": "smart", "ed.v.mode.mirror": "mirror", "ed.v.mode.stretch": "stretch", "ed.op.thumbs": "Page pictures for a check", "ed.f.spreads": "as spreads", "ed.note.blankFirst": "A blank page went first so the first picture is on the side asked for.", "ed.op.defstyle": "Style", "ed.v.kind.para": "paragraph style", "ed.v.kind.char": "character style", "ed.f.base": "based on", "ed.f.li": "left indent (pt)", "ed.f.ri": "right indent (pt)", "ed.f.nest_cs": "nested style", "ed.f.nest_to": "up to", "ed.f.keep": "keep with next", "ed.v.keep.on": "yes", "ed.v.keep.off": "no", "ed.op.styleset": "Ready-made styles", "ed.f.set": "set", "ed.v.set.play": "for a play", "ed.f.style": "style", "ed.op.frame.layout": "New text frame", "ed.f.ins": "inset (mm)", "ed.f.va": "vertical alignment", "ed.v.va.t": "top", "ed.v.va.m": "middle", "ed.v.va.b": "bottom", "ed.v.va.j": "justified", "ed.f.clear": "replacing what is on the page", "ed.nLines": "{n} paragraphs", "ed.f.lines": "text", "ed.op.retext": "New text for a story", "ed.f.story": "story", "ed.op.house_pages": "House front and back pages", "ed.f.house": "house style", "ed.f.where": "where", "ed.v.where.both": "front and back", "ed.v.where.front": "front only", "ed.v.where.back": "back only", "ed.v.where.none": "none (blank pages only)", "ed.f.pad": "pages a multiple of", "ed.v.pad.0": "as they come", "ed.v.pad.2": "2", "ed.v.pad.4": "4", "ed.v.pad.8": "8", "ed.v.pad.16": "16", "ed.f.keep_side": "first page keeps its side", "ed.f.subtitle": "subtitle", "ed.f.isbn": "ISBN", "ed.f.year": "year", "ed.f.publisher": "publisher", "ed.note.noHouse": "No house style document was found for the front and back pages (Layout › House style).", "ed.op.section": "Section with its own page numbers", "ed.f.numstyle": "numbers", "ed.v.numstyle.1": "1, 2, 3", "ed.v.numstyle.i": "i, ii, iii", "ed.v.numstyle.I": "I, II, III", "ed.v.numstyle.a": "a, b, c", "ed.v.numstyle.A": "A, B, C", "ed.f.prefix": "prefix", "ed.f.off": "removed", "ed.op.movepages": "Move pages", "ed.f.before": "before page", "ed.op.duppages": "Copy pages", "ed.op.masterpages": "Master for pages", "ed.f.master": "master", "ed.op.defmaster": "Master", "ed.op.pagesize": "Page size", "ed.op.picture": "Picture frames", "ed.op.addfont": "Add a font", "ed.f.from_edge": "Distance from the edge", "ed.op.masterfield": "Page numbers and running heads", "ed.f.show": "Show again on pages", "ed.f.remove": "Remove", "ed.v.kind.pagenum": "Page number", "ed.v.kind.runhead": "Running head", "ed.v.pos.bc": "Bottom centre", "ed.v.pos.bo": "Bottom outside", "ed.v.pos.bi": "Bottom inside", "ed.v.pos.tc": "Top centre", "ed.v.pos.to": "Top outside", "ed.v.pos.ti": "Top inside", "ed.op.colormode": "Colour mode", "ed.op.framemod": "Change frames", "ed.f.nofill": "No fill", "ed.f.del": "Remove", "ed.op.cancel": "Stop the running commands", "ed.f.family": "Font family", "ed.f.source": "From", "ed.f.path": "Font file", "ed.f.styles": "Styles", "ed.f.collection": "Collection", "ed.v.source.free": "Free fonts (Fontsource)", "ed.v.source.local": "A local folder", "ed.f.out": "also into the local folder", "ed.f.corner": "corner radius (mm)", "ed.v.flip.hv": "both ways", "ed.v.fit.frame": "frame to the picture", "ed.note.noMaster": "A master named in the commands was not found.", "ed.op.animate": "Animation", "ed.op.pagetime": "Page timing", "ed.op.add": "Add", "ed.op.brand": "Brand kit", "ed.op.resize": "New sizes", "ed.op.export": "Download", "ed.op.create": "New design", "ed.f.anim": "entrance", "ed.f.secs": "seconds per page", "ed.f.trans": "transition", "ed.f.icon": "icon", "ed.f.fonts": "fonts", "ed.f.palette": "colours", "ed.f.sizes": "sizes", "ed.f.copies": "as copies", "ed.f.fmt": "as", "ed.f.scale": "scale", "ed.f.dpi": "dpi", "ed.f.u": "unit", "ed.v.anim.none": "none", "ed.v.anim.fade": "fade in", "ed.v.anim.rise": "rise", "ed.v.anim.pop": "pop", "ed.v.anim.wipe": "wipe", "ed.v.anim.type": "typewriter", "ed.v.trans.none": "none", "ed.v.trans.fade": "fade", "ed.v.trans.slide": "slide", "ed.v.trans.push": "push", "ed.v.trans.zoom": "zoom", "ed.v.add.text": "a text", "ed.v.add.shape": "a shape", "ed.v.add.icon": "an icon", "ed.v.add.line": "a line", "ed.willMake": "Makes {n} new designs.", "ed.willFiles": "Makes files of {n} designs for you to save.", "ed.madeDone": "New designs: {n}.", "ed.filesDone": "Files: {n}.", "ed.note.noBrand": "There is no brand kit yet (Atelier › Brand kit).", "ed.note.noBrandFonts": "The brand kit has no fonts.", "ed.note.noBrandColors": "The brand kit has no colours.",
       "ed.counting": "Counting what changes…", "ed.will.photolab": "Changes {n} things in {d} pictures.", "ed.did.photolab": "Changed {n} things in {d} pictures.", "ed.willFiles.photolab": "Pictures to save in Pictures: {n}.", "ed.filesDone.photolab": "Saved in Pictures: {n}.", "ed.sureDel.photolab": "This removes layers. Undo on the card brings them back.", "ed.op.resize.photolab": "Image size", "ed.op.export.photolab": "Save to Pictures", "ed.op.add.photolab": "New layer", "ed.op.tone": "Tone", "ed.op.look": "Look", "ed.op.gray": "Black and white", "ed.op.blur": "Blur", "ed.op.sharpen": "Sharpen", "ed.op.noise": "Grain", "ed.op.adjlayer": "Adjustment layer", "ed.op.layer": "Layer", "ed.op.dup": "Duplicate", "ed.op.style": "Layer style", "ed.op.watermark": "Watermark", "ed.op.crop": "Crop", "ed.op.canvas": "Canvas size", "ed.op.rotate": "Rotate", "ed.op.flip": "Flip", "ed.f.r": "radius", "ed.f.amt": "amount", "ed.f.mono": "grey", "ed.f.hue": "hue", "ed.f.light": "lightness", "ed.f.dens": "density", "ed.f.levels": "levels", "ed.f.blend": "blend", "ed.f.quality": "quality", "ed.f.deg": "by", "ed.f.v": "to", "ed.f.up": "may get larger", "ed.f.ratio": "ratio", "ed.v.dir.h": "left to right", "ed.v.dir.v": "top to bottom", "ed.v.mode.long": "long side", "ed.v.mode.w": "width", "ed.v.mode.h": "height", "ed.v.mode.pct": "percent", "ed.v.kind.gray": "black and white", "ed.v.kind.invert": "invert", "ed.v.kind.bc": "brightness and contrast", "ed.v.kind.hsl": "hue and saturation", "ed.v.kind.photo": "photo filter", "ed.v.kind.posterize": "posterize", "ed.v.what.adj": "adjustment layers", "ed.fx.glow": "outer glow", "ed.fx.inner": "inner glow", "ed.fx.stroke": "stroke", "ed.fx.overlay": "colour overlay", "ed.bl.normal": "normal", "ed.bl.multiply": "multiply", "ed.bl.screen": "screen", "ed.bl.overlay": "overlay", "ed.bl.darken": "darken", "ed.bl.lighten": "lighten", "ed.bl.dodge": "colour dodge", "ed.bl.burn": "colour burn", "ed.bl.hard": "hard light", "ed.bl.soft": "soft light", "ed.bl.difference": "difference", "ed.bl.exclusion": "exclusion", "ed.bl.hue": "hue", "ed.bl.saturation": "saturation", "ed.bl.color": "colour", "ed.bl.luminosity": "luminosity", "ed.note.noPhoto": "Some pictures have no visible, unlocked photo layer to change.", "ed.note.noLayers": "No layer matched in some pictures.", "ed.note.maxLayers": "A picture already has 100 layers.", "ed.note.lastLayer": "A picture's last layer stays.", "ed.note.openFail": "A picture could not be opened.",
       "ed.will.slides": "Changes {n} things in {d} presentations.", "ed.did.slides": "Changed {n} things in {d} presentations.", "ed.sureDel.slides": "This removes objects or slides. Undo on the card brings them back.", "ed.op.pages.slides": "Add slides", "ed.op.delpages.slides": "Remove slides", "ed.op.movepage.slides": "Move slide", "ed.op.bg.slides": "Slide background", "ed.op.photo.slides": "Pictures", "ed.op.arrange.slides": "Order and lock", "ed.op.slide": "Slide settings", "ed.op.notes": "Speaker notes", "ed.op.deck": "Presentation", "ed.f.ids.slides": "objects:", "ed.f.pages.slides": "slides", "ed.f.page.slides": "slide", "ed.f.first.slides": "from slide", "ed.f.last.slides": "to slide", "ed.f.secs.slides": "seconds", "ed.f.valign": "vertical", "ed.f.alt": "description", "ed.f.side": "from", "ed.f.start": "starts", "ed.f.layout": "layout", "ed.f.append": "after the notes there", "ed.f.theme": "theme", "ed.f.aspect": "shape", "ed.f.footer": "footer", "ed.f.num": "slide numbers", "ed.f.date": "date", "ed.v.valign.t": "top", "ed.v.valign.m": "middle", "ed.v.valign.b": "bottom", "ed.v.side.b": "the bottom", "ed.v.side.l": "the left", "ed.v.side.r": "the right", "ed.v.side.t": "the top", "ed.v.start.c": "on click", "ed.v.start.w": "with the previous", "ed.v.start.a": "after the previous", "ed.v.anim.appear": "appear", "ed.v.anim.fly": "fly in", "ed.v.anim.zoom": "zoom", "ed.v.trans.wipe": "wipe", "ed.v.what.title": "titles", "ed.v.pages.all": "all", "ed.v.pages.odd": "odd", "ed.v.pages.even": "even", "ed.v.pages.first": "first", "ed.v.pages.last": "last", "ed.v.num.on": "on", "ed.v.num.off": "off", "ed.v.date.on": "on", "ed.v.date.off": "off", "ed.v.layout.title": "Title", "ed.v.layout.content": "Title and content", "ed.v.layout.section": "Section header", "ed.v.layout.two": "Two columns", "ed.v.layout.compare": "Comparison", "ed.v.layout.imgtext": "Picture and text", "ed.v.layout.photo": "Full picture", "ed.v.layout.quote": "Quote", "ed.v.layout.blank": "Blank", "ed.v.theme.light": "Light", "ed.v.theme.dark": "Dark", "ed.v.theme.ocean": "Ocean", "ed.v.theme.forest": "Forest", "ed.v.theme.sunset": "Sunset", "ed.v.theme.paper": "Paper", "ed.v.theme.tech": "Terminal", "ed.v.theme.bold": "Bold", "ed.note.noObjects": "No object matched in some presentations.", "ed.note.maxSlides": "Some slides were not added: a presentation holds at most 300 slides.", "ed.note.lastSlide": "Not every slide can be removed: one stays.",
       "ed.myStyle": "My style", "ed.will.writer": "Changes {n} things in {d} documents.", "ed.did.writer": "Changed {n} things in {d} documents.", "ed.sureDel.writer": "This removes paragraphs. Undo on the card brings them back.", "ed.op.style.writer": "Paragraph kind", "ed.op.page.writer": "Page setup", "ed.op.meta": "Document details", "ed.op.add.writer": "Add paragraphs", "ed.op.remove.writer": "Remove paragraphs", "ed.f.paras": "paragraphs", "ed.f.para": "paragraph", "ed.f.tag": "kind", "ed.f.brk.writer": "page break before", "ed.f.strike": "strikethrough", "ed.f.paper": "paper", "ed.f.l": "left", "ed.f.r.writer": "right", "ed.f.header": "header", "ed.f.author": "author", "ed.f.tags": "tags", "ed.f.category": "category", "ed.f.lang": "spelling language", "ed.v.what.para": "paragraphs", "ed.v.what.heading": "headings", "ed.v.what.h1": "headings 1", "ed.v.what.h2": "headings 2", "ed.v.what.h3": "headings 3", "ed.v.what.h4": "headings 4", "ed.v.what.item": "list items", "ed.v.what.quote": "quotes", "ed.v.what.code": "code blocks", "ed.v.tag.p": "paragraph", "ed.v.tag.h1": "heading 1", "ed.v.tag.h2": "heading 2", "ed.v.tag.h3": "heading 3", "ed.v.tag.h4": "heading 4", "ed.v.tag.quote": "quote", "ed.v.tag.code": "code", "ed.v.tag.bullet": "bulleted list", "ed.v.tag.number": "numbered list", "ed.v.brk.on": "yes", "ed.v.brk.off": "no", "ed.v.strike.on": "on", "ed.v.strike.off": "off", "ed.v.at.start": "at the start", "ed.v.paper.a4": "A4", "ed.v.paper.a3": "A3", "ed.v.paper.a5": "A5", "ed.v.paper.b5": "B5", "ed.v.paper.letter": "Letter", "ed.v.paper.legal": "Legal", "ed.v.paper.full-width": "full width", "ed.v.lang.auto": "automatic", "ed.v.lang.en": "English", "ed.v.lang.el": "Greek", "ed.v.lang.none": "none", "ed.note.noParas": "No paragraph matched in some documents.", "ed.note.untracked": "Track changes is on in some documents; the Assistant's changes are not marked as tracked changes.",
@@ -748,7 +748,7 @@
       "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles", "lkk.kb": "Kanban card", "lkk.nt": "Notes page", "lkk.ly": "Layout document", "lkk.at": "Atelier design",
       "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "entry.form": "New form · {app}", "entry.text_file": "New file · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
       "cr.v.stg.new": "New", "cr.v.stg.contact": "Contacted", "cr.v.stg.proposal": "Proposal", "cr.v.stg.nego": "Negotiation", "cr.v.stg.won": "Won", "cr.v.stg.lost": "Lost",
-      "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
+      "f.customer": "Customer", "f.channel": "How", "f.who": "With", "f.deal": "Deal", "f.stage": "Stage", "f.close": "Expected close", "f.probability": "Chance", "f.reason": "Why lost", "f.roles": "Roles", "f.rs": "Revenue Splitter", "f.rtpl": "Template", "f.rtgrant": "Grant", "f.rtcovers": "Covers", "f.rtprint": "Print", "f.rtebook": "E-book", "f.rtaudio": "Audio", "f.rttransl": "Translation", "f.rtadapt": "Stage, film, TV", "f.rtmerch": "Merchandise", "f.rtfree": "Free digital posting", "f.rtpromo": "Excerpts, promotion", "f.rtterr": "Territory", "f.rtext": "Extension", "f.rtselloff": "Sell-off months", "f.rtcease": "Sales stop (days)", "f.rtcc": "Creative Commons", "f.rtrev": "Rights return if out of print", "f.rtsource": "Source", "f.rtchecked": "Checked", "f.rtnote": "Rights note", "rt.v.grant.all": "every economic right", "rt.v.grant.excl": "exclusive licence", "rt.v.grant.free": "free digital posting only", "rt.v.cov.p": "print", "rt.v.cov.e": "digital", "rt.v.st.granted": "granted", "rt.v.st.consent": "with consent", "rt.v.st.free": "free only", "rt.v.st.none": "not mentioned", "rt.v.ter.gr": "Greece", "rt.v.ter.none": "not set", "rt.v.ext.agree": "by mutual agreement", "rt.v.ext.none": "not mentioned", "rt.v.cc.yes": "CC BY-NC-SA", "rt.v.cc.ever": "CC BY-NC-SA, for ever", "rt.v.yes": "yes", "rt.v.src.pdf": "the PDF", "rt.v.src.oral": "oral agreement", "rt.v.src.lost": "paper not found", "cr.v.ch.call": "Call", "cr.v.ch.mail": "E-mail", "cr.v.ch.meet": "Meeting", "cr.v.ch.msg": "Message", "cr.v.ch.note": "Note", "cr.v.role.cust": "Customer", "cr.v.role.sup": "Supplier", "cr.v.role.shop": "Consignment shop", "cr.v.role.auth": "Author / contributor", "cr.v.role.assoc": "Associate",
       "cr.rem.m": "{n} min before", "cr.rem.h": "{n} h before", "cr.rem.d": "{n} days before",
       "f.notebook": "Notebook", "f.folder": "Folder", "f.inlist": "List", "cr.rem.d1": "1 day before",
       "lbl.search": "label: {label}", "lbl.none": "no label", "f.priority": "Priority",
@@ -1164,7 +1164,7 @@
       "ed.f.w": "πλάτος", "ed.f.h": "ύψος", "ed.f.dx": "δεξιά κατά", "ed.f.dy": "κάτω κατά", "ed.f.pct": "κλίμακα %", "ed.f.rot": "περιστροφή", "ed.f.opacity": "αδιαφάνεια",
       "ed.f.pos": "θέση", "ed.f.gap": "απόσταση", "ed.f.edge": "άκρη", "ed.f.dist": "κατανομή", "ed.f.rel": "ως προς", "ed.f.order": "σειρά", "ed.f.lock": "κλείδωμα",
       "ed.f.hide": "απόκρυψη", "ed.f.n": "πόσες", "ed.f.at": "πού", "ed.f.page": "σελίδα", "ed.f.dup": "ως αντίγραφα", "ed.f.first": "από τη σελίδα", "ed.f.last": "έως τη σελίδα",
-      "ed.op.create.layout": "Νέο έγγραφο", "ed.v.u.mm": "mm", "ed.v.u.pt": "pt", "ed.v.u.in": "ίντσες", "ed.v.u.px": "px", "ed.f.facing": "αντικριστές σελίδες", "ed.v.side.right": "πρώτη σε δεξιά σελίδα", "ed.v.side.left": "πρώτη σε αριστερή σελίδα", "ed.v.side.any": "σε όποια πλευρά", "ed.f.bt": "αιμορραγία πάνω (mm)", "ed.f.bb": "αιμορραγία κάτω (mm)", "ed.f.bi": "αιμορραγία μέσα (mm)", "ed.f.bo": "αιμορραγία έξω (mm)", "ed.f.slug": "περιθώριο σημαδιών (mm)", "ed.f.ncol": "στήλες", "ed.f.gut": "κενό στηλών (mm)", "ed.f.grid": "πλέγμα γραμμών βάσης (pt)", "ed.f.color": "χρώμα", "ed.v.color.rgb": "RGB", "ed.v.color.cmyk": "CMYK", "ed.f.icc": "προφίλ εκτύπωσης", "ed.v.icc.fogra39": "Coated FOGRA39", "ed.op.images": "Σελίδες από εικόνες", "ed.f.paths": "εικόνες", "ed.nFiles": "{n} αρχεία", "ed.f.folder": "φάκελος", "ed.f.sort": "σειρά", "ed.v.sort.natural": "φυσική (1, 2 … 10)", "ed.v.sort.name": "κατά όνομα", "ed.v.sort.given": "όπως δόθηκαν", "ed.v.fit.trim": "ως το κόψιμο", "ed.v.fit.bleed": "ως την αιμορραγία", "ed.v.fit.margins": "μέσα στα περιθώρια", "ed.v.fit.proportional": "ολόκληρη η εικόνα", "ed.op.bleedfill": "Αιμορραγία για εικόνες ολόκληρης σελίδας", "ed.v.mode.smart": "έξυπνα", "ed.v.mode.mirror": "καθρέφτης", "ed.v.mode.stretch": "τέντωμα", "ed.op.thumbs": "Εικόνες σελίδων για έλεγχο", "ed.f.spreads": "ως δισέλιδα", "ed.note.blankFirst": "Μπήκε πρώτα μια κενή σελίδα, ώστε η πρώτη εικόνα να πέσει στην πλευρά που ζητήθηκε.", "ed.op.defstyle": "Στυλ", "ed.v.kind.para": "στυλ παραγράφου", "ed.v.kind.char": "στυλ χαρακτήρων", "ed.f.base": "με βάση", "ed.f.li": "εσοχή αριστερά (pt)", "ed.f.ri": "εσοχή δεξιά (pt)", "ed.f.nest_cs": "ένθετο στυλ", "ed.f.nest_to": "ως και", "ed.f.keep": "μαζί με την επόμενη", "ed.v.keep.on": "ναι", "ed.v.keep.off": "όχι", "ed.op.styleset": "Έτοιμα στυλ", "ed.f.set": "σετ", "ed.v.set.play": "για θεατρικό", "ed.f.style": "στυλ", "ed.op.frame.layout": "Νέο πλαίσιο κειμένου", "ed.f.ins": "εσωτερικό περιθώριο (mm)", "ed.f.va": "κάθετη στοίχιση", "ed.v.va.t": "πάνω", "ed.v.va.m": "στη μέση", "ed.v.va.b": "κάτω", "ed.v.va.j": "πλήρης", "ed.f.clear": "αντί για ό,τι έχει η σελίδα", "ed.nLines": "{n} παράγραφοι", "ed.f.lines": "κείμενο", "ed.op.retext": "Νέο κείμενο σε ιστορία", "ed.f.story": "ιστορία", "ed.op.house_pages": "Σελίδες αρχής και τέλους του οίκου", "ed.f.house": "στυλ οίκου", "ed.f.where": "πού", "ed.v.where.both": "αρχή και τέλος", "ed.v.where.front": "μόνο αρχή", "ed.v.where.back": "μόνο τέλος", "ed.v.where.none": "καμία (μόνο κενές σελίδες)", "ed.f.pad": "σελίδες πολλαπλάσιο του", "ed.v.pad.0": "όσες βγουν", "ed.v.pad.2": "2", "ed.v.pad.4": "4", "ed.v.pad.8": "8", "ed.v.pad.16": "16", "ed.f.keep_side": "η πρώτη σελίδα κρατά την πλευρά της", "ed.f.subtitle": "υπότιτλος", "ed.f.isbn": "ISBN", "ed.f.year": "έτος", "ed.f.publisher": "εκδότης", "ed.note.noHouse": "Δεν βρέθηκε έγγραφο στυλ οίκου για τις σελίδες αρχής και τέλους (Σελιδοποίηση › Στυλ οίκου).", "ed.op.animate": "Κίνηση", "ed.op.pagetime": "Χρόνος σελίδων", "ed.op.add": "Προσθήκη", "ed.op.brand": "Brand kit", "ed.op.resize": "Νέα μεγέθη", "ed.op.export": "Λήψη", "ed.op.create": "Νέο σχέδιο", "ed.f.anim": "είσοδος", "ed.f.secs": "δευτερόλεπτα ανά σελίδα", "ed.f.trans": "μετάβαση", "ed.f.icon": "εικονίδιο", "ed.f.fonts": "γραμματοσειρές", "ed.f.palette": "χρώματα", "ed.f.sizes": "μεγέθη", "ed.f.copies": "ως αντίγραφα", "ed.f.fmt": "ως", "ed.f.scale": "κλίμακα", "ed.f.dpi": "dpi", "ed.f.u": "μονάδα", "ed.v.anim.none": "καμία", "ed.v.anim.fade": "σταδιακή εμφάνιση", "ed.v.anim.rise": "άνοδος", "ed.v.anim.pop": "αναπήδηση", "ed.v.anim.wipe": "σάρωση", "ed.v.anim.type": "γραφομηχανή", "ed.v.trans.none": "καμία", "ed.v.trans.fade": "σβήσιμο", "ed.v.trans.slide": "ολίσθηση", "ed.v.trans.push": "ώθηση", "ed.v.trans.zoom": "ζουμ", "ed.v.add.text": "κείμενο", "ed.v.add.shape": "σχήμα", "ed.v.add.icon": "εικονίδιο", "ed.v.add.line": "γραμμή", "ed.willMake": "Φτιάχνει {n} νέα σχέδια.", "ed.willFiles": "Φτιάχνει αρχεία από {n} σχέδια για να τα αποθηκεύσεις.", "ed.madeDone": "Νέα σχέδια: {n}.", "ed.filesDone": "Αρχεία: {n}.", "ed.note.noBrand": "Δεν υπάρχει ακόμη brand kit (Ατελιέ › Brand kit).", "ed.note.noBrandFonts": "Το brand kit δεν έχει γραμματοσειρές.", "ed.note.noBrandColors": "Το brand kit δεν έχει χρώματα.",
+      "ed.op.create.layout": "Νέο έγγραφο", "ed.v.u.mm": "mm", "ed.v.u.pt": "pt", "ed.v.u.in": "ίντσες", "ed.v.u.px": "px", "ed.f.facing": "αντικριστές σελίδες", "ed.v.side.right": "πρώτη σε δεξιά σελίδα", "ed.v.side.left": "πρώτη σε αριστερή σελίδα", "ed.v.side.any": "σε όποια πλευρά", "ed.f.bt": "αιμορραγία πάνω (mm)", "ed.f.bb": "αιμορραγία κάτω (mm)", "ed.f.bi": "αιμορραγία μέσα (mm)", "ed.f.bo": "αιμορραγία έξω (mm)", "ed.f.slug": "περιθώριο σημαδιών (mm)", "ed.f.ncol": "στήλες", "ed.f.gut": "κενό στηλών (mm)", "ed.f.grid": "πλέγμα γραμμών βάσης (pt)", "ed.f.color": "χρώμα", "ed.v.color.rgb": "RGB", "ed.v.color.cmyk": "CMYK", "ed.f.icc": "προφίλ εκτύπωσης", "ed.v.icc.fogra39": "Coated FOGRA39", "ed.op.images": "Σελίδες από εικόνες", "ed.f.paths": "εικόνες", "ed.nFiles": "{n} αρχεία", "ed.f.folder": "φάκελος", "ed.f.sort": "σειρά", "ed.v.sort.natural": "φυσική (1, 2 … 10)", "ed.v.sort.name": "κατά όνομα", "ed.v.sort.given": "όπως δόθηκαν", "ed.v.fit.trim": "ως το κόψιμο", "ed.v.fit.bleed": "ως την αιμορραγία", "ed.v.fit.margins": "μέσα στα περιθώρια", "ed.v.fit.proportional": "ολόκληρη η εικόνα", "ed.op.bleedfill": "Αιμορραγία για εικόνες ολόκληρης σελίδας", "ed.v.mode.smart": "έξυπνα", "ed.v.mode.mirror": "καθρέφτης", "ed.v.mode.stretch": "τέντωμα", "ed.op.thumbs": "Εικόνες σελίδων για έλεγχο", "ed.f.spreads": "ως δισέλιδα", "ed.note.blankFirst": "Μπήκε πρώτα μια κενή σελίδα, ώστε η πρώτη εικόνα να πέσει στην πλευρά που ζητήθηκε.", "ed.op.defstyle": "Στυλ", "ed.v.kind.para": "στυλ παραγράφου", "ed.v.kind.char": "στυλ χαρακτήρων", "ed.f.base": "με βάση", "ed.f.li": "εσοχή αριστερά (pt)", "ed.f.ri": "εσοχή δεξιά (pt)", "ed.f.nest_cs": "ένθετο στυλ", "ed.f.nest_to": "ως και", "ed.f.keep": "μαζί με την επόμενη", "ed.v.keep.on": "ναι", "ed.v.keep.off": "όχι", "ed.op.styleset": "Έτοιμα στυλ", "ed.f.set": "σετ", "ed.v.set.play": "για θεατρικό", "ed.f.style": "στυλ", "ed.op.frame.layout": "Νέο πλαίσιο κειμένου", "ed.f.ins": "εσωτερικό περιθώριο (mm)", "ed.f.va": "κάθετη στοίχιση", "ed.v.va.t": "πάνω", "ed.v.va.m": "στη μέση", "ed.v.va.b": "κάτω", "ed.v.va.j": "πλήρης", "ed.f.clear": "αντί για ό,τι έχει η σελίδα", "ed.nLines": "{n} παράγραφοι", "ed.f.lines": "κείμενο", "ed.op.retext": "Νέο κείμενο σε ιστορία", "ed.f.story": "ιστορία", "ed.op.house_pages": "Σελίδες αρχής και τέλους του οίκου", "ed.f.house": "στυλ οίκου", "ed.f.where": "πού", "ed.v.where.both": "αρχή και τέλος", "ed.v.where.front": "μόνο αρχή", "ed.v.where.back": "μόνο τέλος", "ed.v.where.none": "καμία (μόνο κενές σελίδες)", "ed.f.pad": "σελίδες πολλαπλάσιο του", "ed.v.pad.0": "όσες βγουν", "ed.v.pad.2": "2", "ed.v.pad.4": "4", "ed.v.pad.8": "8", "ed.v.pad.16": "16", "ed.f.keep_side": "η πρώτη σελίδα κρατά την πλευρά της", "ed.f.subtitle": "υπότιτλος", "ed.f.isbn": "ISBN", "ed.f.year": "έτος", "ed.f.publisher": "εκδότης", "ed.note.noHouse": "Δεν βρέθηκε έγγραφο στυλ οίκου για τις σελίδες αρχής και τέλους (Σελιδοποίηση › Στυλ οίκου).", "ed.op.section": "Ενότητα με δική της αρίθμηση", "ed.f.numstyle": "αριθμοί", "ed.v.numstyle.1": "1, 2, 3", "ed.v.numstyle.i": "i, ii, iii", "ed.v.numstyle.I": "I, II, III", "ed.v.numstyle.a": "a, b, c", "ed.v.numstyle.A": "A, B, C", "ed.f.prefix": "πρόθεμα", "ed.f.off": "αφαιρείται", "ed.op.movepages": "Μετακίνηση σελίδων", "ed.f.before": "πριν από τη σελίδα", "ed.op.duppages": "Αντίγραφα σελίδων", "ed.op.masterpages": "Μάστερ για σελίδες", "ed.f.master": "μάστερ", "ed.op.defmaster": "Μάστερ", "ed.op.pagesize": "Μέγεθος σελίδων", "ed.op.picture": "Πλαίσια εικόνων", "ed.op.addfont": "Προσθήκη γραμματοσειράς", "ed.f.from_edge": "Απόσταση από την άκρη", "ed.op.masterfield": "Αρίθμηση σελίδων και τρέχοντες τίτλοι", "ed.f.show": "Ξανά στις σελίδες", "ed.f.remove": "Αφαίρεση", "ed.v.kind.pagenum": "Αριθμός σελίδας", "ed.v.kind.runhead": "Τρέχων τίτλος", "ed.v.pos.bc": "Κάτω στο κέντρο", "ed.v.pos.bo": "Κάτω έξω", "ed.v.pos.bi": "Κάτω μέσα", "ed.v.pos.tc": "Πάνω στο κέντρο", "ed.v.pos.to": "Πάνω έξω", "ed.v.pos.ti": "Πάνω μέσα", "ed.op.colormode": "Χρωματικό μοντέλο", "ed.op.framemod": "Αλλαγή πλαισίων", "ed.f.nofill": "Χωρίς γέμισμα", "ed.f.del": "Αφαίρεση", "ed.op.cancel": "Διακοπή των εντολών που τρέχουν", "ed.f.family": "Οικογένεια γραμματοσειράς", "ed.f.source": "Από", "ed.f.path": "Αρχείο γραμματοσειράς", "ed.f.styles": "Στυλ", "ed.f.collection": "Συλλογή", "ed.v.source.free": "Δωρεάν γραμματοσειρές (Fontsource)", "ed.v.source.local": "Τοπικός φάκελος", "ed.f.out": "και στον τοπικό φάκελο", "ed.f.corner": "στρογγύλεμα γωνιών (mm)", "ed.v.flip.hv": "και προς τις δύο", "ed.v.fit.frame": "το πλαίσιο στην εικόνα", "ed.note.noMaster": "Δεν βρέθηκε μάστερ που ονομάζουν οι εντολές.", "ed.op.animate": "Κίνηση", "ed.op.pagetime": "Χρόνος σελίδων", "ed.op.add": "Προσθήκη", "ed.op.brand": "Brand kit", "ed.op.resize": "Νέα μεγέθη", "ed.op.export": "Λήψη", "ed.op.create": "Νέο σχέδιο", "ed.f.anim": "είσοδος", "ed.f.secs": "δευτερόλεπτα ανά σελίδα", "ed.f.trans": "μετάβαση", "ed.f.icon": "εικονίδιο", "ed.f.fonts": "γραμματοσειρές", "ed.f.palette": "χρώματα", "ed.f.sizes": "μεγέθη", "ed.f.copies": "ως αντίγραφα", "ed.f.fmt": "ως", "ed.f.scale": "κλίμακα", "ed.f.dpi": "dpi", "ed.f.u": "μονάδα", "ed.v.anim.none": "καμία", "ed.v.anim.fade": "σταδιακή εμφάνιση", "ed.v.anim.rise": "άνοδος", "ed.v.anim.pop": "αναπήδηση", "ed.v.anim.wipe": "σάρωση", "ed.v.anim.type": "γραφομηχανή", "ed.v.trans.none": "καμία", "ed.v.trans.fade": "σβήσιμο", "ed.v.trans.slide": "ολίσθηση", "ed.v.trans.push": "ώθηση", "ed.v.trans.zoom": "ζουμ", "ed.v.add.text": "κείμενο", "ed.v.add.shape": "σχήμα", "ed.v.add.icon": "εικονίδιο", "ed.v.add.line": "γραμμή", "ed.willMake": "Φτιάχνει {n} νέα σχέδια.", "ed.willFiles": "Φτιάχνει αρχεία από {n} σχέδια για να τα αποθηκεύσεις.", "ed.madeDone": "Νέα σχέδια: {n}.", "ed.filesDone": "Αρχεία: {n}.", "ed.note.noBrand": "Δεν υπάρχει ακόμη brand kit (Ατελιέ › Brand kit).", "ed.note.noBrandFonts": "Το brand kit δεν έχει γραμματοσειρές.", "ed.note.noBrandColors": "Το brand kit δεν έχει χρώματα.",
       "ed.counting": "Μετριέται τι αλλάζει…", "ed.will.photolab": "Αλλάζουν {n} στοιχεία σε {d} εικόνες.", "ed.did.photolab": "Άλλαξαν {n} στοιχεία σε {d} εικόνες.", "ed.willFiles.photolab": "Εικόνες για αποθήκευση στις Εικόνες: {n}.", "ed.filesDone.photolab": "Αποθηκεύτηκαν στις Εικόνες: {n}.", "ed.sureDel.photolab": "Αφαιρούνται επίπεδα. Η Αναίρεση στην κάρτα τα επαναφέρει.", "ed.op.resize.photolab": "Μέγεθος εικόνας", "ed.op.export.photolab": "Αποθήκευση στις Εικόνες", "ed.op.add.photolab": "Νέο επίπεδο", "ed.op.tone": "Τόνος", "ed.op.look": "Ύφος", "ed.op.gray": "Ασπρόμαυρο", "ed.op.blur": "Θόλωμα", "ed.op.sharpen": "Όξυνση", "ed.op.noise": "Κόκκος", "ed.op.adjlayer": "Επίπεδο ρύθμισης", "ed.op.layer": "Επίπεδο", "ed.op.dup": "Διπλότυπο", "ed.op.style": "Στυλ επιπέδου", "ed.op.watermark": "Υδατογράφημα", "ed.op.crop": "Περικοπή", "ed.op.canvas": "Μέγεθος καμβά", "ed.op.rotate": "Περιστροφή", "ed.op.flip": "Αναστροφή", "ed.f.r": "ακτίνα", "ed.f.amt": "ποσότητα", "ed.f.mono": "γκρι", "ed.f.hue": "απόχρωση", "ed.f.light": "φωτεινότητα", "ed.f.dens": "πυκνότητα", "ed.f.levels": "στάθμες", "ed.f.blend": "ανάμειξη", "ed.f.quality": "ποιότητα", "ed.f.deg": "κατά", "ed.f.v": "σε", "ed.f.up": "μπορεί να μεγαλώσει", "ed.f.ratio": "αναλογία", "ed.v.dir.h": "αριστερά-δεξιά", "ed.v.dir.v": "πάνω-κάτω", "ed.v.mode.long": "μεγάλη πλευρά", "ed.v.mode.w": "πλάτος", "ed.v.mode.h": "ύψος", "ed.v.mode.pct": "ποσοστό", "ed.v.kind.gray": "ασπρόμαυρο", "ed.v.kind.invert": "αντιστροφή", "ed.v.kind.bc": "φωτεινότητα και αντίθεση", "ed.v.kind.hsl": "απόχρωση και κορεσμός", "ed.v.kind.photo": "φίλτρο φωτογραφίας", "ed.v.kind.posterize": "αφίσα", "ed.v.what.adj": "επίπεδα ρύθμισης", "ed.fx.glow": "εξωτερική λάμψη", "ed.fx.inner": "εσωτερική λάμψη", "ed.fx.stroke": "περίγραμμα", "ed.fx.overlay": "επικάλυψη χρώματος", "ed.bl.normal": "κανονική", "ed.bl.multiply": "πολλαπλασιασμός", "ed.bl.screen": "οθόνη", "ed.bl.overlay": "επικάλυψη", "ed.bl.darken": "σκούρεμα", "ed.bl.lighten": "φωτισμός", "ed.bl.dodge": "αποφυγή χρώματος", "ed.bl.burn": "κάψιμο χρώματος", "ed.bl.hard": "σκληρό φως", "ed.bl.soft": "απαλό φως", "ed.bl.difference": "διαφορά", "ed.bl.exclusion": "αποκλεισμός", "ed.bl.hue": "απόχρωση", "ed.bl.saturation": "κορεσμός", "ed.bl.color": "χρώμα", "ed.bl.luminosity": "φωτεινότητα", "ed.note.noPhoto": "Κάποιες εικόνες δεν έχουν ορατό, ξεκλείδωτο επίπεδο φωτογραφίας για αλλαγή.", "ed.note.noLayers": "Σε κάποιες εικόνες δεν ταίριαξε κανένα επίπεδο.", "ed.note.maxLayers": "Μια εικόνα έχει ήδη 100 επίπεδα.", "ed.note.lastLayer": "Το τελευταίο επίπεδο μιας εικόνας μένει.", "ed.note.openFail": "Μια εικόνα δεν άνοιξε.",
       "ed.will.slides": "Αλλάζουν {n} στοιχεία σε {d} παρουσιάσεις.", "ed.did.slides": "Άλλαξαν {n} στοιχεία σε {d} παρουσιάσεις.", "ed.sureDel.slides": "Αφαιρούνται αντικείμενα ή διαφάνειες. Η Αναίρεση στην κάρτα τα επαναφέρει.", "ed.op.pages.slides": "Προσθήκη διαφανειών", "ed.op.delpages.slides": "Αφαίρεση διαφανειών", "ed.op.movepage.slides": "Μετακίνηση διαφάνειας", "ed.op.bg.slides": "Φόντο διαφάνειας", "ed.op.photo.slides": "Εικόνες", "ed.op.arrange.slides": "Σειρά και κλείδωμα", "ed.op.slide": "Ρυθμίσεις διαφανειών", "ed.op.notes": "Σημειώσεις ομιλητή", "ed.op.deck": "Παρουσίαση", "ed.f.ids.slides": "αντικείμενα:", "ed.f.pages.slides": "διαφάνειες", "ed.f.page.slides": "διαφάνεια", "ed.f.first.slides": "από τη διαφάνεια", "ed.f.last.slides": "έως τη διαφάνεια", "ed.f.secs.slides": "δευτερόλεπτα", "ed.f.valign": "κάθετα", "ed.f.alt": "περιγραφή", "ed.f.side": "από", "ed.f.start": "ξεκινά", "ed.f.layout": "διάταξη", "ed.f.append": "μετά τις σημειώσεις που υπάρχουν", "ed.f.theme": "θέμα", "ed.f.aspect": "σχήμα", "ed.f.footer": "υποσέλιδο", "ed.f.num": "αριθμοί διαφανειών", "ed.f.date": "ημερομηνία", "ed.v.valign.t": "πάνω", "ed.v.valign.m": "στη μέση", "ed.v.valign.b": "κάτω", "ed.v.side.b": "κάτω", "ed.v.side.l": "αριστερά", "ed.v.side.r": "δεξιά", "ed.v.side.t": "πάνω", "ed.v.start.c": "με κλικ", "ed.v.start.w": "μαζί με το προηγούμενο", "ed.v.start.a": "μετά το προηγούμενο", "ed.v.anim.appear": "εμφάνιση", "ed.v.anim.fly": "πέταγμα", "ed.v.anim.zoom": "μεγέθυνση", "ed.v.trans.wipe": "σάρωση", "ed.v.what.title": "τίτλους", "ed.v.pages.all": "όλες", "ed.v.pages.odd": "μονές", "ed.v.pages.even": "ζυγές", "ed.v.pages.first": "πρώτη", "ed.v.pages.last": "τελευταία", "ed.v.num.on": "ναι", "ed.v.num.off": "όχι", "ed.v.date.on": "ναι", "ed.v.date.off": "όχι", "ed.v.layout.title": "Τίτλος", "ed.v.layout.content": "Τίτλος και περιεχόμενο", "ed.v.layout.section": "Ενότητα", "ed.v.layout.two": "Δύο στήλες", "ed.v.layout.compare": "Σύγκριση", "ed.v.layout.imgtext": "Εικόνα και κείμενο", "ed.v.layout.photo": "Εικόνα σε όλη τη διαφάνεια", "ed.v.layout.quote": "Παράθεση", "ed.v.layout.blank": "Κενή", "ed.v.theme.light": "Φωτεινό", "ed.v.theme.dark": "Σκοτεινό", "ed.v.theme.ocean": "Ωκεανός", "ed.v.theme.forest": "Δάσος", "ed.v.theme.sunset": "Ηλιοβασίλεμα", "ed.v.theme.paper": "Χαρτί", "ed.v.theme.tech": "Τερματικό", "ed.v.theme.bold": "Έντονο", "ed.note.noObjects": "Σε κάποιες παρουσιάσεις δεν ταίριαξε κανένα αντικείμενο.", "ed.note.maxSlides": "Κάποιες διαφάνειες δεν προστέθηκαν: μια παρουσίαση έχει έως 300 διαφάνειες.", "ed.note.lastSlide": "Δεν αφαιρούνται όλες οι διαφάνειες: μία μένει.",
       "ed.myStyle": "Το στυλ μου", "ed.will.writer": "Αλλάζουν {n} στοιχεία σε {d} έγγραφα.", "ed.did.writer": "Άλλαξαν {n} στοιχεία σε {d} έγγραφα.", "ed.sureDel.writer": "Αφαιρούνται παράγραφοι. Η Αναίρεση στην κάρτα τις επαναφέρει.", "ed.op.style.writer": "Είδος παραγράφου", "ed.op.page.writer": "Διαμόρφωση σελίδας", "ed.op.meta": "Στοιχεία εγγράφου", "ed.op.add.writer": "Προσθήκη παραγράφων", "ed.op.remove.writer": "Αφαίρεση παραγράφων", "ed.f.paras": "παράγραφοι", "ed.f.para": "παράγραφος", "ed.f.tag": "είδος", "ed.f.brk.writer": "αλλαγή σελίδας πριν", "ed.f.strike": "διακριτή διαγραφή", "ed.f.paper": "χαρτί", "ed.f.l": "αριστερά", "ed.f.r.writer": "δεξιά", "ed.f.header": "κεφαλίδα", "ed.f.author": "συγγραφέας", "ed.f.tags": "ετικέτες", "ed.f.category": "κατηγορία", "ed.f.lang": "γλώσσα ορθογραφίας", "ed.v.what.para": "παραγράφους", "ed.v.what.heading": "επικεφαλίδες", "ed.v.what.h1": "επικεφαλίδες 1", "ed.v.what.h2": "επικεφαλίδες 2", "ed.v.what.h3": "επικεφαλίδες 3", "ed.v.what.h4": "επικεφαλίδες 4", "ed.v.what.item": "στοιχεία λίστας", "ed.v.what.quote": "παραθέσεις", "ed.v.what.code": "μπλοκ κώδικα", "ed.v.tag.p": "παράγραφος", "ed.v.tag.h1": "επικεφαλίδα 1", "ed.v.tag.h2": "επικεφαλίδα 2", "ed.v.tag.h3": "επικεφαλίδα 3", "ed.v.tag.h4": "επικεφαλίδα 4", "ed.v.tag.quote": "παράθεση", "ed.v.tag.code": "κώδικας", "ed.v.tag.bullet": "λίστα με κουκκίδες", "ed.v.tag.number": "αριθμημένη λίστα", "ed.v.brk.on": "ναι", "ed.v.brk.off": "όχι", "ed.v.strike.on": "ναι", "ed.v.strike.off": "όχι", "ed.v.at.start": "στην αρχή", "ed.v.paper.a4": "A4", "ed.v.paper.a3": "A3", "ed.v.paper.a5": "A5", "ed.v.paper.b5": "B5", "ed.v.paper.letter": "Letter", "ed.v.paper.legal": "Legal", "ed.v.paper.full-width": "όλο το πλάτος", "ed.v.lang.auto": "αυτόματη", "ed.v.lang.en": "Αγγλικά", "ed.v.lang.el": "Ελληνικά", "ed.v.lang.none": "καμία", "ed.note.noParas": "Σε κάποια έγγραφα δεν ταίριαξε καμία παράγραφος.", "ed.note.untracked": "Σε κάποια έγγραφα είναι ενεργή η Παρακολούθηση αλλαγών· οι αλλαγές του Βοηθού δεν σημειώνονται ως παρακολουθούμενες.",
@@ -1425,7 +1425,7 @@
       "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)", "lkk.kb": "Κάρτα Kanban", "lkk.nt": "Σελίδα στις Σημειώσεις", "lkk.ly": "Έγγραφο Σελιδοποίησης", "lkk.at": "Σχέδιο στο Atelier",
       "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "entry.form": "Νέα φόρμα · {app}", "entry.text_file": "Νέο αρχείο · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
       "cr.v.stg.new": "Νέα", "cr.v.stg.contact": "Επικοινωνία", "cr.v.stg.proposal": "Πρόταση", "cr.v.stg.nego": "Διαπραγμάτευση", "cr.v.stg.won": "Κερδήθηκε", "cr.v.stg.lost": "Χάθηκε",
-      "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "f.rs": "Revenue Splitter", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
+      "f.customer": "Πελάτης", "f.channel": "Τρόπος", "f.who": "Με", "f.deal": "Ευκαιρία", "f.stage": "Στάδιο", "f.close": "Αναμενόμενο κλείσιμο", "f.probability": "Πιθανότητα", "f.reason": "Γιατί χάθηκε", "f.roles": "Ρόλοι", "f.rs": "Revenue Splitter", "f.rtpl": "Πρότυπο", "f.rtgrant": "Παραχώρηση", "f.rtcovers": "Καλύπτει", "f.rtprint": "Έντυπο", "f.rtebook": "Ebook", "f.rtaudio": "Ηχητικό", "f.rttransl": "Μετάφραση", "f.rtadapt": "Θέατρο, κινηματογράφος, TV", "f.rtmerch": "Εμπορικά", "f.rtfree": "Δωρεάν ψηφιακή ανάρτηση", "f.rtpromo": "Αποσπάσματα, προώθηση", "f.rtterr": "Περιοχή", "f.rtext": "Επέκταση", "f.rtselloff": "Μήνες διάθεσης αποθέματος", "f.rtcease": "Παύση πωλήσεων (μέρες)", "f.rtcc": "Creative Commons", "f.rtrev": "Επιστροφή αν εξαντληθεί", "f.rtsource": "Πηγή", "f.rtchecked": "Έλεγχος", "f.rtnote": "Σημείωση δικαιωμάτων", "rt.v.grant.all": "όλα τα περιουσιακά δικαιώματα", "rt.v.grant.excl": "αποκλειστική άδεια", "rt.v.grant.free": "μόνο δωρεάν ψηφιακή ανάρτηση", "rt.v.cov.p": "έντυπο", "rt.v.cov.e": "ψηφιακό", "rt.v.st.granted": "παραχωρείται", "rt.v.st.consent": "με συναίνεση", "rt.v.st.free": "μόνο δωρεάν", "rt.v.st.none": "δεν αναφέρεται", "rt.v.ter.gr": "Ελλάδα", "rt.v.ter.none": "δεν ορίζεται", "rt.v.ext.agree": "με αμοιβαία συμφωνία", "rt.v.ext.none": "δεν αναφέρεται", "rt.v.cc.yes": "CC BY-NC-SA", "rt.v.cc.ever": "CC BY-NC-SA, για πάντα", "rt.v.yes": "ναι", "rt.v.src.pdf": "το PDF", "rt.v.src.oral": "προφορική συμφωνία", "rt.v.src.lost": "το έντυπο δεν βρίσκεται", "cr.v.ch.call": "Κλήση", "cr.v.ch.mail": "Email", "cr.v.ch.meet": "Συνάντηση", "cr.v.ch.msg": "Μήνυμα", "cr.v.ch.note": "Σημείωση", "cr.v.role.cust": "Πελάτης", "cr.v.role.sup": "Προμηθευτής", "cr.v.role.shop": "Κατάστημα παρακαταθήκης", "cr.v.role.auth": "Συγγραφέας / συντελεστής", "cr.v.role.assoc": "Συνεργάτης",
       "cr.rem.m": "{n} λεπτά πριν", "cr.rem.h": "{n} ώρες πριν", "cr.rem.d": "{n} ημέρες πριν",
       "f.notebook": "Σημειωματάριο", "f.folder": "Φάκελος", "f.inlist": "Λίστα", "cr.rem.d1": "1 ημέρα πριν",
       "lbl.search": "ετικέτα: {label}", "lbl.none": "χωρίς ετικέτα", "f.priority": "Προτεραιότητα",
@@ -3769,13 +3769,13 @@
     if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "pdfErr" } };
     var e = C.normPdf(args);
     if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "pdfErr" } };
-    var ui = { k: "pdf", doc: e.doc, preset: e.preset, pages: e.pages, bleed: e.bleed, marks: e.marks, spreads: e.spreads, down: e.down, key: attId(), st: "" };
+    var ui = { k: "pdf", doc: e.doc, preset: e.preset, pages: e.pages, bleed: e.bleed, marks: e.marks, spreads: e.spreads, down: e.down, creep: e.creep || 0, out: e.out || "", key: attId(), st: "" };
     return { content: "Shown to the user as a card: making a " + e.preset + " PDF of \u201c" + e.doc + "\u201d. Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
   }
   function runPdf(ui, c) {
     var p = shell();
     if (!p || typeof p.__orosOpenAt !== "function") return false;
-    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", preset: ui.preset, pages: ui.pages || "", bleed: ui.bleed ? 1 : 0, marks: ui.marks || {}, spreads: ui.spreads ? 1 : 0, down: ui.down ? 1 : 0 };
+    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", preset: ui.preset, pages: ui.pages || "", bleed: ui.bleed ? 1 : 0, marks: ui.marks || {}, spreads: ui.spreads ? 1 : 0, down: ui.down ? 1 : 0, creep: Number(ui.creep) || 0, out: typeof ui.out === "string" ? ui.out : "" };
     try { p.__orosOpenAt("layout", { pdfOut: rq }); return true; } catch (e) { return false; }
   }
   function pdfText(rep) {
@@ -3989,6 +3989,15 @@
     if (o && typeof r.at === "number" && isFinite(r.at)) o.made = new Date(r.at).toISOString();
     return o || undefined;
   }
+  // The preflight Layout's editor last found for a document (layout/
+  // editor.js keeps it on this device), with whether it changed since.
+  function livePfOf(doc) {
+    var all = readStore("oros-layout-pf"), r = all && typeof all === "object" ? all[doc.id] : null;
+    if (!r || !Array.isArray(r.list)) return { note: "Layout has not checked this document on this device yet; open it in Layout (or export it) and read it again." };
+    var o = { checked: new Date(+r.at || 0).toISOString(), problems: r.list.slice(0, 60), total: +r.n || r.list.length };
+    if (r.m !== doc.m) o.note = "The document changed after this check; it is checked again when it is open in Layout.";
+    return o;
+  }
   function readInAppNow(c, n, cats, apps) {
     var mod = cats[n.app], src = editSource(n.app), app = appOf(apps, n.app);
     var tg = mod.targets(src.data, src.folders, src.open, n.designs, n.name);
@@ -3996,7 +4005,7 @@
     var doc = null;
     ((src.full && src.full.docs) || []).forEach(function (d) { if (d.id === tg.docs[0].id) doc = d; });
     if (!doc) return Promise.resolve({ content: "Error: the " + C.EDIT_APP[n.app].noun + " could not be read from this device's disk yet (it may still be syncing).", err: 1, ui: { k: "editErr" } });
-    var o = n.app === "layout" ? mod.outline(doc, null, { lastExport: lastPdfOf(doc.id) })
+    var o = n.app === "layout" ? mod.outline(doc, null, { lastExport: lastPdfOf(doc.id), full: n.full, livePf: livePfOf(doc) })
       : mod.outline(doc, EDIT_SRC[n.app].style ? readStore(EDIT_SRC[n.app].style) : null);
     // WR-CAT T2: Writer's book translations (progress, as this device last saw it)
     if (n.app === "writer" && o && typeof mod.translations === "function") {
@@ -4034,7 +4043,7 @@
     var p = editPlan(args, apps);
     if (!p.ok) return { content: "Error: " + p.err, err: 1, ui: { k: "editErr" } };
     if (p.wait.length && p.wait.length === p.docs.length) return { content: "Error: these " + C.EDIT_APP[p.app].what + " could not be read from this device's disk yet (they may still be syncing). Nothing was changed.", err: 1, ui: { k: "editErr" } };
-    if (!p.pv.n && !p.pv.cut && !p.pv.made && !p.pv.files) {
+    if (!p.pv.n && !p.pv.cut && !p.pv.made && !p.pv.files && !p.pv.ctl) {
       return { content: "Error: nothing in " + p.docs.map(function (d) { return JSON.stringify(d.name); }).join(", ") + " matches these commands, so nothing would change" +
         (p.pv.notes.length ? " (" + p.pv.notes.join(", ") + ")" : "") + ". Check the element ids and fields with read_in_app.", err: 1, ui: { k: "editErr" } };
     }
@@ -4051,7 +4060,7 @@
     if (typeof v === "boolean" || v === 1 && /^(cs|word|dup|copies|fonts|palette|flow|mono|up|desc)$/.test(k)) return "";
     // a shape's fill (not a colour) and a boundary's kind
     if ((k === "fill" && /^(whiteboard|mindmap)$/.test(app)) || (k === "kind" && app === "mindmap")) return edT(app, "ed.v." + k + "." + v);
-    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|strike|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind|valign|side|start|layout|theme|num|date|tag|paper|lang|part|numfmt|wrap|border|head|each|row|mute|solo|loop|inst|ends|dash|route|starthead|endhead|where|va|set|keep|pad|done|nodesize|sides)$/.test(k)) return edT(app, "ed.v." + k + "." + v);
+    if (/^(what|pos|edge|dist|rel|order|flip|fit|at|align|bold|ital|under|strike|caps|lock|hide|anim|trans|brk|hyph|on|mode|dir|kind|valign|side|start|layout|theme|num|date|tag|paper|lang|part|numfmt|wrap|border|head|each|row|mute|solo|loop|inst|ends|dash|route|starthead|endhead|where|va|set|keep|pad|numstyle|done|nodesize|sides)$/.test(k)) return edT(app, "ed.v." + k + "." + v);
     if (k === "id") return edName("ed.flt.", v);
     if (k === "blend") return edName("ed.bl.", v);
     if (k === "deg") return v + "°";
@@ -4067,7 +4076,7 @@
     if (/^(sort|color|icc)$/.test(k)) return edT(app, "ed.v." + k + "." + v);
     if ((k === "pages" || k === "paras") && /^(all|odd|even|first|last)$/.test(v)) return t("ed.v.pages." + v);
     if (k === "secs" && v < 1) return String(v).replace(".", LANG === "en" ? "." : ",");
-    if (/^(has|find|repl|text|title|footer|alt|header|author|tags|category|house|style|base|nest_cs|nest_to|subtitle|publisher)$/.test(k)) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
+    if (/^(has|find|repl|text|title|footer|alt|header|author|tags|category|house|style|base|nest_cs|nest_to|subtitle|publisher|prefix|master)$/.test(k)) return edQuote(String(v).slice(0, 80) + (String(v).length > 80 ? "…" : ""));
     return String(v);
   }
   // A card string with an app's own wording when it has one
@@ -4099,7 +4108,7 @@
   // Files an app saved on the orOS disk for Claude to read (Layout's
   // page pictures, LY-PRO W1): /internal/ paths only, at most 60.
   function savedPaths(list) {
-    return list.filter(function (x) { return typeof x === "string" && /^\/internal\/[^\u0000-\u001f]{1,500}$/.test(x) && x.indexOf("/..") < 0; }).slice(0, 60);
+    return list.filter(function (x) { return typeof x === "string" && /^(\/internal\/|local:)[^\u0000-\u001f]{1,500}$/.test(x) && x.indexOf("/..") < 0; }).slice(0, 60);
   }
   function runEdit(ui, c, p) {
     var sh = shell();
@@ -4319,6 +4328,8 @@
   // id (their files live only in this session's memory).
   function coverPic(c, ref) {
     if (!ref) return null;
+    // LOCAL-1: a picture in a local folder the owner opened for Claude
+    if (/^local:/i.test(ref)) return /\.(jpe?g|png|webp|gif)$/i.test(ref) ? { local: ref, name: ref.replace(/\\/g, "/").split("/").pop() } : null;
     var msgs = (c && c.msgs || []).filter(function (m) { return m && m.r === "user" && Array.isArray(m.att); });
     var imgs = function (m) { return m.att.filter(function (a) { return a && C.attKind(a.type) === "img"; }); };
     for (var i = msgs.length - 1; i >= 0; i--) {
@@ -4352,6 +4363,16 @@
     var F = null;
     try { F = window.parent && window.parent !== window ? window.parent.orosFS : null; } catch (e) { F = null; }
     if (!p || !F || typeof F.writeBlob !== "function") return Promise.resolve("");
+    if (p.local) {
+      var L = localBridge();
+      if (!L) return Promise.resolve("");
+      return L.read(p.local, "book_cover").then(function (f) {
+        var ext0 = (/\.[a-z0-9]+$/i.exec(p.name) || [".jpg"])[0].toLowerCase();
+        var base0 = String(p.name || "picture").replace(/\.[^.]*$/, "").replace(/[\\/:*?"<>|\u0000-\u001f]+/g, "_").replace(/^\.+/, "").trim().slice(0, 60) || "picture";
+        var path0 = COVER_DIR + "/" + base0 + "-" + Math.random().toString(36).slice(2, 8) + ext0;
+        return Promise.resolve(F.writeBlob(path0, f)).then(function () { return path0; });
+      }).then(null, function () { return ""; });
+    }
     var blob = attOrig[p.id] || (attMem[p.id] ? new Blob([b64Bytes(attMem[p.id])], { type: "image/jpeg" }) : null);
     if (!blob) return Promise.resolve("");
     var ext = /png/.test(blob.type) ? ".png" : /webp/.test(blob.type) ? ".webp" : /gif/.test(blob.type) ? ".gif" : ".jpg";
@@ -4675,14 +4696,88 @@
     });
   }
   function cfErr(msg) { return { content: "Error: " + msg, err: 1, ui: { k: "toolErr", why: "cf" } }; }
+  // LOCAL-1 (temporary): the local folders the owner opened for Claude
+  // (localroots.js in the shell), listed read-only; Layout or Files must
+  // be readable for Claude.
+  function localBridge() { try { var p = window.parent && window.parent !== window ? window.parent : window; return p.orosLocal || null; } catch (e) { return null; } }
+  // LOCAL-1: what a local-folder error means and the path form to use
+  // (Chris's bug 2026-11-18: an error must name the form)
+  var LOCAL_SAY = {
+    notAllowedRoot: "that path is not inside a local folder the owner opened for Claude, or it goes through a link",
+    badPath: "that is not a usable local path",
+    notThere: "there is no such file or folder there",
+    notFile: "that is a folder, not a file", notFolder: "that is a file, not a folder",
+    needsReconnect: "the browser lost its permission for the folder after a restart: the owner must press Reconnect on the bar at the bottom of orOS, then try again",
+    bridgePaused: "the owner paused the local folders (the bar at the bottom of orOS has Resume)",
+    noBridge: "this orOS has no local folders", tooBig: "the file is larger than 80 MB",
+    cancelled: "the commands were stopped (cancel, or the owner pressed Stop); what they changed before stays, with Undo",
+    timeout: "a file did not answer in time (15 s for a read, 60 s without progress for the whole run), so Layout stopped; nothing more was changed and Layout takes the next command"
+  };
+  // Who holds Layout (assist.js holder()): { ops, since, at, idle }
+  function busyText(h) {
+    if (!h || !Array.isArray(h.ops)) return "earlier commands are still running; they stop by themselves after 60 s without progress, or send steps [{\"op\":\"cancel\"}] to stop them now";
+    var since = new Date(+h.since || Date.now());
+    return "it is still running " + h.ops.slice(0, 8).map(String).join(", ") + " since " + since.toTimeString().slice(0, 8) +
+      (h.at ? ", waiting for " + String(h.at).slice(0, 200) : "") + (h.idle >= 0 ? ", " + (+h.idle) + " s since its last progress" : "") +
+      "; it stops by itself after 60 s without progress, or send steps [{\"op\":\"cancel\"}] to stop it now";
+  }
+  function localHint() {
+    var L = localBridge(), l = [];
+    try { l = L && typeof L.names === "function" ? L.names() : []; } catch (e) { l = []; }
+    var roots = l.map(function (r) { return "local:" + r.name + (r.mode === "w" ? " (write)" : ""); });
+    return " Use local:<root>/<path inside it> with / between the parts, as files_list shows it (files_list with no path lists the roots" +
+      (roots.length ? "; open now: " + roots.slice(0, 8).join(", ") : "; none is open now") + ").";
+  }
+  function localRoots() {
+    var L = localBridge();
+    if (!L) return Promise.resolve([]);
+    return L.list().then(function (l) {
+      return l.filter(function (r) { return !r.expired; }).map(function (r) {
+        var o = { root: "local:" + r.name, access: r.mode === "w" ? "write (new files only)" : "read", until: new Date(r.exp).toISOString().slice(0, 10) };
+        if (r.label) o.also_named = "local:" + r.label;
+        if (!r.granted) o.note = "the owner must press Reconnect on the device first";
+        return o;
+      });
+    }, function () { return []; });
+  }
+  function localList(a, apps) {
+    var L = localBridge();
+    if (!L) return Promise.resolve(cfErr("local folders are not available on this device."));
+    if (!appOf(apps, "layout") && !appOf(apps, "files")) return Promise.resolve(cfErr("Claude may not read Layout or Files."));
+    var depth = Math.max(1, Math.min(3, Math.floor(Number(a.depth) || 1))), off = Math.max(0, Math.floor(Number(a.offset) || 0));
+    return Promise.all([L.ls(String(a.path).trim(), depth, "files_list"), cfMod()]).then(function (r) {
+      var rows = r[0], CF = r[1];
+      var keep = rows.filter(function (e) { return !(CF && CF.secret && CF.secret("/internal/" + e.name)); });
+      var page = keep.slice(off, off + 200).map(function (e) {
+        var o = { name: e.name, path: e.path, kind: e.dir ? "folder" : CF ? CF.kindOf(e.name) : "other" };
+        if (!e.dir) { o.size = e.size || 0; if (e.mtime) o.modified = new Date(e.mtime).toISOString(); }
+        if (e.px) o.pixels = e.px;
+        if (e.ppi) o.ppi = e.ppi;
+        return o;
+      });
+      var out = { path: String(a.path).trim(), entries: page, local: true, note: "A local folder of the owner's device, read-only: Layout copies what it uses into the document." };
+      if (keep.length > off + 200) out.next_offset = off + 200;
+      return { content: JSON.stringify(out), ui: { k: "cfList", path: out.path } };
+    }, function (e) {
+      var why = e && e.why ? e.why : "unreadable";
+      var say = { notAllowedRoot: "that path is not inside a local folder the owner opened for Claude (files_list without path lists them).", bridgePaused: "the owner has paused the local folders.",
+                  needsReconnect: "the owner must press Reconnect on the device first (the browser asks again each session).", notFolder: "that is a file, not a folder.", badPath: "that path has a part orOS does not accept." };
+      return cfErr(say[why] || "the local folder could not be read (" + why + ").");
+    });
+  }
   function filesList(c, a, apps) {
     a = a && typeof a === "object" ? a : {};
+    if (typeof a.path === "string" && /^local:/i.test(a.path.trim())) return localList(a, apps);
     return cfPrep(apps, false).then(function (x) {
-      if (x.err) return cfErr(x.err);
+      if (x.err) return localRoots().then(function (lr) { return lr.length ? { content: JSON.stringify({ folders: [], local_folders: lr, note: x.err + " Local folders the owner opened for Claude: list one with path." }), ui: { k: "cfList", path: "" } } : cfErr(x.err); });
       var CF = x.CF;
       if (a.path == null || String(a.path).trim() === "" || String(a.path).trim() === "/") {
-        if (!x.folders.length) return cfErr(CF.reach("/internal/x", []));
-        return { content: JSON.stringify({ folders: x.folders.map(CF.show), note: "Claude's folders; list one with path." }), ui: { k: "cfList", path: "" } };
+        return localRoots().then(function (lr) {
+          if (!x.folders.length && !lr.length) return cfErr(CF.reach("/internal/x", []));
+          var o = { folders: x.folders.map(CF.show), note: "Claude's folders; list one with path." };
+          if (lr.length) o.local_folders = lr;
+          return { content: JSON.stringify(o), ui: { k: "cfList", path: "" } };
+        });
       }
       var p = CF.normPath(a.path), why = CF.reach(p, x.folders);
       if (why) return cfErr(why);
@@ -5272,6 +5367,10 @@
     if (f === "category" && /^cat:/.test(v)) return t(v.replace(/^cat:/, "cat."));
     if (f === "stage" && /^stg:/.test(v) && STRINGS.en["cr.v." + v.replace(":", ".")] !== undefined) return t("cr.v." + v.replace(":", "."));
     if (f === "roles") return String(v).split(",").map(function (r) { return STRINGS.en["cr.v.role." + r] !== undefined ? t("cr.v.role." + r) : r; }).join(", ");
+    // RIGHTS (CRM 1.11): a contract's terms are codes (edits.js rtView)
+    if (/^rt(grant|covers|print|ebook|audio|transl|adapt|merch|free|promo|terr|ext|cc|rev|source)$/.test(f)) {
+      return String(v).split(" ").map(function (w) { return STRINGS.en["rt.v." + w] !== undefined ? t("rt.v." + w) : w; }).join(f === "rtcovers" ? ", " : " ");
+    }
     return String(v);
   }
   // tick(row) → a checkbox for the row (the confirm card, wave CF1) or null
@@ -6119,6 +6218,9 @@
       if (!q.ok) return { content: "Error: " + q.err, err: 1 };
       var out = { changes: C.histForModel(q.list, Date.now()),
                   note: "Only this device, the last 30 days, and only apps the user lets you read. The user sees them on a card with Undo." };
+      // the edit_in_app jobs of the last hour, with how each ended
+      var jobs = GATE ? jobsForModel().filter(function (j) { return ok[j.app]; }) : [];
+      if (jobs.length) out.edit_jobs = jobs;
       if (q.more) out.more = q.more;
       return { content: JSON.stringify(out), ui: { k: "hist", ids: q.list.map(function (e) { return e.id; }) } };
     });
@@ -9504,6 +9606,8 @@
     });
   }
   // The tool list Claude sees through the gate (MCP shape).
+  // LOCAL-1: local folders open on this device (files_list shows them)
+  function localOpen() { var L = localBridge(); try { return !!(L && typeof L.names === "function" && L.names().length); } catch (e) { return false; } }
   function gateToolList() {
     var ga = gateApps();
     var crIds = createApps(ga.write).map(function (a) { return a.id; }).filter(function (id) { return id !== "budget" && id !== "files"; });
@@ -9522,7 +9626,7 @@
                              entries: on && entryKinds().length > 0, recipes: on ? recipeApps().filter(function (a) { return rd[a.id]; }).map(function (a) { return a.id; }) : [],
                              rules: on && rd.automations && !!window.OrosAutoCore, newsletter: on && rd.newsletter, cover: on && rd.layout,
                              rebuild: on && rd.layout, house: on && rd.layout, epub: on && rd.layout,
-                             files: !cfRaw().length || !rd.files ? false : appOf(ga.write, "files") ? "write" : true });
+                             files: (!cfRaw().length || !rd.files) && !(rd.layout && localOpen()) ? false : rd.files && cfRaw().length && appOf(ga.write, "files") ? "write" : true });
     // edit_in_app only for the documents Claude may change
     var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
     tools = tools.filter(function (x) { return x.name !== "edit_in_app"; }).concat(ed);
@@ -9584,6 +9688,31 @@
   // AS-RB); this frame looks for it while it waits (and for Undo's
   // answers), never through onRb, which an open Assistant keeps.
   var gateWait = {}, gateTimer = 0;
+  // Every edit_in_app call is a job that ends done or error (Chris
+  // 2026-11-18); change_history lists the last ones of this session.
+  var gateJobs = [];
+  function jobNew(key, app, name) {
+    var j = { job: key, app: app, name: name, state: "running", started: Date.now() };
+    gateJobs.unshift(j);
+    if (gateJobs.length > 12) gateJobs.length = 12;
+    return j;
+  }
+  function jobEnd(j, res) {
+    if (!j || j.state !== "running") return res;
+    j.state = res && res.ok ? "done" : "error";
+    j.ended = Date.now();
+    j.result = String(res && res.c || "").slice(0, 700);
+    return res;
+  }
+  function jobsForModel() {
+    var now = Date.now();
+    return gateJobs.filter(function (j) { return now - j.started < 3600000; }).map(function (j) {
+      var o = { job: j.job, app: j.app, state: j.state, started: new Date(j.started).toISOString() };
+      if (j.ended) o.ended = new Date(j.ended).toISOString();
+      if (j.result) o.result = j.result;
+      return o;
+    });
+  }
   function gateTick() {
     takeUndoAnswers();
     Object.keys(gateWait).forEach(function (key) {
@@ -9606,20 +9735,34 @@
       if (!p.ok || !a) return { ok: false, c: p.err || "Claude may not change this app." };
       var g = gateShell(), why = g && typeof g.writeOk === "function" ? g.writeOk(p.app) : "orOS Gate is not running.";
       if (why) return { ok: false, c: why };
+      // dry_run (Chris 2026-11-18, P2): what would change, nothing applied
+      if (args.dry_run === true) {
+        var dv = { dry_run: true, would_change: p.pv.n, in_documents: p.pv.d, per_document: (p.pv.per || []).slice(0, 50).map(function (x) { return { name: x.name, n: x.n }; }) };
+        if (p.pv.made) dv.new_documents = p.pv.made;
+        if (p.pv.files) dv.files = p.pv.files;
+        if (p.pv.notes && p.pv.notes.length) dv.notes = p.pv.notes.slice(0, 10);
+        dv.note = "Nothing was changed. Pictures, fonts and files are read only when the commands run, so a missing file or font shows then.";
+        return { ok: true, a: [p.app], k: 0, c: name + ": " + JSON.stringify(dv) };
+      }
       var removes = p.steps.some(function (s) { return s.op === "remove" || s.op === "delpages" || s.op === "deltrack"; });
       var askP = removes && p.pv.n > 5 && typeof g.askDelete === "function" ? Promise.resolve(g.askDelete(p.pv.n)) : Promise.resolve(true);
       return askP.then(function (yes) {
         if (!yes) return { ok: false, c: "The owner did not confirm removing " + p.pv.n + " things on the device; nothing was changed." };
         var ui = { key: attId() };
-        if (!runEdit(ui, gateConv, p)) return { ok: false, c: "The commands could not be handed to " + name + ". Nothing was changed." };
+        var job = jobNew(ui.key, p.app, name);
+        if (!runEdit(ui, gateConv, p)) return jobEnd(job, { ok: false, c: "The commands could not be handed to " + name + ". Nothing was changed." });
         return new Promise(function (resolve) {
           var key = ui.key;
           var timer = setTimeout(function () {
-            gateWait[key] = function (rep) { delete gateWait[key]; gateTake(rep, p, name); };
-            setTimeout(function () { delete gateWait[key]; }, 120000);
-            resolve({ ok: true, a: [p.app], k: 0, c: name + " is open on the owner's screen and still applying the commands. Check with change_history in a moment before saying it is done." });
+            gateWait[key] = function (rep) { delete gateWait[key]; jobEnd(job, gateTake(rep, p, name)); };
+            setTimeout(function () {
+              if (!gateWait[key]) return;
+              delete gateWait[key];
+              jobEnd(job, { ok: false, c: name + " gave no answer in 2 minutes (it may have been closed); check the document with read_in_app." });
+            }, 120000);
+            resolve({ ok: true, a: [p.app], k: 0, c: name + " is open on the owner's screen and still applying the commands (job " + key + "). change_history lists this job as running, done or error with its result; check it in a moment before saying it is done." });
           }, Math.max(2000, deadline - Date.now()));
-          gateWait[key] = function (rep) { clearTimeout(timer); delete gateWait[key]; resolve(gateTake(rep, p, name)); };
+          gateWait[key] = function (rep) { clearTimeout(timer); delete gateWait[key]; resolve(jobEnd(job, gateTake(rep, p, name))); };
           gateWatch();
         });
       });
@@ -9627,7 +9770,15 @@
   }
   // The app's report → the gate's answer; with Undo in the change history.
   function gateTake(rep, p, name) {
-    if (!rep || rep.failed || !rep.ok) return { ok: false, c: name + " could not apply the commands (" + String(rep && rep.why || "error") + "). Nothing was changed." };
+    if (!rep || rep.failed || !rep.ok) {
+      var why = String(rep && rep.why || "error"), notes = rep && Array.isArray(rep.notes) ? rep.notes.slice(0, 5).map(function (n) { return String(n).slice(0, 300); }) : [];
+      var said = LOCAL_SAY[why] ? ": " + LOCAL_SAY[why] : "";
+      var local = LOCAL_SAY[why] || notes.some(function (n) { return /local:/i.test(n); });
+      if (why === "busy") said = ": " + busyText(rep.holder);
+      if (why === "busy" || why === "cancelled") local = false;
+      return { ok: false, c: name + " could not apply the commands (" + why + said + ")." + (notes.length ? " " + notes.join("; ") + "." : "") +
+        (local && why !== "timeout" && why !== "bridgePaused" && why !== "needsReconnect" ? localHint() : "") + " Nothing was changed." };
+    }
     var per = Array.isArray(rep.per) ? rep.per.slice(0, 50).map(function (x) { return { name: String(x && x.name || "").slice(0, 120), n: +(x && x.n) || 0 }; }) : [];
     var out = { applied: true, changed: +rep.n || 0, designs: per };
     if (+rep.cut) out.backgrounds_removed = +rep.cut;
@@ -9635,7 +9786,10 @@
     if (+rep.files) out.files_for_the_owner = +rep.files;
     if (Array.isArray(rep.saved) && rep.saved.length) out.saved_files = savedPaths(rep.saved);
     if (Array.isArray(rep.notes) && rep.notes.length) out.notes = rep.notes.slice(0, 10).map(String);
-    if (rep.stopped) out.stopped_by_owner = true;
+    if (rep.stopped) {
+      if (Array.isArray(rep.notes) && rep.notes.some(function (n) { return /^timeout/.test(String(n)); })) out.stopped = LOCAL_SAY.timeout;
+      else out.stopped_by_owner = true;
+    }
     var uid = "";
     if (typeof rep.tok === "string" && rep.tok) {
       uid = attId();

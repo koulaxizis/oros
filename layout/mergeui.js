@@ -114,11 +114,13 @@
       var cw = Math.max(1, Math.round(Math.min(src.w, crop.rect.w / 72 * ppi)));
       var ch = Math.max(1, Math.round(Math.min(src.h, crop.rect.h / 72 * ppi)));
       var png = mg ? pics[it.a.slice(3)].png : /\.png$/.test(it.a);
-      var key = [it.a, Math.round(src.x), Math.round(src.y), Math.round(src.w), Math.round(src.h), cw, ch].join("_");
+      var key = [it.a, Math.round(src.x), Math.round(src.y), Math.round(src.w), Math.round(src.h), cw, ch, crop.fh ? 1 : 0, crop.fv ? 1 : 0].join("_");
       if (!cache[key]) {
         var cv = document.createElement("canvas");
         cv.width = cw; cv.height = ch;
-        cv.getContext("2d").drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
+        var cx2 = cv.getContext("2d");
+        if (LY.io.mirror) LY.io.mirror(cx2, crop, cw, ch);
+        cx2.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
         cache[key] = new Promise(function (resolve, reject) {
           cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error("encode")); }, png ? "image/png" : "image/jpeg", 0.9);
         }).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {

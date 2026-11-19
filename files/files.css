@@ -660,6 +660,7 @@ dialog label {
 }
 
 .pv-btn:hover { background: var(--accent-soft, #33313d); }
+.pv-btn.on { border-color: var(--accent, #6d4aff); background: var(--accent-soft, #33313d); }
 .pv-btn.primary { background: var(--accent, #6d4aff); color: var(--accent-ink, #fff); border-color: transparent; }
 a.pv-btn.drv-get { text-decoration: none; }
 .pv-btn.primary:hover { background: var(--accent-hover, #7d5aff); }
@@ -1481,3 +1482,62 @@ body.cmp-mode #status { display: none; }
 #dlg-exp .exp-opts button { padding: 10px; border-radius: 8px; border: 1px solid var(--line, #444); background: transparent; color: inherit; font: inherit; cursor: pointer; }
 #dlg-exp p { overflow-wrap: anywhere; }
 #dlg-exp .clean-note { font-size: 0.9em; opacity: 0.85; }
+
+/* ---------- Tags on every file (tags.js, TAGS v1) ----------
+   Twelve colours that read on the dark and the light theme; the ring
+   keeps a light dot visible on a light row. No colour = an empty ring. */
+.tag-dot {
+  display: inline-block; flex-shrink: 0; width: 9px; height: 9px; border-radius: 50%;
+  box-sizing: border-box; border: 1.5px solid var(--text-dim, #999); background: transparent;
+  vertical-align: middle;
+}
+.tag-dot[data-c] { border: 1px solid rgba(127, 127, 127, 0.45); }
+.tag-dot[data-c="0"]  { background: #e5484d; }
+.tag-dot[data-c="1"]  { background: #f76b15; }
+.tag-dot[data-c="2"]  { background: #e2b203; }
+.tag-dot[data-c="3"]  { background: #8bc34a; }
+.tag-dot[data-c="4"]  { background: #30a46c; }
+.tag-dot[data-c="5"]  { background: #12a594; }
+.tag-dot[data-c="6"]  { background: #3e7bdd; }
+.tag-dot[data-c="7"]  { background: #6366d6; }
+.tag-dot[data-c="8"]  { background: #9a5ccc; }
+.tag-dot[data-c="9"]  { background: #d6409f; }
+.tag-dot[data-c="10"] { background: #a0714f; }
+.tag-dot[data-c="11"] { background: #8b8d98; }
+.tag-dot.big { width: 18px; height: 18px; }
+.tag-dots { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; vertical-align: middle; }
+.tag-dots .tag-more { font-size: 10px; color: var(--text-dim, #999); }
+.has-tags { display: flex; align-items: center; min-width: 0; }
+.has-tags > .en-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.has-tags > .tag-dots, .has-tags > .exp-badge { flex-shrink: 0; }
+#entries.grid .has-tags { justify-content: center; }
+#entries.grid .has-tags > .en-t { white-space: normal; }
+.tnode.tagn .tname { flex: 1; min-width: 0; }
+.tnode.tagn .glyph { display: inline-flex; align-items: center; justify-content: center; }
+.tnode .tcount { font-size: 11px; color: var(--text-dim, #999); margin-left: 4px; }
+.tnode .tag-ed { color: var(--text-dim, #999); opacity: 0; }
+@media (pointer: fine) { .tnode .tag-ed { width: 24px; height: 24px; } }
+.tnode.selected .tcount, .tnode.selected .tag-ed { color: inherit; }
+.tag-list input[type="checkbox"] { accent-color: var(--accent, #6d4aff); width: 18px; height: 18px; margin: 0; }
+.tnode.tagn:hover .tag-ed, .tnode.tagn:focus-within .tag-ed, .tnode.tagn.selected .tag-ed { opacity: 1; }
+@media (hover: none) { .tnode .tag-ed { opacity: 1; } }
+dialog.tag-dlg { width: min(460px, calc(100vw - 32px)); max-width: none; box-sizing: border-box; }
+.tag-list { list-style: none; margin: 0 0 12px; padding: 0; max-height: min(50vh, 360px); overflow-y: auto; }
+.tag-item { display: flex; align-items: center; gap: 6px; border-radius: 6px; }
+.tag-item:hover { background: var(--accent-soft, #2a2832); }
+dialog label.tag-check { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; margin: 0; padding: 8px 6px; cursor: pointer; }
+.tag-check .tag-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tag-edit-btn { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; border: 0; border-radius: 6px; background: none; color: inherit; cursor: pointer; }
+.tag-edit-btn:hover { background: var(--accent-soft, #2a2832); }
+.tag-empty { padding: 8px 6px; color: var(--text-dim, #999); font-size: 13px; }
+.tag-add { display: flex; gap: 8px; margin-bottom: 4px; }
+.tag-add input[type="text"] { flex: 1; min-width: 0; }
+.tag-add button { flex-shrink: 0; }
+dialog label.tag-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.tag-colours { border: 0; margin: 0 0 12px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 4px; }
+.tag-colours legend { padding: 0; margin-bottom: 6px; font-size: 13px; color: var(--text-dim, #999); }
+dialog label.tag-swatch { display: flex; align-items: center; gap: 6px; margin: 0; padding: 6px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.tag-swatch input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.tag-swatch:has(input:checked) { background: var(--accent-soft, #2a2832); outline: 2px solid var(--accent, #6d4aff); outline-offset: -2px; }
+.tag-swatch:has(input:focus-visible) { outline: 2px solid var(--accent, #6d4aff); }
+.entry.selected .tag-dots .tag-more { color: inherit; }

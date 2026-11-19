@@ -147,3 +147,9 @@ dialog.doc-confirm, dialog.doc-name { width: min(420px, calc(100vw - 32px)); }
 .doc-pick-list { list-style: none; margin: 0; padding: 0; max-height: min(50vh, 420px); overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
 .doc-pick-hit { width: 100%; min-height: 44px; text-align: left; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .doc-pick-hit small { opacity: .7; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+/* A tag's colour (files/tags.js sets it), as a dot before its name. */
+.doc-tag[data-c]::before { content: ""; width: 7px; height: 7px; border-radius: 50%; margin-right: 3px; background: var(--tag-c, #8b8d98); }
+.doc-tag[data-c="0"] { --tag-c: #e5484d; } .doc-tag[data-c="1"] { --tag-c: #f76b15; } .doc-tag[data-c="2"] { --tag-c: #e2b203; }
+.doc-tag[data-c="3"] { --tag-c: #8bc34a; } .doc-tag[data-c="4"] { --tag-c: #30a46c; } .doc-tag[data-c="5"] { --tag-c: #12a594; }
+.doc-tag[data-c="6"] { --tag-c: #3e7bdd; } .doc-tag[data-c="7"] { --tag-c: #6366d6; } .doc-tag[data-c="8"] { --tag-c: #9a5ccc; }
+.doc-tag[data-c="9"] { --tag-c: #d6409f; } .doc-tag[data-c="10"] { --tag-c: #a0714f; } .doc-tag[data-c="11"] { --tag-c: #8b8d98; }

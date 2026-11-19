@@ -1,0 +1,310 @@
+{
+  "repo": {
+    "name": {
+      "en-US": "NULL JSFX"
+    },
+    "description": {
+      "en-US": "The NULL JSFX Android remotes: Remote for DAWs and Remote for Mixers. Free and open source (MIT), free forever. https://nulljsfx.tech"
+    },
+    "icon": {
+      "en-US": {
+        "name": "/icons/icon.png",
+        "sha256": "9864aa259e8e5d4381d3ebf31be3649a487f17975aa5a00e4cc24410783c4c68",
+        "size": 14620
+      }
+    },
+    "address": "https://koulaxizis.github.io/null-jsfx-fdroid/repo",
+    "timestamp": 1794929169000,
+    "categories": {
+      "Multimedia": {
+        "name": {
+          "en-US": "Multimedia"
+        }
+      }
+    }
+  },
+  "packages": {
+    "tech.nulljsfx.remote.daws": {
+      "metadata": {
+        "added": 1794929168000,
+        "categories": [
+          "Multimedia"
+        ],
+        "issueTracker": "https://github.com/koulaxizis/null-jsfx/issues",
+        "lastUpdated": 1794929168000,
+        "license": "MIT",
+        "sourceCode": "https://github.com/koulaxizis/null-jsfx",
+        "webSite": "https://nulljsfx.tech",
+        "authorName": "NULL JSFX",
+        "name": {
+          "en-US": "Remote for DAWs"
+        },
+        "summary": {
+          "en-US": "Your DAW's mixer, transport and NULL JSFX plugins on your phone or tablet."
+        },
+        "description": {
+          "en-US": "Remote for DAWs puts your DAW's mixer and transport, and the controls of every NULL JSFX plugin, on your Android phone or tablet, over your local Wi-Fi. It works with REAPER, Ardour and Mixbus, Bitwig Studio, Ableton Live, Cubase and FL Studio, and, as a Mackie Control surface (beta), with other DAWs such as Logic Pro, Studio One, Pro Tools, Cakewalk and Reason.\n\n<b>What it does</b>\n<ul>\n<li>Mixer: volume, pan, mute, solo, record arm and meters for every track.</li>\n<li>Transport: play, pause, stop, record, repeat, go to start.</li>\n<li>FX: the chain of every track. NULL JSFX plugins (JSFX, GFX, VST3 and CLAP) get their own knobs, sliders and buttons; any other plugin gets a list of its parameters. Add, move, bypass and remove FX.</li>\n<li>Finds REAPER on your network, remembers the computers you used, and works with a password.</li>\n<li>Keeps the screen on while you work, optional full screen.</li>\n</ul>\n\n<b>What REAPER needs</b>\nTurn on REAPER's web interface (Preferences > Control/OSC/web). For the FX, run the small script null_jsfx_remote_bridge.lua that comes with NULL JSFX. The mixer and transport work without it.\n\n<b>The other DAWs</b>\nArdour and Mixbus: turn on their OSC control surface. Bitwig Studio, Ableton Live, Cubase and FL Studio: install the small script for it that comes with NULL JSFX (Remote folder). Cubase and FL Studio are reached over network MIDI: a network MIDI session on the computer (built into macOS; rtpMIDI on Windows).\n\n<b>Mackie Control (beta)</b>\nFor any other DAW that supports a Mackie Control: the app plays one over network MIDI, with nothing to install in the DAW. Eight tracks at a time with banks, the master fader, mute, solo, record arm, pan, meters, the transport and the time; no plugins. Not yet tried with every DAW.\n\nPart of NULL JSFX (https://nulljsfx.tech): free, MIT licensed, no ads, no tracking, no account. REAPER, Ardour, Mixbus, Bitwig Studio, Ableton Live, Cubase, FL Studio, Mackie Control, Logic Pro, Studio One, Pro Tools, Cakewalk and Reason are trademarks of their owners; this app is independent and is not made or endorsed by them.\n"
+        },
+        "donate": [
+          "https://ko-fi.com/koulaxizis"
+        ],
+        "icon": {
+          "en-US": {
+            "name": "/tech.nulljsfx.remote.daws/en-US/icon_-AKacY9Mu56h-f5qOjMSV8VauFFqVXvTk23LKfygHSM=.png",
+            "sha256": "f8029a718f4cbb9ea1f9fe6a3a331257c55ab8516a557bd3936dcb29fca01d23",
+            "size": 15681
+          }
+        },
+        "preferredSigner": "21441e31a60a89708c6cece649390c1863ec8ca147f08da7399ae7646e02ee4e"
+      },
+      "versions": {
+        "591b70a5efba9b5f4c9e8db0606093d455de81cdb37b1d7686e6d1366bf043f9": {
+          "added": 1794929168000,
+          "file": {
+            "name": "/tech.nulljsfx.remote.daws_40000_591b70a5.apk",
+            "sha256": "591b70a5efba9b5f4c9e8db0606093d455de81cdb37b1d7686e6d1366bf043f9",
+            "size": 4384724
+          },
+          "manifest": {
+            "versionName": "4.0",
+            "versionCode": 40000,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 35
+            },
+            "signer": {
+              "sha256": [
+                "21441e31a60a89708c6cece649390c1863ec8ca147f08da7399ae7646e02ee4e"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+              }
+            ]
+          }
+        },
+        "e674d048a98b751e95cd57ec006188a89a69dd2847f1051bfcf68529c0e27ef9": {
+          "added": 1794929168000,
+          "file": {
+            "name": "/tech.nulljsfx.remote.daws_30301_e674d048.apk",
+            "sha256": "e674d048a98b751e95cd57ec006188a89a69dd2847f1051bfcf68529c0e27ef9",
+            "size": 4052950
+          },
+          "manifest": {
+            "versionName": "3.3.1",
+            "versionCode": 30301,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 35
+            },
+            "signer": {
+              "sha256": [
+                "21441e31a60a89708c6cece649390c1863ec8ca147f08da7399ae7646e02ee4e"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+              }
+            ]
+          }
+        },
+        "a81cc26d1c33b73ebf310bb9d9a4ba0615e65f2cc134222d782bb1bbd12d792d": {
+          "added": 1794929168000,
+          "file": {
+            "name": "/tech.nulljsfx.remote.daws_30300_a81cc26d.apk",
+            "sha256": "a81cc26d1c33b73ebf310bb9d9a4ba0615e65f2cc134222d782bb1bbd12d792d",
+            "size": 4049724
+          },
+          "manifest": {
+            "versionName": "3.3",
+            "versionCode": 30300,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 35
+            },
+            "signer": {
+              "sha256": [
+                "21441e31a60a89708c6cece649390c1863ec8ca147f08da7399ae7646e02ee4e"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "tech.nulljsfx.remote.mixers": {
+      "metadata": {
+        "added": 1794929169000,
+        "categories": [
+          "Multimedia"
+        ],
+        "issueTracker": "https://github.com/koulaxizis/null-jsfx/issues",
+        "lastUpdated": 1794929169000,
+        "license": "MIT",
+        "sourceCode": "https://github.com/koulaxizis/null-jsfx",
+        "webSite": "https://nulljsfx.tech",
+        "authorName": "NULL JSFX",
+        "name": {
+          "en-US": "Remote for Mixers"
+        },
+        "summary": {
+          "en-US": "Beta: your digital mixer on your phone or tablet. Faders, mutes, sends, meters."
+        },
+        "description": {
+          "en-US": "Remote for Mixers controls a digital mixer from your Android phone or tablet over the mixer's Wi-Fi or your local network. It works with Behringer X AIR mixers (XR12, XR16, XR18, X18) with the Behringer X32 and Midas M32 families (X32, Compact, Producer, Rack, Core; M32, M32R, M32C) with the Behringer WING (WING, Compact, Rack; no meters yet) with the Allen & Heath SQ (SQ-5, SQ-6, SQ-7: faders, mutes, pan, sends and mute groups; its protocol has no names, meters or solo) with the Allen & Heath Qu (Qu-16, Qu-24, Qu-32, Qu-Pac, Qu-SB: names, faders, mutes, pan, mix sends, mute groups and meters) with the Allen & Heath CQ (CQ-12T, CQ-18T, CQ-20B: faders, mutes, pan, sends to the outputs, DCAs and mute groups; its protocol has no names or meters) with the Allen & Heath dLive and Avantis (names, colours, faders, mutes, sends to the aux mixes, DCAs and mute groups; their protocol has no pan or meters) and, in beta, with the Yamaha CL, QL, TF and DM7 (CL5, CL3, CL1, QL5, QL1, TF5, TF3, TF1, TF-RACK, DM7, DM7 Compact: names, colours, faders, on/off, pan, mix sends, DCAs and mute groups; no meters yet).\n\nThis is a beta: it is tested against software X AIR, X32, WING, SQ, Qu, CQ, dLive, Avantis and Yamaha consoles. Please report anything that behaves differently on your mixer.\n\n<b>What it does</b>\n<ul>\n<li>Finds the mixer on the network and recognises its model by itself, with step-by-step connection help. You can also type its IP address.</li>\n<li>Channels, aux, FX returns, buses, FX sends, DCAs and the main mix: faders, mute, solo, pan and meters, with names and colours from the mixer.</li>\n<li>Sends on faders: pick a bus or FX and the faders become the sends to it, for monitor mixes.</li>\n<li>Mute groups and Clear solo.</li>\n<li>My mix: lock a musician's phone to the sends of their own monitor bus, without mute or solo.</li>\n<li>Screen lock that opens only with a long press, so a stray touch on stage changes nothing.</li>\n<li>Faders move with your finger from where they are; they never jump to where you touch.</li>\n</ul>\n\nPart of NULL JSFX (https://nulljsfx.tech): free, MIT licensed, no ads, no tracking, no account. X AIR, X32, M32, WING, Allen & Heath, SQ and Qu are trademarks of their owners. This app is independent and is not made or endorsed by them.\n"
+        },
+        "donate": [
+          "https://ko-fi.com/koulaxizis"
+        ],
+        "icon": {
+          "en-US": {
+            "name": "/tech.nulljsfx.remote.mixers/en-US/icon_yhgBbc2XRlqIyEKQfCBuKD2zEHXNWXmTyvvVnPHqdqE=.png",
+            "sha256": "ca18016dcd97465a88c842907c206e283db31075cd597993cafbd59cf1ea76a1",
+            "size": 9777
+          }
+        },
+        "preferredSigner": "21441e31a60a89708c6cece649390c1863ec8ca147f08da7399ae7646e02ee4e"
+      },
+      "versions": {
+        "a392814e86097c2c5efab2030b0a2c93319045b109ae68c7a29a57ae5ac6d043": {
+          "added": 1794929169000,
+          "file": {
+            "name": "/tech.nulljsfx.remote.mixers_40000_a392814e.apk",
+            "sha256": "a392814e86097c2c5efab2030b0a2c93319045b109ae68c7a29a57ae5ac6d043",
+            "size": 4384744
+          },
+          "manifest": {
+            "versionName": "4.0",
+            "versionCode": 40000,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 35
+            },
+            "signer": {
+              "sha256": [
+                "21441e31a60a89708c6cece649390c1863ec8ca147f08da7399ae7646e02ee4e"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+              }
+            ]
+          }
+        },
+        "ff6ff91c5bd46000a4b6c0e99125ff1d03632747efc7101dcdbec0d33bb59e0d": {
+          "added": 1794929169000,
+          "file": {
+            "name": "/tech.nulljsfx.remote.mixers_30301_ff6ff91c.apk",
+            "sha256": "ff6ff91c5bd46000a4b6c0e99125ff1d03632747efc7101dcdbec0d33bb59e0d",
+            "size": 4053002
+          },
+          "manifest": {
+            "versionName": "3.3.1",
+            "versionCode": 30301,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 35
+            },
+            "signer": {
+              "sha256": [
+                "21441e31a60a89708c6cece649390c1863ec8ca147f08da7399ae7646e02ee4e"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+              }
+            ]
+          }
+        },
+        "098c64a24e276b978766bab6cbc3073a09f2cccc2cf602ab888d6969d9535119": {
+          "added": 1794929169000,
+          "file": {
+            "name": "/tech.nulljsfx.remote.mixers_30300_098c64a2.apk",
+            "sha256": "098c64a24e276b978766bab6cbc3073a09f2cccc2cf602ab888d6969d9535119",
+            "size": 4049764
+          },
+          "manifest": {
+            "versionName": "3.3",
+            "versionCode": 30300,
+            "usesSdk": {
+              "minSdkVersion": 26,
+              "targetSdkVersion": 35
+            },
+            "signer": {
+              "sha256": [
+                "21441e31a60a89708c6cece649390c1863ec8ca147f08da7399ae7646e02ee4e"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.ACCESS_WIFI_STATE"
+              },
+              {
+                "name": "android.permission.CHANGE_WIFI_MULTICAST_STATE"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

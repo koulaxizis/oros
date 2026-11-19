@@ -582,12 +582,20 @@
     return out;
   }
 
+  // APPLOCK-1: an app locked (or hidden) in Settings › Screen lock on
+  // this device is never offered, open or not (shell.js
+  // __orosAppLocked; none in Node).
+  function lockedHere(id) {
+    var f = root && root.__orosAppLocked;
+    try { return typeof f === "function" && !!f(id); } catch (e) { return true; }
+  }
+  function barred(id) { return NEVER.indexOf(id) >= 0 || lockedHere(id); }
   // The apps Claude may read: offered (searchable and installed), not
-  // NEVER, and set to "read" on this device.
+  // NEVER or locked here, and set to "read" on this device.
   function allowed(offered, lv) {
     var l = isObj(lv) ? lv : {};
     return (Array.isArray(offered) ? offered : []).filter(function (a) {
-      return a && NEVER.indexOf(a.id) < 0 && (l[a.id] === "read" || l[a.id] === "write");
+      return a && !barred(a.id) && (l[a.id] === "read" || l[a.id] === "write");
     });
   }
   function toolsOf(id) {
@@ -1755,7 +1763,7 @@
   // INV-EXT: gate tools for apps that are also in ACT (their other
   // changes go through the Assistant's tools).
   var OWN_WRITES = { invoices: ["invoices_record"] };
-  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas", "budget_categories", "budget_transfer", "budget_balances"],
+  var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_refresh"],
                  kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
   // GATE-ACT (2026-11-08): the apps Claude may change with the
   // Assistant's own tools, run in a hidden Assistant frame
@@ -1783,7 +1791,10 @@
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact",
                 // GATE-FILES F3: checked against the closed copy's index; deletes wait for the owner's yes here
-                "files_write", "files_move", "files_delete"];
+                "files_write", "files_move", "files_delete"]
+                // GATE-SCREEN (Chris 2026-11-19): the tools that work on the owner's screen wait for one
+                .concat(["propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
+                         "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app"]);
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
                    "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf"].concat(FILE_READ, FILE_WRITE);
@@ -1793,13 +1804,52 @@
   var ACT_OPEN = ACT_TOOLS.slice(13, 25);
   var ACT_WRITE = ["create_items", "change_item", "link_contact", "link_items", "undo_change", "edit_in_app"].concat(FILE_WRITE);
   var DOC_WRITE = ["edit_in_app", "undo_change"];
+  // GATE-SCREEN (Chris 2026-11-19 «Τα εγκρίνω και τα 3»): the tools that
+  // open an app on the owner's screen (ACT_OPEN, and edit_in_app less its
+  // dry run) are not refused, nor left to time out, while nobody sees
+  // orOS (a hidden tab or window, the background host, behind the lock
+  // on orOS USB): the device answers SCREEN_HELD and the relay keeps the
+  // call, encrypted, for the next device that shows orOS on screen
+  // (sendHeld, as 7.48.00 does for deletions). do_action is never kept:
+  // playing or opening something hours later is not what was asked.
+  var SCREEN_HELD = "__screen";
+  function screenTool(name, args) { return ACT_OPEN.indexOf(name) >= 0 || (name === "edit_in_app" && !(isObj(args) && args.dry_run === true)); }
+  function offScreen() { return away() || document.visibilityState !== "visible"; }
   function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }
   function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"; }
   // One rule, orOS open or closed (Chris 08/11, 5.78.00): Claude may
   // change an app set to "write", unless the owner paused changes
   // (hold = paused until, ms). Every change is notified and undoable.
+  // BK-AO (Chris 2026-11-18 «ρύθμισε το orOS ώστε να κάνει αυτόματα την
+  // ενημέρωση»): budget_refresh asks Budget's banks for new bookings now,
+  // as Update now does (shell.js __orosBankNow). Never queued: the bank
+  // key is on the device. At most once per BANK_GAP per device (banks
+  // allow about 4 unattended reads a day). r = __orosBankNow's answer.
+  var BANK_GAP = 10 * 60000;
+  var BANK_WHY = {
+    nobanks: "Budget has no bank connected (Budget › More › Banks). Nothing was read.",
+    noapp: "Budget is not installed on this device. Nothing was read.",
+    offline: "The owner's device is offline (or cannot reach the banks from here). Nothing was read.",
+    busy: "A bank update is already running on the device; read budget_lines in a minute.",
+    pending: "The owner is connecting a bank right now; try again in a few minutes.",
+    slow: "The update started and is still running on the device; its entries come into Budget by themselves. Read budget_lines in a minute."
+  };
+  function bankNowText(r, now) {
+    var o = isObj(r) ? r : {};
+    var last = typeof o.last === "number" && o.last > 0 ? new Date(o.last).toISOString() : null;
+    if (o.gap) return { ok: true, c: JSON.stringify({ done: "Not read again: the banks were read on this device at " + last + ", less than 10 minutes ago. Use budget_lines.", last_update: last }) };
+    if (o.why) return { ok: o.why === "slow" || o.why === "busy", c: JSON.stringify({ done: BANK_WHY[o.why] || "Nothing was read.", last_update: last }) };
+    var errs = Array.isArray(o.errs) ? o.errs.slice(0, 10).map(function (x) { return { code: String(x.c || ""), text: String(x.text || "").slice(0, 300) }; }) : [];
+    var n = typeof o.n === "number" && o.n > 0 ? Math.floor(o.n) : 0;
+    var out = { done: n ? n + " new entries from the banks are in Budget." : "The banks have nothing new.", new_entries: n, last_update: last || new Date(now).toISOString() };
+    if (errs.length) {
+      out.failed = errs;
+      out.note = "These bank accounts could not be read (the others were). consent = the owner renews the bank's access in Budget › More › Banks; keys = this device has no bank key (another device of the owner's may).";
+    }
+    return { ok: true, c: JSON.stringify(out) };
+  }
   function canWrite(lv, hold, id, now) {
-    return !!(isObj(lv) && lv[id] === "write" && writable(id) && NEVER.indexOf(id) < 0 && !(typeof hold === "number" && hold > now));
+    return !!(isObj(lv) && lv[id] === "write" && writable(id) && !barred(id) && !(typeof hold === "number" && hold > now));
   }
 
   // The copy's key for a call (= relay/gate.js stableArgs).
@@ -2039,7 +2089,7 @@
     return { app: apps.join(", "), list: list };
   }
 
-  var core = { delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, invoicesRecord: invoicesRecord, invoicesUndo: invoicesUndo, OWN_WRITES: OWN_WRITES, stockItems: stockItems, publishTitles: publishTitles,
+  var core = { screenTool: screenTool, SCREEN_HELD: SCREEN_HELD, delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, bankNowText: bankNowText, BANK_GAP: BANK_GAP, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, invoicesRecord: invoicesRecord, invoicesUndo: invoicesUndo, OWN_WRITES: OWN_WRITES, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
@@ -2156,6 +2206,51 @@
     }, OTHER_MS);
   }
   function setWs(s) { if (wsState !== s) { wsState = s; changed(); } }
+  // GATE-AWAKE (Chris 2026-11-19 «Τα εγκρίνω και τα 3»): an orOS tab in
+  // the background keeps answering. (1) The ping ticks in a small worker:
+  // a hidden page's own timers are throttled to once a minute or less
+  // (Chrome's intensive throttling), a worker's are not. Without a
+  // worker (blocked, old browser) the page's own timer, as before.
+  // (2) While the gate is on, the tab holds a Web Lock: Chrome and Edge
+  // do not freeze a page that holds one. Neither keeps a tab the browser
+  // discards for memory, nor a phone's: those still fall back to the
+  // copy and the queue. The background host needs neither (its browser
+  // runs with throttling off).
+  var tickW = null, tickFn = null, tickBad = false, awakeEnd = null;
+  function pingStart(fn) {
+    pingStop();
+    tickFn = fn;
+    if (!tickBad && !HOST.bg && typeof Worker === "function" && typeof Blob === "function" && typeof URL !== "undefined" && URL.createObjectURL) {
+      try {
+        if (!tickW) {
+          var u = URL.createObjectURL(new Blob(["var t=0;onmessage=function(e){clearInterval(t);t=e.data>0?setInterval(function(){postMessage(0)},e.data):0;};"], { type: "text/javascript" }));
+          tickW = new Worker(u);
+          URL.revokeObjectURL(u);
+          tickW.onmessage = function () { if (tickFn) tickFn(); };
+          tickW.onerror = function () { tickBad = true; try { tickW.terminate(); } catch (e) {} tickW = null; if (tickFn) { var f = tickFn; pingTimer = setInterval(f, PING_MS); } };
+        }
+        tickW.postMessage(PING_MS);
+        return;
+      } catch (e) { tickBad = true; tickW = null; }
+    }
+    pingTimer = setInterval(fn, PING_MS);
+  }
+  function pingStop() {
+    clearInterval(pingTimer); pingTimer = null; tickFn = null;
+    if (tickW) { try { tickW.postMessage(0); } catch (e) {} }
+  }
+  function awakeOn() {
+    if (awakeEnd || HOST.bg) return;
+    try {
+      var L = typeof navigator !== "undefined" ? navigator.locks : null;
+      if (!L || typeof L.request !== "function") return;
+      awakeEnd = function () {};
+      L.request("oros-gate-awake", { mode: "shared" }, function () {
+        return new Promise(function (done) { awakeEnd = done; });
+      }).then(null, function () { awakeEnd = null; });
+    } catch (e) { awakeEnd = null; }
+  }
+  function awakeOff() { var f = awakeEnd; awakeEnd = null; if (typeof f === "function") { try { f(); } catch (e) {} } }
   function connect() {
     var p = pref();
     if (!p.on || !p.id || !p.tok || ws) return;
@@ -2179,15 +2274,15 @@
       pushReg();
       copySoon(4000);
       fileCopySoon(60000);
-      clearInterval(pingTimer);
+      awakeOn();
       pingAt = Date.now();
-      pingTimer = setInterval(function () {
+      pingStart(function () {
         var gap = Date.now() - pingAt;
         pingAt = Date.now();
         if (gap > PING_MS * 2.5) { renew(); return; }   // the page was frozen: the box counts this socket asleep
         try { sock.send("ping"); } catch (e) {}
         liveStamp();
-      }, PING_MS);
+      });
     };
     sock.onmessage = function (ev) {
       if (typeof ev.data !== "string" || ev.data === "pong") return;
@@ -2201,7 +2296,7 @@
     sock.onclose = function (ev) {
       if (ws !== sock) return;                        // an old socket this device renewed
       ws = null;
-      clearInterval(pingTimer);
+      pingStop();
       // 4001: a newer connection of this gate took over; 4004: the gate is gone.
       if (ev && ev.code === 4004) { setWs("gone"); return; }
       if (ev && ev.code === 4001) { setWs("other"); watchOther(); return; }
@@ -2220,7 +2315,7 @@
     if (!pref().on || wsState === "gone") return;
     // another window of this browser has the socket: take over only once it went quiet
     if (wsState === "other" && !ws && !liveStale()) { watchOther(); return; }
-    if (ws) { var old = ws; ws = null; clearInterval(pingTimer); try { old.close(1000, "renew"); } catch (e) {} }
+    if (ws) { var old = ws; ws = null; pingStop(); try { old.close(1000, "renew"); } catch (e) {} }
     retry = 0; clearTimeout(retryTimer);
     connect();
   }
@@ -2553,6 +2648,8 @@
             // locked or unanswered, it stays queued (offered again when orOS is
             // on screen, and on the next connect). Writes keep a conflict copy.
             if (x.n === "files_delete" && (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
+            // GATE-SCREEN: a tool for the owner's screen runs only with orOS on screen and unlocked
+            if (screenTool(x.n, x.a) && (offScreen() || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
             if (FILE_WRITE.indexOf(x.n) >= 0) { files = true; if (x.n === "files_write") x.a = Object.assign({}, isObj(x.a) ? x.a : {}, { __q: 1 }); }
             cqBusy[it.id] = 1;
             askLast = "";
@@ -2566,7 +2663,7 @@
               }
               preYes = nDel;                            // the owner just said Delete to these: no second question
               askLast = "";
-              return run(x.n, x.a, { at: at }).then(function (res) { preYes = 0; return res; }, function (e) { preYes = 0; throw e; });
+              return run(x.n, x.a, { at: at, q: 1 }).then(function (res) { preYes = 0; return res; }, function (e) { preYes = 0; throw e; });
             }).then(function (res) {
               if (res === DECL) return res;
               delete cqBusy[it.id];
@@ -2732,7 +2829,7 @@
     retryTimer = setTimeout(connect, [2, 4, 8, 15, 30, 60][retry - 1] * 1000);
   }
   function drop() {
-    clearTimeout(retryTimer); clearInterval(pingTimer);
+    clearTimeout(retryTimer); pingStop(); awakeOff();
     if (ws) { var s = ws; ws = null; try { s.close(1000, "off"); } catch (e) {} }
     setWs("off");
   }
@@ -2771,7 +2868,7 @@
     if (locked()) {
       return Promise.resolve({ ok: false, c: "orOS is locked on the owner's device. Ask the owner to unlock it." });
     }
-    if (away() && (name === "edit_in_app" || name === "do_action" || ACT_OPEN.indexOf(name) >= 0)) return Promise.resolve({ ok: false, c: HOST_TXT });
+    if (away() && name === "do_action") return Promise.resolve({ ok: false, c: HOST_TXT });
     var p = pref();
     var all = offered(), ok = allowed(all, p.lv), names = appNames(all), okIds = ok.map(function (a) { return a.id; });
     args = isObj(args) ? args : {};
@@ -2804,6 +2901,11 @@
     if (ACT_TOOLS.indexOf(name) >= 0 && !budgetish) {
       if ((ACT_WRITE.indexOf(name) >= 0 || name === "do_action" || ACT_OPEN.indexOf(name) >= 0) && !ok.some(function (a) { return p.lv[a.id] === "write" && actable(a.id); })) {
         return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: «Claude may also change …» per app)." });
+      }
+      // GATE-SCREEN: nobody sees orOS here → kept for a screen (a queued one is checked in applyQueue)
+      if (!opt.q && screenTool(name, args) && offScreen()) {
+        if (typeof p.hold === "number" && p.hold > Date.now()) return Promise.resolve({ ok: false, c: "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was done." });
+        return Promise.resolve({ ok: false, c: SCREEN_HELD });
       }
       return actFrame().then(function (F) {
         if (!F) {
@@ -2882,6 +2984,19 @@
       if (!r.ok) return Promise.resolve({ ok: false, c: r.err });
       var dd = r.data, k = (dd.lines || dd.documents || dd.items || dd.titles || []).length;
       return Promise.resolve({ ok: true, a: [line], k: k, c: JSON.stringify(dd) });
+    }
+    if (name === "budget_refresh") {
+      var nowB = Date.now();
+      if (okIds.indexOf("budget") < 0) return Promise.resolve({ ok: false, c: "The owner does not let Claude read Budget." });
+      if (!canWrite(p.lv, p.hold, "budget", nowB)) return Promise.resolve({ ok: false, c: closedMsg(p, "budget", names.budget || "Budget") });
+      if (typeof root.__orosBankNow !== "function") return Promise.resolve({ ok: false, c: "This device's orOS is too old for budget_refresh. Nothing was read." });
+      var devB = null;
+      try { devB = JSON.parse(localStorage.getItem("oros-budget-bank-dev") || "null"); } catch (e) { devB = null; }
+      var lastB = devB && typeof devB.t === "number" ? devB.t : 0;
+      if (lastB && nowB - lastB >= 0 && nowB - lastB < BANK_GAP) return Promise.resolve(Object.assign({ a: ["budget"], k: 0 }, bankNowText({ gap: 1, last: lastB }, nowB)));
+      return Promise.resolve(root.__orosBankNow(20000)).then(function (r) {
+        return Object.assign({ a: ["budget"], k: r && typeof r.n === "number" ? r.n : 0 }, bankNowText(r, Date.now()));
+      }, function () { return { ok: false, c: "The bank update failed on the device. Nothing was read." }; });
     }
     var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas", budget_categories: "cats", budget_transfer: "xfer", budget_balances: "bal" }[name];
     if (op) return change(op, args, p, names, opt.at);
@@ -3499,7 +3614,7 @@
     levels: function () {
       var p = pref(), out = {};
       if (!p.on || !isObj(p.lv)) return out;
-      Object.keys(p.lv).forEach(function (id) { if (NEVER.indexOf(id) < 0 && (p.lv[id] === "read" || p.lv[id] === "write")) out[id] = p.lv[id]; });
+      Object.keys(p.lv).forEach(function (id) { if (!barred(id) && (p.lv[id] === "read" || p.lv[id] === "write")) out[id] = p.lv[id]; });
       return out;
     },
     // "" = Claude may change this app now; else why not (sent to Claude).
@@ -3517,7 +3632,7 @@
       if (!p.on) return "The gate is off.";
       if (away()) return HOST_TXT;
       if (locked()) return "orOS is locked on the owner's device.";
-      if (!id || NEVER.indexOf(id) >= 0) return "Claude may never open " + (id || "this app") + ".";
+      if (!id || barred(id)) return "Claude may never open " + (id || "this app") + ".";
       if (typeof p.hold === "number" && p.hold > now) return "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was done.";
       return "";
     },
@@ -3596,7 +3711,7 @@
     },
     apps: function () {
       var lv = pref().lv || {};
-      return offered().filter(function (a) { return NEVER.indexOf(a.id) < 0; }).map(function (a) {
+      return offered().filter(function (a) { return !barred(a.id); }).map(function (a) {
         return { id: a.id, name: a.name, read: lv[a.id] === "read" || lv[a.id] === "write", write: lv[a.id] === "write",
                  canWrite: writable(a.id), sensitive: sensitive(a.id), tools: toolsOf(a.id) };
       });
@@ -3797,6 +3912,16 @@
     reconnect: function () { if (!ws) { retry = 0; connect(); } },
     // GATE-HOST: this computer's background Gate (orOS Portable / USB)
     host: { state: function () { return hostState(); }, set: function (on) { return hostSet(on); }, active: function () { return HOST.ok; } },
+    // LOCAL-1: a read or write through the local-folder bridge
+    // (localroots.js): kind list|read|write, the local: path, bytes, the
+    // command that asked
+    localLog: function (e) {
+      if (!isObj(e)) return;
+      var kind = /^(list|read|write)$/.test(e.kind) ? e.kind : "read";
+      writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: "local-" + kind, a: [], k: 1, ok: 1,
+        lp: String(e.path || "").slice(0, 300), sz: Math.max(0, Math.floor(+e.size || 0)), c: String(e.cmd || "").slice(0, 40) }));
+      changed();
+    },
     log: function () { var l = readJSON(LOG_KEY); return Array.isArray(l) ? l.slice().reverse() : []; },
     clearLog: function () { try { localStorage.removeItem(LOG_KEY); } catch (e) {} changed(); },
     onChange: function (fn) {

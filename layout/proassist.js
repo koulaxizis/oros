@@ -17,7 +17,7 @@
   var PRO = window.LayoutPro, C = window.LayoutCommands, S = window.LayoutRecipes;
   if (!PRO || !C) return;
   var A = window.orosDK.assets;
-  var PROOF_DIR = "/internal/Layout/Proofs";
+  var PROOF_DIR = "/internal/Layout/Proofs", TICK = null;
   var MAX_BYTES = 80 * 1024 * 1024;
 
   function shellWin() { try { return window.parent && window.parent !== window ? window.parent : window; } catch (e) { return window; } }
@@ -34,7 +34,21 @@
     var V = vault();
     try { return !!(V && V.isRemoteOnly && V.isRemoteOnly(path)); } catch (e) { return false; }
   }
+  // LOCAL-1: the local-folder bridge (localroots.js in the shell)
+  function local() { try { return shellWin().orosLocal || null; } catch (e) { return null; } }
+  function isLocal(p) { return typeof p === "string" && /^local:/i.test(p.trim()); }
+  function localWhy(e) { return e && /^(notAllowedRoot|badPath|bridgePaused|needsReconnect|notThere|notFile|notFolder|timeout)$/.test(e.why) ? e.why : "unreadable"; }
+  function outOf(L) {
+    var w = [];
+    try { w = L && typeof L.names === "function" ? L.names().filter(function (r) { return r && r.mode === "w"; }) : []; } catch (e) { w = []; }
+    return w.length === 1 ? "local:" + w[0].name + "/Proofs" : "";
+  }
   function readBytes(path) {
+    if (isLocal(path)) {
+      var L = local();
+      if (!L) return Promise.reject({ why: "noBridge", path: path });
+      return L.read(path, "layout");
+    }
     if (cloudOnly(path)) return vault().peek(path).then(function (b) { return new Blob([b]); });
     return Promise.resolve(fs().read(path)).then(function (b) { return b instanceof Blob ? b : new Blob([b]); });
   }
@@ -60,6 +74,8 @@
   // A step's files in order → [path] | throws { why }
   function pathsOf(st) {
     var fl = folders();
+    var anyLocal = isLocal(st.folder) || (st.paths || []).some(isLocal);
+    if (anyLocal) return localPaths(st);
     if (!fl.length) return Promise.reject({ why: "noFolders" });
     if (st.folder) {
       var dir = PRO.normPath(st.folder), w = PRO.pathOk(dir, fl, true);
@@ -81,12 +97,38 @@
     else if (st.sort === "name") list.sort();
     return Promise.resolve(list);
   }
+  // pictures from a local folder (or local paths): the bridge checks
+  // every one against the owner's roots
+  function localPaths(st) {
+    var L = local();
+    if (!L) return Promise.reject({ why: "noBridge" });
+    if (st.folder) {
+      if (!isLocal(st.folder)) return Promise.reject({ why: "outside", path: st.folder });
+      return L.ls(st.folder, 1, "layout").then(function (rows) {
+        var map = {};
+        rows.forEach(function (e) { if (!e.dir && e.name.indexOf("/") < 0 && PRO.PIC.test(e.name)) map[e.name] = e.path; });
+        var names = Object.keys(map);
+        names = st.sort === "name" ? names.sort() : PRO.natSort(names);
+        if (!names.length) throw { why: "empty", path: st.folder };
+        return names.map(function (n) { return map[n]; });
+      }, function (e) { throw { why: localWhy(e), path: st.folder }; });
+    }
+    var list = [];
+    for (var i = 0; i < st.paths.length; i++) {
+      if (!isLocal(st.paths[i])) return Promise.reject({ why: "outside", path: st.paths[i] });
+      list.push(String(st.paths[i]).trim());
+    }
+    var base = function (p) { return p.replace(/\\/g, "/").slice(p.replace(/\\/g, "/").lastIndexOf("/") + 1); };
+    if (st.sort === "natural") list = PRO.natSort(list.map(function (p) { return base(p) + "\u0000" + p; })).map(function (x) { return x.split("\u0000")[1]; });
+    else if (st.sort === "name") list.sort();
+    return Promise.resolve(list);
+  }
   function importPath(path) {
     return readBytes(path).then(function (blob) {
       if (blob.size > MAX_BYTES) throw { why: "tooBig", path: path };
-      var name = path.slice(path.lastIndexOf("/") + 1);
-      return A.importFile(new File([blob], name, { type: blob.type || "" })).then(function (r) { return { a: r.id, iw: r.w, ih: r.h, nm: name }; });
-    }, function () { throw { why: "unreadable", path: path }; });
+      var name = path.replace(/\\/g, "/").slice(path.replace(/\\/g, "/").lastIndexOf("/") + 1);
+      return A.importFile(new File([blob], name, { type: blob.type || "" })).then(function (r) { return { a: r.id, iw: r.w, ih: r.h, nm: name, lc: isLocal(path) ? 1 : 0 }; });
+    }, function (e) { throw { why: isLocal(path) ? localWhy(e) : "unreadable", path: path }; });
   }
 
   // ---------- bleed ----------
@@ -147,24 +189,36 @@
     var L = LY.R.computeLayout(doc), scale = st.dpi / 72, dir = PROOF_DIR + "/" + safeName(doc.name) + "/" + stampNow(), saved = [];
     // pictures first, so every page draws them
     var pre = Promise.resolve();
-    doc.items.forEach(function (it) { if (it.t === "img" && it.a) pre = pre.then(function () { return A.load(it.a); }); });
+    doc.items.forEach(function (it) { if (it.t === "img" && it.a) pre = pre.then(function () { if (TICK) TICK(); return A.load(it.a); }); });
     return pre.then(function () { return mkdirs(F, dir); }).then(function () {
       var chain = Promise.resolve();
       groups.forEach(function (g) {
         chain = chain.then(function () {
-          var w = Math.round(doc.setup.w * scale), h = Math.round(doc.setup.h * scale);
+          if (TICK) TICK();
+          // each page at its own size, side by side, tops aligned
+          var sz = g.map(function (p) { var z = M.pageSize(doc, p); return { w: Math.round(z.w * scale), h: Math.round(z.h * scale) }; });
           var cv = document.createElement("canvas");
-          cv.width = w * g.length; cv.height = h;
+          cv.width = sz.reduce(function (a, z) { return a + z.w; }, 0); cv.height = Math.max.apply(null, sz.map(function (z) { return z.h; }));
           var cx = cv.getContext("2d");
           cx.fillStyle = "#ffffff"; cx.fillRect(0, 0, cv.width, cv.height);
+          var x0 = 0;
           g.forEach(function (p, k) {
             var pc = LY.R.renderPage(doc, p, L, scale, { getImage: A.get, background: "#fff" });
-            cx.drawImage(pc, k * w, 0, w, h);
+            cx.drawImage(pc, x0, 0, sz[k].w, sz[k].h);
+            x0 += sz[k].w;
           });
           var nums = g.map(function (p) { return ("00" + (order.indexOf(p) + 1)).slice(-3); }).join("-");
           return new Promise(function (ok, no) { cv.toBlob(function (b) { if (b) ok(b); else no({ why: "encode" }); }, "image/png"); }).then(function (blob) {
             var path = dir + "/page-" + nums + ".png";
-            return Promise.resolve(F.write(path, blob)).then(function () { saved.push(path); });
+            return Promise.resolve(F.write(path, blob)).then(function () {
+              saved.push(path);
+              // LOCAL-1: also in a local write folder (new names only)
+              // Chris 2026-11-18 (P0): with one local write folder open and no
+              // out, the proofs go there too (<root>/Proofs), so Claude sees them
+              var L = local(), out = st.out && isLocal(st.out) ? st.out : outOf(L);
+              if (!out || !L) return;
+              return L.write(out, safeName(doc.name) + " page-" + nums + ".png", blob, "thumbs").then(function (lp) { saved.push(lp); }, function (e) { throw { why: localWhy(e), path: out }; });
+            });
           });
         });
       });
@@ -188,7 +242,7 @@
   }
   // envs[i] = { base, i, pics?, fills? }; envOf(envs[i]) gives a fresh
   // id sequence each time, so every copy gets the same new ids.
-  function envOf(e) { return e ? Object.assign({}, e, { idf: idfFor(e.base, e.i) }) : {}; }
+  function envOf(e) { return e ? Object.assign({}, e, { idf: idfFor(e.base, e.i), prepared: 1 }) : {}; }
   function prepare(doc, steps, ctx, notes, ctl) {
     var base = newBase(), envs = steps.map(function (st, i) { return { base: base, i: i }; });
     var scratch = JSON.parse(JSON.stringify(doc)), saved = [];
@@ -196,22 +250,38 @@
     steps.forEach(function (st, i) {
       chain = chain.then(function () {
         if (ctl && ctl.signal && ctl.signal.aborted) return;
+        if (ctl && ctl.tick) ctl.tick();
         var env = envs[i];
         if (st.op === "images") {
+          if (ctl && ctl.tick) ctl.tick(st.folder || (st.paths || [])[0] || "");
           return pathsOf(st).then(function (paths) {
             var pics = [], c2 = Promise.resolve();
-            paths.slice(0, 400).forEach(function (p) { c2 = c2.then(function () { return importPath(p).then(function (x) { pics.push(x); }); }); });
+            paths.slice(0, 400).forEach(function (p) {
+              c2 = c2.then(function () {
+                if (ctl && ctl.signal && ctl.signal.aborted) return;
+                if (ctl && ctl.tick) ctl.tick(p);
+                return importPath(p).then(function (x) { pics.push(x); if (ctl && ctl.tick) ctl.tick(); });
+              });
+            });
             return c2.then(function () { env.pics = pics; });
           });
         }
         if (st.op === "bleedfill") {
           LY_DOC_FOR_FILL = scratch;
           var list = PRO.bleedTargets(scratch, S.pageTest(st.pages)), fills = {}, c3 = Promise.resolve();
-          list.forEach(function (it) { c3 = c3.then(function () { return fillOne(it, st.mode).then(function (f) { if (f) fills[it.id] = f; }); }); });
+          list.forEach(function (it) { c3 = c3.then(function () { if (ctl && ctl.tick) ctl.tick(); return fillOne(it, st.mode).then(function (f) { if (f) fills[it.id] = f; }); }); });
           return c3.then(function () { env.fills = fills; LY_DOC_FOR_FILL = null; }, function (e) { LY_DOC_FOR_FILL = null; throw e; });
         }
+        if (st.op === "addfont") return addFont(st, notes, ctl || {}).then(function (e) { env.font = e; });
+        if ((st.op === "defstyle" || st.op === "masterfield") && st.font && !PRO.fontFor(scratch, st.font)) {
+          if (ctl && ctl.tick) ctl.tick(st.font);
+          return lib().then(function (l) { return LY.F.match(st.font, l); }).then(function (e) {
+            if (e) { env.fonts = {}; env.fonts[PRO.fontKey(st.font)] = e; }
+          }, function () {});
+        }
         if (st.op === "thumbs") {
-          return thumbs(scratch, st).then(function (list) { saved = saved.concat(list); });
+          TICK = ctl && ctl.tick ? function () { ctl.tick(); } : null;
+          return thumbs(scratch, st).then(function (list) { TICK = null; saved = saved.concat(list); }, function (e) { TICK = null; throw e; });
         }
       }).then(function () {
         // the scratch copy follows, so later steps see this one
@@ -219,6 +289,68 @@
       });
     });
     return chain.then(function () { return { envs: envs, saved: saved }; });
+  }
+
+  // ---------- fonts (Chris 2026-11-18: "fonts_add") ----------
+  // addfont: a Fontsource family (its files kept in the cache for
+  // offline use) or a font file from a local folder (into the owner's
+  // fonts, /internal/Fonts) goes into the owner's collection `collection`
+  // (the synced "fonts" slice, so list_fonts shows it); the document
+  // lists it in C.apply. → Promise of the entry, or null with a note.
+  var libP = null;
+  function lib() {
+    if (!libP) libP = LY.F.library({ all: true }).then(null, function () { libP = null; return []; });
+    return libP;
+  }
+  function intoCollection(e, name) {
+    var CB = LY.fonts && LY.fonts.cols, F = LY.F;
+    if (!CB) return false;
+    var lang = LY.LANG || "en";
+    CB.edit(function (d) {
+      var r = F.cols.add(d, name || "Claude", Date.now(), Math.random(), lang);
+      if (!r.id) return d;
+      return F.cols.set(r.d, r.id, { id: e.id, name: e.name, fb: e.fb }, 1, Date.now());
+    });
+    return true;
+  }
+  var VAR_NAME = { r: "regular", b: "bold", i: "italic", bi: "bold italic" };
+  function addFont(st, notes, ctl) {
+    var F = LY.F, col = st.collection || "Claude";
+    function said(e, extra) { notes.push("fontAdded: " + e.name + " in the collection " + col + (extra ? ", " + extra : "")); }
+    if (st.source === "local") {
+      var name = String(st.path).replace(/\\/g, "/").split("/").pop();
+      if (ctl.tick) ctl.tick(st.path);
+      return readBytes(st.path).then(function (blob) {
+        if (ctl.tick) ctl.tick();
+        return F.importFile(new File([blob], name, { type: blob.type || "font/ttf" }));
+      }, function (e) { throw { why: localWhy(e), path: st.path }; }).then(function (r) {
+        if (!r || r.err) { notes.push("fontBad: " + name + " is not a font file orOS can use (" + ((r && r.err) || "type") + ")"); return null; }
+        libP = null;
+        return lib().then(function (l) {
+          var k = PRO.fontKey(r.family), fam = F.families(l).filter(function (f) { return PRO.fontKey(f.name) === k; })[0];
+          if (!fam) { notes.push("fontBad: " + name); return null; }
+          intoCollection(fam, col);
+          said(fam, "styles " + ["r", "b", "i", "bi"].filter(function (v) { return fam[v]; }).map(function (v) { return VAR_NAME[v]; }).join(", "));
+          return fam;
+        });
+      });
+    }
+    if (ctl.tick) ctl.tick(st.family);
+    return F.catalog().then(function (cat) {
+      if (!cat.length) { notes.push("fontsOffline: the Fontsource list could not be read (offline?)"); return null; }
+      var k = PRO.fontKey(st.family), id = F.fsIdOf(st.family);
+      var c = cat.filter(function (x) { return x.id === id; })[0] || cat.filter(function (x) { return PRO.fontKey(x.family) === k; })[0];
+      if (!c) { notes.push("noFont: " + String(st.family).slice(0, 60) + " is not a Fontsource family (names as fontsource.org shows them)"); return null; }
+      var want = C.fontVars(st.styles), have = c.vars || [], vars = want.length ? want.filter(function (v) { return have.indexOf(v) >= 0; }) : have.slice();
+      if (want.length > vars.length) notes.push("fontStyles: " + c.family + " has only " + have.map(function (v) { return VAR_NAME[v]; }).join(", "));
+      var e = { id: c.id, name: c.family, fb: c.cat };
+      return F.cols.keepOffline([{ id: c.id, vars: vars.length ? vars : ["r"] }], function () { if (ctl.tick) ctl.tick(); }).then(function (res) {
+        if (res && res.failed) notes.push("fontFiles: " + res.failed + " files of " + c.family + " could not be fetched now; they load when the device is online");
+        intoCollection(e, col);
+        said(e, "Greek " + (c.greek ? "full" : "none") + ", polytonic " + (c.poly ? "full" : "none") + ", licence " + (c.lic || "open"));
+        return e;
+      });
+    });
   }
 
   // The book's details for house_pages: the Publishing app's title of

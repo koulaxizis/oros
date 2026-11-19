@@ -829,6 +829,8 @@ body.tr-open { overflow: hidden; }
 .gt-chg-list { padding: 0 12px; }
 .gt-chg-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid var(--border); }
 .gt-chg-row > .hint { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.gt-loc-row { flex-wrap: wrap; }
+.gt-loc-row > .gt-loc-name { flex: 1 1 100%; min-width: 0; overflow-wrap: anywhere; }
 .gt-chg > .hint { padding: 6px 12px 10px; }
 .btn.btn-sm, .gt-chg-row > .btn { flex: none; min-height: 36px; padding: 0 12px; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .gt-chg > summary::before { transition: none; } }
@@ -862,6 +864,32 @@ body.tr-open { overflow: hidden; }
 .sv-check { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; cursor: pointer; }
 .sv-check input { width: 20px; height: 20px; flex-shrink: 0; }
 
+/* Text replacements (TEXTREPL-1) */
+.rp-form { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 4px; }
+.rp-form .pass input,
+.rp-form textarea,
+.rp-q {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: inherit;
+  font: inherit;
+  box-sizing: border-box;
+}
+.rp-form textarea { resize: vertical; line-height: 1.4; }
+.rp-q { margin-top: 10px; }
+.rp-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.rp-item { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+.rp-main { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; min-width: 0; }
+.rp-code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 700; overflow-wrap: anywhere; }
+.rp-text { color: var(--text-dim); min-width: 0; overflow-wrap: anywhere; flex: 1 1 12em; }
+.rp-item .actions { margin: 0; }
+
+.rp-io { margin-top: 12px; display: grid; gap: 6px; }
 /* Accessibility › Colour filter: sample colours (shown through the filter). */
 .a11y-swatches { display: flex; gap: 6px; margin: 4px 0 10px; }
 .a11y-sw { flex: 1 1 0; height: 22px; border-radius: 6px; border: 1px solid var(--border, rgba(127,127,127,.35)); }
