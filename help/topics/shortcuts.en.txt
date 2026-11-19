@@ -26,6 +26,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - [[Ctrl+Alt+Shift+.]]: `Emoji`
 - [[Ctrl+Alt+Shift+,]]: `Pocket`
 - [[Ctrl+Alt+Shift+B]]: `Move the app to the other screen`
+- [[Ctrl+Alt+Shift+Z]]: `Read the selected text aloud`
 - [[Ctrl+Alt+Shift+G]]: `Take a screenshot (orOS USB)`
 - [[Ctrl+Alt+Shift+J]]: `Screen reader on / off (orOS USB)`
 - [[Ctrl+Alt+Shift+D]]: `Switch screens: extend, duplicate or one only (orOS USB)`
@@ -50,6 +51,7 @@ orOS has a set of keyboard shortcuts that work everywhere: on the desktop and in
 - **Emoji** opens the emoji picker: search in English, Greek or German, or pick from a group. The emoji goes into the text field you were last in, in the app on screen, and the picker stays open for more ([[Esc]] closes it); with no such field it is copied. `Emoji` in Quick settings opens it too.
 - **Overview** shows on one screen the search field, your open apps, your recent files and a small System strip (memory, storage, sync). Start typing to search: the text goes to the menu search. See [The menu](help:t/menu#overview).
 - **Move the app to the other screen** works when two screens are set to Extend (on Windows: Win+P; on the Live USB: [[Ctrl+Alt+Shift+D]]). The app in front opens in a new orOS window on the other screen and closes here, so it is never open twice. The same keys in that window bring it back. Opening the app here again while it is on the other screen brings that window forward; click the note to bring the app back. The button with two screens in `Open apps` does the same for any open app. The first time, the browser asks to let orOS manage windows on all your displays. Chrome, Edge and the orOS apps can do this; other browsers, phones and tablets cannot.
+- **Read the selected text aloud** reads what you selected in the app in front (with nothing selected, its main text) with the voices installed on this device, once you turned `Read aloud` on in Settings › Accessibility; the same keys stop it. Inside a text field the keys are left to the field: use Read aloud on the button under the selection or in Quick settings. Never in Passwords or while Sensitive work is on.
 - **Help for the open app** opens Help at the page of the app you are using. On the desktop, it opens Help's start page.
 
 ## Change a shortcut

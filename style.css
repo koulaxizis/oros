@@ -834,6 +834,8 @@ body {
 }
 
 .menu-item:hover { background: var(--accent-soft); }
+/* ST-1 S2: past today's screen time limit (this device) */
+.menu-item .menu-st-over { margin-left: auto; padding-left: 8px; font-size: 13px; opacity: 0.8; }
 
 /* Button labels never wrap — they ellipsize instead (the sync
    buttons' Greek labels sit right at the width limit). */
@@ -857,6 +859,21 @@ body {
 }
 #oros-running.active { display: block; }
 #oros-running iframe { width: 100%; height: 100%; border: none; display: block; }
+/* ZOOM-1: the panel that shrinks into the icon or the Dock when an
+   app closes (shell.js zoomClose; drawn only when motion is allowed).
+   Above the running view, under the Dock (950) and its edge (949). */
+#oros-zoom {
+  position: fixed;
+  z-index: 940;
+  pointer-events: none;
+  transform-origin: 0 0;
+  box-sizing: border-box;
+  background: color-mix(in srgb, var(--accent) 10%, var(--panel-bg, var(--bg)));
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 34px var(--shadow, rgba(0,0,0,.35));
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) { #oros-zoom { display: none; } }
 
 /* ---------- 7. Appearance controls (in menu) ---------- */
 .skin-section {
@@ -1423,6 +1440,12 @@ body {
 .ov-file:hover, .ov-file:focus-visible { background: var(--accent-soft); }
 .ov-fname { font-size: 13.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ov-fwhere { font-size: 11.5px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ov-cont[hidden] { display: none; }
+.ov-crow { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.ov-crow .ov-cgo { flex: 1 1 auto; min-width: 0; }
+.ov-cico { grid-row: span 2; display: inline-flex; color: var(--accent); }
+.ov-cico svg { width: 18px; height: 18px; }
+.ov-crow .ov-x { flex: 0 0 auto; width: 40px; height: 40px; }
 .ov-tiles { display: grid; grid-template-columns: 1fr; gap: 6px; }
 .ov-tile {
   display: flex; flex-direction: column; gap: 3px; padding: 8px 10px;
@@ -2032,6 +2055,15 @@ dialog > #osk { position: fixed; }
   font: inherit; font-size: 18px; line-height: 1; cursor: pointer;
   overflow: hidden; white-space: nowrap; text-overflow: clip;
 }
+/* TEXTREPL-1 W2: the text replacement chip, above the keys (no layout change) */
+.osk-chip {
+  position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%);
+  max-width: min(90%, 520px); padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--accent); background: var(--panel-bg); color: var(--text);
+  font: inherit; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  box-shadow: 0 4px 12px var(--shadow); cursor: pointer;
+}
+.osk-chip[hidden] { display: none; }
 .osk-key.down, .osk-key:active { background: var(--accent-soft); border-color: var(--accent); }
 .osk-shift, .osk-back, .osk-enter, .osk-sym, .osk-abc, .osk-more, .osk-lang,
 .osk-left, .osk-right, .osk-hide { background: var(--bg); font-size: 14px; font-weight: 600; }
@@ -2197,3 +2229,9 @@ html[data-oros-zoom] #app-menu > * { zoom: var(--oros-zoom, 1); }
 #oros-safe button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 html[data-oros-contrast="high"] #oros-safe { border: 2px solid currentColor; box-shadow: none; }
 @media (max-width: 480px) { #oros-safe { left: 16px; right: 16px; width: auto; } }
+
+/* LOCAL-1: the local-folder bridge is on (localroots.js) */
+#oros-local-bar { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2147483000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+  max-width: calc(100vw - 32px); padding: 6px 10px; border-radius: 10px; background: var(--panel-bg, #1d1b16); color: var(--text, #eee); border: 1px solid var(--accent, #d4af37);
+  font: 12px/1.35 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+#oros-local-bar button { font: inherit; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border, #555); background: transparent; color: inherit; cursor: pointer; }

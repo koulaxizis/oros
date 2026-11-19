@@ -497,6 +497,31 @@
     PL.showEditor();
     PL.changed();
   };
+  // CONT-1 W4: tell the shell which picture project is open (continue.js
+  // keeps the reference and the name only, never the picture). On
+  // opening, and once at the first tap or key after the start; nothing
+  // before that, so a restored project never hides the other device's.
+  var contLive = false;
+  PL.contNote = function () {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var d = W ? st.doc : null;
+      if (d && typeof d.id === "string" && C.ID_RE.test(d.id))
+        W.note("photolab", { target: { id: d.id }, title: String(d.name || "") || "Untitled" });
+    } catch (e) {}
+  };
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      PL.contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   PL.openProject = function (id) {
     var fs = PL.fs();
     if (!fs) { PL.toast(PL.t("msg.noDisk")); return Promise.resolve(false); }
@@ -511,6 +536,7 @@
       st.missing = r.missing;
       if (r.missing) PL.toast(PL.t("msg.missingTiles"));
       PL.showEditor();
+      PL.contNote();
       return true;
     }, function () {
       PL.busy(false);
