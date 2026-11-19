@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.74.00
+- **Copy text from a picture.** Press `Text` on a picture in Files or Photos, `Copy text` in Screen Capture, or Image › `Copy text from picture…` in Photo Lab. The words found are marked on the picture: drag, draw a box or tap a line to select, then Copy, Copy all, edit it in the Text panel or send it to an app. Links, days, e-mail addresses and phone numbers become buttons for a new tab, Calendar, Mail, Contacts or a call. It all runs on this device; the reader downloads once, on the first yes, the same one Documents uses. See [Files](help:a/files).
+
 ## Version 7.73.00
 - **Focus modes.** Do Not Disturb, Sleep, Work, Personal and up to 10 of your own. While one is on, only the apps it lets through pop up and sound; the rest still wait in the bell. Turn one on from Quick settings (`Focus`) and it holds on all your devices. Quiet hours are now the Sleep mode's hours. Settings › Notifications › `Focus modes`. See [Focus modes](help:t/notifications).
 
