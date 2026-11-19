@@ -578,6 +578,29 @@ export function neverIn(args) {
 export const REF_QUEUED = ["change_item", "link_items", "link_contact"];
 // BK-AO: relay change tools that never wait for orOS to open (closedCall refuses them)
 export const LIVE_ONLY = ["budget_refresh"];
+// GATE-SCREEN (Chris 2026-11-19): the device tools that work on the
+// owner's screen (Layout's own work, forms, edit_in_app) → their app
+// ("" = args.app; propose_entry's app comes from its kind, so the device
+// checks it). With nobody at a screen they wait, held (hd), for a device
+// that shows orOS (sendHeld); the device checks every rule again then.
+export const SCREEN_TOOLS = { propose_entry: "", propose_automation: "", propose_rule: "automations", newsletter_add: "newsletter", newsletter_check: "newsletter",
+  book_cover: "layout", rebuild_in_layout: "layout", learn_house_style: "layout", layout_book: "layout", add_house_rule: "layout", export_epub: "layout", export_pdf: "layout", edit_in_app: "" };
+export function isScreenTool(name, args) {
+  if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
+  return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
+}
+const SCREEN_NOTE = "This works on the owner's screen (Layout's own work, an app's form or document), and nobody sees orOS right now. It waits, encrypted, and runs the next time orOS is on screen and unlocked on one of the owner's devices; its report, proofs and previews come only then (read the result afterwards with read_in_app or change_history). Until then change_history shows it pending; undo_change with change_id cancels it. Tell the owner to bring orOS to the front.";
+// closed copy's switches → why Claude may not keep this screen call, or ""
+export function screenRefusal(name, args, lv, hold, now, when) {
+  const l = lv && typeof lv === "object" ? lv : {};
+  const a = args && typeof args === "object" ? args : {};
+  const app = SCREEN_TOOLS[name] || (typeof a.app === "string" ? a.app.toLowerCase() : "");
+  if (!Object.keys(l).some((k) => l[k] === "write")) return "The owner lets Claude change no app (the owner's switches, as of " + when + "). Nothing was kept.";
+  if (app && l[app] !== "read" && l[app] !== "write") return "Claude may not use " + app + " (the owner's switch, as of " + when + "). Nothing was kept.";
+  if (name === "edit_in_app" && (!app || l[app] !== "write")) return "Claude may not change " + (app || "this app") + " (the owner's switch, as of " + when + "). Nothing was kept.";
+  if (typeof hold === "number" && hold > now) return "The owner paused Claude's changes until " + new Date(hold).toISOString() + ". Nothing was kept.";
+  return "";
+}
 export function foldTxt(x) {
   return String(x == null ? "" : x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
@@ -636,6 +659,8 @@ export function pendApp(n, a, byRef) {
   if (/^kanban_/.test(n)) return "kanban";
   if (/^invoices_/.test(n)) return "invoices";
   if (/^files_/.test(n)) return "files";
+  if (SCREEN_TOOLS[n]) return SCREEN_TOOLS[n];         // GATE-SCREEN: Layout's own tools…
+  if (n === "edit_in_app") return typeof o.app === "string" ? o.app.toLowerCase() : "";
   const r = refsIn(o)[0];
   return r && byRef && byRef[r] ? byRef[r] : "";
 }
@@ -2071,6 +2096,12 @@ export class GateBox {
         if (typeof def === "string") return withPend({ ok: true, c: "[orOS is closed: this is the copy of " + when + " with its own filters (see the answer), not your arguments; ask again with orOS open for others]\n" + def }, ap);
         return { ok: false, c: "This needs orOS open; it is closed now (the copy of " + when + " does not have it). Ask the owner to open orOS." };
       }
+      if (Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) {
+        if (!isScreenTool(name, args)) return { ok: false, c: "A dry run needs orOS open on one of the owner's devices (it reads the documents there). Nothing was changed." };
+        const why = screenRefusal(name, args, cp.lv, cp.hold, now, when);
+        if (why) return { ok: false, c: why };
+        return await this.queueChange(name, args, kRaw, now, qidWant, "orOS is closed. " + SCREEN_NOTE, 1);
+      }
       if (REF_QUEUED.indexOf(name) >= 0) {
         // 5.96.00: changes by refs from the copy's index wait too; every
         // ref's app must be one Claude may change. 7.44.00 (Chris 2026-11-11
@@ -2269,6 +2300,14 @@ export class GateBox {
       const kRaw = await this.unwrapK(tok);
       ans = kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
                  : { ok: false, c: "Nobody answered on the owner's screen and the deletion could not be kept for later. Nothing was deleted. Ask the owner to have orOS on screen and try once more." };
+      if (ans.ok) await this.sendHeld();
+    }
+    else if (!ans.ok && ans.c === "__screen") {
+      // GATE-SCREEN: the device that got it has nobody at its screen (a
+      // hidden tab, the background host); it already checked the rules.
+      const kRaw = await this.unwrapK(tok);
+      ans = kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "orOS is open but not on screen. " + SCREEN_NOTE, 1)
+                 : { ok: false, c: "orOS is open but not on screen, and this call could not be kept for later. Nothing was done. Ask the owner to bring orOS to the front and try once more." };
       if (ans.ok) await this.sendHeld();
     }
     else if (ans.ok && !(await this.st.get("kw:" + await sha256hex(tok)))) {

@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.79.00
+- **Claude's Layout work no longer needs orOS in front.** When Claude asks Layout (or another app that opens on your screen) for something while nobody sees orOS, in a background tab, with orOS in the tray or closed, the request waits, encrypted, and runs the next time orOS is on your screen. A background orOS tab also stays awake for the Gate, so Claude's reads and changes are answered without bringing it to the front.
+
 ## Version 7.78.00
 - **New game: Windmill ridge.** A tower defense game: on stormy nights sea fog climbs an island road to the village well. Build sling posts, bell towers, olive presses and windmills on the stone pads beside it, upgrade them and pick a branch at level 3. The wind turns with every wave and stretches what the towers reach. Real time with pause and 1x/2x/3x, a wave only starts when you call it. Four ridges on the near island, three difficulties and stars that sync between your devices. In the new Tower defense group of the Game Center.
 
