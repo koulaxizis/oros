@@ -72,6 +72,10 @@
     .lang button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
     .appwin { border: 1px solid var(--accent); border-radius: 12px; padding: 12px 14px; }
     .appwin .copy { margin-left: 6px; font: inherit; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--accent); background: none; color: var(--accent); }
+    .feature { border: 2px solid var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent); margin-bottom: 16px; padding: 20px; }
+    .feature .ch { justify-content: flex-start; }
+    .feature h2 { font-size: 22px; flex: 1 1 240px; }
+    .ficon { flex: none; border-radius: 15px; }
     .foot { color: var(--dim); font-size: 14px; margin-top: 28px; text-align: center; }
     [hidden] { display: none !important; }
   </style>
@@ -89,6 +93,12 @@
   <article lang="en" id="en">
     <p class="lede">Every way to get orOS. orOS is free forever (MIT): every download here costs nothing.</p>
     <p class="appwin" hidden>You are inside the installed orOS app, where nothing can be installed. Single apps and APKs install from a browser tab: open <b>useoros.online/download</b> in Chrome or your usual browser. <button type="button" class="copy" data-done="Copied">Copy link</button></p>
+    <section class="card feature" id="koulaxizis-apps">
+      <div class="ch"><img class="ficon" src="/icons/solo/koulaxizis-apps.svg" width="64" height="64" alt=""><h2>Koulaxizis Apps (every Android app in one place)</h2><span class="badge test">Beta</span></div>
+      <p>One small Android app that installs and updates the Android apps of orOS, NULL JSFX, Noxpress and Glarolykoi, one section per project. <b>Update all</b> updates them one after the other, and a daily check shows one quiet notification when updates are out. It never installs anything by itself.</p>
+      <p class="dim">Each project's list comes from its own signed repository, and every list and APK is checked against the repository's key, size and checksum before Android installs it. While it is installed, the orOS, NULL JSFX and Noxpress apps leave their own update notices to it. Android 8 or newer, no account, no Google services, free (MIT). It is the one place to get and update our Android apps.</p>
+      <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk">Download Koulaxizis Apps (APK)</a>
+    </section>
     <div class="grid">
       <section class="card">
         <div class="ch"><h2>Use it in your browser</h2><span class="badge ok">Available</span></div>
@@ -193,12 +203,6 @@
         </div>
         
       </section>
-      <section class="card" id="koulaxizis-apps">
-        <div class="ch"><h2>Koulaxizis Apps (every Android app in one place)</h2><span class="badge test">Beta</span></div>
-        <p>One small Android app that installs and updates the Android apps of orOS, NULL JSFX, Noxpress and Glarolykoi, one section per project. <b>Update all</b> updates them one after the other, and a daily check shows one quiet notification when updates are out. It never installs anything by itself.</p>
-        <p class="dim">Each project's list comes from its own signed repository, and every list and APK is checked against the repository's key, size and checksum before Android installs it. While it is installed, the orOS, NULL JSFX and Noxpress apps leave their own update notices to it. Android 8 or newer, no account, no Google services, free (MIT). It is the one place to get and update our Android apps.</p>
-        <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk">Download Koulaxizis Apps (APK)</a>
-      </section>
       <section class="card">
         <div class="ch"><h2>Android apps (APK)</h2><span class="badge ok">Available</span></div>
         <p>orOS for Android with extras: contacts and events in the phone's own apps, Health Connect, home-screen widgets, plus every single app as its own APK. Download the APK:</p>
@@ -266,6 +270,12 @@
   <article lang="el" id="el" hidden>
     <p class="lede">Όλοι οι τρόποι να αποκτήσεις το orOS. Το orOS είναι δωρεάν για πάντα (MIT): καμία λήψη εδώ δεν κοστίζει.</p>
     <p class="appwin" hidden>Είσαι μέσα στην εγκατεστημένη εφαρμογή orOS, όπου δεν γίνεται εγκατάσταση. Οι μεμονωμένες εφαρμογές και τα APK εγκαθίστανται από καρτέλα browser: άνοιξε το <b>useoros.online/download</b> στο Chrome ή στον browser που χρησιμοποιείς. <button type="button" class="copy" data-done="Αντιγράφηκε">Αντιγραφή συνδέσμου</button></p>
+    <section class="card feature" id="koulaxizis-apps-el">
+      <div class="ch"><img class="ficon" src="/icons/solo/koulaxizis-apps.svg" width="64" height="64" alt=""><h2>Εφαρμογές Koulaxizis (όλες οι εφαρμογές Android σε ένα σημείο)</h2><span class="badge test">Beta</span></div>
+      <p>Μία μικρή εφαρμογή Android που εγκαθιστά και ενημερώνει τις εφαρμογές Android του orOS, του NULL JSFX, του Noxpress και των Γλαρόλυκων, μία ενότητα για κάθε έργο. Η <b>Ενημέρωση όλων</b> τις ενημερώνει τη μία μετά την άλλη, και ένας καθημερινός έλεγχος δείχνει μία ήσυχη ειδοποίηση όταν βγουν ενημερώσεις. Δεν εγκαθιστά ποτέ τίποτα μόνη της.</p>
+      <p class="dim">Η λίστα κάθε έργου έρχεται από το δικό του υπογεγραμμένο αποθετήριο, και κάθε λίστα και κάθε APK ελέγχεται με το κλειδί, το μέγεθος και το άθροισμα ελέγχου του αποθετηρίου πριν το εγκαταστήσει το Android. Όσο είναι εγκατεστημένη, οι εφαρμογές του orOS, του NULL JSFX και του Noxpress της αφήνουν τις δικές τους ειδοποιήσεις ενημέρωσης. Android 8 ή νεότερο, χωρίς λογαριασμό, χωρίς υπηρεσίες Google, δωρεάν (MIT). Είναι το ένα σημείο για να παίρνεις και να ενημερώνεις τις εφαρμογές μας για Android.</p>
+      <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk">Κατέβασε τις Εφαρμογές Koulaxizis (APK)</a>
+    </section>
     <div class="grid">
       <section class="card">
         <div class="ch"><h2>Χρησιμοποίησέ το στον browser</h2><span class="badge ok">Διαθέσιμο</span></div>
@@ -369,12 +379,6 @@
         <a class="app" href="/writer/solo.html?install" target="_blank" rel="noopener"><img src="/icons/solo/writer.svg" alt="" width="36" height="36"><span>Κειμενογράφος</span></a>
         </div>
         
-      </section>
-      <section class="card" id="koulaxizis-apps-el">
-        <div class="ch"><h2>Εφαρμογές Koulaxizis (όλες οι εφαρμογές Android σε ένα σημείο)</h2><span class="badge test">Beta</span></div>
-        <p>Μία μικρή εφαρμογή Android που εγκαθιστά και ενημερώνει τις εφαρμογές Android του orOS, του NULL JSFX, του Noxpress και των Γλαρόλυκων, μία ενότητα για κάθε έργο. Η <b>Ενημέρωση όλων</b> τις ενημερώνει τη μία μετά την άλλη, και ένας καθημερινός έλεγχος δείχνει μία ήσυχη ειδοποίηση όταν βγουν ενημερώσεις. Δεν εγκαθιστά ποτέ τίποτα μόνη της.</p>
-        <p class="dim">Η λίστα κάθε έργου έρχεται από το δικό του υπογεγραμμένο αποθετήριο, και κάθε λίστα και κάθε APK ελέγχεται με το κλειδί, το μέγεθος και το άθροισμα ελέγχου του αποθετηρίου πριν το εγκαταστήσει το Android. Όσο είναι εγκατεστημένη, οι εφαρμογές του orOS, του NULL JSFX και του Noxpress της αφήνουν τις δικές τους ειδοποιήσεις ενημέρωσης. Android 8 ή νεότερο, χωρίς λογαριασμό, χωρίς υπηρεσίες Google, δωρεάν (MIT). Είναι το ένα σημείο για να παίρνεις και να ενημερώνεις τις εφαρμογές μας για Android.</p>
-        <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk">Κατέβασε τις Εφαρμογές Koulaxizis (APK)</a>
       </section>
       <section class="card">
         <div class="ch"><h2>Εφαρμογές για Android (APK)</h2><span class="badge ok">Διαθέσιμο</span></div>
