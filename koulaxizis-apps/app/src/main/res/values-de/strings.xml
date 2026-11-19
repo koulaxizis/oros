@@ -37,4 +37,5 @@
         <item quantity="one">%d Update bereit</item>
         <item quantity="other">%d Updates bereit</item>
     </plurals>
+    <string name="support">Auf Ko-fi unterstützen</string>
 </resources>

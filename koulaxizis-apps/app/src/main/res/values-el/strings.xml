@@ -37,4 +37,5 @@
         <item quantity="one">%d ενημέρωση έτοιμη</item>
         <item quantity="other">%d ενημερώσεις έτοιμες</item>
     </plurals>
+    <string name="support">Στήριξη στο Ko-fi</string>
 </resources>
