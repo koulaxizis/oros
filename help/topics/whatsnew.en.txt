@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.78.00
+- **New game: Windmill ridge.** A tower defense game: on stormy nights sea fog climbs an island road to the village well. Build sling posts, bell towers, olive presses and windmills on the stone pads beside it, upgrade them and pick a branch at level 3. The wind turns with every wave and stretches what the towers reach. Real time with pause and 1x/2x/3x, a wave only starts when you call it. Four ridges on the near island, three difficulties and stars that sync between your devices. In the new Tower defense group of the Game Center.
+
 ## Version 7.77.00
 - **New game: Hive.** A calm idle game: keep a beehive on a Greek hillside through the year. Plant flowers so something blooms every month, tend the patches, improve the hive and keep honey back for winter. When the colony is full in May it can swarm: found a new hive on another hillside (island, mountain or plain, each with its own flowers and weather) and keep one trait for good, while the old hives in the apiary add honey. It goes on while orOS is closed (full pace for 7 days, then half), with no notifications and nothing to collect, and it syncs between your devices. In the new Idle group of the Game Center.
 
