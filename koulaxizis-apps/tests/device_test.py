@@ -126,8 +126,7 @@ def main():
 
     def loaded(root):
         t = texts(root)
-        # Glarolykoi is its own section, read from the orOS repository (APPS-M3).
-        if "orOS" in t and "orOS Drive" in t and "Glarolykoi" in t and any(x.startswith("Repositories updated") for x in t):
+        if "orOS" in t and "orOS Drive" in t and any(x.startswith("Repositories updated") for x in t):
             return True
         unreachable = sum(1 for x in t if x.startswith("Could not reach the repository"))
         if root is not None and unreachable >= 3 and time.time() - tapped[0] > 15:
@@ -153,6 +152,9 @@ def main():
     shot("list-noxpress")
     for name in ("Site Bridge", "Live Operator"):
         scroll_to(name)
+    # Glarolykoi is its own section at the end, read from the orOS repository (APPS-M3).
+    scroll_to("Glarolykoi")
+    shot("list-glarolykoi")
     # Back up to NULL JSFX and install Remote for Mixers through the manager.
     for _ in range(40):
         swipe(False)
