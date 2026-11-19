@@ -170,5 +170,8 @@ orosPack("de", "netizen", {
  "toast.tagDup": "Diesen Tag gibt es schon",
  "toast.undo": "Rückgängig",
  "view.flip": "Umdrehen",
- "view.open": "Netizen-ID öffnen"
+ "view.open": "Netizen-ID öffnen",
+ "pg.ph.emoji": "🔗",
+ "pg.ph.url": "https://…",
+ "pg.ph.url2": "https://du.neocities.org"
 });

@@ -587,11 +587,36 @@
 
   // ---------- 4. Editor: player, transport, time ----------
   var player = null, tNow = 0;
+  // CONT-1 W4: tell the shell which project is open (continue.js keeps the
+  // reference and the name only, never the clips). On opening, and once at
+  // the first tap or key after the start; nothing before that, so a
+  // restored project never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var pr = W && pid ? data.projects[pid] : null;
+      if (pr) W.note("montage", { target: { project: pid }, title: String(pr.name || "") || t("proj.untitled") });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
   function openProject(id) {
     if (!data.projects[id]) { showToast(t("toast.notFound")); showHome(); return; }
     closeDialog();
     pid = id; sel = null; undoStack = []; redoStack = []; tNow = 0;
     noteOpen(id);
+    contNote();
     view = "editor";
     $("home").hidden = true; $("editor").hidden = false;
     ["back-btn", "undo-btn", "redo-btn", "proj-btn", "export-btn"].forEach(function (k) { $(k).hidden = false; });

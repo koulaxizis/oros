@@ -11,8 +11,9 @@ const path = require("path");
 
 const ROOT = path.join(__dirname, "..", "..");
 
-// Data files whose tables are not UI strings (word lists, OSM presets).
-const SKIP = /(^|\/)(words(-[\w-]+)?\.js|presets-data\.js|wordlist[\w-]*\.js)$|\/(vendor|lib|tests|android|extension|relay|node_modules|i18n)\//;
+// Data files whose tables are not UI strings (word lists, OSM presets,
+// Typing's keyboard layouts keyed by language).
+const SKIP = /(^|\/)(words(-[\w-]+)?\.js|presets-data\.js|wordlist[\w-]*\.js)$|\/typing\/layouts\.js$|\/(vendor|lib|tests|android|extension|relay|node_modules|i18n)\//;
 
 function jsFiles() {
   const out = [];
@@ -61,6 +62,26 @@ function appKeys(app, all) {
   return keys;
 }
 
+// Keys of an app that a module translates inline (en, el, then <code>:
+// {…} in the same table, see i18n-tables.js): a fitting string, or a
+// computed or nested value where English has one too.
+function inlineKeys(app, code, all) {
+  const out = new Set();
+  for (const f of all || ALL_FILES()) {
+    if (!owns(app, f.rel)) continue;
+    for (const t of f.tables) {
+      const m = t.inline && t.inline[code];
+      if (!m) continue;
+      for (const [k, v] of t.en) {
+        if (!m.has(k)) continue;
+        const x = m.get(k);
+        if (v === null ? true : typeof x === "string" && x.trim() && placeholders(v) === placeholders(x) && tagsOf(v) === tagsOf(x)) out.add(k);
+      }
+    }
+  }
+  return out;
+}
+
 // Apps whose index.html loads i18n.js, with the pack name they ask for.
 function packApps() {
   const out = [];
@@ -68,10 +89,32 @@ function packApps() {
   for (const d of fs.readdirSync(ROOT)) {
     if (fs.existsSync(path.join(ROOT, d, "index.html"))) pages.push([d, path.join(d, "index.html")]);
   }
+  // Other pages of an app folder too (solo.html, callbacks, public
+  // pages): the first one that names a pack counts for it.
+  for (const d of fs.readdirSync(ROOT)) {
+    const dp = path.join(ROOT, d);
+    if (d.startsWith(".") || SKIP.test("/" + d + "/") || !fs.statSync(dp).isDirectory()) continue;
+    for (const f of fs.readdirSync(dp).sort()) {
+      if (/\.html$/.test(f) && f !== "index.html") pages.push([d, path.join(d, f)]);
+    }
+  }
   for (const [dir, page] of pages) {
     const s = fs.readFileSync(path.join(ROOT, page), "utf8");
-    const m = /<script src="(?:\.\.\/)?i18n\.js[^"]*" data-app="([^"]+)"><\/script>/.exec(s);
-    if (m) out.push({ dir, page, apps: m[1].split(",").map((a) => a.trim()) });
+    const m = /<script src="(?:\.\.\/|\/)?i18n\.js[^"]*" data-app="([^"]+)"><\/script>/.exec(s);
+    if (!m) continue;
+    const apps = m[1].split(",").map((a) => a.trim());
+    if (page.endsWith("index.html") || !apps.every((a) => out.some((p) => p.apps.includes(a)))) out.push({ dir, page, apps });
+  }
+  // Packs a script loads after start-up (orosI18n.ensure(code, "<name>", …)):
+  // the shell's command bar ("commands") and single-app names ("solo"),
+  // Discover's notice ("discover").
+  for (const rel of jsFiles()) {
+    const s = fs.readFileSync(path.join(ROOT, rel), "utf8");
+    const re = /\bensure\(\s*[\w.]+\s*,\s*"([a-z0-9][a-z0-9-]*)"/g;
+    let m;
+    while ((m = re.exec(s))) {
+      if (!out.some((p) => p.apps.includes(m[1]))) out.push({ dir: path.dirname(rel), page: rel, apps: [m[1]] });
+    }
   }
   // APP-ALIAS views (app merges): a folded app's <dir>/view.js is loaded
   // by its host app, which ensures the view's pack on first open; the
@@ -219,6 +262,6 @@ function inlineGreek(rel, tbls) {
 
 module.exports = {
   ROOT, SKIP, jsFiles, skipToken, blockEnd, entries, tables, sentence, GREEK, line, unquote,
-  langs, owns, appKeys, packApps, packIndex, readPack, checkPack, packIssues, packFiles, helpPages, manifest, inlineGreek,
+  langs, owns, appKeys, inlineKeys, packApps, packIndex, readPack, checkPack, packIssues, packFiles, helpPages, manifest, inlineGreek,
   placeholders, tags: tagsOf, ALL_FILES
 };

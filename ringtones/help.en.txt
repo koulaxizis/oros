@@ -30,6 +30,7 @@ Press a key on the phone keypad and the note is written and played. The melody s
 - `New melody` starts an empty one.
 - In the list, the play button plays a melody without opening it. The copy button makes a duplicate, and the × deletes it; `Undo` brings it back.
 - `Ready tunes` are old public-domain melodies to start from. Tapping one opens it as a new melody.
+- The menu's search box finds your melodies by their name (one without a name as “Untitled melody”). Choosing one opens it here, ready to play.
 
 ## Take it with you
 - `Download WAV` saves the melody as a sound file you can set as a ringtone on your phone.

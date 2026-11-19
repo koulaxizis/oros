@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Music — host.js (player + data owner, v1.4.0)
+// orOS Music — host.js (player + data owner, v1.5.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so the music,
 // the queue and sync keep going while the Music window is closed.
@@ -25,6 +25,8 @@
 //     play-pause / next, stop, open Music, volume and mute);
 //   - audio focus: Radio or Podcasts starting pauses the music, and
 //     music starting pauses them;
+//   - the light show's sound tap (MU-VIZ: viz / vizFrame, an
+//     AnalyserNode after the equalizer, same-origin decks only);
 //   - ListenBrainz listens with the person's own token (lb.js, loaded
 //     only when this device has an account; wave 6d).
 // Songs on the orOS disk play from a blob: URL read through
@@ -374,12 +376,54 @@
     } catch (e) { el._node = null; el._gain = null; }
     return !!el._node;
   }
+  // ---------- Light show (MU-VIZ, wave 1) ----------
+  // The app's light show reads the sound from an AnalyserNode tapped
+  // after the equalizer (master), never connected onwards (it changes
+  // nothing that is heard). Only a deck routed through Web Audio gives
+  // it data, and only same-origin (blob:) sources are routed, as for
+  // the equalizer; a stream keeps playing plain and the app's light
+  // moves on its own. A deck is routed for the light only while the
+  // context runs (a suspended context would silence it); once routed
+  // it stays routed, like an equalizer deck.
+  var viz = { on: false, an: null, f: null, w: null };
+  function vizNode() {
+    if (viz.an) return viz.an;
+    if (!graph()) return null;
+    try {
+      viz.an = ctx.createAnalyser();
+      viz.an.fftSize = 1024;
+      viz.an.smoothingTimeConstant = 0.72;
+      master.connect(viz.an);
+      viz.f = new Uint8Array(viz.an.frequencyBinCount);
+      viz.w = new Uint8Array(viz.an.fftSize);
+    } catch (e) { viz.an = null; }
+    return viz.an;
+  }
+  function vizRoute(el) {
+    if (el._node || !el._same || !vizNode()) return;
+    if (ctx.state === "running") { route(el); return; }
+    try { ctx.resume().then(function () { if (viz.on && ctx.state === "running" && el._same && el.getAttribute("src")) route(el); }, function () {}); } catch (e) {}
+  }
+  function vizSet(on) {
+    viz.on = !!on;
+    if (viz.on && vizNode()) decks.forEach(function (el) { if (el.getAttribute("src")) vizRoute(el); });
+    return viz.on;
+  }
+  // → { live, f, w, rate } (arrays of this window, read only) or null.
+  // live: the song playing now is routed, so f / w are its sound.
+  function vizFrame() {
+    if (!viz.on || !viz.an) return null;
+    var live = !!audio._node && !audio.paused && ctx && ctx.state === "running";
+    if (live) { try { viz.an.getByteFrequencyData(viz.f); viz.an.getByteTimeDomainData(viz.w); } catch (e) { live = false; } }
+    return { live: live, f: viz.f, w: viz.w, rate: ctx ? ctx.sampleRate : 48000 };
+  }
   function fromAlbum() { var q = C.normQueue(local.q); return !!(q.src && /^(album|ia|jm|sva)$/.test(q.src.kind)); }
   // The ReplayGain factor of the deck's song, then the deck's volume.
   function gainFor(el, rgd) {
     el._rgd = rgd || null;
     el._rg = C.rgFactor(el._rgd, sound.rg, fromAlbum(), sound.pre);
     if ((sound.eq.on || el._rg > 1) && el._same) route(el);
+    else if (viz.on && el._same) vizRoute(el);
     vol(el);
   }
   function vol(el) {
@@ -1119,6 +1163,9 @@
     cycleRepeat: function () { setQueue(C.qCycleRepeat(local.q)); host.notify("queue"); },
     setVolume: function (v) { v = +v; if (v >= 0 && v <= 1) { local.vol = v; volAll(); saveLocal(); host.notify("volume"); } },
     sound: function () { return own(sound); },
+    // MU-VIZ: the light show of the full player (see vizFrame).
+    viz: function (on) { return vizSet(on); },
+    vizFrame: vizFrame,
     setSound: setSound,
     sleep: function (v) { sleepSet(v === "end" ? "end" : +v || 0); },
     addNext: function (items) { setQueue(C.qAddNext(local.q, own(items) || [])); host.notify("queue"); },

@@ -24,7 +24,7 @@ test("the late bundle holds the background app files, and only script tags", () 
   const late = lateScripts(page);
   assert.ok(late.length >= 60, "the app cores and hosts are late (" + late.length + ")");
   for (const t of page.matchAll(/<template data-oros-late>([\s\S]*?)<\/template>/g))
-    assert.equal(t[1].replace(/\s*<script src="[a-z]+\/[a-z0-9-]+\.js\?v=[^"]+"><\/script>/g, "").trim(), "", "nothing else in a late template");
+    assert.equal(t[1].replace(/\s*<script src="(?:[a-z]+\/)?[a-z0-9-]+\.js\?v=[^"]+"><\/script>/g, "").trim(), "", "nothing else in a late template");
   for (const s of late) assert.ok(fs.existsSync(path.join(ROOT, s.split("?")[0])), s + " exists");
   const sw = read("sw.js");
   for (const s of late) assert.ok(sw.includes('"./' + s.split("?")[0] + '"') || sw.includes('"' + s.split("?")[0] + '"'), s + " is precached");

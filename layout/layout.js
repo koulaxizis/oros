@@ -98,7 +98,7 @@
       "more.setup": "Document setup…", "more.pkg": "Save as package (.oroslayout)", "more.text": "Place text or a document (Word, .odt, .txt)…",
       "more.story": "Story Editor", "more.selall": "Select all on this page", "more.rec": "Recovered text ({n})",
       "tool.select": "Select (V)", "tool.text": "Text frame (T)", "tool.image": "Image frame (F)",
-      "tool.rect": "Rectangle (R)", "tool.ell": "Ellipse (E)", "tool.line": "Line (L)", "tool.hand": "Hand (H)",
+      "tool.rect": "Rectangle (R)", "tool.ell": "Ellipse (E)", "tool.line": "Line (L)", "tool.hand": "Hand (H, or hold Space). Double-click: fit the spread",
       "tab.props": "Properties", "tab.pages": "Pages", "tab.styles": "Styles", "tab.colors": "Colours",
       "st.page": "Page {n} of {c}", "st.master": "Master {name}", "st.sel": "{n} selected", "st.sel1": "1 selected",
       "st.overset": "Overset text ({n})",
@@ -151,7 +151,7 @@
       "sty.name": "Name", "sty.base": "Based on", "sty.baseNone": "[None]", "sty.font": "Font", "sty.size": "Size (pt)",
       "sty.lead": "Leading (pt)", "sty.auto": "Auto", "sty.align": "Alignment",
       "sty.al": "Left", "sty.ac": "Centre", "sty.ar": "Right", "sty.aj": "Justify",
-      "sty.b": "Bold", "sty.i": "Italic", "sty.u": "Underline", "sty.caps": "All caps", "sty.bul": "Bullet", "sty.kern": "Kerning", "sty.book": "Book typesetting", "sty.hyph": "Hyphenate Greek", "sty.kwn": "Keep with next", "sty.sec": "Running head title", "sty.orph": "Fewest lines before a column break", "sty.wid": "Fewest lines after a column break", "sty.brk": "Start", "sty.brkAny": "Anywhere", "sty.brkCol": "In the next column", "sty.brkPage": "On a new page", "sty.brkOdd": "On an odd page", "sty.brkEven": "On an even page", "sty.sink": "Sunk from the top of the page",
+      "sty.b": "Bold", "sty.i": "Italic", "sty.u": "Underline", "sty.caps": "All caps", "sty.bul": "Bullet", "sty.kern": "Kerning", "sty.book": "Book typesetting", "sty.hyph": "Hyphenate Greek", "sty.kwn": "Keep with next", "sty.sec": "Running head title", "sty.orph": "Fewest lines before a column break", "sty.wid": "Fewest lines after a column break", "sty.brk": "Start", "sty.brkAny": "Anywhere", "sty.brkCol": "In the next column", "sty.brkPage": "On a new page", "sty.brkOdd": "On an odd page", "sty.brkEven": "On an even page", "sty.sink": "Sunk from the top of the page", "sty.nest": "Nested style from the start", "sty.nestNone": "None", "sty.nestTo": "Up to and including", "styles.play": "Styles for a play", "pages.secNew": "Start a section here…", "pages.secEdit": "Section…", "pages.secTitle": "Section", "pages.secStart": "Start at", "pages.secGoOn": "goes on", "pages.secStyle": "Numbers", "pages.secPrefix": "Prefix", "pages.secRemove": "Remove section", "pages.baseMaster": "Based on master…", "pages.baseNone": "None", "props.flipH": "Mirror left to right", "props.flipV": "Mirror top to bottom", "props.frameToPic": "Frame to picture", "more.links": "Links (pictures)…", "links.title": "Links", "links.sum": "{n} pictures, {m} missing or empty.", "links.none": "This document has no pictures.", "links.noName": "(no name)", "links.page": "page {n}", "links.go": "Go to", "links.s.ok": "OK", "links.s.missing": "file missing", "links.s.empty": "empty frame", "links.s.low": "low resolution", "links.local": "embedded (from a local folder)", "pages.size": "Page size…", "pages.sizeOwn": "Page size (own)…", "pages.sizeTitle": "Page size", "pages.sizePages": "Pages", "pages.sizeDoc": "Document size", "pages.sizeBad": "The size must be between 13 mm and 5 m.", "exp.creep": "Creep in mm (saddle stitch)", "styles.playDone": "{n} play styles added.", "styles.playHave": "This document already has the play styles.",
       "sty.sb": "Space before", "sty.sa": "Space after", "sty.fi": "First-line indent", "sty.li": "Left indent", "sty.ri": "Right indent",
       "sty.track": "Tracking (1/1000 em)", "sty.color": "Colour", "sty.inherit": "As base",
       "font.sans": "Noto Sans", "font.serif": "Noto Serif", "font.mono": "Noto Sans Mono",
@@ -179,7 +179,7 @@
       "setup.title": "Document setup", "setup.note": "Objects keep their place when the page size changes.",
       "preset.a4": "A4", "preset.a5": "A5", "preset.a3": "A3", "preset.a6": "A6", "preset.b5": "B5",
       "preset.letter": "US Letter", "preset.legal": "US Legal", "preset.card": "Business card", "preset.dl": "DL flyer",
-      "preset.square": "Square post", "preset.poster": "Poster 50×70", "preset.custom": "Custom",
+      "preset.square": "Square post", "preset.poster": "Poster 50×70", "preset.bk120x190": "Book 120×190", "preset.bk140x210": "Book 140×210", "preset.bk170x240": "Book 170×240", "preset.bk180x250": "Book 180×250", "preset.bk215x215": "Square book 215×215", "preset.custom": "Custom",
       "unit.mm": "mm", "unit.pt": "pt", "unit.in": "in",
       "exp.title": "Export", "exp.img": "Image (PNG / JPG / SVG)", "svg.copy": "Copy as SVG", "svg.save": "Download as SVG", "svg.copied": "Copied as SVG. Paste it into a vector app or a text file.", "svg.noClip": "Copying did not work here. Use Download as SVG.", "svg.none": "Nothing here can go into an SVG.", "exp.page": "Page", "exp.format": "Format", "exp.res": "Resolution", "exp.imgGo": "Export image", "exp.capped": "Exported at {n} dpi (16 megapixel limit)", "exp.pdf": "PDF", "exp.pkg": "Package", "exp.range": "Pages", "exp.all": "All",
       "exp.cur": "Current page", "exp.custom": "Range", "exp.rangeHint": "e.g. 1-3, 5",
@@ -545,7 +545,7 @@
       "rc.pdfs1": "1 PDF saved in Files › Layout.",
       "rc.undone": "Documents are back as they were.",
       "as.done": "The Assistant changed {n} things in {d} documents.", "as.done1": "The Assistant changed {n} things in the document.",
-      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.done0": "Nothing needed changing.", "as.made1": "The new document is ready.", "as.working": "Working on Claude's commands…", "as.busy": "Layout is still working on Claude's earlier commands.", "btn.stop": "Stop", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
       "as.undone": "The Assistant's change was undone.", "as.changed": "These documents were changed since, so the Assistant's change was not undone.",
       "as.gone": "There is nothing left to undo.",
       "rc.op.pages": "Add pages",
@@ -627,7 +627,7 @@
       "more.setup": "Ρυθμίσεις εγγράφου…", "more.pkg": "Αποθήκευση ως πακέτο (.oroslayout)", "more.text": "Τοποθέτηση κειμένου ή εγγράφου (Word, .odt, .txt)…",
       "more.story": "Επεξεργαστής κειμένου", "more.selall": "Επιλογή όλων στη σελίδα", "more.rec": "Ανακτημένο κείμενο ({n})",
       "tool.select": "Επιλογή (V)", "tool.text": "Πλαίσιο κειμένου (T)", "tool.image": "Πλαίσιο εικόνας (F)",
-      "tool.rect": "Ορθογώνιο (R)", "tool.ell": "Έλλειψη (E)", "tool.line": "Γραμμή (L)", "tool.hand": "Χέρι (H)",
+      "tool.rect": "Ορθογώνιο (R)", "tool.ell": "Έλλειψη (E)", "tool.line": "Γραμμή (L)", "tool.hand": "Χέρι (H, ή κράτα το Space). Διπλό κλικ: προσαρμογή δισέλιδου",
       "tab.props": "Ιδιότητες", "tab.pages": "Σελίδες", "tab.styles": "Στυλ", "tab.colors": "Χρώματα",
       "st.page": "Σελίδα {n} από {c}", "st.master": "Master {name}", "st.sel": "{n} επιλεγμένα", "st.sel1": "1 επιλεγμένο",
       "st.overset": "Κείμενο που περισσεύει ({n})",
@@ -680,7 +680,7 @@
       "sty.name": "Όνομα", "sty.base": "Βασίζεται σε", "sty.baseNone": "[Κανένα]", "sty.font": "Γραμματοσειρά", "sty.size": "Μέγεθος (pt)",
       "sty.lead": "Διάστιχο (pt)", "sty.auto": "Αυτόματο", "sty.align": "Στοίχιση",
       "sty.al": "Αριστερά", "sty.ac": "Κέντρο", "sty.ar": "Δεξιά", "sty.aj": "Πλήρης",
-      "sty.b": "Έντονα", "sty.i": "Πλάγια", "sty.u": "Υπογράμμιση", "sty.caps": "Κεφαλαία", "sty.bul": "Κουκκίδα", "sty.kern": "Kerning", "sty.book": "Στοιχειοθεσία βιβλίου", "sty.hyph": "Συλλαβισμός", "sty.kwn": "Μαζί με την επόμενη", "sty.sec": "Τίτλος για τις τρέχουσες επικεφαλίδες", "sty.orph": "Ελάχιστες γραμμές πριν την αλλαγή στήλης", "sty.wid": "Ελάχιστες γραμμές μετά την αλλαγή στήλης", "sty.brk": "Αρχή", "sty.brkAny": "Οπουδήποτε", "sty.brkCol": "Στην επόμενη στήλη", "sty.brkPage": "Σε νέα σελίδα", "sty.brkOdd": "Σε μονή σελίδα", "sty.brkEven": "Σε ζυγή σελίδα", "sty.sink": "Κατέβασμα από την κορυφή της σελίδας",
+      "sty.b": "Έντονα", "sty.i": "Πλάγια", "sty.u": "Υπογράμμιση", "sty.caps": "Κεφαλαία", "sty.bul": "Κουκκίδα", "sty.kern": "Kerning", "sty.book": "Στοιχειοθεσία βιβλίου", "sty.hyph": "Συλλαβισμός", "sty.kwn": "Μαζί με την επόμενη", "sty.sec": "Τίτλος για τις τρέχουσες επικεφαλίδες", "sty.orph": "Ελάχιστες γραμμές πριν την αλλαγή στήλης", "sty.wid": "Ελάχιστες γραμμές μετά την αλλαγή στήλης", "sty.brk": "Αρχή", "sty.brkAny": "Οπουδήποτε", "sty.brkCol": "Στην επόμενη στήλη", "sty.brkPage": "Σε νέα σελίδα", "sty.brkOdd": "Σε μονή σελίδα", "sty.brkEven": "Σε ζυγή σελίδα", "sty.sink": "Κατέβασμα από την κορυφή της σελίδας", "sty.nest": "Ένθετο στυλ από την αρχή", "sty.nestNone": "Κανένα", "sty.nestTo": "Ως και", "styles.play": "Στυλ για θεατρικό", "pages.secNew": "Νέα ενότητα από εδώ…", "pages.secEdit": "Ενότητα…", "pages.secTitle": "Ενότητα", "pages.secStart": "Αρχή από", "pages.secGoOn": "συνεχίζει", "pages.secStyle": "Αριθμοί", "pages.secPrefix": "Πρόθεμα", "pages.secRemove": "Αφαίρεση ενότητας", "pages.baseMaster": "Με βάση το μάστερ…", "pages.baseNone": "Κανένα", "props.flipH": "Καθρέφτης αριστερά-δεξιά", "props.flipV": "Καθρέφτης πάνω-κάτω", "props.frameToPic": "Πλαίσιο στο μέγεθος της εικόνας", "more.links": "Σύνδεσμοι (εικόνες)…", "links.title": "Σύνδεσμοι", "links.sum": "{n} εικόνες, {m} λείπουν ή είναι κενές.", "links.none": "Το έγγραφο δεν έχει εικόνες.", "links.noName": "(χωρίς όνομα)", "links.page": "σελίδα {n}", "links.go": "Μετάβαση", "links.s.ok": "Εντάξει", "links.s.missing": "λείπει το αρχείο", "links.s.empty": "κενό πλαίσιο", "links.s.low": "χαμηλή ανάλυση", "links.local": "ενσωματωμένο (από τοπικό φάκελο)", "pages.size": "Μέγεθος σελίδας…", "pages.sizeOwn": "Μέγεθος σελίδας (δικό της)…", "pages.sizeTitle": "Μέγεθος σελίδας", "pages.sizePages": "Σελίδες", "pages.sizeDoc": "Μέγεθος εγγράφου", "pages.sizeBad": "Το μέγεθος πρέπει να είναι από 13 mm ως 5 m.", "exp.creep": "Creep σε mm (καρφίτσα)", "styles.playDone": "Προστέθηκαν {n} στυλ θεατρικού.", "styles.playHave": "Το έγγραφο έχει ήδη τα στυλ θεατρικού.",
       "sty.sb": "Διάστημα πριν", "sty.sa": "Διάστημα μετά", "sty.fi": "Εσοχή πρώτης γραμμής", "sty.li": "Εσοχή αριστερά", "sty.ri": "Εσοχή δεξιά",
       "sty.track": "Αραίωση (1/1000 em)", "sty.color": "Χρώμα", "sty.inherit": "Όπως η βάση",
       "font.sans": "Noto Sans", "font.serif": "Noto Serif", "font.mono": "Noto Sans Mono",
@@ -708,7 +708,7 @@
       "setup.title": "Ρυθμίσεις εγγράφου", "setup.note": "Τα αντικείμενα μένουν στη θέση τους όταν αλλάζει το μέγεθος.",
       "preset.a4": "A4", "preset.a5": "A5", "preset.a3": "A3", "preset.a6": "A6", "preset.b5": "B5",
       "preset.letter": "US Letter", "preset.legal": "US Legal", "preset.card": "Επαγγελματική κάρτα", "preset.dl": "Φυλλάδιο DL",
-      "preset.square": "Τετράγωνο post", "preset.poster": "Αφίσα 50×70", "preset.custom": "Προσαρμοσμένο",
+      "preset.square": "Τετράγωνο post", "preset.poster": "Αφίσα 50×70", "preset.bk120x190": "Βιβλίο 120×190", "preset.bk140x210": "Βιβλίο 140×210", "preset.bk170x240": "Βιβλίο 170×240", "preset.bk180x250": "Βιβλίο 180×250", "preset.bk215x215": "Τετράγωνο βιβλίο 215×215", "preset.custom": "Προσαρμοσμένο",
       "unit.mm": "mm", "unit.pt": "pt", "unit.in": "in",
       "exp.title": "Εξαγωγή", "exp.img": "Εικόνα (PNG / JPG / SVG)", "svg.copy": "Αντιγραφή ως SVG", "svg.save": "Λήψη ως SVG", "svg.copied": "Αντιγράφηκε ως SVG. Επικόλλησέ το σε εφαρμογή vector ή σε αρχείο κειμένου.", "svg.noClip": "Η αντιγραφή δεν δούλεψε εδώ. Χρησιμοποίησε τη Λήψη ως SVG.", "svg.none": "Τίποτα εδώ δεν μπορεί να γίνει SVG.", "exp.page": "Σελίδα", "exp.format": "Μορφή", "exp.res": "Ανάλυση", "exp.imgGo": "Εξαγωγή εικόνας", "exp.capped": "Εξήχθη στα {n} dpi (όριο 16 megapixel)", "exp.pdf": "PDF", "exp.pkg": "Πακέτο", "exp.range": "Σελίδες", "exp.all": "Όλες",
       "exp.cur": "Τρέχουσα σελίδα", "exp.custom": "Εύρος", "exp.rangeHint": "π.χ. 1-3, 5",
@@ -1074,7 +1074,7 @@
       "rc.pdfs1": "1 PDF αποθηκεύτηκε στα Αρχεία › Layout.",
       "rc.undone": "Τα έγγραφα γύρισαν όπως ήταν.",
       "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} έγγραφα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο έγγραφο.",
-      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.made1": "Το νέο έγγραφο είναι έτοιμο.", "as.working": "Εκτελώ τις εντολές του Claude…", "as.busy": "Η Σελιδοποίηση εκτελεί ακόμα τις προηγούμενες εντολές του Claude.", "btn.stop": "Διακοπή", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
       "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Τα έγγραφα άλλαξαν στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
       "as.gone": "Δεν έμεινε κάτι για αναίρεση.",
       "rc.op.pages": "Προσθήκη σελίδων",
@@ -1739,6 +1739,26 @@
     addDoc(hyphOn(d));
   }
   LY.createDoc = createDoc; LY.addDoc = addDoc; LY.addDocQuiet = addDocQuiet; LY.hyphOn = hyphOn;
+  // a document made by the Assistant or orOS Gate (LY-PRO W1 create):
+  // kerned and hyphenated as a new one; dropDoc takes it back (Undo),
+  // with a tombstone so the removal syncs
+  LY.addNewDoc = function (d) {
+    var base = M.find(d.pstyles, "ps-base");
+    if (base) { base.ext = base.ext || {}; base.ext.kern = 1; }
+    addDoc(hyphOn(d));
+    return !!findDoc(d.id);
+  };
+  LY.dropDoc = function (id) {
+    var d = findDoc(id);
+    if (!d) return false;
+    if (LY.doc && LY.doc.id === id && LY.goHome) LY.goHome();
+    data.dt[id] = Math.max(now(), M.maxM(d));
+    data = M.normData(data);
+    save();
+    if (LY.prefs.doc === id) { LY.prefs.doc = null; savePrefs(); }
+    if (!LY.doc) renderHome();
+    return true;
+  };
 
   function openDoc(id) {
     var d = findDoc(id);
@@ -1752,8 +1772,33 @@
     $("editor").hidden = false;
     $("ed-name").textContent = docTitle(d);
     emit("open");
+    contNote();
   }
   LY.openDoc = openDoc;
+
+  // CONT-1 W3: tell the shell which document is open (continue.js keeps
+  // the reference and the name only, never the pages). On opening, and
+  // once at the first tap or key after the start; nothing before that, so
+  // a restored document never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var C = window.parent !== window ? window.parent.orosContinue : null;
+      if (C && LY.doc) C.note("layout", { target: { doc: LY.doc.id }, title: docTitle(LY.doc) });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   function goHome() {
     LY.flushStory && LY.flushStory();
@@ -2051,6 +2096,17 @@
       LY.io.script("epubout.js", "LY_EPUBOUT").then(function (E) { E.run(epRq, epBack); }, function () { toast(t("ep.fail")); epBack({ failed: 1, why: "error" }); });
       return;
     }
+    // { pdfOut: { key, chat, doc, preset, pages, bleed, marks, spreads,
+    // down } } from the Assistant's export_pdf card or orOS Gate (LY-PRO
+    // W1): the named document's PDF (PDF/X-4, print or screen) goes to
+    // /internal/Layout/PDF/; numbers, boxes and check codes go back.
+    if (tg && tg.pdfOut && typeof tg.pdfOut === "object") {
+      if (document.querySelector("dialog[open]")) { assistBack(tg.pdfOut)({ failed: 1, why: "busy" }); return; }
+      var pdBack = assistBack(tg.pdfOut), pdRq = tg.pdfOut;
+      // loaded on first use (layout/pdfout.js)
+      LY.io.script("pdfout.js", "LY_PDFOUT").then(function (E) { E.run(pdRq, pdBack); }, function () { toast(t("exp.fail")); pdBack({ failed: 1, why: "error" }); });
+      return;
+    }
     // { page: n } (the Assistant's do_action open): page n of the open
     // document, counted from 1.
     if (tg && typeof tg.page === "number") {
@@ -2104,10 +2160,18 @@
   }
   var PLACE_EXT = /\.(png|jpe?g|webp|gif)$/i;
   var RB_SRC = /\.(jpe?g|png|webp|tiff?|gif|txt|md|markdown|html?)$/i, RB_FOLDER_MAX = 400;
+  // LOCAL-1: local:<root>/<path> through the shell's local-folder bridge
+  function localApi() { try { var p = window.parent; return p && p !== window && p.orosLocal ? p.orosLocal : null; } catch (e) { return null; } }
+  function isLocalPath(v) { return typeof v === "string" && /^local:/i.test(v.trim()); }
   function diskPath(v) {
+    if (isLocalPath(v)) return v.trim().replace(/[\\/]+$/, "");
     return typeof v === "string" && v.indexOf("/internal/") === 0 && !/(^|\/)\.\.(\/|$)/.test(v) ? v.replace(/\/+$/, "") : "";
   }
   function diskFile(path) {
+    if (isLocalPath(path)) {
+      var L = localApi();
+      return L ? L.read(path, "layout").then(function (f) { return f; }, function () { return null; }) : Promise.resolve(null);
+    }
     var fs = diskFs();
     if (!fs || !diskPath(path)) return Promise.resolve(null);
     return Promise.resolve(fs.read(path)).then(function (b) {
@@ -2117,6 +2181,15 @@
   // the originals in a disk folder and its subfolders, in name order
   function folderFiles(path) {
     var fs = diskFs(), out = [];
+    if (isLocalPath(path)) {
+      var L = localApi();
+      if (!L) return Promise.resolve(out);
+      return L.ls(path, 3, "layout").then(function (rows) {
+        return rows.filter(function (e) { return !e.dir && RB_SRC.test(e.name); }).slice(0, RB_FOLDER_MAX).reduce(function (p, e) {
+          return p.then(function () { return L.read(e.path, "layout").then(function (f) { out.push(f); }, function () {}); });
+        }, Promise.resolve());
+      }, function () {}).then(function () { return out; });
+    }
     if (!fs || !diskPath(path)) return Promise.resolve(out);
     function walk(dir, depth) {
       return Promise.resolve(fs.ls(dir)).then(function (list) {

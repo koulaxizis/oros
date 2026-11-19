@@ -1,0 +1,6 @@
+// Koulaxizis Apps (APPS-M1): one place on an Android phone to install and
+// update every app of our projects, read from our own signed F-Droid
+// repositories. Plain Android SDK, no libraries (see README.md).
+plugins {
+    id 'com.android.application' version '8.9.1' apply false
+}
