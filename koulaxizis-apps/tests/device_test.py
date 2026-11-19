@@ -126,7 +126,8 @@ def main():
 
     def loaded(root):
         t = texts(root)
-        if "orOS" in t and "orOS Drive" in t and any(x.startswith("Repositories updated") for x in t):
+        # Glarolykoi is its own section, read from the orOS repository (APPS-M3).
+        if "orOS" in t and "orOS Drive" in t and "Glarolykoi" in t and any(x.startswith("Repositories updated") for x in t):
             return True
         unreachable = sum(1 for x in t if x.startswith("Could not reach the repository"))
         if root is not None and unreachable >= 3 and time.time() - tapped[0] > 15:

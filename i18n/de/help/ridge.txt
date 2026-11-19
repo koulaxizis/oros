@@ -1,0 +1,53 @@
+# Windmühlengrat
+Windmühlengrat ist ein Turmverteidigungsspiel für eine Person. In stürmischen Nächten steigt Meeresnebel eine gewundene Straße auf einem Inselgrat hinauf, vom Meer bis zum Dorfbrunnen. Du baust Türme auf die Steinsockel neben der Straße und hältst den Nebel vom Brunnen fern. Das Spiel läuft in Echtzeit, aber du kannst jederzeit anhalten und in der Pause bauen, und eine Welle beginnt erst, wenn du sie rufst.
+
+## So wird gespielt
+- Wähle auf der Inselkarte einen Grat und eine Schwierigkeit. Der erste Grat ist offen; wer einen Grat schafft, öffnet den nächsten.
+- Tippe auf einen Steinsockel neben der Straße und wähle dann unten in der Leiste einen Turm. Tippe auf einen Turm, um ihn auszubauen, sein Ziel zu ändern oder ihn zu verkaufen. Tippe noch einmal auf denselben Sockel oder auf eine leere Stelle, um ihn loszulassen.
+- Drücke `Nächste Welle`, wenn du bereit bist. Drückst du, während noch Nebel auf der Straße ist, kommt die nächste Welle früher und du bekommst eine Münze für jeden Nebel, der noch unterwegs ist.
+- Jeder Nebel, der den Brunnen erreicht, kostet ein Herz; eine Nebelbank kostet drei. Die Nacht ist gewonnen, wenn die letzte Welle verweht ist, und verloren, wenn die Herzen ausgehen.
+- `Pause` und die Tempotaste (1x, 2x, 3x) liegen neben `Nächste Welle`. Das Spiel hält von selbst an, wenn du es verlässt.
+- Verwehter Nebel bringt Münzen, ebenso jede geschaffte Welle.
+
+## Die Türme
+Jeder Turm hat drei Stufen. Auf Stufe 3 wählst du einen von zwei Zweigen, und diese Wahl bleibt.
+- **Schleuderposten:** schnelle Steine auf einen Nebel. Die Doppelschleuder trifft zwei auf einmal; die Weitschleuder reicht viel weiter, mit schwereren, langsameren Steinen.
+- **Glockenturm** (ab Grat 2): läutet ab und zu und bremst allen Nebel in seiner Nähe. Die Tiefe Glocke bremst stärker und knackt Panzer; das Glockenspiel klingt weiter und schadet ein wenig.
+- **Ölpresse** (ab Grat 3): rollt Öl auf die Straße, das den darüberziehenden Nebel verbrennt und Panzer knackt. Heißes Öl brennt länger und heißer; die Ölflut macht eine lange Spur, die auch bremst.
+- **Windmühle** (ab Grat 4): drückt den Nebel in ihrer Nähe die Straße hinunter, stärker bei kräftigem Wind. Große Segel drücken viel weiter; der Mühlstein schadet auch dem, was er zurückdrückt.
+- Schleudern und Pressen zielen auf den ersten Nebel auf der Straße (am nächsten am Brunnen), den stärksten oder den nächsten am Turm.
+- Beim Verkauf bekommst du 70% des Preises zurück. Ein Turm, der seit dem Beginn der letzten Welle gebaut oder ausgebaut wurde, bringt alles zurück, ein falscher Tipp kostet also nichts.
+
+## Der Wind
+Der Wind dreht mit jeder Welle. Der Pfeil oben zeigt, wohin er weht, mit einem bis drei Punkten für seine Stärke (ein Strich bei Windstille), und die Leiste zeigt den Wind der nächsten Welle, bevor du sie rufst. Der Wind ist jedes Mal derselbe, wenn du diese Nacht spielst.
+- Schleudern und Pressen reichen für jeden Punkt 10% weiter dorthin, wohin der Wind weht, und 10% kürzer gegen ihn.
+- Glocken reichen mit dem Wind weiter und gegen ihn nie kürzer.
+- Windmühlen drücken umso stärker, je stärker der Wind ist; bei Windstille drehen sie sich trotzdem, mit halber Kraft.
+- Wähle einen Turm, um seine Reichweite im jetzigen Wind zu sehen: der Ring dehnt sich mit dem Wind.
+
+## Der Nebel
+Jede Art hat ihre eigene Form, du brauchst die Farben also nie.
+- **Schwade** (rund): einfacher Nebel.
+- **Läufer** (ein Tropfen): schnell, verweht aber rasch.
+- **Panzer** (sechseckig, mit Rand): Steine und Glockenspiele richten nur ein Viertel ihres Schadens an, bis Öl oder eine Tiefe Glocke den Panzer knackt.
+- **Bausch** (drei runde Wolken): teilt sich beim Verwehen in zwei halbe Bäusche.
+- **Nebelbank** (breit): langsam und sehr stark, kostet am Brunnen drei Herzen.
+Die nahe Insel hat Schwaden und Läufer und eine Nebelbank am Ende ihres letzten Grats. Panzer und Bäusche kommen mit den nächsten Inseln.
+
+## Schwierigkeit, Sterne und Speichern
+- Leicht: 30 Herzen und mehr Münzen; Normal: 20 Herzen; Schwer: 10 Herzen und stärkerer Nebel.
+- Sterne: drei mit neun Zehnteln der Herzen, zwei mit der Hälfte, einer für jede gewonnene Nacht. Die Karte behält die besten Sterne jedes Grats.
+- Geht eine Nacht verloren, bringt dich `Noch einmal ab Welle` an den Anfang dieser Welle zurück, mit den Türmen und Münzen von damals.
+- Die laufende Nacht bleibt auf diesem Gerät und öffnet sich angehalten dort, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` auf der Karte löscht sie auf allen Geräten. Windmühlengrat steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+
+## Tastatur
+- Die Pfeiltasten wählen einen Sockel; [[Escape]] lässt ihn los.
+- [[1]] bis [[4]]: baut einen Schleuderposten, Glockenturm, eine Ölpresse oder Windmühle auf den gewählten Sockel.
+- [[U]]: Ausbau auf Stufe 2. [[A]] oder [[B]]: der Zweig auf Stufe 3. [[T]]: ändert das Ziel. [[S]]: verkaufen.
+- [[Space]]: Pause oder weiter. [[F]]: Tempo. [[N]]: die nächste Welle. [[C]]: die Inselkarte. [[M]]: Ton. [[?]]: so wird gespielt.
+
+## Tipps
+- Sockel, um die sich die Straße biegt, sehen am meisten Straße.
+- Stell einen Glockenturm dorthin, wo mehrere Schleudern hinreichen: gebremster Nebel bleibt länger in ihrer Reichweite.
+- Schau dir den Wind der nächsten Welle an, bevor du sie rufst, und ziele mit den Pressen dorthin, wohin der Wind ihr Öl weiter trägt.
+- Wellen früh zu rufen bringt ein wenig, aber nur, wenn deine Türme bereit sind.

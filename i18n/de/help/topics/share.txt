@@ -72,6 +72,11 @@ Weitere Apps nehmen Dinge an: [QR](app:qr) macht aus einem Link oder kurzen Text
 
 orOS liest den Text außerdem auf deinem Gerät und stellt die passende App an den Anfang: ein Tag oder eine Uhrzeit öffnet einen neuen Termin im [Kalender](app:calendar), ein Betrag in Euro (bei einem Beleg die Summe) eine neue Ausgabe im [Budget](app:budget), eine Telefonnummer oder E-Mail einen neuen Kontakt in [Kontakte](app:contacts) und eine Adresse eine Suche in [Karten](app:maps). Zeilen mit Beträgen können ein Rechnungsentwurf in der [Abrechnung](app:invoices) werden, und jeder Text kann in den heutigen längeren Eintrag im [Ein-Satz-Tagebuch](app:diary). Diese Apps erscheinen nur, wenn der Text enthält, was sie brauchen, und nichts wird gespeichert, bis du es dort speicherst.
 
+### Die Ablage
+`Keep in pocket` im selben Fenster (und `In die Ablage` im Menü des markierten Texts) legt das Element stattdessen in die Ablage: einen kleinen Platz auf diesem Gerät für einen Text, einen Link, eine Liste, eine Tabelle oder Dateien, während du zu einer anderen App gehst. Dann erscheint eine Ablage-Schaltfläche am Ende des Docks oder in der oberen Leiste, wenn kein Dock zu sehen ist ([[Ctrl+Alt+Shift+,]] öffnet sie auch). Tippe auf ein Element, um es mit demselben Fenster an eine App zu senden; es bleibt in der Ablage und kann auch an eine zweite App gehen. Die Kopieren-Schaltfläche kopiert es, × nimmt es heraus und `Ablage leeren` nimmt alles heraus.
+
+Die Ablage behält bis zu 20 Elemente, bis du sie entfernst. Dateien bleiben, wo sie sind: Die Ablage merkt sich nur, wo, und zeigt `Nicht gefunden`, wenn eine verschoben oder gelöscht wurde. Nichts aus Passwörter oder Einstellungen kommt hinein und nichts, solange [Sensible Arbeit](help:t/sensitive) an ist (das Einschalten leert sie). Sie wird nie synchronisiert und ist in keiner Sicherung.
+
 ## Datenschutz
 Ein einfacher Link trägt die Sache im Teil nach dem #-Zeichen, den Browser nie an einen Server senden. Kein orOS-Server sieht sie, und nichts wird irgendwo gespeichert außer im Link.
 

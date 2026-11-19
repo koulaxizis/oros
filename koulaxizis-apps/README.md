@@ -1,10 +1,9 @@
 # Koulaxizis Apps
 
 One place on an Android phone to install and update every app of our
-projects: orOS, NULL JSFX and Noxpress (Glarolykoi once its own app
-exists). Package `gr.koulaxizis.apps` (permanent). Free and open source
+projects: orOS, NULL JSFX, Noxpress and Glarolykoi. Package `gr.koulaxizis.apps` (permanent). Free and open source
 (MIT), no ads, no account, no Google services. Bible: `OROS_BIBLE.md`
-APPS-M1, APPS-M2.
+APPS-M1, APPS-M2, APPS-M3.
 
 ## How it works
 
@@ -15,6 +14,9 @@ APPS-M1, APPS-M2.
   | orOS | https://koulaxizis.github.io/oros-fdroid/repo | `2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846` |
   | NULL JSFX | https://koulaxizis.github.io/null-jsfx-fdroid/repo | `1C071614D51503C5ED3260A1B69A0D44CEA6057A5DC6A3ACC3FA7AD130EF64EB` |
   | Noxpress | https://koulaxizis.github.io/noxpress-fdroid/repo | `21441E31A60A89708C6CECE649390C1863EC8CA147F08DA7399AE7646E02EE4E` |
+  Glarolykoi (`net.glarolykoi.android`) is published in the orOS repository
+  and shown as its own section (`Source.section`): the repository is read
+  once and the section takes its packages out of the orOS list.
 - **Checks** (`RepoEntry.java`, `Catalog.java`): `entry.jar` must be signed by
   the pinned key; `index-v2.json` must have the size and SHA-256 that the
   signed `entry.json` names; an entry older than the last accepted one is

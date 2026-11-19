@@ -24,6 +24,7 @@ orOS hat eine Reihe von Tastenkürzeln, die überall funktionieren: auf dem Desk
 - [[Ctrl+Alt+Shift+M]]: `Schnelleinstellungen`
 - [[Ctrl+Alt+Shift+V]]: `Zwischenablage-Verlauf`
 - [[Ctrl+Alt+Shift+.]]: `Emoji`
+- [[Ctrl+Alt+Shift+,]]: `Ablage`
 - [[Ctrl+Alt+Shift+B]]: `Die App auf den anderen Bildschirm verschieben`
 - [[Ctrl+Alt+Shift+Z]]: `Markierten Text vorlesen`
 - [[Ctrl+Alt+Shift+G]]: `Bildschirmfoto (orOS USB)`

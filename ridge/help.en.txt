@@ -1,0 +1,53 @@
+# Windmill ridge
+Windmill ridge is a tower defense game for one person. On stormy nights sea fog climbs a winding road up an island ridge, from the sea to the village well. You build towers on the stone pads beside the road and keep the fog from reaching the well. The game runs in real time, but you can pause at any moment and build while it is paused, and a wave only starts when you call it.
+
+## How to play
+- Choose a ridge and a difficulty on the island chart. The first ridge is open; clearing a ridge opens the next one.
+- Tap a stone pad beside the road, then choose a tower in the bar below. Tap a tower to upgrade it, change what it aims at, or sell it. Tap the same pad again, or empty ground, to let go.
+- Press `Next wave` when you are ready. Pressing it while fog is still on the road brings the next wave early and gives one coin for every fog still out.
+- Each fog that reaches the well costs a heart; a fog bank costs three. The night is won when the last wave has faded, and lost when the hearts run out.
+- `Pause`, and the speed button (1x, 2x, 3x), are next to `Next wave`. The game pauses by itself when you leave it.
+- Fog that fades gives coins, and so does every wave cleared.
+
+## The towers
+Each tower has three levels. At level 3 you choose one of two branches, and that choice stays.
+- **Sling post:** fast stones at one fog. Twin sling hits two at a time; Long sling reaches much farther with heavier, slower stones.
+- **Bell tower** (from ridge 2): rings now and then and slows all the fog near it. Deep bell slows more and cracks shells; Chime rings wider and hurts a little.
+- **Olive press** (from ridge 3): rolls oil onto the road that burns the fog crossing it, and cracks shells. Hot oil burns longer and hotter; Spill makes a long patch that also slows.
+- **Windmill** (from ridge 4): pushes the fog near it back down the road, harder in a strong wind. Great sails push much farther; Millstone also hurts what it pushes.
+- Slings and presses can aim at the first fog on the road (nearest the well), the strongest, or the closest to the tower.
+- Selling gives back 70% of what the tower cost. A tower built or upgraded since the last wave started gives back everything, so a wrong tap costs nothing.
+
+## The wind
+The wind turns with every wave. The arrow at the top shows where it blows, with one to three dots for its strength (a dash when it is calm), and the bar shows the wind of the next wave before you call it. The wind is the same every time you play that night.
+- Slings and presses reach 10% farther for each dot towards where the wind blows, and 10% less against it.
+- Bells reach farther with the wind and never less against it.
+- Windmills push harder the stronger the wind; on a calm night they still turn, at half strength.
+- Choose a tower to see its reach in the wind now: the ring stretches with the wind.
+
+## The fog
+Each kind has its own shape, so you never need the colours.
+- **Wisp** (round): plain fog.
+- **Runner** (a drop): fast, but fades quickly.
+- **Shell** (six sides, with a rim): stones and chimes do only a quarter of their harm until oil or a deep bell cracks the shell.
+- **Puff** (three round clouds): splits into two half puffs when it fades.
+- **Fog bank** (wide): slow and very strong, and costs three hearts at the well.
+The near island has wisps and runners, and a fog bank at the end of its last ridge. Shells and puffs come with the next islands.
+
+## Difficulty, stars and saves
+- Mild: 30 hearts and more coins; Normal: 20 hearts; Hard: 10 hearts and stronger fog.
+- Stars: three with nine tenths of the hearts left, two with half, one for any night won. The chart keeps the best stars of each ridge.
+- When a night is lost, `Try again from wave` puts you back at the start of that wave, with the towers and coins you had then.
+- The night you are playing is kept on this device and reopens, paused, where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a night ends. `Reset progress` on the chart clears them on every device. Windmill ridge is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+
+## Keyboard
+- Arrow keys choose a pad; [[Escape]] lets go of it.
+- [[1]] to [[4]]: build a sling post, bell tower, olive press or windmill on the chosen pad.
+- [[U]]: upgrade to level 2. [[A]] or [[B]]: the branch at level 3. [[T]]: change what it aims at. [[S]]: sell.
+- [[Space]]: pause or play. [[F]]: speed. [[N]]: the next wave. [[C]]: the island chart. [[M]]: sound. [[?]]: how to play.
+
+## Tips
+- Pads where the road bends round them see the most road.
+- Put a bell tower where several slings reach: slowed fog stays longer in their reach.
+- Look at the wind of the next wave before you call it, and aim your presses where it carries their oil farther.
+- Calling waves early pays a little, but only when your towers are ready.

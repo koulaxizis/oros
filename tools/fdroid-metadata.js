@@ -55,8 +55,9 @@ const TEXT = {
 // shows English to German phones for the others.
 const LOCALE = { en: "en-US", el: "el", de: "de-DE" };
 
-// Every APK the repository publishes: oros.apk, oros-<id>.apk and
-// oros-drive.apk (orOS Drive, DRIVE-APP: its own source repository)
+// Every APK the repository publishes: oros.apk, oros-<id>.apk,
+// oros-drive.apk (orOS Drive, DRIVE-APP: its own source repository) and
+// oros-glarolykoi.apk (the Glarolykoi app, GL-1: glarolykoi-android/)
 // from the android workflow, and koulaxizis-apps.apk (Koulaxizis Apps,
 // APPS-M3: the app manager in koulaxizis-apps/, its own workflow and
 // release "koulaxizis-apps")
@@ -71,6 +72,10 @@ function list() {
   }
   out.push({ id: "drive", pkg: "online.useoros.drive", apk: "oros-drive.apk", icon: path.join(ROOT, "icons", "icon-512.png"),
     name: "orOS Drive", source: "https://github.com/koulaxizis/oros-drive", web: WEB + "download/" });
+  out.push({ id: "glarolykoi", pkg: "net.glarolykoi.android", apk: "oros-glarolykoi.apk",
+    icon: path.join(STORE, "glarolykoi", "icon-512.png"), name: "Glarolykoi",
+    author: "Glarolykoi", authorWeb: "https://glarolykoi.net/", web: "https://glarolykoi.net/",
+    source: SOURCE + "/tree/main/glarolykoi-android", issues: SOURCE + "/issues" });
   out.push({ id: "koulaxizis-apps", pkg: "gr.koulaxizis.apps", apk: "koulaxizis-apps.apk", icon: path.join(STORE, "koulaxizis-apps", "icon-512.png"),
     name: "Koulaxizis Apps", web: WEB + "download/#koulaxizis-apps" });
   return out;
@@ -124,12 +129,12 @@ function yml(a) {
     "Categories:",
     "  - " + category(a),
     "License: MIT",
-    "AuthorName: orOS",
-    "AuthorWebSite: " + WEB,
+    "AuthorName: " + (a.author || "orOS"),
+    "AuthorWebSite: " + (a.authorWeb || WEB),
     "WebSite: " + (a.web || WEB + (a.id === "oros" ? "" : a.id + "/")),
     "SourceCode: " + (a.source || SOURCE),
-    "IssueTracker: " + (a.source || SOURCE) + "/issues",
-    "Translation: " + (a.source || SOURCE),
+    "IssueTracker: " + (a.issues || (a.source || SOURCE) + "/issues"),
+    "Translation: " + (a.issues ? SOURCE : a.source || SOURCE),
     "Donate: " + DONATE,
     ""
   ].join("\n");

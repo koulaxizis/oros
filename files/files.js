@@ -201,6 +201,9 @@
       "pv.editHint":     "Editing text file — changes apply directly to the virtual disk.",
       "pv.binary":       "Binary file — no text preview available.",
       "pv.imageFail":    "Image couldn't be loaded.",
+      "pv.text":         "Text",
+      "pv.textTip":      "Copy text from this picture",
+      "pv.textFail":     "Text recognition could not start. Try again when online.",
       "pv.notFound":     "File not found.",
       "pv.bigFile":      "File is too large to preview ({n} KB). Use Edit instead.",
       "menu.open":     "Open / Enter folder",
@@ -483,6 +486,9 @@
       "pv.editHint":     "Επεξεργασία αρχείου κειμένου — οι αλλαγές γράφονται απευθείας στον εικονικό δίσκο.",
       "pv.binary":       "Δυαδικό αρχείο — δεν υπάρχει προεπισκόπηση κειμένου.",
       "pv.imageFail":    "Η εικόνα δεν φορτώθηκε.",
+      "pv.text":         "Κείμενο",
+      "pv.textTip":      "Αντιγραφή κειμένου από αυτή την εικόνα",
+      "pv.textFail":     "Η αναγνώριση κειμένου δεν ξεκίνησε. Δοκίμασε ξανά με σύνδεση.",
       "pv.notFound":     "Το αρχείο δεν βρέθηκε.",
       "pv.bigFile":      "Το αρχείο είναι πολύ μεγάλο για προεπισκόπηση ({n} KB). Χρησιμοποίησε την Επεξεργασία.",
       "menu.open":     "Άνοιγμα / είσοδος στον φάκελο",
@@ -734,6 +740,9 @@
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="2 12 6 16 13 8"/><polyline points="11 15 12 16 21 7"/></svg>';
   var TEXT_SVG =
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>';
+  // LIVE-TEXT: a frame with a T, the Text button of pictures
+  var LIVETEXT_SVG =
+    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M8 8h8M12 8v8"/></svg>';
   var IMG_EXTS = ["png","jpg","jpeg","gif","webp","bmp","ico","avif"];
   var PV_TEXT_LIMIT = 512 * 1024;      // 512 KB text preview cap
 
@@ -1756,6 +1765,7 @@
       openFile: openFileAt,
       pickFolder: pickFolderDialog,
       ver: SCRIPT_V,
+      ocr: ocrKit,
       trash: function (p) {
         return moveToTrash(p).then(function () { favDropPath(p); markDirty(); });
       },
@@ -4195,6 +4205,7 @@
     }
     pvDirty = false;
     pvDiscardUntil = 0;
+    pvTextOff();
     pvRevokeAll();
     pvOverlay.remove();
     pvOverlay = null;
@@ -4438,6 +4449,57 @@
     acts.insertBefore(b, acts.firstChild);
   }
 
+  // ---------- LIVE-TEXT: copy text from the picture ----------
+  // ../ocrkit.js loads on the first press (never at boot), then the
+  // engine (vendor/tesseract/) after the device's one yes.
+  var ocrP = null, pvText = null;
+  function ocrKit() {
+    if (window.OrosOcr) return Promise.resolve(window.OrosOcr);
+    if (ocrP) return ocrP;
+    ocrP = new Promise(function (res, rej) {
+      var sc = document.createElement("script");
+      sc.src = "../ocrkit.js" + (SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "");
+      sc.onload = function () { window.OrosOcr ? res(window.OrosOcr) : rej(new Error("ocr")); };
+      sc.onerror = function () { ocrP = null; sc.remove(); rej(new Error("ocr")); };
+      document.head.appendChild(sc);
+    });
+    return ocrP;
+  }
+  function pvTextOff() {
+    var c = pvText;
+    pvText = null;
+    if (c) c.close();
+    var b = $("pv-text");
+    if (b) b.classList.remove("on");
+  }
+  function injectTextButton(path, name) {
+    var acts = $("pv-actions");
+    if (!acts || acts.dataset.hasText) return;
+    acts.dataset.hasText = "1";
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "pv-btn";
+    b.id = "pv-text";
+    b.title = t("pv.textTip");
+    b.setAttribute("aria-label", t("pv.textTip"));
+    b.innerHTML = LIVETEXT_SVG + "<span></span>";
+    b.querySelector("span").textContent = t("pv.text");
+    b.addEventListener("click", function () {
+      if (pvText) { pvTextOff(); return; }
+      var img = $("pv-body") && $("pv-body").querySelector("img.pv-img");
+      if (!img) return;
+      b.classList.add("on");
+      ocrKit().then(function (K) {
+        if (!pvOverlay || !img.isConnected) return null;
+        return K.open({ el: img, key: path, title: name, onClose: function () { pvText = null; b.classList.remove("on"); } });
+      }).then(function (c) { if (c) pvText = c; else b.classList.remove("on"); }, function () {
+        b.classList.remove("on");
+        transientNote(t("pv.textFail"));
+      });
+    });
+    acts.appendChild(b);
+  }
+
   function injectEditButton(path, name) {
     var acts = $("pv-actions");
     if (!acts || acts.dataset.hasEdit) return;
@@ -4578,6 +4640,7 @@
       var url = URL.createObjectURL(blob);
       pvActiveUrls.push(url);              // FG5: revoked in pvRevokeAll()
       pvBodySet('<img class="pv-img" alt="" src="' + url + '">');
+      injectTextButton(path, name);
     }).catch(function () {
       pvBodySet('<div class="pv-msg">' + escapeHtml(t("pv.imageFail")) + "</div>");
     });

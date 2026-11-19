@@ -180,6 +180,10 @@
       "bytes": 186367,
       "ms": 42
     },
+    "hive": {
+      "bytes": 276203,
+      "ms": 297
+    },
     "invoices": {
       "bytes": 753663,
       "ms": 54
@@ -355,6 +359,10 @@
     "reversi": {
       "bytes": 260095,
       "ms": 53
+    },
+    "ridge": {
+      "bytes": 268751,
+      "ms": 143
     },
     "ringtones": {
       "bytes": 303103,

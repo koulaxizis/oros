@@ -7,7 +7,9 @@ The button at the right end of the top bar (the network and power symbols) opens
 - The round buttons at the top: the battery (on a laptop or phone running on it), the language, `Settings`, `Lock orOS` (when the screen lock is on) and the power button with `Restart orOS`. On orOS USB the power button also restarts or shuts down the computer.
 - `Network` shows whether you are online. `Sync` shows its state; tap it to sync now, or the arrow for the sync settings.
 - `Dark style`, `Large text`, `High contrast` and `On-screen keyboard` switch on and off with one tap. Settings has the full choices for each.
-- `Do Not Disturb` keeps notifications quiet: they still arrive in the bell's list, without a pop-up or a sound. The arrow sets it `For one hour`, `Until 8 in the morning` or `Until you turn it off`. It is set on this device only, and the top-bar button shows a crossed bell while it is on.
+- `Focus` keeps notifications quiet: they still arrive in the bell's list, without a pop-up or a sound, apart from the apps the mode lets through. One tap turns the last mode on or off (`Do Not Disturb` at first); the arrow lists the modes (`Do Not Disturb`, `Sleep`, `Work`, `Personal` and your own) and sets how long: `For one hour`, `Until 8 in the morning` or `Until you turn it off`. A mode holds on all your devices, and the top-bar button shows a crossed bell while one is on. See [Focus modes](help:t/notifications).
+- `Keep awake` keeps the screen on while orOS is on screen: one press until you turn it off, the arrow gives `For one hour`, `For two hours` or `Until you turn it off`. On orOS USB it also keeps the screen from going dark and the computer from sleeping. A cup on the top-bar button shows it is on.
+- `Energy saver` stops what moves on the desktop (live wallpaper, Living land, the weather desktop, seasonal decorations, the opening and closing animation of apps) and refreshes widgets once a minute. It turns on by itself when the battery falls under 20 % and is not charging, and off again on the charger; turned off on a low battery, it stays off until the next charge. Sync, notifications, alarms, timers and sound never wait for it. A leaf on the top-bar button shows it is on. Both are set on this device only.
 - `Playing` lists the music, podcast, radio station or Sound Mixer mix that plays, with Play / Pause; tap its name to open the app.
 - On orOS USB, the panel also has the volume and brightness, Wi-Fi and Bluetooth.
 
@@ -90,6 +92,8 @@ In `Settings`, under `Appearance`, choose `Dark` or `Light` next to `Theme`. orO
 
 ## Skins
 The coloured dots under `System colour` are skins: each one gives orOS and its apps a different accent colour. They are named after Linux systems, such as `Ubuntu`, `Fedora`, `Mint` or `Pop!_OS`; hover over a dot to see its name. The default is `Oros`, in gold.
+
+`Accent from wallpaper`, under the dots, takes the accent colour from your wallpaper instead: the built-in wallpapers, `Living land`, `Mine` and a picture of your own. orOS adjusts its brightness so text on buttons and links stays easy to read in the light and the dark theme; backgrounds, panels and text keep the colours of your skin. When the wallpaper has several clear colours, up to four appear under `Colours from the wallpaper` to pick from; a new wallpaper starts at its strongest colour. Grey wallpapers such as `Monochrome` keep the skin's colour, and high contrast always keeps its own colours. The switch is off at first and works on this device only.
 
 > Every skin comes with a suggested wallpaper, marked with a ★ under `Wallpaper`. Choosing a skin also switches to its wallpaper, as long as you still have the default wallpaper (`Desert Sand`) or the one suggested for your previous skin. Once you pick another wallpaper yourself, skins leave it alone, and you can still choose any wallpaper with any skin.
 

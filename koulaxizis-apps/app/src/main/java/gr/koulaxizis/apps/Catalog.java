@@ -24,8 +24,12 @@ import java.util.Map;
  * stale or replayed repository cannot offer an older version.
  */
 final class Catalog {
+    /** Per section of {@link Source#ALL} (see {@link Source#sections}). */
     final Map<String, List<AppInfo>> apps = new HashMap<>();
     final Map<String, String> errors = new HashMap<>();
+    /** Per repository of {@link Source#REPOS}: the verified lists and the failures. */
+    private final Map<String, List<AppInfo>> byRepo = new HashMap<>();
+    private final Map<String, String> repoErrors = new HashMap<>();
     /** Newest accepted entry timestamp over all repositories, or 0. */
     long checkedAt;
     /** The manager itself as a repository offers it (newest over all), or null; never in {@link #apps}. */
@@ -52,31 +56,41 @@ final class Catalog {
     }
 
     private void loadCachedLocked() {
-        for (Source s : Source.ALL) {
+        for (Source s : Source.REPOS) {
             File f = indexFile(s);
             if (!f.exists()) continue;
             try {
-                apps.put(s.id, parse(s, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8)));
+                byRepo.put(s.id, parse(s, new String(Files.readAllBytes(f.toPath()), StandardCharsets.UTF_8)));
                 checkedAt = Math.max(checkedAt, prefs.getLong("ts." + s.id, 0));
             } catch (IOException | RepoException e) {
                 f.delete();
             }
         }
+        split();
+    }
+
+    /** The screen's sections from the repositories' lists. */
+    private void split() {
+        apps.clear();
+        apps.putAll(Source.sections(Source.ALL, byRepo));
+        errors.clear();
+        errors.putAll(Source.sectionErrors(Source.ALL, repoErrors));
     }
 
     /** Network: refreshes every repository; a failing one keeps its last good list and gets an error. */
     void refresh() {
         synchronized (LOCK) {
-            errors.clear();
-            for (Source s : Source.ALL) {
+            repoErrors.clear();
+            for (Source s : Source.REPOS) {
                 try {
                     refresh(s);
                 } catch (RepoException e) {
                     // The reason, for adb logcat; no addresses or data of the phone.
                     android.util.Log.w("KoulaxizisApps", s.id + ": " + e.getMessage(), e.getCause());
-                    errors.put(s.id, e.code);
+                    repoErrors.put(s.id, e.code);
                 }
             }
+            split();
         }
     }
 
@@ -98,7 +112,7 @@ final class Catalog {
         }
         long last = prefs.getLong("ts." + s.id, 0);
         if (entry.timestamp < last) throw new RepoException(RepoException.OLDER, s.id);
-        if (entry.timestamp == last && indexFile(s).exists() && apps.containsKey(s.id)) {
+        if (entry.timestamp == last && indexFile(s).exists() && byRepo.containsKey(s.id)) {
             checkedAt = Math.max(checkedAt, last);
             return; // nothing new
         }
@@ -118,7 +132,7 @@ final class Catalog {
             throw new RepoException(RepoException.NETWORK, "storage", e);
         }
         prefs.edit().putLong("ts." + s.id, entry.timestamp).apply();
-        apps.put(s.id, list);
+        byRepo.put(s.id, list);
         checkedAt = Math.max(checkedAt, entry.timestamp);
     }
 

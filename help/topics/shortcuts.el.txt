@@ -24,6 +24,7 @@
 - [[Ctrl+Alt+Shift+M]]: `Γρήγορες ρυθμίσεις`
 - [[Ctrl+Alt+Shift+V]]: `Ιστορικό προχείρου`
 - [[Ctrl+Alt+Shift+.]]: `Emoji`
+- [[Ctrl+Alt+Shift+,]]: `Τσέπη`
 - [[Ctrl+Alt+Shift+B]]: `Μετακίνηση της εφαρμογής στην άλλη οθόνη`
 - [[Ctrl+Alt+Shift+Z]]: `Ανάγνωση του επιλεγμένου κειμένου φωναχτά`
 - [[Ctrl+Alt+Shift+G]]: `Στιγμιότυπο οθόνης (orOS USB)`
