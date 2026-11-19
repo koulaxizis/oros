@@ -42,8 +42,8 @@
 //
 // Performance: one canvas for moving things, static SVG for the
 // rest, at most 30 frames a second, paused while an app is open or
-// the tab is hidden. Reduced motion, a low battery (where the
-// browser tells) or a frame rate that keeps dropping leave only the
+// the tab is hidden. Reduced motion, Energy saver or a low battery
+// (where the browser tells) or a frame rate that keeps dropping leave only the
 // still pieces. Weak devices get half the particles. Every drawing
 // is our own; no images, fonts or libraries, nothing from the net.
 // Pure logic (dates, events, fields, merge) is unit-tested in node
@@ -340,6 +340,12 @@
   var preview = null;          // event id shown by "Try it now" (memory only)
   var previewAt = 0;
   var lowBattery = false;
+  // Energy saver (qsettings.js 1.3.0): <html data-oros-saver> "1"/"0"
+  // replaces the own low-battery rule; missing = the rule as before.
+  function saverOr(low) {
+    var v = typeof document !== "undefined" ? document.documentElement.getAttribute("data-oros-saver") : null;
+    return v === null ? !!low : v === "1";
+  }
   var weak = false;
   var mqReduce = null;
 
@@ -945,7 +951,7 @@
   }
 
   function still() {
-    return reduced() || lowBattery || degraded || get(load(), "motion") === "still";
+    return reduced() || saverOr(lowBattery) || degraded || get(load(), "motion") === "still";
   }
 
   function amountFactor() {
@@ -1173,7 +1179,7 @@
     return {
       on: get(d, "on"), motion: get(d, "motion"), amount: get(d, "amount"), xmas: get(d, "xmas"),
       easter: get(d, "easter"), bday: get(d, "bday"),
-      reduced: reduced(), lowBattery: lowBattery, slow: degraded,
+      reduced: reduced(), lowBattery: saverOr(lowBattery), slow: degraded,
       // Soonest first: what is on now, then what comes next.
       // A birthday not set has no dates and goes last; seasons are
       // marked so Settings can list them apart.
@@ -1215,6 +1221,7 @@
     var api = root.orosSync;
     if (api && typeof api.registerSlice === "function") api.registerSlice("seasonal", sliceGet, sliceSet, DATA_KEY, merge);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) update(); else stopLoop(); });
+    document.addEventListener("oros-power", function () { shown = ""; update(); });
     root.addEventListener("resize", function () {
       clearTimeout(resizeT);
       resizeT = setTimeout(function () { shown = ""; update(); }, 250);

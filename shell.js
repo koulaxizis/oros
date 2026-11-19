@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.71.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.71.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -716,13 +716,15 @@
 
   // "Live wallpaper": soft lights moving over "Mine" (art.js live) on a
   // canvas behind the desktop's content. Paused while an app is open
-  // or the tab is hidden; never with reduced motion.
+  // or the tab is hidden; never with reduced motion or Energy saver
+  // (qsettings.js 1.3.0, <html data-oros-saver="1">).
   var wpLive = null, wpLiveKey = "";
   function wpLiveSync() {
     var A = wpArt(), desk = document.getElementById("oros-desktop");
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     var on = !!(A && typeof A.live === "function" && desk && state.wallpaper === "custom" &&
-                !wpPic() && state.wpart && state.wpart.live && !reduce);
+                !wpPic() && state.wpart && state.wpart.live && !reduce &&
+                document.documentElement.getAttribute("data-oros-saver") !== "1");
     var r = on ? wpRecipeNow() : null;
     var key = on ? A.key(r, wpAccent()) : "";
     if (key === wpLiveKey && on === !!wpLive) return;
@@ -746,6 +748,7 @@
     var wpMq = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)");
     if (wpMq && wpMq.addEventListener) wpMq.addEventListener("change", wpLiveSync);
   } catch (e) {}
+  document.addEventListener("oros-power", function () { wpLiveSync(); });
 
   function wpCustomApply(desktop) {
     var pic = wpPic();

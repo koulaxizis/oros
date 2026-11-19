@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.71.01
+- **Keep awake and Energy saver in Quick settings.** `Keep awake` keeps the screen on for 1 hour, 2 hours or until you turn it off (on orOS USB the computer does not sleep either). `Energy saver` stops what moves on the desktop and refreshes widgets once a minute; it also turns on by itself under 20 % battery. Both are for this device only. See [Appearance](help:t/appearance).
+
 ## Version 7.71.00
 - **Tags in Files.** Give any file or folder coloured tags (`Tags…` in its menu), find everything with one tag under `Tags` in the tree, also in Photos. It is one list with Documents, and it is synced. See [Files](help:a/files).
 
