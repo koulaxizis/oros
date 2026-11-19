@@ -122,6 +122,8 @@
     var opts = { pages: ids, layout: L, spreads: !!(q.spreads && doc.setup.facing), bleed: print && q.bleed, marks: print ? q.marks : null,
                  ppi: !q.down ? 2400 : q.preset === "screen" ? 150 : 300, rgb: q.preset === "screen", imgStat: stat,
                  creep: print && q.creep ? q.creep * 72 / 25.4 : 0 };
+    // the screen PDF: web and e-mail addresses are links (Chris 2026-11-18)
+    if (!print && window.LY_OUT && window.LY_OUT.urlLinks) opts.links = window.LY_OUT.urlLinks(doc, L);
     var fontP = LY.T && LY.T.load ? Promise.resolve(LY.T.load(["sans-r"])).then(null, function () {}) : Promise.resolve();
     var libs = q.preset === "pdfx4" ? pdfxLib() : Promise.resolve(null);
     return Promise.all([fontP, libs]).then(function (r) {

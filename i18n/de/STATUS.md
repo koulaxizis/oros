@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 47878 of 47878 (100%)
+- Strings: 48078 of 48078 (100%)
 - Help pages: 156 of 156 (100%)
 - Shown in the language list: yes
 
@@ -12,7 +12,7 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 2122 / 2122 |
+| assistant | 100% | 2147 / 2147 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 322 / 322 |
@@ -24,7 +24,7 @@ en and el); translators change them there, not in a pack.
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
 | bubble | 100% | 54 / 54 |
-| budget | 100% | 1182 / 1182 |
+| budget | 100% | 1184 / 1184 |
 | calculator | 100% | 170 / 170 |
 | calendar | 100% | 638 / 638 (49 in the code) |
 | capture | 100% | 56 / 56 |
@@ -54,7 +54,7 @@ en and el); translators change them there, not in a pack.
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 796 / 796 (25 in the code) |
+| files | 100% | 845 / 845 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -74,7 +74,7 @@ en and el); translators change them there, not in a pack.
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 358 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 1151 / 1151 |
+| layout | 100% | 1153 / 1153 |
 | library | 100% | 330 / 330 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
@@ -127,10 +127,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 1873 / 1873 |
+| settings | 100% | 1933 / 1933 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1434 / 1434 |
+| shell | 100% | 1496 / 1496 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -176,3 +176,10 @@ en and el); translators change them there, not in a pack.
 | writer | 100% | 601 / 601 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
+
+## Lines to fix
+
+These show English until fixed (usually the English text changed).
+
+- de/help/settings.txt: links or key caps differ from settings/help.en.txt
+- de/help/topics/share.txt: links or key caps differ from help/topics/share.en.txt

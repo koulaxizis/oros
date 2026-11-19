@@ -177,6 +177,20 @@
     if (key === 'position') applyStackPosition();
   }
 
+  // FOCUS-1: focus modes are written WITHOUT moving settingsRev. They
+  // carry their own stamps (focus.js merge), so turning a mode on here
+  // never makes this device's whole settings object win over a sound
+  // or position changed meanwhile on another device.
+  function setFocus(value) {
+    if (!state.slice) return false;
+    if (!state.slice.settings) state.slice.settings = defaultSettings();
+    if (JSON.stringify(state.slice.settings.focus) === JSON.stringify(value)) return true;
+    state.slice.settings.focus = value;
+    noteChange();
+    saveSliceThrottled(500);
+    return true;
+  }
+
   // NT-2: the settings clock. It used to count (+1): two devices that
   // each changed something ended on the SAME number with different
   // content. Wall-clock ms, kept monotonic — the later change wins,
@@ -199,7 +213,7 @@
     const missedItems = state.slice.items.filter(item => {
       if (item.firedAt) return false; // Already fired somewhere
       if (!getAppToggle(item.ns)) return false; // Disabled app
-      if (isQuietHour(now)) return false; // Silent period
+      if (quietFor(item.ns, now)) return false; // Silent period (focus mode)
       // Wave 1B — badge fallback rule: an unread item older than
       // 24h is too late for a toast — waking the whole screen for
       // yesterday's reminder is noise, not service. It stays in the
@@ -248,12 +262,15 @@
     updateBadge();
   }
 
-  // Do Not Disturb (Quick settings, qsettings.js): device-local
-  // "oros-dnd" = "on" (until turned off) or the ms it ends at. While it
-  // holds, notifications go to the panel without a toast or a sound,
-  // exactly as in quiet hours. An ended or unreadable value is off.
+  // Do Not Disturb is a focus mode since FOCUS-1 (focus.js, decision
+  // D2): dnd() = { on, until, id } of ANY running mode (the bar's
+  // crossed bell, the Automations chime), setDnd("on"|ms|false)
+  // starts or stops the Do Not Disturb mode (shared by all devices,
+  // D1). The old device-local "oros-dnd" key is read only once, by
+  // migrateDnd(), and then removed. Without focus.js (an older
+  // cached shell) the old key still works as before.
   const DND_KEY = 'oros-dnd';
-  function getDnd(now) {
+  function oldDnd(now) {
     let raw = null;
     try { raw = localStorage.getItem(DND_KEY); } catch (e) {}
     if (raw === 'on') return { on: true, until: 0 };
@@ -261,17 +278,63 @@
     if (raw && isFinite(n) && n > (now || Date.now())) return { on: true, until: n };
     return { on: false, until: 0 };
   }
+  function focusApi() {
+    var F = window.orosFocus;
+    return (F && typeof F.silent === 'function') ? F : null;
+  }
+  function getDnd(now) {
+    var F = focusApi();
+    if (!F || !state.slice) return oldDnd(now);
+    var a = F.active(now || Date.now());
+    return a ? { on: true, until: a.until || 0, id: a.id } : { on: false, until: 0 };
+  }
   function setDnd(v) {
-    try {
-      if (v === 'on' || v === true) localStorage.setItem(DND_KEY, 'on');
-      else if (typeof v === 'number' && isFinite(v) && v > Date.now()) localStorage.setItem(DND_KEY, String(Math.floor(v)));
-      else localStorage.removeItem(DND_KEY);
-    } catch (e) {}
+    var F = focusApi();
+    if (F && state.slice) {
+      if (v === 'on' || v === true) F.start('dnd', { until: 0 });
+      else if (typeof v === 'number' && isFinite(v) && v > Date.now()) F.start('dnd', { until: Math.floor(v) });
+      else F.stop();
+    } else {
+      try {
+        if (v === 'on' || v === true) localStorage.setItem(DND_KEY, 'on');
+        else if (typeof v === 'number' && isFinite(v) && v > Date.now()) localStorage.setItem(DND_KEY, String(Math.floor(v)));
+        else localStorage.removeItem(DND_KEY);
+      } catch (e) {}
+    }
     updateBadge();
+  }
+  // A Do Not Disturb still running from before focus modes becomes the
+  // Do Not Disturb mode (once; the key is removed either way).
+  function migrateDnd() {
+    var F = focusApi();
+    if (!F) return;
+    var old = oldDnd(Date.now());
+    var had = false;
+    try { had = localStorage.getItem(DND_KEY) !== null; } catch (e) {}
+    if (!had) return;
+    if (old.on && !F.active()) F.start('dnd', { until: old.until });
+    try { localStorage.removeItem(DND_KEY); } catch (e) {}
+  }
+  // The ONE silence rule: a running focus mode that does not allow
+  // this app (focus.js; quiet hours are the Sleep mode's schedule),
+  // else the old rule. Silent = inbox + badge, no pop-up, no sound.
+  function quietFor(ns, now) {
+    var F = focusApi();
+    if (F && state.slice) {
+      try { return F.silent(ns, now); } catch (e) {}
+    }
+    // focus.js loads with the late bundle (after the desktop is drawn).
+    // Until then a running manual mode keeps EVERY app quiet (the safe
+    // side: nothing is lost, it all waits in the bell).
+    try {
+      var fa = state.slice && state.slice.settings && state.slice.settings.focus && state.slice.settings.focus.act;
+      if (fa && typeof fa.id === 'string' && fa.id && (!fa.until || fa.until > now)) return true;
+    } catch (e) {}
+    return isQuietHour(now);
   }
 
   function isQuietHour(now) {
-    if (getDnd(now).on) return true;
+    if (oldDnd(now).on) return true;
     const qh = getSetting('quietHours', {});
     if (!qh.enabled) return false;
     
@@ -1127,7 +1190,16 @@
       var jb = JSON.stringify([sortKeys(B.settings), sortKeys(B.toggles)]);
       w = (ja >= jb) ? A : B;
     }
-    return notifBuild(w.settings, w.toggles, A.items.concat(B.items), Date.now());
+    // FOCUS-1: the focus modes ride inside the settings but merge on
+    // their own stamps (a sound changed on one device never undoes a
+    // mode started on another). Left out until someone used them.
+    var settings = w.settings, F = focusApi();
+    if (F && (F.touched(A.settings.focus) || F.touched(B.settings.focus))) {
+      settings = {};
+      Object.keys(w.settings).forEach(function (k) { settings[k] = w.settings[k]; });
+      settings.focus = F.merge(A.settings.focus, B.settings.focus);
+    }
+    return notifBuild(settings, w.toggles, A.items.concat(B.items), Date.now());
   }
 
   // Setter: pull-fed. Receives the MERGED slice from the engine (or
@@ -1150,6 +1222,7 @@
     saveSliceNow();
     updateBadge();
     applyStackPosition();   // a position chosen on another device applies now, not at the next boot
+    try { var Fp = focusApi(); if (Fp) Fp.changed(); } catch (e) {}   // a mode started on another device
     // Σ2-N3: items that fired on ANOTHER device while this tab was
     // closed get their toast NOW — same rules as bootSweep: fresh
     // (<24h), enabled, app-toggled, not quiet. Too-late items go
@@ -1161,7 +1234,7 @@
       var cuFresh = state.slice.items.filter(function (it) {
         if (it.firedAt) return false;
         if (!getAppToggle(it.ns)) return false;
-        if (isQuietHour(cuNow)) return false;
+        if (quietFor(it.ns, cuNow)) return false;
         if (cuNow - (it.createdAt || 0) > 24 * 60 * 60 * 1000) {
           it.firedAt = it.createdAt;   // too late — badge only
           return false;
@@ -1231,7 +1304,7 @@
 
     // Quiet hours = inbox + badge ONLY, no toast (silent capture —
     // the bell never misses anything, sleep is respected).
-    if (!isQuietHour(now)) fireToast(item, false);
+    if (!quietFor(item.ns, now)) fireToast(item, false);
     updateBadge();
     // Automations wave A2 (BR-EV): a rule may follow this notice. Only
     // notices posted on THIS device; never the rules' own (no loops)
@@ -1313,6 +1386,15 @@
     // Do Not Disturb (Quick settings): { on, until } (until 0 = until off)
     dnd: () => getDnd(Date.now()),
     setDnd,
+    // FOCUS-1: is a pop-up or sound of this app kept silent right now?
+    silent: (ns) => quietFor(String(ns || ''), Date.now()),
+    setFocus,
+    // focus.js calls this once it has loaded (late bundle).
+    focusReady: function () {
+      if (!state.ready) return;
+      migrateDnd();
+      try { var F = focusApi(); if (F) F.changed(); } catch (e) {}
+    },
     
     // Direct access (for debugging)
     getState: () => state,
@@ -1351,6 +1433,7 @@
 
     // Boot sweep
     state.ready = true;
+    migrateDnd();
     bootSweep();
 
     // NO setInterval(60000) — shell doctrine: "no idle timers".
@@ -1369,6 +1452,7 @@
     if (now - (state._lastTick || 0) < 60000) return;
     state._lastTick = now;
     scheduledSweep();
+    try { var F = focusApi(); if (F) F.changed(); } catch (e) {}   // a schedule or an "until" ran out
   };
 
   // ===== STACK CONTAINER CREATION =====

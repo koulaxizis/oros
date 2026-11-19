@@ -261,7 +261,7 @@
       opts.rgb = true;
       opts.lang = O.lang(d, ed.pub);
       opts.outline = heads;
-      opts.links = O.tocLinks(d, L, heads);
+      opts.links = O.tocLinks(d, L, heads).concat(O.urlLinks ? O.urlLinks(d, L) : []);
       var cd = prof.cover ? LY.data().docs.filter(function (x) { return x.id === prof.cover && !x.del; })[0] : null;
       if (cd) opts.cover = { doc: cd };
     }

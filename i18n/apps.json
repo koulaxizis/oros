@@ -342,7 +342,8 @@
     "files/dropbox.js",
     "files/files.js",
     "files/gmedia.js",
-    "files/photos.js"
+    "files/photos.js",
+    "files/tags.js"
    ]
   },
   {

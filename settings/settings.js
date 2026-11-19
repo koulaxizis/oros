@@ -583,8 +583,8 @@
   }
 
   // ---------- 4a. Section: Accessibility ----------
-  // Text size, high contrast, the focus ring, the colour filter and the
-  // pointer size (shell.js 5e, a11yfx.js). All stay on this device;
+  // Text size, high contrast, the focus ring, the colour filter, the
+  // pointer size (shell.js 5e, a11yfx.js) and Read aloud (READ-1). All stay on this device;
   // older shells send no s.a11y.
   function secAccessibility(host, s) {
     var a = s.a11y;
@@ -639,6 +639,40 @@
         c6.appendChild(el("p", "hint", t("ac.pointer.hint")));
         host.appendChild(c6);
       }
+    }
+
+    // READ-1: Read aloud (shell.js window.orosRead, readaloud.js), off by
+    // default, this device only; older shells send no s.read.
+    var r = s.read;
+    if (r) {
+      var c7 = card(t("ac.read"), "read");
+      c7.appendChild(row(t("ac.read.on"), switchBtn(r.on, "readAloud", function (v) { set("readAloud", v); }, t("ac.read.on")),
+        { hint: t("ac.read.hint") }));
+      if (r.on) {
+        var dec = LANG === "en" ? "." : ",";
+        c7.appendChild(segRow(t("ac.read.rate"), segmented(r.rates.map(function (n) {
+          return { value: n, label: String(n).replace(".", dec) + "\u00d7" };
+        }), r.rate, "readRate", function (v) { set("readRate", v); }, t("ac.read.rate"))));
+      }
+      // W2: a voice per language, from this device's own voices, with Test
+      if (r.on && r.voices && r.voices.length) {
+        r.voices.forEach(function (g) {
+          var vr = row(t("ac.read.voice." + g.lang), null, g.list.length ? null : { hint: t("ac.read.novoices") });
+          if (g.list.length) {
+            var opts = [{ value: "", label: t("ac.read.auto") }].concat(g.list.map(function (v) {
+              return { value: v.uri, label: v.name + (v.lang ? " (" + v.lang + ")" : "") };
+            }));
+            var sel = select(opts, g.pick, "readVoice-" + g.lang, function (val) { set("readVoice", { lang: g.lang, uri: val }); });
+            sel.setAttribute("aria-label", t("ac.read.voice." + g.lang));
+            vr.appendChild(actions(sel, button(t("ac.read.test"), "readTest-" + g.lang, function () { act("read.test", g.lang); })));
+          }
+          c7.appendChild(vr);
+        });
+        c7.appendChild(el("p", "hint", t("ac.read.voices.hint")));
+      }
+      if (!r.available) c7.appendChild(el("p", "hint", t("ac.read.none")));
+      if (r.strict) c7.appendChild(el("p", "hint", t("ac.read.strict")));
+      host.appendChild(c7);
     }
 
     // FM-5: the font of orOS (chosen on a font's page in Fonts)
@@ -882,28 +916,7 @@
       { forId: "f-n.duration" }));
     host.appendChild(c2);
 
-    var q = C.readQuiet(N.getSetting("quietHours", {}));
-    var c3 = card(null);
-    c3.appendChild(row(t("n.quiet"), switchBtn(q.enabled, "n.quiet", function (v) {
-      nSet("quietHours", C.quietValue(v, q.start, q.end));
-    }, t("n.quiet")), { hint: t("n.quiet.hint") }));
-    var hours = [];
-    for (var h = 0; h <= 23; h++) hours.push({ value: h, label: C.hourLabel(h) });
-    var qRow = el("div", "pair");
-    var fromLab = el("label", "pair-label", t("n.from"));
-    fromLab.htmlFor = "f-n.from";
-    qRow.appendChild(fromLab);
-    qRow.appendChild(select(hours, q.start, "n.from", function (v) {
-      nSet("quietHours", C.quietValue(q.enabled, parseInt(v, 10), q.end));
-    }));
-    var toLab = el("label", "pair-label", t("n.to"));
-    toLab.htmlFor = "f-n.to";
-    qRow.appendChild(toLab);
-    qRow.appendChild(select(hours, q.end, "n.to", function (v) {
-      nSet("quietHours", C.quietValue(q.enabled, q.start, parseInt(v, 10)));
-    }));
-    c3.appendChild(qRow);
-    host.appendChild(c3);
+    secFocus(host, N);
 
     var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
     if (known.length) {
@@ -926,6 +939,121 @@
       c4.appendChild(list);
       host.appendChild(c4);
     }
+  }
+
+  // Focus modes (FOCUS-1, focus.js in the shell). Do Not Disturb and
+  // quiet hours became modes (Chris 2026-11-17, D2): quiet hours are
+  // the Sleep mode's schedule. The active mode holds on all devices
+  // (D1). Mode names are the person's text: textContent / value only.
+  var focusSel = "dnd";
+  function focusApi() {
+    var p = parentWin();
+    try { var F = p && p.orosFocus; return (F && typeof F.list === "function") ? F : null; } catch (e) { return null; }
+  }
+  function secFocus(host, N) {
+    var F = focusApi();
+    var q = C.readQuiet(N.getSetting("quietHours", {}));
+    var c3 = card(t("n.focus"), "notifications");
+    if (F) c3.appendChild(el("p", "hint", t("n.focus.hint")));
+    if (F) {
+      var a = F.active();
+      var nowTxt = !a ? t("n.focus.none")
+        : a.until ? t("n.focus.until", { name: a.name, t: linkTime(a.until) })
+        : t("n.focus.on", { name: a.name });
+      var nowRow = row(t("n.focus.now"), a ? button(t("n.focus.stop"), "n.focus.stop", function () { F.stop(); render(); }) : null);
+      nowRow.appendChild(el("div", "hint", nowTxt));
+      c3.appendChild(nowRow);
+    }
+    // The Sleep schedule = quiet hours (old devices keep reading it).
+    c3.appendChild(row(t("n.quiet"), switchBtn(q.enabled, "n.quiet", function (v) {
+      nSet("quietHours", C.quietValue(v, q.start, q.end));
+    }, t("n.quiet")), { hint: t(F ? "n.quiet.hint2" : "n.quiet.hint") }));
+    var hours = [];
+    for (var h = 0; h <= 23; h++) hours.push({ value: h, label: C.hourLabel(h) });
+    var qRow = el("div", "pair");
+    var fromLab = el("label", "pair-label", t("n.from"));
+    fromLab.htmlFor = "f-n.from";
+    qRow.appendChild(fromLab);
+    qRow.appendChild(select(hours, q.start, "n.from", function (v) {
+      nSet("quietHours", C.quietValue(q.enabled, parseInt(v, 10), q.end));
+    }));
+    var toLab = el("label", "pair-label", t("n.to"));
+    toLab.htmlFor = "f-n.to";
+    qRow.appendChild(toLab);
+    qRow.appendChild(select(hours, q.end, "n.to", function (v) {
+      nSet("quietHours", C.quietValue(q.enabled, q.start, parseInt(v, 10)));
+    }));
+    c3.appendChild(qRow);
+    host.appendChild(c3);
+    if (!F) return;
+
+    // One mode at a time: pick it, start it, change it.
+    var modes = F.list();
+    if (!modes.some(function (m) { return m.id === focusSel; })) focusSel = modes[0].id;
+    var m = modes.filter(function (x) { return x.id === focusSel; })[0];
+    var c5 = card(t("n.focus.modes"));
+    c5.appendChild(row(t("n.focus.mode"), select(modes.map(function (x) {
+      return { value: x.id, label: x.name };
+    }), focusSel, "n.focus.mode", function (v) { focusSel = v; render(); }), { forId: "f-n.focus.mode" }));
+    var running = a && a.id === m.id;
+    c5.appendChild(actions(
+      running ? button(t("n.focus.stop"), "n.focus.stop2", function () { F.stop(); render(); })
+              : button(t("n.focus.start"), "n.focus.start", function () { F.start(m.id, { until: 0 }); render(); }, "primary"),
+      modes.length - 4 < F.model.MAX_OWN ? button(t("n.focus.add"), "n.focus.add", function () {
+        var id = F.add(t("n.focus.newname", { n: modes.length - 3 }), "star");
+        if (id) focusSel = id;
+        render();
+      }) : null));
+
+    var nameIn = el("input");
+    nameIn.id = "f-n.focus.name";
+    nameIn.type = "text";
+    nameIn.maxLength = 40;
+    nameIn.autocomplete = "off";
+    nameIn.setAttribute("data-k", "n.focus.name");
+    nameIn.value = m.own || "";
+    nameIn.placeholder = m.builtin ? t("n.focus.m." + m.id) : "";
+    nameIn.addEventListener("change", function () { F.edit(m.id, { name: nameIn.value }); render(); });
+    var nameBox = el("div", "pass-row");
+    nameBox.appendChild(nameIn);
+    c5.appendChild(row(t("n.focus.name"), nameBox, { forId: "f-n.focus.name", hint: m.builtin ? t("n.focus.name.hint") : null }));
+    c5.appendChild(row(t("n.focus.icon"), select(F.model.ICONS.map(function (ic) {
+      return { value: ic, label: t("n.focus.ic." + ic) };
+    }), m.icon, "n.focus.icon", function (v) { F.edit(m.id, { icon: v }); render(); }), { forId: "f-n.focus.icon" }));
+
+    if (m.locked) {
+      c5.appendChild(row(t("n.focus.allow"), null, { hint: t("n.focus.allow.none") }));
+    } else {
+      var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
+      var allowRow = row(t("n.focus.allow"), null, { hint: t("n.focus.allow.hint") });
+      var list = el("div", "checks");
+      known.forEach(function (id) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = m.allow.indexOf(id) >= 0;
+        cb.setAttribute("data-k", "n.focus.allow:" + id);
+        cb.addEventListener("change", function () {
+          var next = m.allow.filter(function (x) { return x !== id; });
+          if (cb.checked) next.push(id);
+          F.edit(m.id, { allow: next });
+          render();
+        });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, id === "system" ? "orOS" : id === "discover" ? t("n.discover") : appName(id)));
+        list.appendChild(lab);
+      });
+      allowRow.appendChild(list);
+      c5.appendChild(allowRow);
+    }
+    if (!m.builtin) {
+      c5.appendChild(actions(confirmBtn(t("n.focus.remove"), t("n.focus.remove.sure"), "n.focus.remove", function () {
+        F.remove(m.id);
+        focusSel = "dnd";
+        render();
+      }, "danger")));
+    }
+    host.appendChild(c5);
   }
 
   // In the orOS Android app only (BR-PHONE v3): the phone rings
@@ -4681,6 +4809,19 @@
       host.appendChild(chc);
     }
 
+    // The Pocket (POCKET-1): this device only; the count, Open, Empty.
+    if (s.pocket) {
+      var pkc = card(t("pk.title"), "pocket");
+      pkc.appendChild(el("p", "hint", t("pk.hint")));
+      if (s.pocket.strict) pkc.appendChild(el("p", "hint", t("pk.strict")));
+      else {
+        pkc.appendChild(el("p", "hint", s.pocket.n ? t("pk.count", { n: s.pocket.n }) : t("pk.none")));
+        if (s.pocket.n) pkc.appendChild(actions(
+          button(t("pk.open"), "pk.open", function () { act("pocket.open"); }),
+          button(t("pk.clear"), "pk.clear", function () { act("pocket.clear"); })));
+      }
+      host.appendChild(pkc);
+    }
     // CONT-1 + RS-1: continue on other devices, reopen after a restart (this device; on by default)
     if (s.cont) secContinue(host, s.cont);
 

@@ -349,6 +349,13 @@ export const TOOLS = [
     annotations: { readOnlyHint: false, destructiveHint: false }
   },
   {
+    // BK-AO (Chris 2026-11-18): the banks' new bookings now, as Budget › Banks › Update now
+    name: "budget_refresh",
+    description: "Asks the owner's banks (and PayPal) connected in Budget › More › Banks for their new bookings now, exactly as the owner's Update now: new entries come in with Budget's own rules, areas and duplicate checks, and the banks' balances are read. Needs orOS open on a device that holds the bank key (it never waits for orOS to open: there Budget updates by itself). At most once per 10 minutes per device; banks allow about 4 unattended reads a day, so call it once before a check, not in a loop. The answer says how many entries came in, which bank accounts failed and why (consent = the owner renews access), and when the banks were last read. Then read them with budget_lines. Same rule as budget_add (Budget set to «may change»).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
     name: "budget_delete",
     description: "Deletes Budget entries by id (at most 100 per call, all or none). Same rule as budget_add; more than 5 at once must also be confirmed by the owner on the device within 20 seconds. With orOS closed the deletion waits and is applied when orOS opens (more than 5 then ask the owner there; not confirmed = nothing deleted). The owner is notified and can undo it from any of their devices.",
     inputSchema: {
@@ -569,6 +576,8 @@ export function neverIn(args) {
 // ---- orOS closed: search, loose answers and changes by ref (5.96.00) ----
 // The device tools whose changes wait in the queue by item refs.
 export const REF_QUEUED = ["change_item", "link_items", "link_contact"];
+// BK-AO: relay change tools that never wait for orOS to open (closedCall refuses them)
+export const LIVE_ONLY = ["budget_refresh"];
 export function foldTxt(x) {
   return String(x == null ? "" : x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
@@ -2007,6 +2016,8 @@ export class GateBox {
   // in the queue (since 6.05.02 Budget deletions and transfers too;
   // deleting other apps' items by ref still waits for an open device).
   async closedCall(name, args, kRaw, now, qidWant) {
+    // BK-AO: a bank read needs the device's bank key; it is never queued
+    if (name === "budget_refresh") return { ok: false, c: "orOS is closed: the banks can be read only from an open device (the bank key stays there), so nothing was read and nothing waits. When orOS opens, Budget reads the banks by itself (Budget › More › Banks › Automatic updates). Use budget_lines for what is in the copy." };
     if (name === "files_list" || name === "files_read") return await this.closedFiles(name, args, kRaw);
     if (FILE_CHANGE[name]) return await this.closedFileChange(name, args, kRaw, now, qidWant);
     if (!kRaw) return { ok: false, c: "orOS is closed and there is no copy Claude may read yet. Ask the owner to open orOS once on a device with the gate on." };
