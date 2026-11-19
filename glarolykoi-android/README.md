@@ -40,10 +40,11 @@ Free, MIT, no ads, no account with anyone, no tracking.
   `ReleasesTest`) "New in the shop" without Firebase or any push
   service. Off until the person says yes; the app asks once, after the
   first page. Then once a day, with a network, JobScheduler fetches the
-  shop's public Store API (`/wp-json/wc/store/v1/products`, newest 10,
+  shop's public Store API (`/wp-json/wc/store/v1/products`, newest 10
+  of the house's own titles, brand `glarolykoi`, since 1.0.1,
   same request for everyone, nothing about the person) and shows one
-  notification: one item opens its page, several open the shop sorted
-  by date. The first check only records the newest id, so nothing old is
+  notification: one item opens its page, several open the house's titles
+  (`/brand/glarolykoi/`) sorted by date. The first check only records the newest id, so nothing old is
   announced; only `https://glarolykoi.net` links are opened; at most
   512 KB is read. Android 13+ asks for the notification permission;
   a no there turns GL-NEW off again.
