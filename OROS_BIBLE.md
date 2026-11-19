@@ -12996,3 +12996,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** `device/screentime.js`, `shell.js`, `qsettings.js`, `settings/{settings,core,screentime}.js`, `settings/screentime.css`, `translations.js`, i18n DE, help Settings EN/EL/DE, What's new EN/EL, `tests/screentime.test.js`.
 - **Verified:** full `node --test tests/*.test.js`; Playwright Chromium 1280 EN and 360 EL: the grey overlay with fade, the Quick settings pill "Until 01:00", the Settings card (chips, status line), Not tonight removes the grey, unticking an evening; after main 7.73.00 the Sleep focus starts with bedtime and stops with Not tonight. Not tested on a real phone or Safari.
 
+### 2026-11-19 — 7.84.00 — Distinct icons for the smart cards and open apps buttons (BAR-ICONS) (#1140)
+
+- **What:** Chris (phone screenshot): the smart cards fold button `#sb-more` and the open apps button `#mt-btn` both drew two stacked squares with a count. `smartbar.js` `IC.more` now draws sparkles, `shell.js` `#mt-btn` two windows with title bars. Tooltips and labels (`sb.more.tip`, `mt.sw.tip`, `mt.sw.btn`) already named both in EN/EL/DE and are unchanged.
+- **Decisions:** Part IX 2026-11-18 · Two bar buttons, two icons (BAR-ICONS).
+- **Files:** `smartbar.js`, `shell.js` (10c, APP_VERSION), What's new EN/EL, Bible.
+- **Verified:** full `node --test tests/*.test.js`; Playwright Chromium 360px EL and EN with both buttons side by side. Not tested on a real phone or Safari.
+
