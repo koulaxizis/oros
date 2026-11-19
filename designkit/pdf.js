@@ -419,8 +419,16 @@
     if (!links || !links.length) return;
     var cur = pdf.internal.getCurrentPageInfo().pageNumber;
     links.forEach(function (ln) {
-      var from = at[ln.pg], to = at[ln.to];
-      if (!from || !to || !(ln.w > 0) || !(ln.h > 0)) return;
+      var from = at[ln.pg], to = ln.url ? null : at[ln.to];
+      if (!from || !(ln.w > 0) || !(ln.h > 0)) return;
+      // a web or e-mail address (http, https, mailto only)
+      if (ln.url) {
+        if (!/^(https?:\/\/|mailto:)[^\s]{3,2000}$/i.test(ln.url)) return;
+        pdf.setPage(from.n);
+        pdf.link(from.dx + ln.x, from.dy + ln.y, ln.w, ln.h, { url: ln.url });
+        return;
+      }
+      if (!to) return;
       pdf.setPage(from.n);
       pdf.link(from.dx + ln.x, from.dy + ln.y, ln.w, ln.h, { pageNumber: to.n });
     });

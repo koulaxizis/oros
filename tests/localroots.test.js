@@ -147,3 +147,29 @@ test("pcPath: a typed computer folder → the launcher's path (orOS Setup route)
   assert.match(src, /"&under=" \+ encodeURIComponent\(under\)/);
   assert.match(src, /j\.under === true/);
 });
+
+test("parse: a full path the owner did not type finds the root by its folder name (bug 2026-11-18)", () => {
+  const R = [{ id: "a", name: "Ελένη Κολιού - Στην καρδιά του βυθού", label: "", mode: "r" }, { id: "b", name: "Final Images", label: "", mode: "w" }];
+  const full = "local:C:\\Users\\koulaxizis\\Documents\\Εκδόσεις\\Σε εξέλιξη\\Ελένη Κολιού - Στην καρδιά του βυθού\\Final Images\\Contents_.jpg";
+  const x = L.parse(full, R);
+  assert.equal(x.root.id, "a");
+  assert.deepEqual(x.rel, ["Final Images", "Contents_.jpg"]);
+  assert.equal(L.parse("local:C:\\Out\\Final Images\\print.pdf", R, "w").root.id, "b");
+  assert.equal(L.parse("local:C:\\Other\\x.jpg", R).err, "notAllowedRoot");
+  assert.equal(L.parse("local:C:\\a\\Ελένη Κολιού - Στην καρδιά του βυθού\\..\\x", R).err, "notAllowedRoot");
+  // a relative name that is not a root stays refused
+  assert.equal(L.parse("local:Final/Ελένη Κολιού - Στην καρδιά του βυθού/x.jpg", R).err, "notAllowedRoot");
+});
+
+test("bug 2026-11-18: every local call ends, Layout is never busy for ever, errors name the path form", () => {
+  const src = read("localroots.js"), as = read("layout/assist.js"), pa = read("layout/proassist.js"), ui = read("assistant/assistant.js");
+  assert.match(src, /function read\(path, cmd\) \{ return limit\(/);
+  assert.match(src, /function ls\(path, depth, cmd\) \{ return limit\(/);
+  assert.match(src, /function write\(dirPath, name, blob, cmd\) \{ return limit\(/);
+  assert.match(src, /typeof r\.pc === "string"/);   // computer folders survive a restart
+  assert.match(as, /WATCH_MS = 60000/);
+  assert.match(as, /if \(ended\) return Promise\.resolve\(\);/);
+  assert.match(pa, /ctl\.tick\(p\)/);
+  assert.match(ui, /function localHint\(\)/);
+  assert.match(ui, /rd\.layout && localOpen\(\)/);   // files_list through the gate with local roots
+});
