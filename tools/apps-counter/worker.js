@@ -13,7 +13,7 @@
 //   ledger by asset id that never goes down, so re-uploaded assets keep their
 //   count.
 // - /stats.json gives every package's counts per channel, plus the counts we
-//   record by hand (table man, e.g. f-droid.org), for the sites.
+//   record by hand (table man, e.g. the old Play Store count), for the sites.
 // The asset map (release asset name → package) is ASSETS below, written by
 // tools/apps-counter/assets.js; deploy steps in README.md.
 

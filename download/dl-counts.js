@@ -15,14 +15,14 @@
 (function () {
   "use strict";
   var URL = "https://apps.koulaxizis.workers.dev/stats.json";
-  var ORDER = ["manager", "github", "fdroid", "droidify", "obtainium", "fdroid_org", "other", "estimate"];
+  var ORDER = ["manager", "github", "fdroid", "droidify", "obtainium", "other", "estimate"];
   var WORDS = {
     en: { manager: "Koulaxizis Apps", github: "Direct APK", fdroid: "F-Droid", droidify: "Droid-ify", obtainium: "Obtainium",
-      fdroid_org: "f-droid.org", other: "Other", estimate: "Before 19/11 (estimate)", play_appilix: "Old app on Google Play", app: "App", total: "Total", byHand: "counted by hand", since: "Counted since 19 November 2026 and updated every hour; earlier downloads are an estimate." },
+      other: "Other", estimate: "Before 19/11 (estimate)", play_appilix: "Old app on Google Play", app: "App", total: "Total", byHand: "counted by hand", since: "Counted since 19 November 2026 and updated every hour; earlier downloads are an estimate." },
     el: { manager: "Εφαρμογές Koulaxizis", github: "Απευθείας APK", fdroid: "F-Droid", droidify: "Droid-ify", obtainium: "Obtainium",
-      fdroid_org: "f-droid.org", other: "Άλλο", estimate: "Πριν τις 19/11 (εκτίμηση)", play_appilix: "Παλιά εφαρμογή στο Google Play", app: "Εφαρμογή", total: "Σύνολο", byHand: "καταμέτρηση με το χέρι", since: "Μετράμε από τις 19 Νοεμβρίου 2026 και ενημερώνεται κάθε ώρα· οι παλαιότερες λήψεις είναι εκτίμηση." },
+      other: "Άλλο", estimate: "Πριν τις 19/11 (εκτίμηση)", play_appilix: "Παλιά εφαρμογή στο Google Play", app: "Εφαρμογή", total: "Σύνολο", byHand: "καταμέτρηση με το χέρι", since: "Μετράμε από τις 19 Νοεμβρίου 2026 και ενημερώνεται κάθε ώρα· οι παλαιότερες λήψεις είναι εκτίμηση." },
     de: { manager: "Koulaxizis Apps", github: "Direkte APK", fdroid: "F-Droid", droidify: "Droid-ify", obtainium: "Obtainium",
-      fdroid_org: "f-droid.org", other: "Andere", estimate: "Vor 19.11. (geschätzt)", play_appilix: "Alte App bei Google Play", app: "App", total: "Gesamt", byHand: "von Hand gezählt", since: "Gezählt seit 19. November 2026, stündlich aktualisiert; frühere Downloads sind geschätzt." },
+      other: "Andere", estimate: "Vor 19.11. (geschätzt)", play_appilix: "Alte App bei Google Play", app: "App", total: "Gesamt", byHand: "von Hand gezählt", since: "Gezählt seit 19. November 2026, stündlich aktualisiert; frühere Downloads sind geschätzt." },
   };
 
   function lang(el) {

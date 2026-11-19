@@ -16,9 +16,12 @@ no IP address, no device, no time per download.
 - `schema.sql`: D1 database `apps-counter` (tables dl, gh_asset, man, meta).
 - `assets.js` → `assets.json`: release asset name → package, injected into
   `worker.js` at `/*ASSETS*/` on deploy. Run it again when an APK is added.
-- Hand-recorded counts (f-droid.org and anything else that cannot be read
-  automatically) go into table `man` (pkg, ch, n, at) once a month, e.g.
-  `INSERT INTO man VALUES ('online.useoros.twa','fdroid_org',123,'2026-12-01') ON CONFLICT (pkg, ch) DO UPDATE SET n = excluded.n, at = excluded.at`.
+- Hand-recorded counts (anything that cannot be read automatically, such as
+  the old Glarolykoi app's Play Store count `play_appilix`, and the
+  `estimate` baseline of downloads before 19/11) live in table `man`
+  (pkg, ch, n, at), e.g.
+  `INSERT INTO man VALUES ('net.glarolykoi.android','play_appilix',10,'2026-11-19') ON CONFLICT (pkg, ch) DO UPDATE SET n = excluded.n, at = excluded.at`.
+  There is no f-droid.org listing (Chris 2026-11-19): only our own repos count.
 
 Deploy (Cloudflare API, account of the relay): create D1 `apps-counter`, run
 `schema.sql`, upload `worker.js` (module, ASSETS injected) with binding `DB`,
