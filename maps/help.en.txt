@@ -101,6 +101,13 @@ They come from Waymarked Trails. Turn on as many as you like; this device rememb
 
 Only what has been mapped is shown. If a detail is missing, it isn't known yet; you can add it with Quests or Edit places. Offline maps now draw cycleways in blue, tracks in brown and footpaths in red, all dashed.
 
+**Walking and cycling routes**: with `Walk` or `Bike`, `Directions` starts with `Route type`:
+
+- Walk: `Hiking` (the default) prefers paths and trails and counts the climbs in the time; `Standard` is the quickest way on foot.
+- Bike: `Touring` (the default: cycleways and quiet roads, some gravel), `Road bike` (smooth asphalt), `Quiet roads` (avoids busy roads), `Gravel`, `Mountain bike` and `Standard` (the quickest way).
+
+These routes come from BRouter. The route bar then shows the climb and descent (↗ ↘), and `Directions` shows the elevation along the route, the lowest and highest point, and two bars: the `Surface` (paved, gravel, earth, not known) and the `Kind of way` (road, track, path, cycleway, steps), each with how much of the route it is. The walking time follows the DIN 33466 hiking rule: 4 km/h on the flat, 300 m up or 500 m down an hour. If BRouter doesn't answer, you get the standard route and a message. In `Maps settings` › `Trail router` you can use your own BRouter server instead of brouter.de. The route types stay on this device.
+
 ## OpenStreetMap notes
 
 A note tells the volunteers who map [OpenStreetMap](https://www.openstreetmap.org) that something is wrong or missing: a shop that closed, a new path, a wrong street name. They read it, fix the map and resolve the note.
@@ -265,7 +272,8 @@ Each pack shows its size, its detail, when you downloaded it and the date of the
 - **Map images**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitarian`), Esri (`Satellite`), OpenTopoMap (`Topo`), CyclOSM through OpenStreetMap France (`Cycling (CyclOSM)`) and Waymarked Trails (the hiking, cycling and MTB route layers). They get the map tiles you look at.
 - **About this path**: the Overpass API gets the point you long-pressed, to read the ways around it and the routes of the one you picked.
 - **Search and place names**: Photon by komoot. It gets your search text and the centre of the map, or the point you long-pressed.
-- **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk). They get the coordinates of your route points.
+- **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk, `Standard`). They get the coordinates of your route points.
+- **Walking and cycling route types**: BRouter (brouter.de, or the server you set in `Trail router`) gets the coordinates of your route points and the route type.
 - **Public transport**: Transitous (api.transitous.org). It gets the start and destination of your search, the time, the stop whose departures you open, and the map area when stops or live vehicles are on.
 - **Live bus arrivals (Athens)**: when you open the board of an Athens bus stop, the orOS relay (the one Mail uses) passes that stop's code to OASA Telematics (telematics.oasa.gr). Nothing else is sent, and the relay keeps nothing.
 - **Sharing**: links are made on your device. Nothing leaves it until you send or open one; a shared link carries the points' coordinates and the destination's name.
@@ -282,7 +290,7 @@ Your location stays on your device unless it's a route point. More in [Privacy](
 
 ## Sync and backup
 
-Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, favourite groups and which group each place is in, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the Discover tab, kind and `Open now` choice, which favourite groups are hidden or folded, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, your offline maps (download each one on every device that needs it) and the map source you set, and the map position and style, with the trail and cycling layers you turned on.
+Saved places, your track list (names, colours, folders, statistics), notes, place changes, entrance changes and quest answers waiting to be sent, hidden quests, quest settings, your answer counter, achievements and team choice, favourite groups and which group each place is in, and the upload comment sync through [orOS sync](help:t/sync). Your OpenStreetMap sign-in does not: sign in once on each device. These stay on this device: your 10 recent places, the `Avoid` choice, the public transport switches (stops, live vehicles), the quest overlay you picked, the Discover tab, kind and `Open now` choice, which favourite groups are hidden or folded, your parked car and its reminder, the last route (it comes back next time you open Maps), map images saved for offline use, your offline maps (download each one on every device that needs it) and the map source you set, and the map position and style, with the trail and cycling layers you turned on, and the walking and cycling route types with the trail router you set.
 
 `Maps settings` shows how many map images are stored (`Clear tile cache`) and the saved route (`Forget saved route`). GPX tracks are imported and exported in `My tracks`.
 
