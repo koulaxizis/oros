@@ -333,6 +333,34 @@
     host.appendChild(c);
   }
 
+  // WPACC-1: Accent from wallpaper (this device), under the skins.
+  function secWpAccent(c, w) {
+    c.appendChild(row(t("a.wpacc"), switchBtn(!!w.on, "wpaccent:on",
+      function (v) { set("wpaccent:on", v); }, t("a.wpacc")), { hint: t("a.wpacc.hint") }));
+    if (!w.on) return;
+    if (w.high) { c.appendChild(el("p", "hint", t("a.wpacc.high"))); return; }
+    if (w.none) { c.appendChild(el("p", "hint", t("a.wpacc.none"))); return; }
+    if (w.sw.length < 2) return;                       // one colour: nothing to pick
+    var g = el("div", "swatches");
+    g.setAttribute("role", "radiogroup");
+    g.setAttribute("aria-label", t("a.wpacc.pick"));
+    w.sw.forEach(function (k, i) {                    // k.color: a #rrggbb the shell fitted
+      var on = i === w.pick, b = el("button", "swatch" + (on ? " on" : ""));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.setAttribute("data-k", "wpaccent:pick:" + i);
+      var name = t("a.wpacc.n").replace("{n}", String(i + 1));
+      b.title = name;
+      b.setAttribute("aria-label", name);
+      if (/^#[0-9a-f]{6}$/.test(k.color)) b.style.background = k.color;
+      b.addEventListener("click", function () { set("wpaccent:pick", i); });
+      g.appendChild(b);
+    });
+    c.appendChild(el("p", "hint", t("a.wpacc.pick")));
+    c.appendChild(g);
+  }
+
   // ---------- 4. Section: Appearance ----------
   function secAppearance(host, s) {
     var c1 = card(t("a.theme"), "theme");
@@ -360,6 +388,7 @@
       sw.appendChild(b);
     });
     c2.appendChild(sw);
+    if (s.wpaccent) secWpAccent(c2, s.wpaccent);
     host.appendChild(c2);
 
     if (s.icons) secIcons(host, s.icons);
@@ -583,8 +612,8 @@
   }
 
   // ---------- 4a. Section: Accessibility ----------
-  // Text size, high contrast, the focus ring, the colour filter and the
-  // pointer size (shell.js 5e, a11yfx.js). All stay on this device;
+  // Text size, high contrast, the focus ring, the colour filter, the
+  // pointer size (shell.js 5e, a11yfx.js) and Read aloud (READ-1). All stay on this device;
   // older shells send no s.a11y.
   function secAccessibility(host, s) {
     var a = s.a11y;
@@ -610,6 +639,18 @@
     c3.appendChild(row(t("ac.focus"), switchBtn(a.focus, "focusRing", function (v) { set("focusRing", v); }, t("ac.focus")),
       { scope: "a11y", hint: t("ac.focus.hint") }));
     host.appendChild(c3);
+
+    // Reduce motion and transparency (W2); an older shell sends no motion.
+    if ("motion" in a) {
+      var c7 = card(null);
+      c7.appendChild(row(t("ac.motion"), switchBtn(a.motion, "reduceMotion", function (v) { set("reduceMotion", v); }, t("ac.motion")),
+        { scope: "a11y", hint: t("ac.motion.hint") }));
+      if (a.motionSys) c7.appendChild(el("p", "hint", t("ac.motion.sys")));
+      c7.appendChild(row(t("ac.transp"), switchBtn(a.transp, "reduceTransparency", function (v) { set("reduceTransparency", v); }, t("ac.transp")),
+        { scope: "a11y", hint: t("ac.transp.hint") }));
+      if (a.transpSys) c7.appendChild(el("p", "hint", t("ac.transp.sys")));
+      host.appendChild(c7);
+    }
 
     // Colour filter and pointer size (a11yfx.js); an older bundle sends no fx.
     if (a.fx) {
@@ -639,6 +680,40 @@
         c6.appendChild(el("p", "hint", t("ac.pointer.hint")));
         host.appendChild(c6);
       }
+    }
+
+    // READ-1: Read aloud (shell.js window.orosRead, readaloud.js), off by
+    // default, this device only; older shells send no s.read.
+    var r = s.read;
+    if (r) {
+      var c7 = card(t("ac.read"), "read");
+      c7.appendChild(row(t("ac.read.on"), switchBtn(r.on, "readAloud", function (v) { set("readAloud", v); }, t("ac.read.on")),
+        { hint: t("ac.read.hint") }));
+      if (r.on) {
+        var dec = LANG === "en" ? "." : ",";
+        c7.appendChild(segRow(t("ac.read.rate"), segmented(r.rates.map(function (n) {
+          return { value: n, label: String(n).replace(".", dec) + "\u00d7" };
+        }), r.rate, "readRate", function (v) { set("readRate", v); }, t("ac.read.rate"))));
+      }
+      // W2: a voice per language, from this device's own voices, with Test
+      if (r.on && r.voices && r.voices.length) {
+        r.voices.forEach(function (g) {
+          var vr = row(t("ac.read.voice." + g.lang), null, g.list.length ? null : { hint: t("ac.read.novoices") });
+          if (g.list.length) {
+            var opts = [{ value: "", label: t("ac.read.auto") }].concat(g.list.map(function (v) {
+              return { value: v.uri, label: v.name + (v.lang ? " (" + v.lang + ")" : "") };
+            }));
+            var sel = select(opts, g.pick, "readVoice-" + g.lang, function (val) { set("readVoice", { lang: g.lang, uri: val }); });
+            sel.setAttribute("aria-label", t("ac.read.voice." + g.lang));
+            vr.appendChild(actions(sel, button(t("ac.read.test"), "readTest-" + g.lang, function () { act("read.test", g.lang); })));
+          }
+          c7.appendChild(vr);
+        });
+        c7.appendChild(el("p", "hint", t("ac.read.voices.hint")));
+      }
+      if (!r.available) c7.appendChild(el("p", "hint", t("ac.read.none")));
+      if (r.strict) c7.appendChild(el("p", "hint", t("ac.read.strict")));
+      host.appendChild(c7);
     }
 
     // FM-5: the font of orOS (chosen on a font's page in Fonts)
@@ -882,28 +957,7 @@
       { forId: "f-n.duration" }));
     host.appendChild(c2);
 
-    var q = C.readQuiet(N.getSetting("quietHours", {}));
-    var c3 = card(null);
-    c3.appendChild(row(t("n.quiet"), switchBtn(q.enabled, "n.quiet", function (v) {
-      nSet("quietHours", C.quietValue(v, q.start, q.end));
-    }, t("n.quiet")), { hint: t("n.quiet.hint") }));
-    var hours = [];
-    for (var h = 0; h <= 23; h++) hours.push({ value: h, label: C.hourLabel(h) });
-    var qRow = el("div", "pair");
-    var fromLab = el("label", "pair-label", t("n.from"));
-    fromLab.htmlFor = "f-n.from";
-    qRow.appendChild(fromLab);
-    qRow.appendChild(select(hours, q.start, "n.from", function (v) {
-      nSet("quietHours", C.quietValue(q.enabled, parseInt(v, 10), q.end));
-    }));
-    var toLab = el("label", "pair-label", t("n.to"));
-    toLab.htmlFor = "f-n.to";
-    qRow.appendChild(toLab);
-    qRow.appendChild(select(hours, q.end, "n.to", function (v) {
-      nSet("quietHours", C.quietValue(q.enabled, q.start, parseInt(v, 10)));
-    }));
-    c3.appendChild(qRow);
-    host.appendChild(c3);
+    secFocus(host, N);
 
     var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
     if (known.length) {
@@ -926,6 +980,121 @@
       c4.appendChild(list);
       host.appendChild(c4);
     }
+  }
+
+  // Focus modes (FOCUS-1, focus.js in the shell). Do Not Disturb and
+  // quiet hours became modes (Chris 2026-11-17, D2): quiet hours are
+  // the Sleep mode's schedule. The active mode holds on all devices
+  // (D1). Mode names are the person's text: textContent / value only.
+  var focusSel = "dnd";
+  function focusApi() {
+    var p = parentWin();
+    try { var F = p && p.orosFocus; return (F && typeof F.list === "function") ? F : null; } catch (e) { return null; }
+  }
+  function secFocus(host, N) {
+    var F = focusApi();
+    var q = C.readQuiet(N.getSetting("quietHours", {}));
+    var c3 = card(t("n.focus"), "notifications");
+    if (F) c3.appendChild(el("p", "hint", t("n.focus.hint")));
+    if (F) {
+      var a = F.active();
+      var nowTxt = !a ? t("n.focus.none")
+        : a.until ? t("n.focus.until", { name: a.name, t: linkTime(a.until) })
+        : t("n.focus.on", { name: a.name });
+      var nowRow = row(t("n.focus.now"), a ? button(t("n.focus.stop"), "n.focus.stop", function () { F.stop(); render(); }) : null);
+      nowRow.appendChild(el("div", "hint", nowTxt));
+      c3.appendChild(nowRow);
+    }
+    // The Sleep schedule = quiet hours (old devices keep reading it).
+    c3.appendChild(row(t("n.quiet"), switchBtn(q.enabled, "n.quiet", function (v) {
+      nSet("quietHours", C.quietValue(v, q.start, q.end));
+    }, t("n.quiet")), { hint: t(F ? "n.quiet.hint2" : "n.quiet.hint") }));
+    var hours = [];
+    for (var h = 0; h <= 23; h++) hours.push({ value: h, label: C.hourLabel(h) });
+    var qRow = el("div", "pair");
+    var fromLab = el("label", "pair-label", t("n.from"));
+    fromLab.htmlFor = "f-n.from";
+    qRow.appendChild(fromLab);
+    qRow.appendChild(select(hours, q.start, "n.from", function (v) {
+      nSet("quietHours", C.quietValue(q.enabled, parseInt(v, 10), q.end));
+    }));
+    var toLab = el("label", "pair-label", t("n.to"));
+    toLab.htmlFor = "f-n.to";
+    qRow.appendChild(toLab);
+    qRow.appendChild(select(hours, q.end, "n.to", function (v) {
+      nSet("quietHours", C.quietValue(q.enabled, q.start, parseInt(v, 10)));
+    }));
+    c3.appendChild(qRow);
+    host.appendChild(c3);
+    if (!F) return;
+
+    // One mode at a time: pick it, start it, change it.
+    var modes = F.list();
+    if (!modes.some(function (m) { return m.id === focusSel; })) focusSel = modes[0].id;
+    var m = modes.filter(function (x) { return x.id === focusSel; })[0];
+    var c5 = card(t("n.focus.modes"));
+    c5.appendChild(row(t("n.focus.mode"), select(modes.map(function (x) {
+      return { value: x.id, label: x.name };
+    }), focusSel, "n.focus.mode", function (v) { focusSel = v; render(); }), { forId: "f-n.focus.mode" }));
+    var running = a && a.id === m.id;
+    c5.appendChild(actions(
+      running ? button(t("n.focus.stop"), "n.focus.stop2", function () { F.stop(); render(); })
+              : button(t("n.focus.start"), "n.focus.start", function () { F.start(m.id, { until: 0 }); render(); }, "primary"),
+      modes.length - 4 < F.model.MAX_OWN ? button(t("n.focus.add"), "n.focus.add", function () {
+        var id = F.add(t("n.focus.newname", { n: modes.length - 3 }), "star");
+        if (id) focusSel = id;
+        render();
+      }) : null));
+
+    var nameIn = el("input");
+    nameIn.id = "f-n.focus.name";
+    nameIn.type = "text";
+    nameIn.maxLength = 40;
+    nameIn.autocomplete = "off";
+    nameIn.setAttribute("data-k", "n.focus.name");
+    nameIn.value = m.own || "";
+    nameIn.placeholder = m.builtin ? t("n.focus.m." + m.id) : "";
+    nameIn.addEventListener("change", function () { F.edit(m.id, { name: nameIn.value }); render(); });
+    var nameBox = el("div", "pass-row");
+    nameBox.appendChild(nameIn);
+    c5.appendChild(row(t("n.focus.name"), nameBox, { forId: "f-n.focus.name", hint: m.builtin ? t("n.focus.name.hint") : null }));
+    c5.appendChild(row(t("n.focus.icon"), select(F.model.ICONS.map(function (ic) {
+      return { value: ic, label: t("n.focus.ic." + ic) };
+    }), m.icon, "n.focus.icon", function (v) { F.edit(m.id, { icon: v }); render(); }), { forId: "f-n.focus.icon" }));
+
+    if (m.locked) {
+      c5.appendChild(row(t("n.focus.allow"), null, { hint: t("n.focus.allow.none") }));
+    } else {
+      var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
+      var allowRow = row(t("n.focus.allow"), null, { hint: t("n.focus.allow.hint") });
+      var list = el("div", "checks");
+      known.forEach(function (id) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = m.allow.indexOf(id) >= 0;
+        cb.setAttribute("data-k", "n.focus.allow:" + id);
+        cb.addEventListener("change", function () {
+          var next = m.allow.filter(function (x) { return x !== id; });
+          if (cb.checked) next.push(id);
+          F.edit(m.id, { allow: next });
+          render();
+        });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, id === "system" ? "orOS" : id === "discover" ? t("n.discover") : appName(id)));
+        list.appendChild(lab);
+      });
+      allowRow.appendChild(list);
+      c5.appendChild(allowRow);
+    }
+    if (!m.builtin) {
+      c5.appendChild(actions(confirmBtn(t("n.focus.remove"), t("n.focus.remove.sure"), "n.focus.remove", function () {
+        F.remove(m.id);
+        focusSel = "dnd";
+        render();
+      }, "danger")));
+    }
+    host.appendChild(c5);
   }
 
   // In the orOS Android app only (BR-PHONE v3): the phone rings
@@ -2607,7 +2776,8 @@
   // The lock lives in the shell (lock.js, window.parent.orosLock): it
   // keeps only a slow hash on this device. The typed PIN / passphrase
   // stays in `lk` until it is handed over, then it is cleared.
-  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", bio: "", msg: null, bioMsg: null, bioSlow: false, bioT: null };
+  var lk = { mode: null, kind: "pin", a: "", b: "", cur: "", bio: "", msg: null, bioMsg: null, bioSlow: false, bioT: null,
+             appPend: null, appCur: "", appMsg: null };
 
   function lockApi() {
     var p = parentWin();
@@ -2704,7 +2874,7 @@
     return form;
   }
 
-  function secLock(host) {
+  function secLock(host, s) {
     var L = lockApi();
     var c1 = card(null);
     c1.appendChild(el("p", "hint", t("l.intro")));
@@ -2766,6 +2936,8 @@
       if (caps && caps.hidden) hsw.disabled = true;     // Sensitive work keeps it on
       c2.appendChild(row(t("l.hidden"), hsw, { hint: t("l.hidden.hint") }));
       host.appendChild(c2);
+      if (k.info) secLockInfo(host, L, k, strict);
+      if (L.apps) secLockApps(host, L, k, s, strict);
     }
 
     if (k.on && strict !== "hard" && L.bio && typeof L.bio.state === "function" && L.bio.state().linked) secLockBio(host, L, k);
@@ -2774,6 +2946,138 @@
     c3.appendChild(el("p", "hint", t("l.honest")));
     c3.appendChild(el("p", "hint", t("l.forgot")));
     host.appendChild(c3);
+  }
+
+  // Lock-screen info (APPLOCK-1 wave 4, idea 13): off by default; the
+  // next event's time, music buttons, the number of notices. lock.js
+  // hides it all under Sensitive work and on a till.
+  function secLockInfo(host, L, k, strict) {
+    var c = card(t("l.info"), "lock-info");
+    c.appendChild(el("p", "hint", t("l.info.hint")));
+    [["ev", "l.info.ev"], ["mu", "l.info.mu"], ["nc", "l.info.nc"]].forEach(function (x) {
+      var sw = switchBtn(!!k.info[x[0]], "lk-info-" + x[0], function (v) {
+        var o = {}; o[x[0]] = !!v; L.option("info", o); render();
+      }, t(x[1]));
+      c.appendChild(row(t(x[1]), sw));
+    });
+    if (strict) c.appendChild(el("p", "hint", t("l.info.strict")));
+    host.appendChild(c);
+  }
+
+  // App lock (APPLOCK-1, lock.js orosLock.apps): which apps ask the PIN
+  // even while orOS is unlocked, and whether the lock covers all of orOS
+  // or only them. Locking an app needs nothing; opening one up again
+  // needs the current PIN / passphrase (lk.appCur, cleared after use).
+  function lockAppResult(r, okKey, vars) {
+    lk.appCur = "";
+    if (r && r.ok) { lk.appPend = null; lk.appMsg = { kind: "ok", key: okKey, vars: vars || null }; }
+    else {
+      var code = (r && r.code) || "crypto";
+      if (code === "wait") lk.appMsg = { kind: "err", key: "l.msg.wait", vars: { n: Math.max(1, Math.ceil((r.wait || 0) / 60000)) } };
+      else lk.appMsg = { kind: "err", key: "l.msg." + (/^(wrong|storage|busy)$/.test(code) ? code : "crypto") };
+    }
+    render();
+  }
+  function secLockApps(host, L, k, s, strict) {
+    var c = card(t("l.apps"), "lock-apps");
+    c.appendChild(el("p", "hint", t("l.apps.hint")));
+    // Scope: all of orOS, or only the chosen apps.
+    var sr = row(t("l.scope"), null, { hint: t(k.scope === "apps" ? "l.scope.apps.hint" : "l.scope.all.hint") });
+    var seg = segmented([
+      { value: "all", label: t("l.scope.all") }, { value: "apps", label: t("l.scope.apps") }
+    ], k.scope || "all", "lk-scope", function (v) { L.option("scope", v); render(); }, t("l.scope"));
+    if (strict) Array.prototype.forEach.call(seg.querySelectorAll("button"), function (b) { b.disabled = true; });
+    sr.appendChild(seg);
+    c.appendChild(sr);
+    var names = {};
+    (s && Array.isArray(s.menu) ? s.menu : []).forEach(function (a) { if (a && typeof a.id === "string") names[a.id] = String(a.name || a.id); });
+    var st = L.apps.list(), free = L.apps.free || [];
+    if (st.broken) c.appendChild(el("p", "msg msg-err", t("l.apps.broken")));
+    var ids = Object.keys(st.apps).sort(function (a, b) { return String(names[a] || a).localeCompare(String(names[b] || b)); });
+    if (!ids.length) c.appendChild(el("p", "hint", t("l.apps.none")));
+    ids.forEach(function (id) {
+      var hid = st.apps[id] === "hide";
+      var r = row(names[id] || id, null, { scope: "lock-app:" + id, hint: t(hid ? "l.apps.isHidden" : "l.apps.isLocked") });
+      var pend = function (value) {
+        return function () {
+          lk.appPend = { id: id, value: value };
+          lk.appCur = "";
+          lk.appMsg = null;
+          render();
+          var f = $("f-lk-appcur"); if (f) f.focus();
+        };
+      };
+      // W2: hiding needs nothing; showing it in the lists again needs the PIN.
+      var btns = el("div", "actions");
+      btns.appendChild(hid ? button(t("l.apps.unhide"), "lk-app-show:" + id, pend("lock"))
+        : button(t("l.apps.hide"), "lk-app-hide:" + id, function () {
+            L.apps.set(id, "hide").then(function (x) { lockAppResult(x, "l.apps.hidden", { app: names[id] || id }); },
+                                        function () { lockAppResult(null); });
+          }));
+      btns.appendChild(button(t("l.apps.remove"), "lk-app-off:" + id, pend("")));
+      r.appendChild(btns);
+      c.appendChild(r);
+    });
+    if (lk.appPend && (st.apps[lk.appPend.id] || st.broken)) {
+      var form = el("form", "pass dav-form");
+      form.setAttribute("autocomplete", "off");
+      var kind = k.kind || "pin";
+      form.appendChild(el("p", "hint", t(lk.appPend.value === "lock" ? "l.apps.askShow" : "l.apps.askPin", { app: names[lk.appPend.id] || lk.appPend.id })));
+      var wrap = el("div", "dav-field");
+      var lab = el("label", "row-label", t("l.current." + kind));
+      lab.htmlFor = "f-lk-appcur";
+      wrap.appendChild(lab);
+      var inp = el("input");
+      inp.id = "f-lk-appcur";
+      inp.type = "password";
+      inp.autocomplete = "off";
+      inp.spellcheck = false;
+      inp.setAttribute("autocapitalize", "off");
+      if (kind === "pin") { inp.inputMode = "numeric"; inp.maxLength = 12; inp.setAttribute("pattern", "[0-9]*"); }
+      else inp.maxLength = 256;
+      inp.setAttribute("data-k", "lk-appcur");
+      inp.addEventListener("input", function () { lk.appCur = inp.value; });
+      wrap.appendChild(inp);
+      form.appendChild(wrap);
+      var go = el("button", "btn primary", t(lk.appPend.value === "lock" ? "l.apps.unhide" : "l.apps.removeGo"));
+      go.type = "submit";
+      go.setAttribute("data-k", "lk-app-go");
+      form.appendChild(actions(go, button(t("l.cancel"), "lk-app-cancel", function () { lk.appPend = null; lk.appCur = ""; render(); })));
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (lockApi() !== L || !lk.appPend) return;
+        var p = lk.appPend, cur = lk.appCur;
+        lk.appCur = "";
+        L.apps.set(p.id, p.value, cur).then(function (r) { lockAppResult(r, p.value === "lock" ? "l.apps.shown" : "l.apps.removed", { app: names[p.id] || p.id }); },
+                                            function () { lockAppResult(null); });
+      });
+      c.appendChild(form);
+    }
+    // Add one: every installed app not locked yet (Settings never).
+    var opts = [{ value: "", label: t("l.apps.pick") }];
+    Object.keys(names).filter(function (id) { return !st.apps[id] && free.indexOf(id) === -1; })
+      .sort(function (a, b) { return names[a].localeCompare(names[b]); })
+      .forEach(function (id) { opts.push({ value: id, label: names[id] }); });
+    var pick = { v: "" };
+    var add = row(t("l.apps.add"), select(opts, "", "lk-app-add", function (v) { pick.v = v; }), { forId: "f-lk-app-add" });
+    c.appendChild(add);
+    c.appendChild(actions(
+      button(t("l.apps.lock"), "lk-app-lock", function () {
+        var id = pick.v || ($("f-lk-app-add") || {}).value;
+        if (!id) return;
+        L.apps.set(id, "lock").then(function (r) { lockAppResult(r, "l.apps.locked", { app: names[id] || id }); },
+                                    function () { lockAppResult(null); });
+      }, "primary"),
+      button(t("l.apps.hide"), "lk-app-addhide", function () {
+        var id = pick.v || ($("f-lk-app-add") || {}).value;
+        if (!id) return;
+        L.apps.set(id, "hide").then(function (r) { lockAppResult(r, "l.apps.hidden", { app: names[id] || id }); },
+                                    function () { lockAppResult(null); });
+      }),
+      ids.length ? button(t("l.apps.now"), "lk-app-now", function () { L.apps.relock(); lk.appMsg = { kind: "ok", key: "l.apps.nowDone" }; render(); }) : null));
+    if (lk.appMsg) c.appendChild(el("p", "msg msg-" + lk.appMsg.kind, t(lk.appMsg.key, lk.appMsg.vars)));
+    c.appendChild(el("p", "hint", t("l.apps.honest")));
+    host.appendChild(c);
   }
 
   // Fingerprint or face on this phone (LK-BIO): only in the orOS app and
@@ -4571,7 +4875,7 @@
   }
   function stCtx() {
     return { C: C, LANG: LANG, t: t, el: el, card: card, row: row, switchBtn: switchBtn, actions: actions,
-             confirmBtn: confirmBtn, set: set, render: render, select: select };
+             confirmBtn: confirmBtn, set: set, render: render, select: select, button: button };
   }
   function secScreenTime(host, s) {
     if (window.SettingsScreenTime) { window.SettingsScreenTime.draw(host, s, stCtx()); return; }
@@ -4642,6 +4946,10 @@
     var c2 = card(t("x.more"));
     c2.appendChild(linkRow(t("x.device"), "x.device", function () { go("device", true); }));   // was the Device Info app
     c2.appendChild(linkRow(t("x.about"), "x.about", function () { act("info"); }));
+    // MEDIA-KIT: the site page (EN/EL only; German opens the English one).
+    c2.appendChild(linkRow(t("x.mediakit"), "x.mediakit", function () {
+      window.open("../media-kit/?lang=" + (LANG === "el" ? "el" : "en"), "_blank", "noopener");
+    }));
     c2.appendChild(linkRow(t("x.sharelinks"), "x.sharelinks", function () { act("shareLinks"); }));
     if (has.weather) c2.appendChild(linkRow(t("x.weather"), "x.weather", function () { act("openApp", "weather"); }));
     if (has.wallpaper) c2.appendChild(linkRow(t("x.wallgen"), "x.wallgen", function () { act("openApp", "wallpaper"); }));
@@ -4681,6 +4989,19 @@
       host.appendChild(chc);
     }
 
+    // The Pocket (POCKET-1): this device only; the count, Open, Empty.
+    if (s.pocket) {
+      var pkc = card(t("pk.title"), "pocket");
+      pkc.appendChild(el("p", "hint", t("pk.hint")));
+      if (s.pocket.strict) pkc.appendChild(el("p", "hint", t("pk.strict")));
+      else {
+        pkc.appendChild(el("p", "hint", s.pocket.n ? t("pk.count", { n: s.pocket.n }) : t("pk.none")));
+        if (s.pocket.n) pkc.appendChild(actions(
+          button(t("pk.open"), "pk.open", function () { act("pocket.open"); }),
+          button(t("pk.clear"), "pk.clear", function () { act("pocket.clear"); })));
+      }
+      host.appendChild(pkc);
+    }
     // CONT-1 + RS-1: continue on other devices, reopen after a restart (this device; on by default)
     if (s.cont) secContinue(host, s.cont);
 

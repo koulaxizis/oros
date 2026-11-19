@@ -3528,7 +3528,8 @@
           app: { type: "string", "enum": apps },
           designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets, for Montage video projects, for Studio song projects, for Whiteboard boards, for Mind map maps: open, named or all." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
-          steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } }
+          steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } },
+          dry_run: { type: "boolean", description: "Only through orOS Gate: say what the commands would change (per document, with notes) without changing anything." }
         },
         required: ["app", "steps"]
       }
@@ -3544,7 +3545,8 @@
         properties: {
           app: { type: "string", "enum": apps.slice().sort() },
           designs: { type: "string", "enum": ["open", "named", "style"], description: "open (the one open in the app, the default) or named. Atelier only: style reads the user's own style (fonts by role, sizes, colours, alignment of their designs, worked out on their device) for one kind of design named in `name` (square, 4:5, 9:16, 16:9, A portrait, bookmark, banner) or, without a name, every kind; use it before making a new design in their style." },
-          name: { type: "string", description: "designs named: the document's name; designs style: the kind of design." }
+          name: { type: "string", description: "designs named: the document's name; designs style: the kind of design." },
+          full: { type: "boolean", description: "Layout: whole paragraphs (not cut at 400 characters, for proofreading) and the preflight Layout last found, without an export." }
         },
         required: ["app"]
       }
@@ -3563,7 +3565,9 @@
     if (chk.steps[0].op === "create") { designs = "new"; name = chk.steps[0].title || name; }
     else if (designs === "new") return bad("designs new needs create as the first command.");
     if (designs !== "named" && designs !== "open" && designs !== "new" && chk.steps.some(function (s) { return s.op === "rename"; })) return bad("rename works on one " + EDIT_APP[app].noun + " (designs open or named).");
-    return { ok: true, app: app, designs: designs, name: name, steps: chk.steps };
+    var r = { ok: true, app: app, designs: designs, name: name, steps: chk.steps };
+    if (a.dry_run === true) r.dry = true;
+    return r;
   }
   function normReadApp(args, cats) {
     var a = isObj(args) ? args : {}, app = String(a.app || "");
@@ -3572,7 +3576,9 @@
     if (designs !== "open" && designs !== "named" && !(designs === "style" && app === "atelier")) return bad("designs must be open or named" + (app === "atelier" ? " (or style)" : "") + ".");
     var name = squash(a.name || "").slice(0, 120);
     if (designs === "named" && !name) return bad("give the " + EDIT_APP[app].noun + "'s name.");
-    return { ok: true, app: app, designs: designs, name: name };
+    var r = { ok: true, app: app, designs: designs, name: name };
+    if (a.full === true) r.full = true;
+    return r;
   }
 
   var TOOLS = [TOOL_SEARCH, TOOL_APPS];
@@ -3643,6 +3649,7 @@
   var GATE_OPEN_SAY = " Through orOS Gate it opens at once on the owner's screen in that app (unless the owner paused Claude's changes): " +
     "Layout's own work (rebuild, house style, book) runs there and its report comes back; a new entry, document, recipe, cover or newsletter content " +
     "is filled into the app's own form or editor for the owner to check and save; an automation rule comes in turned off. " +
+    "If nobody sees orOS at that moment (a hidden tab, orOS in the background or closed), the call waits, encrypted, and runs the next time orOS is on the owner's screen; its report comes then. " +
     "Files come only as paths on the orOS disk (/internal/…) or, while the owner has a local folder open for Claude, as local:<root>/<path> (files_list without path shows those roots): there are no attachments through the gate. Nothing is sent from here.";
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],

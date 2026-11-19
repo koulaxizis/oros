@@ -28,6 +28,13 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - `Add to Favourites` pins a folder or file to the top of the tree. Tap the star next to it there, or choose `Remove from Favourites`, to unpin it.
 - Favourites follow a rename or a move made in Files, and are synced to your other devices. A favourite that has not reached a device yet is shown faded.
 
+### Tags
+- Give any file or folder of the disk coloured tags: right-click it (or select it and open `More actions`) and choose `Tags…`. Tick the tags it should have, or type a new name and press `Add`. With several items selected, a dash means only some of them have that tag; leave it so to keep it that way.
+- Tagged items show small coloured dots after their name. `Tags` in the tree lists every tag with how many items have it; open one to see all of them, wherever they are.
+- The pencil next to a tag (or a right-click on it) renames it, gives it one of twelve colours, or deletes it. Deleting a tag takes it off every item; the files themselves stay as they are.
+- It is one list with `Documents`: a tag made here shows there, and a document's tags are the tags of its file.
+- Tags follow a rename or a move made in Files, stay with an item in the `Trash` so a restore brings them back, and are synced to your other devices. A file moved on another device is found again by its content. In `Photos`, the photos show their tags, `Select` › `Tags…` tags many at once, and `⋯` › `Show a tag…` shows only the photos with one tag.
+
 ### Remove hidden details
 - `Remove hidden details` (in the menu) makes a clean copy, "name (clean).ext", next to each selected photo (JPEG, PNG, WebP), PDF, or Word, Excel, PowerPoint or OpenDocument file. The original stays as it is.
 - It removes what the file says about who made it, where, when and with what: GPS location and camera details from photos; author, program, dates and earlier saved versions from PDFs; author, last editor, dates, company, template, custom properties and Word's editing-session codes from office files. The picture and the text stay byte for byte; a turned photo keeps only its orientation.
@@ -55,6 +62,13 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - Tap `Import files` to pick one or more files, or drop files from your computer onto the list. If a file with the same name already exists, choose `Overwrite` or `Keep both`.
 - Open a file to preview it. Images (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) are shown as pictures. Markdown files are shown formatted, with a `Source` button for the raw text.
 - Tap `Edit` to change a text file and `Save` to write it to the disk. Markdown files show a live preview next to the editor. Closing with unsaved changes warns you first; close again to discard them.
+
+### Copy text from a picture
+- In a picture's preview, and in the Photos viewer, press `Text` (the frame with a T; in Photos the round button at the bottom right). orOS reads the text in the picture on this device: the words found are marked on the picture.
+- Drag from one word to another, or draw a box over the text, to select it; a tap selects a line, a second tap its paragraph. Then `Copy`. `Copy all` copies everything, `Text` shows the whole text in a box where you can correct it before copying, and `Send to…` hands it to Notes, To-Do, Writer, Mail and the other apps that take text. On a keyboard, Ctrl+A selects all the words, Ctrl+C copies, Esc closes.
+- Above the buttons, what the text holds that another app can use shows as small buttons: a web address opens in a new tab, a day and time opens a new event in Calendar, an e-mail address a new message in Mail, a phone number calls it (where the device can), and `New contact` opens a new contact in Contacts filled from the text. Nothing is saved until you save it there.
+- The first time, orOS asks before it downloads its text recognition engine (Tesseract, about 7 MB, Greek and English) from its own site; it is the same download as Documents and Scanner & PDF, so one yes is enough. After that it works offline. The picture and its text never leave your device.
+- Printed text reads best. Handwriting, very small or decorative letters and text at a strong angle are often read wrongly; check the text before you use it.
 
 ## Open a file in another app
 - A file the preview cannot show (a Word or orOS document, a spreadsheet, a song, a video, an e-book…) opens straight in the orOS app that reads it when you double-click it, or tap it twice on a touch screen. Text, pictures and ZIP files still open in the preview, unless you picked an app for that type in [Settings](app:settings) › `Default apps` (for example Pad for .txt): then they open there.
@@ -127,7 +141,7 @@ The orOS disk is the encrypted place: with orOS sync on, every file on it is enc
 ## Photos
 `Photos` in the folder list shows every photo and video on the disk by the day it was taken, newest first, like a phone's gallery. The files stay where they are.
 - The date comes from the camera (the photo's details), else from the video, else from a name like `IMG_20261112_143015.jpg`, else from the file's time. `Details` in the viewer says which.
-- Tap a photo to open it. Swipe or use the arrows to go to the next one, double-tap to zoom in, and play videos right there. The buttons at the top are `Edit in Photo Lab`, `Show in folder`, `Send…`, `Details` (camera, size, place) and `Move to Trash`.
+- Tap a photo to open it. Swipe or use the arrows to go to the next one, double-tap to zoom in, and play videos right there. The round `Text` button at the bottom right copies the text in the photo (see Copy text from a picture). The buttons at the top are `Edit in Photo Lab`, `Show in folder`, `Send…`, `Details` (camera, size, place) and `Move to Trash`.
 - `−` and `+` make the pictures smaller or bigger. On a wide screen the years on the right jump to that year.
 - `Select` (or a long press on a phone) picks several. `Send…` sends the photos with a link, as `Send photos to someone…` does in Files. `Move to Trash` asks first; they can be restored from `Trash` for 30 days.
 - Photos that orOS Drive keeps only in the cloud (for example your phone's `Camera backup`) show a cloud mark. When one comes into view it is downloaded once for its small picture, then it goes back to the cloud, so the disk does not fill up.

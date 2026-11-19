@@ -342,7 +342,8 @@
     "files/dropbox.js",
     "files/files.js",
     "files/gmedia.js",
-    "files/photos.js"
+    "files/photos.js",
+    "files/tags.js"
    ]
   },
   {
@@ -451,6 +452,12 @@
    "app": "hexagon",
    "files": [
     "hexagon/hexagon.js"
+   ]
+  },
+  {
+   "app": "hive",
+   "files": [
+    "hive/hive.js"
    ]
   },
   {
@@ -861,6 +868,12 @@
    "app": "reversi",
    "files": [
     "reversi/reversi.js"
+   ]
+  },
+  {
+   "app": "ridge",
+   "files": [
+    "ridge/ridge.js"
    ]
   },
   {

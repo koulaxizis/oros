@@ -143,6 +143,8 @@
 
   // What the service worker gets (inside the encrypted packet).
   function payload(r) {
+    // APPLOCK-1 W3: a locked app's reminder goes out without its text.
+    try { if (root && typeof root.__orosLockMask === "function") r = root.__orosLockMask(r); } catch (e) {}
     return JSON.stringify({ v: 1, k: r.id, at: r.at, ns: r.ns, kind: r.kind,
                             title: String(r.title || "orOS").slice(0, 120), body: String(r.body || "").slice(0, 240),
                             link: String(r.link || "").slice(0, 200) });
@@ -302,7 +304,10 @@
     if (!devs.length) return Promise.resolve(false);
     busy = true;
     var rs = rows(now);
-    var hash = fnv(JSON.stringify(rs.map(function (r) { return [r.id, r.at, r.title, r.body, r.link]; })));
+    var hash = fnv(JSON.stringify(rs.map(function (r) {
+      try { if (root && typeof root.__orosLockMask === "function") r = root.__orosLockMask(r); } catch (e) {}   // APPLOCK-1: locking an app sends again
+      return [r.id, r.at, r.title, r.body, r.link];
+    })));
     var sent = p.sent && typeof p.sent === "object" ? p.sent : {};
     return checkSelf().then(function () {
       var q0 = prefs().sent;

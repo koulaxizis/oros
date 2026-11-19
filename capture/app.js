@@ -48,6 +48,8 @@
       "btn.send":      "Send to an app…",
       "btn.copy":      "Copy",
       "btn.uncrop":    "Whole picture",
+      "btn.text":      "Copy text",
+      "err.text":      "Text recognition could not start. Try again when online.",
       "btn.again":     "Take another",
       "btn.new":       "Choose again",
       "btn.drop":      "Discard",
@@ -106,6 +108,8 @@
       "btn.send":      "Στείλε σε εφαρμογή…",
       "btn.copy":      "Αντιγραφή",
       "btn.uncrop":    "Όλη η εικόνα",
+      "btn.text":      "Αντιγραφή κειμένου",
+      "err.text":      "Η αναγνώριση κειμένου δεν ξεκίνησε. Δοκίμασε ξανά με σύνδεση.",
       "btn.again":     "Άλλη λήψη",
       "btn.new":       "Νέα επιλογή",
       "btn.drop":      "Απόρριψη",
@@ -668,7 +672,48 @@
       .then(function () { toast(t("toast.copied")); }, function () { toast(t("err.copy")); });
   }
 
+  // ---------- 8b. Copy text from the shot (LIVE-TEXT) ----------
+  // ../ocrkit.js loads on the first press; it reads the crop (or the
+  // whole shot) on this device and marks the words on the picture.
+  var ocrP = null, ocrCtl = null;
+  function ocrKit() {
+    if (window.OrosOcr) return Promise.resolve(window.OrosOcr);
+    if (ocrP) return ocrP;
+    ocrP = new Promise(function (res, rej) {
+      var s = document.createElement("script");
+      s.src = "../ocrkit.js" + (SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "");
+      s.onload = function () { window.OrosOcr ? res(window.OrosOcr) : rej(new Error("ocr")); };
+      s.onerror = function () { ocrP = null; s.remove(); rej(new Error("ocr")); };
+      document.head.appendChild(s);
+    });
+    return ocrP;
+  }
+  function textOff() {
+    var c = ocrCtl;
+    ocrCtl = null;
+    $("b-text").classList.remove("on");
+    $("b-text").setAttribute("aria-pressed", "false");
+    if (c) c.close();
+  }
+  function copyTextOf() {
+    if (!shot.canvas) return;
+    if (ocrCtl) { textOff(); return; }
+    var cv = shot.canvas, r = shot.crop, src = finalCanvas();
+    var region = r ? { x: r.x / cv.width, y: r.y / cv.height, w: r.w / cv.width, h: r.h / cv.height } : null;
+    $("b-text").classList.add("on");
+    $("b-text").setAttribute("aria-pressed", "true");
+    ocrKit().then(function (K) {
+      if (shot.canvas !== cv) return null;
+      return K.open({ el: $("shot"), source: src, region: region, title: t("file.base"), onClose: function () {
+        ocrCtl = null;
+        $("b-text").classList.remove("on");
+        $("b-text").setAttribute("aria-pressed", "false");
+      } });
+    }).then(function (c) { if (c) ocrCtl = c; else textOff(); }, function () { textOff(); toast(t("err.text")); });
+  }
+
   function again() {
+    textOff();
     shot.canvas = null;
     shot.crop = null;
     if (stream) { show("live"); $("b-take").focus(); }
@@ -676,6 +721,7 @@
   }
 
   function discard() {
+    textOff();
     shot.canvas = null;
     shot.crop = null;
     show(stream ? "live" : "idle");
@@ -689,7 +735,8 @@
     $("b-send").addEventListener("click", function () { save(true); });
     $("b-send").hidden = $("b-rsend").hidden = !(sendApi() && fsApi());
     $("b-copy").addEventListener("click", copy);
-    $("b-uncrop").addEventListener("click", function () { shot.crop = null; paintCrop(); });
+    $("b-uncrop").addEventListener("click", function () { textOff(); shot.crop = null; paintCrop(); });
+    $("b-text").addEventListener("click", copyTextOf);
     $("b-again").addEventListener("click", again);
     $("b-drop").addEventListener("click", discard);
     $("opt-cursor").addEventListener("change", function () { prefs.cursor = this.checked; savePrefs(); });

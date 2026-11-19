@@ -1725,6 +1725,8 @@
       if (N2 && N2.getSetting && !N2.getSetting("enabled", true)) items = [];
     } catch (e) {}
     items = items.slice(0, 100);
+    // APPLOCK-1 W3: a locked app's reminder rings without its text.
+    try { if (typeof root.__orosLockMask === "function") items = items.map(root.__orosLockMask); } catch (e) {}
     if (veil) items = veilReminders(items);
     if (!send({ t: "reminders", seq: ++seq, items: items })) return;
     lastSent.reminders = key;

@@ -55,6 +55,23 @@
         if ((a === b || a.indexOf(b + "/") === 0) && b.length > bestLen) { best = { r: r, cut: k.length }; bestLen = b.length; }
       });
     });
+    // A full path the owner did not type as the label (C:\…\<root>\…):
+    // the root's own folder name as one whole part of it, the last one
+    // that matches (the handle still keeps every read inside the root).
+    if (!best && /^([A-Za-z]:\/|\/|~\/)/.test(p)) {
+      // read roots first for a read, so another root named like a
+      // folder inside this one is not taken
+      var segs = p.split("/");
+      (mode ? [mode] : ["r", "w"]).some(function (md) {
+        var at = -1;
+        (roots || []).forEach(function (r) {
+          if (r.mode !== md) return;
+          var n = norm(r.name).toLowerCase();
+          for (var j = segs.length - 1; j > at; j--) if (segs[j].toLowerCase() === n) { at = j; best = { r: r, cut: segs.slice(0, j + 1).join("/").length }; break; }
+        });
+        return !!best;
+      });
+    }
     if (!best) return { err: "notAllowedRoot" };
     var rest = p.slice(best.cut).replace(/^\//, ""), rel = rest ? rest.split("/") : [];
     for (var i = 0; i < rel.length; i++) if (!segOk(rel[i])) return { err: rel[i] === ".." ? "notAllowedRoot" : "badPath" };
@@ -145,6 +162,7 @@
       rq.onupgradeneeded = function () { rq.result.createObjectStore(STORE, { keyPath: "id" }); };
       rq.onsuccess = function () { ok(rq.result); };
       rq.onerror = function () { no(rq.error); };
+      rq.onblocked = function () { no(new Error("blocked")); };
     });
   }
   function tx(mode, fn) {
@@ -157,8 +175,8 @@
     });
   }
   function load() {
-    loaded = tx("readonly", function (st) { return st.getAll(); }).then(function (l) {
-      roots = (Array.isArray(l) ? l : []).filter(function (r) { return r && r.id && r.handle && (r.mode === "r" || r.mode === "w"); });
+    loaded = limit(tx("readonly", function (st) { return st.getAll(); }), "", 10000).then(function (l) {
+      roots = (Array.isArray(l) ? l : []).filter(function (r) { return r && r.id && (r.handle || typeof r.pc === "string" && pcPath(r.pc) === r.pc) && (r.mode === "r" || r.mode === "w"); });
       return roots;
     }, function () { roots = []; return roots; });
     return loaded;
@@ -194,7 +212,7 @@
   function perm(r, ask) {
     if (r.pc) return pcOn();
     var o = { mode: r.mode === "w" ? "readwrite" : "read" };
-    var q = ask ? r.handle.requestPermission(o) : r.handle.queryPermission(o);
+    var q = ask ? r.handle.requestPermission(o) : limit(r.handle.queryPermission(o), "", 10000);
     return Promise.resolve(q).then(function (s) { return s === "granted"; }, function () { return false; });
   }
   function live(now) { return roots.filter(function (r) { return !r.exp || r.exp > now; }); }
@@ -205,6 +223,16 @@
     try { if (root.orosNotifs && root.orosNotifs.transient) root.orosNotifs.transient({ ns: "system", title: tr("loc.used") }); } catch (e) { void e; }
   }
   function fail(why, path) { var e = new Error(why); e.why = why; e.path = path; return e; }
+  // Every call ends: a browser or disk that does not answer (a cloud
+  // placeholder, a lost permission prompt, a stuck launcher) gives
+  // "timeout" instead of a promise that never settles (bug 2026-11-18).
+  var LIMIT = 30000, READ_MS = 15000;   // a read answers inside the gate's ~21 s wait
+  function limit(pr, path, ms) {
+    return new Promise(function (ok, no) {
+      var t = setTimeout(function () { no(fail("timeout", path)); }, ms || LIMIT);
+      Promise.resolve(pr).then(function (v) { clearTimeout(t); ok(v); }, function (e) { clearTimeout(t); no(e); });
+    });
+  }
   // path → { r, dir (FileSystemDirectoryHandle of the parent or the folder), leaf, rel }
   function open(path, mode) {
     return ready().then(function () {
@@ -238,7 +266,8 @@
   function shownPath(x, rel) { return "local:" + x.root.name + (rel.length ? "/" + rel.join("/") : ""); }
   // ls(path, depth) → [{ path, name, dir, size, mtime, type }] (sorted:
   // folders first; at most 2000)
-  function ls(path, depth, cmd) {
+  function ls(path, depth, cmd) { return limit(lsRaw(path, depth, cmd), path, 120000); }
+  function lsRaw(path, depth, cmd) {
     return open(path).then(function (x) {
       return entry(x).then(function (e) {
         if (e.kind !== "dir") throw fail("notFolder", path);
@@ -309,7 +338,8 @@
     });
   }
   // read(path) → File (read and write roots both read; only files)
-  function read(path, cmd) {
+  function read(path, cmd) { return limit(readRaw(path, cmd), path, READ_MS); }
+  function readRaw(path, cmd) {
     return open(path).then(function (x) {
       return entry(x).then(function (e) {
         if (e.kind !== "file") throw fail("notFile", path);
@@ -326,7 +356,8 @@
   }
   // write(dirPath, name, blob) → the path written (write roots only;
   // never replaces a file: a taken name gets -2, -3 …)
-  function write(dirPath, name, blob, cmd) {
+  function write(dirPath, name, blob, cmd) { return limit(writeRaw(dirPath, name, blob, cmd), dirPath, 60000); }
+  function writeRaw(dirPath, name, blob, cmd) {
     if (!segOk(name)) return Promise.reject(fail("badPath", name));
     return open(dirPath, "w").then(function (x) {
       if (x.root.pc) return pcWrite(x, name, blob, cmd);
@@ -495,5 +526,7 @@
   else if (root.document) root.document.addEventListener("DOMContentLoaded", boot);
 
   root.orosLocal = Object.assign({ supported: supported, ready: ready, list: list, add: add, remove: remove, extend: extend, paused: paused, setPaused: setPaused,
-    reconnect: reconnect, addPc: addPc, pcOn: pcOn, ls: ls, read: read, write: write, copyIn: copyIn, onChange: onChange, reload: function () { return load().then(changed); } }, PURE);
+    reconnect: reconnect, addPc: addPc, pcOn: pcOn, ls: ls,
+    // the open roots as Claude names them (sync; [] until loaded)
+    names: function () { var now = Date.now(); return live(now).map(function (r) { return { name: r.name, label: r.label || "", mode: r.mode }; }); }, read: read, write: write, copyIn: copyIn, onChange: onChange, reload: function () { return load().then(changed); } }, PURE);
 })(typeof window !== "undefined" ? window : this);
