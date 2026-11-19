@@ -926,10 +926,18 @@
   // fileopen.js), taken once and read as the Import dialog reads one |
   // { importText: { text } }, RTTTL text from another app (Studio's
   // "Make a ringtone"), at most 64 KB: it only fills the Import dialog,
-  // the user presses Import.
+  // the user presses Import | { melody: id }, a saved melody (menu
+  // search).
   var MAX_IMPORT_TEXT = 65536;
   function openTarget(tg) {
     if (!tg || typeof tg !== "object") return;
+    // { melody: id } (menu search, ringtones/search.js): that saved
+    // melody; nothing while a dialog is open (unsaved edits win).
+    if (typeof tg.melody === "string") {
+      var x = C.findMelody(data, tg.melody);
+      if (x && !document.querySelector("dialog[open]")) openMelody(x);
+      return;
+    }
     if (tg.importText && typeof tg.importText === "object") {
       var tx = tg.importText.text;
       if (typeof tx !== "string" || !tx.trim() || tx.length > MAX_IMPORT_TEXT) return;

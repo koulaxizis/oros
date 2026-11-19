@@ -330,6 +330,46 @@ test("wave 8 (APP-LISTS L4): Transfer, Scanner & PDF, Stock and Forms; no shares
   assert.ok(S.manifestFor("stock", F.table(), BASE).file_handlers[0].accept["application/x-oros-stock"]);
 });
 
+test("wave 9 (gap review proposal 10): orOS Library and orOS Base, file types, shortcuts and German store texts", () => {
+  const pk = JSON.parse(read("android/solo-apps.json")).apps;
+  assert.equal(pk.library, "online.useoros.library");
+  assert.equal(pk.base, "online.useoros.base");
+  assert.equal(S.pkgOf("library"), "online.useoros.library");
+  assert.equal(S.pkgOf("base"), "online.useoros.base");
+  assert.equal(S.nameOf("library", "el"), "orOS Βιβλιοθήκη");
+  assert.equal(S.nameOf("base", "el"), "orOS Βάση");
+  ["library", "base"].forEach((id) => assert.ok(!S.APPS[id].share, id + " takes no text shares"));
+  // Open with: Library's books and comics, Base's own files, from the fileopen.js table
+  const lib = S.manifestFor("library", F.table(), BASE);
+  const exts = [].concat(...Object.values(lib.file_handlers[0].accept)).sort();
+  assert.deepEqual(exts, [".cbr", ".cbz", ".epub", ".fb2", ".oroslibrary", ".pdf"]);
+  assert.deepEqual(S.manifestFor("base", F.table(), BASE).file_handlers[0].accept, { "application/x-oros-base": [".orosbase"] });
+  assert.deepEqual(S.shortcut("library", "resume").target, { resume: true });
+  assert.deepEqual(S.shortcut("library", "free").target, { catalog: true });
+  assert.deepEqual(S.shortcut("base", "new").target, { newBase: true });
+  assert.deepEqual(S.shortcut("base", "last").target, { lastBase: true });
+  assert.match(read("library/app.js"), /if \(target\.resume === true\)/);
+  assert.match(read("library/app.js"), /if \(target\.catalog === true\)/);
+  assert.match(read("base/app.js"), /if \(tg\.newBase === true\)/);
+  assert.match(read("base/app.js"), /if \(tg\.lastBase === true\)/);
+  // Android: the TWA may open useoros.online for both packages
+  const links = JSON.parse(read(".well-known/assetlinks.json")).map((x) => x.target.package_name);
+  assert.ok(links.includes("online.useoros.library") && links.includes("online.useoros.base"));
+  // F-Droid: German name, summary and description go to de-DE (only where texts.json has them)
+  const M = require(path.join(ROOT, "tools", "fdroid-metadata.js"));
+  const tmp = fs.mkdtempSync(path.join(require("os").tmpdir(), "fd-"));
+  M.write(tmp);
+  [["library", "orOS Bibliothek"], ["base", "orOS Datenbank"]].forEach(([id, de]) => {
+    const t = JSON.parse(read("tools/fdroid/" + id + "/texts.json"));
+    assert.ok(t.de.summary.length <= 80 && t.de.description.length > 200, id + " de");
+    const d = path.join(tmp, "metadata", pk[id], "de-DE");
+    assert.equal(fs.readFileSync(path.join(d, "name.txt"), "utf8"), de + "\n");
+    assert.equal(fs.readFileSync(path.join(d, "summary.txt"), "utf8"), t.de.summary + "\n");
+  });
+  assert.ok(!fs.existsSync(path.join(tmp, "metadata", "online.useoros.notes", "de-DE")), "no German folder without German texts");
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
 test("the download page lists every single app and its APK, in English and Greek (APP-LISTS L4)", () => {
   const html = read("download/index.html");
   const i = html.indexOf('<article lang="el"');
@@ -398,7 +438,7 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   // orOS Drive (DRIVE-APP) is built from koulaxizis/oros-drive by the same workflow
   // page apps (STUDIO-RA, android/page-apps.json) are built as flavours too
   const pg = JSON.parse(read("android/page-apps.json")).apps;
-  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
+  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk", "oros-glarolykoi.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
   Object.keys(pg).forEach((id) => {
     const a = l.find((x) => x.id === id);
     assert.equal(a.pkg, pg[id].package);
@@ -408,6 +448,13 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   const dr = l.find((a) => a.id === "drive");
   assert.equal(dr.pkg, "online.useoros.drive");
   assert.equal(M.texts(dr, "el").name, "orOS Drive");
+  // The Glarolykoi app (GL-1, glarolykoi-android/) is built by the same workflow
+  assert.ok(!pk.glarolykoi, "a single app called glarolykoi would publish a second oros-glarolykoi.apk");
+  const gl = l.find((a) => a.id === "glarolykoi");
+  assert.equal(gl.pkg, "net.glarolykoi.android");
+  assert.equal(M.texts(gl, "el").name, "Γλαρόλυκοι");
+  assert.match(read("glarolykoi-android/app/build.gradle"), /applicationId 'net\.glarolykoi\.android'/);
+  assert.match(read(".github/workflows/android.yml"), /app-glarolykoi-release\.apk/);
   l.forEach((a) => {
     assert.ok(fs.existsSync(a.icon), a.icon);
     ["en", "el"].forEach((lg) => {

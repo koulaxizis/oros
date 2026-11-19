@@ -28,10 +28,14 @@ const GATE_ONLY = {
   budget_areas: { why: "Areas are Budget's own settings (words, invoice series, shares of shared costs) that Claude keeps in order from outside; inside orOS the owner sets them in Budget › Areas." },
   budget_categories: { why: "Categories with their areas are Budget's own settings that Claude keeps in order from outside (like budget_areas); inside orOS the owner sets them in Budget › Categories." },
   budget_balances: { why: "Matching several accounts to the bank's real balances on a day is a daily check Claude runs from outside; inside orOS the owner does it per account with Update balance or Match." },
+  // BK-AO (Chris 2026-11-18)
+  budget_refresh: { why: "Reading the banks now is for Claude's checks from outside, before it reads budget_lines; inside orOS the owner presses Update now in Budget › More › Banks, and Budget updates by itself on its schedule." },
   budget_transfer: { why: "Turning entries into a transfer replaces them with an item of another collection in one undoable step; inside orOS the owner does it from the entry (It's a transfer)." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
   kanban_change_card: { twin: ["change_item"] },
+  // INV-EXT (Chris 2026-11-18 card «Νέο εργαλείο στο Gate»)
+  invoices_record: { why: "Recording a batch of documents issued at another provider is bookkeeping import Claude does from outside (an export of that provider); inside orOS the owner records one with Invoices › New › Record an invoice issued elsewhere." },
   // GATE-FILES F2: the Assistant runs on the device and reads the live disk (files_read); a download link is for a cloud thread with orOS closed
   files_link: { why: "A one-time download link from the owner's sealed copy is for Claude working from outside with orOS closed; the Assistant runs on the device and reads the live file with files_read." }
 };

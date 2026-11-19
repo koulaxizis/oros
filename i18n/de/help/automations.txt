@@ -22,6 +22,16 @@ In ihren Texten wird `{text}` zu dem, was die Mitteilung oder das Ereignis sagte
 
 Der Schritt `Timesheet-Timer` startet in [Timesheet](app:timesheet) einen Timer mit dem Titel, den du angibst (und dem Projekt dieses Namens, falls vorhanden), oder stoppt den laufenden Timer. Ein Start stoppt nie einen Timer, der schon läuft. Wie jeder Schritt läuft er, wenn du auf die Mitteilung der Regel tippst.
 
+### Formulare, Abrechnung, Kanban, Bestand, Scanner & PDF und Transfer
+Weitere Apps sagen deinen Regeln, was passiert:
+- `Wenn ein Formular eine neue Antwort bekommt` ([Formulare](app:forms), `{text}` = der Titel des Formulars), sobald dieses Gerät die Antwort abholt.
+- `Wenn eine Rechnung vollständig bezahlt ist` und `Wenn eine Rechnung überfällig wird` ([Abrechnung](app:invoices), `{text}` = Nummer · Kunde · Betrag). Überfällig zählt eine Rechnung in ihren ersten 7 Tagen nach dem Fälligkeitstag, damit eine neue Regel keine alten Schulden hervorholt.
+- `Wenn eine Karte in Kanban eine Erledigt-Spalte erreicht`: eine Spalte, deren Ankunftsregel alle Unteraufgaben abhakt, oder die letzte Spalte des Boards, wenn keine Spalte diese Regel hat.
+- `Wenn ein Produkt im Lager seinen Mindestbestand erreicht`: es fällt auf sein Minimum (`{text}` = Produkt · verbleibende Menge).
+- `Wenn eine Signaturanfrage unterschrieben zurückkommt` ([Scanner & PDF](app:scanpdf), `{text}` = Dokument · Unterzeichner) und `Wenn Dateien über Transfer ankommen`.
+
+Drei weitere Schritte öffnen eine App mit ausgefüllten Angaben, und nichts wird gespeichert, bis du es dort speicherst: `Eine Karte in Kanban anlegen` (Titel, dazu Board und Spalte nach Namen), `Im CRM festhalten` (ein Anruf, eine E-Mail, ein Treffen, eine Nachricht oder eine Notiz; der Kunde ist der, den du nennst, oder der, den der Text nennt) und `Einen Eintrag in der Datenbank anlegen` (sein Name, und die Tabelle nach Namen). Die fertigen Regeln `Bezahlte Rechnung ins CRM`, `Überfällige Rechnung ins To-Do`, `Knapper Bestand ins To-Do` und `Unterschriebenes Dokument zurück` zeigen sie.
+
 ### Vor einem Termin, und Ziele
 - `{n} Min. vor einem Termin meines Tages`: etwas mit Uhrzeit in [Heute](app:today) (dein Kalender und die anderen Apps, die Heute eine Uhrzeit geben) beginnt gleich. Die Minuten stellst du ein, von 1 bis 120. Einträge von Apps, die nicht in der Suche erscheinen (Gesundheit, Zyklus und ähnliche), zählen nie, und solange `Sensible Arbeit` an ist, bleibt `{text}` leer statt des Terminnamens.
 - `Wenn der heutige Kassenumsatz … erreicht`: der Tagesumsatz an der Kasse in [Bestand](app:stock) erreicht den Betrag, den du einstellst. `Wenn die Ausgaben dieses Monats … übersteigen`: die Ausgaben dieses Monats in [Budget](app:budget) übersteigen ihn. Das läuft einmal am Tag (Umsatz) oder einmal im Monat (Ausgaben).

@@ -1,6 +1,87 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.72.00
+- **The Pocket.** Keep a text, a link, a list, a table or files with `Keep in pocket` in Send to an app (or in the menu of selected text), then send it into another app later. Its button shows at the end of the Dock, or in the top bar, only while it holds something; Ctrl+Alt+Shift+, opens it. Up to 20 items, kept on this device until you take them out; never Passwords or Settings. See [Send to someone](help:t/share).
+
+## Version 7.71.01
+- **Keep awake and Energy saver in Quick settings.** `Keep awake` keeps the screen on for 1 hour, 2 hours or until you turn it off (on orOS USB the computer does not sleep either). `Energy saver` stops what moves on the desktop and refreshes widgets once a minute; it also turns on by itself under 20 % battery. Both are for this device only. See [Appearance](help:t/appearance).
+
+## Version 7.71.00
+- **Tags in Files.** Give any file or folder coloured tags (`Tags…` in its menu), find everything with one tag under `Tags` in the tree, also in Photos. It is one list with Documents, and it is synced. See [Files](help:a/files).
+
+## Version 7.70.00
+- **Read aloud, in every app.** Turn on `Read aloud` in Settings › Accessibility (it is off until you do, on this device only), then select text in any orOS app and press Ctrl+Alt+Shift+Z, right-click it and choose `Read aloud`, or use Quick settings › `Read aloud`. With nothing selected, it reads the main text of the app in front. The sentence being read is lit up and the page follows it; a bar goes back or on by a sentence, pauses, changes the speed and stops. Only the voices installed on this device are used, never online ones, and you can pick one per language (English, Greek, German) and hear it with `Test`. Never in Passwords, password fields or while Sensitive work is on.
+
+## Version 7.69.00
+- **Budget: your banks update by themselves while orOS is open.** Every 6 hours now runs in any app, even with Budget closed: when you open orOS, then every 6 hours. In Budget › `Banks` › `Automatic updates` you can also turn them off. Claude can ask for a bank update through orOS Gate while orOS is open, so a check no longer has to ask you to press `Update now`. See [Budget](help:a/budget).
+
+## Version 7.68.01
+- **Layout: a better view.** The pages sit in the middle of the window with the spine centred, scroll bars show where you are and move the view, and the view keeps its place when the window or a panel changes size. Double-click the Hand tool to fit the spread again.
+- **Layout and Claude: fonts, frames, page numbers.** Claude can add a free font (Fontsource, for example Carlito with Greek) or a font file from a local folder to your fonts and use it in a style by name; change or remove one frame; put page numbers and running heads on a master and hide them on chosen pages; switch a book to CMYK for print; read whole paragraphs and the latest preflight; and try commands without changing anything. Every run says which pages it added and on which side.
+- **Layout: busy no more.** When Layout is still working on Claude's earlier commands, Claude is told what it is doing, and you can press Stop (or Claude can cancel it). Proofs also go to your local export folder, and web and e-mail addresses are clickable in the screen PDF.
+- **Local folders for Claude: no more waiting.** A picture from a local folder that does not answer no longer keeps Layout busy: after 15 s for a file (60 s without progress for the whole run) Layout stops, changes nothing more and takes the next command, and Claude is told why and which path form to use. Claude can now list the open local folders through orOS Gate, a full Windows path (C:\\Users\\…) works even when it was not typed in Settings, and folders added by path in orOS Setup stay after a restart.
+
+## Version 7.68.00
+- **Screen time.** Settings › Screen time counts how long each app is in front of you, on this device only: today's apps, the last 7 days as columns, and `Clear history`. It is off until you turn it on, never synced, never in a backup and never seen by the Assistant or orOS Gate; only minutes per app and day are kept, for 4 weeks. `Daily limits` gives any app a limit from 15 minutes to 8 hours: a quiet notice 5 minutes before, then a `Time for a break?` card over the app, which stays open under it (`15 more minutes`, `No more reminders today` or `Go to the desktop`). A limit never closes or blocks an app, and an app past its limit shows a small hourglass in the menu.
+
+## Version 7.67.00
+- **Local folders for Claude (temporary).** Until the material is on the orOS disk, Settings › Connected services › orOS Gate › `Local folders for Claude (temporary)` lets Layout use folders of this computer through orOS Gate. A read folder is only read: Layout copies what it uses into the document and never changes, renames or deletes anything there. A write folder only takes new files (a name that exists gets -2, -3), such as the print PDF and page proofs. Each folder ends after 30 days (`30 more days`), a bar shows while folders are open, `Pause` stops them all at once, and every read and write shows in the Gate history. `Move to Claude's folders` copies a folder onto the orOS disk. Works in Chrome and Edge on a computer, and in the orOS window of orOS Setup and orOS Portable, where a folder is added by its path (C:\Users\…) and needs no permission again after a restart.
+
+## Version 7.66.00
+- **Continue from another device.** orOS remembers where you were in each app (the document, page, board, book or project, never its content) and offers it on your other devices: a row in the Overview, a card in Today and, if you tick it, a chip in the smart bar. One tap opens the app at that item. After a restart orOS also brings your apps back, each at its own item. Settings › System › Continue on your other devices: two switches, the name of this device and Forget for the others. Never for Passwords, Mail, Diary, Health and the other private apps, and nothing while Sensitive work is on.
+
+## Version 7.65.00
+- **Pictures in Layout: mirror, corners and Links.** A picture can be mirrored left to right or top to bottom in its frame, and `Frame to picture` gives the frame the picture's proportions. `Links (pictures)…` in the More menu lists every picture with its page, its resolution and whether its file is here, with `Go to` and `Replace picture…`. The PDF, page pictures and data merge show the mirrored picture too. The Assistant and Claude (through orOS Gate) can mirror, round and fit picture frames by frame or by page.
+
+## Version 7.64.00
+- **Page sizes and creep in Layout.** A page can have its own size, for a fold-out or a smaller insert: `Page size…` under the page list, for this page or a range. The editor, the pictures, the page pictures and the PDF follow it. For a saddle-stitched book, `Creep in mm` in the PDF export moves the inner pages' content towards the spine so nothing is cut after folding. The Assistant and Claude (through orOS Gate) can do both.
+
+## Version 7.63.00
+- **Text replacements.** Type a short code like `;addr` and a space or punctuation in any orOS app and it becomes your full text; [[Backspace]] right after puts the code back. `{date}`, `{time}` and `{cursor}` work in the text. It works in Writer, Mail and Slides too, and the on-screen keyboard shows the text above the keys. Settings › Language & search › Text replacements; import your list from Gboard or from a Mac or iPhone. Synced to your devices, encrypted; never in Passwords or while Sensitive work is on.
+
+## Version 7.62.00
+- **Sections and master pages in Layout.** Any page can start a section with its own numbers: roman numerals for the front matter, 1 again for the book, letters with a prefix for an appendix. Page numbers, running heads, the contents and the PDF follow. A master can be based on another master and add to it. The Assistant and Claude (through orOS Gate) can do all of this too, and move, copy and give masters to whole ranges of pages.
+
+## Version 7.61.00
+- **What each contract grants, in CRM.** A contract now keeps its rights: what it grants, the formats it covers, each right with its share (print, e-book, audio, translation, stage and screen, merchandise), the territory, sell-off after the end and the Creative Commons licence. The new `Rights` chip in `Contracts` shows what is on sale with no running right, rights with no release yet (an e-book or audiobook you could make) and the renewals of the next 90 days with what happens after the end. Publishing shows a short rights line on each title. Claude or the Assistant fill them in from your contracts, each change on a card with Undo.
+
+## Version 7.60.00
+- **Colour filters and a larger pointer.** In Settings › Accessibility, `Colour filter` turns the whole screen grey, helps tell red from green or blue from yellow (with a strength), or inverts the colours while photos and videos stay as they are. `Pointer size` makes the mouse pointer Large or Extra large. A new `Colour filter` button in Quick settings turns the last filter on and off. Both stay on this device.
+
+## Version 7.59.00
+- **Layout sets plays and finishes books.** Paragraph styles can give the start of each paragraph its own character style, up to a character you choose: a play's speaker in bold capitals up to the colon. `Styles for a play` under Paragraph styles adds the cast list, act, scene, dialogue, stage direction and song styles in one go. The Assistant and Claude (through orOS Gate) can now make and change styles, add text frames (also over a page picture, to retypeset it as live text), give a story new text, and add your house style's front and back pages to a book, with the title, author and ISBN filled in and blank pages so the page count comes out right for the printer.
+
+## Version 7.58.00
+- **Layout makes print-ready books.** New book sizes (120×190, 140×210, 170×240, 180×250 and 215×215 mm), a different bleed on each side, and a first page on the left when you need it. Print PDFs can carry crop, bleed and registration marks, colour bars and a page information line. The Assistant and Claude (through orOS Gate) can start a book from nothing, put a folder of page pictures on pages in reading order, fill the bleed of pictures that stop at the page edge, make page pictures to look at, and make a PDF/X-4 for the printer with the Coated FOGRA39 profile, saved in Files › Layout › PDF.
+
+## Version 7.57.00
+- **Apps open from their icon.** An app now grows out of the icon, Dock button or menu row you opened it from, and when you close it, it shrinks back into its icon or into the Dock, on whichever edge the Dock sits. It is on from the start; Settings › Appearance › `Animate apps opening and closing` turns it off on this device. It never moves with reduced motion, Energy saver or a low battery.
+
+## Version 7.56.00
+- **A light show for your music.** In Music's full player, the sun button fills the window with light that moves with the song: Glow, Rings, Bars or Wave, and `Light only` hides the controls. Radio (in the player's `⋯` menu) and Podcasts (the sun button in the full player) have it too. It listens to the sound where the source allows it, otherwise the light moves on its own. Everything stays on your device, and the light never flashes.
+
+## Version 7.55.00
+- **The Dock at any edge.** The Dock can now sit at the left, right or top of the screen as well as the bottom: Settings › Appearance › Dock › `Position`. Shortcuts, widgets and notes on the desktop make room for it. On a phone or a small window it stays at the bottom.
+
+## Version 7.54.00
+- **New app: Shop.** Your own WooCommerce shop's figures inside orOS: today's orders and sales, this month and this year, the products that sell and stock that runs out. With the free orOS Connect plugin also costs and result, partners' shares and consignments. It only reads, keeps totals only (never customer data) and opens offline with the last read. Connect your shop in Settings › Connected services.
+
+## Version 7.53.00
+- **The menu search finds more of your things.** Type in the menu's search box to find your households (by name, the people in them and what you share), your saved labels in Label Maker and your melodies in Ringtone Composer. Choosing one opens that household, label or melody.
+
+## Version 7.52.00
+- **Claude can record invoices you issued elsewhere.** Through orOS Gate, Claude can now add invoices and receipts you issued with another provider (or in myDATA) to Invoices as recorded documents: their own number, client, amounts with withholding, lines, payment, ΜΑΡΚ and Budget area. They are never drafts, never take a number from your orOS series and nothing is sent anywhere; a document already in Invoices is skipped. It works only where you let Claude change Invoices, you are told of each change and you can undo it.
+
+## Version 7.51.00
+- **German everywhere again.** Every German text and help page is up to date again, including the browser start page and the names Layout gives a rebuilt document. German has not yet been read by a native speaker, so tell us what sounds wrong.
+
+## Version 7.50.00
+- **Library and Base as their own apps.** orOS Library and orOS Base now install on their own, with their own icon and window, and as Android apps (APK, and in the orOS F-Droid repository). Books, comics and PDFs (.epub, .pdf, .fb2, .cbz, .cbr) open with Library from your file manager, and .orosbase files with Base. Long-press the icon for `Continue reading` and `Free books` in Library, or `New base` and `Last base` in Base.
+
+## Version 7.49.00
+- **Ask the Assistant and Claude about eight more apps.** The Assistant and Claude through orOS Gate can now give you a summary of Meal Planner (this week's plan and what in the pantry is close to its date), Travel (your trips and what is still open), Plant Care (what needs water or care), Garage (each vehicle's renewals, service and costs), Habits (today and your streaks), Scanner & PDF (where each signature request stands), Transfer (your transfer history, never the files themselves) and Whiteboard (your boards and the text of their notes). It only reads: nothing is changed. Claude reads an app only where you allow it in orOS Gate. Transfer history is now also found by search.
+
 ## Version 7.48.00
 - **Claude's deletions are asked where you are.** When Claude asks to delete something and the orOS that gets the request has nobody at its screen (running in the background, in a hidden window or behind the lock), it no longer says no on your behalf: the request waits and the question appears on the device where orOS is on screen, now or as soon as you open it.
 

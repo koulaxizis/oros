@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Glarolykoi</string>
+    <string name="offline_title">No connection</string>
+    <string name="offline_text">This page needs the internet. Pages you have already opened still work.</string>
+    <string name="retry">Try again</string>
+    <string name="no_app">No app on this phone can open this link.</string>
+    <string name="downloading">Downloading %1$s</string>
+    <string name="channel_new">New in the shop</string>
+    <string name="new_one">New in the Glarolykoi shop</string>
+    <string name="new_many">%1$d new in the Glarolykoi shop</string>
+    <string name="ask_title">New books?</string>
+    <string name="ask_text">Once a day the app can check the shop and tell you when something new arrives. It sends nothing about you. You can turn it off in Android\'s settings for this app.</string>
+    <string name="ask_yes">Yes, tell me</string>
+    <string name="ask_no">No thanks</string>
+</resources>
