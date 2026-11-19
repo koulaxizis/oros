@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 50334 of 50341 (99%)
+- Strings: 50434 of 50441 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -82,7 +82,7 @@ en and el); translators change them there, not in a pack.
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 358 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 1237 / 1237 |
+| layout | 100% | 1265 / 1265 |
 | library | 100% | 330 / 330 |
 | lighthouse | 100% | 215 / 215 |
 | lightsout | 100% | 52 / 52 |
@@ -91,7 +91,7 @@ en and el); translators change them there, not in a pack.
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 504 / 504 |
 | mancala | 100% | 61 / 61 |
-| maps | 100% | 1620 / 1620 |
+| maps | 100% | 1692 / 1692 |
 | mastermind | 100% | 74 / 74 |
 | maze | 100% | 123 / 123 |
 | meals | 100% | 466 / 466 |
