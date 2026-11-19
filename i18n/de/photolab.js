@@ -454,6 +454,8 @@ orosPack("de", "photolab", {
  "menu.toggleMask": "Maske aus- oder einschalten",
  "menu.transform": "Frei transformieren",
  "menu.trim": "Transparente Ränder entfernen",
+ "menu.ocrText": "Text aus dem Bild kopieren…",
+ "msg.ocrFail": "Die Texterkennung konnte nicht starten. Versuche es erneut, wenn du online bist.",
  "menu.undo": "Rückgängig",
  "menu.viaCopy": "Ebene durch Kopieren",
  "menu.viaCut": "Ebene durch Ausschneiden",

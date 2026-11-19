@@ -455,6 +455,12 @@
    ]
   },
   {
+   "app": "hive",
+   "files": [
+    "hive/hive.js"
+   ]
+  },
+  {
    "app": "household",
    "files": [
     "household/app.js",
@@ -862,6 +868,12 @@
    "app": "reversi",
    "files": [
     "reversi/reversi.js"
+   ]
+  },
+  {
+   "app": "ridge",
+   "files": [
+    "ridge/ridge.js"
    ]
   },
   {

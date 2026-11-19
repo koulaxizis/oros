@@ -93,6 +93,9 @@
     // token). Proton isn't made for bulk mail and limits by reputation:
     // slow defaults the user may raise (W4 2026-11).
     proton:     { host: "smtp.protonmail.ch", port: 587, rate: 15, cap: 150 },
+    // The mail of a web hosting plan (cPanel, Plesk): mail.<domain>, the
+    // host's own limits (usually per hour), so slow defaults (MV-1 2026-11).
+    hosting:    { host: "", port: 465, rate: 10, cap: 300 },
     other:      { host: "", port: 587, rate: 6, cap: 450 }
   };
   var MAIL_DEFAULTS = { rate: 6, cap: 450 };   // an ordinary mailbox (Mail account)
@@ -205,6 +208,61 @@
     return o;
   }
   function isApi(ch) { return !!ch && ch.kind === "smtp" && ch.via === "api"; }
+  // The host the "hosting" preset suggests: mail.<domain> of the user name
+  // (hosting plans log in with the full address) or else of a From.
+  function hostingHost(user, from) {
+    var a = [user, from].map(function (v) { return String(v || "").trim().toLowerCase().split("@"); })
+      .filter(function (p) { return p.length === 2 && validHost(p[1]) && p[1].indexOf(".") > 0; })[0];
+    return a ? "mail." + a[1] : "";
+  }
+  // ---------- moving from another platform (MV-1) ----------
+  // a sending account + domain, a test, import, linked group, one issue
+  // from orOS, old forms off, export archived, old account closed
+  var MOVE_STEPS = ["a", "b", "c", "d", "e", "f", "g", "h"];
+  function normMove(v) {
+    if (typeof v !== "string") return "";
+    return MOVE_STEPS.filter(function (k) { return v.indexOf(k) >= 0; }).join("");
+  }
+  function moveTick(l, step, on) {
+    var cur = normMove(l && l.mv);
+    if (MOVE_STEPS.indexOf(step) < 0) return cur;
+    return normMove(on ? cur + step : cur.split(step).join(""));
+  }
+  var PREV_KEYS = ["pvOpen", "pvClick", "pvUnsub"];
+  function pct(v) {
+    if (typeof v === "string" && v.trim()) v = +v.trim().replace(",", ".").replace(/%$/, "");
+    if (typeof v !== "number" || !isFinite(v) || v < 0 || v > 100) return null;
+    return Math.round(v * 10) / 10;
+  }
+  // The previous platform's figures of a list, or null when none.
+  function prevFigures(l) {
+    if (!l) return null;
+    var o = { open: l.pvOpen, click: l.pvClick, unsub: l.pvUnsub, note: l.pvNote || "" };
+    return PREV_KEYS.some(function (k) { return typeof l[k] === "number"; }) || o.note ? o : null;
+  }
+  // Lists the one-time one-click offer is for: no relay registration yet
+  // and the offer never answered.
+  function oneClickOffers(d) {
+    return live(d.lists).filter(function (l) { return !l.form && !l.ocAsk; });
+  }
+  // Has the list sent an issue from orOS yet (imported past issues don't count)?
+  function firstSend(d, x) {
+    return !live(d.issues).some(function (y) {
+      return y.id !== x.id && y.list === x.list && !y.imp && (y.st === "sent" || y.st === "sending" || y.st === "paused");
+    });
+  }
+  // The domain check of the From (DNS-over-HTTPS) as findings: rec =
+  // { spf, dmarc, dkim (strings, "" = none), fail (couldn't read) } or
+  // null (not looked at: a public mailbox, or no From).
+  var DNS_TTL = DAY;
+  function domFindings(rec) {
+    if (!rec) return [];
+    if (rec.fail) return [{ lvl: "warn", k: "domUnread" }];
+    var out = [];
+    if (!rec.spf) out.push({ lvl: "warn", k: "noSpf" });
+    if (!rec.dmarc) out.push({ lvl: "warn", k: "noDmarc" });
+    return out;
+  }
   function normList(x) {
     var o = {
       id: x.id, m: nat(x.m), name: oneLine(x.name, LIM.name),
@@ -237,6 +295,16 @@
     // "issue sent" notice (N3): an https address and the key it is signed with
     var hu = typeof x.hookUrl === "string" && x.hookUrl.length <= 500 && /^https:\/\/[^\s<>"']+$/i.test(x.hookUrl) ? x.hookUrl : "";
     if (hu && typeof x.hookKey === "string" && SHOP_KEY.test(x.hookKey)) { o.hookUrl = hu; o.hookKey = x.hookKey; }
+    // MV-1 (2026-11, moving from another platform): when the one-time
+    // one-click offer was answered, the ticked steps of the moving
+    // checklist (letters of MOVE_STEPS), the previous platform's figures
+    // (percent, one decimal) and a note. Scalars, so an older orOS keeps them.
+    if (nat(x.ocAsk)) o.ocAsk = nat(x.ocAsk);
+    var mv = normMove(x.mv);
+    if (mv) o.mv = mv;
+    PREV_KEYS.forEach(function (k) { var v = pct(x[k]); if (v !== null) o[k] = v; });
+    var pn = oneLine(x.pvNote, 200);
+    if (pn) o.pvNote = pn;
     return keepExtra(x, o, LIST_KEYS);
   }
   // The web sign-up form + one-click unsubscribe kept by the relay
@@ -259,7 +327,10 @@
     var back = safeUrl(f.back);
     return { k: f.k, sec: f.sec, priv: priv, back: /^https:\/\//i.test(back) && back.length <= 300 ? back : "",
              dev: typeof f.dev === "string" && /^[a-z0-9]{6,20}$/.test(f.dev) ? f.dev : "", at: nat(f.at),
-             shk: typeof f.shk === "string" && SHOP_KEY.test(f.shk) ? f.shk : "" };
+             shk: typeof f.shk === "string" && SHOP_KEY.test(f.shk) ? f.shk : "",
+             // MV-1 W3: registered for one-click unsubscribe only (the relay
+             // refuses sign-ups until the form is set up); 0 = the form is open
+             oc: f.oc === 1 ? 1 : 0 };
   }
   // N2: the shop key a checkout sign-up is signed with (orOS Connect:
   // sig = HMAC-SHA256(key, lower-case e-mail + "|" + ts), ts in seconds).
@@ -295,6 +366,64 @@
       "  <div style=\"position:absolute;left:-5000px\" aria-hidden=\"true\"><input type=\"text\" name=\"website\" tabindex=\"-1\" autocomplete=\"off\"></div>\n" +
       "  <button type=\"submit\">" + e(words.btn) + "</button>\n" +
       "</form>";
+  }
+  // MV-1 W2: the same form as a pop-up for any site (replaces a hosted
+  // platform's pop-up). One <div>, a scoped <style> and a small script:
+  // shows after `delay` seconds, closes with its button, Esc or a click
+  // outside, keeps the focus inside while open, and remembers "closed"
+  // (or "signed up") for `days` in localStorage. No cookies, no request
+  // anywhere but the relay's form address, the same honeypot; double
+  // opt-in like the form. words: title, text, email, name, btn, close
+  // (in the list's language). Only the list key and numbers reach the script.
+  var POP_DELAYS = [0, 5, 10, 20, 30, 60], POP_DAYS = [1, 7, 30, 90];
+  function popupHtml(l, relay, words, opt) {
+    if (!l || !l.form) return "";
+    opt = opt || {};
+    var e = function (s) { return String(s || "").replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c]; }); };
+    var delay = POP_DELAYS.indexOf(opt.delay) >= 0 ? opt.delay : 20, days = POP_DAYS.indexOf(opt.days) >= 0 ? opt.days : 30;
+    var id = "onl-" + l.form.k, c = validColor(l.color) ? l.color.toLowerCase() : "#2f6fde";
+    var q = "#" + id;
+    var css = q + "{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;background:rgba(0,0,0,.45);font:16px/1.45 system-ui,sans-serif}" +
+      q + "[hidden]{display:none}" +
+      q + " .onl-box{position:relative;box-sizing:border-box;width:100%;max-width:420px;max-height:100%;overflow:auto;padding:24px 20px 20px;border-radius:14px;background:#fff;color:#1d2228;box-shadow:0 10px 40px rgba(0,0,0,.3)}" +
+      q + " h2{margin:0 32px 8px 0;font-size:20px}" + q + " p{margin:0 0 14px}" +
+      q + " label{display:block;margin:10px 0 4px;font-size:14px;font-weight:600}" +
+      q + " input{box-sizing:border-box;width:100%;padding:10px 12px;border:1px solid #9aa3ad;border-radius:8px;font:inherit;color:inherit;background:transparent}" +
+      q + " button[type=submit]{width:100%;margin-top:16px;padding:12px;border:0;border-radius:8px;font:inherit;font-weight:700;color:#fff;background:" + c + ";cursor:pointer}" +
+      q + " .onl-x{position:absolute;top:8px;right:8px;width:40px;height:40px;border:0;border-radius:8px;font-size:24px;line-height:1;color:inherit;background:transparent;cursor:pointer}" +
+      q + " :focus-visible{outline:2px solid " + c + ";outline-offset:2px}" +
+      "@media (prefers-color-scheme:dark){" + q + " .onl-box{background:#1f2429;color:#eef1f4}" + q + " input{border-color:#5c6670}}";
+    var js = "(function(){var r=document.getElementById(\"" + id + "\"),K=\"oros-nl-pop-" + l.form.k + "\",D=" + days + ",last;" +
+      "function seen(){try{var v=+localStorage.getItem(K);return v>0&&Date.now()-v<D*864e5}catch(x){return false}}" +
+      "function mark(){try{localStorage.setItem(K,String(Date.now()))}catch(x){}}" +
+      "if(!r||seen())return;" +
+      "function key(ev){if(ev.key===\"Escape\"){shut();return}if(ev.key!==\"Tab\")return;" +
+      "var f=r.querySelectorAll(\"button,input:not([type=hidden]):not([tabindex='-1'])\"),a=f[0],z=f[f.length-1];" +
+      "if(ev.shiftKey&&document.activeElement===a){ev.preventDefault();z.focus()}else if(!ev.shiftKey&&document.activeElement===z){ev.preventDefault();a.focus()}}" +
+      "function show(){if(!r.hidden||seen())return;last=document.activeElement;r.hidden=false;r.querySelector(\"input[type=email]\").focus();document.addEventListener(\"keydown\",key)}" +
+      "function shut(){mark();r.hidden=true;document.removeEventListener(\"keydown\",key);if(last&&last.focus)last.focus()}" +
+      "r.querySelector(\".onl-x\").addEventListener(\"click\",shut);" +
+      "r.addEventListener(\"click\",function(ev){if(ev.target===r)shut()});" +
+      "r.querySelector(\"form\").addEventListener(\"submit\",mark);" +
+      "setTimeout(show," + (delay * 1000) + ")})();";
+    return "<div id=\"" + id + "\" hidden role=\"dialog\" aria-modal=\"true\" aria-labelledby=\"" + id + "-t\" lang=\"" + l.lang + "\">\n" +
+      " <div class=\"onl-box\">\n" +
+      "  <button type=\"button\" class=\"onl-x\" aria-label=\"" + e(words.close) + "\">&times;</button>\n" +
+      "  <h2 id=\"" + id + "-t\">" + e(words.title) + "</h2>\n" +
+      (words.text ? "  <p>" + e(words.text) + "</p>\n" : "") +
+      "  <form method=\"post\" action=\"" + e(relay + "/nl/s/" + l.form.k) + "\">\n" +
+      "   <label for=\"" + id + "-e\">" + e(words.email) + "</label>\n" +
+      "   <input id=\"" + id + "-e\" type=\"email\" name=\"email\" required maxlength=\"254\" autocomplete=\"email\">\n" +
+      "   <label for=\"" + id + "-n\">" + e(words.name) + "</label>\n" +
+      "   <input id=\"" + id + "-n\" type=\"text\" name=\"name\" maxlength=\"120\" autocomplete=\"name\">\n" +
+      "   <input type=\"hidden\" name=\"lang\" value=\"" + l.lang + "\">\n" +
+      "   <div style=\"position:absolute;left:-5000px\" aria-hidden=\"true\"><input type=\"text\" name=\"website\" tabindex=\"-1\" autocomplete=\"off\"></div>\n" +
+      "   <button type=\"submit\">" + e(words.btn) + "</button>\n" +
+      "  </form>\n" +
+      " </div>\n" +
+      "</div>\n" +
+      "<style>" + css + "</style>\n" +
+      "<script>" + js + "</script>";
   }
   function normSub(x) {
     var email = normEmail(x.email);
@@ -332,7 +461,8 @@
                     "lw", "sub", "links", "items", "sz", "hd", "side", "bt", "bh", "per", "rows", "d", "tm", "te", "loc", "ics", "sh", "acct", "at", "sec",
                     "code", "dt", "amt", "exp", "min", "made"];
   var LIST_KEYS = ["id", "m", "del", "name", "chan", "from", "fromName", "reply", "lang", "addr", "why", "theme", "color", "salt", "form", "sty", "hf",
-                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt", "buyAt", "buyCur", "buyAcct", "hookUrl", "hookKey"];
+                   "clnPend", "clnGone", "clnIdle", "clnDev", "welTpl", "welAt", "buyAt", "buyCur", "buyAcct", "hookUrl", "hookKey",
+                   "ocAsk", "mv", "pvOpen", "pvClick", "pvUnsub", "pvNote"];
   function keepExtra(src, out, skip) {
     var n = 0;
     Object.keys(src).forEach(function (k) {
@@ -1691,7 +1821,8 @@
     L.push("END:VEVENT", "END:VCALENDAR");
     return L.map(fold).join("\r\n") + "\r\n";
   }
-  // info: { imgBytes, chan (resolved or null), inbox (bool), aud (number) }
+  // info: { imgBytes, chan (resolved or null), inbox (bool), aud (number), relay (bool),
+  //         dom (the From domain check, see domFindings) }
   // → [{ lvl: "err"|"warn", k }]
   function preflight(d, x, info) {
     info = info || {};
@@ -1756,6 +1887,8 @@
     if (!l || !l.addr) add("err", "noAddr");
     // info.relay: the app can turn on one-click unsubscribe (the relay's /nl)
     if (info.relay && l && !l.form) add("warn", "noOneClick");
+    // MV-1: the From domain's SPF / DMARC (never an error: DNS may just be unreadable)
+    domFindings(info.dom).forEach(function (r) { add(r.lvl, r.k); });
     if (!l || !l.from) add("err", "noFrom");
     if (!info.chan) add("err", "noChan");
     // Brevo's API can't carry pictures inside a message (no Content-ID)
@@ -2067,7 +2200,9 @@
     csvCell: csvCell, subsCsv: subsCsv, personData: personData,
     preflight: preflight, badPlaceholders: badPlaceholders, classify: classify, isBounceFrom: isBounceFrom, parseDsn: parseDsn, slug: slug,
     toBackup: toBackup, fromBackup: fromBackup,
-    normForm: normForm, formPub: formPub, unsubPath: unsubPath, formHtml: formHtml,
+    hostingHost: hostingHost, MOVE_STEPS: MOVE_STEPS, normMove: normMove, moveTick: moveTick, pct: pct, PREV_KEYS: PREV_KEYS, prevFigures: prevFigures,
+    oneClickOffers: oneClickOffers, firstSend: firstSend, domFindings: domFindings, DNS_TTL: DNS_TTL,
+    normForm: normForm, formPub: formPub, unsubPath: unsubPath, formHtml: formHtml, popupHtml: popupHtml, POP_DELAYS: POP_DELAYS, POP_DAYS: POP_DAYS,
     API_PROVS: API_PROVS, API_BATCH: API_BATCH, isApi: isApi, nextSubs: nextSubs,
     apiCheckReq: apiCheckReq, apiEventReqs: apiEventReqs, apiEvents: apiEvents, apiOutcome: apiOutcome,
     normRss: normRss, normPlink: normPlink, plinkId: plinkId, PLINK_PS: PLINK_PS, rssNext: rssNext, rssDue: rssDue, rssPick: rssPick, digestMd: digestMd, digestIssue: digestIssue

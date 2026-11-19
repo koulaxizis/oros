@@ -364,3 +364,14 @@ test("publish_titles: a track's credits, writers and masters (wave M2)", () => {
   assert.deepEqual(tr.writers, [{ name: "Ann", share: 60, society: "AEPI", ipi: "00123456789" }, { name: "Mira", share: 40 }]);
   assert.deepEqual(tr.masters, [{ name: "Own", share: 100 }]);
 });
+
+test("GATE-SCREEN: the tools that need the owner's screen (Chris 2026-11-19)", () => {
+  const D = require("../gate/gate.js");
+  ["rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "book_cover", "propose_entry", "newsletter_check"]
+    .forEach((n) => assert.equal(D.screenTool(n, {}), true, n));
+  assert.equal(D.screenTool("edit_in_app", { app: "layout" }), true);
+  assert.equal(D.screenTool("edit_in_app", { app: "layout", dry_run: true }), false, "a dry run reads only");
+  assert.equal(D.screenTool("do_action", {}), false, "never kept for later");
+  assert.equal(D.screenTool("change_item", {}), false);
+  assert.equal(D.SCREEN_HELD, "__screen");
+});

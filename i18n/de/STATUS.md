@@ -2,9 +2,13 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 47972 of 47972 (100%)
-- Help pages: 156 of 156 (100%)
+- Strings: 48608 of 48614 (99%)
+- Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
+
+Apps marked "English for now" do not load language packs yet: their
+text is still written in the code. They switch over wave by wave
+(see the plan in docs/translate/README.md).
 
 "in the code": a shared module or a public page that runs where no
 app pack is loaded keeps these lines in its own table (de: {…} after
@@ -27,7 +31,7 @@ en and el); translators change them there, not in a pack.
 | budget | 100% | 1184 / 1184 |
 | calculator | 100% | 170 / 170 |
 | calendar | 100% | 638 / 638 (49 in the code) |
-| capture | 100% | 56 / 56 |
+| capture | 100% | 58 / 58 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
 | certificates | 100% | 391 / 391 |
@@ -49,18 +53,19 @@ en and el); translators change them there, not in a pack.
 | dice | 100% | 57 / 57 |
 | discover | 100% | 3 / 3 |
 | dots | 100% | 55 / 55 |
+| download | English for now | 0 / 6 |
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 845 / 845 (25 in the code) |
+| files | 100% | 902 / 902 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 158 / 158 |
+| gamecenter | 100% | 162 / 162 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -69,6 +74,7 @@ en and el); translators change them there, not in a pack.
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 60 / 60 |
+| hive | 100% | 184 / 184 |
 | household | 100% | 143 / 143 |
 | invoices | 100% | 693 / 693 |
 | jigsaw | 100% | 90 / 90 |
@@ -80,7 +86,7 @@ en and el); translators change them there, not in a pack.
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
 | mahjong | 100% | 70 / 70 |
-| mail | 100% | 502 / 502 |
+| mail | 100% | 504 / 504 |
 | mancala | 100% | 61 / 61 |
 | maps | 100% | 1286 / 1286 |
 | mastermind | 100% | 74 / 74 |
@@ -97,7 +103,7 @@ en and el); translators change them there, not in a pack.
 | music | 100% | 541 / 541 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 175 / 175 |
-| newsletter | 100% | 1008 / 1008 |
+| newsletter | 100% | 1061 / 1061 |
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 293 / 293 |
 | oracle | 100% | 38 / 38 |
@@ -106,7 +112,7 @@ en and el); translators change them there, not in a pack.
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
-| photolab | 100% | 781 / 781 |
+| photolab | 100% | 783 / 783 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
 | podcasts | 100% | 349 / 349 |
@@ -122,15 +128,16 @@ en and el); translators change them there, not in a pack.
 | recordpkg | 100% | 21 / 21 |
 | remote-play | 100% | 35 / 35 |
 | reversi | 100% | 61 / 61 |
+| ridge | 100% | 132 / 132 |
 | ringtones | 100% | 107 / 107 |
 | roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 1874 / 1874 |
+| settings | 100% | 1985 / 1985 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1449 / 1449 |
+| shell | 100% | 1525 / 1525 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -158,7 +165,7 @@ en and el); translators change them there, not in a pack.
 | today | 100% | 158 / 158 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 144 / 144 |
+| transfer | 100% | 157 / 157 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |
@@ -176,3 +183,10 @@ en and el); translators change them there, not in a pack.
 | writer | 100% | 601 / 601 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
+
+## Lines to fix
+
+These show English until fixed (usually the English text changed).
+
+- de/help/settings.txt: links or key caps differ from settings/help.en.txt
+- de/help/topics/share.txt: links or key caps differ from help/topics/share.en.txt

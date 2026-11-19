@@ -364,6 +364,8 @@ orosPack("de", "mail", {
  "snd.inHour": "In einer Stunde",
  "snd.late": "Zu spät: Sie wird schon gesendet.",
  "snd.later": "Später senden",
+ "snd.onBtn": "Senden: {when}",
+ "snd.planned": "Geplant: Die Nachricht wartet im Postausgang und geht {when} hinaus, von diesem Gerät, solange orOS geöffnet ist (sonst beim nächsten Öffnen). Du bekommst eine Benachrichtigung, sobald sie gesendet ist.",
  "snd.monday": "Montagmorgen ({when})",
  "snd.now": "Wird gesendet…",
  "snd.past": "Wähle eine Zeit in der Zukunft.",

@@ -154,6 +154,15 @@ test("gamecenter: All games groups list every game exactly once, every Games app
   C.GROUPS.forEach((g) => assert.equal(src.split('"all.g.' + g.id + '"').length - 1, 2, g.id));
 });
 
+test("gamecenter: Hive is in the Idle group, played once something was done, never won", () => {
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games, ["hive"]);
+  assert.ok(C.GAMES.includes("hive"));
+  assert.equal(sum({ "oros-hive-data": { v: 1, acts: 0 } }).games.hive.p, 0);
+  const s = sum({ "oros-hive-data": { v: 1, acts: 4, life: 900 } });
+  assert.equal(s.games.hive.p, 1);
+  assert.equal(s.games.hive.w, -1, "an idle game has no wins");
+});
+
 test("gamecenter: Realm's Daily island counts in Today and the streak, never in Clean sweep", () => {
   const realm = { ver: 1, br: 0, rows: { a: { b: 0, s: { "m:m": [2, 1] } } },
     days: { [TODAY]: { b: 0, w: 1, r: 18, p: 80 }, [TODAY - 1]: { b: 0, w: 1, r: 25, p: 77 }, [TODAY - 2]: { b: 0, w: 0, r: 9, p: 12 } } };
@@ -220,6 +229,20 @@ test("gamecenter: Roots counts years and finished years from every device; a Har
   assert.ok(!ach(s, "hard").done, "no Hardy year finished yet");
   rt.rows.bbbbbb.s.h = [4, 1, 30];
   assert.ok(ach(sum({ "oros-roots-data": rt }), "hard").done);
+});
+
+test("gamecenter: Windmill ridge is in the Tower defense group; nights and wins from every device; a Hard win is a hard win", () => {
+  const rd = { ver: 1, br: 1, maps: { i1r1: { b: 1, s: 3, e: 0 } }, rows: {
+    aaaaaa: { b: 1, s: { m: [4, 2], n: [2, 1] }, f: 90 },
+    bbbbbb: { b: 1, s: { h: [3, 0] }, f: 20 },
+    oldold: { b: 0, s: { h: [9, 9] }, f: 99 } } };
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge"]);
+  assert.ok(C.GAMES.includes("ridge"));
+  const s = sum({ "oros-ridge-data": rd });
+  assert.deepEqual([s.games.ridge.p, s.games.ridge.w], [9, 3], "rows from before the reset do not count");
+  assert.ok(!ach(s, "hard").done, "no Hard night won yet");
+  rd.rows.bbbbbb.s.h = [4, 1];
+  assert.ok(ach(sum({ "oros-ridge-data": rd }), "hard").done);
 });
 
 test("gamecenter: Fieldwarden counts years and finished years from every device; a Harsh finish is a hard win", () => {

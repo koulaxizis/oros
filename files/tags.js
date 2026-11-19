@@ -60,7 +60,47 @@
       "tg.onlyDisk":   "Tags are for files of the orOS disk",
       "tg.c.0": "Red", "tg.c.1": "Orange", "tg.c.2": "Yellow", "tg.c.3": "Lime", "tg.c.4": "Green", "tg.c.5": "Teal",
       "tg.c.6": "Blue", "tg.c.7": "Indigo", "tg.c.8": "Purple", "tg.c.9": "Pink", "tg.c.10": "Brown", "tg.c.11": "Grey",
-      "tg.withTags":   "Tags: {list}"
+      "tg.withTags":   "Tags: {list}",
+      "sf.tree":       "Smart folders",
+      "sf.new":        "New smart folder",
+      "sf.save":       "Save as smart folder…",
+      "sf.edit":       "Edit smart folder {name}",
+      "sf.titleNew":   "New smart folder",
+      "sf.titleEdit":  "Smart folder",
+      "sf.hint":       "A smart folder is a saved search: it always shows the items that fit right now. Nothing is copied or moved.",
+      "sf.name":       "Name",
+      "sf.tags":       "With the tags",
+      "sf.any":        "Any of them",
+      "sf.all":        "All of them",
+      "sf.kind":       "Kind",
+      "sf.k.image": "Pictures", "sf.k.video": "Videos", "sf.k.audio": "Sound and music", "sf.k.doc": "Documents", "sf.k.pdf": "PDF",
+      "sf.k.sheet": "Spreadsheets", "sf.k.text": "Text", "sf.k.archive": "Archives (ZIP…)", "sf.k.code": "Code", "sf.k.folder": "Folders",
+      "sf.when":       "Changed",
+      "sf.w.any":      "Any time",
+      "sf.w.7":        "In the last 7 days",
+      "sf.w.30":       "In the last 30 days",
+      "sf.w.365":      "In the last year",
+      "sf.w.range":    "Between two dates",
+      "sf.from":       "From",
+      "sf.to":         "To",
+      "sf.words":      "Name contains",
+      "sf.dir":        "Look in",
+      "sf.wholeDisk":  "The whole disk",
+      "sf.pick":       "Choose a folder…",
+      "sf.pickTitle":  "Look in this folder",
+      "sf.pickOk":     "Choose",
+      "sf.size":       "Size (MB)",
+      "sf.min":        "At least",
+      "sf.max":        "At most",
+      "sf.delete":     "Delete smart folder",
+      "sf.deleteAsk":  "Delete the smart folder “{name}”? Only the saved search goes; the files stay where they are.",
+      "sf.deleted":    "Smart folder deleted",
+      "sf.saved":      "Smart folder saved",
+      "sf.needName":   "Give it a name",
+      "sf.needOne":    "Choose at least one condition (tags, kind, date, name or size)",
+      "sf.full":       "There can be at most 200 smart folders",
+      "sf.looking":    "Looking… {n} items checked",
+      "sf.capped":     "Only the first {n} items of the disk were checked"
     },
     el: {
       "tg.tree":       "Ετικέτες",
@@ -91,7 +131,47 @@
       "tg.onlyDisk":   "Οι ετικέτες είναι για αρχεία του δίσκου του orOS",
       "tg.c.0": "Κόκκινο", "tg.c.1": "Πορτοκαλί", "tg.c.2": "Κίτρινο", "tg.c.3": "Λαχανί", "tg.c.4": "Πράσινο", "tg.c.5": "Γαλαζοπράσινο",
       "tg.c.6": "Μπλε", "tg.c.7": "Λουλακί", "tg.c.8": "Μωβ", "tg.c.9": "Ροζ", "tg.c.10": "Καφέ", "tg.c.11": "Γκρι",
-      "tg.withTags":   "Ετικέτες: {list}"
+      "tg.withTags":   "Ετικέτες: {list}",
+      "sf.tree":       "Έξυπνοι φάκελοι",
+      "sf.new":        "Νέος έξυπνος φάκελος",
+      "sf.save":       "Αποθήκευση ως έξυπνος φάκελος…",
+      "sf.edit":       "Επεξεργασία του έξυπνου φακέλου {name}",
+      "sf.titleNew":   "Νέος έξυπνος φάκελος",
+      "sf.titleEdit":  "Έξυπνος φάκελος",
+      "sf.hint":       "Ένας έξυπνος φάκελος είναι μια αποθηκευμένη αναζήτηση: δείχνει πάντα όσα ταιριάζουν εκείνη τη στιγμή. Τίποτα δεν αντιγράφεται ούτε μετακινείται.",
+      "sf.name":       "Όνομα",
+      "sf.tags":       "Με τις ετικέτες",
+      "sf.any":        "Οποιαδήποτε από αυτές",
+      "sf.all":        "Όλες μαζί",
+      "sf.kind":       "Είδος",
+      "sf.k.image": "Εικόνες", "sf.k.video": "Βίντεο", "sf.k.audio": "Ήχος και μουσική", "sf.k.doc": "Έγγραφα", "sf.k.pdf": "PDF",
+      "sf.k.sheet": "Υπολογιστικά φύλλα", "sf.k.text": "Κείμενο", "sf.k.archive": "Συμπιεσμένα (ZIP…)", "sf.k.code": "Κώδικας", "sf.k.folder": "Φάκελοι",
+      "sf.when":       "Αλλαγή",
+      "sf.w.any":      "Οποτεδήποτε",
+      "sf.w.7":        "Τις τελευταίες 7 μέρες",
+      "sf.w.30":       "Τις τελευταίες 30 μέρες",
+      "sf.w.365":      "Τον τελευταίο χρόνο",
+      "sf.w.range":    "Ανάμεσα σε δύο ημερομηνίες",
+      "sf.from":       "Από",
+      "sf.to":         "Έως",
+      "sf.words":      "Το όνομα περιέχει",
+      "sf.dir":        "Αναζήτηση σε",
+      "sf.wholeDisk":  "Όλο τον δίσκο",
+      "sf.pick":       "Επιλογή φακέλου…",
+      "sf.pickTitle":  "Αναζήτηση σε αυτόν τον φάκελο",
+      "sf.pickOk":     "Επιλογή",
+      "sf.size":       "Μέγεθος (MB)",
+      "sf.min":        "Τουλάχιστον",
+      "sf.max":        "Το πολύ",
+      "sf.delete":     "Διαγραφή έξυπνου φακέλου",
+      "sf.deleteAsk":  "Να διαγραφεί ο έξυπνος φάκελος «{name}»; Φεύγει μόνο η αποθηκευμένη αναζήτηση· τα αρχεία μένουν εκεί που είναι.",
+      "sf.deleted":    "Ο έξυπνος φάκελος διαγράφηκε",
+      "sf.saved":      "Ο έξυπνος φάκελος αποθηκεύτηκε",
+      "sf.needName":   "Δώσε του ένα όνομα",
+      "sf.needOne":    "Διάλεξε τουλάχιστον μία συνθήκη (ετικέτες, είδος, ημερομηνία, όνομα ή μέγεθος)",
+      "sf.full":       "Μπορούν να υπάρχουν έως 200 έξυπνοι φάκελοι",
+      "sf.looking":    "Αναζήτηση… {n} στοιχεία ελέγχθηκαν",
+      "sf.capped":     "Ελέγχθηκαν μόνο τα πρώτα {n} στοιχεία του δίσκου"
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "files", LANG);
@@ -499,6 +579,259 @@
     });
   }
 
+  // ---------- smart folders (wave T2) ----------
+  // A smart folder is a saved search (CORE.normQuery). It runs on the
+  // device: with tags, from the items with those tags; otherwise by a
+  // walk of its folder (names from ls, a stat only when a date or a
+  // size is asked), at most WALK_MAX items, never the Trash or the
+  // hidden Documents texts. Nothing is copied, moved or changed.
+  var WALK_MAX = 20000, WALK_DEPTH = 30;
+  function smartList() {
+    return state.smart.slice().sort(function (a, b) { return a.n.localeCompare(b.n, LOC) || (a.id < b.id ? -1 : 1); });
+  }
+  function smartFind(id) { return CORE.findSmart(state, id); }
+  // → Promise<{ items: [{ path, name, dir, size, mtime }], capped }>
+  function smartRun(id, onStep) {
+    var sf = smartFind(id), fs = ctx && ctx.fs ? ctx.fs() : null;
+    if (!sf || !fs) return Promise.resolve({ items: [], capped: false });
+    var q = sf.q, now = Date.now(), checked = 0, capped = false;
+    function stat(p) { return fs.stat(p).then(function (st) { return st || null; }, function () { return null; }); }
+    function name(p) { return p.slice(p.lastIndexOf("/") + 1); }
+    function test(e) { return CORE.matches(q, e, idsAt(e.path), now); }
+    function entry(p, st) { return { path: p, name: name(p), dir: !!(st && st.dir), size: st && typeof st.size === "number" ? st.size : null, mtime: st && st.mtime ? st.mtime : null }; }
+    if (q.tg && q.tg.length) {
+      var seen = {}, cands = [];
+      return Promise.all(q.tg.map(function (id) { return pathsWith(id); })).then(function (lists) {
+        lists.forEach(function (l) { l.forEach(function (p) { if (!seen[p]) { seen[p] = true; cands.push(p); } }); });
+        return Promise.all(cands.map(function (p) { return stat(p).then(function (st) { return st ? entry(p, st) : null; }); }));
+      }).then(function (rows) {
+        return { items: rows.filter(function (e) { return e && test(e); }), capped: false };
+      });
+    }
+    var out = [], stack = [{ p: q.dir || ROOT, d: 0 }], need = CORE.needsStat(q);
+    function step() {
+      if (!stack.length) return Promise.resolve();
+      if (checked >= WALK_MAX) { capped = true; return Promise.resolve(); }
+      var top = stack.pop();
+      return Promise.resolve(fs.ls(top.p)).then(function (list) {
+        var batch = [];
+        (Array.isArray(list) ? list : []).forEach(function (e) {
+          if (!e || typeof e.name !== "string" || checked >= WALK_MAX) return;
+          if (top.p === ROOT && (e.name === ".trash" || e.name === ".docs")) return;
+          var p = top.p + "/" + e.name;
+          checked++;
+          if (e.dir && top.d < WALK_DEPTH) stack.push({ p: p, d: top.d + 1 });
+          batch.push({ path: p, name: e.name, dir: !!e.dir, size: null, mtime: null });
+        });
+        if (onStep) onStep(checked);
+        // The name, kind and tags first; the disk is asked only for
+        // what is left and only when a date or a size counts.
+        var pre = batch.filter(function (e) {
+          var q2 = {};
+          Object.keys(q).forEach(function (k) { if (["days", "from", "to", "min", "max"].indexOf(k) === -1) q2[k] = q[k]; });
+          return CORE.matches(q2, e, idsAt(e.path), now);
+        });
+        if (!need) { pre.forEach(function (e) { out.push(e); }); return; }
+        var i = 0;
+        function more() {
+          if (i >= pre.length) return Promise.resolve();
+          var chunk = pre.slice(i, i + 8);
+          i += 8;
+          return Promise.all(chunk.map(function (e) { return stat(e.path).then(function (st) {
+            if (!st) return;
+            var x = entry(e.path, st);
+            if (test(x)) out.push(x);
+          }); })).then(more);
+        }
+        return more();
+      }, function () {}).then(step);
+    }
+    return step().then(function () {
+      if (need) return { items: out, capped: capped };
+      // Sizes and times for the list's columns, a few at a time.
+      return Promise.all(out.map(function (e) { return stat(e.path).then(function (st) { return st ? entry(e.path, st) : null; }); }))
+        .then(function (rows) { return { items: rows.filter(Boolean), capped: capped }; });
+    });
+  }
+
+  // New (row = null, or a prefilled { n, q }) or edit (row with id).
+  function smartEdit(row) {
+    return new Promise(function (resolve) {
+      var cur = row && row.id ? smartFind(row.id) : null;
+      var q = JSON.parse(JSON.stringify(cur ? cur.q : CORE.normQuery(row && row.q)));
+      var d = modal("tag-smart");
+      var f = el("form");
+      f.setAttribute("autocomplete", "off");
+      f.appendChild(el("h3", "", cur ? t("sf.titleEdit") : t("sf.titleNew")));
+      f.appendChild(el("p", "", t("sf.hint")));
+      function field(label, input) {
+        var l = el("label", "tag-field");
+        l.appendChild(el("span", "", label));
+        l.appendChild(input);
+        f.appendChild(l);
+        return input;
+      }
+      function input(type, value, attrs) {
+        var i = el("input");
+        i.type = type;
+        if (value != null) i.value = value;
+        Object.keys(attrs || {}).forEach(function (k) { i.setAttribute(k, attrs[k]); });
+        return i;
+      }
+      var name = field(t("sf.name"), input("text", cur ? cur.n : (row && row.n) || "", { maxlength: String(CORE.MAX_NAME) }));
+      // tags
+      var tl = list();
+      var tagSet = {};
+      (q.tg || []).forEach(function (id) { tagSet[id] = true; });
+      var mode = q.all ? "all" : "any";
+      if (tl.length) {
+        var fsT = el("fieldset", "sf-set");
+        fsT.appendChild(el("legend", "", t("sf.tags")));
+        var tw = el("div", "sf-chips");
+        tl.forEach(function (x) {
+          var l = el("label", "sf-chip");
+          var cb = input("checkbox");
+          cb.checked = !!tagSet[x.id];
+          cb.addEventListener("change", function () { tagSet[x.id] = cb.checked; });
+          l.appendChild(cb);
+          l.appendChild(dot(x.c));
+          l.appendChild(el("span", "", x.n));
+          tw.appendChild(l);
+        });
+        fsT.appendChild(tw);
+        var mw = el("div", "sf-chips");
+        ["any", "all"].forEach(function (m) {
+          var l = el("label", "sf-chip");
+          var r = input("radio");
+          r.name = "sf-mode";
+          r.checked = mode === m;
+          r.addEventListener("change", function () { if (r.checked) mode = m; });
+          l.appendChild(r);
+          l.appendChild(el("span", "", t("sf." + m)));
+          mw.appendChild(l);
+        });
+        fsT.appendChild(mw);
+        f.appendChild(fsT);
+      }
+      // kinds
+      var kinds = {};
+      (q.kind || []).forEach(function (k) { kinds[k] = true; });
+      var fsK = el("fieldset", "sf-set");
+      fsK.appendChild(el("legend", "", t("sf.kind")));
+      var kw = el("div", "sf-chips");
+      CORE.KINDS.forEach(function (k) {
+        var l = el("label", "sf-chip");
+        var cb = input("checkbox");
+        cb.checked = !!kinds[k];
+        cb.addEventListener("change", function () { kinds[k] = cb.checked; });
+        l.appendChild(cb);
+        l.appendChild(el("span", "", t("sf.k." + k)));
+        kw.appendChild(l);
+      });
+      fsK.appendChild(kw);
+      f.appendChild(fsK);
+      // when
+      var when = el("select");
+      [["", "sf.w.any"], ["7", "sf.w.7"], ["30", "sf.w.30"], ["365", "sf.w.365"], ["range", "sf.w.range"]].forEach(function (o) {
+        var op = el("option", "", t(o[1])); op.value = o[0]; when.appendChild(op);
+      });
+      when.value = q.days && [7, 30, 365].indexOf(q.days) !== -1 ? String(q.days) : (q.from || q.to || q.days) ? "range" : "";
+      field(t("sf.when"), when);
+      var range = el("div", "sf-row");
+      var from = input("date", q.from || "", { "aria-label": t("sf.from") });
+      var to = input("date", q.to || "", { "aria-label": t("sf.to") });
+      var lf = el("label", "tag-field"); lf.appendChild(el("span", "", t("sf.from"))); lf.appendChild(from);
+      var lt = el("label", "tag-field"); lt.appendChild(el("span", "", t("sf.to"))); lt.appendChild(to);
+      range.appendChild(lf); range.appendChild(lt);
+      f.appendChild(range);
+      function showRange() { range.hidden = when.value !== "range"; }
+      when.addEventListener("change", showRange);
+      showRange();
+      var words = field(t("sf.words"), input("text", q.name || "", { maxlength: "100" }));
+      // folder
+      var dir = q.dir || ROOT;
+      var dirRow = el("div", "sf-row sf-dir");
+      var dirTxt = el("span", "sf-dirname");
+      function paintDir() { dirTxt.textContent = dir === ROOT ? t("sf.wholeDisk") : dir.slice(ROOT.length + 1); wholeBtn.hidden = dir === ROOT; }
+      var pickBtn = btn("", t("sf.pick"), function () {
+        if (!ctx || !ctx.pickFolder) return;
+        ctx.pickFolder(t("sf.pickTitle"), t("sf.pickOk")).then(function (p) { if (p && CORE.okPath(p) || p === ROOT) { dir = p; paintDir(); } });
+      });
+      var wholeBtn = btn("", t("sf.wholeDisk"), function () { dir = ROOT; paintDir(); });
+      var dl = el("div", "tag-field");
+      dl.appendChild(el("span", "", t("sf.dir")));
+      dirRow.appendChild(dirTxt); dirRow.appendChild(pickBtn); dirRow.appendChild(wholeBtn);
+      dl.appendChild(dirRow);
+      f.appendChild(dl);
+      paintDir();
+      // size
+      var MB = 1048576;
+      var sizeRow = el("div", "sf-row");
+      var min = input("number", q.min != null ? String(+(q.min / MB).toFixed(2)) : "", { min: "0", step: "any", inputmode: "decimal" });
+      var max = input("number", q.max != null ? String(+(q.max / MB).toFixed(2)) : "", { min: "0", step: "any", inputmode: "decimal" });
+      var lmin = el("label", "tag-field"); lmin.appendChild(el("span", "", t("sf.min"))); lmin.appendChild(min);
+      var lmax = el("label", "tag-field"); lmax.appendChild(el("span", "", t("sf.max"))); lmax.appendChild(max);
+      sizeRow.appendChild(lmin); sizeRow.appendChild(lmax);
+      var ls = el("div", "tag-field");
+      ls.appendChild(el("span", "", t("sf.size")));
+      ls.appendChild(sizeRow);
+      f.appendChild(ls);
+      var err = el("p", "sf-err");
+      err.setAttribute("role", "alert");
+      err.hidden = true;
+      f.appendChild(err);
+      var bar = el("menu", "dlg-row");
+      if (cur) {
+        bar.appendChild(btn("danger", t("sf.delete"), function () {
+          confirmBox(t("sf.deleteAsk", { name: cur.n }), t("sf.delete")).then(function (yes) {
+            if (!yes) return;
+            commit(CORE.dropSmart(state, cur.id, Date.now()));
+            d.close();
+            toast(t("sf.deleted"));
+            resolve({ deleted: cur.id });
+          });
+        }));
+      }
+      bar.appendChild(el("span", "spacer"));
+      bar.appendChild(btn("", t("tg.cancel"), function () { d.close(); }));
+      var ok = el("button", "", t("tg.save"));
+      ok.type = "submit";
+      bar.appendChild(ok);
+      f.appendChild(bar);
+      function num(v) { var n = parseFloat(String(v).replace(",", ".")); return isFinite(n) && n >= 0 ? Math.round(n * MB) : null; }
+      f.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var nq = {};
+        var tg = Object.keys(tagSet).filter(function (id) { return tagSet[id]; });
+        if (tg.length) { nq.tg = tg; if (mode === "all") nq.all = true; }
+        var kd = Object.keys(kinds).filter(function (k) { return kinds[k]; });
+        if (kd.length) nq.kind = kd;
+        if (when.value === "range") { if (from.value) nq.from = from.value; if (to.value) nq.to = to.value; }
+        else if (when.value) nq.days = +when.value;
+        if (words.value.trim()) nq.name = words.value.trim();
+        if (dir !== ROOT) nq.dir = dir;
+        var a = num(min.value), b = num(max.value);
+        if (a != null && min.value !== "") nq.min = a;
+        if (b != null && max.value !== "") nq.max = b;
+        if (cur && cur.q.x) nq.x = cur.q.x;                    // a later Files' fields stay
+        nq = CORE.normQuery(nq);
+        var n = name.value.replace(/\s+/g, " ").trim();
+        if (!n) { err.textContent = t("sf.needName"); err.hidden = false; name.focus(); return; }
+        if (!CORE.hasCondition(nq)) { err.textContent = t("sf.needOne"); err.hidden = false; return; }
+        var r = CORE.putSmart(state, { id: cur ? cur.id : "", n: n, c: cur ? cur.c : undefined, q: nq }, Date.now());
+        if (!r.id) { err.textContent = t("sf.full"); err.hidden = false; return; }
+        commit(r.state);
+        d.close();
+        toast(t("sf.saved"));
+        resolve({ id: r.id });
+      });
+      d.addEventListener("close", function () { resolve(null); });
+      d.appendChild(f);
+      d.showModal();
+      name.focus();
+    });
+  }
+
   // ---------- drawing helpers for Files and Photos ----------
   // Up to three dots and "+n"; the names in the title for the pointer
   // and in aria-label for screen readers.
@@ -536,6 +869,10 @@
     carry: carry,
     dropPath: dropPath,
     hasAny: function () { return CORE.hasAny(state) || list().length > 0; },
+    smartList: smartList,
+    smartFind: smartFind,
+    smartRun: smartRun,
+    smartEdit: smartEdit,
     state: function () { return state; }
   };
 })();

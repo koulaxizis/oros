@@ -660,6 +660,7 @@ dialog label {
 }
 
 .pv-btn:hover { background: var(--accent-soft, #33313d); }
+.pv-btn.on { border-color: var(--accent, #6d4aff); background: var(--accent-soft, #33313d); }
 .pv-btn.primary { background: var(--accent, #6d4aff); color: var(--accent-ink, #fff); border-color: transparent; }
 a.pv-btn.drv-get { text-decoration: none; }
 .pv-btn.primary:hover { background: var(--accent-hover, #7d5aff); }
@@ -1540,3 +1541,45 @@ dialog label.tag-swatch { display: flex; align-items: center; gap: 6px; margin: 
 .tag-swatch:has(input:checked) { background: var(--accent-soft, #2a2832); outline: 2px solid var(--accent, #6d4aff); outline-offset: -2px; }
 .tag-swatch:has(input:focus-visible) { outline: 2px solid var(--accent, #6d4aff); }
 .entry.selected .tag-dots .tag-more { color: inherit; }
+/* Smart folders (TAGS-1 wave T2) */
+.tsec.tsec-act { display: flex; align-items: center; gap: 4px; padding-right: 6px; }
+.tsec.tsec-act > span { flex: 1; min-width: 0; }
+.tsec-add { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border: 0; border-radius: 6px; background: none; color: var(--text-dim, #999); cursor: pointer; padding: 0; }
+@media (pointer: fine) { .tsec-add { width: 22px; height: 22px; } }
+.tsec-add:hover, .tsec-add:focus-visible { background: var(--accent-soft, #2a2832); color: var(--text, inherit); }
+.tnode.smartn .glyph { color: var(--text-dim, #999); }
+.tnode.smartn.selected .glyph { color: inherit; }
+dialog.tag-smart { max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); overflow-y: auto; }
+dialog.tag-smart p { font-size: 13px; color: var(--text-dim, #999); margin: 0 0 12px; }
+dialog.tag-smart p.sf-err { color: var(--danger, #e5484d); }
+.sf-set { border: 0; margin: 0 0 12px; padding: 0; min-width: 0; }
+.sf-set legend { padding: 0; margin-bottom: 6px; font-size: 13px; color: var(--text-dim, #999); }
+.sf-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
+dialog label.sf-chip { display: inline-flex; align-items: center; gap: 6px; margin: 0; padding: 6px 10px; min-height: 32px; box-sizing: border-box; border: 1px solid var(--border, #2c2b31); border-radius: 999px; cursor: pointer; font-size: 13px; max-width: 100%; }
+.sf-chip > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sf-chip input { accent-color: var(--accent, #6d4aff); margin: 0; }
+.sf-chip:has(input:checked) { background: var(--accent-soft, #2a2832); border-color: var(--accent, #6d4aff); }
+.sf-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.sf-row > label.tag-field { flex: 1 1 120px; min-width: 0; }
+.sf-row input { width: 100%; box-sizing: border-box; }
+.sf-dir { margin-bottom: 0; }
+.sf-dirname { flex: 1 1 100%; min-width: 0; overflow-wrap: anywhere; font-size: 13px; }
+div.tag-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.search-save button { font-weight: 600; }
+dialog.tag-smart select,
+dialog.tag-smart input[type="number"],
+dialog.tag-smart input[type="date"] {
+  width: 100%; box-sizing: border-box; padding: 8px 10px; border-radius: 6px; min-height: 36px;
+  background: var(--bg, #17161a); color: var(--text, #eee); border: 1px solid var(--border, #2c2b31); font: inherit; outline: none;
+}
+dialog.tag-smart select:focus,
+dialog.tag-smart input[type="number"]:focus,
+dialog.tag-smart input[type="date"]:focus { border-color: var(--accent, #6d4aff); }
+dialog.tag-smart div.tag-field { margin-top: 10px; }
+dialog.tag-smart div.tag-field > span { font-size: 12px; color: var(--text-dim, #999); }
+dialog.tag-smart .sf-row label.tag-field { margin: 0; }
+.sf-dir button {
+  padding: 7px 14px; border-radius: 6px; min-height: 36px;
+  background: var(--panel-bg, #2a2832); border: 1px solid var(--border, #2c2b31);
+}
+.sf-dir button:hover { background: var(--accent-soft, #33313d); }

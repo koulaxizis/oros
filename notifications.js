@@ -456,7 +456,7 @@
     toast.innerHTML = `
       <div style="display:flex; justify-content:space-between; align-items:start;">
         <div style="flex:1; min-width:0;">
-          <div style="font-weight:600; margin-bottom:4px; white-space:normal;">${escapeHtml(item.title)}</div>
+          <div style="font-weight:600; margin-bottom:4px; white-space:normal;">${escapeHtml(shownTitle(item))}</div>
           <div style="font-size:0.9em; opacity:0.9; white-space:normal;">${escapeHtml(shownBody(item))}</div>
         </div>
         <div style="display:flex; align-items:center;">
@@ -532,8 +532,8 @@
         'Notification' in window &&
         Notification.permission === 'granted') {
       try {
-        var wn = new Notification('orOS — ' + item.title, {
-          body: shownBody(item),
+        var wn = new Notification('orOS — ' + shownTitle(item, true), {
+          body: shownBody(item, true),
           tag: item.dedupKey || undefined
         });
         // A click on the OS notification lands where the in-tab one
@@ -580,7 +580,7 @@
     // fought this loop and resurrected hidden toasts).
     applyStackLimits();
     
-    log(`Toast fired: ${item.title}`);
+    log(`Toast fired: ${shownTitle(item, true)}`);
   }
   
     // ===== DEEP LINK ROUTER — shell reality =====
@@ -795,7 +795,29 @@
     }
     return 0;
   }
-  function shownBody(item) {
+  // APPLOCK-1: a notice of a locked app shows only the app's name and
+  // "New notification" while the app is locked (lock.js orosLock.apps);
+  // set = true: whenever it is set as locked (what leaves the screen).
+  function lockHidesNs(ns, set) {
+    var L = window.orosLock;
+    if (!ns || !L || !L.apps || typeof L.apps.allowed !== 'function') return false;
+    try { return set ? !!L.apps.state(ns) : !L.apps.allowed(ns); } catch (e) { return true; }
+  }
+  function lockAppName(ns) {
+    try { if (window.orosLock.apps.state(ns) === 'hide') return 'orOS'; } catch (e) {}   // W2: a hidden app is not named
+    var k = 'app.' + ns, v = typeof window.t === 'function' ? window.t(k) : k;
+    return v && v !== k ? v : ns;
+  }
+  function shownTitle(item, set) {
+    if (item && lockHidesNs(item.ns, set)) return lockAppName(item.ns);
+    return item ? item.title : '';
+  }
+  function lockNotice() {
+    var s = typeof window.t === 'function' ? window.t('applock.notice') : '';
+    return s && s !== 'applock.notice' ? s : 'New notification';
+  }
+  function shownBody(item, set) {
+    if (item && lockHidesNs(item.ns, set)) return lockNotice();
     var body = (item && typeof item.body === 'string') ? item.body : '';
     if (!item || item.ns !== 'system' || item.type !== 'update') return body;
     var here = window.__orosAppVersion;
@@ -1007,7 +1029,7 @@
       
       el.innerHTML = `
         <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-          <span style="font-weight:600;">${escapeHtml(item.title)}</span>
+          <span style="font-weight:600;">${escapeHtml(shownTitle(item))}</span>
           <span style="color:var(--text-dim); font-size:0.85em;">${timeStr}</span>
         </div>
         <div style="opacity:0.9; font-size:0.95em;">${escapeHtml(shownBody(item))}</div>
@@ -1313,7 +1335,7 @@
       setTimeout(function () {
         try {
           var A = window.orosAutomations;
-          if (A && typeof A.notice === 'function') A.notice(item.ns, item.dedupKey, item.title + ' ' + item.body);
+          if (A && typeof A.notice === 'function') A.notice(item.ns, item.dedupKey, lockHidesNs(item.ns, true) ? lockNotice() : item.title + ' ' + item.body);   // APPLOCK-1: rules never read a locked app's text
         } catch (e) {}
       }, 0);
     }
@@ -1372,6 +1394,9 @@
     // Wave 6 — the shell's toggle UI renders from THIS list
     // (single source of truth, no mirrored arrays)
     getKnownApps: () => KNOWN_APPS.slice(),
+    // APPLOCK-1 W4: how many notices are unread (the lock screen shows
+    // the number only, when its owner switched that on).
+    unread: () => (state.slice && Array.isArray(state.slice.items) ? state.slice.items.filter(i => !i.readAt).length : 0),
  
     // Manual operations
     fireToast,
