@@ -79,6 +79,11 @@
     .alt { margin-top: 4px; }
     .alt summary { cursor: pointer; color: var(--dim); font-size: 14px; min-height: 32px; padding: 4px 0; }
     .foot { color: var(--dim); font-size: 14px; margin-top: 28px; text-align: center; }
+    .dl-line { margin: 10px 0 0; font-size: 15px; }
+    .dl-line b { color: var(--accent); font-size: 17px; }
+    .dl-line.sub { margin-top: 2px; font-size: 14px; color: var(--dim); }
+    .dl-tile { display: block; color: var(--dim); font-size: 12px; margin-top: 2px; }
+    .dl-table td { text-align: right; white-space: nowrap; }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -99,7 +104,10 @@
       <div class="ch"><img class="ficon" src="/icons/solo/koulaxizis-apps.svg" width="64" height="64" alt=""><h2>Koulaxizis Apps (every Android app in one place)</h2><span class="badge test">Beta</span></div>
       <p>One small Android app that installs and updates the Android apps of orOS, NULL JSFX, Noxpress and Glarolykoi, one section per project. <b>Update all</b> updates them one after the other, and a daily check shows one quiet notification when updates are out. It never installs anything by itself.</p>
       <p class="dim">Each project's list comes from its own signed repository, and every list and APK is checked against the repository's key, size and checksum before Android installs it. While it is installed, the orOS, NULL JSFX and Noxpress apps leave their own update notices to it. Android 8 or newer, no account, no Google services, free (MIT). It is the one place to get and update our Android apps (<a href="#other-ways">other ways</a>: F-Droid, Droid-ify, Obtainium).</p>
-      <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk">Download Koulaxizis Apps (APK)</a>
+      <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk" data-dl-name="Koulaxizis Apps">Download Koulaxizis Apps (APK)</a>
+      <p class="dl-line" data-dl="gr.koulaxizis.apps" hidden><b data-n></b> downloads of Koulaxizis Apps</p>
+      <p class="dl-line" data-dl="online.useoros.,gr.koulaxizis.apps,net.glarolykoi.,tech.nulljsfx.,tech.noxpress." hidden><b data-n></b> downloads of our Android apps, from every channel</p>
+      <p class="dl-line sub" data-dl="online.useoros.,gr.koulaxizis.apps,net.glarolykoi.,tech.nulljsfx.,tech.noxpress." data-dl-ch="manager" hidden><b data-n></b> installs and updates through Koulaxizis Apps</p>
     </section>
     <div class="grid">
       <section class="card">
@@ -140,7 +148,7 @@
         <p>Mirror chosen folders of your Windows or Linux computer into your encrypted orOS Vault, both ways. They appear in orOS under Files › orOS Drive and download only when you open them. It can also show the whole orOS disk as a folder (in Windows Explorer, or <code>~/orOS</code> on Linux).</p>
         <p class="dim">Sign in with the Dropbox account orOS syncs with and unlock with your sync passphrase: Dropbox sees neither file names nor contents. Windows 10/11 (x64 and ARM64): the setup needs no administrator rights. The file is not signed yet, so SmartScreen may warn the first time: <b>More info › Run anyway</b>.</p>
         <p class="dim"><b>Already inside the orOS installer</b> for Windows and Linux, in the orOS tray icon. On its own, <b>Beta 0.5.0:</b> <a href="https://github.com/koulaxizis/oros-drive/releases/download/v0.5.0/orOS-Drive-Setup-0.5.0.exe">download for Windows</a> (setup, about 9 MB) · Linux .deb for <a href="https://github.com/koulaxizis/oros-drive/releases/download/v0.5.0/oros-drive_0.5.0_amd64.deb">amd64</a> or <a href="https://github.com/koulaxizis/oros-drive/releases/download/v0.5.0/oros-drive_0.5.0_arm64.deb">arm64</a>. Portable Windows zips, Linux tarballs and the source code are on GitHub. Besides Dropbox, it can keep the Vault on your own Nextcloud or WebDAV server.</p>
-        <p class="dim"><b>Android (Beta):</b> back up folders of the phone, keep files offline, share files to orOS, back up new camera photos, and see the whole orOS disk in the phone's Files app. Install it with <a href="#koulaxizis-apps">Koulaxizis Apps</a>, which keeps it up to date, or <a href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-drive.apk">download the APK</a> (<a href="#other-ways">other ways</a>).</p>
+        <p class="dim"><b>Android (Beta):</b> back up folders of the phone, keep files offline, share files to orOS, back up new camera photos, and see the whole orOS disk in the phone's Files app. Install it with <a href="#koulaxizis-apps">Koulaxizis Apps</a>, which keeps it up to date, or <a href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-drive.apk" data-dl-name="orOS Drive">download the APK</a> (<a href="#other-ways">other ways</a>).</p>
         <a class="btn" href="https://github.com/koulaxizis/oros-drive/releases/latest" target="_blank" rel="noopener">Downloads on GitHub</a>
       </section>
       <section class="card" id="bridge">
@@ -208,7 +216,8 @@
       <section class="card">
         <div class="ch"><h2>Android apps (APK)</h2><span class="badge ok">Available</span></div>
         <p>orOS for Android with extras: contacts and events in the phone's own apps, Health Connect, home-screen widgets, plus every single app as its own APK. Download the APK:</p>
-        <div class="apps">
+        <p class="dl-line" data-dl="online.useoros." hidden><b data-n></b> downloads of the orOS Android apps so far</p>
+        <div class="apps" data-dl-tiles="downloads">
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros.apk"><img src="/icon.svg" alt="" width="36" height="36"><span>orOS (the whole system)</span></a>
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-base.apk"><img src="/icons/solo/base.svg" alt="" width="36" height="36"><span>Base</span></a>
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-bookmarks.apk"><img src="/icons/solo/bookmarks.svg" alt="" width="36" height="36"><span>Bookmarks</span></a>
@@ -254,9 +263,10 @@
         </div>
         <p class="dim">Install: open the .apk on the phone and allow installing from this source. If a download stops at 100% and never finishes, it was opened inside an installed app: open this page in a normal browser tab, or use the <a href="https://github.com/koulaxizis/oros/releases/tag/android-apks">release page on GitHub</a>.</p>
         <p class="dim"><b>Updates:</b> <a href="#koulaxizis-apps">Koulaxizis Apps</a> installs every APK here and keeps them up to date, with one list for orOS, NULL JSFX, Noxpress and Glarolykoi. Without it, each orOS app tells you once when a newer APK is out. Inside orOS, Settings › Single apps has the same link.</p>
-        <details class="alt" id="other-ways"><summary>Other ways: F-Droid, Droid-ify, Obtainium</summary>
+        <details class="alt" id="other-ways"><summary>Other ways: F-Droid<span data-dl="online.useoros.,gr.koulaxizis.apps" data-dl-ch="fdroid,fdroid_org" hidden> (<span data-n></span>)</span>, Droid-ify<span data-dl="online.useoros.,gr.koulaxizis.apps" data-dl-ch="droidify" hidden> (<span data-n></span>)</span>, Obtainium<span data-dl="online.useoros.,gr.koulaxizis.apps" data-dl-ch="obtainium" hidden> (<span data-n></span>)</span></summary>
           <p class="dim">Every APK here, and Koulaxizis Apps itself, is also in the orOS repository for <b>F-Droid</b> and <b>Droid-ify</b>, which install updates for you. With one of them installed, tap <a href="fdroidrepos://koulaxizis.github.io/oros-fdroid/repo?fingerprint=2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846">Add the orOS repository</a>, or add <code>https://koulaxizis.github.io/oros-fdroid/repo</code> by hand; fingerprint <code class="fp">2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846</code>. <b>Obtainium</b> can follow the same repository: add that address as a source.</p>
         </details>
+        <details class="alt" data-dl-table="online.useoros.,gr.koulaxizis.apps" data-dl-names='{"online.useoros.studioremote":"Studio Remote"}' hidden><summary>Downloads per app and channel</summary></details>
         
       </section>
       <section class="card" id="addon">
@@ -279,7 +289,10 @@
       <div class="ch"><img class="ficon" src="/icons/solo/koulaxizis-apps.svg" width="64" height="64" alt=""><h2>Εφαρμογές Koulaxizis (όλες οι εφαρμογές Android σε ένα σημείο)</h2><span class="badge test">Beta</span></div>
       <p>Μία μικρή εφαρμογή Android που εγκαθιστά και ενημερώνει τις εφαρμογές Android του orOS, του NULL JSFX, του Noxpress και των Γλαρόλυκων, μία ενότητα για κάθε έργο. Η <b>Ενημέρωση όλων</b> τις ενημερώνει τη μία μετά την άλλη, και ένας καθημερινός έλεγχος δείχνει μία ήσυχη ειδοποίηση όταν βγουν ενημερώσεις. Δεν εγκαθιστά ποτέ τίποτα μόνη της.</p>
       <p class="dim">Η λίστα κάθε έργου έρχεται από το δικό του υπογεγραμμένο αποθετήριο, και κάθε λίστα και κάθε APK ελέγχεται με το κλειδί, το μέγεθος και το άθροισμα ελέγχου του αποθετηρίου πριν το εγκαταστήσει το Android. Όσο είναι εγκατεστημένη, οι εφαρμογές του orOS, του NULL JSFX και του Noxpress της αφήνουν τις δικές τους ειδοποιήσεις ενημέρωσης. Android 8 ή νεότερο, χωρίς λογαριασμό, χωρίς υπηρεσίες Google, δωρεάν (MIT). Είναι το ένα σημείο για να παίρνεις και να ενημερώνεις τις εφαρμογές μας για Android (<a href="#other-ways-el">άλλοι τρόποι</a>: F-Droid, Droid-ify, Obtainium).</p>
-      <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk">Κατέβασε τις Εφαρμογές Koulaxizis (APK)</a>
+      <a class="btn" href="https://github.com/koulaxizis/oros/releases/download/koulaxizis-apps/koulaxizis-apps.apk" data-dl-name="Εφαρμογές Koulaxizis">Κατέβασε τις Εφαρμογές Koulaxizis (APK)</a>
+      <p class="dl-line" data-dl="gr.koulaxizis.apps" hidden><b data-n></b> λήψεις των Εφαρμογών Koulaxizis</p>
+      <p class="dl-line" data-dl="online.useoros.,gr.koulaxizis.apps,net.glarolykoi.,tech.nulljsfx.,tech.noxpress." hidden><b data-n></b> λήψεις των εφαρμογών μας για Android, από όλα τα κανάλια</p>
+      <p class="dl-line sub" data-dl="online.useoros.,gr.koulaxizis.apps,net.glarolykoi.,tech.nulljsfx.,tech.noxpress." data-dl-ch="manager" hidden><b data-n></b> εγκαταστάσεις και ενημερώσεις μέσα από τις Εφαρμογές Koulaxizis</p>
     </section>
     <div class="grid">
       <section class="card">
@@ -320,7 +333,7 @@
         <p>Καθρεφτίζει φακέλους που διαλέγεις από τον υπολογιστή σου (Windows ή Linux) στο κρυπτογραφημένο Vault του orOS, και προς τις δύο κατευθύνσεις. Εμφανίζονται στο orOS στα Αρχεία › orOS Drive και κατεβαίνουν μόνο όταν τα ανοίξεις. Μπορεί επίσης να δείξει όλο τον δίσκο του orOS ως φάκελο (στην Εξερεύνηση των Windows ή στο <code>~/orOS</code> σε Linux).</p>
         <p class="dim">Συνδέεσαι με τον λογαριασμό Dropbox που χρησιμοποιεί το sync του orOS και ξεκλειδώνεις με τη φράση του sync: το Dropbox δεν βλέπει ούτε ονόματα ούτε περιεχόμενο αρχείων. Windows 10/11 (x64 και ARM64): η εγκατάσταση δεν θέλει δικαιώματα διαχειριστή. Το αρχείο δεν έχει ακόμα υπογραφή, οπότε το SmartScreen μπορεί να προειδοποιήσει την πρώτη φορά: <b>Περισσότερες πληροφορίες › Εκτέλεση οπωσδήποτε</b>.</p>
         <p class="dim"><b>Υπάρχει ήδη μέσα στην εγκατάσταση του orOS</b> για Windows και Linux, στο εικονίδιο του orOS στο tray. Μόνο του, <b>Beta 0.5.0:</b> <a href="https://github.com/koulaxizis/oros-drive/releases/download/v0.5.0/orOS-Drive-Setup-0.5.0.exe">λήψη για Windows</a> (εγκατάσταση, περίπου 9 MB) · Linux .deb για <a href="https://github.com/koulaxizis/oros-drive/releases/download/v0.5.0/oros-drive_0.5.0_amd64.deb">amd64</a> ή <a href="https://github.com/koulaxizis/oros-drive/releases/download/v0.5.0/oros-drive_0.5.0_arm64.deb">arm64</a>. Φορητά zip για Windows, tarball για Linux και ο πηγαίος κώδικας είναι στο GitHub. Εκτός από το Dropbox, μπορεί να κρατά το Vault στο δικό σου Nextcloud ή σε διακομιστή WebDAV.</p>
-        <p class="dim"><b>Android (Beta):</b> αντίγραφα φακέλων του κινητού, αρχεία διαθέσιμα offline, αποστολή αρχείων στο orOS, αντίγραφα των νέων φωτογραφιών της κάμερας, και όλος ο δίσκος του orOS στην εφαρμογή Αρχεία του κινητού. Εγκατάστησέ το με τις <a href="#koulaxizis-apps-el">Εφαρμογές Koulaxizis</a>, που το κρατούν ενημερωμένο, ή <a href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-drive.apk">κατέβασε το APK</a> (<a href="#other-ways-el">άλλοι τρόποι</a>).</p>
+        <p class="dim"><b>Android (Beta):</b> αντίγραφα φακέλων του κινητού, αρχεία διαθέσιμα offline, αποστολή αρχείων στο orOS, αντίγραφα των νέων φωτογραφιών της κάμερας, και όλος ο δίσκος του orOS στην εφαρμογή Αρχεία του κινητού. Εγκατάστησέ το με τις <a href="#koulaxizis-apps-el">Εφαρμογές Koulaxizis</a>, που το κρατούν ενημερωμένο, ή <a href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-drive.apk" data-dl-name="orOS Drive">κατέβασε το APK</a> (<a href="#other-ways-el">άλλοι τρόποι</a>).</p>
         <a class="btn" href="https://github.com/koulaxizis/oros-drive/releases/latest" target="_blank" rel="noopener">Λήψεις στο GitHub</a>
       </section>
       <section class="card" id="bridge-el">
@@ -388,7 +401,8 @@
       <section class="card">
         <div class="ch"><h2>Εφαρμογές για Android (APK)</h2><span class="badge ok">Διαθέσιμο</span></div>
         <p>Το orOS για Android με επιπλέον δυνατότητες: επαφές και γεγονότα στις εφαρμογές του κινητού, Health Connect, widgets στην αρχική οθόνη, και κάθε μεμονωμένη εφαρμογή ως δικό της APK. Κατέβασε το APK:</p>
-        <div class="apps">
+        <p class="dl-line" data-dl="online.useoros." hidden><b data-n></b> λήψεις των εφαρμογών Android του orOS μέχρι τώρα</p>
+        <div class="apps" data-dl-tiles="λήψεις">
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros.apk"><img src="/icon.svg" alt="" width="36" height="36"><span>orOS (όλο το σύστημα)</span></a>
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-base.apk"><img src="/icons/solo/base.svg" alt="" width="36" height="36"><span>Βάση</span></a>
         <a class="app" href="https://github.com/koulaxizis/oros/releases/download/android-apks/oros-bookmarks.apk"><img src="/icons/solo/bookmarks.svg" alt="" width="36" height="36"><span>Σελιδοδείκτες</span></a>
@@ -434,9 +448,10 @@
         </div>
         <p class="dim">Εγκατάσταση: άνοιξε το .apk στο κινητό και επίτρεψε την εγκατάσταση από αυτή την πηγή. Αν μια λήψη σταματά στο 100% και δεν ολοκληρώνεται, ξεκίνησε μέσα από εγκατεστημένη εφαρμογή: άνοιξε αυτή τη σελίδα σε κανονική καρτέλα του browser, ή χρησιμοποίησε τη <a href="https://github.com/koulaxizis/oros/releases/tag/android-apks">σελίδα της έκδοσης στο GitHub</a>.</p>
         <p class="dim"><b>Ενημερώσεις:</b> οι <a href="#koulaxizis-apps-el">Εφαρμογές Koulaxizis</a> εγκαθιστούν κάθε APK εδώ και τα κρατούν ενημερωμένα, με μία λίστα για το orOS, το NULL JSFX, το Noxpress και τους Γλαρόλυκους. Χωρίς αυτές, κάθε εφαρμογή του orOS σου λέει μία φορά όταν βγαίνει νεότερο APK. Μέσα στο orOS, στις Ρυθμίσεις › Μεμονωμένες εφαρμογές, υπάρχει ο ίδιος σύνδεσμος.</p>
-        <details class="alt" id="other-ways-el"><summary>Άλλοι τρόποι: F-Droid, Droid-ify, Obtainium</summary>
+        <details class="alt" id="other-ways-el"><summary>Άλλοι τρόποι: F-Droid<span data-dl="online.useoros.,gr.koulaxizis.apps" data-dl-ch="fdroid,fdroid_org" hidden> (<span data-n></span>)</span>, Droid-ify<span data-dl="online.useoros.,gr.koulaxizis.apps" data-dl-ch="droidify" hidden> (<span data-n></span>)</span>, Obtainium<span data-dl="online.useoros.,gr.koulaxizis.apps" data-dl-ch="obtainium" hidden> (<span data-n></span>)</span></summary>
           <p class="dim">Κάθε APK εδώ, και οι ίδιες οι Εφαρμογές Koulaxizis, υπάρχουν και στο αποθετήριο του orOS για <b>F-Droid</b> και <b>Droid-ify</b>, που εγκαθιστούν τις ενημερώσεις για σένα. Αν έχεις κάποιο από αυτά, πάτησε <a href="fdroidrepos://koulaxizis.github.io/oros-fdroid/repo?fingerprint=2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846">Πρόσθεσε το αποθετήριο του orOS</a>, ή πρόσθεσε με το χέρι το <code>https://koulaxizis.github.io/oros-fdroid/repo</code>· αποτύπωμα <code class="fp">2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846</code>. Το <b>Obtainium</b> μπορεί να ακολουθεί το ίδιο αποθετήριο: πρόσθεσε τη διεύθυνση ως πηγή.</p>
         </details>
+        <details class="alt" data-dl-table="online.useoros.,gr.koulaxizis.apps" data-dl-names='{"online.useoros.studioremote":"Studio Remote"}' hidden><summary>Λήψεις ανά εφαρμογή και κανάλι</summary></details>
         
       </section>
       <section class="card" id="addon-el">
@@ -453,6 +468,7 @@
   </article>
 </main>
 <script src="/solo.js"></script>
+<script src="/download/dl-counts.js" defer></script>
 <script>
 (function () {
   "use strict";

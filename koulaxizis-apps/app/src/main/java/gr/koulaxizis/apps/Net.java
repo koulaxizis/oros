@@ -20,6 +20,40 @@ final class Net {
 
     static final String UA = "KoulaxizisApps/1";
 
+    /** Our repositories on GitHub Pages, and the counter in front of them (APPS-DL). */
+    static final String PAGES = "https://koulaxizis.github.io/";
+    static final String COUNTER = "https://apps.koulaxizis.workers.dev/";
+
+    /**
+     * The address through the download counter for an APK of our repositories
+     * (Chris 2026-11-19: every APK download counted per app and channel), or
+     * null when the file is not on our Pages. The counter only passes the file
+     * through; size, SHA-256 and signer are checked here as before.
+     */
+    static String counted(String url) {
+        if (url == null || !url.startsWith(PAGES) || !url.endsWith(".apk")) return null;
+        String rest = url.substring(PAGES.length());
+        if (rest.contains("..") || rest.contains("?") || rest.contains("#")) return null;
+        return COUNTER + rest;
+    }
+
+    /**
+     * Downloads an APK through the counter and, if that fails in any way,
+     * straight from the repository, so the counter can never stop an install.
+     */
+    static void apk(String url, File dest, long size, String sha256) throws RepoException {
+        String via = counted(url);
+        if (via != null) {
+            try {
+                file(via, dest, size, sha256);
+                return;
+            } catch (RepoException e) {
+                // fall through to the repository itself
+            }
+        }
+        file(url, dest, size, sha256);
+    }
+
     static HttpURLConnection open(String url) throws RepoException {
         if (!url.startsWith("https://")) throw new RepoException(RepoException.NETWORK, "not https");
         try {

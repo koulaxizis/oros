@@ -70,7 +70,9 @@ async function stats(env) {
   for (const r of gh.results) row(r.pkg).github = r.n;
   for (const r of man.results) row(r.pkg)[r.ch] = { n: r.n, at: r.at };
   const meta = await env.DB.prepare("SELECT v FROM meta WHERE k = 'gh_at'").first();
-  const body = JSON.stringify({ v: 1, at: new Date().toISOString(), github_at: meta ? meta.v : null, apps });
+  const files = {};
+  for (const [repo, rels] of Object.entries(ASSETS)) for (const names of Object.values(rels)) for (const [name, pkg] of Object.entries(names)) files[repo + "/" + name] = pkg;
+  const body = JSON.stringify({ v: 1, at: new Date().toISOString(), github_at: meta ? meta.v : null, apps, files });
   const res = new Response(body, { headers: { "content-type": "application/json; charset=utf-8", "cache-control": "public, max-age=300" } });
   await cache.put(key, res.clone());
   return cors(res);

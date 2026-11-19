@@ -26,6 +26,10 @@ APPS-M1, APPS-M2, APPS-M3.
   match the index's size, SHA-256 and signer (checked on the downloaded
   file too) before Android's PackageInstaller gets it. Android asks before
   every first install. Nothing is ever uninstalled.
+- **Download count** (`Net.apk`, APPS-DL): APKs of our Pages repositories are
+  fetched through the counter `https://apps.koulaxizis.workers.dev/<repo>/…`
+  (same bytes, same checks; only a number per app and channel is kept), and
+  straight from the repository when the counter fails.
 - **Screen** (`MainActivity.java`, `Rows.java`): one section per project,
   featured apps first, then "More apps"; Install, Update, Open, or Why? for
   a copy signed with another key.

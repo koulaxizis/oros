@@ -10,7 +10,9 @@ no IP address, no device, no time per download.
   Obtainium, other). A cron (every 6 hours) adds the public GitHub release download
   counts (site buttons, Obtainium on GitHub releases) to a ledger by asset id that
   never goes down. `/stats.json` (CORS *, 5 min cache) gives
-  `{v, at, github_at, apps: {package: {github, manager, fdroid, droidify, obtainium, other, <manual channel>: {n, at}}}}`.
+  `{v, at, github_at, apps: {package: {github, manager, fdroid, droidify, obtainium, other, <manual channel>: {n, at}}}, files: {"owner/repo/asset name": package}}`
+  (`files` lets a page match its GitHub download buttons to packages).
+  The sites read it with `dl-counts.js` (one copy per site, same code).
 - `schema.sql`: D1 database `apps-counter` (tables dl, gh_asset, man, meta).
 - `assets.js` → `assets.json`: release asset name → package, injected into
   `worker.js` at `/*ASSETS*/` on deploy. Run it again when an APK is added.
