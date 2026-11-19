@@ -27,6 +27,7 @@ Share lists with the people you live with: family, a partner, flatmates. Each pe
 - An admin can rename the household, make someone else an admin and remove a person. Removing someone changes the household key, so what is added after that can no longer be read with their old copy.
 - `Leave this household` takes the shared lists off your devices; To-Do keeps your own copy of each.
 - `Delete the household` (admins) removes it for everyone; everyone keeps their own copy of the lists.
+- The menu's search box finds a household by its name, the names of its people and the titles of what is shared in it. Choosing one opens that household here.
 
 ## Removed lately
 - A list someone stopped sharing stays here for 30 days. `Share again` puts it back into the household.

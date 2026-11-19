@@ -32,6 +32,7 @@ Du kannst auch über die Adressleiste deines Browsers suchen. Füge in den Brows
 
 - **Suche** oben. Fang an zu tippen, und du landest direkt in der Menüsuche, mit denselben Ergebnissen: Apps, Befehle und deine Daten.
 - **Offene Apps**: die App im Vordergrund und, mit eingeschaltetem Multitasking, die im Hintergrund. Klicke eine an, um zu ihr zurückzukehren, oder × zum Schließen. Auf breiten Bildschirmen kannst du eine auch neben die App im Vordergrund setzen.
+- **Auf deinen anderen Geräten weitermachen**: was du zuletzt auf einem anderen deiner Geräte in einer App offen hattest, etwa eine Notiz auf dem Handy, mit App, Gerät und Zeit. Ein Klick öffnet es hier; × blendet es aus, bis das Gerät etwas Neueres hat. Private Apps erscheinen nie, und während sensibler Arbeit oder mit ausgeschaltetem Schalter in `Einstellungen › System › Auf deinen anderen Geräten weitermachen` erscheint nichts.
 - **Zuletzt verwendete Dateien**: die letzten Dateien, die du auf diesem Gerät in [Dateien](app:files) geöffnet, gespeichert oder heruntergeladen hast. Klicke eine an, um sie in Dateien zu öffnen. Während sensibler Arbeit bleiben sie ausgeblendet.
 - **System**: wie viele Plätze dieses Geräts für offene Apps belegt sind, wie viel Speicherplatz orOS nutzt und ob die Synchronisierung aktuell ist oder Dateien warten. `Details unter Einstellungen › Gerät` zeigt das ganze Bild.
 
@@ -51,10 +52,26 @@ Tippe auf Englisch oder Griechisch, was du tun willst, und die erste Zeile der S
 - `habit reading done`: hakt heute in [Gewohnheiten](app:habits) ab (tippe noch einmal auf den Tag, um es rückgängig zu machen). `new habit running` öffnet eine neue Gewohnheit.
 - `send hello world to writer`: gibt den Text oder Link an diese App weiter, wie `An eine App senden…`.
 - `12*3+4`, `√2`, `5 miles to km`, `100 usd to eur`: Das Ergebnis erscheint in der Zeile. Drücke [[Enter]], um es zu kopieren.
+- `in 45 days`, `30 days ago`, `days until 25/12`, `days since 1/3/2020`, `what day is 1/1/2030`, `week number`: Antworten zu Daten, genauso kopiert.
+- `time in Tokyo`, `New York time`: die Uhrzeit dort jetzt und wie weit sie vor- oder nachgeht.
+- `dark theme`, `light theme`, `quiet hours on` / `off`, `do not disturb` (schaltet Benachrichtigungen aus; `notifications on` holt sie zurück) und `lock` (wenn die Bildschirmsperre eingerichtet ist): dieselben Schalter wie in den Einstellungen, sofort.
+- `password 16` (oder `new password`), `roll 2 dice` (auch `2d6`, `d20`), `flip a coin` und `random 1-100`: ein frischer Wurf aus der sicheren Zufallsquelle des Geräts; Enter kopiert ihn. Ein Passwort wird in der Zeile gezeigt und kopiert, aber nie in der Liste der letzten Befehle behalten oder im Hinweis wiederholt.
 
 Bevor du tippst, listet die Leiste deine letzten Befehle auf; tippe auf einen, um ihn noch einmal zu nutzen. Diese Liste bleibt nur auf diesem Gerät, und `Liste leeren` leert sie.
 
 Dieselben Befehle funktionieren in einer kleinen Leiste über jeder App: Drücke [[Ctrl+Alt+Shift+K]]. In der orOS-App für Android öffnet die Lupe der Startbildschirm-Widgets dieselbe Leiste. Alles, was kein Befehl ist, ist eine normale Suche, und wenn der [Assistent](app:assistant) installiert ist, fragt ihn die letzte Zeile. Befehle werden auf deinem Gerät verstanden; nichts wird irgendwohin gesendet.
+
+### Schnellfenster: von überall eine Aufgabe hinzufügen oder suchen
+In der Leiste zeigt eine Zeile, die kein Befehl ist, zuerst „Aufgabe hinzufügen: „…““: Drücke [[Enter]], und [Aufgaben](app:todo) fügt sie sofort der dort offenen Liste hinzu, mit `Rückgängig` für ein paar Sekunden. Ist der Name einer App die ganze Zeile, kommt das Öffnen dieser App zuerst. Unter den Apps zeigt `In deinen Daten` bis zu sechs Treffer aus deinen Apps, wie die Menüsuche, und nur aus den Apps, die du auf diesem Gerät für die Suche eingeschaltet hast.
+
+Du kannst die Leiste öffnen, ohne zuerst orOS zu öffnen:
+- **Handy (orOS-App für Android):** Drück lange auf das orOS-Symbol und wähle `Add or search`, füge das Widget `orOS add or search` zum Startbildschirm hinzu oder die Kachel `orOS Quick` zu den Schnelleinstellungen.
+- **Installierte Web-App (Android, Windows, Linux):** Rechtsklick oder langes Drücken auf das orOS-Symbol und `Add or search` wählen.
+- **Windows und Linux (orOS installiert mit Setup.exe, AppImage oder .deb):** Das orOS-Symbol im Infobereich öffnet ein kleines Fenster mit der Leiste. [[Ctrl+Alt+Shift+Space]] öffnet es unter Windows. Das Menü des Symbols kann orOS mit dem Computer starten; das ist aus, bis du es einschaltest.
+
+Öffnest du das Schnellfenster von außerhalb von orOS (Handy oder Infobereich), ohne etwas zu tippen, zeigt `Heute` deine überfälligen Aufgaben und was heute ansteht, aus der Zusammenfassung von [Heute](app:today) und den Apps, die sie abdeckt (bis zu fünf), mit `Den ganzen Tag in Heute`, um die volle Zusammenfassung zu öffnen.
+
+Escape im kleinen Fenster des Infobereichs schließt es. Nichts, was du dort tippst, verlässt dein Gerät; die Bildschirmsperre fragt trotzdem zuerst.
 
 ## Wählen, welche Apps das Menü zeigt
 Zu viele Apps? Blende die aus, die du nicht nutzt. Öffne [Einstellungen](app:settings) und wähle `Menü`:

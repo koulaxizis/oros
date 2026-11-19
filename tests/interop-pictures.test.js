@@ -85,7 +85,7 @@ test("Layout: placeImage is guarded (/internal/, picture extension, no dialog) a
   assert.match(p, /A\.importFile\(file\)/);
   assert.match(p, /LY\.newDocSetup\(\)/);
   assert.match(p, /LY\.createDoc\(s\)/);
-  assert.match(p, /ED\.marginBox\(doc, P0\.side\)/);
+  assert.match(p, /ED\.marginBox\(doc, P0\.side, P0\.page\)/);
   assert.match(p, /LY\.op\(function \(doc, now\)/);
   assert.match(p, /ED\.addItem\(doc, \{ t: "img"/);
   assert.match(p, /ED\.select\(\[made\.id\]\)/);

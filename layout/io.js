@@ -135,6 +135,12 @@
     return out;
   }
 
+  // A mirrored picture (W4): the cut is drawn flipped.
+  function mirror(cx, crop, cw, ch) {
+    if (!crop.fh && !crop.fv) return;
+    cx.translate(crop.fh ? cw : 0, crop.fv ? ch : 0);
+    cx.scale(crop.fh ? -1 : 1, crop.fv ? -1 : 1);
+  }
   // The visible part of one image, resampled to `ppi` (never up).
   function cropImage(it, ppi) {
     var crop = P.imageCrop(it);
@@ -148,9 +154,11 @@
       var cv = document.createElement("canvas");
       cv.width = cw; cv.height = ch;
       var png = /\.png$/.test(it.a);
-      cv.getContext("2d").drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
+      var cx = cv.getContext("2d");
+      mirror(cx, crop, cw, ch);
+      cx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
       return toBlob(cv, png ? "image/png" : "image/jpeg", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
-        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi };
+        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (crop.fh ? "h" : "") + (crop.fv ? "v" : ""), down: cw < Math.round(src.w) - 1 };
       });
     });
   }
@@ -160,22 +168,32 @@
   // an e-book (LY-OUT): rgb, lang, links, outline, layout (of `doc`),
   // cover ({ doc, page } a Book cover's page: its front panel first).
   function pdfBlob(doc, opts) {
+    return pdfDoc(doc, opts).then(function (pdf) { return pdf.output("blob"); });
+  }
+  // ...the jsPDF document itself (its orosBoxes: TrimBox / BleedBox per
+  // PDF page, read by the PDF/X step, LY-PRO W1); opts.imgStat (an
+  // object) gets { n, down } (pictures out, pictures resampled).
+  function pdfDoc(doc, opts) {
     var images = {}, JsPDF;
     var pages = opts.pages || M.pagesInOrder(doc).map(function (p) { return p.id; });
     return loadJsPDF().then(function (J) {
       JsPDF = J;
       var chain = Promise.resolve();
       imageItems(doc, pages).forEach(function (it) {
-        chain = chain.then(function () { return cropImage(it, opts.ppi || 300); }).then(function (im) { if (im) images[it.id] = im; });
+        chain = chain.then(function () { return cropImage(it, opts.ppi || 300); }).then(function (im) {
+          if (!im) return;
+          images[it.id] = im;
+          if (opts.imgStat) { opts.imgStat.n = (opts.imgStat.n || 0) + 1; if (im.down) opts.imgStat.down = (opts.imgStat.down || 0) + 1; }
+        });
       });
       return chain;
     }).then(function () {
       return opts.cover ? coverPage(JsPDF, doc, opts.cover, opts.ppi || 150) : null;
     }).then(function (first) {
       var L = opts.layout || (doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc));
-      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "" },
+      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "", creep: opts.creep || 0 },
         { jsPDF: JsPDF, layout: L, images: images, pdf: first, links: opts.links, outline: opts.outline });
-      return pdf.output("blob");
+      return pdf;
     });
   }
 
@@ -243,7 +261,7 @@
       opts.rgb = true;
       opts.lang = O.lang(d, ed.pub);
       opts.outline = heads;
-      opts.links = O.tocLinks(d, L, heads);
+      opts.links = O.tocLinks(d, L, heads).concat(O.urlLinks ? O.urlLinks(d, L) : []);
       var cd = prof.cover ? LY.data().docs.filter(function (x) { return x.id === prof.cover && !x.del; })[0] : null;
       if (cd) opts.cover = { doc: cd };
     }
@@ -530,7 +548,7 @@
     LY.flushStory && LY.flushStory();
     exporting = true;
     LY.toast(t("exp.working"));
-    var scale = (opts.dpi || 150) / 72, w = doc.setup.w, h = doc.setup.h, capped = false;
+    var psz = M.pageSize(doc, page), scale = (opts.dpi || 150) / 72, w = psz.w, h = psz.h, capped = false;
     if (w * h * scale * scale > IMG_MAX_PX) { scale = Math.sqrt(IMG_MAX_PX / (w * h)); capped = true; }
     var chain = Promise.resolve();
     imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
@@ -597,7 +615,7 @@
     var chain = Promise.resolve();
     imageItems(doc, [page.id]).forEach(function (it) { chain = chain.then(function () { return A.load(it.a); }); });
     return chain.then(function () {
-      var cv = LY.R.renderPage(doc, page, ED.L, 512 / Math.max(doc.setup.w, doc.setup.h), { getImage: A.get, background: "#fff" });
+      var cv = LY.R.renderPage(doc, page, ED.L, 512 / Math.max(M.pageSize(doc, page).w, M.pageSize(doc, page).h), { getImage: A.get, background: "#fff" });
       return toBlob(cv, "image/png");
     }).then(null, function () { return null; });
   }
@@ -1019,7 +1037,7 @@
     var stop = false;
     LY.toast(t("rb.start", { n: sources.length }), t("btn.cancel"), function () { stop = true; });
     return pdf.arrayBuffer().then(function (buf) {
-      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, thread: !!(opts && opts.thread), cancelled: function () { return stop; }, matchFonts: matchFonts }, A.importFile, function (k, n) {
+      return RB.open(buf, sources, { now: LY.now(), name: baseName(pdf, /\.pdf$/i), lang: LY.BASE, names: RB.names(LY.LANG), thread: !!(opts && opts.thread), cancelled: function () { return stop; }, matchFonts: matchFonts }, A.importFile, function (k, n) {
         LY.toast(t("rb.working", { n: k, t: n }), t("btn.cancel"), function () { stop = true; });
       });
     }).then(function (res) {
@@ -1273,7 +1291,7 @@
       var P0 = ED.curP(), made = null;
       if (!P0) { LY.toast(t("img.fail")); return false; }
       LY.op(function (doc, now) {
-        var mb = ED.marginBox(doc, P0.side);
+        var mb = ED.marginBox(doc, P0.side, P0.page);
         var k = Math.min(mb.w / res.w, mb.h / res.h), w = res.w * k, h = res.h * k;
         made = ED.addItem(doc, { t: "img", pg: P0.id, side: P0.master ? P0.side : "",
                                  x: mb.x + (mb.w - w) / 2, y: mb.y + (mb.h - h) / 2, w: w, h: h }, now);
@@ -1411,7 +1429,7 @@
       }
       var P0 = ED.curP();
       if (!P0) return false;
-      var mb = ED.marginBox(doc, P0.side);
+      var mb = ED.marginBox(doc, P0.side, P0.page);
       var st2 = ED.newStory(doc, now, paras);
       made = ED.addItem(doc, { t: "text", pg: P0.id, side: P0.master ? P0.side : "", x: mb.x, y: mb.y, w: mb.w, h: mb.h, story: st2.id, cols: doc.setup.cols, gut: doc.setup.gut }, now);
       if (!made) return false;
@@ -1420,7 +1438,7 @@
   }
 
   LY.io = {
-    exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
