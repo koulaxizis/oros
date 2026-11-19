@@ -125,6 +125,7 @@ orosPack("de", "gamecenter", {
  "fieldwarden": "Feldhüter",
  "roots": "Wurzeln",
  "hive": "Bienenstock",
+ "lighthouse": "Leuchtturminsel",
  "chal.back": "Wieder aufnehmen",
  "chal.backed": "{g} kann ab morgen wieder Herausforderungen bekommen.",
  "chal.done": "Geschafft",

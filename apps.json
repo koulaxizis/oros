@@ -1200,6 +1200,14 @@
       "type": "internal"
     },
     {
+      "id": "lighthouse",
+      "name": "Lighthouse Island",
+      "category": "Games",
+      "icon": "lighthouse",
+      "url": "lighthouse/",
+      "type": "internal"
+    },
+    {
       "id": "wayfarers",
       "name": "Wayfarers",
       "category": "Games",

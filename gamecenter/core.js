@@ -39,7 +39,7 @@
     "wordsearch", "solitaire", "mahjong", "jigsaw", "spot", "hexagon", "slider", "lightsout",
     "memory", "hangman", "mastermind", "g2048", "tetris", "snake", "breakout", "bubble",
     "simon", "whack", "pong", "chess", "checkers", "reversi", "gomoku", "connect4", "dots",
-    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers", "fieldwarden", "roots", "hive"];
+    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers", "fieldwarden", "roots", "hive", "lighthouse"];
   // The "All games" section (Chris 2026-10-22): every game once, by
   // kind, in the order each group shows them.
   var GROUPS = [
@@ -53,7 +53,7 @@
     { id: "strategy", games: ["realm", "banner", "fieldwarden", "roots"] },
     { id: "rpg", games: ["crypt", "wayfarers"] },
     // Idle games (Chris 2026-11-18): they go on by themselves
-    { id: "idle", games: ["hive"] }
+    { id: "idle", games: ["hive", "lighthouse"] }
   ];
   var WORDLE_LOST = 7;
   var SOL_VARIANTS = { k: ["k1c", "k1n", "k3c", "k3n"], f: ["f"], s: ["s1", "s2", "s4"], p: ["p"] };
@@ -408,6 +408,11 @@
     // Hive: the hive itself (hive/engine.js). An idle game has no
     // rounds to count: played once something was done, never won.
     hive: function (d, S) {
+      if (d && typeof d.acts === "number" && d.acts > 0) S.p = 1;
+    },
+    // Lighthouse Island: the island itself (lighthouse/engine.js), an
+    // idle game like Hive: played once something was done, never won.
+    lighthouse: function (d, S) {
       if (d && typeof d.acts === "number" && d.acts > 0) S.p = 1;
     },
     xeri: function (d, S, X) {
