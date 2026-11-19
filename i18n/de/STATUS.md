@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 48451 of 48451 (100%)
+- Strings: 48569 of 48569 (100%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -83,7 +83,7 @@ en and el); translators change them there, not in a pack.
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 502 / 502 |
 | mancala | 100% | 61 / 61 |
-| maps | 100% | 1286 / 1286 |
+| maps | 100% | 1404 / 1404 |
 | mastermind | 100% | 74 / 74 |
 | meals | 100% | 466 / 466 |
 | memory | 100% | 77 / 77 |
