@@ -37,5 +37,5 @@
         <item quantity="one">%d update ready</item>
         <item quantity="other">%d updates ready</item>
     </plurals>
-    <string name="support">Support on Ko-fi</string>
+    <string name="support">Support the projects</string>
 </resources>

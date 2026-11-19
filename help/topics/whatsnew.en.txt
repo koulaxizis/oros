@@ -1,7 +1,10 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
-orOS is free and made by one person, and Ko-fi is the only way it is funded: [buy a coffee](https://ko-fi.com/koulaxizis) or [support it monthly](https://ko-fi.com/koulaxizis/tiers). Nothing is unlocked: everything stays free.
+orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
+
+## Version 7.79.02
+- **Support orOS without Ko-fi.** Info › Support now has three plain links to the new page useoros.online/support/: buy an orOS t-shirt, mug or sticker from the Glarolykoi shop, make a one-time donation, or hire me. Ko-fi, the coffees and the monthly memberships are gone. The one notice after a month of use stays the same: once, and never again. The download page shows its support step at most once every 30 days, with Don't show this again.
 
 ## Version 7.79.01
 - **Support orOS, in plain sight.** The Start menu has a Support orOS row that opens the Support section of the Info window, which now says plainly how orOS is funded. After a month of use, orOS shows one quiet notice about it, once, and never again. The download page asks once per visit, with Skip to download.
