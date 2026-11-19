@@ -29,9 +29,11 @@
 //                 of cliphist.js is on: opens its panel), Emoji (1.1.0,
 //                 emoji.js: the emoji picker), Colour filter (1.2.0,
 //                 a11yfx.js: tap = off / the last filter, › = Settings
-//                 › Accessibility), Keep awake (1.3.0: › = 1 hour,
-//                 2 hours, until I turn it off), Energy saver (1.3.0,
-//                 see "Power");
+//                 › Accessibility), Read aloud (1.2.0,
+//                 READ-1, only while it is on for this device: reads
+//                 the text selected in the app in front, or stops),
+//                 Keep awake (1.3.0: › = 1 hour, 2 hours, until I
+//                 turn it off), Energy saver (1.3.0, see "Power");
 //       playing   one row per sound that plays in the shell (Music,
 //                 Podcasts, Radio, Sound Mixer) with Play / Pause.
 //     Every switch goes through the shell's own setter (theme,
@@ -277,6 +279,7 @@
   var IC = {
     gate: SV + '<path d="M4 21V10l8-6 8 6v11"/><path d="M9 21v-6h6v6"/></svg>',
     emoji: SV + '<circle cx="12" cy="12" r="9"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><path d="M9 9h.01M15 9h.01"/></svg>',
+    read: SV + '<path d="M11 5L6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>',
     clip: SV + '<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>',
     net: SV + '<path d="M2 8.5a15 15 0 0 1 20 0"/><path d="M5 12a10.5 10.5 0 0 1 14 0"/><path d="M8.5 15.5a5.5 5.5 0 0 1 7 0"/><circle cx="12" cy="19" r="1" fill="currentColor"/></svg>',
     netOff: SV + '<path d="M2 8.5a15 15 0 0 1 20 0" opacity=".35"/><path d="M5 12a10.5 10.5 0 0 1 14 0" opacity=".35"/><path d="M8.5 15.5a5.5 5.5 0 0 1 7 0" opacity=".35"/><path d="M3 3l18 18"/></svg>',
@@ -588,13 +591,16 @@
     // Clipboard history (cliphist.js): shown only while it is on; one
     // press opens its panel.
     parts.clip = pill(IC.clip, then(function () { call(function () { root.orosClip.open(); }); }), null);
+    // Read aloud (READ-1, shell.js orosRead): shown only while it is on;
+    // one press reads the text selected in the app in front, or stops.
+    parts.read = pill(IC.read, then(function () { call(function () { root.orosRead.toggle(); }); }), null);
     // Emoji picker (emoji.js): writes into the field you were in.
     parts.emoji = pill(IC.emoji, then(function () { call(function () { root.orosEmoji.open(); }); }), null);
     // Keep awake: tap = until turned off / off; the arrow = for how long.
     parts.awake = pill(IC.cup, function () { setAwake(awake().on ? "" : "on"); },
       function () { setSub(sub === "awake" ? "" : "awake"); }, t("qs.awake.more"));
     parts.saver = pill(IC.leaf, toggleSaver, null);
-    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
+    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.dndMenu = el("div", "qs-menu");
@@ -751,6 +757,14 @@
     if (clipOn) {
       var cn = call(function () { return C.snapshot().n; }) || 0;
       setPill(parts.clip, t("qs.clip"), t("qs.clip.n").replace("{n}", String(cn)), false, false);
+    }
+
+    var R = root.orosRead;
+    var readOn = !!(R && call(function () { return R.isOn(); }));
+    parts.read.box.hidden = !readOn;
+    if (readOn) {
+      var busy = !!call(function () { return R.active(); });
+      setPill(parts.read, t("qs.read"), t(busy ? "qs.read.stop" : "qs.read.sel"), busy, true);
     }
 
     parts.emoji.box.hidden = !root.orosEmoji;

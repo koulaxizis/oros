@@ -834,7 +834,35 @@
     ensureLang(tab);
     schedulePersist(null);
     view.focus();
+    contNote();
   }
+
+  // CONT-1 W3: tell the shell which file is open (continue.js keeps the
+  // path and the name only, never the text). Only files of the orOS disk:
+  // a file of this device cannot be opened on another. On a switch of
+  // tab, and once at the first tap or key after the start; nothing before
+  // that, so a restored tab never hides the file from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      var loc = active && active.loc;
+      if (W && loc && loc.kind === "disk" && typeof loc.path === "string" && /^\/internal\/./.test(loc.path) && loc.path.indexOf("..") < 0)
+        W.note("pad", { target: { openPath: loc.path }, title: C.baseName(loc.path) });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   // A new tab. opts: { name, text, lang, enc, eol, mixed, loc, raw, dirty, big, sel, top, id }
   function addTab(opts) {

@@ -63,6 +63,8 @@ test("play styles: the set, and dialogue laid out with the speaker in bold capit
   ["Πρόσωπα (τίτλος)", "Πρόσωπα", "Πράξη", "Σκηνή", "Διάλογος", "Σκηνική οδηγία", "Τραγούδι"].forEach((n) => assert.ok(PRO.styleNamed(d.pstyles, n), n));
   assert.equal(PRO.styleNamed(d.pstyles, "Πράξη").ext.brk, "page");
   assert.equal(PRO.playStyles(d, "el", 12), 0, "a second time makes nothing");
+  // sizes and spaces to the nearest 0.5 pt (Chris 2026-11-18)
+  d.pstyles.filter((p) => /^ps-play/.test(p.id)).forEach((p) => ["size", "sb", "sa", "li"].forEach((k) => { if (p[k] !== undefined) assert.equal(p[k] * 2, Math.round(p[k] * 2), p.name + " " + k + " " + p[k]); }));
   const fr = d.items.filter((it) => it.t === "text")[0];
   const runs = runsOf(R.computeLayout(d), fr.id);
   assert.equal(runs[0].t, "ΝΙΚΟΣ:");

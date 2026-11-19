@@ -247,6 +247,26 @@
     if (f === "A") return letters(n).toUpperCase();
     return String(n);
   }
+  // A page's own size (LY-PRO W3b, page.ext.sz {w, h} in pt, 36-14400;
+  // absent = the document's): a fold-out, a smaller insert.
+  function pageSize(doc, p) {
+    var z = p && p.ext && p.ext.sz, s = doc.setup;
+    if (z && typeof z === "object") {
+      var w = Number(z.w), h = Number(z.h);
+      if (isFinite(w) && isFinite(h) && w >= 36 && w <= 14400 && h >= 36 && h <= 14400) return { w: w, h: h, own: 1 };
+    }
+    return { w: s.w, h: s.h, own: 0 };
+  }
+  // Creep for a saddle-stitched book (LY-PRO W3b): how far page i (0-
+  // based) of n moves towards the spine, in pt, when the innermost
+  // sheet's pages move `creep` pt: 0 on the outer sheet, growing
+  // evenly to the middle. → signed x offset (right page −, left +)
+  function creepOf(doc, i, n, creep) {
+    if (!creep || n < 8) return 0;
+    var sheets = Math.ceil(n / 4), sheet = Math.floor(Math.min(i, n - 1 - i) / 2);
+    var d = sheets > 1 ? creep * sheet / (sheets - 1) : 0;
+    return !d ? 0 : sideOf(doc, i) === "L" ? d : -d;
+  }
   // Every page's number and label, in order: [{ id, no, label, sec }]
   // (sec: the index of the page's section, 0 = before any).
   function pageLabels(doc) {
@@ -815,7 +835,7 @@
     normSetup: normSetup, normItem: normItem, normStory: normStory, normPs: normPs, normCs: normCs,
     normSwatch: normSwatch, normPage: normPage, normMaster: normMaster, normGuide: normGuide, normPara: normPara,
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
-    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, pageLabels: pageLabels, numFmt: numFmt, secOfPage: secOfPage, spreads: spreads, margins: margins,
+    newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, pageSize: pageSize, creepOf: creepOf, pageLabels: pageLabels, numFmt: numFmt, secOfPage: secOfPage, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
     swatchColor: swatchColor, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })

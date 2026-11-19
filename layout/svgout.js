@@ -160,7 +160,7 @@
         if (e.it.ext && e.it.ext.tp) p += 40;
         vb.x0 = Math.min(vb.x0, b.x - p); vb.y0 = Math.min(vb.y0, b.y - p); vb.x1 = Math.max(vb.x1, b.x + b.w + p); vb.y1 = Math.max(vb.y1, b.y + b.h + p);
       });
-    } else vb = { x0: 0, y0: 0, x1: doc.setup.w, y1: doc.setup.h };
+    } else { var psz = M.pageSize(doc, page); vb = { x0: 0, y0: 0, x1: psz.w, y1: psz.h }; }
     var W = Math.max(1, vb.x1 - vb.x0), H = Math.max(1, vb.y1 - vb.y0);
     var css = [];
     if (opts.fonts !== false) {
@@ -173,7 +173,7 @@
     css.push("text{white-space:pre;font-kerning:none;font-variant-ligatures:none}");
     var svg = '<?xml version="1.0" encoding="UTF-8"?>\n<svg xmlns="http://www.w3.org/2000/svg" version="1.1"' + at("width", n2(W) + "pt") + at("height", n2(H) + "pt") +
       at("viewBox", n2(vb.x0) + " " + n2(vb.y0) + " " + n2(W) + " " + n2(H)) + ' xml:space="preserve"><style>' + css.join("\n") + "</style>" +
-      (want ? "" : '<rect width="' + n2(doc.setup.w) + '" height="' + n2(doc.setup.h) + '" fill="#ffffff"/>') +
+      (want ? "" : '<rect width="' + n2(W) + '" height="' + n2(H) + '" fill="#ffffff"/>') +
       (defs.length ? "<defs>" + defs.join("") + "</defs>" : "") + body + "</svg>\n";
     return { svg: svg, w: W, h: H };
   }

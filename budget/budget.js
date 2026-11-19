@@ -784,6 +784,8 @@
     // 1 to 4, sorted; none = every 6 hours on open), bam = when they were saved
     if (!(typeof y.bat === "string" && BAT_RE.test(y.bat))) delete y.bat;
     if (!(isInt(y.bam) && y.bam > 0 && y.bam < 1e14)) delete y.bam;
+    // BK-AO: bao = 1 turns the automatic updates off (Update now only)
+    if (y.bao !== 1) delete y.bao;
     return withExtras({ m: x.m, cur: CURRENCIES.indexOf(x.cur) >= 0 ? x.cur : "EUR" }, y);
   }
 
@@ -3754,12 +3756,14 @@
       });
     } finally { autoBusy = false; }
   }
-  // BK-AT: the times banks update by themselves ("" = every 6 hours on
-  // open); synced in set, like the currency.
-  function saveBankTimes(bat) {
-    if ((data.set.bat || "") === bat) return;
+  // BK-AT: the times banks update by themselves ("" = every 6 hours);
+  // BK-AO: off = no automatic updates (bao, the times kept); synced in
+  // set, like the currency.
+  function saveBankTimes(bat, off) {
+    if ((data.set.bat || "") === bat && (data.set.bao === 1) === !!off) return;
     data.set.m = stamp(data.set.m);   // in place: keeps a newer version's fields
     if (bat) data.set.bat = bat; else delete data.set.bat;
+    if (off) data.set.bao = 1; else delete data.set.bao;
     data.set.bam = Date.now();
     commit();
   }

@@ -86,6 +86,7 @@
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     fonts: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19 8.5 5h1L15 19M5.2 14h7.6"/><path d="M21 19v-5.5a2.75 2.75 0 0 0-5.5 0M21 16.2c-1-.9-5.6-1.2-5.6 1.2 0 2.4 4.4 2 5.6-.6"/></svg>',
     device: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
+    screentime: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 2.5h11"/><path d="M6.5 21.5h11"/><path d="M7.5 2.5v3.2a4.5 4.5 0 0 0 1.6 3.4L12 12l2.9-2.9a4.5 4.5 0 0 0 1.6-3.4V2.5"/><path d="M7.5 21.5v-3.2a4.5 4.5 0 0 1 1.6-3.4L12 12l2.9 2.9a4.5 4.5 0 0 1 1.6 3.4v3.2"/></svg>',
     files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
     menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
     users: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 5.5 4.8"/></svg>',
@@ -582,8 +583,8 @@
   }
 
   // ---------- 4a. Section: Accessibility ----------
-  // Text size, high contrast, the focus ring, the colour filter and the
-  // pointer size (shell.js 5e, a11yfx.js). All stay on this device;
+  // Text size, high contrast, the focus ring, the colour filter, the
+  // pointer size (shell.js 5e, a11yfx.js) and Read aloud (READ-1). All stay on this device;
   // older shells send no s.a11y.
   function secAccessibility(host, s) {
     var a = s.a11y;
@@ -638,6 +639,40 @@
         c6.appendChild(el("p", "hint", t("ac.pointer.hint")));
         host.appendChild(c6);
       }
+    }
+
+    // READ-1: Read aloud (shell.js window.orosRead, readaloud.js), off by
+    // default, this device only; older shells send no s.read.
+    var r = s.read;
+    if (r) {
+      var c7 = card(t("ac.read"), "read");
+      c7.appendChild(row(t("ac.read.on"), switchBtn(r.on, "readAloud", function (v) { set("readAloud", v); }, t("ac.read.on")),
+        { hint: t("ac.read.hint") }));
+      if (r.on) {
+        var dec = LANG === "en" ? "." : ",";
+        c7.appendChild(segRow(t("ac.read.rate"), segmented(r.rates.map(function (n) {
+          return { value: n, label: String(n).replace(".", dec) + "\u00d7" };
+        }), r.rate, "readRate", function (v) { set("readRate", v); }, t("ac.read.rate"))));
+      }
+      // W2: a voice per language, from this device's own voices, with Test
+      if (r.on && r.voices && r.voices.length) {
+        r.voices.forEach(function (g) {
+          var vr = row(t("ac.read.voice." + g.lang), null, g.list.length ? null : { hint: t("ac.read.novoices") });
+          if (g.list.length) {
+            var opts = [{ value: "", label: t("ac.read.auto") }].concat(g.list.map(function (v) {
+              return { value: v.uri, label: v.name + (v.lang ? " (" + v.lang + ")" : "") };
+            }));
+            var sel = select(opts, g.pick, "readVoice-" + g.lang, function (val) { set("readVoice", { lang: g.lang, uri: val }); });
+            sel.setAttribute("aria-label", t("ac.read.voice." + g.lang));
+            vr.appendChild(actions(sel, button(t("ac.read.test"), "readTest-" + g.lang, function () { act("read.test", g.lang); })));
+          }
+          c7.appendChild(vr);
+        });
+        c7.appendChild(el("p", "hint", t("ac.read.voices.hint")));
+      }
+      if (!r.available) c7.appendChild(el("p", "hint", t("ac.read.none")));
+      if (r.strict) c7.appendChild(el("p", "hint", t("ac.read.strict")));
+      host.appendChild(c7);
     }
 
     // FM-5: the font of orOS (chosen on a font's page in Fonts)
@@ -1349,6 +1384,7 @@
             })));
         }
         c.appendChild(fb);
+        localSection(c, G);
       }
       // GATE-HOST (PEND-1 wave 2): an installed orOS Portable or orOS USB
       // keeps the Gate open in the background while every window is closed.
@@ -1461,14 +1497,91 @@
         var log = G.log().slice(0, 50);
         if (!log.length) c.appendChild(el("p", "msg msg-dim", t("gt.log.none")));
         log.forEach(function (e) {
-          var ln = el("div", "hint", gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") +
-            " · " + (e.ok ? gateItems(e.k || 0) : t("gt.log.refused")));
+          var ln = el("div", "hint", e.lp ? gateWhen(e.t) + " · " + t("gt.loc.log." + e.n.slice(6)) + " · " + e.lp + (e.n === "local-list" ? "" : " · " + Math.max(1, Math.round((e.sz || 0) / 1024)) + " KB") + (e.c ? " · " + e.c : "")
+            : gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") + " · " + (e.ok ? gateItems(e.k || 0) : t("gt.log.refused")));
           c.appendChild(ln);
         });
         if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
       }
     }
     host.appendChild(c);
+  }
+
+  // LOCAL-1 (temporary, Chris 2026-11-18): folders of this device that
+  // Layout may read through orOS Gate (read roots) and write proofs and
+  // print PDFs to (write roots), picked with the browser's folder
+  // picker; localroots.js in the shell keeps them (this device only).
+  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null;
+  function localApi() { var p = parentWin(); try { return p && p.orosLocal ? p.orosLocal : null; } catch (e) { return null; } }
+  function localSection(c, G) {
+    var L = localApi();
+    if (!L) return;
+    if (!locWired) { locWired = true; L.onChange(function () { locRoots = null; render(); }); }
+    if (locRoots === null && !locBusy) {
+      locBusy = true;
+      L.list().then(function (l) { locRoots = l; locBusy = false; render(); }, function () { locRoots = []; locBusy = false; render(); });
+    }
+    var box = el("div", "gt-folders");
+    box.appendChild(el("div", "pair-label", t("gt.loc.title")));
+    box.appendChild(el("div", "hint", t("gt.loc.hint")));
+    if (locMsg) box.appendChild(el("div", "hint", locMsg));
+    // orOS Setup / Portable: real folders of the computer by their path
+    if (locPc === null && typeof L.pcOn === "function") { locPc = false; L.pcOn().then(function (v) { if (v) { locPc = true; render(); } }); }
+    var canPick = locPc || typeof window.showDirectoryPicker === "function" && L.supported();
+    if (!canPick) box.appendChild(el("div", "hint", t("gt.loc.unsupported")));
+    (locRoots || []).forEach(function (r) {
+      var ln = el("div", "gt-chg-row gt-loc-row");
+      var when = r.exp ? new Date(r.exp).toLocaleDateString(appLang()) : "";
+      ln.appendChild(el("span", "gt-loc-name", (r.mode === "w" ? t("gt.loc.write") : t("gt.loc.read")) + " · local:" + r.name + (r.label ? " (" + (/^[A-Za-z]:\//.test(r.label) ? r.label.replace(/\//g, "\\") : r.label) + ")" : "") +
+        " · " + (r.expired ? t("gt.loc.expired") : t("gt.loc.until", { when: when })) + (r.granted ? "" : " · " + t("gt.loc.needs"))));
+      ln.appendChild(button(t("gt.loc.extend"), "gt.loc.ext:" + r.id, function () { L.extend(r.id, 30); }, "btn-sm"));
+      if (r.mode === "r") ln.appendChild(button(t("gt.loc.copyIn"), "gt.loc.copy:" + r.id, function () {
+        var F = parentWin() && parentWin().orosFS, dest = "/internal/Local/" + r.name;
+        gateNote = "gt.loc.copying"; render();
+        L.copyIn(r.id, F, dest).then(function (res) {
+          return G.setFolders(G.folders().concat([dest])).then(function () { gateNote = ""; locMsg = t("gt.loc.copied", { n: res.files, path: "Local/" + r.name }); render(); });
+        }, function () { gateNote = "gt.fail"; render(); });
+      }, "btn-sm"));
+      ln.appendChild(button(t("gt.fold.rm"), "gt.loc.rm:" + r.id, function () { L.remove(r.id); }, "btn-sm"));
+      box.appendChild(ln);
+    });
+    if (!canPick && !(locRoots || []).length) { c.appendChild(box); return; }
+    if (locRoots && !locRoots.length) box.appendChild(el("div", "hint", t("gt.fold.none")));
+    var lab = el("input", "dav-input");
+    lab.id = "f-gt-loc-label"; lab.type = "text"; lab.autocomplete = "off"; lab.spellcheck = false;
+    lab.placeholder = "C:\\Users\\…\\Final Images";   // i18n-inline-ok: an example path
+    if (canPick) box.appendChild(row(t(locPc ? "gt.loc.pcPath" : "gt.loc.label"), lab, { hint: t(locPc ? "gt.loc.pcHint" : "gt.loc.labelHint"), forId: "f-gt-loc-label", stack: true }));
+    function pick(mode) {
+      if (locPc) {
+        if (!lab.value.trim()) { gateNote = "gt.loc.pcNeed"; render(); return; }
+        L.addPc(lab.value.trim(), { mode: mode, days: 30 }).then(function () { gateNote = ""; render(); }, function (e) {
+          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && /^(badPath|notFolder|notThere|notAllowedRoot)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
+        });
+        return;
+      }
+      window.showDirectoryPicker({ mode: mode === "w" ? "readwrite" : "read" }).then(function (h) {
+        return L.add(h, { mode: mode, label: lab.value.trim(), days: 30 });
+      }).then(function () { gateNote = ""; render(); }, function (e) {
+        if (e && e.name === "AbortError") return;
+        gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : "gt.fail"; render();
+      });
+    }
+    var need = (locRoots || []).some(function (r) { return !r.granted && !r.expired; });
+    box.appendChild(actions(
+      canPick ? button(t("gt.loc.addRead"), "gt.loc.addR", function () { pick("r"); }) : null,
+      canPick ? button(t("gt.loc.addWrite"), "gt.loc.addW", function () { pick("w"); }) : null,
+      need ? button(t("loc.reconnect"), "gt.loc.re", function () { L.reconnect(); }) : null,
+      (locRoots || []).length ? button(L.paused() ? t("loc.resume") : t("loc.pause"), "gt.loc.pause", function () { L.setPaused(!L.paused()); render(); }) : null
+    ));
+    // proofs and PDFs back to Claude (files_link reads Claude's folders)
+    var fl = G.folders(), want = ["/internal/Layout/Proofs", "/internal/Layout/PDF"];
+    if (!want.every(function (w) { return fl.some(function (f) { return f === w || w.indexOf(f + "/") === 0; }); })) {
+      box.appendChild(el("div", "hint", t("gt.loc.proofsHint")));
+      box.appendChild(actions(button(t("gt.loc.proofs"), "gt.loc.proofs", function () {
+        G.setFolders(fl.concat(want.filter(function (w) { return !fl.some(function (f) { return f === w || w.indexOf(f + "/") === 0; }); }))).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
+      })));
+    }
+    c.appendChild(box);
   }
 
   // CLAUDE-1: Claude in a window, and Claude desktop. On orOS USB and
@@ -4389,6 +4502,53 @@
     return b;
   }
 
+  // ---------- System › Continue on your other devices (CONT-1, RS-1) ----------
+  // continue.js: the name of this device (synced, shown elsewhere; empty =
+  // its kind in the viewer's language), the two switches (this device
+  // only) and the devices seen, with Forget. Text through textContent.
+  function contKind(k) {
+    var key = "ct.kind." + (k || "other"), v = t(key);
+    return v === key ? t("ct.kind.other") : v;
+  }
+  function secContinue(host, ct) {
+    var c = card(t("ct.title"), "continue");
+    c.appendChild(el("p", "hint", t("ct.hint")));
+    if (ct.strict) c.appendChild(el("p", "hint warn", t("ct.strict")));
+    c.appendChild(row(t("ct.on"), switchBtn(!!ct.on, "cont:on", function (v) { set("cont:on", v); }, t("ct.on"))));
+    c.appendChild(row(t("ct.reopen"), switchBtn(!!ct.reopen, "cont:reopen", function (v) { set("cont:reopen", v); }, t("ct.reopen")),
+      { hint: t("ct.reopen.hint") }));
+    var box = el("div", "dav-field");
+    var inp = el("input");
+    inp.id = "f-ct-name";
+    inp.type = "text";
+    inp.autocomplete = "off";
+    inp.maxLength = ct.max || 40;
+    inp.value = ct.name || "";
+    inp.placeholder = contKind(ct.kind);
+    inp.setAttribute("aria-label", t("ct.name"));
+    inp.setAttribute("aria-describedby", "f-ct-name-hint");
+    inp.setAttribute("data-k", "cont:name");
+    inp.addEventListener("change", function () { set("cont:name", inp.value); });
+    inp.addEventListener("keydown", function (e) { if (e.key === "Enter") inp.blur(); });
+    box.appendChild(inp);
+    var nr = row(t("ct.name"), box, { forId: "f-ct-name", stack: true });
+    var h = el("div", "hint", t("ct.name.hint", { kind: contKind(ct.kind) }));
+    h.id = "f-ct-name-hint";
+    nr.appendChild(h);
+    c.appendChild(nr);
+    var devs = (ct.devices || []).filter(function (d) { return !d.self; });
+    if (devs.length) {
+      c.appendChild(el("h4", "sub", t("ct.devs")));
+      devs.forEach(function (d) {
+        var when = "";
+        try { when = new Date(d.at).toLocaleDateString(LANG === "el" ? "el-GR" : LANG, { day: "numeric", month: "short" }); } catch (e) {}
+        c.appendChild(row(d.name || contKind(d.kind), button(t("ct.forget"), "cont:forget", function () { set("cont:forget", d.id); }),
+          { hint: t("ct.seen", { date: when }) }));
+      });
+    }
+    host.appendChild(c);
+  }
+
   // ---------- Section: Device (was the Device Info app) ----------
   // ../device/core.js + view.js + view.css and the "device" language
   // pack load on the first open only (Settings size budget);
@@ -4412,6 +4572,9 @@
     return devLoad;
   }
   function secDevice(host) {
+    var lc = card(null);                                // ST-1: Screen time is its own section
+    lc.appendChild(linkRow(t("st.link"), "dv.screentime", function () { go("screentime", true); }));
+    host.appendChild(lc);
     if (window.SettingsDevice) { window.SettingsDevice.mount(host); return; }
     var wait = el("p", "hint", t("dv.loading"));
     host.appendChild(wait);
@@ -4420,6 +4583,38 @@
       if (wait.parentNode) wait.parentNode.removeChild(wait);
       window.SettingsDevice.mount(host);
       if (lit && lit.row[1] === "device" && Date.now() < lit.until) lightUp(true);
+    }, function () { wait.textContent = t("dv.loadFail"); });
+  }
+
+  // ---------- Section: Screen time (ST-1) ----------
+  // settings/screentime.js + screentime.css load on the first open only
+  // (Settings size budget), like Device and Fonts; the section is drawn
+  // there with this page's helpers.
+  var stLoad = null;
+  function loadScreenTime() {
+    if (window.SettingsScreenTime) return Promise.resolve();
+    if (stLoad) return stLoad;
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    var v = window.orosI18n && window.orosI18n.ver;
+    css.href = "screentime.css" + (v ? "?v=" + encodeURIComponent(v) : "");
+    document.head.appendChild(css);
+    stLoad = loadScript("screentime.js");
+    stLoad.catch(function () { stLoad = null; });
+    return stLoad;
+  }
+  function stCtx() {
+    return { C: C, LANG: LANG, t: t, el: el, card: card, row: row, switchBtn: switchBtn, actions: actions,
+             confirmBtn: confirmBtn, set: set, render: render, select: select };
+  }
+  function secScreenTime(host, s) {
+    if (window.SettingsScreenTime) { window.SettingsScreenTime.draw(host, s, stCtx()); return; }
+    var wait = el("p", "hint", t("st.loading"));
+    host.appendChild(wait);
+    loadScreenTime().then(function () {
+      if (current !== "screentime" || !host.isConnected) return;
+      render();
+      if (lit && lit.row[1] === "screentime" && Date.now() < lit.until) lightUp(true);
     }, function () { wait.textContent = t("dv.loadFail"); });
   }
 
@@ -4519,6 +4714,9 @@
       }
       host.appendChild(chc);
     }
+
+    // CONT-1 + RS-1: continue on other devices, reopen after a restart (this device; on by default)
+    if (s.cont) secContinue(host, s.cont);
 
     // Overview (OV-1): hot corner, this device only, off by default (no Super key: one combo for all, Chris 2026-11-16).
     if (s.overview) {
@@ -4755,7 +4953,7 @@
   var SECTION_FN = {
     appearance: secAppearance, fonts: secFonts, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock, sensitive: secSensitive, users: secUsers,
     backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem,
-    device: secDevice
+    device: secDevice, screentime: secScreenTime
   };
 
   function renderNav(s) {
