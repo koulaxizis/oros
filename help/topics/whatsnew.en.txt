@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.69.00
+- **Budget: your banks update by themselves while orOS is open.** Every 6 hours now runs in any app, even with Budget closed: when you open orOS, then every 6 hours. In Budget › `Banks` › `Automatic updates` you can also turn them off. Claude can ask for a bank update through orOS Gate while orOS is open, so a check no longer has to ask you to press `Update now`. See [Budget](help:a/budget).
+
 ## Version 7.68.01
 - **Layout: a better view.** The pages sit in the middle of the window with the spine centred, scroll bars show where you are and move the view, and the view keeps its place when the window or a panel changes size. Double-click the Hand tool to fit the spread again.
 - **Layout and Claude: fonts, frames, page numbers.** Claude can add a free font (Fontsource, for example Carlito with Greek) or a font file from a local folder to your fonts and use it in a style by name; change or remove one frame; put page numbers and running heads on a master and hide them on chosen pages; switch a book to CMYK for print; read whole paragraphs and the latest preflight; and try commands without changing anything. Every run says which pages it added and on which side.
