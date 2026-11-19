@@ -517,6 +517,32 @@
     if (keyDown(t.w, t.el, key)) act(t);
     keyUp(t.w, t.el, key);
     if (st.open) place();
+    paintChip();
+  }
+  // TEXTREPL-1 W2: a text replacement code right before the caret shows
+  // as a chip above the keys; a tap types the space that replaces it
+  // (the same path as a typed space, so Backspace still puts it back).
+  var chip = null;
+  function paintChip() {
+    if (!box) return;
+    var t = st.open ? curTarget() : null, p = null;
+    if (t && root.orosTextRepl && typeof root.orosTextRepl.pending === "function") {
+      try { p = root.orosTextRepl.pending(t.w, t.el); } catch (e) { p = null; }
+    }
+    if (!p) { if (chip) chip.hidden = true; return; }
+    if (!chip) {
+      chip = doc.createElement("button");
+      chip.type = "button";
+      chip.tabIndex = -1;
+      chip.className = "osk-chip";
+      chip.addEventListener("pointerdown", function (e) { e.preventDefault(); clickSkip = Date.now(); typeChar(" "); });
+      chip.addEventListener("click", function () { if (Date.now() - clickSkip > 700) typeChar(" "); });
+    }
+    if (chip.parentNode !== box) box.appendChild(chip);
+    var one = String(p.text).replace(/\s+/g, " ").trim();
+    chip.textContent = one.length > 60 ? one.slice(0, 59) + "\u2026" : one;
+    chip.setAttribute("aria-label", tr("repl", { text: one.slice(0, 200) }));
+    chip.hidden = false;
   }
   function typeChar(s) { send(s, function (t) { insertText(t, s); }); }
 
@@ -658,6 +684,7 @@
       row.forEach(function (k) { r.appendChild(makeKey(k)); });
       box.appendChild(r);
     });
+    paintChip();
     paintBtn();
   }
 

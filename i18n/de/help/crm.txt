@@ -103,6 +103,19 @@ Das Enddatum erscheint auch im [Verlag](app:publish) (an jedem Titel, mit einem 
 
 Ein Vertrag, den der [Assistent](app:assistant) oder orOS Gate hinzufügt, bekommt seine Erinnerung beim nächsten Öffnen von CRM.
 
+### Rechte: was jeder Vertrag einräumt
+Die Schnellaktionen eines Vertrags zeigen seine `Rechte`: die Vorlage, was er einräumt (alle Verwertungsrechte, eine exklusive Lizenz oder nur kostenlose digitale Veröffentlichung), die Formate, die er umfasst, jedes Recht mit seinem Anteil (Druck, E-Book, Hörbuch, Übersetzung, Bühne, Film und TV, Merchandise, kostenlose digitale Veröffentlichung, Auszüge und Werbung), das Gebiet, wie lange Restbestand nach dem Ende noch verkauft werden darf, die Creative-Commons-Lizenz und woher die Bedingungen stammen (das PDF, eine mündliche Vereinbarung oder ein Papier, das nicht auffindbar ist). Claude trägt sie über orOS Gate aus deinen Verträgen ein, oder der [Assistent](app:assistant), jede Änderung auf einer Karte mit Rückgängig.
+
+Der Chip `Rechte` in `Verträge` ordnet sie deinen Titeln in [Publishing](app:publish) zu und zeigt:
+- `Im Verkauf ohne laufendes Recht`: ein mit einem Shop-Produkt verknüpftes Format, dessen Vertrag abgelaufen, einvernehmlich beendet ist oder es nicht abdeckt (eine Druckausgabe bleibt in ihren Abverkaufsmonaten in Ordnung). Kostenlose Ausgaben unter CC BY-NC-SA stehen getrennt unter `Kostenlos, unter CC`. Ein Preis von 0 in Publishing gilt als kostenlos.
+- `Rechte ohne Ausgabe`: ein laufender Vertrag räumt E-Book oder Hörbuch ein, und der Titel hat kein solches Format.
+- `Verlängerungen in den nächsten 90 Tagen`, jede mit dem, was nach dem Ende gilt (Abverkaufsmonate, Verlängerung nur nach Vereinbarung).
+- `Alle Titel`, mit ✓ eingeräumt, ± mit Zustimmung, ○ nur kostenlos und – nicht erwähnt oder nicht erfasst für jedes Recht.
+
+Ein reiner Digitalvertrag unter einer unbefristeten Creative-Commons-Lizenz erscheint als `Digital, für immer unter seiner CC-Lizenz`: Sein Ende braucht keine Entscheidung und schickt keine Erinnerung, und seine digitalen Ausgaben bleiben erlaubt. Druckverträge behalten ihr Enddatum.
+
+Das ist eine Aufzeichnung dessen, was die Verträge sagen, keine Rechtsberatung.
+
 `An den Shop senden…` (mit einem WooCommerce-Shop unter Einstellungen › Verbundene Dienste) sendet die Enddaten an den Revenue Splitter des Shops (1.14.2 oder neuer), der jeder Urheberin und jedem Urheber die eigenen Verträge in seinem Author Portal zeigt. Gesendet werden nur Namen, Titel, Formate, Daten und Status, nie eine Notiz, ein Betrag oder eine Datei.
 
 Gesendet werden nur Partner, die mit einem Begünstigten des Revenue Splitter verknüpft sind (`Begünstigten verknüpfen` auf der Karte des Partners), und Verträge mit einem Starttag, unter dem Namen des Begünstigten; das Fenster sagt, welche zurückbleiben und warum. Der Shop ersetzt seine ganze Liste durch diese und listet gleich dort, was er nicht übernommen hat (zum Beispiel einen Begünstigtennamen, den er nicht kennt), damit du den Namen korrigieren und erneut senden kannst.

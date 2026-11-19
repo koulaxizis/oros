@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Koulaxizis Apps</string>
+    <string name="refresh">Nach Updates suchen</string>
+    <string name="checking">Die Quellen werden geprüft…</string>
+    <string name="repos_from">Quellen aktualisiert %1$s</string>
+    <string name="no_list">Noch keine Liste. Verbinde dich mit dem Internet und prüfe erneut.</string>
+    <string name="more_apps">Weitere Apps</string>
+    <string name="install">Installieren</string>
+    <string name="update">Aktualisieren</string>
+    <string name="open">Öffnen</string>
+    <string name="why">Warum?</string>
+    <string name="working">Läuft…</string>
+    <string name="version_size">%1$s · %2$s</string>
+    <string name="version_beta">%1$s Beta · %2$s</string>
+    <string name="installed_version">installiert: %1$s</string>
+    <string name="other_key">mit einem anderen Schlüssel signiert</string>
+    <string name="other_key_long">Die Version auf diesem Telefon ist mit einem anderen Schlüssel signiert (zum Beispiel ein Test-Build oder aus einer anderen Quelle), daher lässt Android sie hier nicht aktualisieren. Zum Wechseln zuerst deinstallieren und hier neu installieren; eine App mit Synchronisierung bekommt ihre Daten nach der Anmeldung zurück.</string>
+    <string name="allow_title">Installieren von Apps erlauben</string>
+    <string name="allow_text">Android fragt einmal: Koulaxizis Apps das Installieren von Apps erlauben. Danach fragt Android trotzdem vor jeder neuen App.</string>
+    <string name="allow_open">Einstellungen öffnen</string>
+    <string name="install_failed">%1$s wurde nicht installiert: %2$s</string>
+    <string name="err_network">Die Quelle war nicht erreichbar. Die letzte Liste auf diesem Telefon wird gezeigt.</string>
+    <string name="err_signature">Die Signatur passte nicht zu unserem Schlüssel, daher wurde nichts davon verwendet.</string>
+    <string name="err_hash">Die Datei passte nicht zur Liste der Quelle und wurde nicht verwendet.</string>
+    <string name="err_older">Die Quelle lieferte eine ältere Liste als zuvor, daher wurde sie nicht verwendet.</string>
+    <string name="err_format">Die Liste der Quelle konnte nicht gelesen werden.</string>
+    <string name="err_empty">Noch keine Apps für dieses Telefon.</string>
+    <string name="daily_check">Täglich prüfen</string>
+    <string name="channel_updates">Updates</string>
+    <string name="self_update">Neue Version dieser App: %1$s</string>
+    <plurals name="update_all">
+        <item quantity="one">%d App aktualisieren</item>
+        <item quantity="other">Alle aktualisieren (%d)</item>
+    </plurals>
+    <plurals name="updates_ready">
+        <item quantity="one">%d Update bereit</item>
+        <item quantity="other">%d Updates bereit</item>
+    </plurals>
+</resources>

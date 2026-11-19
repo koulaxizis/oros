@@ -29,8 +29,12 @@ test("PIN: 4 to 12 digits; passphrase: 6 to 256 characters", () => {
 });
 
 test("the stored record is read defensively; anything odd means no lock", () => {
-  const good = { v: 1, kind: "pin", salt: "c2FsdA==", hash: "aGFzaA==", i: 600000, idle: 10, hidden: true };
+  const good = { v: 1, kind: "pin", salt: "c2FsdA==", hash: "aGFzaA==", i: 600000, idle: 10, hidden: true, scope: "all", info: { ev: false, mu: false, nc: false } };
   assert.deepEqual(L.parseCfg(JSON.stringify(good)), good);
+  assert.equal(L.parseCfg(JSON.stringify(Object.assign({}, good, { scope: "apps" }))).scope, "apps", "APPLOCK-1: only the chosen apps");
+  assert.equal(L.parseCfg(JSON.stringify(Object.assign({}, good, { scope: "x" }))).scope, "all");
+  const old = Object.assign({}, good); delete old.scope;
+  assert.equal(L.parseCfg(JSON.stringify(old)).scope, "all", "a lock from before APPLOCK-1 covers all of orOS");
   assert.equal(L.parseCfg(null), null);
   assert.equal(L.parseCfg("not json"), null);
   assert.equal(L.parseCfg(JSON.stringify(Object.assign({}, good, { v: 2 }))), null);
@@ -110,6 +114,7 @@ test("every lock string exists in English, Greek and German", () => {
   const tr = read("translations.js");
   const de = read("i18n/de/shell.js");
   new Set(shellKeys.concat(["menu.lock", "lock.recovered"])).forEach((k) => {
+    if (/\.$/.test(k)) return;                   // a prefix ("lock.info." + part)
     assert.equal(tr.split('"' + k + '":').length - 1, 2, k + " in en + el");
     assert.ok(de.includes('"' + k + '":'), k + " in de");
   });
