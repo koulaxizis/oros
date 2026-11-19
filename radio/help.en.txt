@@ -52,6 +52,11 @@ Recordings are for your own personal use only. Radio programmes are protected by
 ### Wake up to a station
 Under `Wake up to this station`, choose a `Time` and whether it repeats (`Once` or `Every day`), then `Set alarm`. The alarm appears in [Time](app:time), and when it rings the station starts playing, softly at first. You can also pick an existing alarm from Time and press `Use`. `Remove` takes a station off an alarm.
 
+## Light show
+`Light show` in the player's `⋯` menu fills the window with light that moves with the station. `Light:` picks the style (Glow, Rings, Bars, Wave) and `Light only` hides the controls; tap anywhere or press a key to bring them back.
+
+The light follows the sound only when the station's server allows a web page to listen to it; then the stream loads once more, with a short gap. With other stations the light moves on its own, and a line says so. Nothing is recorded or sent. The light stays still with reduced motion, a low battery or a busy device, and it never flashes.
+
 ## Sync and backup
 Your favourites and wake-up stations sync between your devices through [orOS sync](help:t/sync). Song history, recent stations and the temporarily kept station lists stay on this device. Stations can be imported (see `Import stations` above), not exported; favourites are part of the orOS [backup](help:t/backup).
 

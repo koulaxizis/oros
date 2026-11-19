@@ -1670,7 +1670,33 @@
     saveLocal();                        // silent: καμία ενεργοποίηση sync
     renderAll();
     closeBoardDropdown();
+    contNote();
   }
+
+  // CONT-1 W3: tell the shell which board is open (continue.js keeps the
+  // reference and the name only, never the cards). On a switch, and once
+  // at the first tap or key after the start; nothing before that, so a
+  // restored board never hides the one from the other device.
+  var contLive = false;
+  function contNote() {
+    if (!contLive) return;
+    try {
+      var C = window.parent !== window ? window.parent.orosContinue : null;
+      var b = C && state ? boardById(state.activeBoardId) : null;
+      if (b) C.note("kanban", { target: { board: b.id }, title: b.name || t("new.board") });
+    } catch (e) {}
+  }
+  (function () {
+    if (typeof document === "undefined") return;   // Node tests load parts of this file
+    var once = function () {
+      document.removeEventListener("pointerdown", once, true);
+      document.removeEventListener("keydown", once, true);
+      contLive = true;
+      contNote();
+    };
+    document.addEventListener("pointerdown", once, true);
+    document.addEventListener("keydown", once, true);
+  })();
 
   // Board creation: creates new board, switches to it
   function createBoard() {
@@ -6711,7 +6737,10 @@
     if (tg.quickAdd === true) { quickAddFirst(); return; }
     if (typeof tg.board === "string" && typeof tg.col === "string" && typeof tg.card === "string") {
       window.__orosKanbanOpen(tg);
+      return;
     }
+    // CONT-1: { board } alone (Continue from another device) → that board
+    if (typeof tg.board === "string" && !tg.col && !tg.card && boardById(tg.board)) switchBoard(tg.board);
   }
   window.__orosOpenAt = openSearchTarget;
 

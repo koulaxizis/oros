@@ -99,6 +99,12 @@
       "ph.al.full":     "That is the most albums or photos an album can hold.",
       "ph.al.saveFail": "Albums could not be saved on this device.",
       "ph.i.albums":    "Albums",
+      "ph.i.tags":      "Tags",
+      "ph.tg.show":     "Show a tag…",
+      "ph.tg.pick":     "Show the photos with",
+      "ph.tg.none":     "No tags yet. Select photos and pick Tags… to make one.",
+      "ph.tg.edit":     "Tags…",
+      "ph.tg.empty":    "No photos have this tag yet.",
       "ph.count":       "{n} items",
       "ph.countOne":    "1 item",
       "ph.smaller":     "Smaller",
@@ -134,6 +140,7 @@
       "ph.next":        "Next",
       "ph.info":        "Details",
       "ph.edit":        "Edit in Photo Lab",
+      "ph.text":        "Copy text from this photo",
       "ph.inFolder":    "Show in folder",
       "ph.i.date":      "Taken",
       "ph.i.src.exif":  "from the camera",
@@ -203,6 +210,12 @@
       "ph.al.full":     "Δεν χωράνε άλλα άλμπουμ ή άλλες φωτογραφίες σε αυτό το άλμπουμ.",
       "ph.al.saveFail": "Τα άλμπουμ δεν αποθηκεύτηκαν σε αυτή τη συσκευή.",
       "ph.i.albums":    "Άλμπουμ",
+      "ph.i.tags":      "Ετικέτες",
+      "ph.tg.show":     "Εμφάνιση ετικέτας…",
+      "ph.tg.pick":     "Εμφάνιση των φωτογραφιών με",
+      "ph.tg.none":     "Δεν υπάρχουν ακόμα ετικέτες. Επίλεξε φωτογραφίες και διάλεξε Ετικέτες… για να φτιάξεις μία.",
+      "ph.tg.edit":     "Ετικέτες…",
+      "ph.tg.empty":    "Καμία φωτογραφία δεν έχει ακόμα αυτή την ετικέτα.",
       "ph.count":       "{n} στοιχεία",
       "ph.countOne":    "1 στοιχείο",
       "ph.smaller":     "Μικρότερα",
@@ -238,6 +251,7 @@
       "ph.next":        "Επόμενο",
       "ph.info":        "Λεπτομέρειες",
       "ph.edit":        "Επεξεργασία στο Photo Lab",
+      "ph.text":        "Αντιγραφή κειμένου από τη φωτογραφία",
       "ph.inFolder":    "Εμφάνιση στον φάκελο",
       "ph.i.date":      "Λήψη",
       "ph.i.src.exif":  "από την κάμερα",
@@ -277,6 +291,7 @@
     play:   '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z"/></svg>',
     cloud:  SVG('<path d="M18 10h-1.3A7 7 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>', 14),
     minus:  SVG('<path d="M5 12h14"/>'),
+    tag:    SVG('<path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/>'),
     plus:   SVG('<path d="M12 5v14M5 12h14"/>'),
     check:  SVG('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12l3 3 5-6"/>'),
     more:   '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>',
@@ -287,6 +302,7 @@
     edit:   SVG('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 20),
     folder: SVG('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', 20),
     send:   SVG('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 20),
+    text:   SVG('<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M8 8h8M12 8v8"/>', 20),
     album:  SVG('<rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/>', 20),
     back:   SVG('<path d="M15 18l-6-6 6-6"/>'),
     star:   SVG('<path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/>', 20),
@@ -309,6 +325,7 @@
   var albums = AL ? AL.norm(null) : null;      // ALB v1 (synced)
   var tab = "all", albumId = "", albumMissing = 0;
   var here = null;                             // map: the records of a tapped spot
+  var tagId = "";                              // T1: only the photos with this tag (files/tags.js)
   var dupes = null;                            // P4: { busy, i, n, groups }
   var map = null, mapView = null, leafletP = null;
 
@@ -398,6 +415,19 @@
   function carry(from, to) {
     if (!AL) return;
     commitAlbums(AL.carry(albums, from, to, Date.now()));
+  }
+  // Tags (files/tags.js, loaded with Documents): Files hands them over.
+  function tagApi() { try { return ctx && ctx.tags ? ctx.tags() : null; } catch (e) { return null; } }
+  function withTags(fn) {
+    var tg = tagApi();
+    if (tg) { fn(tg); return; }
+    if (ctx && ctx.loadTags) ctx.loadTags(function (g) { if (g) fn(g); });
+  }
+  function tagsOf(r) { var tg = tagApi(); return tg ? tg.tagsFor(r.k, r.h || "") : []; }
+  function tagName(id) {
+    var tg = tagApi(), n = "";
+    if (tg) tg.list().forEach(function (x) { if (x.id === id) n = x.n; });
+    return n;
   }
   function albumName(id) { var a = AL && AL.find(albums, id); return a ? a.n : ""; }
   function sortedAlbums() {
@@ -640,6 +670,8 @@
       var keep = {};
       here.forEach(function (r) { keep[r.k] = true; });
       all = all.filter(function (r) { return keep[r.k]; });
+    } else if (tagId) {
+      all = all.filter(function (r) { return tagsOf(r).some(function (x) { return x.id === tagId; }); });
     } else if (albumId && AL) {
       var res = AL.resolve(AL.find(albums, albumId), all);
       albumMissing = res.missing;
@@ -1016,6 +1048,10 @@
       bu.addEventListener("click", function () { removeFromAlbum(pickedPaths()); });
       sb.appendChild(bu);
     }
+    var btg = el("button", "", t("ph.tg.edit"));
+    btg.type = "button"; btg.id = "ph-sel-tags";
+    btg.addEventListener("click", function () { tagPaths(pickedPaths()); });
+    sb.appendChild(btg);
     var bt = el("button", "danger", t("ph.trash"));
     bt.type = "button"; bt.id = "ph-sel-trash";
     bt.addEventListener("click", function () { trashPaths(pickedPaths()); });
@@ -1041,8 +1077,8 @@
   }
 
   function paintHead() {
-    var inAlbum = !!albumId || !!here || !!dupes, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
-    if (ttl) ttl.textContent = dupes ? t("ph.dup.title") : here ? (here.length === 1 ? t("ph.map.hereOne") : t("ph.map.here", { n: here.length })) : albumId ? albumName(albumId) : t("ph.tree");
+    var inAlbum = !!albumId || !!here || !!dupes || !!tagId, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
+    if (ttl) ttl.textContent = dupes ? t("ph.dup.title") : here ? (here.length === 1 ? t("ph.map.hereOne") : t("ph.map.here", { n: here.length })) : tagId ? tagName(tagId) || t("ph.i.tags") : albumId ? albumName(albumId) : t("ph.tree");
     if (back) {
       back.hidden = !inAlbum;
       var bl = dupes ? t("ph.dup.back") : here ? t("ph.map.back") : t("ph.al.back");
@@ -1097,6 +1133,7 @@
       m.hidden = true;
       return;
     }
+    if (tagId && !order.length && !scanning) { m.textContent = t("ph.tg.empty"); return; }
     if (albumId) {
       if (!order.length && !albumMissing && !scanning) { m.textContent = t("ph.al.emptyOne"); return; }
       if (albumMissing && !scanning) { m.textContent = t("ph.al.missing", { n: albumMissing }); return; }
@@ -1219,6 +1256,7 @@
     }
     var ck = el("span", "ph-check");
     b.appendChild(ck);
+    paintTileTags(b);
     if (picked[r.k]) b.classList.add("picked");
     b.addEventListener("click", function () {
       if (selecting) { togglePick(b); return; }
@@ -1275,7 +1313,7 @@
   function setTab(x) {
     if (x === tab && !albumId) return;
     if (selecting) setSelecting(false);
-    tab = x; albumId = ""; here = null; dupes = null;
+    tab = x; albumId = ""; here = null; dupes = null; tagId = "";
     rebuild();
     var sc = $("ph-scroll");
     if (sc) sc.scrollTop = 0;
@@ -1283,6 +1321,7 @@
   function goBack() {
     if (dupes) { dupes = null; setSelecting(false); rebuild(); return; }
     if (here) { if (selecting) setSelecting(false); here = null; rebuild(); return; }
+    if (tagId) { if (selecting) setSelecting(false); tagId = ""; rebuild(); return; }
     openAlbum("");
   }
   function openAlbum(id) {
@@ -1713,6 +1752,8 @@
     if (s) s.disabled = !n || !shareApi();
     if (tr) tr.disabled = !n;
     if (sa) sa.disabled = !n;
+    var stg = $("ph-sel-tags");
+    if (stg) stg.disabled = !n;
     if (su) { su.hidden = !albumId; su.disabled = !n; }
   }
 
@@ -1778,6 +1819,67 @@
     });
   }
 
+  function tagPicker(tg) {
+    var all = tg.list();
+    var d = el("dialog", "ph-dlg ph-pick");
+    var f = el("div");
+    f.appendChild(el("h3", "", t("ph.tg.pick")));
+    var list = el("div", "ph-alist");
+    var chosen = "";
+    if (!all.length) f.appendChild(el("p", "hint", t("ph.tg.none")));
+    all.forEach(function (x) {
+      var b = el("button", "ph-arow");
+      b.type = "button";
+      b.appendChild(tg.dot(x.c));
+      b.appendChild(document.createTextNode(" " + x.n));
+      b.addEventListener("click", function () { chosen = x.id; d.close("ok"); });
+      list.appendChild(b);
+    });
+    f.appendChild(list);
+    var row = el("menu", "dlg-row");
+    var no = el("button", "", t("ph.cancel"));
+    no.type = "button";
+    no.addEventListener("click", function () { d.close(); });
+    row.appendChild(no);
+    f.appendChild(row);
+    d.appendChild(f);
+    document.body.appendChild(d);
+    d.addEventListener("close", function () {
+      var ok = d.returnValue === "ok" && chosen;
+      d.remove();
+      if (!ok) return;
+      if (selecting) setSelecting(false);
+      tagId = chosen;
+      rebuild();
+      var sc = $("ph-scroll");
+      if (sc) sc.scrollTop = 0;
+    });
+    d.showModal();
+    (list.querySelector("button") || no).focus();
+  }
+  function tagPaths(paths) {
+    paths = paths.filter(function (p) { return recs[p]; });
+    if (paths.length) withTags(function (tg) { tg.edit(paths); });
+  }
+  // Files' tags changed (here, in Documents or on another device).
+  function tagsChanged() {
+    if (!active) return;
+    if (tagId) rebuild();
+    else {
+      var tiles = document.querySelectorAll(".ph-tile");
+      for (var i = 0; i < tiles.length; i++) paintTileTags(tiles[i]);
+    }
+    if (viewer && !viewer.root.hidden) paintInfo();
+  }
+  function paintTileTags(b) {
+    var old = b.querySelector(".tag-dots");
+    if (old) old.remove();
+    var tg = tagApi();
+    if (!tg || !b._rec) return;
+    var list = tagsOf(b._rec);
+    if (list.length) b.appendChild(tg.dots(list));
+  }
+
   function openMore(anchor) {
     var old = $("ph-menu");
     if (old) { old.remove(); return; }
@@ -1798,7 +1900,10 @@
     } else if (tab === "albums") {
       item(t("ph.al.new"), function () { nameDialog(t("ph.al.new"), "", t("ph.al.create")).then(function (n) { if (n) newAlbum(n); }); });
     }
-    if (!albumId && !here && !dupes && tab === "all") item(t("ph.dup.find"), findDupes);
+    if (!albumId && !here && !dupes && !tagId && tab === "all") {
+      item(t("ph.dup.find"), findDupes);
+      item(t("ph.tg.show"), function () { withTags(tagPicker); });
+    }
     item(t("ph.rescan"), scan);
     item(t("ph.folders"), foldersDialog);
     document.body.appendChild(m);
@@ -1907,6 +2012,9 @@
     var title = el("div", "ph-vtitle");
     top.appendChild(title);
     var editBtn = iconBtn("ph-vbtn", ICON.edit, t("ph.edit"), function () { editCurrent(); });
+    // LIVE-TEXT: a round button on the picture, bottom right, like a
+    // phone's Live Text; the toolbar stays as it was at 360 px.
+    var textBtn = iconBtn("ph-vbtn ph-vtext", ICON.text, t("ph.text"), function () { toggleText(); });
     var folderBtn = iconBtn("ph-vbtn", ICON.folder, t("ph.inFolder"), function () { inFolder(); });
     var sendBtn = iconBtn("ph-vbtn", ICON.send, t("ph.send"), function () { if (viewer.rec) sendPaths([viewer.rec.k]); });
     var infoBtn = iconBtn("ph-vbtn", ICON.info, t("ph.info"), function () { toggleInfo(); });
@@ -1914,18 +2022,20 @@
     var coverBtn = iconBtn("ph-vbtn", ICON.star, t("ph.al.cover"), function () { coverCurrent(); });
     var trashBtn = iconBtn("ph-vbtn", ICON.trash, t("ph.trash"), function () { trashCurrent(); });
     albumBtn.hidden = !AL;
-    [editBtn, folderBtn, sendBtn, albumBtn, coverBtn, infoBtn, trashBtn].forEach(function (b) { top.appendChild(b); });
+    var tagBtn = iconBtn("ph-vbtn", ICON.tag, t("ph.tg.edit"), function () { if (viewer.rec) tagPaths([viewer.rec.k]); });
+    [editBtn, folderBtn, sendBtn, albumBtn, tagBtn, coverBtn, infoBtn, trashBtn].forEach(function (b) { top.appendChild(b); });
     root.appendChild(top);
     var stage = el("div", "ph-stage");
     root.appendChild(stage);
     var prev = iconBtn("ph-vnav prev", ICON.prev, t("ph.prev"), function () { step(-1); });
     var next = iconBtn("ph-vnav next", ICON.next, t("ph.next"), function () { step(1); });
     root.appendChild(prev); root.appendChild(next);
+    root.appendChild(textBtn);
     var info = el("aside", "ph-info");
     info.hidden = true;
     root.appendChild(info);
     document.body.appendChild(root);
-    viewer = { root: root, stage: stage, title: title, info: info, closeBtn: closeBtn, editBtn: editBtn,
+    viewer = { root: root, stage: stage, title: title, info: info, closeBtn: closeBtn, editBtn: editBtn, textBtn: textBtn, ocr: null,
                sendBtn: sendBtn, coverBtn: coverBtn, prev: prev, next: next, i: -1, rec: null, url: null, gen: 0, zoom: 1, fetched: null };
     root.addEventListener("keydown", function (e) {
       if (e.key === "Escape") { e.preventDefault(); closeViewer(); }
@@ -1985,6 +2095,7 @@
   }
   function releaseCurrent() {
     if (!viewer) return;
+    textOff();
     var v = viewer.stage.querySelector("video");
     if (v) { try { v.pause(); } catch (e) {} v.removeAttribute("src"); try { v.load(); } catch (e2) {} }
     if (viewer.url) { URL.revokeObjectURL(viewer.url); viewer.url = null; }
@@ -2001,6 +2112,7 @@
     viewer.prev.disabled = i <= 0;
     viewer.next.disabled = i >= order.length - 1;
     viewer.editBtn.hidden = r.kind !== "image";
+    viewer.textBtn.hidden = r.kind !== "image" || !(ctx && ctx.ocr);
     viewer.sendBtn.hidden = r.kind !== "image" || !shareApi();
     viewer.coverBtn.hidden = !albumId;
     var fs = disk(), v = vault();
@@ -2065,6 +2177,7 @@
     row("ph.i.place", typeof r.lat === "number" ? r.lat.toFixed(5) + ", " + r.lon.toFixed(5) : "");
     row("ph.i.folder", parentOf(r.k).slice(ROOT.length + 1) || "/");
     if (AL) row("ph.i.albums", AL.albumsWith(albums, AL.keyOf(r)).map(albumName).join(", "));
+    row("ph.i.tags", tagsOf(r).map(function (x) { return x.n; }).join(", "));
   }
   function toggleInfo() {
     if (!viewer) return;
@@ -2081,6 +2194,35 @@
     var tile = document.querySelector('.ph-tile[data-i="' + viewer.i + '"]');
     viewer.i = -1; viewer.rec = null;
     if (tile) tile.focus();
+  }
+  // LIVE-TEXT: the words of the photo, through Files' ocrKit (../ocrkit.js)
+  function textOff() {
+    var c = viewer && viewer.ocr;
+    if (!viewer) return;
+    viewer.ocr = null;
+    viewer.textBtn.classList.remove("on");
+    viewer.textBtn.setAttribute("aria-pressed", "false");
+    if (c) c.close();
+  }
+  function toggleText() {
+    if (!viewer || !viewer.rec || viewer.rec.kind !== "image" || !ctx || !ctx.ocr) return;
+    if (viewer.ocr) { textOff(); return; }
+    var img = viewer.stage.querySelector("img"), r = viewer.rec, gen = viewer.gen;
+    if (!img) return;
+    viewer.zoom = 1;
+    if (viewer.resetPan) viewer.resetPan();
+    applyZoom(0, 0);
+    viewer.textBtn.classList.add("on");
+    viewer.textBtn.setAttribute("aria-pressed", "true");
+    ctx.ocr().then(function (K) {
+      if (!viewer || gen !== viewer.gen || viewer.root.hidden) return null;
+      return K.open({ el: img, key: r.k, title: baseName(r.k), onClose: function () {
+        if (viewer && viewer.ocr) { viewer.ocr = null; viewer.textBtn.classList.remove("on"); viewer.textBtn.setAttribute("aria-pressed", "false"); }
+      } });
+    }).then(function (c) {
+      if (c && viewer && gen === viewer.gen) viewer.ocr = c;
+      else { if (c) c.close(); if (viewer) viewer.textBtn.classList.remove("on"); }
+    }, function () { if (viewer) viewer.textBtn.classList.remove("on"); });
   }
   function editCurrent() {
     var r = viewer && viewer.rec, p = shell();
@@ -2130,6 +2272,7 @@
     dropMap();
     here = null;
     dupes = null;
+    tagId = "";
     thumbJobs = []; cloudJobs = [];
     var sc = $("ph-scroll");
     if (sc) { sc.innerHTML = ""; sc._lastDay = null; sc._grid = null; }
@@ -2158,6 +2301,7 @@
     leave: leave,
     isActive: function () { return active; },
     refresh: function () { if (active) scan(); },
+    tagsChanged: tagsChanged,
     carry: carry,
     t: t
   };

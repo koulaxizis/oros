@@ -13,6 +13,7 @@ Mach ein Bild von deinem ganzen Bildschirm, einem Fenster oder einem Browser-Tab
 - `An eine App senden…` speichert es genauso und lässt dich dann die App wählen: Fotolabor, Transfer, Mail, Seitenlayout…
 - Mit `Nach dem Speichern im Fotolabor öffnen` öffnet sich das Bild im [Fotolabor](app:photolab), um darauf zu zeichnen oder Text hinzuzufügen.
 - `Kopieren` legt das Bild in die Zwischenablage, um es in einer anderen App einzufügen.
+- `Text kopieren` liest den Text im Bild (oder im zugeschnittenen Teil) auf diesem Gerät und markiert die Wörter darauf: wähle sie durch Ziehen aus oder tippe auf eine Zeile, dann `Kopieren`, `Alles kopieren`, `Text` (alles in einem Feld, das du korrigieren kannst) oder `Senden an…`. Beim ersten Mal fragt orOS, bevor es seine Texterkennung lädt (etwa 7 MB, Griechisch und Englisch, dieselbe wie in Dateien und Scanner & PDF); danach funktioniert sie offline. Esc schließt sie. Links, Termine, E-Mail-Adressen und Telefonnummern darin werden zu Knöpfen, wie in Dateien.
 - `Noch eins` geht zurück zur Live-Ansicht; `Verwerfen` wirft das Bild weg.
 
 ## Ein Video aufnehmen

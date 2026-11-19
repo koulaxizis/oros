@@ -1300,9 +1300,19 @@
   }
 
   // ---------- 7. Recipe view ----------
+  // CONT-1 W4: tell the shell which recipe is open (continue.js keeps the
+  // reference and the recipe's name only, never its steps). Only when the
+  // person opens one (a recipe is a dialog, never restored at the start).
+  function contNote(r) {
+    try {
+      var W = window.parent !== window ? window.parent.orosContinue : null;
+      if (W && r && r.id && r.t) W.note("meals", { target: { recipe: r.id }, title: String(r.t) });
+    } catch (e) {}
+  }
   function openRecipe(id, servings) {
     var r = getRecipe(id);
     if (!r) return;
+    contNote(r);
     var sv = servings || r.sv;
     var dlg = makeDialog("ml-view", "wide");
     var head = el("div", "v-head");
