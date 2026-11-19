@@ -52,6 +52,12 @@ Free, MIT, no ads, no account with anyone, no tracking.
   this only once the site's `/.well-known/assetlinks.json` names
   `net.glarolykoi.android` with the release key's SHA-256 (wave G3;
   the file already holds the Live Operator statement, which stays).
+- **GL-DIALOG** (`res/values*/themes.xml`) the app's own dialogs (the
+  GL-NEW question) take a light base in light mode and a dark base in
+  dark mode, so text and buttons always contrast with the dialog. The
+  window theme stays light-based, so the site still sees
+  `prefers-color-scheme: light`. (1.0.0 showed dark mode's near-white
+  text on a white dialog.)
 - File fields on the site (forms) open the system file picker.
 - The user agent ends in `GlarolykoiApp/<version>`, so the site can tell
   the app apart (for the notice in the old app, wave G3).
