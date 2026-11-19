@@ -1,6 +1,9 @@
 # Τι νέο υπάρχει στο orOS
 Οι πιο πρόσφατες αλλαγές είναι πρώτες. Όταν το orOS ενημερώνεται, η ειδοποίηση ενημέρωσης ανοίγει αυτή τη σελίδα.
 
+## Έκδοση 7.76.02
+- **Εφέ του Studio από το NULL JSFX 4.0.** 18 νέα plugins: Closer, Echo One, Smoother, Warmer, Lo-Fi Comp, Room Tone, Binaural Panner, Bloom Delay, Key Detect, Null Test, Phase Distortion και Spectral Blur στα εφέ, Choir, Modal Piano, String Ensemble και Wind ως όργανα, και MIDI Monitor και Strum για κομμάτια οργάνων. Τα υπόλοιπα εφέ έχουν τις βελτιώσεις της 4.0. Δες [Studio](help:a/studio).
+
 ## Έκδοση 7.76.01
 - **Διορθώθηκε η έξυπνη γραμμή στην επιφάνεια εργασίας (Windows).** Με το orOS Setup 0.9.2 ή νεότερο, η `Έξυπνη γραμμή στην επιφάνεια εργασίας` στο μενού του εικονιδίου orOS δείχνει μια λεπτή λωρίδα στην κορυφή της οθόνης αντί για ένα μικρό παράθυρο orOS, και μια κάρτα της ανοίγει την εφαρμογή στο κύριο παράθυρο του orOS.
 
