@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 48555 of 48561 (99%)
+- Strings: 48608 of 48614 (99%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -59,7 +59,7 @@ en and el); translators change them there, not in a pack.
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 849 / 849 (25 in the code) |
+| files | 100% | 902 / 902 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |

@@ -565,7 +565,7 @@
 
   // DOCS-1 W5: what search_data finds in Files' Documents (files/docs-due.js
   // searchHits); kept word for word in assistant/core.js search_data.
-  var DOCS_NOTE = "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear.";
+  var DOCS_NOTE = "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Files and folders on the disk also show their tag names (Tags: …), so a tag name finds them. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear, and neither do their tags.";
   // search_data: groups from orosAssistSearch → items for Claude.
   function packHits(groups, names) {
     var out = [];

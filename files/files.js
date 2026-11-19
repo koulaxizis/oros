@@ -216,6 +216,11 @@
       "tree.tags":      "Tags",
       "tag.empty":      "No files have this tag yet",
       "tag.emptyHint":  "Right-click a file, or select it and open the menu, then pick Tags….",
+      "tree.smart":     "Smart folders",
+      "smart.new":      "New smart folder",
+      "smart.empty":    "Nothing fits this smart folder right now",
+      "smart.emptyHint":"Edit it with the pencil next to its name in the tree.",
+      "search.saveSmart": "Save as smart folder…",
       "menu.toComputer": "Send to This computer…",
       "menu.copyName": "Copy name",
       "menu.copyPath": "Copy path",
@@ -501,6 +506,11 @@
       "tree.tags":      "Ετικέτες",
       "tag.empty":      "Κανένα αρχείο δεν έχει ακόμα αυτή την ετικέτα",
       "tag.emptyHint":  "Κάνε δεξί κλικ σε ένα αρχείο, ή επίλεξέ το και άνοιξε το μενού, και διάλεξε Ετικέτες….",
+      "tree.smart":     "Έξυπνοι φάκελοι",
+      "smart.new":      "Νέος έξυπνος φάκελος",
+      "smart.empty":    "Τίποτα δεν ταιριάζει σε αυτόν τον έξυπνο φάκελο αυτή τη στιγμή",
+      "smart.emptyHint":"Άλλαξέ τον με το μολύβι δίπλα στο όνομά του στο δέντρο.",
+      "search.saveSmart": "Αποθήκευση ως έξυπνος φάκελος…",
       "menu.toComputer": "Αποστολή σε αυτόν τον υπολογιστή…",
       "menu.copyName": "Αντιγραφή ονόματος",
       "menu.copyPath": "Αντιγραφή διαδρομής",
@@ -708,6 +718,8 @@
   var MORE_SVG =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
   var TAG_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>';
+  var SMART_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v3"/><path d="M3 7v10a2 2 0 0 0 2 2h6"/><circle cx="17" cy="16" r="3"/><path d="M21 20l-1.8-1.8"/></svg>';
+  var PLUS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
   var DOCS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>';
   var PHOTO_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
   var TRASH_SVG =
@@ -1225,6 +1237,7 @@
     if (view === "trash") { renderTrashView(); return; }
     if (view === "recent") { renderRecentView(); return; }
     if (view === "tag") { renderTagView(); return; }
+    if (view === "smart") { renderSmartView(); return; }
     // Active search → re-run search render instead of a plain list
     if (searchQuery !== null) { runSearch(searchQuery); return; }
 
@@ -1632,10 +1645,12 @@
       vault: vaultApi,
       docs: docs,
       toast: transientNote,
+      pickFolder: pickFolderDialog,
       onChange: function () {
         renderTree();
         paintTagDots();
-        if (view === "tag" && !placeActive()) refresh();
+        if (view === "smart" && !placeActive() && !tg.smartFind(smartView)) { leaveSmartView(); return; }
+        if ((view === "tag" || view === "smart") && !placeActive()) refresh();
         var ph = photos();
         if (ph && ph.tagsChanged) ph.tagsChanged();
       }
@@ -2259,7 +2274,7 @@
     var home = document.createElement("button");
     home.type = "button";
     home.className = "crumb" + (cwd === ROOT || view !== "files" ? " current" : "");
-    home.textContent = view === "files" ? t("tree.root") : view === "tag" ? tagViewName() : t("tree." + view);
+    home.textContent = view === "files" ? t("tree.root") : view === "tag" ? tagViewName() : view === "smart" ? smartViewName() : t("tree." + view);
     home.addEventListener("click", function () { if (view === "files") navigate(ROOT); });
     host.appendChild(home);
 
@@ -2286,6 +2301,7 @@
 
   function statusPath() {
     if (view === "tag") return tagViewName();
+    if (view === "smart") return smartViewName();
     if (view !== "files") return t("tree." + view);
     return searchQuery !== null ? tfmt("search.where", { path: searchDir }) : cwd;
   }
@@ -3679,6 +3695,24 @@
       sk.textContent = tfmt("search.skipped", { n: st.skipped });
       host.appendChild(sk);
     }
+    // A finished search on the disk can be kept as a smart folder
+    // (names only: smart folders do not look inside files).
+    if (st.phase === "done" && searchDir && searchDir.indexOf(ROOT) === 0 && !CORE.isTrashPath(searchDir)) {
+      var sv = document.createElement("li");
+      sv.className = "search-more search-save";
+      var sb = document.createElement("button");
+      sb.type = "button";
+      sb.textContent = t("search.saveSmart");
+      var q0 = searchQuery, d0 = searchDir;
+      sb.addEventListener("click", function (ev) {
+        ev.stopPropagation();
+        var q = { name: q0 };
+        if (d0 !== ROOT) q.dir = d0;
+        smartNew({ n: q0, q: q });
+      });
+      sv.appendChild(sb);
+      host.appendChild(sv);
+    }
     renderStatus(all.length);   // FB6: was hardcoded 0 — "0 items" over a full result list
   }
 
@@ -4680,9 +4714,9 @@
   function applyViewChrome() {
     document.body.classList.toggle("v-trash", view === "trash");
     document.body.classList.toggle("v-recent", view === "recent");
-    document.body.classList.toggle("v-tag", view === "tag");
-    setEmptyText(view === "trash" ? "trash.empty" : view === "recent" ? "recent.empty" : view === "tag" ? "tag.empty" : null);
-    if (view === "tag") { var hs = $("empty") && $("empty").querySelector("small"); if (hs) hs.textContent = t("tag.emptyHint"); }
+    document.body.classList.toggle("v-tag", view === "tag" || view === "smart");
+    setEmptyText(view === "trash" ? "trash.empty" : view === "recent" ? "recent.empty" : view === "tag" ? "tag.empty" : view === "smart" ? "smart.empty" : null);
+    if (view === "tag" || view === "smart") { var hs = $("empty") && $("empty").querySelector("small"); if (hs) hs.textContent = t(view === "tag" ? "tag.emptyHint" : "smart.emptyHint"); }
     var vb = ensureViewBar();
     if (vb) vb.hidden = view !== "trash";
   }
@@ -4886,7 +4920,124 @@
       sec.appendChild(th);
       tl.forEach(function (x) { sec.appendChild(makeTagNode(x)); });
     }
+    if (tg && tg.smartList) {
+      var sh = document.createElement("div");
+      sh.className = "tsec tsec-act";
+      var sl = document.createElement("span");
+      sl.textContent = t("tree.smart");
+      sh.appendChild(sl);
+      var add = document.createElement("button");
+      add.type = "button";
+      add.className = "tsec-add";
+      add.title = t("smart.new");
+      add.setAttribute("aria-label", add.title);
+      add.innerHTML = PLUS_SVG;
+      add.addEventListener("click", function (e) { e.stopPropagation(); smartNew(null); });
+      sh.appendChild(add);
+      sec.appendChild(sh);
+      tg.smartList().forEach(function (x) { sec.appendChild(makeSmartNode(x)); });
+    }
     return sec;
+  }
+
+  // One smart folder in the tree (a saved search, TAGS-1 wave T2).
+  function makeSmartNode(x) {
+    var node = document.createElement("div");
+    node.className = "tnode tagn smartn" + (view === "smart" && smartView === x.id && !placeActive() ? " selected" : "");
+    node.style.paddingLeft = "6px";
+    node.tabIndex = 0;
+    node.setAttribute("role", "button");
+    var caret = document.createElement("span");
+    caret.className = "caret empty";
+    node.appendChild(caret);
+    var g = document.createElement("span");
+    g.className = "glyph";
+    g.innerHTML = SMART_SVG;
+    node.appendChild(g);
+    var nm = document.createElement("span");
+    nm.className = "tname";
+    nm.textContent = x.n;
+    node.appendChild(nm);
+    var ed = document.createElement("button");
+    ed.type = "button";
+    ed.className = "fav-x tag-ed";
+    ed.title = tags().t("sf.edit", { name: x.n });
+    ed.setAttribute("aria-label", ed.title);
+    ed.innerHTML = EDIT_SVG;
+    ed.addEventListener("click", function (e) { e.stopPropagation(); smartEditRow(x); });
+    node.appendChild(ed);
+    function go() { closeTreeDrawer(); openSmartView(x.id); }
+    node.addEventListener("click", go);
+    node.addEventListener("contextmenu", function (e) { e.preventDefault(); smartEditRow(x); });
+    node.addEventListener("keydown", function (e) {
+      if (e.target !== node) return;
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+    return node;
+  }
+
+  // ===== Smart folder view: what fits the saved search right now =====
+  var smartView = "";
+  function smartNew(prefill) {
+    loadDocs(function () {
+      var tg = tags();
+      if (!tg || !tg.smartEdit) { transientNote(t("toast.opFail")); return; }
+      tg.smartEdit(prefill).then(function (r) { if (r && r.id) openSmartView(r.id); });
+    });
+  }
+  function smartEditRow(x) {
+    var tg = tags();
+    if (!tg) return;
+    tg.smartEdit({ id: x.id }).then(function (r) {
+      if (r && r.id && view === "smart" && smartView === r.id) refresh();
+    });
+  }
+  function openSmartView(id) {
+    smartView = id;
+    openView("smart");
+  }
+  function leaveSmartView() {
+    smartView = "";
+    view = "files";
+    navigate(ROOT);
+  }
+  function smartViewName() {
+    var tg = tags(), sf = tg && tg.smartFind ? tg.smartFind(smartView) : null;
+    return sf ? sf.n : t("tree.smart");
+  }
+  function renderSmartView() {
+    var token = ++renderToken;
+    setStatusLoading();
+    renderTree();
+    renderCrumbs();
+    updateActionButtons();
+    hideRecents();
+    var tg = tags();
+    if (!tg || !tg.smartRun) { renderEntries([]); renderStatus(0); return; }
+    var host = $("entries"), em = $("empty");
+    host.innerHTML = "";
+    if (em) em.hidden = true;
+    var prog = document.createElement("li");
+    prog.className = "search-progress";
+    prog.textContent = tg.t("sf.looking", { n: 0 });
+    host.appendChild(prog);
+    tg.smartRun(smartView, function (n) {
+      if (token === renderToken) prog.textContent = tg.t("sf.looking", { n: n });
+    }).then(function (res) {
+      if (token !== renderToken) return;
+      var rows = applySort(res.items.map(function (e) {
+        return { name: e.name, path: e.path, dir: e.dir, size: e.size, mtime: e.mtime, sub: displayPath(parentOf(e.path)) };
+      }));
+      lastEntries = rows;
+      renderEntries(rows);
+      if (res.capped) {
+        var c = document.createElement("li");
+        c.className = "search-progress";
+        c.textContent = tg.t("sf.capped", { n: 20000 });
+        host.appendChild(c);
+      }
+      renderStatus(rows.length);
+    });
   }
 
   // One tag in the tree: every item with it, wherever it is. Right

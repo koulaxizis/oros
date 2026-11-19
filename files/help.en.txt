@@ -34,6 +34,14 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - The pencil next to a tag (or a right-click on it) renames it, gives it one of twelve colours, or deletes it. Deleting a tag takes it off every item; the files themselves stay as they are.
 - It is one list with `Documents`: a tag made here shows there, and a document's tags are the tags of its file.
 - Tags follow a rename or a move made in Files, stay with an item in the `Trash` so a restore brings them back, and are synced to your other devices. A file moved on another device is found again by its content. In `Photos`, the photos show their tags, `Select` › `Tags…` tags many at once, and `⋯` › `Show a tag…` shows only the photos with one tag.
+- The search in the orOS menu, the Assistant and orOS Gate find an item by its tag names too (names only; a private document's tags never show).
+
+### Smart folders
+- A smart folder is a saved search: it always shows the items that fit right now. Nothing is copied or moved, so a file can show in several smart folders and still have one place on the disk.
+- Make one with the `+` next to `Smart folders` in the tree, or finish a search and choose `Save as smart folder…` under the results.
+- It can ask for tags (any of them, or all together), kinds (pictures, videos, sound, documents, PDF, spreadsheets, text, archives, code, folders), when the item changed (last 7 or 30 days, last year, or between two dates), words in the name, a folder to look in, and a size in MB. Every condition you fill in must fit.
+- Smart folders look at names, tags, dates and sizes, not inside files. They cover the disk of orOS, not `This computer` or Dropbox.
+- The pencil next to a smart folder (or a right-click on it) changes it or deletes it; deleting it removes only the saved search. Smart folders are synced to your other devices.
 
 ### Remove hidden details
 - `Remove hidden details` (in the menu) makes a clean copy, "name (clean).ext", next to each selected photo (JPEG, PNG, WebP), PDF, or Word, Excel, PowerPoint or OpenDocument file. The original stays as it is.
