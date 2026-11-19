@@ -333,6 +333,34 @@
     host.appendChild(c);
   }
 
+  // WPACC-1: Accent from wallpaper (this device), under the skins.
+  function secWpAccent(c, w) {
+    c.appendChild(row(t("a.wpacc"), switchBtn(!!w.on, "wpaccent:on",
+      function (v) { set("wpaccent:on", v); }, t("a.wpacc")), { hint: t("a.wpacc.hint") }));
+    if (!w.on) return;
+    if (w.high) { c.appendChild(el("p", "hint", t("a.wpacc.high"))); return; }
+    if (w.none) { c.appendChild(el("p", "hint", t("a.wpacc.none"))); return; }
+    if (w.sw.length < 2) return;                       // one colour: nothing to pick
+    var g = el("div", "swatches");
+    g.setAttribute("role", "radiogroup");
+    g.setAttribute("aria-label", t("a.wpacc.pick"));
+    w.sw.forEach(function (k, i) {                    // k.color: a #rrggbb the shell fitted
+      var on = i === w.pick, b = el("button", "swatch" + (on ? " on" : ""));
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.setAttribute("data-k", "wpaccent:pick:" + i);
+      var name = t("a.wpacc.n").replace("{n}", String(i + 1));
+      b.title = name;
+      b.setAttribute("aria-label", name);
+      if (/^#[0-9a-f]{6}$/.test(k.color)) b.style.background = k.color;
+      b.addEventListener("click", function () { set("wpaccent:pick", i); });
+      g.appendChild(b);
+    });
+    c.appendChild(el("p", "hint", t("a.wpacc.pick")));
+    c.appendChild(g);
+  }
+
   // ---------- 4. Section: Appearance ----------
   function secAppearance(host, s) {
     var c1 = card(t("a.theme"), "theme");
@@ -360,6 +388,7 @@
       sw.appendChild(b);
     });
     c2.appendChild(sw);
+    if (s.wpaccent) secWpAccent(c2, s.wpaccent);
     host.appendChild(c2);
 
     if (s.icons) secIcons(host, s.icons);

@@ -93,6 +93,8 @@ Wähle in den `Einstellungen` unter `Darstellung` neben `Design` entweder `Dunke
 ## Skins
 Die farbigen Punkte unter `Systemfarbe` sind Skins: Jeder gibt orOS und seinen Apps eine andere Akzentfarbe. Sie sind nach Linux-Systemen benannt, etwa `Ubuntu`, `Fedora`, `Mint` oder `Pop!_OS`; fahr mit der Maus über einen Punkt, um seinen Namen zu sehen. Standard ist `Oros`, in Gold.
 
+`Akzentfarbe aus dem Hintergrund` unter den Punkten nimmt die Akzentfarbe stattdessen aus deinem Hintergrundbild: aus den eingebauten Hintergründen, `Lebendige Landschaft`, `Meins` und einem eigenen Bild. orOS passt ihre Helligkeit so an, dass Text auf Schaltflächen und Links im hellen und dunklen Design gut lesbar bleibt; Hintergründe, Flächen und Text behalten die Farben deines Skins. Hat das Bild mehrere klare Farben, erscheinen bis zu vier unter `Farben aus dem Hintergrund` zur Auswahl; ein neues Bild beginnt mit seiner kräftigsten Farbe. Graue Hintergründe wie `Monochrom` behalten die Farbe des Skins, und hoher Kontrast behält immer seine eigenen Farben. Der Schalter ist anfangs aus und gilt nur auf diesem Gerät.
+
 > Jeder Skin bringt ein vorgeschlagenes Hintergrundbild mit, markiert mit einem ★ unter `Hintergrundbild`. Wählst du einen Skin, wechselt auch das Hintergrundbild zu seinem, solange du noch das Standard-Hintergrundbild (`Desert Sand`) oder das für deinen vorigen Skin vorgeschlagene hast. Sobald du selbst ein anderes Hintergrundbild wählst, lassen Skins es in Ruhe, und du kannst weiterhin jedes Hintergrundbild mit jedem Skin wählen.
 
 ## Hintergrundbilder
