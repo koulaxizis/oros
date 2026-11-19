@@ -151,6 +151,9 @@
       var g = obj(s.g);
       return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
     },
+    // Hive (an idle game): the hive itself syncs in oros-hive-data;
+    // oros-hive-session is {acts}, under way once something was done.
+    hive: function (s) { return num(s.acts) > 0; },
     xeri: function (s) {
       if (s.phase === "over") return false;
       var hs = num(s.hs) || 6, won = arr(s.won), hands = arr(s.hands);
