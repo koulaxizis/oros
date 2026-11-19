@@ -1207,6 +1207,7 @@ orosPack("de", "shell", {
  "qs.focus.modes": "Fokus-Modi",
  "qs.focus.how": "Wie lange",
  "qs.focus.settings": "Fokus-Einstellungen",
+ "qs.focus.end": "Bis zum Ende des Zeitplans",
  "focus.m.dnd": "Nicht stören",
  "focus.m.sleep": "Schlafen",
  "focus.m.work": "Arbeit",
