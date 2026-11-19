@@ -15,14 +15,14 @@
 (function () {
   "use strict";
   var URL = "https://apps.koulaxizis.workers.dev/stats.json";
-  var ORDER = ["manager", "github", "fdroid", "droidify", "obtainium", "fdroid_org", "other"];
+  var ORDER = ["manager", "github", "fdroid", "droidify", "obtainium", "fdroid_org", "other", "estimate"];
   var WORDS = {
     en: { manager: "Koulaxizis Apps", github: "Direct APK", fdroid: "F-Droid", droidify: "Droid-ify", obtainium: "Obtainium",
-      fdroid_org: "f-droid.org", other: "Other", app: "App", total: "Total", byHand: "counted by hand", since: "Counted since 19 November 2026; updated every few hours." },
+      fdroid_org: "f-droid.org", other: "Other", estimate: "Before 19/11 (estimate)", app: "App", total: "Total", byHand: "counted by hand", since: "Counted since 19 November 2026 and updated every hour; earlier downloads are an estimate." },
     el: { manager: "Εφαρμογές Koulaxizis", github: "Απευθείας APK", fdroid: "F-Droid", droidify: "Droid-ify", obtainium: "Obtainium",
-      fdroid_org: "f-droid.org", other: "Άλλο", app: "Εφαρμογή", total: "Σύνολο", byHand: "καταμέτρηση με το χέρι", since: "Μετράμε από τις 19 Νοεμβρίου 2026· ενημερώνεται κάθε λίγες ώρες." },
+      fdroid_org: "f-droid.org", other: "Άλλο", estimate: "Πριν τις 19/11 (εκτίμηση)", app: "Εφαρμογή", total: "Σύνολο", byHand: "καταμέτρηση με το χέρι", since: "Μετράμε από τις 19 Νοεμβρίου 2026 και ενημερώνεται κάθε ώρα· οι παλαιότερες λήψεις είναι εκτίμηση." },
     de: { manager: "Koulaxizis Apps", github: "Direkte APK", fdroid: "F-Droid", droidify: "Droid-ify", obtainium: "Obtainium",
-      fdroid_org: "f-droid.org", other: "Andere", app: "App", total: "Gesamt", byHand: "von Hand gezählt", since: "Gezählt seit 19. November 2026; alle paar Stunden aktualisiert." },
+      fdroid_org: "f-droid.org", other: "Andere", estimate: "Vor 19.11. (geschätzt)", app: "App", total: "Gesamt", byHand: "von Hand gezählt", since: "Gezählt seit 19. November 2026, stündlich aktualisiert; frühere Downloads sind geschätzt." },
   };
 
   function lang(el) {
@@ -123,7 +123,7 @@
         chs.forEach(function (c) {
           var td = tr.insertCell(), v = apps[p][c];
           td.textContent = v === undefined ? "–" : fmt(num(v), l);
-          if (v && v.at) td.title = w.byHand + ", " + v.at;
+          if (v && v.at && c !== "estimate") td.title = w.byHand + ", " + v.at;
         });
         var tot = tr.insertCell(); tot.textContent = fmt(sum(apps, [p], []), l);
       });
