@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.69.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.70.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -416,6 +416,7 @@
     if (window.orosQS) window.orosQS.refresh();     // Quick settings labels
     if (window.orosWidgets) window.orosWidgets.refresh();   // desktop widgets
     if (window.orosClip) window.orosClip.refresh();         // clipboard history
+    if (window.orosRead) window.orosRead.refresh();         // read aloud bar (READ-1)
     if (window.orosEmoji) window.orosEmoji.refresh();       // emoji picker
     if (window.orosSmartBar) window.orosSmartBar.refresh(); // smart top bar chips
     // The sync button and the app frame are labelled once at injection /
@@ -9762,6 +9763,7 @@
     { id: "clip", key: "v", label: "sc.desc.cliphist",   fn: function() { if (window.orosClip) window.orosClip.toggle(); } },
     { id: "emoji", code: "Period", label: "sc.desc.emoji", fn: function() { if (window.orosEmoji) window.orosEmoji.toggle(); } },
     { id: "screen", key: "b", label: "sc.desc.screen", fn: function() { scrMove(); } },
+    { id: "read", key: "z", label: "sc.desc.read", fn: function() { if (window.orosRead) window.orosRead.toggle(); } },
     // orOS USB only (oros-usb System extension, PrtSc also takes a shot).
     { id: "usb-shot",    key: "g", label: "sc.desc.usbshot",    usb: true },
     { id: "usb-reader",  key: "j", label: "sc.desc.usbreader",  usb: true },
@@ -12387,6 +12389,7 @@
       // where the launcher has no users API (Settings › Users explains).
       users: state.users || null,
       a11y: a11ySnapshot(),
+      read: window.orosRead ? window.orosRead.snapshot() : null,   // READ-1, this device
       apps: state.apps.filter(function (a) { return a && a.type === "internal"; })
         .map(function (a) { return a.id; }),
       // SC-EDIT (DEF-APPS D2): id, the key now ("" = off), its default.
@@ -12448,6 +12451,9 @@
         }
         return;
       case "clipKeep":   if (window.orosClip) window.orosClip.setKeep(String(value)); return;
+      case "readAloud":  if (window.orosRead) window.orosRead.setOn(!!value); return;      // READ-1
+      case "readRate":   if (window.orosRead) window.orosRead.setRate(Number(value)); return;
+      case "readVoice":  if (window.orosRead && value && typeof value === "object") window.orosRead.setVoice(String(value.lang), String(value.uri || "")); return;
       case "textSize":
       case "contrast":
       case "focusRing":
@@ -12544,6 +12550,7 @@
       case "sync.link.close":   state.linkIn = null; settingsNotify(); return;
       case "clip.clear":      if (window.orosClip) window.orosClip.clear(); return;   // CLIP-1
       case "clip.open":       if (window.orosClip) window.orosClip.open(); return;
+      case "read.test":       if (window.orosRead) window.orosRead.test(String(arg)); return;   // READ-1 W2
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -16811,6 +16818,130 @@
     };
     if (!window.orosEmoji) window.orosEmoji = emoStub;
     else window.orosEmoji.attach(emoHost);
+  })();
+  // Read aloud (READ-1, readaloud.js): selected text in any app read
+  // with this device's own voices. Off by default (Chris 2026-11-17);
+  // the switch and the speed are device-local here, key
+  // "oros-readaloud" = { v:1, on:1, rate } (absent = off; never synced,
+  // not in exports, the factory-reset oros-* sweep removes it). The
+  // engine is not a start-up script (boot budget): the first read
+  // loads readaloud.js (precached) and attaches it.
+  (function () {
+    var RA_KEY = "oros-readaloud", RA_RATES = [0.8, 1, 1.2, 1.4, 1.6, 2];
+    // vo (W2) = { en|el|de: voiceURI }, the voice chosen per language.
+    var RA_LANGS = ["en", "el", "de"];
+    function raPrefs() {
+      var o = null;
+      try { o = JSON.parse(localStorage.getItem(RA_KEY) || "null"); } catch (e) { o = null; }
+      var on = !!(o && o.v === 1 && o.on === 1), vo = {};
+      if (on && o.vo && typeof o.vo === "object") RA_LANGS.forEach(function (l) {
+        if (typeof o.vo[l] === "string" && o.vo[l] && o.vo[l].length <= 200) vo[l] = o.vo[l];
+      });
+      return { on: on, rate: on && RA_RATES.indexOf(o.rate) !== -1 ? o.rate : 1, vo: vo };
+    }
+    function raWrite(p) {
+      try {
+        var rec = { v: 1, on: 1, rate: p.rate };
+        if (p.vo && Object.keys(p.vo).length) rec.vo = p.vo;
+        if (p.on) localStorage.setItem(RA_KEY, JSON.stringify(rec));
+        else localStorage.removeItem(RA_KEY);
+      } catch (e) { return false; }
+      return true;
+    }
+    // The device's own voices per language (W2, Settings): local only.
+    function raVoices() {
+      var all = [];
+      try { all = window.speechSynthesis ? window.speechSynthesis.getVoices() || [] : []; } catch (e) { all = []; }
+      var p = raPrefs();
+      return RA_LANGS.map(function (l) {
+        var list = [];
+        for (var i = 0; i < all.length; i++) {
+          var v = all[i];
+          if (!v || v.localService !== true || String(v.lang || "").toLowerCase().split(/[-_]/)[0] !== l) continue;
+          list.push({ name: String(v.name || v.voiceURI || ""), uri: String(v.voiceURI || v.name || ""), lang: String(v.lang || "") });
+        }
+        list.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+        return { lang: l, list: list, pick: p.vo[l] || "" };
+      });
+    }
+    try {   // Chrome fills the list a moment later: Settings repaints
+      if (window.speechSynthesis && window.speechSynthesis.addEventListener) {
+        window.speechSynthesis.addEventListener("voiceschanged", function () { if (raPrefs().on) settingsNotify(); });
+      }
+    } catch (e) {}
+    function raAvailable() { return !!(window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function"); }
+    var raEngine = null, raLoading = null;
+    var raHost = {
+      frames: function () { return appFrames(); },
+      lang: function () { return state.lang; },
+      rate: function () { return raPrefs().rate; },
+      setRate: function (r) { var p = raPrefs(); if (p.on && RA_RATES.indexOf(r) !== -1) { p.rate = r; raWrite(p); settingsNotify(); } },
+      voice: function (l) { return raPrefs().vo[l] || ""; },
+      toast: function (kind, msg) { scToast(kind, msg); },
+      changed: function () { settingsNotify(); }
+    };
+    function raLoad() {
+      if (raEngine) return Promise.resolve(raEngine);
+      if (!raLoading) raLoading = new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "readaloud.js?v=" + encodeURIComponent(APP_VERSION);
+        sc.onload = function () {
+          var api = window.orosReadEngine;
+          if (api && api.attach) { api.attach(raHost); raEngine = api; res(api); }
+          else { raLoading = null; rej(new Error("readaloud.js")); }
+        };
+        sc.onerror = function () { raLoading = null; sc.remove(); rej(new Error("readaloud.js")); };
+        document.head.appendChild(sc);
+      });
+      return raLoading;
+    }
+    // Run fn(engine) when Read aloud may be used now; otherwise say why.
+    function raThen(fn) {
+      if (!raPrefs().on) {
+        scToast("", window.t("ra.off"), function () { if (window.orosSettings) window.orosSettings.open("accessibility"); });
+        return;
+      }
+      if (strictLevelNow()) { scToast("err", window.t("ra.strict")); return; }
+      raLoad().then(fn, function () { scToast("err", window.t("ra.loadfail")); });
+    }
+    window.orosRead = {
+      isOn: function () { return raPrefs().on && !strictLevelNow(); },
+      // Ctrl+Alt+Shift+Z and Quick settings: stop a reading, or read the
+      // text selected in the app in front.
+      toggle: function () {
+        if (raEngine && raEngine.active()) { raEngine.stop(); return; }
+        raThen(function (e) { e.readSelection(); });
+      },
+      // The selection menu (quickmenu.js): { text, lang, app, secret }
+      read: function (sel) { raThen(function (e) { e.read(sel); }); },
+      stop: function () { if (raEngine) raEngine.stop(); },
+      active: function () { return !!(raEngine && raEngine.active()); },
+      playing: function () { return !!(raEngine && raEngine.playing()); },
+      // Settings › Accessibility
+      snapshot: function () {
+        var p = raPrefs();
+        return { on: p.on, rate: p.rate, rates: RA_RATES.slice(), strict: !!strictLevelNow(), available: raAvailable(),
+                 voices: p.on ? raVoices() : [] };
+      },
+      setOn: function (on) {
+        var p = raPrefs();
+        if (!!on === p.on) return;
+        if (!on && raEngine) raEngine.stop();
+        raWrite({ on: !!on, rate: p.rate, vo: on ? p.vo : {} });
+        settingsNotify();
+      },
+      setRate: function (r) { raHost.setRate(Number(r)); if (raEngine) raEngine.refresh(); },
+      // W2: the voice for a language ("" = automatic), and Test
+      setVoice: function (l, uri) {
+        var p = raPrefs();
+        if (!p.on || RA_LANGS.indexOf(l) === -1) return;
+        if (typeof uri === "string" && uri && uri.length <= 200) p.vo[l] = uri; else delete p.vo[l];
+        raWrite(p);
+        settingsNotify();
+      },
+      test: function (l) { if (RA_LANGS.indexOf(l) !== -1) raThen(function (e) { e.test(l, raPrefs().vo[l] || ""); }); },
+      refresh: function () { if (raEngine) raEngine.refresh(); }
+    };
   })();
   // Night Light (nightlight.js, a shell component like qsettings.js):
   // the warm filter over the whole shell. Sunset and sunrise come from

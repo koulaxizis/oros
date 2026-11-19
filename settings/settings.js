@@ -583,8 +583,8 @@
   }
 
   // ---------- 4a. Section: Accessibility ----------
-  // Text size, high contrast, the focus ring, the colour filter and the
-  // pointer size (shell.js 5e, a11yfx.js). All stay on this device;
+  // Text size, high contrast, the focus ring, the colour filter, the
+  // pointer size (shell.js 5e, a11yfx.js) and Read aloud (READ-1). All stay on this device;
   // older shells send no s.a11y.
   function secAccessibility(host, s) {
     var a = s.a11y;
@@ -639,6 +639,40 @@
         c6.appendChild(el("p", "hint", t("ac.pointer.hint")));
         host.appendChild(c6);
       }
+    }
+
+    // READ-1: Read aloud (shell.js window.orosRead, readaloud.js), off by
+    // default, this device only; older shells send no s.read.
+    var r = s.read;
+    if (r) {
+      var c7 = card(t("ac.read"), "read");
+      c7.appendChild(row(t("ac.read.on"), switchBtn(r.on, "readAloud", function (v) { set("readAloud", v); }, t("ac.read.on")),
+        { hint: t("ac.read.hint") }));
+      if (r.on) {
+        var dec = LANG === "en" ? "." : ",";
+        c7.appendChild(segRow(t("ac.read.rate"), segmented(r.rates.map(function (n) {
+          return { value: n, label: String(n).replace(".", dec) + "\u00d7" };
+        }), r.rate, "readRate", function (v) { set("readRate", v); }, t("ac.read.rate"))));
+      }
+      // W2: a voice per language, from this device's own voices, with Test
+      if (r.on && r.voices && r.voices.length) {
+        r.voices.forEach(function (g) {
+          var vr = row(t("ac.read.voice." + g.lang), null, g.list.length ? null : { hint: t("ac.read.novoices") });
+          if (g.list.length) {
+            var opts = [{ value: "", label: t("ac.read.auto") }].concat(g.list.map(function (v) {
+              return { value: v.uri, label: v.name + (v.lang ? " (" + v.lang + ")" : "") };
+            }));
+            var sel = select(opts, g.pick, "readVoice-" + g.lang, function (val) { set("readVoice", { lang: g.lang, uri: val }); });
+            sel.setAttribute("aria-label", t("ac.read.voice." + g.lang));
+            vr.appendChild(actions(sel, button(t("ac.read.test"), "readTest-" + g.lang, function () { act("read.test", g.lang); })));
+          }
+          c7.appendChild(vr);
+        });
+        c7.appendChild(el("p", "hint", t("ac.read.voices.hint")));
+      }
+      if (!r.available) c7.appendChild(el("p", "hint", t("ac.read.none")));
+      if (r.strict) c7.appendChild(el("p", "hint", t("ac.read.strict")));
+      host.appendChild(c7);
     }
 
     // FM-5: the font of orOS (chosen on a font's page in Fonts)

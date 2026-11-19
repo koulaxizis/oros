@@ -233,6 +233,7 @@ var PRECACHE_URLS = [
   "./smartbar.js",
   "./smartbar-apps.js",
   "./cliphist.js",
+  "./readaloud.js",
   "./continue.js",
   "./textrepl.js",
   "./localroots.js",
