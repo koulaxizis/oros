@@ -4733,6 +4733,12 @@ Thread «Αλλαγές του Gate με κλειστό orOS», design doc https
 - **Sign-up form stays double opt-in only** (Chris 2026-11-18); single opt-in remains only for signed shop checkout sign-ups (NEWSLETTER v1 1.15).
 - **Post-purchase mail (proposal 5, design only, not built):** a per-list template sent once per person X days after an order (default 7), fed by the purchases read (`bl`) and only where the consent basis allows it, sent by the list's sending device like the welcome mail. Needs its own yes before any code.
 
+### Koulaxizis Apps as the one Android distribution point (APPS-M3/M4, APPS-DL, 2026-11-19)
+
+- **Decided (Chris 2026-11-19):** Koulaxizis Apps (`gr.koulaxizis.apps`) is the central distribution point for every Android app of orOS, NULL JSFX, Noxpress and Glarolykoi; the download page, Settings › Apps and the APK update notice point only to it. The signed index-v2 repositories on our Pages stay behind it for people who already added them; F-Droid, Droid-ify and Obtainium appear only as discreet "other ways". Glarolykoi gets its own section in the manager, like NULL JSFX and Noxpress.
+- **Decided (Chris 2026-11-19):** download counts per app and per channel on every card, counted by our own Cloudflare Worker `apps` (numbers only, never an IP or device); earlier downloads as a marked estimate, real counts added on top. There is no f-droid.org listing and none will be made: only the manager with our own repositories.
+- **Rejected:** an own catalog format replacing index-v2 (2026-11-19); counting the CI emulator (debug build `KoulaxizisApps/1 (test)` is never counted).
+
 ## Part X — Open items, audit queue, lessons
 
 ### Open decisions (Christos)
@@ -13008,3 +13014,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **T2:** smart folders in Files, saved searches by tags (any/all), kind, change date, name words, folder and size; never the contents, never This computer, Dropbox or the Trash. Tree section with `+`, `view = "smart"`, `Save as smart folder…` under a finished disk search, dialog with delete. Rows in `files-tags` `smart` (kept since T1). `OrosTagsCore.matches` / `kindOf` / `needsStat` / `hasCondition`, `OrosFilesTags.smartRun` / `smartEdit`.
 - **T3:** `OrosDocsDue.fileTags` (docs-due.js 1.2.0) and `files/search.js` 1.2.0 add `Tags: …` to disk hits, so the menu search, the Assistant and orOS Gate find files by tag name; a private document's file never gets names. Gate `DOCS_NOTE` and the Assistant's `search_data` sentence updated word for word.
 - **Verified:** full `node --test tests/*.test.js` after merging main 7.84.00; Playwright Chromium 1280 EN and 360 EL, two devices (rename and delete converge, idle syncs upload nothing), `orosAssistSearch` finds a file by its tag. Not tested: real phone, Safari, real Dropbox.
+
+### 2026-11-19 — 7.85.01 — Koulaxizis Apps everywhere, Glarolykoi section, download counts (APPS-M3/M4 + APPS-DL) (#1142)
+- **APPS-M3:** Koulaxizis Apps in the orOS F-Droid repository (`fdroid.yml` takes `koulaxizis-apps.apk` from the `koulaxizis-apps` release; metadata and graphics in `tools/fdroid/koulaxizis-apps/`); `Source.java` adds the Glarolykoi section; the TWA (`LauncherActivity.getLaunchingUrl`) adds `mgr=1` to the start address while the manager is installed (named in `<queries>` by `android/tools/gen.js`), so `solo.js` `apkNotice` stays quiet.
+- **APPS-M4:** download page, Settings › Apps, update notice and help (EN/EL/DE) point only to the manager; repository and Obtainium links stay as "other ways".
+- **APPS-DL:** manager 1.2.0 (10200, after 1.0.1 on main) downloads APKs through the counter `apps.koulaxizis.workers.dev` with a fallback to the repository; `tools/apps-counter/` (Worker, D1 schema, hourly GitHub ledger); `download/dl-counts.js` shows counts on the download page.
+- **Files:** `koulaxizis-apps/`, `android/`, `.github/workflows/fdroid.yml`, `solo.js`, `settings/`, `download/`, `tools/apps-counter/`, `tools/fdroid*`, help, `shell.js` (APP_VERSION), What's new EN/EL, Bible.
+- **Verified:** full `node --test tests/*.test.js` after merging main 7.85.00; manager unit tests (javac + JUnit) and CI emulator device test; a real manager install counted by the Worker (test row removed). Not tested: real phone after this merge.
