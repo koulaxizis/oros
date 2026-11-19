@@ -595,7 +595,8 @@
     "maps/tracks.js",
     "maps/trails-tab.js",
     "maps/trails.js",
-    "maps/transit.js"
+    "maps/transit.js",
+    "maps/where.js"
    ]
   },
   {
