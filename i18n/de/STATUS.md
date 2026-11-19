@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 48316 of 48316 (100%)
-- Help pages: 157 of 157 (100%)
+- Strings: 48451 of 48451 (100%)
+- Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
 "in the code": a shared module or a public page that runs where no
@@ -60,7 +60,7 @@ en and el); translators change them there, not in a pack.
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 160 / 160 |
+| gamecenter | 100% | 162 / 162 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -123,6 +123,7 @@ en and el); translators change them there, not in a pack.
 | recordpkg | 100% | 21 / 21 |
 | remote-play | 100% | 35 / 35 |
 | reversi | 100% | 61 / 61 |
+| ridge | 100% | 132 / 132 |
 | ringtones | 100% | 107 / 107 |
 | roots | 100% | 226 / 226 |
 | rps | 100% | 60 / 60 |
@@ -131,7 +132,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 1962 / 1962 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1511 / 1511 |
+| shell | 100% | 1512 / 1512 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

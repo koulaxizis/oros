@@ -1200,6 +1200,14 @@
       "type": "internal"
     },
     {
+      "id": "ridge",
+      "name": "Windmill ridge",
+      "category": "Games",
+      "icon": "ridge",
+      "url": "ridge/",
+      "type": "internal"
+    },
+    {
       "id": "wayfarers",
       "name": "Wayfarers",
       "category": "Games",

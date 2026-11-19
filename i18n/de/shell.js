@@ -120,6 +120,7 @@ orosPack("de", "shell", {
  "app.realm": "Ländereien",
  "app.reversi": "Reversi",
  "app.roots": "Wurzeln",
+ "app.ridge": "Windmühlengrat",
  "app.ringtones": "Klingelton-Komponist",
  "app.rps": "Schere, Stein, Papier",
  "app.scanpdf": "Scanner & PDF",
