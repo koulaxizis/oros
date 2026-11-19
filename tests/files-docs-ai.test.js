@@ -62,12 +62,12 @@ test("private documents are left out whole; tombstoned ones too", () => {
   assert.deepStrictEqual(D.searchHits(null, "en"), []);
 });
 
-function provider(disk, raw) {
+function provider(disk, raw, tagsRaw) {
   delete require.cache[require.resolve("../files/search.js")];
   global.OrosDocsDue = D;
   global.orosFS = disk;
   const P = require("../files/search.js");
-  const ctx = (q) => ({ q: q, words: q ? q.split(" ") : [], code: "en", lang: "en", readJSON: (k) => (k === D.KEY ? raw : null) });
+  const ctx = (q, lang) => ({ q: q, words: q ? q.split(" ") : [], code: lang || "en", lang: lang || "en", readJSON: (k) => (k === D.KEY ? raw : k === "oros-files-tags" ? tagsRaw : null) });
   return { P, ctx };
 }
 const tick = () => new Promise((r) => setTimeout(r, 20));
@@ -83,7 +83,7 @@ test("Files search provider: documents first, texts read in the background, neve
     readText: async (p) => { reads.push(p); return "Rent 900 EUR a month"; }
   };
   const { P, ctx } = provider(disk, raw);
-  assert.deepStrictEqual(P.keys, ["oros-files-docs"]);
+  assert.deepStrictEqual(P.keys, ["oros-files-docs", "oros-files-tags"]);
   let hits = await P.search(ctx("lease"));
   assert.deepStrictEqual(hits.map((h) => h.id), ["doc:d-a", "/internal/Documents", "/internal/Documents/lease.pdf"]);
   await tick();
@@ -121,4 +121,50 @@ test("parity: the Assistant and orOS Gate say the same about Documents", () => {
   assert.ok(m, "Gate's list_apps note");
   assert.ok(core.includes(m[1]), "word for word in the Assistant's search_data");
   assert.match(gate, /if \(a\.id === "files"\) o\.documents = DOCS_NOTE;/);
+});
+
+// TAGS-1 wave T3 (Chris 2026-11-17 «Ναι, μόνο τα ονόματα»): tag names on
+// disk hits; never for a private document's file.
+test("fileTags: names of live tags at each row's path, a document's own tags, nothing for private ones", () => {
+  const raw = slice([
+    doc("d-a", { t: "Lease", tg: ["tg-home"] }),
+    doc("d-m", { t: "Lab", ty: "ty-medical", tg: ["tg-home"] })
+  ], { tags: [{ id: "tg-home", m: 1, n: { en: "home", el: "σπίτι" } }, { id: "tg-work", m: 1, n: "work" }, { id: "tg-gone", m: 1, n: "old" }],
+    tombs: { "tg-gone": 5 } });
+  const tagsRaw = { v: 1, files: [
+    { k: "p:/internal/notes.txt", p: "/internal/notes.txt", m: 1, t: { "tg-work": 3, "tg-home": -4, "tg-gone": 2 } },
+    { k: "h:" + "a".repeat(64), p: "/internal/Documents/2026/d-m.pdf", m: 1, t: { "tg-work": 3 } },
+    { k: "p:/internal/.trash/x/a.txt", p: "/internal/.trash/x/a.txt", m: 1, t: { "tg-work": 3 } },
+    { k: "p:/internal/.docs/text/d-a.txt", p: "/internal/.docs/text/d-a.txt", m: 1, t: { "tg-work": 3 } }
+  ], smart: [], tombs: {} };
+  assert.deepStrictEqual(D.fileTags(tagsRaw, raw, "en"), {
+    "/internal/Documents/2026/d-a.pdf": ["home"],
+    "/internal/notes.txt": ["work"]
+  });
+  assert.deepStrictEqual(D.fileTags(tagsRaw, raw, "el")["/internal/Documents/2026/d-a.pdf"], ["σπίτι"]);
+  assert.deepStrictEqual(D.fileTags(null, null, "en"), {});
+  assert.deepStrictEqual(D.fileTags({ files: "x" }, { tags: "y" }, "en"), {});
+  assert.strictEqual(D.tagsWord("de"), "Schlagwörter");
+});
+
+test("Files search provider: a tag name finds its files; the Assistant and Gate get the same hits", async () => {
+  const raw = slice([doc("d-m", { t: "Lab", ty: "ty-medical", p: "/internal/lab.pdf", tg: ["tg-w"] })],
+    { tags: [{ id: "tg-w", m: 1, n: "Work" }] });
+  const tagsRaw = { v: 1, files: [
+    { k: "p:/internal/plan.txt", p: "/internal/plan.txt", m: 1, t: { "tg-w": 2 } },
+    { k: "p:/internal/lab.pdf", p: "/internal/lab.pdf", m: 1, t: { "tg-w": 2 } }
+  ], smart: [], tombs: {} };
+  const disk = { ls: async (p) => (p === "/internal" ? [{ name: "plan.txt" }, { name: "lab.pdf" }, { name: "other.txt" }] : []), readText: async () => "" };
+  const { P, ctx } = provider(disk, raw, tagsRaw);
+  const hits = await P.search(ctx("work"));
+  const by = Object.fromEntries(hits.map((h) => [h.id, h.text]));
+  assert.strictEqual(by["/internal/plan.txt"], "/\nTags: Work");
+  assert.strictEqual(by["/internal/lab.pdf"], "/", "a private document's file shows no tags");
+  assert.strictEqual(by["/internal/other.txt"], "/");
+  assert.ok(!hits.some((h) => h.id === "doc:d-m"));
+  const el = await P.search(ctx("work", "el"));
+  assert.strictEqual(el.find((h) => h.id === "/internal/plan.txt").text, "/\nΕτικέτες: Work");
+  // one provider, one sentence: both search through orosAssistSearch
+  assert.match(read("gate/gate.js"), /also show their tag names/);
+  delete global.OrosDocsDue; delete global.orosFS;
 });

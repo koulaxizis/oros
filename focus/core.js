@@ -10,8 +10,11 @@
 //
 // Storage: the notifications settings object (slice "notifs", synced
 // and encrypted) under settings.focus = { mrev, modes, act }:
-//   modes  [{ id, name, icon, allow:[ns…] }]  (built-ins always there;
-//          name "" = the translated built-in name)
+//   modes  [{ id, name, icon, allow:[ns…], sched?, cal? }]  (built-ins
+//          always there; name "" = the translated built-in name)
+//          F2: sched { on, days, from, to } weekly in half hours (not
+//          Sleep: its hours are the quiet hours); cal { on, label, word }
+//          on during a timed Calendar event with that label or word.
 //   mrev   stamp of the modes list (ms, monotonic): newer list wins
 //   act    { id, until, at }: the manual choice. id "" = off;
 //          until 0 = until turned off, else the ms it ends at;
@@ -30,7 +33,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var HOUR = 3600000;
   var MAX_OWN = 10;
   var MAX_NAME = 40;
@@ -60,15 +63,51 @@
     });
     return out.sort();
   }
+  function isInt(v, lo, hi) { return typeof v === "number" && v % 1 === 0 && v >= lo && v <= hi; }
+  // Weekly schedule (F2): days 0 = Sunday … 6, from/to in half hours
+  // (0 = 00:00 … 47 = 23:30); to <= from runs past midnight into the
+  // next day. `on` false keeps the choice without running it.
+  function cleanSched(x) {
+    if (!x || typeof x !== "object") return null;
+    var days = [];
+    (Array.isArray(x.days) ? x.days : []).forEach(function (d) { if (isInt(d, 0, 6) && days.indexOf(d) < 0) days.push(d); });
+    return { on: !!x.on, days: days.sort(), from: isInt(x.from, 0, 47) ? x.from : 18, to: isInt(x.to, 0, 47) ? x.to : 34 };
+  }
+  // Calendar trigger (F2): on while a timed Calendar event with this
+  // label (its id) or with this word in its title runs.
+  function cleanCal(x) {
+    if (!x || typeof x !== "object") return null;
+    var label = (typeof x.label === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(x.label)) ? x.label : "";
+    return { on: !!x.on, label: label, word: cleanName(x.word) };
+  }
+  // Fields a later orOS adds to a mode ride along untouched (an older
+  // device never drops what it does not know).
+  var KNOWN = { id: 1, name: 1, icon: 1, allow: 1, sched: 1, cal: 1 };
+  function extras(m) {
+    var out = {}, size = 0;
+    Object.keys(m).forEach(function (k) {
+      if (KNOWN[k] || !/^[a-z][A-Za-z0-9]{0,15}$/.test(k)) return;
+      var j;
+      try { j = JSON.stringify(m[k]); } catch (e) { return; }
+      if (j === undefined || size + j.length > 4000) return;
+      size += j.length;
+      out[k] = JSON.parse(j);
+    });
+    return out;
+  }
   function cleanMode(m, fallback) {
     m = (m && typeof m === "object") ? m : {};
     var id = fallback ? fallback.id : m.id;
-    return {
-      id: id,
-      name: cleanName(m.name),
-      icon: ICONS.indexOf(m.icon) >= 0 ? m.icon : (fallback ? fallback.icon : "star"),
-      allow: LOCKED_ALLOW[id] ? [] : cleanAllow(Array.isArray(m.allow) ? m.allow : (fallback ? fallback.allow : []))
-    };
+    var c = extras(m);
+    c.id = id;
+    c.name = cleanName(m.name);
+    c.icon = ICONS.indexOf(m.icon) >= 0 ? m.icon : (fallback ? fallback.icon : "star");
+    c.allow = LOCKED_ALLOW[id] ? [] : cleanAllow(Array.isArray(m.allow) ? m.allow : (fallback ? fallback.allow : []));
+    var sc = id === "sleep" ? null : cleanSched(m.sched);   // Sleep's hours are the quiet hours (D2)
+    if (sc) c.sched = sc;
+    var ca = cleanCal(m.cal);
+    if (ca) c.cal = ca;
+    return c;
   }
   // Repairs every field; the built-ins are always first, in order.
   function normalize(f) {
@@ -129,16 +168,94 @@
     if (end.getTime() <= now) end.setDate(end.getDate() + 1);
     return end.getTime();
   }
-  // → { id, until, by: "manual"|"schedule" } | null
-  function activeAt(f, q, now) {
+  // One window of a weekly schedule that starts on the day `k` days
+  // from `now` (local time, so DST moves with the clock).
+  function windowOf(sc, now, k) {
+    var d = new Date(now);
+    var start = new Date(d.getFullYear(), d.getMonth(), d.getDate() + k, 0, sc.from * 30, 0, 0);
+    var end = new Date(d.getFullYear(), d.getMonth(), d.getDate() + k + (sc.to > sc.from ? 0 : 1), 0, sc.to * 30, 0, 0);
+    return { day: start.getDay(), s: start.getTime(), e: end.getTime() };
+  }
+  function schedLive(sc) { return !!(sc && sc.on && sc.days.length && sc.from !== sc.to); }
+  // The ms the running window ends at, or 0 outside every window.
+  function schedEnds(sc, now) {
+    sc = cleanSched(sc);
+    if (!schedLive(sc)) return 0;
+    for (var k = -1; k <= 0; k++) {
+      var w = windowOf(sc, now, k);
+      if (sc.days.indexOf(w.day) >= 0 && w.s <= now && now < w.e) return w.e;
+    }
+    return 0;
+  }
+  // The end of the running or the next window (within a week), or 0.
+  function schedNextEnd(sc, now) {
+    sc = cleanSched(sc);
+    if (!schedLive(sc)) return 0;
+    for (var k = -1; k <= 7; k++) {
+      var w = windowOf(sc, now, k);
+      if (sc.days.indexOf(w.day) >= 0 && w.e > now) return w.e;
+    }
+    return 0;
+  }
+  // Quiet hours as a schedule of every day (the Sleep mode's hours).
+  function quietSched(q) {
+    var r = readQuiet(q);
+    return { on: r.on, days: [0, 1, 2, 3, 4, 5, 6], from: r.start * 2, to: r.end * 2 };
+  }
+  function fold(s) {
+    s = String(s || "").toLowerCase();
+    try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    return s.replace(/\u03c2/g, "\u03c3");   // final sigma
+  }
+  // evs: [{ s, e, title, label }] timed Calendar events around now.
+  function calEnds(ca, evs, now) {
+    ca = cleanCal(ca);
+    if (!ca || !ca.on || (!ca.label && !ca.word) || !Array.isArray(evs)) return 0;
+    var w = ca.word ? fold(ca.word) : "", end = 0;
+    evs.forEach(function (ev) {
+      if (!ev || !(ev.s <= now && now < ev.e)) return;
+      var hit = (ca.label && ev.label === ca.label) || (w && fold(ev.title).indexOf(w) >= 0);
+      if (hit && ev.e > end) end = ev.e;
+    });
+    return end;
+  }
+  // Does a mode's own schedule or Calendar trigger hold now?
+  // → { until, by: "schedule"|"calendar" } | null
+  function triggerOf(m, q, now, evs) {
+    var se = m.id === "sleep" ? sleepEnds(q, now) : schedEnds(m.sched, now);
+    if (se) return { until: se, by: "schedule" };
+    var ce = calEnds(m.cal, evs, now);
+    if (ce) return { until: ce, by: "calendar" };
+    return null;
+  }
+  function scheduledAt(f, q, now, evs) {
+    for (var i = 0; i < f.modes.length; i++) {
+      var r = triggerOf(f.modes[i], q, now, evs);
+      if (r) return { id: f.modes[i].id, until: r.until, by: r.by };
+    }
+    return null;
+  }
+  // → { id, until, by: "manual"|"schedule"|"calendar" } | null
+  // A manual choice wins; else the first mode in the list whose
+  // schedule or Calendar trigger holds (Sleep: the quiet hours).
+  function activeAt(f, q, now, evs) {
     f = normalize(f);
     var a = f.act;
     var live = !a.until || a.until > now;
     if (a.id && live) return { id: a.id, until: a.until, by: "manual" };
-    var se = sleepEnds(q, now);
-    // "off" chosen while the schedule ran keeps it off until its end
-    if (se && !(a.id === "" && a.at && a.until > now)) return { id: "sleep", until: se, by: "schedule" };
-    return null;
+    // "off" chosen while a schedule ran keeps it off until its end
+    if (a.id === "" && a.at && a.until > now) return null;
+    return scheduledAt(f, q, now, evs);
+  }
+  // "Until the schedule ends" for mode `id`: the end of its running
+  // trigger, else of its next weekly window; 0 = it has none.
+  function endOf(f, q, id, now, evs) {
+    f = normalize(f);
+    var m = modeOf(f, id);
+    if (!m) return 0;
+    var r = triggerOf(m, q, now, evs);
+    if (r) return r.until;
+    return schedNextEnd(m.id === "sleep" ? quietSched(q) : m.sched, now);
   }
   function modeOf(f, id) {
     f = normalize(f);
@@ -146,8 +263,8 @@
     return null;
   }
   // Is a notification of app `ns` kept silent now? (inbox + badge only)
-  function silent(f, q, ns, now) {
-    var cur = activeAt(f, q, now);
+  function silent(f, q, ns, now, evs) {
+    var cur = activeAt(f, q, now, evs);
     if (!cur) return false;
     var m = modeOf(f, cur.id);
     if (!m) return false;
@@ -161,10 +278,12 @@
     f.act = { id: id, until: num(until) > now ? num(until) : 0, at: stamp(f.act.at, now) };
     return f;
   }
-  // Off. Inside a Sleep window it stays off until the window ends.
-  function stopped(f, q, now) {
+  // Off. Inside a scheduled window (Sleep's quiet hours, a weekly
+  // schedule, a Calendar event) it stays off until that window ends.
+  function stopped(f, q, now, evs) {
     f = normalize(f);
-    f.act = { id: "", until: sleepEnds(q, now), at: stamp(f.act.at, now) };
+    var sc = scheduledAt(f, q, now, evs);
+    f.act = { id: "", until: sc ? sc.until : 0, at: stamp(f.act.at, now) };
     return f;
   }
   function edited(f, id, patch, now) {
@@ -174,12 +293,14 @@
     patch = patch || {};
     var next = f.modes.map(function (x) {
       if (x.id !== id) return x;
-      var y = { id: x.id, name: x.name, icon: x.icon, allow: x.allow.slice() };
+      var y = JSON.parse(JSON.stringify(x));
       if ("name" in patch) y.name = cleanName(patch.name);
       if ("icon" in patch && ICONS.indexOf(patch.icon) >= 0) y.icon = patch.icon;
       if ("allow" in patch) y.allow = cleanAllow(patch.allow);
+      if ("sched" in patch) { var sc = cleanSched(patch.sched); if (sc && id !== "sleep") y.sched = sc; else delete y.sched; }
+      if ("cal" in patch) { var ca = cleanCal(patch.cal); if (ca) y.cal = ca; else delete y.cal; }
       if (!isBuiltin(id) && !y.name) y.name = x.name;   // an own mode keeps a name
-      return y;
+      return cleanMode(y, isBuiltin(id) ? { id: id, icon: x.icon, allow: [] } : null);
     });
     if (JSON.stringify(next) === JSON.stringify(f.modes)) return f;
     f.modes = next;
@@ -211,8 +332,10 @@
     return normalize(f);
   }
   // Durations of the Quick settings menu, as Do Not Disturb had them.
-  function untilOf(choice, now) {
+  // "end" needs the mode's schedule: endOf(…) (0 = until turned off).
+  function untilOf(choice, now, end) {
     if (choice === "hour") return now + HOUR;
+    if (choice === "end") return num(end) > now ? num(end) : 0;
     if (choice === "morning") {
       var d = new Date(now);
       d.setHours(8, 0, 0, 0);
@@ -247,6 +370,7 @@
 
   var model = { VER: VER, svg: svg, ICONS: ICONS.slice(), BUILTIN_IDS: BUILTIN.map(function (b) { return b.id; }), MAX_OWN: MAX_OWN,
                 normalize: normalize, merge: merge, touched: touched, sleepEnds: sleepEnds, activeAt: activeAt,
+                schedEnds: schedEnds, schedNextEnd: schedNextEnd, calEnds: calEnds, endOf: endOf, fold: fold,
                 modeOf: modeOf, silent: silent, started: started, stopped: stopped, edited: edited,
                 added: added, removed: removed, untilOf: untilOf, nameOf: nameOf, isBuiltin: isBuiltin };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
@@ -257,10 +381,58 @@
   function N() { var n = root.orosNotifs; return (n && typeof n.getSetting === "function") ? n : null; }
   function read() { var n = N(); return normalize(n ? n.getSetting("focus", null) : null); }
   function quiet() { var n = N(); return n ? n.getSetting("quietHours", {}) : {}; }
+  // Calendar (F2): the timed events running around now, read from the
+  // Calendar's own data on this device (synced by Calendar itself), and
+  // only while some mode has a Calendar trigger. Cached per minute.
+  function calData() {
+    var raw = null, hh = null;
+    try { raw = JSON.parse(localStorage.getItem("oros-calendar-data")); } catch (e) {}
+    try { hh = JSON.parse(localStorage.getItem("oros-calendar-hh")); } catch (e) {}
+    raw = (raw && typeof raw === "object") ? raw : {};
+    var evs = Array.isArray(raw.events) ? raw.events : [];
+    if (hh && Array.isArray(hh.events)) evs = evs.concat(hh.events);
+    return { labels: Array.isArray(raw.labels) ? raw.labels : [], events: evs, deleted: Array.isArray(raw.deleted) ? raw.deleted : [] };
+  }
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function ymdOf(ms) { var d = new Date(ms); return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function wall(date, hm) {
+    var p = date.split("-"), h = hm.split(":");
+    return new Date(+p[0], +p[1] - 1, +p[2], +h[0], +h[1], 0, 0).getTime();
+  }
+  var evCache = { min: -1, list: [] };
+  function eventsNow(f, now) {
+    if (!f.modes.some(function (m) { return m.cal && m.cal.on; })) return [];
+    var min = Math.floor(now / 60000);
+    if (evCache.min === min) return evCache.list;
+    var OCC = root.OrosCalOccur, list = [];
+    if (OCC && typeof OCC.instancesBetween === "function") {
+      var d = calData(), gone = {};
+      d.deleted.forEach(function (x) { if (x && typeof x.id === "string") gone[x.id] = true; });
+      var from = ymdOf(now - 86400000), to = ymdOf(now);
+      d.events.forEach(function (ev) {
+        if (!ev || typeof ev !== "object" || gone[ev.id] || typeof ev.start !== "string" || !/^\d{2}:\d{2}$/.test(ev.start)) return;
+        try {
+          OCC.instancesBetween(ev, from, to, function (inst) {
+            if (!inst.start) return true;
+            var s = wall(inst.date, inst.start), e;
+            if (inst.end) {
+              e = wall(inst.dateEnd || inst.date, inst.end);
+              if (e <= s) e += 86400000;            // ends after midnight
+            } else e = s + 3600000;                   // no end time: one hour
+            if (s <= now && now < e) list.push({ s: s, e: e, title: String(ev.title || ""), label: typeof ev.labelId === "string" ? ev.labelId : "" });
+            return true;
+          });
+        } catch (e) {}
+      });
+    }
+    evCache = { min: min, list: list };
+    return list;
+  }
+  function evs(now) { return eventsNow(read(), now); }
   var listeners = [];
   var lastKey = "";
   function changed() {
-    var cur = activeAt(read(), quiet(), Date.now());
+    var now = Date.now(), cur = activeAt(read(), quiet(), now, evs(now));
     var key = JSON.stringify([cur, read().modes]);
     if (key === lastKey) return;
     lastKey = key;
@@ -286,12 +458,14 @@
     // [{ id, name (shown), own (typed, "" = built-in name), icon, allow, builtin, locked }]
     list: function () {
       return read().modes.map(function (m) {
-        return { id: m.id, name: nameOf(m, t), own: m.name, icon: m.icon, allow: m.allow.slice(), builtin: isBuiltin(m.id), locked: !!LOCKED_ALLOW[m.id] };
+        return { id: m.id, name: nameOf(m, t), own: m.name, icon: m.icon, allow: m.allow.slice(), builtin: isBuiltin(m.id), locked: !!LOCKED_ALLOW[m.id],
+                 sched: m.sched ? JSON.parse(JSON.stringify(m.sched)) : null, cal: m.cal ? JSON.parse(JSON.stringify(m.cal)) : null };
       });
     },
     // { id, name, until, by } | null
     active: function (now) {
-      var f = read(), cur = activeAt(f, quiet(), now || Date.now());
+      now = now || Date.now();
+      var f = read(), cur = activeAt(f, quiet(), now, evs(now));
       if (!cur) return null;
       return { id: cur.id, name: nameOf(modeOf(f, cur.id), t), until: cur.until, by: cur.by };
     },
@@ -301,7 +475,14 @@
       try { localStorage.setItem(LAST_KEY, id); } catch (e) {}
       return write(started(read(), id, opts && opts.until, now));
     },
-    stop: function () { return write(stopped(read(), quiet(), Date.now())); },
+    stop: function () { var now = Date.now(); return write(stopped(read(), quiet(), now, evs(now))); },
+    // the ms "Until the schedule ends" means for mode id (0 = no schedule)
+    endOf: function (id, now) { now = now || Date.now(); return endOf(read(), quiet(), id, now, evs(now)); },
+    // the Calendar's labels [{ id, name }] for the Calendar trigger
+    calLabels: function () {
+      return calData().labels.filter(function (l) { return l && typeof l.id === "string" && typeof l.name === "string"; })
+        .map(function (l) { return { id: l.id, name: l.name }; });
+    },
     last: last,
     edit: function (id, patch) { return write(edited(read(), id, patch, Date.now())); },
     add: function (name, icon) {
@@ -311,7 +492,7 @@
     },
     remove: function (id) { return write(removed(read(), id, Date.now())); },
     // notifications.js asks this before a pop-up or a sound
-    silent: function (ns, now) { return silent(read(), quiet(), ns, now || Date.now()); },
+    silent: function (ns, now) { now = now || Date.now(); return silent(read(), quiet(), ns, now, evs(now)); },
     merge: merge,
     touched: touched,
     onChange: function (fn) { if (typeof fn === "function") listeners.push(fn); return function () { listeners = listeners.filter(function (x) { return x !== fn; }); }; },

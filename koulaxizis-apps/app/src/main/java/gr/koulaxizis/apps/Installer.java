@@ -31,7 +31,7 @@ final class Installer {
         if (!dir.isDirectory() && !dir.mkdirs()) throw new RepoException(RepoException.NETWORK, "cache");
         File apk = new File(dir, app.apkSha256 + ".apk");
         try {
-            Net.file(app.apkUrl, apk, app.apkSize, app.apkSha256);
+            Net.apk(app.apkUrl, apk, app.apkSize, app.apkSha256);
             Set<String> got = Installed.archiveSigners(ctx.getPackageManager(), apk.getPath());
             boolean vouched = false;
             for (String s : got) if (app.signers.contains(s)) vouched = true;

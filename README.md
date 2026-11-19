@@ -173,15 +173,15 @@ are no license keys, ads or nags inside orOS.
 
 ## Support
 
-If orOS helps you, you can
-[buy Christos a coffee on Ko-fi](https://ko-fi.com/koulaxizis), or
-[become a monthly supporter](https://ko-fi.com/koulaxizis/tiers). The same
-Ko-fi page supports all of Christos's open-source projects
-([noxpress](https://noxpress.tech), [NULL JSFX](https://nulljsfx.tech) and orOS).
+If orOS helps you, there are three ways to give something back, all on
+[useoros.online/support](https://useoros.online/support/): an orOS t-shirt, mug
+or sticker from the Glarolykoi shop, a one-time donation, or hiring Christos.
+Nothing is unlocked: everything stays free.
 
-Need a hand? You can
-[book a service on Ko-fi](https://ko-fi.com/koulaxizis/commissions): orOS set up
-on your own domain with your own sync, your logo and app list, or a custom app.
+Need a hand? Christos sets up orOS on your own domain with your own sync, your
+logo and app list, or builds a custom app:
+[Work with me](https://koulaxizis.gr/work-with-me/?lang=en#oros). You write
+first, and pay only after you agree on the work.
 
 ## Licence
 

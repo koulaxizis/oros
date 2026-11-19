@@ -2,9 +2,13 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 48576 of 48576 (100%)
-- Help pages: 159 of 159 (100%)
+- Strings: 48980 of 48986 (99%)
+- Help pages: 160 of 160 (100%)
 - Shown in the language list: yes
+
+Apps marked "English for now" do not load language packs yet: their
+text is still written in the code. They switch over wave by wave
+(see the plan in docs/translate/README.md).
 
 "in the code": a shared module or a public page that runs where no
 app pack is loaded keeps these lines in its own table (de: {…} after
@@ -49,18 +53,19 @@ en and el); translators change them there, not in a pack.
 | dice | 100% | 57 / 57 |
 | discover | 100% | 3 / 3 |
 | dots | 100% | 55 / 55 |
+| download | English for now | 12 / 18 (12 in the code) |
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 849 / 849 (25 in the code) |
+| files | 100% | 902 / 902 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 163 / 163 |
+| gamecenter | 100% | 164 / 164 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -77,11 +82,12 @@ en and el); translators change them there, not in a pack.
 | labels | 100% | 88 / 88 |
 | layout | 100% | 1153 / 1153 |
 | library | 100% | 330 / 330 |
+| lighthouse | 100% | 213 / 213 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
 | mahjong | 100% | 70 / 70 |
-| mail | 100% | 502 / 502 |
+| mail | 100% | 504 / 504 |
 | mancala | 100% | 61 / 61 |
 | maps | 100% | 1286 / 1286 |
 | mastermind | 100% | 74 / 74 |
@@ -99,7 +105,7 @@ en and el); translators change them there, not in a pack.
 | music | 100% | 541 / 541 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 175 / 175 |
-| newsletter | 100% | 1008 / 1008 |
+| newsletter | 100% | 1061 / 1061 |
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 293 / 293 |
 | oracle | 100% | 38 / 38 |
@@ -130,10 +136,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 1962 / 1962 |
+| settings | 100% | 1999 / 1999 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1513 / 1513 |
+| shell | 100% | 1533 / 1533 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -161,7 +167,7 @@ en and el); translators change them there, not in a pack.
 | today | 100% | 158 / 158 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 144 / 144 |
+| transfer | 100% | 157 / 157 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |

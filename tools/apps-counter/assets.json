@@ -1,0 +1,66 @@
+{
+  "koulaxizis/oros": {
+    "android-apks": {
+      "oros.apk": "online.useoros.twa",
+      "oros-notes.apk": "online.useoros.notes",
+      "oros-calendar.apk": "online.useoros.calendar",
+      "oros-todo.apk": "online.useoros.todo",
+      "oros-passwords.apk": "online.useoros.passwords",
+      "oros-budget.apk": "online.useoros.budget",
+      "oros-gamecenter.apk": "online.useoros.games",
+      "oros-bookmarks.apk": "online.useoros.bookmarks",
+      "oros-contacts.apk": "online.useoros.contacts",
+      "oros-writer.apk": "online.useoros.writer",
+      "oros-spreadsheet.apk": "online.useoros.spreadsheet",
+      "oros-kanban.apk": "online.useoros.kanban",
+      "oros-mindmap.apk": "online.useoros.mindmap",
+      "oros-wiki.apk": "online.useoros.wiki",
+      "oros-slides.apk": "online.useoros.slides",
+      "oros-habits.apk": "online.useoros.habits",
+      "oros-water.apk": "online.useoros.water",
+      "oros-diary.apk": "online.useoros.diary",
+      "oros-mood.apk": "online.useoros.mood",
+      "oros-fitness.apk": "online.useoros.workouts",
+      "oros-health.apk": "online.useoros.health",
+      "oros-cycle.apk": "online.useoros.cycle",
+      "oros-calculator.apk": "online.useoros.calculator",
+      "oros-time.apk": "online.useoros.time",
+      "oros-weather.apk": "online.useoros.weather",
+      "oros-maps.apk": "online.useoros.maps",
+      "oros-feeds.apk": "online.useoros.reader",
+      "oros-mail.apk": "online.useoros.mail",
+      "oros-files.apk": "online.useoros.files",
+      "oros-podcasts.apk": "online.useoros.podcasts",
+      "oros-radio.apk": "online.useoros.radio",
+      "oros-photolab.apk": "online.useoros.photolab",
+      "oros-invoices.apk": "online.useoros.invoices",
+      "oros-crm.apk": "online.useoros.crm",
+      "oros-timesheet.apk": "online.useoros.timesheet",
+      "oros-music.apk": "online.useoros.music",
+      "oros-transfer.apk": "online.useoros.transfer",
+      "oros-scanpdf.apk": "online.useoros.scanner",
+      "oros-stock.apk": "online.useoros.stock",
+      "oros-forms.apk": "online.useoros.forms",
+      "oros-library.apk": "online.useoros.library",
+      "oros-base.apk": "online.useoros.base",
+      "oros-studioremote.apk": "online.useoros.studioremote",
+      "oros-drive.apk": "online.useoros.drive",
+      "oros-glarolykoi.apk": "net.glarolykoi.android"
+    },
+    "koulaxizis-apps": {
+      "koulaxizis-apps.apk": "gr.koulaxizis.apps"
+    }
+  },
+  "koulaxizis/null-jsfx": {
+    "*": {
+      "NULL-JSFX-Remote-DAWs-Android.apk": "tech.nulljsfx.remote.daws",
+      "NULL-JSFX-Remote-Mixers-Android.apk": "tech.nulljsfx.remote.mixers"
+    }
+  },
+  "koulaxizis/noxpress": {
+    "*": {
+      "site-bridge.apk": "tech.noxpress.sitebridge",
+      "live-operator.apk": "tech.noxpress.liveoperator"
+    }
+  }
+}

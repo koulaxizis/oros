@@ -126,6 +126,7 @@ orosPack("de", "gamecenter", {
  "fieldwarden": "Feldhüter",
  "roots": "Wurzeln",
  "hive": "Bienenstock",
+ "lighthouse": "Leuchtturminsel",
  "ridge": "Windmühlengrat",
  "maze": "Laternenlabyrinth",
  "chal.back": "Wieder aufnehmen",

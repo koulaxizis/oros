@@ -35,6 +35,13 @@ Transfer sendet große Dateien und ganze Ordner von der orOS-Disk oder von diese
 - Beim ersten Mal auf einem Gerät prüft Transfer mit einer kleinen Testdatei, ob dieser Browser von einem Dropbox-Link herunterladen kann (einmal für 4 Stunden und einmal für längere Zeiten). Wenn nicht, sagt es das und lädt nichts hoch.
 - Die Dateien belegen Platz in deiner Dropbox, bis sie gelöscht sind. Transfer prüft vorher den freien Platz.
 
+## Den Link zu einer festen Zeit per E-Mail senden
+- Bei `Über meine Dropbox senden` hake `Den Link an einem festen Tag und zu einer festen Uhrzeit per E-Mail senden` an, schreib die E-Mail-Adresse der anderen Person und wähle Tag und Uhrzeit (5 Minuten bis 14 Tage im Voraus). `Mir auch eine Kopie senden, als Bestätigung` setzt deine eigene Adresse ins Bcc, so bekommst du dieselbe E-Mail, sobald sie hinausgeht.
+- `Hochladen und E-Mail planen` lädt die Dateien jetzt hoch. Die Stunden bei `In Dropbox behalten für` zählen ab der Zeit der E-Mail, die andere Person hat also die ganze Zeit. Geplante Links sind immer geteilte Dropbox-Links (die Dropbox-Berechtigung der längeren Zeiten).
+- Dann öffnet sich [Mail](app:mail) mit der fertigen E-Mail: der Link, bis wann er gilt, dein Titel und deine Nachricht. Prüfe sie und drücke `Senden:` mit der Uhrzeit. Nichts geht hinaus, bevor du drückst. `E-Mail öffnen` öffnet sie wieder, falls du sie geschlossen hast.
+- Mail sendet sie mit deinem eigenen Konto von diesem Gerät: orOS muss zu dieser Zeit hier geöffnet sein (egal welche App, Mail darf geschlossen sein). Ist orOS geschlossen, geht sie beim nächsten Öffnen von orOS auf diesem Gerät hinaus. Du bekommst eine Benachrichtigung, sobald sie gesendet ist.
+- Zum Ändern oder Absagen vorher: `Postausgang von Mail` (`Bearbeiten` oder `Löschen`). `Jetzt löschen` löscht die Dateien: Der Link in der E-Mail funktioniert dann nicht mehr.
+
 ## Verlauf
 - `Verlauf` listet die abgeschlossenen Übertragungen, die neuesten zuerst: wann, an oder von welchem Gerät, wie viele Dateien und wie groß, und wohin sie gingen. `Öffnen` zeigt einen Ordner, der auf der orOS-Disk angekommen ist.
 - Der Verlauf behält nur die Namen der obersten Dateien und Ordner, nie ihren Inhalt, und synchronisiert sich mit deinen anderen Geräten. `Verlauf löschen` (zweimal drücken) leert ihn überall.
