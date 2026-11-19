@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 48473 of 48479 (99%)
+- Strings: 48555 of 48561 (99%)
 - Help pages: 158 of 158 (100%)
 - Shown in the language list: yes
 
@@ -103,7 +103,7 @@ en and el); translators change them there, not in a pack.
 | music | 100% | 541 / 541 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 175 / 175 |
-| newsletter | 100% | 1008 / 1008 |
+| newsletter | 100% | 1061 / 1061 |
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 293 / 293 |
 | oracle | 100% | 38 / 38 |
@@ -134,10 +134,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 1962 / 1962 |
+| settings | 100% | 1985 / 1985 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1519 / 1519 |
+| shell | 100% | 1525 / 1525 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

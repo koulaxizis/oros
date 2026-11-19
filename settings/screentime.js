@@ -28,7 +28,20 @@
       "st.limits.hint": "5 minutes before a limit you get a quiet notice. At the limit a card asks whether to take a break: the app stays open under it, nothing is lost, and one tap goes on. Settings has no limit.",
       "st.limit.none": "No limit",
       "st.limit.used": "{used} of {limit} today",
-      "st.limits.empty": "The apps you use appear here once they have been counted."
+      "st.limits.empty": "The apps you use appear here once they have been counted.",
+      "st.bed.on": "Bedtime on this device",
+      "st.bed.hint": "From the time you choose, the whole screen slowly turns grey, so it is easier to stop. Your apps keep working as usual. 15 minutes before, a quiet notice; Not tonight (in the notice, in Quick settings or here) leaves it off until the next evening. Only on this device.",
+      "st.bed.from": "From",
+      "st.bed.to": "Until",
+      "st.bed.days": "Evenings",
+      "st.bed.sleep": "Also turn on Sleep focus",
+      "st.bed.sleep.hint": "Sleep focus is shared by all your devices, so it also silences the others until the night ends.",
+      "st.bed.skip": "Not tonight",
+      "st.bed.unskip": "On again tonight",
+      "st.bed.now": "Bedtime now, until {t}.",
+      "st.bed.next": "Next: {day} at {t}.",
+      "st.bed.skipped": "Off tonight.",
+      "st.bed.noDays": "Pick at least one evening."
     },
     el: {
       "st.hint": "Μετράει την εφαρμογή που είναι μπροστά, όσο το orOS φαίνεται, είναι ξεκλείδωτο και το χρησιμοποιείς (ή παίζει ήχος ή βίντεο). Μένει σε αυτή τη συσκευή: δεν συγχρονίζεται, δεν μπαίνει σε αντίγραφο ασφαλείας και δεν το βλέπουν ποτέ ο Βοηθός ή το orOS Gate. Κρατιέται 4 εβδομάδες.",
@@ -45,7 +58,20 @@
       "st.limits.hint": "5 λεπτά πριν από ένα όριο βγαίνει μια ήσυχη ειδοποίηση. Στο όριο μια κάρτα ρωτά αν θέλεις διάλειμμα: η εφαρμογή μένει ανοιχτή από κάτω, δεν χάνεται τίποτα και ένα πάτημα συνεχίζει. Οι Ρυθμίσεις δεν έχουν όριο.",
       "st.limit.none": "Χωρίς όριο",
       "st.limit.used": "{used} από {limit} σήμερα",
-      "st.limits.empty": "Οι εφαρμογές που χρησιμοποιείς εμφανίζονται εδώ μόλις μετρηθούν."
+      "st.limits.empty": "Οι εφαρμογές που χρησιμοποιείς εμφανίζονται εδώ μόλις μετρηθούν.",
+      "st.bed.on": "Ώρα για ύπνο σε αυτή τη συσκευή",
+      "st.bed.hint": "Από την ώρα που διαλέγεις, όλη η οθόνη γίνεται σιγά σιγά γκρι, για να σταματάς πιο εύκολα. Οι εφαρμογές δουλεύουν κανονικά. 15 λεπτά πριν βγαίνει μια ήσυχη ειδοποίηση· το Όχι απόψε (στην ειδοποίηση, στις Γρήγορες ρυθμίσεις ή εδώ) την αφήνει κλειστή μέχρι το επόμενο βράδυ. Μόνο σε αυτή τη συσκευή.",
+      "st.bed.from": "Από",
+      "st.bed.to": "Έως",
+      "st.bed.days": "Βράδια",
+      "st.bed.sleep": "Άνοιξε και τη λειτουργία Ύπνος",
+      "st.bed.sleep.hint": "Η λειτουργία Ύπνος είναι κοινή σε όλες τις συσκευές σου, άρα σιγάζει και τις άλλες μέχρι να τελειώσει η νύχτα.",
+      "st.bed.skip": "Όχι απόψε",
+      "st.bed.unskip": "Ξανά απόψε",
+      "st.bed.now": "Ώρα για ύπνο τώρα, έως τις {t}.",
+      "st.bed.next": "Επόμενη: {day} στις {t}.",
+      "st.bed.skipped": "Όχι απόψε.",
+      "st.bed.noDays": "Διάλεξε τουλάχιστον ένα βράδυ."
     }
   };
   var C0 = window.SettingsCore;
@@ -55,7 +81,7 @@
     });
   }
 
-  var C, LANG, t, el, card, row, switchBtn, actions, confirmBtn, set, render, select;
+  var C, LANG, t, el, card, row, switchBtn, actions, confirmBtn, set, render, select, button;
 
   var stPick = null;
   function stLocale() { return LANG === "el" ? "el-GR" : LANG === "de" ? "de-DE" : "en-GB"; }
@@ -84,7 +110,10 @@
       { scope: "screentime", hint: t("st.hint") }));
     if (!st.on && st.has) c1.appendChild(el("p", "hint", t("st.offKept")));
     host.appendChild(c1);
-    if (!st.on && !st.has) return;
+    if (!st.on && !st.has) {           // bedtime works with counting off too
+      if (st.bed && select && button) stBedCard(host, st.bed);
+      return;
+    }
 
     var days = st.days || [];
     var pick = null;
@@ -171,6 +200,10 @@
       host.appendChild(c5);
     }
 
+    // S3: bedtime (its own schedule on this device). Older shells send
+    // no `bed`: no card.
+    if (st.bed && select && button) stBedCard(host, st.bed);
+
     if (st.has) {
       var c4 = card(null);
       c4.appendChild(row(t("st.clear"), null, { hint: t("st.clear.hint") }));
@@ -182,12 +215,63 @@
     }
   }
 
+  function stHM(mins) { var h = Math.floor(mins / 60), m = mins % 60; return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m; }
+  function stBedCard(host, b) {
+    var c = card(t("st.bed"), "screentime");
+    c.appendChild(row(t("st.bed.on"), switchBtn(b.on, "screentime-bed", function (v) { set("screentimeBed", { on: v }); }, t("st.bed.on")),
+      { hint: t("st.bed.hint") }));
+    if (b.on) {
+      var times = [];
+      for (var m = 0; m < 1440; m += 30) times.push({ value: String(m), label: stHM(m) });
+      var f = select(times, String(b.from), "st-bed-from", function (v) { set("screentimeBed", { from: Number(v) }); });
+      c.appendChild(row(t("st.bed.from"), f, { forId: f.id }));
+      var to = select(times, String(b.to), "st-bed-to", function (v) { set("screentimeBed", { to: Number(v) }); });
+      c.appendChild(row(t("st.bed.to"), to, { forId: to.id }));
+      // Evenings, Monday first; the weekday names come from the browser.
+      var wk = el("div", "st-days");
+      wk.setAttribute("role", "group");
+      wk.setAttribute("aria-label", t("st.bed.days"));
+      [1, 2, 3, 4, 5, 6, 0].forEach(function (d) {
+        var on = b.days.indexOf(d) !== -1;
+        var name = "";
+        try { name = new Date(2026, 10, 15 + d).toLocaleDateString(stLocale(), { weekday: "short" }); } catch (e) { name = String(d); }
+        var bt = el("button", "st-day" + (on ? " on" : ""), name);
+        bt.type = "button";
+        bt.setAttribute("aria-pressed", on ? "true" : "false");
+        bt.addEventListener("click", function () {
+          var days = b.days.filter(function (x) { return x !== d; });
+          if (!on) days.push(d);
+          set("screentimeBed", { days: days });
+        });
+        wk.appendChild(bt);
+      });
+      c.appendChild(row(t("st.bed.days"), null, { stack: true }));
+      c.appendChild(wk);
+      if (!b.days.length) c.appendChild(el("p", "hint", t("st.bed.noDays")));
+      if (b.focus) {
+        c.appendChild(row(t("st.bed.sleep"), switchBtn(b.sleep, "screentime-bed-sleep", function (v) { set("screentimeBed", { sleep: v }); }, t("st.bed.sleep")),
+          { hint: t("st.bed.sleep.hint") }));
+      }
+      var when = "";
+      var fmt = function (ms) { return new Date(ms).toLocaleTimeString(stLocale(), { hour: "2-digit", minute: "2-digit", hourCycle: "h23" }); };
+      if (b.skipped) when = t("st.bed.skipped");
+      else if (b.active) when = t("st.bed.now", { t: fmt(b.end) });
+      else if (b.next) when = t("st.bed.next", { day: new Date(b.next).toLocaleDateString(stLocale(), { weekday: "long" }), t: fmt(b.next) });
+      if (when) c.appendChild(el("p", "hint st-bed-when", when));
+      if (b.active || b.next) {
+        c.appendChild(actions(button(t(b.skipped ? "st.bed.unskip" : "st.bed.skip"), b.skipped ? "st.bed.unskip" : "st.bed.skip",
+          function () { set("screentimeBedSkip", !b.skipped); })));
+      }
+    }
+    host.appendChild(c);
+  }
+
   window.SettingsScreenTime = {
     STRINGS: STR,
     draw: function (host, s, ctx) {
       C = ctx.C; LANG = ctx.LANG; t = ctx.t; el = ctx.el; card = ctx.card; row = ctx.row;
       switchBtn = ctx.switchBtn; actions = ctx.actions; confirmBtn = ctx.confirmBtn; set = ctx.set; render = ctx.render;
-      select = ctx.select;
+      select = ctx.select; button = ctx.button;
       secScreenTime(host, s);
     }
   };

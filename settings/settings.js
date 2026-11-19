@@ -4875,7 +4875,7 @@
   }
   function stCtx() {
     return { C: C, LANG: LANG, t: t, el: el, card: card, row: row, switchBtn: switchBtn, actions: actions,
-             confirmBtn: confirmBtn, set: set, render: render, select: select };
+             confirmBtn: confirmBtn, set: set, render: render, select: select, button: button };
   }
   function secScreenTime(host, s) {
     if (window.SettingsScreenTime) { window.SettingsScreenTime.draw(host, s, stCtx()); return; }
