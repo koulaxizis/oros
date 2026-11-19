@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 48608 of 48614 (99%)
-- Help pages: 158 of 158 (100%)
+- Strings: 48855 of 48861 (99%)
+- Help pages: 159 of 159 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -53,7 +53,7 @@ en and el); translators change them there, not in a pack.
 | dice | 100% | 57 / 57 |
 | discover | 100% | 3 / 3 |
 | dots | 100% | 55 / 55 |
-| download | English for now | 0 / 6 |
+| download | English for now | 12 / 18 (12 in the code) |
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
 | feeds | 100% | 328 / 328 |
@@ -65,7 +65,7 @@ en and el); translators change them there, not in a pack.
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 162 / 162 |
+| gamecenter | 100% | 163 / 163 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -82,6 +82,7 @@ en and el); translators change them there, not in a pack.
 | labels | 100% | 88 / 88 |
 | layout | 100% | 1153 / 1153 |
 | library | 100% | 330 / 330 |
+| lighthouse | 100% | 213 / 213 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
@@ -134,10 +135,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 1985 / 1985 |
+| settings | 100% | 1999 / 1999 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1525 / 1525 |
+| shell | 100% | 1532 / 1532 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

@@ -518,6 +518,12 @@
    ]
   },
   {
+   "app": "lighthouse",
+   "files": [
+    "lighthouse/lighthouse.js"
+   ]
+  },
+  {
    "app": "lightsout",
    "files": [
     "lightsout/lightsout.js"

@@ -154,6 +154,8 @@
     // Hive (an idle game): the hive itself syncs in oros-hive-data;
     // oros-hive-session is {acts}, under way once something was done.
     hive: function (s) { return num(s.acts) > 0; },
+    // Lighthouse Island (idle): oros-lighthouse-session is {acts}, as Hive.
+    lighthouse: function (s) { return num(s.acts) > 0; },
     // Windmill ridge: {g: engine state, ck, counted}; under way after the
     // first action, until the night is won or lost.
     ridge: function (s) {

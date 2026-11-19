@@ -1,0 +1,57 @@
+# Leuchtturminsel
+Leuchtturminsel ist ein ruhiges Idle-Spiel für eine Person. Du hältst das Licht auf einer kleinen Insel in der Ägäis am Brennen. Nachts leitet die Lampe die Schiffe auf den Seewegen, die sie erreicht, und jedes Schiff zahlt seine Gebühr; am Tag verdienen der Hafen, die Fischerboote und die Taverne. Die Insel macht von selbst weiter, während orOS geschlossen ist: Du verpasst nichts, musst nichts einsammeln und bekommst keine Benachrichtigungen. Komm, wann du magst.
+
+## So wird gespielt
+- Tippe auf einen Ort der Insel, um dort zu bauen: den Leuchtturm, das Haus des Wärters, den Hafen, die Fischerboote oder die Taverne. Das Feld darunter zeigt, was sich dort bauen lässt, was es bewirkt und was es kostet.
+- Eine Stunde auf der Insel dauert eine Minute, ein Tag und eine Nacht also 24 Minuten. Nacht ist von 20:00 bis 06:00. Die Statuszeile zeigt die Münzen und wie viele jede Minute hereinkommen, die Baustoffe (Holz und Stein), den Fisch, der auf die Taverne wartet, die auf dieser Insel geleiteten Schiffe sowie Tag und Stunde.
+- Tippe auf ein vorbeifahrendes Schiff, um seinen Namen zu sehen. Tippen bringt nichts ein: die Insel verdient von selbst.
+- `Rückgängig` in der Meldung nach jedem Kauf nimmt ihn zurück.
+
+## Das Licht und die Seewege
+- Die Lampe erreicht mehr Seewege, je weiter sie wächst: Docht, Öllampe, Glühstrumpf, Linse und große Linse. Die Wege sind die Fischgründe, der Kaikiweg, die Inselfähre, der Frachtweg und der ferne Handelsweg; die ferneren haben weniger, aber reichere Schiffe.
+- Jeder Seeweg, den das Licht erreicht, gibt 5 % mehr auf alle Münzen von den Schiffen.
+- **Linse polieren** macht das Licht stärker (jedes Schiff zahlt mehr), und die **Uhrwerk-Drehung** dreht den Strahl für 10 % mehr.
+- Die Lampe verbrennt jede Stunde, in der sie brennt, Öl, bezahlt aus deinen Münzen. Gehen die Münzen aus, brennt sie schwach (halbe Reichweite und Stärke), bis wieder Münzen da sind. Das Licht geht nie aus, und kein Schiff erleidet je Schiffbruch.
+- Frachter und ein wenig die Kaikis bringen Baustoffe. Baustoffe braucht man für die größeren Gebäude.
+
+## Die Vorhersage und das Wetter
+Der Streifen oben zeigt das Wetter jedes Tagesviertels der nächsten 3 Tage: ruhig, Wind, Regen, Nebel oder Sturm, jedes mit eigenem Symbol. Tippe darauf oder drücke [[F]] für die Liste in Worten. Das Wetter ist auf jedem Gerät gleich.
+- **Wind:** die Boote fangen 40 % weniger. Ein **Wellenbrecher** hält sie bei der Arbeit.
+- **Regen:** das Licht erreicht 30 % weniger Schiffe, und der Hafen arbeitet 20 % weniger. Das **Regendach** hält das Licht klar.
+- **Nebel:** das Licht brennt auch am Tag, aber nur 40 % der Schiffe finden ihren Weg. Das **Nebelhorn** macht 80 % daraus.
+- **Sturm:** das Licht erreicht 30 % der Schiffe, der Hafen arbeitet zur Hälfte, und die Boote bleiben drin. **Sturmläden** machen 70 % daraus; der Wellenbrecher lässt die Boote zur Hälfte arbeiten.
+Kommt schlechtes Wetter und sein Schutz ist nicht gebaut, sagt es das Feld, mit den verbleibenden Stunden.
+
+## Die anderen Orte
+- **Haus des Wärters:** das Öllager (Öl kostet 20 % weniger) und die Werkstatt (Gebäude brauchen 10 % weniger Baustoffe).
+- **Hafen:** Anleger (liegende Schiffe zahlen je 3 Münzen in jeder Tagesstunde), der Fähranleger (die Fähre zahlt 8 Münzen in jeder Tagesstunde), das Lagerhaus (25 % mehr Baustoffe) und der Wellenbrecher.
+- **Fischerboote:** mehr Boote (je 2 Fische in jeder Tagesstunde) und Netze (20 % mehr Fisch).
+- **Taverne:** Tische (jeder verkauft 3 Fische pro Stunde) und Zimmer (Seeleute bleiben über Nacht: Hafengebühren +15 %). Fisch, den die Taverne noch nicht verkaufen kann, wartet auf die nächste Stunde.
+`Gebäude` in der Werkzeugleiste zeigt alle Orte auf einmal.
+
+## Den Leuchtturm übergeben
+- Sobald die Linse gebaut ist und das Licht auf dieser Insel 20.000 Schiffe geleitet hat, kannst du es deinem Lehrling übergeben. Ein Knopf `Übergeben` erscheint in der Werkzeugleiste und im Feld. Es eilt nicht: er bleibt offen, oder du behältst diesen Leuchtturm für immer.
+- Du wählst eine fernere Insel und eine Eigenschaft, die du für immer behältst. Der neue Leuchtturm beginnt klein: ein Docht, ein Boot, ein Tavernentisch und ein paar Münzen.
+- Jeder übergebene Leuchtturm bleibt auf der Seekarte und gibt für immer 2 % mehr auf alle Münzen (bis 100 %). Jede Übergabe senkt auch die Schiffe, die die nächste braucht, um 10 % (bis zur Hälfte). `Bilanz` listet sie auf.
+- **Inseln:** die Heimatinsel ist meist ruhig. Der Fels ist neblig, und seine Fischgründe und Kaikis bringen mehr Schiffe. Das Kap ist stürmisch und windig, mit mehr Frachtern und Handelsschiffen. Die äußere Insel ist regnerisch, mit anderthalbmal so vielen Handelsschiffen und weniger Fischerbooten. Die Windinsel hat an fast jedem zweiten Tag Wind und mehr Kaikis und Fähren.
+- **Eigenschaften** (drei zur Wahl bei jeder Übergabe; dieselbe kann wieder gewählt werden und addiert sich): Wetterkundig (die Vorhersage zeigt 5 Tage, und im Nebel finden 10 % mehr Schiffe ihren Weg), Sparsam (Öl 20 % billiger), Freund der Fischer (25 % mehr Fisch), Guter Wirt (20 % mehr für den Fisch der Taverne), Baumeister (10 % weniger Baustoffe) und Nachteule (nachts 15 % mehr von jedem Schiff).
+
+## Das Logbuch des Wärters
+`Logbuch des Wärters` in der Werkzeugleiste (oder [[L]]) zeigt die letzten Schiffe, die das Licht geleitet hat, mit ihren Namen und dem Wetter, in dem sie vorbeifuhren. Es ist nur zum Lesen da: nichts darin will etwas von dir.
+
+## Während du weg warst
+Öffnest du Leuchtturminsel nach einer Weile, zeigt eine Karte, wie lange du weg warst, wie viele Tage und Nächte vergingen, die geleiteten Schiffe, die verdienten Münzen, das Wetter und ein paar Zeilen aus dem Logbuch. In den ersten 7 Tagen Abwesenheit arbeitet die Insel voll, danach mit halbem Tempo weiter. Sie hört nie auf, sie wird nur langsamer.
+
+## Bilanz und Synchronisierung
+`Bilanz` zeigt den Tag, alle verdienten Münzen, alle geleiteten Schiffe, die Schiffe dieser Insel gegenüber dem, was die Übergabe braucht, die Insel, die gehaltenen Leuchttürme, die Eigenschaften, die Stunden mit schwacher Lampe und die Seekarte. `Toneffekte` dort schaltet die kleinen Töne an und aus, wie [[M]]. `Das Rauschen von Meer und Wind` dort schaltet ein leises Meeresrauschen ein, das mit dem Wind anschwillt, mit einem tiefen Horn hin und wieder im Nebel, sobald das Nebelhorn gebaut ist; anfangs ist es aus. Die Insel wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen: es ist dieselbe Insel auf Handy und Computer. Spielen zwei Geräte zugleich, bleibt die weiter fortgeschrittene Insel, und die letzten Minuten des anderen Geräts gehen verloren. Ein Kauf wird ein paar Sekunden danach gespeichert und höchstens alle 5 Minuten sowie beim Verlassen gesendet. `Neu beginnen` in der Bilanz startet auf jedem Gerät eine neue Insel, mit `Rückgängig` für ein paar Sekunden. Leuchtturminsel steht in der Gruppe Entspannt im [Game Center](help:a/gamecenter). Die Toneinstellungen bleiben auf diesem Gerät.
+
+## Tastatur
+- Die Pfeiltasten wählen einen Ort der Insel; [[Enter]] geht ins Feld, und [[Escape]] lässt den Ort los.
+- [[1]] bis [[6]]: baut, was das Feld zeigt, in seiner Reihenfolge, am gewählten Ort.
+- [[H]]: Übergeben (sobald der Leuchtturm bereit ist). [[U]]: Gebäude. [[F]]: Vorhersage. [[L]]: Logbuch des Wärters. [[S]]: Bilanz. [[M]]: Ton. [[Z]]: den letzten Kauf rückgängig machen.
+
+## Tipps
+- Am Anfang zahlen sich die Öllampe und ein zweites Boot am schnellsten aus.
+- Schau vor einem großen Kauf auf die Vorhersage: eine neblige Woche macht das Nebelhorn wertvoller als eine Politur.
+- Behalte vor Einbruch der Nacht ein paar Münzen für Öl.
+- Frachter bringen die Baustoffe, die die Linse braucht: zuerst der Glühstrumpf und ein Lagerhaus.

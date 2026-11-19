@@ -62,6 +62,7 @@ orosPack("de", "shell", {
  "app.feeds": "Reader",
  "app.fieldwarden": "Feldhüter",
  "app.hive": "Bienenstock",
+ "app.lighthouse": "Leuchtturminsel",
  "app.files": "Dateien",
  "app.fitness": "Training",
  "app.flashcards": "Karteikarten",

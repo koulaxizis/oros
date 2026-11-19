@@ -126,6 +126,7 @@ orosPack("de", "gamecenter", {
  "fieldwarden": "Feldhüter",
  "roots": "Wurzeln",
  "hive": "Bienenstock",
+ "lighthouse": "Leuchtturminsel",
  "ridge": "Windmühlengrat",
  "chal.back": "Wieder aufnehmen",
  "chal.backed": "{g} kann ab morgen wieder Herausforderungen bekommen.",
