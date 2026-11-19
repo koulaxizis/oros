@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.79.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.79.02";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -4192,7 +4192,7 @@
         appsResumeStart();   // RS-1
         greetStart();
         safeStart();
-        supportAskStart();   // KOFI-1: once, after 30 days
+        supportAskStart();   // SUP-1: once, after 30 days
         if (SOLO) soloStart();
         // Files from the system's "Open with" (fileopen.js) wait for the app list.
         if (window.orosFileOpen) window.orosFileOpen.ready();
@@ -6668,7 +6668,7 @@
     infoRow.appendChild(infoBtn);
     menu.appendChild(infoRow);
 
-    // KOFI-1 (Chris 2026-11-19): Support orOS, the Info window's Support
+    // SUP-1 (Chris 2026-11-19): Support orOS, the Info window's Support
     // section. A plain row like Info: no badge, no count, never coloured.
     var supRow = document.createElement("div");
     supRow.className = "install-section";
@@ -9020,41 +9020,39 @@
     }
   }
   
-    // ---------- Support / donations (Info modal only — no footer) ----------
-  // Plain <a> links, NEVER platform widgets: embeds mean third-party
-  // scripts/requests — violates the no-tracking doctrine. Opened in
-  // a new tab with rel=noopener (same contract as the repo link).
+    // ---------- Support (Info modal only — no footer) ----------
+  // SUP-1 (Chris 2026-11-19, replaces KOFI-1): orOS is supported by buying
+  // something from the Glarolykoi shop, a one-time donation (Viva) or
+  // hiring Christos; nothing is unlocked. Plain <a> links, NEVER platform
+  // widgets: embeds mean third-party scripts/requests (no-tracking
+  // doctrine). New tab, rel=noopener, fixed URLs. All three cards go to
+  // a section of useoros.online/support/, never straight to the shop or
+  // the payment page: where support goes can change there with no new
+  // orOS release.
   // i18n: words in translations.js (sup.*), German in the shell pack.
+  var SUPPORT_PAGE = "https://useoros.online/support/";
   var SUPPORT_OPTS = [
-    {
-      name: "Ko-fi",
-      url:  "https://ko-fi.com/koulaxizis",
-      k:    "sup.kofi"
-    }
+    { hash: "#buy",    nk: "sup.buy",  k: "sup.buy.d" },
+    { hash: "#donate", nk: "sup.once", k: "sup.once.d" },
+    { hash: "#hire",   nk: "sup.hire", k: "sup.hire.d" }
   ];
-  // Extra plain links shown under the Ko-fi card (same rules: fixed
-  // URLs, new tab, rel=noopener, no fetch/embed/widget).
-  var SUPPORT_LINKS = [
-    {
-      url: "https://ko-fi.com/koulaxizis/tiers",
-      k:   "sup.tiers"
-    },
-    {
-      url: "https://nulljsfx.tech/supporters/",
-      k:   "sup.supporters"
-    }
-  ];
+  // The page speaks English and Greek; German reads the English one.
+  function supportHref(opt) {
+    return SUPPORT_PAGE + "?lang=" + langBase() + opt.hash;
+  }
 
   // The Info window, scrolled to its Support section (Start menu row,
-  // the KOFI-1 notice).
+  // the SUP-1 notice).
   function showSupportSection() {
     if (!scInfoClose) showInfoModal();
     var sec = document.getElementById("sc-support");
     if (sec && sec.scrollIntoView) sec.scrollIntoView({ block: "start" });
   }
 
-  // KOFI-1 / A2 (Chris 2026-11-19, changes the no-nags rule once): one
-  // quiet notice after 30 days of use on this device, never again.
+  // SUP-1 (was KOFI-1 / A2, Chris 2026-11-19, changes the no-nags rule
+  // once): one quiet notice after 30 days of use on this device, never
+  // again (so it can never repeat: stricter than "at most once per 30
+  // days, with Don't show again").
   // Device-local keys, never synced: SUP_SINCE (first start seen, set on
   // the first start after this version, so people who were here before
   // get it 30 days from now), SUP_ASKED (the notice was shown). Not in a
@@ -9110,7 +9108,7 @@
       "display:flex;flex-direction:column;gap:6px;margin-bottom:8px;";
     SUPPORT_OPTS.forEach(function (opt) {
       var a = document.createElement("a");
-      a.href = opt.url;
+      a.href = supportHref(opt);
       a.target = "_blank";
       a.rel = "noopener";
       a.style.cssText =
@@ -9119,7 +9117,7 @@
         "border-radius:8px;color:var(--text);text-decoration:none;" +
         "font-size:12.5px;font-weight:600;flex-wrap:wrap;";
       var nm = document.createElement("span");
-      nm.textContent = opt.name;
+      nm.textContent = window.t(opt.nk);
       var ds = document.createElement("span");
       ds.style.cssText =
         "font-size:11px;color:var(--text-dim);font-weight:400;";
@@ -9130,20 +9128,6 @@
     });
     sec.appendChild(cards);
 
-    var links = document.createElement("div");
-    links.id = "sc-support-links";
-    links.style.cssText =
-      "display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12px;margin:0 0 8px;";
-    SUPPORT_LINKS.forEach(function (l) {
-      var a = document.createElement("a");
-      a.href = l.url;
-      a.target = "_blank";
-      a.rel = "noopener";
-      a.style.cssText = "color:var(--accent);";
-      a.textContent = window.t(l.k);
-      links.appendChild(a);
-    });
-    sec.appendChild(links);
 
     if (resetWrap) box.insertBefore(sec, resetWrap);
     else box.appendChild(sec);

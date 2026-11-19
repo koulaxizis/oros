@@ -126,11 +126,15 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             return true;
         }
         if (item.getItemId() == R.id.support) {
-            // KOFI-1: our apps are funded only on Ko-fi; a plain link in the browser.
+            // SUP-1: the shared support page of all the projects (merch, a
+            // one-time donation, services), a plain link in the browser.
+            // The page speaks Greek and English.
+            String url = "https://koulaxizis.gr/support/?lang="
+                    + ("el".equals(Locale.getDefault().getLanguage()) ? "el" : "en");
             try {
-                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/koulaxizis")));
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
             } catch (android.content.ActivityNotFoundException e) {
-                Toast.makeText(this, "https://ko-fi.com/koulaxizis", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, url, Toast.LENGTH_LONG).show();
             }
             return true;
         }
