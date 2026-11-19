@@ -75,7 +75,9 @@ orOS also reads the text on your device and puts the app that fits first: a day 
 ### The Pocket
 `Keep in pocket` in the same window (and in the menu of selected text) puts the item in the Pocket instead: a small place of this device to hold a text, a link, a list, a table or files while you go to another app. A pocket button then shows at the end of the Dock, or in the top bar when no Dock is on screen ([[Ctrl+Alt+Shift+,]] opens it too). Tap an item to send it into an app with this same window; it stays in the Pocket, so it can go to a second app as well. The copy button copies it, × takes it out, and `Empty the pocket` takes everything out.
 
-The Pocket keeps up to 20 items until you remove them. Files stay where they are: the Pocket only remembers where, and says `Not found` when one was moved or deleted. Nothing from Passwords or Settings goes in, nor anything while [Sensitive work](help:t/sensitive) is on (turning that on empties it). It never syncs and is not in backups. See also [Settings](help:a/settings) › System › Pocket.
+You can also drag things in and out. While you drag a text, a link or files from Files, the pocket button shows (with + when the Pocket is empty): drop on it to keep what you drag. Drag an item out of the Pocket into a field of any app to put its text there. On a keyboard, Ctrl+V on the open Pocket adds what you copied, and in [Clipboard history](help:t/privacy) the pocket button next to a copy keeps it.
+
+The Pocket keeps up to 20 items until you remove them. Files stay where they are: the Pocket only remembers where, and follows a file you move in Files; it says `Not found` when one was deleted or moved some other way. Nothing from Passwords or Settings goes in, nor anything while [Sensitive work](help:t/sensitive) is on (turning that on empties it). It never syncs and is not in backups. See also [Settings](help:a/settings) › System › Pocket.
 
 ## Privacy
 A plain link carries the item in the part after the # sign, which browsers never send to a server. No orOS server sees it and nothing is stored anywhere except in the link.

@@ -39,9 +39,11 @@ final class Rows {
         col.setStrength(Collator.PRIMARY);
         List<Row> out = new ArrayList<>();
         for (Source s : sources) {
-            out.add(new Row(HEADER, s, null, null));
             List<AppInfo> list = apps.get(s.id);
             String err = errors.get(s.id);
+            // A section of another repository shows only once it has apps.
+            if (s.from != null && err == null && (list == null || list.isEmpty())) continue;
+            out.add(new Row(HEADER, s, null, null));
             if (err != null) out.add(new Row(NOTE, s, null, err));
             if (list == null || list.isEmpty()) {
                 if (err == null) out.add(new Row(NOTE, s, null, "empty"));

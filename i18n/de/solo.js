@@ -1,7 +1,7 @@
 orosPack("de", "solo", {
  "apk.close": "Schließen",
  "apk.get": "Herunterladen",
- "apk.note": "Eine neue Version der App {n} ist da. Aktualisiere sie dort, wo du sie installiert hast (F-Droid, Droid-ify oder Obtainium), oder lade die APK herunter.",
+ "apk.note": "Eine neue Version der App {n} ist da. Koulaxizis Apps installiert sie und hält alle orOS-Apps an einem Ort aktuell.",
  "bar.apk": "App herunterladen (APK)",
  "bar.ask": "{n} auf diesem Gerät installieren",
  "bar.btn": "Installieren",

@@ -877,6 +877,12 @@
    ]
   },
   {
+   "app": "ridge",
+   "files": [
+    "ridge/ridge.js"
+   ]
+  },
+  {
    "app": "ringtones",
    "files": [
     "ringtones/core.js",

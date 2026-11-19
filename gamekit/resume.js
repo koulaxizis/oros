@@ -156,6 +156,12 @@
     hive: function (s) { return num(s.acts) > 0; },
     // Lighthouse Island (idle): oros-lighthouse-session is {acts}, as Hive.
     lighthouse: function (s) { return num(s.acts) > 0; },
+    // Windmill ridge: {g: engine state, ck, counted}; under way after the
+    // first action, until the night is won or lost.
+    ridge: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
+    },
     xeri: function (s) {
       if (s.phase === "over") return false;
       var hs = num(s.hs) || 6, won = arr(s.won), hands = arr(s.hands);
