@@ -208,6 +208,10 @@
       "bytes": 677887,
       "ms": 69
     },
+    "lighthouse": {
+      "bytes": 295554,
+      "ms": 221
+    },
     "lightsout": {
       "bytes": 203775,
       "ms": 57
