@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.86.00
+- **Drag things into and out of the Pocket.** While you drag a text, a link or files from Files, the pocket button shows: drop on it to keep what you drag. Drag an item out of the Pocket into a field of any app. Ctrl+V on the open Pocket keeps what you copied, Clipboard history has a pocket button next to each copy, and files you move in Files stay in the Pocket. See [Send to someone](help:t/share).
+
 ## Version 7.85.01
 - **Koulaxizis Apps, one place for all our Android apps.** The download page, Settings and the update notice of the orOS Android apps now point to Koulaxizis Apps, the free app manager that installs and updates every app of orOS, NULL JSFX, Noxpress and Glarolykoi. Glarolykoi has its own section in it. While it is installed, it tells you about new versions and orOS no longer does. The download page also shows how often each app was downloaded (only numbers, nothing about you). See [Install orOS](help:t/install).
 
