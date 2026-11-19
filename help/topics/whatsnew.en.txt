@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.82.00
+- **Less motion and less transparency.** Settings › Accessibility has two new switches for this device. `Reduce motion` stops animations and moving effects in orOS and every app: the live wallpaper, seasonal decorations, apps opening from their icon and sliding panels. Games still play. `Reduce transparency` gives the top bar, the Dock, the menu, widgets and panels solid backgrounds instead of see-through, blurred ones. If your device already asks for less motion or transparency, orOS follows it.
+
 ## Version 7.81.00
 - **Newsletter: ready for moving from another platform.** Check now also looks at your domain's SPF and DMARC records and warns before a list's first issue if they are missing (it never stops you sending). New lists get one-click unsubscribe at once, without opening a public form. There is a Hosting mail (cPanel, Plesk) preset for the mail of your web hosting. On Lists, Moving here is a checklist for bringing a list over, with a place for the old platform's figures next to each issue's report. Subscribe link also gives a small pop-up sign-up form for any site: no cookies, nothing from other services, and people still confirm by e-mail. orOS still counts no opens or clicks.
 

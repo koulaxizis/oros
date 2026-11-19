@@ -2263,6 +2263,19 @@ html[data-oros-zoom] #app-menu > * { zoom: var(--oros-zoom, 1); }
 html[data-oros-contrast="high"] #oros-safe { border: 2px solid currentColor; box-shadow: none; }
 @media (max-width: 480px) { #oros-safe { left: 16px; right: 16px; width: auto; } }
 
+/* Reduce transparency (A11Y-FX W2, Settings › Accessibility; the shell
+   sets data-oros-transparency, also while the system asks for it):
+   A11Y_CSS takes every blur away; the glass parts of the shell get
+   their solid panel colour. */
+html[data-oros-transparency] #oros-bar,
+html[data-oros-transparency] #osk,
+html[data-oros-transparency] #oros-greet,
+html[data-oros-transparency] .wg-card,
+html[data-oros-transparency] #ld-dock .ld-bar,
+html[data-oros-transparency][data-oros-bar] #oros-bar::before { background: var(--panel-bg, var(--bg)) !important; }
+html[data-oros-transparency] #oros-ov { background: rgba(0, 0, 0, 0.86); }
+html[data-oros-transparency] .ld-tile { --gl-tint: rgba(16, 16, 20, 0.88) !important; }
+
 /* LOCAL-1: the local-folder bridge is on (localroots.js) */
 #oros-local-bar { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2147483000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
   max-width: calc(100vw - 32px); padding: 6px 10px; border-radius: 10px; background: var(--panel-bg, #1d1b16); color: var(--text, #eee); border: 1px solid var(--accent, #d4af37);
