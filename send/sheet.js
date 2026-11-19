@@ -5,7 +5,8 @@
 // item, one button each; a tap hands the item to that app through its
 // own deep link (env.openAt = the shell's __orosOpenAt). The app opens
 // a prefill (BR-W8-6): nothing is saved until the user saves there.
-// "Copy" puts the item's text on the clipboard; "Send to someone…"
+// "Copy" puts the item's text on the clipboard; "Keep in pocket"
+// (POCKET-1, env.pocket) keeps it in the shell's Pocket; "Send to someone…"
 // (when the sender gave a share item) opens share/ as before.
 //   opts = { kind, data, share? }   (send/core.js kinds; share = the
 //            sender's own "Send to someone" item { kind, data } for
@@ -13,6 +14,7 @@
 //   env  = { apps: [{ id, name }], icon(id) → Node|null, self, from,
 //            openAt(app, target), share(item),
 //            calendarNew(p), budgetNew(p),   (wave A3: BR-W8 / BR-B1)
+//            pocket(kind, data) | null,   (POCKET-1: "Keep in pocket")
 //            file(target, app) → Promise<bool>,   (files wave: a disk
 //              file handed over as a one-shot token, BR-FO-4)
 //            wallpaper(picture) → Promise<bool> } (files wave: after
@@ -34,7 +36,8 @@
       wallAsk: "Use “{name}” as the wallpaper of this device?",
       wallHint: "Only on this device, nothing syncs. Settings › Wallpaper changes it back.",
       wallYes: "Use as wallpaper", cancel: "Cancel", wallDone: "The wallpaper of this device is set.",
-      big: "This file is too big for that app."
+      big: "This file is too big for that app.",
+      pocket: "Keep in pocket"
     },
     el: {
       title: "Στείλε σε εφαρμογή", close: "Κλείσιμο", copy: "Αντιγραφή", copied: "Αντιγράφηκε", someone: "Στείλε σε κάποιον…",
@@ -44,7 +47,8 @@
       wallAsk: "Να γίνει το «{name}» ταπετσαρία αυτής της συσκευής;",
       wallHint: "Μόνο σε αυτή τη συσκευή, δεν συγχρονίζεται. Το αλλάζεις πάλι στις Ρυθμίσεις › Ταπετσαρία.",
       wallYes: "Ως ταπετσαρία", cancel: "Άκυρο", wallDone: "Η ταπετσαρία αυτής της συσκευής άλλαξε.",
-      big: "Το αρχείο είναι πολύ μεγάλο για αυτή την εφαρμογή."
+      big: "Το αρχείο είναι πολύ μεγάλο για αυτή την εφαρμογή.",
+      pocket: "Στην τσέπη"
     }
   };
   function lang() { return window.orosLang === "el" ? "el" : "en"; }
@@ -81,6 +85,7 @@
     "#osd-dlg .osd-foot{display:flex;justify-content:space-between;gap:8px;margin-top:14px}" +
     "#osd-dlg .osd-foot button{padding:10px 14px;border:1px solid var(--border);border-radius:10px;background:transparent;" +
     "color:var(--text);font:inherit;font-size:13.5px;cursor:pointer}" +
+    "#osd-dlg .osd-lead{display:flex;flex-wrap:wrap;gap:8px}" +
     "@media (max-width:360px){#osd-dlg .osd-apps{grid-template-columns:repeat(2,1fr)}}";
   function ensureCss() {
     if (document.getElementById("osd-css")) return;
@@ -129,7 +134,10 @@
     var ids = (env.apps || []).map(function (a) { names[a.id] = a.name; return a.id; });
     var list = C.appsFor(kind, d, ids, env.self);
     var share = opts.share && typeof opts.share === "object" && typeof env.share === "function" ? opts.share : null;
-    if (!list.length && !share) { toast(T("none")); return; }
+    // POCKET-1: env.pocket(kind, data) keeps it in the Pocket (null for
+    // an item that is already there, and in Passwords and Settings).
+    var pocket = typeof env.pocket === "function" ? env.pocket : null;
+    if (!list.length && !share && !pocket) { toast(T("none")); return; }
     ensureCss();
     var stale = document.getElementById("osd-dlg");
     if (stale) { try { stale.close(); } catch (e) {} stale.remove(); }
@@ -185,7 +193,15 @@
     var cl = el("button", "", T("close"));
     cl.type = "button";
     cl.addEventListener("click", function () { dlg.close(); });
-    foot.appendChild(cp);
+    var lead = el("div", "osd-lead");
+    lead.appendChild(cp);
+    if (pocket) {
+      var pk = el("button", "osd-pocket", T("pocket"));
+      pk.type = "button";
+      pk.addEventListener("click", function () { dlg.close(); try { pocket(kind, d); } catch (e) { toast(T("failed")); } });
+      lead.appendChild(pk);
+    }
+    foot.appendChild(lead);
     foot.appendChild(cl);
     dlg.appendChild(foot);
     dlg.addEventListener("close", function () { dlg.remove(); });

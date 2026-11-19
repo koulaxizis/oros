@@ -16,13 +16,15 @@ name: Android app
 # to them directly (no GitHub account needed), e.g.
 #   https://github.com/koulaxizis/oros/releases/download/android-apks/oros.apk
 #   https://github.com/koulaxizis/oros/releases/download/android-apks/oros-notes.apk
+# the Glarolykoi app (net.glarolykoi.android, glarolykoi-android/) as
+# oros-glarolykoi.apk,
 # and orOS Drive (online.useoros.drive, built from koulaxizis/oros-drive
 # android/ at the commit in .github/oros-drive.env) as oros-drive.apk.
 
 on:
   push:
     branches: [main]
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/oros-drive.env', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/oros-drive.env', 'glarolykoi-android/**', '.github/workflows/android.yml']
   pull_request:
     paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', '.github/oros-drive.env', '.github/workflows/android.yml']
   workflow_dispatch:
@@ -139,6 +141,30 @@ jobs:
             mkdir -p android/app/build/outputs/apk/drive/release
             cp "$src/app/build/outputs/apk/release/app-release.apk" android/app/build/outputs/apk/drive/release/app-drive-release.apk
           fi
+      # The Glarolykoi app (net.glarolykoi.android, GL-1: glarolykoi-android/,
+      # checked by glarolykoi-android.yml), signed with the orOS key on
+      # main (decision 2026-11-18). Published as oros-glarolykoi.apk below
+      # and in the F-Droid repository (tools/fdroid-metadata.js).
+      - name: Build the Glarolykoi app
+        env:
+          KS_B64: ${{ github.event_name != 'pull_request' && secrets.OROS_KEYSTORE_BASE64 || '' }}
+          GLAROLYKOI_KEYSTORE_PASSWORD: ${{ secrets.OROS_KEYSTORE_PASSWORD }}
+          GLAROLYKOI_KEY_ALIAS: ${{ secrets.OROS_KEY_ALIAS }}
+          GLAROLYKOI_KEY_PASSWORD: ${{ secrets.OROS_KEY_PASSWORD }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/glarolykoi.keystore"
+            export GLAROLYKOI_KEYSTORE_FILE="$RUNNER_TEMP/glarolykoi.keystore"
+          fi
+          gradle -p glarolykoi-android --no-daemon assembleRelease
+          rm -f "$RUNNER_TEMP/glarolykoi.keystore"
+          src=glarolykoi-android/app/build/outputs/apk/release
+          ls -l "$src/"
+          if [ -f "$src/app-release.apk" ]; then
+            mkdir -p android/app/build/outputs/apk/glarolykoi/release
+            cp "$src/app-release.apk" android/app/build/outputs/apk/glarolykoi/release/app-glarolykoi-release.apk
+          fi
+
       - uses: actions/upload-artifact@v4
         with:
           name: oros-drive-android

@@ -212,6 +212,10 @@
       "menu.copyTo":  "Copy to…",
       "menu.toDropbox": "Send to Dropbox…",
       "menu.toDocs":    "Add to Documents",
+      "menu.tags":      "Tags…",
+      "tree.tags":      "Tags",
+      "tag.empty":      "No files have this tag yet",
+      "tag.emptyHint":  "Right-click a file, or select it and open the menu, then pick Tags….",
       "menu.toComputer": "Send to This computer…",
       "menu.copyName": "Copy name",
       "menu.copyPath": "Copy path",
@@ -493,6 +497,10 @@
       "menu.copyTo":   "Αντιγραφή σε…",
       "menu.toDropbox": "Αποστολή στο Dropbox…",
       "menu.toDocs":    "Προσθήκη στα Έγγραφα",
+      "menu.tags":      "Ετικέτες…",
+      "tree.tags":      "Ετικέτες",
+      "tag.empty":      "Κανένα αρχείο δεν έχει ακόμα αυτή την ετικέτα",
+      "tag.emptyHint":  "Κάνε δεξί κλικ σε ένα αρχείο, ή επίλεξέ το και άνοιξε το μενού, και διάλεξε Ετικέτες….",
       "menu.toComputer": "Αποστολή σε αυτόν τον υπολογιστή…",
       "menu.copyName": "Αντιγραφή ονόματος",
       "menu.copyPath": "Αντιγραφή διαδρομής",
@@ -699,6 +707,7 @@
 
   var MORE_SVG =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+  var TAG_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="7.5" cy="7.5" r="1.5"/></svg>';
   var DOCS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>';
   var PHOTO_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
   var TRASH_SVG =
@@ -1215,6 +1224,7 @@
     applyViewChrome();
     if (view === "trash") { renderTrashView(); return; }
     if (view === "recent") { renderRecentView(); return; }
+    if (view === "tag") { renderTagView(); return; }
     // Active search → re-run search render instead of a plain list
     if (searchQuery !== null) { runSearch(searchQuery); return; }
 
@@ -1421,6 +1431,21 @@
     try { var raw = JSON.parse(localStorage.getItem("oros-files-albums") || "null"); has = !!(raw && raw.albums && raw.albums.length); } catch (e) {}
     if (has) loadPhotos().then(function (p) { if (p && p.carry) p.carry(from, to); }, function () {});
   }
+  // Tags on every file (files/tags.js): loaded with Documents.
+  function tags() {
+    var g = window.OrosFilesTags;
+    return (g && typeof g.tagsFor === "function") ? g : null;
+  }
+  function tagsCarry(from, to) {
+    var tg = tags();
+    if (tg) tg.carry(from, to);
+    else if (docsStored()) loadDocs(function () { var g = tags(); if (g) g.carry(from, to); });
+  }
+  function tagsDrop(p) {
+    var tg = tags();
+    if (tg) tg.dropPath(p);
+    else if (docsStored()) loadDocs(function () { var g = tags(); if (g) g.dropPath(p); });
+  }
   function docsCarry(from, to) {
     var dc = docs();
     if (dc && typeof dc.carry === "function") dc.carry(from, to);
@@ -1430,15 +1455,24 @@
   // Documents loads on demand (first-open budget, .github/qa/budget.json):
   // at boot only where it was open last time or holds documents, else
   // when its node or "Add to Documents" is first used.
-  var DOCS_SCRIPTS = ["docs-core.js", "docs-text.js", "docs-due.js", "docs.js"];   // docs.js loads docs-read.js itself
+  // Tags (tags-core.js, tags.js) come with them: their list is Documents'.
+  var DOCS_SCRIPTS = ["docs-core.js", "docs-text.js", "docs-due.js", "docs.js", "tags-core.js", "tags.js"];   // docs.js loads docs-read.js itself
   var docsWaiters = null;
   function docsStored() {
     try {
       var v = localStorage.getItem("oros-files-docs-view");
       if (v && JSON.parse(v).on) return true;
       if (localStorage.getItem("oros-files-docs-inbox")) return true;      // Scanner & PDF left some
+      // A fresh device: the sync has these slices waiting for Files
+      // (sync.js carry mailbox, same origin) until the scripts register them.
+      var carry = localStorage.getItem("oros-remote-carry");
+      if (carry) { var co = JSON.parse(carry); if (co && (co["files-docs"] || co["files-tags"])) return true; }
+      var tg = localStorage.getItem("oros-files-tags");                   // tags on files, smart folders
+      if (tg) { var to = JSON.parse(tg); if (to && ((to.files && to.files.length) || (to.smart && to.smart.length))) return true; }
       var raw = localStorage.getItem("oros-files-docs");
-      return !!(raw && JSON.parse(raw).docs && JSON.parse(raw).docs.length);
+      if (!raw) return false;
+      var o = JSON.parse(raw);
+      return !!(o && ((o.docs && o.docs.length) || (o.tags && o.tags.length)));
     } catch (e) { return false; }
   }
   function loadDocs(cb) {
@@ -1457,7 +1491,7 @@
     function done(ok) {
       var list = docsWaiters;
       docsWaiters = null;
-      if (ok && docs()) { initDocs(); renderTree(); }
+      if (ok && docs()) { initDocs(); initTags(); renderTree(); paintTagDots(); }
       list.forEach(function (f) { try { f(docs()); } catch (e) {} });
     }
     function next() {
@@ -1582,11 +1616,75 @@
       setJob: setJob,
       zip: { crc32: CORE.crc32, build: CORE.zipBuild },
       zipSafePath: CORE.zipSafePath,
-      onChange: renderTree,
+      onChange: function () { renderTree(); paintTagDots(); },
       onDiskChanged: function () { forceStorageRecalc(); markDirty(); },
       pdfOpen: pdfOpen,
       ver: SCRIPT_V
     });
+  }
+
+  function initTags() {
+    var tg = tags();
+    if (!tg || tagsReady) return;
+    tagsReady = true;
+    tg.init({
+      fs: FS,
+      vault: vaultApi,
+      docs: docs,
+      toast: transientNote,
+      onChange: function () {
+        renderTree();
+        paintTagDots();
+        if (view === "tag" && !placeActive()) refresh();
+        var ph = photos();
+        if (ph && ph.tagsChanged) ph.tagsChanged();
+      }
+    });
+  }
+  var tagsReady = false;
+
+  // Tags… on the selection (menu, Select mode): Documents and the
+  // tags scripts load the first time.
+  function tagSelection() {
+    var paths = selectionPaths().filter(function (p) { return !CORE.isTrashPath(p); });
+    if (!paths.length || view === "trash") return;
+    loadDocs(function () {
+      var tg = tags();
+      if (tg) tg.edit(paths); else transientNote(t("toast.opFail"));
+    });
+  }
+  // The small coloured dots after a name (renderEntries) and again
+  // when the tags change (no new listing).
+  function tagDotsFor(path) {
+    var tg = tags();
+    if (!tg || view === "trash" || CORE.isTrashPath(path)) return null;
+    var list = tg.tagsFor(path);
+    return list.length ? tg.dots(list) : null;
+  }
+  function paintTagDots() {
+    var ul = $("entries");
+    if (!ul || !tags()) return;
+    var rows = ul.querySelectorAll(".entry");
+    for (var i = 0; i < rows.length; i++) {
+      var name = rows[i].querySelector(".ename");
+      if (!name || rows[i].classList.contains("missing")) continue;
+      putTagDots(name, tagDotsFor(rows[i].dataset.path));
+    }
+  }
+  // The dots stay visible after a long name: the name is cut, not them.
+  function putTagDots(name, dots) {
+    var host = name.querySelector(".en") || name;
+    var old = host.querySelector(".tag-dots");
+    if (old) old.remove();
+    var tx = host.querySelector(".en-t");
+    if (!tx && dots) {
+      tx = document.createElement("span");
+      tx.className = "en-t";
+      while (host.firstChild && !(host.firstChild.classList && host.firstChild.classList.contains("exp-badge"))) tx.appendChild(host.firstChild);
+      host.insertBefore(tx, host.firstChild);
+    }
+    host.classList.toggle("has-tags", !!dots);
+    if (dots) tx.after(dots);
   }
 
   // photos.css, photos-core.js, albums-core.js and photos.js load the first time the
@@ -1661,6 +1759,8 @@
       fs: FS,
       vault: vaultApi,
       docs: docs,
+      tags: tags,
+      loadTags: function (cb) { loadDocs(function () { cb(tags()); }); },
       share: shareApi,
       openFile: openFileAt,
       pickFolder: pickFolderDialog,
@@ -1952,6 +2052,8 @@
         name.appendChild(xb);
         li.title = e.name + " \u2014 " + xb.title;
       }
+      var tdots = !e.missing ? tagDotsFor(path) : null;
+      if (tdots) putTagDots(name, tdots);
       li.appendChild(name);
 
       // Size / modified columns — filled by fillStats() (FL-12).
@@ -2157,7 +2259,7 @@
     var home = document.createElement("button");
     home.type = "button";
     home.className = "crumb" + (cwd === ROOT || view !== "files" ? " current" : "");
-    home.textContent = view === "files" ? t("tree.root") : t("tree." + view);
+    home.textContent = view === "files" ? t("tree.root") : view === "tag" ? tagViewName() : t("tree." + view);
     home.addEventListener("click", function () { if (view === "files") navigate(ROOT); });
     host.appendChild(home);
 
@@ -2183,6 +2285,7 @@
   }
 
   function statusPath() {
+    if (view === "tag") return tagViewName();
     if (view !== "files") return t("tree." + view);
     return searchQuery !== null ? tfmt("search.where", { path: searchDir }) : cwd;
   }
@@ -2384,6 +2487,7 @@
       return FS().rm(p).then(function () {
         dropExpandedPrefix(p);
         favDropPath(p);
+        tagsDrop(p);
         return true;
       }).catch(function () { return false; });
     })).then(function (results) {
@@ -3798,6 +3902,9 @@
     if (!p.dir) {
       ctxMenu.appendChild(mkItem(DOCS_SVG, "menu.toDocs", addToDocs));
     }
+    if (!CORE.isTrashPath(p.path)) {
+      ctxMenu.appendChild(mkItem(TAG_SVG, "menu.tags", tagSelection));
+    }
     if (dbx() && dbx().exportFrom) {
       ctxMenu.appendChild(mkItem(dbx().icon || "", "menu.toDropbox", function () {
         sendToDropbox();
@@ -4573,7 +4680,9 @@
   function applyViewChrome() {
     document.body.classList.toggle("v-trash", view === "trash");
     document.body.classList.toggle("v-recent", view === "recent");
-    setEmptyText(view === "trash" ? "trash.empty" : view === "recent" ? "recent.empty" : null);
+    document.body.classList.toggle("v-tag", view === "tag");
+    setEmptyText(view === "trash" ? "trash.empty" : view === "recent" ? "recent.empty" : view === "tag" ? "tag.empty" : null);
+    if (view === "tag") { var hs = $("empty") && $("empty").querySelector("small"); if (hs) hs.textContent = t("tag.emptyHint"); }
     var vb = ensureViewBar();
     if (vb) vb.hidden = view !== "trash";
   }
@@ -4622,7 +4731,7 @@
     transientNote(t(on ? "fav.added" : "fav.removed"));
     renderSelBar();
   }
-  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); expCommit(CORE.expMove(exps, from, to, Date.now())); docsCarry(from, to); photosCarry(from, to); }
+  function favCarry(from, to) { favCommit(CORE.favMove(favs, from, to, Date.now())); expCommit(CORE.expMove(exps, from, to, Date.now())); docsCarry(from, to); photosCarry(from, to); tagsCarry(from, to); }
   function favDropPath(p) { favCommit(CORE.favDrop(favs, p, Date.now())); }
 
   function registerFavSync() {
@@ -4769,7 +4878,97 @@
       sec.appendChild(h);
       live.forEach(function (f) { sec.appendChild(makeFavNode(f)); });
     }
+    var tg = tags(), tl = tg ? tg.list() : [];
+    if (tl.length) {
+      var th = document.createElement("div");
+      th.className = "tsec";
+      th.textContent = t("tree.tags");
+      sec.appendChild(th);
+      tl.forEach(function (x) { sec.appendChild(makeTagNode(x)); });
+    }
     return sec;
+  }
+
+  // One tag in the tree: every item with it, wherever it is. Right
+  // click (or the pencil) renames it, colours it or deletes it.
+  function makeTagNode(x) {
+    var node = document.createElement("div");
+    node.className = "tnode tagn" + (view === "tag" && tagView === x.id && !placeActive() ? " selected" : "");
+    node.style.paddingLeft = "6px";
+    node.tabIndex = 0;
+    node.setAttribute("role", "button");
+    var caret = document.createElement("span");
+    caret.className = "caret empty";
+    node.appendChild(caret);
+    var g = document.createElement("span");
+    g.className = "glyph";
+    g.appendChild(tags().dot(x.c));
+    node.appendChild(g);
+    var nm = document.createElement("span");
+    nm.className = "tname";
+    nm.textContent = x.n;
+    node.appendChild(nm);
+    var cnt = document.createElement("span");
+    cnt.className = "tcount";
+    cnt.textContent = x.count ? String(x.count) : "";
+    node.appendChild(cnt);
+    var ed = document.createElement("button");
+    ed.type = "button";
+    ed.className = "fav-x tag-ed";
+    ed.title = tags().t("tg.edit", { name: x.n });
+    ed.setAttribute("aria-label", ed.title);
+    ed.innerHTML = EDIT_SVG;
+    ed.addEventListener("click", function (e) { e.stopPropagation(); tags().editTag(x.id); });
+    node.appendChild(ed);
+    function go() { closeTreeDrawer(); openTagView(x.id); }
+    node.addEventListener("click", go);
+    node.addEventListener("contextmenu", function (e) { e.preventDefault(); tags().editTag(x.id); });
+    node.addEventListener("keydown", function (e) {
+      if (e.target !== node) return;
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); go(); }
+    });
+    return node;
+  }
+
+  // ===== Tag view: every item with one tag (files/tags.js) =====
+  var tagView = "";
+  function openTagView(id) {
+    tagView = id;
+    openView("tag");
+  }
+  function tagViewName() {
+    var tg = tags(), name = "";
+    if (tg) tg.list().forEach(function (x) { if (x.id === tagView) name = x.n; });
+    return name || t("tree.tags");
+  }
+  function renderTagView() {
+    var token = ++renderToken;
+    setStatusLoading();
+    renderTree();
+    renderCrumbs();
+    updateActionButtons();
+    hideRecents();
+    var tg = tags();
+    var paths = tg ? tg.pathsWith(tagView) : Promise.resolve([]);
+    paths.then(function (list) {
+      return Promise.all(list.map(function (p) {
+        return FS().stat(p).then(function (st) {
+          if (!st) return null;
+          return {
+            name: baseName(p), path: p, dir: !!st.dir,
+            size: typeof st.size === "number" ? st.size : null,
+            mtime: st.mtime || null,
+            sub: displayPath(parentOf(p))
+          };
+        }, function () { return null; });
+      }));
+    }).then(function (rows) {
+      if (token !== renderToken) return;
+      rows = applySort(rows.filter(Boolean));
+      lastEntries = rows;
+      renderEntries(rows);
+      renderStatus(rows.length);
+    });
   }
 
   function makeSpecialNode(kind, label, svg, onGo) {
@@ -4906,6 +5105,7 @@
         return fs.mv(path, CORE.trashItemDir(id) + "/" + baseName(path));
       }).then(function (r) {
         expCommit(CORE.expMove(exps, path, CORE.trashItemDir(id) + "/" + baseName(path), Date.now()));   // it still deletes itself in the Trash
+        tagsCarry(path, CORE.trashItemDir(id) + "/" + baseName(path));                                    // and keeps its tags for a restore
         return r;
       }).catch(function (e) {
         return fs.rm(CORE.trashMetaPath(id)).catch(function () {}).then(function () { throw e; });
@@ -4959,6 +5159,7 @@
 
   // Whatever is left of one record: its folder and its .json.
   function trashDiscard(id) {
+    tagsDrop(CORE.trashItemDir(id));
     return FS().rm(CORE.trashItemDir(id)).catch(function () {}).then(function () {
       return FS().rm(CORE.trashMetaPath(id)).catch(function () {});
     });
@@ -5030,6 +5231,7 @@
           if (parent === ROOT && HIDDEN_ROOT.indexOf(name) !== -1) name = uniqueName("_" + name.slice(1), names);
           var op = item.made ? FS().mkdir(join(parent, name)) : FS().mv(p, join(parent, name));
           return op.then(function () {
+            if (!item.made) tagsCarry(p, join(parent, name));
             done++;
             lastName = name;
             renamed = renamed || name !== item.name;
