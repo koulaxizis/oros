@@ -1,6 +1,9 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+## Version 7.75.00
+- **Accent from your wallpaper.** Turn on `Accent from wallpaper` in Settings › Appearance › System colour, and buttons, selections and links take a colour from your wallpaper, adjusted so text stays easy to read in light and dark. When the wallpaper has several colours you can pick one of up to four. Off until you turn it on, on this device only.
+
 ## Version 7.74.00
 - **Copy text from a picture.** Press `Text` on a picture in Files or Photos, `Copy text` in Screen Capture, or Image › `Copy text from picture…` in Photo Lab. The words found are marked on the picture: drag, draw a box or tap a line to select, then Copy, Copy all, edit it in the Text panel or send it to an app. Links, days, e-mail addresses and phone numbers become buttons for a new tab, Calendar, Mail, Contacts or a call. It all runs on this device; the reader downloads once, on the first yes, the same one Documents uses. See [Files](help:a/files).
 
