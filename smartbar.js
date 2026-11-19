@@ -42,7 +42,7 @@
   var VER = "1.2.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
-               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading"];
+               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue"];
   var MONEY = { budget: 1, sales: 1, invoices: 1 };
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
@@ -52,6 +52,7 @@
   var SOON_MIN = 60;                       // countdown from this many minutes before
   var TODAY_MS = 120000;                   // the summary is rebuilt at most every 2 min
   var HM_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+  var CONT_MS = 7200000;                   // CONT-1 W2: another device's item shows here for 2 h
 
   // ---------- 1. Model (pure) ----------
   function norm(v) {
@@ -197,6 +198,7 @@
     event: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
     focus: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2.5h4"/></svg>',
     tasks: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12l3 3 5-6"/></svg>',
+    continue: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="12" height="9" rx="1.5"/><rect x="15.5" y="9" width="6" height="11" rx="1.5"/><path d="M5 18h7M10.5 14.5l3 3-3 3"/></svg>',
     water: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
     budget: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2.5"/><path d="M16 12.5h2M3 10h18"/></svg>',
     more: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="14" height="12" rx="2.5"/><path d="M7 4.5h11.5A2.5 2.5 0 0 1 21 7v9.5"/></svg>',
@@ -435,6 +437,16 @@
       if (!n) return null;
       return { v: String(n), l: t(n === 1 ? "sb.tasks.one" : "sb.tasks.n"),
                tip: t("sb.tasks.tip").replace("{n}", n).replace("{app}", appName("today")), go: function () { host.open("today"); } };
+    },
+    // CONT-1 W2: the newest item of another device (shell orosContinueUi:
+    // never the sensitive apps, nothing under Sensitive work), 2 h.
+    continue: function (now) {
+      var U = root.orosContinueUi;
+      if (!U || strict()) return null;
+      var it = (call(function () { return U.items(1); }) || [])[0];
+      if (!it || now - it.at > CONT_MS) return null;
+      return { v: it.title, l: "", cls: "sb-txt", tip: it.tip,
+               go: function () { U.open(it.dev, it.app); } };
     },
     water: function (now) {
       var C = root.orosWaterCore;

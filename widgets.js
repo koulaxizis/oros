@@ -194,9 +194,9 @@
   }
 
   var CSS = [
-    "#wg-col { position: absolute; top: 16px; right: 16px; width: 300px; display: flex; flex-direction: column; gap: 12px;",
+    "#wg-col { position: absolute; top: calc(16px + var(--ld-st, 0px)); right: calc(16px + var(--ld-sr, 0px)); width: 300px; display: flex; flex-direction: column; gap: 12px;",
     "  z-index: 2; padding-bottom: calc(110px + var(--tb-h, 0px)); }",
-    "body.wg-col #ld-desk { margin-right: 332px; }",
+    "body.wg-col #ld-desk { margin-right: calc(332px + var(--ld-sr, 0px)); }",
     "#wg-col.wg-strip { position: static; width: auto; flex-direction: row; align-items: flex-start; overflow-x: auto; padding: 12px 10px 4px;",
     "  scroll-snap-type: x proximity; scrollbar-width: thin; }",
     "#wg-col.wg-strip .wg-card { flex: 0 0 min(280px, 82vw); scroll-snap-align: start; }",
@@ -808,7 +808,14 @@
       clearTimeout(rz);
       rz = setTimeout(function () { var was = strip(); if (box && was === wide()) render(); else if (!box && list().length) render(); }, 150);
     });
-    timer = setInterval(function () { paintAll(false); }, 1000);
+    // Energy saver (qsettings.js 1.3.0): once a minute instead.
+    var lastMin = -1;
+    timer = setInterval(function () {
+      var m = Math.floor(Date.now() / 60000);
+      if (doc.documentElement.getAttribute("data-oros-saver") === "1" && m === lastMin) return;
+      lastMin = m;
+      paintAll(false);
+    }, 1000);
     if (root.orosToday && root.orosToday.onChange) root.orosToday.onChange(function () { todayAt = 0; });
     // The desktop menu (quickmenu.js) lists "Widgets…".
     (root.__orosDeskItems = root.__orosDeskItems || []).push(function () {

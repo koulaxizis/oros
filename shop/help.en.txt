@@ -1,0 +1,27 @@
+# Shop
+Shop shows the figures of your own WooCommerce shop inside orOS: today's orders, this month and this year, the products that sell, and, with the free orOS Connect plugin, costs and result, partners' shares, consignments and stock. It only reads: nothing in Shop changes your shop.
+
+## Getting started
+1. In your WordPress admin, open WooCommerce › Settings › Advanced › REST API and make a key with `Read` permission for a user who manages the shop.
+2. In orOS, open [Settings](app:settings) › `Connected services`, add WooCommerce with your shop's address and type the two keys there. They stay on this device, encrypted.
+3. Open Shop. It reads the shop at once, then every 15 minutes while it is on screen. `Refresh` reads it again now.
+
+With more than one shop, pick one at the top.
+
+## What you see
+- `Today`: today's sales, this month and this year, with the number of orders and the average order. With orOS Connect also the orders waiting for payment, cancellations, refunds and the products that are out of stock or running low.
+- `Money`: the month and the year, what is owed to partners, and with orOS Connect the costs and result per product.
+- `Products`: what sold this year, best first. Type in the box to find one.
+- `Partner shares` and `Consignments` appear only when your shop has them (orOS Connect with a revenue-sharing or consignment plugin).
+
+## orOS Connect (optional)
+Without it, Shop shows WooCommerce's own reports, which every shop has. orOS Connect 1.4 or newer adds the rest: install it on your shop, switch on the module `Data for orOS` and pick the areas you want. It hands over totals only, never a customer's name, email, phone or address. A line under the figures tells you when an area has no source on your shop.
+
+## Your data
+- Only totals are kept: sales, products with their figures, partners' and resellers' names with their sums. No customer data is ever stored.
+- With orOS sync switched on in [Settings](app:settings), the last read follows you to your other devices, encrypted, so Shop opens offline too and shows when it was read.
+- The keys are never synced unless you choose to in Connected services.
+
+## Find it from anywhere
+- Shop's figures are financial, so the menu's search finds them only after you tick Shop under `Search in` next to the menu's search box. Then a product, a partner or a reseller opens Shop on that row.
+- Today shows today's sales, out-of-stock products and consignments to settle.

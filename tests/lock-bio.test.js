@@ -64,14 +64,14 @@ test("LK-BIO page: device-local record, never synced; PIN typed resets the days;
   assert.match(src, /var BIO_KEY = "oros-lock-bio";/);
   assert.doesNotMatch(read("sync.js"), /oros-lock-bio/, "never registered with sync");
   assert.match(src, /if \(ok\) \{ clearTries\(\); bioTyped\(\); (if \(tillActive\(\)\) setOwner\(true\); )?unlock\(\); return; \}/, "a typed PIN resets the 14 days");
-  assert.match(src, /save\(null\);\n\s+bioForget\(\);\n\s+unlock\(\);/, "sync passphrase recovery ends it");
+  assert.match(src, /save\(null\);\n\s+bioForget\(\);\n(?:\s+(?:appsWrite|openPut)\(null\);\n)*\s+unlock\(\);/, "sync passphrase recovery ends it");
   assert.match(src, /if \(!save\(null\)\) return \{ ok: false, code: "storage" \};\n\s+bioForget\(\);/, "turning the lock off ends it");
   assert.match(src, /p\.bio\.open\(r\.kid, "lock"\)/);
   assert.match(src, /p\.bio\.seal\(kid, "lock"\)/);
   // the prompt opens before the slow PIN check (the tap's gesture), a
   // wrong PIN throws the new secret away
   assert.match(src, /if \(!r\.ok\) \{ d\.fill\(0\); try \{ p\.bio\.clear\(kid\); \} catch \(e\) \{\} return r; \}/);
-  assert.match(src, /c === "invalidated" \|\| c === "none" \|\| c === "wrong"\) \{\n\s+bioForget\(\);/);
+  assert.match(src, /c === "invalidated" \|\| c === "none" \|\| c === "wrong"\) (?:\{\n\s+)?bioForget\(\);/);
 });
 
 test("LK-BIO bridge: phone.js adds use \"lock\" to the announce only for the screen lock", () => {

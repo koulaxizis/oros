@@ -369,7 +369,7 @@ orosPack("de", "base", {
  "fn.OR": "Mindestens einer angehakt",
  "fld.noLink": "Füge dieser Tabelle zuerst ein Feld „Verknüpfte Einträge“ hinzu.",
  "fld.expr": "Formel",
- "fld.exprHint": "Schreib Feldnamen in geschweifte Klammern, z. B. {Preis} * {Exemplare}. Die Funktionen sind die der Tabellenkalkulation (IF, ROUND, CONCATENATE, TODAY…), auf Englisch, mit Punkt für Dezimalstellen.",
+ "fld.exprHint": "Schreib Feldnamen in geschweifte Klammern, z. B. {Price} * {Copies}. Die Funktionen sind die der Tabelle (IF, ROUND, CONCATENATE, TODAY…), auf Englisch, mit Punkt für Dezimalstellen.",
  "fld.insert": "Feld einfügen",
  "fld.preview": "Erster Eintrag: {x}",
  "fld.exprBad": "In dieser Tabelle gibt es kein Feld „{x}“.",

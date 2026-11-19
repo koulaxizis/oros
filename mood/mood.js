@@ -36,6 +36,14 @@
   function loc() { return window.orosI18n ? window.orosI18n.locale(LANG) : (LANG === "el" ? "el-GR" : "en-GB"); }
   // One decimal for display: en / el keep "3.0" as before, a pack
   // language gets its own decimal mark (German "3,0").
+  // APPLOCK-1 W3: Cycle's days show here only while Cycle may show
+  // (not locked in Settings › Screen lock, or unlocked now).
+  function cycleShown() {
+    try {
+      var A = window.parent && window.parent !== window && window.parent.orosLock && window.parent.orosLock.apps;
+      return !(A && typeof A.allowed === "function" && !A.allowed("cycle"));
+    } catch (e) { return true; }
+  }
   function fix1(n) {
     if (LANG === "en" || LANG === "el") return n.toFixed(1);
     return n.toLocaleString(loc(), { minimumFractionDigits: 1, maximumFractionDigits: 1 });
@@ -3223,7 +3231,7 @@ function mergeMoodStates(A, B) {
     //    origin). Absent / corrupt data contributes NOTHING;
     //    this section never writes, ever. --
     try {
-      var craw = localStorage.getItem("oros-cycle-data");
+      var craw = cycleShown() ? localStorage.getItem("oros-cycle-data") : null;   // APPLOCK-1 W3: not while Cycle is locked
       if (craw) {
         var cd = JSON.parse(craw);
         if (cd && Array.isArray(cd.periods)) {

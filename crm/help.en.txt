@@ -4,7 +4,7 @@ CRM is a small customer book for a freelancer or a small business: your customer
 ## Getting started
 Tap or click `Add your first customer`. Pick `Company` or `Person`, write the name and choose a `Status`: `Lead` (not a customer yet), `Active` or `Past`. Under `Billing details` you can keep the `VAT ID (ΑΦΜ)`, `Tax office (ΔΟΥ)`, `Profession`, `Address` and `Country`. For a Greek VAT ID the app checks the check digit and warns when another customer already has it.
 
-The tabs are `Customers`, `Pipeline`, `Agenda` and `Dashboard`. On a phone they sit at the bottom of the screen.
+The tabs are `Customers`, `Pipeline`, `Agenda`, `Contracts` and `Dashboard`. On a phone they sit at the bottom of the screen.
 
 ## Customers and people
 The list has a search field, a sort menu and filters: `Leads`, `Active`, `Past`, `Starred`, `Not contacted` and your tags. Tap a customer to open the page with `Call`, `Email`, `Map`, `Log contact`, `Follow-up`, `Deal`, `Invoice` and `Quote`.
@@ -37,7 +37,7 @@ Under `Settings` › `Pipeline stages` you can rename a stage, change its defaul
 The `Documents` tab of a customer lists their invoices with what was invoiced, paid and is still unpaid, and the quotes made for a client with the same name or VAT ID. Tap one to open it. CRM only reads them; you change them in their own app.
 
 ## Dashboard
-Open pipeline, won this month and this year, win rate, late follow-ups, customers you have not contacted for a while, new leads and, once you invoice from CRM, what your customers still owe. Tap a tile to see the list behind it.
+With contracts, the top shows how many are in force, how many need a decision (ended or ending soon) and the next end day, then the first five that need a decision with their quick actions. The sales tiles (open pipeline, won this month and this year, win rate) and the stage bars show only once you have a deal in `Pipeline`, a possible job you follow until it is won or lost. Then come late follow-ups, customers you have not contacted for a while, new leads and, once you invoice from CRM, what your customers still owe. Tap a tile to see the list behind it.
 
 ## Sync and backup
 Customers, people, history, follow-ups, deals, tags and the currency sync between your devices through [orOS sync](help:t/sync). The open tab, filters and sort stay on each device.
@@ -102,6 +102,19 @@ In the contract's editor, `Format` (print or digital; read from the title when i
 The end day also shows in [Publishing](app:publish) (on each title, with a badge in the list), the [Calendar](app:calendar) (all day, on its end day), [Today](app:today) (one line with the contracts that need a decision, and Renew, Put off and Email on a contract's reminder) and [Kanban](app:kanban) (on cards that name the book). The buttons there open these actions here. In Settings › `Contracts` pick the Calendar label the end days show under and the Kanban board contract cards go to.
 
 A contract added by the [Assistant](app:assistant) or orOS Gate gets its reminder the next time CRM opens.
+
+### Rights: what each contract grants
+A contract's quick actions show its `Rights`: the template, what it grants (every economic right, an exclusive licence or free digital posting only), the formats it covers, each right with its share (print, e-book, audio, translation, stage, film and TV, merchandise, free digital posting, excerpts and promotion), the territory, how long stock may still be sold after the end, the Creative Commons licence and where the terms come from (the PDF, an oral agreement or a paper not found). Claude fills them in from your contracts through orOS Gate, or the [Assistant](app:assistant) does, each change on a card with Undo.
+
+The `Rights` chip in `Contracts` matches them to your [Publishing](app:publish) titles and shows:
+- `On sale with no running right`: a format linked to a shop product while its contract has ended, was ended by agreement or does not cover it (a print edition stays fine during its sell-off months). Free releases under CC BY-NC-SA show apart, under `Free, under CC`. A price of 0 in Publishing counts as free.
+- `Rights with no release`: a running contract grants the e-book or the audiobook and the title has no such format.
+- `Renewal decisions within 90 days`, each with what happens after the end (sell-off months, extension only by agreement).
+- `All titles`, with ✓ granted, ± with consent, ○ free only and – not mentioned or not recorded for each right.
+
+A digital-only contract released under a perpetual Creative Commons licence shows as `Digital, for ever under its CC licence`: its end needs no decision and sends no reminder, and its digital editions stay allowed. Print contracts keep their end day.
+
+This is a record of what the contracts say, not legal advice.
 
 `Send to the shop…` (with a WooCommerce shop in Settings › Connected services) sends the end days to the shop's Revenue Splitter (1.14.2 or later), which shows each creator their own contracts in its Author Portal. Only names, titles, formats, days and states are sent, never a note, a value or a file.
 

@@ -452,13 +452,15 @@
     chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 20V12M10 20V6M15 20v-9M20 20V4"/></svg>',
     lyrics: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 10h10M4 14h6"/><path d="M18 18V6l3-1"/><circle cx="16" cy="18" r="2"/></svg>',
     eq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><path d="M4 14h4M10 8h4M16 16h4"/></svg>',
+    viz: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="3.5"/></svg>',
+    expand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>'
   };
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false };
+    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, viz: { on: false, st: "glow" } };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
@@ -470,6 +472,11 @@
         if (["all", "jm", "ia", "ov", "cc"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
         if (o.ly === "on" || o.ly === "off") p.ly = o.ly;
         if (o.mb === true) p.mb = true;
+        // MU-VIZ: the light show of the full player (on, style).
+        if (o.viz && typeof o.viz === "object") {
+          p.viz.on = o.viz.on === true;
+          if (["glow", "rings", "bars", "wave"].indexOf(o.viz.st) >= 0) p.viz.st = o.viz.st;
+        }
       }
     } catch (e) {}
     return p;
@@ -3176,6 +3183,8 @@
     var qBtn = button(t("queue"), "icon-btn", function () { showQ = !showQ; if (showQ) showLy = false; dlg._paint(true); }, I.queue);
     var cb = castButton();
     if (cb) head.appendChild(cb);
+    var vizBtn = hasViz() ? button(vizT("btn"), "icon-btn fp-viz-btn", function () { vizToggle(!prefs.viz.on); }, I.viz) : null;
+    if (vizBtn) head.appendChild(vizBtn);
     head.appendChild(button(t("m.share"), "icon-btn", function () { var c = H.getState().cur; if (c) shareSong(c); }, I.share));
     head.appendChild(lyBtn);
     head.appendChild(qBtn);
@@ -3243,6 +3252,95 @@
     extra.appendChild(sndBtn); extra.appendChild(slBtn);
     extra.hidden = !hasSound();
     dlg.appendChild(extra);
+    // MU-VIZ: the light show. A canvas behind the whole window, a row
+    // with the style and "Light only", and a line saying why the light
+    // moves on its own or stays still.
+    var vzCanvas = el("canvas", "fp-viz");
+    vzCanvas.setAttribute("aria-hidden", "true");
+    dlg.insertBefore(vzCanvas, dlg.firstChild);
+    var vzBar = el("div", "fp-vizbar");
+    var vzStyle = pillBtn(vizT("style", { s: vizT(prefs.viz.st) }), function () {
+      prefs.viz.st = window.OrosViz ? window.OrosViz.nextStyle(prefs.viz.st) : prefs.viz.st;
+      savePrefs();
+      if (vz) vz.setStyle(prefs.viz.st);
+      vzPaint();
+    }, I.viz);
+    var vzImm = pillBtn(vizT("immersive"), function () { immersive(true); }, I.expand);
+    vzBar.appendChild(vzStyle); vzBar.appendChild(vzImm);
+    vzBar.hidden = true;
+    dlg.appendChild(vzBar);
+    var vzNote = el("p", "fp-viz-note dim small");
+    vzNote.setAttribute("aria-live", "polite");
+    vzNote.hidden = true;
+    dlg.appendChild(vzNote);
+    var vzBack = button(vizT("back"), "icon-btn fp-viz-back", function (e) { e.stopPropagation(); immersive(false); }, I.down);
+    dlg.appendChild(vzBack);
+    var vz = null, vzWhy = "", vzLive = true, vzSeq = 0;
+    function vzPaint() {
+      var on = !!(prefs.viz.on && hasViz());
+      dlg.classList.toggle("viz-on", on);
+      if (vizBtn) {
+        vizBtn.classList.toggle("on", on);
+        vizBtn.setAttribute("aria-pressed", on ? "true" : "false");
+        vizBtn.setAttribute("aria-label", vizT(on ? "on" : "off")); vizBtn.title = vizT("btn");
+      }
+      vzBar.hidden = !on;
+      vzStyle.lastChild.textContent = vizT("style", { s: vizT(prefs.viz.st) });
+      vzImm.lastChild.textContent = vizT("immersive");
+      vzBack.setAttribute("aria-label", vizT("back")); vzBack.title = vizT("back");
+      vzStyle.setAttribute("aria-label", vizT("style", { s: vizT(prefs.viz.st) }) + " · " + vizT("next"));
+      var msg = !on ? "" : vzWhy ? vizT(vzWhy) : !vzLive ? vizT("calm") : "";
+      if (vzNote.textContent !== msg) vzNote.textContent = msg;
+      vzNote.hidden = !msg;
+      if (!on && dlg.classList.contains("fp-imm")) immersive(false);
+    }
+    function vzStart() {
+      var my = ++vzSeq;
+      H.viz(true);
+      vizKit().then(function (V) {
+        if (my !== vzSeq || !V || !dlg.open || !prefs.viz.on || vz) return;
+        vz = V.create(vzCanvas, {
+          style: prefs.viz.st,
+          source: function () { return H.vizFrame(); },
+          playing: function () { return H.getState().playing; },
+          // The cover's place (empty while the light shows), or the
+          // whole window in "Light only" or when the queue / lyrics take it.
+          area: function () {
+            if (dlg.classList.contains("fp-imm") || !artBox.offsetWidth) return null;
+            var d = dlg.getBoundingClientRect(), b = artBox.getBoundingClientRect();
+            return { x: b.left - d.left, y: b.top - d.top, w: b.width, h: b.height };
+          },
+          colors: function () {
+            var cs = getComputedStyle(document.documentElement);
+            return { a: (cs.getPropertyValue("--accent") || "").trim(), bg: "#08080d" };
+          },
+          onState: function (r) { vzWhy = r; vzPaint(); }
+        });
+        vzPaint();
+      });
+    }
+    function vzStop() {
+      vzSeq++;
+      if (vz) { vz.destroy(); vz = null; }
+      vzWhy = ""; vzLive = true;
+      try { H.viz(false); } catch (e) {}
+    }
+    function vizToggle(on) {
+      prefs.viz.on = !!on;
+      savePrefs();
+      if (on) vzStart(); else vzStop();
+      vzPaint();
+    }
+    // "Light only": everything but the light steps aside; a tap, a key
+    // or Esc brings the controls back (Esc does not close the window then).
+    function immersive(on) {
+      dlg.classList.toggle("fp-imm", !!on);
+      if (on) { try { vzBack.focus({ preventScroll: true }); } catch (e) {} }
+      else { try { vzImm.focus({ preventScroll: true }); } catch (e) {} }
+    }
+    dlg.addEventListener("cancel", function (e) { if (dlg.classList.contains("fp-imm")) { e.preventDefault(); immersive(false); } });
+    dlg.addEventListener("click", function (e) { if (dlg.classList.contains("fp-imm") && e.target !== vzBack && !vzBack.contains(e.target)) { e.stopImmediatePropagation(); e.preventDefault(); immersive(false); } }, true);
+    dlg.addEventListener("keydown", function (e) { if (dlg.classList.contains("fp-imm") && e.key !== "Escape" && e.key !== "Tab") { immersive(false); } });
     var showQ = false, showLy = false, lastK = "", lyP = null;
     dlg._paint = function (full) {
       var st = H.getState(), c = st.cur;
@@ -3286,12 +3384,40 @@
       }
       tDur.textContent = C.fmtTime(st.dur);
       if (document.activeElement !== vr) vr.value = String(Math.round(st.vol * 100));
+      if (vz) {
+        var fr = st.playing ? H.vizFrame() : null;
+        var live = !st.playing || !!(fr && fr.live);
+        if (live !== vzLive) { vzLive = live; vzPaint(); }
+        if (st.playing) vz.wake();
+      }
     };
-    dlg.addEventListener("close", function () { dlg.remove(); });
+    dlg.addEventListener("close", function () { vzStop(); dlg.remove(); });
     // Artist link inside: close first.
     ta.addEventListener("click", function () { dlg.close(); });
     openDialog(dlg);
     dlg._paint(true);
+    vzPaint();
+    if (prefs.viz.on && hasViz()) vzStart();
+  }
+  // MU-VIZ: ../vizkit.js (OrosViz), loaded on the first light show with
+  // this app's ?v=. The host needs viz / vizFrame (host.js 1.5.0).
+  function hasViz() { return !!(H && typeof H.viz === "function" && typeof H.vizFrame === "function" && document.createElement("canvas").getContext); }
+  function vizT(k, v) { return window.OrosViz ? window.OrosViz.label(k, LANG, v) : (VIZ_FALLBACK[k] || k); }
+  var VIZ_FALLBACK = { btn: "Light show", on: "Light show on", off: "Light show off" };
+  var vizWait = null;
+  function vizKit() {
+    if (window.OrosViz) return Promise.resolve(window.OrosViz);
+    if (vizWait) return vizWait;
+    var ver = (document.querySelector('script[src*="music.js"]') || {}).src || "";
+    var q = (ver.match(/\?v=[^"&]+/) || [""])[0];
+    vizWait = new Promise(function (resolve) {
+      var s = document.createElement("script");
+      s.src = "../vizkit.js" + q;
+      s.onload = function () { resolve(window.OrosViz || null); };
+      s.onerror = function () { vizWait = null; s.remove(); resolve(null); };
+      document.head.appendChild(s);
+    });
+    return vizWait;
   }
   function paintQueue(box) {
     box.textContent = "";

@@ -129,13 +129,13 @@ export const TOOLS = [
   {
     name: "app_summary",
     description: "Worked out on the device. budget: one month's income, expenses, per category; stock: one month's units and amounts sold, per product and place; kanban: every open board with its columns and card counts, late and due today, and the cards with column, due date, labels and subtasks done (with board, only that board, every column with its id); studio: the podcast shows (feed address, episodes, how many have their file) and every episode with show, number, date and whether its file is made (with show, only that show; read only, publishing is always the owner's own tap in Studio). " +
-      "The other apps list_apps marks with app_summary (GATE-ACT): todo (open, late, due today per list; with list every task with a ref), calendar (labels; with month or label the events with a ref), notes (notebooks and pages with refs), bookmarks, contacts (no phone or e-mail), shelf, library, timesheet (hours per project of a month), crm (with partner: everything open with them), and for the rest what is late, today and in the next days.",
+      "The other apps list_apps marks with app_summary (GATE-ACT): todo (open, late, due today per list; with list every task with a ref), calendar (labels; with month or label the events with a ref), notes (notebooks and pages with refs), bookmarks, contacts (no phone or e-mail), shelf, library, timesheet (hours per project of a month), crm (with partner: everything open with them), meals (recipes, this and next week's plan, pantry near best-before), travel (trips, what is left to pack, the itinerary of trips not over), plants (every plant with its next care days), garage (vehicles with km and this year's costs, renewals and service plans with due day and level), habits (schedule, today, streak, score), scanpdf (signature requests and their status; never an e-mail or link), transfer (the History; never the files), whiteboard (boards and the texts of their notes and shapes; with board only that board), all read only, and for the rest what is late, today and in the next days.",
     inputSchema: {
       type: "object",
       properties: {
         app: { type: "string", description: "The app id (from list_apps)." },
         month: { type: "string", description: "budget, stock, timesheet: YYYY-MM (this month when left out). calendar: that month's events." },
-        board: { type: "string", description: "kanban: only this board's cards (its name), with every column of that board in order and its id." },
+        board: { type: "string", description: "kanban: only this board's cards (its name), with every column of that board in order and its id. whiteboard: only this board's texts." },
         show: { type: "string", description: "studio: only this podcast show (its title)." },
         label: { type: "string", description: "calendar, contacts: only this label (\"none\": without one)." },
         list: { type: "string", description: "todo: one list's name." },
@@ -171,7 +171,7 @@ export const TOOLS = [
   },
   {
     name: "invoice_list",
-    description: "Invoices: issued documents (invoices, receipts, credit notes, proformas, ones issued elsewhere; drafts left out) between two days with client, totals, paid, balance, status and lines; or, with received: true, invoices received from suppliers. Oldest first, 500 per page, amounts as decimal strings.",
+    description: "Invoices: issued documents (invoices, receipts, credit notes, proformas, ones issued elsewhere; drafts left out) between two days with client, totals, paid, balance, status and lines (one issued elsewhere also its area, source, provider_uid, auth_code and mydata_type when recorded); or, with received: true, invoices received from suppliers. Oldest first, 500 per page, amounts as decimal strings.",
     inputSchema: {
       type: "object",
       properties: {
@@ -349,6 +349,13 @@ export const TOOLS = [
     annotations: { readOnlyHint: false, destructiveHint: false }
   },
   {
+    // BK-AO (Chris 2026-11-18): the banks' new bookings now, as Budget › Banks › Update now
+    name: "budget_refresh",
+    description: "Asks the owner's banks (and PayPal) connected in Budget › More › Banks for their new bookings now, exactly as the owner's Update now: new entries come in with Budget's own rules, areas and duplicate checks, and the banks' balances are read. Needs orOS open on a device that holds the bank key (it never waits for orOS to open: there Budget updates by itself). At most once per 10 minutes per device; banks allow about 4 unattended reads a day, so call it once before a check, not in a loop. The answer says how many entries came in, which bank accounts failed and why (consent = the owner renews access), and when the banks were last read. Then read them with budget_lines. Same rule as budget_add (Budget set to «may change»).",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
     name: "budget_delete",
     description: "Deletes Budget entries by id (at most 100 per call, all or none). Same rule as budget_add; more than 5 at once must also be confirmed by the owner on the device within 20 seconds. With orOS closed the deletion waits and is applied when orOS opens (more than 5 then ask the owner there; not confirmed = nothing deleted). The owner is notified and can undo it from any of their devices.",
     inputSchema: {
@@ -468,6 +475,57 @@ export const TOOLS = [
   }
   ,
   {
+    name: "invoices_record",
+    description: "Records documents ISSUED ELSEWHERE (another invoicing provider, myDATA) in Invoices, at most 100 per call, all or none: each becomes an issued «recorded» document with its own series and number, never a draft, never numbered from orOS's series, never sent to myDATA or anyone. A document whose number (or provider_uid) Invoices already has is skipped and listed, not refused. The client is matched as Invoices does (tax id, then name) or made. Amounts are decimal strings; withholding is the amount withheld (e.g. 20% of net) and total_payable, when given, must equal net + vat − withholding. paid records one payment of the whole amount payable (it does not go to Budget by itself). area: a Budget area name (budget_lines areas). Works when the owner lets Claude change Invoices and has not paused changes; with orOS closed it waits and is applied when orOS opens. The owner is notified and can undo it. Returns the new document ids and the skipped ones.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        documents: { type: "array", minItems: 1, maxItems: 100, items: {
+          type: "object",
+          properties: {
+            number: { type: "string", description: "Series and number as printed, e.g. \"ΤΠΥ0148\" (at most 40 characters)." },
+            date: { type: "string", description: "The issue day, YYYY-MM-DD." },
+            client: { type: "string", description: "The client's name on the document." },
+            client_vat_id: { type: "string", description: "The client's tax id (ΑΦΜ), if any." },
+            net: { type: "string", description: "Net amount, e.g. \"600.00\"." },
+            vat: { type: "string", description: "VAT amount, e.g. \"144.00\" (\"0\" when exempt)." },
+            withholding: { type: "string", description: "Amount withheld, e.g. \"120.00\"; left out = none." },
+            total_payable: { type: "string", description: "What the client pays (a check)." },
+            currency: { type: "string", description: "ISO code; EUR when left out." },
+            lines: { type: "array", maxItems: 50, items: {
+              type: "object",
+              properties: {
+                text: { type: "string", description: "The line's description (at most 500 characters)." },
+                qty: { type: "number", description: "1 when left out." },
+                price: { type: "string", description: "Unit price before VAT, e.g. \"25.00\"." },
+                vat_rate: { type: "number", description: "VAT %, e.g. 24." }
+              },
+              required: ["text"],
+              additionalProperties: false
+            }, description: "The printed lines, kept for the record (the totals are net and vat above)." },
+            paid: { type: "object", properties: {
+              method: { type: "string", enum: ["bank", "cash", "card", "iris", "paypal", "other"] },
+              date: { type: "string", description: "YYYY-MM-DD; the issue day when left out." }
+            }, required: ["method"], additionalProperties: false, description: "Paid in full: how and when." },
+            mark: { type: "string", description: "The myDATA ΜΑΡΚ, if any." },
+            mydata_type: { type: "string", description: "The myDATA document type, e.g. \"1.1\", \"2.1\", \"11.1\", \"11.2\"." },
+            provider_uid: { type: "string", description: "The provider's own id of the document (e.g. invoiceUid), to match it later." },
+            auth_code: { type: "string", description: "The provider's authentication code, if any." },
+            area: { type: "string", description: "A Budget area name (budget_lines areas)." },
+            source: { type: "string", description: "Where it was issued, e.g. \"timologisi.online\" (at most 60 characters)." },
+            note: { type: "string", description: "At most 2000 characters." }
+          },
+          required: ["number", "date", "client", "net", "vat"],
+          additionalProperties: false
+        } }
+      },
+      required: ["documents"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  }
+  ,
+  {
     name: "files_link",
     description: "A one-time download link (15 minutes, one download) for a file in Claude's folders on the orOS disk, made from the owner's sealed copy of those folders (it works with orOS closed; the answer says of when). Use it for PDFs, images, audio, video and other files a tool answer cannot carry: fetch the link with curl or similar. Paths are as files_list shows them. Files not in the copy (too big, media, over the owner's quota) have no link.",
     inputSchema: {
@@ -518,6 +576,8 @@ export function neverIn(args) {
 // ---- orOS closed: search, loose answers and changes by ref (5.96.00) ----
 // The device tools whose changes wait in the queue by item refs.
 export const REF_QUEUED = ["change_item", "link_items", "link_contact"];
+// BK-AO: relay change tools that never wait for orOS to open (closedCall refuses them)
+export const LIVE_ONLY = ["budget_refresh"];
 export function foldTxt(x) {
   return String(x == null ? "" : x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
@@ -574,6 +634,7 @@ export function pendApp(n, a, byRef) {
   if (n === "create_items") return typeof o.app === "string" ? o.app.replace(/^(crm|travel)_.*$/, "$1") : "";
   if (/^budget_/.test(n)) return "budget";
   if (/^kanban_/.test(n)) return "kanban";
+  if (/^invoices_/.test(n)) return "invoices";
   if (/^files_/.test(n)) return "files";
   const r = refsIn(o)[0];
   return r && byRef && byRef[r] ? byRef[r] : "";
@@ -1683,7 +1744,8 @@ export class GateBox {
   async webSocketMessage(ws, msg) {
     if (msg === "ping") { const a = attOf(ws); a.lt = Date.now(); setAtt(ws, a); try { ws.send("pong"); } catch (e) {} return; }
     if (msg === "v0" || msg === "v1") {             // the device's screen: shown or hidden
-      const a = attOf(ws); a.v = msg === "v1" ? 1 : 0; a.vt = a.lt = Date.now(); setAtt(ws, a);
+      const a = attOf(ws), was = a.v; a.v = msg === "v1" ? 1 : 0; a.vt = a.lt = Date.now(); setAtt(ws, a);
+      if (a.v && !was) await this.sendHeld([ws]);    // 7.48.00: deletions waiting for a screen
       return;
     }
     if (typeof msg !== "string" || msg.length > GATE_LIMITS.replyBytes) {
@@ -1696,13 +1758,26 @@ export class GateBox {
     if (o && typeof o.snap === "string" && o.r === undefined) { await this.putCopy(ws, o.snap); return; }
     if (o && typeof o.fidx === "string" && o.r === undefined) { await this.putFileIndex(ws, o.fidx); return; }
     if (o && o.fdrop === 1 && o.r === undefined) { await this.dropFromDevice(ws); return; }
-    if (o && Array.isArray(o.cqa) && o.r === undefined) { await this.queueDone(ws, o.cqa); return; }
+    if (o && Array.isArray(o.cqa) && o.r === undefined) {
+      await this.queueDone(ws, o.cqa);
+      if (Array.isArray(o.cqh) && o.cqh.length) await this.markHeld(ws, o.cqh);
+      return;
+    }
     if (!o || typeof o.r !== "string") return;
     const w = this.wait.get(o.r);
     // 6.01.02: a late answer. The box gave up on it and queued the change
     // under the same id; the device decided it after all (done, or refused:
     // app off, paused), so it waits no more. Only "late" (never started) keeps it.
-    if (!w) { if (!(o.ok === false && o.c === "late") && /^[A-Za-z0-9_-]{16}$/.test(o.r)) await this.st.delete("q:" + o.r); return; }
+    // 7.48.00: a late __held (nobody at that screen) keeps it too, now for a device on screen.
+    if (!w) {
+      if (o.ok === false && o.c === "__held" && /^[A-Za-z0-9_-]{16}$/.test(o.r)) {
+        const row = await this.st.get("q:" + o.r);
+        if (row) { row.hd = 1; delete row.nb; await this.st.put("q:" + o.r, row); await this.sendHeld(this.sockets().filter((s) => s !== ws)); }
+        return;
+      }
+      if (!(o.ok === false && o.c === "late") && /^[A-Za-z0-9_-]{16}$/.test(o.r)) await this.st.delete("q:" + o.r);
+      return;
+    }
     this.wait.delete(o.r);
     clearTimeout(w.timer);
     w.done(o);
@@ -1913,10 +1988,36 @@ export class GateBox {
     const keys = ids.filter((x) => typeof x === "string" && /^[A-Za-z0-9_-]{8,24}$/.test(x)).slice(0, GATE_LIMITS.queue).map((x) => "q:" + x);
     if (keys.length) await this.st.delete(keys);
   }
+  // 7.48.00 (Chris 2026-11-17 «Η ερώτηση δεν εμφανίστηκε ποτέ»): a
+  // deletion that a device could not ask about (nobody at its screen: the
+  // background host, a hidden window, the lock) is marked hd and offered
+  // to the devices on screen now and to each one that comes on screen.
+  // Only these rows go twice (a deletion runs only after a Delete there).
+  async markHeld(ws, ids) {
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    let n = 0;
+    for (const id of ids.filter((x) => typeof x === "string" && /^[A-Za-z0-9_-]{8,24}$/.test(x)).slice(0, GATE_LIMITS.queue)) {
+      const row = await this.st.get("q:" + id);
+      if (row && !row.hd) { row.hd = 1; await this.st.put("q:" + id, row); n++; }
+    }
+    if (n) await this.sendHeld(this.sockets().filter((s) => s !== ws));
+  }
+  async sendHeld(socks) {
+    const on = (socks || this.sockets()).filter((s) => attOf(s).v);
+    if (!on.length) return;
+    const q = await this.st.list({ prefix: "q:" }), hd = new Map();
+    q.forEach((v, k) => { if (v && v.hd) hd.set(k, v); });
+    const items = queueFor(hd, Date.now());
+    if (!items.length) return;
+    for (const s of on) { try { s.send(JSON.stringify({ cq: items })); } catch (e) {} }
+  }
   // A call while no device is open: reads from the copy, changes wait
   // in the queue (since 6.05.02 Budget deletions and transfers too;
   // deleting other apps' items by ref still waits for an open device).
   async closedCall(name, args, kRaw, now, qidWant) {
+    // BK-AO: a bank read needs the device's bank key; it is never queued
+    if (name === "budget_refresh") return { ok: false, c: "orOS is closed: the banks can be read only from an open device (the bank key stays there), so nothing was read and nothing waits. When orOS opens, Budget reads the banks by itself (Budget › More › Banks › Automatic updates). Use budget_lines for what is in the copy." };
     if (name === "files_list" || name === "files_read") return await this.closedFiles(name, args, kRaw);
     if (FILE_CHANGE[name]) return await this.closedFileChange(name, args, kRaw, now, qidWant);
     if (!kRaw) return { ok: false, c: "orOS is closed and there is no copy Claude may read yet. Ask the owner to open orOS once on a device with the gate on." };
@@ -2017,7 +2118,7 @@ export class GateBox {
     if (pl.busy.length) out.on_a_device_now = pl.busy.slice(0, 20);
     return { ok: true, c: JSON.stringify(out) };
   }
-  async queueChange(name, args, kRaw, now, qidWant, note) {
+  async queueChange(name, args, kRaw, now, qidWant, note, hd) {
     const q = await this.st.list({ prefix: "q:" });
     if (q.size >= GATE_LIMITS.queue) return { ok: false, c: "Too many changes are waiting for orOS to open (" + GATE_LIMITS.queue + "). Ask the owner to open orOS." };
     const qid = typeof qidWant === "string" && /^[A-Za-z0-9_-]{16}$/.test(qidWant) ? qidWant : rand43().slice(0, 16);
@@ -2029,6 +2130,7 @@ export class GateBox {
     // 6.01.02: a call that timed out may still finish on the device that
     // got it; no other device gets it for lateMs (its late answer ends it).
     if (qid === qidWant) row.nb = now + GATE_LIMITS.lateMs;
+    if (hd) row.hd = 1;                           // 7.48.00: a deletion waiting for a screen
     await this.st.put("q:" + qid, row);
     const out = { queued: true, pending: true, change_id: qid, note };
     if (name === "create_items" && args && Array.isArray(args.items)) {
@@ -2158,6 +2260,16 @@ export class GateBox {
       // request is not lost.
       const late = await this.closedCall(p.name, args, await this.unwrapK(tok), Date.now(), ans.rid);
       ans = { ok: late.ok, e: late.ok ? undefined : "timeout", c: typeof late.c === "string" ? late.c.split("orOS is closed").join("orOS did not answer in time (asleep in the background or busy)") : late.c };
+    }
+    else if (!ans.ok && ans.c === "__held") {
+      // 7.48.00: the device that got this deletion had nobody at its screen
+      // (the background host, a hidden window) or no answer in 20 s. It is
+      // not refused: it waits like a closed-orOS deletion, for the owner's
+      // Delete on a device on screen (offered now, and when one comes on screen).
+      const kRaw = await this.unwrapK(tok);
+      ans = kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
+                 : { ok: false, c: "Nobody answered on the owner's screen and the deletion could not be kept for later. Nothing was deleted. Ask the owner to have orOS on screen and try once more." };
+      if (ans.ok) await this.sendHeld();
     }
     else if (ans.ok && !(await this.st.get("kw:" + await sha256hex(tok)))) {
       const kRaw = await this.keyFromDevice();          // a link made before 5.80.00: wrap the key for it now

@@ -20,6 +20,7 @@ orosPack("de", "radio", {
  "imp.csv": "eine CSV-Liste",
  "imp.done": "{n} Sender importiert",
  "imp.empty": "Keine Sender in dieser Datei gefunden.",
+ "viz.btn": "Lichtshow",
  "imp.go": "Importieren",
  "imp.keep": "Importierte Sender kommen zu deinen Favoriten; an deinen Daten ändert sich nichts.",
  "imp.more": "… und {n} weitere",

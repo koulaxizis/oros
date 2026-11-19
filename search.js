@@ -216,6 +216,13 @@
   // providers that read packs.
   // Resolves to [{ id, total, hits: [{…hit, score, snippet}] }] in
   // provider order; providers with no hit are left out.
+  // APPLOCK-1: a locked app's items stay out while it is locked
+  // (lock.js orosLock.apps; none in Node or before lock.js).
+  function lockHides(id) {
+    var L = root && root.orosLock;
+    try { return !!(L && L.apps && typeof L.apps.allowed === "function" && !L.apps.allowed(id)); } catch (e) { return true; }
+  }
+
   function run(providers, query, opts) {
     opts = opts || {};
     var words = parseQuery(query);
@@ -232,7 +239,7 @@
     };
     var list = (providers || []).filter(function (p) {
       return p && typeof p.id === "string" && typeof p.search === "function" &&
-             (!opts.enabled || opts.enabled(p.id));
+             (!opts.enabled || opts.enabled(p.id)) && !lockHides(p.id);
     });
     return Promise.all(list.map(function (p) {
       var out;
