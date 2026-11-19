@@ -29,6 +29,12 @@
    hourly dropSweep on every open orOS, and the 4-hour builds) removes
    every hold on time. Or at once with "Delete now".
 
+   TR-LATER (scheduled email): send({ start }) with start in the future
+   (≤ LATER_MAX) counts the hold from start instead of now (T and exp
+   both move) and always uses shared links, because the email may go
+   out after a temporary link would have ended. orOS Mail sends the
+   email from its Outbox (mail/outbox.js); this file only uploads.
+
    window.OrosTransferCloud = { HOLDS, fragment, parseFragment, okLink, plan,
      cipherLen, packLen, newId, idTime, sealIndex, openIndex, Cutter,
      send(opts) → Promise<{ id, url, exp }>, Receiver(opts), probe(drop, fetch),
@@ -48,6 +54,7 @@
   var HOLDS = [4, 12, 24, 48, 60, 72, 84, 96];   // hours the sender may choose
   var HOUR = 3600000;
   var UPLOAD_ALLOW = 2 * HOUR;      // uploads that take longer shorten the promise, never the sweep's margin
+  var LATER_MAX = 14 * 24 * HOUR;   // TR-LATER: a scheduled email at most 14 days ahead
   var READ = 16 * 61440;            // bytes read from a source file at a time
   var RETRIES = 3;
   var INDEX_MAX = 8 * 1048576;
@@ -95,9 +102,10 @@
     return sweepBase(now || Date.now(), hold).toString(36) + C.hex(r);
   }
   // What the link promises: the links' own life, and never past T + 4 h (the sweep comes 15 min later).
-  function expiry(id, linksAt, hold) {
+  // shared: the links do not end by themselves (wave 5 holds, and every scheduled email)
+  function expiry(id, linksAt, hold, shared) {
     hold = okHold(hold);
-    var life = hold === 4 ? LINK_SAFE : hold * HOUR;
+    var life = hold === 4 && !shared ? LINK_SAFE : hold * HOUR;
     return Math.min(linksAt + life, idTime(id) + LINK_MS);
   }
   function idTime(id) { var t = parseInt(String(id).slice(0, 8), 36); return t > 0 ? t : 0; }
@@ -188,8 +196,12 @@
   // opts: { code, hold (hours, HOLDS; default 4), files (manifest [{p,s,m}]), read(i, a, b) → Uint8Array, drop (orosSync.cloudDrop),
   //   temp() → Promise<{ write, close, file, remove }>, onProgress({ bytes, total, step }), cancelled() → bool, packMax?, now? }
   function send(o) {
-    var hold = okHold(o.hold), shared = hold > 4;
-    var id = newId(o.now && o.now(), hold), files = o.files, packs = plan(files, o.packMax), hashes = [], keyP = C.derive(o.code);
+    // o.start (TR-LATER): the link is emailed at this later time, so the hold counts from
+    // then and the links must outlive it (shared links, also for 4 h).
+    var now0 = o.now ? o.now() : Date.now();
+    var start = o.start > now0 ? Math.min(+o.start, now0 + LATER_MAX) : 0;
+    var hold = okHold(o.hold), shared = hold > 4 || !!start;
+    var id = newId(start || now0, hold), files = o.files, packs = plan(files, o.packMax), hashes = [], keyP = C.derive(o.code);
     var total = files.reduce(function (s, f) { return s + f.s; }, 0), done = 0;
     function stop() { if (o.cancelled && o.cancelled()) throw err("cancelled"); }
     function progress(step) { if (o.onProgress) o.onProgress({ bytes: done, total: total, step: step }); }
@@ -234,8 +246,8 @@
         function mk(name) { return shared ? o.drop.share(name) : o.drop.link(name); }
         packs.forEach(function (_, k) { l = l.then(function () { return mk(id + "/p" + k).then(function (u) { links[k] = u; }); }); });
         return l.then(function () {
-          var t0 = o.now ? o.now() : Date.now();
-          var idx = { v: 1, id: id, exp: expiry(id, t0, hold), hold: hold, files: files.map(function (f, i) {
+          var t0 = Math.max(o.now ? o.now() : Date.now(), start);
+          var idx = { v: 1, id: id, exp: expiry(id, t0, hold, shared), hold: hold, files: files.map(function (f, i) {
             var k = 0;
             packs.forEach(function (list, j) { if (list.indexOf(i) !== -1) k = j; });
             return { p: f.p, s: f.s, m: f.m, h: hashes[i], k: k };
@@ -407,7 +419,7 @@
   }
 
   var api = {
-    PACK_MAX: PACK_MAX, LINK_MS: LINK_MS, LINK_SAFE: LINK_SAFE, SWEEP_MS: SWEEP_MS, HOLDS: HOLDS, UPLOAD_ALLOW: UPLOAD_ALLOW,
+    PACK_MAX: PACK_MAX, LINK_MS: LINK_MS, LINK_SAFE: LINK_SAFE, SWEEP_MS: SWEEP_MS, HOLDS: HOLDS, UPLOAD_ALLOW: UPLOAD_ALLOW, LATER_MAX: LATER_MAX,
     okHold: okHold, expiry: expiry,
     fragment: fragment, parseFragment: parseFragment, okLink: okLink, plan: plan, cipherLen: cipherLen, packLen: packLen,
     newId: newId, idTime: idTime, sealIndex: sealIndex, openIndex: openIndex, Cutter: Cutter, pieceLens: pieceLens,
