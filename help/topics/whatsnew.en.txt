@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.98.00
+- **Recording in Maps knows what you do.** Choose walk, hike, run, ride or mountain bike; Maps shows when you stopped, the moving time and the climb as you go, and you can add a point with a photo. A track then shows its splits per kilometre and its points with photos. See [Maps](help:a/maps).
+
 ## Version 7.97.00
 - **Layout: books from Scribus, Affinity and InDesign come over closer to the original.** Calibri, Arial and Times are replaced by free fonts with the same letter widths (Carlito, Liberation Sans, Liberation Serif), so lines break where they did. A photo that your printer's PDF prints in black and white comes in black and white. Export has PDF/X-4, the file printers ask for, with the colours in the printer's CMYK and black text in black ink alone. A cover whose text arrived as shapes can be read with Text from the picture (OCR). More › Compare with a PDF shows, page by page, what differs from the original PDF, in red.
 
