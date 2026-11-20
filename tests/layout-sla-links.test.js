@@ -97,7 +97,7 @@ test("shrunk(): a picture imported before the fix is found, and Find pictures pl
   a.a = "x.jpg"; a.iw = 3500; a.ih = 1750; S.placePicture(a);
   assert.equal(S.shrunk(a, 3500), true);
   // the same frame after a fix of its own (owner changed the scale): left alone
-  const own = Object.assign({}, a, { isc: 0.4 });
+  const own = Object.assign({}, a, { isc: 0.4, ext: JSON.parse(JSON.stringify(a.ext)) });
   assert.equal(S.shrunk(own, 3500), false);
   // a small picture, a fit, a stretch, an empty frame, no Scribus data: never
   d.a = "y.jpg"; d.iw = 1600; d.ih = 800; S.placePicture(d);
@@ -112,6 +112,11 @@ test("shrunk(): a picture imported before the fix is found, and Find pictures pl
   S.placePicture(a, 7000, 3500);
   assert.ok(Math.abs(R.imageRect(a).w - 1750) < 1e-9, "7000 px × 0.25 pt");
   assert.equal(S.shrunk(a, 3500), false, "after the repair it is no longer shrunk");
+  assert.equal(a.ext.ow, 7000);
+  // an original only a little larger than the stored copy: done too
+  const e = Object.assign({}, own, { isc: 0.25, ext: { place: own.ext.place.slice() } });
+  S.placePicture(e, 3504, 1752);
+  assert.equal(S.shrunk(e, 3500), false);
   // the Links list shows it, and Find pictures takes such frames too
   const PRO = require(path.join(ROOT, "layout/pro.js"));
   const doc = M.normDoc(res.doc);

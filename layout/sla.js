@@ -635,7 +635,11 @@
     if (p[0] === 1) { it.fit = "fit"; return; }
     it.fit = "custom";
     if (p[0] === 2) { sx = it.w / it.iw; sy = it.h / it.ih; it.ix = 0; it.iy = 0; }
-    else { it.ix = (p[3] || 0) * sx; it.iy = (p[4] || 0) * sy; sx *= kx; sy *= ky; }
+    else {
+      it.ix = (p[3] || 0) * sx; it.iy = (p[4] || 0) * sy; sx *= kx; sy *= ky;
+      // the original's width is known: placed at its size (shrunk() no more)
+      if (ow > 0) it.ext.ow = Math.round(ow);
+    }
     it.isc = sx;
     if (Math.abs(sy - sx) > 1e-9 * sx) it.ext.iscy = sy;
   }
@@ -643,10 +647,11 @@
   // A free Scribus placement imported before 7.96.01 from a picture
   // stored smaller than its original (a side at `max`, the assets'
   // MAX_SIDE) and not changed since: its scale is still LOCALSC, so it
-  // draws too small. Find pictures with the original places it again.
+  // draws too small. Find pictures with the original places it again
+  // (and placePicture with the original's size sets ext.ow: done).
   function shrunk(it, max) {
     var p = it && it.ext && it.ext.place;
-    if (!it || it.t !== "img" || !it.a || it.fit !== "custom" || !Array.isArray(p) || p[0] !== 0 || !(p[1] > 0)) return false;
+    if (!it || it.t !== "img" || !it.a || it.fit !== "custom" || !Array.isArray(p) || p[0] !== 0 || !(p[1] > 0) || it.ext.ow > 0) return false;
     if (!(Math.max(it.iw || 0, it.ih || 0) >= (max || 3500))) return false;
     return Math.abs((it.isc || 0) - p[1]) <= p[1] * 0.01;
   }
