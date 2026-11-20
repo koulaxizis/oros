@@ -365,6 +365,8 @@ orosPack("de", "shell", {
  "cr.openstreetmap-france": "Humanitäre Kartenebene (Karten)",
  "cr.opensubsonic-api": "Navidrome, Airsonic, Gonic und andere Subsonic-Server (Musik)",
  "cr.opentopomap": "Topo-Ebene mit Höhenlinien (Karten)",
+ "cr.waymarked": "Ebenen für Wander-, Rad- und MTB-Routen (Karten)",
+ "cr.cyclosm": "Radkarte (Karten)",
  "cr.openverse": "Fotos, Illustrationen, Klänge (Atelier); freie Songs (Musik)",
  "cr.osrm": "Autorouten, Demoserver (Karten)",
  "cr.overpass-api": "Orte und Aufgaben in deiner Nähe, Tempolimits beim Fahren (Karten); Firmendaten in „Online aktualisieren“ (Kontakte, CRM)",
