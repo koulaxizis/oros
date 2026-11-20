@@ -17,8 +17,9 @@
 //     vibrance and exposure approximated), with their masks;
 //   - fill layers without saved pixels drawn (colour, gradient).
 // Text, smart objects and shape layers come as the pixels Photoshop
-// saved for them. Groups are flattened (their visibility, opacity and
-// mask go onto the layers inside). Clipping masks are baked: a clipped
+// saved for them. Groups open as groups (wave PS-4: visibility,
+// opacity, blend or pass-through, open/closed, nesting); a group's mask
+// goes onto the layers inside. Clipping masks are baked: a clipped
 // picture keeps what lies over its base, a clipped adjustment changes
 // the base's pixels. Fill opacity goes into the layer opacity (or the
 // pixels, when the layer has styles). Raw, RLE and ZIP channels (ZIP
@@ -27,16 +28,18 @@
 // anything is allocated (a hostile file cannot make it allocate more
 // than `max`).
 // Writer: raster layers (RLE) with their masks, Unicode names, opacity,
-// blend, visibility, plus the merged picture, so Photoshop, Photopea,
+// blend, visibility, groups as folders, plus the merged picture, so Photoshop, Photopea,
 // GIMP and Krita open it with its layers.
 //
-// read(bytes, o) → Promise<{ w, h, layers: [layer], merged: img | null,
+// read(bytes, o) → Promise<{ w, h, layers: [layer], groups, merged: img | null,
 //                    notes: { key: count }, names: { key: [layer names] },
 //                    skipped (older summary) }>; layers bottom → top;
 //   layer = { name, x, y, op, bl, vis, img: { w, h, data RGBA },
 //             mk?: { x, y, img: { w, h, data grey }, bg, on }, fx? }
 //         | { k: "adj", name, op, bl, vis, x: 0, y: 0, aj: { id, p }, mk? }
-//   (mask boxes in canvas pixels). notes keys: groups, groupBlend,
+//   (mask boxes in canvas pixels); groups = [{ name, vis, op, bl
+//   ("pass" or a blend id), open, p: parent index }], layer.g = index.
+//   notes keys: groups (a group mask went onto its layers), groupBlend,
 //   groupFx, groupMask, blend, blendIf, artboard, adjLost, adjApprox,
 //   fx_<style>, fxApprox, fxLost, fillLost, fillApprox, fillFx, vmask,
 //   vmaskLost, clip, clipAdj, clipLost, text, smart, empty, cmyk, hdr,
@@ -463,13 +466,13 @@
     if (name) { var l = f.names[k] = f.names[k] || []; if (l.length < 8 && l.indexOf(name) < 0) l.push(name); }
   }
   function build(bytes, f, o) {
-    var layers = [], groups = [];
+    var layers = [], open = [], groups = [];
     f.names = {};
     var chain = Promise.resolve();
     f.recs.forEach(function (r) {
       chain = chain.then(function () {
-        if (r.section === 3) { groups.push(layers.length); return; }
-        if (r.section === 1 || r.section === 2) return closeGroup(bytes, f, r, layers, groups.length ? groups.pop() : 0);
+        if (r.section === 3) { open.push({ at: layers.length, g: groups.length }); return; }
+        if (r.section === 1 || r.section === 2) return closeGroup(bytes, f, r, layers, groups, open.length ? open.pop() : { at: 0, g: 0 });
         if (r.section) return;
         return oneLayer(bytes, f, r, layers);
       });
@@ -479,7 +482,7 @@
       layers.forEach(function (L) { delete L.clip; });
       if (layers.length || !f.merged || o.layersOnly) {
         if (!layers.length) throw new Error("psd");
-        return { w: f.w, h: f.h, layers: layers, merged: null, notes: f.notes, names: f.names, skipped: legacy(f) };
+        return { w: f.w, h: f.h, layers: layers, groups: groups, merged: null, notes: f.notes, names: f.names, skipped: legacy(f) };
       }
       var planes = [], step = Promise.resolve();
       f.merged.forEach(function (mc, i) {
@@ -648,23 +651,26 @@
     });
   }
 
-  // A folder closes the group opened by its divider: its visibility,
-  // opacity and mask go onto the layers inside (Photo Lab has no groups).
-  function closeGroup(bytes, f, r, layers, from) {
-    note(f, "groups");
-    var name = cleanText(r.name);
-    if (r.gblend && r.gblend !== "pass" && r.gblend !== "norm") note(f, "groupBlend", name);
+  // A folder closes the group opened by its divider (wave PS-4): it
+  // becomes a group, { name, vis, op, bl, open, p } in groups, with
+  // L.g = its index on the layers inside and p on the groups inside.
+  // A group mask has no place in Photo Lab: it goes onto the layers.
+  function closeGroup(bytes, f, r, layers, groups, from) {
+    var name = cleanText(r.name), key = r.gblend || r.key;
+    var bl = key === "pass" ? "pass" : KEYS[key];
+    if (!bl) { note(f, "groupBlend", name); bl = "pass"; }
     if ((r.info.lfx2 || r.info.lmfx)) note(f, "groupFx", name);
-    for (var g = from; g < layers.length; g++) {
-      if (r.flags & 2) layers[g].vis = 0;
-      layers[g].op = Math.round(layers[g].op * r.op / 255);
-      if (r.fill != null && r.fill < 255) layers[g].op = Math.round(layers[g].op * r.fill / 255);
-    }
+    var op = r.op;
+    if (r.fill != null && r.fill < 255) op = op * r.fill / 255;
+    var gi = groups.length;
+    groups.push({ name: name, vis: (r.flags & 2) ? 0 : 1, op: Math.round(op / 255 * 100), bl: bl, open: r.section === 1 ? 1 : 0 });
+    for (var q = from.g; q < gi; q++) if (groups[q].p == null) groups[q].p = gi;
+    for (var g = from.at; g < layers.length; g++) if (layers[g].g == null) layers[g].g = gi;
     return planesOf(bytes, f, r, [-3, -2]).then(function (planes) {
       var gm = mulMasks(userMask(r, planes), vectorMask(f, r));
       if (!gm || !gm.on) return;
-      note(f, "groupMask", name);
-      for (var g = from; g < layers.length; g++) {
+      note(f, "groups", name);
+      for (var g = from.at; g < layers.length; g++) {
         var L = layers[g];
         if (L.k === "adj") { L.mk = mulMasks(L.mk, gm); continue; }
         bakeMask(L, gm);
@@ -796,6 +802,46 @@
     return b.out();
   }
 
+  // Layers bottom → top with the folder records Photoshop expects
+  // around each group: a divider below its layers, the folder above.
+  // A group split by other layers is written as two folders.
+  function withFolders(layers, groups) {
+    var out = [], open = [];
+    function path(gi) {
+      var p = [], n = 0;
+      for (var i = gi; i != null && groups[i] && n < 64; i = groups[i].p, n++) p.unshift(i);
+      return p;
+    }
+    function close(to) { while (open.length > to) out.push({ folder: 1, G: groups[open.pop()] }); }
+    layers.forEach(function (L) {
+      var p = L.g != null ? path(L.g) : [], i = 0;
+      while (i < open.length && i < p.length && open[i] === p[i]) i++;
+      close(i);
+      for (; i < p.length; i++) { out.push({ folder: 3 }); open.push(p[i]); }
+      out.push(L);
+    });
+    close(0);
+    return out;
+  }
+  // A divider (section 3) or a folder record (1 open, 2 closed): no
+  // pixels, four empty raw channels.
+  function folder(recs, chans, F) {
+    var G = F.G || {}, div = F.folder === 3, bl = div ? "norm" : G.bl === "pass" ? "pass" : IDS[G.bl] || "norm";
+    recs.i32(0); recs.i32(0); recs.i32(0); recs.i32(0);
+    recs.u16(4);
+    [-1, 0, 1, 2].forEach(function (id) { recs.u16(id & 0xffff); recs.u32(2); });
+    recs.str("8BIM"); recs.str(bl);
+    recs.u8(div ? 255 : Math.round(Math.max(0, Math.min(100, G.op == null ? 100 : G.op)) * 2.55));
+    recs.u8(0); recs.u8(!div && G.vis === 0 ? 2 : 0); recs.u8(0);
+    var name = div ? "</Layer group>" : G.name, nm = pascal(name), un = luni(name);
+    recs.u32(4 + 4 + nm.length + un.length + 24);
+    recs.u32(0); recs.u32(0);
+    recs.bytes(nm); recs.bytes(un);
+    recs.str("8BIM"); recs.str("lsct"); recs.u32(12);
+    recs.u32(div ? 3 : G.open ? 1 : 2); recs.str("8BIM"); recs.str(bl);
+    for (var c = 0; c < 4; c++) chans.bytes(new Uint8Array([0, 0]));
+  }
+
   function write(doc) {
     var W = new Writer(), w = doc.w, h = doc.h;
     W.str("8BPS"); W.u16(1); W.bytes(new Uint8Array(6));
@@ -804,9 +850,10 @@
     W.u32(0);                                        // image resources
 
     var recs = new Writer(), chans = new Writer();
-    var list = doc.layers || [];
+    var list = withFolders(doc.layers || [], doc.groups || []);
     recs.u16(list.length);
     list.forEach(function (L) {
+      if (L.folder) { folder(recs, chans, L); return; }
       var img = L.img, mk = L.mk && L.mk.img && L.mk.img.w && L.mk.img.h ? L.mk : null;
       var ids = mk ? [-1, 0, 1, 2, -2] : [-1, 0, 1, 2];
       var data = ids.map(function (id) {

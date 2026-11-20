@@ -97,7 +97,7 @@ test("RGBA layers top first in the file come bottom first, with offset, opacity,
   }
 });
 
-test("groups: the group's visibility and opacity go onto the layers inside; order by item path", async () => {
+test("groups: kept as groups (pass-through, opacity); order by item path", async () => {
   const file = xcf({ w: 1, h: 1, layers: [
     { name: "Group", group: true, w: 1, h: 1, type: 1, bpp: 4, props: [P.group(), P.path(0), P.opacity(128), P.mode(61)] },
     { name: "In top", w: 1, h: 1, type: 1, bpp: 4, px: rgba(1, 9, 9, 9, 255), props: [P.path(0, 0), P.opacity(255)] },
@@ -106,9 +106,11 @@ test("groups: the group's visibility and opacity go onto the layers inside; orde
   ] });
   const r = await X.read(file);
   assert.deepEqual(r.layers.map((L) => L.name), ["Under", "In bottom", "In top"]);
-  assert.deepEqual(r.layers.map((L) => L.op), [100, 50, 50]);
-  assert.equal(r.notes.groups, 1);
-  assert.equal(r.notes.groupBlend, undefined);          // pass-through is what Photo Lab does anyway
+  assert.deepEqual(r.layers.map((L) => L.op), [100, 100, 100]);
+  assert.deepEqual(r.layers.map((L) => L.g), [undefined, 0, 0]);
+  assert.deepEqual(r.groups, [{ name: "Group", vis: 1, op: 50, bl: "pass", open: 1, p: null }]);
+  assert.equal(r.notes.groups, undefined);               // no group mask
+  assert.equal(r.notes.groupBlend, undefined);
 });
 
 test("modes: legacy and new GIMP modes map; GIMP's old overlay is soft light; the others are named", async () => {

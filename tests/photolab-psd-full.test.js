@@ -277,7 +277,7 @@ test("clipping: a clipped picture keeps what lies over its base; a clipped adjus
   assert.ok(r.layers.every((L) => !("clip" in L)));
 });
 
-test("groups: opacity, visibility and mask go onto the layers inside; fill opacity; Blend If and blend modes named", async () => {
+test("groups: kept as groups with their blend; the mask goes onto the layers inside; fill opacity; Blend If named", async () => {
   const file = psd({ w: 2, h: 1, layers: [
     { rect: [0, 0, 0, 0], ch: [], section: 3, name: "</Layer group>" },
     { rect: [0, 0, 1, 2], name: "Inside", ch: rgbCh(2, 9, 9, 9, 255), info: [["iOpa", u8(128, 0, 0, 0)]], blendIf: true },
@@ -287,9 +287,11 @@ test("groups: opacity, visibility and mask go onto the layers inside; fill opaci
   const L = r.layers[0];
   assert.equal(L.op, 50);                                  // fill 128 without styles → opacity
   assert.deepEqual([L.img.data[3], L.img.data[7]], [255, 0]);   // the group's mask, baked
-  assert.deepEqual(r.names.groupBlend, ["Group"]);
+  assert.equal(r.names.groupBlend, undefined);             // Multiply is a group blend Photo Lab has (PS-4)
+  assert.deepEqual(r.groups, [{ name: "Group", vis: 1, op: 100, bl: "multiply", open: 1 }]);
+  assert.equal(L.g, 0);
   assert.deepEqual(r.names.blendIf, ["Inside"]);
-  assert.equal(r.notes.groupMask, 1);
+  assert.deepEqual(r.names.groups, ["Group"]);
 });
 
 test("16-bit layers in Lr16, 32-bit layers in Lr32 (linear light), and PSB with 8-byte lengths", async () => {

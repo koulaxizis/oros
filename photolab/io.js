@@ -243,7 +243,7 @@
       layers = capLayers(layers);
       return PL.closeProject(true).then(function () {
         PL.busy(false);
-        PL.newFromLayers(fit.w, fit.h, baseName(file.name), layers);
+        PL.newFromLayers(fit.w, fit.h, baseName(file.name), layers, r.groups);
         var notes = [];
         if (fit.scaled) notes.push(t("msg.scaled", { w: fit.w, h: fit.h }));
         if (r.notes) {                                       // a PSD: what came over, in a window
@@ -300,17 +300,17 @@
       chain = chain.then(function () {
         if (L.img) {
           if (L.img.w * L.img.h > PL.limits.area) throw new Error("psd-big");
-          out.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, img: L.img });
+          out.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, g: L.g, img: L.img });
           return;
         }
         return source(new Blob([L.png], { type: "image/png" })).then(function (s) {
           if (s.w * s.h > PL.limits.area) { s.done(); throw new Error("psd-big"); }
-          out.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, img: pixelsOf(s) });
+          out.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, g: L.g, img: pixelsOf(s) });
         });
       });
     });
     return chain.then(function () {
-      if (out.length || !r.merged) return { w: r.w, h: r.h, layers: out, merged: null, skipped: r.skipped };
+      if (out.length || !r.merged) return { w: r.w, h: r.h, layers: out, groups: r.groups, merged: null, skipped: r.skipped };
       return source(new Blob([r.merged], { type: "image/png" })).then(function (s) {
         return { w: r.w, h: r.h, layers: [], merged: pixelsOf(s), skipped: r.skipped };
       });
@@ -326,7 +326,7 @@
   }
   function scaleLayers(layers, k) {
     return layers.map(function (L) {
-      var o = { name: L.name, x: Math.round(L.x * k), y: Math.round(L.y * k), op: L.op, bl: L.bl, vis: L.vis };
+      var o = { name: L.name, x: Math.round(L.x * k), y: Math.round(L.y * k), op: L.op, bl: L.bl, vis: L.vis, g: L.g };
       if (L.k === "adj") { o.k = "adj"; o.aj = L.aj; o.x = 0; o.y = 0; }
       else {
         var w = Math.max(1, Math.round(L.img.w * k)), h = Math.max(1, Math.round(L.img.h * k));
@@ -551,13 +551,25 @@
     return (C.cleanName(st.doc.name).replace(/[\\\/:*?"<>|]+/g, "-") || "picture") + "." + ext;
   }
   // ---------- Layered export (PSD, OpenRaster) ----------
+  // The doc's groups as the files' list: [{ name, vis, op, bl, open, p:
+  // parent index }], at = { group id: index }.
+  function groupIndex(d) {
+    var at = {}, list = [];
+    (d.gr || []).forEach(function (G, i) { at[G.id] = i; });
+    (d.gr || []).forEach(function (G) {
+      list.push({ name: G.name, vis: G.vis, op: G.op, bl: G.bl, open: G.open, p: G.p && at[G.p] != null ? at[G.p] : null });
+    });
+    return { at: at, list: list };
+  }
   // Every layer as { name, x, y, img, op, bl, vis } (text and shapes
   // as their pixels), trimmed to its content, bottom → top.
   // keepMasks (PSD): a picture layer's mask goes as a mask, so it stays
   // editable in Photoshop, GIMP and Photopea.
   function layerPixels(keepMasks) {
+    var gi = groupIndex(st.doc);
     return st.doc.layers.map(function (L) {
       var o = { name: L.name, op: L.op, bl: L.bl, vis: L.vis, x: L.x, y: L.y, img: { w: 0, h: 0, data: new Uint8ClampedArray(0) } };
+      if (L.g && gi.at[L.g] != null) o.g = gi.at[L.g];
       if (keepMasks && L.k === "raster" && L.mk && !L.fx) {
         var ps = PL.surface(L.id), pb = PL.T.contentBounds(ps);
         if (pb) { o.x = L.x + pb.x; o.y = L.y + pb.y; o.img = PL.T.readRect(ps, pb.x, pb.y, pb.w, pb.h); }
@@ -609,15 +621,15 @@
     var mc = PL.view.flatten(null, 1), merged = { w: d.w, h: d.h, data: mc.getContext("2d").getImageData(0, 0, d.w, d.h).data };
     mc.width = mc.height = 0;
     if (fmt === "psd") {
-      return PL.job("psdWrite", { doc: { w: d.w, h: d.h, layers: layers, merged: merged } }).then(function (bytes) {
+      return PL.job("psdWrite", { doc: { w: d.w, h: d.h, layers: layers, groups: groupIndex(d).list, merged: merged } }).then(function (bytes) {
         return new Blob([bytes], { type: MIME.psd });
       });
     }
     var k = Math.min(1, 256 / Math.max(d.w, d.h));
-    var out = { w: d.w, h: d.h, layers: [] }, chain = Promise.resolve();
+    var out = { w: d.w, h: d.h, layers: [], groups: groupIndex(d).list }, chain = Promise.resolve();
     layers.forEach(function (L) {
       chain = chain.then(function () { return pngOf(L.img); }).then(function (png) {
-        out.layers.push({ name: L.name, x: L.img.w ? L.x : 0, y: L.img.w ? L.y : 0, op: L.op, bl: L.bl, vis: L.vis, png: png });
+        out.layers.push({ name: L.name, x: L.img.w ? L.x : 0, y: L.img.w ? L.y : 0, op: L.op, bl: L.bl, vis: L.vis, g: L.g, png: png });
       });
     });
     return chain.then(function () { return pngOf(merged); }).then(function (png) {

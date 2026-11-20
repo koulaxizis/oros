@@ -111,6 +111,7 @@
   PL.surface = function (id) { return st.surfaces[id] || (st.surfaces[id] = T.create()); };
   PL.selectLayer = function (id, mask) {
     st.active = id;
+    st.group = null;
     var L = PL.layer();
     st.maskEdit = !!(mask && L && L.mk);
     PL.emit("layers");
@@ -351,6 +352,8 @@
     var L = C.normLayer(Object.assign({ id: C.newLayerId(), vis: 1, op: 100, bl: "normal" }, raw));
     if (!L) return null;
     if (st.doc.layers.length >= C.MAX_LAYERS) { PL.toast(PL.t("msg.maxLayers")); return null; }
+    var A0 = PL.layer();
+    if (A0 && A0.g && raw.g === undefined) L.g = A0.g;      // a new layer goes into the active layer's group
     PL.docChange(label, function () {
       var i = C.findLayer(st.doc, st.active);
       var at = i < 0 ? st.doc.layers.length : (below ? i : i + 1);
@@ -476,14 +479,19 @@
   // adjustment { k: "adj", aj, ..., mk? }, already within limits. A mask
   // { x, y, img: grey, bg, on } is in canvas pixels; it is kept in the
   // layer's grid as grey with full alpha (ops.js readFor).
-  PL.newFromLayers = function (w, h, name, layers) {
+  // groups (PSD, XCF, OpenRaster): [{ name, vis, op, bl, open, p }],
+  // each layer's g = its group's index (core.js adoptGroups).
+  PL.newFromLayers = function (w, h, name, layers, groups) {
     var doc = C.newDoc({ w: w, h: h, name: name, now: Date.now(), layerName: PL.t("layer.bg") });
     var surfaces = {};
+    var gr = groups && groups.length ? C.adoptGroups(layers, groups) : [];
+    if (!gr.length) layers.forEach(function (src) { delete src.g; });
     doc.layers = [];
     layers.forEach(function (src) {
       var adj = src.k === "adj";
       var raw = { id: C.newLayerId(), k: adj ? "adj" : "raster", name: src.name, x: adj ? 0 : src.x, y: adj ? 0 : src.y,
                   op: src.op, bl: src.bl, vis: src.vis };
+      if (src.g) raw.g = src.g;
       if (adj) raw.aj = src.aj;
       if (src.fx && !adj) raw.fx = src.fx;
       if (src.mk && src.mk.img) raw.mk = { id: C.newLayerId(), t: {}, on: src.mk.on === 0 ? 0 : 1, bg: src.mk.bg ? 255 : 0 };
@@ -503,6 +511,12 @@
       }
       doc.layers.push(L);
     });
+    if (gr.length) {                                        // only the groups that kept a layer
+      var used = {};
+      doc.layers.forEach(function (L) { if (L.g) C.groupPath({ gr: gr }, L.g).forEach(function (g) { used[g.id] = 1; }); });
+      gr = gr.filter(function (g) { return used[g.id]; });
+      if (gr.length) doc.gr = gr;
+    }
     resetDoc(doc, surfaces);
     PL.showEditor();
     PL.changed();

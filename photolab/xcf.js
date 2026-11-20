@@ -8,14 +8,14 @@
 // Each layer keeps its name, position, opacity, visibility and mode
 // (GIMP's modes mapped to Photo Lab's blend modes, legacy ones too;
 // the others become Normal and are named), and its layer mask as a
-// mask (on/off from "Apply layer mask"). Layer groups are flattened
-// like psd.js does (the group's visibility, opacity and mask go onto
-// the layers inside; a group mode other than pass-through is named).
+// mask (on/off from "Apply layer mask"). Layer groups open as groups
+// like psd.js does (wave PS-4: visibility, opacity, mode or
+// pass-through, nesting; a group mask goes onto the layers inside).
 // Text layers come as the pixels GIMP saved for them (named).
 // Channels and paths are not layers and are left as they are.
 // Every count and size is checked before anything is allocated.
 //
-// read(bytes, o) → Promise<{ w, h, layers, merged: null, notes, names,
+// read(bytes, o) → Promise<{ w, h, layers, groups, merged: null, notes, names,
 //                    skipped }>, the same shape as psd.js read() (so
 //   Photo Lab shows the same report); o.maxSide, o.maxPixels.
 //   Rejects with Error("xcf") (not an XCF / damaged), "xcf-big" (over
@@ -330,9 +330,19 @@
     var out = [], chain = Promise.resolve();
     // the group masks, read once
     var gmask = {};
+    // the groups as Photo Lab groups (wave PS-4): the deepest group
+    // whose path starts the item's path holds it
+    function holder(path) {
+      var best = -1;
+      groups.forEach(function (G, gi) { if (isUnder(path, G.path) && (best < 0 || G.path.length > groups[best].path.length)) best = gi; });
+      return best < 0 ? null : best;
+    }
+    var glist = groups.map(function (G) {
+      var name = clean(G.name) || "Group", bl = G.mode === PASS ? "pass" : MODES[G.mode];
+      if (!bl) { note(f, "groupBlend", name); bl = "pass"; }
+      return { name: name, vis: G.vis, op: Math.round(G.op / 255 * 100), bl: bl, open: 1, p: G.path ? holder(G.path) : null };
+    });
     groups.forEach(function (G) {
-      note(f, "groups");
-      if (G.mode !== PASS && G.mode !== 0 && G.mode !== 28) note(f, "groupBlend", clean(G.name));
       if (G.maskPtr && G.apply) chain = chain.then(function () { return maskOf(bytes, rd, f, G).then(function (m) { gmask[G.idx] = m; }); });
     });
     leaves.forEach(function (L) {
@@ -349,12 +359,11 @@
           if (L.text) note(f, "text", name);
           return (L.maskPtr ? maskOf(bytes, rd, f, L) : Promise.resolve(null)).then(function (m) {
             if (m) { m.on = L.apply ? 1 : 0; o.mk = m; }
-            groups.forEach(function (G) {
+            if (L.path) { var gi = holder(L.path); if (gi != null) o.g = gi; }
+            groups.forEach(function (G) {                     // a group mask has no place in Photo Lab
               if (!isUnder(L.path, G.path)) return;
-              if (!G.vis) o.vis = 0;
-              o.op = Math.round(o.op * G.op / 255);
               var gm = gmask[G.idx];
-              if (gm) { bake(o, gm); note(f, "groupMask"); }
+              if (gm) { bake(o, gm); note(f, "groups", clean(G.name)); }
             });
             out.push(o);
           });
@@ -363,7 +372,7 @@
     });
     return chain.then(function () {
       if (!out.length) throw new Error("xcf");
-      return { w: f.w, h: f.h, layers: out, merged: null, notes: f.notes, names: f.names,
+      return { w: f.w, h: f.h, layers: out, groups: glist, merged: null, notes: f.notes, names: f.names,
                skipped: { groups: f.notes.groups || 0, masks: 0, empty: f.notes.empty || 0, blends: f.notes.blend || 0 } };
     });
   }

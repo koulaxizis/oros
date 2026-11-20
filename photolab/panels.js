@@ -674,7 +674,9 @@
       { id: "duplicate", run: function () { ops().duplicate(); }, on: has },
       { id: "viaCopy", k: "Ctrl+J", run: function () { ops().viaCopy(false); }, on: has },
       { id: "viaCut", k: "Ctrl+Shift+J", run: function () { ops().viaCopy(true); }, on: hasSel },
-      { id: "deleteLayer", run: function () { ops().remove(); }, on: has },
+      { id: "deleteLayer", run: function () { if (st.group) ops().deleteGroup(st.group); else ops().remove(); }, on: has },
+      { id: "groupLayer", k: "Ctrl+G", run: function () { ops().groupLayer(); }, on: has },
+      { id: "ungroup", k: "Ctrl+Shift+G", run: function () { var L = PL.layer(); ops().ungroup(st.group || (L && L.g)); }, on: function () { var L = st.doc && PL.layer(); return !!(st.group || (L && L.g)); } },
       "-",
       { id: "layerFlipH", run: function () { ops().layerFlip(true); }, on: has },
       { id: "layerFlipV", run: function () { ops().layerFlip(false); }, on: has },
@@ -1038,9 +1040,37 @@
     var list = $("layer-list");
     list.innerHTML = "";
     if (!st.doc) return;
-    var A = PL.layer();
-    st.doc.layers.slice().reverse().forEach(function (L) {
+    var A = st.group ? null : PL.layer(), GS = st.group ? ops().groupOf(st.group) : null;
+    if (st.group && !GS) st.group = null;
+    // groups (PS-4): a folder row, its layers under it when open
+    function walk(nodes, depth) {
+      nodes.slice().reverse().forEach(function (n) {
+        if (n.L) { layerRow(n.L, depth); return; }
+        groupRow(n.G, depth);
+        if (n.G.open) walk(n.kids, depth + 1);
+      });
+    }
+    function groupRow(G, depth) {
+      var row = el("li", "lrow lgroup" + (GS && GS.id === G.id ? " on" : ""));
+      row.style.paddingInlineStart = (depth * 14) + "px";
+      var eye = el("button", "icon-btn small"); eye.type = "button";
+      eye.innerHTML = G.vis ? ICON.eye : ICON.eyeOff; PL.setLabel(eye, t(G.vis ? "btn.hide" : "btn.show"));
+      eye.addEventListener("click", function (e) { e.stopPropagation(); ops().setGroupProp(G.id, "vis", G.vis ? 0 : 1, t(G.vis ? "step.hide" : "step.show")); });
+      var fold = el("button", "icon-btn small lfold", G.open ? "▾" : "▸"); fold.type = "button";
+      PL.setLabel(fold, t(G.open ? "btn.foldGroup" : "btn.unfoldGroup"));
+      fold.setAttribute("aria-expanded", G.open ? "true" : "false");
+      fold.addEventListener("click", function (e) { e.stopPropagation(); G.open = G.open ? 0 : 1; PL.changed(); renderLayers(); });
+      var name = el("button", "lname", G.name); name.type = "button";
+      name.appendChild(el("span", "lkind", t(G.bl === "pass" ? "kind.group" : "kind.groupOwn")));
+      name.addEventListener("click", function () { st.group = G.id; st.maskEdit = false; PL.emit("layers"); });
+      name.addEventListener("dblclick", function () { renameGroup(G); });
+      row.appendChild(eye); row.appendChild(fold); row.appendChild(name);
+      list.appendChild(row);
+    }
+    walk(C.layerTree(st.doc), 0);
+    function layerRow(L, depth) {
       var row = el("li", "lrow" + (A && A.id === L.id ? " on" : ""));
+      if (depth) row.style.paddingInlineStart = (depth * 14) + "px";
       var eye = el("button", "icon-btn small"); eye.type = "button";
       eye.innerHTML = L.vis ? ICON.eye : ICON.eyeOff; PL.setLabel(eye, t(L.vis ? "btn.hide" : "btn.show"));
       eye.addEventListener("click", function (e) { e.stopPropagation(); ops().setProp(L, "vis", L.vis ? 0 : 1, t(L.vis ? "step.hide" : "step.show")); });
@@ -1076,14 +1106,23 @@
       if (fxb) row.appendChild(fxb);
       row.appendChild(lock);
       list.appendChild(row);
-    });
-    // Active layer properties.
+    }
+    // Active layer (or group) properties.
     var bl = $("blend-sel"), op = $("opacity-in");
     bl.innerHTML = "";
+    if (GS) { var po = el("option", "", t("blend.pass")); po.value = "pass"; bl.appendChild(po); }
     C.BLENDS.forEach(function (b) { var o = el("option", "", PL.listName("blend", b)); o.value = b.id; bl.appendChild(o); });
-    if (A) { bl.value = A.bl; op.value = String(A.op); $("opacity-out").textContent = A.op + "%"; }
-    bl.disabled = op.disabled = !A;
+    var P = GS || A;
+    if (P) { bl.value = P.bl; op.value = String(P.op); $("opacity-out").textContent = P.op + "%"; }
+    bl.disabled = op.disabled = !P;
     if (A && A.k === "adj") bl.disabled = true;           // adjustments mix normally
+  }
+  function renameGroup(G) {
+    var n = textIn(G.name);
+    PL.dialog({ title: t("dlg.renameGroup"), ok: t("btn.save"), body: [field(t("f.name"), n)], onOk: function () {
+      var v = C.cleanName(n.value);
+      if (v) ops().setGroupProp(G.id, "name", v, t("step.rename"));
+    } });
   }
   function renderHistory() {
     var list = $("history-list"), h = st.hist.list();
@@ -1237,10 +1276,13 @@
       var b = $(a[0]); b.innerHTML = a[1]; PL.setLabel(b, t(a[2])); b.addEventListener("click", a[3]);
     });
     $("blend-lbl").textContent = t("f.blend"); $("opacity-lbl").textContent = t("f.opacity");
-    $("blend-sel").addEventListener("change", function () { var L = PL.layer(); if (L) ops().setProp(L, "bl", $("blend-sel").value, t("step.blend")); });
+    $("blend-sel").addEventListener("change", function () {
+      if (st.group) { ops().setGroupProp(st.group, "bl", $("blend-sel").value, t("step.blend")); return; }
+      var L = PL.layer(); if (L) ops().setProp(L, "bl", $("blend-sel").value, t("step.blend"));
+    });
     var opStart = null;
     $("opacity-in").addEventListener("input", function () {
-      var L = PL.layer(); if (!L) return;
+      var L = st.group ? ops().groupOf(st.group) : PL.layer(); if (!L) return;
       if (opStart === null) opStart = { L: L, json: JSON.stringify(st.doc) };
       L.op = +$("opacity-in").value; $("opacity-out").textContent = L.op + "%"; PL.view.invalidate();
     });
