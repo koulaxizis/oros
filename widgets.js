@@ -30,9 +30,14 @@
 //     Move down, Remove). With a mouse a card's title drags it to
 //     another place.
 //   • Hidden while an app covers the desktop; nothing repaints then.
+//   • Clock style (SIGNAL-1, 1.4.0): the clock card's menu picks
+//     Automatic / Digits / Dots. Dots are our own 5×7 LED glyphs drawn
+//     as SVG circles (no font); Automatic shows them with the Signal
+//     skin. No blinking, no motion; High contrast drops the unlit dots.
 //
 // Device-local (oros-widgets, never synced: screens differ per device):
-//   { v:1, list: ["clock","calendar",…] }   order = list order
+//   { v:1, list: ["clock","calendar",…] [, clock: "digits"|"dots"] }
+//   order = list order; clock absent = Automatic
 //   Absent = the default: clock, calendar, today, weather on a wide
 //   screen that is not a phone; none on a phone or a narrow window.
 //
@@ -42,7 +47,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.4.0";
   var KEY = "oros-widgets";
   var START_KEY = "oros-start";
   // First steps, in order. "install" only where the browser offers it
@@ -53,12 +58,50 @@
   var WIDE = 760;
 
   // ---------- 1. Model (pure) ----------
+  var CLOCK_STYLES = ["auto", "digits", "dots"];
   function norm(v) {
     if (!v || typeof v !== "object" || !Array.isArray(v.list)) return null;
     var out = [];
     v.list.forEach(function (k) { if (KINDS.indexOf(k) !== -1 && out.indexOf(k) === -1) out.push(k); });
-    return { v: 1, list: out };
+    var r = { v: 1, list: out };
+    if (v.clock === "digits" || v.clock === "dots") r.clock = v.clock;
+    return r;
   }
+  // What the clock card draws: the person's pick, else dots with Signal.
+  function clockMode(style, skin) {
+    if (style === "digits" || style === "dots") return style;
+    return skin === "signal" ? "dots" : "digits";
+  }
+  // SIGNAL-1: 5×7 dot glyphs, one string of 5 bits per row, top first.
+  var GLYPHS = {
+    "0": ["01110", "10001", "10011", "10101", "11001", "10001", "01110"],
+    "1": ["00100", "01100", "00100", "00100", "00100", "00100", "01110"],
+    "2": ["01110", "10001", "00001", "00010", "00100", "01000", "11111"],
+    "3": ["11111", "00010", "00100", "00010", "00001", "10001", "01110"],
+    "4": ["00010", "00110", "01010", "10010", "11111", "00010", "00010"],
+    "5": ["11111", "10000", "11110", "00001", "00001", "10001", "01110"],
+    "6": ["00110", "01000", "10000", "11110", "10001", "10001", "01110"],
+    "7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
+    "8": ["01110", "10001", "10001", "01110", "10001", "10001", "01110"],
+    "9": ["01110", "10001", "10001", "01111", "00001", "00010", "01100"],
+    ":": ["0", "0", "1", "0", "1", "0", "0"]
+  };
+  // The dots of a text ("21:07"): { cols, cells:[{x, y, on}] }, one
+  // empty column between glyphs; unknown characters are left out.
+  function dotCells(text) {
+    var cells = [], x = 0, first = true;
+    String(text).split("").forEach(function (ch) {
+      var g = GLYPHS[ch];
+      if (!g) return;
+      if (!first) x++;
+      first = false;
+      var w = g[0].length;
+      for (var y = 0; y < 7; y++) for (var i = 0; i < w; i++) cells.push({ x: x + i, y: y, on: g[y].charAt(i) === "1" });
+      x += w;
+    });
+    return { cols: x, cells: cells };
+  }
+  function hhmm(d) { return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
   function parse(raw) {
     try { return norm(JSON.parse(raw)); } catch (e) { return null; }
   }
@@ -157,7 +200,8 @@
   var model = { VER: VER, KINDS: KINDS, DEFAULT: DEFAULT, STEPS: STEPS, norm: norm, parse: parse, listOf: listOf,
                 toggle: toggle, move: move, monthGrid: monthGrid, ymdOf: ymdOf,
                 startNorm: startNorm, startRows: startRows, startNext: startNext, startGone: startGone, firstList: firstList,
-                phoneUrlOf: phoneUrlOf };
+                phoneUrlOf: phoneUrlOf, CLOCK_STYLES: CLOCK_STYLES, clockMode: clockMode, GLYPHS: GLYPHS,
+                dotCells: dotCells, hhmm: hhmm };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -186,8 +230,12 @@
   function phone() { return call(function () { return host.phone(); }) === true; }
   function wide() { return (root.innerWidth || 0) >= WIDE; }
   function list() { return listOf(stored(), wide(), phone()); }
-  function save(l) {
-    try { localStorage.setItem(KEY, JSON.stringify({ v: 1, list: l })); }
+  function clockStyle() { var s = stored(); return (s && s.clock) || "auto"; }
+  function save(l, clock) {
+    var rec = { v: 1, list: l };
+    var c = clock === undefined ? clockStyle() : clock;
+    if (c === "digits" || c === "dots") rec.clock = c;
+    try { localStorage.setItem(KEY, JSON.stringify(rec)); }
     catch (e) { call(function () { host.toast(t("wg.savefail")); }); }
     render();
     call(function () { host.changed(); });
@@ -214,6 +262,10 @@
     ".wg-more { width: 32px; height: 32px; font-size: 18px; line-height: 1; color: var(--text-dim); }",
     ".wg-clock { display: block; width: 100%; text-align: left; padding: 2px 4px; }",
     ".wg-time { font-size: 44px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; font-variant-numeric: tabular-nums; }",
+    ".wg-dots { display: block; height: 44px; width: auto; max-width: 100%; margin: 2px 0 4px; color: var(--text); }",
+    ".wg-dots .wg-off { opacity: .14; }",
+    "html[data-oros-contrast=\"high\"] .wg-dots .wg-off { display: none; }",
+    ".wg-menu button[aria-checked=\"true\"]::after { content: \" ✓\"; color: var(--accent); font-weight: 800; }",
     ".wg-date { font-size: 14px; color: var(--text-dim); margin-top: 2px; }",
     ".wg-cal-nav { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }",
     ".wg-cal-nav .wg-title { flex: 1; text-align: left; font-weight: 700; padding: 6px 6px; text-transform: capitalize; }",
@@ -440,10 +492,17 @@
     if (i > 0) items.push([t("wg.up"), function () { save(move(l, kind, i - 1)); }]);
     if (i < l.length - 1) items.push([t("wg.down"), function () { save(move(l, kind, i + 1)); }]);
     items.push([t("wg.remove"), function () { save(toggle(l, kind, false)); }]);
+    if (kind === "clock") {
+      var cs = clockStyle();
+      CLOCK_STYLES.forEach(function (st) {
+        items.push([t("wg.clock." + st), function () { save(list(), st); }, cs === st]);
+      });
+    }
     items.push([t("wg.edit"), edit]);
     items.forEach(function (it) {
       var b = btn("", it[0], function () { closeMenu(); it[1](); });
-      b.setAttribute("role", "menuitem");
+      if (it.length > 2) { b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", it[2] ? "true" : "false"); }
+      else b.setAttribute("role", "menuitem");
       m.appendChild(b);
     });
     m.addEventListener("keydown", function (e) {
@@ -535,6 +594,26 @@
     var Q = root.orosQS && root.orosQS.model;
     return Q && Q.onAccent ? Q.onAccent(getComputedStyle(doc.documentElement).getPropertyValue("--accent")) : "";
   }
+  // SIGNAL-1: the time as LED dots (lit in the text colour, unlit faint).
+  function dotSvg(text) {
+    var NS = "http://www.w3.org/2000/svg", P = 6, R = 2.3;
+    var d = dotCells(text);
+    var s = doc.createElementNS(NS, "svg");
+    s.setAttribute("class", "wg-dots");
+    s.setAttribute("viewBox", "0 0 " + (d.cols * P) + " " + (7 * P));
+    s.setAttribute("aria-hidden", "true");
+    s.setAttribute("focusable", "false");
+    d.cells.forEach(function (cell) {
+      var ci = doc.createElementNS(NS, "circle");
+      ci.setAttribute("cx", String(cell.x * P + P / 2));
+      ci.setAttribute("cy", String(cell.y * P + P / 2));
+      ci.setAttribute("r", String(R));
+      ci.setAttribute("fill", "currentColor");
+      if (!cell.on) ci.setAttribute("class", "wg-off");
+      s.appendChild(ci);
+    });
+    return s;
+  }
   // Repaint a card's body only when what it shows changed.
   function fill(c, key, build) {
     if (c.key === key) return;
@@ -599,9 +678,11 @@
       var now = new Date(), l = loc();
       var time = now.toLocaleTimeString(l, { hour: "2-digit", minute: "2-digit", hour12: false });
       var date = now.toLocaleDateString(l, { weekday: "long", day: "numeric", month: "long" });
-      fill(c, time + date, function (b) {
-        var go = btn("wg-clock", null, function () { host.open("time"); }, t("app.time"));
-        go.appendChild(el("div", "wg-time", time));
+      var mode = clockMode(clockStyle(), doc.documentElement.getAttribute("data-skin"));
+      fill(c, time + date + mode, function (b) {
+        var go = btn("wg-clock", null, function () { host.open("time"); }, t("app.time") + " · " + time);
+        if (mode === "dots") go.appendChild(dotSvg(hhmm(now)));
+        else go.appendChild(el("div", "wg-time", time));
         go.appendChild(el("div", "wg-date", date));
         b.appendChild(go);
       });

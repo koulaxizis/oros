@@ -45,14 +45,14 @@ const SKIN_BLOCKS = [...CSS.matchAll(/^\[data-skin="([a-z0-9-]+)"\]\[data-theme=
 
 function rgb(hex) { return W.parse(hex); }
 
-test("style.css has a dark and a light block for all 16 skins", () => {
-  assert.equal(SKIN_BLOCKS.length, 32);
+test("style.css has a dark and a light block for all 17 skins", () => {
+  assert.equal(SKIN_BLOCKS.length, 34);
 });
 
 test("colourful presets give a colour, grey ones none (the skin accent stays)", () => {
   const got = {};
   for (const w of ctx.WALLPAPERS) got[w.id] = W.swatches(W.stops(w.css), 4).length;
-  for (const id of ["mono", "hex", "clear", "custom", "land"]) assert.equal(got[id], 0, id);
+  for (const id of ["mono", "hex", "dots", "clear", "custom", "land"]) assert.equal(got[id], 0, id);
   for (const id of ["dusk", "plum", "forest", "ember", "nordic", "aurora", "sand", "nebula", "borealis", "obsidian", "terrazzo"])
     assert.ok(got[id] >= 1, id);
   assert.equal(got.terrazzo, 4, "many coloured dots: four to pick from");
