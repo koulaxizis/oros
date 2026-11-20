@@ -131,6 +131,7 @@ orosPack("de", "gamecenter", {
  "clockwork": "Uhrwerkstatt",
  "ridge": "Windmühlengrat",
  "maze": "Laternenlabyrinth",
+ "caravan": "Karawane",
  "chal.back": "Wieder aufnehmen",
  "chal.backed": "{g} kann ab morgen wieder Herausforderungen bekommen.",
  "chal.done": "Geschafft",

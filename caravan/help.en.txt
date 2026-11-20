@@ -1,0 +1,58 @@
+# Caravan
+Caravan is a tower defense game the other way round, for one person. Old clockwork toll machines stand beside the road to the market, and you lead a caravan of carts through them. You do not build the machines: you choose the carts, their order and the way at every fork, and you use a few tricks on the road. The game runs in real time, but you can pause at any moment, and a trip only starts when you set off.
+
+## How to play
+- Choose a route and a difficulty on the road map. The first route is open; clearing a route opens the next one.
+- Every route has three trips. Before each trip you hire carts in the bar below, put them in order and set the signs at the forks. Then press `Set off`.
+- On the road the carts roll by themselves from the village gate (at the top) to the market (at the bottom). The machines beside the road knock crates off the carts in their reach; the red rings show how far each one reaches.
+- Bring the goal in crates to the market over the three trips. The toolbar shows the crates at the market against the goal, your coins and the trip.
+- Every crate that reaches the market pays two coins, and every trip ten more, for the next trip.
+- A cart that loses all its crates walks home and is ready again on the next trip. Carts you hire stay with the caravan for the whole route, and every trip they set off fully loaded.
+- Before each trip the toll keepers wind up more machines. The new ones have a ring round them on the plan.
+- `Pause` and the speed button (1x, 2x, 3x) are next to `Set off`. The game pauses by itself when you leave it.
+
+## Forks and signs
+- At every fork a round sign shows with an arrow which way the carts will go. Tap it to turn it. The dotted line on the road shows the way the next cart will take.
+- You can turn a sign on the road too. Each cart follows the sign as it is at the moment it gets there, so you can split the caravan: send the straw cart one way and the goods the other.
+- Carts never overtake. A fast pony behind a slow mule waits behind it, so put the fast carts in front.
+
+## The carts
+Each cart has three levels. At level 3 you choose one of two branches, and that choice stays.
+- **Mule cart:** sturdy and slow; every knock takes a quarter less. Ox wagon carries many more crates and is even slower; Iron rims make knocks take half.
+- **Pony cart:** fast and small, through the machines before they swing twice. Courier is even faster; Saddlebags carry almost twice as much.
+- **Mender's cart** (from route 2): ties fallen crates back on the carts close to it (the dotted ring). Wide reach mends much farther off; Quick hands mend twice as fast.
+- **Straw cart** (from route 3): a decoy with no goods. Every machine aims at a straw cart first when one is in reach. When its straw is burnt through it is gone, and you hire a new one. Wet straw lasts twice as long; Scarecrow stops a machine for two seconds every time it hits it.
+- Tap a cart (on the road or its button in the bar) to see what it carries. In the plan you can move it forward or back, upgrade it or sell it. Selling gives back 70% of what the cart cost; anything bought or upgraded since the last trip set off gives back everything.
+
+## The toll machines
+Each kind has its own shape, so you never need the colours.
+- **Toll arm** (a post with a bar): swings now and then and knocks a crate off the first cart in reach.
+- **Dust bellows** (a fan, from route 2): every three seconds a cloud of dust knocks a crate off every cart close together. Keep the carts apart, or send fewer carts that way.
+- **Mud wheel** (a wheel with spokes, from route 3): does not knock, but carts in its reach go at half speed, so the machines round it have longer to swing.
+- **Lookout** (a tall triangle, from route 4): the machines near it work half as fast again and see through smoke.
+- A machine always aims at the cart in its reach that has come furthest, except that a straw cart is aimed at first.
+
+## Tricks
+- **Smoke:** tap `Smoke`, then the spot. For five seconds the machines inside the cloud cannot work, and carts inside it cannot be aimed at.
+- **Shield:** tap `Shield`, then a cart. That cart takes nothing for six seconds.
+- **Shortcut:** opens the goat track (the dashed path) for this trip, and the signs turn to it. Only some routes have one. You can open it in the plan too, under `Tricks`.
+- One of each trick comes back on every trip. In the plan, `Tricks` buys extra ones for 15 coins each; they keep until you use them.
+
+## Difficulty, stars and saves
+- Mild: more coins and lighter knocks; Normal; Hard: fewer coins and harder knocks.
+- Stars: three when at least 85% of the crates you loaded reach the market, two with 65%, one for any route cleared. The road map keeps the best stars of each route.
+- When a route is lost, `Try again from trip` puts you back in the plan of the last trip, with the caravan and coins you had then.
+- The route you are playing is kept on this device and reopens where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a route ends. `Reset progress` on the road map clears them on every device. Caravan is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+
+## Keyboard
+- Arrow keys choose a cart; [[Escape]] lets go of it. The keys `[` and `]` move it forward or back in the plan.
+- [[1]] to [[4]]: hire a mule, pony, mender's or straw cart. [[U]]: upgrade to level 2. [[A]] or [[B]]: the branch at level 3. [[S]]: sell.
+- [[G]]: choose the next fork sign; [[Enter]]: turn it.
+- [[Q]]: smoke on the machine nearest the leading cart. [[W]]: shield the chosen cart (or the leading one). [[E]]: shortcut.
+- [[N]]: set off. [[Space]]: pause or play. [[F]]: speed. [[L]]: the road map. [[M]]: sound. [[?]]: how to play.
+
+## Tips
+- The way with no machines is often the long one. On the first trip it can be worth it; later the toll keepers fill it too.
+- Put the mule carts in front: the machines aim at the cart that has come furthest, and mules take less from every knock.
+- A mender just behind the biggest cart wins back many crates on a long stretch past the machines.
+- Smoke the place where two machines reach the road together, just before the first cart gets there.

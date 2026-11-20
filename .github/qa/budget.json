@@ -56,6 +56,10 @@
       "bytes": 1676287,
       "ms": 115
     },
+    "caravan": {
+      "bytes": 293547,
+      "ms": 190
+    },
     "certificates": {
       "bytes": 1077381,
       "ms": 63
@@ -229,8 +233,8 @@
       "ms": 57
     },
     "maps": {
-      "bytes": 1340573,
-      "ms": 132
+      "bytes": 1632038,
+      "ms": 298
     },
     "mastermind": {
       "bytes": 168959,
