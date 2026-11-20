@@ -812,19 +812,75 @@
   }
   function shownTitle(item, set) {
     if (item && lockHidesNs(item.ns, set)) return lockAppName(item.ns);
+    // SW-Q1: the update notice travels between devices with the title
+    // in the language of the device that wrote it; say it in this one's.
+    if (item && item.ns === 'system' && item.type === 'update' && typeof window.t === 'function') {
+      var tt = window.t('update.done');
+      if (tt && tt !== 'update.done') return tt;
+    }
     return item ? item.title : '';
   }
   function lockNotice() {
     var s = typeof window.t === 'function' ? window.t('applock.notice') : '';
     return s && s !== 'applock.notice' ? s : 'New notification';
   }
+  // An update notice naming a newer version than the one running here.
+  function newerElsewhere(item) {
+    if (!item || item.ns !== 'system' || item.type !== 'update') return false;
+    var here = window.__orosAppVersion;
+    var m = /^v(\d+(?:\.\d+)*)$/.exec(typeof item.body === 'string' ? item.body : '');
+    return typeof here === 'string' && !!m && cmpVer(m[1], here) > 0;
+  }
+  // SW-Q1: "Update now" under such a notice (index.html orosUpdateNow).
+  function tr(key, en) {
+    var v = typeof window.t === 'function' ? window.t(key) : '';
+    return v && v !== key ? v : en;
+  }
+  var UPD_FAIL = {
+    space:   ['update.now.space', 'There is not enough storage space for the new version. Free some space on this device and try again.'],
+    network: ['update.now.network', 'The new version could not be downloaded. Check the connection and try again.'],
+    offline: ['update.now.offline', 'This device is offline. Connect and try again.'],
+    '':      ['update.now.failed', 'The update did not finish. Try again.']
+  };
+  function updateNowText(state, reason) {
+    if (state === 'checking' || state === 'reloading') return tr('update.now.working', 'Updating…');
+    if (state === 'current') return tr('update.now.current', 'There is no newer version on the server yet.');
+    var f = UPD_FAIL[reason] || UPD_FAIL[''];
+    return tr(f[0], f[1]);
+  }
+  window.orosUpdateNowText = updateNowText;
+  function addUpdateNow(el) {
+    if (typeof window.orosUpdateNow !== 'function') return;
+    var row = document.createElement('div');
+    row.style.cssText = 'margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:8px;';
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'notif-update-now';
+    btn.style.cssText = 'min-height:36px; padding:6px 14px; border-radius:8px; border:1px solid var(--accent); ' +
+      'background:var(--accent); color:var(--accent-ink, #fff); font:inherit; cursor:pointer;';
+    btn.textContent = tr('update.now', 'Update now');
+    var msg = document.createElement('span');
+    msg.setAttribute('role', 'status');
+    msg.style.cssText = 'font-size:0.85em; color:var(--text-dim); flex:1 1 160px;';
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      btn.disabled = true;
+      window.orosUpdateNow(function (state, reason) {
+        msg.textContent = updateNowText(state, reason);
+        if (state === 'current' || state === 'failed') btn.disabled = false;
+      });
+    });
+    row.appendChild(btn);
+    row.appendChild(msg);
+    el.appendChild(row);
+  }
+
   function shownBody(item, set) {
     if (item && lockHidesNs(item.ns, set)) return lockNotice();
     var body = (item && typeof item.body === 'string') ? item.body : '';
     if (!item || item.ns !== 'system' || item.type !== 'update') return body;
+    if (!newerElsewhere(item)) return body;
     var here = window.__orosAppVersion;
-    var m = /^v(\d+(?:\.\d+)*)$/.exec(body);
-    if (typeof here !== 'string' || !m || cmpVer(m[1], here) <= 0) return body;
     var tail = window.t('update.elsewhere');
     if (!tail || tail === 'update.elsewhere') tail = 'on another device · this one runs v{v}';
     return body + ' · ' + tail.replace('{v}', here);
@@ -1039,6 +1095,8 @@
           escapeHtml(window.t('notifs.unread')) + `</div>` : ''}
       `;
       
+      if (newerElsewhere(item)) addUpdateNow(el);
+
       el.addEventListener('click', () => {
         // real per-app bridges (A7 router)
         const opened = openTarget(item);
