@@ -226,9 +226,16 @@ test("pptx: fonts by name become their Fontsource family", () => {
   assert.equal(P.fontFor("GFS Didot").font, "fs_gfs_didot");
   // system, Office and Canva-only fonts, and Noto (built in): the closest built-in family
   assert.equal(P.fontFor("Canva Sans").font, "sans");
-  assert.equal(P.fontFor("Times New Roman").font, "serif");
+  assert.equal(P.fontFor("Georgia").font, "serif");
   assert.equal(P.fontFor("Noto Sans").font, "sans");
-  assert.equal(P.fontFor("Courier New").font, "mono");
+  assert.equal(P.fontFor("Consolas").font, "mono");
+  // Office fonts with a free twin of the same widths (and Greek): lines break as in Canva
+  assert.deepEqual(P.fontFor("Calibri (MS)"), { font: "fs_carlito", name: "Carlito", b: 0, i: 0 });
+  assert.deepEqual(P.fontFor("Calibri (MS) Bold"), { font: "fs_carlito", name: "Carlito", b: 1, i: 0 });
+  assert.equal(P.fontFor("Arial").font, "fs_arimo");
+  assert.equal(P.fontFor("Times New Roman Italic").font, "fs_tinos");
+  assert.equal(P.fontFor("Courier New").font, "fs_cousine");
+  assert.equal(P.fontFor("Cambria").font, "serif", "Caladea has no Greek");
   assert.equal(P.fontFor("").font, "sans");
   // nothing odd gets into an id
   assert.equal(P.fontFor("../../x<script>").font, "fs_x_script");

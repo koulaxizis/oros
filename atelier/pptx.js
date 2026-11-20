@@ -329,6 +329,11 @@
   // Fonts that are not on Fontsource (system, Office, Canva's own):
   // they become the closest built-in family.
   var NOT_FS = /^(arial|arial black|arial narrow|helvetica|helvetica neue|calibri|calibri light|cambria|candara|consolas|constantia|corbel|segoe ui|segoe print|segoe script|tahoma|verdana|trebuchet ms|times|times new roman|georgia|garamond|book antiqua|palatino|palatino linotype|century gothic|franklin gothic|gill sans|futura|avenir|myriad pro|minion pro|impact|comic sans ms|courier|courier new|lucida console|lucida sans|symbol|wingdings|webdings|canva sans|canva serif|canva student font|open sauce|open sauce one|glacial indifference|tt norms|now|brittany|more sugar|horizon|the seasons|aileron|bebas neue pro|league gothic|chunkfive)$/i;
+  // Office fonts that are not free → their free twin on Fontsource with
+  // the same character widths (and Greek), so lines break where they
+  // did in Canva / PowerPoint (as designkit/fonts.js TWINS for Layout)
+  var TWIN = { "calibri": "Carlito", "arial": "Arimo", "helvetica": "Arimo", "times new roman": "Tinos", "times": "Tinos",
+    "courier new": "Cousine", "courier": "Cousine" };
   var WEIGHT = /[\s-]+(thin|hairline|extra ?light|ultra ?light|light|regular|book|normal|medium|semi ?bold|demi ?bold|bold|extra ?bold|ultra ?bold|heavy|black|italic|oblique)$/i;
   // A typeface name from the file → { font: built-in or Fontsource
   // id ("fs_<id>"), name, bold, italic }. Canva writes weights into
@@ -343,6 +348,9 @@
       if (/italic|oblique/.test(w)) i = 1;
       n = n.slice(0, m.index).trim();
     }
+    n = n.replace(/\s*\((ms|pc|mac|tt|ot)\)$/i, "");        // Canva: "Calibri (MS)"
+    var tw = TWIN[n.toLowerCase().replace(/\s+/g, " ")];
+    if (tw) return { font: AX.fsIdOf(tw.toLowerCase()), name: tw, b: b, i: i };
     if (!n || NOT_FS.test(n) || /^(sans|serif|mono|sans-serif|monospace|noto sans|noto serif|noto sans mono)$/i.test(n)) return { font: familyOf(n), name: n, b: b, i: i };
     var slug = n.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     if (!slug || slug.length > 58) return { font: familyOf(n), name: n, b: b, i: i };
@@ -801,7 +809,7 @@
       });
     }).then(function () {
       if (!plan.pages.length) throw new Error("pptx");
-      if (capped) unbox(plan);
+      if (capped) { plan.cap = { w: plan.w, h: plan.h }; unbox(plan); }
       return plan;
     });
   }
@@ -826,7 +834,29 @@
     plan.pages.forEach(function (P) {
       P.items.forEach(function (s) { s.x -= band.x; s.y -= band.y; });
     });
+    plan.cap.dx = band.x; plan.cap.dy = band.y;
     plan.w = Math.round(band.w * 100) / 100; plan.h = Math.round(band.h * 100) / 100;
+  }
+
+  // The design's real size is known (the PDF Canva made of the same
+  // design, real = { w, h } in its points): Canva keeps the short side
+  // as it is, cuts the long side to 56 in and scales the design into
+  // the slide, centred. → the scale k (slide pt per design pt) after
+  // the items are moved back to the band's corner, or 0 (not capped,
+  // or a size that does not fit this slide).
+  function rebox(plan, real) {
+    var c = plan.cap;
+    if (!c || !real || !(real.w > 0 && real.h > 0)) return 0;
+    var k = Math.min(c.w / real.w, c.h / real.h);
+    if (!(k > 0 && k < 1)) return 0;
+    var bx = (c.w - real.w * k) / 2, by = (c.h - real.h * k) / 2;
+    var dx = bx - (c.dx || 0), dy = by - (c.dy || 0);
+    plan.pages.forEach(function (P) {
+      P.items.forEach(function (s) { s.x -= dx; s.y -= dy; });
+    });
+    c.dx = bx; c.dy = by;
+    plan.w = Math.round(real.w * k * 100) / 100; plan.h = Math.round(real.h * k * 100) / 100;
+    return k;
   }
 
   // <p:embeddedFontLst>: [{ name, r, b, i, bi }] (zip paths)
@@ -942,8 +972,11 @@
   // ---------- 7. Build the design ----------
   // assets: { mediaPath|svgKey: { id, w, h } } (missing → item skipped)
   // → { doc, missing }
-  function build(plan, assets, now, fonts) {
+  // opts.real { w, h }: the design's own size in points (from Canva's
+  // PDF of it) for a slide Canva had to shrink (past 56 in, rebox).
+  function build(plan, assets, now, fonts, opts) {
     fonts = fonts || {};
+    var k = opts && opts.real ? rebox(plan, opts.real) : 0;
     var own = {};
     var d = AX.newDesign({ name: plan.name, w: plan.w, h: plan.h, unit: "px", pages: plan.pages.length }, now);
     var pages = M.pagesInOrder(d), missing = 0;
@@ -1030,9 +1063,12 @@
       d.setup.ext = d.setup.ext || {};
       d.setup.ext.fonts = list;
     }
+    // a shrunk slide back to the design's own size (rebox)
+    if (k) AX.scaleDesign(d, 1 / k);
+    var W = d.setup.w, H = d.setup.h;
     // a screen slide (not a paper size) at Canva's 0.75 pt per px: back
     // to its pixels (a 1080 px post comes as 810 pt), CV-0
-    if (!AX.paper(plan.w, plan.h) && Math.max(plan.w, plan.h) * AX.SCREEN <= 14400) AX.scaleDesign(d, AX.SCREEN);
+    if (!AX.paper(W, H) && Math.max(W, H) * AX.SCREEN <= 14400) AX.scaleDesign(d, AX.SCREEN);
     return { doc: M.normDoc(d), missing: missing };
   }
 
@@ -1075,7 +1111,7 @@
     return out;
   }
 
-  var api = { parse: parse, build: build, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
+  var api = { parse: parse, build: build, rebox: rebox, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierPPTX = api;
 })(typeof window !== "undefined" ? window : this);

@@ -297,3 +297,19 @@ test("CV-A: wired into Atelier, strings in EN, EL and DE", () => {
     assert.ok(de.includes('"' + k + '"'), k + " in DE");
   });
 });
+
+test("pptx: a design Canva shrank past 56 in gets its own size back from its PDF", () => {
+  // a 11520 × 3456 px banner: Canva's PDF is 8640 × 2592 pt, its slide
+  // is cut to 4025 pt wide with the design scaled into it, centred
+  const k = 4025 / 8640, by = (2592 - 2592 * k) / 2;
+  const plan = { w: 4025, h: 2592, cap: { w: 4025, h: 2592 }, name: "Banner", media: {}, clips: {}, svgs: {}, fonts: [], skipped: 0, approx: 0,
+    pages: [{ bg: null, items: [{ k: "shape", shp: "rect", fc: "#ff0000", x: 2012.5 - 100 * k, y: by + 1296 * k - 50 * k, w: 200 * k, h: 100 * k, rot: 0 }] }] };
+  const { doc } = P.build(plan, {}, 9, {}, { real: { w: 8640, h: 2592 } });
+  assert.deepEqual([doc.setup.w, doc.setup.h], [11520, 3456]);
+  const sh = doc.items.find((i) => i.ax && i.ax.k === "shape" && !i.ax.bg);
+  // centred as in the PDF, at 4/3 px per pt
+  close(Math.round(sh.x + sh.w / 2), 5760); close(Math.round(sh.y + sh.h / 2), 1728);
+  close(Math.round(sh.w), 267); close(Math.round(sh.h), 133);
+  // without the PDF it stays as the slide (nothing guessed)
+  assert.equal(P.rebox({ cap: null }, { w: 1, h: 1 }), 0);
+});

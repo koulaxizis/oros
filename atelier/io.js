@@ -648,7 +648,8 @@
       return out;
     });
   }
-  function importPptxFile(f, quiet) {
+  // opts.real { w, h }: the design's own size in points (pptx.js rebox)
+  function importPptxFile(f, quiet, opts) {
     var fonts = {};
     return f.arrayBuffer().then(function (ab) {
       var zip = window.AtelierZip.open(new Uint8Array(ab));
@@ -700,7 +701,7 @@
           if (!keys.length) return;
           return Promise.race([T.load(keys).then(null, function () {}), new Promise(function (r) { setTimeout(r, 12000); })]);
         }).then(function () {
-          var r = window.AtelierPPTX.build(plan, assets, AT.now(), fonts);
+          var r = window.AtelierPPTX.build(plan, assets, AT.now(), fonts, opts && opts.real ? { real: opts.real } : null);
           AT.addDoc(r.doc, batching);
           var lost = plan.skipped + r.missing;
           if (!quiet) say(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
@@ -927,11 +928,11 @@
     // a design counts once it is stored (AT.keepStored: on the disk
     // written and read back, else in localStorage); a full storage
     // stops the batch and keeps what fit
-    function one(f) {
+    function one(f, real) {
       if (n >= BATCH_MAX || full) { bad++; return Promise.resolve(); }
       n++;
       var before = docIds();
-      return Promise.resolve().then(function () { return importAnyFile(f); })
+      return Promise.resolve().then(function () { return real ? importPptxFile(f, false, { real: real }) : importAnyFile(f); })
         .then(null, function (e) { if (e && e.message === "nofs") throw e; })
         .then(function () {
           var added = docIds().filter(function (id) { return before.indexOf(id) < 0; });
@@ -959,11 +960,18 @@
     batching = true;
     AT.toast(t("imp.working"));
     var chain = Promise.resolve();
+    // a .pptx with Canva's PDF of the same design beside it: the PDF
+    // gives the real size of a slide Canva had to shrink (past 56 in);
+    // the PDF itself is not imported a second time
+    var pair = pairs(files);
     files.forEach(function (f) {
       chain = chain.then(function () {
+        if (pair.skip.indexOf(f) >= 0) return;
+        var mate = pair.pdf.get(f);
         return Promise.resolve().then(function () { return isFile(f) ? f : f.get(); }).then(function (file) {
           if (!file) { bad++; return; }
           if (/\.zip$/i.test(file.name || "")) return zipOf(file);
+          if (mate) return Promise.resolve(isFile(mate) ? mate : mate.get()).then(pdfSize).then(function (real) { return one(file, real); });
           return one(file);
         }).then(null, function (e) { if (e && e.message === "nofs") throw e; bad++; });
       });
@@ -978,6 +986,32 @@
       importFail(e);
     });
   }
+  // files → { pdf: Map(pptx → its PDF), skip: [those PDFs] } (same
+  // name before the extension, any case)
+  function pairs(files) {
+    var base = function (f) { return String(f && f.name || "").toLowerCase().replace(/\.[a-z0-9]+$/, ""); };
+    var pdfs = {}, out = { pdf: new Map(), skip: [] };
+    files.forEach(function (f) { if (/\.pdf$/i.test(f && f.name || "")) pdfs[base(f)] = f; });
+    files.forEach(function (f) {
+      var m = /\.pptx$/i.test(f && f.name || "") && pdfs[base(f)];
+      if (m) { out.pdf.set(f, m); out.skip.push(m); }
+    });
+    return out;
+  }
+  // A PDF's first page size in points { w, h }, or null (read from its
+  // /MediaBox as plain text; a PDF that hides it in a compressed
+  // object stream gives null)
+  function pdfSize(f) {
+    if (!f) return Promise.resolve(null);
+    return f.slice(0, 4 * 1024 * 1024).arrayBuffer().then(function (ab) {
+      var txt = new TextDecoder("latin1").decode(new Uint8Array(ab));
+      var m = /\/MediaBox\s*\[\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*\]/.exec(txt);
+      if (!m) return null;
+      var w = Math.abs(+m[3] - +m[1]), h = Math.abs(+m[4] - +m[2]);
+      return w > 0 && h > 0 && w < 200000 && h < 200000 ? { w: w, h: h } : null;
+    }).then(null, function () { return null; });
+  }
+
   // Home › Import › From a folder in Files: a small browser of the
   // orOS disk's folders; "Import" takes this folder and its subfolders.
   function diskFs() {
@@ -1366,7 +1400,7 @@
   AT.on("remote", refreshBar);
 
   AT.io = {
-    exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, importDisk: importDisk, importMany: importMany, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
+    exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, importDisk: importDisk, importMany: importMany, openFile: openFile, importPptx: importPptxFile, pdfSize: pdfSize, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo,
     renderFiles: renderFiles, relaid: relaid, svgOf: svgOf, svgSelection: svgSelection,
     sendTo: sendTo, canSend: canSend
