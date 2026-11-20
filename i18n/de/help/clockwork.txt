@@ -1,0 +1,63 @@
+# Uhrwerkstatt
+Uhrwerkstatt ist ein ruhiges Idle-Spiel für eine Person. Auf der Werkbank eines Uhrmachers dreht ein Wasserrad Zahnräder, die Zahnräder treiben kleine Maschinen an, Förderbänder tragen, was sie machen, und eine Kiste verkauft es: Messing wird zu Zahnrädern und Federn, diese werden zu Uhren, und Uhren werden zu Automaten. Die Werkstatt macht von selbst weiter, während orOS geschlossen ist: Du verpasst nichts, musst nichts einsammeln und bekommst keine Benachrichtigungen. Komm, wann du magst.
+
+## So wird gespielt
+- Tippe auf ein leeres Feld der Werkbank, um die Teile zu sehen, und dann auf ein Teil, um es dorthin zu legen. Jedes Teil kostet Münzen, und jedes weitere gleiche Teil kostet etwas mehr.
+- Tippe auf ein Teil der Werkbank, um zu sehen, was es tut. `Drehen` dreht ein Förderband oder eine Maschine um eine Vierteldrehung; `Zurücknehmen` nimmt das Teil weg und gibt die Hälfte seines Preises zurück.
+- Die Statuszeile zeigt die Münzen und wie viele jede Minute dazukommen, die Kraft, die die Maschinen brauchen, und wie viel das Wasserrad gibt, und ob sich die Zahnräder drehen.
+- `Rückgängig` in der Meldung nach jedem Zug nimmt ihn zurück, zum vollen Preis.
+
+## Die Werkbank
+- Das **Wasserrad** sitzt am linken Rand und die **Versandkiste** am rechten Rand, beide in der mittleren Reihe. Sie lassen sich nicht verschieben.
+- Die Werkbank hat zuerst 5 × 5 Felder. Jede neue Werkstatt hat eine Reihe und eine Spalte mehr, bis 7 × 7.
+
+## Zahnräder und Verklemmen
+- Ein **Zahnrad** greift in die Zahnräder und das Wasserrad auf allen acht Feldern um sich herum, an den Seiten und an den Ecken, und gibt die Drehung weiter. Eine Reihe Zahnräder trägt die Drehung über die Werkbank.
+- Benachbarte Zahnräder drehen sich gegenläufig, wie echte. Ein kleiner Pfeil auf jedem Zahnrad zeigt seine Richtung.
+- Darum kann sich ein geschlossener Ring aus einer ungeraden Zahl von Zahnrädern nicht drehen: drei Zahnräder, die sich alle berühren, oder vier in einem Quadrat **verklemmen** das ganze Getriebe, und jede Maschine hält an. Die Zahnräder des Rings tragen ein ✕. Nimm eines davon weg, und alles dreht sich wieder.
+- Ein Zahnrad, das kein drehendes Zahnrad berührt, steht still.
+
+## Maschinen und Kraft
+- Eine Maschine läuft, wenn das Wasserrad oder ein drehendes Zahnrad auf einem der acht Felder um sie herum liegt.
+- Jede laufende Maschine braucht 1 Kraft. Das Wasserrad gibt zuerst 4 (die Verbesserung Größeres Wasserrad gibt mehr). Brauchen die Maschinen mehr Kraft, als das Wasserrad gibt, werden alle langsamer: 6 Maschinen an einem Wasserrad mit 4 laufen mit zwei Dritteln.
+- **Schmelzofen:** macht Messing aus dem Nichts, 6 pro Minute.
+- **Zahnradpresse:** macht ein Zahnrad aus 1 Messing, 3 pro Minute.
+- **Federwickler:** macht eine Feder aus 1 Messing, 3 pro Minute.
+- **Uhrenbank:** macht eine Uhr aus 2 Zahnrädern und 1 Feder, 1,5 pro Minute.
+- **Automatenboden:** macht einen Automaten aus 3 Uhren, 0,5 pro Minute.
+- Eine Maschine mit Zeichen läuft nicht: ◦ kein drehendes Zahnrad daneben, … wartet auf das, was sie braucht, ■ kein Platz für das, was sie macht (oder das Getriebe ist verklemmt).
+
+## Waren und Förderbänder
+- Eine Maschine legt, was sie macht, auf das Feld, auf das ihr weißer Pfeil zeigt. Ist dort ein **Förderband**, trägt es die Ware weiter, Feld für Feld, in die Richtung seines Pfeils. Ist dort eine Maschine, die sie braucht, nimmt diese sie, von jeder Seite. Ist dort die Kiste, wird sie sofort verkauft.
+- Haben die Waren keinen Platz (ein Zahnrad, ein leeres Feld, der Rand der Werkbank, eine Maschine, die sie nicht braucht), hält die Maschine an. Förderbänder, die im Kreis laufen, tragen nichts.
+- Preise: Messing 2 Münzen, ein Zahnrad 9, eine Feder 9, eine Uhr 60, ein Automat 520. Eine Uhr bringt mehr als ihre Zahnräder und ihre Feder, und ein Automat mehr als seine Uhren.
+
+## Verbesserungen
+`Verbesserungen` in der Werkzeugleiste (oder [[U]]):
+- **Größeres Wasserrad:** +2 Kraft, sechsmal.
+- **Geölte Lager:** jede Maschine arbeitet 20 % schneller, fünfmal.
+- **Hintertür:** eine zweite Kiste in der Ecke oben rechts (das Feld muss frei sein).
+- **Politur:** eine für jede Art von Maschine; jede Maschine dieser Art arbeitet doppelt so schnell. Eine Politur braucht eine solche Maschine auf der Werkbank.
+
+## Eine neue Werkstatt
+- Sobald ein Automat verkauft ist und diese Werkstatt 3 Mio. Münzen verdient hat, kannst du eine neue Werkstatt öffnen. In der Werkzeugleiste und unten erscheint `Neue Werkstatt`. Es eilt nicht: sie bleibt offen.
+- Die neue Werkstatt hat eine Werkbank mit einer Reihe und einer Spalte mehr (bis 7 × 7). Münzen, Teile und Verbesserungen gehen zurück auf den Anfang.
+- Die Werkbank der alten Werkstatt kommt ins **Musterbuch** (das Buch in der Werkzeugleiste, oder [[P]]), und jede Werkstatt im Buch gibt für immer 2 % auf jeden Preis.
+- Im Musterbuch baut `Aufbauen` eine alte Werkbank wieder auf: jedes Teil der jetzigen Werkbank kommt zurück (die Hälfte seines Preises), und die Teile des Musters kommen an ihre Plätze, zu ihrem Preis. Das Muster behält die Reihe des Wasserrads; auf einer größeren Werkbank liegt die Kiste ein Feld weiter rechts, vielleicht fehlt also ein Förderband.
+- Du behältst für immer ein **Zunftzeichen** von dreien: Flinke Hände (Maschinen 15 % schneller), Sparsam (Teile 15 % billiger), Starker Fluss (das Wasserrad gibt 2 Kraft mehr), Feines Werkzeug (Preise 10 % höher), Eifriger Lehrling (die erste Zahnradpresse und der erste Federwickler jeder Werkstatt sind gratis) und Geduldig (während du weg bist, hält das volle Tempo 7 Tage länger). Dasselbe Zeichen kann wiederkommen und zählt zusammen.
+
+## Während du weg warst
+Wenn du die Uhrwerkstatt nach einer Weile öffnest, zeigt eine Karte, wie lange du weg warst, die verdienten Münzen und die verschickten Waren. In den ersten 7 Tagen arbeitet die Werkstatt voll; danach macht sie mit halbem Tempo weiter. Sie hört nie auf, sie wird nur langsamer.
+
+## Rekorde und Sync
+`Rekorde` zeigt alle verdienten Münzen, die Werkstatt, die verschickten Waren, die Zunftzeichen und die Meilensteine. `Soundeffekte` schaltet dort die kleinen Töne an und aus, wie [[M]]. `Der Klang der Werkstatt` schaltet ein leises Ticken und ein fernes Wasserrad an; zuerst ist er aus. Die Werkstatt wird über den [orOS-Sync](help:t/sync) zwischen deinen Geräten abgeglichen: auf Handy und Computer ist es dieselbe Werkstatt. Spielen zwei Geräte gleichzeitig, bleibt die Werkstatt, die weiter ist, und die letzten Minuten des anderen Geräts gehen verloren. Ein Zug wird ein paar Sekunden danach gespeichert und höchstens alle 5 Minuten und beim Verlassen gesendet. `Von vorn` in den Rekorden beginnt auf jedem Gerät eine neue Werkstatt aus dem Nichts, sobald du es bestätigst; das lässt sich nicht rückgängig machen. Die Uhrwerkstatt steht in der Gruppe Entspannt der [Game Center](help:a/gamecenter). Die Toneinstellungen bleiben auf diesem Gerät.
+
+## Tastatur
+- Mit den Pfeiltasten gehst du von Feld zu Feld; [[Enter]] oder [[Space]] wählt ein Feld; [[1]] bis [[7]] legen ein Teil auf ein leeres Feld (Zahnrad, Förderband, Schmelzofen, Zahnradpresse, Federwickler, Uhrenbank, Automatenboden); [[R]] dreht ein Teil ([[Shift]]+[[R]] andersherum); [[Entf]] nimmt es zurück; [[Escape]] lässt das Feld los.
+- [[U]]: Verbesserungen. [[P]]: Musterbuch. [[E]]: Neue Werkstatt (sobald sie bereit ist). [[S]]: Rekorde. [[H]] oder [[?]]: So wird gespielt (die erste Führung noch einmal; auch der Knopf `?`). [[M]]: Ton. [[Z]]: den letzten Zug rückgängig machen.
+
+## Tipps
+- Fang mit einem Schmelzofen neben dem Wasserrad und zwei Förderbändern bis zur Kiste an.
+- Stell so bald wie möglich eine Zahnradpresse zwischen Schmelzofen und Kiste: Zahnräder bringen mehr als Messing.
+- Eine gerade Reihe Zahnräder verklemmt nie; eine Kurve verklemmt, wenn sich drei Zahnräder berühren, also geh diagonal um die Ecke.
+- Ein Schmelzofen versorgt eine Maschine; eine Uhrenbank braucht eine Zahnradpresse und einen Federwickler daneben.
