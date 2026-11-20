@@ -101,6 +101,13 @@ Sie kommen von Waymarked Trails. Schalte so viele ein, wie du willst; dieses Ger
 
 Es wird nur gezeigt, was kartiert ist. Fehlt eine Angabe, ist sie noch nicht bekannt; du kannst sie mit Fragen oder Orte bearbeiten ergänzen. Offline-Karten zeichnen Radwege jetzt blau, Feldwege braun und Fußpfade rot, alle gestrichelt.
 
+**Routen zu Fuß und mit dem Rad**: mit `Zu Fuß` oder `Fahrrad` beginnt die `Wegbeschreibung` mit `Routentyp`:
+
+- Zu Fuß: `Wandern` (Standardwahl) bevorzugt Pfade und Wanderwege und rechnet die Anstiege in die Zeit ein; `Standard` ist der schnellste Weg zu Fuß.
+- Fahrrad: `Touren` (Standardwahl: Radwege und ruhige Straßen, etwas Schotter), `Rennrad` (glatter Asphalt), `Ruhige Straßen` (meidet stark befahrene Straßen), `Gravel`, `Mountainbike` und `Standard` (der schnellste Weg).
+
+Diese Routen kommen von BRouter. Die Routenleiste zeigt dann Anstieg und Abstieg (↗ ↘), und die `Wegbeschreibung` zeigt das Höhenprofil entlang der Route, den tiefsten und höchsten Punkt und zwei Balken: die `Oberfläche` (befestigt, Schotter, Erde, unbekannt) und die `Art des Weges` (Straße, Feldweg, Pfad, Radweg, Treppe), jeweils mit ihrem Anteil an der Route. Die Gehzeit folgt der Wanderregel DIN 33466: 4 km/h in der Ebene, 300 m bergauf oder 500 m bergab pro Stunde. Antwortet BRouter nicht, bekommst du die Standardroute und eine Meldung. Unter `Karten-Einstellungen` › `Wegerouter` kannst du statt brouter.de deinen eigenen BRouter-Server nutzen. Die Routentypen bleiben auf diesem Gerät.
+
 ## OpenStreetMap-Hinweise
 
 Ein Hinweis sagt den Freiwilligen, die [OpenStreetMap](https://www.openstreetmap.org) kartieren, dass etwas falsch ist oder fehlt: ein Geschäft, das geschlossen hat, ein neuer Weg, ein falscher Straßenname. Sie lesen ihn, korrigieren die Karte und lösen den Hinweis.
@@ -265,7 +272,8 @@ Jedes Paket zeigt seine Größe, seine Details, wann du es heruntergeladen hast 
 - **Kartenbilder**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitär`), Esri (`Satellit`), OpenTopoMap (`Topo`), CyclOSM über OpenStreetMap France (`Radkarte (CyclOSM)`) und Waymarked Trails (die Ebenen für Wander-, Rad- und MTB-Routen). Sie bekommen die Kartenkacheln, die du ansiehst.
 - **Was ist das für ein Weg**: die Overpass-API bekommt den Punkt, auf den du lange gedrückt hast, um die Wege darum und die Routen des gewählten Weges zu lesen.
 - **Suche und Ortsnamen**: Photon von komoot. Es bekommt deinen Suchtext und die Kartenmitte oder den Punkt, auf den du lange gedrückt hast.
-- **Routen**: der OSRM-Demoserver (Auto) und FOSSGIS (Fahrrad und zu Fuß). Sie bekommen die Koordinaten deiner Routenpunkte.
+- **Routen**: der OSRM-Demoserver (Auto) und FOSSGIS (Fahrrad und zu Fuß, `Standard`). Sie bekommen die Koordinaten deiner Routenpunkte.
+- **Routentypen zu Fuß und mit dem Rad**: BRouter (brouter.de oder der Server, den du unter `Wegerouter` eingestellt hast) bekommt die Koordinaten deiner Routenpunkte und den Routentyp.
 - **Öffentlicher Verkehr**: Transitous (api.transitous.org). Es bekommt Start und Ziel deiner Suche, die Uhrzeit, die Haltestelle, deren Abfahrten du öffnest, und den Kartenausschnitt, wenn Haltestellen oder Live-Fahrzeuge an sind.
 - **Live-Busankünfte (Athen)**: wenn du die Tafel einer Athener Bushaltestelle öffnest, gibt das orOS-Relay (dasselbe, das E-Mail nutzt) den Code dieser Haltestelle an OASA Telematics (telematics.oasa.gr) weiter. Sonst wird nichts gesendet, und das Relay speichert nichts.
 - **Teilen**: Links entstehen auf deinem Gerät. Nichts verlässt es, bis du einen sendest oder öffnest; ein geteilter Link enthält die Koordinaten der Punkte und den Namen des Ziels.
@@ -282,7 +290,7 @@ Dein Standort bleibt auf deinem Gerät, außer er ist ein Routenpunkt. Mehr unte
 
 ## Synchronisierung und Sicherung
 
-Gespeicherte Orte, deine Streckenliste (Namen, Farben, Ordner, Statistik), Hinweise, Ortsänderungen, Eingangsänderungen und Antworten auf Fragen, die auf das Senden warten, ausgeblendete Fragen, Fragen-Einstellungen, dein Antwortzähler, Erfolge und Team-Wahl, Favoritengruppen und welcher Gruppe jeder Ort angehört, und der Änderungskommentar werden über die [orOS-Synchronisierung](help:t/sync) abgeglichen. Deine OpenStreetMap-Anmeldung nicht: melde dich auf jedem Gerät einmal an. Diese Dinge bleiben auf diesem Gerät: deine 10 letzten Orte, die `Vermeiden`-Wahl, die ÖPNV-Schalter (Haltestellen, Live-Fahrzeuge), die gewählte Ebene der Fragen, Tab, Art und `Jetzt geöffnet` in Entdecken, welche Favoritengruppen ausgeblendet oder zugeklappt sind, dein geparktes Auto und seine Erinnerung, die letzte Route (sie kommt beim nächsten Öffnen von Karten zurück), offline gespeicherte Kartenbilder, deine Offline-Karten (lade jede auf jedem Gerät herunter, das sie braucht) und die eingestellte Kartenquelle sowie Kartenposition und -stil, mit den eingeschalteten Wander- und Radebenen.
+Gespeicherte Orte, deine Streckenliste (Namen, Farben, Ordner, Statistik), Hinweise, Ortsänderungen, Eingangsänderungen und Antworten auf Fragen, die auf das Senden warten, ausgeblendete Fragen, Fragen-Einstellungen, dein Antwortzähler, Erfolge und Team-Wahl, Favoritengruppen und welcher Gruppe jeder Ort angehört, und der Änderungskommentar werden über die [orOS-Synchronisierung](help:t/sync) abgeglichen. Deine OpenStreetMap-Anmeldung nicht: melde dich auf jedem Gerät einmal an. Diese Dinge bleiben auf diesem Gerät: deine 10 letzten Orte, die `Vermeiden`-Wahl, die ÖPNV-Schalter (Haltestellen, Live-Fahrzeuge), die gewählte Ebene der Fragen, Tab, Art und `Jetzt geöffnet` in Entdecken, welche Favoritengruppen ausgeblendet oder zugeklappt sind, dein geparktes Auto und seine Erinnerung, die letzte Route (sie kommt beim nächsten Öffnen von Karten zurück), offline gespeicherte Kartenbilder, deine Offline-Karten (lade jede auf jedem Gerät herunter, das sie braucht) und die eingestellte Kartenquelle sowie Kartenposition und -stil, mit den eingeschalteten Wander- und Radebenen, und die Routentypen zu Fuß und mit dem Rad mit dem eingestellten Wegerouter.
 
 `Karten-Einstellungen` zeigt, wie viele Kartenbilder gespeichert sind (`Kachel-Cache leeren`), und die gespeicherte Route (`Gespeicherte Route vergessen`). GPX-Strecken importierst und exportierst du in `Meine Strecken`.
 

@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.92.00
+- **Walking and cycling routes in Maps.** Directions can plan for hiking, touring, road, gravel or mountain bikes and quiet roads, and shows the climb, an elevation profile and what the way is made of. Walking time counts the climb too. See [Maps](help:a/maps).
+
 ## Version 7.91.00
 - **Focus modes hide what distracts.** A mode can hide the widgets and desktop and Dock icons you choose while it runs; the menu and search still find every app. The top-bar button shows the mode's icon. Settings › Notifications › `Focus modes` › `Hide while it is on`. See [Focus modes](help:t/notifications).
 

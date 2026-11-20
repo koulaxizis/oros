@@ -2014,3 +2014,36 @@ body.trn-itin .route-alt { opacity: 0.25; }
 .trl-rt b { display: block; overflow-wrap: anywhere; }
 .trl-rt-s { display: block; font-size: 11.5px; color: var(--text-dim); }
 @media (max-width: 380px) { .trl-rows { grid-template-columns: 1fr; gap: 0; } .trl-rows dd { margin-bottom: 4px; } }
+
+/* ---------- Hiking and cycling, wave H2: route types, climb, profile, surfaces ---------- */
+#route-climb { color: var(--text-dim); white-space: nowrap; font-size: 12px; }
+.odr-box { margin: 4px 0 10px; }
+.odr-kinds { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.odr-kind { min-height: 32px; padding: 4px 10px; border-radius: 16px; border: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; font-size: 12.5px; cursor: pointer; }
+.odr-kind.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.odr-kind:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.odr-prof { display: block; width: 100%; height: 72px; margin: 4px 0 2px; border-bottom: 1px solid var(--border); }
+.odr-prof-area { fill: var(--accent); fill-opacity: .35; stroke: var(--accent); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.odr-lohi { font-size: 12px; color: var(--text-dim); margin-bottom: 8px; }
+.odr-bar { margin: 6px 0; }
+.odr-strip { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--border); margin: 4px 0; }
+.odr-strip .odr-seg { display: block; height: 100%; min-width: 2px; }
+.odr-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11.5px; color: var(--text-dim); }
+.odr-li { display: inline-flex; align-items: center; gap: 5px; }
+.odr-li .odr-seg { display: inline-block; width: 10px; height: 10px; border-radius: 2px; }
+.odr-s-paved { background: #8a8f98; }
+.odr-s-gravel { background: #c9a227; }
+.odr-s-ground { background: #9a6b3f; }
+.odr-s-unknown { background: #55504a; }
+.odr-w-road { background: #8a8f98; }
+.odr-w-track { background: #9a6b3f; }
+.odr-w-path { background: #c0392b; }
+.odr-w-cycleway { background: #2f6fd6; }
+.odr-w-steps { background: #e67e22; }
+.odr-w-other { background: #55504a; }
+.odr-note { font-size: 11.5px; color: var(--text-dim); margin: 6px 0 0; }
+.odr-settings { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+.odr-settings h4 { margin: 0 0 4px; font-size: 13px; }
+.odr-settings p { margin: 0 0 6px; font-size: 12px; color: var(--text-dim); }
+.odr-settings .osm-in { width: 100%; min-width: 0; box-sizing: border-box; }
+.odr-set-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }

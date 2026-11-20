@@ -367,6 +367,7 @@ orosPack("de", "shell", {
  "cr.opentopomap": "Topo-Ebene mit Höhenlinien (Karten)",
  "cr.waymarked": "Ebenen für Wander-, Rad- und MTB-Routen (Karten)",
  "cr.cyclosm": "Radkarte (Karten)",
+ "cr.brouter": "Routen zu Fuß und mit dem Rad mit Anstieg und Oberflächen (Karten)",
  "cr.openverse": "Fotos, Illustrationen, Klänge (Atelier); freie Songs (Musik)",
  "cr.osrm": "Autorouten, Demoserver (Karten)",
  "cr.overpass-api": "Orte und Aufgaben in deiner Nähe, Tempolimits beim Fahren (Karten); Firmendaten in „Online aktualisieren“ (Kontakte, CRM)",
