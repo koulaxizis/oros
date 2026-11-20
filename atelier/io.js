@@ -779,6 +779,44 @@
     });
   }
 
+  // ---------- PDF as a design (PS-3: Canva's PDF download) ----------
+  // Layout's reader (layout/sla.js, layout/pdfin.js, PDF.js) and
+  // pdfin.js load on the first PDF opened (precached, not in the page).
+  var pdfReading = null;
+  function pdfReader() {
+    if (window.LY_PDFIN && window.AtelierPdfIn) return Promise.resolve();
+    if (!pdfReading) {
+      pdfReading = (window.LY_SLA ? Promise.resolve() : loadScript("../layout/sla.js"))
+        .then(function () { return window.LY_PDFIN ? null : loadScript("../layout/pdfin.js"); })
+        .then(function () { return window.AtelierPdfIn ? null : loadScript("pdfin.js"); })
+        .then(null, function (e) { pdfReading = null; throw e; });
+    }
+    return pdfReading;
+  }
+  function isPdf(f) { return /\.pdf$/i.test(String(f && f.name || "")) || (f && f.type) === "application/pdf"; }
+  function importPdfFile(f) {
+    var name = String(f.name || "").replace(/\.pdf$/i, "").slice(0, 120);
+    return pdfReader().then(function () { return f.arrayBuffer(); }).then(function (buf) {
+      var store = function (blob) {
+        return A.importFile(new File([blob], blob.name || "pdf.png", { type: blob.type || "image/png" })).then(function (r) { AT.noteUpload(r.id); return r; });
+      };
+      return window.LY_PDFIN.open(buf, { name: name, now: AT.now() }, store);
+    }).then(function (res) {
+      var plan = res && window.AtelierPdfIn.toDesign(res.doc);
+      if (!plan) { say(t("imp.pdfFail")); return; }
+      var nw = AT.now();
+      var d = AX.newDesign({ name: name || "PDF", w: plan.setup.w, h: plan.setup.h, unit: plan.setup.unit, pages: plan.pages.length }, nw);
+      var pages = M.pagesInOrder(d), made = 0;
+      plan.pages.forEach(function (specs, i) {
+        var pg = pages[i];
+        if (!pg) return;
+        specs.forEach(function (sp) { if (AX.addItem(d, pg.id, sp, nw)) made++; });
+      });
+      AT.addDoc(M.normDoc(d), batching);
+      if (!batching) say(res.stats && res.stats.cut ? t("imp.pdfCut", { n: plan.pages.length, all: res.stats.total }) : t("imp.pdfDone"));
+    });
+  }
+
   // A picture (PNG, JPG, WebP, SVG…): a new design of its size; an SVG
   // may come in as editable shapes instead (asked; shapes when many)
   function importImageFile(f) {
@@ -817,7 +855,7 @@
 
   // Home › Import: .orosdesign, .pptx or a picture
   function importAny() {
-    pickFiles(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*,.svg,.zip,application/zip")
+    pickFiles(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pdf,application/pdf,image/*,.svg,.zip,application/zip")
       .then(importMany).then(null, importFail);
   }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
@@ -826,6 +864,7 @@
     if (f.size > PKG_MAX) { say(t("imp.bad")); return; }
     var nm = String(f.name || "").toLowerCase();
     var run = /\.pptx$/.test(nm) ? importPptxFile
+      : isPdf(f) ? importPdfFile
       : /^image\//.test(f.type || "") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(nm) ? importImageFile
       : importPackageFile;
     say(t("imp.working"));
