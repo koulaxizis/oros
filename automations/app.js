@@ -73,7 +73,7 @@
       "conf.del": "Delete this rule?",
       "a.file": "Open the file in an app", "a.print": "Print the file",
       "x.fileTo": "Open in", "x.printHint": "It prints on the computer the file arrived on, with that computer's printer.",
-      "a.pause": "Pause sounds", "ev.soonPick": "Some minutes before an event of my day", "a.sound": "Play a sound", "f.min": "Minutes before", "f.amount": "Amount",
+      "a.pause": "Pause sounds", "ev.soonPick": "Some minutes before an event of my day", "a.sound": "Play a sound", "a.focus": "Focus mode", "x.focusMode": "Mode", "x.focusOff": "Off", "x.focusMin": "Minutes (0 = until turned off)", "h.focus": "Runs on this device with no tap; the mode then holds on every device.", "f.min": "Minutes before", "f.amount": "Amount",
       "h.local": "Happens by itself on every device the rule runs on, without a tap.", "btn.now": "Try it", "run.local": "{step}: done by itself",
       "x.fileHint": "The file opens there and nothing is saved until you save it.",
       "a.card": "Add a card to Kanban", "a.crm": "Log it in CRM", "a.record": "Add a record to Base",
@@ -150,7 +150,7 @@
       "conf.del": "Διαγραφή αυτού του κανόνα;",
       "a.file": "Άνοιγμα του αρχείου σε εφαρμογή", "a.print": "Εκτύπωση του αρχείου",
       "x.fileTo": "Άνοιγμα στο", "x.printHint": "Εκτυπώνεται στον υπολογιστή όπου ήρθε το αρχείο, με τον εκτυπωτή του.",
-      "a.pause": "Παύση ήχων", "ev.soonPick": "Λίγα λεπτά πριν από ένα ραντεβού της ημέρας μου", "a.sound": "Ένας ήχος", "f.min": "Λεπτά πριν", "f.amount": "Ποσό",
+      "a.pause": "Παύση ήχων", "ev.soonPick": "Λίγα λεπτά πριν από ένα ραντεβού της ημέρας μου", "a.sound": "Ένας ήχος", "a.focus": "Λειτουργία συγκέντρωσης", "x.focusMode": "Λειτουργία", "x.focusOff": "Κλειστή", "x.focusMin": "Λεπτά (0 = μέχρι να την κλείσεις)", "h.focus": "Γίνεται σε αυτή τη συσκευή χωρίς πάτημα· η λειτουργία ισχύει μετά σε όλες τις συσκευές.", "f.min": "Λεπτά πριν", "f.amount": "Ποσό",
       "h.local": "Γίνεται μόνο του σε κάθε συσκευή όπου τρέχει ο κανόνας, χωρίς πάτημα.", "btn.now": "Δοκιμή", "run.local": "{step}: έγινε μόνο του",
       "x.fileHint": "Το αρχείο ανοίγει εκεί και δεν αποθηκεύεται τίποτα πριν το αποθηκεύσεις εσύ.",
       "a.card": "Νέα κάρτα στο Kanban", "a.crm": "Καταγραφή στο CRM", "a.record": "Νέα εγγραφή στη Βάση",
@@ -586,6 +586,22 @@
         li.appendChild(el("p", "hint", t("x.fileHint")));
       } else if (a.a === "print") {
         li.appendChild(el("p", "hint", t("x.printHint")));
+      } else if (a.a === "focus") {          // Focus F4 (D5)
+        var fsel = el("select"), F = null;
+        try { F = window.parent && window.parent !== window ? window.parent.orosFocus : null; } catch (e) { F = null; }
+        var fl = [];
+        try { fl = F && typeof F.list === "function" ? F.list() : []; } catch (e) { fl = []; }
+        fl.forEach(function (m) { fsel.appendChild(new Option(m.name, m.id)); });
+        fsel.appendChild(new Option(t("x.focusOff"), "off"));
+        if (a.mode && !fl.some(function (m) { return m.id === a.mode; }) && a.mode !== "off") fsel.appendChild(new Option(a.mode, a.mode));
+        if (a.mode) fsel.value = a.mode; else a.mode = fsel.value;
+        var minBox = el("div");
+        field(li, t("x.focusMode"), fsel).addEventListener("change", function (ev) { a.mode = ev.target.value; minBox.hidden = a.mode === "off"; });
+        li.appendChild(minBox);
+        minBox.hidden = a.mode === "off";
+        inp = field(minBox, t("x.focusMin"), textIn(a.min || 0, 0, "number")); inp.min = "0"; inp.max = String(C.FOCUS_MAX_MIN);
+        inp.addEventListener("input", function (ev) { a.min = Math.max(0, Math.floor(+ev.target.value) || 0); });
+        li.appendChild(el("p", "hint", t("h.focus")));
       } else if (C.LOCAL[a.a]) {
         li.appendChild(el("p", "hint", t("h.local")));
       } else if (C.OUT[a.a]) {

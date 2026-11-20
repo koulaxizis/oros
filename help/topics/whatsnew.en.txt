@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.93.00
+- **Focus modes: a notification summary and quiet pushes.** Pick apps whose notifications wait quietly in the bell and the times one notice sums them up; when a mode ends, one notice says what waited. Notifications kept quiet no longer pop up later. With orOS closed, a quiet app's notification arrives without sound. In Automations, rules can follow a mode starting or ending, and the step `Focus mode` turns one on or off. See [Focus modes](help:t/notifications).
+
 ## Version 7.92.00
 - **Walking and cycling routes in Maps.** Directions can plan for hiking, touring, road, gravel or mountain bikes and quiet roads, and shows the climb, an elevation profile and what the way is made of. Walking time counts the climb too. See [Maps](help:a/maps).
 

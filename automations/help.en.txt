@@ -38,6 +38,10 @@ Three more steps open an app with things filled in, and nothing is saved until y
 
 Two steps happen by themselves, with no tap: `Pause sounds` pauses what is playing in orOS (Music, Podcasts, Radio, Sound Mixer), and `Play a sound` plays a short chime (never while a focus mode keeps Automations quiet). They happen on every device where the rule runs, even when another device already showed the notice. The ready-made rules `Quiet before a meeting` and `Sales goal reached` show both.
 
+### Focus modes
+- `When a focus mode starts` and `When a focus mode ends` follow the [focus modes](help:t/notifications) while orOS is open on this device. `{text}` is the mode's name, so `Only when it says` with a name picks one mode.
+- The step `Focus mode` happens by itself too: it turns the mode you choose on (for the minutes you set, or until you turn it off with 0) or turns the running mode off. The mode then holds on all your devices. It runs at most once a minute on a device, so two rules that start each other's mode do not go round forever.
+
 ## Folders on your computer
 With [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) (free, Windows and Linux) running on your computer, a rule can follow a folder there, for example the folder your scanner saves into or your Downloads.
 - Press `Computer folders`, tick `Watch folders on this computer` and connect to Bridge with the code it shows. Then `Add folder…` opens the folder chooser on the computer; only you pick the folders, and `Stop watching` lets one go.

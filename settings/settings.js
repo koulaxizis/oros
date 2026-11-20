@@ -1099,6 +1099,79 @@
       }, "danger")));
     }
     host.appendChild(c5);
+    focusDigest(host, F, N);
+  }
+
+  // The notification summary (Focus F4, D4): the chosen apps' notices
+  // wait quietly in the bell; at each chosen time one notice counts them.
+  function focusDigest(host, F, N) {
+    if (typeof F.digest !== "function") return;
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    var d = F.digest();
+    var c6 = card(t("n.focus.sum"));
+    c6.appendChild(row(t("n.focus.sum"), switchBtn(d.on, "n.focus.sum", function (v) {
+      F.setDigest({ on: v, times: v && !d.times.length ? [36] : d.times });
+      render();
+    }, t("n.focus.sum")), { hint: t("n.focus.sum.hint") }));
+    if (d.on) {
+      var halves = [];
+      for (var i = 0; i < 48; i++) halves.push({ value: i, label: pad(Math.floor(i / 2)) + ":" + (i % 2 ? "30" : "00") });
+      var tr = row(t("n.focus.sum.times"), null);
+      var tl = el("div", "sum-times");
+      d.times.forEach(function (h, k) {
+        var one = el("div", "sum-time");
+        var s1 = select(halves, h, "n.focus.sum.t" + k, function (v) {
+          var next = d.times.slice();
+          next[k] = parseInt(v, 10);
+          F.setDigest({ times: next });
+          render();
+        });
+        s1.setAttribute("aria-label", t("n.focus.sum.times") + " " + (k + 1));
+        one.appendChild(s1);
+        var rm = button("×", "n.focus.sum.rm" + k, function () {
+          F.setDigest({ times: d.times.filter(function (x, j) { return j !== k; }) });
+          render();
+        });
+        rm.setAttribute("aria-label", t("n.focus.sum.rm"));
+        one.appendChild(rm);
+        tl.appendChild(one);
+      });
+      tr.appendChild(tl);
+      c6.appendChild(tr);
+      if (d.times.length < F.model.MAX_TIMES) {
+        c6.appendChild(actions(button(t("n.focus.sum.add"), "n.focus.sum.add", function () {
+          var next = d.times.slice(), h2 = d.times.length ? (d.times[d.times.length - 1] + 8) % 48 : 36;
+          while (next.indexOf(h2) >= 0) h2 = (h2 + 1) % 48;
+          next.push(h2);
+          F.setDigest({ times: next });
+          render();
+        })));
+      }
+      var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
+      var ar = row(t("n.focus.sum.apps"), null, { hint: t("n.focus.sum.apps.hint") });
+      var al = el("div", "checks");
+      known.filter(function (id) { return id !== "system"; }).forEach(function (id) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = d.apps.indexOf(id) >= 0;
+        cb.setAttribute("data-k", "n.focus.sum.app:" + id);
+        cb.addEventListener("change", function () {
+          var next = d.apps.filter(function (x) { return x !== id; });
+          if (cb.checked) next.push(id);
+          F.setDigest({ apps: next });
+          render();
+        });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, id === "discover" ? t("n.discover") : appName(id)));
+        al.appendChild(lab);
+      });
+      ar.appendChild(al);
+      c6.appendChild(ar);
+      if (!d.times.length || !d.apps.length) c6.appendChild(el("div", "hint", t("n.focus.sum.empty")));
+    }
+    c6.appendChild(el("p", "hint", t("n.focus.sum.end")));
+    host.appendChild(c6);
   }
 
   // What a mode hides while it runs (Focus F3, D3: the desktop and the
