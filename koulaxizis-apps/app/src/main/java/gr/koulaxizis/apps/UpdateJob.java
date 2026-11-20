@@ -16,14 +16,16 @@ import android.content.SharedPreferences;
 import java.util.List;
 
 /**
- * The daily check (APPS-M2): once a day, with a network and enough
- * battery, read the repositories and, when there are new updates, show one
- * quiet notification. It never installs anything by itself, and the same
- * updates are announced only once.
+ * The daily check (APPS-M2): about twice a day, with a network and enough
+ * battery, read the repositories and, when updates wait, show one quiet
+ * notification. It never installs anything by itself. A new set of updates
+ * is announced at once; the same set again only after {@link Updates#AGAIN}, so a
+ * person who saw them on the screen and left them is reminded, not nagged.
  */
 public final class UpdateJob extends JobService {
     private static final int JOB = 1;
-    private static final long DAY = 24L * 60 * 60 * 1000;
+    private static final long HOUR = 60L * 60 * 1000;
+    static final long PERIOD = 12 * HOUR;
     static final String CHANNEL = "updates";
     private static final int NOTE = 1;
 
@@ -45,7 +47,9 @@ public final class UpdateJob extends JobService {
             js.cancel(JOB);
             return;
         }
-        if (js.getPendingJob(JOB) != null) return;
+        channel(ctx); // listed in Android's settings from the first start
+        JobInfo old = js.getPendingJob(JOB);
+        if (old != null && old.getIntervalMillis() == PERIOD) return;
         try {
             schedule(ctx, js);
         } catch (RuntimeException e) {
@@ -55,7 +59,7 @@ public final class UpdateJob extends JobService {
 
     private static void schedule(Context ctx, JobScheduler js) {
         js.schedule(new JobInfo.Builder(JOB, new ComponentName(ctx, UpdateJob.class))
-            .setPeriodic(DAY, DAY / 4)
+            .setPeriodic(PERIOD, 4 * HOUR)
             .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
             .setRequiresBatteryNotLow(true)
             .setPersisted(true)
@@ -77,7 +81,7 @@ public final class UpdateJob extends JobService {
     public boolean onStopJob(JobParameters params) {
         Thread t = running;
         if (t != null) t.interrupt();
-        return false; // tomorrow's run is soon enough
+        return false; // the next run is soon enough
     }
 
     static void check(Context ctx) {
@@ -90,10 +94,28 @@ public final class UpdateJob extends JobService {
         announce(ctx, list, self, true);
     }
 
+    /** The quiet channel of the notice (created once, kept by Android). */
+    static void channel(Context ctx) {
+        NotificationManager nm = ctx.getSystemService(NotificationManager.class);
+        if (nm == null) return;
+        nm.createNotificationChannel(new NotificationChannel(CHANNEL,
+            ctx.getString(R.string.channel_updates), NotificationManager.IMPORTANCE_LOW));
+    }
+
+    /** False when this app's notices, or its updates channel, are turned off. */
+    static boolean canNotify(Context ctx) {
+        NotificationManager nm = ctx.getSystemService(NotificationManager.class);
+        if (nm == null || !nm.areNotificationsEnabled()) return false;
+        NotificationChannel ch = nm.getNotificationChannel(CHANNEL);
+        return ch == null || ch.getImportance() != NotificationManager.IMPORTANCE_NONE;
+    }
+
     /**
-     * One notification for a new set of updates; none (and the old one gone)
-     * when there are none. With post false (the screen is showing them) the
-     * set only counts as told, so it is not announced again later.
+     * One notification for the updates that wait; none (and the old one
+     * gone) when there are none. With post false (the screen is showing
+     * them) only the notice goes away: the screen does not count as told,
+     * so the daily check still reminds about updates that were left
+     * (Chris 2026-11-19: no notices at all while he opened the app often).
      */
     static void announce(Context ctx, List<AppInfo> list, AppInfo self, boolean post) {
         NotificationManager nm = ctx.getSystemService(NotificationManager.class);
@@ -103,18 +125,17 @@ public final class UpdateJob extends JobService {
         String key = Updates.key(list, self);
         if (n == 0) {
             nm.cancel(NOTE);
-            p.edit().remove("announced").apply();
+            p.edit().remove("announced").remove("announced_at").apply();
             return;
         }
         if (!post) {
             nm.cancel(NOTE);
-            p.edit().putString("announced", key).apply();
             return;
         }
+        if (!Updates.due(key, p.getString("announced", ""), p.getLong("announced_at", 0), System.currentTimeMillis())) return;
         // Off for this app (or not allowed yet): nothing is marked as told.
-        if (!nm.areNotificationsEnabled() || key.equals(p.getString("announced", ""))) return;
-        nm.createNotificationChannel(new NotificationChannel(CHANNEL,
-            ctx.getString(R.string.channel_updates), NotificationManager.IMPORTANCE_LOW));
+        if (!canNotify(ctx)) return;
+        channel(ctx);
         StringBuilder names = new StringBuilder();
         if (self != null) names.append(ctx.getString(R.string.app_name));
         for (AppInfo a : list) {
@@ -133,7 +154,7 @@ public final class UpdateJob extends JobService {
             .build();
         try {
             nm.notify(NOTE, note);
-            p.edit().putString("announced", key).apply();
+            p.edit().putString("announced", key).putLong("announced_at", System.currentTimeMillis()).apply();
         } catch (SecurityException e) {
             // Not allowed after all: the screen still shows the updates.
         }

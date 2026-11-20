@@ -54,4 +54,15 @@ final class Updates {
         if (self != null) b.append(self.pkg).append(':').append(self.versionCode);
         return b.toString();
     }
+
+    /** The same set of updates is told again after three days. */
+    static final long AGAIN = 72L * 60 * 60 * 1000;
+
+    /**
+     * Whether the daily check tells about this set now: a new set at once,
+     * the same set again after {@link #AGAIN} (or when the clock went back).
+     */
+    static boolean due(String key, String told, long toldAt, long now) {
+        return !key.equals(told) || now - toldAt >= AGAIN || now < toldAt;
+    }
 }

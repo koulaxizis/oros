@@ -50,7 +50,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.6.0";
+  var VER = "1.7.0";
   var DATA_KEY = "oros-launcher-data";
   var MENU_KEY = "oros-menu-apps";
   var MAX_ITEMS = 500;
@@ -1359,6 +1359,8 @@
     menuHiddenIds: function () { return menuHiddenIds(menuLoad()); },
     setMenuHidden: setMenuHidden,
     presetMenuHidden: presetMenuHidden,
-    menuStored: menuStored
+    menuStored: menuStored,
+    // the apps on this device's desktop and Dock (Focus F3 picker)
+    placed: function () { return { desk: shown("desk"), dock: shown("dock") }; }
   };
 })(typeof window !== "undefined" ? window : globalThis);

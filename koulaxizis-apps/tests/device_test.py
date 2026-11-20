@@ -3,7 +3,8 @@
 
 Installs the debug APK, opens it and checks that every project's signed
 repository was read (orOS, NULL JSFX and Noxpress headers with their
-apps), then installs one small real app through the manager, answering
+apps), that the daily check posts its update notice for an older app
+that was left after the screen showed it, then installs one small real app through the manager, answering
 Android's own confirmation, and checks that Android has it. Screenshots
 and UI dumps go to the output folder.
 
@@ -14,10 +15,14 @@ import re
 import subprocess
 import sys
 import time
+import urllib.request
 import xml.etree.ElementTree as ET
 
 PKG = "gr.koulaxizis.apps.debug"
 TARGET = "tech.nulljsfx.remote.mixers"  # about 4 MB, minSdk 26
+# An older Remote for DAWs, so one update waits (the daily check's notice).
+OLD = "tech.nulljsfx.remote.daws"
+OLD_APK = "https://github.com/koulaxizis/null-jsfx/releases/download/4.0/NULL-JSFX-Remote-DAWs-Android.apk"
 OUT = sys.argv[2] if len(sys.argv) > 2 else "device-shots"
 step = 0
 
@@ -100,7 +105,11 @@ def scroll_to(text, seconds=120):
 def main():
     os.makedirs(OUT, exist_ok=True)
     adb("uninstall", TARGET, check=False)
+    adb("uninstall", OLD, check=False)
     adb("install", "-r", sys.argv[1])
+    old = os.path.join(OUT, "old-daws.apk")
+    urllib.request.urlretrieve(OLD_APK, old)
+    adb("install", old)
     # The one-time "install unknown apps" switch the person turns on.
     adb("shell", "appops", "set", PKG, "REQUEST_INSTALL_PACKAGES", "allow")
     # Android 13+ asks once for notices (the daily check); answered here.
@@ -145,6 +154,24 @@ def main():
     if "UpdateJob" not in jobs:
         print(jobs[-3000:])
         raise SystemExit("the daily check was not scheduled")
+    # The screen showed the waiting update and the person left it: the
+    # daily check still tells about it (Chris 2026-11-19, no notices at all).
+    adb("shell", "input", "keyevent", "KEYCODE_HOME")
+    adb("shell", "cmd", "jobscheduler", "run", "-f", PKG, "1")
+    end = time.time() + 120
+    while time.time() < end:
+        notes = adb("shell", "dumpsys", "notification", "--noredact", check=False)
+        if re.search(r"pkg=" + re.escape(PKG) + r"\b.*?id=1\b", notes):
+            break
+        time.sleep(3)
+    else:
+        print(notes[-3000:])
+        raise SystemExit("the daily check posted no update notice")
+    adb("shell", "cmd", "statusbar", "expand-notifications", check=False)
+    time.sleep(2)
+    shot("update-notice")
+    adb("shell", "cmd", "statusbar", "collapse", check=False)
+    adb("shell", "am", "start", "-W", "-n", f"{PKG}/gr.koulaxizis.apps.MainActivity")
     # The other projects are further down the one list (a small screen).
     scroll_to("NULL JSFX")
     scroll_to("Remote for DAWs")
