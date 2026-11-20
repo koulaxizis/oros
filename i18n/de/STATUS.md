@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 49964 of 49971 (99%)
+- Strings: 49976 of 49983 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -76,7 +76,7 @@ en and el); translators change them there, not in a pack.
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 60 / 60 |
-| hive | 100% | 184 / 184 |
+| hive | 100% | 186 / 186 |
 | household | 100% | 143 / 143 |
 | invoices | 100% | 693 / 693 |
 | jigsaw | 100% | 90 / 90 |
@@ -84,7 +84,7 @@ en and el); translators change them there, not in a pack.
 | labels | 100% | 88 / 88 |
 | layout | 100% | 1194 / 1194 |
 | library | 100% | 330 / 330 |
-| lighthouse | 100% | 213 / 213 |
+| lighthouse | 100% | 215 / 215 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
@@ -155,7 +155,7 @@ en and el); translators change them there, not in a pack.
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
 | spreadsheet | 100% | 495 / 495 |
-| starchart | 100% | 194 / 194 |
+| starchart | 100% | 202 / 202 |
 | startpage | 100% | 18 / 18 |
 | stickies | 100% | 125 / 125 |
 | stock | 100% | 813 / 813 |

@@ -3,7 +3,7 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
-## Version 8.02.01
+## Version 8.02.02
 - **Layout: Scribus books keep their line breaks and tabs.** Opening a Scribus file now keeps a line break (Shift+Enter) inside its paragraph instead of starting a new, unjustified one, keeps tabs at the file's tab width and each style's tab stops, starts the text after a column or frame break in the next frame, and keeps the empty line after a line break that ends a paragraph. Thin lines drawn with no width show as hairlines, and a small header or page number still fits a short frame. Books opened this way now break their pages much closer to the original.
 
 ## Version 8.02.00

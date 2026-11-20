@@ -108,7 +108,7 @@ orosPack("de", "orbit", {
  "map.cont": "Weiter: {r}, Welle {n}",
  "map.gates": "{n} Tore",
  "map.replace": "In {r} läuft noch eine Nacht. Stattdessen {s} beginnen? Die laufende Nacht wird aufgegeben.",
- "map.resetAsk": "Sterne und Aufzeichnungen auf allen Geräten zurücksetzen?",
+ "map.resetAsk": "Sterne und Aufzeichnungen auf allen Geräten zurücksetzen? Die laufende Nacht endet auch.",
  "gd.g1": "Setzlingsring",
  "gd.g2": "Tauterrasse",
  "gd.g3": "Steinkreis",

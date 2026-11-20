@@ -7,6 +7,9 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.provider.Settings;
 import android.text.format.DateFormat;
 import android.text.format.Formatter;
@@ -26,10 +29,10 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Deque;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -38,11 +41,36 @@ import java.util.concurrent.Executors;
  * or Open (APPS-M1). Lists come from the repositories' signed indexes,
  * first from the copy on the phone, then fresh from the network.
  * "Update all" updates one app after the other; the manager's own update
- * shows in its own bar (APPS-M2).
+ * shows in its own bar (APPS-M2). Every install is watched while the
+ * screen is in front ({@link Watch}): Android's question is shown only then,
+ * shown again or offered again when an overlay took it away, and an app
+ * never stays on "Working" (APPS-M2 fix 1.2.2).
  */
 public final class MainActivity extends Activity implements InstallReceiver.Listener {
     private final ExecutorService work = Executors.newSingleThreadExecutor();
-    private final Set<String> busy = new HashSet<>();
+    /** One install the screen waits for (main thread only). */
+    private static final class Job {
+        final AppInfo app;
+        /** PackageInstaller's session, -1 while the APK is still downloading. */
+        int session = -1;
+        /** Android's question, while it waits for a yes. */
+        Intent confirm;
+        boolean shown;
+        /** When the phase last changed (elapsedRealtime). */
+        long since = SystemClock.elapsedRealtime();
+
+        Job(AppInfo app) { this.app = app; }
+    }
+
+    /** The apps being installed, by package. */
+    private final Map<String, Job> busy = new LinkedHashMap<>();
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private final Runnable tick = this::look;
+    /** Since when the screen is in front (elapsedRealtime), -1 while it is not. */
+    private long frontAt = -1;
+    /** Our own "the question closed" dialog, at most one. */
+    private AlertDialog asking;
+    private Job askingFor;
     private List<Rows.Row> rows = new ArrayList<>();
     /** Updates waiting their turn after "Update all" (main thread only). */
     private final Deque<AppInfo> queue = new ArrayDeque<>();
@@ -86,13 +114,24 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     @Override
     protected void onResume() {
         super.onResume();
+        frontAt = SystemClock.elapsedRealtime();
+        schedule();
         updateBars(); // installed versions may have changed
         updateNotesBar(); // notices may have been turned on in Android's settings
         adapter.notifyDataSetChanged();
     }
 
     @Override
+    protected void onPause() {
+        frontAt = -1;
+        ui.removeCallbacks(tick);
+        super.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
+        ui.removeCallbacksAndMessages(null);
+        if (asking != null) asking.dismiss();
         if (InstallReceiver.listener == this) InstallReceiver.listener = null;
         work.shutdown();
         super.onDestroy();
@@ -219,7 +258,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         for (Rows.Row r : rows) if (r.app != null) offers.add(r.app);
         pending = Updates.pending(offers, pkg -> Installed.of(getPackageManager(), pkg));
         int waiting = 0;
-        for (AppInfo a : pending) if (!busy.contains(a.pkg)) waiting++;
+        for (AppInfo a : pending) if (!busy.containsKey(a.pkg)) waiting++;
         if (pending.size() >= 2) {
             updateAll.setVisibility(View.VISIBLE);
             updateAll.setText(getResources().getQuantityString(R.plurals.update_all, pending.size(), pending.size()));
@@ -233,15 +272,15 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         if (mine != null) {
             ((TextView) findViewById(R.id.self_text)).setText(getString(R.string.self_update, mine.versionName));
             Button b = findViewById(R.id.self_update);
-            b.setEnabled(!busy.contains(mine.pkg));
-            b.setText(busy.contains(mine.pkg) ? R.string.working : R.string.update);
+            b.setEnabled(!busy.containsKey(mine.pkg));
+            b.setText(busy.containsKey(mine.pkg) ? R.string.working : R.string.update);
         }
     }
 
     private void updateAll() {
         if (!mayInstall()) return;
         queue.clear();
-        for (AppInfo a : pending) if (!busy.contains(a.pkg)) queue.add(a);
+        for (AppInfo a : pending) if (!busy.containsKey(a.pkg)) queue.add(a);
         next();
     }
 
@@ -272,43 +311,149 @@ public final class MainActivity extends Activity implements InstallReceiver.List
                 .setPositiveButton(android.R.string.ok, null).show();
             return;
         }
+        if (busy.containsKey(app.pkg)) return;
         if (!mayInstall()) {
             queue.clear();
             return;
         }
-        busy.add(app.pkg);
+        Job job = new Job(app);
+        busy.put(app.pkg, job);
         updateBars();
         adapter.notifyDataSetChanged();
         work.execute(() -> {
             String err = null;
+            int id = -1;
             try {
-                Installer.install(this, app);
+                id = Installer.install(this, app);
             } catch (RepoException e) {
                 err = e.code;
             }
             String code = err;
+            int session = id;
             runOnUiThread(() -> {
+                if (busy.get(app.pkg) != job) return;
                 if (code != null) {
-                    busy.remove(app.pkg);
-                    adapter.notifyDataSetChanged();
-                    Toast.makeText(this, getString(R.string.install_failed, app.name, note(code)), Toast.LENGTH_LONG).show();
-                    next();
+                    done(job, false, getString(R.string.install_failed, app.name, note(code)));
+                } else if (job.session < 0) {
+                    // Android's question may have come first and named the session already.
+                    job.session = session;
+                    job.since = SystemClock.elapsedRealtime();
+                    schedule();
                 }
             });
         });
     }
 
     @Override
-    public void onInstallResult(String pkg, boolean ok, String message) {
-        busy.remove(pkg);
-        adapter.notifyDataSetChanged();
-        if (!ok) {
-            String name = pkg;
-            for (Rows.Row r : rows) if (r.app != null && r.app.pkg.equals(pkg)) name = r.app.name;
-            if (message != null) Toast.makeText(this, getString(R.string.install_failed, name, message), Toast.LENGTH_LONG).show();
+    public void onInstallConfirm(String pkg, int session, Intent confirm) {
+        Job job = busy.get(pkg);
+        if (job == null) {
+            // Not started from this screen (it was closed in between): ask at once.
+            try {
+                startActivity(confirm);
+            } catch (RuntimeException e) {
+                // The next "Update" asks again.
+            }
+            return;
         }
+        if (session >= 0) job.session = session;
+        job.confirm = confirm;
+        job.shown = false;
+        job.since = SystemClock.elapsedRealtime();
+        adapter.notifyDataSetChanged();
+        // Shown by look() once the screen has been in front for a moment, so
+        // an overlay that is still on top (a security scan) cannot take it.
+        schedule();
+    }
+
+    @Override
+    public void onInstallResult(String pkg, int session, boolean ok, String message) {
+        Job job = busy.get(pkg);
+        if (job == null) {
+            adapter.notifyDataSetChanged();
+            return;
+        }
+        // An answer for a session given up before belongs to no one now.
+        if (session >= 0 && job.session >= 0 && session != job.session) return;
+        String toast = null;
+        if (!ok && message != null) toast = getString(R.string.install_failed, job.app.name, message);
+        done(job, ok, toast);
+    }
+
+    /** One install has ended (done, refused, lost or given up); the next one starts. */
+    private void done(Job job, boolean ok, String toast) {
+        if (busy.get(job.app.pkg) != job) return;
+        busy.remove(job.app.pkg);
+        if (askingFor == job && asking != null) asking.dismiss();
+        adapter.notifyDataSetChanged();
+        if (toast != null) Toast.makeText(this, toast, Toast.LENGTH_LONG).show();
         next(); // a "no" to one update does not stop the others
         if (queue.isEmpty()) UpdateJob.announce(this, pending, mine, false); // takes a done notice away
+    }
+
+    private void schedule() {
+        ui.removeCallbacks(tick);
+        if (frontAt >= 0 && !busy.isEmpty()) ui.postDelayed(tick, 500);
+    }
+
+    /** Looks at every install while the screen is in front ({@link Watch}). */
+    private void look() {
+        if (frontAt < 0 || isFinishing()) return;
+        long now = SystemClock.elapsedRealtime();
+        for (Job job : new ArrayList<>(busy.values())) {
+            if (job.session < 0 && job.confirm == null) continue; // still downloading (Net has its own timeouts)
+            float progress = job.session >= 0 ? Installer.progress(this, job.session) : 0;
+            int s = Installed.state(Installed.of(getPackageManager(), job.app.pkg), job.app);
+            boolean installed = s == Installed.CURRENT || s == Installed.NEWER;
+            int what = Watch.look(installed, progress >= 0, job.confirm != null, job.shown,
+                Math.max(progress, 0), now - frontAt, job.since, now);
+            if (what == Watch.DONE) {
+                done(job, true, null);
+            } else if (what == Watch.LOST) {
+                done(job, false, getString(R.string.not_updated, job.app.name));
+            } else if (what == Watch.GIVE_UP) {
+                Installer.abandon(this, job.session);
+                done(job, false, getString(R.string.not_updated, job.app.name));
+            } else if (what == Watch.PROMPT && asking == null) {
+                showConfirm(job);
+                return; // the screen goes behind Android's question
+            } else if (what == Watch.ASK && asking == null) {
+                askAgain(job);
+            }
+        }
+        schedule();
+    }
+
+    /** Puts Android's question for this app on screen. */
+    private void showConfirm(Job job) {
+        if (job.confirm == null) return;
+        job.shown = true;
+        job.since = SystemClock.elapsedRealtime();
+        try {
+            startActivity(job.confirm);
+        } catch (RuntimeException e) {
+            Installer.abandon(this, job.session);
+            done(job, false, getString(R.string.not_updated, job.app.name));
+        }
+    }
+
+    /** Android's question went away without an answer: show it again, or skip this app. */
+    private void askAgain(Job job) {
+        askingFor = job;
+        asking = new AlertDialog.Builder(this).setTitle(job.app.name)
+            .setMessage(getString(R.string.lost_text, job.app.name))
+            .setCancelable(false)
+            .setPositiveButton(R.string.show_again, (d, w) -> showConfirm(job))
+            .setNegativeButton(R.string.skip, (d, w) -> {
+                Installer.abandon(this, job.session);
+                done(job, false, null);
+            })
+            .create();
+        asking.setOnDismissListener(d -> {
+            asking = null;
+            askingFor = null;
+        });
+        asking.show();
     }
 
     private String note(String code) {
@@ -373,7 +518,12 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             Button b = v.findViewById(R.id.action);
             b.setOnClickListener(x -> act(app, state));
             b.setEnabled(true);
-            if (busy.contains(app.pkg)) {
+            Job job = busy.get(app.pkg);
+            if (job != null && job.confirm != null) {
+                // Android waits for a yes: one tap shows its question again.
+                b.setText(R.string.confirm);
+                b.setOnClickListener(x -> showConfirm(job));
+            } else if (job != null) {
                 b.setText(R.string.working);
                 b.setEnabled(false);
             } else if (state == Installed.NONE) {
