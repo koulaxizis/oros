@@ -23,10 +23,32 @@ final class Installer {
     static final String ACTION_STATUS = "gr.koulaxizis.apps.INSTALL_STATUS";
     static final String EXTRA_PKG = "pkg";
 
+    /** The session's progress (0..1), or -1 when Android no longer has it. */
+    static float progress(Context ctx, int session) {
+        try {
+            PackageInstaller.SessionInfo i = ctx.getPackageManager().getPackageInstaller().getSessionInfo(session);
+            return i == null ? -1 : i.getProgress();
+        } catch (RuntimeException e) {
+            return 0;
+        }
+    }
+
+    /** Drops a session this app made (an unanswered question), so the app can be tried again. */
+    static void abandon(Context ctx, int session) {
+        try {
+            ctx.getPackageManager().getPackageInstaller().abandonSession(session);
+        } catch (RuntimeException e) {
+            // Already gone or finished.
+        }
+    }
+
     private Installer() {}
 
-    /** Blocking: call off the main thread. Throws when a check fails; nothing is installed then. */
-    static void install(Context ctx, AppInfo app) throws RepoException {
+    /**
+     * Blocking: call off the main thread. Throws when a check fails; nothing
+     * is installed then. Returns the PackageInstaller session's id.
+     */
+    static int install(Context ctx, AppInfo app) throws RepoException {
         File dir = new File(ctx.getCacheDir(), "apk");
         if (!dir.isDirectory() && !dir.mkdirs()) throw new RepoException(RepoException.NETWORK, "cache");
         File apk = new File(dir, app.apkSha256 + ".apk");
@@ -36,13 +58,13 @@ final class Installer {
             boolean vouched = false;
             for (String s : got) if (app.signers.contains(s)) vouched = true;
             if (!vouched) throw new RepoException(RepoException.SIGNATURE, "apk signer not in index");
-            commit(ctx, app, apk);
+            return commit(ctx, app, apk);
         } finally {
             apk.delete();
         }
     }
 
-    private static void commit(Context ctx, AppInfo app, File apk) throws RepoException {
+    private static int commit(Context ctx, AppInfo app, File apk) throws RepoException {
         PackageInstaller pi = ctx.getPackageManager().getPackageInstaller();
         PackageInstaller.SessionParams p = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         p.setAppPackageName(app.pkg);
@@ -67,6 +89,7 @@ final class Installer {
                 PendingIntent pend = PendingIntent.getBroadcast(ctx, id, status, flags);
                 s.commit(pend.getIntentSender());
             }
+            return id;
         } catch (IOException | SecurityException e) {
             throw new RepoException(RepoException.NETWORK, "installer", e);
         }

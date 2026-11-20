@@ -750,6 +750,12 @@
    ]
   },
   {
+   "app": "orbit",
+   "files": [
+    "orbit/orbit.js"
+   ]
+  },
+  {
    "app": "pad",
    "files": [
     "pad/app.js",

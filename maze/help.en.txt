@@ -39,7 +39,7 @@ Each kind has its own shape, so you never need the colours.
 - Mild: 30 hearts and more coins; Normal: 20 hearts; Hard: 10 hearts, fewer coins and stronger shadows.
 - Stars: three with nine tenths of the hearts left, two with half, one for any night won. The town map keeps the best stars of each square.
 - When a night is lost, `Try again from wave` puts you back at the start of that wave, with the maze and coins you had then.
-- The night you are playing is kept on this device and reopens, paused, where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a night ends. `Reset progress` on the town map clears them on every device. Lantern maze is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+- The night you are playing is kept on this device and reopens, paused, where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a night ends. `Reset progress` on the town map clears them on every device and ends the night in progress. Lantern maze is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
 
 ## Keyboard
 - Arrow keys move the chosen tile; [[Escape]] lets go of it.

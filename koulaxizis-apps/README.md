@@ -38,7 +38,10 @@ APPS-M1, APPS-M2, APPS-M3.
   network, battery not low; put back after a restart or an update) shows
   one quiet notification for waiting updates (a new set at once, the same
   set again after three days) and never installs by itself; a bar says
-  when notices are off; the manager's own new version shows in a bar at the
+  when notices are off; every install is watched (`Watch.java`): Android's
+  question shows only once the screen is in front, a question an overlay
+  (Xiaomi security scan) took away is offered again, and an app never stays
+  on "Working"; the manager's own new version shows in a bar at the
   top (signed build only).
 - Languages: English, Greek, German.
 

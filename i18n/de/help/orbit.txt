@@ -1,0 +1,55 @@
+# Umlaufgarten
+Umlaufgarten ist ein Turmverteidigungsspiel für eine Person. Auf einem kleinen Mond wächst ein runder Garten, in seiner Mitte eine Mondblume. Nachts kommen fallende Funken durch ein Tor am Rand und ziehen in einer Spirale auf sie zu. Deine Pflanzen wachsen auf drei Steinringen, und jeder Ring hat eine Lücke. Zwischen den Wellen drehst du die Ringe: das bewegt deine Pflanzen und ändert, wie weit die Funken gehen müssen, bevor sie den Weg hinein finden. Das Spiel läuft in Echtzeit, aber du kannst jederzeit anhalten und in der Pause pflanzen, und eine Welle beginnt erst, wenn du sie rufst.
+
+## So wird gespielt
+- Wähle in der Liste der Gärten einen Garten und eine Schwierigkeit. Der erste Garten ist offen; wer einen Garten schafft, öffnet den nächsten.
+- Funken kommen durch ein Tor am Rand und gehen im Uhrzeigersinn durch den Gang zwischen dem Rand und dem äußeren Ring, bis sie dessen Lücke erreichen. Sie schlüpfen hindurch, gehen durch den nächsten Gang bis zur Lücke des mittleren Rings, dann durch den letzten Gang bis zur Lücke des inneren Rings und hinein zur Mondblume.
+- Tippe auf ein Beet eines Rings und wähle dann unten in der Leiste eine Pflanze. Tippe auf eine Pflanze, um sie auszubauen, ihr Ziel zu wählen oder sie zu verkaufen. Tippe noch einmal auf das gewählte Beet oder auf die Erde, um es loszulassen.
+- Die gepunktete Linie zeigt immer den Weg, den die nächste Welle nimmt. In Gärten mit zwei Toren leuchten die Tore der nächsten Welle, und die Leiste sagt, aus welchem Tor jede Gruppe kommt.
+- Drücke `Nächste Welle`, wenn du bereit bist. Drückst du, während noch Funken im Garten sind, kommt die nächste Welle früher und du bekommst eine Münze für jeden Funken, der noch unterwegs ist.
+- Jeder Funke, der die Mondblume erreicht, kostet ein Herz; eine Finsternis kostet drei. Die Nacht ist gewonnen, wenn die letzte Welle erloschen ist, und verloren, wenn die Herzen ausgehen.
+- `Pause` und die Tempotaste (1x, 2x, 3x) liegen neben `Nächste Welle`. Das Spiel hält von selbst an, wenn du es verlässt.
+- Erloschene Funken bringen Münzen, ebenso jede geschaffte Welle.
+
+## Die Ringe drehen
+- Wähle eine beliebige Stelle eines Rings (ein Beet, eine Pflanze, die Lücke oder einen Stein) und dreh den Ring mit `Drehen ◀` und `Drehen ▶` einen Schritt zurück oder weiter.
+- Die Lücke und die Pflanzen des Rings drehen sich zusammen. Eine Lücke knapp hinter der Stelle, an der die Funken in einen Gang kommen, lässt sie fast ganz herumgehen; eine Lücke knapp davor lässt sie gleich durch. Ein gedrehter Ring ändert den Gang außen und den Gang innen, und die gepunktete Linie zeigt den neuen Weg sofort.
+- Die Ringe drehen sich nur, wenn kein Funke im Garten ist: zwischen den Wellen oder vor der ersten.
+- Vor der ersten Welle hat jeder Ring zwei freie Schritte, danach zwischen den Wellen einen. Jeder weitere Schritt kostet 5 Münzen, und wer einen Schritt zurückdreht, bekommt ihn zurück.
+- Die Pflanzen behalten ihren Platz auf dem Ring, also kann eine Pflanze, die den Weg gut bewacht hat, nach einer Drehung weit weg davon stehen. Sieh dir die Reichweite an (tippe auf die Pflanze), bevor du drehst.
+
+## Die Pflanzen
+Jede Pflanze hat drei Stufen. Auf Stufe 3 wählst du einen von zwei Zweigen, und diese Wahl bleibt.
+- **Dornbusch:** schießt Dornen auf einen Funken nach dem anderen. Sein Ziel lässt sich wählen ([[T]]): der erste Funke (der Mondblume am nächsten), der stärkste oder der nächste. Brombeere hat große Reichweite und schwere Dornen, etwas langsamer; Dornenhecke schießt doppelt so schnell.
+- **Tausprenger** (ab Garten 2): alle zwei Sekunden ein Sprühstoß, der jeden Funken in Reichweite bremst. Nebel sprüht weiter und bremst stärker; Kalter Tau verletzt auch.
+- **Sonnenblume** (ab Garten 3): ein warmer Puls, der jeden Funken in Reichweite verletzt und die Schale von Meteoren knackt. Großer Kopf reicht viel weiter; Mittagsglut ist viel stärker.
+- **Fangranke** (ab Garten 4): hält ab und zu einen Funken kurz fest und verletzt ihn ein wenig. Ihr Ziel lässt sich wählen wie beim Dornbusch. Lange Ranke reicht weiter und hält länger; Doppelranke hält zwei zugleich.
+- Beim Verkauf gibt es 70% des Preises zurück. Was seit dem Beginn der letzten Welle gepflanzt oder ausgebaut wurde, bringt alles zurück.
+- In der Lücke eines Rings und auf einem alten Stein wächst nichts.
+
+## Die Funken
+Jede Art hat ihre eigene Form, also brauchst du die Farben nie.
+- **Funke** (rund): ein einfacher Funke.
+- **Komet** (ein Tropfen, ab Garten 2): schnell, aber schnell erloschen.
+- **Meteor** (eckig, mit Rand, ab Garten 3): eine Steinschale lässt nur einen Teil dessen durch, was Dornen und Ranken tun, bis eine Sonnenblume sie knackt.
+- **Nebel** (eine Wolke, ab Garten 4): wenn er erlischt, bleiben zwei Fünkchen, die weitergehen.
+- **Finsternis** (breit, mit dunkler Seite): langsam und sehr stark, beendet jede Nacht und kostet an der Mondblume drei Herzen.
+
+## Schwierigkeit, Sterne und Speichern
+- Sanft: 30 Herzen und mehr Münzen; Normal: 20 Herzen; Schwer: 10 Herzen, weniger Münzen und stärkere Funken.
+- Sterne: drei mit neun Zehnteln der Herzen, zwei mit der Hälfte, einer für jede gewonnene Nacht. Die Liste der Gärten behält die besten Sterne jedes Gartens.
+- Ist eine Nacht verloren, setzt dich `Noch einmal ab Welle` an den Beginn dieser Welle zurück, mit dem Garten, den Ringen und den Münzen von damals.
+- Die laufende Nacht bleibt auf diesem Gerät und öffnet sich angehalten dort, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Aufzeichnungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` in der Liste der Gärten löscht sie auf allen Geräten und beendet die laufende Nacht. Umlaufgarten steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+
+## Tastatur
+- [[Left]] und [[Right]] bewegen sich auf einem Ring; [[Up]] und [[Down]] gehen zum Ring außen oder innen; [[Escape]] lässt los.
+- [[1]] bis [[4]]: Dornbusch, Tausprenger, Sonnenblume oder Fangranke pflanzen.
+- Die Klammertasten `[` und `]`: den gewählten Ring einen Schritt zurück oder weiter drehen.
+- [[U]]: auf Stufe 2 ausbauen. [[A]] oder [[B]]: der Zweig auf Stufe 3. [[T]]: Ziel. [[S]]: verkaufen.
+- [[Space]]: Pause oder weiter. [[F]]: Tempo. [[N]]: die nächste Welle. [[L]]: die Liste der Gärten. [[M]]: Ton. [[?]]: so wird gespielt.
+
+## Tipps
+- Außen sind die Gänge am längsten, also gibt ein langer Weg durch den äußeren Gang deinen Pflanzen die meiste Zeit. Dreh zuerst den äußeren Ring.
+- Eine Pflanze neben einer Lücke erreicht Funken auf beiden Seiten ihres Rings, dort wo sie von einem Gang in den nächsten wechseln.
+- In Gärten mit zwei Toren ist die beste Lücke für das eine Tor eine schlechte für das andere. Sieh nach, woher die nächste Welle kommt, und nutze deine freien Schritte vor jeder Welle.
+- Pflanze vor der ersten Welle, was du dir leisten kannst, solange jeder Ring noch zwei freie Schritte hat.

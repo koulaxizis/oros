@@ -8,14 +8,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Star Chart · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=8.01.00">
-  <link rel="stylesheet" href="starchart.css?v=8.01.00">
-  <link rel="stylesheet" href="../gamekit/layout.css?v=8.01.00">
+  <link rel="stylesheet" href="../fonts.css?v=8.02.01">
+  <link rel="stylesheet" href="starchart.css?v=8.02.01">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=8.02.01">
 
 </head>
 <body>
 
-  <!-- Toolbar: the name and season, New season, Observatory, atlas, records, sound -->
+  <!-- Toolbar: the name and season, New season, Observatory, atlas, how to play, records, sound -->
   <header id="toolbar">
     <div class="tb-row" id="tb-a">
       <h1 class="tb-title" data-i18n="app.name">Star Chart</h1>
@@ -24,6 +24,7 @@
       <button type="button" class="main-btn" id="season-btn" hidden><span class="ic"></span><span class="lb" data-i18n="btn.season">New season</span></button>
       <button type="button" class="main-btn" id="obs-btn"><span class="ic"></span><span class="lb" data-i18n="btn.obs">Observatory</span></button>
       <button type="button" class="icon-btn" id="atlas-btn"></button>
+      <button type="button" class="icon-btn" id="help-btn"></button>
       <button type="button" class="icon-btn" id="stats-btn"></button>
       <button type="button" class="icon-btn" id="sfx-btn"></button>
     </div>
@@ -52,12 +53,12 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=8.01.00" data-app="starchart"></script>
+  <script src="../i18n.js?v=8.02.01" data-app="starchart"></script>
 
-  <script src="../gamekit/haptics.js?v=8.01.00"></script>
-  <script src="engine.js?v=8.01.00"></script>
-  <script src="starchart.js?v=8.01.00"></script>
+  <script src="../gamekit/haptics.js?v=8.02.01"></script>
+  <script src="engine.js?v=8.02.01"></script>
+  <script src="starchart.js?v=8.02.01"></script>
 
-  <script src="../pickers.js?v=8.01.00" defer></script>
+  <script src="../pickers.js?v=8.02.01" defer></script>
 </body>
 </html>

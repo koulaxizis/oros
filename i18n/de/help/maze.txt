@@ -39,7 +39,7 @@ Jede Art hat ihre eigene Form, du brauchst also nie die Farben.
 - Sanft: 30 Herzen und mehr Münzen; Normal: 20 Herzen; Schwer: 10 Herzen, weniger Münzen und stärkere Schatten.
 - Sterne: drei mit neun Zehnteln der Herzen, zwei mit der Hälfte, einer für jede gewonnene Nacht. Der Stadtplan behält die besten Sterne jedes Platzes.
 - Geht eine Nacht verloren, bringt dich `Noch einmal ab Welle` an den Beginn dieser Welle zurück, mit dem Labyrinth und den Münzen, die du damals hattest.
-- Die Nacht, die du spielst, bleibt auf diesem Gerät und öffnet sich angehalten dort wieder, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` auf dem Stadtplan löscht sie auf allen Geräten. Laternenlabyrinth steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+- Die Nacht, die du spielst, bleibt auf diesem Gerät und öffnet sich angehalten dort wieder, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` auf dem Stadtplan löscht sie auf allen Geräten und beendet die laufende Nacht. Laternenlabyrinth steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
 
 ## Tastatur
 - Die Pfeiltasten bewegen die gewählte Platte; [[Escape]] lässt sie los.
