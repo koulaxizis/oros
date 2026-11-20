@@ -622,21 +622,40 @@
   // placement Scribus gave it (ext.place): its own scale and offset,
   // fit, or stretched to the frame. A stretch scales the height on its
   // own (ext.iscy, see designkit/render.js imageRect). Without
-  // ext.place nothing changes.
-  function placePicture(it) {
+  // ext.place nothing changes. ow, oh: the picture's own pixel size
+  // when the stored copy is smaller (designkit/assets.js MAX_SIDE):
+  // Scribus's scale is per pixel of the original, so it grows by the
+  // same factor and the picture keeps its printed size.
+  function placePicture(it, ow, oh) {
     var p = it.ext && it.ext.place;
     if (!Array.isArray(p) || !it.iw || !it.ih) return;
     var sx = p[1] > 0 ? p[1] : 1, sy = p[2] > 0 ? p[2] : sx;
+    var kx = ow > it.iw ? ow / it.iw : 1, ky = oh > it.ih ? oh / it.ih : kx;
     delete it.ext.iscy;
     if (p[0] === 1) { it.fit = "fit"; return; }
     it.fit = "custom";
     if (p[0] === 2) { sx = it.w / it.iw; sy = it.h / it.ih; it.ix = 0; it.iy = 0; }
-    else { it.ix = (p[3] || 0) * sx; it.iy = (p[4] || 0) * sy; }
+    else {
+      it.ix = (p[3] || 0) * sx; it.iy = (p[4] || 0) * sy; sx *= kx; sy *= ky;
+      // the original's width is known: placed at its size (shrunk() no more)
+      if (ow > 0) it.ext.ow = Math.round(ow);
+    }
     it.isc = sx;
     if (Math.abs(sy - sx) > 1e-9 * sx) it.ext.iscy = sy;
   }
 
-  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug, nameKey: nameKey, placePicture: placePicture };
+  // A free Scribus placement imported before 7.96.01 from a picture
+  // stored smaller than its original (a side at `max`, the assets'
+  // MAX_SIDE) and not changed since: its scale is still LOCALSC, so it
+  // draws too small. Find pictures with the original places it again
+  // (and placePicture with the original's size sets ext.ow: done).
+  function shrunk(it, max) {
+    var p = it && it.ext && it.ext.place;
+    if (!it || it.t !== "img" || !it.a || it.fit !== "custom" || !Array.isArray(p) || p[0] !== 0 || !(p[1] > 0) || it.ext.ow > 0) return false;
+    if (!(Math.max(it.iw || 0, it.ih || 0) >= (max || 3500))) return false;
+    return Math.abs((it.isc || 0) - p[1]) <= p[1] * 0.01;
+  }
+  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug, nameKey: nameKey, placePicture: placePicture, shrunk: shrunk };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_SLA = api;
 })(typeof window !== "undefined" ? window : this);

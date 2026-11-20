@@ -1187,7 +1187,7 @@
         var it = M.find(doc.items, itemId);
         if (!it) return;
         it.a = r.id; it.iw = r.w; it.ih = r.h;
-        placeAs(it);
+        placeAs(it, r.ow, r.oh);
       });
     }
     res.images.forEach(function (im) {
@@ -1213,7 +1213,7 @@
       return { placed: found, missing: left };
     });
   }
-  var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it) { window.LY_SLA.placePicture(it); };
+  var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it, ow, oh) { window.LY_SLA.placePicture(it, ow, oh); };
   function picsByName(pics) {
     var out = {};
     (pics || []).forEach(function (f) { var k = nameKey(f.name); if (k && !out[k]) out[k] = f; });
@@ -1229,7 +1229,10 @@
   function relink(files) {
     var doc = LY.doc, byName = picsByName(files), want = {}, chain = Promise.resolve(), got = {};
     if (!doc) return Promise.resolve(0);
-    doc.items.forEach(function (it) { if (it.t === "img" && !it.a && it.nm && byName[nameKey(it.nm)]) want[nameKey(it.nm)] = byName[nameKey(it.nm)]; });
+    // empty frames, and frames whose Scribus picture was stored smaller
+    // than its original before 7.96.01 (LY_SLA.shrunk): placed again
+    var fill = function (it) { return it.t === "img" && it.nm && (!it.a || !!(window.LY_SLA && window.LY_SLA.shrunk(it, A.MAX_SIDE))); };
+    doc.items.forEach(function (it) { if (fill(it) && byName[nameKey(it.nm)]) want[nameKey(it.nm)] = byName[nameKey(it.nm)]; });
     Object.keys(want).forEach(function (k) {
       chain = chain.then(function () { return A.importFile(want[k]); }).then(function (r) { got[k] = r; }, function () {});
     });
@@ -1237,10 +1240,10 @@
       var n = 0;
       LY.op(function (d) {
         d.items.forEach(function (it) {
-          var r = it.t === "img" && !it.a && it.nm ? got[nameKey(it.nm)] : null;
+          var r = fill(it) ? got[nameKey(it.nm)] : null;
           if (!r) return;
           it.a = r.id; it.iw = r.w; it.ih = r.h;
-          placeAs(it);
+          placeAs(it, r.ow, r.oh);
           n++;
         });
         return n > 0;

@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.96.01
+- **Layout: Scribus covers keep their size.** A large picture placed freely in a Scribus file (often the cover) now prints at the size Scribus gave it, instead of smaller. For a book you opened earlier, open More › Links (pictures)…: such pictures show as "smaller than in Scribus". Press Find pictures… and pick the original pictures, and they land at the right size.
+
 ## Version 7.96.00
 - **New game: Star Chart.** A calm idle game: a small hilltop observatory whose telescopes gather starlight every minute. Spend it on more telescopes, or draw your own constellations by joining the stars of the night sky. The kinds of the stars and the shape you draw (a chain, a branch or a ring) decide the bonus each one gives, lines never cross and every star belongs to one constellation, so the sky is a quiet puzzle. The moon is the real moon of the date, and the clouds are the same on every device. With six constellations and a radio dish you can begin a new season with a new sky, keeping one trait and every old constellation in the star atlas. It goes on while orOS is closed (full pace for 7 days, then half), with no notifications and nothing to collect, and it syncs between your devices. In the Idle group of the Game Center.
 
