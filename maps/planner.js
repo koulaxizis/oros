@@ -414,6 +414,19 @@
     }
   }
 
+  // Wave H3 (trails-tab.js): the elevation along any line [[lat, lon]…],
+  // from the same tiles. → Promise of { samples: [{ lat, lon, d }], vals,
+  // climb: { up, down, min, max } | null }
+  H.elevationOf = function (line) {
+    if (!online()) return Promise.reject(new Error("offline"));
+    var samples = PC.sample(line, 30, 300);
+    if (samples.length < 2) return Promise.reject(new Error("short"));
+    return Promise.all(samples.map(function (p) {
+      var x = PC.tileFor(p.lat, p.lon);
+      return tilePixels(x).then(function (d) { var o = (x.py * 256 + x.px) * 4; return PC.decode(d[o], d[o + 1], d[o + 2]); });
+    })).then(function (vals) { return { samples: samples, vals: vals, climb: PC.climb(vals) }; });
+  };
+
   window.__orosMapsPlanner = {
     setMode: setMode, add: add, removeAt: removeAt, moveTo: moveTo, clear: clearAll, save: save,
     setModeOf: function (m) { curMode = PC.mode(m); render(); },

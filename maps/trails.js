@@ -10,9 +10,10 @@
 //   and MTB difficulty, trail visibility, incline, who may use it)
 //   with the marked routes it belongs to.
 //
-// Which overlays are on is device-local ("oros-maps-trails"), like the
-// map style. Nothing is synced. Text from OSM goes on the page with
-// textContent only; links are built from numbers (trails-core.js).
+// Which overlays are on (and, since H3, the kind shown in Discover ›
+// Trails) is device-local ("oros-maps-trails"), like the map style.
+// Nothing is synced. Text from OSM goes on the page with textContent
+// only; links are built from numbers (trails-core.js).
 // Tiles load without crossOrigin, so a server without CORS headers
 // still draws (they are then not kept for offline use).
 // ============================================================
@@ -144,7 +145,7 @@
   }
 
   // ---------- device-local prefs ----------
-  var prefs = { ov: [] };
+  var prefs = { ov: [], tk: "all" };   // tk: the kind shown in Discover › Trails (wave H3)
   function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); } catch (e) { /* view state only */ } }
 
   // ---------- layers ----------
@@ -161,6 +162,7 @@
   try {
     var p = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
     if (p && Array.isArray(p.ov)) prefs.ov = p.ov.filter(function (x) { return !!overlays[x]; });
+    if (p && ["all", "foot", "bike", "mtb"].indexOf(p.tk) >= 0) prefs.tk = p.tk;
   } catch (e) { prefs.ov = []; }
 
   var cyclosm = L.tileLayer("https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png", {
@@ -289,8 +291,13 @@
   }
 
   window.__orosMapsTrails = {
-    about: about, overlays: overlays, cyclosm: cyclosm,
-    prefs: function () { return JSON.parse(JSON.stringify(prefs)); }
+    about: about, overlays: overlays, cyclosm: cyclosm, t: t,
+    prefs: function () { return JSON.parse(JSON.stringify(prefs)); },
+    kind: function (v) {
+      if (v === undefined) return prefs.tk;
+      if (["all", "foot", "bike", "mtb"].indexOf(v) >= 0) { prefs.tk = v; savePrefs(); }
+      return prefs.tk;
+    }
   };
   boot();
 })();

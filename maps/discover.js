@@ -16,6 +16,10 @@
 // All three are free services without keys. Nothing is synced: the
 // tab, category and "Open now" choice are device-local
 // ("oros-maps-discover").
+// Other modules add a tab with __orosMapsDiscover.addTab (wave H3:
+// Trails, from trails-tab.js): { id, pos, label(), fetch(view) →
+// Promise of items | null, paint(items, layer, markers), render(body,
+// cur, api) }.
 //
 // Safety: text from the services goes on the page with textContent
 // only; links and images are checked (https only) in discover-core.js.
@@ -137,11 +141,13 @@
   var ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>';
 
   // ---------- device-local prefs ----------
+  var TABS = ["places", "wiki", "photos"], EXT = {}, wantTab = "";
   var prefs = { tab: "places", cat: "restaurant", open: 0 };
   try {
     var pr = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
     if (pr && typeof pr === "object") {
-      if (["places", "wiki", "photos"].indexOf(pr.tab) >= 0) prefs.tab = pr.tab;
+      if (TABS.indexOf(pr.tab) >= 0) prefs.tab = pr.tab;
+      else if (/^[a-z]{1,20}$/.test(pr.tab || "")) wantTab = pr.tab;   // a tab a later module adds
       if (DC.catById(pr.cat)) prefs.cat = pr.cat;
       prefs.open = pr.open ? 1 : 0;
     }
@@ -195,7 +201,10 @@
     err = ""; moved = false;
     if (!online()) { busy = ""; err = "offline"; render(); return; }
     var c = center(), r = viewRadius(), req;
-    if (tab === "photos") {
+    if (EXT[tab]) {
+      req = EXT[tab].fetch({ c: c, r: r, bounds: map.getBounds(), zoom: map.getZoom() });
+      if (!req) { busy = ""; res[tab] = null; paint(); render(); return; }
+    } else if (tab === "photos") {
       if (map.getZoom() < PHOTO_ZOOM) { busy = ""; res.photos = null; paint(); render(); return; }
       var b = map.getBounds();
       req = fetch(DC.photosUrl(b.getSouth(), b.getWest(), b.getNorth(), b.getEast(), 150)).then(json).then(function (j) { return DC.parsePhotos(j); });
@@ -255,7 +264,9 @@
     markers = {};
     if (!modeOn) return;
     var now = new Date();
-    if (prefs.tab === "places") {
+    if (EXT[prefs.tab]) {
+      EXT[prefs.tab].paint(res[prefs.tab] ? res[prefs.tab].items : null, layer, markers);
+    } else if (prefs.tab === "places") {
       visiblePlaces().forEach(function (p) {
         var m = L.marker([p.lat, p.lon], { icon: placeIcon(p, now), keyboard: false, title: p.name || t("one." + p.cat) });
         m.bindPopup(function () { return placePopup(p); }, { maxWidth: 280 });
@@ -350,8 +361,8 @@
     panel.appendChild(head);
     var body = el("div", "osm-body");
     var tabs = el("div", "osm-tabs");
-    ["places", "wiki", "photos"].forEach(function (k) {
-      var b = button(t("tab." + k), "osm-tab" + (prefs.tab === k ? " on" : ""), function () {
+    TABS.forEach(function (k) {
+      var b = button(EXT[k] ? EXT[k].label() : t("tab." + k), "osm-tab" + (prefs.tab === k ? " on" : ""), function () {
         if (prefs.tab === k) return;
         prefs.tab = k; savePrefs();
         if (!res[k] || k === "photos" || (res[k] && DC.dist(res[k].at, center()) > res[k].r * 0.3)) load();
@@ -362,7 +373,8 @@
       tabs.appendChild(b);
     });
     body.appendChild(tabs);
-    if (prefs.tab === "places") renderPlaces(body);
+    if (EXT[prefs.tab]) EXT[prefs.tab].render(body, res[prefs.tab], extApi);
+    else if (prefs.tab === "places") renderPlaces(body);
     else if (prefs.tab === "wiki") renderWiki(body);
     else renderPhotos(body);
     panel.appendChild(body);
@@ -498,14 +510,33 @@
     }
   }
 
+  // What an added tab may use.
+  var extApi = {
+    statusLine: statusLine, fmtDist: fmtDist, focus: focus, el: el, button: button, link: link,
+    refresh: function () { paint(); render(); },
+    close: function () { setMode(false); },
+    load: function () { load(); },
+    on: function () { return modeOn; }
+  };
+  function addTab(def) {
+    if (!def || !/^[a-z]{1,20}$/.test(def.id || "") || TABS.indexOf(def.id) >= 0 || EXT[def.id]) return null;
+    EXT[def.id] = def;
+    TABS.splice(Math.max(0, Math.min(TABS.length, def.pos | 0)), 0, def.id);
+    res[def.id] = null;
+    if (wantTab === def.id) { prefs.tab = def.id; wantTab = ""; }
+    if (modeOn) render();
+    return extApi;
+  }
+
   window.__orosMapsDiscover = {
-    setMode: setMode, load: load, near: nearHere,
-    tab: function (k) { if (["places", "wiki", "photos"].indexOf(k) >= 0) { prefs.tab = k; savePrefs(); load(); } },
+    setMode: setMode, load: load, near: nearHere, addTab: addTab,
+    tab: function (k) { if (TABS.indexOf(k) >= 0) { prefs.tab = k; savePrefs(); load(); } },
     cat: function (id) { if (DC.catById(id)) { prefs.cat = id; savePrefs(); load(); } },
     state: function () {
       return { on: modeOn, tab: prefs.tab, cat: prefs.cat, open: prefs.open, busy: busy, err: err, moved: moved,
         places: res.places && res.places.items.length, wiki: res.wiki && res.wiki.items.length,
-        photos: res.photos && res.photos.items.length, markers: Object.keys(markers).length };
+        photos: res.photos && res.photos.items.length, markers: Object.keys(markers).length,
+        n: res[prefs.tab] ? res[prefs.tab].items.length : null, tabs: TABS.slice() };
     }
   };
   boot();

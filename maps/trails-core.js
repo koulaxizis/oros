@@ -1,16 +1,19 @@
 // ============================================================
-// orOS Maps — trails-core.js (hiking and cycling, wave H1, v1.0.0)
+// orOS Maps — trails-core.js (hiking and cycling, waves H1 + H3, v1.1.0)
 //
 // Pure helpers for "About this path": the Overpass queries, the
 // nearest way to a point, and a plain-words reading of a way's tags
 // (kind, surface, smoothness, hiking difficulty sac_scale, MTB
 // difficulty mtb:scale, trail visibility, incline, width, who may use
 // it) and of the hiking / cycling routes it belongs to.
+// Wave H3 (Discover › Trails): the marked routes in view, and one
+// route's ways joined into lines (for the map, GPX and My tracks).
 //
 // Returns i18n KEYS ("trl.…"), never text: trails.js translates. Tag
 // values are taken only from fixed lists; a value outside the list is
 // returned raw (shown with textContent) or dropped.
-// No DOM, no network: tested in tests/maps-trails.test.js.
+// No DOM, no network: tested in tests/maps-trails.test.js and
+// tests/maps-trails-tab.test.js.
 // ============================================================
 (function (root) {
   "use strict";
@@ -147,24 +150,136 @@
   // Overpass JSON of routes → [{ id, kind: "foot"|"bike"|"mtb", name,
   // ref, net: "intl"|…|"", colour (#rrggbb or ""), km (number or 0) }],
   // the widest network first.
+  // One route relation's tags in plain fields, or null.
+  function routeInfo(e) {
+    if (!e || e.type !== "relation" || !e.tags) return null;
+    var tg = e.tags, r = String(tg.route || "");
+    if (ROUTES.indexOf(r) < 0) return null;
+    var kind = r === "bicycle" ? "bike" : r === "mtb" ? "mtb" : "foot";
+    var col = String(tg.colour || "").toLowerCase();
+    if (!/^#[0-9a-f]{6}$/.test(col)) col = "";
+    var km = parseFloat(String(tg.distance || "").replace(",", "."));
+    if (!(km > 0 && km < 20000) || /mi/.test(String(tg.distance))) km = 0;
+    return { id: e.id, kind: kind, name: String(tg.name || "").slice(0, 120), ref: String(tg.ref || "").slice(0, 30),
+      net: NET[String(tg.network || "")] || "", colour: col, km: km };
+  }
   function routesOf(json) {
     var els = json && Array.isArray(json.elements) ? json.elements : [];
     var out = [];
-    els.forEach(function (e) {
-      if (!e || e.type !== "relation" || !e.tags) return;
-      var tg = e.tags, r = String(tg.route || "");
-      if (ROUTES.indexOf(r) < 0) return;
-      var kind = r === "bicycle" ? "bike" : r === "mtb" ? "mtb" : "foot";
-      var col = String(tg.colour || "").toLowerCase();
-      if (!/^#[0-9a-f]{6}$/.test(col)) col = "";
-      var km = parseFloat(String(tg.distance || "").replace(",", "."));
-      if (!(km > 0 && km < 20000) || /mi/.test(String(tg.distance))) km = 0;
-      out.push({ id: e.id, kind: kind, name: String(tg.name || "").slice(0, 120), ref: String(tg.ref || "").slice(0, 30),
-        net: NET[String(tg.network || "")] || "", colour: col, km: km });
-    });
+    els.forEach(function (e) { var r = routeInfo(e); if (r) out.push(r); });
     out.sort(function (a, b) { return NET_ORDER[a.net] - NET_ORDER[b.net] || (a.ref + a.name).localeCompare(b.ref + b.name) || a.id - b.id; });
     return out;
   }
+
+  // ---------- wave H3: the Trails tab in Discover ----------
+  function num(x) { return typeof x === "number" && isFinite(x); }
+  function hav(a, b) {   // [lat, lon]
+    var r = Math.PI / 180, dLat = (b[0] - a[0]) * r, dLon = (b[1] - a[1]) * r;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a[0] * r) * Math.cos(b[0] * r) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return 2 * 6371000 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+  }
+  function text(v, n) { return String(v || "").replace(/[\u0000-\u001f]+/g, " ").replace(/ {2,}/g, " ").trim().slice(0, n); }
+
+  // The marked routes that cross the view (south, west, north, east),
+  // at most 200, with the middle of each. Views wider than 2° ask nothing.
+  function areaQuery(s, w, n, e) {
+    if (![s, w, n, e].every(num) || n <= s || e <= w || n - s > 2 || e - w > 2) return "";
+    var b = [s, w, n, e].map(function (x) { return x.toFixed(5); }).join(",");
+    return "[out:json][timeout:25];rel[type=route][route~\"^(" + ROUTES.join("|") + ")$\"](" + b + ");out tags center 200;";
+  }
+  // [{ …routeInfo, lat, lon, d (m from c), from, to, round }] nearest first.
+  function areaRoutes(json, c) {
+    var els = json && Array.isArray(json.elements) ? json.elements : [], out = [], seen = {};
+    els.forEach(function (e) {
+      var r = routeInfo(e);
+      if (!r || seen[r.id] || !e.center || !num(e.center.lat) || !num(e.center.lon)) return;
+      seen[r.id] = 1;
+      r.lat = e.center.lat; r.lon = e.center.lon;
+      r.d = c && num(c.lat) && num(c.lon) ? Math.round(hav([c.lat, c.lon], [r.lat, r.lon])) : 0;
+      r.from = text(e.tags.from, 80); r.to = text(e.tags.to, 80);
+      r.round = e.tags.roundtrip === "yes";
+      out.push(r);
+    });
+    out.sort(function (a, b) { return a.d - b.d || a.id - b.id; });
+    return out;
+  }
+
+  function geomQuery(id) {
+    if (typeof id !== "number" || !(id > 0) || Math.floor(id) !== id) return "";
+    return "[out:json][timeout:25];rel(" + id + ");out tags geom;";
+  }
+
+  // Ways that share an end node become one line. → [[[lat, lon]…]]
+  // longest first.
+  function chain(segs) {
+    function key(p) { return p[0].toFixed(7) + "," + p[1].toFixed(7); }
+    var ends = {}, used = [], out = [];
+    segs.forEach(function (sg, i) {
+      [key(sg[0]), key(sg[sg.length - 1])].forEach(function (k) { (ends[k] = ends[k] || []).push(i); });
+    });
+    function take(k) {
+      var l = ends[k] || [];
+      for (var i = 0; i < l.length; i++) if (!used[l[i]]) { used[l[i]] = 1; return l[i]; }
+      return -1;
+    }
+    segs.forEach(function (sg, i) {
+      if (used[i]) return;
+      used[i] = 1;
+      var line = sg.slice(), j, nx, k;
+      for (;;) {
+        k = key(line[line.length - 1]); j = take(k);
+        if (j < 0) break;
+        nx = key(segs[j][0]) === k ? segs[j] : segs[j].slice().reverse();
+        line = line.concat(nx.slice(1));
+      }
+      for (;;) {
+        k = key(line[0]); j = take(k);
+        if (j < 0) break;
+        nx = key(segs[j][segs[j].length - 1]) === k ? segs[j] : segs[j].slice().reverse();
+        line = nx.slice(0, -1).concat(line);
+      }
+      out.push(line);
+    });
+    out = out.map(function (l) { var m = 0; for (var i = 1; i < l.length; i++) m += hav(l[i - 1], l[i]); return { l: l, m: m }; });
+    out.sort(function (a, b) { return b.m - a.m; });
+    return out;
+  }
+
+  function httpsOnly(u) {
+    u = String(u || "").trim();
+    return /^https:\/\/[^\s"<>]+$/i.test(u) && u.length <= 300 ? u : "";
+  }
+
+  // One route with its ways: { info, parts: [[[lat, lon]…]], m (metres
+  // drawn), bounds [[s, w], [n, e]], start, end, desc, op, site } or null.
+  function trailOf(json, id) {
+    var els = json && Array.isArray(json.elements) ? json.elements : [];
+    var rel = null;
+    els.forEach(function (e) { if (e && e.type === "relation" && e.id === id) rel = e; });
+    var info = routeInfo(rel);
+    if (!info) return null;
+    var segs = [];
+    (Array.isArray(rel.members) ? rel.members : []).forEach(function (m) {
+      if (!m || m.type !== "way" || !Array.isArray(m.geometry)) return;
+      if (/^(platform|stop|guidepost|signpost|information)/.test(String(m.role || ""))) return;
+      var pts = [];
+      m.geometry.forEach(function (g) { if (g && num(g.lat) && num(g.lon)) pts.push([g.lat, g.lon]); });
+      if (pts.length >= 2) segs.push(pts);
+    });
+    if (!segs.length || segs.length > 4000) return null;
+    var parts = chain(segs), m = 0, s = 90, w = 180, n = -90, e = -180;
+    parts.forEach(function (p) {
+      m += p.m;
+      p.l.forEach(function (q) { s = Math.min(s, q[0]); n = Math.max(n, q[0]); w = Math.min(w, q[1]); e = Math.max(e, q[1]); });
+    });
+    var main = parts[0].l, tg = rel.tags;
+    info.from = text(tg.from, 80); info.to = text(tg.to, 80); info.round = tg.roundtrip === "yes";
+    return { info: info, parts: parts.map(function (p) { return p.l; }), m: Math.round(m), bounds: [[s, w], [n, e]],
+      start: main[0], end: main[main.length - 1],
+      desc: text(tg.description || tg["description:" + (tg.lang || "")], 500), op: text(tg.operator, 120),
+      site: httpsOnly(tg.website || tg.url) };
+  }
+  function osmRelLink(id) { return "https://www.openstreetmap.org/relation/" + Math.floor(+id); }
 
   // Links that are always safe (built here from numbers only).
   function wtLink(r) {
@@ -176,7 +291,8 @@
   var api = {
     HW: HW, ROUTES: ROUTES, wayQuery: wayQuery, routeQuery: routeQuery, distToLine: distToLine,
     nearestWay: nearestWay, describeWay: describeWay, routesOf: routesOf, wtLink: wtLink, osmWayLink: osmWayLink,
-    isTrail: isTrail
+    isTrail: isTrail, routeInfo: routeInfo, areaQuery: areaQuery, areaRoutes: areaRoutes, geomQuery: geomQuery,
+    chain: chain, trailOf: trailOf, osmRelLink: osmRelLink
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosMapsTrails = api;

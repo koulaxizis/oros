@@ -587,6 +587,7 @@
     "maps/tools-core.js",
     "maps/tools.js",
     "maps/tracks.js",
+    "maps/trails-tab.js",
     "maps/trails.js",
     "maps/transit.js"
    ]
