@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 49964 of 49971 (99%)
+- Strings: 49985 of 49992 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -111,7 +111,7 @@ en and el); translators change them there, not in a pack.
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 293 / 293 |
 | oracle | 100% | 38 / 38 |
-| orbit | 100% | 137 / 137 |
+| orbit | 100% | 158 / 158 |
 | pad | 100% | 307 / 307 |
 | passwords | 100% | 468 / 468 |
 | pet | 100% | 106 / 106 |

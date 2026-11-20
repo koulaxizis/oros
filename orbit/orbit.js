@@ -127,7 +127,18 @@
       "toast.reset": "Progress reset", "toast.early": "+{n} for calling the wave early",
       "live.wave": "Wave {n} of {m}: {w}.", "live.clear": "Wave {n} cleared, +{c} coins.", "live.heart": "A spark reached the moonflower. {h} hearts left.",
       "live.sel": "{ring}, slot {j}. {s}", "live.turn": "The {ring} turned. The way is now {n} long.",
-      "live.status": "{h} hearts, {c} coins, wave {n} of {m}."
+      "live.status": "{h} hearts, {c} coins, wave {n} of {m}.",
+      "map.o2": "The far orbit", "map.gaps": "two gaps", "map.auto": "a ring turns by itself",
+      "map.endless": "Endless: as many waves as you can hold", "map.best": "Endless: best wave {n}",
+      "map.contEn": "Continue: {r}, Endless, wave {n}",
+      "gd.g5": "Two passages", "gd.g6": "Drifting ring", "gd.g7": "Old wall", "gd.g8": "Full eclipse",
+      "st.waveEn": "Wave {n}, Endless", "en.name": "Endless",
+      "end.endless": "The night ended at wave {n}", "end.cleared": "Waves cleared", "end.best": "Best in Endless",
+      "end.endlessNote": "Endless never ends: every round of ten waves brings more and stronger sparks.",
+      "btn.endless": "Endless again",
+      "live.auto": "The {ring} turned one step by itself.", "live.waveEn": "Wave {n}: {w}.",
+      "live.statusEn": "{h} hearts, {c} coins, wave {n}.",
+      "ctx.auto": "After each wave the {ring} turns one step by itself."
     },
     el: {
       "app.name": "Κήπος σε τροχιά",
@@ -197,7 +208,18 @@
       "toast.reset": "Η πρόοδος μηδενίστηκε", "toast.early": "+{n} επειδή κάλεσες νωρίς το κύμα",
       "live.wave": "Κύμα {n} από {m}: {w}.", "live.clear": "Το κύμα {n} καθάρισε, +{c} νομίσματα.", "live.heart": "Μια σπίθα έφτασε στο φεγγαρολούλουδο. Έμειναν {h} καρδιές.",
       "live.sel": "{ring}, θέση {j}. {s}", "live.turn": "Το {ring} γύρισε. Ο δρόμος είναι τώρα {n}.",
-      "live.status": "{h} καρδιές, {c} νομίσματα, κύμα {n} από {m}."
+      "live.status": "{h} καρδιές, {c} νομίσματα, κύμα {n} από {m}.",
+      "map.o2": "Η μακρινή τροχιά", "map.gaps": "δύο ανοίγματα", "map.auto": "ένα δαχτυλίδι γυρίζει μόνο του",
+      "map.endless": "Ατελείωτο: όσα κύματα αντέξεις", "map.best": "Ατελείωτο: καλύτερο κύμα {n}",
+      "map.contEn": "Συνέχεια: {r}, Ατελείωτο, κύμα {n}",
+      "gd.g5": "Τα δύο περάσματα", "gd.g6": "Το δαχτυλίδι που γλιστρά", "gd.g7": "Ο παλιός τοίχος", "gd.g8": "Η ολική έκλειψη",
+      "st.waveEn": "Κύμα {n}, Ατελείωτο", "en.name": "Ατελείωτο",
+      "end.endless": "Η νύχτα τελείωσε στο κύμα {n}", "end.cleared": "Κύματα που καθάρισαν", "end.best": "Καλύτερο στο Ατελείωτο",
+      "end.endlessNote": "Το Ατελείωτο δεν τελειώνει: κάθε γύρος δέκα κυμάτων φέρνει περισσότερες και πιο δυνατές σπίθες.",
+      "btn.endless": "Ξανά Ατελείωτο",
+      "live.auto": "Το {ring} γύρισε μόνο του ένα βήμα.", "live.waveEn": "Κύμα {n}: {w}.",
+      "live.statusEn": "{h} καρδιές, {c} νομίσματα, κύμα {n}.",
+      "ctx.auto": "Μετά από κάθε κύμα το {ring} γυρίζει μόνο του ένα βήμα."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "orbit", LANG);
@@ -326,8 +348,8 @@
   var paused = true, speed = 1;
   var view = "map";                    // "map" | "play"
 
-  function startNight(gdId, diff) {
-    var g = E.newRun(gdId, diff);
+  function startNight(gdId, diff, en) {
+    var g = E.newRun(gdId, diff, !!en);
     if (!g) return;
     sess = { g: g, ck: null, counted: false };
     game = g;
@@ -337,7 +359,7 @@
     fx = []; disp = g.rot.slice();
     saveSession();
     showPlay();
-    announce(t("live.status", { h: g.hearts, c: g.coins, n: g.wave, m: g.nw }));
+    announce(g.en ? t("live.statusEn", { h: g.hearts, c: g.coins, n: g.wave }) : t("live.status", { h: g.hearts, c: g.coins, n: g.wave, m: g.nw }));
   }
   function retryWave() {
     if (!sess || !sess.ck) return;
@@ -408,7 +430,7 @@
     E.callWave(game);
     paused = false;
     sfx("wave");
-    announce(t("live.wave", { n: game.wave, m: game.nw, w: sparkList(list) }));
+    announce(game.en ? t("live.waveEn", { n: game.wave, w: sparkList(list) }) : t("live.wave", { n: game.wave, m: game.nw, w: sparkList(list) }));
     handleEvents();
     saveSession();
     renderAll();
@@ -416,7 +438,7 @@
   // The night is over: count it once, then the end card.
   function endNight() {
     if (!sess || sess.counted) return;
-    var nx = nextGdId(game.gd);
+    var nx = game.en ? null : nextGdId(game.gd);
     var before = nx ? E.isOpen(data, nx) : true;
     data = E.record(data, deviceId, game, Date.now());
     sess.counted = true;
@@ -440,6 +462,7 @@
     raf = 0;
     var dt = lastT ? Math.min(250, now - lastT) : 0;
     lastT = now;
+    clock += dt;
     if (view === "play" && game && !paused && game.over < 0 && !dlgOpen()) {
       advance(dt * speed);
       sinceSave += dt;
@@ -499,6 +522,7 @@
       else if (x.e === "leak") hurt = true;
       else if (x.e === "clear") { announce(t("live.clear", { n: x.w + 1, c: x.n })); sfx("clear"); }
       else if (x.e === "early") showToast(t("toast.early", { n: x.n }));
+      else if (x.e === "auto") { announce(t("live.auto", { ring: ringName(x.k) })); showToast(t("live.auto", { ring: ringName(x.k) })); sfx("auto"); }
     });
     if (out) soundOnce("out", 80);
     if (hurt) {
@@ -550,9 +574,19 @@
   // A few fixed stars round the garden (always the same ones).
   var STARS = (function () {
     var r = E.mulberry32(E.hash("orbit-stars")), out = [];
-    for (var i = 0; i < 70; i++) out.push({ x: r() * 2 - 1, y: r() * 2 - 1, s: 0.4 + r() * 1.1 });
+    for (var i = 0; i < 70; i++) out.push({ x: r() * 2 - 1, y: r() * 2 - 1, s: 0.4 + r() * 1.1, ph: r() * 6.3 });
     return out;
   })();
+  // Old craters on the little moon (garden units), always the same ones.
+  var CRATERS = (function () {
+    var r = E.mulberry32(E.hash("orbit-craters")), out = [];
+    for (var i = 0; i < 14; i++) {
+      var a = r() * E.TAU, d = 1.2 + r() * 4.4;
+      out.push({ x: Math.sin(a) * d, y: -Math.cos(a) * d, r: 0.12 + r() * 0.3 });
+    }
+    return out;
+  })();
+  var clock = 0;                       // ms, for the twinkle and the moonflower's glow
 
   function draw() {
     if (!ctx || view !== "play" || !game) return;
@@ -563,10 +597,23 @@
     STARS.forEach(function (s) {
       var x = CX + s.x * W / 2, y = CY + s.y * H / 2;
       if ((x - CX) * (x - CX) + (y - CY) * (y - CY) < (E.RIM + 0.2) * S * (E.RIM + 0.2) * S) return;
+      ctx.globalAlpha = reduced ? 0.8 : 0.55 + 0.45 * Math.sin(clock / 900 + s.ph);
       ctx.fillRect(x, y, s.s, s.s);
     });
-    // the soil disc and the three lanes
+    ctx.globalAlpha = 1;
+    // the soil disc with its rim and old craters, and the three lanes
+    circle(0, 0, E.RIM + 0.12, C["og-stone"]);
     circle(0, 0, E.RIM, C["og-soil"]);
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    CRATERS.forEach(function (c) {
+      var q = px(c);
+      ctx.beginPath(); ctx.arc(q.x, q.y, c.r * S, 0, Math.PI * 2);
+      ctx.fillStyle = C["og-ground"]; ctx.fill();
+      ctx.beginPath(); ctx.arc(q.x + c.r * S * 0.18, q.y + c.r * S * 0.18, c.r * S * 0.8, 0, Math.PI * 2);
+      ctx.fillStyle = C["og-soil"]; ctx.fill();
+    });
+    ctx.restore();
     E.LANES.forEach(function (r, i) {
       ctx.beginPath(); ctx.arc(CX, CY, r * S, 0, Math.PI * 2);
       ctx.strokeStyle = C["og-lane"]; ctx.lineWidth = (i ? 1.0 : 1.05) * S; ctx.stroke();
@@ -585,15 +632,49 @@
     ctx.beginPath(); ctx.arc(q.x, q.y, r * S, 0, Math.PI * 2);
     ctx.fillStyle = fill; ctx.fill();
   }
-  // A stone band with its gap cut out; beds and old stones on it.
+  // A stone band with its gaps cut out; beds and old stones on it; a
+  // ring that turns by itself has small arrows along it.
   function drawRing(gd, k) {
-    var R = E.RINGS[k], half = Math.PI / R.n * 0.62;
-    var ga = disp[k] * E.TAU / R.n;                      // the gap's angle
-    ctx.beginPath();
+    var R = E.RINGS[k], step = E.TAU / R.n, half = step / 2 * 0.62;
+    var gaps = gd.gaps[k].map(function (j) { return (j + disp[k]) * step; }).sort(function (a, b) { return a - b; });
+    ctx.strokeStyle = C["og-stone"]; ctx.lineWidth = 0.5 * S; ctx.lineCap = "butt";
     // canvas angles start at 3 o'clock; ours at 12
-    ctx.arc(CX, CY, R.r * S, ga + half - Math.PI / 2, ga - half - Math.PI / 2 + Math.PI * 2);
-    ctx.strokeStyle = C["og-stone"]; ctx.lineWidth = 0.5 * S; ctx.lineCap = "butt"; ctx.stroke();
-    for (var j = 1; j < R.n; j++) {
+    gaps.forEach(function (ga, i) {
+      var to = i + 1 < gaps.length ? gaps[i + 1] : gaps[0] + E.TAU;
+      ctx.beginPath();
+      ctx.arc(CX, CY, R.r * S, ga + half - Math.PI / 2, to - half - Math.PI / 2);
+      ctx.stroke();
+    });
+    // the stone's grain: a fine line along the band
+    ctx.save();
+    ctx.globalAlpha = 0.25; ctx.strokeStyle = C["og-ground"]; ctx.lineWidth = Math.max(1, 0.04 * S);
+    gaps.forEach(function (ga, i) {
+      var to = i + 1 < gaps.length ? gaps[i + 1] : gaps[0] + E.TAU;
+      ctx.beginPath();
+      ctx.arc(CX, CY, (R.r + 0.12) * S, ga + half - Math.PI / 2, to - half - Math.PI / 2);
+      ctx.stroke();
+    });
+    ctx.restore();
+    var auto = gd.auto[k];
+    if (auto) {
+      // chevrons between the beds, pointing the way the ring turns
+      ctx.save();
+      ctx.strokeStyle = C["og-rim"]; ctx.lineWidth = Math.max(1.5, 0.06 * S); ctx.lineCap = "round"; ctx.lineJoin = "round";
+      ctx.globalAlpha = 0.85;
+      for (var c = 0; c < R.n; c += 2) {
+        var am = (c + 0.5 + disp[k]) * step, m = px(E.point(R.r, am));
+        var tx = Math.cos(am) * auto, ty = Math.sin(am) * auto;   // the clockwise tangent, times the direction
+        var nx = Math.sin(am), ny = -Math.cos(am), h = 0.11 * S;
+        ctx.beginPath();
+        ctx.moveTo(m.x - tx * h + nx * h, m.y - ty * h + ny * h);
+        ctx.lineTo(m.x + tx * h * 0.6, m.y + ty * h * 0.6);
+        ctx.lineTo(m.x - tx * h - nx * h, m.y - ty * h - ny * h);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    for (var j = 0; j < R.n; j++) {
+      if (E.isGap(gd, k, j)) continue;
       var q = px(slotAt(k, j));
       if (E.isStone(gd, k, j)) {
         ctx.beginPath();
@@ -608,11 +689,13 @@
         ctx.fillStyle = C["og-bed"]; ctx.fill();
       }
     }
-    // two small posts mark the gap
-    [ga + half, ga - half].forEach(function (a) {
-      var p = px(E.point(R.r, a));
-      ctx.beginPath(); ctx.arc(p.x, p.y, 0.12 * S, 0, Math.PI * 2);
-      ctx.fillStyle = C["og-rim"]; ctx.fill();
+    // two small posts mark each gap
+    gaps.forEach(function (ga) {
+      [ga + half, ga - half].forEach(function (a) {
+        var p = px(E.point(R.r, a));
+        ctx.beginPath(); ctx.arc(p.x, p.y, 0.12 * S, 0, Math.PI * 2);
+        ctx.fillStyle = C["og-rim"]; ctx.fill();
+      });
     });
   }
   function drawGates(gd) {
@@ -639,6 +722,12 @@
   }
   function drawFlower() {
     var c = px({ x: 0, y: 0 }), r = E.HEART * S;
+    // a soft glow round the moonflower, breathing slowly
+    var gl = reduced ? 1 : 1 + 0.08 * Math.sin(clock / 700);
+    var grad = ctx.createRadialGradient(c.x, c.y, r * 0.2, c.x, c.y, r * 1.6 * gl);
+    grad.addColorStop(0, C["og-flower"]); grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(c.x, c.y, r * 1.6 * gl, 0, Math.PI * 2); ctx.fill(); ctx.restore();
     ctx.fillStyle = C["og-flower"];
     for (var i = 0; i < 6; i++) {
       var a = i * Math.PI / 3;
@@ -742,6 +831,11 @@
   function drawSpark(s) {
     var q = px(E.sparkPos(game, s));
     var r = S * (s.k === "e" ? 0.4 : s.k === "b" ? 0.14 : s.k === "c" ? 0.17 : 0.22);
+    if (s.k !== "e") {
+      // a faint halo, so a spark reads as light
+      ctx.save(); ctx.globalAlpha = 0.22; ctx.fillStyle = C["og-spark"];
+      ctx.beginPath(); ctx.arc(q.x, q.y, r * 1.9, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
     ctx.fillStyle = C["og-spark"];
     ctx.strokeStyle = C["og-rim"];
     ctx.lineWidth = Math.max(1, S * 0.04);
@@ -825,7 +919,7 @@
   function slotText(s) {
     var p = E.parseKey(s), gd = E.GARDEN[game.gd], pl = game.pl[s];
     if (pl) return t("act.lv", { t: plName(pl), l: pl.l });
-    if (p.j === 0) return t("slot.gap", { ring: ringName(p.k) });
+    if (E.isGap(gd, p.k, p.j)) return t("slot.gap", { ring: ringName(p.k) });
     if (E.isStone(gd, p.k, p.j)) return t("slot.stone", { ring: ringName(p.k) });
     return t("slot.free", { ring: ringName(p.k) });
   }
@@ -856,7 +950,7 @@
     if (!sel) {
       // the slot of the outer ring at the top of the screen (beside it when that is the gap)
       var n0 = E.RINGS[0].n, top = (n0 - game.rot[0]) % n0;
-      select(E.key(0, top || 1));
+      select(E.key(0, E.isGap(E.GARDEN[game.gd], 0, top) ? (top + 1) % n0 : top));
       return;
     }
     var p = E.parseKey(sel);
@@ -913,7 +1007,8 @@
     setStat("s-hearts", ICONS.heart, game.hearts, t("st.hearts") + ": " + game.hearts);
     $("s-hearts").classList.toggle("low", game.hearts <= Math.ceil(game.hmax / 4));
     setStat("s-coins", ICONS.coin, Math.floor(game.coins), t("st.coins") + ": " + Math.floor(game.coins));
-    setStat("s-wave", ICONS.wave, t("st.waveShort", { n: game.wave, m: game.nw }), t("st.wave", { n: game.wave, m: game.nw }));
+    if (game.en) setStat("s-wave", ICONS.wave, String(game.wave), t("st.waveEn", { n: game.wave }));
+    else setStat("s-wave", ICONS.wave, t("st.waveShort", { n: game.wave, m: game.nw }), t("st.wave", { n: game.wave, m: game.nw }));
   }
   function plantBtn(k) {
     var b = el("button", "act");
@@ -1004,6 +1099,8 @@
             (gates > 1 ? " " + t("ctx.from", { n: x.gt + 1 }) : "")));
           tx2.appendChild(g);
         });
+        var gda = E.GARDEN[game.gd];
+        gda.auto.forEach(function (d, k) { if (d) tx2.appendChild(el("span", "", t("ctx.auto", { ring: ringName(k) }))); });
         if (game.wave === 0 && !Object.keys(game.pl).length) tx2.appendChild(el("span", "", t("ctx.pick")));
       }
       row.appendChild(tx2);
@@ -1087,7 +1184,7 @@
     var wrap = el("div", "mp-wrap");
     wrap.appendChild(el("p", "mp-intro", t("map.intro")));
     if (underWay()) {
-      var cont = el("button", "mp-cont", t("map.cont", { r: gdName(game.gd), n: Math.max(1, game.wave) }));
+      var cont = el("button", "mp-cont", t(game.en ? "map.contEn" : "map.cont", { r: gdName(game.gd), n: Math.max(1, game.wave) }));
       cont.type = "button";
       cont.addEventListener("click", showPlay);
       wrap.appendChild(cont);
@@ -1104,10 +1201,11 @@
       seg.appendChild(b);
     });
     wrap.appendChild(seg);
-    wrap.appendChild(el("div", "mp-head", t("map.o1")));
+    var orbit = 0;
     E.GARDENS.forEach(function (gd) {
+      if (gd.o !== orbit) { orbit = gd.o; wrap.appendChild(el("div", "mp-head", t("map.o" + orbit))); }
       var open = E.isOpen(data, gd.id);
-      var b = el("button", "sq-card" + (underWay() && game.gd === gd.id ? " cur" : ""));
+      var b = el("button", "sq-card" + (underWay() && game.gd === gd.id && !game.en ? " cur" : ""));
       b.type = "button";
       b.disabled = !open;
       b.appendChild(el("span", "no", String(gd.idx + 1)));
@@ -1115,13 +1213,25 @@
       tx2.appendChild(el("span", "nm", gdName(gd.id)));
       var kinds = E.KINDS.filter(function (k) { return E.PLANTS[k].u <= Math.min(4, gd.idx + 1); }).map(function (k) { return t("pl." + k); });
       var info = t("map.waves", { n: gd.waves.length }) + (gd.gates.length > 1 ? " · " + t("map.gates", { n: gd.gates.length }) : "") +
+        (gd.gaps.some(function (x) { return x.length > 1; }) ? " · " + t("map.gaps") : "") +
+        (gd.auto.some(function (x) { return x; }) ? " · " + t("map.auto") : "") +
         " · " + t("map.plants", { list: kinds.join(", ") });
       tx2.appendChild(el("span", "fx", open ? info : t("map.lock")));
       b.appendChild(tx2);
       b.appendChild(starIcons(E.starsOf(data, gd.id)));
       b.setAttribute("aria-label", gdName(gd.id) + ", " + E.starsOf(data, gd.id) + "/3");
-      b.addEventListener("click", function () { pickGarden(gd.id); });
+      b.addEventListener("click", function () { pickGarden(gd.id, false); });
       wrap.appendChild(b);
+      if (E.endlessOpen(data, gd.id)) {
+        var best = E.endlessOf(data, gd.id);
+        var en = el("button", "mp-endless" + (underWay() && game.gd === gd.id && game.en ? " cur" : ""));
+        en.type = "button";
+        en.innerHTML = ICONS.wave;
+        en.appendChild(el("span", "", best ? t("map.best", { n: best }) : t("map.endless")));
+        en.setAttribute("aria-label", gdName(gd.id) + ", " + (best ? t("map.best", { n: best }) : t("map.endless")));
+        en.addEventListener("click", function () { pickGarden(gd.id, true); });
+        wrap.appendChild(en);
+      }
     });
     var rs = el("button", "dlg-btn danger mp-reset", t("btn.reset"));
     rs.type = "button";
@@ -1131,13 +1241,15 @@
     wrap.appendChild(rs);
     box.appendChild(wrap);
   }
-  function pickGarden(id) {
-    if (underWay() && game.acts > 0 && (game.gd !== id || game.diff !== prefs.diff)) {
-      confirmDialog(t("map.replace", { r: gdName(game.gd), s: gdName(id) }), t("btn.ok"), function () { startNight(id, prefs.diff); });
+  function nightName(id, en) { return gdName(id) + (en ? " · " + t("en.name") : ""); }
+  function pickGarden(id, en) {
+    var same = underWay() && game.gd === id && game.diff === prefs.diff && !!game.en === !!en;
+    if (underWay() && game.acts > 0 && !same) {
+      confirmDialog(t("map.replace", { r: nightName(game.gd, game.en), s: nightName(id, en) }), t("btn.ok"), function () { startNight(id, prefs.diff, en); });
       return;
     }
-    if (underWay() && game.gd === id && game.diff === prefs.diff) { showPlay(); return; }
-    startNight(id, prefs.diff);
+    if (same) { showPlay(); return; }
+    startNight(id, prefs.diff, en);
   }
   // Reset progress: a new reset stamp, so older rows drop on every device.
   function resetProgress() {
@@ -1175,6 +1287,7 @@
   }
   function endDialog(opened) {
     var g = game, won = g.over === 1;
+    if (g.en) { endlessDialog(); return; }
     openDialog("end", function (d) {
       d.appendChild(el("div", "dlg-title", gdName(g.gd) + " · " + t("diff." + g.diff)));
       d.appendChild(el("div", "dlg-hero", t(won ? "end.won" : "end.lost")));
@@ -1194,6 +1307,22 @@
       var nx = nextGdId(g.gd);
       if (won && nx) a.appendChild(dlgBtn(t("btn.nextGd"), "primary", function () { closeDialog(); startNight(nx, g.diff); }));
       a.appendChild(dlgBtn(t("btn.restart"), "", function () { closeDialog(); startNight(g.gd, g.diff); }));
+      a.appendChild(dlgBtn(t("btn.toMap"), "", function () { closeDialog(); showMap(); }));
+      d.appendChild(a);
+    });
+  }
+  function endlessDialog() {
+    var g = game, n = E.cleared(g);
+    openDialog("end", function (d) {
+      d.appendChild(el("div", "dlg-title", nightName(g.gd, true) + " · " + t("diff." + g.diff)));
+      d.appendChild(el("div", "dlg-hero", t("end.endless", { n: g.wave })));
+      d.appendChild(row(t("end.cleared"), n));
+      d.appendChild(row(t("end.best"), E.endlessOf(data, g.gd)));
+      d.appendChild(row(t("end.faded"), g.faded));
+      d.appendChild(el("p", "dlg-note", t("end.endlessNote")));
+      var a = el("div", "dlg-actions");
+      if (sess.ck) a.appendChild(dlgBtn(t("btn.again", { n: sess.ck.wave + 1 }), "primary", retryWave));
+      a.appendChild(dlgBtn(t("btn.endless"), sess.ck ? "" : "primary", function () { closeDialog(); startNight(g.gd, g.diff, true); }));
       a.appendChild(dlgBtn(t("btn.toMap"), "", function () { closeDialog(); showMap(); }));
       d.appendChild(a);
     });
@@ -1247,7 +1376,25 @@
     o.connect(g); g.connect(audio.destination);
     o.start(t0); o.stop(t0 + dur + 0.02);
   }
-  var HAPTIC = { plant: "tick", turn: "tick", no: "bad", won: "good", wave: "tick" };
+  // A short burst of filtered noise (the spray's hiss, the stone's grind).
+  var noiseBuf = null;
+  function noise(start, dur, freq, q, vol) {
+    if (!noiseBuf) {
+      noiseBuf = audio.createBuffer(1, Math.floor(audio.sampleRate * 0.5), audio.sampleRate);
+      var d = noiseBuf.getChannelData(0), seed = 1;
+      for (var i = 0; i < d.length; i++) { seed = (seed * 16807) % 2147483647; d[i] = seed / 1073741823.5 - 1; }
+    }
+    var t0 = audio.currentTime + start;
+    var src = audio.createBufferSource(), f = audio.createBiquadFilter(), g = audio.createGain();
+    src.buffer = noiseBuf;
+    f.type = "bandpass"; f.frequency.setValueAtTime(freq, t0); f.Q.setValueAtTime(q, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + Math.min(0.03, dur / 3));
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    src.connect(f); f.connect(g); g.connect(audio.destination);
+    src.start(t0); src.stop(t0 + dur + 0.02);
+  }
+  var HAPTIC = { plant: "tick", turn: "tick", auto: "tick", no: "bad", won: "good", wave: "tick" };
   function sfx(kind) {
     if (window.orosHaptics && HAPTIC[kind]) window.orosHaptics.cue(HAPTIC[kind]);
     if (!sfxOn()) return;
@@ -1258,14 +1405,16 @@
       if (audio.state === "suspended") audio.resume();
       if (kind === "thorn") tone(1800, 0, 0.04, "square", 0.015, 1200);
       else if (kind === "vine") tone(240, 0, 0.18, "triangle", 0.04, 180);
-      else if (kind === "dew") tone(3000, 0, 0.18, "sawtooth", 0.008, 1500);
+      else if (kind === "dew") noise(0, 0.28, 5200, 0.9, 0.05);
       else if (kind === "sun") { tone(330, 0, 0.4, "sine", 0.04); tone(495, 0, 0.3, "sine", 0.02); }
       else if (kind === "out") tone(1200, 0, 0.12, "sine", 0.025, 1700);
       else if (kind === "heart") { tone(880, 0, 0.5, "sine", 0.04, 660); tone(1320, 0.05, 0.4, "sine", 0.02); }
       else if (kind === "plant") { tone(260, 0, 0.08, "triangle", 0.07, 180); tone(620, 0.04, 0.08, "sine", 0.05); }
-      else if (kind === "turn") { tone(90, 0, 0.18, "sawtooth", 0.03, 70); tone(140, 0.05, 0.12, "triangle", 0.03); }
+      else if (kind === "turn") { noise(0, 0.22, 320, 2.5, 0.12); tone(90, 0, 0.18, "triangle", 0.03, 70); }
+      else if (kind === "auto") { noise(0, 0.5, 260, 2, 0.1); tone(110, 0, 0.5, "triangle", 0.03, 82); tone(660, 0.25, 0.4, "sine", 0.025); }
       else if (kind === "wave") { tone(220, 0, 0.3, "triangle", 0.06); tone(330, 0.12, 0.3, "triangle", 0.05); }
-      else if (kind === "clear") [523, 659, 784].forEach(function (f, k) { tone(f, k * 0.08, 0.16, "sine", 0.05); });
+      // the moonflower's chime: a soft bell (two partials) per note
+      else if (kind === "clear") [784, 988, 1175].forEach(function (f, k) { tone(f, k * 0.11, 0.6, "sine", 0.04); tone(f * 2.76, k * 0.11, 0.25, "sine", 0.008); });
       else if (kind === "won") [523, 659, 784, 1047].forEach(function (f, k) { tone(f, k * 0.1, 0.22, "triangle", 0.07); });
       else if (kind === "lost") [392, 330, 262].forEach(function (f, k) { tone(f, k * 0.14, 0.3, "sine", 0.06); });
       else if (kind === "no") tone(170, 0, 0.14, "sawtooth", 0.04);
@@ -1384,15 +1533,15 @@
   window.render_game_to_text = function () {
     if (view !== "play" || !game) {
       return JSON.stringify({ mode: dlgKind || "map", diff: prefs.diff,
-        gardens: E.GARDENS.map(function (gd) { return { id: gd.id, open: E.isOpen(data, gd.id), stars: E.starsOf(data, gd.id) }; }) });
+        gardens: E.GARDENS.map(function (gd) { return { id: gd.id, orbit: gd.o, open: E.isOpen(data, gd.id), stars: E.starsOf(data, gd.id), endless: E.endlessOpen(data, gd.id) ? E.endlessOf(data, gd.id) : null }; }) });
     }
     function r1(v) { return Math.round(v * 10) / 10; }
     var w = E.ways(game);
     return JSON.stringify({
       mode: dlgKind || (game.over === 1 ? "won" : game.over === 0 ? "lost" : paused ? "paused" : "running"),
-      garden: game.gd, diff: game.diff, speed: speed, hearts: game.hearts, coins: Math.floor(game.coins),
+      garden: game.gd, diff: game.diff, endless: !!game.en, speed: speed, hearts: game.hearts, coins: Math.floor(game.coins),
       wave: game.wave, waves: game.nw, next: E.preview(game), rot: game.rot, turned: game.tn,
-      canTurn: E.canTurn(game), sel: sel ? [E.parseKey(sel).k, E.parseKey(sel).j] : null,
+      canTurn: E.canTurn(game), auto: E.GARDEN[game.gd].auto, sel: sel ? [E.parseKey(sel).k, E.parseKey(sel).j] : null,
       plants: Object.keys(game.pl).map(function (s) {
         var p = game.pl[s], k = E.parseKey(s), q = E.slotPos(game, s);
         return { ring: k.k, slot: k.j, k: p.k, l: p.l, b: p.b, aim: E.PLANTS[p.k].tm ? E.TARGETS[p.tm] : undefined, x: r1(q.x), y: r1(q.y) };
