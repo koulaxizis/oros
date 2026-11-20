@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.90.01
+- **Your apps no longer come back by themselves after a restart.** orOS now starts on the desktop. If you liked it, switch on `Reopen my apps after a restart` in Settings › System.
+
 ## Version 7.90.00
 - **Maps for hiking and cycling.** The layers button has hiking, cycling and mountain bike routes from Waymarked Trails and the CyclOSM cycling map. Long-press right on a path, track or street › `About this path` tells you in plain words what it is: surface, hiking difficulty from T1 to T6, MTB difficulty, how visible it is, who may use it and the marked routes it belongs to. Offline maps now draw cycleways, tracks and footpaths in their own colours. The first step of a bigger upgrade for walking and cycling.
 
