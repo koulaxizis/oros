@@ -23,7 +23,10 @@
 //   - deep link: __orosOpenAt("mail", { compose:{ to?, subject, body,
 //     attach?: [{ name?, path } | { name, type?, b64 }] } }) opens a
 //     prefilled draft (never sends by itself); path = a file on the
-//     orOS disk (/internal/…), b64 = the file's bytes in base64
+//     orOS disk (/internal/…), b64 = the file's bytes in base64;
+//     bcc?, bccSelf? (the From address in Bcc), sendAt? (ms: the Send
+//     button reads "Send: {when}" and queues it for then, TR-LATER)
+//   - deep link: __orosOpenAt("mail", { outbox: true }) shows the Outbox
 //   - deep link: __orosOpenAt("mail", { signature:{ html, text, name } })
 //     from Email Signature: asks which account gets it (BR-MAIL-SIG)
 
@@ -234,7 +237,7 @@
       "to.aiHint": "Opens the Assistant with the question ready (long messages are cut); you send it.",
       "ai.sum": "Summarise this e-mail in a few sentences, in the language it is written in.",
       "ai.reply": "Write a short, polite reply to this e-mail, in its language. I will edit it before sending.",
-      "snd.sending": "Sending…", "snd.late": "Too late: it is already being sent.", "snd.later": "Send later",
+      "snd.sending": "Sending…", "snd.late": "Too late: it is already being sent.", "snd.later": "Send later", "snd.onBtn": "Send: {when}", "snd.planned": "Planned: it waits in the Outbox and goes out {when}, from this device while orOS is open (else the next time it opens). You get a notification when it has gone.",
       "snd.inHour": "In an hour", "snd.tomorrow": "Tomorrow morning ({when})", "snd.monday": "Monday morning ({when})",
       "snd.at": "Date and time", "snd.schedule": "Schedule", "snd.past": "Pick a time in the future.", "snd.far": "Up to a year ahead.",
       "snd.hint": "It goes out at that time while orOS is open on this device (with Mail closed too); otherwise as soon as orOS opens.",
@@ -447,7 +450,7 @@
       "to.aiHint": "Ανοίγει τον Βοηθό με την ερώτηση έτοιμη (τα μεγάλα μηνύματα κόβονται)· τη στέλνεις εσύ.",
       "ai.sum": "Κάνε περίληψη αυτού του email σε λίγες προτάσεις, στη γλώσσα που είναι γραμμένο.",
       "ai.reply": "Γράψε μια σύντομη, ευγενική απάντηση σε αυτό το email, στη γλώσσα του. Θα τη διορθώσω πριν τη στείλω.",
-      "snd.sending": "Αποστολή…", "snd.late": "Πολύ αργά: στέλνεται ήδη.", "snd.later": "Αποστολή αργότερα",
+      "snd.sending": "Αποστολή…", "snd.late": "Πολύ αργά: στέλνεται ήδη.", "snd.later": "Αποστολή αργότερα", "snd.onBtn": "Αποστολή: {when}", "snd.planned": "Προγραμματισμένο: περιμένει στα Εξερχόμενα και φεύγει {when}, από αυτή τη συσκευή όσο το orOS είναι ανοιχτό (αλλιώς μόλις ξανανοίξει). Θα λάβεις ειδοποίηση όταν σταλεί.",
       "snd.inHour": "Σε μία ώρα", "snd.tomorrow": "Αύριο το πρωί ({when})", "snd.monday": "Δευτέρα πρωί ({when})",
       "snd.at": "Ημερομηνία και ώρα", "snd.schedule": "Προγραμματισμός", "snd.past": "Διάλεξε μια μελλοντική ώρα.", "snd.far": "Έως έναν χρόνο μπροστά.",
       "snd.hint": "Φεύγει εκείνη την ώρα όσο το orOS είναι ανοιχτό σε αυτή τη συσκευή (και με κλειστή την Αλληλογραφία)· αλλιώς μόλις ανοίξει το orOS.",
@@ -2972,10 +2975,12 @@
   // ---------- timed sends: Undo send, Send later (outbox.js) ----------
   var TAB = newId();          // this window, in outbox claims
   var timedTimer = null;
-  function queueTimed(d, due) {
+  // note: Send later (not Undo send) also raises a notification when it went out
+  function queueTimed(d, due, note) {
     var b = buildMsg(d);      // throws "big" / "nosmtp" before anything is queued
     if (outbox.length >= OUT_MAX) throw new MailError("outfull");
     var job = { acct: b.acct.id, from: b.acct.email, rcpt: b.msg.rcpt, raw: C.b64(b.msg.bin), subj: d.subject || "" };
+    if (note) job.note = 1;
     var sent = sentFolder(b.acct);
     if (sent) job.sent = sent;
     if (d.serverDraft) job.serverDraft = d.serverDraft;
@@ -3020,11 +3025,23 @@
           if (rec.job.serverDraft) dropServerDraft(rec.job.serverDraft);
           if (rec.job.sent && cur && cur.acct === acct.id && cur.folder === rec.job.sent) refreshCurrent(false);
           showToast(rec.job.sent && !(res && res.appended) ? t("toast.sentNoCopy") : t("toast.sent") + (rec.job.subj ? ": " + rec.job.subj : ""));
+          if (rec.job.note) sentNotice(rec);
         });
       }, function (e) {
         return db().then(function (d) { return OB.release(d, id, waitsForNet(e) ? "" : sendErrText(e)); });
       });
     }).catch(function () {});
+  }
+  // The confirmation of a Send later message, in the notification centre
+  // (the same notice notify.js raises when it sends with Mail closed).
+  function sentNotice(rec) {
+    try {
+      var n = (window.parent && window.parent !== window && window.parent.orosNotifs) || null;
+      if (n && typeof n.emit === "function") {
+        n.emit({ ns: "mail", type: "sent", key: "s:" + rec.id, title: t("toast.sent"),
+                 body: String(rec.job.subj || t("out.nosubj")).slice(0, 200), ttlDays: 1 });
+      }
+    } catch (e) {}
   }
   // Undo / Edit / Delete: only while nobody is sending it
   function takeBack(id) {
@@ -3296,6 +3313,8 @@
     init = init || {};
     if (!data.accounts.length) { showToast(t("cmp.noacct")); acctDialog(null); return; }
     var acct = acctById(init.acct) || curAcct();
+    // deep link bccSelf: a copy to the sender's own address, visible and removable
+    if (init.bccSelf && acct && acct.email && !(init.bcc && init.bcc.length)) init.bcc = C.parseList(acct.email).list;
     var dirty = !!init.outId || !!init.handed;
     var draftRef = init.draft || null;   // its copy in Drafts on the server
     editingOut = init.outId || null;
@@ -3382,23 +3401,27 @@
     attRow.appendChild(tplB);
     var laterB = el("button", "link-btn cmp-attach", t("snd.later"));
     laterB.type = "button";
+    // queue the message for ms; Send later always confirms with a notification when it goes out
+    function queueAt(ms) {
+      var d2 = collect(true);
+      if (!d2) return;
+      if (draftRef) d2.serverDraft = draftRef;
+      withPgp(d2, function (d3) {
+        var q;
+        try { q = queueTimed(d3, ms, true); } catch (er) { errP.textContent = sendErrText(er); return; }
+        q.then(function () {
+          if (init.outId) dropOut(init.outId);
+          finish(t("snd.scheduled", { when: fmtWhen(ms) }));
+        }, function (er) { errP.textContent = sendErrText(er); });
+      });
+    }
+    // planned(): the time another app asked for (deep link sendAt), while it is still ahead
+    function planned() { return init.sendAt > Date.now() + 30000 ? init.sendAt : 0; }
     laterB.addEventListener("click", function () {
       var d = collect(true);
       if (!d) return;
       if (!acctById(d.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
-      laterDialog(function (ms) {
-        var d2 = collect(true);
-        if (!d2) return;
-        if (draftRef) d2.serverDraft = draftRef;
-        withPgp(d2, function (d3) {
-          var q;
-          try { q = queueTimed(d3, ms); } catch (er) { errP.textContent = sendErrText(er); return; }
-          q.then(function () {
-            if (init.outId) dropOut(init.outId);
-            finish(t("snd.scheduled", { when: fmtWhen(ms) }));
-          }, function (er) { errP.textContent = sendErrText(er); });
-        });
-      });
+      laterDialog(function (ms) { init.sendAt = 0; queueAt(ms); });
     });
     attRow.appendChild(laterB);
     form.appendChild(attRow);
@@ -3512,9 +3535,10 @@
     acts.appendChild(button(t("cmp.discard"), "", function () { leave(); }));
     var saveB = button(t("drf.save"), "", function () { saveNow(false); });
     acts.appendChild(saveB);
-    var ok = button(t("cmp.send"), "primary", null);
+    var ok = button(planned() ? t("snd.onBtn", { when: fmtWhen(planned()) }) : t("cmp.send"), "primary", null);
     ok.type = "submit";
     acts.appendChild(ok);
+    if (planned()) form.appendChild(el("p", "dlg-hint cmp-planned", t("snd.planned", { when: fmtWhen(planned()) })));
     form.appendChild(acts);
 
     function finish(msg) {
@@ -3579,6 +3603,12 @@
       var d0 = collect(true);
       if (!d0) return;
       if (!acctById(d0.acct).smtp) { errP.textContent = t("err.nosmtp"); return; }
+      if (init.sendAt) {
+        // the planned time (deep link sendAt); passed while the window was open → pick a new one
+        if (planned()) { queueAt(planned()); return; }
+        laterDialog(function (ms) { queueAt(ms); });
+        return;
+      }
       if (draftRef) d0.serverDraft = draftRef;
       withPgp(d0, go);
     });
@@ -6136,6 +6166,7 @@
     if (target.view === "signatures") { showSigs(target); return true; }
     var sg = target.signature;
     if (sg && typeof sg === "object") { signatureDialog(sg); return true; }
+    if (target.outbox === true) { loadOutbox().then(function () { renderSide(); outboxDialog(); }); return true; }
     var c = target.compose;
     if (c && typeof c === "object") {
       var init = {
@@ -6143,6 +6174,11 @@
         subject: typeof c.subject === "string" ? c.subject.replace(/\s+/g, " ").trim().slice(0, 300) : "",
         text: typeof c.body === "string" ? c.body.slice(0, 20000) : ""
       };
+      if (typeof c.bcc === "string") init.bcc = C.parseList(c.bcc.slice(0, 2000)).list.slice(0, MAX_RCPT);
+      if (c.bccSelf === true) init.bccSelf = true;
+      // a send time another app proposes (Transfer): shown on the Send button, never sent without it
+      var now0 = Date.now();
+      if (typeof c.sendAt === "number" && c.sendAt > now0 + 30000 && c.sendAt < now0 + 366 * 86400000) init.sendAt = Math.round(c.sendAt);
       if (!Array.isArray(c.attach) || !c.attach.length) { openCompose(init); return true; }
       handedFiles(c.attach).then(function (r) {
         if (document.querySelector("dialog[open]")) return;

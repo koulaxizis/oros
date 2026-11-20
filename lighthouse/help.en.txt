@@ -1,0 +1,57 @@
+# Lighthouse Island
+Lighthouse Island is a calm idle game for one person. You keep the light burning on a small island in the Aegean. At night the lamp guides the ships on the sea routes it reaches, and every ship pays its dues; by day the harbour, the fishing boats and the tavern earn. The island goes on by itself while orOS is closed: there is nothing to miss, nothing to collect and no notifications. Come back when you like.
+
+## How to play
+- Tap a place on the island to build there: the lighthouse, the keeper's house, the harbour, the fishing boats or the tavern. The panel below shows what can be built at that place, what it does and what it costs.
+- One hour on the island lasts one minute, so a day and a night take 24 minutes. Night is from 20:00 to 06:00. The status row shows the coins and how many come in each minute, the supplies (timber and stone), the fish waiting for the tavern, the ships guided on this island, and the day and hour.
+- Tap a passing ship to see its name. Tapping never makes anything: the island earns on its own.
+- `Undo` in the message after every purchase takes it back.
+
+## The light and the sea routes
+- The lamp reaches more sea routes as it grows: wick, oil lamp, mantle, lens and great lens. The routes are the fishing lanes, the caique route, the island ferry, the cargo route and the far merchant route; the farther ones carry fewer but richer ships.
+- Every route the light reaches adds 5% to all the coins from the ships.
+- **Lens polish** makes the light stronger (every ship pays more) and the **clockwork rotation** turns the beam for 10% more.
+- The lamp burns oil every hour it is on, paid from your coins. If the coins run out, it burns low (half its reach and strength) until there are coins again. The light never goes out and no ship is ever wrecked.
+- Cargo ships, and a little the caiques, bring supplies. Supplies build the larger buildings.
+
+## The forecast and the weather
+The strip at the top shows the weather of every quarter of a day for the next 3 days: calm, wind, rain, fog or storm, each with its own icon. Tap it, or press [[F]], for the list in words. The weather is the same on every device.
+- **Wind:** the boats catch 40% less. A **breakwater** keeps them working.
+- **Rain:** the light reaches 30% fewer ships and the harbour works 20% less. The **rain hood** keeps the light clear.
+- **Fog:** the light is on by day too, but only 40% of the ships find their way. The **fog horn** makes it 80%.
+- **Storm:** the light reaches 30% of the ships, the harbour works at half and the boats stay in. **Storm shutters** make it 70% for the light; the breakwater lets the boats work at half.
+When bad weather is coming and its defence is not built, the panel says so, with how many hours are left.
+
+## The other places
+- **Keeper's house:** the oil store (oil costs 20% less) and the workshop (buildings need 10% fewer supplies).
+- **Harbour:** piers (docked ships pay 3 coins every day hour each), the ferry pier (the ferry pays 8 coins every day hour), the warehouse (25% more supplies) and the breakwater.
+- **Fishing boats:** more boats (2 fish every day hour each) and nets (20% more fish).
+- **Tavern:** tables (each sells 3 fish an hour) and rooms (sailors stay the night: harbour fees +15%). Fish the tavern cannot sell yet waits for the next hour.
+`Buildings` in the toolbar lists every place at once.
+
+## Handing over the light
+- Once the lens is built and the light has guided 20,000 ships on this island, you can hand it to your apprentice. A `Hand over` button appears in the toolbar and in the panel. There is no hurry: it stays open, or you can keep this light for good.
+- You choose a farther island and one trait to keep for good. The new light starts small: a wick, one boat, one tavern table and a few coins.
+- Every lighthouse you handed over stays on the sea chart and adds 2% to all coins for good (up to 100%). Each handover also takes 10% off the ships the next one needs (down to half). `Records` lists them.
+- **Islands:** the home island is calm most days. The rock is foggy, and its fishing lanes and caiques carry more ships. The cape is stormy and windy, with more cargo and merchant ships. The outer isle is rainy, with half again as many merchant ships and fewer fishing boats. The windy isle has wind on almost half the days, and more caiques and ferries.
+- **Traits** (three to choose from at each handover; the same trait can be kept again and adds up): Weatherwise (the forecast shows 5 days and 10% more ships find their way in fog), Thrifty (oil 20% cheaper), Fisher's friend (25% more fish), Host (20% more for the tavern's fish), Builder (10% fewer supplies) and Night owl (15% more from every ship at night).
+
+## The keeper's log
+`Keeper's log` in the toolbar (or [[L]]) lists the last ships the light guided, with their names and the weather they passed in. It is only for the pleasure of reading: nothing in it needs doing.
+
+## While you were away
+When you open Lighthouse Island after a while, a card shows how long you were away, how many days and nights passed, the ships guided, the coins made, the weather it had and a few lines from the log. For the first 7 days away the island works in full; after that it goes on at half pace. It never stops, it only slows.
+
+## Records and sync
+`Records` shows the day, all the coins earned, all the ships guided, the ships on this island against what the handover needs, the island, the lighthouses kept, the traits, the hours the lamp burned low and the sea chart. `Sound effects` there turns the small sounds on and off, like [[M]]. `The sound of the sea and the wind` there turns on a soft sea sound that rises with the wind, with a low horn now and then in fog once the fog horn is built; it is off at first. The island syncs between your devices through [orOS sync](help:t/sync): it is the same island on your phone and your computer. If two devices play at the same time, the island that is further ahead is kept, and the other device's last minutes are lost. A purchase is saved a few seconds after you make it, and is sent at most every 5 minutes and when you leave. `Start over` in Records begins a new island on every device, with `Undo` for a few seconds. Lighthouse Island is in the Idle group of the [Game Center](help:a/gamecenter). The sound settings stay on this device.
+
+## Keyboard
+- Arrow keys choose a place on the island; [[Enter]] moves to the panel and [[Escape]] lets go of the place.
+- [[1]] to [[6]]: build what the panel shows, in its order, at the chosen place.
+- [[H]]: Hand over (once the light is ready). [[U]]: Buildings. [[F]]: Forecast. [[L]]: Keeper's log. [[S]]: Records. [[M]]: sound. [[Z]]: undo the last purchase.
+
+## Tips
+- Early on, the oil lamp and a second boat pay for themselves fastest.
+- Look at the forecast before a big purchase: a foggy week makes the fog horn worth more than a polish.
+- Keep a few coins for oil before night falls.
+- Cargo ships bring the supplies the lens needs: the mantle and a warehouse first.

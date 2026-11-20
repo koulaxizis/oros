@@ -105,6 +105,27 @@ const PLAY = {
     await p.focus("#view"); await p.keyboard.press("ArrowRight"); await p.keyboard.press("Digit1");
     for (let i = 0; i < 10 && !(await inProg()); i++) await p.waitForTimeout(300);
   },
+  // Lighthouse Island: close the first-run tour, choose the lighthouse
+  // (the first arrow) and polish the lens (digit 2, 40 coins: the
+  // starting coins)
+  lighthouse: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await p.focus("#view"); await p.keyboard.press("ArrowRight"); await p.waitForTimeout(200);
+    await p.keyboard.press("Digit2"); await p.waitForTimeout(600);
+    for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(500);
+  },
+  // Lantern maze: close the first-run tour, open the first square,
+  // build a lantern beside the way (the cursor starts on the gate)
+  maze: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await tap(p, ".sq-card"); await p.waitForTimeout(400);
+    await p.focus("#view"); await p.keyboard.press("ArrowRight");
+    await p.keyboard.press("ArrowUp"); await p.keyboard.press("ArrowUp"); await p.keyboard.press("ArrowLeft");
+    await p.keyboard.press("Digit1");
+    for (let i = 0; i < 10 && !(await inProg()); i++) await p.waitForTimeout(300);
+  },
   // Roots: close the first-run tour, then end the first turn
   roots: async (p, inProg) => {
     await p.waitForTimeout(700);

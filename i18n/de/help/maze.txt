@@ -1,0 +1,54 @@
+# Laternenlabyrinth
+Laternenlabyrinth ist ein Turmverteidigungsspiel für eine Person. Nachts schlüpfen Schatten durch das Stadttor und gehen über einen alten Platz zum Brunnen. Eine Straße gibt es nicht: das Labyrinth baust du selbst, mit Kisten und Laternentürmen auf jeder freien Platte. Die Schatten nehmen immer den dunkelsten Weg, den sie finden, also verletzt das Licht, das du aufhängst, sie und lenkt sie zugleich. Das Spiel läuft in Echtzeit, aber du kannst jederzeit anhalten und in der Pause bauen, und eine Welle beginnt erst, wenn du sie rufst.
+
+## So wird gespielt
+- Wähle auf dem Stadtplan einen Platz und eine Schwierigkeit. Der erste Platz ist offen; wer einen Platz schafft, öffnet den nächsten.
+- Tippe auf eine freie Platte und wähle dann unten in der Leiste eine Kiste oder einen Turm. Zieh den Finger, um die gewählte Platte vor dem Bauen zu verschieben, damit dein Daumen sie nie verdeckt. Tippe auf etwas Gebautes, um es auszubauen oder zu verkaufen. Tippe noch einmal auf die gewählte Platte, um sie loszulassen.
+- Die gepunktete Linie zeigt immer, wo die Schatten gehen werden. Ist eine freie Platte gewählt, zeigt eine dünne Linie den Weg, den sie nähmen, wenn du dort baust.
+- Den letzten Weg zum Brunnen kannst du nie schließen: was ihn schließen würde, wird abgelehnt, und das Spiel sagt warum. Auf einer Platte, auf der ein Schatten geht, auf Häusern, Säulen, dem Tor und dem Brunnen kann nichts gebaut werden.
+- Drücke `Nächste Welle`, wenn du bereit bist. Drückst du, während noch Schatten unterwegs sind, kommt die nächste Welle früher und du bekommst eine Münze für jeden Schatten, der noch unterwegs ist.
+- Jeder Schatten, der den Brunnen erreicht, kostet ein Herz; eine Düsternis kostet drei. Die Nacht ist gewonnen, wenn die letzte Welle verblasst ist, und verloren, wenn die Herzen ausgehen.
+- `Pause`, die Tempotaste (1x, 2x, 3x) und die Augentaste liegen neben `Nächste Welle`. Das Spiel hält von selbst an, wenn du es verlässt.
+- Verblasste Schatten bringen Münzen, ebenso jede geschaffte Welle.
+
+## Licht und der dunkelste Weg
+- Jede Laterne beleuchtet die Platten um sich herum. Eine Platte hat eine Lichtstufe von 0 bis 3, und Lichter addieren sich.
+- Für einen Schatten zählt eine beleuchtete Platte einen Schritt plus zwei für jede Lichtstufe, eine Platte mit Licht 1 also drei Schritte. Ein Schatten geht lieber einen längeren dunklen Weg als einen kurzen hellen und geht nur dann durchs Licht, wenn deine Wände ihm keinen dunklen Weg lassen.
+- Der Trick ist also, die dunklen Wege mit Kisten zu verbauen und den Schatten nur Wege zu lassen, die durchs Licht führen, so lang du sie machen kannst.
+- Motten (ab dem dritten Platz) machen es umgekehrt: für sie ist die dunkle Platte die teure, und sie suchen den hellsten Weg. Ihr Weg wird mit längeren Strichen gezeigt.
+- Die Augentaste ([[D]]) schreibt die Lichtstufe auf jede beleuchtete Platte.
+
+## Was du baust
+Jeder Turm hat drei Stufen. Auf Stufe 3 wählst du einen von zwei Zweigen, und diese Wahl bleibt.
+- **Kiste:** eine billige Wand. Kein Licht und kein Schaden; sie biegt nur den Weg.
+- **Laterne:** ruhiges Licht, das jeden Schatten darin verletzt. Die Helle Lampe gibt doppeltes Licht, viel breiter, und lenkt stark; das Buntglas ist ein kleines, heißes Licht, das aus der Nähe viel mehr verletzt.
+- **Blitzlampe** (ab Platz 2): eine dunkle Lampe. Alle zwei Sekunden blitzt sie auf die nahen Schatten. Sie gibt kein Licht, also gehen die Schatten nicht um sie herum. Magnesium macht größere Blitze, die Schleier zerreißen; der Schnellblitz blitzt doppelt so oft, etwas schwächer.
+- **Spiegel** (ab Platz 3): wirft das Licht einer Laterne, die neben ihm steht (auch über Eck), in einer geraden Linie weiter, die leuchtet und verletzt. Dreh ihn ([[R]]), um den Strahl zu richten. Der Strahl endet an Häusern, Säulen, Kisten und Türmen. Der Lange Spiegel wirft viel weiter; das Prisma wirft zwei Strahlen im rechten Winkel.
+- **Glocke** (ab Platz 4): läutet ab und zu und bremst jeden Schatten in ihrer Nähe. Die Tiefe Glocke bremst stärker und zerreißt Schleier; das Glockenspiel klingt weiter und schadet ein wenig.
+- Beim Verkauf bekommst du 70% des Preises zurück. Alles, was seit dem Beginn der letzten Welle gebaut oder ausgebaut wurde, bringt alles zurück, du kannst das Labyrinth zwischen den Wellen also kostenlos umbauen.
+
+## Die Schatten
+Jede Art hat ihre eigene Form, du brauchst also nie die Farben.
+- **Schatten** (rund): ein einfacher Schatten.
+- **Huscher** (ein Tropfen): schnell, verblasst aber rasch.
+- **Motte** (eine Raute): sucht den hellsten Weg.
+- **Schleier** (sechs Seiten, mit Rand): ruhiges Licht und Strahlen richten nur ein Viertel ihres Schadens an, bis ein Magnesiumblitz oder eine tiefe Glocke den Schleier zerreißt. Schleier kommen mit dem nächsten Viertel der Stadt.
+- **Düsternis** (breit): langsam und sehr stark, beendet jede Nacht und kostet am Brunnen drei Herzen.
+
+## Schwierigkeit, Sterne und Speichern
+- Sanft: 30 Herzen und mehr Münzen; Normal: 20 Herzen; Schwer: 10 Herzen, weniger Münzen und stärkere Schatten.
+- Sterne: drei mit neun Zehnteln der Herzen, zwei mit der Hälfte, einer für jede gewonnene Nacht. Der Stadtplan behält die besten Sterne jedes Platzes.
+- Geht eine Nacht verloren, bringt dich `Noch einmal ab Welle` an den Beginn dieser Welle zurück, mit dem Labyrinth und den Münzen, die du damals hattest.
+- Die Nacht, die du spielst, bleibt auf diesem Gerät und öffnet sich angehalten dort wieder, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` auf dem Stadtplan löscht sie auf allen Geräten. Laternenlabyrinth steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+
+## Tastatur
+- Die Pfeiltasten bewegen die gewählte Platte; [[Escape]] lässt sie los.
+- [[C]] oder [[0]]: eine Kiste bauen. [[1]] bis [[4]]: eine Laterne, Blitzlampe, einen Spiegel oder eine Glocke bauen.
+- [[U]]: auf Stufe 2 ausbauen. [[A]] oder [[B]]: der Zweig auf Stufe 3. [[R]]: einen Spiegel drehen. [[S]]: verkaufen.
+- [[Space]]: Pause oder weiter. [[F]]: Tempo. [[N]]: die nächste Welle. [[D]]: die Lichtstufen zeigen. [[L]]: der Stadtplan. [[M]]: Ton. [[?]]: so wird gespielt.
+
+## Tipps
+- Jeder Weg endet am Brunnen, also wird das Licht in seiner Nähe immer durchquert. Stell deine ersten Laternen dorthin.
+- Eine Laterne allein schiebt den Weg meist nur zur Seite. Erst Kisten neben ihr zwingen die Schatten durch ihr Licht.
+- Blitzlampen und Glocken lenken nicht: stell sie direkt neben den Weg, dort, wo die Schatten am längsten gehen.
+- Bau das Labyrinth vor jeder Welle um: was seit dem Beginn der letzten Welle gebaut wurde, lässt sich voll zurückverkaufen.

@@ -49,8 +49,8 @@
       "ms": 253
     },
     "calculator": {
-      "bytes": 235670,
-      "ms": 59
+      "bytes": 283585,
+      "ms": 93
     },
     "calendar": {
       "bytes": 1676287,
@@ -208,6 +208,10 @@
       "bytes": 677887,
       "ms": 69
     },
+    "lighthouse": {
+      "bytes": 295554,
+      "ms": 221
+    },
     "lightsout": {
       "bytes": 203775,
       "ms": 57
@@ -231,6 +235,10 @@
     "mastermind": {
       "bytes": 168959,
       "ms": 50
+    },
+    "maze": {
+      "bytes": 286097,
+      "ms": 144
     },
     "meals": {
       "bytes": 648191,

@@ -435,13 +435,94 @@
     return norm({ v: 1, files: s.files, smart: s.smart.filter(function (x) { return x.id !== id; }), tombs: tombs });
   }
 
+  // ---------- smart folders: does an item match? (wave T2) ----------
+  // The extensions each kind means (lower case). "folder" is a folder.
+  var KIND_EXT = {
+    image:   ["jpg", "jpeg", "png", "gif", "webp", "bmp", "svg", "avif", "heic", "heif", "tif", "tiff", "ico"],
+    video:   ["mp4", "webm", "mov", "mkv", "avi", "m4v", "ogv", "3gp"],
+    audio:   ["mp3", "wav", "ogg", "oga", "flac", "m4a", "aac", "opus", "weba", "mid", "midi"],
+    doc:     ["doc", "docx", "odt", "rtf", "epub", "ppt", "pptx", "odp", "pages"],
+    pdf:     ["pdf"],
+    sheet:   ["xls", "xlsx", "ods", "csv", "tsv"],
+    text:    ["txt", "md", "markdown", "log", "json", "xml", "yaml", "yml", "ini", "srt", "vtt"],
+    archive: ["zip", "rar", "7z", "tar", "gz", "tgz", "bz2", "xz"],
+    code:    ["js", "mjs", "ts", "jsx", "tsx", "html", "htm", "css", "py", "go", "rs", "c", "h", "cpp", "hpp", "java", "kt", "sh", "php", "rb", "lua", "swift", "sql", "jsfx", "eel"]
+  };
+  function extOf(name) {
+    var n = String(name || ""), i = n.lastIndexOf(".");
+    return i > 0 ? n.slice(i + 1).toLowerCase() : "";
+  }
+  function kindOf(name, dir) {
+    if (dir) return "folder";
+    var e = extOf(name);
+    for (var i = 0; i < KINDS.length; i++) {
+      var k = KINDS[i];
+      if (KIND_EXT[k] && KIND_EXT[k].indexOf(e) !== -1) return k;
+    }
+    return "";
+  }
+  function fold(x) {
+    var s = String(x || "").toLowerCase();
+    if (s.normalize) s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    return s.replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
+  }
+  function dayStart(iso) {
+    var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || "");
+    return m ? new Date(+m[1], +m[2] - 1, +m[3]).getTime() : NaN;
+  }
+  // Which facts a query needs beyond the name (so a walk asks the disk
+  // for a stat only when it must).
+  function needsStat(q) {
+    return !!(q && (q.days || q.from || q.to || q.min != null || q.max != null));
+  }
+  function inDir(q, path) {
+    var dir = q && q.dir ? q.dir : "/internal";
+    return dir === "/internal" ? path.indexOf("/internal/") === 0 : under(path, dir) && path !== dir;
+  }
+  // e { path, name, dir, size?, mtime? }; ids: the item's tag ids.
+  // Every condition given must hold; tags: any of them, or all with q.all.
+  function matches(q, e, ids, now) {
+    q = q || {};
+    if (!e || typeof e.path !== "string" || !inDir(q, e.path)) return false;
+    if (q.tg && q.tg.length) {
+      ids = ids || [];
+      var hit = q.tg.filter(function (id) { return ids.indexOf(id) !== -1; }).length;
+      if (q.all ? hit !== q.tg.length : !hit) return false;
+    }
+    if (q.kind && q.kind.length && q.kind.indexOf(kindOf(e.name, e.dir)) === -1) return false;
+    if (q.name) {
+      var words = fold(q.name).split(" ").filter(Boolean), n = fold(e.name);
+      for (var i = 0; i < words.length; i++) if (n.indexOf(words[i]) === -1) return false;
+    }
+    if (q.days || q.from || q.to) {
+      var t = typeof e.mtime === "number" ? e.mtime : NaN;
+      if (!isFinite(t)) return false;
+      if (q.days && t < (now || Date.now()) - q.days * 86400000) return false;
+      if (q.from && t < dayStart(q.from)) return false;
+      if (q.to && t >= dayStart(q.to) + 86400000) return false;
+    }
+    if (q.min != null || q.max != null) {
+      if (e.dir || typeof e.size !== "number") return false;
+      if (q.min != null && e.size < q.min) return false;
+      if (q.max != null && e.size > q.max) return false;
+    }
+    return true;
+  }
+  // An empty query would list the whole disk: a smart folder needs at
+  // least one condition besides the folder.
+  function hasCondition(q) {
+    q = q || {};
+    return !!((q.tg && q.tg.length) || (q.kind && q.kind.length) || q.name || q.days || q.from || q.to || q.min != null || q.max != null);
+  }
+
   var api = {
-    VERSION: "1.0.0", KEY: KEY, SLICE: SLICE, KINDS: KINDS,
+    VERSION: "1.1.0", KEY: KEY, SLICE: SLICE, KINDS: KINDS,
     MAX_FILES: MAX_FILES, MAX_ON: MAX_ON, MAX_SMART: MAX_SMART, MAX_NAME: MAX_NAME,
     norm: norm, merge: merge, okPath: okPath, okKey: okKey, keyOf: keyOf, rowAt: rowAt,
     onIds: onIds, index: index, tagsAt: tagsAt, withTag: withTag, counts: counts, hasAny: hasAny,
     setTags: setTags, carry: carry, dropPath: dropPath, stripTag: stripTag, relocate: relocate,
-    normQuery: normQuery, findSmart: findSmart, putSmart: putSmart, dropSmart: dropSmart
+    normQuery: normQuery, findSmart: findSmart, putSmart: putSmart, dropSmart: dropSmart,
+    KIND_EXT: KIND_EXT, kindOf: kindOf, matches: matches, needsStat: needsStat, hasCondition: hasCondition, fold: fold
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosTagsCore = api;

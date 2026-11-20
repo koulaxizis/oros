@@ -518,6 +518,12 @@
    ]
   },
   {
+   "app": "lighthouse",
+   "files": [
+    "lighthouse/lighthouse.js"
+   ]
+  },
+  {
    "app": "lightsout",
    "files": [
     "lightsout/lightsout.js"
@@ -588,6 +594,12 @@
    "app": "mastermind",
    "files": [
     "mastermind/mastermind.js"
+   ]
+  },
+  {
+   "app": "maze",
+   "files": [
+    "maze/maze.js"
    ]
   },
   {

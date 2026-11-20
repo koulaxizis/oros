@@ -59,7 +59,7 @@ orosPack("de", "passwords", {
  "bio.title": "Mit Fingerabdruck oder Gesicht entsperren",
  "bio.unlock": "Mit Fingerabdruck oder Gesicht entsperren",
  "bio.wait": "Frage das Handy…",
- "bio.update": "Die orOS-App auf diesem Handy antwortet noch nicht. Aktualisiere sie (F-Droid, Obtainium oder das APK von der orOS-Seite), öffne sie erneut und versuche es noch einmal.",
+ "bio.update": "Die orOS-App auf diesem Handy antwortet noch nicht. Aktualisiere sie (Koulaxizis Apps oder das APK von der orOS-Seite), öffne sie erneut und versuche es noch einmal.",
  "err.noMemory": "Dieses Gerät konnte der Schlüsselableitung der Datei nicht genug Speicher geben. Öffne die Datei an einem Computer oder exportiere erneut ohne Passwort, importiere diese Datei und lösche sie dann.",
  "err.zero": "Die Datei kam leer an (0 Bytes): Die Dateiauswahl dieses Geräts hat sie nicht übergeben. Kopiere die Datei nach Downloads und wähle sie dort aus, oder öffne sie in einer Text-App, kopiere den ganzen Text und füge ihn unten in „Link des QR-Codes oder der Text einer Exportdatei“ ein.",
  "imp.otpApps": "Zwei-Faktor-Apps: eine Sicherung oder ein Export von Aegis, 2FAS, Proton Authenticator, Ente Auth, Bitwarden Authenticator, andOTP, FreeOTP+, Stratum (Authenticator Pro) oder LastPass Authenticator, mit oder ohne Passwort, oder eine .txt-Datei mit otpauth://-Links. Google Authenticator: die QR-Codes unten. Microsoft Authenticator und Authy haben keinen Export: siehe Hilfe, „Codes aus Microsoft Authenticator oder Authy umziehen“.",

@@ -1798,6 +1798,13 @@ body.till-mode #pocket-chip { display: none !important; }
   border-radius: 9px; background: var(--accent); color: var(--bg, #fff); font-size: 11px; font-weight: 700;
   line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; pointer-events: none;
 }
+/* W2: while something is dragged, both buttons show as a drop place */
+#pocket-chip.pk-drag { outline: 1.5px dashed var(--accent); outline-offset: -4px; }
+#pocket-chip.pk-over, #ld-dock .ld-pocket.pk-over .ld-pk-tile { background: var(--accent); color: var(--bg, #fff); }
+#ld-dock .ld-pocket.pk-over .ld-pk-tile { border-style: solid; }
+@media (prefers-reduced-motion: no-preference) {
+  #pocket-chip.pk-drag, #ld-dock .ld-pocket.pk-drag .ld-pk-tile { transition: background .12s ease, color .12s ease; }
+}
 /* Sensitive work: shield in the bar while the mode is on */
 #strict-badge {
   display: inline-flex; align-items: center; justify-content: center;
@@ -2262,6 +2269,19 @@ html[data-oros-zoom] #app-menu > * { zoom: var(--oros-zoom, 1); }
 #oros-safe button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
 html[data-oros-contrast="high"] #oros-safe { border: 2px solid currentColor; box-shadow: none; }
 @media (max-width: 480px) { #oros-safe { left: 16px; right: 16px; width: auto; } }
+
+/* Reduce transparency (A11Y-FX W2, Settings › Accessibility; the shell
+   sets data-oros-transparency, also while the system asks for it):
+   A11Y_CSS takes every blur away; the glass parts of the shell get
+   their solid panel colour. */
+html[data-oros-transparency] #oros-bar,
+html[data-oros-transparency] #osk,
+html[data-oros-transparency] #oros-greet,
+html[data-oros-transparency] .wg-card,
+html[data-oros-transparency] #ld-dock .ld-bar,
+html[data-oros-transparency][data-oros-bar] #oros-bar::before { background: var(--panel-bg, var(--bg)) !important; }
+html[data-oros-transparency] #oros-ov { background: rgba(0, 0, 0, 0.86); }
+html[data-oros-transparency] .ld-tile { --gl-tint: rgba(16, 16, 20, 0.88) !important; }
 
 /* LOCAL-1: the local-folder bridge is on (localroots.js) */
 #oros-local-bar { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2147483000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;

@@ -1,6 +1,47 @@
 # What's new in orOS
 The newest changes come first. When orOS updates itself, the update notice opens this page.
 
+orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
+
+## Version 7.89.00
+- **New game: Lantern maze.** The second tower defense game: at night shadows slip in at the town gate and walk across an old square to the fountain. There is no road: you build the maze yourself with crates, lanterns, flash lamps, mirrors and bells on any free tile. The shadows always take the darkest way, so a lantern both hurts them and steers them, and moths look for the brightest way instead. The dotted line always shows where they will walk, and a block that would close the last way is refused. Real time with pause and 1x/2x/3x, a wave only starts when you call it. Four squares in the Harbour quarter, three difficulties and stars that sync between your devices. In the Tower defense group of the Game Center.
+
+## Version 7.88.00
+- **New game: Lighthouse Island.** A calm idle game: keep the light burning on a small Aegean island. At night the lamp guides the ships on the sea routes it reaches and each one pays its dues; by day the harbour, the fishing boats and the tavern earn. The forecast at the top shows the weather of the next days, so you choose which defence to build first: a fog horn, storm shutters, a rain hood or a breakwater. The light never goes out and no ship is ever wrecked. Once the lens is built you can hand the light to an apprentice and sail to a farther island, keeping one trait for good, while the old lighthouses on the sea chart add coins. It goes on while orOS is closed (full pace for 7 days, then half), with no notifications and nothing to collect, and it syncs between your devices. In the Idle group of the Game Center.
+
+## Version 7.87.00
+- **Focus modes on a schedule.** A mode can turn on by itself on the days and hours you choose, or while a Calendar event with a chosen label or word in its title runs (for example `Meeting`). Quick settings has `Until the schedule ends`. Settings › Notifications › `Focus modes`. See [Focus modes](help:t/notifications).
+
+## Version 7.86.00
+- **Drag things into and out of the Pocket.** While you drag a text, a link or files from Files, the pocket button shows: drop on it to keep what you drag. Drag an item out of the Pocket into a field of any app. Ctrl+V on the open Pocket keeps what you copied, Clipboard history has a pocket button next to each copy, and files you move in Files stay in the Pocket. See [Send to someone](help:t/share).
+
+## Version 7.85.01
+- **Koulaxizis Apps, one place for all our Android apps.** The download page, Settings and the update notice of the orOS Android apps now point to Koulaxizis Apps, the free app manager that installs and updates every app of orOS, NULL JSFX, Noxpress and Glarolykoi. Glarolykoi has its own section in it. While it is installed, it tells you about new versions and orOS no longer does. The download page also shows how often each app was downloaded (only numbers, nothing about you). See [Install orOS](help:t/install).
+
+## Version 7.85.00
+- **Smart folders in Files.** Save a search by tags, kind, date, name, folder or size, and it always shows what fits right now. Make one with `+` next to `Smart folders` in the tree, or with `Save as smart folder…` under search results. They are synced. Tag names are now also found by the menu search, the Assistant and orOS Gate (never those of a private document). See [Files](help:a/files).
+
+## Version 7.84.00
+- **Two top bar buttons you can tell apart.** The button that holds the smart cards now shows sparkles, and the open apps button shows two windows, so on a phone they no longer look alike.
+
+## Version 7.83.00
+- **Bedtime.** Settings › Screen time › `Bedtime` greys the whole screen on the evenings you choose, from and until the times you pick (half hours, also past midnight). It fades over a minute, keeps your own colour filter and Night Light, and turns back in the morning; your apps keep working. 15 minutes before, a quiet notice; `Not tonight` (in the notice, in Quick settings' new `Bedtime` button or in Settings) leaves it off until the next evening. `Also turn on Sleep focus` starts the Sleep focus until the night ends, which quiets your other devices too. It is off until you turn it on, stays on this device and works whether screen time counting is on or off.
+
+## Version 7.82.00
+- **Less motion and less transparency.** Settings › Accessibility has two new switches for this device. `Reduce motion` stops animations and moving effects in orOS and every app: the live wallpaper, seasonal decorations, apps opening from their icon and sliding panels. Games still play. `Reduce transparency` gives the top bar, the Dock, the menu, widgets and panels solid backgrounds instead of see-through, blurred ones. If your device already asks for less motion or transparency, orOS follows it.
+
+## Version 7.81.00
+- **Newsletter: ready for moving from another platform.** Check now also looks at your domain's SPF and DMARC records and warns before a list's first issue if they are missing (it never stops you sending). New lists get one-click unsubscribe at once, without opening a public form. There is a Hosting mail (cPanel, Plesk) preset for the mail of your web hosting. On Lists, Moving here is a checklist for bringing a list over, with a place for the old platform's figures next to each issue's report. Subscribe link also gives a small pop-up sign-up form for any site: no cookies, nothing from other services, and people still confirm by e-mail. orOS still counts no opens or clicks.
+
+## Version 7.80.00
+- **Email a Transfer link at a set day and time.** When you send through your Dropbox, tick Email the link at a set day and time, write the address and pick when (up to 14 days ahead). Mail opens with the email ready; press Send and it waits in the Outbox, then goes out from your orOS with your own account. You get a notification when it has gone and, if you like, a copy in your inbox. The hours the files stay count from the email. Change or cancel it in Mail's Outbox.
+
+## Version 7.79.02
+- **Support orOS without Ko-fi.** Info › Support now has three plain links to the new page useoros.online/support/: buy an orOS t-shirt, mug or sticker from the Glarolykoi shop, make a one-time donation, or hire me. Ko-fi, the coffees and the monthly memberships are gone. The one notice after a month of use stays the same: once, and never again. The download page shows its support step at most once every 30 days, with Don't show this again.
+
+## Version 7.79.01
+- **Support orOS, in plain sight.** The Start menu has a Support orOS row that opens the Support section of the Info window, which now says plainly how orOS is funded. After a month of use, orOS shows one quiet notice about it, once, and never again. The download page asks once per visit, with Skip to download.
+
 ## Version 7.79.00
 - **Claude's Layout work no longer needs orOS in front.** When Claude asks Layout (or another app that opens on your screen) for something while nobody sees orOS, in a background tab, with orOS in the tray or closed, the request waits, encrypted, and runs the next time orOS is on your screen. A background orOS tab also stays awake for the Gate, so Claude's reads and changes are answered without bringing it to the front.
 

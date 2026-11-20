@@ -9,5 +9,18 @@
         <item name="android:navigationBarColor">@color/bar</item>
         <item name="android:windowBackground">@color/bg</item>
         <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:alertDialogTheme">@style/Glarolykoi.Dialog</item>
+    </style>
+
+    <!--
+      GL-DIALOG: dialogs take the same light or dark base as the colours, so
+      text and buttons always contrast with the dialog's own background
+      (1.0.0 had a light dialog with the dark mode's near-white text).
+    -->
+    <style name="Glarolykoi.Dialog" parent="android:Theme.Material.Light.Dialog.Alert">
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/dim</item>
+        <item name="android:colorBackground">@color/bg</item>
     </style>
 </resources>

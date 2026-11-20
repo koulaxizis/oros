@@ -44,7 +44,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var KEY = "oros-pocket";
   var MAX_ITEMS = 20;
   var MAX_ITEM = 20000;          // characters of one item's data (JSON)
@@ -227,6 +227,7 @@
     "  border-radius: 12px; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }",
     ".pk-use:hover, .pk-use:focus-visible { background: rgba(127,127,127,.16); outline: none; }",
     ".pk-use:disabled { cursor: default; background: transparent; }",
+    ".pk-row[draggable=true] .pk-use { cursor: grab; }",
     ".pk-ic { flex: none; width: 22px; height: 22px; color: var(--accent); }",
     ".pk-ic svg { width: 22px; height: 22px; }",
     ".pk-tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }",
@@ -290,7 +291,8 @@
     dlg.appendChild(foot);
     dlg.addEventListener("click", function (e) { if (e.target === dlg) close(); });   // the backdrop
     var me = dlg;
-    dlg.addEventListener("close", function () { if (dlg === me) close(); });
+    dlg.addEventListener("close", function () { if (dlg === me && !dragging) close(); });
+
     parts = { x: x, note: note, list: list, clear: clearB };
     doc.body.appendChild(dlg);
   }
@@ -347,6 +349,7 @@
       use.disabled = miss;
       use.addEventListener("click", function () { sendIt(it.at); });
       li.appendChild(use);
+      if (it.k !== "files" && !miss) dragOut(li, it);   // W2: drag into a field of any app
       if (it.k !== "files") li.appendChild(iconBtn(IC.copy, t("pk.copy"), function () { copyIt(it.at); }));
       li.appendChild(iconBtn(IC.x, t("pk.remove"), function () {
         save(remove(load(), it.at));
@@ -355,6 +358,47 @@
       }));
       parts.list.appendChild(li);
     });
+  }
+
+  // W2: drag a row out into a field. The panel steps aside (closed,
+  // still in the page, so the drag goes on) and is removed when the
+  // drag ends. The marker type keeps the Pocket from taking it back.
+  var dragging = false;
+  function dragOut(li, it) {
+    li.draggable = true;
+    li.addEventListener("dragstart", function (e) {
+      var dt = e.dataTransfer;
+      if (!dt) return;
+      var text = plain(it.k, it.d);
+      try {
+        dt.setData("text/plain", text);
+        if (it.k === "link" && it.d && it.d.url) dt.setData("text/uri-list", it.d.url);
+        dt.setData("application/x-oros-pocket", "1");
+        dt.effectAllowed = "copy";
+      } catch (x) {}
+      dragging = true;
+      lastFocus = null;
+      var d = dlg;
+      setTimeout(function () { if (d && d.open && dragging) { try { d.close(); } catch (x) { d.removeAttribute("open"); } } }, 0);
+    });
+    li.addEventListener("dragend", function () {
+      if (!dragging) return;
+      dragging = false;
+      close();
+    });
+  }
+  // W2: Ctrl+V on the open panel keeps what was copied.
+  function pasted(e) {
+    if (!dlg || !dlg.open || dragging) return;
+    var tg = e.target;
+    if (tg && (tg.tagName === "INPUT" || tg.tagName === "TEXTAREA" || tg.isContentEditable)) return;
+    var cd = e.clipboardData, txt = "";
+    try { txt = cd ? cd.getData("text/plain") || "" : ""; } catch (x) { txt = ""; }
+    e.preventDefault();
+    var s = txt.trim();
+    if (!s) { toast("err", t("pk.noimport")); return; }
+    if (/^https?:\/\/\S+$/i.test(s)) keep("link", { url: s }, "");
+    else keep("text", { text: txt }, "");
   }
 
   function sendIt(at) {
@@ -391,15 +435,18 @@
   function open() {
     if (locked()) return;
     if (dlg && dlg.open) { paint(); return; }
+    if (dlg) { dragging = false; close(); }       // a panel left aside by a drag
     lastFocus = doc.activeElement;
     gone = {};
     build();
     paint();
     try { dlg.showModal(); } catch (e) { dlg.setAttribute("open", ""); }
+    doc.addEventListener("paste", pasted);
     var first = dlg.querySelector(".pk-use:not(:disabled)");
     (first || parts.x).focus();
   }
   function close() {
+    doc.removeEventListener("paste", pasted);
     if (!dlg) return;
     var d = dlg;
     if (d.open) { try { d.close(); } catch (e) { d.removeAttribute("open"); } }
