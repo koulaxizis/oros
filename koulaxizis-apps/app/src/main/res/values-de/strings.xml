@@ -40,4 +40,9 @@
     <string name="support">Die Projekte unterstützen</string>
     <string name="notes_off">Update-Hinweise sind aus, daher siehst du Updates nur hier.</string>
     <string name="notes_turn_on">Einschalten</string>
+    <string name="confirm">Bestätigen</string>
+    <string name="not_updated">%1$s wurde nicht aktualisiert. Tippen Sie auf Aktualisieren, um es erneut zu versuchen.</string>
+    <string name="lost_text">Die Frage von Android zur Installation von %1$s wurde geschlossen, bevor Sie geantwortet haben (auf manchen Handys verdeckt sie eine Sicherheitsprüfung).</string>
+    <string name="show_again">Erneut anzeigen</string>
+    <string name="skip">Überspringen</string>
 </resources>
