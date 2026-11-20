@@ -683,8 +683,10 @@
     var doc = LY.doc;
     if (!doc || !window.LayoutPro) return;
     LY.openDialog(t("links.title"), function (body, close) {
-      var list = window.LayoutPro.links(doc, LY.A.isMissing, R.effectivePpi, 200);
+      var small = window.LY_SLA ? function (it) { return window.LY_SLA.shrunk(it, LY.A.MAX_SIDE); } : null;
+      var list = window.LayoutPro.links(doc, LY.A.isMissing, R.effectivePpi, 200, small);
       var labels = M.pageLabels(doc), miss = list.filter(function (x) { return x.state === "missing" || x.state === "empty"; }).length;
+      var nSmall = list.filter(function (x) { return x.state === "small"; }).length;
       body.appendChild(el("p", "hint" + (miss ? " warn" : ""), list.length ? t("links.sum", { n: list.length, m: miss }) : t("links.none")));
       var ul = el("ul", "links-list");
       list.slice(0, 500).forEach(function (x) {
@@ -699,8 +701,9 @@
         ul.appendChild(li);
       });
       body.appendChild(ul);
+      if (nSmall) body.appendChild(el("p", "hint warn", t("links.smallHint", { n: nSmall })));
       var act = el("div", "dlg-actions");
-      if (miss && LY.io.relinkPick) act.appendChild(btn(t("sla.find"), function () { close(); LY.io.relinkPick(); }));
+      if ((miss || nSmall) && LY.io.relinkPick) act.appendChild(btn(t("sla.find"), function () { close(); LY.io.relinkPick(); }));
       act.appendChild(el("span", "spacer"));
       act.appendChild(btn(t("btn.close"), close, "primary"));
       body.appendChild(act);

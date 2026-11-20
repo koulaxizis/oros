@@ -640,7 +640,17 @@
     if (Math.abs(sy - sx) > 1e-9 * sx) it.ext.iscy = sy;
   }
 
-  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug, nameKey: nameKey, placePicture: placePicture };
+  // A free Scribus placement imported before 7.96.01 from a picture
+  // stored smaller than its original (a side at `max`, the assets'
+  // MAX_SIDE) and not changed since: its scale is still LOCALSC, so it
+  // draws too small. Find pictures with the original places it again.
+  function shrunk(it, max) {
+    var p = it && it.ext && it.ext.place;
+    if (!it || it.t !== "img" || !it.a || it.fit !== "custom" || !Array.isArray(p) || p[0] !== 0 || !(p[1] > 0)) return false;
+    if (!(Math.max(it.iw || 0, it.ih || 0) >= (max || 3500))) return false;
+    return Math.abs((it.isc || 0) - p[1]) <= p[1] * 0.01;
+  }
+  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug, nameKey: nameKey, placePicture: placePicture, shrunk: shrunk };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_SLA = api;
 })(typeof window !== "undefined" ? window : this);

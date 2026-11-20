@@ -589,6 +589,8 @@ orosPack("de", "layout", {
  "links.s.missing": "Datei fehlt",
  "links.s.empty": "leerer Rahmen",
  "links.s.low": "niedrige Auflösung",
+ "links.s.small": "kleiner als in Scribus",
+ "links.smallHint": "{n} Bilder stammen aus Scribus-Dateien, die vor Version 7.96.01 geöffnet wurden, und erscheinen kleiner als in Scribus. Mit Bilder suchen… und den Originalbildern stehen sie wieder in ihrer Größe.",
  "links.local": "eingebettet (aus einem lokalen Ordner)",
  "pages.size": "Seitenformat…",
  "pages.sizeOwn": "Seitenformat (eigenes)…",
