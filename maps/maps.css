@@ -2081,3 +2081,19 @@ body.trn-itin .route-alt { opacity: 0.25; }
   content: ""; position: absolute; left: 50%; top: 3px; margin-left: -5px;
   border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #fff;
 }
+
+/* ---------- Hiking and cycling, wave H5: recording upgrades ---------- */
+.trk-acts { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.trk-act-tag { display: inline-block; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--text-dim); margin-bottom: 4px; }
+.trk-rec-state.still { color: #e5a50a; }
+.trk-rec.on .trk-rec-state.still { color: #e5a50a; }
+.trk-splits, .trk-pts { margin: 8px 0; border: 1px solid var(--border); border-radius: 10px; padding: 6px 10px; }
+.trk-splits summary, .trk-pts summary { cursor: pointer; font-size: 13px; font-weight: 600; min-height: 28px; display: flex; align-items: center; }
+.trk-sp-t { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; margin-top: 4px; }
+.trk-sp-t th { text-align: right; font-weight: 600; color: var(--text-dim); padding: 3px 4px; border-bottom: 1px solid var(--border); }
+.trk-sp-t td { text-align: right; padding: 3px 4px; }
+.trk-sp-t th:first-child, .trk-sp-t td:first-child { text-align: left; }
+.trk-sp-t tr.best td { color: var(--accent); font-weight: 600; }
+.trk-pt-row { align-items: center; gap: 8px; }
+.trk-pt-img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
+.trk-pt-file { width: 100%; box-sizing: border-box; }
