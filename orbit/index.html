@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-MaWtj9vs61M237csGYfVn5bvoWpnBdU9O68ZIFsv7Xw='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=orbit" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Orbit garden · orOS</title>
+
+  <link rel="stylesheet" href="../fonts.css?v=7.98.00">
+  <link rel="stylesheet" href="orbit.css?v=7.98.00">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=7.98.00">
+
+</head>
+<body>
+
+  <!-- Toolbar: the gardens, the night's hearts / coins / wave, sound -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <button type="button" class="icon-btn" id="map-btn"></button>
+      <h1 class="tb-title" id="tb-title" data-i18n="app.name">Orbit garden</h1>
+      <span class="stat" id="s-hearts"><span class="ic"></span><span class="v"></span></span>
+      <span class="stat" id="s-coins"><span class="ic"></span><span class="v"></span></span>
+      <span class="stat" id="s-wave"><span class="ic"></span><span class="v"></span></span>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn" id="help-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn"></button>
+    </div>
+  </header>
+
+  <main id="scene">
+    <canvas id="view" tabindex="0" role="application"></canvas>
+    <div id="tip" aria-hidden="true" hidden></div>
+    <!-- The garden list: gardens, stars, difficulty -->
+    <section id="map" hidden></section>
+  </main>
+
+  <!-- Pause, speed, next wave; then what comes next, or the chosen slot -->
+  <section id="bar">
+    <div class="bar-row" id="bar-ctl">
+      <button type="button" class="ctl-btn" id="pause-btn"></button>
+      <button type="button" class="ctl-btn" id="speed-btn"></button>
+      <button type="button" class="ctl-btn main" id="next-btn"><span class="ic"></span><span class="lb"></span></button>
+    </div>
+    <div class="bar-row" id="bar-ctx"></div>
+  </section>
+
+  <dialog class="og-dlg" id="dlg"></dialog>
+
+  <aside id="live" class="sr-only" aria-live="polite"></aside>
+  <div id="toast" role="status"></div>
+
+  <script src="../i18n.js?v=7.98.00" data-app="orbit"></script>
+
+  <script src="../gamekit/haptics.js?v=7.98.00"></script>
+  <script src="engine.js?v=7.98.00"></script>
+  <script src="orbit.js?v=7.98.00"></script>
+
+  <script src="../pickers.js?v=7.98.00" defer></script>
+</body>
+</html>

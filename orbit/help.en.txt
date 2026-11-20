@@ -1,0 +1,55 @@
+# Orbit garden
+Orbit garden is a tower defense game for one person. A little round garden grows on a small moon, with a moonflower in the middle. At night falling sparks come in at a gate on the rim and spiral in towards it. Your plants grow on three stone rings, and every ring has one gap. Between waves you turn the rings: that moves your plants, and it changes how far the sparks must walk round before they find the way in. The game runs in real time, but you can pause at any moment and plant while it is paused, and a wave only starts when you call it.
+
+## How to play
+- Choose a garden and a difficulty in the garden list. The first garden is open; clearing a garden opens the next one.
+- Sparks come in at a gate on the rim and walk clockwise round the lane between the rim and the outer ring until they reach that ring's gap. They slip through, walk round the next lane to the middle ring's gap, then round the last lane to the inner ring's gap, and in to the moonflower.
+- Tap a bed on a ring, then choose a plant in the bar below. Tap a plant to upgrade it, set its aim or sell it. Tap the chosen bed again, or the ground, to let go.
+- The dotted line always shows the way the next wave will take. On gardens with two gates, the next wave's gates are lit and the bar says which gate each group comes from.
+- Press `Next wave` when you are ready. Pressing it while sparks are still out brings the next wave early and gives one coin for every spark still out.
+- Each spark that reaches the moonflower costs a heart; an eclipse costs three. The night is won when the last wave has gone out, and lost when the hearts run out.
+- `Pause` and the speed button (1x, 2x, 3x) are next to `Next wave`. The game pauses by itself when you leave it.
+- Sparks that go out give coins, and so does every wave cleared.
+
+## Turning the rings
+- Choose any slot of a ring (a bed, a plant, the gap or a stone) and use `Turn ◀` and `Turn ▶` to turn that ring one step back or on.
+- The gap and the plants on the ring turn together. A gap just behind the place where the sparks come into a lane makes them walk almost the whole way round; a gap just in front of it lets them straight through. Turning a ring changes the lane outside it and the lane inside it, and the dotted line shows the new way at once.
+- Rings turn only while no spark is in the garden: between waves, or before the first one.
+- Before the first wave every ring has two free steps; between waves after that, one. Every step beyond them costs 5 coins, and turning back a step you made gives it back.
+- The plants keep their place on the ring, so a plant that guarded the way well may end up far from it after a turn. Look at the reach (tap the plant) before you turn.
+
+## The plants
+Each plant has three levels. At level 3 you choose one of two branches, and that choice stays.
+- **Thorn bush:** shoots thorns at one spark at a time. Its aim can be set ([[T]]): the first spark (closest to the moonflower), the strongest or the closest. Briar has a long reach and heavy thorns, a little slower; Bramble shoots twice as fast.
+- **Dew sprinkler** (from garden 2): every two seconds a spray that slows every spark in reach. Mist sprays wider and slows more; Cold dew also hurts.
+- **Sunflower** (from garden 3): a warm pulse that hurts every spark in reach and cracks the shell of meteors. Big head is much wider; Noon burst is much stronger.
+- **Snare vine** (from garden 4): now and then it holds one spark still for a moment and hurts it a little. Its aim can be set as the thorn bush's. Long tendril reaches farther and holds longer; Twin vine holds two at once.
+- Selling gives back 70% of what a plant cost. Anything planted or upgraded since the last wave started gives back everything.
+- Nothing grows in a ring's gap or on an old stone.
+
+## The sparks
+Each kind has its own shape, so you never need the colours.
+- **Spark** (round): a plain spark.
+- **Comet** (a drop, from garden 2): fast, but goes out quickly.
+- **Meteor** (square, with a rim, from garden 3): a stone shell lets through only part of what thorns and vines do, until a sunflower cracks it.
+- **Nebula** (a cloud, from garden 4): when it goes out, it leaves two small bits that walk on.
+- **Eclipse** (wide, with a dark side): slow and very strong, ends every night and costs three hearts at the moonflower.
+
+## Difficulty, stars and saves
+- Mild: 30 hearts and more coins; Normal: 20 hearts; Hard: 10 hearts, fewer coins and stronger sparks.
+- Stars: three with nine tenths of the hearts left, two with half, one for any night won. The garden list keeps the best stars of each garden.
+- When a night is lost, `Try again from wave` puts you back at the start of that wave, with the garden, the rings and the coins you had then.
+- The night you are playing is kept on this device and reopens, paused, where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a night ends. `Reset progress` in the garden list clears them on every device. Orbit garden is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+
+## Keyboard
+- [[Left]] and [[Right]] move along a ring; [[Up]] and [[Down]] move to the ring outside or inside; [[Escape]] lets go.
+- [[1]] to [[4]]: plant a thorn bush, dew sprinkler, sunflower or snare vine.
+- The bracket keys `[` and `]`: turn the chosen ring a step back or on.
+- [[U]]: upgrade to level 2. [[A]] or [[B]]: the branch at level 3. [[T]]: aim. [[S]]: sell.
+- [[Space]]: pause or play. [[F]]: speed. [[N]]: the next wave. [[L]]: the garden list. [[M]]: sound. [[?]]: how to play.
+
+## Tips
+- The lanes are longest on the outside, so a long way round the outer lane gives your plants the most time. Turn the outer ring first.
+- A plant beside a gap reaches sparks on both sides of its ring, where they cross from one lane to the next.
+- On gardens with two gates, the best gap for one gate is a poor one for the other. Look at where the next wave comes from, and use your free steps before each wave.
+- Plant what you can afford before the first wave, while every ring still has two free steps.

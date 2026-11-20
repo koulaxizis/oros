@@ -280,11 +280,23 @@ test("gamecenter: Caravan is in the Tower defense group after Lantern maze; rout
     aaaaaa: { b: 1, s: { m: [3, 2], n: [2, 1] }, f: 150 },
     bbbbbb: { b: 1, s: { h: [1, 1] }, f: 60 },
     oldold: { b: 0, s: { n: [9, 9] }, f: 99 } } };
-  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge", "maze", "caravan"]);
+  assert.ok(C.GROUPS.find((g) => g.id === "defense").games.join().startsWith("ridge,maze,caravan"));
   assert.ok(C.GAMES.includes("caravan"));
   const s = sum({ "oros-caravan-data": cv });
   assert.deepEqual([s.games.caravan.p, s.games.caravan.w], [6, 4], "rows from before the reset do not count");
   assert.ok(ach(s, "hard").done, "a Hard route won");
+});
+
+test("gamecenter: Orbit garden is in the Tower defense group after Caravan; nights and wins from every device", () => {
+  const og = { ver: 1, br: 1, maps: { g1: { b: 1, s: 2, e: 0 } }, rows: {
+    aaaaaa: { b: 1, s: { m: [4, 3], n: [2, 0] }, f: 210 },
+    bbbbbb: { b: 1, s: { h: [2, 1] }, f: 80 },
+    oldold: { b: 0, s: { n: [9, 9] }, f: 99 } } };
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge", "maze", "caravan", "orbit"]);
+  assert.ok(C.GAMES.includes("orbit"));
+  const s = sum({ "oros-orbit-data": og });
+  assert.deepEqual([s.games.orbit.p, s.games.orbit.w], [8, 4], "rows from before the reset do not count");
+  assert.ok(ach(s, "hard").done, "a Hard night won");
 });
 
 test("gamecenter: Fieldwarden counts years and finished years from every device; a Harsh finish is a hard win", () => {
