@@ -46,6 +46,12 @@ Jede Art hat ihre eigene Form, du brauchst also nie die Farben.
 - Ist eine Route verloren, bringt dich `Noch einmal ab Fahrt` zurück in den Plan der letzten Fahrt, mit der Karawane und den Münzen von damals.
 - Die laufende Route bleibt auf diesem Gerät und öffnet sich dort wieder, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Route endet. `Fortschritt zurücksetzen` auf der Wegekarte löscht sie auf allen Geräten. Karawane steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
 
+## Endlos
+- Sobald eine Route einen Stern hat, zeigt die Wegekarte darunter `Endlos` mit deinem Bestwert.
+- In Endlos arbeiten alle Maschinen der Route ab der ersten Fahrt, und du beginnst mit 80 Münzen mehr. Die Fahrten gehen weiter, solange jede ihre Kisten zum Markt bringt: die Statusleiste zeigt die Kisten dieser Fahrt gegen das, was sie bringen muss.
+- Jede Fahrt muss mehr Kisten bringen als die davor, und die Stöße werden mit jeder Fahrt etwas härter. Bringt eine Fahrt zu wenig, ist Endlos vorbei; die Wertung ist die Zahl der Fahrten, die ihre Kisten brachten.
+- Endlos gibt keine Sterne. Der Bestwert jeder Route wird mit dem übrigen Fortschritt zwischen deinen Geräten abgeglichen.
+
 ## Tastatur
 - Pfeiltasten wählen einen Karren; [[Escape]] lässt ihn los. Die Tasten `[` und `]` schieben ihn im Plan nach vorn oder hinten.
 - [[1]] bis [[5]]: einen Maultier-, Pony-, Flicker-, Stroh- oder Schmiedekarren mieten. [[U]]: auf Stufe 2 aufwerten. [[A]] oder [[B]]: der Zweig auf Stufe 3. [[S]]: verkaufen.

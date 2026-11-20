@@ -46,6 +46,12 @@ Each kind has its own shape, so you never need the colours.
 - When a route is lost, `Try again from trip` puts you back in the plan of the last trip, with the caravan and coins you had then.
 - The route you are playing is kept on this device and reopens where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a route ends. `Reset progress` on the road map clears them on every device. Caravan is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
 
+## Endless
+- Once a route has a star, the road map shows `Endless` under it, with your best score.
+- In Endless every machine of the route works from the first trip, and you start with 80 more coins. The trips go on as long as each one brings its crates to the market: the status bar shows the crates of this trip against what it must bring.
+- Every trip must bring more crates than the one before, and the knocks grow a little harder each trip. When a trip falls short, Endless is over; the score is the number of trips that brought their crates.
+- Endless gives no stars. The best score of each route syncs between your devices with the rest of your progress.
+
 ## Keyboard
 - Arrow keys choose a cart; [[Escape]] lets go of it. The keys `[` and `]` move it forward or back in the plan.
 - [[1]] to [[5]]: hire a mule, pony, mender's, straw or smith's cart. [[U]]: upgrade to level 2. [[A]] or [[B]]: the branch at level 3. [[S]]: sell.

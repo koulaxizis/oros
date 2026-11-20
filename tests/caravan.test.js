@@ -390,3 +390,46 @@ test("caravan: progress merge is a join: symmetric, idempotent, reset stamp drop
   assert.equal(d.maps.r1.s, E.stars(g));
   assert.equal(E.starsOf(d, "r1"), E.stars(g));
 });
+
+test("caravan: Endless: every machine from trip 1, a growing quota, the score is the trips that brought it", () => {
+  const rt = E.ROUTE.r1;
+  const g = E.newRun("r1", "n", 1);
+  assert.equal(g.en, 1); assert.equal(g.nt, 0);
+  assert.equal(g.coins, E.DIFF.n.coins + E.EN_COINS);
+  assert.equal(g.q, E.quota(rt, 1));
+  assert.ok(E.quota(rt, 2) > E.quota(rt, 1) && E.quota(rt, 5) > E.quota(rt, 4));
+  assert.equal(E.activeMachines(g).length, rt.M.length);
+  assert.deepEqual(E.newMachines(g), []);
+  // a trip that brings its quota goes on, one that falls short ends it
+  g.coins = 999;
+  for (let i = 0; i < 8; i++) E.hire(g, "mule");
+  E.setSign(g, "A", 2);
+  E.setOff(g); roll(g);
+  assert.ok(g.tg >= E.quota(rt, 1), g.tg + " >= " + E.quota(rt, 1));
+  assert.equal(g.over, -1); assert.equal(g.trip, 2); assert.equal(g.q, E.quota(rt, 2));
+  g.cv.splice(1);                         // one mule cannot bring the quota
+  E.setOff(g); roll(g);
+  assert.equal(g.over, 1);
+  assert.equal(E.score(g), 1);
+  assert.equal(E.stars(g), 0);
+  // the record keeps the best score only, never stars or routes played
+  let d = E.record(E.defaultData(), "dev123", play("r1", "n", player), 5);
+  assert.equal(E.endlessOpen(d, "r1"), true);
+  const before = J(d.rows.dev123.s);
+  d = E.record(d, "dev123", g, 6);
+  assert.equal(E.bestEndless(d, "r1"), 1);
+  assert.equal(J(d.rows.dev123.s), before);
+  d = E.record(d, "dev123", Object.assign(E.clone(g), { trip: 1, tg: 0 }), 7);
+  assert.equal(E.bestEndless(d, "r1"), 1, "a lower score keeps the best");
+  // the session copy round-trips and checks the quota
+  const h = E.newRun("r5", "h", 1);
+  E.hire(h, "smith"); E.hire(h, "mule"); E.setOff(h);
+  for (let n = 0; n < 60 * 5; n++) E.step(h);
+  h.ev.length = 0;
+  const c = E.normalizeRun(JSON.parse(J(E.saveable(h))));
+  assert.equal(J(E.saveable(c)), J(E.saveable(h)));
+  const x = JSON.parse(J(E.saveable(h))); x.q = 1;
+  assert.equal(E.normalizeRun(x), null);
+  const y = JSON.parse(J(E.saveable(h))); y.nt = 3;
+  assert.equal(E.normalizeRun(y), null);
+});

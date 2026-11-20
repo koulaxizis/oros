@@ -111,6 +111,20 @@
       "ctx.new": "Trip {n}: the toll keepers wound up {m} more machines (ringed).",
       "ctx.road": "Tap a sign to turn it for the carts still to come.",
       "map.intro": "Lead the caravan from the village to the market, three trips a route. The machines beside the road knock crates off; bring enough crates through to clear the route and open the next.",
+      "map.endless": "Endless",
+      "map.endlessBest": "Endless · best {n} trips",
+      "map.endlessAria": "{r}: Endless, best {n} trips",
+      "st.quota": "Crates this trip: {n} of {m}",
+      "st.tripEn": "Endless, trip {n}",
+      "ctx.en": "Endless, trip {n}: bring {q} crates to the market on this trip. Every machine works, and the knocks grow harder each trip.",
+      "live.statusEn": "Endless, trip {n}: {g} of {q} crates this trip, {c} coins.",
+      "live.offEn": "Endless, trip {n}: the caravan sets off. Bring {q} crates.",
+      "end.en": "Endless is over",
+      "end.enTrips": "Trips that brought their crates",
+      "end.enBest": "Best on this route",
+      "end.enNew": "A new best!",
+      "end.enNote": "Every trip must bring more crates than the one before, and the knocks grow harder too.",
+      "btn.enAgain": "Endless again",
       "map.diff": "Difficulty", "map.road": "The Salt road", "map.road2": "The Spice road",
       "map.two": "the spice market pays {n} a crate", "map.lock": "Clear the route before it to open",
       "map.goal": "Goal {n} crates in {m} trips", "map.carts": "Carts: {list}",
@@ -192,6 +206,20 @@
       "ctx.new": "Ταξίδι {n}: οι διοδιάρηδες κούρδισαν ακόμα {m} μηχανές (με κύκλο).",
       "ctx.road": "Πάτα μια πινακίδα για να τη γυρίσεις για τα κάρα που έρχονται.",
       "map.intro": "Οδήγησε το καραβάνι από το χωριό ως την αγορά, τρία ταξίδια σε κάθε διαδρομή. Οι μηχανές δίπλα στον δρόμο ρίχνουν κιβώτια· φέρε αρκετά κιβώτια για να περάσεις τη διαδρομή και να ανοίξει η επόμενη.",
+      "map.endless": "Ατέλειωτο",
+      "map.endlessBest": "Ατέλειωτο · ρεκόρ {n} ταξίδια",
+      "map.endlessAria": "{r}: Ατέλειωτο, ρεκόρ {n} ταξίδια",
+      "st.quota": "Κιβώτια αυτού του ταξιδιού: {n} από {m}",
+      "st.tripEn": "Ατέλειωτο, ταξίδι {n}",
+      "ctx.en": "Ατέλειωτο, ταξίδι {n}: φέρε {q} κιβώτια στην αγορά σε αυτό το ταξίδι. Δουλεύουν όλες οι μηχανές και τα χτυπήματα δυναμώνουν σε κάθε ταξίδι.",
+      "live.statusEn": "Ατέλειωτο, ταξίδι {n}: {g} από {q} κιβώτια σε αυτό το ταξίδι, {c} νομίσματα.",
+      "live.offEn": "Ατέλειωτο, ταξίδι {n}: το καραβάνι ξεκινά. Φέρε {q} κιβώτια.",
+      "end.en": "Το Ατέλειωτο τελείωσε",
+      "end.enTrips": "Ταξίδια που έφεραν τα κιβώτιά τους",
+      "end.enBest": "Ρεκόρ σε αυτή τη διαδρομή",
+      "end.enNew": "Νέο ρεκόρ!",
+      "end.enNote": "Κάθε ταξίδι πρέπει να φέρει περισσότερα κιβώτια από το προηγούμενο, και τα χτυπήματα δυναμώνουν κι αυτά.",
+      "btn.enAgain": "Ξανά Ατέλειωτο",
       "map.diff": "Δυσκολία", "map.road": "Ο δρόμος του αλατιού", "map.road2": "Ο δρόμος των μπαχαρικών",
       "map.two": "η αγορά των μπαχαρικών πληρώνει {n} το κιβώτιο", "map.lock": "Πέρασε πρώτα την προηγούμενη διαδρομή",
       "map.goal": "Στόχος {n} κιβώτια σε {m} ταξίδια", "map.carts": "Κάρα: {list}",
@@ -351,8 +379,8 @@
   var view = "map";                    // "map" | "play"
 
   function rtOf() { return E.ROUTE[game.rt]; }
-  function startRoute(rtId, diff) {
-    var g = E.newRun(rtId, diff);
+  function startRoute(rtId, diff, en) {
+    var g = E.newRun(rtId, diff, en);
     if (!g) return;
     sess = { g: g, ck: null, counted: false };
     game = g;
@@ -365,6 +393,7 @@
     announce(status());
   }
   function status() {
+    if (game.en) return t("live.statusEn", { n: game.trip, g: game.ph === "go" ? game.tg : 0, q: game.q, c: Math.floor(game.coins) });
     return t("live.status", { g: game.got, m: game.goal, c: Math.floor(game.coins), n: game.trip, k: game.nt });
   }
   function retryTrip() {
@@ -443,7 +472,7 @@
     E.setOff(game);
     paused = false; armed = ""; selId = 0;
     sfx("go");
-    announce(t("live.off", { n: game.trip, m: game.nt }));
+    announce(game.en ? t("live.offEn", { n: game.trip, q: game.q }) : t("live.off", { n: game.trip, m: game.nt }));
     handleEvents();
     saveSession();
     renderAll();
@@ -495,13 +524,15 @@
     if (!sess || sess.counted) return;
     var nx = nextRtId(game.rt);
     var before = nx ? E.isOpen(data, nx) : true;
+    var bestBefore = E.bestEndless(data, game.rt);
     data = E.record(data, deviceId, game, Date.now());
     sess.counted = true;
     saveData();
     saveSession();
     var opened = nx && !before && E.isOpen(data, nx) ? nx : null;
     sfx(game.over === 1 ? "won" : "lost");
-    endDialog(opened);
+    if (game.en) endlessDialog(bestBefore);
+    else endDialog(opened);
   }
   function nextRtId(id) {
     var rt = E.ROUTE[id];
@@ -1000,10 +1031,17 @@
   }
   function renderStatus() {
     if (!game) return;
-    setStat("s-goods", ICONS.crate, game.got + "/" + game.goal, t("st.goodsOf", { n: game.got, m: game.goal }));
-    $("s-goods").classList.toggle("ok", game.got >= game.goal);
+    if (game.en) {
+      var tg = game.ph === "go" ? game.tg : 0;
+      setStat("s-goods", ICONS.crate, tg + "/" + game.q, t("st.quota", { n: tg, m: game.q }));
+      $("s-goods").classList.toggle("ok", tg >= game.q);
+    } else {
+      setStat("s-goods", ICONS.crate, game.got + "/" + game.goal, t("st.goodsOf", { n: game.got, m: game.goal }));
+      $("s-goods").classList.toggle("ok", game.got >= game.goal);
+    }
     setStat("s-coins", ICONS.coin, Math.floor(game.coins), t("st.coins") + ": " + Math.floor(game.coins));
-    setStat("s-trip", ICONS.trip, t("st.tripShort", { n: game.trip, m: game.nt }), t("st.trip", { n: game.trip, m: game.nt }));
+    if (game.en) setStat("s-trip", ICONS.trip, "∞ " + game.trip, t("st.tripEn", { n: game.trip }));
+    else setStat("s-trip", ICONS.trip, t("st.tripShort", { n: game.trip, m: game.nt }), t("st.trip", { n: game.trip, m: game.nt }));
   }
   function actBtn(icon, name, cost, title, fn, disabled, cls) {
     var b = el("button", "act" + (cls ? " " + cls : ""));
@@ -1075,7 +1113,8 @@
     else if (plan && !over) {
       var nm = E.newMachines(game).length;
       tip.hidden = false;
-      tip.textContent = game.trip > 1 && nm ? t("ctx.new", { n: game.trip, m: nm }) :
+      tip.textContent = game.en ? t("ctx.en", { n: game.trip, q: game.q }) :
+        game.trip > 1 && nm ? t("ctx.new", { n: game.trip, m: nm }) :
         rtOf().two && game.trip === 1 ? t("ctx.two", { n: E.PAY_N, m: E.PAY }) : t("ctx.plan");
     } else if (!over && game.t < E.TPS * 6 && rtOf().forks.length) { tip.hidden = false; tip.textContent = t("ctx.road"); }
     else tip.hidden = true;
@@ -1155,7 +1194,7 @@
     var wrap = el("div", "mp-wrap");
     wrap.appendChild(el("p", "mp-intro", t("map.intro")));
     if (underWay()) {
-      var cont = el("button", "mp-cont", t("map.cont", { r: rtName(game.rt), n: game.trip }));
+      var cont = el("button", "mp-cont", t("map.cont", { r: rtName(game.rt) + (game.en ? " · " + t("map.endless") : ""), n: game.trip }));
       cont.type = "button";
       cont.addEventListener("click", showPlay);
       wrap.appendChild(cont);
@@ -1186,8 +1225,16 @@
       b.appendChild(tx2);
       b.appendChild(starIcons(E.starsOf(data, rt.id)));
       b.setAttribute("aria-label", rtName(rt.id) + ", " + E.starsOf(data, rt.id) + "/3");
-      b.addEventListener("click", function () { pickRoute(rt.id); });
+      b.addEventListener("click", function () { pickRoute(rt.id, 0); });
       wrap.appendChild(b);
+      if (E.endlessOpen(data, rt.id)) {
+        var best = E.bestEndless(data, rt.id);
+        var eb = el("button", "mp-endless" + (underWay() && game.rt === rt.id && game.en ? " cur" : ""), best ? t("map.endlessBest", { n: best }) : t("map.endless"));
+        eb.type = "button";
+        eb.setAttribute("aria-label", t("map.endlessAria", { r: rtName(rt.id), n: best }));
+        eb.addEventListener("click", function () { pickRoute(rt.id, 1); });
+        wrap.appendChild(eb);
+      }
     });
     var rs = el("button", "dlg-btn danger mp-reset", t("btn.reset"));
     rs.type = "button";
@@ -1197,13 +1244,15 @@
     wrap.appendChild(rs);
     box.appendChild(wrap);
   }
-  function pickRoute(id) {
-    if (underWay() && game.acts > 0 && (game.rt !== id || game.diff !== prefs.diff)) {
-      confirmDialog(t("map.replace", { r: rtName(game.rt), s: rtName(id) }), t("btn.ok"), function () { startRoute(id, prefs.diff); });
+  function pickRoute(id, en) {
+    en = en ? 1 : 0;
+    var same = underWay() && game.rt === id && game.diff === prefs.diff && (game.en ? 1 : 0) === en;
+    if (underWay() && game.acts > 0 && !same) {
+      confirmDialog(t("map.replace", { r: rtName(game.rt), s: rtName(id) + (en ? " · " + t("map.endless") : "") }), t("btn.ok"), function () { startRoute(id, prefs.diff, en); });
       return;
     }
-    if (underWay() && game.rt === id && game.diff === prefs.diff) { showPlay(); return; }
-    startRoute(id, prefs.diff);
+    if (same) { showPlay(); return; }
+    startRoute(id, prefs.diff, en);
   }
   // Reset progress: a new reset stamp, so older rows drop on every device.
   function resetProgress() {
@@ -1260,6 +1309,23 @@
       var nx = nextRtId(g.rt);
       if (won && nx) a.appendChild(dlgBtn(t("btn.nextRt"), "primary", function () { closeDialog(); startRoute(nx, g.diff); }));
       a.appendChild(dlgBtn(t("btn.restart"), "", function () { closeDialog(); startRoute(g.rt, g.diff); }));
+      a.appendChild(dlgBtn(t("btn.toMap"), "", function () { closeDialog(); showMap(); }));
+      d.appendChild(a);
+    });
+  }
+  // Endless is over: the trips that brought their crates and the best.
+  function endlessDialog(bestBefore) {
+    var g = game, sc = E.score(g);
+    openDialog("end", function (d) {
+      d.appendChild(el("div", "dlg-title", rtName(g.rt) + " · " + t("map.endless") + " · " + t("diff." + g.diff)));
+      d.appendChild(el("div", "dlg-hero", t("end.en")));
+      d.appendChild(row(t("end.enTrips"), sc));
+      d.appendChild(row(t("end.enBest"), Math.max(sc, bestBefore)));
+      d.appendChild(row(t("end.goods"), g.got));
+      if (sc > bestBefore) d.appendChild(el("p", "dlg-note", t("end.enNew")));
+      d.appendChild(el("p", "dlg-note", t("end.enNote")));
+      var a = el("div", "dlg-actions");
+      a.appendChild(dlgBtn(t("btn.enAgain"), "primary", function () { closeDialog(); startRoute(g.rt, g.diff, 1); }));
       a.appendChild(dlgBtn(t("btn.toMap"), "", function () { closeDialog(); showMap(); }));
       d.appendChild(a);
     });
@@ -1475,14 +1541,14 @@
   window.render_game_to_text = function () {
     if (view !== "play" || !game) {
       return JSON.stringify({ mode: dlgKind || "map", diff: prefs.diff,
-        routes: E.ROUTES.map(function (rt) { return { id: rt.id, open: E.isOpen(data, rt.id), stars: E.starsOf(data, rt.id) }; }) });
+        routes: E.ROUTES.map(function (rt) { return { id: rt.id, open: E.isOpen(data, rt.id), stars: E.starsOf(data, rt.id), endless: E.endlessOpen(data, rt.id), best: E.bestEndless(data, rt.id) }; }) });
     }
     var rt = rtOf();
     function r1(v) { return Math.round(v * 10) / 10; }
     return JSON.stringify({
-      mode: dlgKind || (game.over === 1 ? "won" : game.over === 0 ? "lost" : game.ph === "plan" ? "plan" : paused ? "paused" : "road"),
+      mode: dlgKind || (game.over === 1 ? (game.en ? "over" : "won") : game.over === 0 ? "lost" : game.ph === "plan" ? "plan" : paused ? "paused" : "road"),
       route: game.rt, diff: game.diff, speed: speed, trip: game.trip, trips: game.nt, coins: Math.floor(game.coins),
-      got: game.got, goal: game.goal, tricks: game.tk, goat: game.goat, armed: armed,
+      got: game.got, goal: game.goal, endless: game.en, quota: game.en ? game.q : null, tripGot: game.tg, tricks: game.tk, goat: game.goat, armed: armed,
       signs: rt.forks.map(function (n) { return { node: n, x: rt.P[n].x, y: rt.P[n].y, way: game.sg[n], dir: dirWord(n) }; }),
       way: E.wayNow(game).map(function (i) { return [rt.E[i].a, rt.E[i].b]; }),
       machines: E.activeMachines(game).map(function (i) { var m = rt.M[i]; return { k: m.k, x: m.x, y: m.y, r: E.MACHINES[m.k].r, stopped: game.mc[i].st > 0 }; }),

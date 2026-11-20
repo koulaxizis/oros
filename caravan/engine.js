@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Caravan — the rules (v1.1.0), no DOM
+// orOS Caravan — the rules (v1.2.0), no DOM
 // A reverse tower defense game: old clockwork toll machines guard the
 // road to the market, and the player leads a caravan of carts through
 // them. Before every trip the player hires and upgrades carts, puts
@@ -35,6 +35,11 @@
 //          travelled, hp: crates (straw for the straw cart), sh: shield
 //          ticks, j: the smith's rest ticks before the next jam }
 //   cloud { x, y, t: ticks left }   machine { cd: cooldown, st: stopped }
+//   en: 0 | 1 Endless, q: crates this trip must bring (Endless)
+// Endless (W3): every machine of the route works from the first trip,
+// the knocks grow harder every trip, and the trips go on as long as
+// each one brings its quota q to the markets; the score is the trips
+// that did. No stars; the best score is kept per route (maps e).
 // ev (not saved): what happened in the last steps, for the screen.
 // ============================================================
 (function (root) {
@@ -54,6 +59,9 @@
   var SHIELD_T = 360;
   var LOOK_R = 2, LOOK_RATE = 1.5;       // a lookout: reach, how much faster
   var MUD_SLOW = 0.5;
+  var EN_COINS = 80;                     // Endless: extra coins at the start
+  var EN_HARD = 0.08;                    // Endless: knocks this much harder every trip
+  var EN_MAXTRIP = 999;
   var EPS = 1e-9;
 
   var DIFFS = ["m", "n", "h"];           // Mild, Normal, Hard
@@ -236,16 +244,19 @@
 
   // ---------- A new route ----------
   function machinesState(rt) { return rt.M.map(function () { return { cd: 0, st: 0 }; }); }
-  function newRun(rtId, diff) {
+  // Endless: the crates trip t must bring to the markets.
+  function quota(rt, t) { return Math.ceil(rt.goal / TRIPS * (0.6 + 0.12 * (t - 1))); }
+  function newRun(rtId, diff, endless) {
     var rt = ROUTE[rtId];
     if (!rt || !DIFF[diff]) return null;
+    var en = endless ? 1 : 0;
     var sg = {};
     rt.forks.forEach(function (n) { sg[n] = firstOpen(rt, n, false); });
     return {
-      v: V, rt: rtId, diff: diff, u: Math.min(MAX_U, rt.idx + 1), t: 0, ph: "plan", trip: 1, nt: TRIPS,
-      coins: DIFF[diff].coins, got: 0, load: 0, tg: 0, tc: 0, goal: rt.goal, cv: [], sg: sg,
+      v: V, rt: rtId, diff: diff, u: Math.min(MAX_U, rt.idx + 1), t: 0, ph: "plan", trip: 1, nt: en ? 0 : TRIPS,
+      coins: DIFF[diff].coins + (en ? EN_COINS : 0), got: 0, load: 0, tg: 0, tc: 0, goal: rt.goal, cv: [], sg: sg,
       tk: { s: 1, w: 1, c: rt.hasGoat ? 1 : 0 }, goat: 0, sm: [], mc: machinesState(rt), ri: 0,
-      nid: 1, over: -1, acts: 0, ev: []
+      nid: 1, over: -1, acts: 0, en: en, q: en ? quota(rt, 1) : 0, ev: []
     };
   }
   function firstOpen(rt, n, goat) {
@@ -390,7 +401,8 @@
   }
 
   // ---------- One tick ----------
-  function active(g, m) { return m.t <= g.trip; }
+  function active(g, m) { return g.en ? true : m.t <= g.trip; }
+  function dmgMul(g) { return DIFF[g.diff].dmg * (g.en ? 1 + EN_HARD * (g.trip - 1) : 1); }
   // Working: on this trip and not stopped (jammed, scared).
   function working(g, i) { return active(g, ROUTE[g.rt].M[i]) && !(g.mc[i].st > 0); }
   function inSmoke(g, p) {
@@ -448,7 +460,7 @@
   function hit(g, rt, m, ms, c, dmg) {
     if (c.sh > 0) { g.ev.push({ e: "block", c: c.id }); return; }
     var st = stats(c);
-    c.hp = Math.max(0, c.hp - dmg * DIFF[g.diff].dmg * st.ar);
+    c.hp = Math.max(0, c.hp - dmg * dmgMul(g) * st.ar);
     g.ev.push({ e: "hit", c: c.id, x: c.x, y: c.y });
     if (st.scare) ms.st = Math.max(ms.st, st.scare);
   }
@@ -577,13 +589,19 @@
   function endTrip(g, rt) {
     var pay = g.tc + TRIP_PAY;
     g.coins += pay;
-    g.ev.push({ e: "trip", n: g.trip, got: g.tg, c: pay });
-    if (g.trip >= g.nt) {
+    g.ev.push({ e: "trip", n: g.trip, got: g.tg, c: pay, q: g.q });
+    if (g.en && (g.tg < g.q || g.trip >= EN_MAXTRIP)) {
+      g.over = 1;
+      g.ev.push({ e: "endless", n: score(g) });
+      return;
+    }
+    if (!g.en && g.trip >= g.nt) {
       g.over = g.got >= g.goal ? 1 : 0;
       g.ev.push({ e: g.over ? "won" : "lost", stars: stars(g) });
       return;
     }
     g.trip++;
+    if (g.en) g.q = quota(rt, g.trip);
     g.ph = "plan";
     g.cv = g.cv.filter(function (c) { return c.st !== "x"; });
     g.cv.forEach(fresh);
@@ -597,14 +615,17 @@
   }
   function run(g, ticks) { for (var i = 0; i < ticks && g.over < 0 && g.ph === "go"; i++) step(g); }
 
+  // Endless: the trips that brought their quota.
+  function score(g) { return g.en ? (g.over >= 0 && g.tg < g.q ? g.trip - 1 : g.over >= 0 ? g.trip : g.trip - 1) : 0; }
   function stars(g) {
-    if (g.over !== 1) return 0;
+    if (g.over !== 1 || g.en) return 0;
     var r = g.load ? g.got / g.load : 0;
     return r >= 0.85 ? 3 : r >= 0.65 ? 2 : 1;
   }
   // Machines that are new on this trip (indexes), for the plan screen.
   function newMachines(g) {
     var rt = ROUTE[g.rt], out = [];
+    if (g.en) return out;
     rt.M.forEach(function (m, i) { if (m.t === g.trip) out.push(i); });
     return out;
   }
@@ -635,17 +656,20 @@
   function normalizeRun(x) {
     if (!x || typeof x !== "object" || x.v !== V || !ROUTE[x.rt] || !DIFF[x.diff]) return null;
     var rt = ROUTE[x.rt], BIG = 1e9, i;
-    if (!int(x.u, 1, MAX_U) || !int(x.t, 0, BIG) || (x.ph !== "plan" && x.ph !== "go") || !int(x.trip, 1, TRIPS) ||
-        x.nt !== TRIPS || !num(x.coins, 0, BIG) || !int(x.got, 0, BIG) || !int(x.load, 0, BIG) || x.got > x.load ||
+    var en = x.en === 1 ? 1 : 0;
+    if ((x.en !== undefined && x.en !== 0 && x.en !== 1) || (en && x.q !== quota(rt, x.trip))) return null;
+    if (!int(x.u, 1, MAX_U) || !int(x.t, 0, BIG) || (x.ph !== "plan" && x.ph !== "go") || !int(x.trip, 1, en ? EN_MAXTRIP : TRIPS) ||
+        x.nt !== (en ? 0 : TRIPS) || !num(x.coins, 0, BIG) || !int(x.got, 0, BIG) || !int(x.load, 0, BIG) || x.got > x.load ||
         !int(x.tg, 0, BIG) || (x.tc !== undefined && !int(x.tc, 0, BIG)) || x.goal !== rt.goal || !Array.isArray(x.cv) || x.cv.length > MAX_CARTS ||
         !x.sg || typeof x.sg !== "object" || !x.tk || typeof x.tk !== "object" || (x.goat !== 0 && x.goat !== 1) ||
         !Array.isArray(x.sm) || x.sm.length > 99 || !Array.isArray(x.mc) || x.mc.length !== rt.M.length ||
         !int(x.ri, 0, MAX_CARTS) || x.ri > x.cv.length || !int(x.nid, 1, BIG) || [-1, 0, 1].indexOf(x.over) < 0 ||
         !int(x.acts, 0, BIG)) return null;
     if (!int(x.tk.s, 0, 99) || !int(x.tk.w, 0, 99) || !int(x.tk.c, 0, 99) || (!rt.hasGoat && x.tk.c)) return null;
-    var g = { v: V, rt: x.rt, diff: x.diff, u: x.u, t: x.t, ph: x.ph, trip: x.trip, nt: TRIPS, coins: x.coins,
+    var g = { v: V, rt: x.rt, diff: x.diff, u: x.u, t: x.t, ph: x.ph, trip: x.trip, nt: en ? 0 : TRIPS, coins: x.coins,
               got: x.got, load: x.load, tg: x.tg, tc: x.tc === undefined ? x.tg * PAY : x.tc, goal: rt.goal, cv: [], sg: {}, tk: { s: x.tk.s, w: x.tk.w, c: x.tk.c },
-              goat: x.goat, sm: [], mc: [], ri: x.ri, nid: x.nid, over: x.over, acts: x.acts, ev: [] };
+              goat: x.goat, sm: [], mc: [], ri: x.ri, nid: x.nid, over: x.over, acts: x.acts,
+              en: en, q: en ? x.q : 0, ev: [] };
     for (i = 0; i < rt.forks.length; i++) {
       var n = rt.forks[i], j = x.sg[n];
       if (!int(j, 0, rt.out[n].length - 1) || (rt.E[rt.out[n][j]].goat && !x.goat)) return null;
@@ -763,6 +787,16 @@
   // A route ended on this device: count it and keep the best stars.
   function record(d, device, g, now) {
     var out = merge(d, d);
+    if (g.en) {
+      // Endless: only the best score of the route and the crates delivered
+      var me = out.maps[g.rt], sc = score(g);
+      var rw = out.rows[device] || { b: out.br, s: {}, f: 0 };
+      rw.f += g.got;
+      out.rows[device] = rw;
+      if (!me) out.maps[g.rt] = { b: Math.max(out.br, now || 0), s: 0, e: Math.min(9999, sc) };
+      else if (sc > me.e) out.maps[g.rt] = { b: me.b, s: me.s, e: Math.min(9999, sc) };
+      return merge(out, out);
+    }
     var row = out.rows[device] || { b: out.br, s: {}, f: 0 };
     var v = row.s[g.diff] ? row.s[g.diff].slice() : [0, 0];
     v[0]++;
@@ -776,6 +810,9 @@
     return merge(out, out);
   }
   function starsOf(d, id) { var m = d && d.maps && d.maps[id]; return m ? m.s : 0; }
+  function bestEndless(d, id) { var m = d && d.maps && d.maps[id]; return m ? m.e : 0; }
+  // Endless opens on a route once it has a star.
+  function endlessOpen(d, id) { return starsOf(d, id) > 0; }
   function isOpen(d, id) {
     var rt = ROUTE[id];
     return !!rt && (rt.idx === 0 || starsOf(d, ROUTES[rt.idx - 1].id) > 0);
@@ -787,7 +824,8 @@
     V: V, COLS: COLS, ROWS: ROWS, TPS: TPS, GAP: GAP, DIFFS: DIFFS, DIFF: DIFF, CARTS: CARTS, KINDS: KINDS,
     MACHINES: MACHINES, MKINDS: MKINDS, ROUTES: ROUTES, ROUTE: ROUTE, MAX_CARTS: MAX_CARTS, TRIPS: TRIPS,
     TRICK_COST: TRICK_COST, SMOKE_R: SMOKE_R, PAY: PAY, PAY_N: PAY_N, TRIP_PAY: TRIP_PAY, MAX_U: MAX_U,
-    isEnd: isEnd, working: working,
+    isEnd: isEnd, working: working, quota: quota, score: score, bestEndless: bestEndless, endlessOpen: endlessOpen,
+    EN_COINS: EN_COINS, EN_HARD: EN_HARD,
     pointAt: pointAt, stats: stats, isGoods: isGoods, hireCost: hireCost, upCost: upCost, sellValue: sellValue,
     unlocked: unlocked, cartById: cartById, newRun: newRun, whyNot: whyNot, hire: hire, upgrade: upgrade,
     sell: sell, moveCart: moveCart, buyTrick: buyTrick, flip: flip, setSign: setSign, smoke: smoke,
