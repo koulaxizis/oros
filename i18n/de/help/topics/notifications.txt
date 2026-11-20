@@ -21,7 +21,10 @@ Ein Fokus-Modus hält Benachrichtigungen still, während du arbeitest, schläfst
 - orOS hat vier Modi: `Nicht stören` (lässt nichts durch), `Schlafen`, `Arbeit` und `Privat`, und mit `Neuer Modus` kannst du bis zu 10 eigene anlegen.
 - In den [Einstellungen](app:settings) › `Benachrichtigungen` › `Fokus-Modi` wählst du einen Modus, um ihn umzubenennen, ihm ein Symbol zu geben, die `Apps, die sich zeigen dürfen` festzulegen, ihn jetzt einzuschalten oder einen eigenen zu löschen.
 - `Schlafen in den Ruhezeiten` schaltet den Modus Schlafen zwischen den Uhrzeiten `Von` und `Bis` selbst ein (standardmäßig 22:00 bis 08:00). Schaltest du ihn in der Nacht aus, bleibt er bis zum Morgen aus.
-- In den Schnelleinstellungen (die Schaltfläche am rechten Ende der oberen Leiste) schaltet `Fokus` den zuletzt genutzten Modus mit einem Tippen ein oder aus. Sein Pfeil zeigt alle Modi und wie lange: `Für eine Stunde`, `Bis 8 Uhr morgens` oder `Bis du es ausschaltest`.
+- `Nach Zeitplan einschalten` schaltet einen Modus an den gewählten Tagen und zwischen den gewählten Zeiten selbst ein, in halben Stunden; ein Ende vor dem Beginn läuft über Mitternacht (zum Beispiel 22:30 bis 01:30). Schlafen behält die Ruhezeiten oben.
+- `Bei Kalenderterminen einschalten` schaltet einen Modus ein, solange ein [Kalender](app:calendar)-Termin mit Startzeit läuft: einer mit dem gewählten Label oder mit einem Wort im Titel (zum Beispiel `Besprechung`; Groß- und Kleinschreibung und Akzente spielen keine Rolle). Ganztägige Termine zählen nicht.
+- Schaltest du einen Modus aus, während sein Zeitplan oder Termin läuft, bleibt er bis zu dessen Ende aus und kommt beim nächsten Mal wieder.
+- In den Schnelleinstellungen (die Schaltfläche am rechten Ende der oberen Leiste) schaltet `Fokus` den zuletzt genutzten Modus mit einem Tippen ein oder aus. Sein Pfeil zeigt alle Modi und wie lange: `Für eine Stunde`, `Bis 8 Uhr morgens`, `Bis zum Ende des Zeitplans` (bei einem Modus mit Zeitplan) oder `Bis du es ausschaltest`.
 - Ein Modus, den du einschaltest, gilt auf allen deinen Geräten, die synchronisieren. Solange einer an ist, zeigt die obere Leiste eine durchgestrichene Glocke.
 - Wecker der Uhr und klingelnde Kalender-Erinnerungen klingeln immer, in jedem Modus.
 

@@ -79,7 +79,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.4.0";
+  var VER = "1.5.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -143,6 +143,15 @@
     var k = n.active ? "qs.night.until" : "qs.night.from";
     return t(k).replace("{t}", fmt(new Date(n.until)));
   }
+  // The second line of the Bedtime button (screentime.js S3): until
+  // when tonight's runs, from when it starts, or "Off tonight".
+  function bedSub(b, fmt, t) {
+    if (!b || !b.on) return "";
+    if (b.skipped) return t("qs.bed.off");
+    if (b.active && b.end) return t("qs.night.until").replace("{t}", fmt(new Date(b.end)));
+    if (b.next) return t("qs.night.from").replace("{t}", fmt(new Date(b.next)));
+    return "";
+  }
   // Large text: on from 130 % up to the largest; off = 100 %.
   function bigOn(size) { return size >= 130; }
 
@@ -192,7 +201,7 @@
   var model = { VER: VER, dndUntil: dndUntil, dndSub: dndSub, syncKey: syncKey,
                 batteryShown: batteryShown, batteryPct: batteryPct, batteryAttr: batteryAttr, bigOn: bigOn, onAccent: onAccent, nightSub: nightSub,
                 awakeUntil: awakeUntil, awakeState: awakeState, awakeSub: awakeSub, lowBattery: lowBattery,
-                saverState: saverState, saverToggle: saverToggle, saverStored: saverStored };
+                saverState: saverState, saverToggle: saverToggle, saverStored: saverStored, bedSub: bedSub };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -290,6 +299,7 @@
     lock: SV + '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
     sync: SV + '<path d="M21 12a9 9 0 0 1-15.4 6.4L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.4 5.6L21 8"/><path d="M21 3v5h-5"/></svg>',
     moon: SV + '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>',
+    bed: SV + '<path d="M3 18V6"/><path d="M3 14h18v4"/><path d="M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="1.6"/></svg>',
     night: SV + '<path d="M17 18a5 5 0 0 0-10 0"/><path d="M12 2v7"/><path d="M4.2 10.2l1.4 1.4"/><path d="M1 18h2"/><path d="M21 18h2"/><path d="M18.4 11.6l1.4-1.4"/><path d="M23 22H1"/><path d="M16 5l-4 4-4-4"/></svg>',
     bellOff: SV + '<path d="M13.7 21a2 2 0 0 1-3.4 0"/><path d="M18.6 13A17.9 17.9 0 0 1 18 8"/><path d="M6.3 6.3A6 6 0 0 0 6 8c0 7-3 9-3 9h14"/><path d="M18 8a6 6 0 0 0-9.3-5"/><path d="M3 3l18 18"/></svg>',
     text: SV + '<path d="M4 7V5h11v2"/><path d="M9.5 5v14"/><path d="M7 19h5"/><path d="M14 13v-1.5h7V13"/><path d="M17.5 11.5V19"/><path d="M16 19h3"/></svg>',
@@ -566,6 +576,14 @@
     }, then(function () {
       call(function () { root.__orosOpenAt("settings", { section: "appearance", item: "night" }); });
     }), t("qs.night.more"));
+    // Bedtime (screentime.js S3): tap = "Not tonight" / on again
+    // tonight; the arrow = Settings › Screen time. Shown only when on.
+    parts.bed = pill(IC.bed, function () {
+      call(function () { var b = root.orosScreenTime.bed(); root.orosScreenTime.bedSkip(!b.skipped); });
+      paint();
+    }, then(function () {
+      call(function () { root.__orosOpenAt("settings", { section: "screentime", item: "screentime-bed" }); });
+    }), t("qs.bed.more"));
     // Focus (focus.js, FOCUS-1; Do Not Disturb is one of its modes):
     // tap = stop the running mode, or start the last one until turned
     // off; the arrow = the modes, how long, Settings.
@@ -616,7 +634,7 @@
     parts.awake = pill(IC.cup, function () { setAwake(awake().on ? "" : "on"); },
       function () { setSub(sub === "awake" ? "" : "awake"); }, t("qs.awake.more"));
     parts.saver = pill(IC.leaf, toggleSaver, null);
-    [parts.net, parts.sync, parts.dark, parts.night, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
+    [parts.net, parts.sync, parts.dark, parts.night, parts.bed, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.dndMenu = el("div", "qs-menu");
@@ -641,6 +659,19 @@
       parts.dndMenu.appendChild(it);
       return it;
     });
+    // Focus F2: until the running or next window of the mode's schedule
+    parts.focusEnd = menuItem("", t("qs.focus.end"), function () {
+      var F = focus();
+      if (F) {
+        var a = F.active(), id = a ? a.id : F.last();
+        var u = call(function () { return F.endOf(id); }) || 0;
+        F.start(id, { until: u > Date.now() ? u : 0 });
+        paintBtn();
+      }
+      setSub("");
+    });
+    parts.focusEnd.hidden = true;
+    parts.dndMenu.insertBefore(parts.focusEnd, parts.dndItems[2]);
     parts.dndOff = menuItem("", t("qs.dnd.turnoff"), function () { setDnd(false); setSub(""); });
     parts.dndMenu.appendChild(parts.dndOff);
     parts.focusSet = menuItem("", t("qs.focus.settings"), then(function () {
@@ -753,6 +784,10 @@
     parts.night.box.hidden = !nl;
     if (nl) setPill(parts.night, t("qs.night"), nightSub(nl, fmtTime, t), nl.active, true);
 
+    var bd = call(function () { return root.orosScreenTime && root.orosScreenTime.bed ? root.orosScreenTime.bed() : null; });
+    parts.bed.box.hidden = !(bd && bd.on);
+    if (bd && bd.on) setPill(parts.bed, t("qs.bed"), bedSub(bd, fmtTime, t), bd.active && !bd.skipped, true);
+
     var d = dnd();
     parts.dnd.box.hidden = !d;
     var F = focus(), fa = F ? call(function () { return F.active(now); }) : null;
@@ -813,6 +848,9 @@
   // The mode rows of the focus menu (rebuilt only when they change).
   function paintFocus(F, fa) {
     var list = call(function () { return F.list(); }) || [];
+    var endId = fa ? fa.id : call(function () { return F.last(); });
+    var endMs = (typeof F.endOf === "function" && call(function () { return F.endOf(endId); })) || 0;
+    parts.focusEnd.hidden = !(endMs > Date.now());
     var icon = fa ? (list.filter(function (m) { return m.id === fa.id; })[0] || {}).icon : "bell";
     var svg = F.model.svg(icon || "bell");
     if (parts.dnd.__icon !== svg) {

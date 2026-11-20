@@ -154,3 +154,90 @@ test("strings: EN, EL and DE for the pill, modes and Settings", () => {
     assert.ok(sde.includes('"' + k + '":'), k + " DE");
   }
 });
+
+// ---------- F2: weekly schedule, Calendar events, "until the end" ----------
+const WEEK = { on: true, days: [1, 2, 3, 4, 5], from: 18, to: 34 };   // Mon-Fri 09:00-17:00
+const day = (d, h, m) => new Date(2026, 10, d, h, m || 0, 0).getTime();   // 2026-11-16 is a Monday
+
+test("F2 schedule: days, half hours, past midnight, DST-safe local times", () => {
+  assert.equal(F.schedEnds(WEEK, day(16, 9)), day(16, 17));
+  assert.equal(F.schedEnds(WEEK, day(16, 8, 59)), 0);
+  assert.equal(F.schedEnds(WEEK, day(21, 10)), 0, "Saturday is not chosen");
+  const late = { on: true, days: [5], from: 45, to: 3 };               // Fri 22:30 - Sat 01:30
+  assert.equal(F.schedEnds(late, day(20, 23)), day(21, 1, 30));
+  assert.equal(F.schedEnds(late, day(21, 1)), day(21, 1, 30), "the night after the chosen day");
+  assert.equal(F.schedEnds(late, day(22, 1)), 0, "Saturday night is not Friday's");
+  assert.equal(F.schedEnds({ on: false, days: [1], from: 18, to: 34 }, day(16, 10)), 0, "off keeps the choice, runs nothing");
+  assert.equal(F.schedEnds({ on: true, days: [], from: 18, to: 34 }, day(16, 10)), 0);
+  assert.equal(F.schedNextEnd(WEEK, day(16, 7)), day(16, 17));
+  assert.equal(F.schedNextEnd(WEEK, day(20, 18)), day(23, 17), "after Friday: next Monday");
+  const f = F.normalize({ modes: [{ id: "work", sched: { on: true, days: [9, 1, 1, "x"], from: 99, to: 34 } }, { id: "sleep", sched: WEEK }] });
+  assert.deepEqual(F.modeOf(f, "work").sched, { on: true, days: [1], from: 18, to: 34 });
+  assert.equal(F.modeOf(f, "sleep").sched, undefined, "Sleep's hours are the quiet hours (D2)");
+});
+
+test("F2 activeAt: manual wins, then the first scheduled mode; off holds until the window ends", () => {
+  let f = F.edited(null, "work", { sched: WEEK }, day(16, 8));
+  assert.deepEqual(F.activeAt(f, QH, day(16, 10)), { id: "work", until: day(16, 17), by: "schedule" });
+  assert.equal(F.activeAt(f, QH, day(16, 23)).id, "sleep", "quiet hours still run Sleep");
+  assert.equal(F.activeAt(F.started(f, "personal", 0, day(16, 9)), QH, day(16, 10)).id, "personal");
+  const off = F.stopped(f, QH, day(16, 10));
+  assert.equal(off.act.until, day(16, 17));
+  assert.equal(F.activeAt(off, QH, day(16, 16)), null);
+  assert.equal(F.activeAt(off, QH, day(17, 10)).id, "work", "the next day it runs again");
+  assert.equal(F.silent(f, {}, "mail", day(16, 10)), false, "Work lets Mail through");
+  assert.equal(F.silent(f, {}, "games", day(16, 10)), true);
+});
+
+test("F2 Calendar trigger: label or title word, timed events only, accents and case ignored", () => {
+  let f = F.edited(null, "personal", { cal: { on: true, label: "", word: "Γιόγκα" } }, day(16, 8));
+  f = F.edited(f, "work", { cal: { on: true, label: "lbl_w", word: "" } }, day(16, 8));
+  const evs = [
+    { s: day(16, 19), e: day(16, 20), title: "ΓΙΟΓΚΑ με τη Μαρία", label: "" },
+    { s: day(16, 11), e: day(16, 12, 30), title: "Πελάτης", label: "lbl_w" }
+  ];
+  assert.deepEqual(F.activeAt(f, {}, day(16, 19, 30), evs), { id: "personal", until: day(16, 20), by: "calendar" });
+  assert.deepEqual(F.activeAt(f, {}, day(16, 11), evs), { id: "work", until: day(16, 12, 30), by: "calendar" });
+  assert.equal(F.activeAt(f, {}, day(16, 13), evs), null);
+  assert.equal(F.calEnds({ on: false, word: "Γιόγκα" }, evs, day(16, 19, 30)), 0);
+  assert.equal(F.calEnds({ on: true, label: "", word: "" }, evs, day(16, 19, 30)), 0, "nothing chosen, nothing runs");
+  assert.equal(F.fold("Συνάντηση"), F.fold("ΣΥΝΑΝΤΗΣΗ"));
+  assert.equal(F.modeOf(F.normalize({ modes: [{ id: "work", cal: { on: true, label: "bad label!", word: "x" } }] }), "work").cal.label, "");
+});
+
+test("F2 until the end, unknown fields ride along, no change no stamp", () => {
+  const f = F.edited(null, "work", { sched: WEEK }, day(16, 8));
+  assert.equal(F.endOf(f, QH, "work", day(16, 7)), day(16, 17));
+  assert.equal(F.endOf(f, QH, "personal", day(16, 7)), 0, "no schedule, no end");
+  assert.equal(F.endOf(f, QH, "sleep", day(16, 12)), day(17, 8), "Sleep: the next end of the quiet hours");
+  assert.equal(F.untilOf("end", day(16, 7), day(16, 17)), day(16, 17));
+  assert.equal(F.untilOf("end", day(16, 7), 0), 0);
+  const later = F.normalize({ modes: [{ id: "work", hide: { widgets: ["clock"] }, Bad: 1 }] });
+  assert.deepEqual(F.modeOf(later, "work").hide, { widgets: ["clock"] }, "a later wave's field is kept");
+  assert.equal(F.modeOf(later, "work").Bad, undefined);
+  const edited = F.edited(later, "work", { allow: ["mail"] }, day(16, 9));
+  assert.deepEqual(F.modeOf(edited, "work").hide, { widgets: ["clock"] });
+  assert.equal(F.edited(f, "work", { sched: WEEK }, day(16, 9)).mrev, f.mrev, "the same schedule writes nothing");
+});
+
+test("F2 wiring: Settings, Quick settings, strings, Calendar data read", () => {
+  const s = read("settings/settings.js");
+  assert.match(s, /function focusWhen\(c5, F, m\)/);
+  assert.match(s, /F\.edit\(m\.id, \{ sched: next \}\)/);
+  assert.match(s, /F\.edit\(m\.id, \{ cal: next \}\)/);
+  const q = read("qsettings.js");
+  assert.match(q, /F\.endOf\(id\)/);
+  assert.match(q, /parts\.focusEnd\.hidden = !\(endMs > Date\.now\(\)\)/);
+  const core = read("focus/core.js");
+  assert.match(core, /localStorage\.getItem\("oros-calendar-data"\)/);
+  assert.match(core, /OCC\.instancesBetween/);
+  const tr = read("translations.js"), de = read("i18n/de/shell.js"), sc = read("settings/core.js"), sde = read("i18n/de/settings.js");
+  assert.equal((tr.match(/"qs\.focus\.end":/g) || []).length, 2);
+  assert.ok(de.includes('"qs.focus.end":'));
+  for (const k of ["n.focus.sched", "n.focus.sched.hint", "n.focus.sched.sleep", "n.focus.days", "n.focus.sched.empty", "n.focus.sched.night",
+                   "n.focus.cal", "n.focus.cal.hint", "n.focus.cal.label", "n.focus.cal.anylabel", "n.focus.cal.word", "n.focus.cal.word.ph",
+                   "n.focus.cal.word.hint", "n.focus.cal.empty", "n.focus.by.schedule", "n.focus.by.calendar"]) {
+    assert.equal((sc.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN+EL");
+    assert.ok(sde.includes('"' + k + '":'), k + " DE");
+  }
+});

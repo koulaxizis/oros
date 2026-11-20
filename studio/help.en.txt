@@ -135,7 +135,7 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 - On the same network the two devices talk directly. Through a VPN or on different networks (for example a phone on 4G) they talk through the orOS relay instead, with a little more delay. Either way the link is encrypted with the code, and the relay only passes it on.
 - `Disconnect` on the PC ends the link at once. If the link drops, the remote reconnects by itself while Studio stays open on the PC.
 - The screen of the tablet or phone stays on while it shows the console, and a phone gives a short tick when you grab a fader, pass 0 dB or press a button.
-- **Remote for orOS Studio** is the remote as an app of its own for Android (orOS's [F-Droid repository](https://koulaxizis.github.io/oros-fdroid/), Droid-ify, Obtainium or the orOS download page) and at useoros.online/studio/remote/ in any browser. It keeps the last code on that device only: after `Stop controlling`, or when you come back to the app, `Connect` joins the same PC again without a new `Allow`, as long as Studio there still shows that code. It stores nothing of your projects.
+- **Remote for orOS Studio** is the remote as an app of its own for Android (Koulaxizis Apps or the orOS download page) and at useoros.online/studio/remote/ in any browser. It keeps the last code on that device only: after `Stop controlling`, or when you come back to the app, `Connect` joins the same PC again without a new `Allow`, as long as Studio there still shows that code. It stores nothing of your projects.
 >! Press `Allow` only when it is your own device asking. If you did not just type the code somewhere, press `Deny`.
 
 ## Export
@@ -162,7 +162,7 @@ Control Studio's mixer and transport from a tablet or phone while the sound play
 
 ## Publish as podcast
 `Export` › `Publish as podcast` makes a podcast from your projects. Each episode is one Studio project; the show holds them together.
-- `Show`: its title, who makes it, a description, the language, the order (newest first or a series in order), an Apple Podcasts category and whether it is explicit. `Site address` is where you will put the site, for example `https://yourname.github.io/show/` (https only); the feed is that address plus `feed.xml`. The owner e-mail is optional and public: directories use it to check the show is yours. `Support link` can be your Ko-fi page.
+- `Show`: its title, who makes it, a description, the language, the order (newest first or a series in order), an Apple Podcasts category and whether it is explicit. `Site address` is where you will put the site, for example `https://yourname.github.io/show/` (https only); the feed is that address plus `feed.xml`. The owner e-mail is optional and public: directories use it to check the show is yours. `Support link` can be your own support or donation page.
 - `Cover`: a square picture of at least 1400 × 1400 pixels. Studio cuts it square, makes it at most 3000 × 3000 and drops hidden photo details (place, camera). `Design it in Atelier` opens a 3000 × 3000 design; save it as a picture and choose it here.
 - `This project as an episode`: `Add to this show`, then the number, season, kind (episode, trailer, bonus), date, title and show notes. `Sound`: mono for speech, 64, 96 or 128 kbit/s (96 mono is about 43 MB an hour).
 - `Make the episode file` mixes the project (as Export does) into an MP3 with its title, show, number, date, cover and chapters, and keeps it on the orOS disk under `Studio/Podcasts`. Change the sound or the markers later and make it again.

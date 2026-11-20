@@ -1612,7 +1612,7 @@
       "only some of them, or none. Use short keyword queries (1-3 words), in the language the " +
       "data is probably written in; search again with other words if nothing comes back. Each result shows " +
       "its labels; with label it returns only items with that label, or with none. " +
-      "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear.",
+      "search_data in Files also finds Documents: type, date, sender, tags, amount, expiry and keep-until dates, the file and the first 300 characters of the text. Files and folders on the disk also show their tag names (Tags: …), so a tag name finds them. Private documents (medical, IDs, or linked to Health, Cycle or Baby) never appear, and neither do their tags.",
     params: {
       type: "object",
       properties: {

@@ -21,7 +21,10 @@ A focus mode keeps notifications quiet while you work, sleep or have time for yo
 - orOS has four modes: `Do Not Disturb` (lets nothing through), `Sleep`, `Work` and `Personal`, and you can make up to 10 of your own with `New mode`.
 - In [Settings](app:settings) › `Notifications` › `Focus modes`, pick a mode to rename it, give it an icon, choose `Apps that may pop up`, turn it on now, or delete one of your own.
 - `Sleep in quiet hours` turns the Sleep mode on by itself between the `From` and `To` hours (22:00 to 08:00 by default). Turning it off during the night keeps it off until the morning.
-- In Quick settings (the button at the right end of the top bar), `Focus` turns the last mode on or off with one tap. Its arrow lists every mode and sets how long: `For one hour`, `Until 8 in the morning` or `Until you turn it off`.
+- `Turn on by schedule` turns a mode on by itself on the days and between the times you choose, in half hours; an end before the start runs past midnight (for example 22:30 to 01:30). Sleep keeps the quiet hours above.
+- `Turn on during Calendar events` turns a mode on while a [Calendar](app:calendar) event with a start time runs: one with the label you choose, or with a word in its title (for example `Meeting`; capitals and accents do not matter). All-day events do not count.
+- When you turn a mode off while its schedule or event runs, it stays off until that time is over, and comes back the next time.
+- In Quick settings (the button at the right end of the top bar), `Focus` turns the last mode on or off with one tap. Its arrow lists every mode and sets how long: `For one hour`, `Until 8 in the morning`, `Until the schedule ends` (for a mode with a schedule) or `Until you turn it off`.
 - A mode you turn on holds on all your devices that sync. The top bar shows a crossed bell while one is on.
 - Clock alarms and ringing Calendar reminders always ring, in every mode.
 
