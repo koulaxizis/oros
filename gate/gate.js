@@ -481,7 +481,9 @@
   function isrcOut(c) { return typeof c === "string" && /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/.test(c) ? c.slice(0, 2) + "-" + c.slice(2, 5) + "-" + c.slice(5, 7) + "-" + c.slice(7) : ""; }
   function publishTitles(raw, args) {
     if (!isObj(args)) return { ok: false, err: "The arguments must be an object." };
-    var d = isObj(raw) ? raw : {}, tombs = isObj(d.tombs) ? d.tombs : {};
+    // PUB-NODATA: no Publishing store on this device is not "no titles"; an empty answer led to a duplicate create
+    if (!isObj(raw)) return { ok: false, err: "Publishing has no data on this device (it was not opened here yet), so this is not a list of the owner's titles. Do not create titles from this answer; ask again when orOS with Publishing is open." };
+    var d = raw, tombs = isObj(d.tombs) ? d.tombs : {};
     function live(r) { return isObj(r) && typeof r.id === "string" && typeof r.ti === "string" && !(typeof tombs[r.id] === "number" && tombs[r.id] >= (Number(r.m) || 0)); }
     var trks = {}, meds = {};
     (Array.isArray(d.trk) ? d.trk : []).filter(live).forEach(function (r) { (trks[r.ti] = trks[r.ti] || []).push(r); });

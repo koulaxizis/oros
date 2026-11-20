@@ -13175,3 +13175,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js (`kanbanWrite`, `kanbanUndo`, `kanbanChange`, `kbRemovePeek`, `askSubs`, `delCount`, `delWhat`, `askQueued`), relay/gate.js (`kanban_change_card` schema, `isDeletion`), shell.js (APP_VERSION), help/topics/whatsnew.{en,el}.txt, tests/gate-kanban.test.js, tests/gate-kanban-subdel.test.js (new), tests/gate-relay.test.js, OROS_BIBLE.md (this entry).
 - **Tests:** full `node --test tests/*.test.js`; gate-kanban (removal, tombstones, undo + symmetric merge, refusals), gate-kanban-subdel (real shell: on screen asked with the texts and only those removed; hidden → `__held`, nothing removed), gate-relay (`isDeletion`, schema). Not tested: the deployed relay and the owner's real board.
 
+
+### 2026-11-20 — 8.00.01 — Gate: Publishing without data on the device is not "no titles" (PUB-NODATA)
+
+- **What:** a Gate thread got `publish_titles` total 0 (and nothing from Publishing in search) while other apps answered, and nearly created «Άνθρωποι που αξίζει να περιμένεις» a second time; a later read returned all 54 titles. `publishTitles` now refuses when `oros-publish-data` is missing on the answering device ("Publishing has no data on this device … do not create titles from this answer") instead of answering an empty list. Also covers the in-app assistant, which shares the function.
+- **Files:** gate/gate.js (`publishTitles`), shell.js, help/topics/whatsnew.en/el.txt.
+- **Tests:** full `node --test tests/*.test.js`; gate-core (publish_titles with no store).
