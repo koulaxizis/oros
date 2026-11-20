@@ -1248,6 +1248,14 @@
       "type": "internal"
     },
     {
+      "id": "clockwork",
+      "name": "Clockwork Workshop",
+      "category": "Games",
+      "icon": "clockwork",
+      "url": "clockwork/",
+      "type": "internal"
+    },
+    {
       "id": "wayfarers",
       "name": "Wayfarers",
       "category": "Games",

@@ -158,6 +158,8 @@
     lighthouse: function (s) { return num(s.acts) > 0; },
     // Star Chart (idle): oros-starchart-session is {acts}, as Hive.
     starchart: function (s) { return num(s.acts) > 0; },
+    // Clockwork Workshop (idle): oros-clockwork-session is {acts}, as Hive.
+    clockwork: function (s) { return num(s.acts) > 0; },
     // Windmill ridge: {g: engine state, ck, counted}; under way after the
     // first action, until the night is won or lost.
     ridge: function (s) {

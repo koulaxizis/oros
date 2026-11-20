@@ -24,6 +24,14 @@
 //     (vibration, a tone, the device's own voice) when you leave the
 //     track, come back, near a waypoint or reach the end; the alerts
 //     switch is device-local ("oros-maps-follow").
+//   - Since wave H5 a recording has an activity kind (walk, hike, run,
+//     ride, mountain bike; GPX <type>, a speed limit per kind against
+//     GPS jumps), shows when it is stopped (moving time does not count),
+//     the moving time and the climb, and takes points with a name and a
+//     photo (JPEG ≤ 1600 px, /internal/Maps/Tracks/Photos/, linked from
+//     the GPX <wpt>; removed with the track). A track shows its points
+//     and splits per kilometre; recorded tracks count the climb on
+//     heights through a median of 5.
 //   - Import GPX, KML or GeoJSON (Import button, or "Open with" orOS);
 //     KMZ, TCX, FIT and Google Takeout / Timeline go through the preview
 //     of import-ui.js, which adds tracks here with addImported (stable
@@ -86,7 +94,18 @@
       "trk.fw.end": "You've reached the end of the track.",
       "trk.fw.alerts": "Sound and vibration", "trk.fw.alerts.on": "Alerts on", "trk.fw.alerts.off": "Alerts off",
       "trk.fw.unnamedw": "waypoint",
-      "trk.export": "Export GPX", "trk.details": "Name, colour, folder",
+      "trk.act": "Activity", "trk.act.none": "Not set",
+      "trk.act.walk": "Walk", "trk.act.hike": "Hike", "trk.act.run": "Run", "trk.act.bike": "Ride", "trk.act.mtb": "Mountain bike", "trk.act.other": "Other",
+      "trk.rec.auto": "Stopped: the time does not count until you move again",
+      "trk.rec.pt": "Add a point",
+      "trk.pt.title": "A point here", "trk.pt.name": "Name", "trk.pt.photo": "Photo (optional)",
+      "trk.pt.add": "Add", "trk.pt.added": "Point added", "trk.pt.nofix": "No GPS position yet.",
+      "trk.pt.photofail": "The photo could not be saved; the point was added without it.",
+      "trk.pt.n": "Point {n}",
+      "trk.pts": "Points on the track", "trk.photo.alt": "Photo: {n}",
+      "trk.sp": "Per kilometre", "trk.sp.km": "Km", "trk.sp.time": "Time", "trk.sp.pace": "Pace", "trk.sp.speed": "Speed",
+      "trk.pace": "{n}/km",
+      "trk.export": "Export GPX", "trk.details": "Name, activity, colour, folder",
       "trk.folder": "Folder", "trk.color": "Colour",
       "trk.del": "Delete", "trk.del.ask": "Delete “{n}”? Its GPX file leaves the orOS disk too.",
       "trk.deleted": "Track deleted",
@@ -176,7 +195,18 @@
       "trk.fw.end": "Έφτασες στο τέλος της διαδρομής.",
       "trk.fw.alerts": "Ήχος και δόνηση", "trk.fw.alerts.on": "Ειδοποιήσεις ανοιχτές", "trk.fw.alerts.off": "Ειδοποιήσεις κλειστές",
       "trk.fw.unnamedw": "σημείο",
-      "trk.export": "Εξαγωγή GPX", "trk.details": "Όνομα, χρώμα, φάκελος",
+      "trk.act": "Δραστηριότητα", "trk.act.none": "Χωρίς",
+      "trk.act.walk": "Περπάτημα", "trk.act.hike": "Πεζοπορία", "trk.act.run": "Τρέξιμο", "trk.act.bike": "Ποδήλατο", "trk.act.mtb": "Ορεινό ποδήλατο", "trk.act.other": "Άλλο",
+      "trk.rec.auto": "Στάση: ο χρόνος δεν μετρά μέχρι να ξεκινήσεις ξανά",
+      "trk.rec.pt": "Πρόσθεσε σημείο",
+      "trk.pt.title": "Σημείο εδώ", "trk.pt.name": "Όνομα", "trk.pt.photo": "Φωτογραφία (προαιρετικά)",
+      "trk.pt.add": "Προσθήκη", "trk.pt.added": "Το σημείο προστέθηκε", "trk.pt.nofix": "Δεν υπάρχει ακόμα θέση GPS.",
+      "trk.pt.photofail": "Η φωτογραφία δεν αποθηκεύτηκε· το σημείο προστέθηκε χωρίς αυτή.",
+      "trk.pt.n": "Σημείο {n}",
+      "trk.pts": "Σημεία της διαδρομής", "trk.photo.alt": "Φωτογραφία: {n}",
+      "trk.sp": "Ανά χιλιόμετρο", "trk.sp.km": "Χλμ", "trk.sp.time": "Χρόνος", "trk.sp.pace": "Ρυθμός", "trk.sp.speed": "Ταχύτητα",
+      "trk.pace": "{n}/χλμ",
+      "trk.export": "Εξαγωγή GPX", "trk.details": "Όνομα, δραστηριότητα, χρώμα, φάκελος",
       "trk.folder": "Φάκελος", "trk.color": "Χρώμα",
       "trk.del": "Διαγραφή", "trk.del.ask": "Να διαγραφεί η «{n}»; Φεύγει και το αρχείο GPX από τον δίσκο του orOS.",
       "trk.deleted": "Η διαδρομή διαγράφηκε",
@@ -463,13 +493,13 @@
   }
   function recSave() {
     if (!rec) return Promise.resolve();
-    var copy = { id: rec.id, started: rec.started, segs: rec.segs, paused: rec.paused };
+    var copy = { id: rec.id, started: rec.started, segs: rec.segs, paused: rec.paused, act: rec.act, wpts: rec.wpts };
     return idb(function (s) { return s.put(copy, "cur"); }).catch(function () {});
   }
   function recLoad() { return idb(function (s) { return s.get("cur"); }).catch(function () { return null; }); }
   function recClear() { return idb(function (s) { return s.delete("cur"); }).catch(function () {}); }
 
-  var rec = null;                // { id, started, segs, paused, last }
+  var rec = null;                // { id, started, segs, paused, act, wpts }
   var watchId = null, saveTimer = null, tickTimer = null, lastFix = null, gpsState = "";
   var wake = null;
   function wakeOn() {
@@ -488,7 +518,11 @@
   });
   window.addEventListener("pagehide", function () { if (rec) recSave(); });
 
-  function recTrack() { return { name: "", segs: rec ? rec.segs.filter(function (s) { return s.length; }) : [], wpts: [] }; }
+  function recTrack() {
+    var tr = { name: "", segs: rec ? rec.segs.filter(function (s) { return s.length; }) : [], wpts: rec && rec.wpts ? rec.wpts.slice() : [] };
+    if (rec && T.ACTS.indexOf(rec.act) >= 0) tr.act = rec.act;
+    return tr;
+  }
   function lastPoint() {
     if (!rec) return null;
     for (var i = rec.segs.length - 1; i >= 0; i--) if (rec.segs[i].length) return rec.segs[i][rec.segs[i].length - 1];
@@ -499,7 +533,12 @@
     gpsState = "ok";
     if (rec && !rec.paused) {
       var seg = rec.segs[rec.segs.length - 1];
-      var p = T.accept(seg.length ? seg[seg.length - 1] : null, fix);
+      var prev = seg.length ? seg[seg.length - 1] : null;
+      var p = T.accept(prev, fix, rec.act);
+      // Faster than the kind for 3 fixes in a row is real movement (a
+      // wrong kind chosen, a lift), not a jump: keep it.
+      if (!p && rec.act && T.accept(prev, fix)) { rec.fast = (rec.fast || 0) + 1; if (rec.fast >= 3) p = T.accept(prev, fix); }
+      if (p) rec.fast = 0;
       if (p) {
         seg.push(p);
         drawRec();
@@ -535,7 +574,7 @@
     else if (map.hasLayer(recLine)) map.removeLayer(recLine);
   }
   function recStart(resume) {
-    if (!rec) rec = { id: newId(), started: Date.now(), segs: [[]], paused: false };
+    if (!rec) rec = { id: newId(), started: Date.now(), segs: [[]], paused: false, act: fprefs.act, wpts: [] };
     else if (resume) { rec.paused = false; rec.segs.push([]); }
     rec.paused = false;
     startWatch();
@@ -560,6 +599,7 @@
   }
   function recEnd() {
     rec = null;
+    if (recPtLayer) recPtLayer.clearLayers();
     clearInterval(saveTimer); clearInterval(tickTimer);
     saveTimer = tickTimer = null;
     recClear();
@@ -568,7 +608,12 @@
     drawRec();
     chip();
   }
-  function recStats() { return T.stats(recTrack()); }
+  function recStats() { return T.stats(recTrack(), { smooth: true }); }
+  // Not moving for 30 s while recording (the moving time stops too).
+  function recStill() {
+    var last = lastPoint();
+    return !!(rec && !rec.paused && last && last[3] && lastFix && lastFix.t - last[3] > 30000);
+  }
   function defaultName(ms) {
     return t("unnamed") + " " + fmtDate(ms || Date.now());
   }
@@ -623,6 +668,88 @@
     document.body.appendChild(dlg);
     dlg.showModal();
   }
+  function sanePts(list) {
+    return (Array.isArray(list) ? list : []).filter(function (w) {
+      return w && isFinite(w.lat) && isFinite(w.lon) && Math.abs(w.lat) <= 90 && Math.abs(w.lon) <= 180;
+    }).slice(0, T.LIM.wpts).map(function (w) {
+      var o = { lat: w.lat, lon: w.lon, ele: isFinite(w.ele) && w.ele !== null ? w.ele : null, t: isFinite(w.t) ? w.t : null, name: String(w.name || "").slice(0, T.LIM.name) };
+      if (typeof w.photo === "string" && T.PHOTO_RE.test(w.photo)) o.photo = w.photo;
+      return o;
+    });
+  }
+
+  // ---------- a point with a photo while recording ----------
+  // JPEG at most 1600 px on the long side.
+  function shrinkPhoto(file) {
+    return new Promise(function (resolve) {
+      if (!file || !/^image\//.test(file.type || "")) { resolve(null); return; }
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        var k = Math.min(1, 1600 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(img.naturalWidth * k)); cv.height = Math.max(1, Math.round(img.naturalHeight * k));
+        var g = cv.getContext("2d");
+        URL.revokeObjectURL(url);
+        if (!g) { resolve(null); return; }
+        g.drawImage(img, 0, 0, cv.width, cv.height);
+        cv.toBlob(function (b) { resolve(b && b.size ? b : null); }, "image/jpeg", 0.82);
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(null); };
+      img.src = url;
+    });
+  }
+  function photoPath(rel) { return typeof rel === "string" && T.PHOTO_RE.test(rel) ? T.DIR + "/" + rel : null; }
+  function pointDlg() {
+    if (!rec) return;
+    var at = lastFix && isFinite(lastFix.lat) ? { lat: lastFix.lat, lon: lastFix.lon, ele: isFinite(lastFix.ele) && lastFix.ele !== null ? Math.round(lastFix.ele) : null }
+      : (lastPoint() ? { lat: lastPoint()[0], lon: lastPoint()[1], ele: lastPoint()[2] } : null);
+    if (!at) { toast(t("pt.nofix")); return; }
+    var n = rec.wpts.length + 1;
+    var dlg = el("dialog", "osm-dlg trk-pt-dlg");
+    dlg.appendChild(el("h3", "", t("pt.title")));
+    var l1 = el("label", "osm-lab", t("pt.name"));
+    var name = el("input", "osm-in"); name.maxLength = T.LIM.name; name.value = t("pt.n", { n: n });
+    l1.appendChild(name); dlg.appendChild(l1);
+    var l2 = el("label", "osm-lab", t("pt.photo"));
+    var file = el("input", "osm-in trk-pt-file"); file.type = "file"; file.accept = "image/*"; file.setAttribute("capture", "environment");
+    l2.appendChild(file); dlg.appendChild(l2);
+    var row = el("div", "osm-actions");
+    var add = button(t("pt.add"), "osm-btn primary", function () {
+      add.disabled = true;
+      var w = { lat: Math.round(at.lat * 1e7) / 1e7, lon: Math.round(at.lon * 1e7) / 1e7, ele: at.ele, t: Date.now(), name: name.value.trim().slice(0, T.LIM.name) || t("pt.n", { n: n }) };
+      var f = file.files && file.files[0];
+      var rel = "Photos/" + rec.id + "-" + n + ".jpg", fs = fsApi();
+      var p = f && fs && typeof fs.writeBlob === "function" && T.PHOTO_RE.test(rel)
+        ? shrinkPhoto(f).then(function (b) { if (!b) throw new Error("img"); return fs.writeBlob(photoPath(rel), b); }).then(function () { w.photo = rel; }, function () { toast(t("pt.photofail")); })
+        : Promise.resolve();
+      p.then(function () {
+        if (!rec) return;
+        rec.wpts.push(w);
+        recSave();
+        close();
+        toast(t("pt.added"));
+        drawRecPts();
+        if (panelOpen()) render();
+      });
+    });
+    row.appendChild(add);
+    row.appendChild(button(t("cancel"), "osm-btn", close));
+    dlg.appendChild(row);
+    function close() { if (dlg.open) dlg.close(); dlg.remove(); }
+    dlg.addEventListener("cancel", function (ev) { ev.preventDefault(); close(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  var recPtLayer = null;
+  function drawRecPts() {
+    if (!recPtLayer) recPtLayer = L.layerGroup().addTo(map);
+    recPtLayer.clearLayers();
+    if (!rec) return;
+    rec.wpts.forEach(function (w) {
+      L.circleMarker([w.lat, w.lon], { radius: 6, color: "#fff", weight: 2, fillColor: "#e06c75", fillOpacity: 1, interactive: false }).addTo(recPtLayer);
+    });
+  }
+
   // An unfinished recording from an earlier visit.
   function offerResume(saved) {
     var tr = { segs: (saved.segs || []).filter(function (s) { return Array.isArray(s) && s.length; }), wpts: [] };
@@ -630,8 +757,10 @@
       return s.filter(function (p) { return Array.isArray(p) && isFinite(p[0]) && isFinite(p[1]); });
     }).filter(function (s) { return s.length; });
     if (T.flatLen(tr) < 2) { recClear(); return; }
-    rec = { id: saved.id || newId(), started: saved.started || Date.now(), segs: tr.segs, paused: true };
+    rec = { id: saved.id || newId(), started: saved.started || Date.now(), segs: tr.segs, paused: true,
+      act: T.ACTS.indexOf(saved.act) >= 0 ? saved.act : "", wpts: sanePts(saved.wpts) };
     drawRec();
+    drawRecPts();
     var dlg = el("dialog", "osm-dlg");
     dlg.appendChild(el("h3", "", t("rec.resume.title")));
     dlg.appendChild(el("p", "poi-q", t("rec.resume.text", { when: fmtDate(rec.started), d: fmtDist(T.stats(tr).dist) })));
@@ -652,8 +781,12 @@
   //     state, told: waypoints told, end: told the end }
   var following = null, followArrow = null;
   var FC = window.OrosMapsFollow;
-  var FPREF_KEY = "oros-maps-follow", fprefs = { alerts: 1 };
-  try { var fp0 = JSON.parse(localStorage.getItem(FPREF_KEY) || "null"); if (fp0 && fp0.alerts === 0) fprefs.alerts = 0; } catch (e) {}
+  var FPREF_KEY = "oros-maps-follow", fprefs = { alerts: 1, act: "hike" };
+  try {
+    var fp0 = JSON.parse(localStorage.getItem(FPREF_KEY) || "null");
+    if (fp0 && fp0.alerts === 0) fprefs.alerts = 0;
+    if (fp0 && T.ACTS.indexOf(fp0.act) >= 0) fprefs.act = fp0.act;
+  } catch (e) {}
   function saveFprefs() { try { localStorage.setItem(FPREF_KEY, JSON.stringify(fprefs)); } catch (e) {} }
   function followStart(id, rev) {
     readTrack(id).catch(function () { return null; }).then(function (tr) {
@@ -796,20 +929,27 @@
     setH();
   }
 
-  var live = null;
+  var live = null, recStateEl = null;
   function liveUpdate() {
     if (!live || !document.body.contains(live)) return;
     if (route.v === "track") return renderFollowBox();
     var st = recStats();
-    var speed = lastFix && lastPoint() && rec && !rec.paused && isFinite(lastFix.spd) ? lastFix.spd : null;
+    var still = recStill();
+    var speed = lastFix && lastPoint() && rec && !rec.paused && !still && isFinite(lastFix.spd) ? lastFix.spd : null;
     var last = lastPoint();
     var vals = [
       [t("st.dist"), fmtDist(st.dist)],
       [t("st.time"), fmtTime(rec ? Date.now() - (rec.segs[0].length && rec.segs[0][0][3] ? rec.segs[0][0][3] : rec.started) : 0)],
+      [t("st.moving"), st.moving ? fmtTime(st.moving) : "–"],
       [t("st.avg"), fmtSpeed(st.moving ? st.dist / (st.moving / 1000) : 0)],
+      [t("st.up"), t("m", { n: st.up || 0 })],
       [t("chart.ele"), last && last[2] !== null ? t("m", { n: Math.round(last[2]) }) : "–"]
     ];
-    if (speed !== null) vals[2] = [t("chart.speed"), fmtSpeed(speed)];
+    if (speed !== null) vals[3] = [t("chart.speed"), fmtSpeed(speed)];
+    if (recStateEl) {
+      recStateEl.textContent = rec.paused ? t("rec.paused") : (gpsState === "wait" && !lastPoint() ? t("rec.wait") : still ? "❚❚ " + t("rec.auto") : "● " + t("rec.on"));
+      recStateEl.classList.toggle("still", still);
+    }
     live.textContent = "";
     vals.forEach(function (v) {
       var c = el("div", "trk-stat");
@@ -819,6 +959,22 @@
     });
   }
 
+  // The activity for the next recording (remembered on this device).
+  function actChips() {
+    var box = el("div", "trk-acts");
+    box.setAttribute("role", "group");
+    box.setAttribute("aria-label", t("act"));
+    T.ACTS.forEach(function (a) {
+      var b = button(t("act." + a), "odr-kind trk-act" + (fprefs.act === a ? " on" : ""), function () {
+        fprefs.act = a; saveFprefs();
+        box.querySelectorAll(".trk-act").forEach(function (x) { var on = x === b; x.classList.toggle("on", on); x.setAttribute("aria-pressed", on ? "true" : "false"); });
+      });
+      b.setAttribute("aria-pressed", fprefs.act === a ? "true" : "false");
+      b.dataset.act = a;
+      box.appendChild(b);
+    });
+    return box;
+  }
   function renderList() {
     panel.textContent = "";
     panel.appendChild(header(t("title")));
@@ -826,16 +982,22 @@
     // Recording card
     var card = el("div", "trk-rec" + (rec ? (rec.paused ? " paused" : " on") : ""));
     if (rec) {
-      card.appendChild(el("div", "trk-rec-state", rec.paused ? t("rec.paused") : (gpsState === "wait" && !lastPoint() ? t("rec.wait") : "● " + t("rec.on"))));
+      if (rec.act) card.appendChild(el("span", "trk-act-tag", t("act." + rec.act)));
+      recStateEl = el("div", "trk-rec-state", rec.paused ? t("rec.paused") : (gpsState === "wait" && !lastPoint() ? t("rec.wait") : "● " + t("rec.on")));
+      card.appendChild(recStateEl);
       live = el("div", "trk-stats");
       card.appendChild(live);
       var r = el("div", "osm-actions");
       r.appendChild(button(rec.paused ? t("rec.resume") : t("rec.pause"), "osm-btn", function () { if (rec.paused) recStart(true); else recPause(); }));
       r.appendChild(button(t("rec.stop"), "osm-btn primary", stopDialog));
       card.appendChild(r);
+      var rp = el("div", "osm-actions");
+      rp.appendChild(button(t("rec.pt") + (rec.wpts.length ? " (" + rec.wpts.length + ")" : ""), "osm-btn trk-pt-btn", pointDlg));
+      card.appendChild(rp);
       if (!rec.paused) card.appendChild(el("p", "osm-small", t("rec.screen")));
     } else {
-      live = null;
+      live = null; recStateEl = null;
+      card.appendChild(actChips());
       var r0 = el("div", "osm-actions");
       r0.appendChild(button(t("rec.start"), "osm-btn primary", function () { recStart(false); }));
       var imp = button(t("import"), "osm-btn", pickImport);
@@ -901,6 +1063,7 @@
         var b = el("div", "osm-row-body");
         b.appendChild(el("div", "osm-row-t", nameOf(e)));
         var meta = [fmtDate(e.start || e.m), fmtDist(e.dist)];
+        if (e.act) meta.unshift(t("act." + e.act));
         if (e.dur) meta.push(fmtTime(e.dur));
         if (e.folder) meta.push(e.folder);
         b.appendChild(el("div", "osm-row-s", meta.join(" · ")));
@@ -984,10 +1147,11 @@
     panel.appendChild(header(nameOf(e), function () { go({ v: "list" }); }));
     var body = el("div", "osm-body");
     var meta = [fmtDate(e.start || e.m)];
+    if (e.act) meta.unshift(t("act." + e.act));
     if (e.folder) meta.push(e.folder);
     body.appendChild(el("p", "osm-small", meta.join(" · ")));
     if (route.missing && !tr) body.appendChild(el("p", "osm-warn", t("missing")));
-    var st = tr ? T.stats(tr) : e;
+    var st = tr ? T.stats(tr, { smooth: e.src === "rec" }) : e;
     var grid = el("div", "trk-stats");
     var avg = st.moving ? st.dist / (st.moving / 1000) : 0;
     [[t("st.dist"), fmtDist(st.dist)], [t("st.time"), st.dur ? fmtTime(st.dur) : "–"],
@@ -1003,6 +1167,8 @@
       });
     body.appendChild(grid);
     if (tr) body.appendChild(chartBox(tr));
+    if (tr && st.dist >= 1000) body.appendChild(splitsBox(tr, e));
+    if (tr && tr.wpts && tr.wpts.length) body.appendChild(pointsBox(tr));
 
     followBox = el("div", "trk-follow");
     body.appendChild(followBox);
@@ -1057,6 +1223,75 @@
     }));
     body.appendChild(r3);
     panel.appendChild(body);
+  }
+
+  // Splits per kilometre: time, pace (speed on a bike), climb.
+  function fmtPace(msPerKm) {
+    var s = Math.round(msPerKm / 1000), m = Math.floor(s / 60), r = s % 60;
+    return t("pace", { n: m + ":" + (r < 10 ? "0" : "") + r });
+  }
+  function splitsBox(tr, e) {
+    var box = el("details", "trk-splits");
+    box.appendChild(el("summary", "", t("sp")));
+    var rows = T.splits(tr, 1000, { smooth: e.src === "rec" });
+    var timed = rows.some(function (r) { return r.ms > 0; });
+    var bike = e.act === "bike" || e.act === "mtb";
+    var tb = el("table", "trk-sp-t"), hr = el("tr", "");
+    [t("sp.km"), timed ? t("sp.time") : null, timed ? t(bike ? "sp.speed" : "sp.pace") : null, "↗", "↘"].forEach(function (h) {
+      if (h !== null) { var th = el("th", "", h); th.scope = "col"; hr.appendChild(th); }
+    });
+    var th0 = el("thead", ""); th0.appendChild(hr); tb.appendChild(th0);
+    var tbd = el("tbody", "");
+    var best = Infinity;
+    rows.forEach(function (r) { if (r.ms > 0 && r.len >= 900) best = Math.min(best, r.ms / r.len); });
+    rows.slice(0, 300).forEach(function (r) {
+      var tr2 = el("tr", r.ms > 0 && r.len >= 900 && r.ms / r.len === best ? "best" : "");
+      tr2.appendChild(el("td", "", fmtNum(r.d / 1000, r.len < 1000 ? 2 : 0)));
+      if (timed) {
+        tr2.appendChild(el("td", "", r.ms ? fmtTime(r.ms) : "–"));
+        tr2.appendChild(el("td", "", !r.ms || r.len < 50 ? "–" : bike ? fmtSpeed(r.len / (r.ms / 1000)) : fmtPace(r.ms / r.len * 1000)));
+      }
+      tr2.appendChild(el("td", "", t("m", { n: r.up })));
+      tr2.appendChild(el("td", "", t("m", { n: r.down })));
+      tbd.appendChild(tr2);
+    });
+    tb.appendChild(tbd);
+    box.appendChild(tb);
+    return box;
+  }
+  // Waypoints of the track, with their photos (from the orOS disk).
+  function pointsBox(tr) {
+    var box = el("details", "trk-pts");
+    box.appendChild(el("summary", "", t("pts") + " (" + tr.wpts.length + ")"));
+    var ul = el("ul", "osm-list");
+    var fs = fsApi();
+    tr.wpts.slice(0, 200).forEach(function (w) {
+      var li = el("li", "osm-row trk-pt-row");
+      li.tabIndex = 0;
+      var path = photoPath(w.photo);
+      if (path && fs && typeof fs.readBlob === "function") {
+        var img = el("img", "trk-pt-img");
+        img.alt = t("photo.alt", { n: w.name || t("fw.unnamedw") });
+        img.hidden = true;
+        Promise.resolve(fs.readBlob(path)).then(function (b) {
+          if (!b || !b.size) return;
+          var u = URL.createObjectURL(b);
+          img.onload = function () { img.hidden = false; };
+          img.src = u;
+        }, function () {});
+        li.appendChild(img);
+      }
+      var b2 = el("div", "osm-row-body");
+      b2.appendChild(el("div", "osm-row-t", w.name || t("fw.unnamedw")));
+      if (w.ele !== null && w.ele !== undefined) b2.appendChild(el("div", "osm-row-s", t("m", { n: Math.round(w.ele) })));
+      li.appendChild(b2);
+      function go2() { try { map.setView([w.lat, w.lon], Math.max(map.getZoom(), 16)); } catch (x) {} }
+      li.addEventListener("click", go2);
+      li.addEventListener("keydown", function (ev) { if (ev.key === "Enter") go2(); });
+      ul.appendChild(li);
+    });
+    box.appendChild(ul);
+    return box;
   }
 
   // Elevation (or speed when there is no elevation) over distance.
@@ -1144,6 +1379,7 @@
       if (!dlg || typeof dlg.saveFile !== "function") { toast(t("nodlg")); return; }
       var copy = T.clone(tr);
       copy.name = nameOf(e);
+      if (e.act) copy.act = e.act; else delete copy.act;
       var blob = new Blob([T.writeGpx(copy)], { type: "application/gpx+xml" });
       return dlg.saveFile({ blob: blob, filename: fileName(e), mime: "application/gpx+xml",
         types: [{ description: "GPX", accept: { "application/gpx+xml": [".gpx"] } }] });
@@ -1165,6 +1401,11 @@
     });
     folder.setAttribute("list", "trk-folders");
     l2.appendChild(folder); l2.appendChild(dl); dlg.appendChild(l2);
+    var l3 = el("label", "osm-lab", t("act"));
+    var act = el("select", "osm-in trk-act-sel");
+    [""].concat(T.ACTS).forEach(function (a) { var o = el("option", "", a ? t("act." + a) : t("act.none")); o.value = a; act.appendChild(o); });
+    act.value = e.act || "";
+    l3.appendChild(act); dlg.appendChild(l3);
     dlg.appendChild(el("span", "osm-lab", t("color")));
     var sw = el("div", "trk-colors"), color = e.color;
     T.COLORS.forEach(function (c) {
@@ -1185,6 +1426,7 @@
         x.name = name.value.trim().slice(0, T.LIM.name);
         x.folder = folder.value.trim().slice(0, T.LIM.folder);
         x.color = color;
+        if (T.ACTS.indexOf(act.value) >= 0) x.act = act.value; else delete x.act;
         stamp(x); saveData(); paint();
       }
       close(); render();
@@ -1197,6 +1439,22 @@
     dlg.showModal();
   }
 
+  // { "Photos/…jpg": true } named by the other tracks, or null when one
+  // of their files is not readable on this device.
+  function photosInUse(except) {
+    var fs = fsApi(), used = {};
+    return Object.keys(data.tracks).filter(function (k) { return k !== except; }).reduce(function (p, k) {
+      return p.then(function (ok) {
+        if (!ok) return false;
+        var got = full[k] ? Promise.resolve(full[k]) : Promise.resolve(fs.readText(T.pathOf(k))).then(function (txt) { return T.parseAny(txt, "x.gpx"); });
+        return got.then(function (tr) {
+          if (!tr) return false;
+          (tr.wpts || []).forEach(function (w) { if (w.photo) used[w.photo] = true; });
+          return true;
+        }, function () { return false; });
+      });
+    }, Promise.resolve(true)).then(function (ok) { return ok ? used : null; });
+  }
   function removeTrack(id) {
     var e = data.tracks[id];
     if (!e) return;
@@ -1204,10 +1462,29 @@
     if (edit && edit.id === id) edit = null;
     delete data.tracks[id];
     data.tombs[id] = Math.max(Date.now(), e.m + 1);
+    var had = full[id];
     delete full[id];
     saveData();
     var fs = fsApi(), path = T.pathOf(id);
-    if (fs && path && typeof fs.rm === "function") Promise.resolve(fs.rm(path)).catch(function () {});
+    if (fs && path && typeof fs.rm === "function") {
+      // its photos first (wave H5), then the GPX file
+      (had ? Promise.resolve(had) : Promise.resolve(fs.readText(path)).then(function (txt) { return T.parseAny(txt, "x.gpx"); }))
+        .catch(function () { return null; })
+        .then(function (tr) {
+          var rels = ((tr && tr.wpts) || []).map(function (w) { return w.photo; }).filter(function (r) { return photoPath(r); });
+          if (!rels.length) return;
+          // A split or a join copies the points: keep a photo that
+          // another track still names, and keep them all when another
+          // track's file cannot be read here.
+          return photosInUse(id).then(function (used) {
+            if (!used) return;
+            return Promise.all(rels.filter(function (r) { return !used[r]; }).map(function (r) {
+              return Promise.resolve(fs.rm(photoPath(r))).catch(function () {});
+            }));
+          });
+        })
+        .then(function () { return fs.rm(path); }).catch(function () {});
+    }
     paint();
     toast(t("deleted"));
     go({ v: "list" });
