@@ -131,6 +131,9 @@ test("resume: each game's own test", () => {
   assert.equal(one("starchart", { acts: 0 }), false);
   assert.equal(one("starchart", { acts: 2 }), true);
   assert.equal(one("starchart", {}), false);
+  assert.equal(one("clockwork", { acts: 0 }), false);
+  assert.equal(one("clockwork", { acts: 3 }), true);
+  assert.equal(one("clockwork", {}), false);
   assert.equal(one("fieldwarden", { g: { over: -1, acts: 0 }, counted: false }), false);
   assert.equal(one("fieldwarden", { g: { over: -1, acts: 2 }, counted: false }), true);
   assert.equal(one("fieldwarden", { g: { over: 1, acts: 80 }, counted: true }), false);

@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 49644 of 49650 (99%)
-- Help pages: 162 of 162 (100%)
+- Strings: 49825 of 49832 (99%)
+- Help pages: 163 of 163 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -40,6 +40,7 @@ en and el); translators change them there, not in a pack.
 | checkers | 100% | 73 / 73 |
 | chess | 100% | 406 / 406 |
 | chores | 100% | 207 / 207 |
+| clockwork | 99% | 179 / 180 |
 | commands | 100% | 82 / 82 |
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 342 / 342 |
@@ -66,7 +67,7 @@ en and el); translators change them there, not in a pack.
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 166 / 166 |
+| gamecenter | 100% | 167 / 167 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -140,7 +141,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 2013 / 2013 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1542 / 1542 |
+| shell | 100% | 1543 / 1543 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -192,5 +193,7 @@ en and el); translators change them there, not in a pack.
 
 These show English until fixed (usually the English text changed).
 
+- de/clockwork: ms.full must keep the placeholders {g}
+- de/help/clockwork.txt: links or key caps differ from clockwork/help.en.txt
 - de/help/settings.txt: links or key caps differ from settings/help.en.txt
 - de/help/topics/share.txt: links or key caps differ from help/topics/share.en.txt

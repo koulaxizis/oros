@@ -80,6 +80,10 @@
       "bytes": 413695,
       "ms": 68
     },
+    "clockwork": {
+      "bytes": 286155,
+      "ms": 260
+    },
     "connect4": {
       "bytes": 278527,
       "ms": 53
