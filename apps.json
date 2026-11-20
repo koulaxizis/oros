@@ -1232,6 +1232,14 @@
       "type": "internal"
     },
     {
+      "id": "orbit",
+      "name": "Orbit garden",
+      "category": "Games",
+      "icon": "orbit",
+      "url": "orbit/",
+      "type": "internal"
+    },
+    {
       "id": "starchart",
       "name": "Star Chart",
       "category": "Games",
