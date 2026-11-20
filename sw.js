@@ -2665,7 +2665,7 @@ self.addEventListener("install", function (event) {
 
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
-  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, SOUNDS_CACHE, "oros-television-api", SHARE_INBOX, STRICT_CACHE];
+  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, SOUNDS_CACHE, "oros-television-api", SHARE_INBOX, STRICT_CACHE, FOCUS_CACHE];
   // SW-I: Add a guard against slow cache cleanup blocking claim.
   // If cleanup takes >30s (extreme), we still want to claim clients
   // to restore online/offline functionality. The background cleanup
@@ -3148,20 +3148,53 @@ self.addEventListener("fetch", function (event) {
 // the in-app engine rings, so nothing is shown here. Otherwise one
 // notification, tag = the shell's dedupKey, so an in-app one for the
 // same reminder replaces it instead of doubling.
+// Focus modes (FOCUS-1 F4): the page sends who stays quiet for the next
+// 48 hours (focus/core.js timeline); a push of such an app is shown
+// without sound or vibration. Alarms always ring. Same rule as
+// focus/core.js snapQuiet (keep the two in step).
+var FOCUS_CACHE = "oros-focus";
+var focusSnap = null;
+var focusReady = caches.open(FOCUS_CACHE).then(function (c) {
+  return c.match("/__focus");
+}).then(function (r) { return r ? r.json() : null; }).then(function (j) {
+  if (j && !focusSnap) focusSnap = j;
+}).catch(function () {});
+function focusQuiet(snap, ns, now) {
+  if (!snap || snap.v !== 1 || !(now >= snap.at && now < snap.until)) return false;
+  ns = String(ns || "");
+  if (Array.isArray(snap.wait) && snap.wait.indexOf(ns) >= 0) return true;
+  return (Array.isArray(snap.spans) ? snap.spans : []).some(function (x) {
+    return x && x.s <= now && now < x.e && Array.isArray(x.allow) && x.allow.indexOf(ns) < 0;
+  });
+}
+self.addEventListener("message", function (event) {
+  var m = event.data;
+  if (!m || m.t !== "oros-focus" || !m.snap || typeof m.snap !== "object") return;
+  var body;
+  try { body = JSON.stringify(m.snap); } catch (e) { return; }
+  if (body.length > 200000) return;
+  focusSnap = m.snap;
+  event.waitUntil(caches.open(FOCUS_CACHE).then(function (c) {
+    return c.put("/__focus", new Response(body, { headers: { "Content-Type": "application/json" } }));
+  }).catch(function () {}));
+});
 self.addEventListener("push", function (event) {
   var d = null;
   try { d = event.data ? event.data.json() : null; } catch (e) { d = null; }
   if (!d || d.v !== 1 || typeof d.title !== "string" || typeof d.k !== "string") return;
-  event.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then(function (list) {
+  event.waitUntil(Promise.all([focusReady, self.clients.matchAll({ type: "window", includeUncontrolled: true })]).then(function (all) {
+    var list = all[1];
     var onScreen = list.some(function (c) { return c.visibilityState === "visible"; });
     if (onScreen && d.ns !== "system") return;
     var alarm = d.kind === "alarm";
+    var hush = !alarm && focusQuiet(focusSnap, d.ns, Date.now());
     return self.registration.showNotification("orOS — " + d.title.slice(0, 120), {
       body: typeof d.body === "string" ? d.body.slice(0, 240) : "",
       tag: d.k.slice(0, 200),
       renotify: alarm,
       requireInteraction: alarm,
-      vibrate: alarm ? [400, 200, 400, 200, 400] : [200],
+      silent: hush,
+      vibrate: alarm ? [400, 200, 400, 200, 400] : hush ? [] : [200],
       icon: "./icons/icon-192.png",
       badge: "./icons/icon-192.png",
       timestamp: typeof d.at === "number" ? d.at : Date.now(),

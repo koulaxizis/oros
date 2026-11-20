@@ -351,6 +351,11 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr));
   gap: 2px 12px;
 }
+/* Focus F4: the summary's times, a time and its remove button per box */
+.sum-times { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); gap: 8px 12px; }
+.sum-time { display: flex; align-items: center; gap: 8px; }
+.sum-time .sel { flex: 1 1 auto; min-width: 0; }
+.sum-time .btn { flex: 0 0 44px; min-width: 44px; padding-left: 0; padding-right: 0; }
 /* orOS Gate app switches: one box per app, the same in every column */
 .gt-apps {
   display: grid;
