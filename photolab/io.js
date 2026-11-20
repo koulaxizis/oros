@@ -24,7 +24,7 @@
   var PL = window.PL, C = PL.C, st = PL.st;
   var MAX_FILE = 50 * 1024 * 1024;
   var PICTURES = "/internal/Pictures";
-  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|psb|ora|kra|orosphoto|dng|cr2|cr3|crw|nef|nrw|arw|srf|sr2|orf|raf|rw2|rwl|pef|srw|x3f|3fr|fff|iiq|erf|kdc|dcr|mrw|mos|mef)$/i;
+  var IMG_EXT = /\.(png|jpe?g|webp|gif|bmp|avif|svg|ico|psd|psb|xcf|ora|kra|orosphoto|dng|cr2|cr3|crw|nef|nrw|arw|srf|sr2|orf|raf|rw2|rwl|pef|srw|x3f|3fr|fff|iiq|erf|kdc|dcr|mrw|mos|mef)$/i;
   var RAW_ACCEPT = ".dng,.cr2,.cr3,.crw,.nef,.nrw,.arw,.srf,.sr2,.orf,.raf,.rw2,.rwl,.pef,.srw,.x3f,.3fr,.fff,.iiq,.erf,.kdc,.dcr,.mrw,.mos,.mef";
   var RAW_MAX = 300 * 1024 * 1024;
   var LAYERED_MAX = 300 * 1024 * 1024;              // a PSD, OpenRaster or Krita file
@@ -76,6 +76,7 @@
     if (/\.ps[db]$/i.test(n) || /photoshop/i.test(file.type || "")) return "psd";
     if (/\.ora$/i.test(n) || /openraster/i.test(file.type || "")) return "ora";
     if (/\.kra$/i.test(n) || /x-krita/i.test(file.type || "")) return "kra";
+    if (/\.xcf$/i.test(n) || /x-xcf/i.test(file.type || "")) return "xcf";
     if (PL.RAW.isRaw(n)) return "raw";
     return "";
   }
@@ -103,7 +104,7 @@
   }
   function openPicture(asLayer) {
     var dlg = dialogHost();
-    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.psb,.ora,.kra,.orosphoto,application/x-oros-photo," + RAW_ACCEPT) : Promise.resolve(null);
+    var p = dlg && typeof dlg.openFile === "function" ? dlg.openFile("image/*,.psd,.psb,.xcf,.ora,.kra,.orosphoto,application/x-oros-photo," + RAW_ACCEPT) : Promise.resolve(null);
     if (!dlg) PL.toast(t("msg.noDialogs"));
     return p.then(function (f) { if (f) return openPictureFile(f, asLayer); });
   }
@@ -230,7 +231,7 @@
     PL.busy(true);
     return file.arrayBuffer().then(function (buf) {
       var bytes = new Uint8Array(buf);
-      if (kind === "psd") return PL.job("psd", { bytes: bytes, o: { maxPixels: PL.phone ? PL.limits.area * 2 : 120e6 } });
+      if (kind === "psd" || kind === "xcf") return PL.job(kind, { bytes: bytes, o: { maxPixels: PL.phone ? PL.limits.area * 2 : 120e6 } });
       if (kind === "kra") return PL.ORA.readKra(bytes, window.AtelierZip, { maxPixels: PL.phone ? PL.limits.area * 2 : 120e6 }).then(oraPixels);
       return PL.ORA.read(bytes, window.AtelierZip).then(oraPixels);
     }).then(function (r) {
@@ -263,7 +264,7 @@
     }).catch(function (e) {
       PL.busy(false);
       var m = e && e.message || "";
-      PL.toast(t(m === "psd-mode" ? "msg.psdMode" : m === "psd-big" ? "msg.layeredBig" : m === "psd-zip" ? "msg.psdZip" : "msg.layeredFail"));
+      PL.toast(t(m === "psd-mode" ? "msg.psdMode" : m === "psd-big" || m === "xcf-big" ? "msg.layeredBig" : m === "psd-zip" ? "msg.psdZip" : "msg.layeredFail"));
     });
   }
   // What a PSD brought: what stays editable (a toast when nothing else

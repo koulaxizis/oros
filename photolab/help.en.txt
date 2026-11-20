@@ -2,7 +2,7 @@
 Edit photos and pictures with layers, selections, brushes, retouch tools, filters and adjustments, in the spirit of Photoshop, GIMP and Photopea. Everything works offline.
 
 ## Getting started
-- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (also a camera RAW file, or a Photoshop, OpenRaster or Krita file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
+- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (also a camera RAW file, or a Photoshop, GIMP, OpenRaster or Krita file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
 - Your pictures are under `Projects`. Tap or click one to open it; the pencil renames it and the bin deletes it (`Undo` in the message brings it back).
 - In the editor, the button at the top left goes back to `Projects`. Your work is saved as you go.
 
@@ -81,10 +81,11 @@ When Atelier sends a picture here to edit, a `Done` button appears at the top. I
 ## The Assistant
 Ask the Assistant to change your pictures in words, such as "make it black and white", "crop it square" or "make all my pictures 1200 pixels wide". It shows the changes on a card first; `Apply` opens the pictures here one after the other, makes each change as one step of `History` and saves them. `Undo` on the message here, or on the Assistant's card, puts the pictures back as long as they weren't changed since. See the Assistant's help for everything it can do.
 
-## Photoshop and OpenRaster files
+## Photoshop, GIMP and OpenRaster files
 - Photoshop files (`.psd`, and large documents `.psb`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
 - From Photoshop, these stay editable: layer masks (also when they are off), vector masks (as masks you can paint on), layer styles (drop shadow, outer and inner glow, stroke, colour overlay) and adjustment layers (levels, curves, hue/saturation, colour balance, brightness/contrast, black & white, photo filter, gradient map, invert, threshold, posterize; vibrance and exposure are set as close as Photo Lab allows). Fill layers are drawn, clipping masks are applied to the clipped layers (a clipped adjustment changes the layer below it), and groups open into their layers with the group's visibility, opacity and mask.
 - Text and smart objects come in as the pictures Photoshop saved, so they look the same. After opening, a window lists what was set as close as possible or left out (for example bevel and emboss, pattern overlays, selective colour), with the layers' names.
+- GIMP files (`.xcf`, from GIMP 2 and GIMP 3) open with their layers too: names, positions, opacity, visibility, modes (GIMP's modes that Photo Lab lacks, such as grain merge or addition, become Normal and are named) and layer masks (on or off as "Apply layer mask" was). Layer groups open into their layers like Photoshop groups; text layers come as the pictures GIMP saved. Every precision GIMP saves opens (8, 16 and 32 bits, half, float and double, linear or not), RGB, grey and indexed. Channels and paths stay out.
 - Krita files (`.kra`) open too: just open the file you saved in Krita. Ordinary paint layers in 8-bit RGBA come in with their names, positions, opacity, blend modes and visibility; vector, file, filter and fill layers and masks are left out. When the layers use another colour depth (16-bit, float, CMYK, grey), the file opens as one layer from the picture Krita saves alongside them, and Photo Lab tells you so. For a sure result with any Krita file, use File › Export in Krita and pick OpenRaster (`.ora`).
 - `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers for Photoshop, Photopea, GIMP or Krita. Masks of picture layers go as masks with PSD; text, shapes, styles and adjustment layers go as pixels (OpenRaster keeps no masks, so there they go as pixels too).
 

@@ -785,7 +785,7 @@ orosPack("de", "photolab", {
  "psd.title": "Aus {name} geöffnet",
  "psd.kept": "{layers} Ebenen wurden übernommen. Bearbeitbar: {masks} Ebenenmasken, {adj} Einstellungsebenen, {fx} Ebenen mit Stilen.",
  "psd.names": "({list})",
- "psd.text": "Textebenen kamen als die Bilder, die Photoshop gespeichert hat, und sehen daher gleich aus; die Wörter lassen sich hier nicht bearbeiten.",
+ "psd.text": "Textebenen kamen als die Bilder, die in der Datei gespeichert sind, und sehen daher gleich aus; die Wörter lassen sich hier nicht bearbeiten.",
  "psd.smart": "Smartobjekte kamen als ihre Bilder.",
  "psd.adjApprox": "Einige Korrekturen wurden so nah eingestellt, wie das Fotolabor es erlaubt (Gradationskurven oder Tonwerte pro Farbkanal, Färben, Dynamik, Belichtung).",
  "psd.adjLost": "Korrekturen, die das Fotolabor nicht hat (etwa Selektive Farbkorrektur, Kanalmixer oder Color Lookup), wurden weggelassen.",
