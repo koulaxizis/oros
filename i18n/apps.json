@@ -1047,6 +1047,12 @@
    ]
   },
   {
+   "app": "starchart",
+   "files": [
+    "starchart/starchart.js"
+   ]
+  },
+  {
    "app": "startpage",
    "files": [
     "startpage/startpage.js"

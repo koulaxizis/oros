@@ -201,5 +201,13 @@
     }, 300);
   }
 
-  window.LY_PDFOUT = { run: run, norm: norm };
+  // The person's own PDF/X-4 (Export › Quality › PDF/X-4, LY-PORT-C):
+  // a print PDF's bytes → Promise<{ bytes, problems, cmyk }>; o.cmyk
+  // converts its colours to the print profile's CMYK.
+  function pdfx(doc, bytes, o) {
+    return pdfxLib().then(function (r) {
+      return r[1].make(r[0], bytes, { icc: r[2].icc, srgb: r[2].srgb, title: doc.name || LY.docTitle(doc), cmyk: !!(o && o.cmyk) });
+    });
+  }
+  window.LY_PDFOUT = { run: run, norm: norm, pdfx: pdfx };
 })();
