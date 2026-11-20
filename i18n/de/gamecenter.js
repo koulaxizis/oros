@@ -128,6 +128,7 @@ orosPack("de", "gamecenter", {
  "hive": "Bienenstock",
  "lighthouse": "Leuchtturminsel",
  "ridge": "Windmühlengrat",
+ "maze": "Laternenlabyrinth",
  "chal.back": "Wieder aufnehmen",
  "chal.backed": "{g} kann ab morgen wieder Herausforderungen bekommen.",
  "chal.done": "Geschafft",

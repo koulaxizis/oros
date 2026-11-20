@@ -39,7 +39,7 @@
     "wordsearch", "solitaire", "mahjong", "jigsaw", "spot", "hexagon", "slider", "lightsout",
     "memory", "hangman", "mastermind", "g2048", "tetris", "snake", "breakout", "bubble",
     "simon", "whack", "pong", "chess", "checkers", "reversi", "gomoku", "connect4", "dots",
-    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers", "fieldwarden", "roots", "hive", "ridge", "lighthouse"];
+    "tictactoe", "mancala", "backgammon", "battleship", "rps", "xeri", "realm", "banner", "crypt", "wayfarers", "fieldwarden", "roots", "hive", "ridge", "lighthouse", "maze"];
   // The "All games" section (Chris 2026-10-22): every game once, by
   // kind, in the order each group shows them.
   var GROUPS = [
@@ -55,7 +55,7 @@
     // Idle games (Chris 2026-11-18): they go on by themselves
     { id: "idle", games: ["hive", "lighthouse"] },
     // Tower defense (Chris 2026-11-18): real time with pause
-    { id: "defense", games: ["ridge"] }
+    { id: "defense", games: ["ridge", "maze"] }
   ];
   var WORDLE_LOST = 7;
   var SOL_VARIANTS = { k: ["k1c", "k1n", "k3c", "k3n"], f: ["f"], s: ["s1", "s2", "s4"], p: ["p"] };
@@ -420,6 +420,15 @@
     // Windmill ridge: rows "<diff>" (m Mild, n Normal, h Hard) →
     // [nights, won]; a Hard night won counts as a win on the hardest level
     ridge: function (d, S, X) {
+      S.w = 0;
+      eachCell(d, function (k, v) {
+        if (!Array.isArray(v) || v.length < 2) return;
+        S.p += nat(v[0]); S.w += nat(v[1]);
+        if (k === "h" && nat(v[1])) X.hard = true;
+      });
+    },
+    // Lantern maze: the same rows as Windmill ridge
+    maze: function (d, S, X) {
       S.w = 0;
       eachCell(d, function (k, v) {
         if (!Array.isArray(v) || v.length < 2) return;

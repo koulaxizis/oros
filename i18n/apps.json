@@ -596,6 +596,12 @@
    ]
   },
   {
+   "app": "maze",
+   "files": [
+    "maze/maze.js"
+   ]
+  },
+  {
    "app": "meals",
    "files": [
     "meals/core.js",

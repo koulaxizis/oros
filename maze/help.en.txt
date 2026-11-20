@@ -1,0 +1,54 @@
+# Lantern maze
+Lantern maze is a tower defense game for one person. At night shadows slip in at the town gate and walk across an old square to the fountain. There is no road: you build the maze yourself, with crates and lantern towers on any free tile. The shadows always take the darkest way they can find, so the light you hang both hurts them and steers them. The game runs in real time, but you can pause at any moment and build while it is paused, and a wave only starts when you call it.
+
+## How to play
+- Choose a square and a difficulty on the town map. The first square is open; clearing a square opens the next one.
+- Tap a free tile, then choose a crate or a tower in the bar below. Drag your finger to move the chosen tile before you build, so your thumb never hides it. Tap what you built to upgrade or sell it. Tap the chosen tile again to let go.
+- The dotted line always shows the way the shadows will walk. When a free tile is chosen, a thin line shows the way they would take if you built there.
+- You can never close the last way to the fountain: a block that would do it is refused, and the game says why. Nothing can be built on a tile a shadow is walking on, on houses, columns, the gate or the fountain.
+- Press `Next wave` when you are ready. Pressing it while shadows are still out brings the next wave early and gives one coin for every shadow still out.
+- Each shadow that reaches the fountain costs a heart; a gloom costs three. The night is won when the last wave has faded, and lost when the hearts run out.
+- `Pause`, the speed button (1x, 2x, 3x) and the eye button are next to `Next wave`. The game pauses by itself when you leave it.
+- Shadows that fade give coins, and so does every wave cleared.
+
+## Light and the darkest way
+- Every lantern lights the tiles round it. A tile has a light level from 0 to 3, and lights add up.
+- For a shadow a lit tile counts as one step plus two for each light level, so a tile with light 1 counts as three steps. A shadow walks a longer dark way rather than a short lit one, and goes through the light only when your walls leave it no dark way.
+- So the trick is to wall off the dark ways with crates and leave the shadows only ways that run through the light, as long as you can make them.
+- Moths (from the third square) do the opposite: for them a dark tile is the dear one, and they look for the brightest way. Their way is shown with longer dashes.
+- The eye button ([[D]]) writes the light level on every lit tile.
+
+## The blocks
+Each tower has three levels. At level 3 you choose one of two branches, and that choice stays.
+- **Crate:** a cheap wall. No light and no harm; it only bends the way.
+- **Lantern:** steady light that hurts every shadow in it. Bright lamp gives twice the light, much wider, and steers strongly; Coloured glass is a small, hot light that hurts much more, close by.
+- **Flash lamp** (from square 2): a dark lamp. Every two seconds it bursts at the shadows close by. It gives no light, so the shadows do not walk around it. Magnesium makes bigger bursts that tear veils; Rapid flash bursts twice as often, a little weaker.
+- **Mirror** (from square 3): throws the light of a lantern standing next to it (also corner to corner) along a straight line, which lights and hurts. Turn it ([[R]]) to aim the beam. The beam stops at houses, columns, crates and towers. Long mirror throws much farther; Prism throws two beams at a right angle.
+- **Bell** (from square 4): rings now and then and slows every shadow near it. Deep bell slows more and tears veils; Chime rings wider and hurts a little.
+- Selling gives back 70% of what a block cost. Anything built or upgraded since the last wave started gives back everything, so you can reshape the maze between waves for free.
+
+## The shadows
+Each kind has its own shape, so you never need the colours.
+- **Shade** (round): a plain shadow.
+- **Skitter** (a drop): fast, but fades quickly.
+- **Moth** (a diamond): looks for the brightest way.
+- **Veil** (six sides, with a rim): steady light and beams do only a quarter of their harm until a Magnesium flash or a deep bell tears the veil. Veils come with the next quarter of the town.
+- **Gloom** (wide): slow and very strong, ends every night and costs three hearts at the fountain.
+
+## Difficulty, stars and saves
+- Mild: 30 hearts and more coins; Normal: 20 hearts; Hard: 10 hearts, fewer coins and stronger shadows.
+- Stars: three with nine tenths of the hearts left, two with half, one for any night won. The town map keeps the best stars of each square.
+- When a night is lost, `Try again from wave` puts you back at the start of that wave, with the maze and coins you had then.
+- The night you are playing is kept on this device and reopens, paused, where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a night ends. `Reset progress` on the town map clears them on every device. Lantern maze is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+
+## Keyboard
+- Arrow keys move the chosen tile; [[Escape]] lets go of it.
+- [[C]] or [[0]]: build a crate. [[1]] to [[4]]: build a lantern, flash lamp, mirror or bell.
+- [[U]]: upgrade to level 2. [[A]] or [[B]]: the branch at level 3. [[R]]: turn a mirror. [[S]]: sell.
+- [[Space]]: pause or play. [[F]]: speed. [[N]]: the next wave. [[D]]: show the light levels. [[L]]: the town map. [[M]]: sound. [[?]]: how to play.
+
+## Tips
+- Every way ends at the fountain, so light near it is always walked through. Put your first lanterns there.
+- A lantern on its own mostly pushes the way aside. Crates next to it are what force the shadows through its light.
+- Flash lamps and bells do not steer: put them right beside the way where the shadows walk longest.
+- Reshape the maze before each wave: what you built since the last wave started sells back in full.
