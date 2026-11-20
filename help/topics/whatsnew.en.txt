@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.00.01
+- **Claude no longer mistakes a device without Publishing for an empty catalogue.** If the device that answers through orOS Gate has never opened Publishing, Claude is told so instead of hearing that you have no titles, so it does not add a title you already have.
+
 ## Version 8.00.00
 - **Claude can remove subtasks from Kanban cards.** Through orOS Gate, Claude can now take subtasks off a card, by name. It is a deletion: orOS shows you the subtasks first and removes them only after you press Delete, and you can undo it from Claude's changes.
 
