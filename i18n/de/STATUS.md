@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 49263 of 49269 (99%)
-- Help pages: 160 of 160 (100%)
+- Strings: 49500 of 49506 (99%)
+- Help pages: 161 of 161 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -65,7 +65,7 @@ en and el); translators change them there, not in a pack.
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 164 / 164 |
+| gamecenter | 100% | 165 / 165 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -80,7 +80,7 @@ en and el); translators change them there, not in a pack.
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 358 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 1153 / 1153 |
+| layout | 100% | 1194 / 1194 |
 | library | 100% | 330 / 330 |
 | lighthouse | 100% | 213 / 213 |
 | lightsout | 100% | 52 / 52 |
@@ -139,7 +139,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 2013 / 2013 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1540 / 1540 |
+| shell | 100% | 1541 / 1541 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -152,6 +152,7 @@ en and el); translators change them there, not in a pack.
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
 | spreadsheet | 100% | 495 / 495 |
+| starchart | 100% | 194 / 194 |
 | startpage | 100% | 18 / 18 |
 | stickies | 100% | 125 / 125 |
 | stock | 100% | 813 / 813 |
