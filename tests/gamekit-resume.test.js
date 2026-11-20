@@ -148,6 +148,11 @@ test("resume: each game's own test", () => {
   assert.equal(one("maze", { g: { over: -1, acts: 3 }, counted: false }), true);
   assert.equal(one("maze", { g: { over: 1, acts: 40 }, counted: true }), false);
   assert.equal(one("maze", { g: { over: 0, acts: 40 }, counted: false }), false);
+  // Orbit garden: the same as Windmill ridge
+  assert.equal(one("orbit", { g: { over: -1, acts: 0 }, counted: false }), false);
+  assert.equal(one("orbit", { g: { over: -1, acts: 2 }, counted: false }), true);
+  assert.equal(one("orbit", { g: { over: 1, acts: 40 }, counted: true }), false);
+  assert.equal(one("orbit", { g: { over: 0, acts: 40 }, counted: false }), false);
   // Caravan: the same as Windmill ridge
   assert.equal(one("caravan", { g: { over: -1, acts: 0 }, counted: false }), false);
   assert.equal(one("caravan", { g: { over: -1, acts: 2 }, counted: false }), true);

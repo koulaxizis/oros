@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.01.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.02.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -253,6 +253,7 @@
     hive: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 20 6.5v9L12 20l-8-4.5v-9z"/><path d="M8 9.5h8M7 13h10"/><path d="M12 20v2"/></svg>',
     ridge: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12 6 6M12 12l6-6M12 12l-6 6M12 12l6 6"/><path d="M10 21l2-9 2 9"/><path d="M3 21h18"/></svg>',
     caravan: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="10" width="9" height="5" rx="1"/><rect x="13" y="10" width="9" height="5" rx="1"/><path d="M4 10V7h5v3M15 10V7h5v3"/><circle cx="5" cy="18" r="1.6"/><circle cx="16" cy="18" r="1.6"/><path d="M11 12.5h2"/></svg>',
+    orbit: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.6-6.4"/><path d="M16.6 9.4A5 5 0 1 0 17 12"/><circle cx="12" cy="12" r="1.5"/></svg>',
     maze: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h6M15 3v6M9 15h12M9 15v6"/><path d="M10 6h1"/></svg>',
     crypt: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V10a8 8 0 0 1 16 0v11z"/><path d="M8 21v-6h8v6"/><path d="M8 18h8M12 15v6"/></svg>',
     wayfarers: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21l4-9 4 4 4-8 4 13"/><circle cx="16" cy="4" r="1.6"/><path d="M8 12V7"/></svg>',

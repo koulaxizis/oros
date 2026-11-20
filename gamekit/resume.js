@@ -171,6 +171,11 @@
       var g = obj(s.g);
       return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
     },
+    // Orbit garden: the same shape (under way after the first plant or turn).
+    orbit: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
+    },
     // Caravan: the same shape (under way after the first hire).
     caravan: function (s) {
       var g = obj(s.g);

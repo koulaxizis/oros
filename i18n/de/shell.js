@@ -92,6 +92,7 @@ orosPack("de", "shell", {
  "app.mastermind": "Mastermind",
  "app.maze": "Laternenlabyrinth",
  "app.caravan": "Karawane",
+ "app.orbit": "Umlaufgarten",
  "app.meals": "Essensplaner",
  "app.memory": "Memory",
  "app.mindmap": "Mindmap",
