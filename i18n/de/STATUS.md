@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 48855 of 48861 (99%)
-- Help pages: 159 of 159 (100%)
+- Strings: 49051 of 49057 (99%)
+- Help pages: 160 of 160 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -65,7 +65,7 @@ en and el); translators change them there, not in a pack.
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 163 / 163 |
+| gamecenter | 100% | 164 / 164 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -138,7 +138,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 1999 / 1999 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1532 / 1532 |
+| shell | 100% | 1533 / 1533 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -151,6 +151,7 @@ en and el); translators change them there, not in a pack.
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
 | spreadsheet | 100% | 495 / 495 |
+| starchart | 100% | 194 / 194 |
 | startpage | 100% | 18 / 18 |
 | stickies | 100% | 125 / 125 |
 | stock | 100% | 813 / 813 |

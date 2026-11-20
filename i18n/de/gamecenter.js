@@ -127,6 +127,7 @@ orosPack("de", "gamecenter", {
  "roots": "Wurzeln",
  "hive": "Bienenstock",
  "lighthouse": "Leuchtturminsel",
+ "starchart": "Sternkarte",
  "ridge": "Windmühlengrat",
  "chal.back": "Wieder aufnehmen",
  "chal.backed": "{g} kann ab morgen wieder Herausforderungen bekommen.",

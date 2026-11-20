@@ -115,6 +115,15 @@ const PLAY = {
     await p.keyboard.press("Digit2"); await p.waitForTimeout(600);
     for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(500);
   },
+  // Star Chart: close the first-run tour, open the Observatory (T) and
+  // buy a spyglass (the first row: 13 starlight, the start has 25)
+  starchart: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await p.focus("#view"); await p.keyboard.press("t"); await p.waitForTimeout(300);
+    await p.click('#dlg [data-u="spy"] button'); await p.waitForTimeout(600);
+    for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(500);
+  },
   // Roots: close the first-run tour, then end the first turn
   roots: async (p, inProg) => {
     await p.waitForTimeout(700);
