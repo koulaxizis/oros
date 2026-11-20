@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Dark mode: only the dialogs get a dark base (GL-DIALOG). The window
+      theme stays light-based on purpose, so the WebView keeps telling the
+      site prefers-color-scheme: light, as in 1.0.0.
+    -->
+    <style name="Glarolykoi.Dialog" parent="android:Theme.Material.Dialog.Alert">
+        <item name="android:colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/text</item>
+        <item name="android:textColorSecondary">@color/dim</item>
+        <item name="android:colorBackground">@color/bg</item>
+    </style>
+</resources>
