@@ -34,9 +34,11 @@ APPS-M1, APPS-M2, APPS-M3.
   featured apps first, then "More apps"; Install, Update, Open, or Why? for
   a copy signed with another key.
 - **Updates** (`Updates.java`, `UpdateJob.java`, APPS-M2): "Update all" one
-  app after the other; a daily check (JobScheduler, network, battery not
-  low) shows one quiet notification for a new set of updates and never
-  installs by itself; the manager's own new version shows in a bar at the
+  app after the other; a daily check (JobScheduler, every 12 hours,
+  network, battery not low; put back after a restart or an update) shows
+  one quiet notification for waiting updates (a new set at once, the same
+  set again after three days) and never installs by itself; a bar says
+  when notices are off; the manager's own new version shows in a bar at the
   top (signed build only).
 - Languages: English, Greek, German.
 

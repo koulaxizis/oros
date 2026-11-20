@@ -40,10 +40,11 @@ Free, MIT, no ads, no account with anyone, no tracking.
   `ReleasesTest`) "New in the shop" without Firebase or any push
   service. Off until the person says yes; the app asks once, after the
   first page. Then once a day, with a network, JobScheduler fetches the
-  shop's public Store API (`/wp-json/wc/store/v1/products`, newest 10,
+  shop's public Store API (`/wp-json/wc/store/v1/products`, newest 10
+  of the house's own titles, brand `glarolykoi`, since 1.0.1,
   same request for everyone, nothing about the person) and shows one
-  notification: one item opens its page, several open the shop sorted
-  by date. The first check only records the newest id, so nothing old is
+  notification: one item opens its page, several open the house's titles
+  (`/brand/glarolykoi/`) sorted by date. The first check only records the newest id, so nothing old is
   announced; only `https://glarolykoi.net` links are opened; at most
   512 KB is read. Android 13+ asks for the notification permission;
   a no there turns GL-NEW off again.
@@ -52,12 +53,22 @@ Free, MIT, no ads, no account with anyone, no tracking.
   this only once the site's `/.well-known/assetlinks.json` names
   `net.glarolykoi.android` with the release key's SHA-256 (wave G3;
   the file already holds the Live Operator statement, which stays).
+- **GL-DIALOG** (`res/values*/themes.xml`) the app's own dialogs (the
+  GL-NEW question) take a light base in light mode and a dark base in
+  dark mode, so text and buttons always contrast with the dialog. The
+  window theme stays light-based, so the site still sees
+  `prefers-color-scheme: light`. (1.0.0 showed dark mode's near-white
+  text on a white dialog.)
 - File fields on the site (forms) open the system file picker.
 - The user agent ends in `GlarolykoiApp/<version>`, so the site can tell
   the app apart (for the notice in the old app, wave G3).
 - Signing only from the environment (GitHub secrets
   `GLAROLYKOI_KEYSTORE_*`); a keystore is never committed.
-- EN and EL for every string (`values`, `values-el`).
+- **GL-LANG** the app is Greek only: its strings live in `values/strings.xml`
+  in Greek, with no other language folders, so a phone set to English or
+  any other language still shows the app in Greek (Chris 2026-11-19; 1.0.0
+  had English as the default and showed it on his English phone). Android's
+  own dialogs (the notification permission) follow the phone's language.
 
 ## Build
 

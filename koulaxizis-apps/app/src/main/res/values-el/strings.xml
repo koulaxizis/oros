@@ -38,4 +38,6 @@
         <item quantity="other">%d ενημερώσεις έτοιμες</item>
     </plurals>
     <string name="support">Στήριξε τα projects</string>
+    <string name="notes_off">Οι ειδοποιήσεις για ενημερώσεις είναι κλειστές, οπότε τις βλέπεις μόνο εδώ.</string>
+    <string name="notes_turn_on">Άνοιγμα</string>
 </resources>

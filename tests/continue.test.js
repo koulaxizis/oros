@@ -357,3 +357,17 @@ test("RS-1 + SW-2: apps reopened by the start and untouched since let a waiting 
   assert.match(page, /var rsSafe = typeof window\.__orosRsSafe === "function" && window\.__orosRsSafe\(\);/);
   assert.match(page, /run\.classList\.contains\("active"\) && !soloHidden && !rsSafe\) return false;/);
 });
+
+test("browser: reopen after a restart is off until switched on (Chris 2026-11-19)", () => {
+  const w = fakeWindow(APPS);
+  assert.equal(w.win.orosContinue.prefs().reopen, false, "off with nothing stored");
+  assert.equal(w.win.orosContinue.prefs().cont, true, "Continue stays on");
+  w.win.orosContinue.setPref("reopen", true);
+  assert.equal(JSON.parse(w.store.get("oros-continue-prefs")).reopen, 1);
+  assert.equal(w.win.orosContinue.prefs().reopen, true);
+  w.win.orosContinue.setPref("reopen", false);
+  assert.equal(w.store.has("oros-continue-prefs"), false);
+  assert.equal(w.win.orosContinue.prefs().reopen, false);
+  w.store.set("oros-continue-prefs", JSON.stringify({ reopen: 0 }));   // an old "off" stays off
+  assert.equal(w.win.orosContinue.prefs().reopen, false);
+});

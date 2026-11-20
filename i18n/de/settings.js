@@ -1047,7 +1047,7 @@ orosPack("de", "settings", {
  "ct.strict": "Aus, solange Sensible Arbeit an ist: nichts wird gemerkt oder gezeigt.",
  "ct.on": "Zeigen, woran ich auf meinen anderen Geräten war",
  "ct.reopen": "Meine Apps nach einem Neustart wieder öffnen",
- "ct.reopen.hint": "Die offene App kommt beim selben Element zurück; mit Multitasking auch deine anderen offenen Apps (bis zu 6). Nur auf diesem Gerät.",
+ "ct.reopen.hint": "Die offene App kommt beim selben Element zurück; mit Multitasking auch deine anderen offenen Apps (bis zu 6). Anfangs aus. Nur auf diesem Gerät.",
  "ct.name": "Name dieses Geräts",
  "ct.name.hint": "Auf deinen anderen Geräten zu sehen. Leer lassen für «{kind}».",
  "ct.devs": "Deine anderen Geräte",
