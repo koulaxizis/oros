@@ -679,6 +679,80 @@
   }
   // Links (W4): every picture of the document with its page, its
   // resolution and whether its file is here; go to it or replace it.
+  // ---------- Compare with a PDF (LY-PORT-D) ----------
+  // The document's pages next to a PDF's (the printer's file, an old
+  // export): per page the share of pixels that differ, with the two
+  // pages and the differences in red, so a ported book is checked
+  // before it goes out. Pages in order, as many as both have.
+  var cmpBusy = false;
+  function compareDlg() {
+    var doc = LY.doc, RB = window.LY_REBUILD;
+    if (!doc || !RB || cmpBusy) return;
+    LY.io.pickFile(".pdf,application/pdf").then(function (f) {
+      if (!f) return;
+      cmpBusy = true;
+      LY.toast(t("cmp.working"));
+      var order = M.pagesInOrder(doc), L = ED.L || LY.R.computeLayout(doc), chain = Promise.resolve();
+      doc.items.forEach(function (it) { if (it.t === "img" && it.a) chain = chain.then(function () { return LY.A.load(it.a); }).then(null, function () {}); });
+      var ours = function (i, w, h) {
+        var pg = order[i];
+        if (!pg) return null;
+        var sz = M.pageSize ? M.pageSize(doc, pg) : doc.setup;
+        var full = LY.R.renderPage(doc, pg, L, w / sz.w, { getImage: LY.A.get, background: "#fff" });
+        var c = document.createElement("canvas"); c.width = w; c.height = h;
+        var x = c.getContext("2d", { willReadFrequently: true });
+        x.fillStyle = "#fff"; x.fillRect(0, 0, w, h);
+        x.drawImage(full, 0, 0, w, h);
+        return c;
+      };
+      chain.then(function () { return f.arrayBuffer(); }).then(function (buf) {
+        return RB.compare(buf, ours, order.length, { dpi: 50 });
+      }).then(function (res) {
+        cmpBusy = false;
+        compareReport(doc, res, f.name || "PDF");
+      }, function (e) {
+        cmpBusy = false;
+        try { console.error("[orOS] layout: compare failed", e); } catch (x) {}
+        LY.toast(t("cmp.fail"));
+      });
+    });
+  }
+  function compareReport(doc, res, name) {
+    var pages = res.pages, order = M.pagesInOrder(doc);
+    var mean = pages.length ? Math.round(pages.reduce(function (a, p) { return a + p.pct; }, 0) / pages.length * 10) / 10 : 0;
+    var over = pages.filter(function (p) { return p.pct > 2; });
+    var fmt = function (v) { return LY.BASE === "el" ? String(v).replace(".", ",") : String(v); };
+    LY.openDialog(t("cmp.title"), function (body, close) {
+      body.appendChild(el("p", "", t("cmp.sum", { f: name, n: pages.length, p: fmt(mean) })));
+      if (res.total !== res.of) body.appendChild(el("p", "hint", t("cmp.count", { a: res.total, b: res.of })));
+      body.appendChild(el("p", "hint", over.length === 1 ? t("cmp.over1") : over.length ? t("cmp.over", { n: over.length }) : t("cmp.allOk")));
+      body.appendChild(el("p", "hint", t("cmp.hint")));
+      var list = el("div", "cmp-list");
+      // the pages that differ most first, with the pictures (at most 30)
+      pages.slice().sort(function (a, b) { return b.pct - a.pct; }).forEach(function (p, k) {
+        var row = el("div", "cmp-row");
+        var go = btn(t("pf.page", { n: p.page }) + " · " + fmt(p.pct) + " %", function () { close(); var pg = order[p.page - 1]; if (pg) ED.scrollToPage(pg.id); }, "small" + (p.pct > 2 ? " warn" : ""));
+        row.appendChild(go);
+        if (k < 30 && p.pct > 1) {
+          var pics = el("div", "cmp-pics");
+          [p.a, p.b, p.d].forEach(function (c, j) {
+            c.className = "cmp-pic";
+            c.setAttribute("role", "img");
+            c.setAttribute("aria-label", t(["cmp.theirs", "cmp.ours", "cmp.diff"][j]));
+            pics.appendChild(c);
+          });
+          row.appendChild(pics);
+        }
+        list.appendChild(row);
+      });
+      body.appendChild(list);
+      var act = el("div", "dlg-actions");
+      act.appendChild(el("span", "spacer"));
+      act.appendChild(btn(t("btn.close"), close, "primary"));
+      body.appendChild(act);
+    });
+  }
+
   function linksDlg() {
     var doc = LY.doc;
     if (!doc || !window.LayoutPro) return;
@@ -1400,7 +1474,7 @@
 
   // ---------- Export dialog ----------
   var imgPrefs = { page: "", dpi: 150, fmt: "png" };
-  var expPrefs = { range: "all", custom: "", spreads: 0, bleed: 1, marks: 0, q: "print" };
+  var expPrefs = { range: "all", custom: "", spreads: 0, bleed: 1, marks: 0, q: "print", cmyk: 1 };
   function exportDlg() {
     var doc = LY.doc;
     LY.openDialog(t("exp.title"), function (body, close) {
@@ -1426,10 +1500,18 @@
         cr.addEventListener("input", function () { var v = parseFloat(cr.value); expPrefs.creep = isFinite(v) ? Math.max(0, Math.min(5, v)) : 0; });
         body.appendChild(field(t("exp.creep"), cr));
       }
-      var qWrap = el("div");
-      function drawQ() { qWrap.innerHTML = ""; qWrap.appendChild(seg([["print", t("exp.print")], ["screen", t("exp.screen")]], expPrefs.q, function (v) { expPrefs.q = v; drawQ(); })); }
+      var qWrap = el("div"), x4Wrap = el("div");
+      // PDF/X-4 for the printer, its colours in CMYK when asked (LY-PORT-C)
+      function drawQ() {
+        qWrap.innerHTML = ""; x4Wrap.innerHTML = "";
+        qWrap.appendChild(seg([["print", t("exp.print")], ["x4", t("exp.x4")], ["screen", t("exp.screen")]], expPrefs.q, function (v) { expPrefs.q = v; drawQ(); }));
+        if (expPrefs.q !== "x4") return;
+        x4Wrap.appendChild(check(t("exp.cmyk"), expPrefs.cmyk, function (v) { expPrefs.cmyk = v; }));
+        x4Wrap.appendChild(el("p", "hint", t("exp.cmykHint")));
+      }
       drawQ();
       body.appendChild(field(t("exp.quality"), qWrap));
+      body.appendChild(x4Wrap);
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
       act.appendChild(btn(t("btn.cancel"), close));
@@ -1437,7 +1519,7 @@
         var pages = pickPages(doc);
         if (!pages) { LY.toast(t("exp.badRange")); return; }
         close();
-        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4 });
+        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk });
       }, "primary"));
       body.appendChild(act);
       // the same PDF, saved in Files › Layout › PDF and offered to an app
@@ -1446,7 +1528,7 @@
           var pages = pickPages(doc);
           if (!pages) { LY.toast(t("exp.badRange")); return; }
           close();
-          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4 });
+          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk });
         }, "block");
         sendB.id = "exp-send";
         sendB.setAttribute("aria-haspopup", "dialog");
@@ -1810,7 +1892,7 @@
     }, true);
   }
 
-  LY.dlg = { links: linksDlg, newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg };
+  LY.dlg = { links: linksDlg, newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg, compare: compareDlg };
   LY.panels = Object.assign(LY.panels || {}, { epubReport: epubReport, epubMarkReady: markInPublishing });
   // the small widgets, for dialogs in other files (mergeui.js)
   LY.ui = { field: field, select: select, check: check, seg: seg, btn: btn };
@@ -1823,6 +1905,7 @@
       { label: t("more.story"), disabled: !(it && it.t === "text"), fn: function () { LY.story.open(it.id); } },
       { label: t("more.text"), fn: function () { LY.io.importText(); } },
       { label: t("more.links"), fn: linksDlg },
+      { label: t("more.compare"), fn: compareDlg },
       { label: t("more.house"), fn: function () { LY.house.open(); } },
       { label: t("more.auto"), fn: function () { LY.house.auto(); } },
       { label: t("more.toc"), disabled: !LY.house.hasToc(doc), fn: function () { LY.house.updateToc(); } },
