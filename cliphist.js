@@ -55,7 +55,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var KEY = "oros-cliphist";
   var KEEPS = { hour: 3600000, day: 86400000, week: 7 * 86400000 };
   var KEEP_DEFAULT = "day";
@@ -428,7 +428,8 @@
     clip: SV + '<rect x="8" y="3" width="8" height="4" rx="1"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/></svg>',
     x: SV + '<path d="M18 6 6 18M6 6l12 12"/></svg>',
     pin: SV + '<path d="M12 17v5"/><path d="M9 10.8a2 2 0 0 1-1.1 1.8l-1.8.9A2 2 0 0 0 5 15.2V17h14v-1.8a2 2 0 0 0-1.1-1.8l-1.8-.9a2 2 0 0 1-1.1-1.8V7h1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4h1z"/></svg>',
-    paste: SV + '<path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><path d="M12 11v6"/><path d="m9 14 3 3 3-3"/></svg>'
+    paste: SV + '<path d="M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-2"/><path d="M12 11v6"/><path d="m9 14 3 3 3-3"/></svg>',
+    pocket: SV + '<path d="M4 4h16v7a8 8 0 0 1-16 0z"/><path d="m8.5 10 3.5 3.5 3.5-3.5"/></svg>'   // the Pocket's icon (shell.js POCKET_IC)
   };
   var CSS = [
     "#clip-dlg { width: min(460px, calc(100vw - 24px)); max-height: min(640px, calc(100dvh - 32px)); box-sizing: border-box; padding: 0;",
@@ -583,6 +584,13 @@
       li.appendChild(use);
       if (tgt) {
         li.appendChild(iconBtn(IC.paste, t("clip.paste", { app: tgtName || t("clip.thisapp") }), function () { pasteAgain(it); }));
+      }
+      var pk = root.orosPocket;
+      if (pk && typeof pk.canKeep === "function" && pk.canKeep(it.app)) {     // POCKET-1 W2
+        li.appendChild(iconBtn(IC.pocket, t("pk.add"), function () {
+          var lk = /^https?:\/\/\S+$/i.test(it.t.trim());
+          pk.keep(lk ? "link" : "text", lk ? { url: it.t.trim() } : { text: it.t }, it.app);
+        }));
       }
       li.appendChild(iconBtn(IC.pin, t(it.p === 1 ? "clip.unpin" : "clip.pin"), function () {
         var cur = load();

@@ -518,6 +518,12 @@
    ]
   },
   {
+   "app": "lighthouse",
+   "files": [
+    "lighthouse/lighthouse.js"
+   ]
+  },
+  {
    "app": "lightsout",
    "files": [
     "lightsout/lightsout.js"
@@ -580,6 +586,7 @@
     "maps/tools-core.js",
     "maps/tools.js",
     "maps/tracks.js",
+    "maps/trails.js",
     "maps/transit.js"
    ]
   },
@@ -587,6 +594,12 @@
    "app": "mastermind",
    "files": [
     "mastermind/mastermind.js"
+   ]
+  },
+  {
+   "app": "maze",
+   "files": [
+    "maze/maze.js"
    ]
   },
   {

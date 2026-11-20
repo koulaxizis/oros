@@ -120,7 +120,7 @@ test("wiring: shell stand-in, Dock, Send sheet, selection menu, Settings", () =>
 test("strings in English, Greek and German", () => {
   const keys = ["qm.sel.pocket", "sc.desc.pocket", "pk.title", "pk.close", "pk.hint", "pk.empty", "pk.strict", "pk.send",
     "pk.copy", "pk.copied", "pk.nocopy", "pk.remove", "pk.clear", "pk.missing", "pk.kept", "pk.big", "pk.secret",
-    "pk.failed", "pk.nofit", "pk.chip", "pk.chip1", "pk.desk"];
+    "pk.failed", "pk.nofit", "pk.chip", "pk.chip1", "pk.desk", "pk.drop", "pk.nodirs", "pk.noapp", "pk.noimport", "pk.add"];
   const tr = read("translations.js"), de = read("i18n/de/shell.js");
   for (const k of keys) {
     assert.equal(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
@@ -144,5 +144,69 @@ test("help: Send to someone, Shortcuts and Settings in every language", () => {
   }
   for (const f of ["settings/help.en.txt", "settings/help.el.txt", "i18n/de/help/settings.txt"]) {
     assert.match(read(f), /^### (Pocket|Τσέπη|Ablage)$/m, f);
+  }
+});
+
+// ---- W2: drag to and from the Pocket, paste, clipboard history, moves ----
+test("W2 wiring: drop on both buttons, frames, paste, rows dragged out, clipboard history", () => {
+  const shell = read("shell.js"), pk = read("pocket.js"), ch = read("cliphist.js");
+  assert.match(shell, /var POCKET_TYPES = \["application\/x-oros-paths", "text\/uri-list", "text\/plain"\];/);
+  assert.equal((shell.match(/pocketDropWire\((chip|b)\);/g) || []).length, 2, "bar chip and Dock button take drops");
+  assert.match(shell, /var drag = !!pocketDrag && !strictLevelNow\(\);/, "never shown as a drop place in Sensitive work");
+  assert.match(shell, /if \(!window\.orosPocket\.canKeep\(app\)\) \{ scToast\("err", window\.t\("pk\.noapp"\)\); return; \}/);
+  assert.match(shell, /return st && !st\.dir \? p : null;/, "folders are not kept");
+  assert.match(shell, /setTimeout\(pocketDragEnd, 120000\)/, "never left showing");
+  assert.match(shell, /appFrames\(\)\.forEach\(pocketWireFrame\);/, "frames already open");
+  assert.match(shell, /if \(n\.tagName === "IFRAME"\) pocketWireFrame\(n\);/, "every new app frame");
+  assert.match(shell, /ty\.indexOf\("application\/x-oros-pocket"\) !== -1\) return false;/, "a row dragged out is not taken back");
+  assert.match(shell, /FS\.mv = function \(src, dst\)/);
+  assert.match(pk, /dt\.setData\("application\/x-oros-pocket", "1"\);/);
+  assert.match(pk, /if \(it\.k !== "files" && !miss\) dragOut\(li, it\);/);
+  assert.match(pk, /doc\.addEventListener\("paste", pasted\);/);
+  assert.match(pk, /doc\.removeEventListener\("paste", pasted\);/);
+  assert.match(pk, /if \(dlg === me && !dragging\) close\(\);/, "a drag out keeps the panel in the page until it ends");
+  assert.match(ch, /pk\.canKeep\(it\.app\)/, "the clipboard-history button follows the Pocket's rules");
+  assert.match(ch, /iconBtn\(IC\.pocket, t\("pk\.add"\)/);
+  assert.match(read("style.css"), /#pocket-chip\.pk-over/);
+});
+
+function movedFn(store) {
+  const src = read("shell.js");
+  const m = src.match(/function pocketMoved\(src, dst\) \{[\s\S]*?\n  \}\n/);
+  assert.ok(m, "pocketMoved found");
+  const calls = { changed: 0 };
+  const localStorage = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); } };
+  const fn = new Function("localStorage", "POCKET_KEY", "pocketChanged", "window", m[0] + "; return pocketMoved;");
+  return { fn: fn(localStorage, "oros-pocket", () => { calls.changed++; }, {}), calls };
+}
+
+test("W2: a file moved in Files keeps its place; into the bin it does not", () => {
+  let st = EMPTY();
+  st = keep(st, "files", { items: [{ path: "/internal/Documents/a.pdf" }, { path: "/internal/Music/b.mp3" }] }, "files", 1000).st;
+  st = keep(st, "files", { items: [{ path: "/internal/Documents/Old/c.txt", name: "My notes" }] }, "files", 2000).st;
+  st = keep(st, "text", { text: "/internal/Documents/a.pdf" }, "notes", 3000).st;
+  const store = { "oros-pocket": JSON.stringify(st) };
+  const { fn, calls } = movedFn(store);
+  fn("/internal/Documents/a.pdf", "/internal/Work/a2.pdf");
+  fn("/internal/Documents/Old", "/internal/Archive/Old");
+  let o = JSON.parse(store["oros-pocket"]);
+  const files = o.items.filter((it) => it.k === "files");
+  assert.deepEqual(files[1].d.items.map((f) => [f.path, f.name]), [["/internal/Work/a2.pdf", "a2.pdf"], ["/internal/Music/b.mp3", "b.mp3"]]);
+  assert.deepEqual(files[0].d.items.map((f) => [f.path, f.name]), [["/internal/Archive/Old/c.txt", "My notes"]], "an own name stays");
+  assert.equal(o.items.find((it) => it.k === "text").d.text, "/internal/Documents/a.pdf", "texts are never rewritten");
+  assert.equal(calls.changed, 2);
+  // a near name is not a match; the bin is not followed
+  fn("/internal/Music/b", "/internal/x/b");
+  fn("/internal/Music/b.mp3", "/internal/.trash/123/b.mp3");
+  o = JSON.parse(store["oros-pocket"]);
+  assert.equal(o.items.filter((it) => it.k === "files")[1].d.items[1].path, "/internal/Music/b.mp3");
+  assert.equal(calls.changed, 2);
+  // the result still parses as a valid Pocket
+  assert.equal(P.parse(store["oros-pocket"], C.norm).items.length, 3);
+});
+
+test("W2 help: drag, paste and clipboard history in every language", () => {
+  for (const f of ["help/topics/share.en.txt", "help/topics/share.el.txt", "i18n/de/help/topics/share.txt"]) {
+    assert.match(read(f), /Ctrl\+V|Strg\+V/, f + " paste");
   }
 });
