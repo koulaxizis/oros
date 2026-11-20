@@ -13270,6 +13270,10 @@
       if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
       return;
     }
+    if (name === "smartbar-live") {      // smartbar.js SB-LIVE: live pills on/off
+      if (window.orosSmartBar && window.orosSmartBar.setLive) window.orosSmartBar.setLive(!!value);
+      return;
+    }
     if (name === "smartbar-look") {      // smartbar.js SB3: "", glass, midnight, solid
       if (window.orosSmartBar && window.orosSmartBar.setLook) window.orosSmartBar.setLook(String(value || ""));
       return;
@@ -17949,7 +17953,8 @@
       version: function () { return APP_VERSION; },
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); },
-      fit: function () { queueFitBar(); }
+      fit: function () { queueFitBar(); },
+      barwin: function () { return BARWIN; }   // SB-LIVE: no stop buttons in the desktop bar window
     });
   }
   loadApps();

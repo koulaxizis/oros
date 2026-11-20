@@ -117,7 +117,7 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
   assert.match(sh, /tickSafe\("smartbarTick"/);
   const src = read("smartbar.js");
   // chip text goes in through textContent only; innerHTML is for the fixed icons
-  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = IC.more;", "innerHTML = icon(k);"]);
+  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = kind === \"rec\" ? IC.stop : IC.pause;", "innerHTML = IC.more;", "innerHTML = icon(k);", "innerHTML = k === \"rec\" ? IC.stop : IC.pause;"]);
   assert.match(src, /if \(strict\(\)\) return null;[\s\S]*if \(strict\(\)\) return null;/);
 });
 
@@ -143,7 +143,8 @@ test("shell strings for every chip in EN, EL and DE", () => {
     "sb.budget.label", "sb.budget.tip", "sb.sales.label", "sb.sales.tip", "sb.savefail", "sb.more.tip", "sb.more.title",
     "sb.habits.label", "sb.plants.label", "sb.chores.label", "sb.kanban.label", "sb.invoices.label", "sb.list.tip", "sb.list.more",
     "sb.invoices.tip", "sb.trip.today", "sb.trip.tomorrow", "sb.trip.in", "sb.trip.tip", "sb.timer.tip",
-    "sb.habits.one", "sb.plants.one", "sb.chores.one", "sb.kanban.one", "sb.invoices.one"]);
+    "sb.habits.one", "sb.plants.one", "sb.chores.one", "sb.kanban.one", "sb.invoices.one",
+    "sb.tmr.name", "sb.tmr.tip", "sb.tmr.stop", "sb.sw.label", "sb.sw.tip", "sb.sw.stop", "sb.rec.paused", "sb.rec.tip", "sb.rec.tip.p", "sb.rec.stop"]);
   keys.forEach((k) => {
     assert.strictEqual(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
@@ -206,7 +207,7 @@ test("fold: chips that do not fit, and every chip on a phone, go behind one butt
   assert.match(src, /box\.appendChild\(more\.el\);\s+\/\/ always last/);
   // the panel draws chip text through textContent only and closes on Escape and outside taps
   const fill = src.slice(src.indexOf("function fillPop"), src.indexOf("function onPopKey"));
-  assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(k);"], "only fixed icons go through innerHTML");
+  assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(k);", "innerHTML = k === \"rec\" ? IC.stop : IC.pause;"], "only fixed icons go through innerHTML");
   assert.match(fill, /v\.textContent = val;/);
   assert.match(src, /e\.key === "Escape" && pop/);
   assert.match(src, /addEventListener\("touchstart", onPopDown, true\)/);
@@ -249,4 +250,78 @@ test("SB5 agendaCard: counts, the next trip, today's lines and the running timer
   });
   assert.ok(M.MONEY.invoices, "invoices hide under Sensitive work");
   assert.deepStrictEqual(Object.keys(M.APPS).sort(), A.KINDS.slice().sort(), "smartbar.js knows which kinds load smartbar-apps.js");
+});
+
+// SB-LIVE (v1.3.0): live pills for Time timers, the stopwatch and a Screen Capture recording.
+test("SB-LIVE prefs: live pills on when absent, off kept, row puts them first", () => {
+  assert.strictEqual(M.liveOf(null), true);
+  assert.strictEqual(M.liveOf(M.parse('{"v":1,"list":["event"]}')), true);
+  const off = M.parse('{"v":1,"list":["event"],"live":false}');
+  assert.deepStrictEqual(off, { v: 1, list: ["event"], live: false });
+  assert.strictEqual(M.liveOf(off), false);
+  assert.deepStrictEqual(M.parse('{"v":1,"list":[],"live":"no"}'), { v: 1, list: [] });
+  assert.deepStrictEqual(M.rowOf(null), ["rec", "tmr", "sw"]);
+  assert.deepStrictEqual(M.rowOf(M.parse('{"v":1,"list":["water"]}')), ["rec", "tmr", "sw", "water"]);
+  assert.deepStrictEqual(M.rowOf(off), ["event"]);
+  // live kinds are never kinds the person ticks
+  M.LIVE.forEach((k) => assert.strictEqual(M.KINDS.indexOf(k), -1, k));
+});
+
+test("SB-LIVE model: the timer ending first, the stopwatch while it runs, the recording", () => {
+  const CC = require("../time/clock-core.js");
+  const now = 1e12;
+  const list = CC.timerNorm([
+    { id: "aaaa1", name: "Pasta", dur: 600000, end: now + 300000, st: "run" },
+    { id: "aaaa2", name: "Tea", dur: 240000, end: now + 120000, st: "run" },
+    { id: "aaaa3", name: "Bread", dur: 60000, left: 60000, st: "pause" },
+    { id: "aaaa4", name: "Old", dur: 60000, end: now - 1000, st: "run" }
+  ]);
+  const lt = M.liveTimer(list, now);
+  assert.strictEqual(lt.tm.name, "Tea");
+  assert.strictEqual(lt.left, 120000);
+  assert.strictEqual(lt.more, 1);
+  assert.strictEqual(M.liveTimer(CC.timerNorm([{ id: "aaaa3", dur: 60000, st: "pause" }]), now), null);
+  assert.strictEqual(M.liveTimer(null, now), null);
+  assert.deepStrictEqual(M.liveSw(CC.swNorm({ run: true, start: now - 65000, base: 5000, laps: [] }), now), { ms: 70000 });
+  assert.strictEqual(M.liveSw(CC.swNorm({ run: false, base: 5000 }), now), null);
+  assert.strictEqual(M.liveSw(null, now), null);
+  assert.deepStrictEqual(M.liveRec({ ms: 41000, paused: false }), { ms: 41000, paused: false });
+  assert.deepStrictEqual(M.liveRec({ ms: 41000, paused: 1 }), { ms: 41000, paused: true });
+  assert.strictEqual(M.liveRec(null), null);
+  assert.strictEqual(M.liveRec({ ms: NaN }), null);
+  assert.strictEqual(M.clock(70000), "1:10");
+});
+
+test("SB-LIVE wiring: Time's own pause rules, the alarm taken off, Capture in memory, Settings switch", () => {
+  const src = read("smartbar.js");
+  assert.match(src, /s\.src = "time\/clock-core\.js\?v="/);
+  assert.match(src, /root\.orosAlarms\.remove\(aid\)[\s\S]{0,120}CC\.timerPause\(tm, now\)/);
+  assert.match(src, /CC\.swToggle\(sw, Date\.now\(\)\)/);
+  // a stop button is its own button beside the pill, never inside it, and never in the bar window
+  assert.match(src, /g\.appendChild\(b\);[\s\S]{0,400}g\.appendChild\(sb\);/);
+  assert.match(src, /c\.stop = s && s\.halt && c\.sb && !call\(function \(\) \{ return host\.barwin\(\); \}\)/);
+  // on a phone the first live pill stays in the bar
+  assert.match(src, /if \(f && k !== keep\)/);
+  // the recording dot blinks only when motion is welcome
+  assert.match(src, /prefers-reduced-motion: no-preference\) \{ \.sb-chip\.sb-rec/);
+  assert.match(src, /data-oros-motion=\\"reduce\\"\] \.sb-chip\.sb-rec svg \{ animation: none/);
+  const cap = read("capture/app.js");
+  assert.match(cap, /B\.live\("rec", r \? \{/);
+  assert.match(cap, /rec = null;\s+barLive\(null\);/);
+  assert.match(cap, /addEventListener\("pagehide", function \(\) \{ barLive\(null\); \}\)/);
+  assert.doesNotMatch(cap, /localStorage\.setItem\("oros-capture/);
+  const sh = read("shell.js");
+  assert.match(sh, /name === "smartbar-live"\) \{[\s\S]{0,200}setLive\(!!value\)/);
+  assert.match(sh, /barwin: function \(\) \{ return BARWIN; \}/);
+  assert.match(read("settings/settings.js"), /set\("smartbar-live", v\)/);
+  const core = read("settings/core.js"), de = read("i18n/de/settings.js");
+  ["sb.live", "sb.live.hint"].forEach((k) => {
+    assert.strictEqual(core.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  });
+  // the stopwatch and timer files Time keeps stay what the bar reads
+  const tm = read("time/time.js");
+  assert.match(tm, /var TMR_KEY = "oros-time-timers";/);
+  assert.match(tm, /var SW_KEY = "oros-time-sw";/);
+  assert.match(tm, /if \(ev\.key === TMR_KEY\) \{ tmrLoad\(\); tmrRender\(\); \}/);
 });
