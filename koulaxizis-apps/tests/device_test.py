@@ -3,7 +3,8 @@
 
 Installs the debug APK, opens it and checks that every project's signed
 repository was read (orOS, NULL JSFX and Noxpress headers with their
-apps), that the daily check posts its update notice for an older app
+apps), that the search bar filters the list and a card opens the app's own
+page with its description and screenshots (APPS-M5), that the daily check posts its update notice for an older app
 that was left after the screen showed it, then installs one small real app through the manager, answering
 Android's own confirmation, and checks that Android has it. Screenshots
 and UI dumps go to the output folder.
@@ -102,6 +103,56 @@ def scroll_to(text, seconds=120):
     raise SystemExit(f"{text} not found in the list")
 
 
+def node_with(root, text):
+    for n in [] if root is None else root.iter("node"):
+        if n.get("text") == text:
+            return n
+    return None
+
+
+def search_and_pages():
+    """APPS-M5: the search bar filters, a card opens its page, Back goes back."""
+    root = dump()
+    field = next((n for n in root.iter("node") if (n.get("resource-id") or "").endswith(":id/search")), None)
+    if field is None:
+        raise SystemExit("no search bar")
+    adb("shell", "input", "tap", *map(str, center(field)))
+    adb("shell", "input", "text", "mixers")
+    adb("shell", "input", "keyevent", "KEYCODE_ENTER")  # the keyboard's Search key closes it
+    wait_for(lambda r: "Remote for Mixers" in texts(r) and "orOS Drive" not in texts(r) and "NULL JSFX" in texts(r),
+             "the search to show only Remote for Mixers", 30)
+    root, name = wait_for(lambda r: node_with(r, "Remote for Mixers"), "the search result")
+    shot("search")
+    adb("shell", "input", "tap", *map(str, center(name)))
+    root, _ = wait_for(lambda r: "About this app" in texts(r) and "Details" in texts(r)
+                       and any(t.startswith("Package: tech.nulljsfx.remote.mixers") for t in texts(r)),
+                       "the page of Remote for Mixers", 30)
+    shot("app-page")
+    adb("shell", "input", "keyevent", "KEYCODE_BACK")  # closes the page, the search stays
+    wait_for(lambda r: "Remote for Mixers" in texts(r) and "About this app" not in texts(r)
+             and "orOS Drive" not in texts(r), "Back to the search", 30)
+    adb("shell", "input", "keyevent", "KEYCODE_BACK")  # empties the search: the home screen again
+    wait_for(lambda r: "orOS Drive" in texts(r), "Back to the whole list", 30)
+    # A page with screenshots: orOS Notes (its store listing has phone screenshots).
+    root = dump()
+    field = next(n for n in root.iter("node") if (n.get("resource-id") or "").endswith(":id/search"))
+    adb("shell", "input", "tap", *map(str, center(field)))
+    adb("shell", "input", "text", "notes")
+    adb("shell", "input", "keyevent", "KEYCODE_ENTER")
+    root, name = wait_for(lambda r: node_with(r, "orOS Notes"), "orOS Notes in the search", 30)
+    adb("shell", "input", "tap", *map(str, center(name)))
+    wait_for(lambda r: any((n.get("content-desc") or "").startswith("Screenshot 1 of") for n in r.iter("node"))
+             if r is not None else False, "the screenshots of orOS Notes", 30)
+    time.sleep(5)  # the pictures download and are hash-checked
+    root = dump()
+    if not any((n.get("content-desc") or "").startswith("Screenshot 1 of") for n in root.iter("node")):
+        raise SystemExit("the screenshots of orOS Notes did not load")
+    shot("app-page-screenshots")
+    adb("shell", "input", "keyevent", "KEYCODE_BACK")
+    adb("shell", "input", "keyevent", "KEYCODE_BACK")
+    wait_for(lambda r: "orOS Drive" in texts(r) and "About this app" not in texts(r), "the home screen", 30)
+
+
 def main():
     os.makedirs(OUT, exist_ok=True)
     adb("uninstall", TARGET, check=False)
@@ -149,6 +200,7 @@ def main():
 
     wait_for(loaded, "the verified orOS list", 240)
     shot("list-top")
+    search_and_pages()
     # The daily check is in place (APPS-M2).
     jobs = adb("shell", "dumpsys", "jobscheduler", PKG, check=False)
     if "UpdateJob" not in jobs:

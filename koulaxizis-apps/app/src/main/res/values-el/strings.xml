@@ -45,4 +45,35 @@
     <string name="lost_text">Η ερώτηση του Android για την εγκατάσταση του %1$s έκλεισε πριν απαντήσετε (σε μερικά κινητά την καλύπτει ένας έλεγχος ασφαλείας).</string>
     <string name="show_again">Εμφάνιση ξανά</string>
     <string name="skip">Παράλειψη</string>
+    <!-- Search and an app's own page (APPS-M5). -->
+    <string name="search_hint">Αναζήτηση εφαρμογών</string>
+    <string name="search_clear">Καθαρισμός αναζήτησης</string>
+    <string name="no_match">Καμία εφαρμογή δεν ταιριάζει με «%1$s».</string>
+    <string name="about_app">Σχετικά με την εφαρμογή</string>
+    <string name="details">Στοιχεία</string>
+    <string name="website">Ιστότοπος</string>
+    <string name="source_code">Πηγαίος κώδικας</string>
+    <string name="whats_new">Τι νέο στην έκδοση %1$s</string>
+    <string name="info_category">Κατηγορία: %1$s</string>
+    <string name="info_license">Άδεια: %1$s</string>
+    <string name="info_package">Πακέτο: %1$s</string>
+    <string name="screenshot_n">Στιγμιότυπο %1$d από %2$d</string>
+    <string name="cat_connectivity">Συνδεσιμότητα</string>
+    <string name="cat_development">Ανάπτυξη</string>
+    <string name="cat_games">Παιχνίδια</string>
+    <string name="cat_graphics">Γραφικά</string>
+    <string name="cat_internet">Διαδίκτυο</string>
+    <string name="cat_money">Οικονομικά</string>
+    <string name="cat_multimedia">Πολυμέσα</string>
+    <string name="cat_navigation">Πλοήγηση</string>
+    <string name="cat_office">Γραφείο</string>
+    <string name="cat_phone">Τηλέφωνο και SMS</string>
+    <string name="cat_reading">Ανάγνωση</string>
+    <string name="cat_science">Επιστήμη και εκπαίδευση</string>
+    <string name="cat_security">Ασφάλεια</string>
+    <string name="cat_health">Άθληση και υγεία</string>
+    <string name="cat_system">Σύστημα</string>
+    <string name="cat_theming">Εμφάνιση</string>
+    <string name="cat_time">Χρόνος</string>
+    <string name="cat_writing">Γραφή</string>
 </resources>
