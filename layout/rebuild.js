@@ -1163,6 +1163,66 @@
     return f ? String(f.name || "").replace(/^[A-Z]{6}\+/, "").slice(0, 60) : "";
   }
 
+  // ---------- Compare with a PDF (LY-PORT-D) ----------
+  // Two RGBA pictures of one size → the share of pixels (0..100) where
+  // a channel differs by more than 48, and that mask (1 per pixel).
+  // compare() softens both pages by a pixel first: the same letters
+  // from two rasterisers stay under 1 % (the rebuilt «Ο ψίθυρος»
+  // e-book 0.2 %), a cover with its picture too small 82 %.
+  var DIFF_AT = 48, SOFT = 1;
+  function diffPixels(a, b, n) {
+    var mask = new Uint8Array(n), on = 0;
+    for (var k = 0; k < n; k++) {
+      var j = k * 4, d = Math.max(Math.abs(a[j] - b[j]), Math.abs(a[j + 1] - b[j + 1]), Math.abs(a[j + 2] - b[j + 2]));
+      if (d > DIFF_AT) { mask[k] = 1; on++; }
+    }
+    return { pct: n ? Math.round(on / n * 1000) / 10 : 0, mask: mask };
+  }
+  // The PDF's pages cut to their TrimBox next to the document's pages
+  // (ours(page, w, h) → a canvas of that size), at `dpi` (default 50).
+  // → Promise<{ pages: [{ page, pct, a, b, d }] (canvases), total, of }>
+  function compare(buf, ours, count, opts) {
+    opts = opts || {};
+    var dpi = opts.dpi || 50, sc = dpi / 72, bytes = new Uint8Array(buf);
+    return Promise.all([pageBoxes(bytes.slice()), PI.loadLib()]).then(function (r) {
+      var boxes = r[0], lib = r[1];
+      lib.GlobalWorkerOptions.workerSrc = "../vendor/pdfjs/pdf.worker.min.js";
+      return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false, disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise.then(function (pdf) {
+        var n = Math.min(pdf.numPages, count, MAX_PAGES), out = [], chain = Promise.resolve();
+        for (var k = 1; k <= n; k++) (function (k) {
+          chain = chain.then(function () {
+            if (opts.cancelled && opts.cancelled()) throw new Error("cancelled");
+            return pdf.getPage(k);
+          }).then(function (page) {
+            var view = page.view, bx = boxes && boxes[k - 1] && !boxes[k - 1].rot ? boxes[k - 1] : null;
+            var tr = bx ? { x: bx.trim[0] - view[0], y: view[3] - (bx.trim[1] + bx.trim[3]), w: bx.trim[2], h: bx.trim[3] } : { x: 0, y: 0, w: view[2] - view[0], h: view[3] - view[1] };
+            return draw(page, sc).then(function (d) {
+              var w = Math.max(1, Math.round(tr.w * sc)), h = Math.max(1, Math.round(tr.h * sc));
+              var a = canvas(w, h), xa = a.getContext("2d", { willReadFrequently: true });
+              xa.fillStyle = "#fff"; xa.fillRect(0, 0, w, h);
+              var src = canvas(d.w, d.h); src.getContext("2d").putImageData(d.ctx.getImageData(0, 0, d.w, d.h), 0, 0);
+              xa.drawImage(src, -Math.round(tr.x * sc), -Math.round(tr.y * sc));
+              page.cleanup();
+              return Promise.resolve(ours(k - 1, w, h)).then(function (b) {
+                if (!b) return;
+                // compared softened by a pixel, so the same letters a
+                // fraction of a pixel apart (another rasteriser) do not count
+                var soft = function (c) { var o = canvas(w, h), x = o.getContext("2d", { willReadFrequently: true }); x.fillStyle = "#fff"; x.fillRect(0, 0, w, h); x.filter = "blur(" + SOFT + "px)"; x.drawImage(c, 0, 0); return x.getImageData(0, 0, w, h).data; };
+                var r2 = diffPixels(soft(a), soft(b), w * h);
+                var dc = canvas(w, h), xd = dc.getContext("2d"), id = xd.createImageData(w, h);
+                for (var q = 0; q < w * h; q++) { var on = r2.mask[q]; id.data[q * 4] = on ? 220 : 255; id.data[q * 4 + 1] = on ? 30 : 255; id.data[q * 4 + 2] = on ? 30 : 255; id.data[q * 4 + 3] = 255; }
+                xd.putImageData(id, 0, 0);
+                out.push({ page: k, pct: r2.pct, a: a, b: b, d: dc });
+                if (opts.progress) opts.progress(k, n);
+              });
+            });
+          });
+        })(k);
+        return chain.then(function () { return { pages: out, total: pdf.numPages, of: count }; });
+      });
+    });
+  }
+
   // OCR (LY-PORT-O, io.js ocrPicture): the words of ocrkit wordsOf
   // (fractions of the picture read) + the frame's box in pt →
   // [{ x, y, w, h, size, lead, lines: [text] }], one per block of text
@@ -1209,7 +1269,7 @@
     });
   }
 
-  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, grayPixels: grayPixels, ocrFrames: ocrFrames, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
+  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, grayPixels: grayPixels, ocrFrames: ocrFrames, diffPixels: diffPixels, compare: compare, DIFF_AT: DIFF_AT, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_REBUILD = api;
 })(typeof window !== "undefined" ? window : this);
