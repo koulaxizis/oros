@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-LejY2IWBcsxE2g5/OcEdZ98pSWRHQIkLJ+ruo+RlU38='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <!-- DL-1: a direct link to this app opens it inside the orOS shell -->
+  <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=clockwork" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Clockwork Workshop · orOS</title>
+
+  <link rel="stylesheet" href="../fonts.css?v=7.97.00">
+  <link rel="stylesheet" href="clockwork.css?v=7.97.00">
+  <link rel="stylesheet" href="../gamekit/layout.css?v=7.97.00">
+
+</head>
+<body>
+
+  <!-- Toolbar: the name and workshop, New workshop, Upgrades, pattern book, records, sound -->
+  <header id="toolbar">
+    <div class="tb-row" id="tb-a">
+      <h1 class="tb-title" data-i18n="app.name">Clockwork Workshop</h1>
+      <span class="tb-isle" id="tb-ws"></span>
+      <span class="spacer"></span>
+      <button type="button" class="main-btn" id="new-btn" hidden><span class="ic"></span><span class="lb" data-i18n="btn.new">New workshop</span></button>
+      <button type="button" class="main-btn" id="up-btn"><span class="ic"></span><span class="lb" data-i18n="btn.up">Upgrades</span></button>
+      <button type="button" class="icon-btn" id="pb-btn"></button>
+      <button type="button" class="icon-btn" id="stats-btn"></button>
+      <button type="button" class="icon-btn" id="sfx-btn"></button>
+    </div>
+  </header>
+
+  <!-- Status: coins (and per minute), power, the train -->
+  <div id="status">
+    <span class="stat coins" id="s-co"><span class="ic"></span><span class="v"></span><span class="r"></span></span>
+    <span class="stat" id="s-pw"><span class="ic"></span><span class="v"></span></span>
+    <span class="stat" id="s-tr"><span class="ic"></span><span class="v"></span></span>
+  </div>
+
+  <main id="scene">
+    <canvas id="view" tabindex="0" role="application"></canvas>
+  </main>
+
+  <!-- The chosen cell: the parts tray, a part, or what comes next -->
+  <section id="panel" aria-live="off"></section>
+
+  <dialog class="cw-dlg" id="dlg"></dialog>
+
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="toast" role="status"></div>
+
+  <script src="../i18n.js?v=7.97.00" data-app="clockwork"></script>
+
+  <script src="../gamekit/haptics.js?v=7.97.00"></script>
+  <script src="engine.js?v=7.97.00"></script>
+  <script src="clockwork.js?v=7.97.00"></script>
+
+  <script src="../pickers.js?v=7.97.00" defer></script>
+</body>
+</html>

@@ -64,6 +64,7 @@ orosPack("de", "shell", {
  "app.hive": "Bienenstock",
  "app.lighthouse": "Leuchtturminsel",
  "app.starchart": "Sternkarte",
+ "app.clockwork": "Uhrwerkstatt",
  "app.files": "Dateien",
  "app.fitness": "Training",
  "app.flashcards": "Karteikarten",

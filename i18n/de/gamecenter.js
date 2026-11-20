@@ -128,6 +128,7 @@ orosPack("de", "gamecenter", {
  "hive": "Bienenstock",
  "lighthouse": "Leuchtturminsel",
  "starchart": "Sternkarte",
+ "clockwork": "Uhrwerkstatt",
  "ridge": "Windmühlengrat",
  "maze": "Laternenlabyrinth",
  "chal.back": "Wieder aufnehmen",

@@ -187,6 +187,12 @@
    ]
   },
   {
+   "app": "clockwork",
+   "files": [
+    "clockwork/clockwork.js"
+   ]
+  },
+  {
    "app": "commands",
    "files": [
     "commands/bar.js",
