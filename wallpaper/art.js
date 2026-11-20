@@ -37,7 +37,7 @@
 //   1. Recipe
 //   2. Random numbers + noise
 //   3. Colour
-//   4. Styles (waves, flow, orbits, grid, nebula, tree) + grain
+//   4. Styles (waves, flow, orbits, grid, nebula, tree, ribbon) + grain
 //   5. Runner
 //   6. Live layer
 // ============================================================
@@ -45,7 +45,7 @@
   "use strict";
 
   var VER = 1;
-  var STYLES = ["waves", "flow", "orbits", "grid", "nebula", "tree"];
+  var STYLES = ["waves", "flow", "orbits", "grid", "nebula", "tree", "ribbon"];
   var PALETTES = ["oros", "ember", "ocean", "forest", "dusk", "pastel", "mono"];
   var SEED_LEN = 40;
   var TAU = Math.PI * 2;
@@ -560,7 +560,99 @@
     }];
   }
 
-  var STYLE_FN = { waves: waves, flow: flow, orbits: orbits, grid: grid, nebula: nebula, tree: tree };
+  // Glass ribbons (RIBBON-1): three glossy bands in three inks of the
+  // palette that run across the picture and twist. Each band is a
+  // centre line (a few sines) with a width that turns with the twist
+  // angle: where cos(angle) changes sign the band shows its back
+  // (darker), and a narrow specular streak follows the angle, so it
+  // reads like folded glass. density = band width, chaos = twists and
+  // bends. A soft shadow is drawn under each band first.
+  function ribbon(T, w, h, u, R, C) {
+    var k = R.chaos / 100, out = [];
+    var inks = C.ink.slice(), pick = [];
+    for (var n = 0; n < 3; n++) pick.push(inks.splice(T.ri(inks.length), 1)[0] || C.ink[n % C.ink.length]);
+    var segs = 260;
+    var dark = "#000000", lite = "#ffffff";
+    for (var i = 0; i < 3; i++) {
+      (function (i) {
+        var col = pick[i];
+        var base = h * (0.24 + 0.26 * i) + T.rr(-0.06, 0.06) * u;
+        var tilt = T.rr(-0.35, 0.35) * h / Math.max(w, 1);
+        var comps = [];
+        for (var j = 0; j < 3; j++) comps.push({ f: T.rr(0.4, 1.2 + k * 1.6) * TAU, p: T.rr(0, TAU), a: u * T.rr(0.03, 0.09) * (0.5 + k) / (j + 1) });
+        var half = u * (0.035 + R.dens / 100 * 0.085) * T.rr(0.8, 1.2);
+        var turns = 0.4 + k * 2.4 + T.rr(0, 0.6), twist0 = T.rr(0, TAU), light = T.rr(0.6, 1.4);
+        function at(q) {
+          var x = -0.08 * w + q * 1.16 * w, xn = x / u, y = base + tilt * (x - w / 2);
+          for (var c = 0; c < comps.length; c++) y += comps[c].a * Math.sin(comps[c].f * xn + comps[c].p);
+          return { x: x, y: y };
+        }
+        // the same line every step: points, normals and the twist
+        function line() {
+          var P = [];
+          for (var q = 0; q <= segs; q++) P.push(at(q / segs));
+          for (q = 0; q <= segs; q++) {
+            var a = P[Math.max(0, q - 1)], b = P[Math.min(segs, q + 1)];
+            var dx = b.x - a.x, dy = b.y - a.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
+            P[q].nx = -dy / len; P[q].ny = dx / len;
+            P[q].th = twist0 + turns * Math.PI * q / segs;
+          }
+          return P;
+        }
+        out.push(function (ctx) {           // the shadow
+          var P = line();
+          ctx.beginPath();
+          for (var q = 0; q <= segs; q++) { var p = P[q]; if (q) ctx.lineTo(p.x, p.y + half * 0.5); else ctx.moveTo(p.x, p.y + half * 0.5); }
+          ctx.strokeStyle = rgba(dark, C.light ? 0.10 : 0.35);
+          ctx.lineWidth = half * 1.6;
+          ctx.lineCap = "round";
+          if ("filter" in ctx) ctx.filter = "blur(" + Math.round(half * 0.35) + "px)";
+          ctx.stroke();
+        });
+        out.push(function (ctx) {           // the band, quad by quad
+          var P = line();
+          for (var q = 0; q < segs; q++) {
+            var a = P[q], b = P[q + 1];
+            var ca = Math.cos(a.th), cb = Math.cos(b.th);
+            var wa = half * (0.12 + 0.88 * Math.abs(ca)), wb = half * (0.12 + 0.88 * Math.abs(cb));
+            var face = ca >= 0 ? 1 : -1;
+            var spec = Math.pow(Math.max(0, Math.sin(a.th * light + 0.6)), 10);
+            var shade = 0.55 + 0.45 * Math.abs(ca);
+            var c = face > 0 ? mix(col, lite, 0.12 + 0.55 * spec) : mix(col, dark, 0.35 + 0.2 * (1 - Math.abs(ca)));
+            c = mix(c, dark, (1 - shade) * 0.5);
+            ctx.beginPath();
+            ctx.moveTo(a.x + a.nx * wa, a.y + a.ny * wa);
+            ctx.lineTo(b.x + b.nx * wb, b.y + b.ny * wb);
+            ctx.lineTo(b.x - b.nx * wb, b.y - b.ny * wb);
+            ctx.lineTo(a.x - a.nx * wa, a.y - a.ny * wa);
+            ctx.closePath();
+            ctx.fillStyle = c;                 // opaque: overlaps leave no stripes
+            ctx.strokeStyle = c;               // closes the hairline seams
+            ctx.lineWidth = 1;
+            ctx.fill();
+            ctx.stroke();
+          }
+        });
+        out.push(function (ctx) {           // the glass edges
+          var P = line();
+          [1, -1].forEach(function (side) {
+            ctx.beginPath();
+            for (var q = 0; q <= segs; q++) {
+              var p = P[q], wq = half * (0.12 + 0.88 * Math.abs(Math.cos(p.th)));
+              var x = p.x + side * p.nx * wq, y = p.y + side * p.ny * wq;
+              if (q) ctx.lineTo(x, y); else ctx.moveTo(x, y);
+            }
+            ctx.strokeStyle = rgba(side > 0 ? lite : dark, side > 0 ? 0.42 : 0.25);
+            ctx.lineWidth = Math.max(1, u * 0.0022);
+            ctx.stroke();
+          });
+        });
+      })(i);
+    }
+    return out;
+  }
+
+  var STYLE_FN = { waves: waves, flow: flow, orbits: orbits, grid: grid, nebula: nebula, tree: tree, ribbon: ribbon };
 
   // Film grain: one seeded 128×128 noise tile, repeated.
   function grain(recipe, C, w, h, makeCanvas) {

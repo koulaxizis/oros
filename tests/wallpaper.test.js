@@ -353,3 +353,13 @@ test("generator: land tab wiring, its own synced slice, shell setLand", () => {
   ["mode.art", "mode.land", "land.shape", "lst.islands", "lst.hills", "lst.garden", "land.hint", "toast.landSet"]
     .forEach((k) => assert.ok(de.includes('"' + k + '":'), "de " + k));
 });
+
+test("RIBBON-1: glass ribbons are a style of their own, three bands in three inks", () => {
+  assert.equal(ART.STYLES[ART.STYLES.length - 1], "ribbon");
+  assert.equal(R({ style: "ribbon" }).style, "ribbon");
+  const d = draw(R({ style: "ribbon", pal: "ember" }), 400, 240);
+  // a shadow, a band and two edges per ribbon: three ribbons
+  assert.ok(d.length > 1000);
+  for (const pal of ["oros", "ember", "ocean", "forest", "dusk", "pastel", "mono"])
+    assert.doesNotThrow(() => draw(R({ style: "ribbon", pal, light: 1, chaos: 100, dens: 100 }), 120, 400), pal);
+});
