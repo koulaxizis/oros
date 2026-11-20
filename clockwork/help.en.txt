@@ -1,0 +1,63 @@
+# Clockwork Workshop
+Clockwork Workshop is a calm idle game for one person. On a watchmaker's bench a water wheel turns gears, the gears drive small machines, belts carry what they make, and a crate sells it: brass becomes gears and springs, they become clocks, and clocks become automatons. The workshop goes on by itself while orOS is closed: there is nothing to miss, nothing to collect and no notifications. Come back when you like.
+
+## How to play
+- Tap an empty cell of the bench to see the parts tray, then tap a part to put it there. Every part costs coins, and every copy of the same part costs a little more.
+- Tap a part on the bench to see what it does. `Turn` turns a belt or a machine a quarter round; `Take back` takes the part away and returns half its price.
+- The status row shows the coins and how many come in each minute, the power the machines use and how much the wheel gives, and whether the gears turn.
+- `Undo` in the message after every action takes it back, at the full price.
+
+## The bench
+- The **water wheel** sits on the left edge and the **shipping crate** on the right edge, both in the middle row. They cannot be moved.
+- The bench is 5 × 5 cells at first. Every new workshop has one row and one column more, up to 7 × 7.
+
+## Gears and jams
+- A **gear** meshes with the gears and the wheel on all eight cells around it, the sides and the corners, and passes the turn on. A line of gears carries the turn across the bench.
+- Neighbouring gears turn opposite ways, as real gears do. A small arrow on every gear shows its way.
+- So a closed ring of an odd number of gears cannot turn: three gears that all touch each other, or four in a square block, **jam** the whole train, and every machine stops. The gears of the ring are marked with ✕. Take one of them away and everything turns again.
+- A gear that touches no turning gear stays still.
+
+## Machines and power
+- A machine runs when the wheel or a turning gear is on one of the eight cells around it.
+- Every running machine uses 1 power. The wheel gives 4 at first (the Bigger wheel upgrade gives more). When the machines need more power than the wheel gives, they all slow down: 6 machines on a wheel of 4 run at two thirds.
+- **Furnace:** makes brass from nothing, 6 a minute.
+- **Gear press:** makes a gear from 1 brass, 3 a minute.
+- **Spring coiler:** makes a spring from 1 brass, 3 a minute.
+- **Clock bench:** makes a clock from 2 gears and 1 spring, 1.5 a minute.
+- **Automaton loft:** makes an automaton from 3 clocks, 0.5 a minute.
+- A machine with a mark is not running: ◦ no turning gear beside it, … waiting for what it needs, ■ nowhere to put what it makes (or the train is jammed).
+
+## Goods and belts
+- A machine puts what it makes on the cell its white arrow points to. If that is a **belt**, the belt carries it on, one cell at a time, the way its arrow points. If it is a machine that needs it, that machine takes it, from any side. If it is the crate, it is sold at once.
+- When the goods have nowhere to go (a gear, an empty cell, the edge of the bench, a machine that does not need them), the machine stops. Belts that go round in a circle carry nothing.
+- Prices: brass 2 coins, a gear 9, a spring 9, a clock 60, an automaton 520. Selling a clock is worth more than selling its gears and spring, and an automaton more than its clocks.
+
+## Upgrades
+`Upgrades` in the toolbar (or [[U]]):
+- **Bigger wheel:** +2 power, six times.
+- **Oiled bearings:** every machine works 20% faster, five times.
+- **Back door:** a second crate in the top right corner (that cell must be empty).
+- **Polish:** one for every kind of machine; every machine of that kind works twice as fast. A polish needs one of those machines on the bench.
+
+## A new workshop
+- Once an automaton is sold and this workshop has earned 3M coins, you can open a new workshop. A `New workshop` button appears in the toolbar and in the panel. There is no hurry: it stays open.
+- The new workshop has a bench one row and one column bigger (up to 7 × 7). The coins, the parts and the upgrades go back to the start.
+- The bench of the old workshop goes into the **pattern book** (the book in the toolbar, or [[P]]), and every workshop in the book adds 2% to every price for good.
+- In the pattern book, `Lay it` puts an old bench back: every part on the bench now returns (half its price comes back) and the parts of the pattern go in their places, for their price. The pattern keeps its wheel row; on a bigger bench the crate is one cell further right, so a belt may be missing.
+- You keep one **guild mark** for good, out of three: Quick hands (machines 15% faster), Thrifty (parts 15% cheaper), Strong river (the wheel gives 2 more power), Fine tools (prices 10% higher), Keen apprentice (the first gear press and spring coiler of every workshop are free) and Patient (away, the full pace lasts 7 days longer). The same mark can come again and adds up.
+
+## While you were away
+When you open Clockwork Workshop after a while, a card shows how long you were away, the coins earned and the goods shipped. For the first 7 days away the workshop works in full; after that it goes on at half pace. It never stops, it only slows.
+
+## Records and sync
+`Records` shows all the coins earned, the workshop, the goods shipped, the guild marks and the milestones. `Sound effects` there turns the small sounds on and off, like [[M]]. `The sound of the workshop` turns on a soft ticking and a far water wheel; it is off at first. The workshop syncs between your devices through [orOS sync](help:t/sync): it is the same workshop on your phone and your computer. If two devices play at the same time, the workshop that is further ahead is kept, and the other device's last minutes are lost. An action is saved a few seconds after you make it, and is sent at most every 5 minutes and when you leave. `Start over` in Records begins a new workshop from nothing on every device, after you confirm it; it cannot be undone. Clockwork Workshop is in the Idle group of the [Game Center](help:a/gamecenter). The sound settings stay on this device.
+
+## Keyboard
+- Arrow keys move between the cells; [[Enter]] or [[Space]] chooses a cell; [[1]] to [[7]] put a part on an empty cell (gear, belt, furnace, gear press, spring coiler, clock bench, automaton loft); [[R]] turns a part ([[Shift]]+[[R]] the other way); [[Delete]] takes it back; [[Escape]] lets go of the cell.
+- [[U]]: Upgrades. [[P]]: Pattern book. [[E]]: New workshop (once it is ready). [[S]]: Records. [[H]] or [[?]]: How to play (the first tour again; also the `?` button). [[M]]: sound. [[Z]]: undo the last action.
+
+## Tips
+- Start with a furnace next to the wheel and two belts to the crate.
+- Put a gear press between the furnace and the crate as soon as you can: gears sell for more than brass.
+- A straight line of gears never jams; a turn in the line jams when three gears touch, so go round a corner on the diagonal.
+- One furnace feeds one machine; a clock bench needs a gear press and a spring coiler beside it.

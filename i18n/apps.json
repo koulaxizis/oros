@@ -138,6 +138,12 @@
    ]
   },
   {
+   "app": "caravan",
+   "files": [
+    "caravan/caravan.js"
+   ]
+  },
+  {
    "app": "cardkit",
    "files": [
     "cardkit/cardkit.js"
@@ -184,6 +190,12 @@
     "chores/chores.js",
     "chores/package.js",
     "chores/search.js"
+   ]
+  },
+  {
+   "app": "clockwork",
+   "files": [
+    "clockwork/clockwork.js"
    ]
   },
   {
@@ -735,6 +747,12 @@
    "files": [
     "oracle/oracle.js",
     "oracle/prophecies.js"
+   ]
+  },
+  {
+   "app": "orbit",
+   "files": [
+    "orbit/orbit.js"
    ]
   },
   {
