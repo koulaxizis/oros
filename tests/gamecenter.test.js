@@ -173,12 +173,21 @@ test("gamecenter: Lighthouse Island is in the Idle group after Hive, played once
 });
 
 test("gamecenter: Star Chart is in the Idle group after Lighthouse Island, played once something was done, never won", () => {
-  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games, ["hive", "lighthouse", "starchart"]);
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games.slice(0, 3), ["hive", "lighthouse", "starchart"]);
   assert.ok(C.GAMES.includes("starchart"));
   assert.equal(sum({ "oros-starchart-data": { v: 1, acts: 0 } }).games.starchart.p, 0);
   const s = sum({ "oros-starchart-data": { v: 1, acts: 3, life: 700 } });
   assert.equal(s.games.starchart.p, 1);
   assert.equal(s.games.starchart.w, -1, "an idle game has no wins");
+});
+
+test("gamecenter: Clockwork Workshop is in the Idle group after Star Chart, played once something was done, never won", () => {
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games, ["hive", "lighthouse", "starchart", "clockwork"]);
+  assert.ok(C.GAMES.includes("clockwork"));
+  assert.equal(sum({ "oros-clockwork-data": { v: 1, acts: 0 } }).games.clockwork.p, 0);
+  const s = sum({ "oros-clockwork-data": { v: 1, acts: 4, life: 900 } });
+  assert.equal(s.games.clockwork.p, 1);
+  assert.equal(s.games.clockwork.w, -1, "an idle game has no wins");
 });
 
 test("gamecenter: Realm's Daily island counts in Today and the streak, never in Clean sweep", () => {
@@ -280,11 +289,23 @@ test("gamecenter: Caravan is in the Tower defense group after Lantern maze; rout
     aaaaaa: { b: 1, s: { m: [3, 2], n: [2, 1] }, f: 150 },
     bbbbbb: { b: 1, s: { h: [1, 1] }, f: 60 },
     oldold: { b: 0, s: { n: [9, 9] }, f: 99 } } };
-  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge", "maze", "caravan"]);
+  assert.ok(C.GROUPS.find((g) => g.id === "defense").games.join().startsWith("ridge,maze,caravan"));
   assert.ok(C.GAMES.includes("caravan"));
   const s = sum({ "oros-caravan-data": cv });
   assert.deepEqual([s.games.caravan.p, s.games.caravan.w], [6, 4], "rows from before the reset do not count");
   assert.ok(ach(s, "hard").done, "a Hard route won");
+});
+
+test("gamecenter: Orbit garden is in the Tower defense group after Caravan; nights and wins from every device", () => {
+  const og = { ver: 1, br: 1, maps: { g1: { b: 1, s: 2, e: 0 } }, rows: {
+    aaaaaa: { b: 1, s: { m: [4, 3], n: [2, 0] }, f: 210 },
+    bbbbbb: { b: 1, s: { h: [2, 1] }, f: 80 },
+    oldold: { b: 0, s: { n: [9, 9] }, f: 99 } } };
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge", "maze", "caravan", "orbit"]);
+  assert.ok(C.GAMES.includes("orbit"));
+  const s = sum({ "oros-orbit-data": og });
+  assert.deepEqual([s.games.orbit.p, s.games.orbit.w], [8, 4], "rows from before the reset do not count");
+  assert.ok(ach(s, "hard").done, "a Hard night won");
 });
 
 test("gamecenter: Fieldwarden counts years and finished years from every device; a Harsh finish is a hard win", () => {

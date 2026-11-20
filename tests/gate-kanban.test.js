@@ -185,3 +185,51 @@ test("subtasks: refused without changing anything", () => {
   const full = G.kanbanWrite(M, "change_card", raw, { board: "b1", card: "k2", add_subtasks: ["a", "b"] }, NOW, nid);
   assert.match(full.err, /at most 100 subtasks/);
 });
+
+// KB-SUBDEL (Chris 2026-11-20): removing subtasks through kanban_change_card.
+test("subtasks: removed by id or text with tombstones; undo puts them back in place and a merge keeps them", () => {
+  const raw = data();
+  col(raw, "c1").cards[1].subtasks = [
+    { id: "s0", text: "ISBN", completed: true, m: T0 }, { id: "s1", text: "Εξώφυλλο", completed: false, m: T0 },
+    { id: "s2", text: "Τυπογραφείο", completed: false, m: T0 }];
+  const r = G.kanbanWrite(M, "change_card", raw, { board: "b1", card: "k2", remove_subtasks: ["s0", " Τυπογραφείο "] }, NOW, nid);
+  assert.equal(r.ok, true, r.err);
+  const k = col(r.data, "c1").cards[1];
+  assert.deepEqual(k.subtasks.map((s) => s.id), ["s1"]);
+  assert.deepEqual(r.removed, ["ISBN", "Τυπογραφείο"]);
+  assert.match(r.text, /Removed 2 subtasks/);
+  assert.ok(r.data.boards[0].deleted["k2/s0"] >= k.mtime && r.data.boards[0].deleted["k2/s2"] > T0);
+  assert.equal(G.delCount("kanban_change_card", { remove_subtasks: ["s0", "s2"] }), 2, "a deletion: asked on the device");
+  assert.equal(G.delCount("kanban_change_card", { add_subtasks: ["x"] }), 0);
+  // a device that still has them loses them in the merge
+  const mg0 = M.mergeKanbanStates(raw, r.data, NOW + 1);
+  assert.deepEqual(col(mg0, "c1").cards[1].subtasks.map((s) => s.id), ["s1"]);
+  // undo: back in their places, newer than their tombstones, and they survive a merge with the removed copy
+  const u = G.kanbanUndo(M, r.data, r.undo, NOW + 10);
+  assert.equal(u.n, 1);
+  const k0 = col(u.data, "c1").cards[1];
+  assert.deepEqual(k0.subtasks.map((s) => [s.id, s.text, s.completed]), [["s0", "ISBN", true], ["s1", "Εξώφυλλο", false], ["s2", "Τυπογραφείο", false]]);
+  assert.ok(k0.subtasks[0].m > u.data.boards[0].deleted["k2/s0"]);
+  const mg = M.mergeKanbanStates(r.data, u.data, NOW + 20);
+  assert.deepEqual(col(mg, "c1").cards[1].subtasks.map((s) => s.id), ["s0", "s1", "s2"]);
+  assert.deepEqual(col(M.mergeKanbanStates(u.data, r.data, NOW + 20), "c1").cards[1].subtasks.map((s) => s.id), ["s0", "s1", "s2"], "symmetric");
+});
+
+test("subtasks: a removal is refused whole when one name is wrong, twice, or changed too", () => {
+  const raw = data();
+  col(raw, "c1").cards[1].subtasks = [{ id: "s0", text: "Ίδιο", completed: false }, { id: "s1", text: "Ίδιο", completed: false }, { id: "s2", text: "Άλλο", completed: false }];
+  const bad = [
+    [{ remove_subtasks: [] }, /remove_subtasks must hold/],
+    [{ remove_subtasks: [""] }, /give the subtask's id/],
+    [{ remove_subtasks: ["Ίδιο"] }, /more than one subtask/],
+    [{ remove_subtasks: ["s2", "nope"] }, /no subtask/],
+    [{ remove_subtasks: ["s2", "Άλλο"] }, /twice/],
+    [{ remove_subtasks: ["s2"], change_subtasks: [{ subtask: "s2", done: true }] }, /changed and removed/]
+  ];
+  for (const [a, re] of bad) {
+    const r = G.kanbanWrite(M, "change_card", raw, Object.assign({ board: "b1", card: "k2" }, a), NOW, nid);
+    assert.equal(r.ok, false, JSON.stringify(a));
+    assert.match(r.err, re);
+  }
+  assert.equal(col(raw, "c1").cards[1].subtasks.length, 3, "the input is not changed");
+});

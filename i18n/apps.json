@@ -193,6 +193,12 @@
    ]
   },
   {
+   "app": "clockwork",
+   "files": [
+    "clockwork/clockwork.js"
+   ]
+  },
+  {
    "app": "commands",
    "files": [
     "commands/bar.js",
@@ -742,6 +748,12 @@
    "files": [
     "oracle/oracle.js",
     "oracle/prophecies.js"
+   ]
+  },
+  {
+   "app": "orbit",
+   "files": [
+    "orbit/orbit.js"
    ]
   },
   {
