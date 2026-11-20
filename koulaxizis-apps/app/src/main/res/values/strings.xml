@@ -40,4 +40,9 @@
     <string name="support">Support the projects</string>
     <string name="notes_off">Update notices are off, so you only see updates here.</string>
     <string name="notes_turn_on">Turn on</string>
+    <string name="confirm">Confirm</string>
+    <string name="not_updated">%1$s was not updated. Tap Update to try again.</string>
+    <string name="lost_text">Android\'s question about installing %1$s closed before you answered (on some phones a security scan covers it).</string>
+    <string name="show_again">Show again</string>
+    <string name="skip">Skip</string>
 </resources>
