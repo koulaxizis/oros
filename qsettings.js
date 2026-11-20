@@ -79,7 +79,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.4.0";
+  var VER = "1.5.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -659,6 +659,19 @@
       parts.dndMenu.appendChild(it);
       return it;
     });
+    // Focus F2: until the running or next window of the mode's schedule
+    parts.focusEnd = menuItem("", t("qs.focus.end"), function () {
+      var F = focus();
+      if (F) {
+        var a = F.active(), id = a ? a.id : F.last();
+        var u = call(function () { return F.endOf(id); }) || 0;
+        F.start(id, { until: u > Date.now() ? u : 0 });
+        paintBtn();
+      }
+      setSub("");
+    });
+    parts.focusEnd.hidden = true;
+    parts.dndMenu.insertBefore(parts.focusEnd, parts.dndItems[2]);
     parts.dndOff = menuItem("", t("qs.dnd.turnoff"), function () { setDnd(false); setSub(""); });
     parts.dndMenu.appendChild(parts.dndOff);
     parts.focusSet = menuItem("", t("qs.focus.settings"), then(function () {
@@ -835,6 +848,9 @@
   // The mode rows of the focus menu (rebuilt only when they change).
   function paintFocus(F, fa) {
     var list = call(function () { return F.list(); }) || [];
+    var endId = fa ? fa.id : call(function () { return F.last(); });
+    var endMs = (typeof F.endOf === "function" && call(function () { return F.endOf(endId); })) || 0;
+    parts.focusEnd.hidden = !(endMs > Date.now());
     var icon = fa ? (list.filter(function (m) { return m.id === fa.id; })[0] || {}).icon : "bell";
     var svg = F.model.svg(icon || "bell");
     if (parts.dnd.__icon !== svg) {

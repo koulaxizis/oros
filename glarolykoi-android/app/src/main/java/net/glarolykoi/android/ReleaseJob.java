@@ -38,9 +38,10 @@ public class ReleaseJob extends JobService {
     static final String KEY_LAST = "lastSeen";
     private static final int JOB_ID = 1;
     private static final String CHANNEL = "new";
+    /** Only the house's own titles (brand «glarolykoi»), not other publishers or goods (1.0.1). */
     private static final String FEED = Links.HOME
-        + "wp-json/wc/store/v1/products?orderby=date&order=desc&per_page=10&_fields=id,name,permalink";
-    private static final String SHOP_NEWEST = Links.HOME + "shop/?orderby=date";
+        + "wp-json/wc/store/v1/products?orderby=date&order=desc&per_page=10&brand=glarolykoi&_fields=id,name,permalink";
+    private static final String SHOP_NEWEST = Links.HOME + "brand/glarolykoi/?orderby=date";
     private static final int MAX_BYTES = 512 * 1024;
 
     private volatile Thread worker;

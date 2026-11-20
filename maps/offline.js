@@ -570,7 +570,7 @@
     cemetery: "#aacbaf", military: "#f3d5d5", pedestrian: "#e3e2ea", airport: "#e4e2dc", scrub: "#c8d7ab",
     building: "#d9d0c9", buildingLine: "#c4b6ab",
     hwy: "#e892a2", hwyCase: "#c24e6b", major: "#fcd6a4", majorCase: "#c49a5e", minor: "#ffffff", minorCase: "#bdb9b1",
-    path: "#e0715f", rail: "#8f8f8f", border: "#9e8fb0", text: "#333333", text2: "#5d5d5d", halo: "#ffffff", poi: "#7a6a5a"
+    path: "#e0715f", cycle: "#2f6fd6", track: "#9a6b3f", rail: "#8f8f8f", border: "#9e8fb0", text: "#333333", text2: "#5d5d5d", halo: "#ffffff", poi: "#7a6a5a"
   };
   var FILL = [
     [/^(residential|urban_area|urban)$/, "urban"], [/^(industrial|railway|quarry|landfill|brownfield|construction)$/, "industrial"],
@@ -650,7 +650,15 @@
       var r;
       if (kd === "highway") r = { w: 9, fill: C.hwy, cas: C.hwyCase, o: 4 };
       else if (kd === "major_road") r = { w: 7.5, fill: C.major, cas: C.majorCase, o: 3 };
-      else if (kd === "path") { if (z < 14) return; r = { w: 1.4, fill: C.path, dash: true, o: 1 }; }
+      else if (kd === "path") {
+        // Wave H1: paths by what they are, as hiking and cycling maps
+        // draw them: cycleways blue, tracks brown, footpaths red, all dashed.
+        if (z < 13) return;
+        if (det === "cycleway") r = { w: 1.9, fill: C.cycle, dash: [6, 3], o: 1 };
+        else if (det === "track") r = { w: 1.9, fill: C.track, dash: [7, 3], o: 1 };
+        else if (det === "steps") { if (z < 15) return; r = { w: 2.2, fill: C.path, dash: [1.5, 1.5], o: 1 }; }
+        else { if (z < 14 && det !== "path" && det !== "bridleway") return; r = { w: 1.5, fill: C.path, dash: [4, 3], o: 1 }; }
+      }
       else if (kd === "minor_road" || kd === "other" || kd === "") {
         if (z < 12) return;
         var svc = det === "service" || kd === "other";
@@ -671,7 +679,7 @@
     roads.forEach(function (r) {
       ctx.strokeStyle = z < 11 && r.cas ? r.cas : r.fill;
       ctx.lineWidth = W(r.w, z);
-      ctx.setLineDash(r.dash ? [4, 3] : []);
+      ctx.setLineDash(r.dash ? (r.dash === true ? [4, 3] : r.dash) : []);
       path(r.f.geom, false); ctx.stroke();
     });
     ctx.setLineDash([]);

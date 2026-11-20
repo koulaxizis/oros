@@ -155,12 +155,21 @@ test("gamecenter: All games groups list every game exactly once, every Games app
 });
 
 test("gamecenter: Hive is in the Idle group, played once something was done, never won", () => {
-  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games, ["hive"]);
+  assert.ok(C.GROUPS.find((g) => g.id === "idle").games.includes("hive"));
   assert.ok(C.GAMES.includes("hive"));
   assert.equal(sum({ "oros-hive-data": { v: 1, acts: 0 } }).games.hive.p, 0);
   const s = sum({ "oros-hive-data": { v: 1, acts: 4, life: 900 } });
   assert.equal(s.games.hive.p, 1);
   assert.equal(s.games.hive.w, -1, "an idle game has no wins");
+});
+
+test("gamecenter: Lighthouse Island is in the Idle group after Hive, played once something was done, never won", () => {
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games, ["hive", "lighthouse"]);
+  assert.ok(C.GAMES.includes("lighthouse"));
+  assert.equal(sum({ "oros-lighthouse-data": { v: 1, acts: 0 } }).games.lighthouse.p, 0);
+  const s = sum({ "oros-lighthouse-data": { v: 1, acts: 2, life: 500 } });
+  assert.equal(s.games.lighthouse.p, 1);
+  assert.equal(s.games.lighthouse.w, -1, "an idle game has no wins");
 });
 
 test("gamecenter: Realm's Daily island counts in Today and the streak, never in Clean sweep", () => {
@@ -236,13 +245,25 @@ test("gamecenter: Windmill ridge is in the Tower defense group; nights and wins 
     aaaaaa: { b: 1, s: { m: [4, 2], n: [2, 1] }, f: 90 },
     bbbbbb: { b: 1, s: { h: [3, 0] }, f: 20 },
     oldold: { b: 0, s: { h: [9, 9] }, f: 99 } } };
-  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge"]);
+  assert.ok(C.GROUPS.find((g) => g.id === "defense").games.includes("ridge"));
   assert.ok(C.GAMES.includes("ridge"));
   const s = sum({ "oros-ridge-data": rd });
   assert.deepEqual([s.games.ridge.p, s.games.ridge.w], [9, 3], "rows from before the reset do not count");
   assert.ok(!ach(s, "hard").done, "no Hard night won yet");
   rd.rows.bbbbbb.s.h = [4, 1];
   assert.ok(ach(sum({ "oros-ridge-data": rd }), "hard").done);
+});
+
+test("gamecenter: Lantern maze is in the Tower defense group after Windmill ridge; nights and wins from every device", () => {
+  const mz = { ver: 1, br: 1, maps: { q1: { b: 1, s: 2, e: 0 } }, rows: {
+    aaaaaa: { b: 1, s: { n: [5, 3] }, f: 120 },
+    bbbbbb: { b: 1, s: { h: [2, 1] }, f: 40 },
+    oldold: { b: 0, s: { m: [9, 9] }, f: 99 } } };
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "defense").games, ["ridge", "maze"]);
+  assert.ok(C.GAMES.includes("maze"));
+  const s = sum({ "oros-maze-data": mz });
+  assert.deepEqual([s.games.maze.p, s.games.maze.w], [7, 4], "rows from before the reset do not count");
+  assert.ok(ach(s, "hard").done, "a Hard night won");
 });
 
 test("gamecenter: Fieldwarden counts years and finished years from every device; a Harsh finish is a hard win", () => {

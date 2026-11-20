@@ -574,7 +574,7 @@
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) { /* view state only */ }
   }
   var savedLayer = null;        // layerGroup for saved-place pins
-  var layerCtl = null, baseById = {};   // the layer switcher and its base layers by id
+  var layerCtl = null, baseById = {}, overlayById = {};   // the layer switcher, its base layers and overlays by id
 
   function initMap() {
     map = L.map("map", {
@@ -4100,6 +4100,14 @@
       layer.orosId = id;
       baseById[id] = layer;
       layerCtl.addBaseLayer(layer, label);
+    },
+    // Wave H1 (trails.js): an overlay of its own (trail and cycling
+    // routes) in the layer switcher.
+    addOverlay: function (id, layer, label) {
+      if (!layerCtl || overlayById[id]) return;
+      layer.orosId = id;
+      overlayById[id] = layer;
+      layerCtl.addOverlay(layer, label);
     },
     currentBase: function () {
       for (var id in baseById) if (map.hasLayer(baseById[id])) return id;

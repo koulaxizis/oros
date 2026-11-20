@@ -41,7 +41,8 @@
 //
 // Device-local keys (never synced): oros-device-id (random id),
 // oros-device-name (the name typed in Settings), oros-continue-prefs
-// { cont: 0|1, reopen: 0|1 } (absent = on, Chris 2026-11-17),
+// { cont?: 0, reopen?: 1 } (cont absent = on, Chris 2026-11-17; reopen
+// absent = OFF, Chris 2026-11-19: "κλειστό σαν επιλογή"),
 // oros-apps-last (RS-1, written by the shell).
 //
 // Tests: tests/continue.test.js.
@@ -379,11 +380,12 @@
   function kindHere() { return kindOf(root.navigator && root.navigator.userAgent); }
   function prefs() {
     var p = obj(readJSON(PREFS_KEY)) || {};
-    return { cont: p.cont !== 0, reopen: p.reopen !== 0 };
+    return { cont: p.cont !== 0, reopen: p.reopen === 1 };   // reopen: off until switched on (Chris 2026-11-19)
   }
   function setPref(k, on) {
     var p = obj(readJSON(PREFS_KEY)) || {};
-    if (on) delete p[k]; else p[k] = 0;
+    if (k === "reopen") { if (on) p.reopen = 1; else delete p.reopen; }   // off by default
+    else if (on) delete p[k]; else p[k] = 0;
     try {
       if (Object.keys(p).length) localStorage.setItem(PREFS_KEY, JSON.stringify(p));
       else localStorage.removeItem(PREFS_KEY);

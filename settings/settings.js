@@ -1001,6 +1001,7 @@
       var nowTxt = !a ? t("n.focus.none")
         : a.until ? t("n.focus.until", { name: a.name, t: linkTime(a.until) })
         : t("n.focus.on", { name: a.name });
+      if (a && a.by !== "manual") nowTxt += " · " + t("n.focus.by." + a.by);
       var nowRow = row(t("n.focus.now"), a ? button(t("n.focus.stop"), "n.focus.stop", function () { F.stop(); render(); }) : null);
       nowRow.appendChild(el("div", "hint", nowTxt));
       c3.appendChild(nowRow);
@@ -1062,6 +1063,8 @@
       return { value: ic, label: t("n.focus.ic." + ic) };
     }), m.icon, "n.focus.icon", function (v) { F.edit(m.id, { icon: v }); render(); }), { forId: "f-n.focus.icon" }));
 
+    focusWhen(c5, F, m);
+
     if (m.locked) {
       c5.appendChild(row(t("n.focus.allow"), null, { hint: t("n.focus.allow.none") }));
     } else {
@@ -1095,6 +1098,90 @@
       }, "danger")));
     }
     host.appendChild(c5);
+  }
+
+  // When a mode turns on by itself (Focus F2): a weekly schedule
+  // (Sleep: the quiet hours above) and a Calendar event.
+  function focusWhen(c5, F, m) {
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    if (m.id === "sleep") {
+      c5.appendChild(row(t("n.focus.sched"), null, { hint: t("n.focus.sched.sleep") }));
+    } else {
+      var sc = m.sched || { on: false, days: [1, 2, 3, 4, 5], from: 18, to: 34 };
+      var put = function (patch) {
+        var next = { on: sc.on, days: sc.days.slice(), from: sc.from, to: sc.to };
+        Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
+        F.edit(m.id, { sched: next });
+        render();
+      };
+      c5.appendChild(row(t("n.focus.sched"), switchBtn(sc.on, "n.focus.sched", function (v) { put({ on: v }); }, t("n.focus.sched")),
+        { hint: t("n.focus.sched.hint") }));
+      if (sc.on) {
+        var lang = document.documentElement.lang || undefined;
+        var dl = el("div", "checks");
+        dl.setAttribute("role", "group");
+        dl.setAttribute("aria-label", t("n.focus.days"));
+        [1, 2, 3, 4, 5, 6, 0].forEach(function (d) {
+          var lab = el("label", "check");
+          var cb = el("input");
+          cb.type = "checkbox";
+          cb.checked = sc.days.indexOf(d) >= 0;
+          cb.setAttribute("data-k", "n.focus.day:" + d);
+          cb.addEventListener("change", function () {
+            var next = sc.days.filter(function (x) { return x !== d; });
+            if (cb.checked) next.push(d);
+            put({ days: next });
+          });
+          lab.appendChild(cb);
+          // 2026-11-15 was a Sunday: the browser names the day
+          lab.appendChild(el("span", null, new Date(2026, 10, 15 + d).toLocaleDateString(lang, { weekday: "short" })));
+          dl.appendChild(lab);
+        });
+        c5.appendChild(row(t("n.focus.days"), dl));
+        var halves = [];
+        for (var i = 0; i < 48; i++) halves.push({ value: i, label: pad(Math.floor(i / 2)) + ":" + (i % 2 ? "30" : "00") });
+        var pr = el("div", "pair");
+        var fl = el("label", "pair-label", t("n.from"));
+        fl.htmlFor = "f-n.focus.from";
+        pr.appendChild(fl);
+        pr.appendChild(select(halves, sc.from, "n.focus.from", function (v) { put({ from: parseInt(v, 10) }); }));
+        var tl = el("label", "pair-label", t("n.to"));
+        tl.htmlFor = "f-n.focus.to";
+        pr.appendChild(tl);
+        pr.appendChild(select(halves, sc.to, "n.focus.to", function (v) { put({ to: parseInt(v, 10) }); }));
+        c5.appendChild(pr);
+        if (!sc.days.length || sc.from === sc.to) c5.appendChild(el("div", "hint", t("n.focus.sched.empty")));
+        else if (sc.to < sc.from) c5.appendChild(el("div", "hint", t("n.focus.sched.night")));
+      }
+    }
+    var ca = m.cal || { on: false, label: "", word: "" };
+    var putCal = function (patch) {
+      var next = { on: ca.on, label: ca.label, word: ca.word };
+      Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
+      F.edit(m.id, { cal: next });
+      render();
+    };
+    c5.appendChild(row(t("n.focus.cal"), switchBtn(ca.on, "n.focus.cal", function (v) { putCal({ on: v }); }, t("n.focus.cal")),
+      { hint: t("n.focus.cal.hint") }));
+    if (ca.on) {
+      var labels = (typeof F.calLabels === "function" ? F.calLabels() : []);
+      var opts = [{ value: "", label: t("n.focus.cal.anylabel") }].concat(labels.map(function (l) { return { value: l.id, label: l.name }; }));
+      c5.appendChild(row(t("n.focus.cal.label"), select(opts, ca.label, "n.focus.cal.label", function (v) { putCal({ label: v }); }),
+        { forId: "f-n.focus.cal.label" }));
+      var wIn = el("input");
+      wIn.id = "f-n.focus.cal.word";
+      wIn.type = "text";
+      wIn.maxLength = 40;
+      wIn.autocomplete = "off";
+      wIn.setAttribute("data-k", "n.focus.cal.word");
+      wIn.value = ca.word || "";
+      wIn.placeholder = t("n.focus.cal.word.ph");
+      wIn.addEventListener("change", function () { putCal({ word: wIn.value }); });
+      var wBox = el("div", "pass-row");
+      wBox.appendChild(wIn);
+      c5.appendChild(row(t("n.focus.cal.word"), wBox, { forId: "f-n.focus.cal.word", hint: t("n.focus.cal.word.hint") }));
+      if (!ca.label && !ca.word) c5.appendChild(el("div", "hint", t("n.focus.cal.empty")));
+    }
   }
 
   // In the orOS Android app only (BR-PHONE v3): the phone rings
