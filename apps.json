@@ -1232,6 +1232,14 @@
       "type": "internal"
     },
     {
+      "id": "starchart",
+      "name": "Star Chart",
+      "category": "Games",
+      "icon": "starchart",
+      "url": "starchart/",
+      "type": "internal"
+    },
+    {
       "id": "wayfarers",
       "name": "Wayfarers",
       "category": "Games",

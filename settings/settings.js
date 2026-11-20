@@ -1064,6 +1064,7 @@
     }), m.icon, "n.focus.icon", function (v) { F.edit(m.id, { icon: v }); render(); }), { forId: "f-n.focus.icon" }));
 
     focusWhen(c5, F, m);
+    focusHide(c5, F, m);
 
     if (m.locked) {
       c5.appendChild(row(t("n.focus.allow"), null, { hint: t("n.focus.allow.none") }));
@@ -1098,6 +1099,123 @@
       }, "danger")));
     }
     host.appendChild(c5);
+    focusDigest(host, F, N);
+  }
+
+  // The notification summary (Focus F4, D4): the chosen apps' notices
+  // wait quietly in the bell; at each chosen time one notice counts them.
+  function focusDigest(host, F, N) {
+    if (typeof F.digest !== "function") return;
+    function pad(n) { return (n < 10 ? "0" : "") + n; }
+    var d = F.digest();
+    var c6 = card(t("n.focus.sum"));
+    c6.appendChild(row(t("n.focus.sum"), switchBtn(d.on, "n.focus.sum", function (v) {
+      F.setDigest({ on: v, times: v && !d.times.length ? [36] : d.times });
+      render();
+    }, t("n.focus.sum")), { hint: t("n.focus.sum.hint") }));
+    if (d.on) {
+      var halves = [];
+      for (var i = 0; i < 48; i++) halves.push({ value: i, label: pad(Math.floor(i / 2)) + ":" + (i % 2 ? "30" : "00") });
+      var tr = row(t("n.focus.sum.times"), null);
+      var tl = el("div", "sum-times");
+      d.times.forEach(function (h, k) {
+        var one = el("div", "sum-time");
+        var s1 = select(halves, h, "n.focus.sum.t" + k, function (v) {
+          var next = d.times.slice();
+          next[k] = parseInt(v, 10);
+          F.setDigest({ times: next });
+          render();
+        });
+        s1.setAttribute("aria-label", t("n.focus.sum.times") + " " + (k + 1));
+        one.appendChild(s1);
+        var rm = button("×", "n.focus.sum.rm" + k, function () {
+          F.setDigest({ times: d.times.filter(function (x, j) { return j !== k; }) });
+          render();
+        });
+        rm.setAttribute("aria-label", t("n.focus.sum.rm"));
+        one.appendChild(rm);
+        tl.appendChild(one);
+      });
+      tr.appendChild(tl);
+      c6.appendChild(tr);
+      if (d.times.length < F.model.MAX_TIMES) {
+        c6.appendChild(actions(button(t("n.focus.sum.add"), "n.focus.sum.add", function () {
+          var next = d.times.slice(), h2 = d.times.length ? (d.times[d.times.length - 1] + 8) % 48 : 36;
+          while (next.indexOf(h2) >= 0) h2 = (h2 + 1) % 48;
+          next.push(h2);
+          F.setDigest({ times: next });
+          render();
+        })));
+      }
+      var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
+      var ar = row(t("n.focus.sum.apps"), null, { hint: t("n.focus.sum.apps.hint") });
+      var al = el("div", "checks");
+      known.filter(function (id) { return id !== "system"; }).forEach(function (id) {
+        var lab = el("label", "check");
+        var cb = el("input");
+        cb.type = "checkbox";
+        cb.checked = d.apps.indexOf(id) >= 0;
+        cb.setAttribute("data-k", "n.focus.sum.app:" + id);
+        cb.addEventListener("change", function () {
+          var next = d.apps.filter(function (x) { return x !== id; });
+          if (cb.checked) next.push(id);
+          F.setDigest({ apps: next });
+          render();
+        });
+        lab.appendChild(cb);
+        lab.appendChild(el("span", null, id === "discover" ? t("n.discover") : appName(id)));
+        al.appendChild(lab);
+      });
+      ar.appendChild(al);
+      c6.appendChild(ar);
+      if (!d.times.length || !d.apps.length) c6.appendChild(el("div", "hint", t("n.focus.sum.empty")));
+    }
+    c6.appendChild(el("p", "hint", t("n.focus.sum.end")));
+    host.appendChild(c6);
+  }
+
+  // What a mode hides while it runs (Focus F3, D3: the desktop and the
+  // Dock only; the menu and search still find every app).
+  function focusHide(c5, F, m) {
+    var p = parentWin();
+    var hide = m.hide || { widgets: [], apps: [] };
+    var put = function (k, id, on) {
+      var next = { widgets: hide.widgets.slice(), apps: hide.apps.slice() };
+      next[k] = next[k].filter(function (x) { return x !== id; });
+      if (on) next[k].push(id);
+      F.edit(m.id, { hide: next });
+      render();
+    };
+    var box = function (k, id, label) {
+      var lab = el("label", "check");
+      var cb = el("input");
+      cb.type = "checkbox";
+      cb.checked = hide[k].indexOf(id) >= 0;
+      cb.setAttribute("data-k", "n.focus.hide." + k + ":" + id);
+      cb.addEventListener("change", function () { put(k, id, cb.checked); });
+      lab.appendChild(cb);
+      lab.appendChild(el("span", null, label));
+      return lab;
+    };
+    var ws = null, pl = null;
+    try { ws = p && p.orosWidgets && p.orosWidgets.snapshot(); } catch (e) {}
+    try { pl = p && p.orosLauncher && typeof p.orosLauncher.placed === "function" ? p.orosLauncher.placed() : null; } catch (e) {}
+    var wl = el("div", "checks");
+    var wNames = {};
+    ((ws && ws.list) || []).forEach(function (w) { wNames[w.id] = w.name; });
+    var kinds = ((ws && ws.list) || []).filter(function (w) { return w.on; }).map(function (w) { return w.id; });
+    hide.widgets.forEach(function (k) { if (kinds.indexOf(k) < 0) kinds.push(k); });
+    kinds.forEach(function (k) { wl.appendChild(box("widgets", k, wNames[k] || k)); });
+    var ids = [];
+    if (pl) pl.desk.concat(pl.dock).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    hide.apps.forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); });
+    var al = el("div", "checks");
+    ids.forEach(function (id) { al.appendChild(box("apps", id, appName(id))); });
+    var r = row(t("n.focus.hide"), null, { hint: t("n.focus.hide.hint") });
+    if (kinds.length) { r.appendChild(el("div", "hint", t("n.focus.hide.widgets"))); r.appendChild(wl); }
+    if (ids.length) { r.appendChild(el("div", "hint", t("n.focus.hide.apps"))); r.appendChild(al); }
+    if (!kinds.length && !ids.length) r.appendChild(el("div", "hint", t("n.focus.hide.none")));
+    c5.appendChild(r);
   }
 
   // When a mode turns on by itself (Focus F2): a weekly schedule

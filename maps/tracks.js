@@ -18,7 +18,12 @@
 //     Colour, folder, show / hide on the map, search.
 //   - A track: statistics, elevation or speed chart, Fit, Follow (the
 //     line + your distance from it and the distance left), export GPX,
-//     rename / colour / folder, delete.
+//     rename / colour / folder, delete. Since wave H4 (follow-core.js)
+//     Follow works like a hiking app: either way round, the climb left,
+//     the next waypoint, arrival time with a sunset warning, and alerts
+//     (vibration, a tone, the device's own voice) when you leave the
+//     track, come back, near a waypoint or reach the end; the alerts
+//     switch is device-local ("oros-maps-follow").
 //   - Import GPX, KML or GeoJSON (Import button, or "Open with" orOS);
 //     KMZ, TCX, FIT and Google Takeout / Timeline go through the preview
 //     of import-ui.js, which adds tracks here with addImported (stable
@@ -73,6 +78,14 @@
       "trk.chart.ele": "Elevation", "trk.chart.speed": "Speed", "trk.chart.none": "No elevation or time in this track.",
       "trk.fit": "Show all", "trk.follow": "Follow", "trk.follow.stop": "Stop following",
       "trk.follow.off": "Off the track by {d}", "trk.follow.on": "On the track", "trk.follow.left": "{d} to the end",
+      "trk.fw.rev": "Follow the other way", "trk.fw.revon": "The other way round",
+      "trk.fw.climb": "↗ {up} ↘ {down} left", "trk.fw.eta": "Arrive about {t}", "trk.fw.eta.foot": "Arrive about {t} (on foot, DIN 33466)",
+      "trk.fw.sun": "Sunset at {t}: you'd arrive after dark.", "trk.fw.sun.near": "Sunset at {t}.",
+      "trk.fw.next": "Next: {n} in {d}", "trk.fw.wpt": "In {d}: {n}", "trk.fw.wpt.here": "Here: {n}",
+      "trk.fw.offnow": "You've left the track ({d} away).", "trk.fw.back": "Back on the track.",
+      "trk.fw.end": "You've reached the end of the track.",
+      "trk.fw.alerts": "Sound and vibration", "trk.fw.alerts.on": "Alerts on", "trk.fw.alerts.off": "Alerts off",
+      "trk.fw.unnamedw": "waypoint",
       "trk.export": "Export GPX", "trk.details": "Name, colour, folder",
       "trk.folder": "Folder", "trk.color": "Colour",
       "trk.del": "Delete", "trk.del.ask": "Delete “{n}”? Its GPX file leaves the orOS disk too.",
@@ -155,6 +168,14 @@
       "trk.chart.ele": "Υψόμετρο", "trk.chart.speed": "Ταχύτητα", "trk.chart.none": "Η διαδρομή δεν έχει υψόμετρο ή χρόνο.",
       "trk.fit": "Όλη η διαδρομή", "trk.follow": "Ακολούθησε", "trk.follow.stop": "Τέλος ακολούθησης",
       "trk.follow.off": "Εκτός διαδρομής κατά {d}", "trk.follow.on": "Πάνω στη διαδρομή", "trk.follow.left": "{d} ως το τέλος",
+      "trk.fw.rev": "Ακολούθησε αντίστροφα", "trk.fw.revon": "Αντίστροφα",
+      "trk.fw.climb": "↗ {up} ↘ {down} ακόμα", "trk.fw.eta": "Άφιξη περίπου {t}", "trk.fw.eta.foot": "Άφιξη περίπου {t} (με τα πόδια, DIN 33466)",
+      "trk.fw.sun": "Η δύση είναι στις {t}: θα φτάσεις μετά το σκοτάδι.", "trk.fw.sun.near": "Η δύση είναι στις {t}.",
+      "trk.fw.next": "Επόμενο: {n} σε {d}", "trk.fw.wpt": "Σε {d}: {n}", "trk.fw.wpt.here": "Εδώ: {n}",
+      "trk.fw.offnow": "Βγήκες από τη διαδρομή (σε {d}).", "trk.fw.back": "Ξανά πάνω στη διαδρομή.",
+      "trk.fw.end": "Έφτασες στο τέλος της διαδρομής.",
+      "trk.fw.alerts": "Ήχος και δόνηση", "trk.fw.alerts.on": "Ειδοποιήσεις ανοιχτές", "trk.fw.alerts.off": "Ειδοποιήσεις κλειστές",
+      "trk.fw.unnamedw": "σημείο",
       "trk.export": "Εξαγωγή GPX", "trk.details": "Όνομα, χρώμα, φάκελος",
       "trk.folder": "Φάκελος", "trk.color": "Χρώμα",
       "trk.del": "Διαγραφή", "trk.del.ask": "Να διαγραφεί η «{n}»; Φεύγει και το αρχείο GPX από τον δίσκο του orOS.",
@@ -626,30 +647,76 @@
     chip();
   }
 
-  // ---------- follow a track ----------
-  var following = null;          // { id, pts: [[lat, lon, cumDist]...], total }
-  function followStart(id) {
+  // ---------- follow a track (wave H4: Wikiloc-style, follow-core.js) ----------
+  //   { id, f: prepared line, rev, off, left, along, rem, st: off-track
+  //     state, told: waypoints told, end: told the end }
+  var following = null, followArrow = null;
+  var FC = window.OrosMapsFollow;
+  var FPREF_KEY = "oros-maps-follow", fprefs = { alerts: 1 };
+  try { var fp0 = JSON.parse(localStorage.getItem(FPREF_KEY) || "null"); if (fp0 && fp0.alerts === 0) fprefs.alerts = 0; } catch (e) {}
+  function saveFprefs() { try { localStorage.setItem(FPREF_KEY, JSON.stringify(fprefs)); } catch (e) {} }
+  function followStart(id, rev) {
     readTrack(id).catch(function () { return null; }).then(function (tr) {
       var e = data.tracks[id];
-      if (!e) return;
-      var pts = [];
-      if (tr) tr.segs.forEach(function (s) { s.forEach(function (p) { pts.push([p[0], p[1]]); }); });
-      else pts = T.decode(e.prev);
-      if (pts.length < 2) return;
-      var d = 0;
-      pts = pts.map(function (p, i) { if (i) d += T.distM(pts[i - 1][0], pts[i - 1][1], p[0], p[1]); return [p[0], p[1], d]; });
-      following = { id: id, pts: pts, total: d, off: null, left: null };
+      if (!e || !FC) return;
+      var segs = tr ? tr.segs : [T.decode(e.prev)];
+      var f = FC.prepare(segs, tr ? tr.wpts : [], !!rev);
+      if (!f) return;
+      following = { id: id, f: f, rev: !!rev, off: null, left: null, along: null, rem: null, st: { off: false, n: 0 }, told: {}, end: false,
+        pts: f.pts, total: f.total };
       if (followLine) map.removeLayer(followLine);
-      followLine = L.polyline(pts.map(function (p) { return [p[0], p[1]]; }), { color: e.color, weight: 8, opacity: 0.5, interactive: false }).addTo(map);
+      followLine = L.polyline(f.pts.map(function (p) { return [p[0], p[1]]; }), { color: e.color, weight: 8, opacity: 0.5, interactive: false }).addTo(map);
+      drawArrow();
       startWatch();
       wakeOn();
+      unlockAudio();
       if (lastFix) followUpdate(lastFix);
       chip();
       render();
     });
   }
+  // The start, with an arrow towards the way to go.
+  function drawArrow() {
+    if (followArrow) { map.removeLayer(followArrow); followArrow = null; }
+    var p = following && following.f.pts;
+    if (!p || p.length < 2) return;
+    var j = 1;
+    while (j < p.length - 1 && p[j][2] < 15) j++;
+    var ky = 110540, kx = 111320 * Math.cos(p[0][0] * Math.PI / 180);
+    var deg = Math.atan2((p[j][1] - p[0][1]) * kx, (p[j][0] - p[0][0]) * ky) * 180 / Math.PI;
+    var h = el("span", "");
+    h.style.transform = "rotate(" + Math.round(deg) + "deg)";
+    followArrow = L.marker([p[0][0], p[0][1]], { icon: L.divIcon({ className: "trk-fw-start", html: h, iconSize: [26, 26], iconAnchor: [13, 13] }),
+      keyboard: false, interactive: false }).addTo(map);
+  }
+
+  // ---------- alerts: vibration, a short tone, the device's own voice ----------
+  var actx = null;
+  function unlockAudio() {
+    try { if (!actx) { var AC = window.AudioContext || window.webkitAudioContext; if (AC) actx = new AC(); } if (actx && actx.state === "suspended") actx.resume(); } catch (e) { actx = null; }
+  }
+  function tone(n) {
+    if (!actx) return;
+    try {
+      for (var i = 0; i < n; i++) {
+        var o = actx.createOscillator(), g = actx.createGain(), t0 = actx.currentTime + i * 0.25;
+        o.frequency.value = 880; g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+        o.connect(g); g.connect(actx.destination); o.start(t0); o.stop(t0 + 0.2);
+      }
+    } catch (e) {}
+  }
+  function alertUser(kind, text) {
+    toast(text);
+    if (window.__orosMapsFollowLog) window.__orosMapsFollowLog.push([kind, text]);
+    if (!fprefs.alerts) return;
+    try { if (navigator.vibrate) navigator.vibrate(kind === "off" ? [250, 120, 250, 120, 250] : kind === "end" ? [400] : [150]); } catch (e) {}
+    tone(kind === "off" ? 3 : 1);
+    if (H.speak) H.speak(text);
+  }
   function followStop() {
     following = null;
+    if (followArrow) { map.removeLayer(followArrow); followArrow = null; }
     if (followLine) { map.removeLayer(followLine); followLine = null; }
     if (!rec || rec.paused) wakeOff();
     stopWatch();
@@ -657,22 +724,25 @@
     if (panelOpen()) render();
   }
   function followUpdate(fix) {
-    var f = following;
-    if (!f) return;
-    // Nearest point on the line (segment projection, local metres).
-    var kx = 111320 * Math.cos(fix.lat * Math.PI / 180), ky = 110540;
-    var best = Infinity, along = 0;
-    for (var i = 1; i < f.pts.length; i++) {
-      var a = f.pts[i - 1], b = f.pts[i];
-      var ax = (a[1] - fix.lon) * kx, ay = (a[0] - fix.lat) * ky, bx = (b[1] - fix.lon) * kx, by = (b[0] - fix.lat) * ky;
-      var dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy;
-      var u = len2 ? Math.max(0, Math.min(1, -(ax * dx + ay * dy) / len2)) : 0;
-      var ex = ax + u * dx, ey = ay + u * dy, dd = Math.sqrt(ex * ex + ey * ey);
-      if (dd < best) { best = dd; along = a[2] + u * (b[2] - a[2]); }
+    var w = following;
+    if (!w) return;
+    var at = FC.locate(w.f, fix, w.along);
+    w.off = at.off; w.along = at.along;
+    w.rem = FC.remaining(w.f, at.along);
+    w.left = w.rem.left;
+    var ev = FC.offTrack(w.st, at.off, fix.acc);
+    if (ev === "off") alertUser("off", t("fw.offnow", { d: fmtDist(at.off) }));
+    else if (ev === "back") alertUser("back", t("fw.back"));
+    if (!w.st.off) {
+      var nw = FC.nextWpt(w.f, at.along, w.told);
+      if (nw) {
+        var nm = nw.w.name || t("fw.unnamedw");
+        alertUser("wpt", nw.dist <= 15 ? t("fw.wpt.here", { n: nm }) : t("fw.wpt", { d: fmtDist(nw.dist), n: nm }));
+      }
+      if (!w.end && w.left < 30 && at.off < 40 && w.f.total > 100) { w.end = true; alertUser("end", t("fw.end")); }
     }
-    f.off = best;
-    f.left = Math.max(0, f.total - along);
   }
+  function clock(d) { var h = d.getHours(), mi = d.getMinutes(); return (h < 10 ? "0" : "") + h + ":" + (mi < 10 ? "0" : "") + mi; }
 
   // ---------- chip on the map ----------
   var chipEl = null;
@@ -884,9 +954,27 @@
     if (!followBox) return;
     followBox.textContent = "";
     if (!following || following.id !== route.id) return;
-    if (following.off === null) { followBox.appendChild(el("p", "osm-hint", t("rec.wait"))); return; }
-    followBox.appendChild(el("b", "", following.off > 30 ? t("follow.off", { d: fmtDist(following.off) }) : t("follow.on")));
-    followBox.appendChild(el("span", "", t("follow.left", { d: fmtDist(following.left) })));
+    var w = following;
+    if (w.rev) followBox.appendChild(el("span", "trk-fw-rev", t("fw.revon")));
+    if (w.off === null) { followBox.appendChild(el("p", "osm-hint", t("rec.wait"))); return; }
+    var offNow = w.st.off || w.off > 30;
+    var head = el("b", offNow ? "trk-fw-off" : "", offNow ? t("follow.off", { d: fmtDist(w.off) }) : t("follow.on"));
+    followBox.appendChild(head);
+    var line = t("follow.left", { d: fmtDist(w.left) });
+    if (w.f.ele) line += " · " + t("fw.climb", { up: t("m", { n: w.rem.up }), down: t("m", { n: w.rem.down }) });
+    followBox.appendChild(el("span", "trk-fw-left", line));
+    var nx = FC.ahead(w.f, w.along);
+    if (nx) followBox.appendChild(el("span", "trk-fw-next", t("fw.next", { n: nx.w.name || t("fw.unnamedw"), d: fmtDist(nx.dist) })));
+    var secs = FC.eta(w.rem, w.f.moving);
+    if (secs > 60) {
+      var arr = new Date(Date.now() + secs * 1000);
+      followBox.appendChild(el("span", "trk-fw-eta", t(w.f.moving ? "fw.eta" : "fw.eta.foot", { t: clock(arr) })));
+      var sun = lastFix ? FC.sunTimes(new Date(), lastFix.lat, lastFix.lon) : null;
+      if (sun && sun.set && sun.set > Date.now()) {
+        if (arr > sun.set) followBox.appendChild(el("span", "trk-fw-sun warn", t("fw.sun", { t: clock(sun.set) })));
+        else if (sun.set - arr < 3600 * 1000) followBox.appendChild(el("span", "trk-fw-sun", t("fw.sun.near", { t: clock(sun.set) })));
+      }
+    }
   }
 
   function renderTrack(id) {
@@ -923,8 +1011,20 @@
 
     var r1 = el("div", "osm-actions");
     r1.appendChild(button(t("fit"), "osm-btn", function () { fit(id); }));
-    if (following && following.id === id) r1.appendChild(button(t("follow.stop"), "osm-btn primary", followStop));
-    else r1.appendChild(button(t("follow"), "osm-btn primary", function () { followStart(id); }));
+    if (following && following.id === id) {
+      r1.appendChild(button(t("follow.stop"), "osm-btn primary", followStop));
+      var ab = button(t(fprefs.alerts ? "fw.alerts.on" : "fw.alerts.off"), "osm-btn trk-fw-alerts" + (fprefs.alerts ? " on" : ""), function () {
+        fprefs.alerts = fprefs.alerts ? 0 : 1; saveFprefs();
+        if (fprefs.alerts) unlockAudio();
+        render();
+      });
+      ab.title = t("fw.alerts");
+      ab.setAttribute("aria-pressed", fprefs.alerts ? "true" : "false");
+      r1.appendChild(ab);
+    } else {
+      r1.appendChild(button(t("follow"), "osm-btn primary", function () { followStart(id, false); }));
+      r1.appendChild(button(t("fw.rev"), "osm-btn trk-fw-revbtn", function () { followStart(id, true); }));
+    }
     body.appendChild(r1);
     var r2 = el("div", "osm-actions");
     var exp = button(t("export"), "osm-btn", function () { exportGpx(id); });

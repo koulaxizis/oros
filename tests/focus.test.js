@@ -212,11 +212,11 @@ test("F2 until the end, unknown fields ride along, no change no stamp", () => {
   assert.equal(F.endOf(f, QH, "sleep", day(16, 12)), day(17, 8), "Sleep: the next end of the quiet hours");
   assert.equal(F.untilOf("end", day(16, 7), day(16, 17)), day(16, 17));
   assert.equal(F.untilOf("end", day(16, 7), 0), 0);
-  const later = F.normalize({ modes: [{ id: "work", hide: { widgets: ["clock"] }, Bad: 1 }] });
-  assert.deepEqual(F.modeOf(later, "work").hide, { widgets: ["clock"] }, "a later wave's field is kept");
+  const later = F.normalize({ modes: [{ id: "work", digest: { at: [8] }, Bad: 1 }] });
+  assert.deepEqual(F.modeOf(later, "work").digest, { at: [8] }, "a later wave's field is kept");
   assert.equal(F.modeOf(later, "work").Bad, undefined);
   const edited = F.edited(later, "work", { allow: ["mail"] }, day(16, 9));
-  assert.deepEqual(F.modeOf(edited, "work").hide, { widgets: ["clock"] });
+  assert.deepEqual(F.modeOf(edited, "work").digest, { at: [8] });
   assert.equal(F.edited(f, "work", { sched: WEEK }, day(16, 9)).mrev, f.mrev, "the same schedule writes nothing");
 });
 
@@ -240,4 +240,151 @@ test("F2 wiring: Settings, Quick settings, strings, Calendar data read", () => {
     assert.equal((sc.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN+EL");
     assert.ok(sde.includes('"' + k + '":'), k + " DE");
   }
+});
+
+// ---------- F3: hide widgets and desktop/Dock icons, the bar icon ----------
+test("F3 hide: checked ids, CSS only for the running mode, nothing else", () => {
+  let f = F.edited(null, "work", { hide: { widgets: ["today", "today", "Bad"], apps: ["games", "x\"}body{", "chess"] } }, day(16, 8));
+  assert.deepEqual(F.modeOf(f, "work").hide, { widgets: ["today"], apps: ["chess", "games"] });
+  assert.equal(F.hideCss(f, null), "");
+  const css = F.hideCss(f, { id: "work" });
+  assert.equal(css, '.wg-card[data-wg="today"], #ld-desk [data-app="chess"], #ld-dock [data-app="chess"], #ld-desk [data-app="games"], #ld-dock [data-app="games"] { display: none !important; }');
+  assert.doesNotMatch(css, /body\{/);
+  assert.equal(F.hideCss(f, { id: "personal" }), "", "another mode hides nothing");
+  f = F.edited(f, "work", { hide: { widgets: [], apps: [] } }, day(16, 9));
+  assert.equal(F.modeOf(f, "work").hide, undefined, "an empty choice is dropped");
+  const g = F.normalize({ modes: [{ id: "dnd", hide: { apps: ["mail"] } }] });
+  assert.deepEqual(F.modeOf(g, "dnd").hide, { widgets: [], apps: ["mail"] });
+});
+
+test("F3 wiring: shell style, Settings picker, launcher list, bar icon, strings", () => {
+  const core = read("focus/core.js");
+  assert.match(core, /st\.id = "oros-focus-hide"/);
+  assert.match(core, /paintHide\(hideCss\(f0, cur\)\)/);
+  const s = read("settings/settings.js");
+  assert.match(s, /function focusHide\(c5, F, m\)/);
+  assert.match(s, /F\.edit\(m\.id, \{ hide: next \}\)/);
+  assert.doesNotMatch(s.slice(s.indexOf("function focusHide"), s.indexOf("function focusWhen")), /innerHTML/);
+  assert.match(read("launcher.js"), /placed: function \(\) \{ return \{ desk: shown\("desk"\), dock: shown\("dock"\) \}; \}/);
+  assert.match(read("qsettings.js"), /html \+= focusIcon\(\) \|\| IC\.bellOff/);
+  const sc = read("settings/core.js"), sde = read("i18n/de/settings.js");
+  for (const k of ["n.focus.hide", "n.focus.hide.hint", "n.focus.hide.widgets", "n.focus.hide.apps", "n.focus.hide.none"]) {
+    assert.equal((sc.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN+EL");
+    assert.ok(sde.includes('"' + k + '":'), k + " DE");
+  }
+});
+
+// ---------- F4: summary (D4), Web Push, Automations (D5) ----------
+test("F4 summary: cleaned, own stamp, merged on it, holds only on chosen apps", () => {
+  const f = F.normalize({ digest: { on: 1, apps: ["mail", "system", "mail", "Bad"], times: [36, 16, 16, 99, 1, 2, 3, 4, 5], st: 5 } });
+  assert.deepEqual(f.digest, { on: true, apps: ["mail"], times: [1, 2, 3, 4, 16, 36], st: 5 });
+  assert.equal(F.normalize(null).digest.on, false);
+  const g = F.digestEdited(F.normalize(null), { on: true, apps: ["mail", "todo"], times: [36] }, 1000);
+  assert.equal(g.digest.st, 1000);
+  assert.equal(F.digestEdited(g, { on: true }, 2000).digest.st, 1000, "no change, no stamp");
+  assert.ok(F.touched(g));
+  const h = F.digestEdited(g, { apps: ["todo"] }, 3000);
+  assert.deepEqual(F.merge(g, h).digest.apps, ["todo"]);
+  assert.deepEqual(F.merge(h, g), F.merge(g, h));
+  // a mode list change elsewhere never undoes the summary
+  const e = F.edited(F.normalize(null), "work", { name: "Office" }, 9000);
+  assert.deepEqual(F.merge(e, h).digest.apps, ["todo"]);
+  assert.equal(F.modeOf(F.merge(e, h), "work").name, "Office");
+  const now = at(12);
+  assert.equal(F.why(h, {}, "todo", now, []), "digest");
+  assert.equal(F.why(h, {}, "mail", now, []), "");
+  assert.ok(F.silent(h, {}, "todo", now, []));
+  // a running mode names itself first
+  const run = F.started(h, "dnd", 0, now);
+  assert.equal(F.why(run, {}, "todo", now, []), "dnd");
+  assert.equal(F.why(F.digestEdited(h, { on: false }, 4000), {}, "todo", now, []), "");
+});
+
+test("F4 summary times: the due slot, what it counts, missed times give one notice", () => {
+  const f = F.digestEdited(F.normalize(null), { on: true, apps: ["mail"], times: [16, 36] }, 1);   // 08:00, 18:00
+  assert.equal(F.digestDue(f, at(7), at(6)), null, "before the first time");
+  const d = F.digestDue(f, at(8, 5), at(7));
+  assert.equal(d.slot, at(8));
+  assert.equal(d.from, new Date(2026, 10, 17, 18).getTime(), "from yesterday's 18:00");
+  assert.equal(F.digestDue(f, at(9), at(8)), null, "already done");
+  const late = F.digestDue(f, at(19), new Date(2026, 10, 16, 18).getTime());
+  assert.equal(late.slot, at(18));
+  assert.equal(late.from, new Date(2026, 10, 16, 18).getTime(), "counts from its own last summary");
+  assert.equal(F.digestDue(F.digestEdited(f, { apps: [] }, 2), at(9), at(7)), null, "no apps, no summary");
+  const items = [
+    { ns: "mail", createdAt: at(7), readAt: null }, { ns: "mail", createdAt: at(7, 30), readAt: null },
+    { ns: "todo", createdAt: at(7), readAt: null }, { ns: "mail", createdAt: at(7), readAt: at(7, 10) },
+    { ns: "system", createdAt: at(7), readAt: null }, { ns: "mail", createdAt: at(9), readAt: null },
+    { ns: "crm", createdAt: at(6), readAt: null }
+  ];
+  const r = F.tally(items, d.from, d.slot, (ns) => ns === "mail" || ns === "crm" || ns === "system");
+  assert.deepEqual(r, { n: 3, apps: ["mail", "crm"] }, "unread, in the window, never orOS's own");
+});
+
+test("F4 Web Push: the 48-hour timeline matches activeAt, and sw.js keeps the same rule", () => {
+  const sched = { on: true, days: [0, 1, 2, 3, 4, 5, 6], from: 18, to: 34 };   // 09:00-17:00
+  let f = F.edited(F.normalize(null), "work", { sched }, 1);
+  f = F.digestEdited(f, { on: true, apps: ["todo"], times: [36] }, 2);
+  const now = at(6, 10);
+  const snap = F.timeline(f, QH, now, [], 48);
+  assert.equal(snap.v, 1);
+  assert.equal(snap.until, now + 48 * 3600000);
+  assert.deepEqual(snap.wait, ["todo"]);
+  for (let t = now; t < snap.until; t += 7 * 60000) {
+    const cur = F.activeAt(f, QH, t, []);
+    const m = cur ? F.modeOf(f, cur.id) : null;
+    for (const ns of ["mail", "calendar", "weather"]) {
+      const want = !!(m && m.allow.indexOf(ns) < 0);
+      assert.equal(F.snapQuiet({ ...snap, wait: [] }, ns, t), want, ns + " at " + new Date(t).toString());
+    }
+  }
+  assert.ok(F.snapQuiet(snap, "todo", at(12)), "summary apps wait");
+  assert.equal(F.snapQuiet(snap, "mail", snap.until + 1), false, "an old snapshot never hushes");
+  const manual = F.timeline(F.started(F.normalize(null), "dnd", at(7), now), {}, now, [], 48);
+  assert.deepEqual(manual.spans, [{ s: now, e: at(7), allow: [] }]);
+  // the service worker's copy answers the same
+  const sw = read("sw.js");
+  const src = sw.slice(sw.indexOf("function focusQuiet("), sw.indexOf("self.addEventListener(\"message\", function (event) {\n  var m = event.data;\n  if (!m || m.t !== \"oros-focus\""));
+  const focusQuiet = new Function(src + "; return focusQuiet;")();
+  for (let t = now; t < snap.until; t += 23 * 60000) {
+    for (const ns of ["mail", "todo", "calendar"]) assert.equal(focusQuiet(snap, ns, t), F.snapQuiet(snap, ns, t));
+  }
+  assert.ok(sw.includes("silent: hush") && sw.includes('"oros-focus"') && /keep = \[[^\]]*FOCUS_CACHE/.test(sw));
+});
+
+test("F4 wiring: quiet notices never pop up later, summaries, Automations event and action, strings", () => {
+  const nt = read("notifications.js");
+  assert.ok(nt.includes("else item.firedAt = now;"), "emit stamps a quiet notice");
+  assert.ok(nt.includes("if (quietFor(item.ns, now)) { item.firedAt = now; return false; }"), "boot sweep");
+  assert.ok(nt.includes("if (quietFor(it.ns, cuNow)) { it.firedAt = cuNow;"), "pull catch-up");
+  const fc = read("focus/core.js");
+  for (const k of ['"focus-sum:"', '"focus-end:"', '"focus.start"', '"focus.end"', '"oros-focus"', "setDigest"]) assert.ok(fc.includes(k), k);
+  const C = require(path.join(ROOT, "automations/core.js"));
+  assert.ok(C.EVENTS.includes("focus.start") && C.EVENTS.includes("focus.end"));
+  assert.ok(C.ACTIONS.includes("focus") && C.LOCAL.focus);
+  assert.deepEqual(C.cleanAction({ a: "focus", mode: "work", min: 30 }), { a: "focus", mode: "work", min: 30 });
+  assert.deepEqual(C.cleanAction({ a: "focus", mode: "off", min: 30 }), { a: "focus", mode: "off" });
+  assert.deepEqual(C.cleanAction({ a: "focus", mode: "<b>", min: 99999 }), { a: "focus", mode: "dnd" });
+  assert.deepEqual(C.cleanAction({ a: "focus", mode: "m_abc12345" }), { a: "focus", mode: "m_abc12345" });
+  const sig = { kind: "event", name: "focus.start", key: "focus:work:123:start", text: "Work" };
+  const rule = C.cleanRule({ id: "r1", m: 1, name: "", on: true, when: { t: "event", ev: "focus.start", word: "work" }, "do": [{ a: "focus", mode: "dnd", min: 0 }] });
+  assert.ok(rule && C.matches(rule, sig, at(12)));
+  assert.equal(C.matches(rule, { ...sig, text: "Sleep" }, at(12)), null, "the word picks the mode");
+  const host = read("automations/host.js");
+  assert.ok(host.includes('if (a.a === "focus") focusStep(a);') && host.includes("now - focusAt < 60000"));
+  assert.ok(read("automations/app.js").includes('a.a === "focus"'));
+  const de = read("i18n/de/automations.js");
+  for (const k of ["ev.focus.start", "ev.focus.end", "act.focus", "act.focusMin", "act.focusOff", "a.focus", "x.focusMode", "x.focusOff", "x.focusMin", "h.focus"]) assert.ok(de.includes('"' + k + '":'), k + " DE");
+  for (const k of ["ev.focus.start", "act.focusOff"]) assert.equal((read("automations/core.js").match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN+EL");
+  const tr = read("translations.js"), dsh = read("i18n/de/shell.js");
+  for (const k of ["focus.sum.title", "focus.sum.end", "focus.sum.one", "focus.sum.many"]) {
+    assert.equal((tr.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN+EL");
+    assert.ok(dsh.includes('"' + k + '":'), k + " DE");
+  }
+  const sc = read("settings/core.js"), sde = read("i18n/de/settings.js");
+  for (const k of ["n.focus.sum", "n.focus.sum.hint", "n.focus.sum.times", "n.focus.sum.add", "n.focus.sum.rm", "n.focus.sum.apps", "n.focus.sum.apps.hint", "n.focus.sum.empty", "n.focus.sum.end"]) {
+    assert.equal((sc.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN+EL");
+    assert.ok(sde.includes('"' + k + '":'), k + " DE");
+  }
+  assert.ok(read("settings/settings.js").includes("focusDigest(host, F, N);"));
 });

@@ -1,0 +1,71 @@
+{
+ "source": "hand-written: two skies from starchart/engine.js, B behind A (tests/starchart.test.js covers the merge)",
+ "a": {
+  "v": 1,
+  "seed": "deva",
+  "br": 0,
+  "at": 1763485200000,
+  "life": 319.41043554031177,
+  "sl": 317.32643554031176,
+  "lv": {
+   "comp": 0,
+   "dark": 0,
+   "dish": 0,
+   "great": 0,
+   "mdish": 0,
+   "mgreat": 0,
+   "mrefl": 0,
+   "mrefr": 0,
+   "mspy": 0,
+   "refl": 0,
+   "refr": 0,
+   "spy": 3
+  },
+  "cs": [],
+  "acts": 2,
+  "sn": 0,
+  "tr": [],
+  "ax": [],
+  "ab0": 0,
+  "mi": 0,
+  "hc": [
+   3,
+   2,
+   0
+  ]
+ },
+ "b": {
+  "v": 1,
+  "seed": "deva",
+  "br": 0,
+  "at": 1763470800000,
+  "life": 70.90082246373511,
+  "sl": 95.90082246373511,
+  "lv": {
+   "comp": 0,
+   "dark": 0,
+   "dish": 0,
+   "great": 0,
+   "mdish": 0,
+   "mgreat": 0,
+   "mrefl": 0,
+   "mrefr": 0,
+   "mspy": 0,
+   "refl": 0,
+   "refr": 0,
+   "spy": 1
+  },
+  "cs": [],
+  "acts": 0,
+  "sn": 0,
+  "tr": [],
+  "ax": [],
+  "ab0": 0,
+  "mi": 0,
+  "hc": [
+   1,
+   0,
+   0
+  ]
+ }
+}

@@ -88,7 +88,7 @@
             .then(function () {
               cache[id] = { img: null, p: null };
               return loadInto(id, blob).then(function () {
-                return { id: id, w: cw, h: ch, name: String(file.name || "").slice(0, 120) };
+                return { id: id, w: cw, h: ch, ow: w, oh: h, name: String(file.name || "").slice(0, 120) };
               });
             });
         });

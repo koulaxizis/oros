@@ -164,12 +164,21 @@ test("gamecenter: Hive is in the Idle group, played once something was done, nev
 });
 
 test("gamecenter: Lighthouse Island is in the Idle group after Hive, played once something was done, never won", () => {
-  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games, ["hive", "lighthouse"]);
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games.slice(0, 2), ["hive", "lighthouse"]);
   assert.ok(C.GAMES.includes("lighthouse"));
   assert.equal(sum({ "oros-lighthouse-data": { v: 1, acts: 0 } }).games.lighthouse.p, 0);
   const s = sum({ "oros-lighthouse-data": { v: 1, acts: 2, life: 500 } });
   assert.equal(s.games.lighthouse.p, 1);
   assert.equal(s.games.lighthouse.w, -1, "an idle game has no wins");
+});
+
+test("gamecenter: Star Chart is in the Idle group after Lighthouse Island, played once something was done, never won", () => {
+  assert.deepEqual(C.GROUPS.find((g) => g.id === "idle").games, ["hive", "lighthouse", "starchart"]);
+  assert.ok(C.GAMES.includes("starchart"));
+  assert.equal(sum({ "oros-starchart-data": { v: 1, acts: 0 } }).games.starchart.p, 0);
+  const s = sum({ "oros-starchart-data": { v: 1, acts: 3, life: 700 } });
+  assert.equal(s.games.starchart.p, 1);
+  assert.equal(s.games.starchart.w, -1, "an idle game has no wins");
 });
 
 test("gamecenter: Realm's Daily island counts in Today and the streak, never in Clean sweep", () => {

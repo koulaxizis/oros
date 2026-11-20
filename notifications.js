@@ -213,7 +213,9 @@
     const missedItems = state.slice.items.filter(item => {
       if (item.firedAt) return false; // Already fired somewhere
       if (!getAppToggle(item.ns)) return false; // Disabled app
-      if (quietFor(item.ns, now)) return false; // Silent period (focus mode)
+      // Silent period (focus mode, summary): it arrived in the quiet, so
+      // it never pops up later either (FOCUS-1 F4, stamped as handled).
+      if (quietFor(item.ns, now)) { item.firedAt = now; return false; }
       // Wave 1B — badge fallback rule: an unread item older than
       // 24h is too late for a toast — waking the whole screen for
       // yesterday's reminder is noise, not service. It stays in the
@@ -1252,11 +1254,11 @@
     // the bootSweep contract (in-place, throttled save, NO noteChange
     // — the Math.max LWW above converges firedAt across devices).
     if (state.ready && getSetting('enabled', true)) {
-      var cuNow = Date.now();
+      var cuNow = Date.now(), cuQuiet = 0;
       var cuFresh = state.slice.items.filter(function (it) {
         if (it.firedAt) return false;
         if (!getAppToggle(it.ns)) return false;
-        if (quietFor(it.ns, cuNow)) return false;
+        if (quietFor(it.ns, cuNow)) { it.firedAt = cuNow; cuQuiet++; return false; }   // F4: never later
         if (cuNow - (it.createdAt || 0) > 24 * 60 * 60 * 1000) {
           it.firedAt = it.createdAt;   // too late — badge only
           return false;
@@ -1267,7 +1269,7 @@
         fireToast(it, false);
         it.firedAt = cuNow;
       });
-      if (cuFresh.length) saveSliceThrottled(500);
+      if (cuFresh.length || cuQuiet) saveSliceThrottled(500);
     }
   }
   
@@ -1326,7 +1328,10 @@
 
     // Quiet hours = inbox + badge ONLY, no toast (silent capture —
     // the bell never misses anything, sleep is respected).
+    // FOCUS-1 F4: a notice kept quiet is stamped as handled, so it never
+    // pops up later (a mode ending, a reload); the summaries count it.
     if (!quietFor(item.ns, now)) fireToast(item, false);
+    else item.firedAt = now;
     updateBadge();
     // Automations wave A2 (BR-EV): a rule may follow this notice. Only
     // notices posted on THIS device; never the rules' own (no loops)

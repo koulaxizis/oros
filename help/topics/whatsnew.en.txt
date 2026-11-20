@@ -3,6 +3,36 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.97.00
+- **Layout: books from Scribus, Affinity and InDesign come over closer to the original.** Calibri, Arial and Times are replaced by free fonts with the same letter widths (Carlito, Liberation Sans, Liberation Serif), so lines break where they did. A photo that your printer's PDF prints in black and white comes in black and white. Export has PDF/X-4, the file printers ask for, with the colours in the printer's CMYK and black text in black ink alone. A cover whose text arrived as shapes can be read with Text from the picture (OCR). More › Compare with a PDF shows, page by page, what differs from the original PDF, in red.
+
+## Version 7.96.01
+- **Layout: Scribus covers keep their size.** A large picture placed freely in a Scribus file (often the cover) now prints at the size Scribus gave it, instead of smaller. For a book you opened earlier, open More › Links (pictures)…: such pictures show as "smaller than in Scribus". Press Find pictures… and pick the original pictures, and they land at the right size.
+
+## Version 7.96.00
+- **New game: Star Chart.** A calm idle game: a small hilltop observatory whose telescopes gather starlight every minute. Spend it on more telescopes, or draw your own constellations by joining the stars of the night sky. The kinds of the stars and the shape you draw (a chain, a branch or a ring) decide the bonus each one gives, lines never cross and every star belongs to one constellation, so the sky is a quiet puzzle. The moon is the real moon of the date, and the clouds are the same on every device. With six constellations and a radio dish you can begin a new season with a new sky, keeping one trait and every old constellation in the star atlas. It goes on while orOS is closed (full pace for 7 days, then half), with no notifications and nothing to collect, and it syncs between your devices. In the Idle group of the Game Center.
+
+## Version 7.95.00
+- **Follow a track like a hiking app.** Follow it either way round and see the distance and climb left, the next waypoint and when you will arrive, with a warning if that is after sunset. Maps tells you by vibration, a tone and voice when you leave the track, come back, reach a waypoint or the end. See [Maps](help:a/maps).
+
+## Version 7.94.00
+- **Trails in Maps › Discover.** See the marked hiking, cycling and mountain bike routes around you, open one to see the whole route, its climb and walking time, and save it to My tracks or as GPX. See [Maps](help:a/maps).
+
+## Version 7.93.00
+- **Focus modes: a notification summary and quiet pushes.** Pick apps whose notifications wait quietly in the bell and the times one notice sums them up; when a mode ends, one notice says what waited. Notifications kept quiet no longer pop up later. With orOS closed, a quiet app's notification arrives without sound. In Automations, rules can follow a mode starting or ending, and the step `Focus mode` turns one on or off. See [Focus modes](help:t/notifications).
+
+## Version 7.92.00
+- **Walking and cycling routes in Maps.** Directions can plan for hiking, touring, road, gravel or mountain bikes and quiet roads, and shows the climb, an elevation profile and what the way is made of. Walking time counts the climb too. See [Maps](help:a/maps).
+
+## Version 7.91.00
+- **Focus modes hide what distracts.** A mode can hide the widgets and desktop and Dock icons you choose while it runs; the menu and search still find every app. The top-bar button shows the mode's icon. Settings › Notifications › `Focus modes` › `Hide while it is on`. See [Focus modes](help:t/notifications).
+
+## Version 7.90.01
+- **Your apps no longer come back by themselves after a restart.** orOS now starts on the desktop. If you liked it, switch on `Reopen my apps after a restart` in Settings › System.
+
+## Version 7.90.00
+- **Maps for hiking and cycling.** The layers button has hiking, cycling and mountain bike routes from Waymarked Trails and the CyclOSM cycling map. Long-press right on a path, track or street › `About this path` tells you in plain words what it is: surface, hiking difficulty from T1 to T6, MTB difficulty, how visible it is, who may use it and the marked routes it belongs to. Offline maps now draw cycleways, tracks and footpaths in their own colours. The first step of a bigger upgrade for walking and cycling.
+
 ## Version 7.89.00
 - **New game: Lantern maze.** The second tower defense game: at night shadows slip in at the town gate and walk across an old square to the fountain. There is no road: you build the maze yourself with crates, lanterns, flash lamps, mirrors and bells on any free tile. The shadows always take the darkest way, so a lantern both hurts them and steers them, and moths look for the brightest way instead. The dotted line always shows where they will walk, and a block that would close the last way is refused. Real time with pause and 1x/2x/3x, a wave only starts when you call it. Four squares in the Harbour quarter, three difficulties and stars that sync between your devices. In the Tower defense group of the Game Center.
 

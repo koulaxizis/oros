@@ -480,13 +480,20 @@
     LY.flushStory && LY.flushStory();
     exporting = true;
     LY.toast(t("exp.working"));
+    var bad = 0, x4 = !!(opts && opts.pdfx), name = fileName(doc, x4 ? " (PDF-X-4).pdf" : ".pdf");
     pdfBlob(doc, opts).then(function (blob) {
-      if (opts && opts.send) return sendPdf(blob, fileName(doc, ".pdf"));
-      return saveBlob(blob, fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
+      // PDF/X-4 for the printer (LY-PORT-C), its colours in CMYK when asked
+      if (!x4) return blob;
+      return Promise.all([blob.arrayBuffer(), script("pdfout.js", "LY_PDFOUT")]).then(function (r) {
+        return r[1].pdfx(doc, new Uint8Array(r[0]), { cmyk: !!opts.cmyk });
+      }).then(function (x) { bad = (x.problems || []).length; return new Blob([x.bytes], { type: "application/pdf" }); });
+    }).then(function (blob) {
+      if (opts && opts.send) return sendPdf(blob, name);
+      return saveBlob(blob, name, "application/pdf", "PDF", ".pdf");
     }).then(function (ok) {
       exporting = false;
       if (ok === "sent") return;
-      if (ok) LY.toast(t("exp.done"));
+      if (ok) LY.toast(bad ? t("exp.x4Bad", { n: bad }) : t("exp.done"));
     }, function (e) {
       exporting = false;
       try { console.error("[orOS] layout: PDF export failed", e); } catch (x) {}
@@ -1108,6 +1115,20 @@
       var p = function (txt, cls) { body.appendChild(el("p", cls || "", txt)); };
       p(t("rb.lines", { n: c.inPlace, t: c.lines, p: fmt(pct) }));
       p(t("rb.pics", { n: rep.pictures, o: rep.originals }));
+      if (rep.gray) p(t("rb.gray", { n: rep.gray }), "hint");
+      // pages whose text came as shapes: read it (OCR, LY-PORT-O)
+      var drawn = (rep.drawn || []).slice(0, 40);
+      if (drawn.length) {
+        p(t("rb.drawn"), "hint");
+        var dl = el("div", "rb-ocr");
+        drawn.forEach(function (d) {
+          var b = el("button", "btn small", t("rb.ocrPage", { n: d.page }));
+          b.type = "button";
+          b.addEventListener("click", function () { close(); ED.gotoItem && ED.gotoItem(d.id); ocrPicture(d.id); });
+          dl.appendChild(b);
+        });
+        body.appendChild(dl);
+      }
       p(t("rb.styles", { n: rep.styles }));
       if (rep.threads) p(t("rb.threads", { n: rep.threads.stories, f: rep.threads.frames }), "hint");
       if (rep.af && rep.af.failed) p(t("rb.afBad"), "hint");
@@ -1118,8 +1139,10 @@
       }
       var fonts = (rep.fonts || []).filter(function (f) { return f.font && !f.as && !/^noto/i.test(f.font); }).map(function (f) { return f.font; });
       var same = {};
-      (rep.fonts || []).forEach(function (f) { if (f.as) same[f.as] = 1; });
+      var twin = {};
+      (rep.fonts || []).forEach(function (f) { if (f.as && f.like) twin[f.like.replace(/^[A-Z]{6}\+/, "").split(/[-,]/)[0] + " → " + f.as] = 1; else if (f.as) same[f.as] = 1; });
       if (Object.keys(same).length) p(t("rb.fontsSame", { f: Object.keys(same).join(", ") }), "hint");
+      if (Object.keys(twin).length) p(t("rb.fontsTwin", { f: Object.keys(twin).join(", ") }), "hint");
       if (fonts.length) p(t("rb.fonts", { f: fonts.join(", ") }), "hint");
       if (rep.numberStart !== null && rep.numberStart !== 1) p(t("rb.numbers", { n: rep.numberStart }), "hint");
       if (rep.cut) p(t("pdf.cut", { n: rep.pages, t: rep.total }), "hint");
@@ -1156,6 +1179,110 @@
       body.appendChild(act);
     }, true);
   }
+  // ---------- Text from a picture (OCR, LY-PORT-O) ----------
+  // A cover from InDesign often has its text as shapes, so the rebuild
+  // brings it as a picture. OCR (ocrkit.js, Tesseract, on the device)
+  // reads the picture as shown in its frame; the words come back as
+  // text frames over it, one per paragraph, one line per paragraph of
+  // the story, hidden by default so the page looks as it did
+  // (Properties › Show hidden objects brings them out).
+  function ocrFrames(words, box) { return window.LY_REBUILD.ocrFrames(words, box); }
+  var ocrBusy = false;
+  function ocrPicture(id) {
+    var doc = LY.doc, it = doc && M.find(doc.items, id);
+    if (!it || it.t !== "img" || !it.a || ocrBusy) return;
+    var crop = P.imageCrop(it);
+    if (!crop) return;
+    script("../ocrkit.js", "OrosOcr").then(function (K) {
+      if (K.allowed()) return go(K);
+      // the engine is downloaded once (Greek + English), with the person's yes
+      LY.openDialog(t("ocr.title"), function (body, close) {
+        body.appendChild(el("p", "", t("ocr.ask")));
+        var act = el("div", "dlg-actions"), no = el("button", "btn", t("btn.cancel")), yes = el("button", "btn primary", t("ocr.yes"));
+        no.type = yes.type = "button";
+        no.addEventListener("click", close);
+        yes.addEventListener("click", function () { K.allow(); close(); go(K); });
+        act.appendChild(el("span", "spacer")); act.appendChild(no); act.appendChild(yes);
+        body.appendChild(act);
+      });
+    }, function () { LY.toast(t("ocr.fail")); });
+    function go(K) {
+      ocrBusy = true;
+      LY.toast(t("ocr.working"));
+      A.load(it.a).then(function (img) {
+        if (!img) throw new Error("img");
+        var k = (img.naturalWidth || img.width) / (it.iw || 1);
+        var src = { x: crop.src.x * k, y: crop.src.y * k, w: crop.src.w * k, h: crop.src.h * k };
+        var sc = Math.min(1, 3000 / Math.max(src.w, src.h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(src.w * sc)); cv.height = Math.max(1, Math.round(src.h * sc));
+        var cx = cv.getContext("2d");
+        cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+        mirror(cx, crop, cv.width, cv.height);
+        cx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cv.width, cv.height);
+        return K.read(cv, {});
+      }).then(function (r) {
+        ocrBusy = false;
+        var box = { x: it.x + crop.rect.x, y: it.y + crop.rect.y, w: crop.rect.w, h: crop.rect.h };
+        var frames = ocrFrames(r.words || [], box);
+        if (!frames.length) { LY.toast(t("ocr.none")); return; }
+        ocrDlg(it, frames, String(r.text || ""));
+      }, function (e) {
+        ocrBusy = false;
+        LY.toast(t(e && e.code === "offline" ? "ocr.offline" : "ocr.fail"));
+      });
+    }
+  }
+  function ocrDlg(it, frames, text) {
+    LY.openDialog(t("ocr.title"), function (body, close) {
+      var n = frames.reduce(function (a, f) { return a + f.lines.length; }, 0);
+      body.appendChild(el("p", "", t("ocr.found", { n: n, f: frames.length })));
+      var pre = el("pre", "ocr-text");
+      pre.textContent = text.slice(0, 20000);
+      pre.style.whiteSpace = "pre-wrap"; pre.style.maxHeight = "40vh"; pre.style.overflow = "auto";
+      body.appendChild(pre);
+      var hide = true;
+      var lab = el("label", "chk"), cb = el("input");
+      cb.type = "checkbox"; cb.checked = true;
+      cb.addEventListener("change", function () { hide = cb.checked; });
+      lab.appendChild(cb); lab.appendChild(el("span", "", t("ocr.hidden")));
+      body.appendChild(lab);
+      body.appendChild(el("p", "hint", t("ocr.hint")));
+      var act = el("div", "dlg-actions"), cp = el("button", "btn", t("ocr.copy")), put = el("button", "btn primary", t("ocr.place"));
+      cp.type = put.type = "button";
+      cp.addEventListener("click", function () {
+        try { navigator.clipboard.writeText(text).then(function () { LY.toast(t("ocr.copied")); }, function () { LY.toast(t("ocr.noClip")); }); } catch (e) { LY.toast(t("ocr.noClip")); }
+      });
+      put.addEventListener("click", function () { close(); placeOcr(it, frames, hide); });
+      act.appendChild(el("span", "spacer")); act.appendChild(cp); act.appendChild(put);
+      body.appendChild(act);
+    });
+  }
+  function placeOcr(it, frames, hide) {
+    var ids = [];
+    LY.op(function (doc, now) {
+      var src = M.find(doc.items, it.id);
+      if (!src) return false;
+      var sizes = {};
+      frames.forEach(function (f, k) {
+        var key = f.size + "/" + f.lead, ps = sizes[key];
+        if (!ps) {
+          ps = sizes[key] = M.newId("ps");
+          doc.pstyles.push({ id: ps, m: now, name: t("ocr.style") + " " + f.size + "/" + f.lead, base: "ps-base", size: f.size, lead: f.lead, align: "left", fi: 0, sb: 0, sa: 0 });
+        }
+        var sid = M.newId("st");
+        doc.stories.push({ id: sid, m: now, paras: f.lines.map(function (ln) { return { ps: ps, runs: [{ t: ln }] }; }) });
+        var nid = M.newId("it");
+        doc.items.push({ id: nid, m: now, t: "text", pg: src.pg, x: Math.round(f.x * 100) / 100, y: Math.round(f.y * 100) / 100, w: Math.round(f.w * 100) / 100, h: Math.round(f.h * 100) / 100,
+                         story: sid, z: (src.z || 0) + 1 + k, hide: hide ? 1 : 0 });
+        ids.push(nid);
+      });
+    });
+    if (!ids.length) return;
+    if (!hide) ED.select(ids);
+    LY.toast(t(hide ? "ocr.placedHidden" : "ocr.placed", { n: ids.length }));
+  }
+
   // SVG pages (Affinity: File › Export › SVG, text not as curves)
   function importSvg(files) {
     var S = window.LY_SVGIN;
@@ -1187,7 +1314,7 @@
         var it = M.find(doc.items, itemId);
         if (!it) return;
         it.a = r.id; it.iw = r.w; it.ih = r.h;
-        placeAs(it);
+        placeAs(it, r.ow, r.oh);
       });
     }
     res.images.forEach(function (im) {
@@ -1213,7 +1340,7 @@
       return { placed: found, missing: left };
     });
   }
-  var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it) { window.LY_SLA.placePicture(it); };
+  var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it, ow, oh) { window.LY_SLA.placePicture(it, ow, oh); };
   function picsByName(pics) {
     var out = {};
     (pics || []).forEach(function (f) { var k = nameKey(f.name); if (k && !out[k]) out[k] = f; });
@@ -1229,7 +1356,10 @@
   function relink(files) {
     var doc = LY.doc, byName = picsByName(files), want = {}, chain = Promise.resolve(), got = {};
     if (!doc) return Promise.resolve(0);
-    doc.items.forEach(function (it) { if (it.t === "img" && !it.a && it.nm && byName[nameKey(it.nm)]) want[nameKey(it.nm)] = byName[nameKey(it.nm)]; });
+    // empty frames, and frames whose Scribus picture was stored smaller
+    // than its original before 7.96.01 (LY_SLA.shrunk): placed again
+    var fill = function (it) { return it.t === "img" && it.nm && (!it.a || !!(window.LY_SLA && window.LY_SLA.shrunk(it, A.MAX_SIDE))); };
+    doc.items.forEach(function (it) { if (fill(it) && byName[nameKey(it.nm)]) want[nameKey(it.nm)] = byName[nameKey(it.nm)]; });
     Object.keys(want).forEach(function (k) {
       chain = chain.then(function () { return A.importFile(want[k]); }).then(function (r) { got[k] = r; }, function () {});
     });
@@ -1237,10 +1367,10 @@
       var n = 0;
       LY.op(function (d) {
         d.items.forEach(function (it) {
-          var r = it.t === "img" && !it.a && it.nm ? got[nameKey(it.nm)] : null;
+          var r = fill(it) ? got[nameKey(it.nm)] : null;
           if (!r) return;
           it.a = r.id; it.iw = r.w; it.ih = r.h;
-          placeAs(it);
+          placeAs(it, r.ow, r.oh);
           n++;
         });
         return n > 0;
@@ -1438,7 +1568,7 @@
   }
 
   LY.io = {
-    mirror: mirror, relinkPick: relinkPick, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

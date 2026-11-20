@@ -27,6 +27,7 @@ Gib einen Ort oder eine Adresse in `Ort suchen…` ein. Vorschläge erscheinen a
 Die Kompass-Taste öffnet `Entdecken`, das sich rund um die Kartenmitte umsieht. Langes Drücken › `Was ist in der Nähe` macht dasselbe für einen beliebigen Punkt.
 
 - **Orte**: wähle eine Art (Restaurants, Cafés, Bars, Fast Food, Supermärkte, Bäckereien, Apotheken, Geldautomaten und Banken, Tanken und Laden, Toiletten, Sehenswürdigkeiten und Museen, Parks). Jeder Ort zeigt, ob er gerade geöffnet hat und wann er schließt oder öffnet, gelesen aus seinen Öffnungszeiten in OpenStreetMap; `Jetzt geöffnet` behält nur die offenen. Tippe auf einen für Öffnungszeiten, Adresse, Telefon und Website, `Hierhin` und `Speichern`.
+- **Touren**: die markierten Wander-, Rad- und MTB-Routen, die durch die Karte laufen, die nächsten zuerst (zoome etwa auf eine Stadt heran, um sie zu sehen). `Alle`, `Wandern`, `Rad` oder `MTB` wählt die Art. Tippe auf eine für ihre Seite: die ganze Route auf der Karte, von wo nach wo, ihre Länge, das Höhenprofil mit Anstieg und Abstieg und beim Wandern die Gehzeit in beide Richtungen nach der Wanderregel DIN 33466. `Zum Start` plant eine Route dorthin, `In Meine Strecken speichern` behält sie zum späteren Folgen, `GPX herunterladen` speichert eine Datei, und die Links öffnen sie auf Waymarked Trails und OpenStreetMap.
 - **Wikipedia**: Artikel über Orte um dich herum, in der Sprache von orOS, mit Bild, wenn es eins gibt. Das Popup verlinkt den Artikel.
 - **Fotos**: Straßenfotos von Panoramax, der offenen Alternative zu Street View, sobald du nah heranzoomst. Der Pfeil am Punkt zeigt, in welche Richtung das Foto blickt; tippe auf ein Foto, um es größer zu sehen und in Panoramax zu öffnen.
 - Nachdem du die Karte verschoben hast, sucht `In diesem Gebiet suchen` erneut. Tab, Art und `Jetzt geöffnet` bleiben auf diesem Gerät so, wie du sie verlassen hast.
@@ -81,6 +82,34 @@ Die Abdeckung hängt von offenen Fahrplänen ab. In Griechenland gehören die St
 **Messen**: drücke lange auf einen Punkt › `Entfernung messen`. Jedes Tippen auf die Karte fügt einen Punkt hinzu, und du kannst einen Punkt ziehen, um ihn zu verschieben. Das Blatt zeigt die Entfernung, den letzten Abschnitt und die Zahl der Punkte. `Form schließen` verbindet den letzten Punkt mit dem ersten und zeigt Fläche (m², ha oder km²) und Umfang. `Rückgängig` entfernt den letzten Punkt, `Leeren` fängt neu an. Nichts wird gespeichert; Schließen des Blatts oder ein anderer Modus leert es.
 
 **Parken**: drücke lange auf die Stelle, wo das Auto steht › `Hier geparkt`. Wähle eine Erinnerung (`Keine Erinnerung`, `In 30 Min.`, `In 1 Stunde`, `In 2 Stunden` oder `Zu einer Uhrzeit`) und, wenn du magst, eine Notiz wie „Ebene -2, Platz 14“. Ein blaues P markiert das Auto. Tippe darauf für die Parkzeit, die Erinnerung, die Notiz, `Zu Fuß hin` (ein Fußweg von deinem Standort), `Ändern` und `Ich bin weg` (entfernt es). Langes Drücken irgendwo › `Mein geparktes Auto zeigen` bringt dich zurück zum Auto. Die Erinnerung ist eine orOS-Benachrichtigung, sie kommt also auch bei geschlossener Karten-App, solange orOS offen ist; Tippen darauf öffnet Karten am Auto.
+
+## Wandern und Radfahren
+
+Der Ebenen-Knopf hat auch eine Karte `Radkarte (CyclOSM)`, die Radwege, Radstreifen, Fahrradparkplätze und die Oberfläche der Straßen zeigt, und drei Ebenen, die du über jede Karte legen kannst:
+
+- `Wanderwege`: die markierten Wander- und Spazierrouten aus OpenStreetMap, nach Route gefärbt, mit ihren Symbolen.
+- `Radrouten`: die markierten Radrouten, von lokalen Runden bis EuroVelo.
+- `MTB-Routen`: die markierten Mountainbike-Routen.
+
+Sie kommen von Waymarked Trails. Schalte so viele ein, wie du willst; dieses Gerät merkt sie sich.
+
+**Was ist das für ein Weg**: drücke lange (am Computer Rechtsklick) direkt auf einen Pfad, Feldweg oder eine Straße › `Was ist das für ein Weg`. Der Weg leuchtet auf, und du siehst in einfachen Worten, was OpenStreetMap über ihn weiß:
+
+- was er ist (Pfad, Fußweg, Feldweg, Radweg, Treppe…), sein Name, die Oberfläche und wie glatt sie ist (für welche Räder sie passt);
+- die Wanderschwierigkeit, von `T1 · Leichte Wanderung` bis `T6 · Schwieriger Alpinweg`, und die MTB-Schwierigkeit von 0 bis 6;
+- wie gut der Pfad im Gelände sichtbar ist, die Steigung, die Breite, und ob du dort gehen, fahren oder reiten darfst;
+- die markierten Routen, zu denen er gehört (international, national, regional oder lokal), mit `Waymarked Trails`, um die ganze Route zu sehen.
+
+Um die markierten Routen um dich herum zu durchsuchen, öffne Entdecken › `Touren`.
+
+Es wird nur gezeigt, was kartiert ist. Fehlt eine Angabe, ist sie noch nicht bekannt; du kannst sie mit Fragen oder Orte bearbeiten ergänzen. Offline-Karten zeichnen Radwege jetzt blau, Feldwege braun und Fußpfade rot, alle gestrichelt.
+
+**Routen zu Fuß und mit dem Rad**: mit `Zu Fuß` oder `Fahrrad` beginnt die `Wegbeschreibung` mit `Routentyp`:
+
+- Zu Fuß: `Wandern` (Standardwahl) bevorzugt Pfade und Wanderwege und rechnet die Anstiege in die Zeit ein; `Standard` ist der schnellste Weg zu Fuß.
+- Fahrrad: `Touren` (Standardwahl: Radwege und ruhige Straßen, etwas Schotter), `Rennrad` (glatter Asphalt), `Ruhige Straßen` (meidet stark befahrene Straßen), `Gravel`, `Mountainbike` und `Standard` (der schnellste Weg).
+
+Diese Routen kommen von BRouter. Die Routenleiste zeigt dann Anstieg und Abstieg (↗ ↘), und die `Wegbeschreibung` zeigt das Höhenprofil entlang der Route, den tiefsten und höchsten Punkt und zwei Balken: die `Oberfläche` (befestigt, Schotter, Erde, unbekannt) und die `Art des Weges` (Straße, Feldweg, Pfad, Radweg, Treppe), jeweils mit ihrem Anteil an der Route. Die Gehzeit folgt der Wanderregel DIN 33466: 4 km/h in der Ebene, 300 m bergauf oder 500 m bergab pro Stunde. Antwortet BRouter nicht, bekommst du die Standardroute und eine Meldung. Unter `Karten-Einstellungen` › `Wegerouter` kannst du statt brouter.de deinen eigenen BRouter-Server nutzen. Die Routentypen bleiben auf diesem Gerät.
 
 ## OpenStreetMap-Hinweise
 
@@ -159,7 +188,7 @@ Zeichne auf, wo du gehst, fährst oder radelst, behalte deine Strecken und folge
 1. Tippe auf `Meine Strecken (GPX)` (die Weg-Taste) und `Aufzeichnung starten`. Unterwegs siehst du Distanz, Zeit, Tempo und Höhe. `Pausieren` fügt keine Punkte mehr hinzu; `Fortsetzen` macht mit einer Lücke in der Linie weiter.
 2. Du kannst den Bereich schließen: ein roter Chip oben zeigt die Aufzeichnung, tippe darauf, um zurückzukommen.
 3. `Stopp` fragt nach einem Namen und speichert die Strecke. `Weiter aufzeichnen` geht zurück, `Verwerfen` wirft sie weg.
-4. Tippe auf eine Strecke für ihre Statistik und ein Diagramm von Höhe oder Tempo. `Alles zeigen` passt sie in die Karte ein. `Folgen` zeichnet sie dick und sagt dir, wie weit du von ihr weg bist und wie viel noch fehlt. `GPX exportieren` speichert eine Kopie an einem beliebigen Ort. `Name, Farbe, Ordner` ordnet sie, und die Augen-Taste zeigt oder versteckt sie auf der Karte.
+4. Tippe auf eine Strecke für ihre Statistik und ein Diagramm von Höhe oder Tempo. `Alles zeigen` passt sie in die Karte ein. `Folgen` zeichnet sie dick, markiert den Start mit einem Pfeil in die Richtung, in die es geht, und zeigt, ob du auf ihr bist, die verbleibende Strecke mit Anstieg und Abstieg, den nächsten Wegpunkt und ungefähr, wann du ankommst (zu Fuß nach der Wanderregel DIN 33466 oder im eigenen Tempo der Strecke), mit einem Hinweis, wenn das nach Sonnenuntergang ist. `In Gegenrichtung folgen` macht dasselbe vom Ende aus. Während du folgst, meldet sich Karten mit einer Einblendung, Vibration, einem kurzen Ton und, wenn das Gerät eine eigene Stimme für deine Sprache hat, einem gesprochenen Satz, wenn du die Strecke verlässt (nach zwei GPS-Positionen mehr als etwa 40 m daneben), wenn du zurück bist, 100 m vor einem Wegpunkt und am Ende. `Hinweise an` schaltet Ton und Vibration aus (dieses Gerät merkt es sich); lass den Bildschirm beim Folgen an. `GPX exportieren` speichert eine Kopie an einem beliebigen Ort. `Name, Farbe, Ordner` ordnet sie, und die Augen-Taste zeigt oder versteckt sie auf der Karte.
 5. `Datei importieren` holt GPX-, KML- oder GeoJSON-Dateien herein, dazu KMZ, TCX, FIT und Google-Exporte (siehe Aus einer anderen App importieren unten). Auf einem Computer mit installiertem orOS funktioniert `Öffnen mit` › orOS auch für .gpx-, .kml-, .geojson- und .orosmap-Dateien.
 
 > Lass den Bildschirm beim Aufzeichnen an. Bei ausgeschaltetem Bildschirm oder mit orOS im Hintergrund stoppt der Browser das GPS und die Strecke bekommt eine gerade Lücke. Karten hält den Bildschirm wach, solange es aufzeichnet. Schließt sich der Tab oder startet das Gerät neu, geht nichts verloren: beim nächsten Mal bietet Karten `Weiter`, `Speichern` oder `Verwerfen` an.
@@ -243,9 +272,11 @@ Jedes Paket zeigt seine Größe, seine Details, wann du es heruntergeladen hast 
 
 ## Online-Dienste und Datenschutz
 
-- **Kartenbilder**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitär`), Esri (`Satellit`) und OpenTopoMap (`Topo`).
+- **Kartenbilder**: OpenStreetMap (`Standard`), OpenStreetMap France (`Humanitär`), Esri (`Satellit`), OpenTopoMap (`Topo`), CyclOSM über OpenStreetMap France (`Radkarte (CyclOSM)`) und Waymarked Trails (die Ebenen für Wander-, Rad- und MTB-Routen). Sie bekommen die Kartenkacheln, die du ansiehst.
+- **Was ist das für ein Weg**: die Overpass-API bekommt den Punkt, auf den du lange gedrückt hast, um die Wege darum und die Routen des gewählten Weges zu lesen.
 - **Suche und Ortsnamen**: Photon von komoot. Es bekommt deinen Suchtext und die Kartenmitte oder den Punkt, auf den du lange gedrückt hast.
-- **Routen**: der OSRM-Demoserver (Auto) und FOSSGIS (Fahrrad und zu Fuß). Sie bekommen die Koordinaten deiner Routenpunkte.
+- **Routen**: der OSRM-Demoserver (Auto) und FOSSGIS (Fahrrad und zu Fuß, `Standard`). Sie bekommen die Koordinaten deiner Routenpunkte.
+- **Routentypen zu Fuß und mit dem Rad**: BRouter (brouter.de oder der Server, den du unter `Wegerouter` eingestellt hast) bekommt die Koordinaten deiner Routenpunkte und den Routentyp.
 - **Öffentlicher Verkehr**: Transitous (api.transitous.org). Es bekommt Start und Ziel deiner Suche, die Uhrzeit, die Haltestelle, deren Abfahrten du öffnest, und den Kartenausschnitt, wenn Haltestellen oder Live-Fahrzeuge an sind.
 - **Live-Busankünfte (Athen)**: wenn du die Tafel einer Athener Bushaltestelle öffnest, gibt das orOS-Relay (dasselbe, das E-Mail nutzt) den Code dieser Haltestelle an OASA Telematics (telematics.oasa.gr) weiter. Sonst wird nichts gesendet, und das Relay speichert nichts.
 - **Teilen**: Links entstehen auf deinem Gerät. Nichts verlässt es, bis du einen sendest oder öffnest; ein geteilter Link enthält die Koordinaten der Punkte und den Namen des Ziels.
@@ -253,8 +284,8 @@ Jedes Paket zeigt seine Größe, seine Details, wann du es heruntergeladen hast 
 - **Orte und Fragen**: die Overpass-API (overpass-api.de) bekommt den Ausschnitt, den du ansiehst, um seine Orte und Fragen aufzulisten; deine Änderungen gehen unter deinem Namen an die OpenStreetMap-API. Die Arten von Orten stammen aus den Presets des iD-Editors.
 - **Tempolimits**: während du mit dem Auto navigierst, bekommt die Overpass-API die nächsten Kilometer deiner Route (Punkte entlang der Route), um die Tempolimits dieser Straßen zu lesen.
 - **Ebene der GPS-Spuren**: wenn sie an ist, kommen die Kartenbilder der öffentlichen GPS-Spuren von OpenStreetMap (gps.tile.openstreetmap.org), wie die Standardkarte.
-- **Entdecken**: die Overpass-API bekommt die Kartenmitte und die gewählte Art von Ort; Wikipedia (wikipedia.org) bekommt die Kartenmitte; Panoramax (api.panoramax.xyz) bekommt den Kartenausschnitt, den du ansiehst, und seine Fotos laden von den Servern, die sie hosten.
-- **Höhe**: wenn du eine Strecke planst, kommt die Höhe aus den AWS Terrain Tiles (Mapzen und andere, im Open-Data-Register von Amazon); sie bekommen die Kartenkacheln rund um deinen Plan, nicht den Plan selbst.
+- **Entdecken**: die Overpass-API bekommt die Kartenmitte und die gewählte Art von Ort (bei `Touren` den Kartenausschnitt, den du ansiehst, dann die Nummer der geöffneten Route); Wikipedia (wikipedia.org) bekommt die Kartenmitte; Panoramax (api.panoramax.xyz) bekommt den Kartenausschnitt, den du ansiehst, und seine Fotos laden von den Servern, die sie hosten.
+- **Höhe**: wenn du eine Strecke planst oder eine Tour in Entdecken öffnest, kommt die Höhe aus den AWS Terrain Tiles (Mapzen und andere, im Open-Data-Register von Amazon); sie bekommen die Kartenkacheln rund um deinen Plan, nicht den Plan selbst.
 - **Offline-Karten**: nur wenn du eine Größe prüfst oder herunterlädst, kommt die neueste Liste der Builds von Protomaps (build-metadata.protomaps.dev) und die Kartendaten von build.protomaps.com: Teile einer großen Datei, die dem Server das Gebiet verraten, das du herunterlädst. Kartendaten © OpenStreetMap-Mitwirkende (ODbL), Vektorkacheln von Protomaps. Eine selbst eingestellte Quelle bekommt stattdessen dieselben Anfragen.
 - **GPS-Spuren**: nur wenn du auf `Hochladen` tippst, geht die Strecke (Punkte, Zeiten, Höhe) unter deinem Konto an die OpenStreetMap-API, mit der gewählten Sichtbarkeit.
 
@@ -262,7 +293,7 @@ Dein Standort bleibt auf deinem Gerät, außer er ist ein Routenpunkt. Mehr unte
 
 ## Synchronisierung und Sicherung
 
-Gespeicherte Orte, deine Streckenliste (Namen, Farben, Ordner, Statistik), Hinweise, Ortsänderungen, Eingangsänderungen und Antworten auf Fragen, die auf das Senden warten, ausgeblendete Fragen, Fragen-Einstellungen, dein Antwortzähler, Erfolge und Team-Wahl, Favoritengruppen und welcher Gruppe jeder Ort angehört, und der Änderungskommentar werden über die [orOS-Synchronisierung](help:t/sync) abgeglichen. Deine OpenStreetMap-Anmeldung nicht: melde dich auf jedem Gerät einmal an. Diese Dinge bleiben auf diesem Gerät: deine 10 letzten Orte, die `Vermeiden`-Wahl, die ÖPNV-Schalter (Haltestellen, Live-Fahrzeuge), die gewählte Ebene der Fragen, Tab, Art und `Jetzt geöffnet` in Entdecken, welche Favoritengruppen ausgeblendet oder zugeklappt sind, dein geparktes Auto und seine Erinnerung, die letzte Route (sie kommt beim nächsten Öffnen von Karten zurück), offline gespeicherte Kartenbilder, deine Offline-Karten (lade jede auf jedem Gerät herunter, das sie braucht) und die eingestellte Kartenquelle sowie Kartenposition und -stil.
+Gespeicherte Orte, deine Streckenliste (Namen, Farben, Ordner, Statistik), Hinweise, Ortsänderungen, Eingangsänderungen und Antworten auf Fragen, die auf das Senden warten, ausgeblendete Fragen, Fragen-Einstellungen, dein Antwortzähler, Erfolge und Team-Wahl, Favoritengruppen und welcher Gruppe jeder Ort angehört, und der Änderungskommentar werden über die [orOS-Synchronisierung](help:t/sync) abgeglichen. Deine OpenStreetMap-Anmeldung nicht: melde dich auf jedem Gerät einmal an. Diese Dinge bleiben auf diesem Gerät: deine 10 letzten Orte, die `Vermeiden`-Wahl, die ÖPNV-Schalter (Haltestellen, Live-Fahrzeuge), die gewählte Ebene der Fragen, Tab, Art und `Jetzt geöffnet` in Entdecken, die gezeigte Art von Touren, der Schalter für die Hinweise beim Folgen, welche Favoritengruppen ausgeblendet oder zugeklappt sind, dein geparktes Auto und seine Erinnerung, die letzte Route (sie kommt beim nächsten Öffnen von Karten zurück), offline gespeicherte Kartenbilder, deine Offline-Karten (lade jede auf jedem Gerät herunter, das sie braucht) und die eingestellte Kartenquelle sowie Kartenposition und -stil, mit den eingeschalteten Wander- und Radebenen, und die Routentypen zu Fuß und mit dem Rad mit dem eingestellten Wegerouter.
 
 `Karten-Einstellungen` zeigt, wie viele Kartenbilder gespeichert sind (`Kachel-Cache leeren`), und die gespeicherte Route (`Gespeicherte Route vergessen`). GPX-Strecken importierst und exportierst du in `Meine Strecken`.
 

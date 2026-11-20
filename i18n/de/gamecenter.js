@@ -127,6 +127,7 @@ orosPack("de", "gamecenter", {
  "roots": "Wurzeln",
  "hive": "Bienenstock",
  "lighthouse": "Leuchtturminsel",
+ "starchart": "Sternkarte",
  "ridge": "Windmühlengrat",
  "maze": "Laternenlabyrinth",
  "caravan": "Karawane",

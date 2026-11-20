@@ -628,3 +628,9 @@ body.inframe #cv { cursor: text; }
 .links-meta { flex: 1 1 160px; color: var(--text-dim); font-size: .9em; }
 .links-row.warn .links-meta { color: var(--danger); }
 .links-acts { display: flex; gap: 6px; }
+
+/* Compare with a PDF (LY-PORT-D): the PDF's page, ours, the differences */
+.cmp-list { display: flex; flex-direction: column; gap: 10px; max-height: 60vh; overflow: auto; }
+.cmp-row { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.cmp-pics { display: flex; gap: 6px; width: 100%; }
+.cmp-pic { flex: 1 1 0; min-width: 0; max-width: 33%; height: auto; border: 1px solid var(--line, rgba(127,127,127,.35)); background: #fff; }
