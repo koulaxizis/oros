@@ -1116,6 +1116,19 @@
       p(t("rb.lines", { n: c.inPlace, t: c.lines, p: fmt(pct) }));
       p(t("rb.pics", { n: rep.pictures, o: rep.originals }));
       if (rep.gray) p(t("rb.gray", { n: rep.gray }), "hint");
+      // pages whose text came as shapes: read it (OCR, LY-PORT-O)
+      var drawn = (rep.drawn || []).slice(0, 40);
+      if (drawn.length) {
+        p(t("rb.drawn"), "hint");
+        var dl = el("div", "rb-ocr");
+        drawn.forEach(function (d) {
+          var b = el("button", "btn small", t("rb.ocrPage", { n: d.page }));
+          b.type = "button";
+          b.addEventListener("click", function () { close(); ED.gotoItem && ED.gotoItem(d.id); ocrPicture(d.id); });
+          dl.appendChild(b);
+        });
+        body.appendChild(dl);
+      }
       p(t("rb.styles", { n: rep.styles }));
       if (rep.threads) p(t("rb.threads", { n: rep.threads.stories, f: rep.threads.frames }), "hint");
       if (rep.af && rep.af.failed) p(t("rb.afBad"), "hint");
@@ -1166,6 +1179,110 @@
       body.appendChild(act);
     }, true);
   }
+  // ---------- Text from a picture (OCR, LY-PORT-O) ----------
+  // A cover from InDesign often has its text as shapes, so the rebuild
+  // brings it as a picture. OCR (ocrkit.js, Tesseract, on the device)
+  // reads the picture as shown in its frame; the words come back as
+  // text frames over it, one per paragraph, one line per paragraph of
+  // the story, hidden by default so the page looks as it did
+  // (Properties › Show hidden objects brings them out).
+  function ocrFrames(words, box) { return window.LY_REBUILD.ocrFrames(words, box); }
+  var ocrBusy = false;
+  function ocrPicture(id) {
+    var doc = LY.doc, it = doc && M.find(doc.items, id);
+    if (!it || it.t !== "img" || !it.a || ocrBusy) return;
+    var crop = P.imageCrop(it);
+    if (!crop) return;
+    script("../ocrkit.js", "OrosOcr").then(function (K) {
+      if (K.allowed()) return go(K);
+      // the engine is downloaded once (Greek + English), with the person's yes
+      LY.openDialog(t("ocr.title"), function (body, close) {
+        body.appendChild(el("p", "", t("ocr.ask")));
+        var act = el("div", "dlg-actions"), no = el("button", "btn", t("btn.cancel")), yes = el("button", "btn primary", t("ocr.yes"));
+        no.type = yes.type = "button";
+        no.addEventListener("click", close);
+        yes.addEventListener("click", function () { K.allow(); close(); go(K); });
+        act.appendChild(el("span", "spacer")); act.appendChild(no); act.appendChild(yes);
+        body.appendChild(act);
+      });
+    }, function () { LY.toast(t("ocr.fail")); });
+    function go(K) {
+      ocrBusy = true;
+      LY.toast(t("ocr.working"));
+      A.load(it.a).then(function (img) {
+        if (!img) throw new Error("img");
+        var k = (img.naturalWidth || img.width) / (it.iw || 1);
+        var src = { x: crop.src.x * k, y: crop.src.y * k, w: crop.src.w * k, h: crop.src.h * k };
+        var sc = Math.min(1, 3000 / Math.max(src.w, src.h));
+        var cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(src.w * sc)); cv.height = Math.max(1, Math.round(src.h * sc));
+        var cx = cv.getContext("2d");
+        cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+        mirror(cx, crop, cv.width, cv.height);
+        cx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cv.width, cv.height);
+        return K.read(cv, {});
+      }).then(function (r) {
+        ocrBusy = false;
+        var box = { x: it.x + crop.rect.x, y: it.y + crop.rect.y, w: crop.rect.w, h: crop.rect.h };
+        var frames = ocrFrames(r.words || [], box);
+        if (!frames.length) { LY.toast(t("ocr.none")); return; }
+        ocrDlg(it, frames, String(r.text || ""));
+      }, function (e) {
+        ocrBusy = false;
+        LY.toast(t(e && e.code === "offline" ? "ocr.offline" : "ocr.fail"));
+      });
+    }
+  }
+  function ocrDlg(it, frames, text) {
+    LY.openDialog(t("ocr.title"), function (body, close) {
+      var n = frames.reduce(function (a, f) { return a + f.lines.length; }, 0);
+      body.appendChild(el("p", "", t("ocr.found", { n: n, f: frames.length })));
+      var pre = el("pre", "ocr-text");
+      pre.textContent = text.slice(0, 20000);
+      pre.style.whiteSpace = "pre-wrap"; pre.style.maxHeight = "40vh"; pre.style.overflow = "auto";
+      body.appendChild(pre);
+      var hide = true;
+      var lab = el("label", "chk"), cb = el("input");
+      cb.type = "checkbox"; cb.checked = true;
+      cb.addEventListener("change", function () { hide = cb.checked; });
+      lab.appendChild(cb); lab.appendChild(el("span", "", t("ocr.hidden")));
+      body.appendChild(lab);
+      body.appendChild(el("p", "hint", t("ocr.hint")));
+      var act = el("div", "dlg-actions"), cp = el("button", "btn", t("ocr.copy")), put = el("button", "btn primary", t("ocr.place"));
+      cp.type = put.type = "button";
+      cp.addEventListener("click", function () {
+        try { navigator.clipboard.writeText(text).then(function () { LY.toast(t("ocr.copied")); }, function () { LY.toast(t("ocr.noClip")); }); } catch (e) { LY.toast(t("ocr.noClip")); }
+      });
+      put.addEventListener("click", function () { close(); placeOcr(it, frames, hide); });
+      act.appendChild(el("span", "spacer")); act.appendChild(cp); act.appendChild(put);
+      body.appendChild(act);
+    });
+  }
+  function placeOcr(it, frames, hide) {
+    var ids = [];
+    LY.op(function (doc, now) {
+      var src = M.find(doc.items, it.id);
+      if (!src) return false;
+      var sizes = {};
+      frames.forEach(function (f, k) {
+        var key = f.size + "/" + f.lead, ps = sizes[key];
+        if (!ps) {
+          ps = sizes[key] = M.newId("ps");
+          doc.pstyles.push({ id: ps, m: now, name: t("ocr.style") + " " + f.size + "/" + f.lead, base: "ps-base", size: f.size, lead: f.lead, align: "left", fi: 0, sb: 0, sa: 0 });
+        }
+        var sid = M.newId("st");
+        doc.stories.push({ id: sid, m: now, paras: f.lines.map(function (ln) { return { ps: ps, runs: [{ t: ln }] }; }) });
+        var nid = M.newId("it");
+        doc.items.push({ id: nid, m: now, t: "text", pg: src.pg, x: Math.round(f.x * 100) / 100, y: Math.round(f.y * 100) / 100, w: Math.round(f.w * 100) / 100, h: Math.round(f.h * 100) / 100,
+                         story: sid, z: (src.z || 0) + 1 + k, hide: hide ? 1 : 0 });
+        ids.push(nid);
+      });
+    });
+    if (!ids.length) return;
+    if (!hide) ED.select(ids);
+    LY.toast(t(hide ? "ocr.placedHidden" : "ocr.placed", { n: ids.length }));
+  }
+
   // SVG pages (Affinity: File › Export › SVG, text not as curves)
   function importSvg(files) {
     var S = window.LY_SVGIN;
@@ -1451,7 +1568,7 @@
   }
 
   LY.io = {
-    mirror: mirror, relinkPick: relinkPick, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

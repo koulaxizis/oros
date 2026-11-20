@@ -266,7 +266,7 @@
     if (nOff) { doc.setup.ext = doc.setup.ext || {}; doc.setup.ext.pnStart = nOff + 1; }
     var stories = [], items = [], allParas = [], z = 0;
     var report = { pages: pagesIn.length, facing: meas.facing, body: meas.body, pitch: meas.pitch, numberStart: meas.numberOffset === null ? null : meas.numberOffset + 1,
-                   pictures: 0, originals: 0, gray: 0, fonts: [], check: null, framesOff: [] };
+                   pictures: 0, originals: 0, gray: 0, drawn: [], fonts: [], check: null, framesOff: [] };
     var frameLines = [];
     // body frames (for threading) and the display type above them, per page
     var bodyFr = [], displayFr = [];
@@ -513,7 +513,11 @@
       // pictures, and the page's drawings behind everything
       if (P.bg && P.bg.a) {
         var bl0 = src.bleed || 0;
-        items.push({ id: M.newId("it"), m: now, t: "img", pg: page.id, x: -bl0, y: -bl0, w: W + 2 * bl0, h: H + 2 * bl0, a: P.bg.a, iw: P.bg.iw, ih: P.bg.ih, fit: "fill", lock: 1, sw: 0, z: 1, nm: "PDF " + (pi + 1) });
+        var bgIt = { id: M.newId("it"), m: now, t: "img", pg: page.id, x: -bl0, y: -bl0, w: W + 2 * bl0, h: H + 2 * bl0, a: P.bg.a, iw: P.bg.iw, ih: P.bg.ih, fit: "fill", lock: 1, sw: 0, z: 1, nm: "PDF " + (pi + 1) };
+        items.push(bgIt);
+        // a page with no text but drawings: its text may be drawn as
+        // shapes (InDesign's outlines) → the report offers OCR (LY-PORT-O)
+        if (!(P.spans || []).some(function (sp) { return sp.t && sp.t.trim(); })) report.drawn.push({ page: pi + 1, id: bgIt.id });
       }
       imgs.forEach(function (im, k) {
         var it = { id: M.newId("it"), m: now, t: "img", pg: page.id, x: r3(im.x), y: r3(im.y), w: r3(im.w), h: r3(im.h), a: im.a, nm: im.nm || "", iw: im.iw, ih: im.ih, fit: "fill", sw: 0, z: 1000 + k };
@@ -1159,7 +1163,53 @@
     return f ? String(f.name || "").replace(/^[A-Z]{6}\+/, "").slice(0, 60) : "";
   }
 
-  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, grayPixels: grayPixels, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
+  // OCR (LY-PORT-O, io.js ocrPicture): the words of ocrkit wordsOf
+  // (fractions of the picture read) + the frame's box in pt →
+  // [{ x, y, w, h, size, lead, lines: [text] }], one per block of text
+  function ocrFrames(words, box) {
+    // the lines, in reading order (ocrkit counts them over the picture)
+    var byL = {}, keys = [];
+    var WORDISH = new RegExp("[\\p{L}\\p{N}]", "u"), ONE = new RegExp("^[\\p{L}\\p{N}][.,;:!»)]?$", "u"), SHORT_OK = /^(ο|η|ή|ά|α|ο|Ο|Η|Ή|Α|a|A|I|ε|Ε|και|[0-9]+)[.,;:!»)]?$/;
+    words.forEach(function (w) {
+      if (!w || typeof w.t !== "string" || !w.t.trim()) return;
+      // a picture's edges read as "/", "™", "ζ": no letter, or one stray one
+      if (!WORDISH.test(w.t) || (ONE.test(w.t) && !SHORT_OK.test(w.t))) return;
+      var k = String(w.ln);
+      if (!byL[k]) { byL[k] = []; keys.push(k); }
+      byL[k].push(w);
+    });
+    var LETTER = new RegExp("[\\p{L}\\p{N}]", "gu");
+    var lines = keys.map(function (k) {
+      var ws = byL[k].slice().sort(function (a, b) { return a.x - b.x; }), x0 = 1, y0 = 1, x1 = 0, y1 = 0;
+      ws.forEach(function (w) { x0 = Math.min(x0, w.x); y0 = Math.min(y0, w.y); x1 = Math.max(x1, w.x + w.w); y1 = Math.max(y1, w.y + w.h); });
+      var txt = ws.map(function (w) { return w.t; }).join(" ").slice(0, 2000);
+      return { t: txt, pa: ws[0].pa, x0: x0 * box.w, x1: x1 * box.w, y0: y0 * box.h, y1: y1 * box.h, h: (y1 - y0) * box.h };
+    }).filter(function (l) {
+      // noise (a picture's edges read as "/ ™ :"): mostly not letters
+      var n = (l.t.match(LETTER) || []).length;
+      return n >= 2 && n >= l.t.replace(/\s/g, "").length * 0.6;
+    });
+    // blocks: a line joins the block above when it is the same size,
+    // close under it and overlaps it across
+    var blocks = [];
+    lines.forEach(function (l) {
+      var b = blocks[blocks.length - 1], last = b && b.lines[b.lines.length - 1];
+      var join = last && l.pa === last.pa && l.h < last.h * 1.5 && last.h < l.h * 1.5 && l.y0 - last.y1 < Math.max(l.h, last.h) * 1.2 && l.y0 > last.y0 &&
+                 Math.min(l.x1, b.x1) - Math.max(l.x0, b.x0) > 0;
+      if (join) { b.lines.push(l); b.x0 = Math.min(b.x0, l.x0); b.x1 = Math.max(b.x1, l.x1); b.y1 = Math.max(b.y1, l.y1); }
+      else blocks.push({ lines: [l], x0: l.x0, x1: l.x1, y0: l.y0, y1: l.y1 });
+    });
+    return blocks.map(function (b) {
+      var hs = b.lines.map(function (l) { return l.h; }).sort(function (a, c) { return a - c; });
+      // a line's ink is about 0.95 of the type size (accents and descenders in)
+      var size = Math.max(4, Math.min(300, Math.round(hs[hs.length >> 1] / 0.95 * 10) / 10)), lead = size * 1.2;
+      if (b.lines.length > 1) { var gap = (b.lines[b.lines.length - 1].y0 - b.lines[0].y0) / (b.lines.length - 1); if (gap > size * 0.8 && gap < size * 3) lead = Math.round(gap * 10) / 10; }
+      return { x: box.x + b.x0 - size * 0.1, y: box.y + b.y0 - size * 0.25, w: (b.x1 - b.x0) * 1.1 + size * 0.4, h: (b.lines.length - 1) * lead + size * 1.5,
+               size: size, lead: lead, lines: b.lines.map(function (l) { return l.t; }) };
+    });
+  }
+
+  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, grayPixels: grayPixels, ocrFrames: ocrFrames, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_REBUILD = api;
 })(typeof window !== "undefined" ? window : this);
