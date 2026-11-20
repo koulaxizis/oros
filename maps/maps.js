@@ -1193,6 +1193,7 @@
   var lastSteps = [];          // OSRM steps for the active route
   var lastDist = 0;            // total distance (m)
   var lastDur = 0;             // total duration (s)
+  var lastOutdoor = null;      // wave H2: climb / profile / surfaces of a trail-router route
   var pickMode = null;         // null | planner slot index (map pick)
   var routeCoords = [];        // route geometry [[lon, lat], …] (deviation check)
   var routeCum = [];           // cumulative metres along routeCoords, per vertex
@@ -1253,7 +1254,7 @@
     routeFrom = routeTo = null;
     routeVias = [];
     paintRouteMarkers();
-    lastSteps = []; lastDist = 0; lastDur = 0;
+    lastSteps = []; lastDist = 0; lastDur = 0; lastOutdoor = null;
     routeCoords = [];
     buildRouteIndex();
     cancelPick();
@@ -1264,6 +1265,7 @@
     $("maneuvers-list").innerHTML = "";
     if (planOpen) closePlanner();
     try { localStorage.removeItem(ROUTE_STORAGE_KEY); } catch (e) { /* noop */ }
+    routeHook(null);
   }
 
   // "My location" as a plan slot. Its lat/lon are filled when a
@@ -1439,11 +1441,22 @@
     var url = RC.routeUrl(ROUTER_BASE[routeProfile], routePoints(),
       { alternatives: !navActive, avoid: avoid, profile: routeProfile });
 
-    fetch(url)
-      .then(function (r) {
+    function osrm() {
+      return fetch(url).then(function (r) {
         if (!r.ok) { var er = new Error("http"); er.status = r.status; throw er; }
         return r.json();
-      })
+      });
+    }
+    // Wave H2 (outdoor.js): Walk and Bike can come from the trail
+    // router (BRouter); if it fails, the standard OSRM route is used.
+    var outdoor = mapsHost.outdoorFetch ? mapsHost.outdoorFetch(routeProfile, routePoints()) : null;
+    var req = outdoor ? outdoor.catch(function () {
+      if (my !== routeSeq) throw 0;
+      if (mapsHost.outdoorFailed) mapsHost.outdoorFailed();
+      return osrm();
+    }) : osrm();
+
+    req
       .then(function (json) {
         // Stale (a newer request started) or cancelled (route cleared)
         if (my !== routeSeq || !routeFrom || !routeTo) return;
@@ -1498,6 +1511,7 @@
     }
 
     lastSteps = joinLegs(r0.legs);
+    lastOutdoor = r0.outdoor || null;
     lastDist = r0.distance;
     lastDur = r0.duration;
     paintRouteSummary();
@@ -1510,6 +1524,12 @@
     // Render maneuvers if panel is open or route just started
     renderManeuvers();
     saveRoute();
+    routeHook(r0);
+  }
+  // Wave H2: modules that add to a painted route (outdoor.js: climb,
+  // elevation profile, surfaces). r = the route, or null when gone.
+  function routeHook(r) {
+    mapsHost.routeHooks.forEach(function (fn) { try { fn(r, routeProfile); } catch (e) { /* a module's own problem */ } });
   }
 
   // The other routes in grey, under the chosen one; a tap switches.
@@ -2045,6 +2065,7 @@
     sh.addEventListener("click", shareRoute);
     row.appendChild(sh);
     host.appendChild(row);
+    mapsHost.extrasHooks.forEach(function (fn) { try { fn(host, routeProfile); } catch (e) { /* a module's own problem */ } });
     paintRouteSummary();
   }
 
@@ -3207,7 +3228,8 @@
       vias: routeVias.filter(Boolean),
       profile: routeProfile,
       geometry: { type: "LineString", coordinates: routeCoords },
-      steps: slimSteps(lastSteps), distance: lastDist, duration: lastDur
+      steps: slimSteps(lastSteps), distance: lastDist, duration: lastDur,
+      outdoor: lastOutdoor || undefined
     });
     var ok = json.length <= ROUTE_SNAPSHOT_MAX;
     var why = "route.toobig";
@@ -3243,6 +3265,7 @@
     lastSteps = Array.isArray(data.steps) ? data.steps : [];
     lastDist = data.distance || 0;
     lastDur = data.duration || 0;
+    lastOutdoor = data.outdoor && typeof data.outdoor === "object" ? data.outdoor : null;
     routeCoords = data.geometry.coordinates;
     buildRouteIndex();
 
@@ -4101,6 +4124,17 @@
       baseById[id] = layer;
       layerCtl.addBaseLayer(layer, label);
     },
+    // Wave H2 (outdoor.js): Walk / Bike from the trail router.
+    //   outdoorFetch(profile, pts) → Promise of an OSRM-shaped answer,
+    //   or null (use OSRM); outdoorFailed() is told when it fell back.
+    outdoorFetch: null,
+    outdoorFailed: null,
+    routeHooks: [],
+    extrasHooks: [],
+    routeProfile: function () { return routeProfile; },
+    routeOutdoor: function () { return routeLine ? lastOutdoor : null; },
+    reroute: function () { if (routeFrom && routeTo && !navActive) calcRoute(); },
+    navActive: function () { return navActive; },
     // Wave H1 (trails.js): an overlay of its own (trail and cycling
     // routes) in the layer switcher.
     addOverlay: function (id, layer, label) {

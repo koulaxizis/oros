@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.91.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.92.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -9560,6 +9560,9 @@
         { name: "CyclOSM", url: "https://www.cyclosm.org/",
           by: "CyclOSM contributors, hosted by OpenStreetMap France; data by OpenStreetMap contributors", lic: "CC-BY-SA (style), ODbL (data)",
           k: "cr.cyclosm" },
+        { name: "BRouter", url: "https://brouter.de/",
+          by: "Arndt Brenschede and BRouter contributors; data by OpenStreetMap contributors", lic: "MIT (software), ODbL (data)",
+          k: "cr.brouter" },
         { name: "Terrain Tiles (AWS)", url: "https://registry.opendata.aws/terrain-tiles/",
           by: "Mapzen and others (SRTM, GMTED2010, ETOPO1, USGS NED, EU-DEM)", lic: { k: "cr.lic.terrain-tiles" },
           k: "cr.terrain-tiles" },

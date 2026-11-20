@@ -104,10 +104,16 @@
     if (!base) return;
     var my = s.req = ++seq;
     s.busy = true;
-    fetch(RC.routeUrl(base, [a, b], { profile: s.mode })).then(function (r) {
-      if (!r.ok) throw new Error(r.status);
-      return r.json();
-    }).then(function (j) {
+    function osrm() {
+      return fetch(RC.routeUrl(base, [a, b], { profile: s.mode })).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      });
+    }
+    // Wave H2: Walk / Bike parts follow the route type chosen in
+    // Directions (BRouter), else the standard router.
+    var od = H.outdoorFetch ? H.outdoorFetch(s.mode, [a, b]) : null;
+    (od ? od.catch(osrm) : osrm()).then(function (j) {
       if (s.req !== my || segs[i] !== s) return;
       s.busy = false;
       var line = PC.lineFromOsrm(j);
