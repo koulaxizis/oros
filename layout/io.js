@@ -480,13 +480,20 @@
     LY.flushStory && LY.flushStory();
     exporting = true;
     LY.toast(t("exp.working"));
+    var bad = 0, x4 = !!(opts && opts.pdfx), name = fileName(doc, x4 ? " (PDF-X-4).pdf" : ".pdf");
     pdfBlob(doc, opts).then(function (blob) {
-      if (opts && opts.send) return sendPdf(blob, fileName(doc, ".pdf"));
-      return saveBlob(blob, fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
+      // PDF/X-4 for the printer (LY-PORT-C), its colours in CMYK when asked
+      if (!x4) return blob;
+      return Promise.all([blob.arrayBuffer(), script("pdfout.js", "LY_PDFOUT")]).then(function (r) {
+        return r[1].pdfx(doc, new Uint8Array(r[0]), { cmyk: !!opts.cmyk });
+      }).then(function (x) { bad = (x.problems || []).length; return new Blob([x.bytes], { type: "application/pdf" }); });
+    }).then(function (blob) {
+      if (opts && opts.send) return sendPdf(blob, name);
+      return saveBlob(blob, name, "application/pdf", "PDF", ".pdf");
     }).then(function (ok) {
       exporting = false;
       if (ok === "sent") return;
-      if (ok) LY.toast(t("exp.done"));
+      if (ok) LY.toast(bad ? t("exp.x4Bad", { n: bad }) : t("exp.done"));
     }, function (e) {
       exporting = false;
       try { console.error("[orOS] layout: PDF export failed", e); } catch (x) {}

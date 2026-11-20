@@ -1400,7 +1400,7 @@
 
   // ---------- Export dialog ----------
   var imgPrefs = { page: "", dpi: 150, fmt: "png" };
-  var expPrefs = { range: "all", custom: "", spreads: 0, bleed: 1, marks: 0, q: "print" };
+  var expPrefs = { range: "all", custom: "", spreads: 0, bleed: 1, marks: 0, q: "print", cmyk: 1 };
   function exportDlg() {
     var doc = LY.doc;
     LY.openDialog(t("exp.title"), function (body, close) {
@@ -1426,10 +1426,18 @@
         cr.addEventListener("input", function () { var v = parseFloat(cr.value); expPrefs.creep = isFinite(v) ? Math.max(0, Math.min(5, v)) : 0; });
         body.appendChild(field(t("exp.creep"), cr));
       }
-      var qWrap = el("div");
-      function drawQ() { qWrap.innerHTML = ""; qWrap.appendChild(seg([["print", t("exp.print")], ["screen", t("exp.screen")]], expPrefs.q, function (v) { expPrefs.q = v; drawQ(); })); }
+      var qWrap = el("div"), x4Wrap = el("div");
+      // PDF/X-4 for the printer, its colours in CMYK when asked (LY-PORT-C)
+      function drawQ() {
+        qWrap.innerHTML = ""; x4Wrap.innerHTML = "";
+        qWrap.appendChild(seg([["print", t("exp.print")], ["x4", t("exp.x4")], ["screen", t("exp.screen")]], expPrefs.q, function (v) { expPrefs.q = v; drawQ(); }));
+        if (expPrefs.q !== "x4") return;
+        x4Wrap.appendChild(check(t("exp.cmyk"), expPrefs.cmyk, function (v) { expPrefs.cmyk = v; }));
+        x4Wrap.appendChild(el("p", "hint", t("exp.cmykHint")));
+      }
       drawQ();
       body.appendChild(field(t("exp.quality"), qWrap));
+      body.appendChild(x4Wrap);
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
       act.appendChild(btn(t("btn.cancel"), close));
@@ -1437,7 +1445,7 @@
         var pages = pickPages(doc);
         if (!pages) { LY.toast(t("exp.badRange")); return; }
         close();
-        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4 });
+        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk });
       }, "primary"));
       body.appendChild(act);
       // the same PDF, saved in Files › Layout › PDF and offered to an app
@@ -1446,7 +1454,7 @@
           var pages = pickPages(doc);
           if (!pages) { LY.toast(t("exp.badRange")); return; }
           close();
-          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q === "print" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4 });
+          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk });
         }, "block");
         sendB.id = "exp-send";
         sendB.setAttribute("aria-haspopup", "dialog");
