@@ -30,14 +30,10 @@
 //     Move down, Remove). With a mouse a card's title drags it to
 //     another place.
 //   • Hidden while an app covers the desktop; nothing repaints then.
-//   • Clock style (SIGNAL-1, 1.4.0): the clock card's menu picks
-//     Automatic / Digits / Dots. Dots are our own 5×7 LED glyphs drawn
-//     as SVG circles (no font); Automatic shows them with the Signal
-//     skin. No blinking, no motion; High contrast drops the unlit dots.
+//   • Clock style (1.4.0): Automatic / Digits / LED dots (own glyphs).
 //
 // Device-local (oros-widgets, never synced: screens differ per device):
-//   { v:1, list: ["clock","calendar",…] [, clock: "digits"|"dots"] }
-//   order = list order; clock absent = Automatic
+//   { v:1, list: ["clock","calendar",…] [, clock] }   order = list order
 //   Absent = the default: clock, calendar, today, weather on a wide
 //   screen that is not a phone; none on a phone or a narrow window.
 //
@@ -67,37 +63,22 @@
     if (v.clock === "digits" || v.clock === "dots") r.clock = v.clock;
     return r;
   }
-  // What the clock card draws: the person's pick, else dots with Signal.
-  function clockMode(style, skin) {
-    if (style === "digits" || style === "dots") return style;
-    return skin === "signal" ? "dots" : "digits";
-  }
-  // SIGNAL-1: 5×7 dot glyphs, one string of 5 bits per row, top first.
-  var GLYPHS = {
-    "0": ["01110", "10001", "10011", "10101", "11001", "10001", "01110"],
-    "1": ["00100", "01100", "00100", "00100", "00100", "00100", "01110"],
-    "2": ["01110", "10001", "00001", "00010", "00100", "01000", "11111"],
-    "3": ["11111", "00010", "00100", "00010", "00001", "10001", "01110"],
-    "4": ["00010", "00110", "01010", "10010", "11111", "00010", "00010"],
-    "5": ["11111", "10000", "11110", "00001", "00001", "10001", "01110"],
-    "6": ["00110", "01000", "10000", "11110", "10001", "10001", "01110"],
-    "7": ["11111", "00001", "00010", "00100", "01000", "01000", "01000"],
-    "8": ["01110", "10001", "10001", "01110", "10001", "10001", "01110"],
-    "9": ["01110", "10001", "10001", "01111", "00001", "00010", "01100"],
-    ":": ["0", "0", "1", "0", "1", "0", "0"]
-  };
-  // The dots of a text ("21:07"): { cols, cells:[{x, y, on}] }, one
-  // empty column between glyphs; unknown characters are left out.
+  // SIGNAL-1: Automatic = dots with the Signal skin.
+  function clockMode(st, skin) { return st === "digits" || st === "dots" ? st : (skin === "signal" ? "dots" : "digits"); }
+  // 5×7 LED glyphs, 7 rows of 5 bits each, top first; the colon is 1 wide.
+  var GLYPHS = {};
+  "01110100011001110101110011000101110 00100011000010000100001000010001110 01110100010000100010001000100011111 11111000100010000010000011000101110 00010001100101010010111110001000010 11111100001111000001000011000101110 00110010001000011110100011000101110 11111000010001000100010000100001000 01110100011000101110100011000101110 01110100011000101111000010001001100"
+    .split(" ").forEach(function (b, d) { GLYPHS[d] = b.match(/.{5}/g); });
+  GLYPHS[":"] = "0010100".split("");
+  // The dots of "21:07": { cols, cells:[{x, y, on}] }, a blank column between glyphs.
   function dotCells(text) {
-    var cells = [], x = 0, first = true;
+    var cells = [], x = 0;
     String(text).split("").forEach(function (ch) {
       var g = GLYPHS[ch];
       if (!g) return;
-      if (!first) x++;
-      first = false;
-      var w = g[0].length;
-      for (var y = 0; y < 7; y++) for (var i = 0; i < w; i++) cells.push({ x: x + i, y: y, on: g[y].charAt(i) === "1" });
-      x += w;
+      if (cells.length) x++;
+      for (var y = 0; y < 7; y++) for (var i = 0; i < g[0].length; i++) cells.push({ x: x + i, y: y, on: g[y][i] === "1" });
+      x += g[0].length;
     });
     return { cols: x, cells: cells };
   }
@@ -594,23 +575,15 @@
     var Q = root.orosQS && root.orosQS.model;
     return Q && Q.onAccent ? Q.onAccent(getComputedStyle(doc.documentElement).getPropertyValue("--accent")) : "";
   }
-  // SIGNAL-1: the time as LED dots (lit in the text colour, unlit faint).
+  // SIGNAL-1: the time as LED dots, unlit ones faint (.wg-off).
   function dotSvg(text) {
-    var NS = "http://www.w3.org/2000/svg", P = 6, R = 2.3;
     var d = dotCells(text);
-    var s = doc.createElementNS(NS, "svg");
-    s.setAttribute("class", "wg-dots");
-    s.setAttribute("viewBox", "0 0 " + (d.cols * P) + " " + (7 * P));
-    s.setAttribute("aria-hidden", "true");
-    s.setAttribute("focusable", "false");
-    d.cells.forEach(function (cell) {
-      var ci = doc.createElementNS(NS, "circle");
-      ci.setAttribute("cx", String(cell.x * P + P / 2));
-      ci.setAttribute("cy", String(cell.y * P + P / 2));
-      ci.setAttribute("r", String(R));
-      ci.setAttribute("fill", "currentColor");
-      if (!cell.on) ci.setAttribute("class", "wg-off");
-      s.appendChild(ci);
+    function sv(tag, at) { var n = doc.createElementNS("http://www.w3.org/2000/svg", tag); for (var k in at) n.setAttribute(k, at[k]); return n; }
+    var s = sv("svg", { "class": "wg-dots", viewBox: "0 0 " + d.cols * 6 + " 42", "aria-hidden": "true", focusable: "false" });
+    d.cells.forEach(function (c) {
+      var a = { cx: c.x * 6 + 3, cy: c.y * 6 + 3, r: 2.3, fill: "currentColor" };
+      if (!c.on) a["class"] = "wg-off";
+      s.appendChild(sv("circle", a));
     });
     return s;
   }
