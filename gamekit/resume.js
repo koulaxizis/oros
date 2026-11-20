@@ -156,6 +156,8 @@
     hive: function (s) { return num(s.acts) > 0; },
     // Lighthouse Island (idle): oros-lighthouse-session is {acts}, as Hive.
     lighthouse: function (s) { return num(s.acts) > 0; },
+    // Star Chart (idle): oros-starchart-session is {acts}, as Hive.
+    starchart: function (s) { return num(s.acts) > 0; },
     // Windmill ridge: {g: engine state, ck, counted}; under way after the
     // first action, until the night is won or lost.
     ridge: function (s) {

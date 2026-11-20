@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "7.95.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "7.96.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -248,6 +248,7 @@
     fieldwarden: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9"/><path d="M12 9c-3 0-5-2-5-5 3 0 5 2 5 5zM12 9c3 0 5-2 5-5-3 0-5 2-5 5z"/><path d="M12 15c-3 0-5-2-5-5 3 0 5 2 5 5zM12 15c3 0 5-2 5-5-3 0-5 2-5 5z"/><path d="M4 21h16"/></svg>',
     roots: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a5 5 0 0 0-5 5c0 2 1 3 2 4h6c1-1 2-2 2-4a5 5 0 0 0-5-5z"/><path d="M12 12v4M12 16l-4 5M12 16l4 5M12 16v5"/><path d="M3 15h18"/></svg>',
     lighthouse: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 22l1.5-14h3L15 22z"/><path d="M8 22h8"/><path d="M10 8V5h4v3"/><path d="M12 2v3"/><path d="M4 6l4 1M20 6l-4 1"/></svg>',
+    starchart: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="17" r="1.5"/><circle cx="10" cy="8" r="1.5"/><circle cx="17" cy="12" r="1.5"/><circle cx="19" cy="4" r="1.5"/><path d="M6 15.7 9.3 9.4M11.4 8.7l4.3 2.6M17.6 10.6l1-5"/></svg>',
     hive: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 20 6.5v9L12 20l-8-4.5v-9z"/><path d="M8 9.5h8M7 13h10"/><path d="M12 20v2"/></svg>',
     ridge: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 12 6 6M12 12l6-6M12 12l-6 6M12 12l6 6"/><path d="M10 21l2-9 2 9"/><path d="M3 21h18"/></svg>',
     maze: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h6M15 3v6M9 15h12M9 15v6"/><path d="M10 6h1"/></svg>',
