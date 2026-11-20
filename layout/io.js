@@ -1108,6 +1108,7 @@
       var p = function (txt, cls) { body.appendChild(el("p", cls || "", txt)); };
       p(t("rb.lines", { n: c.inPlace, t: c.lines, p: fmt(pct) }));
       p(t("rb.pics", { n: rep.pictures, o: rep.originals }));
+      if (rep.gray) p(t("rb.gray", { n: rep.gray }), "hint");
       p(t("rb.styles", { n: rep.styles }));
       if (rep.threads) p(t("rb.threads", { n: rep.threads.stories, f: rep.threads.frames }), "hint");
       if (rep.af && rep.af.failed) p(t("rb.afBad"), "hint");

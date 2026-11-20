@@ -1117,6 +1117,7 @@ orosPack("de", "layout", {
  "rb.fontsTwin": "Freie Schriften mit denselben Buchstabenbreiten anstelle nicht freier Schriften: {f}.",
  "rb.lines": "{n} von {t} Zeilen stehen dort, wo sie im PDF standen ({p} %).",
  "rb.pics": "{n} Bilder, davon {o} deine Originaldateien (die übrigen stammen aus dem PDF).",
+ "rb.gray": "{n} deiner Originalbilder sind farbig, das PDF druckt sie aber grau, also sind sie auch hier grau.",
  "rb.styles": "{n} Absatzformate.",
  "rb.frames": "Textrahmen",
  "rb.perPage": "Pro Seite",

@@ -266,7 +266,7 @@
     if (nOff) { doc.setup.ext = doc.setup.ext || {}; doc.setup.ext.pnStart = nOff + 1; }
     var stories = [], items = [], allParas = [], z = 0;
     var report = { pages: pagesIn.length, facing: meas.facing, body: meas.body, pitch: meas.pitch, numberStart: meas.numberOffset === null ? null : meas.numberOffset + 1,
-                   pictures: 0, originals: 0, fonts: [], check: null, framesOff: [] };
+                   pictures: 0, originals: 0, gray: 0, fonts: [], check: null, framesOff: [] };
     var frameLines = [];
     // body frames (for threading) and the display type above them, per page
     var bodyFr = [], displayFr = [];
@@ -522,6 +522,7 @@
         items.push(it);
         report.pictures++;
         if (im.original) report.originals++;
+        if (im.gray) report.gray++;
       });
     });
 
@@ -718,6 +719,39 @@
       img.onerror = function () { URL.revokeObjectURL(url); rej(new Error("decode")); };
       img.src = url;
     });
+  }
+  // RGBA pixels with no colour: every sampled pixel's channels within 6
+  // of each other (JPEG noise), 99.5 % of them at least
+  function grayPixels(d, n) {
+    var step = Math.max(1, Math.floor(n / 20000)), seen = 0, off = 0;
+    for (var k = 0; k < n; k += step) {
+      var r = d[k * 4], g = d[k * 4 + 1], b = d[k * 4 + 2];
+      seen++;
+      if (Math.max(r, g, b) - Math.min(r, g, b) > 6) off++;
+    }
+    return seen > 0 && off <= seen * 0.005;
+  }
+  function isGray(cv) {
+    try { return grayPixels(cv.getContext("2d", { willReadFrequently: true }).getImageData(0, 0, cv.width, cv.height).data, cv.width * cv.height); }
+    catch (e) { return false; }
+  }
+  // the original as the PDF shows it: grey (luma, as the thumbnails),
+  // its own file when it is grey already or cannot be read
+  function grayOriginal(file) {
+    return decode(file).then(function (img) {
+      var w = img.naturalWidth, h = img.naturalHeight, c = canvas(w, h), x = c.getContext("2d", { willReadFrequently: true });
+      x.fillStyle = "#fff"; x.fillRect(0, 0, w, h);
+      x.drawImage(img, 0, 0);
+      var id = x.getImageData(0, 0, w, h), d = id.data;
+      if (grayPixels(d, w * h)) return file;
+      for (var k = 0; k < d.length; k += 4) { var v = Math.round(d[k] * 0.299 + d[k + 1] * 0.587 + d[k + 2] * 0.114); d[k] = d[k + 1] = d[k + 2] = v; }
+      x.putImageData(id, 0, 0);
+      return toBlob(c, "image/jpeg", 0.92).then(function (b) {
+        if (!b) return file;
+        b.name = String(file.name || "picture").replace(/\.[^.]+$/, "") + ".jpg";
+        return b;
+      });
+    }).then(null, function () { return file; });
   }
   // a 24 × 24 grey thumbnail, for "is this the same picture?"
   function thumb(src, w, h) {
@@ -952,12 +986,14 @@
                   if (Math.abs(Math.round(p.rot / 90) * 90 - p.rot) < 0.5 && up) box.rot = 0;
                   var ink = inkBox(cv), vis = ink ? [box.x - trim.x + box.w * ink[0] / cv.width, box.y - trim.y + box.h * ink[1] / cv.height, box.w * (ink[2] - ink[0]) / cv.width, box.h * (ink[3] - ink[1]) / cv.height] : null;
                   var orig = ink ? null : match(cands, cv);
-                  var blobP = orig ? Promise.resolve(orig.file) : toBlob(cv, ink ? "image/png" : "image/jpeg", 0.92).then(function (b) { if (b) b.name = "pdf-" + k + "-" + (j + 1) + (ink ? ".png" : ".jpg"); return b; });
+                  // a colour original of a picture the PDF prints grey (an
+                  // adjustment in Affinity or the printer's file): grey too (LY-PORT-G)
+                  var blobP = orig ? (isGray(cv) ? grayOriginal(orig.file) : Promise.resolve(orig.file)) : toBlob(cv, ink ? "image/png" : "image/jpeg", 0.92).then(function (b) { if (b) b.name = "pdf-" + k + "-" + (j + 1) + (ink ? ".png" : ".jpg"); return b; });
                   return blobP.then(function (blob) {
                     if (!blob) return;
                     return store(blob).then(function (s) {
                       res.imgs.push({ x: r3(box.x - trim.x), y: r3(box.y - trim.y), w: r3(box.w), h: r3(box.h), rot: box.rot || 0, vis: vis, a: s.id, iw: s.w, ih: s.h,
-                                      nm: orig ? String(orig.file.name || "") : blob.name, original: !!orig });
+                                      nm: orig ? String(orig.file.name || "") : blob.name, original: !!orig, gray: !!orig && blob !== orig.file });
                     });
                   });
                 }).then(null, function () {});
@@ -1123,7 +1159,7 @@
     return f ? String(f.name || "").replace(/^[A-Z]{6}\+/, "").slice(0, 60) : "";
   }
 
-  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
+  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, grayPixels: grayPixels, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_REBUILD = api;
 })(typeof window !== "undefined" ? window : this);
