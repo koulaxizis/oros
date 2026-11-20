@@ -32,13 +32,22 @@
 // A track: { name, segs: [[pt, ...], ...], wpts: [{lat, lon, ele, t, name}] }
 // pt = [lat, lon, ele | null, t (ms) | null]
 // Optional: trace = "https://www.openstreetmap.org/user/<u>/traces/<n>"
+//           act = "walk" | "hike" | "run" | "bike" | "mtb" | "other"
+//                 (GPX <trk><type>; Strava's names are read too)
+//           wpts[i].photo = "Photos/<id>-<n>.jpg" (GPX <wpt><link>,
+//                 relative to the track file; only that exact form)
+//
+// Wave H5 (v1.2.0): the activity kind, waypoint photos, a speed limit
+// per kind in the recording filter, splits per kilometre and a
+// median-of-5 height filter before the climb hysteresis of recorded
+// tracks (phone GPS heights jitter by several metres).
 //
 // API: window.OrosMapsTracks (module.exports in Node).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var LIM = { chars: 20 * 1024 * 1024, points: 500000, wpts: 2000, name: 120, folder: 60,
     tracks: 2000, tombs: 4000, prev: 300, prevChars: 8000, segs: 500 };
   var DIR = "/internal/Maps/Tracks";
@@ -47,6 +56,20 @@
   var COLOR_RE = /^#[0-9a-f]{6}$/;
   var TRACE_RE = /^https:\/\/(?:www\.openstreetmap\.org|master\.apis\.dev\.openstreetmap\.org)\/user\/[A-Za-z0-9%._~!$'()*+,;=:@-]{1,800}\/traces\/[1-9][0-9]{0,14}$/;
   var T_MIN = Date.UTC(1990, 0, 1), T_MAX = Date.UTC(2200, 0, 1);
+  var ACTS = ["walk", "hike", "run", "bike", "mtb", "other"];
+  // GPX <type> words other apps write (lower case) → our kind
+  var ACT_IN = { walk: "walk", walking: "walk", hike: "hike", hiking: "hike", trekking: "hike", mountaineering: "hike",
+    run: "run", running: "run", trailrun: "run", trail_running: "run", "trail running": "run",
+    bike: "bike", biking: "bike", cycling: "bike", ride: "bike", road_biking: "bike", ebikeride: "bike", gravelride: "bike",
+    mtb: "mtb", mountainbikeride: "mtb", mountain_biking: "mtb", "mountain biking": "mtb", other: "other" };
+  // the fastest believable speed per kind (m/s); beyond it a fix is a jump
+  var ACT_VMAX = { walk: 4, hike: 5, run: 9, bike: 25, mtb: 20, other: 70 };
+  var PHOTO_RE = /^Photos\/[a-z0-9]{6,40}-[0-9]{1,4}\.jpg$/;
+  function actOf(s) {
+    var k = String(s || "").trim().toLowerCase();
+    if (ACTS.indexOf(k) >= 0) return k;
+    return Object.prototype.hasOwnProperty.call(ACT_IN, k) ? ACT_IN[k] : "";
+  }
 
   function isNum(v) { return typeof v === "number" && isFinite(v); }
   function okM(v) { return isNum(v) && v >= 0 && v <= 8.64e15 && Math.floor(v) === v; }
@@ -155,8 +178,11 @@
     var bud = new Budget(), segs = [], wpts = [];
     var meta = blocks(text, "metadata")[0];
     var name = meta ? child(meta.inner, "name") : null;
+    var act = "";
     blocks(text, "trk").forEach(function (trk) {
-      if (!name) name = child(trk.inner.replace(/<(?:[\w-]+:)?trkseg\b[\s\S]*$/, ""), "name");
+      var head = trk.inner.replace(/<(?:[\w-]+:)?trkseg\b[\s\S]*$/, "");
+      if (!name) name = child(head, "name");
+      if (!act) act = actOf(child(head, "type"));
       var ss = blocks(trk.inner, "trkseg");
       if (!ss.length) ss = [{ inner: trk.inner }];
       ss.forEach(function (s) { var seg = gpxPoints(s.inner, "trkpt", bud); if (seg.length) segs.push(seg); });
@@ -169,9 +195,14 @@
     blocks(text, "wpt").forEach(function (w) {
       if (wpts.length >= LIM.wpts) return;
       var x = wptOf(num(attr(w.attrs, "lat")), num(attr(w.attrs, "lon")), num(child(w.inner, "ele")), parseTime(child(w.inner, "time")), child(w.inner, "name"));
-      if (x) wpts.push(x);
+      if (!x) return;
+      var wl = /<(?:[\w-]+:)?link\b([^>]*)>/.exec(w.inner);
+      var ph = wl ? decodeXml(attr(wl[1], "href") || "").trim() : "";
+      if (PHOTO_RE.test(ph)) x.photo = ph;
+      wpts.push(x);
     });
     var out = { name: cleanText(name || "", LIM.name), segs: segs, wpts: wpts };
+    if (act) out.act = act;
     if (meta) {
       var lre = /<(?:[\w-]+:)?link\b([^>]*)>/g, lm;
       while ((lm = lre.exec(meta.inner))) {
@@ -285,11 +316,12 @@
       .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
   }
   function iso(t) { return new Date(t).toISOString().replace(/\.000Z$/, "Z"); }
-  function ptXml(tag, p, name) {
+  function ptXml(tag, p, name, photo) {
     var s = "<" + tag + ' lat="' + p[0] + '" lon="' + p[1] + '">';
     if (p[2] !== null && p[2] !== undefined) s += "<ele>" + p[2] + "</ele>";
     if (p[3]) s += "<time>" + iso(p[3]) + "</time>";
     if (name) s += "<name>" + esc(name) + "</name>";
+    if (photo && PHOTO_RE.test(photo)) s += '<link href="' + esc(photo) + '"><type>image/jpeg</type></link>';
     return s + "</" + tag + ">";
   }
   function writeGpx(tr) {
@@ -299,8 +331,8 @@
       '<gpx version="1.1" creator="orOS Maps" xmlns="http://www.topografix.com/GPX/1/1">\n' +
       "<metadata>" + (name ? "<name>" + esc(name) + "</name>" : "") +
       (tr.trace && TRACE_RE.test(tr.trace) ? '<link href="' + esc(tr.trace) + '"><text>OpenStreetMap</text></link>' : "") + (first ? "<time>" + iso(first) + "</time>" : "") + "</metadata>\n";
-    (tr.wpts || []).forEach(function (w) { out += ptXml("wpt", [w.lat, w.lon, w.ele, w.t], w.name) + "\n"; });
-    out += "<trk>" + (name ? "<name>" + esc(name) + "</name>" : "") + "\n";
+    (tr.wpts || []).forEach(function (w) { out += ptXml("wpt", [w.lat, w.lon, w.ele, w.t], w.name, w.photo) + "\n"; });
+    out += "<trk>" + (name ? "<name>" + esc(name) + "</name>" : "") + (ACTS.indexOf(tr.act) >= 0 ? "<type>" + tr.act + "</type>" : "") + "\n";
     (tr.segs || []).forEach(function (seg) {
       out += "<trkseg>\n";
       seg.forEach(function (p) { out += ptXml("trkpt", p) + "\n"; });
@@ -316,21 +348,35 @@
     }
     return null;
   }
-  function stats(tr) {
+  // Heights of a segment through a median of 5 (null stays null; the
+  // window shrinks evenly at the ends, so the first and last heights
+  // stay as they are).
+  function smoothEle(seg) {
+    return seg.map(function (p, i) {
+      if (p[2] === null) return null;
+      var w = [], h = Math.min(2, i, seg.length - 1 - i);
+      for (var k = i - h; k <= i + h; k++) if (seg[k][2] !== null) w.push(seg[k][2]);
+      w.sort(function (a, b) { return a - b; });
+      return w[w.length >> 1];
+    });
+  }
+  // opt.smooth: heights through smoothEle first (recorded tracks)
+  function stats(tr, opt) {
     var dist = 0, moving = 0, up = 0, down = 0, n = 0, top = 0;
     var s = 90, w = 180, nn = -90, e = -180, t0 = null, t1 = null;
+    var smooth = !!(opt && opt.smooth);
     (tr.segs || []).forEach(function (seg) {
-      var ref = null, win = [];
+      var ref = null, win = [], hs = smooth ? smoothEle(seg) : null;
       for (var i = 0; i < seg.length; i++) {
-        var p = seg[i];
+        var p = seg[i], h = hs ? hs[i] : p[2];
         n++;
         if (p[0] < s) s = p[0]; if (p[0] > nn) nn = p[0];
         if (p[1] < w) w = p[1]; if (p[1] > e) e = p[1];
         if (p[3]) { if (t0 === null || p[3] < t0) t0 = p[3]; if (t1 === null || p[3] > t1) t1 = p[3]; }
-        if (p[2] !== null) {
-          if (ref === null) ref = p[2];
-          else if (p[2] - ref >= 3) { up += p[2] - ref; ref = p[2]; }
-          else if (ref - p[2] >= 3) { down += ref - p[2]; ref = p[2]; }
+        if (h !== null) {
+          if (ref === null) ref = h;
+          else if (h - ref >= 3) { up += h - ref; ref = h; }
+          else if (ref - h >= 3) { down += ref - h; ref = h; }
         }
         if (i === 0) continue;
         var q = seg[i - 1];
@@ -376,10 +422,44 @@
     return res;
   }
 
+  // Splits every `step` metres (default 1000): [{ d: metres covered at
+  // the end of the split, len, ms: time taken (0 without times), up,
+  // down }]. The last split is the rest (shorter). Gaps between
+  // segments add no distance or time. Heights as in stats(…, opt).
+  function splits(tr, step, opt) {
+    step = step > 0 ? step : 1000;
+    var out = [], d = 0, cur = { len: 0, ms: 0, up: 0, down: 0 }, smooth = !!(opt && opt.smooth);
+    function close() { out.push({ d: Math.round(d), len: Math.round(cur.len), ms: Math.round(cur.ms), up: Math.round(cur.up), down: Math.round(cur.down) }); cur = { len: 0, ms: 0, up: 0, down: 0 }; }
+    (tr.segs || []).forEach(function (seg) {
+      var hs = smooth ? smoothEle(seg) : seg.map(function (p) { return p[2]; }), ref = null;
+      for (var i = 0; i < seg.length; i++) {
+        var h = hs[i];
+        if (h !== null) {
+          if (ref === null) ref = h;
+          else if (h - ref >= 3) { cur.up += h - ref; ref = h; }
+          else if (ref - h >= 3) { cur.down += ref - h; ref = h; }
+        }
+        if (!i) continue;
+        var p = seg[i], q = seg[i - 1], dd = distM(q[0], q[1], p[0], p[1]);
+        var dt = p[3] && q[3] && p[3] > q[3] ? p[3] - q[3] : 0;
+        // a point step can cross one or more split marks: share it out
+        while (dd > 0 && cur.len + dd >= step) {
+          var part = step - cur.len, f = part / dd;
+          cur.len = step; cur.ms += dt * f; d += part; dd -= part; dt -= dt * f;
+          close();
+        }
+        cur.len += dd; cur.ms += dt; d += dd;
+      }
+    });
+    if (cur.len >= 1) close();
+    return out;
+  }
+
   // ---------- recording filter ----------
   // fix = { lat, lon, acc (m), ele?, t (ms), spd? }. Returns a point to
   // keep, or null.
-  function accept(last, fix) {
+  // act (optional): the activity kind, for the speed limit (ACT_VMAX).
+  function accept(last, fix, act) {
     if (!fix || !okLat(fix.lat) || !okLon(fix.lon) || !okT(fix.t)) return null;
     if (isNum(fix.acc) && fix.acc > 50) return null;
     var p = mkPt(fix.lat, fix.lon, fix.ele, fix.t);
@@ -389,7 +469,7 @@
     if (dt <= 0 && last[3]) return null;
     var minMove = Math.max(3, (isNum(fix.acc) ? fix.acc : 10) / 2);
     if (d < minMove) return null;
-    if (dt > 0 && d / dt > 70) return null;          // > 250 km/h: a GPS jump
+    if (dt > 0 && d / dt > (ACT_VMAX[act] || 70)) return null;   // faster than the kind can go: a GPS jump
     return p;
   }
 
@@ -423,6 +503,7 @@
   function simplify(tr, tol) {
     var out = { name: tr.name, wpts: (tr.wpts || []).slice(), segs: tr.segs.map(function (s) { return simplifySeg(s, tol); }) };
     if (tr.trace) out.trace = tr.trace;
+    if (tr.act) out.act = tr.act;
     return out;
   }
 
@@ -499,6 +580,7 @@
     var out = { name: tr.name, wpts: (tr.wpts || []).map(function (w) { return Object.assign({}, w); }),
       segs: tr.segs.map(function (s) { return s.map(function (p) { return p.slice(); }); }) };
     if (tr.trace) out.trace = tr.trace;
+    if (tr.act) out.act = tr.act;
     return out;
   }
   // Keep only points [from, to] (inclusive).
@@ -570,6 +652,7 @@
       e.bbox[0] <= e.bbox[2] && e.bbox[1] <= e.bbox[3] ? e.bbox.map(r7) : null;
     o.prev = typeof e.prev === "string" && e.prev.length <= LIM.prevChars && /^[\x3f-\x7e]*$/.test(e.prev) ? e.prev : "";
     o.src = e.src === "import" ? "import" : "rec";
+    if (typeof e.act === "string" && ACTS.indexOf(e.act) >= 0) o.act = e.act;   // H5; absent = not set
     return o;
   }
   function normalizeTracks(data) {
@@ -616,13 +699,16 @@
   function pathOf(id) { return typeof id === "string" && ID_RE.test(id) ? DIR + "/" + id + ".gpx" : null; }
 
   // Index entry for a track (keeps the user fields of `base`).
+  // Recorded tracks get the height filter (stats opt.smooth).
   function entryFor(id, tr, base, m) {
-    var st = stats(tr);
+    var src = (base && base.src) || "rec";
+    var st = stats(tr, { smooth: src === "rec" });
     return normEntry({
       id: id, m: m, name: (base && base.name) || tr.name || "",
       color: base && base.color, folder: base && base.folder, hidden: base && base.hidden,
       start: st.start || (base && base.start) || 0, dur: st.dur, moving: st.moving, dist: st.dist,
-      up: st.up, down: st.down, n: st.n, bbox: st.bbox, prev: preview(tr), src: (base && base.src) || "rec"
+      up: st.up, down: st.down, n: st.n, bbox: st.bbox, prev: preview(tr), src: src,
+      act: (base && base.act) || tr.act
     });
   }
 
@@ -635,7 +721,8 @@
     flatLen: flatLen, at: at, clone: clone, trim: trim, cut: cut, split: split, join: join,
     TRACE_RE: TRACE_RE, timedPoints: timedPoints, traceUrl: traceUrl,
     normEntry: normEntry, normalizeTracks: normalizeTracks, mergeTracks: mergeTracks,
-    pathOf: pathOf, entryFor: entryFor, canon: canon
+    pathOf: pathOf, entryFor: entryFor, canon: canon,
+    ACTS: ACTS, ACT_VMAX: ACT_VMAX, actOf: actOf, PHOTO_RE: PHOTO_RE, smoothEle: smoothEle, splits: splits
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.OrosMapsTracks = api;

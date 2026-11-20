@@ -80,6 +80,10 @@
       "bytes": 413695,
       "ms": 68
     },
+    "clockwork": {
+      "bytes": 286155,
+      "ms": 260
+    },
     "connect4": {
       "bytes": 278527,
       "ms": 53
@@ -233,8 +237,8 @@
       "ms": 57
     },
     "maps": {
-      "bytes": 1340573,
-      "ms": 132
+      "bytes": 1632038,
+      "ms": 298
     },
     "mastermind": {
       "bytes": 168959,
@@ -311,6 +315,10 @@
     "oracle": {
       "bytes": 177151,
       "ms": 48
+    },
+    "orbit": {
+      "bytes": 285537,
+      "ms": 182
     },
     "pad": {
       "bytes": 614822,

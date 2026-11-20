@@ -134,6 +134,15 @@ const PLAY = {
     await p.focus("#view"); await p.keyboard.press("Digit1");
     for (let i = 0; i < 10 && !(await inProg()); i++) await p.waitForTimeout(300);
   },
+  // Orbit garden: close the first-run tour, open the first garden,
+  // choose the outer ring's top bed and plant a thorn bush
+  orbit: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await tap(p, ".sq-card"); await p.waitForTimeout(400);
+    await p.focus("#view"); await p.keyboard.press("ArrowRight"); await p.keyboard.press("Digit1");
+    for (let i = 0; i < 10 && !(await inProg()); i++) await p.waitForTimeout(300);
+  },
   // Star Chart: close the first-run tour, open the Observatory (T) and
   // buy a spyglass (the first row: 13 starlight, the start has 25)
   starchart: async (p, inProg) => {
@@ -141,6 +150,16 @@ const PLAY = {
     await p.keyboard.press("Escape"); await p.waitForTimeout(300);
     await p.focus("#view"); await p.keyboard.press("t"); await p.waitForTimeout(300);
     await p.click('#dlg [data-u="spy"] button'); await p.waitForTimeout(600);
+    for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(500);
+  },
+  // Clockwork Workshop: close the first-run tour, choose the cell right
+  // of the water wheel (Enter) and put a furnace there (key 3: 20 coins,
+  // the start has 40)
+  clockwork: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await p.focus("#view"); await p.waitForTimeout(200);
+    await p.keyboard.press("3"); await p.waitForTimeout(600);
     for (let i = 0; i < 20 && !(await inProg()); i++) await p.waitForTimeout(500);
   },
   // Roots: close the first-run tour, then end the first turn

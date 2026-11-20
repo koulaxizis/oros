@@ -8,7 +8,7 @@ const path = require("path");
 const read = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
 
 const IDLE = ["hive", "lighthouse", "starchart"];
-const TD = ["ridge", "maze", "caravan"];
+const TD = ["ridge", "maze", "caravan", "orbit"];
 
 function body(src, name) {
   const i = src.indexOf("  function " + name + "(");

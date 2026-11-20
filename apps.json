@@ -1232,11 +1232,27 @@
       "type": "internal"
     },
     {
+      "id": "orbit",
+      "name": "Orbit garden",
+      "category": "Games",
+      "icon": "orbit",
+      "url": "orbit/",
+      "type": "internal"
+    },
+    {
       "id": "starchart",
       "name": "Star Chart",
       "category": "Games",
       "icon": "starchart",
       "url": "starchart/",
+      "type": "internal"
+    },
+    {
+      "id": "clockwork",
+      "name": "Clockwork Workshop",
+      "category": "Games",
+      "icon": "clockwork",
+      "url": "clockwork/",
       "type": "internal"
     },
     {

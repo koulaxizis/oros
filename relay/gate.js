@@ -421,7 +421,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_change_card",
-    description: "Changes one card's text, notes, due date (\"\" clears it), plan (start, milestone, depends_on: the Timeline's Gantt) or labels (the full new list of label names; [] clears them), adds subtasks at the end (add_subtasks) and ticks, unticks or rewords subtasks by id or exact text (change_subtasks); subtasks are never removed here. Read the whole card (notes, subtasks with ids and [x] when done) with read_item on its ref from search_data. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices.",
+    description: "Changes one card's text, notes, due date (\"\" clears it), plan (start, milestone, depends_on: the Timeline's Gantt) or labels (the full new list of label names; [] clears them), adds subtasks at the end (add_subtasks) ticks, unticks or rewords subtasks by id or exact text (change_subtasks) and removes subtasks by id or exact text (remove_subtasks: a deletion, so it waits for the owner's Delete on a device where orOS is on screen, one question per call with the subtasks' texts; send them all in one call). Read the whole card (notes, subtasks with ids and [x] when done) with read_item on its ref from search_data. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices.",
     inputSchema: {
       type: "object",
       properties: {
@@ -444,7 +444,8 @@ export const TOOLS = [
           },
           required: ["subtask"],
           additionalProperties: false
-        } }
+        } },
+        remove_subtasks: { type: "array", minItems: 1, maxItems: 100, items: { type: "string" }, description: "Subtasks to remove, each by its id or exact text. The owner confirms on the device first and can undo it." }
       },
       required: ["board", "card"],
       additionalProperties: false
@@ -752,7 +753,7 @@ export function cancelPlan(pend, args, now) {
 // the device asks the owner before it runs one (gate.js askQueued).
 export function isDeletion(name, a) {
   const o = a && typeof a === "object" ? a : {};
-  return name === "budget_delete" || (name === "change_item" && (o.action === "delete" || (Array.isArray(o.changes) && o.changes.some((c) => c && c.action === "delete"))));
+  return name === "budget_delete" || (name === "kanban_change_card" && Array.isArray(o.remove_subtasks) && o.remove_subtasks.length > 0) || (name === "change_item" && (o.action === "delete" || (Array.isArray(o.changes) && o.changes.some((c) => c && c.action === "delete"))));
 }
 // search_data while closed: every word must match the title, text or
 // labels; apps / label as live; at most 200 results.
