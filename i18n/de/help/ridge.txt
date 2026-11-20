@@ -38,7 +38,7 @@ Die nahe Insel hat Schwaden und Läufer und eine Nebelbank am Ende ihres letzten
 - Leicht: 30 Herzen und mehr Münzen; Normal: 20 Herzen; Schwer: 10 Herzen und stärkerer Nebel.
 - Sterne: drei mit neun Zehnteln der Herzen, zwei mit der Hälfte, einer für jede gewonnene Nacht. Die Karte behält die besten Sterne jedes Grats.
 - Geht eine Nacht verloren, bringt dich `Noch einmal ab Welle` an den Anfang dieser Welle zurück, mit den Türmen und Münzen von damals.
-- Die laufende Nacht bleibt auf diesem Gerät und öffnet sich angehalten dort, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` auf der Karte löscht sie auf allen Geräten. Windmühlengrat steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+- Die laufende Nacht bleibt auf diesem Gerät und öffnet sich angehalten dort, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` auf der Karte löscht sie auf allen Geräten und beendet die laufende Nacht. Windmühlengrat steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
 
 ## Tastatur
 - Die Pfeiltasten wählen einen Sockel; [[Escape]] lässt ihn los.

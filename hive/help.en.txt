@@ -50,12 +50,12 @@ Every different honey kind the hive makes in a year adds 5% to all its honey tha
 When you open Hive after a while, a card shows how long you were away, how many months passed on the hillside and the honey made. For the first 7 days away the hive works in full; after that it goes on at half pace. It never stops, it only slows.
 
 ## Records and sync
-`Records` shows the year, all the honey made, the honey kinds of this year, the patches, the bees, the hillside, the hives founded, the traits and the apiary. `The hum of the hive` there turns on a soft hum that follows the bees at work; it is off at first and silent in winter. The hive syncs between your devices through [orOS sync](help:t/sync): it is the same hive on your phone and your computer. If two devices play at the same time, the hive that is further ahead is kept, and the other device's last minutes are lost. A purchase is saved a few seconds after you make it, and is sent at most every 5 minutes and when you leave. `Start over` in Records begins a new hive on every device, with `Undo` for a few seconds. Hive is in the Idle group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+`Records` shows the year, all the honey made, the honey kinds of this year, the patches, the bees, the hillside, the hives founded, the traits and the apiary. `The hum of the hive` there turns on a soft hum that follows the bees at work; it is off at first and silent in winter. The hive syncs between your devices through [orOS sync](help:t/sync): it is the same hive on your phone and your computer. If two devices play at the same time, the hive that is further ahead is kept, and the other device's last minutes are lost. A purchase is saved a few seconds after you make it, and is sent at most every 5 minutes and when you leave. `Start over` in Records begins a new hive on every device, once you confirm; it cannot be undone. The ? button at the top opens How to play again at any time. Hive is in the Idle group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
 
 ## Keyboard
 - Arrow keys choose a patch on the hillside; [[Enter]] moves to the panel and [[Escape]] lets go of the patch.
 - [[1]] to [[8]]: plant the flowers in the order the panel shows them, on the chosen patch.
-- [[W]]: Swarm (in May, when the colony is ready). [[T]]: tend the chosen patch. [[U]]: Improvements. [[S]]: Records. [[M]]: sound. [[Z]]: undo the last purchase.
+- [[W]]: Swarm (in May, when the colony is ready). [[T]]: tend the chosen patch. [[U]]: Improvements. [[S]]: Records. [[?]]: How to play. [[M]]: sound. [[Z]]: undo the last purchase.
 
 ## Tips
 - Early on, wildflowers and orange blossom pay for themselves fastest. Thyme is worth it once the hive has bees to spare.
