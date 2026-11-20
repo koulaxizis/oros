@@ -1829,6 +1829,7 @@ var PRECACHE_URLS = [
   "maps/entrances.js",
   "maps/presets-data.js",
   "maps/tracks-core.js",
+  "maps/follow-core.js",
   "maps/tracks.js",
   "maps/heat-core.js",
   "maps/heat.js",
