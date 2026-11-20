@@ -622,16 +622,20 @@
   // placement Scribus gave it (ext.place): its own scale and offset,
   // fit, or stretched to the frame. A stretch scales the height on its
   // own (ext.iscy, see designkit/render.js imageRect). Without
-  // ext.place nothing changes.
-  function placePicture(it) {
+  // ext.place nothing changes. ow, oh: the picture's own pixel size
+  // when the stored copy is smaller (designkit/assets.js MAX_SIDE):
+  // Scribus's scale is per pixel of the original, so it grows by the
+  // same factor and the picture keeps its printed size.
+  function placePicture(it, ow, oh) {
     var p = it.ext && it.ext.place;
     if (!Array.isArray(p) || !it.iw || !it.ih) return;
     var sx = p[1] > 0 ? p[1] : 1, sy = p[2] > 0 ? p[2] : sx;
+    var kx = ow > it.iw ? ow / it.iw : 1, ky = oh > it.ih ? oh / it.ih : kx;
     delete it.ext.iscy;
     if (p[0] === 1) { it.fit = "fit"; return; }
     it.fit = "custom";
     if (p[0] === 2) { sx = it.w / it.iw; sy = it.h / it.ih; it.ix = 0; it.iy = 0; }
-    else { it.ix = (p[3] || 0) * sx; it.iy = (p[4] || 0) * sy; }
+    else { it.ix = (p[3] || 0) * sx; it.iy = (p[4] || 0) * sy; sx *= kx; sy *= ky; }
     it.isc = sx;
     if (Math.abs(sy - sx) > 1e-9 * sx) it.ext.iscy = sy;
   }

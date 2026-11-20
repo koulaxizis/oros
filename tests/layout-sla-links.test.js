@@ -73,6 +73,23 @@ test("placePicture(): own scale and offset, fit, stretch; the picture lands wher
   assert.deepEqual(f, { t: "img", w: 10, h: 10, iw: 5, ih: 5, fit: "fill" });
 });
 
+test("placePicture(): a stored copy smaller than the original keeps the printed size (PORT, Chris's cover 5670 px)", () => {
+  const res = S.convert(SLA, { now: 5 });
+  const [a, , , d] = imgs(res);
+  // the original is 3200 × 1600 px, the stored copy half of that
+  a.iw = 1600; a.ih = 800; S.placePicture(a, 3200, 1600);
+  const ra = R.imageRect(a);
+  assert.ok(Math.abs(ra.w - 800) < 1e-9 && Math.abs(ra.h - 400) < 1e-9, "3200 px × 0.25 pt, drawn from 1600 px");
+  assert.deepEqual([ra.x, ra.y], [-10, 3], "the offset is in the original's pixels × its scale");
+  d.iw = 1600; d.ih = 800; S.placePicture(d, 3200, 1600);
+  const rd = R.imageRect(d);
+  assert.ok(Math.abs(rd.w - 1280) < 1e-9 && Math.abs(rd.h - 480) < 1e-9);
+  // the same size as the original (or none given): as before
+  const [b2] = imgs(S.convert(SLA, { now: 6 }));
+  b2.iw = 1600; b2.ih = 800; S.placePicture(b2, 1600, 800);
+  assert.deepEqual(R.imageRect(b2), { x: -10, y: 3, w: 400, h: 200 });
+});
+
 test("uniform() returns to one scale; names compare loosely", () => {
   const it = { ext: { iscy: 2 } };
   R.uniform(it);

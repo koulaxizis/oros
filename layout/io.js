@@ -1187,7 +1187,7 @@
         var it = M.find(doc.items, itemId);
         if (!it) return;
         it.a = r.id; it.iw = r.w; it.ih = r.h;
-        placeAs(it);
+        placeAs(it, r.ow, r.oh);
       });
     }
     res.images.forEach(function (im) {
@@ -1213,7 +1213,7 @@
       return { placed: found, missing: left };
     });
   }
-  var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it) { window.LY_SLA.placePicture(it); };
+  var nameKey = function (n) { return window.LY_SLA.nameKey(n); }, placeAs = function (it, ow, oh) { window.LY_SLA.placePicture(it, ow, oh); };
   function picsByName(pics) {
     var out = {};
     (pics || []).forEach(function (f) { var k = nameKey(f.name); if (k && !out[k]) out[k] = f; });
@@ -1240,7 +1240,7 @@
           var r = it.t === "img" && !it.a && it.nm ? got[nameKey(it.nm)] : null;
           if (!r) return;
           it.a = r.id; it.iw = r.w; it.ih = r.h;
-          placeAs(it);
+          placeAs(it, r.ow, r.oh);
           n++;
         });
         return n > 0;
