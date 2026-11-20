@@ -38,4 +38,6 @@
         <item quantity="other">%d Updates bereit</item>
     </plurals>
     <string name="support">Die Projekte unterstützen</string>
+    <string name="notes_off">Update-Hinweise sind aus, daher siehst du Updates nur hier.</string>
+    <string name="notes_turn_on">Einschalten</string>
 </resources>

@@ -576,6 +576,7 @@
     "maps/notes.js",
     "maps/offline.js",
     "maps/osm-callback.js",
+    "maps/outdoor.js",
     "maps/overlays-core.js",
     "maps/package-ui.js",
     "maps/planner.js",
@@ -586,6 +587,8 @@
     "maps/tools-core.js",
     "maps/tools.js",
     "maps/tracks.js",
+    "maps/trails-tab.js",
+    "maps/trails.js",
     "maps/transit.js"
    ]
   },
@@ -593,6 +596,12 @@
    "app": "mastermind",
    "files": [
     "mastermind/mastermind.js"
+   ]
+  },
+  {
+   "app": "maze",
+   "files": [
+    "maze/maze.js"
    ]
   },
   {

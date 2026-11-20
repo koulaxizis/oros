@@ -192,7 +192,20 @@
     (rule && rule["do"] || []).forEach(function (a) {
       if (a.a === "pause" && typeof root.__orosPauseAll === "function") { try { root.__orosPauseAll(); } catch (e) {} }
       if (a.a === "sound") chime();
+      if (a.a === "focus") focusStep(a);
     });
+  }
+  // Focus F4 (D5): turn a focus mode on or off. At most once a minute on
+  // this device, so two rules that start each other's mode cannot ping-pong.
+  var focusAt = 0;
+  function focusStep(a) {
+    var F = root.orosFocus, now = Date.now();
+    if (!F || typeof F.start !== "function" || now - focusAt < 60000) return;
+    focusAt = now;
+    try {
+      if (a.mode === "off") F.stop();
+      else F.start(a.mode, { until: a.min ? now + a.min * 60000 : 0 });
+    } catch (e) {}
   }
   var audio = null;
   function chime() {
@@ -499,7 +512,7 @@
   }
 
   root.orosAutomations = {
-    VERSION: "1.3.0",
+    VERSION: "1.4.0",
     rules: function () { return read(); },
     save: save,
     tick: tick,

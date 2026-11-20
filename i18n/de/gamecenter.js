@@ -129,6 +129,7 @@ orosPack("de", "gamecenter", {
  "lighthouse": "Leuchtturminsel",
  "starchart": "Sternkarte",
  "ridge": "Windmühlengrat",
+ "maze": "Laternenlabyrinth",
  "chal.back": "Wieder aufnehmen",
  "chal.backed": "{g} kann ab morgen wieder Herausforderungen bekommen.",
  "chal.done": "Geschafft",

@@ -88,16 +88,25 @@
   EVENT_APP["forms.answer"] = "forms"; EVENT_APP["invoices.paid"] = EVENT_APP["invoices.overdue"] = "invoices";
   EVENT_APP["kanban.done"] = "kanban"; EVENT_APP["stock.low"] = "stock"; EVENT_APP["scanpdf.signed"] = "scanpdf";
   EVENT_APP["transfer.received"] = "transfer";
+  // Focus modes F4 (FOCUS-1, D5): a mode starts / ends on this device
+  // while orOS is open (focus/core.js; key focus:<mode>:<run>:start|end,
+  // text = the mode's name, so "with the word" picks one mode).
+  EVENTS.push("focus.start", "focus.end");
+  EVENT_APP["focus.start"] = EVENT_APP["focus.end"] = "settings";
   var OVERDUE_DAYS = 7;                          // invoices.overdue: only documents this many days late at most
   var SOON_MIN = 10, SOON_MAX = 120;
   var WORD_MAX = 60;
   var SIG_KEY_MAX = 200;
-  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track", "pause", "sound", "card", "crm", "record"];
+  var ACTIONS = ["notify", "todo", "event", "note", "mail", "budget", "open", "timer", "ask", "push", "hook", "file", "print", "track", "pause", "sound", "card", "crm", "record", "focus"];
   // SB2: steps this device does by itself, with no tap and no data
   // written anywhere: pause what plays in orOS (music, podcasts, radio,
   // Sound Mixer) and a short chime. Every device the rule runs on does
   // them once per run.
-  var LOCAL = { pause: true, sound: true };
+  // Focus F4 (D5): focus = turn a focus mode on (mode = its id, min =
+  // minutes, 0 = until turned off) or off (mode "off"); the mode then
+  // holds on every device (focus D1).
+  var LOCAL = { pause: true, sound: true, focus: true };
+  var FOCUS_MAX_MIN = 1440;
   var FILE_ACTS = { file: true, print: true };
   // Wave A5: steps that leave the device by themselves (AUTO-2 "each
   // address is confirmed once"): push = ntfy or Gotify, hook = a JSON
@@ -271,6 +280,13 @@
     }
     if (a === "file") return FILE_TO.indexOf(x.to) >= 0 ? { a: a, to: x.to } : null;
     if (a === "print") return { a: a };
+    if (a === "focus") {
+      var fm = typeof x.mode === "string" && /^(off|dnd|sleep|work|personal|m_[a-z0-9]{1,24})$/.test(x.mode) ? x.mode : "dnd";
+      var fo = { a: a, mode: fm };
+      var mn = int(x.min, 0, FOCUS_MAX_MIN);
+      if (fm !== "off" && mn) fo.min = mn;
+      return fo;
+    }
     if (LOCAL[a]) return { a: a };
     if (OUT[a]) {
       var url = cleanUrl(x.url);
@@ -601,6 +617,8 @@
       "ev.invoices.overdue": "When an invoice becomes overdue", "ev.kanban.done": "When a card reaches a done column in Kanban",
       "ev.stock.low": "When a product runs low in Stock", "ev.scanpdf.signed": "When a signature request comes back signed",
       "ev.transfer.received": "When files arrive through Transfer",
+      "ev.focus.start": "When a focus mode starts", "ev.focus.end": "When a focus mode ends",
+      "act.focus": "turn on the focus mode {mode}", "act.focusMin": "turn on the focus mode {mode} for {n} min", "act.focusOff": "turn the focus mode off",
       "act.card": "add a card to Kanban", "act.crm": "log it in CRM", "act.record": "add a record to Base",
       "tpl.form-answer": "New form answer", "tpl.form-answer.text": "New answer: {text}",
       "tpl.invoice-paid": "Paid invoice into CRM", "tpl.invoice-paid.text": "Paid: {text}",
@@ -667,6 +685,8 @@
       "ev.invoices.overdue": "Όταν ένα τιμολόγιο γίνεται ληξιπρόθεσμο", "ev.kanban.done": "Όταν μια κάρτα φτάνει σε στήλη ολοκλήρωσης στο Kanban",
       "ev.stock.low": "Όταν ένα προϊόν πέφτει στο όριο στο Απόθεμα", "ev.scanpdf.signed": "Όταν ένα αίτημα υπογραφής επιστρέφει υπογεγραμμένο",
       "ev.transfer.received": "Όταν έρχονται αρχεία μέσω Μεταφοράς",
+      "ev.focus.start": "Όταν ξεκινά μια λειτουργία συγκέντρωσης", "ev.focus.end": "Όταν τελειώνει μια λειτουργία συγκέντρωσης",
+      "act.focus": "άνοιγμα της λειτουργίας συγκέντρωσης {mode}", "act.focusMin": "άνοιγμα της λειτουργίας συγκέντρωσης {mode} για {n} λεπτά", "act.focusOff": "κλείσιμο της λειτουργίας συγκέντρωσης",
       "act.card": "νέα κάρτα στο Kanban", "act.crm": "καταγραφή στο CRM", "act.record": "νέα εγγραφή στη Βάση",
       "tpl.form-answer": "Νέα απάντηση σε φόρμα", "tpl.form-answer.text": "Νέα απάντηση: {text}",
       "tpl.invoice-paid": "Εξοφλημένο τιμολόγιο στο CRM", "tpl.invoice-paid.text": "Εξοφλήθηκε: {text}",
@@ -806,12 +826,28 @@
     try { return new Intl.NumberFormat(loc, { minimumFractionDigits: v % 1 ? 2 : 0, maximumFractionDigits: 2 }).format(v); }
     catch (e) { return String(v); }
   }
+  // A focus mode's shown name (the shell's or, in the app, its parent's
+  // window.orosFocus; else the id).
+  function focusName(id) {
+    var F = null;
+    try { F = root && (root.orosFocus || (root.parent && root.parent !== root && root.parent.orosFocus)); } catch (e) { F = null; }
+    try {
+      var l = F && typeof F.list === "function" ? F.list() : [];
+      for (var i = 0; i < l.length; i++) if (l[i].id === id) return l[i].name;
+    } catch (e) {}
+    return id;
+  }
   function actText(a, lang, appName) {
     if (a.a === "todo") return sub(w(lang, "act.todo"), { n: a.items.length });
     if (a.a === "open") return sub(w(lang, "act.open"), { app: appName ? appName(a.app) : a.app });
     if (a.a === "timer") return sub(w(lang, "act.timer"), { n: a.min });
     if (a.a === "track") return a.stop ? w(lang, "act.trackStop") : sub(w(lang, "act.track"), { t: a.title });
     if (a.a === "file") return sub(w(lang, "act.file"), { app: appName ? appName(a.to) : a.to });
+    if (a.a === "focus") {
+      if (a.mode === "off") return w(lang, "act.focusOff");
+      var mname = focusName(a.mode);
+      return sub(w(lang, a.min ? "act.focusMin" : "act.focus"), { mode: mname, n: a.min || 0 });
+    }
     if (OUT[a.a]) return sub(w(lang, "act." + a.a), { host: hostOf(a.url) });
     return a.a === "notify" ? "" : w(lang, "act." + a.a);
   }
@@ -940,7 +976,7 @@
     LOCAL: LOCAL, GOALS: GOALS, SOON_MIN: SOON_MIN, SOON_MAX: SOON_MAX, amountText: amountText,
     EVENTS: EVENTS.slice(), EVENT_APP: EVENT_APP, bridgeEvent: bridgeEvent, FILE_TO: FILE_TO.slice(), FILE_ACTS: FILE_ACTS, cleanIf: cleanIf, inWindow: inWindow, matches: matches, fold: fold,
     templates: templates, fromTemplate: fromTemplate, ymdOf: ymdOf, from: from, STRINGS: STRINGS,
-    CRM_KINDS: CRM_KINDS.slice(), OVERDUE_DAYS: OVERDUE_DAYS, overdueList: overdueList
+    CRM_KINDS: CRM_KINDS.slice(), OVERDUE_DAYS: OVERDUE_DAYS, overdueList: overdueList, FOCUS_MAX_MIN: FOCUS_MAX_MIN
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   if (root) root.OrosAutoCore = API;

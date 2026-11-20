@@ -42,7 +42,7 @@ function loadSW(store) {
     },
     skipWaiting() {},
     crypto: globalThis.crypto,
-    addEventListener(type, fn) { handlers[type] = fn; }
+    addEventListener(type, fn) { const prev = handlers[type]; handlers[type] = prev ? (e) => { prev(e); fn(e); } : fn; }   // every listener, as in a real worker
   };
   const ctx = {
     self, caches: fakeCaches(store), URL, Response, console: { warn() {}, log() {} },

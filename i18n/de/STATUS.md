@@ -2,8 +2,8 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 49051 of 49057 (99%)
-- Help pages: 160 of 160 (100%)
+- Strings: 49416 of 49422 (99%)
+- Help pages: 161 of 161 (100%)
 - Shown in the language list: yes
 
 Apps marked "English for now" do not load language packs yet: their
@@ -19,7 +19,7 @@ en and el); translators change them there, not in a pack.
 | assistant | 100% | 2147 / 2147 |
 | atelier | 100% | 1429 / 1429 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 322 / 322 |
+| automations | 100% | 332 / 332 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
@@ -65,7 +65,7 @@ en and el); translators change them there, not in a pack.
 | flow | 100% | 75 / 75 |
 | forms | 100% | 381 / 381 |
 | g2048 | 100% | 55 / 55 |
-| gamecenter | 100% | 164 / 164 |
+| gamecenter | 100% | 165 / 165 |
 | garage | 100% | 437 / 437 |
 | gomoku | 100% | 58 / 58 |
 | google-import | 100% | 9 / 9 |
@@ -89,8 +89,9 @@ en and el); translators change them there, not in a pack.
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 504 / 504 |
 | mancala | 100% | 61 / 61 |
-| maps | 100% | 1286 / 1286 |
+| maps | 100% | 1495 / 1495 |
 | mastermind | 100% | 74 / 74 |
+| maze | 100% | 123 / 123 |
 | meals | 100% | 466 / 466 |
 | memory | 100% | 77 / 77 |
 | mindmap | 100% | 285 / 285 |
@@ -135,10 +136,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 1999 / 1999 |
+| settings | 100% | 2013 / 2013 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1533 / 1533 |
+| shell | 100% | 1541 / 1541 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

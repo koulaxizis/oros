@@ -1216,6 +1216,14 @@
       "type": "internal"
     },
     {
+      "id": "maze",
+      "name": "Lantern maze",
+      "category": "Games",
+      "icon": "maze",
+      "url": "maze/",
+      "type": "internal"
+    },
+    {
       "id": "starchart",
       "name": "Star Chart",
       "category": "Games",

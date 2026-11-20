@@ -104,10 +104,16 @@
     if (!base) return;
     var my = s.req = ++seq;
     s.busy = true;
-    fetch(RC.routeUrl(base, [a, b], { profile: s.mode })).then(function (r) {
-      if (!r.ok) throw new Error(r.status);
-      return r.json();
-    }).then(function (j) {
+    function osrm() {
+      return fetch(RC.routeUrl(base, [a, b], { profile: s.mode })).then(function (r) {
+        if (!r.ok) throw new Error(r.status);
+        return r.json();
+      });
+    }
+    // Wave H2: Walk / Bike parts follow the route type chosen in
+    // Directions (BRouter), else the standard router.
+    var od = H.outdoorFetch ? H.outdoorFetch(s.mode, [a, b]) : null;
+    (od ? od.catch(osrm) : osrm()).then(function (j) {
       if (s.req !== my || segs[i] !== s) return;
       s.busy = false;
       var line = PC.lineFromOsrm(j);
@@ -407,6 +413,19 @@
       });
     }
   }
+
+  // Wave H3 (trails-tab.js): the elevation along any line [[lat, lon]…],
+  // from the same tiles. → Promise of { samples: [{ lat, lon, d }], vals,
+  // climb: { up, down, min, max } | null }
+  H.elevationOf = function (line) {
+    if (!online()) return Promise.reject(new Error("offline"));
+    var samples = PC.sample(line, 30, 300);
+    if (samples.length < 2) return Promise.reject(new Error("short"));
+    return Promise.all(samples.map(function (p) {
+      var x = PC.tileFor(p.lat, p.lon);
+      return tilePixels(x).then(function (d) { var o = (x.py * 256 + x.px) * 4; return PC.decode(d[o], d[o + 1], d[o + 2]); });
+    })).then(function (vals) { return { samples: samples, vals: vals, climb: PC.climb(vals) }; });
+  };
 
   window.__orosMapsPlanner = {
     setMode: setMode, add: add, removeAt: removeAt, moveTo: moveTo, clear: clearAll, save: save,

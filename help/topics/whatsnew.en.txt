@@ -3,6 +3,27 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.94.00
+- **Trails in Maps › Discover.** See the marked hiking, cycling and mountain bike routes around you, open one to see the whole route, its climb and walking time, and save it to My tracks or as GPX. See [Maps](help:a/maps).
+
+## Version 7.93.00
+- **Focus modes: a notification summary and quiet pushes.** Pick apps whose notifications wait quietly in the bell and the times one notice sums them up; when a mode ends, one notice says what waited. Notifications kept quiet no longer pop up later. With orOS closed, a quiet app's notification arrives without sound. In Automations, rules can follow a mode starting or ending, and the step `Focus mode` turns one on or off. See [Focus modes](help:t/notifications).
+
+## Version 7.92.00
+- **Walking and cycling routes in Maps.** Directions can plan for hiking, touring, road, gravel or mountain bikes and quiet roads, and shows the climb, an elevation profile and what the way is made of. Walking time counts the climb too. See [Maps](help:a/maps).
+
+## Version 7.91.00
+- **Focus modes hide what distracts.** A mode can hide the widgets and desktop and Dock icons you choose while it runs; the menu and search still find every app. The top-bar button shows the mode's icon. Settings › Notifications › `Focus modes` › `Hide while it is on`. See [Focus modes](help:t/notifications).
+
+## Version 7.90.01
+- **Your apps no longer come back by themselves after a restart.** orOS now starts on the desktop. If you liked it, switch on `Reopen my apps after a restart` in Settings › System.
+
+## Version 7.90.00
+- **Maps for hiking and cycling.** The layers button has hiking, cycling and mountain bike routes from Waymarked Trails and the CyclOSM cycling map. Long-press right on a path, track or street › `About this path` tells you in plain words what it is: surface, hiking difficulty from T1 to T6, MTB difficulty, how visible it is, who may use it and the marked routes it belongs to. Offline maps now draw cycleways, tracks and footpaths in their own colours. The first step of a bigger upgrade for walking and cycling.
+
+## Version 7.89.00
+- **New game: Lantern maze.** The second tower defense game: at night shadows slip in at the town gate and walk across an old square to the fountain. There is no road: you build the maze yourself with crates, lanterns, flash lamps, mirrors and bells on any free tile. The shadows always take the darkest way, so a lantern both hurts them and steers them, and moths look for the brightest way instead. The dotted line always shows where they will walk, and a block that would close the last way is refused. Real time with pause and 1x/2x/3x, a wave only starts when you call it. Four squares in the Harbour quarter, three difficulties and stars that sync between your devices. In the Tower defense group of the Game Center.
+
 ## Version 7.88.00
 - **New game: Lighthouse Island.** A calm idle game: keep the light burning on a small Aegean island. At night the lamp guides the ships on the sea routes it reaches and each one pays its dues; by day the harbour, the fishing boats and the tavern earn. The forecast at the top shows the weather of the next days, so you choose which defence to build first: a fog horn, storm shutters, a rain hood or a breakwater. The light never goes out and no ship is ever wrecked. Once the lens is built you can hand the light to an apprentice and sail to a farther island, keeping one trait for good, while the old lighthouses on the sea chart add coins. It goes on while orOS is closed (full pace for 7 days, then half), with no notifications and nothing to collect, and it syncs between your devices. In the Idle group of the Game Center.
 

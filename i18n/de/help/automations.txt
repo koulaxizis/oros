@@ -38,6 +38,10 @@ Drei weitere Schritte öffnen eine App mit ausgefüllten Angaben, und nichts wir
 
 Zwei Schritte geschehen von selbst, ohne Tippen: `Wiedergabe pausieren` hält an, was in orOS läuft (Musik, Podcasts, Radio, Soundmixer), und `Einen Ton spielen` spielt einen kurzen Klang (nie, solange ein Fokus-Modus Automationen still hält). Sie geschehen auf jedem Gerät, auf dem die Regel läuft, auch wenn ein anderes Gerät die Mitteilung schon gezeigt hat. Die fertigen Regeln `Ruhe vor einem Termin` und `Umsatzziel erreicht` zeigen beides.
 
+### Fokus-Modi
+- `Wenn ein Fokus-Modus beginnt` und `Wenn ein Fokus-Modus endet` folgen den [Fokus-Modi](help:t/notifications), solange orOS auf diesem Gerät offen ist. `{text}` ist der Name des Modus, also wählt `Nur wenn darin steht` mit einem Namen einen Modus.
+- Der Schritt `Fokus-Modus` geschieht ebenfalls von selbst: Er schaltet den gewählten Modus ein (für die eingestellten Minuten oder mit 0 bis du ihn ausschaltest) oder schaltet den laufenden Modus aus. Der Modus gilt dann auf allen deinen Geräten. Er läuft auf einem Gerät höchstens einmal pro Minute, damit zwei Regeln, die gegenseitig ihren Modus starten, nicht endlos kreisen.
+
 ## Ordner auf deinem Computer
 Läuft [orOS Bridge](https://github.com/koulaxizis/oros-bridge/releases/latest) (kostenlos, Windows und Linux) auf deinem Computer, kann eine Regel einem Ordner dort folgen, zum Beispiel dem Ordner, in den dein Scanner speichert, oder deinen Downloads.
 - Drücke `Computer-Ordner`, hake `Ordner auf diesem Computer beobachten` an und verbinde dich mit dem Code, den Bridge zeigt. Dann öffnet `Ordner hinzufügen…` die Ordnerauswahl auf dem Computer; nur du wählst die Ordner, und `Nicht mehr beobachten` gibt einen frei.
