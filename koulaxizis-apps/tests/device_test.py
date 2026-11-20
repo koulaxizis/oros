@@ -128,7 +128,7 @@ def search_and_pages():
     shot("app-page")
     # uiautomator lists only the visible part of the page: scroll down to its Details.
     for _ in range(10):
-        if any(t.startswith("Package: tech.nulljsfx.remote.mixers") for t in texts(dump())):
+        if any("Package: tech.nulljsfx.remote.mixers" in t for t in texts(dump())):
             break
         swipe(True)
         time.sleep(1)
