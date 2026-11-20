@@ -171,6 +171,10 @@ test("publish_titles: status, people, formats, query by ISBN, tombstones", () =>
   assert.deepEqual(G.publishTitles(raw, { status: "published" }).data.titles.map((t) => t.id), ["t1"]);
   assert.deepEqual(G.publishTitles(raw, { query: "9786185321001" }).data.titles.map((t) => t.id), ["t1"]);
   assert.equal(G.publishTitles(raw, { status: "sold" }).ok, false);
+  // PUB-NODATA: a device without the Publishing store must not answer "0 titles"
+  const none = G.publishTitles(null, {});
+  assert.equal(none.ok, false);
+  assert.match(none.err, /no data on this device/);
 });
 
 test("tools per app and the relay a gate is made on", () => {
