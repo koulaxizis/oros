@@ -1636,9 +1636,11 @@
         if (JSON.stringify(v.ids) !== JSON.stringify(old)) { c0.labels = v.ids; groups.push("l"); }
       }
       // Subtasks (KB-SUB): add new ones at the end, tick, untick or reword them by id
-      // or exact text. Never removed here; undo takes back only these.
-      var sa = [], sc = {};
-      if (args.add_subtasks !== undefined || args.change_subtasks !== undefined) {
+      // or exact text; KB-SUBDEL (Chris 2026-11-20): remove them by id or exact
+      // text (a deletion: the device asks the owner first, kanbanChange). Undo
+      // takes back only these.
+      var sa = [], sc = {}, sr = [];
+      if (args.add_subtasks !== undefined || args.change_subtasks !== undefined || args.remove_subtasks !== undefined) {
         if (!Array.isArray(c0.subtasks)) c0.subtasks = [];
         var subs = c0.subtasks, addS = args.add_subtasks, chk = args.change_subtasks;
         if (addS !== undefined) {
@@ -1670,20 +1672,44 @@
             if (moved) { sc[st0.id] = was0; st0.m = now; }
           }
         }
+        var rmS = args.remove_subtasks;
+        if (rmS !== undefined) {
+          if (!Array.isArray(rmS) || !rmS.length || rmS.length > KB_SUBS_MAX) return { ok: false, err: "remove_subtasks must hold 1 to " + KB_SUBS_MAX + " entries." };
+          var rmIds = [];
+          for (i = 0; i < rmS.length; i++) {
+            var rk = String(rmS[i] == null ? "" : rmS[i]).trim(), rt = "remove_subtasks " + (i + 1) + ": ";
+            if (!rk) return { ok: false, err: rt + "give the subtask's id or exact text." };
+            var rId = subs.filter(function (x) { return isObj(x) && x.id === rk; });
+            var rTx = rId.length ? rId : subs.filter(function (x) { return isObj(x) && String(x.text || "").trim() === rk; });
+            if (!rTx.length) return { ok: false, err: rt + "no subtask " + JSON.stringify(rk) + " on this card." };
+            if (rTx.length > 1) return { ok: false, err: rt + "more than one subtask reads " + JSON.stringify(rk) + "; use its id." };
+            if (rmIds.indexOf(rTx[0].id) >= 0) return { ok: false, err: rt + "the subtask is named twice in one call." };
+            if (sc[rTx[0].id] !== undefined) return { ok: false, err: rt + "the subtask is changed and removed in one call." };
+            rmIds.push(rTx[0].id);
+          }
+          subs.forEach(function (x, ix) { if (isObj(x) && rmIds.indexOf(x.id) >= 0) sr.push({ i: ix, x: clone(x) }); });
+          c0.subtasks = subs = subs.filter(function (x) { return !(isObj(x) && rmIds.indexOf(x.id) >= 0); });
+        }
         if (addS !== undefined) addS.forEach(function (t) {
           var ns = { id: newId(), text: kbText(t, KB_TEXT, "text").s, completed: false, m: now };
           subs.push(ns); sa.push(ns.id);
         });
-        if (sa.length || Object.keys(sc).length) groups.push("s");
+        if (sa.length || Object.keys(sc).length || sr.length) groups.push("s");
       }
       if (!groups.length) return { ok: false, err: "Nothing to change: the card already looks like this." };
       M.stampCard(c0, groups, now);
       if (groups.indexOf("s") >= 0) c0.subtasks.forEach(function (x) { if (isObj(x) && (sa.indexOf(x.id) >= 0 || sc[x.id] !== undefined)) x.m = c0.mtime; });
+      if (sr.length) {                                   // a removed subtask's tombstone (merge: an item older than it goes)
+        if (!isObj(b.deleted)) b.deleted = {};
+        sr.forEach(function (r) { b.deleted[M.itemTomb(c0.id, r.x.id)] = Math.max(now, c0.mtime || 0, (typeof r.x.m === "number" ? r.x.m : 0) + 1); });
+      }
       undo.cards[c0.id] = { b: snap, a: c0.mtime, g: groups };
       if (sa.length) undo.cards[c0.id].sa = sa;
       if (Object.keys(sc).length) undo.cards[c0.id].sc = sc;
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: [c0.id].concat(sa),
+      if (sr.length) undo.cards[c0.id].sr = sr;
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: [c0.id].concat(sa), removed: sr.map(function (r) { return String(r.x.text || ""); }),
                text: "Changed the card." + (sa.length ? " Added " + sa.length + " subtask" + (sa.length === 1 ? "" : "s") + "." : "") +
+                     (sr.length ? " Removed " + sr.length + " subtask" + (sr.length === 1 ? "" : "s") + "." : "") +
                      (Object.keys(sc).length ? " Changed " + Object.keys(sc).length + " subtask" + (Object.keys(sc).length === 1 ? "" : "s") + "." : "") };
     }
     return { ok: false, err: "unknown change" };
@@ -1721,6 +1747,12 @@
             return true;
           });
           card.subtasks.forEach(function (x) { if (isObj(x) && isObj(was[x.id])) { x.completed = was[x.id].c; x.text = was[x.id].t; x.touch = 1; } });
+          // KB-SUBDEL: removed subtasks come back in their places, newer than their tombstone
+          (Array.isArray(e.sr) ? e.sr : []).forEach(function (r) {
+            if (!isObj(r) || !isObj(r.x) || typeof r.x.id !== "string" || card.subtasks.some(function (x) { return isObj(x) && x.id === r.x.id; })) return;
+            var back = clone(r.x); back.touch = 1; back.tomb = b.deleted[M.itemTomb(card.id, back.id)] || 0;
+            card.subtasks.splice(Math.min(typeof r.i === "number" ? r.i : card.subtasks.length, card.subtasks.length), 0, back);
+          });
           groups.push("s");
         }
       } else {                                              // a move: back to its column and place
@@ -1733,7 +1765,12 @@
         oms.push(at.col, home);
       }
       M.stampCard(card, groups, now);
-      if (Array.isArray(card.subtasks)) card.subtasks.forEach(function (x) { if (isObj(x) && x.touch) { delete x.touch; x.m = card.mtime; } });
+      if (Array.isArray(card.subtasks)) card.subtasks.forEach(function (x) {
+        if (!isObj(x) || !x.touch) return;
+        var tb = typeof x.tomb === "number" ? x.tomb : 0;
+        delete x.touch; delete x.tomb;
+        x.m = Math.max(card.mtime, tb + 1);
+      });
       n++;
     });
     Object.keys(u.cols).forEach(function (id) {
@@ -2064,6 +2101,7 @@
   function delCount(name, a) {
     if (!isObj(a)) return 0;
     if (name === "budget_delete") return Array.isArray(a.ids) ? Math.max(1, a.ids.length) : 1;
+    if (name === "kanban_change_card") return Array.isArray(a.remove_subtasks) ? a.remove_subtasks.length : 0;   // KB-SUBDEL
     if (name !== "change_item") return 0;
     if (Array.isArray(a.changes)) return a.changes.filter(function (c) { return isObj(c) && c.action === "delete"; }).length;
     if (a.action !== "delete") return 0;
@@ -2081,6 +2119,7 @@
   // from the Assistant frame's peek ([{ a: app name, t: title }]).
   function delWhat(name, items, n, more) {
     if (name === "budget_delete") return { app: "Budget", list: "" };
+    if (name === "kanban_change_card") items = (Array.isArray(items) ? items : []).map(function (t) { return { a: "Kanban", t: String(t) }; });   // KB-SUBDEL: subtask texts
     var l = Array.isArray(items) ? items.filter(function (x) { return isObj(x) && typeof x.t === "string"; }) : [];
     var apps = [];
     l.forEach(function (x) { var a = String(x.a || ""); if (a && apps.indexOf(a) < 0) apps.push(a); });
@@ -3174,12 +3213,50 @@
       var kd = readStore("oros-kanban-data");
       var r = kanbanWrite(M, op, kd, args, at || Date.now(), kbId);
       if (!r.ok) return { ok: false, c: r.err };
+      // KB-SUBDEL: removing subtasks is a deletion: always the owner's Delete here first
+      var nr = Array.isArray(r.removed) ? r.removed.length : 0;
+      if (!nr) return kbSave(r);
+      return askSubs(r.removed).then(function (yes) {
+        if (!yes) return { ok: false, c: askLast === "none" ? "Nobody answered on the owner's screen; nothing was removed." : "The owner chose not to remove these " + nr + " subtasks; nothing was removed." };
+        return kbSave(r);
+      });
+    }, function () { return { ok: false, c: "Kanban is not loaded on the device yet; try again in a moment." }; });
+    function kbSave(r) {
+      var kd = readStore("oros-kanban-data");             // read again: the owner may have changed it while asked
+      if (Array.isArray(r.removed) && r.removed.length) {
+        r = kanbanWrite(root.OrosKanbanModel, op, kd, args, at || Date.now(), kbId);
+        if (!r.ok) return { ok: false, c: r.err };
+      }
       if (at && lateIn(kd, r.data, at)) return { ok: false, late: 1, c: LATE_TXT };
       if (!writeJSON("oros-kanban-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
-      var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length);
+      var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length + (Array.isArray(r.removed) ? r.removed.length : 0));
       return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
-    }, function () { return { ok: false, c: "Kanban is not loaded on the device yet; try again in a moment." }; });
+    }
+  }
+  // KB-SUBDEL: the texts of the subtasks a kanban_change_card would remove (for the question).
+  function kbRemovePeek(a) {
+    if (!isObj(a) || !Array.isArray(a.remove_subtasks)) return Promise.resolve([]);
+    return kanbanModel().then(function (M) {
+      var r = kanbanWrite(M, "change_card", readStore("oros-kanban-data"), a, Date.now(), kbId);
+      return r.ok && Array.isArray(r.removed) ? r.removed : [];
+    }, function () { return []; });
+  }
+  // KB-SUBDEL: the owner's Delete for removing subtasks, with their texts
+  // (at most 10 shown). A queued call the owner just confirmed (preYes)
+  // is not asked twice. askLast as askDelete: "none" = nobody at the
+  // screen or no answer in 20 s (onCall then hands it back as __held).
+  function askSubs(texts) {
+    var n = texts.length;
+    if (preYes && n <= preYes) { preYes = 0; askLast = "yes"; return Promise.resolve(true); }
+    return new Promise(function (ok) {
+      var settled = false, wrap = null, w = core.delWhat("kanban_change_card", texts, n, tr("gate.fdel.more"));
+      function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+      if (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
+      wrap = dialog(tr("gate.qdel.title"), tr("gate.qdel.body").replace("{n}", String(n)).replace("{app}", "Kanban"), w.list, tr("gate.del.no"), tr("gate.del.yes"),
+        function () { end(false, "no"); }, function () { end(true, "yes"); });
+      setTimeout(function () { end(false, "none"); }, 20000);
+    });
   }
   // More than ASK_OVER deletions: the owner says yes on the device
   // within 20 s (the relay waits 25 s for the answer).
@@ -3210,7 +3287,8 @@
   // it stays queued and heldAgain asks again when orOS is on screen).
   var preYes = 0;
   function askQueued(x, n) {
-    var what = x.n === "change_item" ? actFrame().then(function (F) { return F && typeof F.peek === "function" ? F.peek(core.refsOf(x.a)) : []; }, function () { return []; }) : Promise.resolve([]);
+    var what = x.n === "change_item" ? actFrame().then(function (F) { return F && typeof F.peek === "function" ? F.peek(core.refsOf(x.a)) : []; }, function () { return []; })
+      : x.n === "kanban_change_card" ? kbRemovePeek(x.a) : Promise.resolve([]);
     return what.then(function (items) {
       return new Promise(function (ok) {
         var settled = false, wrap = null, w = core.delWhat(x.n, items, n, tr("gate.fdel.more"));
