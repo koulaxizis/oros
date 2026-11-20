@@ -7,7 +7,7 @@
 // Images travel as { w, h, data } with their buffers transferred.
 // ============================================================
 /* global importScripts, self */
-importScripts("select.js", "resample.js", "adjust.js", "filters.js", "psd.js", "batchcore.js", "../designkit/fx.js");
+importScripts("select.js", "resample.js", "adjust.js", "filters.js", "psdinfo.js", "psd.js", "batchcore.js", "../designkit/fx.js");
 
 var PLW = self.PhotoLab;
 

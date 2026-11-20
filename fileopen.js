@@ -88,7 +88,7 @@
       "image/gif": [".gif"],
       "image/bmp": [".bmp"],
       "image/avif": [".avif"],
-      "image/vnd.adobe.photoshop": [".psd"],
+      "image/vnd.adobe.photoshop": [".psd", ".psb"],
       "image/openraster": [".ora"],
       "application/x-oros-photo": [".orosphoto"] } },
     { app: "library", accept: {

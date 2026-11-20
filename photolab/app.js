@@ -472,17 +472,35 @@
     PL.changed();
   };
   // A project from a layered file (PSD, OpenRaster, Krita): layers bottom →
-  // top, each { name, x, y, img, op, bl, vis }, already within limits.
+  // top, each { name, x, y, img, op, bl, vis, fx?, mk? } or an
+  // adjustment { k: "adj", aj, ..., mk? }, already within limits. A mask
+  // { x, y, img: grey, bg, on } is in canvas pixels; it is kept in the
+  // layer's grid as grey with full alpha (ops.js readFor).
   PL.newFromLayers = function (w, h, name, layers) {
     var doc = C.newDoc({ w: w, h: h, name: name, now: Date.now(), layerName: PL.t("layer.bg") });
     var surfaces = {};
     doc.layers = [];
     layers.forEach(function (src) {
-      var L = C.normLayer({ id: C.newLayerId(), k: "raster", name: src.name, x: src.x, y: src.y,
-                            op: src.op, bl: src.bl, vis: src.vis });
-      var s = T.create();
-      T.writeRect(s, 0, 0, src.img);
-      surfaces[L.id] = s;
+      var adj = src.k === "adj";
+      var raw = { id: C.newLayerId(), k: adj ? "adj" : "raster", name: src.name, x: adj ? 0 : src.x, y: adj ? 0 : src.y,
+                  op: src.op, bl: src.bl, vis: src.vis };
+      if (adj) raw.aj = src.aj;
+      if (src.fx && !adj) raw.fx = src.fx;
+      if (src.mk && src.mk.img) raw.mk = { id: C.newLayerId(), t: {}, on: src.mk.on === 0 ? 0 : 1, bg: src.mk.bg ? 255 : 0 };
+      var L = C.normLayer(raw);
+      if (!L) return;
+      if (!adj) {
+        var s = T.create();
+        T.writeRect(s, 0, 0, src.img);
+        surfaces[L.id] = s;
+      }
+      if (L.mk) {
+        var m = src.mk.img, n = m.w * m.h, d = new Uint8ClampedArray(n * 4);
+        for (var i = 0; i < n; i++) { d[i * 4] = d[i * 4 + 1] = d[i * 4 + 2] = m.data[i]; d[i * 4 + 3] = 255; }
+        var ms = T.create();
+        T.writeRect(ms, src.mk.x - L.x, src.mk.y - L.y, { w: m.w, h: m.h, data: d });
+        surfaces[L.mk.id] = ms;
+      }
       doc.layers.push(L);
     });
     resetDoc(doc, surfaces);
