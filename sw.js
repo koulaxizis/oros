@@ -2328,6 +2328,7 @@ var PRECACHE_URLS = [
   "maps/offline.js",
   "maps/trails-core.js",
   "maps/trails.js",
+  "maps/trails-tab.js",
   "maps/outdoor-core.js",
   "maps/outdoor.js",
   "meals/import.js",
