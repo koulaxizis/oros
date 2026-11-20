@@ -54,13 +54,14 @@ function play(rt, diff, plan) {
   return g;
 }
 
-test("caravan: four routes of the Salt road, each a road from the gate to the market", () => {
-  assert.deepEqual(E.ROUTES.map((r) => r.id), ["r1", "r2", "r3", "r4"]);
+test("caravan: four routes of the Salt road and four of the Spice road, each a road from the gate to a market", () => {
+  assert.deepEqual(E.ROUTES.map((r) => r.id), ["r1", "r2", "r3", "r4", "r5", "r6", "r7", "r8"]);
   E.ROUTES.forEach((rt) => {
     assert.ok(rt.P.S && rt.P.M, rt.id);
-    // every way from the gate reaches the market, no loops
+    assert.equal(rt.two, rt.idx >= 4, rt.id + " two markets on the Spice road");
+    // every way from the gate reaches a market, no loops
     const walk = (n, seen) => {
-      if (n === "M") return 1;
+      if (E.isEnd(n)) return 1;
       assert.ok(rt.out[n].length, rt.id + " dead end at " + n);
       return rt.out[n].reduce((s, e) => { assert.ok(!seen.has(rt.E[e].b), rt.id + " loop"); return s + walk(rt.E[e].b, new Set([...seen, n])); }, 0);
     };
@@ -70,6 +71,68 @@ test("caravan: four routes of the Salt road, each a road from the gate to the ma
     assert.ok(rt.M.some((m) => m.t === 1) && rt.M.some((m) => m.t === 2) && rt.M.some((m) => m.t === 3), rt.id + " machines on every trip");
   });
   assert.ok(E.ROUTE.r2.hasGoat && E.ROUTE.r4.hasGoat && !E.ROUTE.r1.hasGoat);
+  // no machine stands on the road, and each spice route reaches both markets
+  E.ROUTES.forEach((rt) => {
+    const road = new Set();
+    rt.E.forEach((e) => {
+      for (let k = 1; k < e.pts.length; k++) {
+        const a = e.pts[k - 1], b = e.pts[k], n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) * 4);
+        for (let i = 0; i <= n; i++) road.add(Math.floor(a.x + (b.x - a.x) * i / n) + "," + Math.floor(a.y + (b.y - a.y) * i / n));
+      }
+    });
+    rt.M.forEach((m) => assert.ok(!road.has(Math.floor(m.x) + "," + Math.floor(m.y)), rt.id + " machine on the road at " + m.x + "," + m.y));
+    if (rt.two) assert.deepEqual([...new Set(rt.E.map((e) => e.b).filter(E.isEnd))].sort(), ["M", "N"], rt.id);
+  });
+});
+
+test("caravan: the Spice road: the spice market pays three coins a crate, both markets count", () => {
+  const g = E.newRun("r5", "n");
+  assert.equal(g.u, 5);
+  assert.equal(E.whyNot(g, "smith"), "");
+  E.hire(g, "mule"); E.hire(g, "pony");
+  const coins = g.coins;
+  // A → C → N: both carts go to the spice market
+  E.setSign(g, "A", 1);
+  assert.equal(E.ROUTE.r5.E[E.wayNow(g).slice(-1)[0]].b, "N");
+  E.setOff(g);
+  const ends = [];
+  for (let n = 0; g.ph === "go" && n < 60 * 600; n++) { E.step(g); g.ev.forEach((x) => { if (x.e === "home") ends.push(x.at); }); g.ev.length = 0; }
+  assert.deepEqual(ends, ["N", "N"]);
+  assert.ok(g.got > 0);
+  assert.equal(g.coins, coins + g.got * E.PAY_N + E.TRIP_PAY);
+  assert.equal(E.newRun("r4", "n").u, 4);
+  assert.equal(E.whyNot(E.newRun("r4", "n"), "smith"), "locked");
+});
+
+test("caravan: the smith jams the nearest working machine it passes, then rests", () => {
+  const rt = E.ROUTE.r5;
+  const g = E.newRun("r5", "n");
+  g.coins = 999;
+  const sm = E.hire(g, "smith"), mu = E.hire(g, "mule");
+  E.setSign(g, "A", 0);                   // A → B: past the arm at (4, 6)
+  E.setOff(g);
+  let jam = null;
+  for (let n = 0; g.ph === "go" && n < 60 * 120 && !jam; n++) { E.step(g); jam = g.ev.find((x) => x.e === "jam"); g.ev.length = 0; }
+  assert.ok(jam, "the smith jammed a machine");
+  assert.equal(jam.c, sm.id);
+  assert.equal(rt.M[jam.m].k, "arm");
+  assert.ok(g.mc[jam.m].st >= E.CARTS.smith.st[1].jt - 1 && g.mc[jam.m].st <= E.CARTS.smith.st[1].jt);
+  assert.equal(E.working(g, jam.m), false);
+  assert.equal(sm.j, E.CARTS.smith.st[1].rest);
+  // a jammed machine does not swing while it is stopped
+  for (let n = 0; n < 60 * 3; n++) { E.step(g); assert.ok(!g.ev.some((x) => x.e === "swing" && x.m === jam.m)); g.ev.length = 0; }
+  assert.ok(g.mc[jam.m].st > 0);
+  // a jammed lookout does not help, a jammed mud wheel does not slow
+  const h = E.newRun("r6", "n");
+  h.trip = 3;
+  const R6 = E.ROUTE.r6;
+  let li = -1, near = -1;
+  R6.M.forEach((m, i) => { if (m.k !== "look" || near >= 0) return; R6.M.forEach((o, j) => { if (near < 0 && j !== i && Math.hypot(m.x - o.x, m.y - o.y) <= 2) { li = i; near = j; } }); });
+  assert.ok(near >= 0, "a machine near a lookout on r6");
+  assert.equal(E.looked(h, R6, near), true);
+  h.mc[li].st = 10;
+  assert.equal(E.looked(h, R6, near), false);
+  assert.ok(mu);
 });
 
 test("caravan: plan: hire, order, upgrade, branches, sell back in full before setting off", () => {
@@ -295,7 +358,15 @@ test("caravan: the session copy round-trips, also on the road, and rejects broke
   assert.equal(bad((x) => { x.sg.A = 7; }), null);
   assert.equal(bad((x) => { x.cv.push(x.cv[0]); }), null, "the same cart twice");
   assert.equal(bad((x) => { x.tk.c = 1; x.rt = "r1"; x.goal = 50; }), null);
+  assert.equal(bad((x) => { x.cv[0].j = -1; }), null);
   assert.equal(E.normalizeRun(null), null);
+  // a session saved by v1.0.0 (no tc, no j) still opens
+  const old = JSON.parse(J(E.saveable(g)));
+  delete old.tc; old.cv.forEach((c) => { delete c.j; });
+  const o = E.normalizeRun(old);
+  assert.ok(o);
+  assert.equal(o.tc, old.tg * E.PAY);
+  assert.ok(o.cv.every((c) => c.j === 0));
 });
 
 test("caravan: progress merge is a join: symmetric, idempotent, reset stamp drops older rows", () => {
