@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 49654 of 49661 (99%)
+- Strings: 49655 of 49662 (99%)
 - Help pages: 162 of 162 (100%)
 - Shown in the language list: yes
 
@@ -39,7 +39,7 @@ en and el); translators change them there, not in a pack.
 | checkers | 100% | 73 / 73 |
 | chess | 100% | 406 / 406 |
 | chores | 100% | 207 / 207 |
-| clockwork | 99% | 178 / 179 |
+| clockwork | 99% | 179 / 180 |
 | commands | 100% | 82 / 82 |
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 342 / 342 |

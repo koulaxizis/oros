@@ -65,7 +65,7 @@
     en: {
       "app.name": "Clockwork Workshop",
       "btn.up": "Upgrades", "btn.upKey": "Upgrades (U)", "btn.pb": "Pattern book (P)",
-      "btn.stats": "Records (S)", "btn.sfxOn": "Sound on (M)", "btn.sfxOff": "Sound off (M)",
+      "btn.stats": "Records (S)", "btn.help": "How to play (H)", "btn.sfxOn": "Sound on (M)", "btn.sfxOff": "Sound off (M)",
       "btn.close": "Close", "btn.ok": "Good", "btn.undo": "Undo", "btn.cancel": "Cancel",
       "btn.start": "Start over", "btn.startYes": "Start over", "btn.new": "New workshop", "btn.newKey": "New workshop (E)",
       "btn.turn": "Turn (R)", "btn.take": "Take back (Del)", "btn.lay": "Lay it",
@@ -153,7 +153,7 @@
     el: {
       "app.name": "Εργαστήρι μηχανισμών",
       "btn.up": "Βελτιώσεις", "btn.upKey": "Βελτιώσεις (U)", "btn.pb": "Βιβλίο σχεδίων (P)",
-      "btn.stats": "Αρχείο (S)", "btn.sfxOn": "Ήχος ανοιχτός (M)", "btn.sfxOff": "Ήχος κλειστός (M)",
+      "btn.stats": "Αρχείο (S)", "btn.help": "Πώς παίζεται (H)", "btn.sfxOn": "Ήχος ανοιχτός (M)", "btn.sfxOff": "Ήχος κλειστός (M)",
       "btn.close": "Κλείσιμο", "btn.ok": "Ωραία", "btn.undo": "Αναίρεση", "btn.cancel": "Άκυρο",
       "btn.start": "Από την αρχή", "btn.startYes": "Από την αρχή", "btn.new": "Νέο εργαστήρι", "btn.newKey": "Νέο εργαστήρι (E)",
       "btn.turn": "Γύρνα το (R)", "btn.take": "Πάρ' το πίσω (Del)", "btn.lay": "Στήσ' το",
@@ -480,13 +480,16 @@
     var old = E.clone(live);
     old.br = br;
     live = E.newGame(newSeed(), nowMs(), br);
-    undo = { snap: old, kind: "start" };
+    // No Undo here: the confirm dialog is enough, and an Undo toast over the
+    // toolbar brought the old workshop back on the next tap there.
+    undo = null;
+    prefs.seen = nowMs(); prefs.seenLife = live.life; savePrefs();
     sel = -1; cur = -1;
     saved = E.normalize(live);
     if (writeSaved()) dirtySoon();
     resolve();
     closeDialog();
-    showToast(t("toast.start"), true);
+    showToast(t("toast.start"));
     renderAll(true);
   }
   // A tap on cell i (the screen and the keyboard both come here).
@@ -802,6 +805,7 @@
       else if (k === "p") { pbDialog(); ev.preventDefault(); }
       else if (k === "e") { newDialog(); ev.preventDefault(); }
       else if (k === "s") { recDialog(); ev.preventDefault(); }
+      else if (k === "h" || ev.key === "?") { tourDialog(); ev.preventDefault(); }
       else if (k === "m") { toggleSfx(); ev.preventDefault(); }
       else if (k === "r" && sel >= 0) { turnPart(sel, ev.shiftKey); ev.preventDefault(); }
       else if (k === "z" && undo) { undoLast(); ev.preventDefault(); }
@@ -1308,6 +1312,7 @@
   var ICONS = {
     up:     SVG + '<path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z"/></svg>',
     pb:     SVG + '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 7h6v6H9z"/><path d="M12 7v6M9 10h6"/></svg>',
+    help:   SVG + '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6"/><path d="M12 17.2v.1"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
@@ -1431,7 +1436,7 @@
     var ub = $("up-btn");
     ub.querySelector(".ic").innerHTML = ICONS.up;
     ub.title = t("btn.upKey");
-    [["pb-btn", "pb", "btn.pb"], ["stats-btn", "stats", "btn.stats"]].forEach(function (x) {
+    [["pb-btn", "pb", "btn.pb"], ["stats-btn", "stats", "btn.stats"], ["help-btn", "help", "btn.help"]].forEach(function (x) {
       var b = $(x[0]);
       b.innerHTML = ICONS[x[1]];
       b.setAttribute("aria-label", t(x[2]));
@@ -1447,6 +1452,7 @@
     $("new-btn").addEventListener("click", newDialog);
     $("pb-btn").addEventListener("click", pbDialog);
     $("stats-btn").addEventListener("click", recDialog);
+    $("help-btn").addEventListener("click", tourDialog);
     $("sfx-btn").addEventListener("click", toggleSfx);
     document.addEventListener("pointerdown", function () { if (shopOn()) updateShop(); }, { once: true });
     $("dlg").addEventListener("close", function () { dlgKind = ""; });

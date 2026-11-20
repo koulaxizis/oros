@@ -67,7 +67,7 @@ button, select { cursor: pointer; }
   flex-shrink: 0;
 }
 .tb-row { display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0; }
-.tb-title { font-size: 15px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tb-title { min-width: 0; font-size: 15px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .icon-btn {
   display: inline-flex;
@@ -313,9 +313,14 @@ dialog.cw-dlg::backdrop { background: rgba(0, 0, 0, 0.5); }
   #status .r { display: none; }
   .pn-grid { grid-template-columns: minmax(0, 1fr); }
   .tb-isle { display: none; }
+  /* The title gives way (ellipsis) so Upgrades, Pattern book, Records and
+     How to play stay on one row at 360 px, even with 44 px touch buttons. */
+  .tb-title { max-width: calc(100% - 212px); }
   dialog.cw-dlg { width: calc(100vw - 20px); padding: 14px; }
   .main-btn .lb { display: none; }
   .main-btn { padding: 4px 10px; }
+  /* A full-width bar, so an Undo never sits half over a toolbar button. */
+  #toast { left: 8px; right: 8px; max-width: none; justify-content: space-between; }
 }
 @media (max-width: 420px) {
   #sfx-btn { display: none; }

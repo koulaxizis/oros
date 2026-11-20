@@ -7,6 +7,7 @@ orosPack("de", "clockwork", {
  "away.title": "Während du weg warst",
  "btn.cancel": "Abbrechen",
  "btn.close": "Schließen",
+ "btn.help": "So wird gespielt (H)",
  "btn.lay": "Aufbauen",
  "btn.new": "Neue Werkstatt",
  "btn.newKey": "Neue Werkstatt (E)",
