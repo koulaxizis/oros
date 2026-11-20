@@ -103,11 +103,15 @@
 
   // ---------- 3. Geometry ----------
   // the design's scale into the slide (1 unless past PowerPoint's limits)
+  // A screen design (not mm, not a paper size) goes out at Canva's
+  // 0.75 pt per px, so a 1080 px post opens in Canva and PowerPoint as
+  // 1080 px (CV-0); then PowerPoint's limits.
   function scaleOf(setup) {
-    var big = Math.max(setup.w, setup.h), small = Math.min(setup.w, setup.h);
-    if (big > MAX_PT) return MAX_PT / big;
-    if (small < MIN_PT && big * MIN_PT / small <= MAX_PT) return MIN_PT / small;
-    return 1;
+    var base = setup.unit === "mm" || AX.paper(setup.w, setup.h) ? 1 : 1 / AX.SCREEN;
+    var big = Math.max(setup.w, setup.h) * base, small = Math.min(setup.w, setup.h) * base;
+    if (big > MAX_PT) return base * MAX_PT / big;
+    if (small < MIN_PT && big * MIN_PT / small <= MAX_PT) return base * MIN_PT / small;
+    return base;
   }
   function xfrm(k, x, y, w, h, rot, flh, flv) {
     var r = ((rot % 360) + 360) % 360, a = "";

@@ -27,14 +27,7 @@
   if (typeof module !== "undefined" && module.exports) { M = require("../designkit/model.js"); AX = require("./ax.js"); }
   else { M = root.orosDK.model; AX = root.AtelierAX; }
 
-  var SCREEN = 4 / 3, MAX_RUNS = 400;
-  // Paper sizes in pt (portrait), ±2 pt either way up.
-  var PAPER = [[595.28, 841.89], [419.53, 595.28], [297.64, 419.53], [841.89, 1190.55], [1190.55, 1683.78], [209.76, 297.64],
-               [498.9, 708.66], [354.33, 498.9], [612, 792], [612, 1008], [792, 1224], [283.46, 419.53], [311.81, 623.62]];
-  function paper(w, h) {
-    var a = Math.min(w, h), b = Math.max(w, h);
-    return PAPER.some(function (p) { return Math.abs(p[0] - a) <= 2 && Math.abs(p[1] - b) <= 2; });
-  }
+  var SCREEN = AX.SCREEN, MAX_RUNS = 400, paper = AX.paper;
   function hexOf(sw) {
     if (!sw || !Array.isArray(sw.v)) return "#000000";
     return "#" + sw.v.slice(0, 3).map(function (v) { var s = Math.max(0, Math.min(255, Math.round(v))).toString(16); return s.length < 2 ? "0" + s : s; }).join("");

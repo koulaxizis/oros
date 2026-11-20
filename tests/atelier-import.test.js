@@ -197,11 +197,14 @@ test("pptx: the built design is a new, canonical Atelier document", async () => 
   const t = d.items.find((i) => i.ax.k === "text" && /Γεια/.test(i.ax.tx));
   const t2 = d.items.find((i) => i.ax.k === "text" && i.ax.tx === "second");
   const base = (it, last) => { const L = AX.textLayout(it).lines; return it.y + L[last ? L.length - 1 : 0].y; };
-  assert.ok(Math.abs(base(t2) - base(t, true) - 18 * 1.2) < 0.02, "baseline to baseline at the second paragraph's spacing");
-  assert.ok(Math.abs((t.y + t2.y + t2.h) / 2 - (103.6 + 292.8 / 2)) < 0.6, "middle anchor keeps the stack centred in its box");
+  // a 1080 pt slide is a screen design: 4/3 back to its pixels (CV-0)
+  const K = 4 / 3;
+  assert.deepEqual([d.setup.w, d.setup.h], [1440, 1440]);
+  assert.ok(Math.abs(base(t2) - base(t, true) - 18 * 1.2 * K) < 0.05, "baseline to baseline at the second paragraph's spacing");
+  assert.ok(Math.abs((t.y + t2.y + t2.h) / 2 - (103.6 + 292.8 / 2) * K) < 0.8, "middle anchor keeps the stack centred in its box");
   const pic = d.items.find((i) => i.ax.k === "photo" && i.a.startsWith("a"));
   assert.equal(pic.fit, "custom");
-  assert.ok(Math.abs(pic.isc - 400 / 0.8 / 800) < 1e-6 && Math.abs(pic.ix + 0.1 * 500) < 0.01);
+  assert.ok(Math.abs(pic.isc - 400 / 0.8 / 800 * K) < 1e-3 && Math.abs(pic.ix + 0.1 * 500 * K) < 0.02);
   // a missing picture is counted, never a broken item
   const r2 = P.build(plan, {}, 6000);
   assert.ok(r2.missing >= 2);

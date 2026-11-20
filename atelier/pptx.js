@@ -951,6 +951,9 @@
       d.setup.ext = d.setup.ext || {};
       d.setup.ext.fonts = list;
     }
+    // a screen slide (not a paper size) at Canva's 0.75 pt per px: back
+    // to its pixels (a 1080 px post comes as 810 pt), CV-0
+    if (!AX.paper(plan.w, plan.h) && Math.max(plan.w, plan.h) * AX.SCREEN <= 14400) AX.scaleDesign(d, AX.SCREEN);
     return { doc: M.normDoc(d), missing: missing };
   }
 
