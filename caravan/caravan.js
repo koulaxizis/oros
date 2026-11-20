@@ -549,6 +549,7 @@
     lastT = now;
     if (running()) {
       advance(dt * speed);
+      if (game.cv.some(function (c) { return c.st === "r"; })) soundOnce("rumble", 950);
       sinceSave += dt;
       if (sinceSave >= RUN_SAVE_MS) { sinceSave = 0; saveSession(); }
     }
@@ -621,7 +622,7 @@
     ["--bg", "--text", "--text-dim", "--accent", "--border", "--danger", "--panel-bg",
      "--cv-hill", "--cv-hill2", "--cv-tree", "--cv-road", "--cv-edge", "--cv-goat", "--cv-way", "--cv-brass",
      "--cv-iron", "--cv-mud", "--cv-reach", "--cv-cart", "--cv-crate", "--cv-straw", "--cv-mend",
-     "--cv-smoke", "--cv-stone", "--cv-awning"].forEach(function (v) {
+     "--cv-smoke", "--cv-stone", "--cv-awning", "--cv-beast", "--cv-dust"].forEach(function (v) {
       C[v.slice(2)] = cs.getPropertyValue(v).trim() || "#888";
     });
   }
@@ -839,17 +840,83 @@
     ctx.closePath();
   }
   // Each cart kind has its own outline; crates on top show its load.
+  // The way a cart on the road is heading (a unit vector, screen axes).
+  function heading(c) {
+    var e = rtOf().E[c.e];
+    if (!e) return { x: 0, y: 1 };
+    var a = E.pointAt(e, Math.max(0, c.d - 0.05)), b = E.pointAt(e, Math.min(e.len, c.d + 0.05));
+    var dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy);
+    return l > 1e-6 ? { x: dx / l, y: dy / l } : { x: 0, y: 1 };
+  }
+  // The animal in front: an ox (Ox wagon), a mule (long ears) or a pony
+  // (a mane); the straw cart has a pony, the mender and the smith a mule.
+  function drawBeast(c, q, hd) {
+    var kind = c.k === "mule" ? (c.b === "a" ? "ox" : "mule") : c.k === "pony" || c.k === "straw" ? "pony" : "mule";
+    var s = tile * (kind === "ox" ? 0.3 : kind === "pony" ? 0.22 : 0.26);
+    var bx = q.x + hd.x * tile * 0.58, by = q.y + hd.y * tile * 0.58, ang = Math.atan2(hd.y, hd.x);
+    var step = reduced ? 0 : Math.sin(c.tr * 9) * s * 0.12;
+    ctx.save(); ctx.translate(bx, by); ctx.rotate(ang);
+    // the shafts
+    ctx.strokeStyle = C["cv-edge"]; ctx.lineWidth = Math.max(1, tile * 0.04);
+    ctx.beginPath(); ctx.moveTo(-tile * 0.2, -s * 0.45); ctx.lineTo(0, -s * 0.45); ctx.moveTo(-tile * 0.2, s * 0.45); ctx.lineTo(0, s * 0.45); ctx.stroke();
+    // legs (two pairs, a little stride)
+    ctx.strokeStyle = C["cv-iron"]; ctx.lineWidth = Math.max(1, tile * 0.035);
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.5 + step, -s * 0.55); ctx.lineTo(-s * 0.5 + step, s * 0.55);
+    ctx.moveTo(s * 0.4 - step, -s * 0.55); ctx.lineTo(s * 0.4 - step, s * 0.55);
+    ctx.stroke();
+    // body and head
+    ctx.fillStyle = C["cv-beast"];
+    ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(s * 1.05, 0, s * 0.38, s * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C["cv-edge"]; ctx.lineWidth = 1;
+    if (kind === "mule") {
+      ctx.beginPath(); ctx.moveTo(s * 0.95, -s * 0.2); ctx.lineTo(s * 0.75, -s * 0.75); ctx.moveTo(s * 0.95, s * 0.2); ctx.lineTo(s * 0.75, s * 0.75);
+      ctx.strokeStyle = C["cv-beast"]; ctx.lineWidth = Math.max(1.5, s * 0.22); ctx.stroke();
+    } else if (kind === "ox") {
+      ctx.beginPath(); ctx.arc(s * 1.05, 0, s * 0.62, -1.2, -0.5); ctx.moveTo(s * 1.05 + Math.cos(0.5) * s * 0.62, Math.sin(0.5) * s * 0.62); ctx.arc(s * 1.05, 0, s * 0.62, 0.5, 1.2);
+      ctx.strokeStyle = C["cv-stone"]; ctx.lineWidth = Math.max(1.5, s * 0.16); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(-s * 0.1, 0); ctx.lineTo(s * 0.85, 0);
+      ctx.strokeStyle = C["cv-edge"]; ctx.lineWidth = Math.max(1.5, s * 0.2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // A little dust behind a moving cart (not with reduced motion).
+  function drawDust(c, q, hd) {
+    if (reduced) return;
+    ctx.fillStyle = C["cv-dust"];
+    for (var k = 1; k <= 3; k++) {
+      var ph = (c.tr * 2 + k / 3) % 1;
+      ctx.globalAlpha = 0.28 * (1 - ph);
+      ctx.beginPath();
+      ctx.arc(q.x - hd.x * tile * (0.45 + ph * 0.5) + hd.y * tile * 0.12 * (k - 2), q.y - hd.y * tile * (0.45 + ph * 0.5) - hd.x * tile * 0.12 * (k - 2), tile * (0.06 + ph * 0.08), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
   function drawCart(c) {
     var q = px(c), st = E.stats(c);
     var w = tile * (c.k === "mule" ? (c.b === "a" ? 0.9 : 0.78) : c.k === "pony" ? 0.56 : 0.66), h = tile * 0.5;
+    if (c.st === "r") { var hd = heading(c); drawDust(c, q, hd); drawBeast(c, q, hd); }
     if (c.sh > 0) {
       ctx.beginPath(); ctx.arc(q.x, q.y, tile * 0.55, 0, Math.PI * 2);
       ctx.globalAlpha = 0.3; ctx.fillStyle = C["cv-mend"]; ctx.fill(); ctx.globalAlpha = 1;
       ctx.strokeStyle = C["cv-mend"]; ctx.lineWidth = 2; ctx.stroke();
     }
-    // wheels
+    // wheels, with a spoke that turns as the cart rolls
     ctx.fillStyle = C["cv-iron"];
     ctx.beginPath(); ctx.arc(q.x - w * 0.32, q.y + h * 0.42, h * 0.2, 0, Math.PI * 2); ctx.arc(q.x + w * 0.32, q.y + h * 0.42, h * 0.2, 0, Math.PI * 2); ctx.fill();
+    if (!reduced && h * 0.2 >= 3) {
+      var wa = (c.tr || 0) * 6;
+      ctx.strokeStyle = C["cv-stone"]; ctx.lineWidth = 1;
+      ctx.beginPath();
+      [-1, 1].forEach(function (sx) {
+        var cx = q.x + sx * w * 0.32, cy = q.y + h * 0.42, r = h * 0.17;
+        ctx.moveTo(cx - Math.cos(wa) * r, cy - Math.sin(wa) * r); ctx.lineTo(cx + Math.cos(wa) * r, cy + Math.sin(wa) * r);
+      });
+      ctx.stroke();
+    }
     if (c.k === "straw") {
       ctx.beginPath(); ctx.ellipse(q.x, q.y - h * 0.05, w * 0.55, h * 0.5, 0, 0, Math.PI * 2);
       ctx.fillStyle = C["cv-straw"]; ctx.fill();
@@ -1416,6 +1483,7 @@
       if (kind === "arm") tone(240, 0, 0.07, "square", 0.025, 160);
       else if (kind === "puff") tone(300, 0, 0.25, "sawtooth", 0.02, 90);
       else if (kind === "hit") tone(150, 0, 0.1, "triangle", 0.05, 90);
+      else if (kind === "rumble") { tone(62, 0, 0.5, "triangle", 0.014, 55); tone(95, 0.18, 0.3, "triangle", 0.008, 80); }
       else if (kind === "spice") { tone(988, 0, 0.25, "sine", 0.04); tone(1480, 0.05, 0.25, "sine", 0.025); tone(1976, 0.1, 0.2, "sine", 0.015); }
       else if (kind === "jam") { tone(330, 0, 0.06, "square", 0.04); tone(220, 0.07, 0.12, "triangle", 0.05, 110); }
       else if (kind === "market") { tone(880, 0, 0.25, "sine", 0.04); tone(1320, 0.05, 0.2, "sine", 0.02); }

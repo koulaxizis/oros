@@ -47,6 +47,8 @@
   --cv-smoke:   #c9c6c0;
   --cv-stone:   #a9a293;
   --cv-awning:  #c9584a;
+  --cv-beast:   #4e4033;
+  --cv-dust:    #b8a582;
 }
 html[data-theme="light"] {
   --cv-hill:    #c9d3a8;
@@ -67,6 +69,8 @@ html[data-theme="light"] {
   --cv-smoke:   #8f8b84;
   --cv-stone:   #7d7668;
   --cv-awning:  #b03d2f;
+  --cv-beast:   #6e5a42;
+  --cv-dust:    #b39a68;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
