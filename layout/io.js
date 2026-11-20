@@ -1118,8 +1118,10 @@
       }
       var fonts = (rep.fonts || []).filter(function (f) { return f.font && !f.as && !/^noto/i.test(f.font); }).map(function (f) { return f.font; });
       var same = {};
-      (rep.fonts || []).forEach(function (f) { if (f.as) same[f.as] = 1; });
+      var twin = {};
+      (rep.fonts || []).forEach(function (f) { if (f.as && f.like) twin[f.like.replace(/^[A-Z]{6}\+/, "").split(/[-,]/)[0] + " → " + f.as] = 1; else if (f.as) same[f.as] = 1; });
       if (Object.keys(same).length) p(t("rb.fontsSame", { f: Object.keys(same).join(", ") }), "hint");
+      if (Object.keys(twin).length) p(t("rb.fontsTwin", { f: Object.keys(twin).join(", ") }), "hint");
       if (fonts.length) p(t("rb.fonts", { f: fonts.join(", ") }), "hint");
       if (rep.numberStart !== null && rep.numberStart !== 1) p(t("rb.numbers", { n: rep.numberStart }), "hint");
       if (rep.cut) p(t("pdf.cut", { n: rep.pages, t: rep.total }), "hint");

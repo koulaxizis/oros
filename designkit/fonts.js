@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — fonts.js (v1.6.0)
+// orOS designkit — fonts.js (v1.7.0)
 // Font families a Layout document names besides the built-in Noto
 // ones. Owner: Layout.
 //   - "fs_<id>": a Fontsource family (open licences, mostly SIL OFL),
@@ -36,6 +36,8 @@
 // Gate (list_fonts), from what the caller read.
 // 1.6.0 (vector wave V5) adds outliner() and outlineGlyphs(): TrueType
 // glyph outlines as path commands, for text to outlines.
+// 1.7.0 (LY-PORT-F) adds twins(): match() falls back to the free font
+// with the same widths (Calibri → Carlito, Arial → Liberation Sans…).
 // Exposes orosDK.fonts (browser) or module.exports (Node: the pure
 // parts).
 // ============================================================
@@ -757,15 +759,37 @@
   // The family to use for a font name found in a PDF or another
   // program's file: one on the disk, else Fontsource. Promise of an
   // entry for setup.ext.fonts, or null.
+  // A font that is not free (Calibri, Cambria, Arial…) and is not on
+  // the disk: its free twin with the same character widths, so every
+  // line breaks where it did (LY-PORT-F). The twin from the disk counts
+  // as it is; from Fontsource only one that has Greek, since the books
+  // are Greek (Caladea has no Greek: Cambria then stays an orOS font
+  // with tracking). The entry carries like: the name asked for.
+  var TWINS = {
+    calibri: ["Carlito"], cambria: ["Caladea"],
+    arial: ["Liberation Sans", "Arimo"], helvetica: ["Liberation Sans", "Arimo"], arialnarrow: ["Liberation Sans Narrow"],
+    timesnewroman: ["Liberation Serif", "Tinos"], times: ["Liberation Serif", "Tinos"],
+    couriernew: ["Liberation Mono", "Cousine"], courier: ["Liberation Mono", "Cousine"]
+  };
+  function twins(name) { return TWINS[squash(name)] || []; }
   function match(name, lib, opts) {
     var k = squash(name);
     if (!k) return Promise.resolve(null);
-    var mine = families(lib || []).filter(function (f) { return squash(f.name) === k; })[0];
+    var fams = families(lib || []);
+    var onDisk = function (key) { return fams.filter(function (f) { return squash(f.name) === key; })[0]; };
+    var mine = onDisk(k);
     if (mine) return Promise.resolve(mine);
+    var tw = (TWINS[k] || []).map(squash), like = function (e) { e.like = String(name).slice(0, 60); return e; };
+    for (var j = 0; j < tw.length; j++) { var d = onDisk(tw[j]); if (d) return Promise.resolve(like(d)); }
     if (opts && opts.offline) return Promise.resolve(null);
     return catalog().then(function (cat) {
       var f = cat.filter(function (c) { return squash(c.family) === k; })[0];
-      return f ? { id: f.id, name: f.family, fb: f.cat } : null;
+      if (f) return { id: f.id, name: f.family, fb: f.cat };
+      for (var j = 0; j < tw.length; j++) {
+        var t = cat.filter(function (c) { return squash(c.family) === tw[j] && c.greek; })[0];
+        if (t) return like({ id: t.id, name: t.family, fb: t.cat });
+      }
+      return null;
     });
   }
 
@@ -1427,7 +1451,7 @@
     isFam: isFam, fsIdOf: fsIdOf, ufIdOf: ufIdOf, squash: squash, info: info, check: check,
     docFonts: docFonts, famsUsed: famsUsed, register: register, withEntry: withEntry, families: families,
     unwoff: unwoff, fetcher: fetcher, library: library, importFile: importFile, put: put, blob: blob,
-    catalog: catalog, match: match,
+    catalog: catalog, match: match, twins: twins,
     // 1.1.0
     woff2: woff2, brotli: brotli, coverage: coverage, level: level, subsetLevels: subsetLevels, SETS: SETS, SET_KEYS: SET_KEYS,
     licence: licence, inspect: inspect, remove: remove, fontsourceUrls: fontsourceUrls,

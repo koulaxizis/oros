@@ -1114,6 +1114,7 @@ orosPack("de", "layout", {
  "rb.done": "Fertig: {p} Seiten.",
  "rb.title": "Was die Wiederherstellung behalten hat",
  "rb.fontsSame": "Die eigenen Schriften des PDF, aus deinen Schriftdateien oder freien Schriften: {f}.",
+ "rb.fontsTwin": "Freie Schriften mit denselben Buchstabenbreiten anstelle nicht freier Schriften: {f}.",
  "rb.lines": "{n} von {t} Zeilen stehen dort, wo sie im PDF standen ({p} %).",
  "rb.pics": "{n} Bilder, davon {o} deine Originaldateien (die übrigen stammen aus dem PDF).",
  "rb.styles": "{n} Absatzformate.",

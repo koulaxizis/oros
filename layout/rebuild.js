@@ -189,7 +189,9 @@
     Object.keys(acc).forEach(function (k) {
       var a = acc[k], tr = a.em ? Math.round((a.pdf - a.ours) / a.em * 1000) : 0;
       // the same font as ours: nothing to make up for
-      out[k] = /^noto/i.test(k) || fonts[k] ? 0 : tr + TRACK_ADJ;
+      // (a twin with the same widths, LY-PORT-F, is measured too: its
+      // justified lines need the same −18 as ours, 2609 of 2610 in place)
+      out[k] = /^noto/i.test(k) || (fonts[k] && !fonts[k].like) ? 0 : tr + TRACK_ADJ;
     });
     return out;
   }
@@ -674,7 +676,7 @@
     });
     report.check = { lines: total, inPlace: total - moved, moved: moved, extra: extra, overset: Object.keys(L.overset || {}).length };
     report.styles = list.length;
-    report.fonts = Object.keys(TRACK).map(function (k) { var o = { font: k, track: TRACK[k] }; if (FONTS[k]) o.as = FONTS[k].name; return o; });
+    report.fonts = Object.keys(TRACK).map(function (k) { var o = { font: k, track: TRACK[k] }; if (FONTS[k]) { o.as = FONTS[k].name; if (FONTS[k].like) o.like = FONTS[k].like; } return o; });
     return { doc: nd, report: report };
   }
 
