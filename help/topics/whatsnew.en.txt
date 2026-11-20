@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.99.00
+- **Recording in Maps knows what you do.** Choose walk, hike, run, ride or mountain bike; Maps shows when you stopped, the moving time and the climb as you go, and you can add a point with a photo. A track then shows its splits per kilometre and its points with photos. See [Maps](help:a/maps).
+
 ## Version 7.98.00
 - **New game: Caravan.** The third tower defense game, the other way round: old clockwork toll machines guard the road to the market, and you lead a caravan of carts through them. Before each trip you hire mule, pony, mender's and straw carts, put them in order and set the signs at the forks; on the road each cart follows a sign as it is when it gets there, so you can split the caravan, and smoke, a shield and the goat track help at the right moment. Three trips a route, four routes on the Salt road, three difficulties and stars that sync between your devices. In the Tower defense group of the Game Center.
 
