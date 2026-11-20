@@ -1008,7 +1008,15 @@
   // --- Position ---
   VIEWS.position = function (body) {
     var list = ED.selItems().filter(function (it) { return !(it.ax && it.ax.bg); });
-    if (!list.length) { body.appendChild(el("p", "hint", t("ctx.hint"))); return; }
+    if (!list.length) { layersSection(body); return; }
+    if (list.length > 1 || ED.inGroup()) {
+      var sg = sec(t("grp.h"));
+      var rg = el("div", "grid2");
+      if (ED.canGroup()) rg.appendChild(btn("btn small", t("grp.group"), ED.group));
+      if (ED.inGroup()) rg.appendChild(btn("btn small", t("grp.ungroup"), ED.ungroup));
+      sg.appendChild(rg);
+      body.appendChild(sg);
+    }
     var s1 = sec(t("pos.layer"));
     var r1 = el("div", "grid2");
     ["front", "fwd", "bwd", "back"].forEach(function (k) { r1.appendChild(btn("btn small", t("pos." + k), function () { ED.arrange(k); })); });
@@ -1065,7 +1073,100 @@
       s3.appendChild(el("p", "hint", AT.unitLbl()));
       body.appendChild(s3);
     }
+    layersSection(body);
   };
+
+  // --- Layers (wave CV-1): the page's elements, front first, groups
+  // as one row that opens; tap picks, drag the grip (mouse or finger)
+  // to move an element or a whole group in front of or behind others.
+  var openGroups = {};
+  function layerLabel(it) {
+    var ax = it.ax || {};
+    if (ax.k === "text") { var s0 = String(ax.tx || "").replace(/\s+/g, " ").trim(); return s0 ? (s0.length > 40 ? s0.slice(0, 39) + "…" : s0) : t("ly.text"); }
+    if (ax.k === "photo") return ax.vid ? t("ly.video") : (it.nm || t("ly.photo"));
+    return t("ly." + (ax.k || "shape"));
+  }
+  function layersSection(body) {
+    var s = sec(t("ly.h"));
+    var pageItems = ED.items().filter(function (it) { return !(it.ax && it.ax.bg) && !(it.ax && it.ax.tg); }).sort(M.byZ).reverse();
+    if (!pageItems.length) { s.appendChild(el("p", "hint", t("ly.none"))); body.appendChild(s); return; }
+    var ul = el("ul", "ly-list");
+    ul.setAttribute("role", "list");
+    var rows = [], seen = {};
+    pageItems.forEach(function (it) {
+      if (it.grp) {
+        if (seen[it.grp]) return;
+        seen[it.grp] = 1;
+        var members = pageItems.filter(function (o) { return o.grp === it.grp; });
+        if (members.length > 1) {
+          rows.push({ grp: it.grp, ids: members.map(function (o) { return o.id; }) });
+          if (openGroups[it.grp]) members.forEach(function (o) { rows.push({ it: o, ids: [o.id], inner: 1 }); });
+          return;
+        }
+      }
+      rows.push({ it: it, ids: [it.id] });
+    });
+    rows.forEach(function (r) {
+      var on = r.ids.every(function (id) { return ED.sel.indexOf(id) >= 0; }) && (r.grp ? ED.sel.length === r.ids.length : ED.sel.length === 1);
+      var li = el("li", "ly-row" + (on ? " on" : "") + (r.inner ? " inner" : "") + (r.grp ? " grp" : ""));
+      var grip = el("button", "ly-grip", "⋮⋮"); grip.type = "button";
+      grip.setAttribute("aria-label", t("ly.drag"));
+      li.appendChild(grip);
+      if (r.grp) {
+        var fold = el("button", "ly-fold", openGroups[r.grp] ? "▾" : "▸"); fold.type = "button";
+        fold.setAttribute("aria-expanded", openGroups[r.grp] ? "true" : "false");
+        fold.setAttribute("aria-label", t(openGroups[r.grp] ? "ly.close" : "ly.open"));
+        fold.addEventListener("click", function () { openGroups[r.grp] = !openGroups[r.grp]; renderDrawer(); });
+        li.appendChild(fold);
+      }
+      var name = btn("ly-name", r.grp ? t("ly.group", { n: r.ids.length }) : layerLabel(r.it), function () {
+        if (r.inner) { ED.inGrp = r.it.grp; ED.select([r.it.id]); }
+        else { ED.inGrp = null; ED.select(r.ids); }
+      });
+      if (r.it && r.it.lock) name.appendChild(el("span", "ly-tag", t("ly.locked")));
+      if (r.it && r.it.hide) name.appendChild(el("span", "ly-tag", t("ly.hidden")));
+      li.appendChild(name);
+      li._row = r;
+      grip.addEventListener("pointerdown", function (e) { dragRow(e, li, ul); });
+      ul.appendChild(li);
+    });
+    s.appendChild(ul);
+    s.appendChild(el("p", "hint", t("ly.hint")));
+    body.appendChild(s);
+  }
+  // Drag a row by its grip: a line shows where it lands; let go to move.
+  function dragRow(e, li, ul) {
+    e.preventDefault();
+    var grip = e.currentTarget, line = el("div", "ly-drop"), target = null;
+    try { grip.setPointerCapture(e.pointerId); } catch (err) {}
+    li.classList.add("dragging");
+    function rowsNow() { return Array.prototype.filter.call(ul.children, function (c) { return c._row && c !== li; }); }
+    function where(y) {
+      var list = rowsNow(), i = 0;
+      while (i < list.length && y > list[i].getBoundingClientRect().top + list[i].offsetHeight / 2) i++;
+      return { i: i, list: list };
+    }
+    function move(ev) {
+      var w = where(ev.clientY);
+      target = w;
+      if (w.i < w.list.length) ul.insertBefore(line, w.list[w.i]); else ul.appendChild(line);
+    }
+    function up(ev) {
+      grip.removeEventListener("pointermove", move);
+      grip.removeEventListener("pointerup", up);
+      grip.removeEventListener("pointercancel", up);
+      li.classList.remove("dragging");
+      if (line.parentNode) line.parentNode.removeChild(line);
+      if (!target || ev.type === "pointercancel") return;
+      // rows run front first: landing before row i puts the moved
+      // elements just in front of that row (of its front-most element)
+      var list = target.list, below = list[target.i] ? list[target.i]._row : null;
+      ED.reorder(li._row.ids, below ? below.ids[0] : null);
+    }
+    grip.addEventListener("pointermove", move);
+    grip.addEventListener("pointerup", up);
+    grip.addEventListener("pointercancel", up);
+  }
 
   // ---------- 3. Context bar ----------
   function renderCtx() {
@@ -1081,6 +1182,7 @@
       var bb = btn("ctx-txt", t("ctx.bg"), function () { openView("background"); });
       bar.appendChild(bb);
       bar.appendChild(btn("ctx-txt" + (view === "animate" ? " on" : ""), t("ctx.animate"), function () { openView("animate"); }));
+      bar.appendChild(tool("layers", t("ly.h"), function () { openView("position"); }, view === "position"));
       bar.appendChild(el("span", "ctx-hint", t("ctx.hint")));
       return;
     }
@@ -1112,6 +1214,9 @@
       bar.appendChild(tool("textpath", PEs("pe.textPath"), function () { ED.vec.textPath(); }));
     }
     bar.appendChild(sep());
+    if (ED.canGroup()) bar.appendChild(tool("group", t("grp.group"), ED.group));
+    if (ED.inGroup()) bar.appendChild(tool("ungroup", t("grp.ungroup"), ED.ungroup));
+    bar.appendChild(tool("roller", t("cs.copy"), ED.copyStyle, !!ED.brush));
     bar.appendChild(tool("position", t("ctx.position"), function () { openView("position"); }, view === "position"));
     bar.appendChild(tool("op", t("ctx.op"), opacityPop));
     bar.appendChild(tool("link", t("ctx.link"), linkPop, list.some(function (x) { return !!AX.linkOf(x); })));

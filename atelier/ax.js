@@ -35,6 +35,9 @@
 //   table: tb (objects.js normTable), font, size (text size before
 //          shrink-to-fit, default 24), al l|c|r; fc text, sc lines
 //   chart: ch (objects.js normChart), fc background, size labels
+// Groups (wave CV-1): designkit's own item.grp (an id, as Layout uses
+//   it): elements with the same grp on a page are one group; a tap
+//   picks the group, a second tap the element inside it.
 // Since wave B1 (R39: new fields live in the item's `ext`, not here):
 //   ext.lnk  the element's link: https / http / mailto / tel, or
 //            "#p<n>" = page n of the same design (normLink); the web
@@ -351,9 +354,10 @@
     }
     var ax = {};
     Object.keys(spec).forEach(function (key) {
-      if (["x", "y", "w", "h", "rot", "op", "sw", "z", "lock", "a", "nm", "iw", "ih", "fit", "ix", "iy", "isc", "ext"].indexOf(key) < 0) ax[key] = spec[key];
+      if (["x", "y", "w", "h", "rot", "op", "sw", "z", "lock", "a", "nm", "iw", "ih", "fit", "ix", "iy", "isc", "ext", "grp"].indexOf(key) < 0) ax[key] = spec[key];
     });
     it.ax = ax;
+    if (spec.grp) it.grp = spec.grp;                   // a group (wave CV-1: designkit item.grp, as in Layout)
     if (spec.ext && typeof spec.ext === "object") it.ext = spec.ext;
     var n = M.normItem(it);
     if (!n || !n.ax) return null;

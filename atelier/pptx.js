@@ -546,9 +546,16 @@
       var t2 = {
         ox: tf.ox + (numA(off, "x", 0) - (cho ? numA(cho, "x", 0) : 0) * sx) * tf.sx,
         oy: tf.oy + (numA(off, "y", 0) - (cho ? numA(cho, "y", 0) : 0) * sy) * tf.sy,
-        sx: tf.sx * sx, sy: tf.sy * sy, rot: tf.rot + numA(gx, "rot", 0) / 60000
+        sx: tf.sx * sx, sy: tf.sy * sy, rot: tf.rot + numA(gx, "rot", 0) / 60000, grp: tf.grp === undefined ? 0 : tf.grp
       };
+      // wave CV-1: the group stays a group (nested groups become one,
+      // as Canva keeps them); marked on the items it brought
+      var from = out.items.length;
       walkTree(n, t2, ctx, out);
+      if (tf.grp === undefined) {
+        var made = out.items.slice(from);
+        if (made.length > 1) { out.groups = (out.groups || 0) + 1; made.forEach(function (it) { it.grp = "g" + out.groups; }); }
+      }
       return;
     }
     if (n.n === "p:pic") { picture(n, tf, ctx, out); return; }
@@ -1000,7 +1007,7 @@
         else bg.ax.ptr = P.ptr;
       }
       if (bg && P.dur) bg.ax.dur = P.dur;
-      var stacks = {};
+      var stacks = {}, grps = {};
       P.items.forEach(function (s) {
         var spec = {}, img = null;
         Object.keys(s).forEach(function (k) {
@@ -1031,6 +1038,7 @@
           } else spec.fit = "fill";
         }
         spec.z = z++;
+        if (s.grp) spec.grp = grps[s.grp] = grps[s.grp] || M.newId("gr");    // the slide's groups stay groups (CV-1)
         if (s.k === "text" && AX.isExtraFont(spec.font)) AX.ensureFont(spec.font, s.fontName);
         var of = s.k === "text" && s.face && Object.prototype.hasOwnProperty.call(fonts, s.face) ? fonts[s.face] : null;
         if (s.gs) { spec.ext = spec.ext || {}; spec.ext.gs = s.gs; }
