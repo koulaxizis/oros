@@ -28,6 +28,10 @@ A focus mode keeps notifications quiet while you work, sleep or have time for yo
 - In Quick settings (the button at the right end of the top bar), `Focus` turns the last mode on or off with one tap. Its arrow lists every mode and sets how long: `For one hour`, `Until 8 in the morning`, `Until the schedule ends` (for a mode with a schedule) or `Until you turn it off`.
 - A mode you turn on holds on all your devices that sync. The top-bar button shows the mode's icon while one is on (a crossed bell for Do Not Disturb).
 - Clock alarms and ringing Calendar reminders always ring, in every mode.
+- A notification that arrives quietly stays quiet: it does not pop up later when the mode ends, it waits in the bell. When a mode ends, one notice says how many waited while it ran, and from which apps (only when some did).
+- `Notification summary` (below the modes) keeps the apps you tick quiet all day, also outside any mode: their notifications wait in the bell, and at each time you choose (up to 6) one notice says how many came and from where. orOS's own notices never wait. The summary holds on every device.
+- With `Notifications with orOS closed` on, a notification of an app the running mode keeps quiet (or that waits for the summary) arrives without sound or vibration. Each time orOS is open it tells the browser the modes and schedules of the next 48 hours, so a mode you start on another device while this one is closed reaches it the next time orOS opens here.
+- In [Automations](app:automations), `When a focus mode starts` and `When a focus mode ends` start a rule (`Only when it says` with the name of a mode picks that mode), and the step `Focus mode` turns a mode on, for some minutes or until you turn it off, or turns it off. Both work while orOS is open.
 
 ## Alarms
 Set alarms in the [Time](app:time) app. When an alarm goes off, a box with `Alarm` appears at the top right of the screen and beeps. Tap `Snooze 9m` to hear it again in 9 minutes, or `Dismiss` to stop it. It stops by itself after 30 seconds and stays in your inbox.
