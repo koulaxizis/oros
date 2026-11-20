@@ -6,6 +6,9 @@ orOS is free and made by one person. If it is useful to you, [here are three way
 ## Version 7.96.00
 - **New game: Star Chart.** A calm idle game: a small hilltop observatory whose telescopes gather starlight every minute. Spend it on more telescopes, or draw your own constellations by joining the stars of the night sky. The kinds of the stars and the shape you draw (a chain, a branch or a ring) decide the bonus each one gives, lines never cross and every star belongs to one constellation, so the sky is a quiet puzzle. The moon is the real moon of the date, and the clouds are the same on every device. With six constellations and a radio dish you can begin a new season with a new sky, keeping one trait and every old constellation in the star atlas. It goes on while orOS is closed (full pace for 7 days, then half), with no notifications and nothing to collect, and it syncs between your devices. In the Idle group of the Game Center.
 
+## Version 7.95.00
+- **Follow a track like a hiking app.** Follow it either way round and see the distance and climb left, the next waypoint and when you will arrive, with a warning if that is after sunset. Maps tells you by vibration, a tone and voice when you leave the track, come back, reach a waypoint or the end. See [Maps](help:a/maps).
+
 ## Version 7.94.00
 - **Trails in Maps › Discover.** See the marked hiking, cycling and mountain bike routes around you, open one to see the whole route, its climb and walking time, and save it to My tracks or as GPX. See [Maps](help:a/maps).
 

@@ -2066,3 +2066,18 @@ body.trn-itin .route-alt { opacity: 0.25; }
 .trt-desc { font-size: 12.5px; margin: 6px 0; overflow-wrap: anywhere; white-space: pre-line; }
 .trt-time { margin: 4px 0 8px; }
 .trt-act { flex-wrap: wrap; }
+
+/* ---------- Hiking and cycling, wave H4: following a track ---------- */
+.trk-fw-off { color: #e06c75; }
+.trk-fw-rev { text-transform: uppercase; letter-spacing: .04em; font-size: 11px; }
+.trk-fw-sun.warn { color: #e5a50a; font-weight: 600; }
+.trk-fw-alerts.on { border-color: var(--accent); color: var(--accent); }
+.trk-fw-start { background: none; border: none; }
+.trk-fw-start span {
+  display: block; width: 26px; height: 26px; border-radius: 50%; background: #2e9e4f; border: 2px solid #fff; box-sizing: border-box;
+  box-shadow: 0 2px 6px var(--shadow); position: relative;
+}
+.trk-fw-start span::after {
+  content: ""; position: absolute; left: 50%; top: 3px; margin-left: -5px;
+  border-left: 5px solid transparent; border-right: 5px solid transparent; border-bottom: 9px solid #fff;
+}
