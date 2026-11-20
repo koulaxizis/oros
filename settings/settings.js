@@ -419,6 +419,12 @@
       grid.appendChild(b);
     });
     c3.appendChild(grid);
+    if (s.viz) {                                       // Light show (VIZWALL-1): the style
+      var vst = (s.viz.styles || ["glow"]).map(function (v) { return { value: v, label: t("a.wallpaper.viz." + v) }; });
+      c3.appendChild(row(t("a.wallpaper.viz.style"), segmented(vst, s.viz.style, "wpviz:style",
+        function (v) { set("wpviz:style", v); }, t("a.wallpaper.viz.style")), { stack: true }));
+      c3.appendChild(el("p", "hint", t("a.wallpaper.viz.hint")));
+    }
     if (s.land) {                                      // Living land: style, motion, another shape
       var lst = (s.land.styles || ["islands"]).map(function (v) { return { value: v, label: t("a.wallpaper.land." + v) }; });
       c3.appendChild(row(t("a.wallpaper.land.style"), segmented(lst, s.land.style, "wpland:style",

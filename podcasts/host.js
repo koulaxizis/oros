@@ -392,16 +392,26 @@
   // The light show (MU-VIZ wave 2) reads the same analyser: while it is
   // on, the element is wired like for the effects (CORS-probed hosts
   // and downloads only), and nothing else changes in what is heard.
-  var vizOn = false, vizF = null, vizW = null;
+  // vizOn = the app's own Light show (it wires the effects, which may
+  // load the episode again once); vizWall = the desktop's Light show
+  // wallpaper "wall" or the Media card "widget" (VIZWALL-1, vizPass),
+  // which only read sound that is already wired and never reload an
+  // episode.
+  var vizOn = false, vizWall = false, vizPass = {}, vizF = null, vizW = null;
   function fxWanted() { return !!(vizOn || C.prefOf(data, "sil") || C.prefOf(data, "vb")); }
-  function vizSet(on) {
+  function vizSet(on, who) {
+    if (who === "wall" || who === "widget") {
+      if (on) vizPass[who] = 1; else delete vizPass[who];
+      vizWall = Object.keys(vizPass).length > 0;
+      return vizOn;
+    }
     vizOn = !!on;
     fxSync();
     return vizOn;
   }
   // → { live, f, w, rate } (arrays of this window, read only) or null.
   function vizFrame() {
-    if (!vizOn) return null;
+    if (!vizOn && !vizWall) return null;
     var an = fx.an, live = !!(an && fx.el === audio && fx.state === "on" && !audio.paused && fx.ctx && fx.ctx.state === "running");
     if (an && (!vizF || vizF.length !== an.frequencyBinCount)) { vizF = new Uint8Array(an.frequencyBinCount); vizW = new Uint8Array(an.fftSize); }
     if (live) { try { an.getByteFrequencyData(vizF); an.getByteTimeDomainData(vizW); } catch (e) { live = false; } }
@@ -816,7 +826,7 @@
       };
     },
     // MU-VIZ: the light show (see vizFrame).
-    viz: function (on) { return vizSet(on); },
+    viz: function (on, who) { return vizSet(on, who); },
     vizFrame: vizFrame,
     subscribe: function (fn) {
       subs.push(fn);

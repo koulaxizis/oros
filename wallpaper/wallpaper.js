@@ -57,6 +57,10 @@
   var TC  = window.TreesCore || null;
   var TREES_KEY = "oros-trees-data";
   var LAND = window.OrosLand || null;
+  // Light show tab (VIZWALL-1): vizkit.js, the desktop's Light show wallpaper
+  var VIZ = window.OrosViz || null;
+  var VIZ_STYLES = ["glow", "rings", "bars", "wave"];
+  var vizCtl = null;          // the moving preview while the tab is open
   var STORAGE_KEY = "oros-wallpaper-data";
   var LANDS_KEY   = "oros-wallpaper-lands";
   var LAND_STYLES = ["islands", "hills", "garden"];
@@ -131,7 +135,15 @@
       "toast.set": "Set as your orOS wallpaper",
       "toast.rolled": "New seed: {seed}",
       "live.preview": "Preview: {style}, {pal}",
-      "mode.label": "What to make", "mode.art": "Patterns", "mode.land": "Living land",
+      "mode.label": "What to make", "mode.art": "Patterns", "mode.land": "Living land", "mode.viz": "Light show",
+      "vst.glow": "Glow", "vst.rings": "Rings", "vst.bars": "Bars", "vst.wave": "Wave",
+      "viz.hint": "The desktop moves with what plays in Music, Podcasts or Radio. The preview shows the light on its own; on your desktop it follows the music, and with nothing playing it rests as a still picture.",
+      "viz.calm": "It stays still with Reduce motion, Energy saver or a low battery, and it never runs under an app.",
+      "viz.dims": "Your desktop · {w} × {h}",
+      "live.viz": "Preview: Light show, {style}",
+      "btn.nextViz": "Next light style (R)",
+      "toast.vizSet": "The Light show is your wallpaper",
+      "toast.vizStyle": "Light style: {style}",
       "land.shape": "Shape", "land.shapeAria": "Shape number, 0 to 999999",
       "lst.islands": "Islands", "lst.hills": "Hills", "lst.garden": "Garden",
       "land.hint": "Living land grows around your shortcuts, widgets and sticky notes. The preview shows a sample desktop; on yours the land follows what is there.",
@@ -194,7 +206,15 @@
       "toast.set": "Έγινε ταπετσαρία του orOS",
       "toast.rolled": "Νέα λέξη: {seed}",
       "live.preview": "Προεπισκόπηση: {style}, {pal}",
-      "mode.label": "Τι φτιάχνεις", "mode.art": "Μοτίβα", "mode.land": "Ζωντανό τοπίο",
+      "mode.label": "Τι φτιάχνεις", "mode.art": "Μοτίβα", "mode.land": "Ζωντανό τοπίο", "mode.viz": "Φωτορυθμικό",
+      "vst.glow": "Λάμψη", "vst.rings": "Κύκλοι", "vst.bars": "Στήλες", "vst.wave": "Κύμα",
+      "viz.hint": "Η επιφάνεια εργασίας κινείται με ό,τι παίζει στη Μουσική, στα Podcasts ή στο Ραδιόφωνο. Η προεπισκόπηση δείχνει το φως μόνο του· στη δική σου επιφάνεια ακολουθεί τη μουσική, και όταν δεν παίζει τίποτα μένει μια ακίνητη εικόνα.",
+      "viz.calm": "Μένει ακίνητο με τις Μειωμένες κινήσεις, την Εξοικονόμηση ενέργειας ή χαμηλή μπαταρία, και δεν τρέχει ποτέ κάτω από μια εφαρμογή.",
+      "viz.dims": "Η επιφάνειά σου · {w} × {h}",
+      "live.viz": "Προεπισκόπηση: Φωτορυθμικό, {style}",
+      "btn.nextViz": "Επόμενο στυλ φωτός (R)",
+      "toast.vizSet": "Το Φωτορυθμικό έγινε ταπετσαρία σου",
+      "toast.vizStyle": "Στυλ φωτός: {style}",
       "land.shape": "Σχήμα", "land.shapeAria": "Αριθμός σχήματος, 0 έως 999999",
       "lst.islands": "Νησιά", "lst.hills": "Λόφοι", "lst.garden": "Κήπος",
       "land.hint": "Το Ζωντανό τοπίο μεγαλώνει γύρω από τις συντομεύσεις, τα widgets και τα αυτοκόλλητα σημειώματα. Η προεπισκόπηση δείχνει ένα δείγμα επιφάνειας· στη δική σου το τοπίο ακολουθεί ό,τι υπάρχει εκεί.",
@@ -393,7 +413,8 @@
       try { deskLand = wallApi() && wallApi().get().land; } catch (e) { deskLand = null; }
     }
     prefs = {
-      mode: p.mode === "land" && LAND ? "land" : "art",
+      mode: p.mode === "land" && LAND ? "land" : p.mode === "viz" && VIZ ? "viz" : "art",
+      viz: { style: p.viz && VIZ_STYLES.indexOf(p.viz.style) >= 0 ? p.viz.style : deskViz() },
       land: landCanon(p.land) || landCanon(deskLand) || { style: "islands", seed: 1 },
       r: ART.normRecipe(p.r) || ART.normRecipe(mine) || ART.defaultRecipe(),
       size: SIZE_IDS.indexOf(p.size) >= 0 ? p.size : "screen",
@@ -414,6 +435,21 @@
 
   function recipe() { return prefs.r; }
   function isLand() { return prefs.mode === "land" && !!LAND; }
+  function isViz() { return prefs.mode === "viz" && !!VIZ; }
+  // The style of the desktop's Light show, or glow.
+  function deskViz() {
+    var v = null;
+    try { v = wallApi() && wallApi().get().viz; } catch (e) { v = null; }
+    return v && VIZ_STYLES.indexOf(v.style) >= 0 ? v.style : "glow";
+  }
+  function setViz(style) {
+    if (VIZ_STYLES.indexOf(style) < 0) return;
+    prefs.viz = { style: style };
+    savePrefs();
+    if (vizCtl) vizCtl.setStyle(style);
+    renderControls();
+    schedulePreview();
+  }
 
   function setLand(patch) {
     var l = { style: prefs.land.style, seed: prefs.land.seed }, k;
@@ -428,6 +464,7 @@
 
   function setMode(m) {
     if (m === "land" && !LAND) return;
+    if (m === "viz" && !VIZ) return;
     if (prefs.mode === m) return;
     prefs.mode = m;
     savePrefs();
@@ -465,7 +502,7 @@
   }
 
   function currentSize() {
-    if (isLand()) return landDesk();
+    if (isLand() || isViz()) return landDesk();
     if (prefs.size === "screen") return screenSize();
     if (prefs.size === "custom") return [prefs.cw, prefs.ch];
     return SIZES[prefs.size].slice();
@@ -540,6 +577,33 @@
     cv.setAttribute("aria-label", t("live.land", { style: t("lst." + l.style), seed: l.seed }));
   }
 
+  // Light show: the kit itself on the preview canvas, moving on its own
+  // (no sound here), as soft as on the desktop. Stopped when the tab
+  // changes; the kit keeps its own rules (30 fps, hidden tab, still with
+  // reduced motion or a low battery).
+  function vizStop() {
+    if (vizCtl) { try { vizCtl.destroy(); } catch (e) {} vizCtl = null; }
+  }
+  function vizBase() {
+    var m = /^#?([0-9a-f]{6})$/i.exec(String(accent() || "").trim()), c = m ? parseInt(m[1], 16) : 0xa78bfa;
+    var mix = function (x, b) { return Math.round(b + (x - b) * 0.09); };
+    var r = mix(c >> 16 & 255, 8), g = mix(c >> 8 & 255, 8), b = mix(c & 255, 13);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+  function renderVizPreview(box, cv) {
+    $("dims").textContent = t("viz.dims", { w: box.full[0], h: box.full[1] });
+    cv.setAttribute("aria-label", t("live.viz", { style: t("vst." + prefs.viz.style) }));
+    if (!vizCtl) {
+      vizCtl = VIZ.create(cv, {
+        style: prefs.viz.style,
+        source: function () { return null; },
+        playing: function () { return true; },
+        colors: function () { return { a: accent(), bg: vizBase() }; },
+        soft: 0.6
+      });
+    } else { vizCtl.setStyle(prefs.viz.style); vizCtl.redraw(); }
+  }
+
   function renderPreview() {
     var box = fitBox();
     var cv = $("cv"), frame = $("frame");
@@ -547,6 +611,8 @@
     frame.style.height = box.h + "px";
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     var pw = Math.round(box.w * dpr), ph = Math.round(box.h * dpr);
+    if (isViz()) { ++previewToken; renderVizPreview(box, cv); return; }
+    vizStop();
     if (isLand()) { ++previewToken; renderLandPreview(box, cv, pw, ph); return; }
     var buf = document.createElement("canvas");
     buf.width = pw; buf.height = ph;
@@ -693,41 +759,79 @@
     });
   }
 
-  // Tabs: Patterns | Living land (ARIA tabs, arrow keys move)
+  // Light show styles: a still glow of the accent per style, the name under it.
+  function buildVizPicker() {
+    var host = $("viz-styles");
+    host.setAttribute("aria-label", t("sec.style"));
+    VIZ_STYLES.forEach(function (id) {
+      var b = el("button", "pick-btn");
+      b.type = "button";
+      b.setAttribute("role", "radio");
+      b.setAttribute("data-v", id);
+      b.appendChild(el("span", "pick-sw viz-sw viz-sw-" + id));
+      b.appendChild(el("span", "pick-lbl", t("vst." + id)));
+      b.addEventListener("click", function () { setViz(id); });
+      host.appendChild(b);
+    });
+    host.addEventListener("keydown", function (e) {
+      var keys = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+      if (!keys[e.key]) return;
+      e.preventDefault();
+      var i = VIZ_STYLES.indexOf(prefs.viz.style);
+      var n = VIZ_STYLES[(i + keys[e.key] + VIZ_STYLES.length) % VIZ_STYLES.length];
+      setViz(n);
+      var b = host.querySelector('[data-v="' + n + '"]');
+      if (b) b.focus();
+    });
+  }
+
+  // Tabs: Patterns | Living land | Light show (ARIA tabs, arrow keys move)
+  function modesOn() {
+    var out = ["art"];
+    if (LAND) out.push("land");
+    if (VIZ) out.push("viz");
+    return out;
+  }
   function wireModes() {
-    var bar = $("modes");
-    if (!LAND) { bar.hidden = true; return; }
+    var bar = $("modes"), ms = modesOn();
+    ["land", "viz"].forEach(function (m) { if (ms.indexOf(m) < 0) $("mode-" + m).hidden = true; });
+    if (ms.length < 2) { bar.hidden = true; return; }
     bar.setAttribute("aria-label", t("mode.label"));
-    ["art", "land"].forEach(function (m) {
+    ms.forEach(function (m) {
       $("mode-" + m).addEventListener("click", function () { setMode(m); });
     });
     bar.addEventListener("keydown", function (e) {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "Home" && e.key !== "End") return;
       e.preventDefault();
-      var m = (e.key === "Home") ? "art" : (e.key === "End") ? "land" : (prefs.mode === "land" ? "art" : "land");
+      var i = ms.indexOf(prefs.mode), n = ms.length;
+      var m = (e.key === "Home") ? ms[0] : (e.key === "End") ? ms[n - 1] : ms[(i + (e.key === "ArrowRight" ? 1 : -1) + n) % n];
       setMode(m);
       $("mode-" + m).focus();
     });
   }
 
   function renderMode() {
-    var land = isLand();
-    ["art", "land"].forEach(function (m) {
-      var b = $("mode-" + m), on = (m === "land") === land;
+    var land = isLand(), viz = isViz(), mode = viz ? "viz" : land ? "land" : "art";
+    ["art", "land", "viz"].forEach(function (m) {
+      var b = $("mode-" + m), on = m === mode;
       b.setAttribute("aria-selected", on ? "true" : "false");
       b.tabIndex = on ? 0 : -1;
       b.classList.toggle("on", on);
     });
-    $("art-panel").hidden = land;
+    $("art-panel").hidden = mode !== "art";
     $("land-panel").hidden = !land;
-    $("export-btn").hidden = land;
+    $("viz-panel").hidden = !viz;
+    $("export-btn").hidden = mode !== "art";
+    $("fav-btn").hidden = viz;
+    $("tb-a").classList.toggle("viz-only", viz);
+    if (!viz) vizStop();
     var seedIn = $("seed");
     seedIn.setAttribute("inputmode", land ? "numeric" : "text");
     seedIn.maxLength = land ? 6 : 40;
     seedIn.placeholder = land ? "1" : "orOS";
     seedIn.setAttribute("aria-label", t(land ? "land.shapeAria" : "seed"));
     $("seed-lbl").textContent = t(land ? "land.shape" : "seed");
-    var rl = t(land ? "btn.rollLand" : "btn.roll");
+    var rl = t(viz ? "btn.nextViz" : land ? "btn.rollLand" : "btn.roll");
     $("roll-btn").setAttribute("aria-label", rl);
     $("roll-btn").title = rl;
   }
@@ -772,6 +876,7 @@
   }
 
   function renderControls() {
+    if (isViz()) { renderPicker($("viz-styles"), prefs.viz.style); renderSetButton(); return; }
     if (isLand()) { renderLandControls(); return; }
     var r = recipe();
     var seedIn = $("seed");
@@ -1081,7 +1186,9 @@
     var cur = null;
     try { cur = api.get(); } catch (e) {}
     if (isLand() && typeof api.setLand !== "function") { b.hidden = true; return; }
-    var isSet = isLand()
+    if (isViz() && typeof api.setViz !== "function") { b.hidden = true; return; }
+    var isSet = isViz() ? !!(cur && cur.viz && cur.viz.style === prefs.viz.style)
+      : isLand()
       ? !!(cur && cur.land && cur.land.style === prefs.land.style && cur.land.seed === prefs.land.seed)
       : !!(cur && cur.active && !cur.picture && cur.recipe &&
            JSON.stringify(cur.recipe) === JSON.stringify(recipe()));
@@ -1117,6 +1224,13 @@
     var api = wallApi();
     if (!api) return;
     var ok = false;
+    if (isViz()) {
+      try { ok = typeof api.setViz === "function" && api.setViz({ style: prefs.viz.style }); }
+      catch (e) { ok = false; }
+      if (ok) showToast(t("toast.vizSet"));
+      renderSetButton();
+      return;
+    }
     if (isLand()) {
       try { ok = typeof api.setLand === "function" && api.setLand({ style: prefs.land.style, seed: prefs.land.seed }); }
       catch (e) { ok = false; }
@@ -1401,6 +1515,12 @@
 
   // ---------- 11. Keyboard ----------
   function rollSeed() {
+    if (isViz()) {
+      var nv = VIZ_STYLES[(VIZ_STYLES.indexOf(prefs.viz.style) + 1) % VIZ_STYLES.length];
+      setViz(nv);
+      live(t("toast.vizStyle", { style: t("vst." + nv) }));
+      return;
+    }
     if (isLand()) {
       var n = prefs.land.seed;
       while (n === prefs.land.seed) n = Math.floor(Math.random() * (LAND_MAX_SEED + 1));
@@ -1668,6 +1788,8 @@
     applyI18n();
     buildPicker($("styles"), ART.STYLES, "st.", "style", null);
     if (LAND) buildLandPicker();
+    if (VIZ) buildVizPicker();
+
     wireModes();
     buildPicker($("pals"), ART.PALETTES, "pal.", "pal", paintPalSw);
     buildSizeSelect();
