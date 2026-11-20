@@ -904,3 +904,12 @@ test("GATE-SCREEN: the copy's switches and pause refuse a screen call before it 
   assert.equal(G.pendApp("export_pdf", {}), "layout");
   assert.equal(G.pendApp("edit_in_app", { app: "Writer" }), "writer");
 });
+
+test("KB-SUBDEL: removing Kanban subtasks is a deletion for the box (it waits for the owner's Delete)", () => {
+  assert.equal(G.isDeletion("kanban_change_card", { remove_subtasks: ["s1"] }), true);
+  assert.equal(G.isDeletion("kanban_change_card", { add_subtasks: ["x"] }), false);
+  assert.equal(G.isDeletion("kanban_change_card", { remove_subtasks: [] }), false);
+  const t = G.TOOLS.find((x) => x.name === "kanban_change_card");
+  assert.ok(t.inputSchema.properties.remove_subtasks);
+  assert.match(t.description, /remove_subtasks: a deletion/);
+});

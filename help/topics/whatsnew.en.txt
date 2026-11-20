@@ -3,8 +3,11 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
-## Version 8.00.00
+## Version 8.01.00
 - **New game: Clockwork Workshop.** A calm idle game on a watchmaker's bench: a water wheel turns gears, the gears drive small machines, belts carry what they make and a crate sells it. Brass becomes gears and springs, they become clocks, clocks become automatons. Gears mesh on all eight sides and turn opposite ways, so three that all touch jam the whole train: the layout is a quiet puzzle. Once an automaton is sold you can open a bigger workshop, keeping one guild mark, and every old bench goes into the pattern book, where you can lay it again. It goes on while orOS is closed (full pace for 7 days, then half), with no notifications and nothing to collect, and it syncs between your devices. In the Idle group of the Game Center.
+
+## Version 8.00.00
+- **Claude can remove subtasks from Kanban cards.** Through orOS Gate, Claude can now take subtasks off a card, by name. It is a deletion: orOS shows you the subtasks first and removes them only after you press Delete, and you can undo it from Claude's changes.
 
 ## Version 7.99.00
 - **Recording in Maps knows what you do.** Choose walk, hike, run, ride or mountain bike; Maps shows when you stopped, the moving time and the climb as you go, and you can add a point with a photo. A track then shows its splits per kilometre and its points with photos. See [Maps](help:a/maps).
