@@ -79,7 +79,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.5.0";
+  var VER = "1.6.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -366,7 +366,8 @@
     var online = navigator.onLine !== false;
     var d = dnd();
     var html = (online ? IC.net : IC.netOff);
-    if (d && d.on) html += IC.bellOff;
+    // Focus F3: the running mode's own icon (Do Not Disturb: the crossed bell)
+    if (d && d.on) html += focusIcon() || IC.bellOff;
     var aw = awake(), sv = saver();
     if (aw.on) html += IC.cup;
     if (sv.on) html += IC.leaf;
@@ -846,6 +847,14 @@
   }
 
   // The mode rows of the focus menu (rebuilt only when they change).
+  function focusIcon() {
+    var F = focus();
+    if (!F || !F.model || typeof F.model.svg !== "function") return "";
+    var a = call(function () { return F.active(); });
+    if (!a) return "";
+    var m = (call(function () { return F.list(); }) || []).filter(function (x) { return x.id === a.id; })[0];
+    return m && m.icon !== "bell" ? F.model.svg(m.icon) : "";
+  }
   function paintFocus(F, fa) {
     var list = call(function () { return F.list(); }) || [];
     var endId = fa ? fa.id : call(function () { return F.last(); });

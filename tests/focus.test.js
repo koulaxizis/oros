@@ -212,11 +212,11 @@ test("F2 until the end, unknown fields ride along, no change no stamp", () => {
   assert.equal(F.endOf(f, QH, "sleep", day(16, 12)), day(17, 8), "Sleep: the next end of the quiet hours");
   assert.equal(F.untilOf("end", day(16, 7), day(16, 17)), day(16, 17));
   assert.equal(F.untilOf("end", day(16, 7), 0), 0);
-  const later = F.normalize({ modes: [{ id: "work", hide: { widgets: ["clock"] }, Bad: 1 }] });
-  assert.deepEqual(F.modeOf(later, "work").hide, { widgets: ["clock"] }, "a later wave's field is kept");
+  const later = F.normalize({ modes: [{ id: "work", digest: { at: [8] }, Bad: 1 }] });
+  assert.deepEqual(F.modeOf(later, "work").digest, { at: [8] }, "a later wave's field is kept");
   assert.equal(F.modeOf(later, "work").Bad, undefined);
   const edited = F.edited(later, "work", { allow: ["mail"] }, day(16, 9));
-  assert.deepEqual(F.modeOf(edited, "work").hide, { widgets: ["clock"] });
+  assert.deepEqual(F.modeOf(edited, "work").digest, { at: [8] });
   assert.equal(F.edited(f, "work", { sched: WEEK }, day(16, 9)).mrev, f.mrev, "the same schedule writes nothing");
 });
 
@@ -237,6 +237,38 @@ test("F2 wiring: Settings, Quick settings, strings, Calendar data read", () => {
   for (const k of ["n.focus.sched", "n.focus.sched.hint", "n.focus.sched.sleep", "n.focus.days", "n.focus.sched.empty", "n.focus.sched.night",
                    "n.focus.cal", "n.focus.cal.hint", "n.focus.cal.label", "n.focus.cal.anylabel", "n.focus.cal.word", "n.focus.cal.word.ph",
                    "n.focus.cal.word.hint", "n.focus.cal.empty", "n.focus.by.schedule", "n.focus.by.calendar"]) {
+    assert.equal((sc.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN+EL");
+    assert.ok(sde.includes('"' + k + '":'), k + " DE");
+  }
+});
+
+// ---------- F3: hide widgets and desktop/Dock icons, the bar icon ----------
+test("F3 hide: checked ids, CSS only for the running mode, nothing else", () => {
+  let f = F.edited(null, "work", { hide: { widgets: ["today", "today", "Bad"], apps: ["games", "x\"}body{", "chess"] } }, day(16, 8));
+  assert.deepEqual(F.modeOf(f, "work").hide, { widgets: ["today"], apps: ["chess", "games"] });
+  assert.equal(F.hideCss(f, null), "");
+  const css = F.hideCss(f, { id: "work" });
+  assert.equal(css, '.wg-card[data-wg="today"], #ld-desk [data-app="chess"], #ld-dock [data-app="chess"], #ld-desk [data-app="games"], #ld-dock [data-app="games"] { display: none !important; }');
+  assert.doesNotMatch(css, /body\{/);
+  assert.equal(F.hideCss(f, { id: "personal" }), "", "another mode hides nothing");
+  f = F.edited(f, "work", { hide: { widgets: [], apps: [] } }, day(16, 9));
+  assert.equal(F.modeOf(f, "work").hide, undefined, "an empty choice is dropped");
+  const g = F.normalize({ modes: [{ id: "dnd", hide: { apps: ["mail"] } }] });
+  assert.deepEqual(F.modeOf(g, "dnd").hide, { widgets: [], apps: ["mail"] });
+});
+
+test("F3 wiring: shell style, Settings picker, launcher list, bar icon, strings", () => {
+  const core = read("focus/core.js");
+  assert.match(core, /st\.id = "oros-focus-hide"/);
+  assert.match(core, /paintHide\(hideCss\(f0, cur\)\)/);
+  const s = read("settings/settings.js");
+  assert.match(s, /function focusHide\(c5, F, m\)/);
+  assert.match(s, /F\.edit\(m\.id, \{ hide: next \}\)/);
+  assert.doesNotMatch(s.slice(s.indexOf("function focusHide"), s.indexOf("function focusWhen")), /innerHTML/);
+  assert.match(read("launcher.js"), /placed: function \(\) \{ return \{ desk: shown\("desk"\), dock: shown\("dock"\) \}; \}/);
+  assert.match(read("qsettings.js"), /html \+= focusIcon\(\) \|\| IC\.bellOff/);
+  const sc = read("settings/core.js"), sde = read("i18n/de/settings.js");
+  for (const k of ["n.focus.hide", "n.focus.hide.hint", "n.focus.hide.widgets", "n.focus.hide.apps", "n.focus.hide.none"]) {
     assert.equal((sc.match(new RegExp('"' + k.replace(/\./g, "\\.") + '":', "g")) || []).length, 2, k + " EN+EL");
     assert.ok(sde.includes('"' + k + '":'), k + " DE");
   }

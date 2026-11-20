@@ -33,7 +33,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var HOUR = 3600000;
   var MAX_OWN = 10;
   var MAX_NAME = 40;
@@ -80,9 +80,24 @@
     var label = (typeof x.label === "string" && /^[A-Za-z0-9_-]{1,64}$/.test(x.label)) ? x.label : "";
     return { on: !!x.on, label: label, word: cleanName(x.word) };
   }
+  // What a mode hides while it runs (F3, D3: only the desktop and the
+  // Dock; the menu and search still find every app): widget kinds and
+  // app ids. The ids are checked, so they are safe inside CSS.
+  function cleanIds(a, re, max) {
+    var out = [];
+    (Array.isArray(a) ? a : []).forEach(function (x) {
+      if (typeof x === "string" && re.test(x) && out.indexOf(x) < 0 && out.length < max) out.push(x);
+    });
+    return out.sort();
+  }
+  function cleanHide(x) {
+    if (!x || typeof x !== "object") return null;
+    var w = cleanIds(x.widgets, /^[a-z]{1,16}$/, 16), a = cleanIds(x.apps, /^[a-z0-9][a-z0-9_-]{0,47}$/, 80);
+    return (w.length || a.length) ? { widgets: w, apps: a } : null;
+  }
   // Fields a later orOS adds to a mode ride along untouched (an older
   // device never drops what it does not know).
-  var KNOWN = { id: 1, name: 1, icon: 1, allow: 1, sched: 1, cal: 1 };
+  var KNOWN = { id: 1, name: 1, icon: 1, allow: 1, sched: 1, cal: 1, hide: 1 };
   function extras(m) {
     var out = {}, size = 0;
     Object.keys(m).forEach(function (k) {
@@ -107,6 +122,8 @@
     if (sc) c.sched = sc;
     var ca = cleanCal(m.cal);
     if (ca) c.cal = ca;
+    var hi = cleanHide(m.hide);
+    if (hi) c.hide = hi;
     return c;
   }
   // Repairs every field; the built-ins are always first, in order.
@@ -299,6 +316,7 @@
       if ("allow" in patch) y.allow = cleanAllow(patch.allow);
       if ("sched" in patch) { var sc = cleanSched(patch.sched); if (sc && id !== "sleep") y.sched = sc; else delete y.sched; }
       if ("cal" in patch) { var ca = cleanCal(patch.cal); if (ca) y.cal = ca; else delete y.cal; }
+      if ("hide" in patch) { var hi = cleanHide(patch.hide); if (hi) y.hide = hi; else delete y.hide; }
       if (!isBuiltin(id) && !y.name) y.name = x.name;   // an own mode keeps a name
       return cleanMode(y, isBuiltin(id) ? { id: id, icon: x.icon, allow: [] } : null);
     });
@@ -344,6 +362,14 @@
     }
     return 0;
   }
+  // The shell's CSS for what the running mode hides ("" = nothing).
+  function hideCss(f, cur) {
+    var m = cur ? modeOf(f, cur.id) : null;
+    if (!m || !m.hide) return "";
+    var sel = m.hide.widgets.map(function (k) { return '.wg-card[data-wg="' + k + '"]'; })
+      .concat(m.hide.apps.map(function (id) { return '#ld-desk [data-app="' + id + '"], #ld-dock [data-app="' + id + '"]'; }));
+    return sel.length ? sel.join(", ") + " { display: none !important; }" : "";
+  }
   function nameOf(m, t) {
     if (!m) return "";
     if (m.name) return m.name;
@@ -370,7 +396,7 @@
 
   var model = { VER: VER, svg: svg, ICONS: ICONS.slice(), BUILTIN_IDS: BUILTIN.map(function (b) { return b.id; }), MAX_OWN: MAX_OWN,
                 normalize: normalize, merge: merge, touched: touched, sleepEnds: sleepEnds, activeAt: activeAt,
-                schedEnds: schedEnds, schedNextEnd: schedNextEnd, calEnds: calEnds, endOf: endOf, fold: fold,
+                schedEnds: schedEnds, schedNextEnd: schedNextEnd, calEnds: calEnds, endOf: endOf, fold: fold, hideCss: hideCss,
                 modeOf: modeOf, silent: silent, started: started, stopped: stopped, edited: edited,
                 added: added, removed: removed, untilOf: untilOf, nameOf: nameOf, isBuiltin: isBuiltin };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
@@ -429,10 +455,21 @@
     return list;
   }
   function evs(now) { return eventsNow(read(), now); }
+  // F3: hide the chosen widgets and desktop/Dock icons while a mode runs
+  // (one <style> in the shell; nothing is removed from the layouts).
+  function paintHide(css) {
+    var doc = root.document;
+    if (!doc || !doc.head) return;
+    var st = doc.getElementById("oros-focus-hide");
+    if (!css) { if (st) st.remove(); return; }
+    if (!st) { st = doc.createElement("style"); st.id = "oros-focus-hide"; doc.head.appendChild(st); }
+    if (st.textContent !== css) st.textContent = css;
+  }
   var listeners = [];
   var lastKey = "";
   function changed() {
-    var now = Date.now(), cur = activeAt(read(), quiet(), now, evs(now));
+    var now = Date.now(), f0 = read(), cur = activeAt(f0, quiet(), now, evs(now));
+    paintHide(hideCss(f0, cur));
     var key = JSON.stringify([cur, read().modes]);
     if (key === lastKey) return;
     lastKey = key;
@@ -459,7 +496,8 @@
     list: function () {
       return read().modes.map(function (m) {
         return { id: m.id, name: nameOf(m, t), own: m.name, icon: m.icon, allow: m.allow.slice(), builtin: isBuiltin(m.id), locked: !!LOCKED_ALLOW[m.id],
-                 sched: m.sched ? JSON.parse(JSON.stringify(m.sched)) : null, cal: m.cal ? JSON.parse(JSON.stringify(m.cal)) : null };
+                 sched: m.sched ? JSON.parse(JSON.stringify(m.sched)) : null, cal: m.cal ? JSON.parse(JSON.stringify(m.cal)) : null,
+                 hide: m.hide ? JSON.parse(JSON.stringify(m.hide)) : null };
       });
     },
     // { id, name, until, by } | null
