@@ -1224,6 +1224,14 @@
       "type": "internal"
     },
     {
+      "id": "caravan",
+      "name": "Caravan",
+      "category": "Games",
+      "icon": "caravan",
+      "url": "caravan/",
+      "type": "internal"
+    },
+    {
       "id": "wayfarers",
       "name": "Wayfarers",
       "category": "Games",

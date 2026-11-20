@@ -138,6 +138,12 @@
    ]
   },
   {
+   "app": "caravan",
+   "files": [
+    "caravan/caravan.js"
+   ]
+  },
+  {
    "app": "cardkit",
    "files": [
     "cardkit/cardkit.js"

@@ -167,6 +167,11 @@
       var g = obj(s.g);
       return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
     },
+    // Caravan: the same shape (under way after the first hire).
+    caravan: function (s) {
+      var g = obj(s.g);
+      return !!g && !s.counted && num(g.over) < 0 && num(g.acts) > 0;
+    },
     xeri: function (s) {
       if (s.phase === "over") return false;
       var hs = num(s.hs) || 6, won = arr(s.won), hands = arr(s.hands);
