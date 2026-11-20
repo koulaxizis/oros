@@ -40,4 +40,9 @@
     <string name="support">Στήριξε τα projects</string>
     <string name="notes_off">Οι ειδοποιήσεις για ενημερώσεις είναι κλειστές, οπότε τις βλέπεις μόνο εδώ.</string>
     <string name="notes_turn_on">Άνοιγμα</string>
+    <string name="confirm">Επιβεβαίωση</string>
+    <string name="not_updated">Το %1$s δεν ενημερώθηκε. Πατήστε Ενημέρωση για να δοκιμάσετε ξανά.</string>
+    <string name="lost_text">Η ερώτηση του Android για την εγκατάσταση του %1$s έκλεισε πριν απαντήσετε (σε μερικά κινητά την καλύπτει ένας έλεγχος ασφαλείας).</string>
+    <string name="show_again">Εμφάνιση ξανά</string>
+    <string name="skip">Παράλειψη</string>
 </resources>
