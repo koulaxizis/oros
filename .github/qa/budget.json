@@ -432,6 +432,10 @@
       "bytes": 794623,
       "ms": 160
     },
+    "starchart": {
+      "bytes": 298883,
+      "ms": 206
+    },
     "stickies": {
       "bytes": 297983,
       "ms": 34

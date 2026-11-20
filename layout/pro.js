@@ -725,14 +725,15 @@
     return n;
   }
   // Every picture frame for the Links list: [{ id, page (1-based),
-  // name, ppi, state ok|missing|empty|low, flip }] in page order.
-  function links(doc, isMissing, ppiOf, low) {
+  // name, ppi, state ok|missing|empty|small|low, flip }] in page order
+  // (small: a Scribus picture drawn smaller than in Scribus, isSmall).
+  function links(doc, isMissing, ppiOf, low, isSmall) {
     var pos = {}, out = [];
     M.pagesInOrder(doc).forEach(function (p, i) { pos[p.id] = i + 1; });
     doc.items.forEach(function (it) {
       if (it.t !== "img" || !pos[it.pg]) return;
       var ppi = it.a && ppiOf ? Math.round(ppiOf(it)) : 0;
-      var state = !it.a ? "empty" : isMissing && isMissing(it.a) ? "missing" : ppi && ppi < (low || 200) ? "low" : "ok";
+      var state = !it.a ? "empty" : isMissing && isMissing(it.a) ? "missing" : isSmall && isSmall(it) ? "small" : ppi && ppi < (low || 200) ? "low" : "ok";
       out.push({ id: it.id, page: pos[it.pg], name: it.nm || "", ppi: ppi, state: state, flip: it.ext && it.ext.fl || "", local: !!(it.ext && it.ext.lc) });
     });
     return out.sort(function (a, b) { return a.page - b.page || M.cmpStr(a.name, b.name); });

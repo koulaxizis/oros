@@ -73,6 +73,68 @@ test("placePicture(): own scale and offset, fit, stretch; the picture lands wher
   assert.deepEqual(f, { t: "img", w: 10, h: 10, iw: 5, ih: 5, fit: "fill" });
 });
 
+test("placePicture(): a stored copy smaller than the original keeps the printed size (PORT, Chris's cover 5670 px)", () => {
+  const res = S.convert(SLA, { now: 5 });
+  const [a, , , d] = imgs(res);
+  // the original is 3200 × 1600 px, the stored copy half of that
+  a.iw = 1600; a.ih = 800; S.placePicture(a, 3200, 1600);
+  const ra = R.imageRect(a);
+  assert.ok(Math.abs(ra.w - 800) < 1e-9 && Math.abs(ra.h - 400) < 1e-9, "3200 px × 0.25 pt, drawn from 1600 px");
+  assert.deepEqual([ra.x, ra.y], [-10, 3], "the offset is in the original's pixels × its scale");
+  d.iw = 1600; d.ih = 800; S.placePicture(d, 3200, 1600);
+  const rd = R.imageRect(d);
+  assert.ok(Math.abs(rd.w - 1280) < 1e-9 && Math.abs(rd.h - 480) < 1e-9);
+  // the same size as the original (or none given): as before
+  const [b2] = imgs(S.convert(SLA, { now: 6 }));
+  b2.iw = 1600; b2.ih = 800; S.placePicture(b2, 1600, 800);
+  assert.deepEqual(R.imageRect(b2), { x: -10, y: 3, w: 400, h: 200 });
+});
+
+test("shrunk(): a picture imported before the fix is found, and Find pictures places it again at its size", () => {
+  const res = S.convert(SLA, { now: 5 });
+  const [a, b, c, d] = imgs(res);
+  // as an old import left it: stored copy 3500 px, scale still LOCALSC
+  a.a = "x.jpg"; a.iw = 3500; a.ih = 1750; S.placePicture(a);
+  assert.equal(S.shrunk(a, 3500), true);
+  // the same frame after a fix of its own (owner changed the scale): left alone
+  const own = Object.assign({}, a, { isc: 0.4, ext: JSON.parse(JSON.stringify(a.ext)) });
+  assert.equal(S.shrunk(own, 3500), false);
+  // a small picture, a fit, a stretch, an empty frame, no Scribus data: never
+  d.a = "y.jpg"; d.iw = 1600; d.ih = 800; S.placePicture(d);
+  assert.equal(S.shrunk(d, 3500), false);
+  c.a = "z.jpg"; c.iw = 3500; c.ih = 1750; S.placePicture(c);
+  b.a = "w.jpg"; b.iw = 3500; b.ih = 1750; S.placePicture(b);
+  assert.equal(S.shrunk(c, 3500), false);
+  assert.equal(S.shrunk(b, 3500), false);
+  assert.equal(S.shrunk({ t: "img", iw: 3500, ih: 10, fit: "custom", isc: 1, ext: { place: [0, 1, 1, 0, 0] } }, 3500), false);
+  assert.equal(S.shrunk({ t: "img", a: "q", iw: 3500, ih: 10, fit: "custom", isc: 1 }, 3500), false);
+  // relinking the 7000 px original places it at its printed size
+  S.placePicture(a, 7000, 3500);
+  assert.ok(Math.abs(R.imageRect(a).w - 1750) < 1e-9, "7000 px × 0.25 pt");
+  assert.equal(S.shrunk(a, 3500), false, "after the repair it is no longer shrunk");
+  assert.equal(a.ext.ow, 7000);
+  // an original only a little larger than the stored copy: done too
+  const e = Object.assign({}, own, { isc: 0.25, ext: { place: own.ext.place.slice() } });
+  S.placePicture(e, 3504, 1752);
+  assert.equal(S.shrunk(e, 3500), false);
+  // the Links list shows it, and Find pictures takes such frames too
+  const PRO = require(path.join(ROOT, "layout/pro.js"));
+  const doc = M.normDoc(res.doc);
+  doc.items = [Object.assign({}, own, { pg: doc.pages[0].id, isc: 0.25 })];
+  const L = PRO.links(doc, () => false, R.effectivePpi, 200, (it) => S.shrunk(it, 3500));
+  assert.equal(L[0].state, "small");
+  const io = read("layout/io.js");
+  assert.match(io, /var fill = function \(it\) \{ return it\.t === "img" && it\.nm && \(!it\.a \|\| !!\(window\.LY_SLA && window\.LY_SLA\.shrunk\(it, A\.MAX_SIDE\)\)\); \};/);
+  assert.match(io, /var r = fill\(it\) \? got\[nameKey\(it\.nm\)\] : null;/);
+  const pn = read("layout/panels.js");
+  assert.match(pn, /if \(\(miss \|\| nSmall\) && LY\.io\.relinkPick\)/);
+  const ly = read("layout/layout.js"), de = read("i18n/de/layout.js");
+  ["links.s.small", "links.smallHint"].forEach((k) => {
+    assert.equal(ly.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), k);
+  });
+});
+
 test("uniform() returns to one scale; names compare loosely", () => {
   const it = { ext: { iscy: 2 } };
   R.uniform(it);

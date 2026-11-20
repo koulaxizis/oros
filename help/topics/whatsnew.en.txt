@@ -3,6 +3,18 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 7.97.00
+- **Layout: books from Scribus, Affinity and InDesign come over closer to the original.** Calibri, Arial and Times are replaced by free fonts with the same letter widths (Carlito, Liberation Sans, Liberation Serif), so lines break where they did. A photo that your printer's PDF prints in black and white comes in black and white. Export has PDF/X-4, the file printers ask for, with the colours in the printer's CMYK and black text in black ink alone. A cover whose text arrived as shapes can be read with Text from the picture (OCR). More › Compare with a PDF shows, page by page, what differs from the original PDF, in red.
+
+## Version 7.96.01
+- **Layout: Scribus covers keep their size.** A large picture placed freely in a Scribus file (often the cover) now prints at the size Scribus gave it, instead of smaller. For a book you opened earlier, open More › Links (pictures)…: such pictures show as "smaller than in Scribus". Press Find pictures… and pick the original pictures, and they land at the right size.
+
+## Version 7.96.00
+- **New game: Star Chart.** A calm idle game: a small hilltop observatory whose telescopes gather starlight every minute. Spend it on more telescopes, or draw your own constellations by joining the stars of the night sky. The kinds of the stars and the shape you draw (a chain, a branch or a ring) decide the bonus each one gives, lines never cross and every star belongs to one constellation, so the sky is a quiet puzzle. The moon is the real moon of the date, and the clouds are the same on every device. With six constellations and a radio dish you can begin a new season with a new sky, keeping one trait and every old constellation in the star atlas. It goes on while orOS is closed (full pace for 7 days, then half), with no notifications and nothing to collect, and it syncs between your devices. In the Idle group of the Game Center.
+
+## Version 7.95.00
+- **Follow a track like a hiking app.** Follow it either way round and see the distance and climb left, the next waypoint and when you will arrive, with a warning if that is after sunset. Maps tells you by vibration, a tone and voice when you leave the track, come back, reach a waypoint or the end. See [Maps](help:a/maps).
+
 ## Version 7.94.00
 - **Trails in Maps › Discover.** See the marked hiking, cycling and mountain bike routes around you, open one to see the whole route, its climb and walking time, and save it to My tracks or as GPX. See [Maps](help:a/maps).
 

@@ -1,0 +1,67 @@
+# Sternkarte
+Sternkarte ist ein ruhiges Idle-Spiel für eine Person. Auf einem Hügel steht eine kleine Sternwarte: ihre Teleskope sammeln jede Minute Sternenlicht, und du gibst das Sternenlicht für weitere Teleskope aus und dafür, eigene Sternbilder zu zeichnen, indem du die Sterne des Nachthimmels verbindest. Die Sternwarte macht von selbst weiter, während orOS geschlossen ist: Du verpasst nichts, musst nichts einsammeln und bekommst keine Benachrichtigungen. Komm, wann du magst.
+
+## So wird gespielt
+- Tippe auf einen Stern und dann auf einen anderen, um sie mit einer Linie zu verbinden. Am zweiten Stern beginnt die nächste Linie, so geht es von Stern zu Stern weiter. Tippe noch einmal auf denselben Stern, um ihn loszulassen, oder auf den leeren Himmel.
+- Verbinde 3 bis 8 Sterne zu einer Form und drücke `Benennen`. Dann werden die Linien bezahlt, in Sternenlicht. Das Sternbild gibt seinen Bonus sofort, für die ganze Saison.
+- `Linie zurück` nimmt die letzte Linie zurück, und ein Tipp auf eine gestrichelte Linie der Zeichnung entfernt sie. `Leeren` beginnt die Zeichnung neu. Vor `Benennen` wird nichts bezahlt.
+- Die Statuszeile zeigt das Sternenlicht und wie viel jede Minute hereinkommt, die Sternbilder dieser Saison, den Mond und den Himmel jetzt.
+- `Rückgängig` in der Meldung nach jeder Aktion nimmt sie zurück.
+
+## Die Regeln des Himmels
+- Eine Linie reicht 3 Felder des Himmelsrasters (mit dem Sternkompass weiter). Wählst du einen Stern, zeigt ein gepunkteter Kreis, wie weit er reicht, und die Sterne, mit denen er sich verbinden lässt, bekommen einen Ring.
+- Eine Linie geht nie durch einen anderen Stern und kreuzt nie eine andere Linie.
+- Jeder Stern gehört nur zu einem Sternbild. Der Himmel hat etwa 24 Sterne, also nimmt jedes Sternbild Sterne, die das nächste nicht mehr hat: plane die Formen.
+- Ein Sternbild ist ein Stück, mit höchstens einem geschlossenen Ring.
+
+## Sternarten
+Jeder Stern hat eine Helligkeit von 1 bis 3 (seine Größe) und eine von vier Arten, jede mit eigener Form und Farbe:
+- **Blau** (eine Raute): die Teleskope sammeln 3 % mehr je Helligkeitspunkt.
+- **Gold** (eine Scheibe): die Teleskope kosten 2 % weniger je Helligkeitspunkt (bis auf 40 % des Preises).
+- **Rot** (ein Dreieck): die Linien kosten 3 % weniger je Helligkeitspunkt (bis auf ein Viertel).
+- **Weiß** (ein Kreuz): jetzt nichts, aber mehr für den Sternatlas, wenn die Saison endet.
+
+## Formen
+Die Form vervielfacht alles, was ihre Sterne geben:
+- **Kette** (Sterne nacheinander, auch ein Dreieck): ×1.
+- **Verzweigt** (ein Stern mit drei oder mehr Linien): ×1,25.
+- **Ring** (ein geschlossener Ring aus mindestens 4 Sternen): ×1,5.
+- **Ring mit Zweig**: ×1,75.
+- Sind alle Sterne eines Sternbilds von einer Art, gibt es noch ein Fünftel mehr.
+Tippe auf einen Stern eines benannten Sternbilds, um zu sehen, was es bringt, es umzubenennen oder zu löschen. Löschen macht seine Sterne frei; das Sternenlicht für seine Linien kommt nicht zurück.
+
+## Linien und ihr Preis
+Die erste Linie einer Saison kostet 10 Sternenlicht, und jede in dieser Saison schon gezogene Linie macht die nächste ein Viertel teurer. Rote Sterne und die Eigenschaft Ruhige Hand machen Linien billiger. Das Feld zeigt den Preis der Zeichnung, bevor du sie benennst.
+
+## Die Sternwarte
+`Sternwarte` in der Werkzeugleiste (oder [[T]]) listet die Teleskope und die Verbesserungen:
+- **Teleskope:** Fernrohr (1 Sternenlicht pro Minute), Linsenteleskop (8), Spiegelteleskop (60), großes Spiegelteleskop (450) und Radioteleskop (3.500). Jedes kostet etwas mehr als das vorige.
+- **Dunkler Himmel:** Schirme über den Dorflampen, +25 % auf alles Sternenlicht, viermal.
+- **Sternkompass:** Linien reichen ein Feld weiter, zweimal.
+- **Polierte Spiegel:** einer für jede Teleskopart; jedes Teleskop dieser Art sammelt doppelt so viel.
+
+## Der Mond und die Wolken
+- Der Mond im Spiel ist der echte Mond des Datums. Bei Neumond sammeln die Teleskope bis zu 20 % mehr, bei Vollmond bis zu 20 % weniger; im Mittel gleicht es sich aus.
+- Die Wolken wechseln alle 3 Stunden und sind auf jedem Gerät gleich: ein klarer Himmel sammelt voll, Dunst 75 % und Wolken 40 %. Der Streifen oben zeigt den Himmel der nächsten 8 Stunden. Tippe darauf oder drücke [[F]] für die Liste in Worten und eine Legende der Sternarten.
+
+## Eine neue Saison
+- Sobald sechs Sternbilder benannt sind und ein Radioteleskop steht, kannst du eine neue Saison beginnen. Ein Knopf `Neue Saison` erscheint in der Werkzeugleiste und im Feld. Es eilt nicht: er bleibt offen.
+- Eine neue Saison bringt ein neues Sternenfeld. Die Sternwarte geht zurück auf ein Fernrohr und ein wenig Sternenlicht.
+- Jedes Sternbild der Saison kommt in den **Sternatlas** (das Buch in der Werkzeugleiste, oder [[A]]) und gibt für immer 1 % auf alles Sternenlicht, dazu ein halbes Prozent für jeden Punkt weißer Helligkeit, den es hatte.
+- Du behältst eine **Eigenschaft** für immer, aus dreien: Scharfes Auge (Linien reichen ein Feld weiter), Ruhige Hand (Linien 15 % billiger), Mondfreund (der Vollmond nimmt nur halb so viel), Kartograf (jede Form ein Viertel mehr), Linsenschleifer (Teleskope 10 % billiger) und Frühaufsteher (jede neue Saison beginnt mit 2 Linsenteleskopen). Dieselbe Eigenschaft kann wiederkommen und zählt zusammen.
+
+## Während du weg warst
+Wenn du Sternkarte nach einer Weile öffnest, zeigt eine Karte, wie lange du weg warst, das gesammelte Sternenlicht, die Stunden mit klarem Himmel, Dunst und Wolken und die Monde, die kamen und gingen. Die ersten 7 Tage der Abwesenheit arbeitet die Sternwarte voll; danach macht sie mit halbem Tempo weiter. Sie hört nie auf, sie wird nur langsamer.
+
+## Bilanz und Synchronisierung
+`Bilanz` zeigt alles gesammelte Sternenlicht, die Saison, die Sternbilder, den Atlas, die Eigenschaften, die Stunden jedes Himmels und die Meilensteine. `Toneffekte` dort schaltet die kleinen Töne an und aus, wie [[M]]. `Der Klang der Nacht` schaltet einen leisen Wind mit fernen Grillen an; anfangs ist er aus. Der Himmel wird über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen: es ist derselbe Himmel auf deinem Handy und deinem Computer. Spielen zwei Geräte gleichzeitig, bleibt der weiter fortgeschrittene Himmel, und die letzten Minuten des anderen Geräts gehen verloren. Eine Aktion wird ein paar Sekunden danach gespeichert und höchstens alle 5 Minuten sowie beim Verlassen gesendet. Eine noch nicht benannte Zeichnung bleibt auf diesem Gerät. `Neu beginnen` in der Bilanz beginnt einen neuen Himmel auf jedem Gerät, mit `Rückgängig` für ein paar Sekunden. Sternkarte ist in der Gruppe Entspannt im [Game Center](help:a/gamecenter). Die Toneinstellungen bleiben auf diesem Gerät.
+
+## Tastatur
+- Die Pfeiltasten gehen von Stern zu Stern; [[Enter]] oder [[Space]] wählt den Stern oder zieht die Linie dorthin; [[Backspace]] nimmt die letzte Linie zurück; [[Escape]] lässt los.
+- [[N]]: die Zeichnung benennen. [[T]]: Sternwarte. [[A]]: Sternatlas. [[E]]: Neue Saison (sobald sie bereit ist). [[F]]: der Himmel der nächsten Stunden. [[S]]: Bilanz. [[M]]: Ton. [[Z]]: die letzte Aktion rückgängig machen.
+
+## Tipps
+- Die ersten Fernrohre und Linsenteleskope zahlen sich am schnellsten aus.
+- Ein kleines Sternbild aus hellen blauen Sternen früh hebt alles, was danach kommt.
+- Heb einen Zweig oder einen Ring für die hellen Sterne auf: die Form vervielfacht sie.
+- Lass Platz: eine lange Kette quer durch die Mitte kann den Himmel in zwei Teile schneiden.

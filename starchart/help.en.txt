@@ -1,0 +1,67 @@
+# Star Chart
+Star Chart is a calm idle game for one person. A small observatory stands on a hill: its telescopes gather starlight every minute, and you spend the starlight on more telescopes and on drawing your own constellations by joining the stars of the night sky. The observatory goes on by itself while orOS is closed: there is nothing to miss, nothing to collect and no notifications. Come back when you like.
+
+## How to play
+- Tap a star, then another star, to join them with a line. The second star is where the next line starts, so you can go on from star to star. Tap the same star again to let go of it, or tap the empty sky.
+- Join 3 to 8 stars into one shape and press `Name it`. The lines are paid for then, in starlight. The constellation gives its bonus at once, for the whole season.
+- `Undo line` takes the last line back, and a tap on a dashed line of the drawing removes it. `Clear` starts the drawing again. Nothing is paid before `Name it`.
+- The status row shows the starlight and how much comes in each minute, the constellations of this season, the moon and the sky now.
+- `Undo` in the message after every action takes it back.
+
+## The rules of the sky
+- A line reaches 3 cells of the sky grid (more with the star compass). When you choose a star, a dotted circle shows how far it reaches, and the stars it can be joined to get a ring.
+- A line never passes through another star and never crosses another line.
+- Every star belongs to one constellation only. The sky has about 24 stars, so every constellation uses stars the next one cannot have: plan the shapes.
+- A constellation is one piece, with at most one closed ring.
+
+## Kinds of stars
+Every star has a brightness from 1 to 3 (its size) and one of four kinds, each with its own shape and colour:
+- **Blue** (a diamond): the telescopes gather 3% more for every point of brightness.
+- **Gold** (a disc): the telescopes cost 2% less for every point of brightness (down to 40% of the price).
+- **Red** (a triangle): the lines cost 3% less for every point of brightness (down to a quarter).
+- **White** (a cross): nothing now, but more for the star atlas when the season ends.
+
+## Shapes
+The shape multiplies everything its stars give:
+- **Chain** (stars one after another, a triangle too): ×1.
+- **Branched** (one star with three or more lines): ×1.25.
+- **Ring** (a closed ring of at least 4 stars): ×1.5.
+- **Ring with a branch**: ×1.75.
+- When every star of a constellation is of one kind, it gives a fifth more again.
+Tap a star of a named constellation to see what it gives, to rename it or to erase it. Erasing frees its stars; the starlight for its lines does not come back.
+
+## Lines and their price
+The first line of a season costs 10 starlight, and every line already drawn this season makes the next one a quarter dearer. Red stars and the Steady hand trait make lines cheaper. The panel shows the price of the drawing before you name it.
+
+## The observatory
+`Observatory` in the toolbar (or [[T]]) lists the telescopes and the upgrades:
+- **Telescopes:** spyglass (1 starlight a minute), refractor (8), reflector (60), great reflector (450) and radio dish (3,500). Each one costs a little more than the one before.
+- **Dark sky:** shades over the village lamps, +25% to all the starlight, four times.
+- **Star compass:** lines reach one cell farther, twice.
+- **Polished mirrors:** one for each kind of telescope; every telescope of that kind gathers twice as much.
+
+## The moon and the clouds
+- The moon in the game is the real moon of the date. At the new moon the telescopes gather up to 20% more, at the full moon up to 20% less; on average it evens out.
+- The clouds change every 3 hours and are the same on every device: a clear sky gathers in full, haze 75% and clouds 40%. The strip at the top shows the sky of the next 8 hours. Tap it, or press [[F]], for the list in words and a key to the kinds of stars.
+
+## A new season
+- Once six constellations are named and a radio dish is built, you can begin a new season. A `New season` button appears in the toolbar and in the panel. There is no hurry: it stays open.
+- A new season brings a new field of stars. The observatory goes back to one spyglass and a little starlight.
+- Every constellation of the season goes into the **star atlas** (the book in the toolbar, or [[A]]) and adds 1% to all the starlight for good, plus half a percent for every point of white brightness it had.
+- You keep one **trait** for good, out of three: Keen-eyed (lines reach one cell farther), Steady hand (lines 15% cheaper), Moon-watcher (the full moon takes half as much), Cartographer (every shape a quarter more), Lens grinder (telescopes 10% cheaper) and Early riser (every new season starts with 2 refractors). The same trait can come again and adds up.
+
+## While you were away
+When you open Star Chart after a while, a card shows how long you were away, the starlight gathered, the hours of clear sky, haze and clouds, and the moons that came and went. For the first 7 days away the observatory works in full; after that it goes on at half pace. It never stops, it only slows.
+
+## Records and sync
+`Records` shows all the starlight gathered, the season, the constellations, the atlas, the traits, the hours of each sky and the milestones. `Sound effects` there turns the small sounds on and off, like [[M]]. `The sound of the night` turns on a soft wind with far crickets; it is off at first. The sky syncs between your devices through [orOS sync](help:t/sync): it is the same sky on your phone and your computer. If two devices play at the same time, the sky that is further ahead is kept, and the other device's last minutes are lost. An action is saved a few seconds after you make it, and is sent at most every 5 minutes and when you leave. A drawing that is not named yet stays on this device. `Start over` in Records begins a new sky on every device, with `Undo` for a few seconds. Star Chart is in the Idle group of the [Game Center](help:a/gamecenter). The sound settings stay on this device.
+
+## Keyboard
+- Arrow keys move between the stars; [[Enter]] or [[Space]] chooses the star or draws the line to it; [[Backspace]] takes the last line back; [[Escape]] lets go.
+- [[N]]: name the drawing. [[T]]: Observatory. [[A]]: Star atlas. [[E]]: New season (once it is ready). [[F]]: the sky of the next hours. [[S]]: Records. [[M]]: sound. [[Z]]: undo the last action.
+
+## Tips
+- The first spyglasses and refractors pay for themselves fastest.
+- A small constellation of bright blue stars early on lifts everything that follows.
+- Keep a branch or a ring for the bright stars: the shape multiplies them.
+- Leave room: a long chain across the middle of the sky can cut it in two.
