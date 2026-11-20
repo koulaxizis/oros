@@ -9,6 +9,7 @@ const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const M = require("../smartbar.js");
 const A = require("../smartbar-apps.js");
+const L = require("../smartbar-live.js");
 const read = (f) => fs.readFileSync(path.join(ROOT, f), "utf8");
 
 test("prefs: unknown and repeated kinds are dropped, absent means no chip", () => {
@@ -117,7 +118,7 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
   assert.match(sh, /tickSafe\("smartbarTick"/);
   const src = read("smartbar.js");
   // chip text goes in through textContent only; innerHTML is for the fixed icons
-  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = kind === \"rec\" ? IC.stop : IC.pause;", "innerHTML = IC.more;", "innerHTML = icon(k);", "innerHTML = k === \"rec\" ? IC.stop : IC.pause;"]);
+  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = IC.more;", "innerHTML = icon(k);"]);
   assert.match(src, /if \(strict\(\)\) return null;[\s\S]*if \(strict\(\)\) return null;/);
 });
 
@@ -149,7 +150,7 @@ test("shell strings for every chip in EN, EL and DE", () => {
     assert.strictEqual(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
   });
-  const src = read("smartbar.js");
+  const src = read("smartbar.js") + read("smartbar-live.js");
   (src.match(/t\("sb\.[a-z.]+"\)/g) || []).forEach((m) => {
     const k = m.slice(3, -2);
     assert.ok(keys.indexOf(k) !== -1 || k === "sb.k.", "string " + k + " is listed");
@@ -207,7 +208,7 @@ test("fold: chips that do not fit, and every chip on a phone, go behind one butt
   assert.match(src, /box\.appendChild\(more\.el\);\s+\/\/ always last/);
   // the panel draws chip text through textContent only and closes on Escape and outside taps
   const fill = src.slice(src.indexOf("function fillPop"), src.indexOf("function onPopKey"));
-  assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(k);", "innerHTML = k === \"rec\" ? IC.stop : IC.pause;"], "only fixed icons go through innerHTML");
+  assert.deepStrictEqual(fill.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(k);"], "only fixed icons go through innerHTML");
   assert.match(fill, /v\.textContent = val;/);
   assert.match(src, /e\.key === "Escape" && pop/);
   assert.match(src, /addEventListener\("touchstart", onPopDown, true\)/);
@@ -276,32 +277,45 @@ test("SB-LIVE model: the timer ending first, the stopwatch while it runs, the re
     { id: "aaaa3", name: "Bread", dur: 60000, left: 60000, st: "pause" },
     { id: "aaaa4", name: "Old", dur: 60000, end: now - 1000, st: "run" }
   ]);
-  const lt = M.liveTimer(list, now);
+  const lt = L.liveTimer(list, now);
   assert.strictEqual(lt.tm.name, "Tea");
   assert.strictEqual(lt.left, 120000);
   assert.strictEqual(lt.more, 1);
-  assert.strictEqual(M.liveTimer(CC.timerNorm([{ id: "aaaa3", dur: 60000, st: "pause" }]), now), null);
-  assert.strictEqual(M.liveTimer(null, now), null);
-  assert.deepStrictEqual(M.liveSw(CC.swNorm({ run: true, start: now - 65000, base: 5000, laps: [] }), now), { ms: 70000 });
-  assert.strictEqual(M.liveSw(CC.swNorm({ run: false, base: 5000 }), now), null);
-  assert.strictEqual(M.liveSw(null, now), null);
-  assert.deepStrictEqual(M.liveRec({ ms: 41000, paused: false }), { ms: 41000, paused: false });
-  assert.deepStrictEqual(M.liveRec({ ms: 41000, paused: 1 }), { ms: 41000, paused: true });
-  assert.strictEqual(M.liveRec(null), null);
-  assert.strictEqual(M.liveRec({ ms: NaN }), null);
+  assert.strictEqual(L.liveTimer(CC.timerNorm([{ id: "aaaa3", dur: 60000, st: "pause" }]), now), null);
+  assert.strictEqual(L.liveTimer(null, now), null);
+  assert.deepStrictEqual(L.liveSw(CC.swNorm({ run: true, start: now - 65000, base: 5000, laps: [] }), now), { ms: 70000 });
+  assert.strictEqual(L.liveSw(CC.swNorm({ run: false, base: 5000 }), now), null);
+  assert.strictEqual(L.liveSw(null, now), null);
+  assert.deepStrictEqual(L.liveRec({ ms: 41000, paused: false }), { ms: 41000, paused: false });
+  assert.deepStrictEqual(L.liveRec({ ms: 41000, paused: 1 }), { ms: 41000, paused: true });
+  assert.strictEqual(L.liveRec(null), null);
+  assert.strictEqual(L.liveRec({ ms: NaN }), null);
   assert.strictEqual(M.clock(70000), "1:10");
 });
 
+test("SB-LIVE loads only when something runs", () => {
+  assert.strictEqual(M.liveWanted(null, null, null), false);
+  assert.strictEqual(M.liveWanted('[{"id":"a","st":"pause"}]', '{"run":false,"start":0}', null), false);
+  assert.strictEqual(M.liveWanted('[{"id":"a","st":"run"}]', null, null), true);
+  assert.strictEqual(M.liveWanted(null, '{"run":true,"start":5}', null), true);
+  assert.strictEqual(M.liveWanted(null, null, { state() {}, stop() {} }), true);
+  const sb = read("smartbar.js");
+  assert.match(sb, /if \(liveWanted\(tr, sr, recLive\)\) loadLive\(\);/);
+  assert.match(sb, /script\("smartbar-live\.js", function/);
+  assert.doesNotMatch(sb, /clock-core\.js/, "Time's rules load with smartbar-live.js, never at start-up");
+});
+
 test("SB-LIVE wiring: Time's own pause rules, the alarm taken off, Capture in memory, Settings switch", () => {
-  const src = read("smartbar.js");
+  const src = read("smartbar-live.js"), sb = read("smartbar.js");
+  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = stopIcon(kind);"], "only fixed icons go through innerHTML");
   assert.match(src, /s\.src = "time\/clock-core\.js\?v="/);
   assert.match(src, /root\.orosAlarms\.remove\(aid\)[\s\S]{0,120}CC\.timerPause\(tm, now\)/);
   assert.match(src, /CC\.swToggle\(sw, Date\.now\(\)\)/);
   // a stop button is its own button beside the pill, never inside it, and never in the bar window
-  assert.match(src, /g\.appendChild\(b\);[\s\S]{0,400}g\.appendChild\(sb\);/);
-  assert.match(src, /c\.stop = s && s\.halt && c\.sb && !call\(function \(\) \{ return host\.barwin\(\); \}\)/);
+  assert.match(src, /g\.appendChild\(c\.btn\);[\s\S]{0,200}g\.appendChild\(c\.sb\);/);
+  assert.match(src, /c\.stop = s && s\.halt && !call\(function \(\) \{ return host\(\)\.barwin\(\); \}\)/);
   // on a phone the first live pill stays in the bar
-  assert.match(src, /if \(f && k !== keep\)/);
+  assert.match(sb, /if \(f && k !== keep\)/);
   // the recording dot blinks only when motion is welcome
   assert.match(src, /prefers-reduced-motion: no-preference\) \{ \.sb-chip\.sb-rec/);
   assert.match(src, /data-oros-motion=\\"reduce\\"\] \.sb-chip\.sb-rec svg \{ animation: none/);

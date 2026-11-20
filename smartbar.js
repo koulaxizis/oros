@@ -19,19 +19,7 @@
 //   • Spent        this month's expenses in Budget.
 //   • Till         today's till sales in Stock (stock/pos-core.js,
 //                  loaded the first time this chip is on).
-//   Live pills (SB-LIVE, v1.3.0), on by default, no tick needed: they
-//   show only while something runs, at the start of the row.
-//   • tmr   a Time timer (the one ending first, "+N" for the others),
-//           time left; oros-time-timers.
-//   • sw    the Time stopwatch, time so far; oros-time-sw.
-//   • rec   a Screen Capture recording, registered in memory by the
-//           Capture window (orosSmartBar.live): nothing stored, so a
-//           closed window never leaves a pill behind.
-//   Each has a stop button beside it: a timer and the stopwatch pause
-//   through Time's own rules (time/clock-core.js, loaded once from the
-//   precache; the timer's shell alarm is taken off), a recording stops
-//   as with Capture's own Stop button. This is the one place the bar
-//   writes another app's data, and only on that button.
+//   Live pills (SB-LIVE): smartbar-live.js, loaded once something runs.
 //   A chip with nothing to say stays hidden. Money chips and event
 //   titles are hidden while Sensitive work is on.
 //   A click opens the place the chip comes from.
@@ -175,25 +163,10 @@
       return (cents / 100).toFixed(big ? 0 : 2) + " " + cur;
     }
   }
-  // SB-LIVE. The running Time timers (already normalised by Time's
-  // timerNorm) → { tm, left: ms, more: how many others run } | null.
-  function liveTimer(list, now) {
-    var run = (Array.isArray(list) ? list : []).filter(function (x) {
-      return x && x.st === "run" && typeof x.end === "number" && x.end > now;
-    }).sort(function (a, b) { return a.end - b.end; });
-    return run.length ? { tm: run[0], left: run[0].end - now, more: run.length - 1 } : null;
+  // SB-LIVE: anything running? (raw text, so nothing loads before it does)
+  function liveWanted(rawTimers, rawSw, rec) {
+    return !!rec || /"st":"run"/.test(rawTimers || "") || /"run":true/.test(rawSw || "");
   }
-  // The stopwatch (Time's swNorm) → { ms } while it runs, else null.
-  function liveSw(sw, now) {
-    if (!sw || sw.run !== true || typeof sw.start !== "number") return null;
-    return { ms: Math.max(0, (+sw.base || 0) + Math.max(0, now - sw.start)) };
-  }
-  // A recording's numbers, as Capture reports them → { ms, paused } | null.
-  function liveRec(r) {
-    if (!r || typeof r.ms !== "number" || !isFinite(r.ms) || r.ms < 0) return null;
-    return { ms: r.ms, paused: !!r.paused };
-  }
-  // The row: live pills first (only while on), then the chosen chips.
   function rowOf(stored) { return (liveOf(stored) ? LIVE.slice() : []).concat(listOf(stored)); }
   function ymdOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
 
@@ -201,7 +174,7 @@
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
                 monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS,
-                LIVE: LIVE, liveOf: liveOf, liveTimer: liveTimer, liveSw: liveSw, liveRec: liveRec, rowOf: rowOf };
+                LIVE: LIVE, liveOf: liveOf, rowOf: rowOf, liveWanted: liveWanted };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -210,7 +183,7 @@
   var host = null, box = null, chips = {}, more = null, pop = null;
   var todayCache = null, todayAt = 0, todayBusy = false, posLoad = 0;
   var apps = null, appsLoad = 0;     // SB5: smartbar-apps.js, once loaded
-  var clockLoad = 0, recLive = null;   // SB-LIVE: Time's clock-core.js; Capture's recording
+  var live = null, liveLoad = 0, recLive = null;   // SB-LIVE: smartbar-live.js; Capture's recording
 
   function t(k) { return typeof root.t === "function" ? root.t(k) : k; }
   function call(fn) { try { return fn(); } catch (e) { return undefined; } }
@@ -245,13 +218,7 @@
     // Sparkles: "smart cards". Never a stack of squares, which is the
     // open-apps button (shell.js 10c) right beside it on a phone.
     more: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3l1.9 5.1L17 10l-5.1 1.9L10 17l-1.9-5.1L3 10l5.1-1.9z"/><path d="M18 14l.9 2.1L21 17l-2.1.9L18 20l-.9-2.1L15 17l2.1-.9z"/></svg>',
-    sales: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.5 11h-13z"/><path d="M8.5 9V7a3.5 3.5 0 0 1 7 0v2"/></svg>',
-    // SB-LIVE: hourglass (timer), stopwatch, the recording dot.
-    tmr: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9"/></svg>',
-    sw: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="7.5"/><path d="M12 14V10M10 2.5h4M12 2.5v4M18.5 6.5l1.5-1.5"/></svg>',
-    rec: '<svg width="15" height="15" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="6" fill="currentColor"/></svg>',
-    pause: '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
-    stop: '<svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>'
+    sales: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.5 11h-13z"/><path d="M8.5 9V7a3.5 3.5 0 0 1 7 0v2"/></svg>'
   };
 
   var CSS = [
@@ -269,30 +236,6 @@
     ".sb-chip.sb-now { background: var(--accent-soft); }",
     "#oros-bar.bar-tight .sb-chip { padding: 0 5px; }",
     "@media (max-width: 760px) { .sb-chip .sb-l { display: none; } }",
-    // SB-LIVE: a pill with its own stop button (two buttons, never nested).
-    // The pill's colour is a 32 px band; its buttons keep their 44 px touch height.
-    ".sb-live { position: relative; isolation: isolate; display: inline-flex; align-items: center; }",
-    ".sb-live::before { content: \"\"; position: absolute; z-index: -1; left: 0; right: 0; top: 6px; bottom: 6px; border-radius: 999px;",
-    "  background: var(--accent-soft); pointer-events: none; }",
-    ".sb-live .sb-chip { border-radius: 999px; }",
-    ".sb-live[hidden] { display: none !important; }",
-    ".sb-live .sb-chip:hover, .sb-live .sb-chip:focus-visible { background: color-mix(in srgb, var(--accent) 22%, transparent); }",
-    ".sb-stop { display: inline-flex; align-items: center; justify-content: center; min-width: 32px; min-height: 44px; padding: 0;",
-    "  border: none; border-radius: 8px; background: transparent; color: var(--text); cursor: pointer; }",
-    ".sb-stop:hover, .sb-stop:focus-visible { background: color-mix(in srgb, var(--accent) 22%, transparent); outline: none; }",
-    ".sb-stop svg { pointer-events: none; }",
-    ".sb-chip.sb-rec svg, .sb-card.sb-rec svg { color: #e5484d; }",
-    ".sb-card.sb-rec.sb-paused svg { color: var(--text-dim); }",
-    ".sb-chip.sb-rec.sb-paused svg { color: var(--text-dim); }",
-    "@media (prefers-reduced-motion: no-preference) { .sb-chip.sb-rec:not(.sb-paused) svg { animation: sb-blink 1.6s ease-in-out infinite; } }",
-    "@keyframes sb-blink { 50% { opacity: .35; } }",
-    "html[data-oros-motion=\"reduce\"] .sb-chip.sb-rec svg { animation: none !important; }",
-    "#oros-bar.bar-tight .sb-stop { min-width: 26px; }",
-    "#oros-bar.bar-tight .sb-live .sb-chip { padding: 0 3px 0 7px; gap: 4px; }",
-    ".sb-cardrow { display: flex; align-items: center; gap: 4px; }",
-    ".sb-cardrow + .sb-cardrow, .sb-cardrow + .sb-card, .sb-card + .sb-cardrow { margin-top: 2px; }",
-    ".sb-cardrow .sb-card { flex: 1; min-width: 0; }",
-    ".sb-cardrow .sb-stop { min-width: 48px; min-height: 48px; border-radius: 12px; }",
     "body.solo-mode #sb-row, body.till-mode #sb-row { display: none !important; }",
     // The fold button and its panel (the chips that are not in the bar).
     ".sb-chip.sb-more { gap: 3px; padding: 0 6px; }",
@@ -344,9 +287,7 @@
   }
 
   function isLive(kind) { return LIVE.indexOf(kind) !== -1; }
-  // el: what the fit hides and folds; btn: the button that opens the app
-  // (the same element, except for a live pill: el is its group with
-  // the stop button beside it).
+  // el: what the fit folds; btn: what opens the app (a live pill's el is its group)
   function makeChip(kind) {
     var b = doc.createElement("button");
     b.type = "button";
@@ -358,21 +299,7 @@
     b.appendChild(v); b.appendChild(l);
     b.addEventListener("click", function (e) { e.stopPropagation(); go(kind); });
     var c = { el: b, btn: b, v: v, l: l, key: "", go: null, stop: null, sb: null, icon: icon(kind) ? 1 : 0 };
-    if (isLive(kind)) {
-      var g = doc.createElement("span");
-      g.className = "sb-live";
-      g.setAttribute("role", "group");
-      g.setAttribute("data-sb", kind);
-      b.removeAttribute("data-sb");
-      g.appendChild(b);
-      var sb = doc.createElement("button");
-      sb.type = "button";
-      sb.className = "sb-stop";
-      sb.innerHTML = kind === "rec" ? IC.stop : IC.pause;   // fixed markup, never data
-      sb.addEventListener("click", function (e) { e.stopPropagation(); halt(kind); });
-      g.appendChild(sb);
-      c.el = g; c.sb = sb;
-    }
+    if (live && isLive(kind)) live.wrap(c, kind, halt);
     c.el.hidden = true;
     return c;
   }
@@ -414,13 +341,12 @@
     if (pop.getAttribute("data-sig") === sig) return;
     pop.setAttribute("data-sig", sig);
     var had = doc.activeElement && pop.contains(doc.activeElement) ? doc.activeElement.getAttribute("data-sb") : null;
-    var hadStop = had && doc.activeElement.classList.contains("sb-stop");
+    var hadStop = had && /sb-stop/.test(doc.activeElement.className);
     while (pop.firstChild) pop.removeChild(pop.firstChild);
     ks.forEach(function (k) {
       var c = chips[k], b = doc.createElement("button");
       b.type = "button";
-      b.className = "sb-card" + (/\bsb-soon\b|\bsb-now\b/.test(c.btn.className) ? " sb-soon" : "") +
-        (/\bsb-rec\b/.test(c.btn.className) ? " sb-rec" + (/\bsb-paused\b/.test(c.btn.className) ? " sb-paused" : "") : "");
+      b.className = "sb-card" + (/\bsb-soon\b|\bsb-now\b/.test(c.btn.className) ? " sb-soon" : "");
       b.setAttribute("data-sb", k);
       b.innerHTML = icon(k);
       var box2 = doc.createElement("span"); box2.className = "sb-ct";
@@ -431,16 +357,7 @@
       var l = doc.createElement("small"); l.textContent = tip;
       box2.appendChild(v); box2.appendChild(l); b.appendChild(box2);
       b.addEventListener("click", function (e) { e.stopPropagation(); closePop(); go(k); });
-      if (!c.stop) { pop.appendChild(b); return; }
-      // SB-LIVE: the card and its stop button side by side.
-      var rw = doc.createElement("div"); rw.className = "sb-cardrow";
-      var sb = doc.createElement("button");
-      sb.type = "button"; sb.className = "sb-stop"; sb.setAttribute("data-sb", k);
-      sb.innerHTML = k === "rec" ? IC.stop : IC.pause;   // fixed markup, never data
-      sb.title = c.stopTip; sb.setAttribute("aria-label", c.stopTip);
-      sb.addEventListener("click", function (e) { e.stopPropagation(); halt(k); });
-      rw.appendChild(b); rw.appendChild(sb);
-      pop.appendChild(rw);
+      pop.appendChild(c.stop && live ? live.row(b, k, c, halt) : b);
     });
     var f = had && pop.querySelector((hadStop ? ".sb-stop" : ".sb-card") + '[data-sb="' + had + '"]');
     if (f) f.focus();
@@ -535,39 +452,6 @@
       return { v: left, l: ph, cls: f.phase === "work" ? "sb-soon" : "",
                tip: t("sb.focus.tip").replace("{p}", ph).replace("{r}", left).replace("{app}", appName("time")), go: function () { host.open("time"); } };
     },
-    // SB-LIVE pills. Time's rules come from its own clock-core.js.
-    tmr: function (now) {
-      var CC = clockCore();
-      if (!CC) return null;
-      var lt = liveTimer(call(function () { return CC.timerNorm(readJSON("oros-time-timers")); }), now);
-      if (!lt) return null;
-      var name = lt.tm.name || t("sb.tmr.name"), left = clock(lt.left), id = lt.tm.id;
-      return { v: left + (lt.more ? " +" + lt.more : ""), l: name, cls: "sb-soon",
-               tip: t("sb.tmr.tip").replace("{n}", name).replace("{r}", left).replace("{app}", appName("time")),
-               stop: t("sb.tmr.stop").replace("{n}", name),
-               halt: function () { pauseTimer(id); }, go: function () { openTime("timer"); } };
-    },
-    sw: function (now) {
-      var CC = clockCore();
-      if (!CC) return null;
-      var ls = liveSw(call(function () { return CC.swNorm(readJSON("oros-time-sw")); }), now);
-      if (!ls) return null;
-      var r = clock(ls.ms);
-      return { v: r, l: t("sb.sw.label"), tip: t("sb.sw.tip").replace("{r}", r).replace("{app}", appName("time")),
-               stop: t("sb.sw.stop"), halt: pauseSw, go: function () { openTime("stopwatch"); } };
-    },
-    rec: function () {
-      var h = recLive;
-      if (!h) return null;
-      var lr = liveRec(call(function () { return h.state(); }));
-      if (!lr) { recLive = null; return null; }               // the Capture window is gone
-      var r = clock(lr.ms), app = appName("capture");
-      return { v: lr.paused ? t("sb.rec.paused") + " " + r : r, l: "", cls: "sb-rec" + (lr.paused ? " sb-paused" : ""),
-               tip: t(lr.paused ? "sb.rec.tip.p" : "sb.rec.tip").replace("{r}", r).replace("{app}", app),
-               stop: t("sb.rec.stop"),
-               halt: function () { call(function () { h.stop(); }); recLive = null; call(function () { host.open("capture"); }); paint(true); },
-               go: function () { host.open("capture"); } };
-    },
     tasks: function () {
       var g = todayCache && todayCache.groups;
       var n = taskCount(g);
@@ -621,6 +505,31 @@
     }
   };
 
+  // SB-LIVE pills: smartbar-live.js
+  LIVE.forEach(function (k) {
+    STATE[k] = function (now) {
+      if (!live) {
+        var tr = null, sr = null;
+        try { tr = localStorage.getItem("oros-time-timers"); sr = localStorage.getItem("oros-time-sw"); } catch (e) {}
+        if (liveWanted(tr, sr, recLive)) loadLive();
+        return null;
+      }
+      return live.state(k, now);
+    };
+  });
+  function loadLive() {
+    if (liveLoad || live) return;
+    liveLoad = 1;
+    script("smartbar-live.js", function () {
+      live = call(function () {
+        return root.orosSmartBarLive.make({ t: t, call: call, appName: appName, clock: clock, readJSON: readJSON, host: hostFn,
+          rec: function (v) { if (v !== undefined) recLive = v; return recLive; }, repaint: repaint });
+      }) || null;
+      if (!live) { liveLoad = 0; return; }
+      LIVE.forEach(function (k) { if (chips[k]) { chips[k].el.remove(); delete chips[k]; } });
+      render();
+    }, function () { liveLoad = 0; });
+  }
   Object.keys(APPS).forEach(function (k) {
     STATE[k] = function (now) {
       if (!apps) { loadApps(); return null; }
@@ -628,81 +537,40 @@
     };
   });
   // The other apps' cards: their own file, loaded once from the precache.
+  // One of the bar's own files, once, from the precache.
+  function script(src, ok, fail) {
+    var s = doc.createElement("script");
+    s.src = src + "?v=" + (call(function () { return host.version(); }) || "");
+    s.onload = ok; s.onerror = fail;
+    doc.head.appendChild(s);
+  }
+  function hostFn() { return host; }
+  function repaint(kinds) { kinds.forEach(function (k) { if (chips[k]) chips[k].key = ""; }); paint(true); }
   function loadApps() {
     if (appsLoad || apps) return;
     appsLoad = 1;
-    var s = doc.createElement("script");
-    s.src = "smartbar-apps.js?v=" + (call(function () { return host.version(); }) || "");
-    s.onload = function () {
+    script("smartbar-apps.js", function () {
       apps = call(function () {
         return root.orosSmartBarApps.make({
           t: t, call: call, strict: strict, appName: appName, clock: clock, ymdOf: ymdOf, ttl: TODAY_MS,
-          host: function () { return host; },
-          kinds: function () { return Object.keys(chips); },
-          repaint: function (kinds) { kinds.forEach(function (k) { if (chips[k]) chips[k].key = ""; }); paint(true); }
+          host: hostFn, kinds: function () { return Object.keys(chips); }, repaint: repaint
         });
       }) || null;
       if (!apps) { appsLoad = 0; return; }
       Object.keys(chips).forEach(function (k) { if (APPS[k] && !chips[k].icon) setIcon(chips[k], k); });
       paint(true);
-    };
-    s.onerror = function () { appsLoad = 0; };
-    doc.head.appendChild(s);
+    }, function () { appsLoad = 0; });
   }
-  function icon(kind) { return IC[kind] || (apps && apps.icon(kind)) || ""; }
+  function icon(kind) { return IC[kind] || (apps && apps.icon(kind)) || (live && live.icon(kind)) || ""; }
   function setIcon(c, kind) {
     var svg = icon(kind);
     if (!svg) return;
-    var old = c.el.querySelector("svg");
+    var old = c.btn.querySelector("svg");
     if (old) old.remove();
-    c.el.insertAdjacentHTML("afterbegin", svg);   // fixed markup, never data
+    c.btn.insertAdjacentHTML("afterbegin", svg);   // fixed markup, never data
     c.icon = 1;
   }
 
-  // SB-LIVE: Time's clock rules (normalise, pause), loaded once from
-  // the precache the first time a live pill is on.
-  function clockCore() {
-    if (root.OrosClockCore) return root.OrosClockCore;
-    if (clockLoad) return null;
-    clockLoad = 1;
-    var s = doc.createElement("script");
-    s.src = "time/clock-core.js?v=" + (call(function () { return host.version(); }) || "");
-    s.onload = function () { ["tmr", "sw"].forEach(function (k) { if (chips[k]) chips[k].key = ""; }); paint(true); };
-    s.onerror = function () { clockLoad = 0; };
-    doc.head.appendChild(s);
-    return null;
-  }
-  function openTime(pane) {
-    if (call(function () { return host.barwin(); })) { host.open("time"); return; }
-    if (typeof root.__orosOpenTime === "function") call(function () { root.__orosOpenTime(pane); });
-    else call(function () { host.open("time"); });
-  }
-  // The stop buttons: pause the way Time's own Pause does (its storage
-  // listener redraws an open Time window), the timer's alarm taken off.
-  function writeKey(k, v) {
-    try { localStorage.setItem(k, JSON.stringify(v)); return true; }
-    catch (e) { call(function () { host.toast(t("sb.savefail")); }); return false; }
-  }
-  function pauseTimer(id) {
-    var CC = root.OrosClockCore;
-    if (!CC) return;
-    var now = Date.now(), list = CC.timerNorm(readJSON("oros-time-timers")), hit = false;
-    list = list.map(function (tm) {
-      if (tm.id !== id || tm.st !== "run") return tm;
-      hit = true;
-      if (tm.aid) { var aid = tm.aid; call(function () { root.orosAlarms.remove(aid); }); }
-      var nx = CC.timerPause(tm, now);
-      nx.aid = "";
-      return nx;
-    });
-    if (hit) writeKey("oros-time-timers", list);
-  }
-  function pauseSw() {
-    var CC = root.OrosClockCore;
-    if (!CC) return;
-    var sw = CC.swNorm(readJSON("oros-time-sw"));
-    if (sw.run) writeKey("oros-time-sw", CC.swToggle(sw, Date.now()));
-  }
   function halt(kind) {
     var c = chips[kind];
     if (c && typeof c.halt === "function") call(c.halt);
@@ -715,11 +583,7 @@
   function loadPos() {
     if (posLoad || root.OrosStockPosCore) return;
     posLoad = 1;
-    var s = doc.createElement("script");
-    s.src = "stock/pos-core.js?v=" + (call(function () { return host.version(); }) || "");
-    s.onload = function () { if (chips.sales) { chips.sales.key = ""; paint(true); } };
-    s.onerror = function () { posLoad = 0; };
-    doc.head.appendChild(s);
+    script("stock/pos-core.js", function () { repaint(["sales"]); }, function () { posLoad = 0; });
   }
 
   function wantsToday() { return !!(chips.event || chips.tasks); }
@@ -755,17 +619,9 @@
       var c = chips[k], s = call(function () { return STATE[k](now); }) || null;
       var key = s ? [s.v, s.l, s.cls, s.tip].join("\u0001") : "";
       c.go = s ? s.go : null;
-      c.halt = s ? s.halt : null;
-      c.stop = s && s.halt && c.sb && !call(function () { return host.barwin(); }) ? 1 : 0;
-      c.stopTip = s && s.stop || "";
-      if (c.sb) {
-        if (c.sb.hidden !== !c.stop) c.sb.hidden = !c.stop;
-        if (c.sb.title !== c.stopTip) { c.sb.title = c.stopTip; c.sb.setAttribute("aria-label", c.stopTip); }
-      }
+      if (c.sb) live.paintStop(c, s);
       if (!force && key === c.key) return;
-      // A live pill that just started: let the fit place it (on a phone
-      // it is the one that stays in the bar).
-      if (s && c.sb && c.key === "" && c.el.hasAttribute("data-sb-drop")) changed = true;
+      if (s && c.sb && c.key === "" && c.el.hasAttribute("data-sb-drop")) changed = true;   // a new live pill: refit
       c.key = key;
       if (!s) { if (!c.el.hidden) { c.el.hidden = true; changed = true; } return; }
       if (c.v.textContent !== s.v) c.v.textContent = s.v;      // textContent: never HTML
@@ -807,13 +663,11 @@
       });
       return { list: names, look: lookOf(stored()), looks: LOOKS.slice(), live: liveOf(stored()) };
     },
-    // SB-LIVE: live pills on/off (device-local, on when absent)
     setLive: function (on) {
       if (!host) return;
       save(list(), undefined, !!on);
     },
-    // Screen Capture registers its running recording: { state() → { ms,
-    // paused }, stop() }, null when it ends. In memory only.
+    // Screen Capture's recording { state() → { ms, paused }, stop() } | null, in memory
     live: function (kind, h) {
       if (kind !== "rec") return;
       recLive = h && typeof h.state === "function" && typeof h.stop === "function" ? h : null;
@@ -838,7 +692,7 @@
     // On a phone every chip folds into the button at once.
     fitReset: function () {
       var f = folded(), keep = "";
-      // SB-LIVE: on a phone the first live pill stays in the bar.
+      // on a phone the first live pill stays in the bar
       if (f) LIVE.some(function (k) { if (chips[k] && chips[k].key !== "") { keep = k; return true; } return false; });
       Object.keys(chips).forEach(function (k) {
         var c = chips[k];
