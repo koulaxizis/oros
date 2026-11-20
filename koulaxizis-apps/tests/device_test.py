@@ -124,10 +124,16 @@ def search_and_pages():
     root, name = wait_for(lambda r: node_with(r, "Remote for Mixers"), "the search result")
     shot("search")
     adb("shell", "input", "tap", *map(str, center(name)))
-    root, _ = wait_for(lambda r: "About this app" in texts(r) and "Details" in texts(r)
-                       and any(t.startswith("Package: tech.nulljsfx.remote.mixers") for t in texts(r)),
-                       "the page of Remote for Mixers", 30)
+    wait_for(lambda r: "About this app" in texts(r), "the page of Remote for Mixers", 30)
     shot("app-page")
+    # uiautomator lists only the visible part of the page: scroll down to its Details.
+    for _ in range(10):
+        if any(t.startswith("Package: tech.nulljsfx.remote.mixers") for t in texts(dump())):
+            break
+        swipe(True)
+        time.sleep(1)
+    else:
+        raise SystemExit("no Details with the package on the page of Remote for Mixers")
     adb("shell", "input", "keyevent", "KEYCODE_BACK")  # closes the page, the search stays
     wait_for(lambda r: "Remote for Mixers" in texts(r) and "About this app" not in texts(r)
              and "orOS Drive" not in texts(r), "Back to the search", 30)
