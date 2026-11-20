@@ -1,9 +1,11 @@
 package gr.koulaxizis.apps;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -79,5 +81,16 @@ public class UpdatesTest {
         assertEquals(Updates.key(a, null), Updates.key(a, null));
         assertNotEquals(Updates.key(a, null), Updates.key(b, null));
         assertNotEquals(Updates.key(a, null), Updates.key(a, offer("oros", "gr.koulaxizis.apps", 1)));
+    }
+
+    @Test
+    public void newSetIsToldAtOnceAndTheSameSetAfterThreeDays() {
+        long t = 1_800_000_000_000L;
+        assertTrue(Updates.due("a:2", "", 0, t));             // never told
+        assertTrue(Updates.due("a:2,b:5", "a:2", t, t + 1));  // a new update joined
+        assertFalse(Updates.due("a:2", "a:2", t, t + Updates.AGAIN - 1));
+        assertTrue(Updates.due("a:2", "a:2", t, t + Updates.AGAIN));
+        assertTrue(Updates.due("a:2", "a:2", t, t - 1));      // clock went back
+        assertTrue(Updates.due("a:2", "a:2", 0, t));          // told by 1.0-1.2.0 (no time kept)
     }
 }

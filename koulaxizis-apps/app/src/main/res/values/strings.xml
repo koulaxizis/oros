@@ -38,4 +38,6 @@
         <item quantity="other">%d updates ready</item>
     </plurals>
     <string name="support">Support the projects</string>
+    <string name="notes_off">Update notices are off, so you only see updates here.</string>
+    <string name="notes_turn_on">Turn on</string>
 </resources>
