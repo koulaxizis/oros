@@ -526,10 +526,11 @@
           cb.addEventListener("change", function () { if (cb.checked) ui.pick[f.id] = 1; else delete ui.pick[f.id]; render(); });
           tile.appendChild(cb);
           var th = el("span", "cv-thumb");
-          if (CL.isVideo(f.id) || CL.isSound(f.id)) th.appendChild(el("span", "fm-kind", CL.isVideo(f.id) ? "▶" : "♪"));
+          if (CL.isGif(f.id)) th.appendChild(el("span", "fm-kind", "GIF"));
+          else if (CL.isVideo(f.id) || CL.isSound(f.id)) th.appendChild(el("span", "fm-kind", CL.isVideo(f.id) ? "▶" : "♪"));
           else { var img = el("img"); img.alt = ""; assetThumb(f.id, img); th.appendChild(img); }
           tile.appendChild(th);
-          var kind = CL.isVideo(f.id) ? t("fm.video") : CL.isSound(f.id) ? t("vd.sound") : t("fm.picture");
+          var kind = CL.isGif(f.id) ? t("fm.gif") : CL.isVideo(f.id) ? t("fm.video") : CL.isSound(f.id) ? t("vd.sound") : t("fm.picture");
           tile.appendChild(el("span", "cv-name", kind + " · " + mb(f.size)));
           tile.appendChild(el("span", "cv-meta", inUse ? t("fm.inUse") : t("fm.unused")));
           g.appendChild(tile);

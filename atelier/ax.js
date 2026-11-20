@@ -59,6 +59,13 @@
 //            text (the PowerPoint import sets it; older copies lay the
 //            text out without it).
 // Since wave C2 (morph, atelier/morph.js):
+//   ext.anim on an element (wave CV-A, anim.js norm): its Canva-style
+//            animation { in, out, em: { e, d, sp, by }, t0, t1 }; ax.an
+//            keeps the nearest older entrance for older copies
+//   ext.pan  on a page background { e, d, sp }: the page animation
+//            (every element without its own entrance)
+//   ext.gif  on a photo: a moving GIF (clips.js), the picture is its
+//            first frame
 //   ext.mph  1 on a page background: the page morphs in from the page
 //            before it; ptr stays what older copies show instead
 // Since CL-1 (photo collage, atelier/collage.js):
@@ -680,6 +687,7 @@
       if (!it.ax) return;
       if (it.ax.vid) ids[it.ax.vid] = 1;
       if (it.ax.au) ids[it.ax.au] = 1;
+      if (it.ext && CL.isGif(it.ext.gif)) ids[it.ext.gif] = 1;     // moving GIF (CV-A)
     });
     return Object.keys(ids).sort();
   }

@@ -30,8 +30,12 @@
 // <img>), pictures (crop, flips, round/ellipse mask, transparency),
 // lines and arrows, groups (flattened), slide/layout/master
 // background (colour, gradient, picture), theme colours with
-// lumMod/lumOff/tint/shade. Not mapped (counted in plan.skipped):
-// charts, tables, media, SmartArt, OLE objects.
+// lumMod/lumOff/tint/shade, videos (p14:media: a video element with
+// its trim), a slide's sound (the page sound), moving GIFs (io.js
+// keeps the GIF, ext.gif), slide transitions and timings (wave CV-A).
+// Not mapped (counted in plan.skipped): charts, tables, SmartArt, OLE
+// objects. Canva writes no animation effects into the file (its
+// <p:timing> only starts the media).
 // A Canva design past PowerPoint's largest slide (56 in) comes scaled
 // into that slide and centred; unbox() gives it its own page back.
 // The XML is read by a small tolerant parser below: no DTDs, no
@@ -578,7 +582,34 @@
     return it;
   }
 
+  // A video or sound on the slide (p:nvPr: a:videoFile / a:audioFile,
+  // the file itself in p14:media r:embed, what Canva writes) →
+  // { kind: "video" | "sound", clip: zip path, vs, ve (trim, seconds) }
+  var CLIP_FILE = /^ppt\/media\/[^/]+\.(mp4|m4v|mov|webm|mp3|m4a|wav|ogg)$/i;
+  function mediaOf(n, ctx) {
+    var nv = path(n, ["p:nvPicPr", "p:nvPr"]);
+    if (!nv) return null;
+    var vf = kid(nv, "a:videoFile"), af = kid(nv, "a:audioFile");
+    if (!vf && !af) return null;
+    var m = find(nv, "p14:media"), rel = m && ctx.rels[m.a["r:embed"]];
+    if (!rel) rel = ctx.rels[(vf || af).a["r:link"]];
+    if (!rel || !CLIP_FILE.test(rel.target)) return null;
+    var o = { kind: vf ? "video" : "sound", clip: rel.target };
+    var tr = m && kid(m, "p14:trim");
+    if (tr) {
+      var st = numA(tr, "st", 0) / 1000, en = numA(tr, "end", 0) / 1000;
+      if (st > 0) o.vs = Math.round(st * 100) / 100;
+      if (en > 0) o.ve = Math.round(en * 100) / 100;    // p14:trim end = cut from the end
+    }
+    return o;
+  }
   function picture(n, tf, ctx, out) {
+    var med = mediaOf(n, ctx);
+    if (med && med.kind === "sound") {            // the page's sound (its speaker icon stays out)
+      if (!out.sound) out.sound = med.clip;
+      out.clips[med.clip] = true;
+      return;
+    }
     var spPr = kid(n, "p:spPr");
     var box = boxOf(kid(spPr, "a:xfrm"), tf);
     if (!box) {
@@ -588,6 +619,11 @@
     var prst = path(spPr, ["a:prstGeom"]), shp = prst ? PRST[prst.a.prst] || "" : "";
     var it = box && photoItem(kid(n, "p:blipFill"), box, shp, ctx, out);
     if (!it) { out.skipped++; return; }
+    if (med) {                                    // a video: its poster is the picture
+      it.clip = med.clip; out.clips[med.clip] = true;
+      if (med.vs) it.vs = med.vs;
+      if (med.ve) it.trimEnd = med.ve;
+    }
     out.items.push(it);
   }
 
@@ -739,7 +775,7 @@
   // zip: atelier/zip.js reader. → Promise<plan>
   function parse(zip, name) {
     var L = loader(zip);
-    var plan = { w: 960, h: 540, name: name || "", pages: [], media: {}, svgs: {}, fonts: [], skipped: 0, approx: 0 };
+    var plan = { w: 960, h: 540, name: name || "", pages: [], media: {}, clips: {}, svgs: {}, fonts: [], skipped: 0, approx: 0 };
     var presP = "ppt/presentation.xml", capped = false;
     return L.xml(presP).then(function (pres) {
       if (!pres) throw new Error("pptx");
@@ -849,7 +885,7 @@
           if (tst) titleSz = numA(tst, "sz", 0);
           var base = { theme: theme.colours, themeFont: theme.font, titleSz: titleSz, phTrees: [path(lcs, ["p:spTree"]), path(mcs, ["p:spTree"])] };
           var page = { bg: null, items: [] };
-          var out = { items: page.items, media: plan.media, svgs: plan.svgs, skipped: 0, approx: 0 };
+          var out = { items: page.items, media: plan.media, clips: plan.clips, svgs: plan.svgs, skipped: 0, approx: 0, sound: "" };
           var tf = { ox: 0, oy: 0, sx: 1, sy: 1, rot: 0 };
           page.bg = bgOf(cSld, assign(base, { rels: rels })) || bgOf(lcs, assign(base, { rels: lrels })) || bgOf(mcs, assign(base, { rels: mrels }));
           if (page.bg && page.bg.img) plan.media[page.bg.img] = true;
@@ -863,11 +899,39 @@
             decor(lay, tf, assign(base, { rels: lrels, phTrees: [] }), out);
           }
           walkTree(path(cSld, ["p:spTree"]) || { c: [] }, tf, assign(base, { rels: rels }), out);
+          if (out.sound) page.sound = out.sound;
+          var tr = transitionOf(sld);
+          if (tr.ptr) page.ptr = tr.ptr;
+          if (tr.dur) page.dur = tr.dur;
           plan.skipped += out.skipped; plan.approx += out.approx;
           plan.pages.push(page);
         });
       });
     });
+  }
+  // <p:transition> (also inside mc:AlternateContent) → { ptr: Atelier's
+  // transition, dur: seconds the slide shows (advTm) }
+  var TR_MAP = { "p:fade": "fade", "p:dissolve": "fade", "p:cut": "none", "p:push": "push", "p:wipe": "slide", "p:cover": "slide",
+    "p:pull": "slide", "p:split": "slide", "p:zoom": "zoom", "p:newsflash": "zoom", "p14:flip": "slide", "p14:pan": "push",
+    "p14:vortex": "zoom", "p14:prism": "push", "p14:reveal": "fade", "p159:morph": "morph", "p14:conveyor": "push", "p14:ferris": "push" };
+  function transitionOf(sld) {
+    var o = {};
+    if (!sld) return o;
+    var t = kid(sld, "p:transition");
+    if (!t) {
+      var ac = kid(sld, "mc:AlternateContent"), ch = ac && (kid(ac, "mc:Choice") || kid(ac, "mc:Fallback"));
+      t = ch && kid(ch, "p:transition");
+      if (!t && ac) { var fb = kid(ac, "mc:Fallback"); t = fb && kid(fb, "p:transition"); }
+    }
+    if (!t) return o;
+    var adv = numA(t, "advTm", 0);
+    if (adv > 0) o.dur = Math.max(1, Math.min(60, Math.round(adv / 1000)));
+    for (var i = 0; i < t.c.length; i++) {
+      var k = TR_MAP[t.c[i].n];
+      if (k) { o.ptr = k; break; }
+    }
+    if (!o.ptr && t.c.some(function (c) { return /^p\d*:/.test(c.n || "") && c.n !== "p:sndAc" && c.n !== "p:extLst"; })) o.ptr = "fade";
+    return o;
   }
   function decor(tree, tf, ctx, out) {
     if (!tree) return;
@@ -896,17 +960,32 @@
           else missing++;
         }
       }
+      // the page's sound, transition and duration (CV-A)
+      if (bg && P.sound && assets[P.sound] && assets[P.sound].clip) bg.ax.au = assets[P.sound].clip;
+      if (bg && P.ptr && pi) {
+        if (P.ptr === "morph") { bg.ext = bg.ext || {}; bg.ext.mph = 1; }
+        else bg.ax.ptr = P.ptr;
+      }
+      if (bg && P.dur) bg.ax.dur = P.dur;
       var stacks = {};
       P.items.forEach(function (s) {
         var spec = {}, img = null;
         Object.keys(s).forEach(function (k) {
-          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face", "stk", "si", "gap", "runs", "gs"].indexOf(k) < 0) spec[k] = s[k];
+          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face", "stk", "si", "gap", "runs", "gs", "clip", "vs", "trimEnd"].indexOf(k) < 0) spec[k] = s[k];
         });
         if (spec.op !== undefined && !(spec.op < 100)) delete spec.op;
         if (s.k === "photo") {
           img = assets[s.img];
           if (!img) { missing++; return; }
           spec.a = img.id; spec.iw = img.w; spec.ih = img.h; spec.nm = s.svg ? "" : s.img.split("/").pop();
+          // a video (its clip stored by io.js) or a moving GIF
+          var cl = s.clip && assets[s.clip];
+          if (cl && cl.clip) {
+            spec.vid = cl.clip;
+            if (s.vs) spec.vs = s.vs;
+            if (s.trimEnd && cl.dur > s.trimEnd) spec.ve = Math.round((cl.dur - s.trimEnd) * 100) / 100;
+          }
+          if (img.gif) spec.ext = { gif: img.gif };
           if (s.svg) { spec.fit = "custom"; spec.ix = 0; spec.iy = 0; spec.isc = s.w / img.w; }
           else if (s.crop && (s.crop.l || s.crop.t || s.crop.r || s.crop.b)) {
             var fw = 1 - s.crop.l - s.crop.r, fh = 1 - s.crop.t - s.crop.b;
@@ -921,7 +1000,7 @@
         spec.z = z++;
         if (s.k === "text" && AX.isExtraFont(spec.font)) AX.ensureFont(spec.font, s.fontName);
         var of = s.k === "text" && s.face && Object.prototype.hasOwnProperty.call(fonts, s.face) ? fonts[s.face] : null;
-        if (s.gs) spec.ext = { gs: s.gs };
+        if (s.gs) { spec.ext = spec.ext || {}; spec.ext.gs = s.gs; }
         if (s.k === "text") spec.ext = { kern: 1 };                 // Canva kerns its text
         if (of && AX.isOwnFont(of.id)) { spec.ext.fam = of.id; own[of.id] = of; }
         if (s.runs) spec.ext.runs = s.runs.map(function (r) {   // pieces in another weight, slant or typeface

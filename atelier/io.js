@@ -660,7 +660,24 @@
             if (!b) { failed++; return; }
             var ext = (p.split(".").pop() || "").toLowerCase();
             var file = new File([b], p.split("/").pop(), { type: MIME[ext] || "application/octet-stream" });
-            return A.importFile(file).then(function (res) { assets[p] = res; AT.noteUpload(res.id); });
+            return A.importFile(file).then(function (res) {
+              assets[p] = res; AT.noteUpload(res.id);
+              // a moving GIF also keeps the GIF itself (CV-A)
+              if (ext === "gif" && AT.video && AT.video.importGif) {
+                return AT.video.importGif(file).then(function (gid) { if (gid) assets[p] = { id: res.id, w: res.w, h: res.h, gif: gid }; });
+              }
+            });
+          }).then(null, function (e) { if (e && e.message === "nofs") throw e; failed++; });
+        });
+        // videos and sounds (CV-A): stored like an upload of a clip
+        Object.keys(plan.clips || {}).forEach(function (p) {
+          if (!AT.video) { failed++; return; }
+          chain = chain.then(function () { return zip.bytes(p, PPTX_MEDIA_MAX); }).then(function (b) {
+            if (!b) { failed++; return; }
+            return AT.video.importClip(new File([b], p.split("/").pop())).then(function (res) {
+              assets[p] = { clip: res.id, dur: res.dur };
+              if (res.poster) AT.noteUpload(res.poster.id);
+            });
           }).then(null, function (e) { if (e && e.message === "nofs") throw e; failed++; });
         });
         Object.keys(plan.svgs).forEach(function (k) {
@@ -842,12 +859,14 @@
     return importPicture(f);
   }
   function importPicture(f) {
-    return A.importFile(f).then(function (res) {
+    return A.importFile(f).then(function (res) { return withGif(f, res); }).then(function (res) {
       AT.noteUpload(res.id);
       var nw = AT.now();
       var d = AX.newDesign({ name: String(f.name || "").replace(/\.[a-z0-9]+$/i, "").slice(0, 120), w: res.w, h: res.h, unit: "px" }, nw);
       var pg = M.pagesInOrder(d)[0];
-      AX.addItem(d, pg.id, { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", x: 0, y: 0, w: res.w, h: res.h, fit: "fill" }, nw);
+      var spec = { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", x: 0, y: 0, w: res.w, h: res.h, fit: "fill" };
+      if (res.gif) spec.ext = { gif: res.gif };
+      AX.addItem(d, pg.id, spec, nw);
       AT.addDoc(M.normDoc(d), batching);
       say(t("imp.done"));
     });
@@ -1047,7 +1066,9 @@
   // ---------- Images ----------
   function placePhoto(res) {
     var s = AT.doc.setup, k = Math.min(s.w * 0.6 / res.w, s.h * 0.6 / res.h);
-    ED.add({ k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", w: res.w * k, h: res.h * k, fit: "fill" });
+    var spec = { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", w: res.w * k, h: res.h * k, fit: "fill" };
+    if (res.gif) spec.ext = { gif: res.gif };
+    ED.add(spec);
   }
   // An SVG put on the open page as shapes, in the middle, at most 60%
   // of the page; picked afterwards.
@@ -1077,8 +1098,14 @@
       return placeAsPicture(f, replaceId);
     });
   }
+  // a moving GIF also keeps the GIF itself (CV-A): res.gif = its id
+  function withGif(f, res) {
+    var gif = /\.gif$/i.test(f.name || "") || f.type === "image/gif";
+    if (!gif || !AT.video || !AT.video.importGif) return Promise.resolve(res);
+    return AT.video.importGif(f).then(function (id) { if (id) res.gif = id; return res; });
+  }
   function placeAsPicture(f, replaceId) {
-    return A.importFile(f).then(function (res) {
+    return A.importFile(f).then(function (res) { return withGif(f, res); }).then(function (res) {
       AT.noteUpload(res.id);
       if (replaceId && ED.find(replaceId)) {
         AT.editItems([replaceId], function (it) {
@@ -1086,6 +1113,8 @@
           it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1;
           delete it.ax.cr;
           ["vid", "vs", "ve", "mu", "vol", "nl"].forEach(function (k) { delete it.ax[k]; });   // a picture now
+          if (res.gif) { it.ext = it.ext || {}; it.ext.gif = res.gif; }
+          else if (it.ext && it.ext.gif) { delete it.ext.gif; if (!Object.keys(it.ext).length) delete it.ext; }
         });
       } else placePhoto(res);
       AT.toast(t("img.added"));
