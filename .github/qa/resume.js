@@ -126,6 +126,14 @@ const PLAY = {
     await p.keyboard.press("Digit1");
     for (let i = 0; i < 10 && !(await inProg()); i++) await p.waitForTimeout(300);
   },
+  // Caravan: close the first-run tour, open the first route, hire a mule
+  caravan: async (p, inProg) => {
+    await p.waitForTimeout(700);
+    await p.keyboard.press("Escape"); await p.waitForTimeout(300);
+    await tap(p, ".sq-card"); await p.waitForTimeout(400);
+    await p.focus("#view"); await p.keyboard.press("Digit1");
+    for (let i = 0; i < 10 && !(await inProg()); i++) await p.waitForTimeout(300);
+  },
   // Star Chart: close the first-run tour, open the Observatory (T) and
   // buy a spyglass (the first row: 13 starlight, the start has 25)
   starchart: async (p, inProg) => {

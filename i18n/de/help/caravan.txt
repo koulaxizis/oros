@@ -1,0 +1,58 @@
+# Karawane
+Karawane ist ein Turmverteidigungsspiel andersherum, für eine Person. Alte Zollmaschinen mit Uhrwerk stehen neben der Straße zum Markt, und du führst eine Karawane aus Karren an ihnen vorbei. Die Maschinen baust nicht du: du wählst die Karren, ihre Reihenfolge und den Weg an jeder Gabelung, und unterwegs hast du ein paar Tricks. Das Spiel läuft in Echtzeit, aber du kannst jederzeit anhalten, und eine Fahrt beginnt erst, wenn du aufbrichst.
+
+## So wird gespielt
+- Wähle auf der Wegekarte eine Route und eine Schwierigkeit. Die erste Route ist offen; wer eine Route schafft, öffnet die nächste.
+- Jede Route hat drei Fahrten. Vor jeder Fahrt mietest du Karren in der Leiste unten, stellst sie in eine Reihe und drehst die Wegweiser an den Gabelungen. Dann drückst du `Aufbrechen`.
+- Unterwegs rollen die Karren von selbst vom Dorftor (oben) zum Markt (unten). Die Maschinen neben der Straße werfen Kisten von den Karren in ihrer Reichweite; die roten Ringe zeigen, wie weit jede reicht.
+- Bring in den drei Fahrten die Zielzahl an Kisten zum Markt. Die obere Leiste zeigt die Kisten auf dem Markt und das Ziel, deine Münzen und die Fahrt.
+- Jede Kiste, die den Markt erreicht, bringt zwei Münzen, und jede Fahrt zehn dazu, für die nächste Fahrt.
+- Ein Karren, der alle Kisten verliert, geht zu Fuß nach Hause und ist auf der nächsten Fahrt wieder bereit. Gemietete Karren bleiben die ganze Route bei der Karawane und brechen jede Fahrt voll beladen auf.
+- Vor jeder Fahrt ziehen die Zöllner weitere Maschinen auf. Die neuen haben im Plan einen Ring.
+- `Pause` und der Tempoknopf (1x, 2x, 3x) liegen neben `Aufbrechen`. Das Spiel hält von selbst an, wenn du es verlässt.
+
+## Gabelungen und Wegweiser
+- An jeder Gabelung zeigt ein runder Wegweiser mit einem Pfeil, wohin die Karren fahren. Tippe ihn an, um ihn zu drehen. Die gepunktete Linie auf der Straße zeigt den Weg des nächsten Karrens.
+- Du kannst einen Wegweiser auch unterwegs drehen. Jeder Karren folgt dem Wegweiser so, wie er steht, wenn er dort ankommt. So kannst du die Karawane teilen: den Strohkarren auf den einen Weg, die Ware auf den anderen.
+- Karren überholen nie. Ein schnelles Pony hinter einem langsamen Maultier wartet dahinter, also stelle die schnellen Karren nach vorn.
+
+## Die Karren
+Jeder Karren hat drei Stufen. Auf Stufe 3 wählst du einen von zwei Zweigen, und die Wahl bleibt.
+- **Maultierkarren:** robust und langsam; jeder Schlag nimmt ein Viertel weniger. Der Ochsenwagen trägt viel mehr Kisten und ist noch langsamer; mit Eisenreifen nehmen Schläge nur die Hälfte.
+- **Ponykarren:** schnell und klein, an den Maschinen vorbei, bevor sie zweimal schlagen. Der Eilbote ist noch schneller; Satteltaschen tragen fast doppelt so viel.
+- **Flickerkarren** (ab Route 2): bindet heruntergefallene Kisten auf den Karren in der Nähe wieder fest (der gepunktete Ring). Langer Arm flickt viel weiter weg; Flinke Hände flicken doppelt so schnell.
+- **Strohkarren** (ab Route 3): ein Köder ohne Ware. Jede Maschine zielt zuerst auf einen Strohkarren, wenn einer in Reichweite ist. Ist sein Stroh durchgebrannt, ist er weg, und du mietest einen neuen. Nasses Stroh hält doppelt so lange; die Vogelscheuche hält jede Maschine, die sie trifft, zwei Sekunden an.
+- Tippe auf einen Karren (auf der Straße oder seinen Knopf in der Leiste), um zu sehen, was er trägt. Im Plan kannst du ihn nach vorn oder hinten schieben, aufwerten oder verkaufen. Verkaufen gibt 70% zurück; was seit dem letzten Aufbruch gekauft oder aufgewertet wurde, gibt alles zurück.
+
+## Die Zollmaschinen
+Jede Art hat ihre eigene Form, du brauchst also nie die Farben.
+- **Zollschranke** (ein Pfosten mit einem Balken): schlägt ab und zu und wirft eine Kiste vom ersten Karren in Reichweite.
+- **Staubblasebalg** (ein Fächer, ab Route 2): alle drei Sekunden wirft eine Staubwolke eine Kiste von jedem Karren, der dicht dabei fährt. Halte die Karren auseinander, oder schick weniger dort entlang.
+- **Schlammrad** (ein Rad mit Speichen, ab Route 3): schlägt nicht, aber Karren in seiner Reichweite fahren nur halb so schnell, also haben die Maschinen ringsum länger Zeit.
+- **Ausguck** (ein hohes Dreieck, ab Route 4): die Maschinen in der Nähe arbeiten anderthalbmal so schnell und sehen durch den Rauch.
+- Eine Maschine zielt immer auf den Karren in Reichweite, der am weitesten gekommen ist, nur ein Strohkarren kommt zuerst.
+
+## Tricks
+- **Rauch:** tippe auf `Rauch`, dann auf die Stelle. Fünf Sekunden lang arbeiten die Maschinen in der Wolke nicht, und Karren darin werden nicht anvisiert.
+- **Schild:** tippe auf `Schild`, dann auf einen Karren. Dieser Karren verliert sechs Sekunden lang nichts.
+- **Abkürzung:** öffnet den Ziegenpfad (den gestrichelten Weg) für diese Fahrt, und die Wegweiser drehen sich dorthin. Nur manche Routen haben einen. Du kannst ihn auch im Plan unter `Tricks` öffnen.
+- Von jedem Trick kommt auf jeder Fahrt einer zurück. Im Plan kauft `Tricks` zusätzliche für je 15 Münzen; sie bleiben, bis du sie benutzt.
+
+## Schwierigkeit, Sterne und Speichern
+- Leicht: mehr Münzen und leichtere Schläge; Normal; Schwer: weniger Münzen und härtere Schläge.
+- Sterne: drei, wenn mindestens 85% der geladenen Kisten den Markt erreichen, zwei mit 65%, einer für jede geschaffte Route. Die Wegekarte behält die besten Sterne jeder Route.
+- Ist eine Route verloren, bringt dich `Noch einmal ab Fahrt` zurück in den Plan der letzten Fahrt, mit der Karawane und den Münzen von damals.
+- Die laufende Route bleibt auf diesem Gerät und öffnet sich dort wieder, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Route endet. `Fortschritt zurücksetzen` auf der Wegekarte löscht sie auf allen Geräten. Karawane steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+
+## Tastatur
+- Pfeiltasten wählen einen Karren; [[Escape]] lässt ihn los. Die Tasten `[` und `]` schieben ihn im Plan nach vorn oder hinten.
+- [[1]] bis [[4]]: einen Maultier-, Pony-, Flicker- oder Strohkarren mieten. [[U]]: auf Stufe 2 aufwerten. [[A]] oder [[B]]: der Zweig auf Stufe 3. [[S]]: verkaufen.
+- [[G]]: den nächsten Wegweiser wählen; [[Enter]]: ihn drehen.
+- [[Q]]: Rauch auf die Maschine, die dem vordersten Karren am nächsten ist. [[W]]: Schild auf den gewählten (oder den vordersten) Karren. [[E]]: Abkürzung.
+- [[N]]: aufbrechen. [[Space]]: Pause oder weiter. [[F]]: Tempo. [[L]]: die Wegekarte. [[M]]: Ton. [[?]]: so wird gespielt.
+
+## Tipps
+- Der Weg ohne Maschinen ist oft der lange. Auf der ersten Fahrt kann er sich lohnen; später füllen die Zöllner auch ihn.
+- Stelle die Maultierkarren nach vorn: die Maschinen zielen auf den Karren, der am weitesten gekommen ist, und Maultiere verlieren bei jedem Schlag weniger.
+- Ein Flicker direkt hinter dem größten Karren holt auf einem langen Stück nach den Maschinen viele Kisten zurück.
+- Wirf Rauch dorthin, wo zwei Maschinen zugleich an die Straße reichen, kurz bevor der erste Karren ankommt.

@@ -1,0 +1,69 @@
+{
+ "source": "hand-written: progress from two devices, caravan/engine.js merge (tests/caravan.test.js covers the merge)",
+ "a": {
+  "ver": 1,
+  "br": 0,
+  "maps": {
+   "r1": {
+    "b": 0,
+    "s": 3,
+    "e": 0
+   },
+   "r2": {
+    "b": 0,
+    "s": 1,
+    "e": 0
+   }
+  },
+  "rows": {
+   "deva000001": {
+    "b": 0,
+    "s": {
+     "n": [
+      4,
+      2
+     ]
+    },
+    "f": 160
+   }
+  }
+ },
+ "b": {
+  "ver": 1,
+  "br": 0,
+  "maps": {
+   "r1": {
+    "b": 0,
+    "s": 2,
+    "e": 0
+   },
+   "r2": {
+    "b": 0,
+    "s": 2,
+    "e": 0
+   }
+  },
+  "rows": {
+   "deva000001": {
+    "b": 0,
+    "s": {
+     "n": [
+      3,
+      2
+     ]
+    },
+    "f": 140
+   },
+   "devb000002": {
+    "b": 0,
+    "s": {
+     "m": [
+      2,
+      2
+     ]
+    },
+    "f": 95
+   }
+  }
+ }
+}
