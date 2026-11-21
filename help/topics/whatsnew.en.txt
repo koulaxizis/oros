@@ -6,6 +6,11 @@ orOS is free and made by one person. If it is useful to you, [here are three way
 ## Version 8.14.00
 - **Layout: port a whole folder of books.** On Layout's home page, Open file › Port a folder of books opens every Scribus and InDesign file of a folder of past work as a new document with its own pictures, finds the PDF that went to the printer, compares each page with it and gives you a report you can save as a spreadsheet. Nothing in the folder changes. Compare with a PDF now also notices when the PDF has extra pages at the start.
 
+## Version 8.13.00
+- **Claude finds your Layout documents on every device.** Through orOS Gate, Claude now reads and changes Layout and Atelier documents from their synced files, even on a device where you never opened Layout, such as orOS in the tray. Claude can also read back Layout's proofs and PDFs.
+- **A picture that can't be read no longer stops everything.** When a picture or font file in Claude's Layout commands can't be opened, only that step is skipped and the rest are applied; the report names what was skipped and why.
+- **Up to date right after a change.** Layout answers Claude once a change is saved, so what Claude reads next already shows it, and Claude can use new orOS Gate tools without starting a new conversation.
+
 ## Version 8.12.00
 - **Layout: more of your Scribus and InDesign files comes over.** Tables from Scribus open as tables, with their cell colours, borders and text, and text on a curve stays on its curve. From InDesign, layers keep their order and their hidden or locked objects, drawn shapes keep their outline, text on a curve stays on it, tabs stay tabs, tables become rows set at their columns and footnotes go after their text.
 
