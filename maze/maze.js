@@ -104,7 +104,7 @@
       "map.diff": "Difficulty", "map.lock": "Clear the square before it to open", "map.waves": "{n} waves",
       "map.towers": "Towers: {list}", "map.cont": "Continue: {r}, wave {n}",
       "map.replace": "A night is still under way on {r}. Start {s} instead? The night under way is given up.",
-      "map.resetAsk": "Reset the stars and records on every device?",
+      "map.resetAsk": "Reset the stars and records on every device? The night in progress ends too.",
       "sq.q1": "Net-menders' square", "sq.q2": "Customs yard", "sq.q3": "Chapel steps", "sq.q4": "Harbour gate",
       "end.won": "The fountain is safe", "end.lost": "The shadows reached the fountain",
       "end.hearts": "Hearts left", "end.faded": "Shadows faded", "end.waves": "Waves",
@@ -170,7 +170,7 @@
       "map.diff": "Δυσκολία", "map.lock": "Πέρασε πρώτα την προηγούμενη πλατεία", "map.waves": "{n} κύματα",
       "map.towers": "Πύργοι: {list}", "map.cont": "Συνέχεια: {r}, κύμα {n}",
       "map.replace": "Μια νύχτα είναι ακόμα σε εξέλιξη στην πλατεία «{r}». Να ξεκινήσει η «{s}»; Η νύχτα σε εξέλιξη χάνεται.",
-      "map.resetAsk": "Να μηδενιστούν τα αστέρια και το αρχείο σε όλες τις συσκευές;",
+      "map.resetAsk": "Να μηδενιστούν τα αστέρια και το αρχείο σε όλες τις συσκευές; Τελειώνει και η νύχτα που παίζεται.",
       "sq.q1": "Η πλατεία με τα δίχτυα", "sq.q2": "Η αυλή του τελωνείου", "sq.q3": "Τα σκαλιά του ξωκλησιού", "sq.q4": "Η πύλη του λιμανιού",
       "end.won": "Το συντριβάνι σώθηκε", "end.lost": "Οι σκιές έφτασαν στο συντριβάνι",
       "end.hearts": "Καρδιές που έμειναν", "end.faded": "Σκιές που χάθηκαν", "end.waves": "Κύματα",
@@ -1063,9 +1063,12 @@
     startNight(id, prefs.diff);
   }
   // Reset progress: a new reset stamp, so older rows drop on every device.
+  // The night in progress ends too (not counted): a reset that left it on
+  // screen, with Continue, read as "nothing was reset".
   function resetProgress() {
     data = E.merge({ ver: 1, br: Math.max(Date.now(), data.br + 1), maps: {}, rows: {} }, data);
     saveData();
+    if (sess && !sess.counted) { sess.counted = true; paused = true; saveSession(); }
     showToast(t("toast.reset"));
     renderMap();
   }
