@@ -637,3 +637,27 @@ body.inframe #cv { cursor: text; }
 .cmp-row { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .cmp-pics { display: flex; gap: 6px; width: 100%; }
 .cmp-pic { flex: 1 1 0; min-width: 0; max-width: 33%; height: auto; border: 1px solid var(--line, rgba(127,127,127,.35)); background: #fff; }
+
+/* Guided New book (LY-N1): kinds, preview, type pairs, Learn panel, one-time hints */
+.st-step { margin: 0 0 10px; font-weight: 600; }
+.st-main { display: flex; flex-direction: column; gap: 8px; }
+.st-kinds { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; max-height: 52vh; overflow-y: auto; padding: 2px; }
+.st-kind { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; text-align: start; padding: 10px 12px; border: 1px solid var(--line, rgba(127,127,127,.35)); border-radius: 10px; background: transparent; color: inherit; font: inherit; cursor: pointer; min-height: 44px; }
+.st-kind:hover { border-color: var(--accent); }
+.st-kind:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.st-kind.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.st-kind-name { font-weight: 600; }
+.st-kind-d { font-size: 12px; opacity: .72; line-height: 1.35; }
+.st-pv { margin-top: 10px; }
+.st-pv:empty { display: none; }
+.st-spread { display: flex; gap: 2px; overflow-x: auto; max-width: 100%; }
+.st-spread canvas { flex: 0 0 auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.st-pairs { display: flex; flex-direction: column; gap: 6px; }
+.st-pair { min-height: 32px; }
+.learn-item { padding: 10px 0; border-bottom: 1px solid var(--line, rgba(127,127,127,.25)); }
+.learn-item:last-child { border-bottom: none; }
+.learn-txt { margin: 4px 0 8px; line-height: 1.45; }
+.hint-bar { position: absolute; left: 12px; right: 12px; top: auto; bottom: 22px; transform: none; max-width: none; z-index: 5; display: flex; align-items: center; gap: 10px; }
+.hint-bar > span { flex: 1 1 auto; }
+.st-open { margin-top: 6px; }
+@media (max-width: 520px) { .st-kinds { grid-template-columns: 1fr 1fr; max-height: 46vh; } .st-kind { padding: 8px; } }

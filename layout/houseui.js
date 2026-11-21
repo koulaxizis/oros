@@ -645,7 +645,7 @@
       body.appendChild(act);
     });
   }
-  function hasToc(doc) { return !!(doc && H.houseOf(doc) && doc.stories.some(function (s) { return s.ext && s.ext.hs === "toc"; })); }
+  function hasToc(doc) { return !!(doc && (H.houseOf(doc) || (doc.setup.ext && doc.setup.ext.start)) && doc.stories.some(function (s) { return s.ext && s.ext.hs === "toc"; })); }
   function updateToc() {
     var n = -1;
     LY.flushStory && LY.flushStory();

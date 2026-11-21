@@ -9,7 +9,7 @@ The button at the right end of the top bar (the network and power symbols) opens
 - `Dark style`, `Large text`, `High contrast` and `On-screen keyboard` switch on and off with one tap. Settings has the full choices for each.
 - `Focus` keeps notifications quiet: they still arrive in the bell's list, without a pop-up or a sound, apart from the apps the mode lets through. One tap turns the last mode on or off (`Do Not Disturb` at first); the arrow lists the modes (`Do Not Disturb`, `Sleep`, `Work`, `Personal` and your own) and sets how long: `For one hour`, `Until 8 in the morning`, `Until the schedule ends` or `Until you turn it off`. A mode holds on all your devices, and the top-bar button shows its icon while one is on. See [Focus modes](help:t/notifications).
 - `Keep awake` keeps the screen on while orOS is on screen: one press until you turn it off, the arrow gives `For one hour`, `For two hours` or `Until you turn it off`. On orOS USB it also keeps the screen from going dark and the computer from sleeping. A cup on the top-bar button shows it is on.
-- `Energy saver` stops what moves on the desktop (live wallpaper, Living land, the weather desktop, seasonal decorations, the opening and closing animation of apps) and refreshes widgets once a minute. It turns on by itself when the battery falls under 20 % and is not charging, and off again on the charger; turned off on a low battery, it stays off until the next charge. Sync, notifications, alarms, timers and sound never wait for it. A leaf on the top-bar button shows it is on. Both are set on this device only.
+- `Energy saver` stops what moves on the desktop (live wallpaper, Living land, the Light show, the weather desktop, seasonal decorations, the opening and closing animation of apps) and refreshes widgets once a minute. It turns on by itself when the battery falls under 20 % and is not charging, and off again on the charger; turned off on a low battery, it stays off until the next charge. Sync, notifications, alarms, timers and sound never wait for it. A leaf on the top-bar button shows it is on. Both are set on this device only.
 - `Playing` lists the music, podcast, radio station or Sound Mixer mix that plays, with Play / Pause; tap its name to open the app.
 - On orOS USB, the panel also has the volume and brightness, Wi-Fi and Bluetooth.
 
@@ -27,7 +27,7 @@ Night Light makes the screen warmer in the evening, with less blue light, which 
 On orOS USB the computer changes the screen's own colours, so the Internet window and Tor Browser turn warm too. In a browser or orOS Portable, orOS tints its own window: a video in full screen inside an app shows its own colours.
 
 ## Desktop widgets
-Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a month; tap a day to open it in the Calendar), `Today` (what is late and what is due today, from the [Today](app:today) summary; tap a line to open it), `Weather` (the place of the top-bar weather), `Playing` (Play / Pause for music, podcasts, radio or the Sound Mixer) and `Sync` (its state and Sync now).
+Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a month; tap a day to open it in the Calendar), `Today` (what is late and what is due today, from the [Today](app:today) summary; tap a line to open it), `Weather` (the place of the top-bar weather), `Playing` (what plays now, large: its cover, title, progress, Previous / Play-Pause / Next and a small light that moves with the sound; other players under it with Play / Pause; music, podcasts, radio or the Sound Mixer) and `Sync` (its state and Sync now).
 
 - On a computer they sit in a column at the right of the desktop; on a phone or a narrow window, in a row at the top that scrolls sideways.
 - Right-click an empty spot of the desktop and choose `Widgets…` to tick the cards you want and set their order. `Settings`, under `Appearance`, has the same ticks.
@@ -123,6 +123,12 @@ Settings › Appearance › `Icons` changes how app icons look on the desktop, i
 - `Gentle motion` (off at first) adds glints on the water and a drifting cloud shadow. It stops while an app is open, with reduced motion, on a low battery (under 20 % and not charging) and on a device too slow for it.
 - `Light of the day` (on at first) colours the land with the time on this device: a deep blue at night, rose at dawn, clear by day and golden in the evening, changing slowly through the day. It is drawn once over the land and costs no battery.
 - High contrast shows the plain desktop instead.
+
+### Light show
+`Light show` (the third tile) makes the desktop move with what plays in Music, Podcasts or Radio: the same light as their full-screen Light show, softer, behind your shortcuts and widgets. Under the wallpapers, `Light style` picks `Glow`, `Rings`, `Bars` or `Wave`; the Wallpaper Generator has it too, as its own tab.
+- Songs on this device move it with their real sound. A station or an episode whose server does not let orOS listen moves it calmly on its own; orOS never restarts a stream for the wallpaper.
+- With nothing playing it rests as a still picture and costs no battery. It stops while an app is open, and stays still with reduced motion, Energy saver, a low battery (under 20 % and not charging) or a device too slow for it. High contrast shows the plain desktop instead.
+- The style follows you to your other devices. The little light in the `Playing` card works the same way; `Hide the light` in the card's menu takes it away on this device.
 
 ### Weather on the desktop
 Settings › Wallpaper › `Weather on the desktop` (off at first, on this device only) shows the weather over any wallpaper: sun or stars when it is clear, a few clouds, overcast, fog, gentle rain, snow, or a storm with heavier rain under darker clouds (never a flash). It follows the weather of your [Weather](app:weather) city, the same as the top bar. With no weather yet, or weather older than three hours, nothing shows. It stops while an app is open, and stays still with reduced motion, on a low battery (under 20 % and not charging) and on a device too slow for it. High contrast hides it.
