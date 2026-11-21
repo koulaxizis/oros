@@ -1901,10 +1901,18 @@
   // every deletion (askDelete answers "none" off screen → __held).
   var BACK_OK = ["book_cover", "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app"];
   function deskApp() { return typeof location !== "undefined" && /^http:\/\/(localhost|127\.0\.0\.1):47800$/.test(String(location.origin || "")); }
+  // TRAY-3 (Chris 2026-11-21 «εφάρμοσε τις ίδιες δυνατότητες για όλες
+  // τις εργασίες του Gate»): in an orOS desktop window that is minimised
+  // or behind others, every screen tool runs too; a proposal's form stays
+  // open in that window for the owner to check when they look. The
+  // headless tray host has no window to keep it in, so there proposals
+  // still wait for a screen (the phone answers them too).
   function backOk(name) {
-    if (BACK_OK.indexOf(name) < 0 || strictOn()) return false;
+    if (strictOn()) return false;
+    var desk = deskApp() && !away() && !(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());
+    if (BACK_OK.indexOf(name) < 0) return desk && ACT_OPEN.indexOf(name) >= 0;
     if (HOST.ok && HOST.kind === "bg") return true;
-    return deskApp() && !away() && !(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());
+    return desk;
   }
   // a screen tool that must wait here for a person at the screen
   function screenWait(name, args) {
@@ -2769,7 +2777,7 @@
               if (res === DECL) return res;
               delete cqBusy[it.id];
               if (res && res.ok && res.u) chgTag(res.u, it.id, at, res.made);   // PEND-1: q, p (items by index), at
-              if ((x.n === "files_delete" || x.n === "local_folders_request") && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
+              if ((x.n === "files_delete" || x.n === "local_folders_request" || (x.n === "edit_in_app" && !res.ok)) && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
               delete cqHeld[it.id];
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
@@ -3807,7 +3815,7 @@
       if (res && res.ok && q.n !== "__tools") ranAdd(q.q);
       // 7.48.00: a deletion this screen could not ask about (nobody here)
       // is handed back to the box, which queues it for a device on screen.
-      if (res && !res.ok && askLast === "none" && core.delCount(q.n, q.a)) {
+      if (res && !res.ok && askLast === "none" && (core.delCount(q.n, q.a) || q.n === "edit_in_app")) {   // TRAY-3: Layout's removals too
         try { sock.send(JSON.stringify({ r: q.q, ok: false, c: "__held" })); } catch (e) {}
         return;
       }

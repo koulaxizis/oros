@@ -126,7 +126,7 @@ test("TRAY-2: Claude asks for a computer folder; hidden it is held, on screen th
   } finally { await br.close(); srv.close(); }
 });
 
-test("TRAY-1: an orOS desktop window runs Layout's work while hidden and says b1; a proposal still waits", opt, async (t) => {
+test("TRAY-1/3: an orOS desktop window runs Layout's work and proposals while hidden and says b1; do_action is not kept", opt, async (t) => {
   const K = crypto.randomBytes(32);
   let srv;
   try { srv = await serve(47800); } catch (e) { t.skip("port 47800 is in use"); return; }
@@ -139,7 +139,7 @@ test("TRAY-1: an orOS desktop window runs Layout's work while hidden and says b1
     for (let i = 0; i < 60 && !(o.got.some((x) => x.r === "L".repeat(16)) && o.got.some((x) => x.r === "P".repeat(16))); i++) await o.page.waitForTimeout(500);
     const l = o.got.find((x) => x.r === "L".repeat(16)), p = o.got.find((x) => x.r === "P".repeat(16));
     assert.ok(l && l.c !== "__screen", "Layout's work ran here: " + JSON.stringify(l));
-    assert.ok(p && p.c === "__screen", "a proposal waits for a screen: " + JSON.stringify(p));
+    assert.ok(p && p.c !== "__screen", "TRAY-3: a proposal opens in the minimised window: " + JSON.stringify(p));
     assert.deepEqual(o.errs, []);
   } finally { await br.close(); srv.close(); }
 });
