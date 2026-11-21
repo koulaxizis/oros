@@ -30,6 +30,23 @@
     return worker;
   }
 
+  // GIMP's reader is loaded only when a .xcf opens without the worker
+  // (same ?v= as the page's psd.js).
+  var xcfP = null;
+  function loadXcf() {
+    var NS = window.PhotoLab || {};
+    if (NS.xcf) return Promise.resolve(NS.xcf);
+    if (xcfP) return xcfP;
+    xcfP = new Promise(function (ok, fail) {
+      var tag = document.querySelector('script[src^="psd.js"]'), q = tag ? (tag.getAttribute("src").split("?")[1] || "") : "";
+      var s = document.createElement("script");
+      s.src = "xcf.js" + (q ? "?" + q : "");
+      s.onload = function () { if (window.PhotoLab && window.PhotoLab.xcf) ok(window.PhotoLab.xcf); else fail(new Error("xcf")); };
+      s.onerror = function () { xcfP = null; fail(new Error("xcf")); };
+      document.head.appendChild(s);
+    });
+    return xcfP;
+  }
   function local(op, a) {
     var S = PL.S, R = PL.R, A = PL.A;
     switch (op) {
@@ -49,6 +66,7 @@
         return out;
       case "psd": return PL.PSD.read(a.bytes, a.o);
       case "psdWrite": return PL.PSD.write(a.doc);
+      case "xcf": return loadXcf().then(function (X) { return X.read(a.bytes, a.o); });
       case "stack": return PL.B.applyStack(a.img, a.stack, A, PL.FX);
     }
     throw new Error("op");

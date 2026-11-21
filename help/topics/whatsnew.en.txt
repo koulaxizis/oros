@@ -3,6 +3,13 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.03.00
+- **Bring your work from Photoshop, GIMP and Canva.** Photo Lab now opens Photoshop files in full: masks, adjustment layers, layer styles, fill layers and vector masks stay editable, at 8, 16 and 32 bits and in every colour mode. It also opens GIMP files (.xcf, GIMP 2 and 3), and after opening, a short report says what could not stay editable.
+- **Layer groups in Photo Lab.** Folders in Layers, as in Photoshop and GIMP: pass-through or their own blend mode, opacity, groups inside groups. Group layer is Ctrl+G. Groups from Photoshop, GIMP, OpenRaster and Krita files open as groups and are saved back as groups.
+- **Atelier opens a Canva PDF as a design you can edit**, and designs from Canva now keep their real size in pixels, including banners longer than 56 inches (pick the .pptx together with Canva's PDF of it). Office fonts are replaced by free fonts with the same letter widths, so lines break as in Canva.
+- **Canva's animations in Atelier.** A new Animate panel with Canva's 28 enter and exit effects and 4 emphasis effects, with direction, speed and text by line, word or letter, plus page animations. Videos, the page's sound, moving GIFs and slide transitions now come in from Canva files.
+- **Groups, Layers and Copy style in Atelier.** Group elements with Ctrl+G: a tap picks the group, a second tap the element inside it. Position › Layers lists the page's elements; drag them to move them in front or behind. The roller copies one element's style onto another.
+
 ## Version 8.02.03
 - **Updates no longer get stuck on a phone with little free space.** A phone whose browser storage was nearly full could stay on an old version for hours: the new version did not fit next to the old one and the update failed quietly every time. orOS now makes room, starts the new version with what fits and fetches the rest afterwards. The bell's notice that orOS was updated on another device has an **Update now** button, which loads the new version at once or says why it could not (not enough space, no connection). Settings › Check for updates does the same.
 

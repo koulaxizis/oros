@@ -54,6 +54,10 @@ function eotOf(font, flags) {
   return out;
 }
 
+// The deck slides are screen sizes, which the import scales by 4/3 to
+// their pixels (CV-0); these checks are in the slide's own points.
+const slideUnits = (d) => AX.scaleDesign(d, 3 / 4);
+
 test("eot(): the font inside an Embedded OpenType file", () => {
   assert.deepEqual(P.eot(eotOf(SERIF)), SERIF);
   assert.deepEqual(P.eot(eotOf(SERIF, 0x10000000)), SERIF, "XOR obfuscation undone");
@@ -174,7 +178,7 @@ test("pptx build: own font as ext.fam over its stand-in, kerning, the design's f
   const assets = { "ppt/media/image1.png": { id: "a".repeat(64) + ".png", w: 400, h: 100 } };
   AX.useDocFonts({ setup: { ext: { fonts: [ownEntry()] } } });
   T.register(OWN + "-r", SERIF.slice().buffer);
-  const r = P.build(plan, assets, 7000, { Caudex: ownEntry() });
+  const r = P.build(plan, assets, 7000, { Caudex: ownEntry() }); slideUnits(r.doc);
   const d = r.doc;
   assert.equal(J(M.normDoc(JSON.parse(J(d)))), J(d), "canonical");
   assert.deepEqual(d.setup.ext.fonts, [ownEntry()], "only the families the text uses");
@@ -206,7 +210,7 @@ test("pptx build: a line that runs a little past its box widens the box around i
   const it = { ax: { k: "text", tx: s.tx, font: "serif", size: 32, al: "c" }, ext: { fam: OWN, kern: 1 }, t: "rect" };
   const nat = AX.textWidth(it.ax, it, true);
   s.w = Math.round(nat * 0.97 * 100) / 100;            // 3% short, as another program measured
-  const d = P.build(plan, { "ppt/media/image1.png": { id: "a".repeat(64) + ".png", w: 400, h: 100 } }, 1, { Caudex: ownEntry() }).doc;
+  const d = slideUnits(P.build(plan, { "ppt/media/image1.png": { id: "a".repeat(64) + ".png", w: 400, h: 100 } }, 1, { Caudex: ownEntry() }).doc);
   const t = d.items.find((i) => i.ax.k === "text" && /ΓΛΑ/.test(i.ax.tx));
   assert.equal(AX.textLayout(t).lines.length, 1, "one line, as in Canva");
   assert.ok(Math.abs(t.x + t.w / 2 - (s.x + s.w / 2)) < 0.02, "centred text keeps its centre");
@@ -276,7 +280,7 @@ test("pptx: paragraphs in other styles become items stacked baseline to baseline
   assert.deepEqual(ts.map((t) => t.tx), ["Title\nTitle 2", "Author\nAuthor 2"]);
   assert.equal(ts[1].gap, 40, "the blank paragraph is the block above's line (32 pt at 125%)");
   assert.ok(ts[0].stk && ts[1].stk === ts[0].stk);
-  const d = P.build(plan, {}, 1).doc;
+  const d = slideUnits(P.build(plan, {}, 1).doc);
   const [a, b] = d.items.filter((i) => i.ax.k === "text").sort((p, q) => p.z - q.z);
   const L = (it) => AX.textLayout(it).lines;
   assert.equal(a.y, 100, "a top-anchored stack starts at the box");
@@ -315,7 +319,7 @@ test("pptx: bold words and other typefaces inside a paragraph become runs (ext.r
   const BOLD = "uf_" + "2b".repeat(8);
   AX.useDocFonts({ setup: { ext: { fonts: [ownEntry(), { id: BOLD, name: "Caudex Bold", fb: "serif", r: "2b".repeat(32) + ".ttf" }] } } });
   T.register(OWN + "-r", SERIF.slice().buffer); T.register(BOLD + "-r", noto("NotoSerif-Bold.ttf").buffer);
-  const d = P.build(plan, {}, 1, { Caudex: ownEntry(), "Caudex Bold": { id: BOLD, name: "Caudex Bold", fb: "serif", r: "2b".repeat(32) + ".ttf" } }).doc;
+  const d = slideUnits(P.build(plan, {}, 1, { Caudex: ownEntry(), "Caudex Bold": { id: BOLD, name: "Caudex Bold", fb: "serif", r: "2b".repeat(32) + ".ttf" } }).doc);
   assert.equal(J(M.normDoc(JSON.parse(J(d)))), J(d), "canonical");
   const it = d.items.find((i) => i.ax.k === "text");
   assert.deepEqual(it.ext.runs, [{ n: 4 }, { n: 3, b: 1, fam: BOLD }, { n: 13 }, { n: 4, b: 1 }]);
@@ -354,7 +358,7 @@ test("pptx: radial and multi-stop gradients keep their stops (ext.gs over the ax
   assert.deepEqual(r.gs, { st: [[0, "#0b6dc2"], [0.5, "#138eff"], [1, "#a2d2ff"]], r: 1, c: [0, 0] }, "centred on the top-left corner");
   assert.deepEqual(t.gs, { st: [[0, "#ff0000"], [0.3, "#00ff00"], [1, "#0000ff"]] }, "stops in order");
   assert.equal(w.gs, undefined, "two stops, linear: ax.g alone");
-  const d = P.build(plan, {}, 1).doc;
+  const d = slideUnits(P.build(plan, {}, 1).doc);
   assert.equal(J(M.normDoc(JSON.parse(J(d)))), J(d), "canonical");
   const it = d.items.find((i) => i.ax.g && i.ext && i.ext.gs && i.ext.gs.r);
   assert.deepEqual(AX.gradOf(it), { st: r.gs.st, r: 1, c: [0, 0] });
