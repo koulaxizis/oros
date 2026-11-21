@@ -68,8 +68,10 @@ test("core: bad documents and layers are refused or cleaned", () => {
   assert.equal(d.layers[1].tx.z, 2000);
 });
 
-test("core: 16 native blend modes, tilesOf, moveLayer", () => {
-  assert.equal(C.BLENDS.length, 16);
+test("core: Photoshop's 27 blend modes (16 native, 11 per pixel), tilesOf, moveLayer", () => {
+  assert.equal(C.BLENDS.length, 27);
+  assert.equal(C.BLENDS.filter((b) => b.op).length, 16);
+  assert.equal(C.blendOp("hardmix"), "source-over");
   assert.equal(C.blendOp("dodge"), "color-dodge");
   assert.equal(C.blendOp("nope"), "source-over");
   const d = C.normDoc({ id: "pabcdefgh", m: 1, w: 10, h: 10, layers: [
