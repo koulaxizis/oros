@@ -433,6 +433,8 @@
   function runColor(p, fill, r) {
     var c = r && r.color;
     if (!c || !HEX6I.test(c) || !p || !p.color) return p ? p.color : c;
+    // an offset copy (a shadow in the text's colour) keeps one colour
+    if (p.dx || p.dy) return p.color;
     return String(p.color).toLowerCase() === String(fill || "#000000").toLowerCase() ? c : p.color;
   }
   // A gradient's own stops and shape (ext.gs, AC3b) over ax.g, which
@@ -486,7 +488,10 @@
     var ax = it.ax || {};
     var ps = textStyle(ax, it);
     var cs = [], story = storyOf(ax, it, cs);
-    var res = T.layoutChain(story, [{ id: "f", w: Math.max(1, it.w), h: 1e7, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: {} }], { ps: [ps], cs: cs });
+    // slack: a word a hair wider than the box stays on its line, as in
+    // Canva, whose boxes fit its own (slightly narrower) measure (CV-F3)
+    var slack = Math.max((ax.size || TEXT_DEF.size) * 0.002, Math.max(1, it.w) * 0.0005);
+    var res = T.layoutChain(story, [{ id: "f", w: Math.max(1, it.w), h: 1e7, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: {}, slack: slack }], { ps: [ps], cs: cs });
     var lines = res.frames.f.lines;
     var lead = ps.lead;
     var h = lines.length ? lines[lines.length - 1].y + Math.max(lines[lines.length - 1].d, lead * 0.25) : lead;

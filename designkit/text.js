@@ -912,12 +912,15 @@
       });
       segs = next;
     });
-    return segs.filter(function (s) { return s[1] - s[0] >= minW; });
+    // a slice left by a wrap must be wide enough; the whole line (no
+    // wrap across it) always is, however narrow the frame (CV-F3)
+    return segs.filter(function (s) { return s[1] - s[0] >= minW || (s[0] === x0 && s[1] === x1); });
   }
 
   // ---------- 8. Layout ----------
   // frames: ordered chain, each
   //   { id, w, h, cols, gut, inset, valign: "t"|"c"|"b", excl: [],
+  //     slack (optional: a word may pass the right edge by this much),
   //     one (true: the frame holds one line, whatever its height),
   //     ctx: { pageLabel, pageCount, sec (the page's running head
   //     text, LY-RH) } }
@@ -1141,6 +1144,9 @@
     }
     function fill(ti, toks, ps, segs, base, asc, desc, lead, bul, bulletW, li, fullW) {
       var ctx = geom.f.ctx || {};
+      // frame slack: a word may pass the edge by this much (Atelier's
+      // boxes, sized to Canva's own narrower measure, CV-F3)
+      var slk = geom.f.slack > 0 ? geom.f.slack : 0;
       var line = { col: col, frame: geom.f.id, y: base, d: desc, h: lead, runs: [], maxSize: 0, next: ti, base: base,
                    p: curPi, o0: tokO(toks[ti]), o1: curLen, cx0: geom.x0, cx1: geom.x1, x0: segs[0][0] };
       var broke = false;
@@ -1155,7 +1161,7 @@
             var tSpW = 0, tNsp = 0;
             pendingSp.forEach(function (s) { if (s.k === "s") { tSpW += measure(s.a.key, " ", s.a.size, s.a.track); tNsp++; } });
             var at = sx0 - (geom.x0 + li) + w + tSpW, tw = tabStop(ps, at) - at;
-            if (w + tSpW + tw > avail + 0.001 && items.length) break;
+            if (w + tSpW + tw > avail + 0.001 + slk && items.length) break;
             items.push({ tok: tk, w: Math.max(0, tw), sp: pendingSp, spW: tSpW, nsp: tNsp, ti: ti, tab: 1 });
             w += tSpW + Math.max(0, tw); pendingSp = [];
             spaces = 0; lastTab = items.length - 1;
@@ -1170,11 +1176,11 @@
           var spW = 0, nsp = 0;
           pendingSp.forEach(function (s) { if (s.k === "s") { spW += measure(s.a.key, " ", s.a.size, s.a.track); nsp++; } });
           var ww = wordWidth(tk, ctx);
-          if (w + spW + ww > avail + 0.001) {
+          if (w + spW + ww > avail + 0.001 + slk) {
             if (!items.length) {
               // too wide for a segment narrowed by a wrap: try the
               // next segment / line; wider than the column: split
-              if (ww <= fullW + 0.001 && avail < fullW - 0.001) break;
+              if (ww <= fullW + 0.001 + slk && avail < fullW - 0.001) break;
               var pieces = splitWord(tk, avail, ctx);
               if (pieces.length > 1) { toks.splice.apply(toks, [ti, 1].concat(pieces)); continue; }
               items.push({ tok: tk, w: ww, sp: [], spW: 0, nsp: 0, ti: ti }); w += ww; ti++;
@@ -1184,7 +1190,7 @@
             // line ends one break earlier
             hyph = breakHyph(pendingSp);
             while (hyph && items.length > 1) {
-              if (w + (hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0) <= avail + 0.001) break;
+              if (w + (hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0) <= avail + 0.001 + slk) break;
               var last = items.pop();
               w -= last.w + last.spW; spaces -= last.nsp; ti = last.ti;
               hyph = breakHyph(last.sp);

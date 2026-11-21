@@ -227,6 +227,11 @@
       var lin = kid(gf, "a:lin"), ang = lin ? numA(lin, "ang", 0) / 60000 : 90;
       if (stops.length === 1) return { fc: stops[0].c.c, a: stops[0].c.a };
       var out = { g: { a: stops[0].c.c, b: stops[stops.length - 1].c.c, ang: Math.round(((ang + 90) % 360 + 360) % 360) } };
+      // see-through stops (Canva's shadow gradients over a video, CV-F3):
+      // such a shape is drawn as a picture that keeps them (svgOf)
+      if (stops.some(function (x) { return x.c.a < 1; })) {
+        out.ga = { ang: ang, st: stops.slice(0, 10).map(function (x) { return [Math.max(0, Math.min(1, x.pos / 100000)), x.c.c, x.c.a]; }) };
+      }
       // more stops, or a radial gradient: its own stops over the stand-in (ax.js gradOf)
       var circ = path(gf, ["a:path"]), ftr = circ && kid(circ, "a:fillToRect");
       var radial = circ && (circ.a.path === "circle" || circ.a.path === "rect" || circ.a.path === "shape");
@@ -237,6 +242,7 @@
           var ft = ftr ? numA(ftr, "t", 50000) : 50000, fb = ftr ? numA(ftr, "b", 50000) : 50000;
           var c01 = function (v) { return Math.round(Math.max(0, Math.min(1, v)) * 1000) / 1000; };
           out.gs.r = 1; out.gs.c = [c01((fl + 100000 - fr) / 200000), c01((ft + 100000 - fb) / 200000)];
+          if (out.ga) { out.ga.r = 1; out.ga.c = out.gs.c; }
         }
       }
       return out;
@@ -308,11 +314,25 @@
     var k = Math.max(1, Math.min(4, 1200 / Math.max(w, h, 1)));        // draw it sharp enough
     var pad = stroke && sw ? sw / 2 + 1 : 0;
     var vw = w + pad * 2, vh = h + pad * 2;
-    var attrs = "fill=\"" + (fill ? esc(fill.c) + "\" fill-opacity=\"" + f2(fill.a) : "none") + "\"" +
+    var defs = "", paint = fill ? esc(fill.c) + "\" fill-opacity=\"" + f2(fill.a) : "none";
+    if (fill && fill.ga) {
+      // a gradient with see-through stops, across the box as draw.js lays one
+      var G = fill.ga, stops = G.st.map(function (x) { return "<stop offset=\"" + f2(x[0]) + "\" stop-color=\"" + esc(x[1]) + "\" stop-opacity=\"" + f2(x[2]) + "\"/>"; }).join("");
+      if (G.r) {
+        var ox = G.c[0] * w, oy = G.c[1] * h, R = Math.max(Math.hypot(ox, oy), Math.hypot(w - ox, oy), Math.hypot(ox, h - oy), Math.hypot(w - ox, h - oy), 0.01);
+        defs = "<defs><radialGradient id=\"g\" gradientUnits=\"userSpaceOnUse\" cx=\"" + f2(ox) + "\" cy=\"" + f2(oy) + "\" r=\"" + f2(R) + "\">" + stops + "</radialGradient></defs>";
+      } else {
+        var a = G.ang * Math.PI / 180, len = Math.abs(w * Math.cos(a)) / 2 + Math.abs(h * Math.sin(a)) / 2;
+        var dx = Math.cos(a) * len, dy = Math.sin(a) * len;
+        defs = "<defs><linearGradient id=\"g\" gradientUnits=\"userSpaceOnUse\" x1=\"" + f2(w / 2 - dx) + "\" y1=\"" + f2(h / 2 - dy) + "\" x2=\"" + f2(w / 2 + dx) + "\" y2=\"" + f2(h / 2 + dy) + "\">" + stops + "</linearGradient></defs>";
+      }
+      paint = "url(#g)";
+    }
+    var attrs = "fill=\"" + paint + "\"" +
       (stroke && sw ? " stroke=\"" + esc(stroke.c) + "\" stroke-opacity=\"" + f2(stroke.a) + "\" stroke-width=\"" + f2(sw) + "\" stroke-linejoin=\"round\"" : "");
     return {
       svg: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" + f2(vw * k) + "\" height=\"" + f2(vh * k) + "\" viewBox=\"" +
-        [-pad, -pad, vw, vh].map(f2).join(" ") + "\"><path d=\"" + esc(d) + "\" " + attrs + " fill-rule=\"evenodd\"/></svg>",
+        [-pad, -pad, vw, vh].map(f2).join(" ") + "\">" + defs + "<path d=\"" + esc(d) + "\" " + attrs + " fill-rule=\"evenodd\"/></svg>",
       pad: pad
     };
   }
@@ -716,7 +736,7 @@
         var ph2 = photoItem(fill.blip, box, shp, ctx, out);
         if (ph2) out.items.push(ph2);
         else out.skipped++;
-      } else if (shp && !box.flh && !box.flv || shp === "rect" || shp === "circle" || shp === "rounded") {
+      } else if ((shp && !box.flh && !box.flv || shp === "rect" || shp === "circle" || shp === "rounded") && !(fill && fill.ga && (cust || shp === "rect" || shp === "circle"))) {
         var s = { k: "shape", shp: shp, x: b.x, y: b.y, w: b.w, h: b.h, rot: b.rot };
         if (fill && fill.g) { s.g = fill.g; if (fill.gs) s.gs = fill.gs; }
         else if (fill && fill.fc) { s.fc = fill.fc; if (fill.a < 1) s.op = Math.round(fill.a * 100); }
@@ -729,7 +749,8 @@
         out.items.push(s);
       } else if (cust || prstId) {
         // any other geometry: drawn once as a picture
-        var d = cust ? custPath(cust, b.w, b.h) : "";
+        var d = cust ? custPath(cust, b.w, b.h) : shp === "rect" ? "M0 0H" + f2(b.w) + "V" + f2(b.h) + "H0Z" :
+          shp === "circle" ? "M0 " + f2(b.h / 2) + "A" + f2(b.w / 2) + " " + f2(b.h / 2) + " 0 1 0 " + f2(b.w) + " " + f2(b.h / 2) + "A" + f2(b.w / 2) + " " + f2(b.h / 2) + " 0 1 0 0 " + f2(b.h / 2) + "Z" : "";
         if (!d) {
           // a preset Atelier lacks: its bounding box keeps the colour
           var r = { k: "shape", shp: "rect", x: b.x, y: b.y, w: b.w, h: b.h, rot: b.rot };
@@ -738,7 +759,7 @@
           out.items.push(r);
           out.approx++;
         } else {
-          var fl = fill && fill.fc ? { c: fill.fc, a: fill.a } : fill && fill.g ? { c: fill.g.a, a: 1 } : null;
+          var fl = fill && fill.fc ? { c: fill.fc, a: fill.a } : fill && fill.g ? { c: fill.g.a, a: 1, ga: fill.ga } : null;
           var sv = svgOf(d, b.w, b.h, fl, line && line.c, line && line.w);
           var key = "svg" + Object.keys(out.svgs).length;
           out.svgs[key] = sv.svg;
@@ -1128,8 +1149,11 @@
   var FIT_SLACK = 1.08;
   function fitLines(it, s) {
     var ax = it.ax, paras = (ax.tx || "").split("\n").length;
-    if (ax.cv || AX.textLayout(it).lines.length <= paras) return;
+    if (ax.cv) return;
     var nat = AX.textWidth(ax, it, true) + 0.5;
+    // a line that fits only by the frame's slack (CV-F3) grows its box
+    // too, so a font that comes later cannot wrap it
+    if (AX.textLayout(it).lines.length <= paras && nat - 0.5 <= it.w) return;
     if (!(nat > it.w) || nat > it.w * FIT_SLACK) return;
     var grow = nat - it.w;
     it.x -= ax.al === "c" ? grow / 2 : ax.al === "r" ? grow : 0;
@@ -1150,7 +1174,7 @@
     return out;
   }
 
-  var api = { leadPct: leadPct, canvaBase: canvaBase, parse: parse, build: build, rebox: rebox, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
+  var api = { leadPct: leadPct, canvaBase: canvaBase, fillOf: fillOf, svgOf: svgOf, parse: parse, build: build, rebox: rebox, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierPPTX = api;
 })(typeof window !== "undefined" ? window : this);

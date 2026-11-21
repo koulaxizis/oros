@@ -703,10 +703,12 @@
           return Promise.race([T.load(keys).then(null, function () {}), new Promise(function (r) { setTimeout(r, 12000); })]);
         }).then(function () {
           var r = window.AtelierPPTX.build(plan, assets, AT.now(), fonts, opts && opts.real ? { real: opts.real } : null);
-          AT.addDoc(r.doc, batching);
-          var lost = plan.skipped + r.missing;
-          if (!quiet) say(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
-          return quiet ? { lost: lost, id: r.doc.id } : lost;
+          return (opts && opts.pdf ? canvaLook(r.doc, opts.pdf) : Promise.resolve()).then(function () {
+            AT.addDoc(r.doc, batching);
+            var lost = plan.skipped + r.missing;
+            if (!quiet) say(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
+            return quiet ? { lost: lost, id: r.doc.id } : lost;
+          });
         });
       });
     });
@@ -796,6 +798,19 @@
       else AT.op(function (d, now) { add(d, now); if (!made.length) return false; });
       return made;
     });
+  }
+
+  // Canva's text effects and curved text (CV-F2): read from Canva's PDF
+  // of the same design (atelier/canvafx.js, PDF.js through Layout's
+  // reader; both load on first use). A PDF that cannot be read changes
+  // nothing.
+  function canvaLook(doc, pdf) {
+    return pdfReader().then(function () { return window.AtelierCanvaFx ? null : loadScript("canvafx.js"); })
+      .then(function () { return isFile(pdf) ? pdf : pdf && pdf.get ? pdf.get() : null; })
+      .then(function (f) { return f ? f.arrayBuffer() : null; })
+      .then(function (buf) { return buf ? window.AtelierCanvaFx.glyphs(buf) : null; })
+      .then(function (pages) { if (pages) window.AtelierCanvaFx.apply(doc, pages, AX, AT.M); })
+      .then(null, function () {});
   }
 
   // ---------- PDF as a design (PS-3: Canva's PDF download) ----------
@@ -929,11 +944,11 @@
     // a design counts once it is stored (AT.keepStored: on the disk
     // written and read back, else in localStorage); a full storage
     // stops the batch and keeps what fit
-    function one(f, real) {
+    function one(f, real, pdf) {
       if (n >= BATCH_MAX || full) { bad++; return Promise.resolve(); }
       n++;
       var before = docIds();
-      return Promise.resolve().then(function () { return real ? importPptxFile(f, false, { real: real }) : importAnyFile(f); })
+      return Promise.resolve().then(function () { return real || pdf ? importPptxFile(f, false, { real: real, pdf: pdf }) : importAnyFile(f); })
         .then(null, function (e) { if (e && e.message === "nofs") throw e; })
         .then(function () {
           var added = docIds().filter(function (id) { return before.indexOf(id) < 0; });
@@ -962,7 +977,8 @@
     AT.toast(t("imp.working"));
     var chain = Promise.resolve();
     // a .pptx with Canva's PDF of the same design beside it: the PDF
-    // gives the real size of a slide Canva had to shrink (past 56 in);
+    // gives the real size of a slide Canva had to shrink (past 56 in) and
+    // the text effects and curves (CV-F2);
     // the PDF itself is not imported a second time
     var pair = pairs(files);
     files.forEach(function (f) {
@@ -972,7 +988,7 @@
         return Promise.resolve().then(function () { return isFile(f) ? f : f.get(); }).then(function (file) {
           if (!file) { bad++; return; }
           if (/\.zip$/i.test(file.name || "")) return zipOf(file);
-          if (mate) return Promise.resolve(isFile(mate) ? mate : mate.get()).then(pdfSize).then(function (real) { return one(file, real); });
+          if (mate) return Promise.resolve(isFile(mate) ? mate : mate.get()).then(function (pf) { return pdfSize(pf).then(function (real) { return one(file, real, pf); }); });
           return one(file);
         }).then(null, function (e) { if (e && e.message === "nofs") throw e; bad++; });
       });
@@ -1029,12 +1045,16 @@
     var out = [];
     function walk(p, depth) {
       return lsOf(fs, p).then(function (en) {
-        var chain = Promise.resolve();
+        var chain = Promise.resolve(), decks = {};
+        // a PDF beside a .pptx of the same name comes along (Canva's
+        // PDF of the design: real size, text effects, CV-F2)
+        en.forEach(function (e) { if (!e.dir && /\.pptx$/i.test(e.name)) decks[e.name.toLowerCase().replace(/\.pptx$/, "")] = 1; });
         en.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; }).forEach(function (e) {
           var q = p + "/" + e.name;
           // the Trash, and Atelier's own designs (AT-DISK), are not imported
           if (e.dir) { if (depth < DEPTH_MAX && q !== ROOT + "/Trash" && q !== AT.DISK_DIR) chain = chain.then(function () { return walk(q, depth + 1); }); }
           else if (PKG_RE.test(e.name) && out.length < BATCH_MAX) out.push(q);
+          else if (/\.pdf$/i.test(e.name) && decks[e.name.toLowerCase().replace(/\.pdf$/, "")]) out.push(q);
         });
         return chain;
       });
@@ -1090,8 +1110,9 @@
         }).then(function (ps) {
           if (my !== gen || !ps) return;
           paths = ps;
-          o.disabled = !ps.length;
-          found.textContent = ps.length ? t("imp.diskFound", { n: ps.length }) : t("imp.diskNone");
+          var n = ps.filter(function (q) { return PKG_RE.test(q); }).length;
+          o.disabled = !n;
+          found.textContent = n ? t("imp.diskFound", { n: n }) : t("imp.diskNone");
         });
       }
       go(ROOT);
