@@ -45,4 +45,35 @@
     <string name="lost_text">Die Frage von Android zur Installation von %1$s wurde geschlossen, bevor Sie geantwortet haben (auf manchen Handys verdeckt sie eine Sicherheitsprüfung).</string>
     <string name="show_again">Erneut anzeigen</string>
     <string name="skip">Überspringen</string>
+    <!-- Search and an app's own page (APPS-M5). -->
+    <string name="search_hint">Apps suchen</string>
+    <string name="search_clear">Suche leeren</string>
+    <string name="no_match">Keine App passt zu „%1$s“.</string>
+    <string name="about_app">Über diese App</string>
+    <string name="details">Details</string>
+    <string name="website">Website</string>
+    <string name="source_code">Quellcode</string>
+    <string name="whats_new">Neu in Version %1$s</string>
+    <string name="info_category">Kategorie: %1$s</string>
+    <string name="info_license">Lizenz: %1$s</string>
+    <string name="info_package">Paket: %1$s</string>
+    <string name="screenshot_n">Bildschirmfoto %1$d von %2$d</string>
+    <string name="cat_connectivity">Verbindungen</string>
+    <string name="cat_development">Entwicklung</string>
+    <string name="cat_games">Spiele</string>
+    <string name="cat_graphics">Grafik</string>
+    <string name="cat_internet">Internet</string>
+    <string name="cat_money">Finanzen</string>
+    <string name="cat_multimedia">Multimedia</string>
+    <string name="cat_navigation">Navigation</string>
+    <string name="cat_office">Büro</string>
+    <string name="cat_phone">Telefon &amp; SMS</string>
+    <string name="cat_reading">Lesen</string>
+    <string name="cat_science">Wissenschaft &amp; Bildung</string>
+    <string name="cat_security">Sicherheit</string>
+    <string name="cat_health">Sport &amp; Gesundheit</string>
+    <string name="cat_system">System</string>
+    <string name="cat_theming">Design</string>
+    <string name="cat_time">Zeit</string>
+    <string name="cat_writing">Schreiben</string>
 </resources>

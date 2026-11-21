@@ -128,4 +128,50 @@ public class IndexParserTest {
             + "H:NULL JSFX|Remote for DAWs|Remote for Mixers|"
             + "H:Noxpress|N:network|", got.toString());
     }
+
+    @Test
+    public void detailsGiveDescriptionScreenshotsCategoryLicenceAndLinks() throws Exception {
+        List<AppInfo> list = IndexParser.parse(RepoEntryTest.read("nulljsfx-index-v2.json"),
+            RepoEntryTest.source("nulljsfx"), EN, 34, ARM, "x.y");
+        AppInfo d = find(list, "tech.nulljsfx.remote.daws");
+        assertTrue(d.details.description.startsWith("Remote for DAWs puts"));
+        assertTrue(d.details.categories.contains("Multimedia"));
+        assertNotNull(d.details.license);
+        assertTrue(d.details.sourceCode.startsWith("https://"));
+        assertTrue(d.details.added > 0);
+        assertTrue(d.details.screenshots.isEmpty());
+
+        String sig = "\"signer\":{\"sha256\":[\"" + "a".repeat(64) + "\"]}";
+        String shot = "{\"name\":\"/p/%s/phoneScreenshots/%d.jpg\",\"sha256\":\"" + "c".repeat(64) + "\",\"size\":%d}";
+        String json = "{\"packages\":{\"a.one\":{\"metadata\":{\"name\":{\"en-US\":\"One\"},"
+            + "\"description\":{\"en-US\":\"English text\",\"el\":\"Ελληνικό κείμενο\"},"
+            + "\"categories\":[\"Office\",\"Office\",\"\"],\"license\":\"MIT\","
+            + "\"webSite\":\"http://plain.example/\",\"sourceCode\":\"https://user@evil.example/\","
+            + "\"screenshots\":{\"phone\":{\"en-US\":[" + String.format(shot, "en-US", 1, 100) + ","
+            + String.format(shot, "en-US", 2, 9L * 1024 * 1024) + ",{\"name\":\"https://evil.example/x.jpg\",\"sha256\":\""
+            + "c".repeat(64) + "\"}],"
+            + "\"el\":[" + String.format(shot, "el", 1, 100) + "]}}},"
+            + "\"versions\":{\"1\":{\"added\":1700000000000,\"file\":{\"name\":\"/a.apk\",\"sha256\":\"" + "b".repeat(64)
+            + "\",\"size\":10},\"manifest\":{\"versionCode\":1," + sig + "}}}}}}";
+        Source s = RepoEntryTest.source("oros");
+        AppInfo en = IndexParser.parse(json, s, EN, 34, ARM, "x.y").get(0);
+        assertEquals("English text", en.details.description);
+        // Only the screenshot inside the repository and under the size cap.
+        assertEquals(1, en.details.screenshots.size());
+        assertEquals(s.address + "/p/en-US/phoneScreenshots/1.jpg", en.details.screenshots.get(0).url);
+        assertEquals(Arrays.asList("Office"), en.details.categories);
+        assertEquals("MIT", en.details.license);
+        assertNull(en.details.webSite); // not https
+        assertNull(en.details.sourceCode); // a user part in the address
+        assertEquals(1700000000000L, en.details.added);
+        AppInfo el = IndexParser.parse(json, s, EL, 34, ARM, "x.y").get(0);
+        assertEquals("Ελληνικό κείμενο", el.details.description);
+        assertEquals(s.address + "/p/el/phoneScreenshots/1.jpg", el.details.screenshots.get(0).url);
+        // German phones get the English pictures.
+        List<String> de = Locales.chain(java.util.Collections.singletonList(Locale.GERMANY));
+        assertEquals(s.address + "/p/en-US/phoneScreenshots/1.jpg",
+            IndexParser.parse(json, s, de, 34, ARM, "x.y").get(0).details.screenshots.get(0).url);
+        assertEquals("https://useoros.online/notes/", IndexParser.https(" https://useoros.online/notes/ "));
+        assertNull(IndexParser.https("https:// x"));
+    }
 }

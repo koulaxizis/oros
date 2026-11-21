@@ -367,6 +367,10 @@ body.side-open #side { display: flex; }
   text-overflow: ellipsis;
 }
 .lkind { font-size: 11px; color: var(--text-dim); }
+/* layer groups (PS-4): a folder row above its layers */
+.lgroup .lname { font-weight: 600; }
+.lgroup { border-bottom-color: var(--border); border-radius: 8px 8px 0 0; }
+.lfold { width: 28px; font-size: 14px; line-height: 1; }
 button.lthumb { padding: 0; cursor: pointer; color: inherit; }
 .lthumb.cur { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
 .lmask { background: var(--panel-bg); }
@@ -672,3 +676,7 @@ body.dropping .drop-hint { display: flex; }
 .rc-sum { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; overflow-wrap: anywhere; }
 .rc-will .hint { margin: 2px 0; }
 .hint.warn { color: var(--danger, #e5484d); }
+
+/* What a PSD brought (io.js psdReport) */
+.psd-notes { margin: 8px 0 0; padding-left: 20px; max-height: 50vh; overflow: auto; }
+.psd-notes li { margin: 4px 0; line-height: 1.4; }

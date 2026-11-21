@@ -94,7 +94,7 @@ test("sla: styles, threaded story, fields and character overrides", () => {
   assert.equal(f1.cols, 2); assert.equal(f1.ins, 4);
   assert.ok(Math.abs(f1.x - 42) < 0.01 && Math.abs(f1.y - 40) < 0.01, "page-local");
   const st = M.story(d, f1.story);
-  assert.equal(st.paras.length, 5);
+  assert.equal(st.paras.length, 4, "a line break stays inside its paragraph");
   assert.equal(st.paras[0].ps, head.id);
   assert.equal(st.paras[0].runs[0].t, "Τίτλος");
   const p2 = st.paras[1];
@@ -104,8 +104,8 @@ test("sla: styles, threaded story, fields and character overrides", () => {
   assert.equal(cs.size, 14); assert.equal(M.find(d.swatches, cs.color).name, "Sky");
   assert.equal(M.find(d.pstyles, p2.ps).align, "c", "local alignment kept");
   assert.equal(st.paras[2].runs[0].t, "Subtitle <b>", "text, never markup");
-  assert.equal(st.paras[3].runs[0].t, "line one");
-  assert.equal(st.paras[4].runs[0].t, "line two");
+  assert.equal(st.paras[3].runs.map((r) => r.t).join(""), "line one\nline two");
+  assert.match(p2.runs.map((r) => r.t).join(""), /\tend\./, "a tab stays a tab");
   const mf = d.items.find((i) => M.find(d.masters, i.pg));
   assert.deepEqual(M.story(d, mf.story).paras[0].runs.filter((r) => r.f).map((r) => r.f), ["pn", "pc"]);
   assert.ok(Math.abs(mf.x - 50) < 0.01, "master-local");

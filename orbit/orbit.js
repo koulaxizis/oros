@@ -110,7 +110,7 @@
       "map.plants": "Plants: {list}", "map.cont": "Continue: {r}, wave {n}",
       "map.gates": "{n} gates",
       "map.replace": "A night is still under way in {r}. Start {s} instead? The night under way is given up.",
-      "map.resetAsk": "Reset the stars and records on every device?",
+      "map.resetAsk": "Reset the stars and records on every device? The night in progress ends too.",
       "gd.g1": "Seedling ring", "gd.g2": "Dew terrace", "gd.g3": "Stone circle", "gd.g4": "Night bloom",
       "end.won": "The moonflower is safe", "end.lost": "The sparks reached the moonflower",
       "end.hearts": "Hearts left", "end.faded": "Sparks gone out", "end.waves": "Waves",
@@ -191,7 +191,7 @@
       "map.plants": "Φυτά: {list}", "map.cont": "Συνέχεια: {r}, κύμα {n}",
       "map.gates": "{n} πύλες",
       "map.replace": "Μια νύχτα είναι ακόμα σε εξέλιξη στον κήπο «{r}». Να ξεκινήσει ο «{s}»; Η νύχτα σε εξέλιξη χάνεται.",
-      "map.resetAsk": "Να μηδενιστούν τα αστέρια και το αρχείο σε όλες τις συσκευές;",
+      "map.resetAsk": "Να μηδενιστούν τα αστέρια και το αρχείο σε όλες τις συσκευές; Τελειώνει και η νύχτα που παίζεται.",
       "gd.g1": "Το δαχτυλίδι με τα σπορόφυτα", "gd.g2": "Η ταράτσα της δροσιάς", "gd.g3": "Ο πέτρινος κύκλος", "gd.g4": "Το νυχτολούλουδο",
       "end.won": "Το φεγγαρολούλουδο σώθηκε", "end.lost": "Οι σπίθες έφτασαν στο φεγγαρολούλουδο",
       "end.hearts": "Καρδιές που έμειναν", "end.faded": "Σπίθες που έσβησαν", "end.waves": "Κύματα",
@@ -1252,9 +1252,12 @@
     startNight(id, prefs.diff, en);
   }
   // Reset progress: a new reset stamp, so older rows drop on every device.
+  // The night in progress ends too (not counted): a reset that left it on
+  // screen, with Continue, read as "nothing was reset".
   function resetProgress() {
     data = E.merge({ ver: 1, br: Math.max(Date.now(), data.br + 1), maps: {}, rows: {} }, data);
     saveData();
+    if (sess && !sess.counted) { sess.counted = true; paused = true; saveSession(); }
     showToast(t("toast.reset"));
     renderMap();
   }
