@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.08.01
+- **Layout: books from Scribus keep their lines.** A Scribus book opened in Layout now ends every line where Scribus ended it and starts each page at the same height, so the pages break where they did in the original. Open the book's .sla again to get it.
+
 ## Version 8.08.00
 - **Claude can rename Kanban columns.** Through orOS Gate, Claude can now give a column a new name, alongside adding columns. You are notified and can undo it from Claude's changes.
 

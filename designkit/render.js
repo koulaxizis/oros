@@ -182,7 +182,7 @@
     function geom(it, ctx, ex) {
       var tp = pathOf(it);
       if (tp) return { id: it.id, w: tp.wk.len, h: it.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: ctx, story: it.story, one: true };
-      return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story };
+      return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story, sfit: !!(it.ext && it.ext.sfit) };
     }
 
     // page stories
@@ -349,7 +349,7 @@
       var g = frames.map(function (f) {
         var c = { pageLabel: master.pre, pageCount: master.pre + "#" }, tp = pathOf(f);
         if (tp) return { id: f.id, w: tp.wk.len, h: f.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: c, one: true };
-        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c };
+        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c, sfit: !!(f.ext && f.ext.sfit) };
       });
       var res = T.layoutChain(M.story(doc, sid) || { paras: [] }, g, styles);
       bendAll(frames, res);
