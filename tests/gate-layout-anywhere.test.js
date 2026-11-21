@@ -134,3 +134,15 @@ test("GL-4: Layout reports an edit once its save is done", () => {
   assert.match(as, /var settled = snaps\.length && LY\.settled \? LY\.settled\(20000\) : Promise\.resolve\(\);/);
   assert.match(ly, /LY\.settled = function \(ms\)/);
 });
+
+test("GL-6: the newest orOS answers first, then the screen, then the last to connect", async () => {
+  const R = await import("../relay/gate.js");
+  const s = (n, att) => ({ n, __g: att });
+  const old = s("old 8.01 on screen", { v: 1, at: 9 }), phone = s("8.14 hidden", { v: 0, ver: R.verNum("8.14.00"), at: 1 }), pc = s("8.14 on screen", { v: 1, ver: 81400, at: 2 });
+  assert.deepEqual(R.pickOrder([old, phone, pc]).map((x) => x.n), ["8.14 on screen", "8.14 hidden", "old 8.01 on screen"]);
+  assert.equal(R.verNum("8.13.00"), 81300);
+  assert.equal(R.verNum("8.13"), 0);
+  const g = fs.readFileSync(path.join(__dirname, "..", "gate/gate.js"), "utf8"), rel = fs.readFileSync(path.join(__dirname, "..", "relay/gate.js"), "utf8");
+  assert.match(g, /sock\.send\("ver:" \+ av\)/);
+  assert.match(rel, /msg\.indexOf\("ver:"\) === 0/);
+});
