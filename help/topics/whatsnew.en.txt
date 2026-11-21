@@ -3,6 +3,11 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.11.00
+- **Claude works with orOS in the tray.** On a computer with orOS Setup or Portable, Layout's work that Claude asks for through orOS Gate now runs while the orOS window is minimised or closed to the tray, without bringing orOS to the front. Proposals for you to read, and anything that deletes, still wait for you on a screen.
+- **Folders of your computer for Claude, from any device.** A folder you open for Claude by its path is now shared with your other devices through orOS Gate (only the path, sealed), so you can open, renew or close it from the phone, and Claude can ask for one: you answer on whichever device has orOS on screen. It keeps working after a restart, where orOS runs on that computer.
+- **Every Gate task with orOS minimised.** In a minimised orOS window on the computer, Claude's proposals (an entry, an automation, a newsletter) also open there for you to check when you look. When Layout's work would remove pages or things, it now waits for your Delete on any device with orOS on screen, the phone too, instead of being dropped.
+
 ## Version 8.10.00
 - **Layout: text around shapes and pictures.** Text can now follow a shape's outline or a picture's transparent edges, not only its frame (Properties › Wrap by).
 - **Layout: pictures that move with the text.** Anchor a picture or shape in the text and it stays with its line when the text changes (Properties › Anchor in the text).
