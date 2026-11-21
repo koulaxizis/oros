@@ -92,6 +92,8 @@ test("the relay runs studio_import / montage_import as edit_in_app's create, and
     { name: "edit_in_app", arguments: { app: "montage", designs: "new", steps: [{ op: "create", from: "/internal/Claude/v.orosmontage" }] } });
   assert.match(R.importCall({ name: "studio_import", arguments: { path: "/internal/x.orosmontage" } }).err, /Nothing was opened/);
   assert.match(R.importCall({ name: "montage_import", arguments: {} }).err, /needs path/);
+  ["/internal/../x.orosstudio", "/internal/a/./x.orosstudio", "/internal/a\\x.orosstudio", "/internal/a\u0001x.orosstudio"].forEach((bad) =>
+    assert.match(R.importCall({ name: "studio_import", arguments: { path: bad } }).err, /Nothing was opened/, JSON.stringify(bad)));
   assert.match(R.importCall({ name: "studio_import", arguments: { path: "/internal/x.orosstudio", title: 3 } }).err, /title/);
   assert.equal(R.importCall({ name: "edit_in_app", arguments: {} }), null);
   assert.equal(R.importCall(null), null);

@@ -669,7 +669,8 @@ export function importCall(p) {
   if (!imp) return null;
   const a = p.arguments && typeof p.arguments === "object" && !Array.isArray(p.arguments) ? p.arguments : {};
   const path = typeof a.path === "string" ? a.path.trim() : "";
-  if (!path || path.length > 500 || path.indexOf("/internal/") !== 0 || !path.toLowerCase().endsWith(imp.ext)) {
+  if (!path || path.length > 500 || path.indexOf("/internal/") !== 0 || !path.toLowerCase().endsWith(imp.ext) ||
+      path.split("/").some((x) => x === "." || x === "..") || /[\\\u0000-\u001f\u007f]/.test(path)) {
     return { err: p.name + " needs path: the " + imp.ext + " file's /internal/ path on the orOS disk (files_upload, then files_write, gives it). Nothing was opened." };
   }
   if (a.title !== undefined && typeof a.title !== "string") return { err: p.name + "'s title must be text. Nothing was opened." };
