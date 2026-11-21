@@ -690,7 +690,7 @@ test("MockPrint: spiral covers share the gap, no gap label", () => {
   assert.deepEqual(Object.keys(sp).sort(), ["back", "front"]);
   assert.equal(sp.back[0], 0); assert.equal(sp.front[1], T.sheet.w);
   assert.ok(Math.abs(sp.back[1] - (T.bleed * 2 + 148)) < 1e-9 && sp.back[1] === sp.front[0]);
-  assert.equal(MP.VERSION, "1.3.0");
+  assert.equal(MP.VERSION, "1.4.0");
 });
 
 test("openCurve: lay-flat, spiral and board pages lie flat at the gutter", () => {
@@ -801,12 +801,13 @@ const GM = require(path.join(ROOT, "mockups/goods/media.js"));
 const GA = require(path.join(ROOT, "mockups/goods/analog.js"));
 const GS = require(path.join(ROOT, "mockups/goods/small.js"));
 const GH = require(path.join(ROOT, "mockups/goods/home.js"));
+const GC = require(path.join(ROOT, "mockups/goods/cloth.js"));
 function good(over) {
   return C.normGoodProject(Object.assign({ id: ID, m: 1000, nm: "Album", kind: "cd", g: {}, art: {}, sc: {}, out: {}, tpl: { safe: 3 } }, over || {}));
 }
 
 test("products: registry, defaults, unknown values fall back, canonical", () => {
-  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet", "mug", "poster", "card"]);
+  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet", "mug", "poster", "card", "tshirt", "tote"]);
   const cd = good();
   assert.deepEqual(cd.g, { pack: "jewel", tray: "black", disc: "silver", hub: 22, beside: 0 });
   const odd = good({ g: { pack: "tin", tray: "pink", disc: "gold", hub: 99, beside: true, x: 1 } });
@@ -1162,4 +1163,86 @@ test("v2 wave 6 wiring: home gallery, strings, search, help", () => {
   assert.equal(P.search(ctx)[0].title, "Μακέτα Κούπα");
   assert.match(read("mockups/help.en.txt"), /## Mug, poster and cards/);
   assert.match(read("mockups/help.el.txt"), /## Κούπα, αφίσα και κάρτες/);
+});
+
+// ---------- v2 wave 7: T-shirt and tote bag ----------
+test("T-shirt and tote bag: options, print areas, garment-ink sheets", () => {
+  const t = good({ kind: "tshirt" });
+  assert.deepEqual(t.g, { col: "white", area: "front", back: 0 });
+  assert.deepEqual(good({ kind: "tshirt", g: { col: "pink", area: "sleeve", back: true } }).g, { col: "white", area: "front", back: 1 });
+  assert.deepEqual(C.sheetsOf(t), ["teefront"]);
+  const T = C.templateOf(t, "teefront");
+  assert.deepEqual([T.W, T.H, T.bleed, T.ink, T.parts[0].k], [300, 400, 0, 1, "front"]);
+  const chest = good({ kind: "tshirt", g: { area: "chest", back: 1 } });
+  assert.deepEqual(C.sheetsOf(chest), ["teefront", "teeback"]);
+  assert.deepEqual([C.templateOf(chest, "teefront").W, C.templateOf(chest, "teefront").H], [95, 95]);
+  assert.deepEqual([C.templateOf(chest, "teeback").W, C.templateOf(chest, "teeback").parts[0].k], [300, "back"]);
+  assert.deepEqual(C.good("tshirt").shown(chest.g), ["front", "back"]);
+  const b = good({ kind: "tote", g: { handles: "short", back: 1 } });
+  assert.deepEqual(b.g, { col: "natural", handles: "short", back: 1 });
+  assert.deepEqual(C.sheetsOf(b), ["totefront", "toteback"]);
+  assert.deepEqual([C.templateOf(b, "toteback").W, C.templateOf(b, "toteback").H], [280, 300]);
+  assert.equal(GC.toteDims(b.g).handle, 150);
+  const blank = C.blankGood("tote", ID, 5);
+  assert.equal(blank.sc.place, "lie");
+  assert.equal(C.good("tote").model, "tote");
+  // every print area lies inside its model's outline
+  for (const name of ["tshirt", "tote"]) {
+    const M = GC.MODELS[name];
+    assert.match(M.sha256, /^[0-9a-f]{64}$/); assert.ok(M.bytes > 1000);
+    for (const r of Object.values(M.print)) {
+      assert.ok(r.x >= -M.w / 2 && r.x + r.w <= M.w / 2 && r.y <= M.h / 2 && r.y - r.h >= -M.h / 2, name);
+    }
+  }
+  assert.equal(GC.urlOf("tote"), "https://koulaxizis.github.io/oros-models/mockups/tote.glb?v=1");
+});
+
+test("cloth models: only the exact file is kept", async () => {
+  await assert.rejects(GC.check("tote", new ArrayBuffer(10)), (e) => e.code === "hash");
+  await assert.rejects(GC.check("tote", new ArrayBuffer(GC.MODELS.tote.bytes)), (e) => e.code === "hash");
+  assert.equal(GC.buffer("tote"), null);
+  assert.equal(await GC.cached("tote"), false);          // no Cache Storage here: nothing, no network
+  await assert.rejects(GC.load("lamp"), (e) => e.code === "unknown");
+});
+
+test("cloth3d: reads the GLB layout make.py writes", async () => {
+  const { parseGLB } = await import(path.join(ROOT, "mockups/goods/cloth3d.js"));
+  // one triangle: POSITION (metres), NORMAL, uint32 indices
+  const pos = new Float32Array([0, 0, 0, 0.1, 0, 0, 0, 0.2, 0.01]), nrm = new Float32Array([0, 0, 1, 0, 0, 1, 0, 0, 1]), idx = new Uint32Array([0, 1, 2]);
+  const bin = Buffer.concat([Buffer.from(pos.buffer), Buffer.from(nrm.buffer), Buffer.from(idx.buffer)]);
+  const js = { asset: { version: "2.0" }, meshes: [{ name: "shirt", primitives: [{ attributes: { POSITION: 0, NORMAL: 1 }, indices: 2 }] }],
+    accessors: [{ bufferView: 0, componentType: 5126, count: 3, type: "VEC3" }, { bufferView: 1, componentType: 5126, count: 3, type: "VEC3" }, { bufferView: 2, componentType: 5125, count: 3, type: "SCALAR" }],
+    bufferViews: [{ buffer: 0, byteOffset: 0, byteLength: 36 }, { buffer: 0, byteOffset: 36, byteLength: 36 }, { buffer: 0, byteOffset: 72, byteLength: 12 }], buffers: [{ byteLength: 84 }] };
+  let j = Buffer.from(JSON.stringify(js)); while (j.length % 4) j = Buffer.concat([j, Buffer.from(" ")]);
+  const head = Buffer.alloc(12); head.writeUInt32LE(0x46546C67, 0); head.writeUInt32LE(2, 4); head.writeUInt32LE(12 + 8 + j.length + 8 + bin.length, 8);
+  const ch = (len, type) => { const b = Buffer.alloc(8); b.writeUInt32LE(len, 0); b.writeUInt32LE(type, 4); return b; };
+  const glb = Buffer.concat([head, ch(j.length, 0x4E4F534A), j, ch(bin.length, 0x004E4942), bin]);
+  const m = parseGLB(glb.buffer.slice(glb.byteOffset, glb.byteOffset + glb.length)).shirt;
+  assert.deepEqual([...m.idx], [0, 1, 2]);
+  assert.ok(Math.abs(m.pos[3] - 100) < 1e-4 && Math.abs(m.pos[7] - 200) < 1e-4);    // mm
+  assert.throws(() => parseGLB(new ArrayBuffer(24)));
+});
+
+test("v2 wave 7 wiring: wear gallery, strings, search, help", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html"), de = read("i18n/de/mockups.js"), sc = read("mockups/scene.js");
+  assert.match(html, /<script src="goods\/cloth\.js\?v=/);
+  assert.match(html, /id="model-get"/);
+  assert.match(sc, /from "\.\/goods\/cloth3d\.js"/);
+  const keys = ["make.g.wear", "tpl.inkInfo", "model.get", "model.need", "model.busy", "model.ready", "model.remove", "model.err.net", "model.err.hash"];
+  for (const kind of ["tshirt", "tote"]) {
+    keys.push("kind." + kind, "kind." + kind + ".d", "untitled." + kind, "pics.hint." + kind);
+    const def = C.good(kind);
+    def.opts.forEach((o) => { keys.push(o.l); if (o.p) o.v.forEach((v) => keys.push(o.p + v)); });
+    const p = good({ kind, g: { back: 1 } });
+    for (const s of C.sheetsOf(p)) keys.push("tpl.kind." + C.templateOf(p, s).kind, "tpl.goodNote." + s);
+    def.shown(p.g).forEach((x) => keys.push("slot." + kind + "." + x));
+  }
+  [...new Set(keys)].forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  });
+  const ctx = { lang: "en", readJSON: (k) => (k === C.GOODS_KEY ? { prj: [good({ kind: "tote", nm: "" })] } : null) };
+  assert.equal(P.search(ctx)[0].title, "Mockup Tote bag");
+  assert.match(read("mockups/help.en.txt"), /## T-shirt and tote bag/);
+  assert.match(read("mockups/help.el.txt"), /## T-shirt και πάνινη τσάντα/);
 });

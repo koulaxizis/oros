@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — print.js (MockPrint, v1.3.0)
+// orOS Mockups — print.js (MockPrint, v1.4.0)
 // The cover sheet for the printer, drawn on a 2D canvas from
 // MockCore.template(): the cover itself (the full-wrap picture, or
 // front / back / spine / flap pictures put together, running into
@@ -11,7 +11,9 @@
 // marked txt, and a disc label is a round sheet (T.circle: print
 // ring, hub, hole). Cut sheets (v1.3.0, goods/small.js): T.cut is a
 // round, rectangle or die line (the picture's outline, MockSmall),
-// with holes; the PDF carries the cut as a vector line. The same drawing feeds the live preview of the
+// with holes; the PDF carries the cut as a vector line. Garment sheets
+// (v1.4.0, goods/cloth.js): T.ink prints only the picture, fitted
+// whole inside the area from its top, no background. The same drawing feeds the live preview of the
 // Print tab, the PNG, the PDF and the new Atelier design.
 // No three.js; loaded with the app.
 // ============================================================
@@ -27,6 +29,13 @@
     if (!iw || !ih || w <= 0 || h <= 0) return;
     var s = Math.max(w / iw, h / ih), sw = w / s, sh = h / s;
     ctx.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, x, y, w, h);
+  }
+  // garment ink: the whole picture inside the area, its top on the area's top
+  function inkFit(ctx, img, x, y, w, h) {
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    if (!iw || !ih || w <= 0 || h <= 0) return;
+    var s = Math.min(w / iw, h / ih);
+    ctx.drawImage(img, x + (w - iw * s) / 2, y, iw * s, ih * s);
   }
   // #rrggbb a little lighter (k > 0) or darker (k < 0)
   function shade(hex, k) {
@@ -64,6 +73,12 @@
   // The cover. art: MockCore.normArt; pics: slot → picture.
   function drawArt(ctx, T, art, pics, ppm) {
     var sw = T.sheet.w * ppm, sh = T.sheet.h * ppm;
+    if (T.ink) {
+      // nothing is printed where the picture has nothing (the garment shows)
+      ctx.clearRect(0, 0, sw, sh);
+      T.parts.forEach(function (q) { var im = pics[q.a] || pics[q.k]; if (im) inkFit(ctx, im, (T.bleed + q.x) * ppm, T.bleed * ppm, q.w * ppm, T.H * ppm); });
+      return;
+    }
     ctx.fillStyle = art.c; ctx.fillRect(0, 0, sw, sh);
     if (art.mode === "wrap") {
       if (pics.wrap) ctx.drawImage(pics.wrap, 0, 0, sw, sh);
@@ -337,7 +352,7 @@
     var cv = canvas(T.sheet.w * ppm, T.sheet.h * ppm), ctx = cv.getContext("2d");
     if (o.white) { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height); }
     if (o.art) {
-      if ((T.circle || T.cut) && o.white) { var lay = canvas(cv.width, cv.height); drawArt(lay.getContext("2d"), T, art, pics || {}, ppm); ctx.drawImage(lay, 0, 0); }
+      if ((T.circle || T.cut || T.ink) && o.white) { var lay = canvas(cv.width, cv.height); drawArt(lay.getContext("2d"), T, art, pics || {}, ppm); ctx.drawImage(lay, 0, 0); }
       else drawArt(ctx, T, art, pics || {}, ppm);
     }
     if (o.guides) drawGuides(ctx, T, ppm, o.L || { name: String, len: String }, pics);
@@ -370,5 +385,5 @@
     return doc;
   }
 
-  root.MockPrint = { VERSION: "1.3.0", cutOf: cutOf, ppmFor: ppmFor, spans: spans, drawArt: drawArt, drawGuides: drawGuides, render: render, pdf: pdf, COL: COL };
+  root.MockPrint = { VERSION: "1.4.0", cutOf: cutOf, ppmFor: ppmFor, spans: spans, drawArt: drawArt, drawGuides: drawGuides, render: render, pdf: pdf, COL: COL };
 })(typeof window !== "undefined" ? window : globalThis);

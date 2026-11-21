@@ -53,6 +53,11 @@ Badges, stickers, keychains, enamel pins and magnets lie flat on the table to be
 - `Framed poster`: A4 to A1, 30 × 40, 50 × 70 or 61 × 91 cm, portrait or landscape, a black, white, oak, walnut or aluminium `Frame` or `No frame`, a `Mat (passe-partout)`, and a light or dark `Wall` behind. The frame or the mat hides about 4 to 5 mm of the poster's edge.
 - `Postcard or card`: a `Flat postcard` (front and back) or a `Folded card` with its two inside pages, A6, A5, DL or square, portrait or landscape, and an `Envelope` behind it. `Open the card` on the `Scene` tab opens a folded card. On the `Print` tab a folded card has two sheets: the outside (back on the left, front on the right) and the inside.
 
+## T-shirt and tote bag
+- `T-shirt`: laid flat, in white, black, heather grey, navy, red, forest green or sand, with a `Print area` on the `Front` (30 × 40 cm) or the `Left chest` (9.5 × 9.5 cm), and `Print on the back too`. `Tote bag`: natural, black, navy, red, forest green or white cotton canvas, `Long (shoulder)` or `Short (hand)` handles, one side or both.
+- Only what the picture has is printed: a PNG with a clear background prints best. The picture fits whole inside the print area, from its top; the `Print` tab gives the print area at its real size, with no bleed.
+- The real 3D models are our own (made in Blender, free to use). They are downloaded only when you press `Download the 3D model`, once, from orOS's model library, checked, and then kept on this device so they work offline. Until then a flat stand-in shows the print. `Remove the model from this device` frees the space.
+
 ## Finishes and extras
 - `Finishes` (on the `Book` tab): `Cover material` is printed paper, linen, book cloth, leather or kraft paper; the cloth ones show their weave in the light. `Rounded corners` rounds the outer corners of the cover and the pages, like a notebook. `Deckled page edges` makes the edges rough and uncut. `Page edges` › `Printed (a picture)` puts a picture of yours on the edges of the pages.
 - `Belly band`: a paper band round the book, with its colour, its `Band height` and its own picture. `Slipcase`: an open box the book slides into, with its colour and picture. `Elastic band`: the band that keeps a notebook shut.

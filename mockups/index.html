@@ -148,6 +148,14 @@
               <label class="check" id="big-row"><input type="checkbox" id="f-big"><span data-i18n="f.big">Big hole (jukebox)</span></label>
             </div>
             <div id="gen-form"></div>
+            <div id="model-box" class="sub" hidden>
+              <p id="model-msg" class="hint small"></p>
+              <div class="actions" id="model-acts">
+                <button type="button" id="model-get" class="chip primary"></button>
+                <button type="button" id="model-del" class="chip small" data-i18n="model.remove" hidden>Remove the model from this device</button>
+              </div>
+              <progress id="model-prog" max="1" value="0" hidden></progress>
+            </div>
             <div id="disc-box">
             <span class="lbl" id="disck-lbl" data-i18n="f.disck">The disc</span>
             <div class="seg" id="disck" role="radiogroup" aria-labelledby="disck-lbl">
@@ -537,6 +545,7 @@
   <script src="goods/analog.js?v=8.25.00"></script>
   <script src="goods/small.js?v=8.25.00"></script>
   <script src="goods/home.js?v=8.25.00"></script>
+  <script src="goods/cloth.js?v=8.25.00"></script>
   <script src="mockups.js?v=8.25.00"></script>
 
   <script src="../pickers.js?v=8.25.00" defer></script>

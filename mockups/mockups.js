@@ -196,6 +196,47 @@
       "tpl.goodNote.poster": "A frame or a mat hides about 4 to 5 mm round the edge: keep text inside the safe zone.",
       "tpl.goodNote.gcout": "Left the back, right the front; the fold is in the middle.",
       "tpl.goodNote.gcin": "The two inside pages; the fold is in the middle.",
+      "make.g.wear": "Clothes & bags",
+      "kind.tshirt": "T-shirt",
+      "kind.tshirt.d": "Laid flat in seven colours, with a front or chest print and a back print",
+      "kind.tote": "Tote bag",
+      "kind.tote.d": "Cotton canvas bag with long or short handles, printed on one or both sides",
+      "untitled.tshirt": "T-shirt mockup",
+      "untitled.tote": "Tote bag mockup",
+      "pics.hint.tshirt": "Only what the picture has is printed, so a picture with a clear background (PNG) prints best. It fits whole inside the print area, from its top.",
+      "pics.hint.tote": "Only what the picture has is printed, so a picture with a clear background (PNG) prints best. It fits whole inside the print area, from its top.",
+      "slot.tshirt.front": "Front print",
+      "slot.tshirt.back": "Back print",
+      "slot.tote.front": "Front print",
+      "slot.tote.back": "Back print",
+      "f.ccol": "Colour",
+      "col.heather": "Heather grey",
+      "col.navy": "Navy",
+      "col.forest": "Forest green",
+      "col.sand": "Sand",
+      "col.natural": "Natural",
+      "f.area": "Print area",
+      "area.front": "Front",
+      "area.chest": "Left chest",
+      "f.backPrint": "Print on the back too",
+      "f.handles": "Handles",
+      "handles.long": "Long (shoulder)",
+      "handles.short": "Short (hand)",
+      "tpl.kind.teefront": "T-shirt, front",
+      "tpl.kind.teeback": "T-shirt, back",
+      "tpl.kind.totefront": "Tote bag, front",
+      "tpl.kind.toteback": "Tote bag, back",
+      "tpl.goodNote.teefront": "Garment print: send a PNG with a clear background at this size; nothing is printed where it is clear. No bleed.",
+      "tpl.goodNote.teeback": "Garment print: send a PNG with a clear background at this size; nothing is printed where it is clear. No bleed.",
+      "tpl.goodNote.totefront": "Bag print: send a PNG with a clear background at this size; nothing is printed where it is clear. No bleed.",
+      "tpl.goodNote.toteback": "Bag print: send a PNG with a clear background at this size; nothing is printed where it is clear. No bleed.",
+      "model.get": "Download the 3D model ({size})",
+      "model.need": "The 3D model comes from orOS's own model library (koulaxizis.github.io), only if you ask, once; then it stays on this device and works offline. Until then a flat stand-in shows the print.",
+      "model.busy": "Downloading the model…",
+      "model.ready": "The 3D model is on this device.",
+      "model.remove": "Remove the model from this device",
+      "model.err.net": "The model could not be downloaded. Check the connection and try again.",
+      "model.err.hash": "The downloaded file was not the expected model, so it was not kept. Try again later.",
       "make.g.merch": "Merch & small things",
       "kind.badge": "Badge",
       "kind.badge.d": "Pin-back button, 25 to 75 mm, gloss or matte, with a pin or a magnet",
@@ -264,6 +305,7 @@
       "tpl.kind.pcard": "Backing card",
       "tpl.kind.magnet": "Magnet",
       "tpl.badgeInfo": "Cut a circle of {cut}; the face is {d}, the ring between wraps round the edge and under it.",
+      "tpl.inkInfo": "Print area {w} × {h}, no bleed: the print shop places it on the garment.",
       "tpl.cutInfo": "Sheet {w} × {h} with the bleed, cut {tw} × {th}. The cut line is in the PDF as a thin magenta line.",
       "tpl.goodNote.badge": "Keep text inside the dashed ring: the outer ring goes round the edge and behind.",
       "tpl.goodNote.sticker": "The cut follows the outline; keep text out of the green band inside it.",
@@ -653,6 +695,47 @@
       "tpl.goodNote.poster": "Το κάδρο ή το πασπαρτού κρύβει περίπου 4 με 5 mm γύρω γύρω: κράτα το κείμενο μέσα στη ζώνη ασφαλείας.",
       "tpl.goodNote.gcout": "Αριστερά το πίσω, δεξιά το μπροστά· το δίπλωμα είναι στη μέση.",
       "tpl.goodNote.gcin": "Οι δύο εσωτερικές σελίδες· το δίπλωμα είναι στη μέση.",
+      "make.g.wear": "Ρούχα και τσάντες",
+      "kind.tshirt": "T-shirt",
+      "kind.tshirt.d": "Απλωμένο, σε επτά χρώματα, με τύπωμα μπροστά ή στο στήθος και πίσω",
+      "kind.tote": "Πάνινη τσάντα",
+      "kind.tote.d": "Βαμβακερή τσάντα με μακριά ή κοντά χερούλια, τυπωμένη στη μία ή και στις δύο πλευρές",
+      "untitled.tshirt": "Μακέτα T-shirt",
+      "untitled.tote": "Μακέτα πάνινης τσάντας",
+      "pics.hint.tshirt": "Τυπώνεται μόνο ό,τι έχει η εικόνα, οπότε μια εικόνα με διάφανο φόντο (PNG) τυπώνεται καλύτερα. Χωράει ολόκληρη στην περιοχή εκτύπωσης, από το πάνω μέρος της.",
+      "pics.hint.tote": "Τυπώνεται μόνο ό,τι έχει η εικόνα, οπότε μια εικόνα με διάφανο φόντο (PNG) τυπώνεται καλύτερα. Χωράει ολόκληρη στην περιοχή εκτύπωσης, από το πάνω μέρος της.",
+      "slot.tshirt.front": "Τύπωμα μπροστά",
+      "slot.tshirt.back": "Τύπωμα πίσω",
+      "slot.tote.front": "Τύπωμα μπροστά",
+      "slot.tote.back": "Τύπωμα πίσω",
+      "f.ccol": "Χρώμα",
+      "col.heather": "Γκρι μελανζέ",
+      "col.navy": "Μπλε σκούρο",
+      "col.forest": "Πράσινο σκούρο",
+      "col.sand": "Άμμου",
+      "col.natural": "Φυσικό",
+      "f.area": "Περιοχή εκτύπωσης",
+      "area.front": "Μπροστά",
+      "area.chest": "Στήθος αριστερά",
+      "f.backPrint": "Τύπωμα και πίσω",
+      "f.handles": "Χερούλια",
+      "handles.long": "Μακριά (ώμου)",
+      "handles.short": "Κοντά (χεριού)",
+      "tpl.kind.teefront": "T-shirt, μπροστά",
+      "tpl.kind.teeback": "T-shirt, πίσω",
+      "tpl.kind.totefront": "Πάνινη τσάντα, μπροστά",
+      "tpl.kind.toteback": "Πάνινη τσάντα, πίσω",
+      "tpl.goodNote.teefront": "Τύπωμα ρούχου: στείλε PNG με διάφανο φόντο σε αυτό το μέγεθος· όπου είναι διάφανο δεν τυπώνεται τίποτα. Χωρίς ξάκρισμα.",
+      "tpl.goodNote.teeback": "Τύπωμα ρούχου: στείλε PNG με διάφανο φόντο σε αυτό το μέγεθος· όπου είναι διάφανο δεν τυπώνεται τίποτα. Χωρίς ξάκρισμα.",
+      "tpl.goodNote.totefront": "Τύπωμα τσάντας: στείλε PNG με διάφανο φόντο σε αυτό το μέγεθος· όπου είναι διάφανο δεν τυπώνεται τίποτα. Χωρίς ξάκρισμα.",
+      "tpl.goodNote.toteback": "Τύπωμα τσάντας: στείλε PNG με διάφανο φόντο σε αυτό το μέγεθος· όπου είναι διάφανο δεν τυπώνεται τίποτα. Χωρίς ξάκρισμα.",
+      "model.get": "Λήψη του τρισδιάστατου μοντέλου ({size})",
+      "model.need": "Το τρισδιάστατο μοντέλο έρχεται από τη βιβλιοθήκη μοντέλων του orOS (koulaxizis.github.io), μόνο αν το ζητήσεις, μία φορά· μετά μένει σε αυτή τη συσκευή και δουλεύει χωρίς σύνδεση. Ως τότε ένα επίπεδο υποκατάστατο δείχνει το τύπωμα.",
+      "model.busy": "Λήψη του μοντέλου…",
+      "model.ready": "Το τρισδιάστατο μοντέλο είναι σε αυτή τη συσκευή.",
+      "model.remove": "Αφαίρεση του μοντέλου από τη συσκευή",
+      "model.err.net": "Δεν ήταν δυνατή η λήψη του μοντέλου. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "model.err.hash": "Το αρχείο που ήρθε δεν ήταν το αναμενόμενο μοντέλο, οπότε δεν κρατήθηκε. Δοκίμασε ξανά αργότερα.",
       "make.g.merch": "Merch και μικροαντικείμενα",
       "kind.badge": "Κονκάρδα",
       "kind.badge.d": "Κονκάρδα 25 έως 75 mm, γυαλιστερή ή ματ, με καρφίτσα ή μαγνήτη",
@@ -721,6 +804,7 @@
       "tpl.kind.pcard": "Καρτελάκι",
       "tpl.kind.magnet": "Μαγνητάκι",
       "tpl.badgeInfo": "Κόψε κύκλο {cut}· η πρόσοψη είναι {d} και ο δακτύλιος ανάμεσα τυλίγεται γύρω από την άκρη και από κάτω.",
+      "tpl.inkInfo": "Περιοχή εκτύπωσης {w} × {h}, χωρίς bleed: το τυπογραφείο την τοποθετεί πάνω στο ρούχο.",
       "tpl.cutInfo": "Φύλλο {w} × {h} με το bleed, κοπή {tw} × {th}. Η γραμμή κοπής είναι στο PDF ως λεπτή ματζέντα γραμμή.",
       "tpl.goodNote.badge": "Κράτα το κείμενο μέσα στον διακεκομμένο κύκλο: ο εξωτερικός δακτύλιος πάει γύρω από την άκρη και πίσω.",
       "tpl.goodNote.sticker": "Η κοπή ακολουθεί το περίγραμμα· κράτα το κείμενο έξω από την πράσινη λωρίδα μέσα της.",
@@ -1494,7 +1578,7 @@
     $("title-sub").textContent = subOf(cur);
     if (renderKind()) { renderGoodForm(); renderCommon(); return; }
     var b = cur.bk, a = cur.art;
-    $("f-spTC").parentNode.hidden = $("f-spT").parentNode.hidden = false;
+    $("f-spTC").parentNode.hidden = $("f-spT").parentNode.hidden = $("f-coverC").parentNode.hidden = false;
     // book
     setSeg("bind", b.bind);
     setVal("f-trim", b.trim);
@@ -1664,12 +1748,32 @@
     curSheet = ""; legendKind = "";
   }
   function lenTxt(mm, d) { return cur && cur.unit === "in" ? fmtNum(mm / C.MM_PER_IN, 3) + "″" : fmtNum(mm, d == null ? 1 : d) + " mm"; }
+  // A garment's model (goods/cloth.js): kept on the device once fetched.
+  var modelBusy = "", modelErr = "", modelLooked = {};
+  function modelName() { var d = cur && C.good(cur.kind); return d && d.model && window.MockCloth ? d.model : ""; }
+  function renderModelBox() {
+    var name = modelName(), box = $("model-box");
+    box.hidden = !name;
+    if (!name) return;
+    var CL = window.MockCloth, have = !!CL.buffer(name), M = CL.MODELS[name];
+    if (!have && !modelLooked[name]) {
+      modelLooked[name] = 1;            // fetched before: from this device's cache, no network
+      CL.cached(name).then(function (ok) { if (ok && modelName() === name) { renderModelBox(); pushAll(); } });
+    }
+    $("model-get").hidden = have;
+    $("model-del").hidden = !have || !!modelBusy;
+    $("model-get").disabled = !!modelBusy;
+    $("model-get").textContent = t("model.get", { size: fmtNum(M.bytes / 1048576, 1) + " MB" });
+    $("model-prog").hidden = modelBusy !== name;
+    out("model-msg", have ? t("model.ready") : modelBusy === name ? t("model.busy") : modelErr ? t("model.err." + modelErr) : t("model.need"));
+  }
   function renderGoodForm() {
     var g = cur.g, a = cur.art, k = cur.kind, D = C.good(k).dims(g);
     ["cd", "dvd", "tape", "vhs", "vinyl"].forEach(function (x) { $(x + "-form").hidden = k !== x; });
     var def = C.good(k);
     $("gen-form").hidden = !def.opts;
     if (def.opts) renderGen(def, g);
+    renderModelBox();
     $("disc-box").hidden = !(k === "cd" || k === "dvd");
     if (!def.opts) $("beside-lbl").textContent = t("f.beside." + k);
     $("beside-row").hidden = !!def.opts || ((k === "tape" || k === "vhs") && g.pack === "none");
@@ -1710,6 +1814,8 @@
     setVal("f-coverC", a.c); setVal("f-spTC", a.spTC); setVal("f-spT", a.spT);
     // flat products have no spine
     $("f-spTC").parentNode.hidden = $("f-spT").parentNode.hidden = !!def.opts;
+    // garment ink prints nothing where there is no picture: no colour to choose
+    $("f-coverC").parentNode.hidden = !!C.templateOf(cur, C.sheetsOf(cur)[0]).ink;
     renderSlots();
     if (wrapOk) renderWrapInfo();
     $("ins-box").hidden = true; $("vols-box").hidden = true;
@@ -1754,6 +1860,23 @@
     $("f-big").addEventListener("change", function () { var on = $("f-big").checked ? 1 : 0; changeG(function (g) { g.big = on; }); });
     $("f-hub").addEventListener("change", function () { var v = +$("f-hub").value; changeG(function (g) { g.hub = v; }); });
     $("f-beside").addEventListener("change", function () { var on = $("f-beside").checked ? 1 : 0; changeG(function (g) { g.beside = on; }); });
+    // the cloth models: downloaded only when the person asks
+    $("model-get").addEventListener("click", function () {
+      var name = modelName();
+      if (!name || modelBusy) return;
+      modelBusy = name; modelErr = ""; $("model-prog").value = 0;
+      renderModelBox();
+      window.MockCloth.load(name, function (f) { $("model-prog").value = f; }).then(function () {
+        modelBusy = ""; renderModelBox(); pushAll();
+      }, function (e) {
+        modelBusy = ""; modelErr = e && e.code === "hash" ? "hash" : "net"; renderModelBox();
+      });
+    });
+    $("model-del").addEventListener("click", function () {
+      var name = modelName();
+      if (!name) return;
+      window.MockCloth.remove(name).then(function () { renderModelBox(); pushAll(); });
+    });
     // products that describe their own options
     var gf = $("gen-form");
     gf.addEventListener("click", function (e) {
@@ -1782,7 +1905,8 @@
     { g: "books", items: [{ k: "book" }, { k: "notebook" }] },
     { g: "music", items: [{ k: "cd" }, { k: "dvd" }, { k: "vinyl" }, { k: "tape" }, { k: "vhs" }] },
     { g: "merch", items: [{ k: "badge" }, { k: "sticker" }, { k: "keychain" }, { k: "pin" }, { k: "magnet" }] },
-    { g: "home", items: [{ k: "mug" }, { k: "poster" }, { k: "card" }] }
+    { g: "home", items: [{ k: "mug" }, { k: "poster" }, { k: "card" }] },
+    { g: "wear", items: [{ k: "tshirt" }, { k: "tote" }] }
   ];
   var MAKE_ICON = {
     book: '<path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M6 18a2 2 0 0 1 2-2h10"/>',
@@ -1799,7 +1923,9 @@
     magnet: '<path d="M6 4v8a6 6 0 0 0 12 0V4h-4v8a2 2 0 0 1-4 0V4z"/><path d="M6 8h4M14 8h4"/>',
     mug: '<path d="M5 6h11v11a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z"/><path d="M16 9h1.5a2.5 2.5 0 0 1 0 5H16"/>',
     poster: '<rect x="4" y="3" width="16" height="18" rx="1"/><rect x="7.5" y="6.5" width="9" height="11"/>',
-    card: '<path d="M4 5h9v14H4z"/><path d="M13 5l7 2v14l-7-2"/>'
+    card: '<path d="M4 5h9v14H4z"/><path d="M13 5l7 2v14l-7-2"/>',
+    tshirt: '<path d="M9 4a3 3 0 0 0 6 0l5 2.5-2 4-2-1V20H8V9.5l-2 1-2-4z"/>',
+    tote: '<path d="M5 9h14l-1 11H6z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/>'
   };
   function renderMake() {
     var box = $("make-groups");
@@ -2802,18 +2928,19 @@
     out("tpl-kind", t("tpl.kind." + T.kind));
     out("tpl-info", T.circle && T.circle.fold
       ? t("tpl.badgeInfo", { cut: tplLen(T.W), d: tplLen(T.circle.fold) })
+      : T.ink ? t("tpl.inkInfo", { w: tplLen(T.W), h: tplLen(T.H) })
       : T.cut ? t("tpl.cutInfo", { w: tplLen(T.sheet.w), h: tplLen(T.sheet.h), tw: tplLen(T.W), th: tplLen(T.H) })
       : T.circle
       ? t("tpl.discInfo", { d: tplLen(T.W), p: tplLen(T.circle.print), hub: tplLen(T.circle.hub), hole: tplLen(T.circle.hole) })
       : t("tpl.info", { w: tplLen(T.sheet.w), h: tplLen(T.sheet.h), tw: tplLen(T.W), th: tplLen(T.H), s: tplLen(T.spine) }));
     var ul = $("tpl-parts");
     ul.textContent = "";
-    if (!T.circle && !T.cut) T.parts.forEach(function (p) { ul.appendChild(el("li", null, t("slot." + p.k) + " " + tplLen(p.w))); });
+    if (!T.circle && !T.cut && !T.ink) T.parts.forEach(function (p) { ul.appendChild(el("li", null, t("slot." + p.k) + " " + tplLen(p.w))); });
     out("tpl-spine", t("tpl.goodNote." + T.kind) !== "tpl.goodNote." + T.kind ? t("tpl.goodNote." + T.kind) : "");
     $("tpl-warn").hidden = true;
     $("tbleed-lbl").textContent = t("f.tbleed");
     setVal("f-tbleed", T.bleed);
-    $("f-tbleed").disabled = !!T.circle;
+    $("f-tbleed").disabled = !!T.circle || !!T.ink;
     setVal("f-safe", o.safe);
     setChk("f-tart", o.art); setChk("f-tgd", o.gd);
     var lk = T.circle ? (T.circle.fold ? "badge" : "disc") : T.cut ? "cut" : "flat";

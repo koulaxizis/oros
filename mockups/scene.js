@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.8.0, ES module)
+// orOS Mockups — scene.js (v1.9.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -36,6 +36,8 @@
 //     cassette, VHS and vinyl from goods/analog3d.js (v1.7.0), badge,
 //     sticker, keychain, enamel pin and magnet from goods/small3d.js (v1.8.0),
 //     mug, framed poster and card from goods/home3d.js (v1.8.0),
+//     T-shirt and tote bag from goods/cloth3d.js (v1.9.0; our Blender models,
+//     downloaded on request by goods/cloth.js),
 //     posed, framed, lit and saved like a book; "open" opens a lid
 //     or slides a disc out (fronts with userData.open)
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
@@ -53,6 +55,7 @@ import { build as buildMedia } from "./goods/media3d.js";
 import { build as buildAnalog } from "./goods/analog3d.js";
 import { build as buildSmall } from "./goods/small3d.js";
 import { build as buildHome } from "./goods/home3d.js";
+import { build as buildCloth } from "./goods/cloth3d.js";
 
 var S = 0.01;                          // scene units per mm
 
@@ -926,7 +929,7 @@ export function createStage(host, C) {
     disposeBooks();
     var p = state.p, placeK = p.sc.place;
     var H = { THREE: THREE, S: S, own: own, ANISO: ANISO, pics: picsOf(p.art), MP: (typeof window !== "undefined" && window.MockPrint) || null, C: C };
-    var res = buildMedia(H, p) || buildAnalog(H, p) || buildSmall(H, p) || buildHome(H, p);
+    var res = buildMedia(H, p) || buildAnalog(H, p) || buildSmall(H, p) || buildHome(H, p) || buildCloth(H, p);
     if (!res) { built = false; return; }
     res.fronts.forEach(function (f) { fronts.push(f); });
     var pose = new THREE.Group();
