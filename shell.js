@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.02.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.02.03";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -9135,6 +9135,10 @@
       return;
     }
     if (!("serviceWorker" in navigator)) return;
+    if (window.orosUpdateNow && window.orosUpdateNowText) return window.orosUpdateNow(function (st, why) {   // SW-Q1
+      setSyncMsgRaw(st === "failed" ? "err" : st === "current" ? "ok" : "dim", st === "current"
+        ? window.t("update.none").replace("{v}", APP_VERSION) : window.orosUpdateNowText(st, why));
+    });
     setSyncMsgRaw("dim", window.t("update.checking"));
     navigator.serviceWorker.getRegistration()
       .then(function (r) {
