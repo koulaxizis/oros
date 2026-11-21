@@ -34,7 +34,7 @@
   <link rel="preload" as="script" href="notifications.js?v=8.02.00">
   <link rel="preload" as="script" href="webpush.js?v=8.02.00">
   <!-- /BOOT-P1 -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VPHyDFuRJXqfe2q0meITZbVd8yUrQwNq1Ba7/dB0LNY=' 'sha256-86ObmN7XfozvSQ6RvUXiGw70JGNsYTm5qss8vG/+SUQ='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VPHyDFuRJXqfe2q0meITZbVd8yUrQwNq1Ba7/dB0LNY=' 'sha256-iomnTlvK3BvqxfiFq7Plh018BgJ2sqbij0Dxom/ooe4='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="orOS — A static operating system in your browser. Mobile-friendly, works offline, no cookies, no tracking.">
   <title>orOS</title>
@@ -386,7 +386,7 @@
 
   function reloadWhenSafe() {
     if (reloading) return;
-    if (!safeToReload()) {
+    if (!reloadWhenSafe.now && !safeToReload()) {
       showUpdateReady();
       // Poll ONLY while an update is waiting (no idle timer otherwise).
       if (!waitTimer) waitTimer = setInterval(reloadWhenSafe, 3000);
@@ -426,82 +426,50 @@
     runWatch.observe(run, { attributes: true, attributeFilter: ["class"] });
   }
 
-  // SW-Q1: "Update now" (the bell's update notice from another device,
-  // Settings › Check for updates). The person asked, so the new release
-  // loads at once (no safe-moment wait), the install does not wait for
-  // PRECACHE_GIVE_UP attempts (sw.js FORCE_KEY), and a failed install
-  // says why (sw.js STATUS_KEY). cb(state, reason): "checking",
-  // "reloading", "current", or "failed" with "offline" | "network" |
-  // "space" | "".
+  // SW-Q1 "Update now" (bell notice, Settings): loads at once, no
+  // give-up wait (sw.js FORCE_KEY), says why it failed (STATUS_KEY).
+  // cb(state, reason): checking | reloading | current | failed.
   var updateAsked = false;
-  function swStatus(key) {
-    try {
-      return caches.open("oros-sw-status").then(function (c) { return c.match(key); })
-        .then(function (r) { return r ? r.json() : null; })
-        .catch(function () { return null; });
-    } catch (e) { return Promise.resolve(null); }
+  function swSt(k, v) {
+    return caches.open("oros-sw-status").then(function (c) {
+      return v ? c.put(k, new Response(JSON.stringify(v))) : c.match(k).then(function (r) { return r ? r.json() : null; });
+    }).catch(function () { return null; });
   }
-  function reloadNow() {
-    if (reloading) return;
-    reloading = true;
-    if (waitTimer) { clearInterval(waitTimer); waitTimer = null; }
-    try { sessionStorage.setItem("oros-skip-splash", "1"); } catch (e) {}
-    window.location.reload();
-  }
-  function watchInstall(w, cb) {
-    var asked = Date.now();
-    function step() {
-      if (w.state === "activated") { cb("reloading"); reloadNow(); return; }
-      if (w.state !== "redundant") return;
-      swStatus("/__status").then(function (s) {
-        var fresh = s && s.ok === false && s.at >= asked - 1000;
-        cb("failed", fresh ? (s.reason || "") : "");
-      });
-    }
-    w.addEventListener("statechange", step);
-    step();
-  }
+  function reloadNow() { reloadWhenSafe.now = 1; reloadWhenSafe(); }
   window.orosUpdateNow = function (cb) {
-    if (typeof cb !== "function") cb = function () {};
     if (reloading) return;
-    if (navigator.onLine === false) { cb("failed", "offline"); return; }
+    if (navigator.onLine === false) return cb("failed", "offline");
     updateAsked = true;
     cb("checking");
-    var mark;
-    try {
-      mark = caches.open("oros-sw-status").then(function (c) {
-        return c.put("/__force", new Response(JSON.stringify({ at: Date.now() })));
-      }).catch(function () {});
-    } catch (e) { mark = Promise.resolve(); }
-    mark.then(function () { return navigator.serviceWorker.getRegistration(); }).then(function (r) {
-      if (!r) { cb("reloading"); reloadNow(); return; }
+    var t0 = Date.now();
+    swSt("/__force", { at: t0 }).then(function () { return navigator.serviceWorker.getRegistration(); }).then(function (r) {
+      if (!r) return reloadNow(cb("reloading"));
       return r.update().then(function () {
         var w = r.installing || r.waiting;
-        if (w) { watchInstall(w, cb); return; }
-        // Nothing newer than the active worker; the page itself may
-        // still be older than it (an update waiting for a safe moment).
-        return swStatus("/__status").then(function (s) {
-          var here = "oros-v" + (window.__orosAppVersion || "");
-          if (readyBtn || (s && s.ok && s.v && s.v !== here)) { cb("reloading"); reloadNow(); }
+        if (!w) return swSt("/__status").then(function (s) {
+          if (readyBtn || (s && s.ok && s.v !== "oros-v" + window.__orosAppVersion)) reloadNow(cb("reloading"));
           else { updateAsked = false; cb("current"); }
         });
+        function step() {
+          if (w.state === "activated") reloadNow(cb("reloading"));
+          else if (w.state === "redundant") swSt("/__status").then(function (s) {
+            cb("failed", s && s.ok === false && s.at >= t0 - 1000 ? s.reason : "");
+          });
+        }
+        w.addEventListener("statechange", step);
+        step();
       });
     }).catch(function () { cb("failed", "network"); });
   };
-
-  // SW-Q1: a release that activated without some precache files (no
-  // room, or files it could not reach) fetches them once it runs; the
-  // worker checks a flag first, so this costs nothing otherwise.
+  // SW-Q1: a release that activated without some files fetches them now.
   setTimeout(function () {
-    try {
-      var c = navigator.serviceWorker.controller;
-      if (c && navigator.onLine !== false) c.postMessage({ t: "oros-sw-fill" });
-    } catch (e) {}
+    var c = navigator.serviceWorker.controller;
+    if (c) c.postMessage({ t: "oros-sw-fill" });
   }, 20000);
 
   navigator.serviceWorker.addEventListener("controllerchange", function () {
     if (skipFirstClaim) { skipFirstClaim = false; return; }
-    if (updateAsked) { reloadNow(); return; }
+    if (updateAsked) reloadWhenSafe.now = 1;
     reloadWhenSafe();
     if (!reloading) watchRunning();
   });

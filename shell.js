@@ -9135,16 +9135,10 @@
       return;
     }
     if (!("serviceWorker" in navigator)) return;
-    // SW-Q1: the same path as the update notice's "Update now": a newer
-    // release loads at once, and a failed install says why.
-    if (typeof window.orosUpdateNow === "function" && typeof window.orosUpdateNowText === "function") {
-      window.orosUpdateNow(function (st, why) {
-        if (st === "checking") setSyncMsgRaw("dim", window.t("update.checking"));
-        else if (st === "current") setSyncMsgRaw("ok", window.t("update.none").replace("{v}", APP_VERSION));
-        else setSyncMsgRaw(st === "failed" ? "err" : "dim", window.orosUpdateNowText(st, why));
-      });
-      return;
-    }
+    if (window.orosUpdateNow && window.orosUpdateNowText) return window.orosUpdateNow(function (st, why) {   // SW-Q1
+      setSyncMsgRaw(st === "failed" ? "err" : st === "current" ? "ok" : "dim", st === "current"
+        ? window.t("update.none").replace("{v}", APP_VERSION) : window.orosUpdateNowText(st, why));
+    });
     setSyncMsgRaw("dim", window.t("update.checking"));
     navigator.serviceWorker.getRegistration()
       .then(function (r) {

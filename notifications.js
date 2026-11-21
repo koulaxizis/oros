@@ -812,12 +812,7 @@
   }
   function shownTitle(item, set) {
     if (item && lockHidesNs(item.ns, set)) return lockAppName(item.ns);
-    // SW-Q1: the update notice travels between devices with the title
-    // in the language of the device that wrote it; say it in this one's.
-    if (item && item.ns === 'system' && item.type === 'update' && typeof window.t === 'function') {
-      var tt = window.t('update.done');
-      if (tt && tt !== 'update.done') return tt;
-    }
+    if (item && item.ns === 'system' && item.type === 'update') return window.t('update.done');   // SW-Q1: this device's language
     return item ? item.title : '';
   }
   function lockNotice() {
@@ -832,46 +827,30 @@
     return typeof here === 'string' && !!m && cmpVer(m[1], here) > 0;
   }
   // SW-Q1: "Update now" under such a notice (index.html orosUpdateNow).
-  function tr(key, en) {
-    var v = typeof window.t === 'function' ? window.t(key) : '';
-    return v && v !== key ? v : en;
-  }
-  var UPD_FAIL = {
-    space:   ['update.now.space', 'There is not enough storage space for the new version. Free some space on this device and try again.'],
-    network: ['update.now.network', 'The new version could not be downloaded. Check the connection and try again.'],
-    offline: ['update.now.offline', 'This device is offline. Connect and try again.'],
-    '':      ['update.now.failed', 'The update did not finish. Try again.']
-  };
   function updateNowText(state, reason) {
-    if (state === 'checking' || state === 'reloading') return tr('update.now.working', 'Updating…');
-    if (state === 'current') return tr('update.now.current', 'There is no newer version on the server yet.');
-    var f = UPD_FAIL[reason] || UPD_FAIL[''];
-    return tr(f[0], f[1]);
+    return window.t(state === 'failed' ? 'update.now.' + ({ space: 1, network: 1, offline: 1 }[reason] ? reason : 'failed')
+      : state === 'current' ? 'update.now.current' : 'update.now.working');
   }
   window.orosUpdateNowText = updateNowText;
   function addUpdateNow(el) {
-    if (typeof window.orosUpdateNow !== 'function') return;
-    var row = document.createElement('div');
-    row.style.cssText = 'margin-top:8px; display:flex; flex-wrap:wrap; align-items:center; gap:8px;';
-    var btn = document.createElement('button');
+    if (!window.orosUpdateNow) return;
+    var row = document.createElement('div'), btn = document.createElement('button'), msg = document.createElement('span');
+    row.style.cssText = 'margin-top:8px;display:flex;flex-wrap:wrap;align-items:center;gap:8px';
     btn.type = 'button';
     btn.className = 'notif-update-now';
-    btn.style.cssText = 'min-height:36px; padding:6px 14px; border-radius:8px; border:1px solid var(--accent); ' +
-      'background:var(--accent); color:var(--accent-ink, #fff); font:inherit; cursor:pointer;';
-    btn.textContent = tr('update.now', 'Update now');
-    var msg = document.createElement('span');
+    btn.style.cssText = 'min-height:36px;padding:6px 14px;border-radius:8px;border:0;background:var(--accent);color:var(--accent-ink,#fff);font:inherit;cursor:pointer';
+    btn.textContent = window.t('update.now');
     msg.setAttribute('role', 'status');
-    msg.style.cssText = 'font-size:0.85em; color:var(--text-dim); flex:1 1 160px;';
-    btn.addEventListener('click', function (e) {
+    msg.style.cssText = 'font-size:.85em;color:var(--text-dim);flex:1 1 160px';
+    btn.onclick = function (e) {
       e.stopPropagation();
       btn.disabled = true;
-      window.orosUpdateNow(function (state, reason) {
-        msg.textContent = updateNowText(state, reason);
-        if (state === 'current' || state === 'failed') btn.disabled = false;
+      window.orosUpdateNow(function (st, why) {
+        msg.textContent = updateNowText(st, why);
+        btn.disabled = st === 'checking' || st === 'reloading';
       });
-    });
-    row.appendChild(btn);
-    row.appendChild(msg);
+    };
+    row.append(btn, msg);
     el.appendChild(row);
   }
 
