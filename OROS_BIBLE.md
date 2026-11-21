@@ -13402,3 +13402,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Start-up budget:** the credit lines of the new services (shell.js CREDIT_GROUPS + translations) add about 2.6 KB to start-up scripts; budget 2236 -> 2246 KB (`.github/qa/boot.json` jsBytes 2300000).
 - **Next:** test DPLA once Chris has a key.
 
+
+### 2026-11-21 — 8.24.00 — Photo Lab PS-5, Atelier CV-2 and Canva fidelity CV-F1–F4 (#1184)
+- **What:** Photo Lab gets Photoshop's 27 blend modes (11 mixed per pixel by `photolab/blendx.js`), Skew/Distort/Perspective/Warp and Filter › Liquify (`photolab/warp.js`). In Atelier: Canva's photo effects (CV-2a, `atelier/photofx.js`, `ext.pfx`), Magic Switch resize and translate (CV-2b), and Canva copy fidelity: CV-F1 pitch, first baseline and coloured words; CV-F2 text effects and curves from Canva's PDF (`atelier/canvafx.js`); CV-F3 see-through gradients, narrow and edge text; CV-F4 lines as Canva set them, outlines, glow pictures and the PDF from a Canva account (relay `canva` export `kind: "pdf"`).
+- **Files:** photolab/ (blendx.js, warp.js, core.js, ops.js, view.js, io.js, psd.js, xcf.js, ora.js, strings.js, help), atelier/ (photofx.js, canvafx.js, canva.js, io.js, ax.js, pptx.js, draw.js, relayout.js, panels.js, help), designkit/ (fx.js, text.js), translate/panel.js, relay/canva.js + README, i18n/de, assistant/assistant.js, sw.js (precache blendx.js, warp.js, photofx.js, canvafx.js), shell.js (APP_VERSION), help/topics/whatsnew.{en,el}.txt, OROS_BIBLE.md.
+- **Tests:** full `node --test tests/*.test.js`; new photolab-blendx, photolab-warp, atelier-photofx, atelier-switch, atelier-canva-fidelity, atelier-canva-fx; canva-relay. The whole migrated Canva corpus against Canva's PDFs (228 pages): mean 4.12% → 2.08%, median 1.93% → 0.62%; all 576 comparable pages mean 2.20%, median 0.64%; completeness 280/280.
+- **Next:** relay redeploy for the Canva account PDF; Chris spot-checks designs before cancelling Canva.

@@ -3,6 +3,12 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.24.00
+- **Photo Lab: all 27 Photoshop blend modes**, including dissolve, linear burn, vivid light, hard mix, subtract and divide. They open from and save to Photoshop, GIMP, OpenRaster and Krita files.
+- **Photo Lab: Skew, Distort, Perspective and Warp** (Edit menu, or the Mode list while transforming), plus **Filter › Liquify** (Ctrl+Shift+X) to push, twirl, pucker and bloat.
+- **Atelier: photo effects as in Canva.** Shadow or glow, duotone, blur edges and frames, from Effects after Adjust. **Resize and translate** makes copies in other sizes and languages at once.
+- **Designs from Canva look as they did in Canva.** Pick the .pptx together with Canva's PDF of it. Atelier then takes the line breaks, sizes, spacing and the text effects from the PDF: glitch, shadow, splice, echo, hollow, outline, glow and curved text. Bringing designs straight from your Canva account now fetches the PDF too.
+
 ## Version 8.20.00
 - **Music: search with filters.** A filters button next to the search box narrows free music by genre, country, length, voice, mood, tempo, year and licence. A catalogue that cannot apply a filter is listed under Left out instead of showing songs that do not match.
 - **Music: eleven free catalogues.** Audius, Free Music Archive, Kevin MacLeod, Musopen, the National Jukebox of the Library of Congress, Europeana and DPLA (with your own free key) join Jamendo, the Internet Archive, Openverse and ccMixter. Turn each on or off in Settings › Sources. Dogmazic is one tap away in Connect a server.
