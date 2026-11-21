@@ -1454,8 +1454,12 @@ function localPickFile(accept) {
   });
 }
 
+// GX-3: while an export step of the Assistant or orOS Gate runs, the
+// files are collected here instead of going to a save dialog.
+let exportSink = null;
 function downloadBlob(content, filename, mime) {
   const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+  if (exportSink) { exportSink.push({ name: filename, blob: blob }); return Promise.resolve(true); }
   const host = dialogHost();
   if (host) {
     // Wave 2: unified save dialog (native picker on Chromium, download
@@ -2906,6 +2910,20 @@ function catWriteDoc(doc, o) {
   scheduleSave();
   return doc;
 }
+// GX-3: the export step (writer/assist.js): the document opens, its
+// files are made as by Export and collected → [{ name, blob }]
+window.WriterExport = {
+  run: (id, fmt) => {
+    const doc = getDoc(id);
+    if (!doc || exportSink) return Promise.resolve([]);
+    if (state.activeTab !== id) activateTab(id);
+    const got = exportSink = [];
+    return new Promise(res => setTimeout(res, 200)).then(() => {
+      const d = getDoc(id);
+      return fmt === 'docx' ? ioExportDocx(d) : fmt === 'md' ? ioExportMd(d) : fmt === 'html' ? ioExportHtml(d) : fmt === 'txt' ? ioExportTxt(d) : ioExportPdf(d);
+    }).then(() => { exportSink = null; return got; }, e => { exportSink = null; throw e; });
+  }
+};
 window.WriterCatHost = {
   t: t, toast: showToast, openDialog: openDialog, wConfirm: wConfirm, wPrompt: wPrompt, openMenu: openMenu,
   docs: () => state.docs.filter(d => !d.del), getDoc: getDoc, activeDoc: activeDoc, flushSave: flushSave,
@@ -6709,13 +6727,13 @@ function ioBuildOrosDoc(doc) {
 
 /* ----- Individual export actions (RTF/DOCX/PDF wired in parts 3-4) ----- */
 function ioExportTxt(doc) {
-  downloadBlob(ioToPlainText(), ioBaseName(doc) + '.txt', 'text/plain');
+  return downloadBlob(ioToPlainText(), ioBaseName(doc) + '.txt', 'text/plain');
 }
 function ioExportMd(doc) {
-  downloadBlob(ioToMarkdown(doc), ioBaseName(doc) + '.md', 'text/markdown');
+  return downloadBlob(ioToMarkdown(doc), ioBaseName(doc) + '.md', 'text/markdown');
 }
 function ioExportHtml(doc) {
-  downloadBlob(ioToStandaloneHTML(doc), ioBaseName(doc) + '.html', 'text/html');
+  return downloadBlob(ioToStandaloneHTML(doc), ioBaseName(doc) + '.html', 'text/html');
 }
 /* ----- .orosdoc = an orOS bundle (bundle.js, docs/oros-bundle.md) -----
    content.json holds the document; pictures leave the HTML for
@@ -7129,7 +7147,7 @@ function ioExportDocx(doc) {
   flushSave();
   showToast(t('io.busy'));
   const D = window.WriterDocxOut;
-  setTimeout(() => {
+  return new Promise(res => setTimeout(res, 30)).then(() => {
     const c = ioExportClone({ keepTracked: true });   // tracked changes → w:ins / w:del
     c.querySelectorAll('mark.cmt-mark').forEach(ioUnwrap);
 
@@ -7155,7 +7173,7 @@ function ioExportDocx(doc) {
       });
     }
 
-    D.build(c, {
+    return D.build(c, {
       title: doc.title || t('tab.untitled'), author: doc.author, category: doc.category, tags: doc.tags,
       page: ioPageSizeMm(doc), margins: doc.margins, appendix: app.join(''),
       track: window.WriterTrack || null
@@ -7166,7 +7184,7 @@ function ioExportDocx(doc) {
         console.error('[orOS] writer DOCX export failed:', err);
         showToast(t('io.exportfailed'));
       });
-  }, 30);
+  });
 }
 
 /* ===== SECTION 23: WAVE 5 — PDF EXPORTER (lazy jsPDF) ===== */
@@ -7323,7 +7341,7 @@ function ioPdfImage(src) {
 function ioExportPdf(doc) {
   flushSave();
   showToast(t('io.busy'));
-  ioBuildPdf(doc)
+  return ioBuildPdf(doc)
     .then(b => downloadBlob(b, ioBaseName(doc) + '.pdf', 'application/pdf'))
     .catch(err => {
       console.error('[orOS] writer PDF export failed:', err);

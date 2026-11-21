@@ -59,7 +59,9 @@
     remove: { kind: "doc", args: sel({}) },
     page: { kind: "doc", args: { paper: oneOf([""].concat(PAPERS)), t: mm(), b: mm(), l: mm(), r: mm(), header: { t: "str", max: 200 }, footer: { t: "str", max: 200 } } },
     meta: { kind: "doc", args: { author: { t: "str", max: 120 }, tags: { t: "str", max: 400 }, category: { t: "str", max: 80 }, lang: oneOf(["", "auto", "en", "el", "none"]) } },
-    rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } }
+    rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } },
+    // GX-3: the document as a file into out (nothing in it changes)
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["pdf", "docx", "md", "html", "txt"], def: "pdf" }, out: { t: "str", max: 1030, req: 1 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -76,7 +78,8 @@
     "remove: delete the picked paragraphs (needs paras, what or has)",
     "page: paper " + PAPERS.join("|") + ", margins t, b, l, r (top, bottom, left, right in mm, 0-100), header, footer (printed on every page; a single space clears one)",
     "meta: author, tags (comma separated; replaces the list), category, lang (spelling language: auto|en|el|none)",
-    "rename: the document's title becomes `title`"
+    "rename: the document's title becomes `title`",
+    "export: the document as a file, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Texts with Files at «may change»; never over a file): fmt pdf | docx | md | html | txt; changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------
@@ -617,6 +620,7 @@
 
   // One command on a document copy (work()) → how many things changed.
   function apply(w, st, env) {
+    if (CATALOG[st.op] && CATALOG[st.op].kind === "out") return 0;   // GX-3: assist.js makes the file
     env = env || {};
     var k = 0;
     switch (st.op) {
@@ -763,6 +767,7 @@
       var w = work(recs[id]), k = 0, env = { notes: out.notes };
       steps.forEach(function (st) { k += apply(w, st, env); });
       if (k) { out.n += k; out.d++; out.per.push({ id: id, name: nameOf(w), n: k }); }
+      if (R.outFiles(steps, 1)) out.files = (out.files || 0) + R.outFiles(steps, 1);   // GX-3
     });
     return out;
   }
