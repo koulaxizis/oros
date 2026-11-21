@@ -32,6 +32,7 @@ Karten auf dem Desktop, die deinen Tag auf einen Blick zeigen: `Uhr`, `Kalender`
 - Auf einem Computer stehen sie in einer Spalte rechts auf dem Desktop; auf einem Handy oder in einem schmalen Fenster in einer Reihe oben, die seitlich scrollt.
 - Klicke mit der rechten Maustaste auf eine freie Stelle des Desktops und wähle `Widgets…`, um die gewünschten Karten anzuhaken und ihre Reihenfolge festzulegen. Die `Einstellungen` haben unter `Darstellung` dieselben Haken.
 - Klicke mit der rechten Maustaste auf eine Karte (lange drücken auf einem Touchscreen) oder nutze ihre Schaltfläche `⋯`, um sie nach oben oder unten zu verschieben oder zu entfernen. Mit der Maus kannst du eine Karte auch an ihrem Titel ziehen.
+- Das Menü der Uhr-Karte legt auch ihren Stil fest: `Uhr: Ziffern`, `Uhr: LED-Punkte` oder `Uhr: automatisch` (der Anfang: LED-Punkte mit dem Skin Signal, Ziffern mit den anderen). Die Punkte zeichnet orOS selbst, und sie blinken nie; bei hohem Kontrast sind nur die leuchtenden zu sehen.
 - Ein Computer beginnt mit Uhr, Kalender, Heute und Wetter; ein Handy mit keiner. Deine Wahl bleibt auf diesem Gerät.
 
 ### Erste Schritte
@@ -92,6 +93,8 @@ Wähle in den `Einstellungen` unter `Darstellung` neben `Design` entweder `Dunke
 
 ## Skins
 Die farbigen Punkte unter `Systemfarbe` sind Skins: Jeder gibt orOS und seinen Apps eine andere Akzentfarbe. Sie sind nach Linux-Systemen benannt, etwa `Ubuntu`, `Fedora`, `Mint` oder `Pop!_OS`; fahr mit der Maus über einen Punkt, um seinen Namen zu sehen. Standard ist `Oros`, in Gold.
+
+`Signal`, der letzte Punkt, ist nach keinem System benannt: Er gibt orOS das Aussehen einer LED-Punktanzeige, schwarz mit weißem Text und rotem Licht (im hellen Design weißes Papier mit tiefem Rot). Sein Hintergrund ist `Punktmatrix`, ein feines Raster aus Punkten, und das Uhr-Widget zeigt die Zeit in LED-Punkten, solange Signal aktiv ist.
 
 `Akzentfarbe aus dem Hintergrund` unter den Punkten nimmt die Akzentfarbe stattdessen aus deinem Hintergrundbild: aus den eingebauten Hintergründen, `Lebendige Landschaft`, `Meins` und einem eigenen Bild. orOS passt ihre Helligkeit so an, dass Text auf Schaltflächen und Links im hellen und dunklen Design gut lesbar bleibt; Hintergründe, Flächen und Text behalten die Farben deines Skins. Hat das Bild mehrere klare Farben, erscheinen bis zu vier unter `Farben aus dem Hintergrund` zur Auswahl; ein neues Bild beginnt mit seiner kräftigsten Farbe. Graue Hintergründe wie `Monochrom` behalten die Farbe des Skins, und hoher Kontrast behält immer seine eigenen Farben. Der Schalter ist anfangs aus und gilt nur auf diesem Gerät.
 

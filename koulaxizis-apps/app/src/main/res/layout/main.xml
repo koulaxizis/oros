@@ -1,9 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- The home screen (unchanged, with the search bar on top) and an app's own page (APPS-M5) over it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:fitsSystemWindows="true"
+    android:fitsSystemWindows="true">
+
+<LinearLayout
+    android:id="@+id/home"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:focusable="true"
+    android:focusableInTouchMode="true"
     android:orientation="vertical">
+
+    <!-- Search (APPS-M5): filters the list below as you type; empty = the home screen as it was. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingStart="12dp"
+        android:paddingTop="8dp"
+        android:paddingEnd="4dp">
+
+        <EditText
+            android:id="@+id/search"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:autofillHints=""
+            android:drawableStart="@drawable/ic_search"
+            android:drawablePadding="8dp"
+            android:hint="@string/search_hint"
+            android:imeOptions="actionSearch|flagNoExtractUi"
+            android:importantForAutofill="no"
+            android:inputType="text"
+            android:maxLines="1"
+            android:minHeight="48dp" />
+
+        <ImageButton
+            android:id="@+id/search_clear"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:background="?android:attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/search_clear"
+            android:src="@drawable/ic_clear"
+            android:visibility="gone" />
+    </LinearLayout>
 
     <TextView
         android:id="@+id/status"
@@ -74,6 +117,16 @@
         android:minHeight="48dp"
         android:visibility="gone" />
 
+    <TextView
+        android:id="@+id/no_match"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:accessibilityLiveRegion="polite"
+        android:paddingHorizontal="16dp"
+        android:paddingVertical="16dp"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:visibility="gone" />
+
     <ListView
         android:id="@+id/list"
         android:layout_width="match_parent"
@@ -82,3 +135,9 @@
         android:paddingBottom="16dp"
         android:clipToPadding="false" />
 </LinearLayout>
+
+    <include
+        android:id="@+id/detail"
+        layout="@layout/detail"
+        android:visibility="gone" />
+</FrameLayout>

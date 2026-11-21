@@ -386,6 +386,8 @@
         if (ax.bg) break;
         if (st.anim === "none") delete ax.an;
         else if (st.anim !== "type" || k === "text") ax.an = st.anim;
+        // a Canva-style animation (ext.anim, CV-A) gives way to the one asked for
+        if (it.ext && it.ext.anim && (st.anim === "none" || ax.an === st.anim)) { delete it.ext.anim; if (!Object.keys(it.ext).length) delete it.ext; }
         break;
       case "arrange":
         if (st.lock) { if (st.lock === "on") it.lock = 1; else it.lock = 0; }

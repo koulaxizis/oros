@@ -2,7 +2,7 @@
 Edit photos and pictures with layers, selections, brushes, retouch tools, filters and adjustments, in the spirit of Photoshop, GIMP and Photopea. Everything works offline.
 
 ## Getting started
-- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (also a camera RAW file, or a Photoshop, OpenRaster or Krita file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
+- `New picture` starts an empty picture: pick a size and a background. `Open picture` opens a photo from your device (also a camera RAW file, or a Photoshop, GIMP, OpenRaster or Krita file with its layers), and `Paste` opens a picture you copied. You can also drop a picture file anywhere on the app.
 - Your pictures are under `Projects`. Tap or click one to open it; the pencil renames it and the bin deletes it (`Undo` in the message brings it back).
 - In the editor, the button at the top left goes back to `Projects`. Your work is saved as you go.
 
@@ -25,6 +25,7 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 `Show or hide panels` (the layers button at the top right) opens `Layers` and `History`.
 - Each layer has an eye (show or hide), a lock and a name (tap it to choose the layer). `Blend` and `Opacity` apply to the chosen layer.
 - The buttons below add, duplicate, move, merge down and delete layers. The `Layer` menu has more: `Layer via copy`, `Rasterize layer`, `Flatten image` and more.
+- Groups are folders of layers, as in Photoshop and GIMP. `Layer` › `Group layer` ([[Ctrl+G]]) puts the current layer in a new group; new layers and layers you move into it join it, and `Ungroup` ([[Ctrl+Shift+G]]) takes them out again. Tap a group to pick it: its eye hides it, the arrow opens or closes it, a double tap renames it, and Blend and Opacity then change the whole group. `Pass through` (the usual) mixes the layers in as if there were no folder; any other blend mode, or an opacity under 100%, first draws the group on its own, so an adjustment layer inside it changes only the group. `Delete layer` with a group picked deletes the group and its layers.
 - `History` lists your steps; tap one to go back to it.
 
 ## Masks, adjustment layers and styles
@@ -81,11 +82,13 @@ When Atelier sends a picture here to edit, a `Done` button appears at the top. I
 ## The Assistant
 Ask the Assistant to change your pictures in words, such as "make it black and white", "crop it square" or "make all my pictures 1200 pixels wide". It shows the changes on a card first; `Apply` opens the pictures here one after the other, makes each change as one step of `History` and saves them. `Undo` on the message here, or on the Assistant's card, puts the pictures back as long as they weren't changed since. See the Assistant's help for everything it can do.
 
-## Photoshop and OpenRaster files
-- Photoshop files (`.psd`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
-- Groups are flattened into the layer list (a hidden group hides its layers) and layer masks are applied to the layers' pixels. Text, smart objects and effects come in as the pixels the file saved for them.
+## Photoshop, GIMP and OpenRaster files
+- Photoshop files (`.psd`, and large documents `.psb`) and OpenRaster files (`.ora`, from GIMP, Krita and MyPaint) open with their layers: names, positions, opacity, blend modes and visibility.
+- From Photoshop, these stay editable: layer masks (also when they are off), vector masks (as masks you can paint on), layer styles (drop shadow, outer and inner glow, stroke, colour overlay) and adjustment layers (levels, curves, hue/saturation, colour balance, brightness/contrast, black & white, photo filter, gradient map, invert, threshold, posterize; vibrance and exposure are set as close as Photo Lab allows). Fill layers are drawn, clipping masks are applied to the clipped layers (a clipped adjustment changes the layer below it), and groups open as groups with their visibility, opacity, blend mode or pass-through and nesting (a group's mask goes onto the layers inside it).
+- Text and smart objects come in as the pictures Photoshop saved, so they look the same. After opening, a window lists what was set as close as possible or left out (for example bevel and emboss, pattern overlays, selective colour), with the layers' names.
+- GIMP files (`.xcf`, from GIMP 2 and GIMP 3) open with their layers too: names, positions, opacity, visibility, modes (GIMP's modes that Photo Lab lacks, such as grain merge or addition, become Normal and are named) and layer masks (on or off as "Apply layer mask" was). Layer groups open as groups like Photoshop groups; text layers come as the pictures GIMP saved. Every precision GIMP saves opens (8, 16 and 32 bits, half, float and double, linear or not), RGB, grey and indexed. Channels and paths stay out.
 - Krita files (`.kra`) open too: just open the file you saved in Krita. Ordinary paint layers in 8-bit RGBA come in with their names, positions, opacity, blend modes and visibility; vector, file, filter and fill layers and masks are left out. When the layers use another colour depth (16-bit, float, CMYK, grey), the file opens as one layer from the picture Krita saves alongside them, and Photo Lab tells you so. For a sure result with any Krita file, use File › Export in Krita and pick OpenRaster (`.ora`).
-- `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers for Photoshop, Photopea, GIMP or Krita. Text, shapes, masks, styles and adjustment layers go as pixels.
+- `Export…` with `PSD (Photoshop, with layers)` or `OpenRaster (GIMP, Krita, with layers)` keeps your layers and groups for Photoshop, Photopea, GIMP or Krita. Masks of picture layers go as masks with PSD; text, shapes, styles and adjustment layers go as pixels (OpenRaster keeps no masks, so there they go as pixels too).
 
 ## orOS file (.orosphoto)
 - `File` › `orOS file (.orosphoto)…` (or `Export…` › `orOS file (.orosphoto)`) saves the whole project in one file: every layer with its masks, styles, blend mode and opacity, adjustment layers, text and shapes you can still edit, guides and saved selections. The pixels are kept exactly as they are.
@@ -122,7 +125,7 @@ Ask the Assistant to change your pictures in words, such as "make it black and w
 - Up to 100 layers a picture. Text and shape layers move and scale but do not rotate; rasterize them first.
 - A mask stays in place when you flip, rotate or transform only its layer; whole-picture size, rotation and flips move it with the layer.
 - Old undo steps are dropped when they would use too much memory.
-- Photoshop files: RGB, Grayscale and CMYK at 8 or 16 bits (CMYK colours are converted simply, without a colour profile). Large documents (PSB) and other colour modes do not open.
+- Photoshop files: RGB, Grayscale, CMYK, Lab, Indexed, Bitmap and Duotone, at 8, 16 or 32 bits, also large documents (PSB), up to 300 MB. CMYK colours are converted simply, without a colour profile; 32-bit colours are brought into the normal range; a duotone opens as its grey ink. Multichannel files do not open.
 - RAW files up to 300 MB. Developing RAW data needs a browser that allows it (Chrome, Edge and other Chromium browsers); elsewhere the preview stored in the file opens. Some rare or very new cameras may not be read; then nothing opens.
 - Select subject finds one main subject; with several people or a busy scene the mask may need some painting.
 - Batch processing: up to 2000 photos at a time and a 1 GB ZIP. Masks of the adjustment layers are left out. PSD, OpenRaster and SVG files are not taken; the watermark picture and the list of photos are not kept after the dialog closes.

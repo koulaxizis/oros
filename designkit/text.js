@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — text.js (v1.0.0)
+// orOS designkit — text.js (v1.1.0)
 // Fonts + typesetting shared by Layout and Atelier.
 //   - fonts: the Noto TTF subsets in vendor/noto/ (Latin + Greek).
 //     ONE fetch per font feeds three consumers: the metrics parser
@@ -32,6 +32,18 @@
 //     (hyph), lines kept together at a column break (orph at the
 //     start, wid at the end), keep with next (kwn) and a paragraph
 //     that starts a new column, page or odd page (brk).
+//   - tabs (LY-TAB): a tab character moves on to the next stop,
+//     measured from the paragraph's left indent: the style's own stops
+//     (ext.tabs, points) first, then every ext.tabw points (36 when
+//     unset, as Scribus and Word). Stops are left stops; the gap of a
+//     tab never stretches in a justified line, only the spaces after
+//     the line's last tab do.
+//   - a line whose sizes are all smaller than its paragraph style's
+//     size takes its metrics from them (a 7 pt header in a 9.8 pt
+//     frame of a 10.5 pt style still fits, as in Scribus).
+//   - a forced line break that ends a paragraph leaves an empty
+//     line after it (Scribus, InDesign, Word); the first line of a
+//     column needs only its baseline inside the column.
 // Units: points (1/72 in) everywhere; y grows downwards; a line's
 // y is its baseline.
 // Exposes window.orosDK.text (browser) or module.exports (Node).
@@ -583,6 +595,13 @@
     if (x.sink !== undefined) { var k = Number(x.sink); out.sink = isFinite(k) ? Math.max(0, Math.min(600, k)) : 0; }
     if (x.sec !== undefined) out.sec = x.sec ? 1 : 0;
     if (x.nest !== undefined) out.nest = nestOf(x.nest);
+    if (x.tabw !== undefined) { var tw = Number(x.tabw); out.tabw = isFinite(tw) ? Math.max(1, Math.min(720, tw)) : 36; }
+    if (x.tabs !== undefined) out.tabs = tabsOf(x.tabs);
+  }
+  // ext.tabs: up to 40 stops in points (0-14400), in order
+  function tabsOf(v) {
+    if (!Array.isArray(v)) return [];
+    return v.map(Number).filter(function (n) { return isFinite(n) && n > 0 && n <= 14400; }).sort(function (a, b) { return a - b; }).slice(0, 40);
   }
   // Nested styles (LY-PRO W2, ext.nest): [{ cs, to }] up to 4, each a
   // character style from where the last one stopped through the first
@@ -791,7 +810,10 @@
         if (ch === "\n") {
           if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
           flush(); toks.push({ k: "br", o: base + i });
-        } else if (ch === " " || ch === "\t") {
+        } else if (ch === "\t") {
+          if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
+          flush(); toks.push({ k: "t", a: a, o: base + i });
+        } else if (ch === " ") {
           if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
           flush(); toks.push({ k: "s", a: a, o: base + i });
         } else if (ch === "\u00AD" || ch === "\u200B") {
@@ -820,10 +842,18 @@
     for (var i = 0; i < w.parts.length; i++) s += partWidth(w.parts[i], ctx);
     return s;
   }
-  function tokMaxSize(tok, ps) {
-    if (tok.k === "w") { var m = 0; tok.parts.forEach(function (p) { if (p.a.size > m) m = p.a.size; }); return m; }
-    if (tok.k === "s") return tok.a.size;
-    return ps.size;
+  // the biggest size among a paragraph's words (0: none)
+  function wordsMaxSize(toks) {
+    var m = 0;
+    toks.forEach(function (tk) { if (tk.k === "w") tk.parts.forEach(function (p) { if (p.a.size > m) m = p.a.size; }); });
+    return m;
+  }
+  // a tab at `pos` (points from the left indent) → the next stop
+  function tabStop(ps, pos) {
+    var st = ps.tabs || [];
+    for (var i = 0; i < st.length; i++) if (st[i] > pos + 0.01) return st[i];
+    var w = ps.tabw || 36;
+    return (Math.floor((pos + 0.01) / w) + 1) * w;
   }
 
   // Split a word that is wider than any line into pieces that fit.
@@ -1030,11 +1060,13 @@
         if (li < bulletW * 2) li = bulletW * 2.2;
       }
       var empty = toks.length === 0;
+      // all its words smaller than the style: their size sets the metrics
+      var wMax = wordsMaxSize(toks), size0 = wMax > 0 && wMax < ps.size ? wMax : ps.size;
       while (ti < toks.length || empty) {
         if (opt.breakAt && done === opt.breakAt) { if (!nextCol()) return false; opt.breakAt = 0; }
         // line metrics guess: paragraph size, refined by the line's
         // biggest size after a first fill
-        var maxSize = ps.size;
+        var maxSize = size0;
         for (var pass = 0; pass < 2; pass++) {
           var lead = leadOf(ps, maxSize);
           var keyA = fontKey(ps.font, ps.b, ps.i);
@@ -1056,6 +1088,14 @@
         }
         if (empty) break;
       }
+      // a line break that ends the paragraph leaves an empty line after
+      // it, as in Scribus, InDesign and Word (LY-TAB)
+      if (toks.length && toks[toks.length - 1].k === "br") {
+        var keyT = fontKey(ps.font, ps.b, ps.i), lineT = placeLine(toks.length, toks, ps, li, false, ascent(keyT, size0), descent(keyT, size0), leadOf(ps, size0), null, bulletW);
+        if (lineT === false) return false;
+        commit(lineT);
+        done++;
+      }
       y += ps.sa;
       return true;
     }
@@ -1071,7 +1111,10 @@
           continue;
         }
         var base = colTop ? y + asc : y + lead;
-        if (base + desc > geom.bottom + 0.01) {
+        // the first line of a column needs its baseline inside, not its
+        // descent: a one-line header or page number whose font is taller
+        // here than in the program it came from still shows (LY-TAB)
+        if (base + (colTop ? 0 : desc) > geom.bottom + 0.01) {
           // a frame too short for even one line: still move on
           if (!nextCol()) return false;
           continue;
@@ -1103,10 +1146,22 @@
       var broke = false;
       for (var si = 0; si < segs.length; si++) {
         var sx0 = segs[si][0], sx1 = segs[si][1], avail = sx1 - sx0;
-        var items = [], w = 0, spaces = 0, pendingSp = [], hyph = null, hyW = 0;
+        var items = [], w = 0, spaces = 0, pendingSp = [], hyph = null, hyW = 0, lastTab = -1;
         while (ti < toks.length) {
           var tk = toks[ti];
           if (tk.k === "br") { ti++; broke = true; break; }
+          if (tk.k === "t") {
+            // to the next stop, from the left indent (LY-TAB)
+            var tSpW = 0, tNsp = 0;
+            pendingSp.forEach(function (s) { if (s.k === "s") { tSpW += measure(s.a.key, " ", s.a.size, s.a.track); tNsp++; } });
+            var at = sx0 - (geom.x0 + li) + w + tSpW, tw = tabStop(ps, at) - at;
+            if (w + tSpW + tw > avail + 0.001 && items.length) break;
+            items.push({ tok: tk, w: Math.max(0, tw), sp: pendingSp, spW: tSpW, nsp: tNsp, ti: ti, tab: 1 });
+            w += tSpW + Math.max(0, tw); pendingSp = [];
+            spaces = 0; lastTab = items.length - 1;
+            ti++;
+            continue;
+          }
           if (tk.k === "s" || tk.k === "h") {
             if (items.length) pendingSp.push(tk);
             ti++;
@@ -1156,7 +1211,13 @@
           line.maxSize = Math.max(line.maxSize, bul.a.size);
         }
         items.forEach(function (it, k) {
-          if (k > 0) x += (it.spW || 0) + gapAdd * (it.nsp || 0);
+          if (k > 0) x += (it.spW || 0) + (k > lastTab ? gapAdd * (it.nsp || 0) : 0);
+          if (it.tab) {
+            // the tab: a blank run, so the caret and a selection find it
+            line.runs.push({ x: x, y: base, t: " ", key: it.tok.a.key, size: it.tok.a.size, color: it.tok.a.color, u: 0, track: 0, w: it.w, p: curPi, o: it.tok.o, n: 1, f: 0 });
+            x += it.w;
+            return;
+          }
           it.tok.parts.forEach(function (p) {
             var txt = partText(p, ctx), pw = partWidth(p, ctx);
             line.runs.push({ x: x, y: base - (p.a.rise || 0), t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
