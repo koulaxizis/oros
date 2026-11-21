@@ -126,6 +126,45 @@ test("undo: puts back moves, edits, new cards and empty new columns; keeps what 
   assert.deepEqual(u4.data.boards[0].columns.map((c) => c.name), ["Αναμονή", "Επιμέλεια", "Σελιδοποίηση", "B"]);
 });
 
+// KB-COLREN (Chris 2026-11-21): rename columns through kanban_add_columns.
+test("rename columns: by name or id, header stamp wins the merge, undo gives the old name back", () => {
+  const base = data();
+  const r = G.kanbanWrite(M, "add_columns", base, { board: "Βιβλία", rename_columns: [{ column: "Επιμέλεια", name: "ISBN" }, { column: "c3", name: " Σελίδες " }] }, NOW, nid);
+  assert.equal(r.ok, true, r.err);
+  assert.deepEqual(r.data.boards[0].columns.map((c) => c.name), ["Αναμονή", "ISBN", "Σελίδες"]);
+  assert.deepEqual(r.ids, []);
+  assert.equal(r.renamed, 2);
+  assert.match(r.text, /Renamed "Επιμέλεια" → "ISBN"/);
+  assert.equal(col(r.data, "c2").mtime, NOW);
+  assert.equal(r.data.boards[0].om, T0, "no order change");
+  assert.equal(M.mergeKanbanStates(base, r.data, NOW + 10).boards[0].columns[1].name, "ISBN", "the rename wins the merge");
+  // with adds in the same call
+  const both = G.kanbanWrite(M, "add_columns", base, { board: "b1", rename_columns: [{ column: "c2", name: "ISBN" }], columns: [{ name: "Τυπογραφείο" }] }, NOW, nid);
+  assert.equal(both.ok, true, both.err);
+  assert.deepEqual(both.data.boards[0].columns.map((c) => c.name), ["Αναμονή", "ISBN", "Σελιδοποίηση", "Τυπογραφείο"]);
+  // undo
+  const u = G.kanbanUndo(M, r.data, r.undo, NOW + 100);
+  assert.deepEqual([u.n, u.kept], [2, 0]);
+  assert.deepEqual(u.data.boards[0].columns.map((c) => c.name), ["Αναμονή", "Επιμέλεια", "Σελιδοποίηση"]);
+  assert.equal(M.mergeKanbanStates(r.data, u.data, NOW + 200).boards[0].columns[1].name, "Επιμέλεια", "the undo wins the merge");
+  // a column the owner renamed again since is kept
+  const later = JSON.parse(JSON.stringify(r.data));
+  col(later, "c2").name = "ISBN & κατάθεση"; col(later, "c2").mtime = NOW + 50;
+  const u2 = G.kanbanUndo(M, later, r.undo, NOW + 100);
+  assert.deepEqual([u2.n, u2.kept], [1, 1]);
+  assert.equal(col(u2.data, "c2").name, "ISBN & κατάθεση");
+  // refusals
+  const no = (a) => G.kanbanWrite(M, "add_columns", base, Object.assign({ board: "b1" }, a), NOW, nid);
+  assert.match(no({}).err, /rename_columns/);
+  assert.match(no({ rename_columns: [{ column: "Nope", name: "X" }] }).err, /^rename_columns 1: /);
+  assert.match(no({ rename_columns: [{ column: "c2", name: "" }] }).err, /at most 60/);
+  assert.match(no({ rename_columns: [{ column: "c2", name: "x".repeat(61) }] }).err, /at most 60/);
+  assert.match(no({ rename_columns: [{ column: "c2", name: "αναμονή" }] }).err, /already called "Αναμονή"/);
+  assert.match(no({ rename_columns: [{ column: "c2", name: "A" }, { column: "Επιμέλεια", name: "B" }] }).err, /already renamed/);
+  assert.match(no({ rename_columns: [{ column: "c2", name: "Επιμέλεια" }] }).err, /^Nothing to change/);
+  assert.match(no({ rename_columns: [] }).err, /1 to 20/);
+});
+
 // KB-SUB (Chris 2026-11-12): subtasks through kanban_change_card.
 test("subtasks: add at the end, tick or reword by id or text, undo takes back only those", () => {
   const raw = data();

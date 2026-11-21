@@ -1543,8 +1543,36 @@
     var undo = { k: "kanban", board: b.id, cards: {}, cols: {} }, ids = [], i, r;
 
     if (op === "add_columns") {
-      var list = Array.isArray(args.columns) ? args.columns : [];
-      if (!list.length || list.length > KB_COLS) return { ok: false, err: "columns must hold 1 to " + KB_COLS + " columns." };
+      // KB-COLREN (Chris 2026-11-21): rename_columns [{ column, name }] renames columns (header stamp, LWW), before any adds
+      var ren = args.rename_columns, rn = [];
+      if (ren !== undefined) {
+        if (!Array.isArray(ren) || !ren.length || ren.length > KB_COLS) return { ok: false, err: "rename_columns must hold 1 to " + KB_COLS + " columns." };
+        var renSeen = {};
+        for (i = 0; i < ren.length; i++) {
+          var rc = isObj(ren[i]) ? ren[i] : {}, rtag = "rename_columns " + (i + 1) + ": ";
+          var fr = kbFind(kbCols(b), rc.column, "column");
+          if (fr.err) return { ok: false, err: rtag + fr.err };
+          r = kbText(rc.name, 60, "text");
+          if (r.err || !r.s) return { ok: false, err: rtag + "a column needs a name of at most 60 characters." };
+          if (renSeen[fr.x.id]) return { ok: false, err: rtag + "that column is already renamed in this call." };
+          renSeen[fr.x.id] = 1;
+          if (r.s === fr.x.name) continue;
+          var clash = kbCols(b).filter(function (c) { return c !== fr.x && String(c.name || "").trim().toLowerCase() === r.s.toLowerCase(); })[0];
+          if (clash) return { ok: false, err: rtag + "another column is already called " + JSON.stringify(clash.name) + "." };
+          rn.push({ col: fr.x, from: String(fr.x.name || ""), to: r.s });
+        }
+        if (!rn.length && args.columns === undefined) return { ok: false, err: "Nothing to change: the columns already have these names." };
+      }
+      if (args.columns === undefined && ren === undefined) return { ok: false, err: "Give columns to add or rename_columns." };
+      undo.ren = {};
+      var renTxt = rn.map(function (x) {
+        var at = Math.max(now, (x.col.mtime || 0) + 1);
+        x.col.name = x.to; x.col.mtime = at;
+        undo.ren[x.col.id] = { n: x.from, a: at };
+        return JSON.stringify(x.from) + " → " + JSON.stringify(x.to);
+      });
+      var list = args.columns === undefined ? [] : Array.isArray(args.columns) ? args.columns : null;
+      if (!list || (args.columns !== undefined && !list.length) || list.length > KB_COLS) return { ok: false, err: "columns must hold 1 to " + KB_COLS + " columns." };
       for (i = 0; i < list.length; i++) {
         var nc = isObj(list[i]) ? list[i] : {};
         r = kbText(nc.name, 60, "text");
@@ -1560,8 +1588,11 @@
         undo.cols[col.id] = now;
         ids.push(col.id);
       }
-      b.om = now;
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, text: "Added " + ids.length + " column" + (ids.length === 1 ? "" : "s") + " to " + (b.name || "the board") + "." };
+      if (ids.length) b.om = now;
+      var said = [];
+      if (renTxt.length) said.push("Renamed " + renTxt.join(", ") + ".");
+      if (ids.length) said.push("Added " + ids.length + " column" + (ids.length === 1 ? "" : "s") + " to " + (b.name || "the board") + ".");
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, renamed: renTxt.length, text: said.join(" ") };
     }
 
     if (op === "add_cards") {
@@ -1775,6 +1806,12 @@
       });
       n++;
     });
+    // KB-COLREN: a renamed column gets its old name back unless it changed since
+    if (isObj(u.ren)) Object.keys(u.ren).forEach(function (id) {
+      var e = u.ren[id], c = kbCols(b).filter(function (x) { return x.id === id; })[0];
+      if (!isObj(e) || !c || (c.mtime || 0) !== e.a) { kept++; return; }
+      c.name = e.n; c.mtime = Math.max(now, e.a + 1); n++;
+    });
     Object.keys(u.cols).forEach(function (id) {
       var cols = kbCols(b), c = cols.filter(function (x) { return x.id === id; })[0];
       if (!c || (c.mtime || 0) !== u.cols[id] || (Array.isArray(c.cards) && c.cards.length)) { kept++; return; }
@@ -1946,21 +1983,21 @@
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
           tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer", budget_balances: "matched Budget's account balances",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
-                   kanban_add_columns: "added Kanban columns", invoices_record: "recorded invoices issued elsewhere",
+                   kanban_add_columns: "added or renamed Kanban columns", invoices_record: "recorded invoices issued elsewhere",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
-                   kanban_add_columns: "πρόσθεσε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
+                   kanban_add_columns: "πρόσθεσε ή μετονόμασε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
-                   kanban_add_columns: "Kanban-Spalten hinzugefügt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
+                   kanban_add_columns: "Kanban-Spalten hinzugefügt oder umbenannt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
                    link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };
@@ -3232,7 +3269,7 @@
       if (at && lateIn(kd, r.data, at)) return { ok: false, late: 1, c: LATE_TXT };
       if (!writeJSON("oros-kanban-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
-      var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length + (Array.isArray(r.removed) ? r.removed.length : 0));
+      var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length + (Array.isArray(r.removed) ? r.removed.length : 0) + (r.renamed || 0));
       return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
     }
   }

@@ -913,3 +913,12 @@ test("KB-SUBDEL: removing Kanban subtasks is a deletion for the box (it waits fo
   assert.ok(t.inputSchema.properties.remove_subtasks);
   assert.match(t.description, /remove_subtasks: a deletion/);
 });
+
+test("KB-COLREN: kanban_add_columns also renames columns (not a deletion)", () => {
+  const t = G.TOOLS.find((x) => x.name === "kanban_add_columns");
+  assert.ok(t.inputSchema.properties.rename_columns);
+  assert.deepEqual(t.inputSchema.required, ["board"]);
+  assert.deepEqual(t.inputSchema.properties.rename_columns.items.required, ["column", "name"]);
+  assert.match(t.description, /renames columns/);
+  assert.equal(G.isDeletion("kanban_add_columns", { board: "b", rename_columns: [{ column: "c", name: "ISBN" }] }), false);
+});
