@@ -13409,3 +13409,8 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** maps/quests-core.js, maps/quests.js, maps/overlays-core.js, maps/trails.js, maps/maps.css, maps/help.en/el.txt, i18n/de/maps.js, i18n/de/help/maps.txt, i18n/de/STATUS.md, shell.js, help/topics/whatsnew.en/el.txt, tests/maps-hike-quests.test.js (new), tests/maps-quests.test.js, tests/maps-overlays.test.js.
 - **Tests:** full `node --test tests/*.test.js`; Playwright `h7-e2e.js`, `overlays-e2e.js`, `quests-e2e.js`, `quests8-e2e.js`, `trails-e2e.js`, `notes-e2e.js`. Not tested: live Overpass, note upload from a signed-in OSM account.
 - **Next:** H8 (experimental offline Walk and Bike routing from map packs).
+
+### 2026-11-21 — Koulaxizis Apps 1.3.1 — Waymark in its own section (no APP_VERSION)
+- **Asked (Chris 2026-11-21):** Waymark showed inside the orOS section of Koulaxizis Apps, but it is a standalone project, not an orOS app; it needs its own section, before the Glarolykoi app.
+- **Changes:** `Source.java`: `section("waymark", "Waymark", OROS, "site.waymarked.app")` in `ALL`, before Glarolykoi (same orOS repository and pinned key, read once). Order on the screen: orOS, NULL JSFX, Noxpress, Waymark, Glarolykoi. versionCode 10301 / 1.3.1. README «Sources» updated.
+- **Verified:** `SourceTest` (new `waymarkIsItsOwnSectionBeforeGlarolykoi`, the split and the shared error now include Waymark) compiled with javac + JUnit 4.13.2 and run: 3/3 pass. The other manager tests need the Android framework jar, not available here; CI runs the full unit tests and the emulator test on the PR. Not tested on a real phone.
