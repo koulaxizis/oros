@@ -3,9 +3,14 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
-## Version 8.10.00
+## Version 8.11.00
 - **Claude works with orOS in the tray.** On a computer with orOS Setup or Portable, Layout's work that Claude asks for through orOS Gate now runs while the orOS window is minimised or closed to the tray, without bringing orOS to the front. Proposals for you to read, and anything that deletes, still wait for you on a screen.
 - **Folders of your computer for Claude, from any device.** A folder you open for Claude by its path is now shared with your other devices through orOS Gate (only the path, sealed), so you can open, renew or close it from the phone, and Claude can ask for one: you answer on whichever device has orOS on screen. It keeps working after a restart, where orOS runs on that computer.
+
+## Version 8.10.00
+- **Layout: text around shapes and pictures.** Text can now follow a shape's outline or a picture's transparent edges, not only its frame (Properties › Wrap by).
+- **Layout: pictures that move with the text.** Anchor a picture or shape in the text and it stays with its line when the text changes (Properties › Anchor in the text).
+- **Layout: a page of another file as a picture.** Place a page of a PDF, Scribus or InDesign file in a picture frame. For an Affinity file, export the page as a PDF first. Claude can do all three too.
 
 ## Version 8.09.00
 - **Layout: colour corrections for pictures.** Select a picture and open Colour corrections in its properties: levels, curves, brightness and contrast, colour balance, hue and saturation, or black and white. The picture file stays as it is, so you can change or remove the corrections at any time, and the PDF and e-book show them. Claude can set them too.
