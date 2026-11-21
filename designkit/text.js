@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — text.js (v1.1.0)
+// orOS designkit — text.js (v1.3.0)
 // Fonts + typesetting shared by Layout and Atelier.
 //   - fonts: the Noto TTF subsets in vendor/noto/ (Latin + Greek).
 //     ONE fetch per font feeds three consumers: the metrics parser
@@ -816,6 +816,12 @@
         } else if (ch === " ") {
           if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
           flush(); toks.push({ k: "s", a: a, o: base + i });
+        } else if (ch === "\uFFFC" && run.ext && typeof run.ext.obj === "string") {
+          // an anchored object (LY-PRO W4b): a box as wide and tall as
+          // the frame it holds, set like a word
+          if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
+          if (!word) word = { k: "w", parts: [] };
+          word.parts.push({ t: null, f: "obj", ob: run.ext.obj, a: a, o: base + i, n: 1 });
         } else if (ch === "\u00AD" || ch === "\u200B") {
           if (buf) { part(buf, a, base + b0, buf.length); buf = ""; }
           flush(); toks.push({ k: "h", a: a, o: base + i, hy: ch === "\u00AD" ? 1 : 0 });
@@ -836,7 +842,14 @@
     if (p.f === "sec") return caseOf(p.a, typeof ctx.sec === "string" ? ctx.sec : p.fb || "");
     return "";
   }
-  function partWidth(p, ctx) { return measure(p.a.key, partText(p, ctx), p.a.size, p.a.track, p.a.kern); }
+  // the anchored objects' boxes of the chain being laid out:
+  // { item id: { w, h } } (styles.obj; none: an object takes no room)
+  var curObjs = null;
+  function objBox(p) { var b = curObjs && curObjs[p.ob]; return b && b.w > 0 && b.h > 0 ? b : null; }
+  function partWidth(p, ctx) {
+    if (p.f === "obj") { var b = objBox(p); return b ? b.w : 0; }
+    return measure(p.a.key, partText(p, ctx), p.a.size, p.a.track, p.a.kern);
+  }
   function wordWidth(w, ctx) {
     var s = 0;
     for (var i = 0; i < w.parts.length; i++) s += partWidth(w.parts[i], ctx);
@@ -847,6 +860,21 @@
     var m = 0;
     toks.forEach(function (tk) { if (tk.k === "w") tk.parts.forEach(function (p) { if (p.a.size > m) m = p.a.size; }); });
     return m;
+  }
+  // the one font all its words are set in ("" when they mix or there
+  // are none): in a frame from Scribus (sfit) its ascent and descent
+  // place the lines, as Scribus takes them from the glyphs (LY-FIT)
+  function wordsKey(toks) {
+    var k = null;
+    for (var i = 0; i < toks.length; i++) {
+      if (toks[i].k !== "w") continue;
+      var ps = toks[i].parts;
+      for (var j = 0; j < ps.length; j++) {
+        if (k === null) k = ps[j].a.key;
+        else if (ps[j].a.key !== k) return "";
+      }
+    }
+    return k || "";
   }
   // a tab at `pos` (points from the left indent) → the next stop
   function tabStop(ps, pos) {
@@ -883,11 +911,34 @@
   }
 
   // ---------- 7. Exclusions (text wrap) ----------
-  // ex = { x, y, w, h, shape: "box"|"ell" } in frame coordinates,
+  // ex = { x, y, w, h, shape: "box"|"ell"|"poly" } in frame coordinates,
   // offset already applied. Returns the blocked x-interval for the
   // band [y0, y1], or null.
+  // shape "poly" (W4b, by the outline): polys = point lists, o the
+  // offset; the band (widened by o) takes the polygons' x extent there.
+  function polyBlocked(ex, y0, y1) {
+    var o = ex.o || 0, a = y0 - o, b = y1 + o, lo = Infinity, hi = -Infinity;
+    ex.polys.forEach(function (pl) {
+      for (var i = 0; i < pl.length; i++) {
+        var p = pl[i], q = pl[(i + 1) % pl.length];
+        var ya = Math.min(p[1], q[1]), yb = Math.max(p[1], q[1]);
+        if (yb < a || ya > b) continue;
+        // the edge's part inside the band
+        var t0 = 0, t1 = 1, dy = q[1] - p[1];
+        if (dy) {
+          var ta = (a - p[1]) / dy, tb = (b - p[1]) / dy;
+          t0 = Math.max(0, Math.min(ta, tb)); t1 = Math.min(1, Math.max(ta, tb));
+          if (t1 < t0) continue;
+        }
+        var xa = p[0] + (q[0] - p[0]) * t0, xb = p[0] + (q[0] - p[0]) * t1;
+        lo = Math.min(lo, xa, xb); hi = Math.max(hi, xa, xb);
+      }
+    });
+    return hi >= lo ? [lo - o, hi + o] : null;
+  }
   function blocked(ex, y0, y1) {
     if (y1 <= ex.y || y0 >= ex.y + ex.h) return null;
+    if (ex.shape === "poly") return polyBlocked(ex, y0, y1);
     if (ex.shape !== "ell") return [ex.x, ex.x + ex.w];
     var cy = ex.y + ex.h / 2, ry = ex.h / 2, rx = ex.w / 2;
     // widest point of the ellipse inside the band
@@ -932,6 +983,7 @@
   //                     p, o, n (source offsets), f (field) }] }
   function layoutChain(story, frames, styles) {
     var psMap = byId(styles.ps), csMap = byId(styles.cs);
+    curObjs = styles.obj || null;
     var out = { frames: {}, overset: false, placedParas: 0 };
     frames.forEach(function (f) { out.frames[f.id] = { lines: [] }; });
     if (!frames.length) { out.overset = hasText(story); return out; }
@@ -1062,17 +1114,22 @@
       var empty = toks.length === 0;
       // all its words smaller than the style: their size sets the metrics
       var wMax = wordsMaxSize(toks), size0 = wMax > 0 && wMax < ps.size ? wMax : ps.size;
+      var wKey = geom.f.sfit ? wordsKey(toks) : "";
       while (ti < toks.length || empty) {
         if (opt.breakAt && done === opt.breakAt) { if (!nextCol()) return false; opt.breakAt = 0; }
         // line metrics guess: paragraph size, refined by the line's
         // biggest size after a first fill
-        var maxSize = size0;
-        for (var pass = 0; pass < 2; pass++) {
+        var maxSize = size0, objH = 0;
+        for (var pass = 0; pass < 3; pass++) {
           var lead = leadOf(ps, maxSize);
-          var keyA = fontKey(ps.font, ps.b, ps.i);
+          var keyA = wKey || fontKey(ps.font, ps.b, ps.i);
           var asc = ascent(keyA, maxSize), desc = descent(keyA, maxSize);
+          // an anchored object taller than the line's ascent: the line
+          // makes room above its baseline (W4b)
+          if (objH > asc) { lead += objH - asc; asc = objH; }
           var placed = placeLine(ti, toks, ps, li, firstLine, asc, desc, lead, hangBul && firstLine ? hangBul : null, bulletW);
           if (placed === false) return false;
+          if (pass < 2 && (placed.objH || 0) > Math.max(objH, asc) + 0.001) { objH = placed.objH; if (placed.maxSize > maxSize) maxSize = placed.maxSize; continue; }
           if (placed.maxSize > maxSize + 0.001 && pass === 0) { maxSize = placed.maxSize; continue; }
           if (placed.next === ti && !empty) {
             // nothing fitted beside a wrap: nudge down, try again
@@ -1146,6 +1203,10 @@
       var broke = false;
       for (var si = 0; si < segs.length; si++) {
         var sx0 = segs[si][0], sx1 = segs[si][1], avail = sx1 - sx0;
+        // does a line `lw` wide still fit? Scribus's frames (sfit) end a
+        // line once its end, rounded up, reaches the column's right
+        // edge rounded down, so the same words go on each line (LY-FIT)
+        var over = geom.f.sfit ? function (lw) { return Math.ceil(sx0 + lw - 0.001) >= Math.floor(sx1 + 0.001); } : function (lw) { return lw > avail + 0.001; };
         var items = [], w = 0, spaces = 0, pendingSp = [], hyph = null, hyW = 0, lastTab = -1;
         while (ti < toks.length) {
           var tk = toks[ti];
@@ -1155,7 +1216,7 @@
             var tSpW = 0, tNsp = 0;
             pendingSp.forEach(function (s) { if (s.k === "s") { tSpW += measure(s.a.key, " ", s.a.size, s.a.track); tNsp++; } });
             var at = sx0 - (geom.x0 + li) + w + tSpW, tw = tabStop(ps, at) - at;
-            if (w + tSpW + tw > avail + 0.001 && items.length) break;
+            if (over(w + tSpW + tw) && items.length) break;
             items.push({ tok: tk, w: Math.max(0, tw), sp: pendingSp, spW: tSpW, nsp: tNsp, ti: ti, tab: 1 });
             w += tSpW + Math.max(0, tw); pendingSp = [];
             spaces = 0; lastTab = items.length - 1;
@@ -1170,7 +1231,7 @@
           var spW = 0, nsp = 0;
           pendingSp.forEach(function (s) { if (s.k === "s") { spW += measure(s.a.key, " ", s.a.size, s.a.track); nsp++; } });
           var ww = wordWidth(tk, ctx);
-          if (w + spW + ww > avail + 0.001) {
+          if (over(w + spW + ww)) {
             if (!items.length) {
               // too wide for a segment narrowed by a wrap: try the
               // next segment / line; wider than the column: split
@@ -1184,7 +1245,7 @@
             // line ends one break earlier
             hyph = breakHyph(pendingSp);
             while (hyph && items.length > 1) {
-              if (w + (hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0) <= avail + 0.001) break;
+              if (!over(w + (hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0))) break;
               var last = items.pop();
               w -= last.w + last.spW; spaces -= last.nsp; ti = last.ti;
               hyph = breakHyph(last.sp);
@@ -1222,6 +1283,13 @@
             var txt = partText(p, ctx), pw = partWidth(p, ctx);
             line.runs.push({ x: x, y: base - (p.a.rise || 0), t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
             if (p.a.kern) line.runs[line.runs.length - 1].kern = 1;
+            if (p.f === "obj") {
+              var ob = objBox(p);
+              line.runs[line.runs.length - 1].obj = p.ob;
+              if (ob) line.objH = Math.max(line.objH || 0, ob.h + (p.a.rise || 0));
+              x += pw;
+              return;
+            }
             if (p.a.size > line.maxSize) line.maxSize = p.a.size;
             x += pw;
           });
@@ -1250,7 +1318,7 @@
       return sp[sp.length - 1];
     }
     function commit(line) {
-      delete line.maxSize; delete line.next; delete line.base;
+      delete line.maxSize; delete line.next; delete line.base; delete line.objH;
       out.frames[geom.f.id].lines.push(line);
       y = line.y; colTop = false;
       lastPg = pageOf() || null;

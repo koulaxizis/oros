@@ -309,6 +309,9 @@ body.panel-closed #side { display: none; }
 .pn-sec { padding: 10px 0; border-bottom: 1px solid var(--border); }
 .pn-sec:last-child { border-bottom: none; }
 .pn-h { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin-bottom: 8px; }
+.pn-det > summary.pn-h { cursor: pointer; list-style-position: inside; }
+.pn-det > summary.pn-h:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.pn-det[open] > summary.pn-h { margin-bottom: 10px; }
 .pn-title { font-weight: 800; padding: 10px 0 2px; }
 .pn-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 6px; }
 .pn-col { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }

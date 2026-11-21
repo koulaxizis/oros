@@ -349,6 +349,18 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 #ed-export svg { width: 16px; height: 16px; }
 /* ---------- 5. Panel content ---------- */
 .pn-sec { padding: 10px 0; border-bottom: 1px solid var(--border); }
+/* Layers list (wave CV-1) */
+.ly-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.ly-row { display: flex; align-items: center; gap: 4px; border: 1px solid transparent; border-radius: 8px; padding: 2px 4px; background: var(--panel-bg); }
+.ly-row.on { border-color: var(--accent); background: var(--accent-soft); }
+.ly-row.inner { margin-inline-start: 22px; }
+.ly-row.grp .ly-name { font-weight: 600; }
+.ly-row.dragging { opacity: 0.5; }
+.ly-grip { cursor: grab; touch-action: none; background: none; border: 0; color: var(--text-dim); min-width: 32px; min-height: 40px; font-size: 14px; letter-spacing: -2px; }
+.ly-fold { background: none; border: 0; color: var(--text); min-width: 28px; min-height: 40px; font-size: 14px; }
+.ly-name { flex: 1 1 auto; min-width: 0; text-align: start; background: none; border: 0; color: var(--text); padding: 8px 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ly-tag { margin-inline-start: 6px; font-size: 11px; color: var(--text-dim); }
+.ly-drop { height: 3px; border-radius: 2px; background: var(--accent); }
 .pn-sec:last-child { border-bottom: none; }
 .pn-h { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin-bottom: 8px; }
 .pn-title { font-weight: 800; padding: 10px 0 2px; }

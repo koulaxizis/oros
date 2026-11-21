@@ -3,6 +3,74 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.20.00
+- **Music: search with filters.** A filters button next to the search box narrows free music by genre, country, length, voice, mood, tempo, year and licence. A catalogue that cannot apply a filter is listed under Left out instead of showing songs that do not match.
+- **Music: eleven free catalogues.** Audius, Free Music Archive, Kevin MacLeod, Musopen, the National Jukebox of the Library of Congress, Europeana and DPLA (with your own free key) join Jamendo, the Internet Archive, Openverse and ccMixter. Turn each on or off in Settings › Sources. Dogmazic is one tap away in Connect a server.
+- **Music: dig deeper.** The Concert explorer finds a band's live tapes by year, soundboard or audience. Netlabels lists the free labels with their releases. Save a search and it waits for you in Search on every device, showing what is new since your last visit. A Deep dig order brings rarely played, well rated albums first, and a playlist can copy the credits of its free songs.
+
+## Version 8.19.00
+- **Claude brings files into your folders, even with orOS closed.** Through orOS Gate, Claude can now upload pictures, PDFs and fonts into Claude's folders, for example a book's pictures from your computer. The file waits sealed with your gate key until orOS opens on one of your devices, which writes it like any other change of Claude's: you are notified and can undo it. Then Layout finds it on every device.
+
+## Version 8.18.00
+- **Update your other devices from your phone.** Settings › orOS Gate has a new button, Update them now: every other device where orOS is open, a computer with orOS in the tray too, switches to the newest orOS within a few minutes, without you at the computer. Claude can ask for the same through orOS Gate when a device runs an older version. On Windows this needs orOS for Windows 0.9.5 or newer.
+
+## Version 8.17.00
+- **Outdoor places and Where am I in Maps.** Discover now finds water and springs, shelters and huts, peaks and viewpoints, camping and bike service. Where am I shows your position in every common format with a compass, sunrise and sunset, Call 112 and Text my position. See [Maps](help:a/maps).
+
+## Version 8.16.00
+- **Layout: port a whole folder of books.** On Layout's home page, Open file › Port a folder of books opens every Scribus and InDesign file of a folder of past work as a new document with its own pictures, finds the PDF that went to the printer, compares each page with it and gives you a report you can save as a spreadsheet. Nothing in the folder changes. Compare with a PDF now also notices when the PDF has extra pages at the start.
+
+## Version 8.14.00
+- **Claude talks to your newest orOS.** When orOS is open on more than one device, orOS Gate now asks the one with the newest version first, so an old window left open on a computer no longer answers for the others.
+
+## Version 8.13.00
+- **Claude finds your Layout documents on every device.** Through orOS Gate, Claude now reads and changes Layout and Atelier documents from their synced files, even on a device where you never opened Layout, such as orOS in the tray. Claude can also read back Layout's proofs and PDFs.
+- **A picture that can't be read no longer stops everything.** When a picture or font file in Claude's Layout commands can't be opened, only that step is skipped and the rest are applied; the report names what was skipped and why.
+- **Up to date right after a change.** Layout answers Claude once a change is saved, so what Claude reads next already shows it, and Claude can use new orOS Gate tools without starting a new conversation.
+
+## Version 8.12.00
+- **Layout: more of your Scribus and InDesign files comes over.** Tables from Scribus open as tables, with their cell colours, borders and text, and text on a curve stays on its curve. From InDesign, layers keep their order and their hidden or locked objects, drawn shapes keep their outline, text on a curve stays on it, tabs stay tabs, tables become rows set at their columns and footnotes go after their text.
+
+## Version 8.11.00
+- **Claude works with orOS in the tray.** On a computer with orOS Setup or Portable, Layout's work that Claude asks for through orOS Gate now runs while the orOS window is minimised or closed to the tray, without bringing orOS to the front. Proposals for you to read, and anything that deletes, still wait for you on a screen.
+- **Folders of your computer for Claude, from any device.** A folder you open for Claude by its path is now shared with your other devices through orOS Gate (only the path, sealed), so you can open, renew or close it from the phone, and Claude can ask for one: you answer on whichever device has orOS on screen. It keeps working after a restart, where orOS runs on that computer.
+- **Every Gate task with orOS minimised.** In a minimised orOS window on the computer, Claude's proposals (an entry, an automation, a newsletter) also open there for you to check when you look. When Layout's work would remove pages or things, it now waits for your Delete on any device with orOS on screen, the phone too, instead of being dropped.
+
+## Version 8.10.00
+- **Layout: text around shapes and pictures.** Text can now follow a shape's outline or a picture's transparent edges, not only its frame (Properties › Wrap by).
+- **Layout: pictures that move with the text.** Anchor a picture or shape in the text and it stays with its line when the text changes (Properties › Anchor in the text).
+- **Layout: a page of another file as a picture.** Place a page of a PDF, Scribus or InDesign file in a picture frame. For an Affinity file, export the page as a PDF first. Claude can do all three too.
+
+## Version 8.09.00
+- **Layout: colour corrections for pictures.** Select a picture and open Colour corrections in its properties: levels, curves, brightness and contrast, colour balance, hue and saturation, or black and white. The picture file stays as it is, so you can change or remove the corrections at any time, and the PDF and e-book show them. Claude can set them too.
+- **Layout: Scribus books, a little closer.** A no-break space or line break in a Scribus book now keeps the font of the text around it.
+
+## Version 8.08.01
+- **Layout: books from Scribus keep their lines.** A Scribus book opened in Layout now ends every line where Scribus ended it and starts each page at the same height, so the pages break where they did in the original. Open the book's .sla again to get it.
+
+## Version 8.08.00
+- **Claude can rename Kanban columns.** Through orOS Gate, Claude can now give a column a new name, alongside adding columns. You are notified and can undo it from Claude's changes.
+
+## Version 8.07.00
+- **Caravan: the Spice road.** Four new routes past the old toll machines, each ending at two markets: the spice market pays three coins a crate instead of two. A new cart, the smith's cart, jams the nearest machine it passes for a few seconds, and a jammed machine does nothing at all, not even slow carts down or help its neighbours. Open it by clearing the last route of the Salt road. Every route with a star now also has Endless: all the machines work from the first trip, and each trip must bring more crates than the one before, for as long as you can keep going; your best score syncs. And the carts now have their mules, ponies and oxen in front, turning wheels and a little dust (none of it with reduced motion), with a soft rumble on the road.
+
+## Version 8.06.00
+- **Live pills in the top bar.** While a timer or the stopwatch of Time runs, or Screen Capture records, a pill with its time shows at the start of the top bar by itself. Tap it to open the app; the button beside it pauses the timer or the stopwatch, or stops the recording. Turn them off in Settings › Appearance › Top bar › `Live pills`.
+
+## Version 8.05.00
+- **Signal, a skin like an LED dot display.** The 17th skin in Settings › Appearance: black with white text and a red light (white paper with deep red in the light theme). It comes with the new `Dot Matrix` wallpaper, and the Clock widget shows the time in LED dots. The Clock card's ⋯ menu lets you pick `Clock: digits`, `Clock: LED dots` or `Clock: automatic` with any skin.
+- **Glass ribbons in the Wallpaper Generator.** A new style: three glossy ribbons that run across the screen and twist like folded glass, each in one colour of the palette you pick. Density makes them wider, Chaos gives them more bends.
+
+## Version 8.04.00
+- **Orbit garden: the far orbit and Endless.** Four new gardens open after Night bloom: rings with two gaps, where the sparks take the first gap they meet, and rings the moon turns one step by itself after every wave (small arrows show which way). Every garden with a star now has an Endless night: its ten waves come round again and again, more and stronger each round, and the garden list keeps your best wave. The garden also looks and sounds more like a little moon: twinkling stars, old craters, a glowing moonflower, a hiss for the dew, a stone grind for every turn and a bell when a wave is cleared.
+
+## Version 8.03.00
+- **Bring your work from Photoshop, GIMP and Canva.** Photo Lab now opens Photoshop files in full: masks, adjustment layers, layer styles, fill layers and vector masks stay editable, at 8, 16 and 32 bits and in every colour mode. It also opens GIMP files (.xcf, GIMP 2 and 3), and after opening, a short report says what could not stay editable.
+- **Layer groups in Photo Lab.** Folders in Layers, as in Photoshop and GIMP: pass-through or their own blend mode, opacity, groups inside groups. Group layer is Ctrl+G. Groups from Photoshop, GIMP, OpenRaster and Krita files open as groups and are saved back as groups.
+- **Atelier opens a Canva PDF as a design you can edit**, and designs from Canva now keep their real size in pixels, including banners longer than 56 inches (pick the .pptx together with Canva's PDF of it). Office fonts are replaced by free fonts with the same letter widths, so lines break as in Canva.
+- **Canva's animations in Atelier.** A new Animate panel with Canva's 28 enter and exit effects and 4 emphasis effects, with direction, speed and text by line, word or letter, plus page animations. Videos, the page's sound, moving GIFs and slide transitions now come in from Canva files.
+- **Groups, Layers and Copy style in Atelier.** Group elements with Ctrl+G: a tap picks the group, a second tap the element inside it. Position › Layers lists the page's elements; drag them to move them in front or behind. The roller copies one element's style onto another.
+
 ## Version 8.02.03
 - **Updates no longer get stuck on a phone with little free space.** A phone whose browser storage was nearly full could stay on an old version for hours: the new version did not fit next to the old one and the update failed quietly every time. orOS now makes room, starts the new version with what fits and fetches the rest afterwards. The bell's notice that orOS was updated on another device has an **Update now** button, which loads the new version at once or says why it could not (not enough space, no connection). Settings › Check for updates does the same.
 

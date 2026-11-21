@@ -241,7 +241,7 @@ test("idml: frames, threads, text, shapes, images", async () => {
   assert.equal(st.paras[0].ps, d.pstyles.find((p) => p.name === "Headings:Title").id);
   const p1 = st.paras[1];
   assert.equal(p1.ps, body.id);
-  assert.deepEqual(p1.runs.map((r) => r.t), ["Plain then ", "bold", " styled", " big blue\nnext line tab"]);
+  assert.deepEqual(p1.runs.map((r) => r.t), ["Plain then ", "bold", " styled", " big blue\nnext line\ttab"]);
   assert.equal(p1.runs[1].b, 1);
   assert.equal(p1.runs[2].cs, d.cstyles.find((c) => c.name === "Emphasis").id);
   const big = d.cstyles.find((c) => c.id === p1.runs[3].cs);
@@ -266,12 +266,16 @@ test("idml: frames, threads, text, shapes, images", async () => {
   assert.deepEqual(imgs.map((i) => i.nm).sort(), ["logo.tif", "sea view.png"]);
   assert.equal(res.images.length, 1);
   assert.equal(res.linked, 1);
+  // the linked one by name, for the pictures picked with it (LY-PORT3)
+  assert.deepEqual(res.links, [{ item: imgs.find((i) => i.nm === "logo.tif").id, name: "logo.tif" }]);
   assert.equal(res.images[0].item, imgs.find((i) => i.nm === "sea view.png").id);
   const blob = I.imageBlob(res.images[0]);
   assert.equal(blob.type, "image/png");
-  // polygon → its box (counted), button left out (counted), table counted
-  assert.ok(on(0).some((i) => i.t === "rect" && Math.round(i.w) === 60 && Math.round(i.h) === 40));
-  assert.equal(res.stats.skipped, 3);
+  // polygon → a path with its own points (LY-PORT2), button left out
+  // (counted), an empty table counted
+  const poly = on(0).find((i) => i.t === "path");
+  assert.deepEqual([poly.x, poly.y, poly.w, poly.h, poly.d], [300, 497.5, 60, 40, "M0 0L0.5 1L1 0Z"]);
+  assert.equal(res.stats.skipped, 2);
   assert.equal(res.stats.items, d.items.length);
   // the result is a normal, valid document
   assert.equal(JSON.stringify(M.normDoc(d)), JSON.stringify(d));

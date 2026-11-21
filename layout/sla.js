@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Layout — Scribus .sla import (v1.4.0)
+// orOS Layout — Scribus .sla import (v1.6.0)
 // Reads a Scribus document (1.4, 1.5, 1.6 XML) into a NEW Layout
 // document: pages, master pages, margins, columns, bleed, colours,
 // paragraph styles, text frames with their threads, images, shapes,
@@ -14,8 +14,10 @@
 //     frames that keep the file name (`links`), filled by io.js from
 //     the pictures picked with the file. Each keeps how Scribus placed
 //     it (ext.place: scale, offset, fit or stretch).
-//   - Not imported (counted in stats.skipped): tables, text on a path
-//     (a plain text frame), mesh / pattern / diamond / conical fills
+//   - Tables become their cells: fills, borders and one text frame per
+//     cell, in a group (LY-PORT2, tableItems); text on a path keeps its
+//     path (ext.tp).
+//   - Not imported (counted in stats.skipped): mesh / pattern / diamond / conical fills
 //     (plain colour), LaTeX and other render frames, hyphenation
 //     settings. Image and text frames keep their box, not a free
 //     outline.
@@ -272,6 +274,118 @@
     return M.parsePath(d) ? d : "";
   }
 
+  // Length of absolute M / L / C / Z commands (cubics flattened).
+  function pathLen(cmds) {
+    var len = 0, x = 0, y = 0, sx = 0, sy = 0;
+    cmds.forEach(function (c) {
+      if (c[0] === "M") { x = sx = c[1]; y = sy = c[2]; return; }
+      if (c[0] === "L") { len += Math.hypot(c[1] - x, c[2] - y); x = c[1]; y = c[2]; return; }
+      if (c[0] === "Z") { len += Math.hypot(sx - x, sy - y); x = sx; y = sy; return; }
+      if (c[0] === "C") {
+        var px = x, py = y;
+        for (var k = 1; k <= 16; k++) {
+          var t = k / 16, u = 1 - t;
+          var qx = u * u * u * x + 3 * u * u * t * c[1] + 3 * u * t * t * c[3] + t * t * t * c[5];
+          var qy = u * u * u * y + 3 * u * u * t * c[2] + 3 * u * t * t * c[4] + t * t * t * c[6];
+          len += Math.hypot(qx - px, qy - py); px = qx; py = qy;
+        }
+        x = c[5]; y = c[6];
+      }
+    });
+    return len;
+  }
+  // Path data (0-1 in the frame, as pathData) → ext.tp's d: one string,
+  // or 4000-character pieces (designkit normX's longest string); null
+  // when it would not fit in an item's ext.
+  function tpData(d) {
+    if (!d) return null;
+    var out = [];
+    for (var i = 0; i < d.length; i += 4000) out.push(d.slice(i, i + 4000));
+    var v = out.length === 1 ? out[0] : out;
+    return JSON.stringify(v).length <= 7000 ? v : null;
+  }
+
+  // ---------- 3b. Tables (LY-PORT2) ----------
+  // A table as Layout items: a filled rectangle per coloured cell, a
+  // text frame per cell that holds text (its own story), and one line
+  // per cell side that has a border (a side two cells share is drawn
+  // once, the heavier border wins), all in one group. Layout has no
+  // table object yet (wave W12): this keeps how the page looks and
+  // every cell's text editable.
+  // t: { pg, x, y, rot (deg, about the table's top-left), cols: [w],
+  // rows: [h], cells: [{ r, c, rs, cs, fill, ins, va, story, ext }],
+  // edge(cell, side "l"|"t"|"r"|"b") → { stroke, sw, dash } or null,
+  // z (first z), grp, hide, lock, now }. Returns the items.
+  function tableItems(t) {
+    var cx = [0], cy = [0], i;
+    for (i = 0; i < t.cols.length; i++) cx.push(cx[i] + Math.max(0, t.cols[i]));
+    for (i = 0; i < t.rows.length; i++) cy.push(cy[i] + Math.max(0, t.rows[i]));
+    var a = (t.rot || 0) * Math.PI / 180, co = Math.cos(a), si = Math.sin(a);
+    function P(u, v) { return [t.x + u * co - v * si, t.y + u * si + v * co]; }
+    var fills = [], texts = [], edges = {};
+    function base(o) {
+      o.id = M.newId("it"); o.m = t.now || 1; o.pg = t.pg;
+      if (t.grp) o.grp = t.grp;
+      if (t.hide) o.hide = 1;
+      if (t.lock) o.lock = 1;
+      return o;
+    }
+    (t.cells || []).forEach(function (c) {
+      var r1 = Math.min(t.rows.length, c.r + Math.max(1, c.rs || 1)), c1 = Math.min(t.cols.length, c.c + Math.max(1, c.cs || 1));
+      if (!(c.r >= 0 && c.c >= 0 && c.r < r1 && c.c < c1)) return;
+      var u = cx[c.c], v = cy[c.r], w = cx[c1] - u, h = cy[r1] - v;
+      if (!(w > 0.01 && h > 0.01)) return;
+      var tl = P(u, v);
+      if (c.fill) {
+        var f = base({ t: "rect", fill: c.fill, stroke: "", sw: 0 });
+        place(f, tl[0], tl[1], w, h, t.rot || 0);
+        fills.push(f);
+      }
+      if (c.story) {
+        var tx = base({ t: "text", story: c.story, seq: 1024, cols: 1, gut: 0, ins: Math.max(0, c.ins || 0), va: c.va || "t", fill: "", stroke: "", sw: 0 });
+        if (c.ext) tx.ext = c.ext;
+        place(tx, tl[0], tl[1], w, h, t.rot || 0);
+        texts.push(tx);
+      }
+      // sides on the grid: horizontal "h:row:col", vertical "v:col:row"
+      [["t", "h", c.r, c.c, c1], ["b", "h", r1, c.c, c1], ["l", "v", c.c, c.r, r1], ["r", "v", c1, c.r, r1]].forEach(function (s) {
+        var e = t.edge ? t.edge(c, s[0]) : null;
+        if (!e || !e.stroke || !(e.sw >= 0)) return;
+        for (var k = s[3]; k < s[4]; k++) {
+          var key = s[1] + ":" + s[2] + ":" + k, old = edges[key];
+          if (!old || e.sw > old.sw) edges[key] = { e: e, h: s[1] === "h", at: s[2], k: k };
+        }
+      });
+    });
+    // neighbouring pieces of one border with the same look join up
+    var lines = [], keys = Object.keys(edges).sort(function (p, q) {
+      var A = edges[p], B = edges[q];
+      return (A.h === B.h ? 0 : A.h ? -1 : 1) || A.at - B.at || A.k - B.k;
+    });
+    var run = null;
+    function flush() {
+      if (!run) return;
+      var p0 = run.h ? P(cx[run.k0], cy[run.at]) : P(cx[run.at], cy[run.k0]);
+      var p1 = run.h ? P(cx[run.k1], cy[run.at]) : P(cx[run.at], cy[run.k1]);
+      var ln = base({ t: "line", x: p0[0], y: p0[1], w: p1[0] - p0[0], h: p1[1] - p0[1], rot: 0, fill: "", stroke: run.e.stroke, sw: run.e.sw > 0 ? run.e.sw : HAIR });
+      if (run.e.dash) ln.dash = 1;
+      lines.push(ln);
+      run = null;
+    }
+    keys.forEach(function (key) {
+      var s = edges[key], same = run && run.h === s.h && run.at === s.at && run.k1 === s.k &&
+        run.e.stroke === s.e.stroke && run.e.sw === s.e.sw && !!run.e.dash === !!s.e.dash;
+      if (same) { run.k1 = s.k + 1; return; }
+      flush();
+      run = { h: s.h, at: s.at, k0: s.k, k1: s.k + 1, e: s.e };
+    });
+    flush();
+    // lines on top of the fills, text on top of everything
+    var all = fills.concat(lines, texts), z0 = t.z || 0;
+    all.forEach(function (o, k) { o.z = z0 + k * 16; });
+    return all;
+  }
+
   // ---------- 4. Convert ----------
   // opts: { now, name }. Result: { doc, images: [{ item, name, data }],
   // linked: n, links: [{ item, name }], stats: { pages, items,
@@ -485,10 +599,12 @@
         } else if (x.n === "para") endPara(withTabs(x.a, x));
         else if (x.n === "trail") endPara(withTabs(x.a, x));
         else if (x.n === "tab") runs.push({ t: "\t", a: x.a });
-        else if (x.n === "nbspace") runs.push({ t: "\u00a0", a: {} });
+        // a no-break space keeps its own font and size, so a line
+        // holding one is still set in the text's font (LY-FIT)
+        else if (x.n === "nbspace") runs.push({ t: "\u00a0", a: x.a });
         // a line break (Shift+Enter) stays inside its paragraph, which
         // keeps the style the paragraph ends with (LY-TAB)
-        else if (x.n === "breakline") runs.push({ t: "\n", a: {} });
+        else if (x.n === "breakline") runs.push({ t: "\n", a: x.a });
         // a column or frame break: what follows starts the next column
         // (frames in a chain are columns to the text engine)
         else if (x.n === "breakcol" || x.n === "breakframe") runs.push({ brk: "col" });
@@ -514,6 +630,62 @@
       return pagePos[k];
     }
 
+    // a Scribus table (PTYPE 16, 1.5+) → cells, borders and cell text
+    // (tableItems); its rows and columns keep their sizes, merged cells
+    // (CellAreas "row column height width") their span
+    function borderOf(node, side) {
+      var b = kids(node, "TableBorder" + side)[0], ln = b && kids(b, "TableBorderLine");
+      if (!ln || !ln.length) return null;
+      var best = null;
+      ln.forEach(function (l) {
+        var c = colour(l.a.Color, l.a.Shade);
+        if (!c) return;
+        var e = { stroke: c, sw: num(l.a.Width, 1), dash: l.a.PenStyle !== undefined && l.a.PenStyle !== "1" ? 1 : 0 };
+        if (!best || e.sw > best.sw) best = e;
+      });
+      return best;
+    }
+    function table(node, own, x, y, rot, lay) {
+      var a = node.a, td = kids(node, "TableData")[0];
+      var list = function (s) { return String(s || "").trim().split(/\s+/).map(Number).filter(function (v) { return isFinite(v) && v >= 0; }); };
+      var rows = list(a.RowHeights), cols = list(a.ColumnWidths);
+      if (!rows.length || !cols.length) { stats.skipped++; return; }
+      var spans = {}, covered = {}, ca = list(a.CellAreas);
+      for (var i = 0; i + 3 < ca.length; i += 4) {
+        var r0 = ca[i], c0 = ca[i + 1], hh = Math.max(1, ca[i + 2]), ww = Math.max(1, ca[i + 3]);
+        spans[r0 + ":" + c0] = [hh, ww];
+        for (var rr = r0; rr < r0 + hh; rr++) for (var cc = c0; cc < c0 + ww; cc++) if (rr !== r0 || cc !== c0) covered[rr + ":" + cc] = 1;
+      }
+      var tFill = colour(td.a.FillColor, td.a.FillShade), SIDES = { l: "Left", t: "Top", r: "Right", b: "Bottom" }, tb = {};
+      Object.keys(SIDES).forEach(function (k) { tb[k] = borderOf(td, SIDES[k]); });
+      var cells = [], nodes = {};
+      kids(td, "Cell").forEach(function (cn) {
+        var ca2 = cn.a, r = parseInt(ca2.Row, 10), c = parseInt(ca2.Column, 10), key = r + ":" + c;
+        if (!(r >= 0 && c >= 0) || covered[key] || nodes[key]) return;
+        nodes[key] = cn;
+        var sp = spans[key] || [1, 1], story = null;
+        var st = storyOf(cn);
+        if (st.paras.some(function (p) { return p.runs.some(function (q) { return q.f || (q.t && q.t.trim()); }); })) { doc.stories.push(st); story = st.id; }
+        cells.push({
+          r: r, c: c, rs: sp[0], cs: sp[1], fill: colour(ca2.FillColor, ca2.FillShade) || tFill, story: story, ext: { sfit: 1 },
+          ins: Math.max(num(ca2.LeftPadding, 0) + num(ca2.TextDistLeft, 0), num(ca2.TopPadding, 0) + num(ca2.TextDistTop, 0), num(ca2.RightPadding, 0) + num(ca2.TextDistRight, 0), num(ca2.BottomPadding, 0) + num(ca2.TextDistBottom, 0)),
+          va: ca2.TextVertAlign === "1" ? "c" : ca2.TextVertAlign === "2" ? "b" : "t"
+        });
+      });
+      var out = tableItems({
+        pg: own.id, x: x, y: y, rot: rot, rows: rows, cols: cols, cells: cells, now: now, grp: M.newId("gr"),
+        z: (Math.max(0, Math.min(999, lay.level)) * 1e6 + z + 1) * 16, hide: lay.hide, lock: a.LOCK === "1" || lay.lock,
+        edge: function (cell, side) {
+          var own2 = borderOf(nodes[cell.r + ":" + cell.c], SIDES[side]);
+          var outer = (side === "l" && cell.c === 0) || (side === "t" && cell.r === 0) || (side === "r" && cell.c + cell.cs >= cols.length) || (side === "b" && cell.r + cell.rs >= rows.length);
+          var t2 = outer ? tb[side] : null;
+          return own2 && t2 ? (t2.sw > own2.sw ? t2 : own2) : own2 || t2;
+        }
+      });
+      z += out.length;
+      out.forEach(function (it) { items.push({ it: it, node: { a: {} } }); stats.items++; });
+    }
+
     var z = 0;
     function addObject(node, gx, gy, gLayer) {
       var a = node.a, typ = parseInt(a.PTYPE, 10);
@@ -529,6 +701,7 @@
       var y = (a.YPOS !== undefined ? num(a.YPOS, 0) : (gy || 0) + num(a.gYpos, 0)) - own.y;
       var w = Math.max(0.5, num(a.WIDTH, 10)), h = Math.max(0.5, num(a.HEIGHT, 10)), rot = num(a.ROT, 0);
       var lay = layerBy[a.LAYER] || layerBy[gLayer] || { level: 0 };
+      if (typ === 16 && kids(node, "TableData").length) { table(node, own, x, y, rot, lay); return; }
       var it = { id: M.newId("it"), m: now, pg: own.id, z: (Math.max(0, Math.min(999, lay.level)) * 1e6 + (++z)) * 16 };
       if (lay.hide) it.hide = 1;
       it.fill = colour(a.PCOLOR, a.SHADE);
@@ -553,7 +726,29 @@
           it.cols = Math.max(1, num(a.COLUMNS, 1)); it.gut = num(a.COLGAP, 0);
           it.ins = Math.max(num(a.EXTRA, 0), num(a.TEXTRA, 0), num(a.BEXTRA, 0), num(a.REXTRA, 0));
           it.va = a.VAlign === "1" ? "c" : a.VAlign === "2" ? "b" : "t";
-          if (typ === 8) stats.skipped++;
+          // Scribus's own rule for where a line ends (LY-FIT)
+          it.ext = Object.assign(it.ext || {}, { sfit: 1 });
+          // text on a path (LY-PORT2): the frame's own outline is the
+          // path (ext.tp, as Layout's Text on a path); the start offset
+          // (Scribus's left distance) moves it along; flipped → other side
+          if (typ === 8) {
+            var pc = a.path ? svgPath(a.path) : poCoor(a.POCOOR), tpd = tpData(pathData(pc, w, h)), plen = pathLen(pc);
+            if (tpd) {
+              it.ext.tp = { d: tpd, o: plen > 0 ? Math.round(Math.max(0, Math.min(100, num(a.EXTRA, 0) / plen * 100)) * 100) / 100 : 0 };
+              if (a.textPathFlipped === "1") it.ext.tp.s = -1;
+              it.ins = 0; it.va = "t";
+              // "Show curve": the path itself is drawn too
+              if (a.PLTSHOW === "1" && it.stroke) {
+                var cv = { id: M.newId("it"), m: now, pg: own.id, z: it.z - 8, t: "path", d: pathData(pc, w, h), fill: "", stroke: it.stroke, sw: it.sw };
+                place(cv, x, y, w, h, rot);
+                if (it.hide) cv.hide = 1;
+                if (it.lock) cv.lock = 1;
+                items.push({ it: cv, node: { a: {} } });
+                stats.items++;
+              }
+              it.stroke = ""; it.fill = "";
+            } else stats.skipped++;
+          }
         } else if (typ === 2) {
           it.t = "img";
           it.nm = String(a.PFILE || "").split(/[\\\/]/).pop().slice(0, 120);
@@ -707,7 +902,7 @@
     if (!(Math.max(it.iw || 0, it.ih || 0) >= (max || 3500))) return false;
     return Math.abs((it.isc || 0) - p[1]) <= p[1] * 0.01;
   }
-  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug, nameKey: nameKey, placePicture: placePicture, shrunk: shrunk };
+  var api = { parseXml: parseXml, convert: convert, inlineImage: inlineImage, gunzip: gunzip, svgPath: svgPath, poCoor: poCoor, fontOf: fontOf, slug: slug, nameKey: nameKey, placePicture: placePicture, shrunk: shrunk, tableItems: tableItems, pathData: pathData, pathLen: pathLen, tpData: tpData, place: place };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_SLA = api;
 })(typeof window !== "undefined" ? window : this);

@@ -245,11 +245,27 @@
   function envOf(e) { return e ? Object.assign({}, e, { idf: idfFor(e.base, e.i), prepared: 1 }) : {}; }
   function prepare(doc, steps, ctx, notes, ctl) {
     var base = newBase(), envs = steps.map(function (st, i) { return { base: base, i: i }; });
-    var scratch = JSON.parse(JSON.stringify(doc)), saved = [];
+    var scratch = JSON.parse(JSON.stringify(doc)), saved = [], skipped = 0, stopped = -1;
     var chain = Promise.resolve(), now = LY.now();
+    // GL-3 (Chris 2026-11-21, book item 24): a file that cannot be read
+    // no longer throws the whole batch away. That step is skipped and the
+    // report names it; after a failed `images` (it adds pages, so the
+    // page numbers of later steps would be wrong) the later steps are
+    // skipped too, while every step before it still applies.
+    function skip(i, st, e) {
+      if (!e || typeof e.why !== "string" || !SKIPPABLE.test(e.why) || !FILE_OPS[st.op] || (ctl && ctl.signal && ctl.signal.aborted)) throw e;
+      envs[i].skip = 1; skipped++;
+      notes.push("skipped step " + (i + 1) + " (" + st.op + "): " + e.why + (e.path ? ": " + String(e.path).slice(0, 200) : ""));
+      if (st.op === "images") {
+        stopped = i;
+        for (var j = i + 1; j < steps.length; j++) { envs[j].skip = 1; skipped++; }
+        if (i + 1 < steps.length) notes.push("skipped steps " + (i + 2) + "-" + steps.length + " (after the picture step that failed, their pages would be wrong; send them again)");
+      }
+    }
     steps.forEach(function (st, i) {
       chain = chain.then(function () {
         if (ctl && ctl.signal && ctl.signal.aborted) return;
+        if (envs[i].skip) return "skip";
         if (ctl && ctl.tick) ctl.tick();
         var env = envs[i];
         if (st.op === "images") {
@@ -272,6 +288,23 @@
           list.forEach(function (it) { c3 = c3.then(function () { if (ctl && ctl.tick) ctl.tick(); return fillOne(it, st.mode).then(function (f) { if (f) fills[it.id] = f; }); }); });
           return c3.then(function () { env.fills = fills; LY_DOC_FOR_FILL = null; }, function (e) { LY_DOC_FOR_FILL = null; throw e; });
         }
+        // placepage (W4b): the file read like a picture of `images`, its page drawn by io.js
+        if (st.op === "placepage") {
+          if (ctl && ctl.tick) ctl.tick(st.path);
+          var pth = isLocal(st.path) ? String(st.path).trim() : PRO.normPath(st.path);
+          if (!isLocal(pth)) {
+            var fl = folders();
+            if (!fl.length) return Promise.reject({ why: "noFolders" });
+            if (PRO.pathOk(pth, fl, false)) return Promise.reject({ why: "outside", path: st.path });
+          }
+          return readBytes(pth).then(function (blob) {
+            if (blob.size > MAX_BYTES) throw { why: "tooBig", path: st.path };
+            var name = pth.replace(/\\/g, "/").slice(pth.replace(/\\/g, "/").lastIndexOf("/") + 1);
+            return LY.io.pageImage(new File([blob], name, { type: /\.pdf$/i.test(name) ? "application/pdf" : "" }), st.page || 1);
+          }, function (e) { throw e && e.why ? e : { why: isLocal(pth) ? localWhy(e) : "unreadable", path: st.path }; }).then(function (pic) { env.page = pic; }, function (e) {
+            throw Object.assign({ path: st.path }, e && e.why ? e : { why: "unreadable" });
+          });
+        }
         if (st.op === "addfont") return addFont(st, notes, ctl || {}).then(function (e) { env.font = e; });
         if ((st.op === "defstyle" || st.op === "masterfield") && st.font && !PRO.fontFor(scratch, st.font)) {
           if (ctl && ctl.tick) ctl.tick(st.font);
@@ -283,13 +316,16 @@
           TICK = ctl && ctl.tick ? function () { ctl.tick(); } : null;
           return thumbs(scratch, st).then(function (list) { TICK = null; saved = saved.concat(list); }, function (e) { TICK = null; throw e; });
         }
-      }).then(function () {
+      }).then(function (r) { return r === "skip" ? r : null; }, function (e) { skip(i, st, e); return "skip"; }).then(function (r) {
+        if (r === "skip" || envs[i].skip) return;
         // the scratch copy follows, so later steps see this one
         C.apply(scratch, st, Object.assign(envOf(envs[i]), { now: now, grey: ctx.grey || {}, notes: notes, docs: LY.data().docs, meta: metaFor(doc), fill: window.LY_AUTO ? window.LY_AUTO.fillFields : null }));
       });
     });
-    return chain.then(function () { return { envs: envs, saved: saved }; });
+    return chain.then(function () { return { envs: envs, saved: saved, skipped: skipped, stopped: stopped }; });
   }
+  var FILE_OPS = { images: 1, placepage: 1, addfont: 1 };
+  var SKIPPABLE = /^(notAllowedRoot|badPath|bridgePaused|needsReconnect|notHere|notThere|notFile|notFolder|unreadable|tooBig|outside|empty|noFolders|noBridge)$/;
 
   // ---------- fonts (Chris 2026-11-18: "fonts_add") ----------
   // addfont: a Fontsource family (its files kept in the cache for

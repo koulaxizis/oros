@@ -5,15 +5,17 @@
 // one PNG per layer, mergedimage.png and Thumbnails/thumbnail.png.
 // Reading uses the shared ZIP reader (atelier/zip.js, passed in);
 // the PNGs are decoded by the caller (the browser), so this file only
-// deals with the stack and the container. Groups are flattened into
-// the layer list: a hidden group hides its layers, its opacity
-// multiplies theirs. Text in stack.xml is data only (never markup).
+// deals with the stack and the container. Nested stacks are groups
+// (wave PS-4: name, visibility, opacity, composite-op, isolation;
+// written back the same way). Text in stack.xml is data only (never
+// markup).
 //
 // read(bytes, Zip, o) → Promise<{ w, h, layers: [{ name, x, y, op, bl,
-//   vis, png }] (bottom → top), merged: png | null, skipped: { groups,
-//   missing } }>; png = Uint8Array. Rejects with Error("ora").
-// write({ w, h, layers: [{ name, x, y, op, bl, vis, png }], merged,
-//   thumb }) → Uint8Array (stored ZIP, layers bottom → top).
+//   vis, png, g? }] (bottom → top), groups: [{ name, vis, op, bl, open,
+//   p }], merged: png | null, skipped: { groups, missing } }>; png =
+//   Uint8Array; g and p are indexes into groups. Rejects with Error("ora").
+// write({ w, h, layers: [{ name, x, y, op, bl, vis, png, g? }], groups?,
+//   merged, thumb }) → Uint8Array (stored ZIP, layers bottom → top).
 // parseStack(xml) and zip(entries) are exposed for the tests.
 //
 // Krita .kra is a ZIP too, but not OpenRaster: maindoc.xml lists the
@@ -75,35 +77,43 @@
   function cleanText(s) { return String(s || "").replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 60); }
 
   // → { w, h, layers: [...] bottom → top, groups } ; throws Error("ora").
+  // groups (wave PS-4) = [{ name, vis, op, bl, open, p }] (pass-through
+  // unless isolated or with its own composite-op); layer.g = index.
   function parseStack(xml) {
     var re = /<(\/?)(image|stack|layer)\b([^>]*?)(\/?)>/g, m;
-    var w = 0, h = 0, out = [], groups = 0;
-    var ctx = [{ vis: 1, op: 1, x: 0, y: 0 }];          // the enclosing stacks
+    var w = 0, h = 0, out = [], groups = [], root = true;
+    var ctx = [{ g: null, x: 0, y: 0 }];               // the enclosing stacks
     while ((m = re.exec(xml))) {
       var close = m[1] === "/", tag = m[2], a = attrs(m[3]), empty = m[4] === "/";
       if (tag === "image") { if (!close) { w = Math.round(num(a.w, 0)); h = Math.round(num(a.h, 0)); } continue; }
       var top = ctx[ctx.length - 1];
       if (tag === "stack") {
         if (close) { if (ctx.length > 1) ctx.pop(); continue; }
-        if (ctx.length > 1 || out.length) groups++;
+        if (root && !out.length) { root = false; continue; }      // the image's own stack
+        root = false;
         if (ctx.length > MAX_DEPTH) throw new Error("ora");
-        var g = { vis: top.vis && a.visibility !== "hidden" ? 1 : 0,
-                  op: top.op * Math.max(0, Math.min(1, num(a.opacity, 1))),
-                  x: top.x + Math.round(num(a.x, 0)), y: top.y + Math.round(num(a.y, 0)) };
-        if (!empty) ctx.push(g);
+        var op = a["composite-op"], own = OPS[op];
+        var G = { name: cleanText(a.name) || "Group", vis: a.visibility !== "hidden" ? 1 : 0,
+                  op: Math.round(Math.max(0, Math.min(1, num(a.opacity, 1))) * 100),
+                  bl: a.isolation === "isolate" || (own && own !== "normal") ? own || "normal" : "pass", open: 1, p: top.g };
+        groups.push(G);
+        if (!empty) ctx.push({ g: groups.length - 1, x: top.x + Math.round(num(a.x, 0)), y: top.y + Math.round(num(a.y, 0)) });
         continue;
       }
       if (close) continue;
+      root = false;
       if (out.length >= MAX_LAYERS) throw new Error("ora");
       var src = String(a.src || "");
       if (!src || /^\/|\.\.|^[a-z]+:/i.test(src)) continue;   // only paths inside the file
-      out.push({
+      var L = {
         name: cleanText(a.name) || "Layer", src: src,
         x: top.x + Math.round(num(a.x, 0)), y: top.y + Math.round(num(a.y, 0)),
-        op: Math.round(top.op * Math.max(0, Math.min(1, num(a.opacity, 1))) * 100),
+        op: Math.round(Math.max(0, Math.min(1, num(a.opacity, 1))) * 100),
         bl: OPS[a["composite-op"]] || "normal",
-        vis: top.vis && a.visibility !== "hidden" ? 1 : 0
-      });
+        vis: a.visibility !== "hidden" ? 1 : 0
+      };
+      if (top.g != null) L.g = top.g;
+      out.push(L);
     }
     if (!w || !h) throw new Error("ora");
     return { w: w, h: h, layers: out.reverse(), groups: groups };
@@ -120,7 +130,7 @@
         chain = chain.then(function () {
           if (!z.has(L.src)) { missing++; return; }
           return z.bytes(L.src, MAX_PNG).then(function (png) {
-            layers.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, png: png });
+            layers.push({ name: L.name, x: L.x, y: L.y, op: L.op, bl: L.bl, vis: L.vis, g: L.g, png: png });
           });
         });
       });
@@ -129,7 +139,7 @@
         return z.has("mergedimage.png") ? z.bytes("mergedimage.png", MAX_PNG) : null;
       }).then(function (merged) {
         if (!layers.length && !merged) throw new Error("ora");
-        return { w: st.w, h: st.h, layers: layers, merged: merged, skipped: { groups: st.groups, missing: missing } };
+        return { w: st.w, h: st.h, layers: layers, groups: st.groups, merged: merged, skipped: { groups: 0, missing: missing } };
       });
     }).catch(function (e) { throw new Error(e && /^ora/.test(e.message) ? e.message : "ora"); });
   }
@@ -145,11 +155,13 @@
   var KRA_TILE_MAX = 1 << 20;                        // tiles in one layer
 
   // maindoc.xml → { w, h, name, layers: [{ name, file, x, y, op, bl,
-  // vis, cs }] bottom → top, groups, masks, other }. Throws Error("ora").
+  // vis, cs, g? }] bottom → top, groups: [{ name, vis, op, bl, open, p }]
+  // (wave PS-4; pass-through when Krita says passthrough="1"), masks,
+  // other }. Throws Error("ora").
   function parseKraDoc(xml) {
     var re = /<(\/?)(IMAGE|layer|mask)\b([^>]*?)(\/?)>/g, m;
-    var img = null, out = [], groups = 0, masks = 0, other = 0;
-    var ctx = [{ vis: 1, op: 1 }], open = [];          // groups open around us
+    var img = null, out = [], groups = [], masks = 0, other = 0;
+    var ctx = [null], open = [];                       // groups open around us
     while ((m = re.exec(xml))) {
       var close = m[1] === "/", tag = m[2], a = attrs(m[3]), empty = m[4] === "/";
       if (tag === "IMAGE") {
@@ -162,13 +174,14 @@
         continue;
       }
       var top = ctx[ctx.length - 1];
-      var vis = top.vis && a.visible !== "0" ? 1 : 0;
-      var op = top.op * Math.max(0, Math.min(1, num(a.opacity, 255) / 255));
+      var vis = a.visible !== "0" ? 1 : 0;
+      var op = Math.max(0, Math.min(1, num(a.opacity, 255) / 255));
       var type = a.nodetype || "paintlayer";
       if (type === "grouplayer") {
-        groups++;
         if (ctx.length > MAX_DEPTH) throw new Error("ora");
-        if (!empty) { ctx.push({ vis: vis, op: op }); open.push(true); }
+        groups.push({ name: cleanText(a.name) || "Group", vis: vis, op: Math.round(op * 100),
+                      bl: a.passthrough === "1" ? "pass" : KOPS[a.compositeop] || "normal", open: a.collapsed === "1" ? 0 : 1, p: top });
+        if (!empty) { ctx.push(groups.length - 1); open.push(true); }
         continue;
       }
       if (!empty) open.push(false);                  // e.g. a layer with masks inside
@@ -176,9 +189,11 @@
       if (out.length >= MAX_LAYERS) throw new Error("ora");
       var file = String(a.filename || "");
       if (!file || /[\/\\]|\.\./.test(file)) { other++; continue; }
-      out.push({ name: cleanText(a.name) || "Layer", file: file, x: Math.round(num(a.x, 0)), y: Math.round(num(a.y, 0)),
-                 op: Math.round(op * 100), bl: KOPS[a.compositeop] || "normal", vis: vis,
-                 cs: String(a.colorspacename || "RGBA") });
+      var L = { name: cleanText(a.name) || "Layer", file: file, x: Math.round(num(a.x, 0)), y: Math.round(num(a.y, 0)),
+                op: Math.round(op * 100), bl: KOPS[a.compositeop] || "normal", vis: vis,
+                cs: String(a.colorspacename || "RGBA") };
+      if (top != null) L.g = top;
+      out.push(L);
     }
     if (!img || !img.w || !img.h) throw new Error("ora");
     return { w: img.w, h: img.h, name: img.name, layers: out.reverse(), groups: groups, masks: masks, other: other };
@@ -274,7 +289,7 @@
     if (!z.has("maindoc.xml")) return Promise.reject(new Error("ora"));
     function merged() { return z.has("mergedimage.png") ? z.bytes("mergedimage.png", MAX_PNG) : Promise.resolve(null); }
     return z.text("maindoc.xml", MAX_XML).then(function (xml) {
-      var doc = parseKraDoc(xml), skipped = { groups: doc.groups, other: doc.other + doc.masks, flat: 0 };   // masks are left out
+      var doc = parseKraDoc(xml), skipped = { groups: 0, other: doc.other + doc.masks, flat: 0 };   // masks are left out
       var layers = [], total = 0, chain = Promise.resolve();
       function path(file) {
         var want = doc.name + "/layers/" + file;
@@ -292,13 +307,13 @@
             var t = kraTiles(b, { maxPixels: maxPixels - total });
             total += t.w * t.h;
             if (!t.w) return;                          // an empty layer
-            layers.push({ name: L.name, x: L.x + t.x, y: L.y + t.y, op: L.op, bl: L.bl, vis: L.vis,
+            layers.push({ name: L.name, x: L.x + t.x, y: L.y + t.y, op: L.op, bl: L.bl, vis: L.vis, g: L.g,
                           img: { w: t.w, h: t.h, data: t.data } });
           });
         });
       });
       return chain.then(function () {
-        if (layers.length) return { w: doc.w, h: doc.h, layers: layers, merged: null, skipped: skipped };
+        if (layers.length) return { w: doc.w, h: doc.h, layers: layers, groups: doc.groups, merged: null, skipped: skipped };
         return merged().then(function (png) {
           if (!png) throw new Error("ora");
           return { w: doc.w, h: doc.h, layers: [], merged: png, skipped: skipped };
@@ -358,14 +373,30 @@
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
   function write(doc) {
-    var list = doc.layers || [], lines = [];
+    var list = doc.layers || [], lines = [], groups = doc.groups || [], open = [];
+    function path(gi) {
+      var p = [], n = 0;
+      for (var q = gi; q != null && groups[q] && n < MAX_DEPTH; q = groups[q].p, n++) p.unshift(q);
+      return p;
+    }
+    function pad() { return new Array(open.length + 3).join(" "); }
     for (var i = list.length - 1; i >= 0; i--) {
-      var L = list[i];
-      lines.push('  <layer name="' + esc(L.name) + '" src="data/layer' + i + '.png" x="' + Math.round(L.x) +
+      var L = list[i], p = L.g != null ? path(L.g) : [], k = 0;
+      while (k < open.length && k < p.length && open[k] === p[k]) k++;
+      while (open.length > k) { open.pop(); lines.push(pad() + '</stack>'); }
+      for (; k < p.length; k++) {                    // a group (wave PS-4): a nested stack
+        var G = groups[p[k]];
+        lines.push(pad() + '<stack name="' + esc(G.name) + '" opacity="' + (Math.max(0, Math.min(100, G.op == null ? 100 : G.op)) / 100) +
+                   '" visibility="' + (G.vis === 0 ? "hidden" : "visible") + '" composite-op="' + (G.bl === "pass" ? "svg:src-over" : OP_OF[G.bl] || "svg:src-over") +
+                   '" isolation="' + (G.bl === "pass" ? "auto" : "isolate") + '">');
+        open.push(p[k]);
+      }
+      lines.push(pad() + '<layer name="' + esc(L.name) + '" src="data/layer' + i + '.png" x="' + Math.round(L.x) +
                  '" y="' + Math.round(L.y) + '" opacity="' + (Math.max(0, Math.min(100, L.op == null ? 100 : L.op)) / 100) +
                  '" visibility="' + (L.vis === 0 ? "hidden" : "visible") +
                  '" composite-op="' + (OP_OF[L.bl] || "svg:src-over") + '"/>');
     }
+    while (open.length) { open.pop(); lines.push(pad() + '</stack>'); }
     var xml = '<?xml version="1.0" encoding="UTF-8"?>\n<image version="0.0.6" w="' + doc.w + '" h="' + doc.h +
               '">\n <stack>\n' + lines.join("\n") + '\n </stack>\n</image>\n';
     var entries = [{ name: "mimetype", data: utf8(MIME) }, { name: "stack.xml", data: utf8(xml) }];

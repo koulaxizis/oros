@@ -3,11 +3,11 @@
    Versioning: orOS-wide version lives ONLY in shell.js (single
    source of truth) — this file carries no version number.
    Architecture:
-     data-skin  = palette (16 skins)
+     data-skin  = palette (17 skins)
      data-theme = light/dark (orthogonal to skin)
    Sections:
      0. Local fonts: moved to fonts.css (5.04.05)
-     1. Skin palettes (16 skins)
+     1. Skin palettes (17 skins)
      2. Reset & base
      3. Top bar (persistent, safe-area aware)
      4. Desktop
@@ -518,6 +518,36 @@
   --accent-ink:   #ffffff;
   --panel-bg:     #ffffff;
   --border:       #d2e2e2;
+  --shadow:       rgba(0, 0, 0, 0.16);
+}
+
+/* Signal — dot-matrix LED (SIGNAL-1): black panel, white dots, red LED */
+[data-skin="signal"][data-theme="dark"] {
+  --bg:           #050505;
+  --bg-desktop:   #000000;
+  --bar-bg:       rgba(5, 5, 5, 0.94);
+  --text:         #f2f2f2;
+  --text-dim:     #9a9a9a;
+  --accent:       #ff3b30;
+  --accent-hover: #ff6a61;
+  --accent-soft:  rgba(255, 59, 48, 0.18);
+  --accent-ink:   #141414;
+  --panel-bg:     #111111;
+  --border:       #262626;
+  --shadow:       rgba(0, 0, 0, 0.60);
+}
+[data-skin="signal"][data-theme="light"] {
+  --bg:           #f7f7f5;
+  --bg-desktop:   #ececea;
+  --bar-bg:       rgba(247, 247, 245, 0.94);
+  --text:         #111111;
+  --text-dim:     #5c5c5c;
+  --accent:       #c8102e;
+  --accent-hover: #a00d25;
+  --accent-soft:  rgba(200, 16, 46, 0.14);
+  --accent-ink:   #ffffff;
+  --panel-bg:     #ffffff;
+  --border:       #dcdcd8;
   --shadow:       rgba(0, 0, 0, 0.16);
 }
 

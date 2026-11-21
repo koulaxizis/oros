@@ -141,6 +141,58 @@
     cx.translate(crop.fh ? cw : 0, crop.fv ? ch : 0);
     cx.scale(crop.fh ? -1 : 1, crop.fv ? -1 : 1);
   }
+  // Text wrap by a picture's transparent edges (W4b): the profile of
+  // its opaque pixels (R.alphaProfile on a copy at most 600 px high).
+  // → Promise of the profile, [] (no transparent edges) or null (not
+  // loaded).
+  function wrapProfile(it) {
+    if (!it || it.t !== "img" || !it.a) return Promise.resolve(null);
+    return A.load(it.a).then(function (img) {
+      if (!img) return null;
+      var w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+      if (!(w0 > 0 && h0 > 0)) return null;
+      var k = Math.min(1, 600 / h0, 1200 / w0), w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+      var cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      var cx = cv.getContext("2d", { willReadFrequently: true });
+      cx.drawImage(img, 0, 0, w, h);
+      return LY.R.alphaProfile({ w: w, h: h, data: cx.getImageData(0, 0, w, h).data }, 96) || [];
+    }, function () { return null; });
+  }
+  // A frame set to wrap by transparency without its profile (set by a
+  // command, or on another device) gets it here, once its picture
+  // loads: derived data, so no undo step of its own.
+  var wrapBusy = {};
+  function fillWrapProfiles() {
+    var doc = LY.doc;
+    if (!doc) return;
+    doc.items.forEach(function (it) {
+      if (it.t !== "img" || !it.a || !it.ext || it.ext.wc !== "alpha" || (Array.isArray(it.ext.wpr) && it.ext.wpa === it.a) || wrapBusy[it.id + it.a]) return;
+      var key = it.id + it.a;
+      wrapBusy[key] = 1;
+      wrapProfile(it).then(function (pr) {
+        delete wrapBusy[key];
+        if (!pr || LY.doc !== doc) return;
+        var cur = M.find(doc.items, it.id);
+        if (!cur || cur.a !== it.a || !cur.ext || cur.ext.wc !== "alpha" || (Array.isArray(cur.ext.wpr) && cur.ext.wpa === cur.a)) return;
+        cur.ext.wpr = pr; cur.ext.wpa = cur.a;
+        M.touch(cur, Date.now());
+        LY.commit();
+      });
+    });
+  }
+  if (LY.on) { LY.on("open", fillWrapProfiles); LY.on("doc", fillWrapProfiles); }
+
+  // The picture's colour corrections (W4b) on the cut that goes out
+  // → their key ("" none).
+  function adjust(cx, it, cw, ch) {
+    var a = LY.R.adjOf(it);
+    if (!a) return "";
+    var id = cx.getImageData(0, 0, cw, ch);
+    if (!LY.R.applyAdj({ w: cw, h: ch, data: id.data }, a)) return "";
+    cx.putImageData(id, 0, 0);
+    return LY.R.adjKey(a);
+  }
   // The visible part of one image, resampled to `ppi` (never up).
   function cropImage(it, ppi) {
     var crop = P.imageCrop(it);
@@ -157,8 +209,9 @@
       var cx = cv.getContext("2d");
       mirror(cx, crop, cw, ch);
       cx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
+      var adj = adjust(cx, it, cw, ch);
       return toBlob(cv, png ? "image/png" : "image/jpeg", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
-        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (crop.fh ? "h" : "") + (crop.fv ? "v" : ""), down: cw < Math.round(src.w) - 1 };
+        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (crop.fh ? "h" : "") + (crop.fv ? "v" : "") + (adj ? "-" + adj : ""), down: cw < Math.round(src.w) - 1 };
       });
     });
   }
@@ -936,7 +989,7 @@
   // name); pdf: its print PDF, whose line breaks the text takes.
   // → Promise of a report (the Assistant's card) or null:
   // { sla: 1, pages, items, skipped, placed, missing, fit }
-  function importSla(f, pics, pdf) {
+  function importSla(f, pics, pdf, opts) {
     if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return Promise.resolve(null); }
     LY.toast(t("sla.working"));
     // a compressed .sla.gz is unpacked first (gzip magic, not the name)
@@ -946,7 +999,7 @@
     }).then(function (txt) {
       var res = null;
       if (typeof txt !== "string") { LY.toast(t("sla.bad")); return; }
-      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
+      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: (opts && opts.name) || baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
       var fit = null;
       return useSrcFonts(res.doc).then(function () { return pdf ? fitToPdf(res.doc, pdf) : { msg: "" }; }).then(function (fr) {
@@ -957,16 +1010,168 @@
       });
     }).then(null, function () { LY.toast(t("sla.bad")); return null; });
   }
-  function importIdml(f) {
-    if (f.size > FOREIGN_MAX || !window.LY_IDML) { LY.toast(t("idml.bad")); return; }
+  // pics: pictures to fill the linked frames with, by name (a folder
+  // port, LY-PORT3); opts.name: the new document's name
+  function importIdml(f, pics, opts) {
+    if (f.size > FOREIGN_MAX || !window.LY_IDML) { LY.toast(t("idml.bad")); return Promise.resolve(null); }
     LY.toast(t("idml.working"));
     return f.arrayBuffer().then(function (buf) {
-      return window.LY_IDML.open(buf, { now: LY.now(), name: baseName(f, /\.idml$/i) });
+      return window.LY_IDML.open(buf, { now: LY.now(), name: (opts && opts.name) || baseName(f, /\.idml$/i) });
     }).then(function (res) {
-      if (!res) { LY.toast(t("idml.bad")); return; }
-      return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }));
-    }).then(null, function () { LY.toast(t("idml.bad")); });
+      if (!res) { LY.toast(t("idml.bad")); return null; }
+      return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }), "idml.skipped", pics).then(function (pl) {
+        return { idml: 1, pages: res.stats.pages, items: res.stats.items, skipped: res.stats.skipped, placed: pl.placed, missing: pl.missing };
+      });
+    }).then(null, function () { LY.toast(t("idml.bad")); return null; });
   }
+  // ---------- A page of another file as a picture (LY-PRO W4b) ----------
+  // A PDF, Scribus (.sla, .sla.gz) or InDesign (.idml) page, drawn at
+  // up to 300 ppi (4000 px on its long side) and placed in the picture
+  // frame like any picture: it.ext.pp = { f: file name, k: pdf|sla|idml,
+  // p: page } says where it came from. An Affinity .af cannot be drawn
+  // here (its pages are Affinity's own); export its PDF and place that.
+  var PAGE_ACCEPT = ".pdf,application/pdf,.sla,.gz,.idml,application/vnd.adobe.indesign-idml-package";
+  function pageKind(f) {
+    var n = f.name || "";
+    return /\.pdf$/i.test(n) || f.type === "application/pdf" ? "pdf" : /\.idml$/i.test(n) ? "idml" : /\.sla(\.gz)?$/i.test(n) ? "sla" : /\.af$/i.test(n) ? "af" : "";
+  }
+  // → Promise of { n, size(k) → { w, h } pt, draw(k, scale) → Promise of a canvas, close() } or null
+  function pageSource(f, kind) {
+    if (kind === "pdf") {
+      return f.arrayBuffer().then(function (buf) { return window.LY_PDFIN.loadLib().then(function (lib) {
+        if (!lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc = "../vendor/pdfjs/pdf.worker.min.js";
+        return lib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false, enableXfa: false, disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise;
+      }); }).then(function (pdf) {
+        var sizes = {};
+        return {
+          n: pdf.numPages,
+          draw: function (k, ppi) {
+            return pdf.getPage(k).then(function (page) {
+              var v1 = page.getViewport({ scale: 1 }), sc = Math.min(ppi / 72, 4000 / Math.max(v1.width, v1.height));
+              var vp = page.getViewport({ scale: sc }), cv = document.createElement("canvas");
+              cv.width = Math.max(1, Math.round(vp.width)); cv.height = Math.max(1, Math.round(vp.height));
+              var cx = cv.getContext("2d");
+              cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+              sizes[k] = { w: v1.width, h: v1.height };
+              return page.render({ canvasContext: cx, viewport: vp }).promise.then(function () { return cv; });
+            });
+          },
+          close: function () { try { pdf.destroy(); } catch (e) {} }
+        };
+      });
+    }
+    var made;
+    if (kind === "sla") {
+      made = f.arrayBuffer().then(function (buf) {
+        var u = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+        return u[0] === 0x1f && u[1] === 0x8b ? window.LY_SLA.gunzip(buf) : new TextDecoder().decode(buf);
+      }).then(function (txt) {
+        var res = typeof txt === "string" ? window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }) : null;
+        if (!res) return null;
+        res.keep = 1;
+        return useSrcFonts(res.doc).then(function () { return addForeign(res, window.LY_SLA.inlineImage, ""); });
+      });
+    } else if (kind === "idml") {
+      made = f.arrayBuffer().then(function (buf) { return window.LY_IDML.open(buf, { now: LY.now(), name: baseName(f, /\.idml$/i) }); }).then(function (res) {
+        if (!res) return null;
+        res.keep = 1;
+        return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, "");
+      });
+    } else return Promise.resolve(null);
+    return made.then(function (r) {
+      if (!r || !r.doc) return null;
+      var doc = r.doc, pages = M.pagesInOrder(doc), L = null;
+      return Promise.all(assetIds(doc).map(function (id) { return A.load(id).then(null, function () { return null; }); })).then(function () {
+        return {
+          n: pages.length,
+          draw: function (k, ppi) {
+            var pg = pages[k - 1], sz = M.pageSize(doc, pg);
+            L = L || LY.R.computeLayout(doc);
+            return Promise.resolve(LY.R.renderPage(doc, pg, L, Math.min(ppi / 72, 4000 / Math.max(sz.w, sz.h)), { getImage: A.get, background: "#fff" }));
+          },
+          close: function () {}
+        };
+      });
+    });
+  }
+  function askPage(n, name) {
+    if (n <= 1) return Promise.resolve(1);
+    return new Promise(function (resolve) {
+      var done = false;
+      var close = LY.openDialog(t("pp.title"), function (body, close) {
+        body.appendChild(el("p", "hint", t("pp.which", { f: name, n: n })));
+        var inp = el("input", "inp num");
+        inp.type = "number"; inp.min = 1; inp.max = n; inp.value = 1;
+        inp.setAttribute("aria-label", t("pp.page"));
+        body.appendChild(inp);
+        var act = el("div", "dlg-actions");
+        var c = el("button", "btn", t("btn.cancel")); c.type = "button";
+        var o = el("button", "btn primary", t("pp.place")); o.type = "button";
+        c.addEventListener("click", function () { close(); });
+        o.addEventListener("click", function () {
+          var k = Math.round(Number(inp.value));
+          if (!(k >= 1 && k <= n)) { inp.focus(); return; }
+          done = true; close(); resolve(k);
+        });
+        inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); o.click(); } });
+        act.appendChild(c); act.appendChild(o);
+        body.appendChild(act);
+      });
+      var d = document.getElementById("dlg");
+      if (d) d.addEventListener("close", function () { if (!done) resolve(0); }, { once: true });
+      void close;
+    });
+  }
+  // Page k of a file as a stored picture (the orOS Gate's placepage,
+  // proassist.js): → Promise of { a, iw, ih, nm, pp } (throws { why }).
+  function pageImage(f, k) {
+    var kind = pageKind(f), src = null;
+    if (kind === "af") return Promise.reject({ why: "affinity" });
+    if (!kind) return Promise.reject({ why: "notPage" });
+    if (f.size > FOREIGN_MAX) return Promise.reject({ why: "tooBig" });
+    return pageSource(f, kind).then(function (s) {
+      src = s;
+      if (!src || !src.n) throw { why: "unreadable" };
+      if (!(k >= 1 && k <= src.n)) throw { why: "noPage", pages: src.n };
+      return src.draw(k, 300);
+    }).then(function (cv) { return toBlob(cv, "image/png"); }).then(function (blob) {
+      var nm = String(f.name || "page").replace(/\.(pdf|idml|sla(\.gz)?)$/i, "") + " · " + k + ".png";
+      return A.importFile(new File([blob], nm, { type: "image/png" })).then(function (r) {
+        if (src) src.close();
+        return { a: r.id, iw: r.w, ih: r.h, nm: r.name, pp: { f: String(f.name || "").slice(0, 120), k: kind, p: k } };
+      });
+    }).then(null, function (e) { if (src) src.close(); throw e && e.why ? e : { why: "unreadable" }; });
+  }
+  // The picture frame `itemId` gets page k of file f (picked when f is
+  // not given; k asked when there are several). → Promise of true/false
+  function placePage(itemId, f, k) {
+    var src = null;
+    return (f ? Promise.resolve(f) : pickFile(PAGE_ACCEPT)).then(function (file) {
+      if (!file) return false;
+      f = file;
+      var kind = pageKind(f);
+      if (kind === "af") { LY.toast(t("pp.af")); return false; }
+      if (!kind || f.size > FOREIGN_MAX) { LY.toast(t("pp.bad")); return false; }
+      LY.toast(t("pp.working"));
+      return pageSource(f, kind).then(function (s) {
+        src = s;
+        if (!src || !src.n) { LY.toast(t("pp.bad")); return false; }
+        return (k >= 1 && k <= src.n ? Promise.resolve(k) : askPage(src.n, f.name || "")).then(function (pk) {
+          if (!pk) return false;
+          return src.draw(pk, 300).then(function (cv) { return toBlob(cv, "image/png"); }).then(function (blob) {
+            var nm = String(f.name || "page").replace(/\.(pdf|idml|sla(\.gz)?)$/i, "") + " · " + pk + ".png";
+            return A.importFile(new File([blob], nm, { type: "image/png" }));
+          }).then(function (res) {
+            var pic = { a: res.id, iw: res.w, ih: res.h, nm: res.name, pp: { f: String(f.name || "").slice(0, 120), k: kind, p: pk } };
+            var ok = LY.op(function (doc, now) { return window.LayoutPro.setPage(doc, itemId, pic, now) ? undefined : false; });
+            LY.toast(t("pp.done", { p: pk, f: f.name || "" }));
+            return !!ok;
+          });
+        });
+      });
+    }).then(function (r) { if (src) src.close(); return r; }, function () { if (src) src.close(); LY.toast(t("pp.bad")); return false; });
+  }
+
   // PDF: text → editable frames, the rest → one picture per page
   function importPdf(f) {
     if (f.size > FOREIGN_MAX || !window.LY_PDFIN) { LY.toast(t("pdf.bad")); return; }
@@ -1331,9 +1536,12 @@
       chain = chain.then(function () { return put(ln.item, f); }).then(function () { found++; }, function () {});
     });
     return chain.then(function () {
+      if (res.keep) return { doc: M.normDoc(doc), placed: found, missing: res.linked - found + failed };   // a page to place (W4b)
       LY.addDoc(M.normDoc(doc));
       var parts = [done], left = res.linked - found + failed;
       if (left) parts.push(t("sla.linked", { n: left }));
+      if (res.stats.tables) parts.push(t("idml.tables", { n: res.stats.tables }));
+      if (res.stats.notes) parts.push(t("idml.notes", { n: res.stats.notes }));
       if (res.stats.skipped) parts.push(t(skipKey || "sla.skipped", { n: res.stats.skipped }));
       if (left && res.links) LY.toast(parts.join(" "), t("sla.find"), relinkPick);
       else LY.toast(parts.join(" "));
@@ -1567,10 +1775,174 @@
     if (made) ED.select([made.id]);
   }
 
+  // ---------- Compare with a PDF, port a folder (LY-PORT-D, LY-PORT3) ----------
+  // A document's pages beside a PDF's (rebuild.js compare): pictures
+  // loaded first; opts.shift "auto" finds how many pages the PDF has
+  // before ours (an e-book's cover), opts.keep false keeps only the
+  // numbers. → Promise<{ pages, total, of, shift }>
+  function compareDoc(doc, file, opts) {
+    opts = opts || {};
+    var RB = window.LY_REBUILD, R = LY.R;
+    if (!RB || !doc || !file) return Promise.reject(new Error("compare"));
+    var order = M.pagesInOrder(doc), chain = Promise.resolve(), L = null;
+    doc.items.forEach(function (it) { if (it.t === "img" && it.a) chain = chain.then(function () { return LY.A.load(it.a); }).then(null, function () {}); });
+    var ours = function (i, w, h) {
+      var pg = order[i];
+      if (!pg) return null;
+      L = L || R.computeLayout(doc);
+      var sz = M.pageSize ? M.pageSize(doc, pg) : doc.setup;
+      var full = R.renderPage(doc, pg, L, w / sz.w, { getImage: LY.A.get, background: "#fff" });
+      var c = document.createElement("canvas"); c.width = w; c.height = h;
+      var x = c.getContext("2d", { willReadFrequently: true });
+      x.fillStyle = "#fff"; x.fillRect(0, 0, w, h);
+      x.drawImage(full, 0, 0, w, h);
+      return c;
+    };
+    var buf = null;
+    return chain.then(function () { return file.arrayBuffer(); }).then(function (b) {
+      buf = b;
+      if (opts.shift !== "auto") return { shift: +opts.shift || 0 };
+      return RB.shiftOf(buf.slice(0), ours, order.length, { range: 6 });
+    }).then(function (sh) {
+      return RB.compare(buf, ours, order.length, { dpi: opts.dpi || 50, shift: sh.shift, keep: opts.keep !== false, cancelled: opts.cancelled });
+    });
+  }
+
+  // Home › Open › Port a folder of books: every Scribus or InDesign file
+  // in a folder of past work opens as a new document with the pictures
+  // of its own folder (its print PDF, when there is one, also gives the
+  // Scribus text its line breaks), is compared with its PDF and goes
+  // into one report, which can be saved as CSV. Nothing in the folder
+  // changes.
+  var portBusy = false;
+  function portFolder() {
+    if (portBusy || !window.LY_PORT) return;
+    window.OrosBundle.pickFolder().then(function (files) {
+      if (!files) return;
+      var plan = window.LY_PORT.plan(files);
+      if (!plan.books.length) { LY.toast(t("port.none")); return; }
+      portPlanDlg(plan);
+    }).then(null, function () { LY.toast(t("imp.bad")); });
+  }
+  function portPlanDlg(plan) {
+    var withPdf = plan.books.filter(function (b) { return b.pdf; }).length;
+    LY.openDialog(t("port.title"), function (body, close) {
+      body.appendChild(el("p", "", t("port.found", { n: plan.books.length, p: withPdf })));
+      if (plan.more) body.appendChild(el("p", "hint warn", t("port.more", { n: plan.more })));
+      body.appendChild(el("p", "hint", t("port.hint")));
+      var ul = el("ul", "links-list");
+      plan.books.forEach(function (b) {
+        var li = el("li", "links-row");
+        li.appendChild(el("span", "links-name", b.name));
+        li.appendChild(el("span", "links-meta", b.path + " · " + t("port.pics", { n: b.pics.length }) + " · " + (b.pdf ? "PDF: " + b.pdfPath.split("/").pop() : t("port.noPdf"))));
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      var cmpBox = el("input"); cmpBox.type = "checkbox"; cmpBox.checked = withPdf > 0; cmpBox.disabled = !withPdf; cmpBox.id = "port-cmp";
+      var lab = el("label", "chk"); lab.appendChild(cmpBox); lab.appendChild(document.createTextNode(" " + t("port.cmp")));
+      body.appendChild(lab);
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn", t("btn.cancel")); c.type = "button"; c.addEventListener("click", close);
+      var go = el("button", "btn primary", t("port.go")); go.type = "button";
+      go.addEventListener("click", function () { var cmp = cmpBox.checked; close(); portRun(plan, cmp); });
+      act.appendChild(c); act.appendChild(el("span", "spacer")); act.appendChild(go);
+      body.appendChild(act);
+    }, true);
+  }
+  function portRun(plan, cmp) {
+    portBusy = true;
+    var rows = [], stop = false, status = null, k = 0, n = plan.books.length;
+    LY.openDialog(t("port.title"), function (body) {
+      status = el("p", "", t("port.working", { i: 1, n: n, f: plan.books[0].name }));
+      status.setAttribute("aria-live", "polite");
+      body.appendChild(status);
+      var act = el("div", "dlg-actions");
+      var s = el("button", "btn", t("port.stop")); s.type = "button";
+      s.addEventListener("click", function () { stop = true; s.disabled = true; });
+      act.appendChild(el("span", "spacer")); act.appendChild(s);
+      body.appendChild(act);
+    });
+    var chain = Promise.resolve();
+    plan.books.forEach(function (b) {
+      chain = chain.then(function () {
+        if (stop) return;
+        k++;
+        if (status) status.textContent = t("port.working", { i: k, n: n, f: b.name });
+        var before = {};
+        LY.data().docs.forEach(function (d) { before[d.id] = 1; });
+        var row = { book: b, rep: null, doc: null, cmp: null };
+        rows.push(row);
+        var imp = b.kind === "idml" ? importIdml(b.file, b.pics, { name: b.name }) : importSla(b.file, b.pics, b.pdf, { name: b.name });
+        return Promise.resolve(imp).then(function (rep) {
+          row.rep = rep;
+          row.doc = LY.data().docs.filter(function (d) { return !d.del && !before[d.id]; })[0] || null;
+          if (!row.doc || !cmp || !b.pdf || stop) return;
+          if (status) status.textContent = t("port.comparing", { f: b.name });
+          return compareDoc(row.doc, b.pdf, { shift: "auto", keep: false, dpi: 36, cancelled: function () { return stop; } }).then(function (res) {
+            row.cmp = res;
+          }, function () { row.cmpFail = 1; });
+        }, function () { row.rep = null; });
+      });
+    });
+    chain.then(function () {
+      portBusy = false;
+      portReport(rows, n, stop);
+    });
+  }
+  function portRows(rows) {
+    var P = window.LY_PORT, head = t("port.csvHead").split("|"), out = [head];
+    rows.forEach(function (r) {
+      var sc = r.cmp ? P.scoreOf(r.cmp.pages) : null;
+      out.push([r.book.name, r.book.path, r.rep ? r.rep.pages : "", r.rep ? r.rep.items : "", r.rep ? r.rep.missing : "", r.book.pdfPath,
+        r.cmp ? r.cmp.shift : "", sc ? sc.mean : "", sc ? sc.over : "", sc && sc.worst !== null ? sc.worst : "", sc && sc.worstPct !== null ? sc.worstPct : "",
+        !r.doc ? t("port.fail") : r.cmpFail ? t("cmp.fail") : ""]);
+    });
+    return out;
+  }
+  function portReport(rows, n, stopped) {
+    var P = window.LY_PORT, done = rows.filter(function (r) { return r.doc; }), cmpd = rows.filter(function (r) { return r.cmp && r.cmp.pages.length; });
+    var fmt = function (v) { return LY.BASE === "el" ? String(v).replace(".", ",") : String(v); };
+    var all = [];
+    cmpd.forEach(function (r) { all = all.concat(r.cmp.pages); });
+    var avg = P.scoreOf(all).mean;
+    LY.openDialog(t("port.title"), function (body, close) {
+      body.appendChild(el("p", "", t("port.done", { n: done.length, c: cmpd.length })));
+      if (stopped) body.appendChild(el("p", "hint warn", t("port.stopped", { n: rows.length, t: n })));
+      if (avg !== null) body.appendChild(el("p", "hint", t("port.avg", { p: fmt(avg) })));
+      var ul = el("ul", "links-list");
+      rows.forEach(function (r) {
+        var sc = r.cmp ? P.scoreOf(r.cmp.pages) : null;
+        var li = el("li", "links-row" + (!r.doc || (sc && sc.mean > 2) ? " warn" : ""));
+        li.appendChild(el("span", "links-name", r.book.name));
+        var meta = !r.doc ? t("port.fail") : t("port.row", { p: r.rep ? r.rep.pages : r.doc.pages.length, m: r.rep && r.rep.missing ? r.rep.missing : 0 });
+        if (sc && sc.mean !== null) meta += " · " + t("port.diff", { p: fmt(sc.mean), o: sc.over });
+        else if (r.book.pdf && r.doc) meta += " · " + (r.cmpFail ? t("cmp.fail") : t("port.noCmp"));
+        if (r.cmp && r.cmp.shift > 0) meta += " · " + t("port.shift", { n: r.cmp.shift });
+        li.appendChild(el("span", "links-meta", meta));
+        if (r.doc) {
+          var acts = el("span", "links-acts"), o = el("button", "btn small", t("port.open")); o.type = "button";
+          o.addEventListener("click", function () { close(); LY.openDoc(r.doc.id); });
+          acts.appendChild(o); li.appendChild(acts);
+        }
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      var act = el("div", "dlg-actions");
+      var sv = el("button", "btn", t("port.csv")); sv.type = "button";
+      sv.addEventListener("click", function () {
+        saveBlob(new Blob([P.csv(portRows(rows))], { type: "text/csv" }), t("port.csvName") + ".csv", "text/csv", "CSV", ".csv");
+      });
+      act.appendChild(sv); act.appendChild(el("span", "spacer"));
+      var c = el("button", "btn primary", t("btn.close")); c.type = "button"; c.addEventListener("click", close);
+      act.appendChild(c);
+      body.appendChild(act);
+    }, true);
+  }
+
   LY.io = {
-    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, portFolder: portFolder, compareDoc: compareDoc, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
-    saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
+    adjust: adjust, placePage: placePage, pageImage: pageImage, pageKind: pageKind, wrapProfile: wrapProfile, fillWrapProfiles: fillWrapProfiles, saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
   };
 })();

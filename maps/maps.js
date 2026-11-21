@@ -768,7 +768,26 @@
     }
     var b = document.createElement("b");
     b.textContent = t("geo.me");
-    userMarker.bindPopup(b).openPopup();
+    // Wave H6: extra buttons from modules (where.js: Where am I).
+    var box = b;
+    if (mapsHost.meItems.length) {
+      box = document.createElement("div");
+      box.appendChild(b);
+      var acts = document.createElement("div");
+      acts.className = "pop-actions";
+      mapsHost.meItems.forEach(function (fn) {
+        var it = null;
+        try { it = fn({ lat: lat, lon: lon, acc: accuracy }); } catch (e) { it = null; }
+        if (!it) return;
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = it.label;
+        btn.addEventListener("click", function () { map.closePopup(); it.run(); });
+        acts.appendChild(btn);
+      });
+      box.appendChild(acts);
+    }
+    userMarker.bindPopup(box).openPopup();
   }
 
   // Move (or lazily create) the user marker + accuracy circle WITHOUT
@@ -4050,6 +4069,8 @@
     localToast: localToast,
     storeFull: t("store.full"),
     ctxItems: [],
+    meItems: [],                 // wave H6: buttons in the "You are here" popup
+    share: function (place) { sharePoint(place); },
     // Wave 7 (transit.js): the planner's points, a location fix, a
     // place name, and a link that reopens a public transport search.
     routeEnds: function () { return { from: routeFrom, to: routeTo }; },
