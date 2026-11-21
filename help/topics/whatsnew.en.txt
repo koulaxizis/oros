@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.06.00
+- **Live pills in the top bar.** While a timer or the stopwatch of Time runs, or Screen Capture records, a pill with its time shows at the start of the top bar by itself. Tap it to open the app; the button beside it pauses the timer or the stopwatch, or stops the recording. Turn them off in Settings › Appearance › Top bar › `Live pills`.
+
 ## Version 8.05.00
 - **Signal, a skin like an LED dot display.** The 17th skin in Settings › Appearance: black with white text and a red light (white paper with deep red in the light theme). It comes with the new `Dot Matrix` wallpaper, and the Clock widget shows the time in LED dots. The Clock card's ⋯ menu lets you pick `Clock: digits`, `Clock: LED dots` or `Clock: automatic` with any skin.
 - **Glass ribbons in the Wallpaper Generator.** A new style: three glossy ribbons that run across the screen and twist like folded glass, each in one colour of the palette you pick. Density makes them wider, Chaos gives them more bends.
