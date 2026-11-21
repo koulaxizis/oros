@@ -145,7 +145,9 @@ def search_and_pages():
     adb("shell", "input", "tap", *map(str, center(field)))
     adb("shell", "input", "text", "notes")
     adb("shell", "input", "keyevent", "KEYCODE_ENTER")
-    root, name = wait_for(lambda r: node_with(r, "orOS Notes"), "orOS Notes in the search", 30)
+    # "notes" also matches other apps' descriptions (credit notes, ...), so orOS Notes may sit lower down.
+    wait_for(lambda r: "orOS Drive" not in texts(r), "the search for notes", 30)
+    root, name = scroll_to("orOS Notes", 60)
     adb("shell", "input", "tap", *map(str, center(name)))
     wait_for(lambda r: any((n.get("content-desc") or "").startswith("Screenshot 1 of") for n in r.iter("node"))
              if r is not None else False, "the screenshots of orOS Notes", 30)
