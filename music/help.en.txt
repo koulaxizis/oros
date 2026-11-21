@@ -28,17 +28,38 @@ Liked songs and playlists sync to your other devices. A song that is not on a de
 A song's ⋯ menu has `Details` (file, format, size, length) and `Delete from this device`, which deletes the file from `Files › Music`. Old tags in Greek written with the Windows code page are recognised automatically; if names look wrong, choose `Always Greek` or `Always Western` under `Old tags` in the settings.
 
 ## Free music
-Besides your own songs, Music plays free and legal music from four open catalogues, with no account:
+Besides your own songs, Music plays free and legal music from eleven open catalogues:
 - **Jamendo**: independent artists who share their music under Creative Commons. Popular this week, new albums, all-time favourites, moods and Jamendo's own radios. Jamendo songs always stream (Jamendo does not allow offline copies), and each one links back to its page on Jamendo. If a stream stops (the connection dropped, or the song's address went stale), Music asks for it again and goes on from where it stopped; without a network it waits and goes on when the network is back. Only a song that still cannot play is skipped: the next song starts at once, and a notice names the song that was skipped. Tap an artist's name (also in the full player) for the artist's page: on Jamendo it has every album, newest first, and every song, most played first.
 - **Internet Archive**: netlabel albums, classical recordings and the Live Music Archive (concert tapes of bands that allow free, non-commercial sharing). Only items with a Creative Commons or public-domain licence are shown.
 - **Openverse**: songs with Creative Commons or public-domain licences from Wikimedia Commons, Freesound, Jamendo and more.
 - **ccMixter**: Creative Commons remixes, instrumentals and a cappellas.
+- **Audius**: artists share songs there to be heard for free (`Trending on Audius` on `Home`). Most have no free licence, so they show `Free to listen` instead of a licence, stream only, and any licence filter leaves Audius out.
+- **Europeana**: open-licence recordings of Europe's archives and radios (folk, classical, historic records, live radio sessions). It needs your own free API key: get one at europeana.eu and paste it in `Settings` › `Sources`. The key stays on this device, sealed, is never synced and goes only to api.europeana.eu. Some recordings come from archives that do not let other sites play them; those are skipped.
+- **Free Music Archive**: the Creative Commons albums of the Free Music Archive, kept on the Internet Archive (`Free Music Archive` on `Home`).
+- **Kevin MacLeod**: more than 1,400 instrumental pieces from incompetech, all under CC BY 4.0, so they can be kept offline (`Kevin MacLeod` on `Home`). Search, genre, mood, tempo, length and year work on them.
+- **Musopen**: public-domain classical recordings, kept on the Internet Archive (`Musopen classical` on `Home`).
+- **National Jukebox**: historic recordings of the Library of Congress, kept on the Internet Archive (`Early recordings, 1900–1925` on `Home`). Only recordings old enough to be public domain are shown.
+- **DPLA**: open-licence recordings of American libraries and archives. It needs your own free API key (dp.la explains how to ask for one; it comes by email), pasted in `Settings` › `Sources`. Only recordings that can be played here are listed.
+
+`Settings` › `Sources` turns each catalogue on or off on this device. It also links to mobygratis.com, where Moby gives his instrumentals for free to non-commercial creative projects; its licence does not let other apps play them, so they open on that site.
 
 On `Home`, `Free music` has shelves such as `Popular this week`, `Jamendo radios`, `Live concerts`, `Netlabel albums`, `Classical` and `Remixes`; `Free music by genre` has genres and `Moods (Jamendo)` has moods. In `Search`, `Free music online` adds results from the catalogues when you stop typing (or press Enter); the chips choose `All` or one catalogue. Nothing is asked of them until you open a shelf or search, and the requests go straight to them.
 
 Every song shows its licence (for example `CC BY-SA`). Its ⋯ menu has `Copy credit`, the line that names the song, the artist, the licence and the source, ready to paste wherever you use the song; `Details` shows it too, and so does the licence line under the song in the full player. `Open on …` opens the song's page at its source.
 
 Songs from the catalogues go into `Liked songs` and playlists like your own, and play on your other devices too. `Save for offline` (on a song, or the arrow on an album) keeps a copy on this device, only where the licence and the source allow it: songs that Openverse lists from Jamendo always stream. Saved songs are under `Offline` in `Your library`, with the arrow mark; `Remove offline copy` or `Delete all offline copies` in the settings frees the space. To turn the catalogues off, untick `Free music online` in the settings.
+
+## Search with filters
+In `Search`, the `Filters` button next to the search field opens `Search filters`: `Genre`, `Country`, `Length` (under 2 min, 2–5, 5–10, over 10), `Year` (from, to), `Vocals` (with vocals or instrumental), `Mood`, `Tempo`, `Voice` and `Sound` (acoustic or electric; these four come from Jamendo), the `Licence` (`Public domain or CC0`, `Allows commercial use`, `Allows changes and remixes`), `Can be kept offline` and the `Order` (best match, most popular, newest). `Show results` applies them. Active filters show as chips under the search field: tap one to remove it, or `Clear filters`. The button shows how many are on, and the filters stay on this device until you clear them.
+
+Filters work with words or without: with an empty search field and filters on, `Search` lists the songs of yours that pass, then the open catalogues. Not every catalogue can use every filter. A catalogue that cannot use one is left out, never shown with results that ignore it, and a line under the results says which and why (for example `ccMixter (cannot filter by country)`). What each catalogue sends back is checked again on your device for the licence, the length and offline copies. `Country` asks Jamendo for the artists who live in that country and Internet Archive for recordings made there (mostly concerts); `Your music` can be filtered by genre, year and length only, from your files' tags.
+
+## Dig deeper
+- **Concert explorer** (`Home` › `Free music`): the Live Music Archive by band, then year, then show. Each show lists its date, venue and city, how it was recorded (SBD from the mixing desk, AUD from the crowd, Matrix both mixed), whether it comes lossless, and its rating. A show opens as an album. Bands that allow streaming only stay streaming only.
+- **Netlabels** (`Home` › `Free music`): the free record labels on the Internet Archive, each with its own page of releases, newest first.
+- **Filters** › `Order` › `Deep dig`: rarely played albums of the Internet Archive collections, best rated first. `Lossless only (FLAC)` keeps albums that also come in a lossless format.
+- **Saved searches**: `Save search` under the search box keeps the words, the filters and the chosen catalogue. They appear under `Search` (with nothing typed) on all your devices. Opening one again shows first what is new since your last visit on this device.
+- **Credits**: a playlist's ⋯ › `Copy credits` copies a credit line (title, artist, licence, source) for each song from the open catalogues, ready to paste where you reuse them.
 
 ## Your own servers
 If your music lives on a server of your own, Music plays it from there. Press **+** and `Connect a server`, or go to `Your library › Servers`:
@@ -51,6 +72,8 @@ If your music lives on a server of your own, Music plays it from there. Press **
 Use an `https://` address: browsers block plain `http://` addresses in orOS, except a server on the same computer. The address and the login stay on this device, sealed with a key that never leaves the browser, and are never synced. A server's page has its albums, artists and playlists (or its folders), and `Shuffle the server`. Its ⋯ button has `Rename` and `Remove from this device`. `Home` shows `New on …` for your servers, and `Search` asks them too once you stop typing.
 
 Songs from a server go into `Liked songs` and your playlists like any other. They play on your other devices once you connect the same server there too; until then they show as `From a server not connected here`.
+
+`Dogmazic` in the connect window fills in Dogmazic, a French library of free music where every song has a free licence. Sign in with your free Dogmazic account; as the password use the Subsonic password or the API key from your Dogmazic account settings.
 
 ## Playlist files and music feeds
 `Import a playlist (M3U, PLS, XSPF)` makes a new playlist from a playlist file or its address. Each entry becomes the song with the same file name (or title and artist) on this device, the song at an `https://` address, or, for a file kept on a WebDAV or Dropbox server, the song next to it on that server. Entries that cannot be found are left out, and Music says how many. Playlist files inside a server's folders open the same way.
