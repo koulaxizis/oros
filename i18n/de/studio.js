@@ -6,6 +6,7 @@ orosPack("de", "studio", {
  "as.done0": "Es war nichts zu ändern.",
  "as.done1": "Der Assistent hat {n} Dinge im Projekt geändert.",
  "as.gone": "Es gibt nichts mehr rückgängig zu machen.",
+ "as.made1": "Der Assistent hat eine Datei als neues Projekt {name} geöffnet.",
  "as.undone": "Die Änderung des Assistenten wurde rückgängig gemacht.",
  "au.auto": "automatisiert",
  "au.btn": "A",

@@ -53,7 +53,9 @@
     return o;
   }
 
-  // kind: "doc" (every command edits a project)
+  // kind: "doc" (the command edits a project) | "new" (create: a new
+  // project from a file, Studio's own .orosstudio import; Gate's
+  // studio_import is this command)
   var CATALOG = {
     clip: { kind: "doc", args: sel(CSEL, { gain: n(S.GAIN_MIN, S.GAIN_MAX), fi: n(0, 60), fo: n(0, 60), time: n(0, S.MAX_SEC), bar: i(1, 2000), secs: n(S.MIN_LEN, S.MAX_SEC) }) },
     split: { kind: "doc", args: sel(CSEL, { time: n(0, S.MAX_SEC), bar: i(1, 2000) }) },
@@ -64,7 +66,8 @@
     addtrack: { kind: "doc", args: { what: { t: "enum", v: ["audio", "midi"], def: "audio" }, title: { t: "str", max: S.MAX_NAME }, inst: oneOf([""].concat(INSTS)), c: { t: "color" } } },
     deltrack: { kind: "doc", args: sel(TSEL, {}) },
     project: { kind: "doc", args: { bpm: n(S.MIN_BPM, S.MAX_BPM), sig: i(2, 7), vol: n(S.VOL_MIN, S.VOL_MAX), loop: ONOFF, bars: { t: "str", max: 20 } } },
-    rename: { kind: "doc", args: { title: { t: "str", max: S.MAX_NAME, req: 1 } } }
+    rename: { kind: "doc", args: { title: { t: "str", max: S.MAX_NAME, req: 1 } } },
+    create: { kind: "new", args: { from: { t: "str", max: 500, req: 1 }, title: { t: "str", max: S.MAX_NAME } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -81,10 +84,13 @@
     "addtrack: a new track at the bottom, what audio|midi (an instrument track), title, inst " + INSTS.join("|") + " (the instrument of a midi track), c",
     "deltrack: delete the picked tracks and their clips (needs tracks or what)",
     "project: bpm (" + S.MIN_BPM + "-" + S.MAX_BPM + ", MIDI clips keep their bars and beats, audio stays in time), sig (beats in a bar, 2-7), vol (the master, dB), loop on|off, bars (the loop, e.g. \"5-8\" = bars 5 to 8)",
-    "rename: the project's name becomes `title`"
+    "rename: the project's name becomes `title`",
+    "create: open a .orosstudio file from Claude's folders as a NEW project (only as the one command, with designs new): from (its /internal/ path, as files_upload or files_write gave it), title (the new project's name; the file's own name when empty). Nothing that exists changes, the user can undo it, and nothing is published"
   ].join("\n") + "\nA project that is a part of an audiobook (opening, chapter or closing credits) is named \"<book> · <part>\" and its outline carries `book` (the book, the part's place, the other parts, the requirements ACX or Storytel, whether it is normalised); the same commands work on it. Checking, normalising and exporting a book are done in Studio's Books window, not by commands.";
 
   // ---------- 1. Checking ----------
+  // a file in the user's orOS disk; no step up or back slash
+  var FROM_RX = /^\/internal\/(?!(?:.*\/)?\.\.?(?:\/|$))[^\\\u0000-\u001f]+\.orosstudio$/i;
   var IDS_RX = /^[\s,a-z0-9]*$/, BARS_RX = /^\s*(\d{1,4})\s*(?:-\s*(\d{1,4}))?\s*$/;
   function given(v) { return v !== null && v !== undefined && v !== ""; }
   function picks(st) { return given(st.ids) || given(st.tracks) || given(st.what) || given(st.has); }
@@ -117,6 +123,7 @@
     if (st.op === "clip" && given(st.time) && given(st.bar)) return { err: "clip: give time or bar, not both" };
     if (st.op === "notes" && !given(st.semis) && !given(st.vel)) return { err: "notes: give semis or vel" };
     if (st.op === "addtrack" && st.inst && st.what !== "midi") return { err: "addtrack: inst is for a midi track" };
+    if (st.op === "create" && !FROM_RX.test(st.from)) return { err: "create: from must be an /internal/ path of a .orosstudio file (files_upload or files_write)" };
     if (st.op === "project" && !given(st.bpm) && !given(st.sig) && !given(st.vol) && !st.loop && !given(st.bars)) return { err: "project: give bpm, sig, vol, loop or bars" };
     return { step: st };
   }
@@ -131,6 +138,7 @@
       else steps.push(r.step);
     });
     if (errs.length) return { ok: false, err: errs.slice(0, 6).join(". ") };
+    if (steps.length > 1 && steps.some(function (st) { return st.op === "create"; })) return { ok: false, err: "create is the only command of its list (change the new project with a second edit_in_app)" };
     return { ok: true, steps: steps };
   }
 
@@ -407,10 +415,10 @@
         part[key].push(stamp(key, x));
       });
     });
+    var cp = S.find(dat, "projects", pid);
     if (snap.project) {
-      var cp = S.find(dat, "projects", pid);
       if (!(cp && JSON.stringify(Object.assign({}, snap.project, { m: cp.m })) === JSON.stringify(cp))) part.projects.push(stamp("projects", snap.project));
-    }
+    } else if (cp) part.tombs[pid] = Math.max(now, cp.m);   // a project create made goes again
     return S.mergeStudio(dat, part);
   }
 
@@ -433,7 +441,8 @@
   // project's id (prefs.cur). designs: open | named | all.
   function targets(data, folders, open, designs, name) {
     var docs = data && Array.isArray(data.docs) ? data.docs : [];
-    if (designs === "new") return { ok: false, err: "a new song project is made in Studio itself; use open, named or all" };
+    // a new project from a file (create): nothing that exists is picked
+    if (designs === "new") return { ok: true, docs: [{ id: "", name: String(name || "") }], fresh: 1 };
     if (designs === "folder") return { ok: false, err: "Studio has no folders; use open, named or all" };
     if (!docs.length) return { ok: false, err: "the user has no projects in Studio yet" };
     var list = [];
@@ -464,6 +473,8 @@
     var out = { n: 0, d: 0, per: [], cut: 0, notes: [] }, recs = {}, seq = 0;
     ((data && data.docs) || []).forEach(function (d) { recs[d.id] = d.store; });
     var env = { notes: out.notes, now: Date.now(), newId: function (kind) { seq++; return kind + "zzpreview" + seq; } };
+    // create: one new project, read from its file only in Studio
+    if (steps.length && steps[0].op === "create") { out.made = 1; return out; }
     ids.forEach(function (id) {
       if (!recs[id]) return;
       var w = work(recs[id], id), k = 0;
@@ -523,7 +534,7 @@
 
   var api = {
     CATALOG: CATALOG, ORDER: ORDER, GUIDE: GUIDE, MAX_STEPS: MAX_STEPS, INSTS: INSTS,
-    check: check, work: work, apply: apply, snapshot: snapshot, restore: restore,
+    FROM_RX: FROM_RX, check: check, work: work, apply: apply, snapshot: snapshot, restore: restore,
     view: view, targets: targets, preview: preview, outline: outline
   };
   if (node) module.exports = api;

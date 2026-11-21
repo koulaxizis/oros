@@ -203,7 +203,7 @@
       "nr.working": "Cleaning the sound… {p}%", "nr.done": "Noise reduced", "nr.fail": "Could not clean this sound.",
       "rel.today": "today", "rel.yesterday": "yesterday",
       "as.done": "The Assistant changed {n} things in {d} projects.", "as.done1": "The Assistant changed {n} things in the project.",
-      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.done0": "Nothing needed changing.", "as.made1": "The Assistant opened a file as the new project {name}.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
       "as.undone": "The Assistant's change was undone.", "as.changed": "The project was changed since, so the Assistant's change was not undone.",
       "as.gone": "There is nothing left to undo."
     },
@@ -353,7 +353,7 @@
       "nr.working": "Καθαρίζω τον ήχο… {p}%", "nr.done": "Ο θόρυβος μειώθηκε", "nr.fail": "Δεν καθάρισε αυτός ο ήχος.",
       "rel.today": "σήμερα", "rel.yesterday": "χθες",
       "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} έργα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο έργο.",
-      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.made1": "Ο Βοηθός άνοιξε ένα αρχείο ως νέο έργο: {name}.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
       "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Το έργο άλλαξε στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
       "as.gone": "Δεν έμεινε κάτι για αναίρεση."
     }
@@ -2198,7 +2198,9 @@
   }
   // job: Promise<OrosBundle result> → its media into the media store
   // (ids this device has already are skipped), then a NEW project.
-  function openOros(job) {
+  // title: a name for the new project instead of the file's (the
+  // Assistant's create, Gate montage_import). Resolves the new id or null.
+  function openOros(job, title) {
     var PK = window.MontagePackage, skipped = 0;
     busy(t("oros.reading", { p: 0 }), 0);
     return job.then(function (r) {
@@ -2216,6 +2218,7 @@
       }, Promise.resolve()).then(function () { return r; });
     }).then(function (r) {
       var np = PK.parse(r.content, { uid: uid, now: Date.now(), name: (r.meta && r.meta.title) || t("proj.untitled") });
+      if (title) np.name = String(title).slice(0, 80);
       var d = C.merge(data, null);
       d.projects[np.id] = np;
       data = C.merge(d, null);
@@ -2494,6 +2497,20 @@
     data: function () { return data; },
     pid: function () { return pid; },
     open: function (id) { if (data.projects[id]) openProject(id); },
+    // create: an .orosmontage on the disk (Claude's folders) as a NEW
+    // project, as Import does → { pid, name } | { err }
+    importFile: function (path, title) {
+      var F = fsApi();
+      if (!orosReady()) return Promise.resolve({ err: "error" });
+      if (!F) return Promise.resolve({ err: "nodisk" });
+      return Promise.resolve().then(function () { return F.read(path); }).then(function (b) { return b || null; }, function () { return null; }).then(function (b) {
+        if (!b) { showToast(t("err.fail")); return { err: "nofile" }; }
+        var bad = null;
+        return openOros(readOrosFile(b).then(null, function (e) { bad = e && e.code === "newer" ? "newer" : "notbundle"; throw e; }), title).then(function (id) {
+          return id && data.projects[id] ? { pid: id, name: data.projects[id].name } : { err: bad || "notbundle" };
+        });
+      });
+    },
     // next = the whole data; withUndo = the open project changed (one
     // step of Montage's own Undo).
     set: function (next, withUndo) {
@@ -2501,7 +2518,8 @@
       data = next;
       save();
       if (sel && cur() && !cur().items[sel]) sel = null;
-      if (view === "editor") refreshEditor(); else renderHome();
+      if (view === "editor" && !cur()) showHome();   /* an undone create took the open project */
+      else if (view === "editor") refreshEditor(); else renderHome();
     }
   };
   var assistP = null;

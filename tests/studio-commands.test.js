@@ -178,7 +178,7 @@ test("view, targets, preview and the outline for the AI", () => {
   assert.deepEqual(CMD.targets(vw, null, "", "named", "song").docs.map((d) => d.id), [PID]);
   assert.match(CMD.targets(vw, null, "", "named", "zzz").err, /no project is called "zzz"; projects: "Demo", "Song"/);
   assert.equal(CMD.targets(vw, null, "", "all").docs.length, 2);
-  assert.match(CMD.targets(vw, null, "", "new").err, /made in Studio itself/);
+  assert.deepEqual(CMD.targets(vw, null, "", "new", "X"), { ok: true, docs: [{ id: "", name: "X" }], fresh: 1 }, "ST-IMP: create (a file as a new project)");
   const pv = CMD.preview(vw, [PID, "pother01"], CMD.check([{ op: "addtrack" }, { op: "rename", title: "X" }]).steps);
   assert.deepEqual([pv.n, pv.d, pv.per.map((x) => x.n)], [4, 2, [2, 2]]);
   assert.equal(vw.docs[1].store.tracks.length, 3, "the preview works on copies");

@@ -309,7 +309,7 @@
       "dr.kick": "Kick", "dr.snare": "Snare", "dr.rim": "Rim", "dr.clap": "Clap", "dr.hat": "Hi-hat", "dr.pedal": "Pedal hi-hat", "dr.ohat": "Open hi-hat",
       "dr.crash": "Crash", "dr.ride": "Ride", "dr.shaker": "Shaker", "dr.cow": "Cowbell", "dr.tom1": "Low tom", "dr.tom2": "Mid tom", "dr.tom3": "High tom",
       "as.done": "The Assistant changed {n} things in {d} projects.", "as.done1": "The Assistant changed {n} things in the project.",
-      "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
+      "as.done0": "Nothing needed changing.", "as.made1": "The Assistant opened a file as the new project {name}.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
       "as.undone": "The Assistant's change was undone.", "as.changed": "The project was changed since, so the Assistant's change was not undone.",
       "as.gone": "There is nothing left to undo."
     },
@@ -549,7 +549,7 @@
       "dr.kick": "Μπότα", "dr.snare": "Ταμπούρο", "dr.rim": "Στεφάνι", "dr.clap": "Παλαμάκια", "dr.hat": "Hi-hat", "dr.pedal": "Hi-hat πεντάλ", "dr.ohat": "Ανοιχτό hi-hat",
       "dr.crash": "Crash", "dr.ride": "Ride", "dr.shaker": "Shaker", "dr.cow": "Κουδούνα", "dr.tom1": "Χαμηλό tom", "dr.tom2": "Μεσαίο tom", "dr.tom3": "Ψηλό tom",
       "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} έργα.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο έργο.",
-      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
+      "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.made1": "Ο Βοηθός άνοιξε ένα αρχείο ως νέο έργο: {name}.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
       "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Το έργο άλλαξε στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
       "as.gone": "Δεν έμεινε κάτι για αναίρεση."
     }
@@ -4315,16 +4315,20 @@
     pickFilesP(OROS_EXT + "," + OROS_MIME).then(function (files) { if (files && files.length) routeFiles(files); });
   }
   // A read bundle → a NEW project: its audio onto the disk first, then
-  // the project, tracks, sources and clips into the data.
-  function addOros(r, name) {
+  // the project, tracks, sources and clips into the data. Resolves
+  // { pid, name, files (the paths written) } or { err } (the Assistant's
+  // create, Gate studio_import, reads it). title: a name for the new
+  // project instead of the file's.
+  function addOros(r, name, title) {
     var SP = window.StudioPackage, parsed;
     try {
       parsed = SP.parse(r.content, { newId: function (k) { return C.newId(k, Math.random); }, now: Date.now(), title: r.meta && r.meta.title,
                                      hasBook: function (id) { return !!findBook(id); } });
-    } catch (e) { orosFail(name)(e); return; }
-    if (C.songCount(data) >= C.MAX_PROJECTS) { busy(null); showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return; }
+    } catch (e) { orosFail(name)(e); return Promise.resolve({ err: e && e.code === "newer" ? "newer" : "notbundle" }); }
+    if (C.songCount(data) >= C.MAX_PROJECTS) { busy(null); showToast(t("toast.maxProjects", { n: C.MAX_PROJECTS })); return Promise.resolve({ err: "full" }); }
     var fs = fsApi(), files = parsed.files.filter(function (x) { return r.media[x.key]; }), written = [];
-    if (files.length && !fs) { busy(null); showToast(t("toast.noDisk")); return; }
+    if (files.length && !fs) { busy(null); showToast(t("toast.noDisk")); return Promise.resolve({ err: "nodisk" }); }
+    if (title) parsed.project.name = String(title).slice(0, C.MAX_NAME);
     if (!parsed.project.name) parsed.project.name = t("proj.default", { n: data.projects.length + 1 });
     return files.reduce(function (p, x, i) {
       return p.then(function () {
@@ -4342,10 +4346,28 @@
       openProject(C.find(data, "projects", parsed.project.id));
       if ($("proj-dlg").open) renderProjects();
       showToast(t("oros.opened", { name: parsed.project.name }));
+      return { pid: parsed.project.id, name: parsed.project.name, files: written.slice() };
     }, function () {
       busy(null);
       written.forEach(function (p) { try { Promise.resolve(fs.rm(p)).catch(function () {}); } catch (e) {} });
       showToast(t("toast.writeFail"));
+      return { err: "write" };
+    });
+  }
+  // The Assistant's create (Gate studio_import): an .orosstudio from the
+  // disk (Claude's folders) as a NEW project, as Import does.
+  function importPath(path, title) {
+    var B = bundleApi(), fs = fsApi(), name = String(path || "").replace(/^.*\//, "") || OROS_EXT;
+    if (!B) return Promise.resolve({ err: "error" });
+    if (!fs) return Promise.resolve({ err: "nodisk" });
+    busy(t("oros.opening", { name: name, n: 0 }));
+    return Promise.resolve().then(function () { return fs.readBlob(path); }).catch(function () { return null; }).then(function (blob) {
+      if (!blob) throw { code: "nofile" };
+      return B.read(blob, { mime: OROS_MIME, big: true, onProgress: function (d, tot) { busy(t("oros.opening", { name: name, n: pctOf(d, tot) })); } });
+    }).then(function (r) { return addOros(r, name, title); }, function (e) {
+      var nofile = e && e.code === "nofile";
+      if (nofile) { busy(null); showToast(t("oros.bad", { name: name })); } else orosFail(name)(e);
+      return { err: nofile ? "nofile" : e && e.code === "newer" ? "newer" : "notbundle" };
     });
   }
 
@@ -4378,6 +4400,12 @@
     pid: function () { return proj ? proj.id : ""; },
     busy: function () { return recording || !!(drag || rdrag || adrag) || !!(Roll && Roll.busy()); },
     open: function (id) { var p = C.find(data, "projects", id); if (p) openProject(p); },
+    // create: a file as a new project; rm: files an undone create wrote
+    importFile: importPath,
+    rm: function (paths) {
+      var fs = fsApi();
+      if (fs && typeof fs.rm === "function") (paths || []).forEach(function (p) { try { Promise.resolve(fs.rm(p)).catch(function () {}); } catch (e) {} });
+    },
     // next = the whole data; withUndo = the open project changed (one
     // step of Studio's own Undo).
     set: function (next, withUndo) {

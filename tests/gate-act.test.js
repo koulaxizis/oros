@@ -118,7 +118,8 @@ test("relay: the device's tools are cleaned and merged", () => {
 test("closed orOS: the device runs only the changes the relay may queue", () => {
   // 6.05.02 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με κλειστό το orOS»):
   // every relay change waits, budget_delete and budget_transfer too
-  const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true) && R.LIVE_ONLY.indexOf(t.name) < 0 && R.META_TOOLS.indexOf(t.name) < 0).map((t) => t.name);
+  // (ST-IMP: studio_import / montage_import are edit_in_app by the time anything waits)
+  const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true) && R.LIVE_ONLY.indexOf(t.name) < 0 && R.META_TOOLS.indexOf(t.name) < 0 && !R.IMPORT_TOOLS[t.name]).map((t) => t.name);
   assert.deepEqual(R.LIVE_ONLY, ["budget_refresh"], "BK-AO: a bank read needs the device's key, never queued");
   assert.ok(G.QUEUED.indexOf("budget_refresh") < 0);
   assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED, Object.keys(R.FILE_CHANGE), Object.keys(R.SCREEN_TOOLS)).sort(), "5.96.00: changes and links by ref too; F3: Claude's folders; GATE-SCREEN: the screen tools");

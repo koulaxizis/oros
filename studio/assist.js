@@ -21,6 +21,11 @@
    never takes away newer work. Undo data: IndexedDB oros-studio-assist
    (store "undo"), this device only, 30 days, 50 entries. Loaded on
    the first request (studio.js), with commands.js.
+   create (designs "new", Gate's studio_import): an .orosstudio from the
+   disk opens as a NEW project through Studio's own import (studio.js
+   importPath); the report counts it as made, and Undo removes the
+   project and the files the import wrote, only while it is unchanged.
+   Nothing is ever published from here.
    ============================================================ */
 (function () {
   "use strict";
@@ -97,9 +102,33 @@
   function stateOf(rec) { return JSON.stringify(rec.projects.map(function (x) { return projJson(x.id); })); }
 
   var busy = false;
+  var NO_STATE = { project: null, tracks: [], sources: [], clips: [] };
+  // why a create failed, for the model (English)
+  var WHY = { nofile: "there is no such file on the owner's orOS disk (upload it with files_upload first)", notbundle: "the file is not a .orosstudio project",
+              newer: "the file was made by a newer orOS; the owner must update orOS first", nodisk: "this device has no orOS disk", full: "Studio already has as many projects as it can keep", write: "the project's audio could not be written to the disk" };
+  // create: one file → one new project
+  function create(key, st) {
+    if (busy || H.busy()) { H.toast(t("as.bad")); back(key, { failed: 1, why: "busy" }); return; }
+    busy = true;
+    Promise.resolve(H.importFile(st.from, st.title)).then(function (r) {
+      busy = false;
+      if (!r || !r.pid) { var why = r && r.err || "error"; back(key, { failed: 1, why: why, notes: WHY[why] ? [WHY[why]] : [] }); return; }
+      var rec = { tok: newTok(), at: Date.now(), projects: [{ id: r.pid, before: NO_STATE, made: 1 }], files: (r.files || []).slice(0, 2000) };
+      rec.fp = fp(stateOf(rec));
+      return put(rec).then(function () {
+        back(key, { ok: 1, n: 0, d: 0, per: [{ name: r.name, n: 1 }], cut: 0, made: 1, notes: [], tok: rec.tok });
+        H.undoToast(t("as.made1", { name: r.name }), function () { undo({ tok: rec.tok }); });
+      });
+    }, function (e) {
+      busy = false;
+      try { console.error("[orOS] studio: the Assistant's import failed", e); } catch (x) {}
+      back(key, { failed: 1, why: "error" });
+    });
+  }
   function edit(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "";
     var chk = K.check(rq && rq.steps);
+    if (chk.ok && chk.steps[0].op === "create") { create(key, chk.steps[0]); return; }
     var ids = rq && Array.isArray(rq.docs) ? rq.docs.filter(function (id) { return typeof id === "string" && C.find(H.data(), "projects", id); }).slice(0, 300) : [];
     var held = busy || H.busy();
     if (!chk.ok || !ids.length || held) {
@@ -154,11 +183,13 @@
       var next = H.data(), now = Date.now(), open = false;
       rec.projects.forEach(function (x) {
         next = K.restore(next, x.id, x.before, now);
-        if (x.id === H.pid()) open = true;
+        if (x.id === H.pid() && !x.made) open = true;
       });
       H.set(next, open);
+      /* the files an undone create wrote leave the disk with its project */
+      if (rec.files && rec.files.length && rec.projects.every(function (x) { return x.made; })) H.rm(rec.files);
       rec.st = "undone";
-      rec.projects = [];   /* nothing left to undo: the copies go */
+      rec.projects = []; rec.files = [];   /* nothing left to undo: the copies go */
       return put(rec).then(function () {
         H.toast(t("as.undone"));
         back(key, { ok: 1 });
