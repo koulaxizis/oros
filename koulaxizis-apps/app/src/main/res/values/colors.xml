@@ -5,4 +5,6 @@
     <color name="background">#FAFAFB</color>
     <color name="icon_bg">#1D1F24</color>
     <color name="icon_fg">#E8EAEE</color>
+    <!-- A screenshot's place while it loads (APPS-M5). -->
+    <color name="shot_bg">#14000000</color>
 </resources>

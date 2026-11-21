@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Layout — Scribus .sla import (v1.3.0)
+// orOS Layout — Scribus .sla import (v1.5.0)
 // Reads a Scribus document (1.4, 1.5, 1.6 XML) into a NEW Layout
 // document: pages, master pages, margins, columns, bleed, colours,
 // paragraph styles, text frames with their threads, images, shapes,
@@ -23,6 +23,12 @@
 //     and the font's own name in ext.srcFont; io.js then finds that
 //     family on the orOS disk or at Fontsource (LY-FONT). Text kerns,
 //     as in Scribus (ext.kern on the base style, LY-KERN).
+//   - Line breaks (Shift+Enter) stay inside their paragraph and tabs
+//     stay tabs, with the document's tab interval and each style's
+//     stops (LY-TAB).
+//   - A column or frame break starts what follows in the next column
+//     (ext.brk "col"); text after a break inside a paragraph goes on
+//     with no first-line indent and no space before.
 //   - A compressed .sla.gz is unpacked by io.js before it comes here.
 // Exposes LY_SLA (browser) or module.exports (Node tests).
 // ============================================================
@@ -172,6 +178,7 @@
   }
 
   var ALIGN = ["l", "c", "r", "j", "j"];
+  var HAIR = 0.25;      // pt, a Scribus line of width 0
   // Scribus paragraph attributes → Layout paragraph style keys.
   function psProps(a, colour) {
     var o = {};
@@ -190,6 +197,9 @@
     if (a.FEATURES !== undefined && /underline/.test(a.FEATURES)) o.u = 1;
     if (a.FEATURES !== undefined && /allcaps/.test(a.FEATURES)) o.caps = 1;
     if (a.KERN !== undefined) o.track = num(a.KERN, 0) * 10;
+    // tab stops (LY-TAB): their positions; every kind stops as a left one
+    if (a._tabs !== undefined) { o.ext = o.ext || {}; o.ext.tabs = a._tabs; }
+    if (a._brk) { o.ext = o.ext || {}; o.ext.brk = a._brk; }
     return o;
   }
 
@@ -336,13 +346,22 @@
       pagePos.push({ id: order[k].id, x: num(pn.a.PAGEXPOS, 0), y: num(pn.a.PAGEYPOS, 0) });
     });
 
+    // a style's or paragraph's <Tabs> → its attributes plus _tabs
+    function withTabs(a, node) {
+      var tb = kids(node, "Tabs");
+      if (!tb.length) return a;
+      var o = {};
+      Object.keys(a).forEach(function (k) { o[k] = a[k]; });
+      o._tabs = tb.map(function (t) { return Math.round(num(t.a.Pos, 0) * 100) / 100; }).filter(function (v) { return v > 0; }).slice(0, 40);
+      return o;
+    }
     // paragraph styles (Scribus inheritance kept through "based on")
     var styleId = {}, styleRaw = {};
     var defName = "Default Paragraph Style";
     kids(D, "STYLE").forEach(function (st) {
       var nm = st.a.NAME;
       if (!nm || styleId[nm]) return;
-      styleRaw[nm] = st.a;
+      styleRaw[nm] = withTabs(st.a, st);
       styleId[nm] = nm === defName || st.a.DefaultStyle === "1" ? "ps-base" : slug(nm, "ps", used);
     });
     doc.pstyles.forEach(function (p) { used[p.id] = 1; });
@@ -361,12 +380,15 @@
     var base0 = M.find(doc.pstyles, "ps-base");
     base0.ext = base0.ext || {};
     base0.ext.kern = 1;
+    // the document's default tab interval (Scribus TabWidth, LY-TAB)
+    var tabw = Math.max(1, Math.min(720, num(D.a.TabWidth, 36)));
+    if (Math.abs(tabw - 36) > 0.001) base0.ext.tabw = tabw;
     // paragraph with local overrides → a derived style, made once
     var derived = {};
     function paraStyle(a) {
       var parent = a.PARENT && styleId[a.PARENT] ? styleId[a.PARENT] : "ps-base";
       var loc = {};
-      ["ALIGN", "LINESP", "LINESPMode", "VOR", "NACH", "FIRST", "INDENT", "RMARGIN"].forEach(function (k) { if (a[k] !== undefined) loc[k] = a[k]; });
+      ["ALIGN", "LINESP", "LINESPMode", "VOR", "NACH", "FIRST", "INDENT", "RMARGIN", "_tabs", "_brk"].forEach(function (k) { if (a[k] !== undefined) loc[k] = a[k]; });
       if (!Object.keys(loc).length) return parent;
       var key = parent + JSON.stringify(loc);
       if (derived[key]) return derived[key];
@@ -407,8 +429,32 @@
         var pa = {};
         Object.keys(defA).forEach(function (k) { pa[k] = defA[k]; });
         Object.keys(a || {}).forEach(function (k) { pa[k] = a[k]; });
-        var ps = paraStyle(pa), sty = resolved(pa.PARENT);
+        var sty = resolved(pa.PARENT);
         var sf = fontOf(sty.FONT), base = { size: num(sty.FONTSIZE, 0), color: sty.FCOLOR, shade: sty.FSHADE };
+        // a column or frame break inside the paragraph (LY-TAB): the text
+        // after it is the same paragraph going on at the top of the next
+        // column, so no first-line indent and no space before there
+        var segs = [[]], brks = [pending];
+        pending = "";
+        runs.forEach(function (r) { if (r.brk) { segs.push([]); brks.push(r.brk); } else segs[segs.length - 1].push(r); });
+        // a break at the very end starts the next paragraph; one at the
+        // very start makes this paragraph start in the next column
+        if (segs.length > 1 && !segs[segs.length - 1].length) { pending = brks.pop(); segs.pop(); }
+        if (segs.length > 1 && !segs[0].length) { segs.shift(); brks.shift(); }
+        segs.forEach(function (sg, si) {
+          var qa = pa;
+          if (brks[si]) {
+            qa = {};
+            Object.keys(pa).forEach(function (k) { qa[k] = pa[k]; });
+            qa._brk = brks[si];
+            if (si) { qa.FIRST = "0"; qa.VOR = "0"; }
+          }
+          pushPara(paraStyle(qa), sg, sty, sf, base);
+        });
+        runs = [];
+      }
+      var pending = "";
+      function pushPara(ps, runs, sty, sf, base) {
         paras.push({ ps: ps, runs: runs.map(function (r) {
           var o = { t: r.t }, ra = r.a, cs = {};
           if (ra.FONT !== undefined) {
@@ -426,7 +472,6 @@
           if (!o.i) delete o.i;
           return o;
         }) });
-        runs = [];
       }
       host.c.forEach(function (x) {
         if (x.n === "ITEXT") {
@@ -434,15 +479,22 @@
           var parts = String(x.a.CH || "").split(/[\u2029\r\n]/);
           parts.forEach(function (t, k) {
             if (k) endPara({});
-            t = t.replace(/[\t\u0009]/g, " ").replace(/[\u0000-\u001f\u2028]/g, "");
+            t = t.replace(/\u2028/g, "\n").replace(/[\u0000-\u0008\u000b-\u001f]/g, "");
             if (t) runs.push({ t: t, a: x.a });
           });
-        } else if (x.n === "para") endPara(x.a);
-        else if (x.n === "trail") endPara(x.a);
-        else if (x.n === "tab") runs.push({ t: " ", a: {} });
-        else if (x.n === "nbspace") runs.push({ t: "\u00a0", a: {} });
-        else if (x.n === "breakline" || x.n === "breakcol" || x.n === "breakframe") endPara({});
-        else if (x.n === "var" && (x.a.name === "pgno" || x.a.name === "pgco")) runs.push({ f: x.a.name === "pgno" ? "pn" : "pc", a: {} });
+        } else if (x.n === "para") endPara(withTabs(x.a, x));
+        else if (x.n === "trail") endPara(withTabs(x.a, x));
+        else if (x.n === "tab") runs.push({ t: "\t", a: x.a });
+        // a no-break space keeps its own font and size, so a line
+        // holding one is still set in the text's font (LY-FIT)
+        else if (x.n === "nbspace") runs.push({ t: "\u00a0", a: x.a });
+        // a line break (Shift+Enter) stays inside its paragraph, which
+        // keeps the style the paragraph ends with (LY-TAB)
+        else if (x.n === "breakline") runs.push({ t: "\n", a: x.a });
+        // a column or frame break: what follows starts the next column
+        // (frames in a chain are columns to the text engine)
+        else if (x.n === "breakcol" || x.n === "breakframe") runs.push({ brk: "col" });
+        else if (x.n === "var" && (x.a.name === "pgno" || x.a.name === "pgco")) runs.push({ f: x.a.name === "pgno" ? "pn" : "pc", a: x.a });
       });
       if (runs.length || !paras.length) endPara({});
       return { id: M.newId("st"), m: now, h: [], paras: paras };
@@ -484,6 +536,8 @@
       it.fill = colour(a.PCOLOR, a.SHADE);
       it.stroke = colour(a.PCOLOR2, a.SHADE2);
       it.sw = num(a.PWIDTH, 1);
+      // width 0 is Scribus's hairline: the thinnest line, still drawn
+      if (it.sw === 0 && (it.stroke || typ === 5)) it.sw = HAIR;
       if (!it.stroke || !(it.sw > 0)) { it.stroke = ""; }
       it.op = Math.round(100 * (1 - Math.min(1, Math.max(0, num(a.TransValue, 0)))));
       if (a.LOCK === "1" || lay.lock) it.lock = 1;
@@ -501,6 +555,8 @@
           it.cols = Math.max(1, num(a.COLUMNS, 1)); it.gut = num(a.COLGAP, 0);
           it.ins = Math.max(num(a.EXTRA, 0), num(a.TEXTRA, 0), num(a.BEXTRA, 0), num(a.REXTRA, 0));
           it.va = a.VAlign === "1" ? "c" : a.VAlign === "2" ? "b" : "t";
+          // Scribus's own rule for where a line ends (LY-FIT)
+          it.ext = Object.assign(it.ext || {}, { sfit: 1 });
           if (typ === 8) stats.skipped++;
         } else if (typ === 2) {
           it.t = "img";

@@ -1,9 +1,11 @@
 // ============================================================
-// orOS Atelier — motion (v1.0.0): animation, present, video, GIF
-//   - Animate panel: an entrance per element (fade, rise, pop, wipe,
-//     typewriter), and per page its duration and the transition to
-//     it (anim.js keeps the timing rules), Morph among them (wave C2,
-//     morph.js: the previous page turns into this one)
+// orOS Atelier — motion (v2.0.0): animation, present, video, GIF
+//   - Animate panel: per element an entrance, an exit and an emphasis
+//     from Canva's effects (wave CV-A: direction, speed, by line /
+//     word / letter, start and end time), per page an animation for
+//     every element, its duration and the transition to it (anim.js
+//     keeps the timing rules), Morph among them (wave C2, morph.js:
+//     the previous page turns into this one)
 //   - Play: previews the current page's animation on the stage
 //   - Present: full screen with designkit/show.js (keys, clicker,
 //     touch, transitions); pages show as they end up
@@ -43,7 +45,7 @@
     var my = ++playing, pg = ED.pg;
     var items = doc.items.filter(function (it) { return it.pg === pg; }).sort(M.byZ);
     var from = morphFrom(doc, pg), lead = from ? Anim.MORPH : 0;
-    var end = Anim.introLen(items) + lead + 0.3;
+    var end = Anim.introLen(items, Anim.pageAnim(doc, pg)) + lead + 0.3;
     var page = pages(doc).filter(function (p) { return p.id === pg; })[0];
     var s = AT.video && page ? AT.video.Session(doc, [page]) : null;
     (s ? s.prepare() : Promise.resolve()).then(function () {
@@ -81,6 +83,87 @@
   }
 
   // ---------- Animate panel ----------
+  // As in Canva (wave CV-A): per element an entrance, an exit and an
+  // emphasis (anim.js EFFECTS / EMPHASIS), each with its direction,
+  // speed and, for a text, by line / word / letter; when it starts and
+  // ends on the page. Stored in ext.anim (R39); ax.an keeps the
+  // nearest older entrance so older orOS copies still animate.
+  var animTab = "in";
+  function specFor(it) {
+    var a = Anim.norm(it.ext && it.ext.anim);
+    if (a) return a;
+    var s = Anim.specOf(it, null);
+    return s ? JSON.parse(JSON.stringify(s)) : {};
+  }
+  function writeAnim(it, a) {
+    a = Anim.norm(a);
+    it.ext = it.ext || {};
+    if (a) it.ext.anim = a; else delete it.ext.anim;
+    if (!Object.keys(it.ext).length) delete it.ext;
+    var old = Anim.legacy(a);
+    if (old) it.ax.an = old; else delete it.ax.an;
+  }
+  function editAnim(list, fn, replay) {
+    AT.editItems(list.map(function (it) { return it.id; }), function (it) { var a = specFor(it); fn(a, it); writeAnim(it, a); });
+    AT.renderDrawer();
+    if (replay) play();
+  }
+  function chipRow(ids, cur, label, fn) {
+    var c = el("div", "chips");
+    ids.forEach(function (id) {
+      var b = btn("chip-btn" + (cur === id ? " on" : ""), label(id), function () { fn(id); });
+      b.setAttribute("aria-pressed", cur === id ? "true" : "false");
+      c.appendChild(b);
+    });
+    return c;
+  }
+  function rangeRow(label, min, max, step, val, show, fn) {
+    var row = el("label", "rng-row");
+    row.appendChild(el("span", "rng-l", label));
+    var r = el("input", "rng");
+    r.type = "range"; r.min = min; r.max = max; r.step = step; r.value = val;
+    var v = el("span", "rng-v", show(val));
+    r.addEventListener("input", function () { AT.beginGesture(); v.textContent = show(Number(r.value)); fn(Number(r.value)); });
+    r.addEventListener("change", function () { AT.endGesture(); });
+    row.appendChild(r); row.appendChild(v);
+    return row;
+  }
+  // effect tiles for a part ("in" | "out" | "pan"), text effects only
+  // when every element is a text
+  function effectGrid(cur, allText, pick) {
+    var g = el("div", "an-grid");
+    [""].concat(Anim.EFFECT_IDS).forEach(function (id) {
+      if (id && Anim.EFFECTS[id][3] && !allText) return;
+      var b = btn("an-tile" + (cur === id ? " on" : ""), id ? t("an.e." + id) : t("an.none"), function () { pick(id); });
+      b.setAttribute("aria-pressed", cur === id ? "true" : "false");
+      g.appendChild(b);
+    });
+    return g;
+  }
+  // direction, speed and by-unit of one part
+  function partControls(box, part, allText, set) {
+    if (!part) return;
+    var E = Anim.EFFECTS[part.e];
+    if (E[1]) {
+      box.appendChild(el("div", "fld-lbl", t("an.dir")));
+      box.appendChild(chipRow(Anim.DIRS, part.d || E[1], function (d) { return t("an.dir." + d); }, function (d) { set({ d: d }, true); }));
+    }
+    if (part.e !== "typewriter") box.appendChild(rangeRow(t("an.speed"), 0.25, 4, 0.25, part.sp || 1, function (v) { return "×" + v; }, function (v) { set({ sp: v }); }));
+    if (allText && part.e !== "typewriter") {
+      box.appendChild(el("div", "fld-lbl", t("an.by")));
+      box.appendChild(chipRow(Anim.BYS, part.by || "el", function (b) { return t("an.by." + b); }, function (b) { set({ by: b }, true); }));
+    }
+  }
+  function timeField(label, val, fn) {
+    var row = el("label", "fld-row an-time");
+    row.appendChild(el("span", "fld-lbl", label));
+    var i = el("input", "fld");
+    i.type = "number"; i.min = 0; i.max = Anim.DUR_MAX; i.step = 0.1; i.placeholder = t("an.auto");
+    i.value = val === undefined ? "" : String(val);
+    i.addEventListener("change", function () { var v = i.value.trim(); fn(v === "" ? undefined : Number(v)); });
+    row.appendChild(i);
+    return row;
+  }
   function view(body) {
     var doc = AT.doc;
     if (AT.magicDesign) AT.magicDesign.section(body);
@@ -88,21 +171,45 @@
     var s1 = sec(t("an.element"));
     if (!list.length) s1.appendChild(el("p", "hint", t("an.pick")));
     else {
-      var cur = list[0].ax.an || "";
-      var g = el("div", "an-grid");
-      [""].concat(Anim.ANIMS).forEach(function (id) {
-        if (id === "type" && !list.every(function (it) { return it.ax.k === "text"; })) return;
-        var b = btn("an-tile" + (cur === id ? " on" : ""), t("an." + (id || "none")), function () {
-          AT.editItems(list.map(function (it) { return it.id; }), function (it) {
-            if (id) it.ax.an = id; else delete it.ax.an;
+      var allText = list.every(function (it) { return it.ax.k === "text"; });
+      var a0 = specFor(list[0]);
+      s1.appendChild(chipRow(["in", "out", "em"], animTab, function (k) {
+        return t("an.tab." + k) + ((k === "in" ? a0["in"] : k === "out" ? a0.out : a0.em) ? " •" : "");
+      }, function (k) { animTab = k; AT.renderDrawer(); }));
+      if (animTab === "em") {
+        var cur = a0.em ? a0.em.e : "", g = el("div", "an-grid");
+        [""].concat(Anim.EMPHASIS_IDS).forEach(function (id) {
+          var b = btn("an-tile" + (cur === id ? " on" : ""), id ? t("an.m." + id) : t("an.none"), function () {
+            editAnim(list, function (a) { if (id) a.em = { e: id }; else delete a.em; }, !!id);
           });
-          AT.renderDrawer();
-          if (id) play();
+          b.setAttribute("aria-pressed", cur === id ? "true" : "false");
+          g.appendChild(b);
         });
-        b.setAttribute("aria-pressed", cur === id ? "true" : "false");
-        g.appendChild(b);
-      });
-      s1.appendChild(g);
+        s1.appendChild(g);
+        if (a0.em) s1.appendChild(rangeRow(t("an.speed"), 0.25, 4, 0.25, a0.em.sp || 1, function (v) { return "×" + v; }, function (v) {
+          AT.editItems(list.map(function (it) { return it.id; }), function (it) { var a = specFor(it); if (a.em) a.em.sp = v; writeAnim(it, a); });
+        }));
+      } else {
+        var key = animTab, part = a0[key];
+        if (part && Anim.EFFECTS[part.e][3] && !allText) part = null;
+        s1.appendChild(effectGrid(part ? part.e : "", allText, function (id) {
+          editAnim(list, function (a) {
+            if (!id) { delete a[key]; return; }
+            var keep = a[key] && a[key].e === id ? a[key] : { e: id };
+            a[key] = keep;
+          }, !!id);
+        }));
+        partControls(s1, part, allText, function (ch, replay) {
+          var edit = function (a) { if (!a[key]) return; Object.keys(ch).forEach(function (k) { a[key][k] = ch[k]; }); };
+          if (replay) editAnim(list, edit, true);
+          else AT.editItems(list.map(function (it) { return it.id; }), function (it) { var a = specFor(it); edit(a); writeAnim(it, a); });
+        });
+      }
+      // when on the page (seconds; empty = in turn / until the page ends)
+      var tm = el("div", "an-times");
+      tm.appendChild(timeField(t("an.t0"), a0.t0, function (v) { editAnim(list, function (a) { if (v > 0) a.t0 = v; else delete a.t0; }); }));
+      tm.appendChild(timeField(t("an.t1"), a0.t1, function (v) { editAnim(list, function (a) { if (v > 0) a.t1 = v; else delete a.t1; }); }));
+      s1.appendChild(tm);
     }
     body.appendChild(s1);
 
@@ -123,6 +230,19 @@
       r.addEventListener("change", function () { AT.endGesture(); });
       row.appendChild(r); row.appendChild(v);
       s2.appendChild(row);
+      // page animation: every element without its own entrance
+      s2.appendChild(el("div", "fld-lbl", t("an.pageAnim")));
+      var pan = Anim.pageAnim(doc, ED.pg);
+      s2.appendChild(effectGrid(pan ? pan.e : "", false, function (id) {
+        AT.editItems([bg.id], function (it) {
+          it.ext = it.ext || {};
+          if (id) it.ext.pan = { e: id }; else delete it.ext.pan;
+          if (!Object.keys(it.ext).length) delete it.ext;
+        });
+        AT.renderDrawer();
+        if (id) play();
+      }));
+      if (pan) s2.appendChild(el("p", "hint", t("an.pageAnimHint")));
       if (pages(doc)[0].id !== ED.pg) {
         s2.appendChild(el("div", "fld-lbl", t("an.tr")));
         var chips = el("div", "chips");
@@ -168,10 +288,14 @@
     var idx = Math.max(0, list.findIndex(function (p) { return p.id === ED.pg; }));
     var sess = AT.video ? AT.video.Session(doc, list) : null;
     var intro = list.map(function (p) {
-      return Anim.introLen(doc.items.filter(function (it) { return it.pg === p.id; }).sort(function (a, b) { return a.z - b.z; }));
+      return Anim.introLen(doc.items.filter(function (it) { return it.pg === p.id; }).sort(function (a, b) { return a.z - b.z; }), Anim.pageAnim(doc, p.id));
+    });
+    // an emphasis goes on for as long as the page shows
+    var loops = list.map(function (p) {
+      return doc.items.some(function (it) { var a = it.pg === p.id && !it.hide && Anim.norm(it.ext && it.ext.anim); return !!(a && a.em); });
     });
     var hasVid = list.map(function (p) {
-      return doc.items.some(function (it) { return it.pg === p.id && !it.hide && it.ax && it.ax.vid; });
+      return doc.items.some(function (it) { return it.pg === p.id && !it.hide && it.ax && (it.ax.vid || (it.ext && it.ext.gif)); });
     });
     // A morph is drawn here, not by show.js: only when the show came
     // from the page before (not on a jump, Previous or the first page
@@ -188,7 +312,7 @@
       aspect: doc.setup.w / doc.setup.h,
       startAt: idx,
       lang: AT.BASE,
-      live: function (i, t) { return hasVid[i] || t < intro[i] + lead(i) + 0.1; },
+      live: function (i, t) { return hasVid[i] || loops[i] || t < intro[i] + lead(i) + 0.1; },
       renderSlide: function (i, canvas, cssW, cssH, t) {
         var sc = canvas.width / doc.setup.w, L = lead(i);
         AT.draw.renderPage(doc, list[i], sc, { canvas: canvas, maxSide: 0, background: "#ffffff",

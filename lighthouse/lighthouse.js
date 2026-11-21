@@ -64,7 +64,7 @@
     en: {
       "app.name": "Lighthouse Island",
       "btn.up": "Buildings", "btn.upKey": "Buildings (U)", "btn.log": "Keeper's log (L)",
-      "btn.stats": "Records (S)", "btn.sfxOn": "Sound on (M)", "btn.sfxOff": "Sound off (M)",
+      "btn.help": "How to play (?)", "btn.stats": "Records (S)", "btn.sfxOn": "Sound on (M)", "btn.sfxOff": "Sound off (M)",
       "btn.close": "Close", "btn.ok": "Good", "btn.undo": "Undo", "btn.cancel": "Cancel",
       "btn.start": "Start over", "btn.startYes": "Start over", "btn.hand": "Hand over", "btn.handKey": "Hand over (H)",
       "btn.fc": "Forecast (F)",
@@ -135,11 +135,12 @@
       "away.slow": "After 7 days away the island works at half pace: it never stops, it only slows.",
       "away.low": "For {n} night hours the coins for oil ran out and the lamp burned low. No ship was lost.",
       "dur.d": "{n} d", "dur.h": "{n} h", "dur.m": "{n} min",
-      "tour.title": "How it works",
+      "tour.title": "How to play",
       "tour.1": "At night your lamp guides the ships on the sea routes it reaches, and each one pays its dues. By day the harbour, the fishing boats and the tavern earn. One hour on the island is one minute.",
       "tour.2": "The forecast at the top shows the weather of the next days. Fog, rain and storms dim the light: each defence in Buildings softens one of them, so the forecast tells you what to build first.",
       "tour.3": "The lamp burns oil, paid from your coins. If the coins run out it burns low until there are coins again. The light never goes out and no ship is ever wrecked.",
       "tour.4": "The island goes on while orOS is closed. There is nothing to miss and nothing to collect: come back when you like.",
+      "tour.again": "The ? button at the top opens this again at any time.",
       "toast.up": "Built: {u}", "toast.start": "A new island", "toast.coins": "Not enough coins yet",
       "toast.sup": "Not enough supplies yet", "toast.max": "Already done", "toast.need": "Build {x} first",
       "toast.save": "Not saved: the browser's storage is full",
@@ -173,7 +174,7 @@
     el: {
       "app.name": "Νησί του φάρου",
       "btn.up": "Κτίρια", "btn.upKey": "Κτίρια (U)", "btn.log": "Ημερολόγιο φαροφύλακα (L)",
-      "btn.stats": "Αρχείο (S)", "btn.sfxOn": "Ήχος ανοιχτός (M)", "btn.sfxOff": "Ήχος κλειστός (M)",
+      "btn.help": "Πώς παίζεται (?)", "btn.stats": "Αρχείο (S)", "btn.sfxOn": "Ήχος ανοιχτός (M)", "btn.sfxOff": "Ήχος κλειστός (M)",
       "btn.close": "Κλείσιμο", "btn.ok": "Ωραία", "btn.undo": "Αναίρεση", "btn.cancel": "Άκυρο",
       "btn.start": "Από την αρχή", "btn.startYes": "Νέο νησί", "btn.hand": "Παράδοση", "btn.handKey": "Παράδοση (H)",
       "btn.fc": "Πρόγνωση (F)",
@@ -249,6 +250,7 @@
       "tour.2": "Η πρόγνωση επάνω δείχνει τον καιρό των επόμενων ημερών. Η ομίχλη, η βροχή και οι καταιγίδες θαμπώνουν το φως: κάθε προστασία στα Κτίρια μαλακώνει μία από αυτές, οπότε η πρόγνωση σου λέει τι να χτίσεις πρώτα.",
       "tour.3": "Η λάμπα καίει λάδι, που πληρώνεται από τα νομίσματά σου. Αν τελειώσουν, καίει χαμηλά ώσπου να υπάρξουν πάλι. Το φως δεν σβήνει ποτέ και κανένα πλοίο δεν ναυαγεί.",
       "tour.4": "Το νησί συνεχίζει και όταν το orOS είναι κλειστό. Δεν χάνεις τίποτα και δεν έχεις τίποτα να μαζέψεις: έλα όποτε θέλεις.",
+      "tour.again": "Το κουμπί ? πάνω το ξανανοίγει όποτε θέλεις.",
       "toast.up": "Χτίστηκε: {u}", "toast.start": "Νέο νησί", "toast.coins": "Δεν φτάνουν ακόμα τα νομίσματα",
       "toast.sup": "Δεν φτάνουν ακόμα τα υλικά", "toast.max": "Έχει ήδη γίνει", "toast.need": "Χρειάζεται πρώτα {x}",
       "toast.save": "Δεν αποθηκεύτηκε: ο χώρος του προγράμματος περιήγησης γέμισε",
@@ -480,28 +482,28 @@
     if (pending) { clearTimeout(pending.timer); pending = null; }
     live = u.snap;
     E.catchUp(live, nowMs());
-    // Start over was written at once: the old island is written back
-    if (u.kind === "start") { saved = E.normalize(live); if (writeSaved()) dirtySoon(); }
     hideToast();
     sfx("undo");
     renderAll(true);
   }
   // Start over: a new island with a new reset stamp (it wins on every
-  // device). Undo brings the old island back with the NEW stamp, so the
-  // reset cannot come back from the cloud either.
+  // device, so the old island cannot come back from the cloud). No Undo:
+  // the question before it is the safeguard, and an Undo in the toast
+  // sat over the toolbar, where the next tap brought the old island back.
   function startOver() {
     if (pending) commitNow();
     E.catchUp(live, nowMs());
     var br = Math.max(nowMs(), saved.br + 1);
-    var old = E.clone(live);
-    old.br = br;
     live = E.newGame(newSeed(), nowMs(), br);
-    undo = { snap: old, kind: "start" };
+    undo = null;
+    hideToast();
     saved = E.normalize(live);
     if (writeSaved()) dirtySoon();
+    seenNow();
+    savePrefs();
     sel = "";
     closeDialog();
-    showToast(t("toast.start"), true);
+    showToast(t("toast.start"));
     renderAll(true);
   }
 
@@ -888,6 +890,7 @@
       else if (k === "l") { logDialog(); ev.preventDefault(); }
       else if (k === "s") { recDialog(); ev.preventDefault(); }
       else if (k === "m") { toggleSfx(); ev.preventDefault(); }
+      else if (ev.key === "?") { tourDialog(); ev.preventDefault(); }
       else if (k === "z" && undo) { undoLast(); ev.preventDefault(); }
     });
   }
@@ -1311,8 +1314,10 @@
       d.setAttribute("aria-label", t("tour.title"));
       d.appendChild(el("div", "dlg-title", t("tour.title")));
       ["tour.1", "tour.2", "tour.3", "tour.4"].forEach(function (k) { d.appendChild(el("p", "dlg-msg", t(k))); });
+      d.appendChild(el("p", "dlg-note", t("tour.again")));
       actions(d, [{ label: t("btn.ok"), cls: "primary", fn: function () { prefs.tour = 1; savePrefs(); closeDialog(); } }]);
     });
+    $("dlg").scrollTop = 0;   // open at the top, not at the focused Good button
   }
 
   // ---------- 9. Toasts ----------
@@ -1435,6 +1440,7 @@
   var ICONS = {
     tower:  SVG + '<path d="M9 22l1.5-14h3L15 22z"/><path d="M8 22h8"/><path d="M10 8V5h4v3"/><path d="M12 2v3"/><path d="M4 6l4 1M20 6l-4 1"/></svg>',
     log:    SVG + '<path d="M5 3h11l3 3v15H5z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>',
+    help:   SVG + '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17h.01"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
@@ -1552,6 +1558,10 @@
   };
 
   function applyI18n() {
+    var hb = $("help-btn");
+    hb.innerHTML = ICONS.help;
+    hb.setAttribute("aria-label", t("btn.help"));
+    hb.title = t("btn.help");
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
       n.textContent = t(n.getAttribute("data-i18n"));
     });
@@ -1578,6 +1588,7 @@
     $("hand-btn").addEventListener("click", handDialog);
     $("log-btn").addEventListener("click", logDialog);
     $("stats-btn").addEventListener("click", recDialog);
+    $("help-btn").addEventListener("click", tourDialog);
     $("sfx-btn").addEventListener("click", toggleSfx);
     $("fc").addEventListener("click", fcDialog);
     document.addEventListener("pointerdown", function () { if (seaOn()) updateSea(); }, { once: true });

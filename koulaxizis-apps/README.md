@@ -33,6 +33,11 @@ APPS-M1, APPS-M2, APPS-M3.
 - **Screen** (`MainActivity.java`, `Rows.java`): one section per project,
   featured apps first, then "More apps"; Install, Update, Open, or Why? for
   a copy signed with another key.
+- **Search and app pages** (`Search.java`, `Text.java`, APPS-M5): a search
+  bar on top filters the list (every word, no accents or case); a tap on a
+  card opens the app's own page with the whole description, the phone
+  screenshots (hash-checked like everything else), what is new, category,
+  licence and links, all from the signed index.
 - **Updates** (`Updates.java`, `UpdateJob.java`, APPS-M2): "Update all" one
   app after the other; a daily check (JobScheduler, every 12 hours,
   network, battery not low; put back after a restart or an update) shows

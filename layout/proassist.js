@@ -272,6 +272,23 @@
           list.forEach(function (it) { c3 = c3.then(function () { if (ctl && ctl.tick) ctl.tick(); return fillOne(it, st.mode).then(function (f) { if (f) fills[it.id] = f; }); }); });
           return c3.then(function () { env.fills = fills; LY_DOC_FOR_FILL = null; }, function (e) { LY_DOC_FOR_FILL = null; throw e; });
         }
+        // placepage (W4b): the file read like a picture of `images`, its page drawn by io.js
+        if (st.op === "placepage") {
+          if (ctl && ctl.tick) ctl.tick(st.path);
+          var pth = isLocal(st.path) ? String(st.path).trim() : PRO.normPath(st.path);
+          if (!isLocal(pth)) {
+            var fl = folders();
+            if (!fl.length) return Promise.reject({ why: "noFolders" });
+            if (PRO.pathOk(pth, fl, false)) return Promise.reject({ why: "outside", path: st.path });
+          }
+          return readBytes(pth).then(function (blob) {
+            if (blob.size > MAX_BYTES) throw { why: "tooBig", path: st.path };
+            var name = pth.replace(/\\/g, "/").slice(pth.replace(/\\/g, "/").lastIndexOf("/") + 1);
+            return LY.io.pageImage(new File([blob], name, { type: /\.pdf$/i.test(name) ? "application/pdf" : "" }), st.page || 1);
+          }, function (e) { throw e && e.why ? e : { why: isLocal(pth) ? localWhy(e) : "unreadable", path: st.path }; }).then(function (pic) { env.page = pic; }, function (e) {
+            throw Object.assign({ path: st.path }, e && e.why ? e : { why: "unreadable" });
+          });
+        }
         if (st.op === "addfont") return addFont(st, notes, ctl || {}).then(function (e) { env.font = e; });
         if ((st.op === "defstyle" || st.op === "masterfield") && st.font && !PRO.fontFor(scratch, st.font)) {
           if (ctl && ctl.tick) ctl.tick(st.font);

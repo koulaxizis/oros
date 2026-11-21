@@ -3,4 +3,6 @@
     <color name="primary">#15161A</color>
     <color name="accent">#A9B8D8</color>
     <color name="background">#101114</color>
+    <!-- A screenshot's place while it loads (APPS-M5). -->
+    <color name="shot_bg">#1FFFFFFF</color>
 </resources>

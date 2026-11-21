@@ -498,7 +498,7 @@ test("F-Droid store listing (FDROID-2): texts, categories, pictures and front pa
       assert.ok(t[l].summary.length <= 80 && !/\.$/.test(t[l].summary), id + " " + l + " summary");
       assert.ok(t[l].description.length > 200 && t[l].description.length < 4000, id + " " + l + " description");
       assert.ok(!/google/i.test(t[l].summary + t[l].description), id + " mentions Google");
-      // screenshotsLater: an app whose phone screenshots are still to come (orOS Drive, DRIVE-APP wave 5)
+      // screenshotsLater: an app whose phone screenshots are still to come (none since Koulaxizis Apps 1.3.0)
       assert.ok(M.shots(id, l).length >= 2 || t.screenshotsLater === true, id + " " + l + " screenshots");
     });
     assert.ok(M.feature(id), id + " feature.jpg");

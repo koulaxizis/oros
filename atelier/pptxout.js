@@ -103,11 +103,15 @@
 
   // ---------- 3. Geometry ----------
   // the design's scale into the slide (1 unless past PowerPoint's limits)
+  // A screen design (not mm, not a paper size) goes out at Canva's
+  // 0.75 pt per px, so a 1080 px post opens in Canva and PowerPoint as
+  // 1080 px (CV-0); then PowerPoint's limits.
   function scaleOf(setup) {
-    var big = Math.max(setup.w, setup.h), small = Math.min(setup.w, setup.h);
-    if (big > MAX_PT) return MAX_PT / big;
-    if (small < MIN_PT && big * MIN_PT / small <= MAX_PT) return MIN_PT / small;
-    return 1;
+    var base = setup.unit === "mm" || AX.paper(setup.w, setup.h) ? 1 : 1 / AX.SCREEN;
+    var big = Math.max(setup.w, setup.h) * base, small = Math.min(setup.w, setup.h) * base;
+    if (big > MAX_PT) return base * MAX_PT / big;
+    if (small < MIN_PT && big * MIN_PT / small <= MAX_PT) return base * MIN_PT / small;
+    return base;
   }
   function xfrm(k, x, y, w, h, rot, flh, flv) {
     var r = ((rot % 360) + 360) % 360, a = "";
@@ -271,6 +275,32 @@
       "</Relationships>";
   }
 
+  // Elements next to each other with the same grp (wave CV-1) go in a
+  // <p:grpSp> whose child space is the slide's own (off = chOff,
+  // ext = chExt), so PowerPoint and Canva keep them as one group.
+  function groupParts(parts, k, nextId) {
+    var tree = "", i = 0;
+    while (i < parts.length) {
+      var g = parts[i].it.grp, j = i + 1;
+      while (g && j < parts.length && parts[j].it.grp === g) j++;
+      if (!g || j - i < 2) { tree += parts[i].xml; i++; continue; }
+      var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      parts.slice(i, j).forEach(function (q) {
+        var it = q.it, ax0 = Math.min(it.x, it.x + it.w), ay0 = Math.min(it.y, it.y + it.h);
+        x0 = Math.min(x0, ax0); y0 = Math.min(y0, ay0);
+        x1 = Math.max(x1, ax0 + Math.abs(it.w)); y1 = Math.max(y1, ay0 + Math.abs(it.h));
+      });
+      var ox = int(x0 * k * EMU), oy = int(y0 * k * EMU), cx = Math.max(1, int((x1 - x0) * k * EMU)), cy = Math.max(1, int((y1 - y0) * k * EMU));
+      var gid = nextId();
+      tree += "<p:grpSp><p:nvGrpSpPr><p:cNvPr id=\"" + gid + "\" name=\"Group " + gid + "\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr>" +
+        "<p:grpSpPr><a:xfrm><a:off x=\"" + ox + "\" y=\"" + oy + "\"/><a:ext cx=\"" + cx + "\" cy=\"" + cy + "\"/>" +
+        "<a:chOff x=\"" + ox + "\" y=\"" + oy + "\"/><a:chExt cx=\"" + cx + "\" cy=\"" + cy + "\"/></a:xfrm></p:grpSpPr>" +
+        parts.slice(i, j).map(function (q) { return q.xml; }).join("") + "</p:grpSp>";
+      i = j;
+    }
+    return tree;
+  }
+
   // ---------- 6. Build ----------
   function build(doc, media, opts) {
     media = media || {}; opts = opts || {};
@@ -296,8 +326,9 @@
         rl.push([r, "image", target]);
         return r;
       }
+      var parts = [];
       pageItems(doc, pg.id).forEach(function (it) {
-        var kind = kindOf(it), ax = it.ax, id = nid++;
+        var kind = kindOf(it), ax = it.ax, id = nid++, tree = "";
         if (!kind) return;
         if (ax.bg && ax.k === "shape" && kind === "shape") {
           bgXml = "<p:bg><p:bgPr>" + fillXml(ax, opOf(it), it) + "<a:effectLst/></p:bgPr></p:bg>";
@@ -312,6 +343,7 @@
             { x: it.x - pad, y: it.y - pad, w: it.w + 2 * pad, h: it.h + 2 * pad, rot: ax.k === "line" ? 0 : it.rot }, k,
             { name: "Picture " + id });
           out.raster++;
+          parts.push({ xml: tree, it: it });
           return;
         }
         if (kind === "photo") {
@@ -326,7 +358,9 @@
         else if (kind === "shape") tree += shapeXml(it, id, k);
         else if (kind === "line") tree += lineItemXml(it, id, k);
         out.native++;
+        parts.push({ xml: tree, it: it });
       });
+      tree = groupParts(parts, k, function () { return nid++; });
       var name = "ppt/slides/slide" + (si + 1) + ".xml";
       files.push({ name: name, data: XML + "<p:sld" + PNS + "><p:cSld>" + bgXml + "<p:spTree>" + TREE0 + tree + "</p:spTree></p:cSld>" +
         "<p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>" });

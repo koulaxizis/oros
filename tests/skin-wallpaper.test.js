@@ -63,7 +63,7 @@ function pickSkin(ctx, id) {
 test("every skin suggests one existing wallpaper, never Mine or None", () => {
   const c = load();
   const ids = c.WALLPAPERS.map((w) => w.id);
-  assert.equal(c.SKINS.length, 16);
+  assert.equal(c.SKINS.length, 17);
   for (const k of c.SKINS) {
     assert.ok(ids.includes(k.wp), k.id + " → " + k.wp);
     assert.notEqual(k.wp, "custom");

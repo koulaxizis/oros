@@ -75,6 +75,9 @@
       "ct.mule": "Mule cart", "ct.pony": "Pony cart", "ct.mender": "Mender's cart", "ct.straw": "Straw cart",
       "ct.mule.a": "Ox wagon", "ct.mule.b": "Iron rims", "ct.pony.a": "Courier", "ct.pony.b": "Saddlebags",
       "ct.mender.a": "Wide reach", "ct.mender.b": "Quick hands", "ct.straw.a": "Wet straw", "ct.straw.b": "Scarecrow",
+      "ct.smith": "Smith's cart", "ct.smith.a": "Long jam", "ct.smith.b": "Quick hammer",
+      "fx.smith": "Jams the nearest machine it passes for a few seconds, then rests.",
+      "fx.smith.a": "Jams twice as long.", "fx.smith.b": "Reaches farther and rests half as long.",
       "fx.mule": "Sturdy and slow: every knock takes a quarter less.",
       "fx.pony": "Fast and small: through the machines before they swing twice.",
       "fx.mender": "Ties fallen crates back on the carts close to it.",
@@ -104,15 +107,32 @@
       "cart.st.q": "waiting", "cart.st.r": "on the road", "cart.st.d": "at the market", "cart.st.h": "walked home", "cart.st.x": "burnt",
       "why.coins": "Not enough coins", "why.locked": "{t} can be hired from route {n}", "why.empty": "Hire at least one cart first.",
       "ctx.plan": "Hire carts, put them in order and set the signs, then set off.",
+      "ctx.two": "Two markets: the spice market (right) pays {n} coins a crate, the market (left) {m}.",
       "ctx.new": "Trip {n}: the toll keepers wound up {m} more machines (ringed).",
       "ctx.road": "Tap a sign to turn it for the carts still to come.",
       "map.intro": "Lead the caravan from the village to the market, three trips a route. The machines beside the road knock crates off; bring enough crates through to clear the route and open the next.",
-      "map.diff": "Difficulty", "map.road": "The Salt road", "map.lock": "Clear the route before it to open",
+      "map.endless": "Endless",
+      "map.endlessBest": "Endless · best {n} trips",
+      "map.endlessAria": "{r}: Endless, best {n} trips",
+      "st.quota": "Crates this trip: {n} of {m}",
+      "st.tripEn": "Endless, trip {n}",
+      "ctx.en": "Endless, trip {n}: bring {q} crates to the market on this trip. Every machine works, and the knocks grow harder each trip.",
+      "live.statusEn": "Endless, trip {n}: {g} of {q} crates this trip, {c} coins.",
+      "live.offEn": "Endless, trip {n}: the caravan sets off. Bring {q} crates.",
+      "end.en": "Endless is over",
+      "end.enTrips": "Trips that brought their crates",
+      "end.enBest": "Best on this route",
+      "end.enNew": "A new best!",
+      "end.enNote": "Every trip must bring more crates than the one before, and the knocks grow harder too.",
+      "btn.enAgain": "Endless again",
+      "map.diff": "Difficulty", "map.road": "The Salt road", "map.road2": "The Spice road",
+      "map.two": "the spice market pays {n} a crate", "map.lock": "Clear the route before it to open",
       "map.goal": "Goal {n} crates in {m} trips", "map.carts": "Carts: {list}",
       "map.cont": "Continue: {r}, trip {n}",
       "map.replace": "A route is still under way: {r}. Start {s} instead? The route under way is given up.",
-      "map.resetAsk": "Reset the stars and records on every device?",
+      "map.resetAsk": "Reset the stars and records on every device? The route in progress ends too.",
       "rt.r1": "Olive hills", "rt.r2": "Dry riverbed", "rt.r3": "Windy pass", "rt.r4": "Old customs house",
+      "rt.r5": "Cedar ford", "rt.r6": "Date palms", "rt.r7": "Saffron hills", "rt.r8": "The silk gate",
       "end.won": "The market is stocked", "end.lost": "Not enough crates reached the market",
       "end.goods": "Crates at the market", "end.share": "Of the crates loaded", "end.trips": "Trips",
       "end.wonNote": "Three stars when nearly nine in ten of the crates you loaded reach the market.",
@@ -128,6 +148,7 @@
       "toast.reset": "Progress reset",
       "live.off": "Trip {n} of {m}: the caravan sets off.", "live.trip": "Trip {n}: {g} crates reached the market, +{c} coins.",
       "live.back": "{t} lost all its crates and walks home.", "live.burnt": "The straw cart burnt through.",
+      "live.jam": "{t} jammed the {m}.",
       "live.sign": "The sign at the fork points {d}.", "live.dir.l": "left", "live.dir.r": "right", "live.dir.s": "straight on",
       "live.dir.g": "to the goat track",
       "live.sel": "{t}, place {n} of {m}, {s}.",
@@ -149,6 +170,9 @@
       "ct.mule": "Κάρο με μουλάρι", "ct.pony": "Κάρο με αλογάκι", "ct.mender": "Κάρο του μάστορα", "ct.straw": "Κάρο με άχυρα",
       "ct.mule.a": "Βοϊδάμαξα", "ct.mule.b": "Σιδερένιες ρόδες", "ct.pony.a": "Ταχυδρόμος", "ct.pony.b": "Δισάκια",
       "ct.mender.a": "Μακρύ χέρι", "ct.mender.b": "Γρήγορα χέρια", "ct.straw.a": "Βρεγμένα άχυρα", "ct.straw.b": "Σκιάχτρο",
+      "ct.smith": "Κάρο του σιδερά", "ct.smith.a": "Γερή σφήνα", "ct.smith.b": "Γρήγορο σφυρί",
+      "fx.smith": "Σφηνώνει για λίγα δευτερόλεπτα την πιο κοντινή μηχανή που προσπερνά και μετά ξαποσταίνει.",
+      "fx.smith.a": "Σφηνώνει για διπλάσια ώρα.", "fx.smith.b": "Φτάνει πιο μακριά και ξαποσταίνει τη μισή ώρα.",
       "fx.mule": "Γερό και αργό: κάθε χτύπημα παίρνει ένα τέταρτο λιγότερο.",
       "fx.pony": "Γρήγορο και μικρό: περνά τις μηχανές πριν χτυπήσουν δεύτερη φορά.",
       "fx.mender": "Ξαναδένει πάνω στα κοντινά κάρα τα κιβώτια που έπεσαν.",
@@ -178,15 +202,32 @@
       "cart.st.q": "περιμένει", "cart.st.r": "στον δρόμο", "cart.st.d": "στην αγορά", "cart.st.h": "γύρισε πίσω", "cart.st.x": "κάηκε",
       "why.coins": "Δεν φτάνουν τα νομίσματα", "why.locked": "{t}: το νοικιάζεις από τη διαδρομή {n}", "why.empty": "Νοίκιασε πρώτα τουλάχιστον ένα κάρο.",
       "ctx.plan": "Νοίκιασε κάρα, βάλ' τα σε σειρά και γύρνα τις πινακίδες, μετά ξεκίνα.",
+      "ctx.two": "Δύο αγορές: η αγορά των μπαχαρικών (δεξιά) πληρώνει {n} νομίσματα το κιβώτιο, η αγορά (αριστερά) {m}.",
       "ctx.new": "Ταξίδι {n}: οι διοδιάρηδες κούρδισαν ακόμα {m} μηχανές (με κύκλο).",
       "ctx.road": "Πάτα μια πινακίδα για να τη γυρίσεις για τα κάρα που έρχονται.",
       "map.intro": "Οδήγησε το καραβάνι από το χωριό ως την αγορά, τρία ταξίδια σε κάθε διαδρομή. Οι μηχανές δίπλα στον δρόμο ρίχνουν κιβώτια· φέρε αρκετά κιβώτια για να περάσεις τη διαδρομή και να ανοίξει η επόμενη.",
-      "map.diff": "Δυσκολία", "map.road": "Ο δρόμος του αλατιού", "map.lock": "Πέρασε πρώτα την προηγούμενη διαδρομή",
+      "map.endless": "Ατέλειωτο",
+      "map.endlessBest": "Ατέλειωτο · ρεκόρ {n} ταξίδια",
+      "map.endlessAria": "{r}: Ατέλειωτο, ρεκόρ {n} ταξίδια",
+      "st.quota": "Κιβώτια αυτού του ταξιδιού: {n} από {m}",
+      "st.tripEn": "Ατέλειωτο, ταξίδι {n}",
+      "ctx.en": "Ατέλειωτο, ταξίδι {n}: φέρε {q} κιβώτια στην αγορά σε αυτό το ταξίδι. Δουλεύουν όλες οι μηχανές και τα χτυπήματα δυναμώνουν σε κάθε ταξίδι.",
+      "live.statusEn": "Ατέλειωτο, ταξίδι {n}: {g} από {q} κιβώτια σε αυτό το ταξίδι, {c} νομίσματα.",
+      "live.offEn": "Ατέλειωτο, ταξίδι {n}: το καραβάνι ξεκινά. Φέρε {q} κιβώτια.",
+      "end.en": "Το Ατέλειωτο τελείωσε",
+      "end.enTrips": "Ταξίδια που έφεραν τα κιβώτιά τους",
+      "end.enBest": "Ρεκόρ σε αυτή τη διαδρομή",
+      "end.enNew": "Νέο ρεκόρ!",
+      "end.enNote": "Κάθε ταξίδι πρέπει να φέρει περισσότερα κιβώτια από το προηγούμενο, και τα χτυπήματα δυναμώνουν κι αυτά.",
+      "btn.enAgain": "Ξανά Ατέλειωτο",
+      "map.diff": "Δυσκολία", "map.road": "Ο δρόμος του αλατιού", "map.road2": "Ο δρόμος των μπαχαρικών",
+      "map.two": "η αγορά των μπαχαρικών πληρώνει {n} το κιβώτιο", "map.lock": "Πέρασε πρώτα την προηγούμενη διαδρομή",
       "map.goal": "Στόχος {n} κιβώτια σε {m} ταξίδια", "map.carts": "Κάρα: {list}",
       "map.cont": "Συνέχεια: {r}, ταξίδι {n}",
       "map.replace": "Μια διαδρομή είναι ακόμα σε εξέλιξη: «{r}». Να ξεκινήσει η «{s}»; Η διαδρομή σε εξέλιξη χάνεται.",
-      "map.resetAsk": "Να μηδενιστούν τα αστέρια και το αρχείο σε όλες τις συσκευές;",
+      "map.resetAsk": "Να μηδενιστούν τα αστέρια και το αρχείο σε όλες τις συσκευές; Τελειώνει και η διαδρομή που παίζεται.",
       "rt.r1": "Οι λόφοι με τις ελιές", "rt.r2": "Η ξερή κοίτη", "rt.r3": "Το φαράγγι του αέρα", "rt.r4": "Το παλιό τελωνείο",
+      "rt.r5": "Το πέρασμα με τους κέδρους", "rt.r6": "Οι χουρμαδιές", "rt.r7": "Οι λόφοι του κρόκου", "rt.r8": "Η πύλη του μεταξιού",
       "end.won": "Η αγορά γέμισε πραμάτεια", "end.lost": "Δεν έφτασαν αρκετά κιβώτια στην αγορά",
       "end.goods": "Κιβώτια στην αγορά", "end.share": "Από όσα φορτώθηκαν", "end.trips": "Ταξίδια",
       "end.wonNote": "Τρία αστέρια όταν φτάνουν στην αγορά σχεδόν τα εννιά στα δέκα κιβώτια που φόρτωσες.",
@@ -202,6 +243,7 @@
       "toast.reset": "Η πρόοδος μηδενίστηκε",
       "live.off": "Ταξίδι {n} από {m}: το καραβάνι ξεκινά.", "live.trip": "Ταξίδι {n}: έφτασαν {g} κιβώτια στην αγορά, +{c} νομίσματα.",
       "live.back": "{t}: έχασε όλα τα κιβώτια και γυρίζει πίσω.", "live.burnt": "Το κάρο με τα άχυρα κάηκε.",
+      "live.jam": "{t}: σφήνωσε τη μηχανή «{m}».",
       "live.sign": "Η πινακίδα στη διχάλα δείχνει {d}.", "live.dir.l": "αριστερά", "live.dir.r": "δεξιά", "live.dir.s": "ευθεία",
       "live.dir.g": "το κατσικομονοπάτι",
       "live.sel": "{t}, θέση {n} από {m}, {s}.",
@@ -337,8 +379,8 @@
   var view = "map";                    // "map" | "play"
 
   function rtOf() { return E.ROUTE[game.rt]; }
-  function startRoute(rtId, diff) {
-    var g = E.newRun(rtId, diff);
+  function startRoute(rtId, diff, en) {
+    var g = E.newRun(rtId, diff, en);
     if (!g) return;
     sess = { g: g, ck: null, counted: false };
     game = g;
@@ -351,6 +393,7 @@
     announce(status());
   }
   function status() {
+    if (game.en) return t("live.statusEn", { n: game.trip, g: game.ph === "go" ? game.tg : 0, q: game.q, c: Math.floor(game.coins) });
     return t("live.status", { g: game.got, m: game.goal, c: Math.floor(game.coins), n: game.trip, k: game.nt });
   }
   function retryTrip() {
@@ -429,7 +472,7 @@
     E.setOff(game);
     paused = false; armed = ""; selId = 0;
     sfx("go");
-    announce(t("live.off", { n: game.trip, m: game.nt }));
+    announce(game.en ? t("live.offEn", { n: game.trip, q: game.q }) : t("live.off", { n: game.trip, m: game.nt }));
     handleEvents();
     saveSession();
     renderAll();
@@ -481,13 +524,15 @@
     if (!sess || sess.counted) return;
     var nx = nextRtId(game.rt);
     var before = nx ? E.isOpen(data, nx) : true;
+    var bestBefore = E.bestEndless(data, game.rt);
     data = E.record(data, deviceId, game, Date.now());
     sess.counted = true;
     saveData();
     saveSession();
     var opened = nx && !before && E.isOpen(data, nx) ? nx : null;
     sfx(game.over === 1 ? "won" : "lost");
-    endDialog(opened);
+    if (game.en) endlessDialog(bestBefore);
+    else endDialog(opened);
   }
   function nextRtId(id) {
     var rt = E.ROUTE[id];
@@ -504,6 +549,7 @@
     lastT = now;
     if (running()) {
       advance(dt * speed);
+      if (game.cv.some(function (c) { return c.st === "r"; })) soundOnce("rumble", 950);
       sinceSave += dt;
       if (sinceSave >= RUN_SAVE_MS) { sinceSave = 0; saveSession(); }
     }
@@ -543,7 +589,13 @@
         var c = E.cartById(game, x.c);
         announce(x.e === "back" ? t("live.back", { t: c ? ctName(c) : "" }) : t("live.burnt"));
         if (window.orosHaptics) window.orosHaptics.cue("bad");
-      } else if (x.e === "home") { if (x.n) soundOnce("market", 160); fx.push({ k: "home", at: rt.P.M, life: 500 }); }
+      } else if (x.e === "home") { if (x.n) soundOnce(x.at === "N" ? "spice" : "market", 160); fx.push({ k: "home", at: rt.P[x.at || "M"], life: 500 }); }
+      else if (x.e === "jam") {
+        fx.push({ k: "jam", m: x.m, at: { x: x.x, y: x.y }, life: 600 });
+        soundOnce("jam", 200);
+        var jc = E.cartById(game, x.c);
+        announce(t("live.jam", { t: jc ? ctName(jc) : "", m: t("mc." + rt.M[x.m].k) }));
+      }
       else if (x.e === "trip") tripEnd = x;
       else if (x.e === "smoke") fx.push({ k: "smokeIn", at: { x: x.x, y: x.y }, life: 400 });
     });
@@ -570,7 +622,7 @@
     ["--bg", "--text", "--text-dim", "--accent", "--border", "--danger", "--panel-bg",
      "--cv-hill", "--cv-hill2", "--cv-tree", "--cv-road", "--cv-edge", "--cv-goat", "--cv-way", "--cv-brass",
      "--cv-iron", "--cv-mud", "--cv-reach", "--cv-cart", "--cv-crate", "--cv-straw", "--cv-mend",
-     "--cv-smoke", "--cv-stone", "--cv-awning"].forEach(function (v) {
+     "--cv-smoke", "--cv-stone", "--cv-awning", "--cv-beast", "--cv-dust"].forEach(function (v) {
       C[v.slice(2)] = cs.getPropertyValue(v).trim() || "#888";
     });
   }
@@ -721,6 +773,11 @@
       ctx.beginPath(); ctx.arc(q.x, q.y + r * 0.1, r * 0.22, 0, Math.PI * 2); ctx.fillStyle = C["cv-iron"]; ctx.fill();
     }
     ctx.globalAlpha = 1;
+    if (stopped) {
+      // stopped (jammed or scared): a wedge stuck in it
+      ctx.beginPath(); ctx.moveTo(q.x + r * 0.2, q.y + r * 0.9); ctx.lineTo(q.x + r * 1.1, q.y + r * 0.5); ctx.lineTo(q.x + r * 1.1, q.y + r * 1.1); ctx.closePath();
+      ctx.fillStyle = C["cv-iron"]; ctx.fill();
+    }
   }
   function drawSmoke() {
     game.sm.forEach(function (s) {
@@ -738,14 +795,25 @@
     var g = px(rt.P.S), r = tile * 0.45;
     ctx.strokeStyle = C["cv-stone"]; ctx.lineWidth = Math.max(2, tile * 0.14); ctx.lineCap = "round";
     ctx.beginPath(); ctx.moveTo(g.x - r, g.y + r * 0.8); ctx.lineTo(g.x - r, g.y); ctx.arc(g.x, g.y, r, Math.PI, 0); ctx.lineTo(g.x + r, g.y + r * 0.8); ctx.stroke();
-    // the market: a stall with a striped awning
-    var m = px(rt.P.M), w = tile * 1.2, h = tile * 0.5;
+    stall(rt.P.M, false);
+    if (rt.P.N) stall(rt.P.N, true);
+  }
+  // A market: a stall with a striped awning; the spice market has a
+  // pointed roof with five stripes and a jar on the counter.
+  function stall(p, spice) {
+    var m = px(p), w = tile * 1.2, h = tile * 0.5, n = spice ? 5 : 4;
     ctx.fillStyle = C["cv-cart"]; ctx.fillRect(m.x - w / 2, m.y - h * 0.1, w, h * 0.7);
-    for (var k = 0; k < 4; k++) {
-      ctx.fillStyle = k % 2 ? C["cv-crate"] : C["cv-awning"];
-      ctx.fillRect(m.x - w / 2 + k * w / 4, m.y - h * 0.8, w / 4 + 0.5, h * 0.7);
+    for (var k = 0; k < n; k++) {
+      ctx.fillStyle = k % 2 ? C["cv-crate"] : (spice ? C["cv-brass"] : C["cv-awning"]);
+      ctx.fillRect(m.x - w / 2 + k * w / n, m.y - h * 0.8, w / n + 0.5, h * 0.7);
     }
-    var hm = fx.some(function (f) { return f.k === "home"; });
+    if (spice) {
+      ctx.beginPath(); ctx.moveTo(m.x - w / 2, m.y - h * 0.8); ctx.lineTo(m.x, m.y - h * 1.4); ctx.lineTo(m.x + w / 2, m.y - h * 0.8); ctx.closePath();
+      ctx.fillStyle = C["cv-awning"]; ctx.fill();
+      ctx.beginPath(); ctx.arc(m.x, m.y + h * 0.25, h * 0.22, 0, Math.PI * 2);
+      ctx.fillStyle = C["cv-brass"]; ctx.fill(); ctx.strokeStyle = C["cv-edge"]; ctx.lineWidth = 1; ctx.stroke();
+    }
+    var hm = fx.some(function (f) { return f.k === "home" && f.at === p; });
     if (hm && !reduced) { ctx.globalAlpha = 0.35; ctx.fillStyle = C.accent; ctx.beginPath(); ctx.arc(m.x, m.y, tile * 0.9, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; }
   }
   // A sign: a round board on the fork with an arrow along the way it sends carts.
@@ -772,17 +840,83 @@
     ctx.closePath();
   }
   // Each cart kind has its own outline; crates on top show its load.
+  // The way a cart on the road is heading (a unit vector, screen axes).
+  function heading(c) {
+    var e = rtOf().E[c.e];
+    if (!e) return { x: 0, y: 1 };
+    var a = E.pointAt(e, Math.max(0, c.d - 0.05)), b = E.pointAt(e, Math.min(e.len, c.d + 0.05));
+    var dx = b.x - a.x, dy = b.y - a.y, l = Math.hypot(dx, dy);
+    return l > 1e-6 ? { x: dx / l, y: dy / l } : { x: 0, y: 1 };
+  }
+  // The animal in front: an ox (Ox wagon), a mule (long ears) or a pony
+  // (a mane); the straw cart has a pony, the mender and the smith a mule.
+  function drawBeast(c, q, hd) {
+    var kind = c.k === "mule" ? (c.b === "a" ? "ox" : "mule") : c.k === "pony" || c.k === "straw" ? "pony" : "mule";
+    var s = tile * (kind === "ox" ? 0.3 : kind === "pony" ? 0.22 : 0.26);
+    var bx = q.x + hd.x * tile * 0.58, by = q.y + hd.y * tile * 0.58, ang = Math.atan2(hd.y, hd.x);
+    var step = reduced ? 0 : Math.sin(c.tr * 9) * s * 0.12;
+    ctx.save(); ctx.translate(bx, by); ctx.rotate(ang);
+    // the shafts
+    ctx.strokeStyle = C["cv-edge"]; ctx.lineWidth = Math.max(1, tile * 0.04);
+    ctx.beginPath(); ctx.moveTo(-tile * 0.2, -s * 0.45); ctx.lineTo(0, -s * 0.45); ctx.moveTo(-tile * 0.2, s * 0.45); ctx.lineTo(0, s * 0.45); ctx.stroke();
+    // legs (two pairs, a little stride)
+    ctx.strokeStyle = C["cv-iron"]; ctx.lineWidth = Math.max(1, tile * 0.035);
+    ctx.beginPath();
+    ctx.moveTo(-s * 0.5 + step, -s * 0.55); ctx.lineTo(-s * 0.5 + step, s * 0.55);
+    ctx.moveTo(s * 0.4 - step, -s * 0.55); ctx.lineTo(s * 0.4 - step, s * 0.55);
+    ctx.stroke();
+    // body and head
+    ctx.fillStyle = C["cv-beast"];
+    ctx.beginPath(); ctx.ellipse(0, 0, s, s * 0.5, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(s * 1.05, 0, s * 0.38, s * 0.3, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = C["cv-edge"]; ctx.lineWidth = 1;
+    if (kind === "mule") {
+      ctx.beginPath(); ctx.moveTo(s * 0.95, -s * 0.2); ctx.lineTo(s * 0.75, -s * 0.75); ctx.moveTo(s * 0.95, s * 0.2); ctx.lineTo(s * 0.75, s * 0.75);
+      ctx.strokeStyle = C["cv-beast"]; ctx.lineWidth = Math.max(1.5, s * 0.22); ctx.stroke();
+    } else if (kind === "ox") {
+      ctx.beginPath(); ctx.arc(s * 1.05, 0, s * 0.62, -1.2, -0.5); ctx.moveTo(s * 1.05 + Math.cos(0.5) * s * 0.62, Math.sin(0.5) * s * 0.62); ctx.arc(s * 1.05, 0, s * 0.62, 0.5, 1.2);
+      ctx.strokeStyle = C["cv-stone"]; ctx.lineWidth = Math.max(1.5, s * 0.16); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(-s * 0.1, 0); ctx.lineTo(s * 0.85, 0);
+      ctx.strokeStyle = C["cv-edge"]; ctx.lineWidth = Math.max(1.5, s * 0.2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+  // A little dust behind a moving cart (not with reduced motion).
+  function drawDust(c, q, hd) {
+    if (reduced) return;
+    ctx.fillStyle = C["cv-dust"];
+    for (var k = 1; k <= 3; k++) {
+      var ph = (c.tr * 2 + k / 3) % 1;
+      ctx.globalAlpha = 0.28 * (1 - ph);
+      ctx.beginPath();
+      ctx.arc(q.x - hd.x * tile * (0.45 + ph * 0.5) + hd.y * tile * 0.12 * (k - 2), q.y - hd.y * tile * (0.45 + ph * 0.5) - hd.x * tile * 0.12 * (k - 2), tile * (0.06 + ph * 0.08), 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
   function drawCart(c) {
     var q = px(c), st = E.stats(c);
     var w = tile * (c.k === "mule" ? (c.b === "a" ? 0.9 : 0.78) : c.k === "pony" ? 0.56 : 0.66), h = tile * 0.5;
+    if (c.st === "r") { var hd = heading(c); drawDust(c, q, hd); drawBeast(c, q, hd); }
     if (c.sh > 0) {
       ctx.beginPath(); ctx.arc(q.x, q.y, tile * 0.55, 0, Math.PI * 2);
       ctx.globalAlpha = 0.3; ctx.fillStyle = C["cv-mend"]; ctx.fill(); ctx.globalAlpha = 1;
       ctx.strokeStyle = C["cv-mend"]; ctx.lineWidth = 2; ctx.stroke();
     }
-    // wheels
+    // wheels, with a spoke that turns as the cart rolls
     ctx.fillStyle = C["cv-iron"];
     ctx.beginPath(); ctx.arc(q.x - w * 0.32, q.y + h * 0.42, h * 0.2, 0, Math.PI * 2); ctx.arc(q.x + w * 0.32, q.y + h * 0.42, h * 0.2, 0, Math.PI * 2); ctx.fill();
+    if (!reduced && h * 0.2 >= 3) {
+      var wa = (c.tr || 0) * 6;
+      ctx.strokeStyle = C["cv-stone"]; ctx.lineWidth = 1;
+      ctx.beginPath();
+      [-1, 1].forEach(function (sx) {
+        var cx = q.x + sx * w * 0.32, cy = q.y + h * 0.42, r = h * 0.17;
+        ctx.moveTo(cx - Math.cos(wa) * r, cy - Math.sin(wa) * r); ctx.lineTo(cx + Math.cos(wa) * r, cy + Math.sin(wa) * r);
+      });
+      ctx.stroke();
+    }
     if (c.k === "straw") {
       ctx.beginPath(); ctx.ellipse(q.x, q.y - h * 0.05, w * 0.55, h * 0.5, 0, 0, Math.PI * 2);
       ctx.fillStyle = C["cv-straw"]; ctx.fill();
@@ -800,6 +934,16 @@
         var row = Math.floor(k / 2);
         ctx.fillStyle = C["cv-crate"];
         ctx.fillRect(cx + (row ? cw * 0.5 : 0) + (c.k === "pony" ? 0 : w * 0.25), q.y - h * 0.15 - cw * (row + 1), cw, cw);
+      }
+      if (c.k === "smith") {
+        // an anvil on the side
+        ctx.fillStyle = C["cv-iron"];
+        ctx.fillRect(q.x - h * 0.3, q.y + h * 0.02, h * 0.6, h * 0.12);
+        ctx.fillRect(q.x - h * 0.12, q.y + h * 0.14, h * 0.24, h * 0.14);
+        if (c.j > 0) {
+          ctx.globalAlpha = 0.5; ctx.fillStyle = C.border;
+          ctx.fillRect(q.x - w / 2, q.y + h * 0.42, w * (1 - c.j / st.rest), 2); ctx.globalAlpha = 1;
+        }
       }
       if (c.k === "mender") {
         // a mender's cross on the side
@@ -926,7 +1070,7 @@
       else if (k === "g" || k === "G") nextFork();
       else if (k === "Enter" && forkSel >= 0) flipFork(rtOf().forks[forkSel]);
       else if (k === "Escape") { armed = ""; forkSel = -1; selectCart(0, true); }
-      else if (/^[1-4]$/.test(k) && plan) hire(E.KINDS[+k - 1]);
+      else if (/^[1-5]$/.test(k) && plan) hire(E.KINDS[+k - 1]);
       else if (k === "[" && c) moveSel(-1);
       else if (k === "]" && c) moveSel(1);
       else if ((k === "u" || k === "U") && c && c.l === 1 && plan) upgrade("");
@@ -954,10 +1098,17 @@
   }
   function renderStatus() {
     if (!game) return;
-    setStat("s-goods", ICONS.crate, game.got + "/" + game.goal, t("st.goodsOf", { n: game.got, m: game.goal }));
-    $("s-goods").classList.toggle("ok", game.got >= game.goal);
+    if (game.en) {
+      var tg = game.ph === "go" ? game.tg : 0;
+      setStat("s-goods", ICONS.crate, tg + "/" + game.q, t("st.quota", { n: tg, m: game.q }));
+      $("s-goods").classList.toggle("ok", tg >= game.q);
+    } else {
+      setStat("s-goods", ICONS.crate, game.got + "/" + game.goal, t("st.goodsOf", { n: game.got, m: game.goal }));
+      $("s-goods").classList.toggle("ok", game.got >= game.goal);
+    }
     setStat("s-coins", ICONS.coin, Math.floor(game.coins), t("st.coins") + ": " + Math.floor(game.coins));
-    setStat("s-trip", ICONS.trip, t("st.tripShort", { n: game.trip, m: game.nt }), t("st.trip", { n: game.trip, m: game.nt }));
+    if (game.en) setStat("s-trip", ICONS.trip, "∞ " + game.trip, t("st.tripEn", { n: game.trip }));
+    else setStat("s-trip", ICONS.trip, t("st.tripShort", { n: game.trip, m: game.nt }), t("st.trip", { n: game.trip, m: game.nt }));
   }
   function actBtn(icon, name, cost, title, fn, disabled, cls) {
     var b = el("button", "act" + (cls ? " " + cls : ""));
@@ -1029,7 +1180,9 @@
     else if (plan && !over) {
       var nm = E.newMachines(game).length;
       tip.hidden = false;
-      tip.textContent = game.trip > 1 && nm ? t("ctx.new", { n: game.trip, m: nm }) : t("ctx.plan");
+      tip.textContent = game.en ? t("ctx.en", { n: game.trip, q: game.q }) :
+        game.trip > 1 && nm ? t("ctx.new", { n: game.trip, m: nm }) :
+        rtOf().two && game.trip === 1 ? t("ctx.two", { n: E.PAY_N, m: E.PAY }) : t("ctx.plan");
     } else if (!over && game.t < E.TPS * 6 && rtOf().forks.length) { tip.hidden = false; tip.textContent = t("ctx.road"); }
     else tip.hidden = true;
     if (over) return;
@@ -1108,7 +1261,7 @@
     var wrap = el("div", "mp-wrap");
     wrap.appendChild(el("p", "mp-intro", t("map.intro")));
     if (underWay()) {
-      var cont = el("button", "mp-cont", t("map.cont", { r: rtName(game.rt), n: game.trip }));
+      var cont = el("button", "mp-cont", t("map.cont", { r: rtName(game.rt) + (game.en ? " · " + t("map.endless") : ""), n: game.trip }));
       cont.type = "button";
       cont.addEventListener("click", showPlay);
       wrap.appendChild(cont);
@@ -1125,8 +1278,8 @@
       seg.appendChild(b);
     });
     wrap.appendChild(seg);
-    wrap.appendChild(el("div", "mp-head", t("map.road")));
     E.ROUTES.forEach(function (rt) {
+      if (rt.idx === 0 || rt.idx === 4) wrap.appendChild(el("div", "mp-head", t(rt.idx ? "map.road2" : "map.road")));
       var open = E.isOpen(data, rt.id);
       var b = el("button", "sq-card" + (underWay() && game.rt === rt.id ? " cur" : ""));
       b.type = "button";
@@ -1134,13 +1287,21 @@
       b.appendChild(el("span", "no", String(rt.idx + 1)));
       var tx2 = el("span", "tx");
       tx2.appendChild(el("span", "nm", rtName(rt.id)));
-      var kinds = E.KINDS.filter(function (k) { return E.CARTS[k].u <= Math.min(4, rt.idx + 1); }).map(function (k) { return t("ct." + k); });
-      tx2.appendChild(el("span", "fx", open ? t("map.goal", { n: rt.goal, m: E.TRIPS }) + " · " + t("map.carts", { list: kinds.join(", ") }) : t("map.lock")));
+      var kinds = E.KINDS.filter(function (k) { return E.CARTS[k].u <= Math.min(E.MAX_U, rt.idx + 1); }).map(function (k) { return t("ct." + k); });
+      tx2.appendChild(el("span", "fx", open ? t("map.goal", { n: rt.goal, m: E.TRIPS }) + (rt.two ? " · " + t("map.two", { n: E.PAY_N }) : "") + " · " + t("map.carts", { list: kinds.join(", ") }) : t("map.lock")));
       b.appendChild(tx2);
       b.appendChild(starIcons(E.starsOf(data, rt.id)));
       b.setAttribute("aria-label", rtName(rt.id) + ", " + E.starsOf(data, rt.id) + "/3");
-      b.addEventListener("click", function () { pickRoute(rt.id); });
+      b.addEventListener("click", function () { pickRoute(rt.id, 0); });
       wrap.appendChild(b);
+      if (E.endlessOpen(data, rt.id)) {
+        var best = E.bestEndless(data, rt.id);
+        var eb = el("button", "mp-endless" + (underWay() && game.rt === rt.id && game.en ? " cur" : ""), best ? t("map.endlessBest", { n: best }) : t("map.endless"));
+        eb.type = "button";
+        eb.setAttribute("aria-label", t("map.endlessAria", { r: rtName(rt.id), n: best }));
+        eb.addEventListener("click", function () { pickRoute(rt.id, 1); });
+        wrap.appendChild(eb);
+      }
     });
     var rs = el("button", "dlg-btn danger mp-reset", t("btn.reset"));
     rs.type = "button";
@@ -1150,18 +1311,23 @@
     wrap.appendChild(rs);
     box.appendChild(wrap);
   }
-  function pickRoute(id) {
-    if (underWay() && game.acts > 0 && (game.rt !== id || game.diff !== prefs.diff)) {
-      confirmDialog(t("map.replace", { r: rtName(game.rt), s: rtName(id) }), t("btn.ok"), function () { startRoute(id, prefs.diff); });
+  function pickRoute(id, en) {
+    en = en ? 1 : 0;
+    var same = underWay() && game.rt === id && game.diff === prefs.diff && (game.en ? 1 : 0) === en;
+    if (underWay() && game.acts > 0 && !same) {
+      confirmDialog(t("map.replace", { r: rtName(game.rt), s: rtName(id) + (en ? " · " + t("map.endless") : "") }), t("btn.ok"), function () { startRoute(id, prefs.diff, en); });
       return;
     }
-    if (underWay() && game.rt === id && game.diff === prefs.diff) { showPlay(); return; }
-    startRoute(id, prefs.diff);
+    if (same) { showPlay(); return; }
+    startRoute(id, prefs.diff, en);
   }
   // Reset progress: a new reset stamp, so older rows drop on every device.
+  // The route in progress ends too (not counted): a reset that left it on
+  // screen, with Continue, read as "nothing was reset".
   function resetProgress() {
     data = E.merge({ ver: 1, br: Math.max(Date.now(), data.br + 1), maps: {}, rows: {} }, data);
     saveData();
+    if (sess && !sess.counted) { sess.counted = true; paused = true; saveSession(); }
     showToast(t("toast.reset"));
     renderMap();
   }
@@ -1213,6 +1379,23 @@
       var nx = nextRtId(g.rt);
       if (won && nx) a.appendChild(dlgBtn(t("btn.nextRt"), "primary", function () { closeDialog(); startRoute(nx, g.diff); }));
       a.appendChild(dlgBtn(t("btn.restart"), "", function () { closeDialog(); startRoute(g.rt, g.diff); }));
+      a.appendChild(dlgBtn(t("btn.toMap"), "", function () { closeDialog(); showMap(); }));
+      d.appendChild(a);
+    });
+  }
+  // Endless is over: the trips that brought their crates and the best.
+  function endlessDialog(bestBefore) {
+    var g = game, sc = E.score(g);
+    openDialog("end", function (d) {
+      d.appendChild(el("div", "dlg-title", rtName(g.rt) + " · " + t("map.endless") + " · " + t("diff." + g.diff)));
+      d.appendChild(el("div", "dlg-hero", t("end.en")));
+      d.appendChild(row(t("end.enTrips"), sc));
+      d.appendChild(row(t("end.enBest"), Math.max(sc, bestBefore)));
+      d.appendChild(row(t("end.goods"), g.got));
+      if (sc > bestBefore) d.appendChild(el("p", "dlg-note", t("end.enNew")));
+      d.appendChild(el("p", "dlg-note", t("end.enNote")));
+      var a = el("div", "dlg-actions");
+      a.appendChild(dlgBtn(t("btn.enAgain"), "primary", function () { closeDialog(); startRoute(g.rt, g.diff, 1); }));
       a.appendChild(dlgBtn(t("btn.toMap"), "", function () { closeDialog(); showMap(); }));
       d.appendChild(a);
     });
@@ -1303,6 +1486,9 @@
       if (kind === "arm") tone(240, 0, 0.07, "square", 0.025, 160);
       else if (kind === "puff") tone(300, 0, 0.25, "sawtooth", 0.02, 90);
       else if (kind === "hit") tone(150, 0, 0.1, "triangle", 0.05, 90);
+      else if (kind === "rumble") { tone(62, 0, 0.5, "triangle", 0.014, 55); tone(95, 0.18, 0.3, "triangle", 0.008, 80); }
+      else if (kind === "spice") { tone(988, 0, 0.25, "sine", 0.04); tone(1480, 0.05, 0.25, "sine", 0.025); tone(1976, 0.1, 0.2, "sine", 0.015); }
+      else if (kind === "jam") { tone(330, 0, 0.06, "square", 0.04); tone(220, 0.07, 0.12, "triangle", 0.05, 110); }
       else if (kind === "market") { tone(880, 0, 0.25, "sine", 0.04); tone(1320, 0.05, 0.2, "sine", 0.02); }
       else if (kind === "build") { tone(180, 0, 0.08, "triangle", 0.08, 120); tone(520, 0.04, 0.08, "sine", 0.05); }
       else if (kind === "sign") tone(700, 0, 0.06, "square", 0.03, 900);
@@ -1345,6 +1531,7 @@
     pony:   SVG + '<rect x="6" y="10" width="10" height="5" rx="1"/><path d="M9 10V8h4v2"/><circle cx="9" cy="17" r="2"/><circle cx="14" cy="17" r="2"/><path d="M16 12l4-3"/></svg>',
     mender: SVG + '<rect x="3" y="9" width="14" height="6" rx="1"/><path d="M10 10v4M8 12h4"/><circle cx="7" cy="17" r="2"/><circle cx="13" cy="17" r="2"/><path d="M17 12h3"/></svg>',
     straw:  SVG + '<ellipse cx="11" cy="11" rx="8" ry="4.5"/><path d="M5 10h12M6 13h10"/><circle cx="7" cy="18" r="1.8"/><circle cx="15" cy="18" r="1.8"/></svg>',
+    smith:  SVG + '<rect x="3" y="11" width="14" height="5" rx="1"/><path d="M6 11V9h8v2M8 9V7h5"/><circle cx="7" cy="18" r="1.8"/><circle cx="14" cy="18" r="1.8"/><path d="M17 13h3"/></svg>',
     tk_s:   SVG + '<path d="M6 16a4 4 0 0 1 0-8 5 5 0 0 1 9.5-1.5A4 4 0 1 1 18 16z"/><path d="M8 20h8"/></svg>',
     tk_w:   SVG + '<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/></svg>',
     tk_c:   SVG + '<path d="M4 20c4-2 4-6 8-8s4-6 8-8" stroke-dasharray="2 3"/><circle cx="4" cy="20" r="1.5"/><circle cx="20" cy="4" r="1.5"/></svg>'
@@ -1425,22 +1612,23 @@
   window.render_game_to_text = function () {
     if (view !== "play" || !game) {
       return JSON.stringify({ mode: dlgKind || "map", diff: prefs.diff,
-        routes: E.ROUTES.map(function (rt) { return { id: rt.id, open: E.isOpen(data, rt.id), stars: E.starsOf(data, rt.id) }; }) });
+        routes: E.ROUTES.map(function (rt) { return { id: rt.id, open: E.isOpen(data, rt.id), stars: E.starsOf(data, rt.id), endless: E.endlessOpen(data, rt.id), best: E.bestEndless(data, rt.id) }; }) });
     }
     var rt = rtOf();
     function r1(v) { return Math.round(v * 10) / 10; }
     return JSON.stringify({
-      mode: dlgKind || (game.over === 1 ? "won" : game.over === 0 ? "lost" : game.ph === "plan" ? "plan" : paused ? "paused" : "road"),
+      mode: dlgKind || (game.over === 1 ? (game.en ? "over" : "won") : game.over === 0 ? "lost" : game.ph === "plan" ? "plan" : paused ? "paused" : "road"),
       route: game.rt, diff: game.diff, speed: speed, trip: game.trip, trips: game.nt, coins: Math.floor(game.coins),
-      got: game.got, goal: game.goal, tricks: game.tk, goat: game.goat, armed: armed,
+      got: game.got, goal: game.goal, endless: game.en, quota: game.en ? game.q : null, tripGot: game.tg, tricks: game.tk, goat: game.goat, armed: armed,
       signs: rt.forks.map(function (n) { return { node: n, x: rt.P[n].x, y: rt.P[n].y, way: game.sg[n], dir: dirWord(n) }; }),
       way: E.wayNow(game).map(function (i) { return [rt.E[i].a, rt.E[i].b]; }),
-      machines: E.activeMachines(game).map(function (i) { var m = rt.M[i]; return { k: m.k, x: m.x, y: m.y, r: E.MACHINES[m.k].r }; }),
+      machines: E.activeMachines(game).map(function (i) { var m = rt.M[i]; return { k: m.k, x: m.x, y: m.y, r: E.MACHINES[m.k].r, stopped: game.mc[i].st > 0 }; }),
       carts: game.cv.map(function (c) {
         return { id: c.id, k: c.k, l: c.l, b: c.b, st: c.st, hp: r1(c.hp), x: c.st === "r" ? r1(c.x) : null, y: c.st === "r" ? r1(c.y) : null, sel: c.id === selId };
       }),
       smoke: game.sm.map(function (s) { return { x: r1(s.x), y: r1(s.y) }; }),
-      note: "tiles 12x18, origin top left; the gate is at the top, the market at the bottom"
+      markets: Object.keys(rt.P).filter(E.isEnd).map(function (n) { return { node: n, x: rt.P[n].x, y: rt.P[n].y, pay: n === "N" ? E.PAY_N : E.PAY }; }),
+      note: "tiles 12x18, origin top left; the gate is at the top, the markets at the bottom (N the spice market)"
     });
   };
   // advanceTime(ms): steps the road deterministically at the current
