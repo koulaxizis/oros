@@ -3910,7 +3910,7 @@
     if (s.view) { var v = window[s.mod].view(readStore(s.data)); return { data: v, full: v, folders: null, open: open, brand: null }; }
     if (!s.disk) { var d = readStore(s.data); return { data: d, full: d, folders: readStore(s.folders), open: open, brand: kit }; }
     // index entries for picking, the loaded doc records for counting
-    var idx = readStore(s.data);
+    var idx = idxOf(app);
     var fold = s.folders ? readStore(s.folders) : null;
     if (!idx && s.legacy) { var lg = readStore(s.legacy); return { data: lg, full: lg, folders: fold, open: open, brand: kit }; }
     var list = idx && Array.isArray(idx[s.list || "projects"]) ? idx[s.list || "projects"].filter(function (e) { return e && typeof e.id === "string"; }) : [];
@@ -3919,13 +3919,60 @@
     return { data: { docs: list }, full: { docs: full }, missing: missing, folders: fold, open: open, brand: kit };
   }
   var diskDocs = {}, DISK_MAX = 2 * 1024 * 1024;
+  // GL-1 (Chris 2026-11-21): the index of a disk app is written by the
+  // app itself, so a device where Layout (or Atelier) never ran had
+  // none, and the Gate answered "no documents in Layout yet" although
+  // Vault Drive had synced every document file. There the documents
+  // are read from the files themselves (read only: nothing is written,
+  // the app builds its own index when it opens).
+  var DISK_DIRS = { layout: ["/internal/Layout", ".oroslayout", "oros-layout-package"], atelier: ["/internal/Atelier", ".orosdesign", "oros-atelier-package"] };
+  var diskIdx = {}, diskIdxAt = {}, DISK_SCAN_MS = 60000, DISK_SCAN_MAX = 200;
+  // The index this device has for a disk app: its own, else one read
+  // from the files (with documents in it), else null.
+  function idxOf(app) {
+    var s = EDIT_SRC[app], own = s ? readStore(s.data) : null;
+    if (own && Array.isArray(own[s.list || "projects"])) return own;
+    var sc = diskIdx[app];
+    if (sc && sc.docs.length) return sc;
+    return own || null;   // null: the old store (legacy), if any
+  }
+  // → Promise (never rejects): reads the document files of a disk app
+  // when this device has no index of its own (at most once a minute).
+  function diskScan(app) {
+    var s = EDIT_SRC[app], dd = DISK_DIRS[app], sh = shell(), fs = null;
+    try { fs = sh && sh.orosFS; } catch (e) { fs = null; }
+    if (!s || !dd || !fs || typeof fs.ls !== "function" || typeof fs.read !== "function") return Promise.resolve();
+    var own = readStore(s.data);
+    if (own && Array.isArray(own[s.list || "projects"])) return Promise.resolve();
+    if (diskIdx[app] && Date.now() - diskIdxAt[app] < DISK_SCAN_MS) return Promise.resolve();
+    var re = new RegExp("^.* \u00b7 ([a-z]{1,4}-[a-z0-9]{1,24})" + dd[1].replace(".", "\\.") + "$");
+    return Promise.resolve(fs.ls(dd[0])).then(function (en) {
+      var list = [], chain = Promise.resolve();
+      (en || []).filter(function (e) { return e && !e.dir && typeof e.name === "string" && re.test(e.name); }).slice(0, DISK_SCAN_MAX).forEach(function (e) {
+        var id = re.exec(e.name)[1], path = dd[0] + "/" + e.name;
+        chain = chain.then(function () {
+          return fs.read(path).then(function (b) {
+            if (b && typeof b.size === "number" && b.size > (s.max || DISK_MAX)) return;
+            return (b && typeof b.text === "function" ? b.text() : Promise.resolve(String(b || ""))).then(function (txt) {
+              var pkg = JSON.parse(txt), doc = pkg && pkg.kind === dd[2] && pkg.doc;
+              if (!doc || doc.id !== id || !Array.isArray(doc.pages)) return;
+              var m = "f" + (typeof e.mtime === "number" ? e.mtime : 0) + ":" + txt.length;
+              list.push({ id: id, m: m, name: typeof doc.name === "string" ? doc.name : "", pages: doc.pages.length, path: path });
+              diskDocs[app + "/" + id] = { m: m, doc: doc };
+            });
+          }).catch(function () {});
+        });
+      });
+      return chain.then(function () { diskIdx[app] = { ver: 1, docs: list, scanned: 1 }; diskIdxAt[app] = Date.now(); });
+    }, function () {});
+  }
   // Reads the doc.json of the given projects that are not loaded yet
   // (at most 200 at a time) → Promise (never rejects).
   function editLoad(app, ids) {
     var s = EDIT_SRC[app], sh = shell(), fs = null, mod = window[s && s.mod];
     try { fs = sh && sh.orosFS; } catch (e) { fs = null; }
     if (!s || !s.disk || !fs || !mod || !(mod.docPath || s.pkg)) return Promise.resolve();
-    var idx = readStore(s.data), ms = {}, paths = {};
+    var idx = idxOf(app), ms = {}, paths = {};
     ((idx && idx[s.list || "projects"]) || []).forEach(function (e) {
       if (e && typeof e.id === "string") { ms[e.id] = e.m; if (typeof e.path === "string") paths[e.id] = e.path; }
     });
@@ -3950,9 +3997,11 @@
   function editLoadFor(app, args) {
     var s = EDIT_SRC[app];
     if (!s || !s.disk) return Promise.resolve();
-    var src = editSource(app), mod = window[s.mod], a = args && typeof args === "object" ? args : {};
-    var tg = mod.targets(src.data, src.folders, src.open, a.designs || "open", a.name || "");
-    return tg.ok ? editLoad(app, tg.docs.map(function (d) { return d.id; })) : Promise.resolve();
+    return diskScan(app).then(function () {
+      var src = editSource(app), mod = window[s.mod], a = args && typeof args === "object" ? args : {};
+      var tg = mod.targets(src.data, src.folders, src.open, a.designs || "open", a.name || "");
+      return tg.ok ? editLoad(app, tg.docs.map(function (d) { return d.id; })) : Promise.resolve();
+    });
   }
   function appOf(apps, id) { var o = null; (apps || []).forEach(function (a) { if (a.id === id) o = a; }); return o; }
   function readInApp(c, args, apps) {
@@ -4683,16 +4732,23 @@
       return rows;
     });
   }
+  var LY_OUT = ["/internal/Layout/Proofs", "/internal/Layout/PDF"];   // GL-2
   // → Promise<{ CF, fs, folders } | { err }>
   function cfPrep(apps, write) {
     var app = appOf(apps, "files");
     if (app && write && !GATE && !changeApps(apps).some(function (y) { return y.id === "files"; })) app = null;
-    if (!app) return Promise.resolve({ err: write ? "Claude may not change files." : "Claude may not read Files." });
+    // GL-2 (Chris 2026-11-21): with Layout readable, its own proofs and
+    // PDFs can be read back (read only) even where Files is not allowed
+    var lyOnly = !app && !write && !!appOf(apps, "layout");
+    if (!app && !lyOnly) return Promise.resolve({ err: write ? "Claude may not change files." : "Claude may not read Files." });
     var fs = filesFS();
     if (!fs || typeof fs.read !== "function") return Promise.resolve({ err: "the orOS disk is not reachable right now." });
     return cfMod().then(function (CF) {
       if (!CF) return { err: "the file tools could not be loaded right now." };
-      return { CF: CF, fs: fs, app: app, folders: cfFolders(CF) };
+      if (lyOnly) return { CF: CF, fs: fs, app: appOf(apps, "layout"), folders: LY_OUT.slice(), lyOnly: 1 };
+      var fo = cfFolders(CF);
+      if (!write && appOf(apps, "layout")) LY_OUT.forEach(function (f) { if (fo.indexOf(f) < 0) fo.push(f); });
+      return { CF: CF, fs: fs, app: app, folders: fo };
     });
   }
   function cfErr(msg) { return { content: "Error: " + msg, err: 1, ui: { k: "toolErr", why: "cf" } }; }
@@ -9792,6 +9848,12 @@
     if (+rep.files) out.files_for_the_owner = +rep.files;
     if (Array.isArray(rep.saved) && rep.saved.length) out.saved_files = savedPaths(rep.saved);
     if (Array.isArray(rep.notes) && rep.notes.length) out.notes = rep.notes.slice(0, 10).map(String);
+    // GL-3: steps with a file that could not be read were skipped, the rest applied
+    if (+rep.skipped) {
+      out.skipped_steps = +rep.skipped;
+      out.skipped_note = "The notes name the skipped steps and why; fix the path and send only those steps again." +
+        (Array.isArray(rep.notes) && rep.notes.some(function (n) { return /local:/i.test(String(n)); }) ? localHint() : "");
+    }
     if (rep.stopped) {
       if (Array.isArray(rep.notes) && rep.notes.some(function (n) { return /^timeout/.test(String(n)); })) out.stopped = LOCAL_SAY.timeout;
       else out.stopped_by_owner = true;
