@@ -612,7 +612,9 @@ body {
   cursor: pointer;
   transition: background 0.15s;
 }
-#btn-menu:hover, #btn-lang:hover { background: var(--accent-soft); }
+/* Bar hover only where hover is real: a touch screen keeps :hover on the
+   last tapped button, which left a faint frame on it (BAR-HOVER-1). */
+@media (hover: hover) { #btn-menu:hover, #btn-lang:hover { background: var(--accent-soft); } }
 
 #btn-menu {
   display: inline-flex;
@@ -1285,7 +1287,7 @@ body {
   padding: 0;
   color: var(--text);
 }
-#sync-dot-btn:hover { background: var(--accent-soft); }
+@media (hover: hover) { #sync-dot-btn:hover { background: var(--accent-soft); } }
 
 /* Help "?" (shown only when apps.json lists "help") */
 #help-btn {
@@ -1301,7 +1303,7 @@ body {
   padding: 0;
   color: var(--text-dim);
 }
-#help-btn:hover { background: var(--accent-soft); color: var(--text); }
+@media (hover: hover) { #help-btn:hover { background: var(--accent-soft); color: var(--text); } }
 /* Phones: the bar is full. On the desktop "?" hides (Help is in the
    menu); inside an app it takes the language button's place. */
 @media (max-width: 480px) {
@@ -1318,7 +1320,7 @@ body {
   font: inherit; font-size: 12px; font-weight: 700; white-space: nowrap;
   cursor: pointer;
 }
-#update-ready:hover { background: var(--accent); color: var(--accent-ink, #fff); }
+@media (hover: hover) { #update-ready:hover { background: var(--accent); color: var(--accent-ink, #fff); } }
 #update-ready:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 /* Narrow bars: the icon alone (the title says the rest). */
 @media (max-width: 640px) {
@@ -1336,7 +1338,7 @@ body {
   border-radius: 8px; color: var(--text-dim);
 }
 #mt-btn[hidden] { display: none; }
-#mt-btn:hover { background: var(--accent-soft); color: var(--text); }
+@media (hover: hover) { #mt-btn:hover { background: var(--accent-soft); color: var(--text); } }
 #mt-btn .mt-count {
   font-size: 11px; font-weight: 700; color: var(--accent);
   font-variant-numeric: tabular-nums;
@@ -1813,7 +1815,7 @@ html[data-oros-contrast="high"] #oros-greet { background: var(--panel-bg, var(--
   white-space: nowrap;
   cursor: pointer;
 }
-#ts-tray-chip:hover { background: var(--accent-soft); }
+@media (hover: hover) { #ts-tray-chip:hover { background: var(--accent-soft); } }
 #ts-tray-chip svg { display: block; flex-shrink: 0; pointer-events: none; }
 #oros-bar.bar-tight #ts-tray-chip { padding: 0 5px; }
 /* The Pocket (POCKET-1): top-bar button while it holds something and no Dock is on screen */
@@ -1824,7 +1826,7 @@ html[data-oros-contrast="high"] #oros-greet { background: var(--panel-bg, var(--
   color: var(--accent); font: inherit; font-size: 12.5px; font-weight: 600;
   font-variant-numeric: tabular-nums; cursor: pointer;
 }
-#pocket-chip:hover { background: var(--accent-soft); }
+@media (hover: hover) { #pocket-chip:hover { background: var(--accent-soft); } }
 #pocket-chip svg { display: block; width: 18px; height: 18px; flex-shrink: 0; pointer-events: none; }
 #oros-bar.bar-tight #pocket-chip { min-width: 34px; padding: 0 4px; }
 body.till-mode #pocket-chip { display: none !important; }
@@ -1853,7 +1855,7 @@ body.till-mode #pocket-chip { display: none !important; }
   background: transparent; border: none; border-radius: 6px;
   color: var(--accent); cursor: pointer;
 }
-#strict-badge:hover { background: var(--accent-soft); }
+@media (hover: hover) { #strict-badge:hover { background: var(--accent-soft); } }
 #strict-badge.strict-hard { color: var(--danger); }
 #strict-badge svg { display: block; pointer-events: none; }
 #oros-bar.bar-tight #strict-badge { min-width: 34px; padding: 0 3px; }
@@ -1902,7 +1904,7 @@ body.till-mode #pocket-chip { display: none !important; }
   white-space: nowrap;
   user-select: none;
 }
-#wx-chip:hover { background: var(--accent-soft); }
+@media (hover: hover) { #wx-chip:hover { background: var(--accent-soft); } }
 #wx-chip[data-state="off"] { color: var(--text-dim); opacity: 0.7; }
 #wx-chip svg { display: block; flex-shrink: 0; pointer-events: none; }
 #wx-chip .wx-temp { pointer-events: none; }
@@ -1972,8 +1974,7 @@ body.till-mode #pocket-chip { display: none !important; }
   cursor: pointer;
   transition: background 0.15s;
 }
-#bar-time:hover,
-#bar-date:hover { background: var(--accent-soft); }
+@media (hover: hover) { #bar-time:hover, #bar-date:hover { background: var(--accent-soft); } }
 
 /* ===== Z-index ladder (inline, shell.js) ===== */
 /* Semantic tokens (Σ2, Bible §14): skin-neutral, same value in
@@ -2078,7 +2079,8 @@ body.till-mode #qs-btn { display: none !important; }
   background: transparent; border: none; border-radius: 6px;
   color: var(--text); cursor: pointer;
 }
-#osk-btn:hover, #osk-btn:focus-visible { background: var(--accent-soft); outline: none; }
+#osk-btn:focus-visible { background: var(--accent-soft); outline: none; }
+@media (hover: hover) { #osk-btn:hover { background: var(--accent-soft); } }
 #osk-btn[aria-pressed="true"] { color: var(--accent-hover); }
 body.osk-open #oros-running { bottom: var(--osk-h, 0px); }
 #osk {
