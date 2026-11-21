@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 50128 of 50135 (99%)
+- Strings: 50173 of 50180 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -32,7 +32,7 @@ en and el); translators change them there, not in a pack.
 | calculator | 100% | 170 / 170 |
 | calendar | 100% | 638 / 638 (49 in the code) |
 | capture | 100% | 58 / 58 |
-| caravan | 100% | 142 / 142 |
+| caravan | 100% | 170 / 170 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
 | certificates | 100% | 391 / 391 |
@@ -139,10 +139,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2013 / 2013 |
+| settings | 100% | 2015 / 2015 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1551 / 1551 |
+| shell | 100% | 1565 / 1565 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -176,7 +176,7 @@ en and el); translators change them there, not in a pack.
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |
 | units | 100% | 214 / 214 |
-| wallpaper | 100% | 130 / 130 |
+| wallpaper | 100% | 131 / 131 |
 | water | 100% | 94 / 94 |
 | wayfarers | 100% | 549 / 549 |
 | weather | 100% | 190 / 190 |
