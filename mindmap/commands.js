@@ -58,7 +58,9 @@
     frame: { kind: "doc", args: sel({ kind: oneOf(M.FRAME_KINDS), text: { t: "str", max: 200 }, c: { t: "color" } }) },
     remove: { kind: "doc", args: sel({}) },
     map: { kind: "doc", args: { layout: oneOf(["", "map", "org", "tree", "time"]), sides: oneOf(["", "both", "right"]) } },
-    rename: { kind: "doc", args: { title: { t: "str", max: 2000, req: 1 } } }
+    rename: { kind: "doc", args: { title: { t: "str", max: 2000, req: 1 } } },
+    // GX-3: the map as a file into out (nothing changes)
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["png", "svg", "md", "opml", "json", "oros"], def: "png" }, out: { t: "str", max: 1030, req: 1 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -80,7 +82,8 @@
     "frame: a boundary (kind box) or a summary brace (kind brace) around the picked ideas, labelled `text`, colour c (at most 50 ideas)",
     "remove: delete the picked ideas with everything under them (needs ids, has, branch or level; never the centre)",
     "map: layout map (around the centre)|org (org chart)|tree (a list going down)|time (a timeline); sides both|right (where a map's branches go)",
-    "rename: the map's title (its centre's text) becomes `title`"
+    "rename: the map's title (its centre's text) becomes `title`",
+    "export: the whole map as a file, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Maps with Files at «may change»; never over a file): fmt png | svg | md (outline) | opml | json | oros (.orosmind); changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------
@@ -256,6 +259,7 @@
   // now: ms, newId: () → a fresh id, untitled: the centre's text when
   // the map has none yet }.
   function apply(w, st, env) {
+    if (CATALOG[st.op] && CATALOG[st.op].kind === "out") return 0;   // GX-3: assist.js makes the file
     env = env || {};
     var now = env.now || Date.now(), T = tree(w);
     if (!T.map) return 0;
@@ -481,6 +485,7 @@
       var w = work(recs[id], id), k = 0;
       steps.forEach(function (st) { k += apply(w, st, env); });
       if (k) { out.n += k; out.d++; out.per.push({ id: id, name: title(tree(w)), n: k }); }
+      if (R.outFiles(steps, 1)) out.files = (out.files || 0) + R.outFiles(steps, 1);   // GX-3
     });
     return out;
   }
