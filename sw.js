@@ -931,6 +931,8 @@ var PRECACHE_URLS = [
   "layout/afread.js",
   "layout/rebuild.js",
   "layout/port.js",
+  "layout/starters.js",
+  "layout/startui.js",
   "designkit/zipin.js",
   "layout/wordin.js",
   "layout/io.js",

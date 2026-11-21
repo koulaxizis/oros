@@ -82,9 +82,13 @@
   function toPt(v, u) { return v * (PT_PER[u] || MM); }
   // A create step → a new document (not yet stored). Lengths of the
   // margins, bleed, slug and gutter are in mm; the trim in st.u.
+  // a starter book (LY-N1): layout/starters.js where it is loaded
+  function starter() { return node ? require("./starters.js") : root.LY_START; }
   function makeDoc(st, now) {
     var u = PT_PER[st.u] ? st.u : "mm";
     var w = toPt(st.w, u), h = toPt(st.h, u);
+    var SK = st.starter ? starter() : null;
+    if (SK && SK.kindOf(st.starter)) return fromStarter(SK, st, w, h, now);
     var bl = st.mm >= 0 ? st.mm : 3;
     var side = function (v) { return typeof v === "number" && v >= 0 ? v : bl; };
     var bt = side(st.bt), bb = side(st.bb), bi = side(st.bi), bo = side(st.bo);
@@ -101,6 +105,25 @@
     if (st.grid > 0) x.bg = { st: r3(st.grid), s: r3(mg(st.t, 15) * MM) };
     if (st.color === "cmyk") { x.cm = "cmyk"; x.icc = st.icc || "fogra39"; }
     if (Object.keys(x).length) doc.setup.ext = x;
+    return M.normDoc(doc);
+  }
+  // the starter, with the margins, bleed, grid and colour asked for
+  function fromStarter(SK, st, w, h, now) {
+    var LYw = !node && root.LY;
+    var doc = SK.build({
+      kind: st.starter, w: w, h: h, pair: st.pair || "", now: now, name: st.title || "",
+      meta: { title: st.title || "" }, t: LYw && LYw.t, names: LYw && LYw.startUI && LYw.startUI.names
+    });
+    var s = doc.setup, x = s.ext || {};
+    var mg = function (k, v) { if (typeof v === "number" && v >= 0) s[k] = v * MM; };
+    mg("mt", st.t); mg("mb", st.b); mg("mi", st.i); mg("mo", st.o);
+    if (typeof st.mm === "number" && st.mm >= 0 && st.mm !== 3) s.bleed = st.mm * MM;
+    if (st.ncol > 1) s.cols = st.ncol;
+    if (typeof st.gut === "number" && st.gut >= 0) s.gut = st.gut * MM;
+    if (st.slug > 0) x.slug = r3(st.slug * MM);
+    if (st.grid > 0) x.bg = { st: r3(st.grid), s: r3(s.mt) };
+    if (st.color === "cmyk") { x.cm = "cmyk"; x.icc = st.icc || "fogra39"; }
+    s.ext = x;
     return M.normDoc(doc);
   }
   function presetOf(w, h) {
