@@ -87,7 +87,59 @@ final class IndexParser {
         }
         String whatsNew = Locales.pick(v.optJSONObject("whatsNew"), locales);
         return new AppInfo(src.id, pkg, name, summary, m.optString("versionName", ""), m.optLong("versionCode"),
-            v != stable, apk, sha, size, Collections.unmodifiableSet(signers), iconUrl, iconSha, whatsNew);
+            v != stable, apk, sha, size, Collections.unmodifiableSet(signers), iconUrl, iconSha, whatsNew,
+            details(src, meta, v, locales));
+    }
+
+    /** Largest screenshot the manager downloads. */
+    static final long MAX_SHOT = 4L * 1024 * 1024;
+    /** At most this many screenshots per app. */
+    static final int MAX_SHOTS = 8;
+
+    /** The app's own page (APPS-M5): description, phone screenshots, category, licence and links. */
+    static AppInfo.Details details(Source src, JSONObject meta, JSONObject version, List<String> locales) {
+        String description = Locales.pick(meta.optJSONObject("description"), locales);
+        List<AppInfo.Shot> shots = new ArrayList<>();
+        JSONObject screens = meta.optJSONObject("screenshots");
+        JSONArray phone = screens == null ? null : Locales.pickArray(screens.optJSONObject("phone"), locales);
+        if (phone != null) {
+            for (int i = 0; i < phone.length() && shots.size() < MAX_SHOTS; i++) {
+                JSONObject f = phone.optJSONObject(i);
+                if (f == null) continue;
+                String url = path(src.address, f.optString("name", null));
+                String sha = f.optString("sha256", "").toLowerCase(Locale.ROOT);
+                long size = f.optLong("size", -1);
+                // Without a size the cap is the limit; the hash still decides.
+                if (size <= 0) size = MAX_SHOT;
+                if (url == null || !sha.matches("[0-9a-f]{64}") || size > MAX_SHOT) continue;
+                shots.add(new AppInfo.Shot(url, sha, size));
+            }
+        }
+        List<String> cats = new ArrayList<>();
+        JSONArray c = meta.optJSONArray("categories");
+        if (c != null) for (int i = 0; i < c.length(); i++) {
+            String s = c.optString(i, "").trim();
+            if (!s.isEmpty() && !cats.contains(s)) cats.add(s);
+        }
+        long added = version == null ? 0 : version.optLong("added", 0);
+        return new AppInfo.Details(description, shots, cats, text(meta, "license"), https(meta.optString("webSite", null)),
+            https(meta.optString("sourceCode", null)), text(meta, "authorName"), added);
+    }
+
+    private static String text(JSONObject o, String key) {
+        String s = o.optString(key, "").trim();
+        return s.isEmpty() || s.length() > 200 ? null : s;
+    }
+
+    /** A link the page may open: https, no spaces, no user part. */
+    static String https(String url) {
+        if (url == null) return null;
+        url = url.trim();
+        if (!url.startsWith("https://") || url.length() > 500 || url.matches(".*\\s.*")) return null;
+        int end = url.indexOf('/', 8);
+        String host = end < 0 ? url.substring(8) : url.substring(8, end);
+        if (host.isEmpty() || host.contains("@")) return null;
+        return url;
     }
 
     private static boolean fits(JSONObject m, int sdk, List<String> abis) {

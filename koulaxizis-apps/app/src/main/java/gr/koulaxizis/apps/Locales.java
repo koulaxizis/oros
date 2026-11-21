@@ -5,6 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /** Picks the text for the phone's languages from an index-v2 locale map. */
@@ -36,6 +37,12 @@ final class Locales {
     static JSONObject pickObject(JSONObject map, List<String> chain) {
         String key = key(map, chain);
         return key == null ? null : map.optJSONObject(key);
+    }
+
+    /** A locale map of lists (index-v2 screenshots): the phone's language, else English, else any. */
+    static JSONArray pickArray(JSONObject map, List<String> chain) {
+        String key = key(map, chain);
+        return key == null ? null : map.optJSONArray(key);
     }
 
     private static String key(JSONObject map, List<String> chain) {

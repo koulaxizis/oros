@@ -1,6 +1,5 @@
 {
   "category": "System",
-  "screenshotsLater": true,
   "en": {
     "summary": "Back up phone folders to your encrypted orOS Vault, with Dropbox or Nextcloud",
     "description": "orOS Drive keeps folders of your phone in your encrypted orOS Vault, the same Vault the orOS apps and the orOS Drive desktop app use.\n\nSign in with your own Dropbox, your own Nextcloud, or any WebDAV server that keeps exact ETags. Everything is encrypted on the phone with your sync passphrase before it leaves it; the cloud only sees encrypted pieces.\n\nPick folders to back up: they are synced in the background, by default only on Wi-Fi. A file you delete on the phone goes to the app's Trash first, and nothing is ever deleted because the cloud looked empty.\n\nThe whole orOS disk appears in Android's Files app and in every file picker as \"orOS\": files download only when you open them, and changes you save go back to the Vault. The app also has its own simple file browser.\n\nNo account with us, no ads, no trackers. Free and open source (MIT), free forever."

@@ -11,9 +11,18 @@ import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
 import android.provider.Settings;
+import android.text.Editable;
+import android.text.Html;
+import android.text.TextWatcher;
 import android.text.format.DateFormat;
 import android.text.format.Formatter;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -44,7 +53,10 @@ import java.util.concurrent.Executors;
  * shows in its own bar (APPS-M2). Every install is watched while the
  * screen is in front ({@link Watch}): Android's question is shown only then,
  * shown again or offered again when an overlay took it away, and an app
- * never stays on "Working" (APPS-M2 fix 1.2.2).
+ * never stays on "Working" (APPS-M2 fix 1.2.2). A search bar on top
+ * filters the list, and a tap on a card opens the app's own page with its
+ * whole description and screenshots (APPS-M5); the home screen itself is
+ * unchanged.
  */
 public final class MainActivity extends Activity implements InstallReceiver.Listener {
     private final ExecutorService work = Executors.newSingleThreadExecutor();
@@ -71,7 +83,19 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     /** Our own "the question closed" dialog, at most one. */
     private AlertDialog asking;
     private Job askingFor;
+    /** Every row (the home screen), and the rows on screen (the search's, or all). */
+    private List<Rows.Row> all = new ArrayList<>();
     private List<Rows.Row> rows = new ArrayList<>();
+    private List<String> words = new ArrayList<>();
+    private EditText search;
+    private View home, detail, clear;
+    private TextView noMatch;
+    private ListView list;
+    /** The app whose page is open, or null; the page to open again after a restart. */
+    private AppInfo open;
+    private String reopen;
+    /** Android 13+: takes Back while a page is open or a search is typed. */
+    private Object backCallback;
     /** Updates waiting their turn after "Update all" (main thread only). */
     private final Deque<AppInfo> queue = new ArrayDeque<>();
     private List<AppInfo> pending = new ArrayList<>();
@@ -98,9 +122,37 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         findViewById(R.id.self_update).setOnClickListener(v -> {
             if (mine != null) act(mine, Installed.UPDATE);
         });
-        ListView list = findViewById(R.id.list);
+        list = findViewById(R.id.list);
         adapter = new Adapter();
         list.setAdapter(adapter);
+        home = findViewById(R.id.home);
+        detail = findViewById(R.id.detail);
+        noMatch = findViewById(R.id.no_match);
+        clear = findViewById(R.id.search_clear);
+        search = findViewById(R.id.search);
+        clear.setOnClickListener(v -> search.setText(""));
+        search.addTextChangedListener(new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence t, int a, int b, int c) {}
+            @Override public void onTextChanged(CharSequence t, int a, int b, int c) {}
+            @Override public void afterTextChanged(Editable e) {
+                List<String> w = Search.words(e.toString());
+                clear.setVisibility(e.length() > 0 ? View.VISIBLE : View.GONE);
+                if (w.equals(words)) return;
+                words = w;
+                applyFilter();
+                list.setSelection(0);
+            }
+        });
+        search.setOnEditorActionListener((v, action, ev) -> {
+            if (action == EditorInfo.IME_ACTION_SEARCH) {
+                hideKeyboard();
+                return true;
+            }
+            return false;
+        });
+        findViewById(R.id.d_web).setOnClickListener(v -> { if (open != null) browse(open.details.webSite); });
+        findViewById(R.id.d_source).setOnClickListener(v -> { if (open != null) browse(open.details.sourceCode); });
+        if (state != null) reopen = state.getString("open");
         catalog = new Catalog(this);
         icons = new Icons(this);
         // Set for the screen's whole life: results arrive while Android's
@@ -112,13 +164,19 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle out) {
+        super.onSaveInstanceState(out);
+        if (open != null) out.putString("open", open.pkg);
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         frontAt = SystemClock.elapsedRealtime();
         schedule();
         updateBars(); // installed versions may have changed
         updateNotesBar(); // notices may have been turned on in Android's settings
-        adapter.notifyDataSetChanged();
+        changed();
     }
 
     @Override
@@ -177,6 +235,10 @@ public final class MainActivity extends Activity implements InstallReceiver.List
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        if (item.getItemId() == android.R.id.home) {
+            closeDetail();
+            return true;
+        }
         if (item.getItemId() == R.id.refresh) {
             refresh(false);
             return true;
@@ -237,10 +299,19 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     }
 
     private void show(List<Rows.Row> next, long checkedAt, AppInfo me) {
-        rows = next;
+        all = next;
         self = me;
+        applyFilter();
         updateBars();
-        adapter.notifyDataSetChanged();
+        // The open page shows the fresh listing; one to open again after a restart opens now.
+        String want = open != null ? open.pkg : reopen;
+        if (want != null) {
+            AppInfo a = find(want);
+            if (a != null) {
+                reopen = null;
+                openDetail(a);
+            }
+        }
         if (refreshing) {
             status.setText(R.string.checking);
         } else if (checkedAt > 0) {
@@ -255,7 +326,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     /** The "Update all" button and the manager's own bar, from what the phone has now. */
     private void updateBars() {
         List<AppInfo> offers = new ArrayList<>();
-        for (Rows.Row r : rows) if (r.app != null) offers.add(r.app);
+        for (Rows.Row r : all) if (r.app != null) offers.add(r.app);
         pending = Updates.pending(offers, pkg -> Installed.of(getPackageManager(), pkg));
         int waiting = 0;
         for (AppInfo a : pending) if (!busy.containsKey(a.pkg)) waiting++;
@@ -319,7 +390,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         Job job = new Job(app);
         busy.put(app.pkg, job);
         updateBars();
-        adapter.notifyDataSetChanged();
+        changed();
         work.execute(() -> {
             String err = null;
             int id = -1;
@@ -360,7 +431,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         job.confirm = confirm;
         job.shown = false;
         job.since = SystemClock.elapsedRealtime();
-        adapter.notifyDataSetChanged();
+        changed();
         // Shown by look() once the screen has been in front for a moment, so
         // an overlay that is still on top (a security scan) cannot take it.
         schedule();
@@ -370,7 +441,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     public void onInstallResult(String pkg, int session, boolean ok, String message) {
         Job job = busy.get(pkg);
         if (job == null) {
-            adapter.notifyDataSetChanged();
+            changed();
             return;
         }
         // An answer for a session given up before belongs to no one now.
@@ -385,7 +456,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         if (busy.get(job.app.pkg) != job) return;
         busy.remove(job.app.pkg);
         if (askingFor == job && asking != null) asking.dismiss();
-        adapter.notifyDataSetChanged();
+        changed();
         if (toast != null) Toast.makeText(this, toast, Toast.LENGTH_LONG).show();
         next(); // a "no" to one update does not stop the others
         if (queue.isEmpty()) UpdateJob.announce(this, pending, mine, false); // takes a done notice away
@@ -467,13 +538,302 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         }
     }
 
+    /** The list and the open page show the installs' state again. */
+    private void changed() {
+        adapter.notifyDataSetChanged();
+        if (open != null) bindDetail(open, true);
+    }
+
+    private AppInfo find(String pkg) {
+        for (Rows.Row r : all) if (r.app != null && r.app.pkg.equals(pkg)) return r.app;
+        return null;
+    }
+
+    /** The search's rows, or every row while nothing is typed (APPS-M5). */
+    private void applyFilter() {
+        rows = Search.filter(all, words, a -> categories(a));
+        boolean none = !words.isEmpty() && rows.isEmpty() && !all.isEmpty();
+        noMatch.setVisibility(none ? View.VISIBLE : View.GONE);
+        if (none) noMatch.setText(getString(R.string.no_match, search.getText().toString().trim()));
+        adapter.notifyDataSetChanged();
+        updateBack();
+    }
+
+    private void hideKeyboard() {
+        InputMethodManager im = getSystemService(InputMethodManager.class);
+        if (im != null) im.hideSoftInputFromWindow(search.getWindowToken(), 0);
+        search.clearFocus();
+    }
+
+    /** Opens an https link of a store listing in the browser. */
+    private void browse(String url) {
+        if (url == null) return;
+        try {
+            startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)));
+        } catch (android.content.ActivityNotFoundException e) {
+            Toast.makeText(this, url, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** F-Droid's category names in the phone's language; unknown ones as the repository wrote them. */
+    private String category(String c) {
+        int id;
+        switch (c) {
+            case "Connectivity": id = R.string.cat_connectivity; break;
+            case "Development": id = R.string.cat_development; break;
+            case "Games": id = R.string.cat_games; break;
+            case "Graphics": id = R.string.cat_graphics; break;
+            case "Internet": id = R.string.cat_internet; break;
+            case "Money": id = R.string.cat_money; break;
+            case "Multimedia": id = R.string.cat_multimedia; break;
+            case "Navigation": id = R.string.cat_navigation; break;
+            case "Office": id = R.string.cat_office; break;
+            case "Phone & SMS": id = R.string.cat_phone; break;
+            case "Reading": id = R.string.cat_reading; break;
+            case "Science & Education": id = R.string.cat_science; break;
+            case "Security": id = R.string.cat_security; break;
+            case "Sports & Health": id = R.string.cat_health; break;
+            case "System": id = R.string.cat_system; break;
+            case "Theming": id = R.string.cat_theming; break;
+            case "Time": id = R.string.cat_time; break;
+            case "Writing": id = R.string.cat_writing; break;
+            default: return c;
+        }
+        return getString(id);
+    }
+
+    private String categories(AppInfo a) {
+        StringBuilder b = new StringBuilder();
+        for (String c : a.details.categories) {
+            if (b.length() > 0) b.append(", ");
+            b.append(category(c));
+        }
+        return b.toString();
+    }
+
+    // ---- The app's own page (APPS-M5) ----
+
+    private void openDetail(AppInfo app) {
+        boolean same = open != null && open.pkg.equals(app.pkg) && detail.getVisibility() == View.VISIBLE;
+        open = app;
+        bindDetail(app, same);
+        if (!same) {
+            hideKeyboard();
+            home.setVisibility(View.GONE);
+            detail.setVisibility(View.VISIBLE);
+            detail.scrollTo(0, 0);
+            if (getActionBar() != null) getActionBar().setDisplayHomeAsUpEnabled(true);
+            setTitle(app.name);
+        }
+        updateBack();
+    }
+
+    private void closeDetail() {
+        if (open == null) return;
+        open = null;
+        detail.setVisibility(View.GONE);
+        home.setVisibility(View.VISIBLE);
+        if (getActionBar() != null) getActionBar().setDisplayHomeAsUpEnabled(false);
+        setTitle(R.string.app_name);
+        ((LinearLayout) findViewById(R.id.d_shots)).removeAllViews();
+        updateBack();
+    }
+
+    /** Back closes the page, then empties the search, then leaves (Android 16 sends no onBackPressed). */
+    private void updateBack() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return;
+        boolean want = open != null || search.length() > 0;
+        android.window.OnBackInvokedDispatcher d = getOnBackInvokedDispatcher();
+        if (want && backCallback == null) {
+            android.window.OnBackInvokedCallback cb = this::back;
+            d.registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, cb);
+            backCallback = cb;
+        } else if (!want && backCallback != null) {
+            d.unregisterOnBackInvokedCallback((android.window.OnBackInvokedCallback) backCallback);
+            backCallback = null;
+        }
+    }
+
+    private void back() {
+        if (open != null) closeDetail();
+        else search.setText("");
+    }
+
+    @Override
+    @SuppressWarnings("deprecation")
+    public void onBackPressed() {
+        if (open != null || search.length() > 0) back();
+        else super.onBackPressed();
+    }
+
+    private void bindDetail(AppInfo app, boolean same) {
+        Source src = null;
+        for (Rows.Row r : all) if (r.app == app) src = r.source;
+        icons.show((ImageView) findViewById(R.id.d_icon), app);
+        ((TextView) findViewById(R.id.d_name)).setText(app.name);
+        String by = src == null ? "" : src.title;
+        if (app.details.author != null && !app.details.author.equalsIgnoreCase(by)) {
+            by = by.isEmpty() ? app.details.author : by + " · " + app.details.author;
+        }
+        TextView byView = findViewById(R.id.d_by);
+        byView.setText(by);
+        byView.setVisibility(by.isEmpty() ? View.GONE : View.VISIBLE);
+        String meta = metaLine(app);
+        if (app.details.added > 0) {
+            meta += " · " + DateFormat.getMediumDateFormat(this).format(new Date(app.details.added));
+        }
+        ((TextView) findViewById(R.id.d_meta)).setText(meta);
+        action((Button) findViewById(R.id.d_action), app);
+        TextView sum = findViewById(R.id.d_summary);
+        sum.setText(app.summary == null ? "" : app.summary);
+        sum.setVisibility(app.summary == null ? View.GONE : View.VISIBLE);
+        if (!same) bindShots(app);
+        TextView newTitle = findViewById(R.id.d_new_title), news = findViewById(R.id.d_new);
+        boolean hasNew = app.whatsNew != null;
+        newTitle.setVisibility(hasNew ? View.VISIBLE : View.GONE);
+        news.setVisibility(hasNew ? View.VISIBLE : View.GONE);
+        if (hasNew) {
+            newTitle.setText(getString(R.string.whats_new, app.versionName));
+            news.setText(Html.fromHtml(Text.html(app.whatsNew), Html.FROM_HTML_MODE_COMPACT));
+        }
+        TextView about = findViewById(R.id.d_description);
+        boolean hasAbout = app.details.description != null;
+        about.setVisibility(hasAbout ? View.VISIBLE : View.GONE);
+        findViewById(R.id.d_about_title).setVisibility(hasAbout ? View.VISIBLE : View.GONE);
+        if (hasAbout) about.setText(Html.fromHtml(Text.html(app.details.description), Html.FROM_HTML_MODE_COMPACT));
+        StringBuilder info = new StringBuilder();
+        if (!app.details.categories.isEmpty()) info.append(getString(R.string.info_category, categories(app))).append('\n');
+        if (app.details.license != null) info.append(getString(R.string.info_license, app.details.license)).append('\n');
+        info.append(getString(R.string.info_package, app.pkg));
+        ((TextView) findViewById(R.id.d_info)).setText(info);
+        findViewById(R.id.d_web).setVisibility(app.details.webSite == null ? View.GONE : View.VISIBLE);
+        findViewById(R.id.d_source).setVisibility(app.details.sourceCode == null ? View.GONE : View.VISIBLE);
+    }
+
+    /** The screenshots in a row that scrolls sideways; a tap shows one on the whole screen. */
+    private void bindShots(AppInfo app) {
+        LinearLayout box = findViewById(R.id.d_shots);
+        box.removeAllViews();
+        List<AppInfo.Shot> shots = app.details.screenshots;
+        View scroller = findViewById(R.id.d_shots_box);
+        scroller.setVisibility(shots.isEmpty() ? View.GONE : View.VISIBLE);
+        scroller.scrollTo(0, 0);
+        float dp = getResources().getDisplayMetrics().density;
+        int h = Math.round(320 * dp);
+        int[] shown = {0, 0};
+        for (int i = 0; i < shots.size(); i++) {
+            ImageView iv = new ImageView(this);
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, h);
+            lp.setMarginEnd(Math.round(8 * dp));
+            iv.setLayoutParams(lp);
+            iv.setAdjustViewBounds(true);
+            iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+            iv.setMinimumWidth(Math.round(180 * dp)); // a phone screenshot's width while it loads
+            iv.setBackgroundResource(R.color.shot_bg);
+            iv.setContentDescription(getString(R.string.screenshot_n, i + 1, shots.size()));
+            int at = i;
+            iv.setOnClickListener(v -> viewShots(app, at));
+            box.addView(iv);
+            icons.shot(iv, shots.get(i), 0, h, ok -> {
+                if (open == null || !open.pkg.equals(app.pkg)) return;
+                if (ok) {
+                    iv.setMinimumWidth(0);
+                    iv.setBackground(null);
+                } else {
+                    iv.setVisibility(View.GONE);
+                    if (++shown[1] == shots.size()) scroller.setVisibility(View.GONE);
+                }
+            });
+        }
+    }
+
+    /** One screenshot on the whole screen; swipe for the next one, tap or Back to close. */
+    private void viewShots(AppInfo app, int first) {
+        List<AppInfo.Shot> shots = app.details.screenshots;
+        android.app.Dialog d = new android.app.Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        android.widget.FrameLayout root = new android.widget.FrameLayout(this);
+        ImageView iv = new ImageView(this);
+        iv.setScaleType(ImageView.ScaleType.FIT_CENTER);
+        root.addView(iv, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT));
+        TextView count = new TextView(this);
+        count.setTextColor(0xFFFFFFFF);
+        count.setPadding(0, 0, 0, Math.round(24 * getResources().getDisplayMetrics().density));
+        root.addView(count, new android.widget.FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,
+            ViewGroup.LayoutParams.WRAP_CONTENT, android.view.Gravity.BOTTOM | android.view.Gravity.CENTER_HORIZONTAL));
+        int w = getResources().getDisplayMetrics().widthPixels, h = getResources().getDisplayMetrics().heightPixels;
+        int[] at = {first};
+        Runnable load = () -> {
+            iv.setContentDescription(getString(R.string.screenshot_n, at[0] + 1, shots.size()));
+            count.setText((at[0] + 1) + " / " + shots.size());
+            icons.shot(iv, shots.get(at[0]), w / 2, h / 2, ok -> {});
+        };
+        GestureDetector g = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override public boolean onDown(MotionEvent e) { return true; }
+            @Override public boolean onSingleTapUp(MotionEvent e) {
+                d.dismiss();
+                return true;
+            }
+            @Override public boolean onFling(MotionEvent a, MotionEvent b, float vx, float vy) {
+                if (Math.abs(vx) < Math.abs(vy)) return false;
+                int next = at[0] + (vx < 0 ? 1 : -1);
+                if (next < 0 || next >= shots.size()) return false;
+                at[0] = next;
+                load.run();
+                return true;
+            }
+        });
+        root.setOnTouchListener((v, e) -> g.onTouchEvent(e));
+        d.setContentView(root);
+        load.run();
+        d.show();
+    }
+
+    private String metaLine(AppInfo app) {
+        String size = Formatter.formatShortFileSize(this, app.apkSize);
+        String line = app.beta ? getString(R.string.version_beta, app.versionName, size)
+            : getString(R.string.version_size, app.versionName, size);
+        Installed have = Installed.of(getPackageManager(), app.pkg);
+        int state = Installed.state(have, app);
+        if (state == Installed.UPDATE) line += " · " + getString(R.string.installed_version, have.versionName);
+        if (state == Installed.OTHER_KEY) line += " · " + getString(R.string.other_key);
+        return line;
+    }
+
+    /** Install, Update, Open, Why?, Confirm or Working, the same on a card and on the app's page. */
+    private void action(Button b, AppInfo app) {
+        PackageManager pm = getPackageManager();
+        int state = Installed.state(Installed.of(pm, app.pkg), app);
+        b.setOnClickListener(x -> act(app, state));
+        b.setEnabled(true);
+        Job job = busy.get(app.pkg);
+        if (job != null && job.confirm != null) {
+            // Android waits for a yes: one tap shows its question again.
+            b.setText(R.string.confirm);
+            b.setOnClickListener(x -> showConfirm(job));
+        } else if (job != null) {
+            b.setText(R.string.working);
+            b.setEnabled(false);
+        } else if (state == Installed.NONE) {
+            b.setText(R.string.install);
+        } else if (state == Installed.UPDATE) {
+            b.setText(R.string.update);
+        } else if (state == Installed.OTHER_KEY) {
+            b.setText(R.string.why);
+        } else {
+            b.setText(R.string.open);
+            b.setEnabled(pm.getLaunchIntentForPackage(app.pkg) != null);
+        }
+        b.setContentDescription(b.getText() + " " + app.name);
+    }
+
     private final class Adapter extends BaseAdapter {
         @Override public int getCount() { return rows.size(); }
         @Override public Object getItem(int i) { return rows.get(i); }
         @Override public long getItemId(int i) { return i; }
         @Override public int getViewTypeCount() { return 4; }
         @Override public int getItemViewType(int i) { return rows.get(i).kind; }
-        @Override public boolean isEnabled(int i) { return false; }
+        @Override public boolean isEnabled(int i) { return rows.get(i).kind == Rows.APP; }
 
         @Override
         public View getView(int i, View v, ViewGroup parent) {
@@ -501,42 +861,15 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         }
 
         private void bind(View v, AppInfo app) {
-            PackageManager pm = getPackageManager();
-            Installed have = Installed.of(pm, app.pkg);
-            int state = Installed.state(have, app);
             ((TextView) v.findViewById(R.id.name)).setText(app.name);
             TextView sum = v.findViewById(R.id.summary);
             sum.setText(app.summary == null ? "" : app.summary);
             sum.setVisibility(app.summary == null ? View.GONE : View.VISIBLE);
-            String size = Formatter.formatShortFileSize(MainActivity.this, app.apkSize);
-            String line = app.beta ? getString(R.string.version_beta, app.versionName, size)
-                : getString(R.string.version_size, app.versionName, size);
-            if (state == Installed.UPDATE) line += " · " + getString(R.string.installed_version, have.versionName);
-            if (state == Installed.OTHER_KEY) line += " · " + getString(R.string.other_key);
-            ((TextView) v.findViewById(R.id.meta)).setText(line);
+            ((TextView) v.findViewById(R.id.meta)).setText(metaLine(app));
             icons.show((ImageView) v.findViewById(R.id.icon), app);
-            Button b = v.findViewById(R.id.action);
-            b.setOnClickListener(x -> act(app, state));
-            b.setEnabled(true);
-            Job job = busy.get(app.pkg);
-            if (job != null && job.confirm != null) {
-                // Android waits for a yes: one tap shows its question again.
-                b.setText(R.string.confirm);
-                b.setOnClickListener(x -> showConfirm(job));
-            } else if (job != null) {
-                b.setText(R.string.working);
-                b.setEnabled(false);
-            } else if (state == Installed.NONE) {
-                b.setText(R.string.install);
-            } else if (state == Installed.UPDATE) {
-                b.setText(R.string.update);
-            } else if (state == Installed.OTHER_KEY) {
-                b.setText(R.string.why);
-            } else {
-                b.setText(R.string.open);
-                b.setEnabled(pm.getLaunchIntentForPackage(app.pkg) != null);
-            }
-            b.setContentDescription(b.getText() + " " + app.name);
+            action((Button) v.findViewById(R.id.action), app);
+            // The whole card opens the app's page (APPS-M5); its button keeps its own job.
+            v.setOnClickListener(x -> openDetail(app));
         }
     }
 }
