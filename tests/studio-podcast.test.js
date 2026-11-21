@@ -13,7 +13,7 @@ const FEEDS = require("../feeds/core.js");
 const SHOW = {
   id: "hshow0001", m: 5, title: "Ιστορίες της γειτονιάς", author: "Chris & co", desc: "Μια εκπομπή <για> όλους.\n\nΔεύτερη παράγραφος.",
   lang: "el", cat: "Society & Culture", sub: "Documentary", explicit: false, type: "episodic",
-  url: "https://chris.github.io/geitonia", email: "me@example.com", fund: "https://ko-fi.com/me",
+  url: "https://chris.github.io/geitonia", email: "me@example.com", fund: "https://example.org/support",
   cover: "/internal/Studio/Podcasts/hshow0001/cover.jpg"
 };
 function proj(id, m, x) {
@@ -146,7 +146,7 @@ test("P1: the feed is valid RSS that the Podcasts app reads back", () => {
   assert.equal(f.show.lang, "el");
   assert.equal(f.show.img, "https://chris.github.io/geitonia/cover.jpg");
   assert.deepEqual(f.show.cats, ["Society & Culture", "Documentary"]);
-  assert.equal(f.show.funding[0].url, "https://ko-fi.com/me");
+  assert.equal(f.show.funding[0].url, "https://example.org/support");
   assert.equal(f.eps.length, 2);
   const [e2, e1] = f.eps;
   assert.equal(e2.title, "Επεισόδιο 2");
@@ -172,7 +172,7 @@ test("P1: the show's page has no script and nothing from outside", () => {
   assert.ok(!/<script/i.test(html), "no script tag");
   assert.ok(html.includes("&lt;script&gt;"));
   assert.ok(html.includes('<meta http-equiv="Content-Security-Policy" content="' + P.PAGE_CSP + '">'));
-  assert.ok(!/(src|href)="(https?:)?\/\/(?!ko-fi\.com)/.test(html), "only the support link leaves the site");
+  assert.ok(!/(src|href)="(https?:)?\/\/(?!example\.org\/support")/.test(html), "only the support link leaves the site");
   assert.ok(html.includes('<audio controls preload="none" src="episodes/001-epeisodio-1.mp3">'));
   assert.ok(html.includes('<html lang="el">'));
   assert.ok(html.includes("Επεισόδιο 1 · 2026-11-01 · 10:01"));
