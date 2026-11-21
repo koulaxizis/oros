@@ -6,6 +6,8 @@ orOS is free and made by one person. If it is useful to you, [here are three way
 ## Version 8.23.00
 - **Path and bike questions, Cycle lanes in Maps.** Quests now asks about hiking difficulty, path visibility, track surface, bikes on paths, drinking water and shelters. A new Cycle lanes overlay colours streets by what they have for bikes, and a trail page can report a problem on the path as an OpenStreetMap note. See [Maps](help:a/maps).
 
+## Version 8.22.00
+- **Layout: start a book in four steps.** New book asks what kind of book you are making (novel, stories, poetry, essay, study, children's picture book, photo album, cookbook, catalogue, magazine, workbook or zine), its size and margins, a pair of fonts and its details, shows the opening pages as you go, and makes a ready book with styles, page numbers, running heads, front pages and sample text that flows. Short hints show once, and the new Learn tab explains the rest.
 ## Version 8.20.00
 - **Music: search with filters.** A filters button next to the search box narrows free music by genre, country, length, voice, mood, tempo, year and licence. A catalogue that cannot apply a filter is listed under Left out instead of showing songs that do not match.
 - **Music: eleven free catalogues.** Audius, Free Music Archive, Kevin MacLeod, Musopen, the National Jukebox of the Library of Congress, Europeana and DPLA (with your own free key) join Jamendo, the Internet Archive, Openverse and ccMixter. Turn each on or off in Settings › Sources. Dogmazic is one tap away in Connect a server.

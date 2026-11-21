@@ -57,7 +57,9 @@ const LOCALE = { en: "en-US", el: "el", de: "de-DE" };
 
 // Every APK the repository publishes: oros.apk, oros-<id>.apk,
 // oros-drive.apk (orOS Drive, DRIVE-APP: its own source repository) and
-// oros-glarolykoi.apk (the Glarolykoi app, GL-1: glarolykoi-android/)
+// oros-glarolykoi.apk (the Glarolykoi app, GL-1: glarolykoi-android/) and
+// oros-waymark.apk (Waymark, site.waymarked.app: its own source
+// repository koulaxizis/waymark, pinned in .github/waymark.env)
 // from the android workflow, and koulaxizis-apps.apk (Koulaxizis Apps,
 // APPS-M3: the app manager in koulaxizis-apps/, its own workflow and
 // release "koulaxizis-apps")
@@ -76,6 +78,10 @@ function list() {
     icon: path.join(STORE, "glarolykoi", "icon-512.png"), name: "Glarolykoi",
     author: "Glarolykoi", authorWeb: "https://glarolykoi.net/", web: "https://glarolykoi.net/",
     source: SOURCE + "/tree/main/glarolykoi-android", issues: SOURCE + "/issues" });
+  out.push({ id: "waymark", pkg: "site.waymarked.app", apk: "oros-waymark.apk",
+    icon: path.join(STORE, "waymark", "icon-512.png"), name: "Waymark",
+    author: "Waymark", authorWeb: "https://waymarked.site/", web: "https://waymarked.site/",
+    source: "https://github.com/koulaxizis/waymark", issues: "https://github.com/koulaxizis/waymark/issues" });
   out.push({ id: "koulaxizis-apps", pkg: "gr.koulaxizis.apps", apk: "koulaxizis-apps.apk", icon: path.join(STORE, "koulaxizis-apps", "icon-512.png"),
     name: "Koulaxizis Apps", web: WEB + "download/#koulaxizis-apps" });
   return out;

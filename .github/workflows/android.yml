@@ -19,14 +19,16 @@ name: Android app
 # the Glarolykoi app (net.glarolykoi.android, glarolykoi-android/) as
 # oros-glarolykoi.apk,
 # and orOS Drive (online.useoros.drive, built from koulaxizis/oros-drive
-# android/ at the commit in .github/oros-drive.env) as oros-drive.apk.
+# android/ at the commit in .github/oros-drive.env) as oros-drive.apk,
+# and Waymark (site.waymarked.app, built from koulaxizis/waymark
+# app/android at the commit in .github/waymark.env) as oros-waymark.apk.
 
 on:
   push:
     branches: [main]
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/oros-drive.env', 'glarolykoi-android/**', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', 'shell.js', '.github/oros-drive.env', '.github/waymark.env', 'glarolykoi-android/**', '.github/workflows/android.yml']
   pull_request:
-    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', '.github/oros-drive.env', '.github/workflows/android.yml']
+    paths: ['android/**', 'phone.js', 'manifest.webmanifest', '*/manifest.webmanifest', 'studio/remote/manifest.webmanifest', 'icons/solo/**', '.github/oros-drive.env', '.github/waymark.env', '.github/workflows/android.yml']
   workflow_dispatch:
     inputs:
       diag:
@@ -163,6 +165,41 @@ jobs:
           if [ -f "$src/app-release.apk" ]; then
             mkdir -p android/app/build/outputs/apk/glarolykoi/release
             cp "$src/app-release.apk" android/app/build/outputs/apk/glarolykoi/release/app-glarolykoi-release.apk
+          fi
+
+      # Waymark (site.waymarked.app): the phone Controller of Waymark
+      # Remote, from koulaxizis/waymark (app/android, which packs that
+      # repository's remote/ web page) at the commit in .github/waymark.env,
+      # signed with the orOS key on main (decision 2026-11-21: published
+      # in this F-Droid repository, so Koulaxizis Apps lists it).
+      - name: Waymark pin
+        id: waymark
+        run: grep -E '^(commit|version)=' .github/waymark.env >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          repository: koulaxizis/waymark
+          ref: ${{ steps.waymark.outputs.commit }}
+          path: waymark-src
+      - name: Build the Waymark app
+        env:
+          WAYMARK_VERSION: ${{ steps.waymark.outputs.version }}
+          KS_B64: ${{ github.event_name != 'pull_request' && secrets.OROS_KEYSTORE_BASE64 || '' }}
+          WAYMARK_KEYSTORE_PASSWORD: ${{ secrets.OROS_KEYSTORE_PASSWORD }}
+          WAYMARK_KEY_ALIAS: ${{ secrets.OROS_KEY_ALIAS }}
+          WAYMARK_KEY_PASSWORD: ${{ secrets.OROS_KEY_PASSWORD }}
+        run: |
+          src=waymark-src/app/android
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/waymark.keystore"
+            export WAYMARK_KEYSTORE="$RUNNER_TEMP/waymark.keystore"
+          fi
+          gradle -p "$src" --no-daemon assembleRelease
+          rm -f "$RUNNER_TEMP/waymark.keystore"
+          out="$src/app/build/outputs/apk/release"
+          ls -l "$out/"
+          if [ -f "$out/app-release.apk" ]; then
+            mkdir -p android/app/build/outputs/apk/waymark/release
+            cp "$out/app-release.apk" android/app/build/outputs/apk/waymark/release/app-waymark-release.apk
           fi
 
       - uses: actions/upload-artifact@v4

@@ -194,7 +194,9 @@
   // gives the look: its paragraph style, the text between title and
   // number, its runs' attributes. → entries, or -1 when there is none.
   function toc(d, L) {
-    var h = H.houseOf(d), title = h && h.roles && h.roles.title;
+    var h = H.houseOf(d), sx = d.setup.ext && d.setup.ext.start;
+    // a book made from a starter (LY-N1) names its chapter titles' style
+    var title = (h && h.roles && h.roles.title) || (sx && typeof sx.title === "string" && M.find(d.pstyles, sx.title) ? sx.title : null);
     var st = null, heads = {}, book = d.setup.ext && d.setup.ext.book;
     d.stories.forEach(function (s) { if (s.ext && s.ext.hs === "toc") st = s; });
     if (!st || !title) return -1;
