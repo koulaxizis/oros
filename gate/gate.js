@@ -2798,6 +2798,51 @@
     });
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
+  // GL-8 (Chris 2026-11-21): a file Claude uploaded (relay files_upload),
+  // sealed in the box under FK = HMAC-K("orOS-gate-up|" + id): fetched in
+  // calls of up to 20 pieces, opened, checked against its SHA-256 → Blob.
+  function upFetch(id, path) {
+    var p = pref(), k = gateKey();
+    if (!k || !p.id || !p.tok) return Promise.reject(new Error("no gate key"));
+    var te = new TextEncoder();
+    return crypto.subtle.importKey("raw", keyBytes(k), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]).then(function (hk) {
+      return crypto.subtle.sign("HMAC", hk, te.encode("orOS-gate-up|" + id));
+    }).then(function (raw) {
+      return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["decrypt"]);
+    }).then(function (fk) {
+      var parts = [], head = null;
+      function more(from) {
+        return devCall({ act: "up", id: p.id, tok: p.tok, up: id, from: from }).then(function (d) {
+          if (!isObj(d) || !Array.isArray(d.p) || typeof d.n !== "number") throw new Error("bad answer");
+          head = d;
+          return d.p.reduce(function (ch, sealed, j) {
+            return ch.then(function () {
+              var x = String(sealed).split(".");
+              return crypto.subtle.decrypt({ name: "AES-GCM", iv: keyBytes(x[0]), additionalData: te.encode("orOS-gate-up|" + id + "|" + (from + j)) }, fk, keyBytes(x[1] || ""));
+            }).then(function (pt) { parts.push(new Uint8Array(pt)); });
+          }, Promise.resolve()).then(function () {
+            return from + d.p.length < d.n && d.p.length ? more(from + d.p.length) : null;
+          });
+        }, function (e) { throw new Error(e && e.code === "gone" ? "gone" : "the box did not answer"); });
+      }
+      return more(0).then(function () {
+        var blob = new Blob(parts, { type: upType(path) !== "application/octet-stream" ? upType(path) : upType(head.name) });
+        if (blob.size !== head.s) throw new Error("size");
+        return blob.arrayBuffer().then(function (buf) { return crypto.subtle.digest("SHA-256", buf); }).then(function (h) {
+          var hex = Array.prototype.map.call(new Uint8Array(h), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+          if (hex !== head.h) throw new Error("checksum");
+          return blob;
+        });
+      });
+    });
+  }
+  function upDrop(id) {
+    var p = pref();
+    if (p.id && p.tok) devCall({ act: "up", id: p.id, tok: p.tok, up: id, from: 0, del: true }).catch(function () {});
+  }
+  var UP_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", tif: "image/tiff", tiff: "image/tiff",
+                   pdf: "application/pdf", svg: "image/svg+xml", otf: "font/otf", ttf: "font/ttf", woff2: "font/woff2" };
+  function upType(name) { var m = /\.([a-z0-9]{1,5})$/i.exec(String(name || "")); return m && UP_TYPES[m[1].toLowerCase()] || "application/octet-stream"; }
   function dirty() { try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {} }
   // ---- HELPER-1: who helps with the data (synced) ----
   var HELPER_KEY = "oros-ai-helper", helperBusy = false;
@@ -3128,7 +3173,18 @@
           if (miss.length) return { ok: false, c: "No item for " + miss.slice(0, 5).join(", ") + ": its add was not applied (refused, cancelled or still waiting). Find the item with search_data. Nothing was changed." };
           args = mapRefs(args, function (r) { return pm[r]; });
         }
-        return F.run(name, args, opt.at ? { at: opt.at } : undefined).then(function (r) {
+        // GL-8: files_write with an upload → the file's bytes from the box
+        var upId = name === "files_write" && typeof args.upload === "string" ? args.upload : "";
+        return (upId ? upFetch(upId, args.path).then(function (blob) {
+          var a2 = Object.assign({}, args, { blob: blob });
+          delete a2.upload;
+          return a2;
+        }) : Promise.resolve(args)).then(function (args2) {
+          return F.run(name, args2, opt.at ? { at: opt.at } : undefined);
+        }, function (e) {
+          return { ok: false, c: e && e.message === "gone" ? "That upload is no longer in the box (it expired after 7 days or was written already). Nothing was written." : "The upload could not be opened on the device (" + (e && e.message || "error") + "). Nothing was written." };
+        }).then(function (r) {
+          if (upId && r && r.ok) upDrop(upId);
           var out = { ok: !!r.ok, c: r.c || "", a: Array.isArray(r.a) ? r.a : [], k: r.k || 0 };
           if (r.ok && Array.isArray(r.made) && r.made.length) out.made = r.made;
           // One record per change (5.78.00 remember): synced, notified, in

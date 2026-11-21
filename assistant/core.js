@@ -2427,10 +2427,11 @@
       properties: {
         path: { type: "string", description: "The file, e.g. \"Drive/ckdesktop/Instagram/Αποφθέγματα/2026-11-14.md\"." },
         text: { type: "string", description: "The whole content of the file." },
+        upload: { type: "string", description: "Through orOS Gate, instead of text: the id files_upload gave, once its file was PUT there (any kind of file, a new one)." },
         mode: { type: "string", enum: ["create", "replace"], description: "create (default) or replace." },
         if_version: { type: "string", description: "replace: the version the file had when read." }
       },
-      required: ["path", "text"]
+      required: ["path"]
     }
   };
   var TOOL_FILES_MOVE = {

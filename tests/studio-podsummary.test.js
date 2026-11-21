@@ -66,5 +66,7 @@ test("P4: the Gate offers app_summary for Studio, and both sides describe it the
   assert.ok(rg.inputSchema.properties.show);
   // no tool on either side publishes a podcast
   const names = C.toolsFor({ data: 1, summary: 1, changes: 1, creates: ["todo"], actions: ["timer"], edits: { writer: 1 } }).map((t) => t.name).concat(R.TOOLS.map((t) => t.name));
-  assert.ok(!names.some((n) => /publish_pod|podcast_publish|upload/.test(n)));
+  // (GL-8's files_upload puts a file in Claude's folders; it publishes nothing)
+  assert.ok(!names.some((n) => /publish_pod|podcast_publish|pod\w*_upload|upload\w*_pod/.test(n)));
+  assert.ok(!names.some((n) => /upload/.test(n) && n !== "files_upload"), "no other upload tool");
 });
