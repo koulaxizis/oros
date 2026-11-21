@@ -13411,7 +13411,7 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Tests:** full `node --test tests/*.test.js`; Playwright `h7-e2e.js`, `overlays-e2e.js`, `quests-e2e.js`, `quests8-e2e.js`, `trails-e2e.js`, `notes-e2e.js`. Not tested: live Overpass, note upload from a signed-in OSM account.
 - **Next:** H8 (experimental offline Walk and Bike routing from map packs).
 
-### 2026-11-21 — 8.24.00 — Maps for hiking and cycling, wave H8 (experimental): Walk and Bike routes with no network (#PR)
+### 2026-11-21 — 8.24.00 — Maps for hiking and cycling, wave H8 (experimental): Walk and Bike routes with no network (#1203)
 - **What:** with no network, or when the routing server fails, Walk and Bike routes come from the offline map packs: the device builds a graph from their roads, paths, steps and cycleways and finds the route on it. Navigation re-routes offline when it can. Marked experimental.
 - **Files:** maps/offroute-core.js, maps/offroute.js (new), maps/maps.js (calcRoute offline guard, fetchRoute fallback, nav reroute, mapsHost.offlineRoute), maps/offline.js, maps/maps.css, maps/index.html, maps/help.en/el.txt, i18n/de/maps.js, i18n/de/help/maps.txt, i18n/apps.json, i18n/de/STATUS.md, sw.js (precache), shell.js, help/topics/whatsnew.en/el.txt, tests/maps-offroute.test.js + tests/maps-offroute-fixture.js (new).
 - **Tests:** full `node --test tests/*.test.js`; Playwright `offroute-e2e.js` (real pack download from a fixture PMTiles source; offline EN, Greek at 360 px, German), `outdoor-e2e.js`, `planner-e2e.js`. Not tested: a real phone with a large pack, long routes.
