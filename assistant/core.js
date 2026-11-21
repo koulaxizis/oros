@@ -3654,7 +3654,7 @@
   var GATE_OPEN_SAY = " Through orOS Gate it opens at once on the owner's screen in that app (unless the owner paused Claude's changes): " +
     "Layout's own work (rebuild, house style, book) runs there and its report comes back; a new entry, document, recipe, cover or newsletter content " +
     "is filled into the app's own form or editor for the owner to check and save; an automation rule comes in turned off. " +
-    "If nobody sees orOS at that moment (a hidden tab, orOS in the background or closed), the call waits, encrypted, and runs the next time orOS is on the owner's screen; its report comes then. " +
+    "If nobody sees orOS at that moment (a hidden tab, orOS in the background or closed), the call waits, encrypted, and runs the next time orOS is on the owner's screen (Layout's own work runs at once where orOS runs on the owner's computer in the tray or a minimised orOS window); its report comes then. " +
     "Files come only as paths on the orOS disk (/internal/…) or, while the owner has a local folder open for Claude, as local:<root>/<path> (files_list without path shows those roots): there are no attachments through the gate. Nothing is sent from here.";
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],
