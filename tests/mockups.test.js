@@ -802,12 +802,13 @@ const GA = require(path.join(ROOT, "mockups/goods/analog.js"));
 const GS = require(path.join(ROOT, "mockups/goods/small.js"));
 const GH = require(path.join(ROOT, "mockups/goods/home.js"));
 const GC = require(path.join(ROOT, "mockups/goods/cloth.js"));
+const MC = require(path.join(ROOT, "mockups/goods/combo.js"));
 function good(over) {
   return C.normGoodProject(Object.assign({ id: ID, m: 1000, nm: "Album", kind: "cd", g: {}, art: {}, sc: {}, out: {}, tpl: { safe: 3 } }, over || {}));
 }
 
 test("products: registry, defaults, unknown values fall back, canonical", () => {
-  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet", "mug", "poster", "card", "tshirt", "tote", "hoodie", "socks", "cap"]);
+  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet", "mug", "poster", "card", "tshirt", "tote", "hoodie", "socks", "cap", "combo"]);
   const cd = good();
   assert.deepEqual(cd.g, { pack: "jewel", tray: "black", disc: "silver", hub: 22, beside: 0 });
   const odd = good({ g: { pack: "tin", tray: "pink", disc: "gold", hub: 99, beside: true, x: 1 } });
@@ -1284,4 +1285,33 @@ test("scene: lifestyle surface and props, unknown values fall back", () => {
   keys.forEach((k) => { assert.equal(js.split('"' + k + '":').length - 1, 2, k); assert.ok(de.includes('"' + k + '":'), "de " + k); });
   C.SURFS.forEach((k) => assert.match(html, new RegExp('<option value="' + k + '" data-i18n="surf\\.' + k + '"')));
   assert.match(read("mockups/help.en.txt"), /`Surface`/);
+});
+
+// ---------- v2 wave 9: several mockups in one picture, kits ----------
+test("combo: ids kept once, at most 6, layouts, kits name known kinds", () => {
+  const ids = ["kaaaaaa1", "kaaaaaa2", "kaaaaaa3", "kaaaaaa4", "kaaaaaa5", "kaaaaaa6", "kaaaaaa7"];
+  const c = good({ kind: "combo", g: { items: ["kaaaaaa1", "kaaaaaa1", "../x", 5].concat(ids), lay: "flat" } });
+  assert.deepEqual(c.g, { items: ids.slice(0, 6), lay: "flat" });
+  assert.equal(good({ kind: "combo", g: { lay: "pile" } }).g.lay, "table");
+  assert.deepEqual(C.sheetsOf(c), []);
+  assert.equal(C.good("combo").combo, true);
+  assert.equal(C.blankGood("combo", ID, 5).out.ratio, "3:2", "a combo starts wide");
+  assert.deepEqual(MC.add({ items: ["kaaaaaa1"] }, "kaaaaaa2").items, ["kaaaaaa1", "kaaaaaa2"]);
+  assert.deepEqual(MC.del({ items: ["kaaaaaa1", "kaaaaaa2"] }, "kaaaaaa1").items, ["kaaaaaa2"]);
+  assert.match(C.newId(), /^k[0-9a-z]{6,24}$/, "project ids pass the combo's check");
+  assert.ok(!MC.canHold(c) && MC.canHold(good()) && MC.canHold(prj({})));
+  for (const [name, kinds] of Object.entries(MC.KITS)) for (const k of kinds) {
+    assert.ok(k === "book" || C.good(k), name + " " + k);
+    const slot = MC.mainSlot(k);
+    assert.ok(k === "book" ? slot === "front" : C.goodSlots(k).includes(slot), name + " " + k + " " + slot);
+  }
+  const js = read("mockups/mockups.js"), de = read("i18n/de/mockups.js"), html = read("mockups/index.html");
+  const keys = ["f.lay", "lay.table", "lay.flat", "combo.hint", "combo.pick", "combo.add", "combo.remove", "combo.gone", "combo.empty", "combo.n", "kind.combo"]
+    .concat(Object.keys(MC.KITS).flatMap((k) => ["kit." + k, "kind.kit_" + k, "kind.kit_" + k + ".d"]));
+  keys.forEach((k) => { assert.equal(js.split('"' + k + '":').length - 1, 2, k); assert.ok(de.includes('"' + k + '":'), "de " + k); });
+  assert.match(html, /<script src="goods\/combo\.js(\?[^"]*)?"/);
+  assert.match(html, /id="combo-box"/);
+  assert.match(read("mockups/scene.js"), /buildCombo/);
+  assert.match(read("mockups/help.en.txt"), /## Several mockups in one picture/);
+  assert.match(read("mockups/help.el.txt"), /## Πολλές μακέτες σε μία εικόνα/);
 });

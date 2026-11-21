@@ -237,6 +237,33 @@
       "model.remove": "Remove the model from this device",
       "model.err.net": "The model could not be downloaded. Check the connection and try again.",
       "model.err.hash": "The downloaded file was not the expected model, so it was not kept. Try again later.",
+      "make.g.scene": "Scenes & kits",
+      "kind.combo": "Several in one picture",
+      "kind.combo.d": "Put up to six of your mockups together, on a table or flat from above",
+      "untitled.combo": "Scene",
+      "pics.hint.combo": "Each mockup in the picture uses its own pictures.",
+      "f.lay": "Layout",
+      "lay.table": "On a table",
+      "lay.flat": "Flat from above",
+      "combo.hint": "Each mockup keeps its own pictures and options; change them in its own project.",
+      "combo.pick": "Add one of your mockups…",
+      "combo.add": "Add",
+      "combo.remove": "Remove",
+      "combo.gone": "(a deleted mockup)",
+      "combo.empty": "Nothing here yet: add a mockup below, or make a kit from the gallery.",
+      "combo.n": "{n} of 6 mockups",
+      "kind.kit_band": "Band merch kit",
+      "kind.kit_band.d": "Vinyl, CD, T-shirt, tote bag and badge, all with one picture of yours",
+      "kind.kit_book": "Book launch kit",
+      "kind.kit_book.d": "Book, tote bag, mug, postcard and badge, all with one picture",
+      "kind.kit_brand": "Brand kit",
+      "kind.kit_brand.d": "Mug, cap, tote bag, sticker and poster with your logo",
+      "kind.kit_wear": "Clothing kit",
+      "kind.kit_wear.d": "T-shirt, hoodie, cap and socks, all with one picture",
+      "kit.band": "Band merch",
+      "kit.book": "Book launch",
+      "kit.brand": "Brand kit",
+      "kit.wear": "Clothing",
       "f.surf": "Surface",
       "surf.none": "None (only the shadow)",
       "surf.wood": "Wood",
@@ -778,6 +805,33 @@
       "model.remove": "Αφαίρεση του μοντέλου από τη συσκευή",
       "model.err.net": "Δεν ήταν δυνατή η λήψη του μοντέλου. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "model.err.hash": "Το αρχείο που ήρθε δεν ήταν το αναμενόμενο μοντέλο, οπότε δεν κρατήθηκε. Δοκίμασε ξανά αργότερα.",
+      "make.g.scene": "Σκηνές και σετ",
+      "kind.combo": "Πολλά σε μία εικόνα",
+      "kind.combo.d": "Βάλε μαζί έως έξι από τις μακέτες σου, σε τραπέζι ή απλωμένες από πάνω",
+      "untitled.combo": "Σκηνή",
+      "pics.hint.combo": "Κάθε μακέτα στην εικόνα έχει τις δικές της εικόνες.",
+      "f.lay": "Διάταξη",
+      "lay.table": "Σε τραπέζι",
+      "lay.flat": "Απλωμένα από πάνω",
+      "combo.hint": "Κάθε μακέτα κρατά τις δικές της εικόνες και επιλογές· άλλαξέ τες στη δική της μακέτα.",
+      "combo.pick": "Πρόσθεσε μία από τις μακέτες σου…",
+      "combo.add": "Προσθήκη",
+      "combo.remove": "Αφαίρεση",
+      "combo.gone": "(διαγραμμένη μακέτα)",
+      "combo.empty": "Τίποτα ακόμα: πρόσθεσε μια μακέτα από κάτω ή φτιάξε ένα σετ από τον κατάλογο.",
+      "combo.n": "{n} από 6 μακέτες",
+      "kind.kit_band": "Σετ merch συγκροτήματος",
+      "kind.kit_band.d": "Βινύλιο, CD, T-shirt, πάνινη τσάντα και κονκάρδα, όλα με μία εικόνα σου",
+      "kind.kit_book": "Σετ παρουσίασης βιβλίου",
+      "kind.kit_book.d": "Βιβλίο, πάνινη τσάντα, κούπα, καρτ ποστάλ και κονκάρδα, όλα με μία εικόνα",
+      "kind.kit_brand": "Σετ επωνυμίας",
+      "kind.kit_brand.d": "Κούπα, καπέλο, πάνινη τσάντα, αυτοκόλλητο και αφίσα με το λογότυπό σου",
+      "kind.kit_wear": "Σετ ρούχων",
+      "kind.kit_wear.d": "T-shirt, φούτερ, καπέλο και κάλτσες, όλα με μία εικόνα",
+      "kit.band": "Merch συγκροτήματος",
+      "kit.book": "Παρουσίαση βιβλίου",
+      "kit.brand": "Σετ επωνυμίας",
+      "kit.wear": "Ρούχα",
       "f.surf": "Επιφάνεια",
       "surf.none": "Καμία (μόνο η σκιά)",
       "surf.wood": "Ξύλο",
@@ -1496,7 +1550,9 @@
   // Every picture a project names: { imgs: asset id → picture, bg }.
   function picsFor(p) {
     var imgs = {}, bg = null;
-    var jobs = C.assetsOf(p).map(function (id) {
+    var ids = C.assetsOf(p);
+    (p.items || []).forEach(function (it) { C.assetsOf(it).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); }); });
+    var jobs = ids.map(function (id) {
       return loadImg(id).then(function (img) { if (img) imgs[id] = img; });
     });
     jobs.push(loadImg(p.sc.bg.img).then(function (img) { bg = img; }));
@@ -1506,6 +1562,7 @@
   function pushAll() {
     if (!stage || !cur) return;
     var seq = ++pushSeq, p = clone(cur);
+    if (p.kind === "combo" && window.MockCombo) p.items = p.g.items.map(findPrj).filter(window.MockCombo.canHold).map(clone);
     picsFor(p).then(function (r) {
       if (seq !== pushSeq || !stage || !cur) return;
       stage.set(p, r.imgs, r.bg);
@@ -1654,6 +1711,9 @@
     $("show-grp").hidden = g;
     $("tbar-row").hidden = g;
     $("sheet-box").hidden = !g;
+    var combo = g && cur.kind === "combo";
+    $("tab-cover").hidden = $("tab-print").hidden = combo;
+    if (combo && ($("tab-cover").classList.contains("on") || $("tab-print").classList.contains("on"))) showTab("book");
     return g;
   }
   function renderForm() {
@@ -1830,10 +1890,61 @@
     var def = cur && C.good(cur.kind), o = def && def.opts && def.opts.filter(function (x) { return x.k === k; })[0];
     if (!o) return;
     var v = o.t === "chk" ? (raw ? 1 : 0) : typeof o.v[0] === "number" ? +raw : raw;
-    changeG(function (g) { g[k] = v; });
+    // a combo laid flat is seen from above; back on the table, from the side
+    if (def.combo && k === "lay") change("book", function (p) {
+      if (p.g.lay !== v) p.sc.cam = Object.assign({}, p.sc.cam, v === "flat" ? { th: 0, ph: 72, dx: 0, dy: 0 } : { th: def.cam.th, ph: def.cam.ph });
+      p.g.lay = v;
+    });
+    else changeG(function (g) { g[k] = v; });
     curSheet = ""; legendKind = "";
   }
   function lenTxt(mm, d) { return cur && cur.unit === "in" ? fmtNum(mm / C.MM_PER_IN, 3) + "″" : fmtNum(mm, d == null ? 1 : d) + " mm"; }
+  // A combo (goods/combo.js): the mockups in it and the list to add from.
+  function renderComboBox() {
+    var on = cur && cur.kind === "combo" && window.MockCombo, box = $("combo-box");
+    box.hidden = !on;
+    if (!on) return;
+    var MC = window.MockCombo, ul = $("combo-list"), items = cur.g.items;
+    ul.textContent = "";
+    if (!items.length) ul.appendChild(el("li", "hint small", t("combo.empty")));
+    items.forEach(function (id) {
+      var p = findPrj(id), li = el("li");
+      li.appendChild(el("span", "cn", p ? label(p) + " · " + subOf(p) : t("combo.gone")));
+      var b = el("button", "chip small", t("combo.remove"));
+      b.type = "button"; b.setAttribute("data-id", id);
+      li.appendChild(b); ul.appendChild(li);
+    });
+    var sel = $("combo-add");
+    sel.textContent = "";
+    sel.setAttribute("aria-label", t("combo.pick"));
+    var first = el("option", null, t("combo.pick")); first.value = ""; sel.appendChild(first);
+    allPrj().filter(function (p) { return MC.canHold(p) && items.indexOf(p.id) < 0; }).sort(function (a, b) { return b.m - a.m; }).forEach(function (p) {
+      var op = el("option", null, label(p) + " · " + subOf(p)); op.value = p.id; sel.appendChild(op);
+    });
+    sel.disabled = $("combo-add-btn").disabled = items.length >= MC.MAX;
+  }
+  // A kit: one picture → the kit's products, each with it, and the combo of them.
+  function makeKit(name, pic) {
+    var MC = window.MockCombo, kinds = MC && MC.KITS[name];
+    if (!kinds) return;
+    if (data.prj.length + gdata.prj.length + kinds.length + 1 > C.MAX_PRJ) { toast(t("toast.full")); return; }
+    var now = Date.now(), ids = [];
+    kinds.forEach(function (k, i) {
+      var p = k === "book" ? C.blank(C.newId(), now) : C.blankGood(k, C.newId(), now);
+      if (!p) return;
+      var slot = MC.mainSlot(k);
+      if (slot) p.art[slot] = pic;
+      p.nm = t("kit." + name);
+      var r = putAny(p, now + i);
+      if (r.ok) ids.push(r.prj.id);
+    });
+    var c = C.blankGood("combo", C.newId(), now);
+    c.g = MC.norm({ items: ids }); c.nm = t("kit." + name);
+    var rc = putAny(c, now + kinds.length + 1);
+    storeData();
+    if (rc.ok) openPrj(rc.prj.id);
+  }
+
   // A garment's model (goods/cloth.js): kept on the device once fetched.
   var modelBusy = "", modelErr = "", modelLooked = {};
   function modelName() { var d = cur && C.good(cur.kind); return d && d.model && window.MockCloth ? d.model : ""; }
@@ -1860,10 +1971,11 @@
     $("gen-form").hidden = !def.opts;
     if (def.opts) renderGen(def, g);
     renderModelBox();
+    renderComboBox();
     $("disc-box").hidden = !(k === "cd" || k === "dvd");
     if (!def.opts) $("beside-lbl").textContent = t("f.beside." + k);
     $("beside-row").hidden = !!def.opts || ((k === "tape" || k === "vhs") && g.pack === "none");
-    if (def.opts) out("good-info", t("good.size2", { w: lenTxt(D.w), h: lenTxt(D.h) }));
+    if (def.opts) out("good-info", def.combo ? t("combo.n", { n: g.items.length }) : t("good.size2", { w: lenTxt(D.w), h: lenTxt(D.h) }));
     if (k === "tape") {
       setSeg("tpack", g.pack); setSeg("shellk", g.shell);
       $("jp-box").hidden = g.pack !== "norelco";
@@ -1894,14 +2006,15 @@
     $("mode-grp").hidden = !wrapOk;
     setSeg("mode", a.mode);
     $("wrap-box").hidden = !(wrapOk && a.mode === "wrap");
-    setVal("f-bleed", C.templateOf(cur, C.sheetsOf(cur)[0]).bleed);
+    var T0 = C.templateOf(cur, C.sheetsOf(cur)[0]);
+    if (T0) setVal("f-bleed", T0.bleed);
     $("good-pics").hidden = false;
     out("good-pics", t("pics.hint." + k));
     setVal("f-coverC", a.c); setVal("f-spTC", a.spTC); setVal("f-spT", a.spT);
     // flat products have no spine
     $("f-spTC").parentNode.hidden = $("f-spT").parentNode.hidden = !!def.opts;
     // garment ink prints nothing where there is no picture: no colour to choose
-    $("f-coverC").parentNode.hidden = !!C.templateOf(cur, C.sheetsOf(cur)[0]).ink;
+    $("f-coverC").parentNode.hidden = !T0 || !!T0.ink;
     renderSlots();
     if (wrapOk) renderWrapInfo();
     $("ins-box").hidden = true; $("vols-box").hidden = true;
@@ -1946,6 +2059,15 @@
     $("f-big").addEventListener("change", function () { var on = $("f-big").checked ? 1 : 0; changeG(function (g) { g.big = on; }); });
     $("f-hub").addEventListener("change", function () { var v = +$("f-hub").value; changeG(function (g) { g.hub = v; }); });
     $("f-beside").addEventListener("change", function () { var on = $("f-beside").checked ? 1 : 0; changeG(function (g) { g.beside = on; }); });
+    // combos: add one of the person's mockups, or take one out
+    $("combo-add-btn").addEventListener("click", function () {
+      var id = $("combo-add").value;
+      if (id && window.MockCombo) changeG(function (g) { g.items = window.MockCombo.add(g, id).items; });
+    });
+    $("combo-list").addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-id]");
+      if (b && window.MockCombo) { var id = b.getAttribute("data-id"); changeG(function (g) { g.items = window.MockCombo.del(g, id).items; }); }
+    });
     // the cloth models: downloaded only when the person asks
     $("model-get").addEventListener("click", function () {
       var name = modelName();
@@ -1992,7 +2114,8 @@
     { g: "music", items: [{ k: "cd" }, { k: "dvd" }, { k: "vinyl" }, { k: "tape" }, { k: "vhs" }] },
     { g: "merch", items: [{ k: "badge" }, { k: "sticker" }, { k: "keychain" }, { k: "pin" }, { k: "magnet" }] },
     { g: "home", items: [{ k: "mug" }, { k: "poster" }, { k: "card" }] },
-    { g: "wear", items: [{ k: "tshirt" }, { k: "hoodie" }, { k: "tote" }, { k: "cap" }, { k: "socks" }] }
+    { g: "wear", items: [{ k: "tshirt" }, { k: "hoodie" }, { k: "tote" }, { k: "cap" }, { k: "socks" }] },
+    { g: "scene", items: [{ k: "combo" }, { k: "kit_band" }, { k: "kit_book" }, { k: "kit_brand" }, { k: "kit_wear" }] }
   ];
   var MAKE_ICON = {
     book: '<path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M6 18a2 2 0 0 1 2-2h10"/>',
@@ -2014,19 +2137,24 @@
     tote: '<path d="M5 9h14l-1 11H6z"/><path d="M9 9V7a3 3 0 0 1 6 0v2"/>',
     hoodie: '<path d="M8 6a4 4 0 0 1 8 0l4 2-1.5 11H16V11v9H8v-9 8H5.5L4 8z"/><path d="M10.5 9v3M13.5 9v3"/>',
     cap: '<path d="M4 15a8 8 0 0 1 16 0z"/><path d="M14 15h7"/><circle cx="12" cy="6.5" r="0.6"/>',
-    socks: '<path d="M7 3h5v9l4 4a2.5 2.5 0 0 1-3.5 3.5L7 14z"/><path d="M7 6h5"/>'
+    socks: '<path d="M7 3h5v9l4 4a2.5 2.5 0 0 1-3.5 3.5L7 14z"/><path d="M7 6h5"/>',
+    combo: '<rect x="3" y="9" width="7" height="11" rx="1"/><circle cx="16.5" cy="15" r="4.5"/><path d="M8 4h9v4"/>',
+    kit_band: '<circle cx="9" cy="12" r="6"/><circle cx="9" cy="12" r="1.5"/><path d="M16 6h5v12h-5"/>',
+    kit_book: '<path d="M4 5h7v14H4z"/><path d="M13 9h7l-1 10h-5z"/><path d="M15 9V7.5a1.5 1.5 0 0 1 3 0V9"/>',
+    kit_brand: '<path d="M4 8h8v9a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M14 16a4 4 0 0 1 7 0z"/><path d="M12 10h1.5a1.5 1.5 0 0 1 0 3H12"/>',
+    kit_wear: '<path d="M7 4a2.5 2.5 0 0 0 5 0l4 2-1.5 3-1.5-.7V20H6V8.3l-1.5.7L3 6z"/><path d="M15 15a4 4 0 0 1 7 0z"/>'
   };
   function renderMake() {
     var box = $("make-groups");
     box.textContent = "";
     MAKE.forEach(function (grp) {
-      var items = grp.items.filter(function (it) { return it.k === "book" || it.k === "notebook" || C.good(it.k); });
+      var items = grp.items.filter(function (it) { return it.k === "book" || it.k === "notebook" || (it.k.indexOf("kit_") === 0 ? !!window.MockCombo : C.good(it.k)); });
       if (!items.length) return;
       box.appendChild(el("h3", "make-g", t("make.g." + grp.g)));
       var ul = el("ul", "make-list");
       items.forEach(function (it) {
         var li = el("li"), b = el("button", "make-item");
-        b.type = "button";
+        b.type = "button"; b.setAttribute("data-k", it.k);
         var ic = el("span", "make-ic");
         ic.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + MAKE_ICON[it.k] + "</svg>";
         b.appendChild(ic);
@@ -2048,6 +2176,7 @@
       showTab("book");
       return;
     }
+    if (k.indexOf("kit_") === 0) { pickPicture(function (id) { makeKit(k.slice(4), id); }); return; }
     curSheet = ""; legendKind = "";
     newPrj(null, k);
     showTab("book");
@@ -3010,6 +3139,7 @@
   }
   var legendKind = "";
   function renderGoodTpl() {
+    if (!C.sheetsOf(cur).length) return;    // a combo: nothing of its own to print
     var T = tplOf(cur), o = cur.tpl, sel = $("f-sheet"), list = C.sheetsOf(cur), sh = sheetOf(cur);
     if (sel.getAttribute("data-k") !== list.join(",") + LANG) {
       sel.textContent = "";

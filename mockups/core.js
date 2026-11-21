@@ -928,7 +928,8 @@
 
   // ---------- Products other than books (v1.6.0) ----------
   // def: { group, slots: [extra picture slots], norm(g) → g,
-  //        sheets(p) → [sheet keys], template(p, sheet) → T, sub(g) }
+  //        sheets(p) → [sheet keys], template(p, sheet) → T, sub(g),
+  //        place, cam, out: what a new one starts with }
   var GOODS = {}, GOOD_ORDER = [];
   var KIND_RE = /^[a-z][a-z0-9]{1,15}$/;
   function addGood(kind, def) {
@@ -981,7 +982,7 @@
   var GOODS_STORE = makeStore(normGoodProject);
   function blankGood(kind, id, now) {
     if (!GOODS[kind]) return null;
-    return normGoodProject({ id: id, m: now, nm: "", kind: kind, g: {}, art: {}, sc: { place: GOODS[kind].place, cam: GOODS[kind].cam }, out: {}, tpl: { safe: 3 } });
+    return normGoodProject({ id: id, m: now, nm: "", kind: kind, g: {}, art: {}, sc: { place: GOODS[kind].place, cam: GOODS[kind].cam }, out: GOODS[kind].out || {}, tpl: { safe: 3 } });
   }
   // Is this a project this device can open? (a book, or a known product)
   function known(p) { return !!p && (p.kind === "book" || !!GOODS[p.kind]); }

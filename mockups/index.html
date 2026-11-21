@@ -148,6 +148,14 @@
               <label class="check" id="big-row"><input type="checkbox" id="f-big"><span data-i18n="f.big">Big hole (jukebox)</span></label>
             </div>
             <div id="gen-form"></div>
+            <div id="combo-box" class="sub" hidden>
+              <p id="combo-hint" class="hint small" data-i18n="combo.hint">Each mockup keeps its own pictures and options; change them in its own project.</p>
+              <ul id="combo-list" class="combo-list"></ul>
+              <div class="actions">
+                <select id="combo-add" aria-label="Add one of your mockups"></select>
+                <button type="button" id="combo-add-btn" class="chip primary" data-i18n="combo.add">Add</button>
+              </div>
+            </div>
             <div id="model-box" class="sub" hidden>
               <p id="model-msg" class="hint small"></p>
               <div class="actions" id="model-acts">
@@ -554,6 +562,7 @@
   <script src="goods/small.js?v=8.25.00"></script>
   <script src="goods/home.js?v=8.25.00"></script>
   <script src="goods/cloth.js?v=8.25.00"></script>
+  <script src="goods/combo.js?v=8.25.00"></script>
   <script src="mockups.js?v=8.25.00"></script>
 
   <script src="../pickers.js?v=8.25.00" defer></script>

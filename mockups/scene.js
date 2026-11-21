@@ -39,7 +39,8 @@
 //     T-shirt and tote bag from goods/cloth3d.js (v1.9.0; our Blender models,
 //     downloaded on request by goods/cloth.js; hoodie, socks, cap),
 //   - lifestyle surfaces (wood, marble, linen, paper, concrete) and
-//     props (cup, plant, pencil) from surface3d.js (v1.10.0),
+//     props (cup, plant, pencil) from surface3d.js (v1.10.0), and a
+//     combo of several mockups in one picture (goods/combo.js),
 //     posed, framed, lit and saved like a book; "open" opens a lid
 //     or slides a disc out (fronts with userData.open)
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
@@ -592,15 +593,15 @@ export function createStage(host, C) {
     owned.forEach(function (x) { try { x.dispose(); } catch (e) {} });
     owned = []; fronts = []; contactMats = []; built = false;
   }
-  function picsOf(art) {
-    var o = {};
-    var slots = state.p && C.isGood(state.p) ? C.goodSlots(state.p.kind) : C.SLOTS;
+  function picsOf(art, kind) {
+    var o = {}, k = kind || (state.p && state.p.kind);
+    var slots = k && k !== "book" ? C.goodSlots(k) : C.SLOTS;
     slots.forEach(function (k) { if (art[k] && state.pics[art[k]]) o[k] = state.pics[art[k]]; });
     return o;
   }
 
   function materials(bk, art, maxPx) {
-    var pics = picsOf(art);
+    var pics = picsOf(art, "book");
     var cv = composeCover(C, bk, art, pics, maxPx);
     var fin = bk.fin, look = TEX_LOOK[bk.tex] || TEX_LOOK.paper;
     var baseRough = fin === "gloss" ? 0.32 : fin === "soft" ? 0.92 : 0.7;
@@ -938,12 +939,52 @@ export function createStage(host, C) {
     place();
   }
 
+  function buildProduct(p) {
+    var H = { THREE: THREE, S: S, own: own, ANISO: ANISO, pics: picsOf(p.art, p.kind), MP: (typeof window !== "undefined" && window.MockPrint) || null, C: C };
+    return buildMedia(H, p) || buildAnalog(H, p) || buildSmall(H, p) || buildHome(H, p) || buildCloth(H, p);
+  }
+  // Several mockups in one picture (goods/combo.js): each posed as it is
+  // in its own project, side by side on a table, or all flat from above.
+  function buildCombo() {
+    disposeBooks();
+    var p = state.p, list = p.items || [], flat = p.g.lay === "flat", poses = [];
+    list.forEach(function (it) {
+      var obj, placeK = flat ? "lie" : (it.sc.place === "lean" ? "stand" : it.sc.place);
+      if (C.isGood(it)) { var res = buildProduct(it); if (!res) return; obj = res.g; }
+      else { obj = makeBook(it.bk, materials(it.bk, it.art, 2048), placeK).g; }
+      var pose = new THREE.Group();
+      pose.add(obj);
+      if (placeK === "lie") pose.rotation.x = -Math.PI / 2;
+      var pb = boxOf(pose), pc = pb.getCenter(new THREE.Vector3()), ps = pb.getSize(new THREE.Vector3());
+      pose.position.set(-pc.x, -pb.min.y, -pc.z);
+      var slot = new THREE.Group();
+      slot.add(pose);
+      var cm = own(new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, opacity: 0.5 }));
+      var ct = new THREE.Mesh(own(new THREE.PlaneGeometry(1, 1)), cm);
+      ct.rotation.x = -Math.PI / 2; ct.position.y = 0.0005;
+      ct.scale.set(ps.x * 1.2, ps.z * 1.2 + (placeK === "lie" ? 0 : 0.08), 1);
+      ct.renderOrder = 1; ct.userData.skip = true;
+      slot.add(ct); contactMats.push(cm);
+      poses.push({ g: slot, w: ps.x, d: ps.z });
+    });
+    // table: one row, the tallest in the middle; flat: rows of about √n
+    var gap = 40 * S, perRow = flat ? Math.ceil(Math.sqrt(poses.length)) : poses.length, z = 0;
+    for (var r0 = 0; r0 < poses.length; r0 += perRow) {
+      var row = poses.slice(r0, r0 + perRow), wsum = 0, dmax = 0;
+      row.forEach(function (q) { wsum += q.w; dmax = Math.max(dmax, q.d); });
+      var x = -(wsum + gap * (row.length - 1)) / 2;
+      row.forEach(function (q) { q.g.position.set(x + q.w / 2, 0, z + (flat ? 0 : -q.d / 2)); x += q.w + gap; setG.add(q.g); });
+      z += dmax + gap;
+    }
+    leanNow = false;
+    built = poses.length > 0;
+    place();
+  }
   // A product (CD, DVD…), posed on the floor like one book.
   function buildGood() {
     disposeBooks();
     var p = state.p, placeK = p.sc.place;
-    var H = { THREE: THREE, S: S, own: own, ANISO: ANISO, pics: picsOf(p.art), MP: (typeof window !== "undefined" && window.MockPrint) || null, C: C };
-    var res = buildMedia(H, p) || buildAnalog(H, p) || buildSmall(H, p) || buildHome(H, p) || buildCloth(H, p);
+    var res = buildProduct(p);
     if (!res) { built = false; return; }
     res.fronts.forEach(function (f) { fronts.push(f); });
     var pose = new THREE.Group();
@@ -975,6 +1016,7 @@ export function createStage(host, C) {
 
   // Every book of the set, posed and laid out.
   function buildSet() {
+    if (state.p.kind === "combo") { buildCombo(); return; }
     if (C.isGood(state.p)) { buildGood(); return; }
     if (state.p.show === "open" || state.p.show === "ebook") { buildOne(); return; }
     disposeBooks();
@@ -1024,7 +1066,7 @@ export function createStage(host, C) {
   }
   // A box set: a box round the shelf of books, open toward the spines.
   function boxSet(p) {
-    var bk = p.bk, pics = picsOf(p.art), t = 2.5 * S, m = 0.8 * S;
+    var bk = p.bk, pics = picsOf(p.art, "book"), t = 2.5 * S, m = 0.8 * S;
     setG.updateMatrixWorld(true);
     var box = boxOf(setG).applyMatrix4(setG.matrixWorld.clone().invert()), sz = box.getSize(new THREE.Vector3());
     setG.children.forEach(function (c) { c.position.y += t; });
@@ -1060,6 +1102,8 @@ export function createStage(host, C) {
     wall.position.set(0, 15, box.min.z - 0.0002);
     var size = box.getSize(new THREE.Vector3());
     frame.R = Math.max(size.x, size.y, size.z) * 0.56 + 0.03;
+    // a combo on a table is a long, low row: let a wide frame use its width
+    frame.wide = state.p && state.p.kind === "combo" ? Math.max(1, size.x / Math.max(size.y, size.z, 1e-6)) : 1;
     setSurface(sc.surf || "none");
     placeProps(props, sc.props, box, S);
     frame.cy = (box.min.y + box.max.y) / 2;
@@ -1094,6 +1138,7 @@ export function createStage(host, C) {
     camera.aspect = cw / ch;
     var half = cam.fov * Math.PI / 360;
     var fit = Math.min(1, camera.aspect);                // keep the book inside a tall frame too
+    if (frame.wide > 1 && camera.aspect > 1) fit = Math.max(fit, Math.min(camera.aspect, frame.wide) * 0.88);
     var dist = R / Math.sin(half) / fit / cam.zoom;
     var th = cam.th * Math.PI / 180, ph = cam.ph * Math.PI / 180;
     var dir = new THREE.Vector3(Math.sin(th) * Math.cos(ph), Math.sin(ph), Math.cos(th) * Math.cos(ph));

@@ -73,6 +73,13 @@ Badges, stickers, keychains, enamel pins and magnets lie flat on the table to be
 - `Box set` stands the books in a row inside an open box, spines out; the box takes the `Slipcase` colour and picture.
 - On the `Cover` tab, `The other books` gives each book its own pictures, pages and spine text. A book without its own takes the first book's, so a stack of the same book needs nothing more.
 
+## Several mockups in one picture
+- `Several in one picture` (in the gallery, under scenes) puts up to 6 of your mockups together: books and products. Pick each one under `Add one of your mockups…`; `Remove` takes it out again.
+- `Layout`: `On a table` (side by side, standing where they stand) or `Flat from above` (laid out in a grid, as for a shop picture).
+- Each mockup keeps its own pictures and options: change them in its own project and the picture follows.
+- Kits make the products and the picture in one go from one picture of yours: `Band merch kit` (vinyl, CD, T-shirt, tote bag, badge), `Book launch kit` (book, tote bag, mug, postcard, badge), `Brand kit` (mug, cap, tote bag, sticker, poster) and `Clothing kit` (T-shirt, hoodie, cap, socks).
+- A surface and props (`Scene` tab) work here too.
+
 ## Scene and camera
 - Drag the picture to turn around the book. Pinch, or use the mouse wheel, to come closer. The buttons under the picture jump to ready angles.
 - `Placement`: standing, lying on its back or leaning on a wall. `Turn` turns the book on the floor; `Open the cover` opens it up to 160°.
