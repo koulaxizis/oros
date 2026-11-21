@@ -170,7 +170,7 @@ test("pptx: embedded fonts, picture-filled shapes, exact spacing", async () => {
   assert.ok(Math.abs(b.crop.l + x / W) < 1e-6 && Math.abs(b.crop.r - (1 - 1 / W + x / W)) < 1e-6);
 
   const t = plan.pages[0].items.find((i) => i.k === "text" && /ΓΛΑ/.test(i.tx));
-  assert.equal(t.face, "Caudex"); assert.equal(t.lh, 140, "44.8 pt at 32 pt");
+  assert.equal(t.face, "Caudex"); assert.equal(t.lh, 138.3, "44.8 pt at 32 pt, in Canva's whole pixels: 59 px = 44.25 pt (CV-F1)");
 });
 
 test("pptx build: own font as ext.fam over its stand-in, kerning, the design's font list", async () => {
@@ -278,14 +278,15 @@ test("pptx: paragraphs in other styles become items stacked baseline to baseline
   const plan = await P.parse(Z.open(deckOf(box(0, paras))), "Canva");
   const ts = plan.pages[0].items.filter((i) => i.k === "text");
   assert.deepEqual(ts.map((t) => t.tx), ["Title\nTitle 2", "Author\nAuthor 2"]);
-  assert.equal(ts[1].gap, 40, "the blank paragraph is the block above's line (32 pt at 125%)");
+  assert.equal(ts[1].gap, 39.74, "the blank paragraph is the block above's line (40 pt = 53.3 px, cut to 53 px)");
   assert.ok(ts[0].stk && ts[1].stk === ts[0].stk);
   const d = slideUnits(P.build(plan, {}, 1).doc);
   const [a, b] = d.items.filter((i) => i.ax.k === "text").sort((p, q) => p.z - q.z);
   const L = (it) => AX.textLayout(it).lines;
-  assert.equal(a.y, 100, "a top-anchored stack starts at the box");
+  const a0 = L(a)[0], lead = a.ax.size * a.ax.lh / 100;
+  assert.ok(Math.abs(a.y + a0.y - (100 + P.canvaBase(lead, a.ax.size, a0.y, a0.d))) < 0.02, "a top-anchored stack starts at Canva's first baseline (CV-F1)");
   const last = a.y + L(a)[L(a).length - 1].y, first = b.y + L(b)[0].y;
-  assert.ok(Math.abs(first - last - (40 + 20)) < 0.02, "the blank line, then one line at the second block's spacing");
+  assert.ok(Math.abs(first - last - (39.74 + 19.5)) < 0.05, "the blank line, then one line at the second block's spacing (26 px = 19.5 pt)");
   assert.equal(b.ax.fc, "#bcbbba"); assert.equal(b.ax.size, 16);
   // a rotated box stays one item in its first style
   const rot = await P.parse(Z.open(deckOf(box(90, paras))), "Canva");
@@ -314,15 +315,19 @@ test("pptx: bold words and other typefaces inside a paragraph become runs (ext.r
   const plan = await P.parse(Z.open(deckOf(box(0, paras))), "Canva");
   const t = plan.pages[0].items.find((i) => i.k === "text");
   assert.equal(t.tx, "Get 40% off red\nnow here");
-  assert.deepEqual(t.runs, [{ n: 4 }, { n: 3, b: 1, i: 0, face: "Caudex Bold" }, { n: 13 }, { n: 4, b: 1, i: 0, face: "Caudex" }],
-    "another size or colour keeps the box's look; the paragraph break belongs to the plain run");
+  assert.deepEqual(t.runs, [{ n: 4 }, { n: 3, b: 1, i: 0, face: "Caudex Bold", fc: "#000000" }, { n: 4 }, { n: 4, b: 0, i: 0, face: "Caudex", fc: "#ff0000" },
+    { n: 5 }, { n: 4, b: 1, i: 0, face: "Caudex", fc: "#000000" }],
+    "another colour is a run of its own (CV-F1); the paragraph break belongs to the plain run");
   const BOLD = "uf_" + "2b".repeat(8);
   AX.useDocFonts({ setup: { ext: { fonts: [ownEntry(), { id: BOLD, name: "Caudex Bold", fb: "serif", r: "2b".repeat(32) + ".ttf" }] } } });
   T.register(OWN + "-r", SERIF.slice().buffer); T.register(BOLD + "-r", noto("NotoSerif-Bold.ttf").buffer);
   const d = slideUnits(P.build(plan, {}, 1, { Caudex: ownEntry(), "Caudex Bold": { id: BOLD, name: "Caudex Bold", fb: "serif", r: "2b".repeat(32) + ".ttf" } }).doc);
   assert.equal(J(M.normDoc(JSON.parse(J(d)))), J(d), "canonical");
   const it = d.items.find((i) => i.ax.k === "text");
-  assert.deepEqual(it.ext.runs, [{ n: 4 }, { n: 3, b: 1, fam: BOLD }, { n: 13 }, { n: 4, b: 1 }]);
+  assert.deepEqual(it.ext.runs, [{ n: 4 }, { n: 3, b: 1, fam: BOLD }, { n: 4 }, { n: 4, fc: "#ff0000" }, { n: 5 }, { n: 4, b: 1 }]);
+  const reds = [];
+  AX.textLayout(it).lines.forEach((ln) => ln.runs.forEach((x) => { if (x.t.trim() === "red") reds.push(AX.runColor({ color: "#000000" }, "#000000", x)); }));
+  assert.deepEqual(reds, ["#ff0000"], "the red word is painted red where the text's own colour is used");
   assert.deepEqual(d.setup.ext.fonts.map((f) => f.id).sort(), [BOLD, OWN].sort(), "a run's own font is in the design's list");
   const keys = [];
   AX.textLayout(it).lines.forEach((ln) => ln.runs.forEach((x) => { if (x.t.trim()) keys.push(x.t + "=" + x.key); }));

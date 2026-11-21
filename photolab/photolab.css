@@ -680,3 +680,7 @@ body.dropping .drop-hint { display: flex; }
 /* What a PSD brought (io.js psdReport) */
 .psd-notes { margin: 8px 0 0; padding-left: 20px; max-height: 50vh; overflow: auto; }
 .psd-notes li { margin: 4px 0; line-height: 1.4; }
+
+/* Liquify (wave PS-5) */
+.lq-cv { display: block; max-width: 100%; height: auto; margin: 10px auto; touch-action: none; cursor: crosshair;
+  background: repeating-conic-gradient(#d8d8d8 0% 25%, #f4f4f4 0% 50%) 0 0 / 16px 16px; border-radius: 6px; }

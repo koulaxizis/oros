@@ -41,6 +41,8 @@ test("validation", () => {
   assert.equal(validCanva({ act: "token", code: "c", verifier: "short", redirect: ORIGIN + "/cb" }, o), "verifier");
   assert.equal(validCanva({ act: "designs", token: "a\r\nb" }, o), "token");
   assert.equal(validCanva({ act: "export", token: "t", id: "../x" }, o), "id");
+  assert.equal(validCanva({ act: "export", token: "t", id: "DAF1", kind: "svg" }, o), "kind");
+  assert.equal(validCanva({ act: "export", token: "t", id: "DAF1", kind: "pdf" }, o), "");
   assert.equal(validCanva({ act: "job", token: "t", job: "J1" }, o), "");
   assert.equal(fileUrl("https://export-download.canva.com/a/b.pptx?x=1").hostname, "export-download.canva.com");
   assert.equal(fileUrl("https://canva.com.evil.example/x"), null);
@@ -90,6 +92,10 @@ test("expired token → auth; designs mapped; export + job", async () => {
   assert.deepEqual(j.data, { job: "E1", status: "in_progress", urls: [], err: "" });
   j = await (await run({ op: "canva", act: "job", token: "T", job: "E1" }, ENV, f)).json();
   assert.deepEqual(j.data.urls, ["https://export-download.canva.com/x.pptx"]);
+  // Canva's PDF of the design (CV-F4)
+  f = mock([[/\/exports$/, (u, init) => { assert.deepEqual(JSON.parse(init.body), { design_id: "DAF1", format: { type: "pdf" } }); return J({ job: { id: "E2", status: "in_progress" } }); }]]);
+  j = await (await run({ op: "canva", act: "export", token: "T", id: "DAF1", kind: "pdf" }, ENV, f)).json();
+  assert.equal(j.data.job, "E2");
 });
 
 test("file streams bytes with CORS, refuses other hosts", async () => {

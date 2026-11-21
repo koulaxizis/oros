@@ -385,9 +385,8 @@
         }
         tmp.width = L.img.w; tmp.height = L.img.h;
         tmp.getContext("2d").putImageData(new ImageData(px, L.img.w, L.img.h), 0, 0);
-        g.globalAlpha = L.op / 100;
-        g.globalCompositeOperation = C.blendOp(L.bl);
-        g.drawImage(tmp, L.x - x0, L.y - y0);
+        window.PhotoLab.blendx.drawOver(g, tmp, L.x - x0, L.y - y0, L.op / 100, L.bl, C.blendOp(L.bl), null,
+          function (x, y) { return [x + x0, y + y0]; });
       });
       merged.x = x0; merged.y = y0;
       merged.img = { w: c.width, h: c.height, data: g.getImageData(0, 0, c.width, c.height).data };

@@ -14,7 +14,7 @@
 
   var AT = window.AT, DK = window.orosDK;
   var FX = DK.fx, T = DK.text, R = DK.render, A = DK.assets, M = DK.model;
-  var AX = window.AtelierAX, ICONS = window.ATELIER_ICONS;
+  var AX = window.AtelierAX, ICONS = window.ATELIER_ICONS, PF = window.AtelierPhotoFx;
 
   function rad(d) { return d * Math.PI / 180; }
 
@@ -98,17 +98,20 @@
     var img = A.get(it.a);
     if (!img) return null;
     var look = lookOf(it.ax || {});
-    if (FX.isIdentity(look)) return img;
+    var pf = PF && PF.of(it), duo = pf && pf.duo;        // duotone (CV-2) after the look
+    if (FX.isIdentity(look) && !duo) return img;
     var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
     var s = maxSide ? Math.min(1, maxSide / Math.max(iw, ih)) : 1;
     var w = Math.max(1, Math.round(iw * s)), h = Math.max(1, Math.round(ih * s));
-    var key = it.a + "|" + w + "|" + JSON.stringify(look);
+    var key = it.a + "|" + w + "|" + JSON.stringify(look) + (duo ? "|" + duo.a + duo.b : "");
     var c = photoCache.get(key);
     if (c) return c;
     var cv = document.createElement("canvas");
     cv.width = w; cv.height = h;
-    cv.getContext("2d", { willReadFrequently: true }).drawImage(img, 0, 0, w, h);
-    FX.applyToCanvas(cv, look);
+    var cg = cv.getContext("2d", { willReadFrequently: true });
+    cg.drawImage(img, 0, 0, w, h);
+    if (!FX.isIdentity(look)) FX.applyToCanvas(cv, look);
+    if (duo) { var id = cg.getImageData(0, 0, w, h); PF.duotone(id.data, duo.a, duo.b); cg.putImageData(id, 0, 0); }
     return photoCache.set(key, cv);
   }
 
@@ -131,11 +134,31 @@
 
   function drawPhoto(ctx, it, opts) {
     var ax = it.ax || {};
+    var moving = ax.vid || (it.ext && it.ext.gif);       // a video, or a moving GIF (CV-A)
+    var src = (moving && opts.media && frameSource(it, opts.media(it))) || (it.a ? photoSource(it, opts.maxSide) : null);
+    var pf = PF && PF.of(it);
+    if (src && PF.composite(pf)) {
+      // shadow, faded edges or a frame (CV-2): drawn as one picture
+      var shape = ax.shp || (it.ext && it.ext.pth) ? itemShape(it) : (function () { var q = new Path2D(); q.rect(0, 0, it.w, it.h); return q; })();
+      PF.paint(ctx, it, pf, shape, function (g, box) {
+        g.save();
+        g.clip(shape);
+        g.beginPath(); g.rect(box.x, box.y, box.w, box.h); g.clip();
+        g.translate(box.x, box.y);
+        var inIt = box.x || box.y || box.w !== it.w || box.h !== it.h ? Object.assign({}, it, { w: box.w, h: box.h }) : it;
+        var r1 = R.imageRect(inIt);
+        if (ax.flh || ax.flv) {
+          g.translate(box.w / 2, box.h / 2);
+          g.scale(ax.flh ? -1 : 1, ax.flv ? -1 : 1);
+          g.translate(-box.w / 2, -box.h / 2);
+        }
+        g.drawImage(src, r1.x, r1.y, r1.w, r1.h);
+        g.restore();
+      });
+    } else {
     ctx.save();
     if (ax.shp) ctx.clip(itemShape(it));
     else { ctx.beginPath(); ctx.rect(0, 0, it.w, it.h); ctx.clip(); }
-    var moving = ax.vid || (it.ext && it.ext.gif);       // a video, or a moving GIF (CV-A)
-    var src = (moving && opts.media && frameSource(it, opts.media(it))) || (it.a ? photoSource(it, opts.maxSide) : null);
     if (src) {
       var r = R.imageRect(it);
       if (ax.flh || ax.flv) {
@@ -158,6 +181,7 @@
       }
     }
     ctx.restore();
+    }
     // editing: a play badge marks a video element or a moving GIF
     if (moving && !opts.clean && !(opts.media && opts.media(it))) {
       var r0 = Math.max(6, Math.min(it.w, it.h) * 0.09), bx = r0 * 1.4, by = it.h - r0 * 1.4;
@@ -280,7 +304,13 @@
       }
       if (p.mode === "stroke") { ctx.lineWidth = p.width; ctx.lineJoin = "round"; ctx.miterLimit = 2; }
       if (lay.curve) paintCurve(ctx, lay.curve, it, p.mode, dx, dy);
-      else eachRun(lay, function (r) { paintRun(ctx, r, p.mode, dx, dy); });
+      else eachRun(lay, function (r) {
+        var c = AX.runColor(p, fill, r);
+        if (c === p.color) { paintRun(ctx, r, p.mode, dx, dy); return; }
+        ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = c;
+        paintRun(ctx, r, p.mode, dx, dy);
+        ctx.restore();
+      });
       ctx.restore();
     });
   }
