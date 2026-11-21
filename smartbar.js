@@ -7,35 +7,17 @@
 // every second from its clock and refresh() when the language changes.
 // A bundle without this file draws exactly what it drew before.
 //
-//   Live chips in the top bar, each one the person switches on:
-//   • Next event   the next timed row of today's summary (Calendar,
-//                  Travel, …) with a countdown from 60 minutes before;
-//                  "Now" while it runs. Rows of apps kept out of search
-//                  (Health, Cycle, One-Sentence Diary, …) never reach the bar.
-//   • Focus        the Time app's Pomodoro leg while it runs (focus or
-//                  break, minutes left), from oros-time-pmrun.
-//   • Tasks        late and today's tasks of the summary.
-//   • Water        today's water against the goal (water/core.js).
-//   • Spent        this month's expenses in Budget.
-//   • Till         today's till sales in Stock (stock/pos-core.js,
-//                  loaded the first time this chip is on).
-//   Live pills (SB-LIVE): smartbar-live.js, loaded once something runs.
-//   A chip with nothing to say stays hidden. Money chips and event
-//   titles are hidden while Sensitive work is on.
-//   A click opens the place the chip comes from.
-//   Fit: the shell's fitBar() asks fitDrop() to fold the last chips
-//   before it hides the weekday or the date, so the bar never scrolls.
-//   Folded chips are not lost: one button (#sb-more, "+N") at the end
-//   of the row unfolds them all in a panel under the bar. On a phone
-//   (≤ 600 px) every chip folds into that button; on a wide screen the
-//   chips stay in the bar and only the ones that do not fit fold.
+//   Chips the person ticks (event, focus, tasks, water, spent, till;
+//   the other apps' cards in smartbar-apps.js), and live pills while a
+//   timer, the stopwatch or a recording runs (smartbar-live.js). Each
+//   shows only with something to say; money and event titles hide under
+//   Sensitive work; a click opens its app. fitBar() folds the last chips
+//   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
+//   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
 // Device-local (oros-smartbar, never synced: screens differ):
-//   { v:1, list:["event","focus",…], live:false? }   order = list order
-//   live:false = no live pills (absent = on).
-//   Absent = none: the bar looks as before until the person adds one.
-//
-// Reads only. It never writes another app's data. Pure logic is
+//   { v:1, list:["event",…] (order), look?, live:false? (no pills) }
+// Reads only (the live pills' pause button excepted). Pure logic is
 // unit-tested in node (tests/smartbar.test.js).
 // ============================================================
 (function (root) {
