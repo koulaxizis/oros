@@ -3,6 +3,8 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.18.00
+- **Update your other devices from your phone.** Settings › orOS Gate has a new button, Update them now: every other device where orOS is open, a computer with orOS in the tray too, switches to the newest orOS within a few minutes, without you at the computer. Claude can ask for the same through orOS Gate when a device runs an older version. On Windows this needs orOS for Windows 0.9.5 or newer.
 ## Version 8.17.00
 - **Outdoor places and Where am I in Maps.** Discover now finds water and springs, shelters and huts, peaks and viewpoints, camping and bike service. Where am I shows your position in every common format with a compass, sunrise and sunset, Call 112 and Text my position. See [Maps](help:a/maps).
 
