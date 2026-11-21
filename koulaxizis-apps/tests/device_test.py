@@ -239,18 +239,30 @@ def main():
     shot("list-noxpress")
     for name in ("Site Bridge", "Live Operator"):
         scroll_to(name)
+    # Waymark is its own section before Glarolykoi, also from the orOS repository.
+    scroll_to("Waymark")
+    shot("list-waymark")
     # Glarolykoi is its own section at the end, read from the orOS repository (APPS-M3).
     scroll_to("Glarolykoi")
     shot("list-glarolykoi")
     # Back up to NULL JSFX and install Remote for Mixers through the manager.
     for _ in range(40):
         swipe(False)
-    root, node = scroll_to("Remote for Mixers")
+    # The name can show at the bottom edge with its row's button still off
+    # screen (the list is longer since Waymark has its own section), so move
+    # the list up a little and look again before giving up.
     row = None
-    for parent in root.iter("node"):
-        kids = list(parent.iter("node"))
-        if node in kids and any(k.get("class") == "android.widget.Button" for k in kids) and len(kids) < 12:
-            row = parent
+    for _ in range(4):
+        root, node = scroll_to("Remote for Mixers")
+        for parent in root.iter("node"):
+            kids = list(parent.iter("node"))
+            if node in kids and any(k.get("class") == "android.widget.Button" for k in kids) and len(kids) < 12:
+                row = parent
+        if row is not None:
+            break
+        w, h = screen()
+        adb("shell", "input", "swipe", str(w // 2), str(h * 2 // 3), str(w // 2), str(h // 3), "300")
+        time.sleep(1)
     if row is None:
         raise SystemExit("no row for Remote for Mixers")
     button = [k for k in row.iter("node") if k.get("class") == "android.widget.Button"][0]
