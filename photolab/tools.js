@@ -701,7 +701,15 @@
   };
 
   // ---------- Free transform (Ctrl+T) ----------
-  // tf = { L, b (doc bounds before), cx, cy, sx, sy, ang (rad), tx, ty }
+  // tf = { L, b (doc bounds before), cx, cy, sx, sy, ang (rad), tx, ty,
+  //        mode, q?, mesh?, src?, dirty }
+  // mode (wave PS-5): "free" (scale, rotate, move), or on raster
+  // layers "skew", "distort", "perspective" (q: the four corners
+  // tl, tr, br, bl, doc px) and "warp" (mesh: Photoshop's 4 × 4
+  // Bezier control points). As in Photoshop, Ctrl on a corner
+  // distorts, Ctrl+Shift skews, Ctrl+Alt+Shift sets perspective.
+  var W = window.PhotoLab.warp;
+  var TF_MODES = ["free", "skew", "distort", "perspective", "warp"];
   var tf = null;
   function tfMatrix() {
     var c = Math.cos(tf.ang), s = Math.sin(tf.ang);
@@ -710,12 +718,14 @@
     return [a, b, cc, d, e, f];
   }
   function tfCorners() {
+    if (tf.mesh) return [tf.mesh[0], tf.mesh[3], tf.mesh[15], tf.mesh[12]];
+    if (tf.q) return tf.q;
     var m = tfMatrix(), b = tf.b;
     return [[b.x, b.y], [b.x + b.w, b.y], [b.x + b.w, b.y + b.h], [b.x, b.y + b.h]].map(function (p) {
       return { x: m[0] * p[0] + m[2] * p[1] + m[4], y: m[1] * p[0] + m[3] * p[1] + m[5] };
     });
   }
-  function startTransform() {
+  function startTransform(mode) {
     var L = PL.layer();
     if (!L) { PL.toast(PL.t("msg.noLayer")); return; }
     if (L.lock) { PL.toast(PL.t("msg.locked")); return; }
@@ -723,17 +733,51 @@
     var b = view().layerBounds(L);
     if (!b || L.k === "raster" && !T.contentBounds(PL.surface(L.id))) { PL.toast(PL.t("msg.emptyLayer")); return; }
     if (L.k === "raster") b = (function (cb) { return { x: cb.x + L.x, y: cb.y + L.y, w: cb.w, h: cb.h }; })(T.contentBounds(PL.surface(L.id)));
-    tf = { L: L, b: b, cx: b.x + b.w / 2, cy: b.y + b.h / 2, sx: 1, sy: 1, ang: 0, tx: 0, ty: 0, prevTool: PL.st.tool };
+    if (tf && tf.L === L && typeof mode === "string") { setTransformMode(mode); return; }
+    if (tf) endTransform(true);
+    tf = { L: L, b: b, cx: b.x + b.w / 2, cy: b.y + b.h / 2, sx: 1, sy: 1, ang: 0, tx: 0, ty: 0, prevTool: PL.st.tool,
+           mode: "free", q: null, mesh: null, src: null, dirty: false };
     PL.setTool("transform", true);
+    if (typeof mode === "string" && mode !== "free") setTransformMode(mode);
+  }
+  // The layer's pixels in its bounds, once (the preview of the
+  // modes canvas 2D cannot draw with one matrix).
+  function tfSource() {
+    if (tf.src) return tf.src;
+    var b = tf.b, c = view().canvas(Math.max(1, b.w), Math.max(1, b.h)), g = c.getContext("2d");
+    g.setTransform(1, 0, 0, 1, -b.x, -b.y);
+    view().drawLayer(g, tf.L, null);
+    tf.src = c;
+    return c;
+  }
+  function setTransformMode(mode) {
+    if (!tf || TF_MODES.indexOf(mode) < 0 || mode === tf.mode) { PL.emit("transform"); return; }
+    if (mode !== "free" && tf.L.k !== "raster") { PL.toast(PL.t("msg.tfRaster")); PL.emit("transform"); return; }
+    if (mode === "free") {
+      if (tf.q || tf.mesh) { PL.toast(PL.t("msg.tfKept")); PL.emit("transform"); return; }
+    } else {
+      var q = tfCorners().map(function (p) { return { x: p.x, y: p.y }; });
+      if (mode === "warp") { if (!tf.mesh) tf.mesh = W.meshOfQuad(q); tf.q = null; }
+      else { tf.q = q; tf.mesh = null; }
+      if (tf.sx !== 1 || tf.sy !== 1 || tf.ang || tf.tx || tf.ty) tf.dirty = true;
+      tf.sx = tf.sy = 1; tf.ang = tf.tx = tf.ty = 0;      // folded into the corners / the mesh
+      tfSource();
+    }
+    tf.mode = mode;
+    view().invalidate(); PL.emit("transform");
   }
   function endTransform(apply) {
     if (!tf) return;
     var t0 = tf;
     tf = null;
-    if (apply && (t0.sx !== 1 || t0.sy !== 1 || t0.ang || t0.tx || t0.ty)) commitTransform(t0);
+    var changed = t0.dirty || t0.sx !== 1 || t0.sy !== 1 || t0.ang || t0.tx || t0.ty;
+    if (apply && changed) commitTransform(t0);
+    if (t0.src) t0.src.width = t0.src.height = 0;
     PL.setTool(t0.prevTool === "transform" ? "move" : t0.prevTool, true);
     view().invalidate();
   }
+  // Output points of the source's regular grid (n × n cells).
+  function tfGrid(t0, n) { return t0.mesh ? W.patchGrid(t0.mesh, n) : W.quadGrid(t0.q, n); }
   function commitTransform(t0) {
     var L = t0.L;
     tf = t0; var m = tfMatrix(); tf = null;
@@ -749,29 +793,90 @@
     }
     var s = PL.surface(L.id), b = t0.b;
     var img = T.readRect(s, b.x - L.x, b.y - L.y, b.w, b.h);
-    tf = t0; var cs = tfCorners(); tf = null;
+    var pts = t0.mesh ? tfGrid(t0, W.MESH_N) : null;
+    tf = t0; var cs = pts || tfCorners(); tf = null;
     var xs = cs.map(function (p) { return p.x; }), ys = cs.map(function (p) { return p.y; });
     var ox = Math.floor(Math.min.apply(null, xs)), oy = Math.floor(Math.min.apply(null, ys));
     var ow = Math.max(1, Math.ceil(Math.max.apply(null, xs)) - ox), oh = Math.max(1, Math.ceil(Math.max.apply(null, ys)) - oy);
-    // image local → output local
-    var M = [m[0], m[1], m[2], m[3], m[0] * b.x + m[2] * b.y + m[4] - ox, m[1] * b.x + m[3] * b.y + m[5] - oy];
+    var job, args;
+    if (t0.mesh) {
+      job = "meshWarp";
+      args = { img: img, pts: pts.map(function (p) { return { x: p.x - ox, y: p.y - oy }; }), n: W.MESH_N, w: ow, h: oh };
+    } else if (t0.q) {
+      job = "perspective";
+      args = { img: img, q: t0.q.map(function (p) { return { x: p.x - ox, y: p.y - oy }; }), w: ow, h: oh };
+    } else {
+      // image local → output local
+      job = "transform";
+      args = { img: img, m: [m[0], m[1], m[2], m[3], m[0] * b.x + m[2] * b.y + m[4] - ox, m[1] * b.x + m[3] * b.y + m[5] - oy], w: ow, h: oh };
+    }
     PL.busy(true);
-    PL.job("transform", { img: img, m: M, w: ow, h: oh }).then(function (out) {
+    PL.job(job, args).then(function (out) {
       PL.busy(false);
-      PL.docChange(PL.t("step.transform"), function () {
+      PL.docChange(PL.t(t0.mesh ? "step.warp" : t0.q ? "step.distort" : "step.transform"), function () {
         T.clear(s);
         T.writeRect(s, ox - L.x, oy - L.y, out);
       }, [L.id]);
     }, function () { PL.busy(false); PL.toast(PL.t("msg.failed")); });
   }
+  // Moves corner i of q0 by (dx, dy) as the mode says → new quad.
+  function quadDrag(mode, q0, i, dx, dy) {
+    var q = q0.map(function (p) { return { x: p.x, y: p.y }; });
+    var horiz = Math.abs(dx) >= Math.abs(dy), j = horiz ? i ^ 1 : 3 - i;   // tl-tr / br-bl, tl-bl / tr-br
+    if (mode === "distort") { q[i].x += dx; q[i].y += dy; }
+    else if (mode === "skew") {
+      if (horiz) { q[i].x += dx; q[j].x += dx; } else { q[i].y += dy; q[j].y += dy; }
+    } else if (mode === "perspective") {
+      if (horiz) { q[i].x += dx; q[j].x -= dx; } else { q[i].y += dy; q[j].y -= dy; }
+    }
+    return q;
+  }
+  // The four mesh points moving with corner k (its two handles).
+  var MESH_CARRY = { 0: [1, 4, 5], 3: [2, 7, 6], 12: [8, 13, 9], 15: [11, 14, 10] };
   var transform = {
     id: "transform", cursor: "default",
     down: function (p, e) {
       if (!tf) return null;
-      var cs = tfCorners(), z = view().state().z, tol = 14 / z;
-      var hit = -1;
+      var z = view().state().z, tol = 14 / z, hit = -1;
+      var cs = tfCorners();
       cs.forEach(function (c, i) { if (Math.hypot(c.x - p.x, c.y - p.y) <= tol) hit = i; });
-      var a = { x: p.x, y: p.y }, s0 = { sx: tf.sx, sy: tf.sy, ang: tf.ang, tx: tf.tx, ty: tf.ty };
+      // Photoshop's keys on a corner: Ctrl distorts, Ctrl+Shift skews, Ctrl+Alt+Shift perspective
+      if (hit >= 0 && tf.mode === "free" && (e.ctrlKey || e.metaKey) && tf.L.k === "raster") {
+        setTransformMode(e.shiftKey && e.altKey ? "perspective" : e.shiftKey ? "skew" : "distort");
+        cs = tfCorners();
+      }
+      var a = { x: p.x, y: p.y };
+      if (tf.mode === "warp") {
+        var mi = -1, best = tol;
+        tf.mesh.forEach(function (c, i) { var dd = Math.hypot(c.x - p.x, c.y - p.y); if (dd <= best) { best = dd; mi = i; } });
+        var m0 = tf.mesh.map(function (c) { return { x: c.x, y: c.y }; });
+        var moving = mi < 0 ? (pointInPoly(p, cs) ? m0.map(function (c, i) { return i; }) : null) : [mi].concat(MESH_CARRY[mi] || []);
+        if (!moving) return null;
+        return {
+          move: function (q) {
+            var dx = q.x - a.x, dy = q.y - a.y;
+            moving.forEach(function (i) { tf.mesh[i] = { x: m0[i].x + dx, y: m0[i].y + dy }; });
+            tf.dirty = true; view().invalidate(); PL.emit("transform");
+          },
+          up: function () {}, cancel: function () { tf.mesh = m0; view().invalidate(); }
+        };
+      }
+      if (tf.q) {
+        var q0 = tf.q.map(function (c) { return { x: c.x, y: c.y }; });
+        if (hit < 0 && !pointInPoly(p, cs)) return null;
+        return {
+          move: function (q, ev) {
+            var dx = q.x - a.x, dy = q.y - a.y, nq;
+            if (hit < 0) nq = q0.map(function (c) { return { x: c.x + dx, y: c.y + dy }; });
+            else nq = quadDrag(tf.mode, q0, hit, dx, dy);
+            if (!W.convex(nq)) return;                  // a folded quad is not a picture
+            tf.q = nq; tf.dirty = true;
+            view().invalidate(); PL.emit("transform");
+          },
+          up: function () {}, cancel: function () { tf.q = q0; view().invalidate(); }
+        };
+      }
+      var s0 = { sx: tf.sx, sy: tf.sy, ang: tf.ang, tx: tf.tx, ty: tf.ty };
       var ccx = tf.cx + tf.tx, ccy = tf.cy + tf.ty;
       var inside = pointInPoly(p, cs);
       var mode = hit >= 0 ? "scale" : inside ? "move" : "rotate";
@@ -801,11 +906,34 @@
       if (e.key === "Escape") { endTransform(false); return true; }
       return false;
     },
-    leave: function () { if (tf) { tf = null; view().invalidate(); } },
+    leave: function () { if (tf) { if (tf.src) tf.src.width = tf.src.height = 0; tf = null; view().invalidate(); } },
     overlay: function (g) {
       if (!tf) return;
       var cs = tfCorners();
       g.save(); g.lineWidth = 1; g.strokeStyle = "#4aa3ff";
+      if (tf.mesh) {
+        // the patch's grid lines (thirds) and the handles
+        var n = 12, grid = W.patchGrid(tf.mesh, n);
+        g.beginPath();
+        [0, 4, 8, 12].forEach(function (j) {
+          for (var i = 0; i <= n; i++) { var P = grid[j * (n + 1) + i]; if (i) g.lineTo(sx(P.x), sy(P.y)); else g.moveTo(sx(P.x), sy(P.y)); }
+          for (var k = 0; k <= n; k++) { var Q = grid[k * (n + 1) + j]; if (k) g.lineTo(sx(Q.x), sy(Q.y)); else g.moveTo(sx(Q.x), sy(Q.y)); }
+        });
+        g.stroke();
+        g.beginPath();
+        Object.keys(MESH_CARRY).forEach(function (c) {
+          var C0 = tf.mesh[c];
+          MESH_CARRY[c].slice(0, 2).forEach(function (h) { g.moveTo(sx(C0.x), sy(C0.y)); g.lineTo(sx(tf.mesh[h].x), sy(tf.mesh[h].y)); });
+        });
+        g.stroke();
+        g.fillStyle = "#fff";
+        tf.mesh.forEach(function (c, i) {
+          var r = MESH_CARRY[i] ? 5 : 4;
+          g.fillRect(sx(c.x) - r, sy(c.y) - r, r * 2, r * 2); g.strokeRect(sx(c.x) - r, sy(c.y) - r, r * 2, r * 2);
+        });
+        g.restore();
+        return;
+      }
       g.beginPath(); cs.forEach(function (c, i) { if (i) g.lineTo(sx(c.x), sy(c.y)); else g.moveTo(sx(c.x), sy(c.y)); });
       g.closePath(); g.stroke();
       g.fillStyle = "#fff";
@@ -822,9 +950,39 @@
     }
     return inside;
   }
+  // One textured triangle: src points (canvas px of img) onto dst
+  // (doc px, g's transform), clipped to the triangle grown a little
+  // so neighbours meet without hairlines.
+  function drawTri(g, img, s0, s1, s2, d0, d1, d2) {
+    var den = (s1.x - s0.x) * (s2.y - s0.y) - (s2.x - s0.x) * (s1.y - s0.y);
+    if (Math.abs(den) < 1e-9) return;
+    var a = ((d1.x - d0.x) * (s2.y - s0.y) - (d2.x - d0.x) * (s1.y - s0.y)) / den;
+    var c = ((d2.x - d0.x) * (s1.x - s0.x) - (d1.x - d0.x) * (s2.x - s0.x)) / den;
+    var b = ((d1.y - d0.y) * (s2.y - s0.y) - (d2.y - d0.y) * (s1.y - s0.y)) / den;
+    var d = ((d2.y - d0.y) * (s1.x - s0.x) - (d1.y - d0.y) * (s2.x - s0.x)) / den;
+    var e = d0.x - a * s0.x - c * s0.y, f = d0.y - b * s0.x - d * s0.y;
+    var mx = (d0.x + d1.x + d2.x) / 3, my = (d0.y + d1.y + d2.y) / 3, z = view().state().z, grow = 0.7 / z;
+    function out(P) { var vx = P.x - mx, vy = P.y - my, l = Math.hypot(vx, vy) || 1; return { x: P.x + vx / l * grow, y: P.y + vy / l * grow }; }
+    var A = out(d0), B = out(d1), Cc = out(d2);
+    g.save();
+    g.beginPath(); g.moveTo(A.x, A.y); g.lineTo(B.x, B.y); g.lineTo(Cc.x, Cc.y); g.closePath(); g.clip();
+    g.transform(a, b, c, d, e, f);
+    g.drawImage(img, 0, 0);
+    g.restore();
+  }
   // Live preview while transforming, and the floating selection.
   function preview(L, g) {
     if (tf && tf.L === L) {
+      if (tf.q || tf.mesh) {
+        var src = tfSource(), n = tf.mesh ? 16 : 10, pts = tfGrid(tf, n), cw = src.width / n, ch = src.height / n;
+        for (var j = 0; j < n; j++) for (var i = 0; i < n; i++) {
+          var p00 = pts[j * (n + 1) + i], p10 = pts[j * (n + 1) + i + 1], p01 = pts[(j + 1) * (n + 1) + i], p11 = pts[(j + 1) * (n + 1) + i + 1];
+          var s00 = { x: i * cw, y: j * ch }, s10 = { x: (i + 1) * cw, y: j * ch }, s01 = { x: i * cw, y: (j + 1) * ch }, s11 = { x: (i + 1) * cw, y: (j + 1) * ch };
+          drawTri(g, src, s00, s10, s11, p00, p10, p11);
+          drawTri(g, src, s00, s11, s01, p00, p11, p01);
+        }
+        return true;
+      }
       g.save();
       var m = tfMatrix();
       g.transform(m[0], m[1], m[2], m[3], m[4], m[5]);
@@ -995,6 +1153,7 @@
     setCropRect: function (r) { crop.r = clampRect(r); view().schedule(); },
     applyCrop: applyCrop,
     transforming: function () { return tf; },
-    startTransform: startTransform, endTransform: endTransform
+    startTransform: startTransform, endTransform: endTransform,
+    TF_MODES: TF_MODES, setTransformMode: setTransformMode
   };
 })();
