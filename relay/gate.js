@@ -565,6 +565,14 @@ export const TOOLS = [
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
   },
+  // GL-7 (Chris 2026-11-21 «Πρέπει να βρούμε λύσεις»): a computer left with
+  // an old orOS no longer needs the owner at it.
+  {
+    name: "oros_update",
+    description: "Asks every open orOS of the owner (computers with orOS in a window or in the tray, phones, browsers) to update to the newest orOS now. Use it when an answer shows a device runs an older orOS than the newest one (a missing tool or argument, an old behaviour). It changes nothing in the owner's data; the owner sees the usual update notice.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true }
+  },
   // GL-5 (Chris 2026-11-21): a conversation keeps the tool list it saw
   // when it started, so a tool or an argument added later was out of its
   // reach until a new conversation. These two never change: gate_tools
@@ -1867,6 +1875,7 @@ export class GateBox {
     try { o = JSON.parse(msg); } catch (e) { return; }
     if (o && o.lv !== undefined && o.r === undefined) { await this.shareLv(ws, o.lv, o.base === 1); return; }
     if (o && typeof o.lf === "string" && o.r === undefined) { await this.shareLf(ws, o.lf); return; }
+    if (o && o.upd === 1 && o.r === undefined) { this.askUpdate(ws); return; }   // GL-7: the owner's Update button
     if (o && typeof o.snap === "string" && o.r === undefined) { await this.putCopy(ws, o.snap); return; }
     if (o && typeof o.fidx === "string" && o.r === undefined) { await this.putFileIndex(ws, o.fidx); return; }
     if (o && o.fdrop === 1 && o.r === undefined) { await this.dropFromDevice(ws); return; }
@@ -2315,6 +2324,13 @@ export class GateBox {
     return Array.isArray(kept) ? kept : [];
   }
 
+  // GL-7: every other open orOS updates itself now (→ how many were asked)
+  askUpdate(from) {
+    let n = 0;
+    this.sockets().forEach((s) => { if (s === from) return; try { s.send('{"upd":1}'); n++; } catch (e) {} });
+    return n;
+  }
+
   // Passes one tool call to an awake device and waits for its answer.
   // e: "closed" (no awake device) or "timeout" (rid: the call's id).
   // dl (6.01.02): the box's time after which the device must not start it.
@@ -2369,6 +2385,10 @@ export class GateBox {
       const a1 = p.arguments && typeof p.arguments === "object" ? p.arguments : {};
       const txt = gateToolsText(withDevTools(await this.devTools(false)), typeof a1.name === "string" ? a1.name : "");
       return jsonRes(200, rpcOk(id, toolText(txt || "No orOS Gate tool is called " + JSON.stringify(String(a1.name).slice(0, 60)) + "; gate_tools without name lists them.", !txt)));
+    }
+    if (p.name === "oros_update") {
+      const n = this.askUpdate(null);
+      return jsonRes(200, rpcOk(id, toolText(n ? "Asked " + n + " open orOS to update now. The orOS desktop app on a computer downloads the newest orOS and switches to it within a few minutes (its launcher 0.9.5 or newer); every orOS reloads by itself when the new version is in. Nothing in the owner's data changes. Check with list_apps in about five minutes." : "No orOS is open right now, so none could be asked. An orOS updates itself when it next starts.", !n)));
     }
     if (TOOL_NAMES.indexOf(p.name) < 0 && !(await this.devTools(false)).some((t) => t.name === p.name)) {
       return jsonRes(200, rpcErr(id, -32602, "unknown tool"));

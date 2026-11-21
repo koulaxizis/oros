@@ -245,9 +245,9 @@ test("mcp: 401 with resource metadata, then initialize and tools/list", async ()
   const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json();
   assert.deepEqual(list.result.tools.map((x) => x.name), ["list_apps", "search_data", "app_summary", "budget_lines",
     "invoice_list", "stock_items", "publish_titles", "budget_add", "budget_change", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_refresh", "budget_delete",
-    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "invoices_record", "files_link", "local_folders_request", "gate_tools", "gate_call"]);
+    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "invoices_record", "files_link", "local_folders_request", "oros_update", "gate_tools", "gate_call"]);
   const ro = list.result.tools.filter((x) => x.annotations.readOnlyHint).map((x) => x.name);
-  assert.equal(ro.length, 9, "only the budget_*, kanban_* and invoices_record writers are not read-only (+ files_link, GATE-FILES F2; gate_tools GL-5)");
+  assert.equal(ro.length, 10, "only the budget_*, kanban_* and invoices_record writers are not read-only (+ files_link, GATE-FILES F2; gate_tools GL-5; oros_update GL-7)");
   assert.equal(list.result.tools.find((x) => x.name === "budget_delete").annotations.destructiveHint, true);
   const unk = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 3, method: "resources/list" })).json();
   assert.equal(unk.error.code, -32601);
@@ -981,4 +981,28 @@ test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passe
   const tool = G.TOOLS.find((x) => x.name === "local_folders_request");
   assert.deepEqual(tool.inputSchema.required, ["path"]);
   assert.deepEqual(tool.inputSchema.properties.access.enum, ["read", "write"]);
+});
+
+test("GL-7: oros_update asks every open orOS to update; a device's Update asks the others", async () => {
+  const w = world();
+  await newGate(w);
+  const t = await tokens(w);
+  const tc = async () => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "oros_update", arguments: {} } })).json()).result;
+  const none = await tc();
+  assert.equal(none.isError, true);
+  assert.match(none.content[0].text, /No orOS is open/);
+  const b = w.boxes.get(ID);
+  const mk = () => ({ sent: [], closed: null, send(m) { this.sent.push(m); }, close(c) { this.closed = c; } });
+  const pc = mk(), phone = mk();
+  b.socks.push(pc, phone);
+  const two = await tc();
+  assert.equal(two.isError, false);
+  assert.match(two.content[0].text, /Asked 2 open orOS/);
+  assert.deepEqual([pc.sent.pop(), phone.sent.pop()], ['{"upd":1}', '{"upd":1}']);
+  await b.box.webSocketMessage(phone, '{"upd":1}');
+  assert.deepEqual(pc.sent, ['{"upd":1}']);
+  assert.deepEqual(phone.sent, [], "the asking device is not asked back");
+  const g = require("fs").readFileSync(require("path").join(__dirname, "..", "gate/gate.js"), "utf8");
+  assert.match(g, /fetch\("\/__oros\/update", \{ method: "POST"/);
+  assert.match(g, /if \(ev\.data\.indexOf\('\{"upd"'\) === 0\) \{ onUpd\(\); return; \}/);
 });
