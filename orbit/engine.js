@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Orbit garden — the rules (v1.0.0), no DOM
+// orOS Orbit garden — the rules (v1.1.0), no DOM
 // A tower defense game on a round map: a little garden on a small moon.
 // At night falling sparks come in at a gate on the rim and spiral in
 // towards the moonflower in the middle. Plants grow on three stone
@@ -15,23 +15,29 @@
 // r sin a, y = −r cos a). Ring k (0 outer, 1 middle, 2 inner) has
 // RINGS[k].n slots at radius RINGS[k].r; slot j (in the ring's own
 // frame) stands at angle (j + rot[k]) × 2π / n. Frame slot 0 is the
-// gap, so turning a ring moves its gap and its plants together.
+// gap (in the far orbit some rings have a second gap, gd.gaps), so
+// turning a ring moves its gaps and its plants together. A ring of
+// the far orbit can turn by itself (gd.auto, signed steps): once
+// after every wave, when the garden is clear again.
 // Lanes: LANES[0] runs between the rim and ring 0, LANES[1] between
 // rings 0 and 1, LANES[2] between rings 1 and 2.
 //
 // The way of a gate (rebuilt whenever a ring turns): in from the rim to
-// lane 0, clockwise round lane 0 to the angle of ring 0's gap, through
-// it to lane 1, clockwise to ring 1's gap, through to lane 2, clockwise
-// to ring 2's gap, and in to the moonflower (radius HEART). A spark's
-// place is its distance s along the way of its gate.
+// lane 0, clockwise round lane 0 to the angle of ring 0's gap (the
+// first one it meets), through it to lane 1, clockwise to ring 1's
+// gap, through to lane 2, clockwise to ring 2's gap, and in to the
+// moonflower (radius HEART). A spark's place is its distance s along
+// the way of its gate.
 //
 // Run state (also the device-local session, oros-orbit-session .g):
 //   { v, gd: garden, diff, u: plants unlocked (1-4), t: ticks, coins,
 //     hearts, hmax, wave: waves called, nw: waves in the night,
 //     rot: [3 ring turns], tn: [3 steps turned since the last wave was
-//     called, signed], sp: [spawner], wl: [sparks left per wave],
-//     sk: [spark], pl: { "<ring>:<slot>": plant }, nid,
-//     over: -1 playing | 0 lost | 1 won, acts, faded }
+//     called, signed], at: waves after which the self-turning rings
+//     have turned, en: 1 Endless (no last wave; nw = ENDLESS), sp:
+//     [spawner], wl: [sparks left per wave called (all waves of the
+//     night when not Endless)], sk: [spark], pl: { "<ring>:<slot>":
+//     plant }, nid, over: -1 playing | 0 lost | 1 won, acts, faded }
 //   spawner { w: wave, g: group, n: spawned in group, next: tick }
 //   spark { id, k: kind, w: wave, gt: gate index, s, hp, mx,
 //           sl: slow, st: slow ticks, hd: held ticks, ar: 1 shelled }
@@ -55,6 +61,9 @@
   var STEP_COST = 5;                     // a ring step beyond the free ones
   var FREE_FIRST = 2;                    // free steps per ring before the first wave
   var FREE = 1;                          // and between waves after that
+  var ENDLESS = 999;                     // the waves of an Endless night (never all reached)
+  var ENDLESS_HP = 1.07;                 // and the extra health a wave after its tenth
+  var NO_GAPS = [[0], [0], [0]], NO_AUTO = [0, 0, 0];
   var TAU = Math.PI * 2;
 
   var DIFFS = ["m", "n", "h"];           // Mild, Normal, Hard
@@ -107,19 +116,30 @@
   var KINDS = ["thorn", "dew", "sun", "vine"];
   var TARGETS = ["first", "strong", "close"];
 
-  // The gardens of the Quiet orbit: gates (rim angle 0-15), the rings'
-  // turns at the start, old stones (frame slots, no planting) and the
-  // waves ("<kind><count>:<ticks between>", groups one after the other;
+  // The gardens: o the orbit (1 the Quiet orbit, 2 the far orbit),
+  // gates (rim angle 0-15), the rings' turns at the start, old stones
+  // (frame slots, no planting), gaps (frame slots, default only 0),
+  // auto (steps a ring turns by itself after each wave) and the waves
+  // ("<kind><count>:<ticks between>", groups one after the other;
   // groups take the gates in turn).
   var GARDENS = [
-    { id: "g1", gates: [0], rot: [4, 6, 6], stones: [[], [], []],
+    { id: "g1", o: 1, gates: [0], rot: [4, 6, 6], stones: [[], [], []],
       waves: ["s5:90", "s7:80", "s9:70", "s10:60", "s12:55", "s14:50", "s16:45", "s18:40", "s20:36", "s16:40 e1:0"] },
-    { id: "g2", gates: [0, 8], rot: [12, 3, 2], stones: [[], [], []],
+    { id: "g2", o: 1, gates: [0, 8], rot: [12, 3, 2], stones: [[], [], []],
       waves: ["s6:80", "s8:70", "c5:50 s5:70", "s12:55", "c10:40", "s10:50 c6:40", "s16:45", "c12:35 s8:45", "s20:38", "s14:40 c10:35 e1:0"] },
-    { id: "g3", gates: [12], rot: [0, 9, 4], stones: [[5, 11], [4, 8], [4]],
+    { id: "g3", o: 1, gates: [12], rot: [0, 9, 4], stones: [[5, 11], [4, 8], [4]],
       waves: ["s8:70", "m4:80", "s10:55 c4:45", "m8:60", "s12:50 m4:60", "c12:35", "s14:45 m6:55", "m12:45", "s18:38 c8:35", "m12:40 s12:40 e1:0"] },
-    { id: "g4", gates: [4, 12], rot: [8, 0, 4], stones: [[8], [6], []],
-      waves: ["s8:70", "n4:80", "c8:45 s6:60", "n8:60", "s14:50", "c10:35 n6:55", "s16:45", "n12:45", "s12:45 c12:35 m8:50", "n12:40 s14:40 e1:0"] }
+    { id: "g4", o: 1, gates: [4, 12], rot: [8, 0, 4], stones: [[8], [6], []],
+      waves: ["s8:70", "n4:80", "c8:45 s6:60", "n8:60", "s14:50", "c10:35 n6:55", "s16:45", "n12:45", "s12:45 c12:35 m8:50", "n12:40 s14:40 e1:0"] },
+    // The far orbit: rings with two gaps, rings that turn by themselves.
+    { id: "g5", o: 2, gates: [2], rot: [3, 5, 1], stones: [[], [], []], gaps: [[0, 8], [0], [0]],
+      waves: ["s8:70", "c6:45 s6:60", "m6:60", "n6:60 s6:55", "s14:45", "c12:35 m6:50", "n10:50", "s16:40 c8:35", "m10:45 n8:45", "s14:38 m8:45 e1:0"] },
+    { id: "g6", o: 2, gates: [6, 14], rot: [10, 2, 5], stones: [[], [], []], auto: [0, 1, 0],
+      waves: ["s8:70", "c8:45", "s10:50 m4:60", "n8:55", "c12:35 s8:50", "m10:50", "s16:42 n6:50", "c14:32 m6:45", "n12:42 s12:40", "m10:42 c12:32 e1:0"] },
+    { id: "g7", o: 2, gates: [10], rot: [6, 8, 2], stones: [[4, 12], [3, 9], []], gaps: [[0], [0], [0, 4]], auto: [-1, 0, 0],
+      waves: ["s10:60", "m6:60", "c10:40 n4:55", "s12:45", "m8:50 c6:40", "n8:48", "s15:40 m5:50", "c14:32 n6:45", "m10:44 s12:40", "n9:42 m7:44 e1:0"] },
+    { id: "g8", o: 2, gates: [0, 8], rot: [5, 7, 3], stones: [[10], [], [6]], gaps: [[0, 8], [0], [0]], auto: [0, 1, 0],
+      waves: ["s10:60", "c10:40 m4:60", "n8:55", "s16:42 c8:38", "m12:48", "n12:45 c10:35", "s18:36 m8:45", "c18:28 n10:42", "m14:40 s16:36", "n14:38 m12:40 e2:240"] }
   ];
   var GARDEN = {};
   function parseWave(str) {
@@ -128,7 +148,23 @@
       return { k: m[1], n: +m[2], gap: +m[3] };
     });
   }
-  GARDENS.forEach(function (gd, i) { gd.idx = i; gd.groups = gd.waves.map(parseWave); GARDEN[gd.id] = gd; });
+  GARDENS.forEach(function (gd, i) {
+    gd.idx = i; gd.groups = gd.waves.map(parseWave); GARDEN[gd.id] = gd;
+    if (!gd.gaps) gd.gaps = NO_GAPS;
+    if (!gd.auto) gd.auto = NO_AUTO;
+  });
+  // The groups of wave w (0-based). Endless repeats the garden's ten
+  // waves, each round with 30% more sparks a group, a little closer
+  // together; health keeps growing with the wave as always.
+  function groupsOf(g, w) {
+    var gd = GARDEN[g.gd];
+    if (!g.en) return gd.groups[w];
+    var L = gd.groups.length, round = Math.floor(w / L);
+    return gd.groups[w % L].map(function (x) {
+      return { k: x.k, n: Math.max(1, Math.round(x.n * (1 + 0.3 * round))), gap: Math.max(10, Math.round(x.gap * Math.pow(0.92, round))) };
+    });
+  }
+  function waveSize(gs) { return gs.reduce(function (n, x) { return n + x.n; }, 0); }
 
   // ---------- Geometry ----------
   function mod(a, n) { return ((a % n) + n) % n; }
@@ -158,7 +194,10 @@
     function arc(to) { var da = sweep(a, to), l = da * r; if (l > 0) seg.push({ t: "c", r: r, a0: a, da: da, s0: s, l: l }); s += l; a = mod(a + da, TAU); }
     radial(LANES[0]);
     for (var k = 0; k < 3; k++) {
-      arc(slotAngle(rot, k, 0));
+      // the first gap clockwise from here
+      var best = null, bs = 0;
+      gd.gaps[k].forEach(function (j) { var to = slotAngle(rot, k, j), d = sweep(a, to); if (best === null || d < bs) { best = to; bs = d; } });
+      arc(best);
       radial(k < 2 ? LANES[k + 1] : HEART);
     }
     return { seg: seg, len: s };
@@ -210,18 +249,22 @@
   }
 
   // ---------- A new night ----------
-  function newRun(gdId, diff) {
+  // en: an Endless night (the waves never end; the best wave counts).
+  function newRun(gdId, diff, en) {
     var gd = GARDEN[gdId];
     if (!gd || !DIFF[diff]) return null;
     var D = DIFF[diff];
-    return {
+    var g = {
       v: V, gd: gdId, diff: diff, u: Math.min(4, gd.idx + 1), t: 0,
-      coins: D.coins, hearts: D.hearts, hmax: D.hearts, wave: 0, nw: gd.waves.length,
-      rot: gd.rot.slice(), tn: [0, 0, 0],
-      sp: [], wl: gd.groups.map(function (gs) { return gs.reduce(function (n, x) { return n + x.n; }, 0); }),
+      coins: D.coins, hearts: D.hearts, hmax: D.hearts, wave: 0, nw: en ? ENDLESS : gd.waves.length,
+      rot: gd.rot.slice(), tn: [0, 0, 0], at: 0,
+      sp: [], wl: en ? [] : gd.groups.map(waveSize),
       sk: [], pl: {}, nid: 1, over: -1, acts: 0, faded: 0, ev: []
     };
+    if (en) g.en = 1;
+    return g;
   }
+  function isGap(gd, k, j) { return gd.gaps[k].indexOf(j) >= 0; }
 
   // ---------- Actions ----------
   function stats(p) { var P = PLANTS[p.k]; return P ? P.st[p.l === 3 ? p.b : p.l] : null; }
@@ -234,8 +277,8 @@
   function sellValue(p) { return p.fr + Math.floor(SELL * (p.sp - p.fr)); }
   function unlocked(g, k) { return !!PLANTS[k] && PLANTS[k].u <= g.u; }
   function isStone(gd, k, j) { return gd.stones[k].indexOf(j) >= 0; }
-  // A slot plants can grow on: not the gap (frame slot 0), not a stone.
-  function isBed(gd, k, j) { return j > 0 && j < RINGS[k].n && !isStone(gd, k, j); }
+  // A slot plants can grow on: not a gap, not a stone.
+  function isBed(gd, k, j) { return j >= 0 && j < RINGS[k].n && !isGap(gd, k, j) && !isStone(gd, k, j); }
   // Why plant k cannot go on slot key ("" = it can): "over", "locked",
   // "gap", "stone", "taken", "coins".
   function whyNot(g, sk, k) {
@@ -243,7 +286,7 @@
     if (g.over >= 0) return "over";
     if (!PLANTS[k] || !unlocked(g, k)) return "locked";
     if (!p) return "stone";
-    if (p.j === 0) return "gap";
+    if (isGap(gd, p.k, p.j)) return "gap";
     if (isStone(gd, p.k, p.j)) return "stone";
     if (g.pl[sk]) return "taken";
     if (g.coins < plantCost(k)) return "coins";
@@ -312,7 +355,7 @@
   // Sparks still to come or out in the waves called so far.
   function sparksLeft(g) {
     var n = 0;
-    for (var w = 0; w < g.wave; w++) n += g.wl[w];
+    for (var w = 0; w < g.wave; w++) n += g.wl[w] || 0;
     return n;
   }
   // The next wave. Called while sparks are still out: +1 coin for every
@@ -321,6 +364,7 @@
     if (g.over >= 0 || g.wave >= g.nw) return false;
     var early = sparksLeft(g);
     if (early) { g.coins += early; g.ev.push({ e: "early", n: early }); }
+    if (g.en) g.wl.push(waveSize(groupsOf(g, g.wave)));
     g.sp.push({ w: g.wave, g: 0, n: 0, next: g.t + 1 });
     g.wave++;
     g.tn = [0, 0, 0];
@@ -330,8 +374,11 @@
   }
 
   // ---------- One tick ----------
+  // Health: +45% a wave, by garden (the far orbit as garden 5) and
+  // difficulty; past wave 10 of an Endless night also ×1.07 a wave.
   function sparkHp(g, k, w) {
-    return Math.round(SPARK[k].hp * (1 + HP_WAVE * w) * (0.85 + HP_GD * GARDEN[g.gd].idx) * DIFF[g.diff].hp);
+    var en = g.en && w > 9 ? Math.pow(ENDLESS_HP, w - 9) : 1;
+    return Math.round(SPARK[k].hp * (1 + HP_WAVE * w) * (0.85 + HP_GD * Math.min(4, GARDEN[g.gd].idx)) * DIFF[g.diff].hp * en);
   }
   function makeSpark(g, k, w, gt, s) {
     var hp = sparkHp(g, k, w);
@@ -414,12 +461,12 @@
     for (var i = 0; i < g.sp.length; i++) {
       var sp = g.sp[i];
       if (g.t < sp.next) continue;
-      var grp = gd.groups[sp.w][sp.g];
+      var gs = groupsOf(g, sp.w), grp = gs[sp.g];
       g.sk.push(makeSpark(g, grp.k, sp.w, (sp.w + sp.g) % gd.gates.length, 0));
       sp.n++;
       if (sp.n >= grp.n) {
         sp.g++; sp.n = 0;
-        if (sp.g >= gd.groups[sp.w].length) { g.sp.splice(i, 1); i--; continue; }
+        if (sp.g >= gs.length) { g.sp.splice(i, 1); i--; continue; }
         sp.next = g.t + GROUP_GAP;
       } else sp.next = g.t + Math.max(1, grp.gap);
     }
@@ -458,7 +505,15 @@
     });
     g.sk = left;
     if (g.hearts <= 0) { g.over = 0; g.ev.push({ e: "lost" }); return; }
-    if (g.wave >= g.nw && !g.sp.length && !g.sk.length) { g.over = 1; g.ev.push({ e: "won", stars: stars(g) }); }
+    if (g.wave >= g.nw && !g.sp.length && !g.sk.length) { g.over = 1; g.ev.push({ e: "won", stars: stars(g) }); return; }
+    // the garden is clear again after a wave: the self-turning rings turn
+    if (g.at < g.wave && !g.sp.length && !g.sk.length) {
+      g.at = g.wave;
+      for (var k = 0; k < 3; k++) if (gd.auto[k]) {
+        g.rot[k] = mod(g.rot[k] + gd.auto[k], RINGS[k].n);
+        g.ev.push({ e: "auto", k: k, d: gd.auto[k] });
+      }
+    }
   }
   // One spark of wave w is gone: the wave's bonus when it was the last.
   function done(g, w) {
@@ -472,15 +527,21 @@
   function run(g, ticks) { for (var i = 0; i < ticks && g.over < 0; i++) step(g); }
 
   function stars(g) {
-    if (g.over !== 1) return 0;
+    if (g.over !== 1 || g.en) return 0;
     var r = g.hearts / g.hmax;
     return r >= 0.9 ? 3 : r >= 0.5 ? 2 : 1;
+  }
+  // Waves of the night cleared so far (every spark of the wave gone).
+  function cleared(g) {
+    var n = 0;
+    for (var w = 0; w < g.wave; w++) if (g.wl[w] === 0) n++;
+    return n;
   }
   // What comes in the next wave: [{k, n, gt}], in order.
   function preview(g) {
     if (g.wave >= g.nw) return [];
     var gd = GARDEN[g.gd], w = g.wave;
-    return gd.groups[w].map(function (x, i) { return { k: x.k, n: x.n, gt: (w + i) % gd.gates.length }; });
+    return groupsOf(g, w).map(function (x, i) { return { k: x.k, n: x.n, gt: (w + i) % gd.gates.length }; });
   }
   // The gates the next wave comes from (or every gate when none comes).
   function nextGates(g) {
@@ -497,21 +558,24 @@
   function normalizeRun(x) {
     if (!x || typeof x !== "object" || x.v !== V || !GARDEN[x.gd] || !DIFF[x.diff]) return null;
     var gd = GARDEN[x.gd];
-    var BIG = 1e9, nw = gd.waves.length, i;
+    var en = x.en === 1, BIG = 1e9, nw = en ? ENDLESS : gd.waves.length, i;
+    if (x.en !== undefined && !en) return null;
     if (!int(x.u, 1, 4) || !int(x.t, 0, BIG) || !num(x.coins, 0, BIG) || !int(x.hearts, 0, 99) ||
         !int(x.hmax, 1, 99) || !int(x.wave, 0, nw) || x.nw !== nw ||
         !int(x.nid, 1, BIG) || [-1, 0, 1].indexOf(x.over) < 0 || !int(x.acts, 0, BIG) || !int(x.faded, 0, BIG) ||
         !Array.isArray(x.rot) || x.rot.length !== 3 || !Array.isArray(x.tn) || x.tn.length !== 3 ||
-        !Array.isArray(x.sp) || !Array.isArray(x.wl) || x.wl.length !== nw ||
+        !Array.isArray(x.sp) || !Array.isArray(x.wl) || x.wl.length !== (en ? x.wave : nw) ||
+        (x.at !== undefined && !int(x.at, 0, x.wave)) ||
         !Array.isArray(x.sk) || !x.pl || typeof x.pl !== "object" || Array.isArray(x.pl)) return null;
     for (i = 0; i < 3; i++) if (!int(x.rot[i], 0, RINGS[i].n - 1) || !int(x.tn[i], -99, 99)) return null;
     var g = { v: V, gd: x.gd, diff: x.diff, u: x.u, t: x.t, coins: x.coins, hearts: x.hearts, hmax: x.hmax,
-              wave: x.wave, nw: nw, rot: x.rot.slice(), tn: x.tn.slice(), sp: [], wl: [], sk: [], pl: {},
-              nid: x.nid, over: x.over, acts: x.acts, faded: x.faded, ev: [] };
+              wave: x.wave, nw: nw, rot: x.rot.slice(), tn: x.tn.slice(), at: x.at === undefined ? x.wave : x.at,
+              sp: [], wl: [], sk: [], pl: {}, nid: x.nid, over: x.over, acts: x.acts, faded: x.faded, ev: [] };
+    if (en) { if (x.over === 1) return null; g.en = 1; }
     for (i = 0; i < x.wl.length; i++) { if (!int(x.wl[i], 0, BIG)) return null; g.wl.push(x.wl[i]); }
     for (i = 0; i < x.sp.length; i++) {
       var s = x.sp[i];
-      if (!s || !int(s.w, 0, nw - 1) || !int(s.g, 0, gd.groups[s.w].length - 1) ||
+      if (!s || !int(s.w, 0, x.wave - 1) || !int(s.g, 0, groupsOf(g, s.w).length - 1) ||
           !int(s.n, 0, BIG) || !int(s.next, 0, BIG)) return null;
       g.sp.push({ w: s.w, g: s.g, n: s.n, next: s.next });
     }
@@ -526,7 +590,7 @@
     var w = ways(g);
     for (i = 0; i < x.sk.length; i++) {
       var h = x.sk[i];
-      if (!h || !SPARK[h.k] || !int(h.id, 1, BIG) || !int(h.w, 0, nw - 1) || !int(h.gt, 0, gd.gates.length - 1) ||
+      if (!h || !SPARK[h.k] || !int(h.id, 1, BIG) || !int(h.w, 0, Math.max(0, x.wave - 1)) || !int(h.gt, 0, gd.gates.length - 1) ||
           !num(h.s, 0, w[h.gt].len) || !num(h.hp, -BIG, BIG) || !num(h.mx, 1, BIG) || !num(h.sl, 0, 1) ||
           !int(h.st, 0, BIG) || !int(h.hd, 0, BIG) || (h.ar !== 0 && h.ar !== 1)) return null;
       g.sk.push({ id: h.id, k: h.k, w: h.w, gt: h.gt, s: h.s, hp: h.hp, mx: h.mx, sl: h.sl, st: h.st, hd: h.hd, ar: h.ar });
@@ -616,6 +680,11 @@
     row.f += g.faded;
     out.rows[device] = row;
     var m = out.maps[g.gd];
+    if (g.en) {
+      var e = Math.min(9999, cleared(g));
+      if (e && (!m || e > m.e)) out.maps[g.gd] = { b: m ? m.b : Math.max(out.br, now || 0), s: m ? m.s : 0, e: e };
+      return merge(out, out);
+    }
     var st = stars(g);
     if (st && (!m || st > m.s)) out.maps[g.gd] = { b: m ? m.b : Math.max(out.br, now || 0), s: st, e: m ? m.e : 0 };
     return merge(out, out);
@@ -623,6 +692,9 @@
   // Stars of a garden, and whether it is open (the first is; the next
   // opens when the one before has a star).
   function starsOf(d, id) { var m = d && d.maps && d.maps[id]; return m ? m.s : 0; }
+  // The best Endless wave of a garden; Endless opens with the garden's first star.
+  function endlessOf(d, id) { var m = d && d.maps && d.maps[id]; return m ? m.e : 0; }
+  function endlessOpen(d, id) { return starsOf(d, id) > 0; }
   function isOpen(d, id) {
     var gd = GARDEN[id];
     return !!gd && (gd.idx === 0 || starsOf(d, GARDENS[gd.idx - 1].id) > 0);
@@ -633,7 +705,8 @@
   var api = {
     V: V, TPS: TPS, RIM: RIM, HEART: HEART, RINGS: RINGS, LANES: LANES, GATES_N: GATES_N, TAU: TAU,
     DIFFS: DIFFS, DIFF: DIFF, SPARK: SPARK, PLANTS: PLANTS, KINDS: KINDS, TARGETS: TARGETS,
-    GARDENS: GARDENS, GARDEN: GARDEN, STEP_COST: STEP_COST, FREE: FREE, FREE_FIRST: FREE_FIRST,
+    GARDENS: GARDENS, GARDEN: GARDEN, STEP_COST: STEP_COST, FREE: FREE, FREE_FIRST: FREE_FIRST, ENDLESS: ENDLESS,
+    isGap: isGap, groupsOf: groupsOf, cleared: cleared, endlessOf: endlessOf, endlessOpen: endlessOpen,
     point: point, slotAngle: slotAngle, slotPos: slotPos, gateAngle: gateAngle, key: key, parseKey: parseKey,
     isBed: isBed, isStone: isStone, ways: ways, posOn: posOn, sparkPos: sparkPos, wayPoints: wayPoints,
     stats: stats, plantCost: plantCost, upCost: upCost, sellValue: sellValue, unlocked: unlocked,

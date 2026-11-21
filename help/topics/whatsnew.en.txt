@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.04.00
+- **Orbit garden: the far orbit and Endless.** Four new gardens open after Night bloom: rings with two gaps, where the sparks take the first gap they meet, and rings the moon turns one step by itself after every wave (small arrows show which way). Every garden with a star now has an Endless night: its ten waves come round again and again, more and stronger each round, and the garden list keeps your best wave. The garden also looks and sounds more like a little moon: twinkling stars, old craters, a glowing moonflower, a hiss for the dew, a stone grind for every turn and a bell when a wave is cleared.
+
 ## Version 8.03.00
 - **Bring your work from Photoshop, GIMP and Canva.** Photo Lab now opens Photoshop files in full: masks, adjustment layers, layer styles, fill layers and vector masks stay editable, at 8, 16 and 32 bits and in every colour mode. It also opens GIMP files (.xcf, GIMP 2 and 3), and after opening, a short report says what could not stay editable.
 - **Layer groups in Photo Lab.** Folders in Layers, as in Photoshop and GIMP: pass-through or their own blend mode, opacity, groups inside groups. Group layer is Ctrl+G. Groups from Photoshop, GIMP, OpenRaster and Krita files open as groups and are saved back as groups.

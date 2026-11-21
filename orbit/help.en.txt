@@ -35,6 +35,12 @@ Each kind has its own shape, so you never need the colours.
 - **Nebula** (a cloud, from garden 4): when it goes out, it leaves two small bits that walk on.
 - **Eclipse** (wide, with a dark side): slow and very strong, ends every night and costs three hearts at the moonflower.
 
+## The far orbit and Endless
+- Gardens 5 to 8 are in the far orbit, which opens when Night bloom has a star. There every garden has a twist; the garden list says which.
+- **Two gaps:** some rings have two gaps on opposite sides. The sparks slip through the first gap they meet, so a ring with two gaps never sends them more than half way round. Nothing grows in either gap.
+- **A ring that turns by itself:** after every wave, as soon as the garden is clear, the moon turns that ring one step (the small arrows on it show which way), and its plants turn with it. Your free steps come after that, so you can turn it back.
+- **Endless:** a garden with a star gets an Endless night below it in the garden list. The garden's ten waves come round again and again, each round with more sparks, closer together and stronger, until the hearts run out. There are no stars; the list keeps your best wave, and it syncs like the stars.
+
 ## Difficulty, stars and saves
 - Mild: 30 hearts and more coins; Normal: 20 hearts; Hard: 10 hearts, fewer coins and stronger sparks.
 - Stars: three with nine tenths of the hearts left, two with half, one for any night won. The garden list keeps the best stars of each garden.
@@ -53,3 +59,4 @@ Each kind has its own shape, so you never need the colours.
 - A plant beside a gap reaches sparks on both sides of its ring, where they cross from one lane to the next.
 - On gardens with two gates, the best gap for one gate is a poor one for the other. Look at where the next wave comes from, and use your free steps before each wave.
 - Plant what you can afford before the first wave, while every ring still has two free steps.
+- On a ring that turns by itself, plants that guard both sides of a gap stay useful for longer.

@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 49976 of 49983 (99%)
+- Strings: 50128 of 50135 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -17,7 +17,7 @@ en and el); translators change them there, not in a pack.
 | App | Translated | Strings |
 |---|---|---|
 | assistant | 100% | 2147 / 2147 |
-| atelier | 100% | 1429 / 1429 |
+| atelier | 100% | 1507 / 1507 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 332 / 332 |
 | baby | 100% | 341 / 341 |
@@ -111,13 +111,13 @@ en and el); translators change them there, not in a pack.
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 293 / 293 |
 | oracle | 100% | 38 / 38 |
-| orbit | 100% | 137 / 137 |
+| orbit | 100% | 158 / 158 |
 | pad | 100% | 307 / 307 |
 | passwords | 100% | 468 / 468 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
-| photolab | 100% | 783 / 783 |
+| photolab | 100% | 829 / 829 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
 | podcasts | 100% | 349 / 349 |
@@ -142,7 +142,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 2013 / 2013 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1544 / 1544 |
+| shell | 100% | 1551 / 1551 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
