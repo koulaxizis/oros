@@ -31,6 +31,8 @@ const GATE_ONLY = {
   // BK-AO (Chris 2026-11-18)
   budget_refresh: { why: "Reading the banks now is for Claude's checks from outside, before it reads budget_lines; inside orOS the owner presses Update now in Budget › More › Banks, and Budget updates by itself on its schedule." },
   budget_transfer: { why: "Turning entries into a transfer replaces them with an item of another collection in one undoable step; inside orOS the owner does it from the entry (It's a transfer)." },
+  // TRAY-2 (Chris 2026-11-21)
+  local_folders_request: { why: "Asking the owner, on any device on screen, to open a folder of their computer for Claude from outside; inside orOS the owner opens it in Settings › Connected services › orOS Gate." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
   kanban_change_card: { twin: ["change_item"] },
