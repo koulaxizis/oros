@@ -13345,3 +13345,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js, relay/gate.js, shell.js, help/topics/whatsnew.en/el.txt, tests/gate-layout-anywhere.test.js.
 - **Tests:** full `node --test tests/*.test.js`.
 
+### 2026-11-21 — 8.15.00 — Update orOS on the other devices from the phone or by Claude (GL-7)
+- **Why:** Chris, away from the PC, «Πρέπει να βρούμε λύσεις»: his Windows app stayed on 8.01.00 because nobody was there to close the window or restart. Updates must be startable from the phone and by Claude.
+- **What:** relay/gate.js: new read-only tool `oros_update` (answers before the TOOL_NAMES check; "Asked N open orOS…", or an error when none is open) and `askUpdate(from)`, which sends `{"upd":1}` to every other socket; a device's `{"upd":1}` message does the same. gate/gate.js: `onUpd()` (at most once per 5 min) POSTs `/__oros/update` (X-Oros-Gate: 1) on the desktop app, then asks the service worker for the new version now and after 90/180/300/600 s (the page reloads itself on controllerchange); `askUpdate()` exposed as `api.askUpdate`. settings/settings.js: Settings › orOS Gate › "Update orOS on my other devices" button; strings en/el/de (`gt.upd.*`).
+- **Needs:** oros-portable 0.9.5+ (`/__oros/update`, PR #47) for the Windows/Linux app to download and swap while its window is open; older launchers still reload when their next 6-hour download lands.
+- **Files:** gate/gate.js, relay/gate.js, settings/{settings.js, core.js}, i18n/de/settings.js, shell.js, help/topics/whatsnew.en/el.txt, tests/{gate-relay, gate-parity}.test.js.
+- **Tests:** full `node --test tests/*.test.js`.
+

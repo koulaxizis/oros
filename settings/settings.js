@@ -1731,6 +1731,14 @@
         c.appendChild(fb);
         localSection(c, G);
       }
+      // GL-7 (Chris 2026-11-21): update orOS on the other devices from here (the phone)
+      if (typeof G.askUpdate === "function") {
+        var ub = el("div", "gt-folders");
+        ub.appendChild(el("div", "pair-label", t("gt.upd.title")));
+        ub.appendChild(el("div", "hint", updMsg || t("gt.upd.hint")));
+        ub.appendChild(button(t("gt.upd.btn"), "gt.upd.btn", function () { updMsg = t(G.askUpdate() ? "gt.upd.sent" : "gt.upd.off"); render(); }, "btn-sm"));
+        c.appendChild(ub);
+      }
       // GATE-HOST (PEND-1 wave 2): an installed orOS Portable or orOS USB
       // keeps the Gate open in the background while every window is closed.
       if (G.host && typeof G.host.state === "function") {
@@ -1856,7 +1864,7 @@
   // Layout may read through orOS Gate (read roots) and write proofs and
   // print PDFs to (write roots), picked with the browser's folder
   // picker; localroots.js in the shell keeps them (this device only).
-  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null;
+  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null, updMsg = "";
   function localApi() { var p = parentWin(); try { return p && p.orosLocal ? p.orosLocal : null; } catch (e) { return null; } }
   function localSection(c, G) {
     var L = localApi();

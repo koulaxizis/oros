@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.15.00
+- **Update your other devices from your phone.** Settings › orOS Gate has a new button, Update them now: every other device where orOS is open, a computer with orOS in the tray too, switches to the newest orOS within a few minutes, without you at the computer. Claude can ask for the same through orOS Gate when a device runs an older version. On Windows this needs orOS for Windows 0.9.5 or newer.
+
 ## Version 8.14.00
 - **Claude talks to your newest orOS.** When orOS is open on more than one device, orOS Gate now asks the one with the newest version first, so an old window left open on a computer no longer answers for the others.
 
