@@ -10,6 +10,7 @@ The tile `Surprise me` plays a random top station. The chips under it change the
 - `Countries` lists every country with its number of stations. Pick one to see its stations; the chips above the list filter them by genre. Tap a chip again to clear the filter.
 - `Genres` lists genres such as jazz or news; pick one to see its stations.
 - `Languages` lists the languages stations broadcast in, with their names in your language; pick one to see its stations.
+- `Map` shows stations on a map of the world, like a globe of radio. Move and zoom the map; the dots are the best voted stations in that area, and a tap plays one. `Near me` asks for your position once and centres the map on your area (rounded to about 11 km; it isn't saved). Only stations whose location is known appear on the map.
 - Lists show 100 stations at a time. `More stations` at the end loads the next 100 (`Draw more` in Random).
 - The search box (`Search stations…`) suggests stations once you type three letters. Use [[↑]] and [[↓]] to pick a suggestion, or press [[Enter]] to see all results. With the box empty, clicking into it suggests your recent stations.
 

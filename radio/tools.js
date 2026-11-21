@@ -502,8 +502,24 @@
       case "fresh":    return "/json/stations/search?order=changetimestamp&reverse=true&hidebroken=true" + off;
       case "random":   return "/json/stations/search?order=random&hidebroken=true&limit=" + PAGE;
       case "search":   return "/json/stations/search?name=" + a + "&" + BASEQ + off;
+      case "geo": {     // arg "lat,lon,metres" (geoArg): one page of 300, best voted first
+        var g = String(arg || "").split(",").map(Number);
+        if (g.length !== 3 || !g.every(isFinite)) return "";
+        return "/json/stations/search?geo_lat=" + g[0] + "&geo_long=" + g[1] + "&geo_distance=" + g[2] +
+          "&has_geo_info=true&" + BASEQ + "&limit=300";
+      }
     }
     return "";
+  }
+  // Map view → the geo list's argument: the centre rounded to 0.1°
+  // (about 11 km: a "Near me" never sends an exact position) and the
+  // radius to the corner, rounded, between 25 km and 3000 km.
+  function geoArg(lat, lon, metres) {
+    lat = Math.max(-90, Math.min(90, +lat || 0));
+    lon = ((((+lon || 0) + 180) % 360) + 360) % 360 - 180;
+    var r = Math.max(25000, Math.min(3000000, +metres || 0));
+    r = Math.round(r / 25000) * 25000;
+    return (Math.round(lat * 10) / 10) + "," + (Math.round(lon * 10) / 10) + "," + r;
   }
   // A language row of /json/languages → its name in the UI language.
   function langLabel(row, ui) {
@@ -524,7 +540,7 @@
     fmtBytes: fmtBytes, fmtClock: fmtClock,
     normWakeStation: normWakeStation, normWake: normWake, mergeWake: mergeWake,
     streamKey: streamKey, nameKey: nameKey, dedupe: dedupe, sameStation: sameStation,
-    listPath: listPath, langLabel: langLabel, PAGE: PAGE,
+    listPath: listPath, langLabel: langLabel, geoArg: geoArg, PAGE: PAGE,
     engine: engine
   };
   root.OrosRadioTools = api;

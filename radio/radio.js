@@ -96,6 +96,15 @@ var STRINGS = {
     "more.stations":  "More stations",
     "more.random":    "Draw more",
     "more.loading":   "Loading…",
+    "tab.map":        "Map",
+    "view.map":       "Stations on the Map",
+    "map.near":       "Near me",
+    "map.near.tip":   "Show stations near you (your position is asked once, rounded to about 11 km and not saved)",
+    "map.near.wait":  "Finding your area…",
+    "map.near.err":   "Your position isn't available. Move the map by hand.",
+    "map.count":      "{n} stations here. Tap a dot to play it.",
+    "map.none":       "No stations with a location here. Move or zoom out.",
+    "map.err":        "The map could not load.",
     "random":         "Surprise me",
     "random.hint":    "Play a random top station",
     "catalog.err":    "The station directory isn't answering right now — favorites and recent stations still play.",
@@ -214,6 +223,15 @@ var STRINGS = {
     "more.stations":  "Περισσότεροι σταθμοί",
     "more.random":    "Κι άλλοι τυχαίοι",
     "more.loading":   "Φόρτωση…",
+    "tab.map":        "Χάρτης",
+    "view.map":       "Σταθμοί στον χάρτη",
+    "map.near":       "Κοντά μου",
+    "map.near.tip":   "Δείξε σταθμούς κοντά σου (η θέση σου ζητείται μία φορά, στρογγυλεμένη στα 11 χλμ. περίπου, και δεν αποθηκεύεται)",
+    "map.near.wait":  "Βρίσκω την περιοχή σου…",
+    "map.near.err":   "Η θέση σου δεν είναι διαθέσιμη. Μετακίνησε τον χάρτη με το χέρι.",
+    "map.count":      "{n} σταθμοί εδώ. Πάτησε μια κουκκίδα για να παίξει.",
+    "map.none":       "Δεν υπάρχουν σταθμοί με τοποθεσία εδώ. Μετακίνησε ή απομάκρυνε τον χάρτη.",
+    "map.err":        "Ο χάρτης δεν φόρτωσε.",
     "random":         "Τυχαίος σταθμός",
     "random.hint":    "Παίξε έναν τυχαίο κορυφαίο σταθμό",
     "catalog.err":    "Ο κατάλογος σταθμών δεν απαντά αυτή τη στιγμή — τα αγαπημένα και οι πρόσφατοι σταθμοί παίζουν κανονικά.",
@@ -363,7 +381,10 @@ function normalizeStation(s){
     votes:        s.votes || 0,
     // RX-7: kept for the country tag chips + favorites (the API cache
     // now stores normalized rows, not the ~30-field API objects)
-    tags:         Array.isArray(s.tags) ? s.tags.join(",") : String(s.tags || "")
+    tags:         Array.isArray(s.tags) ? s.tags.join(",") : String(s.tags || ""),
+    // RX-MORE W2: where the station is (the Map); null when unknown
+    geo_lat:      typeof s.geo_lat === "number" && isFinite(s.geo_lat) ? s.geo_lat : null,
+    geo_long:     typeof s.geo_long === "number" && isFinite(s.geo_long) ? s.geo_long : null
   };
 }
 
@@ -371,7 +392,7 @@ function normalizeStation(s){
 
 var state = {
   catalogDown: false,       // RX-NET: last directory request found nothing to show
-  viewMode: "discover",      // discover | countries | genres | languages | favorites | recents | stations | search
+  viewMode: "discover",      // discover | countries | genres | languages | map | favorites | recents | stations | search
   discover: "top",          // RX-MORE: top | trend | fresh | random (this session)
   tagFilter: "",             // active tag chip filter inside country views (W3-8)
   parent: null,             // { type:"country"|"genre", code|tag, name }
@@ -1515,6 +1536,7 @@ var renderSeq = 0;
 
 function renderMain(){
   renderSeq++;
+  closeMap();   // RX-MORE W2: a map belongs to the Map view only
   var main = $("rx-main");
   var list = $("rx-list");
   var crumb = $("rx-crumb");
@@ -1556,6 +1578,13 @@ function renderMain(){
       crumb.removeAttribute("hidden");
       list.className = "rx-list tiles";
       renderGenres(list);
+      break;
+      
+    case "map":
+      crumb.textContent = t("view.map");
+      crumb.removeAttribute("hidden");
+      list.className = "rx-list rx-list-map";
+      renderMap(list);
       break;
       
     case "languages":
@@ -2012,6 +2041,139 @@ function highlightPlayingCard(uuid){
     card.classList.add("playing");
     card.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
+}
+
+/* ===== MAP (RX-MORE W2) ===== */
+// Stations with coordinates from radio-browser on OpenStreetMap
+// tiles, through the Leaflet copy Maps already ships (loaded on the
+// first visit). A dot plays its station. The list follows the view:
+// the best voted 300 within reach of the centre. "Near me" asks the
+// device's position once, on a tap; it is rounded to about 11 km
+// (RT.geoArg) before it is used and never stored.
+var mapState = { map: null, layer: null, renderer: null, timer: null, seq: 0 };
+var leafletReady = null;
+
+function ensureLeaflet(){
+  if(window.L && window.L.map) return Promise.resolve(window.L);
+  if(leafletReady) return leafletReady;
+  leafletReady = new Promise(function(resolve, reject){
+    var v = SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "";
+    var css = document.createElement("link");
+    css.rel = "stylesheet";
+    css.href = "../vendor/leaflet.css" + v;
+    document.head.appendChild(css);
+    var js = document.createElement("script");
+    js.src = "../vendor/leaflet.js" + v;
+    js.onload = function(){ if(window.L && window.L.map) resolve(window.L); else reject(new Error("leaflet")); };
+    js.onerror = function(){ leafletReady = null; js.remove(); reject(new Error("leaflet")); };
+    document.head.appendChild(js);
+  });
+  return leafletReady;
+}
+
+function closeMap(){
+  if(mapState.timer){ clearTimeout(mapState.timer); mapState.timer = null; }
+  if(mapState.map){ try{ mapState.map.remove(); }catch(e){} }
+  mapState.map = null; mapState.layer = null; mapState.renderer = null;
+  mapState.seq++;
+}
+
+function renderMap(container){
+  var seq = renderSeq;
+  var wrap = document.createElement("div");
+  wrap.className = "rx-map-wrap";
+  var box = document.createElement("div");
+  box.id = "rx-map";
+  box.className = "rx-map";
+  box.setAttribute("role", "region");
+  box.setAttribute("aria-label", t("view.map"));
+  var bar = document.createElement("div");
+  bar.className = "rx-map-bar";
+  var near = document.createElement("button");
+  near.type = "button";
+  near.id = "rx-map-near";
+  near.className = "rx-chip";
+  near.textContent = t("map.near");
+  near.title = t("map.near.tip");
+  var note = document.createElement("span");
+  note.className = "rx-map-note";
+  note.id = "rx-map-note";
+  note.setAttribute("aria-live", "polite");
+  note.textContent = t("more.loading");
+  bar.appendChild(near);
+  bar.appendChild(note);
+  wrap.appendChild(bar);
+  wrap.appendChild(box);
+  container.appendChild(wrap);
+  ensureLeaflet().then(function(L){
+    if(seq !== renderSeq) return;   // RX-12: the person moved on
+    var map = L.map(box, { zoomControl: true, attributionControl: true, worldCopyJump: true, minZoom: 2, maxZoom: 15 });
+    map.setView([45, 15], 4);
+    // No {s}. subdomains (OSMF tile usage policy), as Maps.
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      crossOrigin: "anonymous",
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors · <a href="https://www.radio-browser.info">radio-browser.info</a>'
+    }).addTo(map);
+    mapState.map = map;
+    mapState.layer = L.layerGroup().addTo(map);
+    mapState.renderer = L.canvas({ padding: 0.3 });
+    map.on("moveend", function(){
+      if(mapState.timer) clearTimeout(mapState.timer);
+      mapState.timer = setTimeout(loadMapStations, 450);
+    });
+    near.addEventListener("click", function(){
+      if(!navigator.geolocation || !RT){ note.textContent = t("map.near.err"); return; }
+      note.textContent = t("map.near.wait");
+      navigator.geolocation.getCurrentPosition(function(pos){
+        if(mapState.map !== map) return;
+        var a = RT.geoArg(pos.coords.latitude, pos.coords.longitude, 0).split(",");
+        map.setView([+a[0], +a[1]], 9);
+      }, function(){
+        if(mapState.map === map) note.textContent = t("map.near.err");
+      }, { enableHighAccuracy: false, maximumAge: 600000, timeout: 15000 });
+    });
+    loadMapStations();
+  }, function(){
+    if(seq === renderSeq) note.textContent = t("map.err");
+  });
+}
+
+function loadMapStations(){
+  var map = mapState.map;
+  if(!map || !RT) return;
+  var c = map.getCenter();
+  var reach = c.distanceTo(map.getBounds().getNorthEast());
+  var arg = RT.geoArg(c.lat, c.lng, reach);
+  var mySeq = ++mapState.seq;
+  fetchList("geo", arg, 0).then(function(rows){
+    if(mySeq !== mapState.seq || mapState.map !== map) return;
+    var L = window.L, layer = mapState.layer, note = $("rx-map-note");
+    layer.clearLayers();
+    var shown = 0, playing = getHostState().current;
+    var css = getComputedStyle(document.documentElement);
+    var accent = (css.getPropertyValue("--accent") || "").trim() || "#6d4aff";
+    var warm = (css.getPropertyValue("--warn") || "").trim() || "#e0a44c";
+    RT.dedupe(rows).forEach(function(st){
+      if(typeof st.geo_lat !== "number" || typeof st.geo_long !== "number") return;
+      var lat = st.geo_lat, lon = st.geo_long;
+      if(!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) return;
+      var on = !!(playing && playing.stationuuid === st.stationuuid);
+      var dot = L.circleMarker([lat, lon], {
+        renderer: mapState.renderer, radius: on ? 9 : 7, weight: on ? 3 : 1.5,
+        color: "#ffffff", fillColor: on ? warm : accent, fillOpacity: 0.9
+      });
+      // Leaflet writes a string tooltip as HTML: escape the name
+      dot.bindTooltip(esc(String(st.name || "")), { direction: "top", offset: [0, -6] });
+      dot.on("click", function(){
+        playStation(st);
+        dot.openTooltip();
+      });
+      dot.addTo(layer);
+      shown++;
+    });
+    if(note) note.textContent = shown ? fmt("map.count", shown) : t("map.none");
+  });
 }
 
 /* ===== PLAYER UI ===== */
@@ -2851,6 +3013,7 @@ function applyI18n(){
     "rx-tab-countries": "tab.countries",
     "rx-tab-genres":    "tab.genres",
     "rx-tab-languages": "tab.languages",
+    "rx-tab-map":       "tab.map",
     "rx-tab-favorites": "tab.favorites",
     "rx-tab-recents":   "tab.recents"
   };

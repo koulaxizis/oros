@@ -107,3 +107,30 @@ test("the app: Languages tab, Discover chips, More button; EN, EL and DE strings
     assert.match(de, re, "de " + k);
   }
 });
+
+test("map (W2): a rounded centre (about 11 km) and a bounded radius go to the directory", () => {
+  assert.equal(T.geoArg(37.9812, 23.7334, 61234), "38,23.7,50000");
+  assert.equal(T.geoArg(0, 190, 9e9), "0,-170,3000000", "longitude wraps, radius capped at 3000 km");
+  assert.equal(T.geoArg(95, 0, 10), "90,0,25000", "latitude clamped, radius at least 25 km");
+  assert.equal(T.listPath("geo", "38,23.7,50000", 0),
+    "/json/stations/search?geo_lat=38&geo_long=23.7&geo_distance=50000&has_geo_info=true&order=votes&reverse=true&hidebroken=true&limit=300");
+  assert.equal(T.listPath("geo", "x,y", 0), "", "a bad argument asks nothing");
+});
+
+test("map (W2): Map tab, Leaflet loaded on first use, names escaped, position used once and rounded", () => {
+  assert.match(html, /id="rx-tab-map"/);
+  assert.match(src, /"rx-tab-map":\s+"tab\.map"/);
+  assert.match(src, /js\.src = "\.\.\/vendor\/leaflet\.js" \+ v;/);
+  assert.match(src, /dot\.bindTooltip\(esc\(/, "Leaflet writes a string tooltip as HTML");
+  assert.match(src, /RT\.geoArg\(pos\.coords\.latitude, pos\.coords\.longitude, 0\)/);
+  assert.doesNotMatch(src, /watchPosition/);
+  assert.match(src, /closeMap\(\);\s+\/\/ RX-MORE W2/);
+  // the cache keeps the coordinates (normalizeStation whitelist)
+  assert.match(src, /geo_lat:\s+typeof s\.geo_lat === "number"/);
+  const en = src.slice(src.indexOf("  en: {"), src.indexOf("  el: {"));
+  const el = src.slice(src.indexOf("  el: {"));
+  for (const k of ["tab.map", "view.map", "map.near", "map.near.tip", "map.near.wait", "map.near.err", "map.count", "map.none", "map.err"]) {
+    const re = new RegExp('"' + k.replace(/\./g, "\\.") + '":');
+    assert.match(en, re, "en " + k); assert.match(el, re, "el " + k); assert.match(de, re, "de " + k);
+  }
+});
