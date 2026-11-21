@@ -38,6 +38,12 @@
       "trl.r.foot": "Hiking", "trl.r.bike": "Cycling", "trl.r.mtb": "MTB",
       "trl.net.intl": "international", "trl.net.national": "national", "trl.net.regional": "regional", "trl.net.local": "local",
       "trl.km": "{n} km", "trl.unnamed": "No name", "trl.open.wt": "Waymarked Trails", "trl.open.osm": "Open on OpenStreetMap",
+      "trl.prob": "Report a problem on this path", "trl.prob.title": "What is wrong with this path?",
+      "trl.prob.blocked": "Blocked (fallen tree, rockfall, fence)", "trl.prob.overgrown": "Overgrown, hard to pass",
+      "trl.prob.signs": "Signs or marks missing or wrong", "trl.prob.damaged": "Bridge, steps or railing damaged",
+      "trl.prob.gone": "The path is not there any more", "trl.prob.danger": "Dangerous (erosion, landslide, washed out)",
+      "trl.prob.other": "Something else", "trl.cancel": "Cancel",
+      "trl.prob.text": "Problem on this path: {k}.\n{w}\n{u}\n\nDetails: ",
       "trl.nodata": "OpenStreetMap has no more details for this one. You can add them in Quests or Edit places.",
       "trl.hw.path": "Path", "trl.hw.footway": "Footpath", "trl.hw.sidewalk": "Sidewalk", "trl.hw.shared": "Shared path (walk and bike)",
       "trl.hw.track": "Track (farm or forest road)", "trl.hw.cycleway": "Cycleway", "trl.hw.bridleway": "Bridleway",
@@ -83,6 +89,12 @@
       "trl.r.foot": "Πεζοπορία", "trl.r.bike": "Ποδήλατο", "trl.r.mtb": "MTB",
       "trl.net.intl": "διεθνής", "trl.net.national": "εθνική", "trl.net.regional": "περιφερειακή", "trl.net.local": "τοπική",
       "trl.km": "{n} χλμ.", "trl.unnamed": "Χωρίς όνομα", "trl.open.wt": "Waymarked Trails", "trl.open.osm": "Άνοιγμα στο OpenStreetMap",
+      "trl.prob": "Ανάφερε πρόβλημα στο μονοπάτι", "trl.prob.title": "Τι πρόβλημα έχει το μονοπάτι;",
+      "trl.prob.blocked": "Κλειστό (πεσμένο δέντρο, κατολίσθηση πέτρας, φράχτης)", "trl.prob.overgrown": "Κλεισμένο από βλάστηση, δύσβατο",
+      "trl.prob.signs": "Πινακίδες ή σημάδια λείπουν ή είναι λάθος", "trl.prob.damaged": "Χαλασμένη γέφυρα, σκαλιά ή κάγκελο",
+      "trl.prob.gone": "Το μονοπάτι δεν υπάρχει πια", "trl.prob.danger": "Επικίνδυνο (διάβρωση, κατολίσθηση, παρασυρμένο)",
+      "trl.prob.other": "Κάτι άλλο", "trl.cancel": "Άκυρο",
+      "trl.prob.text": "Πρόβλημα στο μονοπάτι: {k}.\n{w}\n{u}\n\nΛεπτομέρειες: ",
       "trl.nodata": "Το OpenStreetMap δεν έχει άλλες λεπτομέρειες για αυτόν. Μπορείς να τις προσθέσεις στις Αποστολές ή στην Επεξεργασία σημείων.",
       "trl.hw.path": "Μονοπάτι", "trl.hw.footway": "Πεζόδρομος", "trl.hw.sidewalk": "Πεζοδρόμιο", "trl.hw.shared": "Κοινός δρόμος (πεζοί και ποδήλατα)",
       "trl.hw.track": "Χωματόδρομος (αγροτικός ή δασικός)", "trl.hw.cycleway": "Ποδηλατόδρομος", "trl.hw.bridleway": "Μονοπάτι για άλογα",
@@ -218,21 +230,21 @@
       var w = TC.nearestWay(j, place.lat, place.lon, r);
       if (!w) { msg("trl.none"); return; }
       hiLine = L.polyline(w.pts, { color: "#ffb400", weight: 9, opacity: 0.55, interactive: false }).addTo(map);
-      render(body, w, null);
+      render(body, w, null, place);
       pop.update();
       return post(TC.routeQuery(w.id)).then(function (rj) {
         if (my !== seq) return;
-        render(body, w, TC.routesOf(rj));
+        render(body, w, TC.routesOf(rj), place);
         pop.update();
       }, function () {
         if (my !== seq) return;
-        render(body, w, []);
+        render(body, w, [], place);
         pop.update();
       });
     }, function () { if (my === seq) msg("trl.fail"); });
   }
 
-  function render(body, w, routes) {
+  function render(body, w, routes, place) {
     var d = TC.describeWay(w.tags);
     body.textContent = "";
     body.appendChild(el("div", "trl-kind", t(d.kind)));
@@ -271,6 +283,43 @@
     }
     body.appendChild(rbox);
     body.appendChild(link(t("trl.open.osm"), TC.osmWayLink(w.id)));
+    // wave H7: a problem on the path becomes an OpenStreetMap note
+    var N = window.__orosMapsNotes;
+    if (N && N.newNote && place) {
+      var pb = el("button", "osm-btn trl-prob-btn", t("trl.prob"));
+      pb.type = "button";
+      pb.addEventListener("click", function () { problemDlg(w, d, place); });
+      body.appendChild(pb);
+    }
+  }
+  var PROBS = ["blocked", "overgrown", "signs", "damaged", "gone", "danger", "other"];
+  function problemDlg(w, d, place) {
+    var dlg = el("dialog", "osm-dlg trl-prob-dlg");
+    dlg.appendChild(el("h3", "", t("trl.prob.title")));
+    var list = el("div", "trl-prob-list");
+    PROBS.forEach(function (k) {
+      var b = el("button", "osm-btn", t("trl.prob." + k));
+      b.type = "button";
+      b.dataset.k = k;
+      b.addEventListener("click", function () {
+        close();
+        map.closePopup();
+        var what = [t(d.kind), d.name].filter(Boolean).join(" · ");
+        window.__orosMapsNotes.newNote(place.lat, place.lon, t("trl.prob.text", { k: t("trl.prob." + k), w: what, u: TC.osmWayLink(w.id) }));
+      });
+      list.appendChild(b);
+    });
+    dlg.appendChild(list);
+    var row = el("div", "osm-actions");
+    var c = el("button", "osm-btn", t("trl.cancel"));
+    c.type = "button";
+    c.addEventListener("click", close);
+    row.appendChild(c);
+    dlg.appendChild(row);
+    function close() { if (dlg.open) dlg.close(); dlg.remove(); }
+    dlg.addEventListener("cancel", function (e) { e.preventDefault(); close(); });
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   var ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20c3-1 4-4 7-5s5 1 9-3"/><circle cx="19" cy="6" r="2"/><path d="M5 9l2 2 3-4"/></svg>';

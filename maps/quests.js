@@ -453,7 +453,7 @@
     ov.legend.forEach(function (x) {
       var li = el("li", "");
       var sw = el("i", x[0] === "miss" ? "dash" : "");
-      sw.style.background = V.legendColor(x[0]);
+      sw.style.background = V.legendColor(x[0], ov.id);
       if (x[0] === "miss") sw.style.borderColor = V.legendColor(x[0]);
       sw.setAttribute("aria-hidden", "true");
       li.appendChild(sw);

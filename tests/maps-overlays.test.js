@@ -14,15 +14,15 @@ const Q = require(path.join(__dirname, "..", "maps", "quests-core.js"));
 
 const way = (id, tags, geom) => ({ t: "w", id, lat: 38, lon: 23.7, ts: 0, tags, geom: geom || [[38, 23.7], [38.001, 23.7]] });
 
-test("5 overlays, texts in EN and EL, each answer goes to a known quest", () => {
-  assert.deepEqual(V.OVERLAYS.map(o => o.id), ["lit", "surface", "sidewalk", "address", "building"]);
+test("6 overlays, texts in EN and EL, each answer goes to a known quest", () => {
+  assert.deepEqual(V.OVERLAYS.map(o => o.id), ["lit", "surface", "sidewalk", "cycleway", "address", "building"]);
   V.OVERLAYS.forEach(o => {
     ["title", "q"].forEach(f => { assert.ok(o[f].en && o[f].el, o.id + " " + f); });
     assert.ok(Q.BY_ID[o.qid], o.id + " → " + o.qid);
-    o.legend.forEach(l => assert.ok(l[1] && l[2] && /^#[0-9a-f]{6}$/.test(V.legendColor(l[0]))));
+    o.legend.forEach(l => assert.ok(l[1] && l[2] && /^#[0-9a-f]{6}$/.test(V.legendColor(l[0], o.id))));
   });
   // sidewalk is an overlay-only quest: valid, counted, never a pin or a setting
-  assert.equal(Q.QUESTS.length, 36);
+  assert.equal(Q.QUESTS.length, 44);
   assert.ok(!Q.QUESTS.some(q => q.id === "sidewalk"));
   assert.equal(Q.BY_ID.sidewalk.cat, "streets");
   assert.ok(!/sidewalk/.test(Q.overpassQuery(1, 2, 3, 4, [])));
