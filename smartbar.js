@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.2.0)
+// orOS — smartbar.js (smart top bar, v1.3.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -7,39 +7,23 @@
 // every second from its clock and refresh() when the language changes.
 // A bundle without this file draws exactly what it drew before.
 //
-//   Live chips in the top bar, each one the person switches on:
-//   • Next event   the next timed row of today's summary (Calendar,
-//                  Travel, …) with a countdown from 60 minutes before;
-//                  "Now" while it runs. Rows of apps kept out of search
-//                  (Health, Cycle, One-Sentence Diary, …) never reach the bar.
-//   • Focus        the Time app's Pomodoro leg while it runs (focus or
-//                  break, minutes left), from oros-time-pmrun.
-//   • Tasks        late and today's tasks of the summary.
-//   • Water        today's water against the goal (water/core.js).
-//   • Spent        this month's expenses in Budget.
-//   • Till         today's till sales in Stock (stock/pos-core.js,
-//                  loaded the first time this chip is on).
-//   A chip with nothing to say stays hidden. Money chips and event
-//   titles are hidden while Sensitive work is on.
-//   A click opens the place the chip comes from.
-//   Fit: the shell's fitBar() asks fitDrop() to fold the last chips
-//   before it hides the weekday or the date, so the bar never scrolls.
-//   Folded chips are not lost: one button (#sb-more, "+N") at the end
-//   of the row unfolds them all in a panel under the bar. On a phone
-//   (≤ 600 px) every chip folds into that button; on a wide screen the
-//   chips stay in the bar and only the ones that do not fit fold.
+//   Chips the person ticks (event, focus, tasks, water, spent, till;
+//   the other apps' cards in smartbar-apps.js), and live pills while a
+//   timer, the stopwatch or a recording runs (smartbar-live.js). Each
+//   shows only with something to say; money and event titles hide under
+//   Sensitive work; a click opens its app. fitBar() folds the last chips
+//   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
+//   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
 // Device-local (oros-smartbar, never synced: screens differ):
-//   { v:1, list:["event","focus",…] }   order = list order
-//   Absent = none: the bar looks as before until the person adds one.
-//
-// Reads only. It never writes another app's data. Pure logic is
+//   { v:1, list:["event",…] (order), look?, live:false? (no pills) }
+// Reads only (the live pills' pause button excepted). Pure logic is
 // unit-tested in node (tests/smartbar.test.js).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.2.0";
+  var VER = "1.3.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
                "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue"];
@@ -47,6 +31,7 @@
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
   var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1 };
+  var LIVE = ["rec", "tmr", "sw"];          // SB-LIVE pills, in this order, before the chips
   var LOOKS = ["", "glass", "midnight", "solid"];   // SB3: "" = the classic bar
   var FOLD_W = 600;                         // ≤ this width: every chip folds into the button
   var SOON_MIN = 60;                       // countdown from this many minutes before
@@ -61,8 +46,10 @@
     v.list.forEach(function (k) { if (KINDS.indexOf(k) !== -1 && out.indexOf(k) === -1) out.push(k); });
     var o = { v: 1, list: out };
     if (typeof v.look === "string" && v.look && LOOKS.indexOf(v.look) !== -1) o.look = v.look;
+    if (v.live === false) o.live = false;
     return o;
   }
+  function liveOf(stored) { return !(stored && stored.live === false); }
   function lookOf(stored) { return stored && stored.look || ""; }
   function parse(raw) {
     try { return norm(JSON.parse(raw)); } catch (e) { return null; }
@@ -158,12 +145,18 @@
       return (cents / 100).toFixed(big ? 0 : 2) + " " + cur;
     }
   }
+  // SB-LIVE: anything running? (raw text, so nothing loads before it does)
+  function liveWanted(rawTimers, rawSw, rec) {
+    return !!rec || /"st":"run"/.test(rawTimers || "") || /"run":true/.test(rawSw || "");
+  }
+  function rowOf(stored) { return (liveOf(stored) ? LIVE.slice() : []).concat(listOf(stored)); }
   function ymdOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
 
   var model = { VER: VER, KEY: KEY, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
-                monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS };
+                monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS,
+                LIVE: LIVE, liveOf: liveOf, rowOf: rowOf, liveWanted: liveWanted };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -172,6 +165,7 @@
   var host = null, box = null, chips = {}, more = null, pop = null;
   var todayCache = null, todayAt = 0, todayBusy = false, posLoad = 0;
   var apps = null, appsLoad = 0;     // SB5: smartbar-apps.js, once loaded
+  var live = null, liveLoad = 0, recLive = null;   // SB-LIVE: smartbar-live.js; Capture's recording
 
   function t(k) { return typeof root.t === "function" ? root.t(k) : k; }
   function call(fn) { try { return fn(); } catch (e) { return undefined; } }
@@ -181,10 +175,12 @@
   function strict() { return !!call(function () { return host.strict(); }); }
   function stored() { try { return parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
   function list() { return listOf(stored()); }
-  function save(l, look) {
-    var o = { v: 1, list: l };
-    var lk = look === undefined ? lookOf(stored()) : look;
+  function row() { return rowOf(stored()); }
+  function save(l, look, live) {
+    var o = { v: 1, list: l }, cur = stored();
+    var lk = look === undefined ? lookOf(cur) : look;
     if (lk) o.look = lk;
+    if ((live === undefined ? liveOf(cur) : live) === false) o.live = false;
     try { localStorage.setItem(KEY, JSON.stringify(o)); }
     catch (e) { call(function () { host.toast(t("sb.savefail")); }); }
     applyLook();
@@ -272,6 +268,8 @@
     doc.head.appendChild(s);
   }
 
+  function isLive(kind) { return LIVE.indexOf(kind) !== -1; }
+  // el: what the fit folds; btn: what opens the app (a live pill's el is its group)
   function makeChip(kind) {
     var b = doc.createElement("button");
     b.type = "button";
@@ -281,9 +279,11 @@
     var v = doc.createElement("span"); v.className = "sb-v";
     var l = doc.createElement("span"); l.className = "sb-l";
     b.appendChild(v); b.appendChild(l);
-    b.hidden = true;
     b.addEventListener("click", function (e) { e.stopPropagation(); go(kind); });
-    return { el: b, v: v, l: l, key: "", go: null, icon: icon(kind) ? 1 : 0 };
+    var c = { el: b, btn: b, v: v, l: l, key: "", go: null, stop: null, sb: null, icon: icon(kind) ? 1 : 0 };
+    if (live && isLive(kind)) live.wrap(c, kind, halt);
+    c.el.hidden = true;
+    return c;
   }
 
   // ---------- The fold button and its panel ----------
@@ -304,7 +304,7 @@
   // The chips the bar has no room for, that have something to say.
   function foldedKinds() {
     return Object.keys(chips).filter(function (k) { var c = chips[k]; return c.key !== "" && c.el.hasAttribute("data-sb-drop"); })
-      .sort(function (a, b) { return list().indexOf(a) - list().indexOf(b); });
+      .sort(function (a, b) { var r = row(); return r.indexOf(a) - r.indexOf(b); });
   }
   function paintMore() {
     if (!more) return;
@@ -319,28 +319,29 @@
     else if (pop) fillPop(ks);
   }
   function fillPop(ks) {
-    var sig = ks.map(function (k) { return k + "\u0001" + chips[k].key; }).join("\u0002");
+    var sig = ks.map(function (k) { return k + "\u0001" + chips[k].key + "\u0001" + (chips[k].stop ? 1 : 0); }).join("\u0002");
     if (pop.getAttribute("data-sig") === sig) return;
     pop.setAttribute("data-sig", sig);
     var had = doc.activeElement && pop.contains(doc.activeElement) ? doc.activeElement.getAttribute("data-sb") : null;
+    var hadStop = had && /sb-stop/.test(doc.activeElement.className);
     while (pop.firstChild) pop.removeChild(pop.firstChild);
     ks.forEach(function (k) {
       var c = chips[k], b = doc.createElement("button");
       b.type = "button";
-      b.className = "sb-card" + (/\bsb-soon\b|\bsb-now\b/.test(c.el.className) ? " sb-soon" : "");
+      b.className = "sb-card" + (/\bsb-soon\b|\bsb-now\b/.test(c.btn.className) ? " sb-soon" : "");
       b.setAttribute("data-sb", k);
       b.innerHTML = icon(k);
       var box2 = doc.createElement("span"); box2.className = "sb-ct";
       var val = c.v.textContent + (c.l.textContent && !c.l.hidden ? " " + c.l.textContent : "");
-      var tip = c.el.title || "";
+      var tip = c.btn.title || "";
       if (tip.indexOf(c.v.textContent) === 0) tip = tip.slice(c.v.textContent.length).replace(/^[\s·:]+/, "");
       var v = doc.createElement("b"); v.textContent = val;      // textContent: never HTML
       var l = doc.createElement("small"); l.textContent = tip;
       box2.appendChild(v); box2.appendChild(l); b.appendChild(box2);
       b.addEventListener("click", function (e) { e.stopPropagation(); closePop(); go(k); });
-      pop.appendChild(b);
+      pop.appendChild(c.stop && live ? live.row(b, k, c, halt) : b);
     });
-    var f = had && pop.querySelector('[data-sb="' + had + '"]');
+    var f = had && pop.querySelector((hadStop ? ".sb-stop" : ".sb-card") + '[data-sb="' + had + '"]');
     if (f) f.focus();
   }
   function onPopKey(e) { if (e.key === "Escape" && pop) { e.preventDefault(); closePop(true); } }
@@ -379,7 +380,7 @@
     if (!host) return;
     var bar = doc.querySelector("#oros-bar .bar-right");
     if (!bar) return;
-    var l = list();
+    var l = row();
     if (!l.length) {
       closePop();
       if (box) { box.remove(); box = null; chips = {}; more = null; }
@@ -397,7 +398,7 @@
       if (!chips[k]) chips[k] = makeChip(k);
       box.appendChild(chips[k].el);                    // list order
       chips[k].key = "";
-      if (folded()) chips[k].el.setAttribute("data-sb-drop", "1");
+      if (folded() && !isLive(k)) chips[k].el.setAttribute("data-sb-drop", "1");
     });
     box.appendChild(more.el);                          // always last
     paint(true);
@@ -486,6 +487,31 @@
     }
   };
 
+  // SB-LIVE pills: smartbar-live.js
+  LIVE.forEach(function (k) {
+    STATE[k] = function (now) {
+      if (!live) {
+        var tr = null, sr = null;
+        try { tr = localStorage.getItem("oros-time-timers"); sr = localStorage.getItem("oros-time-sw"); } catch (e) {}
+        if (liveWanted(tr, sr, recLive)) loadLive();
+        return null;
+      }
+      return live.state(k, now);
+    };
+  });
+  function loadLive() {
+    if (liveLoad || live) return;
+    liveLoad = 1;
+    script("smartbar-live.js", function () {
+      live = call(function () {
+        return root.orosSmartBarLive.make({ t: t, call: call, appName: appName, clock: clock, readJSON: readJSON, host: hostFn,
+          rec: function (v) { if (v !== undefined) recLive = v; return recLive; }, repaint: repaint });
+      }) || null;
+      if (!live) { liveLoad = 0; return; }
+      LIVE.forEach(function (k) { if (chips[k]) { chips[k].el.remove(); delete chips[k]; } });
+      render();
+    }, function () { liveLoad = 0; });
+  }
   Object.keys(APPS).forEach(function (k) {
     STATE[k] = function (now) {
       if (!apps) { loadApps(); return null; }
@@ -493,35 +519,45 @@
     };
   });
   // The other apps' cards: their own file, loaded once from the precache.
+  // One of the bar's own files, once, from the precache.
+  function script(src, ok, fail) {
+    var s = doc.createElement("script");
+    s.src = src + "?v=" + (call(function () { return host.version(); }) || "");
+    s.onload = ok; s.onerror = fail;
+    doc.head.appendChild(s);
+  }
+  function hostFn() { return host; }
+  function repaint(kinds) { kinds.forEach(function (k) { if (chips[k]) chips[k].key = ""; }); paint(true); }
   function loadApps() {
     if (appsLoad || apps) return;
     appsLoad = 1;
-    var s = doc.createElement("script");
-    s.src = "smartbar-apps.js?v=" + (call(function () { return host.version(); }) || "");
-    s.onload = function () {
+    script("smartbar-apps.js", function () {
       apps = call(function () {
         return root.orosSmartBarApps.make({
           t: t, call: call, strict: strict, appName: appName, clock: clock, ymdOf: ymdOf, ttl: TODAY_MS,
-          host: function () { return host; },
-          kinds: function () { return Object.keys(chips); },
-          repaint: function (kinds) { kinds.forEach(function (k) { if (chips[k]) chips[k].key = ""; }); paint(true); }
+          host: hostFn, kinds: function () { return Object.keys(chips); }, repaint: repaint
         });
       }) || null;
       if (!apps) { appsLoad = 0; return; }
       Object.keys(chips).forEach(function (k) { if (APPS[k] && !chips[k].icon) setIcon(chips[k], k); });
       paint(true);
-    };
-    s.onerror = function () { appsLoad = 0; };
-    doc.head.appendChild(s);
+    }, function () { appsLoad = 0; });
   }
-  function icon(kind) { return IC[kind] || (apps && apps.icon(kind)) || ""; }
+  function icon(kind) { return IC[kind] || (apps && apps.icon(kind)) || (live && live.icon(kind)) || ""; }
   function setIcon(c, kind) {
     var svg = icon(kind);
     if (!svg) return;
-    var old = c.el.querySelector("svg");
+    var old = c.btn.querySelector("svg");
     if (old) old.remove();
-    c.el.insertAdjacentHTML("afterbegin", svg);   // fixed markup, never data
+    c.btn.insertAdjacentHTML("afterbegin", svg);   // fixed markup, never data
     c.icon = 1;
+  }
+
+  function halt(kind) {
+    var c = chips[kind];
+    if (c && typeof c.halt === "function") call(c.halt);
+    if (chips[kind]) chips[kind].key = "";
+    paint(true);
   }
 
   // Stock's till rules come from its own file, loaded once from the
@@ -529,11 +565,7 @@
   function loadPos() {
     if (posLoad || root.OrosStockPosCore) return;
     posLoad = 1;
-    var s = doc.createElement("script");
-    s.src = "stock/pos-core.js?v=" + (call(function () { return host.version(); }) || "");
-    s.onload = function () { if (chips.sales) { chips.sales.key = ""; paint(true); } };
-    s.onerror = function () { posLoad = 0; };
-    doc.head.appendChild(s);
+    script("stock/pos-core.js", function () { repaint(["sales"]); }, function () { posLoad = 0; });
   }
 
   function wantsToday() { return !!(chips.event || chips.tasks); }
@@ -569,14 +601,16 @@
       var c = chips[k], s = call(function () { return STATE[k](now); }) || null;
       var key = s ? [s.v, s.l, s.cls, s.tip].join("\u0001") : "";
       c.go = s ? s.go : null;
+      if (c.sb) live.paintStop(c, s);
       if (!force && key === c.key) return;
+      if (s && c.sb && c.key === "" && c.el.hasAttribute("data-sb-drop")) changed = true;   // a new live pill: refit
       c.key = key;
       if (!s) { if (!c.el.hidden) { c.el.hidden = true; changed = true; } return; }
       if (c.v.textContent !== s.v) c.v.textContent = s.v;      // textContent: never HTML
       if (c.l.textContent !== (s.l || "")) c.l.textContent = s.l || "";
       c.l.hidden = !s.l;
-      c.el.className = "sb-chip" + (s.cls ? " " + s.cls : "");
-      if (c.el.title !== s.tip) { c.el.title = s.tip; c.el.setAttribute("aria-label", s.tip); }
+      c.btn.className = "sb-chip" + (s.cls ? " " + s.cls : "");
+      if (c.btn.title !== s.tip) { c.btn.title = s.tip; c.btn.setAttribute("aria-label", s.tip); }
       if (c.el.hidden && !c.el.hasAttribute("data-sb-drop")) { c.el.hidden = false; changed = true; }
     });
     paintMore();
@@ -609,7 +643,18 @@
         if (ib === -1) return -1;
         return ia - ib;
       });
-      return { list: names, look: lookOf(stored()), looks: LOOKS.slice() };
+      return { list: names, look: lookOf(stored()), looks: LOOKS.slice(), live: liveOf(stored()) };
+    },
+    setLive: function (on) {
+      if (!host) return;
+      save(list(), undefined, !!on);
+    },
+    // Screen Capture's recording { state() → { ms, paused }, stop() } | null, in memory
+    live: function (kind, h) {
+      if (kind !== "rec") return;
+      recLive = h && typeof h.state === "function" && typeof h.stop === "function" ? h : null;
+      if (chips.rec) chips.rec.key = "";
+      paint(true);
     },
     // SB3: "" (classic), glass, midnight, solid; device-local like the chips
     setLook: function (look) {
@@ -628,10 +673,12 @@
     // fitBar(): show every chip again before measuring …
     // On a phone every chip folds into the button at once.
     fitReset: function () {
-      var f = folded();
+      var f = folded(), keep = "";
+      // on a phone the first live pill stays in the bar
+      if (f) LIVE.some(function (k) { if (chips[k] && chips[k].key !== "") { keep = k; return true; } return false; });
       Object.keys(chips).forEach(function (k) {
         var c = chips[k];
-        if (f) { c.el.setAttribute("data-sb-drop", "1"); c.el.hidden = true; return; }
+        if (f && k !== keep) { c.el.setAttribute("data-sb-drop", "1"); c.el.hidden = true; return; }
         c.el.removeAttribute("data-sb-drop");
         c.el.hidden = c.key === "";
       });
