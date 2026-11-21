@@ -13,12 +13,21 @@
 //              // AnalyserNode's arrays; any realm), live = real sound
 //     playing: function () { return bool },
 //     colors:  function () { return { a: "#rrggbb", bg: "#rrggbb" } },
+//              // bg "transparent" (1.2.0): cleared, for a light over a card
 //     style:   "glow" | "rings" | "bars" | "wave",
 //     area:    function () { return { x, y, w, h } },  // optional: the
 //              // free space in canvas CSS pixels the light centres on
-//     onState: function (reason) {}  // "", "reduced", "battery", "slow"
+//     onState: function (reason) {}, // "", "reduced", "battery", "slow",
+//              // "saver" (only with opts.saver)
+//     // Desktop wallpaper (1.2.0, VIZWALL-1), all optional:
+//     saver:   function () { return bool },  // Energy saver on: still
+//     paused:  function () { return bool },  // covered (an app is open):
+//              // no frames at all until wake()
+//     soft:    0.6,     // light strength 0..1 (icons stay readable)
+//     rest:    true     // nothing playing = the levels settle on the
+//              // still picture and the loop stops (never goes dark)
 //   });
-//   v.setStyle(id); v.wake(); v.destroy();
+//   v.setStyle(id); v.wake(); v.redraw(); v.destroy();
 //
 // No sound data (a stream from a site that does not allow reading
 // it): the light breathes on its own, slowly, and source().live is
@@ -40,7 +49,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var STYLES = ["glow", "rings", "bars", "wave"];
   var FPS_GAP = 1000 / 30;
   var SLOW_MS = 55, SLOW_N = 90;
@@ -55,7 +64,8 @@
       calm: "This source does not let orOS listen to the sound, so the light moves on its own.",
       reduced: "Reduced motion is on, so the light stays still.",
       battery: "The battery is low, so the light stays still.",
-      slow: "This device is busy, so the light stays still."
+      slow: "This device is busy, so the light stays still.",
+      saver: "Energy saver is on, so the light stays still."
     },
     el: {
       btn: "Φωτορυθμικό", on: "Φωτορυθμικό ενεργό", off: "Φωτορυθμικό ανενεργό",
@@ -65,7 +75,8 @@
       calm: "Αυτή η πηγή δεν αφήνει το orOS να ακούσει τον ήχο, γι' αυτό το φως κινείται μόνο του.",
       reduced: "Οι μειωμένες κινήσεις είναι ενεργές, γι' αυτό το φως μένει ακίνητο.",
       battery: "Η μπαταρία είναι χαμηλή, γι' αυτό το φως μένει ακίνητο.",
-      slow: "Η συσκευή είναι φορτωμένη, γι' αυτό το φως μένει ακίνητο."
+      slow: "Η συσκευή είναι φορτωμένη, γι' αυτό το φως μένει ακίνητο.",
+      saver: "Η Εξοικονόμηση ενέργειας είναι ενεργή, γι' αυτό το φως μένει ακίνητο."
     },
     de: {
       btn: "Lichtshow", on: "Lichtshow an", off: "Lichtshow aus",
@@ -75,7 +86,8 @@
       calm: "Diese Quelle lässt orOS den Ton nicht hören, darum bewegt sich das Licht von selbst.",
       reduced: "Reduzierte Bewegung ist an, darum bleibt das Licht still.",
       battery: "Der Akku ist schwach, darum bleibt das Licht still.",
-      slow: "Dieses Gerät ist ausgelastet, darum bleibt das Licht still."
+      slow: "Dieses Gerät ist ausgelastet, darum bleibt das Licht still.",
+      saver: "Der Energiesparen ist an, darum bleibt das Licht still."
     }
   };
 
@@ -119,6 +131,10 @@
     var v = (+x || 0) / Math.max(peak, 0.12);
     return { peak: peak, v: Math.max(0, Math.min(1, v)) };
   }
+  // Levels of the still picture (and of the wallpaper at rest).
+  var REST = { lo: 0.4, mid: 0.32, hi: 0.24 };
+  // How far levels are from the rest picture (sum of differences).
+  function restGap(lv) { return Math.abs(lv.lo - REST.lo) + Math.abs(lv.mid - REST.mid) + Math.abs(lv.hi - REST.hi); }
   // The light on its own (no sound data): slow, soft, never still.
   function idle(t) {
     t = (+t || 0) / 1000;
@@ -132,6 +148,7 @@
   function stillReason(o) {
     o = o || {};
     if (o.reduced) return "reduced";
+    if (o.saver) return "saver";
     if (o.battery && o.battery.level != null && !o.battery.charging && o.battery.level < 0.2) return "battery";
     if (o.slow) return "slow";
     return "";
@@ -328,13 +345,16 @@
     try { g = canvas.getContext("2d"); } catch (e) { g = null; }
     var style = normStyle(opts.style);
     var lv = { lo: 0, mid: 0, hi: 0 }, pk = { lo: 0, mid: 0, hi: 0 };
-    var st = {}, raf = 0, last = 0, prevT = 0, gaps = [], quiet = 0, dead = false;
+    var st = {}, raf = 0, last = 0, prevT = 0, gaps = [], quiet = 0, dead = false, drawT = 0;
+    var soft = opts.soft > 0 && opts.soft < 1 ? +opts.soft : 1, rest = !!opts.rest;
     var reason = "", battery = null, mq = null, pal = palette("");
     var bat = null;
 
     function reduced() { return !!(mq && mq.matches); }
     function setReason() {
-      var r = stillReason({ reduced: reduced(), battery: battery, slow: slowSeen });
+      var sv = false;
+      try { sv = !!(opts.saver && opts.saver()); } catch (e) { sv = false; }
+      var r = stillReason({ reduced: reduced(), saver: sv, battery: battery, slow: slowSeen });
       if (r !== reason) {
         reason = r;
         try { if (opts.onState) opts.onState(reason); } catch (e) {}
@@ -353,8 +373,10 @@
       if (canvas.width !== f.w || canvas.height !== f.h) { canvas.width = f.w; canvas.height = f.h; }
       return f;
     }
+    function covered() { try { return !!(opts.paused && opts.paused()); } catch (e) { return false; } }
     function frame(t, still) {
       if (!g) return;
+      if (still) t = drawT; else drawT = t;
       var f = size(), W = f.w, H = f.h;
       var c = colours();
       var src = null;
@@ -362,32 +384,35 @@
       var playing = false;
       try { playing = !!(opts.playing && opts.playing()); } catch (e) {}
       var target;
-      if (still) target = { lo: 0.4, mid: 0.32, hi: 0.24 };
+      if (still) target = REST;
       else if (src && src.live && src.f) {
         var b = bands(src.f, src.rate);
         var a1 = gain(pk.lo, b.lo), a2 = gain(pk.mid, b.mid), a3 = gain(pk.hi, b.hi);
         pk.lo = a1.peak; pk.mid = a2.peak; pk.hi = a3.peak;
         target = { lo: a1.v, mid: a2.v, hi: a3.v };
       } else if (playing) target = idle(t);
-      else target = { lo: 0, mid: 0, hi: 0 };
-      if (still) lv = target;
+      else target = rest ? REST : { lo: 0, mid: 0, hi: 0 };
+      if (still) lv = { lo: target.lo, mid: target.mid, hi: target.hi };
       else { lv.lo = smooth(lv.lo, target.lo); lv.mid = smooth(lv.mid, target.mid); lv.hi = smooth(lv.hi, target.hi); }
       g.globalAlpha = 1;
       g.globalCompositeOperation = "source-over";
-      g.fillStyle = (c && c.bg) || "#0b0b10";
-      g.fillRect(0, 0, W, H);
+      if (c && c.bg === "transparent") g.clearRect(0, 0, W, H);   // 1.2.0: over a card
+      else { g.fillStyle = (c && c.bg) || "#0b0b10"; g.fillRect(0, 0, W, H); }
       var a = null;
       try { a = opts.area ? opts.area() : null; } catch (e) { a = null; }
       var B = a && a.w > 40 && a.h > 40 ? { x: a.x * f.r, y: a.y * f.r, w: a.w * f.r, h: a.h * f.r } : { x: 0, y: 0, w: W, h: H };
       B.W = W; B.H = H; B.r = f.r;
-      try { DRAW[style](g, B, lv, still ? 0 : t, pal, st, still ? null : src); } catch (e) {}
-      quiet = !playing && lv.lo + lv.mid + lv.hi < 0.03 ? quiet + 1 : 0;
+      g.globalAlpha = soft;
+      try { DRAW[style](g, B, lv, t, pal, st, still ? null : src); } catch (e) {}
+      g.globalAlpha = 1;
+      quiet = !playing && (rest ? restGap(lv) < 0.01 : lv.lo + lv.mid + lv.hi < 0.03) ? quiet + 1 : 0;
     }
     function loop(t) {
       raf = 0;
       if (dead) return;
       var doc = canvas.ownerDocument;
       if (doc && doc.hidden) return;                   // visibilitychange wakes it
+      if (covered()) { prevT = 0; return; }            // the owner wakes it
       if (prevT) { gaps.push(t - prevT); if (gaps.length > SLOW_N) gaps.shift(); }
       prevT = t;
       if (!slowSeen && isSlow(gaps)) slowSeen = true;
@@ -401,7 +426,16 @@
       quiet = 0;
       prevT = 0;
       if (setReason()) { frame(0, true); return; }
+      if (covered()) return;
       raf = win.requestAnimationFrame(loop);
+    }
+    // One picture now at the current levels (a resize, a new accent),
+    // without starting the loop.
+    function redraw() {
+      if (dead || covered()) return;
+      if (setReason()) { frame(0, true); return; }
+      frame(drawT, false);
+      if (!raf) wake();
     }
     function onVis() { if (!canvas.ownerDocument.hidden) wake(); }
     function onMq() { reason = "-"; if (!setReason()) wake(); else frame(0, true); }
@@ -434,6 +468,9 @@
       setStyle: function (s) { style = normStyle(s); st = {}; if (reason) frame(0, true); else wake(); },
       style: function () { return style; },
       wake: wake,
+      redraw: redraw,
+      // Re-read the still reasons (Energy saver changed): still now or moving again.
+      check: function () { if (setReason()) frame(0, true); else wake(); },
       reason: function () { return reason; },
       destroy: function () {
         dead = true;
@@ -575,7 +612,7 @@
 
   var api = {
     v: VER, STYLES: STYLES, create: create, stage: stage, label: label, normStyle: normStyle, nextStyle: nextStyle,
-    bands: bands, smooth: smooth, gain: gain, idle: idle, stillReason: stillReason, isSlow: isSlow,
+    bands: bands, smooth: smooth, gain: gain, idle: idle, stillReason: stillReason, isSlow: isSlow, REST: REST, restGap: restGap,
     rgb: rgb, palette: palette, fit: fit, bars: bars, STR: STR
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

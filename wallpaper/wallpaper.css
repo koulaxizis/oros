@@ -238,7 +238,16 @@ input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-of
 .modes [role="tab"]:hover { color: var(--text); }
 .modes [role="tab"].on { color: var(--accent-ink, #141414); background: var(--accent); }
 .modes [role="tab"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-#art-panel[hidden], #land-panel[hidden] { display: none; }
+#art-panel[hidden], #land-panel[hidden], #viz-panel[hidden] { display: none; }
+/* Light show (VIZWALL-1): a still sign of each style in the accent */
+.viz-sw { background-color: #0b0a12; }
+.viz-sw-glow { background-image: radial-gradient(circle at 38% 45%, color-mix(in srgb, var(--accent) 70%, transparent) 0, transparent 46%), radial-gradient(circle at 68% 60%, color-mix(in srgb, var(--accent) 40%, transparent) 0, transparent 40%); }
+.viz-sw-rings { background-image: radial-gradient(circle, transparent 0 9px, var(--accent) 10px 11px, transparent 12px 17px, color-mix(in srgb, var(--accent) 60%, transparent) 18px 19px, transparent 20px); }
+.viz-sw-bars, .viz-sw-wave { position: relative; }
+.viz-sw-bars::after, .viz-sw-wave::after { content: ""; position: absolute; inset: 7px 10px; background: var(--accent); -webkit-mask: var(--viz-m) center / 100% 100% no-repeat; mask: var(--viz-m) center / 100% 100% no-repeat; }
+.viz-sw-bars { --viz-m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40'%3E%3Cg fill='%23000'%3E%3Crect x='10' y='18' width='6' height='20' rx='3'/%3E%3Crect x='24' y='8' width='6' height='30' rx='3'/%3E%3Crect x='38' y='2' width='6' height='36' rx='3'/%3E%3Crect x='52' y='14' width='6' height='24' rx='3'/%3E%3Crect x='66' y='6' width='6' height='32' rx='3'/%3E%3Crect x='80' y='20' width='6' height='18' rx='3'/%3E%3C/g%3E%3C/svg%3E"); }
+.viz-sw-wave { --viz-m: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 40'%3E%3Cpath d='M2 20 C14 2 26 2 38 20 S62 38 74 20 S92 6 98 14' fill='none' stroke='%23000' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E"); }
+#tb-a.viz-only .seed-wrap { display: none; }
 
 .pick-grid {
   display: grid;
