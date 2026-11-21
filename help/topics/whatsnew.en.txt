@@ -3,6 +3,10 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.27.00
+- **Claude saves exports where you want them.** Through orOS Gate, Claude's exports can now also go to a local folder you opened for Claude and/or one of Claude's folders in Files: Layout's print PDF (PDF/X-4 with crop marks too), EPUB and page pictures, Atelier's PNG, JPG and PDF, and Photo Lab's pictures. Nothing is ever overwritten: a taken name gets -2, -3. Files must be at «Claude may also change».
+- **New files show up for Claude at once.** What Claude saves through orOS Gate reaches the copy Claude reads within seconds, so a download link for it works right away.
+
 ## Version 8.26.01
 - **Budget: banks are read less often when you use several devices.** With "every 6 hours", each device used to read your banks on its own, so a phone and a computer together could pass a bank's limit of about 4 reads a day and get "too many requests". The devices now share one schedule, and after a bank asks to wait, no device asks it again before the next turn.
 - **Update now in installed orOS.** In installed orOS, orOS Portable and the Live USB, the **Update now** button on the update notice now opens the System panel's update check, as Settings › Check for updates does, instead of saying there is no newer version. orOS takes the new version at its next start.

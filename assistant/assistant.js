@@ -3739,13 +3739,15 @@
     if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "epubErr" } };
     var e = C.normEpub(args);
     if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "epubErr" } };
-    var ui = { k: "epub", doc: e.doc, title: e.title, edition: e.edition, layout: e.layout, ready: e.ready, key: attId(), st: "" };
+    var ui = { k: "epub", doc: e.doc, title: e.title, edition: e.edition, layout: e.layout, ready: e.ready, out: e.out || [], key: attId(), st: "" };
     return { content: "Shown to the user as a card: making an EPUB of \u201c" + (e.doc || e.title) + "\u201d. Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
   }
+  // GX-1: a card's out (a list; an older card kept one local: string)
+  function outList(v) { return (Array.isArray(v) ? v : typeof v === "string" && v ? [v] : []).filter(function (x) { return typeof x === "string" && x; }).slice(0, 2); }
   function runEpub(ui, c) {
     var p = shell();
     if (!p || typeof p.__orosOpenAt !== "function") return false;
-    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", title: ui.title || "", edition: ui.edition || "", layout: ui.layout || "", ready: ui.ready === 1 ? 1 : 0 };
+    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", title: ui.title || "", edition: ui.edition || "", layout: ui.layout || "", ready: ui.ready === 1 ? 1 : 0, out: outList(ui.out) };
     try { p.__orosOpenAt("layout", { epubOut: rq }); return true; } catch (e) { return false; }
   }
   function epubText(rep) {
@@ -3769,13 +3771,13 @@
     if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "pdfErr" } };
     var e = C.normPdf(args);
     if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "pdfErr" } };
-    var ui = { k: "pdf", doc: e.doc, preset: e.preset, pages: e.pages, bleed: e.bleed, marks: e.marks, spreads: e.spreads, down: e.down, creep: e.creep || 0, out: e.out || "", key: attId(), st: "" };
+    var ui = { k: "pdf", doc: e.doc, preset: e.preset, pages: e.pages, bleed: e.bleed, marks: e.marks, spreads: e.spreads, down: e.down, creep: e.creep || 0, out: e.out || [], key: attId(), st: "" };
     return { content: "Shown to the user as a card: making a " + e.preset + " PDF of \u201c" + e.doc + "\u201d. Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
   }
   function runPdf(ui, c) {
     var p = shell();
     if (!p || typeof p.__orosOpenAt !== "function") return false;
-    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", preset: ui.preset, pages: ui.pages || "", bleed: ui.bleed ? 1 : 0, marks: ui.marks || {}, spreads: ui.spreads ? 1 : 0, down: ui.down ? 1 : 0, creep: Number(ui.creep) || 0, out: typeof ui.out === "string" ? ui.out : "" };
+    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", preset: ui.preset, pages: ui.pages || "", bleed: ui.bleed ? 1 : 0, marks: ui.marks || {}, spreads: ui.spreads ? 1 : 0, down: ui.down ? 1 : 0, creep: Number(ui.creep) || 0, out: outList(ui.out) };
     try { p.__orosOpenAt("layout", { pdfOut: rq }); return true; } catch (e) { return false; }
   }
   function pdfText(rep) {
@@ -4186,6 +4188,7 @@
       if (ui.rep.made) out.new_designs = ui.rep.made;
       if (ui.rep.files) out.files_for_the_user = ui.rep.files;
       if (Array.isArray(rep.saved) && rep.saved.length) out.saved_files = savedPaths(rep.saved);
+      if (Array.isArray(rep.outFail) && rep.outFail.length) out.save_failed = C.outReport({ outFail: rep.outFail }, {}).save_failed;   // GX-2
       if (ui.rep.notes.length) out.notes = ui.rep.notes;
       if (rep.stopped) out.stopped_by_user = true;
       r.content = name + " applied the commands on the device. " + JSON.stringify(out);
@@ -9847,6 +9850,7 @@
     if (+rep.made) out.new_designs = +rep.made;
     if (+rep.files) out.files_for_the_owner = +rep.files;
     if (Array.isArray(rep.saved) && rep.saved.length) out.saved_files = savedPaths(rep.saved);
+    if (Array.isArray(rep.outFail) && rep.outFail.length) out.save_failed = C.outReport({ outFail: rep.outFail }, {}).save_failed;   // GX-2
     if (Array.isArray(rep.notes) && rep.notes.length) out.notes = rep.notes.slice(0, 10).map(String);
     // GL-3: steps with a file that could not be read were skipped, the rest applied
     if (+rep.skipped) {
