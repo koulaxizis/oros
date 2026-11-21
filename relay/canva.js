@@ -15,7 +15,8 @@
 //   act "token"   { code, verifier, redirect } → { access, refresh, expires, scope }
 //   act "refresh" { refresh }             → same
 //   act "designs" { token, cont?, query? } → { items: [...], cont }
-//   act "export"  { token, id }           → { job, status, urls, err }   (PPTX)
+//   act "export"  { token, id, kind? }    → { job, status, urls, err }   (PPTX;
+//                  kind "pdf": Canva's PDF of it, for the effects, CV-F4)
 //   act "job"     { token, job }          → same
 //   act "file"    { url }                 → the exported file's bytes
 //                  (application/octet-stream; only https *.canva.com)
@@ -26,7 +27,7 @@
 // ============================================================
 
 export const CANVA_LIMITS = {
-  fileBytes: 60 * 1024 * 1024,     // one exported .pptx
+  fileBytes: 60 * 1024 * 1024,     // one exported .pptx or .pdf
   timeout: 20000,                  // ms, per Canva call
   redirects: 3,                    // hops of an export download
   pageSize: 50
@@ -58,6 +59,7 @@ export function validCanva(b, origins) {
     if (b.query !== undefined && !(typeof b.query === "string" && b.query.length <= 255 && !/[\r\n\0]/.test(b.query))) return "query";
   }
   if (b.act === "export" && !(typeof b.id === "string" && ID.test(b.id))) return "id";
+  if (b.act === "export" && b.kind !== undefined && b.kind !== "pptx" && b.kind !== "pdf") return "kind";
   if (b.act === "job" && !(typeof b.job === "string" && ID.test(b.job))) return "job";
   if (b.act === "file" && !fileUrl(b.url)) return "url";
   return "";
@@ -160,7 +162,7 @@ export async function runCanva(b, env, fetchFn) {
       const r = await call(fetchFn, API + "/exports", {
         method: "POST",
         headers: Object.assign({ "Content-Type": "application/json" }, bearer(b.token)),
-        body: JSON.stringify({ design_id: b.id, format: { type: "pptx" } })
+        body: JSON.stringify({ design_id: b.id, format: { type: b.kind === "pdf" ? "pdf" : "pptx" } })
       });
       return jobOf(await jsonOf(r));
     }

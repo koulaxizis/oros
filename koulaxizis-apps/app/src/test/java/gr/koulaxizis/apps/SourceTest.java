@@ -49,13 +49,25 @@ public class SourceTest {
     }
 
     @Test
+    public void waymarkIsItsOwnSectionBeforeGlarolykoi() {
+        Source w = byId("waymark");
+        Source o = byId("oros");
+        assertEquals("oros", w.from);
+        assertEquals(o.fingerprint, w.fingerprint);
+        assertTrue(w.only.contains("site.waymarked.app"));
+        assertFalse(Source.REPOS.contains(w));
+        assertEquals("waymark", Source.ALL.get(Source.ALL.size() - 2).id);
+    }
+
+    @Test
     public void sectionsSplitOneListAndShareItsError() {
         Map<String, List<AppInfo>> byRepo = new HashMap<>();
         byRepo.put("oros", Arrays.asList(offer("online.useoros.twa"), offer("net.glarolykoi.android"),
-            offer("online.useoros.notes")));
+            offer("site.waymarked.app"), offer("online.useoros.notes")));
         Map<String, List<AppInfo>> got = Source.sections(Source.ALL, byRepo);
         assertEquals(Arrays.asList("online.useoros.twa", "online.useoros.notes"), pkgs(got.get("oros")));
         assertEquals(Arrays.asList("net.glarolykoi.android"), pkgs(got.get("glarolykoi")));
+        assertEquals(Arrays.asList("site.waymarked.app"), pkgs(got.get("waymark")));
         assertNull(got.get("nulljsfx"));
         // Rows: Glarolykoi has its own header with its app
         List<Rows.Row> rows = Rows.build(Source.ALL, got, new HashMap<>(), java.util.Locale.US);
@@ -64,12 +76,13 @@ public class SourceTest {
             if (r.kind == Rows.HEADER) sb.append("H:").append(r.source.title).append('|');
             else if (r.kind == Rows.APP) sb.append(r.app.pkg).append('|');
         }
-        assertTrue(sb.toString(), sb.toString().endsWith("H:Glarolykoi|net.glarolykoi.android|"));
+        assertTrue(sb.toString(), sb.toString().endsWith("H:Waymark|site.waymarked.app|H:Glarolykoi|net.glarolykoi.android|"));
 
         Map<String, String> errs = new HashMap<>();
         errs.put("oros", RepoException.NETWORK);
         Map<String, String> e = Source.sectionErrors(Source.ALL, errs);
         assertEquals(RepoException.NETWORK, e.get("glarolykoi"));
+        assertEquals(RepoException.NETWORK, e.get("waymark"));
         assertEquals(RepoException.NETWORK, e.get("oros"));
         assertNull(e.get("noxpress"));
     }

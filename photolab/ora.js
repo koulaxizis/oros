@@ -53,7 +53,12 @@
     "svg:color-dodge": "dodge", "svg:color-burn": "burn", "svg:hard-light": "hard",
     "svg:soft-light": "soft", "svg:difference": "difference", "svg:exclusion": "exclusion",
     "krita:exclusion": "exclusion", "svg:hue": "hue", "svg:saturation": "saturation",
-    "svg:color": "color", "svg:luminosity": "luminosity"
+    "svg:color": "color", "svg:luminosity": "luminosity", "svg:plus": "lineardodge",
+    // wave PS-5: Krita's names in OpenRaster for the Photoshop modes
+    "krita:dissolve": "dissolve", "krita:linear_burn": "linearburn", "krita:darker color": "darkercolor",
+    "krita:linear_dodge": "lineardodge", "krita:lighter color": "lightercolor", "krita:vivid_light": "vivid",
+    "krita:linear light": "linearlight", "krita:pin_light": "pin", "krita:hard mix": "hardmix",
+    "krita:hard_mix_photoshop": "hardmix", "krita:subtract": "subtract", "krita:divide": "divide"
   };
   var OP_OF = {};
   Object.keys(OPS).forEach(function (k) { if (!OP_OF[OPS[k]]) OP_OF[OPS[k]] = k; });
@@ -150,7 +155,10 @@
     normal: "normal", multiply: "multiply", screen: "screen", overlay: "overlay", darken: "darken",
     lighten: "lighten", dodge: "dodge", burn: "burn", hard_light: "hard", soft_light: "soft",
     soft_light_svg: "soft", diff: "difference", exclusion: "exclusion", hue: "hue",
-    saturation: "saturation", color: "color", luminize: "luminosity"
+    saturation: "saturation", color: "color", luminize: "luminosity",
+    dissolve: "dissolve", linear_burn: "linearburn", "darker color": "darkercolor", linear_dodge: "lineardodge",
+    add: "lineardodge", "lighter color": "lightercolor", vivid_light: "vivid", "linear light": "linearlight",
+    pin_light: "pin", "hard mix": "hardmix", hard_mix_photoshop: "hardmix", subtract: "subtract", divide: "divide"
   };
   var KRA_TILE_MAX = 1 << 20;                        // tiles in one layer
 

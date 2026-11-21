@@ -12,7 +12,8 @@
 //   opts.segments  [string] (Montage: one per subtitle, order kept)
 //   opts.lang      UI language "en" | "el" | "de" (default orosI18n)
 //   opts.actions   [{ label, run(result) }]  result = { text } or
-//                  { segments: [string] }; the panel closes after run
+//                  { segments: [string] }, both with to (the language
+//                  code translated into); the panel closes after run
 //                  (Copy is always there for a text)
 // Nothing is stored except the last "To" language (device-local
 // "oros-translate-panel" { to }). Translations are shown only through
@@ -260,7 +261,7 @@
           if (!st.res) return;
           var r = st.res;
           dlg.close();
-          a.run(segs ? { segments: r.segments } : { text: r.text });
+          a.run(segs ? { segments: r.segments, to: to } : { text: r.text, to: to });
         });
         acts.insertBefore(b, closeBtn);
         return b;

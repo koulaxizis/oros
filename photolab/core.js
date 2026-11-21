@@ -74,24 +74,37 @@
   var SHAPE_RE   = /^[a-z0-9-]{1,30}$/;
 
   // Canvas 2D globalCompositeOperation names: native, so the screen
-  // and the export blend the same way.
+  // and the export blend the same way. op "" (wave PS-5): a Photoshop
+  // mode the canvas lacks, mixed per pixel by photolab/blendx.js.
+  // Listed in Photoshop's menu order.
   var BLENDS = [
-    { id: "normal",      op: "source-over", en: "Normal" },
-    { id: "multiply",    op: "multiply",    en: "Multiply" },
-    { id: "screen",      op: "screen",      en: "Screen" },
-    { id: "overlay",     op: "overlay",     en: "Overlay" },
-    { id: "darken",      op: "darken",      en: "Darken" },
-    { id: "lighten",     op: "lighten",     en: "Lighten" },
-    { id: "dodge",       op: "color-dodge", en: "Color dodge" },
-    { id: "burn",        op: "color-burn",  en: "Color burn" },
-    { id: "hard",        op: "hard-light",  en: "Hard light" },
-    { id: "soft",        op: "soft-light",  en: "Soft light" },
-    { id: "difference",  op: "difference",  en: "Difference" },
-    { id: "exclusion",   op: "exclusion",   en: "Exclusion" },
-    { id: "hue",         op: "hue",         en: "Hue" },
-    { id: "saturation",  op: "saturation",  en: "Saturation" },
-    { id: "color",       op: "color",       en: "Color" },
-    { id: "luminosity",  op: "luminosity",  en: "Luminosity" }
+    { id: "normal",       op: "source-over", en: "Normal" },
+    { id: "dissolve",     op: "", en: "Dissolve" },
+    { id: "darken",       op: "darken",      en: "Darken" },
+    { id: "multiply",     op: "multiply",    en: "Multiply" },
+    { id: "burn",         op: "color-burn",  en: "Color burn" },
+    { id: "linearburn",   op: "", en: "Linear burn" },
+    { id: "darkercolor",  op: "", en: "Darker color" },
+    { id: "lighten",      op: "lighten",     en: "Lighten" },
+    { id: "screen",       op: "screen",      en: "Screen" },
+    { id: "dodge",        op: "color-dodge", en: "Color dodge" },
+    { id: "lineardodge",  op: "", en: "Linear dodge (add)" },
+    { id: "lightercolor", op: "", en: "Lighter color" },
+    { id: "overlay",      op: "overlay",     en: "Overlay" },
+    { id: "soft",         op: "soft-light",  en: "Soft light" },
+    { id: "hard",         op: "hard-light",  en: "Hard light" },
+    { id: "vivid",        op: "", en: "Vivid light" },
+    { id: "linearlight",  op: "", en: "Linear light" },
+    { id: "pin",          op: "", en: "Pin light" },
+    { id: "hardmix",      op: "", en: "Hard mix" },
+    { id: "difference",   op: "difference",  en: "Difference" },
+    { id: "exclusion",    op: "exclusion",   en: "Exclusion" },
+    { id: "subtract",     op: "", en: "Subtract" },
+    { id: "divide",       op: "", en: "Divide" },
+    { id: "hue",          op: "hue",         en: "Hue" },
+    { id: "saturation",   op: "saturation",  en: "Saturation" },
+    { id: "color",        op: "color",       en: "Color" },
+    { id: "luminosity",   op: "luminosity",  en: "Luminosity" }
   ];
   var BLEND_IDS = BLENDS.map(function (b) { return b.id; });
 
@@ -501,7 +514,7 @@
   }
 
   function blendOp(id) {
-    for (var i = 0; i < BLENDS.length; i++) if (BLENDS[i].id === id) return BLENDS[i].op;
+    for (var i = 0; i < BLENDS.length; i++) if (BLENDS[i].id === id) return BLENDS[i].op || "source-over";
     return "source-over";
   }
 
