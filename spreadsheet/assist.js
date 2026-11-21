@@ -209,12 +209,22 @@
       H.done();
       rec.fp = fp(stateOf(rec));
     }
-    busy = false;
+    var ex = null;
     (changed ? put(rec) : Promise.resolve()).then(function () {
+      // GX-3: the export steps, made as by the menu (csv per sheet, a workbook once)
+      var R = window.orosRecipes;
+      return R.runOuts(ids, chk.steps, function (id, st) {
+        if (st.fmt !== "csv" && id !== ids[0]) return null;
+        if (st.fmt === "csv" && H.getSheet(id)) H.switchTo(id);
+        return R.capture(function () { H.exportAs(st.fmt); });
+      }).then(function (r) { ex = r; });
+    }).then(null, function () {}).then(function () {
+      busy = false;
       /* the changed sheet opens, so the user sees what changed */
       if (perIds.length === 1 && changed && perIds[0] !== H.activeId() && H.getSheet(perIds[0]) && !document.querySelector("dialog[open]")) H.switchTo(perIds[0]);
       var rep = err && !changed ? { failed: 1, why: "error" }
         : { ok: 1, n: changed ? total : 0, d: changed ? per.length : 0, per: changed ? per.slice(0, 50) : [], cut: 0, notes: notes.slice(), tok: changed ? rec.tok : "" };
+      window.orosRecipes.outRep(rep, ex);
       back(key, rep);
       var msg = !changed ? t("as.done0") : per.length === 1 ? t("as.done1").replace("{n}", total) : t("as.done").replace("{n}", total).replace("{d}", per.length);
       if (changed) H.undoToast(msg, function () { undo({ tok: rec.tok }); });

@@ -1005,6 +1005,8 @@ function updateStatus() {
 // Standalone PWA mode -> null -> caller uses local fallback.
 function dialogHost() {
   try {
+    // GX-3: an export step's files go to its sink (recipes/core.js capture)
+    if (window.__orosExportSink) return window.__orosExportSink;
     return window.orosDialog || window.parent.orosDialog || null;
   } catch (e) { return null; }
 }
@@ -6069,6 +6071,8 @@ window.SheetAssistHost = {
   state: function () { return state; }, getSheet: getSheetById, activeId: function () { return actSID; }, switchTo: switchTo,
   flush: function () { if (editing) commitEdit(0, 0); closePops(); },
   rawSet: rawSet, rawDel: rawDel, canonF: canonF, applyObj: applyObj, push: pushUndo,
+  // GX-3: Export as the menu does (csv: the open sheet; xlsx, ods: the workbook)
+  exportAs: function (fmt) { if (fmt === "csv") csvExport(); else xlExport(fmt === "ods" ? "ods" : "xlsx"); },
   done: function () {
     if (!getActiveSheet() || !getSheetById(actSID)) actSID = state.sheets[0].id;
     invalidateEval(); resetDisp(); markDirty(); queueSave();
