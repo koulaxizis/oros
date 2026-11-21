@@ -30,9 +30,10 @@
 //     Move down, Remove). With a mouse a card's title drags it to
 //     another place.
 //   • Hidden while an app covers the desktop; nothing repaints then.
+//   • Clock style (1.4.0): Automatic / Digits / LED dots (own glyphs).
 //
 // Device-local (oros-widgets, never synced: screens differ per device):
-//   { v:1, list: ["clock","calendar",…] }   order = list order
+//   { v:1, list: ["clock","calendar",…] [, clock] }   order = list order
 //   Absent = the default: clock, calendar, today, weather on a wide
 //   screen that is not a phone; none on a phone or a narrow window.
 //
@@ -42,7 +43,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.4.0";
   var KEY = "oros-widgets";
   var START_KEY = "oros-start";
   // First steps, in order. "install" only where the browser offers it
@@ -53,12 +54,35 @@
   var WIDE = 760;
 
   // ---------- 1. Model (pure) ----------
+  var CLOCK_STYLES = ["auto", "digits", "dots"];
   function norm(v) {
     if (!v || typeof v !== "object" || !Array.isArray(v.list)) return null;
     var out = [];
     v.list.forEach(function (k) { if (KINDS.indexOf(k) !== -1 && out.indexOf(k) === -1) out.push(k); });
-    return { v: 1, list: out };
+    var r = { v: 1, list: out };
+    if (v.clock === "digits" || v.clock === "dots") r.clock = v.clock;
+    return r;
   }
+  // SIGNAL-1: Automatic = dots with the Signal skin.
+  function clockMode(st, skin) { return st === "digits" || st === "dots" ? st : (skin === "signal" ? "dots" : "digits"); }
+  // 5×7 LED glyphs, 7 rows of 5 bits each, top first; the colon is 1 wide.
+  var GLYPHS = {};
+  "01110100011001110101110011000101110 00100011000010000100001000010001110 01110100010000100010001000100011111 11111000100010000010000011000101110 00010001100101010010111110001000010 11111100001111000001000011000101110 00110010001000011110100011000101110 11111000010001000100010000100001000 01110100011000101110100011000101110 01110100011000101111000010001001100"
+    .split(" ").forEach(function (b, d) { GLYPHS[d] = b.match(/.{5}/g); });
+  GLYPHS[":"] = "0010100".split("");
+  // The dots of "21:07": { cols, cells:[{x, y, on}] }, a blank column between glyphs.
+  function dotCells(text) {
+    var cells = [], x = 0;
+    String(text).split("").forEach(function (ch) {
+      var g = GLYPHS[ch];
+      if (!g) return;
+      if (cells.length) x++;
+      for (var y = 0; y < 7; y++) for (var i = 0; i < g[0].length; i++) cells.push({ x: x + i, y: y, on: g[y][i] === "1" });
+      x += g[0].length;
+    });
+    return { cols: x, cells: cells };
+  }
+  function hhmm(d) { return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
   function parse(raw) {
     try { return norm(JSON.parse(raw)); } catch (e) { return null; }
   }
@@ -157,7 +181,8 @@
   var model = { VER: VER, KINDS: KINDS, DEFAULT: DEFAULT, STEPS: STEPS, norm: norm, parse: parse, listOf: listOf,
                 toggle: toggle, move: move, monthGrid: monthGrid, ymdOf: ymdOf,
                 startNorm: startNorm, startRows: startRows, startNext: startNext, startGone: startGone, firstList: firstList,
-                phoneUrlOf: phoneUrlOf };
+                phoneUrlOf: phoneUrlOf, CLOCK_STYLES: CLOCK_STYLES, clockMode: clockMode, GLYPHS: GLYPHS,
+                dotCells: dotCells, hhmm: hhmm };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -186,8 +211,12 @@
   function phone() { return call(function () { return host.phone(); }) === true; }
   function wide() { return (root.innerWidth || 0) >= WIDE; }
   function list() { return listOf(stored(), wide(), phone()); }
-  function save(l) {
-    try { localStorage.setItem(KEY, JSON.stringify({ v: 1, list: l })); }
+  function clockStyle() { var s = stored(); return (s && s.clock) || "auto"; }
+  function save(l, clock) {
+    var rec = { v: 1, list: l };
+    var c = clock === undefined ? clockStyle() : clock;
+    if (c === "digits" || c === "dots") rec.clock = c;
+    try { localStorage.setItem(KEY, JSON.stringify(rec)); }
     catch (e) { call(function () { host.toast(t("wg.savefail")); }); }
     render();
     call(function () { host.changed(); });
@@ -214,6 +243,10 @@
     ".wg-more { width: 32px; height: 32px; font-size: 18px; line-height: 1; color: var(--text-dim); }",
     ".wg-clock { display: block; width: 100%; text-align: left; padding: 2px 4px; }",
     ".wg-time { font-size: 44px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; font-variant-numeric: tabular-nums; }",
+    ".wg-dots { display: block; height: 44px; width: auto; max-width: 100%; margin: 2px 0 4px; color: var(--text); }",
+    ".wg-dots .wg-off { opacity: .14; }",
+    "html[data-oros-contrast=\"high\"] .wg-dots .wg-off { display: none; }",
+    ".wg-menu button[aria-checked=\"true\"]::after { content: \" ✓\"; color: var(--accent); font-weight: 800; }",
     ".wg-date { font-size: 14px; color: var(--text-dim); margin-top: 2px; }",
     ".wg-cal-nav { display: flex; align-items: center; gap: 4px; margin-bottom: 4px; }",
     ".wg-cal-nav .wg-title { flex: 1; text-align: left; font-weight: 700; padding: 6px 6px; text-transform: capitalize; }",
@@ -440,10 +473,17 @@
     if (i > 0) items.push([t("wg.up"), function () { save(move(l, kind, i - 1)); }]);
     if (i < l.length - 1) items.push([t("wg.down"), function () { save(move(l, kind, i + 1)); }]);
     items.push([t("wg.remove"), function () { save(toggle(l, kind, false)); }]);
+    if (kind === "clock") {
+      var cs = clockStyle();
+      CLOCK_STYLES.forEach(function (st) {
+        items.push([t("wg.clock." + st), function () { save(list(), st); }, cs === st]);
+      });
+    }
     items.push([t("wg.edit"), edit]);
     items.forEach(function (it) {
       var b = btn("", it[0], function () { closeMenu(); it[1](); });
-      b.setAttribute("role", "menuitem");
+      if (it.length > 2) { b.setAttribute("role", "menuitemradio"); b.setAttribute("aria-checked", it[2] ? "true" : "false"); }
+      else b.setAttribute("role", "menuitem");
       m.appendChild(b);
     });
     m.addEventListener("keydown", function (e) {
@@ -535,6 +575,18 @@
     var Q = root.orosQS && root.orosQS.model;
     return Q && Q.onAccent ? Q.onAccent(getComputedStyle(doc.documentElement).getPropertyValue("--accent")) : "";
   }
+  // SIGNAL-1: the time as LED dots, unlit ones faint (.wg-off).
+  function dotSvg(text) {
+    var d = dotCells(text);
+    function sv(tag, at) { var n = doc.createElementNS("http://www.w3.org/2000/svg", tag); for (var k in at) n.setAttribute(k, at[k]); return n; }
+    var s = sv("svg", { "class": "wg-dots", viewBox: "0 0 " + d.cols * 6 + " 42", "aria-hidden": "true", focusable: "false" });
+    d.cells.forEach(function (c) {
+      var a = { cx: c.x * 6 + 3, cy: c.y * 6 + 3, r: 2.3, fill: "currentColor" };
+      if (!c.on) a["class"] = "wg-off";
+      s.appendChild(sv("circle", a));
+    });
+    return s;
+  }
   // Repaint a card's body only when what it shows changed.
   function fill(c, key, build) {
     if (c.key === key) return;
@@ -599,9 +651,11 @@
       var now = new Date(), l = loc();
       var time = now.toLocaleTimeString(l, { hour: "2-digit", minute: "2-digit", hour12: false });
       var date = now.toLocaleDateString(l, { weekday: "long", day: "numeric", month: "long" });
-      fill(c, time + date, function (b) {
-        var go = btn("wg-clock", null, function () { host.open("time"); }, t("app.time"));
-        go.appendChild(el("div", "wg-time", time));
+      var mode = clockMode(clockStyle(), doc.documentElement.getAttribute("data-skin"));
+      fill(c, time + date + mode, function (b) {
+        var go = btn("wg-clock", null, function () { host.open("time"); }, t("app.time") + " · " + time);
+        if (mode === "dots") go.appendChild(dotSvg(hhmm(now)));
+        else go.appendChild(el("div", "wg-time", time));
         go.appendChild(el("div", "wg-date", date));
         b.appendChild(go);
       });
