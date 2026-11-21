@@ -163,7 +163,7 @@
     if (!it.ext) return;
     if (Array.isArray(it.ext.runs)) {
       it.ext.runs.forEach(function (r) { if (r) delete r.fam; });
-      if (it.ext.runs.every(function (r) { return !r || (r.b === undefined && r.i === undefined); })) delete it.ext.runs;
+      if (it.ext.runs.every(function (r) { return !r || (r.b === undefined && r.i === undefined && r.fc === undefined); })) delete it.ext.runs;
     }
     if (!Object.keys(it.ext).length) delete it.ext;
   }
@@ -234,7 +234,8 @@
       if (bit(a.caps)) o.caps = 1;
       var al = oneOf(a.al, ALIGNS, TEXT_DEF.al);
       if (al !== TEXT_DEF.al) o.al = al;
-      var lh = int(a.lh, 70, 300, TEXT_DEF.lh);
+      // tenths of a % (CV-F1: Canva's whole-pixel line pitch); older copies round
+      var lh = isNum(a.lh) ? Math.min(300, Math.max(70, Math.round(a.lh * 10) / 10)) : TEXT_DEF.lh;
       if (lh !== TEXT_DEF.lh) o.lh = lh;
       var tr = int(a.tr, -200, 1000, 0);
       if (tr) o.tr = tr;
@@ -404,6 +405,7 @@
       if (r.b !== undefined) st.b = r.b;
       if (r.i !== undefined) st.i = r.i;
       if (r.fam !== undefined && famOf({ ext: { fam: r.fam } })) { st.font = ax.font || TEXT_DEF.font; st.ext = { fam: r.fam }; }
+      if (typeof r.fc === "string" && HEX6I.test(r.fc)) st.color = r.fc.toLowerCase();     // CV-F1: a word in its own colour
       if (cs) cs.push(st);
       src.slice(at, at + r.n).split("\n").forEach(function (part, k) {
         if (k) paras.push({ ps: PS_ID, runs: [] });
@@ -425,7 +427,16 @@
     }
     return n === ((it.ax && it.ax.tx) || "").length ? r : null;
   }
-  var MAX_RUNS = 400;
+  var MAX_RUNS = 400, HEX6I = /^#[0-9a-f]{6}$/i;
+  // The colour a run is painted in by one paint pass: its own colour
+  // (ext.runs fc) where the pass uses the text's colour, else the pass's.
+  function runColor(p, fill, r) {
+    var c = r && r.color;
+    if (!c || !HEX6I.test(c) || !p || !p.color) return p ? p.color : c;
+    // an offset copy (a shadow in the text's colour) keeps one colour
+    if (p.dx || p.dy) return p.color;
+    return String(p.color).toLowerCase() === String(fill || "#000000").toLowerCase() ? c : p.color;
+  }
   // A gradient's own stops and shape (ext.gs, AC3b) over ax.g, which
   // stays the two-colour stand-in: { st: [[pos 0..1, "#rrggbb"], …]
   // (2-10, in order), r: 1 for radial, c: [x, y] its centre as parts
@@ -477,7 +488,10 @@
     var ax = it.ax || {};
     var ps = textStyle(ax, it);
     var cs = [], story = storyOf(ax, it, cs);
-    var res = T.layoutChain(story, [{ id: "f", w: Math.max(1, it.w), h: 1e7, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: {} }], { ps: [ps], cs: cs });
+    // slack: a word a hair wider than the box stays on its line, as in
+    // Canva, whose boxes fit its own (slightly narrower) measure (CV-F3)
+    var slack = Math.max((ax.size || TEXT_DEF.size) * 0.002, Math.max(1, it.w) * 0.0005);
+    var res = T.layoutChain(story, [{ id: "f", w: Math.max(1, it.w), h: 1e7, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: {}, slack: slack }], { ps: [ps], cs: cs });
     var lines = res.frames.f.lines;
     var lead = ps.lead;
     var h = lines.length ? lines[lines.length - 1].y + Math.max(lines[lines.length - 1].d, lead * 0.25) : lead;
@@ -937,7 +951,7 @@
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,
     nextZ: nextZ, textStyle: textStyle, textLayout: textLayout, curveLayout: curveLayout, textHeight: textHeight,
     textWidth: textWidth, fontKeyOf: fontKeyOf, tableLayout: tableLayout, TABLE_SIZE: TABLE_SIZE, OB: OB, isExtraFont: isExtraFont, ensureFont: ensureFont,
-    fontName: fontName, famOf: famOf, fontOf: fontOf, setFont: setFont, dropRunFonts: dropRunFonts, runsOf: runsOf, editRuns: editRuns, gradOf: gradOf, docFonts: docFonts, useDocFonts: useDocFonts, isOwnFont: function (id) { return UF_FONT.test(id || ""); }, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds, clipIds: clipIds
+    fontName: fontName, famOf: famOf, fontOf: fontOf, setFont: setFont, dropRunFonts: dropRunFonts, runsOf: runsOf, runColor: runColor, editRuns: editRuns, gradOf: gradOf, docFonts: docFonts, useDocFonts: useDocFonts, isOwnFont: function (id) { return UF_FONT.test(id || ""); }, fsIdOf: fsIdOf, fsSlug: fsSlug, fromTemplate: fromTemplate, credits: credits, assetIds: assetIds, clipIds: clipIds
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierAX = api;

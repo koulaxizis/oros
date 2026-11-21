@@ -38,8 +38,9 @@
   // view.js FONT_IDS and fx SHAPES (a test keeps them equal), so the
   // Assistant loads nothing else.
   var LOOKS = ["vivid", "warm", "cool", "aegean", "summer", "mono", "noir", "sepia", "vintage", "faded", "drama", "soft"];
-  var BLENDS = ["normal", "multiply", "screen", "overlay", "darken", "lighten", "dodge", "burn", "hard", "soft", "difference", "exclusion",
-                "hue", "saturation", "color", "luminosity"];
+  var BLENDS = ["normal", "dissolve", "darken", "multiply", "burn", "linearburn", "darkercolor", "lighten", "screen", "dodge",
+                "lineardodge", "lightercolor", "overlay", "soft", "hard", "vivid", "linearlight", "pin", "hardmix", "difference",
+                "exclusion", "subtract", "divide", "hue", "saturation", "color", "luminosity"];
   var FONTS = ["sans", "serif", "mono", "hand", "display"];
   var SHAPES = ["rect", "rounded", "circle", "triangle", "rtriangle", "diamond", "pentagon", "hexagon", "octagon", "star", "burst",
                 "heart", "cross", "arrow", "chevron", "parallelogram", "trapezoid", "arch", "drop", "shield", "bubble"];

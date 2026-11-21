@@ -68,7 +68,11 @@
     "norm": "normal", "mul ": "multiply", "scrn": "screen", "over": "overlay",
     "dark": "darken", "lite": "lighten", "div ": "dodge", "idiv": "burn",
     "hLit": "hard", "sLit": "soft", "diff": "difference", "smud": "exclusion",
-    "hue ": "hue", "sat ": "saturation", "colr": "color", "lum ": "luminosity"
+    "hue ": "hue", "sat ": "saturation", "colr": "color", "lum ": "luminosity",
+    // wave PS-5: the modes the canvas lacks (photolab/blendx.js)
+    "diss": "dissolve", "lbrn": "linearburn", "dkCl": "darkercolor", "lddg": "lineardodge",
+    "lgCl": "lightercolor", "vLit": "vivid", "lLit": "linearlight", "pLit": "pin", "hMix": "hardmix",
+    "fsub": "subtract", "fdiv": "divide"
   };
   var IDS = {};
   Object.keys(KEYS).forEach(function (k) { IDS[KEYS[k]] = k; });

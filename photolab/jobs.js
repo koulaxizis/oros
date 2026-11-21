@@ -54,6 +54,9 @@
       case "feather": return S.feather(a.mask, a.r);
       case "grow": return S.grow(a.mask, a.px);
       case "transform": return R.transform(a.img, a.m, a.w, a.h);
+      case "perspective": return window.PhotoLab.warp.perspective(a.img, a.q, a.w, a.h);
+      case "meshWarp": return window.PhotoLab.warp.meshWarp(a.img, a.pts, a.n, a.w, a.h);
+      case "liquify": return window.PhotoLab.warp.liquify(a.img, a.field);
       case "resize": return R.resize(a.img, a.w, a.h);
       case "rotate": return R.rotate(a.img, a.deg);
       case "adjust":

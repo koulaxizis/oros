@@ -26,12 +26,12 @@
 (function (root) {
   "use strict";
 
-  var M, T, FX, AX, ICONS;
+  var M, T, FX, AX, ICONS, PF;
   if (typeof module !== "undefined" && module.exports) {
     M = require("../designkit/model.js"); T = require("../designkit/text.js");
-    FX = require("../designkit/fx.js"); AX = require("./ax.js"); ICONS = require("./library/icons.js");
+    FX = require("../designkit/fx.js"); AX = require("./ax.js"); PF = require("./photofx.js"); ICONS = require("./library/icons.js");
   } else {
-    M = root.orosDK.model; T = root.orosDK.text; FX = root.orosDK.fx; AX = root.AtelierAX; ICONS = root.ATELIER_ICONS;
+    M = root.orosDK.model; T = root.orosDK.text; FX = root.orosDK.fx; AX = root.AtelierAX; PF = root.AtelierPhotoFx; ICONS = root.ATELIER_ICONS;
   }
 
   var CSP = "default-src 'none'; img-src 'self'; font-src 'self'; style-src 'self'; base-uri 'none'; form-action 'none'";
@@ -78,10 +78,11 @@
     }
     if (ax.k === "shape") return ax.g || ax.fc || (ax.sc && it.sw > 0) ? "vector" : "";
     if (ax.k === "line" || ax.k === "icon" || ax.k === "table") return "vector";
-    if (ax.k === "photo") return it.a || ax.vid ? "photo" : "";
+    if (ax.k === "photo") return it.a || ax.vid ? (PF && PF.of(it) ? "raster" : "photo") : "";   // photo effects (CV-2)
     return "raster";                     // charts
   }
   function padOf(it, kind) {
+    if (kind === "raster" && it.ax.k === "photo") return PF ? PF.pad(it, PF.of(it)) : 0;
     if (kind !== "textfx" && !(kind === "raster" && it.ax.k === "text")) return 0;
     var ax = it.ax, p = FX.fxPad(ax.tfx, ax.size || AX.TEXT_DEF.size), s = (ax.size || AX.TEXT_DEF.size) * 0.3;
     return Math.ceil(Math.max(p.l, p.t, p.r, p.b) + s);
@@ -288,7 +289,11 @@
       var t = "<text" + head + (hide ? ' aria-hidden="true"' : "") + ">", lines = [];
       lay.lines.forEach(function (ln, li) {
         var tl = tails(ln, li, lay.lines), runs = ln.runs.filter(function (r) { return r.t; });
-        runs.forEach(function (r, ri) { t += tspan(r, key, size, p.dx, p.dy, tl[ri]); });
+        runs.forEach(function (r, ri) {
+          var c = AX.runColor(p, ax.fc || "#000000", r), s = tspan(r, key, size, p.dx, p.dy, tl[ri]);
+          if (c !== p.color) s = s.replace("<tspan", "<tspan" + (p.mode === "stroke" ? at("stroke", colour(c, "#000000")) : at("fill", colour(c, "#000000"))));
+          t += s;
+        });
         if (p.mode === "fill") runs.forEach(function (r) { if (r.u) lines.push(r); });
       });
       out += t + "</text>";

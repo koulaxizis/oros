@@ -567,6 +567,101 @@
       onCancel: function () { clearTimeout(timer); st.sel = before; PL.view.selChanged(); } });
     preview();
   }
+  // ---------- Liquify (wave PS-5) ----------
+  // Photoshop's Filter › Liquify on the active raster layer, inside
+  // the canvas: brushes bend a displacement field (photolab/warp.js)
+  // seen live on a preview; OK applies it to the full picture.
+  function liquifyDialog() {
+    var L = PL.layer(), d = st.doc, W = window.PhotoLab.warp;
+    if (!L) { PL.toast(t("msg.noLayer")); return; }
+    if (L.lock) { PL.toast(t("msg.locked")); return; }
+    if (L.k !== "raster") { PL.toast(t("msg.notRaster")); return; }
+    if (!PL.T.contentBounds(PL.surface(L.id))) { PL.toast(t("msg.emptyLayer")); return; }
+    var img = PL.T.readRect(PL.surface(L.id), -L.x, -L.y, d.w, d.h);
+    var ps = Math.min(1, 560 / Math.max(d.w, d.h));
+    var pw = Math.max(1, Math.round(d.w * ps)), ph = Math.max(1, Math.round(d.h * ps));
+    var full = PL.view.canvas(d.w, d.h);
+    full.getContext("2d").putImageData(new ImageData(img.data, d.w, d.h), 0, 0);
+    var small = PL.view.canvas(pw, ph), sg = small.getContext("2d");
+    sg.imageSmoothingQuality = "high";
+    sg.drawImage(full, 0, 0, pw, ph);
+    full.width = full.height = 0;
+    var pimg = { w: pw, h: ph, data: sg.getImageData(0, 0, pw, ph).data };
+    var out = { w: pw, h: ph, data: new Uint8ClampedArray(pimg.data) };
+    var fld = W.field(d.w, d.h);
+    var o = pr().liquify = Object.assign({ tool: "push", size: Math.max(20, Math.round(Math.max(d.w, d.h) / 12)), pressure: 50 }, pr().liquify || {});
+    var cv = el("canvas", "lq-cv"); cv.width = pw; cv.height = ph;
+    cv.style.width = Math.round(560 * d.w / Math.max(d.w, d.h)) + "px";     // a small picture shows large too
+    var g = cv.getContext("2d");
+    function show(rect) {
+      W.liquify(pimg, fld, out, rect);
+      var id = new ImageData(out.data, pw, ph);
+      if (rect) g.putImageData(id, 0, 0, rect.x, rect.y, rect.w, rect.h); else g.putImageData(id, 0, 0);
+    }
+    var tools = ["push", "twirlCw", "twirlCcw", "pucker", "bloat", "reconstruct"];
+    var tsel = select(tools.map(function (k) { return [k, t("lq." + k)]; }), o.tool);
+    tsel.addEventListener("change", function () { o.tool = tsel.value; PL.savePrefs(); });
+    var maxSize = Math.max(50, Math.round(Math.max(d.w, d.h) / 2));
+    o.size = Math.min(o.size, maxSize);
+    var size = range(t("f.size"), o.size, 5, maxSize, function (v) { o.size = v; PL.savePrefs(); });
+    var pres = range(t("f.pressure"), o.pressure, 1, 100, function (v) { o.pressure = v; PL.savePrefs(); });
+    var last = null, timer = null, ptr = null;
+    function toImg(e) {
+      var b = cv.getBoundingClientRect();
+      return { x: (e.clientX - b.left) / b.width * d.w, y: (e.clientY - b.top) / b.height * d.h };
+    }
+    function stamp(p, vx, vy) {
+      var k = o.tool, s = o.pressure / 100, tool = k;
+      if (k === "twirlCw" || k === "twirlCcw") { tool = "twirl"; if (k === "twirlCcw") s = -s; }
+      var r = W.dab(fld, tool, p.x, p.y, o.size / 2, s, vx || 0, vy || 0);
+      if (!r) return;
+      var x0 = Math.floor(r.x / fld.k * ps) - 2, y0 = Math.floor(r.y / fld.k * ps) - 2;
+      show({ x: Math.max(0, x0), y: Math.max(0, y0), w: Math.ceil(r.w / fld.k * ps) + 4, h: Math.ceil(r.h / fld.k * ps) + 4 });
+    }
+    function still() {                               // twirl, pucker and bloat go on while the brush rests
+      clearTimeout(timer);
+      if (!last || o.tool === "push") return;
+      timer = setTimeout(function () { if (last) { stamp(last); still(); } }, 60);
+    }
+    cv.addEventListener("pointerdown", function (e) {
+      e.preventDefault();
+      ptr = e.pointerId;
+      try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      last = toImg(e);
+      if (o.tool !== "push") stamp(last);
+      still();
+    });
+    cv.addEventListener("pointermove", function (e) {
+      if (!last || e.pointerId !== ptr) return;
+      var p = toImg(e), dx = p.x - last.x, dy = p.y - last.y, step = Math.max(1, o.size / 8), n = Math.ceil(Math.hypot(dx, dy) / step);
+      for (var i = 1; i <= n; i++) {
+        var q = { x: last.x + dx * i / n, y: last.y + dy * i / n };
+        stamp(q, dx / n, dy / n);
+      }
+      if (n) last = p;
+      still();
+    });
+    function stop() { last = null; ptr = null; clearTimeout(timer); }
+    cv.addEventListener("pointerup", stop);
+    cv.addEventListener("pointercancel", stop);
+    var restore = el("button", "btn ghost", t("btn.restoreAll")); restore.type = "button";
+    restore.addEventListener("click", function () { fld.dx.fill(0); fld.dy.fill(0); show(null); });
+    PL.dialog({ title: t("dlg.liquify"), wide: true, ok: t("btn.ok"), extra: [restore],
+      body: [field(t("f.lqTool"), tsel), size, pres, cv, hint(t("hint.liquify"))],
+      onOk: function () {
+        stop();
+        if (!W.moved(fld)) return;
+        PL.busy(true);
+        PL.job("liquify", { img: img, field: fld }).then(function (res) {
+          PL.busy(false);
+          PL.docChange(t("step.liquify"), function () {
+            PL.T.writeRect(PL.surface(L.id), -L.x, -L.y, res);
+          }, [L.id]);
+        }, function () { PL.busy(false); PL.toast(t("msg.failed")); });
+      },
+      onCancel: stop });
+    show(null);
+  }
   function saveSelDialog() {
     var n = textIn(t("sel.default") + " " + ((st.doc.sels || []).length + 1));
     PL.dialog({ title: t("dlg.saveSel"), ok: t("btn.save"), body: [field(t("f.name"), n)], onOk: function () { ops().saveSelection(n.value); } });
@@ -651,7 +746,11 @@
       { id: "clear", k: "Delete", run: function () { ops().clearSel(); }, on: hasSel },
       { id: "fill", run: function () { ops().fillSel(st.fg); }, on: has },
       "-",
-      { id: "transform", k: "Alt+T", run: function () { PL.tools.startTransform(); }, on: has }
+      { id: "transform", k: "Alt+T", run: function () { PL.tools.startTransform(); }, on: has },
+      { id: "tfSkew", run: function () { PL.tools.startTransform("skew"); }, on: has },
+      { id: "tfDistort", run: function () { PL.tools.startTransform("distort"); }, on: has },
+      { id: "tfPerspective", run: function () { PL.tools.startTransform("perspective"); }, on: has },
+      { id: "tfWarp", run: function () { PL.tools.startTransform("warp"); }, on: has }
     ] },
     { id: "image", items: [
       { id: "resize", k: "Ctrl+Alt+I", run: resizeDialog, on: has },
@@ -724,6 +823,8 @@
       { id: "adjPosterize", run: function () { adjustDialog("posterize"); }, on: has }
     ] },
     { id: "filter", items: [
+      { id: "liquify", k: "Ctrl+Shift+X", run: liquifyDialog, on: has },
+      "-",
       { id: "fGauss", run: function () { adjustDialog("gauss"); }, on: has },
       { id: "fMotion", run: function () { adjustDialog("motion"); }, on: has },
       { id: "fLens", run: function () { adjustDialog("lens"); }, on: has },
@@ -974,7 +1075,12 @@
       box.appendChild(optCheck(t("f.strokeBg"), P.shape, "stroke"));
       box.appendChild(optRange(t("f.strokeW"), P.shape, "sw", 1, 100));
     } else if (id === "transform") {
-      box.appendChild(el("span", "opt-hint", t("hint.transform")));
+      var tfNow = PL.tools.transforming(), tfMode = tfNow ? tfNow.mode : "free";
+      // wave PS-5: Photoshop's Edit › Transform modes (raster layers)
+      box.appendChild(optSelect(t("f.tfMode"), PL.tools.TF_MODES.map(function (m) { return [m, t("tf." + m)]; }), tfMode,
+        function (v) { PL.tools.setTransformMode(v); }));
+      box.lastChild.querySelector("select").id = "tf-mode";
+      box.appendChild(el("span", "opt-hint", t(tfMode === "warp" ? "hint.warp" : tfMode === "free" ? "hint.transform" : "hint.distort")));
       box.appendChild(optButton(t("btn.apply"), function () { PL.tools.endTransform(true); }, true));
       box.appendChild(optButton(t("btn.cancel"), function () { PL.tools.endTransform(false); }));
     } else if (id === "text") {
@@ -1308,6 +1414,10 @@
     PL.on("colors", renderTools);
     PL.on("tool", function () { renderTools(); renderOptions(); });
     PL.on("sel", function () { if (st.tool === "move") renderOptions(); });
+    PL.on("transform", function () {                   // the mode changed (Ctrl on a corner, or refused)
+      var s = $("tf-mode"), T0 = PL.tools.transforming();
+      if (st.tool === "transform" && s && T0 && s.value !== T0.mode) renderOptions();
+    });
     PL.on("pointer", function (p) {
       var s = $("status-pos");
       if (s) s.textContent = Math.floor(p.x) + ", " + Math.floor(p.y);
