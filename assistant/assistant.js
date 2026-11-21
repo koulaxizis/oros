@@ -4707,7 +4707,8 @@
     badPath: "that is not a usable local path",
     notThere: "there is no such file or folder there",
     notFile: "that is a folder, not a file", notFolder: "that is a file, not a folder",
-    needsReconnect: "the browser lost its permission for the folder after a restart: the owner must press Reconnect on the bar at the bottom of orOS, then try again",
+    needsReconnect: "the browser lost its permission for the folder after a restart: the owner must press Reconnect on the bar at the bottom of orOS, then try again (or open it again as a folder of the computer by its path, which keeps: local_folders_request)",
+    notHere: "that folder is on the owner's computer, and this device is not it: it runs where orOS runs on that computer (a window, minimised, or in the tray)",
     bridgePaused: "the owner paused the local folders (the bar at the bottom of orOS has Resume)",
     noBridge: "this orOS has no local folders", tooBig: "the file is larger than 80 MB",
     cancelled: "the commands were stopped (cancel, or the owner pressed Stop); what they changed before stays, with Undo",
@@ -4726,7 +4727,7 @@
     try { l = L && typeof L.names === "function" ? L.names() : []; } catch (e) { l = []; }
     var roots = l.map(function (r) { return "local:" + r.name + (r.mode === "w" ? " (write)" : ""); });
     return " Use local:<root>/<path inside it> with / between the parts, as files_list shows it (files_list with no path lists the roots" +
-      (roots.length ? "; open now: " + roots.slice(0, 8).join(", ") : "; none is open now") + ").";
+      (roots.length ? "; open now: " + roots.slice(0, 8).join(", ") : "; none is open now: ask the owner for the folder with local_folders_request") + ").";
   }
   function localRoots() {
     var L = localBridge();

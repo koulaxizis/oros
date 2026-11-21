@@ -26,6 +26,17 @@
 // refuses anything outside the folder and any symbolic link or junction
 // below it, and a write never replaces a file there either.
 //
+// TRAY-2 (Chris 2026-11-21 «πρόσβαση στους φακέλους ακόμη και με
+// έγκριση από κινητό»): computer folders (by path, above) are no longer
+// this browser's alone. They live in one list every device of the owner's
+// orOS Gate shares (localStorage "oros-local-pc", sealed with the gate's
+// key and passed on by its relay, gate.js lf), so a folder opened, renewed
+// or closed on the phone, or one Claude asked for and the owner allowed
+// there (local_folders_request), reaches the computer as soon as orOS
+// runs there, also in the tray. A device without the orOS launcher only
+// keeps and shows the list; the files are read where the launcher is.
+// No handle and no file ever leaves the computer; only the paths do.
+//
 // window.orosLocal (browser) and module.exports (the pure parts, Node).
 (function (root) {
   "use strict";
@@ -150,7 +161,50 @@
     }
     return r.w ? r : null;
   }
-  var PURE = { pcPath: pcPath, imageInfo: imageInfo, parse: parse, isLocal: isLocal, segOk: segOk, freeName: freeName, shown: shown, rootName: rootName, norm: norm, DEF_DAYS: DEF_DAYS, MAX_ROOTS: MAX_ROOTS };
+  // ---------- TRAY-2: the shared list of computer folders (pure) ----------
+  var PC_KEY = "oros-local-pc", PC_TOMB_DAYS = 90, ID_RE = /^lr[a-z0-9]{4,24}$/;
+  // One entry as kept and shared, or null: { id, pc, label, name, mode,
+  // exp, added, m, gone?, by? } (m: its last change, the newest wins).
+  function pcClean(e) {
+    if (!e || typeof e !== "object" || !ID_RE.test(String(e.id || ""))) return null;
+    var m = Math.floor(+e.m || 0);
+    if (!(m > 0)) return null;
+    if (e.gone) return { id: e.id, m: m, gone: 1 };
+    var pc = typeof e.pc === "string" ? e.pc : "";
+    if (!pc || pcPath(pc) !== pc || pcRisky(pc)) return null;
+    var name = String(e.name || ""), exp = Math.floor(+e.exp || 0);
+    if (!NAME_RE.test(name) || /^\s|\s$/.test(name) || !(exp > 0)) return null;
+    var o = { id: e.id, pc: pc, label: norm(String(e.label || "")).slice(0, 400), name: name, mode: e.mode === "w" ? "w" : "r", exp: exp, added: Math.floor(+e.added || m), m: m };
+    if (typeof e.by === "string" && /^(owner|claude)$/.test(e.by)) o.by = e.by;
+    return o;
+  }
+  function pcList(raw) {
+    var out = [], seen = {};
+    (Array.isArray(raw) ? raw : []).slice(0, 200).forEach(function (e) { var c = pcClean(e); if (c && !seen[c.id]) { seen[c.id] = 1; out.push(c); } });
+    return out;
+  }
+  // Two lists → one: per id the newest m wins (a tie: the removal, then
+  // the later expiry); removals older than 90 days are forgotten.
+  function pcMerge(a, b, now) {
+    var by = {};
+    pcList(a).concat(pcList(b)).forEach(function (e) {
+      var o = by[e.id];
+      if (!o || e.m > o.m || (e.m === o.m && (e.gone && !o.gone || (!e.gone && !o.gone && e.exp > o.exp)))) by[e.id] = e;
+    });
+    var cut = (now || Date.now()) - PC_TOMB_DAYS * DAY;
+    return Object.keys(by).sort().map(function (k) { return by[k]; }).filter(function (e) { return !e.gone || e.m >= cut; });
+  }
+  // A computer folder Claude may never be given: a drive or the home
+  // folder itself, the system, programs, app data, keys.
+  var PC_NO = ["appdata", "windows", "program files", "program files (x86)", "programdata", "$recycle.bin", "system volume information", ".ssh", ".gnupg", ".aws", ".config", ".local", "library", "etc", "proc", "sys", "root"];
+  function pcRisky(pc) {
+    var segs = String(pc || "").split("/").slice(1), low = segs.map(function (x) { return x.toLowerCase(); });
+    if (!segs.length) return true;
+    var base = low[0] === "home" ? 2 : low[0] === "disks" ? (low[2] === "users" ? 4 : 2) : 99;   // /home/<u>, /disks/C/Users/<u>, /disks/D
+    if (segs.length <= base) return true;
+    return low.some(function (x) { return PC_NO.indexOf(x) >= 0; });
+  }
+  var PURE = { pcClean: pcClean, pcList: pcList, pcMerge: pcMerge, pcRisky: pcRisky, PC_KEY: PC_KEY, pcPath: pcPath, imageInfo: imageInfo, parse: parse, isLocal: isLocal, segOk: segOk, freeName: freeName, shown: shown, rootName: rootName, norm: norm, DEF_DAYS: DEF_DAYS, MAX_ROOTS: MAX_ROOTS };
   if (typeof module !== "undefined" && module.exports) { module.exports = PURE; return; }
 
   // ---------- this device ----------
@@ -174,11 +228,27 @@
       });
     });
   }
+  // TRAY-2: the shared list (localStorage, every gate device)
+  function pcRead() { try { return pcList(JSON.parse(localStorage.getItem(PC_KEY) || "[]")); } catch (e) { return []; } }
+  function pcSave(list, quiet) {
+    try { localStorage.setItem(PC_KEY, JSON.stringify(list)); } catch (e) { return false; }
+    if (!quiet) { try { if (typeof root.orosLocalShare === "function") root.orosLocalShare(); } catch (e) { void e; } }
+    return true;
+  }
+  function pcLive(list) { return list.filter(function (e) { return !e.gone; }); }
   function load() {
-    loaded = limit(tx("readonly", function (st) { return st.getAll(); }), "", 10000).then(function (l) {
-      roots = (Array.isArray(l) ? l : []).filter(function (r) { return r && r.id && (r.handle || typeof r.pc === "string" && pcPath(r.pc) === r.pc) && (r.mode === "r" || r.mode === "w"); });
+    loaded = limit(tx("readonly", function (st) { return st.getAll(); }), "", 10000).then(null, function () { return []; }).then(function (l) {
+      var rows = Array.isArray(l) ? l : [];
+      // computer folders kept here before TRAY-2 join the shared list (once)
+      var old = rows.filter(function (r) { return r && r.id && typeof r.pc === "string" && pcPath(r.pc) === r.pc; });
+      if (old.length) {
+        var now = Date.now();
+        pcSave(pcMerge(pcRead(), old.map(function (r) { return { id: ID_RE.test(r.id) ? r.id : "lr" + now.toString(36) + Math.random().toString(36).slice(2, 6), pc: r.pc, label: r.label, name: r.name, mode: r.mode, exp: r.exp || now + DEF_DAYS * DAY, added: r.added || now, m: now, by: "owner" }; }), now));
+        tx("readwrite", function (st) { old.forEach(function (r) { st["delete"](r.id); }); }).then(null, function () {});
+      }
+      roots = rows.filter(function (r) { return r && r.id && r.handle && (r.mode === "r" || r.mode === "w"); }).concat(pcLive(pcRead()));
       return roots;
-    }, function () { roots = []; return roots; });
+    });
     return loaded;
   }
   function ready() { return loaded || load(); }
@@ -240,7 +310,7 @@
       var x = parse(path, live(Date.now()), mode);
       if (x.err) throw fail(x.err === "notLocal" ? "notAllowedRoot" : x.err, path);
       return perm(x.root, false).then(function (ok) {
-        if (!ok) throw fail("needsReconnect", path);
+        if (!ok) throw fail(x.root.pc ? "notHere" : "needsReconnect", path);
         return x;
       });
     });
@@ -418,24 +488,40 @@
     });
   }
   // add a computer folder by its path (orOS Setup / Portable)
+  // TRAY-2: kept in the shared list; o.anywhere (a phone, Claude's
+  // request the owner allowed): no launcher here, so it is checked on the
+  // computer when used. The same folder and access again only renews it.
   function addPc(typed, o) {
     o = o || {};
     var pc = pcPath(typed);
     if (!pc) return Promise.reject(fail("badPath"));
-    return ready().then(function () {
-      if (roots.length >= MAX_ROOTS) throw fail("tooMany");
-      return pcOn();
-    }).then(function (on) {
-      if (!on) throw fail("needsReconnect");
+    if (pcRisky(pc)) return Promise.reject(fail("riskyPath"));
+    var mode = o.mode === "w" ? "w" : "r", days = Math.max(1, Math.min(90, Math.floor(o.days || DEF_DAYS)));
+    return ready().then(function () { return pcOn(); }).then(function (on) {
+      if (!on) { if (o.anywhere) return { dir: true }; throw fail("needsReconnect"); }
       return pcCall("stat", pc, pc).then(function (r) { return r.json(); });
     }).then(function (e) {
       if (!e || !e.dir) throw fail("notFolder");
-      var mode = o.mode === "w" ? "w" : "r", days = Math.max(1, Math.min(90, Math.floor(o.days || DEF_DAYS)));
-      var leaf = pc.slice(pc.lastIndexOf("/") + 1);
-      var r = { id: "lr" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), name: rootName(o.name || leaf, roots), label: norm(String(typed).trim()).slice(0, 400),
-                mode: mode, exp: Date.now() + days * DAY, added: Date.now(), pc: pc };
-      return tx("readwrite", function (st) { st.put(r); }).then(function () { roots.push(r); changed(); return shown(r, Date.now()); });
+      var now = Date.now(), list = pcRead();
+      var same = pcLive(list).filter(function (x) { return x.pc.toLowerCase() === pc.toLowerCase() && x.mode === mode; })[0];
+      var r;
+      if (same) r = Object.assign({}, same, { exp: Math.max(same.exp, now + days * DAY), m: now });
+      else {
+        if (roots.length >= MAX_ROOTS) throw fail("tooMany");
+        var leaf = pc.slice(pc.lastIndexOf("/") + 1);
+        r = { id: "lr" + now.toString(36) + Math.random().toString(36).slice(2, 6), name: rootName(o.name || leaf, roots), label: norm(String(typed).trim()).slice(0, 400),
+              mode: mode, exp: now + days * DAY, added: now, m: now, pc: pc, by: o.by === "claude" ? "claude" : "owner" };
+      }
+      if (!pcSave(pcMerge(list, [r], now))) throw fail("storage");
+      return load().then(function () { changed(); return shown(r, now); });
     });
+  }
+  // TRAY-2: a list from another device of the gate (already opened) → merged here
+  function mergeShared(raw) {
+    var now = Date.now(), cur = pcRead(), next = pcMerge(cur, raw, now);
+    if (JSON.stringify(next) === JSON.stringify(cur)) return Promise.resolve(false);
+    pcSave(next, true);
+    return load().then(function () { changed(); return true; });
   }
   // add a root from a handle the owner just picked (Settings frame)
   function add(handle, o) {
@@ -450,12 +536,22 @@
     });
   }
   function remove(id) {
+    var r = roots.filter(function (x) { return x.id === id; })[0];
+    if (r && r.pc) {                                  // TRAY-2: closed on every device
+      pcSave(pcMerge(pcRead(), [{ id: id, m: Date.now(), gone: 1 }], Date.now()));
+      return load().then(changed);
+    }
     return tx("readwrite", function (st) { st["delete"](id); }).then(function () { roots = roots.filter(function (r) { return r.id !== id; }); changed(); });
   }
   function extend(id, days) {
     var r = roots.filter(function (x) { return x.id === id; })[0];
     if (!r) return Promise.resolve(false);
     r.exp = Date.now() + Math.max(1, Math.min(90, days || DEF_DAYS)) * DAY;
+    if (r.pc) {
+      r.m = Date.now();
+      pcSave(pcMerge(pcRead(), [r], r.m));
+      return load().then(function () { changed(); return true; });
+    }
     return tx("readwrite", function (st) { st.put(r); }).then(function () { changed(); return true; });
   }
   function setPaused(on) { try { localStorage.setItem(PAUSE_KEY, on ? "1" : "0"); } catch (e) { void e; } changed(); }
@@ -468,7 +564,7 @@
   function list() {
     return ready().then(function () {
       var now = Date.now();
-      return Promise.all(roots.map(function (r) { return perm(r, false).then(function (ok) { var s = shown(r, now); s.granted = ok; return s; }); }));
+      return Promise.all(roots.map(function (r) { return perm(r, false).then(function (ok) { var s = shown(r, now); s.granted = ok; if (r.pc && !ok) s.elsewhere = true; if (r.by) s.by = r.by; return s; }); }));
     });
   }
   // "Move this local root into Claude's folders" (spec item 8): every
@@ -498,7 +594,7 @@
   function banner() {
     if (!root.document || !root.document.body) return;
     list().then(function (l) {
-      var on = l.filter(function (r) { return !r.expired; });
+      var on = l.filter(function (r) { return !r.expired && !r.elsewhere; });
       if (!on.length) { if (bar) { bar.remove(); bar = null; } return; }
       if (!bar) {
         bar = root.document.createElement("div");
@@ -526,7 +622,7 @@
   else if (root.document) root.document.addEventListener("DOMContentLoaded", boot);
 
   root.orosLocal = Object.assign({ supported: supported, ready: ready, list: list, add: add, remove: remove, extend: extend, paused: paused, setPaused: setPaused,
-    reconnect: reconnect, addPc: addPc, pcOn: pcOn, ls: ls,
+    reconnect: reconnect, addPc: addPc, pcOn: pcOn, ls: ls, mergeShared: mergeShared, shared: function () { return pcRead(); },
     // the open roots as Claude names them (sync; [] until loaded)
     names: function () { var now = Date.now(); return live(now).map(function (r) { return { name: r.name, label: r.label || "", mode: r.mode }; }); }, read: read, write: write, copyIn: copyIn, onChange: onChange, reload: function () { return load().then(changed); } }, PURE);
 })(typeof window !== "undefined" ? window : this);
