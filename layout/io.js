@@ -1017,7 +1017,7 @@
       return window.LY_IDML.open(buf, { now: LY.now(), name: baseName(f, /\.idml$/i) });
     }).then(function (res) {
       if (!res) { LY.toast(t("idml.bad")); return; }
-      return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }));
+      return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }), "idml.skipped");
     }).then(null, function () { LY.toast(t("idml.bad")); });
   }
   // ---------- A page of another file as a picture (LY-PRO W4b) ----------
@@ -1536,6 +1536,8 @@
       LY.addDoc(M.normDoc(doc));
       var parts = [done], left = res.linked - found + failed;
       if (left) parts.push(t("sla.linked", { n: left }));
+      if (res.stats.tables) parts.push(t("idml.tables", { n: res.stats.tables }));
+      if (res.stats.notes) parts.push(t("idml.notes", { n: res.stats.notes }));
       if (res.stats.skipped) parts.push(t(skipKey || "sla.skipped", { n: res.stats.skipped }));
       if (left && res.links) LY.toast(parts.join(" "), t("sla.find"), relinkPick);
       else LY.toast(parts.join(" "));

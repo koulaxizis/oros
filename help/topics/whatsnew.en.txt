@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.12.00
+- **Layout: more of your Scribus and InDesign files comes over.** Tables from Scribus open as tables, with their cell colours, borders and text, and text on a curve stays on its curve. From InDesign, layers keep their order and their hidden or locked objects, drawn shapes keep their outline, text on a curve stays on it, tabs stay tabs, tables become rows set at their columns and footnotes go after their text.
+
 ## Version 8.11.00
 - **Claude works with orOS in the tray.** On a computer with orOS Setup or Portable, Layout's work that Claude asks for through orOS Gate now runs while the orOS window is minimised or closed to the tray, without bringing orOS to the front. Proposals for you to read, and anything that deletes, still wait for you on a screen.
 - **Folders of your computer for Claude, from any device.** A folder you open for Claude by its path is now shared with your other devices through orOS Gate (only the path, sealed), so you can open, renew or close it from the phone, and Claude can ask for one: you answer on whichever device has orOS on screen. It keeps working after a restart, where orOS runs on that computer.
