@@ -1211,10 +1211,42 @@
     if (ids.length === 1) AT.toast(t("resize.made", { n: 1 }), t("resize.open"), function () { AT.openDoc(ids[0]); });
     else AT.toast(t("resize.made", { n: ids.length }));
   }
+  // Magic Switch (CV-2b): the copies' texts translated on the device
+  // with the shared Translate panel (../translate/panel.js, loaded on
+  // first use); with no size picked, one copy at this size.
+  function translatePanel(o, fail) {
+    if (window.OrosTranslatePanel) { window.OrosTranslatePanel.open(o); return; }
+    var v = window.orosI18n && window.orosI18n.ver, sc = document.createElement("script");
+    sc.src = "../translate/panel.js" + (v ? "?v=" + encodeURIComponent(v) : "");
+    sc.onload = function () { if (window.OrosTranslatePanel) window.OrosTranslatePanel.open(o); else fail(); };
+    sc.onerror = fail;
+    document.head.appendChild(sc);
+  }
+  function switchCopies(sizes) {
+    var src = AT.doc;
+    if (!src) return;
+    var tx = RL.textSegments(src);
+    if (!tx.segs.length) { AT.toast(t("resize.noText")); if (sizes.length) resizeCopies(sizes); return; }
+    var here = sizes.length ? sizes : [{ w: src.setup.w, h: src.setup.h, unit: AT.unitLbl(src) === "mm" ? "mm" : "px", label: t("resize.same") }];
+    translatePanel({ segments: tx.segs, lang: AT.LANG, actions: [{ label: t("resize.trMake", { n: here.length }), run: function (res) {
+      var cur = AT.findDoc(src.id) || src;
+      var tdoc = RL.translated(cur, tx.map, res.segments || []);
+      var TR = window.OrosTranslate, lang = res.to ? (TR && TR.name ? TR.name(res.to, AT.LANG) : res.to) : "";
+      var name = AT.docTitle(cur);
+      var list = here.map(function (z) {
+        var c = relaid(tdoc, z.w, z.h, z.unit);
+        c.name = t("resize.copyLang", { name: name, size: z.label, lang: lang }).slice(0, 120);
+        return c;
+      });
+      var ids = AT.addCopies(list, cur.id);
+      if (ids.length === 1) AT.toast(t("resize.made", { n: 1 }), t("resize.open"), function () { AT.openDoc(ids[0]); });
+      else AT.toast(t("resize.made", { n: ids.length }));
+    } }] }, function () { AT.toast(t("resize.trFail")); });
+  }
   function resizeDialog() {
     var d = AT.doc;
     if (!d) return;
-    var pick = {}, copies = true, custom = { on: false, w: Math.round(M.toUnit(d.setup.w, AT.unitLbl(d) === "mm" ? "mm" : "pt")), h: Math.round(M.toUnit(d.setup.h, AT.unitLbl(d) === "mm" ? "mm" : "pt")), unit: AT.unitLbl(d) === "mm" ? "mm" : "px" };
+    var pick = {}, copies = true, tr = false, custom = { on: false, w: Math.round(M.toUnit(d.setup.w, AT.unitLbl(d) === "mm" ? "mm" : "pt")), h: Math.round(M.toUnit(d.setup.h, AT.unitLbl(d) === "mm" ? "mm" : "pt")), unit: AT.unitLbl(d) === "mm" ? "mm" : "px" };
     AT.openDialog(t("resize.title"), function (body, close) {
       body.appendChild(el("p", "hint", t("resize.note")));
       var list = el("div", "rs-list");
@@ -1236,9 +1268,10 @@
       }
       function update() {
         var n = sizes().length;
-        go.textContent = t("resize.go", { n: n });
-        go.disabled = !n || (!copies && n > 1);
+        go.textContent = tr && copies ? t("resize.goTr", { n: Math.max(1, n) }) : t("resize.go", { n: n });
+        go.disabled = tr && copies ? false : !n || (!copies && n > 1);
         warn.hidden = copies || n <= 1;
+        trRow.hidden = !copies;
       }
       function row(label, sub, on, fn, extra) {
         var r = el("label", "rs-row");
@@ -1282,12 +1315,19 @@
       keep.appendChild(kc);
       keep.appendChild(el("span", "", t("resize.copies")));
       body.appendChild(keep);
+      var trRow = el("label", "rs-keep");
+      var tc = el("input"); tc.type = "checkbox"; tc.checked = false;
+      tc.addEventListener("change", function () { tr = tc.checked; update(); });
+      trRow.appendChild(tc);
+      trRow.appendChild(el("span", "", t("resize.translate")));
+      body.appendChild(trRow);
       body.appendChild(warn);
       var act = el("div", "dlg-actions");
       var c = el("button", "btn", t("btn.cancel")); c.type = "button";
       c.addEventListener("click", close);
       go.addEventListener("click", function () {
         var s = sizes();
+        if (tr && copies) { close(); switchCopies(s); return; }
         if (!s.length) return;
         close();
         AT.emit("rc-note", { op: "resize", copies: copies ? 1 : 0, sizes: s.map(function (z) {
@@ -1404,6 +1444,6 @@
     exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, importDisk: importDisk, importMany: importMany, openFile: openFile, importPptx: importPptxFile, pdfSize: pdfSize, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo,
     renderFiles: renderFiles, relaid: relaid, svgOf: svgOf, svgSelection: svgSelection,
-    sendTo: sendTo, canSend: canSend
+    sendTo: sendTo, canSend: canSend, resizeDialog: resizeDialog, switchCopies: switchCopies
   };
 })();
