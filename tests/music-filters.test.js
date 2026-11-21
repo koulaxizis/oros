@@ -128,9 +128,9 @@ test("songs on this device: genre in any spelling, year, length", () => {
 
 test("filter words exist in English, Greek and German", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "music/music.js"), "utf8");
-  const keys = [...new Set([...src.matchAll(/"((?:fl|au|eu|src)\.[a-zA-Z0-9.]+)": "/g)].map((m) => m[1]))];
+  const keys = [...new Set([...src.matchAll(/"((?:fl|au|eu|src|dp)\.[a-zA-Z0-9.]+)": "/g)].map((m) => m[1]))];
   assert.ok(keys.length > 50);
-  const used = [...src.matchAll(/t\("((?:fl|au|eu|src)\.[a-zA-Z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith("."));
+  const used = [...src.matchAll(/t\("((?:fl|au|eu|src|dp)\.[a-zA-Z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith("."));
   used.forEach((k) => assert.ok(keys.includes(k), "missing " + k));
   // dynamic keys
   ["fl.g.g", "fl.g.cc", "fl.g.dur", "fl.g.lic", "fl.g.y", "fl.g.vi", "fl.g.mood", "fl.g.sp", "fl.g.gd", "fl.g.ae", "fl.g.off",
@@ -215,8 +215,109 @@ test("Europeana: own key, refinements, open licences only", () => {
 });
 
 test("sources: order, names, Audius shelf", () => {
-  assert.deepEqual(O.SOURCE_ORDER, ["jm", "ia", "ov", "cc", "au", "eu"]);
+  assert.deepEqual(O.SOURCE_ORDER, ["jm", "ia", "fm", "ov", "cc", "km", "au", "mo", "jb", "eu", "dp"]);
   O.SOURCE_ORDER.forEach((s) => assert.ok(O.SOURCES[s].name));
   assert.equal(O.browseOf("autrend").src, "au");
   assert.equal(O.browseName("autrend", "el"), "Δημοφιλή στο Audius");
+});
+
+// ---------- MU-SRC2 (wave 2b): FMA, Musopen, National Jukebox, Kevin MacLeod, DPLA ----------
+test("Internet Archive collections as sources; the Jukebox only when public domain", () => {
+  const now = Date.UTC(2026, 10, 21);
+  assert.equal(O.jbLastYear(now), 1925);
+  const fm = decodeURIComponent(O.iaSearchUrl({ scope: "fm", q: "jazz" }));
+  assert.match(fm, /collection:\(freemusicarchive\)/);
+  assert.match(fm, /-collection:\(78rpm/);
+  assert.match(decodeURIComponent(O.iaSearchUrl({ scope: "mo" })), /\(collection:\(musopen\) OR subject:\(musopen\)\)/);
+  const jb = decodeURIComponent(O.iaSearchUrl({ scope: "jb", now: now }));
+  assert.match(jb, /identifier:\(loc-jukebox-\*\) AND licenseurl:\(\*publicdomain\*\) AND year:\[1800 TO 1925\]/);
+  assert.doesNotMatch(jb, /78rpm/);
+  // A Jukebox card too new for the public domain is dropped; others stay.
+  const pdm = "https://creativecommons.org/publicdomain/mark/1.0/";
+  const r = O.iaParseSearch({ response: { numFound: 3, docs: [
+    { identifier: "loc-jukebox-1-a", title: "A", year: "1923", licenseurl: pdm, collection: ["78rpm"] },
+    { identifier: "loc-jukebox-2-b", title: "B", year: "2999", licenseurl: pdm, collection: ["78rpm"] },
+    { identifier: "loc-jukebox-3-c", title: "C", licenseurl: pdm, collection: ["78rpm"] }] } }, 1);
+  assert.deepEqual(r.albums.map((a) => a.id), ["loc-jukebox-1-a"]);
+  assert.equal(O.jbOk("other-item", ""), true);
+  // Same rule on the album page.
+  const meta = (date, lic) => ({ metadata: { title: "X", date: date, licenseurl: lic, collection: ["78rpm"] },
+    files: [{ name: "x.mp3", format: "VBR MP3", source: "original", length: "180" }] });
+  assert.ok(O.iaParseMeta(meta("1921", pdm), "loc-jukebox-9-x"));
+  assert.equal(O.iaParseMeta(meta("2999", pdm), "loc-jukebox-9-x"), null);
+  assert.equal(O.iaParseMeta(meta("1921", "https://creativecommons.org/licenses/by-nc/4.0/"), "loc-jukebox-9-x"), null);
+  ["fm", "mo", "jb", "km", "dp"].forEach((s) => assert.ok(O.SOURCES[s].name && O.CAN[s], s));
+  ["fma", "kevin", "jukebox", "musopen"].forEach((id) => { assert.ok(O.browseOf(id)); assert.ok(O.browseName(id, "el")); });
+});
+
+test("Kevin MacLeod: search and filters on the device", () => {
+  const P = [
+    { title: "Slow Piano", filename: "Slow Piano.mp3", length: "00:03:10", instruments: "Piano", genre: "4", bpm: "60", description: "Quiet.", feel: "Relaxed, Calming", uploaded: "2015-01-01" },
+    { title: "Fast Rock", filename: "Fast Rock.mp3", length: "00:01:30", instruments: "Guitar, Drums", genre: "19", bpm: "160", description: "Loud piano-free.", feel: "Driving, Intense", uploaded: "2020-05-05" },
+    { title: "Bad", filename: "../x.wav", length: "00:01:00", genre: "19" },
+    { title: "Folk Tune", filename: "Folk Tune.mp3", length: "00:02:30", instruments: "Fiddle", genre: "25", bpm: "100", description: "An old folk dance.", feel: "Bouncy", uploaded: "2010-01-01" }
+  ];
+  let r = O.kmPick(P, {});
+  assert.deepEqual(r.tracks.map((x) => x.t), ["Fast Rock", "Slow Piano", "Folk Tune"]);
+  const t0 = r.tracks[1];
+  assert.equal(t0.s, "km"); assert.equal(t0.li, "by 4.0"); assert.equal(t0.off, 1); assert.equal(t0.a, "Kevin MacLeod");
+  assert.equal(t0.u, "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Slow%20Piano.mp3");
+  assert.equal(t0.d, 190); assert.equal(t0.y, 2015);
+  assert.deepEqual(O.kmPick(P, { q: "piano" }).tracks.map((x) => x.t), ["Slow Piano", "Fast Rock"]);   // title before description
+  assert.deepEqual(O.kmPick(P, { f: { g: "rock" } }).tracks.map((x) => x.t), ["Fast Rock"]);
+  assert.deepEqual(O.kmPick(P, { f: { g: "folk" } }).tracks.map((x) => x.t), ["Folk Tune"]);
+  assert.deepEqual(O.kmPick(P, { f: { mood: "relaxed" } }).tracks.map((x) => x.t), ["Slow Piano"]);
+  assert.deepEqual(O.kmPick(P, { f: { sp: "veryhigh" } }).tracks.map((x) => x.t), ["Fast Rock"]);
+  assert.deepEqual(O.kmPick(P, { f: { dur: "s" } }).tracks.map((x) => x.t), ["Fast Rock"]);
+  assert.equal(O.kmPick(P, { f: { pd: 1 } }).tracks.length, 0);
+  assert.equal(O.kmPick(P, { f: { com: 1, mod: 1, off: 1 } }).tracks.length, 3);
+  assert.equal(O.kmSpeed("69"), "verylow"); assert.equal(O.kmSpeed(""), "");
+  assert.deepEqual(O.filterMissing("km", { vi: "v" }), ["vi"]);
+  assert.deepEqual(O.filterMissing("km", { vi: "i", mood: "romantic" }), ["mood"]);
+  const many = Array.from({ length: 45 }, (_, i) => ({ title: "T" + i, filename: "T" + i + ".mp3", length: "00:02:00", genre: "4" }));
+  assert.equal(O.kmPick(many, { page: 3 }).tracks.length, 5);
+  assert.equal(O.kmPick(many, { page: 2 }).more, true);
+});
+
+test("DPLA: own key, sound with open licence, playable files only", () => {
+  const K = "0123456789abcdef0123456789abcdef";
+  assert.ok(O.dpKeyOk(K)); assert.ok(!O.dpKeyOk("short")); assert.ok(!O.dpKeyOk(K + "x"));
+  const p = q(O.dpUrl({ key: K, q: "blues (live)", f: { g: "jazz", cc: "US", y0: 1920, y1: 1950, sort: "new" }, page: 2 }));
+  assert.equal(p.get("api_key"), K);
+  assert.equal(p.get("sourceResource.type"), "sound");
+  assert.equal(p.get("rights"), "*creativecommons*");
+  assert.equal(p.get("q"), "blues live jazz");
+  assert.equal(p.get("sourceResource.spatial.country"), "United States");
+  assert.equal(p.get("sourceResource.date.after"), "1920");
+  assert.equal(p.get("sourceResource.date.before"), "1950");
+  assert.equal(p.get("sort_by"), "sourceResource.date.begin");
+  assert.equal(p.get("page"), "2");
+  const doc = (id, extra) => Object.assign({ id: id, rights: "http://creativecommons.org/publicdomain/mark/1.0/",
+    sourceResource: { title: ["Song"], creator: "Band", date: { displayDate: "1925", begin: "1925-01-01" } },
+    mediaMaster: ["http://archive.example.org/a.mp3"], dataProvider: { name: "Library" } }, extra);
+  const r = O.dpParse({ count: 45, docs: [
+    doc("a".repeat(32)),
+    doc("b".repeat(32), { mediaMaster: ["https://example.org/page.html"] }),
+    doc("c".repeat(32), { rights: "http://rightsstatements.org/vocab/InC/1.0/" }),
+    doc("bad"), doc("d".repeat(32), { mediaMaster: undefined })] }, 1);
+  assert.equal(r.tracks.length, 1);
+  assert.equal(r.more, true);
+  const t0 = r.tracks[0];
+  assert.equal(t0.s, "dp"); assert.equal(t0.u, "https://archive.example.org/a.mp3"); assert.equal(t0.li, "pdm");
+  assert.equal(t0.pg, "https://dp.la/item/" + "a".repeat(32)); assert.equal(t0.y, 1925); assert.equal(t0.a, "Band");
+  assert.throws(() => O.dpParse({ message: "Invalid or inactive API key." }), (e) => e.code === "key");
+  assert.equal(C.isRemote(t0), true);
+});
+
+test("Dogmazic preset and new source words exist in English, Greek and German", () => {
+  const src = fs.readFileSync(path.join(__dirname, "..", "music/music.js"), "utf8");
+  let de = null;
+  global.orosPack = (l, a, o) => { de = o; };
+  delete require.cache[require.resolve(path.join(__dirname, "..", "i18n/de/music.js"))];
+  require(path.join(__dirname, "..", "i18n/de/music.js"));
+  ["sv.free", "sv.h.dogmazic", "src.fm", "src.km", "src.mo", "src.jb", "src.dp"].forEach((k) => {
+    assert.equal((src.match(new RegExp('"' + k.replace(/\./g, "\\.") + '": "', "g")) || []).length, 2, k);
+    assert.ok(de[k], "DE " + k);
+  });
+  assert.match(src, /https:\/\/play\.dogmazic\.net/);
 });

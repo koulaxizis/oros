@@ -34,7 +34,7 @@
   // ccMixter pages hold 10: its server drops the connection when one
   // answer passes about 128 KB, and 20 search hits with many files each
   // (stems, zips, flac) went past that (MU-CC1, 2026-11-11).
-  var PAGE = { ia: 24, ov: 20, cc: 10, jm: 20, au: 20, eu: 20 };
+  var PAGE = { ia: 24, ov: 20, cc: 10, jm: 20, au: 20, eu: 20, km: 20, dp: 20 };
   // Registered by Chris at devportal.jamendo.com (2026-10-16); public,
   // one for every orOS user, non-commercial use.
   var JM_CLIENT = "e04c6e83";
@@ -48,10 +48,20 @@
     // MU-SRC (wave 2): free to listen, mostly no free licence; streaming only.
     au: { name: "Audius", home: "https://audius.co/" },
     // MU-SRC: open-licence recordings of European archives; each user's own API key.
-    eu: { name: "Europeana", home: "https://www.europeana.eu/" }
+    eu: { name: "Europeana", home: "https://www.europeana.eu/" },
+    // MU-SRC2 (wave 2b): three Internet Archive collections shown as their own
+    // sources (albums are Internet Archive items, s "ia"), Kevin MacLeod's
+    // catalogue (incompetech, CC BY 4.0) and DPLA (each user's own API key).
+    fm: { name: "Free Music Archive", home: "https://archive.org/details/freemusicarchive" },
+    mo: { name: "Musopen", home: "https://archive.org/details/musopen" },
+    jb: { name: "National Jukebox", home: "https://www.loc.gov/collections/national-jukebox/" },
+    km: { name: "Kevin MacLeod", home: "https://incompetech.com/music/royalty-free/" },
+    dp: { name: "DPLA", home: "https://dp.la/" }
   };
   // The order sources are shown in.
-  var SOURCE_ORDER = ["jm", "ia", "ov", "cc", "au", "eu"];
+  var SOURCE_ORDER = ["jm", "ia", "fm", "ov", "cc", "km", "au", "mo", "jb", "eu", "dp"];
+  // Sources whose albums are Internet Archive items (one search each).
+  var IA_SOURCES = ["ia", "fm", "mo", "jb"];
   // Openverse's own sources, for the credit line.
   var OV_VIA = { jamendo: "Jamendo", freesound: "Freesound", wikimedia_audio: "Wikimedia Commons", ccmixter: "ccMixter" };
 
@@ -108,7 +118,7 @@
   }
   function https(u) {
     var s = typeof u === "string" ? u.trim() : "";
-    if (/^http:\/\/([a-z0-9-]+\.)*(ccmixter\.org|archive\.org|openverse\.org|jamendo\.com|freesound\.org|wikimedia\.org|europeana\.eu)(\/|$)/i.test(s)) s = "https://" + s.slice(7);
+    if (/^http:\/\/([a-z0-9-]+\.)*(ccmixter\.org|archive\.org|openverse\.org|jamendo\.com|freesound\.org|wikimedia\.org|europeana\.eu|dp\.la|incompetech\.com)(\/|$)/i.test(s)) s = "https://" + s.slice(7);
     return /^https:\/\/[^\s"'<>]+$/i.test(s) && s.length <= 1000 ? s : "";
   }
   // "245.3" | "4:05" | "1:02:03" -> seconds
@@ -138,6 +148,19 @@
   // spoken word / radio collections.
   var IA_BASE = "mediatype:(audio OR etree) AND -collection:(78rpm OR georgeblood OR librivoxaudio OR audio_bookspoetry OR oldtimeradio OR podcasts OR radioprograms)" +
     " AND (collection:(etree) OR licenseurl:(*creativecommons.org*))";
+  // MU-SRC2: the National Jukebox (Library of Congress) copies on the Internet
+  // Archive sit in its 78rpm collection, which IA_BASE leaves out; only these
+  // items, marked public domain, and only recordings old enough to be public
+  // domain in the US (published before 1926 in 2026: 100 years after
+  // publication, Music Modernization Act) are asked.
+  function jbLastYear(now) { return new Date(now || Date.now()).getUTCFullYear() - 101; }
+  function jbItem(id) { return /^loc-jukebox-/.test(String(id || "")); }
+  function iaBase(scope, now) {
+    if (scope === "jb") return "mediatype:(audio) AND identifier:(loc-jukebox-*) AND licenseurl:(*publicdomain*) AND year:[1800 TO " + jbLastYear(now) + "]";
+    if (scope === "fm") return IA_BASE + " AND collection:(freemusicarchive)";
+    if (scope === "mo") return IA_BASE + " AND (collection:(musopen) OR subject:(musopen))";
+    return IA_BASE;
+  }
   var IA_FL = ["identifier", "title", "creator", "date", "year", "licenseurl", "collection", "downloads"];
   function iaSearchUrl(o) {
     o = o || {};
@@ -155,7 +178,7 @@
       if (F.pd) parts.push("licenseurl:(*publicdomain*)");
       if (F.sort === "new") sort = "publicdate desc";
     }
-    parts.push(IA_BASE);
+    parts.push(iaBase(o.scope, o.now));
     var p = "q=" + encodeURIComponent(parts.join(" AND "));
     IA_FL.forEach(function (f) { p += "&fl%5B%5D=" + f; });
     p += "&sort%5B%5D=" + encodeURIComponent(sort || "downloads desc");
@@ -173,9 +196,15 @@
     var id = iaId(d && d.identifier);
     if (!id) return null;
     var li = iaLicence(d.licenseurl, d.collection);
-    if (!li) return null;
+    if (!li || !jbOk(id, d.year || d.date)) return null;
     return { s: "ia", id: id, n: str(d.title) || id, a: str(d.creator), y: str(d.year) || (str(d.date).match(/\d{4}/) || [""])[0],
       li: li, art: "https://archive.org/services/img/" + id, pg: "https://archive.org/details/" + id };
+  }
+  // A National Jukebox item is kept only when its year makes it public domain.
+  function jbOk(id, year, now) {
+    if (!jbItem(id)) return true;
+    var y = +((String(Array.isArray(year) ? year[0] : year || "").match(/\d{4}/) || [""])[0]);
+    return y >= 1800 && y <= jbLastYear(now);
   }
   function iaParseSearch(j, page) {
     var r = j && j.response;
@@ -195,6 +224,7 @@
     if (meta["access-restricted-item"] === "true" || meta["access-restricted-item"] === true) return null;
     var li = iaLicence(meta.licenseurl, meta.collection);
     if (!li) return null;
+    if (jbItem(id) && !(/publicdomain/.test(String(meta.licenseurl || "")) && jbOk(id, meta.date || meta.year))) return null;
     var album = { s: "ia", id: id, n: str(meta.title) || id, a: str(meta.creator), y: (str(meta.date).match(/\d{4}/) || [""])[0] || str(meta.year),
       li: li, art: "https://archive.org/services/img/" + id, pg: "https://archive.org/details/" + id,
       off: meta.stream_only || meta["stream-only"] ? 0 : 1 };
@@ -543,6 +573,130 @@
     return { tracks: list.map(euTrack).filter(Boolean), more: Math.max(1, page || 1) * PAGE.eu < (+j.totalResults || 0) };
   }
 
+  // ---------- 5e. Kevin MacLeod / incompetech (MU-SRC2) ----------
+  // 1,443 pieces, all CC BY 4.0, listed in one public JSON file
+  // (~900 KB, asked only when this source is searched, kept 30 minutes).
+  // Search and filters run on the device. All pieces are instrumental.
+  var KM_URL = "https://incompetech.com/music/royalty-free/pieces.json";
+  var KM_MP3 = "https://incompetech.com/music/royalty-free/mp3-royaltyfree/";
+  var KM_PAGE = "https://incompetech.com/music/royalty-free/music.html";
+  var KM_GENRES = { 2: "African", 3: "Blues", 4: "Classical", 5: "Contemporary", 6: "Disco", 7: "Electronica", 8: "Funk", 9: "Holiday",
+    10: "Horror", 11: "Jazz", 12: "Latin", 13: "Modern", 14: "Musical", 15: "Polka", 16: "Pop", 18: "Reggae", 19: "Rock",
+    20: "Silent Film Score", 21: "Ska", 22: "Soundtrack", 23: "Stings", 24: "Unclassifiable", 25: "World", 26: "Urban" };
+  // Our genres as incompetech genre ids, else as words of its "feel" / description.
+  var KM_G = { rock: [19], jazz: [11], electronic: [7, 6], hiphop: [26], classical: [4], blues: [3, 8], pop: [16], reggae: [18, 21],
+    world: [25, 2, 12], folk: "folk", ambient: "ambient", metal: "metal" };
+  // Moods as incompetech "feel" words (romantic has none).
+  var KM_MOOD = { relaxed: ["relaxed", "calming"], happy: ["bright", "bouncy", "uplifting", "humorous"],
+    energetic: ["driving", "action", "intense", "aggressive", "grooving"], sad: ["somber"], epic: ["epic"],
+    dark: ["dark", "eerie", "unnerving", "mysterious", "suspenseful"] };
+  // Tempo bands of SPEEDS, in beats per minute.
+  function kmSpeed(bpm) {
+    var b = +bpm || 0;
+    if (!b) return "";
+    return b < 70 ? "verylow" : b < 95 ? "low" : b < 120 ? "medium" : b < 150 ? "high" : "veryhigh";
+  }
+  function kmFeel(x) { return String((x && x.feel) || "").toLowerCase().split(",").map(function (w) { return w.trim(); }).filter(Boolean); }
+  function kmTrack(x) {
+    var fn = x && typeof x.filename === "string" ? x.filename : "";
+    if (!/^[^\/\\<>"?#]{1,200}\.mp3$/i.test(fn)) return null;
+    var o = { k: key("km", fn), t: str(x.title) || C.stem(fn), a: "Kevin MacLeod", d: secs(x.length), s: "km",
+      u: KM_MP3 + encodeURIComponent(fn), pg: KM_PAGE, li: "by 4.0", off: 1 };
+    var r = ref(o);
+    if (!r) return null;
+    var y = (String(x.uploaded || "").match(/^\d{4}/) || [""])[0];
+    if (y) r.y = +y;
+    return r;
+  }
+  function kmGenreOk(x, g) {
+    var m = KM_G[g];
+    if (!m) return false;
+    if (Array.isArray(m)) return m.indexOf(+x.genre) >= 0;
+    return (kmFeel(x).join(" ") + " " + String(x.description || "") + " " + String(x.title || "")).toLowerCase().indexOf(m) >= 0;
+  }
+  function kmFold(s) { return C ? C.fold(String(s || "")) : String(s || "").toLowerCase(); }
+  // o: { q, f, page } on the parsed pieces.json -> { tracks, more }
+  function kmPick(list, o) {
+    o = o || {};
+    var F = o.f ? normFilter(o.f) : {};
+    var words = kmFold(o.q).split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+    var hits = [];
+    (Array.isArray(list) ? list : []).forEach(function (x, i) {
+      if (!x || typeof x !== "object") return;
+      if (F.g && !kmGenreOk(x, F.g)) return;
+      if (F.mood) { var fw = KM_MOOD[F.mood], fe = kmFeel(x); if (!fw || !fw.some(function (w) { return fe.indexOf(w) >= 0; })) return; }
+      if (F.sp && kmSpeed(x.bpm) !== F.sp) return;
+      if (F.vi === "v") return;
+      var score = 0;
+      if (words.length) {
+        var title = kmFold(x.title), rest = kmFold([x.feel, x.instruments, x.description, KM_GENRES[+x.genre] || ""].join(" "));
+        for (var w = 0; w < words.length; w++) {
+          if (title.indexOf(words[w]) >= 0) score += 3;
+          else if (rest.indexOf(words[w]) >= 0) score += 1;
+          else return;
+        }
+      }
+      var r = kmTrack(x);
+      if (!r || !durOk(r.d, F) || !yearOk(r.y, F) || !licOk(r.li, F)) return;
+      hits.push({ r: r, score: score, up: String(x.uploaded || ""), i: i });
+    });
+    hits.sort(function (a, b) {
+      if (F.sort !== "new" && b.score !== a.score) return b.score - a.score;
+      return a.up < b.up ? 1 : a.up > b.up ? -1 : a.i - b.i;
+    });
+    var page = Math.max(1, o.page || 1), n = PAGE.km;
+    return { tracks: hits.slice((page - 1) * n, page * n).map(function (h) { return h.r; }), more: hits.length > page * n };
+  }
+
+  // ---------- 5f. DPLA (MU-SRC2) ----------
+  // Sound items of American libraries and archives with a Creative Commons
+  // licence or public-domain mark, through the DPLA API with each user's own
+  // free key (dp.la, 32 characters), kept on the device like Europeana's.
+  // Only items whose record names a playable https audio file are listed.
+  function dpKeyOk(k) { return typeof k === "string" && /^[A-Za-z0-9]{32}$/.test(k.trim()); }
+  function dpWords(q) { return String(q || "").replace(/[\\+\-!(){}[\]^"~*?:/&|=]/g, " ").replace(/\s+/g, " ").trim().slice(0, 120); }
+  function dpUrl(o) {
+    o = o || {};
+    var F = o.f ? normFilter(o.f) : {}, n = PAGE.dp;
+    var p = { api_key: String(o.key || "").trim(), "sourceResource.type": "sound", rights: "*creativecommons*",
+      page_size: n, page: Math.max(1, o.page || 1) };
+    var words = [dpWords(o.q), F.g ? genreWord(F.g) : ""].filter(Boolean).join(" ");
+    if (words) p.q = words;
+    if (F.cc && countryEn(F.cc)) p["sourceResource.spatial.country"] = countryEn(F.cc);
+    if (F.y0) p["sourceResource.date.after"] = String(F.y0);
+    if (F.y1) p["sourceResource.date.before"] = String(F.y1);
+    if (F.sort === "new") { p.sort_by = "sourceResource.date.begin"; p.sort_order = "desc"; }
+    return "https://api.dp.la/v2/items?" + qs(p);
+  }
+  function dpFirst(v) { return Array.isArray(v) ? v[0] : v; }
+  var DP_AUDIO = /\.(mp3|m4a|ogg|oga|opus|flac|wav)(\?[^\s]*)?$/i;
+  function dpTrack(x) {
+    if (!x || typeof x.id !== "string" || !/^[a-f0-9]{32}$/.test(x.id)) return null;
+    var li = "";
+    (Array.isArray(x.rights) ? x.rights : [x.rights]).some(function (r) { li = licFromUrl(r); return !!li; });
+    if (!li) return null;
+    var u = "";
+    (Array.isArray(x.mediaMaster) ? x.mediaMaster : [x.mediaMaster]).some(function (m) {
+      var v = https(String(m || "").replace(/^http:\/\//i, "https://"));
+      if (v && DP_AUDIO.test(v)) u = v;
+      return !!u;
+    });
+    if (!u) return null;
+    var sr = x.sourceResource && typeof x.sourceResource === "object" ? x.sourceResource : {};
+    var dp = x.dataProvider && typeof x.dataProvider === "object" ? x.dataProvider.name : x.dataProvider;
+    var o = { k: key("dp", x.id), t: str(dpFirst(sr.title)) || "?", a: str(dpFirst(sr.creator)) || str(dpFirst(dp)),
+      s: "dp", u: u, pg: "https://dp.la/item/" + x.id, li: li };
+    var r = ref(o);
+    var d = dpFirst(sr.date);
+    var y = (String((d && typeof d === "object" ? d.begin || d.displayDate : d) || "").match(/\d{4}/) || [""])[0];
+    if (r && y) r.y = +y;
+    return r;
+  }
+  function dpParse(j, page) {
+    if (!j || !Array.isArray(j.docs)) throw new OpenError(j && /key/i.test(String(j.error || j.message || "")) ? "key" : "http");
+    return { tracks: j.docs.map(dpTrack).filter(Boolean), more: Math.max(1, page || 1) * PAGE.dp < (+j.count || 0) };
+  }
+
   // ---------- 6. Browse shelves (Home) ----------
   // Names of shelves, moods and genres, licence labels and the credit
   // words. Shares the "music" pack with music.js (same key = same
@@ -553,6 +707,8 @@
       "open.browse.classical": "Classical", "open.browse.remix": "Remixes", "open.browse.instr": "Instrumentals",
       "open.browse.free": "Free songs (Openverse)", "open.browse.jmweek": "Popular this week", "open.browse.jmnew": "New albums",
       "open.browse.jmtop": "All-time favourites", "open.browse.jmradio": "Jamendo radios", "open.browse.autrend": "Trending on Audius",
+      "open.browse.fma": "Free Music Archive", "open.browse.kevin": "Kevin MacLeod", "open.browse.jukebox": "Early recordings, 1900–1925",
+      "open.browse.musopen": "Musopen classical",
       "open.mood.relaxed": "Relaxed", "open.mood.happy": "Happy", "open.mood.energetic": "Energetic", "open.mood.romantic": "Romantic",
       "open.mood.sad": "Melancholic", "open.mood.epic": "Epic", "open.mood.dark": "Dark",
       "open.genre.rock": "Rock", "open.genre.jazz": "Jazz", "open.genre.electronic": "Electronic", "open.genre.hiphop": "Hip-hop",
@@ -566,6 +722,8 @@
       "open.browse.classical": "Κλασική", "open.browse.remix": "Remix", "open.browse.instr": "Ορχηστρικά",
       "open.browse.free": "Ελεύθερα τραγούδια (Openverse)", "open.browse.jmweek": "Δημοφιλή της εβδομάδας", "open.browse.jmnew": "Νέα άλμπουμ",
       "open.browse.jmtop": "Τα αγαπημένα όλων των εποχών", "open.browse.jmradio": "Ραδιόφωνα Jamendo", "open.browse.autrend": "Δημοφιλή στο Audius",
+      "open.browse.fma": "Free Music Archive", "open.browse.kevin": "Kevin MacLeod", "open.browse.jukebox": "Πρώτες ηχογραφήσεις, 1900–1925",
+      "open.browse.musopen": "Κλασική από το Musopen",
       "open.mood.relaxed": "Χαλαρή", "open.mood.happy": "Χαρούμενη", "open.mood.energetic": "Γεμάτη ενέργεια", "open.mood.romantic": "Ρομαντική",
       "open.mood.sad": "Μελαγχολική", "open.mood.epic": "Επική", "open.mood.dark": "Σκοτεινή",
       "open.genre.rock": "Ροκ", "open.genre.jazz": "Τζαζ", "open.genre.electronic": "Ηλεκτρονική", "open.genre.hiphop": "Χιπ χοπ",
@@ -604,7 +762,11 @@
     shelf("jmnew", "jm", { albums: 1, order: "releasedate_desc" }),
     shelf("jmtop", "jm", { order: "popularity_total" }),
     shelf("jmradio", "jm", { radios: 1 }),
-    shelf("autrend", "au", {})
+    shelf("autrend", "au", {}),
+    shelf("fma", "fm", {}),
+    shelf("kevin", "km", {}),
+    shelf("jukebox", "jb", {}),
+    shelf("musopen", "mo", {})
   ];
   // [id, English, Greek] from the table.
   function named(pre, ids) { return ids.map(function (id) { return [id, STRINGS.en[pre + id], STRINGS.el[pre + id]]; }); }
@@ -742,6 +904,12 @@
     if (!euKeyOk(o.key)) return Promise.reject(new OpenError("key"));
     return getJSON(euUrl(o)).then(function (j) { return euParse(j, o.page); });
   }
+  function kmSearch(o) { o = o || {}; return getJSON(KM_URL, { timeout: 30000 }).then(function (j) { return kmPick(j, o); }); }
+  function dpSearch(o) {
+    o = o || {};
+    if (!dpKeyOk(o.key)) return Promise.reject(new OpenError("key"));
+    return getJSON(dpUrl(o)).then(function (j) { return dpParse(j, o.page); });
+  }
   function jmRadios() { return getJSON(jmRadiosUrl()).then(jmParseRadios); }
   function jmRadio(radio) { return getJSON(jmRadioStreamUrl(radio.id)).then(function (j) { return jmRadioItem(j, radio); }); }
 
@@ -815,6 +983,11 @@
     cc: { g: 1, dur: 1, lic: 1, vi: 1, off: 1 },
     au: { g: 1, dur: 1, mood: 1 },
     eu: { g: 1, cc: 1, lic: 1, y: 1 },
+    fm: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
+    mo: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
+    jb: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
+    km: { g: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1, off: 1 },
+    dp: { g: 1, cc: 1, lic: 1, y: 1 },
     loc: { g: 1, dur: 1, y: 1 }
   };
   // The groups of F that source src cannot honour.
@@ -825,7 +998,8 @@
       if (!can[k]) return true;
       if (k === "lic" && src === "jm" && F.pd) return true;   // Jamendo has no public domain
       if (k === "vi" && src === "cc" && F.vi === "v") return true;
-      if (k === "cc" && (src === "ia" || src === "eu") && !countryEn(F.cc)) return true;
+      if (k === "cc" && /^(ia|fm|mo|jb|eu|dp)$/.test(src) && !countryEn(F.cc)) return true;
+      if (src === "km" && ((k === "vi" && F.vi === "v") || (k === "mood" && !KM_MOOD[F.mood]))) return true;   // all instrumental; no romantic feel
       return false;
     });
   }
@@ -880,7 +1054,7 @@
   }
 
   var api = {
-    VERSION: "1.5.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.6.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,
@@ -896,6 +1070,9 @@
     SOURCE_ORDER: SOURCE_ORDER, auUrl: auUrl, auParse: auParse, auLicence: auLicence, auSearch: auSearch, AU_GENRES: AU_GENRES, AU_MOODS: AU_MOODS,
     euUrl: euUrl, euParse: euParse, euSearch: euSearch, euKeyOk: euKeyOk,
     jmCountryUrl: jmCountryUrl, jmParseIds: jmParseIds, jmFiltered: jmFiltered,
+    IA_SOURCES: IA_SOURCES, iaBase: iaBase, jbLastYear: jbLastYear, jbOk: jbOk,
+    KM_URL: KM_URL, kmTrack: kmTrack, kmPick: kmPick, kmSpeed: kmSpeed, kmSearch: kmSearch,
+    dpKeyOk: dpKeyOk, dpUrl: dpUrl, dpParse: dpParse, dpSearch: dpSearch,
     getJSON: getJSON, iaSearch: iaSearch, iaAlbum: iaAlbum, ovSearch: ovSearch, ccSearch: ccSearch, OpenError: OpenError
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -479,3 +479,5 @@ dl.info dd { overflow-wrap: anywhere; }
 .fl-years input { min-height: 44px; }
 .fl-dlg select { min-height: 44px; }
 .lic.lic-free { font-weight: 700; }
+/* MU-SRC2: links in the Sources dialog are full-size tap targets. */
+#mu-sources a.link { display: inline-flex; align-items: center; min-height: 44px; }

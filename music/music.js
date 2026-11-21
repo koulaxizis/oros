@@ -96,7 +96,7 @@
       "info.file": "File", "info.format": "Format", "info.size": "Size", "info.genre": "Genre", "info.year": "Year", "info.track": "Track",
       "info.length": "Length",
       "liked.empty": "Songs you like appear here. Tap the heart on any song.",
-      "home.free": "Free music", "home.freeSub": "Open catalogues: Jamendo, Internet Archive, Openverse, ccMixter, Audius and Europeana. Every song shows its licence (Audius: free to listen).",
+      "home.free": "Free music", "home.freeSub": "Open catalogues: Jamendo, Internet Archive, Free Music Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Musopen, the National Jukebox, Europeana and DPLA. Every song shows its licence (Audius: free to listen).",
       "home.genres": "Free music by genre", "kind.free": "Free music", "home.moods": "Moods (Jamendo)", "kind.mood": "Mood",
       "o.title": "Free music online", "o.all": "All", "o.loading": "Loading…", "o.more": "Show more", "o.none": "Nothing found here.",
       "o.fromQueue": "The list did not load this time. These are the songs playing from here.",
@@ -185,6 +185,23 @@
       "src.cc": "Creative Commons remixes, instrumentals and a cappellas.",
       "src.au": "Free to listen: artists share songs to be heard, mostly without a free licence. Streaming only.",
       "src.eu": "Open-licence recordings of Europe's archives and radios. Needs your own free key.",
+      "src.fm": "The Free Music Archive's Creative Commons albums, kept on the Internet Archive.",
+      "src.km": "Kevin MacLeod's 1,400+ instrumental pieces (incompetech), all CC BY 4.0. Can be kept offline.",
+      "src.mo": "Musopen's public-domain classical recordings, kept on the Internet Archive.",
+      "src.jb": "The Library of Congress National Jukebox: recordings from 1900 to 1925, public domain.",
+      "src.dp": "Open-licence recordings of American libraries and archives. Needs your own free key.",
+      "dp.needKey": "DPLA needs your own free API key.",
+      "dp.key": "Your DPLA API key",
+      "dp.getKey": "How to get a free key (dp.la)",
+      "dp.keyHint": "The key stays on this device, sealed, never synced and never sent anywhere but api.dp.la.",
+      "dp.saved": "DPLA key saved.",
+      "dp.forgot": "DPLA key removed.",
+      "dp.badKey": "DPLA did not accept the key (32 letters and digits). Check it in Settings › Sources.",
+      "dp.note": "DPLA: only recordings with an open licence that can be played here are listed.",
+      "sv.free": "Free-music servers:",
+      "src.more": "More free music elsewhere",
+      "src.moby": "mobygratis: Moby's free instrumentals for your own non-commercial videos, films and remixes, under its own licence. Opens the site; it does not play here.",
+      "sv.h.dogmazic": "Dogmazic: French free-music library, every song under a free licence. Sign in with your free Dogmazic account; as the password use the Subsonic password or the API key from your Dogmazic account settings.",
       "m.share": "Share…", "sh.title": "Share this song", "sh.name": "Send its name as a link",
       "sh.file": "Send the file itself", "sh.fileSub": "A song on this device: send only its name, or the file itself (only if it is yours to give).",
       "sh.big": "Too big to send as a file (100 MB at most).", "sh.fileNo": "This device cannot send this file. Send its name instead.",
@@ -197,7 +214,7 @@
       "toast.offNo": "The licence or the source does not allow an offline copy of this song.", "toast.offHave": "Already saved for offline.",
       "toast.offDel": "Offline copy removed.", "toast.offDels": "Offline copies removed.",
       "lib.offline": "Offline", "off.empty": "Songs from the free catalogues that you save for offline appear here.", "off.badge": "Saved for offline",
-      "s.open": "Free music online (Jamendo, Internet Archive, Openverse, ccMixter, Audius, Europeana)",
+      "s.open": "Free music online (Jamendo, Internet Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Europeana and more)",
       "s.openHint": "Only when you browse or search. The requests go straight to those services, with no account and no tracking.",
       "s.offInfo": "Offline copies: {n} · {s}", "s.offClear": "Delete all offline copies",
       "s.offClearQ": "Delete all offline copies ({n})? The songs stay in your playlists and play online.",
@@ -347,7 +364,7 @@
       "info.file": "Αρχείο", "info.format": "Μορφή", "info.size": "Μέγεθος", "info.genre": "Είδος", "info.year": "Έτος", "info.track": "Κομμάτι",
       "info.length": "Διάρκεια",
       "liked.empty": "Τα τραγούδια που σου αρέσουν εμφανίζονται εδώ. Πάτησε την καρδιά σε οποιοδήποτε τραγούδι.",
-      "home.free": "Ελεύθερη μουσική", "home.freeSub": "Ανοιχτοί κατάλογοι: Jamendo, Internet Archive, Openverse, ccMixter, Audius και Europeana. Κάθε τραγούδι δείχνει την άδειά του (Audius: δωρεάν ακρόαση).",
+      "home.free": "Ελεύθερη μουσική", "home.freeSub": "Ανοιχτοί κατάλογοι: Jamendo, Internet Archive, Free Music Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Musopen, National Jukebox, Europeana και DPLA. Κάθε τραγούδι δείχνει την άδειά του (Audius: δωρεάν ακρόαση).",
       "home.genres": "Ελεύθερη μουσική ανά είδος", "kind.free": "Ελεύθερη μουσική", "home.moods": "Διάθεση (Jamendo)", "kind.mood": "Διάθεση",
       "o.title": "Ελεύθερη μουσική online", "o.all": "Όλα", "o.loading": "Φόρτωση…", "o.more": "Δείξε περισσότερα", "o.none": "Δεν βρέθηκε τίποτα εδώ.",
       "o.fromQueue": "Η λίστα δεν φόρτωσε αυτή τη φορά. Αυτά είναι τα τραγούδια που παίζουν από εδώ.",
@@ -436,6 +453,23 @@
       "src.cc": "Remix, ορχηστρικά και a cappella με άδειες Creative Commons.",
       "src.au": "Δωρεάν ακρόαση: οι καλλιτέχνες μοιράζονται τραγούδια για να ακουστούν, τα περισσότερα χωρίς ελεύθερη άδεια. Μόνο online.",
       "src.eu": "Ηχογραφήσεις με ανοιχτή άδεια από αρχεία και ραδιόφωνα της Ευρώπης. Θέλει το δικό σου δωρεάν κλειδί.",
+      "src.fm": "Τα άλμπουμ Creative Commons του Free Music Archive, σωσμένα στο Internet Archive.",
+      "src.km": "Πάνω από 1.400 ορχηστρικά κομμάτια του Kevin MacLeod (incompetech), όλα CC BY 4.0. Μπορούν να μείνουν offline.",
+      "src.mo": "Ηχογραφήσεις κλασικής μουσικής του Musopen σε κοινό κτήμα, σωσμένες στο Internet Archive.",
+      "src.jb": "Το National Jukebox της Library of Congress: ηχογραφήσεις από το 1900 ως το 1925, σε κοινό κτήμα.",
+      "src.dp": "Ηχογραφήσεις με ανοιχτή άδεια από αμερικανικές βιβλιοθήκες και αρχεία. Θέλει το δικό σου δωρεάν κλειδί.",
+      "dp.needKey": "Το DPLA θέλει το δικό σου δωρεάν κλειδί API.",
+      "dp.key": "Το κλειδί σου API του DPLA",
+      "dp.getKey": "Πώς παίρνεις δωρεάν κλειδί (dp.la)",
+      "dp.keyHint": "Το κλειδί μένει σε αυτή τη συσκευή, σφραγισμένο, δεν συγχρονίζεται και δεν πηγαίνει πουθενά αλλού εκτός από το api.dp.la.",
+      "dp.saved": "Το κλειδί του DPLA αποθηκεύτηκε.",
+      "dp.forgot": "Το κλειδί του DPLA αφαιρέθηκε.",
+      "dp.badKey": "Το DPLA δεν δέχτηκε το κλειδί (32 γράμματα και αριθμοί). Έλεγξέ το στις Ρυθμίσεις › Πηγές.",
+      "dp.note": "DPLA: εμφανίζονται μόνο ηχογραφήσεις με ανοιχτή άδεια που παίζουν εδώ.",
+      "sv.free": "Servers ελεύθερης μουσικής:",
+      "src.more": "Κι άλλη ελεύθερη μουσική αλλού",
+      "src.moby": "mobygratis: δωρεάν ορχηστρικά του Moby για τα δικά σου μη εμπορικά βίντεο, ταινίες και remix, με δική του άδεια. Ανοίγει τον ιστότοπο· δεν παίζει εδώ.",
+      "sv.h.dogmazic": "Dogmazic: γαλλική βιβλιοθήκη ελεύθερης μουσικής, κάθε τραγούδι με ελεύθερη άδεια. Συνδέσου με τον δωρεάν λογαριασμό σου στο Dogmazic· ως κωδικό βάλε τον κωδικό Subsonic ή το κλειδί API από τις ρυθμίσεις του λογαριασμού σου στο Dogmazic.",
       "m.share": "Κοινοποίηση…", "sh.title": "Κοινοποίηση τραγουδιού", "sh.name": "Αποστολή του ονόματος ως σύνδεσμο",
       "sh.file": "Αποστολή του ίδιου του αρχείου", "sh.fileSub": "Τραγούδι σε αυτή τη συσκευή: στείλε μόνο το όνομά του ή το ίδιο το αρχείο (μόνο αν σου ανήκει να το δώσεις).",
       "sh.big": "Πολύ μεγάλο για αποστολή ως αρχείο (έως 100 MB).", "sh.fileNo": "Αυτή η συσκευή δεν μπορεί να στείλει αυτό το αρχείο. Στείλε καλύτερα το όνομά του.",
@@ -448,7 +482,7 @@
       "toast.offNo": "Η άδεια ή η πηγή δεν επιτρέπει αντίγραφο χωρίς σύνδεση για αυτό το τραγούδι.", "toast.offHave": "Είναι ήδη αποθηκευμένο για χωρίς σύνδεση.",
       "toast.offDel": "Το αντίγραφο αφαιρέθηκε.", "toast.offDels": "Τα αντίγραφα αφαιρέθηκαν.",
       "lib.offline": "Χωρίς σύνδεση", "off.empty": "Εδώ εμφανίζονται τα τραγούδια από τους ελεύθερους καταλόγους που αποθηκεύεις για χωρίς σύνδεση.", "off.badge": "Αποθηκευμένο για χωρίς σύνδεση",
-      "s.open": "Ελεύθερη μουσική online (Jamendo, Internet Archive, Openverse, ccMixter, Audius, Europeana)",
+      "s.open": "Ελεύθερη μουσική online (Jamendo, Internet Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Europeana και άλλοι)",
       "s.openHint": "Μόνο όταν περιηγείσαι ή ψάχνεις. Τα αιτήματα πάνε κατευθείαν σε αυτές τις υπηρεσίες, χωρίς λογαριασμό και χωρίς παρακολούθηση.",
       "s.offInfo": "Αντίγραφα χωρίς σύνδεση: {n} · {s}", "s.offClear": "Διαγραφή όλων των αντιγράφων",
       "s.offClearQ": "Να διαγραφούν όλα τα αντίγραφα χωρίς σύνδεση ({n}); Τα τραγούδια μένουν στις λίστες σου και παίζουν online.",
@@ -779,15 +813,33 @@
   function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   function fAu(o) { return function (page) { return O.auSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   function fEu(o) { return function (page) { return O.euSearch(Object.assign({}, o, { page: page, key: euKey })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  // MU-SRC2: Kevin MacLeod (searched on the device) and DPLA (the person's key).
+  function fKm(o) { return function (page) { return O.kmSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  function fDp(o) { return function (page) { return O.dpSearch(Object.assign({}, o, { page: page, key: dpKey })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  // Internet Archive collections shown as their own sources (fm, mo, jb).
+  function isIaSrc(sk) { return O.IA_SOURCES.indexOf(sk) >= 0; }
+  function fSrc(sk, o) {
+    o = o || {};
+    if (isIaSrc(sk)) return fIa(sk === "ia" ? o : Object.assign({}, o, { scope: sk }));
+    return sk === "jm" ? fJm(o) : sk === "ov" ? fOv(o) : sk === "cc" ? fCc(o) : sk === "au" ? fAu(o) : sk === "eu" ? fEu(o) : sk === "km" ? fKm(o) : fDp(o);
+  }
   // MU-SRC: which open sources this device asks (Settings › Sources).
   function srcOn(sk) { return prefs.soff.indexOf(sk) < 0; }
-  // The person's own Europeana key, read once from the sealed store.
-  var euKey = null;
+  // The person's own Europeana and DPLA keys, read once from the sealed store.
+  var euKey = null, dpKey = null;
   function loadEuKey() {
     var L = window.OrosMusicLB;
     if (!L || typeof L.secret !== "function") return;
     L.secret("europeana").then(function (k) { euKey = O && O.euKeyOk(k || "") ? k : null; if (euKey) renderKeepScroll(); });
+    L.secret("dpla").then(function (k) { dpKey = O && O.dpKeyOk(k || "") ? k : null; if (dpKey) renderKeepScroll(); });
   }
+  // Key sources: their key, check, sealed name, where to get one.
+  var KEYS = {
+    eu: { get: function () { return euKey; }, set: function (v) { euKey = v; }, ok: function (v) { return O.euKeyOk(v); }, name: "europeana",
+      url: "https://pro.europeana.eu/page/get-api", max: 40 },
+    dp: { get: function () { return dpKey; }, set: function (v) { dpKey = v; }, ok: function (v) { return O.dpKeyOk(v); }, name: "dpla",
+      url: "https://pro.dp.la/developers/api-codex", max: 32 }
+  };
   function fCc(o) { return function (page) { return O.ccSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   // Jamendo songs asked in more than one way (a mood, MU-MOOD2): page 1
   // goes down the list until one way answers with songs, later pages
@@ -818,7 +870,7 @@
   function albumOf(sk, id) { return sk === "jm" ? O.jmAlbum(id) : O.iaAlbum(id); }
   function fAlbum(sk, id) { return function () { return albumOf(sk, id).then(function (r) { return { list: r.tracks, more: false, extra: r.album }; }); }; }
   function errText(code, s) {
-    return code === "key" ? t("eu.badKey") : code === "busy" ? t("o.busy", { s: s }) : code === "offline" ? t("o.offline") : code === "closed" ? t("o.closed") : t("o.err", { s: s });
+    return code === "key" ? t(s === srcName("dp") ? "dp.badKey" : "eu.badKey") : code === "busy" ? t("o.busy", { s: s }) : code === "offline" ? t("o.offline") : code === "closed" ? t("o.closed") : t("o.err", { s: s });
   }
   // Loading / error / "show more" under a list of an open catalogue.
   function feedStatus(box, key, s, noMore) {
@@ -1272,6 +1324,16 @@
     sel.addEventListener("change", paint);
     form.addEventListener("input", function (e) { if (e.target !== sel) msg.textContent = ""; });
     paint();
+    // MU-SRC2: free-music servers that speak Subsonic, filled in with one tap.
+    var pre = el("p", "dim small sv-pre");
+    pre.appendChild(el("span", "", t("sv.free") + " "));
+    pre.appendChild(button("Dogmazic", "pill small-pill", function () {
+      sel.value = "subsonic"; paint();
+      addr.value = "https://play.dogmazic.net"; name.value = "Dogmazic";
+      hint.textContent = t("sv.h.dogmazic");
+      user.focus();
+    }));
+    form.insertBefore(pre, hint);
     var row = el("div", "dlg-btns");
     row.appendChild(button(t("cancel"), "txt-btn", function () { dlg.close(); }));
     var ok = el("button", "txt-btn accent", t("sv.go"));
@@ -2706,23 +2768,25 @@
     var F = FL(), fOn = O.filterOn(F), sig = fOn ? "|" + O.filterSig(F) : "", skipped = [];
     var o = fOn ? { q: q, f: F } : { q: q };
     var miss = function (sk) { var l = fOn ? O.filterMissing(sk, F) : []; if (l.length) skipped.push(t("fl.skipOne", { s: srcName(sk), f: missText(l) })); return l.length > 0; };
-    if ((all || prefs.osrc === "ia") && srcOn("ia") && !miss("ia")) {
-      var kI = "s|ia|" + q + sig, fi = feed(kI, fIa(o));
-      sec.appendChild(el("h3", "sub-h", t("o.albums", { s: srcName("ia") })));
+    O.IA_SOURCES.forEach(function (sk) {
+      if ((!all && prefs.osrc !== sk) || !srcOn(sk) || miss(sk)) return;
+      var kI = "s|" + sk + "|" + q + sig, fi = feed(kI, fSrc(sk, o));
+      sec.appendChild(el("h3", "sub-h", t("o.albums", { s: srcName(sk) })));
       var ci = el("div", all ? "cards" : "grid");
       fi.list.forEach(function (a) { ci.appendChild(oAlbumCard(a)); });
       if (fi.list.length) sec.appendChild(ci);
-      feedStatus(sec, kI, srcName("ia"));
-    }
-    ["jm", "ov", "cc", "au", "eu"].forEach(function (sk) {
+      feedStatus(sec, kI, srcName(sk));
+    });
+    ["jm", "ov", "cc", "km", "au", "eu", "dp"].forEach(function (sk) {
       if (!all && prefs.osrc !== sk) return;
       if (!srcOn(sk) || miss(sk)) return;
-      // Audius and Europeana need words or a filter (no "everything" list).
-      if ((sk === "au" || sk === "eu") && !q && !fOn) return;
+      // Audius, Europeana and DPLA need words or a filter (no "everything" list).
+      if ((sk === "au" || sk === "eu" || sk === "dp") && !q && !fOn) return;
       sec.appendChild(el("h3", "sub-h", t("o.songs", { s: srcName(sk) })));
-      if (sk === "eu" && !euKey) { sec.appendChild(euKeyNote()); return; }
-      var k = "s|" + sk + "|" + q + sig, f = feed(k, sk === "jm" ? fJm(o) : sk === "ov" ? fOv(o) : sk === "cc" ? fCc(o) : sk === "au" ? fAu(o) : fEu(o));
+      if (KEYS[sk] && !KEYS[sk].get()) { sec.appendChild(keyNote(sk)); return; }
+      var k = "s|" + sk + "|" + q + sig, f = feed(k, fSrc(sk, o));
       if (sk === "au") sec.appendChild(el("p", "dim small sec-note", t("au.note")));
+      if (sk === "dp") sec.appendChild(el("p", "dim small sec-note", t("dp.note")));
       if (f.list.length) sec.appendChild(rowList(f.list, { src: src }));
       feedStatus(sec, k, srcName(sk));
     });
@@ -2791,9 +2855,9 @@
     else box.appendChild(el("p", "empty", t("fl.needOpen")));
   }
   // ---------- Sources (MU-SRC) ----------
-  function euKeyNote() {
+  function keyNote(sk) {
     var p = el("div", "o-note");
-    p.appendChild(el("span", "dim small", t("eu.needKey")));
+    p.appendChild(el("span", "dim small", t(sk + ".needKey")));
     p.appendChild(button(t("eu.addKey"), "pill small-pill", sourcesDlg));
     return p;
   }
@@ -2816,43 +2880,51 @@
       dlg.appendChild(lab);
       dlg.appendChild(el("p", "dim small", t("src." + sk)));
     });
-    // Europeana: the person's own key.
+    // MU-SRC2: free music elsewhere, as links only (its licence does not let other apps play it).
+    dlg.appendChild(el("h3", "sub-h", t("src.more")));
+    var moby = el("a", "link", "mobygratis.com");
+    moby.href = "https://mobygratis.com/"; moby.target = "_blank"; moby.rel = "noopener noreferrer";
+    moby.addEventListener("click", function (e) { e.preventDefault(); openExt(moby.href); });
+    dlg.appendChild(el("p", "")).appendChild(moby);
+    dlg.appendChild(el("p", "dim small", t("src.moby")));
+    // Europeana and DPLA: the person's own keys.
     var L = window.OrosMusicLB;
-    if (L && typeof L.saveSecret === "function") {
-      var form = el("form", "");
-      var f0 = el("label", "field");
-      f0.appendChild(el("span", "dim small", t("eu.key")));
-      var inp = el("input");
-      inp.type = "password"; inp.autocomplete = "off"; inp.spellcheck = false; inp.maxLength = 40;
-      inp.setAttribute("autocapitalize", "none");
-      inp.placeholder = euKey ? t("eu.keySaved") : t("eu.keyPh");
-      f0.appendChild(inp);
-      form.appendChild(f0);
-      var get = el("a", "link small", t("eu.getKey"));
-      get.href = "https://pro.europeana.eu/page/get-api"; get.target = "_blank"; get.rel = "noopener noreferrer";
-      get.addEventListener("click", function (e) { e.preventDefault(); openExt(get.href); });
-      form.appendChild(el("p", "dim small")).appendChild(get);
-      form.appendChild(el("p", "dim small", t("eu.keyHint")));
-      var row = el("div", "dlg-btns");
-      if (euKey) row.appendChild(button(t("eu.forget"), "txt-btn danger", function () { L.forgetSecret("europeana").then(function () { euKey = null; dlg.close(); showToast(t("eu.forgot")); renderKeepScroll(); }); }));
-      var ok = el("button", "txt-btn accent", t("eu.save"));
-      ok.type = "submit";
-      row.appendChild(ok);
-      form.appendChild(row);
-      form.addEventListener("submit", function (e) {
-        e.preventDefault();
-        var v = inp.value.trim();
-        if (!O.euKeyOk(v)) { showToast(t("eu.badKey")); inp.focus(); return; }
-        L.saveSecret("europeana", v).then(function () {
-          euKey = v;
-          Object.keys(feeds).forEach(function (k) { if (/^s\|eu\|/.test(k)) delete feeds[k]; });
-          dlg.close(); showToast(t("eu.saved")); renderKeepScroll();
-        }, function () { showToast(t("eu.saveErr")); });
-      });
-      dlg.appendChild(form);
-    }
+    if (L && typeof L.saveSecret === "function") ["eu", "dp"].forEach(function (sk) { dlg.appendChild(keyForm(sk, L, dlg)); });
     dlg.appendChild(el("div", "dlg-btns")).appendChild(button(t("close"), "txt-btn", function () { dlg.close(); }));
     openDialog(dlg);
+  }
+  function keyForm(sk, L, dlg) {
+    var K = KEYS[sk], form = el("form", "");
+    var f0 = el("label", "field");
+    f0.appendChild(el("span", "dim small", t(sk + ".key")));
+    var inp = el("input");
+    inp.type = "password"; inp.autocomplete = "off"; inp.spellcheck = false; inp.maxLength = K.max;
+    inp.setAttribute("autocapitalize", "none");
+    inp.placeholder = K.get() ? t("eu.keySaved") : t("eu.keyPh");
+    f0.appendChild(inp);
+    form.appendChild(f0);
+    var get = el("a", "link small", t(sk + ".getKey"));
+    get.href = K.url; get.target = "_blank"; get.rel = "noopener noreferrer";
+    get.addEventListener("click", function (e) { e.preventDefault(); openExt(get.href); });
+    form.appendChild(el("p", "dim small")).appendChild(get);
+    form.appendChild(el("p", "dim small", t(sk + ".keyHint")));
+    var row = el("div", "dlg-btns");
+    if (K.get()) row.appendChild(button(t("eu.forget"), "txt-btn danger", function () { L.forgetSecret(K.name).then(function () { K.set(null); dlg.close(); showToast(t(sk + ".forgot")); renderKeepScroll(); }); }));
+    var ok = el("button", "txt-btn accent", t("eu.save"));
+    ok.type = "submit";
+    row.appendChild(ok);
+    form.appendChild(row);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = inp.value.trim();
+      if (!K.ok(v)) { showToast(t(sk + ".badKey")); inp.focus(); return; }
+      L.saveSecret(K.name, v).then(function () {
+        K.set(v);
+        Object.keys(feeds).forEach(function (k) { if (k.indexOf("|" + sk + "|") >= 0) delete feeds[k]; });
+        dlg.close(); showToast(t(sk + ".saved")); renderKeepScroll();
+      }, function () { showToast(t("eu.saveErr")); });
+    });
+    return form;
   }
   function filtersDlg() {
     var F = FL();
@@ -3187,8 +3259,8 @@
       var name = O.browseName(b.id, LANG);
       src = { kind: "browse", id: b.id, n: name };
       k = "b|" + b.id;
-      f = feed(k, b.src === "ia" ? fIa(b.ia) : b.src === "cc" ? fCc(b.cc) : b.src === "jm" ? fJm(b.jm) : b.src === "au" ? fAu(b.au) : fOv(b.ov));
-      var cardsOnly = b.src === "ia" || (b.jm && (b.jm.albums || b.jm.radios));
+      f = feed(k, fSrc(b.src, b[b.src]));
+      var cardsOnly = isIaSrc(b.src) || (b.jm && (b.jm.albums || b.jm.radios));
       pageHead(m, cover("", b.id, "big", I.globe), t("kind.free"), name, el("div", "ph-sub dim", srcName(b.src)), cardsOnly ? null : liveFeeds([k]), src);
       if (cardsOnly) { var g = el("div", "grid"); f.list.forEach(function (a) { g.appendChild(b.jm && b.jm.radios ? radioCard(a) : oAlbumCard(a)); }); m.appendChild(g); }
       else m.appendChild(rowList(f.list, { src: src }));
@@ -3222,6 +3294,8 @@
       var gl = [["jm", kj, fj], ["ov", ko, fo], ["cc", kc, fc]];
       if (srcOn("au")) gl.push(["au", "g|au|" + gg.id, feed("g|au|" + gg.id, fAu({ f: { g: gg.id } }))]);
       if (srcOn("eu") && euKey) gl.push(["eu", "g|eu|" + gg.id, feed("g|eu|" + gg.id, fEu({ f: { g: gg.id } }))]);
+      if (srcOn("km")) gl.push(["km", "g|km|" + gg.id, feed("g|km|" + gg.id, fKm({ f: { g: gg.id } }))]);
+      if (srcOn("dp") && dpKey) gl.push(["dp", "g|dp|" + gg.id, feed("g|dp|" + gg.id, fDp({ f: { g: gg.id } }))]);
       gl.filter(function (x) { return srcOn(x[0]); }).forEach(function (x) {
         m.appendChild(el("h2", "sub-h", t("o.songs", { s: srcName(x[0]) })));
         if (x[2].list.length) m.appendChild(rowList(x[2].list, { src: src }));
