@@ -2866,6 +2866,10 @@
   // Dropbox account, or this account on the WebDAV/Nextcloud server).
   // The shell asks the cloud when this card shows and keeps the answer
   // for a few minutes; Refresh asks again.
+  function spPct(pct) {   // the bar's length: a clamped 0-100 %, at least 2 % when anything is used
+    pct = +pct || 0;
+    return (pct > 0 ? Math.max(2, Math.min(100, pct)) : 0).toFixed(1) + "%";
+  }
   function spaceCard(y) {
     var c = card(t("y.space"));
     var s = y.space;
@@ -2882,7 +2886,7 @@
       bar.setAttribute("aria-valuenow", String(Math.round(pct)));
       bar.setAttribute("aria-label", t("y.space"));
       var fill = el("span", "sp-fill");
-      fill.style.width = (pct > 0 ? Math.max(2, pct) : 0).toFixed(1) + "%";
+      fill.style.width = spPct(pct);
       bar.appendChild(fill);
       c.appendChild(bar);
       var main = el("div", "sp-free", t("y.space.free", { free: bytesLabel(typeof s.free === "number" ? s.free : s.total - s.used) }));

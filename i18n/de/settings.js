@@ -1653,6 +1653,7 @@ orosPack("de", "settings", {
  "w.caldav": "caldav carddav kalender kontakte aufgaben server nextcloud radicale baikal fastmail mailbox icloud davx5 thunderbird",
  "w.cloud-backups": "wiederherstellen verlauf alte version",
  "w.cloud-clean": "speicher platz freigeben kontingent müll verwaist löschen alt",
+ "w.cloud-space": "speicher platz frei übrig voll kontingent festplatte kapazität dropbox nextcloud webdav wie viel",
  "w.connect": "dropbox cloud synchronisierung geräte verschlüsselt",
  "w.contrast": "kontrast schwarz weiß barrierefreiheit",
  "w.device": "gerät speicher browser",
