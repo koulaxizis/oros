@@ -3,6 +3,10 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.26.01
+- **Budget: banks are read less often when you use several devices.** With "every 6 hours", each device used to read your banks on its own, so a phone and a computer together could pass a bank's limit of about 4 reads a day and get "too many requests". The devices now share one schedule, and after a bank asks to wait, no device asks it again before the next turn.
+- **Update now in installed orOS.** In installed orOS, orOS Portable and the Live USB, the **Update now** button on the update notice now opens the System panel's update check, as Settings › Check for updates does, instead of saying there is no newer version. orOS takes the new version at its next start.
+
 ## Version 8.26.00
 - **Claude keeps all of orOS's tools when it may change your files.** With Files at «Claude may also change», the list of tools orOS gives Claude through orOS Gate had grown too long and Claude lost the file and app tools. orOS Gate now takes the whole list, and if one day it grows past the limit, it shortens the longest descriptions instead of dropping tools.
 

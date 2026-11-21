@@ -34,7 +34,7 @@
   <link rel="preload" as="script" href="notifications.js?v=8.26.00">
   <link rel="preload" as="script" href="webpush.js?v=8.26.00">
   <!-- /BOOT-P1 -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VPHyDFuRJXqfe2q0meITZbVd8yUrQwNq1Ba7/dB0LNY=' 'sha256-iomnTlvK3BvqxfiFq7Plh018BgJ2sqbij0Dxom/ooe4='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-VPHyDFuRJXqfe2q0meITZbVd8yUrQwNq1Ba7/dB0LNY=' 'sha256-+9qPJt1EWAevSXmWy1R+cGgj+/zZJRkMrLjVEFZ4aeU='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="description" content="orOS — A static operating system in your browser. Mobile-friendly, works offline, no cookies, no tracking.">
   <title>orOS</title>
@@ -438,6 +438,9 @@
   function reloadNow() { reloadWhenSafe.now = 1; reloadWhenSafe(); }
   window.orosUpdateNow = function (cb) {
     if (reloading) return;
+    // SW-Q1b: orOS that comes with its program (installed, Portable, USB) updates through it
+    if (document.documentElement.hasAttribute("data-oros-sys-update")) { document.dispatchEvent(new CustomEvent("oros-sys-update")); return cb("system"); }
+    if (/^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname)) return cb("local");
     if (navigator.onLine === false) return cb("failed", "offline");
     updateAsked = true;
     cb("checking");
