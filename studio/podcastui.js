@@ -296,25 +296,32 @@
       var path = P.epPath(s.id, ep.slug), mk = P.normMarkers(p.mk);
       busy = true; setBusy();
       status("pod-ep-err", t("export.busy"));
-      var rate = 44100;
-      H.renderMix(r, rate).then(function (chans) {
-        var dur = chans[0].length / rate;
-        var pcm = ep.ch === 1 ? [mono(chans)] : chans;
-        return coverBytes(s).then(function (cover) {
-          var e = { p: p, ep: ep, mk: mk };
-          var tags = P.id3Tags(s, e, { dur: dur, intro: t("pod.intro"), untitled: t("pod.untitledEp"), cover: cover, lang3: LANG3[s.lang.slice(0, 2)] || "", tool: "orOS Studio" });
-          var opts = E.id3v24 ? { title: tags.title, tags: tags } : { title: tags.title };
-          var enc = new E.Mp3Encoder(pcm, rate, ep.kbps, opts);
+      var rate = 44100, total = H.mixLen(r, rate), dur = total / rate, enc = null;
+      // the mix arrives in parts (five-minute parts past an hour) and each is
+      // encoded as it comes, so a three-hour episode is never whole in memory
+      coverBytes(s).then(function (cover) {
+        var e = { p: p, ep: ep, mk: mk };
+        var tags = P.id3Tags(s, e, { dur: dur, intro: t("pod.intro"), untitled: t("pod.untitledEp"), cover: cover, lang3: LANG3[s.lang.slice(0, 2)] || "", tool: "orOS Studio" });
+        var opts = E.id3v24 ? { title: tags.title, tags: tags } : { title: tags.title };
+        enc = new E.Mp3Encoder(null, rate, ep.kbps, Object.assign(opts, { channels: ep.ch === 1 ? 1 : 2, samples: total }));
+        var drain = function () {
           return new Promise(function (res, rej) {
             var step = function () {
               try {
-                if (enc.step(60)) { res(enc.bytes()); return; }
+                var before = enc.done, end = enc.step(60);
+                if (end || enc.done === before) { res(); return; }
               } catch (err) { rej(err); return; }
               status("pod-ep-err", t("export.encoding", { n: Math.floor(enc.progress() * 100) }));
               setTimeout(step, 0);
             };
             setTimeout(step, 0);
-          }).then(function (bytes) {
+          });
+        };
+        return H.mixParts(r, rate, function (chans) {
+          enc.push(ep.ch === 1 ? [mono(chans)] : chans);
+          return drain();
+        }, function (i, n) { status("pod-ep-err", t("export.part", { i: i, n: n })); }).then(drain).then(function () {
+          return Promise.resolve(enc.bytes()).then(function (bytes) {
             var blob = new Blob([bytes], { type: "audio/mpeg" });
             return Promise.resolve(fs.mkdir(P.DIR)).then(function () { return fs.mkdir(P.showDir(s.id)); })
               .then(function () { return fs.writeBlob(path, blob); })

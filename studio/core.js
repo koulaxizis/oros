@@ -61,7 +61,7 @@
   var MIN_BPM      = 30;
   var MAX_BPM      = 300;
   var SIGS         = [2, 3, 4, 5, 6, 7];
-  var MAX_SEC      = 3600;         // a project is at most one hour long
+  var MAX_SEC      = 10800;        // a project is at most three hours long (a podcast talk, a book chapter)
   var MIN_LEN      = 0.01;         // shortest clip
   var VOL_MIN      = -60;          // dB; at the bottom the fader is silent
   var VOL_MAX      = 6;
@@ -693,10 +693,12 @@
     return Math.max(0, Math.round(sec / step) * step);
   }
   // "m:ss.mmm"
+  // m:ss.mmm, and h:mm:ss.mmm from an hour on
   function fmtTime(sec) {
     sec = Math.max(0, sec || 0);
     var ms = Math.floor(sec * 1000 + 1e-6), m = Math.floor(ms / 60000), s = Math.floor(ms / 1000) % 60;
-    return m + ":" + (s < 10 ? "0" : "") + s + "." + ("00" + (ms % 1000)).slice(-3);
+    var mm = m >= 60 ? Math.floor(m / 60) + ":" + (m % 60 < 10 ? "0" : "") + (m % 60) : String(m);
+    return mm + ":" + (s < 10 ? "0" : "") + s + "." + ("00" + (ms % 1000)).slice(-3);
   }
 
   // ---------- Mixing ----------
@@ -769,6 +771,51 @@
   }
   // The range to export: the loop when it is on, else from 0 to the end
   // of the last clip.
+  // ---------- Long mixes in parts ----------
+  // A mix longer than LONG_SEC (up to MAX_SEC, three hours) is never one
+  // buffer: at 48 kHz stereo three hours are over 4 GB. It is rendered in
+  // parts of PART_SEC; each part after the first starts PART_PRE seconds
+  // early (the effects' state settles: compressors, reverb tails, filters)
+  // and that lead-in is dropped; each part but the last runs PART_XF
+  // seconds on, and the next part fades in over that piece, so a seam
+  // never clicks. Up to LONG_SEC the mix is one part, exactly as before.
+  //   partPlan(r, rate) → [{ a, b (seconds to render), skip, len, tail,
+  //     xf (samples: dropped lead-in, kept, extra after, cross-fade), off
+  //     (where the kept samples start in the whole mix) }]
+  //   joinPart(chans, part, prevTail) → { out: the kept samples (views
+  //     into chans, the first xf faded in from prevTail), tail: copies of
+  //     the extra samples for the next part }
+  var LONG_SEC = 3600, PART_SEC = 300, PART_PRE = 10, PART_XF = 0.05;
+  function partPlan(r, rate) {
+    var total = Math.max(0, Math.ceil((r.b - r.a) * rate - 1e-9));
+    if (r.b - r.a <= LONG_SEC) return [{ a: r.a, b: r.b, skip: 0, len: total, tail: 0, xf: 0, off: 0 }];
+    var step = Math.round(PART_SEC * rate), pre = Math.round(PART_PRE * rate), xf = Math.round(PART_XF * rate), out = [];
+    for (var off = 0; off < total; off += step) {
+      var len = Math.min(step, total - off), skip = off ? pre : 0, tail = off + len < total ? xf : 0;
+      out.push({ a: r.a + (off - skip) / rate, b: r.a + (off + len + tail) / rate, skip: skip, len: len, tail: tail,
+                 xf: off ? Math.min(xf, len) : 0, off: off });
+    }
+    return out;
+  }
+  function joinPart(chans, part, prevTail) {
+    var out = [], tail = [], xf = prevTail ? Math.min(part.xf, prevTail[0].length) : 0;
+    chans.forEach(function (d, c) {
+      var o = d.subarray(part.skip, part.skip + part.len);
+      if (o.length < part.len) { var full = new Float32Array(part.len); full.set(o); o = full; }
+      if (xf) {
+        var pt = prevTail[Math.min(c, prevTail.length - 1)];
+        for (var i = 0; i < xf; i++) { var w = (i + 0.5) / xf; o[i] = pt[i] * (1 - w) + o[i] * w; }
+      }
+      out.push(o);
+      if (part.tail) {
+        var tl = new Float32Array(part.tail);
+        tl.set(d.subarray(part.skip + part.len, part.skip + part.len + part.tail));
+        tail.push(tl);
+      }
+    });
+    return { out: out, tail: part.tail ? tail : null };
+  }
+
   function exportRange(project, clips) {
     if (project.loop && project.loop.on && project.loop.b - project.loop.a >= MIN_LEN) return { a: project.loop.a, b: project.loop.b };
     return { a: 0, b: projectEnd(clips) };
@@ -853,15 +900,22 @@
   }
 
   // ---------- WAV (PCM 16 or 24 bit, 1 or 2 channels) ----------
-  function wavBytes(channels, rate, bits) {
+  // the 44-byte header of a WAV of n frames (a long mix writes it, then its parts' samples)
+  function wavHeader(n, ch, rate, bits) {
     bits = bits === 24 ? 24 : 16;
-    var ch = channels.length, n = ch ? channels[0].length : 0, bps = bits / 8;
-    var size = n * ch * bps, buf = new Uint8Array(44 + size), dv = new DataView(buf.buffer);
+    var bps = bits / 8, size = n * ch * bps, buf = new Uint8Array(44), dv = new DataView(buf.buffer);
     function str(off, s) { for (var i = 0; i < s.length; i++) buf[off + i] = s.charCodeAt(i); }
     str(0, "RIFF"); dv.setUint32(4, 36 + size, true); str(8, "WAVE");
     str(12, "fmt "); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, ch, true);
     dv.setUint32(24, rate, true); dv.setUint32(28, rate * ch * bps, true); dv.setUint16(32, ch * bps, true); dv.setUint16(34, bits, true);
     str(36, "data"); dv.setUint32(40, size, true);
+    return buf;
+  }
+  function wavBytes(channels, rate, bits) {
+    bits = bits === 24 ? 24 : 16;
+    var ch = channels.length, n = ch ? channels[0].length : 0, bps = bits / 8;
+    var size = n * ch * bps, buf = new Uint8Array(44 + size), dv = new DataView(buf.buffer);
+    buf.set(wavHeader(n, ch, rate, bits), 0);
     var o = 44, max = bits === 24 ? 8388607 : 32767;
     for (var i = 0; i < n; i++) {
       for (var c = 0; c < ch; c++) {
@@ -943,7 +997,8 @@
     dbToGain: dbToGain, gainToDb: gainToDb, trackGain: trackGain, anySolo: anySolo,
     clipEnd: clipEnd, projectEnd: projectEnd, moveClip: moveClip, trimStart: trimStart, trimEnd: trimEnd,
     splitClip: splitClip, fadeGainAt: fadeGainAt, exportRange: exportRange,
-    peaks: peaks, wavBytes: wavBytes, fileName: fileName, sourcePath: sourcePath, extOf: extOf,
+    LONG_SEC: LONG_SEC, PART_SEC: PART_SEC, PART_PRE: PART_PRE, PART_XF: PART_XF, partPlan: partPlan, joinPart: joinPart,
+    peaks: peaks, wavBytes: wavBytes, wavHeader: wavHeader, fileName: fileName, sourcePath: sourcePath, extOf: extOf,
     clipLine: clipLine,
     MAX_FX: MAX_FX, FX_ID_RE: FX_ID_RE, normFx: normFx, POS_STEPS: POS_STEPS,
     sliderFromPos: sliderFromPos, sliderToPos: sliderToPos, sliderStep: sliderStep, fxValue: fxValue, fxFilePath: fxFilePath,

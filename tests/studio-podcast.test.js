@@ -69,7 +69,7 @@ test("P1: episodes and markers are bounded and ordered", () => {
   assert.ok(!list.some((x) => x.n === "dup"), "the first of two equal ids wins");
   const ep = P.normEp({ n: 3.5, se: 200, type: "x", date: -1, kbps: 100, ch: 3, file: "/internal/Studio/Podcasts/hshow0001/../x.mp3", bytes: 9, dur: 9 });
   assert.deepEqual([ep.n, ep.se, ep.type, ep.date, ep.kbps, ep.ch, ep.file, ep.bytes, ep.dur], [0, 99, "full", 0, 96, 1, "", 0, 0]);
-  const ok = P.normEp({ file: "/internal/Studio/Podcasts/hshow0001/001-a.mp3", bytes: 9, dur: 4000 });
+  const ok = P.normEp({ file: "/internal/Studio/Podcasts/hshow0001/001-a.mp3", bytes: 9, dur: 40000 });
   assert.equal(ok.dur, P.LIM.dur);
   assert.equal(P.addMarker([], 12.3456, "kmark0001", "Intro")[0].t, 12.346);
   const two = P.addMarker(P.addMarker([], 30, "kmark0002", "B"), 10, "kmark0001", "A");

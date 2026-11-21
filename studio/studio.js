@@ -60,10 +60,10 @@
   var PREFS_KEY   = "oros-studio-prefs";
   var SAVE_MS     = 400;
   var MAX_UNDO    = 100;
-  var MAX_FILE    = 100 * 1024 * 1024;   // one imported file
+  var MAX_FILE    = 1024 * 1024 * 1024;  // one imported file (a two-hour talk as WAV fits)
   var MAX_REC_SEC = 30 * 60;             // one take
   var PEAKS_PER_S = 100;
-  var ZOOMS       = [4, 6, 10, 16, 25, 40, 60, 100, 160, 250, 400];   // pixels per second
+  var ZOOMS       = [1, 2, 4, 6, 10, 16, 25, 40, 60, 100, 160, 250, 400];   // pixels per second (1: three hours on one screen)
   var LOOKAHEAD   = 1.0;                 // seconds of audio scheduled ahead
   var TICK_MS     = 50;
 
@@ -143,7 +143,7 @@
       "pod.err.title": "The show needs a title.", "pod.err.url": "The site address must be a full https address.",
       "pod.err.email": "That e-mail address does not look right.", "pod.err.fund": "The support link must be an http or https address.",
       "pod.err.noDisk": "The orOS disk is not available here.", "pod.err.cover": "That picture could not be read.",
-      "pod.err.coverSmall": "The picture is smaller than 1400 × 1400 pixels.", "pod.err.long": "An episode can be at most one hour long.",
+      "pod.err.coverSmall": "The picture is smaller than 1400 × 1400 pixels.", "pod.err.long": "An episode can be at most three hours long.",
       "pod.err.missing": "These files are not on this device: {list}. Make the episode files again here, or wait until the disk syncs.",
       "pod.err.big": "The site is larger than 4 GB, which a ZIP cannot hold.",
       "pod.gh.h": "Publish on GitHub Pages", "pod.gh.hint": "Studio puts the site straight into a GitHub repository of yours and GitHub Pages serves it, free. Use a repository just for the show. The token needs access to that repository only, with Contents and Pages set to Read and write.", "pod.gh.newToken": "Make a token on GitHub", "pod.gh.repo": "Repository (owner/name)", "pod.gh.token": "Token", "pod.gh.tokenSet": "A token is saved on this device only. It is never synced.", "pod.gh.forget": "Forget the token", "pod.gh.go": "Publish", "pod.gh.forgot": "The token is gone from this device.", "pod.gh.other": "Your site address is {url}, but GitHub Pages serves this repository at {pages}. The feed only works at the address it was made for.", "pod.gh.step.repo": "Opening the repository…", "pod.gh.step.feed": "Reading the published feed…", "pod.gh.step.file": "Sending file {i} of {n}…", "pod.gh.step.commit": "Saving the new version…", "pod.gh.step.pages": "Checking GitHub Pages…", "pod.gh.done": "Published. In a minute or two it is online at {url}", "pod.gh.same": "Nothing had changed. The site is at {url}", "pod.gh.pagesOff": "Turn on GitHub Pages in the settings of {repo} (Pages, branch main, folder / root).", "pod.gh.err.repo": "That repository was not found. Write it as owner/name, and check that the token may use it.", "pod.gh.err.token": "Paste a GitHub token (it starts with github_pat_).", "pod.gh.err.store": "This browser cannot keep the token (private window?). Nothing was sent.", "pod.gh.err.auth": "GitHub did not accept the token. It may have expired; make a new one.", "pod.gh.err.perm": "The token may not write to this repository. Give it Contents: Read and write for it.", "pod.gh.err.rate": "GitHub asks to wait a while before more requests. Try again later.", "pod.gh.err.net": "GitHub could not be reached. Check the connection and try again.", "pod.gh.err.big": "A file is larger than 75 MB, which GitHub does not take. Make the episode shorter or at a lower bitrate.", "pod.gh.err.http": "GitHub answered with an error. Nothing was lost; try again.", "pod.gh.err.moved": "The repository changed while publishing. Nothing was lost; try again.", "pod.gh.err.name": "A file name cannot be used on GitHub.", "pod.dav.h": "Publish on Nextcloud or WebDAV", "pod.dav.hint": "Studio puts the site into a folder on your own server (Nextcloud, ownCloud or any WebDAV server) with your account. In Nextcloud make a folder just for the show, share it with a public link (no password, downloads allowed) and make an app password in Settings › Security. Podcast apps read the site through the public link (Nextcloud 29 or newer).", "pod.dav.url": "The show's folder (WebDAV address)", "pod.dav.share": "Public link of that folder", "pod.dav.user": "User name", "pod.dav.pass": "App password", "pod.dav.passSet": "A password is saved on this device only. It is never synced.", "pod.dav.relay": "Through the orOS relay", "pod.dav.relayHint": "Turn it on when the server cannot be reached from the browser (most servers send no CORS headers). The files and the app password then pass through the orOS relay on their way; nothing is kept there. A file can be at most 95 MB.", "pod.dav.forget": "Forget the password", "pod.dav.go": "Publish", "pod.dav.forgot": "The password is gone from this device.", "pod.dav.other": "Your site address is {url}, but the public link serves this folder at {pub}. The feed only works at the address it was made for.", "pod.dav.step.folder": "Opening the folder…", "pod.dav.step.feed": "Reading the published feed…", "pod.dav.done": "Published. It is online at {url}", "pod.dav.err.url": "Write the folder's WebDAV address, starting with https:// (in Nextcloud: Files › Settings › WebDAV, then the folder's path).", "pod.dav.err.share": "Paste the folder's public link, like https://cloud.example.com/s/AbCdEf123.", "pod.dav.err.user": "Write your user name on that server.", "pod.dav.err.pass": "Paste an app password for that account.", "pod.dav.err.store": "This browser cannot keep the password (private window?). Nothing was sent.", "pod.dav.err.auth": "The server did not accept the user name or app password.", "pod.dav.err.perm": "This account may not write to that folder.", "pod.dav.err.folder": "That folder was not found. Check the WebDAV address.", "pod.dav.err.moved": "The feed changed on the server while publishing (another device?). Nothing was lost; try again.", "pod.dav.err.big": "A file is too large for the server or the relay (at most 95 MB through the relay). Make the episode shorter or at a lower bitrate.", "pod.dav.err.full": "The server has no space left for these files.", "pod.dav.err.http": "The server answered with an error. Nothing was lost; try again.", "pod.dav.err.net": "The server could not be reached through the relay. Check the connection and try again later.", "pod.dav.err.cors": "The server could not be reached from the browser. Turn on Through the orOS relay, or check the connection.", "pod.dav.err.target": "The relay only reaches servers at an https address on the usual ports.", "pod.dav.err.notdav": "That address is not a WebDAV folder.", "pod.dav.err.name": "A file name cannot be used on the server.", "pod.page.feed": "RSS feed", "pod.page.support": "Support",
@@ -170,7 +170,7 @@
       "toast.saveFail": "Could not save: storage is full", "toast.noAudio": "This browser cannot play sound",
       "toast.noDisk": "The orOS disk is not available, so audio cannot be kept",
       "toast.writeFail": "The audio could not be written to the orOS disk",
-      "toast.tooBig": "{name} is larger than 100 MB", "toast.badFile": "{name} is not audio this browser can read",
+      "toast.tooBig": "{name} is larger than 1 GB", "toast.badFile": "{name} is not audio this browser can read",
       "toast.imported": "Imported: {name}", "toast.maxTracks": "A project has up to {n} tracks",
       "toast.maxClips": "A project has up to {n} clips", "toast.maxProjects": "You have {n} projects, the most there can be",
       "toast.noClip": "Select a clip first", "toast.noSplit": "Put the playhead inside the clip to split it",
@@ -226,7 +226,7 @@
       "fx.key": "Key input (sidechain)", "fx.keyNone": "None",
       "fx.keyHint": "The effect listens to that track, after its effects and before its fader, so a muted track still works as the key.",
       "sec.format": "Format", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Bitrate", "kbps": "{n} kbit/s",
-      "export.encoding": "Encoding… {n}%", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
+      "export.encoding": "Encoding… {n}%", "export.part": "Mixing part {i} of {n}…", "export.opusLong": "Opus is made for mixes of up to an hour. Choose MP3 or WAV for a longer one.", "export.noOpus": "This browser cannot make Opus files. Chrome, Edge and Firefox can.",
       "export.opusRate": "Opus files are always 48 kHz.", "export.mp3Hint": "192 kbit/s or more keeps a mix close to the WAV. For speech 64–96 kbit/s is enough.",
       "toast.exportFail": "The export did not finish",
       "ld.title": "Loudness", "ld.open": "Loudness…", "ld.m": "Momentary", "ld.s": "Short-term", "ld.i": "Integrated", "ld.lra": "Range", "ld.tp": "True peak",
@@ -381,7 +381,7 @@
       "pod.err.title": "Η εκπομπή χρειάζεται τίτλο.", "pod.err.url": "Η διεύθυνση του site πρέπει να είναι πλήρης διεύθυνση https.",
       "pod.err.email": "Αυτό το email δεν μοιάζει σωστό.", "pod.err.fund": "Ο σύνδεσμος υποστήριξης πρέπει να είναι διεύθυνση http ή https.",
       "pod.err.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.", "pod.err.cover": "Η εικόνα δεν διαβάστηκε.",
-      "pod.err.coverSmall": "Η εικόνα είναι μικρότερη από 1400 × 1400 pixel.", "pod.err.long": "Ένα επεισόδιο μπορεί να είναι έως μία ώρα.",
+      "pod.err.coverSmall": "Η εικόνα είναι μικρότερη από 1400 × 1400 pixel.", "pod.err.long": "Ένα επεισόδιο μπορεί να είναι έως τρεις ώρες.",
       "pod.err.missing": "Αυτά τα αρχεία δεν είναι σε αυτή τη συσκευή: {list}. Φτιάξε ξανά τα αρχεία των επεισοδίων εδώ ή περίμενε να συγχρονιστεί ο δίσκος.",
       "pod.err.big": "Το site είναι πάνω από 4 GB και δεν χωρά σε ZIP.",
       "pod.gh.h": "Δημοσίευση στο GitHub Pages", "pod.gh.hint": "Το Studio βάζει το site κατευθείαν σε ένα δικό σου repository στο GitHub, και το GitHub Pages το σερβίρει δωρεάν. Χρησιμοποίησε ένα repository μόνο για την εκπομπή. Το token χρειάζεται πρόσβαση μόνο σε αυτό, με Contents και Pages σε Read and write.", "pod.gh.newToken": "Φτιάξε token στο GitHub", "pod.gh.repo": "Repository (κάτοχος/όνομα)", "pod.gh.token": "Token", "pod.gh.tokenSet": "Υπάρχει αποθηκευμένο token μόνο σε αυτή τη συσκευή. Δεν συγχρονίζεται ποτέ.", "pod.gh.forget": "Ξέχνα το token", "pod.gh.go": "Δημοσίευση", "pod.gh.forgot": "Το token σβήστηκε από αυτή τη συσκευή.", "pod.gh.other": "Η διεύθυνση του site σου είναι {url}, αλλά το GitHub Pages σερβίρει αυτό το repository στο {pages}. Το feed δουλεύει μόνο στη διεύθυνση για την οποία φτιάχτηκε.", "pod.gh.step.repo": "Άνοιγμα του repository…", "pod.gh.step.feed": "Ανάγνωση του δημοσιευμένου feed…", "pod.gh.step.file": "Αποστολή αρχείου {i} από {n}…", "pod.gh.step.commit": "Αποθήκευση της νέας έκδοσης…", "pod.gh.step.pages": "Έλεγχος του GitHub Pages…", "pod.gh.done": "Δημοσιεύτηκε. Σε ένα με δύο λεπτά είναι online στο {url}", "pod.gh.same": "Δεν είχε αλλάξει τίποτα. Το site είναι στο {url}", "pod.gh.pagesOff": "Άνοιξε το GitHub Pages στις ρυθμίσεις του {repo} (Pages, branch main, φάκελος / root).", "pod.gh.err.repo": "Το repository δεν βρέθηκε. Γράψ' το ως κάτοχος/όνομα και έλεγξε ότι το token έχει πρόσβαση σε αυτό.", "pod.gh.err.token": "Επικόλλησε ένα token του GitHub (ξεκινά με github_pat_).", "pod.gh.err.store": "Αυτός ο browser δεν μπορεί να κρατήσει το token (ιδιωτικό παράθυρο;). Δεν στάλθηκε τίποτα.", "pod.gh.err.auth": "Το GitHub δεν δέχτηκε το token. Ίσως έληξε· φτιάξε καινούργιο.", "pod.gh.err.perm": "Το token δεν μπορεί να γράψει σε αυτό το repository. Δώσε του Contents: Read and write για αυτό.", "pod.gh.err.rate": "Το GitHub ζητά να περιμένεις λίγο πριν από άλλα αιτήματα. Δοκίμασε αργότερα.", "pod.gh.err.net": "Δεν υπήρξε σύνδεση με το GitHub. Έλεγξε τη σύνδεση και δοκίμασε ξανά.", "pod.gh.err.big": "Ένα αρχείο είναι πάνω από 75 MB, που το GitHub δεν το δέχεται. Κάνε το επεισόδιο πιο σύντομο ή με χαμηλότερο bitrate.", "pod.gh.err.http": "Το GitHub απάντησε με σφάλμα. Δεν χάθηκε τίποτα· δοκίμασε ξανά.", "pod.gh.err.moved": "Το repository άλλαξε κατά τη δημοσίευση. Δεν χάθηκε τίποτα· δοκίμασε ξανά.", "pod.gh.err.name": "Ένα όνομα αρχείου δεν γίνεται δεκτό στο GitHub.", "pod.dav.h": "Δημοσίευση σε Nextcloud ή WebDAV", "pod.dav.hint": "Το Studio βάζει το site σε έναν φάκελο στον δικό σου server (Nextcloud, ownCloud ή οποιονδήποτε server WebDAV) με τον λογαριασμό σου. Στο Nextcloud φτιάξε έναν φάκελο μόνο για την εκπομπή, μοιράσου τον με δημόσιο σύνδεσμο (χωρίς κωδικό, με επιτρεπτή λήψη) και φτιάξε έναν κωδικό εφαρμογής στις Ρυθμίσεις › Ασφάλεια. Οι εφαρμογές podcast διαβάζουν το site από τον δημόσιο σύνδεσμο (Nextcloud 29 ή νεότερο).", "pod.dav.url": "Ο φάκελος της εκπομπής (διεύθυνση WebDAV)", "pod.dav.share": "Δημόσιος σύνδεσμος του φακέλου", "pod.dav.user": "Όνομα χρήστη", "pod.dav.pass": "Κωδικός εφαρμογής", "pod.dav.passSet": "Υπάρχει αποθηκευμένος κωδικός μόνο σε αυτή τη συσκευή. Δεν συγχρονίζεται ποτέ.", "pod.dav.relay": "Μέσω του relay του orOS", "pod.dav.relayHint": "Άνοιξέ το όταν ο server δεν φτάνει από τον browser (οι περισσότεροι δεν στέλνουν κεφαλίδες CORS). Τότε τα αρχεία και ο κωδικός εφαρμογής περνούν από το relay του orOS στον δρόμο τους· τίποτα δεν κρατιέται εκεί. Κάθε αρχείο μπορεί να είναι έως 95 MB.", "pod.dav.forget": "Ξέχνα τον κωδικό", "pod.dav.go": "Δημοσίευση", "pod.dav.forgot": "Ο κωδικός σβήστηκε από αυτή τη συσκευή.", "pod.dav.other": "Η διεύθυνση του site σου είναι {url}, αλλά ο δημόσιος σύνδεσμος σερβίρει αυτόν τον φάκελο στο {pub}. Το feed δουλεύει μόνο στη διεύθυνση για την οποία φτιάχτηκε.", "pod.dav.step.folder": "Άνοιγμα του φακέλου…", "pod.dav.step.feed": "Ανάγνωση του δημοσιευμένου feed…", "pod.dav.done": "Δημοσιεύτηκε. Είναι online στο {url}", "pod.dav.err.url": "Γράψε τη διεύθυνση WebDAV του φακέλου, που ξεκινά με https:// (στο Nextcloud: Αρχεία › Ρυθμίσεις › WebDAV και μετά η διαδρομή του φακέλου).", "pod.dav.err.share": "Επικόλλησε τον δημόσιο σύνδεσμο του φακέλου, όπως https://cloud.example.com/s/AbCdEf123.", "pod.dav.err.user": "Γράψε το όνομα χρήστη σου σε αυτόν τον server.", "pod.dav.err.pass": "Επικόλλησε έναν κωδικό εφαρμογής για αυτόν τον λογαριασμό.", "pod.dav.err.store": "Αυτός ο browser δεν μπορεί να κρατήσει τον κωδικό (ιδιωτικό παράθυρο;). Δεν στάλθηκε τίποτα.", "pod.dav.err.auth": "Ο server δεν δέχτηκε το όνομα χρήστη ή τον κωδικό εφαρμογής.", "pod.dav.err.perm": "Αυτός ο λογαριασμός δεν μπορεί να γράψει σε αυτόν τον φάκελο.", "pod.dav.err.folder": "Ο φάκελος δεν βρέθηκε. Έλεγξε τη διεύθυνση WebDAV.", "pod.dav.err.moved": "Το feed άλλαξε στον server την ώρα της δημοσίευσης (άλλη συσκευή;). Δεν χάθηκε τίποτα· δοκίμασε ξανά.", "pod.dav.err.big": "Ένα αρχείο είναι πολύ μεγάλο για τον server ή το relay (έως 95 MB μέσω του relay). Κάνε το επεισόδιο πιο σύντομο ή με χαμηλότερο bitrate.", "pod.dav.err.full": "Ο server δεν έχει άλλο χώρο για αυτά τα αρχεία.", "pod.dav.err.http": "Ο server απάντησε με σφάλμα. Δεν χάθηκε τίποτα· δοκίμασε ξανά.", "pod.dav.err.net": "Ο server δεν βρέθηκε μέσω του relay. Έλεγξε τη σύνδεση και δοκίμασε αργότερα.", "pod.dav.err.cors": "Ο server δεν φτάνει από τον browser. Άνοιξε το «Μέσω του relay του orOS» ή έλεγξε τη σύνδεση.", "pod.dav.err.target": "Το relay φτάνει μόνο σε servers με διεύθυνση https στις συνηθισμένες θύρες.", "pod.dav.err.notdav": "Αυτή η διεύθυνση δεν είναι φάκελος WebDAV.", "pod.dav.err.name": "Ένα όνομα αρχείου δεν γίνεται δεκτό στον server.", "pod.page.feed": "Feed RSS", "pod.page.support": "Υποστήριξη",
@@ -409,7 +409,7 @@
       "toast.saveFail": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.noAudio": "Αυτός ο browser δεν παίζει ήχο",
       "toast.noDisk": "Ο δίσκος του orOS δεν είναι διαθέσιμος, οπότε ο ήχος δεν μπορεί να κρατηθεί",
       "toast.writeFail": "Ο ήχος δεν γράφτηκε στον δίσκο του orOS",
-      "toast.tooBig": "Το {name} είναι μεγαλύτερο από 100 MB", "toast.badFile": "Το {name} δεν είναι ήχος που διαβάζει αυτός ο browser",
+      "toast.tooBig": "Το {name} είναι μεγαλύτερο από 1 GB", "toast.badFile": "Το {name} δεν είναι ήχος που διαβάζει αυτός ο browser",
       "toast.imported": "Εισήχθη: {name}", "toast.maxTracks": "Ένα έργο έχει έως {n} κανάλια",
       "toast.maxClips": "Ένα έργο έχει έως {n} clips", "toast.maxProjects": "Έχεις {n} έργα, όσα χωράνε",
       "toast.noClip": "Διάλεξε πρώτα ένα clip", "toast.noSplit": "Βάλε τον δείκτη μέσα στο clip για να το κόψεις",
@@ -465,7 +465,7 @@
       "fx.key": "Είσοδος κλειδιού (sidechain)", "fx.keyNone": "Καμία",
       "fx.keyHint": "Το εφέ ακούει εκείνο το κανάλι, μετά τα εφέ του και πριν από τον fader του, οπότε και ένα κανάλι σε σίγαση κάνει για κλειδί.",
       "sec.format": "Μορφή", "fmt.wav": "WAV", "fmt.mp3": "MP3", "fmt.opus": "Opus (OGG)", "sec.kbps": "Ρυθμός bit", "kbps": "{n} kbit/s",
-      "export.encoding": "Κωδικοποίηση… {n}%", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
+      "export.encoding": "Κωδικοποίηση… {n}%", "export.part": "Μίξη κομματιού {i} από {n}…", "export.opusLong": "Το Opus φτιάχνεται για μίξεις έως μία ώρα. Για μεγαλύτερη διάλεξε MP3 ή WAV.", "export.noOpus": "Αυτός ο browser δεν φτιάχνει αρχεία Opus. Το Chrome, το Edge και το Firefox φτιάχνουν.",
       "export.opusRate": "Τα αρχεία Opus είναι πάντα 48 kHz.", "export.mp3Hint": "Από 192 kbit/s και πάνω η μίξη μένει κοντά στο WAV. Για ομιλία αρκούν 64–96 kbit/s.",
       "toast.exportFail": "Η εξαγωγή δεν ολοκληρώθηκε",
       "ld.title": "Ένταση", "ld.open": "Ένταση…", "ld.m": "Στιγμιαία", "ld.s": "Σύντομη", "ld.i": "Συνολική", "ld.lra": "Εύρος", "ld.tp": "Πραγματική κορυφή",
@@ -2667,10 +2667,11 @@
       j = x;
       ioRec.sr = j.sr;
       ioRec.lat = (j.latency | 0) / j.sr + prefs.lat / 1000;
-      var songSec = Math.max(0, end - from), sec = Math.min(MAX_REC_SEC, songSec + (prefs.metro ? IO_CLICK_TAIL : 0));
+      // a take is at most MAX_REC_SEC: only that much of the song is mixed (a project can be three hours)
+      var songSec = Math.min(MAX_REC_SEC, Math.max(0, end - from)), sec = Math.min(MAX_REC_SEC, songSec + (prefs.metro ? IO_CLICK_TAIL : 0));
       if (sec <= 0) return [];
       var len = Math.ceil(sec * j.sr);
-      var mix = songSec > 0.01 ? renderMix({ a: from, b: end }, j.sr) : Promise.resolve([new Float32Array(0), new Float32Array(0)]);
+      var mix = songSec > 0.01 ? renderMix({ a: from, b: from + songSec }, j.sr) : Promise.resolve([new Float32Array(0), new Float32Array(0)]);
       return mix.then(function (m) {
         if (m[0].length === len && !prefs.metro) return m;
         var out = [new Float32Array(len), new Float32Array(len)];
@@ -3283,6 +3284,8 @@
       seek: function (sec) { seek(sec); },
       fmtTime: C.fmtTime,
       renderMix: function (r, rate) { return renderMix(r, rate); },
+      mixParts: function (r, rate, onPart, progress) { return mixParts(r, rate, onPart, progress); },
+      mixLen: function (r, rate) { return C.partPlan(r, rate).reduce(function (n, p) { return n + p.len; }, 0); },
       mixRange: function () { return proj ? C.exportRange(proj, projClips()) : null; },
       mixProblem: function () {
         var clips = projClips(), seq = proj && proj.loop.on && tracks().some(function (tr) { return !!nxOf(tr); });
@@ -3920,6 +3923,40 @@
       return new Promise(function (res) { oc.oncomplete = function (e) { res(e.renderedBuffer); }; });
     }).then(function (out) { return [out.getChannelData(0).subarray(skip, skip + len), out.getChannelData(1).subarray(skip, skip + len)]; });
   }
+  // A mix in parts (C.partPlan: one part up to an hour, five-minute parts
+  // past it, so three hours never sit in memory whole): onPart(chans, off,
+  // i, n) gets each part's samples in turn and may return a Promise.
+  // progress(i, n) is told before each part of a long mix is rendered.
+  function mixParts(r, rate, onPart, progress) {
+    var plan = C.partPlan(r, rate), tail = null, i = 0;
+    var next = function () {
+      if (i >= plan.length) return Promise.resolve();
+      var p = plan[i];
+      if (plan.length > 1 && progress) progress(i + 1, plan.length);
+      return renderMix({ a: p.a, b: p.b }, rate).then(function (chans) {
+        var j = plan.length > 1 ? C.joinPart(chans, p, tail) : { out: chans, tail: null };
+        tail = j.tail;
+        i++;
+        return onPart(j.out, p.off, i, plan.length);
+      }).then(next);
+    };
+    return next();
+  }
+  function mixLong(r, rate) { return C.partPlan(r, rate).length > 1; }
+  // a streaming MP3 encoder: encode what has arrived, a slice at a time (the page stays responsive)
+  function drainMp3(enc, pct) {
+    return new Promise(function (res, rej) {
+      var step = function () {
+        try {
+          var before = enc.done, end = enc.step(60);
+          if (end || enc.done === before) { res(end); return; }
+        } catch (e) { rej(e); return; }
+        if (pct) pct(enc.progress());
+        setTimeout(step, 0);
+      };
+      step();
+    });
+  }
   function exportBusy(on) { ["export-go", "export-music", "export-lyrics", "export-ring", "export-send"].forEach(function (id) { $(id).disabled = on; }); }
   // dest "music": the file goes onto the orOS disk under /internal/Music
   // and plays in Music ("lyrics": opens in Lyric Sync instead);
@@ -3933,10 +3970,11 @@
     var fmt = prefs.fmt === "opus" && opusOk === false ? "wav" : prefs.fmt;
     var rate = fmt === "opus" ? 48000 : prefs.rate;
     var fail = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.noAudio")); };
+    var title = proj.name || t("proj.untitled");
+    if (mixLong(r, rate)) { exportLong(dest, r, fmt, rate, title); return; }
     $("export-status").textContent = t("export.busy");
     exportBusy(true);
     renderMix(r, rate).then(function (chans) { done(chans); }, fail);
-    var title = proj.name || t("proj.untitled");
     var done = function (chans) {
       var finish = function (bytes, mime, ext, desc) {
         exportBusy(false);
@@ -3967,6 +4005,35 @@
       } else finish(C.wavBytes(chans, rate, prefs.bits), "audio/wav", "wav", "WAV");
     };
   }
+  // Export of a mix over an hour: rendered in parts, each part encoded as it
+  // comes (MP3 through the streaming encoder, WAV as its samples after one
+  // header), so the whole mix is never in memory at once. Opus stays for
+  // mixes up to an hour (the browser's encoder wants the whole buffer).
+  function exportLong(dest, r, fmt, rate, title) {
+    if (fmt === "opus") { showToast(t("export.opusLong")); return; }
+    var total = C.partPlan(r, rate).reduce(function (n, p) { return n + p.len; }, 0), enc = null, wav = [], parts = 0;
+    var status = function (s) { $("export-status").textContent = s; };
+    exportBusy(true);
+    status(t("export.busy"));
+    if (fmt === "mp3") enc = new E.Mp3Encoder(null, rate, prefs.kbps, { title: title, channels: 2, samples: total });
+    else wav.push(C.wavHeader(total, 2, rate, prefs.bits));
+    mixParts(r, rate, function (chans, off, i, n) {
+      parts = n;
+      if (enc) { enc.push(chans); return drainMp3(enc, function (x) { status(t("export.encoding", { n: Math.floor(x * 100) })); }); }
+      wav.push(C.wavBytes(chans, rate, prefs.bits).subarray(44));
+    }, function (i, n) { status(t("export.part", { i: i, n: n })); }).then(function () {
+      return enc ? drainMp3(enc).then(function () { return new Blob([enc.bytes()], { type: "audio/mpeg" }); }) : new Blob(wav, { type: "audio/wav" });
+    }).then(function (blob) {
+      exportBusy(false);
+      status("");
+      hideDlg("export-dlg");
+      var ext = enc ? "mp3" : "wav", mime = blob.type;
+      if (dest === "send") sendMix(blob, C.fileName(title, ext));
+      else if (dest === "music" || dest === "lyrics") addToMusic(blob, C.fileName(title, ext), dest === "lyrics" ? title : null);
+      else saveBlob(blob, C.fileName(title, ext), mime, enc ? "MP3" : "WAV", "." + ext);
+    }, function () { exportBusy(false); status(""); showToast(parts ? t("toast.exportFail") : t("toast.noAudio")); });
+  }
+
   // ---------- 9a. To other apps: Music, Ringtone Composer ----------
   var MUSIC_DIR = "/internal/Music";
   function shellHas() {
@@ -4539,6 +4606,15 @@
     ldBusy(true);
     $("ld-status").textContent = t("ld.mixing");
     var pid = proj.id, name = t("ld.colSong");
+    if (mixLong(r, 48000)) {                   // over an hour: measured part by part
+      var A = SM.Analysis.parts(48000, 2), job = ++ld.job;
+      mixParts(r, 48000, function (chans) { if (job === ld.job) A.feed(chans); },
+               function (i, n) { $("ld-status").textContent = t("export.part", { i: i, n: n }); }).then(function () {
+        if (job !== ld.job) return;
+        ldFinish(A.result(), function (x) { if (proj && proj.id === pid) { ld.cur = x; ld.curName = name; ld.curPid = pid; ld.curFrom = r.a; } });
+      }, function () { ldFinish(null); });
+      return;
+    }
     renderMix(r, 48000).then(function (chans) {
       ldAnalyse(chans, 48000, function (rep) { ldFinish(rep, function (x) { if (proj && proj.id === pid) { ld.cur = x; ld.curName = name; ld.curPid = pid; ld.curFrom = r.a; } }); });
     }, function () { ldFinish(null); });
@@ -5007,7 +5083,10 @@
     var clips = projClips(), r = C.exportRange(Object.assign({}, proj, { loop: { on: false, a: 0, b: 0 } }), clips);
     if (r.b - r.a < C.MIN_LEN) return Promise.resolve(null);
     if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) return Promise.reject(new Error("missing"));
-    return renderMix(r, rate);
+    if (!mixLong(r, rate)) return renderMix(r, rate);
+    // a part over an hour: mixed in parts straight into one mono buffer (a book is mono)
+    var mono = new Float32Array(C.partPlan(r, rate).reduce(function (n, p) { return n + p.len; }, 0));
+    return mixParts(r, rate, function (chans, off) { mono.set(monoOf(chans), off); }).then(function () { return [mono]; });
   }
   function analyseP(chans, rate) {
     return new Promise(function (res, rej) {

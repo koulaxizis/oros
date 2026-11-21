@@ -28,7 +28,7 @@
 
   var LIM = {
     title: 120, author: 120, showDesc: 4000, epDesc: 1500, url: 500, email: 120,
-    markers: 50, mark: 40, epNo: 9999, season: 99, dur: 3600, bytes: 2147483647,
+    markers: 50, mark: 40, epNo: 9999, season: 99, dur: 10800, bytes: 2147483647,
     cues: 3000, cue: 500, vtt: 400000
   };
   var SHOW_RE  = /^h[a-z0-9]{6,20}$/;
