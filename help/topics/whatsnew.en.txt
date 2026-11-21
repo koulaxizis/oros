@@ -5,6 +5,9 @@ orOS is free and made by one person. If it is useful to you, [here are three way
 
 ## Version 8.21.00
 - **Light show wallpaper.** Your desktop moves with the music. Pick it under Settings › Appearance › Wallpaper or in the Wallpaper Generator. The Playing widget is bigger too: cover, progress, previous and next, and a small light.
+## Version 8.19.00
+- **Claude brings files into your folders, even with orOS closed.** Through orOS Gate, Claude can now upload pictures, PDFs and fonts into Claude's folders, for example a book's pictures from your computer. The file waits sealed with your gate key until orOS opens on one of your devices, which writes it like any other change of Claude's: you are notified and can undo it. Then Layout finds it on every device.
+
 ## Version 8.18.00
 - **Update your other devices from your phone.** Settings › orOS Gate has a new button, Update them now: every other device where orOS is open, a computer with orOS in the tray too, switches to the newest orOS within a few minutes, without you at the computer. Claude can ask for the same through orOS Gate when a device runs an older version. On Windows this needs orOS for Windows 0.9.5 or newer.
 ## Version 8.17.00

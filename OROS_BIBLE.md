@@ -13368,6 +13368,12 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js, relay/gate.js, settings/{settings.js, core.js}, i18n/de/settings.js, shell.js, help/topics/whatsnew.en/el.txt, tests/{gate-relay, gate-parity}.test.js.
 - **Tests:** full `node --test tests/*.test.js`.
 
+### 2026-11-21 — 8.19.00 — Claude brings files into Claude's folders, also with orOS closed (GL-8)
+- **Why:** «Στην καρδιά του βυθού» waits for Layout with the book's pictures on Chris's PC (local: folders) while he is away and the PC runs an old orOS. Solution 5 of «Πρέπει να βρούμε λύσεις»: Claude takes the pictures from the PC folder it can already read and puts them on the owner's synced disk, so Layout on any device places them.
+- **Relay (relay/gate.js):** tool `files_upload` {name, size ≤ 25 MB, sha256} → one-time PUT address `/gate/up/<gate>/<id>` + token. The box keeps FK = HMAC-K("orOS-gate-up|" + id) only wrapped under the token; the PUT checks size and SHA-256, seals 90 000-byte pieces (AES-GCM, AD "orOS-gate-up|<id>|<i>") as `upp:<id>:<i>`, drops the wrapped key. `files_write` takes `upload` instead of `text` (create only; checked by `uploadReady` and `fileChangeCheck`), live or queued as usual. dev act "up" {up, from} gives 20 sealed pieces per call; {del: true} drops the upload. Limits upBytes 25 MB, upTotal 80 MB per gate, upMs 7 days.
+- **Device:** gate/gate.js `upFetch` (FK from K, opens and joins the pieces, checks size and SHA-256 → Blob), then `files_write` runs with `blob` and `upDrop` after success. assistant/claudefiles.js `planWrite` takes `blob` (new file only, ≤ 25 MB), `run` writes it with `fs.write`; card row "Size". Layout reads files in Claude's folders through the vault on every device (proassist `readBytes`).
+- **Files:** relay/gate.js, gate/gate.js, assistant/{claudefiles.js, assistant.js, core.js}, i18n/de/assistant.js, shell.js, help/topics/whatsnew.en/el.txt, tests/gate-upload.test.js (new), tests/{gate-relay, gate-parity, studio-podsummary}.test.js (the podcast test allows files_upload by name).
+- **Tests:** full `node --test tests/*.test.js`.
 
 ### 2026-11-21 — 8.21.00 — Light show wallpaper and a bigger Playing widget (VIZWALL-1, WG-MEDIA-2) (#1181)
 - **Why:** Chris approved video ideas 2 and 3 (2026-11-20): the Light show of Music, Radio and Podcasts as a desktop wallpaper, and a Playing widget with cover, progress, previous/next and a small light.

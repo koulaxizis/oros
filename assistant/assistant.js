@@ -743,7 +743,7 @@
       "f.people": "People",
       "cr.sameAdd": "Already there: {name}. The same address can't be added twice.", "cr.newList": "A new list, {name}, is made for it.",
       "cr.v.expense": "Expense", "cr.v.income": "Income",
-      "f.text": "Text", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
+      "f.text": "Text", "f.size": "Size", "f.paid": "Paid", "f.owed": "Still owed", "f.servings": "Servings", "f.author": "Author", "f.next": "Next date", "inv.paid": "Paid", "inv.partial": "Partly paid", "inv.unpaid": "Not paid", "inv.overdue": "Overdue",
       "cr.textLinkItems": "{name} asks to link these CRM partners with their records in other apps. Nothing changes until you press Link; the other apps stay as they are.",
       "f.lk": "Record", "f.moves": "Moves from", "f.unlink": "Link", "lk.unlinkYes": "Removed", "lkk.sup": "Stock supplier", "lkk.wh": "Consignment shop (Stock)", "lkk.tsc": "Timesheet client", "lkk.inv": "Invoices client", "lkk.pub": "Person on Publishing titles", "lkk.kb": "Kanban card", "lkk.nt": "Notes page", "lkk.ly": "Layout document", "lkk.at": "Atelier design",
       "entry.flashcards": "Study cards · {app}", "entry.wiki_article": "New article · {app}", "entry.document": "New document · {app}", "entry.mind_map": "New mind map · {app}", "entry.form": "New form · {app}", "entry.text_file": "New file · {app}", "f.cards": "Cards", "f.project": "Project", "f.task": "Task", "f.trip": "Trip", "f.ingredients": "Ingredients", "f.steps": "Steps", "f.color": "Colour", "f.qty": "How many", "tv.k.flight": "Flight", "tv.k.train": "Train", "tv.k.bus": "Bus", "tv.k.ferry": "Ferry", "tv.k.car": "Car", "tv.k.rental": "Car rental", "tv.k.stay": "Stay", "tv.k.ticket": "Ticket", "tv.k.activity": "Activity", "tv.k.food": "Food", "tv.k.other": "Other", "tv.g.clothes": "Clothes", "tv.g.toilet": "Toiletries", "tv.g.health": "Health", "tv.g.tech": "Electronics", "tv.g.docs": "Documents", "tv.g.baby": "Baby", "tv.g.gear": "Gear", "tv.g.food": "Food", "tv.g.misc": "Other", "tv.g.before": "Before I leave", "sn.c.yellow": "Yellow", "sn.c.pink": "Pink", "sn.c.green": "Green", "sn.c.blue": "Blue", "sn.c.orange": "Orange", "sn.c.lilac": "Lilac",
@@ -1420,7 +1420,7 @@
       "f.people": "Άνθρωποι",
       "cr.sameAdd": "Υπάρχει ήδη: {name}. Η ίδια διεύθυνση δεν μπαίνει δύο φορές.", "cr.newList": "Φτιάχνεται νέα λίστα για αυτό: {name}.",
       "cr.v.expense": "Έξοδο", "cr.v.income": "Έσοδο",
-      "f.text": "Κείμενο", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
+      "f.text": "Κείμενο", "f.size": "Μέγεθος", "f.paid": "Πληρώθηκαν", "f.owed": "Υπόλοιπο", "f.servings": "Μερίδες", "f.author": "Συγγραφέας", "f.next": "Επόμενη ημερομηνία", "inv.paid": "Εξοφλημένο", "inv.partial": "Μερικώς πληρωμένο", "inv.unpaid": "Απλήρωτο", "inv.overdue": "Ληξιπρόθεσμο",
       "cr.textLinkItems": "Το {name} ζητά να συνδεθούν αυτοί οι συνεργάτες του CRM με τις εγγραφές τους σε άλλες εφαρμογές. Τίποτα δεν αλλάζει πριν πατήσεις Σύνδεση· οι άλλες εφαρμογές μένουν όπως είναι.",
       "f.lk": "Εγγραφή", "f.moves": "Μεταφέρεται από", "f.unlink": "Σύνδεση", "lk.unlinkYes": "Αφαιρείται", "lkk.sup": "Προμηθευτής (Απόθεμα)", "lkk.wh": "Κατάστημα παρακαταθήκης (Απόθεμα)", "lkk.tsc": "Πελάτης (Ώρες εργασίας)", "lkk.inv": "Πελάτης (Τιμολόγια)", "lkk.pub": "Πρόσωπο σε τίτλους (Εκδόσεις)", "lkk.kb": "Κάρτα Kanban", "lkk.nt": "Σελίδα στις Σημειώσεις", "lkk.ly": "Έγγραφο Σελιδοποίησης", "lkk.at": "Σχέδιο στο Atelier",
       "entry.flashcards": "Κάρτες μελέτης · {app}", "entry.wiki_article": "Νέο άρθρο · {app}", "entry.document": "Νέο έγγραφο · {app}", "entry.mind_map": "Νέος νοητικός χάρτης · {app}", "entry.form": "Νέα φόρμα · {app}", "entry.text_file": "Νέο αρχείο · {app}", "f.cards": "Κάρτες", "f.project": "Έργο", "f.task": "Εργασία", "f.trip": "Ταξίδι", "f.ingredients": "Υλικά", "f.steps": "Βήματα", "f.color": "Χρώμα", "f.qty": "Πόσα", "tv.k.flight": "Πτήση", "tv.k.train": "Τρένο", "tv.k.bus": "Λεωφορείο", "tv.k.ferry": "Πλοίο", "tv.k.car": "Αυτοκίνητο", "tv.k.rental": "Ενοικίαση αυτοκινήτου", "tv.k.stay": "Διαμονή", "tv.k.ticket": "Εισιτήριο", "tv.k.activity": "Δραστηριότητα", "tv.k.food": "Φαγητό", "tv.k.other": "Άλλο", "tv.g.clothes": "Ρούχα", "tv.g.toilet": "Είδη υγιεινής", "tv.g.health": "Υγεία", "tv.g.tech": "Ηλεκτρονικά", "tv.g.docs": "Έγγραφα", "tv.g.baby": "Μωρό", "tv.g.gear": "Εξοπλισμός", "tv.g.food": "Τρόφιμα", "tv.g.misc": "Διάφορα", "tv.g.before": "Πριν φύγω", "sn.c.yellow": "Κίτρινο", "sn.c.pink": "Ροζ", "sn.c.green": "Πράσινο", "sn.c.blue": "Μπλε", "sn.c.orange": "Πορτοκαλί", "sn.c.lilac": "Λιλά",
@@ -4949,9 +4949,9 @@
           if (GATE && a.__q === 1 && CF.writeConflict(a, { st: st, v: v })) return cfConflict(c, a, apps, x, p, 1);
           var r = CF.planWrite(a, { st: st, v: v }, x.folders, Date.now());
           if (!r.ok) return cfErr(r.err);
-          var name = p.slice(p.lastIndexOf("/") + 1), len = a.text.length;
+          var name = p.slice(p.lastIndexOf("/") + 1), len = r.step.blob ? r.step.blob.size + " B" : a.text.length + " chars";   // GL-8: an upload
           var cards = [{ title: name, rows: [{ f: "folder", b: r.step.k === "make" ? "" : CF.show(p.slice(0, p.lastIndexOf("/"))), a: CF.show(p.slice(0, p.lastIndexOf("/"))) },
-                                             { f: "text", b: r.step.k === "make" ? "" : (st.size || 0) + " B", a: len + " chars" }] }];
+                                             { f: r.step.blob ? "size" : "text", b: r.step.k === "make" ? "" : (st.size || 0) + " B", a: len }] }];
           return cfApply(c, x, "write", [r.step], cards, [CF.show(p)]);
         });
       });
@@ -4961,7 +4961,7 @@
     var q = x.CF.conflictName(p, Date.now(), n);
     return cfStat(x.fs, q).then(function (st) {
       if (st) return n < 9 ? cfConflict(c, a, apps, x, p, n + 1) : cfErr("\"" + x.CF.show(p) + "\" changed since, and no free name was left for a conflict copy. Nothing was written.");
-      return filesWrite(c, { path: q, text: a.text, mode: "create" }, apps);
+      return filesWrite(c, a.blob ? { path: q, blob: a.blob, mode: "create" } : { path: q, text: a.text, mode: "create" }, apps);
     });
   }
   function filesMove(c, a, apps) {
