@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Layout — Scribus .sla import (v1.4.0)
+// orOS Layout — Scribus .sla import (v1.5.0)
 // Reads a Scribus document (1.4, 1.5, 1.6 XML) into a NEW Layout
 // document: pages, master pages, margins, columns, bleed, colours,
 // paragraph styles, text frames with their threads, images, shapes,
@@ -485,10 +485,12 @@
         } else if (x.n === "para") endPara(withTabs(x.a, x));
         else if (x.n === "trail") endPara(withTabs(x.a, x));
         else if (x.n === "tab") runs.push({ t: "\t", a: x.a });
-        else if (x.n === "nbspace") runs.push({ t: "\u00a0", a: {} });
+        // a no-break space keeps its own font and size, so a line
+        // holding one is still set in the text's font (LY-FIT)
+        else if (x.n === "nbspace") runs.push({ t: "\u00a0", a: x.a });
         // a line break (Shift+Enter) stays inside its paragraph, which
         // keeps the style the paragraph ends with (LY-TAB)
-        else if (x.n === "breakline") runs.push({ t: "\n", a: {} });
+        else if (x.n === "breakline") runs.push({ t: "\n", a: x.a });
         // a column or frame break: what follows starts the next column
         // (frames in a chain are columns to the text engine)
         else if (x.n === "breakcol" || x.n === "breakframe") runs.push({ brk: "col" });
@@ -553,6 +555,8 @@
           it.cols = Math.max(1, num(a.COLUMNS, 1)); it.gut = num(a.COLGAP, 0);
           it.ins = Math.max(num(a.EXTRA, 0), num(a.TEXTRA, 0), num(a.BEXTRA, 0), num(a.REXTRA, 0));
           it.va = a.VAlign === "1" ? "c" : a.VAlign === "2" ? "b" : "t";
+          // Scribus's own rule for where a line ends (LY-FIT)
+          it.ext = Object.assign(it.ext || {}, { sfit: 1 });
           if (typ === 8) stats.skipped++;
         } else if (typ === 2) {
           it.t = "img";

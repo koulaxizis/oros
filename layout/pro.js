@@ -23,6 +23,7 @@
   var node = typeof module !== "undefined" && module.exports;
   var M = node ? require("../designkit/model.js") : root.orosDK && root.orosDK.model;
   if (!M) return;
+  function Rd() { return node ? require("../designkit/render.js") : root.orosDK && root.orosDK.render; }
   var MM = 72 / 25.4;
   var PT_PER = { pt: 1, mm: MM, in: 72, px: 72 / 96 };
 
@@ -289,6 +290,8 @@
         f.effective_ppi = sc > 0 ? Math.round(72 / sc) : 0;
         if (it.ext && it.ext.bf) f.bleed_fill = it.ext.bf.mode;
         if (it.ext && it.ext.fl) f.flip = it.ext.fl;
+        var adj = Rd() && Rd().adjOf(it);
+        if (adj) f.adj = adj;                    // colour corrections (W4b)
         if (it.r) f.corner_mm = mm(it.r);
         if (it.mf) f.merge_field = it.mf;
       }
@@ -701,24 +704,38 @@
   // picture (W4): the picture frames `ids` (or every picture on the
   // pages `want` picks): flip none|h|v|hv, corner radius (pt, −1 = as
   // it is), fit fit|fill|frame (frame: the frame takes the picture's
-  // proportions, keeping its width). → number changed
+  // proportions, keeping its width), adj colour corrections (W4b: a
+  // record as R.adjNorm reads, merged by kind, or "none"). → number
+  // changed
   function setPicture(doc, ids, want, st, now) {
     var on = {}, n = 0;
     if (want) M.pagesInOrder(doc).forEach(function (p, i) { if (want(i + 1)) on[p.id] = 1; });
     var pick = ids && ids.length ? function (it) { return ids.indexOf(it.id) >= 0; } : function (it) { return !!on[it.pg]; };
     doc.items.forEach(function (it) {
       if (it.t !== "img" || it.lock || !pick(it)) return;
-      var before = JSON.stringify([it.ext && it.ext.fl, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]);
+      var before = JSON.stringify([it.ext && it.ext.fl, it.ext && it.ext.adj, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]);
       if (st.flip) {
         var x = it.ext || {};
         if (st.flip === "none") delete x.fl; else x.fl = st.flip;
         if (Object.keys(x).length) it.ext = x; else delete it.ext;
       }
+      // colour corrections (W4b): "none" takes them all off; a record
+      // sets the corrections it names (one that changes nothing goes)
+      if (st.adj) {
+        var R = Rd(), xa = it.ext || {};
+        if (st.adj === "none") delete xa.adj;
+        else if (R && typeof st.adj === "object") {
+          var na = Object.assign({}, R.adjNorm(xa.adj) || {}, st.adj);
+          na = R.adjNorm(na);
+          if (na) xa.adj = na; else delete xa.adj;
+        }
+        if (Object.keys(xa).length) it.ext = xa; else delete it.ext;
+      }
       if (st.corner >= 0) it.r = r3(Math.min(st.corner, Math.min(it.w, it.h) / 2));
       if (st.fit === "fit" || st.fit === "fill") { it.fit = st.fit; it.ix = 0; it.iy = 0; it.isc = 1; }
       else if (st.fit === "frame" && it.iw && it.ih) { it.h = r3(it.w * it.ih / it.iw); it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1; }
       if (it.ext && it.ext.iscy !== undefined && st.fit) { delete it.ext.iscy; if (!Object.keys(it.ext).length) delete it.ext; }
-      if (JSON.stringify([it.ext && it.ext.fl, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]) === before) return;
+      if (JSON.stringify([it.ext && it.ext.fl, it.ext && it.ext.adj, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]) === before) return;
       M.touch(it, now);
       n++;
     });
@@ -734,7 +751,7 @@
       if (it.t !== "img" || !pos[it.pg]) return;
       var ppi = it.a && ppiOf ? Math.round(ppiOf(it)) : 0;
       var state = !it.a ? "empty" : isMissing && isMissing(it.a) ? "missing" : isSmall && isSmall(it) ? "small" : ppi && ppi < (low || 200) ? "low" : "ok";
-      out.push({ id: it.id, page: pos[it.pg], name: it.nm || "", ppi: ppi, state: state, flip: it.ext && it.ext.fl || "", local: !!(it.ext && it.ext.lc) });
+      out.push({ id: it.id, page: pos[it.pg], name: it.nm || "", ppi: ppi, state: state, flip: it.ext && it.ext.fl || "", adj: !!(it.ext && it.ext.adj), local: !!(it.ext && it.ext.lc) });
     });
     return out.sort(function (a, b) { return a.page - b.page || M.cmpStr(a.name, b.name); });
   }
