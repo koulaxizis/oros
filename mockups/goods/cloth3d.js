@@ -1,6 +1,7 @@
 // ============================================================
-// orOS Mockups — goods/cloth3d.js (v1.0.0, ES module)
-// The 3D T-shirt and tote bag with the vendored three.js (imported by
+// orOS Mockups — goods/cloth3d.js (v1.1.0, ES module)
+// The 3D T-shirt, tote bag, hoodie, socks (v1.1.0) and cap (built
+// here in code: dad or trucker, print or embroidery) with the vendored three.js (imported by
 // scene.js). The garments are our own Blender models (oros-models,
 // mockups/*.glb: named meshes, POSITION + NORMAL in metres, uint32
 // indices, front toward +z, y up), read by the small GLB reader below
@@ -178,18 +179,29 @@ function printPiece(H, m, r, side, sh, kind) {
 }
 
 // ---------- Stand-ins (before the model is downloaded) ----------
-function teeOutline() {
+function teeOutline(sx, sy) {
   var half = [];
   for (var i = 0; i <= 10; i++) { var a = -Math.PI / 2 + i / 10 * Math.PI / 2; half.push([95 * Math.cos(a), 360 + 75 * Math.sin(a)]); }
   half = half.concat([[232, 332], [398, 214], [312, 96], [262, 150], [262, -300], [258, -352], [230, -362], [0, -364]]);
   var left = half.slice(1, -1).reverse().map(function (q) { return [-q[0], q[1]]; });
-  return half.concat(left);
+  return half.concat(left).map(function (q) { return [q[0] * (sx || 1), q[1] * (sy || 1)]; });
 }
-function toteOutline() {
-  var W = 380, Hh = 420, r = 6, out = [];
+function rectOutline(W, Hh, r, cx, cy) {
+  var out = [];
   [[W / 2 - r, Hh / 2 - r, 0], [-W / 2 + r, Hh / 2 - r, Math.PI / 2], [-W / 2 + r, -Hh / 2 + r, Math.PI], [W / 2 - r, -Hh / 2 + r, 1.5 * Math.PI]].forEach(function (c) {
-    for (var i = 0; i <= 4; i++) { var a = c[2] + i / 4 * Math.PI / 2; out.push([c[0] + r * Math.cos(a), c[1] + r * Math.sin(a)]); }
+    for (var i = 0; i <= 4; i++) { var a = c[2] + i / 4 * Math.PI / 2; out.push([(cx || 0) + c[0] + r * Math.cos(a), (cy || 0) + c[1] + r * Math.sin(a)]); }
   });
+  return out;
+}
+// a three.js geometry → mesh arrays (mm), as the GLB reader gives them
+function arraysOf(g) {
+  if (!g.index) { g = g.toNonIndexed(); }
+  g.computeVertexNormals();
+  var pos = g.attributes.position.array, nrm = g.attributes.normal.array, n = pos.length / 3, idx;
+  if (g.index) idx = new Uint32Array(g.index.array);
+  else { idx = new Uint32Array(n); for (var i = 0; i < n; i++) idx[i] = i; }
+  var out = { pos: new Float32Array(pos), nrm: new Float32Array(nrm), idx: idx, uv: g.attributes.uv ? new Float32Array(g.attributes.uv.array) : null };
+  g.dispose();
   return out;
 }
 // a flat stand-in, as mesh arrays (mm) so the print goes on it the same way
@@ -198,51 +210,157 @@ function flatArrays(H, outline, thick) {
   outline.forEach(function (q, i) { if (i) sh.lineTo(q[0], q[1]); else sh.moveTo(q[0], q[1]); });
   var g = new THREE.ExtrudeGeometry(sh, { depth: thick, bevelEnabled: true, bevelThickness: 2, bevelSize: 2, bevelSegments: 2, curveSegments: 4 });
   g.translate(0, 0, -thick / 2);
-  g = g.toNonIndexed(); g.computeVertexNormals();
-  var pos = g.attributes.position.array, nrm = g.attributes.normal.array, idx = new Uint32Array(pos.length / 3);
-  for (var i = 0; i < idx.length; i++) idx[i] = i;
-  g.dispose();
-  return { pos: new Float32Array(pos), nrm: new Float32Array(nrm), idx: idx };
+  return arraysOf(g.toNonIndexed());
+}
+function standIn(H, name, g, M) {
+  if (name === "tote") return { bag: flatArrays(H, rectOutline(380, 420, 6), 6) };
+  if (name === "hoodie") return { hoodie: flatArrays(H, teeOutline(1.18, 1.1), 18) };
+  if (name === "socks") return { sock_0: flatArrays(H, rectOutline(95, 380, 30, -75, 20), 8), sock_1: flatArrays(H, rectOutline(95, 380, 30, 75, -20), 8) };
+  return { shirt: flatArrays(H, teeOutline(), 14) };
 }
 
 // ---------- The garments ----------
+function sheetOnce(H, p) {
+  var seen = {};
+  return function (key) { if (!(key in seen)) seen[key] = sheetCanvas(H, p, key); return seen[key]; };
+}
 function garment(H, p, name) {
   var THREE = H.THREE, CL = window.MockCloth, M = CL.MODELS[name], g = p.g, grp = new THREE.Group();
   var kind = name === "tote" ? "canvas" : "knit", hex = CL.CLOTH_C[g.col] || "#f2f2ef", heather = g.col === "heather";
-  var fab = fabricMat(H, hex, kind, heather), meshes = modelMeshes(name), main;
-  if (meshes && meshes[M.main]) {
-    main = meshes[M.main];
-    Object.keys(meshes).forEach(function (k) {
-      if (/^handle_/.test(k) && k.indexOf("handle_" + g.handles + "_") !== 0) return;
-      var q = meshes[k];
-      grp.add(meshOf(H, q.pos, q.nrm, q.idx, fab, kind));
+  var fab = fabricMat(H, hex, kind, heather), meshes = modelMeshes(name), stand = !meshes || !meshes[M.main];
+  if (stand) meshes = standIn(H, name, g, M);
+  Object.keys(meshes).forEach(function (k) {
+    if (/^handle_/.test(k) && k.indexOf("handle_" + g.handles + "_") !== 0) return;
+    var q = meshes[k];
+    grp.add(meshOf(H, q.pos, q.nrm, q.idx, fab, kind));
+  });
+  if (stand && name === "tote") {
+    var rise = g.handles === "long" ? 300 : 150;
+    [-1, 1].forEach(function (s) {
+      var hd = new THREE.Mesh(H.own(new THREE.TorusGeometry(85 * H.S, 1.6 * H.S, 8, 32, Math.PI)), fab);
+      hd.scale.set(1, (rise - 15) / 85, 1); hd.position.set(s * 4 * H.S, (M.h / 2 - 30) * H.S, (s > 0 ? 5 : 3) * H.S);
+      hd.castShadow = true; grp.add(hd);
     });
-  } else {
-    main = name === "tote" ? flatArrays(H, toteOutline(), 6) : flatArrays(H, teeOutline(), 14);
-    grp.add(meshOf(H, main.pos, main.nrm, main.idx, fab, kind));
-    if (name === "tote") {
-      var rise = g.handles === "long" ? 300 : 150;
-      [-1, 1].forEach(function (s) {
-        var hd = new THREE.Mesh(H.own(new THREE.TorusGeometry(85 * H.S, 1.6 * H.S, 8, 32, Math.PI)), fab);
-        hd.scale.set(1, (rise - 15) / 85, 1); hd.position.set(s * 4 * H.S, (M.h / 2 - 30) * H.S, (s > 0 ? 5 : 3) * H.S);
-        hd.castShadow = true; grp.add(hd);
-      });
-    }
   }
-  var front = name === "tshirt" ? M.print[g.area] : M.print.front;
-  var pf = printPiece(H, main, front, 1, sheetCanvas(H, p, name === "tote" ? "totefront" : "teefront"), kind);
-  if (pf) grp.add(pf);
-  if (g.back) {
-    var pb = printPiece(H, main, M.print.front, -1, sheetCanvas(H, p, name === "tote" ? "toteback" : "teeback"), kind);
-    if (pb) grp.add(pb);
+  var sheet = sheetOnce(H, p);
+  CL.prints(name, g).forEach(function (q) {
+    var m = meshes[q.mesh];
+    var pc = m && printPiece(H, m, q.area, q.side, sheet(q.sheet), kind);
+    if (pc) grp.add(pc);
+  });
+  return grp;
+}
+
+// ---------- Cap (built here: no model file) ----------
+var CAP_R = 95;
+function stitchCanvas() {
+  if (texCache.stitch) return texCache.stitch;
+  var n = 64, hf = new Float32Array(n * n);
+  for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) hf[y * n + x] = Math.abs(Math.sin(((x + y) % 8) / 8 * Math.PI));   // satin stitch, slanting
+  texCache.stitch = normalCanvas(n, hf, 2.6);
+  return texCache.stitch;
+}
+function netCanvas(hex) {
+  var key = "net" + hex;
+  if (texCache[key]) return texCache[key];
+  var n = 64, cv = canvas(n, n), ctx = cv.getContext("2d");
+  ctx.fillStyle = hex; ctx.fillRect(0, 0, n, n);
+  ctx.globalCompositeOperation = "destination-out";
+  for (var y = 0; y < 4; y++) for (var x = 0; x < 4; x++) {
+    ctx.beginPath(); ctx.arc(x * 16 + (y % 2 ? 8 : 0) + 4, y * 16 + 8, 5.4, 0, Math.PI * 2); ctx.fill();
+  }
+  texCache[key] = cv;
+  return cv;
+}
+function cap(H, p) {
+  var THREE = H.THREE, S = H.S, CL = window.MockCloth, g = p.g, grp = new THREE.Group();
+  var hk = g.style === "trucker" ? 1.26 : 1.12, R = CAP_R, hex = CL.CLOTH_C[g.col] || "#1d1d20";
+  var fab = fabricMat(H, hex, "canvas", false);
+  var frontHex = g.style === "trucker" && g.wfront ? CL.CLOTH_C.white : hex;
+  var frontMat = g.style === "trucker" ? fabricMat(H, frontHex, "knit", false) : fab;
+  // the crown: a dome, its front toward +z; a trucker's back is mesh
+  function dome(p0, pl) {
+    var d = new THREE.SphereGeometry(R, 72, 26, p0, pl, 0, Math.PI / 2 + 0.12);    // a little past the equator: the rim tucks in
+    d.scale(1, hk, 1.08);
+    return arraysOf(d);
+  }
+  var FRONT = g.style === "trucker" ? 1.2 : Math.PI;          // half the front panels' sweep
+  var crown = dome(Math.PI / 2 - FRONT, 2 * FRONT);
+  grp.add(meshOf(H, crown.pos, crown.nrm, crown.idx, frontMat, "canvas"));
+  if (g.style === "trucker") {
+    var back = dome(Math.PI / 2 + FRONT, 2 * Math.PI - 2 * FRONT);
+    var nt = tex(H, netCanvas(hex), 1, 0, true);
+    nt.repeat.set(46, 9);
+    var bm = meshOf(H, back.pos, back.nrm, back.idx, H.own(new THREE.MeshStandardMaterial({ map: nt, alphaTest: 0.5, side: THREE.DoubleSide, roughness: 0.8 })), "canvas");
+    var buv = new THREE.BufferAttribute(back.uv, 2);
+    bm.geometry.setAttribute("uv", buv);
+    grp.add(bm);
+    var lining = new THREE.Mesh(H.own(new THREE.SphereGeometry((R - 1.5) * S, 48, 16, Math.PI / 2 + FRONT, 2 * Math.PI - 2 * FRONT, 0, Math.PI / 2 + 0.12)), H.own(new THREE.MeshStandardMaterial({ color: 0x2a2a2c, roughness: 1, side: THREE.BackSide })));
+    lining.scale.set(1, hk, 1.08); grp.add(lining);
+  }
+  // panel seams and the button on top
+  var seamM = H.own(new THREE.MeshStandardMaterial({ color: new THREE.Color(hex).multiplyScalar(0.7), roughness: 0.9 }));
+  for (var k = 0; k < 6; k++) {
+    var ph = Math.PI / 2 + Math.PI / 6 + k * Math.PI / 3, pts = [];
+    for (var i = 0; i <= 16; i++) {
+      var th = i / 16 * (Math.PI / 2 + 0.1), r = R + 0.4;
+      pts.push(new THREE.Vector3(-Math.cos(ph) * Math.sin(th) * r * S, Math.cos(th) * r * hk * S, Math.sin(ph) * Math.sin(th) * r * 1.08 * S));
+    }
+    grp.add(new THREE.Mesh(H.own(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.9 * S, 5, false)), seamM));
+  }
+  var btn = new THREE.Mesh(H.own(new THREE.SphereGeometry(7 * S, 20, 10)), fab);
+  btn.scale.y = 0.45; btn.position.y = R * hk * S; grp.add(btn);
+  // the brim: a grid from the crown's edge out, curved down at its sides and its front
+  var NA = 40, NT = 10, A = 1.32, T = 3.2, P = [], I = [];
+  function brimPt(a, t, top) {
+    var c = Math.cos(a), ri = [Math.sin(a) * R * 0.99, Math.cos(a) * R * 1.07], ro = [Math.sin(a) * (R + 6), Math.cos(a) * R * 1.07 + 78 * Math.pow(Math.max(c, 0), 0.9)];
+    var x = ri[0] + (ro[0] - ri[0]) * t, z = ri[1] + (ro[1] - ri[1]) * t;
+    var y = 1 - 0.0011 * x * x - Math.max(0, z - R) * 0.1 - (top ? 0 : T) * (1 - 0.35 * t);
+    return [x, y, z];
+  }
+  [1, 0].forEach(function (top) {
+    var o = P.length / 3;
+    for (var i = 0; i <= NA; i++) for (var j = 0; j <= NT; j++) { var q = brimPt(-A + 2 * A * i / NA, j / NT, top); P.push(q[0], q[1], q[2]); }
+    for (i = 0; i < NA; i++) for (j = 0; j < NT; j++) {
+      var v0 = o + i * (NT + 1) + j, v1 = v0 + 1, v2 = v0 + NT + 1, v3 = v2 + 1;
+      if (top) I.push(v0, v1, v2, v1, v3, v2); else I.push(v0, v2, v1, v1, v2, v3);
+    }
+  });
+  var half = (NA + 1) * (NT + 1);
+  for (var i2 = 0; i2 < NA; i2++) {                     // the outer edge
+    var t0 = i2 * (NT + 1) + NT, t1 = t0 + NT + 1;
+    I.push(t0, t1, half + t0, t1, half + t1, half + t0);
+  }
+  [0, NA].forEach(function (i3, e) {                    // the two ends
+    for (var j3 = 0; j3 < NT; j3++) {
+      var u0 = i3 * (NT + 1) + j3, u1 = u0 + 1;
+      if (e) I.push(u0, u1, half + u0, u1, half + u1, half + u0); else I.push(u0, half + u0, u1, u1, half + u0, half + u1);
+    }
+  });
+  var bg = new THREE.BufferGeometry();
+  bg.setAttribute("position", new THREE.Float32BufferAttribute(P.map(function (v) { return v * S; }), 3));
+  bg.setIndex(I); bg.computeVertexNormals();
+  var brim = new THREE.Mesh(H.own(bg), fab);
+  brim.castShadow = true; brim.receiveShadow = true;
+  grp.add(brim);
+  // the front print: printed ink or embroidery (thread: raised, a satin sheen)
+  var pc = printPiece(H, crown, CL.CAP_PRINT, 1, sheetCanvas(H, p, "capfront"), "canvas");
+  if (pc) {
+    if (g.fin === "embroidery") {
+      var em = pc.material;
+      em.normalMap = tex(H, stitchCanvas(), 1, 1); em.normalScale = new THREE.Vector2(1.1, 1.1);
+      em.roughness = 0.5; em.sheen = 0.8; em.sheenRoughness = 0.35;
+      pc.scale.setScalar(1.006);
+    }
+    grp.add(pc);
   }
   return grp;
 }
 
 export function build(H, p) {
-  if (p.kind !== "tshirt" && p.kind !== "tote") return null;
+  if (["tshirt", "tote", "hoodie", "socks", "cap"].indexOf(p.kind) < 0) return null;
   if (typeof window === "undefined" || !window.MockCloth) return null;
   var g = new H.THREE.Group();
-  g.add(garment(H, p, p.kind));
+  g.add(p.kind === "cap" ? cap(H, p) : garment(H, p, p.kind));
   return { g: g, fronts: [] };
 }

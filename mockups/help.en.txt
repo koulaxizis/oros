@@ -53,8 +53,10 @@ Badges, stickers, keychains, enamel pins and magnets lie flat on the table to be
 - `Framed poster`: A4 to A1, 30 × 40, 50 × 70 or 61 × 91 cm, portrait or landscape, a black, white, oak, walnut or aluminium `Frame` or `No frame`, a `Mat (passe-partout)`, and a light or dark `Wall` behind. The frame or the mat hides about 4 to 5 mm of the poster's edge.
 - `Postcard or card`: a `Flat postcard` (front and back) or a `Folded card` with its two inside pages, A6, A5, DL or square, portrait or landscape, and an `Envelope` behind it. `Open the card` on the `Scene` tab opens a folded card. On the `Print` tab a folded card has two sheets: the outside (back on the left, front on the right) and the inside.
 
-## T-shirt and tote bag
+## Clothes, bags and caps
 - `T-shirt`: laid flat, in white, black, heather grey, navy, red, forest green or sand, with a `Print area` on the `Front` (30 × 40 cm) or the `Left chest` (9.5 × 9.5 cm), and `Print on the back too`. `Tote bag`: natural, black, navy, red, forest green or white cotton canvas, `Long (shoulder)` or `Short (hand)` handles, one side or both.
+- `Hoodie`: laid flat with its hood, kangaroo pocket and drawstrings, in the T-shirt's colours; the `Front` area (28 × 25 cm) sits above the pocket, or the `Left chest`, and `Print on the back too` (30 × 40 cm). `Socks`: a pair in white, black or heather grey with the same picture on the front of both legs (9 × 25 cm); sock printers often print all round, so ask yours for its full template.
+- `Cap`: a `Dad cap` or a `Trucker` with a mesh back and, if you like, `White front panels`, in black, navy, red, forest green, sand or white. The front panel (11 × 5.5 cm) is `Printed` or `Embroidered`; embroidery shows bold shapes in a few colours best. The cap is drawn by orOS itself, so it needs no download.
 - Only what the picture has is printed: a PNG with a clear background prints best. The picture fits whole inside the print area, from its top; the `Print` tab gives the print area at its real size, with no bleed.
 - The real 3D models are our own (made in Blender, free to use). They are downloaded only when you press `Download the 3D model`, once, from orOS's model library, checked, and then kept on this device so they work offline. Until then a flat stand-in shows the print. `Remove the model from this device` frees the space.
 

@@ -807,7 +807,7 @@ function good(over) {
 }
 
 test("products: registry, defaults, unknown values fall back, canonical", () => {
-  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet", "mug", "poster", "card", "tshirt", "tote"]);
+  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet", "mug", "poster", "card", "tshirt", "tote", "hoodie", "socks", "cap"]);
   const cd = good();
   assert.deepEqual(cd.g, { pack: "jewel", tray: "black", disc: "silver", hub: 22, beside: 0 });
   const odd = good({ g: { pack: "tin", tray: "pink", disc: "gold", hub: 99, beside: true, x: 1 } });
@@ -1229,11 +1229,11 @@ test("v2 wave 7 wiring: wear gallery, strings, search, help", () => {
   assert.match(html, /id="model-get"/);
   assert.match(sc, /from "\.\/goods\/cloth3d\.js"/);
   const keys = ["make.g.wear", "tpl.inkInfo", "model.get", "model.need", "model.busy", "model.ready", "model.remove", "model.err.net", "model.err.hash"];
-  for (const kind of ["tshirt", "tote"]) {
+  for (const kind of ["tshirt", "tote", "hoodie", "socks", "cap"]) {
     keys.push("kind." + kind, "kind." + kind + ".d", "untitled." + kind, "pics.hint." + kind);
     const def = C.good(kind);
     def.opts.forEach((o) => { keys.push(o.l); if (o.p) o.v.forEach((v) => keys.push(o.p + v)); });
-    const p = good({ kind, g: { back: 1 } });
+    const p = good({ kind, g: { back: 1, style: "trucker" } });
     for (const s of C.sheetsOf(p)) keys.push("tpl.kind." + C.templateOf(p, s).kind, "tpl.goodNote." + s);
     def.shown(p.g).forEach((x) => keys.push("slot." + kind + "." + x));
   }
@@ -1243,6 +1243,30 @@ test("v2 wave 7 wiring: wear gallery, strings, search, help", () => {
   });
   const ctx = { lang: "en", readJSON: (k) => (k === C.GOODS_KEY ? { prj: [good({ kind: "tote", nm: "" })] } : null) };
   assert.equal(P.search(ctx)[0].title, "Mockup Tote bag");
-  assert.match(read("mockups/help.en.txt"), /## T-shirt and tote bag/);
-  assert.match(read("mockups/help.el.txt"), /## T-shirt και πάνινη τσάντα/);
+  assert.match(read("mockups/help.en.txt"), /## Clothes, bags and caps/);
+  assert.match(read("mockups/help.el.txt"), /## Ρούχα, τσάντες και καπέλα/);
+});
+
+// ---------- v2 wave 8: hoodie, socks, cap ----------
+test("hoodie, socks and cap: options, print areas, what goes where", () => {
+  const h = good({ kind: "hoodie", g: { area: "chest", back: 1 } });
+  assert.deepEqual(h.g, { col: "heather", area: "chest", back: 1 });
+  assert.deepEqual(C.sheetsOf(h), ["hoodfront", "hoodback"]);
+  assert.deepEqual([C.templateOf(h, "hoodback").W, C.templateOf(h, "hoodback").H, C.templateOf(h, "hoodback").ink], [300, 400, 1]);
+  assert.deepEqual(GC.prints("hoodie", h.g).map((q) => [q.sheet, q.side, q.area.w]), [["hoodfront", 1, 95], ["hoodback", -1, 300]]);
+  const so = good({ kind: "socks", g: { col: "navy" } });
+  assert.deepEqual(so.g, { col: "white" });
+  assert.deepEqual([C.templateOf(so, "sockleg").W, C.templateOf(so, "sockleg").H], [90, 250]);
+  assert.deepEqual(GC.prints("socks", so.g).map((q) => q.mesh), ["sock_0", "sock_1"]);
+  const c = good({ kind: "cap" });
+  assert.deepEqual(c.g, { style: "dad", col: "black", fin: "embroidery", wfront: 0 });
+  assert.equal(C.good("cap").model, undefined);              // built in code: nothing to download
+  assert.equal(C.blankGood("cap", ID, 5).sc.place, "stand");
+  assert.equal(C.good("cap").opts.find((o) => o.k === "wfront").when(c.g), false);
+  assert.deepEqual([C.templateOf(c, "capfront").W, C.templateOf(c, "capfront").H], [110, 55]);
+  assert.equal(GC.capDims({ style: "trucker" }).h, 122);
+  for (const name of ["hoodie", "socks"]) {
+    const M = GC.MODELS[name];
+    assert.match(M.sha256, /^[0-9a-f]{64}$/); assert.equal(C.good(name).model, name);
+  }
 });
