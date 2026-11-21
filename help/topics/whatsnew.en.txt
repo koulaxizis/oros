@@ -3,6 +3,27 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.21.00
+- **Light show wallpaper.** Your desktop moves with the music. Pick it under Settings › Appearance › Wallpaper or in the Wallpaper Generator. The Playing widget is bigger too: cover, progress, previous and next, and a small light.
+## Version 8.18.00
+- **Update your other devices from your phone.** Settings › orOS Gate has a new button, Update them now: every other device where orOS is open, a computer with orOS in the tray too, switches to the newest orOS within a few minutes, without you at the computer. Claude can ask for the same through orOS Gate when a device runs an older version. On Windows this needs orOS for Windows 0.9.5 or newer.
+## Version 8.17.00
+- **Outdoor places and Where am I in Maps.** Discover now finds water and springs, shelters and huts, peaks and viewpoints, camping and bike service. Where am I shows your position in every common format with a compass, sunrise and sunset, Call 112 and Text my position. See [Maps](help:a/maps).
+
+## Version 8.16.00
+- **Layout: port a whole folder of books.** On Layout's home page, Open file › Port a folder of books opens every Scribus and InDesign file of a folder of past work as a new document with its own pictures, finds the PDF that went to the printer, compares each page with it and gives you a report you can save as a spreadsheet. Nothing in the folder changes. Compare with a PDF now also notices when the PDF has extra pages at the start.
+
+## Version 8.14.00
+- **Claude talks to your newest orOS.** When orOS is open on more than one device, orOS Gate now asks the one with the newest version first, so an old window left open on a computer no longer answers for the others.
+
+## Version 8.13.00
+- **Claude finds your Layout documents on every device.** Through orOS Gate, Claude now reads and changes Layout and Atelier documents from their synced files, even on a device where you never opened Layout, such as orOS in the tray. Claude can also read back Layout's proofs and PDFs.
+- **A picture that can't be read no longer stops everything.** When a picture or font file in Claude's Layout commands can't be opened, only that step is skipped and the rest are applied; the report names what was skipped and why.
+- **Up to date right after a change.** Layout answers Claude once a change is saved, so what Claude reads next already shows it, and Claude can use new orOS Gate tools without starting a new conversation.
+
+## Version 8.12.00
+- **Layout: more of your Scribus and InDesign files comes over.** Tables from Scribus open as tables, with their cell colours, borders and text, and text on a curve stays on its curve. From InDesign, layers keep their order and their hidden or locked objects, drawn shapes keep their outline, text on a curve stays on it, tabs stay tabs, tables become rows set at their columns and footnotes go after their text.
+
 ## Version 8.11.00
 - **Claude works with orOS in the tray.** On a computer with orOS Setup or Portable, Layout's work that Claude asks for through orOS Gate now runs while the orOS window is minimised or closed to the tray, without bringing orOS to the front. Proposals for you to read, and anything that deletes, still wait for you on a screen.
 - **Folders of your computer for Claude, from any device.** A folder you open for Claude by its path is now shared with your other devices through orOS Gate (only the path, sealed), so you can open, renew or close it from the phone, and Claude can ask for one: you answer on whichever device has orOS on screen. It keeps working after a restart, where orOS runs on that computer.

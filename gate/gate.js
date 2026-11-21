@@ -606,6 +606,7 @@
     if (DOCS.indexOf(id) >= 0) t.push("read_in_app");
     if (LINES[id]) t.push(LINES[id]);
     if (id === "files") t = t.concat(FILE_READ);
+    if (id === "layout") t = t.concat(FILE_READ);   // GL-2: its proofs and PDFs, read only
     return t;
   }
   function pushLog(list, entry) {
@@ -2397,6 +2398,7 @@
       if (ev.data.indexOf('{"hi"') === 0) { onHi(ev.data); return; }
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
       if (ev.data.indexOf('{"lf"') === 0) { onLf(sock, ev.data); return; }
+      if (ev.data.indexOf('{"upd"') === 0) { onUpd(); return; }
       if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
       if (ev.data.indexOf('{"snapok"') === 0) return;
       if (ev.data.indexOf('{"fidxok"') === 0) { fileCopyAck(); return; }
@@ -2985,6 +2987,34 @@
     try { if (sock && sock.readyState === 1) sock.send((HOST.ok && HOST.kind === "bg") || document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}
     // TRAY-1: this device runs Layout's work unseen, so the box also offers it the calls kept for a screen
     try { if (sock && sock.readyState === 1 && ((HOST.ok && HOST.kind === "bg") || deskApp())) sock.send("b1"); } catch (e) {}
+    // GL-6 (Chris 2026-11-21): this orOS's version, so the box asks the newest device first
+    try { var av = String(root.__orosAppVersion || ""); if (sock && sock.readyState === 1 && /^\d{1,3}\.\d{2}\.\d{2}$/.test(av)) sock.send("ver:" + av); } catch (e) {}
+  }
+  // GL-7 (Chris 2026-11-21 «Πρέπει να βρούμε λύσεις»): the owner pressed
+  // "Update orOS on my computers" on another device, or Claude asked
+  // (relay tool oros_update). The orOS desktop app asks its launcher to
+  // download and swap in the newest orOS now (oros-portable /__oros/update,
+  // 0.9.5+); every orOS then asks its service worker for the new version,
+  // which reloads the page by itself. Nothing in the owner's data changes.
+  var updAt = 0, UPD_GAP = 5 * 60 * 1000;
+  function swCheck() {
+    try { if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update().then(null, function () {}); }, function () {}); } catch (e) {}
+  }
+  function onUpd() {
+    var now = Date.now();
+    if (now - updAt < UPD_GAP) return;
+    updAt = now;
+    var go = deskApp() ? fetch("/__oros/update", { method: "POST", cache: "no-store", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-Oros-Gate": "1" }, body: "{}" }).then(null, function () {}) : Promise.resolve();
+    go.then(function () {
+      swCheck();
+      // the download takes a minute or two on the desktop app: ask again
+      [90, 180, 300, 600].forEach(function (s) { setTimeout(swCheck, s * 1000); });
+    });
+  }
+  // → true when the ask went to the box (it passes it to the other devices)
+  function askUpdate() {
+    try { if (ws && ws.readyState === 1) { ws.send('{"upd":1}'); return true; } } catch (e) {}
+    return false;
   }
   try {
     document.addEventListener("visibilitychange", function () {
@@ -3825,6 +3855,7 @@
 
   /* ---------- API for Settings ---------- */
   var api = {
+    askUpdate: askUpdate,   // GL-7: Settings › orOS Gate › Update orOS on my computers
     // For the hidden Assistant frame (assistant.js GATE).
     frameReady: function () { if (actReady) actReady(); },
     act: ACT.concat(DOCS, ["files"]),

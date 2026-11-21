@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Layout — InDesign .idml import (v1.0.0)
+// orOS Layout — InDesign .idml import (v1.1.0)
 // An IDML file is a zip of XML parts (designmap.xml, Spreads/,
 // MasterSpreads/, Stories/, Resources/). This reads it into a NEW
 // Layout document: page size, facing pages, margins, columns, bleed,
@@ -12,10 +12,16 @@
 //     (layout/sla.js: no DOM, no scripts, no external entities).
 //   - Images embedded in the file come back as bytes for io.js to
 //     store; linked images become empty image frames that keep the
-//     file name, ready for Place image.
-//   - Not imported (counted in stats.skipped): tables, free shapes
-//     (drawn as their box), text on a path, buttons and other
-//     interactive objects, footnotes, layers.
+//     file name (`links`, filled by io.js from pictures picked with
+//     the file, as Scribus's), ready for Place image.
+//   - LY-PORT2: free shapes and bent lines become path items, text on
+//     a path keeps its path (ext.tp), layers keep their order and hide
+//     or lock their objects, tabs stay tabs with the styles' stops, a
+//     table becomes one paragraph per row with its cells at tab stops
+//     on the columns, a footnote its raised number in the text and its
+//     text after the story.
+//   - Not imported (counted in stats.skipped): buttons and other
+//     interactive objects. Tables keep no borders or cell fills.
 // Exposes LY_IDML (browser) or module.exports (Node tests).
 // ============================================================
 (function (root) {
@@ -139,6 +145,49 @@
       return v.length === 2 && isFinite(v[0]) && isFinite(v[1]) ? v : null;
     }).filter(Boolean);
   }
+  // an item's outlines: [{ open, pts: [{ a, l, r }] }] (inner
+  // coordinates; l / r are the direction points before / after the anchor)
+  function outlines(node) {
+    function xy(s) { var v = String(s || "").trim().split(/\s+/).map(Number); return v.length === 2 && isFinite(v[0]) && isFinite(v[1]) ? v : null; }
+    return findAll(node, "GeometryPathType").map(function (g) {
+      var pts = findAll(g, "PathPointType").map(function (p) {
+        var a = xy(p.a.Anchor);
+        return a ? { a: a, l: xy(p.a.LeftDirection) || a, r: xy(p.a.RightDirection) || a } : null;
+      }).filter(Boolean);
+      return { open: g.a.PathOpen === "true", pts: pts };
+    }).filter(function (o) { return o.pts.length > 1; });
+  }
+  // outlines through f (inner → page) → { x, y, w, h, d (0-1 in that
+  // box, as Layout's path items), curved } or null; the box never
+  // thinner than 1 pt so a straight line still has a height
+  function outlinePath(outs, f) {
+    var all = [], segs = [];
+    outs.forEach(function (o) {
+      var P = o.pts.map(function (p) { return { a: f(p.a), l: f(p.l), r: f(p.r) }; });
+      P.forEach(function (p) { all.push(p.a, p.l, p.r); });
+      segs.push({ open: o.open, P: P });
+    });
+    if (!all.length) return null;
+    var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    all.forEach(function (q) { x0 = Math.min(x0, q[0]); y0 = Math.min(y0, q[1]); x1 = Math.max(x1, q[0]); y1 = Math.max(y1, q[1]); });
+    if (x1 - x0 < 1) { var mx = (x0 + x1) / 2; x0 = mx - 0.5; x1 = mx + 0.5; }
+    if (y1 - y0 < 1) { var my = (y0 + y1) / 2; y0 = my - 0.5; y1 = my + 0.5; }
+    var w = x1 - x0, h = y1 - y0, curved = false;
+    function n(q) { return (Math.round((q[0] - x0) / w * 10000) / 10000) + " " + (Math.round((q[1] - y0) / h * 10000) / 10000); }
+    function same(p, q) { return Math.abs(p[0] - q[0]) < 1e-6 && Math.abs(p[1] - q[1]) < 1e-6; }
+    function seg(p, q) {
+      if (same(p.r, p.a) && same(q.l, q.a)) return "L" + n(q.a);
+      curved = true;
+      return "C" + n(p.r) + " " + n(q.l) + " " + n(q.a);
+    }
+    var d = segs.map(function (sg) {
+      var P = sg.P, out = "M" + n(P[0].a);
+      for (var i = 1; i < P.length; i++) out += seg(P[i - 1], P[i]);
+      if (!sg.open) { var last = seg(P[P.length - 1], P[0]); out += (last.charAt(0) === "L" ? "" : last) + "Z"; }
+      return out;
+    }).join("");
+    return { x: x0, y: y0, w: w, h: h, d: d, curved: curved, n: segs.length };
+  }
   // "top left bottom right"
   function bounds(s) {
     var v = String(s || "").trim().split(/\s+/).map(Number);
@@ -216,9 +265,19 @@
     if ((v = node.a.Capitalization) !== undefined) o.caps = v === "AllCaps" || v === "SmallCaps" ? 1 : 0;
     if ((v = node.a.Tracking) !== undefined) o.track = num(v, 0);
     if ((v = node.a.BulletsAndNumberingListType) !== undefined) o.bul = v === "BulletList" ? 1 : 0;
+    // tab stops (LY-PORT2): the positions under <Properties><TabList>
+    var ps = kids(node, "Properties")[0], tl = ps && kids(ps, "TabList")[0];
+    if (tl) o.tabs = findAll(tl, "Position").map(function (q) { return Math.round(num(textOf(q), 0) * 100) / 100; }).filter(function (x) { return x > 0; }).slice(0, 40);
     return o;
   }
-  var PS_KEYS = ["font", "b", "i", "size", "lead", "align", "sb", "sa", "fi", "li", "ri", "color", "u", "caps", "track", "bul"];
+  var PS_KEYS = ["font", "b", "i", "size", "lead", "align", "sb", "sa", "fi", "li", "ri", "color", "u", "caps", "track", "bul", "tabs"];
+  // a style's tab stops live in its ext (as Scribus's, LY-TAB)
+  function tabsToExt(o) {
+    if (o.tabs === undefined) return o;
+    if (o.tabs.length) { o.ext = o.ext || {}; o.ext.tabs = o.tabs; }
+    delete o.tabs;
+    return o;
+  }
   var CS_KEYS = ["font", "b", "i", "size", "color", "u", "caps", "track"];
   function pick(o, keys) { var r = {}; keys.forEach(function (k) { if (o[k] !== undefined) r[k] = o[k]; }); return r; }
   var BASIC = /^ParagraphStyle\/\$ID\/(\[No paragraph style\]|NormalParagraphStyle)$/;
@@ -270,7 +329,7 @@
 
     // styles ("based on" kept); Basic Paragraph = ps-base
     var S = { n: "#root", a: {}, c: (srcs.Styles || []).map(xml).filter(Boolean) };
-    var psId = {}, csId = {}, psRaw = {};
+    var psId = {}, csId = {}, psRaw = {}, tabsOf = {};
     findAll(S, "ParagraphStyle").forEach(function (n) {
       var ref = n.a.Self;
       if (!ref || psId[ref]) return;
@@ -279,9 +338,11 @@
     });
     Object.keys(psId).forEach(function (ref) {
       var n = psRaw[ref], o = pick(textProps(n, colour), PS_KEYS), id = psId[ref];
+      if (o.tabs) tabsOf[id] = o.tabs;
+      tabsToExt(o);
       if (id === "ps-base") {
         var base = M.find(doc.pstyles, "ps-base");
-        Object.keys(o).forEach(function (k) { base[k] = o[k]; });
+        Object.keys(o).forEach(function (k) { base[k] = k === "ext" ? Object.assign(base.ext || {}, o.ext) : o[k]; });
         return;
       }
       var bo = prop(n, "BasedOn");
@@ -306,18 +367,21 @@
       var chain = [], seen = {};
       for (var s = M.find(doc.pstyles, id); s && !seen[s.id]; s = s.base ? M.find(doc.pstyles, s.base) : null) { seen[s.id] = 1; chain.unshift(s); }
       var out = {};
-      chain.forEach(function (s) { PS_KEYS.forEach(function (k) { if (s[k] !== undefined) out[k] = s[k]; }); });
+      chain.forEach(function (s) { PS_KEYS.forEach(function (k) { if (s[k] !== undefined) out[k] = s[k]; }); if (tabsOf[s.id]) out.tabs = tabsOf[s.id]; });
       return out;
     }
     var derived = {};
-    function paraStyle(psr) {
+    function paraStyle(psr, extra) {
       var parent = psId[psr.a.AppliedParagraphStyle] || "ps-base";
-      var loc = pick(textProps(psr, colour), ["align", "sb", "sa", "fi", "li", "ri", "lead", "bul"]), res = resolvedPs(parent);
-      Object.keys(loc).forEach(function (k) { if (res[k] === loc[k] || (res[k] === undefined && !loc[k])) delete loc[k]; });
+      var loc = pick(textProps(psr, colour), ["align", "sb", "sa", "fi", "li", "ri", "lead", "bul", "tabs"]), res = resolvedPs(parent);
+      if (extra) Object.keys(extra).forEach(function (k) { loc[k] = extra[k]; });
+      Object.keys(loc).forEach(function (k) { if (JSON.stringify(res[k]) === JSON.stringify(loc[k]) || (res[k] === undefined && !loc[k])) delete loc[k]; });
       if (!Object.keys(loc).length) return parent;
       var key = parent + JSON.stringify(loc);
       if (derived[key]) return derived[key];
       var id = X.slug(parent.slice(3) + "loc", "ps", used), ps = M.find(doc.pstyles, parent);
+      if (loc.tabs) tabsOf[id] = loc.tabs;
+      tabsToExt(loc);
       loc.id = id; loc.m = now; loc.base = parent;
       loc.name = (ps && typeof ps.name === "string" ? ps.name : "Basic").slice(0, 48) + " \u00b7 " + Object.keys(derived).length;
       doc.pstyles.push(loc);
@@ -343,15 +407,26 @@
       var t = xml(src), st = t && find1(t, "Story");
       if (st && st.a.Self) storyT[st.a.Self] = st;
     });
+    // footnotes' paragraphs (LY-PORT2): the body's size − 1.5 pt, no indent
+    var noteStyle = "";
+    function notesPs() {
+      if (noteStyle) return noteStyle;
+      var b = resolvedPs("ps-base");
+      noteStyle = X.slug("Footnotes", "ps", used);
+      doc.pstyles.push({ id: noteStyle, m: now, name: "Footnotes", base: "ps-base", size: Math.max(5, (b.size || 12) - 1.5), fi: 0, sb: 0, sa: 0 });
+      return noteStyle;
+    }
     function storyOf(st) {
-      var paras = [], runs = [], psr = null;
+      var paras = [], runs = [], psr = null, inCell = 0, notes = [];
       function endPara() {
+        // a paragraph inside a table cell or a footnote goes on after a space
+        if (inCell) { if (runs.length) runs.push({ t: " " }); return; }
         var ps = psr ? paraStyle(psr) : "ps-base";
         paras.push({ ps: ps, runs: runs });
         runs = [];
       }
       function addText(t, csr) {
-        t = String(t).replace(/\u2028/g, "\n").replace(/[\t\u0009]/g, " ").replace(/[\u0000-\u0008\u000b-\u001f\u007f\u2029\ufeff]/g, "");
+        t = String(t).replace(/\u2028/g, "\n").replace(/[\u0000-\u0008\u000b-\u001f\u007f\u2029\ufeff]/g, "");
         if (!t) return;
         runs.push(runOf({ t: t }, csr));
       }
@@ -372,6 +447,48 @@
         if (!r.u) delete r.u;
         return r;
       }
+      // a table (LY-PORT2) → one paragraph per row, the cells parted by
+      // tabs set at the columns' left edges (Layout has no table object
+      // yet, wave W12): the text and its columns stay, borders do not
+      function table(tb, csr) {
+        var widths = kids(tb, "Column").map(function (c) { return Math.max(0, num(c.a.SingleColumnWidth, 0)); });
+        var nRows = kids(tb, "Row").length, cells = {};
+        kids(tb, "Cell").forEach(function (c) { if (c.a.Name) cells[c.a.Name] = c; });
+        if (!widths.length || !nRows) { stats.skipped++; return; }
+        if (runs.length) endPara();
+        var stops = [], acc = 0;
+        widths.forEach(function (w, i) { if (i) stops.push(Math.round(acc * 100) / 100); acc += w; });
+        var keep = psr;
+        for (var r = 0; r < nRows && r < 2000; r++) {
+          var rowPsr = null;
+          inCell = 1;
+          for (var c = 0; c < widths.length; c++) {
+            if (c) runs.push({ t: "\t" });
+            var cell = cells[c + ":" + r];
+            if (!cell) continue;
+            rowPsr = rowPsr || findAll(cell, "ParagraphStyleRange")[0] || null;
+            walk(cell, csr);
+            while (runs.length && runs[runs.length - 1].t === " ") runs.pop();
+          }
+          inCell = 0;
+          psr = keep;
+          paras.push({ ps: paraStyle(rowPsr || keep || { a: {}, c: [] }, { tabs: stops }), runs: runs });
+          runs = [];
+        }
+        stats.tables = (stats.tables || 0) + 1;
+      }
+      // a footnote (LY-PORT2) → its raised number in the text (ext.sup,
+      // as Word's notes, LY-NT) and its text after the story
+      function footnote(fn, csr) {
+        var n = notes.length + 1, keep = runs, keepCell = inCell, keepPsr = psr;
+        runs.push(runOf({ t: String(n), ext: { sup: 1 } }, csr));
+        runs = []; inCell = 1;
+        walk(fn, null);
+        while (runs.length && typeof runs[0].t === "string" && !runs[0].t.trim()) runs.shift();
+        if (runs.length && typeof runs[0].t === "string") runs[0].t = runs[0].t.replace(/^\s+/, "");
+        notes.push({ n: n, runs: runs });
+        runs = keep; inCell = keepCell; psr = keepPsr;
+      }
       function walk(node, csr) {
         node.c.forEach(function (x) {
           if (x.n === "ParagraphStyleRange") { var keep = psr; psr = x; walk(x, csr); psr = keep; }
@@ -388,7 +505,9 @@
             if (/last ?page ?number/i.test(x.a.AssociatedTextVariable || "") || /last ?page ?number/i.test(x.a.Name || "")) runs.push(runOf({ f: "pc" }, csr));
             else if (x.a.ResultText) addText(x.a.ResultText, csr);
           }
-          else if (x.n === "Table" || x.n === "Footnote" || x.n === "Note") stats.skipped++;
+          else if (x.n === "Table") table(x, csr);
+          else if (x.n === "Footnote") footnote(x, csr);
+          else if (x.n === "Note") return;     // InDesign's editorial notes never print
           else if (x.n === "Properties" || x.n === "StoryPreference" || x.n === "InCopyExportOption") return;
           else if (x.c && x.c.length) walk(x, csr);     // XML tags, hyperlinks, tracked changes
         });
@@ -397,6 +516,8 @@
       if (runs.length || !paras.length) endPara();
       // a final empty paragraph left by a trailing break
       if (paras.length > 1 && !paras[paras.length - 1].runs.length) paras.pop();
+      notes.forEach(function (nt) { paras.push({ ps: notesPs(), runs: [{ t: nt.n + ". " }].concat(nt.runs) }); });
+      if (notes.length) stats.notes = (stats.notes || 0) + notes.length;
       return { id: M.newId("st"), m: now, h: [], paras: paras };
     }
 
@@ -440,7 +561,12 @@
     }
     function local(g, x, y) { var l = apply(g.im, x, y); return [l[0] - g.bx.l, l[1] - g.bx.t]; }
 
-    var images = [], linked = 0, frames = [], z = 0, items = [];
+    var images = [], linked = 0, links = [], frames = [], z = 0, items = [];
+    // layers: the designmap lists them top first
+    var layerBy = {}, layerN = kids(D, "Layer");
+    layerN.forEach(function (l, k) {
+      if (l.a.Self) layerBy[l.a.Self] = { level: Math.min(999, layerN.length - 1 - k), hide: l.a.Visible === "false" || l.a.Printable === "false", lock: l.a.Locked === "true" };
+    });
     function common(node, it) {
       var a = node.a;
       var f = colour(a.FillColor, a.FillTint), s = colour(a.StrokeColor, a.StrokeTint);
@@ -461,31 +587,48 @@
       if (a.CornerOption && /Rounded/.test(a.CornerOption)) it.r = num(a.CornerRadius, 0);
       else if (a.TopLeftCornerOption && /Rounded/.test(a.TopLeftCornerOption)) it.r = num(a.TopLeftCornerRadius, 0);
     }
-    function addItem(node, pm, geos, grp) {
+    function addItem(node, pm, geos, grp, layer) {
       var kind = node.n;
       var m = mul(mat(node.a.ItemTransform), pm);
+      var lref = node.a.ItemLayer || layer || "", lay = layerBy[lref] || { level: 0 };
       if (kind === "Group") {
         var g = M.newId("gr");
-        node.c.forEach(function (c) { addItem(c, m, geos, g); });
+        node.c.forEach(function (c) { addItem(c, m, geos, g, lref); });
         return;
       }
       if (["TextFrame", "Rectangle", "Oval", "GraphicLine", "Polygon"].indexOf(kind) < 0) {
-        if (["Button", "TextPath", "MultiStateObject", "EPSText", "FormField", "CheckBox", "RadioButton", "TextBox", "ListBox", "ComboBox", "SignatureField"].indexOf(kind) >= 0) stats.skipped++;
+        if (["Button", "MultiStateObject", "EPSText", "FormField", "CheckBox", "RadioButton", "TextBox", "ListBox", "ComboBox", "SignatureField"].indexOf(kind) >= 0) stats.skipped++;
         return;
       }
       var pts = anchors(node);
       if (!pts.length) { stats.skipped++; return; }
-      var it = { id: M.newId("it"), m: now, z: (++z) * 16 };
+      // layers (LY-PORT2): stacking order, hidden or non-printing →
+      // hidden, locked → locked
+      var it = { id: M.newId("it"), m: now, z: (lay.level * 1e6 + (++z)) * 16 };
       if (grp) it.grp = grp;
       common(node, it);
-      var sp, g0;
+      if (lay.hide) it.hide = 1;
+      if (lay.lock) it.lock = 1;
+      var sp, g0, outs = outlines(node);
+      function toPage(q) { var s2 = apply(m, q[0], q[1]); return local(g0, s2[0], s2[1]); }
+      // a free shape or a bent line (LY-PORT2): a path item with the
+      // outline's own points, upright, in the outline's box
+      function asPath() {
+        var op = outlinePath(outs, toPage);
+        if (!op) return false;
+        it.t = "path"; it.d = op.d; it.x = op.x; it.y = op.y; it.w = op.w; it.h = op.h; it.rot = 0;
+        if (op.n > 1) it.eo = 1;
+        return true;
+      }
       if (kind === "GraphicLine") {
         var p0 = apply(m, pts[0][0], pts[0][1]), p1 = apply(m, pts[pts.length - 1][0], pts[pts.length - 1][1]);
         g0 = pageAt(geos, (p0[0] + p1[0]) / 2, (p0[1] + p1[1]) / 2);
         if (!g0) { stats.skipped++; return; }
         var l0 = local(g0, p0[0], p0[1]), l1 = local(g0, p1[0], p1[1]);
-        it.t = "line"; it.x = l0[0]; it.y = l0[1]; it.w = l1[0] - l0[0]; it.h = l1[1] - l0[1]; it.rot = 0;
-        it.stroke = it.stroke || "sw-black"; it.fill = "";
+        var bent = pts.length > 2 || outs.length > 1 || (outs[0] && outlinePath(outs, toPage).curved);
+        if (!(bent && asPath())) { it.t = "line"; it.x = l0[0]; it.y = l0[1]; it.w = l1[0] - l0[0]; it.h = l1[1] - l0[1]; it.rot = 0; it.fill = ""; }
+        it.stroke = it.stroke || "sw-black";
+        if (it.t === "line") it.fill = "";
         if (!(it.sw > 0)) it.sw = 1;
       } else {
         var x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
@@ -523,22 +666,39 @@
           it.nm = nm.slice(0, 120);
           var cont = find1(gr, "Contents"), b64 = textOf(cont).replace(/\s+/g, "");
           if (gr.n === "Image" && b64) images.push({ item: it.id, name: it.nm || "image", b64: b64 });
-          else linked++;
+          else { linked++; if (it.nm) links.push({ item: it.id, name: it.nm }); }
         } else {
           it.t = kind === "Oval" ? "ell" : "rect";
-          if (kind === "Polygon") stats.skipped++;     // drawn as its box
+          if (kind === "Polygon" && !asPath()) stats.skipped++;     // drawn as its box
         }
       }
       it.pg = g0.pg.id;
       if (g0.pg.side) it.side = g0.pg.side;
       items.push(it);
       stats.items++;
+      // text on the item's outline (LY-PORT2): a text frame over the
+      // outline's box with the outline as its path (ext.tp); its story
+      // is threaded like any frame's
+      kids(node, "TextPath").forEach(function (tpn) {
+        var op = outlinePath(outs.slice(0, 1), toPage), d = op && X.tpData(op.d);
+        if (!d) { stats.skipped++; return; }
+        var tx = { id: M.newId("it"), m: now, z: (lay.level * 1e6 + (++z)) * 16, t: "text", pg: g0.pg.id, x: op.x, y: op.y, w: op.w, h: op.h, rot: 0,
+          cols: 1, gut: 0, ins: 0, va: "t", fill: "", stroke: "", sw: 0, ext: { tp: { d: d, o: 0 } } };
+        if (tpn.a.FlipPathEffect === "Flipped") tx.ext.tp.s = -1;
+        if (grp) tx.grp = grp;
+        if (it.hide) tx.hide = 1;
+        if (it.lock) tx.lock = 1;
+        if (g0.pg.side) tx.side = g0.pg.side;
+        items.push(tx);
+        frames.push({ it: tx, node: tpn });
+        stats.items++;
+      });
     }
     var OBJ = /^(TextFrame|Rectangle|Oval|GraphicLine|Polygon|Group|Button|TextPath|MultiStateObject|EPSText|FormField|CheckBox|RadioButton|TextBox|ListBox|ComboBox|SignatureField)$/;
     function spreadItems(sp, pages) {
       // pages and items are both placed in the spread's own space
       var geos = pages.map(pageGeo);
-      sp.c.forEach(function (c) { if (OBJ.test(c.n)) addItem(c, [1, 0, 0, 1, 0, 0], geos, ""); });
+      sp.c.forEach(function (c) { if (OBJ.test(c.n)) addItem(c, [1, 0, 0, 1, 0, 0], geos, "", ""); });
     }
     masterPages.forEach(function (ms) { spreadItems(ms.spread, ms.pages); });
     spreadT.forEach(function (sp) {
@@ -574,7 +734,7 @@
     if (doc.items.length > M.MAX_ITEMS) doc.items.length = M.MAX_ITEMS;
     if (!doc.masters.length) doc.masters.push({ id: "ms-a", m: now, name: { en: "A-Master", el: "A-Master" }, pre: "A" });
     var out = M.normDoc(doc);
-    return { doc: out, images: images, linked: linked, stats: stats };
+    return { doc: out, images: images, linked: linked, links: links, stats: stats };
   }
 
   // The whole file → Promise of the convert() result (or null).
