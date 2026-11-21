@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.14.00
+- **Claude talks to your newest orOS.** When orOS is open on more than one device, orOS Gate now asks the one with the newest version first, so an old window left open on a computer no longer answers for the others.
+
 ## Version 8.13.00
 - **Claude finds your Layout documents on every device.** Through orOS Gate, Claude now reads and changes Layout and Atelier documents from their synced files, even on a device where you never opened Layout, such as orOS in the tray. Claude can also read back Layout's proofs and PDFs.
 - **A picture that can't be read no longer stops everything.** When a picture or font file in Claude's Layout commands can't be opened, only that step is skipped and the rest are applied; the report names what was skipped and why.

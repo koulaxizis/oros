@@ -1421,11 +1421,19 @@ export function queueFor(q, now) {
   // to an item Claude added meanwhile (its p- ref) runs after the add.
   return items.sort((x, y) => x.t - y.t || x.s - y.s).map((x) => ({ id: x.id, c: x.c, t: x.t }));
 }
-// Which device answers: one whose orOS is on screen, else the one that
-// connected last (a phone in the background often has no socket at all).
+// "8.13.00" → 81300 (0 when it is not a version)
+export function verNum(s) {
+  const m = /^(\d{1,3})\.(\d{2})\.(\d{2})$/.exec(String(s || ""));
+  return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : 0;
+}
+// Which device answers: the newest orOS (GL-6, Chris 2026-11-21: an old
+// window kept answering for a day; a device older than 8.14.00 says no
+// version and comes last), then one whose orOS is on screen, else the
+// one that connected last (a phone in the background often has no socket).
 export function pickOrder(socks) {
   return socks.slice().sort((x, y) => {
     const a = attOf(x), b = attOf(y);
+    if ((b.ver || 0) !== (a.ver || 0)) return (b.ver || 0) - (a.ver || 0);
     if ((b.v ? 1 : 0) !== (a.v ? 1 : 0)) return (b.v ? 1 : 0) - (a.v ? 1 : 0);
     return (b.at || 0) - (a.at || 0);
   });
@@ -1839,6 +1847,11 @@ export class GateBox {
     if (msg === "v0" || msg === "v1") {             // the device's screen: shown or hidden
       const a = attOf(ws), was = a.v; a.v = msg === "v1" ? 1 : 0; a.vt = a.lt = Date.now(); setAtt(ws, a);
       if (a.v && !was) await this.sendHeld([ws]);    // 7.48.00: deletions waiting for a screen
+      return;
+    }
+    if (typeof msg === "string" && msg.length <= 14 && msg.indexOf("ver:") === 0) {   // GL-6: the device's orOS version
+      const n = verNum(msg.slice(4));
+      if (n) { const a = attOf(ws); a.ver = n; a.lt = Date.now(); setAtt(ws, a); }
       return;
     }
     if (msg === "b1") {                              // TRAY-1: a device that runs Layout's work unseen (tray host, desktop window)

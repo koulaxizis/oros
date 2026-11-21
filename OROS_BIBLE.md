@@ -13338,3 +13338,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** assistant/assistant.js, layout/{layout.js, assist.js, proassist.js}, gate/gate.js, relay/gate.js, shell.js, help/topics/whatsnew.en/el.txt, tests/gate-layout-anywhere.test.js (new), tests/{gate-act, gate-parity, gate-relay, layout-disk}.test.js.
 - **Tests:** full `node --test tests/*.test.js` (contacts-windows CT-SW failed once in the full run, passed alone; untouched). Not tested: a real device scan of a big /internal/Layout; the closed-orOS copy still has no Layout documents (with the tray host on, orOS is open).
 - **Next:** orOS desktop window of its own (WebView2) so computer use can click (Chris chose after GL-1…5).
+
+### 2026-11-21 — 8.14.00 — Gate asks the newest device first (GL-6)
+- **Why:** after 8.13.00 Chris's Windows desktop app kept answering the Gate on 8.01.00 all day: its window had been open since 22:52Z on 20/11, and oros-portable applies a downloaded orOS only with no window open (fixed in oros-portable#46). Chris, away from the PC: «Αυτό είναι το πρόβλημα!!».
+- **What:** gate/gate.js `sendVis` also sends "ver:<APP_VERSION>"; relay/gate.js keeps it per socket (`a.ver`, `verNum` "8.14.00" → 81400) and `pickOrder` sorts by version first, then screen, then the last to connect. Devices older than 8.14.00 send no version and come last.
+- **Files:** gate/gate.js, relay/gate.js, shell.js, help/topics/whatsnew.en/el.txt, tests/gate-layout-anywhere.test.js.
+- **Tests:** full `node --test tests/*.test.js`.
+
