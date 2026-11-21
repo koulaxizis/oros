@@ -124,6 +124,87 @@
       "untitled.tape": "Cassette mockup",
       "untitled.vhs": "VHS mockup",
       "untitled.vinyl": "Vinyl mockup",
+      "make.g.merch": "Merch & small things",
+      "kind.badge": "Badge",
+      "kind.badge.d": "Pin-back button, 25 to 75 mm, gloss or matte, with a pin or a magnet",
+      "kind.sticker": "Sticker",
+      "kind.sticker.d": "Cut to the picture's outline, round or square; matte, gloss, holographic or clear",
+      "kind.keychain": "Keychain",
+      "kind.keychain.d": "Acrylic, metal or rubber, with its ring; printed on one or both sides",
+      "kind.pin": "Enamel pin",
+      "kind.pin.d": "Metal with enamel colours, hard or soft enamel, on a backing card if you like",
+      "kind.magnet": "Magnet",
+      "kind.magnet.d": "Fridge magnet: rectangle, round or cut to the picture",
+      "untitled.badge": "Badge mockup",
+      "untitled.sticker": "Sticker mockup",
+      "untitled.keychain": "Keychain mockup",
+      "untitled.pin": "Pin mockup",
+      "untitled.magnet": "Magnet mockup",
+      "pics.hint.badge": "The picture covers the whole circle: the middle is the face, the outer ring wraps round the edge.",
+      "pics.hint.sticker": "For a cut to the shape use a picture with a see-through background (PNG): the cut follows its outline.",
+      "pics.hint.keychain": "For a cut to the shape use a PNG with a see-through background; the back side keeps the same outline.",
+      "pics.hint.pin": "Use a picture with a see-through background and a few flat colours; the pin shows it as enamel with metal lines.",
+      "pics.hint.magnet": "The picture fills the magnet; for a cut to the shape use a PNG with a see-through background.",
+      "slot.badge.front": "Badge picture",
+      "slot.sticker.front": "Sticker picture",
+      "slot.keychain.front": "Front side",
+      "slot.keychain.back": "Back side",
+      "slot.pin.front": "Pin design",
+      "slot.pin.back": "Backing card",
+      "slot.magnet.front": "Magnet picture",
+      "f.gsize": "Size",
+      "fin.holo": "Holographic",
+      "fin.clear": "Clear",
+      "f.shape": "Shape",
+      "shape.die": "Cut to the picture",
+      "shape.round": "Round",
+      "shape.square": "Square",
+      "shape.rounded": "Rounded corners",
+      "shape.rect": "Rectangle",
+      "f.wedge": "White edge",
+      "f.bback": "Back",
+      "bback.pin": "Pin",
+      "bback.magnet": "Magnet",
+      "f.kmat": "Material",
+      "kmat.acrylic": "Acrylic",
+      "kmat.metal": "Metal",
+      "kmat.rubber": "Rubber",
+      "f.ring": "Ring",
+      "f.metal": "Metal",
+      "metal.silver": "Silver",
+      "metal.gold": "Gold",
+      "metal.black": "Black",
+      "metal.rose": "Rose gold",
+      "metal.copper": "Copper",
+      "f.two": "Printed on both sides",
+      "f.enamel": "Enamel",
+      "enamel.hard": "Hard (smooth, glossy)",
+      "enamel.soft": "Soft (metal lines raised)",
+      "f.card": "On a backing card",
+      "f.beside.badge": "The back of the badge next to it",
+      "f.beside.pin": "The back of the pin next to it",
+      "good.size2": "Size: {w} × {h}.",
+      "tpl.kind.badge": "Badge (round, cut)",
+      "tpl.kind.sticker": "Sticker",
+      "tpl.kind.kfront": "Keychain, front",
+      "tpl.kind.kback": "Keychain, back",
+      "tpl.kind.pin": "Pin artwork",
+      "tpl.kind.pcard": "Backing card",
+      "tpl.kind.magnet": "Magnet",
+      "tpl.badgeInfo": "Cut a circle of {cut}; the face is {d}, the ring between wraps round the edge and under it.",
+      "tpl.cutInfo": "Sheet {w} × {h} with the bleed, cut {tw} × {th}. The cut line is in the PDF as a thin magenta line.",
+      "tpl.goodNote.badge": "Keep text inside the dashed ring: the outer ring goes round the edge and behind.",
+      "tpl.goodNote.sticker": "The cut follows the outline; keep text out of the green band inside it.",
+      "tpl.goodNote.kfront": "The hole sits at the top in the middle; keep the picture clear of it.",
+      "tpl.goodNote.pin": "Send this as the artwork: the maker turns it into metal lines and enamel colours. Few flat colours and lines of at least 0.3 mm work best.",
+      "tpl.goodNote.magnet": "Keep text out of the green band by the edge.",
+      "lg.badgeCut": "Circle to cut",
+      "lg.badgeFace": "Edge of the face",
+      "lg.cutAway": "Cut away",
+      "lg.cutLine": "Cut line",
+      "warn.dieOpaque": "The picture has no see-through background, so the cut is a rectangle round it.",
+      "warn.dieParts": "Parts of the picture stand apart: the cut follows the biggest one. Join them or grow the white edge.",
+      "warn.dieNoPic": "Add a picture: the cut follows its outline.",
       "pics.hint.tape": "The J-card (or O-card) parts, and the two labels on the tape: side A in front, side B behind.",
       "pics.hint.vhs": "The sleeve's front, back and spine, the face label of the tape; the spine picture also goes on the tape's spine label.",
       "pics.hint.vinyl": "The jacket's front, back and spine (or one full wrap), the two record labels (round, the hole is cut out) and a printed inner sleeve.",
@@ -428,6 +509,87 @@
       "untitled.tape": "Μακέτα κασέτας",
       "untitled.vhs": "Μακέτα VHS",
       "untitled.vinyl": "Μακέτα βινυλίου",
+      "make.g.merch": "Merch και μικροαντικείμενα",
+      "kind.badge": "Κονκάρδα",
+      "kind.badge.d": "Κονκάρδα 25 έως 75 mm, γυαλιστερή ή ματ, με καρφίτσα ή μαγνήτη",
+      "kind.sticker": "Αυτοκόλλητο",
+      "kind.sticker.d": "Κομμένο στο περίγραμμα της εικόνας, στρογγυλό ή τετράγωνο· ματ, γυαλιστερό, ολογραφικό ή διάφανο",
+      "kind.keychain": "Μπρελόκ",
+      "kind.keychain.d": "Ακρυλικό, μεταλλικό ή λάστιχο, με τον κρίκο του· τυπωμένο από τη μία ή και τις δύο πλευρές",
+      "kind.pin": "Καρφίτσα σμάλτου",
+      "kind.pin.d": "Μέταλλο με χρώματα σμάλτου, σκληρό ή μαλακό σμάλτο, αν θες σε καρτελάκι",
+      "kind.magnet": "Μαγνητάκι",
+      "kind.magnet.d": "Μαγνητάκι ψυγείου: ορθογώνιο, στρογγυλό ή στο σχήμα της εικόνας",
+      "untitled.badge": "Μακέτα κονκάρδας",
+      "untitled.sticker": "Μακέτα αυτοκόλλητου",
+      "untitled.keychain": "Μακέτα μπρελόκ",
+      "untitled.pin": "Μακέτα καρφίτσας",
+      "untitled.magnet": "Μακέτα μαγνήτη",
+      "pics.hint.badge": "Η εικόνα καλύπτει όλο τον κύκλο: η μέση είναι η πρόσοψη, ο εξωτερικός δακτύλιος τυλίγεται γύρω από την άκρη.",
+      "pics.hint.sticker": "Για κοπή στο σχήμα βάλε εικόνα με διάφανο φόντο (PNG): η κοπή ακολουθεί το περίγραμμά της.",
+      "pics.hint.keychain": "Για κοπή στο σχήμα βάλε PNG με διάφανο φόντο· η πίσω πλευρά κρατά το ίδιο περίγραμμα.",
+      "pics.hint.pin": "Βάλε εικόνα με διάφανο φόντο και λίγα επίπεδα χρώματα· η καρφίτσα τη δείχνει ως σμάλτο με μεταλλικές γραμμές.",
+      "pics.hint.magnet": "Η εικόνα γεμίζει το μαγνητάκι· για κοπή στο σχήμα βάλε PNG με διάφανο φόντο.",
+      "slot.badge.front": "Εικόνα κονκάρδας",
+      "slot.sticker.front": "Εικόνα αυτοκόλλητου",
+      "slot.keychain.front": "Μπροστινή πλευρά",
+      "slot.keychain.back": "Πίσω πλευρά",
+      "slot.pin.front": "Σχέδιο καρφίτσας",
+      "slot.pin.back": "Καρτελάκι",
+      "slot.magnet.front": "Εικόνα μαγνήτη",
+      "f.gsize": "Μέγεθος",
+      "fin.holo": "Ολογραφικό",
+      "fin.clear": "Διάφανο",
+      "f.shape": "Σχήμα",
+      "shape.die": "Στο σχήμα της εικόνας",
+      "shape.round": "Στρογγυλό",
+      "shape.square": "Τετράγωνο",
+      "shape.rounded": "Στρογγυλεμένες γωνίες",
+      "shape.rect": "Ορθογώνιο",
+      "f.wedge": "Λευκό περιθώριο",
+      "f.bback": "Πίσω",
+      "bback.pin": "Καρφίτσα",
+      "bback.magnet": "Μαγνήτης",
+      "f.kmat": "Υλικό",
+      "kmat.acrylic": "Ακρυλικό",
+      "kmat.metal": "Μέταλλο",
+      "kmat.rubber": "Λάστιχο",
+      "f.ring": "Κρίκος",
+      "f.metal": "Μέταλλο",
+      "metal.silver": "Ασημί",
+      "metal.gold": "Χρυσό",
+      "metal.black": "Μαύρο",
+      "metal.rose": "Ροζ χρυσό",
+      "metal.copper": "Χάλκινο",
+      "f.two": "Τυπωμένο και από τις δύο πλευρές",
+      "f.enamel": "Σμάλτο",
+      "enamel.hard": "Σκληρό (λείο, γυαλιστερό)",
+      "enamel.soft": "Μαλακό (ανάγλυφες γραμμές)",
+      "f.card": "Σε καρτελάκι",
+      "f.beside.badge": "Η πίσω πλευρά της κονκάρδας δίπλα",
+      "f.beside.pin": "Η πίσω πλευρά της καρφίτσας δίπλα",
+      "good.size2": "Μέγεθος: {w} × {h}.",
+      "tpl.kind.badge": "Κονκάρδα (στρογγυλή, κοπή)",
+      "tpl.kind.sticker": "Αυτοκόλλητο",
+      "tpl.kind.kfront": "Μπρελόκ, μπροστά",
+      "tpl.kind.kback": "Μπρελόκ, πίσω",
+      "tpl.kind.pin": "Σχέδιο καρφίτσας",
+      "tpl.kind.pcard": "Καρτελάκι",
+      "tpl.kind.magnet": "Μαγνητάκι",
+      "tpl.badgeInfo": "Κόψε κύκλο {cut}· η πρόσοψη είναι {d} και ο δακτύλιος ανάμεσα τυλίγεται γύρω από την άκρη και από κάτω.",
+      "tpl.cutInfo": "Φύλλο {w} × {h} με το bleed, κοπή {tw} × {th}. Η γραμμή κοπής είναι στο PDF ως λεπτή ματζέντα γραμμή.",
+      "tpl.goodNote.badge": "Κράτα το κείμενο μέσα στον διακεκομμένο κύκλο: ο εξωτερικός δακτύλιος πάει γύρω από την άκρη και πίσω.",
+      "tpl.goodNote.sticker": "Η κοπή ακολουθεί το περίγραμμα· κράτα το κείμενο έξω από την πράσινη λωρίδα μέσα της.",
+      "tpl.goodNote.kfront": "Η τρύπα είναι πάνω στη μέση· κράτα την εικόνα μακριά της.",
+      "tpl.goodNote.pin": "Στείλ' το ως σχέδιο: ο κατασκευαστής το κάνει μεταλλικές γραμμές και χρώματα σμάλτου. Λίγα επίπεδα χρώματα και γραμμές τουλάχιστον 0.3 mm δουλεύουν καλύτερα.",
+      "tpl.goodNote.magnet": "Κράτα το κείμενο έξω από την πράσινη λωρίδα στην άκρη.",
+      "lg.badgeCut": "Κύκλος κοπής",
+      "lg.badgeFace": "Άκρη της πρόσοψης",
+      "lg.cutAway": "Κόβεται",
+      "lg.cutLine": "Γραμμή κοπής",
+      "warn.dieOpaque": "Η εικόνα δεν έχει διάφανο φόντο, οπότε η κοπή είναι ένα ορθογώνιο γύρω της.",
+      "warn.dieParts": "Κομμάτια της εικόνας στέκονται χωριστά: η κοπή ακολουθεί το μεγαλύτερο. Ένωσέ τα ή μεγάλωσε το λευκό περιθώριο.",
+      "warn.dieNoPic": "Βάλε εικόνα: η κοπή ακολουθεί το περίγραμμά της.",
       "pics.hint.tape": "Τα μέρη του J-card (ή του O-card) και οι δύο ετικέτες της κασέτας: η πλευρά A μπροστά, η B πίσω.",
       "pics.hint.vhs": "Μπροστά, πίσω και ράχη της θήκης, η ετικέτα της κασέτας· η εικόνα της ράχης μπαίνει και στην ετικέτα ράχης της κασέτας.",
       "pics.hint.vinyl": "Μπροστά, πίσω και ράχη του εξωφύλλου (ή ένα ενιαίο), οι δύο ετικέτες του δίσκου (στρογγυλές, η τρύπα κόβεται) και τυπωμένος εσωτερικός φάκελος.",
@@ -1188,6 +1350,7 @@
     $("title-sub").textContent = subOf(cur);
     if (renderKind()) { renderGoodForm(); renderCommon(); return; }
     var b = cur.bk, a = cur.art;
+    $("f-spTC").parentNode.hidden = $("f-spT").parentNode.hidden = false;
     // book
     setSeg("bind", b.bind);
     setVal("f-trim", b.trim);
@@ -1245,7 +1408,7 @@
     if (g) { $("set-grp").hidden = true; $("dev-box").hidden = true; $("setn-box").hidden = true; $("gap-box").hidden = true; }
     var slideOut = g && ((cur.kind === "cd" && cur.g.pack === "sleeve") || cur.kind === "vinyl" || (cur.kind === "vhs" && cur.g.pack === "slip") || (cur.kind === "tape" && cur.g.pack === "ocard"));
     $("open-lbl").textContent = t(g ? (slideOut ? "f.openSlide." + cur.kind : "f.openCase") : "f.open");
-    $("open-box").hidden = g && (cur.kind === "tape" || cur.kind === "vhs") && cur.g.pack === "none";
+    $("open-box").hidden = g && (!!C.good(cur.kind).noOpen || ((cur.kind === "tape" || cur.kind === "vhs") && cur.g.pack === "none"));
     if (!g) $("open-box").hidden = show !== "book";
     if (!g) {
       setSeg("showk", show);
@@ -1301,15 +1464,70 @@
     if (p.kind === "tape") return t("sub.tape", { pack: t("tpack." + g.pack) });
     if (p.kind === "vhs") return t("sub.vhs", { pack: t(g.pack === "none" ? "tpack.none" : "vpack." + g.pack) });
     if (p.kind === "vinyl") return t("sub.vinyl", { size: t("rsize." + g.size), jk: t("vjk." + g.jk) });
+    var def = C.good(p.kind);
+    if (def && def.opts) return t("kind." + p.kind) + " · " + optTxt(def.opts[0], g[def.opts[0].k]);
     return t("kind." + p.kind);
+  }
+  // The label of one value of a product option (goods with opts).
+  function optTxt(o, v) {
+    if (o.u === "mm") return lenTxt(+v, 0);
+    if (o.u === "wxh") { var q = String(v).split("x"); return lenTxt(+q[0], 0) + " × " + lenTxt(+q[1], 0); }
+    return t(o.p + v);
+  }
+  // The form of a product that describes its own options.
+  function renderGen(def, g) {
+    var box = $("gen-form"), key = cur.kind + "|" + LANG + "|" + cur.unit;
+    if (box.getAttribute("data-k") !== key) {
+      box.textContent = "";
+      def.opts.forEach(function (o) {
+        var row = el("div"), id = "go-" + o.k;
+        row.id = id + "-row";
+        if (o.t === "chk") {
+          var lb = el("label", "check"), inp = el("input");
+          inp.type = "checkbox"; inp.id = id; inp.setAttribute("data-o", o.k);
+          lb.appendChild(inp); lb.appendChild(el("span", null, t(o.l)));
+          row.appendChild(lb);
+        } else if (o.t === "sel") {
+          var fl = el("label", "fld"), sel = el("select");
+          sel.id = id; sel.setAttribute("data-o", o.k);
+          o.v.forEach(function (v) { var op = el("option", null, optTxt(o, v)); op.value = String(v); sel.appendChild(op); });
+          fl.appendChild(el("span", null, t(o.l))); fl.appendChild(sel);
+          row.appendChild(fl);
+        } else {
+          var lbl = el("span", "lbl", t(o.l)), seg = el("div", "seg" + (o.v.length > 3 ? " wrap" : ""));
+          lbl.id = id + "-lbl"; seg.id = id; seg.setAttribute("role", "radiogroup"); seg.setAttribute("aria-labelledby", lbl.id); seg.setAttribute("data-o", o.k);
+          o.v.forEach(function (v) { var b = el("button", null, optTxt(o, v)); b.type = "button"; b.setAttribute("role", "radio"); b.setAttribute("data-v", String(v)); seg.appendChild(b); });
+          row.appendChild(lbl); row.appendChild(seg);
+        }
+        box.appendChild(row);
+      });
+      box.setAttribute("data-k", key);
+    }
+    def.opts.forEach(function (o) {
+      $("go-" + o.k + "-row").hidden = !!(o.when && !o.when(g));
+      if (o.t === "chk") setChk("go-" + o.k, g[o.k]);
+      else if (o.t === "sel") setVal("go-" + o.k, String(g[o.k]));
+      else setSeg("go-" + o.k, String(g[o.k]));
+    });
+  }
+  function genSet(k, raw) {
+    var def = cur && C.good(cur.kind), o = def && def.opts && def.opts.filter(function (x) { return x.k === k; })[0];
+    if (!o) return;
+    var v = o.t === "chk" ? (raw ? 1 : 0) : typeof o.v[0] === "number" ? +raw : raw;
+    changeG(function (g) { g[k] = v; });
+    curSheet = ""; legendKind = "";
   }
   function lenTxt(mm, d) { return cur && cur.unit === "in" ? fmtNum(mm / C.MM_PER_IN, 3) + "″" : fmtNum(mm, d == null ? 1 : d) + " mm"; }
   function renderGoodForm() {
     var g = cur.g, a = cur.art, k = cur.kind, D = C.good(k).dims(g);
     ["cd", "dvd", "tape", "vhs", "vinyl"].forEach(function (x) { $(x + "-form").hidden = k !== x; });
+    var def = C.good(k);
+    $("gen-form").hidden = !def.opts;
+    if (def.opts) renderGen(def, g);
     $("disc-box").hidden = !(k === "cd" || k === "dvd");
-    $("beside-lbl").textContent = t("f.beside." + k);
-    $("beside-row").hidden = (k === "tape" || k === "vhs") && g.pack === "none";
+    if (!def.opts) $("beside-lbl").textContent = t("f.beside." + k);
+    $("beside-row").hidden = !!def.opts || ((k === "tape" || k === "vhs") && g.pack === "none");
+    if (def.opts) out("good-info", t("good.size2", { w: lenTxt(D.w), h: lenTxt(D.h) }));
     if (k === "tape") {
       setSeg("tpack", g.pack); setSeg("shellk", g.shell);
       $("jp-box").hidden = g.pack !== "norelco";
@@ -1344,13 +1562,16 @@
     $("good-pics").hidden = false;
     out("good-pics", t("pics.hint." + k));
     setVal("f-coverC", a.c); setVal("f-spTC", a.spTC); setVal("f-spT", a.spT);
+    // flat products have no spine
+    $("f-spTC").parentNode.hidden = $("f-spT").parentNode.hidden = !!def.opts;
     renderSlots();
     if (wrapOk) renderWrapInfo();
     $("ins-box").hidden = true; $("vols-box").hidden = true;
   }
   // Which picture slots a product shows (in the order of its sheets).
   function goodSlotsShown() {
-    var k = cur.kind, g = cur.g;
+    var k = cur.kind, g = cur.g, def = C.good(k);
+    if (def && typeof def.shown === "function") return def.shown(g);
     if (cur.art.mode === "wrap" && C.good(k).wrap) return k === "vinyl" ? ["wrap", "labelA", "labelB"].concat(g.inner === "printed" ? ["innerF", "innerB"] : []) : ["wrap", "disc"];
     if (k === "tape") return (g.pack === "norelco" ? ["front", "spine", "back"].concat(g.jp > 3 ? ["inside"] : [])
       : g.pack === "ocard" ? ["front", "back", "spine"] : []).concat(["sideA", "sideB"]);
@@ -1387,13 +1608,34 @@
     $("f-big").addEventListener("change", function () { var on = $("f-big").checked ? 1 : 0; changeG(function (g) { g.big = on; }); });
     $("f-hub").addEventListener("change", function () { var v = +$("f-hub").value; changeG(function (g) { g.hub = v; }); });
     $("f-beside").addEventListener("change", function () { var on = $("f-beside").checked ? 1 : 0; changeG(function (g) { g.beside = on; }); });
+    // products that describe their own options
+    var gf = $("gen-form");
+    gf.addEventListener("click", function (e) {
+      var b = e.target.closest("button[data-v]"), sg = b && b.closest("[data-o]");
+      if (sg) genSet(sg.getAttribute("data-o"), b.getAttribute("data-v"));
+    });
+    gf.addEventListener("keydown", function (e) {
+      var sg = e.target.closest(".seg[data-o]"), d = (e.key === "ArrowRight" || e.key === "ArrowDown") ? 1 : (e.key === "ArrowLeft" || e.key === "ArrowUp") ? -1 : 0;
+      if (!sg || !d) return;
+      e.preventDefault();
+      var bs = [].slice.call(sg.querySelectorAll("button[data-v]")), i = bs.findIndex(function (b) { return b.getAttribute("aria-checked") === "true"; });
+      var nb = bs[(i + d + bs.length) % bs.length];
+      genSet(sg.getAttribute("data-o"), nb.getAttribute("data-v"));
+      var nid = sg.id, v = nb.getAttribute("data-v");
+      setTimeout(function () { var q = $(nid) && $(nid).querySelector('button[data-v="' + v + '"]'); if (q) q.focus(); }, 0);
+    });
+    gf.addEventListener("change", function (e) {
+      var n = e.target, k = n.getAttribute("data-o");
+      if (k) genSet(k, n.type === "checkbox" ? n.checked : n.value);
+    });
   }
 
   // "What do you want to make?": books first, then the products
   // this orOS knows, by group.
   var MAKE = [
     { g: "books", items: [{ k: "book" }, { k: "notebook" }] },
-    { g: "music", items: [{ k: "cd" }, { k: "dvd" }, { k: "vinyl" }, { k: "tape" }, { k: "vhs" }] }
+    { g: "music", items: [{ k: "cd" }, { k: "dvd" }, { k: "vinyl" }, { k: "tape" }, { k: "vhs" }] },
+    { g: "merch", items: [{ k: "badge" }, { k: "sticker" }, { k: "keychain" }, { k: "pin" }, { k: "magnet" }] }
   ];
   var MAKE_ICON = {
     book: '<path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M6 18a2 2 0 0 1 2-2h10"/>',
@@ -1402,7 +1644,12 @@
     dvd: '<rect x="5" y="3" width="14" height="18" rx="1.5"/><circle cx="12.5" cy="12" r="4.2"/><circle cx="12.5" cy="12" r="1"/><path d="M7.5 3v18"/>',
     vinyl: '<rect x="3" y="4" width="13" height="16" rx="1"/><circle cx="15" cy="12" r="6.5"/><circle cx="15" cy="12" r="2"/>',
     tape: '<rect x="3" y="6" width="18" height="12" rx="1.5"/><circle cx="8.5" cy="11" r="1.8"/><circle cx="15.5" cy="11" r="1.8"/><path d="M7 18l1.5-3h7l1.5 3"/>',
-    vhs: '<rect x="2.5" y="6" width="19" height="12" rx="1"/><rect x="7" y="9" width="10" height="4" rx="0.5"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/>'
+    vhs: '<rect x="2.5" y="6" width="19" height="12" rx="1"/><rect x="7" y="9" width="10" height="4" rx="0.5"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/>',
+    badge: '<circle cx="12" cy="12" r="8.5"/><path d="M7 9.5a6 6 0 0 1 5-3"/>',
+    sticker: '<path d="M5 4h14v9l-6 7H5z"/><path d="M13 20v-7h6"/>',
+    keychain: '<circle cx="8" cy="7" r="3.5"/><rect x="9" y="10" width="10" height="10" rx="2"/><circle cx="12.5" cy="13.5" r="1"/>',
+    pin: '<path d="M12 3l2.6 5.4 5.9.8-4.3 4.1 1 5.8L12 16.3 6.8 19.1l1-5.8-4.3-4.1 5.9-.8z"/>',
+    magnet: '<path d="M6 4v8a6 6 0 0 0 12 0V4h-4v8a2 2 0 0 1-4 0V4z"/><path d="M6 8h4M14 8h4"/>'
   };
   function renderMake() {
     var box = $("make-groups");
@@ -2384,7 +2631,7 @@
   function tplOf(p) { return isG(p) ? C.templateOf(p, sheetOf(p)) : C.template(p.bk, p.art, p.tpl); }
   function tplLabels(p, T) {
     if (isG(p)) return {
-      name: function (k) { return t("slot." + k); }, len: tplLen, bar: t("tpl.bar"),
+      name: function (k) { var own = "slot." + p.kind + "." + k; return t(own) !== own ? t(own) : t("slot." + k); }, len: tplLen, bar: t("tpl.bar"),
       info: t("tpl.goodInfo", { kind: t("tpl.kind." + T.kind), tw: tplLen(T.W), th: tplLen(T.H), b: tplLen(T.bleed) })
     };
     return {
@@ -2403,12 +2650,15 @@
     setVal("f-sheet", sh);
     $("tpl-hint").textContent = t("tpl.hintGood");
     out("tpl-kind", t("tpl.kind." + T.kind));
-    out("tpl-info", T.circle
+    out("tpl-info", T.circle && T.circle.fold
+      ? t("tpl.badgeInfo", { cut: tplLen(T.W), d: tplLen(T.circle.fold) })
+      : T.cut ? t("tpl.cutInfo", { w: tplLen(T.sheet.w), h: tplLen(T.sheet.h), tw: tplLen(T.W), th: tplLen(T.H) })
+      : T.circle
       ? t("tpl.discInfo", { d: tplLen(T.W), p: tplLen(T.circle.print), hub: tplLen(T.circle.hub), hole: tplLen(T.circle.hole) })
       : t("tpl.info", { w: tplLen(T.sheet.w), h: tplLen(T.sheet.h), tw: tplLen(T.W), th: tplLen(T.H), s: tplLen(T.spine) }));
     var ul = $("tpl-parts");
     ul.textContent = "";
-    if (!T.circle) T.parts.forEach(function (p) { ul.appendChild(el("li", null, t("slot." + p.k) + " " + tplLen(p.w))); });
+    if (!T.circle && !T.cut) T.parts.forEach(function (p) { ul.appendChild(el("li", null, t("slot." + p.k) + " " + tplLen(p.w))); });
     out("tpl-spine", t("tpl.goodNote." + T.kind) !== "tpl.goodNote." + T.kind ? t("tpl.goodNote." + T.kind) : "");
     $("tpl-warn").hidden = true;
     $("tbleed-lbl").textContent = t("f.tbleed");
@@ -2416,12 +2666,14 @@
     $("f-tbleed").disabled = !!T.circle;
     setVal("f-safe", o.safe);
     setChk("f-tart", o.art); setChk("f-tgd", o.gd);
-    var lk = T.circle ? "disc" : "flat";
+    var lk = T.circle ? (T.circle.fold ? "badge" : "disc") : T.cut ? "cut" : "flat";
     if (legendKind !== lk) {
       legendKind = lk;
       var lg = $("legend"), K = MP ? MP.COL : {};
       lg.textContent = "";
-      (T.circle ? [["bleed", "lg.noprint", ""], ["trim", "lg.discEdge", "solid"], ["fold", "lg.discOut", "line"], ["safe", "lg.safe", "line"]]
+      (lk === "badge" ? [["bleed", "lg.noprint", ""], ["trim", "lg.badgeCut", "solid"], ["hinge", "lg.badgeFace", "line"], ["safe", "lg.safe", "line"]]
+        : lk === "disc" ? [["bleed", "lg.noprint", ""], ["trim", "lg.discEdge", "solid"], ["fold", "lg.discOut", "line"], ["safe", "lg.safe", "line"]]
+        : lk === "cut" ? [["bleed", "lg.cutAway", ""], ["trim", "lg.cutLine", "solid"], ["safe", "lg.safe", ""]]
         : [["bleed", "lg.bleed", ""], ["trim", "lg.trim", "solid"], ["fold", "lg.fold", "line"], ["safe", "lg.safe", "line"]]).forEach(function (x) {
         var li = el("li"), i = el("i", x[2] === "line" ? "line" : null);
         if (x[2] === "line") i.style.color = K[x[0]]; else if (x[2] === "solid") { i.style.height = "0"; i.style.borderTop = "2px solid " + K[x[0]]; } else i.style.background = K[x[0]];
@@ -2494,6 +2746,12 @@
         fl.getContext("2d").drawImage(cv, 0, 0);
         fl.style.width = Math.round(T.sheet.w * k) + "px"; fl.style.height = Math.round(T.sheet.h * k) + "px";
         fl.setAttribute("aria-label", t("tpl.kind." + T.kind) + ", " + tplLen(T.sheet.w) + " × " + tplLen(T.sheet.h));
+        // a die cut: what the outline found (no see-through background, pieces apart)
+        if (T.cut) {
+          var w = (cv.cut && cv.cut.warn || []).map(function (k) { return t("warn." + k); });
+          $("tpl-warn").hidden = !w.length;
+          out("tpl-warn", w.join(" "));
+        }
       });
     });
   }

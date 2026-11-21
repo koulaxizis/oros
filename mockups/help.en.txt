@@ -39,6 +39,15 @@ They work like a CD: a `Product` tab, a `Pictures` tab, and the sheets for the p
 - Vinyl: `12″ LP` or `7″ single`, a `Single` or `Gatefold` jacket, the `Inner sleeve` (white, black or `Printed`), the `Colour of the record` and, for a 7″, the `Big hole (jukebox)`. `Slide the record out` pulls the inner sleeve and the record out of the jacket. The two record labels are cut round with the hole out.
 - The printer's sheets: the J-card (101.6 mm high: front 65, spine 12.7, flap 15 mm), the O-card, the tape labels (89 × 51 mm), the VHS sleeve (105 × 192 mm panels with a 27 mm spine and the glue flap), the clamshell insert, the face and spine labels, the LP jacket (314 mm panels; gatefold with a wider spine), the inner sleeve (302 mm) and the record labels (100 mm on an LP, 84 mm on a 7″). The plant's own template wins.
 
+## Badges, stickers and other small things
+Badges, stickers, keychains, enamel pins and magnets lie flat on the table to begin with; `Placement` stands them up. Their options are on the `Product` tab.
+- `Badge`: 25 to 75 mm, gloss or matte, with a `Pin` or a `Magnet` on the back. The picture covers the whole circle on the `Print` tab: the middle is the face, the ring round it wraps over the edge and under (the cut circle is 35 to 87 mm).
+- `Sticker`: `Cut to the picture` (a PNG with a see-through background: the cut follows its outline, with a `White edge` of 0, 2 or 3 mm), `Round`, `Square` or `Rounded corners`; matte, gloss, `Holographic` or `Clear`.
+- `Keychain`: acrylic, metal or rubber, cut to the picture (the hole sits on a tab at the top) or round or rectangle (the hole inside), the colour of the `Ring`, and `Printed on both sides` (the back keeps the front's outline).
+- `Enamel pin`: cut to the picture or round, 20 to 50 mm, the `Metal`, and `Hard` (smooth, glossy) or `Soft` enamel (raised metal lines). The mockup shows your picture in a few flat colours with metal lines between them, as the maker would. `On a backing card` adds a 51 × 76 mm card with its own picture.
+- `Magnet`: rectangle (51 × 51 to 102 × 76 mm), round or cut to the picture.
+- On the `Print` tab a cut sheet shows what is cut away, the cut line, the holes and a band to keep text out of. The PDF carries the cut line as a thin 100 % magenta line, as cutting plotters read it; ask your maker how they want it named. If the picture has no see-through background, or parts of it stand apart, the tab says so.
+
 ## Finishes and extras
 - `Finishes` (on the `Book` tab): `Cover material` is printed paper, linen, book cloth, leather or kraft paper; the cloth ones show their weave in the light. `Rounded corners` rounds the outer corners of the cover and the pages, like a notebook. `Deckled page edges` makes the edges rough and uncut. `Page edges` › `Printed (a picture)` puts a picture of yours on the edges of the pages.
 - `Belly band`: a paper band round the book, with its colour, its `Band height` and its own picture. `Slipcase`: an open box the book slides into, with its colour and picture. `Elastic band`: the band that keeps a notebook shut.

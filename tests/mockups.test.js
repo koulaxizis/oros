@@ -690,7 +690,7 @@ test("MockPrint: spiral covers share the gap, no gap label", () => {
   assert.deepEqual(Object.keys(sp).sort(), ["back", "front"]);
   assert.equal(sp.back[0], 0); assert.equal(sp.front[1], T.sheet.w);
   assert.ok(Math.abs(sp.back[1] - (T.bleed * 2 + 148)) < 1e-9 && sp.back[1] === sp.front[0]);
-  assert.equal(MP.VERSION, "1.2.0");
+  assert.equal(MP.VERSION, "1.3.0");
 });
 
 test("openCurve: lay-flat, spiral and board pages lie flat at the gutter", () => {
@@ -799,12 +799,13 @@ test("v2 wave 2 wiring: finish controls, notebook preset, strings in en, el and 
 // ---------- v2 wave 3: products (CD, DVD / Blu-ray) ----------
 const GM = require(path.join(ROOT, "mockups/goods/media.js"));
 const GA = require(path.join(ROOT, "mockups/goods/analog.js"));
+const GS = require(path.join(ROOT, "mockups/goods/small.js"));
 function good(over) {
   return C.normGoodProject(Object.assign({ id: ID, m: 1000, nm: "Album", kind: "cd", g: {}, art: {}, sc: {}, out: {}, tpl: { safe: 3 } }, over || {}));
 }
 
 test("products: registry, defaults, unknown values fall back, canonical", () => {
-  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl"]);
+  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet"]);
   const cd = good();
   assert.deepEqual(cd.g, { pack: "jewel", tray: "black", disc: "silver", hub: 22, beside: 0 });
   const odd = good({ g: { pack: "tin", tray: "pink", disc: "gold", hub: 99, beside: true, x: 1 } });
@@ -1010,4 +1011,101 @@ test("v2 wave 4 wiring: cassette, VHS and vinyl forms, gallery, strings, search,
   }
   assert.match(read("mockups/help.en.txt"), /## Cassette, VHS and vinyl/);
   assert.match(read("mockups/help.el.txt"), /## Κασέτα, VHS και βινύλιο/);
+});
+
+test("die line: the outline of the see-through edge, grown, holes filled, the biggest piece", () => {
+  const w = 60, h = 40, a = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    if (Math.hypot(x - 15, y - 20) < 10 || Math.hypot(x - 45, y - 20) < 8 || (x >= 20 && x <= 40 && y >= 18 && y <= 22)) a[y * w + x] = 255;
+  }
+  assert.deepEqual(GS.alphaBox(a, w, h), { x0: 6, y0: 11, x1: 52, y1: 29 });
+  assert.equal(GS.alphaBox(new Uint8Array(4), 2, 2), null);
+  const r0 = GS.dieOutline(a, w, h, 0), xs = r0.path.map((p) => p[0]), ys = r0.path.map((p) => p[1]);
+  assert.equal(r0.parts, 1);
+  assert.deepEqual([Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)], [6, 52, 11, 29]);
+  const r3 = GS.dieOutline(a, w, h, 3), x3 = r3.path.map((p) => p[0]);
+  assert.ok(Math.min(...x3) <= 3 && Math.max(...x3) >= 55, "grown by the white edge");
+  // two pieces: the bigger one, and the count
+  const b = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { if (Math.hypot(x - 12, y - 20) < 8) b[y * w + x] = 255; if (Math.hypot(x - 48, y - 20) < 5) b[y * w + x] = 255; }
+  const rb = GS.dieOutline(b, w, h, 1);
+  assert.equal(rb.parts, 2); assert.ok(Math.max(...rb.path.map((p) => p[0])) < 30);
+  // a ring: one outline, the hole filled
+  const c = new Uint8Array(w * h);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { const d = Math.hypot(x - 30, y - 20); if (d < 15 && d > 8) c[y * w + x] = 255; }
+  const rc = GS.dieOutline(c, w, h, 0);
+  assert.equal(rc.parts, 1);
+  assert.ok(Math.abs(GS.topAt(rc.path, 30) - 6) <= 1);
+  assert.equal(GS.dieOutline(new Uint8Array(w * h), w, h, 2), null);
+  assert.equal(GS.circlePath(10, 10, 5, 8).length, 8);
+  assert.equal(GS.rectPath(0, 0, 10, 10, 0).length, 4);
+});
+
+test("badge: button sizes, the cut circle, face and fold", () => {
+  const p = good({ kind: "badge" });
+  assert.deepEqual(p.g, { d: 38, fin: "gloss", back: "pin", beside: 0 });
+  assert.equal(good({ kind: "badge", g: { d: 39 } }).g.d, 38);
+  const T = C.templateOf(p, "badge");
+  assert.equal(T.W, 50); assert.equal(T.circle.fold, 38); assert.equal(T.circle.hole, 0); assert.equal(T.circle.safeOut, 34);
+  assert.equal(C.templateOf(good({ kind: "badge", g: { d: 25 } }), "badge").W, 35);
+  assert.equal(C.blankGood("badge", ID, 5).sc.place, "lie", "small things lie flat");
+  assert.equal(C.blankGood("cd", ID, 5).sc.place, "stand");
+});
+
+test("sticker, keychain, pin and magnet: cut sheets, holes, backs", () => {
+  const s = good({ kind: "sticker" });
+  assert.deepEqual(s.g, { shape: "die", size: 75, fin: "gloss", edge: 2 });
+  const T = C.templateOf(s, "sticker");
+  assert.equal(T.W, 75); assert.equal(T.bleed, 2); assert.deepEqual(T.cut, { shape: "die", r: 0, off: 2, edge: "#ffffff" });
+  assert.equal(C.templateOf(good({ kind: "sticker", g: { fin: "clear" } }), "sticker").cut.edge, null, "a clear sticker has no white");
+  assert.equal(C.templateOf(good({ kind: "sticker", g: { shape: "rounded" } }), "sticker").cut.r, 6);
+  const k = good({ kind: "keychain", g: { two: 1 } });
+  assert.deepEqual(C.sheetsOf(k), ["kfront", "kback"]);
+  const kb = C.templateOf(k, "kback");
+  assert.equal(kb.parts[0].a, "back"); assert.equal(kb.cut.from, "front"); assert.equal(kb.cut.mirror, 1);
+  assert.equal(kb.holes[0].tab, 9);
+  assert.equal(C.templateOf(good({ kind: "keychain", g: { shape: "round" } }), "kfront").holes[0].y, 4.5);
+  assert.equal(GS.keyDims({ mat: "rubber" }).d, 4);
+  const pn = good({ kind: "pin", g: { card: 1 } });
+  assert.deepEqual(C.sheetsOf(pn), ["pin", "pcard"]);
+  assert.equal(C.templateOf(pn, "pin").bleed, 0, "pin artwork has no bleed");
+  assert.deepEqual([C.templateOf(pn, "pcard").W, C.templateOf(pn, "pcard").H], [51, 76]);
+  const m = good({ kind: "magnet" });
+  assert.deepEqual([C.templateOf(m, "magnet").W, C.templateOf(m, "magnet").H], [76, 51]);
+  assert.deepEqual([GS.magDims({ shape: "round", size: "102x76" }).w, GS.magDims({ shape: "round" }).h], [76, 51]);
+  // every product of the group describes its options; values parse back
+  for (const kind of ["badge", "sticker", "keychain", "pin", "magnet"]) {
+    const def = C.good(kind);
+    assert.equal(def.group, "merch"); assert.ok(def.noOpen);
+    def.opts.forEach((o) => { if (o.t !== "chk") assert.ok(o.v.indexOf(good({ kind }).g[o.k]) >= 0, kind + " " + o.k); });
+    assert.ok(def.shown(good({ kind }).g).every((x) => C.goodSlots(kind).indexOf(x) >= 0));
+  }
+});
+
+test("v2 wave 5 wiring: merch gallery, generated form, cut sheets in print, strings, search, help", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html"), de = read("i18n/de/mockups.js"), sc = read("mockups/scene.js"), pr = read("mockups/print.js");
+  assert.match(html, /<script src="goods\/small\.js\?v=/);
+  assert.match(html, /id="gen-form"/);
+  assert.match(sc, /from "\.\/goods\/small3d\.js"/);
+  assert.match(pr, /function cutOf/); assert.match(pr, /doc\.lines\(/);
+  const keys = ["make.g.merch", "f.gsize", "f.shape", "f.wedge", "f.bback", "f.kmat", "f.ring", "f.metal", "f.enamel", "f.two", "f.card", "good.size2",
+    "tpl.badgeInfo", "tpl.cutInfo", "lg.cutLine", "warn.dieOpaque", "warn.dieParts", "warn.dieNoPic"];
+  for (const kind of ["badge", "sticker", "keychain", "pin", "magnet"]) {
+    keys.push("kind." + kind, "kind." + kind + ".d", "untitled." + kind, "pics.hint." + kind);
+    const def = C.good(kind);
+    def.opts.forEach((o) => { keys.push(o.l); if (o.p) o.v.forEach((v) => keys.push(o.p + v)); });
+    for (const g of [{}, { two: 1, card: 1 }]) {
+      const p = good({ kind, g });
+      for (const s of C.sheetsOf(p)) keys.push("tpl.kind." + C.templateOf(p, s).kind);
+      def.shown(p.g).forEach((x) => keys.push("slot." + kind + "." + x));
+    }
+  }
+  [...new Set(keys)].forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  });
+  const ctx = { lang: "en", readJSON: (k) => (k === C.GOODS_KEY ? { prj: [good({ kind: "pin", nm: "" })] } : null) };
+  assert.equal(P.search(ctx)[0].title, "Mockup Enamel pin");
+  assert.match(read("mockups/help.en.txt"), /## Badges, stickers and other small things/);
+  assert.match(read("mockups/help.el.txt"), /## Κονκάρδες, αυτοκόλλητα και άλλα μικρά/);
 });

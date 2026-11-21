@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — print.js (MockPrint, v1.2.0)
+// orOS Mockups — print.js (MockPrint, v1.3.0)
 // The cover sheet for the printer, drawn on a 2D canvas from
 // MockCore.template(): the cover itself (the full-wrap picture, or
 // front / back / spine / flap pictures put together, running into
@@ -9,7 +9,9 @@
 // with the strip of the holes shown). Products (v1.2.0): a part may
 // take another slot's picture (part.a), spine text goes on every part
 // marked txt, and a disc label is a round sheet (T.circle: print
-// ring, hub, hole). The same drawing feeds the live preview of the
+// ring, hub, hole). Cut sheets (v1.3.0, goods/small.js): T.cut is a
+// round, rectangle or die line (the picture's outline, MockSmall),
+// with holes; the PDF carries the cut as a vector line. The same drawing feeds the live preview of the
 // Print tab, the PNG, the PDF and the new Atelier design.
 // No three.js; loaded with the app.
 // ============================================================
@@ -68,6 +70,7 @@
       return;
     }
     if (T.circle) { drawDisc(ctx, T, art, pics, ppm); return; }
+    if (T.cut && T.cut.shape === "die") { drawDie(ctx, T, art, pics, ppm); return; }
     var sp = spans(T), alias = {};
     T.parts.forEach(function (p) { if (typeof p.a === "string") alias[p.k] = p.a; });
     Object.keys(sp).forEach(function (k) {
@@ -107,13 +110,130 @@
     ctx.restore();
   }
 
+  // ---------- Cut sheets (stickers, keychains, pins, magnets) ----------
+  // The cut of a sheet in trim mm: { path: [[x, y]…], img: where the
+  // picture goes (die cut), holes, warn } or null. A die cut follows
+  // the picture's see-through edge, grown by cut.off (MockSmall).
+  var dieCache = typeof WeakMap === "function" ? new WeakMap() : null;
+  function dieFit(img, box, off) {
+    var SM = root.MockSmall, key = [box.x, box.y, box.w, box.h, off].join(",");
+    if (!SM || !img) return null;
+    var hit = dieCache && dieCache.get(img);
+    if (hit && hit[key]) return hit[key];
+    var iw = img.naturalWidth || img.width, ih = img.naturalHeight || img.height;
+    if (!iw || !ih) return null;
+    var sc = Math.min(1, 320 / Math.max(iw, ih)), w = Math.max(1, Math.round(iw * sc)), h = Math.max(1, Math.round(ih * sc));
+    var cv = canvas(w, h), cx = cv.getContext("2d");
+    cx.drawImage(img, 0, 0, w, h);
+    var px = cx.getImageData(0, 0, w, h).data, a = new Uint8Array(w * h);
+    for (var i = 0; i < w * h; i++) a[i] = px[i * 4 + 3];
+    var bb = SM.alphaBox(a, w, h), warn = [];
+    if (!bb) return null;
+    if (bb.x0 === 0 && bb.y0 === 0 && bb.x1 === w - 1 && bb.y1 === h - 1) warn.push("dieOpaque");
+    var cw = bb.x1 - bb.x0 + 1, ch = bb.y1 - bb.y0 + 1;
+    var mpp = Math.min((box.w - 2 * off) / cw, (box.h - 2 * off) / ch), offPx = off / mpp, pad = Math.ceil(offPx) + 2;
+    var GW = cw + 2 * pad, GH = ch + 2 * pad, ga = new Uint8Array(GW * GH);
+    for (var y = 0; y < ch; y++) for (var x = 0; x < cw; x++) ga[(y + pad) * GW + x + pad] = a[(y + bb.y0) * w + x + bb.x0];
+    var r = SM.dieOutline(ga, GW, GH, offPx);
+    if (!r) return null;
+    if (r.parts > 1) warn.push("dieParts");
+    var x0 = box.x + (box.w - cw * mpp) / 2, y0 = box.y + (box.h - ch * mpp) / 2;
+    var out = {
+      path: r.path.map(function (q) { return [x0 + (q[0] - pad + 0.5) * mpp, y0 + (q[1] - pad + 0.5) * mpp]; }),
+      img: { x: x0 - bb.x0 * mpp, y: y0 - bb.y0 * mpp, w: w * mpp, h: h * mpp }, warn: warn
+    };
+    if (dieCache) { hit = hit || {}; hit[key] = out; dieCache.set(img, hit); }
+    return out;
+  }
+  function cutOf(T, pics) {
+    var c = T.cut, SM = root.MockSmall;
+    if (!c || !SM) return null;
+    var holes = (T.holes || []).map(function (h) { return Object.assign({}, h); }), res;
+    if (c.shape === "round") res = { path: SM.circlePath(T.W / 2, T.H / 2, Math.min(T.W, T.H) / 2), img: null, warn: [] };
+    else if (c.shape === "rect") res = { path: SM.rectPath(0, 0, T.W, T.H, c.r), img: null, warn: [] };
+    else {
+      var top = c.top || 0, im = pics && pics[c.from || T.parts[0].a];
+      res = im ? dieFit(im, { x: 0, y: top, w: T.W, h: T.H - top }, c.off) : null;
+      if (!res) res = { path: SM.rectPath(c.off, top + c.off, T.W - 2 * c.off, T.H - top - 2 * c.off, 3), img: null, warn: im ? [] : ["dieNoPic"] };
+      // the hole tab sits on the outline's top in the middle
+      holes.forEach(function (h) {
+        if (!h.tab) return;
+        var y = SM.topAt(res.path, h.x);
+        h.y = Math.max(h.tab / 2, (y == null ? top : y) - h.tab / 2 + 2.5);
+      });
+    }
+    if (c.mirror) {
+      res = { path: res.path.map(function (q) { return [T.W - q[0], q[1]]; }), img: null, warn: res.warn };
+      holes.forEach(function (h) { h.x = T.W - h.x; });
+    }
+    res.holes = holes;
+    return res;
+  }
+  function pathOn(ctx, path, ppm, ox) {
+    ctx.beginPath();
+    path.forEach(function (q, i) { ctx[i ? "lineTo" : "moveTo"](ox + q[0] * ppm, ox + q[1] * ppm); });
+    ctx.closePath();
+  }
+  // A die-cut sheet: see-through outside, the edge colour (white
+  // vinyl) inside the cut and into the bleed, the whole picture on it.
+  function drawDie(ctx, T, art, pics, ppm) {
+    var R = cutOf(T, pics), bl = T.bleed * ppm, im = pics[T.parts[0].a];
+    ctx.clearRect(0, 0, T.sheet.w * ppm, T.sheet.h * ppm);
+    if (!R) return;
+    ctx.save();
+    ctx.fillStyle = T.cut.edge || "rgba(0,0,0,0)";
+    ctx.strokeStyle = ctx.fillStyle;
+    pathOn(ctx, R.path, ppm, bl);
+    if (T.cut.edge) { ctx.fill(); if (bl) { ctx.lineWidth = bl * 2; ctx.lineJoin = "round"; ctx.stroke(); } }
+    R.holes.forEach(function (h) {
+      if (!h.tab || !T.cut.edge) return;
+      ctx.beginPath(); ctx.arc(bl + h.x * ppm, bl + h.y * ppm, (h.tab / 2 + T.bleed) * ppm, 0, Math.PI * 2); ctx.fill();
+    });
+    if (im) {
+      if (R.img) ctx.drawImage(im, bl + R.img.x * ppm, bl + R.img.y * ppm, R.img.w * ppm, R.img.h * ppm);
+      else { pathOn(ctx, R.path, ppm, bl); ctx.clip(); coverFit(ctx, im, bl, bl, T.W * ppm, T.H * ppm); }
+    }
+    ctx.restore();
+  }
+  // The guides of a cut sheet: cut away tinted, the cut line, the
+  // holes, a band inside the cut to keep text out of.
+  function cutGuides(ctx, T, ppm, L, lw, fs, pics) {
+    var R = cutOf(T, pics || {}), bl = T.bleed * ppm, sw = T.sheet.w * ppm, sh = T.sheet.h * ppm;
+    if (!R) return;
+    ctx.save();
+    // what is cut away, tinted (a layer, so the tab and the outline add up)
+    var lay = canvas(sw, sh), lx = lay.getContext("2d");
+    lx.fillStyle = COL.bleed; lx.fillRect(0, 0, sw, sh);
+    lx.globalCompositeOperation = "destination-out";
+    pathOn(lx, R.path, ppm, bl); lx.fill();
+    R.holes.forEach(function (h) { if (h.tab) { lx.beginPath(); lx.arc(bl + h.x * ppm, bl + h.y * ppm, h.tab / 2 * ppm, 0, Math.PI * 2); lx.fill(); } });
+    ctx.drawImage(lay, 0, 0);
+    ctx.save();
+    pathOn(ctx, R.path, ppm, bl); ctx.clip();
+    ctx.strokeStyle = COL.safe; ctx.globalAlpha = 0.35; ctx.lineWidth = 2 * Math.max(0.5, Math.min(T.safeMm || 2, 3)) * ppm; ctx.lineJoin = "round";
+    pathOn(ctx, R.path, ppm, bl); ctx.stroke();
+    ctx.restore();
+    ctx.strokeStyle = COL.trim; ctx.lineWidth = lw * 1.4;
+    pathOn(ctx, R.path, ppm, bl); ctx.stroke();
+    R.holes.forEach(function (h) {
+      ctx.beginPath(); ctx.arc(bl + h.x * ppm, bl + h.y * ppm, h.d / 2 * ppm, 0, Math.PI * 2); ctx.stroke();
+      if (h.tab) { ctx.beginPath(); ctx.arc(bl + h.x * ppm, bl + h.y * ppm, h.tab / 2 * ppm, Math.PI, 0); ctx.stroke(); }
+    });
+    label(ctx, L.name(T.parts[0].k), sw / 2, bl + Math.max(fs * 1.4, T.H * ppm * 0.12), fs * 1.2, COL.fold, T.W * ppm * 0.8);
+    label(ctx, L.len(T.W) + " × " + L.len(T.H), sw / 2, sh - bl - fs * 1.2, fs, COL.fold, T.W * ppm * 0.9);
+    if (L.info) label(ctx, L.info, sw / 2, sh - bl / 2 - fs * 0.2, fs * 0.8, COL.trim, sw * 0.95);
+    ctx.restore();
+  }
+
   var COL = { bleed: "rgba(226, 46, 46, 0.30)", trim: "#d81e1e", fold: "#1769d6", hinge: "#8a3fd1", safe: "#11905a", bar: "#1d2330", punch: "rgba(23, 105, 214, 0.16)" };
 
   // The guides. L: { name(k), len(mm) → "148 mm", bar, info }
-  function drawGuides(ctx, T, ppm, L) {
+  function drawGuides(ctx, T, ppm, L, pics) {
     var bl = T.bleed * ppm, W = T.W * ppm, H = T.H * ppm, sw = T.sheet.w * ppm, sh = T.sheet.h * ppm;
     var lw = Math.max(1, ppm * 0.3), fs = Math.max(9, ppm * 3.2);
+    if (T.circle || T.cut) fs = Math.max(7, Math.min(fs, Math.min(T.W, T.H) * ppm * 0.055));   // small sheets: smaller names
     if (T.circle) { discGuides(ctx, T, ppm, L, lw, fs); return; }
+    if (T.cut) { cutGuides(ctx, T, ppm, L, lw, fs, pics); return; }
     var trims = T.trims && T.trims.length ? T.trims : [{ x: 0, w: T.W }];
     ctx.save();
     // bleed (paperback, jacket) or wrap round the boards (case)
@@ -186,6 +306,7 @@
     ring(c.hole); ctx.stroke();
     ctx.strokeStyle = COL.fold; ctx.lineWidth = lw; ctx.setLineDash([lw * 6, lw * 3]);
     ring(T.W); ctx.stroke();
+    if (c.fold) { ctx.strokeStyle = COL.hinge; ring(c.fold); ctx.stroke(); ctx.strokeStyle = COL.safe; }
     ctx.strokeStyle = COL.safe; ctx.setLineDash([lw * 4, lw * 3]);
     ring(c.safeOut); ctx.stroke();
     ring(c.safeIn); ctx.stroke();
@@ -216,10 +337,11 @@
     var cv = canvas(T.sheet.w * ppm, T.sheet.h * ppm), ctx = cv.getContext("2d");
     if (o.white) { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height); }
     if (o.art) {
-      if (T.circle && o.white) { var lay = canvas(cv.width, cv.height); drawArt(lay.getContext("2d"), T, art, pics || {}, ppm); ctx.drawImage(lay, 0, 0); }
+      if ((T.circle || T.cut) && o.white) { var lay = canvas(cv.width, cv.height); drawArt(lay.getContext("2d"), T, art, pics || {}, ppm); ctx.drawImage(lay, 0, 0); }
       else drawArt(ctx, T, art, pics || {}, ppm);
     }
-    if (o.guides) drawGuides(ctx, T, ppm, o.L || { name: String, len: String });
+    if (o.guides) drawGuides(ctx, T, ppm, o.L || { name: String, len: String }, pics);
+    if (T.cut) cv.cut = cutOf(T, pics || {});
     return cv;
   }
 
@@ -235,8 +357,18 @@
     var box = function (x0, y0, x1, y1) { return { bottomLeftX: x0, bottomLeftY: y0, topRightX: x1, topRightY: y1 }; };
     info.trimBox = box(b, b, W - b, H - b);
     info.bleedBox = box(0, 0, W, H);
+    // the cut line as a vector path (100 % magenta, hairline), the
+    // way cutting plotters and sticker printers read it
+    var cut = cv.cut;
+    if (cut && cut.path && cut.path.length > 2 && typeof doc.lines === "function") {
+      doc.setDrawColor(236, 0, 140); doc.setLineWidth(0.25);
+      var P = cut.path.map(function (q) { return [b + q[0] * PT, b + q[1] * PT]; }), seg = [];
+      for (var i = 1; i < P.length; i++) seg.push([P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]]);
+      doc.lines(seg, P[0][0], P[0][1], [1, 1], "S", true);
+      (cut.holes || []).forEach(function (h) { doc.circle(b + h.x * PT, b + h.y * PT, h.d / 2 * PT, "S"); });
+    }
     return doc;
   }
 
-  root.MockPrint = { VERSION: "1.2.0", ppmFor: ppmFor, spans: spans, drawArt: drawArt, drawGuides: drawGuides, render: render, pdf: pdf, COL: COL };
+  root.MockPrint = { VERSION: "1.3.0", cutOf: cutOf, ppmFor: ppmFor, spans: spans, drawArt: drawArt, drawGuides: drawGuides, render: render, pdf: pdf, COL: COL };
 })(typeof window !== "undefined" ? window : globalThis);
