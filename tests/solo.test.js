@@ -467,6 +467,7 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   assert.equal(M.texts(wm, "el").name, "Waymark");
   assert.match(read(".github/waymark.env"), /^commit=[0-9a-f]{40}$/m);
   assert.match(read(".github/waymark.env"), /^version=\d+\.\d+\.\d+$/m);
+  assert.match(read(".github/waymark.env"), /^build=\d{1,2}$/m);
   assert.match(read(".github/workflows/android.yml"), /repository: koulaxizis\/waymark/);
   assert.match(read(".github/workflows/android.yml"), /app-waymark-release\.apk/);
   l.forEach((a) => {
