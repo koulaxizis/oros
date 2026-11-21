@@ -115,10 +115,17 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 
 ## Keyboard shortcuts
 - [[V]] [[T]] [[F]] [[R]] [[E]] [[L]] [[H]] pick a tool; [[W]] toggles preview.
-- Arrow keys nudge the selection ([[Shift]] for bigger steps); [[Delete]] removes it.
+- Arrow keys nudge the selection by 0.5 mm (or what Shortcuts and comfort says; [[Shift]] ten times, [[Alt]] a tenth); [[Delete]] removes it. Every shortcut can be changed in `Shortcuts and comfort…`.
 - [[Ctrl+Z]] / [[Ctrl+Y]] undo and redo; [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]], [[Ctrl+D]] duplicate, [[Ctrl+A]] select all.
 - [[Ctrl+G]] groups, [[Ctrl+Shift+G]] ungroups; [[Ctrl+E]] opens Export.
 - Typing in a frame or in the Story Editor: [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]]; [[Esc]] finishes.
+
+## Working comfort
+- **Smart guides**: while you drag, an object snaps to the page edges, margins, columns, guides and the other objects, and to the same gap as between the objects next to it; pink marks show the equal gaps with their size. Hold [[Alt]] to drag freely.
+- **Live measurements**: a small label shows the position while you move, the size while you resize or draw, and the angle while you rotate, in the document's unit. Click the corner where the rulers meet to switch between mm, pt and in.
+- **Toolbar over the selection**: what a selection needs most, right above it: `Edit text` or `Place image…`, `Duplicate`, `Bring to front`, `Send to back`, `Group`, `Lock position`, `Delete`, and `More` for the rest.
+- **History…** (in the `More` menu, or [[Ctrl+Alt+Z]]): every undo step by name, such as Move, Add 3 objects or Style “Body”, with its time; click one to go back to it, or forward again.
+- **Shortcuts and comfort…** (`More` menu): change any shortcut by clicking it and pressing the new keys. Letters mean the keys' places, so the shortcuts also work with a Greek keyboard. Set how far the arrow keys move ([[Shift]] ten times as far, [[Alt]] a tenth), and switch smart guides, measurements or the toolbar off. Saved on this device.
 
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
