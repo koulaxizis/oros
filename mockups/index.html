@@ -59,10 +59,15 @@
         <div class="pane" id="pane-book" role="tabpanel" aria-labelledby="tab-book">
           <div class="grp">
             <span class="lbl" id="bind-lbl" data-i18n="f.bind">Binding</span>
-            <div class="seg" id="bind" role="radiogroup" aria-labelledby="bind-lbl">
+            <div class="seg wrap" id="bind" role="radiogroup" aria-labelledby="bind-lbl">
               <button type="button" role="radio" data-v="pb" data-i18n="bind.pb">Paperback</button>
               <button type="button" role="radio" data-v="hc" data-i18n="bind.hc">Hardcover</button>
+              <button type="button" role="radio" data-v="ss" data-i18n="bind.ss">Saddle-stitched</button>
+              <button type="button" role="radio" data-v="sp" data-i18n="bind.sp">Spiral</button>
+              <button type="button" role="radio" data-v="bb" data-i18n="bind.bb">Board book</button>
+              <button type="button" role="radio" data-v="lf" data-i18n="bind.lf">Lay-flat</button>
             </div>
+            <p id="bind-hint" class="hint small"></p>
           </div>
           <div class="grid2">
             <label class="fld wide"><span data-i18n="f.trim">Size</span><select id="f-trim"></select></label>
@@ -81,11 +86,13 @@
           <label class="check"><input type="checkbox" id="f-spineOn"><span data-i18n="f.spineOn">Set the spine width by hand</span></label>
           <label class="fld" id="spine-box" hidden><span data-i18n="f.spine">Spine width (mm)</span><input id="f-spine" type="number" inputmode="decimal" step="0.1" min="1" max="150"></label>
 
-          <label class="check"><input type="checkbox" id="f-flaps"><span id="flaps-lbl" data-i18n="f.flaps">Flaps (French flaps)</span></label>
+          <label class="fld" id="wire-box" hidden><span data-i18n="f.wire">Wire colour</span>
+            <select id="f-wire"><option value="black" data-i18n="wire.black">Black</option><option value="silver" data-i18n="wire.silver">Silver</option><option value="white" data-i18n="wire.white">White</option><option value="gold" data-i18n="wire.gold">Gold</option></select></label>
+          <label class="check" id="flaps-row"><input type="checkbox" id="f-flaps"><span id="flaps-lbl" data-i18n="f.flaps">Flaps (French flaps)</span></label>
           <div class="range" id="flapw-box" hidden><span class="rl" data-i18n="f.flapW">Flap width</span><input id="f-flapW" type="range" min="30" max="200" step="1"><output id="flapw-out"></output></div>
 
           <div id="hc-box" class="sub" hidden>
-            <label class="check"><input type="checkbox" id="f-round"><span data-i18n="f.round">Rounded spine</span></label>
+            <label class="check" id="round-row"><input type="checkbox" id="f-round"><span data-i18n="f.round">Rounded spine</span></label>
             <div class="row"><label class="check"><input type="checkbox" id="f-band"><span data-i18n="f.band">Headband</span></label><input type="color" id="f-bandC" class="sw" aria-label="Headband colour"></div>
             <div class="row"><label class="check"><input type="checkbox" id="f-ribbon"><span data-i18n="f.ribbon">Ribbon bookmark</span></label><input type="color" id="f-ribC" class="sw" aria-label="Ribbon colour"></div>
             <label class="fld" id="cloth-box" hidden><span data-i18n="f.cloth">Cover under the jacket</span><input type="color" id="f-clothC"></label>

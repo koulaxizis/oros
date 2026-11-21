@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.3.0, ES module)
+// orOS Mockups — scene.js (v1.4.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -20,6 +20,10 @@
 //     the gutter, arching up), the inside pictures on them with a
 //     gutter shadow; the e-book: a tablet, phone or e-reader body with
 //     its screen showing a page (glowing, or grey e-ink)
+//   - bindings (v1.4.0): a saddle-stitched booklet folds round its
+//     pages with two staples in the fold; a spiral book has no spine,
+//     its two covers are held by a coil of wire loops through holes
+//     (MockCore.coilLoops), also across the gutter of the open book
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
 //     draws one finished frame with the set turned a little more
 //   - floor shadow (shadow catcher + contact shadows), a wall when
@@ -388,8 +392,42 @@ export function createStage(host, C) {
     var jacket = d.hc && d.flaps;
     var ph = jacket ? d.Hc + 0.2 : d.Hc;
     add(pr.print.back, ph, pr.total, printM, g);
-    add(pr.print.spine, ph, pr.total, printM, g);
+    if (d.bind !== "sp") add(pr.print.spine, ph, pr.total, printM, g);
     add(pr.print.front, ph, pr.total, printM, fInner);
+    if (d.bind === "ss") {
+      // two staples through the fold
+      var stM = own(new THREE.MeshStandardMaterial({ color: "#c9ccd1", metalness: 0.9, roughness: 0.32 }));
+      var stG = own(new THREE.BoxGeometry(0.5 * S, 12 * S, 0.5 * S));
+      [-1, 1].forEach(function (sg) {
+        var st = new THREE.Mesh(stG, stM);
+        st.position.set((d.xS - d.bulge - 0.05) * S, sg * d.H * 0.27 * S, 0);
+        g.add(st);
+      });
+    }
+    if (d.coil) {
+      // the coil: one wire loop round the spine edge through each pair of holes
+      var cl = d.coil, wireC = { black: "#1b1c1f", silver: "#c4c8ce", white: "#f1f1ee", gold: "#c9a24a" }[bk.wire] || "#1b1c1f";
+      var wM = own(new THREE.MeshStandardMaterial({ color: wireC, metalness: bk.wire === "silver" || bk.wire === "gold" ? 0.85 : 0.2, roughness: 0.35 }));
+      var tG = own(new THREE.TorusGeometry(cl.r * S, cl.wire * S, 8, 40));
+      var hM = own(new THREE.MeshBasicMaterial({ color: "#16171a" }));
+      var hG = own(new THREE.CircleGeometry(1.7 * S, 14));
+      C.coilLoops(bk).forEach(function (y, i) {
+        var ring = new THREE.Mesh(tG, wM);
+        ring.rotation.x = Math.PI / 2;
+        ring.rotation.y = 0.06;                       // a coil climbs a little each turn
+        ring.position.set(cl.x * S, y * S, 0);
+        ring.castShadow = true;
+        g.add(ring);
+        // the holes, on the outside of both covers
+        var hf = new THREE.Mesh(hG, hM);
+        hf.position.set(d.xH * S, y * S, (d.zF + 0.02) * S);
+        fInner.add(hf);
+        var hb = new THREE.Mesh(hG, hM);
+        hb.rotation.y = Math.PI;
+        hb.position.set(d.xH * S, y * S, -(d.zF + 0.02) * S);
+        g.add(hb);
+      });
+    }
     if (pr.caseP) {
       var cm = [M.cloth, M.inside, M.cloth], ct = pr.caseP.front.u[pr.caseP.front.u.length - 1];
       add(pr.caseP.back, d.Hc, ct, cm, g);
@@ -505,6 +543,19 @@ export function createStage(host, C) {
     }
     half(-1, pics[ins.l] || null, "l");
     half(1, pics[ins.r] || null, "r");
+    if (d.coil) {
+      // spiral: the loops stand across the gutter
+      var wireC = { black: "#1b1c1f", silver: "#c4c8ce", white: "#f1f1ee", gold: "#c9a24a" }[bk.wire] || "#1b1c1f";
+      var wM = own(new THREE.MeshStandardMaterial({ color: wireC, metalness: bk.wire === "silver" || bk.wire === "gold" ? 0.85 : 0.2, roughness: 0.35 }));
+      var top = base + cur[0][1], rr = Math.max(4, top * 0.6 + 2);
+      var tG = own(new THREE.TorusGeometry(rr * S, d.coil.wire * S, 8, 32));
+      C.coilLoops(bk).forEach(function (y) {
+        var ring = new THREE.Mesh(tG, wM);
+        ring.position.set(0, (top - rr * 0.35) * S, -y * S);
+        ring.castShadow = true;
+        g.add(ring);
+      });
+    }
     return g;
   }
   // The e-book: a device standing, screen to +z.

@@ -10,7 +10,9 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 
 ## The book
 - `Binding`: `Paperback` has a soft cover flush with the pages; `Hardcover` has boards a little larger than the pages, a groove next to the spine, and can have a `Rounded spine`, a `Headband` and a `Ribbon bookmark`.
+- More bindings: `Saddle-stitched` is folded in the middle and stapled, like a magazine or a zine (no spine; pages in fours, at most about 96). `Spiral` has two loose covers and a coil through holes near the edge, in black, silver, white or gold (`Wire colour`); it opens flat. `Board book` is a children's book of thick board pages (the paper turns to `Board pages`). `Lay-flat` is a hardcover whose spread lies flat, like a photo book.
 - `Size`: ready sizes (A5, B-format, 6 × 9″ and more) or your own width and height, in mm or inches.
+- More sizes: 5.25 × 8″, 7 × 10″, 8 × 10″, comics (6.625 × 10.25″), B5, B6 (manga), A5 landscape (21 × 14.8), squares of 8 × 8″ and 25 × 25 cm.
 - `Pages` and `Paper` give the spine: pages × the thickness of one page. The white and cream papers use the figures print-on-demand services give. With `Set the spine width by hand` you type the spine your printer gave you.
 - `Flaps`: on a paperback they are French flaps folded inside the cover; on a hardcover they turn the cover into a dust jacket, and `Cover under the jacket` sets the colour of the boards. Open the cover a little on the `Scene` tab to see them.
 - `Finish`: matte, gloss (shines with the light) or soft-touch. `Page edges` can be white, cream or sprayed in a colour.
@@ -47,6 +49,7 @@ The `Print` tab makes the cover sheet your printer asks for, from this book's nu
 - `With my cover pictures` puts your front, back and spine (or the full wrap) on the sheet. With `Show the guides` off you get your finished cover with its bleed, ready to send.
 - `Save PNG` and `Save PDF` make it at 300 dpi; the PDF has the trim and bleed boxes print shops read. `Design it in Atelier` makes an Atelier design of the right size with the bleed; the guides show there while you work but never print or export. When it is ready, `More` › `Make a book mockup` in Atelier brings it back onto this book.
 - Your printer's own template wins. If it gives another spine width, type it in `Book` › `Set the spine width by hand`; set its bleed here.
+- Other bindings: a saddle-stitched cover is back and front with the fold in the middle and no spine. A spiral book has two covers cut apart, side by side with their bleed between them; the blue strip with dots by the binding edge is where the holes go, so keep text and faces out of it (the barcode spot moves clear of it too). A board book's cover is back, spine and front like a paperback. A lay-flat book has the sheet of a hardcover case.
 
 ## Saving
 - `Picture shape`: square, 4:5 (posts), 3:2, 4:3, 16:9 or 9:16 (stories). `Size` is the long side, up to 4096 px; some phones draw less, and the app tells you.

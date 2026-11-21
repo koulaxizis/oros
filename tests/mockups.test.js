@@ -10,6 +10,9 @@
 // (parseTpl) and the wrap's trim size coming back (parseCover ww/wh).
 // Wave 4: the open book (normIns, openCurve) and the e-book (device,
 // containIn), kept in the project and its assets, and the wiring.
+// v2 wave 1: more bindings (saddle-stitched, spiral, board book,
+// lay-flat) and sizes: measures, cover sheets, wrap maps, the coil,
+// the flat spread, the print guides and the wiring.
 // Run: node --test tests/*.test.js
 
 "use strict";
@@ -591,4 +594,133 @@ test("wave 4 wiring: what to show, inside pages, PDF pages, devices, help", () =
     assert.equal(js.split('"' + k + '":').length - 1, 2, k));
   assert.match(read("mockups/help.en.txt"), /^## Open book and e-book$/m);
   assert.match(read("mockups/help.el.txt"), /^## Ανοιχτό βιβλίο και e-book$/m);
+});
+
+// ---------- v2 wave 1: bindings and sizes ----------
+
+test("bindings: unknown ones fall back, wire colours, board paper and new sizes", () => {
+  assert.deepEqual(C.BINDS, ["pb", "hc", "ss", "sp", "bb", "lf"]);
+  for (const b of C.BINDS) assert.equal(C.normBook({ bind: b }).bind, b);
+  assert.equal(C.normBook({ bind: "glued" }).bind, "pb");
+  assert.equal(C.normBook({}).wire, "black");
+  assert.equal(C.normBook({ wire: "gold" }).wire, "gold");
+  assert.equal(C.normBook({ wire: "pink" }).wire, "black");
+  assert.equal(C.paperOf("board").c, 0.75);
+  assert.equal(C.PAPERS[C.PAPERS.length - 1].k, "custom");
+  const keys = C.TRIMS.map((x) => x.k);
+  assert.equal(new Set(keys).size, keys.length);
+  for (const k of ["us525x8", "us7x10", "us8x10", "comic", "b6", "b5", "a5l", "sq20", "sq25"]) assert.ok(C.trimOf(k), k);
+  assert.equal(C.normBook({ trim: "b5", w: 176, h: 250 }).trim, "b5");
+  assert.equal(C.normBook({ trim: "a5l", w: 210, h: 148 }).trim, "a5l");
+});
+
+test("dims per binding: flaps only on paperback and hardcover, spines, the coil", () => {
+  for (const b of ["ss", "sp", "bb", "lf"]) assert.equal(C.dims({ bind: b, flaps: 1 }).flaps, false, b);
+  assert.equal(C.dims({ bind: "pb", flaps: 1 }).flaps, true);
+  const lf = C.dims({ bind: "lf", pages: 200, round: 1 }), hc = C.dims({ bind: "hc", pages: 200 });
+  assert.equal(lf.hc, true); assert.equal(lf.round, false); assert.equal(lf.spineMm, hc.spineMm);
+  const ss = C.dims({ bind: "ss", pages: 32 });
+  assert.equal(ss.spineMm, 0); assert.ok(ss.bulge > 0 && ss.bulge === ss.zF);
+  const sp = C.dims({ bind: "sp", pages: 100 });
+  assert.equal(sp.spineMm, 0); assert.ok(sp.coil && sp.coil.r > sp.zF);
+  // the loop passes through the holes on both covers
+  const dx = sp.xH - sp.coil.x;
+  assert.ok(Math.abs(Math.hypot(dx, sp.zF) - sp.coil.r) < 0.01);
+  const bb = C.dims({ bind: "bb", pages: 20, paper: "board" });
+  assert.equal(bb.T, 15); assert.equal(bb.c, 1.6); assert.equal(bb.spineMm, 18.2);
+  // a thick spiral book gets the wider 2:1 pitch
+  assert.equal(C.dims({ bind: "sp", pages: 40 }).coil.pitch, 8.47);
+  assert.equal(C.dims({ bind: "sp", pages: 300 }).coil.pitch, 12.7);
+  const loops = C.coilLoops({ bind: "sp", h: 210, pages: 100 });
+  assert.equal(loops.length, Math.floor((210 - 10) / 8.47) + 1);
+  assert.ok(Math.abs(loops[0] + loops[loops.length - 1]) < 0.01);
+  assert.deepEqual(C.coilLoops({ bind: "pb" }), []);
+  // every binding has a cross-section the 3D view can lay the cover along
+  for (const b of C.BINDS) {
+    const pr = C.profile({ bind: b, pages: b === "ss" ? 32 : 120 });
+    assert.ok(pr.total > 0 && pr.print.back.pts.length >= 2 && pr.print.front.pts.length >= 2, b);
+    for (const k of ["back", "spine", "front"]) pr.print[k].u.forEach((u, i, a) => assert.ok(i === 0 || u >= a[i - 1], b + " " + k));
+  }
+});
+
+test("template per binding: saddle stitch, spiral, board book, lay-flat", () => {
+  const ss = C.template({ w: 148, h: 210, pages: 32, bind: "ss" }, {});
+  assert.equal(ss.kind, "ss"); assert.equal(ss.spine, 0);
+  assert.deepEqual(ss.parts.map((p) => p.k), ["back", "front"]);
+  assert.equal(ss.W, 296); assert.deepEqual(ss.folds, [{ x: 148, k: "fold" }]);
+  assert.deepEqual(ss.warn, []);
+  assert.deepEqual(C.template({ bind: "ss", pages: 34 }, {}).warn, ["ss4"]);
+  assert.ok(C.template({ bind: "ss", pages: 120 }, {}).warn.includes("ssMax"));
+  const sp = C.template({ w: 148, h: 210, pages: 100, bind: "sp" }, {});
+  assert.equal(sp.kind, "sp"); assert.equal(sp.folds.length, 0);
+  assert.deepEqual(sp.parts.map((p) => [p.k, p.x, p.w]), [["back", 0, 148], ["gap", 148, 6.4], ["front", 154.4, 148]]);
+  assert.deepEqual(sp.trims, [{ x: 0, w: 148 }, { x: 154.4, w: 148 }]);
+  assert.equal(sp.punch.length, 2);
+  assert.equal(sp.punch[0].x + sp.punch[0].w, 148); assert.equal(sp.punch[1].x, 154.4);
+  // the barcode and the safe zones keep clear of the holes
+  assert.ok(sp.bar.x + sp.bar.w <= 148 - C.PUNCH);
+  const sb = sp.safe.find((r) => r.k === "back"), sf = sp.safe.find((r) => r.k === "front");
+  assert.ok(sb.x + sb.w <= 148 - C.PUNCH && sf.x >= 154.4 + C.PUNCH);
+  assert.equal(C.template({ bind: "sp" }, { bleed: 5 }).parts[1].w, 10);
+  const bb = C.template({ w: 200, h: 200, pages: 20, paper: "board", bind: "bb" }, {});
+  assert.equal(bb.kind, "bb"); assert.deepEqual(bb.parts.map((p) => p.k), ["back", "spine", "front"]);
+  assert.equal(bb.spine, 18.2);
+  const lf = C.template({ w: 148, h: 210, pages: 240, bind: "lf" }, {}), cs = C.template({ w: 148, h: 210, pages: 240, bind: "hc" }, {});
+  assert.equal(lf.kind, "case"); assert.deepEqual(lf.parts, cs.parts);
+  // old kinds keep their numbers
+  assert.deepEqual(C.template({ w: 148, h: 210, pages: 240 }, {}).trims, [{ x: 0, w: C.template({ w: 148, h: 210, pages: 240 }, {}).W }]);
+});
+
+test("wrapMap per binding: the fold of a booklet, the two spiral covers", () => {
+  const ss = C.wrapMap({ w: 148, h: 210, pages: 32, bind: "ss" }, {});
+  const k = ss.panels.map((p) => p.k);
+  assert.deepEqual(k, ["back", "spine", "front"]);
+  ss.panels.forEach((p, i, a) => { assert.ok(p.x1 > p.x0); if (i) assert.ok(Math.abs(p.x0 - a[i - 1].x1) < 1e-9); });
+  const mid = (ss.panels[1].x0 + ss.panels[1].x1) / 2;
+  assert.ok(Math.abs(mid - 0.5) < 0.002);
+  const sp = C.wrapMap({ w: 148, h: 210, pages: 100, bind: "sp" }, {});
+  assert.deepEqual(sp.panels.map((p) => p.k), ["back", "front"]);
+  const T = C.template({ w: 148, h: 210, pages: 100, bind: "sp" }, {});
+  assert.ok(Math.abs(sp.panels[0].x1 - (T.bleed + 148) / T.sheet.w) < 1e-9);
+  assert.ok(Math.abs(sp.panels[1].x0 - (T.bleed + 154.4) / T.sheet.w) < 1e-9);
+});
+
+test("MockPrint: spiral covers share the gap, no gap label", () => {
+  const T = C.template({ w: 148, h: 210, pages: 100, bind: "sp" }, {}), sp = MP.spans(T);
+  assert.deepEqual(Object.keys(sp).sort(), ["back", "front"]);
+  assert.equal(sp.back[0], 0); assert.equal(sp.front[1], T.sheet.w);
+  assert.ok(Math.abs(sp.back[1] - (T.bleed * 2 + 148)) < 1e-9 && sp.back[1] === sp.front[0]);
+  assert.equal(MP.VERSION, "1.1.0");
+});
+
+test("openCurve: lay-flat, spiral and board pages lie flat at the gutter", () => {
+  for (const b of ["lf", "sp", "bb"]) {
+    const c = C.openCurve({ bind: b, pages: 100 }, 0.5);
+    const t = C.dims({ bind: b, pages: 100 }).T / 2;
+    assert.ok(c[0][1] >= t - 0.01, b);
+  }
+  const pb = C.openCurve({ pages: 100 }, 0.5);
+  assert.ok(pb[0][1] < C.dims({ pages: 100 }).T / 2 * 0.2);
+  const bb = C.openCurve({ bind: "bb", pages: 20, paper: "board" }, 1);
+  assert.ok(bb.every((p) => Math.abs(p[1] - bb[0][1]) < 0.01));
+});
+
+test("v2 wave 1 wiring: binding buttons, wire colour, strings in en, el and de, help, search", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html"), de = read("i18n/de/mockups.js"), sc = read("mockups/scene.js");
+  for (const b of C.BINDS) assert.match(html, new RegExp('data-v="' + b + '" data-i18n="bind\\.' + b + '"'), b);
+  ["bind-hint", "wire-box", "f-wire", "flaps-row", "round-row"].forEach((id) => {
+    assert.match(html, new RegExp('id="' + id + '"'), id);
+    assert.ok(js.includes('"' + id + '"'), id);
+  });
+  const keys = ["bind.ss", "bind.sp", "bind.bb", "bind.lf", "hint.ss", "hint.sp", "hint.bb", "hint.lf", "f.wire", "wire.gold", "paper.board",
+    "tpl.kind.ss", "tpl.kind.sp", "tpl.kind.bb", "tpl.spineSs", "tpl.spineSp", "tpl.spineBb", "warn.ss4", "warn.ssMax", "lg.punch", "slot.gap", "spine.none"];
+  keys.forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  });
+  assert.match(sc, /C\.coilLoops\(bk\)/);
+  assert.match(read("mockups/help.en.txt"), /`Saddle-stitched`/);
+  assert.match(read("mockups/help.el.txt"), /`Καρφίτσα`/);
+  const ctx = { lang: "el", readJSON: () => ({ prj: [{ id: ID, m: 1, bk: { w: 148, h: 210, pages: 32, bind: "ss" } }] }) };
+  assert.match(P.search(ctx)[0].text, /Καρφίτσα/);
 });

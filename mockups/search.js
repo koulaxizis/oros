@@ -11,8 +11,8 @@
   var KEY = "oros-mockups-data";
   // Runs in the shell, which loads only its own pack: a pack language shows English.
   var S = {
-    en: { "search.name": "Book mockup", "bind.pb": "Paperback", "bind.hc": "Hardcover", "search.pages": "pages" },
-    el: { "search.name": "Μακέτα βιβλίου", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο", "search.pages": "σελίδες" }
+    en: { "search.name": "Book mockup", "bind.pb": "Paperback", "bind.hc": "Hardcover", "bind.ss": "Saddle-stitched", "bind.sp": "Spiral", "bind.bb": "Board book", "bind.lf": "Lay-flat", "search.pages": "pages" },
+    el: { "search.name": "Μακέτα βιβλίου", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο", "bind.ss": "Καρφίτσα", "bind.sp": "Σπιράλ", "bind.bb": "Χαρτονένιο", "bind.lf": "Ανοίγει επίπεδα", "search.pages": "σελίδες" }
   };
   var ID_RE = /^k[0-9a-z]{6,24}$/;
 
@@ -33,7 +33,7 @@
         var parts = [];
         if (n(bk.w) && n(bk.h)) parts.push(n(bk.w) + " × " + n(bk.h) + " mm");
         if (n(bk.pages)) parts.push(n(bk.pages) + " " + S[lang]["search.pages"]);
-        if (bk.bind === "pb" || bk.bind === "hc") parts.push(S[lang]["bind." + bk.bind]);
+        if (S[lang]["bind." + bk.bind]) parts.push(S[lang]["bind." + bk.bind]);
         if (str(art.spT)) parts.push(str(art.spT));
         out.push({ id: p.id, title: str(p.nm) || S[lang]["search.name"], text: parts.join(" · "), target: { id: p.id } });
       });

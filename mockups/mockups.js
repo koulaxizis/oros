@@ -63,6 +63,20 @@
       "btn.first": "Make a book mockup",
       "tab.book": "Book", "tab.cover": "Cover", "tab.scene": "Scene", "tab.out": "Save",
       "f.bind": "Binding", "bind.pb": "Paperback", "bind.hc": "Hardcover",
+      "bind.ss": "Saddle-stitched", "bind.sp": "Spiral", "bind.bb": "Board book", "bind.lf": "Lay-flat",
+      "hint.ss": "Folded in the middle and stapled, like a magazine, a booklet or a zine. No spine; pages go in fours, at most about 96.",
+      "hint.sp": "Spiral or wire-o: two loose covers and a coil through holes near the edge. It opens flat; there is no spine.",
+      "hint.bb": "A children's board book: thick board pages and a laminated cover flush with them. Each leaf is about 1.5 mm.",
+      "hint.lf": "A hardcover whose spread lies flat when open, like a photo book.",
+      "f.wire": "Wire colour", "wire.black": "Black", "wire.silver": "Silver", "wire.white": "White", "wire.gold": "Gold",
+      "paper.board": "Board pages",
+      "tpl.kind.ss": "Saddle-stitched cover (folds in the middle)", "tpl.kind.sp": "Spiral covers (front and back, cut apart)",
+      "tpl.kind.bb": "Board book cover",
+      "tpl.spineSs": "No spine: the cover folds round the pages at the staples.",
+      "tpl.spineSp": "No spine: the coil holds the pages. Keep the blue strip with the holes clear.",
+      "tpl.spineBb": "Spine for the printer: {s} (the board pages plus the two covers).",
+      "warn.ss4": "Saddle stitching needs a page count that divides by 4.", "warn.ssMax": "Over 96 pages is too many to staple at most printers: take a paperback.",
+      "lg.punch": "Holes for the coil: keep clear", "slot.gap": "Gap", "spine.none": "none",
       "f.trim": "Size", "trim.custom": "My own size", "f.w": "Width", "f.h": "Height", "f.unit": "Unit", "unit.in": "inches",
       "f.pages": "Pages", "f.paper": "Paper", "f.cal": "One page (mm)",
       "paper.white": "White 80 g", "paper.cream": "Cream 90 g", "paper.color": "Colour pages", "paper.coated": "Coated (photo book)",
@@ -174,6 +188,20 @@
       "btn.first": "Φτιάξε μακέτα βιβλίου",
       "tab.book": "Βιβλίο", "tab.cover": "Εξώφυλλο", "tab.scene": "Σκηνή", "tab.out": "Αποθήκευση",
       "f.bind": "Βιβλιοδεσία", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο",
+      "bind.ss": "Καρφίτσα", "bind.sp": "Σπιράλ", "bind.bb": "Χαρτονένιο", "bind.lf": "Ανοίγει επίπεδα",
+      "hint.ss": "Διπλωμένο στη μέση και καρφιτσωμένο, σαν περιοδικό, φυλλάδιο ή fanzine. Δεν έχει ράχη· οι σελίδες πάνε ανά τέσσερις, έως περίπου 96.",
+      "hint.sp": "Σπιράλ ή wire-o: δύο χωριστά εξώφυλλα και ένα σπιράλ μέσα από τρύπες κοντά στην άκρη. Ανοίγει επίπεδα· δεν έχει ράχη.",
+      "hint.bb": "Παιδικό χαρτονένιο βιβλίο: χοντρές σελίδες από χαρτόνι και πλαστικοποιημένο εξώφυλλο στο ίδιο μέγεθος. Κάθε φύλλο είναι περίπου 1,5 mm.",
+      "hint.lf": "Σκληρόδετο που ανοίγει εντελώς επίπεδα, σαν φωτογραφικό άλμπουμ.",
+      "f.wire": "Χρώμα σπιράλ", "wire.black": "Μαύρο", "wire.silver": "Ασημί", "wire.white": "Λευκό", "wire.gold": "Χρυσό",
+      "paper.board": "Σελίδες χαρτόνι",
+      "tpl.kind.ss": "Εξώφυλλο με καρφίτσα (διπλώνει στη μέση)", "tpl.kind.sp": "Εξώφυλλα σπιράλ (μπροστά και πίσω, κομμένα χωριστά)",
+      "tpl.kind.bb": "Εξώφυλλο χαρτονένιου βιβλίου",
+      "tpl.spineSs": "Χωρίς ράχη: το εξώφυλλο διπλώνει γύρω από τις σελίδες στις καρφίτσες.",
+      "tpl.spineSp": "Χωρίς ράχη: το σπιράλ κρατά τις σελίδες. Άφησε ελεύθερη τη μπλε λωρίδα με τις τρύπες.",
+      "tpl.spineBb": "Ράχη για το τυπογραφείο: {s} (οι σελίδες από χαρτόνι μαζί με τα δύο εξώφυλλα).",
+      "warn.ss4": "Η καρφίτσα θέλει αριθμό σελίδων που διαιρείται με το 4.", "warn.ssMax": "Πάνω από 96 σελίδες είναι πολλές για καρφίτσα στα περισσότερα τυπογραφεία: προτίμησε χαρτόδετο.",
+      "lg.punch": "Τρύπες για το σπιράλ: άφησέ τες ελεύθερες", "slot.gap": "Κενό", "spine.none": "καμία",
       "f.trim": "Μέγεθος", "trim.custom": "Δικό μου μέγεθος", "f.w": "Πλάτος", "f.h": "Ύψος", "f.unit": "Μονάδα", "unit.in": "ίντσες",
       "f.pages": "Σελίδες", "f.paper": "Χαρτί", "f.cal": "Μία σελίδα (mm)",
       "paper.white": "Λευκό 80 γρ.", "paper.cream": "Κρεμ 90 γρ.", "paper.color": "Έγχρωμες σελίδες", "paper.coated": "Κουσέ (λεύκωμα)",
@@ -763,21 +791,30 @@
     $("cal-box").hidden = b.paper !== "custom";
     setVal("f-cal", b.cal);
     var d = C.dims(b);
-    out("spine-out", (cur.unit === "in" ? fmtNum(d.spineMm / C.MM_PER_IN, 3) + "″" : fmtNum(d.spineMm, 1) + " mm"));
+    out("spine-out", !d.spineMm ? t("spine.none") : (cur.unit === "in" ? fmtNum(d.spineMm / C.MM_PER_IN, 3) + "″" : fmtNum(d.spineMm, 1) + " mm"));
     var cal = b.paper === "custom" ? b.cal : C.paperOf(b.paper).c;
     out("spine-sub", "(" + (b.spine ? t("spine.hand") : t("spine.from", { pages: b.pages, cal: fmtNum(cal, 4) })) +
-      (b.bind === "hc" ? " · " + t("spine.block", { b: fmtNum(d.T, 1) + " mm" }) : "") + ")");
+      (d.hc || b.bind === "bb" ? " · " + t("spine.block", { b: fmtNum(d.T, 1) + " mm" }) : "") + ")");
+    out("bind-hint", /^(ss|sp|bb|lf)$/.test(b.bind) ? t("hint." + b.bind) : "");
+    $("bind-hint").hidden = !/^(ss|sp|bb|lf)$/.test(b.bind);
+    $("wire-box").hidden = b.bind !== "sp";
+    setVal("f-wire", b.wire);
+    $("flaps-row").hidden = !(b.bind === "pb" || b.bind === "hc");
     setChk("f-spineOn", b.spine > 0);
-    $("spine-box").hidden = !(b.spine > 0);
+    var noSpine = b.bind === "ss" || b.bind === "sp";
+    $("spine-sub").hidden = noSpine;
+    $("f-spineOn").closest("label").hidden = noSpine;
+    $("spine-box").hidden = noSpine || !(b.spine > 0);
     setVal("f-spine", b.spine || +d.T.toFixed(1));
     setChk("f-flaps", b.flaps);
     $("flaps-lbl").textContent = t(b.bind === "hc" ? "f.flapsHc" : "f.flaps");
-    $("flapw-box").hidden = !b.flaps;
+    $("flapw-box").hidden = !d.flaps;
     setVal("f-flapW", b.flapW); out("flapw-out", fmtNum(b.flapW, 0) + " mm");
-    $("hc-box").hidden = b.bind !== "hc";
+    $("hc-box").hidden = !d.hc;
+    $("round-row").hidden = b.bind !== "hc";
     setChk("f-round", b.round); setChk("f-band", b.band); setChk("f-ribbon", b.ribbon);
     setVal("f-bandC", b.bandC); setVal("f-ribC", b.ribC);
-    $("cloth-box").hidden = !(b.bind === "hc" && b.flaps);
+    $("cloth-box").hidden = !(b.bind === "hc" && d.flaps);
     setVal("f-clothC", b.clothC);
     setVal("f-fin", b.fin); setVal("f-edge", b.edge);
     $("edgec-box").hidden = b.edge !== "color";
@@ -1093,7 +1130,15 @@
     });
   }
   function wireForm() {
-    wireSeg("bind", function (v) { change("book", function (p) { p.bk.bind = v; }); });
+    wireSeg("bind", function (v) {
+      change("book", function (p) {
+        // board books have board pages and few of them; leaving one, the pages turn back to paper
+        if (v === "bb" && p.bk.bind !== "bb") { if (p.bk.paper !== "board") p.bk.paper = "board"; if (p.bk.pages > 40) p.bk.pages = 20; }
+        else if (v !== "bb" && p.bk.bind === "bb" && p.bk.paper === "board") p.bk.paper = "white";
+        p.bk.bind = v;
+      });
+    });
+    $("f-wire").addEventListener("change", function () { change("book", function (p) { p.bk.wire = $("f-wire").value; }); });
     $("f-trim").addEventListener("change", function () {
       var tr = C.trimOf($("f-trim").value);
       change("book", function (p) { if (tr) { p.bk.w = tr.w; p.bk.h = tr.h; p.bk.trim = tr.k; } else p.bk.trim = "custom"; });
@@ -1712,9 +1757,11 @@
     out("tpl-info", t("tpl.info", { w: tplLen(T.sheet.w), h: tplLen(T.sheet.h), tw: tplLen(T.W), th: tplLen(T.H), s: tplLen(T.spine) }));
     var ul = $("tpl-parts");
     ul.textContent = "";
-    T.parts.forEach(function (p) { ul.appendChild(el("li", null, t("slot." + p.k) + " " + tplLen(p.w))); });
+    T.parts.forEach(function (p) { if (p.k !== "gap") ul.appendChild(el("li", null, t("slot." + p.k) + " " + tplLen(p.w))); });
     var cal = b.paper === "custom" ? b.cal : C.paperOf(b.paper).c;
-    out("tpl-spine", T.kind !== "pb" ? t("tpl.spineHand", { s: tplLen(T.spine) })
+    out("tpl-spine", T.kind === "ss" ? t("tpl.spineSs") : T.kind === "sp" ? t("tpl.spineSp")
+      : T.kind === "bb" ? t("tpl.spineBb", { s: tplLen(T.spine) })
+      : T.kind !== "pb" ? t("tpl.spineHand", { s: tplLen(T.spine) })
       : b.spine ? t("tpl.spinePb", { s: tplLen(T.spine) }) : t("tpl.spine", { s: tplLen(T.spine), pages: b.pages, cal: fmtNum(cal, 4) }));
     var w = T.warn.filter(function (k) { return k !== "nobar" || o.bar; }).map(function (k) { return t("warn." + k); });
     $("tpl-warn").hidden = !w.length;
@@ -1728,8 +1775,10 @@
       var lg = $("legend"), K = MP ? MP.COL : {};
       lg.textContent = "";
       [["bleed", T.kind === "case" ? "lg.wrap" : "lg.bleed", ""], ["trim", "lg.trim", "solid"], ["fold", "lg.fold", "line"],
-       ["hinge", "lg.hinge", "line"], ["safe", "lg.safe", "line"]].forEach(function (x) {
+       ["hinge", "lg.hinge", "line"], ["safe", "lg.safe", "line"], ["punch", "lg.punch", ""]].forEach(function (x) {
         if (x[0] === "hinge" && T.kind !== "case") return;
+        if (x[0] === "fold" && T.kind === "sp") return;
+        if (x[0] === "punch" && T.kind !== "sp") return;
         var li = el("li"), i = el("i", x[2] === "line" ? "line" : null);
         if (x[2] === "line") i.style.color = K[x[0]]; else if (x[2] === "solid") { i.style.height = "0"; i.style.borderTop = "2px solid " + K[x[0]]; } else i.style.background = K[x[0]];
         li.appendChild(i); li.appendChild(el("span", null, t(x[1])));

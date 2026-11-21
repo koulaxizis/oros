@@ -190,6 +190,7 @@ input[type="color"].sw { width: 52px; flex-shrink: 0; }
 }
 .seg.wrap button { flex: 1 1 64px; }
 #setk button { flex: 1 1 30%; }
+#bind button { flex: 1 1 30%; white-space: normal; line-height: 1.15; }
 .seg button[aria-checked="true"] { background: var(--accent-soft); color: var(--accent); }
 .seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 

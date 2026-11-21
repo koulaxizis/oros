@@ -1,11 +1,12 @@
 // ============================================================
-// orOS Mockups — print.js (MockPrint, v1.0.0)
+// orOS Mockups — print.js (MockPrint, v1.1.0)
 // The cover sheet for the printer, drawn on a 2D canvas from
 // MockCore.template(): the cover itself (the full-wrap picture, or
 // front / back / spine / flap pictures put together, running into
 // the bleed) and the guides (bleed or hardcover wrap tinted, trim
 // line, folds, hinges, safe zones, barcode spot, the name and width
-// of every panel). The same drawing feeds the live preview of the
+// of every panel; a spiral binding's two covers are trimmed apart,
+// with the strip of the holes shown). The same drawing feeds the live preview of the
 // Print tab, the PNG, the PDF and the new Atelier design.
 // No three.js; loaded with the app.
 // ============================================================
@@ -47,6 +48,11 @@
       if (out[k]) { out[k][0] = Math.min(out[k][0], x0); out[k][1] = Math.max(out[k][1], x1); }
       else out[k] = [x0, x1];
     });
+    // spiral: the two covers share the bleed between them
+    if (out.gap) {
+      if (out.back && out.front) out.back[1] = out.front[0] = (out.gap[0] + out.gap[1]) / 2;
+      delete out.gap;
+    }
     return out;
   }
 
@@ -81,16 +87,26 @@
     }
   }
 
-  var COL = { bleed: "rgba(226, 46, 46, 0.30)", trim: "#d81e1e", fold: "#1769d6", hinge: "#8a3fd1", safe: "#11905a", bar: "#1d2330" };
+  var COL = { bleed: "rgba(226, 46, 46, 0.30)", trim: "#d81e1e", fold: "#1769d6", hinge: "#8a3fd1", safe: "#11905a", bar: "#1d2330", punch: "rgba(23, 105, 214, 0.16)" };
 
   // The guides. L: { name(k), len(mm) → "148 mm", bar, info }
   function drawGuides(ctx, T, ppm, L) {
     var bl = T.bleed * ppm, W = T.W * ppm, H = T.H * ppm, sw = T.sheet.w * ppm, sh = T.sheet.h * ppm;
     var lw = Math.max(1, ppm * 0.3), fs = Math.max(9, ppm * 3.2);
+    var trims = T.trims && T.trims.length ? T.trims : [{ x: 0, w: T.W }];
     ctx.save();
     // bleed (paperback, jacket) or wrap round the boards (case)
     ctx.fillStyle = COL.bleed;
-    ctx.beginPath(); ctx.rect(0, 0, sw, sh); ctx.rect(bl, bl, W, H); ctx.fill("evenodd");
+    ctx.beginPath(); ctx.rect(0, 0, sw, sh);
+    trims.forEach(function (r) { ctx.rect(bl + r.x * ppm, bl, r.w * ppm, H); });
+    ctx.fill("evenodd");
+    // spiral: the strip of the holes (keep it clear)
+    (T.punch || []).forEach(function (r) {
+      ctx.fillStyle = COL.punch; ctx.fillRect(bl + r.x * ppm, bl + r.y * ppm, r.w * ppm, r.h * ppm);
+      ctx.fillStyle = "rgba(23, 105, 214, 0.55)";
+      var cx = bl + (r.x + (r.x < T.W / 2 ? r.w - 5 : 5)) * ppm;
+      for (var y = 6; y < r.h - 3; y += 8.47) { ctx.beginPath(); ctx.arc(cx, bl + (r.y + y) * ppm, 1.6 * ppm, 0, Math.PI * 2); ctx.fill(); }
+    });
     // safe zones
     ctx.strokeStyle = COL.safe; ctx.lineWidth = lw; ctx.setLineDash([lw * 4, lw * 3]);
     T.safe.forEach(function (r) { ctx.strokeRect(bl + r.x * ppm, bl + r.y * ppm, r.w * ppm, r.h * ppm); });
@@ -103,7 +119,7 @@
     });
     // trim
     ctx.setLineDash([]); ctx.strokeStyle = COL.trim; ctx.lineWidth = lw * 1.4;
-    ctx.strokeRect(bl, bl, W, H);
+    trims.forEach(function (r) { ctx.strokeRect(bl + r.x * ppm, bl, r.w * ppm, H); });
     // barcode spot
     if (T.bar) {
       var b = T.bar, bx = bl + b.x * ppm, by = bl + b.y * ppm, bw = b.w * ppm, bh = b.h * ppm;
@@ -116,6 +132,7 @@
     // where titles and spine text usually go)
     var top = bl + Math.max(fs * 1.4, Math.min(H * 0.12, (T.safe.length ? T.safe[0].y * ppm : 0) + fs * 1.6));
     T.parts.forEach(function (p) {
+      if (p.k === "gap") return;
       var cx = bl + (p.x + p.w / 2) * ppm, w = p.w * ppm;
       if (/^hinge/.test(p.k) || p.k === "spine") {
         var f2 = Math.min(fs, w * 0.5);
@@ -172,5 +189,5 @@
     return doc;
   }
 
-  root.MockPrint = { VERSION: "1.0.0", ppmFor: ppmFor, spans: spans, drawArt: drawArt, drawGuides: drawGuides, render: render, pdf: pdf, COL: COL };
+  root.MockPrint = { VERSION: "1.1.0", ppmFor: ppmFor, spans: spans, drawArt: drawArt, drawGuides: drawGuides, render: render, pdf: pdf, COL: COL };
 })(typeof window !== "undefined" ? window : globalThis);
