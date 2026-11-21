@@ -8,6 +8,9 @@ orOS is free and made by one person. If it is useful to you, [here are three way
 - **Music: eleven free catalogues.** Audius, Free Music Archive, Kevin MacLeod, Musopen, the National Jukebox of the Library of Congress, Europeana and DPLA (with your own free key) join Jamendo, the Internet Archive, Openverse and ccMixter. Turn each on or off in Settings › Sources. Dogmazic is one tap away in Connect a server.
 - **Music: dig deeper.** The Concert explorer finds a band's live tapes by year, soundboard or audience. Netlabels lists the free labels with their releases. Save a search and it waits for you in Search on every device, showing what is new since your last visit. A Deep dig order brings rarely played, well rated albums first, and a playlist can copy the credits of its free songs.
 
+## Version 8.17.00
+- **Outdoor places and Where am I in Maps.** Discover now finds water and springs, shelters and huts, peaks and viewpoints, camping and bike service. Where am I shows your position in every common format with a compass, sunrise and sunset, Call 112 and Text my position. See [Maps](help:a/maps).
+
 ## Version 8.16.00
 - **Layout: port a whole folder of books.** On Layout's home page, Open file › Port a folder of books opens every Scribus and InDesign file of a folder of past work as a new document with its own pictures, finds the PDF that went to the printer, compares each page with it and gives you a report you can save as a spreadsheet. Nothing in the folder changes. Compare with a PDF now also notices when the PDF has extra pages at the start.
 
