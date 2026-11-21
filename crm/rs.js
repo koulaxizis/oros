@@ -439,9 +439,12 @@
 //     name_en, about, about_en }] }], works: [{ id, ben, title, flow, step,
 //     since, release, note, products: [shop product ids] }] }
 // in the order of the columns; a card in a column that is not a step is
-// at the last step before it (none before → not sent, "nostep"); the
-// last step of a flow goes only while the release day (or since) is at
-// most 30 days ago. Only flows that carry a work go. products: the shop
+// at the last step before it (none before → not sent, "nostep"). A step
+// may be a finish (ap.e): the board's steps are parts that end at each
+// finish (and at the last step), each part its own flow ("<board>",
+// "<board>-2"…); a card at a finish is not sent ("done"), so the bar
+// hides until the card reaches the next part's first step. Only flows
+// that carry a work go. products: the shop
 // products of the Publishing title with the card's name (its formats'
 // wp links for this shop). Nothing else from the board leaves orOS.
 //   stepBoards(kanban) → [board]; flowOf(board) → { steps, at: [step index per column, -1 none] }
@@ -589,20 +592,35 @@
              Array.isArray(b.columns) && b.columns.some(isStep);
     });
   }
+  // The board's steps in column order, split into parts at each finish
+  // (ap.e, Chris 2026-11-21: «Κυκλοφορία» of the print book is a finish,
+  // the audiobook's steps after it are the next part); the last step is
+  // always a finish. segs[k] = { from, to } step indexes.
   function flowOf(board) {
-    var steps = [], at = [], cur = -1;
+    var steps = [], at = [], cur = -1, ends = [];
     (board && Array.isArray(board.columns) ? board.columns : []).forEach(function (col) {
       if (isStep(col)) {
         var ap = col.ap, name = clean(ap.n, 80) || clean(col.name, 80);
         if (name) {
           steps.push({ id: col.id, name: name, name_en: clean(ap.ne, 80), about: cleanText(ap.a, 600), about_en: cleanText(ap.ae, 600) });
           cur = steps.length - 1;
+          ends.push(ap.e === 1);
         }
       }
       at.push(cur);
     });
-    return { steps: steps, at: at };
+    var segs = [], from = 0;
+    steps.forEach(function (s, i) {
+      if (ends[i] || i === steps.length - 1) { segs.push({ from: from, to: i }); from = i + 1; }
+    });
+    return { steps: steps, at: at, segs: segs };
   }
+  function segOf(fl, si) {
+    for (var k = 0; k < fl.segs.length; k++) if (si >= fl.segs[k].from && si <= fl.segs[k].to) return k;
+    return -1;
+  }
+  // the flow id of a part: the board's id, "<board>-2", "-3"… for later parts
+  function partId(board, k) { var id = k ? board.id + "-" + (k + 1) : board.id; return RS_ID.test(id) ? id : ""; }
   function cleanText(v, max) {
     return typeof v === "string" ? v.replace(/[\u0000-\u0009\u000b-\u001f\u007f<>]+/g, " ").replace(/[ \t]{2,}/g, " ").trim().slice(0, max).trim() : "";
   }
@@ -620,23 +638,25 @@
     var today = YMD.test(o.today || "") ? o.today : "", dayOf = typeof o.dayOf === "function" ? o.dayOf : localDay;
     var out = { body: { v: 2, sent: today, flows: [], works: [] }, left: [], board: null, at: {} };
     if (!today) return out;
-    var tdy = dayNum(today), works = [], used = {}, pick = {};
+    var works = [], used = {}, pick = {};
     (Array.isArray(o.chosen) ? o.chosen : []).forEach(function (id) { if (typeof id === "string") pick[id] = 1; });
     var flows = {};
     boards.forEach(function (board) {
       var fl = flowOf(board);
       if (!fl.steps.length) return;
-      flows[board.id] = fl.steps;
       board.columns.forEach(function (col, ci) {
         (isObj(col) && Array.isArray(col.cards) ? col.cards : []).forEach(function (card) {
           if (!isObj(card) || !(card.ap === 1 || (card.ap === undefined && pick[card.id]))) return;
           var title = clean(card.text, TITLE_MAX), si = fl.at[ci];
           if (si < 0) { out.left.push({ card: card.id, t: title, why: "nostep" }); return; }
-          var step = fl.steps[si];
-          out.at[card.id] = { step: step.name, i: si + 1, n: fl.steps.length };
+          var k = segOf(fl, si), seg = fl.segs[k], step = fl.steps[si], fid = partId(board, k);
+          out.at[card.id] = { step: step.name, i: si - seg.from + 1, n: seg.to - seg.from + 1, end: si === seg.to };
+          // at a finish (or past it, before the next step): the bar hides
+          if (si === seg.to) { out.left.push({ card: card.id, t: title, why: "done" }); return; }
+          if (!fid) { out.left.push({ card: card.id, t: title, why: "badid" }); return; }
+          flows[fid] = fl.steps.slice(seg.from, seg.to + 1);
           var since = sinceOf(card, dayOf) || today;
           var t = titleOf(o.publish, card.text), release = t && YMD.test(t.rel || "") ? t.rel : "";
-          if (si === fl.steps.length - 1 && !(tdy - dayNum(release || since) <= DONE_DAYS)) { out.left.push({ card: card.id, t: title, why: "old" }); return; }
           if (!title) { out.left.push({ card: card.id, t: "", why: "notitle" }); return; }
           if (typeof card.id !== "string" || !RS_ID.test(card.id) || card.id.length > 60) { out.left.push({ card: card.id, t: title, why: "badid" }); return; }
           var names = creators(o.crm, o.publish, board, card, o.shopId, o.firstShopId);
@@ -644,10 +664,10 @@
           if (!names.length) { out.left.push({ card: card.id, t: title, why: "noben" }); return; }
           var note = noteOf(card.notes), products = productsOf(t, o.shopId, o.firstShopId);
           names.forEach(function (n, i) {
-            works.push({ id: names.length > 1 ? card.id + "-" + (i + 1) : card.id, ben: n, title: title, flow: board.id, step: step.id,
+            works.push({ id: names.length > 1 ? card.id + "-" + (i + 1) : card.id, ben: n, title: title, flow: fid, step: step.id,
                          since: since, release: release, note: note, products: products });
           });
-          used[board.id] = 1;
+          used[fid] = 1;
         });
       });
     });

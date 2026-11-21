@@ -441,6 +441,7 @@ orosPack("de", "crm", {
  "pd.offHint": "Wähle das Board, dessen Spalten die Produktionsstufen sind.",
  "pd.old": "{shop} nimmt den Produktionsstand noch nicht an: Revenue Splitter 1.18.0 oder neuer ist nötig.",
  "pd.old2": "{shop} nimmt deine eigenen Schritte noch nicht an: Revenue Splitter 1.21.0 oder neuer ist nötig.",
+ "pd.why.done": "an einem Abschluss: die Leiste des Urhebers ist bis zum nächsten Schritt ausgeblendet",
  "pd.why.nostep": "kein Schritt vor ihrer Spalte (markiere die Spalte oder eine davor in Kanban › Spalteneinstellungen als Schritt)",
  "pd.v2": "Deine eigenen Schritte gelten: die in Kanban als Schritte markierten Spalten (Spalteneinstellungen › Author Portal) sind die Stufen, die der Urheber sieht, in ihrer Reihenfolge und mit deiner Erklärung. Hake eine Karte in Kanban an (Karte › Author Portal), damit ihr Urheber sie sieht.",
  "pd.v2steps": "{board}: {n} Schritte",

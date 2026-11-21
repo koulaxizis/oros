@@ -261,6 +261,10 @@
       "pd.why.nophase":   "its column has no phase",
       "pd.chipStep":       "Portal · {step}",
       "pd.chipStepHint":   "Its creator sees step {i} of {n} in the Author Portal",
+      "pd.why.done":       "at a finish: hidden from the creator until the next step",
+      "pd.chipDone":       "Portal · finished",
+      "ap.colEnd":         "Finish: when the book gets here, the creator's bar hides until the next step",
+      "ap.cardDone":       "At a finish ({step}): the creator's bar is hidden until the card reaches the next step.",
       "pd.why.nostep":     "no step before its column",
       "ap.title":          "Author Portal",
       "ap.colOn":          "A step of the creator's production flow",
@@ -553,6 +557,10 @@
       "pd.why.nophase":   "η στήλη της δεν έχει φάση",
       "pd.chipStep":       "Portal · {step}",
       "pd.chipStepHint":   "Ο δημιουργός βλέπει το βήμα {i} από {n} στο Author Portal",
+      "pd.why.done":       "σε τερματισμό: δεν φαίνεται στον δημιουργό μέχρι το επόμενο βήμα",
+      "pd.chipDone":       "Portal · ολοκληρώθηκε",
+      "ap.colEnd":         "Τερματισμός: όταν το βιβλίο φτάσει εδώ, η μπάρα του δημιουργού κρύβεται μέχρι το επόμενο βήμα",
+      "ap.cardDone":       "Σε τερματισμό ({step}): η μπάρα του δημιουργού κρύβεται μέχρι η κάρτα να φτάσει στο επόμενο βήμα.",
       "pd.why.nostep":     "δεν υπάρχει βήμα πριν από τη στήλη της",
       "ap.title":          "Author Portal",
       "ap.colOn":          "Βήμα της ροής παραγωγής του δημιουργού",
@@ -2507,7 +2515,7 @@
     if (v.v2) {
       var at = v.at[card.id], off = !at || !!v.why[card.id];
       sp.className = "pd-chip" + (off ? " off" : "");
-      sp.textContent = off ? t("pd.chipOff") : t("pd.chipStep", { step: at.step });
+      sp.textContent = v.why[card.id] === "done" ? t("pd.chipDone") : (off ? t("pd.chipOff") : t("pd.chipStep", { step: at.step }));
       sp.title = off ? t("pd.why." + (v.why[card.id] || "nostep")) : t("pd.chipStepHint", { i: at.i, n: at.n });
       return sp;                          // a click opens the card (its Author Portal section)
     }
@@ -2904,14 +2912,21 @@
     var hint = $("c-ap-hint"), lines = [];
     if (!ticked) lines.push(t("ap.cardOff"));
     else {
-      var fl = window.OrosCrmProd.flowOf(board), ci = -1;
-      (board.columns || []).forEach(function (c, i) { if ((c.cards || []).some(function (k) { return k.id === card.id; })) ci = i; });
-      var si = ci >= 0 ? fl.at[ci] : -1;
-      lines.push(si >= 0 ? t("ap.cardStep", { i: si + 1, n: fl.steps.length, step: fl.steps[si].name }) : t("ap.cardNoStep"));
       pdView = null;
-      var v = pdViewNow(), who = v && v.at && v.at[card.id] && v.at[card.id].who;
-      if (who && who.length) lines.push(t("ap.cardWho", { names: who.join(", ") }));
-      else if (si >= 0) lines.push(t("ap.cardNoWho"));
+      var v = pdViewNow(), a = v && v.at && v.at[card.id], who = a && a.who;
+      if (!a && !(v && v.on)) {                    // no CRM data here: the step alone
+        var fl = window.OrosCrmProd.flowOf(board), ci = -1;
+        (board.columns || []).forEach(function (c, i) { if ((c.cards || []).some(function (k) { return k.id === card.id; })) ci = i; });
+        var si = ci >= 0 ? fl.at[ci] : -1;
+        fl.segs.forEach(function (sg) { if (si >= sg.from && si <= sg.to) a = { step: fl.steps[si].name, i: si - sg.from + 1, n: sg.to - sg.from + 1, end: si === sg.to }; });
+      }
+      if (!a) lines.push(t("ap.cardNoStep"));
+      else if (a.end) lines.push(t("ap.cardDone", { step: a.step }));
+      else {
+        lines.push(t("ap.cardStep", { i: a.i, n: a.n, step: a.step }));
+        if (who && who.length) lines.push(t("ap.cardWho", { names: who.join(", ") }));
+        else lines.push(t("ap.cardNoWho"));
+      }
     }
     hint.textContent = lines.join(" ");
   }
@@ -3827,6 +3842,7 @@
     // AP-FLOW: the column as a step of the creator's production flow
     var ap = col.ap || {};
     $("col-ap-on").checked = ap.on === 1;
+    $("col-ap-e").checked = ap.e === 1;
     $("col-ap-n").value = ap.n || "";
     $("col-ap-n").placeholder = col.name || "";
     $("col-ap-ne").value = ap.ne || "";
@@ -6524,7 +6540,7 @@
     var oldA = JSON.stringify(col.auto || {});
     if (oldA !== JSON.stringify(na)) { if (Object.keys(na).length) col.auto = na; else delete col.auto; changed = true; }
     // AP-FLOW: step of the creator's flow (name, explanation; EN optional)
-    var nap = M.colAp({ on: $("col-ap-on").checked ? 1 : 0, n: $("col-ap-n").value, ne: $("col-ap-ne").value,
+    var nap = M.colAp({ on: $("col-ap-on").checked ? 1 : 0, e: $("col-ap-e").checked ? 1 : 0, n: $("col-ap-n").value, ne: $("col-ap-ne").value,
                         a: $("col-ap-a").value, ae: $("col-ap-ae").value });
     if (JSON.stringify(col.ap ? M.colAp(col.ap) : null) !== JSON.stringify(nap)) { if (nap) col.ap = nap; else delete col.ap; changed = true; }
     if (changed) touch(col);   // header edit = δομικό LWW

@@ -36,9 +36,9 @@
 //     and rebuilds fm without r in a mixed merge; a valid fm without r
 //     counts r at its g stamp (else d), and the mixed result wins the
 //     tie on the older device (tests/kanban-apflow.test.js).
-//     Columns carry ap = { on, n, ne, a, ae } (a step of the creator's
-//     production flow: name, English name, explanation, English
-//     explanation): a column key, last writer of the header wins.
+//     Columns carry ap = { on, e, n, ne, a, ae } (a step of the creator's
+//     production flow, e = a finish, name, English name, explanation,
+//     English explanation): a column key, last writer of the header wins.
 //   · nothing new lives on the board or the root (old merges drop
 //     unknown keys there): WIP limits and arrival rules live on the
 //     column, the overdue rule on its label (label.auto), templates
@@ -463,11 +463,12 @@
   function colAp(v) {
     if (!v || typeof v !== "object" || Array.isArray(v)) return null;
     var o = { on: v.on === 1 || v.on === true ? 1 : 0 };
+    if (v.e === 1 || v.e === true) o.e = 1;          // a finish: the bar hides here until the next step
     Object.keys(AP_TEXT).forEach(function (k) {
       var x = typeof v[k] === "string" ? v[k].replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, " ").trim().slice(0, AP_TEXT[k]) : "";
       if (x) o[k] = x;
     });
-    return o.on || Object.keys(o).length > 1 ? o : null;
+    return o.on || Object.keys(o).length > 1 ? o : null;   // (e alone keeps the object too)
   }
   function canonCol(col, ci) {
     col.pos = ci;

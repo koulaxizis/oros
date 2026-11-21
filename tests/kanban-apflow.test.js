@@ -155,16 +155,41 @@ test("v2: steps in column order, the last step before a plain column, only ticke
   assert.equal(byId.k3, undefined);
   assert.equal(byId.q1, undefined);
   assert.deepEqual(x.left.find((l) => l.card === "k0"), { card: "k0", t: "Early", why: "nostep" });
-  // k4: the last step, released (since = today) → goes; no creator → left
-  assert.equal(x.left.find((l) => l.card === "k4").why, "noben");
-  assert.deepEqual(x.at.k1, { step: "Επιμέλεια", i: 1, n: 3, who: ["Μαρία Π."] });
+  // k4: the last step is always a finish → not sent, the bar hides
+  assert.equal(x.left.find((l) => l.card === "k4").why, "done");
+  assert.deepEqual(x.at.k1, { step: "Επιμέλεια", i: 1, n: 3, end: false, who: ["Μαρία Π."] });
   // nothing internal: no column names that are not steps
   assert.ok(!JSON.stringify(x.body).includes("Teaser"));
   assert.ok(!JSON.stringify(x.body).includes("private"));
   assert.ok(!JSON.stringify(x.body).includes("ΤΥΠ"));
 });
 
-test("v2: a flow without works is not sent; old releases are left out", () => {
+test("v2: finishes split the board into parts; the bar hides at a finish and comes back at the next step", () => {
+  const kb = { boards: [{ id: "b1", name: "Βιβλία", archived: false, columns: [
+    { id: "c1", name: "Επιμέλεια", ap: { on: 1 }, cards: [{ id: "k1", text: "Βυθός", ap: 1 }] },
+    { id: "c2", name: "Κυκλοφορία", ap: { on: 1, e: 1 }, cards: [{ id: "k2", text: "Legacy", ap: 1 }] },
+    { id: "c3", name: "eShop", cards: [{ id: "k3", text: "Βυθός", ap: 1 }] },
+    { id: "c4", name: "Ηχογράφηση", ap: { on: 1 }, cards: [{ id: "k5", text: "Βυθός", ap: 1 }] },
+    { id: "c5", name: "Μίξη", ap: { on: 1 }, cards: [] },
+    { id: "c6", name: "Audiobook out", ap: { on: 1, e: 1 }, cards: [] }] }] };
+  const crm = crmData();
+  crm.ix[0].it = ["k1", "k2", "k3", "k5"].map((id) => ({ k: "kb", r: "b1/c/" + id }));
+  const x = P.plan({ kanban: kb, crm, publish: { titles: [] }, shopId: "shop1", firstShopId: "shop1", today: TODAY });
+  assert.deepEqual(x.body.flows.map((f) => [f.id, f.steps.map((s) => s.id)]), [["b1", ["c1", "c2"]], ["b1-2", ["c4", "c5", "c6"]]]);
+  const by = {};
+  x.body.works.forEach((w) => { by[w.id] = w; });
+  assert.deepEqual([by.k1.flow, by.k1.step], ["b1", "c1"]);
+  assert.deepEqual([by.k5.flow, by.k5.step], ["b1-2", "c4"]);
+  assert.equal(by.k2, undefined);
+  assert.equal(by.k3, undefined);                       // a plain column after a finish: still finished
+  assert.equal(x.left.find((l) => l.card === "k2").why, "done");
+  assert.equal(x.left.find((l) => l.card === "k3").why, "done");
+  assert.deepEqual([x.at.k5.i, x.at.k5.n, x.at.k5.end], [1, 3, false]);
+  assert.equal(L.checkReq("woo", P.req(x.body)), "");
+  assert.equal(M.colAp({ on: 1, e: true }).e, 1);
+});
+
+test("v2: a flow without works is not sent; a finished one is left out", () => {
   const kb = books();
   kb.boards[0].columns.forEach((c) => { c.cards.forEach((k) => { k.ap = 0; }); });
   const x = P.plan({ kanban: kb, crm: crmData(), publish: PUB, shopId: "shop1", firstShopId: "shop1", today: TODAY });
@@ -173,7 +198,7 @@ test("v2: a flow without works is not sent; old releases are left out", () => {
   kb2.boards[0].columns[4].cards = [{ id: "k1", text: "Βυθός", ap: 1 }];
   const pub = { titles: [{ id: "t1", t: "Βυθός", rel: "2026-09-01", ppl: [] }] };
   const y = P.plan({ kanban: kb2, crm: crmData(), publish: pub, shopId: "shop1", firstShopId: "shop1", today: TODAY });
-  assert.equal(y.left.find((l) => l.card === "k1").why, "old");
+  assert.equal(y.left.find((l) => l.card === "k1").why, "done");
 });
 
 test("without step columns the v1 plan is unchanged", () => {
