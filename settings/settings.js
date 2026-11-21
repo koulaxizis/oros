@@ -2618,6 +2618,7 @@
         { scope: "syncInterval", forId: "f-y.interval" }));
       host.appendChild(c2);
 
+      if (y.canSpace) host.appendChild(spaceCard(y));
       if (y.canRestore) host.appendChild(backupsCard(y));
       if (y.canClean) host.appendChild(cleanCard(y));
 
@@ -2860,6 +2861,49 @@
     if (n < 1048576) return Math.max(n ? 1 : 0, Math.round(n / 1024)) + " KB";
     if (n < 1073741824) return (n / 1048576).toFixed(1) + " MB";
     return (n / 1073741824).toFixed(2) + " GB";
+  }
+  // SPACE-1: how much room the cloud account has left (the whole
+  // Dropbox account, or this account on the WebDAV/Nextcloud server).
+  // The shell asks the cloud when this card shows and keeps the answer
+  // for a few minutes; Refresh asks again.
+  function spaceCard(y) {
+    var c = card(t("y.space"));
+    var s = y.space;
+    if (!s || s.stale) act("sync.space");
+    c.appendChild(el("p", "hint", t(y.provider === "webdav" ? "y.space.hint.dav" : "y.space.hint.db")));
+    var known = s && typeof s.used === "number";
+    if (s && known && typeof s.total === "number" && s.total > 0) {
+      var pct = Math.max(0, Math.min(100, s.used / s.total * 100));
+      var low = pct >= 90;
+      var bar = el("div", "sp-bar" + (low ? " low" : ""));
+      bar.setAttribute("role", "meter");
+      bar.setAttribute("aria-valuemin", "0");
+      bar.setAttribute("aria-valuemax", "100");
+      bar.setAttribute("aria-valuenow", String(Math.round(pct)));
+      bar.setAttribute("aria-label", t("y.space"));
+      var fill = el("span", "sp-fill");
+      fill.style.width = (pct > 0 ? Math.max(2, pct) : 0).toFixed(1) + "%";
+      bar.appendChild(fill);
+      c.appendChild(bar);
+      var main = el("div", "sp-free", t("y.space.free", { free: bytesLabel(typeof s.free === "number" ? s.free : s.total - s.used) }));
+      main.setAttribute("data-k", "y.space.free");
+      c.appendChild(main);
+      c.appendChild(el("div", "hint", t("y.space.used", { used: bytesLabel(s.used), total: bytesLabel(s.total), pct: Math.round(pct) })));
+      if (low) c.appendChild(el("div", "hint warn", t("y.space.low")));
+    } else if (s && known) {
+      c.appendChild(el("div", "hint", t("y.space.used.only", { used: bytesLabel(s.used) })));
+      c.appendChild(el("div", "hint", t("y.space.nolimit")));
+    } else if (s && typeof s.free === "number") {
+      c.appendChild(el("div", "sp-free", t("y.space.free", { free: bytesLabel(s.free) })));
+    } else if (s && s.none) {
+      c.appendChild(el("div", "hint", t("y.space.none")));
+    }
+    if (s && s.err) c.appendChild(el("div", "msg msg-err", s.err));
+    if (!s || s.busy) c.appendChild(el("div", "hint", t("y.space.checking")));
+    var b = button(t("y.space.refresh"), "y.space.refresh", function () { act("sync.space", { force: true }); });
+    if (!s || s.busy) b.disabled = true;
+    c.appendChild(actions(b));
+    return c;
   }
   function cleanCard(y) {
     var c = card(t("y.clean"));

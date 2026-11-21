@@ -833,7 +833,7 @@ orosPack("de", "shell", {
  "ov.sys.mem": "Speicher",
  "ov.sys.memGB": "Etwa {n} GB auf diesem Gerät",
  "ov.sys.places": "{n} von {m} Plätzen für offene Apps",
- "ov.sys.disk": "Speicherplatz",
+ "ov.sys.disk": "Gerätespeicher",
  "ov.sys.of": "{a} von {b}",
  "ov.sys.na": "Der Browser gibt es nicht an",
  "ov.sys.sync": "Synchronisierung",
