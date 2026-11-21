@@ -23,6 +23,7 @@
   var node = typeof module !== "undefined" && module.exports;
   var M = node ? require("../designkit/model.js") : root.orosDK && root.orosDK.model;
   if (!M) return;
+  function Rd() { return node ? require("../designkit/render.js") : root.orosDK && root.orosDK.render; }
   var MM = 72 / 25.4;
   var PT_PER = { pt: 1, mm: MM, in: 72, px: 72 / 96 };
 
@@ -289,10 +290,15 @@
         f.effective_ppi = sc > 0 ? Math.round(72 / sc) : 0;
         if (it.ext && it.ext.bf) f.bleed_fill = it.ext.bf.mode;
         if (it.ext && it.ext.fl) f.flip = it.ext.fl;
+        var adj = Rd() && Rd().adjOf(it);
+        if (adj) f.adj = adj;                    // colour corrections (W4b)
         if (it.r) f.corner_mm = mm(it.r);
         if (it.mf) f.merge_field = it.mf;
       }
       if (it.t === "text") { f.story = it.story; f.columns = it.cols || 1; }
+      if (it.ext && typeof it.ext.anc === "string") f.anchored_in = it.ext.anc;   // W4b
+      if (it.t === "img" && it.ext && it.ext.pp) f.page_of = { file: it.ext.pp.f, page: it.ext.pp.p };
+      if (it.wrap && it.wrap !== "none") { f.wrap = it.ext && it.ext.wc ? it.ext.wc : it.wrap; f.wrap_mm = mm(it.wo || 0); }   // W4b
       frames.push(f);
     });
     o.frames = frames;
@@ -701,24 +707,150 @@
   // picture (W4): the picture frames `ids` (or every picture on the
   // pages `want` picks): flip none|h|v|hv, corner radius (pt, −1 = as
   // it is), fit fit|fill|frame (frame: the frame takes the picture's
-  // proportions, keeping its width). → number changed
+  // proportions, keeping its width), adj colour corrections (W4b: a
+  // record as R.adjNorm reads, merged by kind, or "none"). → number
+  // changed
   function setPicture(doc, ids, want, st, now) {
     var on = {}, n = 0;
     if (want) M.pagesInOrder(doc).forEach(function (p, i) { if (want(i + 1)) on[p.id] = 1; });
     var pick = ids && ids.length ? function (it) { return ids.indexOf(it.id) >= 0; } : function (it) { return !!on[it.pg]; };
     doc.items.forEach(function (it) {
       if (it.t !== "img" || it.lock || !pick(it)) return;
-      var before = JSON.stringify([it.ext && it.ext.fl, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]);
+      var before = JSON.stringify([it.ext && it.ext.fl, it.ext && it.ext.adj, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]);
       if (st.flip) {
         var x = it.ext || {};
         if (st.flip === "none") delete x.fl; else x.fl = st.flip;
         if (Object.keys(x).length) it.ext = x; else delete it.ext;
       }
+      // colour corrections (W4b): "none" takes them all off; a record
+      // sets the corrections it names (one that changes nothing goes)
+      if (st.adj) {
+        var R = Rd(), xa = it.ext || {};
+        if (st.adj === "none") delete xa.adj;
+        else if (R && typeof st.adj === "object") {
+          var na = Object.assign({}, R.adjNorm(xa.adj) || {}, st.adj);
+          na = R.adjNorm(na);
+          if (na) xa.adj = na; else delete xa.adj;
+        }
+        if (Object.keys(xa).length) it.ext = xa; else delete it.ext;
+      }
       if (st.corner >= 0) it.r = r3(Math.min(st.corner, Math.min(it.w, it.h) / 2));
       if (st.fit === "fit" || st.fit === "fill") { it.fit = st.fit; it.ix = 0; it.iy = 0; it.isc = 1; }
       else if (st.fit === "frame" && it.iw && it.ih) { it.h = r3(it.w * it.ih / it.iw); it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1; }
       if (it.ext && it.ext.iscy !== undefined && st.fit) { delete it.ext.iscy; if (!Object.keys(it.ext).length) delete it.ext; }
-      if (JSON.stringify([it.ext && it.ext.fl, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]) === before) return;
+      if (JSON.stringify([it.ext && it.ext.fl, it.ext && it.ext.adj, it.r, it.fit, it.w, it.h, it.isc, it.ix, it.iy]) === before) return;
+      M.touch(it, now);
+      n++;
+    });
+    return n;
+  }
+  // A page of a PDF / Scribus / InDesign file as the picture of frame
+  // `id` (W4b): pic = { a, iw, ih, nm, pp: { f, k, p } } (io.js
+  // pageImage); the whole page shows (fit). → true if changed
+  function setPage(doc, id, pic, now) {
+    var it = M.find(doc.items, id);
+    if (!it || it.t !== "img" || it.lock || !pic || !pic.a) return false;
+    it.a = pic.a; it.nm = String(pic.nm || "").slice(0, 120); it.iw = pic.iw; it.ih = pic.ih;
+    it.fit = "fit"; it.ix = 0; it.iy = 0; it.isc = 1;
+    var x = it.ext || {};
+    delete x.iscy; delete x.wpr; delete x.wpa;
+    if (pic.pp) x.pp = { f: String(pic.pp.f || "").slice(0, 120), k: pic.pp.k, p: pic.pp.p };
+    it.ext = x;
+    M.touch(it, now);
+    return true;
+  }
+  // Anchored objects (W4b): the frame `id` (a picture or a shape, not
+  // on a master) goes into the story `sid` at paragraph `pi` (0-based),
+  // character `off` (clamped; -1 = the paragraph's end) as a U+FFFC
+  // run with ext.obj = id; it.ext.anc = sid. From then on the text
+  // carries it (render.js computeLayout). One place at a time: an
+  // anchor it had goes first. → true if done
+  function unanchorRuns(doc, id, now) {
+    var n = 0;
+    doc.stories.forEach(function (st) {
+      var hit = false;
+      st.paras.forEach(function (p) {
+        (p.runs || []).forEach(function (r) {
+          if (!r.ext || r.ext.obj !== id || typeof r.t !== "string" || r.t.indexOf("\uFFFC") < 0) return;
+          r.t = r.t.split("\uFFFC").join("");
+          hit = true;
+        });
+        p.runs = (p.runs || []).filter(function (r) { return r.f || (typeof r.t === "string" && r.t.length); });
+      });
+      if (hit) { M.touch(st, now); n++; }
+    });
+    return n;
+  }
+  function anchorItem(doc, id, sid, pi, off, now) {
+    var it = M.find(doc.items, id), st = M.story(doc, sid);
+    if (!it || !st || it.t === "text" || it.lock || M.find(doc.masters, it.pg) || !st.paras.length) return false;
+    unanchorRuns(doc, id, now);
+    var p = st.paras[Math.max(0, Math.min(st.paras.length - 1, pi | 0))];
+    var runs = p.runs || [], at = off < 0 ? Infinity : off | 0, pos = 0, out = [], put = false;
+    // never inside a word: back to where it starts
+    var plain = runs.map(function (r) { return r.f ? "#" : String(r.t || ""); }).join("");
+    if (at !== Infinity) { at = Math.min(at, plain.length); while (at > 0 && !/[\s\u00a0\uFFFC]/.test(plain[at - 1])) at--; }
+    var obj = { t: "\uFFFC", ext: { obj: id } };
+    runs.forEach(function (r) {
+      var len = r.f ? 1 : String(r.t || "").length;
+      if (!put && at <= pos + len && !r.f && at - pos > 0 && at - pos < len) {
+        var a = JSON.parse(JSON.stringify(r)), b = JSON.parse(JSON.stringify(r));
+        a.t = r.t.slice(0, at - pos); b.t = r.t.slice(at - pos);
+        out.push(a, obj, b); put = true;
+      } else {
+        if (!put && at <= pos) { out.push(obj); put = true; }
+        out.push(r);
+      }
+      pos += len;
+    });
+    if (!put) out.push(obj);
+    p.runs = out;
+    M.touch(st, now);
+    var x = it.ext || {};
+    x.anc = sid;
+    it.ext = x;
+    M.touch(it, now);
+    return true;
+  }
+  // The frame goes back to being a free frame where it is now.
+  function releaseItem(doc, id, now) {
+    var it = M.find(doc.items, id);
+    if (!it || !it.ext || typeof it.ext.anc !== "string") return false;
+    unanchorRuns(doc, id, now);
+    delete it.ext.anc;
+    if (!Object.keys(it.ext).length) delete it.ext;
+    M.touch(it, now);
+    return true;
+  }
+
+  // Text wrap of frames (W4b): st.wrap none|box|ell, st.wo the offset
+  // (pt, -1 = as it is), st.wc box|shape|alpha (by the frame, its
+  // outline or a picture's transparent edges; alpha on pictures only),
+  // st.prof { id: profile } read from the pictures (R.alphaProfile;
+  // [] = no transparent edges); without one Layout reads it when the
+  // picture loads (io.js fillWrapProfiles). A wc other than box turns a
+  // wrap that was none on. → number changed
+  function setWrap(doc, ids, st, now) {
+    var n = 0;
+    doc.items.forEach(function (it) {
+      if (ids.indexOf(it.id) < 0 || it.lock) return;
+      var before = JSON.stringify([it.wrap, it.wo, it.ext && it.ext.wc, it.ext && it.ext.wpr, it.ext && it.ext.wpa]);
+      if (st.wrap) it.wrap = st.wrap;
+      if (st.wo >= 0) it.wo = r3(Math.min(500, st.wo));
+      var wc = st.wc === "alpha" && !(it.t === "img" && it.a) ? "" : st.wc;
+      if (wc) {
+        var x = it.ext || {}, oldPr = x.wpr, oldPa = x.wpa;
+        delete x.wpr; delete x.wpa;
+        if (wc === "box") delete x.wc;
+        else {
+          x.wc = wc;
+          if (wc === "alpha" && st.prof && Array.isArray(st.prof[it.id])) { x.wpr = st.prof[it.id]; x.wpa = it.a; }
+          else if (wc === "alpha" && Array.isArray(oldPr) && oldPa === it.a) { x.wpr = oldPr; x.wpa = oldPa; }
+          if (it.wrap === "none" && !st.wrap) it.wrap = "box";
+        }
+        if (Object.keys(x).length) it.ext = x; else delete it.ext;
+      }
+      if (JSON.stringify([it.wrap, it.wo, it.ext && it.ext.wc, it.ext && it.ext.wpr, it.ext && it.ext.wpa]) === before) return;
       M.touch(it, now);
       n++;
     });
@@ -734,7 +866,7 @@
       if (it.t !== "img" || !pos[it.pg]) return;
       var ppi = it.a && ppiOf ? Math.round(ppiOf(it)) : 0;
       var state = !it.a ? "empty" : isMissing && isMissing(it.a) ? "missing" : isSmall && isSmall(it) ? "small" : ppi && ppi < (low || 200) ? "low" : "ok";
-      out.push({ id: it.id, page: pos[it.pg], name: it.nm || "", ppi: ppi, state: state, flip: it.ext && it.ext.fl || "", local: !!(it.ext && it.ext.lc) });
+      out.push({ id: it.id, page: pos[it.pg], name: it.nm || "", ppi: ppi, state: state, flip: it.ext && it.ext.fl || "", adj: !!(it.ext && it.ext.adj), local: !!(it.ext && it.ext.lc) });
     });
     return out.sort(function (a, b) { return a.page - b.page || M.cmpStr(a.name, b.name); });
   }
@@ -905,7 +1037,7 @@
     return n;
   }
 
-  var api = { setPicture: setPicture, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
+  var api = { setPicture: setPicture, setPage: setPage, setWrap: setWrap, anchorItem: anchorItem, releaseItem: releaseItem, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
               styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, masterField: masterField, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;

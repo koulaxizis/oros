@@ -95,7 +95,7 @@ test("psd: PackBits round-trips runs, literals and 128-long edges", () => {
   });
 });
 
-test("psd: raw, ZIP and ZIP-with-prediction channels; mask baked into alpha; groups flattened", async () => {
+test("psd: raw, ZIP and ZIP-with-prediction channels; the mask stays a mask; groups open as groups", async () => {
   const R = fill(16, 200), G = fill(16, 100), B = Array.from({ length: 16 }, (_, i) => i * 10), A = fill(16, 255);
   const mask = [255, 0, 255, 0];                       // 2 × 2 mask at the layer's top-left, rest default 255
   const file = psdFile({ w: 4, h: 4, layers: [
@@ -110,14 +110,16 @@ test("psd: raw, ZIP and ZIP-with-prediction channels; mask baked into alpha; gro
   assert.equal(r.layers.length, 2);
   const g = r.layers[0];
   assert.equal(g.name, "In group"); assert.equal(g.bl, "multiply");
-  assert.equal(g.vis, 0);                               // the group is hidden
-  assert.equal(g.op, 50);                               // 100 % × group 128/255
+  assert.equal(g.vis, 1); assert.equal(g.op, 100);      // the layer's own; the group keeps its own (PS-4)
+  assert.equal(g.g, 0);
+  assert.deepEqual(r.groups, [{ name: "Group", vis: 0, op: 50, bl: "normal", open: 1 }]);
   assert.deepEqual([...g.img.data.slice(0, 4)], [200, 100, 0, 255]);
-  assert.equal(g.img.data[1 * 4 + 3], 0);               // mask 0
+  assert.equal(g.img.data[1 * 4 + 3], 255);             // the pixels are not cut
+  assert.deepEqual(g.mk, { x: 0, y: 0, img: { w: 2, h: 2, data: new Uint8Array(mask) }, bg: 255, on: 1 });
   assert.equal(g.img.data[15 * 4 + 2], 150);            // prediction undone
-  assert.equal(g.img.data[15 * 4 + 3], 255);            // outside the mask: default 255
-  assert.equal(r.skipped.groups, 1); assert.equal(r.skipped.masks, 1);
+  assert.equal(r.skipped.groups, 0); assert.equal(r.notes.groups, undefined);   // no group mask to bake
   assert.equal(r.layers[1].bl, "normal"); assert.equal(r.skipped.blends, 1);
+  assert.deepEqual(r.names.blend, ["Odd blend"]);
 });
 
 test("psd: flat Grayscale, CMYK and 16-bit files open as their merged picture", async () => {
@@ -141,9 +143,9 @@ test("psd: flat Grayscale, CMYK and 16-bit files open as their merged picture", 
 test("psd: refuses what it cannot or should not open", async () => {
   const reject = async (bytes, msg, o) => { await assert.rejects(PSD.read(bytes, o), (e) => e.message === msg); };
   await reject(new Uint8Array([1, 2, 3]), "psd");
-  await reject(psdFile({ w: 2, h: 2, ver: 2 }), "psd-big");                    // PSB
-  await reject(psdFile({ w: 2, h: 2, mode: 2 }), "psd-mode");                  // indexed
-  await reject(psdFile({ w: 2, h: 2, depth: 32 }), "psd-mode");
+  await reject(psdFile({ w: 2, h: 2, mode: 7 }), "psd-mode");                  // Multichannel
+  await reject(psdFile({ w: 2, h: 2, depth: 1 }), "psd-mode");                 // 1-bit is for Bitmap only
+  await reject(psdFile({ w: 2, h: 2, depth: 4 }), "psd-mode");
   await reject(psdFile({ w: 5000, h: 5000 }), "psd-big", { maxPixels: 1e6 });
   // A layer claiming more channel bytes than the file holds
   const bad = psdFile({ w: 2, h: 2, layers: [{ rect: [0, 0, 2, 2], ch: [{ id: 0, bytes: raw([1, 2, 3, 4]) }] }] });
@@ -170,11 +172,13 @@ test("ora: stack.xml groups, offsets, opacity, visibility, blend; unsafe paths i
       <layer name="Bottom" src="data/c.png" composite-op="krita:unknown"/>
     </stack></image>`;
   const s = ORA.parseStack(xml);
-  assert.equal(s.w, 100); assert.equal(s.h, 80); assert.equal(s.groups, 1);
+  assert.equal(s.w, 100); assert.equal(s.h, 80);
+  assert.deepEqual(s.groups, [{ name: "G", vis: 0, op: 50, bl: "pass", open: 1, p: null }]);
   assert.deepEqual(s.layers.map((l) => l.name), ["Bottom", "In", "Top & α"]);
   const [bottom, inner, top] = s.layers;
   assert.equal(bottom.bl, "normal");
-  assert.deepEqual([inner.x, inner.y, inner.op, inner.vis], [11, 2, 50, 0]);
+  assert.deepEqual([inner.x, inner.y, inner.op, inner.vis, inner.g], [11, 2, 100, 1, 0]);
+  assert.equal(top.g, undefined);
   assert.deepEqual([top.x, top.y, top.op, top.bl, top.vis], [5, 6, 50, "multiply", 1]);
   assert.throws(() => ORA.parseStack("<image><stack/></image>"));
 });

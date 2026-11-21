@@ -35,6 +35,7 @@ import { validCt } from "./push.js";
 export const GATE_LIMITS = {
   bodyBytes: 64 * 1024,          // a JSON-RPC request or a /gate/dev call
   replyBytes: 900 * 1024,        // one answer from the device
+  lfChars: 60000,                // TRAY-2: the sealed list of computer folders
   callMs: 25000,                 // the device must answer within this
   callsPerMin: 60,               // tools/call per gate
   toolsMs: 6000,                 // the device's tool list (GATE-ACT); the frame may need to start
@@ -454,7 +455,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_add_columns",
-    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
+    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
     inputSchema: {
       type: "object",
       properties: {
@@ -467,9 +468,18 @@ export const TOOLS = [
           },
           required: ["name"],
           additionalProperties: false
+        } },
+        rename_columns: { type: "array", minItems: 1, maxItems: 20, items: {
+          type: "object",
+          properties: {
+            column: { type: "string", description: "The column's id or current name." },
+            name: { type: "string", description: "Its new name, at most 60 characters." }
+          },
+          required: ["column", "name"],
+          additionalProperties: false
         } }
       },
-      required: ["board", "columns"],
+      required: ["board"],
       additionalProperties: false
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
@@ -538,6 +548,22 @@ export const TOOLS = [
       additionalProperties: false
     },
     annotations: { readOnlyHint: true }
+  },
+  {
+    name: "local_folders_request",
+    description: "Asks the owner to open a folder of their computer for Claude (Layout's pictures and texts to read, or a folder to save proofs and PDFs into), for the local:<root>/<path> paths edit_in_app and files_list take. The owner answers on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). Once allowed, it works where orOS runs on that computer, in a window, minimised or in the tray, and the owner can close it any time. Never a whole drive or home folder, nor system, program or key folders. Ask only for the folder the work needs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The folder's full path on the owner's computer, as Windows shows it (C:\\Users\\<name>\\Documents\\<folder>), or ~/<folder>." },
+        access: { type: "string", enum: ["read", "write"], description: "read (default): only read; write: only new files are saved there, nothing is replaced or deleted." },
+        days: { type: "integer", minimum: 1, maximum: 90, description: "How long, 30 when left out." },
+        reason: { type: "string", description: "One line for the owner: what it is for." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
   }
 ];
 const TOOL_NAMES = TOOLS.map((t) => t.name);
@@ -590,7 +616,8 @@ export function isScreenTool(name, args) {
   if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
   return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
 }
-const SCREEN_NOTE = "This works on the owner's screen (Layout's own work, an app's form or document), and nobody sees orOS right now. It waits, encrypted, and runs the next time orOS is on screen and unlocked on one of the owner's devices; its report, proofs and previews come only then (read the result afterwards with read_in_app or change_history). Until then change_history shows it pending; undo_change with change_id cancels it. Tell the owner to bring orOS to the front.";
+const LF_NOTE = "Nobody is at an orOS screen now, so the question waits, encrypted, and is asked the next time orOS is on screen on one of the owner's devices (the phone too). Nothing is opened before the owner allows it. Tell the owner to open orOS (on the phone is enough) and answer; change_history shows it pending, and undo_change with change_id cancels it.";
+const SCREEN_NOTE = "This works on the owner's screen (Layout's own work, an app's form or document), and nobody sees orOS right now. It waits, encrypted, and runs the next time orOS is on screen and unlocked on one of the owner's devices, or (Layout's work and edit_in_app) as soon as orOS runs on the owner's computer in the tray or in a minimised orOS window; its report, proofs and previews come only then (read the result afterwards with read_in_app or change_history). Until then change_history shows it pending; undo_change with change_id cancels it. Tell the owner to bring orOS to the front.";
 // closed copy's switches → why Claude may not keep this screen call, or ""
 export function screenRefusal(name, args, lv, hold, now, when) {
   const l = lv && typeof lv === "object" ? lv : {};
@@ -1757,6 +1784,7 @@ export class GateBox {
     try { server.send(JSON.stringify({ hi: now })); } catch (e) {}
     // The app switches the devices share (5.77.00): the newest set goes to a device as it connects.
     if (m.lv) { try { server.send(JSON.stringify({ lv: m.lv, lvt: m.lvt || 0 })); } catch (e) {} }
+    if (typeof m.lf === "string") { try { server.send(JSON.stringify({ lf: m.lf })); } catch (e) {} }   // TRAY-2
     // orOS closed (5.80.00): a device is open again; the changes Claude
     // left meanwhile go to it (it applies them and says which).
     m.seen = now;
@@ -1774,6 +1802,11 @@ export class GateBox {
       if (a.v && !was) await this.sendHeld([ws]);    // 7.48.00: deletions waiting for a screen
       return;
     }
+    if (msg === "b1") {                              // TRAY-1: a device that runs Layout's work unseen (tray host, desktop window)
+      const a = attOf(ws), was = a.b; a.b = 1; a.lt = Date.now(); setAtt(ws, a);
+      if (!was) await this.sendHeld([ws]);
+      return;
+    }
     if (typeof msg !== "string" || msg.length > GATE_LIMITS.replyBytes) {
       try { ws.close(1009, "too big"); } catch (e) {}
       return;
@@ -1781,6 +1814,7 @@ export class GateBox {
     let o;
     try { o = JSON.parse(msg); } catch (e) { return; }
     if (o && o.lv !== undefined && o.r === undefined) { await this.shareLv(ws, o.lv, o.base === 1); return; }
+    if (o && typeof o.lf === "string" && o.r === undefined) { await this.shareLf(ws, o.lf); return; }
     if (o && typeof o.snap === "string" && o.r === undefined) { await this.putCopy(ws, o.snap); return; }
     if (o && typeof o.fidx === "string" && o.r === undefined) { await this.putFileIndex(ws, o.fidx); return; }
     if (o && o.fdrop === 1 && o.r === undefined) { await this.dropFromDevice(ws); return; }
@@ -1822,6 +1856,19 @@ export class GateBox {
     m.lv = lv; m.lvt = Date.now();
     await this.st.put("meta", m);
     const msg = JSON.stringify({ lv: lv, lvt: m.lvt });
+    for (const s of this.sockets()) { if (s !== ws) { try { s.send(msg); } catch (e) {} } }
+  }
+  // TRAY-2: the owner's computer folders, sealed by a device with the
+  // gate's key (the relay cannot read them): the newest blob is kept and
+  // passed to the gate's other devices, and given to each as it connects.
+  async shareLf(ws, sealed) {
+    if (sealed.length > GATE_LIMITS.lfChars || !/^[A-Za-z0-9_-]{8,64}\.[A-Za-z0-9_-]+$/.test(sealed)) return;
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    if (m.lf === sealed) return;
+    m.lf = sealed;
+    await this.st.put("meta", m);
+    const msg = JSON.stringify({ lf: sealed });
     for (const s of this.sockets()) { if (s !== ws) { try { s.send(msg); } catch (e) {} } }
   }
   async webSocketClose(ws) { try { ws.close(1000, "bye"); } catch (e) {} }
@@ -2030,7 +2077,7 @@ export class GateBox {
     if (n) await this.sendHeld(this.sockets().filter((s) => s !== ws));
   }
   async sendHeld(socks) {
-    const on = (socks || this.sockets()).filter((s) => attOf(s).v);
+    const on = (socks || this.sockets()).filter((s) => attOf(s).v || attOf(s).b);
     if (!on.length) return;
     const q = await this.st.list({ prefix: "q:" }), hd = new Map();
     q.forEach((v, k) => { if (v && v.hd) hd.set(k, v); });
@@ -2084,6 +2131,10 @@ export class GateBox {
     // when it has them; create_items (the app in args.app) waits in the
     // queue like the relay's own change tools; the others work on items
     // found in a live session or on the owner's screen, so they need orOS open.
+    if (name === "local_folders_request") {             // TRAY-2: a question for the owner, kept for a screen
+      if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was asked." };
+      return await this.queueChange(name, args, kRaw, now, qidWant, LF_NOTE, 1);
+    }
     let app = name.split("_")[0];
     if (!Object.prototype.hasOwnProperty.call(READ_ONLY, name) && !TOOLS.some((t) => t.name === name)) {
       const dev = await this.st.get("devtools");
@@ -2299,7 +2350,8 @@ export class GateBox {
       // not refused: it waits like a closed-orOS deletion, for the owner's
       // Delete on a device on screen (offered now, and when one comes on screen).
       const kRaw = await this.unwrapK(tok);
-      ans = kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
+      ans = kRaw && p.name === "local_folders_request" ? await this.queueChange(p.name, args, kRaw, Date.now(), null, LF_NOTE, 1) :
+            kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
                  : { ok: false, c: "Nobody answered on the owner's screen and the deletion could not be kept for later. Nothing was deleted. Ask the owner to have orOS on screen and try once more." };
       if (ans.ok) await this.sendHeld();
     }

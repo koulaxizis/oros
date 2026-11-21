@@ -101,7 +101,69 @@
     if (!L) return;
     var i = C.findLayer(st.doc, L.id), j = i + dir;
     if (j < 0 || j >= st.doc.layers.length) { PL.toast(t(dir > 0 ? "msg.top" : "msg.bottom")); return; }
-    PL.docChange(t("step.order"), function () { st.doc.layers = C.moveLayer(st.doc.layers, i, j); }, []);
+    var other = st.doc.layers[j];
+    PL.docChange(t("step.order"), function () {
+      st.doc.layers = C.moveLayer(st.doc.layers, i, j);
+      // past a group's edge the layer goes in (or comes out), as in Photoshop
+      if ((other.g || "") !== (L.g || "")) { if (other.g) L.g = other.g; else delete L.g; }
+    }, []);
+  }
+
+  // ---------- Layer groups (PS-4) ----------
+  function groupOf(id) { return (st.doc.gr || []).filter(function (g) { return g.id === id; })[0] || null; }
+  // The active layer into a new group (in the group it was in)
+  function groupLayer() {
+    var L = PL.layer();
+    if (!L) { PL.toast(t("msg.noLayer")); return; }
+    if ((st.doc.gr || []).length >= C.MAX_GROUPS) { PL.toast(t("msg.maxGroups")); return; }
+    if (L.g && C.groupPath(st.doc, L.g).length >= C.MAX_DEPTH) { PL.toast(t("msg.maxGroups")); return; }
+    var names = {};
+    (st.doc.gr || []).forEach(function (g) { names[g.name] = 1; });
+    var n = 1;
+    while (names[t("layer.group") + " " + n]) n++;
+    PL.docChange(t("step.group"), function () {
+      var G = { id: C.newGroupId(), name: t("layer.group") + " " + n, vis: 1, op: 100, bl: "pass", open: 1 };
+      if (L.g) G.p = L.g;
+      st.doc.gr = (st.doc.gr || []).concat([G]);
+      L.g = G.id;
+      st.group = G.id;
+    }, []);
+  }
+  // A group's layers and sub-groups move up into its parent; the group goes.
+  function ungroup(gid) {
+    var G = groupOf(gid || st.group);
+    if (!G) { PL.toast(t("msg.noGroup")); return; }
+    PL.docChange(t("step.ungroup"), function () {
+      st.doc.layers.forEach(function (L) { if (L.g === G.id) { if (G.p) L.g = G.p; else delete L.g; } });
+      st.doc.gr.forEach(function (g) { if (g.p === G.id) { if (G.p) g.p = G.p; else delete g.p; } });
+      st.doc.gr = st.doc.gr.filter(function (g) { return g !== G; });
+      if (!st.doc.gr.length) delete st.doc.gr;
+      st.group = null;
+    }, []);
+  }
+  function setGroupProp(gid, k, v, label) {
+    var G = groupOf(gid);
+    if (!G || G[k] === v) return;
+    PL.docChange(label, function () { G[k] = v; }, []);
+  }
+  // The group and every layer in it
+  function deleteGroup(gid) {
+    var G = groupOf(gid || st.group);
+    if (!G) { PL.toast(t("msg.noGroup")); return; }
+    var inside = C.groupLayers(st.doc, G.id);
+    if (inside.length >= st.doc.layers.length) { PL.toast(t("msg.lastLayer")); return; }
+    var ids = [];
+    inside.forEach(function (L) { ids = ids.concat(ownIds(L)); });
+    PL.docChange(t("step.deleteGroup"), function () {
+      var sub = {};
+      sub[G.id] = 1;
+      st.doc.gr.forEach(function (g) { if (C.groupPath(st.doc, g.id).some(function (q) { return q.id === G.id; })) sub[g.id] = 1; });
+      st.doc.layers = st.doc.layers.filter(function (L) { return inside.indexOf(L) < 0; });
+      st.doc.gr = st.doc.gr.filter(function (g) { return !sub[g.id]; });
+      if (!st.doc.gr.length) delete st.doc.gr;
+      if (C.findLayer(st.doc, st.active) < 0) st.active = st.doc.layers[st.doc.layers.length - 1].id;
+      st.group = null;
+    }, ids);
   }
   function setProp(L, k, v, label) {
     if (L[k] === v) return;
@@ -163,6 +225,7 @@
       var s = T.create();
       T.writeRect(s, 0, 0, { w: d.w, h: d.h, data: px.data });
       st.doc.layers = [L];
+      delete st.doc.gr;
       st.surfaces = {}; st.surfaces[L.id] = s;
       st.active = L.id;
     }, "all");
@@ -703,6 +766,7 @@
 
   PL.ops = {
     newLayer: newLayer, duplicate: duplicate, remove: remove, moveBy: moveBy, setProp: setProp,
+    groupLayer: groupLayer, ungroup: ungroup, setGroupProp: setGroupProp, deleteGroup: deleteGroup, groupOf: groupOf,
     rasterize: rasterize, mergeDown: mergeDown, flatten: flatten, viaCopy: viaCopy,
     clearSel: clearSel, fillSel: fillSel, copy: copy, pasteImage: pasteImage,
     selectAll: selectAll, deselect: deselect, invertSel: invertSel, selectLayerPixels: selectLayerPixels,

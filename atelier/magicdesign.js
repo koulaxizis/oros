@@ -346,6 +346,7 @@
         var before = JSON.stringify(it.ax);
         if (Object.prototype.hasOwnProperty.call(plan.an, it.id)) {
           if (plan.an[it.id] && !(plan.an[it.id] === "type" && it.ax.k !== "text")) it.ax.an = plan.an[it.id]; else delete it.ax.an;
+          dropAnim(it, nw);
         }
         if (it.ax.bg && it.ax.k === "shape" && plan.pages[it.pg]) {
           var P = plan.pages[it.pg];
@@ -364,10 +365,19 @@
     if (ok) AT.toast(t("ma.done"), t("btn.undo"), AT.undo);
     AT.renderDrawer();
   }
+  // the element's own Canva-style animation (ext.anim, CV-A) goes
+  function dropAnim(it, nw) {
+    if (!it.ext || !it.ext.anim) return;
+    delete it.ext.anim;
+    if (!Object.keys(it.ext).length) delete it.ext;
+    M.touch(it, nw);
+  }
   function clearAll() {
     var ok = AT.op(function (d, nw) {
       d.items.forEach(function (it) {
         if (it.ax && it.ax.an) { delete it.ax.an; M.touch(it, nw); }
+        if (it.ax) dropAnim(it, nw);
+        if (it.ax && it.ax.bg && it.ext && it.ext.pan) { delete it.ext.pan; if (!Object.keys(it.ext).length) delete it.ext; M.touch(it, nw); }
       });
     });
     if (ok) AT.toast(t("ma.cleared"), t("btn.undo"), AT.undo);

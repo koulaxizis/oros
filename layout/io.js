@@ -141,6 +141,58 @@
     cx.translate(crop.fh ? cw : 0, crop.fv ? ch : 0);
     cx.scale(crop.fh ? -1 : 1, crop.fv ? -1 : 1);
   }
+  // Text wrap by a picture's transparent edges (W4b): the profile of
+  // its opaque pixels (R.alphaProfile on a copy at most 600 px high).
+  // → Promise of the profile, [] (no transparent edges) or null (not
+  // loaded).
+  function wrapProfile(it) {
+    if (!it || it.t !== "img" || !it.a) return Promise.resolve(null);
+    return A.load(it.a).then(function (img) {
+      if (!img) return null;
+      var w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+      if (!(w0 > 0 && h0 > 0)) return null;
+      var k = Math.min(1, 600 / h0, 1200 / w0), w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+      var cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      var cx = cv.getContext("2d", { willReadFrequently: true });
+      cx.drawImage(img, 0, 0, w, h);
+      return LY.R.alphaProfile({ w: w, h: h, data: cx.getImageData(0, 0, w, h).data }, 96) || [];
+    }, function () { return null; });
+  }
+  // A frame set to wrap by transparency without its profile (set by a
+  // command, or on another device) gets it here, once its picture
+  // loads: derived data, so no undo step of its own.
+  var wrapBusy = {};
+  function fillWrapProfiles() {
+    var doc = LY.doc;
+    if (!doc) return;
+    doc.items.forEach(function (it) {
+      if (it.t !== "img" || !it.a || !it.ext || it.ext.wc !== "alpha" || (Array.isArray(it.ext.wpr) && it.ext.wpa === it.a) || wrapBusy[it.id + it.a]) return;
+      var key = it.id + it.a;
+      wrapBusy[key] = 1;
+      wrapProfile(it).then(function (pr) {
+        delete wrapBusy[key];
+        if (!pr || LY.doc !== doc) return;
+        var cur = M.find(doc.items, it.id);
+        if (!cur || cur.a !== it.a || !cur.ext || cur.ext.wc !== "alpha" || (Array.isArray(cur.ext.wpr) && cur.ext.wpa === cur.a)) return;
+        cur.ext.wpr = pr; cur.ext.wpa = cur.a;
+        M.touch(cur, Date.now());
+        LY.commit();
+      });
+    });
+  }
+  if (LY.on) { LY.on("open", fillWrapProfiles); LY.on("doc", fillWrapProfiles); }
+
+  // The picture's colour corrections (W4b) on the cut that goes out
+  // → their key ("" none).
+  function adjust(cx, it, cw, ch) {
+    var a = LY.R.adjOf(it);
+    if (!a) return "";
+    var id = cx.getImageData(0, 0, cw, ch);
+    if (!LY.R.applyAdj({ w: cw, h: ch, data: id.data }, a)) return "";
+    cx.putImageData(id, 0, 0);
+    return LY.R.adjKey(a);
+  }
   // The visible part of one image, resampled to `ppi` (never up).
   function cropImage(it, ppi) {
     var crop = P.imageCrop(it);
@@ -157,8 +209,9 @@
       var cx = cv.getContext("2d");
       mirror(cx, crop, cw, ch);
       cx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
+      var adj = adjust(cx, it, cw, ch);
       return toBlob(cv, png ? "image/png" : "image/jpeg", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
-        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (crop.fh ? "h" : "") + (crop.fv ? "v" : ""), down: cw < Math.round(src.w) - 1 };
+        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (crop.fh ? "h" : "") + (crop.fv ? "v" : "") + (adj ? "-" + adj : ""), down: cw < Math.round(src.w) - 1 };
       });
     });
   }
@@ -967,6 +1020,154 @@
       return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }));
     }).then(null, function () { LY.toast(t("idml.bad")); });
   }
+  // ---------- A page of another file as a picture (LY-PRO W4b) ----------
+  // A PDF, Scribus (.sla, .sla.gz) or InDesign (.idml) page, drawn at
+  // up to 300 ppi (4000 px on its long side) and placed in the picture
+  // frame like any picture: it.ext.pp = { f: file name, k: pdf|sla|idml,
+  // p: page } says where it came from. An Affinity .af cannot be drawn
+  // here (its pages are Affinity's own); export its PDF and place that.
+  var PAGE_ACCEPT = ".pdf,application/pdf,.sla,.gz,.idml,application/vnd.adobe.indesign-idml-package";
+  function pageKind(f) {
+    var n = f.name || "";
+    return /\.pdf$/i.test(n) || f.type === "application/pdf" ? "pdf" : /\.idml$/i.test(n) ? "idml" : /\.sla(\.gz)?$/i.test(n) ? "sla" : /\.af$/i.test(n) ? "af" : "";
+  }
+  // → Promise of { n, size(k) → { w, h } pt, draw(k, scale) → Promise of a canvas, close() } or null
+  function pageSource(f, kind) {
+    if (kind === "pdf") {
+      return f.arrayBuffer().then(function (buf) { return window.LY_PDFIN.loadLib().then(function (lib) {
+        if (!lib.GlobalWorkerOptions.workerSrc) lib.GlobalWorkerOptions.workerSrc = "../vendor/pdfjs/pdf.worker.min.js";
+        return lib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false, enableXfa: false, disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise;
+      }); }).then(function (pdf) {
+        var sizes = {};
+        return {
+          n: pdf.numPages,
+          draw: function (k, ppi) {
+            return pdf.getPage(k).then(function (page) {
+              var v1 = page.getViewport({ scale: 1 }), sc = Math.min(ppi / 72, 4000 / Math.max(v1.width, v1.height));
+              var vp = page.getViewport({ scale: sc }), cv = document.createElement("canvas");
+              cv.width = Math.max(1, Math.round(vp.width)); cv.height = Math.max(1, Math.round(vp.height));
+              var cx = cv.getContext("2d");
+              cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+              sizes[k] = { w: v1.width, h: v1.height };
+              return page.render({ canvasContext: cx, viewport: vp }).promise.then(function () { return cv; });
+            });
+          },
+          close: function () { try { pdf.destroy(); } catch (e) {} }
+        };
+      });
+    }
+    var made;
+    if (kind === "sla") {
+      made = f.arrayBuffer().then(function (buf) {
+        var u = new Uint8Array(buf, 0, Math.min(2, buf.byteLength));
+        return u[0] === 0x1f && u[1] === 0x8b ? window.LY_SLA.gunzip(buf) : new TextDecoder().decode(buf);
+      }).then(function (txt) {
+        var res = typeof txt === "string" ? window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }) : null;
+        if (!res) return null;
+        res.keep = 1;
+        return useSrcFonts(res.doc).then(function () { return addForeign(res, window.LY_SLA.inlineImage, ""); });
+      });
+    } else if (kind === "idml") {
+      made = f.arrayBuffer().then(function (buf) { return window.LY_IDML.open(buf, { now: LY.now(), name: baseName(f, /\.idml$/i) }); }).then(function (res) {
+        if (!res) return null;
+        res.keep = 1;
+        return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, "");
+      });
+    } else return Promise.resolve(null);
+    return made.then(function (r) {
+      if (!r || !r.doc) return null;
+      var doc = r.doc, pages = M.pagesInOrder(doc), L = null;
+      return Promise.all(assetIds(doc).map(function (id) { return A.load(id).then(null, function () { return null; }); })).then(function () {
+        return {
+          n: pages.length,
+          draw: function (k, ppi) {
+            var pg = pages[k - 1], sz = M.pageSize(doc, pg);
+            L = L || LY.R.computeLayout(doc);
+            return Promise.resolve(LY.R.renderPage(doc, pg, L, Math.min(ppi / 72, 4000 / Math.max(sz.w, sz.h)), { getImage: A.get, background: "#fff" }));
+          },
+          close: function () {}
+        };
+      });
+    });
+  }
+  function askPage(n, name) {
+    if (n <= 1) return Promise.resolve(1);
+    return new Promise(function (resolve) {
+      var done = false;
+      var close = LY.openDialog(t("pp.title"), function (body, close) {
+        body.appendChild(el("p", "hint", t("pp.which", { f: name, n: n })));
+        var inp = el("input", "inp num");
+        inp.type = "number"; inp.min = 1; inp.max = n; inp.value = 1;
+        inp.setAttribute("aria-label", t("pp.page"));
+        body.appendChild(inp);
+        var act = el("div", "dlg-actions");
+        var c = el("button", "btn", t("btn.cancel")); c.type = "button";
+        var o = el("button", "btn primary", t("pp.place")); o.type = "button";
+        c.addEventListener("click", function () { close(); });
+        o.addEventListener("click", function () {
+          var k = Math.round(Number(inp.value));
+          if (!(k >= 1 && k <= n)) { inp.focus(); return; }
+          done = true; close(); resolve(k);
+        });
+        inp.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); o.click(); } });
+        act.appendChild(c); act.appendChild(o);
+        body.appendChild(act);
+      });
+      var d = document.getElementById("dlg");
+      if (d) d.addEventListener("close", function () { if (!done) resolve(0); }, { once: true });
+      void close;
+    });
+  }
+  // Page k of a file as a stored picture (the orOS Gate's placepage,
+  // proassist.js): → Promise of { a, iw, ih, nm, pp } (throws { why }).
+  function pageImage(f, k) {
+    var kind = pageKind(f), src = null;
+    if (kind === "af") return Promise.reject({ why: "affinity" });
+    if (!kind) return Promise.reject({ why: "notPage" });
+    if (f.size > FOREIGN_MAX) return Promise.reject({ why: "tooBig" });
+    return pageSource(f, kind).then(function (s) {
+      src = s;
+      if (!src || !src.n) throw { why: "unreadable" };
+      if (!(k >= 1 && k <= src.n)) throw { why: "noPage", pages: src.n };
+      return src.draw(k, 300);
+    }).then(function (cv) { return toBlob(cv, "image/png"); }).then(function (blob) {
+      var nm = String(f.name || "page").replace(/\.(pdf|idml|sla(\.gz)?)$/i, "") + " · " + k + ".png";
+      return A.importFile(new File([blob], nm, { type: "image/png" })).then(function (r) {
+        if (src) src.close();
+        return { a: r.id, iw: r.w, ih: r.h, nm: r.name, pp: { f: String(f.name || "").slice(0, 120), k: kind, p: k } };
+      });
+    }).then(null, function (e) { if (src) src.close(); throw e && e.why ? e : { why: "unreadable" }; });
+  }
+  // The picture frame `itemId` gets page k of file f (picked when f is
+  // not given; k asked when there are several). → Promise of true/false
+  function placePage(itemId, f, k) {
+    var src = null;
+    return (f ? Promise.resolve(f) : pickFile(PAGE_ACCEPT)).then(function (file) {
+      if (!file) return false;
+      f = file;
+      var kind = pageKind(f);
+      if (kind === "af") { LY.toast(t("pp.af")); return false; }
+      if (!kind || f.size > FOREIGN_MAX) { LY.toast(t("pp.bad")); return false; }
+      LY.toast(t("pp.working"));
+      return pageSource(f, kind).then(function (s) {
+        src = s;
+        if (!src || !src.n) { LY.toast(t("pp.bad")); return false; }
+        return (k >= 1 && k <= src.n ? Promise.resolve(k) : askPage(src.n, f.name || "")).then(function (pk) {
+          if (!pk) return false;
+          return src.draw(pk, 300).then(function (cv) { return toBlob(cv, "image/png"); }).then(function (blob) {
+            var nm = String(f.name || "page").replace(/\.(pdf|idml|sla(\.gz)?)$/i, "") + " · " + pk + ".png";
+            return A.importFile(new File([blob], nm, { type: "image/png" }));
+          }).then(function (res) {
+            var pic = { a: res.id, iw: res.w, ih: res.h, nm: res.name, pp: { f: String(f.name || "").slice(0, 120), k: kind, p: pk } };
+            var ok = LY.op(function (doc, now) { return window.LayoutPro.setPage(doc, itemId, pic, now) ? undefined : false; });
+            LY.toast(t("pp.done", { p: pk, f: f.name || "" }));
+            return !!ok;
+          });
+        });
+      });
+    }).then(function (r) { if (src) src.close(); return r; }, function () { if (src) src.close(); LY.toast(t("pp.bad")); return false; });
+  }
+
   // PDF: text → editable frames, the rest → one picture per page
   function importPdf(f) {
     if (f.size > FOREIGN_MAX || !window.LY_PDFIN) { LY.toast(t("pdf.bad")); return; }
@@ -1331,6 +1532,7 @@
       chain = chain.then(function () { return put(ln.item, f); }).then(function () { found++; }, function () {});
     });
     return chain.then(function () {
+      if (res.keep) return { doc: M.normDoc(doc), placed: found, missing: res.linked - found + failed };   // a page to place (W4b)
       LY.addDoc(M.normDoc(doc));
       var parts = [done], left = res.linked - found + failed;
       if (left) parts.push(t("sla.linked", { n: left }));
@@ -1571,6 +1773,6 @@
     mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
-    saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
+    adjust: adjust, placePage: placePage, pageImage: pageImage, pageKind: pageKind, wrapProfile: wrapProfile, fillWrapProfiles: fillWrapProfiles, saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName
   };
 })();

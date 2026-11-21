@@ -27,7 +27,17 @@
 //   fx     layer styles: { sh: drop shadow, gl: outer glow, ig: inner
 //          glow, st: stroke, co: colour overlay }, each { c, op, ... }
 //          (see FX_SPEC); only the styles that are on are kept.
-//   Doc extras (optional): gd = { x: [px], y: [px] } guides (vertical
+//   g      (wave PS-4) the id of the layer group the layer is in
+//   Doc extras (optional): gr = [{ id, name, vis, op, bl, open, p }]
+//          layer groups (folders, as Photoshop and GIMP have them):
+//          bl "pass" (pass-through: the layers mix with what is below
+//          as if there were no folder) or a blend id (the group is
+//          drawn on its own first, then mixed in with op and bl, and
+//          adjustments inside it change only the group), open (shown
+//          unfolded in Layers), p = the group it sits in (nesting, at
+//          most MAX_DEPTH). A group's layers are next to each other in
+//          layers[]. Older copies drop gr and g: the layers stay.
+//          gd = { x: [px], y: [px] } guides (vertical
 //          lines at x, horizontal at y); sels = [{ id, name, t }]
 //          saved selections (tiles like a mask: white, alpha = how
 //          much is selected; x, y = grid offset, moved with the
@@ -55,6 +65,8 @@
   var PHONE_AREA   = 16777216;            // iPhone Safari canvas area cap
   var ID_RE      = /^p[a-z0-9]{6,20}$/;
   var LAYER_RE   = /^l[a-z0-9]{4,20}$/;
+  var GROUP_RE   = /^g[a-z0-9]{4,20}$/;
+  var MAX_GROUPS = 60, MAX_DEPTH = 8;
   var TILE_KEY_RE = /^-?\d{1,4},-?\d{1,4}$/;
   var TILE_NAME_RE = /^[0-9a-f]{28}$/;
   var HEX_RE     = /^#[0-9a-f]{6}$/;
@@ -276,7 +288,100 @@
     if (mk && mk.id !== L.id) L.mk = mk;
     var fx = k !== "adj" && normFx(raw.fx);
     if (fx) L.fx = fx;
+    if (typeof raw.g === "string" && GROUP_RE.test(raw.g)) L.g = raw.g;
     return L;
+  }
+
+  // ---------- Layer groups (PS-4) ----------
+  // raw gr → the groups kept: known fields, ids unique, a parent that
+  // is another kept group, no loops, at most MAX_DEPTH deep.
+  function normGroups(raw) {
+    var out = [], byId = {};
+    (Array.isArray(raw) ? raw : []).forEach(function (g) {
+      if (out.length >= MAX_GROUPS || !g || typeof g !== "object" || typeof g.id !== "string" || !GROUP_RE.test(g.id) || byId[g.id]) return;
+      var o = { id: g.id, name: cleanName(g.name) || "Group", vis: g.vis === 0 ? 0 : 1, op: clampInt(g.op, 0, 100, 100),
+        bl: g.bl === "pass" || BLEND_IDS.indexOf(g.bl) < 0 ? "pass" : g.bl, open: g.open ? 1 : 0 };
+      if (typeof g.p === "string" && GROUP_RE.test(g.p) && g.p !== g.id) o.p = g.p;
+      byId[o.id] = o; out.push(o);
+    });
+    out.forEach(function (o) { if (o.p && !byId[o.p]) delete o.p; });
+    out.forEach(function (o) {
+      var seen = {}, q = o, d = 0;
+      while (q && q.p) {
+        seen[q.id] = 1; d++;
+        if (seen[q.p] || d >= MAX_DEPTH) { delete q.p; break; }
+        q = byId[q.p];
+      }
+    });
+    return out;
+  }
+  // The chain of groups a layer is in, outermost first: [group]
+  function groupPath(doc, gid) {
+    var byId = {}, path = [];
+    (doc.gr || []).forEach(function (g) { byId[g.id] = g; });
+    for (var g = byId[gid], n = 0; g && n < MAX_DEPTH; g = byId[g.p], n++) path.unshift(g);
+    return path;
+  }
+  // The layers as a tree, bottom → top: [{ L } | { G, kids: [...] }].
+  // Layers next to each other in the same group make one node; a group
+  // split by another layer shows twice (each part on its own).
+  function layerTree(doc, layers) {
+    layers = layers || doc.layers;
+    var root = { kids: [] }, stack = [{ id: "", node: root }];
+    layers.forEach(function (L) {
+      var path = L.g ? groupPath(doc, L.g) : [];
+      var i = 0;
+      while (i < path.length && i + 1 < stack.length && stack[i + 1].id === path[i].id) i++;
+      stack.length = i + 1;
+      for (; i < path.length; i++) {
+        var node = { G: path[i], kids: [] };
+        stack[stack.length - 1].node.kids.push(node);
+        stack.push({ id: path[i].id, node: node });
+      }
+      stack[stack.length - 1].node.kids.push({ L: L });
+    });
+    return root.kids;
+  }
+  // every layer inside group gid (also in its sub-groups)
+  function groupLayers(doc, gid) {
+    return doc.layers.filter(function (L) { return L.g && groupPath(doc, L.g).some(function (g) { return g.id === gid; }); });
+  }
+  function newGroupId() { return "g" + Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); }
+  // Groups from an opened file (PSD, XCF, OpenRaster): groups = [{ name,
+  // vis, op (0..100), bl ("pass" or a blend id), open, p: parent index }],
+  // each layer's g = its group's index. Returns the doc's gr and sets
+  // every L.g to the new id. Past MAX_GROUPS or MAX_DEPTH the deepest
+  // groups go: their visibility and opacity go onto their layers.
+  function adoptGroups(layers, groups) {
+    groups = Array.isArray(groups) ? groups : [];
+    var depth = groups.map(function (G, i) {
+      for (var d = 1, q = G, seen = {}; q && q.p != null && groups[q.p] && !seen[q.p]; d++) { seen[q.p] = 1; q = groups[q.p]; }
+      return d;
+    });
+    var order = groups.map(function (G, i) { return i; }).sort(function (a, b) { return depth[a] - depth[b] || a - b; });
+    var ids = [], gr = [];
+    order.forEach(function (i) {
+      if (gr.length >= MAX_GROUPS || depth[i] > MAX_DEPTH) return;
+      var G = groups[i], P = G.p != null ? ids[G.p] : null;
+      if (G.p != null && groups[G.p] && !P) return;           // its parent went: so does it
+      ids[i] = newGroupId() + i.toString(36);
+      var o = { id: ids[i], name: String(G.name || "Group"), vis: G.vis === 0 ? 0 : 1, op: G.op == null ? 100 : G.op,
+                bl: G.bl === "pass" || BLEND_IDS.indexOf(G.bl) < 0 ? "pass" : G.bl, open: G.open ? 1 : 0 };
+      if (P) o.p = P;
+      gr.push(o);
+    });
+    layers.forEach(function (L) {
+      var i = L.g, n = 0;
+      delete L.g;
+      while (i != null && groups[i] && n++ < 64) {
+        if (ids[i]) { L.g = ids[i]; break; }
+        var G = groups[i];                                    // a group that went
+        if (G.vis === 0) L.vis = 0;
+        L.op = Math.round((L.op == null ? 100 : L.op) * (G.op == null ? 100 : G.op) / 100);
+        i = G.p;
+      }
+    });
+    return normGroups(gr);
   }
 
   // ---------- Documents ----------
@@ -310,6 +415,14 @@
     if (sels.length) d.sels = sels;
     var bk = normBack(raw.bk);
     if (bk) d.bk = bk;
+    var gr = normGroups(raw.gr);
+    var used = {};
+    layers.forEach(function (L) {
+      if (L.g && !gr.some(function (g) { return g.id === L.g; })) delete L.g;
+      if (L.g) groupPath({ gr: gr }, L.g).forEach(function (g) { used[g.id] = 1; });
+    });
+    gr = gr.filter(function (g) { return used[g.id]; });   // a group with no layers goes
+    if (gr.length) d.gr = gr;
     return d;
   }
 
@@ -467,6 +580,8 @@
     normGuides: normGuides, normBack: normBack, MAX_SELS: MAX_SELS,
     normAdj: normAdj, normFx: normFx, normMask: normMask, fxPad: fxPad,
     findLayer: findLayer, moveLayer: moveLayer, blendOp: blendOp,
+    GROUP_RE: GROUP_RE, MAX_GROUPS: MAX_GROUPS, MAX_DEPTH: MAX_DEPTH, normGroups: normGroups, groupPath: groupPath,
+    layerTree: layerTree, groupLayers: groupLayers, newGroupId: newGroupId, adoptGroups: adoptGroups,
     entryOf: entryOf, emptyIndex: emptyIndex, normIndex: normIndex, mergeIndex: mergeIndex,
     upsertEntry: upsertEntry, removeEntry: removeEntry
   };

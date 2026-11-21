@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — render.js (v1.3.0)
+// orOS designkit — render.js (v1.4.0)
 // Lays out every story of a document (threads, master pages, page
 // numbers, text wrap) and draws pages on a canvas: the editor view,
 // thumbnails and image exports all go through drawPage(), and the
@@ -9,6 +9,7 @@
 // text on a path (LY-TP, wave V3: a text frame with ext.tp = { d, o,
 // s } holds one line of its story laid along the outline d, unit path
 // text in the frame's box; without vector.js it stays a plain frame).
+// Picture colour corrections (it.ext.adj, W4b) need photolab/adjust.js.
 // Exposes orosDK.render (browser) or module.exports (Node).
 // ============================================================
 (function (root) {
@@ -65,6 +66,165 @@
   function flipOf(it) {
     var f = it && it.ext && typeof it.ext.fl === "string" ? it.ext.fl : "";
     return { h: f.indexOf("h") >= 0, v: f.indexOf("v") >= 0 };
+  }
+  // Colour corrections of a picture (LY-PRO W4b, it.ext.adj), kept
+  // apart from the file so they can always be changed or taken off:
+  // { levels: { ib, iw, g, ob, ow }, curves: { s, m, h }, bc: { b, c },
+  // balance: { r, g, b }, hsl: { h, s, l }, gray: 1 }, applied in that
+  // order by photolab/adjust.js (window.PhotoLab.adjust; without it a
+  // picture shows as it is). → the cleaned record, or null when it
+  // changes nothing.
+  var ADJ = {
+    levels: { ib: [0, 254, 0], iw: [1, 255, 255], g: [0.1, 9.99, 1], ob: [0, 255, 0], ow: [0, 255, 255] },
+    curves: { s: [0, 255, 64], m: [0, 255, 128], h: [0, 255, 192] },
+    bc: { b: [-150, 150, 0], c: [-100, 100, 0] },
+    balance: { r: [-100, 100, 0], g: [-100, 100, 0], b: [-100, 100, 0] },
+    hsl: { h: [-180, 180, 0], s: [-100, 100, 0], l: [-100, 100, 0] }
+  };
+  var ADJ_ORDER = ["levels", "curves", "bc", "balance", "hsl", "gray"];
+  function adjNorm(a) {
+    if (!a || typeof a !== "object") return null;
+    var out = {}, any = false;
+    ADJ_ORDER.forEach(function (id) {
+      if (id === "gray") { if (a.gray) { out.gray = 1; any = true; } return; }
+      var src = a[id], spec = ADJ[id];
+      if (!src || typeof src !== "object") return;
+      var o = {}, same = true;
+      Object.keys(spec).forEach(function (k) {
+        var r = spec[k], v = Number(src[k]);
+        v = isFinite(v) ? Math.min(r[1], Math.max(r[0], Math.round(v * 100) / 100)) : r[2];
+        o[k] = v;
+        if (v !== r[2]) same = false;
+      });
+      if (id === "levels" && o.iw <= o.ib) o.iw = Math.min(255, o.ib + 1);
+      if (!same) { out[id] = o; any = true; }
+    });
+    return any ? out : null;
+  }
+  function adjOf(it) { return it && it.t === "img" && it.ext ? adjNorm(it.ext.adj) : null; }
+  // A short text that changes when the corrections do (cache keys,
+  // PDF image names).
+  function adjKey(a) {
+    if (!a) return "";
+    return ADJ_ORDER.filter(function (id) { return a[id]; }).map(function (id) {
+      return id === "gray" ? "g" : id.charAt(0) + Object.keys(ADJ[id]).map(function (k) { return a[id][k]; }).join("_");
+    }).join("-");
+  }
+  function adjLib() {
+    if (typeof module !== "undefined" && module.exports) { try { return require("../photolab/adjust.js"); } catch (e) { return null; } }
+    return root.PhotoLab && root.PhotoLab.adjust || null;
+  }
+  // Corrections on pixels { w, h, data RGBA } in place → true if done.
+  function applyAdj(img, a) {
+    var lib = adjLib();
+    if (!a || !lib) return false;
+    ADJ_ORDER.forEach(function (id) { if (a[id]) lib.run(img, id, a[id]); });
+    return true;
+  }
+  // The picture with its corrections, for the screen: one canvas per
+  // picture and set of corrections, at most 2400 px on its long side.
+  var adjCache = typeof WeakMap === "function" ? new WeakMap() : null;
+  function adjustedImage(img, a) {
+    if (!a || !adjCache || typeof document === "undefined" || !adjLib()) return img;
+    var key = adjKey(a), per = adjCache.get(img);
+    if (!per) { per = {}; adjCache.set(img, per); }
+    if (per[key]) return per[key];
+    var w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+    if (!(w0 > 0 && h0 > 0)) return img;
+    var k = Math.min(1, 2400 / Math.max(w0, h0)), w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+    try {
+      var cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      var cx = cv.getContext("2d", { willReadFrequently: true });
+      cx.drawImage(img, 0, 0, w, h);
+      var id = cx.getImageData(0, 0, w, h);
+      applyAdj({ w: w, h: h, data: id.data }, a);
+      cx.putImageData(id, 0, 0);
+      // only the last few sets per picture stay (sliders make many)
+      var keys = Object.keys(per);
+      if (keys.length >= 4) delete per[keys[0]];
+      per[key] = cv;
+      return cv;
+    } catch (e) { return img; }
+  }
+  // Text wrap by the outline (LY-PRO W4b, it.ext.wc on a frame whose
+  // wrap is not "none"; older versions see the frame's own wrap):
+  // "shape" = the frame's outline (a path's curve, an ellipse, a
+  // rotated box), "alpha" = the picture's opaque pixels, from the
+  // profile in it.ext.wpr (alphaProfile) of the picture it.ext.wpa
+  // (another picture placed since: by the box until it is read again).
+  // → polygons in page points,
+  // or null (wrap by the box as before).
+  function rotPts(it, pts) {
+    var a = rad(it.rot || 0);
+    if (!a) return pts;
+    var cx = it.x + it.w / 2, cy = it.y + it.h / 2, c = Math.cos(a), s = Math.sin(a);
+    return pts.map(function (p) { var dx = p[0] - cx, dy = p[1] - cy; return [cx + dx * c - dy * s, cy + dx * s + dy * c]; });
+  }
+  function flatPath(it) {
+    var polys = [], cur = null, last = [0, 0];
+    pathCmds(it).forEach(function (c) {
+      if (c[0] === "M") { cur = [[c[1], c[2]]]; polys.push(cur); last = [c[1], c[2]]; }
+      else if (c[0] === "L") { if (!cur) { cur = [last.slice()]; polys.push(cur); } cur.push([c[1], c[2]]); last = [c[1], c[2]]; }
+      else if (c[0] === "C") {
+        if (!cur) { cur = [last.slice()]; polys.push(cur); }
+        for (var k = 1; k <= 8; k++) {
+          var t = k / 8, u = 1 - t;
+          cur.push([u * u * u * last[0] + 3 * u * u * t * c[1] + 3 * u * t * t * c[3] + t * t * t * c[5],
+            u * u * u * last[1] + 3 * u * u * t * c[2] + 3 * u * t * t * c[4] + t * t * t * c[6]]);
+        }
+        last = [c[5], c[6]];
+      } else cur = null;
+    });
+    return polys.filter(function (p) { return p.length > 1; });
+  }
+  function wrapShape(it) {
+    var wc = it.ext && it.ext.wc;
+    if (!wc || it.wrap === "none") return null;
+    var polys = null;
+    if (wc === "shape") {
+      if (it.t === "path") polys = flatPath(it);
+      else if (it.t === "ell") {
+        var e = [];
+        for (var i = 0; i < 48; i++) { var a = i / 48 * Math.PI * 2; e.push([it.x + it.w / 2 + Math.cos(a) * it.w / 2, it.y + it.h / 2 + Math.sin(a) * it.h / 2]); }
+        polys = [e];
+      } else if (it.t !== "line") polys = [[[it.x, it.y], [it.x + it.w, it.y], [it.x + it.w, it.y + it.h], [it.x, it.y + it.h]]];
+    } else if (wc === "alpha" && it.t === "img" && Array.isArray(it.ext.wpr) && it.ext.wpr.length && it.ext.wpa === it.a) {
+      var r = imageRect(it), fl = flipOf(it), n = it.ext.wpr.length;
+      polys = [];
+      it.ext.wpr.forEach(function (row, i) {
+        if (!Array.isArray(row) || row.length < 2) return;
+        var a0 = row[0] / 1000, a1 = row[1] / 1000, b0 = i / n, b1 = (i + 1) / n;
+        if (fl.h) { var t0 = 1 - a1; a1 = 1 - a0; a0 = t0; }
+        if (fl.v) { var t1 = 1 - b1; b1 = 1 - b0; b0 = t1; }
+        // the picture's part inside its frame only
+        var x0 = Math.max(it.x, it.x + r.x + a0 * r.w), x1 = Math.min(it.x + it.w, it.x + r.x + a1 * r.w);
+        var y0 = Math.max(it.y, it.y + r.y + b0 * r.h), y1 = Math.min(it.y + it.h, it.y + r.y + b1 * r.h);
+        if (x1 > x0 && y1 > y0) polys.push([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
+      });
+    }
+    if (!polys || !polys.length) return null;
+    return polys.map(function (p) { return rotPts(it, p); });
+  }
+  // The opaque part of a picture's pixels { w, h, data RGBA } for an
+  // "alpha" wrap: n bands from the top, each [x0, x1] in thousandths
+  // of the width (0 = nothing opaque in that band). → array, or null
+  // when every pixel is opaque (a box wrap does the same).
+  function alphaProfile(img, n, thr) {
+    n = Math.max(1, Math.min(200, n || 96)); thr = thr === undefined ? 24 : thr;
+    var w = img.w, h = img.h, d = img.data, out = [], clear = false;
+    for (var i = 0; i < n; i++) {
+      var r0 = Math.floor(i * h / n), r1 = Math.max(r0 + 1, Math.floor((i + 1) * h / n)), lo = w, hi = -1;
+      for (var y = r0; y < r1 && y < h; y++) {
+        for (var x = 0; x < lo; x++) if (d[(y * w + x) * 4 + 3] > thr) { lo = x; break; }
+        for (x = w - 1; x > hi && x >= lo; x--) if (d[(y * w + x) * 4 + 3] > thr) { hi = x; break; }
+      }
+      if (hi < lo) { out.push(0); clear = true; continue; }
+      var a = Math.floor(lo * 1000 / w), b = Math.ceil((hi + 1) * 1000 / w);
+      if (a > 0 || b < 1000) clear = true;
+      out.push([a, b]);
+    }
+    return clear ? out : null;
   }
   // Effective resolution of a placed image (pixels per inch).
   function effectivePpi(it) {
@@ -143,11 +303,28 @@
   //   { frames: { itemId: { lines } }          page frames
   //     master: { pageId: { itemId: { lines } } }  master frames
   //     overset: { storyId: true }, pageOf: { pageId: index } }
+  function masterIds0(doc) {
+    var m = {};
+    doc.masters.forEach(function (x) { m[x.id] = 1; });
+    return m;
+  }
   function computeLayout(doc) {
     var pages = M.pagesInOrder(doc), idx = {}, info = {}, first = M.firstNumber(doc);
     var labels = M.pageLabels ? M.pageLabels(doc) : null;   // sections (LY-PRO W3)
     pages.forEach(function (p, i) { idx[p.id] = i; info[p.id] = { side: M.sideOf(doc, i), label: labels ? labels[i].label : String(i + first), no: labels ? labels[i].no : i + first }; });
-    var styles = { ps: doc.pstyles, cs: doc.cstyles };
+    // anchored objects (LY-PRO W4b, it.ext.anc = the story they sit
+    // in, as a U+FFFC run with ext.obj = their id): set in the text
+    // like a word as wide and tall as they are, and moved to where
+    // their place in the text falls (derived: every device does the
+    // same, so the move is not a change of its own); they never wrap
+    var objs = {}, anchored = {}, mIds = masterIds0(doc);
+    doc.items.forEach(function (it) {
+      var a = it.ext && it.ext.anc;
+      if (typeof a !== "string" || it.t === "text" || mIds[it.pg]) return;
+      objs[it.id] = { w: Math.max(0, it.w), h: Math.max(0, it.h) };
+      anchored[it.id] = it;
+    });
+    var styles = { ps: doc.pstyles, cs: doc.cstyles, obj: objs };
     var masterIds = {};
     doc.masters.forEach(function (m) { masterIds[m.id] = 1; });
     var out = { frames: {}, master: {}, overset: {}, pageOf: idx, labels: labels };
@@ -155,7 +332,7 @@
     // wrap objects per owner (page or master)
     var wrapsBy = {};
     doc.items.forEach(function (it) {
-      if (it.wrap === "none" || it.hide) return;
+      if (it.wrap === "none" || it.hide || anchored[it.id]) return;
       (wrapsBy[it.pg] = wrapsBy[it.pg] || []).push(it);
     });
 
@@ -173,16 +350,44 @@
           var pts = w.t === "line" ? [[w.x, w.y], [w.x + w.w, w.y + w.h]] : corners(w);
           var local = pts.map(function (p) { return toLocal(frame, p[0], p[1]); });
           var b = bbox(local), o = w.wo || 0;
+          // by the outline or the picture's opaque part (W4b)
+          var polys = wrapShape(w);
+          if (polys) {
+            polys = polys.map(function (pl) { return pl.map(function (p) { return toLocal(frame, p[0], p[1]); }); });
+            var pb = bbox([].concat.apply([], polys));
+            ex.push({ x: pb.x - o, y: pb.y - o, w: pb.w + 2 * o, h: pb.h + 2 * o, shape: "poly", polys: polys, o: o });
+            return;
+          }
           ex.push({ x: b.x - o, y: b.y - o, w: b.w + 2 * o, h: b.h + 2 * o, shape: w.wrap === "ell" && !w.rot ? "ell" : "box" });
         });
       });
       return ex;
     }
 
+    var placedA = {};
+    function placeAnchored(frames, res, sid) {
+      frames.forEach(function (f) {
+        var fr = res.frames[f.id];
+        if (!fr || pathOf(f)) return;
+        fr.lines.forEach(function (ln) {
+          ln.runs.forEach(function (r) {
+            var it = r.obj && anchored[r.obj];
+            if (!it || it.ext.anc !== sid || placedA[it.id]) return;
+            placedA[it.id] = 1;
+            // its bottom on the baseline, turned with the frame
+            var c = rotPts(f, [[f.x + r.x + it.w / 2, f.y + r.y - it.h / 2]])[0];
+            it.pg = f.pg;
+            if (f.side !== undefined) it.side = f.side;
+            it.x = c[0] - it.w / 2; it.y = c[1] - it.h / 2;
+          });
+        });
+      });
+    }
+
     function geom(it, ctx, ex) {
       var tp = pathOf(it);
       if (tp) return { id: it.id, w: tp.wk.len, h: it.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: ctx, story: it.story, one: true };
-      return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story };
+      return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story, sfit: !!(it.ext && it.ext.sfit) };
     }
 
     // page stories
@@ -203,9 +408,12 @@
       });
       var res = T.layoutChain(st || { paras: [] }, g, styles);
       bendAll(frames, res);
+      placeAnchored(frames, res, sid);
       Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
       if (res.overset) out.overset[sid] = true;
     });
+    out.anchored = {};
+    Object.keys(anchored).forEach(function (id) { var it = anchored[id]; if (it.ext.anc && placedA[id]) out.anchored[id] = { pg: it.pg, x: it.x, y: it.y }; });
 
     // running heads (LY-RH): each page's chapter title, the first one
     // that opens on the page, else the last one before it ("" before
@@ -349,7 +557,7 @@
       var g = frames.map(function (f) {
         var c = { pageLabel: master.pre, pageCount: master.pre + "#" }, tp = pathOf(f);
         if (tp) return { id: f.id, w: tp.wk.len, h: f.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: c, one: true };
-        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c };
+        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c, sfit: !!(f.ext && f.ext.sfit) };
       });
       var res = T.layoutChain(M.story(doc, sid) || { paras: [] }, g, styles);
       bendAll(frames, res);
@@ -494,6 +702,7 @@
 
   function drawImageItem(ctx, doc, it, opts) {
     var img = it.a && opts.getImage ? opts.getImage(it.a) : null;
+    if (img) img = adjustedImage(img, adjOf(it));
     if (img) {
       ctx.save();
       roundRectPath(ctx, it.x, it.y, it.w, it.h, it.r);
@@ -575,7 +784,7 @@
   }
 
   var api = {
-    corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, flipOf: flipOf, effectivePpi: effectivePpi, uniform: uniform,
+    corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, flipOf: flipOf, wrapShape: wrapShape, alphaProfile: alphaProfile, adjNorm: adjNorm, adjOf: adjOf, adjKey: adjKey, applyAdj: applyAdj, ADJ_ORDER: ADJ_ORDER, effectivePpi: effectivePpi, uniform: uniform,
     pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
     drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };

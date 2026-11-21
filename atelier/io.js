@@ -648,7 +648,8 @@
       return out;
     });
   }
-  function importPptxFile(f, quiet) {
+  // opts.real { w, h }: the design's own size in points (pptx.js rebox)
+  function importPptxFile(f, quiet, opts) {
     var fonts = {};
     return f.arrayBuffer().then(function (ab) {
       var zip = window.AtelierZip.open(new Uint8Array(ab));
@@ -660,7 +661,24 @@
             if (!b) { failed++; return; }
             var ext = (p.split(".").pop() || "").toLowerCase();
             var file = new File([b], p.split("/").pop(), { type: MIME[ext] || "application/octet-stream" });
-            return A.importFile(file).then(function (res) { assets[p] = res; AT.noteUpload(res.id); });
+            return A.importFile(file).then(function (res) {
+              assets[p] = res; AT.noteUpload(res.id);
+              // a moving GIF also keeps the GIF itself (CV-A)
+              if (ext === "gif" && AT.video && AT.video.importGif) {
+                return AT.video.importGif(file).then(function (gid) { if (gid) assets[p] = { id: res.id, w: res.w, h: res.h, gif: gid }; });
+              }
+            });
+          }).then(null, function (e) { if (e && e.message === "nofs") throw e; failed++; });
+        });
+        // videos and sounds (CV-A): stored like an upload of a clip
+        Object.keys(plan.clips || {}).forEach(function (p) {
+          if (!AT.video) { failed++; return; }
+          chain = chain.then(function () { return zip.bytes(p, PPTX_MEDIA_MAX); }).then(function (b) {
+            if (!b) { failed++; return; }
+            return AT.video.importClip(new File([b], p.split("/").pop())).then(function (res) {
+              assets[p] = { clip: res.id, dur: res.dur };
+              if (res.poster) AT.noteUpload(res.poster.id);
+            });
           }).then(null, function (e) { if (e && e.message === "nofs") throw e; failed++; });
         });
         Object.keys(plan.svgs).forEach(function (k) {
@@ -683,7 +701,7 @@
           if (!keys.length) return;
           return Promise.race([T.load(keys).then(null, function () {}), new Promise(function (r) { setTimeout(r, 12000); })]);
         }).then(function () {
-          var r = window.AtelierPPTX.build(plan, assets, AT.now(), fonts);
+          var r = window.AtelierPPTX.build(plan, assets, AT.now(), fonts, opts && opts.real ? { real: opts.real } : null);
           AT.addDoc(r.doc, batching);
           var lost = plan.skipped + r.missing;
           if (!quiet) say(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
@@ -779,6 +797,44 @@
     });
   }
 
+  // ---------- PDF as a design (PS-3: Canva's PDF download) ----------
+  // Layout's reader (layout/sla.js, layout/pdfin.js, PDF.js) and
+  // pdfin.js load on the first PDF opened (precached, not in the page).
+  var pdfReading = null;
+  function pdfReader() {
+    if (window.LY_PDFIN && window.AtelierPdfIn) return Promise.resolve();
+    if (!pdfReading) {
+      pdfReading = (window.LY_SLA ? Promise.resolve() : loadScript("../layout/sla.js"))
+        .then(function () { return window.LY_PDFIN ? null : loadScript("../layout/pdfin.js"); })
+        .then(function () { return window.AtelierPdfIn ? null : loadScript("pdfin.js"); })
+        .then(null, function (e) { pdfReading = null; throw e; });
+    }
+    return pdfReading;
+  }
+  function isPdf(f) { return /\.pdf$/i.test(String(f && f.name || "")) || (f && f.type) === "application/pdf"; }
+  function importPdfFile(f) {
+    var name = String(f.name || "").replace(/\.pdf$/i, "").slice(0, 120);
+    return pdfReader().then(function () { return f.arrayBuffer(); }).then(function (buf) {
+      var store = function (blob) {
+        return A.importFile(new File([blob], blob.name || "pdf.png", { type: blob.type || "image/png" })).then(function (r) { AT.noteUpload(r.id); return r; });
+      };
+      return window.LY_PDFIN.open(buf, { name: name, now: AT.now() }, store);
+    }).then(function (res) {
+      var plan = res && window.AtelierPdfIn.toDesign(res.doc);
+      if (!plan) { say(t("imp.pdfFail")); return; }
+      var nw = AT.now();
+      var d = AX.newDesign({ name: name || "PDF", w: plan.setup.w, h: plan.setup.h, unit: plan.setup.unit, pages: plan.pages.length }, nw);
+      var pages = M.pagesInOrder(d), made = 0;
+      plan.pages.forEach(function (specs, i) {
+        var pg = pages[i];
+        if (!pg) return;
+        specs.forEach(function (sp) { if (AX.addItem(d, pg.id, sp, nw)) made++; });
+      });
+      AT.addDoc(M.normDoc(d), batching);
+      if (!batching) say(res.stats && res.stats.cut ? t("imp.pdfCut", { n: plan.pages.length, all: res.stats.total }) : t("imp.pdfDone"));
+    });
+  }
+
   // A picture (PNG, JPG, WebP, SVG…): a new design of its size; an SVG
   // may come in as editable shapes instead (asked; shapes when many)
   function importImageFile(f) {
@@ -804,12 +860,14 @@
     return importPicture(f);
   }
   function importPicture(f) {
-    return A.importFile(f).then(function (res) {
+    return A.importFile(f).then(function (res) { return withGif(f, res); }).then(function (res) {
       AT.noteUpload(res.id);
       var nw = AT.now();
       var d = AX.newDesign({ name: String(f.name || "").replace(/\.[a-z0-9]+$/i, "").slice(0, 120), w: res.w, h: res.h, unit: "px" }, nw);
       var pg = M.pagesInOrder(d)[0];
-      AX.addItem(d, pg.id, { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", x: 0, y: 0, w: res.w, h: res.h, fit: "fill" }, nw);
+      var spec = { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", x: 0, y: 0, w: res.w, h: res.h, fit: "fill" };
+      if (res.gif) spec.ext = { gif: res.gif };
+      AX.addItem(d, pg.id, spec, nw);
       AT.addDoc(M.normDoc(d), batching);
       say(t("imp.done"));
     });
@@ -817,7 +875,7 @@
 
   // Home › Import: .orosdesign, .pptx or a picture
   function importAny() {
-    pickFiles(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,image/*,.svg,.zip,application/zip")
+    pickFiles(".orosdesign,.pptx,application/vnd.openxmlformats-officedocument.presentationml.presentation,.pdf,application/pdf,image/*,.svg,.zip,application/zip")
       .then(importMany).then(null, importFail);
   }
   // Also the way in for a file from the system's "Open with" (shell fileopen.js).
@@ -826,6 +884,7 @@
     if (f.size > PKG_MAX) { say(t("imp.bad")); return; }
     var nm = String(f.name || "").toLowerCase();
     var run = /\.pptx$/.test(nm) ? importPptxFile
+      : isPdf(f) ? importPdfFile
       : /^image\//.test(f.type || "") || /\.(png|jpe?g|gif|webp|bmp|svg)$/.test(nm) ? importImageFile
       : importPackageFile;
     say(t("imp.working"));
@@ -869,11 +928,11 @@
     // a design counts once it is stored (AT.keepStored: on the disk
     // written and read back, else in localStorage); a full storage
     // stops the batch and keeps what fit
-    function one(f) {
+    function one(f, real) {
       if (n >= BATCH_MAX || full) { bad++; return Promise.resolve(); }
       n++;
       var before = docIds();
-      return Promise.resolve().then(function () { return importAnyFile(f); })
+      return Promise.resolve().then(function () { return real ? importPptxFile(f, false, { real: real }) : importAnyFile(f); })
         .then(null, function (e) { if (e && e.message === "nofs") throw e; })
         .then(function () {
           var added = docIds().filter(function (id) { return before.indexOf(id) < 0; });
@@ -901,11 +960,18 @@
     batching = true;
     AT.toast(t("imp.working"));
     var chain = Promise.resolve();
+    // a .pptx with Canva's PDF of the same design beside it: the PDF
+    // gives the real size of a slide Canva had to shrink (past 56 in);
+    // the PDF itself is not imported a second time
+    var pair = pairs(files);
     files.forEach(function (f) {
       chain = chain.then(function () {
+        if (pair.skip.indexOf(f) >= 0) return;
+        var mate = pair.pdf.get(f);
         return Promise.resolve().then(function () { return isFile(f) ? f : f.get(); }).then(function (file) {
           if (!file) { bad++; return; }
           if (/\.zip$/i.test(file.name || "")) return zipOf(file);
+          if (mate) return Promise.resolve(isFile(mate) ? mate : mate.get()).then(pdfSize).then(function (real) { return one(file, real); });
           return one(file);
         }).then(null, function (e) { if (e && e.message === "nofs") throw e; bad++; });
       });
@@ -920,6 +986,32 @@
       importFail(e);
     });
   }
+  // files → { pdf: Map(pptx → its PDF), skip: [those PDFs] } (same
+  // name before the extension, any case)
+  function pairs(files) {
+    var base = function (f) { return String(f && f.name || "").toLowerCase().replace(/\.[a-z0-9]+$/, ""); };
+    var pdfs = {}, out = { pdf: new Map(), skip: [] };
+    files.forEach(function (f) { if (/\.pdf$/i.test(f && f.name || "")) pdfs[base(f)] = f; });
+    files.forEach(function (f) {
+      var m = /\.pptx$/i.test(f && f.name || "") && pdfs[base(f)];
+      if (m) { out.pdf.set(f, m); out.skip.push(m); }
+    });
+    return out;
+  }
+  // A PDF's first page size in points { w, h }, or null (read from its
+  // /MediaBox as plain text; a PDF that hides it in a compressed
+  // object stream gives null)
+  function pdfSize(f) {
+    if (!f) return Promise.resolve(null);
+    return f.slice(0, 4 * 1024 * 1024).arrayBuffer().then(function (ab) {
+      var txt = new TextDecoder("latin1").decode(new Uint8Array(ab));
+      var m = /\/MediaBox\s*\[\s*(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*\]/.exec(txt);
+      if (!m) return null;
+      var w = Math.abs(+m[3] - +m[1]), h = Math.abs(+m[4] - +m[2]);
+      return w > 0 && h > 0 && w < 200000 && h < 200000 ? { w: w, h: h } : null;
+    }).then(null, function () { return null; });
+  }
+
   // Home › Import › From a folder in Files: a small browser of the
   // orOS disk's folders; "Import" takes this folder and its subfolders.
   function diskFs() {
@@ -1008,7 +1100,9 @@
   // ---------- Images ----------
   function placePhoto(res) {
     var s = AT.doc.setup, k = Math.min(s.w * 0.6 / res.w, s.h * 0.6 / res.h);
-    ED.add({ k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", w: res.w * k, h: res.h * k, fit: "fill" });
+    var spec = { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", w: res.w * k, h: res.h * k, fit: "fill" };
+    if (res.gif) spec.ext = { gif: res.gif };
+    ED.add(spec);
   }
   // An SVG put on the open page as shapes, in the middle, at most 60%
   // of the page; picked afterwards.
@@ -1038,8 +1132,14 @@
       return placeAsPicture(f, replaceId);
     });
   }
+  // a moving GIF also keeps the GIF itself (CV-A): res.gif = its id
+  function withGif(f, res) {
+    var gif = /\.gif$/i.test(f.name || "") || f.type === "image/gif";
+    if (!gif || !AT.video || !AT.video.importGif) return Promise.resolve(res);
+    return AT.video.importGif(f).then(function (id) { if (id) res.gif = id; return res; });
+  }
   function placeAsPicture(f, replaceId) {
-    return A.importFile(f).then(function (res) {
+    return A.importFile(f).then(function (res) { return withGif(f, res); }).then(function (res) {
       AT.noteUpload(res.id);
       if (replaceId && ED.find(replaceId)) {
         AT.editItems([replaceId], function (it) {
@@ -1047,6 +1147,8 @@
           it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1;
           delete it.ax.cr;
           ["vid", "vs", "ve", "mu", "vol", "nl"].forEach(function (k) { delete it.ax[k]; });   // a picture now
+          if (res.gif) { it.ext = it.ext || {}; it.ext.gif = res.gif; }
+          else if (it.ext && it.ext.gif) { delete it.ext.gif; if (!Object.keys(it.ext).length) delete it.ext; }
         });
       } else placePhoto(res);
       AT.toast(t("img.added"));
@@ -1298,7 +1400,7 @@
   AT.on("remote", refreshBar);
 
   AT.io = {
-    exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, importDisk: importDisk, importMany: importMany, openFile: openFile, importPptx: importPptxFile, uploadImage: uploadImage,
+    exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, importDisk: importDisk, importMany: importMany, openFile: openFile, importPptx: importPptxFile, pdfSize: pdfSize, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo,
     renderFiles: renderFiles, relaid: relaid, svgOf: svgOf, svgSelection: svgSelection,
     sendTo: sendTo, canSend: canSend

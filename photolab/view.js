@@ -310,11 +310,47 @@
   // px), clipped to `clip` doc rect. lb: a canvas the size of g's
   // canvas. preview(L, g): optional override to draw one layer
   // differently (transform tool).
+  // Layer groups (PS-4): a pass-through group at full opacity is just
+  // its layers; any other group is drawn on a canvas of its own first,
+  // then mixed in with its opacity and blend.
+  var groupCvs = [];
   function composite(g, lb, clip, preview, layers) {
+    var d = PL.st.doc;
+    clip = clip || { x: 0, y: 0, w: d.w, h: d.h };
+    // a given list (merge down, one layer for export) is drawn as it is
+    if (layers || !d.gr || !d.gr.length) { compositeList(g, lb, clip, preview, layers || d.layers); return; }
+    compositeTree(g, lb, clip, preview, C.layerTree(d), 0);
+  }
+  function compositeTree(g, lb, clip, preview, nodes, depth) {
+    var run = [];
+    function flush() { if (run.length) compositeList(g, lb, clip, preview, run); run = []; }
+    nodes.forEach(function (n) {
+      if (n.L) { run.push(n.L); return; }
+      flush();
+      var G = n.G;
+      if (!G.vis || !G.op) return;
+      if (G.bl === "pass" && G.op === 100) { compositeTree(g, lb, clip, preview, n.kids, depth + 1); return; }
+      var cv = groupCvs[depth] = groupCvs[depth] || document.createElement("canvas");
+      if (cv.width !== g.canvas.width || cv.height !== g.canvas.height) { cv.width = g.canvas.width; cv.height = g.canvas.height; }
+      var gg = cv.getContext("2d");
+      gg.setTransform(1, 0, 0, 1, 0, 0);
+      gg.clearRect(0, 0, cv.width, cv.height);
+      gg.setTransform(g.getTransform());
+      gg.imageSmoothingEnabled = g.imageSmoothingEnabled;
+      compositeTree(gg, lb, clip, preview, n.kids, depth + 1);
+      g.save();
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.globalAlpha = G.op / 100;
+      g.globalCompositeOperation = C.blendOp(G.bl === "pass" ? "normal" : G.bl);
+      g.drawImage(cv, 0, 0);
+      g.restore();
+    });
+    flush();
+  }
+  function compositeList(g, lb, clip, preview, layers) {
     var lg = lb.getContext("2d");
     var tf = g.getTransform(), z = Math.hypot(tf.a, tf.b), smooth = g.imageSmoothingEnabled;
-    clip = clip || { x: 0, y: 0, w: PL.st.doc.w, h: PL.st.doc.h };
-    (layers || PL.st.doc.layers).forEach(function (L) {
+    layers.forEach(function (L) {
       if (!L.vis || !L.op) return;
       if (L.k === "adj") { adjustBelow(g, lb, L, clip, tf, smooth); return; }
       var pad = C.fxPad(L.fx), cl = pad ? { x: clip.x - pad, y: clip.y - pad, w: clip.w + pad * 2, h: clip.h + pad * 2 } : clip;

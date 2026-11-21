@@ -21,6 +21,7 @@ Take a picture of your whole screen, one window or a browser tab, crop it, and k
 - `Record the sound of the screen or tab` adds what you hear. In Chrome and Edge, tick "Share audio" in the browser's question; a tab or the whole screen can share sound, a single window cannot.
 - `Record the microphone` adds your voice. Both sounds are mixed into one track.
 - Press `Start recording` (after the delay, if you chose one). `Pause` and `Resume` skip a part; `Stop recording` ends it. You can take screenshots while you record.
+- While it records, the orOS top bar shows a red dot with the time; its stop button does the same as `Stop recording` and brings Screen Capture to the front so you can save.
 - Watch the video, then `Save to Videos`. It is saved as MP4 where the browser can write it, otherwise as WebM.
 - `Save and send to an app…` saves the video the same way and sends it to Transfer or Mail.
 - With `Open in Montage after saving` switched on, the video opens in [Montage](app:montage) to cut it or add music and titles.

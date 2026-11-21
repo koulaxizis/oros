@@ -7,6 +7,7 @@ Caravan is a tower defense game the other way round, for one person. Old clockwo
 - On the road the carts roll by themselves from the village gate (at the top) to the market (at the bottom). The machines beside the road knock crates off the carts in their reach; the red rings show how far each one reaches.
 - Bring the goal in crates to the market over the three trips. The toolbar shows the crates at the market against the goal, your coins and the trip.
 - Every crate that reaches the market pays two coins, and every trip ten more, for the next trip.
+- On the Spice road (routes 5 to 8) the road ends at two markets: the market on the left pays two coins a crate, the spice market on the right (with the pointed roof) pays three. Both count towards the goal.
 - A cart that loses all its crates walks home and is ready again on the next trip. Carts you hire stay with the caravan for the whole route, and every trip they set off fully loaded.
 - Before each trip the toll keepers wind up more machines. The new ones have a ring round them on the plan.
 - `Pause` and the speed button (1x, 2x, 3x) are next to `Set off`. The game pauses by itself when you leave it.
@@ -22,6 +23,7 @@ Each cart has three levels. At level 3 you choose one of two branches, and that 
 - **Pony cart:** fast and small, through the machines before they swing twice. Courier is even faster; Saddlebags carry almost twice as much.
 - **Mender's cart** (from route 2): ties fallen crates back on the carts close to it (the dotted ring). Wide reach mends much farther off; Quick hands mend twice as fast.
 - **Straw cart** (from route 3): a decoy with no goods. Every machine aims at a straw cart first when one is in reach. When its straw is burnt through it is gone, and you hire a new one. Wet straw lasts twice as long; Scarecrow stops a machine for two seconds every time it hits it.
+- **Smith's cart** (from route 5, the Spice road): jams the nearest working machine it passes, for four seconds at level 1, then rests before it can jam again (a thin bar under it fills as it rests). A jammed machine has a wedge in it and does nothing: no knocks, no mud, no lookout. Long jam jams twice as long; Quick hammer reaches farther and rests half as long.
 - Tap a cart (on the road or its button in the bar) to see what it carries. In the plan you can move it forward or back, upgrade it or sell it. Selling gives back 70% of what the cart cost; anything bought or upgraded since the last trip set off gives back everything.
 
 ## The toll machines
@@ -42,11 +44,17 @@ Each kind has its own shape, so you never need the colours.
 - Mild: more coins and lighter knocks; Normal; Hard: fewer coins and harder knocks.
 - Stars: three when at least 85% of the crates you loaded reach the market, two with 65%, one for any route cleared. The road map keeps the best stars of each route.
 - When a route is lost, `Try again from trip` puts you back in the plan of the last trip, with the caravan and coins you had then.
-- The route you are playing is kept on this device and reopens where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a route ends. `Reset progress` on the road map clears them on every device. Caravan is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+- The route you are playing is kept on this device and reopens where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a route ends. `Reset progress` on the road map clears them on every device and ends the route in progress. Caravan is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+
+## Endless
+- Once a route has a star, the road map shows `Endless` under it, with your best score.
+- In Endless every machine of the route works from the first trip, and you start with 80 more coins. The trips go on as long as each one brings its crates to the market: the status bar shows the crates of this trip against what it must bring.
+- Every trip must bring more crates than the one before, and the knocks grow a little harder each trip. When a trip falls short, Endless is over; the score is the number of trips that brought their crates.
+- Endless gives no stars. The best score of each route syncs between your devices with the rest of your progress.
 
 ## Keyboard
 - Arrow keys choose a cart; [[Escape]] lets go of it. The keys `[` and `]` move it forward or back in the plan.
-- [[1]] to [[4]]: hire a mule, pony, mender's or straw cart. [[U]]: upgrade to level 2. [[A]] or [[B]]: the branch at level 3. [[S]]: sell.
+- [[1]] to [[5]]: hire a mule, pony, mender's, straw or smith's cart. [[U]]: upgrade to level 2. [[A]] or [[B]]: the branch at level 3. [[S]]: sell.
 - [[G]]: choose the next fork sign; [[Enter]]: turn it.
 - [[Q]]: smoke on the machine nearest the leading cart. [[W]]: shield the chosen cart (or the leading one). [[E]]: shortcut.
 - [[N]]: set off. [[Space]]: pause or play. [[F]]: speed. [[L]]: the road map. [[M]]: sound. [[?]]: how to play.
@@ -56,3 +64,4 @@ Each kind has its own shape, so you never need the colours.
 - Put the mule carts in front: the machines aim at the cart that has come furthest, and mules take less from every knock.
 - A mender just behind the biggest cart wins back many crates on a long stretch past the machines.
 - Smoke the place where two machines reach the road together, just before the first cart gets there.
+- On the Spice road a smith in front of the caravan opens the way for the carts behind it: put it first where a lookout stands.

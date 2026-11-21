@@ -1543,8 +1543,36 @@
     var undo = { k: "kanban", board: b.id, cards: {}, cols: {} }, ids = [], i, r;
 
     if (op === "add_columns") {
-      var list = Array.isArray(args.columns) ? args.columns : [];
-      if (!list.length || list.length > KB_COLS) return { ok: false, err: "columns must hold 1 to " + KB_COLS + " columns." };
+      // KB-COLREN (Chris 2026-11-21): rename_columns [{ column, name }] renames columns (header stamp, LWW), before any adds
+      var ren = args.rename_columns, rn = [];
+      if (ren !== undefined) {
+        if (!Array.isArray(ren) || !ren.length || ren.length > KB_COLS) return { ok: false, err: "rename_columns must hold 1 to " + KB_COLS + " columns." };
+        var renSeen = {};
+        for (i = 0; i < ren.length; i++) {
+          var rc = isObj(ren[i]) ? ren[i] : {}, rtag = "rename_columns " + (i + 1) + ": ";
+          var fr = kbFind(kbCols(b), rc.column, "column");
+          if (fr.err) return { ok: false, err: rtag + fr.err };
+          r = kbText(rc.name, 60, "text");
+          if (r.err || !r.s) return { ok: false, err: rtag + "a column needs a name of at most 60 characters." };
+          if (renSeen[fr.x.id]) return { ok: false, err: rtag + "that column is already renamed in this call." };
+          renSeen[fr.x.id] = 1;
+          if (r.s === fr.x.name) continue;
+          var clash = kbCols(b).filter(function (c) { return c !== fr.x && String(c.name || "").trim().toLowerCase() === r.s.toLowerCase(); })[0];
+          if (clash) return { ok: false, err: rtag + "another column is already called " + JSON.stringify(clash.name) + "." };
+          rn.push({ col: fr.x, from: String(fr.x.name || ""), to: r.s });
+        }
+        if (!rn.length && args.columns === undefined) return { ok: false, err: "Nothing to change: the columns already have these names." };
+      }
+      if (args.columns === undefined && ren === undefined) return { ok: false, err: "Give columns to add or rename_columns." };
+      undo.ren = {};
+      var renTxt = rn.map(function (x) {
+        var at = Math.max(now, (x.col.mtime || 0) + 1);
+        x.col.name = x.to; x.col.mtime = at;
+        undo.ren[x.col.id] = { n: x.from, a: at };
+        return JSON.stringify(x.from) + " → " + JSON.stringify(x.to);
+      });
+      var list = args.columns === undefined ? [] : Array.isArray(args.columns) ? args.columns : null;
+      if (!list || (args.columns !== undefined && !list.length) || list.length > KB_COLS) return { ok: false, err: "columns must hold 1 to " + KB_COLS + " columns." };
       for (i = 0; i < list.length; i++) {
         var nc = isObj(list[i]) ? list[i] : {};
         r = kbText(nc.name, 60, "text");
@@ -1560,8 +1588,11 @@
         undo.cols[col.id] = now;
         ids.push(col.id);
       }
-      b.om = now;
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, text: "Added " + ids.length + " column" + (ids.length === 1 ? "" : "s") + " to " + (b.name || "the board") + "." };
+      if (ids.length) b.om = now;
+      var said = [];
+      if (renTxt.length) said.push("Renamed " + renTxt.join(", ") + ".");
+      if (ids.length) said.push("Added " + ids.length + " column" + (ids.length === 1 ? "" : "s") + " to " + (b.name || "the board") + ".");
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, renamed: renTxt.length, text: said.join(" ") };
     }
 
     if (op === "add_cards") {
@@ -1775,6 +1806,12 @@
       });
       n++;
     });
+    // KB-COLREN: a renamed column gets its old name back unless it changed since
+    if (isObj(u.ren)) Object.keys(u.ren).forEach(function (id) {
+      var e = u.ren[id], c = kbCols(b).filter(function (x) { return x.id === id; })[0];
+      if (!isObj(e) || !c || (c.mtime || 0) !== e.a) { kept++; return; }
+      c.name = e.n; c.mtime = Math.max(now, e.a + 1); n++;
+    });
     Object.keys(u.cols).forEach(function (id) {
       var cols = kbCols(b), c = cols.filter(function (x) { return x.id === id; })[0];
       if (!c || (c.mtime || 0) !== u.cols[id] || (Array.isArray(c.cards) && c.cards.length)) { kept++; return; }
@@ -1827,6 +1864,7 @@
   // create_items. applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 "invoices_record",   // INV-EXT
+                "local_folders_request",   // TRAY-2: the owner's answer on a screen
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact",
                 // GATE-FILES F3: checked against the closed copy's index; deletes wait for the owner's yes here
@@ -1854,6 +1892,34 @@
   var SCREEN_HELD = "__screen";
   function screenTool(name, args) { return ACT_OPEN.indexOf(name) >= 0 || (name === "edit_in_app" && !(isObj(args) && args.dry_run === true)); }
   function offScreen() { return away() || document.visibilityState !== "visible"; }
+  // TRAY-1 (Chris 2026-11-21 «να δουλεύεις με το orOS κλειστό στο tray»):
+  // Layout's book work and edit_in_app need nobody to look at them. On the
+  // background host (the tray keeps orOS open headless) and in an orOS
+  // desktop window that is minimised or behind others (orOS Setup /
+  // Portable, its own browser) they run at once; proposals that the owner
+  // reads (propose_*, newsletter_*) still wait for a screen, and so does
+  // every deletion (askDelete answers "none" off screen → __held).
+  var BACK_OK = ["book_cover", "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app"];
+  function deskApp() { return typeof location !== "undefined" && /^http:\/\/(localhost|127\.0\.0\.1):47800$/.test(String(location.origin || "")); }
+  // TRAY-3 (Chris 2026-11-21 «εφάρμοσε τις ίδιες δυνατότητες για όλες
+  // τις εργασίες του Gate»): in an orOS desktop window that is minimised
+  // or behind others, every screen tool runs too; a proposal's form stays
+  // open in that window for the owner to check when they look. The
+  // headless tray host has no window to keep it in, so there proposals
+  // still wait for a screen (the phone answers them too).
+  function backOk(name) {
+    if (strictOn()) return false;
+    var desk = deskApp() && !away() && !(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());
+    if (BACK_OK.indexOf(name) < 0) return desk && ACT_OPEN.indexOf(name) >= 0;
+    if (HOST.ok && HOST.kind === "bg") return true;
+    return desk;
+  }
+  // a screen tool that must wait here for a person at the screen
+  function screenWait(name, args) {
+    if (name === "local_folders_request") return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());   // TRAY-2: a question for the owner
+    if (!screenTool(name, args) || backOk(name)) return false;
+    return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());
+  }
   function writable(id) { return !sensitive(id) && (!!WRITES[id] || ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"); }
   function actable(id) { return ACT.indexOf(id) >= 0 || DOCS.indexOf(id) >= 0 || id === "files"; }
   // One rule, orOS open or closed (Chris 08/11, 5.78.00): Claude may
@@ -1946,21 +2012,21 @@
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
           tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer", budget_balances: "matched Budget's account balances",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
-                   kanban_add_columns: "added Kanban columns", invoices_record: "recorded invoices issued elsewhere",
+                   kanban_add_columns: "added or renamed Kanban columns", invoices_record: "recorded invoices issued elsewhere",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
-                   kanban_add_columns: "πρόσθεσε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
+                   kanban_add_columns: "πρόσθεσε ή μετονόμασε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
-                   kanban_add_columns: "Kanban-Spalten hinzugefügt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
+                   kanban_add_columns: "Kanban-Spalten hinzugefügt oder umbenannt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
                    link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };
@@ -2130,7 +2196,7 @@
     return { app: apps.join(", "), list: list };
   }
 
-  var core = { screenTool: screenTool, SCREEN_HELD: SCREEN_HELD, delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, bankNowText: bankNowText, BANK_GAP: BANK_GAP, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, invoicesRecord: invoicesRecord, invoicesUndo: invoicesUndo, OWN_WRITES: OWN_WRITES, stockItems: stockItems, publishTitles: publishTitles,
+  var core = { screenTool: screenTool, SCREEN_HELD: SCREEN_HELD, BACK_OK: BACK_OK, delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, bankNowText: bankNowText, BANK_GAP: BANK_GAP, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, invoicesRecord: invoicesRecord, invoicesUndo: invoicesUndo, OWN_WRITES: OWN_WRITES, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
@@ -2312,6 +2378,7 @@
       sendVis(sock);
       if (pref().lvd) sendLv(sock);
       else sendBase(sock);
+      lfSend(sock);
       pushReg();
       copySoon(4000);
       fileCopySoon(60000);
@@ -2329,6 +2396,7 @@
       if (typeof ev.data !== "string" || ev.data === "pong") return;
       if (ev.data.indexOf('{"hi"') === 0) { onHi(ev.data); return; }
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
+      if (ev.data.indexOf('{"lf"') === 0) { onLf(sock, ev.data); return; }
       if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
       if (ev.data.indexOf('{"snapok"') === 0) return;
       if (ev.data.indexOf('{"fidxok"') === 0) { fileCopyAck(); return; }
@@ -2690,7 +2758,7 @@
             // on screen, and on the next connect). Writes keep a conflict copy.
             if (x.n === "files_delete" && (away() || document.visibilityState !== "visible" || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
             // GATE-SCREEN: a tool for the owner's screen runs only with orOS on screen and unlocked
-            if (screenTool(x.n, x.a) && (offScreen() || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked()))) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
+            if (screenWait(x.n, x.a)) { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }
             if (FILE_WRITE.indexOf(x.n) >= 0) { files = true; if (x.n === "files_write") x.a = Object.assign({}, isObj(x.a) ? x.a : {}, { __q: 1 }); }
             cqBusy[it.id] = 1;
             askLast = "";
@@ -2709,7 +2777,7 @@
               if (res === DECL) return res;
               delete cqBusy[it.id];
               if (res && res.ok && res.u) chgTag(res.u, it.id, at, res.made);   // PEND-1: q, p (items by index), at
-              if (x.n === "files_delete" && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
+              if ((x.n === "files_delete" || x.n === "local_folders_request" || (x.n === "edit_in_app" && !res.ok)) && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
               delete cqHeld[it.id];
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
@@ -2845,10 +2913,78 @@
     if (lv.kanban === "write") kanbanModel().then(null, function () {});
     changed();
   }
+  // TRAY-2: the computer folders (localroots.js, "oros-local-pc") go to
+  // the gate's other devices sealed with the gate's key: the relay keeps
+  // and passes on a blob it cannot read. Every device sends the list it
+  // has merged, so the newest of each folder wins everywhere; a device
+  // that gets a list missing something it knows answers with its own.
+  function localL() { return root.orosLocal && typeof root.orosLocal.mergeShared === "function" ? root.orosLocal : null; }
+  function lfSend(sock) {
+    var L = localL(), k = gateKey();
+    sock = sock || ws;
+    if (!L || !k || !sock || sock.readyState !== 1) return;
+    var list = L.shared();
+    if (!list.length) return;
+    seal(k, JSON.stringify({ v: 1, l: list })).then(function (sealed) {
+      try { if (sock.readyState === 1) sock.send(JSON.stringify({ lf: sealed })); } catch (e) {}
+    }, function () {});
+  }
+  var lfTimer = 0;
+  root.orosLocalShare = function () { clearTimeout(lfTimer); lfTimer = setTimeout(function () { lfSend(); }, 300); };
+  function onLf(sock, text) {
+    var o, L = localL(), k = gateKey();
+    try { o = JSON.parse(text); } catch (e) { return; }
+    if (!isObj(o) || typeof o.lf !== "string" || !L || !k) return;
+    unseal(k, o.lf).then(function (t) {
+      var d = JSON.parse(t);
+      if (!isObj(d) || d.v !== 1 || !Array.isArray(d.l)) return;
+      return Promise.resolve(L.mergeShared(d.l)).then(function () {
+        // the other side lacks something this device has: send the merged list back
+        if (JSON.stringify(L.shared()) !== JSON.stringify(L.pcMerge(d.l, [], Date.now()))) lfSend(sock);
+      });
+    }).then(null, function () {});
+  }
+  // TRAY-2: Claude asks for a folder of the owner's computer; the owner
+  // allows it on any device where orOS is on screen (the phone too).
+  // Nobody at a screen (hidden, background host, locked) → __held, and
+  // the box keeps it for the next device on screen. → Promise of the
+  // answer to Claude.
+  function localAsk(args, p) {
+    var L = localL();
+    if (!L) return Promise.resolve({ ok: false, c: "This orOS has no local folders yet; ask the owner to update orOS." });
+    if (typeof p.hold === "number" && p.hold > Date.now()) return Promise.resolve({ ok: false, c: "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was asked." });
+    var typed = typeof args.path === "string" ? args.path.trim().slice(0, 400) : "", pc = L.pcPath(typed);
+    if (!pc) return Promise.resolve({ ok: false, c: "path must be a full folder path of the owner's computer, e.g. C:\\Users\\<name>\\Documents\\<folder> (or ~/<folder>). Nothing was asked." });
+    if (L.pcRisky(pc)) return Promise.resolve({ ok: false, c: "That folder cannot be opened for Claude (a whole drive or home folder, or a system, program or key folder). Ask for the folder of the work itself. Nothing was asked." });
+    var mode = args.access === "write" ? "w" : "r", days = Math.max(1, Math.min(90, Math.floor(+args.days || 30)));
+    var why = typeof args.reason === "string" ? args.reason.replace(/\s+/g, " ").trim().slice(0, 300) : "";
+    var now = Date.now(), same = L.shared().filter(function (e) { return !e.gone && e.pc.toLowerCase() === pc.toLowerCase() && e.mode === mode && e.exp > now + days * 86400000 - 86400000; })[0];
+    if (same) return Promise.resolve({ ok: true, a: [], k: 0, c: "Already open for Claude: local:" + same.name + " (" + typed + "), " + (mode === "w" ? "write (new files only)" : "read") + ", until " + new Date(same.exp).toISOString().slice(0, 10) + ". Nothing was asked." });
+    return new Promise(function (ok) {
+      var settled = false, wrap = null;
+      function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+      if (offScreen() || locked() || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
+      var body = tr(mode === "w" ? "gate.lf.bodyW" : "gate.lf.bodyR").replace("{days}", String(days));
+      var list = typed + (why ? "\n\n" + tr("gate.lf.why").replace("{why}", why) : "");
+      wrap = dialog(tr("gate.lf.title"), body, list, tr("gate.lf.no"), tr("gate.lf.yes"),
+        function () { end(false, "no"); }, function () { end(true, "yes"); });
+      setTimeout(function () { end(false, "none"); }, 60000);
+    }).then(function (yes) {
+      if (!yes) return askLast === "none" ? { ok: false, c: "__held" } : { ok: false, c: "The owner did not open that folder for Claude. Nothing was opened." };
+      return Promise.resolve(L.addPc(typed, { mode: mode, days: days, anywhere: true, by: "claude" })).then(function (r) {
+        return { ok: true, a: [], k: 1, c: "The owner opened it for Claude: local:" + r.name + " (" + typed + "), " + (mode === "w" ? "write (new files only, never replacing one)" : "read only") + ", until " + new Date(r.exp).toISOString().slice(0, 10) +
+          ". It works on the owner's computer where orOS runs (a window, minimised, or in the tray); that computer gets it as soon as orOS runs there. Use local:" + r.name + "/<path inside it>." };
+      }, function (e) {
+        return { ok: false, c: "The owner allowed it, but the folder could not be opened" + (e && e.why === "notFolder" ? ": it is not a folder on that computer" : e && e.why === "tooMany" ? ": there are already 8 local folders (the owner closes one in Settings › Connected services › orOS Gate)" : "") + ". Nothing was opened." };
+      });
+    });
+  }
   // The relay asks a device whose orOS is on screen first (5.73.00):
   // a phone in the background loses its socket, a computer keeps it.
   function sendVis(sock) {
     try { if (sock && sock.readyState === 1) sock.send((HOST.ok && HOST.kind === "bg") || document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}
+    // TRAY-1: this device runs Layout's work unseen, so the box also offers it the calls kept for a screen
+    try { if (sock && sock.readyState === 1 && ((HOST.ok && HOST.kind === "bg") || deskApp())) sock.send("b1"); } catch (e) {}
   }
   try {
     document.addEventListener("visibilitychange", function () {
@@ -2944,7 +3080,7 @@
         return Promise.resolve({ ok: false, c: "The owner lets Claude change none of these apps (orOS › Settings › Connected services › orOS Gate: «Claude may also change …» per app)." });
       }
       // GATE-SCREEN: nobody sees orOS here → kept for a screen (a queued one is checked in applyQueue)
-      if (!opt.q && screenTool(name, args) && offScreen()) {
+      if (!opt.q && screenTool(name, args) && offScreen() && !backOk(name)) {
         if (typeof p.hold === "number" && p.hold > Date.now()) return Promise.resolve({ ok: false, c: "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was done." });
         return Promise.resolve({ ok: false, c: SCREEN_HELD });
       }
@@ -3044,6 +3180,7 @@
     var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
     if (kop) return kanbanChange(kop, args, p, names, opt.at);
     if (name === "invoices_record") return invoicesChange(args, p, names, okIds, opt.at);
+    if (name === "local_folders_request") return localAsk(args, p);   // TRAY-2
     return Promise.resolve({ ok: false, c: "Unknown tool." });
     }
   }
@@ -3232,7 +3369,7 @@
       if (at && lateIn(kd, r.data, at)) return { ok: false, late: 1, c: LATE_TXT };
       if (!writeJSON("oros-kanban-data", r.data)) return { ok: false, c: "orOS could not save the change on the device; nothing was changed." };
       try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {}
-      var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length + (Array.isArray(r.removed) ? r.removed.length : 0));
+      var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length + (Array.isArray(r.removed) ? r.removed.length : 0) + (r.renamed || 0));
       return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify({ done: r.text, ids: r.ids }) };
     }
   }
@@ -3678,7 +3815,7 @@
       if (res && res.ok && q.n !== "__tools") ranAdd(q.q);
       // 7.48.00: a deletion this screen could not ask about (nobody here)
       // is handed back to the box, which queues it for a device on screen.
-      if (res && !res.ok && askLast === "none" && core.delCount(q.n, q.a)) {
+      if (res && !res.ok && askLast === "none" && (core.delCount(q.n, q.a) || q.n === "edit_in_app")) {   // TRAY-3: Layout's removals too
         try { sock.send(JSON.stringify({ r: q.q, ok: false, c: "__held" })); } catch (e) {}
         return;
       }

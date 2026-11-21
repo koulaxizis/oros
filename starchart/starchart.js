@@ -68,7 +68,7 @@
     en: {
       "app.name": "Star Chart",
       "btn.obs": "Observatory", "btn.obsKey": "Observatory (T)", "btn.atlas": "Star atlas (A)",
-      "btn.stats": "Records (S)", "btn.sfxOn": "Sound on (M)", "btn.sfxOff": "Sound off (M)",
+      "btn.help": "How to play (?)", "btn.stats": "Records (S)", "btn.sfxOn": "Sound on (M)", "btn.sfxOff": "Sound off (M)",
       "btn.close": "Close", "btn.ok": "Good", "btn.undo": "Undo", "btn.cancel": "Cancel",
       "btn.start": "Start over", "btn.startYes": "Start over", "btn.season": "New season", "btn.seasonKey": "New season (E)",
       "btn.name": "Name it (N)", "btn.back": "Undo line", "btn.clear": "Clear", "btn.rename": "Rename", "btn.erase": "Erase",
@@ -125,11 +125,18 @@
       "away.sl": "Starlight now",
       "away.slow": "After 7 days away the observatory works at half pace: it never stops, it only slows.",
       "dur.d": "{n} d", "dur.h": "{n} h", "dur.m": "{n} min",
-      "tour.title": "How it works",
+      "tour.title": "How to play",
       "tour.1": "Your telescopes gather starlight every minute, even while orOS is closed. Starlight buys more telescopes in the Observatory.",
-      "tour.2": "Tap a star, then another, to join them with a line. Join 3 to 8 stars into one shape and name it. Lines may not cross, and a star belongs to one constellation, so plan the sky.",
+      "tour.goal": "Draw constellations: join stars with lines. Every constellation gives a bonus for the whole season, and your telescopes turn it into starlight.",
+      "tour.s1": "Tap a star. A ring marks it.",
+      "tour.s2": "Tap a star near it: a line joins the two. The next line starts from the star you just tapped.",
+      "tour.s3": "To branch, tap the ringed star again to let go, then tap any star of your drawing and go on from there.",
+      "tour.s4": "Once 3 to 8 stars are joined, press Name it under the sky. That is when the lines are paid in starlight.",
+      "tour.rules": "Lines may not cross or pass through another star, they reach only a few cells, and every star belongs to one constellation. Tap a named constellation to rename or erase it.",
+      "tour.season": "Six constellations and a Radio dish begin a new season: the constellations go into the star atlas, which adds to all your starlight for good.",
       "tour.3": "Every kind of star gives something: blue lifts the telescopes, gold makes them cheaper, red makes lines cheaper, white is kept for the atlas. A branch or a ring makes the whole constellation worth more.",
       "tour.4": "The moon is the real moon: a new moon gives a little more, a full moon a little less. There is nothing to miss and nothing to collect: come back when you like.",
+      "tour.again": "The ? button at the top opens this again at any time.",
       "toast.buy": "Built: {u}", "toast.named": "A new constellation: {n}", "toast.erased": "Erased: {n}", "toast.renamed": "Renamed: {n}",
       "toast.start": "A new sky", "toast.sl": "Not enough starlight yet", "toast.max": "Already done", "toast.need": "Build a {x} first",
       "toast.far": "Too far: lines reach {r} cells (the star compass reaches farther)",
@@ -156,7 +163,7 @@
     el: {
       "app.name": "Χάρτης των άστρων",
       "btn.obs": "Αστεροσκοπείο", "btn.obsKey": "Αστεροσκοπείο (T)", "btn.atlas": "Άτλαντας των άστρων (A)",
-      "btn.stats": "Αρχείο (S)", "btn.sfxOn": "Ήχος ανοιχτός (M)", "btn.sfxOff": "Ήχος κλειστός (M)",
+      "btn.help": "Πώς παίζεται (?)", "btn.stats": "Αρχείο (S)", "btn.sfxOn": "Ήχος ανοιχτός (M)", "btn.sfxOff": "Ήχος κλειστός (M)",
       "btn.close": "Κλείσιμο", "btn.ok": "Ωραία", "btn.undo": "Αναίρεση", "btn.cancel": "Άκυρο",
       "btn.start": "Από την αρχή", "btn.startYes": "Νέος ουρανός", "btn.season": "Νέα εποχή", "btn.seasonKey": "Νέα εποχή (E)",
       "btn.name": "Δώσε όνομα (N)", "btn.back": "Πίσω μία γραμμή", "btn.clear": "Καθάρισμα", "btn.rename": "Μετονομασία", "btn.erase": "Σβήσιμο",
@@ -215,9 +222,16 @@
       "dur.d": "{n} μ.", "dur.h": "{n} ώ.", "dur.m": "{n} λεπ.",
       "tour.title": "Πώς παίζεται",
       "tour.1": "Τα τηλεσκόπιά σου μαζεύουν αστρόφως κάθε λεπτό, ακόμα και όταν το orOS είναι κλειστό. Με το αστρόφως αγοράζεις κι άλλα τηλεσκόπια στο Αστεροσκοπείο.",
-      "tour.2": "Πάτα ένα αστέρι και μετά ένα άλλο για να τα ενώσεις με μια γραμμή. Ένωσε 3 ως 8 αστέρια σε ένα σχήμα και δώσ' του όνομα. Οι γραμμές δεν διασταυρώνονται και κάθε αστέρι ανήκει σε έναν αστερισμό, οπότε σχεδίασε τον ουρανό με το μυαλό.",
+      "tour.goal": "Σχεδίασε αστερισμούς: ένωσε αστέρια με γραμμές. Κάθε αστερισμός δίνει μπόνους για όλη την εποχή, και τα τηλεσκόπιά σου το κάνουν αστρόφως.",
+      "tour.s1": "Πάτα ένα αστέρι. Ένας κύκλος το σημαδεύει.",
+      "tour.s2": "Πάτα ένα αστέρι κοντά του: μια γραμμή ενώνει τα δύο. Η επόμενη γραμμή ξεκινά από το αστέρι που μόλις πάτησες.",
+      "tour.s3": "Για διακλάδωση, πάτα ξανά το σημαδεμένο αστέρι για να το αφήσεις, μετά πάτα όποιο αστέρι του σχεδίου θέλεις και συνέχισε από εκεί.",
+      "tour.s4": "Όταν ενωθούν 3 ως 8 αστέρια, πάτα «Δώσε όνομα» κάτω από τον ουρανό. Τότε πληρώνονται οι γραμμές σε αστρόφως.",
+      "tour.rules": "Οι γραμμές δεν διασταυρώνονται ούτε περνούν από άλλο αστέρι, φτάνουν μόνο λίγα τετράγωνα μακριά, και κάθε αστέρι ανήκει σε έναν αστερισμό. Πάτα έναν αστερισμό με όνομα για να τον μετονομάσεις ή να τον σβήσεις.",
+      "tour.season": "Έξι αστερισμοί και ένα ραδιοτηλεσκόπιο ξεκινούν νέα εποχή: οι αστερισμοί μπαίνουν στον άτλαντα των άστρων, που ανεβάζει για πάντα όλο το αστρόφως σου.",
       "tour.3": "Κάθε είδος αστεριού δίνει κάτι: το μπλε ανεβάζει τα τηλεσκόπια, το χρυσό τα κάνει φθηνότερα, το κόκκινο κάνει φθηνότερες τις γραμμές, το λευκό φυλάγεται για τον άτλαντα. Μια διακλάδωση ή ένας κύκλος κάνει όλον τον αστερισμό πιο πολύτιμο.",
       "tour.4": "Η σελήνη είναι η πραγματική: η νέα σελήνη δίνει λίγο περισσότερο, η πανσέληνος λίγο λιγότερο. Δεν χάνεις τίποτα και δεν έχεις τίποτα να μαζέψεις: έλα όποτε θέλεις.",
+      "tour.again": "Το κουμπί ? πάνω το ξανανοίγει όποτε θέλεις.",
       "toast.buy": "Έγινε: {u}", "toast.named": "Νέος αστερισμός: {n}", "toast.erased": "Σβήστηκε: {n}", "toast.renamed": "Νέο όνομα: {n}",
       "toast.start": "Νέος ουρανός", "toast.sl": "Δεν φτάνει ακόμα το αστρόφως", "toast.max": "Έχει ήδη γίνει", "toast.need": "Χρειάζεται πρώτα {x}",
       "toast.far": "Πολύ μακριά: οι γραμμές φτάνουν {r} τετράγωνα (η αστρική πυξίδα φτάνει πιο μακριά)",
@@ -470,25 +484,29 @@
     live = u.snap;
     if (u.draft) draft = u.draft;
     E.catchUp(live, nowMs());
-    if (u.kind === "start") { saved = E.normalize(live); if (writeSaved()) dirtySoon(); }
     checkDraft();
     hideToast();
     sfx("undo");
     renderAll(true);
   }
+  // Start over: a new sky with a new reset stamp (it wins on every
+  // device, so the old sky cannot come back from the cloud). No Undo:
+  // the question before it is the safeguard, and an Undo in the toast
+  // sat over the toolbar, where the next tap brought the old sky back.
   function startOver() {
     if (pending) commitNow();
     E.catchUp(live, nowMs());
     var br = Math.max(nowMs(), saved.br + 1);
-    var old = E.clone(live);
-    old.br = br;
     live = E.newGame(newSeed(), nowMs(), br);
-    undo = { snap: old, kind: "start", draft: JSON.parse(JSON.stringify(draft)) };
+    undo = null;
+    hideToast();
     draft = { l: [], a: -1 }; selC = -1; cur = -1;
     saved = E.normalize(live);
     if (writeSaved()) dirtySoon();
+    seenNow();
+    savePrefs();
     closeDialog();
-    showToast(t("toast.start"), true);
+    showToast(t("toast.start"));
     renderAll(true);
   }
   // A tap on star i (the screen and the keyboard both come here).
@@ -777,8 +795,13 @@
   function stopAnim() { rafOn = false; }
 
   // ---------- 6. Input ----------
+  // A finger is wider than a mouse: on a touch screen a star and a line
+  // answer a little farther away.
+  function coarse() {
+    try { return window.matchMedia("(pointer: coarse)").matches; } catch (e) { return false; }
+  }
   function starAt(x, y) {
-    var f = E.fieldOf(live), best = -1, bd = Math.max(22, G.cell * 0.55);
+    var f = E.fieldOf(live), best = -1, bd = Math.max(coarse() ? 30 : 22, G.cell * 0.55);
     f.forEach(function (st, i) {
       var p = px(st), d = Math.sqrt((p.x - x) * (p.x - x) + (p.y - y) * (p.y - y));
       if (d < bd) { bd = d; best = i; }
@@ -786,13 +809,13 @@
     return best;
   }
   function draftLineAt(x, y) {
-    var f = E.fieldOf(live);
+    var f = E.fieldOf(live), near = coarse() ? 400 : 144;
     for (var k = 0; k < draft.l.length; k++) {
       var a = px(f[draft.l[k][0]]), b = px(f[draft.l[k][1]]);
       var dx = b.x - a.x, dy = b.y - a.y, L = dx * dx + dy * dy;
       var u = L ? Math.max(0, Math.min(1, ((x - a.x) * dx + (y - a.y) * dy) / L)) : 0;
       var qx = a.x + u * dx - x, qy = a.y + u * dy - y;
-      if (u > 0.15 && u < 0.85 && qx * qx + qy * qy < 144) return k;
+      if (u > 0.15 && u < 0.85 && qx * qx + qy * qy < near) return k;
     }
     return -1;
   }
@@ -845,6 +868,7 @@
       else if (k === "f") { fcDialog(); ev.preventDefault(); }
       else if (k === "s") { recDialog(); ev.preventDefault(); }
       else if (k === "m") { toggleSfx(); ev.preventDefault(); }
+      else if (ev.key === "?") { tourDialog(); ev.preventDefault(); }
       else if (k === "z" && undo) { undoLast(); ev.preventDefault(); }
     });
   }
@@ -1312,9 +1336,16 @@
     openDialog("tour", function (d) {
       d.setAttribute("aria-label", t("tour.title"));
       d.appendChild(el("div", "dlg-title", t("tour.title")));
-      ["tour.1", "tour.2", "tour.3", "tour.4"].forEach(function (k) { d.appendChild(el("p", "dlg-msg", t(k))); });
+      // the goal, then the drawing in numbered steps, then the rest
+      d.appendChild(el("p", "dlg-msg", t("tour.goal")));
+      var ol = el("ol", "tour-steps");
+      ["tour.s1", "tour.s2", "tour.s3", "tour.s4"].forEach(function (k) { ol.appendChild(el("li", "", t(k))); });
+      d.appendChild(ol);
+      ["tour.rules", "tour.1", "tour.3", "tour.season", "tour.4"].forEach(function (k) { d.appendChild(el("p", "dlg-msg", t(k))); });
+      d.appendChild(el("p", "dlg-note", t("tour.again")));
       actions(d, [{ label: t("btn.ok"), cls: "primary", fn: function () { prefs.tour = 1; savePrefs(); closeDialog(); } }]);
     });
+    $("dlg").scrollTop = 0;   // open at the top, not at the focused Good button
   }
 
   // ---------- 9. Toasts ----------
@@ -1437,6 +1468,7 @@
   var ICONS = {
     scope:  SVG + '<path d="M4 15l12-7 2 3.5-12 7z"/><path d="M16 8l2-1 2 3.5-2 1"/><path d="M9 17l-3 5M11 16l3 6"/></svg>',
     atlas:  SVG + '<path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 19V5"/><path d="M9 8l3 3 3-2"/><circle cx="9" cy="8" r="0.6"/><circle cx="12" cy="11" r="0.6"/><circle cx="15" cy="9" r="0.6"/></svg>',
+    help:   SVG + '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17h.01"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
@@ -1546,6 +1578,10 @@
   };
 
   function applyI18n() {
+    var hb = $("help-btn");
+    hb.innerHTML = ICONS.help;
+    hb.setAttribute("aria-label", t("btn.help"));
+    hb.title = t("btn.help");
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
       n.textContent = t(n.getAttribute("data-i18n"));
     });
@@ -1572,6 +1608,7 @@
     $("season-btn").addEventListener("click", seasonDialog);
     $("atlas-btn").addEventListener("click", atlasDialog);
     $("stats-btn").addEventListener("click", recDialog);
+    $("help-btn").addEventListener("click", tourDialog);
     $("sfx-btn").addEventListener("click", toggleSfx);
     $("fc").addEventListener("click", fcDialog);
     document.addEventListener("pointerdown", function () { if (nightOn()) updateNight(); }, { once: true });

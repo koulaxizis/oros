@@ -105,6 +105,7 @@ orosPack("de", "wallpaper", {
  "st.flow": "Strömung",
  "st.grid": "Raster",
  "st.nebula": "Nebel",
+ "st.ribbon": "Glasbänder",
  "st.orbits": "Umlaufbahnen",
  "st.tree": "Baum",
  "st.waves": "Wellen",

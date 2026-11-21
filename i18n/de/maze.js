@@ -95,7 +95,7 @@ orosPack("de", "maze", {
  "map.towers": "Türme: {list}",
  "map.cont": "Weiter: {r}, Welle {n}",
  "map.replace": "Auf {r} läuft noch eine Nacht. Stattdessen {s} beginnen? Die laufende Nacht geht verloren.",
- "map.resetAsk": "Sterne und Statistik auf allen Geräten zurücksetzen?",
+ "map.resetAsk": "Sterne und Statistik auf allen Geräten zurücksetzen? Die laufende Nacht endet auch.",
  "sq.q1": "Netzflickerplatz",
  "sq.q2": "Zollhof",
  "sq.q3": "Kapellenstufen",

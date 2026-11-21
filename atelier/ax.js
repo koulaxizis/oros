@@ -35,6 +35,9 @@
 //   table: tb (objects.js normTable), font, size (text size before
 //          shrink-to-fit, default 24), al l|c|r; fc text, sc lines
 //   chart: ch (objects.js normChart), fc background, size labels
+// Groups (wave CV-1): designkit's own item.grp (an id, as Layout uses
+//   it): elements with the same grp on a page are one group; a tap
+//   picks the group, a second tap the element inside it.
 // Since wave B1 (R39: new fields live in the item's `ext`, not here):
 //   ext.lnk  the element's link: https / http / mailto / tel, or
 //            "#p<n>" = page n of the same design (normLink); the web
@@ -59,6 +62,13 @@
 //            text (the PowerPoint import sets it; older copies lay the
 //            text out without it).
 // Since wave C2 (morph, atelier/morph.js):
+//   ext.anim on an element (wave CV-A, anim.js norm): its Canva-style
+//            animation { in, out, em: { e, d, sp, by }, t0, t1 }; ax.an
+//            keeps the nearest older entrance for older copies
+//   ext.pan  on a page background { e, d, sp }: the page animation
+//            (every element without its own entrance)
+//   ext.gif  on a photo: a moving GIF (clips.js), the picture is its
+//            first frame
 //   ext.mph  1 on a page background: the page morphs in from the page
 //            before it; ptr stays what older copies show instead
 // Since CL-1 (photo collage, atelier/collage.js):
@@ -344,9 +354,10 @@
     }
     var ax = {};
     Object.keys(spec).forEach(function (key) {
-      if (["x", "y", "w", "h", "rot", "op", "sw", "z", "lock", "a", "nm", "iw", "ih", "fit", "ix", "iy", "isc", "ext"].indexOf(key) < 0) ax[key] = spec[key];
+      if (["x", "y", "w", "h", "rot", "op", "sw", "z", "lock", "a", "nm", "iw", "ih", "fit", "ix", "iy", "isc", "ext", "grp"].indexOf(key) < 0) ax[key] = spec[key];
     });
     it.ax = ax;
+    if (spec.grp) it.grp = spec.grp;                   // a group (wave CV-1: designkit item.grp, as in Layout)
     if (spec.ext && typeof spec.ext === "object") it.ext = spec.ext;
     var n = M.normItem(it);
     if (!n || !n.ax) return null;
@@ -680,6 +691,7 @@
       if (!it.ax) return;
       if (it.ax.vid) ids[it.ax.vid] = 1;
       if (it.ax.au) ids[it.ax.au] = 1;
+      if (it.ext && CL.isGif(it.ext.gif)) ids[it.ext.gif] = 1;     // moving GIF (CV-A)
     });
     return Object.keys(ids).sort();
   }
@@ -889,7 +901,37 @@
     return true;
   }
 
+  // ---------- Screen designs and Canva's points (CV-0) ----------
+  // Atelier draws 1 px of a screen design as 1 pt; Canva (and
+  // PowerPoint at 96 dpi) write 1 px as 0.75 pt in .pptx and .pdf. A
+  // page of a paper size keeps its size; any other page is a screen
+  // page and is scaled by SCREEN on the way in, 1 / SCREEN on the way
+  // out. Paper sizes in pt (portrait), +-2 pt, either way up: A3-A6,
+  // B4-B6, Letter, Legal, Tabloid, DL, half Letter.
+  var SCREEN = 4 / 3;
+  var PAPER = [[841.89, 1190.55], [595.28, 841.89], [419.53, 595.28], [297.64, 419.53], [1190.55, 1683.78], [209.76, 297.64],
+               [708.66, 1000.63], [498.9, 708.66], [354.33, 498.9], [612, 792], [612, 1008], [792, 1224], [311.81, 623.62], [396, 612]];
+  function paper(w, h) {
+    var a = Math.min(w, h), b = Math.max(w, h);
+    return PAPER.some(function (p) { return Math.abs(p[0] - a) <= 2 && Math.abs(p[1] - b) <= 2; });
+  }
+  // The whole design k times larger, exactly (no relayout): page, boxes,
+  // strokes, photo crops and font sizes. In place; returns doc.
+  function scaleDesign(doc, k) {
+    if (!(k > 0) || k === 1) return doc;
+    function s(v) { return Math.round(v * k * 100) / 100; }
+    doc.setup.w = s(doc.setup.w); doc.setup.h = s(doc.setup.h);
+    doc.items.forEach(function (it) {
+      it.x = s(it.x || 0); it.y = s(it.y || 0); it.w = s(it.w); it.h = s(it.h);
+      if (typeof it.sw === "number") it.sw = s(it.sw);
+      if (it.t === "img" && it.fit === "custom") { it.ix = s(it.ix || 0); it.iy = s(it.iy || 0); it.isc = Math.round((it.isc || 1) * k * 1000) / 1000; }
+      if (it.ax && typeof it.ax.size === "number") it.ax.size = s(it.ax.size);
+    });
+    return doc;
+  }
+
   var api = {
+    SCREEN: SCREEN, paper: paper, scaleDesign: scaleDesign,
     normLink: normLink, linkOf: linkOf, setLink: setLink, pthOf: pthOf, shapeCmds: shapeCmds, tpOf: tpOf, isCurved: isCurved, setTp: setTp, textOutlines: textOutlines, outlineText: outlineText, shapeToPath: shapeToPath,
     KINDS: KINDS, BASE: BASE, TEXT_DEF: TEXT_DEF, RD_DEF: RD_DEF, MAX_TX: MAX_TX, HEADS: HEADS,
     normAx: normAx, newDesign: newDesign, addItem: addItem, addBackground: addBackground, background: background,

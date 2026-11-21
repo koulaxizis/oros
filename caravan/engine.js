@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Caravan — the rules (v1.0.0), no DOM
+// orOS Caravan — the rules (v1.2.0), no DOM
 // A reverse tower defense game: old clockwork toll machines guard the
 // road to the market, and the player leads a caravan of carts through
 // them. Before every trip the player hires and upgrades carts, puts
@@ -15,12 +15,15 @@
 // r + 0.5). Each route is a small road graph: nodes (S the village
 // gate, M the market, the rest junctions) and edges drawn as
 // straight pieces between corner tiles. An edge marked goat is the
-// goat track: only the Shortcut trick opens it, for one trip.
+// goat track: only the Shortcut trick opens it, for one trip. The
+// routes of the Spice road (5-8) have a second market, the spice
+// market N, which pays more for every crate.
 //
 // Run state (also the device-local session, oros-caravan-session .g):
-//   { v, rt, diff, u: carts unlocked (1-4), t: ticks, ph: "plan" | "go",
+//   { v, rt, diff, u: carts unlocked (1-5), t: ticks, ph: "plan" | "go",
 //     trip (1-3), nt: trips, coins, got: crates at the market, load:
-//     crates loaded, tg: crates of this trip, goal, cv: [cart] in order,
+//     crates loaded, tg: crates of this trip, tc: coins the crates of
+//     this trip were paid (both markets), goal, cv: [cart] in order,
 //     sg: { "<node>": out edge index }, tk: { s: smoke, w: shield,
 //     c: shortcut } tricks left, goat: 0 | 1 open this trip, sm: [cloud],
 //     mc: [machine], ri: carts released this trip, nid,
@@ -30,8 +33,13 @@
 //          road | "d" at the market | "h" turned back | "x" burnt,
 //          e: edge (-1 none), d: distance along it, x, y, tr: distance
 //          travelled, hp: crates (straw for the straw cart), sh: shield
-//          ticks }
+//          ticks, j: the smith's rest ticks before the next jam }
 //   cloud { x, y, t: ticks left }   machine { cd: cooldown, st: stopped }
+//   en: 0 | 1 Endless, q: crates this trip must bring (Endless)
+// Endless (W3): every machine of the route works from the first trip,
+// the knocks grow harder every trip, and the trips go on as long as
+// each one brings its quota q to the markets; the score is the trips
+// that did. No stars; the best score is kept per route (maps e).
 // ev (not saved): what happened in the last steps, for the screen.
 // ============================================================
 (function (root) {
@@ -45,11 +53,15 @@
   var MAX_CARTS = 8;
   var TRIPS = 3;
   var PAY = 2, TRIP_PAY = 10;            // coins per crate at the market, per trip
+  var PAY_N = 3;                         // coins per crate at the spice market
   var TRICK_COST = 15;
   var SMOKE_R = 1.6, SMOKE_T = 300;      // tiles, ticks
   var SHIELD_T = 360;
   var LOOK_R = 2, LOOK_RATE = 1.5;       // a lookout: reach, how much faster
   var MUD_SLOW = 0.5;
+  var EN_COINS = 80;                     // Endless: extra coins at the start
+  var EN_HARD = 0.08;                    // Endless: knocks this much harder every trip
+  var EN_MAXTRIP = 999;
   var EPS = 1e-9;
 
   var DIFFS = ["m", "n", "h"];           // Mild, Normal, Hard
@@ -83,9 +95,17 @@
       1: { cap: 12, v: 1, ar: 1, decoy: 1 },
       2: { cap: 16, v: 1, ar: 1, decoy: 1 },
       a: { cap: 26, v: 1, ar: 1, decoy: 1 },             // Wet straw
-      b: { cap: 16, v: 1, ar: 1, decoy: 1, scare: 120 } } } // Scarecrow
+      b: { cap: 16, v: 1, ar: 1, decoy: 1, scare: 120 } } }, // Scarecrow
+    // The smith: jams the nearest working machine within jr for jt
+    // ticks, then rests for rest ticks.
+    smith: { c: 45, u: 5, st: {
+      1: { cap: 4, v: 0.9, ar: 1, jr: 1.3, jt: 240, rest: 420 },
+      2: { cap: 5, v: 0.9, ar: 1, jr: 1.3, jt: 300, rest: 360 },
+      a: { cap: 5, v: 0.9, ar: 1, jr: 1.3, jt: 480, rest: 360 },   // Long jam
+      b: { cap: 5, v: 0.9, ar: 1, jr: 1.6, jt: 300, rest: 180 } } } // Quick hammer
   };
-  var KINDS = ["mule", "pony", "mender", "straw"];
+  var KINDS = ["mule", "pony", "mender", "straw", "smith"];
+  var MAX_U = KINDS.length;
 
   // Toll machines: reach r, cooldown cd (ticks), dmg crates per hit,
   // sp splash reach round the cart it aims at; mud slows, look speeds
@@ -98,7 +118,8 @@
   };
   var MKINDS = ["arm", "bellows", "mud", "look"];
 
-  // The routes of the Salt road. edges: [from, to, "c,r c,r" corners
+  // The routes of the Salt road (1-4) and the Spice road (5-8, a second
+  // market N). edges: [from, to, "c,r c,r" corners
   // between, "g" goat track]. machines: [kind, c, r, first trip].
   var ROUTES = [
     { id: "r1", goal: 50,
@@ -111,9 +132,9 @@
       nodes: { S: [3, 0], A: [3, 3], B: [9, 8], C: [3, 12], M: [8, 17] },
       edges: [["S", "A"], ["A", "B", "9,3"], ["A", "C"], ["B", "M"], ["C", "M", "3,15 8,15"],
               ["B", "C", "9,12"], ["A", "M", "6,10", "g"]],
-      machines: [["arm", 4, 7, 1], ["bellows", 10, 5, 1], ["arm", 7, 15, 1],
+      machines: [["arm", 4, 7, 1], ["bellows", 10, 5, 1], ["arm", 7, 16, 1],
                  ["bellows", 2, 10, 2], ["arm", 8, 11, 2], ["arm", 7, 9, 2],
-                 ["bellows", 9, 14, 3], ["arm", 4, 14, 3], ["arm", 6, 12, 3]] },
+                 ["bellows", 9, 14, 3], ["arm", 4, 14, 3], ["arm", 6, 13, 3]] },
     { id: "r3", goal: 60,
       nodes: { S: [2, 0], A: [2, 3], B: [9, 6], C: [2, 9], D: [6, 12], M: [6, 17] },
       edges: [["S", "A"], ["A", "B", "9,3"], ["A", "C"], ["B", "D", "9,12"], ["C", "D", "2,12"],
@@ -127,14 +148,46 @@
               ["B", "C", "6,7 6,9"], ["A", "D", "6,6", "g"], ["D", "M"]],
       machines: [["arm", 10, 6, 1], ["look", 4, 10, 1], ["arm", 2, 9, 1], ["arm", 7, 15, 1],
                  ["arm", 8, 11, 2], ["bellows", 4, 12, 2], ["mud", 10, 12, 2],
-                 ["look", 8, 7, 3], ["arm", 7, 8, 3], ["bellows", 5, 15, 3], ["arm", 4, 5, 3]] }
+                 ["look", 8, 7, 3], ["arm", 7, 8, 3], ["bellows", 5, 15, 3], ["arm", 4, 5, 3]] },
+    // The Spice road: M the market, N the spice market (pays more).
+    { id: "r5", goal: 80,
+      nodes: { S: [6, 0], A: [6, 3], B: [3, 9], C: [9, 9], M: [3, 17], N: [9, 17] },
+      edges: [["S", "A"], ["A", "B", "3,3"], ["A", "C", "9,3"], ["B", "M"], ["B", "C"], ["C", "N"]],
+      machines: [["arm", 4, 6, 1], ["arm", 8, 12, 1], ["arm", 2, 15, 1],
+                 ["bellows", 10, 6, 2], ["arm", 6, 8, 2], ["arm", 4, 12, 2],
+                 ["arm", 8, 15, 3], ["mud", 2, 11, 3], ["bellows", 10, 13, 3]] },
+    { id: "r6", goal: 100,
+      nodes: { S: [2, 0], A: [2, 4], B: [8, 4], C: [2, 10], D: [8, 10], M: [2, 17], N: [8, 17] },
+      edges: [["S", "A"], ["A", "B"], ["A", "C"], ["B", "D"], ["B", "N", "11,4 11,17"], ["C", "D"], ["C", "M"],
+              ["D", "N"], ["A", "D", "5,7", "g"]],
+      machines: [["arm", 5, 5, 1], ["arm", 9, 7, 1], ["arm", 3, 13, 1], ["look", 10, 12, 1],
+                 ["arm", 7, 13, 2], ["bellows", 5, 9, 2], ["mud", 9, 15, 2],
+                 ["arm", 1, 7, 3], ["bellows", 10, 9, 3], ["arm", 6, 11, 3], ["look", 4, 14, 3]] },
+    { id: "r7", goal: 85,
+      nodes: { S: [6, 0], A: [6, 2], B: [2, 7], C: [6, 7], D: [10, 7], E: [4, 12], F: [8, 12], M: [4, 17], N: [8, 17] },
+      edges: [["S", "A"], ["A", "B", "2,2"], ["A", "C"], ["A", "D", "10,2"], ["B", "E", "2,12"], ["C", "E", "4,7"],
+              ["C", "F", "8,7"], ["D", "F", "10,12"], ["E", "M"], ["E", "F"], ["F", "N"]],
+      machines: [["arm", 5, 4, 1], ["arm", 3, 10, 1], ["arm", 9, 10, 1], ["look", 6, 14, 1],
+                 ["bellows", 7, 5, 2], ["mud", 5, 13, 2], ["arm", 11, 9, 2], ["arm", 1, 5, 2],
+                 ["bellows", 3, 15, 3], ["arm", 9, 15, 3], ["arm", 7, 9, 3], ["look", 11, 4, 3]] },
+    { id: "r8", goal: 92,
+      nodes: { S: [6, 0], A: [6, 3], B: [2, 6], C: [10, 6], D: [6, 10], E: [2, 13], F: [10, 13], M: [2, 17], N: [10, 17] },
+      edges: [["S", "A"], ["A", "B", "2,3"], ["A", "C", "10,3"], ["A", "D"], ["B", "E"], ["B", "D", "4,6 4,10"],
+              ["C", "D", "8,6 8,10"], ["C", "F"], ["D", "E", "4,12"], ["D", "F", "8,12"], ["E", "M"], ["F", "N"],
+              ["B", "M", "0,6 0,17", "g"]],
+      machines: [["arm", 3, 4, 1], ["arm", 9, 8, 1], ["arm", 5, 7, 1], ["look", 7, 12, 1],
+                 ["bellows", 3, 9, 2], ["mud", 9, 15, 2], ["arm", 1, 11, 2], ["bellows", 7, 5, 2],
+                 ["arm", 11, 10, 3], ["arm", 3, 15, 3], ["look", 5, 14, 3], ["arm", 7, 9, 3]] }
   ];
   var ROUTE = {};
 
   // ---------- Routes ----------
   function pt(c, r) { return { x: c + 0.5, y: r + 0.5 }; }
+  // A market: the road ends there.
+  function isEnd(n) { return n === "M" || n === "N"; }
   function buildRoute(rt, idx) {
     rt.idx = idx;
+    rt.road = idx < 4 ? 1 : 2;
     var P = {};
     Object.keys(rt.nodes).forEach(function (k) { P[k] = pt(rt.nodes[k][0], rt.nodes[k][1]); });
     rt.P = P;
@@ -151,6 +204,7 @@
     });
     rt.forks = Object.keys(rt.out).filter(function (k) { return rt.out[k].length > 1; }).sort();
     rt.hasGoat = rt.E.some(function (e) { return e.goat; });
+    rt.two = !!P.N;
     rt.M = rt.machines.map(function (m) { var p = pt(m[1], m[2]); return { k: m[0], x: p.x, y: p.y, t: m[3] }; });
   }
   ROUTES.forEach(function (rt, i) { buildRoute(rt, i); ROUTE[rt.id] = rt; });
@@ -190,16 +244,19 @@
 
   // ---------- A new route ----------
   function machinesState(rt) { return rt.M.map(function () { return { cd: 0, st: 0 }; }); }
-  function newRun(rtId, diff) {
+  // Endless: the crates trip t must bring to the markets.
+  function quota(rt, t) { return Math.ceil(rt.goal / TRIPS * (0.6 + 0.12 * (t - 1))); }
+  function newRun(rtId, diff, endless) {
     var rt = ROUTE[rtId];
     if (!rt || !DIFF[diff]) return null;
+    var en = endless ? 1 : 0;
     var sg = {};
     rt.forks.forEach(function (n) { sg[n] = firstOpen(rt, n, false); });
     return {
-      v: V, rt: rtId, diff: diff, u: Math.min(4, rt.idx + 1), t: 0, ph: "plan", trip: 1, nt: TRIPS,
-      coins: DIFF[diff].coins, got: 0, load: 0, tg: 0, goal: rt.goal, cv: [], sg: sg,
+      v: V, rt: rtId, diff: diff, u: Math.min(MAX_U, rt.idx + 1), t: 0, ph: "plan", trip: 1, nt: en ? 0 : TRIPS,
+      coins: DIFF[diff].coins + (en ? EN_COINS : 0), got: 0, load: 0, tg: 0, tc: 0, goal: rt.goal, cv: [], sg: sg,
       tk: { s: 1, w: 1, c: rt.hasGoat ? 1 : 0 }, goat: 0, sm: [], mc: machinesState(rt), ri: 0,
-      nid: 1, over: -1, acts: 0, ev: []
+      nid: 1, over: -1, acts: 0, en: en, q: en ? quota(rt, 1) : 0, ev: []
     };
   }
   function firstOpen(rt, n, goat) {
@@ -222,7 +279,7 @@
   function fresh(c) {
     var st = stats(c);
     c.st = "q"; c.e = -1; c.d = 0; c.tr = 0; c.sh = 0; c.hp = st.cap;
-    c.x = -1; c.y = -1;
+    c.x = -1; c.y = -1; c.j = 0;
   }
   function changed(g) { g.acts++; }
   function hire(g, k) {
@@ -335,7 +392,7 @@
   function setOff(g) {
     if (!canSetOff(g)) return false;
     g.ph = "go";
-    g.ri = 0; g.tg = 0;
+    g.ri = 0; g.tg = 0; g.tc = 0;
     g.cv.forEach(function (c) { fresh(c); c.fr = 0; if (isGoods(c)) g.load += stats(c).cap; });
     g.mc = machinesState(ROUTE[g.rt]);
     changed(g);
@@ -344,7 +401,10 @@
   }
 
   // ---------- One tick ----------
-  function active(g, m) { return m.t <= g.trip; }
+  function active(g, m) { return g.en ? true : m.t <= g.trip; }
+  function dmgMul(g) { return DIFF[g.diff].dmg * (g.en ? 1 + EN_HARD * (g.trip - 1) : 1); }
+  // Working: on this trip and not stopped (jammed, scared).
+  function working(g, i) { return active(g, ROUTE[g.rt].M[i]) && !(g.mc[i].st > 0); }
   function inSmoke(g, p) {
     for (var i = 0; i < g.sm.length; i++) if (dist2(p, g.sm[i]) <= SMOKE_R * SMOKE_R) return true;
     return false;
@@ -354,7 +414,7 @@
     var m = rt.M[i];
     for (var j = 0; j < rt.M.length; j++) {
       var o = rt.M[j];
-      if (j !== i && o.k === "look" && active(g, o) && dist2(m, o) <= LOOK_R * LOOK_R + EPS) return true;
+      if (j !== i && o.k === "look" && working(g, j) && dist2(m, o) <= LOOK_R * LOOK_R + EPS) return true;
     }
     return false;
   }
@@ -400,7 +460,7 @@
   function hit(g, rt, m, ms, c, dmg) {
     if (c.sh > 0) { g.ev.push({ e: "block", c: c.id }); return; }
     var st = stats(c);
-    c.hp = Math.max(0, c.hp - dmg * DIFF[g.diff].dmg * st.ar);
+    c.hp = Math.max(0, c.hp - dmg * dmgMul(g) * st.ar);
     g.ev.push({ e: "hit", c: c.id, x: c.x, y: c.y });
     if (st.scare) ms.st = Math.max(ms.st, st.scare);
   }
@@ -419,8 +479,9 @@
   function fire(g, rt) {
     for (var i = 0; i < rt.M.length; i++) {
       var m = rt.M[i], M = MACHINES[m.k], ms = g.mc[i];
-      if (!active(g, m) || !M.dmg) continue;
+      if (!active(g, m)) continue;
       if (ms.st > 0) { ms.st--; continue; }
+      if (!M.dmg) continue;
       if (ms.cd > 0) { ms.cd--; continue; }
       var sees = looked(g, rt, i);
       if (!sees && inSmoke(g, m)) continue;
@@ -449,10 +510,27 @@
       });
     });
   }
+  // A smith that is not resting jams the nearest working machine in reach.
+  function jam(g, rt) {
+    g.cv.forEach(function (c) {
+      if (!onRoad(c) || c.k !== "smith") return;
+      if (c.j > 0) { c.j--; return; }
+      var st = stats(c), best = -1, bd = 0;
+      for (var i = 0; i < rt.M.length; i++) {
+        if (!working(g, i)) continue;
+        var d = dist2(c, rt.M[i]);
+        if (d <= st.jr * st.jr + EPS && (best < 0 || d < bd - EPS)) { best = i; bd = d; }
+      }
+      if (best < 0) return;
+      g.mc[best].st = Math.max(g.mc[best].st, st.jt);
+      c.j = st.rest;
+      g.ev.push({ e: "jam", c: c.id, m: best, x: rt.M[best].x, y: rt.M[best].y });
+    });
+  }
   function muddy(g, rt, c) {
     for (var i = 0; i < rt.M.length; i++) {
       var m = rt.M[i];
-      if (MACHINES[m.k].mud && active(g, m) && dist2(c, m) <= MACHINES[m.k].r * MACHINES[m.k].r + EPS) return true;
+      if (MACHINES[m.k].mud && working(g, i) && dist2(c, m) <= MACHINES[m.k].r * MACHINES[m.k].r + EPS) return true;
     }
     return false;
   }
@@ -462,7 +540,7 @@
       var v = stats(c).v * (muddy(g, rt, c) ? MUD_SLOW : 1) / TPS;
       var edge = rt.E[c.e], lim = Infinity, a = ahead(g, c);
       if (a) lim = a.d - GAP;
-      else if (edge.b !== "M") {
+      else if (!isEnd(edge.b)) {
         // the last cart on the stretch after the next fork or junction
         var r = rearOn(g, wayOut(g, rt, edge.b), c);
         if (r) lim = edge.len + r.d - GAP;
@@ -472,12 +550,12 @@
       c.d = nd;
       if (c.d >= edge.len - EPS) {
         var over = c.d - edge.len;
-        if (edge.b === "M") {
+        if (isEnd(edge.b)) {
           c.st = "d";
-          var n = Math.floor(c.hp + 1e-6);
-          if (isGoods(c)) { g.got += n; g.tg += n; }
-          c.x = rt.P.M.x; c.y = rt.P.M.y;
-          g.ev.push({ e: "home", c: c.id, n: isGoods(c) ? n : 0 });
+          var n = isGoods(c) ? Math.floor(c.hp + 1e-6) : 0;
+          g.got += n; g.tg += n; g.tc += n * (edge.b === "N" ? PAY_N : PAY);
+          c.x = rt.P[edge.b].x; c.y = rt.P[edge.b].y;
+          g.ev.push({ e: "home", c: c.id, n: n, at: edge.b });
           return;
         }
         c.e = wayOut(g, rt, edge.b);
@@ -495,6 +573,7 @@
     release(g, rt);
     g.sm = g.sm.filter(function (s) { s.t--; return s.t > 0; });
     g.cv.forEach(function (c) { if (c.sh > 0) c.sh--; });
+    jam(g, rt);
     fire(g, rt);
     mend(g);
     // emptied carts walk home, burnt straw is gone
@@ -508,15 +587,21 @@
     if (g.ri >= g.cv.length && !g.cv.some(onRoad)) endTrip(g, rt);
   }
   function endTrip(g, rt) {
-    var pay = g.tg * PAY + TRIP_PAY;
+    var pay = g.tc + TRIP_PAY;
     g.coins += pay;
-    g.ev.push({ e: "trip", n: g.trip, got: g.tg, c: pay });
-    if (g.trip >= g.nt) {
+    g.ev.push({ e: "trip", n: g.trip, got: g.tg, c: pay, q: g.q });
+    if (g.en && (g.tg < g.q || g.trip >= EN_MAXTRIP)) {
+      g.over = 1;
+      g.ev.push({ e: "endless", n: score(g) });
+      return;
+    }
+    if (!g.en && g.trip >= g.nt) {
       g.over = g.got >= g.goal ? 1 : 0;
       g.ev.push({ e: g.over ? "won" : "lost", stars: stars(g) });
       return;
     }
     g.trip++;
+    if (g.en) g.q = quota(rt, g.trip);
     g.ph = "plan";
     g.cv = g.cv.filter(function (c) { return c.st !== "x"; });
     g.cv.forEach(fresh);
@@ -530,14 +615,17 @@
   }
   function run(g, ticks) { for (var i = 0; i < ticks && g.over < 0 && g.ph === "go"; i++) step(g); }
 
+  // Endless: the trips that brought their quota.
+  function score(g) { return g.en ? (g.over >= 0 && g.tg < g.q ? g.trip - 1 : g.over >= 0 ? g.trip : g.trip - 1) : 0; }
   function stars(g) {
-    if (g.over !== 1) return 0;
+    if (g.over !== 1 || g.en) return 0;
     var r = g.load ? g.got / g.load : 0;
     return r >= 0.85 ? 3 : r >= 0.65 ? 2 : 1;
   }
   // Machines that are new on this trip (indexes), for the plan screen.
   function newMachines(g) {
     var rt = ROUTE[g.rt], out = [];
+    if (g.en) return out;
     rt.M.forEach(function (m, i) { if (m.t === g.trip) out.push(i); });
     return out;
   }
@@ -549,7 +637,7 @@
   // The edges the signs send a cart along now, from the gate to the market.
   function wayNow(g) {
     var rt = ROUTE[g.rt], out = [], n = "S";
-    for (var k = 0; k < rt.E.length + 1 && n !== "M"; k++) {
+    for (var k = 0; k < rt.E.length + 1 && !isEnd(n); k++) {
       var e = wayOut(g, rt, n);
       out.push(e);
       n = rt.E[e].b;
@@ -568,17 +656,20 @@
   function normalizeRun(x) {
     if (!x || typeof x !== "object" || x.v !== V || !ROUTE[x.rt] || !DIFF[x.diff]) return null;
     var rt = ROUTE[x.rt], BIG = 1e9, i;
-    if (!int(x.u, 1, 4) || !int(x.t, 0, BIG) || (x.ph !== "plan" && x.ph !== "go") || !int(x.trip, 1, TRIPS) ||
-        x.nt !== TRIPS || !num(x.coins, 0, BIG) || !int(x.got, 0, BIG) || !int(x.load, 0, BIG) || x.got > x.load ||
-        !int(x.tg, 0, BIG) || x.goal !== rt.goal || !Array.isArray(x.cv) || x.cv.length > MAX_CARTS ||
+    var en = x.en === 1 ? 1 : 0;
+    if ((x.en !== undefined && x.en !== 0 && x.en !== 1) || (en && x.q !== quota(rt, x.trip))) return null;
+    if (!int(x.u, 1, MAX_U) || !int(x.t, 0, BIG) || (x.ph !== "plan" && x.ph !== "go") || !int(x.trip, 1, en ? EN_MAXTRIP : TRIPS) ||
+        x.nt !== (en ? 0 : TRIPS) || !num(x.coins, 0, BIG) || !int(x.got, 0, BIG) || !int(x.load, 0, BIG) || x.got > x.load ||
+        !int(x.tg, 0, BIG) || (x.tc !== undefined && !int(x.tc, 0, BIG)) || x.goal !== rt.goal || !Array.isArray(x.cv) || x.cv.length > MAX_CARTS ||
         !x.sg || typeof x.sg !== "object" || !x.tk || typeof x.tk !== "object" || (x.goat !== 0 && x.goat !== 1) ||
         !Array.isArray(x.sm) || x.sm.length > 99 || !Array.isArray(x.mc) || x.mc.length !== rt.M.length ||
         !int(x.ri, 0, MAX_CARTS) || x.ri > x.cv.length || !int(x.nid, 1, BIG) || [-1, 0, 1].indexOf(x.over) < 0 ||
         !int(x.acts, 0, BIG)) return null;
     if (!int(x.tk.s, 0, 99) || !int(x.tk.w, 0, 99) || !int(x.tk.c, 0, 99) || (!rt.hasGoat && x.tk.c)) return null;
-    var g = { v: V, rt: x.rt, diff: x.diff, u: x.u, t: x.t, ph: x.ph, trip: x.trip, nt: TRIPS, coins: x.coins,
-              got: x.got, load: x.load, tg: x.tg, goal: rt.goal, cv: [], sg: {}, tk: { s: x.tk.s, w: x.tk.w, c: x.tk.c },
-              goat: x.goat, sm: [], mc: [], ri: x.ri, nid: x.nid, over: x.over, acts: x.acts, ev: [] };
+    var g = { v: V, rt: x.rt, diff: x.diff, u: x.u, t: x.t, ph: x.ph, trip: x.trip, nt: en ? 0 : TRIPS, coins: x.coins,
+              got: x.got, load: x.load, tg: x.tg, tc: x.tc === undefined ? x.tg * PAY : x.tc, goal: rt.goal, cv: [], sg: {}, tk: { s: x.tk.s, w: x.tk.w, c: x.tk.c },
+              goat: x.goat, sm: [], mc: [], ri: x.ri, nid: x.nid, over: x.over, acts: x.acts,
+              en: en, q: en ? x.q : 0, ev: [] };
     for (i = 0; i < rt.forks.length; i++) {
       var n = rt.forks[i], j = x.sg[n];
       if (!int(j, 0, rt.out[n].length - 1) || (rt.E[rt.out[n][j]].goat && !x.goat)) return null;
@@ -600,11 +691,11 @@
       if (!c || !CARTS[c.k] || !int(c.id, 1, x.nid - 1) || ids[c.id] || !int(c.l, 1, 3) ||
           (c.l === 3 ? (c.b !== "a" && c.b !== "b") : c.b !== "") || !num(c.sp, 0, BIG) || !num(c.fr, 0, c.sp) ||
           STATES.indexOf(c.st) < 0 || !int(c.e, -1, rt.E.length - 1) || !int(c.sh, 0, SHIELD_T) ||
-          !num(c.tr, 0, BIG)) return null;
+          !num(c.tr, 0, BIG) || (c.j !== undefined && !int(c.j, 0, 9999))) return null;
       ids[c.id] = 1;
       // the same key order as hire + fresh, so a copy writes the same
       var cc = { id: c.id, k: c.k, l: c.l, b: c.b, sp: c.sp, fr: c.fr, st: c.st, e: c.e, d: 0, tr: c.tr, sh: c.sh,
-                 hp: 0, x: -1, y: -1 };
+                 hp: 0, x: -1, y: -1, j: c.j || 0 };
       var cap = stats(cc).cap;
       if (!num(c.hp, 0, cap)) return null;
       cc.hp = c.hp;
@@ -696,6 +787,16 @@
   // A route ended on this device: count it and keep the best stars.
   function record(d, device, g, now) {
     var out = merge(d, d);
+    if (g.en) {
+      // Endless: only the best score of the route and the crates delivered
+      var me = out.maps[g.rt], sc = score(g);
+      var rw = out.rows[device] || { b: out.br, s: {}, f: 0 };
+      rw.f += g.got;
+      out.rows[device] = rw;
+      if (!me) out.maps[g.rt] = { b: Math.max(out.br, now || 0), s: 0, e: Math.min(9999, sc) };
+      else if (sc > me.e) out.maps[g.rt] = { b: me.b, s: me.s, e: Math.min(9999, sc) };
+      return merge(out, out);
+    }
     var row = out.rows[device] || { b: out.br, s: {}, f: 0 };
     var v = row.s[g.diff] ? row.s[g.diff].slice() : [0, 0];
     v[0]++;
@@ -709,6 +810,9 @@
     return merge(out, out);
   }
   function starsOf(d, id) { var m = d && d.maps && d.maps[id]; return m ? m.s : 0; }
+  function bestEndless(d, id) { var m = d && d.maps && d.maps[id]; return m ? m.e : 0; }
+  // Endless opens on a route once it has a star.
+  function endlessOpen(d, id) { return starsOf(d, id) > 0; }
   function isOpen(d, id) {
     var rt = ROUTE[id];
     return !!rt && (rt.idx === 0 || starsOf(d, ROUTES[rt.idx - 1].id) > 0);
@@ -719,7 +823,9 @@
   var api = {
     V: V, COLS: COLS, ROWS: ROWS, TPS: TPS, GAP: GAP, DIFFS: DIFFS, DIFF: DIFF, CARTS: CARTS, KINDS: KINDS,
     MACHINES: MACHINES, MKINDS: MKINDS, ROUTES: ROUTES, ROUTE: ROUTE, MAX_CARTS: MAX_CARTS, TRIPS: TRIPS,
-    TRICK_COST: TRICK_COST, SMOKE_R: SMOKE_R, PAY: PAY, TRIP_PAY: TRIP_PAY,
+    TRICK_COST: TRICK_COST, SMOKE_R: SMOKE_R, PAY: PAY, PAY_N: PAY_N, TRIP_PAY: TRIP_PAY, MAX_U: MAX_U,
+    isEnd: isEnd, working: working, quota: quota, score: score, bestEndless: bestEndless, endlessOpen: endlessOpen,
+    EN_COINS: EN_COINS, EN_HARD: EN_HARD,
     pointAt: pointAt, stats: stats, isGoods: isGoods, hireCost: hireCost, upCost: upCost, sellValue: sellValue,
     unlocked: unlocked, cartById: cartById, newRun: newRun, whyNot: whyNot, hire: hire, upgrade: upgrade,
     sell: sell, moveCart: moveCart, buyTrick: buyTrick, flip: flip, setSign: setSign, smoke: smoke,

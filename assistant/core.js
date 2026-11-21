@@ -2910,15 +2910,20 @@
   };
   var TOOL_KB_COLS = {
     name: "kanban_add_columns",
-    description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column. " +
+    description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column, and rename columns " +
+      "(rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. " +
       "The user sees the columns on one card and must press Add; nothing is saved before that. The card has Undo.",
     params: { type: "object", properties: {
       board: { type: "string", description: "The board name or id (app_summary with app kanban)." },
       columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
         name: { type: "string", description: "At most 60 characters." },
         after: { type: "string", description: "Put it right after this column (name or id); at the end when left out." } },
-        required: ["name"] } } },
-      required: ["board", "columns"] }
+        required: ["name"] } },
+      rename_columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
+        column: { type: "string", description: "The column's id or current name." },
+        name: { type: "string", description: "Its new name, at most 60 characters." } },
+        required: ["column", "name"] } } },
+      required: ["board"] }
   };
 
   var TOOL_OPEN_FILE = {
@@ -3649,7 +3654,7 @@
   var GATE_OPEN_SAY = " Through orOS Gate it opens at once on the owner's screen in that app (unless the owner paused Claude's changes): " +
     "Layout's own work (rebuild, house style, book) runs there and its report comes back; a new entry, document, recipe, cover or newsletter content " +
     "is filled into the app's own form or editor for the owner to check and save; an automation rule comes in turned off. " +
-    "If nobody sees orOS at that moment (a hidden tab, orOS in the background or closed), the call waits, encrypted, and runs the next time orOS is on the owner's screen; its report comes then. " +
+    "If nobody sees orOS at that moment (a hidden tab, orOS in the background or closed), the call waits, encrypted, and runs the next time orOS is on the owner's screen (Layout's own work runs at once where orOS runs on the owner's computer in the tray or a minimised orOS window); its report comes then. " +
     "Files come only as paths on the orOS disk (/internal/…) or, while the owner has a local folder open for Claude, as local:<root>/<path> (files_list without path shows those roots): there are no attachments through the gate. Nothing is sent from here.";
   var GATE_SAY = [
     [" The user sees every result first and may share only some of them, or none.", ""],

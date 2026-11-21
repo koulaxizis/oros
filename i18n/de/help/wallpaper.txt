@@ -5,7 +5,8 @@ Der Hintergrundbild-Generator zeichnet abstrakte Hintergrundbilder aus einem Sta
 Die große Vorschau rechts (auf dem Handy oben) zeigt dein Hintergrundbild im Format der gewählten Größe. Tippe ein beliebiges Wort in `Startwert` oder tippe bzw. klicke auf den Würfel (`Zufälliger Startwert (R)`) für einen neuen. Probiere dann verschiedene Stile und Paletten aus; die Stil-Knöpfe zeigen kleine Vorschauen deines aktuellen Startwerts.
 
 ## Stil und Palette
-- `Stil`: `Wellen`, `Strömung`, `Umlaufbahnen`, `Raster`, `Nebel` oder `Baum`.
+- `Stil`: `Wellen`, `Strömung`, `Umlaufbahnen`, `Raster`, `Nebel`, `Baum` oder `Glasbänder`.
+- `Glasbänder` zeichnet drei glänzende Bänder, die quer durch das Bild laufen und sich wie gefaltetes Glas drehen, jedes in einer Farbe der Palette. `Dichte` macht sie breiter, `Chaos` gibt ihnen mehr Bögen und Drehungen.
 - `Baum` lässt einen Baum wachsen, wie von Hand gezeichnet, in den Farben der Palette. Seine eigenen Einstellungen erscheinen weiter unten (siehe „Baum“). Der Baumzeichner, früher eine eigene App, ist jetzt hier.
 - `Palette`: `Glut`, `Ozean`, `Wald`, `Dämmerung`, `Pastell`, `Mono` und `orOS-Skin`, die ihre Farben von deinem orOS-Skin nimmt und sich mit ihm ändert.
 
