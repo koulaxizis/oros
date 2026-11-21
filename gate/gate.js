@@ -606,6 +606,7 @@
     if (DOCS.indexOf(id) >= 0) t.push("read_in_app");
     if (LINES[id]) t.push(LINES[id]);
     if (id === "files") t = t.concat(FILE_READ);
+    if (id === "layout") t = t.concat(FILE_READ);   // GL-2: its proofs and PDFs, read only
     return t;
   }
   function pushLog(list, entry) {
@@ -2985,6 +2986,8 @@
     try { if (sock && sock.readyState === 1) sock.send((HOST.ok && HOST.kind === "bg") || document.visibilityState === "hidden" ? "v0" : "v1"); } catch (e) {}
     // TRAY-1: this device runs Layout's work unseen, so the box also offers it the calls kept for a screen
     try { if (sock && sock.readyState === 1 && ((HOST.ok && HOST.kind === "bg") || deskApp())) sock.send("b1"); } catch (e) {}
+    // GL-6 (Chris 2026-11-21): this orOS's version, so the box asks the newest device first
+    try { var av = String(root.__orosAppVersion || ""); if (sock && sock.readyState === 1 && /^\d{1,3}\.\d{2}\.\d{2}$/.test(av)) sock.send("ver:" + av); } catch (e) {}
   }
   try {
     document.addEventListener("visibilitychange", function () {

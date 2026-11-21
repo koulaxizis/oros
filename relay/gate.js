@@ -564,9 +564,48 @@ export const TOOLS = [
       additionalProperties: false
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  // GL-5 (Chris 2026-11-21): a conversation keeps the tool list it saw
+  // when it started, so a tool or an argument added later was out of its
+  // reach until a new conversation. These two never change: gate_tools
+  // reads the list as it is now, gate_call runs any tool of it by name.
+  {
+    name: "gate_tools",
+    description: "The orOS Gate tools as they are now, including ones added after this conversation started: without name, every tool's name and first sentence; with name, that tool's whole description and input schema. Use it when a tool or argument you need is missing from your list, then call it with gate_call.",
+    inputSchema: {
+      type: "object",
+      properties: { name: { type: "string", description: "One tool's name, for its whole description and schema." } },
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: true }
+  },
+  {
+    name: "gate_call",
+    description: "Runs one orOS Gate tool by name with its arguments, exactly as calling it directly (same rules, same checks, the owner notified the same way). For a tool or argument that gate_tools shows but your own tool list does not have yet.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tool: { type: "string", description: "The tool's name, as gate_tools lists it." },
+        args: { type: "object", description: "The tool's arguments, as its schema in gate_tools describes them." }
+      },
+      required: ["tool"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
   }
 ];
 const TOOL_NAMES = TOOLS.map((t) => t.name);
+export const META_TOOLS = ["gate_tools", "gate_call"];
+// GL-5: gate_tools' answer from the list as it is now
+export function gateToolsText(list, name) {
+  const all = (Array.isArray(list) ? list : []).filter((t) => t && META_TOOLS.indexOf(t.name) < 0);
+  if (typeof name === "string" && name) {
+    const t = all.find((x) => x.name === name);
+    return t ? JSON.stringify({ name: t.name, description: t.description, inputSchema: t.inputSchema }) : "";
+  }
+  const first = (d) => { const s = String(d || ""); const i = s.search(/\.(\s|$)/); return (i > 0 ? s.slice(0, i + 1) : s).slice(0, 300); };
+  return JSON.stringify({ tools: all.map((t) => ({ name: t.name, about: first(t.description) })), note: "gate_tools with name gives a tool's schema; gate_call runs it." });
+}
 const READ_ONLY = {};
 // The copy's key for a call: the tool and its arguments, keys sorted.
 export function stableArgs(a) {
@@ -1382,11 +1421,19 @@ export function queueFor(q, now) {
   // to an item Claude added meanwhile (its p- ref) runs after the add.
   return items.sort((x, y) => x.t - y.t || x.s - y.s).map((x) => ({ id: x.id, c: x.c, t: x.t }));
 }
-// Which device answers: one whose orOS is on screen, else the one that
-// connected last (a phone in the background often has no socket at all).
+// "8.13.00" → 81300 (0 when it is not a version)
+export function verNum(s) {
+  const m = /^(\d{1,3})\.(\d{2})\.(\d{2})$/.exec(String(s || ""));
+  return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : 0;
+}
+// Which device answers: the newest orOS (GL-6, Chris 2026-11-21: an old
+// window kept answering for a day; a device older than 8.14.00 says no
+// version and comes last), then one whose orOS is on screen, else the
+// one that connected last (a phone in the background often has no socket).
 export function pickOrder(socks) {
   return socks.slice().sort((x, y) => {
     const a = attOf(x), b = attOf(y);
+    if ((b.ver || 0) !== (a.ver || 0)) return (b.ver || 0) - (a.ver || 0);
     if ((b.v ? 1 : 0) !== (a.v ? 1 : 0)) return (b.v ? 1 : 0) - (a.v ? 1 : 0);
     return (b.at || 0) - (a.at || 0);
   });
@@ -1800,6 +1847,11 @@ export class GateBox {
     if (msg === "v0" || msg === "v1") {             // the device's screen: shown or hidden
       const a = attOf(ws), was = a.v; a.v = msg === "v1" ? 1 : 0; a.vt = a.lt = Date.now(); setAtt(ws, a);
       if (a.v && !was) await this.sendHeld([ws]);    // 7.48.00: deletions waiting for a screen
+      return;
+    }
+    if (typeof msg === "string" && msg.length <= 14 && msg.indexOf("ver:") === 0) {   // GL-6: the device's orOS version
+      const n = verNum(msg.slice(4));
+      if (n) { const a = attOf(ws); a.ver = n; a.lt = Date.now(); setAtt(ws, a); }
       return;
     }
     if (msg === "b1") {                              // TRAY-1: a device that runs Layout's work unseen (tray host, desktop window)
@@ -2305,7 +2357,19 @@ export class GateBox {
     if (msg.method === "ping") return jsonRes(200, rpcOk(id, {}));
     if (msg.method === "tools/list") return jsonRes(200, rpcOk(id, { tools: withDevTools(await this.devTools(true)) }));
     if (msg.method !== "tools/call") return jsonRes(200, rpcErr(id, -32601, "method not found"));
-    const p = msg.params || {};
+    let p = msg.params || {};
+    if (p.name === "gate_call") {
+      // GL-5: the call inside runs as if it had been made directly
+      const a0 = p.arguments && typeof p.arguments === "object" && !Array.isArray(p.arguments) ? p.arguments : {};
+      if (typeof a0.tool !== "string" || META_TOOLS.indexOf(a0.tool) >= 0) return jsonRes(200, rpcOk(id, toolText("gate_call needs tool: the name of an orOS Gate tool (gate_tools lists them).", true)));
+      if (a0.args !== undefined && (!a0.args || typeof a0.args !== "object" || Array.isArray(a0.args))) return jsonRes(200, rpcOk(id, toolText("gate_call's args must be an object.", true)));
+      p = { name: a0.tool, arguments: a0.args || {} };
+    }
+    if (p.name === "gate_tools") {
+      const a1 = p.arguments && typeof p.arguments === "object" ? p.arguments : {};
+      const txt = gateToolsText(withDevTools(await this.devTools(false)), typeof a1.name === "string" ? a1.name : "");
+      return jsonRes(200, rpcOk(id, toolText(txt || "No orOS Gate tool is called " + JSON.stringify(String(a1.name).slice(0, 60)) + "; gate_tools without name lists them.", !txt)));
+    }
     if (TOOL_NAMES.indexOf(p.name) < 0 && !(await this.devTools(false)).some((t) => t.name === p.name)) {
       return jsonRes(200, rpcErr(id, -32602, "unknown tool"));
     }
