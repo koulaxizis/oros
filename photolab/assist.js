@@ -140,11 +140,22 @@
     });
     return chain.then(function () { return done; });
   }
+  // GX-2: out (a local write folder or a folder of Claude's) gets a copy
+  var saved = [], outFail = [];
   function exportPic(s) {
     return PL.io.render(s.fmt, s.quality / 100, 1).then(function (blob) {
       if (!blob) return null;
-      var ext = s.fmt === "webp" && blob.type !== "image/webp" ? "png" : s.fmt;
-      return PL.io.saveToPictures(blob, PL.io.fileName(ext));
+      var ext = s.fmt === "webp" && blob.type !== "image/webp" ? "png" : s.fmt, name = PL.io.fileName(ext);
+      return PL.io.saveToPictures(blob, name).then(function (p) {
+        if (p) saved.push(p);
+        if (!s.out) return p;
+        var G = null;
+        try { G = window.parent && window.parent !== window && window.parent.orosGate && typeof window.parent.orosGate.exportAll === "function" ? window.parent.orosGate : null; } catch (e) { G = null; }
+        if (!G) { outFail.push({ to: s.out, why: "gateOff" }); return p; }
+        return Promise.resolve(G.exportAll([s.out], [{ name: name, blob: blob }], "export")).then(function (r) {
+          saved = saved.concat(r.saved); outFail = outFail.concat(r.outFail); return p;
+        }, function () { outFail.push({ to: s.out, why: "error" }); return p; });
+      });
     });
   }
 
@@ -226,6 +237,9 @@
           var rep = err && !rec ? { failed: 1, why: "error" }
             : { ok: 1, n: total, d: snaps.length, per: per.slice(0, 50), cut: 0, made: 0, files: files, notes: notes.slice(), tok: rec ? rec.tok : "" };
           if (stopped) rep.stopped = 1;
+          if (rep.ok && saved.length) rep.saved = saved.slice(0, 60);
+          if (rep.ok && outFail.length) rep.outFail = outFail.slice(0, 4);
+          saved = []; outFail = [];
           back(key, rep);
           var msg = stopped ? t("as.stopped") : !total ? (files ? t("as.files", { n: files }) : t("as.done0"))
             : (snaps.length === 1 ? t("as.done1", { n: total }) : t("as.done", { n: total, d: snaps.length })) + (files ? " " + t("as.files", { n: files }) : "");

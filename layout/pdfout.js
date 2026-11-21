@@ -31,7 +31,7 @@
     return { doc: clean(rq.doc, 200), preset: preset, pages: pages === "all" ? "" : pages, bleed: !!rq.bleed,
              marks: any ? mk : null, spreads: !!rq.spreads, down: rq.down !== 0,
              creep: Math.max(0, Math.min(5, Number(rq.creep) || 0)),
-             out: typeof rq.out === "string" && /^local:/i.test(rq.out.trim()) ? rq.out.trim().slice(0, 1030) : "" };
+             out: (Array.isArray(rq.out) ? rq.out : typeof rq.out === "string" ? [rq.out] : []).filter(function (o) { return typeof o === "string" && o.trim() && o.length <= 1030; }).slice(0, 2) };
   }
   // the document by name: the same name first, else a part of it; the
   // newest one wins
@@ -150,15 +150,12 @@
     }).then(null, function () { return ""; });
   }
 
-  // LOCAL-1: a copy in a local write folder the owner opened (never
-  // replaces a file: the bridge adds -2, -3) → its local: path or ""
-  function saveLocal(doc, q, bytes) {
-    var L = null;
-    try { L = window.parent && window.parent !== window ? window.parent.orosLocal : null; } catch (e) { L = null; }
-    if (!q.out || !L) return Promise.resolve({ path: "", why: q.out ? "noBridge" : "" });
+  // LOCAL-1, GX-1: a copy in out (a local write folder the owner opened
+  // and/or a folder of Claude's on the orOS disk); never replaces a file
+  function saveOut(doc, q, bytes) {
+    if (!q.out.length) return Promise.resolve({ saved: [], outFail: [] });
     var suffix = q.preset === "pdfx4" ? " - PDF-X-4.pdf" : q.preset === "screen" ? " - screen.pdf" : " - print.pdf";
-    return L.write(q.out, LY.io.fileName(doc, suffix), new Blob([bytes], { type: "application/pdf" }), "export_pdf")
-      .then(function (p) { return { path: p }; }, function (e) { return { path: "", why: e && e.why || "error" }; });
+    return LY.io.saveOut(q.out, LY.io.fileName(doc, suffix), new Blob([bytes], { type: "application/pdf" }), "export_pdf");
   }
   function run(rq, back) {
     var q = norm(rq || {});
@@ -176,7 +173,7 @@
       LY.toast(t("exp.working"));
       var d = LY.doc;
       make(d, q).then(function (res) {
-        return Promise.all([save(d, q, res.bytes), saveLocal(d, q, res.bytes)]).then(function (two) {
+        return Promise.all([save(d, q, res.bytes), saveOut(d, q, res.bytes)]).then(function (two) {
           var path = two[0], loc = two[1];
           var pf = problems(d, res.L);
           (res.fx || []).forEach(function (p) { pf.push({ sev: "err", code: p.code, page: p.page || 0 }); });
@@ -186,8 +183,8 @@
           if (res.intent) rep.intent = res.intent;
           if (res.pdfx) rep.pdfx = res.pdfx;
           if (!path) rep.why = "noDisk";
-          if (loc.path) rep.local = loc.path;
-          if (loc.why) rep.localWhy = loc.why;
+          if (loc.saved.length) rep.saved = loc.saved;
+          if (loc.outFail.length) rep.outFail = loc.outFail;
           keepLast(d, rep);
           LY.toast(path ? t("exp.sentAt", { path: path.slice("/internal/".length) }) : t("ep.noDisk"));
           done(rep);
