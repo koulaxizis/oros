@@ -119,7 +119,8 @@
   var PPTX_SIDE = 3000;
   function rasterItem(doc, it) {
     var ax = it.ax;
-    var pad = ax.k === "text" ? (ax.size || AX.TEXT_DEF.size) * 0.6 : ax.k === "icon" ? (it.sw || 2) * 2 + 2 : ax.k === "table" ? (it.sw || 0) : 0;
+    var pad = ax.k === "text" ? (ax.size || AX.TEXT_DEF.size) * 0.6 : ax.k === "icon" ? (it.sw || 2) * 2 + 2 : ax.k === "table" ? (it.sw || 0) :
+      ax.k === "photo" && window.AtelierPhotoFx ? window.AtelierPhotoFx.pad(it, window.AtelierPhotoFx.of(it)) : 0;
     var W = it.w + pad * 2, H = it.h + pad * 2;
     var s = Math.max(0.05, Math.min(3, PPTX_SIDE / Math.max(W, H)));
     var cv = document.createElement("canvas");
@@ -702,10 +703,12 @@
           return Promise.race([T.load(keys).then(null, function () {}), new Promise(function (r) { setTimeout(r, 12000); })]);
         }).then(function () {
           var r = window.AtelierPPTX.build(plan, assets, AT.now(), fonts, opts && opts.real ? { real: opts.real } : null);
-          AT.addDoc(r.doc, batching);
-          var lost = plan.skipped + r.missing;
-          if (!quiet) say(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
-          return quiet ? { lost: lost, id: r.doc.id } : lost;
+          return (opts && opts.pdf ? canvaLook(r.doc, opts.pdf) : Promise.resolve()).then(function () {
+            AT.addDoc(r.doc, batching);
+            var lost = plan.skipped + r.missing;
+            if (!quiet) say(lost ? t("imp.partial", { n: lost }) : t("imp.done"));
+            return quiet ? { lost: lost, id: r.doc.id } : lost;
+          });
         });
       });
     });
@@ -795,6 +798,65 @@
       else AT.op(function (d, now) { add(d, now); if (!made.length) return false; });
       return made;
     });
+  }
+
+  // Canva's text effects and curved text (CV-F2): read from Canva's PDF
+  // of the same design (atelier/canvafx.js, PDF.js through Layout's
+  // reader; both load on first use). A PDF that cannot be read changes
+  // nothing.
+  function canvaLook(doc, pdf) {
+    return pdfReader().then(function () { return window.AtelierCanvaFx ? null : loadScript("canvafx.js"); })
+      .then(function () { return isFile(pdf) ? pdf : pdf && pdf.get ? pdf.get() : null; })
+      .then(function (f) { return f ? f.arrayBuffer() : null; })
+      .then(function (buf) { return buf ? window.AtelierCanvaFx.glyphs(buf) : null; })
+      .then(function (pages) {
+        if (!pages) return;
+        var res = window.AtelierCanvaFx.apply(doc, pages, AX, AT.M);
+        return canvaPics(doc, pages, res.pics).then(null, function () {}).then(function () { if (pages.close) pages.close(); });
+      })
+      .then(null, function () {});
+  }
+  // Canva's outline, glow or lift around a text is a picture in its PDF
+  // (CV-F4): put it under the text, where the PDF has it. Only a picture
+  // with see-through parts (an effect, not a photo) comes in.
+  function canvaPics(doc, pages, pics) {
+    var chain = Promise.resolve(), R = window.LY_PDFIN;
+    (pics || []).forEach(function (p) {
+      chain = chain.then(function () { return p.im.img || pdfObj(pages[p.k].page, p.im.id); }).then(function (obj) {
+        var cv = obj && R.imageCanvas(obj);
+        if (!cv || !seeThrough(cv)) return;
+        return new Promise(function (res) { cv.toBlob(res, "image/png"); }).then(function (blob) {
+          if (!blob) return;
+          return A.importFile(new File([blob], "canva-effect.png", { type: "image/png" })).then(function (r) {
+            AT.noteUpload(r.id);
+            var it = p.it, z = it.z;
+            doc.items.forEach(function (o) { if (o.pg === it.pg && o.z >= z && !(o.ax && o.ax.bg)) o.z++; });
+            var pic = AX.addItem(doc, it.pg, { k: "photo", a: r.id, iw: r.w, ih: r.h, fit: "fill", nm: "", x: Math.round(p.im.x * 100) / 100, y: Math.round(p.im.y * 100) / 100, w: Math.round(p.im.w * 100) / 100, h: Math.round(p.im.h * 100) / 100, z: z }, AT.now());
+            if (pic && it.grp) pic.grp = it.grp;
+          });
+        });
+      }).then(null, function (e) { if (e && e.message === "nofs") throw e; });
+    });
+    return chain;
+  }
+  // a picture of a PDF page once PDF.js has it (it may still be coming)
+  function pdfObj(page, id) {
+    var objs = /^g_/.test(id) ? page.commonObjs : page.objs;
+    return new Promise(function (res) {
+      var t = setTimeout(function () { res(null); }, 5000);
+      try { objs.get(id, function (v) { clearTimeout(t); res(v); }); } catch (e) { clearTimeout(t); res(null); }
+    });
+  }
+  function seeThrough(cv) {
+    try {
+      var w = Math.min(cv.width, 200), h = Math.min(cv.height, 200), c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var x = c.getContext("2d", { willReadFrequently: true });
+      x.drawImage(cv, 0, 0, w, h);
+      var d = x.getImageData(0, 0, w, h).data, clear = 0;
+      for (var i = 3; i < d.length; i += 4) if (d[i] < 8) clear++;
+      return clear >= w * h * 0.2;
+    } catch (e) { return false; }
   }
 
   // ---------- PDF as a design (PS-3: Canva's PDF download) ----------
@@ -928,11 +990,11 @@
     // a design counts once it is stored (AT.keepStored: on the disk
     // written and read back, else in localStorage); a full storage
     // stops the batch and keeps what fit
-    function one(f, real) {
+    function one(f, real, pdf) {
       if (n >= BATCH_MAX || full) { bad++; return Promise.resolve(); }
       n++;
       var before = docIds();
-      return Promise.resolve().then(function () { return real ? importPptxFile(f, false, { real: real }) : importAnyFile(f); })
+      return Promise.resolve().then(function () { return real || pdf ? importPptxFile(f, false, { real: real, pdf: pdf }) : importAnyFile(f); })
         .then(null, function (e) { if (e && e.message === "nofs") throw e; })
         .then(function () {
           var added = docIds().filter(function (id) { return before.indexOf(id) < 0; });
@@ -961,7 +1023,8 @@
     AT.toast(t("imp.working"));
     var chain = Promise.resolve();
     // a .pptx with Canva's PDF of the same design beside it: the PDF
-    // gives the real size of a slide Canva had to shrink (past 56 in);
+    // gives the real size of a slide Canva had to shrink (past 56 in) and
+    // the text effects and curves (CV-F2);
     // the PDF itself is not imported a second time
     var pair = pairs(files);
     files.forEach(function (f) {
@@ -971,7 +1034,7 @@
         return Promise.resolve().then(function () { return isFile(f) ? f : f.get(); }).then(function (file) {
           if (!file) { bad++; return; }
           if (/\.zip$/i.test(file.name || "")) return zipOf(file);
-          if (mate) return Promise.resolve(isFile(mate) ? mate : mate.get()).then(pdfSize).then(function (real) { return one(file, real); });
+          if (mate) return Promise.resolve(isFile(mate) ? mate : mate.get()).then(function (pf) { return pdfSize(pf).then(function (real) { return one(file, real, pf); }); });
           return one(file);
         }).then(null, function (e) { if (e && e.message === "nofs") throw e; bad++; });
       });
@@ -1028,12 +1091,16 @@
     var out = [];
     function walk(p, depth) {
       return lsOf(fs, p).then(function (en) {
-        var chain = Promise.resolve();
+        var chain = Promise.resolve(), decks = {};
+        // a PDF beside a .pptx of the same name comes along (Canva's
+        // PDF of the design: real size, text effects, CV-F2)
+        en.forEach(function (e) { if (!e.dir && /\.pptx$/i.test(e.name)) decks[e.name.toLowerCase().replace(/\.pptx$/, "")] = 1; });
         en.sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; }).forEach(function (e) {
           var q = p + "/" + e.name;
           // the Trash, and Atelier's own designs (AT-DISK), are not imported
           if (e.dir) { if (depth < DEPTH_MAX && q !== ROOT + "/Trash" && q !== AT.DISK_DIR) chain = chain.then(function () { return walk(q, depth + 1); }); }
           else if (PKG_RE.test(e.name) && out.length < BATCH_MAX) out.push(q);
+          else if (/\.pdf$/i.test(e.name) && decks[e.name.toLowerCase().replace(/\.pdf$/, "")]) out.push(q);
         });
         return chain;
       });
@@ -1089,8 +1156,9 @@
         }).then(function (ps) {
           if (my !== gen || !ps) return;
           paths = ps;
-          o.disabled = !ps.length;
-          found.textContent = ps.length ? t("imp.diskFound", { n: ps.length }) : t("imp.diskNone");
+          var n = ps.filter(function (q) { return PKG_RE.test(q); }).length;
+          o.disabled = !n;
+          found.textContent = n ? t("imp.diskFound", { n: n }) : t("imp.diskNone");
         });
       }
       go(ROOT);
@@ -1210,10 +1278,42 @@
     if (ids.length === 1) AT.toast(t("resize.made", { n: 1 }), t("resize.open"), function () { AT.openDoc(ids[0]); });
     else AT.toast(t("resize.made", { n: ids.length }));
   }
+  // Magic Switch (CV-2b): the copies' texts translated on the device
+  // with the shared Translate panel (../translate/panel.js, loaded on
+  // first use); with no size picked, one copy at this size.
+  function translatePanel(o, fail) {
+    if (window.OrosTranslatePanel) { window.OrosTranslatePanel.open(o); return; }
+    var v = window.orosI18n && window.orosI18n.ver, sc = document.createElement("script");
+    sc.src = "../translate/panel.js" + (v ? "?v=" + encodeURIComponent(v) : "");
+    sc.onload = function () { if (window.OrosTranslatePanel) window.OrosTranslatePanel.open(o); else fail(); };
+    sc.onerror = fail;
+    document.head.appendChild(sc);
+  }
+  function switchCopies(sizes) {
+    var src = AT.doc;
+    if (!src) return;
+    var tx = RL.textSegments(src);
+    if (!tx.segs.length) { AT.toast(t("resize.noText")); if (sizes.length) resizeCopies(sizes); return; }
+    var here = sizes.length ? sizes : [{ w: src.setup.w, h: src.setup.h, unit: AT.unitLbl(src) === "mm" ? "mm" : "px", label: t("resize.same") }];
+    translatePanel({ segments: tx.segs, lang: AT.LANG, actions: [{ label: t("resize.trMake", { n: here.length }), run: function (res) {
+      var cur = AT.findDoc(src.id) || src;
+      var tdoc = RL.translated(cur, tx.map, res.segments || []);
+      var TR = window.OrosTranslate, lang = res.to ? (TR && TR.name ? TR.name(res.to, AT.LANG) : res.to) : "";
+      var name = AT.docTitle(cur);
+      var list = here.map(function (z) {
+        var c = relaid(tdoc, z.w, z.h, z.unit);
+        c.name = t("resize.copyLang", { name: name, size: z.label, lang: lang }).slice(0, 120);
+        return c;
+      });
+      var ids = AT.addCopies(list, cur.id);
+      if (ids.length === 1) AT.toast(t("resize.made", { n: 1 }), t("resize.open"), function () { AT.openDoc(ids[0]); });
+      else AT.toast(t("resize.made", { n: ids.length }));
+    } }] }, function () { AT.toast(t("resize.trFail")); });
+  }
   function resizeDialog() {
     var d = AT.doc;
     if (!d) return;
-    var pick = {}, copies = true, custom = { on: false, w: Math.round(M.toUnit(d.setup.w, AT.unitLbl(d) === "mm" ? "mm" : "pt")), h: Math.round(M.toUnit(d.setup.h, AT.unitLbl(d) === "mm" ? "mm" : "pt")), unit: AT.unitLbl(d) === "mm" ? "mm" : "px" };
+    var pick = {}, copies = true, tr = false, custom = { on: false, w: Math.round(M.toUnit(d.setup.w, AT.unitLbl(d) === "mm" ? "mm" : "pt")), h: Math.round(M.toUnit(d.setup.h, AT.unitLbl(d) === "mm" ? "mm" : "pt")), unit: AT.unitLbl(d) === "mm" ? "mm" : "px" };
     AT.openDialog(t("resize.title"), function (body, close) {
       body.appendChild(el("p", "hint", t("resize.note")));
       var list = el("div", "rs-list");
@@ -1235,9 +1335,10 @@
       }
       function update() {
         var n = sizes().length;
-        go.textContent = t("resize.go", { n: n });
-        go.disabled = !n || (!copies && n > 1);
+        go.textContent = tr && copies ? t("resize.goTr", { n: Math.max(1, n) }) : t("resize.go", { n: n });
+        go.disabled = tr && copies ? false : !n || (!copies && n > 1);
         warn.hidden = copies || n <= 1;
+        trRow.hidden = !copies;
       }
       function row(label, sub, on, fn, extra) {
         var r = el("label", "rs-row");
@@ -1281,12 +1382,19 @@
       keep.appendChild(kc);
       keep.appendChild(el("span", "", t("resize.copies")));
       body.appendChild(keep);
+      var trRow = el("label", "rs-keep");
+      var tc = el("input"); tc.type = "checkbox"; tc.checked = false;
+      tc.addEventListener("change", function () { tr = tc.checked; update(); });
+      trRow.appendChild(tc);
+      trRow.appendChild(el("span", "", t("resize.translate")));
+      body.appendChild(trRow);
       body.appendChild(warn);
       var act = el("div", "dlg-actions");
       var c = el("button", "btn", t("btn.cancel")); c.type = "button";
       c.addEventListener("click", close);
       go.addEventListener("click", function () {
         var s = sizes();
+        if (tr && copies) { close(); switchCopies(s); return; }
         if (!s.length) return;
         close();
         AT.emit("rc-note", { op: "resize", copies: copies ? 1 : 0, sizes: s.map(function (z) {
@@ -1403,6 +1511,6 @@
     exportPackage: exportPackage, importAny: importAny, importFolder: importFolder, importDisk: importDisk, importMany: importMany, openFile: openFile, importPptx: importPptxFile, pdfSize: pdfSize, uploadImage: uploadImage,
     placePhoto: placePhoto, pickFile: pickFile, saveBlob: saveBlob, exportDialog: exportDialog, resizeTo: resizeTo,
     renderFiles: renderFiles, relaid: relaid, svgOf: svgOf, svgSelection: svgSelection,
-    sendTo: sendTo, canSend: canSend
+    sendTo: sendTo, canSend: canSend, resizeDialog: resizeDialog, switchCopies: switchCopies
   };
 })();

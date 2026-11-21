@@ -227,6 +227,11 @@
       var lin = kid(gf, "a:lin"), ang = lin ? numA(lin, "ang", 0) / 60000 : 90;
       if (stops.length === 1) return { fc: stops[0].c.c, a: stops[0].c.a };
       var out = { g: { a: stops[0].c.c, b: stops[stops.length - 1].c.c, ang: Math.round(((ang + 90) % 360 + 360) % 360) } };
+      // see-through stops (Canva's shadow gradients over a video, CV-F3):
+      // such a shape is drawn as a picture that keeps them (svgOf)
+      if (stops.some(function (x) { return x.c.a < 1; })) {
+        out.ga = { ang: ang, st: stops.slice(0, 10).map(function (x) { return [Math.max(0, Math.min(1, x.pos / 100000)), x.c.c, x.c.a]; }) };
+      }
       // more stops, or a radial gradient: its own stops over the stand-in (ax.js gradOf)
       var circ = path(gf, ["a:path"]), ftr = circ && kid(circ, "a:fillToRect");
       var radial = circ && (circ.a.path === "circle" || circ.a.path === "rect" || circ.a.path === "shape");
@@ -237,6 +242,7 @@
           var ft = ftr ? numA(ftr, "t", 50000) : 50000, fb = ftr ? numA(ftr, "b", 50000) : 50000;
           var c01 = function (v) { return Math.round(Math.max(0, Math.min(1, v)) * 1000) / 1000; };
           out.gs.r = 1; out.gs.c = [c01((fl + 100000 - fr) / 200000), c01((ft + 100000 - fb) / 200000)];
+          if (out.ga) { out.ga.r = 1; out.ga.c = out.gs.c; }
         }
       }
       return out;
@@ -308,11 +314,25 @@
     var k = Math.max(1, Math.min(4, 1200 / Math.max(w, h, 1)));        // draw it sharp enough
     var pad = stroke && sw ? sw / 2 + 1 : 0;
     var vw = w + pad * 2, vh = h + pad * 2;
-    var attrs = "fill=\"" + (fill ? esc(fill.c) + "\" fill-opacity=\"" + f2(fill.a) : "none") + "\"" +
+    var defs = "", paint = fill ? esc(fill.c) + "\" fill-opacity=\"" + f2(fill.a) : "none";
+    if (fill && fill.ga) {
+      // a gradient with see-through stops, across the box as draw.js lays one
+      var G = fill.ga, stops = G.st.map(function (x) { return "<stop offset=\"" + f2(x[0]) + "\" stop-color=\"" + esc(x[1]) + "\" stop-opacity=\"" + f2(x[2]) + "\"/>"; }).join("");
+      if (G.r) {
+        var ox = G.c[0] * w, oy = G.c[1] * h, R = Math.max(Math.hypot(ox, oy), Math.hypot(w - ox, oy), Math.hypot(ox, h - oy), Math.hypot(w - ox, h - oy), 0.01);
+        defs = "<defs><radialGradient id=\"g\" gradientUnits=\"userSpaceOnUse\" cx=\"" + f2(ox) + "\" cy=\"" + f2(oy) + "\" r=\"" + f2(R) + "\">" + stops + "</radialGradient></defs>";
+      } else {
+        var a = G.ang * Math.PI / 180, len = Math.abs(w * Math.cos(a)) / 2 + Math.abs(h * Math.sin(a)) / 2;
+        var dx = Math.cos(a) * len, dy = Math.sin(a) * len;
+        defs = "<defs><linearGradient id=\"g\" gradientUnits=\"userSpaceOnUse\" x1=\"" + f2(w / 2 - dx) + "\" y1=\"" + f2(h / 2 - dy) + "\" x2=\"" + f2(w / 2 + dx) + "\" y2=\"" + f2(h / 2 + dy) + "\">" + stops + "</linearGradient></defs>";
+      }
+      paint = "url(#g)";
+    }
+    var attrs = "fill=\"" + paint + "\"" +
       (stroke && sw ? " stroke=\"" + esc(stroke.c) + "\" stroke-opacity=\"" + f2(stroke.a) + "\" stroke-width=\"" + f2(sw) + "\" stroke-linejoin=\"round\"" : "");
     return {
       svg: "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"" + f2(vw * k) + "\" height=\"" + f2(vh * k) + "\" viewBox=\"" +
-        [-pad, -pad, vw, vh].map(f2).join(" ") + "\"><path d=\"" + esc(d) + "\" " + attrs + " fill-rule=\"evenodd\"/></svg>",
+        [-pad, -pad, vw, vh].map(f2).join(" ") + "\">" + defs + "<path d=\"" + esc(d) + "\" " + attrs + " fill-rule=\"evenodd\"/></svg>",
       pad: pad
     };
   }
@@ -408,25 +428,26 @@
     });
     return out.length ? out : null;
   }
-  // Pieces of a block in another weight, slant or typeface than the
-  // block (bold words in running text): [{ n, b, i, face }] over the
-  // block's text, or null when every piece has the block's look. A
-  // piece in another size or colour keeps the block's look.
+  // Pieces of a block in another weight, slant, typeface or colour
+  // than the block (bold words in running text, a word in Canva's other
+  // colour, CV-F1): [{ n, b, i, face, fc }] over the block's text, or
+  // null when every piece has the block's look. A piece in another
+  // size keeps the block's look.
   function runsIn(b, len, lst, ctx, scale, lnRed) {
     var base = b.st, list = [], other = false;
     function push(n, k) {
       var last = list[list.length - 1];
-      if (last && last.k === k.k) last.n += n; else list.push({ n: n, k: k.k, b: k.b, i: k.i, face: k.face });
+      if (last && last.k === k.k) last.n += n; else list.push({ n: n, k: k.k, b: k.b, i: k.i, face: k.face, fc: k.fc });
     }
-    var plain = { k: "", b: base.b, i: base.i, face: base.face };
+    var plain = { k: "", b: base.b, i: base.i, face: base.face, fc: base.fc };
     b.lines.forEach(function (ln, li) {
       if (li) push(1, plain);                      // the paragraph break
       ln.segs.forEach(function (sg) {
         var k = plain;
         if (sg.rp && sg.t.trim()) {
           var st = styleOf(sg.rp, ln.p || b.lines[0].p, lst, ctx, scale, lnRed);
-          if (st.size === base.size && st.fc === base.fc && st.op === base.op && (st.b !== base.b || st.i !== base.i || st.face !== base.face)) {
-            k = { k: st.b + "|" + st.i + "|" + st.face, b: st.b, i: st.i, face: st.face };
+          if (st.size === base.size && st.op === base.op && (st.b !== base.b || st.i !== base.i || st.face !== base.face || st.fc !== base.fc)) {
+            k = { k: st.b + "|" + st.i + "|" + st.face + "|" + st.fc, b: st.b, i: st.i, face: st.face, fc: st.fc };
             other = true;
           }
         }
@@ -437,7 +458,7 @@
     var out = [], at = 0;
     list.forEach(function (r) {                    // cut to the trimmed text
       var n = Math.min(r.n, len - at);
-      if (n > 0) out.push(r.k ? { n: n, b: r.b, i: r.i, face: r.face } : { n: n });
+      if (n > 0) out.push(r.k ? { n: n, b: r.b, i: r.i, face: r.face, fc: r.fc } : { n: n });
       at += n;
     });
     return out.length > 1 && out.length <= 400 ? out : null;
@@ -460,11 +481,29 @@
       font: ff.font, fontName: ff.name, face: String(font || "").trim(), size: size,
       b: bold ? 1 : 0, i: ital ? 1 : 0, u: ra.u && ra.u !== "none" ? 1 : 0, caps: ra.cap === "all" ? 1 : 0,
       al: ALIGN[algn] || "l",
-      // exact spacing (what Canva writes): points → % of the size
-      lh: Math.round(Math.max(70, Math.min(300, sPts ? numA(sPts, "val", 0) / sz * 100 : 120 * lnPct / 100 * (1 - lnRed)))),
+      // exact spacing (what Canva writes): points → % of the size, to a
+      // tenth; Canva sets the line pitch in whole pixels, cut down
+      // (CANVA_PX pt each, CV-F1)
+      lh: sPts ? leadPct(numA(sPts, "val", 0) / 100, size) : Math.round(Math.max(70, Math.min(300, 120 * lnPct / 100 * (1 - lnRed)))),
+      cb: sPts ? 1 : 0,
       tr: spc ? Math.round(spc / size * 1000) : 0, fc: col.c, op: col.a
     };
   }
+  // Canva's line pitch: its points in whole pixels of 0.75 pt, rounded
+  // down (measured on 120 text boxes of Canva's own PDFs, CV-F1), as a
+  // % of the size to a tenth.
+  var CANVA_PX = 0.75;
+  function leadPct(pts, size) {
+    var lead = Math.floor(pts / CANVA_PX + 0.02) * CANVA_PX;
+    if (!(lead > 0)) lead = pts;
+    return Math.max(70, Math.min(300, Math.round(lead / size * 1000) / 10));
+  }
+  // Where Canva puts a box's first baseline below its top: a CSS line
+  // box (half the leading above, the font's ascent and descent centred)
+  // plus a share of the line pitch; fitted on the same 120 boxes
+  // (rms 0.03 of the size; the font's ascent alone missed by 0.17).
+  // lead, asc, desc and the result in the item's units.
+  function canvaBase(lead, size, asc, desc) { return 0.733 * lead + (asc - desc) / 2 - 0.278 * size; }
   var STYLE_KEYS = ["font", "face", "size", "b", "i", "u", "caps", "al", "lh", "tr", "fc", "op"];
   function sameStyle(a, b) {
     return STYLE_KEYS.every(function (k) { return a[k] === b[k]; });
@@ -697,7 +736,7 @@
         var ph2 = photoItem(fill.blip, box, shp, ctx, out);
         if (ph2) out.items.push(ph2);
         else out.skipped++;
-      } else if (shp && !box.flh && !box.flv || shp === "rect" || shp === "circle" || shp === "rounded") {
+      } else if ((shp && !box.flh && !box.flv || shp === "rect" || shp === "circle" || shp === "rounded") && !(fill && fill.ga && (cust || shp === "rect" || shp === "circle"))) {
         var s = { k: "shape", shp: shp, x: b.x, y: b.y, w: b.w, h: b.h, rot: b.rot };
         if (fill && fill.g) { s.g = fill.g; if (fill.gs) s.gs = fill.gs; }
         else if (fill && fill.fc) { s.fc = fill.fc; if (fill.a < 1) s.op = Math.round(fill.a * 100); }
@@ -710,7 +749,8 @@
         out.items.push(s);
       } else if (cust || prstId) {
         // any other geometry: drawn once as a picture
-        var d = cust ? custPath(cust, b.w, b.h) : "";
+        var d = cust ? custPath(cust, b.w, b.h) : shp === "rect" ? "M0 0H" + f2(b.w) + "V" + f2(b.h) + "H0Z" :
+          shp === "circle" ? "M0 " + f2(b.h / 2) + "A" + f2(b.w / 2) + " " + f2(b.h / 2) + " 0 1 0 " + f2(b.w) + " " + f2(b.h / 2) + "A" + f2(b.w / 2) + " " + f2(b.h / 2) + " 0 1 0 0 " + f2(b.h / 2) + "Z" : "";
         if (!d) {
           // a preset Atelier lacks: its bounding box keeps the colour
           var r = { k: "shape", shp: "rect", x: b.x, y: b.y, w: b.w, h: b.h, rot: b.rot };
@@ -719,7 +759,7 @@
           out.items.push(r);
           out.approx++;
         } else {
-          var fl = fill && fill.fc ? { c: fill.fc, a: fill.a } : fill && fill.g ? { c: fill.g.a, a: 1 } : null;
+          var fl = fill && fill.fc ? { c: fill.fc, a: fill.a } : fill && fill.g ? { c: fill.g.a, a: 1, ga: fill.ga } : null;
           var sv = svgOf(d, b.w, b.h, fl, line && line.c, line && line.w);
           var key = "svg" + Object.keys(out.svgs).length;
           out.svgs[key] = sv.svg;
@@ -1049,6 +1089,7 @@
           if (r.face === undefined) return o;
           if (r.b !== s.b) o.b = r.b;
           if (r.i !== s.i) o.i = r.i;
+          if (r.fc && r.fc !== s.fc) o.fc = r.fc;
           var rf = r.face !== s.face && Object.prototype.hasOwnProperty.call(fonts, r.face) ? fonts[r.face] : null;
           if (rf && AX.isOwnFont(rf.id)) { o.fam = rf.id; own[rf.id] = rf; }
           return o;
@@ -1056,6 +1097,7 @@
         if (spec.ext && spec.ext.runs && spec.ext.runs.every(function (r) { return Object.keys(r).length === 1; })) delete spec.ext.runs;
         var it = AX.addItem(d, pg.id, spec, now);
         if (it && s.k === "text") fitLines(it, s);
+        if (it && s.k === "text" && s.cb && (s.anchor || "t") === "t" && !(s.stk && s.si)) canvaTop(it);
         if (it && s.stk) {                          // one box, several styles: stack the items
           var st = stacks[s.stk] = stacks[s.stk] || { s: s, its: [] }, prev = st.its[st.its.length - 1];
           // baseline to baseline as PowerPoint sets them: the last line above,
@@ -1082,6 +1124,16 @@
 
   function lastBase(it) { var L = AX.textLayout(it).lines; return L.length ? L[L.length - 1].y : 0; }
   function firstBase(it) { var L = AX.textLayout(it).lines; return L.length ? L[0].y : 0; }
+  // a box from Canva (its spacing in points): its first baseline where
+  // Canva sets it (canvaBase), not at the font's ascent
+  function canvaTop(it) {
+    var L = AX.textLayout(it).lines;
+    if (!L.length || it.rot) return;
+    var size = it.ax.size || AX.TEXT_DEF.size, lead = size * (it.ax.lh || AX.TEXT_DEF.lh) / 100;
+    var asc = L[0].y, desc = L[0].d || 0;
+    var dy = canvaBase(lead, size, asc, desc) - asc;
+    if (Math.abs(dy) < size) it.y = Math.round((it.y + dy) * 100) / 100;
+  }
 
   // text inside its box by the box's anchor (items: one box's stack, top to bottom)
   function anchorTo(its, s) {
@@ -1097,8 +1149,11 @@
   var FIT_SLACK = 1.08;
   function fitLines(it, s) {
     var ax = it.ax, paras = (ax.tx || "").split("\n").length;
-    if (ax.cv || AX.textLayout(it).lines.length <= paras) return;
+    if (ax.cv) return;
     var nat = AX.textWidth(ax, it, true) + 0.5;
+    // a line that fits only by the frame's slack (CV-F3) grows its box
+    // too, so a font that comes later cannot wrap it
+    if (AX.textLayout(it).lines.length <= paras && nat - 0.5 <= it.w) return;
     if (!(nat > it.w) || nat > it.w * FIT_SLACK) return;
     var grow = nat - it.w;
     it.x -= ax.al === "c" ? grow / 2 : ax.al === "r" ? grow : 0;
@@ -1119,7 +1174,7 @@
     return out;
   }
 
-  var api = { parse: parse, build: build, rebox: rebox, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
+  var api = { leadPct: leadPct, canvaBase: canvaBase, fillOf: fillOf, svgOf: svgOf, parse: parse, build: build, rebox: rebox, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierPPTX = api;
 })(typeof window !== "undefined" ? window : this);

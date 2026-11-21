@@ -515,9 +515,11 @@
           return { mode: "fill", dx: r2(dx * k / 1.5), dy: r2(dy * k / 1.5), blur: 0, color: col, alpha: r2(0.2 * (4 - k)) };
         }).concat([main]);
       case "glitch":
-        var g = r2(Math.max(1, dist / 2));
-        return [{ mode: "fill", dx: -g, dy: 0, blur: 0, color: "#00e5ff", alpha: 1 },
-                { mode: "fill", dx: g, dy: 0, blur: 0, color: "#ff2bd6", alpha: 1 }, main];
+        // a colour other than black (Canva's glitch, CV-F2): that colour
+        // on the right and Canva's cyan on the left
+        var g = r2(Math.max(1, dist / 2)), own = f.color !== "#000000";
+        return [{ mode: "fill", dx: -g, dy: 0, blur: 0, color: own ? "#00ffff" : "#00e5ff", alpha: 1 },
+                { mode: "fill", dx: g, dy: 0, blur: 0, color: own ? f.color : "#ff2bd6", alpha: 1 }, main];
       case "neon":
         var glow = r2(s * (0.08 + f.blur / 100 * 0.4));
         return [{ mode: "fill", dx: 0, dy: 0, blur: glow, color: col, alpha: 1 },

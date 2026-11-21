@@ -30,12 +30,12 @@
 (function (root) {
   "use strict";
 
-  var M, AX, FX, Z;
+  var M, AX, FX, Z, PF;
   if (typeof module !== "undefined" && module.exports) {
-    M = require("../designkit/model.js"); AX = require("./ax.js");
+    M = require("../designkit/model.js"); AX = require("./ax.js"); PF = require("./photofx.js");
     FX = require("../designkit/fx.js"); Z = require("./zip.js");
   } else {
-    M = root.orosDK.model; AX = root.AtelierAX; FX = root.orosDK.fx; Z = root.AtelierZip;
+    M = root.orosDK.model; AX = root.AtelierAX; PF = root.AtelierPhotoFx; FX = root.orosDK.fx; Z = root.AtelierZip;
   }
 
   var EMU = 12700;
@@ -82,7 +82,7 @@
     if (ax.k === "photo") {
       if (ax.vid) return "raster";
       if (!it.a) return "";
-      return ax.adj || ax.flt ? "raster" : "photo";
+      return ax.adj || ax.flt || (PF && PF.of(it)) ? "raster" : "photo";
     }
     return "";
   }
