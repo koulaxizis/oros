@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.23.00
+- **Timesheet: Claude keeps your hours with you.** Through orOS Gate, Claude can now make a Timesheet project with its client, hourly rate, day minimum and overtime, mark time as billed with the invoice it went on, and tie each day to its Calendar event. Work that runs past midnight now counts as one working day, with its overtime, instead of a second day with a second minimum.
+
 ## Version 8.22.00
 - **Layout: start a book in four steps.** New book asks what kind of book you are making (novel, stories, poetry, essay, study, children's picture book, photo album, cookbook, catalogue, magazine, workbook or zine), its size and margins, a pair of fonts and its details, shows the opening pages as you go, and makes a ready book with styles, page numbers, running heads, front pages and sample text that flows. Short hints show once, and the new Learn tab explains the rest.
 ## Version 8.20.00

@@ -76,6 +76,8 @@
   function str(v, max) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim().slice(0, max || 120) : ""; }
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function money(cents) { return Math.round(cents) / 100; }
+  var MAX_WORK = 200;     // TS-GATE: a month's entries listed by timesheet's summary
+  function hm(ts) { var t = new Date(ts); return pad(t.getHours()) + ":" + pad(t.getMinutes()); }
   function hours(ms) { return Math.round(ms / 36000) / 100; }
   function lastDay(month) {
     var m = YM.exec(month);
@@ -411,6 +413,47 @@
       return row;
     });
     if (rep.rows.length > MAX_PROJECTS) out.more_projects = rep.rows.length - MAX_PROJECTS;
+    // TS-GATE (8.23.00): the month's work, entry by entry (what each
+    // was charged: its time, overtime and the day minimum's top-up),
+    // and per client what is billed and what is still to invoice, so
+    // the hours can be checked against invoices, Budget and Calendar.
+    if (typeof core.chargedPieces === "function") {
+      var plan = core.chargedPieces(data, from, to, {}, now), byE = {}, ord = [], cl = {}, clOrd = [], otMs = 0, minAmt = 0;
+      plan.pcs.forEach(function (pc) {
+        var x = pc.x, r = byE[x.id];
+        if (!r) { r = byE[x.id] = { x: x, ms: 0, ot: 0, amt: 0 }; ord.push(x.id); }
+        r.ms += pc.ms; r.ot += pc.otMs; r.amt += pc.amount;
+        otMs += pc.otMs;
+      });
+      plan.tops.forEach(function (tp) { var r = byE[tp.pc.x.id]; if (r) r.amt += tp.amount; minAmt += tp.amount; });
+      out.overtime_hours = hours(otMs);
+      if (minAmt) out.day_minimum_amount = money(minAmt);
+      out.work = ord.slice(0, MAX_WORK).map(function (id) {
+        var r = byE[id], x = r.x, p = core.project(data, x.p), c = p ? core.projectClient(data, p) : null;
+        var e = core.endOf(x, now), row = { date: core.dayKeyOf(x.s), start: hm(x.s), end: x.e ? hm(e) + (core.dayKeyOf(e) !== core.dayKeyOf(x.s) ? " (+1)" : "") : "running",
+                                           hours: hours(r.ms) };
+        if (r.ot) row.overtime_hours = hours(r.ot);
+        if (p) row.project = p.name;
+        if (c) row.client = c.name;
+        if (x.desc) row.title = String(x.desc).slice(0, 120);
+        row.amount = money(r.amt);
+        row.billed = !!x.billed;
+        if (x.iv) row.invoice_id = x.iv;
+        if (x.src) row.source = x.src;
+        var ck = c ? c.name : "";
+        if (!cl[ck]) { cl[ck] = { name: ck || "(no client)", days: {}, hours: 0, overtime_hours: 0, amount: 0, billed: 0, to_invoice: 0 }; clOrd.push(ck); }
+        var g = cl[ck];
+        g.days[row.date] = 1; g.hours += r.ms; g.overtime_hours += r.ot; g.amount += r.amt;
+        if (x.billed) g.billed += r.amt; else g.to_invoice += r.amt;
+        return row;
+      });
+      if (ord.length > MAX_WORK) out.more_work = ord.length - MAX_WORK;
+      out.clients = clOrd.map(function (k) {
+        var g = cl[k];
+        return { name: g.name, days: Object.keys(g.days).length, hours: hours(g.hours), overtime_hours: hours(g.overtime_hours),
+                 amount: money(g.amount), billed: money(g.billed), to_invoice: money(g.to_invoice) };
+      });
+    }
     var run = core.running(data);
     if (run.length) out.running = run.map(function (x) { var p = core.project(data, x.p); return p ? p.name : ""; }).slice(0, 5);
     // Timesheet T4: what is still to invoice, all time (the To invoice tab)

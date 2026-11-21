@@ -20,7 +20,7 @@ test.before(async () => { R = await import("../relay/gate.js"); });
 
 test("ACT = the Assistant's create / change apps, less NEVER, SENSITIVE, Budget, Kanban and Files", () => {
   const all = new Set();
-  const add = (id) => all.add(/^crm_/.test(id) ? "crm" : /^travel_/.test(id) ? "travel" : id);
+  const add = (id) => all.add(/^crm_/.test(id) ? "crm" : /^travel_/.test(id) ? "travel" : /^timesheet_/.test(id) ? "timesheet" : id);
   N.APP_IDS.forEach(add); Object.keys(N2.CORES).forEach(add); Object.keys(N3.CORES).forEach(add);
   CR.APP_IDS.forEach(add); E.APP_IDS.forEach(add);
   const want = [...all].filter((id) => G.NEVER.indexOf(id) < 0 && G.SENSITIVE.indexOf(id) < 0 && ["budget", "kanban", "files"].indexOf(id) < 0).sort();

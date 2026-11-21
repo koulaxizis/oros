@@ -98,7 +98,7 @@
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "plan", "ms", "deps", "start", "end", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "sub", "translator", "illustrator", "editor", "credits", "series", "release", "lang", "format", "royalty", "kw", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "blurb", "bio", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "plan", "ms", "deps", "start", "end", "project", "billed", "invoice", "event", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "sub", "translator", "illustrator", "editor", "credits", "series", "release", "lang", "format", "royalty", "kw", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "blurb", "bio", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -186,6 +186,17 @@
     if (set.err) return bad(set.err);
     if (has(args, "location") && typeof args.location === "string") set.location = line(args.location, 150);
     if (has(args, "note") && typeof args.note === "string") set.note = para(args.note, NOTE_IN);
+    // TS-GATE (8.23.00): a Timesheet entry's project (by name, "" = none),
+    // billed, and the refs of its invoice and event ("" clears; assistant.js
+    // tsChangeRefs turns a ref into { id | src, title } before the change)
+    if (has(args, "project") && typeof args.project === "string") set.project = line(args.project, 200);
+    if (has(args, "billed") && args.billed !== null && args.billed !== undefined) {
+      if (typeof args.billed !== "boolean") return bad("billed must be true or false.");
+      set.billed = args.billed;
+    }
+    ["invoice", "event"].forEach(function (k) {
+      if (has(args, k) && typeof args[k] === "string") set[k] = line(args[k], 40).replace(/^oros:/, "");
+    });
     // Wave A3: a Notes page's text (replace) or a line added to it, and
     // fields of the newer apps (checked against each app's own limits).
     if (has(args, "text") && typeof args.text === "string") {

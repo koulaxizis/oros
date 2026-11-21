@@ -336,8 +336,21 @@
     var h = byId(d.entries, id);
     return h && !h.x.del ? h : null;
   }
-  function tsView(x) {
-    return { title: String(x.desc || ""), date: dayOf(x.s), start: hmOf(x.s), end: x.e ? hmOf(x.e) : "" };
+  // TS-GATE (8.23.00): also the project (by name), billed, the Invoices
+  // document it went on (iv) and the Calendar event it was for (src);
+  // invoice / event arrive resolved by assistant.js (tsChangeRefs) as
+  // { id, title } / { src, title }, "" clears.
+  function tsFold(v) {
+    return String(v || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\u03c2/g, "\u03c3").replace(/\s+/g, " ").trim();
+  }
+  function tsView(d, x) {
+    var p = null;
+    (Array.isArray(d.projects) ? d.projects : []).forEach(function (y) { if (isObj(y) && !y.del && y.id === x.p) p = y; });
+    var v = { title: String(x.desc || ""), date: dayOf(x.s), start: hmOf(x.s), end: x.e ? hmOf(x.e) : "",
+              project: p ? String(p.name) : "", billed: x.billed ? "yes" : "no" };
+    if (x.iv) v.invoice = x.iv;
+    if (x.src) v.event = x.src;
+    return v;
   }
   function timesheetChange(d, target, ch, now) {
     var C = core("timesheet");
@@ -345,9 +358,9 @@
     if (!isObj(target) || typeof target.entry !== "string") return bad("Only a Timesheet entry (a time worked) can be changed here.");
     var h = isObj(d) ? tsLive(d, target.entry) : null;
     if (!h) return bad("That entry is no longer in Timesheet.");
-    var e = only(ch, ["title", "date", "start", "end"], "A Timesheet entry");
+    var e = only(ch, ["title", "date", "start", "end", "project", "billed", "invoice", "event"], "A Timesheet entry");
     if (e) return e;
-    var s = ch.set, x = clone(h.x), before = tsView(h.x);
+    var s = ch.set, x = clone(h.x), before = tsView(d, h.x);
     if (has(s, "title")) { if ((e = tooLong("title", s.title, C.LIM.desc, "a Timesheet entry"))) return e; x.desc = s.title; }
     if (!x.e && (has(s, "date") || has(s, "end"))) return bad("That entry is still running: stop it in Timesheet first, then change its day or end.");
     var day = has(s, "date") ? s.date : dayOf(x.s);
@@ -361,8 +374,38 @@
       } else x.e = x.s + dur;
     }
     if (x.s > now && (has(s, "date") || has(s, "start"))) return bad("An entry can't start in the future.");
-    var after = tsView(x);
+    if (has(s, "project")) {
+      if (s.project === "") x.p = "";
+      else {
+        var want = tsFold(s.project), hit = null, names = [];
+        (Array.isArray(d.projects) ? d.projects : []).forEach(function (p) {
+          if (!isObj(p) || p.del || typeof p.name !== "string") return;
+          if (!p.arch) names.push(p.name);
+          if (!hit && tsFold(p.name) === want) hit = p;
+        });
+        if (!hit) return bad("Timesheet has no project named \"" + s.project + "\". Its projects: " + (names.length ? names.join(", ") : "none") + ".");
+        if (hit.arch) return bad("The project " + hit.name + " is archived; bring it back in Timesheet first.");
+        x.p = hit.id;
+      }
+    }
+    if (has(s, "billed")) { x.billed = s.billed ? 1 : 0; if (!s.billed) delete x.iv; }
+    if (has(s, "invoice")) {
+      if (s.invoice === "") delete x.iv;
+      else if (isObj(s.invoice) && typeof s.invoice.id === "string") {
+        if (has(s, "billed") && !s.billed) return bad("An entry on an invoice is billed; leave billed out or true.");
+        x.iv = s.invoice.id;
+        x.billed = 1;
+      } else return bad("invoice must be an invoice's ref from search_data (app invoices), or \"\" to clear it.");
+    }
+    if (has(s, "event")) {
+      if (s.event === "") delete x.src;
+      else if (isObj(s.event) && typeof s.event.src === "string") x.src = s.event.src;
+      else return bad("event must be a Calendar event's ref from search_data or app_summary (app calendar), or \"\" to clear it.");
+    }
+    var after = tsView(d, x);
     if (same(after, before)) return nothing("entry");
+    if (has(s, "invoice") && isObj(s.invoice) && s.invoice.title) after.invoice = s.invoice.title;
+    if (has(s, "event") && isObj(s.event) && s.event.title) after.event = s.event.title;
     x.m = stampAfter(now, h.x.m);
     d.entries[h.i] = x;
     adopt(d, C.mergeTimesheet(d, d));
@@ -782,7 +825,7 @@
 
   var MODS = {
     notes:     { settable: { title: 1, text: 1, text_add: 1, label: 1, labels: 1, notebook: 1 }, change: notesChange, undo: notesUndo },
-    timesheet: { settable: { title: 1, date: 1, start: 1, end: 1 }, change: timesheetChange, undo: timesheetUndo },
+    timesheet: { settable: { title: 1, date: 1, start: 1, end: 1, project: 1, billed: 1, invoice: 1, event: 1 }, change: timesheetChange, undo: timesheetUndo },
     invoices:  { settable: { amount: 1, date: 1, how: 1 }, change: invoicesChange, undo: invoicesUndo },
     chores:    { settable: { title: 1 }, change: choresChange, undo: choresUndo },
     meals:     { settable: { title: 1, note: 1, servings: 1 }, change: mealsChange, undo: mealsUndo },
