@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.03.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.08.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -90,7 +90,9 @@
     { id: "nixos",      color: "#5277c3", wp: "hex" },
     { id: "gentoo",     color: "#7d5ba6", wp: "obsidian" },
     { id: "popos",      color: "#ff7043", wp: "ember" },
-    { id: "zorin",      color: "#15a6a0", wp: "terrazzo" }
+    { id: "zorin",      color: "#15a6a0", wp: "terrazzo" },
+    // SIGNAL-1 (8.x): dot-matrix LED look, 17 skins
+    { id: "signal",     color: "#ff3b30", wp: "dots" }
   ];
 
   var DEFAULT_WALLPAPER = "sand";
@@ -116,6 +118,8 @@
     { id: "hex",      css: "repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 22px), repeating-linear-gradient(60deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 26px), linear-gradient(165deg, #17181d 0%, #101116 60%, #0a0b0f 100%)" },
     { id: "obsidian", css: "linear-gradient(200deg, #1a1025 0%, #0e0a14 55%, #070609 100%)" },
     { id: "terrazzo", css: "radial-gradient(circle at 15% 22%, #d4af37 0 2.5px, transparent 3px), radial-gradient(circle at 62% 30%, #6d4aff 0 2px, transparent 2.5px), radial-gradient(circle at 38% 68%, #e06c75 0 2.5px, transparent 3px), radial-gradient(circle at 78% 76%, #15a6a0 0 2px, transparent 2.5px), radial-gradient(circle at 28% 48%, #87cf3e 0 1.5px, transparent 2px), radial-gradient(circle at 85% 18%, #51a2da 0 1.5px, transparent 2px), radial-gradient(circle at 8% 82%, #ff7043 0 2px, transparent 2.5px), linear-gradient(160deg, #211f1b 0%, #161411 60%, #0e0d0b 100%)" },
+    // SIGNAL-1: a fine grid of drawn dots, like an unlit LED panel
+    { id: "dots",     css: "radial-gradient(circle, rgba(255,255,255,0.13) 0 1.3px, transparent 1.8px) 0 0 / 9px 9px, radial-gradient(ellipse at 50% 40%, #141414 0%, #070707 60%, #000000 100%)" },
     { id: "clear",    css: "" }   // "None": theme background
   ];
 
@@ -6945,7 +6949,7 @@
   }
 
   // Names: translations.js "wp.name.<id>"; any other id shows as it is.
-  var WALLPAPER_NAMED = { dusk: 1, midnight: 1, plum: 1, forest: 1, ember: 1, nordic: 1, aurora: 1, sand: 1, mono: 1, nebula: 1, borealis: 1, hex: 1, obsidian: 1, terrazzo: 1, custom: 1, land: 1, clear: 1 };
+  var WALLPAPER_NAMED = { dusk: 1, midnight: 1, plum: 1, forest: 1, ember: 1, nordic: 1, aurora: 1, sand: 1, mono: 1, nebula: 1, borealis: 1, hex: 1, obsidian: 1, terrazzo: 1, dots: 1, custom: 1, land: 1, clear: 1 };
   function wallpaperTitle(id) {
     return WALLPAPER_NAMED[id] ? window.t("wp.name." + id) : id;
   }
@@ -13275,6 +13279,10 @@
       if (window.orosSmartBar) window.orosSmartBar.set(name.slice(9), !!value);
       return;
     }
+    if (name === "smartbar-live") {      // smartbar.js SB-LIVE: live pills on/off
+      if (window.orosSmartBar && window.orosSmartBar.setLive) window.orosSmartBar.setLive(!!value);
+      return;
+    }
     if (name === "smartbar-look") {      // smartbar.js SB3: "", glass, midnight, solid
       if (window.orosSmartBar && window.orosSmartBar.setLook) window.orosSmartBar.setLook(String(value || ""));
       return;
@@ -17954,7 +17962,8 @@
       version: function () { return APP_VERSION; },
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); },
-      fit: function () { queueFitBar(); }
+      fit: function () { queueFitBar(); },
+      barwin: function () { return BARWIN; }   // SB-LIVE: no stop buttons in the desktop bar window
     });
   }
   loadApps();

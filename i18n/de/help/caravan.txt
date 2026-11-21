@@ -7,6 +7,7 @@ Karawane ist ein Turmverteidigungsspiel andersherum, für eine Person. Alte Zoll
 - Unterwegs rollen die Karren von selbst vom Dorftor (oben) zum Markt (unten). Die Maschinen neben der Straße werfen Kisten von den Karren in ihrer Reichweite; die roten Ringe zeigen, wie weit jede reicht.
 - Bring in den drei Fahrten die Zielzahl an Kisten zum Markt. Die obere Leiste zeigt die Kisten auf dem Markt und das Ziel, deine Münzen und die Fahrt.
 - Jede Kiste, die den Markt erreicht, bringt zwei Münzen, und jede Fahrt zehn dazu, für die nächste Fahrt.
+- Auf der Gewürzstraße (Routen 5 bis 8) endet die Straße an zwei Märkten: der Markt links zahlt zwei Münzen je Kiste, der Gewürzmarkt rechts (mit dem spitzen Dach) drei. Beide zählen zum Ziel.
 - Ein Karren, der alle Kisten verliert, geht zu Fuß nach Hause und ist auf der nächsten Fahrt wieder bereit. Gemietete Karren bleiben die ganze Route bei der Karawane und brechen jede Fahrt voll beladen auf.
 - Vor jeder Fahrt ziehen die Zöllner weitere Maschinen auf. Die neuen haben im Plan einen Ring.
 - `Pause` und der Tempoknopf (1x, 2x, 3x) liegen neben `Aufbrechen`. Das Spiel hält von selbst an, wenn du es verlässt.
@@ -22,6 +23,7 @@ Jeder Karren hat drei Stufen. Auf Stufe 3 wählst du einen von zwei Zweigen, und
 - **Ponykarren:** schnell und klein, an den Maschinen vorbei, bevor sie zweimal schlagen. Der Eilbote ist noch schneller; Satteltaschen tragen fast doppelt so viel.
 - **Flickerkarren** (ab Route 2): bindet heruntergefallene Kisten auf den Karren in der Nähe wieder fest (der gepunktete Ring). Langer Arm flickt viel weiter weg; Flinke Hände flicken doppelt so schnell.
 - **Strohkarren** (ab Route 3): ein Köder ohne Ware. Jede Maschine zielt zuerst auf einen Strohkarren, wenn einer in Reichweite ist. Ist sein Stroh durchgebrannt, ist er weg, und du mietest einen neuen. Nasses Stroh hält doppelt so lange; die Vogelscheuche hält jede Maschine, die sie trifft, zwei Sekunden an.
+- **Schmiedekarren** (ab Route 5, der Gewürzstraße): verklemmt die nächste arbeitende Maschine, an der er vorbeikommt, auf Stufe 1 für vier Sekunden, und ruht dann, bevor er wieder verklemmen kann (ein dünner Balken unter ihm füllt sich, während er ruht). Eine verklemmte Maschine hat einen Keil und tut nichts: keine Stöße, kein Schlamm, kein Ausguck. Langer Keil verklemmt doppelt so lange; Schneller Hammer reicht weiter und ruht nur halb so lange.
 - Tippe auf einen Karren (auf der Straße oder seinen Knopf in der Leiste), um zu sehen, was er trägt. Im Plan kannst du ihn nach vorn oder hinten schieben, aufwerten oder verkaufen. Verkaufen gibt 70% zurück; was seit dem letzten Aufbruch gekauft oder aufgewertet wurde, gibt alles zurück.
 
 ## Die Zollmaschinen
@@ -44,9 +46,15 @@ Jede Art hat ihre eigene Form, du brauchst also nie die Farben.
 - Ist eine Route verloren, bringt dich `Noch einmal ab Fahrt` zurück in den Plan der letzten Fahrt, mit der Karawane und den Münzen von damals.
 - Die laufende Route bleibt auf diesem Gerät und öffnet sich dort wieder, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Route endet. `Fortschritt zurücksetzen` auf der Wegekarte löscht sie auf allen Geräten und beendet die laufende Route. Karawane steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
 
+## Endlos
+- Sobald eine Route einen Stern hat, zeigt die Wegekarte darunter `Endlos` mit deinem Bestwert.
+- In Endlos arbeiten alle Maschinen der Route ab der ersten Fahrt, und du beginnst mit 80 Münzen mehr. Die Fahrten gehen weiter, solange jede ihre Kisten zum Markt bringt: die Statusleiste zeigt die Kisten dieser Fahrt gegen das, was sie bringen muss.
+- Jede Fahrt muss mehr Kisten bringen als die davor, und die Stöße werden mit jeder Fahrt etwas härter. Bringt eine Fahrt zu wenig, ist Endlos vorbei; die Wertung ist die Zahl der Fahrten, die ihre Kisten brachten.
+- Endlos gibt keine Sterne. Der Bestwert jeder Route wird mit dem übrigen Fortschritt zwischen deinen Geräten abgeglichen.
+
 ## Tastatur
 - Pfeiltasten wählen einen Karren; [[Escape]] lässt ihn los. Die Tasten `[` und `]` schieben ihn im Plan nach vorn oder hinten.
-- [[1]] bis [[4]]: einen Maultier-, Pony-, Flicker- oder Strohkarren mieten. [[U]]: auf Stufe 2 aufwerten. [[A]] oder [[B]]: der Zweig auf Stufe 3. [[S]]: verkaufen.
+- [[1]] bis [[5]]: einen Maultier-, Pony-, Flicker-, Stroh- oder Schmiedekarren mieten. [[U]]: auf Stufe 2 aufwerten. [[A]] oder [[B]]: der Zweig auf Stufe 3. [[S]]: verkaufen.
 - [[G]]: den nächsten Wegweiser wählen; [[Enter]]: ihn drehen.
 - [[Q]]: Rauch auf die Maschine, die dem vordersten Karren am nächsten ist. [[W]]: Schild auf den gewählten (oder den vordersten) Karren. [[E]]: Abkürzung.
 - [[N]]: aufbrechen. [[Space]]: Pause oder weiter. [[F]]: Tempo. [[L]]: die Wegekarte. [[M]]: Ton. [[?]]: so wird gespielt.
@@ -56,3 +64,4 @@ Jede Art hat ihre eigene Form, du brauchst also nie die Farben.
 - Stelle die Maultierkarren nach vorn: die Maschinen zielen auf den Karren, der am weitesten gekommen ist, und Maultiere verlieren bei jedem Schlag weniger.
 - Ein Flicker direkt hinter dem größten Karren holt auf einem langen Stück nach den Maschinen viele Kisten zurück.
 - Wirf Rauch dorthin, wo zwei Maschinen zugleich an die Straße reichen, kurz bevor der erste Karren ankommt.
+- Auf der Gewürzstraße öffnet ein Schmied vorn in der Karawane den Weg für die Karren hinter ihm: stelle ihn dorthin, wo ein Ausguck steht.

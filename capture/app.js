@@ -440,6 +440,7 @@
         r.tick = setInterval(paintRec, 500);
         paintRec();
         renderLive();
+        barLive(r);
         $("b-end").focus();
       });
     });
@@ -467,10 +468,31 @@
     renderLive();
   }
 
+  // SB-LIVE: the shell's smart bar shows the running recording with
+  // its time and a stop button (same as Stop recording here). Only
+  // numbers and a stop function cross over; nothing is stored.
+  function barApi() {
+    try {
+      var p = window.parent;
+      return p && p !== window && p.orosSmartBar && typeof p.orosSmartBar.live === "function" ? p.orosSmartBar : null;
+    } catch (e) { return null; }
+  }
+  function barLive(r) {
+    var B = barApi();
+    if (!B) return;
+    try {
+      B.live("rec", r ? {
+        state: function () { return rec === r ? { ms: recMs(r), paused: r.mr.state === "paused" } : null; },
+        stop: function () { if (rec === r) endRec(); }
+      } : null);
+    } catch (e) {}
+  }
+
   function endRec() {
     var r = rec;
     if (!r) return;
     rec = null;
+    barLive(null);
     clearInterval(r.tick);
     if (r.pausedAt) { r.paused += Date.now() - r.pausedAt; r.pausedAt = 0; }
     r.ms = recMs(r);
@@ -756,6 +778,7 @@
     $("b-rdrop").addEventListener("click", recDiscard);
     wireCrop();
     window.addEventListener("pagehide", stopStream);
+    window.addEventListener("pagehide", function () { barLive(null); });
 
     // Contract Β: Ctrl+Alt+Shift belongs to the shell.
     document.addEventListener("keydown", function (e) {

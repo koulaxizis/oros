@@ -32,6 +32,7 @@ Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a mont
 - On a computer they sit in a column at the right of the desktop; on a phone or a narrow window, in a row at the top that scrolls sideways.
 - Right-click an empty spot of the desktop and choose `Widgets…` to tick the cards you want and set their order. `Settings`, under `Appearance`, has the same ticks.
 - Right-click a card (long press on a touch screen) or use its `⋯` button to move it up or down or remove it. With a mouse you can also drag a card by its title.
+- The Clock card's menu also sets its style: `Clock: digits`, `Clock: LED dots` or `Clock: automatic` (the start: LED dots with the Signal skin, digits with the others). The dots are drawn by orOS itself and never blink; with high contrast only the lit dots show.
 - A computer starts with Clock, Calendar, Today and Weather; a phone starts with none. Your choice stays on this device.
 
 ### First steps
@@ -53,6 +54,8 @@ The top bar can show a few live items next to the clock. Tick them in `Settings`
 - `Next trip`: in how many days your next trip in [Travel](app:travel) starts (up to a month ahead).
 - `Today's meals`: today's meals from your plan in [Meal Planner](app:meals).
 - `The book you are reading`: the book open in [Library](app:library) and how far you are.
+
+Live pills need no ticking: while a timer or the stopwatch of [Time](app:time) runs, or [Screen Capture](app:capture) records, a pill with its time shows at the start of the bar (the timer that ends first, with "+1" when another one runs too). Tap it to open the app; the button beside it pauses the timer or the stopwatch (resume it in Time) or stops the recording, which then waits in Screen Capture to be saved. On a phone the first live pill stays in the bar and the others go behind the button with the cards. `Live pills` in `Top bar` turns them off on this device.
 
 Each item shows only when it has something to say, and a tap opens its app. On a phone they all sit behind one button with a small stack of cards and their number: tap it and they unfold under the bar, each with its full text. On a wider screen they stay in the bar; when it is full, the last ones move into the same button (it then reads `+2` and so on). Tap an item in the list to open its app; `Esc` or a tap elsewhere folds it again. While `Sensitive work` is on, the money items (and overdue invoices), meals, the book and the names of events and trips are hidden. Events of apps kept out of search (Health, Cycle, One-Sentence Diary and the like) never appear in the bar.
 
@@ -92,6 +95,8 @@ In `Settings`, under `Appearance`, choose `Dark` or `Light` next to `Theme`. orO
 
 ## Skins
 The coloured dots under `System colour` are skins: each one gives orOS and its apps a different accent colour. They are named after Linux systems, such as `Ubuntu`, `Fedora`, `Mint` or `Pop!_OS`; hover over a dot to see its name. The default is `Oros`, in gold.
+
+`Signal`, the last dot, is not named after a system: it gives orOS the look of an LED dot display, black with white text and a red light (in the light theme, white paper with a deep red). Its wallpaper is `Dot Matrix`, a fine grid of dots, and the Clock widget shows the time in LED dots while Signal is on.
 
 `Accent from wallpaper`, under the dots, takes the accent colour from your wallpaper instead: the built-in wallpapers, `Living land`, `Mine` and a picture of your own. orOS adjusts its brightness so text on buttons and links stays easy to read in the light and the dark theme; backgrounds, panels and text keep the colours of your skin. When the wallpaper has several clear colours, up to four appear under `Colours from the wallpaper` to pick from; a new wallpaper starts at its strongest colour. Grey wallpapers such as `Monochrome` keep the skin's colour, and high contrast always keeps its own colours. The switch is off at first and works on this device only.
 

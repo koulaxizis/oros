@@ -36,8 +36,8 @@ for (let m; (m = BLOCK.exec(css)); ) {
   blocks.push({ name: m[1], accent: accent[1], ink: ink && ink[1] });
 }
 
-test("every palette block (32 skins + 2 high contrast) sets --accent-ink", () => {
-  assert.equal(blocks.length, 34);
+test("every palette block (34 skin blocks + 2 high contrast) sets --accent-ink", () => {
+  assert.equal(blocks.length, 36);
   for (const b of blocks) assert.ok(b.ink, b.name + " has no --accent-ink");
 });
 

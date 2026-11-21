@@ -90,14 +90,17 @@ function put(g, k, s, id) {
   return sk;
 }
 
-test("orbit: four gardens, ten waves each ending with an eclipse, gates on the rim, the way ends at the moonflower", () => {
-  assert.equal(E.GARDENS.length, 4);
+test("orbit: eight gardens in two orbits, ten waves each ending with an eclipse, gates on the rim, the way ends at the moonflower", () => {
+  assert.equal(E.GARDENS.length, 8);
+  assert.deepEqual(E.GARDENS.map((gd) => gd.o), [1, 1, 1, 1, 2, 2, 2, 2]);
   E.GARDENS.forEach((gd) => {
     assert.equal(gd.waves.length, 10, gd.id);
-    assert.ok(/e1:0$/.test(gd.waves[9]), gd.id + ": an eclipse ends the night");
+    assert.ok(/e\d:\d+$/.test(gd.waves[9]), gd.id + ": an eclipse ends the night");
     gd.groups.forEach((gs) => gs.forEach((x) => assert.ok(E.SPARK[x.k] && x.n > 0, gd.id)));
     gd.gates.forEach((x) => assert.ok(x >= 0 && x < E.GATES_N));
-    gd.stones.forEach((st, k) => st.forEach((j) => assert.ok(j > 0 && j < E.RINGS[k].n, gd.id + ": never the gap")));
+    gd.gaps.forEach((gs, k) => { assert.equal(gs[0], 0, "frame slot 0 is always a gap"); gs.forEach((j) => assert.ok(j >= 0 && j < E.RINGS[k].n)); });
+    gd.stones.forEach((st, k) => st.forEach((j) => assert.ok(j > 0 && j < E.RINGS[k].n && !E.isGap(gd, k, j), gd.id + ": never a gap")));
+    if (gd.o === 1) assert.ok(gd.gaps.every((x) => x.length === 1) && gd.auto.every((x) => x === 0), gd.id + ": the Quiet orbit has no extras");
     const g = E.newRun(gd.id, "n");
     E.ways(g).forEach((w, i) => {
       const a = E.posOn(w, 0), b = E.posOn(w, w.len);
@@ -289,6 +292,77 @@ test("orbit: doing nothing loses; a plain player who turns the rings clears the 
   assert.equal(play("g4", "n", spend, false).over, 0, "garden 4 on Normal is lost without turning");
   assert.equal(play("g4", "n", spend, true).over, 1, "and won with the turns");
   E.GARDENS.forEach((gd) => assert.equal(play(gd.id, "m", spend, true).over, 1, gd.id + " is beatable on Mild"));
+  ["g5", "g6", "g7", "g8"].forEach((id) => assert.equal(play(id, "n", spend, true).over, 1, id + " is beatable on Normal with the turns"));
+  assert.equal(play("g5", "m", spend, false).over, 0, "the far orbit is lost without turning, even on Mild");
+});
+
+test("orbit: a ring with two gaps lets the sparks through the first one they meet; neither gap takes a plant", () => {
+  const g = E.newRun("g5", "n"), gd = E.GARDEN.g5;
+  assert.deepEqual(gd.gaps[0], [0, 8]);
+  assert.equal(E.whyNot(g, "0:8", "thorn"), "gap");
+  assert.equal(E.isBed(gd, 0, 8), false);
+  assert.equal(E.isBed(gd, 0, 7), true);
+  const w = E.ways(g)[0], arc = w.seg.filter((q) => q.t === "c")[0];
+  const a0 = E.gateAngle(gd, 0), to = [0, 8].map((j) => E.slotAngle(g.rot, 0, j));
+  const sw = (b) => ((b - a0) % E.TAU + E.TAU) % E.TAU;
+  assert.ok(near(arc.da, Math.min(...to.map(sw))), "the nearer gap clockwise");
+  assert.ok(arc.da < Math.PI + 1e-9, "never more than half round with two opposite gaps");
+});
+
+test("orbit: a self-turning ring turns once after every wave, when the garden is clear, and the way follows", () => {
+  const g = E.newRun("g6", "n"), gd = E.GARDEN.g6;
+  assert.deepEqual(gd.auto, [0, 1, 0]);
+  const r0 = g.rot.slice();
+  E.callWave(g);
+  let autos = [];
+  for (let i = 0; i < 60 * 120 && (g.sp.length || g.sk.length || !autos.length); i++) {
+    E.step(g);
+    autos = autos.concat(g.ev.filter((x) => x.e === "auto"));
+    g.ev.length = 0;
+  }
+  assert.equal(autos.length, 1);
+  assert.deepEqual(autos[0], { e: "auto", k: 1, d: 1 });
+  assert.deepEqual(g.rot, [r0[0], (r0[1] + 1) % 12, r0[2]]);
+  assert.equal(g.at, 1);
+  for (let i = 0; i < 120; i++) E.step(g);
+  assert.deepEqual(g.rot[1], (r0[1] + 1) % 12, "only once per wave");
+  assert.ok(E.canTurn(g) && E.turn(g, 1, -1), "the player can turn it back with the free step");
+  assert.equal(E.turnCost(g, 1, -1), 5);
+});
+
+test("orbit: Endless repeats the garden's waves with more and stronger sparks; the best wave is kept", () => {
+  const g = E.newRun("g1", "n", true);
+  assert.equal(g.en, 1);
+  assert.equal(g.nw, E.ENDLESS);
+  assert.deepEqual(g.wl, []);
+  const n0 = E.groupsOf(g, 0)[0].n, n10 = E.groupsOf(g, 10)[0].n, n20 = E.groupsOf(g, 20)[0].n;
+  assert.ok(n10 > n0 && n20 > n10, "more sparks each round");
+  assert.ok(E.sparkHp(g, "s", 20) > E.sparkHp(E.newRun("g1", "n"), "s", 20) * 2, "and stronger past wave 10");
+  E.callWave(g);
+  assert.equal(g.wl.length, 1);
+  assert.ok(E.normalizeRun(JSON.parse(J(E.saveable(g)))), "the session copy loads");
+  const bad = JSON.parse(J(E.saveable(g))); bad.wl = [];
+  assert.equal(E.normalizeRun(bad), null);
+  const won = JSON.parse(J(E.saveable(g))); won.over = 1;
+  assert.equal(E.normalizeRun(won), null, "an Endless night is never won");
+  // a lost Endless night: no stars, the waves cleared count
+  g.wl[0] = 0; g.over = 0;
+  assert.equal(E.stars(g), 0);
+  let d = E.record(E.defaultData(), "dev123", Object.assign(E.newRun("g1", "n"), { over: 1, hearts: 20 }), 5);
+  d = E.record(d, "dev123", g, 6);
+  assert.equal(E.starsOf(d, "g1"), 3);
+  assert.equal(E.endlessOf(d, "g1"), 1);
+  assert.ok(E.endlessOpen(d, "g1") && !E.endlessOpen(d, "g2"));
+  assert.deepEqual(d.rows.dev123.s.n, [2, 1]);
+});
+
+test("orbit: a session from before the far orbit (no at) loads without a surprise turn", () => {
+  const g = E.newRun("g6", "n");
+  E.callWave(g);
+  const old = JSON.parse(J(E.saveable(g)));
+  delete old.at;
+  const back = E.normalizeRun(old);
+  assert.equal(back.at, 1);
 });
 
 test("orbit: the session copy is canonical, and anything odd is refused", () => {
