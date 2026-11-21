@@ -13307,15 +13307,15 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Tests:** full `node --test tests/*.test.js`; real shell (harness): a red picture drawn grey with `gray`, the panel sets black and white and contrast and removes them. Not tested: a real device; a PDF export of a corrected picture from a real disk asset (the cut goes through the same `LY.io.adjust`).
 - **Next:** W4b part 2: text wrap by contour/alpha, anchored objects, placing .af/.sla/.idml pages as pictures.
 
-### 2026-11-21 — 8.11.00 — Layout: Scribus tables and text on a path, InDesign layers, shapes, tables and footnotes (LY-PORT2, PORT)
-- **What:** the PORT wave's remaining gaps after the acceptance run: Scribus tables come in as cells with their fills, borders and text, Scribus text on a path keeps its path; InDesign layers keep their order, hidden and locked objects, free shapes and bent lines keep their outline, text on a path keeps its path, tabs and tab stops stay, tables become rows at tab stops, footnotes become raised numbers with the notes after the text.
-- **Files:** layout/sla.js (1.6.0), layout/idml.js (1.1.0), layout/io.js, layout/layout.js, i18n/de/layout.js, tests/layout-port2.test.js (new), tests/layout-idml.test.js, shell.js (APP_VERSION), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md (LY-PORT2, Part IX, this entry).
-- **Tests:** full `node --test tests/*.test.js`; the acceptance E2E (40 pages, PDF/X-4) and the local-folders E2E on 8.10.00 before the change; the private book with 11 Scribus tables re-imported in the real shell and compared with its PDF. Not tested: a real device; a real InDesign file (none in the corpus; the tests build IDML by hand).
-- **Next:** PORT fidelity report and bulk folder port, then N1.
-
 ### 2026-11-21 — 8.10.00 — Layout: wrap by outline, anchored objects, pages of other files (LY-PRO W4b part 2)
 - **What:** spec items 9, 10, 14: text wraps a frame's outline or a picture's transparent edges; a picture or shape anchored in the text moves with it; a page of a PDF, Scribus or InDesign file placed as a picture (Affinity: via its PDF). Commands `framemod` (wrap, anchor) and `placepage`; read-back says wrap, anchored_in, page_of.
 - **Files:** designkit/render.js, designkit/text.js (1.3.0), layout/{pro.js, commands.js, io.js, panels.js, layout.js, assist.js, proassist.js}, assistant/assistant.js, i18n/de/{layout.js, assistant.js}, tests/layout-pro-w4b.test.js, tests/layout-commands.test.js, shell.js (APP_VERSION), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md (LY-PRO W4b part 2, Part IX, this entry).
 - **Tests:** full `node --test tests/*.test.js`; real shell (harness) as in LY-PRO W4b part 2. Not tested: a real device; a big print PDF placed page by page; a gate `placepage` run end to end (its pieces are: the command in Node, the page drawing in the real shell).
 - **Next:** acceptance run «Στην καρδιά του βυθού», then PORT.
+
+### 2026-11-21 — 8.11.00 — Layout: Scribus tables and text on a path, InDesign layers, shapes, tables and footnotes (LY-PORT2, PORT)
+- **What:** the PORT wave's remaining gaps after the acceptance run: Scribus tables come in as cells with their fills, borders and text, Scribus text on a path keeps its path; InDesign layers keep their order, hidden and locked objects, free shapes and bent lines keep their outline, text on a path keeps its path, tabs and tab stops stay, tables become rows at tab stops, footnotes become raised numbers with the notes after the text.
+- **Files:** layout/sla.js (1.6.0), layout/idml.js (1.1.0), layout/io.js, layout/layout.js, i18n/de/layout.js, tests/layout-port2.test.js (new), tests/layout-idml.test.js, shell.js (APP_VERSION), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md (LY-PORT2, Part IX, this entry).
+- **Tests:** full `node --test tests/*.test.js`; the acceptance E2E (40 pages, PDF/X-4) and the local-folders E2E on 8.10.00 before the change; the private book with 11 Scribus tables re-imported in the real shell and compared with its PDF. Not tested: a real device; a real InDesign file (none in the corpus; the tests build IDML by hand).
+- **Next:** PORT fidelity report and bulk folder port, then N1.
 
