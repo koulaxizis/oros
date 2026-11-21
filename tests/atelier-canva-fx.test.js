@@ -136,3 +136,57 @@ test("CV-F3: a word a hair wider than its box stays whole; a clearly wider one s
   // a slice left by a wrap must be wide enough; the whole line always stays
   assert.ok(T.freeSegments(0, 10, [], 0, 10, 40).length === 1, "the whole line of a narrow frame stays");
 });
+
+test("CV-F4: Canva's outline (the text again in a font of outlined letters) is Atelier's outline", () => {
+  const S = 100, t = 7.5;   // the outlined letters are 7.5 wider: a line of 7.5 across the edge
+  const ol = line("ABC", 100, 200, S, "#000000").map((g) => Object.assign(g, { t3: 1, inkw: 50 + t }));
+  const mn = line("ABC", 100, 200, S, "#ffffff").map((g) => Object.assign(g, { inkw: 50 }));
+  const [lk] = CF.pageLooks([box("ABC", "#ffffff", S, 100, 200)], [].concat(ol, mn));
+  assert.equal(lk.tfx.type, "outline");
+  assert.equal(lk.tfx.color, "#000000");
+  assert.equal(lk.tfx.thick, Math.round(t / (S * 0.0024)));
+  // Atelier draws a line that wide under the text
+  const p = FX.textPasses(lk.tfx, S, "#ffffff");
+  assert.ok(Math.abs(p[0].width - t) < 0.2 && p[0].mode === "stroke");
+  // the same copy in an ordinary font is no outline
+  const plain = line("ABC", 100, 200, S, "#000000");
+  assert.equal(CF.pageLooks([box("ABC", "#ffffff", S, 100, 200)], [].concat(plain, line("ABC", 100, 200, S, "#ffffff")))[0].tfx, undefined);
+});
+
+test("CV-F4: a picture drawn just before the text that frames its letters is its effect picture", () => {
+  const S = 50, gl = line("GLOW", 100, 200, S, "#ffffff");
+  const ink = { x: 100, y: 200 - S * 0.75, w: 4 * S * 0.6, h: S * 0.95 };
+  const imgs = [
+    { at: 0, straight: true, x: ink.x - 20, y: ink.y - 20, w: ink.w + 40, h: ink.h + 40 },     // around the letters
+    { at: 0, straight: true, x: 0, y: 0, w: 1000, h: 1000 },                                  // the background photo
+    { at: 0, straight: false, x: ink.x - 20, y: ink.y - 20, w: ink.w + 40, h: ink.h + 40 }    // turned: not ours
+  ];
+  const [lk] = CF.pageLooks([box("GLOW", "#ffffff", S, 100, 200)], gl, imgs);
+  assert.deepEqual(lk.pics, [imgs[0]]);
+  // drawn after the text: not its effect
+  const late = [Object.assign({}, imgs[0], { at: gl[gl.length - 1].i + 1 })];
+  assert.equal(CF.pageLooks([box("GLOW", "#ffffff", S, 100, 200)], gl, late)[0].pics, undefined);
+});
+
+test("CV-F4: lines, size, pitch and first baseline as Canva set them", () => {
+  const AX = require("../atelier/ax.js");
+  // Canva: 30 pt letters, two lines 40 apart, broken after "ONE"
+  const S = 30, gl = [].concat(line("ONE", 10, 100, S, "#000000"), line("TWO", 10, 140, S, "#000000"));
+  assert.deepEqual(CF.linesOf(gl, S).map((l) => [l.y, l.n]), [[100, 3], [140, 3]]);
+  const it = { t: "rect", x: 10, y: 60, w: 400, h: 40, ax: { k: "text", fc: "#000000", tx: "ONE TWO", font: "sans", size: 32 } };
+  assert.ok(CF.snap(it, gl, AX));
+  assert.equal(it.ax.size, 30);
+  assert.equal(it.ax.tx, "ONE\nTWO");
+  assert.ok(Math.abs(it.ax.lh - 133.3) < 0.1, "pitch 40 / 30");
+  const L = AX.textLayout(it).lines;
+  assert.ok(Math.abs(it.y + L[0].y - 100) < 0.01, "the first baseline on Canva's");
+  // nothing to change the second time
+  assert.equal(CF.snap(it, gl, AX), false);
+});
+
+test("CV-F4: a Canva account import also brings Canva's PDF (atelier/canva.js, relay)", () => {
+  const cv = read("atelier/canva.js");
+  assert.ok(cv.includes('authed({ act: "export", id: d.id, kind: kind })'));
+  assert.ok(cv.includes('file("pdf")') && cv.includes("importPptx(new File([pptx]") && cv.includes(", true, opts)"));
+  assert.ok(cv.includes('=== "%PDF-"'), "an older relay's answer is not taken for a PDF");
+});

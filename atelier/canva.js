@@ -157,16 +157,36 @@
       if (Date.now() - t0 > POLL_MAX) throw CanvaErr("timeout");
       return wait(POLL).then(function () { return authed({ act: "job", job: job.job }); }).then(poll);
     }
-    return authed({ act: "export", id: d.id }).then(poll).then(function (url) {
-      return relay({ act: "file", url: url }, true);
-    }).then(function (ab) {
+    function file(kind) {
+      t0 = Date.now();
+      return authed({ act: "export", id: d.id, kind: kind }).then(poll).then(function (url) {
+        return relay({ act: "file", url: url }, true);
+      });
+    }
+    var pptx;
+    return file("pptx").then(function (ab) {
       if (!(ab instanceof ArrayBuffer)) throw CanvaErr("canva");
-      return AT.io.importPptx(new File([ab], fileName(d) + ".pptx", { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }), true)
+      pptx = ab;
+      // Canva's PDF of the design too: its text effects, curves and line
+      // breaks (canvafx.js, CV-F4). Without it the design still comes.
+      return file("pdf").then(function (pb) { return isPdf(pb) ? pb : null; }, function (e) {
+        if (e && e.code === "auth") throw e;
+        return null;
+      });
+    }).then(function (pb) {
+      var opts = pb ? { pdf: new File([pb], fileName(d) + ".pdf", { type: "application/pdf" }) } : undefined;
+      return AT.io.importPptx(new File([pptx], fileName(d) + ".pptx", { type: "application/vnd.openxmlformats-officedocument.presentationml.presentation" }), true, opts)
         .then(null, function (e) {
           if (e && e.message === "nofs") throw e;
           throw CanvaErr("read", e && e.message);
         });
     });
+  }
+  // an older relay exports the .pptx again for "pdf": only a real PDF counts
+  function isPdf(ab) {
+    if (!(ab instanceof ArrayBuffer) || ab.byteLength < 5) return false;
+    var b = new Uint8Array(ab, 0, 5);
+    return String.fromCharCode(b[0], b[1], b[2], b[3], b[4]) === "%PDF-";
   }
   // Passing trouble (network, a slow export, too many calls) gets two
   // more tries; what Canva refuses does not.

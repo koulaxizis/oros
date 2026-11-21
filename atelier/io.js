@@ -809,8 +809,54 @@
       .then(function () { return isFile(pdf) ? pdf : pdf && pdf.get ? pdf.get() : null; })
       .then(function (f) { return f ? f.arrayBuffer() : null; })
       .then(function (buf) { return buf ? window.AtelierCanvaFx.glyphs(buf) : null; })
-      .then(function (pages) { if (pages) window.AtelierCanvaFx.apply(doc, pages, AX, AT.M); })
+      .then(function (pages) {
+        if (!pages) return;
+        var res = window.AtelierCanvaFx.apply(doc, pages, AX, AT.M);
+        return canvaPics(doc, pages, res.pics).then(null, function () {}).then(function () { if (pages.close) pages.close(); });
+      })
       .then(null, function () {});
+  }
+  // Canva's outline, glow or lift around a text is a picture in its PDF
+  // (CV-F4): put it under the text, where the PDF has it. Only a picture
+  // with see-through parts (an effect, not a photo) comes in.
+  function canvaPics(doc, pages, pics) {
+    var chain = Promise.resolve(), R = window.LY_PDFIN;
+    (pics || []).forEach(function (p) {
+      chain = chain.then(function () { return p.im.img || pdfObj(pages[p.k].page, p.im.id); }).then(function (obj) {
+        var cv = obj && R.imageCanvas(obj);
+        if (!cv || !seeThrough(cv)) return;
+        return new Promise(function (res) { cv.toBlob(res, "image/png"); }).then(function (blob) {
+          if (!blob) return;
+          return A.importFile(new File([blob], "canva-effect.png", { type: "image/png" })).then(function (r) {
+            AT.noteUpload(r.id);
+            var it = p.it, z = it.z;
+            doc.items.forEach(function (o) { if (o.pg === it.pg && o.z >= z && !(o.ax && o.ax.bg)) o.z++; });
+            var pic = AX.addItem(doc, it.pg, { k: "photo", a: r.id, iw: r.w, ih: r.h, fit: "fill", nm: "", x: Math.round(p.im.x * 100) / 100, y: Math.round(p.im.y * 100) / 100, w: Math.round(p.im.w * 100) / 100, h: Math.round(p.im.h * 100) / 100, z: z }, AT.now());
+            if (pic && it.grp) pic.grp = it.grp;
+          });
+        });
+      }).then(null, function (e) { if (e && e.message === "nofs") throw e; });
+    });
+    return chain;
+  }
+  // a picture of a PDF page once PDF.js has it (it may still be coming)
+  function pdfObj(page, id) {
+    var objs = /^g_/.test(id) ? page.commonObjs : page.objs;
+    return new Promise(function (res) {
+      var t = setTimeout(function () { res(null); }, 5000);
+      try { objs.get(id, function (v) { clearTimeout(t); res(v); }); } catch (e) { clearTimeout(t); res(null); }
+    });
+  }
+  function seeThrough(cv) {
+    try {
+      var w = Math.min(cv.width, 200), h = Math.min(cv.height, 200), c = document.createElement("canvas");
+      c.width = w; c.height = h;
+      var x = c.getContext("2d", { willReadFrequently: true });
+      x.drawImage(cv, 0, 0, w, h);
+      var d = x.getImageData(0, 0, w, h).data, clear = 0;
+      for (var i = 3; i < d.length; i += 4) if (d[i] < 8) clear++;
+      return clear >= w * h * 0.2;
+    } catch (e) { return false; }
   }
 
   // ---------- PDF as a design (PS-3: Canva's PDF download) ----------
