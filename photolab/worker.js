@@ -7,7 +7,7 @@
 // Images travel as { w, h, data } with their buffers transferred.
 // ============================================================
 /* global importScripts, self */
-importScripts("select.js", "resample.js", "adjust.js", "filters.js", "psd.js", "batchcore.js", "../designkit/fx.js");
+importScripts("select.js", "resample.js", "adjust.js", "filters.js", "psdinfo.js", "psd.js", "xcf.js", "batchcore.js", "../designkit/fx.js");
 
 var PLW = self.PhotoLab;
 
@@ -27,6 +27,7 @@ function run(op, a) {
     case "filter": return filtered(PLW.filters, A, a);
     case "psd": return PLW.psd.read(a.bytes, a.o);
     case "psdWrite": return PLW.psd.write(a.doc);
+    case "xcf": return PLW.xcf.read(a.bytes, a.o);
     case "stack": return PLW.batch.applyStack(a.img, a.stack, A, self.orosDK && self.orosDK.fx);
   }
   throw new Error("op");

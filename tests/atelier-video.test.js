@@ -84,6 +84,7 @@ test("clips: idsIn finds every file id a saved text names (delete check)", () =>
   assert.deepEqual(CL.idsIn(H + ".txt " + H.slice(1) + ".png"), {});
   assert.equal(CL.isFileId(H + ".png"), true);
   assert.equal(CL.isFileId(H + ".m4a"), true);
-  assert.equal(CL.isFileId(H + ".gif"), false);
+  assert.equal(CL.isFileId(H + ".gif"), true);           // a moving GIF (CV-A)
+  assert.equal(CL.isFileId(H + ".bmp"), false);
   assert.equal(CL.isFileId("x" + H + ".png"), false);
 });

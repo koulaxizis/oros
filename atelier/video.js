@@ -37,7 +37,7 @@
   var urls = {};
   // blob: URL of a clip on this device, or null (not synced here yet)
   function url(id) {
-    if (!CL.isVideo(id) && !CL.isSound(id)) return Promise.resolve(null);
+    if (!CL.isVideo(id) && !CL.isSound(id) && !CL.isGif(id)) return Promise.resolve(null);
     if (urls[id]) return urls[id];
     var F = fs();
     if (!F) return Promise.resolve(null);
@@ -48,7 +48,7 @@
   }
   function blob(id) {
     var F = fs();
-    if (!F || (!CL.isVideo(id) && !CL.isSound(id))) return Promise.resolve(null);
+    if (!F || (!CL.isVideo(id) && !CL.isSound(id) && !CL.isGif(id))) return Promise.resolve(null);
     return F.read(pathOf(id)).then(null, function () { return null; });
   }
   function head(b) { return b.slice(0, 16).arrayBuffer().then(function (ab) { return new Uint8Array(ab); }); }
@@ -132,12 +132,33 @@
     }
   }
 
+  // A moving GIF (file or bytes) → its clip id "<sha256>.gif", kept
+  // on the orOS disk; null when it has a single frame (a still picture)
+  function importGif(file) {
+    var F = fs(), G = window.AtelierGifDec;
+    if (!F || !G) return Promise.resolve(null);
+    var b = file instanceof Blob ? file : new Blob([file], { type: "image/gif" });
+    if (b.size > CL.MAX_VIDEO) return Promise.resolve(null);
+    return b.arrayBuffer().then(function (ab) {
+      var u = new Uint8Array(ab);
+      if (!G.isGif(u) || G.frameCount(u) < 2) return null;
+      return sha256(b).then(function (h) {
+        var id = h + ".gif";
+        return F.stat(pathOf(id)).then(function () { return id; }, function () { return F.write(pathOf(id), b).then(function () { return id; }); });
+      });
+    }).then(null, function () { return null; });
+  }
+
   // A clip from a package: the hash and the type are checked.
   function put(id, b) {
     var F = fs();
-    if (!F || (!CL.isVideo(id) && !CL.isSound(id))) return Promise.reject(fail("badid"));
+    if (!F || (!CL.isVideo(id) && !CL.isSound(id) && !CL.isGif(id))) return Promise.reject(fail("badid"));
     return Promise.all([sha256(b), head(b)]).then(function (r) {
       if (r[0] + id.slice(64) !== id) throw fail("hash");
+      if (CL.isGif(id)) {
+        if (!window.AtelierGifDec || !window.AtelierGifDec.isGif(r[1])) throw fail("type");
+        return F.stat(pathOf(id)).then(function () { return null; }, function () { return F.write(pathOf(id), b); });
+      }
       var k = CL.sniff(r[1]), ext = CL.extOf(id);
       if (!k || [CL.extFor(k, true), CL.extFor(k, false)].indexOf(ext) < 0) throw fail("type");
       return F.stat(pathOf(id)).then(function () { return null; }, function () { return F.write(pathOf(id), b); });
@@ -176,6 +197,34 @@
         AT.renderDrawer();
       }, function (e) { AT.toast(errText(e)); });
     });
+  }
+
+  // ---------- moving GIFs ----------
+  // id → Promise<{ cv, dur, show(t) } | null>; cv is the canvas drawn
+  // in the photo's place (it acts as a playing video for draw.js)
+  var gifCache = {};
+  function gifPlayer(id) {
+    if (gifCache[id]) return gifCache[id];
+    var p = gifCache[id] = blob(id).then(function (b) {
+      if (!b) { delete gifCache[id]; return null; }
+      return b.arrayBuffer().then(function (ab) {
+        var G = window.AtelierGifDec, gif = G.decode(new Uint8Array(ab));
+        var cv = document.createElement("canvas");
+        cv.width = gif.fw; cv.height = gif.fh;
+        cv.videoWidth = gif.fw; cv.videoHeight = gif.fh; cv.readyState = 4;
+        var cx = cv.getContext("2d"), shown = -1;
+        var imgs = gif.frames.map(function (f) { return new ImageData(f.rgba, gif.fw, gif.fh); });
+        function show(t) {
+          var i = G.frameAt(gif, t);
+          if (i === shown) return;
+          shown = i;
+          cx.putImageData(imgs[i], 0, 0);
+        }
+        show(0);
+        return { cv: cv, dur: gif.dur, show: show };
+      });
+    }).then(null, function () { delete gifCache[id]; return null; });
+    return p;
   }
 
   // ---------- session: clips in step with the film ----------
@@ -218,6 +267,14 @@
         return ready(v);
       }));
     });
+    // moving GIFs (ext.gif, CV-A): a canvas that shows the frame of
+    // the moment (decoded once per clip by gifdec.js)
+    var gifs = {};
+    doc.items.forEach(function (it) {
+      var id = it.ext && it.ext.gif;
+      if (!pageOf[it.pg] || it.hide || !it.ax || !CL.isGif(id) || !window.AtelierGifDec) return;
+      jobs.push(gifPlayer(id).then(function (g) { if (g) gifs[it.id] = { it: it, g: g }; }));
+    });
     plan.forEach(function (s) {
       if (!s || snds[s.id]) return;
       snds[s.id] = null;
@@ -251,6 +308,10 @@
         var r = want(e.v, w, live);
         if (r) waits.push(r);
       });
+      Object.keys(gifs).forEach(function (id) {
+        var e = gifs[id];
+        if (e.it.pg === cur.pg) e.g.show(p.local);
+      });
       var sp = plan[p.i];
       Object.keys(snds).forEach(function (id) {
         var v = snds[id];
@@ -266,12 +327,18 @@
     return {
       timeline: tl,
       prepare: function () { return Promise.all(jobs); },
-      empty: function () { return !Object.keys(vids).length && !Object.keys(snds).some(function (k) { return snds[k]; }); },
+      empty: function () { return !Object.keys(vids).length && !Object.keys(gifs).length && !Object.keys(snds).some(function (k) { return snds[k]; }); },
       hasVideo: function () { return Object.keys(vids).length > 0; },
       hasSound: function () {
         return Object.keys(vids).some(function (k) { return !vids[k].it.ax.mu; }) || Object.keys(snds).some(function (k) { return snds[k]; });
       },
-      media: function (it) { var e = vids[it.id]; return e ? e.v : null; },
+      media: function (it) { var e = vids[it.id] || gifs[it.id]; return e ? e.v || e.g.cv : null; },
+      // seconds the page's GIFs need for one round (0: none)
+      gifLen: function (pg) {
+        var n = 0;
+        Object.keys(gifs).forEach(function (k) { if (gifs[k].it.pg === pg) n = Math.max(n, gifs[k].g.dur); });
+        return n;
+      },
       sync: sync,
       // sound of the clips into an AudioContext node (video export)
       connect: function (ctx, dest) {
@@ -422,5 +489,5 @@
     body.appendChild(s);
   }
 
-  AT.video = { upload: upload, importClip: importClip, url: url, blob: blob, put: put, Session: Session, pageSection: pageSection };
+  AT.video = { upload: upload, importClip: importClip, importGif: importGif, gifPlayer: gifPlayer, url: url, blob: blob, put: put, Session: Session, pageSection: pageSection };
 })();

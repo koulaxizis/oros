@@ -240,6 +240,7 @@
       out.layers.push(o);
     });
     if (doc.gd) out.gd = copy(doc.gd);
+    if (doc.gr && doc.gr.length) out.gr = copy(doc.gr);          // layer groups (PS-4): ids are the doc's own
     if (doc.sels && doc.sels.length) {
       out.sels = doc.sels.map(function (v) {
         var o = { id: v.id, name: v.name, x: v.x || 0, y: v.y || 0 };
@@ -286,6 +287,7 @@
       id: C.newProjectId(), m: isInt(o.now) && o.now >= 0 ? o.now : 0,
       name: C.cleanName(src.name) || o.name || "Untitled", w: src.w, h: src.h, layers: [], gd: src.gd
     };
+    if (Array.isArray(src.gr)) raw.gr = src.gr;
     (Array.isArray(src.layers) ? src.layers : []).slice(0, C.MAX_LAYERS * 2).forEach(function (L) {
       if (!L || typeof L !== "object") return;
       var n = {};
