@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.02.02
+- **Layout: Scribus books keep their line breaks and tabs.** Opening a Scribus file now keeps a line break (Shift+Enter) inside its paragraph instead of starting a new, unjustified one, keeps tabs at the file's tab width and each style's tab stops, starts the text after a column or frame break in the next frame, and keeps the empty line after a line break that ends a paragraph. Thin lines drawn with no width show as hairlines, and a small header or page number still fits a short frame. Books opened this way now break their pages much closer to the original.
+
 ## Version 8.02.00
 - **New game: Orbit garden.** The fourth tower defense game: a little round garden on a small moon, where falling sparks spiral in from the rim towards the moonflower. Your thorn bushes, dew sprinklers, sunflowers and snare vines grow on three stone rings, each with one gap, and between waves you turn the rings a step at a time: a gap just behind the sparks makes them walk the long way round past your plants, but the plants turn with their ring. Four gardens in the Quiet orbit, three difficulties and stars that sync between your devices. In the Tower defense group of the Game Center.
 
