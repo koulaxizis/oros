@@ -109,6 +109,7 @@
       "mk.none": "No markers yet.", "mk.add": "Add at the playhead", "mk.default": "Chapter {n}", "mk.added": "Marker at {time}",
       "mk.max": "A project has up to {n} markers", "mk.go": "Go to {time}", "mk.name": "Marker name", "mk.here": "To the playhead", "mk.del": "Delete",
       "mk.delName": "Delete marker {name}", "pod.btn": "Publish as podcast",
+      "host.line": "The show is on another host?", "host.btn": "File for another host", "host.hint": "For a show that stays where it is (Spotify for Creators, for example): upload the MP3 there by hand and paste the description. The MP3 is the episode file with its tags, cover and chapters. No feed and no site are made.", "host.mp3": "Save the MP3", "host.text": "Description to paste (show notes, chapters, credits)", "host.copy": "Copy the description", "host.txt": "Save as .txt", "host.chapters": "Chapters",
       "pod.intro.hint": "Make a show, turn this project into one of its episodes, and download a ready site (feed, episodes, chapters, cover) to put on GitHub Pages, Netlify, Cloudflare Pages or a server of your own. Podcast apps follow its feed address.",
       "pod.sec.show": "Show", "pod.f.show": "Show", "pod.newShow": "New show…", "pod.untitledShow": "Untitled show", "pod.f.title": "Title",
       "pod.f.author": "Made by", "pod.f.desc": "Description", "pod.f.lang": "Language", "pod.f.type": "Order", "pod.type.episodic": "Newest first",
@@ -342,6 +343,7 @@
       "mk.none": "Δεν υπάρχουν σημάδια ακόμη.", "mk.add": "Προσθήκη στον δείκτη", "mk.default": "Κεφάλαιο {n}", "mk.added": "Σημάδι στο {time}",
       "mk.max": "Ένα έργο έχει έως {n} σημάδια", "mk.go": "Μετάβαση στο {time}", "mk.name": "Όνομα σημαδιού", "mk.here": "Στον δείκτη", "mk.del": "Διαγραφή",
       "mk.delName": "Διαγραφή του σημαδιού {name}", "pod.btn": "Δημοσίευση ως podcast",
+      "host.line": "Η εκπομπή είναι σε άλλο host;", "host.btn": "Αρχείο για άλλο host", "host.hint": "Για εκπομπή που μένει εκεί που είναι (για παράδειγμα στο Spotify for Creators): ανέβασε εκεί το MP3 με το χέρι και επικόλλησε την περιγραφή. Το MP3 είναι το αρχείο του επεισοδίου με τα στοιχεία, το εξώφυλλο και τα κεφάλαιά του. Δεν φτιάχνεται feed ούτε site.", "host.mp3": "Αποθήκευση του MP3", "host.text": "Περιγραφή για επικόλληση (σημειώσεις, κεφάλαια, credits)", "host.copy": "Αντιγραφή της περιγραφής", "host.txt": "Αποθήκευση ως .txt", "host.chapters": "Κεφάλαια",
       "pod.intro.hint": "Φτιάξε μια εκπομπή, κάνε αυτό το έργο επεισόδιό της και κατέβασε έτοιμο site (feed, επεισόδια, κεφάλαια, εξώφυλλο) για να το ανεβάσεις σε GitHub Pages, Netlify, Cloudflare Pages ή δικό σου server. Οι εφαρμογές podcast ακολουθούν τη διεύθυνση του feed.",
       "pod.sec.show": "Εκπομπή", "pod.f.show": "Εκπομπή", "pod.newShow": "Νέα εκπομπή…", "pod.untitledShow": "Εκπομπή χωρίς τίτλο", "pod.f.title": "Τίτλος",
       "pod.f.author": "Δημιουργός", "pod.f.desc": "Περιγραφή", "pod.f.lang": "Γλώσσα", "pod.f.type": "Σειρά", "pod.type.episodic": "Πρώτα τα νεότερα",
@@ -430,7 +432,7 @@
       "oros.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "oros.bad": "Το {name} δεν είναι έργο Studio που διαβάζει το orOS",
       "oros.missing": "{n} αρχεία ήχου δεν έχουν φτάσει ακόμη σε αυτή τη συσκευή, οπότε έμειναν έξω", "oros.fail": "Το αρχείο orOS δεν φτιάχτηκε",
       "oros.w.tempo": "Ρυθμός", "oros.w.length": "Διάρκεια", "oros.w.audio": "Ήχος", "oros.w.inst": "Όργανο", "oros.w.clips": "clips",
-      "oros.w.notes": "νότες", "oros.w.muted": "σίγαση", "oros.w.solo": "σόλο", "oros.w.markers": "Δείκτες",
+      "oros.w.notes": "νότες", "oros.w.muted": "σίγαση", "oros.w.solo": "σόλο", "oros.w.markers": "Σημάδια",
       "toast.noMic": "Δεν άνοιξε μικρόφωνο ή είσοδος", "toast.recMax": "Μια λήψη κρατά έως 30 λεπτά",
       "toast.recSaved": "Η λήψη αποθηκεύτηκε στο {name}", "toast.recFail": "Η λήψη δεν αποθηκεύτηκε",
       "toast.armed": "Η ηχογράφηση πάει στο {name}", "toast.noRec": "Αυτός ο browser δεν ηχογραφεί εδώ",
@@ -3297,6 +3299,7 @@
         return "";
       },
       fs: musicFs, dialog: dialogHost, pickLocal: function (accept) { return localPickFiles(accept).then(function (l) { return l && l[0] || null; }); },
+      credits: function () { return proj ? creditsText(C.credits(data, proj.id).concat(smpCredits())) : ""; },
       saveFile: saveFileP, toast: showToast, showDlg: showDlg, hideDlg: hideDlg, radioChips: radioChips, shellOpen: shellOpen
     });
   }

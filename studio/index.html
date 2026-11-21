@@ -585,6 +585,10 @@
           <span id="pod-ep-tr-state" class="hint small"></span>
           <button type="button" id="pod-ep-tr" class="chip" aria-haspopup="dialog" data-i18n="tr.btn">Transcript</button>
         </div>
+        <div class="pod-ch">
+          <span class="hint small" data-i18n="host.line">The show is on another host?</span>
+          <button type="button" id="pod-ep-host" class="chip" aria-haspopup="dialog" data-i18n="host.btn">File for another host</button>
+        </div>
         <p id="pod-ep-file" class="hint small"></p>
         <p id="pod-ep-err" class="hint small" aria-live="polite"></p>
         <div class="dlg-actions">
@@ -675,6 +679,24 @@
       <button type="button" id="tr-del" class="chip danger" data-i18n="tr.del">Delete the transcript</button>
       <button type="button" id="tr-close" class="chip" data-i18n="btn.close">Close</button>
       <button type="button" id="tr-save" class="chip primary" data-i18n="tr.save">Save</button>
+    </div>
+  </dialog>
+
+  <!-- A file for another host (Spotify for Creators…): the MP3 and notes to paste, no feed, no site -->
+  <dialog id="host-dlg" class="wide" aria-labelledby="host-h">
+    <h2 id="host-h" data-i18n="host.btn">File for another host</h2>
+    <p class="hint small" data-i18n="host.hint"></p>
+    <p id="host-file" class="hint small"></p>
+    <p id="host-status" class="hint small" aria-live="polite"></p>
+    <div class="dlg-actions spread">
+      <button type="button" id="host-mp3" class="chip primary" data-i18n="host.mp3">Save the MP3</button>
+    </div>
+    <label class="field" for="host-text" data-i18n="host.text">Description to paste (show notes, chapters, credits)</label>
+    <textarea id="host-text" rows="12" readonly></textarea>
+    <div class="dlg-actions spread">
+      <button type="button" id="host-copy" class="chip" data-i18n="host.copy">Copy the description</button>
+      <button type="button" id="host-txt" class="chip" data-i18n="host.txt">Save as .txt</button>
+      <button type="button" id="host-close" class="chip primary" data-i18n="btn.close">Close</button>
     </div>
   </dialog>
 

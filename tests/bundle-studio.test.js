@@ -192,9 +192,9 @@ test("markers (the episode's chapters) ride along in project.mk, with fresh ids 
   const mk = [{ id: "kbbbbbb0002", t: 754.5, n: "Second" }, { id: "kaaaaaa0001", t: 0, n: "Intro" }];
   d.projects = d.projects.map((p) => p.id === "pabcdef1" ? Object.assign({}, p, { mk, m: p.m + 1 }) : p);
   const data = C.mergeStudio(d, d);
-  const built = P.build(data, "pabcdef1", keys, { words: { markers: "Δείκτες" } });
+  const built = P.build(data, "pabcdef1", keys, { words: { markers: "Σημάδια" } });
   assert.deepEqual(built.content.project.mk, [{ id: "kaaaaaa0001", t: 0, n: "Intro" }, { id: "kbbbbbb0002", t: 754.5, n: "Second" }]);
-  assert.match(built.tracksTxt, /Δείκτες:\n   0:00\.000  Intro\n   12:34\.500  Second\n/);
+  assert.match(built.tracksTxt, /Σημάδια:\n   0:00\.000  Intro\n   12:34\.500  Second\n/);
   // through a real bundle and back
   const bytes = await B.write({ mime: MIME, app: "studio", schema: "studio/1", content: built.content, meta: { title: "Song" }, media: {} });
   const back = await B.read(bytes, { mime: MIME, big: true });
