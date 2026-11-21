@@ -119,7 +119,7 @@
   }
   // Stops the run now: nothing more is changed, what it changed so far stays (with Undo).
   function stopRun(by) { if (run && run.stop) run.stop(by); }
-  var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1, addfont: 1 };
+  var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1, addfont: 1, placepage: 1 };
   // defstyle with a font Layout must look up (the disk, Fontsource)
   function slowStep(st) { return PRO_ASYNC[st.op] || ((st.op === "defstyle" || st.op === "masterfield") && st.font && window.LayoutPro && !window.LayoutPro.fontFor({ setup: {} }, st.font)); }
   function edit(rq) {
