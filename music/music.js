@@ -103,6 +103,63 @@
       "o.err": "No answer from {s}.", "o.busy": "Too many requests to {s}. Try again in a minute.", "o.offline": "You are offline.",
       "o.retry": "Try again", "o.closed": "This item has no open licence, so Music does not play it.", "o.wait": "Searching online…",
       "o.albums": "Albums · {s}", "o.songs": "Songs · {s}",
+      "fl.btn": "Filters",
+      "fl.btnN": "Filters ({n} on)",
+      "fl.title": "Search filters",
+      "fl.hint": "Filters work with or without words. A source that cannot use a filter is left out, so nothing shown ignores it.",
+      "fl.any": "Any",
+      "fl.apply": "Show results",
+      "fl.clear": "Clear filters",
+      "fl.active": "Active filters",
+      "fl.remove": "Remove filter {f}",
+      "fl.g.g": "Genre",
+      "fl.g.cc": "Country",
+      "fl.g.dur": "Length",
+      "fl.g.lic": "Licence",
+      "fl.g.y": "Year",
+      "fl.g.vi": "Vocals",
+      "fl.g.mood": "Mood",
+      "fl.g.sp": "Tempo",
+      "fl.g.gd": "Voice",
+      "fl.g.ae": "Sound",
+      "fl.g.off": "Offline",
+      "fl.ccNote": "Jamendo and live recordings",
+      "fl.dur.s": "Under 2 min",
+      "fl.dur.m": "2–5 min",
+      "fl.dur.l": "5–10 min",
+      "fl.dur.xl": "Over 10 min",
+      "fl.pd": "Public domain or CC0",
+      "fl.pdHint": "No conditions at all.",
+      "fl.com": "Allows commercial use",
+      "fl.comHint": "Leaves out NC (non-commercial) licences.",
+      "fl.mod": "Allows changes and remixes",
+      "fl.modHint": "Leaves out ND (no derivatives) licences.",
+      "fl.off": "Can be kept offline",
+      "fl.offHint": "Only songs whose licence and source allow a copy on this device.",
+      "fl.y0": "From",
+      "fl.y1": "To",
+      "fl.from": "from {y}",
+      "fl.to": "until {y}",
+      "fl.vocal": "With vocals",
+      "fl.instr": "Instrumental",
+      "fl.sp.verylow": "Very slow",
+      "fl.sp.low": "Slow",
+      "fl.sp.medium": "Medium",
+      "fl.sp.high": "Fast",
+      "fl.sp.veryhigh": "Very fast",
+      "fl.gd.female": "Female voice",
+      "fl.gd.male": "Male voice",
+      "fl.ae.acoustic": "Acoustic",
+      "fl.ae.electric": "Electric",
+      "fl.sort": "Order",
+      "fl.sort.rel": "Best match",
+      "fl.sort.pop": "Most popular",
+      "fl.sort.new": "Newest",
+      "fl.skipped": "Left out:",
+      "fl.skipOne": "{s} (cannot filter by {f})",
+      "fl.skipMine": "Your music is left out: it cannot be filtered by {f}.",
+      "fl.mine": "Your music",
+      "fl.needOpen": "Turn on free music online in Settings to search the open catalogues with filters.",
       "m.share": "Share…", "sh.title": "Share this song", "sh.name": "Send its name as a link",
       "sh.file": "Send the file itself", "sh.fileSub": "A song on this device: send only its name, or the file itself (only if it is yours to give).",
       "sh.big": "Too big to send as a file (100 MB at most).", "sh.fileNo": "This device cannot send this file. Send its name instead.",
@@ -272,6 +329,63 @@
       "o.err": "Δεν ήρθε απάντηση από {s}.", "o.busy": "Πολλά αιτήματα προς {s}. Δοκίμασε ξανά σε ένα λεπτό.", "o.offline": "Δεν υπάρχει σύνδεση.",
       "o.retry": "Δοκίμασε ξανά", "o.closed": "Αυτό δεν έχει ανοιχτή άδεια, οπότε η Μουσική δεν το παίζει.", "o.wait": "Αναζήτηση online…",
       "o.albums": "Άλμπουμ · {s}", "o.songs": "Τραγούδια · {s}",
+      "fl.btn": "Φίλτρα",
+      "fl.btnN": "Φίλτρα ({n} ενεργά)",
+      "fl.title": "Φίλτρα αναζήτησης",
+      "fl.hint": "Τα φίλτρα δουλεύουν με λέξεις ή χωρίς. Μια πηγή που δεν μπορεί να εφαρμόσει ένα φίλτρο παραλείπεται, ώστε τίποτα από όσα βλέπεις να μην το αγνοεί.",
+      "fl.any": "Όλα",
+      "fl.apply": "Εμφάνιση αποτελεσμάτων",
+      "fl.clear": "Καθαρισμός φίλτρων",
+      "fl.active": "Ενεργά φίλτρα",
+      "fl.remove": "Αφαίρεση φίλτρου {f}",
+      "fl.g.g": "Είδος",
+      "fl.g.cc": "Χώρα",
+      "fl.g.dur": "Διάρκεια",
+      "fl.g.lic": "Άδεια",
+      "fl.g.y": "Χρονιά",
+      "fl.g.vi": "Φωνητικά",
+      "fl.g.mood": "Διάθεση",
+      "fl.g.sp": "Τέμπο",
+      "fl.g.gd": "Φωνή",
+      "fl.g.ae": "Ήχος",
+      "fl.g.off": "Χωρίς σύνδεση",
+      "fl.ccNote": "Jamendo και ζωντανές ηχογραφήσεις",
+      "fl.dur.s": "Κάτω από 2 λεπτά",
+      "fl.dur.m": "2–5 λεπτά",
+      "fl.dur.l": "5–10 λεπτά",
+      "fl.dur.xl": "Πάνω από 10 λεπτά",
+      "fl.pd": "Κοινό κτήμα ή CC0",
+      "fl.pdHint": "Χωρίς κανέναν όρο.",
+      "fl.com": "Επιτρέπει εμπορική χρήση",
+      "fl.comHint": "Αφήνει έξω τις άδειες NC (μη εμπορική χρήση).",
+      "fl.mod": "Επιτρέπει αλλαγές και remix",
+      "fl.modHint": "Αφήνει έξω τις άδειες ND (χωρίς παράγωγα έργα).",
+      "fl.off": "Μπορεί να μείνει χωρίς σύνδεση",
+      "fl.offHint": "Μόνο τραγούδια που η άδεια και η πηγή τους επιτρέπουν αντίγραφο σε αυτή τη συσκευή.",
+      "fl.y0": "Από",
+      "fl.y1": "Έως",
+      "fl.from": "από {y}",
+      "fl.to": "έως {y}",
+      "fl.vocal": "Με φωνητικά",
+      "fl.instr": "Ορχηστρικό",
+      "fl.sp.verylow": "Πολύ αργό",
+      "fl.sp.low": "Αργό",
+      "fl.sp.medium": "Μέτριο",
+      "fl.sp.high": "Γρήγορο",
+      "fl.sp.veryhigh": "Πολύ γρήγορο",
+      "fl.gd.female": "Γυναικεία φωνή",
+      "fl.gd.male": "Ανδρική φωνή",
+      "fl.ae.acoustic": "Ακουστικό",
+      "fl.ae.electric": "Ηλεκτρικό",
+      "fl.sort": "Σειρά",
+      "fl.sort.rel": "Καλύτερη αντιστοιχία",
+      "fl.sort.pop": "Πιο δημοφιλή",
+      "fl.sort.new": "Πιο πρόσφατα",
+      "fl.skipped": "Παραλείφθηκαν:",
+      "fl.skipOne": "{s} (δεν φιλτράρει κατά {f})",
+      "fl.skipMine": "Η μουσική σου παραλείπεται: δεν φιλτράρεται κατά {f}.",
+      "fl.mine": "Η μουσική σου",
+      "fl.needOpen": "Άνοιξε την ελεύθερη μουσική online στις Ρυθμίσεις για να ψάχνεις στους ανοιχτούς καταλόγους με φίλτρα.",
       "m.share": "Κοινοποίηση…", "sh.title": "Κοινοποίηση τραγουδιού", "sh.name": "Αποστολή του ονόματος ως σύνδεσμο",
       "sh.file": "Αποστολή του ίδιου του αρχείου", "sh.fileSub": "Τραγούδι σε αυτή τη συσκευή: στείλε μόνο το όνομά του ή το ίδιο το αρχείο (μόνο αν σου ανήκει να το δώσεις).",
       "sh.big": "Πολύ μεγάλο για αποστολή ως αρχείο (έως 100 MB).", "sh.fileNo": "Αυτή η συσκευή δεν μπορεί να στείλει αυτό το αρχείο. Στείλε καλύτερα το όνομά του.",
@@ -454,13 +568,14 @@
     eq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><path d="M4 14h4M10 8h4M16 16h4"/></svg>',
     viz: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="3.5"/></svg>',
     expand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>'
   };
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, viz: { on: false, st: "glow" } };
+    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, viz: { on: false, st: "glow" }, fl: {} };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
@@ -472,6 +587,8 @@
         if (["all", "jm", "ia", "ov", "cc"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
         if (o.ly === "on" || o.ly === "off") p.ly = o.ly;
         if (o.mb === true) p.mb = true;
+        // MU-FIND1: the search filters (open.js normFilter).
+        if (o.fl && typeof o.fl === "object" && window.OrosMusicOpen) p.fl = window.OrosMusicOpen.normFilter(o.fl);
         // MU-VIZ: the light show of the full player (on, style).
         if (o.viz && typeof o.viz === "object") {
           p.viz.on = o.viz.on === true;
@@ -604,9 +721,11 @@
       playPending();
     });
   }
-  function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.albums, more: r.more }; }); }; }
-  function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.tracks, more: r.more }; }); }; }
-  function fCc(o) { return function (page) { return O.ccSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.tracks, more: r.more }; }); }; }
+  // o.f = search filters (MU-FIND1): what a source sends back is checked again here.
+  function keepT(o, l) { return o.f ? l.filter(function (r) { return O.trackPasses(r, o.f); }) : l; }
+  function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: o.f ? r.albums.filter(function (a) { return O.albumPasses(a, o.f); }) : r.albums, more: r.more }; }); }; }
+  function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  function fCc(o) { return function (page) { return O.ccSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   // Jamendo songs asked in more than one way (a mood, MU-MOOD2): page 1
   // goes down the list until one way answers with songs, later pages
   // keep that way.
@@ -628,6 +747,7 @@
       var q = Object.assign({}, o, { page: page });
       if (o.albums) return O.jmAlbums(q).then(function (r) { return { list: r.albums, more: r.more }; });
       if (o.radios) return O.jmRadios().then(function (r) { return { list: r.radios, more: false }; });
+      if (o.f) return O.jmFiltered(q).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; });
       return O.jmTracks(q).then(function (r) { return { list: r.tracks, more: r.more }; });
     };
   }
@@ -2425,8 +2545,19 @@
       clearTimeout(onlineTimer);
       if (onlineQ !== searchQ.trim()) { onlineQ = searchQ.trim(); refresh(); }
     });
-    bar.appendChild(inp);
+    var row = el("div", "search-row");
+    row.appendChild(inp);
+    if (O) {
+      var nOn = O.groupsOf(FL()).length;
+      var fb = button(t("fl.btn"), "icon-btn fl-btn" + (nOn ? " on" : ""), filtersDlg, I.filter);
+      fb.id = "fl-btn";
+      fb.setAttribute("aria-haspopup", "dialog");
+      if (nOn) { fb.setAttribute("aria-label", t("fl.btnN", { n: nOn })); fb.title = t("fl.btnN", { n: nOn }); fb.appendChild(el("span", "fl-n", String(nOn))); }
+      row.appendChild(fb);
+    }
+    bar.appendChild(row);
     m.appendChild(bar);
+    if (O && O.filterOn(FL())) m.appendChild(filterChips());
     var res = el("div", "");
     res.id = "search-res";
     m.appendChild(res);
@@ -2434,6 +2565,7 @@
   }
   function searchResults(box) {
     var q = searchQ.trim();
+    if (!q && O && O.filterOn(FL())) { exploreResults(box); return; }
     if (!q) {
       if (openOn()) {
         box.appendChild(el("h2", "sub-h", t("home.genres")));
@@ -2467,7 +2599,9 @@
       } else box.appendChild(el("p", "empty", t("search.hint")));
       return;
     }
-    var r = C.search(tracks, q, LANG);
+    var F = FL(), fOn = !!(O && O.filterOn(F)), locMiss = fOn ? O.filterMissing("loc", F) : [];
+    var r = fOn && locMiss.length ? { songs: [], albums: [], artists: [] } : C.search(fOn ? tracks.filter(function (x) { return O.localPasses(x, F); }) : tracks, q, LANG);
+    if (fOn && locMiss.length) box.appendChild(el("p", "dim small o-note fl-skip", t("fl.skipMine", { f: missText(locMiss) })));
     var w = C.words(q);
     var pls = D().pls.filter(function (p) { var f = C.fold(p.n); return w.every(function (x) { return f.indexOf(x) >= 0; }); });
     if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !openOn() && !svLib().length && !A) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
@@ -2487,8 +2621,8 @@
       box.appendChild(el("h2", "sub-h", t("sec.pls")));
       var cp = el("div", "cards"); pls.forEach(function (p) { cp.appendChild(plCard(p)); }); box.appendChild(cp);
     }
-    if (SV && q.length >= 2) serverResults(box, q);
-    if (A && O && q.length >= 2) mbResults(box, q);
+    if (SV && q.length >= 2 && !fOn) serverResults(box, q);
+    if (A && O && q.length >= 2 && !fOn) mbResults(box, q);
     if (openOn() && q.length >= 2) onlineResults(box, q);
   }
   var onlineQ = "", onlineTimer = null;
@@ -2502,9 +2636,13 @@
     });
     sec.appendChild(chips);
     if (onlineQ !== q) { sec.appendChild(el("p", "dim small o-note", t("o.wait"))); return; }
-    var all = prefs.osrc === "all", src = { kind: "osearch", id: q, n: q };
-    if (all || prefs.osrc === "ia") {
-      var kI = "s|ia|" + q, fi = feed(kI, fIa({ q: q }));
+    var all = prefs.osrc === "all", src = { kind: "osearch", id: q, n: q || t("fl.title") };
+    // MU-FIND1: a source that cannot honour a filter is left out, with a line saying why.
+    var F = FL(), fOn = O.filterOn(F), sig = fOn ? "|" + O.filterSig(F) : "", skipped = [];
+    var o = fOn ? { q: q, f: F } : { q: q };
+    var miss = function (sk) { var l = fOn ? O.filterMissing(sk, F) : []; if (l.length) skipped.push(t("fl.skipOne", { s: srcName(sk), f: missText(l) })); return l.length > 0; };
+    if ((all || prefs.osrc === "ia") && !miss("ia")) {
+      var kI = "s|ia|" + q + sig, fi = feed(kI, fIa(o));
       sec.appendChild(el("h3", "sub-h", t("o.albums", { s: srcName("ia") })));
       var ci = el("div", all ? "cards" : "grid");
       fi.list.forEach(function (a) { ci.appendChild(oAlbumCard(a)); });
@@ -2513,11 +2651,160 @@
     }
     ["jm", "ov", "cc"].forEach(function (sk) {
       if (!all && prefs.osrc !== sk) return;
-      var k = "s|" + sk + "|" + q, f = feed(k, sk === "jm" ? fJm({ q: q }) : sk === "ov" ? fOv({ q: q }) : fCc({ q: q }));
+      if (miss(sk)) return;
+      var k = "s|" + sk + "|" + q + sig, f = feed(k, sk === "jm" ? fJm(o) : sk === "ov" ? fOv(o) : fCc(o));
       sec.appendChild(el("h3", "sub-h", t("o.songs", { s: srcName(sk) })));
       if (f.list.length) sec.appendChild(rowList(f.list, { src: src }));
       feedStatus(sec, k, srcName(sk));
     });
+    if (skipped.length) {
+      var note = el("div", "o-note fl-skip");
+      note.appendChild(el("span", "dim small", t("fl.skipped") + " " + skipped.join(" · ")));
+      sec.appendChild(note);
+    }
+  }
+  // ---------- Search filters (MU-FIND1) ----------
+  function FL() { return O ? O.normFilter(prefs.fl) : {}; }
+  function setFL(F) { prefs.fl = O ? O.normFilter(F) : {}; savePrefs(); renderKeepScroll(); }
+  // "genre, country" for the groups a source cannot honour.
+  function missText(groups) {
+    return groups.map(function (k) { var w = t("fl.g." + k); return LANG === "de" ? w : w.toLocaleLowerCase(loc()); }).join(", ");
+  }
+  function durName(d) { return t("fl.dur." + d); }
+  // The value of one group, as a chip shows it.
+  function groupText(k, F) {
+    if (k === "g") return O.genreName(F.g, LANG);
+    if (k === "cc") return regionName(F.cc);
+    if (k === "dur") return durName(F.dur);
+    if (k === "lic") return [F.pd ? t("fl.pd") : "", F.com ? t("fl.com") : "", F.mod ? t("fl.mod") : ""].filter(Boolean).join(" + ");
+    if (k === "y") return F.y0 && F.y1 ? F.y0 + "–" + F.y1 : F.y0 ? t("fl.from", { y: F.y0 }) : t("fl.to", { y: F.y1 });
+    if (k === "vi") return t(F.vi === "v" ? "fl.vocal" : "fl.instr");
+    if (k === "mood") return O.moodName(F.mood, LANG);
+    if (k === "sp") return t("fl.sp." + F.sp);
+    if (k === "gd") return t("fl.gd." + F.gd);
+    if (k === "ae") return t("fl.ae." + F.ae);
+    if (k === "off") return t("fl.off");
+    return "";
+  }
+  var GROUP_KEYS = { g: ["g"], cc: ["cc"], dur: ["dur"], lic: ["pd", "com", "mod"], y: ["y0", "y1"], vi: ["vi"], mood: ["mood"], sp: ["sp"], gd: ["gd"], ae: ["ae"], off: ["off"] };
+  function filterChips() {
+    var F = FL(), row = el("div", "chips wrap fl-chips");
+    row.setAttribute("aria-label", t("fl.active"));
+    O.groupsOf(F).forEach(function (k) {
+      var b = button("", "chip on fl-chip", function () {
+        var G = Object.assign({}, F);
+        GROUP_KEYS[k].forEach(function (x) { delete G[x]; });
+        setFL(G);
+      });
+      var label = t("fl.g." + k) + ": " + groupText(k, F);
+      b.appendChild(el("span", "", groupText(k, F)));
+      b.appendChild(el("span", "fl-x", "×"));
+      b.setAttribute("aria-label", t("fl.remove", { f: label }));
+      b.title = t("fl.remove", { f: label });
+      row.appendChild(b);
+    });
+    row.appendChild(button(t("fl.clear"), "chip", function () { setFL({ sort: F.sort }); }));
+    return row;
+  }
+  // No words, filters on: the songs on this device that pass, then the open catalogues.
+  function exploreResults(box) {
+    var F = FL(), miss = O.filterMissing("loc", F);
+    if (tracks.length) {
+      if (miss.length) box.appendChild(el("p", "dim small o-note fl-skip", t("fl.skipMine", { f: missText(miss) })));
+      else {
+        var mine = C.sortTracks(tracks.filter(function (x) { return O.localPasses(x, F); }), "title", LANG);
+        box.appendChild(el("h2", "sub-h", t("fl.mine")));
+        if (mine.length) box.appendChild(rowList(mine.slice(0, 100), { src: { kind: "search", id: "", n: t("fl.title") } }));
+        else box.appendChild(el("p", "dim small o-note", t("o.none")));
+      }
+    }
+    if (openOn()) onlineResults(box, "");
+    else box.appendChild(el("p", "empty", t("fl.needOpen")));
+  }
+  function filtersDlg() {
+    var F = FL();
+    var dlg = makeDialog("mu-filters", "menu-dlg fl-dlg");
+    dlg.setAttribute("aria-labelledby", "fl-title");
+    var form = el("form", "");
+    form.method = "dialog";
+    var h = el("h2", "dlg-title", t("fl.title"));
+    h.id = "fl-title";
+    form.appendChild(h);
+    form.appendChild(el("p", "dim small dlg-sub", t("fl.hint")));
+    var grid = el("div", "fl-grid");
+    function sel(label, opts, val, note) {
+      var lab = el("label", "field");
+      lab.appendChild(el("span", "dim small", label + (note ? " · " + note : "")));
+      var s0 = el("select");
+      opts.forEach(function (x) { var o = el("option", "", x[1]); o.value = x[0]; if (String(val || "") === x[0]) o.selected = true; s0.appendChild(o); });
+      lab.appendChild(s0);
+      grid.appendChild(lab);
+      return s0;
+    }
+    var any = [["", t("fl.any")]];
+    var gS = sel(t("fl.g.g"), any.concat(O.OPEN_GENRES.map(function (g) { return [g[0], O.genreName(g[0], LANG)]; })), F.g);
+    var col = typeof Intl !== "undefined" && Intl.Collator ? new Intl.Collator(loc()) : null;
+    var ccs = O.countryCodes().map(function (c) { return [c, regionName(c)]; }).sort(function (a, b) { return col ? col.compare(a[1], b[1]) : a[1] < b[1] ? -1 : 1; });
+    var cS = sel(t("fl.g.cc"), any.concat(ccs), F.cc, t("fl.ccNote"));
+    var dS = sel(t("fl.g.dur"), any.concat(["s", "m", "l", "xl"].map(function (d) { return [d, durName(d)]; })), F.dur);
+    var vS = sel(t("fl.g.vi"), any.concat([["v", t("fl.vocal")], ["i", t("fl.instr")]]), F.vi);
+    var mS = sel(t("fl.g.mood"), any.concat(O.MOODS.map(function (x) { return [x[0], O.moodName(x[0], LANG)]; })), F.mood, "Jamendo");
+    var pS = sel(t("fl.g.sp"), any.concat(O.SPEEDS.map(function (x) { return [x, t("fl.sp." + x)]; })), F.sp, "Jamendo");
+    var gdS = sel(t("fl.g.gd"), any.concat([["female", t("fl.gd.female")], ["male", t("fl.gd.male")]]), F.gd, "Jamendo");
+    var aS = sel(t("fl.g.ae"), any.concat([["acoustic", t("fl.ae.acoustic")], ["electric", t("fl.ae.electric")]]), F.ae, "Jamendo");
+    var sS = sel(t("fl.sort"), [["", t("fl.sort.rel")], ["pop", t("fl.sort.pop")], ["new", t("fl.sort.new")]], F.sort);
+    form.appendChild(grid);
+    // Years
+    var yr = el("div", "fl-years");
+    function yIn(label, v) {
+      var lab = el("label", "field");
+      lab.appendChild(el("span", "dim small", label));
+      var i0 = el("input");
+      i0.type = "number"; i0.inputMode = "numeric"; i0.min = "1800"; i0.max = "2100"; i0.step = "1"; i0.placeholder = label;
+      if (v) i0.value = String(v);
+      lab.appendChild(i0);
+      yr.appendChild(lab);
+      return i0;
+    }
+    var y0 = yIn(t("fl.y0"), F.y0), y1 = yIn(t("fl.y1"), F.y1);
+    form.appendChild(el("h3", "sub-h", t("fl.g.y")));
+    form.appendChild(yr);
+    // Licence + offline
+    form.appendChild(el("h3", "sub-h", t("fl.g.lic")));
+    function chk(key, label, on, hint) {
+      var lab = el("label", "toggle-row fl-check");
+      var c = el("input");
+      c.type = "checkbox"; c.checked = !!on;
+      lab.appendChild(c);
+      var tx = el("span", "");
+      tx.appendChild(el("span", "", label));
+      if (hint) tx.appendChild(el("span", "dim small fl-hint", hint));
+      lab.appendChild(tx);
+      form.appendChild(lab);
+      return c;
+    }
+    var pdC = chk("pd", t("fl.pd"), F.pd, t("fl.pdHint"));
+    var comC = chk("com", t("fl.com"), F.com, t("fl.comHint"));
+    var modC = chk("mod", t("fl.mod"), F.mod, t("fl.modHint"));
+    form.appendChild(el("h3", "sub-h", t("fl.g.off")));
+    var offC = chk("off", t("fl.off"), F.off, t("fl.offHint"));
+    var row = el("div", "dlg-btns");
+    row.appendChild(button(t("fl.clear"), "txt-btn", function () { dlg.close(); setFL({}); }));
+    row.appendChild(button(t("cancel"), "txt-btn", function () { dlg.close(); }));
+    var ok = el("button", "txt-btn accent", t("fl.apply"));
+    ok.type = "submit";
+    row.appendChild(ok);
+    form.appendChild(row);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var G = { g: gS.value, cc: cS.value, dur: dS.value, vi: vS.value, mood: mS.value, sp: pS.value, gd: gdS.value, ae: aS.value, sort: sS.value,
+        y0: y0.value, y1: y1.value, pd: pdC.checked ? 1 : 0, com: comC.checked ? 1 : 0, mod: modC.checked ? 1 : 0, off: offC.checked ? 1 : 0 };
+      dlg.close();
+      setFL(G);
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+    gS.focus();
   }
   function renderLib(m) {
     var chips = el("div", "chips");

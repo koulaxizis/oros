@@ -457,3 +457,24 @@ dl.info dd { overflow-wrap: anywhere; }
   .fp-head { gap: 0; }
   .fp-head .icon-btn { width: 40px; }
 }
+
+/* Search filters (MU-FIND1) */
+.search-row { display: flex; gap: 8px; align-items: center; }
+.search-row input { flex: 1 1 auto; min-width: 0; }
+.fl-btn { position: relative; flex: 0 0 auto; width: 46px; height: 46px; border-radius: 999px; border: 1px solid var(--border); }
+.fl-btn.on { border-color: var(--accent); }
+.fl-n { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 999px;
+  background: var(--accent); color: var(--accent-ink, #111); font-size: 12px; line-height: 20px; text-align: center; font-weight: 600; }
+.fl-chips { padding-top: 0; }
+.fl-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; }
+.fl-chip > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fl-x { font-size: 16px; line-height: 1; }
+.fl-dlg { width: min(560px, calc(100vw - 24px)); }
+.fl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); column-gap: 12px; }
+.fl-years { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.fl-check { display: flex; gap: 10px; align-items: flex-start; padding: 6px 0; min-height: 44px; cursor: pointer; }
+.fl-check input { width: 20px; height: 20px; margin-top: 2px; flex: 0 0 auto; }
+.fl-check > span { display: flex; flex-direction: column; gap: 2px; }
+.fl-skip { opacity: .9; }
+.fl-years input { min-height: 44px; }
+.fl-dlg select { min-height: 44px; }

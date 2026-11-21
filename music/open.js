@@ -141,10 +141,18 @@
     if (o.creator) parts.push('creator:("' + iaWords(o.creator) + '")');
     if (o.subject) parts.push("subject:(" + iaWords(o.subject) + ")");
     if (o.coll) parts.push("collection:(" + iaWords(o.coll) + ")");
+    var F = o.f ? normFilter(o.f) : null, sort = o.sort;
+    if (F) {
+      if (F.g) parts.push("subject:(" + iaWords(genreWord(F.g)) + ")");
+      if (F.cc && countryEn(F.cc)) parts.push("coverage:(" + iaWords(countryEn(F.cc)) + ")");
+      if (F.y0 || F.y1) parts.push("year:[" + (F.y0 || YEAR_MIN) + " TO " + (F.y1 || 2100) + "]");
+      if (F.pd) parts.push("licenseurl:(*publicdomain*)");
+      if (F.sort === "new") sort = "publicdate desc";
+    }
     parts.push(IA_BASE);
     var p = "q=" + encodeURIComponent(parts.join(" AND "));
     IA_FL.forEach(function (f) { p += "&fl%5B%5D=" + f; });
-    p += "&sort%5B%5D=" + encodeURIComponent(o.sort || "downloads desc");
+    p += "&sort%5B%5D=" + encodeURIComponent(sort || "downloads desc");
     p += "&rows=" + PAGE.ia + "&page=" + Math.max(1, o.page || 1) + "&output=json";
     return "https://archive.org/advancedsearch.php?" + p;
   }
@@ -232,6 +240,14 @@
     if (o.creator) p.creator = String(o.creator).slice(0, 120);
     else if (o.q) p.q = String(o.q).slice(0, 200);
     if (o.tags) p.tags = String(o.tags).slice(0, 120);
+    var F = o.f ? normFilter(o.f) : null;
+    if (F) {
+      // Openverse finds genres as words (its tags hardly name them).
+      if (F.g && !p.creator) p.q = ((p.q ? p.q + " " : "") + genreWord(F.g)).slice(0, 200);
+      if (F.pd) p.license = "cc0,pdm";
+      else if (F.com || F.mod) p.license_type = [F.com ? "commercial" : "", F.mod ? "modification" : ""].filter(Boolean).join(",");
+      if (F.dur) p.length = { s: "shortest,short", m: "medium", l: "medium", xl: "long" }[F.dur];
+    }
     return "https://api.openverse.org/v1/audio/?" + qs(p);
   }
   function ovTrack(x) {
@@ -262,7 +278,15 @@
     var at = (Math.max(1, o.page || 1) - 1) * PAGE.cc + (o.skip > 0 ? Math.floor(o.skip) : 0);
     var p = { f: "json", limit: n, offset: at, sort: o.sort || "rank", ord: "desc" };
     if (o.q) { p.search = String(o.q).slice(0, 120); p.search_type = "all"; }
-    if (o.tags) p.tags = String(o.tags).replace(/[^a-z0-9_,]/gi, "").slice(0, 120);
+    var F = o.f ? normFilter(o.f) : null, tags = o.tags ? [String(o.tags)] : [];
+    if (F) {
+      if (F.g) tags.push(genreCc(F.g));
+      if (F.vi === "i") tags.push("instrumental");
+      if (F.pd) p.lic = "pd";
+      else if (F.com) p.lic = "by";
+      if (F.sort === "new") p.sort = "date";
+    }
+    if (tags.length) p.tags = tags.join(",").replace(/[^a-z0-9_,]/gi, "").slice(0, 120);
     if (o.user) p.user = String(o.user).replace(/[^A-Za-z0-9_.-]/g, "").slice(0, 60);
     return "https://ccmixter.org/api/query?" + qs(p);
   }
@@ -308,6 +332,21 @@
     if (o.tags) p.tags = jmWord(o.tags);
     if (o.mood) p.fuzzytags = jmWord(o.mood);
     if (jmId(o.artist)) p.artist_id = jmId(o.artist);
+    if (Array.isArray(o.artists)) p.artist_id = o.artists.map(jmId).filter(Boolean).slice(0, 100).join("+");
+    var F = o.f ? normFilter(o.f) : null;
+    if (F) {
+      if (F.g && !p.tags) p.tags = jmWord(F.g);
+      if (F.mood && !p.fuzzytags) p.fuzzytags = jmWord(F.mood);
+      if (F.dur) p.durationbetween = DUR[F.dur][0] + "_" + DUR[F.dur][1];
+      if (F.y0 || F.y1) p.datebetween = (F.y0 || 1990) + "-01-01_" + (F.y1 || 2100) + "-12-31";
+      if (F.vi) p.vocalinstrumental = F.vi === "v" ? "vocal" : "instrumental";
+      if (F.sp) p.speed = F.sp;
+      if (F.gd) p.gender = F.gd;
+      if (F.ae) p.acousticelectric = F.ae;
+      // Jamendo answers these two only together (2026-11-21): BY and BY-SA.
+      if (F.com || F.mod) { p.ccnc = "false"; p.ccnd = "false"; }
+      if (F.sort && !o.order) o = Object.assign({}, o, { order: F.sort === "new" ? "releasedate_desc" : "popularity_total" });
+    }
     if (o.order) p.order = String(o.order).replace(/[^a-z_]/g, "");
     else if (!o.q) p.order = "popularity_total";
     return jmUrl("tracks", p);
@@ -322,6 +361,9 @@
   }
   function jmAlbumTracksUrl(id) { return jmUrl("albums/tracks", { id: jmId(id), audioformat: "mp32", imagesize: 300 }); }
   function jmArtistUrl(id) { return jmUrl("artists", { id: jmId(id) }); }
+  // Artists of one country (ISO 3166 alpha-3), for the country filter.
+  function jmCountryUrl(cc) { return jmUrl("artists/locations", { limit: 100, location_country: cc3(cc) }); }
+  function jmParseIds(j) { return jmResults(j).map(function (x) { return jmId(x && x.id); }).filter(Boolean); }
   function jmRadiosUrl() { return jmUrl("radios", { limit: 50, imagesize: 300 }); }
   function jmRadioStreamUrl(id) { return jmUrl("radios/stream", { id: jmId(id) }); }
   function jmResults(j) {
@@ -575,11 +617,154 @@
     if (!jmId(id)) return Promise.reject(new OpenError("id"));
     return getJSON(jmAlbumTracksUrl(id)).then(jmParseAlbum);
   }
+  // Songs with a filter: a country first asks which artists live there.
+  function jmFiltered(o) {
+    o = o || {};
+    var F = normFilter(o.f);
+    if (!F.cc) return jmTracks(o);
+    return getJSON(jmCountryUrl(F.cc)).then(function (j) {
+      var ids = jmParseIds(j);
+      if (!ids.length) return { tracks: [], more: false };
+      return jmTracks(Object.assign({}, o, { artists: ids }));
+    });
+  }
   function jmRadios() { return getJSON(jmRadiosUrl()).then(jmParseRadios); }
   function jmRadio(radio) { return getJSON(jmRadioStreamUrl(radio.id)).then(function (j) { return jmRadioItem(j, radio); }); }
 
+
+  // ---------- 9. Search filters (MU-FIND1) ----------
+  // One filter for every source. F (all keys optional):
+  //   g genre id (OPEN_GENRES), cc country (ISO 3166 alpha-2, upper),
+  //   dur "s" < 2 min | "m" 2–5 | "l" 5–10 | "xl" > 10,
+  //   pd 1 public domain / CC0 only, com 1 commercial use allowed,
+  //   mod 1 changes (remix) allowed, y0 / y1 years,
+  //   vi "v" vocal | "i" instrumental, mood (MOODS id),
+  //   sp tempo (Jamendo speed), gd voice "male" | "female",
+  //   ae "acoustic" | "electric", sort "pop" | "new", off 1 can be kept offline.
+  // A source that cannot honour a filter is left out (filterMissing),
+  // never shown with results that ignore it; what a source sends back
+  // is checked again here (trackPasses / albumPasses).
+  var CC3 = "ADANDAEAREAFAFGAGATGAIAIAALALBAMARMAOAGOAQATAARARGASASMATAUTAUAUSAWABWAXALAAZAZEBABIHBBBRBBDBGDBEBELBFBFABGBGRBHBHRBIBDIBJBENBLBLMBMBMUBNBRNBOBOLBQBESBRBRABSBHSBTBTNBVBVTBWBWABYBLRBZBLZCACANCCCCKCDCODCFCAFCGCOGCHCHECICIVCKCOKCLCHLCMCMRCNCHNCOCOLCRCRICUCUBCVCPVCWCUWCXCXRCYCYPCZCZEDEDEUDJDJIDKDNKDMDMADODOMDZDZAECECUEEESTEGEGYEHESHERERIESESPETETHFIFINFJFJIFKFLKFMFSMFOFROFRFRAGAGABGBGBRGDGRDGEGEOGFGUFGGGGYGHGHAGIGIBGLGRLGMGMBGNGINGPGLPGQGNQGRGRCGSSGSGTGTMGUGUMGWGNBGYGUYHKHKGHMHMDHNHNDHRHRVHTHTIHUHUNIDIDNIEIRLILISRIMIMNININDIOIOTIQIRQIRIRNISISLITITAJEJEYJMJAMJOJORJPJPNKEKENKGKGZKHKHMKIKIRKMCOMKNKNAKPPRKKRKORKWKWTKYCYMKZKAZLALAOLBLBNLCLCALILIELKLKALRLBRLSLSOLTLTULULUXLVLVALYLBYMAMARMCMCOMDMDAMEMNEMFMAFMGMDGMHMHLMKMKDMLMLIMMMMRMNMNGMOMACMPMNPMQMTQMRMRTMSMSRMTMLTMUMUSMVMDVMWMWIMXMEXMYMYSMZMOZNANAMNCNCLNENERNFNFKNGNGANINICNLNLDNONORNPNPLNRNRUNUNIUNZNZLOMOMNPAPANPEPERPFPYFPGPNGPHPHLPKPAKPLPOLPMSPMPNPCNPRPRIPSPSEPTPRTPWPLWPYPRYQAQATREREUROROURSSRBRURUSRWRWASASAUSBSLBSCSYCSDSDNSESWESGSGPSHSHNSISVNSJSJMSKSVKSLSLESMSMRSNSENSOSOMSRSURSSSSDSTSTPSVSLVSXSXMSYSYRSZSWZTCTCATDTCDTFATFTGTGOTHTHATJTJKTKTKLTLTLSTMTKMTNTUNTOTONTRTURTTTTOTVTUVTWTWNTZTZAUAUKRUGUGAUMUMIUSUSAUYURYUZUZBVAVATVCVCTVEVENVGVGBVIVIRVNVNMVUVUTWFWLFWSWSMYEYEMYTMYTZAZAFZMZMBZWZWE";
+  function cc3(cc) {
+    cc = String(cc || "").toUpperCase();
+    if (!/^[A-Z]{2}$/.test(cc)) return "";
+    for (var i = 0; i < CC3.length; i += 5) if (CC3.substr(i, 2) === cc) return CC3.substr(i + 2, 3);
+    return "";
+  }
+  function countryCodes() { var out = []; for (var i = 0; i < CC3.length; i += 5) out.push(CC3.substr(i, 2)); return out; }
+  // English name, as Internet Archive writes places ("Athina, Greece").
+  function countryEn(cc) {
+    if (!cc3(cc)) return "";
+    try { var n = new Intl.DisplayNames(["en"], { type: "region" }).of(String(cc).toUpperCase()); return n && n !== cc ? n : ""; } catch (e) { return ""; }
+  }
+  var DUR = { s: [1, 120], m: [120, 300], l: [300, 600], xl: [600, 360000] };
+  var SPEEDS = ["verylow", "low", "medium", "high", "veryhigh"];
+  var YEAR_MIN = 1800;
+  function yearOf(v) { var n = Math.floor(+v); return n >= YEAR_MIN && n <= 2100 ? n : 0; }
+  function normFilter(o) {
+    o = o && typeof o === "object" ? o : {};
+    var F = {};
+    if (genreOf(o.g)) F.g = o.g;
+    if (cc3(o.cc)) F.cc = String(o.cc).toUpperCase();
+    if (DUR[o.dur]) F.dur = o.dur;
+    ["pd", "com", "mod", "off"].forEach(function (k) { if (o[k] === 1 || o[k] === true) F[k] = 1; });
+    var y0 = yearOf(o.y0), y1 = yearOf(o.y1);
+    if (y0 && y1 && y0 > y1) { var x = y0; y0 = y1; y1 = x; }
+    if (y0) F.y0 = y0;
+    if (y1) F.y1 = y1;
+    if (o.vi === "v" || o.vi === "i") F.vi = o.vi;
+    if (moodOf(o.mood)) F.mood = o.mood;
+    if (SPEEDS.indexOf(o.sp) >= 0) F.sp = o.sp;
+    if (o.gd === "male" || o.gd === "female") F.gd = o.gd;
+    if (o.ae === "acoustic" || o.ae === "electric") F.ae = o.ae;
+    if (o.sort === "pop" || o.sort === "new") F.sort = o.sort;
+    return F;
+  }
+  // The groups a filter sets, in panel order (sort is an order, not a filter).
+  var GROUPS = ["g", "cc", "dur", "lic", "y", "vi", "mood", "sp", "gd", "ae", "off"];
+  function groupsOf(F) {
+    F = F || {};
+    return GROUPS.filter(function (k) {
+      if (k === "lic") return !!(F.pd || F.com || F.mod);
+      if (k === "y") return !!(F.y0 || F.y1);
+      return !!F[k];
+    });
+  }
+  function filterOn(F) { return groupsOf(F).length > 0; }
+  // A short text that changes with any filter (feed keys).
+  function filterSig(F) { F = normFilter(F); return Object.keys(F).sort().map(function (k) { return k + "=" + F[k]; }).join("&"); }
+  // What each source can do ("loc" = the songs on this device).
+  var CAN = {
+    jm: { g: 1, cc: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1, gd: 1, ae: 1 },
+    ia: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
+    ov: { g: 1, dur: 1, lic: 1, off: 1 },
+    cc: { g: 1, dur: 1, lic: 1, vi: 1, off: 1 },
+    loc: { g: 1, dur: 1, y: 1 }
+  };
+  // The groups of F that source src cannot honour.
+  function filterMissing(src, F) {
+    F = normFilter(F);
+    var can = CAN[src] || {};
+    return groupsOf(F).filter(function (k) {
+      if (!can[k]) return true;
+      if (k === "lic" && src === "jm" && F.pd) return true;   // Jamendo has no public domain
+      if (k === "vi" && src === "cc" && F.vi === "v") return true;
+      if (k === "cc" && src === "ia" && !countryEn(F.cc)) return true;
+      return false;
+    });
+  }
+  // A licence that the licence filters allow.
+  function licOk(li, F) {
+    if (!F || (!F.pd && !F.com && !F.mod)) return true;
+    var c = licParts(li).c;
+    if (!c) return false;
+    var pd = c === "cc0" || c === "pdm";
+    if (F.pd && !pd) return false;
+    if (pd) return true;
+    if (c === "lma") return false;
+    if (F.com && /nc|sampling/.test(c)) return false;
+    if (F.mod && /nd/.test(c)) return false;
+    return true;
+  }
+  function durOk(d, F) {
+    if (!F || !F.dur) return true;
+    var r = DUR[F.dur], n = +d || 0;
+    return n >= r[0] && n < r[1];
+  }
+  function yearOk(y, F) {
+    if (!F || (!F.y0 && !F.y1)) return true;
+    var n = yearOf(y);
+    return !!n && (!F.y0 || n >= F.y0) && (!F.y1 || n <= F.y1);
+  }
+  function trackPasses(r, F) {
+    F = normFilter(F);
+    if (!r) return false;
+    if (!durOk(r.d, F) || !licOk(r.li, F)) return false;
+    if (F.off && r.off !== 1) return false;
+    return true;
+  }
+  function albumPasses(a, F) {
+    F = normFilter(F);
+    return !!a && licOk(a.li, F) && yearOk(a.y, F);
+  }
+  // Genre words as each source writes them.
+  function genreWord(g) { return g === "hiphop" ? "hip hop" : g; }
+  function genreCc(g) { return g === "hiphop" ? "hip_hop" : g; }
+  // The songs on this device: genre (tag text in any spelling, or the
+  // genre's name in English / Greek), year, length.
+  function squash(s) { return C ? C.fold(s).replace(/[^\p{L}\p{N}]+/gu, "") : String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, ""); }
+  function localPasses(r, F) {
+    F = normFilter(F);
+    if (!r) return false;
+    if (F.g) {
+      var g = genreOf(F.g), have = squash(r.g);
+      if (!have || ![g.id, genreWord(g.id), g.en, g.el].some(function (w) { var x = squash(w); return x && have.indexOf(x) >= 0; })) return false;
+    }
+    return durOk(r.d, F) && yearOk(r.y, F);
+  }
+
   var api = {
-    VERSION: "1.3.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.4.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,
@@ -590,6 +775,9 @@
     ovUrl: ovUrl, ovParse: ovParse, ccUrl: ccUrl, ccParse: ccParse, ccUserFromPage: ccUserFromPage,
     browseOf: browseOf, genreOf: genreOf, sourceName: sourceName, credit: credit,
     browseName: browseName, moodName: moodName, genreName: genreName, STRINGS: STRINGS,
+    normFilter: normFilter, groupsOf: groupsOf, filterOn: filterOn, filterSig: filterSig, filterMissing: filterMissing, CAN: CAN, DUR: DUR, SPEEDS: SPEEDS,
+    licOk: licOk, trackPasses: trackPasses, albumPasses: albumPasses, localPasses: localPasses, cc3: cc3, countryCodes: countryCodes, countryEn: countryEn,
+    jmCountryUrl: jmCountryUrl, jmParseIds: jmParseIds, jmFiltered: jmFiltered,
     getJSON: getJSON, iaSearch: iaSearch, iaAlbum: iaAlbum, ovSearch: ovSearch, ccSearch: ccSearch, OpenError: OpenError
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
