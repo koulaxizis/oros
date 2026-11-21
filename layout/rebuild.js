@@ -1180,48 +1180,110 @@
   }
   // The PDF's pages cut to their TrimBox next to the document's pages
   // (ours(page, w, h) → a canvas of that size), at `dpi` (default 50).
-  // → Promise<{ pages: [{ page, pct, a, b, d }] (canvases), total, of }>
-  function compare(buf, ours, count, opts) {
-    opts = opts || {};
-    var dpi = opts.dpi || 50, sc = dpi / 72, bytes = new Uint8Array(buf);
+  // opts.shift (LY-PORT3): the PDF has that many pages before ours
+  // (a cover in an e-book's PDF: 1; negative when ours has more), so
+  // PDF page k is set beside our page k − shift; opts.keep false drops
+  // the three pictures of each page (a long run over many books keeps
+  // only the numbers).
+  // → Promise<{ pages: [{ page, pct, a, b, d }] (canvases), total, of, shift }>
+  function pdfOpen(bytes) {
     return Promise.all([pageBoxes(bytes.slice()), PI.loadLib()]).then(function (r) {
       var boxes = r[0], lib = r[1];
       lib.GlobalWorkerOptions.workerSrc = "../vendor/pdfjs/pdf.worker.min.js";
-      return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false, disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise.then(function (pdf) {
-        var n = Math.min(pdf.numPages, count, MAX_PAGES), out = [], chain = Promise.resolve();
-        for (var k = 1; k <= n; k++) (function (k) {
-          chain = chain.then(function () {
-            if (opts.cancelled && opts.cancelled()) throw new Error("cancelled");
-            return pdf.getPage(k);
-          }).then(function (page) {
-            var view = page.view, bx = boxes && boxes[k - 1] && !boxes[k - 1].rot ? boxes[k - 1] : null;
-            var tr = bx ? { x: bx.trim[0] - view[0], y: view[3] - (bx.trim[1] + bx.trim[3]), w: bx.trim[2], h: bx.trim[3] } : { x: 0, y: 0, w: view[2] - view[0], h: view[3] - view[1] };
-            return draw(page, sc).then(function (d) {
-              var w = Math.max(1, Math.round(tr.w * sc)), h = Math.max(1, Math.round(tr.h * sc));
-              var a = canvas(w, h), xa = a.getContext("2d", { willReadFrequently: true });
-              xa.fillStyle = "#fff"; xa.fillRect(0, 0, w, h);
-              var src = canvas(d.w, d.h); src.getContext("2d").putImageData(d.ctx.getImageData(0, 0, d.w, d.h), 0, 0);
-              xa.drawImage(src, -Math.round(tr.x * sc), -Math.round(tr.y * sc));
-              page.cleanup();
-              return Promise.resolve(ours(k - 1, w, h)).then(function (b) {
-                if (!b) return;
-                // compared softened by a pixel, so the same letters a
-                // fraction of a pixel apart (another rasteriser) do not count
-                var soft = function (c) { var o = canvas(w, h), x = o.getContext("2d", { willReadFrequently: true }); x.fillStyle = "#fff"; x.fillRect(0, 0, w, h); x.filter = "blur(" + SOFT + "px)"; x.drawImage(c, 0, 0); return x.getImageData(0, 0, w, h).data; };
-                var r2 = diffPixels(soft(a), soft(b), w * h);
-                var dc = canvas(w, h), xd = dc.getContext("2d"), id = xd.createImageData(w, h);
-                for (var q = 0; q < w * h; q++) { var on = r2.mask[q]; id.data[q * 4] = on ? 220 : 255; id.data[q * 4 + 1] = on ? 30 : 255; id.data[q * 4 + 2] = on ? 30 : 255; id.data[q * 4 + 3] = 255; }
-                xd.putImageData(id, 0, 0);
-                out.push({ page: k, pct: r2.pct, a: a, b: b, d: dc });
-                if (opts.progress) opts.progress(k, n);
-              });
-            });
-          });
-        })(k);
-        return chain.then(function () { return { pages: out, total: pdf.numPages, of: count }; });
+      return lib.getDocument({ data: bytes, isEvalSupported: false, enableXfa: false, disableAutoFetch: true, disableStream: true, stopAtErrors: false }).promise.then(function (pdf) { return { pdf: pdf, boxes: boxes }; });
+    });
+  }
+  // PDF page k cut to its TrimBox at scale sc → { a: canvas, w, h }
+  function trimmed(P, k, sc) {
+    return P.pdf.getPage(k).then(function (page) {
+      var view = page.view, bx = P.boxes && P.boxes[k - 1] && !P.boxes[k - 1].rot ? P.boxes[k - 1] : null;
+      var tr = bx ? { x: bx.trim[0] - view[0], y: view[3] - (bx.trim[1] + bx.trim[3]), w: bx.trim[2], h: bx.trim[3] } : { x: 0, y: 0, w: view[2] - view[0], h: view[3] - view[1] };
+      return draw(page, sc).then(function (d) {
+        var w = Math.max(1, Math.round(tr.w * sc)), h = Math.max(1, Math.round(tr.h * sc));
+        var a = canvas(w, h), xa = a.getContext("2d", { willReadFrequently: true });
+        xa.fillStyle = "#fff"; xa.fillRect(0, 0, w, h);
+        var src = canvas(d.w, d.h); src.getContext("2d").putImageData(d.ctx.getImageData(0, 0, d.w, d.h), 0, 0);
+        xa.drawImage(src, -Math.round(tr.x * sc), -Math.round(tr.y * sc));
+        page.cleanup();
+        return { a: a, w: w, h: h };
       });
     });
   }
+  // compared softened by a pixel, so the same letters a fraction of a
+  // pixel apart (another rasteriser) do not count
+  function softData(c, w, h) { var o = canvas(w, h), x = o.getContext("2d", { willReadFrequently: true }); x.fillStyle = "#fff"; x.fillRect(0, 0, w, h); x.filter = "blur(" + SOFT + "px)"; x.drawImage(c, 0, 0); return x.getImageData(0, 0, w, h).data; }
+  function compare(buf, ours, count, opts) {
+    opts = opts || {};
+    var dpi = opts.dpi || 50, sc = dpi / 72, bytes = new Uint8Array(buf), shift = Math.round(opts.shift || 0), keep = opts.keep !== false;
+    return pdfOpen(bytes).then(function (P) {
+      var pdf = P.pdf, first = Math.max(1, 1 + shift), last = Math.min(pdf.numPages, count + shift, MAX_PAGES + shift), out = [], chain = Promise.resolve();
+      var n = Math.max(0, last - first + 1);
+      for (var k = first; k <= last; k++) (function (k) {
+        chain = chain.then(function () {
+          if (opts.cancelled && opts.cancelled()) throw new Error("cancelled");
+          return trimmed(P, k, sc);
+        }).then(function (t) {
+          var w = t.w, h = t.h, a = t.a;
+          return Promise.resolve(ours(k - 1 - shift, w, h)).then(function (b) {
+            if (!b) return;
+            var r2 = diffPixels(softData(a, w, h), softData(b, w, h), w * h), row = { page: k - shift, pct: r2.pct };
+            if (shift) row.pdf = k;
+            if (keep) {
+              var dc = canvas(w, h), xd = dc.getContext("2d"), id = xd.createImageData(w, h);
+              for (var q = 0; q < w * h; q++) { var on = r2.mask[q]; id.data[q * 4] = on ? 220 : 255; id.data[q * 4 + 1] = on ? 30 : 255; id.data[q * 4 + 2] = on ? 30 : 255; id.data[q * 4 + 3] = 255; }
+              xd.putImageData(id, 0, 0);
+              row.a = a; row.b = b; row.d = dc;
+            }
+            out.push(row);
+            if (opts.progress) opts.progress(k - first + 1, n);
+          });
+        });
+      })(k);
+      return chain.then(function () { try { pdf.destroy(); } catch (e) {} return { pages: out, total: pdf.numPages, of: count, shift: shift }; });
+    });
+  }
+  // How many pages the PDF has before ours (LY-PORT3): a few pages from
+  // its middle, small, against ours moved by −range…range; the move with
+  // the fewest differing pixels wins (ties: the smallest move, so a
+  // book that lines up stays at 0). → Promise<{ shift, tried }>
+  function shiftOf(buf, ours, count, opts) {
+    opts = opts || {};
+    var range = Math.max(0, Math.min(12, opts.range === undefined ? 6 : opts.range)), sc = (opts.dpi || 18) / 72, bytes = new Uint8Array(buf);
+    return pdfOpen(bytes).then(function (P) {
+      var n = P.pdf.numPages, picks = [];
+      [0.3, 0.5, 0.7].forEach(function (f) { var k = Math.max(1, Math.min(n, Math.round(n * f))); if (picks.indexOf(k) < 0) picks.push(k); });
+      var tried = {}, chain = Promise.resolve();
+      picks.forEach(function (k) {
+        chain = chain.then(function () { return trimmed(P, k, sc); }).then(function (t) {
+          var a = softData(t.a, t.w, t.h), c2 = Promise.resolve();
+          for (var s = -range; s <= range; s++) (function (s) {
+            var i = k - 1 - s;
+            if (i < 0 || i >= count) return;
+            c2 = c2.then(function () { return ours(i, t.w, t.h); }).then(function (b) {
+              if (!b) return;
+              (tried[s] = tried[s] || []).push(diffPixels(a, softData(b, t.w, t.h), t.w * t.h).pct);
+            });
+          })(s);
+          return c2;
+        });
+      });
+      return chain.then(function () { try { P.pdf.destroy(); } catch (e) {} return { shift: bestShift(tried, picks.length), tried: tried }; });
+    });
+  }
+  // tried: { shift: [pct per sampled page] } → the best shift. Only
+  // shifts tried on every sampled page count; none → 0.
+  function bestShift(tried, need) {
+    var best = 0, bv = Infinity;
+    Object.keys(tried).map(Number).sort(function (a, b) { return Math.abs(a) - Math.abs(b) || a - b; }).forEach(function (s) {
+      var v = tried[s];
+      if (!v || v.length < (need || 1)) return;
+      var m = v.reduce(function (x, y) { return x + y; }, 0) / v.length;
+      if (m < bv - 1e-9) { bv = m; best = s; }
+    });
+    return best;
+  }
+
+
 
   // OCR (LY-PORT-O, io.js ocrPicture): the words of ocrkit wordsOf
   // (fractions of the picture read) + the frame's box in pt →
@@ -1269,7 +1331,7 @@
     });
   }
 
-  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, grayPixels: grayPixels, ocrFrames: ocrFrames, diffPixels: diffPixels, compare: compare, DIFF_AT: DIFF_AT, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
+  var api = { toLines: toLines, measure: measure, build: build, names: names, open: open, pdfText: pdfText, matchPdf: matchPdf, pageShift: pageShift, inkOf: inkOf, grayPixels: grayPixels, ocrFrames: ocrFrames, diffPixels: diffPixels, compare: compare, shiftOf: shiftOf, bestShift: bestShift, DIFF_AT: DIFF_AT, MAX_PAGES: MAX_PAGES, TRACK_ADJ: TRACK_ADJ };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_REBUILD = api;
 })(typeof window !== "undefined" ? window : this);

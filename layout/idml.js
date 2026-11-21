@@ -12,7 +12,8 @@
 //     (layout/sla.js: no DOM, no scripts, no external entities).
 //   - Images embedded in the file come back as bytes for io.js to
 //     store; linked images become empty image frames that keep the
-//     file name, ready for Place image.
+//     file name (`links`, filled by io.js from pictures picked with
+//     the file, as Scribus's), ready for Place image.
 //   - LY-PORT2: free shapes and bent lines become path items, text on
 //     a path keeps its path (ext.tp), layers keep their order and hide
 //     or lock their objects, tabs stay tabs with the styles' stops, a
@@ -560,7 +561,7 @@
     }
     function local(g, x, y) { var l = apply(g.im, x, y); return [l[0] - g.bx.l, l[1] - g.bx.t]; }
 
-    var images = [], linked = 0, frames = [], z = 0, items = [];
+    var images = [], linked = 0, links = [], frames = [], z = 0, items = [];
     // layers: the designmap lists them top first
     var layerBy = {}, layerN = kids(D, "Layer");
     layerN.forEach(function (l, k) {
@@ -665,7 +666,7 @@
           it.nm = nm.slice(0, 120);
           var cont = find1(gr, "Contents"), b64 = textOf(cont).replace(/\s+/g, "");
           if (gr.n === "Image" && b64) images.push({ item: it.id, name: it.nm || "image", b64: b64 });
-          else linked++;
+          else { linked++; if (it.nm) links.push({ item: it.id, name: it.nm }); }
         } else {
           it.t = kind === "Oval" ? "ell" : "rect";
           if (kind === "Polygon" && !asPath()) stats.skipped++;     // drawn as its box
@@ -733,7 +734,7 @@
     if (doc.items.length > M.MAX_ITEMS) doc.items.length = M.MAX_ITEMS;
     if (!doc.masters.length) doc.masters.push({ id: "ms-a", m: now, name: { en: "A-Master", el: "A-Master" }, pre: "A" });
     var out = M.normDoc(doc);
-    return { doc: out, images: images, linked: linked, stats: stats };
+    return { doc: out, images: images, linked: linked, links: links, stats: stats };
   }
 
   // The whole file → Promise of the convert() result (or null).
