@@ -800,12 +800,13 @@ test("v2 wave 2 wiring: finish controls, notebook preset, strings in en, el and 
 const GM = require(path.join(ROOT, "mockups/goods/media.js"));
 const GA = require(path.join(ROOT, "mockups/goods/analog.js"));
 const GS = require(path.join(ROOT, "mockups/goods/small.js"));
+const GH = require(path.join(ROOT, "mockups/goods/home.js"));
 function good(over) {
   return C.normGoodProject(Object.assign({ id: ID, m: 1000, nm: "Album", kind: "cd", g: {}, art: {}, sc: {}, out: {}, tpl: { safe: 3 } }, over || {}));
 }
 
 test("products: registry, defaults, unknown values fall back, canonical", () => {
-  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet"]);
+  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl", "badge", "sticker", "keychain", "pin", "magnet", "mug", "poster", "card"]);
   const cd = good();
   assert.deepEqual(cd.g, { pack: "jewel", tray: "black", disc: "silver", hub: 22, beside: 0 });
   const odd = good({ g: { pack: "tin", tray: "pink", disc: "gold", hub: 99, beside: true, x: 1 } });
@@ -828,12 +829,12 @@ test("products: registry, defaults, unknown values fall back, canonical", () => 
 test("products store: own key, LWW and tombstones, a newer product kept as it came", () => {
   assert.equal(C.GOODS_KEY, "oros-mockups-goods");
   assert.notEqual(C.GOODS_KEY, C.DATA_KEY);
-  const future = { id: "kfuture123", m: 50, kind: "mug", g: { oz: 11 }, art: { wrap: A1 } };
+  const future = { id: "kfuture123", m: 50, kind: "lamp", g: { oz: 11 }, art: { wrap: A1 } };
   let d = C.mergeGoods({ prj: [good(), future, { id: "kbook12345", m: 3, kind: "book" }] }, null);
   assert.deepEqual(d.prj.map((x) => x.id), [ID, "kfuture123"]);
   assert.deepEqual(C.byId(d, "kfuture123"), future, "unknown product kept verbatim");
   assert.equal(C.known(C.byId(d, "kfuture123")), false, "and not shown");
-  const huge = { id: "khuge12345", m: 9, kind: "mug", junk: "x".repeat(70000) };
+  const huge = { id: "khuge12345", m: 9, kind: "lamp", junk: "x".repeat(70000) };
   assert.equal(C.mergeGoods({ prj: [huge] }, null).prj.length, 0);
   const r = C.putGood(d, Object.assign({}, good(), { nm: "New" }), 2000);
   assert.ok(r.ok);
@@ -1108,4 +1109,57 @@ test("v2 wave 5 wiring: merch gallery, generated form, cut sheets in print, stri
   assert.equal(P.search(ctx)[0].title, "Mockup Enamel pin");
   assert.match(read("mockups/help.en.txt"), /## Badges, stickers and other small things/);
   assert.match(read("mockups/help.el.txt"), /## Κονκάρδες, αυτοκόλλητα και άλλα μικρά/);
+});
+
+test("mug, framed poster and card: sizes, sheets, frames, folds", () => {
+  const m = good({ kind: "mug" });
+  assert.deepEqual(m.g, { oz: 11, inner: "white", handle: "white", fin: "gloss" });
+  const T = C.templateOf(m, "mugwrap");
+  assert.deepEqual([T.W, T.H, T.parts[0].a], [216, 89, "wrap"]);
+  assert.equal(C.templateOf(good({ kind: "mug", g: { oz: 15 } }), "mugwrap").H, 100);
+  assert.equal(GH.mugDims({ oz: 15 }).h, 117);
+  const p = good({ kind: "poster" });
+  assert.deepEqual(p.g, { size: "a3", orient: "portrait", frame: "black", mat: 0, wall: "light" });
+  assert.deepEqual([C.templateOf(p, "poster").W, C.templateOf(p, "poster").H], [297, 420]);
+  const land = good({ kind: "poster", g: { size: "50x70", orient: "landscape", mat: 1 } });
+  assert.deepEqual([C.templateOf(land, "poster").W, C.templateOf(land, "poster").H], [700, 500]);
+  const D = GH.posterDims(land.g);
+  assert.equal(D.mat, 60); assert.equal(D.w, 700 + 120 + 2 * D.bar);
+  assert.equal(C.templateOf(good({ kind: "poster", g: { frame: "none" } }), "poster").hidden, 0);
+  const c = good({ kind: "card" });
+  assert.deepEqual(C.sheetsOf(c), ["pcfront", "pcback"]);
+  assert.equal(C.blankGood("card", ID, 5).sc.place, "lean");
+  const f = good({ kind: "card", g: { ck: "folded", size: "sq", env: "kraft" } });
+  assert.deepEqual(C.sheetsOf(f), ["gcout", "gcin"]);
+  const o = C.templateOf(f, "gcout"), i = C.templateOf(f, "gcin");
+  assert.deepEqual(o.parts.map((q) => q.k), ["back", "front"]); assert.equal(o.W, 296); assert.deepEqual(o.folds, [{ x: 148, k: "fold" }]);
+  assert.deepEqual(i.parts.map((q) => q.a), ["inside", "inside2"]);
+  assert.equal(C.good("card").noOpen(c.g), true); assert.equal(C.good("card").noOpen(f.g), false);
+  assert.deepEqual(C.good("card").shown(f.g), ["front", "back", "inside", "inside2"]);
+  assert.equal(good({ kind: "card", art: { inside2: A1 } }).art.inside2, A1);
+});
+
+test("v2 wave 6 wiring: home gallery, strings, search, help", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html"), de = read("i18n/de/mockups.js"), sc = read("mockups/scene.js");
+  assert.match(html, /<script src="goods\/home\.js\?v=/);
+  assert.match(sc, /from "\.\/goods\/home3d\.js"/);
+  const keys = ["make.g.home", "f.openCard"];
+  for (const kind of ["mug", "poster", "card"]) {
+    keys.push("kind." + kind, "kind." + kind + ".d", "untitled." + kind, "pics.hint." + kind);
+    const def = C.good(kind);
+    def.opts.forEach((o) => { keys.push(o.l); if (o.p) o.v.forEach((v) => keys.push(o.p + v)); });
+    for (const g of [{}, { ck: "folded" }]) {
+      const p = good({ kind, g });
+      for (const s of C.sheetsOf(p)) keys.push("tpl.kind." + C.templateOf(p, s).kind);
+      def.shown(p.g).forEach((x) => keys.push("slot." + kind + "." + x));
+    }
+  }
+  [...new Set(keys)].forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  });
+  const ctx = { lang: "el", readJSON: (k) => (k === C.GOODS_KEY ? { prj: [good({ kind: "mug", nm: "" })] } : null) };
+  assert.equal(P.search(ctx)[0].title, "Μακέτα Κούπα");
+  assert.match(read("mockups/help.en.txt"), /## Mug, poster and cards/);
+  assert.match(read("mockups/help.el.txt"), /## Κούπα, αφίσα και κάρτες/);
 });

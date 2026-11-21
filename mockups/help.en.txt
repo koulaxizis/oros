@@ -48,6 +48,11 @@ Badges, stickers, keychains, enamel pins and magnets lie flat on the table to be
 - `Magnet`: rectangle (51 × 51 to 102 × 76 mm), round or cut to the picture.
 - On the `Print` tab a cut sheet shows what is cut away, the cut line, the holes and a band to keep text out of. The PDF carries the cut line as a thin 100 % magenta line, as cutting plotters read it; ask your maker how they want it named. If the picture has no see-through background, or parts of it stand apart, the tab says so.
 
+## Mug, poster and cards
+- `Mug`: 11 or 15 oz, the colour `Inside` and of the `Handle`, gloss or matte. One picture goes round it (216 × 89 mm, or 216 × 100 for 15 oz): its middle faces away from the handle, its ends meet under it. Turn the mug on the `Scene` tab to see all round.
+- `Framed poster`: A4 to A1, 30 × 40, 50 × 70 or 61 × 91 cm, portrait or landscape, a black, white, oak, walnut or aluminium `Frame` or `No frame`, a `Mat (passe-partout)`, and a light or dark `Wall` behind. The frame or the mat hides about 4 to 5 mm of the poster's edge.
+- `Postcard or card`: a `Flat postcard` (front and back) or a `Folded card` with its two inside pages, A6, A5, DL or square, portrait or landscape, and an `Envelope` behind it. `Open the card` on the `Scene` tab opens a folded card. On the `Print` tab a folded card has two sheets: the outside (back on the left, front on the right) and the inside.
+
 ## Finishes and extras
 - `Finishes` (on the `Book` tab): `Cover material` is printed paper, linen, book cloth, leather or kraft paper; the cloth ones show their weave in the light. `Rounded corners` rounds the outer corners of the cover and the pages, like a notebook. `Deckled page edges` makes the edges rough and uncut. `Page edges` › `Printed (a picture)` puts a picture of yours on the edges of the pages.
 - `Belly band`: a paper band round the book, with its colour, its `Band height` and its own picture. `Slipcase`: an open box the book slides into, with its colour and picture. `Elastic band`: the band that keeps a notebook shut.

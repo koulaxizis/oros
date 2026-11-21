@@ -35,6 +35,7 @@
 //   - products (v1.6.0): CD and DVD / Blu-ray from goods/media3d.js,
 //     cassette, VHS and vinyl from goods/analog3d.js (v1.7.0), badge,
 //     sticker, keychain, enamel pin and magnet from goods/small3d.js (v1.8.0),
+//     mug, framed poster and card from goods/home3d.js (v1.8.0),
 //     posed, framed, lit and saved like a book; "open" opens a lid
 //     or slides a disc out (fronts with userData.open)
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
@@ -51,6 +52,7 @@ import * as THREE from "../vendor/three/three.module.min.js";
 import { build as buildMedia } from "./goods/media3d.js";
 import { build as buildAnalog } from "./goods/analog3d.js";
 import { build as buildSmall } from "./goods/small3d.js";
+import { build as buildHome } from "./goods/home3d.js";
 
 var S = 0.01;                          // scene units per mm
 
@@ -924,7 +926,7 @@ export function createStage(host, C) {
     disposeBooks();
     var p = state.p, placeK = p.sc.place;
     var H = { THREE: THREE, S: S, own: own, ANISO: ANISO, pics: picsOf(p.art), MP: (typeof window !== "undefined" && window.MockPrint) || null, C: C };
-    var res = buildMedia(H, p) || buildAnalog(H, p) || buildSmall(H, p);
+    var res = buildMedia(H, p) || buildAnalog(H, p) || buildSmall(H, p) || buildHome(H, p);
     if (!res) { built = false; return; }
     res.fronts.forEach(function (f) { fronts.push(f); });
     var pose = new THREE.Group();
