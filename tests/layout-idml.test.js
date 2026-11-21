@@ -266,6 +266,8 @@ test("idml: frames, threads, text, shapes, images", async () => {
   assert.deepEqual(imgs.map((i) => i.nm).sort(), ["logo.tif", "sea view.png"]);
   assert.equal(res.images.length, 1);
   assert.equal(res.linked, 1);
+  // the linked one by name, for the pictures picked with it (LY-PORT3)
+  assert.deepEqual(res.links, [{ item: imgs.find((i) => i.nm === "logo.tif").id, name: "logo.tif" }]);
   assert.equal(res.images[0].item, imgs.find((i) => i.nm === "sea view.png").id);
   const blob = I.imageBlob(res.images[0]);
   assert.equal(blob.type, "image/png");
