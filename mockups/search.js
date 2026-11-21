@@ -1,29 +1,47 @@
 // ============================================================
-// orOS Mockups — universal search provider (v1.0.0)
+// orOS Mockups — universal search provider (v1.1.0)
 // Loaded by the shell on the first menu search (apps.json
-// "search"). Read-only: reads oros-mockups-data, never writes.
-// One hit per mockup: its name as title, and as text the book's
-// size, pages, binding and spine text.
+// "search"). Read-only: reads oros-mockups-data and (v1.1.0) the
+// products in oros-mockups-goods, never writes. One hit per mockup:
+// its name as title, and as text the book's size, pages, binding and
+// spine text, or the product (CD, DVD / Blu-ray).
 // Opens through __orosOpenAt("mockups", { id }).
 // ============================================================
 (function (root) {
   "use strict";
-  var KEY = "oros-mockups-data";
+  var KEY = "oros-mockups-data", GKEY = "oros-mockups-goods";
   // Runs in the shell, which loads only its own pack: a pack language shows English.
   var S = {
-    en: { "search.name": "Book mockup", "bind.pb": "Paperback", "bind.hc": "Hardcover", "bind.ss": "Saddle-stitched", "bind.sp": "Spiral", "bind.bb": "Board book", "bind.lf": "Lay-flat", "search.pages": "pages" },
-    el: { "search.name": "Μακέτα βιβλίου", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο", "bind.ss": "Καρφίτσα", "bind.sp": "Σπιράλ", "bind.bb": "Χαρτονένιο", "bind.lf": "Ανοίγει επίπεδα", "search.pages": "σελίδες" }
+    en: { "search.name": "Book mockup", "bind.pb": "Paperback", "bind.hc": "Hardcover", "bind.ss": "Saddle-stitched", "bind.sp": "Spiral", "bind.bb": "Board book", "bind.lf": "Lay-flat", "search.pages": "pages", "search.cd": "CD", "search.dvd": "DVD", "search.bd": "Blu-ray", "search.good": "Mockup" },
+    el: { "search.name": "Μακέτα βιβλίου", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο", "bind.ss": "Καρφίτσα", "bind.sp": "Σπιράλ", "bind.bb": "Χαρτονένιο", "bind.lf": "Ανοίγει επίπεδα", "search.pages": "σελίδες", "search.cd": "CD", "search.dvd": "DVD", "search.bd": "Blu-ray", "search.good": "Μακέτα" }
   };
   var ID_RE = /^k[0-9a-z]{6,24}$/;
 
   function str(v) { return typeof v === "string" ? v.replace(/\s+/g, " ").trim() : ""; }
   function n(v) { return typeof v === "number" && isFinite(v) ? Math.round(v * 10) / 10 : 0; }
 
+  // Products: only the kinds this version knows (CD, DVD / Blu-ray).
+  function goods(d, lang, out) {
+    if (!d || !Array.isArray(d.prj)) return;
+    var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
+    d.prj.forEach(function (p) {
+      if (!p || typeof p.id !== "string" || !ID_RE.test(p.id)) return;
+      if (tombs[p.id] && tombs[p.id] >= p.m) return;
+      if (p.kind !== "cd" && p.kind !== "dvd") return;
+      var g = p.g && typeof p.g === "object" ? p.g : {}, art = p.art && typeof p.art === "object" ? p.art : {};
+      var k = p.kind === "dvd" && g.fmt === "bd" ? "bd" : p.kind, kn = S[lang]["search." + k];
+      var parts = [kn];
+      if (str(art.spT)) parts.push(str(art.spT));
+      out.push({ id: p.id, title: str(p.nm) || S[lang]["search.good"] + " " + kn, text: parts.join(" · "), target: { id: p.id } });
+    });
+  }
+
   var PROVIDER = {
     id: "mockups",
-    keys: [KEY],
+    keys: [KEY, GKEY],
     search: function (ctx) {
       var d = ctx.readJSON(KEY), out = [], lang = ctx.lang === "el" ? "el" : "en";
+      goods(ctx.readJSON(GKEY), lang, out);
       if (!d || !Array.isArray(d.prj)) return out;
       var tombs = d.tombs && typeof d.tombs === "object" ? d.tombs : {};
       d.prj.forEach(function (p) {

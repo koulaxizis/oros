@@ -690,7 +690,7 @@ test("MockPrint: spiral covers share the gap, no gap label", () => {
   assert.deepEqual(Object.keys(sp).sort(), ["back", "front"]);
   assert.equal(sp.back[0], 0); assert.equal(sp.front[1], T.sheet.w);
   assert.ok(Math.abs(sp.back[1] - (T.bleed * 2 + 148)) < 1e-9 && sp.back[1] === sp.front[0]);
-  assert.equal(MP.VERSION, "1.1.0");
+  assert.equal(MP.VERSION, "1.2.0");
 });
 
 test("openCurve: lay-flat, spiral and board pages lie flat at the gutter", () => {
@@ -794,4 +794,130 @@ test("v2 wave 2 wiring: finish controls, notebook preset, strings in en, el and 
   });
   assert.match(read("mockups/help.en.txt"), /## Finishes and extras/);
   assert.match(read("mockups/help.el.txt"), /## Φινιρίσματα και πρόσθετα/);
+});
+
+// ---------- v2 wave 3: products (CD, DVD / Blu-ray) ----------
+const GM = require(path.join(ROOT, "mockups/goods/media.js"));
+function good(over) {
+  return C.normGoodProject(Object.assign({ id: ID, m: 1000, nm: "Album", kind: "cd", g: {}, art: {}, sc: {}, out: {}, tpl: { safe: 3 } }, over || {}));
+}
+
+test("products: registry, defaults, unknown values fall back, canonical", () => {
+  assert.deepEqual(C.goodKinds(), ["cd", "dvd"]);
+  const cd = good();
+  assert.deepEqual(cd.g, { pack: "jewel", tray: "black", disc: "silver", hub: 22, beside: 0 });
+  const odd = good({ g: { pack: "tin", tray: "pink", disc: "gold", hub: 99, beside: true, x: 1 } });
+  assert.deepEqual(odd.g, { pack: "jewel", tray: "black", disc: "silver", hub: 22, beside: 1 });
+  const dvd = good({ kind: "dvd", g: { fmt: "bd" } });
+  assert.equal(dvd.g.col, "blue", "a Blu-ray case is blue by default");
+  assert.equal(good({ kind: "dvd" }).g.col, "black");
+  // book-only parts never travel with a product; its own slots do
+  const p = good({ art: { front: A1, disc: A2, foil: A1, flapF: A1, inside: A2 }, bk: { pages: 300 }, set: { k: "row" } });
+  assert.equal(p.art.disc, A2); assert.equal(p.art.inside, A2);
+  assert.ok(!("foil" in p.art) && !("flapF" in p.art));
+  assert.ok(!("bk" in p) && !("set" in p) && !("show" in p));
+  assert.deepEqual(C.assetsOf(p).sort(), [A1, A2].sort());
+  assert.equal(C.canon(C.normGoodProject(p)), C.canon(p));
+  assert.equal(C.normGoodProject({ id: ID, m: 1, kind: "book" }), null, "books never go in the products store");
+  assert.equal(C.normGoodProject({ id: ID, m: 1, kind: "../x" }), null);
+  assert.ok(C.known(p) && C.isGood(p) && !C.isGood(prj({})));
+});
+
+test("products store: own key, LWW and tombstones, a newer product kept as it came", () => {
+  assert.equal(C.GOODS_KEY, "oros-mockups-goods");
+  assert.notEqual(C.GOODS_KEY, C.DATA_KEY);
+  const future = { id: "kfuture123", m: 50, kind: "mug", g: { oz: 11 }, art: { wrap: A1 } };
+  let d = C.mergeGoods({ prj: [good(), future, { id: "kbook12345", m: 3, kind: "book" }] }, null);
+  assert.deepEqual(d.prj.map((x) => x.id), [ID, "kfuture123"]);
+  assert.deepEqual(C.byId(d, "kfuture123"), future, "unknown product kept verbatim");
+  assert.equal(C.known(C.byId(d, "kfuture123")), false, "and not shown");
+  const huge = { id: "khuge12345", m: 9, kind: "mug", junk: "x".repeat(70000) };
+  assert.equal(C.mergeGoods({ prj: [huge] }, null).prj.length, 0);
+  const r = C.putGood(d, Object.assign({}, good(), { nm: "New" }), 2000);
+  assert.ok(r.ok);
+  assert.equal(C.byId(r.data, ID).nm, "New");
+  const gone = C.removeGood(r.data, ID, 3000);
+  assert.equal(C.byId(gone, ID), null);
+  assert.equal(C.mergeGoods(gone, r.data).prj.length, 1, "the tombstone wins over the older copy");
+  // the books store never takes a product as a book (old devices never see them)
+  assert.equal(C.merge({ prj: [] }, null).prj.length, 0);
+  assert.equal(C.blankGood("cd", ID, 5).tpl.safe, 3);
+  assert.equal(C.blankGood("tin", ID, 5), null);
+});
+
+test("CD sheets: booklet, tray card with spines, digipak, sleeve, disc label", () => {
+  assert.deepEqual(C.sheetsOf(good()), ["booklet", "inlay", "disc"]);
+  assert.deepEqual(C.sheetsOf(good({ g: { pack: "slim" } })), ["booklet", "disc"]);
+  assert.deepEqual(C.sheetsOf(good({ g: { pack: "digi" } })), ["digi", "digiIn", "disc"]);
+  assert.deepEqual(C.sheetsOf(good({ g: { pack: "sleeve" } })), ["sleeve", "disc"]);
+  const b = C.templateOf(good(), "booklet");
+  assert.equal(b.W, 240); assert.equal(b.H, 120); assert.equal(b.bleed, 3);
+  assert.deepEqual(b.sheet, { w: 246, h: 126 });
+  assert.deepEqual(b.folds, [{ x: 120, k: "fold" }]);
+  const i = C.templateOf(good(), "inlay");
+  assert.equal(i.W, 151); assert.equal(i.H, 118);
+  assert.deepEqual(i.parts.map((p) => [p.k, p.a, p.w]), [["spineL", "spine", 6.5], ["back", "back", 138], ["spineR", "spine", 6.5]]);
+  assert.deepEqual(i.safe.map((s) => s.k), ["back"], "no safe box on the narrow spines");
+  const d = C.templateOf(good({ g: { hub: 36 } }), "disc");
+  assert.equal(d.circle.print, 118); assert.equal(d.circle.hole, 15); assert.equal(d.circle.hub, 36);
+  assert.deepEqual(d.sheet, { w: 120, h: 120 });
+  assert.equal(C.templateOf(good(), "nope").kind, "booklet", "an unknown sheet gives the first");
+  assert.equal(C.templateOf(good({ art: { bleed: 5 } }), "inlay").bleed, 5);
+  const dg = C.templateOf(good({ g: { pack: "digi" } }), "digi");
+  assert.deepEqual(dg.parts.map((p) => p.k), ["back", "spine", "front"]);
+  assert.equal(GM.cdDims({ pack: "slim" }).d, 5.2);
+});
+
+test("DVD sheets: sleeve 273 × 183 with a 14 mm spine, slim and Blu-ray", () => {
+  const T = C.templateOf(good({ kind: "dvd" }), "sleeve");
+  assert.equal(T.W, 273); assert.equal(T.H, 183); assert.equal(T.parts[1].w, 14);
+  assert.equal(C.templateOf(good({ kind: "dvd", g: { cs: "slim" } }), "sleeve").parts[1].w, 7);
+  const bd = C.templateOf(good({ kind: "dvd", g: { fmt: "bd" } }), "sleeve");
+  assert.equal(bd.H, 148);
+  assert.equal(GM.dvdDims({ fmt: "bd" }).h, 171.5);
+  assert.equal(C.good("dvd").wrap, true);
+  assert.equal(C.good("cd").wrap, false);
+});
+
+test("MockPrint: a part takes another slot's picture, every txt part gets the spine text", () => {
+  const calls = [];
+  const ctx = new Proxy({}, { get: (o, k) => k in o ? o[k] : (...a) => { calls.push([k, a]); return { width: 10 }; }, set: (o, k, v) => { o[k] = v; return true; } });
+  const T = C.templateOf(good({ art: { spT: "ALBUM" } }), "inlay");
+  MP.drawArt(ctx, T, C.normArt({ spT: "ALBUM" }), {}, 1);
+  assert.equal(calls.filter((c) => c[0] === "fillText").length, 2, "both spines");
+  const pic = { width: 100, height: 100 };
+  calls.length = 0;
+  MP.drawArt(ctx, T, C.normArt({}), { spine: pic }, 1);
+  assert.equal(calls.filter((c) => c[0] === "drawImage").length, 2, "the spine picture on both spines");
+});
+
+test("v2 wave 3 wiring: gallery, product form, two sync slices, strings, search, help", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html"), de = read("i18n/de/mockups.js"), sc = read("mockups/scene.js");
+  assert.match(html, /<script src="goods\/media\.js\?v=/);
+  assert.match(sc, /from "\.\/goods\/media3d\.js"/);
+  assert.match(js, /registerSlice\("mockups-goods", gSliceGet, gSliceSet, C\.GOODS_KEY, C\.mergeGoods\)/);
+  ["make", "make-groups", "good-form", "book-form", "cdpack", "trayk", "dvdfmt", "dvdcs", "dvdcol", "disck", "f-hub", "f-beside",
+    "f-sheet", "sheet-box", "good-pics", "show-grp", "mode-grp", "tbar-row", "open-lbl"].forEach((id) => {
+    assert.match(html, new RegExp('id="' + id + '"'), id);
+  });
+  const keys = ["tab.item", "tab.pics", "make.title", "make.g.books", "make.g.music", "kind.cd", "kind.cd.d", "kind.dvd", "kind.notebook",
+    "f.cdpack", "cdpack.digi", "f.disck", "f.hub", "f.beside", "slot.disc", "slot.cd.front", "tpl.kind.inlay", "tpl.kind.disc", "tpl.discInfo",
+    "tpl.goodNote.inlay", "lg.noprint", "f.openCase", "f.openSlide", "f.sheet", "sub.cd", "sub.dvd", "untitled.cd"];
+  keys.forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  });
+  // every sheet kind and part has a name
+  for (const kind of C.goodKinds()) for (const pack of ["jewel", "slim", "digi", "sleeve"]) {
+    const p = good({ kind, g: { pack } });
+    for (const s of C.sheetsOf(p)) {
+      const T = C.templateOf(p, s);
+      assert.ok(js.includes('"tpl.kind.' + T.kind + '":'), T.kind);
+      T.parts.forEach((q) => assert.ok(js.includes('"slot.' + q.k + '":'), q.k));
+    }
+  }
+  const ctx = { lang: "en", readJSON: (k) => (k === C.GOODS_KEY ? { prj: [good({ nm: "" })] } : null) };
+  assert.equal(P.search(ctx)[0].title, "Mockup CD");
+  assert.match(read("mockups/help.en.txt"), /## CD, DVD and Blu-ray/);
+  assert.match(read("mockups/help.el.txt"), /## CD, DVD και Blu-ray/);
 });

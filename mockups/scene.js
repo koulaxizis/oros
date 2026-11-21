@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.5.0, ES module)
+// orOS Mockups — scene.js (v1.6.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -32,6 +32,9 @@
 //     printed page edges, a belly band laid along the cover, a
 //     slipcase open at the spine, a sticker, a notebook's elastic
 //     band, ruled empty pages and a box set round a shelf of books
+//   - products (v1.6.0): CD and DVD / Blu-ray from goods/media3d.js,
+//     posed, framed, lit and saved like a book; "open" opens a lid
+//     or slides a disc out (fronts with userData.open)
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
 //     draws one finished frame with the set turned a little more
 //   - floor shadow (shadow catcher + contact shadows), a wall when
@@ -43,6 +46,7 @@
 // Exports createStage(host, MockCore) → stage.
 // ============================================================
 import * as THREE from "../vendor/three/three.module.min.js";
+import { build as buildMedia } from "./goods/media3d.js";
 
 var S = 0.01;                          // scene units per mm
 
@@ -567,7 +571,8 @@ export function createStage(host, C) {
   }
   function picsOf(art) {
     var o = {};
-    C.SLOTS.forEach(function (k) { if (art[k] && state.pics[art[k]]) o[k] = state.pics[art[k]]; });
+    var slots = state.p && C.isGood(state.p) ? C.goodSlots(state.p.kind) : C.SLOTS;
+    slots.forEach(function (k) { if (art[k] && state.pics[art[k]]) o[k] = state.pics[art[k]]; });
     return o;
   }
 
@@ -910,8 +915,44 @@ export function createStage(host, C) {
     place();
   }
 
+  // A product (CD, DVD…), posed on the floor like one book.
+  function buildGood() {
+    disposeBooks();
+    var p = state.p, placeK = p.sc.place;
+    var H = { THREE: THREE, S: S, own: own, ANISO: ANISO, pics: picsOf(p.art), MP: (typeof window !== "undefined" && window.MockPrint) || null, C: C };
+    var res = buildMedia(H, p);
+    if (!res) { built = false; return; }
+    res.fronts.forEach(function (f) { fronts.push(f); });
+    var pose = new THREE.Group();
+    pose.add(res.g);
+    if (placeK === "lie") pose.rotation.x = -Math.PI / 2;
+    else if (placeK === "lean") pose.rotation.x = -0.24;
+    var pb = boxOf(pose), pc = pb.getCenter(new THREE.Vector3()), ps = pb.getSize(new THREE.Vector3());
+    pose.position.set(-pc.x, -pb.min.y, -pc.z);
+    var slot = new THREE.Group();
+    slot.add(pose);
+    var cm = own(new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, opacity: 0.5 }));
+    var ct = new THREE.Mesh(own(new THREE.PlaneGeometry(1, 1)), cm);
+    ct.rotation.x = -Math.PI / 2; ct.position.y = 0.0005;
+    ct.scale.set(ps.x * 1.2, ps.z * 1.2 + (placeK === "lie" ? 0 : 0.08), 1);
+    ct.renderOrder = 1; ct.userData.skip = true;
+    slot.add(ct); contactMats.push(cm);
+    setG.add(slot);
+    leanNow = placeK === "lean";
+    built = true;
+    openFronts(p.sc.open);
+    place();
+  }
+  function openFronts(deg) {
+    fronts.forEach(function (f) {
+      if (f.userData && typeof f.userData.open === "function") f.userData.open(deg);
+      else f.rotation.y = -deg * Math.PI / 180;
+    });
+  }
+
   // Every book of the set, posed and laid out.
   function buildSet() {
+    if (C.isGood(state.p)) { buildGood(); return; }
     if (state.p.show === "open" || state.p.show === "ebook") { buildOne(); return; }
     disposeBooks();
     var p = state.p, list = C.setList(p), maxPx = list.length > 2 ? 2048 : 4096, mats = {};
@@ -1104,7 +1145,7 @@ export function createStage(host, C) {
       if (state.p) state.p = Object.assign({}, state.p, { sc: sc });
       if (bgImg !== undefined) state.bgImg = bgImg;
       if (state.p && (rebuild || placeChanged)) { buildSet(); request(); return; }
-      fronts.forEach(function (f) { f.rotation.y = -sc.open * Math.PI / 180; });
+      openFronts(sc.open);
       place();
       request();
     },

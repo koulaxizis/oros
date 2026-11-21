@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — core.js (MockCore, v1.5.0)
+// orOS Mockups — core.js (MockCore, v1.6.0)
 // Pure model of the Mockups app. No DOM, no three.js: Node-tested
 // in tests/mockups.test.js.
 //   - book sizes in mm: trim presets, paper presets, spine width
@@ -40,6 +40,13 @@
 //     corners, deckled or printed page edges, a belly band, a
 //     slipcase, a sticker on the cover, a notebook's elastic band and
 //     ruled pages, and a box set (a shelf of books in a box)
+//   - products other than books (v1.6.0): a registry the product
+//     modules (mockups/goods/*.js) fill with addGood(kind, def); their
+//     projects live in their own store "oros-mockups-goods" (synced
+//     slice "mockups-goods"), so a device from before v1.6.0, which
+//     turns every project into a book, never sees them. A project of
+//     a product this device does not know yet is kept as it came
+//     (LWW still applies) and is not shown
 //   - the project model and its merge (synced slice "mockups")
 // Data (localStorage "oros-mockups-data"):
 //   { ver: 1, prj: [project], tombs: { id: m } }
@@ -52,9 +59,11 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.5.0";
+  var VERSION = "1.6.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-mockups-data";
+  var GOODS_KEY = "oros-mockups-goods";
+  var GOODS_MAX_JSON = 65536;            // a project of a product not known here, kept as it came
   var PREFS_KEY = "oros-mockups-prefs";
   var MAX_PRJ = 200;
   var ID_RE = /^k[0-9a-z]{6,24}$/;
@@ -838,38 +847,60 @@
   }
 
   // ---------- Data + merge ----------
-  function merge(A, B) {
-    var a = A && typeof A === "object" ? A : {}, b = B && typeof B === "object" ? B : {};
-    var tombs = {};
-    [a.tombs, b.tombs].forEach(function (tm) {
-      if (!tm || typeof tm !== "object" || Array.isArray(tm)) return;
-      Object.keys(tm).forEach(function (k) {
-        if (!ID_RE.test(k) || !isInt(tm[k]) || tm[k] <= 0) return;
-        if (!(k in tombs) || tm[k] > tombs[k]) tombs[k] = tm[k];
+  // One store = { ver, prj, tombs }, its projects normalised by norm.
+  function makeStore(norm) {
+    function merge(A, B) {
+      var a = A && typeof A === "object" ? A : {}, b = B && typeof B === "object" ? B : {};
+      var tombs = {};
+      [a.tombs, b.tombs].forEach(function (tm) {
+        if (!tm || typeof tm !== "object" || Array.isArray(tm)) return;
+        Object.keys(tm).forEach(function (k) {
+          if (!ID_RE.test(k) || !isInt(tm[k]) || tm[k] <= 0) return;
+          if (!(k in tombs) || tm[k] > tombs[k]) tombs[k] = tm[k];
+        });
       });
-    });
-    var best = {};
-    [a.prj, b.prj].forEach(function (list) {
-      (Array.isArray(list) ? list : []).forEach(function (x) {
-        var p = normProject(x);
-        if (p) best[p.id] = newer(best[p.id], p);
+      var best = {};
+      [a.prj, b.prj].forEach(function (list) {
+        (Array.isArray(list) ? list : []).forEach(function (x) {
+          var p = norm(x);
+          if (p) best[p.id] = newer(best[p.id], p);
+        });
       });
-    });
-    var prj = [];
-    Object.keys(best).sort(cmpStr).forEach(function (k) {
-      if (k in tombs && tombs[k] >= best[k].m) return;
-      prj.push(best[k]);
-    });
-    prj = prj.slice(0, MAX_PRJ);
-    var t = {};
-    Object.keys(tombs).sort(cmpStr).forEach(function (k) { t[k] = tombs[k]; });
-    return { ver: DATA_VER, prj: prj, tombs: t };
+      var prj = [];
+      Object.keys(best).sort(cmpStr).forEach(function (k) {
+        if (k in tombs && tombs[k] >= best[k].m) return;
+        prj.push(best[k]);
+      });
+      prj = prj.slice(0, MAX_PRJ);
+      var t = {};
+      Object.keys(tombs).sort(cmpStr).forEach(function (k) { t[k] = tombs[k]; });
+      return { ver: DATA_VER, prj: prj, tombs: t };
+    }
+    function parse(raw) {
+      if (typeof raw !== "string" || !raw) return empty();
+      try { return merge(JSON.parse(raw), null); } catch (e) { return empty(); }
+    }
+    // Put a project in (new or changed): m moves past the old copy and
+    // past its tombstone, so the change always wins.
+    function put(data, p, now) {
+      var cur = merge(data, null), old = byId(cur, p.id);
+      if (!old && cur.prj.length >= MAX_PRJ) return { data: cur, ok: false, why: "full" };
+      var m = Math.max(now, old ? old.m + 1 : 0, (cur.tombs[p.id] || 0) + 1);
+      var n = norm(Object.assign({}, p, { m: m }));
+      if (!n) return { data: cur, ok: false, why: "bad" };
+      cur.prj = cur.prj.filter(function (x) { return x.id !== n.id; }).concat([n]);
+      return { data: merge(cur, null), ok: true, prj: n };
+    }
+    function remove(data, id, now) {
+      var cur = merge(data, null), old = byId(cur, id);
+      if (!old) return cur;
+      var add = {};
+      add[id] = Math.max(now, old.m);
+      return merge(cur, { tombs: add });
+    }
+    return { merge: merge, parse: parse, put: put, remove: remove };
   }
   function empty() { return { ver: DATA_VER, prj: [], tombs: {} }; }
-  function parse(raw) {
-    if (typeof raw !== "string" || !raw) return empty();
-    try { return merge(JSON.parse(raw), null); } catch (e) { return empty(); }
-  }
   function byId(data, id) {
     for (var i = 0; i < data.prj.length; i++) if (data.prj[i].id === id) return data.prj[i];
     return null;
@@ -882,30 +913,88 @@
   function blank(id, now) {
     return normProject({ id: id, m: now, nm: "", bk: { trim: "a5", w: 148, h: 210 }, art: {}, sc: {}, out: {} });
   }
-  // Put a project in (new or changed): m moves past the old copy and
-  // past its tombstone, so the change always wins.
-  function put(data, p, now) {
-    var cur = merge(data, null), old = byId(cur, p.id);
-    if (!old && cur.prj.length >= MAX_PRJ) return { data: cur, ok: false, why: "full" };
-    var m = Math.max(now, old ? old.m + 1 : 0, (cur.tombs[p.id] || 0) + 1);
-    var n = normProject(Object.assign({}, p, { m: m }));
-    if (!n) return { data: cur, ok: false, why: "bad" };
-    cur.prj = cur.prj.filter(function (x) { return x.id !== n.id; }).concat([n]);
-    return { data: merge(cur, null), ok: true, prj: n };
+  var BOOKS = makeStore(normProject);
+  var merge = BOOKS.merge, parse = BOOKS.parse, put = BOOKS.put, remove = BOOKS.remove;
+
+  // ---------- Products other than books (v1.6.0) ----------
+  // def: { group, slots: [extra picture slots], norm(g) → g,
+  //        sheets(p) → [sheet keys], template(p, sheet) → T, sub(g) }
+  var GOODS = {}, GOOD_ORDER = [];
+  var KIND_RE = /^[a-z][a-z0-9]{1,15}$/;
+  function addGood(kind, def) {
+    if (!KIND_RE.test(kind) || kind === "book" || !def || typeof def.norm !== "function") return false;
+    if (!GOODS[kind]) GOOD_ORDER.push(kind);
+    GOODS[kind] = def;
+    return true;
   }
-  function remove(data, id, now) {
-    var cur = merge(data, null), old = byId(cur, id);
-    if (!old) return cur;
-    var add = {};
-    add[id] = Math.max(now, old.m);
-    return merge(cur, { tombs: add });
+  function good(kind) { return GOODS[kind] || null; }
+  function goodSlots(kind) {
+    var d = GOODS[kind], out = ["front", "back", "spine", "wrap"];
+    if (d && Array.isArray(d.slots)) d.slots.forEach(function (k) { if (out.indexOf(k) < 0) out.push(k); });
+    return out;
   }
+  function normGoodArt(kind, a) {
+    var o = normArt(a);
+    a = a && typeof a === "object" ? a : {};
+    goodSlots(kind).forEach(function (k) { o[k] = asset(a[k]); });
+    // the book-only slots never travel with a product
+    ["flapF", "flapB", "foil", "uv", "emb", "edgeP", "belly", "slip", "stick"].forEach(function (k) {
+      if (goodSlots(kind).indexOf(k) < 0) delete o[k];
+    });
+    return o;
+  }
+  function normGoodProject(p) {
+    if (!p || typeof p !== "object") return null;
+    if (typeof p.id !== "string" || !ID_RE.test(p.id)) return null;
+    if (!isInt(p.m) || p.m <= 0) return null;
+    if (typeof p.kind !== "string" || !KIND_RE.test(p.kind) || p.kind === "book") return null;
+    var d = GOODS[p.kind];
+    if (!d) {
+      // a product of a newer orOS: kept as it came, never shown
+      var raw;
+      try { raw = JSON.stringify(p); } catch (e) { return null; }
+      if (!raw || raw.length > GOODS_MAX_JSON) return null;
+      return JSON.parse(raw);
+    }
+    return {
+      id: p.id, m: p.m,
+      nm: str(p.nm, 80),
+      kind: p.kind,
+      g: d.norm(p.g),
+      art: normGoodArt(p.kind, p.art),
+      sc: normScene(p.sc),
+      out: normOut(p.out),
+      tpl: normTpl(p.tpl),
+      unit: p.unit === "in" ? "in" : "mm"
+    };
+  }
+  var GOODS_STORE = makeStore(normGoodProject);
+  function blankGood(kind, id, now) {
+    if (!GOODS[kind]) return null;
+    return normGoodProject({ id: id, m: now, nm: "", kind: kind, g: {}, art: {}, sc: {}, out: {}, tpl: { safe: 3 } });
+  }
+  // Is this a project this device can open? (a book, or a known product)
+  function known(p) { return !!p && (p.kind === "book" || !!GOODS[p.kind]); }
+  function isGood(p) { return !!p && p.kind !== "book"; }
+  // The printer's sheets of a project, and one of them.
+  function sheetsOf(p) {
+    if (!isGood(p)) return ["cover"];
+    var d = GOODS[p.kind];
+    return d && typeof d.sheets === "function" ? d.sheets(p) : [];
+  }
+  function templateOf(p, sheet) {
+    if (!isGood(p)) return template(p.bk, p.art, p.tpl);
+    var d = GOODS[p.kind], list = sheetsOf(p);
+    if (!d || !list.length) return null;
+    return d.template(p, list.indexOf(sheet) >= 0 ? sheet : list[0]);
+  }
+
   // Every picture file a project names (for "in use" checks).
   function assetsOf(p) {
     var out = [];
     if (!p) return out;
-    SLOTS.forEach(function (k) { if (p.art && p.art[k]) out.push(p.art[k]); });
-    if (p.sc && p.sc.bg && p.sc.bg.img) out.push(p.sc.bg.img);
+    (isGood(p) ? goodSlots(p.kind) : SLOTS).forEach(function (k) { if (p.art && p.art[k] && out.indexOf(p.art[k]) < 0) out.push(p.art[k]); });
+    if (p.sc && p.sc.bg && p.sc.bg.img && out.indexOf(p.sc.bg.img) < 0) out.push(p.sc.bg.img);
     if (p.ins) IN_SLOTS.forEach(function (k) { if (p.ins[k] && out.indexOf(p.ins[k]) < 0) out.push(p.ins[k]); });
     if (p.set && Array.isArray(p.set.vols)) p.set.vols.forEach(function (v) {
       VOL_SLOTS.forEach(function (k) { if (v && v[k] && out.indexOf(v[k]) < 0) out.push(v[k]); });
@@ -934,7 +1023,11 @@
   }
 
   var MockCore = {
-    VERSION: VERSION, DATA_VER: DATA_VER, DATA_KEY: DATA_KEY, PREFS_KEY: PREFS_KEY, MAX_PRJ: MAX_PRJ,
+    VERSION: VERSION, DATA_VER: DATA_VER, DATA_KEY: DATA_KEY, GOODS_KEY: GOODS_KEY,
+    addGood: addGood, good: good, goodKinds: function () { return GOOD_ORDER.slice(); }, goodSlots: goodSlots,
+    normGoodProject: normGoodProject, blankGood: blankGood, known: known, isGood: isGood,
+    mergeGoods: GOODS_STORE.merge, parseGoods: GOODS_STORE.parse, putGood: GOODS_STORE.put, removeGood: GOODS_STORE.remove,
+    sheetsOf: sheetsOf, templateOf: templateOf, round3: round3, asset: asset, str: str, PREFS_KEY: PREFS_KEY, MAX_PRJ: MAX_PRJ,
     ID_RE: ID_RE, ASSET_RE: ASSET_RE, LIMIT: LIMIT,
     TRIMS: TRIMS, PAPERS: PAPERS, BINDS: BINDS, WIRES: WIRES, FOILS: FOILS, EMBS: EMBS, TEXS: TEXS, STICKS: STICKS, RULES: RULES, CORNER_R: CORNER_R, canHave: canHave, stickerBox: stickerBox, slipcase: slipcase, SS_MAX: SS_MAX, PUNCH: PUNCH, coilLoops: coilLoops, FINISH: FINISH, EDGES: EDGES, PLACES: PLACES, BGS: BGS,
     RATIOS: RATIOS, SIZES: SIZES, FMTS: FMTS, SLOTS: SLOTS, MM_PER_IN: MM_PER_IN,

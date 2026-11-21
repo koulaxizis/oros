@@ -1,12 +1,15 @@
 // ============================================================
-// orOS Mockups — print.js (MockPrint, v1.1.0)
+// orOS Mockups — print.js (MockPrint, v1.2.0)
 // The cover sheet for the printer, drawn on a 2D canvas from
 // MockCore.template(): the cover itself (the full-wrap picture, or
 // front / back / spine / flap pictures put together, running into
 // the bleed) and the guides (bleed or hardcover wrap tinted, trim
 // line, folds, hinges, safe zones, barcode spot, the name and width
 // of every panel; a spiral binding's two covers are trimmed apart,
-// with the strip of the holes shown). The same drawing feeds the live preview of the
+// with the strip of the holes shown). Products (v1.2.0): a part may
+// take another slot's picture (part.a), spine text goes on every part
+// marked txt, and a disc label is a round sheet (T.circle: print
+// ring, hub, hole). The same drawing feeds the live preview of the
 // Print tab, the PNG, the PDF and the new Atelier design.
 // No three.js; loaded with the app.
 // ============================================================
@@ -64,14 +67,16 @@
       if (pics.wrap) ctx.drawImage(pics.wrap, 0, 0, sw, sh);
       return;
     }
-    var sp = spans(T);
+    if (T.circle) { drawDisc(ctx, T, art, pics, ppm); return; }
+    var sp = spans(T), alias = {};
+    T.parts.forEach(function (p) { if (typeof p.a === "string") alias[p.k] = p.a; });
     Object.keys(sp).forEach(function (k) {
-      var x = sp[k][0] * ppm, w = (sp[k][1] - sp[k][0]) * ppm, im = pics[k];
+      var x = sp[k][0] * ppm, w = (sp[k][1] - sp[k][0]) * ppm, im = pics[k in alias ? alias[k] : k];
       if (im) { ctx.save(); ctx.beginPath(); ctx.rect(x, 0, w, sh); ctx.clip(); coverFit(ctx, im, x, 0, w, sh); ctx.restore(); return; }
       if (k === "flapB" || k === "flapF") { ctx.fillStyle = shade(art.c, 0.08); ctx.fillRect(x, 0, w, sh); }
     });
-    var spine = T.parts.filter(function (p) { return p.k === "spine"; })[0];
-    if (spine && !pics.spine && art.spT) {
+    T.parts.filter(function (p) { return p.k === "spine" || p.txt; }).forEach(function (spine) {
+      if (pics.spine || !art.spT) return;
       var w = spine.w * ppm, H = T.H * ppm;
       ctx.save();
       ctx.translate((T.bleed + spine.x + spine.w / 2) * ppm, (T.bleed + T.H / 2) * ppm);
@@ -84,7 +89,21 @@
       if (txt !== art.spT) txt = txt.slice(0, -1) + "…";
       ctx.fillText(txt, 0, 0);
       ctx.restore();
-    }
+    });
+  }
+  // A disc label: the picture in the print ring (outer print Ø to
+  // the hub), the disc's colour where there is none.
+  function drawDisc(ctx, T, art, pics, ppm) {
+    var c = T.circle, cx = c.c * ppm, sw = T.sheet.w * ppm;
+    ctx.clearRect(0, 0, sw, sw);
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cx, c.print / 2 * ppm, 0, Math.PI * 2);
+    ctx.arc(cx, cx, c.hub / 2 * ppm, 0, Math.PI * 2, true);
+    ctx.clip("evenodd");
+    ctx.fillStyle = art.c; ctx.fillRect(0, 0, sw, sw);
+    if (pics.disc) coverFit(ctx, pics.disc, 0, 0, sw, sw);
+    ctx.restore();
   }
 
   var COL = { bleed: "rgba(226, 46, 46, 0.30)", trim: "#d81e1e", fold: "#1769d6", hinge: "#8a3fd1", safe: "#11905a", bar: "#1d2330", punch: "rgba(23, 105, 214, 0.16)" };
@@ -93,6 +112,7 @@
   function drawGuides(ctx, T, ppm, L) {
     var bl = T.bleed * ppm, W = T.W * ppm, H = T.H * ppm, sw = T.sheet.w * ppm, sh = T.sheet.h * ppm;
     var lw = Math.max(1, ppm * 0.3), fs = Math.max(9, ppm * 3.2);
+    if (T.circle) { discGuides(ctx, T, ppm, L, lw, fs); return; }
     var trims = T.trims && T.trims.length ? T.trims : [{ x: 0, w: T.W }];
     ctx.save();
     // bleed (paperback, jacket) or wrap round the boards (case)
@@ -149,6 +169,31 @@
     if (L.info) label(ctx, L.info, bl + W / 2, T.bleed >= 6 ? sh - bl / 2 : bl + H - fs * 0.9, fs * 0.85, COL.trim, W * 0.95);
     ctx.restore();
   }
+  // A disc label: outside the print ring and inside the hub tinted,
+  // the print edge and the hole as trim lines, the safe ring dashed.
+  function discGuides(ctx, T, ppm, L, lw, fs) {
+    var c = T.circle, cx = c.c * ppm, sw = T.sheet.w * ppm;
+    function ring(d) { ctx.beginPath(); ctx.arc(cx, cx, d / 2 * ppm, 0, Math.PI * 2); }
+    ctx.save();
+    ctx.fillStyle = COL.bleed;
+    ctx.beginPath(); ctx.rect(0, 0, sw, sw);
+    ctx.arc(cx, cx, c.print / 2 * ppm, 0, Math.PI * 2, true);
+    ctx.fill();
+    ring(c.hub); ctx.fill();
+    ctx.strokeStyle = COL.trim; ctx.lineWidth = lw * 1.4;
+    ring(c.print); ctx.stroke();
+    ring(c.hole); ctx.stroke();
+    ctx.strokeStyle = COL.fold; ctx.lineWidth = lw; ctx.setLineDash([lw * 6, lw * 3]);
+    ring(T.W); ctx.stroke();
+    ctx.strokeStyle = COL.safe; ctx.setLineDash([lw * 4, lw * 3]);
+    ring(c.safeOut); ctx.stroke();
+    ring(c.safeIn); ctx.stroke();
+    ctx.setLineDash([]);
+    label(ctx, L.name("disc"), cx, cx - (c.safeIn / 2 + (c.safeOut - c.safeIn) / 4) * ppm, fs * 1.3, COL.fold, (c.safeOut - c.safeIn) / 2 * ppm);
+    label(ctx, "Ø " + L.len(c.print) + " · " + L.len(c.hub), cx, cx + (c.safeIn / 2 + (c.safeOut - c.safeIn) / 4) * ppm, fs, COL.fold, c.safeOut * 0.6 * ppm);
+    if (L.info) label(ctx, L.info, cx, sw - fs * 1.2, fs * 0.85, COL.trim, sw * 0.6);
+    ctx.restore();
+  }
   // Text with a white halo, kept inside maxW; centred unless align.
   function label(ctx, txt, x, y, size, color, maxW, align) {
     if (!txt) return;
@@ -168,8 +213,11 @@
   function render(T, art, pics, ppm, o) {
     o = o || {};
     var cv = canvas(T.sheet.w * ppm, T.sheet.h * ppm), ctx = cv.getContext("2d");
-    if (o.art) drawArt(ctx, T, art, pics || {}, ppm);
-    else if (o.white) { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height); }
+    if (o.white) { ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, cv.width, cv.height); }
+    if (o.art) {
+      if (T.circle && o.white) { var lay = canvas(cv.width, cv.height); drawArt(lay.getContext("2d"), T, art, pics || {}, ppm); ctx.drawImage(lay, 0, 0); }
+      else drawArt(ctx, T, art, pics || {}, ppm);
+    }
     if (o.guides) drawGuides(ctx, T, ppm, o.L || { name: String, len: String });
     return cv;
   }
@@ -189,5 +237,5 @@
     return doc;
   }
 
-  root.MockPrint = { VERSION: "1.1.0", ppmFor: ppmFor, spans: spans, drawArt: drawArt, drawGuides: drawGuides, render: render, pdf: pdf, COL: COL };
+  root.MockPrint = { VERSION: "1.2.0", ppmFor: ppmFor, spans: spans, drawArt: drawArt, drawGuides: drawGuides, render: render, pdf: pdf, COL: COL };
 })(typeof window !== "undefined" ? window : globalThis);

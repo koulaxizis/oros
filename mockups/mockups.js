@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — App logic (v1.3.0)
+// orOS Mockups — App logic (v1.4.0)
 // 3D book mockups: give the book's size, pages, paper and binding
 // (paperback or hardcover, flaps / dust jacket, rounded spine,
 // headband, ribbon), add the cover (front, back, spine, flaps or one
@@ -17,7 +17,10 @@
 // design of the right size, BR-MK-TPL). Wave 4: what to show, the
 // closed book, the open book (inside pages from pictures or a PDF
 // through the vendored PDF.js, page curve) or the e-book on a
-// tablet, phone or e-reader.
+// tablet, phone or e-reader. v2 wave 3: products other than books
+// ("What do you want to make?"): CD and DVD / Blu-ray (goods/media.js,
+// goods/media3d.js), kept in their own synced slice "mockups-goods"
+// (oros-mockups-goods), with their printer's sheets on the Print tab.
 // Data: synced slice "mockups" (oros-mockups-data, core.js);
 // pictures on the orOS disk through designkit/assets.js (R30);
 // project thumbnails cached on this device only (IndexedDB
@@ -59,8 +62,8 @@
   var STRINGS = {
     en: {
       "app.name": "Mockups", "btn.new": "New mockup", "btn.more": "More", "btn.back": "All mockups",
-      "empty": "No mockup yet. Make a 3D picture of your book: give its size and pages, add the cover, pick the angle and the background, and save it.",
-      "btn.first": "Make a book mockup",
+      "empty": "No mockup yet. Make a 3D picture of your book, notebook, CD or DVD: give its size, add its pictures, pick the angle and the background, and save it.",
+      "btn.first": "Make a mockup",
       "tab.book": "Book", "tab.cover": "Cover", "tab.scene": "Scene", "tab.out": "Save",
       "f.bind": "Binding", "bind.pb": "Paperback", "bind.hc": "Hardcover",
       "edge.print": "Printed (a picture)", "slot.edgeP": "Picture on the page edges",
@@ -77,6 +80,88 @@
       "f.stick": "Sticker on the cover", "slot.stick": "Sticker picture", "stick.round": "Round", "stick.square": "Square", "aria.stickK": "Sticker shape",
       "f.stickD": "Size", "f.stickX": "Left / right", "f.stickY": "Up / down",
       "f.rule": "Empty pages", "rule.none": "Plain", "rule.lined": "Lined", "rule.dotted": "Dotted", "rule.grid": "Squared", "set.box": "Box set",
+      "tab.item": "Product",
+      "tab.pics": "Pictures",
+      "untitled.cd": "CD mockup",
+      "untitled.dvd": "DVD mockup",
+      "sub.cd": "CD · {pack}",
+      "sub.dvd": "{fmt} · {cs} case",
+      "make.title": "What do you want to make?",
+      "make.g.books": "Books & paper",
+      "make.g.music": "Music & film",
+      "kind.book": "Book",
+      "kind.book.d": "Paperback, hardcover, booklet, spiral, board book, lay-flat",
+      "kind.notebook": "Notebook",
+      "kind.notebook.d": "Hardcover with rounded corners, elastic band and lined pages",
+      "kind.cd": "CD",
+      "kind.cd.d": "Jewel case, slim case, digipak or card sleeve, with the disc",
+      "kind.dvd": "DVD / Blu-ray",
+      "kind.dvd.d": "The case with its sleeve, and the disc",
+      "f.cdpack": "Packaging",
+      "cdpack.jewel": "Jewel case",
+      "cdpack.slim": "Slim case",
+      "cdpack.digi": "Digipak",
+      "cdpack.sleeve": "Card sleeve",
+      "f.tray": "Tray",
+      "col.black": "Black",
+      "col.clear": "Clear",
+      "col.white": "White",
+      "col.blue": "Blue",
+      "f.dvdfmt": "Format",
+      "dvdfmt.dvd": "DVD",
+      "dvdfmt.bd": "Blu-ray",
+      "f.dvdcs": "Case",
+      "dvdcs.std": "Standard",
+      "dvdcs.slim": "Slim",
+      "f.dvdcol": "Case colour",
+      "f.disck": "The disc",
+      "disc.silver": "Silver",
+      "disc.white": "White",
+      "disc.black": "Black",
+      "f.hub": "Label printed from",
+      "hub.15": "The hole (15 mm)",
+      "hub.22": "22 mm",
+      "hub.36": "36 mm (clear ring)",
+      "f.beside": "The disc next to the case",
+      "good.size": "Closed: {w} × {h} × {d}.",
+      "pics.hint.cd": "Each picture goes on its part of the case and on the printer's sheets (Print tab). The disc picture fills the label; its middle is cut out.",
+      "pics.hint.dvd": "The front, spine and back of the sleeve, or one full sleeve as the printer's sheet, and the disc label.",
+      "slot.disc": "Disc label",
+      "slot.inside": "Inside",
+      "slot.tray": "Under the tray",
+      "slot.spineL": "Spine",
+      "slot.spineR": "Spine",
+      "slot.spineIn": "Spine (inside)",
+      "slot.cd.front": "Front (booklet or cover)",
+      "slot.cd.inside": "Inside (back page of the booklet, or inside panel)",
+      "slot.cd.back": "Back (tray card)",
+      "slot.cd.spine": "Spines",
+      "slot.cd.tray": "Under the tray",
+      "slot.dvd.front": "Front of the sleeve",
+      "slot.dvd.back": "Back of the sleeve",
+      "slot.dvd.spine": "Spine of the sleeve",
+      "slot.dvd.wrap": "Full sleeve (printer's sheet)",
+      "f.openCase": "Open the case",
+      "f.openSlide": "Slide the disc out",
+      "f.sheet": "Sheet",
+      "tpl.kind.booklet": "Booklet (4 pages, folded)",
+      "tpl.kind.inlay": "Tray card with spines",
+      "tpl.kind.disc": "Disc label",
+      "tpl.kind.digi": "Digipak, outside",
+      "tpl.kind.digiIn": "Digipak, inside",
+      "tpl.kind.sleeve": "Card sleeve",
+      "tpl.kind.dvd": "Case sleeve",
+      "tpl.goodInfo": "{kind} · trim {tw} × {th} · bleed {b}",
+      "tpl.discInfo": "Disc {d}, printed from {p} down to {hub}; the hole is {hole}.",
+      "tpl.goodNote.booklet": "The back page is on the left, the front on the right; it folds in the middle.",
+      "tpl.goodNote.inlay": "The two narrow spines fold up at the ends of the case; the back sits under the tray.",
+      "tpl.goodNote.disc": "Pressing plants ask for the label as a square picture; the print stops at the clear ring or the hole you choose on the Product tab.",
+      "tpl.goodNote.digiIn": "Inside: the left panel faces the disc; the tray is glued on the right panel.",
+      "tpl.goodNote.sleeve": "Back and front of the sleeve; the glue flaps come from your plant's own cutting line.",
+      "lg.noprint": "Not printed",
+      "tpl.hintGood": "The sheets the pressing plant or print shop asks for, at their real size. Lay out your pictures on them, or save your finished sheets with the right bleed.",
+      "lg.discEdge": "Edge of the print and the hole",
+      "lg.discOut": "Edge of the disc",
       "bind.ss": "Saddle-stitched", "bind.sp": "Spiral", "bind.bb": "Board book", "bind.lf": "Lay-flat",
       "hint.ss": "Folded in the middle and stapled, like a magazine, a booklet or a zine. No spine; pages go in fours, at most about 96.",
       "hint.sp": "Spiral or wire-o: two loose covers and a coil through holes near the edge. It opens flat; there is no spine.",
@@ -198,8 +283,8 @@
     },
     el: {
       "app.name": "Μακέτες", "btn.new": "Νέα μακέτα", "btn.more": "Περισσότερα", "btn.back": "Όλες οι μακέτες",
-      "empty": "Δεν υπάρχει ακόμα μακέτα. Φτιάξε μια τρισδιάστατη εικόνα του βιβλίου σου: δώσε μέγεθος και σελίδες, βάλε το εξώφυλλο, διάλεξε γωνία και φόντο και αποθήκευσέ τη.",
-      "btn.first": "Φτιάξε μακέτα βιβλίου",
+      "empty": "Δεν υπάρχει ακόμα μακέτα. Φτιάξε μια τρισδιάστατη εικόνα του βιβλίου, του σημειωματαρίου, του CD ή του DVD σου: δώσε μέγεθος, βάλε τις εικόνες, διάλεξε γωνία και φόντο και αποθήκευσέ τη.",
+      "btn.first": "Φτιάξε μακέτα",
       "tab.book": "Βιβλίο", "tab.cover": "Εξώφυλλο", "tab.scene": "Σκηνή", "tab.out": "Αποθήκευση",
       "f.bind": "Βιβλιοδεσία", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο",
       "edge.print": "Τυπωμένες (μια εικόνα)", "slot.edgeP": "Εικόνα στις άκρες των σελίδων",
@@ -216,6 +301,88 @@
       "f.stick": "Αυτοκόλλητο στο εξώφυλλο", "slot.stick": "Εικόνα αυτοκόλλητου", "stick.round": "Στρογγυλό", "stick.square": "Τετράγωνο", "aria.stickK": "Σχήμα αυτοκόλλητου",
       "f.stickD": "Μέγεθος", "f.stickX": "Αριστερά / δεξιά", "f.stickY": "Πάνω / κάτω",
       "f.rule": "Άδειες σελίδες", "rule.none": "Λευκές", "rule.lined": "Με γραμμές", "rule.dotted": "Με τελείες", "rule.grid": "Τετραγωνισμένες", "set.box": "Box set",
+      "tab.item": "Προϊόν",
+      "tab.pics": "Εικόνες",
+      "untitled.cd": "Μακέτα CD",
+      "untitled.dvd": "Μακέτα DVD",
+      "sub.cd": "CD · {pack}",
+      "sub.dvd": "{fmt} · θήκη {cs}",
+      "make.title": "Τι θέλεις να φτιάξεις;",
+      "make.g.books": "Βιβλία και χαρτί",
+      "make.g.music": "Μουσική και ταινίες",
+      "kind.book": "Βιβλίο",
+      "kind.book.d": "Χαρτόδετο, σκληρόδετο, με καρφίτσα, σπιράλ, χαρτονένιο, που ανοίγει επίπεδα",
+      "kind.notebook": "Σημειωματάριο",
+      "kind.notebook.d": "Σκληρόδετο με στρογγυλές γωνίες, λάστιχο και σελίδες με γραμμές",
+      "kind.cd": "CD",
+      "kind.cd.d": "Θήκη jewel, λεπτή θήκη, digipak ή χάρτινος φάκελος, με τον δίσκο",
+      "kind.dvd": "DVD / Blu-ray",
+      "kind.dvd.d": "Η θήκη με το ένθετό της, και ο δίσκος",
+      "f.cdpack": "Συσκευασία",
+      "cdpack.jewel": "Θήκη jewel",
+      "cdpack.slim": "Λεπτή θήκη",
+      "cdpack.digi": "Digipak",
+      "cdpack.sleeve": "Χάρτινος φάκελος",
+      "f.tray": "Βάση δίσκου",
+      "col.black": "Μαύρο",
+      "col.clear": "Διάφανο",
+      "col.white": "Λευκό",
+      "col.blue": "Μπλε",
+      "f.dvdfmt": "Μορφή",
+      "dvdfmt.dvd": "DVD",
+      "dvdfmt.bd": "Blu-ray",
+      "f.dvdcs": "Θήκη",
+      "dvdcs.std": "Κανονική",
+      "dvdcs.slim": "Λεπτή",
+      "f.dvdcol": "Χρώμα θήκης",
+      "f.disck": "Ο δίσκος",
+      "disc.silver": "Ασημί",
+      "disc.white": "Λευκός",
+      "disc.black": "Μαύρος",
+      "f.hub": "Η ετικέτα τυπώνεται έως",
+      "hub.15": "Την τρύπα (15 mm)",
+      "hub.22": "22 mm",
+      "hub.36": "36 mm (διάφανος δακτύλιος)",
+      "f.beside": "Ο δίσκος δίπλα στη θήκη",
+      "good.size": "Κλειστό: {w} × {h} × {d}.",
+      "pics.hint.cd": "Κάθε εικόνα πάει στο μέρος της θήκης και στα φύλλα του τυπογραφείου (καρτέλα Εκτύπωση). Η εικόνα του δίσκου γεμίζει την ετικέτα· η μέση της κόβεται.",
+      "pics.hint.dvd": "Μπροστά, ράχη και πίσω του ένθετου, ή ένα ενιαίο ένθετο όπως το φύλλο του τυπογραφείου, και η ετικέτα του δίσκου.",
+      "slot.disc": "Ετικέτα δίσκου",
+      "slot.inside": "Εσωτερικό",
+      "slot.tray": "Κάτω από τη βάση",
+      "slot.spineL": "Ράχη",
+      "slot.spineR": "Ράχη",
+      "slot.spineIn": "Ράχη (μέσα)",
+      "slot.cd.front": "Μπροστά (εξώφυλλο ή βιβλιαράκι)",
+      "slot.cd.inside": "Μέσα (πίσω σελίδα του βιβλιαρακίου ή εσωτερικό)",
+      "slot.cd.back": "Πίσω (ένθετο βάσης)",
+      "slot.cd.spine": "Ράχες",
+      "slot.cd.tray": "Κάτω από τη βάση",
+      "slot.dvd.front": "Μπροστά του ένθετου",
+      "slot.dvd.back": "Πίσω του ένθετου",
+      "slot.dvd.spine": "Ράχη του ένθετου",
+      "slot.dvd.wrap": "Ενιαίο ένθετο (φύλλο τυπογραφείου)",
+      "f.openCase": "Άνοιγμα θήκης",
+      "f.openSlide": "Βγάλε τον δίσκο",
+      "f.sheet": "Φύλλο",
+      "tpl.kind.booklet": "Βιβλιαράκι (4 σελίδες, διπλωμένο)",
+      "tpl.kind.inlay": "Ένθετο βάσης με ράχες",
+      "tpl.kind.disc": "Ετικέτα δίσκου",
+      "tpl.kind.digi": "Digipak, έξω",
+      "tpl.kind.digiIn": "Digipak, μέσα",
+      "tpl.kind.sleeve": "Χάρτινος φάκελος",
+      "tpl.kind.dvd": "Ένθετο θήκης",
+      "tpl.goodInfo": "{kind} · τελικό {tw} × {th} · bleed {b}",
+      "tpl.discInfo": "Δίσκος {d}, τυπώνεται από τα {p} έως τα {hub}· η τρύπα είναι {hole}.",
+      "tpl.goodNote.booklet": "Η πίσω σελίδα είναι αριστερά, το εξώφυλλο δεξιά· διπλώνει στη μέση.",
+      "tpl.goodNote.inlay": "Οι δύο στενές ράχες διπλώνουν στις άκρες της θήκης· το πίσω μέρος μπαίνει κάτω από τη βάση.",
+      "tpl.goodNote.disc": "Τα εργοστάσια ζητούν την ετικέτα ως τετράγωνη εικόνα· η εκτύπωση σταματά στον διάφανο δακτύλιο ή στην τρύπα που διαλέγεις στην καρτέλα Προϊόν.",
+      "tpl.goodNote.digiIn": "Μέσα: το αριστερό πάνελ κοιτά τον δίσκο· η βάση κολλάει στο δεξί πάνελ.",
+      "tpl.goodNote.sleeve": "Πίσω και μπροστά του φακέλου· τα αυτιά για κόλλημα έρχονται από τη γραμμή κοπής του εργοστασίου σου.",
+      "lg.noprint": "Δεν τυπώνεται",
+      "tpl.hintGood": "Τα φύλλα που ζητά το εργοστάσιο ή το τυπογραφείο, στο πραγματικό τους μέγεθος. Στήσε πάνω τους τις εικόνες σου ή αποθήκευσε τα έτοιμα φύλλα με το σωστό bleed.",
+      "lg.discEdge": "Άκρη της εκτύπωσης και τρύπα",
+      "lg.discOut": "Άκρη του δίσκου",
       "bind.ss": "Καρφίτσα", "bind.sp": "Σπιράλ", "bind.bb": "Χαρτονένιο", "bind.lf": "Ανοίγει επίπεδα",
       "hint.ss": "Διπλωμένο στη μέση και καρφιτσωμένο, σαν περιοδικό, φυλλάδιο ή fanzine. Δεν έχει ράχη· οι σελίδες πάνε ανά τέσσερις, έως περίπου 96.",
       "hint.sp": "Σπιράλ ή wire-o: δύο χωριστά εξώφυλλα και ένα σπιράλ μέσα από τρύπες κοντά στην άκρη. Ανοίγει επίπεδα· δεν έχει ράχη.",
@@ -387,42 +554,70 @@
   }
 
   // ---------- 2. State + storage ----------
-  var data = C.empty();
+  var data = C.empty();               // books (oros-mockups-data)
+  var gdata = C.empty();              // other products (oros-mockups-goods)
   var prefs = C.normPrefs(null);
   var cur = null;                    // the open project (normalized)
   var saveTimer = 0;
 
   function load() {
     try { data = C.parse(localStorage.getItem(C.DATA_KEY)); } catch (e) { data = C.empty(); }
+    try { gdata = C.parseGoods(localStorage.getItem(C.GOODS_KEY)); } catch (e) { gdata = C.empty(); }
     prefs = C.normPrefs(readJSON(C.PREFS_KEY));
   }
   function savePrefs() { try { localStorage.setItem(C.PREFS_KEY, JSON.stringify(prefs)); } catch (e) {} }
   function storeData() {
-    try { localStorage.setItem(C.DATA_KEY, JSON.stringify(data)); }
+    try { localStorage.setItem(C.DATA_KEY, JSON.stringify(data)); localStorage.setItem(C.GOODS_KEY, JSON.stringify(gdata)); }
     catch (e) { toast(t("toast.saveFail")); return false; }
     if (window.__orosSyncApi) window.__orosSyncApi.dirty();
     return true;
   }
+  // Books and products live in two stores; these find the right one.
+  function isG(p) { return C.isGood(p); }
+  function findPrj(id) {
+    var p = C.byId(data, id);
+    if (p) return p;
+    p = C.byId(gdata, id);
+    return p && C.known(p) ? p : null;
+  }
+  function normAny(p) { return isG(p) ? C.normGoodProject(p) : C.normProject(p); }
+  function putAny(p, now) {
+    if (isG(p)) {
+      if (data.prj.length + gdata.prj.length >= C.MAX_PRJ && !C.byId(gdata, p.id)) return { ok: false, why: "full" };
+      var r = C.putGood(gdata, p, now);
+      if (r.ok) gdata = r.data;
+      return r;
+    }
+    if (data.prj.length + gdata.prj.length >= C.MAX_PRJ && !C.byId(data, p.id)) return { ok: false, why: "full" };
+    var q = C.put(data, p, now);
+    if (q.ok) data = q.data;
+    return q;
+  }
+  function removeAny(id, now) {
+    if (C.byId(gdata, id)) gdata = C.removeGood(gdata, id, now);
+    else data = C.remove(data, id, now);
+  }
+  function allPrj() { return data.prj.concat(gdata.prj.filter(C.known)); }
   function saveSoon() { clearTimeout(saveTimer); saveTimer = setTimeout(saveNow, 500); }
   function saveNow() {
     clearTimeout(saveTimer);
     saveTimer = 0;
     if (!cur) return;
-    var old = C.byId(data, cur.id);
+    var old = findPrj(cur.id);
     if (old) {
       var a = clone(cur), b = clone(old);
       a.m = b.m = 0;
       if (C.canon(a) === C.canon(b)) return;
     }
-    var r = C.put(data, cur, Date.now());
+    var r = putAny(cur, Date.now());
     if (!r.ok) { if (r.why === "full") toast(t("toast.full")); return; }
-    data = r.data;
     cur.m = r.prj.m;
     storeData();
     thumbSoon();
   }
-  function label(p) { return p.nm || t("untitled"); }
+  function label(p) { return p.nm || t(isG(p) ? "untitled." + p.kind : "untitled"); }
   function subOf(p) {
+    if (isG(p)) return goodSub(p);
     return t("sub.book", { w: fmtNum(p.bk.w, 1), h: fmtNum(p.bk.h, 1), pages: p.bk.pages, bind: t("bind." + p.bk.bind) });
   }
 
@@ -483,7 +678,7 @@
     thumbUrls = [];
     var grid = $("grid");
     grid.textContent = "";
-    var list = data.prj.slice().sort(function (a, b) { return b.m - a.m; });
+    var list = allPrj().sort(function (a, b) { return b.m - a.m; });
     $("empty-box").hidden = list.length > 0;
     var missing = [];
     list.forEach(function (p) {
@@ -561,7 +756,7 @@
     renderHome();
   }
   function openPrj(id) {
-    var p = C.byId(data, id);
+    var p = findPrj(id);
     if (!p) { showHome(); return; }
     if (cur && saveTimer) saveNow();
     clearMotion();
@@ -585,7 +780,7 @@
     if (!contLive) return;
     try {
       var W = window.parent !== window ? window.parent.orosContinue : null;
-      if (W && cur && typeof cur.id === "string" && C.byId(data, cur.id))
+      if (W && cur && typeof cur.id === "string" && findPrj(cur.id))
         W.note("mockups", { target: { id: cur.id }, title: label(cur) });
     } catch (e) {}
   }
@@ -600,12 +795,13 @@
     document.addEventListener("pointerdown", once, true);
     document.addEventListener("keydown", once, true);
   })();
-  function newPrj(init) {
-    var p = C.blank(C.newId(), Date.now());
+  // kind: "book" (default) or a product ("cd", "dvd"…)
+  function newPrj(init, kind) {
+    var p = kind && kind !== "book" ? C.blankGood(kind, C.newId(), Date.now()) : C.blank(C.newId(), Date.now());
+    if (!p) return null;
     if (init) init(p);
-    var r = C.put(data, p, Date.now());
+    var r = putAny(p, Date.now());
     if (!r.ok) { if (r.why === "full") toast(t("toast.full")); return null; }
-    data = r.data;
     storeData();
     openPrj(r.prj.id);
     return r.prj;
@@ -682,7 +878,8 @@
     loadImg(sc.bg.img).then(function (bg) { if (stage && cur) stage.scene(sc, bg, false); });
   }
   if (AS && typeof AS.onChange === "function") AS.onChange(function () {
-    if (cur) { renderSlots(); renderVols(); renderIns(); renderFinish(); pushAll(); drawFlat(); }
+    if (cur && isG(cur)) { renderSlots(); pushAll(); drawFlat(); }
+    else if (cur) { renderSlots(); renderVols(); renderIns(); renderFinish(); pushAll(); drawFlat(); }
   });
 
   // Drag to orbit, pinch / wheel to zoom, arrows on the keyboard.
@@ -805,11 +1002,26 @@
   function out(id, text) { $(id).textContent = text; }
   function unitVal(mm) { return cur.unit === "in" ? +(mm / C.MM_PER_IN).toFixed(3) : +(+mm).toFixed(1); }
 
+  // Books and products share the Scene, Print and Save tabs; the
+  // first two tabs are the book's or the product's own.
+  function renderKind() {
+    var g = isG(cur);
+    $("book-form").hidden = g;
+    $("good-form").hidden = !g;
+    [].forEach.call(document.querySelectorAll(".bk-only"), function (n) { n.hidden = g; });
+    $("tab-book").textContent = t(g ? "tab.item" : "tab.book");
+    $("tab-cover").textContent = t(g ? "tab.pics" : "tab.cover");
+    $("show-grp").hidden = g;
+    $("tbar-row").hidden = g;
+    $("sheet-box").hidden = !g;
+    return g;
+  }
   function renderForm() {
     if (!cur) return;
-    var b = cur.bk, a = cur.art, s = cur.sc;
     $("title-main").textContent = label(cur);
     $("title-sub").textContent = subOf(cur);
+    if (renderKind()) { renderGoodForm(); renderCommon(); return; }
+    var b = cur.bk, a = cur.art;
     // book
     setSeg("bind", b.bind);
     setVal("f-trim", b.trim);
@@ -858,19 +1070,27 @@
     renderWrapInfo();
     renderVols();
     renderIns();
-    // scene
-    var st = cur.set, show = cur.show;
-    setSeg("showk", show);
-    $("set-grp").hidden = show !== "book";
-    $("dev-box").hidden = show !== "ebook";
-    setSeg("devk", cur.ins.dev); setSeg("dck", cur.ins.dc);
-    $("open-box").hidden = show !== "book";
+    renderCommon();
+  }
+  // Scene, Print and Save (books and products).
+  function renderCommon() {
+    var s = cur.sc, g = isG(cur);
+    var st = g ? C.normSet(null) : cur.set, show = g ? "good" : cur.show;
+    if (g) { $("set-grp").hidden = true; $("dev-box").hidden = true; $("setn-box").hidden = true; $("gap-box").hidden = true; }
+    $("open-lbl").textContent = t(g ? (cur.kind === "cd" && cur.g.pack === "sleeve" ? "f.openSlide" : "f.openCase") : "f.open");
+    $("open-box").hidden = !(g || show === "book");
+    if (!g) {
+      setSeg("showk", show);
+      $("set-grp").hidden = show !== "book";
+      $("dev-box").hidden = show !== "ebook";
+      setSeg("devk", cur.ins.dev); setSeg("dck", cur.ins.dc);
+      $("setn-box").hidden = show !== "book" || !(st.k === "row" || st.k === "shelf" || st.k === "stack" || st.k === "box");
+      $("gap-box").hidden = show !== "book" || st.k === "one" || st.k === "stack";
+    }
     setSeg("setk", st.k);
-    $("setn-box").hidden = show !== "book" || !(st.k === "row" || st.k === "shelf" || st.k === "stack" || st.k === "box");
-    $("gap-box").hidden = show !== "book" || st.k === "one" || st.k === "stack";
     setVal("f-n", st.n); out("n-out", st.n);
     setVal("f-gap", st.gap); out("gap-out", fmtNum(st.gap, 1) + " mm");
-    $("place-grp").hidden = show === "open" || (show === "book" && (st.k === "shelf" || st.k === "stack" || st.k === "box"));
+    $("place-grp").hidden = !g && (show === "open" || (show === "book" && (st.k === "shelf" || st.k === "stack" || st.k === "box")));
     setSeg("place", s.place);
     setVal("f-turn", s.turn); out("turn-out", s.turn + "°");
     setVal("f-open", s.open); out("open-out", s.open + "°");
@@ -904,6 +1124,125 @@
     $("vsize-box").hidden = mo.fmt === "gif";
     renderOutInfo();
   }
+  // ---------- 5c. Products (CD, DVD…) ----------
+  var GM = window.MockMedia || null;
+  function goodSub(p) {
+    var g = p.g;
+    if (p.kind === "cd") return t("sub.cd", { pack: t("cdpack." + g.pack) });
+    if (p.kind === "dvd") return t("sub.dvd", { fmt: t("dvdfmt." + g.fmt), cs: t("dvdcs." + g.cs) });
+    return t("kind." + p.kind);
+  }
+  function lenTxt(mm, d) { return cur && cur.unit === "in" ? fmtNum(mm / C.MM_PER_IN, 3) + "″" : fmtNum(mm, d == null ? 1 : d) + " mm"; }
+  function renderGoodForm() {
+    var g = cur.g, a = cur.art, k = cur.kind, D = C.good(k).dims(g);
+    $("cd-form").hidden = k !== "cd";
+    $("dvd-form").hidden = k !== "dvd";
+    if (k === "cd") {
+      setSeg("cdpack", g.pack);
+      $("tray-box").hidden = g.pack === "sleeve";
+      setSeg("trayk", g.tray);
+      out("good-info", t("good.size", { w: lenTxt(D.w), h: lenTxt(D.h), d: lenTxt(D.d) }));
+    } else if (k === "dvd") {
+      setSeg("dvdfmt", g.fmt); setSeg("dvdcs", g.cs); setSeg("dvdcol", g.col);
+      out("good-info", t("good.size", { w: lenTxt(D.w), h: lenTxt(D.h), d: lenTxt(D.d) }));
+    }
+    setSeg("disck", g.disc);
+    setVal("f-hub", String(g.hub));
+    setChk("f-beside", g.beside);
+    // pictures tab
+    var wrapOk = !!C.good(k).wrap;
+    $("mode-grp").hidden = !wrapOk;
+    setSeg("mode", a.mode);
+    $("wrap-box").hidden = !(wrapOk && a.mode === "wrap");
+    setVal("f-bleed", C.templateOf(cur, C.sheetsOf(cur)[0]).bleed);
+    $("good-pics").hidden = false;
+    out("good-pics", t("pics.hint." + k));
+    setVal("f-coverC", a.c); setVal("f-spTC", a.spTC); setVal("f-spT", a.spT);
+    renderSlots();
+    if (wrapOk) renderWrapInfo();
+    $("ins-box").hidden = true; $("vols-box").hidden = true;
+  }
+  // Which picture slots a product shows (in the order of its sheets).
+  function goodSlotsShown() {
+    var k = cur.kind, g = cur.g;
+    if (cur.art.mode === "wrap" && C.good(k).wrap) return ["wrap", "disc"];
+    if (k === "cd") {
+      if (g.pack === "jewel") return ["front", "inside", "back", "spine", "disc"];
+      if (g.pack === "slim") return ["front", "inside", "disc"];
+      if (g.pack === "digi") return ["front", "back", "spine", "inside", "tray", "disc"];
+      return ["front", "back", "disc"];
+    }
+    return ["front", "back", "spine", "disc"];
+  }
+  function changeG(fn) { change("book", function (p) { fn(p.g); }); }
+  function wireGood() {
+    wireSeg("cdpack", function (v) { changeG(function (g) { g.pack = v; }); curSheet = ""; legendKind = ""; });
+    wireSeg("trayk", function (v) { changeG(function (g) { g.tray = v; }); });
+    wireSeg("dvdfmt", function (v) {
+      changeG(function (g) { if (g.fmt !== v && (g.col === "blue" || g.col === "black")) g.col = v === "bd" ? "blue" : "black"; g.fmt = v; });
+    });
+    wireSeg("dvdcs", function (v) { changeG(function (g) { g.cs = v; }); });
+    wireSeg("dvdcol", function (v) { changeG(function (g) { g.col = v; }); });
+    wireSeg("disck", function (v) { changeG(function (g) { g.disc = v; }); });
+    $("f-hub").addEventListener("change", function () { var v = +$("f-hub").value; changeG(function (g) { g.hub = v; }); });
+    $("f-beside").addEventListener("change", function () { var on = $("f-beside").checked ? 1 : 0; changeG(function (g) { g.beside = on; }); });
+  }
+
+  // "What do you want to make?": books first, then the products
+  // this orOS knows, by group.
+  var MAKE = [
+    { g: "books", items: [{ k: "book" }, { k: "notebook" }] },
+    { g: "music", items: [{ k: "cd" }, { k: "dvd" }] }
+  ];
+  var MAKE_ICON = {
+    book: '<path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M6 18a2 2 0 0 1 2-2h10"/>',
+    notebook: '<rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M15 3v18M9 8h3"/>',
+    cd: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.2"/><path d="M12 6.5a5.5 5.5 0 0 1 5.5 5.5"/>',
+    dvd: '<rect x="5" y="3" width="14" height="18" rx="1.5"/><circle cx="12.5" cy="12" r="4.2"/><circle cx="12.5" cy="12" r="1"/><path d="M7.5 3v18"/>'
+  };
+  function renderMake() {
+    var box = $("make-groups");
+    box.textContent = "";
+    MAKE.forEach(function (grp) {
+      var items = grp.items.filter(function (it) { return it.k === "book" || it.k === "notebook" || C.good(it.k); });
+      if (!items.length) return;
+      box.appendChild(el("h3", "make-g", t("make.g." + grp.g)));
+      var ul = el("ul", "make-list");
+      items.forEach(function (it) {
+        var li = el("li"), b = el("button", "make-item");
+        b.type = "button";
+        var ic = el("span", "make-ic");
+        ic.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + MAKE_ICON[it.k] + "</svg>";
+        b.appendChild(ic);
+        var tx = el("span", "make-tx");
+        tx.appendChild(el("span", "make-n", t("kind." + it.k)));
+        tx.appendChild(el("span", "make-d", t("kind." + it.k + ".d")));
+        b.appendChild(tx);
+        b.addEventListener("click", function () { hideDlg(); make(it.k); });
+        li.appendChild(b); ul.appendChild(li);
+      });
+      box.appendChild(ul);
+    });
+  }
+  function make(k) {
+    if (cur && saveTimer) saveNow();
+    if (k === "book") { newPrj(); showTab("book"); return; }
+    if (k === "notebook") {
+      newPrj(function (p) { notebookPreset(p); p.nm = t("kind.notebook"); });
+      showTab("book");
+      return;
+    }
+    curSheet = ""; legendKind = "";
+    newPrj(null, k);
+    showTab("book");
+  }
+  function notebookPreset(p) {
+    var bk = p.bk;
+    bk.bind = "hc"; bk.trim = "a5"; bk.w = 148; bk.h = 210; bk.pages = 192; bk.paper = "cream"; bk.spine = 0; bk.flaps = 0; bk.round = 0;
+    bk.corners = 1; bk.elastic = 1; bk.ribbon = 1; bk.band = 1; bk.tex = bk.tex === "paper" ? "linen" : bk.tex; bk.edge = "cream";
+    p.ins.rule = "lined";
+  }
+
   function renderCamFields() {
     var c = cur.sc.cam;
     setVal("f-fov", c.fov); out("fov-out", c.fov + "°");
@@ -927,7 +1266,7 @@
   }
   // The wrap picture is the printer's sheet (Print tab).
   function renderWrapInfo() {
-    var T = C.template(cur.bk, cur.art), bl = T.bleed;
+    var T = isG(cur) ? C.templateOf(cur, C.sheetsOf(cur)[0]) : C.template(cur.bk, cur.art), bl = T.bleed;
     var parts = [t("wrap.bleed", { mm: fmtNum(bl, 1) })];
     T.parts.forEach(function (p) { parts.push(t("wrap.part", { name: t("slot." + p.k), mm: fmtNum(p.w, 2) })); });
     parts.push(t("wrap.bleed", { mm: fmtNum(bl, 1) }));
@@ -936,6 +1275,7 @@
 
   // Picture slots (cover tab).
   function slotsShown() {
+    if (isG(cur)) return goodSlotsShown();
     if (cur.art.mode === "wrap") return ["wrap"];
     return cur.bk.flaps ? ["front", "back", "spine", "flapF", "flapB"] : ["front", "back", "spine"];
   }
@@ -1017,10 +1357,11 @@
     void a;
   }
   function renderSlots() {
-    var ul = $("slots");
+    var ul = $("slots"), g = isG(cur);
     ul.textContent = "";
     slotsShown().forEach(function (k) {
-      ul.appendChild(slotRow(t("slot." + k), cur.art[k], function (id, w, h) { setSlot(k, id, w, h); }));
+      var nm = g && t("slot." + cur.kind + "." + k) !== "slot." + cur.kind + "." + k ? t("slot." + cur.kind + "." + k) : t("slot." + k);
+      ul.appendChild(slotRow(nm, cur.art[k], function (id, w, h) { setSlot(k, id, w, h); }));
     });
   }
   // The other books of a series, shelf or stack (cover tab).
@@ -1071,7 +1412,7 @@
   function setSlot(k, id, w, h) {
     change("art", function (p) { p.art[k] = id; });
     if (k === "wrap" && id && w && h) {
-      var T = C.template(cur.bk, cur.art), want = T.sheet.w / T.sheet.h, got = w / h;
+      var T = isG(cur) ? C.templateOf(cur, C.sheetsOf(cur)[0]) : C.template(cur.bk, cur.art), want = T.sheet.w / T.sheet.h, got = w / h;
       if (Math.abs(got / want - 1) > 0.04) toast(t("toast.wrapShape"));
     }
   }
@@ -1125,7 +1466,7 @@
   function change(kind, fn) {
     if (!cur || busy) return;
     fn(cur);
-    var n = C.normProject(cur);
+    var n = normAny(cur);
     if (!n) return;
     cur = n;
     renderForm();
@@ -1221,12 +1562,7 @@
     wireSeg("stickk", function (v) { change("book", function (p) { p.bk.stickK = v; }); });
     $("f-rule").addEventListener("change", function () { var v = $("f-rule").value; change("art", function (p) { p.ins.rule = v; }); });
     $("nb-btn").addEventListener("click", function () {
-      change("book", function (p) {
-        var bk = p.bk;
-        bk.bind = "hc"; bk.trim = "a5"; bk.w = 148; bk.h = 210; bk.pages = 192; bk.paper = "cream"; bk.spine = 0; bk.flaps = 0; bk.round = 0;
-        bk.corners = 1; bk.elastic = 1; bk.ribbon = 1; bk.band = 1; bk.tex = bk.tex === "paper" ? "linen" : bk.tex; bk.edge = "cream";
-        p.ins.rule = "lined";
-      });
+      change("book", notebookPreset);
       toast(t("toast.notebook"));
     });
     $("f-trim").addEventListener("change", function () {
@@ -1834,15 +2170,61 @@
   // a new Atelier design of the sheet's size (BR-MK-TPL).
   var MP = window.MockPrint;
   function tplLen(mm) { return cur && cur.unit === "in" ? fmtNum(mm / C.MM_PER_IN, 3) + "″" : fmtNum(mm, 2) + " mm"; }
-  function tplOf(p) { return C.template(p.bk, p.art, p.tpl); }
+  var curSheet = "";
+  function sheetOf(p) { var l = C.sheetsOf(p); return l.indexOf(curSheet) >= 0 ? curSheet : l[0]; }
+  function tplOf(p) { return isG(p) ? C.templateOf(p, sheetOf(p)) : C.template(p.bk, p.art, p.tpl); }
   function tplLabels(p, T) {
+    if (isG(p)) return {
+      name: function (k) { return t("slot." + k); }, len: tplLen, bar: t("tpl.bar"),
+      info: t("tpl.goodInfo", { kind: t("tpl.kind." + T.kind), tw: tplLen(T.W), th: tplLen(T.H), b: tplLen(T.bleed) })
+    };
     return {
       name: function (k) { return t("slot." + k); }, len: tplLen, bar: t("tpl.bar"),
       info: t("tpl.canvasInfo", { kind: t("tpl.kind." + T.kind), tw: tplLen(T.W), th: tplLen(T.H), s: tplLen(T.spine), pages: p.bk.pages, b: tplLen(T.bleed) })
     };
   }
   var legendKind = "";
+  function renderGoodTpl() {
+    var T = tplOf(cur), o = cur.tpl, sel = $("f-sheet"), list = C.sheetsOf(cur), sh = sheetOf(cur);
+    if (sel.getAttribute("data-k") !== list.join(",") + LANG) {
+      sel.textContent = "";
+      list.forEach(function (k) { var op = el("option", null, t("tpl.kind." + C.templateOf(cur, k).kind)); op.value = k; sel.appendChild(op); });
+      sel.setAttribute("data-k", list.join(",") + LANG);
+    }
+    setVal("f-sheet", sh);
+    $("tpl-hint").textContent = t("tpl.hintGood");
+    out("tpl-kind", t("tpl.kind." + T.kind));
+    out("tpl-info", T.circle
+      ? t("tpl.discInfo", { d: tplLen(T.W), p: tplLen(T.circle.print), hub: tplLen(T.circle.hub), hole: tplLen(T.circle.hole) })
+      : t("tpl.info", { w: tplLen(T.sheet.w), h: tplLen(T.sheet.h), tw: tplLen(T.W), th: tplLen(T.H), s: tplLen(T.spine) }));
+    var ul = $("tpl-parts");
+    ul.textContent = "";
+    if (!T.circle) T.parts.forEach(function (p) { ul.appendChild(el("li", null, t("slot." + p.k) + " " + tplLen(p.w))); });
+    out("tpl-spine", t("tpl.goodNote." + T.kind) !== "tpl.goodNote." + T.kind ? t("tpl.goodNote." + T.kind) : "");
+    $("tpl-warn").hidden = true;
+    $("tbleed-lbl").textContent = t("f.tbleed");
+    setVal("f-tbleed", T.bleed);
+    $("f-tbleed").disabled = !!T.circle;
+    setVal("f-safe", o.safe);
+    setChk("f-tart", o.art); setChk("f-tgd", o.gd);
+    var lk = T.circle ? "disc" : "flat";
+    if (legendKind !== lk) {
+      legendKind = lk;
+      var lg = $("legend"), K = MP ? MP.COL : {};
+      lg.textContent = "";
+      (T.circle ? [["bleed", "lg.noprint", ""], ["trim", "lg.discEdge", "solid"], ["fold", "lg.discOut", "line"], ["safe", "lg.safe", "line"]]
+        : [["bleed", "lg.bleed", ""], ["trim", "lg.trim", "solid"], ["fold", "lg.fold", "line"], ["safe", "lg.safe", "line"]]).forEach(function (x) {
+        var li = el("li"), i = el("i", x[2] === "line" ? "line" : null);
+        if (x[2] === "line") i.style.color = K[x[0]]; else if (x[2] === "solid") { i.style.height = "0"; i.style.borderTop = "2px solid " + K[x[0]]; } else i.style.background = K[x[0]];
+        li.appendChild(i); li.appendChild(el("span", null, t(x[1])));
+        lg.appendChild(li);
+      });
+    }
+  }
   function renderTpl() {
+    if (isG(cur)) { renderGoodTpl(); return; }
+    $("f-tbleed").disabled = false;
+    $("tpl-hint").textContent = t("tpl.hint");
     var T = tplOf(cur), b = cur.bk, o = cur.tpl;
     out("tpl-kind", t("tpl.kind." + T.kind));
     out("tpl-info", t("tpl.info", { w: tplLen(T.sheet.w), h: tplLen(T.sheet.h), tw: tplLen(T.W), th: tplLen(T.H), s: tplLen(T.spine) }));
@@ -1880,7 +2262,7 @@
   // Pictures of the first book: slot → picture.
   function slotPics(p) {
     var pics = {};
-    return Promise.all(C.SLOTS.map(function (k) {
+    return Promise.all((isG(p) ? C.goodSlots(p.kind) : C.SLOTS).map(function (k) {
       return loadImg(p.art[k]).then(function (img) { if (img) pics[k] = img; });
     })).then(function () { return pics; });
   }
@@ -1910,6 +2292,7 @@
     return new Promise(function (res, rej) { cv.toBlob(function (b) { if (b) res(b); else rej(new Error("encode")); }, mime, q); });
   }
   function tplName() {
+    if (isG(cur)) return t(cur.tpl.gd ? "file.tpl" : "file.cover", { name: fileBase() + " " + t("tpl.kind." + tplOf(cur).kind) }).replace(/[\\/:*?"<>|]+/g, " ").slice(0, 120);
     return t(cur.tpl.gd ? "file.tpl" : "file.cover", { name: fileBase() }).replace(/[\\/:*?"<>|]+/g, " ").slice(0, 120);
   }
   // kind: "png" | "pdf" | "pics" (PNG in Pictures)
@@ -1993,6 +2376,7 @@
     [["f-tbar", "bar"], ["f-tart", "art"], ["f-tgd", "gd"]].forEach(function (x) {
       $(x[0]).addEventListener("change", function () { var on = $(x[0]).checked ? 1 : 0; change("tpl", function (p) { p.tpl[x[1]] = on; }); });
     });
+    $("f-sheet").addEventListener("change", function () { curSheet = $("f-sheet").value; legendKind = ""; renderTpl(); drawFlat(); });
     $("tpl-png").addEventListener("click", function () { tplSave("png"); });
     $("tpl-pdf").addEventListener("click", function () { tplSave("pdf"); });
     $("tpl-pics").addEventListener("click", function () { tplSave("pics"); });
@@ -2029,6 +2413,14 @@
     if (!cur) return;
     if (saveTimer) saveNow();
     var src = clone(cur);
+    if (isG(src)) {
+      newPrj(function (p) {
+        p.g = src.g; p.art = src.art; p.sc = src.sc; p.out = src.out; p.unit = src.unit; p.tpl = src.tpl;
+        p.nm = (label(src) + " " + t("copyOf")).slice(0, 80);
+      }, src.kind);
+      toast(t("toast.dup"));
+      return;
+    }
     newPrj(function (p) {
       p.bk = src.bk; p.art = src.art; p.sc = src.sc; p.out = src.out; p.unit = src.unit; p.set = src.set; p.tpl = src.tpl;
       p.show = src.show; p.ins = src.ins;
@@ -2042,7 +2434,7 @@
     var id = cur.id;
     ask(t("ask.del", { name: label(cur) }), t("btn.delete"), function () {
       clearTimeout(saveTimer); saveTimer = 0;
-      data = C.remove(data, id, Date.now());
+      removeAny(id, Date.now());
       storeData();
       tDel(id);
       cur = null;
@@ -2093,6 +2485,30 @@
     };
     if (!api || typeof api.registerSlice !== "function") return;
     api.registerSlice("mockups", sliceGet, sliceSet, C.DATA_KEY, C.merge);
+    api.registerSlice("mockups-goods", gSliceGet, gSliceSet, C.GOODS_KEY, C.mergeGoods);
+  }
+  function gSliceGet() { return C.mergeGoods(gdata, null); }
+  function gSliceSet(incoming) {
+    if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.prj)) return;
+    var before = JSON.stringify(gdata);
+    window.__orosSyncApi._suppress = true;
+    try {
+      gdata = C.mergeGoods(incoming, null);
+      localStorage.setItem(C.GOODS_KEY, JSON.stringify(gdata));
+    } catch (e) {
+    } finally {
+      window.__orosSyncApi._suppress = false;
+    }
+    if (JSON.stringify(gdata) === before) return;
+    afterPull();
+  }
+  // A pull changed a store: the open project follows, or the list.
+  function afterPull() {
+    if (cur && !saveTimer) {
+      var p = findPrj(cur.id);
+      if (!p) { showHome(); return; }
+      if (p.m !== cur.m) { cur = clone(p); renderForm(); pushAll(); }
+    } else if (!cur) renderHome();
   }
   function sliceGet() { return C.merge(data, null); }     // canonical copy (R26)
   function sliceSet(incoming) {
@@ -2107,11 +2523,7 @@
       window.__orosSyncApi._suppress = false;
     }
     if (JSON.stringify(data) === before) return;
-    if (cur && !saveTimer) {
-      var p = C.byId(data, cur.id);
-      if (!p) { showHome(); return; }
-      if (p.m !== cur.m) { cur = clone(p); renderForm(); pushAll(); }
-    } else if (!cur) renderHome();
+    afterPull();
   }
   // A full wrap from Atelier with its trim size (ww × wh mm): the
   // newest mockup whose cover sheet has that trim (it was most likely
@@ -2150,7 +2562,7 @@
       toast(twin ? t("toast.wrapBook", { name: label(twin) }) : t("toast.fromAtelier"));
       return true;
     }
-    if (typeof target.id !== "string" || !C.byId(data, target.id)) return false;
+    if (typeof target.id !== "string" || !findPrj(target.id)) return false;
     hideDlg();
     openPrj(target.id);
     return true;
@@ -2177,8 +2589,8 @@
     $("stage").setAttribute("aria-label", t("cam.hint"));
   }
   function wire() {
-    $("new-btn").addEventListener("click", function () { newPrj(); showTab("book"); });
-    $("first-btn").addEventListener("click", function () { newPrj(); showTab("book"); });
+    $("new-btn").addEventListener("click", function () { renderMake(); showDlg("make"); });
+    $("first-btn").addEventListener("click", function () { renderMake(); showDlg("make"); });
     $("back-btn").addEventListener("click", showHome);
     $("more-btn").addEventListener("click", function () { showDlg("more"); });
     tabs.forEach(function (k) { $("tab-" + k).addEventListener("click", function () { showTab(k); }); });
@@ -2189,6 +2601,7 @@
       showTab(tabs[i]); $("tab-" + tabs[i]).focus();
     });
     wireForm();
+    wireGood();
     wireTpl();
     wireStage();
     $("dup-btn").addEventListener("click", duplicate);
@@ -2233,7 +2646,7 @@
       }
     } catch (e) {}
     if (!opened) {
-      if (prefs.cur && C.byId(data, prefs.cur)) openPrj(prefs.cur);
+      if (prefs.cur && findPrj(prefs.cur)) openPrj(prefs.cur);
       else showHome();
     }
     console.log("[orOS Mockups] v" + C.VERSION + " ready");

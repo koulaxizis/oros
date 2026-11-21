@@ -2,7 +2,7 @@
 Make realistic 3D pictures of your book for a shop page, a post or a press kit. The book is built from its real measures, so the size, the page count and the binding change the picture at once.
 
 ## Getting started
-1. Press `Make a book mockup` (or [[+]] at the top for another one).
+1. Press `Make a mockup` (or [[+]] at the top for another one) and choose what to make: a `Book`, a `Notebook`, a `CD` or a `DVD / Blu-ray`.
 2. On the `Book` tab give the binding, the size and the pages.
 3. On the `Cover` tab choose the pictures of the front, the back and the spine.
 4. On the `Scene` tab drag the picture to turn the camera, and pick a placement and a background.
@@ -22,6 +22,15 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 - `One full wrap`: the whole printed cover in one picture, as you send it to the printer (back, spine and front, flaps too). It is the sheet of the `Print` tab: the app tells you its exact size and where each part starts, and puts each part on its side of the book. `Bleed` is the extra edge around it.
 - Where there is no picture the book takes the `Colour where there is no picture`, and the spine shows the `Spine text`.
 - Pictures stay on your orOS disk and travel to your other devices with it.
+
+## CD, DVD and Blu-ray
+A CD or a DVD has a `Product` tab and a `Pictures` tab in place of `Book` and `Cover`; `Scene`, `Print` and `Save` work as for a book.
+- CD `Packaging`: `Jewel case` (a clear lid with the booklet, a tray, and the tray card seen through the back with its two spines), `Slim case`, `Digipak` (printed card with a tray inside) or `Card sleeve`. `Tray` sets the colour of the tray.
+- DVD: `DVD` or `Blu-ray`, a `Standard` or `Slim` case, and the `Case colour`. The sleeve sits under the clear film of the case.
+- `The disc`: silver, white or black under the printed label. `Label printed from` is where the print stops in the middle: at the hole, or at 22 or 36 mm, leaving a clear ring as many pressing plants do. `The disc next to the case` stands the disc beside it.
+- On the `Pictures` tab each picture names its place: the front (booklet or cover), the inside, the back and the spines, and the `Disc label`, which is cut round with its middle out. A DVD can also take `One full wrap`, the whole sleeve as the printer's sheet.
+- On the `Scene` tab, `Open the case` opens the lid or the front and shows the disc; for a card sleeve, `Slide the disc out` pulls it out.
+- On the `Print` tab, `Sheet` picks one of the sheets the pressing plant asks for: the booklet (4 pages, folded, 120 × 120 mm), the tray card (151 × 118 mm with 6.5 mm spines), the digipak outside and inside, the card sleeve, the DVD sleeve (273 × 183 mm with a 14 mm spine; Blu-ray 148 mm high) and the disc label (118 mm on a 120 mm disc, with the hole). The plant's own template wins: set its bleed here, and check its spine and hub sizes.
 
 ## Finishes and extras
 - `Finishes` (on the `Book` tab): `Cover material` is printed paper, linen, book cloth, leather or kraft paper; the cloth ones show their weave in the light. `Rounded corners` rounds the outer corners of the cover and the pages, like a notebook. `Deckled page edges` makes the edges rough and uncut. `Page edges` › `Printed (a picture)` puts a picture of yours on the edges of the pages.

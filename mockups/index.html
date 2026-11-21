@@ -57,6 +57,54 @@
 
         <!-- Book -->
         <div class="pane" id="pane-book" role="tabpanel" aria-labelledby="tab-book">
+          <div id="good-form" hidden>
+            <div id="cd-form">
+              <span class="lbl" id="cdpack-lbl" data-i18n="f.cdpack">Packaging</span>
+              <div class="seg wrap" id="cdpack" role="radiogroup" aria-labelledby="cdpack-lbl">
+                <button type="button" role="radio" data-v="jewel" data-i18n="cdpack.jewel">Jewel case</button>
+                <button type="button" role="radio" data-v="slim" data-i18n="cdpack.slim">Slim case</button>
+                <button type="button" role="radio" data-v="digi" data-i18n="cdpack.digi">Digipak</button>
+                <button type="button" role="radio" data-v="sleeve" data-i18n="cdpack.sleeve">Card sleeve</button>
+              </div>
+              <div id="tray-box">
+                <span class="lbl sm" id="tray-lbl" data-i18n="f.tray">Tray</span>
+                <div class="seg" id="trayk" role="radiogroup" aria-labelledby="tray-lbl">
+                  <button type="button" role="radio" data-v="black" data-i18n="col.black">Black</button>
+                  <button type="button" role="radio" data-v="clear" data-i18n="col.clear">Clear</button>
+                  <button type="button" role="radio" data-v="white" data-i18n="col.white">White</button>
+                </div>
+              </div>
+            </div>
+            <div id="dvd-form">
+              <span class="lbl" id="dvdfmt-lbl" data-i18n="f.dvdfmt">Format</span>
+              <div class="seg" id="dvdfmt" role="radiogroup" aria-labelledby="dvdfmt-lbl">
+                <button type="button" role="radio" data-v="dvd" data-i18n="dvdfmt.dvd">DVD</button>
+                <button type="button" role="radio" data-v="bd" data-i18n="dvdfmt.bd">Blu-ray</button>
+              </div>
+              <span class="lbl sm" id="dvdcs-lbl" data-i18n="f.dvdcs">Case</span>
+              <div class="seg" id="dvdcs" role="radiogroup" aria-labelledby="dvdcs-lbl">
+                <button type="button" role="radio" data-v="std" data-i18n="dvdcs.std">Standard</button>
+                <button type="button" role="radio" data-v="slim" data-i18n="dvdcs.slim">Slim</button>
+              </div>
+              <span class="lbl sm" id="dvdcol-lbl" data-i18n="f.dvdcol">Case colour</span>
+              <div class="seg" id="dvdcol" role="radiogroup" aria-labelledby="dvdcol-lbl">
+                <button type="button" role="radio" data-v="black" data-i18n="col.black">Black</button>
+                <button type="button" role="radio" data-v="clear" data-i18n="col.clear">Clear</button>
+                <button type="button" role="radio" data-v="blue" data-i18n="col.blue">Blue</button>
+              </div>
+            </div>
+            <span class="lbl" id="disck-lbl" data-i18n="f.disck">The disc</span>
+            <div class="seg" id="disck" role="radiogroup" aria-labelledby="disck-lbl">
+              <button type="button" role="radio" data-v="silver" data-i18n="disc.silver">Silver</button>
+              <button type="button" role="radio" data-v="white" data-i18n="disc.white">White</button>
+              <button type="button" role="radio" data-v="black" data-i18n="disc.black">Black</button>
+            </div>
+            <label class="fld"><span data-i18n="f.hub">Label printed from</span>
+              <select id="f-hub"><option value="15" data-i18n="hub.15">The hole (15 mm)</option><option value="22" data-i18n="hub.22">22 mm</option><option value="36" data-i18n="hub.36">36 mm (clear ring)</option></select></label>
+            <label class="check"><input type="checkbox" id="f-beside"><span data-i18n="f.beside">The disc next to the case</span></label>
+            <p id="good-info" class="hint small"></p>
+          </div>
+          <div id="book-form">
           <div class="grp">
             <span class="lbl" id="bind-lbl" data-i18n="f.bind">Binding</span>
             <div class="seg wrap" id="bind" role="radiogroup" aria-labelledby="bind-lbl">
@@ -124,17 +172,19 @@
             <div class="row" id="elastic-row"><label class="check"><input type="checkbox" id="f-elastic"><span data-i18n="f.elastic">Elastic band (notebook)</span></label><input type="color" id="f-elasticC" class="sw" aria-label="Elastic band colour"></div>
             <button type="button" id="nb-btn" class="chip small" data-i18n="btn.notebook">Make it a notebook</button>
           </div>
+          </div>
         </div>
 
         <!-- Cover -->
         <div class="pane" id="pane-cover" role="tabpanel" aria-labelledby="tab-cover" hidden>
-          <div class="grp">
+          <div class="grp" id="mode-grp">
             <span class="lbl" id="mode-lbl" data-i18n="f.mode">Cover pictures</span>
             <div class="seg" id="mode" role="radiogroup" aria-labelledby="mode-lbl">
               <button type="button" role="radio" data-v="parts" data-i18n="mode.parts">Front, back, spine</button>
               <button type="button" role="radio" data-v="wrap" data-i18n="mode.wrap">One full wrap</button>
             </div>
           </div>
+          <p id="good-pics" class="hint small" hidden></p>
           <ul id="slots" class="slots"></ul>
           <div id="wrap-box" class="sub" hidden>
             <p id="wrap-info" class="hint small"></p>
@@ -145,7 +195,7 @@
             <label class="fld"><span data-i18n="f.spTC">Spine text colour</span><input type="color" id="f-spTC"></label>
             <label class="fld wide"><span data-i18n="f.spT">Spine text (when there is no spine picture)</span><input id="f-spT" maxlength="80" autocomplete="off"></label>
           </div>
-          <div id="fx-box" class="sub">
+          <div id="fx-box" class="sub bk-only">
             <span class="lbl" data-i18n="sec.fx">Foil, spot UV and embossing</span>
             <p class="hint small" data-i18n="fx.hint">Choose a picture for each effect: its white (or its drawn, not see-through) parts get the effect, laid on the front cover like the front picture. Make one in Atelier from your cover's title or logo.</p>
             <ul id="fx-slots" class="slots"></ul>
@@ -156,7 +206,7 @@
                 <select id="f-embK"><option value="emboss" data-i18n="emb.emboss">Raised (emboss)</option><option value="deboss" data-i18n="emb.deboss">Pressed in (deboss)</option></select></label>
             </div>
           </div>
-          <div id="stick-box" class="sub">
+          <div id="stick-box" class="sub bk-only">
             <label class="check"><input type="checkbox" id="f-stick"><span data-i18n="f.stick">Sticker on the cover</span></label>
             <div id="stick-more" hidden>
               <ul id="stick-slot" class="slots"></ul>
@@ -187,12 +237,12 @@
             <p class="hint small" data-i18n="vols.hint">Each book can have its own pictures, pages and spine text. Where it has none, it looks like the first book.</p>
             <div id="vols"></div>
           </div>
-          <p class="hint small" data-i18n="cover.atelier">Made your cover in Atelier? There, open More › Make a book mockup, and it comes here with its pages.</p>
+          <p class="hint small bk-only" data-i18n="cover.atelier">Made your cover in Atelier? There, open More › Make a book mockup, and it comes here with its pages.</p>
         </div>
 
         <!-- Scene -->
         <div class="pane" id="pane-scene" role="tabpanel" aria-labelledby="tab-scene" hidden>
-          <div class="grp">
+          <div class="grp" id="show-grp">
             <span class="lbl" id="show-lbl" data-i18n="f.show">What to show</span>
             <div class="seg" id="showk" role="radiogroup" aria-labelledby="show-lbl">
               <button type="button" role="radio" data-v="book" data-i18n="show.book">The book</button>
@@ -236,7 +286,7 @@
             </div>
           </div>
           <div class="range"><span class="rl" data-i18n="f.turn">Turn</span><input id="f-turn" type="range" min="-180" max="180" step="1"><output id="turn-out"></output></div>
-          <div class="range" id="open-box"><span class="rl" data-i18n="f.open">Open the cover</span><input id="f-open" type="range" min="0" max="160" step="1"><output id="open-out"></output></div>
+          <div class="range" id="open-box"><span class="rl" id="open-lbl" data-i18n="f.open">Open the cover</span><input id="f-open" type="range" min="0" max="160" step="1"><output id="open-out"></output></div>
 
           <span class="lbl" data-i18n="sec.cam">Camera</span>
           <p class="hint small" data-i18n="cam.hint">Drag the picture to turn around the book; pinch or use the wheel to come closer.</p>
@@ -279,7 +329,8 @@
 
         <!-- Print: the cover sheet for the printer -->
         <div class="pane" id="pane-print" role="tabpanel" aria-labelledby="tab-print" hidden>
-          <p class="hint small" data-i18n="tpl.hint">The cover sheet for the printer.</p>
+          <p class="hint small" id="tpl-hint" data-i18n="tpl.hint">The cover sheet for the printer.</p>
+          <label class="fld" id="sheet-box" hidden><span data-i18n="f.sheet">Sheet</span><select id="f-sheet"></select></label>
           <p id="tpl-kind" class="tpl-kind"></p>
           <p id="tpl-info" class="hint small"></p>
           <ul id="tpl-parts" class="tpl-parts"></ul>
@@ -289,7 +340,7 @@
             <label class="fld"><span id="tbleed-lbl" data-i18n="f.tbleed">Bleed (mm)</span><input id="f-tbleed" type="number" inputmode="decimal" step="0.1" min="0" max="25"></label>
             <label class="fld"><span data-i18n="f.safe">Safe zone (mm)</span><input id="f-safe" type="number" inputmode="decimal" step="0.1" min="0" max="20"></label>
           </div>
-          <label class="check"><input type="checkbox" id="f-tbar"><span data-i18n="f.tbar">Barcode spot on the back</span></label>
+          <label class="check" id="tbar-row"><input type="checkbox" id="f-tbar"><span data-i18n="f.tbar">Barcode spot on the back</span></label>
           <label class="check"><input type="checkbox" id="f-tart"><span data-i18n="f.tart">With my cover pictures</span></label>
           <label class="check"><input type="checkbox" id="f-tgd"><span data-i18n="f.tgd">Show the guides</span></label>
           <p class="hint small" data-i18n="tpl.gdHint">With the guides off, the file is your finished cover.</p>
@@ -379,6 +430,16 @@
     <p class="hint small" data-i18n="more.hint">Your mockups follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.</p>
   </div>
 
+  <!-- What do you want to make? -->
+  <div id="make" class="dialog" role="dialog" aria-modal="true" aria-labelledby="make-title" hidden>
+    <div class="dlg-head">
+      <h2 id="make-title" data-i18n="make.title">What do you want to make?</h2>
+      <span class="spacer"></span>
+      <button type="button" class="icon-btn dlg-close"></button>
+    </div>
+    <div id="make-groups" class="make-groups"></div>
+  </div>
+
   <!-- Free photos for the background -->
   <div id="find" class="dialog wide" role="dialog" aria-modal="true" aria-labelledby="find-title" hidden>
     <div class="dlg-head">
@@ -415,6 +476,7 @@
   <script src="../designkit/media.js?v=8.25.00"></script>
   <script src="core.js?v=8.25.00"></script>
   <script src="print.js?v=8.25.00"></script>
+  <script src="goods/media.js?v=8.25.00"></script>
   <script src="mockups.js?v=8.25.00"></script>
 
   <script src="../pickers.js?v=8.25.00" defer></script>
