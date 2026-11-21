@@ -812,3 +812,10 @@ input[type="color"] { width: 44px; height: 34px; padding: 2px; border: 1px solid
 .cl-grid.on { border-color: var(--accent); background: var(--accent-soft); }
 .cl-grid.on svg { fill: var(--accent); }
 .cl-count { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+
+/* Photo effects (wave CV-2) */
+.pfx-seg { margin: 4px 0 8px; }
+.pfx-duo { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; margin: 4px 0 8px; }
+.pfx-duo-b { height: 40px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+.pfx-duo-b.on { box-shadow: 0 0 0 2px var(--accent); }
+.pfx-col { width: 44px; height: 32px; padding: 0; border: 1px solid var(--border); border-radius: 6px; background: none; cursor: pointer; }

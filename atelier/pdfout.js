@@ -22,12 +22,12 @@
 (function (root) {
   "use strict";
 
-  var M, T, FX, AX;
+  var M, T, FX, AX, PF;
   if (typeof module !== "undefined" && module.exports) {
     M = require("../designkit/model.js"); T = require("../designkit/text.js");
-    FX = require("../designkit/fx.js"); AX = require("./ax.js");
+    FX = require("../designkit/fx.js"); AX = require("./ax.js"); PF = require("./photofx.js");
   } else {
-    M = root.orosDK.model; T = root.orosDK.text; FX = root.orosDK.fx; AX = root.AtelierAX;
+    M = root.orosDK.model; T = root.orosDK.text; FX = root.orosDK.fx; AX = root.AtelierAX; PF = root.AtelierPhotoFx;
   }
 
   function f4(n) { return (Math.round(n * 10000) / 10000).toString(); }
@@ -105,7 +105,7 @@
     }
     if (ax.k === "line") return "vector";
     if (ax.k === "table") return coversRuns(tableRuns(it)) ? "vector" : "raster";
-    if (ax.k === "photo") return it.a || ax.vid ? "photo" : "";
+    if (ax.k === "photo") return it.a || ax.vid ? (PF && PF.of(it) ? "raster" : "photo") : "";   // photo effects (CV-2): a picture
     return "raster";                     // icons, charts
   }
   function pageItems(doc, pg) {
@@ -120,6 +120,7 @@
     }
     if (ax.k === "icon") return (it.sw || 2) * 2 + 2;
     if (ax.k === "table" || ax.k === "shape") return (it.sw || 0) + 1;
+    if (ax.k === "photo" && PF) return PF.pad(it, PF.of(it));
     return 0;
   }
   // [{ id, kind, pad }] for the pages (ids). Only "textfx", "photo"

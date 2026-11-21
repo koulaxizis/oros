@@ -119,7 +119,8 @@
   var PPTX_SIDE = 3000;
   function rasterItem(doc, it) {
     var ax = it.ax;
-    var pad = ax.k === "text" ? (ax.size || AX.TEXT_DEF.size) * 0.6 : ax.k === "icon" ? (it.sw || 2) * 2 + 2 : ax.k === "table" ? (it.sw || 0) : 0;
+    var pad = ax.k === "text" ? (ax.size || AX.TEXT_DEF.size) * 0.6 : ax.k === "icon" ? (it.sw || 2) * 2 + 2 : ax.k === "table" ? (it.sw || 0) :
+      ax.k === "photo" && window.AtelierPhotoFx ? window.AtelierPhotoFx.pad(it, window.AtelierPhotoFx.of(it)) : 0;
     var W = it.w + pad * 2, H = it.h + pad * 2;
     var s = Math.max(0.05, Math.min(3, PPTX_SIDE / Math.max(W, H)));
     var cv = document.createElement("canvas");

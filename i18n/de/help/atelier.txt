@@ -27,6 +27,7 @@ Tippe oder klicke unter `Was möchtest du gestalten?` auf eine Größe, zum Beis
 ## Fotos
 - `Uploads` › `Bild hochladen` fügt ein Foto von diesem Gerät oder aus Dateien hinzu.
 - Mit einem ausgewählten Foto bekommst du `Filter`, `Anpassen` (Helligkeit, Kontrast, Wärme und mehr), `Form`, um es als Kreis, Stern oder andere Form zuzuschneiden, `Spiegeln` und `Ersetzen`.
+- `Effekte` auf einem Foto bringt die Fotoeffekte von Canva: `Schlagschatten` oder `Leuchten` (Farbe, Deckkraft, Weichzeichnung, Abstand, Richtung), `Duotone` (wähle ein Paar oder eigene Farben für Schatten und Lichter), `Ränder weichzeichnen` (das Foto blendet zu seinem Umriss hin aus) und einen `Rahmen` (`Rand` oder `Polaroid`, mit Farbe und Breite). Sie folgen der Form des Fotos und erscheinen in jedem Download; `Fotoeffekte entfernen` nimmt alle weg.
 - Mit `Zuschneiden` oder einem Doppelklick auf das Foto verschiebst und zoomst du das Foto in seinem Rahmen.
 - `Hintergrund` kann das ausgewählte Foto als Seitenhintergrund verwenden.
 - `Im Fotolabor bearbeiten` öffnet das Foto für tiefere Änderungen im Fotolabor (Ebenen, Retusche, Auswahlen). Tippe dort auf `Fertig`, und du kommst mit dem neuen Bild im selben Rahmen zum Design zurück; das Fotolabor-Projekt bleibt, du kannst es also später wieder ändern. `Rückgängig` holt das frühere Bild zurück.
