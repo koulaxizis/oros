@@ -6,6 +6,11 @@ Tippe auf `Neues Dokument` und wähle ein `Seitenformat` (etwa A4, `Visitenkarte
 
 Deine Dokumente erscheinen als Karten auf der Startseite. Dort kannst du sie suchen, umbenennen, duplizieren oder löschen (gleich danach rückgängig zu machen). Jedes Dokument ist auch eine Datei in Dateien › Layout: Es darf so groß sein wie ein ganzes Buch, wird wie jede Datei mit deinen anderen Geräten synchronisiert und kommt mit der orOS-Festplatte in die Sicherungen. Ein Doppelklick auf die Datei in Dateien öffnet das Dokument; ein gelöschtes Dokument landet im Papierkorb von Dateien. Wurde dasselbe Dokument auf zwei Geräten zugleich geändert, führt Seitenlayout beide Fassungen zusammen, damit keine Änderung verloren geht.
 
+## Hier anfangen: ein neues Buch
+Tippe auf `Neues Buch` (oder `Ein Buch, Schritt für Schritt` in `Neues Dokument`) und beantworte vier kurze Schritte: `Welche Art von Buch` (Roman, Erzählungen, Lyrik, Essay, Studie, Bilderbuch, Fotobuch, Kochbuch, Ausstellungskatalog, Magazin, Arbeitsheft oder Zine), `Format und Ränder` (das übliche Format dieser Art ist schon gewählt; enge, normale oder weite Ränder), `Schrift` (ein Paar freier Schriften für Überschriften und Text) und `Angaben und erste Seiten` (Titel, Autor, Verlag, Jahr, ISBN sowie Schmutztitel, Titelseite, Impressum und Inhaltsverzeichnis). Die Vorschau zeigt dabei die erste Doppelseite. `Buch anlegen` baut es mit Formaten, Musterseiten mit Seitenzahlen und Kolumnentiteln, Beispieltext, der von Seite zu Seite fließt, und Rahmen für die Bilder. Ränder, Schriftgrößen und Rahmen folgen dem gewählten Format; alles lässt sich später in `Dokument einrichten…` und `Formate` ändern.
+
+Beim ersten Öffnen eines Buchs, einer Musterseite usw. erscheint ein kurzer Hinweis; `Hinweise wieder zeigen` im Tab `Lernen` holt sie zurück. `Lernen` erklärt außerdem Text, Formate, Seiten, Bilder, das Inhaltsverzeichnis, die Prüfung vor dem Druck und den Export, jeweils mit einer Schaltfläche `Zeigen`.
+
 ## Dinge auf der Seite platzieren
 Wähle links ein Werkzeug und zieh auf der Seite: `Textrahmen (T)`, `Bildrahmen (F)`, `Rechteck (R)`, `Ellipse (E)`, `Linie (L)` oder `Zeichenstift (P)`. `Auswahl (V)` verschiebt Objekte und ändert ihre Größe; `Hand (H)` verschiebt die Ansicht.
 
