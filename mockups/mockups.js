@@ -63,6 +63,20 @@
       "btn.first": "Make a book mockup",
       "tab.book": "Book", "tab.cover": "Cover", "tab.scene": "Scene", "tab.out": "Save",
       "f.bind": "Binding", "bind.pb": "Paperback", "bind.hc": "Hardcover",
+      "edge.print": "Printed (a picture)", "slot.edgeP": "Picture on the page edges",
+      "sec.finish": "Finishes", "f.tex": "Cover material", "tex.paper": "Printed paper", "tex.linen": "Linen", "tex.cloth": "Book cloth",
+      "tex.leather": "Leather", "tex.kraft": "Kraft paper", "f.corners": "Rounded corners", "f.deckle": "Deckled page edges (rough, uncut)",
+      "f.belly": "Belly band", "f.bellyH": "Band height", "slot.belly": "Belly band picture", "aria.bellyC": "Belly band colour",
+      "f.slip": "Slipcase", "slot.slip": "Slipcase picture (also the box of a box set)", "aria.slipC": "Slipcase colour",
+      "f.elastic": "Elastic band (notebook)", "aria.elasticC": "Elastic band colour", "btn.notebook": "Make it a notebook",
+      "toast.notebook": "A5 hardcover notebook: rounded corners, ribbon, elastic band and lined pages.",
+      "sec.fx": "Foil, spot UV and embossing",
+      "fx.hint": "Choose a picture for each effect: its white (or its drawn, not see-through) parts get the effect, laid on the front cover like the front picture. Make one in Atelier from your cover's title or logo.",
+      "slot.foil": "Foil", "slot.uv": "Spot UV (gloss)", "slot.emb": "Embossing", "f.foilK": "Foil", "foil.gold": "Gold", "foil.silver": "Silver",
+      "foil.copper": "Copper", "foil.rose": "Rose gold", "foil.holo": "Holographic", "f.embK": "Embossing", "emb.emboss": "Raised (emboss)", "emb.deboss": "Pressed in (deboss)",
+      "f.stick": "Sticker on the cover", "slot.stick": "Sticker picture", "stick.round": "Round", "stick.square": "Square", "aria.stickK": "Sticker shape",
+      "f.stickD": "Size", "f.stickX": "Left / right", "f.stickY": "Up / down",
+      "f.rule": "Empty pages", "rule.none": "Plain", "rule.lined": "Lined", "rule.dotted": "Dotted", "rule.grid": "Squared", "set.box": "Box set",
       "bind.ss": "Saddle-stitched", "bind.sp": "Spiral", "bind.bb": "Board book", "bind.lf": "Lay-flat",
       "hint.ss": "Folded in the middle and stapled, like a magazine, a booklet or a zine. No spine; pages go in fours, at most about 96.",
       "hint.sp": "Spiral or wire-o: two loose covers and a coil through holes near the edge. It opens flat; there is no spine.",
@@ -188,6 +202,20 @@
       "btn.first": "Φτιάξε μακέτα βιβλίου",
       "tab.book": "Βιβλίο", "tab.cover": "Εξώφυλλο", "tab.scene": "Σκηνή", "tab.out": "Αποθήκευση",
       "f.bind": "Βιβλιοδεσία", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο",
+      "edge.print": "Τυπωμένες (μια εικόνα)", "slot.edgeP": "Εικόνα στις άκρες των σελίδων",
+      "sec.finish": "Φινιρίσματα", "f.tex": "Υλικό εξωφύλλου", "tex.paper": "Τυπωμένο χαρτί", "tex.linen": "Λινό", "tex.cloth": "Βιβλιοδετικό ύφασμα",
+      "tex.leather": "Δέρμα", "tex.kraft": "Χαρτί kraft", "f.corners": "Στρογγυλεμένες γωνίες", "f.deckle": "Ακανόνιστες άκρες σελίδων (άκοπες)",
+      "f.belly": "Ζώνη (κοιλιά)", "f.bellyH": "Ύψος ζώνης", "slot.belly": "Εικόνα της ζώνης", "aria.bellyC": "Χρώμα ζώνης",
+      "f.slip": "Κασετίνα", "slot.slip": "Εικόνα κασετίνας (και του κουτιού του box set)", "aria.slipC": "Χρώμα κασετίνας",
+      "f.elastic": "Λάστιχο (σημειωματάριο)", "aria.elasticC": "Χρώμα λάστιχου", "btn.notebook": "Κάν' το σημειωματάριο",
+      "toast.notebook": "Σκληρόδετο σημειωματάριο A5: στρογγυλές γωνίες, κορδέλα, λάστιχο και σελίδες με γραμμές.",
+      "sec.fx": "Χρυσοτυπία, spot UV και ανάγλυφο",
+      "fx.hint": "Διάλεξε μια εικόνα για κάθε εφέ: τα λευκά (ή τα ζωγραφισμένα, όχι διάφανα) μέρη της παίρνουν το εφέ, πάνω στο εξώφυλλο όπως η εικόνα του εξωφύλλου. Φτιάξε τη στο Ατελιέ από τον τίτλο ή το λογότυπο του εξωφύλλου.",
+      "slot.foil": "Χρυσοτυπία", "slot.uv": "Spot UV (γυαλιστερό)", "slot.emb": "Ανάγλυφο", "f.foilK": "Χρυσοτυπία", "foil.gold": "Χρυσό", "foil.silver": "Ασημί",
+      "foil.copper": "Χάλκινο", "foil.rose": "Ροζ χρυσό", "foil.holo": "Ολογραφικό", "f.embK": "Ανάγλυφο", "emb.emboss": "Εξέχει (emboss)", "emb.deboss": "Βαθουλωτό (deboss)",
+      "f.stick": "Αυτοκόλλητο στο εξώφυλλο", "slot.stick": "Εικόνα αυτοκόλλητου", "stick.round": "Στρογγυλό", "stick.square": "Τετράγωνο", "aria.stickK": "Σχήμα αυτοκόλλητου",
+      "f.stickD": "Μέγεθος", "f.stickX": "Αριστερά / δεξιά", "f.stickY": "Πάνω / κάτω",
+      "f.rule": "Άδειες σελίδες", "rule.none": "Λευκές", "rule.lined": "Με γραμμές", "rule.dotted": "Με τελείες", "rule.grid": "Τετραγωνισμένες", "set.box": "Box set",
       "bind.ss": "Καρφίτσα", "bind.sp": "Σπιράλ", "bind.bb": "Χαρτονένιο", "bind.lf": "Ανοίγει επίπεδα",
       "hint.ss": "Διπλωμένο στη μέση και καρφιτσωμένο, σαν περιοδικό, φυλλάδιο ή fanzine. Δεν έχει ράχη· οι σελίδες πάνε ανά τέσσερις, έως περίπου 96.",
       "hint.sp": "Σπιράλ ή wire-o: δύο χωριστά εξώφυλλα και ένα σπιράλ μέσα από τρύπες κοντά στην άκρη. Ανοίγει επίπεδα· δεν έχει ράχη.",
@@ -332,7 +360,8 @@
     try { var r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch (e) { return null; }
   }
   function fmtNum(v, d) {
-    var s = (+v).toFixed(d).replace(/\.?0+$/, "");
+    var s = (+v).toFixed(d);
+    if (s.indexOf(".") >= 0) s = s.replace(/0+$/, "").replace(/\.$/, "");   // 80 stays 80, 1.50 → 1.5
     return DEC_COMMA ? s.replace(".", ",") : s;
   }
   function parseNum(s) {
@@ -653,7 +682,7 @@
     loadImg(sc.bg.img).then(function (bg) { if (stage && cur) stage.scene(sc, bg, false); });
   }
   if (AS && typeof AS.onChange === "function") AS.onChange(function () {
-    if (cur) { renderSlots(); renderVols(); renderIns(); pushAll(); drawFlat(); }
+    if (cur) { renderSlots(); renderVols(); renderIns(); renderFinish(); pushAll(); drawFlat(); }
   });
 
   // Drag to orbit, pinch / wheel to zoom, arrows on the keyboard.
@@ -818,6 +847,7 @@
     setVal("f-clothC", b.clothC);
     setVal("f-fin", b.fin); setVal("f-edge", b.edge);
     $("edgec-box").hidden = b.edge !== "color";
+    renderFinish();
     setVal("f-edgeC", b.edgeC); setVal("f-inC", b.inC);
     // cover
     setSeg("mode", a.mode);
@@ -836,11 +866,11 @@
     setSeg("devk", cur.ins.dev); setSeg("dck", cur.ins.dc);
     $("open-box").hidden = show !== "book";
     setSeg("setk", st.k);
-    $("setn-box").hidden = show !== "book" || !(st.k === "row" || st.k === "shelf" || st.k === "stack");
+    $("setn-box").hidden = show !== "book" || !(st.k === "row" || st.k === "shelf" || st.k === "stack" || st.k === "box");
     $("gap-box").hidden = show !== "book" || st.k === "one" || st.k === "stack";
     setVal("f-n", st.n); out("n-out", st.n);
     setVal("f-gap", st.gap); out("gap-out", fmtNum(st.gap, 1) + " mm");
-    $("place-grp").hidden = show === "open" || (show === "book" && (st.k === "shelf" || st.k === "stack"));
+    $("place-grp").hidden = show === "open" || (show === "book" && (st.k === "shelf" || st.k === "stack" || st.k === "box"));
     setSeg("place", s.place);
     setVal("f-turn", s.turn); out("turn-out", s.turn + "°");
     setVal("f-open", s.open); out("open-out", s.open + "°");
@@ -950,6 +980,42 @@
     });
     return li;
   }
+  // Finishes (Book tab) and the effects + sticker (Cover tab).
+  function artSlot(ul, k) {
+    ul.appendChild(slotRow(t("slot." + k), cur.art[k], function (id) { change("art", function (p) { p.art[k] = id; }); }));
+  }
+  function renderFinish() {
+    var b = cur.bk, a = cur.art;
+    setVal("f-tex", b.tex);
+    setChk("f-corners", b.corners); setChk("f-deckle", b.deckle);
+    $("deckle-row").hidden = !C.canHave(b, "deckle");
+    var ep = $("edgep-slot"); ep.textContent = ""; ep.hidden = b.edge !== "print";
+    if (b.edge === "print") artSlot(ep, "edgeP");
+    var cb = C.canHave(b, "belly");
+    $("belly-row").hidden = !cb;
+    setChk("f-belly", b.belly); setVal("f-bellyC", b.bellyC);
+    $("belly-box").hidden = !(cb && b.belly);
+    setVal("f-bellyH", b.bellyH); out("bellyh-out", fmtNum(b.bellyH, 0) + " mm");
+    var bs = $("belly-slot"); bs.textContent = ""; if (cb && b.belly) artSlot(bs, "belly");
+    var cs = C.canHave(b, "slip"), box = cur.set.k === "box";
+    $("slip-row").hidden = !cs && !box;
+    setChk("f-slip", b.slip); setVal("f-slipC", b.slipC);
+    var ss = $("slip-slot"); ss.textContent = ""; ss.hidden = !((cs && b.slip) || box);
+    if (!ss.hidden) artSlot(ss, "slip");
+    setChk("f-elastic", b.elastic); setVal("f-elasticC", b.elasticC);
+    $("elastic-row").hidden = b.bind === "sp";
+    // cover tab
+    var fx = $("fx-slots"); fx.textContent = "";
+    ["foil", "uv", "emb"].forEach(function (k) { artSlot(fx, k); });
+    setVal("f-foilK", b.foilK); setVal("f-embK", b.embK);
+    setChk("f-stick", b.stick);
+    $("stick-more").hidden = !b.stick;
+    var st = $("stick-slot"); st.textContent = ""; if (b.stick) artSlot(st, "stick");
+    setSeg("stickk", b.stickK);
+    setVal("f-stickD", b.stickD); out("stickd-out", fmtNum(b.stickD, 0) + " mm");
+    setVal("f-stickX", b.stickX); setVal("f-stickY", b.stickY);
+    void a;
+  }
   function renderSlots() {
     var ul = $("slots");
     ul.textContent = "";
@@ -960,7 +1026,7 @@
   // The other books of a series, shelf or stack (cover tab).
   function renderVols() {
     var st = cur.set, box = $("vols"), n = C.count(cur);
-    var on = cur.show === "book" && (st.k === "row" || st.k === "shelf" || st.k === "stack");
+    var on = cur.show === "book" && (st.k === "row" || st.k === "shelf" || st.k === "stack" || st.k === "box");
     $("vols-box").hidden = !on;
     box.textContent = "";
     if (!on) return;
@@ -1139,6 +1205,30 @@
       });
     });
     $("f-wire").addEventListener("change", function () { change("book", function (p) { p.bk.wire = $("f-wire").value; }); });
+    // finishes (v2 wave 2)
+    [["f-tex", "tex"], ["f-foilK", "foilK"], ["f-embK", "embK"]].forEach(function (x) {
+      $(x[0]).addEventListener("change", function () { var v = $(x[0]).value; change("book", function (p) { p.bk[x[1]] = v; }); });
+    });
+    ["corners", "deckle", "belly", "slip", "elastic", "stick"].forEach(function (k) {
+      $("f-" + k).addEventListener("change", function () { var v = $("f-" + k).checked ? 1 : 0; change("book", function (p) { p.bk[k] = v; }); });
+    });
+    ["bellyC", "slipC", "elasticC"].forEach(function (k) {
+      $("f-" + k).addEventListener("change", function () { var v = $("f-" + k).value; change("book", function (p) { p.bk[k] = v; }); });
+    });
+    [["f-bellyH", "bellyH"], ["f-stickD", "stickD"], ["f-stickX", "stickX"], ["f-stickY", "stickY"]].forEach(function (x) {
+      $(x[0]).addEventListener("input", function () { var v = +$(x[0]).value; change("book", function (p) { p.bk[x[1]] = v; }); });
+    });
+    wireSeg("stickk", function (v) { change("book", function (p) { p.bk.stickK = v; }); });
+    $("f-rule").addEventListener("change", function () { var v = $("f-rule").value; change("art", function (p) { p.ins.rule = v; }); });
+    $("nb-btn").addEventListener("click", function () {
+      change("book", function (p) {
+        var bk = p.bk;
+        bk.bind = "hc"; bk.trim = "a5"; bk.w = 148; bk.h = 210; bk.pages = 192; bk.paper = "cream"; bk.spine = 0; bk.flaps = 0; bk.round = 0;
+        bk.corners = 1; bk.elastic = 1; bk.ribbon = 1; bk.band = 1; bk.tex = bk.tex === "paper" ? "linen" : bk.tex; bk.edge = "cream";
+        p.ins.rule = "lined";
+      });
+      toast(t("toast.notebook"));
+    });
     $("f-trim").addEventListener("change", function () {
       var tr = C.trimOf($("f-trim").value);
       change("book", function (p) { if (tr) { p.bk.w = tr.w; p.bk.h = tr.h; p.bk.trim = tr.k; } else p.bk.trim = "custom"; });
@@ -1295,6 +1385,7 @@
     });
     setVal("f-pdfp", ins.pdfp);
     $("curl-box").hidden = show !== "open";
+    setVal("f-rule", ins.rule);
     setVal("f-curl", ins.curl); out("curl-out", Math.round(ins.curl * 100) + "%");
     out("pdf-info", pdfDoc ? t("pdf.info", { name: pdfName, n: pdfDoc.numPages }) : "");
   }
@@ -2078,6 +2169,10 @@
     [].forEach.call(document.querySelectorAll(".dlg-close"), function (b) { b.innerHTML = ICON.close; setLabel(b, t("btn.close")); });
     $("f-bandC").setAttribute("aria-label", t("aria.bandC"));
     $("f-ribC").setAttribute("aria-label", t("aria.ribC"));
+    $("f-bellyC").setAttribute("aria-label", t("aria.bellyC"));
+    $("f-slipC").setAttribute("aria-label", t("aria.slipC"));
+    $("f-elasticC").setAttribute("aria-label", t("aria.elasticC"));
+    $("stickk").setAttribute("aria-label", t("aria.stickK"));
     $("tabs").setAttribute("aria-label", t("app.name"));
     $("stage").setAttribute("aria-label", t("cam.hint"));
   }

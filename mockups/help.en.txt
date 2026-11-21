@@ -23,9 +23,17 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 - Where there is no picture the book takes the `Colour where there is no picture`, and the spine shows the `Spine text`.
 - Pictures stay on your orOS disk and travel to your other devices with it.
 
+## Finishes and extras
+- `Finishes` (on the `Book` tab): `Cover material` is printed paper, linen, book cloth, leather or kraft paper; the cloth ones show their weave in the light. `Rounded corners` rounds the outer corners of the cover and the pages, like a notebook. `Deckled page edges` makes the edges rough and uncut. `Page edges` › `Printed (a picture)` puts a picture of yours on the edges of the pages.
+- `Belly band`: a paper band round the book, with its colour, its `Band height` and its own picture. `Slipcase`: an open box the book slides into, with its colour and picture. `Elastic band`: the band that keeps a notebook shut.
+- `Make it a notebook` sets everything at once: an A5 hardcover with rounded corners, a ribbon, an elastic band, linen and lined pages. `Empty pages` (plain, lined, dotted or squared) is what an open notebook shows where there is no inside picture.
+- `Foil, spot UV and embossing` (on the `Cover` tab): give each effect a picture the size of the front cover. Its white parts (or, in a picture with see-through parts, the drawn parts) get the effect: `Foil` in gold, silver, copper, rose gold or holographic; `Spot UV` shines like varnish on a matte cover; `Embossing` is raised or pressed in. Make the picture in Atelier from the title or the logo of your cover.
+- `Sticker on the cover`: a round or square sticker ("Signed", an award) with its picture, its `Size` and where it sits.
+
 ## Several books
 - `Books in the picture` (on the `Scene` tab): `One book`, `Front + back` (the same book twice, one showing its back), `Series` (side by side, fronts to the camera), `Shelf` (standing in a row, spines to the camera) or `Stack` (lying one on another).
 - For a series, a shelf or a stack, `How many books` goes from 2 to 6, and `Space between them` sets the gap.
+- `Box set` stands the books in a row inside an open box, spines out; the box takes the `Slipcase` colour and picture.
 - On the `Cover` tab, `The other books` gives each book its own pictures, pages and spine text. A book without its own takes the first book's, so a stack of the same book needs nothing more.
 
 ## Scene and camera

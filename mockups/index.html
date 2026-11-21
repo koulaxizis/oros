@@ -102,9 +102,27 @@
             <label class="fld"><span data-i18n="f.fin">Finish</span>
               <select id="f-fin"><option value="matte" data-i18n="fin.matte">Matte</option><option value="gloss" data-i18n="fin.gloss">Gloss</option><option value="soft" data-i18n="fin.soft">Soft-touch</option></select></label>
             <label class="fld"><span data-i18n="f.edge">Page edges</span>
-              <select id="f-edge"><option value="white" data-i18n="edge.white">White</option><option value="cream" data-i18n="edge.cream">Cream</option><option value="color" data-i18n="edge.color">Coloured (sprayed)</option></select></label>
+              <select id="f-edge"><option value="white" data-i18n="edge.white">White</option><option value="cream" data-i18n="edge.cream">Cream</option><option value="color" data-i18n="edge.color">Coloured (sprayed)</option><option value="print" data-i18n="edge.print">Printed (a picture)</option></select></label>
             <label class="fld" id="edgec-box" hidden><span data-i18n="f.edgeC">Edge colour</span><input type="color" id="f-edgeC"></label>
             <label class="fld"><span data-i18n="f.inC">Inside of the cover</span><input type="color" id="f-inC"></label>
+          </div>
+          <ul id="edgep-slot" class="slots" hidden></ul>
+
+          <div class="sub" id="finish-box">
+            <span class="lbl" data-i18n="sec.finish">Finishes</span>
+            <label class="fld"><span data-i18n="f.tex">Cover material</span>
+              <select id="f-tex"><option value="paper" data-i18n="tex.paper">Printed paper</option><option value="linen" data-i18n="tex.linen">Linen</option><option value="cloth" data-i18n="tex.cloth">Book cloth</option><option value="leather" data-i18n="tex.leather">Leather</option><option value="kraft" data-i18n="tex.kraft">Kraft paper</option></select></label>
+            <label class="check"><input type="checkbox" id="f-corners"><span data-i18n="f.corners">Rounded corners</span></label>
+            <label class="check" id="deckle-row"><input type="checkbox" id="f-deckle"><span data-i18n="f.deckle">Deckled page edges (rough, uncut)</span></label>
+            <div class="row" id="belly-row"><label class="check"><input type="checkbox" id="f-belly"><span data-i18n="f.belly">Belly band</span></label><input type="color" id="f-bellyC" class="sw" aria-label="Belly band colour"></div>
+            <div id="belly-box" class="sub" hidden>
+              <div class="range"><span class="rl" data-i18n="f.bellyH">Band height</span><input id="f-bellyH" type="range" min="20" max="150" step="1"><output id="bellyh-out"></output></div>
+              <ul id="belly-slot" class="slots"></ul>
+            </div>
+            <div class="row" id="slip-row"><label class="check"><input type="checkbox" id="f-slip"><span data-i18n="f.slip">Slipcase</span></label><input type="color" id="f-slipC" class="sw" aria-label="Slipcase colour"></div>
+            <ul id="slip-slot" class="slots" hidden></ul>
+            <div class="row" id="elastic-row"><label class="check"><input type="checkbox" id="f-elastic"><span data-i18n="f.elastic">Elastic band (notebook)</span></label><input type="color" id="f-elasticC" class="sw" aria-label="Elastic band colour"></div>
+            <button type="button" id="nb-btn" class="chip small" data-i18n="btn.notebook">Make it a notebook</button>
           </div>
         </div>
 
@@ -127,6 +145,30 @@
             <label class="fld"><span data-i18n="f.spTC">Spine text colour</span><input type="color" id="f-spTC"></label>
             <label class="fld wide"><span data-i18n="f.spT">Spine text (when there is no spine picture)</span><input id="f-spT" maxlength="80" autocomplete="off"></label>
           </div>
+          <div id="fx-box" class="sub">
+            <span class="lbl" data-i18n="sec.fx">Foil, spot UV and embossing</span>
+            <p class="hint small" data-i18n="fx.hint">Choose a picture for each effect: its white (or its drawn, not see-through) parts get the effect, laid on the front cover like the front picture. Make one in Atelier from your cover's title or logo.</p>
+            <ul id="fx-slots" class="slots"></ul>
+            <div class="grid2">
+              <label class="fld"><span data-i18n="f.foilK">Foil</span>
+                <select id="f-foilK"><option value="gold" data-i18n="foil.gold">Gold</option><option value="silver" data-i18n="foil.silver">Silver</option><option value="copper" data-i18n="foil.copper">Copper</option><option value="rose" data-i18n="foil.rose">Rose gold</option><option value="holo" data-i18n="foil.holo">Holographic</option></select></label>
+              <label class="fld"><span data-i18n="f.embK">Embossing</span>
+                <select id="f-embK"><option value="emboss" data-i18n="emb.emboss">Raised (emboss)</option><option value="deboss" data-i18n="emb.deboss">Pressed in (deboss)</option></select></label>
+            </div>
+          </div>
+          <div id="stick-box" class="sub">
+            <label class="check"><input type="checkbox" id="f-stick"><span data-i18n="f.stick">Sticker on the cover</span></label>
+            <div id="stick-more" hidden>
+              <ul id="stick-slot" class="slots"></ul>
+              <div class="seg" id="stickk" role="radiogroup" aria-label="Sticker shape">
+                <button type="button" role="radio" data-v="round" data-i18n="stick.round">Round</button>
+                <button type="button" role="radio" data-v="square" data-i18n="stick.square">Square</button>
+              </div>
+              <div class="range"><span class="rl" data-i18n="f.stickD">Size</span><input id="f-stickD" type="range" min="15" max="90" step="1"><output id="stickd-out"></output></div>
+              <div class="range"><span class="rl" data-i18n="f.stickX">Left / right</span><input id="f-stickX" type="range" min="0" max="1" step="0.01"></div>
+              <div class="range"><span class="rl" data-i18n="f.stickY">Up / down</span><input id="f-stickY" type="range" min="0" max="1" step="0.01"></div>
+            </div>
+          </div>
           <div id="ins-box" class="sub" hidden>
             <span class="lbl" id="ins-lbl" data-i18n="sec.ins">Inside pages</span>
             <p id="ins-hint" class="hint small"></p>
@@ -136,6 +178,8 @@
               <label class="fld pdf-p"><span data-i18n="f.pdfp">Page</span><input id="f-pdfp" type="number" inputmode="numeric" min="1" max="9999" step="1"></label>
             </div>
             <p id="pdf-info" class="hint small"></p>
+            <label class="fld"><span data-i18n="f.rule">Empty pages</span>
+              <select id="f-rule"><option value="none" data-i18n="rule.none">Plain</option><option value="lined" data-i18n="rule.lined">Lined</option><option value="dotted" data-i18n="rule.dotted">Dotted</option><option value="grid" data-i18n="rule.grid">Squared</option></select></label>
             <div class="range" id="curl-box"><span class="rl" data-i18n="f.curl">Page curve</span><input id="f-curl" type="range" min="0" max="1" step="0.01"><output id="curl-out"></output></div>
           </div>
           <div id="vols-box" class="sub" hidden>
@@ -178,6 +222,7 @@
               <button type="button" role="radio" data-v="row" data-i18n="set.row">Series</button>
               <button type="button" role="radio" data-v="shelf" data-i18n="set.shelf">Shelf</button>
               <button type="button" role="radio" data-v="stack" data-i18n="set.stack">Stack</button>
+              <button type="button" role="radio" data-v="box" data-i18n="set.box">Box set</button>
             </div>
           </div>
           <div id="setn-box" class="range"><span class="rl" data-i18n="f.n">How many books</span><input id="f-n" type="range" min="2" max="6" step="1"><output id="n-out"></output></div>

@@ -520,7 +520,7 @@ test("wave 3 wiring: Print tab, flat preview, PDF, Atelier guides never export",
 
 test("normIns: inside pages, curve, device, PDF page with safe defaults", () => {
   const d = C.normIns(null);
-  assert.deepEqual(d, { l: "", r: "", scr: "", curl: 0.5, dev: "tablet", dc: "black", pdfp: 1 });
+  assert.deepEqual(d, { l: "", r: "", scr: "", curl: 0.5, dev: "tablet", dc: "black", pdfp: 1, rule: "none" });
   const o = C.normIns({ l: A1, r: A2, scr: "../x.png", curl: 7, dev: "laptop", dc: "silver", pdfp: 12.7 });
   assert.equal(o.l, A1); assert.equal(o.r, A2); assert.equal(o.scr, "");
   assert.equal(o.curl, 1); assert.equal(o.dev, "tablet"); assert.equal(o.dc, "silver");
@@ -723,4 +723,75 @@ test("v2 wave 1 wiring: binding buttons, wire colour, strings in en, el and de, 
   assert.match(read("mockups/help.el.txt"), /`Καρφίτσα`/);
   const ctx = { lang: "el", readJSON: () => ({ prj: [{ id: ID, m: 1, bk: { w: 148, h: 210, pages: 32, bind: "ss" } }] }) };
   assert.match(P.search(ctx)[0].text, /Καρφίτσα/);
+});
+
+test("finishes: foil, embossing, material, band, slipcase, sticker, elastic with safe defaults", () => {
+  const d = C.normBook({});
+  assert.deepEqual([d.foilK, d.embK, d.tex, d.corners, d.deckle, d.belly, d.slip, d.stick, d.elastic], ["gold", "emboss", "paper", 0, 0, 0, 0, 0, 0]);
+  assert.deepEqual([d.bellyH, d.bellyC, d.slipC, d.stickK, d.stickD, d.stickX, d.stickY, d.elasticC], [60, "#e8d9b0", "#2a2f38", "round", 38, 0.78, 0.18, "#1f1f22"]);
+  const b = C.normBook({ foilK: "holo", embK: "deboss", tex: "linen", corners: true, deckle: 1, belly: 1, bellyH: 999, bellyC: "#ABCDEF",
+    slip: 1, stick: 1, stickK: "square", stickD: 5, stickX: 7, stickY: -1, elastic: 1, elasticC: "red" });
+  assert.deepEqual([b.foilK, b.embK, b.tex, b.corners, b.deckle, b.belly, b.bellyH, b.bellyC], ["holo", "deboss", "linen", 1, 1, 1, 150, "#abcdef"]);
+  assert.deepEqual([b.stickK, b.stickD, b.stickX, b.stickY, b.elasticC], ["square", 15, 1, 0, "#1f1f22"]);
+  assert.equal(C.normBook({ foilK: "platinum", tex: "velvet", embK: "x" }).foilK, "gold");
+  assert.equal(C.normBook({ tex: "velvet" }).tex, "paper");
+  for (const k of ["foil", "uv", "emb", "edgeP", "belly", "slip", "stick"]) assert.ok(C.SLOTS.includes(k), k);
+  assert.ok(C.EDGES.includes("print"));
+  assert.ok(C.SETS.includes("box"));
+  // canonical (R26)
+  assert.equal(C.canon(C.normBook(b)), C.canon(b));
+});
+
+test("canHave: no band or slipcase on a booklet or spiral, no deckle on board or booklet", () => {
+  assert.equal(C.canHave({ bind: "pb" }, "belly"), true);
+  assert.equal(C.canHave({ bind: "ss" }, "belly"), false);
+  assert.equal(C.canHave({ bind: "sp" }, "slip"), false);
+  assert.equal(C.canHave({ bind: "hc" }, "slip"), true);
+  assert.equal(C.canHave({ bind: "bb" }, "deckle"), false);
+  assert.equal(C.canHave({ bind: "ss" }, "deckle"), false);
+  assert.equal(C.canHave({ bind: "lf" }, "deckle"), true);
+  assert.equal(C.canHave({ bind: "sp" }, "corners"), true);
+});
+
+test("stickerBox stays on the front cover; slipcase wraps the book", () => {
+  const s = C.stickerBox({ w: 148, h: 210, stickD: 40, stickX: 1, stickY: 0, stickK: "square" });
+  assert.deepEqual(s, { x: 108, y: 0, w: 40, h: 40, round: false });
+  const r = C.stickerBox({ w: 148, h: 210 });
+  assert.equal(r.round, true);
+  assert.ok(r.x >= 0 && r.x + r.w <= 148 && r.y >= 0 && r.y + r.h <= 210);
+  for (const bind of ["pb", "hc", "bb", "lf"]) {
+    const bk = { w: 148, h: 210, pages: 300, bind }, dd = C.dims(bk), sc = C.slipcase(bk);
+    assert.ok(sc.x0 <= dd.xS && sc.x1 > dd.xE, bind + " x");
+    assert.ok(sc.y > dd.Hc / 2 && sc.z > dd.zF, bind + " y/z");
+    assert.equal(sc.t, 2);
+  }
+});
+
+test("box set: books stand like a shelf; finish pictures are assets in use", () => {
+  const p = prj({ set: { k: "box", n: 3 }, art: { foil: A1, slip: A2 } });
+  assert.equal(p.set.k, "box");
+  assert.equal(C.count(p), 3);
+  C.setList(p).forEach((s) => { assert.equal(s.place, "stand"); assert.equal(s.yaw, 90); });
+  assert.deepEqual(C.assetsOf(p).sort(), [A1, A2].sort());
+  assert.equal(C.normIns({}).rule, "none");
+  assert.equal(C.normIns({ rule: "dotted" }).rule, "dotted");
+  assert.equal(C.normIns({ rule: "wavy" }).rule, "none");
+});
+
+test("v2 wave 2 wiring: finish controls, notebook preset, strings in en, el and de, help", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html"), de = read("i18n/de/mockups.js");
+  ["f-tex", "f-corners", "f-deckle", "f-belly", "f-bellyC", "f-bellyH", "f-slip", "f-slipC", "f-elastic", "f-elasticC", "nb-btn",
+    "f-foilK", "f-embK", "f-stick", "f-stickD", "f-stickX", "f-stickY", "f-rule", "edgep-slot"].forEach((id) => {
+    assert.match(html, new RegExp('id="' + id + '"'), id);
+    assert.ok(js.includes('"' + id + '"'), id);
+  });
+  const keys = ["edge.print", "slot.edgeP", "sec.finish", "f.tex", "tex.linen", "f.corners", "f.deckle", "f.belly", "f.bellyH", "f.slip", "f.elastic",
+    "btn.notebook", "toast.notebook", "sec.fx", "fx.hint", "slot.foil", "slot.uv", "slot.emb", "foil.holo", "emb.deboss", "f.stick", "stick.square",
+    "f.rule", "rule.dotted", "set.box"];
+  keys.forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  });
+  assert.match(read("mockups/help.en.txt"), /## Finishes and extras/);
+  assert.match(read("mockups/help.el.txt"), /## Φινιρίσματα και πρόσθετα/);
 });

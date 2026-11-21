@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — core.js (MockCore, v1.4.0)
+// orOS Mockups — core.js (MockCore, v1.5.0)
 // Pure model of the Mockups app. No DOM, no three.js: Node-tested
 // in tests/mockups.test.js.
 //   - book sizes in mm: trim presets, paper presets, spine width
@@ -34,6 +34,12 @@
 //     (folded and stapled, no spine), spiral / wire-o (two loose
 //     covers and a coil), board book (thick board pages) and lay-flat
 //     (a hardcover whose spread lies flat)
+//   - finishes (v1.5.0): foil (gold, silver, copper, rose, holographic),
+//     spot UV and emboss / deboss from mask pictures on the front,
+//     cover material (paper, linen, cloth, leather, kraft), rounded
+//     corners, deckled or printed page edges, a belly band, a
+//     slipcase, a sticker on the cover, a notebook's elastic band and
+//     ruled pages, and a box set (a shelf of books in a box)
 //   - the project model and its merge (synced slice "mockups")
 // Data (localStorage "oros-mockups-data"):
 //   { ver: 1, prj: [project], tombs: { id: m } }
@@ -46,7 +52,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.4.0";
+  var VERSION = "1.5.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-mockups-data";
   var PREFS_KEY = "oros-mockups-prefs";
@@ -101,18 +107,27 @@
   var SS_MAX = 96;                      // most printers staple at most ~96 pages
   var PUNCH = 9.5;                      // spiral: holes this close to the binding edge (mm)
   var FINISH = ["matte", "gloss", "soft"];
-  var EDGES = ["white", "cream", "color"];
+  var EDGES = ["white", "cream", "color", "print"];
+  var FOILS = ["gold", "silver", "copper", "rose", "holo"];
+  var EMBS = ["emboss", "deboss"];
+  var TEXS = ["paper", "linen", "cloth", "leather", "kraft"];
+  var STICKS = ["round", "square"];
+  var RULES = ["none", "lined", "dotted", "grid"];
+  var CORNER_R = 6;                     // rounded corners, mm
   var PLACES = ["stand", "lie", "lean"];
   var BGS = ["none", "solid", "grad", "photo"];
   var RATIOS = ["1:1", "4:5", "3:2", "4:3", "16:9", "9:16"];
   var SIZES = [1024, 2048, 3000, 4096];
   var FMTS = ["png", "jpg", "webp"];
   var ART_MODES = ["parts", "wrap"];
-  var SLOTS = ["front", "back", "spine", "flapF", "flapB", "wrap"];
+  // cover pictures; then the finish masks (front cover: white = the
+  // effect), the printed fore-edge, the belly band, the slipcase (and
+  // box set) and the sticker
+  var SLOTS = ["front", "back", "spine", "flapF", "flapB", "wrap", "foil", "uv", "emb", "edgeP", "belly", "slip", "stick"];
   var VOL_SLOTS = ["front", "back", "spine", "wrap"];
-  var SETS = ["one", "pair", "row", "shelf", "stack"];
+  var SETS = ["one", "pair", "row", "shelf", "stack", "box"];
   var MAX_VOLS = 5;                     // books after the first one
-  var GAP_DEF = { one: 0, pair: 24, row: 14, shelf: 1, stack: 0 };
+  var GAP_DEF = { one: 0, pair: 24, row: 14, shelf: 1, stack: 0, box: 0.5 };
   var MOTIONS = ["spin", "swing"];
   var SECS = [4, 6, 8, 12];
   var VSIZES = [720, 1080];
@@ -132,7 +147,8 @@
     turn: [-180, 180], open: [0, 160], th: [-180, 180], ph: [-10, 89],
     fov: [8, 70], zoom: [0.5, 3], dx: [-1, 1], dy: [-1, 1],
     az: [-180, 180], el: [10, 85], str: [0, 2], soft: [0, 1], warm: [-1, 1],
-    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80], safe: [0, 20], curl: [0, 1], pdfp: [1, 9999]
+    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80], safe: [0, 20], curl: [0, 1], pdfp: [1, 9999],
+    bellyH: [20, 150], stickD: [15, 90], frac: [0, 1]
   };
 
   // ---------- Helpers ----------
@@ -195,6 +211,24 @@
     o.clothC = hex(b.clothC, "#26303d");
     o.fin = pick(b.fin, FINISH, "matte");
     o.wire = pick(b.wire, WIRES, "black");
+    // finishes (v1.5.0)
+    o.foilK = pick(b.foilK, FOILS, "gold");
+    o.embK = pick(b.embK, EMBS, "emboss");
+    o.tex = pick(b.tex, TEXS, "paper");
+    o.corners = bit(b.corners);
+    o.deckle = bit(b.deckle);
+    o.belly = bit(b.belly);
+    o.bellyH = num(b.bellyH, LIMIT.bellyH, 60, 1);
+    o.bellyC = hex(b.bellyC, "#e8d9b0");
+    o.slip = bit(b.slip);
+    o.slipC = hex(b.slipC, "#2a2f38");
+    o.stick = bit(b.stick);
+    o.stickK = pick(b.stickK, STICKS, "round");
+    o.stickD = num(b.stickD, LIMIT.stickD, 38, 1);
+    o.stickX = num(b.stickX, LIMIT.frac, 0.78, 0.01);
+    o.stickY = num(b.stickY, LIMIT.frac, 0.18, 0.01);
+    o.elastic = bit(b.elastic);
+    o.elasticC = hex(b.elasticC, "#1f1f22");
     return o;
   }
   // Block thickness (mm): typed by hand, else pages × one page.
@@ -264,6 +298,25 @@
     return d;
   }
   // The coil loops of a spiral binding: y of each (mm, from the middle).
+  // Which finishes the binding can take.
+  function canHave(bk, k) {
+    var b = normBook(bk);
+    if (k === "belly" || k === "slip") return b.bind !== "ss" && b.bind !== "sp";
+    if (k === "deckle") return b.bind !== "bb" && b.bind !== "ss";
+    return true;
+  }
+  // The sticker on the front cover, mm from the top left of the front.
+  function stickerBox(bk) {
+    var b = normBook(bk), d = b.stickD, r = d / 2;
+    var cx = Math.max(r, Math.min(b.w - r, b.stickX * b.w)), cy = Math.max(r, Math.min(b.h - r, b.stickY * b.h));
+    return { x: round3(cx - r), y: round3(cy - r), w: d, h: d, round: b.stickK === "round" };
+  }
+  // A slipcase round the book (inside measures, mm): open at the spine.
+  function slipcase(bk) {
+    var d = dims(bk), t = 2;
+    var x0 = d.xS - (d.bulge || 0), x1 = d.xE + 0.8;
+    return { t: t, x0: round3(x0), x1: round3(x1 + t), y: round3(d.Hc / 2 + 0.8 + t), z: round3(d.zF + 0.6 + t) };
+  }
   function coilLoops(bk) {
     var d = dims(bk);
     if (!d.coil) return [];
@@ -556,6 +609,7 @@
     o.dev = pick(i.dev, DEVICES, "tablet");
     o.dc = pick(i.dc, DCOLS, "black");
     o.pdfp = isInt(i.pdfp) ? Math.max(LIMIT.pdfp[0], Math.min(LIMIT.pdfp[1], i.pdfp)) : 1;
+    o.rule = pick(i.rule, RULES, "none");     // empty pages: plain, lined, dotted or squared
     return o;
   }
   // The top of one half of the open page block, from the gutter (u = 0)
@@ -680,7 +734,7 @@
     if (st.k === "pair") return [{ i: 0, back: false, yaw: 12, place: place, dx: 0 }, { i: 1, back: true, yaw: -12, place: place, dx: 0 }];
     for (var i = 0; i < n; i++) {
       if (st.k === "row") out.push({ i: i, back: false, yaw: 0, place: place, dx: 0 });
-      else if (st.k === "shelf") out.push({ i: i, back: false, yaw: 90, place: "stand", dx: 0 });
+      else if (st.k === "shelf" || st.k === "box") out.push({ i: i, back: false, yaw: 90, place: "stand", dx: 0 });
       else out.push({ i: i, back: false, yaw: STACK_YAW[i % STACK_YAW.length], place: "lie", dx: STACK_DX[i % STACK_DX.length] });
     }
     return out;
@@ -882,7 +936,7 @@
   var MockCore = {
     VERSION: VERSION, DATA_VER: DATA_VER, DATA_KEY: DATA_KEY, PREFS_KEY: PREFS_KEY, MAX_PRJ: MAX_PRJ,
     ID_RE: ID_RE, ASSET_RE: ASSET_RE, LIMIT: LIMIT,
-    TRIMS: TRIMS, PAPERS: PAPERS, BINDS: BINDS, WIRES: WIRES, SS_MAX: SS_MAX, PUNCH: PUNCH, coilLoops: coilLoops, FINISH: FINISH, EDGES: EDGES, PLACES: PLACES, BGS: BGS,
+    TRIMS: TRIMS, PAPERS: PAPERS, BINDS: BINDS, WIRES: WIRES, FOILS: FOILS, EMBS: EMBS, TEXS: TEXS, STICKS: STICKS, RULES: RULES, CORNER_R: CORNER_R, canHave: canHave, stickerBox: stickerBox, slipcase: slipcase, SS_MAX: SS_MAX, PUNCH: PUNCH, coilLoops: coilLoops, FINISH: FINISH, EDGES: EDGES, PLACES: PLACES, BGS: BGS,
     RATIOS: RATIOS, SIZES: SIZES, FMTS: FMTS, SLOTS: SLOTS, MM_PER_IN: MM_PER_IN,
     VOL_SLOTS: VOL_SLOTS, SETS: SETS, MAX_VOLS: MAX_VOLS, GAP_DEF: GAP_DEF,
     MOTIONS: MOTIONS, SECS: SECS, VSIZES: VSIZES, VFMTS: VFMTS,
