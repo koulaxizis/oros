@@ -6,6 +6,11 @@ Press `New document` and choose a `Page size` (such as A4, `Business card` or `C
 
 Your documents appear as cards on the home screen, where you can search, rename, duplicate or delete them (with undo right after). Each document is also a file in Files › Layout, so it takes as much room as a book needs, is synced with your other devices like every file, and goes into backups with the orOS disk. Double-click such a file in Files to open the document; a deleted document goes to the Trash in Files. If the same document was changed on two devices at once, Layout puts both versions together, so no change is lost.
 
+## Start here: a new book
+Press `New book` (or `A book, step by step` in `New document`) and answer four short steps: `What kind of book` (novel, short stories, poetry, essay, study, illustrated children's book, photo album, cookbook, exhibition catalogue, magazine, workbook or zine), `Size and margins` (the usual trim for that kind is already chosen; tight, normal or wide margins), `Type` (a pair of free fonts for headings and text) and `Details and first pages` (title, author, publisher, year, ISBN, and the half-title, title, copyright and contents pages). The preview shows the opening spread as you go. `Make the book` builds it with its styles, masters with page numbers and running heads, sample text that flows from page to page, and frames for the pictures. Margins, type sizes and frames follow the size you picked; all of it can change later in `Document setup…` and `Styles`.
+
+A short hint shows the first time you open a book, a master and so on; `Show the hints again` in the `Learn` tab brings them back. `Learn` also explains text, styles, pages, pictures, the contents, the check before printing and export, each with a `Show me` button.
+
 ## Place things on the page
 Pick a tool on the left and drag on the page: `Text frame (T)`, `Image frame (F)`, `Rectangle (R)`, `Ellipse (E)`, `Line (L)` or `Pen (P)`. `Select (V)` moves and resizes objects; `Hand (H)` moves the view.
 

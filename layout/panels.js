@@ -12,7 +12,7 @@
 
   var LY = window.LY, M = LY.M, R = LY.R, T = LY.T, t = LY.t, $ = LY.$, el = LY.el;
   var ED = LY.ed, BL = window.LayoutBlend;
-  var TABS = ["props", "pages", "styles", "colors"];
+  var TABS = ["props", "pages", "styles", "colors", "learn"];
   var tab = "props";
 
   // ---------- Form helpers ----------
@@ -180,6 +180,7 @@
     if (tab === "props") buildProps(body);
     else if (tab === "pages") buildPages(body);
     else if (tab === "styles") buildStyles(body);
+    else if (tab === "learn" && LY.startUI) LY.startUI.learn(body);
     else buildColors(body);
     body.scrollTop = scroll;
   }
@@ -1488,6 +1489,12 @@
     var s = newDocSetup();
     var pick = "";
     LY.openDialog(t("new.title"), function (body, close) {
+      // a book, step by step (LY-N1, startui.js)
+      if (LY.startUI) {
+        var sb = btn(t("start.open"), function () { close(); LY.startUI.open(); });
+        sb.classList.add("st-open");
+        body.appendChild(sb);
+      }
       var name = el("input", "inp"); name.type = "text"; name.maxLength = 120; name.value = t("doc.untitled");
       body.appendChild(field(t("new.name"), name));
       // start from: blank or one of the templates (page 1 as a thumbnail)
