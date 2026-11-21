@@ -76,7 +76,7 @@ test("sla: a table becomes its cells, borders and cell text, grouped (LY-PORT2)"
   const mid = lines.filter((l) => near(l.y, 60) && l.h === 0);
   assert.deepEqual(mid.map((l) => [l.x, l.w, l.sw]), [[40, 300, 1]]);
   // the merged cell has no inner side between its two columns on row 1
-  const v1 = lines.filter((l) => l.w === 0 && near(l.x, 140));
+  const v1 = lines.filter((l) => l.w === 0 && near(l.x, 140)).sort((a, b) => a.y - b.y);
   assert.deepEqual(v1.map((l) => [l.y, l.h]), [[40, 20], [80, 20]]);
   // a dashed bottom on one cell is its own piece
   const bottom = lines.filter((l) => near(l.y, 100) && l.h === 0);
