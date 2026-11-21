@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.24.01
+- **Budget: banks are read less often when you use several devices.** With "every 6 hours", each device used to read your banks on its own, so a phone and a computer together could pass a bank's limit of about 4 reads a day and get "too many requests". The devices now share one schedule, and after a bank asks to wait, no device asks it again before the next turn.
+
 ## Version 8.24.00
 - **Light show wallpaper.** Your desktop moves with the music. Pick it under Settings › Appearance › Wallpaper or in the Wallpaper Generator. The Playing widget is bigger too: cover, progress, previous and next, and a small light.
 ## Version 8.23.00
