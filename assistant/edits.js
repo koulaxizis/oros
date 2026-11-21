@@ -186,7 +186,7 @@
     if (set.err) return bad(set.err);
     if (has(args, "location") && typeof args.location === "string") set.location = line(args.location, 150);
     if (has(args, "note") && typeof args.note === "string") set.note = para(args.note, NOTE_IN);
-    // TS-GATE (8.23.00): a Timesheet entry's project (by name, "" = none),
+    // TS-GATE (8.26.00): a Timesheet entry's project (by name, "" = none),
     // billed, and the refs of its invoice and event ("" clears; assistant.js
     // tsChangeRefs turns a ref into { id | src, title } before the change)
     if (has(args, "project") && typeof args.project === "string") set.project = line(args.project, 200);

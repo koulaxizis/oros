@@ -37,7 +37,10 @@
     6: "difference", 32: "difference", 9: "darken", 35: "darken", 10: "lighten", 36: "lighten",
     11: "hue", 37: "hue", 24: "hue", 12: "saturation", 38: "saturation", 25: "saturation",
     13: "color", 39: "color", 26: "color", 14: "luminosity", 40: "luminosity", 27: "luminosity", 56: "luminosity",
-    16: "dodge", 42: "dodge", 17: "burn", 43: "burn", 18: "hard", 44: "hard", 19: "soft", 45: "soft", 52: "exclusion"
+    16: "dodge", 42: "dodge", 17: "burn", 43: "burn", 18: "hard", 44: "hard", 19: "soft", 45: "soft", 52: "exclusion",
+    // wave PS-5 (photolab/blendx.js)
+    1: "dissolve", 7: "lineardodge", 33: "lineardodge", 8: "subtract", 34: "subtract", 15: "divide", 41: "divide",
+    48: "vivid", 49: "pin", 50: "linearlight", 51: "hardmix", 53: "linearburn", 54: "darkercolor", 55: "lightercolor"
   };
   var PASS = 61;
 

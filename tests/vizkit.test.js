@@ -100,7 +100,7 @@ test("Music host: the tap is an analyser after the equalizer, never connected on
   // routed only for same-origin decks, only while the context runs
   assert.match(s, /function vizRoute\(el\) \{\n    if \(el\._node \|\| !el\._same \|\| !vizNode\(\)\) return;\n    if \(ctx\.state === "running"\) \{ route\(el\); return; \}/);
   assert.match(s, /else if \(viz\.on && el\._same\) vizRoute\(el\);/);
-  assert.match(s, /viz: function \(on\) \{ return vizSet\(on\); \},\n    vizFrame: vizFrame,/);
+  assert.match(s, /viz: function \(on, who\) \{ return vizSet\(on, who\); \},\n    vizFrame: vizFrame,/);
 });
 
 test("Music app: button, device-local prefs, kit loaded on first use, host off on close", () => {
@@ -147,7 +147,7 @@ test("Podcasts host: the light show wires like the effects, its frame needs a wi
   const s = read("podcasts/host.js");
   assert.match(s, /function fxWanted\(\) \{ return !!\(vizOn \|\| C\.prefOf\(data, "sil"\) \|\| C\.prefOf\(data, "vb"\)\); \}/);
   assert.match(s, /fx\.el === audio && fx\.state === "on"/);
-  assert.match(s, /viz: function \(on\) \{ return vizSet\(on\); \},\n    vizFrame: vizFrame,/);
+  assert.match(s, /viz: function \(on, who\) \{ return vizSet\(on, who\); \},\n    vizFrame: vizFrame,/);
   const a = read("podcasts/podcasts.js");
   assert.match(a, /lsB\.id = "fp-viz"/);
   assert.match(a, /onClose: function \(\) \{ vizStage = null; try \{ H\.viz\(false\); \} catch \(e\) \{\} \}/);
