@@ -100,6 +100,8 @@ Sie kommen von Waymarked Trails. Schalte so viele ein, wie du willst; dieses Ger
 - wie gut der Pfad im Gelände sichtbar ist, die Steigung, die Breite, und ob du dort gehen, fahren oder reiten darfst;
 - die markierten Routen, zu denen er gehört (international, national, regional oder lokal), mit `Waymarked Trails`, um die ganze Route zu sehen.
 
+`Problem auf diesem Weg melden` (ganz unten) wählt, was nicht stimmt (gesperrt, zugewachsen, Markierungen fehlen, Brücke oder Stufen beschädigt, den Weg gibt es nicht mehr, gefährlich, etwas anderes), und öffnet an der Stelle einen neuen OpenStreetMap-Hinweis, in dem der Weg und sein Link schon stehen; ergänze Details und sende ihn wie jeden Hinweis (siehe OpenStreetMap-Hinweise).
+
 Um die markierten Routen um dich herum zu durchsuchen, öffne Entdecken › `Touren`.
 
 Es wird nur gezeigt, was kartiert ist. Fehlt eine Angabe, ist sie noch nicht bekannt; du kannst sie mit Fragen oder Orte bearbeiten ergänzen. Offline-Karten zeichnen Radwege jetzt blau, Feldwege braun und Fußpfade rot, alle gestrichelt.
@@ -159,7 +161,7 @@ Ein oranger Ring um einen Punkt heißt, dem Ort fehlt etwas Wichtiges (sein Name
 
 Hilf OpenStreetMap, indem du kleine Fragen zu deiner Umgebung beantwortest. Du musst keine Tags kennen.
 
-1. Tippe auf `Fragen` (die Stecknadel mit Fragezeichen) und zoome auf Straßenebene. Stecknadeln zeigen die offenen Fragen: 🪑 Lehne der Bank, 🚏 Wartehäuschen, 🚌 Bank an der Haltestelle, 🚸 Art des Übergangs, 💡 Straßenbeleuchtung, 🛣️ Belag, 🕒 Öffnungszeiten, ♿ Rollstuhlzugang, 🚻 Toilettengebühr, ♻️ Recycling, 🛐 Religion, 🏢 Stockwerke, 🔢 Hausnummer, 🛝 Zugang zum Spielplatz, 🚬 Rauchen, 🏧 Geldautomat an der Bank, 🚦 Tempolimit, 🏷️ Straßenname, 🪜 Anzahl der Stufen, 🤚 Handlauf, 🦯 Blindenleitsystem am Übergang, 🪧 Name der Haltestelle, 🚧 Schranke am Bahnübergang, 🅿️ Parkgebühr, 🚗 Art des Parkplatzes, 🚲 Fahrradstellplätze, ☂️ überdachte Fahrradstellplätze, 🥗 vegetarisches Essen, 🌱 veganes Essen, 💳 Zahlungsarten, 📶 WLAN, 🚾 Rollstuhl-WC, ❤️ Defibrillator drinnen, 🧯 Hydrant, 📮 Leerungszeiten, 🏠 Gebäudeart.
+1. Tippe auf `Fragen` (die Stecknadel mit Fragezeichen) und zoome auf Straßenebene. Stecknadeln zeigen die offenen Fragen: 🪑 Lehne der Bank, 🚏 Wartehäuschen, 🚌 Bank an der Haltestelle, 🚸 Art des Übergangs, 💡 Straßenbeleuchtung, 🛣️ Belag, 🕒 Öffnungszeiten, ♿ Rollstuhlzugang, 🚻 Toilettengebühr, ♻️ Recycling, 🛐 Religion, 🏢 Stockwerke, 🔢 Hausnummer, 🛝 Zugang zum Spielplatz, 🚬 Rauchen, 🏧 Geldautomat an der Bank, 🚦 Tempolimit, 🏷️ Straßenname, 🪜 Anzahl der Stufen, 🤚 Handlauf, 🦯 Blindenleitsystem am Übergang, 🪧 Name der Haltestelle, 🚧 Schranke am Bahnübergang, 🅿️ Parkgebühr, 🚗 Art des Parkplatzes, 🚲 Fahrradstellplätze, ☂️ überdachte Fahrradstellplätze, 🥗 vegetarisches Essen, 🌱 veganes Essen, 💳 Zahlungsarten, 📶 WLAN, 🚾 Rollstuhl-WC, ❤️ Defibrillator drinnen, 🧯 Hydrant, 📮 Leerungszeiten, 🏠 Gebäudeart, und für Wandernde und Radfahrende 🥾 Wanderschwierigkeit (T1 bis T6), 👀 wie gut ein Pfad sichtbar ist, 🚜 wie fest ein Feldweg ist, 🚲 Räder auf dem Weg, ↔️ getrennte Spuren für Rad und Fußgänger, 🛞 Schieberinne an Treppen, 💧 Trinkwasser an Quelle oder Hahn, 🛖 Art der Schutzhütte.
 2. Tippe auf eine Stecknadel (oder eine Zeile der Liste) und dann auf die Antwort. Die nächste Frage in der Nähe öffnet sich von selbst.
 3. `Weiß nicht` überspringt die Frage vorerst. `Hier ausblenden` blendet sie für diesen Ort auf all deinen Geräten aus. `Gibt es nicht mehr` öffnet an der Stelle einen neuen Hinweis, damit Kartierende nachsehen können.
 4. Manche Antworten veralten: Karten fragt nach einigen Jahren erneut (Öffnungszeiten nach einem Jahr), und `Immer noch gleich` bestätigt sie.
@@ -178,6 +180,7 @@ Eine Ebene färbt die Straßen oder Gebäude um dich herum nach einer Eigenschaf
 - 💡 `Straßenbeleuchtung`: beleuchtet oder nicht.
 - 🛣️ `Belag`: Asphalt, Pflaster, Schotter, Erde und mehr.
 - 🚶 `Gehwege`: auf beiden Seiten, einer Seite, ein eigener Weg oder keiner. Pfeile auf der gewählten Straße zeigen ihre Richtung: links und rechts gelten so, wie du sie siehst, wenn du in diese Richtung gehst.
+- 🚴 `Radwege`: ein baulich getrennter Radweg, ein markierter Radfahrstreifen, Radpiktogramme auf einer gemeinsamen Spur, ein eigener Radweg neben der Straße oder nichts für Räder.
 - 🔢 `Adressen`: welche Gebäude eine Hausnummer haben. Gib die Nummer ein oder tippe auf `Es hat keine Nummer`.
 - 🏢 `Gebäude`: Stockwerke und Gebäudeart in einem Formular (leere Felder bleiben, wie sie sind).
 

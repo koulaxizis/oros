@@ -385,7 +385,10 @@
   // moves on its own. A deck is routed for the light only while the
   // context runs (a suspended context would silence it); once routed
   // it stays routed, like an equalizer deck.
-  var viz = { on: false, an: null, f: null, w: null };
+  // Listeners (VIZWALL-1): "app" (the Music app's Light show, also when
+  // no name is given), "wall" (the desktop wallpaper), "widget" (the
+  // Media card); the tap is on while any of them listens.
+  var viz = { on: false, who: {}, an: null, f: null, w: null };
   function vizNode() {
     if (viz.an) return viz.an;
     if (!graph()) return null;
@@ -404,8 +407,10 @@
     if (ctx.state === "running") { route(el); return; }
     try { ctx.resume().then(function () { if (viz.on && ctx.state === "running" && el._same && el.getAttribute("src")) route(el); }, function () {}); } catch (e) {}
   }
-  function vizSet(on) {
-    viz.on = !!on;
+  function vizSet(on, who) {
+    who = who === "wall" || who === "widget" ? who : "app";
+    if (on) viz.who[who] = 1; else delete viz.who[who];
+    viz.on = Object.keys(viz.who).length > 0;
     if (viz.on && vizNode()) decks.forEach(function (el) { if (el.getAttribute("src")) vizRoute(el); });
     return viz.on;
   }
@@ -1164,7 +1169,7 @@
     setVolume: function (v) { v = +v; if (v >= 0 && v <= 1) { local.vol = v; volAll(); saveLocal(); host.notify("volume"); } },
     sound: function () { return own(sound); },
     // MU-VIZ: the light show of the full player (see vizFrame).
-    viz: function (on) { return vizSet(on); },
+    viz: function (on, who) { return vizSet(on, who); },
     vizFrame: vizFrame,
     setSound: setSound,
     sleep: function (v) { sleepSet(v === "end" ? "end" : +v || 0); },
