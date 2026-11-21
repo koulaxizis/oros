@@ -31,6 +31,22 @@
   if (!R || !S || !M) return;
   function hasEngine() { return node || !!(root.orosDK && root.orosDK.render && root.orosDK.text); }
 
+  // The picture op's corrections → a record for setPicture, "none" or
+  // null (nothing asked). Each is a list of numbers in its fields' order.
+  var ADJ_FIELDS = { levels: ["ib", "iw", "g", "ob", "ow"], curves: ["s", "m", "h"], bc: ["b", "c"], balance: ["r", "g", "b"], hsl: ["h", "s", "l"] };
+  function pictureAdj(st) {
+    if (st.adjust === "none") return "none";
+    var out = {}, any = false;
+    Object.keys(ADJ_FIELDS).forEach(function (id) {
+      var v = String(st[id] || "").trim();
+      if (!v) return;
+      var nums = v.split(/[\s,;]+/).map(Number), o = {};
+      ADJ_FIELDS[id].forEach(function (k, i) { if (isFinite(nums[i])) o[k] = nums[i]; });
+      out[id] = o; any = true;
+    });
+    if (st.gray === "on") { out.gray = 1; any = true; } else if (st.gray === "off") { out.gray = 0; any = true; }
+    return any ? out : null;
+  }
   var OPS = ["text", "pstyle", "style", "master", "margins", "pages", "delpages", "fit", "numbering", "bleed", "grey", "imgfit"];
   var CATALOG = {};
   OPS.forEach(function (op) { CATALOG[op] = S.CATALOG[op]; });
@@ -81,7 +97,10 @@
   CATALOG.pagesize = { kind: "doc", args: { pages: RANGE, w: MMv(0, 5080, 0), h: MMv(0, 5080, 0) } };
   // LY-PRO W4 (items 9, 10): picture frames
   CATALOG.picture = { kind: "doc", args: { frame: { t: "str", max: 400 }, pages: { t: "str", max: 60 },
-    flip: { t: "enum", v: ["", "none", "h", "v", "hv"], def: "" }, corner: MMv(-1, 500, -1), fit: { t: "enum", v: ["", "fit", "fill", "frame"], def: "" } } };
+    flip: { t: "enum", v: ["", "none", "h", "v", "hv"], def: "" }, corner: MMv(-1, 500, -1), fit: { t: "enum", v: ["", "fit", "fill", "frame"], def: "" },
+    // colour corrections (W4b): numbers separated by spaces, "" = as it is
+    adjust: { t: "enum", v: ["", "none"], def: "" }, gray: OO, levels: { t: "str", max: 40 }, curves: { t: "str", max: 30 },
+    bc: { t: "str", max: 20 }, balance: { t: "str", max: 30 }, hsl: { t: "str", max: 30 } } };
   // Chris 2026-11-18: a font into the owner's collection and this
   // document (the gate has no room for a fonts_add tool)
   CATALOG.addfont = { kind: "doc", args: { family: { t: "str", max: 60 }, source: { t: "enum", v: ["free", "local"], def: "free" }, path: { t: "str", max: 600 },
@@ -146,7 +165,10 @@
     "source free = a Fontsource family by `family` (e.g. Carlito, as fontsource.org names it; its files are kept on the device for offline use), styles regular|bold|italic|bold italic (or 400, 700, 400i, 700i; default all it has); " +
     "source local = the font file `path` local:<root>/<file>.ttf|.otf in a local folder the owner opened (one file per command: add the bold and italic files too), kept in the owner's fonts" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
-    "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width)";
+    "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width); " +
+    "colour corrections, kept apart from the file (numbers separated by spaces; empty = as it is; values that change nothing take that correction off; applied in this order): " +
+    "levels \"black white gamma [out_black out_white]\" (0-255, gamma 0.1-9.99, e.g. \"12 240 1.1\"), curves \"shadows mids highlights\" (outputs at 64 128 192, e.g. \"56 132 200\"), " +
+    "bc \"brightness contrast\" (-150..150, -100..100), balance \"red green blue\" midtones -100..100, hsl \"hue saturation lightness\" (-180..180, -100..100, -100..100), gray on|off (black and white), adjust none takes every correction off";
 
   // addfont styles → fonts.js variants
   var STYLE_OF = { regular: "r", "400": "r", bold: "b", "700": "b", italic: "i", "400i": "i", "400 italic": "i", "bold italic": "bi", "700i": "bi", "700 italic": "bi" };
@@ -263,7 +285,7 @@
     if (st.op === "picture") {
       var fids = st.frame ? String(st.frame).split(/[\s,]+/).filter(Boolean) : [];
       if (!fids.length && !st.pages) return 0;
-      return PRO.setPicture(doc, fids, st.pages ? S.pageTest(st.pages) : null, { flip: st.flip, corner: st.corner >= 0 ? st.corner * PT_PER_MM : -1, fit: st.fit }, now);
+      return PRO.setPicture(doc, fids, st.pages ? S.pageTest(st.pages) : null, { flip: st.flip, corner: st.corner >= 0 ? st.corner * PT_PER_MM : -1, fit: st.fit, adj: pictureAdj(st) }, now);
     }
     if (st.op === "masterfield") {
       var mfr = PRO.masterField(doc, Object.assign({}, st, { env: env }), now, env.idf, function (list) {

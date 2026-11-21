@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — render.js (v1.3.0)
+// orOS designkit — render.js (v1.4.0)
 // Lays out every story of a document (threads, master pages, page
 // numbers, text wrap) and draws pages on a canvas: the editor view,
 // thumbnails and image exports all go through drawPage(), and the
@@ -9,6 +9,7 @@
 // text on a path (LY-TP, wave V3: a text frame with ext.tp = { d, o,
 // s } holds one line of its story laid along the outline d, unit path
 // text in the frame's box; without vector.js it stays a plain frame).
+// Picture colour corrections (it.ext.adj, W4b) need photolab/adjust.js.
 // Exposes orosDK.render (browser) or module.exports (Node).
 // ============================================================
 (function (root) {
@@ -65,6 +66,86 @@
   function flipOf(it) {
     var f = it && it.ext && typeof it.ext.fl === "string" ? it.ext.fl : "";
     return { h: f.indexOf("h") >= 0, v: f.indexOf("v") >= 0 };
+  }
+  // Colour corrections of a picture (LY-PRO W4b, it.ext.adj), kept
+  // apart from the file so they can always be changed or taken off:
+  // { levels: { ib, iw, g, ob, ow }, curves: { s, m, h }, bc: { b, c },
+  // balance: { r, g, b }, hsl: { h, s, l }, gray: 1 }, applied in that
+  // order by photolab/adjust.js (window.PhotoLab.adjust; without it a
+  // picture shows as it is). → the cleaned record, or null when it
+  // changes nothing.
+  var ADJ = {
+    levels: { ib: [0, 254, 0], iw: [1, 255, 255], g: [0.1, 9.99, 1], ob: [0, 255, 0], ow: [0, 255, 255] },
+    curves: { s: [0, 255, 64], m: [0, 255, 128], h: [0, 255, 192] },
+    bc: { b: [-150, 150, 0], c: [-100, 100, 0] },
+    balance: { r: [-100, 100, 0], g: [-100, 100, 0], b: [-100, 100, 0] },
+    hsl: { h: [-180, 180, 0], s: [-100, 100, 0], l: [-100, 100, 0] }
+  };
+  var ADJ_ORDER = ["levels", "curves", "bc", "balance", "hsl", "gray"];
+  function adjNorm(a) {
+    if (!a || typeof a !== "object") return null;
+    var out = {}, any = false;
+    ADJ_ORDER.forEach(function (id) {
+      if (id === "gray") { if (a.gray) { out.gray = 1; any = true; } return; }
+      var src = a[id], spec = ADJ[id];
+      if (!src || typeof src !== "object") return;
+      var o = {}, same = true;
+      Object.keys(spec).forEach(function (k) {
+        var r = spec[k], v = Number(src[k]);
+        v = isFinite(v) ? Math.min(r[1], Math.max(r[0], Math.round(v * 100) / 100)) : r[2];
+        o[k] = v;
+        if (v !== r[2]) same = false;
+      });
+      if (id === "levels" && o.iw <= o.ib) o.iw = Math.min(255, o.ib + 1);
+      if (!same) { out[id] = o; any = true; }
+    });
+    return any ? out : null;
+  }
+  function adjOf(it) { return it && it.t === "img" && it.ext ? adjNorm(it.ext.adj) : null; }
+  // A short text that changes when the corrections do (cache keys,
+  // PDF image names).
+  function adjKey(a) {
+    if (!a) return "";
+    return ADJ_ORDER.filter(function (id) { return a[id]; }).map(function (id) {
+      return id === "gray" ? "g" : id.charAt(0) + Object.keys(ADJ[id]).map(function (k) { return a[id][k]; }).join("_");
+    }).join("-");
+  }
+  function adjLib() {
+    if (typeof module !== "undefined" && module.exports) { try { return require("../photolab/adjust.js"); } catch (e) { return null; } }
+    return root.PhotoLab && root.PhotoLab.adjust || null;
+  }
+  // Corrections on pixels { w, h, data RGBA } in place → true if done.
+  function applyAdj(img, a) {
+    var lib = adjLib();
+    if (!a || !lib) return false;
+    ADJ_ORDER.forEach(function (id) { if (a[id]) lib.run(img, id, a[id]); });
+    return true;
+  }
+  // The picture with its corrections, for the screen: one canvas per
+  // picture and set of corrections, at most 2400 px on its long side.
+  var adjCache = typeof WeakMap === "function" ? new WeakMap() : null;
+  function adjustedImage(img, a) {
+    if (!a || !adjCache || typeof document === "undefined" || !adjLib()) return img;
+    var key = adjKey(a), per = adjCache.get(img);
+    if (!per) { per = {}; adjCache.set(img, per); }
+    if (per[key]) return per[key];
+    var w0 = img.naturalWidth || img.width, h0 = img.naturalHeight || img.height;
+    if (!(w0 > 0 && h0 > 0)) return img;
+    var k = Math.min(1, 2400 / Math.max(w0, h0)), w = Math.max(1, Math.round(w0 * k)), h = Math.max(1, Math.round(h0 * k));
+    try {
+      var cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      var cx = cv.getContext("2d", { willReadFrequently: true });
+      cx.drawImage(img, 0, 0, w, h);
+      var id = cx.getImageData(0, 0, w, h);
+      applyAdj({ w: w, h: h, data: id.data }, a);
+      cx.putImageData(id, 0, 0);
+      // only the last few sets per picture stay (sliders make many)
+      var keys = Object.keys(per);
+      if (keys.length >= 4) delete per[keys[0]];
+      per[key] = cv;
+      return cv;
+    } catch (e) { return img; }
   }
   // Effective resolution of a placed image (pixels per inch).
   function effectivePpi(it) {
@@ -494,6 +575,7 @@
 
   function drawImageItem(ctx, doc, it, opts) {
     var img = it.a && opts.getImage ? opts.getImage(it.a) : null;
+    if (img) img = adjustedImage(img, adjOf(it));
     if (img) {
       ctx.save();
       roundRectPath(ctx, it.x, it.y, it.w, it.h, it.r);
@@ -575,7 +657,7 @@
   }
 
   var api = {
-    corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, flipOf: flipOf, effectivePpi: effectivePpi, uniform: uniform,
+    corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, flipOf: flipOf, adjNorm: adjNorm, adjOf: adjOf, adjKey: adjKey, applyAdj: applyAdj, ADJ_ORDER: ADJ_ORDER, effectivePpi: effectivePpi, uniform: uniform,
     pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
     drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };

@@ -62,3 +62,19 @@ test("render passes sfit to the engine", () => {
   const src = fs.readFileSync(path.join(ROOT, "designkit/render.js"), "utf8");
   assert.equal((src.match(/sfit: !!\(/g) || []).length, 2);
 });
+
+test("a no-break space and a line break keep their own font and size", () => {
+  const sla = `<?xml version="1.0" encoding="UTF-8"?>
+<SCRIBUSUTF8NEW Version="1.5.8"><DOCUMENT ANZPAGES="1" PAGEWIDTH="400" PAGEHEIGHT="600" BORDERLEFT="40" BORDERRIGHT="40" BORDERTOP="40" BORDERBOTTOM="40" BOOK="0" UNITS="1">
+  <STYLE NAME="Default Paragraph Style" FONTSIZE="10"/>
+  <PAGE PAGEXPOS="100" PAGEYPOS="20" PAGEWIDTH="400" PAGEHEIGHT="600" NUM="0" LEFT="0"/>
+  <PAGEOBJECT XPOS="140" YPOS="60" WIDTH="300" HEIGHT="200" PTYPE="4" OwnPage="0" ItemID="1">
+    <StoryText><DefaultStyle/><ITEXT FONTSIZE="14" CH="one"/><nbspace FONTSIZE="14"/><ITEXT FONTSIZE="14" CH="two"/><breakline FONTSIZE="14"/><ITEXT FONTSIZE="14" CH="three"/><trail/></StoryText>
+  </PAGEOBJECT>
+</DOCUMENT></SCRIBUSUTF8NEW>`;
+  const d = S.convert(sla, { now: 5, name: "F" }).doc;
+  const runs = d.stories[0].paras[0].runs;
+  // one run: the space and the break are set like the words around them
+  assert.equal(runs.length, 1);
+  assert.equal(runs[0].t, "one two\nthree");
+});

@@ -485,10 +485,12 @@
         } else if (x.n === "para") endPara(withTabs(x.a, x));
         else if (x.n === "trail") endPara(withTabs(x.a, x));
         else if (x.n === "tab") runs.push({ t: "\t", a: x.a });
-        else if (x.n === "nbspace") runs.push({ t: "\u00a0", a: {} });
+        // a no-break space keeps its own font and size, so a line
+        // holding one is still set in the text's font (LY-FIT)
+        else if (x.n === "nbspace") runs.push({ t: "\u00a0", a: x.a });
         // a line break (Shift+Enter) stays inside its paragraph, which
         // keeps the style the paragraph ends with (LY-TAB)
-        else if (x.n === "breakline") runs.push({ t: "\n", a: {} });
+        else if (x.n === "breakline") runs.push({ t: "\n", a: x.a });
         // a column or frame break: what follows starts the next column
         // (frames in a chain are columns to the text engine)
         else if (x.n === "breakcol" || x.n === "breakframe") runs.push({ brk: "col" });

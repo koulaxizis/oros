@@ -251,7 +251,7 @@
 
     if (one && (one.t === "rect" || one.t === "ell" || one.t === "path")) body.appendChild(gradSection(one));
     if (one && one.t === "text") body.appendChild(textSection(one));
-    if (one && one.t === "img") body.appendChild(imageSection(one));
+    if (one && one.t === "img") { body.appendChild(imageSection(one)); if (one.a) body.appendChild(adjSection(one)); }
 
     var sb = blendSection(items);
     if (sb) body.appendChild(sb);
@@ -414,6 +414,47 @@
       if (i < ch.length - 1) r.appendChild(btn(t("props.unthread"), function () { ED.unthread(it.id); }, "small"));
       s.appendChild(r);
     }
+    return s;
+  }
+
+  // Colour corrections of a picture (W4b): kept in the document, not
+  // in the file, so they change or come off at any time; screen, PDF,
+  // e-book and SVG all show them (render.js adjOf / io.js adjust).
+  var adjOpen = false;
+  function adjSection(it) {
+    var s = section(""), a = R.adjOf(it) || {};
+    var det = el("details", "pn-det");
+    det.open = adjOpen || !!R.adjOf(it);
+    det.addEventListener("toggle", function () { adjOpen = det.open; });
+    det.appendChild(el("summary", "pn-h", t("adj.title")));
+    function set(rec) {
+      LY.op(function (d2, now) { return window.LayoutPro.setPicture(d2, ED.sel.slice(), null, { adj: rec }, now) ? undefined : false; });
+    }
+    function val(id, k, d) { return a[id] && a[id][k] !== undefined ? a[id][k] : d; }
+    // one number of one correction; the others of it stay as they are
+    function num(id, k, d, lo, hi, step) {
+      return numInput(val(id, k, d), function (v) {
+        var cur = Object.assign({}, a[id] || {}), rec = {};
+        cur[k] = v; rec[id] = cur;
+        set(rec);
+      }, { unit: "raw", min: lo, max: hi, step: step || 1 });
+    }
+    det.appendChild(check(t("adj.gray"), !!a.gray, function (v) { set({ gray: v ? 1 : 0 }); }));
+    function group(title, cells) {
+      det.appendChild(el("span", "fld-lbl", title));
+      var g = el("div", "grid2");
+      cells.forEach(function (c) { g.appendChild(field(t(c[0]), c[1])); });
+      det.appendChild(g);
+    }
+    group(t("adj.bcT"), [["adj.b", num("bc", "b", 0, -150, 150)], ["adj.c", num("bc", "c", 0, -100, 100)]]);
+    group(t("adj.hslT"), [["adj.h", num("hsl", "h", 0, -180, 180)], ["adj.s", num("hsl", "s", 0, -100, 100)], ["adj.l", num("hsl", "l", 0, -100, 100)]]);
+    group(t("adj.levels"), [["adj.ib", num("levels", "ib", 0, 0, 254)], ["adj.iw", num("levels", "iw", 255, 1, 255)], ["adj.g", num("levels", "g", 1, 0.1, 9.99, 0.05)],
+      ["adj.ob", num("levels", "ob", 0, 0, 255)], ["adj.ow", num("levels", "ow", 255, 0, 255)]]);
+    group(t("adj.curves"), [["adj.cs", num("curves", "s", 64, 0, 255)], ["adj.cm", num("curves", "m", 128, 0, 255)], ["adj.ch", num("curves", "h", 192, 0, 255)]]);
+    group(t("adj.balance"), [["adj.r", num("balance", "r", 0, -100, 100)], ["adj.gr", num("balance", "g", 0, -100, 100)], ["adj.bl", num("balance", "b", 0, -100, 100)]]);
+    if (R.adjOf(it)) det.appendChild(btn(t("adj.off"), function () { set("none"); }, "small"));
+    if (!window.PhotoLab || !window.PhotoLab.adjust) det.appendChild(el("p", "hint warn", t("adj.noLib")));
+    s.appendChild(det);
     return s;
   }
 
@@ -767,7 +808,7 @@
         var li = el("li", "links-row" + (x.state !== "ok" ? " warn" : ""));
         li.appendChild(el("span", "links-name", x.name || t("links.noName")));
         li.appendChild(el("span", "links-meta", t("links.page", { n: labels[x.page - 1] ? labels[x.page - 1].label : x.page }) + " · " +
-          (x.ppi ? x.ppi + " ppi" : "—") + " · " + t("links.s." + x.state) + (x.local ? " · " + t("links.local") : "") + (x.flip ? " · ⇋" : "")));
+          (x.ppi ? x.ppi + " ppi" : "—") + " · " + t("links.s." + x.state) + (x.local ? " · " + t("links.local") : "") + (x.flip ? " · ⇋" : "") + (x.adj ? " · " + t("adj.title") : "")));
         var acts = el("span", "links-acts");
         acts.appendChild(btn(t("links.go"), function () { close(); ED.select([x.id]); ED.scrollToItem(x.id); }, "small"));
         acts.appendChild(btn(t("props.replace"), function () { close(); LY.io.placeImage(x.id); }, "small"));
