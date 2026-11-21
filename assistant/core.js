@@ -2910,15 +2910,20 @@
   };
   var TOOL_KB_COLS = {
     name: "kanban_add_columns",
-    description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column. " +
+    description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column, and rename columns " +
+      "(rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. " +
       "The user sees the columns on one card and must press Add; nothing is saved before that. The card has Undo.",
     params: { type: "object", properties: {
       board: { type: "string", description: "The board name or id (app_summary with app kanban)." },
       columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
         name: { type: "string", description: "At most 60 characters." },
         after: { type: "string", description: "Put it right after this column (name or id); at the end when left out." } },
-        required: ["name"] } } },
-      required: ["board", "columns"] }
+        required: ["name"] } },
+      rename_columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
+        column: { type: "string", description: "The column's id or current name." },
+        name: { type: "string", description: "Its new name, at most 60 characters." } },
+        required: ["column", "name"] } } },
+      required: ["board"] }
   };
 
   var TOOL_OPEN_FILE = {
