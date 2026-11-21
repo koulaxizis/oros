@@ -4,14 +4,18 @@ Radio plays thousands of internet radio stations from around the world. Browse b
 ## Getting started
 Radio opens on `Discover` with the top stations worldwide. Tap or click a station to play it. A player bar appears at the bottom with play/pause, the station's name, the sleep timer (☾), the station tools (⋯), stop (■) and a heart for favourites.
 
-The tile `Surprise me` plays a random top station.
+The tile `Surprise me` plays a random top station. The chips under it change the list: `Top` (most votes), `Trending now` (stations more people are starting to listen to), `New or updated` (stations added or changed in the directory lately) and `Random` (a new draw each time).
 
 ## Find stations
 - `Countries` lists every country with its number of stations. Pick one to see its stations; the chips above the list filter them by genre. Tap a chip again to clear the filter.
 - `Genres` lists genres such as jazz or news; pick one to see its stations.
+- `Languages` lists the languages stations broadcast in, with their names in your language; pick one to see its stations.
+- Lists show 100 stations at a time. `More stations` at the end loads the next 100 (`Draw more` in Random).
 - The search box (`Search stations…`) suggests stations once you type three letters. Use [[↑]] and [[↓]] to pick a suggestion, or press [[Enter]] to see all results. With the box empty, clicking into it suggests your recent stations.
 
-Each station shows its bitrate, format and country code where known.
+Each station shows its bitrate, format and country code where known. A station listed twice in the directory (the same stream, or the same website under almost the same name) shows once, and the heart knows it is the same station.
+
+All stations come from the free, community-run directory [radio-browser.info](https://www.radio-browser.info). Other directories, such as Radio Garden, SomaFM or laut.fm, don't allow other apps to play their stations, so they aren't included; you can still add a station from a list file with `Import stations`.
 
 ## Favourites and recent stations
 While a station plays, tap the heart in the player bar to add it to `Favorites`; tap it again to remove it. `Recent` keeps the last 20 stations you played. The ✕ button in that view clears them, with `Undo` for a few seconds.

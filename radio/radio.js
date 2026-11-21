@@ -83,6 +83,19 @@ var STRINGS = {
     "stop":           "Stop",
     "tab.discover":   "Discover",
     "view.discover":  "Top Stations Worldwide",
+    "tab.languages":  "Languages",
+    "view.languages": "Browse by Language",
+    "disc.label":     "Which stations",
+    "disc.top":       "Top",
+    "disc.trend":     "Trending now",
+    "disc.fresh":     "New or updated",
+    "disc.random":    "Random",
+    "view.trend":     "Trending Now Worldwide",
+    "view.fresh":     "Recently Added or Updated",
+    "view.random":    "Random Stations from Around the World",
+    "more.stations":  "More stations",
+    "more.random":    "Draw more",
+    "more.loading":   "Loading…",
     "random":         "Surprise me",
     "random.hint":    "Play a random top station",
     "catalog.err":    "The station directory isn't answering right now — favorites and recent stations still play.",
@@ -188,6 +201,19 @@ var STRINGS = {
     "stop":           "Διακοπή",
     "tab.discover":   "Ανακάλυψη",
     "view.discover":  "Κορυφαίοι σταθμοί παγκοσμίως",
+    "tab.languages":  "Γλώσσες",
+    "view.languages": "Αναζήτηση ανά Γλώσσα",
+    "disc.label":     "Ποιοι σταθμοί",
+    "disc.top":       "Κορυφαίοι",
+    "disc.trend":     "Ανεβαίνουν τώρα",
+    "disc.fresh":     "Νέοι ή ανανεωμένοι",
+    "disc.random":    "Τυχαίοι",
+    "view.trend":     "Ανεβαίνουν τώρα παγκοσμίως",
+    "view.fresh":     "Πρόσφατα νέοι ή ανανεωμένοι σταθμοί",
+    "view.random":    "Τυχαίοι σταθμοί απ' όλο τον κόσμο",
+    "more.stations":  "Περισσότεροι σταθμοί",
+    "more.random":    "Κι άλλοι τυχαίοι",
+    "more.loading":   "Φόρτωση…",
     "random":         "Τυχαίος σταθμός",
     "random.hint":    "Παίξε έναν τυχαίο κορυφαίο σταθμό",
     "catalog.err":    "Ο κατάλογος σταθμών δεν απαντά αυτή τη στιγμή — τα αγαπημένα και οι πρόσφατοι σταθμοί παίζουν κανονικά.",
@@ -345,7 +371,8 @@ function normalizeStation(s){
 
 var state = {
   catalogDown: false,       // RX-NET: last directory request found nothing to show
-  viewMode: "discover",      // discover | countries | genres | favorites | recents | stations | search
+  viewMode: "discover",      // discover | countries | genres | languages | favorites | recents | stations | search
+  discover: "top",          // RX-MORE: top | trend | fresh | random (this session)
   tagFilter: "",             // active tag chip filter inside country views (W3-8)
   parent: null,             // { type:"country"|"genre", code|tag, name }
   data: null,               // full slice { ver, favorites[], deleted{} }
@@ -1124,102 +1151,86 @@ function fetchGenres(){
   });
 }
 
-function fetchStationsByCountry(code, limit){
-  var cached = getCached("stations_country_" + code);
-  if(cached) return Promise.resolve(cached);
-  
-  return rbRequest("/json/stations/bycountryexact/" + encodeURIComponent(code) +
-    "?limit=" + (limit || 200)).then(function(data){
-    var filtered = data.filter(function(s){
-      var codec = (s.codec || "").toLowerCase();
-      return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
-    });
-    filtered.sort(function(a,b){ return (b.votes||0) - (a.votes||0); });
-    filtered = filtered.slice(0, limit || 200);
-    setCached("stations_country_" + code, filtered);
-    return filtered;
-  }).catch(function(err){
-    return staleOrEmpty("stations_country_" + code, "stations fetch", err);
+// RX-MORE (2026-11-21): one fetch for every station list, a page
+// (RT.PAGE = 100 rows) at a time, sorted by the directory (votes,
+// trend, last change or random). Country lists asked the
+// country-NAME endpoint with the country CODE, which matches no
+// country: they came back empty. Now the code endpoint (tools.js).
+function goodRows(data){
+  return (Array.isArray(data) ? data : []).filter(function(s){
+    var codec = (s.codec || "").toLowerCase();
+    return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
   });
 }
 
-function fetchStationsByTag(tag, limit){
-  var cached = getCached("stations_tag_" + tag);
-  if(cached) return Promise.resolve(cached);
-  
-  return rbRequest("/json/stations/bytag/" + encodeURIComponent(tag) +
-    "?limit=" + (limit || 200)).then(function(data){
-    var filtered = data.filter(function(s){
-      var codec = (s.codec || "").toLowerCase();
-      return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
-    });
-    filtered.sort(function(a,b){ return (b.votes||0) - (a.votes||0); });
-    filtered = filtered.slice(0, limit || 200);
-    setCached("stations_tag_" + tag, filtered);
-    return filtered;
+function fetchList(kind, arg, page){
+  page = page || 0;
+  var random = kind === "random";
+  var key = "list_" + kind + "_" + String(arg || "").toLowerCase() + "_" + page;
+  if(!random){
+    var cached = getCached(key);
+    if(cached) return Promise.resolve(cached);
+  }
+  var path = RT ? RT.listPath(kind, arg, page) : "";
+  if(!path) return Promise.resolve([]);
+  return rbRequest(path).then(function(data){
+    var rows = goodRows(data);
+    if(!random) setCached(key, rows);
+    return rows;
   }).catch(function(err){
-    return staleOrEmpty("stations_tag_" + tag, "tag fetch", err);
+    if(random) return [];   // a new draw next time; nothing stale to show
+    return staleOrEmpty(key, kind + " fetch", err);
   });
 }
 
-function searchStations(query, limit){
+function searchStations(query){
   if(!query || query.trim().length < 3) return Promise.resolve([]);
-  
-  var q = query.toLowerCase();
-  var cached = getCached("search_" + q);
-  if(cached) return Promise.resolve(cached);
-  
-  return rbRequest("/json/stations/search?name=" + encodeURIComponent(query) +
-    "&limit=" + (limit || 50)).then(function(data){
-    var filtered = data.filter(function(s){
-      var codec = (s.codec || "").toLowerCase();
-      return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
-    });
-    filtered.sort(function(a,b){ return (b.votes||0) - (a.votes||0); });
-    setCached("search_" + q, filtered);
-    return filtered;
-  }).catch(function(err){
-    return staleOrEmpty("search_" + q, "search", err);
-  });
+  return fetchList("search", query.trim(), 0);
 }
 
-function fetchTopVoted(limit){
-  var cached = getCached("topvote");
+function fetchTopVoted(){ return fetchList("top", "", 0); }
+
+function fetchLanguages(){
+  var cached = getCached("languages");
   if(cached) return Promise.resolve(cached);
-  
-  return rbRequest("/json/stations/topvote/" + (limit || 50)).then(function(data){
-    var filtered = data.filter(function(s){
-      var codec = (s.codec || "").toLowerCase();
-      return codec.match(/mp3|aac|ogg|opus/) && s.url_resolved;
-    });
-    filtered.sort(function(a,b){ return (b.votes||0) - (a.votes||0); });
-    setCached("topvote", filtered);
-    return filtered;
+  return rbRequest("/json/languages?order=stationcount&reverse=true&hidebroken=true&limit=150").then(function(data){
+    var rows = (Array.isArray(data) ? data : []).filter(function(l){
+      return l && l.name && l.stationcount >= 20;
+    }).map(function(l){ return { name: String(l.name), iso_639: l.iso_639 || "", stationcount: l.stationcount }; });
+    setCached("languages", rows);
+    return rows;
   }).catch(function(err){
-    return staleOrEmpty("topvote", "topvote fetch", err);
+    return staleOrEmpty("languages", "languages fetch", err);
   });
 }
 
 /* ===== FAVORITES MANAGEMENT ===== */
 
-function isFavorite(uuid){
+// RX-MORE: a station is a favourite when its id or its stream is
+// (the directory lists some streams twice; one heart for both).
+function findFavorite(list, st){
+  if(!st) return null;
+  if(typeof st === "string") st = { stationuuid: st };
+  return list.find(function(f){ return f.stationuuid === st.stationuuid; }) ||
+    (RT ? list.find(function(f){ return RT.sameStation(f, st); }) : null) || null;
+}
+
+function isFavorite(st){
   if(!state.data) return false;
-  return !!state.data.favorites.find(function(f){ return f.stationuuid === uuid; });
+  return !!findFavorite(state.data.favorites, st);
 }
 
 function favoriteToggle(station){
   if(!state.data) return;
   
   var payload = sliceGet();
-  var existing = payload.favorites.find(function(f){
-    return f.stationuuid === station.stationuuid;
-  });
+  var existing = findFavorite(payload.favorites, station);
   
   if(existing){
     payload.favorites = payload.favorites.filter(function(f){
-      return f.stationuuid !== station.stationuuid;
+      return f.stationuuid !== existing.stationuuid;
     });
-    payload.deleted[station.stationuuid] = Date.now();
+    payload.deleted[existing.stationuuid] = Date.now();
   }else{
     payload.favorites.push({
       stationuuid: station.stationuuid,
@@ -1527,7 +1538,7 @@ function renderMain(){
   // Render based on view mode
   switch(state.viewMode){
     case "discover":
-      crumb.textContent = t("view.discover");
+      crumb.textContent = t(state.discover && state.discover !== "top" ? "view." + state.discover : "view.discover");
       crumb.removeAttribute("hidden");
       list.className = "rx-list stations";
       renderDiscover(list);
@@ -1545,6 +1556,13 @@ function renderMain(){
       crumb.removeAttribute("hidden");
       list.className = "rx-list tiles";
       renderGenres(list);
+      break;
+      
+    case "languages":
+      crumb.textContent = t("view.languages");
+      crumb.removeAttribute("hidden");
+      list.className = "rx-list tiles";
+      renderLanguages(list);
       break;
       
     case "favorites":
@@ -1572,6 +1590,11 @@ function renderMain(){
         crumb.removeAttribute("hidden");
         list.className = "rx-list stations";
         renderStationsByTag(list, state.parent.tag);
+      }else if(state.parent && state.parent.type === "language"){
+        crumb.textContent = state.parent.name;
+        crumb.removeAttribute("hidden");
+        list.className = "rx-list stations";
+        renderStationsByLanguage(list, state.parent.lang);
       }
       break;
       
@@ -1672,6 +1695,11 @@ function renderGenres(container){
   });
 }
 
+// RX-MORE: Discover shows one of four lists, picked with chips:
+// Top (votes), Trending now (clicktrend), Recently added or updated
+// (changetimestamp) and Random (a new draw on every "More").
+var DISCOVER_KINDS = ["top", "trend", "fresh", "random"];
+
 function renderDiscover(container){
   // W3-5: surprise-me tile first
   var dice = document.createElement("button");
@@ -1683,38 +1711,88 @@ function renderDiscover(container){
   dice.addEventListener("click", surpriseMe);
   container.appendChild(dice);
   
-  var seq = renderSeq;
-  fetchTopVoted().then(function(data){
-    if(seq !== renderSeq) return;   // RX-12
-    if(!data || data.length === 0){
-      $("rx-empty").textContent = t("noresults");
-      $("rx-empty").removeAttribute("hidden");
-      return;
-    }
-    
-    data.forEach(function(station){
-      var card = createStationCard(station);
-      container.appendChild(card);
+  var kind = DISCOVER_KINDS.indexOf(state.discover) >= 0 ? state.discover : "top";
+  var chips = document.createElement("div");
+  chips.className = "rx-chips";
+  chips.id = "rx-disc-chips";
+  chips.setAttribute("role", "group");
+  chips.setAttribute("aria-label", t("disc.label"));
+  DISCOVER_KINDS.forEach(function(k){
+    var chip = document.createElement("button");
+    chip.type = "button";
+    chip.className = "rx-chip" + (k === kind ? " on" : "");
+    chip.dataset.kind = k;
+    chip.setAttribute("aria-pressed", k === kind ? "true" : "false");
+    chip.textContent = t("disc." + k);
+    chip.addEventListener("click", function(){
+      state.discover = k;
+      renderMain();
     });
+    chips.appendChild(chip);
   });
+  container.appendChild(chips);
+  renderPagedList(container, kind, "", null);
 }
 
 function surpriseMe(){
-  // Pool: cached topvote first (instant, offline-friendly), else
+  // Pool: cached top list first (instant, offline-friendly), else
   // a fresh fetch. Honest offline: no pool + no network → nothing
   // happens (the offline banner is already speaking).
-  var pool = getCached("topvote", true) || [];
+  var pool = getCached("list_top__0", true) || [];
   if(pool.length){
     var st = pool[Math.floor(Math.random() * pool.length)];
     playStation(st);
     return;
   }
-  fetchTopVoted(100).then(function(data){
+  fetchTopVoted().then(function(data){
     if(data && data.length){
       var st = data[Math.floor(Math.random() * data.length)];
       playStation(st);
     }
   });
+}
+
+// RX-MORE: a station list that grows a page at a time. Every page
+// goes through RT.dedupe with the keys of the pages before it, so a
+// station shows once. filter (optional): row → bool (country tag
+// chips). onFirst (optional): rows of page 0, before they are shown.
+function renderPagedList(container, kind, arg, filter, onFirst){
+  var seq = renderSeq;
+  var seen = { s: {}, n: {} };
+  var page = 0, shown = 0;
+  var more = document.createElement("button");
+  more.type = "button";
+  more.className = "rx-chip rx-more";
+  more.id = "rx-more";
+  more.textContent = t(kind === "random" ? "more.random" : "more.stations");
+  function load(){
+    more.disabled = true;
+    more.textContent = t("more.loading");
+    fetchList(kind, arg, page).then(function(data){
+      if(seq !== renderSeq) return;   // RX-12: a newer view owns the list
+      if(more.parentNode) more.parentNode.removeChild(more);
+      if(page === 0 && onFirst) onFirst(data || []);
+      var rows = RT ? RT.dedupe(data, seen) : (data || []);
+      rows.forEach(function(station){
+        if(filter && !filter(station)) return;
+        container.appendChild(createStationCard(station));
+        shown++;
+      });
+      if(!shown && (!data || data.length < (RT ? RT.PAGE : 100))){
+        $("rx-empty").textContent = t("noresults");
+        $("rx-empty").removeAttribute("hidden");
+      }
+      // a full page means there may be more; random always draws again
+      if(data && data.length >= (RT ? RT.PAGE : 100)){
+        page++;
+        more.disabled = false;
+        more.textContent = t(kind === "random" ? "more.random" : "more.stations");
+        container.appendChild(more);
+      }
+    });
+  }
+  more.addEventListener("click", load);
+  load();
 }
 
 function createTileElement(flagOrHash, label, count, type){
@@ -1725,6 +1803,8 @@ function createTileElement(flagOrHash, label, count, type){
   var icon = "";
   if(type === "country"){
     icon = '<span class="rx-tile-flag">' + getFlagEmoji(flagOrHash) + '</span>';
+  }else if(type === "language"){
+    icon = '<span class="rx-tile-hash rx-tile-lang">' + esc(String(flagOrHash || "").slice(0, 3).toUpperCase() || "··") + '</span>';
   }else{
     icon = '<span class="rx-tile-hash">#</span>';
   }
@@ -1788,87 +1868,74 @@ function renderRecents(container){
 }
 
 function renderStationsByCountry(container, code){
-  var seq = renderSeq;
-  fetchStationsByCountry(code).then(function(data){
-    if(seq !== renderSeq) return;   // RX-12
-    if(!data || data.length === 0){
-      $("rx-empty").textContent = t("noresults");
-      $("rx-empty").removeAttribute("hidden");
-      return;
-    }
-    
-    // W3-8: tag filter chips — client-side aggregation of the most
-    // popular tags in this country. Clicking a chip filters the
-    // cards (data is cached, so re-render is instant, no network).
+  // W3-8: tag filter chips — the most popular tags of the first page.
+  // A chip filters this page and every page loaded after it.
+  var tag = state.tagFilter;
+  var chipsAt = document.createElement("div");
+  chipsAt.className = "rx-chips";
+  container.appendChild(chipsAt);
+  renderPagedList(container, "country", code, tag ? function(st){
+    return String(st.tags || "").indexOf(tag) !== -1;
+  } : null, function(data){
     var counts = {};
     data.forEach(function(s){
-      String(s.tags || "").split(",").forEach(function(tag){
-        tag = tag.trim();
-        if(tag) counts[tag] = (counts[tag] || 0) + 1;
+      String(s.tags || "").split(",").forEach(function(tg){
+        tg = tg.trim();
+        if(tg) counts[tg] = (counts[tg] || 0) + 1;
       });
     });
-    var topTags = Object.keys(counts).sort(function(a, b){
+    Object.keys(counts).sort(function(a, b){
       return counts[b] - counts[a];
-    }).slice(0, 12);
-    
-    if(topTags.length){
-      var chips = document.createElement("div");
-      chips.className = "rx-chips";
-      topTags.forEach(function(tag){
-        var chip = document.createElement("button");
-        chip.type = "button";
-        chip.className = "rx-chip";
-        chip.textContent = tag;
-        if(state.tagFilter === tag) chip.classList.add("on");
-        chip.addEventListener("click", function(){
-          state.tagFilter = (state.tagFilter === tag) ? "" : tag;
-          renderMain();
-        });
-        chips.appendChild(chip);
+    }).slice(0, 12).forEach(function(tg){
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "rx-chip";
+      chip.textContent = tg;
+      if(tag === tg) chip.classList.add("on");
+      chip.addEventListener("click", function(){
+        state.tagFilter = (state.tagFilter === tg) ? "" : tg;
+        renderMain();
       });
-      container.appendChild(chips);
-    }
-    
-    data.forEach(function(station){
-      if(state.tagFilter &&
-         String(station.tags || "").indexOf(state.tagFilter) === -1) return;
-      var card = createStationCard(station);
-      container.appendChild(card);
+      chipsAt.appendChild(chip);
     });
+    if(!chipsAt.firstChild) chipsAt.remove();
   });
 }
 
 function renderStationsByTag(container, tag){
-  var seq = renderSeq;
-  fetchStationsByTag(tag).then(function(data){
-    if(seq !== renderSeq) return;   // RX-12
-    if(!data || data.length === 0){
-      $("rx-empty").textContent = t("noresults");
-      $("rx-empty").removeAttribute("hidden");
-      return;
-    }
-    
-    data.forEach(function(station){
-      var card = createStationCard(station);
-      container.appendChild(card);
-    });
-  });
+  renderPagedList(container, "tag", tag, null);
+}
+
+function renderStationsByLanguage(container, lang){
+  renderPagedList(container, "language", lang, null);
 }
 
 function renderSearchResults(container){
-  var q = state.searchQuery;
+  renderPagedList(container, "search", state.searchQuery, null);
+}
+
+function renderLanguages(container){
   var seq = renderSeq;
-  searchStations(q).then(function(data){
+  fetchLanguages().then(function(data){
     if(seq !== renderSeq) return;   // RX-12
     if(!data || data.length === 0){
       $("rx-empty").textContent = t("noresults");
       $("rx-empty").removeAttribute("hidden");
       return;
     }
-    
-    data.forEach(function(station){
-      var card = createStationCard(station);
-      container.appendChild(card);
+    var ui = activeLang();
+    data.map(function(l){
+      return { row: l, label: RT ? RT.langLabel(l, ui) : l.name };
+    }).sort(function(a, b){
+      return b.row.stationcount - a.row.stationcount;
+    }).forEach(function(x){
+      var tile = createTileElement(x.row.iso_639 || "", x.label, x.row.stationcount || 0, "language");
+      tile.addEventListener("click", function(){
+        state.parent = { type: "language", lang: x.row.name, name: x.label };
+        state.viewMode = "stations";
+        renderMain();
+      });
+      container.appendChild(tile);
     });
   });
 }
@@ -2003,7 +2070,7 @@ function updatePlayerUI(){
   
   // Favorite button
   if(favBtn && st.current){
-    var fav = isFavorite(st.current.stationuuid);
+    var fav = isFavorite(st.current);
     favBtn.classList.toggle("active", fav);
     favBtn.setAttribute("aria-label", fav ? t("unfavorite") : t("favorite"));
     // Icon update
@@ -2023,7 +2090,7 @@ function toggleFavorite(){
   var st = getHostState();
   if(st.current){
     favoriteToggle(st.current);
-    var msg = isFavorite(st.current.stationuuid) ? t("fav.added") : t("fav.removed");
+    var msg = isFavorite(st.current) ? t("fav.added") : t("fav.removed");
     transientNote(msg);
     updatePlayerUI();
   }
@@ -2783,6 +2850,7 @@ function applyI18n(){
     "rx-tab-discover":  "tab.discover",
     "rx-tab-countries": "tab.countries",
     "rx-tab-genres":    "tab.genres",
+    "rx-tab-languages": "tab.languages",
     "rx-tab-favorites": "tab.favorites",
     "rx-tab-recents":   "tab.recents"
   };

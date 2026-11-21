@@ -17,6 +17,7 @@
 //     linked to a station rings).
 // window.OrosRadioTools (module.exports in Node).
 // Sections: 1. Pure helpers  2. Wake rows (synced)  3. Engine (shell)
+//   4. Directory lists (RX-MORE: paths, pages, one row per station)
 // ============================================================
 (function (root) {
   "use strict";
@@ -419,12 +420,111 @@
     return E;
   }
 
+  // ---------- 4. Directory lists (RX-MORE, 2026-11-21) ----------
+  // radio-browser lists the same stream more than once (different
+  // people add it under other names: "Skai 100.3" / "SKAI 100.3 FM").
+  // One station = one row: the same stream address, or the same
+  // homepage host with the same folded name. The row with more votes
+  // stays (lists come sorted by votes, so normally the first).
+  var NOISE_Q = /^(utm_[a-z]+|aw_0_[a-z0-9.]+|_|cb|nocache|ref|source|listening-from-radio-garden)$/i;
+  function streamKey(u) {
+    u = typeof u === "string" ? u.trim().toLowerCase() : "";
+    if (!/^https?:\/\//.test(u)) return "";
+    u = u.replace(/^https?:\/\//, "").replace(/#.*$/, "");
+    var q = "", qi = u.indexOf("?");
+    if (qi >= 0) {
+      q = u.slice(qi + 1).split("&").filter(function (kv) {
+        return kv && !NOISE_Q.test(kv.split("=")[0]);
+      }).sort().join("&");
+      u = u.slice(0, qi);
+    }
+    var si = u.indexOf("/"), host = si < 0 ? u : u.slice(0, si), path = si < 0 ? "" : u.slice(si);
+    host = host.replace(/^www\./, "").replace(/:(80|443)$/, "");
+    path = path.replace(/[\/;]+$/, "");
+    return host + path + (q ? "?" + q : "");
+  }
+  function fold(s) {
+    s = typeof s === "string" ? s : "";
+    try { s = s.normalize("NFD").replace(/[̀-ͯ]/g, ""); } catch (e) {}
+    return s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+  }
+  function nameKey(name, homepage) {
+    var n = fold(name), h = typeof homepage === "string" ? homepage.trim().toLowerCase() : "";
+    var m = /^https?:\/\/([^\/?#:]+)/.exec(h);
+    if (!n || !m) return "";
+    return m[1].replace(/^www\./, "") + "|" + n;
+  }
+  // rows: station rows, best first. seen (optional, kept across the
+  // pages of one list): { s: {}, n: {} }. Returns the rows to show.
+  function dedupe(rows, seen) {
+    seen = seen || { s: {}, n: {} };
+    var out = [], at = {};
+    (Array.isArray(rows) ? rows : []).forEach(function (r) {
+      if (!r) return;
+      var ks = streamKey(r.url_resolved) || streamKey(r.url), kn = nameKey(r.name, r.homepage);
+      var hit = (ks && seen.s[ks] !== undefined) ? seen.s[ks] : (kn && seen.n[kn] !== undefined ? seen.n[kn] : undefined);
+      if (hit === undefined) {
+        if (ks) seen.s[ks] = r.stationuuid || ks;
+        if (kn) seen.n[kn] = r.stationuuid || kn;
+        at[r.stationuuid || ks || kn] = out.length;
+        out.push(r);
+        return;
+      }
+      // a duplicate inside this batch with more votes takes the place
+      var i = at[hit];
+      if (i !== undefined && (+r.votes || 0) > (+out[i].votes || 0)) {
+        out[i] = r;
+        at[r.stationuuid || ks || kn] = i;
+        if (ks) seen.s[ks] = r.stationuuid || ks;
+        if (kn) seen.n[kn] = r.stationuuid || kn;
+      }
+    });
+    return out;
+  }
+  // The favourite that is this station: same id, else the same stream.
+  function sameStation(fav, st) {
+    if (!fav || !st) return false;
+    if (fav.stationuuid && fav.stationuuid === st.stationuuid) return true;
+    var a = streamKey(fav.url_resolved), b = streamKey(st.url_resolved) || streamKey(st.url);
+    return !!a && a === b;
+  }
+  // Directory paths (radio-browser /json). page counts from 0.
+  var PAGE = 100;
+  var BASEQ = "order=votes&reverse=true&hidebroken=true";
+  function listPath(kind, arg, page) {
+    var off = "&limit=" + PAGE + "&offset=" + ((+page || 0) * PAGE), a = encodeURIComponent(String(arg || ""));
+    switch (kind) {
+      case "country":  return "/json/stations/bycountrycodeexact/" + a + "?" + BASEQ + off;
+      case "tag":      return "/json/stations/bytag/" + a + "?" + BASEQ + off;
+      case "language": return "/json/stations/bylanguageexact/" + a + "?" + BASEQ + off;
+      case "top":      return "/json/stations/search?" + BASEQ + off;
+      case "trend":    return "/json/stations/search?order=clicktrend&reverse=true&hidebroken=true" + off;
+      case "fresh":    return "/json/stations/search?order=changetimestamp&reverse=true&hidebroken=true" + off;
+      case "random":   return "/json/stations/search?order=random&hidebroken=true&limit=" + PAGE;
+      case "search":   return "/json/stations/search?name=" + a + "&" + BASEQ + off;
+    }
+    return "";
+  }
+  // A language row of /json/languages → its name in the UI language.
+  function langLabel(row, ui) {
+    var name = row && typeof row.name === "string" ? row.name : "", code = row && typeof row.iso_639 === "string" ? row.iso_639 : "";
+    if (code && /^[a-z]{2,3}$/.test(code)) {
+      try {
+        var dn = new Intl.DisplayNames([ui || "en"], { type: "language" }).of(code);
+        if (dn && dn.toLowerCase() !== code) return dn.charAt(0).toLocaleUpperCase(ui || "en") + dn.slice(1);
+      } catch (e) {}
+    }
+    return name ? name.charAt(0).toUpperCase() + name.slice(1) : "";
+  }
+
   var api = {
     LIM: LIM, clean: clean, fadeVolume: fadeVolume, fadeIn: fadeIn, fadeLength: fadeLength,
     scanIcy: scanIcy, cleanTitle: cleanTitle, splitTitle: splitTitle, icecastStatusUrl: icecastStatusUrl, mountOf: mountOf,
     parseIcecast: parseIcecast, historyAdd: historyAdd, recExt: recExt, recPath: recPath, nextAt: nextAt,
     fmtBytes: fmtBytes, fmtClock: fmtClock,
     normWakeStation: normWakeStation, normWake: normWake, mergeWake: mergeWake,
+    streamKey: streamKey, nameKey: nameKey, dedupe: dedupe, sameStation: sameStation,
+    listPath: listPath, langLabel: langLabel, PAGE: PAGE,
     engine: engine
   };
   root.OrosRadioTools = api;

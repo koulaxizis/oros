@@ -795,3 +795,14 @@ body {
   background: var(--accent, #6d4aff);
   border-color: var(--accent, #6d4aff);
 }
+
+/* RX-MORE: "More stations" at the end of a list (spans the grid) */
+.rx-more {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin: 10px auto 4px;
+  min-height: 44px;
+  padding: 8px 18px;
+}
+.rx-more:disabled { opacity: .6; cursor: default; }
+.rx-tile-lang { font-size: 13px; letter-spacing: .04em; }
