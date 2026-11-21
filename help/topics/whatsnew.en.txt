@@ -3,6 +3,11 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.15.00
+- **Music: search with filters.** A filters button next to the search box narrows free music by genre, country, length, voice, mood, tempo, year and licence. A catalogue that cannot apply a filter is listed under Left out instead of showing songs that do not match.
+- **Music: eleven free catalogues.** Audius, Free Music Archive, Kevin MacLeod, Musopen, the National Jukebox of the Library of Congress, Europeana and DPLA (with your own free key) join Jamendo, the Internet Archive, Openverse and ccMixter. Turn each on or off in Settings › Sources. Dogmazic is one tap away in Connect a server.
+- **Music: dig deeper.** The Concert explorer finds a band's live tapes by year, soundboard or audience. Netlabels lists the free labels with their releases. Save a search and it waits for you in Search on every device, showing what is new since your last visit. A Deep dig order brings rarely played, well rated albums first, and a playlist can copy the credits of its free songs.
+
 ## Version 8.12.00
 - **Layout: more of your Scribus and InDesign files comes over.** Tables from Scribus open as tables, with their cell colours, borders and text, and text on a curve stays on its curve. From InDesign, layers keep their order and their hidden or locked objects, drawn shapes keep their outline, text on a curve stays on it, tabs stay tabs, tables become rows set at their columns and footnotes go after their text.
 
