@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.19.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.20.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -9626,6 +9626,30 @@
         { name: "Jamendo", url: "https://www.jamendo.com/",
           by: "Jamendo S.A.; each track by its artist", lic: { k: "cr.lic.jamendo" },
           k: "cr.jamendo" },
+        { name: "Audius", url: "https://audius.co/",
+          by: "The Audius community; each track by its artist", lic: { k: "cr.lic.audius" },
+          k: "cr.audius" },
+        { name: "Europeana", url: "https://www.europeana.eu/",
+          by: "Europeana Foundation; each recording by its archive", lic: { k: "cr.lic.europeana" },
+          k: "cr.europeana" },
+        { name: "Free Music Archive", url: "https://archive.org/details/freemusicarchive",
+          by: "WFMU's Free Music Archive (kept on the Internet Archive); each album by its artist", lic: { k: "cr.lic.fma" },
+          k: "cr.fma" },
+        { name: "Kevin MacLeod (incompetech)", url: "https://incompetech.com/music/royalty-free/",
+          by: "Kevin MacLeod", lic: { k: "cr.lic.incompetech" },
+          k: "cr.incompetech" },
+        { name: "Musopen", url: "https://musopen.org/",
+          by: "Musopen (kept on the Internet Archive)", lic: { k: "cr.lic.musopen" },
+          k: "cr.musopen" },
+        { name: "National Jukebox", url: "https://www.loc.gov/collections/national-jukebox/",
+          by: "Library of Congress (kept on the Internet Archive)", lic: { k: "cr.lic.national-jukebox" },
+          k: "cr.national-jukebox" },
+        { name: "DPLA", url: "https://dp.la/",
+          by: "Digital Public Library of America; each recording by its library or archive", lic: { k: "cr.lic.dpla" },
+          k: "cr.dpla" },
+        { name: "Dogmazic", url: "https://play.dogmazic.net/",
+          by: "Association Musique Libre; each song by its artist", lic: { k: "cr.lic.dogmazic" },
+          k: "cr.dogmazic" },
         { name: "OpenSubsonic API", url: "https://opensubsonic.netlify.app/",
           by: "Subsonic API by Sindre Mehus; OpenSubsonic by its contributors", lic: { k: "cr.lic.opensubsonic-api" },
           k: "cr.opensubsonic-api" },

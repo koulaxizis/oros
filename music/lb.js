@@ -135,6 +135,33 @@
     try { root.localStorage.removeItem(QKEY); } catch (e) {}
     return idb("creds", "readwrite", function (s) { s.delete("token"); }).catch(function () {});
   }
+  // Other keys of the person's own accounts (MU-SRC: "europeana"), sealed
+  // with the same device key, never synced, never through the relay.
+  var SECRET_RE = /^[a-z]{2,20}$/, secretMem = {};
+  function saveSecret(name, v) {
+    if (!SECRET_RE.test(name)) return Promise.reject(new Error("name"));
+    return key().then(function (k) {
+      var iv = root.crypto.getRandomValues(new Uint8Array(12));
+      return root.crypto.subtle.encrypt({ name: "AES-GCM", iv: iv }, k, new TextEncoder().encode(String(v))).then(function (data) {
+        return idb("creds", "readwrite", function (s) { s.put({ iv: iv.buffer, data: data }, "s:" + name); });
+      });
+    }).then(function () { secretMem[name] = String(v); });
+  }
+  function secret(name) {
+    if (!SECRET_RE.test(name)) return Promise.resolve(null);
+    if (secretMem[name] !== undefined) return Promise.resolve(secretMem[name]);
+    if (!root.indexedDB || !root.crypto || !root.crypto.subtle) return Promise.resolve(null);
+    return idb("creds", "readonly", function (s) { return s.get("s:" + name); }).then(function (rec) {
+      if (!rec) return null;
+      return key().then(function (k) { return root.crypto.subtle.decrypt({ name: "AES-GCM", iv: new Uint8Array(rec.iv) }, k, rec.data); })
+        .then(function (p) { return new TextDecoder().decode(p); });
+    }).catch(function () { return null; }).then(function (v) { secretMem[name] = v || null; return secretMem[name]; });
+  }
+  function forgetSecret(name) {
+    if (!SECRET_RE.test(name)) return Promise.resolve();
+    secretMem[name] = null;
+    return idb("creds", "readwrite", function (s) { s.delete("s:" + name); }).catch(function () {});
+  }
   function queue() { try { var q = JSON.parse(root.localStorage.getItem(QKEY) || "[]"); return Array.isArray(q) ? q.slice(-QMAX) : []; } catch (e) { return []; } }
   function setQueue(q) { try { if (q.length) root.localStorage.setItem(QKEY, JSON.stringify(q.slice(-QMAX))); else root.localStorage.removeItem(QKEY); } catch (e) {} }
 
@@ -196,9 +223,9 @@
   }
 
   var api = {
-    VERSION: "1.0.0", PREF: PREF, QKEY: QKEY, DB: DB, okToken: okToken, listenAt: listenAt, listen: listen, payload: payload,
+    VERSION: "1.1.0", PREF: PREF, QKEY: QKEY, DB: DB, okToken: okToken, listenAt: listenAt, listen: listen, payload: payload,
     parsePlaylist: parsePlaylist, parsePlaylists: parsePlaylists,
-    prefs: prefs, setPrefs: setPrefs, token: token, forget: forget, queue: queue, connect: connect, send: send, setVersion: setVersion,
+    prefs: prefs, setPrefs: setPrefs, token: token, forget: forget, saveSecret: saveSecret, secret: secret, forgetSecret: forgetSecret, queue: queue, connect: connect, send: send, setVersion: setVersion,
     playlists: playlists, playlist: playlist
   };
   root.OrosMusicLB = api;
