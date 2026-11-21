@@ -53,19 +53,22 @@ test("round trip through Atelier's own .pptx import", async () => {
   n.raster.forEach((id) => { media["r:" + id] = { png: PNG, pad: 4 }; });
   const { r, plan } = await roundTrip(d, media);
   assert.deepEqual(r.out, { native: 7, raster: 2, missing: 0 });
-  assert.equal(plan.w, 1080); assert.equal(plan.h, 1350);
+  // a screen design goes out at Canva's 0.75 pt per px (CV-0): the
+  // slide reads back in points as 3/4 of the design's pixels
+  const S = 3 / 4;
+  assert.equal(plan.w, 1080 * S); assert.equal(plan.h, 1350 * S);
   assert.equal(plan.pages.length, 2);
   const [a, b] = plan.pages;
   assert.equal(a.bg.fc, "#112233");
   const text = a.items.find((i) => i.k === "text");
   assert.equal(text.tx, "Γεια σου & <κόσμε>\nδεύτερη");
-  assert.deepEqual([text.size, text.b, text.al, text.lh, text.tr, text.fc, text.rot, text.x, text.w], [64, 1, "c", 150, 50, "#ff0000", 10, 100, 800]);
+  assert.deepEqual([text.size, text.b, text.al, text.lh, text.tr, text.fc, text.rot, text.x, text.w], [64 * S, 1, "c", 150, 50, "#ff0000", 10, 100 * S, 800 * S]);
   const shapes = a.items.filter((i) => i.k === "shape");
   assert.equal(shapes[0].shp, "rounded"); assert.equal(shapes[0].rd, 40);
-  assert.equal(shapes[0].fc, "#00ff00"); assert.equal(shapes[0].op, 50); assert.equal(shapes[0].sc, "#0000ff"); assert.equal(shapes[0].sw, 4);
+  assert.equal(shapes[0].fc, "#00ff00"); assert.equal(shapes[0].op, 50); assert.equal(shapes[0].sc, "#0000ff"); assert.equal(shapes[0].sw, 4 * S);
   // the star is exact custom geometry (read back as a drawn picture)
   const line = a.items.find((i) => i.k === "line");
-  assert.deepEqual([line.x, line.y, line.w, line.h, line.sc, line.sw, line.as, line.ae], [900, 900, -300, 100, "#123456", 6, "dot", "arrow"]);
+  assert.deepEqual([line.x, line.y, line.w, line.h, line.sc, line.sw, line.as, line.ae], [900 * S, 900 * S, -300 * S, 100 * S, "#123456", 6 * S, "dot", "arrow"]);
   const photos = a.items.filter((i) => i.k === "photo" && !i.svg);
   assert.equal(photos.length, 2);                                       // the photo + the icon picture
   const ph = photos[0];
@@ -74,6 +77,11 @@ test("round trip through Atelier's own .pptx import", async () => {
   assert.deepEqual(ph.crop, { l: 0.25, t: 0, r: 0.25, b: 0 });
   assert.equal(b.items.length, 1);
   assert.equal(b.bg.fc, "#112233");
+  // and back through the build: the design's own pixels again
+  const back = P.build(plan, {}, 2000).doc;
+  assert.deepEqual([back.setup.w, back.setup.h], [1080, 1350]);
+  const bt = back.items.find((i) => i.ax.k === "text");
+  assert.deepEqual([bt.ax.size, bt.x, bt.w], [64, 100, 800]);
 });
 
 test("the package: well-formed parts, slide size, title escaped, no script", async () => {
@@ -87,7 +95,7 @@ test("the package: well-formed parts, slide size, title escaped, no script", asy
     assert.ok(!/<script|javascript:/i.test(s), name);
   }
   const pres = await zip.text("ppt/presentation.xml");
-  assert.match(pres, /<p:sldSz cx="13716000" cy="17145000"\/>/);
+  assert.match(pres, /<p:sldSz cx="10287000" cy="12858750"\/>/);   // 810 × 1012.5 pt = 1080 × 1350 px
   assert.match(await zip.text("docProps/core.xml"), /Αφίσα &lt;1&gt;/);
   assert.deepEqual(zip.names.filter((n) => /media/.test(n)), ["ppt/media/image1.png"]);   // one copy of the image
 });
@@ -100,4 +108,25 @@ test("sizes past PowerPoint's limits scale as a whole", async () => {
   assert.equal(plan.w, 4032);
   const t = plan.pages[0].items[0];
   assert.deepEqual([t.x, t.size], [400, 50]);
+});
+
+test("CV-0: paper sizes keep their points both ways; screen sizes are Canva's 0.75 pt per px", async () => {
+  assert.equal(AX.paper(595.28, 841.89), true);
+  assert.equal(AX.paper(810, 810), false);
+  // an A4 design (mm) goes out at its own size and comes back unscaled
+  const a4 = AX.newDesign({ name: "A4", w: 595.28, h: 841.89, unit: "mm", pages: 1 }, 1);
+  AX.addItem(a4, M.pagesInOrder(a4)[0].id, { k: "text", tx: "Flyer", size: 24, x: 72, y: 72, w: 300 }, 1);
+  const { zip, plan } = await roundTrip(a4, {});
+  assert.match(await zip.text("ppt/presentation.xml"), /<p:sldSz cx="7560056" cy="10692003"\/>/);
+  const back = P.build(plan, {}, 2).doc;
+  assert.deepEqual([back.setup.w, back.setup.h], [595.28, 841.89]);
+  assert.equal(back.items.find((i) => i.ax.k === "text").ax.size, 24);
+  // scaleDesign: page, boxes, strokes, crops and font sizes, exactly
+  const d = AX.newDesign({ name: "s", w: 810, h: 810, unit: "px" }, 1), pg = M.pagesInOrder(d)[0].id;
+  AX.addItem(d, pg, { k: "photo", a: IMG, iw: 400, ih: 200, fit: "custom", ix: -30, iy: 0, isc: 0.5, x: 30, y: 60, w: 150, h: 90 }, 1);
+  AX.addItem(d, pg, { k: "line", sw: 3, x: 0, y: 0, w: 300, h: 0 }, 1);
+  AX.scaleDesign(d, 4 / 3);
+  const n = M.normDoc(d), ph = n.items.find((i) => i.t === "img");
+  assert.deepEqual([n.setup.w, ph.x, ph.y, ph.w, ph.h, ph.ix, ph.isc], [1080, 40, 80, 200, 120, -40, 0.667]);
+  assert.equal(n.items.find((i) => i.ax.k === "line").sw, 4);
 });

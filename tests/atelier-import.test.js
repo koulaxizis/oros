@@ -197,11 +197,14 @@ test("pptx: the built design is a new, canonical Atelier document", async () => 
   const t = d.items.find((i) => i.ax.k === "text" && /Γεια/.test(i.ax.tx));
   const t2 = d.items.find((i) => i.ax.k === "text" && i.ax.tx === "second");
   const base = (it, last) => { const L = AX.textLayout(it).lines; return it.y + L[last ? L.length - 1 : 0].y; };
-  assert.ok(Math.abs(base(t2) - base(t, true) - 18 * 1.2) < 0.02, "baseline to baseline at the second paragraph's spacing");
-  assert.ok(Math.abs((t.y + t2.y + t2.h) / 2 - (103.6 + 292.8 / 2)) < 0.6, "middle anchor keeps the stack centred in its box");
+  // a 1080 pt slide is a screen design: 4/3 back to its pixels (CV-0)
+  const K = 4 / 3;
+  assert.deepEqual([d.setup.w, d.setup.h], [1440, 1440]);
+  assert.ok(Math.abs(base(t2) - base(t, true) - 18 * 1.2 * K) < 0.05, "baseline to baseline at the second paragraph's spacing");
+  assert.ok(Math.abs((t.y + t2.y + t2.h) / 2 - (103.6 + 292.8 / 2) * K) < 0.8, "middle anchor keeps the stack centred in its box");
   const pic = d.items.find((i) => i.ax.k === "photo" && i.a.startsWith("a"));
   assert.equal(pic.fit, "custom");
-  assert.ok(Math.abs(pic.isc - 400 / 0.8 / 800) < 1e-6 && Math.abs(pic.ix + 0.1 * 500) < 0.01);
+  assert.ok(Math.abs(pic.isc - 400 / 0.8 / 800 * K) < 1e-3 && Math.abs(pic.ix + 0.1 * 500 * K) < 0.02);
   // a missing picture is counted, never a broken item
   const r2 = P.build(plan, {}, 6000);
   assert.ok(r2.missing >= 2);
@@ -223,9 +226,16 @@ test("pptx: fonts by name become their Fontsource family", () => {
   assert.equal(P.fontFor("GFS Didot").font, "fs_gfs_didot");
   // system, Office and Canva-only fonts, and Noto (built in): the closest built-in family
   assert.equal(P.fontFor("Canva Sans").font, "sans");
-  assert.equal(P.fontFor("Times New Roman").font, "serif");
+  assert.equal(P.fontFor("Georgia").font, "serif");
   assert.equal(P.fontFor("Noto Sans").font, "sans");
-  assert.equal(P.fontFor("Courier New").font, "mono");
+  assert.equal(P.fontFor("Consolas").font, "mono");
+  // Office fonts with a free twin of the same widths (and Greek): lines break as in Canva
+  assert.deepEqual(P.fontFor("Calibri (MS)"), { font: "fs_carlito", name: "Carlito", b: 0, i: 0 });
+  assert.deepEqual(P.fontFor("Calibri (MS) Bold"), { font: "fs_carlito", name: "Carlito", b: 1, i: 0 });
+  assert.equal(P.fontFor("Arial").font, "fs_arimo");
+  assert.equal(P.fontFor("Times New Roman Italic").font, "fs_tinos");
+  assert.equal(P.fontFor("Courier New").font, "fs_cousine");
+  assert.equal(P.fontFor("Cambria").font, "serif", "Caladea has no Greek");
   assert.equal(P.fontFor("").font, "sans");
   // nothing odd gets into an id
   assert.equal(P.fontFor("../../x<script>").font, "fs_x_script");

@@ -79,7 +79,11 @@
           ".avif"
         ],
         "image/vnd.adobe.photoshop": [
-          ".psd"
+          ".psd",
+          ".psb"
+        ],
+        "image/x-xcf": [
+          ".xcf"
         ],
         "image/openraster": [
           ".ora"
@@ -117,6 +121,9 @@
             ".avif",
             "image/vnd.adobe.photoshop",
             ".psd",
+            ".psb",
+            "image/x-xcf",
+            ".xcf",
             "image/openraster",
             ".ora",
             "application/x-oros-photo",

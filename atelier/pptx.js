@@ -30,8 +30,12 @@
 // <img>), pictures (crop, flips, round/ellipse mask, transparency),
 // lines and arrows, groups (flattened), slide/layout/master
 // background (colour, gradient, picture), theme colours with
-// lumMod/lumOff/tint/shade. Not mapped (counted in plan.skipped):
-// charts, tables, media, SmartArt, OLE objects.
+// lumMod/lumOff/tint/shade, videos (p14:media: a video element with
+// its trim), a slide's sound (the page sound), moving GIFs (io.js
+// keeps the GIF, ext.gif), slide transitions and timings (wave CV-A).
+// Not mapped (counted in plan.skipped): charts, tables, SmartArt, OLE
+// objects. Canva writes no animation effects into the file (its
+// <p:timing> only starts the media).
 // A Canva design past PowerPoint's largest slide (56 in) comes scaled
 // into that slide and centred; unbox() gives it its own page back.
 // The XML is read by a small tolerant parser below: no DTDs, no
@@ -325,6 +329,11 @@
   // Fonts that are not on Fontsource (system, Office, Canva's own):
   // they become the closest built-in family.
   var NOT_FS = /^(arial|arial black|arial narrow|helvetica|helvetica neue|calibri|calibri light|cambria|candara|consolas|constantia|corbel|segoe ui|segoe print|segoe script|tahoma|verdana|trebuchet ms|times|times new roman|georgia|garamond|book antiqua|palatino|palatino linotype|century gothic|franklin gothic|gill sans|futura|avenir|myriad pro|minion pro|impact|comic sans ms|courier|courier new|lucida console|lucida sans|symbol|wingdings|webdings|canva sans|canva serif|canva student font|open sauce|open sauce one|glacial indifference|tt norms|now|brittany|more sugar|horizon|the seasons|aileron|bebas neue pro|league gothic|chunkfive)$/i;
+  // Office fonts that are not free → their free twin on Fontsource with
+  // the same character widths (and Greek), so lines break where they
+  // did in Canva / PowerPoint (as designkit/fonts.js TWINS for Layout)
+  var TWIN = { "calibri": "Carlito", "arial": "Arimo", "helvetica": "Arimo", "times new roman": "Tinos", "times": "Tinos",
+    "courier new": "Cousine", "courier": "Cousine" };
   var WEIGHT = /[\s-]+(thin|hairline|extra ?light|ultra ?light|light|regular|book|normal|medium|semi ?bold|demi ?bold|bold|extra ?bold|ultra ?bold|heavy|black|italic|oblique)$/i;
   // A typeface name from the file → { font: built-in or Fontsource
   // id ("fs_<id>"), name, bold, italic }. Canva writes weights into
@@ -339,6 +348,9 @@
       if (/italic|oblique/.test(w)) i = 1;
       n = n.slice(0, m.index).trim();
     }
+    n = n.replace(/\s*\((ms|pc|mac|tt|ot)\)$/i, "");        // Canva: "Calibri (MS)"
+    var tw = TWIN[n.toLowerCase().replace(/\s+/g, " ")];
+    if (tw) return { font: AX.fsIdOf(tw.toLowerCase()), name: tw, b: b, i: i };
     if (!n || NOT_FS.test(n) || /^(sans|serif|mono|sans-serif|monospace|noto sans|noto serif|noto sans mono)$/i.test(n)) return { font: familyOf(n), name: n, b: b, i: i };
     var slug = n.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     if (!slug || slug.length > 58) return { font: familyOf(n), name: n, b: b, i: i };
@@ -534,9 +546,16 @@
       var t2 = {
         ox: tf.ox + (numA(off, "x", 0) - (cho ? numA(cho, "x", 0) : 0) * sx) * tf.sx,
         oy: tf.oy + (numA(off, "y", 0) - (cho ? numA(cho, "y", 0) : 0) * sy) * tf.sy,
-        sx: tf.sx * sx, sy: tf.sy * sy, rot: tf.rot + numA(gx, "rot", 0) / 60000
+        sx: tf.sx * sx, sy: tf.sy * sy, rot: tf.rot + numA(gx, "rot", 0) / 60000, grp: tf.grp === undefined ? 0 : tf.grp
       };
+      // wave CV-1: the group stays a group (nested groups become one,
+      // as Canva keeps them); marked on the items it brought
+      var from = out.items.length;
       walkTree(n, t2, ctx, out);
+      if (tf.grp === undefined) {
+        var made = out.items.slice(from);
+        if (made.length > 1) { out.groups = (out.groups || 0) + 1; made.forEach(function (it) { it.grp = "g" + out.groups; }); }
+      }
       return;
     }
     if (n.n === "p:pic") { picture(n, tf, ctx, out); return; }
@@ -578,7 +597,34 @@
     return it;
   }
 
+  // A video or sound on the slide (p:nvPr: a:videoFile / a:audioFile,
+  // the file itself in p14:media r:embed, what Canva writes) →
+  // { kind: "video" | "sound", clip: zip path, vs, ve (trim, seconds) }
+  var CLIP_FILE = /^ppt\/media\/[^/]+\.(mp4|m4v|mov|webm|mp3|m4a|wav|ogg)$/i;
+  function mediaOf(n, ctx) {
+    var nv = path(n, ["p:nvPicPr", "p:nvPr"]);
+    if (!nv) return null;
+    var vf = kid(nv, "a:videoFile"), af = kid(nv, "a:audioFile");
+    if (!vf && !af) return null;
+    var m = find(nv, "p14:media"), rel = m && ctx.rels[m.a["r:embed"]];
+    if (!rel) rel = ctx.rels[(vf || af).a["r:link"]];
+    if (!rel || !CLIP_FILE.test(rel.target)) return null;
+    var o = { kind: vf ? "video" : "sound", clip: rel.target };
+    var tr = m && kid(m, "p14:trim");
+    if (tr) {
+      var st = numA(tr, "st", 0) / 1000, en = numA(tr, "end", 0) / 1000;
+      if (st > 0) o.vs = Math.round(st * 100) / 100;
+      if (en > 0) o.ve = Math.round(en * 100) / 100;    // p14:trim end = cut from the end
+    }
+    return o;
+  }
   function picture(n, tf, ctx, out) {
+    var med = mediaOf(n, ctx);
+    if (med && med.kind === "sound") {            // the page's sound (its speaker icon stays out)
+      if (!out.sound) out.sound = med.clip;
+      out.clips[med.clip] = true;
+      return;
+    }
     var spPr = kid(n, "p:spPr");
     var box = boxOf(kid(spPr, "a:xfrm"), tf);
     if (!box) {
@@ -588,6 +634,11 @@
     var prst = path(spPr, ["a:prstGeom"]), shp = prst ? PRST[prst.a.prst] || "" : "";
     var it = box && photoItem(kid(n, "p:blipFill"), box, shp, ctx, out);
     if (!it) { out.skipped++; return; }
+    if (med) {                                    // a video: its poster is the picture
+      it.clip = med.clip; out.clips[med.clip] = true;
+      if (med.vs) it.vs = med.vs;
+      if (med.ve) it.trimEnd = med.ve;
+    }
     out.items.push(it);
   }
 
@@ -739,7 +790,7 @@
   // zip: atelier/zip.js reader. → Promise<plan>
   function parse(zip, name) {
     var L = loader(zip);
-    var plan = { w: 960, h: 540, name: name || "", pages: [], media: {}, svgs: {}, fonts: [], skipped: 0, approx: 0 };
+    var plan = { w: 960, h: 540, name: name || "", pages: [], media: {}, clips: {}, svgs: {}, fonts: [], skipped: 0, approx: 0 };
     var presP = "ppt/presentation.xml", capped = false;
     return L.xml(presP).then(function (pres) {
       if (!pres) throw new Error("pptx");
@@ -765,7 +816,7 @@
       });
     }).then(function () {
       if (!plan.pages.length) throw new Error("pptx");
-      if (capped) unbox(plan);
+      if (capped) { plan.cap = { w: plan.w, h: plan.h }; unbox(plan); }
       return plan;
     });
   }
@@ -790,7 +841,29 @@
     plan.pages.forEach(function (P) {
       P.items.forEach(function (s) { s.x -= band.x; s.y -= band.y; });
     });
+    plan.cap.dx = band.x; plan.cap.dy = band.y;
     plan.w = Math.round(band.w * 100) / 100; plan.h = Math.round(band.h * 100) / 100;
+  }
+
+  // The design's real size is known (the PDF Canva made of the same
+  // design, real = { w, h } in its points): Canva keeps the short side
+  // as it is, cuts the long side to 56 in and scales the design into
+  // the slide, centred. → the scale k (slide pt per design pt) after
+  // the items are moved back to the band's corner, or 0 (not capped,
+  // or a size that does not fit this slide).
+  function rebox(plan, real) {
+    var c = plan.cap;
+    if (!c || !real || !(real.w > 0 && real.h > 0)) return 0;
+    var k = Math.min(c.w / real.w, c.h / real.h);
+    if (!(k > 0 && k < 1)) return 0;
+    var bx = (c.w - real.w * k) / 2, by = (c.h - real.h * k) / 2;
+    var dx = bx - (c.dx || 0), dy = by - (c.dy || 0);
+    plan.pages.forEach(function (P) {
+      P.items.forEach(function (s) { s.x -= dx; s.y -= dy; });
+    });
+    c.dx = bx; c.dy = by;
+    plan.w = Math.round(real.w * k * 100) / 100; plan.h = Math.round(real.h * k * 100) / 100;
+    return k;
   }
 
   // <p:embeddedFontLst>: [{ name, r, b, i, bi }] (zip paths)
@@ -849,7 +922,7 @@
           if (tst) titleSz = numA(tst, "sz", 0);
           var base = { theme: theme.colours, themeFont: theme.font, titleSz: titleSz, phTrees: [path(lcs, ["p:spTree"]), path(mcs, ["p:spTree"])] };
           var page = { bg: null, items: [] };
-          var out = { items: page.items, media: plan.media, svgs: plan.svgs, skipped: 0, approx: 0 };
+          var out = { items: page.items, media: plan.media, clips: plan.clips, svgs: plan.svgs, skipped: 0, approx: 0, sound: "" };
           var tf = { ox: 0, oy: 0, sx: 1, sy: 1, rot: 0 };
           page.bg = bgOf(cSld, assign(base, { rels: rels })) || bgOf(lcs, assign(base, { rels: lrels })) || bgOf(mcs, assign(base, { rels: mrels }));
           if (page.bg && page.bg.img) plan.media[page.bg.img] = true;
@@ -863,11 +936,39 @@
             decor(lay, tf, assign(base, { rels: lrels, phTrees: [] }), out);
           }
           walkTree(path(cSld, ["p:spTree"]) || { c: [] }, tf, assign(base, { rels: rels }), out);
+          if (out.sound) page.sound = out.sound;
+          var tr = transitionOf(sld);
+          if (tr.ptr) page.ptr = tr.ptr;
+          if (tr.dur) page.dur = tr.dur;
           plan.skipped += out.skipped; plan.approx += out.approx;
           plan.pages.push(page);
         });
       });
     });
+  }
+  // <p:transition> (also inside mc:AlternateContent) → { ptr: Atelier's
+  // transition, dur: seconds the slide shows (advTm) }
+  var TR_MAP = { "p:fade": "fade", "p:dissolve": "fade", "p:cut": "none", "p:push": "push", "p:wipe": "slide", "p:cover": "slide",
+    "p:pull": "slide", "p:split": "slide", "p:zoom": "zoom", "p:newsflash": "zoom", "p14:flip": "slide", "p14:pan": "push",
+    "p14:vortex": "zoom", "p14:prism": "push", "p14:reveal": "fade", "p159:morph": "morph", "p14:conveyor": "push", "p14:ferris": "push" };
+  function transitionOf(sld) {
+    var o = {};
+    if (!sld) return o;
+    var t = kid(sld, "p:transition");
+    if (!t) {
+      var ac = kid(sld, "mc:AlternateContent"), ch = ac && (kid(ac, "mc:Choice") || kid(ac, "mc:Fallback"));
+      t = ch && kid(ch, "p:transition");
+      if (!t && ac) { var fb = kid(ac, "mc:Fallback"); t = fb && kid(fb, "p:transition"); }
+    }
+    if (!t) return o;
+    var adv = numA(t, "advTm", 0);
+    if (adv > 0) o.dur = Math.max(1, Math.min(60, Math.round(adv / 1000)));
+    for (var i = 0; i < t.c.length; i++) {
+      var k = TR_MAP[t.c[i].n];
+      if (k) { o.ptr = k; break; }
+    }
+    if (!o.ptr && t.c.some(function (c) { return /^p\d*:/.test(c.n || "") && c.n !== "p:sndAc" && c.n !== "p:extLst"; })) o.ptr = "fade";
+    return o;
   }
   function decor(tree, tf, ctx, out) {
     if (!tree) return;
@@ -878,8 +979,11 @@
   // ---------- 7. Build the design ----------
   // assets: { mediaPath|svgKey: { id, w, h } } (missing → item skipped)
   // → { doc, missing }
-  function build(plan, assets, now, fonts) {
+  // opts.real { w, h }: the design's own size in points (from Canva's
+  // PDF of it) for a slide Canva had to shrink (past 56 in, rebox).
+  function build(plan, assets, now, fonts, opts) {
     fonts = fonts || {};
+    var k = opts && opts.real ? rebox(plan, opts.real) : 0;
     var own = {};
     var d = AX.newDesign({ name: plan.name, w: plan.w, h: plan.h, unit: "px", pages: plan.pages.length }, now);
     var pages = M.pagesInOrder(d), missing = 0;
@@ -896,17 +1000,32 @@
           else missing++;
         }
       }
-      var stacks = {};
+      // the page's sound, transition and duration (CV-A)
+      if (bg && P.sound && assets[P.sound] && assets[P.sound].clip) bg.ax.au = assets[P.sound].clip;
+      if (bg && P.ptr && pi) {
+        if (P.ptr === "morph") { bg.ext = bg.ext || {}; bg.ext.mph = 1; }
+        else bg.ax.ptr = P.ptr;
+      }
+      if (bg && P.dur) bg.ax.dur = P.dur;
+      var stacks = {}, grps = {};
       P.items.forEach(function (s) {
         var spec = {}, img = null;
         Object.keys(s).forEach(function (k) {
-          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face", "stk", "si", "gap", "runs", "gs"].indexOf(k) < 0) spec[k] = s[k];
+          if (["img", "crop", "svg", "boxH", "anchor", "fontName", "face", "stk", "si", "gap", "runs", "gs", "clip", "vs", "trimEnd"].indexOf(k) < 0) spec[k] = s[k];
         });
         if (spec.op !== undefined && !(spec.op < 100)) delete spec.op;
         if (s.k === "photo") {
           img = assets[s.img];
           if (!img) { missing++; return; }
           spec.a = img.id; spec.iw = img.w; spec.ih = img.h; spec.nm = s.svg ? "" : s.img.split("/").pop();
+          // a video (its clip stored by io.js) or a moving GIF
+          var cl = s.clip && assets[s.clip];
+          if (cl && cl.clip) {
+            spec.vid = cl.clip;
+            if (s.vs) spec.vs = s.vs;
+            if (s.trimEnd && cl.dur > s.trimEnd) spec.ve = Math.round((cl.dur - s.trimEnd) * 100) / 100;
+          }
+          if (img.gif) spec.ext = { gif: img.gif };
           if (s.svg) { spec.fit = "custom"; spec.ix = 0; spec.iy = 0; spec.isc = s.w / img.w; }
           else if (s.crop && (s.crop.l || s.crop.t || s.crop.r || s.crop.b)) {
             var fw = 1 - s.crop.l - s.crop.r, fh = 1 - s.crop.t - s.crop.b;
@@ -919,9 +1038,10 @@
           } else spec.fit = "fill";
         }
         spec.z = z++;
+        if (s.grp) spec.grp = grps[s.grp] = grps[s.grp] || M.newId("gr");    // the slide's groups stay groups (CV-1)
         if (s.k === "text" && AX.isExtraFont(spec.font)) AX.ensureFont(spec.font, s.fontName);
         var of = s.k === "text" && s.face && Object.prototype.hasOwnProperty.call(fonts, s.face) ? fonts[s.face] : null;
-        if (s.gs) spec.ext = { gs: s.gs };
+        if (s.gs) { spec.ext = spec.ext || {}; spec.ext.gs = s.gs; }
         if (s.k === "text") spec.ext = { kern: 1 };                 // Canva kerns its text
         if (of && AX.isOwnFont(of.id)) { spec.ext.fam = of.id; own[of.id] = of; }
         if (s.runs) spec.ext.runs = s.runs.map(function (r) {   // pieces in another weight, slant or typeface
@@ -951,6 +1071,12 @@
       d.setup.ext = d.setup.ext || {};
       d.setup.ext.fonts = list;
     }
+    // a shrunk slide back to the design's own size (rebox)
+    if (k) AX.scaleDesign(d, 1 / k);
+    var W = d.setup.w, H = d.setup.h;
+    // a screen slide (not a paper size) at Canva's 0.75 pt per px: back
+    // to its pixels (a 1080 px post comes as 810 pt), CV-0
+    if (!AX.paper(W, H) && Math.max(W, H) * AX.SCREEN <= 14400) AX.scaleDesign(d, AX.SCREEN);
     return { doc: M.normDoc(d), missing: missing };
   }
 
@@ -993,7 +1119,7 @@
     return out;
   }
 
-  var api = { parse: parse, build: build, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
+  var api = { parse: parse, build: build, rebox: rebox, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierPPTX = api;
 })(typeof window !== "undefined" ? window : this);

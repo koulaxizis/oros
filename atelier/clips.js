@@ -15,6 +15,9 @@
 //     still exports, thumbnails, PDF and PowerPoint show that frame)
 //     with ax.vid (clip id), vs / ve (trim, seconds), mu (muted),
 //     vol (0..100, default 100), nl (no loop: stops at its end)
+//   moving GIF (wave CV-A, gifdec.js) = a photo whose picture is the
+//     GIF's first frame, with ext.gif (clip id "….gif"); it plays in
+//     Play, Present, video and GIF export, loops for the page
 //   page sound = on the page background: au (clip id), av (volume),
 //     ao (seconds into the sound where the page starts). Consecutive
 //     pages with the same sound play it on without a restart.
@@ -25,12 +28,14 @@
 
   var VIDEO_RE = /^[0-9a-f]{64}\.(webm|mp4)$/;
   var SOUND_RE = /^[0-9a-f]{64}\.(mp3|m4a|ogg|wav|weba)$/;
+  var GIF_RE = /^[0-9a-f]{64}\.gif$/;
   var MAX_VIDEO = 100 * 1024 * 1024, MAX_SOUND = 30 * 1024 * 1024;
   var MAX_LEN = 30 * 60;                        // seconds
-  var MIME = { webm: "video/webm", mp4: "video/mp4", mp3: "audio/mpeg", m4a: "audio/mp4", ogg: "audio/ogg", wav: "audio/wav", weba: "audio/webm" };
+  var MIME = { webm: "video/webm", mp4: "video/mp4", mp3: "audio/mpeg", m4a: "audio/mp4", ogg: "audio/ogg", wav: "audio/wav", weba: "audio/webm", gif: "image/gif" };
 
   function isVideo(id) { return typeof id === "string" && VIDEO_RE.test(id); }
   function isSound(id) { return typeof id === "string" && SOUND_RE.test(id); }
+  function isGif(id) { return typeof id === "string" && GIF_RE.test(id); }
   function extOf(id) { return String(id).split(".").pop(); }
   function mimeOf(id) { return MIME[extOf(id)] || "application/octet-stream"; }
 
@@ -96,18 +101,18 @@
   // Every file id (picture, video, sound) named anywhere in a text:
   // the "in use" check before files are deleted scans all saved data
   // of this browser (Atelier, Slides, Layout share the folder).
-  var ANY_ID_G = /[0-9a-f]{64}\.(?:jpg|png|webm|mp4|mp3|m4a|ogg|wav|weba)/g;
+  var ANY_ID_G = /[0-9a-f]{64}\.(?:jpg|png|webm|mp4|mp3|m4a|ogg|wav|weba|gif)/g;
   function idsIn(text, into) {
     into = into || {};
     String(text || "").replace(ANY_ID_G, function (m) { into[m] = 1; return m; });
     return into;
   }
-  function isFileId(id) { return /^[0-9a-f]{64}\.(jpg|png)$/.test(id) || isVideo(id) || isSound(id); }
+  function isFileId(id) { return /^[0-9a-f]{64}\.(jpg|png)$/.test(id) || isVideo(id) || isSound(id) || isGif(id); }
 
   var api = {
     idsIn: idsIn, isFileId: isFileId,
     VIDEO_RE: VIDEO_RE, SOUND_RE: SOUND_RE, MAX_VIDEO: MAX_VIDEO, MAX_SOUND: MAX_SOUND, MAX_LEN: MAX_LEN,
-    isVideo: isVideo, isSound: isSound, extOf: extOf, mimeOf: mimeOf, sniff: sniff, extFor: extFor,
+    isVideo: isVideo, isSound: isSound, isGif: isGif, GIF_RE: GIF_RE, extOf: extOf, mimeOf: mimeOf, sniff: sniff, extFor: extFor,
     videoTime: videoTime, soundPlan: soundPlan, soundTime: soundTime
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
