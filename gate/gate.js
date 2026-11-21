@@ -606,6 +606,7 @@
     if (DOCS.indexOf(id) >= 0) t.push("read_in_app");
     if (LINES[id]) t.push(LINES[id]);
     if (id === "files") t = t.concat(FILE_READ);
+    if (id === "layout") t = t.concat(FILE_READ);   // GL-2: its proofs and PDFs, read only
     return t;
   }
   function pushLog(list, entry) {
