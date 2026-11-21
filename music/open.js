@@ -161,7 +161,9 @@
     if (scope === "mo") return IA_BASE + " AND (collection:(musopen) OR subject:(musopen))";
     return IA_BASE;
   }
-  var IA_FL = ["identifier", "title", "creator", "date", "year", "licenseurl", "collection", "downloads"];
+  var IA_FL = ["identifier", "title", "creator", "date", "year", "licenseurl", "collection", "downloads", "format"];
+  // Lossless formats an item may hold (MU-DIG lossless filter).
+  var IA_LL = ["Flac", "24bit Flac", "Shorten", "WAVE", "Apple Lossless Audio", "AIFF"];
   function iaSearchUrl(o) {
     o = o || {};
     var parts = [];
@@ -176,12 +178,16 @@
       if (F.cc && countryEn(F.cc)) parts.push("coverage:(" + iaWords(countryEn(F.cc)) + ")");
       if (F.y0 || F.y1) parts.push("year:[" + (F.y0 || YEAR_MIN) + " TO " + (F.y1 || 2100) + "]");
       if (F.pd) parts.push("licenseurl:(*publicdomain*)");
+      if (F.ll) parts.push("format:(" + IA_LL.map(function (x) { return '"' + x + '"'; }).join(" OR ") + ")");
       if (F.sort === "new") sort = "publicdate desc";
+      // Deep dig (MU-DIG): rarely played, best rated first.
+      if (F.sort === "dig") { parts.push("downloads:[10 TO 1000]"); sort = "avg_rating desc"; }
     }
     parts.push(iaBase(o.scope, o.now));
     var p = "q=" + encodeURIComponent(parts.join(" AND "));
     IA_FL.forEach(function (f) { p += "&fl%5B%5D=" + f; });
     p += "&sort%5B%5D=" + encodeURIComponent(sort || "downloads desc");
+    if (sort === "avg_rating desc") p += "&sort%5B%5D=" + encodeURIComponent("downloads asc");
     p += "&rows=" + PAGE.ia + "&page=" + Math.max(1, o.page || 1) + "&output=json";
     return "https://archive.org/advancedsearch.php?" + p;
   }
@@ -197,8 +203,11 @@
     if (!id) return null;
     var li = iaLicence(d.licenseurl, d.collection);
     if (!li || !jbOk(id, d.year || d.date)) return null;
-    return { s: "ia", id: id, n: str(d.title) || id, a: str(d.creator), y: str(d.year) || (str(d.date).match(/\d{4}/) || [""])[0],
+    var a = { s: "ia", id: id, n: str(d.title) || id, a: str(d.creator), y: str(d.year) || (str(d.date).match(/\d{4}/) || [""])[0],
       li: li, art: "https://archive.org/services/img/" + id, pg: "https://archive.org/details/" + id };
+    var fm = Array.isArray(d.format) ? d.format : d.format ? [d.format] : [];
+    if (fm.some(function (x) { return IA_LL.indexOf(x) >= 0; })) a.ll = 1;
+    return a;
   }
   // A National Jukebox item is kept only when its year makes it public domain.
   function jbOk(id, year, now) {
@@ -959,11 +968,12 @@
     if (SPEEDS.indexOf(o.sp) >= 0) F.sp = o.sp;
     if (o.gd === "male" || o.gd === "female") F.gd = o.gd;
     if (o.ae === "acoustic" || o.ae === "electric") F.ae = o.ae;
-    if (o.sort === "pop" || o.sort === "new") F.sort = o.sort;
+    if (o.sort === "pop" || o.sort === "new" || o.sort === "dig") F.sort = o.sort;
+    if (o.ll === 1 || o.ll === true) F.ll = 1;
     return F;
   }
   // The groups a filter sets, in panel order (sort is an order, not a filter).
-  var GROUPS = ["g", "cc", "dur", "lic", "y", "vi", "mood", "sp", "gd", "ae", "off"];
+  var GROUPS = ["g", "cc", "dur", "lic", "y", "vi", "mood", "sp", "gd", "ae", "off", "ll"];
   function groupsOf(F) {
     F = F || {};
     return GROUPS.filter(function (k) {
@@ -978,14 +988,14 @@
   // What each source can do ("loc" = the songs on this device).
   var CAN = {
     jm: { g: 1, cc: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1, gd: 1, ae: 1 },
-    ia: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
+    ia: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
     ov: { g: 1, dur: 1, lic: 1, off: 1 },
     cc: { g: 1, dur: 1, lic: 1, vi: 1, off: 1 },
     au: { g: 1, dur: 1, mood: 1 },
     eu: { g: 1, cc: 1, lic: 1, y: 1 },
-    fm: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
-    mo: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
-    jb: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
+    fm: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
+    mo: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
+    jb: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
     km: { g: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1, off: 1 },
     dp: { g: 1, cc: 1, lic: 1, y: 1 },
     loc: { g: 1, dur: 1, y: 1 }
@@ -1035,7 +1045,7 @@
   }
   function albumPasses(a, F) {
     F = normFilter(F);
-    return !!a && licOk(a.li, F) && yearOk(a.y, F);
+    return !!a && licOk(a.li, F) && yearOk(a.y, F) && (!F.ll || a.ll === 1);
   }
   // Genre words as each source writes them.
   function genreWord(g) { return g === "hiphop" ? "hip hop" : g; }
@@ -1053,8 +1063,96 @@
     return durOk(r.d, F) && yearOk(r.y, F);
   }
 
+  // ---------- 10. Live Music Archive explorer (MU-DIG) ----------
+  // Band -> year -> show. Bands are the Internet Archive collections
+  // inside "etree"; a band's years come from the scrape API (one field,
+  // up to 10,000 items per call, a cursor for more); a year's shows
+  // from advancedsearch, oldest first. A show opens as an Internet
+  // Archive album (iaAlbum), so stream-only bands stay stream-only.
+  var LMA_ROWS = 48;
+  function lmaBandId(id) { return typeof id === "string" && /^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$/.test(id) ? id : ""; }
+  function lmaBandsUrl(o) {
+    o = o || {};
+    var w = iaWords(o.q);
+    // o.parent: "etree" (bands, default) or "netlabels" (MU-DIG label pages).
+    var parent = o.parent === "netlabels" ? "netlabels" : "etree";
+    var q = "collection:(" + parent + ") AND mediatype:(collection)" + (w ? " AND title:(" + w + ")" : "");
+    return "https://archive.org/advancedsearch.php?q=" + encodeURIComponent(q) + "&fl%5B%5D=identifier&fl%5B%5D=title&fl%5B%5D=downloads" +
+      "&sort%5B%5D=" + encodeURIComponent("downloads desc") + "&rows=" + LMA_ROWS + "&page=" + Math.max(1, o.page || 1) + "&output=json";
+  }
+  function lmaParseBands(j, page) {
+    var r = j && j.response, docs = r && Array.isArray(r.docs) ? r.docs : [];
+    var bands = docs.map(function (d) {
+      var id = lmaBandId(d && d.identifier);
+      return id ? { id: id, n: str(d.title) || id, dl: +d.downloads || 0, art: "https://archive.org/services/img/" + id } : null;
+    }).filter(Boolean);
+    return { bands: bands, more: Math.max(1, page || 1) * LMA_ROWS < (r && +r.numFound || 0) };
+  }
+  function lmaYearsUrl(band, cursor) {
+    return "https://archive.org/services/search/v1/scrape?q=" + encodeURIComponent("collection:(" + lmaBandId(band) + ")") +
+      "&fields=year&count=10000" + (typeof cursor === "string" && /^[A-Za-z0-9+/=_-]{1,400}$/.test(cursor) ? "&cursor=" + encodeURIComponent(cursor) : "");
+  }
+  // Adds one scrape page to counts { year: n }; returns the next cursor or "".
+  function lmaAddYears(j, counts) {
+    (j && Array.isArray(j.items) ? j.items : []).forEach(function (x) {
+      var y = yearOf(x && x.year);
+      if (y) counts[y] = (counts[y] || 0) + 1;
+    });
+    return j && typeof j.cursor === "string" ? j.cursor : "";
+  }
+  var LMA_FL = ["identifier", "title", "date", "venue", "coverage", "source", "format", "avg_rating", "downloads"];
+  function lmaShowsUrl(band, year, page) {
+    var q = "collection:(" + lmaBandId(band) + ") AND year:" + (yearOf(year) || 0);
+    var p = "q=" + encodeURIComponent(q);
+    LMA_FL.forEach(function (f) { p += "&fl%5B%5D=" + f; });
+    return "https://archive.org/advancedsearch.php?" + p + "&sort%5B%5D=" + encodeURIComponent("date asc") + "&rows=100&page=" + Math.max(1, page || 1) + "&output=json";
+  }
+  // "sbd" soundboard | "aud" audience | "mtx" matrix (both mixed) | "".
+  function lmaKind(id, source) {
+    var s = String(id || "") + " " + String(Array.isArray(source) ? source.join(" ") : source || "");
+    if (/matrix|\bmtx\b/i.test(s)) return "mtx";
+    if (/\bsbd\b|soundboard|\.sbd\./i.test(s)) return "sbd";
+    if (/\baud\b|audience|\.aud\.|\bfob\b/i.test(s)) return "aud";
+    return "";
+  }
+  function lmaShow(d) {
+    var id = iaId(d && d.identifier);
+    if (!id) return null;
+    var fm = Array.isArray(d.format) ? d.format : d.format ? [d.format] : [];
+    var o = { id: id, n: str(d.venue) || str(d.title) || id, t: str(d.title) || id, date: (String(d.date || "").match(/^\d{4}-\d{2}-\d{2}/) || [""])[0],
+      at: str(d.coverage), kind: lmaKind(id, d.source), dl: +d.downloads || 0 };
+    if (/^(unknown|various)(, ?unknown)?$/i.test(o.at)) o.at = "";
+    if (fm.some(function (x) { return IA_LL.indexOf(x) >= 0; })) o.ll = 1;
+    var r = +d.avg_rating;
+    if (r > 0 && r <= 5) o.r = Math.round(r * 10) / 10;
+    return o;
+  }
+  function lmaParseShows(j, page) {
+    var r = j && j.response, docs = r && Array.isArray(r.docs) ? r.docs : [];
+    return { shows: docs.map(lmaShow).filter(Boolean), more: Math.max(1, page || 1) * 100 < (r && +r.numFound || 0) };
+  }
+  function lmaBands(o) { o = o || {}; return getJSON(lmaBandsUrl(o)).then(function (j) { return lmaParseBands(j, o.page); }); }
+  // All years of a band (up to 5 scrape pages = 50,000 shows).
+  function lmaYears(band) {
+    if (!lmaBandId(band)) return Promise.reject(new OpenError("id"));
+    var counts = {};
+    function step(cursor, n) {
+      return getJSON(lmaYearsUrl(band, cursor), { timeout: 30000 }).then(function (j) {
+        var next = lmaAddYears(j, counts);
+        return next && n < 4 ? step(next, n + 1) : counts;
+      });
+    }
+    return step("", 0).then(function (c) {
+      return Object.keys(c).map(function (y) { return { y: +y, n: c[y] }; }).sort(function (a, b) { return a.y - b.y; });
+    });
+  }
+  function lmaShows(band, year, page) {
+    if (!lmaBandId(band) || !yearOf(year)) return Promise.reject(new OpenError("id"));
+    return getJSON(lmaShowsUrl(band, year, page)).then(function (j) { return lmaParseShows(j, page); });
+  }
+
   var api = {
-    VERSION: "1.6.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.7.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,
@@ -1073,6 +1171,8 @@
     IA_SOURCES: IA_SOURCES, iaBase: iaBase, jbLastYear: jbLastYear, jbOk: jbOk,
     KM_URL: KM_URL, kmTrack: kmTrack, kmPick: kmPick, kmSpeed: kmSpeed, kmSearch: kmSearch,
     dpKeyOk: dpKeyOk, dpUrl: dpUrl, dpParse: dpParse, dpSearch: dpSearch,
+    IA_LL: IA_LL, lmaBandsUrl: lmaBandsUrl, lmaParseBands: lmaParseBands, lmaYearsUrl: lmaYearsUrl, lmaAddYears: lmaAddYears,
+    lmaShowsUrl: lmaShowsUrl, lmaKind: lmaKind, lmaShow: lmaShow, lmaParseShows: lmaParseShows, lmaBands: lmaBands, lmaYears: lmaYears, lmaShows: lmaShows,
     getJSON: getJSON, iaSearch: iaSearch, iaAlbum: iaAlbum, ovSearch: ovSearch, ccSearch: ccSearch, OpenError: OpenError
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

@@ -54,6 +54,13 @@ In `Suche` öffnet die Schaltfläche `Filter` neben dem Suchfeld die `Suchfilter
 
 Filter wirken mit oder ohne Suchwörter: Mit leerem Suchfeld und aktiven Filtern zeigt `Suche` deine passenden Songs und danach die offenen Kataloge. Nicht jeder Katalog kann jeden Filter anwenden. Ein Katalog, der einen nicht anwenden kann, wird ausgelassen und nie mit Ergebnissen gezeigt, die ihn übergehen; eine Zeile unter den Ergebnissen sagt, welcher und warum (zum Beispiel `ccMixter (kann nicht nach Land filtern)`). Was jeder Katalog zurückschickt, wird auf deinem Gerät noch einmal auf Lizenz, Länge und Offline-Kopien geprüft. `Land` fragt Jamendo nach Künstlern, die in diesem Land leben, und Internet Archive nach Aufnahmen von dort (meist Konzerte); `Deine Musik` lässt sich nur nach Genre, Jahr und Länge filtern, aus den Tags deiner Dateien.
 
+## Tiefer graben
+- **Konzert-Entdecker** (`Start` › `Freie Musik`): das Live Music Archive nach Band, Jahr und Konzert. Jedes Konzert zeigt Datum, Ort und Stadt, wie es aufgenommen wurde (SBD vom Mischpult, AUD aus dem Publikum, Matrix beides gemischt), ob es verlustfrei vorliegt, und seine Bewertung. Ein Konzert öffnet sich als Album. Bands, die nur Streaming erlauben, bleiben nur Streaming.
+- **Netlabels** (`Start` › `Freie Musik`): die freien Plattenlabels im Internet Archive, jedes mit eigener Seite seiner Veröffentlichungen, die neuesten zuerst.
+- **Filter** › `Reihenfolge` › `Tief graben`: selten gehörte Alben der Internet-Archive-Sammlungen, am besten bewertete zuerst. `Nur verlustfrei (FLAC)` behält Alben, die es auch verlustfrei gibt.
+- **Gespeicherte Suchen**: `Suche speichern` unter dem Suchfeld behält Wörter, Filter und gewählten Katalog. Sie erscheinen unter `Suche` (ohne Eingabe) auf allen deinen Geräten. Öffnest du eine wieder, siehst du zuerst, was seit deinem letzten Besuch auf diesem Gerät neu ist.
+- **Credits**: ⋯ einer Playlist › `Credits kopieren` kopiert für jeden Song aus den offenen Katalogen eine Quellenzeile (Titel, Künstler, Lizenz, Quelle), bereit zum Einfügen, wo du sie weiterverwendest.
+
 ## Deine eigenen Server
 Wenn deine Musik auf einem eigenen Server liegt, spielt Musik sie von dort. Drücke **+** und `Server verbinden`, oder geh zu `Deine Bibliothek › Server`:
 - **Subsonic / Navidrome**: Navidrome, Airsonic, Gonic, Ampache und andere Server mit der Subsonic-API (OpenSubsonic). Gib Adresse, Benutzername und Passwort ein. Musik speichert ein gesalzenes Token, nicht das Passwort selbst.

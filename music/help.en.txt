@@ -54,6 +54,13 @@ In `Search`, the `Filters` button next to the search field opens `Search filters
 
 Filters work with words or without: with an empty search field and filters on, `Search` lists the songs of yours that pass, then the open catalogues. Not every catalogue can use every filter. A catalogue that cannot use one is left out, never shown with results that ignore it, and a line under the results says which and why (for example `ccMixter (cannot filter by country)`). What each catalogue sends back is checked again on your device for the licence, the length and offline copies. `Country` asks Jamendo for the artists who live in that country and Internet Archive for recordings made there (mostly concerts); `Your music` can be filtered by genre, year and length only, from your files' tags.
 
+## Dig deeper
+- **Concert explorer** (`Home` › `Free music`): the Live Music Archive by band, then year, then show. Each show lists its date, venue and city, how it was recorded (SBD from the mixing desk, AUD from the crowd, Matrix both mixed), whether it comes lossless, and its rating. A show opens as an album. Bands that allow streaming only stay streaming only.
+- **Netlabels** (`Home` › `Free music`): the free record labels on the Internet Archive, each with its own page of releases, newest first.
+- **Filters** › `Order` › `Deep dig`: rarely played albums of the Internet Archive collections, best rated first. `Lossless only (FLAC)` keeps albums that also come in a lossless format.
+- **Saved searches**: `Save search` under the search box keeps the words, the filters and the chosen catalogue. They appear under `Search` (with nothing typed) on all your devices. Opening one again shows first what is new since your last visit on this device.
+- **Credits**: a playlist's ⋯ › `Copy credits` copies a credit line (title, artist, licence, source) for each song from the open catalogues, ready to paste where you reuse them.
+
 ## Your own servers
 If your music lives on a server of your own, Music plays it from there. Press **+** and `Connect a server`, or go to `Your library › Servers`:
 - **Subsonic / Navidrome**: Navidrome, Airsonic, Gonic, Ampache and other servers with the Subsonic (OpenSubsonic) API. Enter the address, your user name and password. Music keeps a salted token, not the password itself.

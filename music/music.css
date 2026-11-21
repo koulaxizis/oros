@@ -481,3 +481,22 @@ dl.info dd { overflow-wrap: anywhere; }
 .lic.lic-free { font-weight: 700; }
 /* MU-SRC2: links in the Sources dialog are full-size tap targets. */
 #mu-sources a.link { display: inline-flex; align-items: center; min-height: 44px; }
+/* MU-DIG: concert explorer and saved searches */
+.lma-find { margin: 6px 0 4px; }
+.lma-find input { min-height: 44px; }
+.lma-find .txt-btn { min-height: 44px; flex: 0 0 auto; }
+.lma-years .chip, .lma-kinds .chip { min-height: 36px; }
+.lma-list, .ss-list { display: flex; flex-direction: column; gap: 2px; }
+.lma-show, .ss-open {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 4px; width: 100%; min-height: 56px; padding: 8px 10px;
+  background: transparent; border: none; border-radius: 6px; text-align: left; color: inherit; font: inherit; cursor: pointer;
+}
+.lma-show:hover, .ss-open:hover { background: var(--panel-bg); }
+.lma-d, .ss-n { font-weight: 700; font-size: 15px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lma-s { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ss-open > .dim { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ss-item { display: flex; align-items: center; gap: 4px; }
+.ss-item .ss-open { flex: 1 1 auto; min-width: 0; }
+.ss-item .icon-btn { flex: 0 0 auto; width: 44px; height: 44px; }
+.ss-row { padding-top: 0; }
+.ss-new { border-left: 3px solid var(--accent); padding-left: 10px; margin: 8px 0 12px; }

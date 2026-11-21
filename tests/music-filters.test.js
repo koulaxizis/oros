@@ -128,9 +128,9 @@ test("songs on this device: genre in any spelling, year, length", () => {
 
 test("filter words exist in English, Greek and German", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "music/music.js"), "utf8");
-  const keys = [...new Set([...src.matchAll(/"((?:fl|au|eu|src|dp)\.[a-zA-Z0-9.]+)": "/g)].map((m) => m[1]))];
+  const keys = [...new Set([...src.matchAll(/"((?:fl|au|eu|src|dp|lma|ss|crd|lab)\.[a-zA-Z0-9.]+)": "/g)].map((m) => m[1]))];
   assert.ok(keys.length > 50);
-  const used = [...src.matchAll(/t\("((?:fl|au|eu|src|dp)\.[a-zA-Z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith("."));
+  const used = [...src.matchAll(/t\("((?:fl|au|eu|src|dp|lma|ss|crd|lab)\.[a-zA-Z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith("."));
   used.forEach((k) => assert.ok(keys.includes(k), "missing " + k));
   // dynamic keys
   ["fl.g.g", "fl.g.cc", "fl.g.dur", "fl.g.lic", "fl.g.y", "fl.g.vi", "fl.g.mood", "fl.g.sp", "fl.g.gd", "fl.g.ae", "fl.g.off",
@@ -320,4 +320,64 @@ test("Dogmazic preset and new source words exist in English, Greek and German", 
     assert.ok(de[k], "DE " + k);
   });
   assert.match(src, /https:\/\/play\.dogmazic\.net/);
+});
+
+// ---------- MU-DIG (wave 3): saved searches, lossless, deep dig, concert explorer ----------
+test("saved searches sync like follows: newest wins, unsaves pruned, absent when empty", () => {
+  const t0 = Date.UTC(2026, 10, 21);
+  const empty = C.emptyData();
+  assert.equal("ss" in C.canon(empty), false);
+  const a = C.setSaved(empty, { n: "Greek jazz", q: "jazz", f: { g: "jazz", cc: "GR", bad: "<x>", y0: 1960 }, src: "ia" }, 1, t0, 0.25);
+  assert.match(a.k, /^s[0-9a-z]{10,14}$/);
+  assert.deepEqual(a.data.ss, [{ k: a.k, m: t0, on: 1, n: "Greek jazz", q: "jazz", f: { g: "jazz", cc: "GR", y0: 1960 }, src: "ia" }]);
+  const b = C.setSaved(a.data, { k: a.k, n: "Renamed", q: "jazz" }, 1, t0 + 1000).data;
+  const off = C.setSaved(a.data, { k: a.k, n: "Greek jazz" }, 0, t0 + 500).data;
+  const m = C.mergeMusic(b, off);
+  assert.equal(m.ss.length, 1); assert.equal(m.ss[0].n, "Renamed"); assert.equal(C.savedList(m).length, 1);
+  const gone = C.mergeMusic(off, a.data);
+  assert.equal(C.savedList(gone).length, 0);
+  // A year later the unsave is pruned and the field disappears.
+  const later = C.setLike(gone, { k: "ia:abcdef12", t: "x", a: "y", s: "ia", u: "https://archive.org/download/x/y.mp3" }, 1, t0 + 400 * 86400000);
+  assert.equal("ss" in later, false);
+  // Bad entries are dropped.
+  assert.equal(C.mergeMusic({ ss: [{ k: "nope", m: t0, n: "x" }, { k: a.k, m: -1 }] }, {}).ss, undefined);
+});
+
+test("lossless filter and deep dig on the Internet Archive", () => {
+  const F = O.normFilter({ ll: 1, sort: "dig" });
+  assert.deepEqual(F, { ll: 1, sort: "dig" });
+  assert.deepEqual(O.groupsOf(F), ["ll"]);
+  const u = decodeURIComponent(O.iaSearchUrl({ q: "jazz", f: F }));
+  assert.match(u, /format:\("Flac" OR "24bit Flac" OR "Shorten"/);
+  assert.match(u, /downloads:\[10 TO 1000\]/);
+  assert.match(u, /sort\[\]=avg_rating desc&sort\[\]=downloads asc/);
+  ["jm", "ov", "cc", "au", "eu", "km", "dp"].forEach((s) => assert.ok(O.filterMissing(s, F).includes("ll"), s));
+  ["ia", "fm", "mo", "jb"].forEach((s) => assert.deepEqual(O.filterMissing(s, F), [], s));
+  const r = O.iaParseSearch({ response: { numFound: 2, docs: [
+    { identifier: "a1", title: "A", licenseurl: "https://creativecommons.org/licenses/by/4.0/", format: ["VBR MP3", "Flac"] },
+    { identifier: "b1", title: "B", licenseurl: "https://creativecommons.org/licenses/by/4.0/", format: "VBR MP3" }] } }, 1);
+  assert.equal(r.albums[0].ll, 1); assert.equal(r.albums[1].ll, undefined);
+  assert.deepEqual(r.albums.filter((a) => O.albumPasses(a, F)).map((a) => a.id), ["a1"]);
+});
+
+test("concert explorer: bands, years, shows", () => {
+  const bu = decodeURIComponent(O.lmaBandsUrl({ q: "dead (live)", page: 2 }));
+  assert.match(bu, /q=collection:\(etree\) AND mediatype:\(collection\) AND title:\(dead live\)/);
+  assert.match(bu, /page=2/);
+  const b = O.lmaParseBands({ response: { numFound: 100, docs: [{ identifier: "GratefulDead", title: "Grateful Dead", downloads: 5 }, { identifier: "../x" }] } }, 1);
+  assert.deepEqual(b.bands.map((x) => x.id), ["GratefulDead"]); assert.equal(b.more, true);
+  assert.match(O.lmaYearsUrl("moe", "abc="), /scrape\?q=collection%3A\(moe\)&fields=year&count=10000&cursor=abc%3D/);
+  assert.doesNotMatch(O.lmaYearsUrl("moe", "bad cursor!"), /cursor/);
+  const counts = {};
+  assert.equal(O.lmaAddYears({ items: [{ year: 1977 }, { year: "1977" }, { year: 1978 }, { year: "x" }], cursor: "c1" }, counts), "c1");
+  assert.deepEqual(counts, { 1977: 2, 1978: 1 });
+  assert.match(decodeURIComponent(O.lmaShowsUrl("GratefulDead", 1977, 1)), /collection:\(GratefulDead\) AND year:1977.*sort\[\]=date asc/);
+  assert.equal(O.lmaKind("gd77-05-08.sbd.hicks.4982.sbeok.shnf", ""), "sbd");
+  assert.equal(O.lmaKind("x", "AUD > DAT"), "aud");
+  assert.equal(O.lmaKind("phish1997.mtx.x", "SBD + AUD"), "mtx");
+  assert.equal(O.lmaKind("x", ""), "");
+  const s = O.lmaParseShows({ response: { numFound: 1, docs: [{ identifier: "gd1977-05-08.sbd", title: "Grateful Dead Live at Barton Hall", date: "1977-05-08T00:00:00Z",
+    venue: "Barton Hall", coverage: "Ithaca, NY", format: ["Flac", "VBR MP3"], avg_rating: 4.87, downloads: 100 }, { identifier: "" }] } }, 1);
+  assert.deepEqual(s.shows, [{ id: "gd1977-05-08.sbd", n: "Barton Hall", t: "Grateful Dead Live at Barton Hall", date: "1977-05-08", at: "Ithaca, NY", kind: "sbd", dl: 100, ll: 1, r: 4.9 }]);
+  assert.equal(O.lmaShow({ identifier: "x1", coverage: "Unknown, Unknown" }).at, "");
 });
