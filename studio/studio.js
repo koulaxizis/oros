@@ -191,7 +191,7 @@
       "oros.newer": "This file was made by a newer orOS. Update orOS to open it.", "oros.bad": "{name} is not a Studio project orOS can read",
       "oros.missing": "{n} audio files are not on this device yet, so they were left out", "oros.fail": "The orOS file could not be made",
       "oros.w.tempo": "Tempo", "oros.w.length": "Length", "oros.w.audio": "Audio", "oros.w.inst": "Instrument", "oros.w.clips": "clips",
-      "oros.w.notes": "notes", "oros.w.muted": "muted", "oros.w.solo": "solo",
+      "oros.w.notes": "notes", "oros.w.muted": "muted", "oros.w.solo": "solo", "oros.w.markers": "Markers",
       "toast.noMic": "No microphone or input could be opened", "toast.recMax": "A take is at most 30 minutes",
       "toast.recSaved": "Take saved on {name}", "toast.recFail": "The take could not be saved",
       "toast.armed": "Recording goes to {name}", "toast.noRec": "This browser cannot record here",
@@ -430,7 +430,7 @@
       "oros.newer": "Το αρχείο φτιάχτηκε από νεότερο orOS. Ενημέρωσε το orOS για να το ανοίξεις.", "oros.bad": "Το {name} δεν είναι έργο Studio που διαβάζει το orOS",
       "oros.missing": "{n} αρχεία ήχου δεν έχουν φτάσει ακόμη σε αυτή τη συσκευή, οπότε έμειναν έξω", "oros.fail": "Το αρχείο orOS δεν φτιάχτηκε",
       "oros.w.tempo": "Ρυθμός", "oros.w.length": "Διάρκεια", "oros.w.audio": "Ήχος", "oros.w.inst": "Όργανο", "oros.w.clips": "clips",
-      "oros.w.notes": "νότες", "oros.w.muted": "σίγαση", "oros.w.solo": "σόλο",
+      "oros.w.notes": "νότες", "oros.w.muted": "σίγαση", "oros.w.solo": "σόλο", "oros.w.markers": "Δείκτες",
       "toast.noMic": "Δεν άνοιξε μικρόφωνο ή είσοδος", "toast.recMax": "Μια λήψη κρατά έως 30 λεπτά",
       "toast.recSaved": "Η λήψη αποθηκεύτηκε στο {name}", "toast.recFail": "Η λήψη δεν αποθηκεύτηκε",
       "toast.armed": "Η ηχογράφηση πάει στο {name}", "toast.noRec": "Αυτός ο browser δεν ηχογραφεί εδώ",
@@ -4166,7 +4166,7 @@
         instName: function (id) { return window.StudioMidi.PRESETS[id] ? t("snd." + id) : id; },
         words: { untitled: t("proj.untitled"), tempo: t("oros.w.tempo"), length: t("oros.w.length"), master: t("f.master"), fx: t("fx.open"),
                  audio: t("oros.w.audio"), inst: t("oros.w.inst"), clips: t("oros.w.clips"), notes: t("oros.w.notes"),
-                 mute: t("oros.w.muted"), solo: t("oros.w.solo"), midi: t("mi.clip") }
+                 mute: t("oros.w.muted"), solo: t("oros.w.solo"), midi: t("mi.clip"), markers: t("oros.w.markers") }
       });
       return songThumb(pid).catch(function () { return null; });
     }).then(function (thumb) {

@@ -511,6 +511,7 @@ orosPack("de", "studio", {
  "oros.w.clips": "Clips",
  "oros.w.inst": "Instrument",
  "oros.w.length": "Länge",
+ "oros.w.markers": "Marker",
  "oros.w.muted": "stumm",
  "oros.w.notes": "Noten",
  "oros.w.solo": "Solo",
