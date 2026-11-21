@@ -42,7 +42,7 @@ Each kind has its own shape, so you never need the colours.
 - Mild: more coins and lighter knocks; Normal; Hard: fewer coins and harder knocks.
 - Stars: three when at least 85% of the crates you loaded reach the market, two with 65%, one for any route cleared. The road map keeps the best stars of each route.
 - When a route is lost, `Try again from trip` puts you back in the plan of the last trip, with the caravan and coins you had then.
-- The route you are playing is kept on this device and reopens where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a route ends. `Reset progress` on the road map clears them on every device. Caravan is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
+- The route you are playing is kept on this device and reopens where you left it, even after orOS closes. The stars and records sync between your devices through [orOS sync](help:t/sync); they are only written when a route ends. `Reset progress` on the road map clears them on every device and ends the route in progress. Caravan is in the Tower defense group of the [Game Center](help:a/gamecenter). The sound setting stays on this device.
 
 ## Keyboard
 - Arrow keys choose a cart; [[Escape]] lets go of it. The keys `[` and `]` move it forward or back in the plan.

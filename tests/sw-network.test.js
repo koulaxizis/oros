@@ -20,6 +20,7 @@ const noSearch = (u) => u.split("?")[0];
 
 function fakeCaches() {
   const store = new Map();   // name → Map(url → Response)
+  const limit = { n: Infinity };
   const scans = [];          // cache names matched with ignoreSearch
   function open(name) {
     if (!store.has(name)) store.set(name, new Map());
@@ -34,13 +35,25 @@ function fakeCaches() {
         }
         return Promise.resolve(undefined);
       },
-      put(req, res) { m.set(abs(req), res); return Promise.resolve(); },
+      put(req, res) {
+        // SW-Q1: a storage limit in entries, across every cache
+        let total = 0;
+        for (const c of store.values()) total += c.size;
+        if (!m.has(abs(req)) && total >= limit.n) {
+          const e = new Error("Quota exceeded");
+          e.name = "QuotaExceededError";
+          return Promise.reject(e);
+        }
+        m.set(abs(req), res);
+        return Promise.resolve();
+      },
       delete(req) { return Promise.resolve(m.delete(abs(req))); },
       keys() { return Promise.resolve([...m.keys()].map((u) => ({ url: u }))); }
     });
   }
   return {
     store,
+    limit,
     scans,
     open,
     keys() { return Promise.resolve([...store.keys()]); },
@@ -490,4 +503,105 @@ test("every app page and every script it loads is precached (SW-F1 opens it with
     }
   }
   assert.deepEqual(missing, []);
+});
+
+// SW-Q1: a phone with its storage nearly full stayed on 7.97.00: a
+// refused cache.put() failed every update, and each failed attempt
+// left a half copy that took more room.
+async function markedRelease(sw, name, files) {
+  const c = await sw.caches.open(name);
+  await c.put(sw.ctx.PARTIAL_MARK, new Response("1"));
+  for (const u of files) await c.put(u, new Response("old " + u));
+  return c;
+}
+const status = async (sw, key) => {
+  const r = await (await sw.caches.open(sw.ctx.STATUS_CACHE)).match(key);
+  return r ? r.json() : null;
+};
+
+test("update install: only the newest release that never activated is kept", async () => {
+  const sw = loadSW(() => Promise.resolve(new Response("x")), { updating: true });
+  await markedRelease(sw, "oros-shell-oros-v9.98.00", ["./shell.js"]);
+  await markedRelease(sw, "oros-shell-oros-v10.01.00", ["./shell.js"]);
+  const active = await sw.caches.open("oros-shell-oros-v9.97.00");   // no marker: the active release
+  await active.put("./shell.js", new Response("active"));
+  await install(sw);
+  const names = [...sw.caches.store.keys()];
+  assert.ok(!names.includes("oros-shell-oros-v9.98.00"), "older unfinished release removed");
+  assert.ok(names.includes("oros-shell-oros-v10.01.00"), "newest unfinished release kept (numeric order)");
+  assert.ok(names.includes("oros-shell-oros-v9.97.00"), "the active release is never touched");
+});
+
+test("update install: no room → the unfinished release is removed and the files go again", async () => {
+  const sw = loadSW(() => Promise.resolve(new Response("x")), { updating: true });
+  const n = sw.ctx.PRECACHE_URLS.length;
+  await markedRelease(sw, "oros-shell-oros-v0.0.2", sw.ctx.PRECACHE_URLS.slice(0, 50));
+  // Room for the active copy's worth plus a full new copy, not for the half copy too.
+  sw.caches.limit.n = n + 20;
+  await install(sw);
+  assert.ok(!sw.caches.store.has("oros-shell-oros-v0.0.2"), "half copy removed");
+  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  for (const u of sw.ctx.PRECACHE_URLS) assert.ok(await c.match(u), "stored " + u);
+  assert.equal(await c.match(sw.ctx.PARTIAL_MARK), undefined, "marker cleared");
+  const st = await status(sw, sw.ctx.STATUS_KEY);
+  assert.equal(st.ok, true);
+  assert.equal(st.missing, 0);
+  assert.deepEqual(await status(sw, sw.ctx.DONE_KEY), { v: sw.ctx.CACHE_VERSION });
+});
+
+test("update install: still no room → it activates with what fit, and fillPrecache stores the rest later", async () => {
+  const sw = loadSW(() => Promise.resolve(new Response("x")), { updating: true });
+  const active = await sw.caches.open("oros-shell-oros-v0.0.1");
+  for (const u of sw.ctx.PRECACHE_URLS) await active.put(u, new Response("old"));
+  sw.caches.limit.n = sw.ctx.PRECACHE_URLS.length + 30;
+  await install(sw);   // must not reject: waiting cannot make room
+  const c = await sw.caches.open(sw.ctx.SHELL_CACHE);
+  assert.equal(await c.match(sw.ctx.PARTIAL_MARK), undefined, "marker cleared");
+  const st = await status(sw, sw.ctx.STATUS_KEY);
+  assert.equal(st.reason, "space");
+  assert.ok(st.missing > 0);
+  // The download stopped at the first refusal: no point fetching what cannot be stored.
+  assert.ok(sw.fetchLog.length < 40, "fetched " + sw.fetchLog.length);
+  // Activation removes the old copy; then the rest comes.
+  await sw.caches.delete("oros-shell-oros-v0.0.1");
+  sw.caches.limit.n = Infinity;
+  await sw.ctx.fillPrecache();
+  for (const u of sw.ctx.PRECACHE_URLS) assert.ok(await c.match(u), "filled " + u);
+  assert.deepEqual(await status(sw, sw.ctx.DONE_KEY), { v: sw.ctx.CACHE_VERSION }, "fill done");
+  sw.fetchLog.length = 0;
+  await sw.ctx.fillPrecache();
+  assert.equal(sw.fetchLog.length, 0, "a finished release is not checked again");
+});
+
+test("update install: a network failure is recorded for the page", async () => {
+  const sw = loadSW((u) => u === abs("./shell.js")
+    ? Promise.reject(new TypeError("blocked"))
+    : Promise.resolve(new Response("x")), { updating: true });
+  await assert.rejects(install(sw), /attempt 1/);
+  const st = await status(sw, sw.ctx.STATUS_KEY);
+  assert.equal(st.ok, false);
+  assert.equal(st.reason, "network");
+  assert.equal(st.missing, 1);
+});
+
+test("update install: 'Update now' (FORCE_KEY) activates on the first attempt", async () => {
+  const sw = loadSW((u) => u === abs("./shell.js")
+    ? Promise.reject(new TypeError("blocked"))
+    : Promise.resolve(new Response("x")), { updating: true });
+  const sc = await sw.caches.open(sw.ctx.STATUS_CACHE);
+  await sc.put(sw.ctx.FORCE_KEY, new Response(JSON.stringify({ at: Date.now() })));
+  await install(sw);
+  assert.equal(await status(sw, sw.ctx.FORCE_KEY), null, "force used up");
+  assert.equal(await status(sw, sw.ctx.DONE_KEY), null, "not complete: fillPrecache will try shell.js again");
+  // A stale request (older than FORCE_MS) does not count.
+  const sw2 = loadSW((u) => u === abs("./shell.js")
+    ? Promise.reject(new TypeError("blocked"))
+    : Promise.resolve(new Response("x")), { updating: true });
+  const sc2 = await sw2.caches.open(sw2.ctx.STATUS_CACHE);
+  await sc2.put(sw2.ctx.FORCE_KEY, new Response(JSON.stringify({ at: Date.now() - sw2.ctx.FORCE_MS - 1 })));
+  await assert.rejects(install(sw2), /attempt 1/);
+});
+
+test("the status cache outlives releases", () => {
+  assert.match(SRC, /var keep = \[[^\]]*STATUS_CACHE/);
 });
