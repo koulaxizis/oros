@@ -296,6 +296,11 @@
       "pd.send": "Send now ({n})",
       "pd.done": "The shop saved {n} rows at {time}.",
       "pd.old": "{shop} does not take the production stage yet: Revenue Splitter 1.18.0 or later is needed.",
+      "pd.old2": "{shop} does not take your own steps yet: Revenue Splitter 1.21.0 or later is needed.",
+      "pd.why.nostep": "no step before its column (mark the column, or one before it, as a step in Kanban › column settings)",
+      "pd.v2": "Your own steps are on: the Kanban columns marked as steps (column settings › Author Portal) are the stages the creator sees, in their order, with your explanation. Tick a card in Kanban (card › Author Portal) to show it to its creator.",
+      "pd.v2steps": "{board}: {n} steps",
+      "pd.v2card": "{card} · step {i} of {n}: {step}",
       "pd.autoSkip": "{shop} skipped {n} production rows (CRM › Contracts › Production stage…).",
       "pd.autoFail": "The production stage could not be sent to {shop}.",
       "cx.set": "Contracts", "cx.lbl": "Calendar label for the end days", "cx.lbl.own": "CRM (its own chip)", "cx.kb": "Kanban board for contract cards", "cx.kbPh": "The board that is open",
@@ -628,6 +633,11 @@
       "pd.send": "Αποστολή τώρα ({n})",
       "pd.done": "Το site αποθήκευσε {n} γραμμές στις {time}.",
       "pd.old": "Το {shop} δεν δέχεται ακόμα το στάδιο παραγωγής: χρειάζεται Revenue Splitter 1.18.0 ή νεότερο.",
+      "pd.old2": "Το {shop} δεν δέχεται ακόμα τα δικά σου βήματα: χρειάζεται Revenue Splitter 1.21.0 ή νεότερο.",
+      "pd.why.nostep": "δεν υπάρχει βήμα πριν από τη στήλη της (σημείωσε τη στήλη ή μια πριν από αυτήν ως βήμα στο Kanban › ρυθμίσεις στήλης)",
+      "pd.v2": "Ισχύουν τα δικά σου βήματα: οι στήλες του Kanban που σημείωσες ως βήματα (ρυθμίσεις στήλης › Author Portal) είναι τα στάδια που βλέπει ο δημιουργός, με τη σειρά τους και την επεξήγησή σου. Τσέκαρε μια κάρτα στο Kanban (κάρτα › Author Portal) για να τη δει ο δημιουργός της.",
+      "pd.v2steps": "{board}: {n} βήματα",
+      "pd.v2card": "{card} · βήμα {i} από {n}: {step}",
       "pd.autoSkip": "Το {shop} παρέλειψε {n} γραμμές παραγωγής (CRM › Λήξεις › Στάδιο παραγωγής…).",
       "pd.autoFail": "Το στάδιο παραγωγής δεν στάλθηκε στο {shop}.",
       "cx.set": "Συμφωνητικά", "cx.lbl": "Ετικέτα Ημερολογίου για τις λήξεις", "cx.lbl.own": "CRM (δική του ετικέτα)", "cx.kb": "Πίνακας Kanban για κάρτες συμφωνητικών", "cx.kbPh": "Ο πίνακας που είναι ανοιχτός",
@@ -2567,9 +2577,11 @@
   function pushProd(shop) {
     var P = window.OrosCrmProd, L = shopLinks();
     if (!P || !L) return Promise.reject(rsErr("other"));
-    var x = pdPlan(shop), sent = JSON.stringify(x.body.works);
+    var x = pdPlan(shop), sent = P.sentKey(x.body);
     return Promise.resolve(L.call(shop.id, [P.req(x.body)])).then(function (res) {
       var r = res && res[0], code = L.statusCode(r);
+      // AP-FLOW: a shop before Revenue Splitter 1.21.0 answers 400 to v 2
+      if (code && x.body.v === 2 && r && r.status === 400) throw rsErr("old2");
       if (code) throw rsErr(code === "notfound" ? "old" : code);
       var got = P.parseSaved(r.data);
       if (!got) throw rsErr("old");
@@ -2586,20 +2598,20 @@
   // on its own: only with a board set, a contracts key, and a list that
   // differs from the last one this device sent there
   function prodChanged(now) {
-    if (!window.OrosCrmProd || !shopLinks() || !(data.cset && data.cset.pb)) return;
+    if (!window.OrosCrmProd || !shopLinks() || !((data.cset && data.cset.pb) || window.OrosCrmProd.stepBoards(kanbanData()).length)) return;
     clearTimeout(pdTimer);
     pdTimer = setTimeout(function () {
       var sent = pdSent();
       rsShops().reduce(function (p, shop) {
         return p.then(function () {
-          if (sent[shop.id] === JSON.stringify(pdPlan(shop).body.works)) return false;
+          if (sent[shop.id] === window.OrosCrmProd.sentKey(pdPlan(shop).body)) return false;
           return hasRsKey(shop);
         }).then(function (k) {
           if (!k) return;
           return pushProd(shop).then(function (r) {
             if (r.skipped.length) showToast(t("pd.autoSkip", { shop: shop.name || shop.site, n: r.skipped.length }));
           }, function (e) {
-            if (!(e && (e.code === "offline" || e.code === "old"))) showToast(t("pd.autoFail", { shop: shop.name || shop.site }));
+            if (!(e && (e.code === "offline" || e.code === "old" || e.code === "old2"))) showToast(t("pd.autoFail", { shop: shop.name || shop.site }));
           });
         });
       }, Promise.resolve()).catch(function () {});
@@ -2632,6 +2644,10 @@
     function draw() {
       body.innerHTML = "";
       cs = data.cset || {};
+      var v2 = P.stepBoards(kanbanData());
+      boardSel.hidden = v2.length > 0;
+      if (boardSel.previousElementSibling) boardSel.previousElementSibling.hidden = v2.length > 0;
+      if (v2.length) { drawV2(v2); return; }
       var board = P.boardByName(kanbanData(), cs.pb || "");
       if (!board) { body.appendChild(el("p", "hint", t(cs.pb ? "pd.noBoard" : "pd.offHint"))); if (send) send.disabled = true; return; }
       var phases = P.columnPhases(board, cs.pm || null), chosen = {};
@@ -2691,7 +2707,45 @@
       body.appendChild(det);
       if (shop) {
         var last = pdLast[shop.id];
-        if (pdErr[shop.id]) body.appendChild(el("p", "hint late", pdErr[shop.id] === "old" ? t("pd.old", { shop: shop.name || shop.site }) : rcErrText(pdErr[shop.id], shop)));
+        if (pdErr[shop.id]) body.appendChild(el("p", "hint late", errText(shop)));
+        else if (last) {
+          body.appendChild(el("p", "hint", t("pd.done", { n: last.saved, time: new Date(last.at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hour12: false }) })));
+          last.skipped.forEach(function (k) { body.appendChild(el("p", "hint late", k.id + " · " + k.why)); });
+        }
+      }
+      if (send) { send.disabled = !shop || !x; send.textContent = t("pd.send", { n: x ? x.body.works.length : 0 }); }
+    }
+    function errText(shop) {
+      var e = pdErr[shop.id];
+      return e === "old" || e === "old2" ? t("pd." + e, { shop: shop.name || shop.site }) : rcErrText(e, shop);
+    }
+    // AP-FLOW: the steps and the ticks live in Kanban; here only what goes
+    function drawV2(boards) {
+      var shop = shopOf(), x = shop ? pdPlan(shop) : null;
+      body.appendChild(el("p", "hint", t("pd.v2")));
+      boards.forEach(function (b) {
+        var fl = P.flowOf(b);
+        body.appendChild(el("h3", "dlg-lbl", t("pd.v2steps", { board: String(b.name || "").slice(0, 60), n: fl.steps.length })));
+        var ol = el("ol", "pd-steps");
+        fl.steps.forEach(function (st) { ol.appendChild(el("li", "", st.name + (st.about ? " · " + st.about : ""))); });
+        body.appendChild(ol);
+      });
+      if (x) {
+        body.appendChild(el("p", "hint", t("pd.n", { n: x.body.works.length, c: Object.keys(x.at || {}).length })));
+        var names = {};
+        (kanbanData().boards || []).forEach(function (b) { (b.columns || []).forEach(function (c) { (c.cards || []).forEach(function (k) { if (k && k.id) names[k.id] = k.text; }); }); });
+        Object.keys(x.at || {}).forEach(function (id) {
+          var a = x.at[id];
+          body.appendChild(el("p", "hint", t("pd.v2card", { card: String(names[id] || id).slice(0, 120), i: a.i, n: a.n, step: a.step })));
+        });
+        if (x.left.length) {
+          body.appendChild(el("p", "hint late", t("pd.left")));
+          x.left.slice(0, 30).forEach(function (l) { body.appendChild(el("p", "hint late", (l.t || l.card) + " · " + t("pd.why." + l.why))); });
+        }
+      }
+      if (shop) {
+        var last = pdLast[shop.id];
+        if (pdErr[shop.id]) body.appendChild(el("p", "hint late", errText(shop)));
         else if (last) {
           body.appendChild(el("p", "hint", t("pd.done", { n: last.saved, time: new Date(last.at).toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit", hour12: false }) })));
           last.skipped.forEach(function (k) { body.appendChild(el("p", "hint late", k.id + " · " + k.why)); });

@@ -1844,3 +1844,9 @@ dialog label.chk.sel select { flex: 1; min-width: 0; width: auto; }
 
 /* ---------- X. [hidden] must ALWAYS win ---------- */
 [hidden] { display: none !important; }
+
+/* AP-FLOW: a column as a step of the creator's production flow */
+.ap-box { margin-top: 12px; border-top: 1px solid var(--border, rgba(127,127,127,.25)); padding-top: 8px; }
+.ap-box > summary { cursor: pointer; font-weight: 600; padding: 4px 0; }
+.ap-box[open] > summary { margin-bottom: 6px; }
+#c-ap .dlg-hint { margin-top: 4px; }

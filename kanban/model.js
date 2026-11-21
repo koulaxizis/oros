@@ -10,6 +10,8 @@
 //   t text · n notes · d due · l labels · s subtasks · x extra info
 //   p column (placement) · a attachments · c cover · k lane
 //   g plan (Gantt, wave G1): start, ms (milestone), deps
+//   r Author Portal (AP-FLOW): ap = 1 shown to its creator,
+//     0 explicitly not shown (absent = CRM's older choice decides)
 // Subtasks and attachments merge per item (`m` stamp on the item,
 // deletions as board tombstones "<cardId>/<itemId>").
 // A card whose fm is missing or whose fm.m differs from its mtime was
@@ -29,6 +31,14 @@
 //     valid fm without g counts g at the due stamp d (a Gantt move
 //     stamps both), and our mixed result (mtime + 1) wins every tie
 //     on the older device, so the fleet converges (tests/kanban-gantt).
+//   · the Author Portal group r (AP-FLOW) works like g: a version that
+//     does not know it keeps ap (an unknown card key on the whole card)
+//     and rebuilds fm without r in a mixed merge; a valid fm without r
+//     counts r at its g stamp (else d), and the mixed result wins the
+//     tie on the older device (tests/kanban-apflow.test.js).
+//     Columns carry ap = { on, n, ne, a, ae } (a step of the creator's
+//     production flow: name, English name, explanation, English
+//     explanation): a column key, last writer of the header wins.
 //   · nothing new lives on the board or the root (old merges drop
 //     unknown keys there): WIP limits and arrival rules live on the
 //     column, the overdue rule on its label (label.auto), templates
@@ -41,10 +51,10 @@
 
   var DATA_VER = 5;
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
-  var GROUPS = ["a", "c", "d", "g", "k", "l", "n", "p", "s", "t", "x"];
+  var GROUPS = ["a", "c", "d", "g", "k", "l", "n", "p", "r", "s", "t", "x"];
   // group → card field (p is the placement, outside the card object)
   var FIELD = { a: "att", c: "cover", d: "due", k: "lane", l: "labels",
-                n: "notes", s: "subtasks", t: "text", x: "info" };
+                n: "notes", r: "ap", s: "subtasks", t: "text", x: "info" };
   var LIST_GROUPS = { s: true, a: true };
   var PLAN_KEYS = ["start", "ms", "deps"];          // group g
   var YMD = /^\d{4}-\d{2}-\d{2}$/;
@@ -62,6 +72,7 @@
       var v = card.fm[g];
       if (typeof v === "number") return v;
       if (g === "g" && typeof card.fm.d === "number") return card.fm.d;   // fm from an older version
+      if (g === "r") return typeof card.fm.g === "number" ? card.fm.g : (typeof card.fm.d === "number" ? card.fm.d : 0);
       return 0;
     }
     return card.mtime || 0;
@@ -85,6 +96,7 @@
   }
   function fieldVal(card, g) {
     if (g === "g") return planOf(card);
+    if (g === "r") return card.ap === 1 || card.ap === 0 ? card.ap : null;
     var v = card[FIELD[g]];
     if (g === "t" || g === "n" || g === "k") return typeof v === "string" ? v : "";
     if (g === "d" || g === "c") return typeof v === "string" && v ? v : null;
@@ -100,6 +112,7 @@
       PLAN_KEYS.forEach(function (k) { if (pv[k] !== undefined) card[k] = clone(pv[k]); else delete card[k]; });
       return;
     }
+    if (g === "r") { if (v === 1 || v === 0) card.ap = v; else delete card.ap; return; }
     // optional keys: only present when set (older cards stay canonical)
     if (g === "k" || g === "c") { if (v) card[f] = v; else delete card[f]; return; }
     if (g === "a") { if (Array.isArray(v) && v.length) card.att = v; else delete card.att; }
@@ -439,13 +452,28 @@
     if (c.cover === "" || c.cover === null) delete c.cover;
     if (c.start !== undefined && !(typeof c.start === "string" && YMD.test(c.start))) delete c.start;
     if (c.ms !== undefined) { if (c.ms === 1 || c.ms === true) c.ms = 1; else delete c.ms; }
+    if (c.ap !== undefined && c.ap !== 1 && c.ap !== 0) delete c.ap;
     if (c.deps !== undefined) { var dl = cleanDeps(c.deps, c.id); if (dl.length) c.deps = dl; else delete c.deps; }
     return canonOrder(c, CARD_KEYS);
+  }
+  // A column's Author Portal step (AP-FLOW): { on: 1, n, ne, a, ae },
+  // only the keys that are set; null when it is not a step and has no
+  // text (a step switched off keeps its texts, on: 0).
+  var AP_TEXT = { n: 80, ne: 80, a: 600, ae: 600 };
+  function colAp(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+    var o = { on: v.on === 1 || v.on === true ? 1 : 0 };
+    Object.keys(AP_TEXT).forEach(function (k) {
+      var x = typeof v[k] === "string" ? v[k].replace(/[\u0000-\u0009\u000b-\u001f\u007f]+/g, " ").trim().slice(0, AP_TEXT[k]) : "";
+      if (x) o[k] = x;
+    });
+    return o.on || Object.keys(o).length > 1 ? o : null;
   }
   function canonCol(col, ci) {
     col.pos = ci;
     col.cards = (col.cards || []).map(canonCard);
     if (col.auto && typeof col.auto === "object") col.auto = canonOrder(col.auto, AUTO_KEYS);
+    if (col.ap !== undefined) { var ap = colAp(col.ap); if (ap) col.ap = ap; else delete col.ap; }
     return canonOrder(col, COL_KEYS);
   }
   function canonState(src, now) {
@@ -471,7 +499,7 @@
   }
 
   var api = {
-    DATA_VER: DATA_VER, TOMB_LIFETIME_MS: TOMB_LIFETIME_MS, GROUPS: GROUPS,
+    DATA_VER: DATA_VER, TOMB_LIFETIME_MS: TOMB_LIFETIME_MS, GROUPS: GROUPS, colAp: colAp,
     isTpl: isTpl, fmValid: fmValid, eff: eff, stampCard: stampCard, stampItem: stampItem,
     freshFm: freshFm, itemTomb: itemTomb, planOf: planOf, cleanDeps: cleanDeps, PLAN_KEYS: PLAN_KEYS,
     mergeCard: mergeCard, mergeItems: mergeItems, mergeBoardBody: mergeBoardBody,
