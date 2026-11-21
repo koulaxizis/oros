@@ -2561,14 +2561,86 @@ function markTries(res) {
   }).catch(function () { return 1; });
 }
 
-// The other releases' shell caches, newest name first.
+// SW-Q1: shell cache names by release number, newest first (as text
+// "v10.00.00" would sort before "v9.99.00").
+function shellOrder(a, b) {
+  function ver(n) {
+    var m = /v(\d+(?:\.\d+)*)$/.exec(n);
+    return m ? m[1].split(".").map(Number) : [];
+  }
+  var x = ver(a), y = ver(b);
+  for (var i = 0; i < Math.max(x.length, y.length); i++) {
+    var d = (x[i] || 0) - (y[i] || 0);
+    if (d) return d > 0 ? -1 : 1;
+  }
+  return a < b ? 1 : a > b ? -1 : 0;
+}
+
+// The other releases' shell caches, newest first. The list also
+// carries their names (prev.names[i] is the name of prev[i]).
 function previousShells() {
   return caches.keys().then(function (names) {
     var prev = names.filter(function (n) {
       return n.indexOf("oros-shell-") === 0 && n !== SHELL_CACHE;
-    }).sort().reverse();
-    return Promise.all(prev.map(function (n) { return caches.open(n); }));
-  }).catch(function () { return []; });
+    }).sort(shellOrder);
+    return Promise.all(prev.map(function (n) { return caches.open(n); })).then(function (list) {
+      list.names = prev;
+      return list;
+    });
+  }).catch(function () { var none = []; none.names = []; return none; });
+}
+
+// SW-Q1: the names of the previous shell caches whose release never
+// activated: they still hold PARTIAL_MARK (an install that finished,
+// and so the active release, always removed it), newest first.
+function failedShells(prev) {
+  return Promise.all(prev.map(function (c, i) {
+    return c.match(PARTIAL_MARK).then(function (r) { return r ? prev.names[i] : null; },
+                                      function () { return null; });
+  })).then(function (l) { return l.filter(Boolean); });
+}
+
+// SW-Q1: deletes these shell caches; returns prev without them.
+function dropShells(prev, names) {
+  if (!names.length) return Promise.resolve(prev);
+  return Promise.all(names.map(function (n) {
+    console.warn("[SW] precache: removing the unfinished release", n);
+    return caches.delete(n).catch(function () { return false; });
+  })).then(function () {
+    var keep = [], keepNames = [];
+    prev.forEach(function (c, i) {
+      if (names.indexOf(prev.names[i]) === -1) { keep.push(c); keepNames.push(prev.names[i]); }
+    });
+    keep.names = keepNames;
+    return keep;
+  });
+}
+
+// SW-Q1: what the last install did, for the page (index.html
+// orosUpdateNow: the update notice's "Update now" and Settings ›
+// Check for updates). A small cache that outlives releases:
+//   STATUS_KEY {v, ok, reason: "" | "network" | "space", missing, tries, at}
+//   FORCE_KEY  {at}  the person asked to update now: no waiting for
+//              PRECACHE_GIVE_UP attempts (honoured for FORCE_MS)
+//   DONE_KEY   {v}   this release has every precache file it can get
+//              (else fillPrecache fetches the rest; no flag is needed
+//              for that, because with no room the flag could not be
+//              written either)
+var STATUS_CACHE = "oros-sw-status";
+var STATUS_KEY = "/__status", FORCE_KEY = "/__force", DONE_KEY = "/__done";
+var FORCE_MS = 10 * 60 * 1000;
+function statusGet(key) {
+  return caches.open(STATUS_CACHE).then(function (c) { return c.match(key); })
+    .then(function (r) { return r ? r.json() : null; })
+    .catch(function () { return null; });
+}
+function statusPut(key, obj) {
+  return caches.open(STATUS_CACHE).then(function (c) {
+    return c.put(key, new Response(JSON.stringify(obj), { headers: { "Content-Type": "application/json" } }));
+  }).catch(function () {});
+}
+function statusDel(key) {
+  return caches.open(STATUS_CACHE).then(function (c) { return c.delete(key); }).catch(function () {});
 }
 
 function hex16(buf) {
@@ -2633,33 +2705,76 @@ self.addEventListener("install", function (event) {
       // the number of attempts so far, so an attempt the browser
       // killed half way (no time to write anything at the end) still
       // resumes, and attempts are counted across releases.
-      return Promise.all([cache.match(PARTIAL_MARK), previousShells()]).then(function (got) {
+      // SW-Q1: a phone whose storage was nearly full stayed on 7.97.00
+      // for good: every update needs room for a second copy of the
+      // precache (about 140 MB stored for 66 MB of files), a refused
+      // cache.put() failed the whole install without a word, and each
+      // failed attempt left its half copy behind, which took more room.
+      // Now only the newest unfinished release is kept, a refused put
+      // first removes that one too and tries again, and if there is
+      // still no room the release activates with what it stored: the
+      // old copy goes at activation and fillPrecache() fetches the rest.
+      var unstored = [];
+      var room = "ok";          // "ok" | "freeing" | "freed" | "full"
+      var freeing = null;
+      return Promise.all([cache.match(PARTIAL_MARK), previousShells(), statusGet(FORCE_KEY)]).then(function (got) {
       var resume = got[0], prev = got[1];
+      var force = !!(got[2] && Date.now() - got[2].at < FORCE_MS);
       return Promise.all([markTries(resume)].concat(prev.map(function (c) {
         return c.match(PARTIAL_MARK).then(markTries, function () { return 0; });
       }))).then(function (counts) {
       var tries = Math.max.apply(null, counts) + 1;
+      // SW-Q1: of the releases that never activated only the newest
+      // stays (a source of unchanged files for this one).
+      return failedShells(prev).then(function (failed) {
+        return dropShells(prev, failed.slice(1));
+      }).then(function (left) {
+      prev = left;
       return (updating ? cache.put(PARTIAL_MARK, new Response(String(tries))).catch(function () {})
                        : Promise.resolve()).then(function () {
+      function noRoom(u, e) {
+        unstored.push(u);
+        if (room === "ok") {
+          console.warn("[SW] precache: no room for", u, e && (e.name || e.message));
+          room = "freeing";
+          freeing = failedShells(prev).then(function (names) {
+            return dropShells(prev, names).then(function (left) {
+              prev = left;
+              room = names.length ? "freed" : "full";
+            });
+          }).catch(function () { room = "full"; });
+          return freeing;
+        }
+        if (room === "freed") room = "full";
+        return freeing || Promise.resolve();
+      }
+      function keep(u, response) {
+        if (room !== "ok" && room !== "freed") { unstored.push(u); return Promise.resolve(); }
+        return cache.put(u, response).catch(function (e) { return noRoom(u, e); });
+      }
       function download(u) {
         return precacheFetch(u).then(function (response) {
           if (!response.ok) {
             console.warn("[SW] precache MISS:", u, response.status);
             return true;
           }
-          return cache.put(u, response).then(function () { return true; });
+          return keep(u, response).then(function () { return true; });
         }, function (e) {
           console.warn("[SW] precache MISS:", u, e && e.message);
           return false;
         });
       }
+      function fetchOne(u) {
+        if (room === "full") { unstored.push(u); return; }
+        return unchangedCopy(prev, u).then(function (same) {
+          if (same) return keep(u, same);
+          return download(u).then(function (ok) { if (!ok) netFailed.push(u); });
+        });
+      }
       return pool(PRECACHE_URLS, PRECACHE_POOL, function (u) {
         return (resume ? cache.match(u) : Promise.resolve(undefined)).then(function (have) {
           if (have) return;
-          return unchangedCopy(prev, u).then(function (same) {
-          if (same) return cache.put(u, same);
-          return download(u).then(function (ok) { if (!ok) netFailed.push(u); });
-          });   // unchangedCopy
+          return fetchOne(u);
         });
       }).then(function () {
         // SW-T4: the files that failed get PRECACHE_TRIES - 1 more
@@ -2676,19 +2791,40 @@ self.addEventListener("install", function (event) {
         }
         return again();
       }).then(function () {
+        // SW-Q1: room was made: the files that did not fit go again.
+        if (room !== "freed" || !unstored.length) return;
+        var list = unstored;
+        unstored = [];
+        return pool(list, PRECACHE_POOL, fetchOne);
+      }).then(function () {
         return adoptNullfx(prev);
       }).then(function () {
-        if (updating && netFailed.length && tries < PRECACHE_GIVE_UP) {
-          throw new Error("precache: " + netFailed.length +
-            " file(s) unreachable, keeping the current release (attempt " + tries + ")");
+        var noSpace = unstored.length > 0;
+        if (updating && netFailed.length && tries < PRECACHE_GIVE_UP && !force && !noSpace) {
+          return statusPut(STATUS_KEY, { v: CACHE_VERSION, ok: false, reason: "network",
+                                         missing: netFailed.length, tries: tries, at: Date.now() }).then(function () {
+            throw new Error("precache: " + netFailed.length +
+              " file(s) unreachable, keeping the current release (attempt " + tries + ")");
+          });
         }
-        if (netFailed.length) {
-          console.warn("[SW] precache: activating without " + netFailed.length +
-            " file(s) after " + tries + " attempts:", netFailed.join(" "));
+        var missing = netFailed.length + unstored.length;
+        if (missing) {
+          console.warn("[SW] precache: activating without " + missing +
+            " file(s) after " + tries + " attempt(s)" + (noSpace ? " (no room)" : "") + ":",
+            netFailed.concat(unstored).join(" "));
         }
-        return cache.delete(PARTIAL_MARK);
+        return cache.delete(PARTIAL_MARK).catch(function () {}).then(function () {
+          return Promise.all([
+            statusPut(STATUS_KEY, { v: CACHE_VERSION, ok: true,
+                                    reason: noSpace ? "space" : netFailed.length ? "network" : "",
+                                    missing: missing, tries: tries, at: Date.now() }),
+            missing ? statusDel(DONE_KEY) : statusPut(DONE_KEY, { v: CACHE_VERSION }),
+            statusDel(FORCE_KEY)
+          ]);
+        });
       });
       });   // marker written
+      });   // unfinished releases trimmed
       });   // attempt count
       });   // PARTIAL_MARK + previous release
     })
@@ -2697,7 +2833,7 @@ self.addEventListener("install", function (event) {
 
 // ---------- Activate: purge old caches ----------
 self.addEventListener("activate", function (event) {
-  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, SOUNDS_CACHE, "oros-television-api", SHARE_INBOX, STRICT_CACHE, FOCUS_CACHE];
+  var keep = [SHELL_CACHE, RUNTIME_CACHE, TILE_CACHE, LANG_CACHE, NULLFX_CACHE, SOUNDS_CACHE, "oros-television-api", SHARE_INBOX, STRICT_CACHE, FOCUS_CACHE, STATUS_CACHE];
   // SW-I: Add a guard against slow cache cleanup blocking claim.
   // If cleanup takes >30s (extreme), we still want to claim clients
   // to restore online/offline functionality. The background cleanup
@@ -2736,6 +2872,43 @@ self.addEventListener("activate", function (event) {
   ]);
 
   event.waitUntil(claimWithTimeout);
+});
+
+// ---------- SW-Q1: files a release activated without ----------
+// After an install that had no room (or gave up on unreachable files)
+// the old release's copy is gone and there is room again: the missing
+// precache files are fetched now, two at a time. The page asks for it
+// once per start ("oros-sw-fill", index.html); it is never part of
+// activate (fetch events wait for activation to finish). It stops at
+// the first refused put and goes on at the next start.
+var filling = null;
+function fillPrecache() {
+  if (filling) return filling;
+  filling = statusGet(DONE_KEY).then(function (d) {
+    if (d && d.v === CACHE_VERSION) return;
+    return caches.open(SHELL_CACHE).then(function (cache) {
+      return cache.keys().then(function (reqs) {
+        var have = {};
+        reqs.forEach(function (r) { have[r.url] = 1; });
+        var todo = PRECACHE_URLS.filter(function (u) { return !have[new URL(u, self.location.href).href]; });
+        var left = 0, full = false;
+        return pool(todo, 2, function (u) {
+          if (full) { left++; return; }
+          return precacheFetch(u).then(function (res) {
+            if (!res.ok) return;   // a server error stays a MISS, as at install
+            return cache.put(u, res).catch(function () { full = true; left++; });
+          }, function () { left++; });
+        }).then(function () {
+          if (!left) return statusPut(DONE_KEY, { v: CACHE_VERSION });
+        });
+      });
+    });
+  }).catch(function () {}).then(function () { filling = null; });
+  return filling;
+}
+self.addEventListener("message", function (event) {
+  var m = event.data;
+  if (m && m.t === "oros-sw-fill") event.waitUntil(fillPrecache());
 });
 
 // ---------- Studio effects (NULLFX_CACHE) ----------

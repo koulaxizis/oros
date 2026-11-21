@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.02.03
+- **Updates no longer get stuck on a phone with little free space.** A phone whose browser storage was nearly full could stay on an old version for hours: the new version did not fit next to the old one and the update failed quietly every time. orOS now makes room, starts the new version with what fits and fetches the rest afterwards. The bell's notice that orOS was updated on another device has an **Update now** button, which loads the new version at once or says why it could not (not enough space, no connection). Settings › Check for updates does the same.
+
 ## Version 8.02.02
 - **Layout: Scribus books keep their line breaks and tabs.** Opening a Scribus file now keeps a line break (Shift+Enter) inside its paragraph instead of starting a new, unjustified one, keeps tabs at the file's tab width and each style's tab stops, starts the text after a column or frame break in the next frame, and keeps the empty line after a line break that ends a paragraph. Thin lines drawn with no width show as hairlines, and a small header or page number still fits a short frame. Books opened this way now break their pages much closer to the original.
 
