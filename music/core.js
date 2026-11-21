@@ -582,7 +582,7 @@
   //   keeps every follow (a transient re-upload until it updates).
   var MBID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   var IMG_RE = /^https:\/\/(upload\.wikimedia\.org|commons\.wikimedia\.org|coverartarchive\.org)\/[^\s"'<>]{1,600}$/;
-  var SRC_RE = /^(ia|ov|cc|jm|ln)$/;
+  var SRC_RE = /^(ia|ov|cc|jm|ln|au|eu)$/;
   var SH_RE = /^[0-9a-z]{6,14}$/;
   var SID_RE = /^[A-Za-z0-9._-]{1,100}$/;
   var LI_RE = /^(cc0|pdm|lma|by(-nc)?(-sa|-nd)?|(nc-)?sampling\+)( \d\.\d)?$/;

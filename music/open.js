@@ -34,7 +34,7 @@
   // ccMixter pages hold 10: its server drops the connection when one
   // answer passes about 128 KB, and 20 search hits with many files each
   // (stems, zips, flac) went past that (MU-CC1, 2026-11-11).
-  var PAGE = { ia: 24, ov: 20, cc: 10, jm: 20 };
+  var PAGE = { ia: 24, ov: 20, cc: 10, jm: 20, au: 20, eu: 20 };
   // Registered by Chris at devportal.jamendo.com (2026-10-16); public,
   // one for every orOS user, non-commercial use.
   var JM_CLIENT = "e04c6e83";
@@ -44,8 +44,14 @@
     ia: { name: "Internet Archive", home: "https://archive.org/details/audio" },
     ov: { name: "Openverse", home: "https://openverse.org/audio" },
     cc: { name: "ccMixter", home: "https://ccmixter.org/" },
-    jm: { name: "Jamendo", home: "https://www.jamendo.com/" }
+    jm: { name: "Jamendo", home: "https://www.jamendo.com/" },
+    // MU-SRC (wave 2): free to listen, mostly no free licence; streaming only.
+    au: { name: "Audius", home: "https://audius.co/" },
+    // MU-SRC: open-licence recordings of European archives; each user's own API key.
+    eu: { name: "Europeana", home: "https://www.europeana.eu/" }
   };
+  // The order sources are shown in.
+  var SOURCE_ORDER = ["jm", "ia", "ov", "cc", "au", "eu"];
   // Openverse's own sources, for the credit line.
   var OV_VIA = { jamendo: "Jamendo", freesound: "Freesound", wikimedia_audio: "Wikimedia Commons", ccmixter: "ccMixter" };
 
@@ -102,7 +108,7 @@
   }
   function https(u) {
     var s = typeof u === "string" ? u.trim() : "";
-    if (/^http:\/\/([a-z0-9-]+\.)*(ccmixter\.org|archive\.org|openverse\.org|jamendo\.com|freesound\.org|wikimedia\.org)(\/|$)/i.test(s)) s = "https://" + s.slice(7);
+    if (/^http:\/\/([a-z0-9-]+\.)*(ccmixter\.org|archive\.org|openverse\.org|jamendo\.com|freesound\.org|wikimedia\.org|europeana\.eu)(\/|$)/i.test(s)) s = "https://" + s.slice(7);
     return /^https:\/\/[^\s"'<>]+$/i.test(s) && s.length <= 1000 ? s : "";
   }
   // "245.3" | "4:05" | "1:02:03" -> seconds
@@ -436,6 +442,107 @@
       pg: "https://www.jamendo.com/radios", art: radio.art || "" });
   }
 
+
+  // ---------- 5c. Audius (MU-SRC) ----------
+  // Open API with no key (app_name names the app). Artists share songs
+  // to be heard for free; most carry no free licence ("Free to listen"),
+  // so they stream only, never offline, and every licence filter leaves
+  // Audius out. A song's address is the API's stream link, which sends
+  // the player on to a content node (the signed node address expires).
+  var AU_BASE = "https://discoveryprovider.audius.co/v1/";
+  var AU_GENRES = { rock: "Rock", jazz: "Jazz", electronic: "Electronic", hiphop: "Hip-Hop/Rap", folk: "Folk", ambient: "Ambient",
+    classical: "Classical", blues: "Blues", pop: "Pop", reggae: "Reggae", metal: "Metal", world: "World" };
+  var AU_MOODS = { relaxed: "Peaceful", happy: "Upbeat", energetic: "Energizing", romantic: "Romantic", sad: "Melancholy", epic: "Stirring", dark: "Brooding" };
+  function auId(v) { var x = v == null ? "" : String(v); return /^[A-Za-z0-9]{1,20}$/.test(x) ? x : ""; }
+  // o: { q, f, page } — words search, else the week's trending songs.
+  function auUrl(o) {
+    o = o || {};
+    var F = o.f ? normFilter(o.f) : {}, n = PAGE.au;
+    var p = { app_name: "orOS", limit: n, offset: (Math.max(1, o.page || 1) - 1) * n };
+    if (F.g) p.genre = AU_GENRES[F.g];
+    if (F.mood) p.mood = AU_MOODS[F.mood];
+    var w = String(o.q || "").replace(/\s+/g, " ").trim().slice(0, 120);
+    if (w) {
+      p.query = w;
+      if (F.sort) p.sort_method = F.sort === "new" ? "recent" : "popular";
+      return AU_BASE + "tracks/search?" + qs(p);
+    }
+    if (!F.mood) {
+      p.time = F.sort === "new" ? "week" : "month";
+      return AU_BASE + "tracks/trending?" + qs(p);
+    }
+    // Trending takes no mood: a search with no words and the mood does.
+    p.sort_method = F.sort === "new" ? "recent" : "popular";
+    return AU_BASE + "tracks/search?" + qs(p);
+  }
+  // "Attribution-NonCommercial CC BY-NC" -> "by-nc"; anything else "".
+  function auLicence(v) {
+    var m = /\bCC (BY(?:-NC)?(?:-SA|-ND)?)\b/i.exec(String(v || ""));
+    if (m) return licFromCode(m[1].toLowerCase());
+    return /\bCC0\b|public domain/i.test(String(v || "")) ? "cc0" : "";
+  }
+  function auTrack(x) {
+    var id = auId(x && x.id);
+    if (!id || x.is_streamable === false || x.is_stream_gated === true || x.is_unlisted === true) return null;
+    var u = x.user && typeof x.user === "object" ? x.user : {};
+    var art = x.artwork && typeof x.artwork === "object" ? https(x.artwork["480x480"] || x.artwork["150x150"]) : "";
+    var o = { k: key("au", id), t: str(x.title) || "?", a: str(u.name) || str(u.handle), d: secs(+x.duration || 0), s: "au",
+      u: AU_BASE + "tracks/" + id + "/stream?app_name=orOS",
+      pg: /^\/[A-Za-z0-9._~\/-]{1,200}$/.test(x.permalink || "") ? "https://audius.co" + x.permalink : "https://audius.co/" };
+    if (art) o.art = art;
+    var li = auLicence(x.license);
+    if (li) o.li = li;
+    return ref(o);
+  }
+  function auParse(j) {
+    var list = j && Array.isArray(j.data) ? j.data : [];
+    return { tracks: list.map(auTrack).filter(Boolean), more: list.length >= PAGE.au };
+  }
+
+  // ---------- 5d. Europeana (MU-SRC) ----------
+  // Sound items with an open licence (reusability=open: CC0, public
+  // domain, BY, BY-SA) from Europe's archives and radios. The Search API
+  // needs a key: each user's own free key (europeana.eu, "Get your API
+  // key"), kept on the device (lb.js secret "europeana"). Audio comes
+  // from the archive that holds it (https only), streaming only.
+  function euKeyOk(k) { return typeof k === "string" && /^[A-Za-z0-9]{4,40}$/.test(k.trim()); }
+  function euWords(q) { return String(q || "").replace(/[\\+\-!(){}[\]^"~*?:/&|]/g, " ").replace(/\s+/g, " ").trim().slice(0, 120); }
+  // o: { q, f, page, key }; one repeated qf per refinement.
+  function euUrl(o) {
+    o = o || {};
+    var F = o.f ? normFilter(o.f) : {}, n = PAGE.eu;
+    var words = [euWords(o.q), F.g ? genreWord(F.g) : ""].filter(Boolean).join(" ");
+    var p = "wskey=" + encodeURIComponent(String(o.key || "").trim()) + "&query=" + encodeURIComponent(words || "*") +
+      "&qf=TYPE%3ASOUND&reusability=open&media=true&profile=rich&rows=" + n + "&start=" + ((Math.max(1, o.page || 1) - 1) * n + 1);
+    if (F.cc && countryEn(F.cc)) p += "&qf=" + encodeURIComponent("COUNTRY:\"" + countryEn(F.cc) + "\"");
+    if (F.y0 || F.y1) p += "&qf=" + encodeURIComponent("YEAR:[" + (F.y0 || YEAR_MIN) + " TO " + (F.y1 || 2100) + "]");
+    if (F.pd) p += "&qf=" + encodeURIComponent("RIGHTS:*publicdomain*");
+    if (F.sort === "new") p += "&sort=" + encodeURIComponent("timestamp_created desc");
+    return "https://api.europeana.eu/record/v2/search.json?" + p;
+  }
+  function euFirst(v) { return Array.isArray(v) ? v[0] : v; }
+  function euTrack(x) {
+    if (!x || typeof x.id !== "string" || !/^\/[A-Za-z0-9_\/.-]{3,200}$/.test(x.id)) return null;
+    // Browsers upgrade a plain http song inside an https page anyway; ask for https at once.
+    var u = https(String(euFirst(x.edmIsShownBy) || "").replace(/^http:\/\//i, "https://"));
+    var li = "";
+    (Array.isArray(x.rights) ? x.rights : [x.rights]).some(function (r) { li = licFromUrl(r); return !!li; });
+    if (!u || !li) return null;
+    var y = (String(euFirst(x.year) || "").match(/\d{4}/) || [""])[0];
+    var o = { k: key("eu", x.id), t: str(euFirst(x.title)) || "?", a: str(euFirst(x.dcCreator)) || str(euFirst(x.dataProvider)),
+      s: "eu", u: u, pg: "https://www.europeana.eu/item" + x.id, li: li };
+    var prev = https(euFirst(x.edmPreview));
+    if (prev && /^https:\/\/api\.europeana\.eu\/thumbnail\//.test(prev)) o.art = prev;
+    var r = ref(o);
+    if (r && y) r.y = +y;
+    return r;
+  }
+  function euParse(j, page) {
+    if (!j || j.success === false) throw new OpenError(j && /key/i.test(String(j.error || "")) ? "key" : "http");
+    var list = Array.isArray(j.items) ? j.items : [];
+    return { tracks: list.map(euTrack).filter(Boolean), more: Math.max(1, page || 1) * PAGE.eu < (+j.totalResults || 0) };
+  }
+
   // ---------- 6. Browse shelves (Home) ----------
   // Names of shelves, moods and genres, licence labels and the credit
   // words. Shares the "music" pack with music.js (same key = same
@@ -445,7 +552,7 @@
       "open.browse.live": "Live concerts", "open.browse.netlabels": "Netlabel albums", "open.browse.new": "New free albums",
       "open.browse.classical": "Classical", "open.browse.remix": "Remixes", "open.browse.instr": "Instrumentals",
       "open.browse.free": "Free songs (Openverse)", "open.browse.jmweek": "Popular this week", "open.browse.jmnew": "New albums",
-      "open.browse.jmtop": "All-time favourites", "open.browse.jmradio": "Jamendo radios",
+      "open.browse.jmtop": "All-time favourites", "open.browse.jmradio": "Jamendo radios", "open.browse.autrend": "Trending on Audius",
       "open.mood.relaxed": "Relaxed", "open.mood.happy": "Happy", "open.mood.energetic": "Energetic", "open.mood.romantic": "Romantic",
       "open.mood.sad": "Melancholic", "open.mood.epic": "Epic", "open.mood.dark": "Dark",
       "open.genre.rock": "Rock", "open.genre.jazz": "Jazz", "open.genre.electronic": "Electronic", "open.genre.hiphop": "Hip-hop",
@@ -458,7 +565,7 @@
       "open.browse.live": "Συναυλίες live", "open.browse.netlabels": "Άλμπουμ από netlabels", "open.browse.new": "Νέα ελεύθερα άλμπουμ",
       "open.browse.classical": "Κλασική", "open.browse.remix": "Remix", "open.browse.instr": "Ορχηστρικά",
       "open.browse.free": "Ελεύθερα τραγούδια (Openverse)", "open.browse.jmweek": "Δημοφιλή της εβδομάδας", "open.browse.jmnew": "Νέα άλμπουμ",
-      "open.browse.jmtop": "Τα αγαπημένα όλων των εποχών", "open.browse.jmradio": "Ραδιόφωνα Jamendo",
+      "open.browse.jmtop": "Τα αγαπημένα όλων των εποχών", "open.browse.jmradio": "Ραδιόφωνα Jamendo", "open.browse.autrend": "Δημοφιλή στο Audius",
       "open.mood.relaxed": "Χαλαρή", "open.mood.happy": "Χαρούμενη", "open.mood.energetic": "Γεμάτη ενέργεια", "open.mood.romantic": "Ρομαντική",
       "open.mood.sad": "Μελαγχολική", "open.mood.epic": "Επική", "open.mood.dark": "Σκοτεινή",
       "open.genre.rock": "Ροκ", "open.genre.jazz": "Τζαζ", "open.genre.electronic": "Ηλεκτρονική", "open.genre.hiphop": "Χιπ χοπ",
@@ -496,7 +603,8 @@
     shelf("jmweek", "jm", { order: "popularity_week" }),
     shelf("jmnew", "jm", { albums: 1, order: "releasedate_desc" }),
     shelf("jmtop", "jm", { order: "popularity_total" }),
-    shelf("jmradio", "jm", { radios: 1 })
+    shelf("jmradio", "jm", { radios: 1 }),
+    shelf("autrend", "au", {})
   ];
   // [id, English, Greek] from the table.
   function named(pre, ids) { return ids.map(function (id) { return [id, STRINGS.en[pre + id], STRINGS.el[pre + id]]; }); }
@@ -628,6 +736,12 @@
       return jmTracks(Object.assign({}, o, { artists: ids }));
     });
   }
+  function auSearch(o) { o = o || {}; return getJSON(auUrl(o)).then(auParse); }
+  function euSearch(o) {
+    o = o || {};
+    if (!euKeyOk(o.key)) return Promise.reject(new OpenError("key"));
+    return getJSON(euUrl(o)).then(function (j) { return euParse(j, o.page); });
+  }
   function jmRadios() { return getJSON(jmRadiosUrl()).then(jmParseRadios); }
   function jmRadio(radio) { return getJSON(jmRadioStreamUrl(radio.id)).then(function (j) { return jmRadioItem(j, radio); }); }
 
@@ -699,6 +813,8 @@
     ia: { g: 1, cc: 1, lic: 1, y: 1, off: 1 },
     ov: { g: 1, dur: 1, lic: 1, off: 1 },
     cc: { g: 1, dur: 1, lic: 1, vi: 1, off: 1 },
+    au: { g: 1, dur: 1, mood: 1 },
+    eu: { g: 1, cc: 1, lic: 1, y: 1 },
     loc: { g: 1, dur: 1, y: 1 }
   };
   // The groups of F that source src cannot honour.
@@ -709,7 +825,7 @@
       if (!can[k]) return true;
       if (k === "lic" && src === "jm" && F.pd) return true;   // Jamendo has no public domain
       if (k === "vi" && src === "cc" && F.vi === "v") return true;
-      if (k === "cc" && src === "ia" && !countryEn(F.cc)) return true;
+      if (k === "cc" && (src === "ia" || src === "eu") && !countryEn(F.cc)) return true;
       return false;
     });
   }
@@ -764,7 +880,7 @@
   }
 
   var api = {
-    VERSION: "1.4.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.5.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,
@@ -777,6 +893,8 @@
     browseName: browseName, moodName: moodName, genreName: genreName, STRINGS: STRINGS,
     normFilter: normFilter, groupsOf: groupsOf, filterOn: filterOn, filterSig: filterSig, filterMissing: filterMissing, CAN: CAN, DUR: DUR, SPEEDS: SPEEDS,
     licOk: licOk, trackPasses: trackPasses, albumPasses: albumPasses, localPasses: localPasses, cc3: cc3, countryCodes: countryCodes, countryEn: countryEn,
+    SOURCE_ORDER: SOURCE_ORDER, auUrl: auUrl, auParse: auParse, auLicence: auLicence, auSearch: auSearch, AU_GENRES: AU_GENRES, AU_MOODS: AU_MOODS,
+    euUrl: euUrl, euParse: euParse, euSearch: euSearch, euKeyOk: euKeyOk,
     jmCountryUrl: jmCountryUrl, jmParseIds: jmParseIds, jmFiltered: jmFiltered,
     getJSON: getJSON, iaSearch: iaSearch, iaAlbum: iaAlbum, ovSearch: ovSearch, ccSearch: ccSearch, OpenError: OpenError
   };

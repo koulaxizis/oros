@@ -96,7 +96,7 @@
       "info.file": "File", "info.format": "Format", "info.size": "Size", "info.genre": "Genre", "info.year": "Year", "info.track": "Track",
       "info.length": "Length",
       "liked.empty": "Songs you like appear here. Tap the heart on any song.",
-      "home.free": "Free music", "home.freeSub": "Open catalogues: Jamendo, Internet Archive, Openverse and ccMixter. Every song shows its licence.",
+      "home.free": "Free music", "home.freeSub": "Open catalogues: Jamendo, Internet Archive, Openverse, ccMixter, Audius and Europeana. Every song shows its licence (Audius: free to listen).",
       "home.genres": "Free music by genre", "kind.free": "Free music", "home.moods": "Moods (Jamendo)", "kind.mood": "Mood",
       "o.title": "Free music online", "o.all": "All", "o.loading": "Loading…", "o.more": "Show more", "o.none": "Nothing found here.",
       "o.fromQueue": "The list did not load this time. These are the songs playing from here.",
@@ -160,6 +160,31 @@
       "fl.skipMine": "Your music is left out: it cannot be filtered by {f}.",
       "fl.mine": "Your music",
       "fl.needOpen": "Turn on free music online in Settings to search the open catalogues with filters.",
+      "au.free": "Free to listen",
+      "au.freeLong": "The artist shares this song to be heard for free on Audius. It has no free licence: listen only, no copies or reuse.",
+      "au.note": "Audius: artists share these songs to be heard for free. Most have no free licence, so they stream only and a licence filter leaves Audius out.",
+      "eu.needKey": "Europeana needs your own free API key.",
+      "eu.addKey": "Add key",
+      "eu.key": "Your Europeana API key",
+      "eu.keyPh": "Paste your key",
+      "eu.keySaved": "Key saved (paste a new one to change it)",
+      "eu.getKey": "Get a free key at europeana.eu",
+      "eu.keyHint": "The key stays on this device, sealed, never synced and never sent anywhere but api.europeana.eu.",
+      "eu.save": "Save key",
+      "eu.saved": "Europeana key saved.",
+      "eu.saveErr": "The key could not be saved on this device.",
+      "eu.forget": "Remove key",
+      "eu.forgot": "Europeana key removed.",
+      "eu.badKey": "Europeana did not accept the key. Check it in Settings › Sources.",
+      "src.btn": "Sources",
+      "src.title": "Sources",
+      "src.hint": "Which open catalogues Music asks when you browse or search. Each is asked straight from this device, only then.",
+      "src.jm": "Independent artists under Creative Commons. Streaming only.",
+      "src.ia": "Netlabels, classical and the Live Music Archive; open licences only.",
+      "src.ov": "Creative Commons and public-domain songs from Wikimedia Commons, Freesound and more.",
+      "src.cc": "Creative Commons remixes, instrumentals and a cappellas.",
+      "src.au": "Free to listen: artists share songs to be heard, mostly without a free licence. Streaming only.",
+      "src.eu": "Open-licence recordings of Europe's archives and radios. Needs your own free key.",
       "m.share": "Share…", "sh.title": "Share this song", "sh.name": "Send its name as a link",
       "sh.file": "Send the file itself", "sh.fileSub": "A song on this device: send only its name, or the file itself (only if it is yours to give).",
       "sh.big": "Too big to send as a file (100 MB at most).", "sh.fileNo": "This device cannot send this file. Send its name instead.",
@@ -172,7 +197,7 @@
       "toast.offNo": "The licence or the source does not allow an offline copy of this song.", "toast.offHave": "Already saved for offline.",
       "toast.offDel": "Offline copy removed.", "toast.offDels": "Offline copies removed.",
       "lib.offline": "Offline", "off.empty": "Songs from the free catalogues that you save for offline appear here.", "off.badge": "Saved for offline",
-      "s.open": "Free music online (Jamendo, Internet Archive, Openverse, ccMixter)",
+      "s.open": "Free music online (Jamendo, Internet Archive, Openverse, ccMixter, Audius, Europeana)",
       "s.openHint": "Only when you browse or search. The requests go straight to those services, with no account and no tracking.",
       "s.offInfo": "Offline copies: {n} · {s}", "s.offClear": "Delete all offline copies",
       "s.offClearQ": "Delete all offline copies ({n})? The songs stay in your playlists and play online.",
@@ -322,7 +347,7 @@
       "info.file": "Αρχείο", "info.format": "Μορφή", "info.size": "Μέγεθος", "info.genre": "Είδος", "info.year": "Έτος", "info.track": "Κομμάτι",
       "info.length": "Διάρκεια",
       "liked.empty": "Τα τραγούδια που σου αρέσουν εμφανίζονται εδώ. Πάτησε την καρδιά σε οποιοδήποτε τραγούδι.",
-      "home.free": "Ελεύθερη μουσική", "home.freeSub": "Ανοιχτοί κατάλογοι: Jamendo, Internet Archive, Openverse και ccMixter. Κάθε τραγούδι δείχνει την άδειά του.",
+      "home.free": "Ελεύθερη μουσική", "home.freeSub": "Ανοιχτοί κατάλογοι: Jamendo, Internet Archive, Openverse, ccMixter, Audius και Europeana. Κάθε τραγούδι δείχνει την άδειά του (Audius: δωρεάν ακρόαση).",
       "home.genres": "Ελεύθερη μουσική ανά είδος", "kind.free": "Ελεύθερη μουσική", "home.moods": "Διάθεση (Jamendo)", "kind.mood": "Διάθεση",
       "o.title": "Ελεύθερη μουσική online", "o.all": "Όλα", "o.loading": "Φόρτωση…", "o.more": "Δείξε περισσότερα", "o.none": "Δεν βρέθηκε τίποτα εδώ.",
       "o.fromQueue": "Η λίστα δεν φόρτωσε αυτή τη φορά. Αυτά είναι τα τραγούδια που παίζουν από εδώ.",
@@ -386,6 +411,31 @@
       "fl.skipMine": "Η μουσική σου παραλείπεται: δεν φιλτράρεται κατά {f}.",
       "fl.mine": "Η μουσική σου",
       "fl.needOpen": "Άνοιξε την ελεύθερη μουσική online στις Ρυθμίσεις για να ψάχνεις στους ανοιχτούς καταλόγους με φίλτρα.",
+      "au.free": "Δωρεάν ακρόαση",
+      "au.freeLong": "Ο καλλιτέχνης μοιράζεται αυτό το τραγούδι για δωρεάν ακρόαση στο Audius. Δεν έχει ελεύθερη άδεια: μόνο ακρόαση, χωρίς αντίγραφα ή επαναχρησιμοποίηση.",
+      "au.note": "Audius: οι καλλιτέχνες μοιράζονται αυτά τα τραγούδια για δωρεάν ακρόαση. Τα περισσότερα δεν έχουν ελεύθερη άδεια, οπότε παίζουν μόνο online και ένα φίλτρο άδειας αφήνει έξω το Audius.",
+      "eu.needKey": "Η Europeana θέλει το δικό σου δωρεάν κλειδί API.",
+      "eu.addKey": "Προσθήκη κλειδιού",
+      "eu.key": "Το κλειδί σου API της Europeana",
+      "eu.keyPh": "Επικόλλησε το κλειδί σου",
+      "eu.keySaved": "Το κλειδί αποθηκεύτηκε (επικόλλησε νέο για αλλαγή)",
+      "eu.getKey": "Πάρε δωρεάν κλειδί στο europeana.eu",
+      "eu.keyHint": "Το κλειδί μένει σε αυτή τη συσκευή, σφραγισμένο, δεν συγχρονίζεται και δεν πηγαίνει πουθενά αλλού εκτός από το api.europeana.eu.",
+      "eu.save": "Αποθήκευση κλειδιού",
+      "eu.saved": "Το κλειδί της Europeana αποθηκεύτηκε.",
+      "eu.saveErr": "Το κλειδί δεν αποθηκεύτηκε σε αυτή τη συσκευή.",
+      "eu.forget": "Αφαίρεση κλειδιού",
+      "eu.forgot": "Το κλειδί της Europeana αφαιρέθηκε.",
+      "eu.badKey": "Η Europeana δεν δέχτηκε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Πηγές.",
+      "src.btn": "Πηγές",
+      "src.title": "Πηγές",
+      "src.hint": "Ποιους ανοιχτούς καταλόγους ρωτά η Μουσική όταν περιηγείσαι ή ψάχνεις. Ο καθένας ρωτιέται κατευθείαν από αυτή τη συσκευή, μόνο τότε.",
+      "src.jm": "Ανεξάρτητοι καλλιτέχνες με άδειες Creative Commons. Μόνο online.",
+      "src.ia": "Netlabels, κλασική και το Live Music Archive· μόνο ανοιχτές άδειες.",
+      "src.ov": "Τραγούδια Creative Commons και κοινού κτήματος από Wikimedia Commons, Freesound και άλλες πηγές.",
+      "src.cc": "Remix, ορχηστρικά και a cappella με άδειες Creative Commons.",
+      "src.au": "Δωρεάν ακρόαση: οι καλλιτέχνες μοιράζονται τραγούδια για να ακουστούν, τα περισσότερα χωρίς ελεύθερη άδεια. Μόνο online.",
+      "src.eu": "Ηχογραφήσεις με ανοιχτή άδεια από αρχεία και ραδιόφωνα της Ευρώπης. Θέλει το δικό σου δωρεάν κλειδί.",
       "m.share": "Κοινοποίηση…", "sh.title": "Κοινοποίηση τραγουδιού", "sh.name": "Αποστολή του ονόματος ως σύνδεσμο",
       "sh.file": "Αποστολή του ίδιου του αρχείου", "sh.fileSub": "Τραγούδι σε αυτή τη συσκευή: στείλε μόνο το όνομά του ή το ίδιο το αρχείο (μόνο αν σου ανήκει να το δώσεις).",
       "sh.big": "Πολύ μεγάλο για αποστολή ως αρχείο (έως 100 MB).", "sh.fileNo": "Αυτή η συσκευή δεν μπορεί να στείλει αυτό το αρχείο. Στείλε καλύτερα το όνομά του.",
@@ -398,7 +448,7 @@
       "toast.offNo": "Η άδεια ή η πηγή δεν επιτρέπει αντίγραφο χωρίς σύνδεση για αυτό το τραγούδι.", "toast.offHave": "Είναι ήδη αποθηκευμένο για χωρίς σύνδεση.",
       "toast.offDel": "Το αντίγραφο αφαιρέθηκε.", "toast.offDels": "Τα αντίγραφα αφαιρέθηκαν.",
       "lib.offline": "Χωρίς σύνδεση", "off.empty": "Εδώ εμφανίζονται τα τραγούδια από τους ελεύθερους καταλόγους που αποθηκεύεις για χωρίς σύνδεση.", "off.badge": "Αποθηκευμένο για χωρίς σύνδεση",
-      "s.open": "Ελεύθερη μουσική online (Jamendo, Internet Archive, Openverse, ccMixter)",
+      "s.open": "Ελεύθερη μουσική online (Jamendo, Internet Archive, Openverse, ccMixter, Audius, Europeana)",
       "s.openHint": "Μόνο όταν περιηγείσαι ή ψάχνεις. Τα αιτήματα πάνε κατευθείαν σε αυτές τις υπηρεσίες, χωρίς λογαριασμό και χωρίς παρακολούθηση.",
       "s.offInfo": "Αντίγραφα χωρίς σύνδεση: {n} · {s}", "s.offClear": "Διαγραφή όλων των αντιγράφων",
       "s.offClearQ": "Να διαγραφούν όλα τα αντίγραφα χωρίς σύνδεση ({n}); Τα τραγούδια μένουν στις λίστες σου και παίζουν online.",
@@ -575,7 +625,7 @@
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, viz: { on: false, st: "glow" }, fl: {} };
+    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, viz: { on: false, st: "glow" }, fl: {}, soff: [] };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
@@ -584,7 +634,9 @@
         if (["title", "artist", "album", "added"].indexOf(o.sort) >= 0) p.sort = o.sort;
         if (["auto", "el", "latin"].indexOf(o.legacy) >= 0) p.legacy = o.legacy;
         if (o.open === false) p.open = false;
-        if (["all", "jm", "ia", "ov", "cc"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
+        if (["all", "jm", "ia", "ov", "cc", "au", "eu"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
+        // MU-SRC: open sources turned off on this device (all on by default).
+        if (Array.isArray(o.soff)) p.soff = o.soff.filter(function (x) { return ["jm", "ia", "ov", "cc", "au", "eu"].indexOf(x) >= 0; });
         if (o.ly === "on" || o.ly === "off") p.ly = o.ly;
         if (o.mb === true) p.mb = true;
         // MU-FIND1: the search filters (open.js normFilter).
@@ -725,6 +777,17 @@
   function keepT(o, l) { return o.f ? l.filter(function (r) { return O.trackPasses(r, o.f); }) : l; }
   function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: o.f ? r.albums.filter(function (a) { return O.albumPasses(a, o.f); }) : r.albums, more: r.more }; }); }; }
   function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  function fAu(o) { return function (page) { return O.auSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  function fEu(o) { return function (page) { return O.euSearch(Object.assign({}, o, { page: page, key: euKey })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  // MU-SRC: which open sources this device asks (Settings › Sources).
+  function srcOn(sk) { return prefs.soff.indexOf(sk) < 0; }
+  // The person's own Europeana key, read once from the sealed store.
+  var euKey = null;
+  function loadEuKey() {
+    var L = window.OrosMusicLB;
+    if (!L || typeof L.secret !== "function") return;
+    L.secret("europeana").then(function (k) { euKey = O && O.euKeyOk(k || "") ? k : null; if (euKey) renderKeepScroll(); });
+  }
   function fCc(o) { return function (page) { return O.ccSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   // Jamendo songs asked in more than one way (a mood, MU-MOOD2): page 1
   // goes down the list until one way answers with songs, later pages
@@ -755,7 +818,7 @@
   function albumOf(sk, id) { return sk === "jm" ? O.jmAlbum(id) : O.iaAlbum(id); }
   function fAlbum(sk, id) { return function () { return albumOf(sk, id).then(function (r) { return { list: r.tracks, more: false, extra: r.album }; }); }; }
   function errText(code, s) {
-    return code === "busy" ? t("o.busy", { s: s }) : code === "offline" ? t("o.offline") : code === "closed" ? t("o.closed") : t("o.err", { s: s });
+    return code === "key" ? t("eu.badKey") : code === "busy" ? t("o.busy", { s: s }) : code === "offline" ? t("o.offline") : code === "closed" ? t("o.closed") : t("o.err", { s: s });
   }
   // Loading / error / "show more" under a list of an open catalogue.
   function feedStatus(box, key, s, noMore) {
@@ -807,6 +870,7 @@
     s1.appendChild(el("p", "dim small sec-note", t("home.freeSub")));
     var row = el("div", "cards");
     O.BROWSE.forEach(function (b) {
+      if (!srcOn(b.src)) return;
       var name = O.browseName(b.id, LANG);
       row.appendChild(card(cover("", b.id, "", I.globe), name, srcName(b.src), function () { openView({ kind: "browse", id: b.id }); }));
     });
@@ -2601,7 +2665,7 @@
     }
     var F = FL(), fOn = !!(O && O.filterOn(F)), locMiss = fOn ? O.filterMissing("loc", F) : [];
     var r = fOn && locMiss.length ? { songs: [], albums: [], artists: [] } : C.search(fOn ? tracks.filter(function (x) { return O.localPasses(x, F); }) : tracks, q, LANG);
-    if (fOn && locMiss.length) box.appendChild(el("p", "dim small o-note fl-skip", t("fl.skipMine", { f: missText(locMiss) })));
+    if (fOn && locMiss.length && tracks.length) box.appendChild(el("p", "dim small o-note fl-skip", t("fl.skipMine", { f: missText(locMiss) })));
     var w = C.words(q);
     var pls = D().pls.filter(function (p) { var f = C.fold(p.n); return w.every(function (x) { return f.indexOf(x) >= 0; }); });
     if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !openOn() && !svLib().length && !A) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
@@ -2629,7 +2693,8 @@
   function onlineResults(box, q) {
     var sec = section(box, t("o.title"));
     var chips = el("div", "chips");
-    ["all", "jm", "ia", "ov", "cc"].forEach(function (k) {
+    if (prefs.osrc !== "all" && !srcOn(prefs.osrc)) prefs.osrc = "all";
+    ["all"].concat(O.SOURCE_ORDER.filter(srcOn)).forEach(function (k) {
       var b = button(k === "all" ? t("o.all") : srcName(k), "chip" + (prefs.osrc === k ? " on" : ""), function () { prefs.osrc = k; savePrefs(); renderKeepScroll(); });
       b.setAttribute("aria-pressed", prefs.osrc === k ? "true" : "false");
       chips.appendChild(b);
@@ -2641,7 +2706,7 @@
     var F = FL(), fOn = O.filterOn(F), sig = fOn ? "|" + O.filterSig(F) : "", skipped = [];
     var o = fOn ? { q: q, f: F } : { q: q };
     var miss = function (sk) { var l = fOn ? O.filterMissing(sk, F) : []; if (l.length) skipped.push(t("fl.skipOne", { s: srcName(sk), f: missText(l) })); return l.length > 0; };
-    if ((all || prefs.osrc === "ia") && !miss("ia")) {
+    if ((all || prefs.osrc === "ia") && srcOn("ia") && !miss("ia")) {
       var kI = "s|ia|" + q + sig, fi = feed(kI, fIa(o));
       sec.appendChild(el("h3", "sub-h", t("o.albums", { s: srcName("ia") })));
       var ci = el("div", all ? "cards" : "grid");
@@ -2649,11 +2714,15 @@
       if (fi.list.length) sec.appendChild(ci);
       feedStatus(sec, kI, srcName("ia"));
     }
-    ["jm", "ov", "cc"].forEach(function (sk) {
+    ["jm", "ov", "cc", "au", "eu"].forEach(function (sk) {
       if (!all && prefs.osrc !== sk) return;
-      if (miss(sk)) return;
-      var k = "s|" + sk + "|" + q + sig, f = feed(k, sk === "jm" ? fJm(o) : sk === "ov" ? fOv(o) : fCc(o));
+      if (!srcOn(sk) || miss(sk)) return;
+      // Audius and Europeana need words or a filter (no "everything" list).
+      if ((sk === "au" || sk === "eu") && !q && !fOn) return;
       sec.appendChild(el("h3", "sub-h", t("o.songs", { s: srcName(sk) })));
+      if (sk === "eu" && !euKey) { sec.appendChild(euKeyNote()); return; }
+      var k = "s|" + sk + "|" + q + sig, f = feed(k, sk === "jm" ? fJm(o) : sk === "ov" ? fOv(o) : sk === "cc" ? fCc(o) : sk === "au" ? fAu(o) : fEu(o));
+      if (sk === "au") sec.appendChild(el("p", "dim small sec-note", t("au.note")));
       if (f.list.length) sec.appendChild(rowList(f.list, { src: src }));
       feedStatus(sec, k, srcName(sk));
     });
@@ -2720,6 +2789,70 @@
     }
     if (openOn()) onlineResults(box, "");
     else box.appendChild(el("p", "empty", t("fl.needOpen")));
+  }
+  // ---------- Sources (MU-SRC) ----------
+  function euKeyNote() {
+    var p = el("div", "o-note");
+    p.appendChild(el("span", "dim small", t("eu.needKey")));
+    p.appendChild(button(t("eu.addKey"), "pill small-pill", sourcesDlg));
+    return p;
+  }
+  function sourcesDlg() {
+    var dlg = makeDialog("mu-sources", "menu-dlg");
+    dlg.addEventListener("close", function () { setTimeout(renderKeepScroll, 0); });
+    dlg.appendChild(el("h2", "dlg-title", t("src.title")));
+    dlg.appendChild(el("p", "dim small dlg-sub", t("src.hint")));
+    O.SOURCE_ORDER.forEach(function (sk) {
+      var lab = el("label", "check");
+      var c = el("input");
+      c.type = "checkbox"; c.checked = srcOn(sk);
+      c.addEventListener("change", function () {
+        prefs.soff = prefs.soff.filter(function (x) { return x !== sk; });
+        if (!c.checked) prefs.soff.push(sk);
+        savePrefs(); renderKeepScroll();
+      });
+      lab.appendChild(c);
+      lab.appendChild(el("span", "", srcName(sk)));
+      dlg.appendChild(lab);
+      dlg.appendChild(el("p", "dim small", t("src." + sk)));
+    });
+    // Europeana: the person's own key.
+    var L = window.OrosMusicLB;
+    if (L && typeof L.saveSecret === "function") {
+      var form = el("form", "");
+      var f0 = el("label", "field");
+      f0.appendChild(el("span", "dim small", t("eu.key")));
+      var inp = el("input");
+      inp.type = "password"; inp.autocomplete = "off"; inp.spellcheck = false; inp.maxLength = 40;
+      inp.setAttribute("autocapitalize", "none");
+      inp.placeholder = euKey ? t("eu.keySaved") : t("eu.keyPh");
+      f0.appendChild(inp);
+      form.appendChild(f0);
+      var get = el("a", "link small", t("eu.getKey"));
+      get.href = "https://pro.europeana.eu/page/get-api"; get.target = "_blank"; get.rel = "noopener noreferrer";
+      get.addEventListener("click", function (e) { e.preventDefault(); openExt(get.href); });
+      form.appendChild(el("p", "dim small")).appendChild(get);
+      form.appendChild(el("p", "dim small", t("eu.keyHint")));
+      var row = el("div", "dlg-btns");
+      if (euKey) row.appendChild(button(t("eu.forget"), "txt-btn danger", function () { L.forgetSecret("europeana").then(function () { euKey = null; dlg.close(); showToast(t("eu.forgot")); renderKeepScroll(); }); }));
+      var ok = el("button", "txt-btn accent", t("eu.save"));
+      ok.type = "submit";
+      row.appendChild(ok);
+      form.appendChild(row);
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var v = inp.value.trim();
+        if (!O.euKeyOk(v)) { showToast(t("eu.badKey")); inp.focus(); return; }
+        L.saveSecret("europeana", v).then(function () {
+          euKey = v;
+          Object.keys(feeds).forEach(function (k) { if (/^s\|eu\|/.test(k)) delete feeds[k]; });
+          dlg.close(); showToast(t("eu.saved")); renderKeepScroll();
+        }, function () { showToast(t("eu.saveErr")); });
+      });
+      dlg.appendChild(form);
+    }
+    dlg.appendChild(el("div", "dlg-btns")).appendChild(button(t("close"), "txt-btn", function () { dlg.close(); }));
+    openDialog(dlg);
   }
   function filtersDlg() {
     var F = FL();
@@ -3054,7 +3187,7 @@
       var name = O.browseName(b.id, LANG);
       src = { kind: "browse", id: b.id, n: name };
       k = "b|" + b.id;
-      f = feed(k, b.src === "ia" ? fIa(b.ia) : b.src === "cc" ? fCc(b.cc) : b.src === "jm" ? fJm(b.jm) : fOv(b.ov));
+      f = feed(k, b.src === "ia" ? fIa(b.ia) : b.src === "cc" ? fCc(b.cc) : b.src === "jm" ? fJm(b.jm) : b.src === "au" ? fAu(b.au) : fOv(b.ov));
       var cardsOnly = b.src === "ia" || (b.jm && (b.jm.albums || b.jm.radios));
       pageHead(m, cover("", b.id, "big", I.globe), t("kind.free"), name, el("div", "ph-sub dim", srcName(b.src)), cardsOnly ? null : liveFeeds([k]), src);
       if (cardsOnly) { var g = el("div", "grid"); f.list.forEach(function (a) { g.appendChild(b.jm && b.jm.radios ? radioCard(a) : oAlbumCard(a)); }); m.appendChild(g); }
@@ -3085,7 +3218,11 @@
       fi.list.forEach(function (a) { ci.appendChild(oAlbumCard(a)); });
       if (fi.list.length) m.appendChild(ci);
       feedStatus(m, ki, srcName("ia"));
-      [["jm", kj, fj], ["ov", ko, fo], ["cc", kc, fc]].forEach(function (x) {
+      // MU-SRC: Audius and (with the person's key) Europeana in genres too.
+      var gl = [["jm", kj, fj], ["ov", ko, fo], ["cc", kc, fc]];
+      if (srcOn("au")) gl.push(["au", "g|au|" + gg.id, feed("g|au|" + gg.id, fAu({ f: { g: gg.id } }))]);
+      if (srcOn("eu") && euKey) gl.push(["eu", "g|eu|" + gg.id, feed("g|eu|" + gg.id, fEu({ f: { g: gg.id } }))]);
+      gl.filter(function (x) { return srcOn(x[0]); }).forEach(function (x) {
         m.appendChild(el("h2", "sub-h", t("o.songs", { s: srcName(x[0]) })));
         if (x[2].list.length) m.appendChild(rowList(x[2].list, { src: src }));
         feedStatus(m, x[1], srcName(x[0]));
@@ -3237,6 +3374,7 @@
         subEl.insertBefore(oi, subEl.firstChild);
       }
       if (r.li) { var lb0 = el("span", "lic", O.licShort(r.li)); lb0.title = O.licLabel(r.li, LANG); subEl.insertBefore(lb0, subEl.firstChild); }
+      else if (r.s === "au") { var lb1 = el("span", "lic lic-free", t("au.free")); lb1.title = t("au.freeLong"); subEl.insertBefore(lb1, subEl.firstChild); }
     }
     tx.appendChild(subEl);
     main.appendChild(tx);
@@ -3640,7 +3778,7 @@
         ta.textContent = "";
         ta.appendChild(c.s === "sv" ? svArtistLink(c, "dim") : isOpen(c) ? oArtistLink(c, "dim") : c.s ? el("span", "dim", c.a || "") : artistLink(c.a, "dim"));
         licLine.hidden = !isOpen(c);
-        licLine.textContent = isOpen(c) ? [c.li ? O.licLabel(c.li, LANG) : "", O.sourceName(c)].filter(Boolean).join(" · ") : "";
+        licLine.textContent = isOpen(c) ? [c.li ? O.licLabel(c.li, LANG) : c.s === "au" ? t("au.free") : "", O.sourceName(c)].filter(Boolean).join(" · ") : "";
         fromN.textContent = (st.src && st.src.n) || t("now.lib");
         var liked = C.isLiked(D(), c.k);
         like.innerHTML = liked ? I.heartOn : I.heart;
@@ -4076,6 +4214,7 @@
       ol.appendChild(el("span", "", t("s.open")));
       dlg.appendChild(ol);
       dlg.appendChild(el("p", "dim small", t("s.openHint")));
+      if (prefs.open) dlg.appendChild(el("div", "menu-col")).appendChild(button(t("src.btn"), "", function () { dlg.close(); sourcesDlg(); }));
       if (A) {
         var ml = el("label", "check");
         var mc = el("input");
@@ -4381,6 +4520,7 @@
       H = api;
       unsub = H.subscribe(onHost);
       window.addEventListener("pagehide", function () { if (unsub) unsub(); });
+      loadEuKey();
       return Promise.all([loadIndex(), loadOff().catch(function () {}), SV ? SV.ready().catch(function () {}) : null]).then(function () {
         renderAll();
         var tg = null;

@@ -478,3 +478,4 @@ dl.info dd { overflow-wrap: anywhere; }
 .fl-skip { opacity: .9; }
 .fl-years input { min-height: 44px; }
 .fl-dlg select { min-height: 44px; }
+.lic.lic-free { font-weight: 700; }

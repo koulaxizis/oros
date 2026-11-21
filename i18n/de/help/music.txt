@@ -28,11 +28,15 @@ Lieblingssongs und Playlists werden mit deinen anderen Geräten synchronisiert. 
 Das ⋯-Menü eines Songs hat `Details` (Datei, Format, Größe, Länge) und `Von diesem Gerät löschen`, das die Datei aus `Dateien › Music` löscht. Alte griechische Tags mit der Windows-Codepage werden automatisch erkannt; wenn Namen falsch aussehen, wähle in den Einstellungen unter `Alte Tags` die Option `Immer Griechisch` oder `Immer westlich`.
 
 ## Freie Musik
-Neben deinen eigenen Songs spielt Musik freie und legale Musik aus vier offenen Katalogen, ohne Konto:
+Neben deinen eigenen Songs spielt Musik freie und legale Musik aus sechs offenen Katalogen:
 - **Jamendo**: unabhängige Künstler, die ihre Musik unter Creative Commons teilen. Beliebt diese Woche, neue Alben, Lieblinge aller Zeiten, Stimmungen und Jamendos eigene Radios. Jamendo-Songs werden immer gestreamt (Jamendo erlaubt keine Offline-Kopien), und jeder verlinkt zurück auf seine Seite bei Jamendo. Bricht ein Stream ab (Verbindung weg oder die Adresse des Songs abgelaufen), fragt Musik ihn neu an und spielt dort weiter, wo er stehen blieb; ohne Netz wartet es und spielt weiter, sobald das Netz zurück ist. Nur ein Song, der dann immer noch nicht spielt, wird übersprungen: Der nächste Song startet sofort, und ein Hinweis nennt den übersprungenen Song.
 - **Internet Archive**: Netlabel-Alben, Klassikaufnahmen und das Live Music Archive (Konzertmitschnitte von Bands, die freie, nichtkommerzielle Weitergabe erlauben). Nur Einträge mit Creative-Commons- oder Gemeinfrei-Lizenz werden gezeigt.
 - **Openverse**: Songs mit Creative-Commons- oder Gemeinfrei-Lizenz von Wikimedia Commons, Freesound, Jamendo und mehr.
 - **ccMixter**: Creative-Commons-Remixe, Instrumentals und A-cappellas.
+- **Audius**: Künstler teilen dort Songs zum kostenlosen Anhören (`Angesagt auf Audius` auf `Start`). Die meisten haben keine freie Lizenz, zeigen deshalb `Kostenlos anhören` statt einer Lizenz, werden nur gestreamt, und jeder Lizenzfilter lässt Audius aus.
+- **Europeana**: Aufnahmen mit offener Lizenz aus Europas Archiven und Radios (Volksmusik, Klassik, historische Platten, Live-Radioaufnahmen). Dafür brauchst du deinen eigenen kostenlosen API-Schlüssel: Hol dir einen bei europeana.eu und füge ihn unter `Einstellungen` › `Quellen` ein. Der Schlüssel bleibt versiegelt auf diesem Gerät, wird nie synchronisiert und geht nur an api.europeana.eu. Manche Aufnahmen kommen aus Archiven, die andere Seiten sie nicht abspielen lassen; diese werden übersprungen.
+
+`Einstellungen` › `Quellen` schaltet jeden Katalog auf diesem Gerät ein oder aus.
 
 Auf `Start` hat `Freie Musik` Regale wie `Beliebt diese Woche`, `Jamendo-Radios`, `Live-Konzerte`, `Netlabel-Alben`, `Klassik` und `Remixe`; `Freie Musik nach Genre` hat Genres und `Stimmungen (Jamendo)` hat Stimmungen. In `Suche` fügt `Freie Musik online` Ergebnisse aus den Katalogen hinzu, sobald du aufhörst zu tippen (oder Enter drückst); die Chips wählen `Alle` oder einen Katalog. Die Kataloge werden erst gefragt, wenn du ein Regal öffnest oder suchst, und die Anfragen gehen direkt an sie.
 

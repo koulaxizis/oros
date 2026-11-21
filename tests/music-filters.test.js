@@ -128,9 +128,9 @@ test("songs on this device: genre in any spelling, year, length", () => {
 
 test("filter words exist in English, Greek and German", () => {
   const src = fs.readFileSync(path.join(__dirname, "..", "music/music.js"), "utf8");
-  const keys = [...new Set([...src.matchAll(/"(fl\.[a-zA-Z0-9.]+)": "/g)].map((m) => m[1]))];
+  const keys = [...new Set([...src.matchAll(/"((?:fl|au|eu|src)\.[a-zA-Z0-9.]+)": "/g)].map((m) => m[1]))];
   assert.ok(keys.length > 50);
-  const used = [...src.matchAll(/t\("(fl\.[a-zA-Z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith("."));
+  const used = [...src.matchAll(/t\("((?:fl|au|eu|src)\.[a-zA-Z0-9.]+)"/g)].map((m) => m[1]).filter((k) => !k.endsWith("."));
   used.forEach((k) => assert.ok(keys.includes(k), "missing " + k));
   // dynamic keys
   ["fl.g.g", "fl.g.cc", "fl.g.dur", "fl.g.lic", "fl.g.y", "fl.g.vi", "fl.g.mood", "fl.g.sp", "fl.g.gd", "fl.g.ae", "fl.g.off",
@@ -141,4 +141,82 @@ test("filter words exist in English, Greek and German", () => {
   global.orosPack = (l, a, o) => { de = o; };
   require(path.join(__dirname, "..", "i18n/de/music.js"));
   keys.forEach((k) => assert.ok(de[k], "DE " + k));
+});
+
+// ---------- MU-SRC (wave 2): Audius and Europeana ----------
+const C = require(path.join(__dirname, "..", "music/core.js")).OrosMusicCore;
+
+test("Audius: addresses, songs, free to listen", () => {
+  const s = q(O.auUrl({ q: "piano", f: { g: "hiphop", mood: "sad", sort: "new" }, page: 2 }));
+  assert.equal(s.get("app_name"), "orOS");
+  assert.equal(s.get("query"), "piano");
+  assert.equal(s.get("genre"), "Hip-Hop/Rap");
+  assert.equal(s.get("mood"), "Melancholy");
+  assert.equal(s.get("sort_method"), "recent");
+  assert.equal(s.get("offset"), "20");
+  assert.match(O.auUrl({ f: { g: "rock" } }), /\/tracks\/trending\?.*genre=Rock.*time=month/);
+  assert.match(O.auUrl({ f: { mood: "happy" } }), /\/tracks\/search\?.*mood=Upbeat/);
+  assert.equal(O.auLicence("Attribution-NonCommercial CC BY-NC"), "by-nc");
+  assert.equal(O.auLicence("All rights reserved"), "");
+  const r = O.auParse({ data: [
+    { id: "jZXZa", title: "Time For Jazz", duration: 116, permalink: "/boyjugo/time-for-jazz", license: null, is_streamable: true,
+      artwork: { "480x480": "https://cn1.mainnet.audiusindex.org/content/Qm/480x480.jpg" }, user: { name: "BoyJugo", handle: "boyjugo" } },
+    { id: "gated1", title: "Paid", duration: 100, is_stream_gated: true, user: { name: "X" } },
+    { id: "bad id!", title: "Bad", user: {} },
+    { id: "x2", title: "<img src=x>", duration: 200, permalink: "javascript:alert(1)", user: { name: "Y" }, license: "Attribution CC BY" }] });
+  assert.equal(r.tracks.length, 2);
+  const a = r.tracks[0];
+  assert.equal(a.s, "au");
+  assert.equal(a.u, "https://discoveryprovider.audius.co/v1/tracks/jZXZa/stream?app_name=orOS");
+  assert.equal(a.pg, "https://audius.co/boyjugo/time-for-jazz");
+  assert.equal(a.li, undefined);
+  assert.equal(a.off, undefined);
+  assert.equal(r.tracks[1].pg, "https://audius.co/");
+  assert.equal(r.tracks[1].li, "by");
+  // Travels in the synced slice like the other open sources.
+  assert.equal(C.normRef(a).s, "au");
+  assert.equal(C.isRemote(a), true);
+  assert.deepEqual(O.filterMissing("au", { com: 1 }), ["lic"]);
+  assert.deepEqual(O.filterMissing("au", { off: 1 }), ["off"]);
+  assert.deepEqual(O.filterMissing("au", { g: "rock", mood: "dark", dur: "s" }), []);
+});
+
+test("Europeana: own key, refinements, open licences only", () => {
+  assert.equal(O.euKeyOk("api2demo"), true);
+  assert.equal(O.euKeyOk("a b"), false);
+  assert.equal(O.euKeyOk(""), false);
+  const u = decodeURIComponent(O.euUrl({ q: "rebetiko", key: "mykey123", f: { g: "folk", cc: "GR", y0: 1930, y1: 1960, pd: 1, sort: "new" }, page: 2 }));
+  assert.match(u, /^https:\/\/api\.europeana\.eu\/record\/v2\/search\.json\?wskey=mykey123&query=rebetiko folk&qf=TYPE:SOUND&reusability=open&media=true/);
+  assert.match(u, /&start=21/);
+  assert.match(u, /qf=COUNTRY:"Greece"/);
+  assert.match(u, /qf=YEAR:\[1930 TO 1960\]/);
+  assert.match(u, /qf=RIGHTS:\*publicdomain\*/);
+  assert.match(u, /sort=timestamp_created desc/);
+  assert.match(O.euUrl({ key: "k1234" }), /query=\*/);
+  const r = O.euParse({ success: true, totalResults: 50, items: [
+    { id: "/937/Culturalia_1", title: ["Temă de jazz"], rights: ["http://creativecommons.org/licenses/by-sa/4.0/"],
+      edmIsShownBy: ["https://resource.culturalia.ro/a.mp3"], dataProvider: ["Romanian Radio"], year: ["2010"],
+      edmPreview: ["https://api.europeana.eu/thumbnail/v2/url.json?uri=x&type=SOUND"] },
+    { id: "/2059219/x", title: ["Gallica"], rights: ["http://creativecommons.org/publicdomain/mark/1.0/"], edmIsShownBy: ["http://gallica.bnf.fr/ark:/1/f1.audio"], edmPreview: ["https://evil.example/x.png"] },
+    { id: "/1/closed", title: ["Closed"], rights: ["http://rightsstatements.org/vocab/InC/1.0/"], edmIsShownBy: ["https://a.org/x.mp3"] },
+    { id: "../bad", title: ["Bad"], rights: ["http://creativecommons.org/licenses/by/4.0/"], edmIsShownBy: ["https://a.org/x.mp3"] }] }, 1);
+  assert.equal(r.tracks.length, 2);
+  assert.equal(r.more, true);
+  assert.equal(r.tracks[0].li, "by-sa 4.0");
+  assert.equal(r.tracks[0].a, "Romanian Radio");
+  assert.equal(r.tracks[0].pg, "https://www.europeana.eu/item/937/Culturalia_1");
+  assert.equal(r.tracks[1].u, "https://gallica.bnf.fr/ark:/1/f1.audio");   // http asked as https
+  assert.equal(r.tracks[1].art, undefined);                                  // covers only from Europeana's thumbnails
+  assert.equal(C.normRef(r.tracks[0]).s, "eu");
+  assert.throws(() => O.euParse({ success: false, error: "Invalid API key" }), (e) => e.code === "key");
+  assert.deepEqual(O.filterMissing("eu", { cc: "GR", y0: 1900, pd: 1, g: "folk" }), []);
+  assert.deepEqual(O.filterMissing("eu", { dur: "s", off: 1 }), ["dur", "off"]);
+  return O.euSearch({ q: "x" }).then(() => assert.fail("no key"), (e) => assert.equal(e.code, "key"));
+});
+
+test("sources: order, names, Audius shelf", () => {
+  assert.deepEqual(O.SOURCE_ORDER, ["jm", "ia", "ov", "cc", "au", "eu"]);
+  O.SOURCE_ORDER.forEach((s) => assert.ok(O.SOURCES[s].name));
+  assert.equal(O.browseOf("autrend").src, "au");
+  assert.equal(O.browseName("autrend", "el"), "Δημοφιλή στο Audius");
 });
