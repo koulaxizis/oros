@@ -119,7 +119,7 @@
   }
   // Stops the run now: nothing more is changed, what it changed so far stays (with Undo).
   function stopRun(by) { if (run && run.stop) run.stop(by); }
-  var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1, addfont: 1 };
+  var PRO_ASYNC = { images: 1, bleedfill: 1, thumbs: 1, addfont: 1, placepage: 1 };
   // defstyle with a font Layout must look up (the disk, Fontsource)
   function slowStep(st) { return PRO_ASYNC[st.op] || ((st.op === "defstyle" || st.op === "masterfield") && st.font && window.LayoutPro && !window.LayoutPro.fontFor({ setup: {} }, st.font)); }
   function edit(rq) {
@@ -162,7 +162,7 @@
     // a picture that does not decode) may not keep Layout busy for ever.
     // 60 s without progress stops the run; nothing more is changed and
     // the report says "timeout" with the file it waited for.
-    var ended = false;
+    var ended = false, skippedN = 0;
     ctl.last = Date.now();
     ctl.tick = function (at) { ctl.last = Date.now(); if (at) ctl.at = at; };
     run = { ops: chk.steps.map(function (st) { return st.op; }), since: Date.now(), ctl: ctl, stop: function (by) {
@@ -187,7 +187,7 @@
         cur = LY.findDoc(id);
         if (!cur) return null;
         if (!slow || !LY.pro) return { ctx: ctx, envs: null };
-        return LY.pro.prepare(cur, steps, ctx, notes, ctl).then(function (pr) { saved = saved.concat(pr.saved); return { ctx: ctx, envs: pr.envs }; });
+        return LY.pro.prepare(cur, steps, ctx, notes, ctl).then(function (pr) { saved = saved.concat(pr.saved); skippedN += pr.skipped || 0; return { ctx: ctx, envs: pr.envs }; });
       }).then(function (pp) {
         if (!pp || ctl.signal.aborted) return;
         var ctx = pp.ctx;
@@ -202,11 +202,13 @@
           if (window.LY_AUTO) e.fill = window.LY_AUTO.fillFields;
           return e;
         }
+        // GL-3: the steps prepare() skipped (a file it could not read) stay out
+        var skipAt = function (i) { return !!(pp.envs && pp.envs[i] && pp.envs[i].skip); };
         var before = JSON.parse(JSON.stringify(cur)), work = JSON.parse(JSON.stringify(cur)), nw = LY.now(), k = 0;
-        steps.forEach(function (st, i) { var e = envAt(i, nw); e.notes = notes; k += C.apply(work, st, e); });
+        steps.forEach(function (st, i) { if (skipAt(i)) return; var e = envAt(i, nw); e.notes = notes; k += C.apply(work, st, e); });
         if (!k) return;
         var done = cur === LY.doc
-          ? LY.op(function (w, now) { var n = 0; steps.forEach(function (st, i) { n += C.apply(w, st, envAt(i, now)); }); return n ? undefined : false; })
+          ? LY.op(function (w, now) { var n = 0; steps.forEach(function (st, i) { if (!skipAt(i)) n += C.apply(w, st, envAt(i, now)); }); return n ? undefined : false; })
           : LY.putDoc(work);
         if (!done) return;
         var now2 = LY.findDoc(id);
@@ -235,14 +237,19 @@
       run = null;
       snaps.forEach(function (x) { if (x.made && !x.fp) x.fp = fp(LY.findDoc(x.id)); });
       var rec = snaps.length ? { tok: newTok(), at: Date.now(), docs: snaps } : null;
-      return (rec ? put(rec) : Promise.resolve()).then(function () {
+      // GL-4: the report goes once the change is in the files and the
+      // index, so read_in_app right after it reads the new document
+      var settled = snaps.length && LY.settled ? LY.settled(20000) : Promise.resolve();
+      return (rec ? put(rec) : Promise.resolve()).then(function () { return settled; }).then(function () {
         // the changed document opens, so the user sees what changed
         if (snaps.length === 1 && (!LY.doc || LY.doc.id !== snaps[0].id) && !document.querySelector("dialog[open]")) {
           if (LY.doc) LY.goHome();
           LY.openDoc(snaps[0].id);
         } else if (!LY.doc) LY.renderHome();
+        if (!err && skippedN && !total && !saved.length) { err = { why: "skipped" }; why = why || "skipped"; }   // GL-3: nothing ran, every step skipped
         var rep = err && !snaps.length && !saved.length ? { failed: 1, why: why || "error", notes: notes.slice() }
           : { ok: 1, n: total, d: snaps.filter(function (x) { return !x.made || total; }).length, per: per.slice(0, 50), cut: 0, made: made, files: saved.length, saved: saved.slice(0, 60), notes: notes.slice(), tok: rec ? rec.tok : "" };
+        if (rep.ok && skippedN) rep.skipped = skippedN;   // GL-3: the notes name them
         if (err && rep.ok) rep.stopped = 1;
         back(key, rep);
         var msg = !total ? (made ? t("as.made1") : t("as.done0")) : snaps.length === 1 ? t("as.done1", { n: total }) : t("as.done", { n: total, d: snaps.length });

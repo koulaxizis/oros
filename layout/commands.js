@@ -108,7 +108,14 @@
   // framemod (Chris 2026-11-18, P0): change or remove frames by id
   CATALOG.framemod = { kind: "doc", args: { frame: { t: "str", max: 400, req: 1 }, x: MMv(-1, 5000, -1), y: MMv(-1, 5000, -1), w: MMv(-1, 5000, -1), h: MMv(-1, 5000, -1),
     ncol: { t: "int", lo: 0, hi: 20, def: 0 }, gut: MMv(-1, 100, -1), ins: MMv(-1, 50, -1), va: { t: "enum", v: ["", "t", "m", "b", "j"], def: "" },
-    fill: { t: "color" }, nofill: { t: "bool", def: 0 }, opacity: { t: "int", lo: -1, hi: 100, def: -1 }, del: { t: "bool", def: 0 } } };
+    fill: { t: "color" }, nofill: { t: "bool", def: 0 }, opacity: { t: "int", lo: -1, hi: 100, def: -1 }, del: { t: "bool", def: 0 },
+    // text wrap (W4b): around the frame, an ellipse, its outline or a picture's transparent edges
+    wrap: { t: "enum", v: ["", "none", "box", "ell", "shape", "alpha"], def: "" }, wrap_mm: MMv(-1, 100, -1),
+    // anchored in the text (W4b): the frame moves with its place in the text
+    anchor: { t: "enum", v: ["", "inline", "off"], def: "" }, anchor_in: { t: "str", max: 80 }, anchor_para: { t: "int", lo: 1, hi: 99999, def: 1 },
+    anchor_at: { t: "enum", v: ["start", "end"], def: "start" } } };
+  // placepage (W4b): a page of a PDF / Scribus / InDesign file as a picture frame's picture
+  CATALOG.placepage = { kind: "async", args: { frame: { t: "str", max: 80, req: 1 }, path: { t: "str", max: 1024, req: 1 }, page: { t: "int", lo: 1, hi: 9999, def: 1 } } };
   // colormode (Chris 2026-11-18, P1): the document's colour after create
   CATALOG.colormode = { kind: "doc", args: { color: { t: "enum", v: ["rgb", "cmyk"], def: "cmyk", req: 1 }, icc: { t: "enum", v: ["", "fogra39"], def: "" } } };
   // masterfield (Chris 2026-11-18, P1): page numbers and running heads
@@ -117,7 +124,7 @@
     hide: { t: "str", max: 60 }, show: { t: "str", max: 60 }, remove: { t: "bool", def: 0 }, lang: { t: "enum", v: ["el", "en"], def: "el" } } };
   // cancel (alone): stops the commands that hold Layout ("busy")
   CATALOG.cancel = { kind: "doc", args: {} };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "framemod", "masterfield", "colormode", "addfont", "cancel"];
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -154,9 +161,12 @@
     "\nmasterpages: the pages `pages` (all, odd, even or 3-10) get the master `master` by name (\"\" = none)" +
     "\ndefmaster: makes or changes a master by `name`: prefix 1-3 letters, base the master it is based on (its objects show under this one's; none = not based on any)" +
     "\npagesize: the pages `pages` get their own trim w × h in mm (a fold-out, a smaller insert; at least 13 mm); w 0 and h 0 = the document's size again; the PDF, the pictures and the editor follow" +
+    "\nplacepage: the picture frame `frame` (an id from the frames list) gets page `page` (1 = the first) of the file `path` (a .pdf, .sla or .idml on the orOS disk inside Claude's folders, or local:<root>/<file>), drawn at 300 ppi and shown whole; read-back says page_of" +
     "\nframemod: the frames `frame` (ids as the document's frames list shows, comma-separated; text or picture) get x y (mm from the page's top left) w h (mm; -1 = as it is), " +
     "ncol columns (0 = as it is), gut the gutter and ins the inset in mm (-1 = as it is), va t|m|b, fill #rrggbb or nofill true, opacity 0-100 (-1 = as it is); del true removes them " +
-    "(a story goes with its last frame; with other frames in its chain the text flows on in them)" +
+    "(a story goes with its last frame; with other frames in its chain the text flows on in them); " +
+    "wrap: text of other frames goes around it: none | box (its frame) | ell (an ellipse in the frame) | shape (its outline: a path's curve, a turned box) | alpha (a picture's opaque part, its transparent edges let the text in), wrap_mm the distance in mm (-1 = as it is); " +
+    "anchor inline puts the first frame `frame` (a picture or shape) into the text of `anchor_in` (a text frame id or story id) at paragraph `anchor_para` (1 = the first), anchor_at start|end of it: it then sits on the line like a big letter and moves with the text; anchor off frees it where it is" +
     "\nmasterfield: on the master `master` (by name), kind pagenum = the page number | runhead = a running head with `text` ({title} = the document's name), " +
     "pos bc|bo|bi (bottom centre, outside, inside) | tc|to|ti (top), from_edge the distance from the trim edge in mm (-1 = 10), font and size (pt, 0 = 9) as defstyle; a second call changes it in place; " +
     "hide a page list (e.g. 1-6,23) keeps it off those pages of that master (front matter, picture pages), show puts it back there; remove true takes it off the master; lang el|en names its style" +
@@ -224,6 +234,8 @@
     var bad = steps.filter(function (st) { return st.op === "images" && !(st.paths && st.paths.length) && !st.folder; });
     if (bad.length) return { ok: false, err: "images needs paths or folder" };
     if (steps.some(function (st) { return st.op === "images" && (st.paths || []).some(function (p) { return !/^local:/i.test(String(p).trim()) && !PRO.normPath(p); }); })) return { ok: false, err: "images: every path is a file on the orOS disk (/internal/… or as files_list shows it)" };
+    if (steps.some(function (st) { return st.op === "placepage" && !/^local:/i.test(String(st.path).trim()) && !PRO.normPath(st.path); })) return { ok: false, err: "placepage: path is a file on the orOS disk (/internal/… or as files_list shows it) or local:<root>/<file>" };
+    if (steps.some(function (st) { return st.op === "placepage" && !/\.(pdf|sla|sla\.gz|idml)$/i.test(String(st.path).trim()); })) return { ok: false, err: "placepage: path is a .pdf, .sla (or .sla.gz) or .idml file (an Affinity .af page: export it as a PDF first)" };
     if (steps.some(function (st) { return st.op === "retext" && !st.frame && !st.story; })) return { ok: false, err: "retext needs frame or story" };
     if (steps.some(function (st) { return st.op === "addfont" && st.source === "free" && !st.family; })) return { ok: false, err: "addfont source free needs family (a Fontsource family name, e.g. Carlito)" };
     if (steps.some(function (st) { return st.op === "addfont" && st.source === "local" && !/^local:.+\.(ttf|otf|ttc|otc|woff2?)$/i.test(String(st.path || "").trim()); })) return { ok: false, err: "addfont source local needs path local:<root>/<file>.ttf (or .otf), a file in a local folder the owner opened for Claude" };
@@ -305,7 +317,26 @@
       doc.m = Math.max(now, (doc.m || 0) + 1);
       return 1;
     }
-    if (st.op === "framemod") return PRO.modFrame(doc, String(st.frame).split(/[\s,]+/).filter(Boolean).slice(0, 200), st, now);
+    if (st.op === "placepage") {
+      // env.page: the page Layout drew and stored (proassist.js)
+      if (!env.page) return M.find(doc.items, String(st.frame)) ? 1 : 0;
+      return PRO.setPage(doc, String(st.frame), env.page, now) ? 1 : 0;
+    }
+    if (st.op === "framemod") {
+      var fmIds = String(st.frame).split(/[\s,]+/).filter(Boolean).slice(0, 200);
+      var fmN = PRO.modFrame(doc, fmIds, st, now);
+      if (!st.del && st.anchor === "inline" && fmIds.length) {
+        var tfr = M.find(doc.items, String(st.anchor_in || "")), sidA = tfr && tfr.t === "text" ? tfr.story : String(st.anchor_in || "");
+        if (M.story(doc, sidA) && PRO.anchorItem(doc, fmIds[0], sidA, (st.anchor_para || 1) - 1, st.anchor_at === "end" ? -1 : 0, now)) fmN++;
+        else if (env.notes && env.notes.indexOf("noAnchor") < 0) env.notes.push("noAnchor");
+      } else if (!st.del && st.anchor === "off") fmIds.forEach(function (id) { if (PRO.releaseItem(doc, id, now)) fmN++; });
+      if (st.del || (!st.wrap && !(st.wrap_mm >= 0))) return fmN;
+      var wst = { wo: st.wrap_mm >= 0 ? st.wrap_mm * PT_PER_MM : -1 };
+      if (st.wrap === "none" || st.wrap === "ell") { wst.wrap = st.wrap; wst.wc = "box"; }
+      else if (st.wrap) wst.wc = st.wrap;
+      if (st.wrap === "box") wst.wrap = "box";
+      return fmN + PRO.setWrap(doc, fmIds, wst, now);
+    }
     if (st.op === "pagesize") return PRO.setPageSize(doc, S.pageTest(st.pages), (st.w || 0) * PT_PER_MM, (st.h || 0) * PT_PER_MM, now);
     if (!hasEngine()) {
       if (st.op === "fit") { if (env.notes && env.notes.indexOf("fitLater") < 0) env.notes.push("fitLater"); return 1; }

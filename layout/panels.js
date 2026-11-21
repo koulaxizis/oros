@@ -263,6 +263,25 @@
     }));
     if (items.some(function (it) { return it.wrap !== "none"; })) {
       s4.appendChild(field(t("props.wo"), numInput(common(items, "wo"), function (v) { editSel(function (it) { it.wo = v; }); })));
+      // by the frame, its outline or the picture's transparent edges (W4b)
+      var wcOf = function (it) { return (it.ext && it.ext.wc) || "box"; };
+      var wcs = items.map(wcOf), wc = wcs.every(function (v) { return v === wcs[0]; }) ? wcs[0] : "";
+      var opts = [["box", t("props.wc.box")], ["shape", t("props.wc.shape")]];
+      if (items.every(function (it) { return it.t === "img" && it.a; })) opts.push(["alpha", t("props.wc.alpha")]);
+      s4.appendChild(el("span", "fld-lbl", t("props.wc")));
+      s4.appendChild(seg(opts, wc, function (v) {
+        var ids = items.map(function (it) { return it.id; });
+        var set = function (prof) {
+          LY.op(function (d2, now) { return window.LayoutPro.setWrap(d2, ids, { wc: v, prof: prof }, now) ? undefined : false; });
+        };
+        if (v !== "alpha") { set(null); return; }
+        Promise.all(items.map(function (it) { return LY.io.wrapProfile(it); })).then(function (list) {
+          var prof = {};
+          items.forEach(function (it, i) { if (list[i]) prof[it.id] = list[i]; });
+          set(prof);
+          if (list.some(function (p) { return p && !p.length; })) LY.toast(t("props.wc.opaque"));
+        });
+      }));
     }
     body.appendChild(s4);
 
@@ -298,8 +317,42 @@
     var dupB = LY.iconBtn("copy", t("props.dup")); dupB.addEventListener("click", ED.duplicate); r3.appendChild(dupB);
     var delB = LY.iconBtn("trash", t("props.del"), "danger"); delB.addEventListener("click", ED.deleteSel); r3.appendChild(delB);
     s5.appendChild(r3);
+    // anchored in the text (W4b): one picture or shape moves with its
+    // place in a story, like a big letter in the line
+    if (one && one.t !== "text" && one.t !== "line" && !M.find(doc.masters, one.pg)) {
+      if (one.ext && typeof one.ext.anc === "string") {
+        s5.appendChild(el("p", "hint", t("anc.on")));
+        s5.appendChild(btn(t("anc.off"), function () {
+          LY.op(function (d2, now) { return window.LayoutPro.releaseItem(d2, one.id, now) ? undefined : false; });
+        }, "small"));
+      } else if (!one.lock) {
+        var spot = anchorSpot(one);
+        if (spot) s5.appendChild(btn(t("anc.add"), function () {
+          LY.op(function (d2, now) { return window.LayoutPro.anchorItem(d2, one.id, spot.sid, spot.p, spot.o, now) ? undefined : false; });
+        }, "small"));
+      }
+    }
     body.appendChild(s5);
     void doc;
+  }
+
+  // Where a frame would be anchored: the text frame on its page under
+  // its top-left corner (else the nearest one), the line nearest its
+  // top, at that line's start. → { sid, p, o } or null
+  function anchorSpot(it) {
+    var doc = LY.doc, L = ED.L, best = null;
+    if (!L) return null;
+    doc.items.forEach(function (f) {
+      if (f.t !== "text" || f.pg !== it.pg || f.hide || !L.frames[f.id] || f.story === (it.ext && it.ext.anc)) return;
+      var lines = L.frames[f.id].lines;
+      if (!lines.length) return;
+      var inside = it.x >= f.x && it.x <= f.x + f.w && it.y >= f.y && it.y <= f.y + f.h;
+      var dx = Math.max(0, f.x - it.x, it.x - (f.x + f.w)), dy = Math.max(0, f.y - it.y, it.y - (f.y + f.h));
+      var dist = inside ? 0 : Math.sqrt(dx * dx + dy * dy);
+      var ln = lines.reduce(function (a, l) { return Math.abs(f.y + l.y - it.y) < Math.abs(f.y + a.y - it.y) ? l : a; }, lines[0]);
+      if (!best || dist < best.dist) best = { dist: dist, sid: f.story, p: ln.p, o: ln.o0 || 0 };
+    });
+    return best;
   }
 
   // Blend (wave C1, blend.js): two shapes picked → make the steps;
@@ -461,6 +514,10 @@
   function imageSection(it) {
     var s = section(t("props.image"));
     s.appendChild(btn(it.a ? t("props.replace") : t("props.place"), function () { LY.io.placeImage(it.id); }, "primary block"));
+    // a page of a PDF, Scribus or InDesign file as the picture (W4b)
+    s.appendChild(btn(t("pp.menu"), function () { LY.io.placePage(it.id); }, "small"));
+    var pp = it.ext && it.ext.pp;
+    if (pp && it.a) s.appendChild(el("p", "hint", t("pp.from", { f: pp.f, p: pp.p })));
     if (it.a) {
       s.appendChild(seg([["fit", t("props.fit")], ["fill", t("props.fillf")]], it.fit === "custom" ? "" : it.fit, function (v) {
         editSel(function (x) { if (x.t !== "img") return false; x.fit = v; R.uniform(x); });
@@ -727,28 +784,14 @@
   // before it goes out. Pages in order, as many as both have.
   var cmpBusy = false;
   function compareDlg() {
-    var doc = LY.doc, RB = window.LY_REBUILD;
-    if (!doc || !RB || cmpBusy) return;
+    var doc = LY.doc;
+    if (!doc || !window.LY_REBUILD || cmpBusy) return;
     LY.io.pickFile(".pdf,application/pdf").then(function (f) {
       if (!f) return;
       cmpBusy = true;
       LY.toast(t("cmp.working"));
-      var order = M.pagesInOrder(doc), L = ED.L || LY.R.computeLayout(doc), chain = Promise.resolve();
-      doc.items.forEach(function (it) { if (it.t === "img" && it.a) chain = chain.then(function () { return LY.A.load(it.a); }).then(null, function () {}); });
-      var ours = function (i, w, h) {
-        var pg = order[i];
-        if (!pg) return null;
-        var sz = M.pageSize ? M.pageSize(doc, pg) : doc.setup;
-        var full = LY.R.renderPage(doc, pg, L, w / sz.w, { getImage: LY.A.get, background: "#fff" });
-        var c = document.createElement("canvas"); c.width = w; c.height = h;
-        var x = c.getContext("2d", { willReadFrequently: true });
-        x.fillStyle = "#fff"; x.fillRect(0, 0, w, h);
-        x.drawImage(full, 0, 0, w, h);
-        return c;
-      };
-      chain.then(function () { return f.arrayBuffer(); }).then(function (buf) {
-        return RB.compare(buf, ours, order.length, { dpi: 50 });
-      }).then(function (res) {
+      // the PDF may have pages before ours (an e-book's cover): found first (LY-PORT3)
+      LY.io.compareDoc(doc, f, { shift: "auto" }).then(function (res) {
         cmpBusy = false;
         compareReport(doc, res, f.name || "PDF");
       }, function (e) {
@@ -766,6 +809,7 @@
     LY.openDialog(t("cmp.title"), function (body, close) {
       body.appendChild(el("p", "", t("cmp.sum", { f: name, n: pages.length, p: fmt(mean) })));
       if (res.total !== res.of) body.appendChild(el("p", "hint", t("cmp.count", { a: res.total, b: res.of })));
+      if (res.shift > 0) body.appendChild(el("p", "hint", t("port.shift", { n: res.shift })));
       body.appendChild(el("p", "hint", over.length === 1 ? t("cmp.over1") : over.length ? t("cmp.over", { n: over.length }) : t("cmp.allOk")));
       body.appendChild(el("p", "hint", t("cmp.hint")));
       var list = el("div", "cmp-list");

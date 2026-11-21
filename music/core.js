@@ -31,7 +31,7 @@
   var DATA_VER = 1;
   var PL_RE = /^p[0-9a-z]{10,14}$/;
   var KEY_RE = /^[a-z]{1,3}:[0-9a-z]{6,40}$/;
-  var LIM = { text: 200, follows: 2000, likes: 20000, pls: 500, items: 5000, plName: 100, queue: 10000, up: 500, hist: 2000 };
+  var LIM = { text: 200, follows: 2000, saved: 200, likes: 20000, pls: 500, items: 5000, plName: 100, queue: 10000, up: 500, hist: 2000 };
   var DAY = 86400000;
   var AUDIO_EXT = /\.(mp3|m4a|m4b|aac|mp4|ogg|oga|opus|flac|wav|wave|weba|webm)$/i;
   var REPEAT = ["off", "all", "one"];
@@ -580,9 +580,36 @@
   //   an entry, so data without follows keeps its exact old form. An
   //   older device drops the list on its own save; the union here
   //   keeps every follow (a transient re-upload until it updates).
+  //   Since MU-DIG (filters plan wave 3, 2026-11-21): ss: [saved] = saved
+  //   searches, saved = { k "s…" id, m, on 1|0, n name, q? words, f?
+  //   filter (open.js normFilter keys), src? one source }. Merged and
+  //   written like fa (only when it holds an entry, unsaves pruned after
+  //   a year). The filter is cleaned to plain values here; open.js
+  //   normFilter checks it again where it is used.
+  var SS_RE = /^s[0-9a-z]{10,14}$/;
+  var SS_F = { g: 1, cc: 1, dur: 1, pd: 1, com: 1, mod: 1, off: 1, y0: 1, y1: 1, vi: 1, mood: 1, sp: 1, gd: 1, ae: 1, sort: 1, ll: 1 };
+  function normSavedF(f) {
+    var o = {};
+    if (!f || typeof f !== "object" || Array.isArray(f)) return o;
+    Object.keys(SS_F).forEach(function (k) {
+      var v = f[k];
+      if (typeof v === "number" && isFinite(v) && v >= 0 && v <= 2100) o[k] = Math.floor(v);
+      else if (typeof v === "string" && /^[A-Za-z0-9]{1,12}$/.test(v)) o[k] = v;
+    });
+    return o;
+  }
+  function normSaved(r) {
+    if (!r || typeof r !== "object" || typeof r.k !== "string" || !SS_RE.test(r.k) || !isStamp(r.m)) return null;
+    var o = { k: r.k, m: r.m, on: r.on === 0 ? 0 : 1, n: clean(r.n, 80) || "?" };
+    var q = clean(r.q, 120), f = normSavedF(r.f);
+    if (q) o.q = q;
+    if (Object.keys(f).length) o.f = f;
+    if (typeof r.src === "string" && /^[a-z]{2}$/.test(r.src)) o.src = r.src;
+    return o;
+  }
   var MBID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
   var IMG_RE = /^https:\/\/(upload\.wikimedia\.org|commons\.wikimedia\.org|coverartarchive\.org)\/[^\s"'<>]{1,600}$/;
-  var SRC_RE = /^(ia|ov|cc|jm|ln)$/;
+  var SRC_RE = /^(ia|ov|cc|jm|ln|au|eu|km|dp)$/;
   var SH_RE = /^[0-9a-z]{6,14}$/;
   var SID_RE = /^[A-Za-z0-9._-]{1,100}$/;
   var LI_RE = /^(cc0|pdm|lma|by(-nc)?(-sa|-nd)?|(nc-)?sampling\+)( \d\.\d)?$/;
@@ -647,8 +674,9 @@
   function emptyData() { return { ver: DATA_VER, likes: [], pls: [], tombs: {} }; }
   function mergeMusic(A, B) {
     var a = A && typeof A === "object" ? A : {}, b = B && typeof B === "object" ? B : {};
-    var likes = {}, pls = {}, tombs = {}, fa = {};
+    var likes = {}, pls = {}, tombs = {}, fa = {}, ss = {};
     [a, b].forEach(function (s) {
+      if (Array.isArray(s.ss)) s.ss.forEach(function (r) { var x = normSaved(r); if (x) ss[x.k] = pick(ss[x.k], x); });
       if (Array.isArray(s.fa)) s.fa.forEach(function (r) { var x = normFollow(r); if (x) fa[x.k] = pick(fa[x.k], x); });
       if (Array.isArray(s.likes)) s.likes.forEach(function (r) { var x = normLike(r); if (x) likes[x.k] = pick(likes[x.k], x); });
       if (Array.isArray(s.pls)) s.pls.forEach(function (r) { var x = normPl(r); if (x) pls[x.id] = pick(pls[x.id], x); });
@@ -662,6 +690,7 @@
     Object.keys(pls).forEach(function (k) { if (pls[k].m > newest) newest = pls[k].m; });
     Object.keys(tombs).forEach(function (k) { if (tombs[k] > newest) newest = tombs[k]; });
     Object.keys(fa).forEach(function (k) { if (fa[k].m > newest) newest = fa[k].m; });
+    Object.keys(ss).forEach(function (k) { if (ss[k].m > newest) newest = ss[k].m; });
     var keep = newest - 365 * DAY;
     // Unliked entries and tombstones older than a year are dropped.
     var outLikes = Object.keys(likes).sort(cmpStr).map(function (k) { return likes[k]; })
@@ -677,6 +706,9 @@
     var outFa = Object.keys(fa).sort(cmpStr).map(function (k) { return fa[k]; }).filter(function (f) { return f.on || f.m >= keep; });
     if (outFa.length > LIM.follows) outFa = outFa.sort(function (x, y) { return y.m - x.m || cmpStr(x.k, y.k); }).slice(0, LIM.follows).sort(function (x, y) { return cmpStr(x.k, y.k); });
     if (outFa.length) out.fa = outFa;
+    var outSs = Object.keys(ss).sort(cmpStr).map(function (k) { return ss[k]; }).filter(function (x) { return x.on || x.m >= keep; });
+    if (outSs.length > LIM.saved) outSs = outSs.sort(function (x, y) { return y.m - x.m || cmpStr(x.k, y.k); }).slice(0, LIM.saved).sort(function (x, y) { return cmpStr(x.k, y.k); });
+    if (outSs.length) out.ss = outSs;
     return out;
   }
   function canon(d) { return mergeMusic(d, d); }
@@ -713,6 +745,19 @@
     if (!f) return o;
     o.fa = (o.fa || []).filter(function (x) { return x.k !== f.k; }).concat([f]);
     return canon(o);
+  }
+  // Saved searches (MU-DIG): newest first.
+  function savedList(d) {
+    return (d && d.ss || []).filter(function (x) { return x.on; }).slice().sort(function (x, y) { return y.m - x.m || cmpStr(x.k, y.k); });
+  }
+  // s: { k? (new id when missing), n, q, f, src }; on 0 removes.
+  function setSaved(d, s, on, now, rnd) {
+    var o = copy(d);
+    var k = s && SS_RE.test(s.k) ? s.k : newId("s", now, rnd);
+    var x = normSaved(Object.assign({}, s, { k: k, m: now, on: on ? 1 : 0 }));
+    if (!x) return { data: o, k: "" };
+    o.ss = (o.ss || []).filter(function (y) { return y.k !== k; }).concat([x]);
+    return { data: canon(o), k: k };
   }
   function findPl(d, id) { return (d.pls || []).filter(function (p) { return p.id === id; })[0] || null; }
   function addPl(d, name, refs, now, rnd) {
@@ -1195,14 +1240,14 @@
   }
 
   var api = {
-    VERSION: "1.7.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.8.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
     parseFlac: parseFlac, parseOgg: parseOgg, parseMp4: parseMp4, mp4Box: mp4Box, parseWav: parseWav,
     readTags: readTags, trackKey: trackKey, albumKey: albumKey, artistKey: artistKey, isAudioName: isAudioName,
     emptyData: emptyData, mergeMusic: mergeMusic, canon: canon, normRef: normRef, MBID_RE: MBID_RE,
-    isFollowed: isFollowed, followed: followed, setFollow: setFollow,
+    isFollowed: isFollowed, followed: followed, setFollow: setFollow, savedList: savedList, setSaved: setSaved, normSaved: normSaved,
     isLiked: isLiked, likedList: likedList, setLike: setLike, findPl: findPl, addPl: addPl, renamePl: renamePl,
     addToPl: addToPl, removeFromPl: removeFromPl, movePl: movePl, deletePl: deletePl,
     emptyQueue: emptyQueue, normQueue: normQueue, qStart: qStart, qNext: qNext, qPrev: qPrev, qShuffle: qShuffle,

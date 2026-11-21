@@ -1731,6 +1731,14 @@
         c.appendChild(fb);
         localSection(c, G);
       }
+      // GL-7 (Chris 2026-11-21): update orOS on the other devices from here (the phone)
+      if (typeof G.askUpdate === "function") {
+        var ub = el("div", "gt-folders");
+        ub.appendChild(el("div", "pair-label", t("gt.upd.title")));
+        ub.appendChild(el("div", "hint", updMsg || t("gt.upd.hint")));
+        ub.appendChild(button(t("gt.upd.btn"), "gt.upd.btn", function () { updMsg = t(G.askUpdate() ? "gt.upd.sent" : "gt.upd.off"); render(); }, "btn-sm"));
+        c.appendChild(ub);
+      }
       // GATE-HOST (PEND-1 wave 2): an installed orOS Portable or orOS USB
       // keeps the Gate open in the background while every window is closed.
       if (G.host && typeof G.host.state === "function") {
@@ -1856,7 +1864,7 @@
   // Layout may read through orOS Gate (read roots) and write proofs and
   // print PDFs to (write roots), picked with the browser's folder
   // picker; localroots.js in the shell keeps them (this device only).
-  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null;
+  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null, updMsg = "";
   function localApi() { var p = parentWin(); try { return p && p.orosLocal ? p.orosLocal : null; } catch (e) { return null; } }
   function localSection(c, G) {
     var L = localApi();
@@ -1878,9 +1886,9 @@
       var ln = el("div", "gt-chg-row gt-loc-row");
       var when = r.exp ? new Date(r.exp).toLocaleDateString(appLang()) : "";
       ln.appendChild(el("span", "gt-loc-name", (r.mode === "w" ? t("gt.loc.write") : t("gt.loc.read")) + " · local:" + r.name + (r.label ? " (" + (/^[A-Za-z]:\//.test(r.label) ? r.label.replace(/\//g, "\\") : r.label) + ")" : "") +
-        " · " + (r.expired ? t("gt.loc.expired") : t("gt.loc.until", { when: when })) + (r.granted ? "" : " · " + t("gt.loc.needs"))));
+        " · " + (r.expired ? t("gt.loc.expired") : t("gt.loc.until", { when: when })) + (r.granted ? "" : " · " + t(r.elsewhere ? "gt.loc.elsewhere" : "gt.loc.needs")) + (r.by === "claude" ? " · " + t("gt.loc.byClaude") : "")));
       ln.appendChild(button(t("gt.loc.extend"), "gt.loc.ext:" + r.id, function () { L.extend(r.id, 30); }, "btn-sm"));
-      if (r.mode === "r") ln.appendChild(button(t("gt.loc.copyIn"), "gt.loc.copy:" + r.id, function () {
+      if (r.mode === "r" && !r.elsewhere) ln.appendChild(button(t("gt.loc.copyIn"), "gt.loc.copy:" + r.id, function () {
         var F = parentWin() && parentWin().orosFS, dest = "/internal/Local/" + r.name;
         gateNote = "gt.loc.copying"; render();
         L.copyIn(r.id, F, dest).then(function (res) {
@@ -1890,6 +1898,22 @@
       ln.appendChild(button(t("gt.fold.rm"), "gt.loc.rm:" + r.id, function () { L.remove(r.id); }, "btn-sm"));
       box.appendChild(ln);
     });
+    // TRAY-2: a folder of the owner's computer by its path, from any device
+    // (the phone too): shared with the gate's other devices, used where
+    // orOS runs on that computer (also in the tray).
+    if (!locPc && typeof L.addPc === "function") {
+      var rp = el("input", "dav-input");
+      rp.id = "f-gt-loc-remote"; rp.type = "text"; rp.autocomplete = "off"; rp.spellcheck = false;
+      rp.placeholder = "C:\\Users\\…\\Final Images";   // i18n-inline-ok: an example path
+      box.appendChild(row(t("gt.loc.remote"), rp, { hint: t("gt.loc.remoteHint"), forId: "f-gt-loc-remote", stack: true }));
+      var addRemote = function (mode) {
+        if (!rp.value.trim()) { gateNote = "gt.loc.pcNeed"; render(); return; }
+        L.addPc(rp.value.trim(), { mode: mode, days: 30, anywhere: true }).then(function () { gateNote = ""; render(); }, function (e) {
+          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && e.why === "riskyPath" ? "gt.loc.risky" : e && /^(badPath|notFolder)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
+        });
+      };
+      box.appendChild(actions(button(t("gt.loc.addRead"), "gt.loc.remR", function () { addRemote("r"); }), button(t("gt.loc.addWrite"), "gt.loc.remW", function () { addRemote("w"); })));
+    }
     if (!canPick && !(locRoots || []).length) { c.appendChild(box); return; }
     if (locRoots && !locRoots.length) box.appendChild(el("div", "hint", t("gt.fold.none")));
     var lab = el("input", "dav-input");
@@ -1900,7 +1924,7 @@
       if (locPc) {
         if (!lab.value.trim()) { gateNote = "gt.loc.pcNeed"; render(); return; }
         L.addPc(lab.value.trim(), { mode: mode, days: 30 }).then(function () { gateNote = ""; render(); }, function (e) {
-          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && /^(badPath|notFolder|notThere|notAllowedRoot)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
+          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && e.why === "riskyPath" ? "gt.loc.risky" : e && /^(badPath|notFolder|notThere|notAllowedRoot)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
         });
         return;
       }

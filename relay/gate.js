@@ -35,6 +35,7 @@ import { validCt } from "./push.js";
 export const GATE_LIMITS = {
   bodyBytes: 64 * 1024,          // a JSON-RPC request or a /gate/dev call
   replyBytes: 900 * 1024,        // one answer from the device
+  lfChars: 60000,                // TRAY-2: the sealed list of computer folders
   callMs: 25000,                 // the device must answer within this
   callsPerMin: 60,               // tools/call per gate
   toolsMs: 6000,                 // the device's tool list (GATE-ACT); the frame may need to start
@@ -71,6 +72,12 @@ export const GATE_LIMITS = {
   linkMs: 15 * 60000,            // a files_link download link lives this long, for one download
   links: 20,                     // download links waiting per gate
   pieceBytes: 1048576 + 28,      // one sealed piece: 1 MiB + IV + tag
+  // GL-8: files Claude brings into the owner's folders (files_upload)
+  upBytes: 25 * 1048576,         // one upload
+  upTotal: 80 * 1048576,         // all uploads waiting in one gate
+  upMs: 7 * 86400000,            // an upload waits this long for an open orOS
+  upPiece: 90000,                // bytes per sealed piece in the box (base64url < 128 KiB)
+  upPer: 20,                     // pieces per device call
   readChars: 100000              // characters of text per files_read
 };
 
@@ -102,6 +109,7 @@ const BEARER_RE = /^([A-Za-z0-9_-]{22})\.([A-Za-z0-9_-]{43})$/;
 const HEX64_RE = /^[0-9a-f]{64}$/;
 const WS_RE = /^\/gate\/ws\/([A-Za-z0-9_-]{22})$/;
 const FLINK_RE = /^\/gate\/f\/([A-Za-z0-9_-]{22})\/([A-Za-z0-9_-]{43})$/;
+const UP_RE = /^\/gate\/up\/([A-Za-z0-9_-]{22})\/([A-Za-z0-9_-]{22})$/;   // GL-8: PUT one upload
 
 // What Claude sees. orOS checks every call again on the device (the
 // app's level, the gate itself, the lock); this list only describes.
@@ -547,9 +555,88 @@ export const TOOLS = [
       additionalProperties: false
     },
     annotations: { readOnlyHint: true }
+  },
+  {
+    name: "files_upload",
+    description: "Brings a file of any kind (pictures, PDFs, fonts, audio…; at most 25 MB) into Claude's folders on the orOS disk, also with orOS closed: this call gives a one-time upload address; PUT the file's bytes there (e.g. curl -fsS -T <file> -H \"Authorization: Bearer <token>\" <url>), then call files_write with path and upload (no text). The file is sealed with the owner's gate key in the box and written by the next open orOS (the owner is notified and can undo it, like any files_write); after that, Layout and the other apps use it from the owner's synced disk on every device. The upload waits 7 days.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "The file's name, e.g. \"kolaz-1.jpg\" (for the owner's notice)." },
+        size: { type: "integer", description: "The file's size in bytes (at most 26214400)." },
+        sha256: { type: "string", description: "SHA-256 of the file, 64 lowercase hex characters (sha256sum)." }
+      },
+      required: ["size", "sha256"],
+      additionalProperties: false
+    },
+    // like files_link: it only makes an address; the change itself is files_write
+    annotations: { readOnlyHint: true }
+  },
+  {
+    name: "local_folders_request",
+    description: "Asks the owner to open a folder of their computer for Claude (Layout's pictures and texts to read, or a folder to save proofs and PDFs into), for the local:<root>/<path> paths edit_in_app and files_list take. The owner answers on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). Once allowed, it works where orOS runs on that computer, in a window, minimised or in the tray, and the owner can close it any time. Never a whole drive or home folder, nor system, program or key folders. Ask only for the folder the work needs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The folder's full path on the owner's computer, as Windows shows it (C:\\Users\\<name>\\Documents\\<folder>), or ~/<folder>." },
+        access: { type: "string", enum: ["read", "write"], description: "read (default): only read; write: only new files are saved there, nothing is replaced or deleted." },
+        days: { type: "integer", minimum: 1, maximum: 90, description: "How long, 30 when left out." },
+        reason: { type: "string", description: "One line for the owner: what it is for." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  // GL-7 (Chris 2026-11-21 «Πρέπει να βρούμε λύσεις»): a computer left with
+  // an old orOS no longer needs the owner at it.
+  {
+    name: "oros_update",
+    description: "Asks every open orOS of the owner (computers with orOS in a window or in the tray, phones, browsers) to update to the newest orOS now. Use it when an answer shows a device runs an older orOS than the newest one (a missing tool or argument, an old behaviour). It changes nothing in the owner's data; the owner sees the usual update notice.",
+    inputSchema: { type: "object", properties: {}, additionalProperties: false },
+    annotations: { readOnlyHint: true }
+  },
+  // GL-5 (Chris 2026-11-21): a conversation keeps the tool list it saw
+  // when it started, so a tool or an argument added later was out of its
+  // reach until a new conversation. These two never change: gate_tools
+  // reads the list as it is now, gate_call runs any tool of it by name.
+  {
+    name: "gate_tools",
+    description: "The orOS Gate tools as they are now, including ones added after this conversation started: without name, every tool's name and first sentence; with name, that tool's whole description and input schema. Use it when a tool or argument you need is missing from your list, then call it with gate_call.",
+    inputSchema: {
+      type: "object",
+      properties: { name: { type: "string", description: "One tool's name, for its whole description and schema." } },
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: true }
+  },
+  {
+    name: "gate_call",
+    description: "Runs one orOS Gate tool by name with its arguments, exactly as calling it directly (same rules, same checks, the owner notified the same way). For a tool or argument that gate_tools shows but your own tool list does not have yet.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        tool: { type: "string", description: "The tool's name, as gate_tools lists it." },
+        args: { type: "object", description: "The tool's arguments, as its schema in gate_tools describes them." }
+      },
+      required: ["tool"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
   }
 ];
 const TOOL_NAMES = TOOLS.map((t) => t.name);
+export const META_TOOLS = ["gate_tools", "gate_call"];
+// GL-5: gate_tools' answer from the list as it is now
+export function gateToolsText(list, name) {
+  const all = (Array.isArray(list) ? list : []).filter((t) => t && META_TOOLS.indexOf(t.name) < 0);
+  if (typeof name === "string" && name) {
+    const t = all.find((x) => x.name === name);
+    return t ? JSON.stringify({ name: t.name, description: t.description, inputSchema: t.inputSchema }) : "";
+  }
+  const first = (d) => { const s = String(d || ""); const i = s.search(/\.(\s|$)/); return (i > 0 ? s.slice(0, i + 1) : s).slice(0, 300); };
+  return JSON.stringify({ tools: all.map((t) => ({ name: t.name, about: first(t.description) })), note: "gate_tools with name gives a tool's schema; gate_call runs it." });
+}
 const READ_ONLY = {};
 // The copy's key for a call: the tool and its arguments, keys sorted.
 export function stableArgs(a) {
@@ -599,7 +686,8 @@ export function isScreenTool(name, args) {
   if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
   return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
 }
-const SCREEN_NOTE = "This works on the owner's screen (Layout's own work, an app's form or document), and nobody sees orOS right now. It waits, encrypted, and runs the next time orOS is on screen and unlocked on one of the owner's devices; its report, proofs and previews come only then (read the result afterwards with read_in_app or change_history). Until then change_history shows it pending; undo_change with change_id cancels it. Tell the owner to bring orOS to the front.";
+const LF_NOTE = "Nobody is at an orOS screen now, so the question waits, encrypted, and is asked the next time orOS is on screen on one of the owner's devices (the phone too). Nothing is opened before the owner allows it. Tell the owner to open orOS (on the phone is enough) and answer; change_history shows it pending, and undo_change with change_id cancels it.";
+const SCREEN_NOTE = "This works on the owner's screen (Layout's own work, an app's form or document), and nobody sees orOS right now. It waits, encrypted, and runs the next time orOS is on screen and unlocked on one of the owner's devices, or (Layout's work and edit_in_app) as soon as orOS runs on the owner's computer in the tray or in a minimised orOS window; its report, proofs and previews come only then (read the result afterwards with read_in_app or change_history). Until then change_history shows it pending; undo_change with change_id cancels it. Tell the owner to bring orOS to the front.";
 // closed copy's switches → why Claude may not keep this screen call, or ""
 export function screenRefusal(name, args, lv, hold, now, when) {
   const l = lv && typeof lv === "object" ? lv : {};
@@ -932,6 +1020,12 @@ async function fileKeyOf(kRaw, h) {
   const raw = new Uint8Array(await crypto.subtle.sign("HMAC", hk, new TextEncoder().encode("orOS-gate-fk|" + h)));
   return aesKey(raw, ["decrypt"]);
 }
+// GL-8: an upload's piece key, the same on the box (while Claude's token
+// unwraps K) and on the owner's devices (which hold K)
+export async function upKeyRaw(kRaw, id) {
+  const hk = await crypto.subtle.importKey("raw", kRaw, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  return new Uint8Array(await crypto.subtle.sign("HMAC", hk, new TextEncoder().encode("orOS-gate-up|" + id)));
+}
 export async function openPiece(kRaw, h, part, i, sealed) {
   const u = new Uint8Array(sealed);
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: u.slice(0, 12), additionalData: new TextEncoder().encode("orOS-gate-file|" + h + "|" + part + "|" + i) },
@@ -1069,6 +1163,11 @@ export function fileChangeCheck(idx, name, args) {
   if (name === "files_write") {
     const t = inside(a.path);
     if (t.err) return t.err;
+    if (typeof a.upload === "string") {                 // GL-8: the bytes of a files_upload
+      if (a.text !== undefined) return "Give text or upload, not both.";
+      if (a.mode != null && a.mode !== "" && a.mode !== "create") return "An upload makes a new file (mode create).";
+      return fileTaken(idx, t.p) ? "\"" + fileShow(t.p) + "\" already exists in the copy. Pick another name." : null;
+    }
     if (typeof a.text !== "string") return "text must be the file's whole new content.";
     if (a.mode === "replace") return fileHas(idx, t.p, a.if_version);
     if (a.mode != null && a.mode !== "" && a.mode !== "create") return "mode must be create or replace.";
@@ -1220,6 +1319,19 @@ export async function handleGate(request, env, url, okOrigin, ip, now) {
     if (p === "/gate/pair") return await pairPage(request, env, url, now);
     if (p === "/gate/token") return token(request, env, now);
     if (p === "/mcp") return mcp(request, env, base, now);
+    // GL-8: the bytes of a files_upload (one PUT, with its token)
+    const um = UP_RE.exec(p);
+    if (um) {
+      if (request.method !== "PUT") return new Response(null, { status: 405, headers: { "Allow": "PUT" } });
+      const am = /^Bearer ([A-Za-z0-9_-]{43})$/.exec(request.headers.get("Authorization") || "");
+      if (!am) return new Response("Send the token from files_upload: Authorization: Bearer <token>.", { status: 401 });
+      const len = +(request.headers.get("Content-Length") || -1);
+      if (len > GATE_LIMITS.upBytes) return new Response("Too big.", { status: 413 });
+      let body;
+      try { body = await request.arrayBuffer(); } catch (e) { return new Response("The file did not arrive.", { status: 400 }); }
+      if (body.byteLength > GATE_LIMITS.upBytes) return new Response("Too big.", { status: 413 });
+      return stub(env, um[1]).fetch(new Request("https://gate/up", { method: "PUT", headers: { "X-Now": String(now), "X-Up": um[2], "X-Tok": am[1] }, body: body }));
+    }
     // GATE-FILES F2: a files_link download (one use, 15 minutes)
     const fm = FLINK_RE.exec(p);
     if (fm) {
@@ -1364,11 +1476,19 @@ export function queueFor(q, now) {
   // to an item Claude added meanwhile (its p- ref) runs after the add.
   return items.sort((x, y) => x.t - y.t || x.s - y.s).map((x) => ({ id: x.id, c: x.c, t: x.t }));
 }
-// Which device answers: one whose orOS is on screen, else the one that
-// connected last (a phone in the background often has no socket at all).
+// "8.13.00" → 81300 (0 when it is not a version)
+export function verNum(s) {
+  const m = /^(\d{1,3})\.(\d{2})\.(\d{2})$/.exec(String(s || ""));
+  return m ? +m[1] * 10000 + +m[2] * 100 + +m[3] : 0;
+}
+// Which device answers: the newest orOS (GL-6, Chris 2026-11-21: an old
+// window kept answering for a day; a device older than 8.14.00 says no
+// version and comes last), then one whose orOS is on screen, else the
+// one that connected last (a phone in the background often has no socket).
 export function pickOrder(socks) {
   return socks.slice().sort((x, y) => {
     const a = attOf(x), b = attOf(y);
+    if ((b.ver || 0) !== (a.ver || 0)) return (b.ver || 0) - (a.ver || 0);
     if ((b.v ? 1 : 0) !== (a.v ? 1 : 0)) return (b.v ? 1 : 0) - (a.v ? 1 : 0);
     return (b.at || 0) - (a.at || 0);
   });
@@ -1419,7 +1539,7 @@ async function devCall(request, env, now) {
   try { b = JSON.parse(text); } catch (e) { return devErr(400, "bad-request"); }
   if (b && b.act === "join") return await joinCall(b, env, now);
   if (!b || typeof b !== "object" || !ID_RE.test(b.id || "")) return devErr(400, "bad-request");
-  if (["new", "code", "pair", "invite", "revoke", "info", "del", "seat", "sit", "ping"].indexOf(b.act) < 0) return devErr(400, "bad-request");
+  if (["new", "code", "pair", "invite", "revoke", "info", "del", "seat", "sit", "ping", "up"].indexOf(b.act) < 0) return devErr(400, "bad-request");
   if (b.act === "new" || b.act === "sit" ? !HEX64_RE.test(b.th || "") : !TOK_RE.test(b.tok || "")) return devErr(400, "bad-request");
   if (b.act === "seat" && !HEX64_RE.test(b.sh || "")) return devErr(400, "bad-request");
   if (b.act === "sit" && !TOK_RE.test(b.ss || "")) return devErr(400, "bad-request");
@@ -1427,10 +1547,11 @@ async function devCall(request, env, now) {
   if (b.act === "pair" && !normPair(b.pc)) return devErr(400, "bad-request");
   if (b.act === "ping" && b.pid !== "" && !(ID_RE.test(b.pid || "") && TOK_RE.test(b.wt || "") && validCt(b.ct))) return devErr(400, "bad-request");
   if (b.act === "ping" && b.cw !== undefined && !validCt(b.cw)) return devErr(400, "bad-request");     // PEND-1: the "waiting" packet, optional
+  if (b.act === "up" && (!ID_RE.test(b.up || "") || !(Number.isInteger(b.from) && b.from >= 0 && b.from < 100000) || (b.del !== undefined && b.del !== true))) return devErr(400, "bad-request");   // GL-8
   return stub(env, b.id).fetch(new Request("https://gate/dev", {
     method: "POST",
     headers: { "X-Now": String(now) },
-    body: JSON.stringify({ act: b.act, id: b.id, th: b.th, tok: b.tok, c: b.c, r: b.r, pc: normPair(b.pc), lv: cleanLv(b.lv), sh: b.sh, ss: b.ss, pid: b.pid, wt: b.wt, ct: b.ct, cw: b.cw })
+    body: JSON.stringify({ act: b.act, id: b.id, th: b.th, tok: b.tok, c: b.c, r: b.r, pc: normPair(b.pc), lv: cleanLv(b.lv), sh: b.sh, ss: b.ss, pid: b.pid, wt: b.wt, ct: b.ct, cw: b.cw, up: b.up, from: b.from, del: b.del })
   }));
 }
 
@@ -1514,6 +1635,7 @@ export class GateBox {
       if (p === "/token") return await this.token(await request.json(), now);
       if (p === "/mcp") return await this.mcp(request, now);
       if (p === "/flink") return await this.fileDownload(request.headers.get("X-S") || "", now);
+      if (p === "/up") return await this.uploadPut(request, request.headers.get("X-Up") || "", request.headers.get("X-Tok") || "", now);
       if (p === "/ws") return await this.accept(request, now);
       if (p === "/adddev") return await this.addDev(await request.json(), now);
       if (p === "/jointake") return await this.joinTake(now);
@@ -1661,6 +1783,7 @@ export class GateBox {
       await this.dropCopy(true);                      // the wraps, the copy and the queue go with the links
       return jsonRes(200, { ok: true, data: { ok: true } });
     }
+    if (b.act === "up") return await this.uploadTake(b, now);     // GL-8: a device fetches (or drops) an upload
     if (b.act === "info") {
       const all = await this.tokens();
       let n = 0;
@@ -1766,6 +1889,7 @@ export class GateBox {
     try { server.send(JSON.stringify({ hi: now })); } catch (e) {}
     // The app switches the devices share (5.77.00): the newest set goes to a device as it connects.
     if (m.lv) { try { server.send(JSON.stringify({ lv: m.lv, lvt: m.lvt || 0 })); } catch (e) {} }
+    if (typeof m.lf === "string") { try { server.send(JSON.stringify({ lf: m.lf })); } catch (e) {} }   // TRAY-2
     // orOS closed (5.80.00): a device is open again; the changes Claude
     // left meanwhile go to it (it applies them and says which).
     m.seen = now;
@@ -1783,6 +1907,16 @@ export class GateBox {
       if (a.v && !was) await this.sendHeld([ws]);    // 7.48.00: deletions waiting for a screen
       return;
     }
+    if (typeof msg === "string" && msg.length <= 14 && msg.indexOf("ver:") === 0) {   // GL-6: the device's orOS version
+      const n = verNum(msg.slice(4));
+      if (n) { const a = attOf(ws); a.ver = n; a.lt = Date.now(); setAtt(ws, a); }
+      return;
+    }
+    if (msg === "b1") {                              // TRAY-1: a device that runs Layout's work unseen (tray host, desktop window)
+      const a = attOf(ws), was = a.b; a.b = 1; a.lt = Date.now(); setAtt(ws, a);
+      if (!was) await this.sendHeld([ws]);
+      return;
+    }
     if (typeof msg !== "string" || msg.length > GATE_LIMITS.replyBytes) {
       try { ws.close(1009, "too big"); } catch (e) {}
       return;
@@ -1790,6 +1924,8 @@ export class GateBox {
     let o;
     try { o = JSON.parse(msg); } catch (e) { return; }
     if (o && o.lv !== undefined && o.r === undefined) { await this.shareLv(ws, o.lv, o.base === 1); return; }
+    if (o && typeof o.lf === "string" && o.r === undefined) { await this.shareLf(ws, o.lf); return; }
+    if (o && o.upd === 1 && o.r === undefined) { this.askUpdate(ws); return; }   // GL-7: the owner's Update button
     if (o && typeof o.snap === "string" && o.r === undefined) { await this.putCopy(ws, o.snap); return; }
     if (o && typeof o.fidx === "string" && o.r === undefined) { await this.putFileIndex(ws, o.fidx); return; }
     if (o && o.fdrop === 1 && o.r === undefined) { await this.dropFromDevice(ws); return; }
@@ -1831,6 +1967,19 @@ export class GateBox {
     m.lv = lv; m.lvt = Date.now();
     await this.st.put("meta", m);
     const msg = JSON.stringify({ lv: lv, lvt: m.lvt });
+    for (const s of this.sockets()) { if (s !== ws) { try { s.send(msg); } catch (e) {} } }
+  }
+  // TRAY-2: the owner's computer folders, sealed by a device with the
+  // gate's key (the relay cannot read them): the newest blob is kept and
+  // passed to the gate's other devices, and given to each as it connects.
+  async shareLf(ws, sealed) {
+    if (sealed.length > GATE_LIMITS.lfChars || !/^[A-Za-z0-9_-]{8,64}\.[A-Za-z0-9_-]+$/.test(sealed)) return;
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    if (m.lf === sealed) return;
+    m.lf = sealed;
+    await this.st.put("meta", m);
+    const msg = JSON.stringify({ lf: sealed });
     for (const s of this.sockets()) { if (s !== ws) { try { s.send(msg); } catch (e) {} } }
   }
   async webSocketClose(ws) { try { ws.close(1000, "bye"); } catch (e) {} }
@@ -1984,6 +2133,94 @@ export class GateBox {
     return { ok: true, c: JSON.stringify({ url: base + "/gate/f/" + gid + "/" + sec, name: e.p.slice(e.p.lastIndexOf("/") + 1), size: e.s || 0, version: e.v || undefined,
       expires: new Date(exp).toISOString(), as_of: when, note: "One download, within 15 minutes, e.g. curl -fL -o <name> <url>. The file is as it was in the copy of " + when + "." }) };
   }
+  // ---- GL-8 (Chris 2026-11-21 «Πρέπει να βρούμε λύσεις»): files Claude
+  // brings into the owner's folders without anybody at a computer. The box
+  // keeps an upload's key FK = HMAC-K("orOS-gate-up|" + id) only wrapped
+  // under the upload's own token (as for files_link), seals the bytes in
+  // pieces with it (AES-GCM, "orOS-gate-up|<id>|<i>" as additional data)
+  // and forgets the bytes; the device derives FK from K, opens the pieces,
+  // checks the SHA-256 and writes the file through files_write (notified,
+  // undoable), then drops the upload. Rows: "up:<id>", pieces "upp:<id>:<i>".
+  async uploadPurge(now) {
+    const rows = await this.st.list({ prefix: "up:" });
+    let used = 0;
+    for (const [k, v] of rows) {
+      if (!v || v.exp <= now) await this.uploadDrop(k.slice(3), v);
+      else used += v.s || 0;
+    }
+    return used;
+  }
+  async uploadDrop(id, row) {
+    const keys = ["up:" + id];
+    for (let i = 0; i < ((row && row.n) || 0); i++) keys.push("upp:" + id + ":" + i);
+    for (let i = 0; i < keys.length; i += 100) await this.st.delete(keys.slice(i, i + 100));
+  }
+  async uploadNew(args, kRaw, gid, base, now) {
+    const a = args && typeof args === "object" ? args : {};
+    if (!kRaw) return { ok: false, c: "The gate key is not here (ask the owner to open orOS once). Nothing was made." };
+    if (!Number.isInteger(a.size) || a.size < 1 || a.size > GATE_LIMITS.upBytes) return { ok: false, c: "size: the file's size in bytes, 1 to " + GATE_LIMITS.upBytes + "." };
+    const h = String(a.sha256 || "").toLowerCase();
+    if (!HEX64_RE.test(h)) return { ok: false, c: "sha256: 64 hex characters (sha256sum of the file)." };
+    if (!ID_RE.test(gid || "")) return { ok: false, c: "The gate is unknown." };
+    const used = await this.uploadPurge(now);
+    if (used + a.size > GATE_LIMITS.upTotal) return { ok: false, c: "Too many uploads are waiting for an open orOS (" + Math.round(used / 1048576) + " MB). Wait until orOS opens and writes them." };
+    const id = b64u(crypto.getRandomValues(new Uint8Array(16))), sec = rand43();
+    const fk = await upKeyRaw(kRaw, id);
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, await wrapKey("up|" + sec), fk));
+    const exp = now + GATE_LIMITS.upMs;
+    const name = typeof a.name === "string" ? a.name.replace(/[\u0000-\u001f]/g, "").slice(0, 200) : "";
+    await this.st.put("up:" + id, { s: a.size, h: h, th: await sha256hex(sec), w: b64u(iv) + "." + b64u(ct), exp: exp, n: 0, done: 0, name: name });
+    return { ok: true, c: JSON.stringify({ upload: id, url: base + "/gate/up/" + gid + "/" + id, method: "PUT", authorization: "Bearer " + sec,
+      expires: new Date(exp).toISOString(),
+      how: "curl -fsS -T <file> -H \"Authorization: Bearer " + sec + "\" " + base + "/gate/up/" + gid + "/" + id + " (once, the whole file, " + a.size + " bytes). Then files_write with {path, upload: \"" + id + "\"}." }) };
+  }
+  // PUT /gate/up/<gate>/<id>: the whole file, once.
+  async uploadPut(request, id, sec, now) {
+    if (!ID_RE.test(id) || !TOK_RE.test(sec)) return new Response("Not found", { status: 404 });
+    const row = await this.st.get("up:" + id);
+    if (!row || row.exp <= now || !sameText(await sha256hex(sec), row.th)) return new Response("Not found", { status: 404 });
+    if (row.done) return new Response("This upload has its file already.", { status: 409 });
+    let bytes;
+    try { bytes = new Uint8Array(await request.arrayBuffer()); } catch (e) { return new Response("The file did not arrive.", { status: 400 }); }
+    if (bytes.length !== row.s) return new Response("The file has " + bytes.length + " bytes, not the " + row.s + " files_upload was told.", { status: 400 });
+    const h = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map((x) => x.toString(16).padStart(2, "0")).join("");
+    if (h !== row.h) return new Response("The file's SHA-256 is " + h + ", not the one files_upload was told.", { status: 400 });
+    let fk;
+    try {
+      const [iv, ct] = String(row.w).split(".");
+      fk = new Uint8Array(await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64u(iv) }, await wrapKey("up|" + sec), unb64u(ct)));
+    } catch (e) { return new Response("Not found", { status: 404 }); }
+    const key = await aesKey(fk, ["encrypt"]), P = GATE_LIMITS.upPiece, n = Math.ceil(bytes.length / P);
+    for (let i = 0; i < n; i++) {
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv, additionalData: new TextEncoder().encode("orOS-gate-up|" + id + "|" + i) }, key, bytes.subarray(i * P, Math.min(bytes.length, (i + 1) * P))));
+      await this.st.put("upp:" + id + ":" + i, b64u(iv) + "." + b64u(ct));
+    }
+    row.n = n; row.done = 1; delete row.w;           // the key goes; only an open orOS can open the pieces now
+    await this.st.put("up:" + id, row);
+    return jsonRes(200, { ok: true, bytes: bytes.length, pieces: n, next: "files_write with {path, upload: \"" + id + "\"}" });
+  }
+  // "" when files_write may name this upload; else why not
+  async uploadReady(id, now) {
+    if (typeof id !== "string" || !ID_RE.test(id)) return "upload: the id files_upload gave.";
+    const row = await this.st.get("up:" + id);
+    if (!row || row.exp <= now) return "That upload is unknown or has expired (7 days); make a new one with files_upload.";
+    if (!row.done) return "That upload has no file yet: PUT the file to its address first.";
+    return "";
+  }
+  // dev "up": { up, from } → { s, h, n, name, p: [sealed pieces from…] }; { up, del: true } drops it
+  async uploadTake(b, now) {
+    const row = await this.st.get("up:" + b.up);
+    if (b.del === true) { if (row) await this.uploadDrop(b.up, row); return jsonRes(200, { ok: true, data: { ok: true } }); }
+    if (!row || row.exp <= now || !row.done) return devErr(404, "gone");
+    const keys = [];
+    for (let i = b.from; i < Math.min(row.n, b.from + GATE_LIMITS.upPer); i++) keys.push("upp:" + b.up + ":" + i);
+    const p = [];
+    for (const k of keys) p.push(await this.st.get(k));
+    if (p.some((x) => typeof x !== "string")) return devErr(404, "gone");
+    return jsonRes(200, { ok: true, data: { s: row.s, h: row.h, n: row.n, name: row.name || "", p: p } });
+  }
   // GET /gate/f/<gate>/<secret>: the file, opened piece by piece as it streams.
   async fileDownload(sec, now) {
     if (!TOK_RE.test(sec || "")) return new Response("Not found", { status: 404 });
@@ -2039,7 +2276,7 @@ export class GateBox {
     if (n) await this.sendHeld(this.sockets().filter((s) => s !== ws));
   }
   async sendHeld(socks) {
-    const on = (socks || this.sockets()).filter((s) => attOf(s).v);
+    const on = (socks || this.sockets()).filter((s) => attOf(s).v || attOf(s).b);
     if (!on.length) return;
     const q = await this.st.list({ prefix: "q:" }), hd = new Map();
     q.forEach((v, k) => { if (v && v.hd) hd.set(k, v); });
@@ -2093,6 +2330,10 @@ export class GateBox {
     // when it has them; create_items (the app in args.app) waits in the
     // queue like the relay's own change tools; the others work on items
     // found in a live session or on the owner's screen, so they need orOS open.
+    if (name === "local_folders_request") {             // TRAY-2: a question for the owner, kept for a screen
+      if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was asked." };
+      return await this.queueChange(name, args, kRaw, now, qidWant, LF_NOTE, 1);
+    }
     let app = name.split("_")[0];
     if (!Object.prototype.hasOwnProperty.call(READ_ONLY, name) && !TOOLS.some((t) => t.name === name)) {
       const dev = await this.st.get("devtools");
@@ -2221,6 +2462,13 @@ export class GateBox {
     return Array.isArray(kept) ? kept : [];
   }
 
+  // GL-7: every other open orOS updates itself now (→ how many were asked)
+  askUpdate(from) {
+    let n = 0;
+    this.sockets().forEach((s) => { if (s === from) return; try { s.send('{"upd":1}'); n++; } catch (e) {} });
+    return n;
+  }
+
   // Passes one tool call to an awake device and waits for its answer.
   // e: "closed" (no awake device) or "timeout" (rid: the call's id).
   // dl (6.01.02): the box's time after which the device must not start it.
@@ -2263,7 +2511,23 @@ export class GateBox {
     if (msg.method === "ping") return jsonRes(200, rpcOk(id, {}));
     if (msg.method === "tools/list") return jsonRes(200, rpcOk(id, { tools: withDevTools(await this.devTools(true)) }));
     if (msg.method !== "tools/call") return jsonRes(200, rpcErr(id, -32601, "method not found"));
-    const p = msg.params || {};
+    let p = msg.params || {};
+    if (p.name === "gate_call") {
+      // GL-5: the call inside runs as if it had been made directly
+      const a0 = p.arguments && typeof p.arguments === "object" && !Array.isArray(p.arguments) ? p.arguments : {};
+      if (typeof a0.tool !== "string" || META_TOOLS.indexOf(a0.tool) >= 0) return jsonRes(200, rpcOk(id, toolText("gate_call needs tool: the name of an orOS Gate tool (gate_tools lists them).", true)));
+      if (a0.args !== undefined && (!a0.args || typeof a0.args !== "object" || Array.isArray(a0.args))) return jsonRes(200, rpcOk(id, toolText("gate_call's args must be an object.", true)));
+      p = { name: a0.tool, arguments: a0.args || {} };
+    }
+    if (p.name === "gate_tools") {
+      const a1 = p.arguments && typeof p.arguments === "object" ? p.arguments : {};
+      const txt = gateToolsText(withDevTools(await this.devTools(false)), typeof a1.name === "string" ? a1.name : "");
+      return jsonRes(200, rpcOk(id, toolText(txt || "No orOS Gate tool is called " + JSON.stringify(String(a1.name).slice(0, 60)) + "; gate_tools without name lists them.", !txt)));
+    }
+    if (p.name === "oros_update") {
+      const n = this.askUpdate(null);
+      return jsonRes(200, rpcOk(id, toolText(n ? "Asked " + n + " open orOS to update now. The orOS desktop app on a computer downloads the newest orOS and switches to it within a few minutes (its launcher 0.9.5 or newer); every orOS reloads by itself when the new version is in. Nothing in the owner's data changes. Check with list_apps in about five minutes." : "No orOS is open right now, so none could be asked. An orOS updates itself when it next starts.", !n)));
+    }
     if (TOOL_NAMES.indexOf(p.name) < 0 && !(await this.devTools(false)).some((t) => t.name === p.name)) {
       return jsonRes(200, rpcErr(id, -32602, "unknown tool"));
     }
@@ -2278,6 +2542,14 @@ export class GateBox {
     m.used = now;
     await this.st.put("meta", m);
     await this.touch(m, now);
+    if (p.name === "files_upload") {
+      const fu = await this.uploadNew(args, await this.unwrapK(tok), String(request.headers.get("X-Gid") || ""), String(request.headers.get("X-Base") || ""), now);
+      return jsonRes(200, rpcOk(id, toolText(fu.c, !fu.ok)));
+    }
+    if (p.name === "files_write" && args.upload !== undefined) {   // GL-8: only a finished upload of this gate
+      const why = await this.uploadReady(args.upload, now);
+      if (why) return jsonRes(200, rpcOk(id, toolText(why + " Nothing was written.", true)));
+    }
     if (p.name === "files_link") {
       const fl = await this.fileLink(args, await this.unwrapK(tok), String(request.headers.get("X-Gid") || ""), String(request.headers.get("X-Base") || ""), now);
       return jsonRes(200, rpcOk(id, toolText(fl.c, !fl.ok)));
@@ -2308,7 +2580,8 @@ export class GateBox {
       // not refused: it waits like a closed-orOS deletion, for the owner's
       // Delete on a device on screen (offered now, and when one comes on screen).
       const kRaw = await this.unwrapK(tok);
-      ans = kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
+      ans = kRaw && p.name === "local_folders_request" ? await this.queueChange(p.name, args, kRaw, Date.now(), null, LF_NOTE, 1) :
+            kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
                  : { ok: false, c: "Nobody answered on the owner's screen and the deletion could not be kept for later. Nothing was deleted. Ask the owner to have orOS on screen and try once more." };
       if (ans.ok) await this.sendHeld();
     }
