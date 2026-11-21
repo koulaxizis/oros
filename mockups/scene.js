@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.9.0, ES module)
+// orOS Mockups — scene.js (v1.10.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -37,7 +37,9 @@
 //     sticker, keychain, enamel pin and magnet from goods/small3d.js (v1.8.0),
 //     mug, framed poster and card from goods/home3d.js (v1.8.0),
 //     T-shirt and tote bag from goods/cloth3d.js (v1.9.0; our Blender models,
-//     downloaded on request by goods/cloth.js),
+//     downloaded on request by goods/cloth.js; hoodie, socks, cap),
+//   - lifestyle surfaces (wood, marble, linen, paper, concrete) and
+//     props (cup, plant, pencil) from surface3d.js (v1.10.0),
 //     posed, framed, lit and saved like a book; "open" opens a lid
 //     or slides a disc out (fronts with userData.open)
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
@@ -56,6 +58,7 @@ import { build as buildAnalog } from "./goods/analog3d.js";
 import { build as buildSmall } from "./goods/small3d.js";
 import { build as buildHome } from "./goods/home3d.js";
 import { build as buildCloth } from "./goods/cloth3d.js";
+import { surfaceMesh, makeProps, placeProps } from "./surface3d.js";
 
 var S = 0.01;                          // scene units per mm
 
@@ -559,6 +562,17 @@ export function createStage(host, C) {
   scene.add(floor);
   var turnG = new THREE.Group(), setG = new THREE.Group();
   turnG.add(setG); scene.add(turnG);
+  // lifestyle surface (replaces the shadow catcher) and props (v1.10.0)
+  var surf = null, surfK = "none", props = makeProps(THREE, S);
+  Object.keys(props).forEach(function (k) { turnG.add(props[k]); });
+  function setSurface(k) {
+    if (k === surfK) return;
+    if (surf) { scene.remove(surf); surf.geometry.dispose(); surf.material.map.dispose(); surf.material.dispose(); surf = null; }
+    surfK = k;
+    surf = surfaceMesh(THREE, k, S, 60, ANISO);
+    if (surf) scene.add(surf);
+    floor.visible = !surf;
+  }
   var wall = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.ShadowMaterial({ opacity: 0.4 }));
   wall.receiveShadow = true;
   wall.visible = false;
@@ -1046,6 +1060,8 @@ export function createStage(host, C) {
     wall.position.set(0, 15, box.min.z - 0.0002);
     var size = box.getSize(new THREE.Vector3());
     frame.R = Math.max(size.x, size.y, size.z) * 0.56 + 0.03;
+    setSurface(sc.surf || "none");
+    placeProps(props, sc.props, box, S);
     frame.cy = (box.min.y + box.max.y) / 2;
     turn();
     lights();

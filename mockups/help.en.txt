@@ -78,6 +78,7 @@ Badges, stickers, keychains, enamel pins and magnets lie flat on the table to be
 - `Placement`: standing, lying on its back or leaning on a wall. `Turn` turns the book on the floor; `Open the cover` opens it up to 160°.
 - `Perspective`: low values look flat like a catalogue picture, high values look close and dramatic. `Move left / right` and `Move up / down` place the book in the frame.
 - `Background`: see-through, a colour, a gradient or a photo. With `Photo`, `Choose a picture` takes one of yours and `Find free photos` searches Openverse and Wikimedia Commons (only photos that allow commercial use). A free photo is saved on your orOS disk with its credit, shown under it; `Copy credit` copies the line to give where you post the picture. `Shadow` sets how dark the floor shadow is.
+- `Surface`: wood, marble, linen, paper or concrete under the product, drawn by orOS at real scale (no photos), or `None (only the shadow)`. `Things beside it`: a coffee cup, a plant and a pencil, at their real size, set round the product without changing its framing.
 - `Light`: where it comes from, how high, how strong, how soft its shadows are, and cool or warm.
 
 ## Open book and e-book

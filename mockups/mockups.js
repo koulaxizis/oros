@@ -237,6 +237,17 @@
       "model.remove": "Remove the model from this device",
       "model.err.net": "The model could not be downloaded. Check the connection and try again.",
       "model.err.hash": "The downloaded file was not the expected model, so it was not kept. Try again later.",
+      "f.surf": "Surface",
+      "surf.none": "None (only the shadow)",
+      "surf.wood": "Wood",
+      "surf.marble": "Marble",
+      "surf.linen": "Linen",
+      "surf.paper": "Paper",
+      "surf.concrete": "Concrete",
+      "f.props": "Things beside it",
+      "prop.cup": "Coffee cup",
+      "prop.plant": "Plant",
+      "prop.pencil": "Pencil",
       "kind.hoodie": "Hoodie",
       "kind.hoodie.d": "Laid flat with its hood and pocket, printed on the front or chest and the back",
       "untitled.hoodie": "Hoodie mockup",
@@ -767,6 +778,17 @@
       "model.remove": "Αφαίρεση του μοντέλου από τη συσκευή",
       "model.err.net": "Δεν ήταν δυνατή η λήψη του μοντέλου. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
       "model.err.hash": "Το αρχείο που ήρθε δεν ήταν το αναμενόμενο μοντέλο, οπότε δεν κρατήθηκε. Δοκίμασε ξανά αργότερα.",
+      "f.surf": "Επιφάνεια",
+      "surf.none": "Καμία (μόνο η σκιά)",
+      "surf.wood": "Ξύλο",
+      "surf.marble": "Μάρμαρο",
+      "surf.linen": "Λινό",
+      "surf.paper": "Χαρτί",
+      "surf.concrete": "Μπετόν",
+      "f.props": "Αντικείμενα δίπλα",
+      "prop.cup": "Φλιτζάνι καφέ",
+      "prop.plant": "Φυτό",
+      "prop.pencil": "Μολύβι",
       "kind.hoodie": "Φούτερ με κουκούλα",
       "kind.hoodie.d": "Απλωμένο με την κουκούλα και την τσέπη, τύπωμα μπροστά ή στο στήθος και πίσω",
       "untitled.hoodie": "Μακέτα φούτερ",
@@ -1729,6 +1751,8 @@
     renderPhotoThumb();
     renderCredit();
     setVal("f-shadow", s.shadow); out("shadow-out", Math.round(s.shadow * 100) + "%");
+    setVal("f-surf", s.surf);
+    C.PROPS.forEach(function (k) { setChk("f-prop-" + k, s.props[k]); });
     setVal("f-az", s.light.az); out("az-out", s.light.az + "°");
     setVal("f-el", s.light.el); out("el-out", s.light.el + "°");
     setVal("f-str", s.light.str); out("str-out", Math.round(s.light.str * 100) + "%");
@@ -2458,6 +2482,10 @@
     rng("f-dy", function (s, v) { s.cam.dy = v; });
     rng("f-ang", function (s, v) { s.bg.ang = v; });
     rng("f-shadow", function (s, v) { s.shadow = v; });
+    $("f-surf").addEventListener("change", function () { var v = $("f-surf").value; change("scene", function (p) { p.sc.surf = v; }); });
+    C.PROPS.forEach(function (k) {
+      $("f-prop-" + k).addEventListener("change", function () { var on = $("f-prop-" + k).checked ? 1 : 0; change("scene", function (p) { p.sc.props[k] = on; }); });
+    });
     rng("f-az", function (s, v) { s.light.az = v; });
     rng("f-el", function (s, v) { s.light.el = v; });
     rng("f-str", function (s, v) { s.light.str = v; });

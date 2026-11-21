@@ -1270,3 +1270,18 @@ test("hoodie, socks and cap: options, print areas, what goes where", () => {
     assert.match(M.sha256, /^[0-9a-f]{64}$/); assert.equal(C.good(name).model, name);
   }
 });
+
+// ---------- v2 wave 9: surfaces and props ----------
+test("scene: lifestyle surface and props, unknown values fall back", () => {
+  const b = good({ sc: { surf: "wood", props: { cup: 1, plant: true, lamp: 1 } } });
+  assert.equal(b.sc.surf, "wood");
+  assert.deepEqual(b.sc.props, { cup: 1, plant: 1, pencil: 0 });
+  const odd = good({ sc: { surf: "lava", props: "x" } });
+  assert.equal(odd.sc.surf, "none"); assert.deepEqual(odd.sc.props, { cup: 0, plant: 0, pencil: 0 });
+  const js = read("mockups/mockups.js"), de = read("i18n/de/mockups.js"), html = read("mockups/index.html");
+  assert.match(read("mockups/scene.js"), /from "\.\/surface3d\.js"/);
+  const keys = ["f.surf", "f.props"].concat(C.SURFS.map((k) => "surf." + k), C.PROPS.map((k) => "prop." + k));
+  keys.forEach((k) => { assert.equal(js.split('"' + k + '":').length - 1, 2, k); assert.ok(de.includes('"' + k + '":'), "de " + k); });
+  C.SURFS.forEach((k) => assert.match(html, new RegExp('<option value="' + k + '" data-i18n="surf\\.' + k + '"')));
+  assert.match(read("mockups/help.en.txt"), /`Surface`/);
+});

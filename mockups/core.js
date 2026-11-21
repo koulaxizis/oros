@@ -59,7 +59,7 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.6.0";
+  var VERSION = "1.7.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-mockups-data";
   var GOODS_KEY = "oros-mockups-goods";
@@ -124,6 +124,8 @@
   var RULES = ["none", "lined", "dotted", "grid"];
   var CORNER_R = 6;                     // rounded corners, mm
   var PLACES = ["stand", "lie", "lean"];
+  var SURFS = ["none", "wood", "marble", "linen", "paper", "concrete"];   // v2 wave 9: lifestyle surfaces
+  var PROPS = ["cup", "plant", "pencil"];
   var BGS = ["none", "solid", "grad", "photo"];
   var RATIOS = ["1:1", "4:5", "3:2", "4:3", "16:9", "9:16"];
   var SIZES = [1024, 2048, 3000, 4096];
@@ -749,6 +751,12 @@
     return out;
   }
 
+  function normProps(o) {
+    o = o && typeof o === "object" ? o : {};
+    var out = {};
+    PROPS.forEach(function (k) { out[k] = bit(o[k]); });
+    return out;
+  }
   function normScene(s) {
     s = s && typeof s === "object" ? s : {};
     var cam = s.cam && typeof s.cam === "object" ? s.cam : {};
@@ -771,6 +779,8 @@
         cr: bg.img ? normCr(bg.cr) : null       // credit when the photo came from an open library
       },
       shadow: num(s.shadow, LIMIT.shadow, 0.45, 0.01),
+      surf: pick(s.surf, SURFS, "none"),
+      props: normProps(s.props),
       light: {
         az: num(li.az, LIMIT.az, 20, 1), el: num(li.el, LIMIT.el, 55, 1),
         str: num(li.str, LIMIT.str, 1, 0.01), soft: num(li.soft, LIMIT.soft, 0.6, 0.01),
@@ -1029,7 +1039,7 @@
     mergeGoods: GOODS_STORE.merge, parseGoods: GOODS_STORE.parse, putGood: GOODS_STORE.put, removeGood: GOODS_STORE.remove,
     sheetsOf: sheetsOf, templateOf: templateOf, round3: round3, asset: asset, str: str, PREFS_KEY: PREFS_KEY, MAX_PRJ: MAX_PRJ,
     ID_RE: ID_RE, ASSET_RE: ASSET_RE, LIMIT: LIMIT,
-    TRIMS: TRIMS, PAPERS: PAPERS, BINDS: BINDS, WIRES: WIRES, FOILS: FOILS, EMBS: EMBS, TEXS: TEXS, STICKS: STICKS, RULES: RULES, CORNER_R: CORNER_R, canHave: canHave, stickerBox: stickerBox, slipcase: slipcase, SS_MAX: SS_MAX, PUNCH: PUNCH, coilLoops: coilLoops, FINISH: FINISH, EDGES: EDGES, PLACES: PLACES, BGS: BGS,
+    TRIMS: TRIMS, PAPERS: PAPERS, BINDS: BINDS, WIRES: WIRES, FOILS: FOILS, EMBS: EMBS, TEXS: TEXS, STICKS: STICKS, RULES: RULES, CORNER_R: CORNER_R, canHave: canHave, stickerBox: stickerBox, slipcase: slipcase, SS_MAX: SS_MAX, PUNCH: PUNCH, coilLoops: coilLoops, FINISH: FINISH, EDGES: EDGES, PLACES: PLACES, BGS: BGS, SURFS: SURFS, PROPS: PROPS,
     RATIOS: RATIOS, SIZES: SIZES, FMTS: FMTS, SLOTS: SLOTS, MM_PER_IN: MM_PER_IN,
     VOL_SLOTS: VOL_SLOTS, SETS: SETS, MAX_VOLS: MAX_VOLS, GAP_DEF: GAP_DEF,
     MOTIONS: MOTIONS, SECS: SECS, VSIZES: VSIZES, VFMTS: VFMTS,

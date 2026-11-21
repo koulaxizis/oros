@@ -383,6 +383,14 @@
           </div>
           <div id="swatches" class="swatches" role="group"></div>
           <div class="range"><span class="rl" data-i18n="f.shadow">Shadow</span><input id="f-shadow" type="range" min="0" max="1" step="0.01"><output id="shadow-out"></output></div>
+          <label class="fld"><span data-i18n="f.surf">Surface</span>
+            <select id="f-surf"><option value="none" data-i18n="surf.none">None (only the shadow)</option><option value="wood" data-i18n="surf.wood">Wood</option><option value="marble" data-i18n="surf.marble">Marble</option><option value="linen" data-i18n="surf.linen">Linen</option><option value="paper" data-i18n="surf.paper">Paper</option><option value="concrete" data-i18n="surf.concrete">Concrete</option></select></label>
+          <span class="lbl sm" data-i18n="f.props">Things beside it</span>
+          <div class="checks" id="props-box">
+            <label class="check"><input type="checkbox" id="f-prop-cup"><span data-i18n="prop.cup">Coffee cup</span></label>
+            <label class="check"><input type="checkbox" id="f-prop-plant"><span data-i18n="prop.plant">Plant</span></label>
+            <label class="check"><input type="checkbox" id="f-prop-pencil"><span data-i18n="prop.pencil">Pencil</span></label>
+          </div>
 
           <span class="lbl" data-i18n="sec.light">Light</span>
           <div class="range"><span class="rl" data-i18n="f.az">From where</span><input id="f-az" type="range" min="-180" max="180" step="1"><output id="az-out"></output></div>
