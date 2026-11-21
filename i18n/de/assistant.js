@@ -1427,6 +1427,7 @@ orosPack("de", "assistant", {
  "f.task": "Aufgabe",
  "f.taxoffice": "Finanzamt",
  "f.text": "Text",
+ "f.size": "Größe",
  "f.title": "Titel",
  "f.track": "Titel",
  "f.translator": "Übersetzung",

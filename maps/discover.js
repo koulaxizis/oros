@@ -3,7 +3,11 @@
 //
 // The Discover sheet (compass button, or long-press › "What's
 // nearby"), three tabs around the middle of the map:
-//   - Places: a category (restaurants, cafés, pharmacies, ATMs…)
+//   - Places: a category (restaurants, cafés, pharmacies, ATMs…;
+//     since wave H6 also water and springs, shelters and huts, peaks
+//     and viewpoints, camping and picnic, bike repair and parking,
+//     which show their kind, height and "drinking water" instead of
+//     opening hours)
 //     from OpenStreetMap through Overpass, by distance, with "open
 //     now / closes at / opens at" read from opening_hours and an
 //     "Open now" filter. Popup: hours, address, phone, website, Go
@@ -58,7 +62,18 @@
       "dsc.p.by": "By {b}", "dsc.p.look": "Photo looking {dir}", "dsc.unnamed": "No name",
       "dsc.dir.0": "north", "dsc.dir.1": "north-east", "dsc.dir.2": "east", "dsc.dir.3": "south-east",
       "dsc.dir.4": "south", "dsc.dir.5": "south-west", "dsc.dir.6": "west", "dsc.dir.7": "north-west",
-      "dsc.u.m": "{n} m", "dsc.u.km": "{n} km"
+      "dsc.u.m": "{n} m", "dsc.u.km": "{n} km",
+      "dsc.cat.water": "Water and springs", "dsc.cat.shelter": "Shelters and huts", "dsc.cat.peak": "Peaks and viewpoints",
+      "dsc.cat.camp": "Camping and picnic", "dsc.cat.bike": "Bike repair and parking",
+      "dsc.one.water": "Water", "dsc.one.shelter": "Shelter", "dsc.one.peak": "Peak", "dsc.one.camp": "Camping / picnic", "dsc.one.bike": "Bike service",
+      "dsc.k.spring": "Spring", "dsc.k.drinking_water": "Drinking fountain", "dsc.k.water_tap": "Water tap", "dsc.k.water_point": "Water point",
+      "dsc.k.alpine_hut": "Mountain hut", "dsc.k.wilderness_hut": "Unstaffed hut", "dsc.k.shelter": "Shelter",
+      "dsc.k.peak": "Peak", "dsc.k.volcano": "Volcano", "dsc.k.saddle": "Pass / saddle", "dsc.k.viewpoint": "Viewpoint",
+      "dsc.k.camp_site": "Campsite", "dsc.k.picnic_site": "Picnic site", "dsc.k.picnic_table": "Picnic table", "dsc.k.firepit": "Fire pit",
+      "dsc.k.bicycle_repair_station": "Bike repair stand", "dsc.k.bicycle_rental": "Bike rental", "dsc.k.compressed_air": "Air pump",
+      "dsc.k.bicycle": "Bike shop", "dsc.k.bicycle_parking": "Bike parking",
+      "dsc.f.yes": "drinking water", "dsc.f.no": "not drinking water", "dsc.f.unk": "drinkable? not known",
+      "dsc.f.seasonal": "seasonal", "dsc.f.fee": "fee"
     },
     el: {
       "dsc.btn": "Ανακάλυψη", "dsc.title": "Ανακάλυψη", "dsc.close": "Κλείσιμο", "dsc.ctx": "Τι υπάρχει κοντά",
@@ -82,7 +97,18 @@
       "dsc.p.by": "Από {b}", "dsc.p.look": "Φωτογραφία προς {dir}", "dsc.unnamed": "Χωρίς όνομα",
       "dsc.dir.0": "βορρά", "dsc.dir.1": "βορειοανατολικά", "dsc.dir.2": "ανατολή", "dsc.dir.3": "νοτιοανατολικά",
       "dsc.dir.4": "νότο", "dsc.dir.5": "νοτιοδυτικά", "dsc.dir.6": "δύση", "dsc.dir.7": "βορειοδυτικά",
-      "dsc.u.m": "{n} μ.", "dsc.u.km": "{n} χλμ."
+      "dsc.u.m": "{n} μ.", "dsc.u.km": "{n} χλμ.",
+      "dsc.cat.water": "Νερό και πηγές", "dsc.cat.shelter": "Καταφύγια", "dsc.cat.peak": "Κορυφές και θέες",
+      "dsc.cat.camp": "Κάμπινγκ και πικνίκ", "dsc.cat.bike": "Επισκευή και στάθμευση ποδηλάτου",
+      "dsc.one.water": "Νερό", "dsc.one.shelter": "Καταφύγιο", "dsc.one.peak": "Κορυφή", "dsc.one.camp": "Κάμπινγκ / πικνίκ", "dsc.one.bike": "Για ποδήλατο",
+      "dsc.k.spring": "Πηγή", "dsc.k.drinking_water": "Βρύση πόσιμου νερού", "dsc.k.water_tap": "Βρύση", "dsc.k.water_point": "Σημείο νερού",
+      "dsc.k.alpine_hut": "Ορειβατικό καταφύγιο", "dsc.k.wilderness_hut": "Ανοιχτό καταφύγιο", "dsc.k.shelter": "Στέγαστρο",
+      "dsc.k.peak": "Κορυφή", "dsc.k.volcano": "Ηφαίστειο", "dsc.k.saddle": "Διάσελο", "dsc.k.viewpoint": "Θέα",
+      "dsc.k.camp_site": "Κάμπινγκ", "dsc.k.picnic_site": "Χώρος πικνίκ", "dsc.k.picnic_table": "Τραπέζι πικνίκ", "dsc.k.firepit": "Εστία φωτιάς",
+      "dsc.k.bicycle_repair_station": "Σταθμός επισκευής ποδηλάτου", "dsc.k.bicycle_rental": "Ενοικίαση ποδηλάτων", "dsc.k.compressed_air": "Τρόμπα αέρα",
+      "dsc.k.bicycle": "Κατάστημα ποδηλάτων", "dsc.k.bicycle_parking": "Στάθμευση ποδηλάτων",
+      "dsc.f.yes": "πόσιμο νερό", "dsc.f.no": "μη πόσιμο", "dsc.f.unk": "πόσιμο; άγνωστο",
+      "dsc.f.seasonal": "εποχικό", "dsc.f.fee": "με χρέωση"
     }
   };
   if (window.orosI18n) window.orosI18n.table(STR, "maps", LANG);
@@ -137,6 +163,21 @@
     if (st.state === "unknown") return { cls: "unknown", text: t("s.unknown") };
     if (st.state === "open") return { cls: "open", text: st.at ? t("s.closes", { t: timeOf(st.at, now) }) : t("s.24") };
     return { cls: "closed", text: st.at ? t("s.opens", { t: timeOf(st.at, now) }) : t("s.closed") };
+  }
+  // Wave H6: outdoor places say what they are instead of opening hours.
+  function isOut(p) { var c = DC.catById(p.cat); return !!(c && c.out && !p.hours); }
+  function kindName(p) { return p.kind ? t("k." + p.kind) : t("one." + p.cat); }
+  function factsText(p) {
+    var a = [kindName(p)];
+    if (p.ele !== null && p.ele !== undefined) a.push(t("u.m", { n: p.ele }));
+    if (p.cat === "water") a.push(t("f." + (p.drink === "yes" ? "yes" : p.drink === "no" ? "no" : "unk")));
+    if (p.seasonal) a.push(t("f.seasonal"));
+    if (p.fee) a.push(t("f.fee"));
+    return a.join(" · ");
+  }
+  function statusOf(p, now) {
+    if (isOut(p)) return { cls: p.cat === "water" ? (p.drink === "yes" ? "open" : p.drink === "no" ? "closed" : "unknown") : "unknown", text: factsText(p) };
+    return hoursText(p.hours, now);
   }
   var ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>';
 
@@ -249,12 +290,13 @@
   function visiblePlaces() {
     var cur = res.places;
     if (!cur) return [];
-    if (!prefs.open) return cur.items;
+    var cc0 = DC.catById(cur.cat);
+    if (!prefs.open || (cc0 && cc0.out)) return cur.items;
     var now = new Date();
     return cur.items.filter(function (p) { return DC.status(p.hours, now).state === "open"; });
   }
   function placeIcon(p, now) {
-    var c = DC.catById(p.cat), s = hoursText(p.hours, now);
+    var c = DC.catById(p.cat), s = statusOf(p, now);
     var h = el("span", s.cls);
     h.textContent = c ? c.icon : "•";
     return L.divIcon({ className: "dsc-pin", html: h, iconSize: [30, 30], iconAnchor: [15, 15], popupAnchor: [0, -14] });
@@ -268,7 +310,7 @@
       EXT[prefs.tab].paint(res[prefs.tab] ? res[prefs.tab].items : null, layer, markers);
     } else if (prefs.tab === "places") {
       visiblePlaces().forEach(function (p) {
-        var m = L.marker([p.lat, p.lon], { icon: placeIcon(p, now), keyboard: false, title: p.name || t("one." + p.cat) });
+        var m = L.marker([p.lat, p.lon], { icon: placeIcon(p, now), keyboard: false, title: p.name || kindName(p) });
         m.bindPopup(function () { return placePopup(p); }, { maxWidth: 280 });
         markers[p.id] = m; layer.addLayer(m);
       });
@@ -298,10 +340,13 @@
   // ---------- popups (DOM-built) ----------
   function placePopup(p) {
     var now = new Date(), w = el("div", "dsc-pop");
-    w.appendChild(el("b", "", p.name || t("unnamed")));
-    w.appendChild(el("div", "dsc-pop-s", t("one." + p.cat) + (p.addr ? " · " + p.addr : "")));
-    var s = hoursText(p.hours, now);
-    w.appendChild(el("div", "dsc-st " + s.cls, s.text));
+    w.appendChild(el("b", "", p.name || (isOut(p) ? kindName(p) : t("unnamed"))));
+    if (isOut(p)) w.appendChild(el("div", "dsc-st " + statusOf(p, now).cls, factsText(p)));
+    else {
+      w.appendChild(el("div", "dsc-pop-s", t("one." + p.cat) + (p.addr ? " · " + p.addr : "")));
+      var s = hoursText(p.hours, now);
+      w.appendChild(el("div", "dsc-st " + s.cls, s.text));
+    }
     if (p.hours) {
       var hh = el("div", "dsc-pop-s");
       hh.textContent = t("hours") + ": " + p.hours;
@@ -315,10 +360,10 @@
     act.appendChild(button(t("go"), "", function () {
       map.closePopup();
       setMode(false);
-      if (H.routeTo) H.routeTo({ lat: p.lat, lon: p.lon, name: p.name || t("one." + p.cat), sub: p.addr });
+      if (H.routeTo) H.routeTo({ lat: p.lat, lon: p.lon, name: p.name || kindName(p), sub: p.addr });
     }));
     act.appendChild(button(t("save"), "", function () {
-      if (H.addPlaces && H.addPlaces([{ lat: p.lat, lon: p.lon, name: p.name || t("one." + p.cat), sub: p.addr }])) toast(t("saved"));
+      if (H.addPlaces && H.addPlaces([{ lat: p.lat, lon: p.lon, name: p.name || kindName(p), sub: p.addr }])) toast(t("saved"));
     }));
     w.appendChild(act);
     return w;
@@ -414,20 +459,21 @@
     cb.addEventListener("change", function () { prefs.open = cb.checked ? 1 : 0; savePrefs(); paint(); render(); });
     lab.appendChild(cb);
     lab.appendChild(el("span", "", t("open")));
-    body.appendChild(lab);
+    var outCat = DC.catById(prefs.cat) && DC.catById(prefs.cat).out;
+    if (!outCat) body.appendChild(lab);
     var cur = res.places, list = cur && cur.cat === prefs.cat ? visiblePlaces() : [];
     var txt = "";
-    if (cur && cur.cat === prefs.cat) txt = prefs.open ? t("n.open", { n: list.length, all: cur.items.length, d: fmtDist(cur.r) }) : t("n.places", { n: list.length, d: fmtDist(cur.r) });
+    if (cur && cur.cat === prefs.cat) txt = prefs.open && !outCat ? t("n.open", { n: list.length, all: cur.items.length, d: fmtDist(cur.r) }) : t("n.places", { n: list.length, d: fmtDist(cur.r) });
     if (!statusLine(body, txt) || !cur) return;
-    if (!list.length) { body.appendChild(el("p", "osm-hint dsc-none", prefs.open ? t("none.open") : t("none"))); return; }
+    if (!list.length) { body.appendChild(el("p", "osm-hint dsc-none", prefs.open && !outCat ? t("none.open") : t("none"))); return; }
     var ul = el("ul", "osm-list dsc-list"), now = new Date();
     list.slice(0, 100).forEach(function (p) {
       var li = el("li", "osm-row dsc-row");
       li.tabIndex = 0;
-      var cc = DC.catById(p.cat), s = hoursText(p.hours, now);
+      var cc = DC.catById(p.cat), s = statusOf(p, now);
       li.appendChild(el("span", "dsc-ico " + s.cls, cc ? cc.icon : "•"));
       var b = el("div", "osm-row-body");
-      b.appendChild(el("div", "osm-row-t", p.name || t("one." + p.cat)));
+      b.appendChild(el("div", "osm-row-t", p.name || kindName(p)));
       var sub = el("div", "osm-row-s");
       sub.appendChild(el("span", "dsc-st " + s.cls, s.text));
       sub.appendChild(document.createTextNode(" · " + fmtDist(p.d)));
