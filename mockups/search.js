@@ -1,10 +1,10 @@
 // ============================================================
-// orOS Mockups — universal search provider (v1.1.0)
+// orOS Mockups — universal search provider (v1.2.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: reads oros-mockups-data and (v1.1.0) the
 // products in oros-mockups-goods, never writes. One hit per mockup:
 // its name as title, and as text the book's size, pages, binding and
-// spine text, or the product (CD, DVD / Blu-ray).
+// spine text, or the product (CD, DVD / Blu-ray, and since v1.2.0 cassette, VHS, vinyl).
 // Opens through __orosOpenAt("mockups", { id }).
 // ============================================================
 (function (root) {
@@ -12,8 +12,8 @@
   var KEY = "oros-mockups-data", GKEY = "oros-mockups-goods";
   // Runs in the shell, which loads only its own pack: a pack language shows English.
   var S = {
-    en: { "search.name": "Book mockup", "bind.pb": "Paperback", "bind.hc": "Hardcover", "bind.ss": "Saddle-stitched", "bind.sp": "Spiral", "bind.bb": "Board book", "bind.lf": "Lay-flat", "search.pages": "pages", "search.cd": "CD", "search.dvd": "DVD", "search.bd": "Blu-ray", "search.good": "Mockup" },
-    el: { "search.name": "Μακέτα βιβλίου", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο", "bind.ss": "Καρφίτσα", "bind.sp": "Σπιράλ", "bind.bb": "Χαρτονένιο", "bind.lf": "Ανοίγει επίπεδα", "search.pages": "σελίδες", "search.cd": "CD", "search.dvd": "DVD", "search.bd": "Blu-ray", "search.good": "Μακέτα" }
+    en: { "search.name": "Book mockup", "bind.pb": "Paperback", "bind.hc": "Hardcover", "bind.ss": "Saddle-stitched", "bind.sp": "Spiral", "bind.bb": "Board book", "bind.lf": "Lay-flat", "search.pages": "pages", "search.cd": "CD", "search.dvd": "DVD", "search.bd": "Blu-ray", "search.tape": "Cassette", "search.vhs": "VHS", "search.vinyl": "Vinyl", "search.good": "Mockup" },
+    el: { "search.name": "Μακέτα βιβλίου", "bind.pb": "Χαρτόδετο", "bind.hc": "Σκληρόδετο", "bind.ss": "Καρφίτσα", "bind.sp": "Σπιράλ", "bind.bb": "Χαρτονένιο", "bind.lf": "Ανοίγει επίπεδα", "search.pages": "σελίδες", "search.cd": "CD", "search.dvd": "DVD", "search.bd": "Blu-ray", "search.tape": "Κασέτα", "search.vhs": "VHS", "search.vinyl": "Βινύλιο", "search.good": "Μακέτα" }
   };
   var ID_RE = /^k[0-9a-z]{6,24}$/;
 
@@ -27,7 +27,7 @@
     d.prj.forEach(function (p) {
       if (!p || typeof p.id !== "string" || !ID_RE.test(p.id)) return;
       if (tombs[p.id] && tombs[p.id] >= p.m) return;
-      if (p.kind !== "cd" && p.kind !== "dvd") return;
+      if (["cd", "dvd", "tape", "vhs", "vinyl"].indexOf(p.kind) < 0) return;
       var g = p.g && typeof p.g === "object" ? p.g : {}, art = p.art && typeof p.art === "object" ? p.art : {};
       var k = p.kind === "dvd" && g.fmt === "bd" ? "bd" : p.kind, kn = S[lang]["search." + k];
       var parts = [kn];

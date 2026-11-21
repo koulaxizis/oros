@@ -798,12 +798,13 @@ test("v2 wave 2 wiring: finish controls, notebook preset, strings in en, el and 
 
 // ---------- v2 wave 3: products (CD, DVD / Blu-ray) ----------
 const GM = require(path.join(ROOT, "mockups/goods/media.js"));
+const GA = require(path.join(ROOT, "mockups/goods/analog.js"));
 function good(over) {
   return C.normGoodProject(Object.assign({ id: ID, m: 1000, nm: "Album", kind: "cd", g: {}, art: {}, sc: {}, out: {}, tpl: { safe: 3 } }, over || {}));
 }
 
 test("products: registry, defaults, unknown values fall back, canonical", () => {
-  assert.deepEqual(C.goodKinds(), ["cd", "dvd"]);
+  assert.deepEqual(C.goodKinds(), ["cd", "dvd", "tape", "vhs", "vinyl"]);
   const cd = good();
   assert.deepEqual(cd.g, { pack: "jewel", tray: "black", disc: "silver", hub: 22, beside: 0 });
   const odd = good({ g: { pack: "tin", tray: "pink", disc: "gold", hub: 99, beside: true, x: 1 } });
@@ -901,8 +902,8 @@ test("v2 wave 3 wiring: gallery, product form, two sync slices, strings, search,
     assert.match(html, new RegExp('id="' + id + '"'), id);
   });
   const keys = ["tab.item", "tab.pics", "make.title", "make.g.books", "make.g.music", "kind.cd", "kind.cd.d", "kind.dvd", "kind.notebook",
-    "f.cdpack", "cdpack.digi", "f.disck", "f.hub", "f.beside", "slot.disc", "slot.cd.front", "tpl.kind.inlay", "tpl.kind.disc", "tpl.discInfo",
-    "tpl.goodNote.inlay", "lg.noprint", "f.openCase", "f.openSlide", "f.sheet", "sub.cd", "sub.dvd", "untitled.cd"];
+    "f.cdpack", "cdpack.digi", "f.disck", "f.hub", "f.beside.cd", "slot.disc", "slot.cd.front", "tpl.kind.inlay", "tpl.kind.disc", "tpl.discInfo",
+    "tpl.goodNote.inlay", "lg.noprint", "f.openCase", "f.openSlide.cd", "f.sheet", "sub.cd", "sub.dvd", "untitled.cd"];
   keys.forEach((k) => {
     assert.equal(js.split('"' + k + '":').length - 1, 2, k);
     assert.ok(de.includes('"' + k + '":'), "de " + k);
@@ -920,4 +921,93 @@ test("v2 wave 3 wiring: gallery, product form, two sync slices, strings, search,
   assert.equal(P.search(ctx)[0].title, "Mockup CD");
   assert.match(read("mockups/help.en.txt"), /## CD, DVD and Blu-ray/);
   assert.match(read("mockups/help.el.txt"), /## CD, DVD και Blu-ray/);
+});
+
+test("cassette: defaults, J-card 101.6 mm with 3 to 5 panels, O-card, tape labels", () => {
+  const t = good({ kind: "tape" });
+  assert.deepEqual(t.g, { pack: "norelco", shell: "clear", jp: 3, beside: 0 });
+  assert.deepEqual(good({ kind: "tape", g: { pack: "tin", shell: "gold", jp: 9 } }).g, t.g);
+  assert.deepEqual(C.sheetsOf(t), ["jcard", "tlabel"]);
+  assert.deepEqual(C.sheetsOf(good({ kind: "tape", g: { pack: "ocard" } })), ["ocard", "tlabel"]);
+  assert.deepEqual(C.sheetsOf(good({ kind: "tape", g: { pack: "none" } })), ["tlabel"]);
+  const j = C.templateOf(t, "jcard");
+  assert.equal(j.H, 101.6); assert.equal(j.W, 92.7);
+  assert.deepEqual(j.parts.map((p) => [p.k, p.a, p.txt]), [["front", "front", 0], ["spine", "spine", 1], ["flap", "back", 0]]);
+  const j5 = C.templateOf(good({ kind: "tape", g: { jp: 5 } }), "jcard");
+  assert.deepEqual(j5.parts.map((p) => p.k), ["front", "spine", "flap", "in1", "in2"]);
+  assert.equal(j5.parts[3].a, "inside"); assert.equal(j5.W, 222.7);
+  const l = C.templateOf(t, "tlabel");
+  assert.deepEqual(l.parts.map((p) => [p.k, p.w]), [["sideA", 89], ["sideB", 89]]);
+  assert.equal(l.H, 51);
+  const o = C.templateOf(good({ kind: "tape", g: { pack: "ocard" } }), "ocard");
+  assert.equal(o.W, 175); assert.equal(o.H, 110.5);
+  assert.deepEqual(GA.tapeDims({}).j, { front: 65, spine: 12.7, flap: 15, h: 101.6 });
+  assert.equal(C.good("tape").wrap, false);
+});
+
+test("VHS: card sleeve 105 × 192 with a 27 mm spine and glue flap, clamshell, labels", () => {
+  const v = good({ kind: "vhs" });
+  assert.deepEqual(v.g, { pack: "slip", col: "black", beside: 0 });
+  assert.deepEqual(C.sheetsOf(v), ["vslip", "vface", "vspine"]);
+  assert.deepEqual(C.sheetsOf(good({ kind: "vhs", g: { pack: "clam" } })), ["vclam", "vface", "vspine"]);
+  assert.deepEqual(C.sheetsOf(good({ kind: "vhs", g: { pack: "none" } })), ["vface", "vspine"]);
+  const s = C.templateOf(v, "vslip");
+  assert.deepEqual(s.parts.map((p) => [p.k, p.w]), [["back", 105], ["spine", 27], ["front", 105], ["side", 27], ["glue", 10]]);
+  assert.equal(s.H, 192); assert.equal(s.W, 274);
+  assert.equal(C.templateOf(good({ kind: "vhs", g: { pack: "clam" } }), "vclam").W, 288);
+  assert.deepEqual([C.templateOf(v, "vface").W, C.templateOf(v, "vface").H], [78, 46]);
+  assert.equal(C.templateOf(v, "vspine").parts[0].a, "spine", "the spine label takes the spine picture");
+  assert.equal(GA.vhsDims({ pack: "clam" }).d, 32);
+});
+
+test("vinyl: LP and 7-inch jackets, gatefold, inner sleeve, round labels with the hole", () => {
+  const r = good({ kind: "vinyl" });
+  assert.deepEqual(r.g, { size: "lp", jk: "single", rc: "black", inner: "white", big: 0, beside: 0 });
+  assert.deepEqual(C.sheetsOf(r), ["jacket", "labelA", "labelB"]);
+  assert.deepEqual(C.sheetsOf(good({ kind: "vinyl", g: { jk: "gatefold", inner: "printed" } })), ["gatefold", "inner", "labelA", "labelB"]);
+  const j = C.templateOf(r, "jacket");
+  assert.equal(j.W, 632); assert.equal(j.H, 314);
+  assert.equal(C.templateOf(good({ kind: "vinyl", g: { jk: "gatefold" } }), "gatefold").parts[1].w, 6);
+  const a = C.templateOf(r, "labelA");
+  assert.equal(a.circle.print, 100); assert.equal(a.circle.hole, 7.24); assert.equal(a.parts[0].a, "labelA");
+  const s7 = C.templateOf(good({ kind: "vinyl", g: { size: "7in", big: 1 } }), "labelB");
+  assert.equal(s7.circle.print, 84); assert.equal(s7.circle.hole, 38.2);
+  assert.equal(C.templateOf(good({ kind: "vinyl", g: { size: "7in" } }), "jacket").H, 184);
+  const p = good({ kind: "vinyl", art: { labelA: A1, innerF: A2, disc: A1 } });
+  assert.equal(p.art.labelA, A1); assert.equal(p.art.innerF, A2);
+  assert.ok(!("disc" in p.art), "a CD slot never travels with a record");
+  assert.equal(C.good("vinyl").wrap, true);
+  assert.equal(GA.vinylDims({ size: "7in" }).rec, 175);
+});
+
+test("v2 wave 4 wiring: cassette, VHS and vinyl forms, gallery, strings, search, help", () => {
+  const js = read("mockups/mockups.js"), html = read("mockups/index.html"), de = read("i18n/de/mockups.js"), sc = read("mockups/scene.js");
+  assert.match(html, /<script src="goods\/analog\.js\?v=/);
+  assert.match(sc, /from "\.\/goods\/analog3d\.js"/);
+  ["tape-form", "tpack", "shellk", "f-jp", "vhs-form", "vpack", "vcolk", "vinyl-form", "rsizek", "vjkk", "innerk", "f-rc", "f-big", "beside-lbl"].forEach((id) => {
+    assert.match(html, new RegExp('id="' + id + '"'), id);
+  });
+  const keys = ["kind.tape", "kind.vhs", "kind.vinyl", "kind.vinyl.d", "tpack.ocard", "f.shell", "f.jp", "vpack.clam", "f.rsize", "rsize.7in",
+    "f.vjk", "vjk.gatefold", "f.inner", "inner.printed", "f.rc", "f.big", "f.beside.vinyl", "f.openSlide.vinyl", "sub.tape", "untitled.vhs",
+    "pics.hint.vinyl", "tpl.kind.jcard", "tpl.kind.vslip", "tpl.goodNote.jcard"];
+  keys.forEach((k) => {
+    assert.equal(js.split('"' + k + '":').length - 1, 2, k);
+    assert.ok(de.includes('"' + k + '":'), "de " + k);
+  });
+  const variants = { tape: [{ pack: "norelco", jp: 5 }, { pack: "ocard" }, { pack: "none" }], vhs: [{ pack: "slip" }, { pack: "clam" }, { pack: "none" }],
+    vinyl: [{ jk: "single" }, { jk: "gatefold", inner: "printed" }] };
+  for (const kind of Object.keys(variants)) for (const g of variants[kind]) {
+    const p = good({ kind, g });
+    for (const s of C.sheetsOf(p)) {
+      const T = C.templateOf(p, s);
+      assert.ok(js.includes('"tpl.kind.' + T.kind + '":'), T.kind);
+      T.parts.forEach((q) => assert.ok(js.includes('"slot.' + q.k + '":'), q.k));
+    }
+  }
+  for (const kind of ["tape", "vhs", "vinyl"]) {
+    const ctx = { lang: "el", readJSON: (k) => (k === C.GOODS_KEY ? { prj: [good({ kind, nm: "" })] } : null) };
+    assert.equal(P.search(ctx).length, 1, kind);
+  }
+  assert.match(read("mockups/help.en.txt"), /## Cassette, VHS and vinyl/);
+  assert.match(read("mockups/help.el.txt"), /## Κασέτα, VHS και βινύλιο/);
 });

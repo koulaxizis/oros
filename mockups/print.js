@@ -102,7 +102,8 @@
     ctx.arc(cx, cx, c.hub / 2 * ppm, 0, Math.PI * 2, true);
     ctx.clip("evenodd");
     ctx.fillStyle = art.c; ctx.fillRect(0, 0, sw, sw);
-    if (pics.disc) coverFit(ctx, pics.disc, 0, 0, sw, sw);
+    var im = pics[T.parts[0] && T.parts[0].a || "disc"];
+    if (im) coverFit(ctx, im, 0, 0, sw, sw);
     ctx.restore();
   }
 
@@ -189,7 +190,7 @@
     ring(c.safeOut); ctx.stroke();
     ring(c.safeIn); ctx.stroke();
     ctx.setLineDash([]);
-    label(ctx, L.name("disc"), cx, cx - (c.safeIn / 2 + (c.safeOut - c.safeIn) / 4) * ppm, fs * 1.3, COL.fold, (c.safeOut - c.safeIn) / 2 * ppm);
+    label(ctx, L.name(T.parts[0] ? T.parts[0].k : "disc"), cx, cx - (c.safeIn / 2 + (c.safeOut - c.safeIn) / 4) * ppm, fs * 1.3, COL.fold, (c.safeOut - c.safeIn) / 2 * ppm);
     label(ctx, "Ø " + L.len(c.print) + " · " + L.len(c.hub), cx, cx + (c.safeIn / 2 + (c.safeOut - c.safeIn) / 4) * ppm, fs, COL.fold, c.safeOut * 0.6 * ppm);
     if (L.info) label(ctx, L.info, cx, sw - fs * 1.2, fs * 0.85, COL.trim, sw * 0.6);
     ctx.restore();

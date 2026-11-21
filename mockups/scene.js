@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.6.0, ES module)
+// orOS Mockups — scene.js (v1.7.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -33,6 +33,7 @@
 //     slipcase open at the spine, a sticker, a notebook's elastic
 //     band, ruled empty pages and a box set round a shelf of books
 //   - products (v1.6.0): CD and DVD / Blu-ray from goods/media3d.js,
+//     cassette, VHS and vinyl from goods/analog3d.js (v1.7.0),
 //     posed, framed, lit and saved like a book; "open" opens a lid
 //     or slides a disc out (fronts with userData.open)
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
@@ -47,6 +48,7 @@
 // ============================================================
 import * as THREE from "../vendor/three/three.module.min.js";
 import { build as buildMedia } from "./goods/media3d.js";
+import { build as buildAnalog } from "./goods/analog3d.js";
 
 var S = 0.01;                          // scene units per mm
 
@@ -920,7 +922,7 @@ export function createStage(host, C) {
     disposeBooks();
     var p = state.p, placeK = p.sc.place;
     var H = { THREE: THREE, S: S, own: own, ANISO: ANISO, pics: picsOf(p.art), MP: (typeof window !== "undefined" && window.MockPrint) || null, C: C };
-    var res = buildMedia(H, p);
+    var res = buildMedia(H, p) || buildAnalog(H, p);
     if (!res) { built = false; return; }
     res.fronts.forEach(function (f) { fronts.push(f); });
     var pose = new THREE.Group();

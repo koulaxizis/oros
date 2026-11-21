@@ -128,7 +128,9 @@
   var M = {
     VERSION: "1.0.0", DISC: DISC, HUBS: HUBS, DBASES: DBASES,
     CD_PACKS: CD_PACKS, TRAYS: TRAYS, FMTS: FMTS, CASES: CASES, DCOLS: DCOLS,
-    cdNorm: cdNorm, cdDims: cdDims, dvdNorm: dvdNorm, dvdDims: dvdDims
+    cdNorm: cdNorm, cdDims: cdDims, dvdNorm: dvdNorm, dvdDims: dvdDims,
+    // shared with the other product modules (goods/analog.js)
+    sheet: sheet, bleedOf: bleedOf, safeOf: safeOf, pick: pick, bit: bit
   };
   C.addGood("cd", {
     group: "music", slots: ["disc", "inside", "tray"], norm: cdNorm, dims: cdDims,

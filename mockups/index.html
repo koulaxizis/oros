@@ -93,6 +93,61 @@
                 <button type="button" role="radio" data-v="blue" data-i18n="col.blue">Blue</button>
               </div>
             </div>
+            <div id="tape-form">
+              <span class="lbl" id="tpack-lbl" data-i18n="f.cdpack">Packaging</span>
+              <div class="seg" id="tpack" role="radiogroup" aria-labelledby="tpack-lbl">
+                <button type="button" role="radio" data-v="norelco" data-i18n="tpack.norelco">Clear case</button>
+                <button type="button" role="radio" data-v="ocard" data-i18n="tpack.ocard">O-card</button>
+                <button type="button" role="radio" data-v="none" data-i18n="tpack.none">Tape only</button>
+              </div>
+              <span class="lbl sm" id="shell-lbl" data-i18n="f.shell">Shell</span>
+              <div class="seg" id="shellk" role="radiogroup" aria-labelledby="shell-lbl">
+                <button type="button" role="radio" data-v="clear" data-i18n="col.clear">Clear</button>
+                <button type="button" role="radio" data-v="white" data-i18n="col.white">White</button>
+                <button type="button" role="radio" data-v="black" data-i18n="col.black">Black</button>
+                <button type="button" role="radio" data-v="smoke" data-i18n="col.smoke">Smoke</button>
+              </div>
+              <label class="fld" id="jp-box"><span data-i18n="f.jp">J-card</span>
+                <select id="f-jp"><option value="3" data-i18n="jp.3">3 panels</option><option value="4" data-i18n="jp.4">4 panels</option><option value="5" data-i18n="jp.5">5 panels</option></select></label>
+            </div>
+            <div id="vhs-form">
+              <span class="lbl" id="vpack-lbl" data-i18n="f.cdpack">Packaging</span>
+              <div class="seg" id="vpack" role="radiogroup" aria-labelledby="vpack-lbl">
+                <button type="button" role="radio" data-v="slip" data-i18n="vpack.slip">Card sleeve</button>
+                <button type="button" role="radio" data-v="clam" data-i18n="vpack.clam">Clamshell</button>
+                <button type="button" role="radio" data-v="none" data-i18n="tpack.none">Tape only</button>
+              </div>
+              <div id="vcol-box">
+                <span class="lbl sm" id="vcol-lbl" data-i18n="f.dvdcol">Case colour</span>
+                <div class="seg" id="vcolk" role="radiogroup" aria-labelledby="vcol-lbl">
+                  <button type="button" role="radio" data-v="black" data-i18n="col.black">Black</button>
+                  <button type="button" role="radio" data-v="white" data-i18n="col.white">White</button>
+                  <button type="button" role="radio" data-v="clear" data-i18n="col.clear">Clear</button>
+                </div>
+              </div>
+            </div>
+            <div id="vinyl-form">
+              <span class="lbl" id="rsize-lbl" data-i18n="f.rsize">Record</span>
+              <div class="seg" id="rsizek" role="radiogroup" aria-labelledby="rsize-lbl">
+                <button type="button" role="radio" data-v="lp" data-i18n="rsize.lp">12″ LP</button>
+                <button type="button" role="radio" data-v="7in" data-i18n="rsize.7in">7″ single</button>
+              </div>
+              <span class="lbl sm" id="vjk-lbl" data-i18n="f.vjk">Jacket</span>
+              <div class="seg" id="vjkk" role="radiogroup" aria-labelledby="vjk-lbl">
+                <button type="button" role="radio" data-v="single" data-i18n="vjk.single">Single</button>
+                <button type="button" role="radio" data-v="gatefold" data-i18n="vjk.gatefold">Gatefold</button>
+              </div>
+              <span class="lbl sm" id="vin-lbl" data-i18n="f.inner">Inner sleeve</span>
+              <div class="seg" id="innerk" role="radiogroup" aria-labelledby="vin-lbl">
+                <button type="button" role="radio" data-v="white" data-i18n="col.white">White</button>
+                <button type="button" role="radio" data-v="black" data-i18n="col.black">Black</button>
+                <button type="button" role="radio" data-v="printed" data-i18n="inner.printed">Printed</button>
+              </div>
+              <label class="fld"><span data-i18n="f.rc">Colour of the record</span>
+                <select id="f-rc"><option value="black" data-i18n="col.black">Black</option><option value="clear" data-i18n="col.clear">Clear</option><option value="red" data-i18n="col.red">Red</option><option value="blue" data-i18n="col.blue">Blue</option><option value="white" data-i18n="col.white">White</option><option value="marble" data-i18n="col.marble">Marbled</option></select></label>
+              <label class="check" id="big-row"><input type="checkbox" id="f-big"><span data-i18n="f.big">Big hole (jukebox)</span></label>
+            </div>
+            <div id="disc-box">
             <span class="lbl" id="disck-lbl" data-i18n="f.disck">The disc</span>
             <div class="seg" id="disck" role="radiogroup" aria-labelledby="disck-lbl">
               <button type="button" role="radio" data-v="silver" data-i18n="disc.silver">Silver</button>
@@ -101,7 +156,8 @@
             </div>
             <label class="fld"><span data-i18n="f.hub">Label printed from</span>
               <select id="f-hub"><option value="15" data-i18n="hub.15">The hole (15 mm)</option><option value="22" data-i18n="hub.22">22 mm</option><option value="36" data-i18n="hub.36">36 mm (clear ring)</option></select></label>
-            <label class="check"><input type="checkbox" id="f-beside"><span data-i18n="f.beside">The disc next to the case</span></label>
+            </div>
+            <label class="check" id="beside-row"><input type="checkbox" id="f-beside"><span id="beside-lbl" data-i18n="f.beside.cd">The disc next to the case</span></label>
             <p id="good-info" class="hint small"></p>
           </div>
           <div id="book-form">
@@ -477,6 +533,7 @@
   <script src="core.js?v=8.25.00"></script>
   <script src="print.js?v=8.25.00"></script>
   <script src="goods/media.js?v=8.25.00"></script>
+  <script src="goods/analog.js?v=8.25.00"></script>
   <script src="mockups.js?v=8.25.00"></script>
 
   <script src="../pickers.js?v=8.25.00" defer></script>

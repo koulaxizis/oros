@@ -21,7 +21,7 @@
 var CARD_EDGE = "#d8d1c3";
 var BASES = { silver: { c: "#d9dce0", metal: 1, rough: 0.22 }, white: { c: "#f2f2ef", metal: 0, rough: 0.55 }, black: { c: "#141416", metal: 0, rough: 0.35 } };
 var TRAY_C = { black: "#16171a", white: "#efefec", clear: "#cfd6dc" };
-var CASE_C = { black: "#121214", blue: "#1d4f9c", clear: "#d5dce2" };
+var CASE_C = { black: "#121214", blue: "#1d4f9c", clear: "#d5dce2", white: "#ecebe7" };
 
 // The sheets of a project as canvases (pictures composed by MockPrint).
 function sheetCanvas(H, p, key) {
@@ -29,7 +29,7 @@ function sheetCanvas(H, p, key) {
   if (!T || !H.MP) return null;
   var ppm = Math.min(9, 2600 / Math.max(T.sheet.w, T.sheet.h));
   var art = Object.assign({}, p.art);
-  if (!H.C.good(p.kind).wrap) art.mode = "parts";
+  if (!H.C.good(p.kind).wrap || key !== H.C.sheetsOf(p)[0]) art.mode = "parts";
   var cv = H.MP.render(T, art, H.pics, ppm, { art: true });
   var tex = H.own(new H.THREE.CanvasTexture(cv));
   tex.colorSpace = H.THREE.SRGBColorSpace; tex.anisotropy = H.ANISO;
@@ -238,15 +238,32 @@ function sleeve(H, p, d) {
 }
 
 // ---------- DVD / Blu-ray ----------
-function amaray(H, p, d) {
+// o: { key (the sleeve's sheet), inner(H, p) → what lies inside (the disc) }
+function amaray(H, p, d, o) {
+  o = o || {};
   var THREE = H.THREE, S = H.S, g = p.g, out = { g: new THREE.Group(), fronts: [] };
-  var sh = sheetCanvas(H, p, "sleeve"), W = d.w, Hh = d.h, half = d.d / 2;
+  var sh = sheetCanvas(H, p, o.key || "sleeve"), W = d.w, Hh = d.h, half = d.d / 2;
   var col = CASE_C[g.col] || CASE_C.black, clearCase = g.col === "clear";
   var body = clearCase ? clearMat(H, col, 0.3) : H.own(new THREE.MeshPhysicalMaterial({ color: col, roughness: 0.42, clearcoat: 0.3 }));
   var film = clearMat(H, "#ffffff", 0.08);
   var sw = d.panel, shH = d.sh;
   // back half with the spine and the hub
-  var back = box(H, W, Hh, half, body);
+  // a deep case (VHS) is two hollow trays, a DVD case two solid halves
+  var wall = 1.2;
+  function half3(sign) {
+    var grp = new THREE.Group();
+    if (!o.hollow) { grp.add(box(H, W, Hh, half, body)); return grp; }
+    var pl = box(H, W, Hh, wall, body);
+    pl.position.z = sign * (half / 2 - wall / 2) * S;
+    grp.add(pl);
+    [[W, wall, 0, Hh / 2 - wall / 2], [W, wall, 0, -Hh / 2 + wall / 2], [wall, Hh, -W / 2 + wall / 2, 0], [wall, Hh, W / 2 - wall / 2, 0]].forEach(function (r) {
+      var m = box(H, r[0], r[1], half, body);
+      m.position.set(r[2] * S, r[3] * S, 0);
+      grp.add(m);
+    });
+    return grp;
+  }
+  var back = half3(-1);
   back.position.z = -half / 2 * S;
   out.g.add(back);
   var bpic = panel(H, sh, "back", sw, shH, printMat(H, sh, true));
@@ -256,18 +273,21 @@ function amaray(H, p, d) {
   spic.rotation.y = -Math.PI / 2; spic.position.x = (-W / 2 - 0.06) * S;
   spic.scale.x = d.d / d.spine;
   out.g.add(spic);
-  var hub = new THREE.Mesh(H.own(new THREE.CylinderGeometry(7 * S, 7 * S, 2.5 * S, 24)), body);
-  hub.rotation.x = Math.PI / 2; hub.position.set(2 * S, 0, 1.2 * S);
-  out.g.add(hub);
-  var dc = disc(H, p);
-  dc.position.set(2 * S, 0, 0.8 * S);
-  out.g.add(dc);
+  if (o.inner) out.g.add(o.inner(H, p));
+  else {
+    var hub = new THREE.Mesh(H.own(new THREE.CylinderGeometry(7 * S, 7 * S, 2.5 * S, 24)), body);
+    hub.rotation.x = Math.PI / 2; hub.position.set(2 * S, 0, 1.2 * S);
+    out.g.add(hub);
+    var dc = disc(H, p);
+    dc.position.set(2 * S, 0, 0.8 * S);
+    out.g.add(dc);
+  }
   // front half on the hinge
   var pivot = new THREE.Group();
   pivot.position.set(-W / 2 * S, 0, half / 2 * S);
   var fr = new THREE.Group();
   fr.position.x = W / 2 * S;
-  fr.add(box(H, W, Hh, half, body));
+  fr.add(half3(1));
   var fpic = panel(H, sh, "front", sw, shH, printMat(H, sh, true));
   fpic.position.z = (half / 2 + 0.06) * S;
   fr.add(fpic);
@@ -303,3 +323,6 @@ export function build(H, p) {
   }
   return res;
 }
+
+// Shared with the other product modules (goods/analog3d.js).
+export { sheetCanvas, panel, printMat, box, clearMat, solidMat, faceMat, board, amaray, CARD_EDGE };

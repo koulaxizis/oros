@@ -80,6 +80,91 @@
       "f.stick": "Sticker on the cover", "slot.stick": "Sticker picture", "stick.round": "Round", "stick.square": "Square", "aria.stickK": "Sticker shape",
       "f.stickD": "Size", "f.stickX": "Left / right", "f.stickY": "Up / down",
       "f.rule": "Empty pages", "rule.none": "Plain", "rule.lined": "Lined", "rule.dotted": "Dotted", "rule.grid": "Squared", "set.box": "Box set",
+      "tpack.norelco": "Clear case",
+      "tpack.ocard": "O-card",
+      "tpack.none": "Tape only",
+      "f.shell": "Shell",
+      "col.smoke": "Smoke",
+      "col.red": "Red",
+      "col.marble": "Marbled",
+      "f.jp": "J-card",
+      "jp.3": "3 panels",
+      "jp.4": "4 panels",
+      "jp.5": "5 panels",
+      "vpack.slip": "Card sleeve",
+      "vpack.clam": "Clamshell",
+      "f.rsize": "Record",
+      "rsize.lp": "12″ LP",
+      "rsize.7in": "7″ single",
+      "f.vjk": "Jacket",
+      "vjk.single": "Single",
+      "vjk.gatefold": "Gatefold",
+      "f.inner": "Inner sleeve",
+      "inner.printed": "Printed",
+      "f.rc": "Colour of the record",
+      "f.big": "Big hole (jukebox)",
+      "f.beside.cd": "The disc next to the case",
+      "f.beside.dvd": "The disc next to the case",
+      "f.beside.tape": "The tape next to the case",
+      "f.beside.vhs": "The tape next to the sleeve",
+      "f.beside.vinyl": "The record next to the jacket",
+      "f.openSlide.cd": "Slide the disc out",
+      "f.openSlide.tape": "Slide the case out",
+      "f.openSlide.vhs": "Slide the tape out",
+      "f.openSlide.vinyl": "Slide the record out",
+      "sub.tape": "Cassette · {pack}",
+      "sub.vhs": "VHS · {pack}",
+      "sub.vinyl": "{size} · {jk}",
+      "kind.tape": "Cassette",
+      "kind.tape.d": "Tape in a clear case with its J-card, in an O-card or on its own",
+      "kind.vhs": "VHS",
+      "kind.vhs.d": "Tape in a card sleeve or a clamshell case, with its labels",
+      "kind.vinyl": "Vinyl",
+      "kind.vinyl.d": "12″ LP or 7″ single: jacket, inner sleeve and the record",
+      "untitled.tape": "Cassette mockup",
+      "untitled.vhs": "VHS mockup",
+      "untitled.vinyl": "Vinyl mockup",
+      "pics.hint.tape": "The J-card (or O-card) parts, and the two labels on the tape: side A in front, side B behind.",
+      "pics.hint.vhs": "The sleeve's front, back and spine, the face label of the tape; the spine picture also goes on the tape's spine label.",
+      "pics.hint.vinyl": "The jacket's front, back and spine (or one full wrap), the two record labels (round, the hole is cut out) and a printed inner sleeve.",
+      "slot.sideA": "Label, side A",
+      "slot.sideB": "Label, side B",
+      "slot.flap": "Back flap",
+      "slot.in1": "Inside panel",
+      "slot.in2": "Second inside panel",
+      "slot.side": "Other side",
+      "slot.glue": "Glue flap",
+      "slot.face": "Face label",
+      "slot.tspine": "Spine label",
+      "slot.labelA": "Label, side A",
+      "slot.labelB": "Label, side B",
+      "slot.innerF": "Inner sleeve, front",
+      "slot.innerB": "Inner sleeve, back",
+      "slot.tape.back": "Back flap of the J-card",
+      "slot.tape.inside": "Inside panels of the J-card",
+      "slot.vhs.spine": "Spine (sleeve and tape label)",
+      "slot.vinyl.front": "Front of the jacket",
+      "slot.vinyl.back": "Back of the jacket",
+      "slot.vinyl.spine": "Spine of the jacket",
+      "slot.vinyl.wrap": "Full jacket (printer's sheet)",
+      "tpl.kind.jcard": "J-card",
+      "tpl.kind.tlabel": "Cassette labels (A and B)",
+      "tpl.kind.ocard": "O-card sleeve",
+      "tpl.kind.vface": "VHS face label",
+      "tpl.kind.vspine": "VHS spine label",
+      "tpl.kind.vclam": "Clamshell sleeve",
+      "tpl.kind.vslip": "VHS card sleeve",
+      "tpl.kind.jacket": "Record jacket",
+      "tpl.kind.gatefold": "Gatefold jacket (outside)",
+      "tpl.kind.inner": "Printed inner sleeve",
+      "tpl.kind.labelA": "Record label, side A",
+      "tpl.kind.labelB": "Record label, side B",
+      "tpl.goodNote.jcard": "Front, spine, then the flap that folds behind the tape; more panels fold out inside.",
+      "tpl.goodNote.tlabel": "Side A and side B, each 89 × 51 mm; leave the middle clear, the window of the shell sits there.",
+      "tpl.goodNote.vslip": "Back, spine, front, the other side and the glue flap; the end flaps come from the printer's cutting line.",
+      "tpl.goodNote.jacket": "Back, spine and front; the glue flaps come from the pressing plant's own template.",
+      "tpl.goodNote.gatefold": "The outside of a gatefold: back, spine, front; the inside spread is a sheet of the same size.",
+      "tpl.goodNote.labelA": "A round label with the hole in the middle; keep text out of the dashed ring by the hole.",
       "tab.item": "Product",
       "tab.pics": "Pictures",
       "untitled.cd": "CD mockup",
@@ -122,7 +207,6 @@
       "hub.15": "The hole (15 mm)",
       "hub.22": "22 mm",
       "hub.36": "36 mm (clear ring)",
-      "f.beside": "The disc next to the case",
       "good.size": "Closed: {w} × {h} × {d}.",
       "pics.hint.cd": "Each picture goes on its part of the case and on the printer's sheets (Print tab). The disc picture fills the label; its middle is cut out.",
       "pics.hint.dvd": "The front, spine and back of the sleeve, or one full sleeve as the printer's sheet, and the disc label.",
@@ -142,7 +226,6 @@
       "slot.dvd.spine": "Spine of the sleeve",
       "slot.dvd.wrap": "Full sleeve (printer's sheet)",
       "f.openCase": "Open the case",
-      "f.openSlide": "Slide the disc out",
       "f.sheet": "Sheet",
       "tpl.kind.booklet": "Booklet (4 pages, folded)",
       "tpl.kind.inlay": "Tray card with spines",
@@ -301,6 +384,91 @@
       "f.stick": "Αυτοκόλλητο στο εξώφυλλο", "slot.stick": "Εικόνα αυτοκόλλητου", "stick.round": "Στρογγυλό", "stick.square": "Τετράγωνο", "aria.stickK": "Σχήμα αυτοκόλλητου",
       "f.stickD": "Μέγεθος", "f.stickX": "Αριστερά / δεξιά", "f.stickY": "Πάνω / κάτω",
       "f.rule": "Άδειες σελίδες", "rule.none": "Λευκές", "rule.lined": "Με γραμμές", "rule.dotted": "Με τελείες", "rule.grid": "Τετραγωνισμένες", "set.box": "Box set",
+      "tpack.norelco": "Διάφανη θήκη",
+      "tpack.ocard": "O-card",
+      "tpack.none": "Μόνο η κασέτα",
+      "f.shell": "Κέλυφος",
+      "col.smoke": "Φιμέ",
+      "col.red": "Κόκκινο",
+      "col.marble": "Μαρμαρωτό",
+      "f.jp": "J-card",
+      "jp.3": "3 πάνελ",
+      "jp.4": "4 πάνελ",
+      "jp.5": "5 πάνελ",
+      "vpack.slip": "Χάρτινη θήκη",
+      "vpack.clam": "Πλαστική θήκη",
+      "f.rsize": "Δίσκος",
+      "rsize.lp": "12″ LP",
+      "rsize.7in": "7″ single",
+      "f.vjk": "Εξώφυλλο",
+      "vjk.single": "Απλό",
+      "vjk.gatefold": "Gatefold (ανοιγόμενο)",
+      "f.inner": "Εσωτερικός φάκελος",
+      "inner.printed": "Τυπωμένος",
+      "f.rc": "Χρώμα δίσκου",
+      "f.big": "Μεγάλη τρύπα (jukebox)",
+      "f.beside.cd": "Ο δίσκος δίπλα στη θήκη",
+      "f.beside.dvd": "Ο δίσκος δίπλα στη θήκη",
+      "f.beside.tape": "Η κασέτα δίπλα στη θήκη",
+      "f.beside.vhs": "Η κασέτα δίπλα στη θήκη της",
+      "f.beside.vinyl": "Ο δίσκος δίπλα στο εξώφυλλο",
+      "f.openSlide.cd": "Βγάλε τον δίσκο",
+      "f.openSlide.tape": "Βγάλε τη θήκη",
+      "f.openSlide.vhs": "Βγάλε την κασέτα",
+      "f.openSlide.vinyl": "Βγάλε τον δίσκο",
+      "sub.tape": "Κασέτα · {pack}",
+      "sub.vhs": "VHS · {pack}",
+      "sub.vinyl": "{size} · {jk}",
+      "kind.tape": "Κασέτα",
+      "kind.tape.d": "Κασέτα σε διάφανη θήκη με J-card, σε O-card ή μόνη της",
+      "kind.vhs": "VHS",
+      "kind.vhs.d": "Βιντεοκασέτα σε χάρτινη ή πλαστική θήκη, με τις ετικέτες της",
+      "kind.vinyl": "Βινύλιο",
+      "kind.vinyl.d": "12″ LP ή 7″ single: εξώφυλλο, εσωτερικός φάκελος και δίσκος",
+      "untitled.tape": "Μακέτα κασέτας",
+      "untitled.vhs": "Μακέτα VHS",
+      "untitled.vinyl": "Μακέτα βινυλίου",
+      "pics.hint.tape": "Τα μέρη του J-card (ή του O-card) και οι δύο ετικέτες της κασέτας: η πλευρά A μπροστά, η B πίσω.",
+      "pics.hint.vhs": "Μπροστά, πίσω και ράχη της θήκης, η ετικέτα της κασέτας· η εικόνα της ράχης μπαίνει και στην ετικέτα ράχης της κασέτας.",
+      "pics.hint.vinyl": "Μπροστά, πίσω και ράχη του εξωφύλλου (ή ένα ενιαίο), οι δύο ετικέτες του δίσκου (στρογγυλές, η τρύπα κόβεται) και τυπωμένος εσωτερικός φάκελος.",
+      "slot.sideA": "Ετικέτα, πλευρά A",
+      "slot.sideB": "Ετικέτα, πλευρά B",
+      "slot.flap": "Πίσω αυτί",
+      "slot.in1": "Εσωτερικό πάνελ",
+      "slot.in2": "Δεύτερο εσωτερικό πάνελ",
+      "slot.side": "Άλλη πλευρά",
+      "slot.glue": "Αυτί κόλλας",
+      "slot.face": "Ετικέτα προσόψης",
+      "slot.tspine": "Ετικέτα ράχης",
+      "slot.labelA": "Ετικέτα, πλευρά A",
+      "slot.labelB": "Ετικέτα, πλευρά B",
+      "slot.innerF": "Εσωτερικός φάκελος, μπροστά",
+      "slot.innerB": "Εσωτερικός φάκελος, πίσω",
+      "slot.tape.back": "Πίσω αυτί του J-card",
+      "slot.tape.inside": "Εσωτερικά πάνελ του J-card",
+      "slot.vhs.spine": "Ράχη (θήκη και ετικέτα κασέτας)",
+      "slot.vinyl.front": "Μπροστά του εξωφύλλου",
+      "slot.vinyl.back": "Πίσω του εξωφύλλου",
+      "slot.vinyl.spine": "Ράχη του εξωφύλλου",
+      "slot.vinyl.wrap": "Ενιαίο εξώφυλλο (φύλλο τυπογραφείου)",
+      "tpl.kind.jcard": "J-card",
+      "tpl.kind.tlabel": "Ετικέτες κασέτας (A και B)",
+      "tpl.kind.ocard": "Θήκη O-card",
+      "tpl.kind.vface": "Ετικέτα προσόψης VHS",
+      "tpl.kind.vspine": "Ετικέτα ράχης VHS",
+      "tpl.kind.vclam": "Ένθετο πλαστικής θήκης",
+      "tpl.kind.vslip": "Χάρτινη θήκη VHS",
+      "tpl.kind.jacket": "Εξώφυλλο δίσκου",
+      "tpl.kind.gatefold": "Gatefold εξώφυλλο (έξω)",
+      "tpl.kind.inner": "Τυπωμένος εσωτερικός φάκελος",
+      "tpl.kind.labelA": "Ετικέτα δίσκου, πλευρά A",
+      "tpl.kind.labelB": "Ετικέτα δίσκου, πλευρά B",
+      "tpl.goodNote.jcard": "Μπροστά, ράχη, και το αυτί που διπλώνει πίσω από την κασέτα· τα επιπλέον πάνελ ανοίγουν μέσα.",
+      "tpl.goodNote.tlabel": "Πλευρά A και πλευρά B, 89 × 51 mm η καθεμία· άφησε ελεύθερη τη μέση, εκεί είναι το παράθυρο του κελύφους.",
+      "tpl.goodNote.vslip": "Πίσω, ράχη, μπροστά, η άλλη πλευρά και το αυτί κόλλας· τα αυτιά των άκρων έρχονται από τη γραμμή κοπής του τυπογραφείου.",
+      "tpl.goodNote.jacket": "Πίσω, ράχη και μπροστά· τα αυτιά κόλλας έρχονται από το πρότυπο του εργοστασίου.",
+      "tpl.goodNote.gatefold": "Το έξω μέρος ενός gatefold: πίσω, ράχη, μπροστά· το μέσα άνοιγμα είναι φύλλο ίδιου μεγέθους.",
+      "tpl.goodNote.labelA": "Στρογγυλή ετικέτα με την τρύπα στη μέση· κράτα το κείμενο έξω από τον διακεκομμένο κύκλο δίπλα στην τρύπα.",
       "tab.item": "Προϊόν",
       "tab.pics": "Εικόνες",
       "untitled.cd": "Μακέτα CD",
@@ -343,7 +511,6 @@
       "hub.15": "Την τρύπα (15 mm)",
       "hub.22": "22 mm",
       "hub.36": "36 mm (διάφανος δακτύλιος)",
-      "f.beside": "Ο δίσκος δίπλα στη θήκη",
       "good.size": "Κλειστό: {w} × {h} × {d}.",
       "pics.hint.cd": "Κάθε εικόνα πάει στο μέρος της θήκης και στα φύλλα του τυπογραφείου (καρτέλα Εκτύπωση). Η εικόνα του δίσκου γεμίζει την ετικέτα· η μέση της κόβεται.",
       "pics.hint.dvd": "Μπροστά, ράχη και πίσω του ένθετου, ή ένα ενιαίο ένθετο όπως το φύλλο του τυπογραφείου, και η ετικέτα του δίσκου.",
@@ -363,7 +530,6 @@
       "slot.dvd.spine": "Ράχη του ένθετου",
       "slot.dvd.wrap": "Ενιαίο ένθετο (φύλλο τυπογραφείου)",
       "f.openCase": "Άνοιγμα θήκης",
-      "f.openSlide": "Βγάλε τον δίσκο",
       "f.sheet": "Φύλλο",
       "tpl.kind.booklet": "Βιβλιαράκι (4 σελίδες, διπλωμένο)",
       "tpl.kind.inlay": "Ένθετο βάσης με ράχες",
@@ -1077,8 +1243,10 @@
     var s = cur.sc, g = isG(cur);
     var st = g ? C.normSet(null) : cur.set, show = g ? "good" : cur.show;
     if (g) { $("set-grp").hidden = true; $("dev-box").hidden = true; $("setn-box").hidden = true; $("gap-box").hidden = true; }
-    $("open-lbl").textContent = t(g ? (cur.kind === "cd" && cur.g.pack === "sleeve" ? "f.openSlide" : "f.openCase") : "f.open");
-    $("open-box").hidden = !(g || show === "book");
+    var slideOut = g && ((cur.kind === "cd" && cur.g.pack === "sleeve") || cur.kind === "vinyl" || (cur.kind === "vhs" && cur.g.pack === "slip") || (cur.kind === "tape" && cur.g.pack === "ocard"));
+    $("open-lbl").textContent = t(g ? (slideOut ? "f.openSlide." + cur.kind : "f.openCase") : "f.open");
+    $("open-box").hidden = g && (cur.kind === "tape" || cur.kind === "vhs") && cur.g.pack === "none";
+    if (!g) $("open-box").hidden = show !== "book";
     if (!g) {
       setSeg("showk", show);
       $("set-grp").hidden = show !== "book";
@@ -1130,13 +1298,32 @@
     var g = p.g;
     if (p.kind === "cd") return t("sub.cd", { pack: t("cdpack." + g.pack) });
     if (p.kind === "dvd") return t("sub.dvd", { fmt: t("dvdfmt." + g.fmt), cs: t("dvdcs." + g.cs) });
+    if (p.kind === "tape") return t("sub.tape", { pack: t("tpack." + g.pack) });
+    if (p.kind === "vhs") return t("sub.vhs", { pack: t(g.pack === "none" ? "tpack.none" : "vpack." + g.pack) });
+    if (p.kind === "vinyl") return t("sub.vinyl", { size: t("rsize." + g.size), jk: t("vjk." + g.jk) });
     return t("kind." + p.kind);
   }
   function lenTxt(mm, d) { return cur && cur.unit === "in" ? fmtNum(mm / C.MM_PER_IN, 3) + "″" : fmtNum(mm, d == null ? 1 : d) + " mm"; }
   function renderGoodForm() {
     var g = cur.g, a = cur.art, k = cur.kind, D = C.good(k).dims(g);
-    $("cd-form").hidden = k !== "cd";
-    $("dvd-form").hidden = k !== "dvd";
+    ["cd", "dvd", "tape", "vhs", "vinyl"].forEach(function (x) { $(x + "-form").hidden = k !== x; });
+    $("disc-box").hidden = !(k === "cd" || k === "dvd");
+    $("beside-lbl").textContent = t("f.beside." + k);
+    $("beside-row").hidden = (k === "tape" || k === "vhs") && g.pack === "none";
+    if (k === "tape") {
+      setSeg("tpack", g.pack); setSeg("shellk", g.shell);
+      $("jp-box").hidden = g.pack !== "norelco";
+      setVal("f-jp", String(g.jp));
+    } else if (k === "vhs") {
+      setSeg("vpack", g.pack); setSeg("vcolk", g.col);
+      $("vcol-box").hidden = g.pack !== "clam";
+    } else if (k === "vinyl") {
+      setSeg("rsizek", g.size); setSeg("vjkk", g.jk); setSeg("innerk", g.inner);
+      setVal("f-rc", g.rc);
+      $("big-row").hidden = g.size !== "7in";
+      setChk("f-big", g.big);
+    }
+    if (k === "tape" || k === "vhs" || k === "vinyl") out("good-info", t("good.size", { w: lenTxt(D.w), h: lenTxt(D.h), d: lenTxt(D.d) }));
     if (k === "cd") {
       setSeg("cdpack", g.pack);
       $("tray-box").hidden = g.pack === "sleeve";
@@ -1146,8 +1333,7 @@
       setSeg("dvdfmt", g.fmt); setSeg("dvdcs", g.cs); setSeg("dvdcol", g.col);
       out("good-info", t("good.size", { w: lenTxt(D.w), h: lenTxt(D.h), d: lenTxt(D.d) }));
     }
-    setSeg("disck", g.disc);
-    setVal("f-hub", String(g.hub));
+    if (g.disc) { setSeg("disck", g.disc); setVal("f-hub", String(g.hub)); }
     setChk("f-beside", g.beside);
     // pictures tab
     var wrapOk = !!C.good(k).wrap;
@@ -1165,7 +1351,11 @@
   // Which picture slots a product shows (in the order of its sheets).
   function goodSlotsShown() {
     var k = cur.kind, g = cur.g;
-    if (cur.art.mode === "wrap" && C.good(k).wrap) return ["wrap", "disc"];
+    if (cur.art.mode === "wrap" && C.good(k).wrap) return k === "vinyl" ? ["wrap", "labelA", "labelB"].concat(g.inner === "printed" ? ["innerF", "innerB"] : []) : ["wrap", "disc"];
+    if (k === "tape") return (g.pack === "norelco" ? ["front", "spine", "back"].concat(g.jp > 3 ? ["inside"] : [])
+      : g.pack === "ocard" ? ["front", "back", "spine"] : []).concat(["sideA", "sideB"]);
+    if (k === "vhs") return (g.pack === "none" ? [] : ["front", "back", "spine"]).concat(["face"]);
+    if (k === "vinyl") return ["front", "back", "spine", "labelA", "labelB"].concat(g.inner === "printed" ? ["innerF", "innerB"] : []);
     if (k === "cd") {
       if (g.pack === "jewel") return ["front", "inside", "back", "spine", "disc"];
       if (g.pack === "slim") return ["front", "inside", "disc"];
@@ -1184,6 +1374,17 @@
     wireSeg("dvdcs", function (v) { changeG(function (g) { g.cs = v; }); });
     wireSeg("dvdcol", function (v) { changeG(function (g) { g.col = v; }); });
     wireSeg("disck", function (v) { changeG(function (g) { g.disc = v; }); });
+    var reset = function () { curSheet = ""; legendKind = ""; };
+    wireSeg("tpack", function (v) { changeG(function (g) { g.pack = v; }); reset(); });
+    wireSeg("shellk", function (v) { changeG(function (g) { g.shell = v; }); });
+    $("f-jp").addEventListener("change", function () { var v = +$("f-jp").value; changeG(function (g) { g.jp = v; }); });
+    wireSeg("vpack", function (v) { changeG(function (g) { g.pack = v; }); reset(); });
+    wireSeg("vcolk", function (v) { changeG(function (g) { g.col = v; }); });
+    wireSeg("rsizek", function (v) { changeG(function (g) { g.size = v; }); });
+    wireSeg("vjkk", function (v) { changeG(function (g) { g.jk = v; }); reset(); });
+    wireSeg("innerk", function (v) { changeG(function (g) { g.inner = v; }); reset(); });
+    $("f-rc").addEventListener("change", function () { var v = $("f-rc").value; changeG(function (g) { g.rc = v; }); });
+    $("f-big").addEventListener("change", function () { var on = $("f-big").checked ? 1 : 0; changeG(function (g) { g.big = on; }); });
     $("f-hub").addEventListener("change", function () { var v = +$("f-hub").value; changeG(function (g) { g.hub = v; }); });
     $("f-beside").addEventListener("change", function () { var on = $("f-beside").checked ? 1 : 0; changeG(function (g) { g.beside = on; }); });
   }
@@ -1192,13 +1393,16 @@
   // this orOS knows, by group.
   var MAKE = [
     { g: "books", items: [{ k: "book" }, { k: "notebook" }] },
-    { g: "music", items: [{ k: "cd" }, { k: "dvd" }] }
+    { g: "music", items: [{ k: "cd" }, { k: "dvd" }, { k: "vinyl" }, { k: "tape" }, { k: "vhs" }] }
   ];
   var MAKE_ICON = {
     book: '<path d="M6 4h10a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M6 18a2 2 0 0 1 2-2h10"/>',
     notebook: '<rect x="6" y="3" width="12" height="18" rx="2.5"/><path d="M15 3v18M9 8h3"/>',
     cd: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="2.2"/><path d="M12 6.5a5.5 5.5 0 0 1 5.5 5.5"/>',
-    dvd: '<rect x="5" y="3" width="14" height="18" rx="1.5"/><circle cx="12.5" cy="12" r="4.2"/><circle cx="12.5" cy="12" r="1"/><path d="M7.5 3v18"/>'
+    dvd: '<rect x="5" y="3" width="14" height="18" rx="1.5"/><circle cx="12.5" cy="12" r="4.2"/><circle cx="12.5" cy="12" r="1"/><path d="M7.5 3v18"/>',
+    vinyl: '<rect x="3" y="4" width="13" height="16" rx="1"/><circle cx="15" cy="12" r="6.5"/><circle cx="15" cy="12" r="2"/>',
+    tape: '<rect x="3" y="6" width="18" height="12" rx="1.5"/><circle cx="8.5" cy="11" r="1.8"/><circle cx="15.5" cy="11" r="1.8"/><path d="M7 18l1.5-3h7l1.5 3"/>',
+    vhs: '<rect x="2.5" y="6" width="19" height="12" rx="1"/><rect x="7" y="9" width="10" height="4" rx="0.5"/><circle cx="9" cy="11" r="1"/><circle cx="15" cy="11" r="1"/>'
   };
   function renderMake() {
     var box = $("make-groups");
@@ -2172,6 +2376,11 @@
   function tplLen(mm) { return cur && cur.unit === "in" ? fmtNum(mm / C.MM_PER_IN, 3) + "″" : fmtNum(mm, 2) + " mm"; }
   var curSheet = "";
   function sheetOf(p) { var l = C.sheetsOf(p); return l.indexOf(curSheet) >= 0 ? curSheet : l[0]; }
+  // A product's full wrap is its first sheet only.
+  function artFor(p) {
+    if (!isG(p) || p.art.mode !== "wrap" || sheetOf(p) === C.sheetsOf(p)[0]) return p.art;
+    return Object.assign({}, p.art, { mode: "parts" });
+  }
   function tplOf(p) { return isG(p) ? C.templateOf(p, sheetOf(p)) : C.template(p.bk, p.art, p.tpl); }
   function tplLabels(p, T) {
     if (isG(p)) return {
@@ -2279,7 +2488,7 @@
         var bw = box.clientWidth - 24, bh = box.clientHeight - 24;
         if (bw < 20 || bh < 20) return;
         var dpr = Math.min(2, window.devicePixelRatio || 1), k = Math.min(bw / T.sheet.w, bh / T.sheet.h);
-        var cv = MP.render(T, p.art, pics, k * dpr, { art: !!p.tpl.art, guides: !!p.tpl.gd, white: true, L: tplLabels(p, T) });
+        var cv = MP.render(T, artFor(p), pics, k * dpr, { art: !!p.tpl.art, guides: !!p.tpl.gd, white: true, L: tplLabels(p, T) });
         var fl = $("flat");
         fl.width = cv.width; fl.height = cv.height;
         fl.getContext("2d").drawImage(cv, 0, 0);
@@ -2305,7 +2514,7 @@
     toast(t("toast.making"));
     setBusy(true);
     var job = slotPics(p).then(function (pics) {
-      return MP.render(T, p.art, pics, MP.ppmFor(T, 300), { art: !!p.tpl.art, guides: !!p.tpl.gd, white: true, L: tplLabels(p, T) });
+      return MP.render(T, artFor(p), pics, MP.ppmFor(T, 300), { art: !!p.tpl.art, guides: !!p.tpl.gd, white: true, L: tplLabels(p, T) });
     });
     if (kind === "pdf") {
       job = Promise.all([job, loadScript("../vendor/jspdf.umd.min.js")]).then(function (r) {
@@ -2347,9 +2556,9 @@
     setBusy(true);
     slotPics(p).then(function (pics) {
       var ppm = MP.ppmFor(T, 300), base = fileBase();
-      return importCanvas(MP.render(T, p.art, pics, ppm, { guides: true, L: tplLabels(p, T) }), base + " guides").then(function (g) {
+      return importCanvas(MP.render(T, artFor(p), pics, ppm, { guides: true, L: tplLabels(p, T) }), base + " guides").then(function (g) {
         if (!p.tpl.art) return [g, ""];
-        return importCanvas(MP.render(T, p.art, pics, ppm, { art: true }), base + " cover").then(function (a) { return [g, a]; });
+        return importCanvas(MP.render(T, artFor(p), pics, ppm, { art: true }), base + " cover").then(function (a) { return [g, a]; });
       });
     }).then(function (r) {
       s.__orosOpenAt("atelier", { newTemplate: {
