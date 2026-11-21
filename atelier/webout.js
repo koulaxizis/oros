@@ -289,7 +289,11 @@
       var t = "<text" + head + (hide ? ' aria-hidden="true"' : "") + ">", lines = [];
       lay.lines.forEach(function (ln, li) {
         var tl = tails(ln, li, lay.lines), runs = ln.runs.filter(function (r) { return r.t; });
-        runs.forEach(function (r, ri) { t += tspan(r, key, size, p.dx, p.dy, tl[ri]); });
+        runs.forEach(function (r, ri) {
+          var c = AX.runColor(p, ax.fc || "#000000", r), s = tspan(r, key, size, p.dx, p.dy, tl[ri]);
+          if (c !== p.color) s = s.replace("<tspan", "<tspan" + (p.mode === "stroke" ? at("stroke", colour(c, "#000000")) : at("fill", colour(c, "#000000"))));
+          t += s;
+        });
         if (p.mode === "fill") runs.forEach(function (r) { if (r.u) lines.push(r); });
       });
       out += t + "</text>";

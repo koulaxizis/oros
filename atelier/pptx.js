@@ -408,25 +408,26 @@
     });
     return out.length ? out : null;
   }
-  // Pieces of a block in another weight, slant or typeface than the
-  // block (bold words in running text): [{ n, b, i, face }] over the
-  // block's text, or null when every piece has the block's look. A
-  // piece in another size or colour keeps the block's look.
+  // Pieces of a block in another weight, slant, typeface or colour
+  // than the block (bold words in running text, a word in Canva's other
+  // colour, CV-F1): [{ n, b, i, face, fc }] over the block's text, or
+  // null when every piece has the block's look. A piece in another
+  // size keeps the block's look.
   function runsIn(b, len, lst, ctx, scale, lnRed) {
     var base = b.st, list = [], other = false;
     function push(n, k) {
       var last = list[list.length - 1];
-      if (last && last.k === k.k) last.n += n; else list.push({ n: n, k: k.k, b: k.b, i: k.i, face: k.face });
+      if (last && last.k === k.k) last.n += n; else list.push({ n: n, k: k.k, b: k.b, i: k.i, face: k.face, fc: k.fc });
     }
-    var plain = { k: "", b: base.b, i: base.i, face: base.face };
+    var plain = { k: "", b: base.b, i: base.i, face: base.face, fc: base.fc };
     b.lines.forEach(function (ln, li) {
       if (li) push(1, plain);                      // the paragraph break
       ln.segs.forEach(function (sg) {
         var k = plain;
         if (sg.rp && sg.t.trim()) {
           var st = styleOf(sg.rp, ln.p || b.lines[0].p, lst, ctx, scale, lnRed);
-          if (st.size === base.size && st.fc === base.fc && st.op === base.op && (st.b !== base.b || st.i !== base.i || st.face !== base.face)) {
-            k = { k: st.b + "|" + st.i + "|" + st.face, b: st.b, i: st.i, face: st.face };
+          if (st.size === base.size && st.op === base.op && (st.b !== base.b || st.i !== base.i || st.face !== base.face || st.fc !== base.fc)) {
+            k = { k: st.b + "|" + st.i + "|" + st.face + "|" + st.fc, b: st.b, i: st.i, face: st.face, fc: st.fc };
             other = true;
           }
         }
@@ -437,7 +438,7 @@
     var out = [], at = 0;
     list.forEach(function (r) {                    // cut to the trimmed text
       var n = Math.min(r.n, len - at);
-      if (n > 0) out.push(r.k ? { n: n, b: r.b, i: r.i, face: r.face } : { n: n });
+      if (n > 0) out.push(r.k ? { n: n, b: r.b, i: r.i, face: r.face, fc: r.fc } : { n: n });
       at += n;
     });
     return out.length > 1 && out.length <= 400 ? out : null;
@@ -460,11 +461,29 @@
       font: ff.font, fontName: ff.name, face: String(font || "").trim(), size: size,
       b: bold ? 1 : 0, i: ital ? 1 : 0, u: ra.u && ra.u !== "none" ? 1 : 0, caps: ra.cap === "all" ? 1 : 0,
       al: ALIGN[algn] || "l",
-      // exact spacing (what Canva writes): points → % of the size
-      lh: Math.round(Math.max(70, Math.min(300, sPts ? numA(sPts, "val", 0) / sz * 100 : 120 * lnPct / 100 * (1 - lnRed)))),
+      // exact spacing (what Canva writes): points → % of the size, to a
+      // tenth; Canva sets the line pitch in whole pixels, cut down
+      // (CANVA_PX pt each, CV-F1)
+      lh: sPts ? leadPct(numA(sPts, "val", 0) / 100, size) : Math.round(Math.max(70, Math.min(300, 120 * lnPct / 100 * (1 - lnRed)))),
+      cb: sPts ? 1 : 0,
       tr: spc ? Math.round(spc / size * 1000) : 0, fc: col.c, op: col.a
     };
   }
+  // Canva's line pitch: its points in whole pixels of 0.75 pt, rounded
+  // down (measured on 120 text boxes of Canva's own PDFs, CV-F1), as a
+  // % of the size to a tenth.
+  var CANVA_PX = 0.75;
+  function leadPct(pts, size) {
+    var lead = Math.floor(pts / CANVA_PX + 0.02) * CANVA_PX;
+    if (!(lead > 0)) lead = pts;
+    return Math.max(70, Math.min(300, Math.round(lead / size * 1000) / 10));
+  }
+  // Where Canva puts a box's first baseline below its top: a CSS line
+  // box (half the leading above, the font's ascent and descent centred)
+  // plus a share of the line pitch; fitted on the same 120 boxes
+  // (rms 0.03 of the size; the font's ascent alone missed by 0.17).
+  // lead, asc, desc and the result in the item's units.
+  function canvaBase(lead, size, asc, desc) { return 0.733 * lead + (asc - desc) / 2 - 0.278 * size; }
   var STYLE_KEYS = ["font", "face", "size", "b", "i", "u", "caps", "al", "lh", "tr", "fc", "op"];
   function sameStyle(a, b) {
     return STYLE_KEYS.every(function (k) { return a[k] === b[k]; });
@@ -1049,6 +1068,7 @@
           if (r.face === undefined) return o;
           if (r.b !== s.b) o.b = r.b;
           if (r.i !== s.i) o.i = r.i;
+          if (r.fc && r.fc !== s.fc) o.fc = r.fc;
           var rf = r.face !== s.face && Object.prototype.hasOwnProperty.call(fonts, r.face) ? fonts[r.face] : null;
           if (rf && AX.isOwnFont(rf.id)) { o.fam = rf.id; own[rf.id] = rf; }
           return o;
@@ -1056,6 +1076,7 @@
         if (spec.ext && spec.ext.runs && spec.ext.runs.every(function (r) { return Object.keys(r).length === 1; })) delete spec.ext.runs;
         var it = AX.addItem(d, pg.id, spec, now);
         if (it && s.k === "text") fitLines(it, s);
+        if (it && s.k === "text" && s.cb && (s.anchor || "t") === "t" && !(s.stk && s.si)) canvaTop(it);
         if (it && s.stk) {                          // one box, several styles: stack the items
           var st = stacks[s.stk] = stacks[s.stk] || { s: s, its: [] }, prev = st.its[st.its.length - 1];
           // baseline to baseline as PowerPoint sets them: the last line above,
@@ -1082,6 +1103,16 @@
 
   function lastBase(it) { var L = AX.textLayout(it).lines; return L.length ? L[L.length - 1].y : 0; }
   function firstBase(it) { var L = AX.textLayout(it).lines; return L.length ? L[0].y : 0; }
+  // a box from Canva (its spacing in points): its first baseline where
+  // Canva sets it (canvaBase), not at the font's ascent
+  function canvaTop(it) {
+    var L = AX.textLayout(it).lines;
+    if (!L.length || it.rot) return;
+    var size = it.ax.size || AX.TEXT_DEF.size, lead = size * (it.ax.lh || AX.TEXT_DEF.lh) / 100;
+    var asc = L[0].y, desc = L[0].d || 0;
+    var dy = canvaBase(lead, size, asc, desc) - asc;
+    if (Math.abs(dy) < size) it.y = Math.round((it.y + dy) * 100) / 100;
+  }
 
   // text inside its box by the box's anchor (items: one box's stack, top to bottom)
   function anchorTo(its, s) {
@@ -1119,7 +1150,7 @@
     return out;
   }
 
-  var api = { parse: parse, build: build, rebox: rebox, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
+  var api = { leadPct: leadPct, canvaBase: canvaBase, parse: parse, build: build, rebox: rebox, parseXml: parseXml, familyOf: familyOf, fontFor: fontFor, planFonts: planFonts, eot: eot, EMU: EMU };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierPPTX = api;
 })(typeof window !== "undefined" ? window : this);

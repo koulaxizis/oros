@@ -304,7 +304,13 @@
       }
       if (p.mode === "stroke") { ctx.lineWidth = p.width; ctx.lineJoin = "round"; ctx.miterLimit = 2; }
       if (lay.curve) paintCurve(ctx, lay.curve, it, p.mode, dx, dy);
-      else eachRun(lay, function (r) { paintRun(ctx, r, p.mode, dx, dy); });
+      else eachRun(lay, function (r) {
+        var c = AX.runColor(p, fill, r);
+        if (c === p.color) { paintRun(ctx, r, p.mode, dx, dy); return; }
+        ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = c;
+        paintRun(ctx, r, p.mode, dx, dy);
+        ctx.restore();
+      });
       ctx.restore();
     });
   }

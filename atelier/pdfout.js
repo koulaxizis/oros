@@ -273,9 +273,12 @@
         lay.lines.forEach(function (ln) {
           ln.runs.forEach(function (r) {
             if (!r.t) return;
+            var c = AX.runColor(p, ax.fc || "#000000", r);       // a word in its own colour (CV-F1)
+            if (c !== p.color) { pdf.setTextColor.apply(pdf, rgb(c)); pdf.setDrawColor.apply(pdf, rgb(c)); }
             W.run(r, it.x + r.x + p.dx, it.y + r.y + p.dy, p.mode);
+            if (c !== p.color) { pdf.setTextColor.apply(pdf, rgb(p.color)); if (p.mode === "stroke") pdf.setDrawColor.apply(pdf, rgb(p.color)); }
             if (r.u && p.mode === "fill") {
-              pdf.setFillColor.apply(pdf, rgb(p.color));
+              pdf.setFillColor.apply(pdf, rgb(c));
               pdf.rect(it.x + r.x + p.dx, it.y + r.y + p.dy + r.size * 0.12, r.w, Math.max(0.3, r.size * 0.05), "F");
             }
           });
