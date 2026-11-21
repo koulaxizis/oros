@@ -143,10 +143,10 @@ def search_and_pages():
     root = dump()
     field = next(n for n in root.iter("node") if (n.get("resource-id") or "").endswith(":id/search"))
     adb("shell", "input", "tap", *map(str, center(field)))
-    adb("shell", "input", "text", "notes")
+    # A word only orOS Notes' description has ("notes" alone matches a dozen apps and a fling can skip it).
+    adb("shell", "input", "text", "notebooks")
     adb("shell", "input", "keyevent", "KEYCODE_ENTER")
-    # "notes" also matches other apps' descriptions (credit notes, ...), so orOS Notes may sit lower down.
-    wait_for(lambda r: "orOS Drive" not in texts(r), "the search for notes", 30)
+    wait_for(lambda r: "orOS Drive" not in texts(r), "the search for notebooks", 30)
     root, name = scroll_to("orOS Notes", 60)
     adb("shell", "input", "tap", *map(str, center(name)))
     wait_for(lambda r: any((n.get("content-desc") or "").startswith("Screenshot 1 of") for n in r.iter("node"))
