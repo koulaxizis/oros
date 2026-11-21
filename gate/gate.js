@@ -3144,8 +3144,11 @@
     }
     if (name === "__tools") {
       return actFrame().then(function (F) {
-        var list = [];
-        try { list = F ? F.tools() || [] : []; } catch (e) { list = []; }
+        // GL-9: a frame that did not start answers not-ok, so the relay
+        // keeps the list it has instead of storing an empty one
+        if (!F) return { ok: false, c: "orOS could not start its tools on the device.", quiet: 1 };
+        var list;
+        try { list = F.tools() || []; } catch (e) { return { ok: false, c: "orOS could not list its tools.", quiet: 1 }; }
         return { ok: true, c: JSON.stringify(list), quiet: 1 };
       });
     }
