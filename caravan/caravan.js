@@ -130,7 +130,7 @@
       "map.goal": "Goal {n} crates in {m} trips", "map.carts": "Carts: {list}",
       "map.cont": "Continue: {r}, trip {n}",
       "map.replace": "A route is still under way: {r}. Start {s} instead? The route under way is given up.",
-      "map.resetAsk": "Reset the stars and records on every device?",
+      "map.resetAsk": "Reset the stars and records on every device? The route in progress ends too.",
       "rt.r1": "Olive hills", "rt.r2": "Dry riverbed", "rt.r3": "Windy pass", "rt.r4": "Old customs house",
       "rt.r5": "Cedar ford", "rt.r6": "Date palms", "rt.r7": "Saffron hills", "rt.r8": "The silk gate",
       "end.won": "The market is stocked", "end.lost": "Not enough crates reached the market",
@@ -225,7 +225,7 @@
       "map.goal": "Στόχος {n} κιβώτια σε {m} ταξίδια", "map.carts": "Κάρα: {list}",
       "map.cont": "Συνέχεια: {r}, ταξίδι {n}",
       "map.replace": "Μια διαδρομή είναι ακόμα σε εξέλιξη: «{r}». Να ξεκινήσει η «{s}»; Η διαδρομή σε εξέλιξη χάνεται.",
-      "map.resetAsk": "Να μηδενιστούν τα αστέρια και το αρχείο σε όλες τις συσκευές;",
+      "map.resetAsk": "Να μηδενιστούν τα αστέρια και το αρχείο σε όλες τις συσκευές; Τελειώνει και η διαδρομή που παίζεται.",
       "rt.r1": "Οι λόφοι με τις ελιές", "rt.r2": "Η ξερή κοίτη", "rt.r3": "Το φαράγγι του αέρα", "rt.r4": "Το παλιό τελωνείο",
       "rt.r5": "Το πέρασμα με τους κέδρους", "rt.r6": "Οι χουρμαδιές", "rt.r7": "Οι λόφοι του κρόκου", "rt.r8": "Η πύλη του μεταξιού",
       "end.won": "Η αγορά γέμισε πραμάτεια", "end.lost": "Δεν έφτασαν αρκετά κιβώτια στην αγορά",
@@ -1322,9 +1322,12 @@
     startRoute(id, prefs.diff, en);
   }
   // Reset progress: a new reset stamp, so older rows drop on every device.
+  // The route in progress ends too (not counted): a reset that left it on
+  // screen, with Continue, read as "nothing was reset".
   function resetProgress() {
     data = E.merge({ ver: 1, br: Math.max(Date.now(), data.br + 1), maps: {}, rows: {} }, data);
     saveData();
+    if (sess && !sess.counted) { sess.counted = true; paused = true; saveSession(); }
     showToast(t("toast.reset"));
     renderMap();
   }

@@ -132,7 +132,7 @@ orosPack("de", "caravan", {
  "map.carts": "Karren: {list}",
  "map.cont": "Weiter: {r}, Fahrt {n}",
  "map.replace": "Eine Route läuft noch: {r}. Stattdessen {s} beginnen? Die laufende Route wird aufgegeben.",
- "map.resetAsk": "Sterne und Statistik auf allen Geräten zurücksetzen?",
+ "map.resetAsk": "Sterne und Statistik auf allen Geräten zurücksetzen? Die laufende Route endet auch.",
  "rt.r1": "Olivenhügel",
  "rt.r2": "Trockenes Flussbett",
  "rt.r3": "Windiger Pass",

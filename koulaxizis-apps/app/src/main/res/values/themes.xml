@@ -6,4 +6,13 @@
         <item name="android:colorAccent">@color/accent</item>
         <item name="android:windowBackground">@color/background</item>
     </style>
+
+    <!-- Section titles on an app's own page (APPS-M5). -->
+    <style name="DetailHeading">
+        <item name="android:layout_marginTop">20dp</item>
+        <item name="android:layout_marginBottom">4dp</item>
+        <item name="android:accessibilityHeading">true</item>
+        <item name="android:textAppearance">?android:attr/textAppearanceMedium</item>
+        <item name="android:textStyle">bold</item>
+    </style>
 </resources>

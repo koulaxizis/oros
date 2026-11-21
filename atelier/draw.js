@@ -134,7 +134,8 @@
     ctx.save();
     if (ax.shp) ctx.clip(itemShape(it));
     else { ctx.beginPath(); ctx.rect(0, 0, it.w, it.h); ctx.clip(); }
-    var src = (ax.vid && opts.media && frameSource(it, opts.media(it))) || (it.a ? photoSource(it, opts.maxSide) : null);
+    var moving = ax.vid || (it.ext && it.ext.gif);       // a video, or a moving GIF (CV-A)
+    var src = (moving && opts.media && frameSource(it, opts.media(it))) || (it.a ? photoSource(it, opts.maxSide) : null);
     if (src) {
       var r = R.imageRect(it);
       if (ax.flh || ax.flv) {
@@ -157,8 +158,8 @@
       }
     }
     ctx.restore();
-    // editing: a play badge marks a video element
-    if (ax.vid && !opts.clean && !(opts.media && opts.media(it))) {
+    // editing: a play badge marks a video element or a moving GIF
+    if (moving && !opts.clean && !(opts.media && opts.media(it))) {
       var r0 = Math.max(6, Math.min(it.w, it.h) * 0.09), bx = r0 * 1.4, by = it.h - r0 * 1.4;
       ctx.save();
       ctx.fillStyle = "rgba(0,0,0,0.55)";
@@ -443,16 +444,31 @@
       ? doc.items.filter(function (it) { return it.pg === page.id && (it.ax || it.axu); }).sort(M.byZ)
       : itemsOf(doc, page.id);
     var Anim = window.AtelierAnim;
-    var sc = opts && opts.time !== undefined && Anim ? Anim.schedule(list) : null;
+    var live = opts && opts.time !== undefined && Anim;
+    var pc = live && Anim.pageCtx ? Anim.pageCtx(doc, page.id) : null;
+    var sc = live ? Anim.schedule(list, pc && pc.pan) : null;
     list.forEach(function (it) {
       if (opts && opts.skip && opts.skip[it.id]) return;
       if (opts && opts.clean && it.ax && it.ax.tg) return;   // template guides: editor only
-      var st = sc && sc[it.id] !== undefined ? Anim.stateAt(it, sc[it.id], opts.time, doc.setup.h) : null;
+      var st = sc && sc[it.id] !== undefined ? Anim.stateAt(it, sc[it.id], opts.time, doc.setup.h, pc) : null;
       if (st) drawAnimated(ctx, doc, it, st, opts);
       else drawItem(ctx, doc, it, opts);
     });
   }
+  // the element's corners on the page
+  function cornersOf(it) {
+    var cx0 = it.x + it.w / 2, cy0 = it.y + it.h / 2, r0 = rad(it.rot || 0), xs = [], ys = [];
+    [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (q) {
+      var px = q[0] * it.w / 2, py = q[1] * it.h / 2;
+      xs.push(cx0 + px * Math.cos(r0) - py * Math.sin(r0));
+      ys.push(cy0 + px * Math.sin(r0) + py * Math.cos(r0));
+    });
+    return { xs: xs, ys: ys };
+  }
+  // st: a look from AtelierAnim.stateAt (anim.js): a, dx, dy, s, sx,
+  // rot, blur, clip + cd, box, chars
   function drawAnimated(ctx, doc, it, st, opts) {
+    if (st.a !== undefined && st.a <= 0.005) return;
     var c = it;
     if (st.a !== undefined || st.chars !== undefined) {
       c = {};
@@ -462,24 +478,37 @@
     }
     if (c.op !== undefined && c.op <= 0.5) return;
     ctx.save();
+    var cx = it.x + it.w / 2, cy = it.y + it.h / 2;
+    if (st.box) {
+      // the effect stays inside the element's own box
+      ctx.translate(cx, cy); ctx.rotate(rad(it.rot || 0));
+      ctx.beginPath(); ctx.rect(-it.w / 2, -it.h / 2, it.w, it.h); ctx.clip();
+      ctx.rotate(-rad(it.rot || 0)); ctx.translate(-cx, -cy);
+    }
     if (st.clip !== undefined) {
-      // reveal from the left across the element's on-page bounds
-      var cx0 = it.x + it.w / 2, cy0 = it.y + it.h / 2, r0 = rad(it.rot || 0);
-      var xs = [], ys = [];
-      [[-1, -1], [1, -1], [1, 1], [-1, 1]].forEach(function (q) {
-        var px = q[0] * it.w / 2, py = q[1] * it.h / 2;
-        xs.push(cx0 + px * Math.cos(r0) - py * Math.sin(r0));
-        ys.push(cy0 + px * Math.sin(r0) + py * Math.cos(r0));
-      });
-      var pad = Math.max(it.sw || 0, 4) * 4;
-      var x0 = Math.min.apply(null, xs) - pad, x1 = Math.max.apply(null, xs) + pad;
-      var y0 = Math.min.apply(null, ys) - pad, y1 = Math.max.apply(null, ys) + pad;
-      ctx.beginPath(); ctx.rect(x0, y0, (x1 - x0) * st.clip, y1 - y0); ctx.clip();
+      // a reveal across the element's on-page bounds, from st.cd
+      var q = cornersOf(it), pad = Math.max(it.sw || 0, 4) * 4;
+      var x0 = Math.min.apply(null, q.xs) - pad, x1 = Math.max.apply(null, q.xs) + pad;
+      var y0 = Math.min.apply(null, q.ys) - pad, y1 = Math.max.apply(null, q.ys) + pad;
+      var W = x1 - x0, H = y1 - y0, k = Math.max(0, Math.min(1, st.clip)), d = st.cd || "l";
+      ctx.beginPath();
+      if (d === "r") ctx.rect(x1 - W * k, y0, W * k, H);
+      else if (d === "u") ctx.rect(x0, y0, W, H * k);
+      else if (d === "d") ctx.rect(x0, y1 - H * k, W, H * k);
+      else ctx.rect(x0, y0, W * k, H);
+      ctx.clip();
     }
     if (st.dx || st.dy) ctx.translate(st.dx || 0, st.dy || 0);
-    if (st.s !== undefined && st.s !== 1) {
-      var cx = it.x + it.w / 2, cy = it.y + it.h / 2;
-      ctx.translate(cx, cy); ctx.scale(st.s, st.s); ctx.translate(-cx, -cy);
+    var s = st.s === undefined ? 1 : st.s, sx = st.sx === undefined ? 1 : st.sx;
+    if (s !== 1 || sx !== 1 || st.rot) {
+      ctx.translate(cx, cy);
+      if (st.rot) ctx.rotate(rad(st.rot));
+      if (s !== 1 || sx !== 1) ctx.scale(s * sx, s);
+      ctx.translate(-cx, -cy);
+    }
+    if (st.blur > 0.3 && "filter" in ctx) {
+      var m = ctx.getTransform ? ctx.getTransform() : null, zs = m ? Math.sqrt(m.a * m.a + m.b * m.b) : 1;
+      ctx.filter = "blur(" + Math.round(st.blur * zs * 10) / 10 + "px)";
     }
     drawItem(ctx, doc, c, opts);
     ctx.restore();

@@ -44,7 +44,7 @@ Jede Art hat ihre eigene Form, du brauchst also nie die Farben.
 - Leicht: mehr Münzen und leichtere Schläge; Normal; Schwer: weniger Münzen und härtere Schläge.
 - Sterne: drei, wenn mindestens 85% der geladenen Kisten den Markt erreichen, zwei mit 65%, einer für jede geschaffte Route. Die Wegekarte behält die besten Sterne jeder Route.
 - Ist eine Route verloren, bringt dich `Noch einmal ab Fahrt` zurück in den Plan der letzten Fahrt, mit der Karawane und den Münzen von damals.
-- Die laufende Route bleibt auf diesem Gerät und öffnet sich dort wieder, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Route endet. `Fortschritt zurücksetzen` auf der Wegekarte löscht sie auf allen Geräten. Karawane steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+- Die laufende Route bleibt auf diesem Gerät und öffnet sich dort wieder, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Statistik werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Route endet. `Fortschritt zurücksetzen` auf der Wegekarte löscht sie auf allen Geräten und beendet die laufende Route. Karawane steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
 
 ## Endlos
 - Sobald eine Route einen Stern hat, zeigt die Wegekarte darunter `Endlos` mit deinem Bestwert.

@@ -101,7 +101,7 @@ orosPack("de", "ridge", {
  "ch.towers": "Türme: {list}",
  "ch.cont": "Weiter: {r}, Welle {n}",
  "ch.replace": "Auf „{r}“ läuft noch eine Nacht. Stattdessen „{s}“ beginnen? Die laufende Nacht wird aufgegeben.",
- "ch.resetAsk": "Sterne und Statistik auf allen Geräten zurücksetzen?",
+ "ch.resetAsk": "Sterne und Statistik auf allen Geräten zurücksetzen? Die laufende Nacht endet auch.",
  "rd.i1r1": "Hafentreppen",
  "rd.i1r2": "Oliventerrassen",
  "rd.i1r3": "Mühlenweg",

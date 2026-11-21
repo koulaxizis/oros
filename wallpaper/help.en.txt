@@ -5,7 +5,8 @@ Wallpaper Generator draws abstract wallpapers from a seed, a style and a palette
 The big preview on the right (at the top on a phone) shows your wallpaper at the shape of the chosen size. Type any word in `Seed`, or tap or click the dice (`Random seed (R)`) for a new one. Then try different styles and palettes; the style buttons show small previews of your current seed.
 
 ## Style and palette
-- `Style`: `Waves`, `Flow field`, `Orbits`, `Grid`, `Nebula` or `Tree`.
+- `Style`: `Waves`, `Flow field`, `Orbits`, `Grid`, `Nebula`, `Tree` or `Glass ribbons`.
+- `Glass ribbons` draws three glossy bands that run across the picture and twist like folded glass, each in one colour of the palette. `Density` makes them wider, `Chaos` gives them more bends and twists.
 - `Tree` grows a tree drawn as if by hand, in the colours of the palette. Its own settings appear below (see "Tree"). Tree Sketcher, which used to be a separate app, lives here now.
 - `Palette`: `Ember`, `Ocean`, `Forest`, `Dusk`, `Pastel`, `Mono` and `orOS skin`, which takes its colours from your orOS skin and changes with it.
 

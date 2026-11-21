@@ -504,6 +504,11 @@
     if (s.smartbar) {
       var cb2 = card(t("sb.title"), "smartbar");
       cb2.appendChild(el("p", "hint", t("sb.hint")));
+      // SB-LIVE: timers, stopwatch and recording show by themselves
+      if (typeof s.smartbar.live === "boolean") {
+        cb2.appendChild(row(t("sb.live"), switchBtn(s.smartbar.live, "smartbar-live", function (v) { set("smartbar-live", v); }, t("sb.live")),
+          { hint: t("sb.live.hint") }));
+      }
       var sl = el("div", "sb-list");
       var onIds = s.smartbar.list.filter(function (w) { return w.on; }).map(function (w) { return w.id; });
       s.smartbar.list.forEach(function (w) {

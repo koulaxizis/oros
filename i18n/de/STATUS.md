@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 49992 of 49999 (99%)
+- Strings: 50173 of 50180 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -17,7 +17,7 @@ en and el); translators change them there, not in a pack.
 | App | Translated | Strings |
 |---|---|---|
 | assistant | 100% | 2147 / 2147 |
-| atelier | 100% | 1429 / 1429 |
+| atelier | 100% | 1507 / 1507 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 332 / 332 |
 | baby | 100% | 341 / 341 |
@@ -76,7 +76,7 @@ en and el); translators change them there, not in a pack.
 | health | 100% | 597 / 597 |
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 60 / 60 |
-| hive | 100% | 184 / 184 |
+| hive | 100% | 186 / 186 |
 | household | 100% | 143 / 143 |
 | invoices | 100% | 693 / 693 |
 | jigsaw | 100% | 90 / 90 |
@@ -84,7 +84,7 @@ en and el); translators change them there, not in a pack.
 | labels | 100% | 88 / 88 |
 | layout | 100% | 1194 / 1194 |
 | library | 100% | 330 / 330 |
-| lighthouse | 100% | 213 / 213 |
+| lighthouse | 100% | 215 / 215 |
 | lightsout | 100% | 52 / 52 |
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
@@ -111,13 +111,13 @@ en and el); translators change them there, not in a pack.
 | nonogram | 100% | 70 / 70 |
 | notes | 100% | 293 / 293 |
 | oracle | 100% | 38 / 38 |
-| orbit | 100% | 137 / 137 |
+| orbit | 100% | 158 / 158 |
 | pad | 100% | 307 / 307 |
 | passwords | 100% | 468 / 468 |
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
-| photolab | 100% | 783 / 783 |
+| photolab | 100% | 829 / 829 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
 | podcasts | 100% | 349 / 349 |
@@ -139,10 +139,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2013 / 2013 |
+| settings | 100% | 2015 / 2015 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1544 / 1544 |
+| shell | 100% | 1565 / 1565 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -155,7 +155,7 @@ en and el); translators change them there, not in a pack.
 | split | 100% | 356 / 356 |
 | spot | 100% | 55 / 55 |
 | spreadsheet | 100% | 495 / 495 |
-| starchart | 100% | 194 / 194 |
+| starchart | 100% | 202 / 202 |
 | startpage | 100% | 18 / 18 |
 | stickies | 100% | 125 / 125 |
 | stock | 100% | 813 / 813 |
@@ -176,7 +176,7 @@ en and el); translators change them there, not in a pack.
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |
 | units | 100% | 214 / 214 |
-| wallpaper | 100% | 130 / 130 |
+| wallpaper | 100% | 131 / 131 |
 | water | 100% | 94 / 94 |
 | wayfarers | 100% | 549 / 549 |
 | weather | 100% | 190 / 190 |

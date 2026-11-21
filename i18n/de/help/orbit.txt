@@ -35,11 +35,17 @@ Jede Art hat ihre eigene Form, also brauchst du die Farben nie.
 - **Nebel** (eine Wolke, ab Garten 4): wenn er erlischt, bleiben zwei Fünkchen, die weitergehen.
 - **Finsternis** (breit, mit dunkler Seite): langsam und sehr stark, beendet jede Nacht und kostet an der Mondblume drei Herzen.
 
+## Die ferne Umlaufbahn und Endlos
+- Die Gärten 5 bis 8 liegen auf der fernen Umlaufbahn, die sich öffnet, wenn Nachtblüte einen Stern hat. Dort hat jeder Garten eine Besonderheit; die Liste der Gärten sagt, welche.
+- **Zwei Lücken:** manche Ringe haben zwei Lücken, einander gegenüber. Die Funken schlüpfen durch die erste Lücke, die sie erreichen, also schickt ein Ring mit zwei Lücken sie nie mehr als halb herum. In keiner der beiden Lücken wächst etwas.
+- **Ein Ring, der sich von selbst dreht:** nach jeder Welle, sobald der Garten leer ist, dreht der Mond diesen Ring um einen Schritt (die kleinen Pfeile darauf zeigen, wohin), und seine Pflanzen drehen sich mit. Deine freien Schritte kommen danach, also kannst du ihn zurückdrehen.
+- **Endlos:** ein Garten mit einem Stern bekommt in der Liste darunter eine endlose Nacht. Die zehn Wellen des Gartens kommen immer wieder, jede Runde mit mehr Funken, dichter und stärker, bis die Herzen ausgehen. Sterne gibt es dort nicht; die Liste behält deine beste Welle, und sie wird wie die Sterne abgeglichen.
+
 ## Schwierigkeit, Sterne und Speichern
 - Sanft: 30 Herzen und mehr Münzen; Normal: 20 Herzen; Schwer: 10 Herzen, weniger Münzen und stärkere Funken.
 - Sterne: drei mit neun Zehnteln der Herzen, zwei mit der Hälfte, einer für jede gewonnene Nacht. Die Liste der Gärten behält die besten Sterne jedes Gartens.
 - Ist eine Nacht verloren, setzt dich `Noch einmal ab Welle` an den Beginn dieser Welle zurück, mit dem Garten, den Ringen und den Münzen von damals.
-- Die laufende Nacht bleibt auf diesem Gerät und öffnet sich angehalten dort, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Aufzeichnungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` in der Liste der Gärten löscht sie auf allen Geräten. Umlaufgarten steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
+- Die laufende Nacht bleibt auf diesem Gerät und öffnet sich angehalten dort, wo du aufgehört hast, auch nachdem orOS geschlossen wurde. Sterne und Aufzeichnungen werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten abgeglichen; sie werden nur geschrieben, wenn eine Nacht endet. `Fortschritt zurücksetzen` in der Liste der Gärten löscht sie auf allen Geräten und beendet die laufende Nacht. Umlaufgarten steht in der Gruppe Turmverteidigung des [Spielecenters](help:a/gamecenter). Die Toneinstellung bleibt auf diesem Gerät.
 
 ## Tastatur
 - [[Left]] und [[Right]] bewegen sich auf einem Ring; [[Up]] und [[Down]] gehen zum Ring außen oder innen; [[Escape]] lässt los.
@@ -53,3 +59,4 @@ Jede Art hat ihre eigene Form, also brauchst du die Farben nie.
 - Eine Pflanze neben einer Lücke erreicht Funken auf beiden Seiten ihres Rings, dort wo sie von einem Gang in den nächsten wechseln.
 - In Gärten mit zwei Toren ist die beste Lücke für das eine Tor eine schlechte für das andere. Sieh nach, woher die nächste Welle kommt, und nutze deine freien Schritte vor jeder Welle.
 - Pflanze vor der ersten Welle, was du dir leisten kannst, solange jeder Ring noch zwei freie Schritte hat.
+- Auf einem Ring, der sich von selbst dreht, bleiben Pflanzen, die beide Seiten einer Lücke bewachen, länger nützlich.

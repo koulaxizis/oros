@@ -86,10 +86,11 @@ test("kra: maindoc.xml layers, groups, masks, opacity, visibility, blend; unsafe
     <layer name="Bottom" filename="layer4" nodetype="paintlayer" compositeop="weird"/>`));
   assert.equal(d.w, 100); assert.equal(d.h, 80); assert.equal(d.name, "Art");
   assert.deepEqual(d.layers.map((l) => l.name), ["Bottom", "Masked", "In", "Top & α"]);
-  assert.deepEqual([d.groups, d.masks, d.other], [1, 1, 2]);
+  assert.deepEqual([d.groups.length, d.masks, d.other], [1, 1, 2]);
+  assert.deepEqual(d.groups[0], { name: "G", vis: 0, op: 100, bl: "normal", open: 1, p: null });
   const [bottom, masked, inner, top] = d.layers;
   assert.equal(bottom.bl, "normal"); assert.equal(masked.bl, "luminosity");
-  assert.deepEqual([inner.vis, inner.op], [0, 100]);
+  assert.deepEqual([inner.vis, inner.op, inner.g], [1, 100, 0]);
   assert.deepEqual([top.x, top.y, top.op, top.bl, top.vis, top.file], [3, 4, 50, "multiply", 1, "layer5"]);
   assert.throws(() => ORA.parseKraDoc("<DOC><IMAGE/></DOC>"));
 });

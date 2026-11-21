@@ -314,8 +314,22 @@
   }
 
   // ---------- 5. Selection ----------
+  // Groups (wave CV-1, designkit's item.grp as in Layout): a tap picks
+  // the whole group; a second tap on it goes inside (ED.inGrp) and
+  // picks the one element, as in Canva.
+  function groupIds(it) {
+    if (!it || !it.grp || ED.inGrp === it.grp) return it ? [it.id] : [];
+    return items().filter(function (o) { return o.grp === it.grp && !isBg(o); }).map(function (o) { return o.id; });
+  }
+  ED.groupIds = groupIds;
+  function withGroups(ids) {
+    var out = [];
+    ids.forEach(function (id) { groupIds(find(id)).forEach(function (g) { if (out.indexOf(g) < 0) out.push(g); }); });
+    return out;
+  }
   function select(ids, quiet) {
     ids = (ids || []).filter(function (id) { var it = find(id); return it && it.pg === ED.pg; });
+    if (ED.inGrp && !ids.some(function (id) { var it = find(id); return it && it.grp === ED.inGrp; })) ED.inGrp = null;
     if (JSON.stringify(ids) === JSON.stringify(ED.sel)) return;
     ED.sel = ids;
     redraw();
@@ -323,6 +337,7 @@
   }
   ED.select = select;
   ED.selectAll = function () {
+    ED.inGrp = null;
     select(items().filter(function (it) { return !isBg(it) && !it.hide && !(it.ax && it.ax.tg); }).map(function (it) { return it.id; }));
   };
 
@@ -428,15 +443,18 @@
       return;
     }
     var hit = hitItem(p.x, p.y, touch);
+    if (hit && ED.brush) { pasteStyle(hit); return; }
+    if (ED.brush) { ED.brush = null; cv.style.cursor = "default"; AT.emit("sel"); }
     if (hit) {
-      var was = ED.sel.indexOf(hit.id) >= 0;
+      var grp = groupIds(hit), was = ED.sel.indexOf(hit.id) >= 0;
+      var wasGrp = grp.length > 1 && grp.every(function (id) { return ED.sel.indexOf(id) >= 0; }) && ED.sel.length === grp.length;
       if (e.shiftKey || e.ctrlKey || e.metaKey) {
-        select(was ? ED.sel.filter(function (id) { return id !== hit.id; }) : ED.sel.concat([hit.id]));
+        select(was ? ED.sel.filter(function (id) { return grp.indexOf(id) < 0; }) : ED.sel.concat(grp.filter(function (id) { return ED.sel.indexOf(id) < 0; })));
         return;
       }
-      if (!was) select([hit.id]);
+      if (!was) select(grp);
       var moving = selItems().filter(function (it) { return !it.lock; });
-      drag = { kind: "move", sx: sp.x, sy: sp.y, p0: p, moved: false, hit: hit.id, was: was && ED.sel.length === 1,
+      drag = { kind: "move", sx: sp.x, sy: sp.y, p0: p, moved: false, hit: hit.id, was: was && ED.sel.length === 1, wasGrp: wasGrp,
         start: moving.map(function (it) { return { id: it.id, x: it.x, y: it.y }; }), locked: moving.length === 0 };
       return;
     }
@@ -491,6 +509,7 @@
         var b = R.itemBox(it);
         return b.x >= a0.x && b.y >= a0.y && b.x + b.w <= a1.x && b.y + b.h <= a1.y;
       }).map(function (it) { return it.id; });
+      inside = withGroups(inside);
       select(drag.add.concat(inside.filter(function (id) { return drag.add.indexOf(id) < 0; })));
       return;
     }
@@ -533,6 +552,12 @@
       if (!it) return;
       var dbl = lastTap.id === it.id && nowT - lastTap.t < 400;
       lastTap = { t: nowT, id: it.id };
+      if (d.wasGrp && it.grp) {                       // the group was picked: now the element inside it
+        ED.inGrp = it.grp;
+        select([it.id]);
+        if (it.ax.k === "text" && !it.lock && dbl) enterText(it.id);
+        return;
+      }
       if (it.ax.k === "text" && !it.lock && (d.was || dbl)) { enterText(it.id); return; }
       if (it.ax.k === "photo" && it.a && !it.lock && dbl) { enterCrop(it.id); return; }
       if (it.ax.k === "shape" && dbl && ED.vec && ED.vec.canEdit(it)) { ED.vec.edit(it.id); return; }
@@ -871,13 +896,15 @@
     if (mod && k === "y") { e.preventDefault(); AT.redo(); return; }
     if (mod && k === "a") { e.preventDefault(); ED.selectAll(); return; }
     if (mod && k === "d") { e.preventDefault(); ED.duplicate(); return; }
+    if (mod && e.altKey && k === "c") { e.preventDefault(); ED.copyStyle(); return; }
+    if (mod && k === "g") { e.preventDefault(); if (e.shiftKey) ED.ungroup(); else ED.group(); return; }
     if (mod && k === "c") { e.preventDefault(); ED.copy(); return; }
     if (mod && k === "x") { e.preventDefault(); ED.copy(); ED.remove(); return; }
     if (mod && k === "v") { e.preventDefault(); ED.paste(); return; }
     if (mod && (k === "=" || k === "+")) { e.preventDefault(); ED.zoomBy(1.25); return; }
     if (mod && k === "-") { e.preventDefault(); ED.zoomBy(0.8); return; }
     if (mod && k === "0") { e.preventDefault(); fit(); return; }
-    if (e.key === "Escape") { if (ED.cropId) exitCrop(); else select([]); return; }
+    if (e.key === "Escape") { if (ED.brush) { ED.brush = null; cv.style.cursor = "default"; AT.emit("sel"); } else if (ED.cropId) exitCrop(); else if (ED.inGrp) { var g0 = ED.inGrp; ED.inGrp = null; select(items().filter(function (o) { return o.grp === g0; }).map(function (o) { return o.id; })); } else select([]); return; }
     if (e.code === "KeyP" && !e.shiftKey && !e.altKey && ED.vec) { e.preventDefault(); ED.vec.pen(); return; }
     if (e.key === "Delete" || e.key === "Backspace") { if (ED.sel.length) { e.preventDefault(); ED.remove(); } return; }
     if (e.key === "Enter") {
@@ -908,11 +935,14 @@
   };
 
   function cloneInto(d, list, pg, off, nw) {
-    var out = [], z = AX.nextZ(d, pg);
+    var out = [], z = AX.nextZ(d, pg), grpMap = {}, count = {};
+    list.forEach(function (src) { if (src.grp) count[src.grp] = (count[src.grp] || 0) + 1; });
     list.slice().sort(M.byZ).forEach(function (src) {
       if (d.items.length >= M.MAX_ITEMS) return;
       var c = JSON.parse(JSON.stringify(src));
       c.id = M.newId("it"); c.m = nw; c.pg = pg; c.z = z++;
+      // a whole group copies as a new group; one element out of a group goes alone
+      if (c.grp) c.grp = count[c.grp] > 1 ? (grpMap[c.grp] = grpMap[c.grp] || M.newId("gr")) : "";
       c.x += off; c.y += off; c.lock = 0;
       if (c.ax) delete c.ax.bg;
       // a copy of a blend step is a plain shape (Update would remove it)
@@ -945,6 +975,107 @@
   };
   ED.hasClip = function () { return !!(clip && clip.length); };
 
+  // ---------- Groups (wave CV-1) ----------
+  // Group: the picked elements get one grp and sit next to each other
+  // in z, under the topmost of them (as in Canva). Ungroup clears it.
+  ED.canGroup = function () { return selItems().filter(function (it) { return !isBg(it); }).length > 1 && !ED.isGroup(); };
+  ED.isGroup = function () {
+    var sel = selItems();
+    return sel.length > 1 && !!sel[0].grp && sel.every(function (it) { return it.grp === sel[0].grp; }) &&
+      items().filter(function (o) { return o.grp === sel[0].grp; }).length === sel.length;
+  };
+  ED.inGroup = function () { var sel = selItems(); return sel.some(function (it) { return !!it.grp; }); };
+  ED.group = function () {
+    var sel = selItems().filter(function (it) { return !isBg(it); });
+    if (sel.length < 2) return;
+    var ids = sel.map(function (it) { return it.id; }), g = M.newId("gr");
+    AT.op(function (d, nw) {
+      var list = d.items.filter(function (it) { return it.pg === ED.pg && !(it.ax && it.ax.bg); }).sort(M.byZ);
+      var inSel = function (it) { return ids.indexOf(it.id) >= 0; };
+      var top = -1;
+      list.forEach(function (it, i) { if (inSel(it)) top = i; });
+      var members = list.filter(inSel), rest = list.filter(function (it) { return !inSel(it); });
+      var below = list.slice(0, top + 1).filter(function (it) { return !inSel(it); }).length;
+      var order = rest.slice(0, below).concat(members, rest.slice(below));
+      order.forEach(function (it, k) {
+        var ch = false;
+        if (it.z !== k + 1) { it.z = k + 1; ch = true; }
+        if (inSel(it) && it.grp !== g) { it.grp = g; ch = true; }
+        if (ch) M.touch(it, nw);
+      });
+    });
+    ED.inGrp = null;
+    AT.emit("sel");
+    redraw();
+  };
+  ED.ungroup = function () {
+    var gs = {};
+    selItems().forEach(function (it) { if (it.grp) gs[it.grp] = 1; });
+    if (!Object.keys(gs).length) return;
+    AT.op(function (d, nw) {
+      d.items.forEach(function (it) { if (it.pg === ED.pg && it.grp && gs[it.grp]) { it.grp = ""; M.touch(it, nw); } });
+    });
+    ED.inGrp = null;
+    AT.emit("sel");
+    redraw();
+  };
+
+  // ---------- Copy style (wave CV-1) ----------
+  // The paint roller: the first picked element's look, put on the next
+  // element tapped (its whole group when the group is not open). Text
+  // gives its font, size, colour, weight, spacing and effect; shapes
+  // their fill, outline and roundness; photos their filter and
+  // adjustments; every kind its transparency. Colour also goes across
+  // kinds (a text's colour onto a shape).
+  var TEXT_STYLE = ["font", "size", "b", "i", "u", "caps", "al", "lh", "tr", "tfx", "fc"];
+  var KIND_STYLE = {
+    text: TEXT_STYLE, shape: ["fc", "sc", "g", "rd"], icon: ["fc", "sc"], line: ["sc", "as", "ae"],
+    photo: ["adj", "flt"], table: ["font", "size", "al", "fc", "sc"], chart: ["fc", "size"]
+  };
+  function styleOf(it) {
+    var ax = it.ax || {}, st = { k: ax.k, ax: {}, it: { op: it.op === undefined ? 100 : it.op }, ext: {} };
+    (KIND_STYLE[ax.k] || []).forEach(function (key) { st.ax[key] = ax[key] === undefined ? null : JSON.parse(JSON.stringify(ax[key])); });
+    if (ax.k === "shape" || ax.k === "line" || ax.k === "icon") { st.it.sw = it.sw; st.it.dash = it.dash; }
+    if (ax.k === "text") ["fam", "kern"].forEach(function (key) { st.ext[key] = it.ext && it.ext[key] !== undefined ? it.ext[key] : null; });
+    return st;
+  }
+  ED.styleOf = styleOf;
+  function putStyle(st, x) {
+    var ax = x.ax, keys = KIND_STYLE[ax.k] || [];
+    if (ax.k === st.k) {
+      keys.forEach(function (key) { if (st.ax[key] === null) delete ax[key]; else if (st.ax[key] !== undefined) ax[key] = JSON.parse(JSON.stringify(st.ax[key])); });
+      if (st.it.sw !== undefined) { x.sw = st.it.sw; x.dash = st.it.dash; }
+      if (ax.k === "text") {
+        x.ext = x.ext || {};
+        ["fam", "kern"].forEach(function (key) { if (st.ext[key] === null) delete x.ext[key]; else x.ext[key] = st.ext[key]; });
+        delete x.ext.runs;                             // one look for the whole text, as in Canva
+        if (!Object.keys(x.ext).length) delete x.ext;
+      }
+    } else {
+      var c = st.ax.fc || st.ax.sc;                    // across kinds: the colour only
+      if (c && keys.indexOf("fc") >= 0 && ax.k !== "line") ax.fc = c;
+      else if (c && keys.indexOf("sc") >= 0) ax.sc = c;
+    }
+    x.op = st.it.op;
+  }
+  ED.putStyle = putStyle;
+  ED.copyStyle = function () {
+    var one = selItems().filter(function (it) { return !isBg(it); })[0];
+    if (!one) return;
+    ED.brush = styleOf(one);
+    if (cv) cv.style.cursor = "copy";
+    AT.emit("sel");
+    AT.toast(t("cs.pick"));
+  };
+  function pasteStyle(hit) {
+    var st = ED.brush, ids = groupIds(hit);
+    ED.brush = null;
+    cv.style.cursor = "default";
+    AT.editItems(ids, function (x) { if (x.lock || isBg(x)) return false; putStyle(st, x); });
+    select(ids);
+    AT.toast(t("cs.done"));
+  }
+
   // z order: front / fwd / bwd / back (the background stays last)
   ED.arrange = function (how) {
     var sel = selItems().filter(function (it) { return !isBg(it); });
@@ -966,6 +1097,46 @@
       }
       order.forEach(function (it, k) { if (it.z !== k + 1) { it.z = k + 1; M.touch(it, nw); } });
     });
+  };
+
+  // Layers list (wave CV-1): ids moved to sit just above `belowId`
+  // (null = at the very back), keeping their own order. One element
+  // dropped between two elements of a group joins that group; one
+  // element of a group dropped outside it leaves it; a whole group
+  // never lands inside another group (it goes past it).
+  ED.reorder = function (ids, belowId) {
+    if (!ids.length) return;
+    AT.op(function (d, nw) {
+      var list = d.items.filter(function (it) { return it.pg === ED.pg && !(it.ax && it.ax.bg); }).sort(M.byZ);
+      var inSel = function (it) { return ids.indexOf(it.id) >= 0; };
+      var moving = list.filter(inSel), rest = list.filter(function (it) { return !inSel(it); });
+      if (!moving.length) return false;
+      var at = 0;
+      if (belowId) { var bi = -1; rest.forEach(function (it, i) { if (it.id === belowId) bi = i; }); at = bi + 1; }
+      var lo = rest[at - 1], hi = rest[at];
+      var whole = moving[0].grp && moving.every(function (it) { return it.grp === moving[0].grp; }) &&
+        list.filter(function (it) { return it.grp === moving[0].grp; }).length === moving.length;
+      var into = lo && hi && lo.grp && lo.grp === hi.grp ? lo.grp : "";
+      if (into && (whole || moving.length > 1 && moving.some(function (it) { return it.grp; }))) {
+        while (at < rest.length && rest[at].grp === into) at++;      // past the other group
+        into = "";
+      }
+      var order = rest.slice(0, at).concat(moving, rest.slice(at));
+      order.forEach(function (it, k) {
+        var ch = false;
+        if (it.z !== k + 1) { it.z = k + 1; ch = true; }
+        if (inSel(it) && !whole) {
+          var g = moving.length === 1 ? into : it.grp && !into ? it.grp : into;
+          if (moving.length === 1 && it.grp && !into) {
+            var a2 = order[k - 1], b2 = order[k + 1];
+            g = (a2 && a2.grp === it.grp) || (b2 && b2.grp === it.grp) ? it.grp : "";
+          }
+          if ((it.grp || "") !== g) { it.grp = g; ch = true; }
+        }
+        if (ch) M.touch(it, nw);
+      });
+    });
+    redraw();
   };
 
   // align to page (one element) or to the selection box (several)

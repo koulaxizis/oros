@@ -63,7 +63,7 @@
     en: {
       "app.name": "Hive",
       "btn.up": "Improvements", "btn.upKey": "Improvements (U)",
-      "btn.stats": "Records (S)", "btn.sfxOn": "Sound on (M)", "btn.sfxOff": "Sound off (M)",
+      "btn.help": "How to play (?)", "btn.stats": "Records (S)", "btn.sfxOn": "Sound on (M)", "btn.sfxOff": "Sound off (M)",
       "btn.close": "Close", "btn.ok": "Good", "btn.undo": "Undo", "btn.cancel": "Cancel",
       "btn.start": "Start over", "btn.startYes": "Start over", "btn.openUp": "Open Improvements",
       "view.label": "The hillside: the hive in the middle and the flower patches around it. Arrow keys choose a patch.",
@@ -112,11 +112,12 @@
       "away.slow": "After 7 days away the hive works at half pace: it never stops, it only slows.",
       "away.cluster": "The stores ran out in winter, so the bees huddled until spring. Nothing was lost.",
       "dur.d": "{n} d", "dur.h": "{n} h", "dur.m": "{n} min",
-      "tour.title": "How it works",
+      "tour.title": "How to play",
       "tour.1": "Your bees fly from the hive to the flower patches that are in bloom and bring back honey. One month on the hillside is half an hour.",
       "tour.2": "Every flower blooms in its own months: the calendar at the top shows them. Plant so that something blooms all year. Every different honey kind of the year gives +5%.",
       "tour.3": "Spend honey on new patches, tending and Improvements. In December and January nothing blooms and the bees eat the stores, so keep some back for winter.",
       "tour.4": "The hive goes on while orOS is closed. There is nothing to miss and nothing to collect: come back when you like.",
+      "tour.again": "The ? button at the top opens this again at any time.",
       "toast.plant": "{f} planted", "toast.tend": "Patch tended", "toast.up": "{u} bought", "toast.start": "A new hive",
       "toast.honey": "Not enough honey yet", "toast.wax": "Not enough wax yet", "toast.max": "Already done",
       "toast.locked": "This patch opens with the Terraces", "toast.same": "Already planted here",
@@ -149,7 +150,7 @@
     el: {
       "app.name": "Κυψέλη",
       "btn.up": "Βελτιώσεις", "btn.upKey": "Βελτιώσεις (U)",
-      "btn.stats": "Αρχείο (S)", "btn.sfxOn": "Ήχος ανοιχτός (M)", "btn.sfxOff": "Ήχος κλειστός (M)",
+      "btn.help": "Πώς παίζεται (?)", "btn.stats": "Αρχείο (S)", "btn.sfxOn": "Ήχος ανοιχτός (M)", "btn.sfxOff": "Ήχος κλειστός (M)",
       "btn.close": "Κλείσιμο", "btn.ok": "Ωραία", "btn.undo": "Αναίρεση", "btn.cancel": "Άκυρο",
       "btn.start": "Από την αρχή", "btn.startYes": "Νέα κυψέλη", "btn.openUp": "Άνοιξε τις Βελτιώσεις",
       "view.label": "Η πλαγιά: η κυψέλη στη μέση και τα λουλούδια γύρω της. Με τα βελάκια διαλέγεις κομμάτι.",
@@ -203,6 +204,7 @@
       "tour.2": "Κάθε λουλούδι ανθίζει τους δικούς του μήνες: τους δείχνει το ημερολόγιο επάνω. Φύτεψε ώστε κάτι να ανθίζει όλη τη χρονιά. Κάθε διαφορετικό είδος μελιού της χρονιάς δίνει +5%.",
       "tour.3": "Με το μέλι αγοράζεις νέα κομμάτια, περιποίηση και Βελτιώσεις. Τον Δεκέμβριο και τον Ιανουάριο δεν ανθίζει τίποτα και οι μέλισσες τρώνε από τα αποθέματα, οπότε κράτα λίγο για τον χειμώνα.",
       "tour.4": "Η κυψέλη συνεχίζει και όταν το orOS είναι κλειστό. Δεν χάνεις τίποτα και δεν έχεις τίποτα να μαζέψεις: έλα όποτε θέλεις.",
+      "tour.again": "Το κουμπί ? πάνω το ξανανοίγει όποτε θέλεις.",
       "toast.plant": "Φυτεύτηκε: {f}", "toast.tend": "Το κομμάτι περιποιήθηκε", "toast.up": "Αγοράστηκε: {u}", "toast.start": "Νέα κυψέλη",
       "toast.honey": "Δεν φτάνει ακόμα το μέλι", "toast.wax": "Δεν φτάνει ακόμα το κερί", "toast.max": "Έχει ήδη γίνει",
       "toast.locked": "Αυτό το κομμάτι ανοίγει με τις Πεζούλες", "toast.same": "Είναι ήδη φυτεμένο εδώ",
@@ -438,28 +440,28 @@
     if (pending) { clearTimeout(pending.timer); pending = null; }
     live = u.snap;
     E.catchUp(live, nowMs());
-    // Start over was written at once: the old hive is written back
-    if (u.kind === "start") { saved = E.normalize(live); if (writeSaved()) dirtySoon(); }
     hideToast();
     sfx("undo");
     renderAll(true);
   }
   // Start over: a new hive with a new reset stamp (it wins on every
-  // device). Undo brings the old hive back with the NEW stamp, so the
-  // reset cannot come back from the cloud either.
+  // device, so the old hive cannot come back from the cloud). No Undo:
+  // the question before it is the safeguard, and an Undo in the toast
+  // sat over the toolbar, where the next tap brought the old hive back.
   function startOver() {
     if (pending) commitNow();
     E.catchUp(live, nowMs());
     var br = Math.max(nowMs(), saved.br + 1);
-    var old = E.clone(live);
-    old.br = br;
     live = E.newGame(newSeed(), nowMs(), br);
-    undo = { snap: old, kind: "start" };
+    undo = null;
+    hideToast();
     saved = E.normalize(live);
     if (writeSaved()) dirtySoon();
+    prefs.seen = nowMs(); prefs.seenLife = live.life; prefs.seenMin = live.min;
+    savePrefs();
     sel = -1;
     closeDialog();
-    showToast(t("toast.start"), true);
+    showToast(t("toast.start"));
     renderAll(true);
   }
 
@@ -710,6 +712,7 @@
       else if (k === "u") { upDialog(); ev.preventDefault(); }
       else if (k === "s") { recDialog(); ev.preventDefault(); }
       else if (k === "m") { toggleSfx(); ev.preventDefault(); }
+      else if (ev.key === "?") { tourDialog(); ev.preventDefault(); }
       else if (k === "z" && undo) { undoLast(); ev.preventDefault(); }
     });
   }
@@ -1115,8 +1118,10 @@
       d.setAttribute("aria-label", t("tour.title"));
       d.appendChild(el("div", "dlg-title", t("tour.title")));
       ["tour.1", "tour.2", "tour.3", "tour.4"].forEach(function (k) { d.appendChild(el("p", "dlg-msg", t(k))); });
+      d.appendChild(el("p", "dlg-note", t("tour.again")));
       actions(d, [{ label: t("btn.ok"), cls: "primary", fn: function () { prefs.tour = 1; savePrefs(); closeDialog(); } }]);
     });
+    $("dlg").scrollTop = 0;   // open at the top, not at the focused Good button
   }
 
   // ---------- 9. Toasts ----------
@@ -1236,6 +1241,7 @@
   var SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">';
   var ICONS = {
     hive:   SVG + '<path d="M12 2 20 6.5v9L12 20l-8-4.5v-9z"/><path d="M8 9.5h8M7 13h10"/><path d="M12 20v2"/></svg>',
+    help:   SVG + '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.9.8c0 1.7-2.4 2.2-2.4 3.7"/><path d="M12 17h.01"/></svg>',
     stats:  SVG + '<path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
     sfxOn:  SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>',
     sfxOff: SVG + '<path d="M11 5 6 9H2v6h4l5 4z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>',
@@ -1352,6 +1358,10 @@
   };
 
   function applyI18n() {
+    var hb = $("help-btn");
+    hb.innerHTML = ICONS.help;
+    hb.setAttribute("aria-label", t("btn.help"));
+    hb.title = t("btn.help");
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
       n.textContent = t(n.getAttribute("data-i18n"));
     });
@@ -1376,6 +1386,7 @@
     $("sw-btn").addEventListener("click", swarmDialog);
     document.addEventListener("pointerdown", function () { if (humOn()) updateHum(); }, { once: true });
     $("stats-btn").addEventListener("click", recDialog);
+    $("help-btn").addEventListener("click", tourDialog);
     $("sfx-btn").addEventListener("click", toggleSfx);
     $("dlg").addEventListener("close", function () { dlgKind = ""; });
     $("dlg").addEventListener("cancel", function () {

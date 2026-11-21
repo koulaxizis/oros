@@ -29,7 +29,7 @@ test("in a batch no design opens and no toast but the last one", () => {
   assert.match(core, /function addDoc\(d, stay\) \{[\s\S]*?if \(!stay\) openDoc\(d\.id\);/);
   // every import path adds without opening while batching and speaks through say()
   const adds = io.split("\n").filter((l) => l.includes("AT.addDoc("));
-  assert.equal(adds.length, 4);
+  assert.equal(adds.length, 5);   // package, pptx, svg shapes, picture, pdf
   adds.forEach((l) => assert.match(l, /, batching\);$/));
   assert.match(io, /function bundleFail\(e\) \{ say\(/);
   const paths = io.slice(io.indexOf("function importPackageObj"), io.indexOf("function importFail"));
