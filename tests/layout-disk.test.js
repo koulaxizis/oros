@@ -280,7 +280,7 @@ test("Layout wiring: disk at boot, saves, pulls, Vault changes, own files open, 
   const ly = read("layout/layout.js"), io = read("layout/io.js"), html = read("layout/index.html");
   assert.match(html, /files-core\.js[^\n]*\n\s*<script src="\.\.\/designkit\/docstore\.js/);
   assert.match(ly, /loadDisk\(\)\.then\(function \(\) \{ return T\.load\(T\.allKeys\(\)\); \}\)/);
-  assert.match(ly, /if \(diskReady\) disk\.save\(data, LY\.doc\)\.then\(diskSaved\);/);
+  assert.match(ly, /if \(diskReady\) lastSave = disk\.save\(data, LY\.doc\)\.then\(diskSaved\);/);
   assert.match(ly, /function sliceGet\(\) \{ return disk \? disk\.sliceGet\(data\) : M\.normData\(data\); \}/);
   assert.match(ly, /if \(!diskReady\) \{ diskPulls\.push\(incoming\); return; \}/);
   assert.match(ly, /detail\.downloaded > 0 \|\| detail\.deleted > 0 \|\| detail\.conflicts > 0\)\) diskRescan\(\)/);

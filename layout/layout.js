@@ -1394,11 +1394,11 @@
     });
   }
 
-  var saveTimer = null, saveFailShown = false, bigWarned = {};
+  var saveTimer = null, saveFailShown = false, bigWarned = {}, lastSave = null;
   function saveNow() {
     clearTimeout(saveTimer); saveTimer = null;
     if (disk) {
-      if (diskReady) disk.save(data, LY.doc).then(diskSaved);
+      if (diskReady) lastSave = disk.save(data, LY.doc).then(diskSaved);
       if (window.__orosSyncApi) window.__orosSyncApi.dirty();
       return;
     }
@@ -1415,6 +1415,14 @@
     saveTimer = setTimeout(saveNow, 400);
   }
   LY.save = save; LY.flush = function () { if (saveTimer) saveNow(); };
+  // GL-4 (book item 26): saves now and → Promise once the files and the
+  // index hold it (at most ms), so a read right after an edit is current
+  LY.settled = function (ms) {
+    LY.flushStory && LY.flushStory();
+    if (saveTimer) saveNow();
+    var p = lastSave || Promise.resolve();
+    return Promise.race([p.then(null, function () {}), new Promise(function (ok) { setTimeout(ok, ms || 20000); })]);
+  };
   LY.data = function () { return data; };
 
   function findDoc(id) { return M.find(data.docs, id); }
