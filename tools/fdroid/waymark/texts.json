@@ -1,0 +1,13 @@
+{
+  "category": "Connectivity",
+  "en": {
+    "name": "Waymark",
+    "summary": "Phone as presentation remote and file transfer on the local network",
+    "description": "Waymark Remote turns your phone into the remote for a presentation laptop. Scan the QR code the Waymark app shows on the laptop, compare the check number, and you are connected.\n\nChange slides, start and end the show, black the screen, jump to a slide and see which slide is showing. Send files to the laptop's shared folder and take files back, with a check that each file arrived whole.\n\nRoles for the people around an event: operator, secretariat and supervisor.\n\nEverything goes straight between the phone and the laptop on the local network, encrypted end to end. No account, no cloud, no ads, no tracking. Free and open source (MIT).\n\nThe laptop side is the portable Waymark Remote app for Windows, macOS and Linux, from waymarked.site."
+  },
+  "el": {
+    "name": "Waymark",
+    "summary": "Το κινητό σου τηλεχειριστήριο παρουσίασης και μεταφορά αρχείων στο τοπικό δίκτυο",
+    "description": "Το Waymark Remote κάνει το κινητό σου τηλεχειριστήριο για τον υπολογιστή της παρουσίασης. Σαρώνεις τον κωδικό QR που δείχνει η εφαρμογή Waymark στον υπολογιστή, συγκρίνεις τον αριθμό ελέγχου και συνδέεσαι.\n\nΑλλάζεις διαφάνειες, ξεκινάς και τελειώνεις την προβολή, μαυρίζεις την οθόνη, πηγαίνεις σε όποια διαφάνεια θέλεις και βλέπεις ποια προβάλλεται. Στέλνεις αρχεία στον κοινό φάκελο του υπολογιστή και παίρνεις αρχεία πίσω, με έλεγχο ότι κάθε αρχείο έφτασε ολόκληρο.\n\nΡόλοι για όσους δουλεύουν σε μια εκδήλωση: Χειριστής, Γραμματεία και Εποπτεία.\n\nΌλα πάνε κατευθείαν από το κινητό στον υπολογιστή μέσα στο τοπικό δίκτυο, κρυπτογραφημένα από άκρη σε άκρη. Χωρίς λογαριασμό, χωρίς cloud, χωρίς διαφημίσεις, χωρίς παρακολούθηση. Δωρεάν και ανοιχτού κώδικα (MIT).\n\nΣτον υπολογιστή τρέχει η φορητή εφαρμογή Waymark Remote για Windows, macOS και Linux, από το waymarked.site."
+  }
+}
