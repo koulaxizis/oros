@@ -3,8 +3,11 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
-## Version 8.07.01
+## Version 8.08.01
 - **Layout: books from Scribus keep their lines.** A Scribus book opened in Layout now ends every line where Scribus ended it and starts each page at the same height, so the pages break where they did in the original. Open the book's .sla again to get it.
+
+## Version 8.08.00
+- **Claude can rename Kanban columns.** Through orOS Gate, Claude can now give a column a new name, alongside adding columns. You are notified and can undo it from Claude's changes.
 
 ## Version 8.07.00
 - **Caravan: the Spice road.** Four new routes past the old toll machines, each ending at two markets: the spice market pays three coins a crate instead of two. A new cart, the smith's cart, jams the nearest machine it passes for a few seconds, and a jammed machine does nothing at all, not even slow carts down or help its neighbours. Open it by clearing the last route of the Salt road. Every route with a star now also has Endless: all the machines work from the first trip, and each trip must bring more crates than the one before, for as long as you can keep going; your best score syncs. And the carts now have their mules, ponies and oxen in front, turning wheels and a little dust (none of it with reduced motion), with a soft rumble on the road.

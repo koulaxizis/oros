@@ -6758,21 +6758,26 @@
     if (!app || !G) return Promise.resolve({ content: "Error: the user does not let the assistant change Kanban.", err: 1 });
     args = args && typeof args === "object" ? args : {};
     var cols = Array.isArray(args.columns) ? args.columns : [];
+    var rens = Array.isArray(args.rename_columns) ? args.rename_columns : [];   // KB-COLREN
     return coreOf("OrosKanbanModel", "../kanban/model.js").then(function (M) {
       var key = "oros-kanban-data";
       var test = G.kanbanWrite(M, "add_columns", readStore(key), args, Date.now(), kbId);
       if (!test.ok) return { content: "Error: " + test.err + " Nothing was saved.", err: 1, ui: { k: "chgErr", app: app.name } };
-      var rows = cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; });
+      var rows = rens.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: "← " + String(x && x.column || "").slice(0, 60) }; })
+        .concat(cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; }));
       var base = { k: "create", app: app.name, rows: rows };
       return askCreate(app.name, rows, false).then(function (ok) {
         if (!ok) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
-        var pick = { board: args.board, columns: cols.filter(function (x, i) { return !ok.skip[i]; }) };
+        var pick = { board: args.board }, pr = rens.filter(function (x, i) { return !ok.skip[i]; }), pc = cols.filter(function (x, i) { return !ok.skip[rens.length + i]; });
+        if (pr.length) pick.rename_columns = pr;
+        if (pc.length) pick.columns = pc;
+        if (!pr.length && !pc.length) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
         var res = G.kanbanWrite(M, "add_columns", readStore(key), pick, Date.now(), kbId);
         if (!res.ok) { base.st = "failed"; base.msg = res.err; return { content: "Error: " + res.err + " Nothing was saved.", err: 1, ui: base }; }
         if (!writeStore(key, res.data)) { base.st = "failed"; base.msg = t("chg.storage"); return { content: "Error: the columns could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base }; }
         markAppDirty();
         var uid = newId();
-        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: pick.columns.map(function (x) { return String(x.name); }) });
+        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: (pick.rename_columns || []).concat(pick.columns || []).map(function (x) { return String(x.name); }) });
         base.st = "done";
         base.u = uid;
         base.added = rows.map(function (r, i) { return i; }).filter(function (i) { return !ok.skip[i]; });

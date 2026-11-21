@@ -454,7 +454,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_add_columns",
-    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
+    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
     inputSchema: {
       type: "object",
       properties: {
@@ -467,9 +467,18 @@ export const TOOLS = [
           },
           required: ["name"],
           additionalProperties: false
+        } },
+        rename_columns: { type: "array", minItems: 1, maxItems: 20, items: {
+          type: "object",
+          properties: {
+            column: { type: "string", description: "The column's id or current name." },
+            name: { type: "string", description: "Its new name, at most 60 characters." }
+          },
+          required: ["column", "name"],
+          additionalProperties: false
         } }
       },
-      required: ["board", "columns"],
+      required: ["board"],
       additionalProperties: false
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
