@@ -1133,6 +1133,8 @@ orosPack("de", "shell", {
  "update.now": "Jetzt aktualisieren",
  "update.now.working": "Wird aktualisiert…",
  "update.now.current": "Auf dem Server gibt es noch keine neuere Version.",
+ "update.now.system": "Das System-Fenster sucht nach der neuen Version. orOS übernimmt sie beim nächsten Start.",
+ "update.now.local": "Dieses orOS wird mit seinem Programm aktualisiert und übernimmt die neue Version beim nächsten Start.",
  "update.now.space": "Für die neue Version ist nicht genug Speicherplatz frei. Gib auf diesem Gerät etwas Speicher frei und versuche es erneut.",
  "update.now.network": "Die neue Version konnte nicht geladen werden. Prüfe die Verbindung und versuche es erneut.",
  "update.now.offline": "Dieses Gerät ist offline. Verbinde dich und versuche es erneut.",

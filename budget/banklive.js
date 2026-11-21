@@ -300,14 +300,16 @@
       lastErr = errs;
       store(DEV_KEY, { t: Date.now() });
       // one write per row: where it was read with, its last booked day,
-      // the bank's balance and, with set times, when it was read (bt:
-      // the other devices then skip that time)
-      var sched = times().length, at = Date.now(), pat = {};
+      // the bank's balance and when it was read (bt: the other devices
+      // then skip that set time, or wait 6 hours from it; BK-6S). A bank
+      // that said "too many requests" counts as read: nobody asks again
+      // before the next turn.
+      var at = Date.now(), pat = {};
       function put(id, f) { pat[id] = Object.assign(pat[id] || {}, f); }
       Object.keys(moves).forEach(function (id) { put(id, { la: moves[id] }); });
       Object.keys(lfs).forEach(function (id) { put(id, { lf: lfs[id] }); });
       Object.keys(bals).forEach(function (id) { put(id, bals[id]); });
-      if (sched) rows.forEach(function (r) { if (!errs[r.id]) put(r.id, { bt: at }); });
+      rows.forEach(function (r) { if (!errs[r.id] || errs[r.id] === "busy") put(r.id, { bt: at }); });
       Object.keys(pat).forEach(function (id) { A.patchBnk(id, pat[id]); });
       if (add.length || Object.keys(adopt).length) A.addEntries(add, t("got", { n: add.length }), adopt);
       else if (!auto && !Object.keys(errs).length) A.showToast(t("gotNone"));

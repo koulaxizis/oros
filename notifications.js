@@ -829,7 +829,7 @@
   // SW-Q1: "Update now" under such a notice (index.html orosUpdateNow).
   function updateNowText(state, reason) {
     return window.t(state === 'failed' ? 'update.now.' + ({ space: 1, network: 1, offline: 1 }[reason] ? reason : 'failed')
-      : state === 'current' ? 'update.now.current' : 'update.now.working');
+      : state === 'current' || state === 'system' || state === 'local' ? 'update.now.' + state : 'update.now.working');
   }
   window.orosUpdateNowText = updateNowText;
   function addUpdateNow(el) {
@@ -847,7 +847,7 @@
       btn.disabled = true;
       window.orosUpdateNow(function (st, why) {
         msg.textContent = updateNowText(st, why);
-        btn.disabled = st === 'checking' || st === 'reloading';
+        btn.disabled = st === 'checking' || st === 'reloading' || st === 'system';
       });
     };
     row.append(btn, msg);
