@@ -115,10 +115,77 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 
 ## Tastenkürzel
 - [[V]] [[T]] [[F]] [[R]] [[E]] [[L]] [[H]] wählen ein Werkzeug; [[W]] schaltet die Vorschau um.
-- Pfeiltasten verschieben die Auswahl ein Stück ([[Shift]] für größere Schritte); [[Delete]] entfernt sie.
+- Pfeiltasten verschieben die Auswahl um 0,5 mm (oder was in Tastenkürzel und Komfort steht; [[Shift]] zehnmal, [[Alt]] ein Zehntel); [[Delete]] entfernt sie. Jedes Kürzel lässt sich in `Tastenkürzel und Komfort…` ändern.
 - [[Ctrl+Z]] / [[Ctrl+Y]] machen rückgängig und wiederholen; [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]], [[Ctrl+D]] dupliziert, [[Ctrl+A]] wählt alles aus.
 - [[Ctrl+G]] gruppiert, [[Ctrl+Shift+G]] hebt die Gruppierung auf; [[Ctrl+E]] öffnet den Export.
 - Beim Tippen in einem Rahmen oder im Textmodus: [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]]; [[Esc]] beendet.
+
+## Komfort bei der Arbeit
+- **Intelligente Hilfslinien**: Beim Ziehen rastet ein Objekt an Seitenrändern, Rändern, Spalten, Hilfslinien und den anderen Objekten ein, und am gleichen Abstand wie zwischen den Objekten daneben; rosa Marken zeigen die gleichen Abstände mit ihrem Maß. Mit [[Alt]] ziehst du frei.
+- **Maße beim Ziehen**: Ein kleines Schild zeigt beim Verschieben die Lage, beim Größeändern oder Zeichnen die Größe und beim Drehen den Winkel, in der Einheit des Dokuments. Klicke auf die Ecke, wo sich die Lineale treffen, für mm, pt oder in.
+- **Werkzeugleiste über der Auswahl**: was eine Auswahl am häufigsten braucht, direkt darüber: `Text bearbeiten` oder `Bild platzieren…`, `Duplizieren`, `In den Vordergrund`, `In den Hintergrund`, `Gruppieren`, `Position sperren`, `Löschen` und `Mehr` für den Rest.
+- **Verlauf…** (im Menü `Mehr`, oder [[Ctrl+Alt+Z]]): jeder Rückgängig-Schritt mit Namen, etwa Verschieben, 3 Objekte hinzufügen oder Format „Text“, mit seiner Uhrzeit; ein Klick geht dorthin zurück oder wieder vor.
+- **Tastenkürzel und Komfort…** (Menü `Mehr`): Ändere jedes Kürzel, indem du es anklickst und die neuen Tasten drückst. Buchstaben meinen die Tastenplätze, die Kürzel gehen also auch mit griechischer Tastatur. Lege fest, wie weit die Pfeiltasten verschieben ([[Shift]] zehnmal so weit, [[Alt]] ein Zehntel), und schalte Hilfslinien, Maße oder Werkzeugleiste aus. Auf diesem Gerät gespeichert.
+
+## Suchen, Ersetzen und Rechtschreibung
+- **Suchen/Ersetzen…** (Menü `Mehr`, oder [[Ctrl+F]]): findet Text im ganzen Dokument oder in einem Textabschnitt, auf Wunsch nur in Absätzen eines Formats. **Text** findet, was du tippst; **GREP** nimmt einen regulären Ausdruck (\d eine Ziffer, \s ein Leerzeichen, ( ) eine Gruppe; in „Ersetzen durch“ ist $1 die erste Gruppe und \n beginnt einen neuen Absatz). Die Änderung kann auch ein Absatzformat setzen oder ein Zeichenformat auf das Geänderte legen. `Suchen` listet alle Treffer (ein Klick öffnet ihn im Textmodus), `Weiter` geht von Treffer zu Treffer, `Ersetzen` ändert den gezeigten, `Alle ersetzen` ändert alle in einem Rückgängig-Schritt. `Abfragen…` enthält fertige Aufräumarbeiten für ein Buch (doppelte Leerzeichen, Leerzeichen vor Satzzeichen, Bindestrich zwischen Leerzeichen zum Gedankenstrich, gerade Anführungszeichen zu «», drei Punkte zu Auslassungspunkten) und die auf diesem Gerät gespeicherten Abfragen.
+- **Rechtschreibung…** (Menü `Mehr`): prüft jedes Wort mit den griechischen und englischen Wörterbüchern (dieselben wie in Writer; sie laden beim ersten Mal und funktionieren danach offline). Für jedes unbekannte Wort: `Zeigen`, `Vorschläge` (ein Klick ändert es überall), `Ins Wörterbuch` (das eigene Wörterbuch des Dokuments, das mit ihm reist) oder `Ignorieren`. Die Wörter deines Wörterbuchs in Writer zählen auch.
+- **Nächstes Format**: In einem Absatzformat ist `Nächstes Format` das Format, das ein neuer Absatz bekommt, wenn du am Ende eines Absatzes [[Enter]] drückst, z. B. Überschrift → Text.
+- **GREP-Stile**: In einem Absatzformat ein Zeichenformat auf allem, was ein regulärer Ausdruck findet, z. B. Zahlen in einer anderen Schrift oder der Name des Sprechers in Kapitälchen. Bis zu 10 pro Format.
+
+## Umbrüche, Grundlinienraster und Objektformate
+- **Umbrüche**: Im Textmodus setzt `⤓` an der Einfügemarke einen Spalten-, Seiten-, ungeraden oder geraden Seitenumbruch; der Text danach beginnt dort. Beim Tippen ist [[Enter im Ziffernblock]] ein Spaltenumbruch und [[Strg+Enter im Ziffernblock]] ein Seitenumbruch. Der Textmodus markiert jeden Umbruch.
+- **Grundlinienraster**: In `Dokument einrichten…` legst du fest, wo die erste Linie liegt und wie weit die Linien auseinander sind; `Grundlinienraster zeigen` zeichnet es. Absatzformate mit `Am Grundlinienraster ausrichten` setzen jede Zeile darauf, damit die Zeilen gegenüberliegender Seiten und Spalten fluchten.
+- **Ausgleichen** (Textrahmen, vertikale Ausrichtung): Der freie Platz am Fuß einer Spalte wird zwischen ihren Absätzen verteilt, damit die Spalten gleich hoch enden. Die letzte Spalte eines Textes bleibt, wie sie ist.
+- **Objektformate** (Eigenschaften): `Neu aus diesem` speichert das Aussehen eines Rahmens oder einer Form (Füllung, Kontur, Ecken, Deckkraft, Umfluss; bei Textrahmen Abstand, Spalten und Ausrichtung) unter einem Namen; wähle es für andere Objekte; `Aus diesem neu definieren` ändert jedes Objekt, das es nutzt. Sie reisen mit dem Dokument.
+
+## Textmodus, Bibliothek und Farbfeldbibliotheken
+- **Textmodus**: `¶` zeigt den Formatnamen jedes Absatzes in einer Spalte neben dem Text; `A−` und `A+` machen die Schrift kleiner oder größer (nur am Bildschirm, auf diesem Gerät gemerkt). Absätze, die nicht mehr in die Rahmen passen, sind ab dem Übersatz markiert.
+- **Bibliothek** (`Mehr › Bibliothek…`): Wähle Objekte aus; `Auswahl hinzufügen` bewahrt sie mit Text, Farben und Formaten für jedes Dokument auf diesem Gerät auf; ein Klick platziert eines auf der aktuellen Seite. Dort benennst oder entfernst du sie; `Exportieren…` und `Importieren…` bringen eine Bibliothek als `.oroslib`-Datei auf ein anderes Gerät. Bilder werden genannt, nicht kopiert.
+- **Farbfeldbibliotheken** (Bedienfeld Farben): `Bibliotheken…` fügt fertige Sätze hinzu (Druck-Grundfarben, Meer, Erde, Pastell, Grautöne); `.ase importieren…` liest Farbfelddateien aus InDesign, Illustrator, Photoshop, Affinity oder Scribus (RGB, CMYK, Grau und Lab; Volltonfarben bleiben Volltonfarben); `.ase exportieren` schreibt die Farben des Dokuments für sie. Farben, die schon im Dokument sind, werden übersprungen.
+
+## Griechisch und Satz
+- **Griechisch**: Die Silbentrennung liest auch polytonischen Text (Hauche, Akzente und Iota subscriptum bleiben außen vor: ἄν-θρω-πος); Großbuchstaben verlieren sie und behalten das Trema (ᾠδή → ΩΙΔΗ). Formatlisten sortieren griechisch (ά wie α, ς wie σ).
+- **Glyphenprüfung**: Die Preflight-Prüfung nennt jeden Rahmen mit Zeichen, die seine Schrift nicht hat, und welche.
+- **Satz** (Absatzformat, Satz): `Ganzer Absatz` wägt alle Zeilen eines Absatzes zusammen ab, für gleichmäßige Abstände; Wortabstand mindestens und höchstens (%) und Zeichenabstand höchstens legen fest, wie weit eine Blocksatzzeile gehen darf; `Optischer Randausgleich` lässt Satzzeichen über den Rand hängen; `Flattersatz ausgleichen` gleicht Zeilen ohne Blocksatz an; eine Initiale senkt die ersten Buchstaben über zwei oder mehr Zeilen.
+- **Kapitälchen, hoch- und tiefgestellt**: in einem Zeichenformat.
+- **Lockere und enge Zeilen**: `Mehr › Lockere und enge Zeilen zeigen` markiert Blocksatzzeilen außerhalb der Grenzen (gelb locker, rosa eng).
+
+## Fußnoten, Listen, Querverweise und Bücher
+- **Fußnoten und Endnoten**: im Textmodus die Schaltfläche `¹` › `Fußnote einfügen…`. Die Fußnote wird selbst nummeriert und unten in ihrer Spalte gesetzt; eine Zeile, die sie zurücklassen würde, geht mit ihr weiter. Klicke die Nummer einer Fußnote an, um sie zu ändern oder zu entfernen. `Mehr › Fußnoten…` setzt sie stattdessen nach den Text (Endnoten), legt ihr Absatzformat fest und ob die Nummerierung in jedem Textabschnitt neu beginnt. Im EPUB öffnen sie sich als Pop-up.
+- **Listen**: die `Liste` eines Absatzformats nummeriert seine Absätze (1. a) i. αʹ Αʹ und mehr, oder Aufzählungszeichen). Formate mit demselben Listennamen teilen die Nummern; Ebene 2 beginnt unter jeder Ebene 1 neu.
+- **Querverweise**: `¹ › Querverweis einfügen…` zeigt auf eine Überschrift oder einen beliebigen Absatz und zeigt seine Seite, seinen Text oder beides; die Seite folgt, wenn sich der Text verschiebt. Im PDF ist er ein Link zu dieser Seite, im EPUB zum Absatz.
+- **Links**: Wörter auswählen und `¹ › Link…` für eine Web- oder E-Mail-Adresse; er funktioniert im PDF und im EPUB.
+- **Inhaltsverzeichnis in jedem Dokument**: `Mehr › Inhaltsverzeichnis aus Formaten…` wählt die Formate der Überschriften und ihre Ebene, das Format jeder Ebene und was zwischen Titel und Seite steht; gibt es keines, kommt es in einen neuen Rahmen. `Mehr › Inhaltsverzeichnis aktualisieren` folgt später den Seiten.
+- **Bücher**: `Mehr › Buch…` hält Kapitel in getrennten Dokumenten zusammen: ihre Reihenfolge, fortlaufende Seitenzahlen (auf Wunsch jedes Dokument auf einer rechten Seite), Formate und Farben wie im ersten Dokument und ein PDF des ganzen Buchs.
+
+## Neues Seitenformat
+- **Dokument einrichten** mit anderer Breite oder Höhe verschiebt die Inhalte, wie es ein Gestalter täte: was bis an die Ränder reicht, reicht wieder dorthin, Seitenzahlen und Kolumnentitel behalten ihre Kante, alles andere behält seinen Platz im Satzspiegel, Bilder und Formen ihre Proportionen. Ändert sich nur das Format, folgen die Ränder im Verhältnis; `Auch Schriftgrößen im Verhältnis` ändert auch die Formate.
+- Hausstile und ihre vorderen und hinteren Seiten passen sich ebenso jedem Format an.
+
+## Druckfarben
+- **Die Farben sehen**: `Mehr › Druckfarben…` zeigt die Seiten, wie sie gedruckt werden: Proof (die Farben durch das Druckprofil), je eine Druckplatte (Cyan, Magenta, Gelb, Schwarz) oder den Farbauftrag, in Pink, wo mehr Farbe als die Grenze hinkäme. Ein Klick auf das Schild über den Seiten schaltet zu den normalen Farben zurück.
+- **Druckprofil**: es ist Coated FOGRA39, außer du gibst das CMYK-Profil der Druckerei (.icc). Es bleibt beim Dokument, und das PDF/X nutzt es.
+- **Druckprüfungen**: Die Preflight-Prüfung warnt vor zu viel Farbe, kleiner Schrift in Tiefschwarz, Linien dünner als 0,25 pt, Text zu nah am Beschnitt und überdruckendem Weiß. Grenze und Abstand stellst du in Druckfarben ein.
+- **Überdrucken und Tonwerte**: 100 % Schwarz überdruckt, damit schwarzer Text nie einen weißen Spalt zeigt; abschalten in Druckfarben. Auch ein Farbfeld kann überdrucken, und ein Farbfeld kann ein Tonwert eines anderen sein: Ändert sich die Farbe, folgen ihre Tonwerte.
+- **PDF/X-1a**: `Export › PDF/X-1a` bringt alles in CMYK, auch die Bilder, für Druckereien, die das verlangen. Es kennt keine Transparenz: transparente Bilder kommen auf Weiß, und der Bericht sagt, was sich sonst ändern musste.
+
+## Ausschießen und Bilder
+- **Broschüren und Lagen**: `Export › Ausschießen` bringt die Seiten auf Druckbogen: eine Broschüre (ein Stapel, gefalzt und geheftet), Lagen zu 8, 16 oder 32 Seiten für ein fadengeheftetes oder klebegebundenes Buch, oder zwei Seiten auf einem Bogen. Leere Seiten füllen den letzten Bogen; Schnittmarken, Falz und Bundzuwachs kommen auf die Bogen.
+- **Jede Seite als Bild**: unter `Export › Bild` speichert `Alle Seiten` oder `Alle Doppelseiten` alle in einer .zip.
+- **Preiscode**: ein Buchumschlag kann neben dem ISBN-Strichcode einen EAN-5-Preiscode tragen (z. B. 90000).
+
+## Barrierefreies PDF
+- **PDF mit Tags**: Kreuz `Exportieren › Mit Tags für Barrierefreiheit (PDF/UA)` an, und das PDF trägt seine Struktur: Überschriften (die Ebenen der Lesezeichen), Absätze, Fuß- und Endnoten, das Inhaltsverzeichnis als Liste von Links und Bilder mit ihrer Beschreibung. Bildschirmleser und das Umfließen auf dem Handy lesen es der Reihe nach, Textabschnitt für Textabschnitt.
+- **Was draußen bleibt**: Kolumnentitel, Seitenzahlen, Musterseiten-Elemente, Rahmen, Linien und dekorative Bilder sind als Schmuck markiert und werden nicht vorgelesen.
+- **Bilder**: Gib jedem Bild eine `Beschreibung` in seinen Einstellungen oder kreuz `Dekorativ` an. Ein Bild ohne beides bleibt beim Lesen außen vor.
+- **Sprache und Titel**: Das PDF nennt die Sprache des Buchs (Dokument einrichten, sonst der Titel in Publishing) und zeigt den Namen des Dokuments als Titel. Ein E-Book-PDF aus einem Ausgabeprofil hat immer Tags. Nicht mit PDF/X-1a oder Ausschießen.
+
+## Versionen
+- **Eine Version behalten**: `Mehr › Versionen…` behält das ganze Dokument unter einem Namen (z. B. „An das Lektorat“). Die 30 neuesten Versionen jedes Dokuments bleiben auf diesem Gerät.
+- **Vergleichen**: zeigt, was sich seit einer Version geändert hat: Seiten, Wörter, Rahmen, Formate, Farben, die Dokumenteinstellungen und jeden geänderten Absatz, mit gestrichenen entfernten und markierten neuen Wörtern. `Zeigen` öffnet den Absatz.
+- **Wiederherstellen**: holt eine Version zurück. Der jetzige Stand wird vorher als Version behalten, und Rückgängig nimmt das Wiederherstellen zurück.
+- **Claude**: Vor großen Änderungen kann auch Claude eine Version behalten (markiert mit „von Claude“).
 
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.

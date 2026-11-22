@@ -423,11 +423,11 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   const pk = JSON.parse(read("android/solo-apps.json")).apps;
   Object.keys(pk).forEach((id) => {
     assert.equal(S.pkgOf(id), pk[id], id);
-    assert.equal(S.obtainiumLink(id), "obtainium://add/https://koulaxizis.github.io/oros-fdroid/repo?appId=" + pk[id]);
+    assert.equal(S.obtainiumLink(id), "obtainium://add/https://apps.koulaxizis.workers.dev/oros-fdroid/repo?appId=" + pk[id]);
   });
   assert.equal(S.pkgOf("oros"), "online.useoros.twa");
   assert.equal(S.pkgOf("nope"), "");
-  assert.match(S.repoLink(), /^fdroidrepos:\/\/koulaxizis\.github\.io\/oros-fdroid\/repo\?fingerprint=[0-9A-F]{64}$/);
+  assert.match(S.repoLink(), /^fdroidrepos:\/\/apps\.koulaxizis\.workers\.dev\/oros-fdroid\/repo\?fingerprint=[0-9A-F]{64}$/);
   assert.equal(S.apkCode("?apk=2025007"), 2025007);
   assert.equal(S.apkCode("?source=pwa&apk=2025007"), 2025007);
   assert.equal(S.apkCode("?apk=x1"), 0);
@@ -467,6 +467,7 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   assert.equal(M.texts(wm, "el").name, "Waymark");
   assert.match(read(".github/waymark.env"), /^commit=[0-9a-f]{40}$/m);
   assert.match(read(".github/waymark.env"), /^version=\d+\.\d+\.\d+$/m);
+  assert.match(read(".github/waymark.env"), /^build=\d{1,2}$/m);
   assert.match(read(".github/workflows/android.yml"), /repository: koulaxizis\/waymark/);
   assert.match(read(".github/workflows/android.yml"), /app-waymark-release\.apk/);
   l.forEach((a) => {
@@ -488,6 +489,8 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   const wf = read(".github/workflows/fdroid.yml");
   assert.match(wf, /repo_keyalias: orosrepo/);
   assert.match(wf, /SITE: https:\/\/koulaxizis\.github\.io\/oros-fdroid/);
+  // The published address goes through the download counter (solo.js REPO)
+  assert.ok(wf.includes("REPO_URL: " + S.repoPage + "\n") && wf.includes("repo_url: $REPO_URL\n"));
   assert.match(wf, /versions\.json/);
   // Each build gets its own file name in the repository (a fixed oros.apk
   // made F-Droid report "Hash not matching" and HTTP 416 after an update)
@@ -521,7 +524,7 @@ test("F-Droid store listing (FDROID-2): texts, categories, pictures and front pa
   assert.ok(fs.existsSync(path.join(m, "en-US", "featureGraphic.jpg")));
   assert.ok(fs.existsSync(path.join(m, "el", "phoneScreenshots", "1.jpg")));
   const html = fs.readFileSync(path.join(tmp, "site", "index.html"), "utf8");
-  assert.ok(html.includes("https://fdroid.link/#https://koulaxizis.github.io/oros-fdroid/repo?fingerprint="));
+  assert.ok(html.includes("https://fdroid.link/#https://apps.koulaxizis.workers.dev/oros-fdroid/repo?fingerprint="));
   assert.ok(html.includes('src="repo/index.png"'));
   M.list().forEach((a) => assert.ok(fs.existsSync(path.join(tmp, "site", "icons", a.pkg + ".png")), a.pkg));
   fs.rmSync(tmp, { recursive: true, force: true });

@@ -12,7 +12,7 @@ The tabs:
 - `Your library`: `Playlists`, `Songs`, `Albums`, `Artists`, `Genres`, `Folders`, `Offline` and `Servers`.
 
 ## Listen
-Tap a song to play it, with the rest of its album or list after it. The big play button plays a whole album, artist, playlist or genre, and `Shuffle` plays it in random order.
+Tap a song to play it, with the rest of its album or list after it. The big play button plays a whole album, artist, playlist or genre in order, from its first song (it turns shuffle off), and `Shuffle` plays it in random order.
 
 The player bar at the bottom shows the song, a heart and play/pause and next. Tap the song's name for the full player: position, `Previous`, `Next`, `Shuffle`, `Repeat` (all, then one), volume and `Queue`. Your device's media controls (lock screen, headset, media keys) work too. While a song plays, a music note shows on the orOS top bar, also with the Music window closed: tap it for a small control panel with the song, a heart to save it to your Liked songs (or remove it), its position, `Previous`, play/pause, `Next`, `Stop`, `Open Music`, volume and `Mute`. Tap outside it or press Esc to close it. Radio and Podcasts pause when music starts, and the other way round.
 
@@ -33,6 +33,7 @@ Besides your own songs, Music plays free and legal music from eleven open catalo
 - **Internet Archive**: netlabel albums, classical recordings and the Live Music Archive (concert tapes of bands that allow free, non-commercial sharing). Only items with a Creative Commons or public-domain licence are shown.
 - **Openverse**: songs with Creative Commons or public-domain licences from Wikimedia Commons, Freesound, Jamendo and more.
 - **ccMixter**: Creative Commons remixes, instrumentals and a cappellas.
+- **Funkwhale**: music people share on open.audio, the public pod of the open Funkwhale network. Only songs whose uploader chose a Creative Commons licence or CC0 are shown; they stream only. It needs words or a filter, and it shows up under each genre too.
 - **Audius**: artists share songs there to be heard for free (`Trending on Audius` on `Home`). Most have no free licence, so they show `Free to listen` instead of a licence, stream only, and any licence filter leaves Audius out.
 - **Europeana**: open-licence recordings of Europe's archives and radios (folk, classical, historic records, live radio sessions). It needs your own free API key: get one at europeana.eu and paste it in `Settings` › `Sources`. The key stays on this device, sealed, is never synced and goes only to api.europeana.eu. Some recordings come from archives that do not let other sites play them; those are skipped.
 - **Free Music Archive**: the Creative Commons albums of the Free Music Archive, kept on the Internet Archive (`Free Music Archive` on `Home`).
@@ -74,6 +75,8 @@ Use an `https://` address: browsers block plain `http://` addresses in orOS, exc
 Songs from a server go into `Liked songs` and your playlists like any other. They play on your other devices once you connect the same server there too; until then they show as `From a server not connected here`.
 
 `Dogmazic` in the connect window fills in Dogmazic, a French library of free music where every song has a free licence. Sign in with your free Dogmazic account; as the password use the Subsonic password or the API key from your Dogmazic account settings.
+
+`open.audio` in the same window fills in the open.audio Funkwhale pod. Its public libraries play without a login; for your own library there, add a token from Settings › Applications (read access).
 
 ## Playlist files and music feeds
 `Import a playlist (M3U, PLS, XSPF)` makes a new playlist from a playlist file or its address. Each entry becomes the song with the same file name (or title and artist) on this device, the song at an `https://` address, or, for a file kept on a WebDAV or Dropbox server, the song next to it on that server. Entries that cannot be found are left out, and Music says how many. Playlist files inside a server's folders open the same way.

@@ -12,7 +12,7 @@ Die Tabs:
 - `Deine Bibliothek`: `Playlists`, `Songs`, `Alben`, `Künstler`, `Genres`, `Ordner`, `Offline` und `Server`.
 
 ## Hören
-Tippe auf einen Song, um ihn abzuspielen, danach folgt der Rest seines Albums oder seiner Liste. Der große Abspielknopf spielt ein ganzes Album, einen Künstler, eine Playlist oder ein Genre, und `Zufällig` spielt es in zufälliger Reihenfolge.
+Tippe auf einen Song, um ihn abzuspielen, danach folgt der Rest seines Albums oder seiner Liste. Der große Abspielknopf spielt ein ganzes Album, einen Künstler, eine Playlist oder ein Genre der Reihe nach ab dem ersten Song (und schaltet Zufall aus), und `Zufällig` spielt es in zufälliger Reihenfolge.
 
 Die Leiste unten zeigt den Song, ein Herz sowie Abspielen/Pause und Weiter. Tippe auf den Namen des Songs für den großen Player: Position, `Zurück`, `Weiter`, `Zufällig`, `Wiederholen` (alle, dann einen), Lautstärke und `Warteschlange`. Die Mediensteuerung deines Geräts (Sperrbildschirm, Headset, Medientasten) funktioniert auch. Solange ein Song läuft, zeigt die obere Leiste von orOS eine Note, auch bei geschlossenem Musik-Fenster: Tippe darauf für eine kleine Steuerung mit dem Song, seiner Position, `Zurück`, Abspielen/Pause, `Weiter`, `Stopp`, `Musik öffnen`, Lautstärke und `Stummschalten`. Tippe daneben oder drücke Esc, um sie zu schließen. Radio und Podcasts pausieren, wenn Musik startet, und umgekehrt.
 
@@ -33,6 +33,7 @@ Neben deinen eigenen Songs spielt Musik freie und legale Musik aus elf offenen K
 - **Internet Archive**: Netlabel-Alben, Klassikaufnahmen und das Live Music Archive (Konzertmitschnitte von Bands, die freie, nichtkommerzielle Weitergabe erlauben). Nur Einträge mit Creative-Commons- oder Gemeinfrei-Lizenz werden gezeigt.
 - **Openverse**: Songs mit Creative-Commons- oder Gemeinfrei-Lizenz von Wikimedia Commons, Freesound, Jamendo und mehr.
 - **ccMixter**: Creative-Commons-Remixe, Instrumentals und A-cappellas.
+- **Funkwhale**: Musik, die Menschen auf open.audio teilen, dem öffentlichen Pod des offenen Funkwhale-Netzes. Gezeigt werden nur Songs, für die die hochladende Person eine Creative-Commons-Lizenz oder CC0 gewählt hat; sie laufen nur als Stream. Braucht Wörter oder einen Filter und erscheint auch unter jedem Genre.
 - **Audius**: Künstler teilen dort Songs zum kostenlosen Anhören (`Angesagt auf Audius` auf `Start`). Die meisten haben keine freie Lizenz, zeigen deshalb `Kostenlos anhören` statt einer Lizenz, werden nur gestreamt, und jeder Lizenzfilter lässt Audius aus.
 - **Europeana**: Aufnahmen mit offener Lizenz aus Europas Archiven und Radios (Volksmusik, Klassik, historische Platten, Live-Radioaufnahmen). Dafür brauchst du deinen eigenen kostenlosen API-Schlüssel: Hol dir einen bei europeana.eu und füge ihn unter `Einstellungen` › `Quellen` ein. Der Schlüssel bleibt versiegelt auf diesem Gerät, wird nie synchronisiert und geht nur an api.europeana.eu. Manche Aufnahmen kommen aus Archiven, die andere Seiten sie nicht abspielen lassen; diese werden übersprungen.
 - **Free Music Archive**: die Creative-Commons-Alben des Free Music Archive, aufbewahrt im Internet Archive (`Free Music Archive` auf `Start`).
@@ -74,6 +75,8 @@ Nutze eine `https://`-Adresse: Browser blockieren in orOS einfache `http://`-Adr
 Songs von einem Server kommen wie alle anderen in `Lieblingssongs` und deine Playlists. Sie spielen auf deinen anderen Geräten, sobald du dort denselben Server verbindest; bis dahin erscheinen sie als `Von einem hier nicht verbundenen Server`.
 
 `Dogmazic` im Verbindungsfenster füllt Dogmazic aus, eine französische Bibliothek freier Musik, in der jeder Song eine freie Lizenz hat. Melde dich mit deinem kostenlosen Dogmazic-Konto an; als Passwort das Subsonic-Passwort oder den API-Schlüssel aus deinen Dogmazic-Kontoeinstellungen.
+
+`open.audio` im selben Fenster füllt den Funkwhale-Pod open.audio aus. Seine öffentlichen Bibliotheken spielen ohne Anmeldung; für deine eigene Bibliothek dort ein Token unter Einstellungen › Anwendungen (Lesezugriff) hinzufügen.
 
 ## Playlist-Dateien und Musik-Feeds
 `Playlist importieren (M3U, PLS, XSPF)` erstellt eine neue Playlist aus einer Playlist-Datei oder ihrer Adresse. Jeder Eintrag wird zum Song mit demselben Dateinamen (oder Titel und Künstler) auf diesem Gerät, zum Song unter einer `https://`-Adresse oder, bei einer Datei auf einem WebDAV- oder Dropbox-Server, zum Song daneben auf diesem Server. Einträge, die nicht gefunden werden, bleiben weg, und Musik sagt, wie viele. Playlist-Dateien in den Ordnern eines Servers öffnen sich genauso.

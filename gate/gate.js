@@ -1562,15 +1562,51 @@
           if (clash) return { ok: false, err: rtag + "another column is already called " + JSON.stringify(clash.name) + "." };
           rn.push({ col: fr.x, from: String(fr.x.name || ""), to: r.s });
         }
-        if (!rn.length && args.columns === undefined) return { ok: false, err: "Nothing to change: the columns already have these names." };
+        if (!rn.length && args.columns === undefined && args.portal_columns === undefined) return { ok: false, err: "Nothing to change: the columns already have these names." };
       }
-      if (args.columns === undefined && ren === undefined) return { ok: false, err: "Give columns to add or rename_columns." };
+      // KB-COLAP (Chris 2026-11-22): portal_columns [{ column, step?, finish?, name?, name_en?, about?, about_en? }] sets a
+      // column's Author Portal step (col.ap, AP-FLOW) like Column settings › Author Portal: keys left out stay, "" clears a text
+      var pcs = args.portal_columns, pa = [];
+      if (pcs !== undefined) {
+        if (typeof M.colAp !== "function") return { ok: false, err: "This orOS is too old for Author Portal steps; update orOS on the device." };
+        if (!Array.isArray(pcs) || !pcs.length || pcs.length > KB_COLS) return { ok: false, err: "portal_columns must hold 1 to " + KB_COLS + " columns." };
+        var apSeen = {}, AP_ARG = { name: ["n", 80], name_en: ["ne", 80], about: ["a", 600], about_en: ["ae", 600] };
+        for (i = 0; i < pcs.length; i++) {
+          var pc = isObj(pcs[i]) ? pcs[i] : {}, ptag = "portal_columns " + (i + 1) + ": ";
+          var fp = kbFind(kbCols(b), pc.column, "column");
+          if (fp.err) return { ok: false, err: ptag + fp.err };
+          if (apSeen[fp.x.id]) return { ok: false, err: ptag + "that column is already set in this call." };
+          apSeen[fp.x.id] = 1;
+          var cur = fp.x.ap ? M.colAp(fp.x.ap) : null, nx = cur ? clone(cur) : { on: 0 }, any = false;
+          if (pc.step !== undefined) { if (typeof pc.step !== "boolean") return { ok: false, err: ptag + "step must be true or false." }; nx.on = pc.step ? 1 : 0; any = true; }
+          if (pc.finish !== undefined) { if (typeof pc.finish !== "boolean") return { ok: false, err: ptag + "finish must be true or false." }; if (pc.finish) nx.e = 1; else delete nx.e; any = true; }
+          for (var ak in AP_ARG) {
+            if (pc[ak] === undefined) continue;
+            if (typeof pc[ak] !== "string" || pc[ak].length > AP_ARG[ak][1]) return { ok: false, err: ptag + ak + " must be text of at most " + AP_ARG[ak][1] + " characters." };
+            nx[AP_ARG[ak][0]] = pc[ak]; any = true;
+          }
+          if (!any) return { ok: false, err: ptag + "give step, finish or a text to set." };
+          var nap = M.colAp(nx);
+          if (JSON.stringify(cur) === JSON.stringify(nap)) continue;
+          pa.push({ col: fp.x, from: cur, to: nap });
+        }
+        if (!pa.length && args.columns === undefined && !rn.length) return { ok: false, err: "Nothing to change: the columns already have these Author Portal settings." };
+      }
+      if (args.columns === undefined && ren === undefined && pcs === undefined) return { ok: false, err: "Give columns to add, rename_columns or portal_columns." };
       undo.ren = {};
       var renTxt = rn.map(function (x) {
         var at = Math.max(now, (x.col.mtime || 0) + 1);
         x.col.name = x.to; x.col.mtime = at;
         undo.ren[x.col.id] = { n: x.from, a: at };
         return JSON.stringify(x.from) + " → " + JSON.stringify(x.to);
+      });
+      undo.ap = {};
+      var apTxt = pa.map(function (x) {
+        var at = undo.ren[x.col.id] ? x.col.mtime : Math.max(now, (x.col.mtime || 0) + 1);   // a column renamed in this call keeps one stamp
+        if (x.to) x.col.ap = x.to; else delete x.col.ap;
+        x.col.mtime = at;
+        undo.ap[x.col.id] = { p: x.from, a: at };
+        return JSON.stringify(String(x.col.name || "")) + (x.to && x.to.on ? (x.to.e ? " (step, finish)" : " (step)") : " (not a step)");
       });
       var list = args.columns === undefined ? [] : Array.isArray(args.columns) ? args.columns : null;
       if (!list || (args.columns !== undefined && !list.length) || list.length > KB_COLS) return { ok: false, err: "columns must hold 1 to " + KB_COLS + " columns." };
@@ -1592,8 +1628,9 @@
       if (ids.length) b.om = now;
       var said = [];
       if (renTxt.length) said.push("Renamed " + renTxt.join(", ") + ".");
+      if (apTxt.length) said.push("Author Portal: " + apTxt.join(", ") + ".");
       if (ids.length) said.push("Added " + ids.length + " column" + (ids.length === 1 ? "" : "s") + " to " + (b.name || "the board") + ".");
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, renamed: renTxt.length, text: said.join(" ") };
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, renamed: renTxt.length + apTxt.length, text: said.join(" ") };
     }
 
     if (op === "add_cards") {
@@ -1807,11 +1844,19 @@
       });
       n++;
     });
-    // KB-COLREN: a renamed column gets its old name back unless it changed since
-    if (isObj(u.ren)) Object.keys(u.ren).forEach(function (id) {
-      var e = u.ren[id], c = kbCols(b).filter(function (x) { return x.id === id; })[0];
-      if (!isObj(e) || !c || (c.mtime || 0) !== e.a) { kept++; return; }
-      c.name = e.n; c.mtime = Math.max(now, e.a + 1); n++;
+    // KB-COLREN / KB-COLAP: a renamed column gets its old name, a column whose Author Portal step was set its old
+    // setting, unless the column changed since (both checked against the stamp before either is put back)
+    var hdr = {};
+    if (isObj(u.ren)) Object.keys(u.ren).forEach(function (id) { hdr[id] = 1; });
+    if (isObj(u.ap)) Object.keys(u.ap).forEach(function (id) { hdr[id] = 1; });
+    Object.keys(hdr).forEach(function (id) {
+      var c = kbCols(b).filter(function (x) { return x.id === id; })[0], e = isObj(u.ren) ? u.ren[id] : null, p = isObj(u.ap) ? u.ap[id] : null;
+      var okR = isObj(e) && c && (c.mtime || 0) === e.a, okP = isObj(p) && c && (c.mtime || 0) === p.a, at = 0;
+      if (e && !okR) kept++;
+      if (p && !okP) kept++;
+      if (okR) { c.name = e.n; at = e.a; n++; }
+      if (okP) { if (p.p) c.ap = p.p; else delete c.ap; at = p.a; n++; }
+      if (at) c.mtime = Math.max(now, at + 1);
     });
     Object.keys(u.cols).forEach(function (id) {
       var cols = kbCols(b), c = cols.filter(function (x) { return x.id === id; })[0];
@@ -1853,12 +1898,13 @@
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): the documents the
   // Assistant changes with edit_in_app (assistant.js EDIT_SRC). The app
   // opens on the owner's screen and applies the commands there.
-  var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
+  var DOCS = ["atelier", "layout", "mindmap", "mockups", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
   // GATE-FILES F1 (2026-11-13, Chris «Προχώρα, όλα τα κύματα»): Files
   // joins the gate with its own tools (assistant/claudefiles.js), only
   // inside Claude's folders (FILES_KEY, synced). Files stays outside
   // ACT: change_item on files is not offered through the gate.
   var FILE_READ = ["files_list", "files_read"], FILE_WRITE = ["files_write", "files_move", "files_delete"];
+  var FRESH_COPY = FILE_WRITE.concat(["export_pdf", "export_epub", "edit_in_app"]);
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
@@ -1866,6 +1912,7 @@
   var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 "invoices_record",   // INV-EXT
                 "local_folders_request",   // TRAY-2: the owner's answer on a screen
+                "claude_folders_request",   // CF-ASK: the same for a folder of the orOS disk
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact",
                 // GATE-FILES F3: checked against the closed copy's index; deletes wait for the owner's yes here
@@ -1917,7 +1964,7 @@
   }
   // a screen tool that must wait here for a person at the screen
   function screenWait(name, args) {
-    if (name === "local_folders_request") return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());   // TRAY-2: a question for the owner
+    if (name === "local_folders_request" || name === "claude_folders_request") return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());   // TRAY-2: a question for the owner
     if (!screenTool(name, args) || backOk(name)) return false;
     return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());
   }
@@ -2013,21 +2060,21 @@
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
           tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer", budget_balances: "matched Budget's account balances",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
-                   kanban_add_columns: "added or renamed Kanban columns", invoices_record: "recorded invoices issued elsewhere",
+                   kanban_add_columns: "added, renamed or set up Kanban columns", invoices_record: "recorded invoices issued elsewhere",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
-                   kanban_add_columns: "πρόσθεσε ή μετονόμασε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
+                   kanban_add_columns: "πρόσθεσε, μετονόμασε ή ρύθμισε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
-                   kanban_add_columns: "Kanban-Spalten hinzugefügt oder umbenannt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
+                   kanban_add_columns: "Kanban-Spalten hinzugefügt, umbenannt oder eingestellt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
                    link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };
@@ -2728,7 +2775,25 @@
   // with the same rules as a live call (the switches and a pause as they
   // are now), then the box is told which ones are done.
   // F3: queued deletions waiting for the owner (id → queue item).
-  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, DECL = { ok: false, c: "declined" };
+  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, KEEP = { keep: 1 }, DECL = { ok: false, c: "declined" };
+  // GQ-SETTLE (2026-11-22): orOS checks for a new release as it starts and
+  // reloads into it, which cut a queued change off half done (and the new
+  // copy then took it as done). The queue waits until that check is over:
+  // no worker installing or waiting, and 10 s since the page started.
+  var Q_SETTLE_MS = 10000, Q_SETTLE_TRIES = 45;
+  function queueSettled(fn, n) {
+    n = n || 0;
+    var sw = null;
+    try { sw = typeof navigator !== "undefined" && navigator.serviceWorker && typeof navigator.serviceWorker.getRegistration === "function" ? navigator.serviceWorker : null; } catch (e) { sw = null; }
+    if (!sw || n >= Q_SETTLE_TRIES) { fn(); return; }
+    sw.getRegistration().then(function (r) {
+      if (!r) { fn(); return; }                     // no service worker here: nothing reloads it
+      var age = typeof performance !== "undefined" && performance.now ? performance.now() : Q_SETTLE_MS;
+      if (r.installing || r.waiting) { setTimeout(function () { queueSettled(fn, n + 1); }, 2000); return; }
+      if (age < Q_SETTLE_MS) { setTimeout(function () { queueSettled(fn, n + 1); }, Q_SETTLE_MS - age + 50); return; }
+      fn();
+    }, function () { fn(); });
+  }
   function heldAgain() {
     var ids = Object.keys(cqHeld);
     if (!ids.length || !ws || ws.readyState !== 1 || document.visibilityState !== "visible") return;
@@ -2738,7 +2803,7 @@
     var o, k = gateKey();
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
-    whenOpen(function () {
+    queueSettled(function () { whenOpen(function () {
       var done = [], files = false, held = [];
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
@@ -2748,7 +2813,11 @@
           ranAdd(it.id);
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
-            if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
+            if (!isObj(x) || typeof x.n !== "string") return { ok: false, c: "refused" };
+            // GQ-KEEP (2026-11-22): a change this orOS does not know (an older
+            // copy, e.g. the cached one that runs before an update) stays queued
+            // for a newer one, never acknowledged as done
+            if (QUEUED.indexOf(x.n) < 0) { ranDrop(it.id); throw KEEP; }
             // 7.44.00 (Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με
             // το orOS κλειστό»): a deletion of items (change_item delete, budget_delete)
             // waits like files_delete: always asked here (askQueued, one question per
@@ -2779,14 +2848,14 @@
               if (res === DECL) return res;
               delete cqBusy[it.id];
               if (res && res.ok && res.u) chgTag(res.u, it.id, at, res.made);   // PEND-1: q, p (items by index), at
-              if ((x.n === "files_delete" || x.n === "local_folders_request" || (x.n === "edit_in_app" && !res.ok)) && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
+              if ((x.n === "files_delete" || x.n === "local_folders_request" || x.n === "claude_folders_request" || (x.n === "edit_in_app" && !res.ok)) && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
               delete cqHeld[it.id];
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
               writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
               return res;
             });
-          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else done.push(it.id); });   // never in a loop
+          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else if (e !== KEEP) done.push(it.id); });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
         // 7.48.00: cqh = deletions held for the owner here; the box offers them to a device on screen
@@ -2795,7 +2864,7 @@
         copySoon(2000);
         if (files) fileCopySoon(60000);
       });
-    });
+    }); });
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   // GL-8 (Chris 2026-11-21): a file Claude uploaded (relay files_upload),
@@ -3026,6 +3095,39 @@
       });
     });
   }
+  // CF-ASK (Chris 2026-11-22 «Πρόσθεσε τους φακέλους που χρειάζεσαι, σου
+  // δίνω έγκριση»): Claude asks for a folder of the orOS disk among
+  // Claude's folders. Asked on a screen like localAsk; on Yes it joins the
+  // synced list (setFolders), as if the owner added it in Settings.
+  function claudeAsk(args, p) {
+    if (typeof p.hold === "number" && p.hold > Date.now()) return Promise.resolve({ ok: false, c: "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was asked." });
+    return claudeFiles().then(function (CF) {
+      var typed = typeof args.path === "string" ? args.path.trim().slice(0, 1024) : "", path = CF.normPath(typed);
+      if (!path || path === "/internal") return { ok: false, c: "path must be a folder of the orOS disk, e.g. \"Studio/Podcasts\" (not the whole disk). Nothing was asked." };
+      if (CF.secret(path)) return { ok: false, c: "\"" + CF.show(path) + "\" looks like a folder of keys or secrets; it is never opened for Claude. Nothing was asked." };
+      var cur = foldersRead().f, wantW = args.access === "write";
+      var filesW = isObj(p.lv) && p.lv.files === "write", wNote = wantW && !filesW ? " Writing there also needs the owner's switch for Files at write (it is not now)." : "";
+      var has = cur.filter(function (f) { return path === f || path.indexOf(f + "/") === 0; })[0];
+      if (has) return { ok: true, a: [], k: 0, c: "Already one of Claude's folders" + (has === path ? "" : " (inside " + CF.show(has) + ")") + ": " + path + ". Nothing was asked." + wNote };
+      if (cur.length >= 50) return { ok: false, c: "Claude's folders are full (50); the owner removes one in Settings › Connected services › orOS Gate. Nothing was asked." };
+      var why = typeof args.reason === "string" ? args.reason.replace(/\s+/g, " ").trim().slice(0, 300) : "";
+      return new Promise(function (ok) {
+        var settled = false, wrap = null;
+        function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+        if (offScreen() || locked() || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
+        var list = CF.show(path) + (why ? "\n\n" + tr("gate.lf.why").replace("{why}", why) : "");
+        wrap = dialog(tr("gate.cf.title"), tr(wantW ? "gate.cf.bodyW" : "gate.cf.bodyR"), list, tr("gate.lf.no"), tr("gate.lf.yes"),
+          function () { end(false, "no"); }, function () { end(true, "yes"); });
+        setTimeout(function () { end(false, "none"); }, 60000);
+      }).then(function (yes) {
+        if (!yes) return askLast === "none" ? { ok: false, c: "__held" } : { ok: false, c: "The owner did not add that folder to Claude's folders. Nothing was opened." };
+        return api.setFolders(cur.concat([path])).then(function (f) {
+          if (f.indexOf(path) < 0 && !f.some(function (x) { return path.indexOf(x + "/") === 0; })) return { ok: false, c: "The owner allowed it, but the folder could not be added. Nothing was opened." };
+          return { ok: true, a: ["files"], k: 1, c: "The owner added it to Claude's folders: " + path + " (synced to every device; the owner can remove it in Settings › Connected services › orOS Gate). Use paths inside it with files_list, files_write, studio_import and the others." + wNote };
+        }, function () { return { ok: false, c: "The owner allowed it, but the folder list could not be saved on this device. Nothing was opened." }; });
+      });
+    }, function () { return { ok: false, c: "This orOS could not load Claude's folders; ask the owner to update orOS. Nothing was asked." }; });
+  }
   // The relay asks a device whose orOS is on screen first (5.73.00):
   // a phone in the background loses its socket, a computer keeps it.
   function sendVis(sock) {
@@ -3144,8 +3246,11 @@
     }
     if (name === "__tools") {
       return actFrame().then(function (F) {
-        var list = [];
-        try { list = F ? F.tools() || [] : []; } catch (e) { list = []; }
+        // GL-9: a frame that did not start answers not-ok, so the relay
+        // keeps the list it has instead of storing an empty one
+        if (!F) return { ok: false, c: "orOS could not start its tools on the device.", quiet: 1 };
+        var list;
+        try { list = F.tools() || []; } catch (e) { return { ok: false, c: "orOS could not list its tools.", quiet: 1 }; }
         return { ok: true, c: JSON.stringify(list), quiet: 1 };
       });
     }
@@ -3267,6 +3372,7 @@
     if (kop) return kanbanChange(kop, args, p, names, opt.at);
     if (name === "invoices_record") return invoicesChange(args, p, names, okIds, opt.at);
     if (name === "local_folders_request") return localAsk(args, p);   // TRAY-2
+    if (name === "claude_folders_request") return claudeAsk(args, p);   // CF-ASK
     return Promise.resolve({ ok: false, c: "Unknown tool." });
     }
   }
@@ -3688,6 +3794,58 @@
   function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
   function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
   function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  // GX-1 (Chris 2026-11-21 «δώσε στο gate τη δυνατότητα να μπορεί να
+  // κάνει εξαγωγή σε τοπικό φάκελο ή/και orOS Files»): an app's export
+  // also goes to out, a local write folder the owner opened
+  // (local:<root>/<folder>, localroots.js) or a folder of Claude's on the
+  // orOS disk while Files is at «may change» and not paused. Never
+  // replaces a file (name-2.ext, -3…). → the saved path, or throws { why }.
+  var EXPORT_WHY = ["noBridge", "gateOff", "locked", "notAllowed", "paused", "outside", "badName", "noDisk", "nameTaken", "error"];
+  function exportTo(out, name, blob, tool) {
+    out = typeof out === "string" ? out.trim() : "";
+    var fail = function (why) { return Promise.reject({ why: why }); };
+    if (!out || !blob || typeof blob.size !== "number") return fail("error");
+    if (/^local:/i.test(out)) {
+      var L = root.orosLocal;
+      if (!L || typeof L.write !== "function") return fail("noBridge");
+      return Promise.resolve(L.write(out, name, blob, String(tool || "export").slice(0, 40))).then(null, function (e) { throw { why: e && typeof e.why === "string" ? e.why : "error" }; });
+    }
+    return claudeFiles().then(function (CF) {
+      var p = pref(), dir = CF.normPath(out), now = Date.now();
+      name = typeof name === "string" ? name.trim() : "";
+      var why = !p.on ? "gateOff" : locked() ? "locked" : !isObj(p.lv) || p.lv.files !== "write" || barred("files") ? "notAllowed"
+        : !canWrite(p.lv, p.hold, "files", now) ? "paused" : CF.reach(dir, CF.cleanFolders(foldersRead().f)) ? "outside" : CF.validName(name) ? "badName" : "";
+      if (why) throw { why: why };
+      var FS = root.orosFS;
+      if (!FS || typeof FS.write !== "function" || typeof FS.stat !== "function") throw { why: "noDisk" };
+      var dot = name.lastIndexOf("."), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : "";
+      var free = function (k) {
+        if (k > 99) return Promise.resolve("");
+        var path = dir + "/" + (k === 1 ? name : base + "-" + k + ext);
+        return Promise.resolve().then(function () { return FS.stat(path); }).then(function (st) { return st ? free(k + 1) : path; }, function () { return path; });
+      };
+      return Promise.resolve(typeof FS.mkdir === "function" ? FS.mkdir(dir) : null).then(null, function () {}).then(function () { return free(1); }).then(function (path) {
+        if (!path) throw { why: "nameTaken" };
+        return Promise.resolve(FS.write(path, blob)).then(function () { fileCopySoon(3000); return path; }, function () { throw { why: "error" }; });
+      });
+    });
+  }
+  // GX-2: several files (an app's export) to each place of out (≤ 2)
+  // → { saved: [paths], outFail: [{ to, why }] }
+  function exportAll(outs, files, tool) {
+    var list = (Array.isArray(outs) ? outs : typeof outs === "string" && outs ? [outs] : []).filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 2);
+    var saved = [], outFail = [];
+    return list.reduce(function (pr, o) {
+      return pr.then(function () {
+        return (Array.isArray(files) ? files : []).slice(0, 200).reduce(function (p2, f) {
+          return p2.then(function () {
+            if (outFail.some(function (x) { return x.to === o; })) return;
+            return exportTo(o, f && f.name, f && f.blob, tool).then(function (p) { saved.push(p); }, function (e) { outFail.push({ to: o, why: e && e.why || "error" }); });
+          });
+        }, Promise.resolve());
+      });
+    }, Promise.resolve()).then(function () { return { saved: saved, outFail: outFail }; });
+  }
   function fcFilesOn(p) { return isObj(p.lv) && (p.lv.files === "read" || p.lv.files === "write"); }
   // Every file under the folders: [{ p, s, m, cloud: { h } | null }]
   function fcWalk(CF, folders) {
@@ -3899,6 +4057,9 @@
     askLast = "";
     run(q.n, q.a).then(function (res) {
       if (res && res.ok && q.n !== "__tools") ranAdd(q.q);
+      // GX-4: what Claude just wrote or exported is in the files copy within
+      // seconds, so files_link finds it (it was 60 s and more)
+      if (res && res.ok && FRESH_COPY.indexOf(q.n) >= 0) fileCopySoon(3000);
       // 7.48.00: a deletion this screen could not ask about (nobody here)
       // is handed back to the box, which queues it for a device on screen.
       if (res && !res.ok && askLast === "none" && (core.delCount(q.n, q.a) || q.n === "edit_in_app")) {   // TRAY-3: Layout's removals too
@@ -3959,6 +4120,9 @@
     refreshFileCopy: function () { return fileCopy(); },
     // Claude's folders on the orOS disk (synced): [path]
     folders: function () { return foldersRead().f.slice(); },
+    exportAll: exportAll,   // GX-2: an app's files to out
+    exportTo: exportTo,   // GX-1: an export also into a local folder or Claude's folders on the orOS disk
+    EXPORT_WHY: EXPORT_WHY,
     // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
     setFolders: function (list) {
       return claudeFiles().then(function (CF) {

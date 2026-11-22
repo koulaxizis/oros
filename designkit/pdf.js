@@ -1,5 +1,5 @@
 // ============================================================
-// orOS designkit — pdf.js (v1.2.0)
+// orOS designkit — pdf.js (v1.3.0)
 // Vector PDF export with jsPDF (vendor/jspdf.umd.min.js): text as
 // real, selectable text in the embedded fonts (Noto, or a family the
 // document names: every subset file of it, each character written in
@@ -10,7 +10,10 @@
 // CMYK, rotation and opacity, bleed, TrimBox/BleedBox and crop marks,
 // single pages or spreads. E-book PDF (v1.2.0, LY-OUT): every colour
 // as RGB, the document language (/Lang), links (the contents lines to
-// their pages) and bookmarks (the headings).
+// their pages) and bookmarks (the headings). Tagged (v1.3.0, LY-N6):
+// every text run and described picture is marked content with an MCID
+// (pdf.orosTag records what each one is: tagpdf.js builds the
+// structure tree from it), everything else is an /Artifact.
 // Needs orosDK.model + orosDK.text + orosDK.render (Node: require).
 // Exposes orosDK.pdf (browser) or module.exports (Node).
 // ============================================================
@@ -134,6 +137,49 @@
     pdf.restoreGraphicsState();
   }
 
+  // ---------- tagged PDF (LY-N6) ----------
+  // pdf.orosTag = { pages: { PDF page number: [entry by MCID] }, role }
+  // entry: { k "t" (text) | "f" (figure), key (the paragraph or note it
+  //   belongs to), sid, p, note, r (role), x, y, w, h (top-down page
+  //   points), t (its text, for link descriptions), alt }
+  function tagStart(pdf, role) {
+    if (!pdf.orosTag) pdf.orosTag = { pages: {}, off: 0 };
+    if (role) pdf.orosTag.role = role;
+    return pdf.orosTag;
+  }
+  // fn's painting as one marked-content sequence with the next MCID of
+  // the page (nothing while not tagging, or inside an artifact)
+  function mc(pdf, info, fn) {
+    var tg = pdf.orosTag;
+    if (!tg || tg.off) { fn(); return; }
+    var n = pdf.internal.getCurrentPageInfo().pageNumber, list = tg.pages[n] = tg.pages[n] || [];
+    info.mcid = list.length;
+    list.push(info);
+    pdf.internal.write("/" + (info.k === "f" ? "Figure" : "Span") + " <</MCID " + info.mcid + ">> BDC");
+    try { fn(); } finally { pdf.internal.write("EMC"); }
+  }
+  // fn's painting as an artifact (not the document's content)
+  function art(pdf, fn) {
+    var tg = pdf.orosTag;
+    if (!tg || tg.off) { fn(); return; }
+    tg.off = 1;
+    pdf.internal.write("/Artifact BMC");
+    try { fn(); } finally { tg.off = 0; pdf.internal.write("EMC"); }
+  }
+  var ROLE_CACHE = "orosRoles";
+  function roleOf(pdf, sid, p) {
+    var tg = pdf.orosTag, c = tg[ROLE_CACHE] = tg[ROLE_CACHE] || {}, k = sid + ":" + p;
+    if (!(k in c)) { var r = tg.role ? tg.role(sid, p) : "P"; c[k] = /^(P|H[1-6]|TOCI|LI|BlockQuote|Caption)$/.test(r) ? r : "P"; }
+    return c[k];
+  }
+  // what a text line is: a paragraph, a note, or the note rule (null)
+  function lineTag(pdf, it, ln) {
+    if (ln.rule) return null;
+    if (ln.fn && ln.p < 0) return { key: it.story + ":n" + it.id + ":" + (ln.fk || ""), sid: it.story, p: -1, note: 1, r: "Note" };
+    if (ln.fn) return { key: it.story + ":" + ln.p, sid: it.story, p: ln.p, note: 1, r: "Note" };
+    return { key: it.story + ":" + ln.p, sid: it.story, p: ln.p, note: 0, r: roleOf(pdf, it.story, ln.p) };
+  }
+
   function style(fill, stroke) { return fill && stroke ? "FD" : fill ? "F" : stroke ? "S" : null; }
 
   function drawItem(pdf, doc, it, ox, oy, lines, images, gstates) {
@@ -152,7 +198,7 @@
       pdf.setLineDashPattern(it.dash ? [it.sw * 3, it.sw * 2] : [], 0);
     }
     if (it.t === "line") {
-      if (hasStroke) pdf.line(x, y, x + it.w, y + it.h);
+      if (hasStroke) art(pdf, function () { pdf.line(x, y, x + it.w, y + it.h); });
       pdf.restoreGraphicsState();
       return;
     }
@@ -167,54 +213,76 @@
       else if (r) pdf.roundedRect(x, y, it.w, it.h, r, r, st);
       else pdf.rect(x, y, it.w, it.h, st);
     }
-    if (it.gr) gradFill(pdf, doc, it, ox, oy);
-    if (hasFill) shape("F");
+    if (it.gr) art(pdf, function () { gradFill(pdf, doc, it, ox, oy); });
+    if (hasFill) art(pdf, function () { shape("F"); });
     if (it.t === "img") {
       var im = images[it.id];
       if (im) {
-        pdf.saveGraphicsState();
-        shape(null); pdf.clip(); pdf.discardPath();
-        pdf.addImage(im.data, im.fmt, x + im.rect.x, y + im.rect.y, im.rect.w, im.rect.h, im.alias, "FAST");
-        pdf.restoreGraphicsState();
+        // a picture with a description (ext.alt, not ext.deco) is a
+        // Figure, any other an artifact
+        var ex = it.ext || {}, alt = typeof ex.alt === "string" && !ex.deco ? ex.alt.replace(/\s+/g, " ").trim().slice(0, 2000) : "";
+        var paint = function () {
+          pdf.saveGraphicsState();
+          shape(null); pdf.clip(); pdf.discardPath();
+          pdf.addImage(im.data, im.fmt, x + im.rect.x, y + im.rect.y, im.rect.w, im.rect.h, im.alias, "FAST");
+          pdf.restoreGraphicsState();
+        };
+        if (alt) mc(pdf, { k: "f", key: "fig:" + it.id, alt: alt, x: x, y: y, w: it.w, h: it.h }, paint);
+        else art(pdf, paint);
       }
     }
     if (it.t === "text" && lines) {
       lines.forEach(function (ln) {
-        ln.runs.forEach(function (run) {
-          if (!run.t) return;
-          if (!setColor(pdf, doc, run.color, "text")) pdf.setTextColor(0, 0, 0);
-          if (run.g) {                                // on a path (LY-TP): glyph by glyph, turned
-            run.g.forEach(function (gl) {
-              var pc = pieces({ t: gl.ch, key: run.key, size: run.size })[0], name = pc && fontOf(pdf, pc.f[0], pc.f[1]);
-              if (!name) return;
-              pdf.saveGraphicsState();
-              rotateAbout(pdf, gl.rot * 180 / Math.PI, x + gl.x, y + gl.y);
-              pdf.setFont(name, "normal");
-              pdf.setFontSize(run.size);
-              pdf.text(gl.ch, x + gl.x - gl.w / 2, y + gl.y, { baseline: "alphabetic" });
-              pdf.restoreGraphicsState();
-            });
-            return;
-          }
-          var opt = { baseline: "alphabetic" }, dx = 0;
-          if (run.track) opt.charSpace = run.track * run.size / 1000;
-          pieces(run).forEach(function (pc) {
-            dx += pc.kern;
-            var name = fontOf(pdf, pc.f[0], pc.f[1]);
-            if (!name) return;
-            pdf.setFont(name, "normal");
-            pdf.setFontSize(run.size);
-            pdf.text(pc.t, x + run.x + dx, y + run.y, opt);
-            dx += T.measure(run.key, pc.t, run.size, run.track);
-          });
-          if (run.u) {
-            if (!setColor(pdf, doc, run.color, "fill")) pdf.setFillColor(0, 0, 0);
-            pdf.rect(x + run.x, y + run.y + run.size * 0.12, run.w, Math.max(0.3, run.size * 0.05), "F");
-          }
+        var runs = ln.runs.filter(function (run) { return !!run.t; });
+        if (!runs.length) return;
+        var all = function () { runs.forEach(drawRun); };
+        if (!pdf.orosTag || pdf.orosTag.off) { all(); return; }
+        // tagged: a line is one marked-content sequence of its paragraph
+        // or note (a line never holds two paragraphs)
+        var lt = lineTag(pdf, it, ln);
+        if (!lt) { art(pdf, all); return; }
+        var x0 = Infinity, x1 = -Infinity, top = Infinity, bot = -Infinity;
+        runs.forEach(function (run) {
+          var rx = run.x || 0, ry = run.y || 0;
+          x0 = Math.min(x0, rx); x1 = Math.max(x1, rx + (run.w || 0));
+          top = Math.min(top, ry - run.size * 0.8); bot = Math.max(bot, ry + run.size * 0.2);
         });
+        mc(pdf, { k: "t", key: lt.key, sid: lt.sid, p: lt.p, note: lt.note, r: lt.r, x: x + x0, y: y + top, w: Math.max(0, x1 - x0), h: Math.max(0, bot - top),
+                  t: runs.map(function (run) { return run.t; }).join("").slice(0, 300) }, all);
       });
     }
-    if (hasStroke) shape("S");
+    function drawRun(run) {
+      if (!setColor(pdf, doc, run.color, "text")) pdf.setTextColor(0, 0, 0);
+      if (run.g) {                                // on a path (LY-TP): glyph by glyph, turned
+        run.g.forEach(function (gl) {
+          var pc = pieces({ t: gl.ch, key: run.key, size: run.size })[0], name = pc && fontOf(pdf, pc.f[0], pc.f[1]);
+          if (!name) return;
+          pdf.saveGraphicsState();
+          rotateAbout(pdf, gl.rot * 180 / Math.PI, x + gl.x, y + gl.y);
+          pdf.setFont(name, "normal");
+          pdf.setFontSize(run.size);
+          pdf.text(gl.ch, x + gl.x - gl.w / 2, y + gl.y, { baseline: "alphabetic" });
+          pdf.restoreGraphicsState();
+        });
+        return;
+      }
+      var opt = { baseline: "alphabetic" }, dx = 0;
+      if (run.track) opt.charSpace = run.track * run.size / 1000;
+      pieces(run).forEach(function (pc) {
+        dx += pc.kern;
+        var name = fontOf(pdf, pc.f[0], pc.f[1]);
+        if (!name) return;
+        pdf.setFont(name, "normal");
+        pdf.setFontSize(run.size);
+        pdf.text(pc.t, x + run.x + dx, y + run.y, opt);
+        dx += T.measure(run.key, pc.t, run.size, run.track);
+      });
+      if (run.u) {
+        if (!setColor(pdf, doc, run.color, "fill")) pdf.setFillColor(0, 0, 0);
+        pdf.rect(x + run.x, y + run.y + run.size * 0.12, run.w, Math.max(0.3, run.size * 0.05), "F");
+      }
+    }
+    if (hasStroke) art(pdf, function () { shape("S"); });
     pdf.restoreGraphicsState();
   }
 
@@ -301,7 +369,7 @@
   //         slug (keep the document's slug without marks), stamp (text
   //         after the page numbers in the info line), title, lang
   //         (BCP 47: the PDF's /Lang), rgb (every colour as RGB: an
-  //         e-book) }
+  //         e-book), tagged (marked content for a tagged PDF, LY-N6) }
   // The result's orosBoxes = [{ w, h, trim [x0,y0,x1,y1], bleed }] per
   // PDF page, in points (pdfx.js and the export report read it).
   // deps: { jsPDF, layout (computeLayout result, optional),
@@ -313,7 +381,9 @@
   //           an e-book's cover page),
   //         links: [{ pg, x, y, w, h, to }] (page ids, page points:
   //           a link on page pg to page to, both among the pages out),
-  //         outline: [{ t, lvl 1-3, to | pg (page id) }] (bookmarks) }
+  //         outline: [{ t, lvl 1-3, to | pg (page id) }] (bookmarks),
+  //         role: function (story id, paragraph index) → "P", "H1".."H6",
+  //           "TOCI"... (tagged only; default "P") }
   // Returns the jsPDF document (caller: .output("blob")).
   function build(doc, opts, deps) {
     opts = opts || {}; deps = deps || {};
@@ -362,6 +432,7 @@
         pdf.setProperties({ title: opts.title || doc.name, creator: "orOS Layout" });
       } else pdf.addPage([W, H], orient);
       if (opts.rgb) pdf.orosRgb = 1;
+      if (opts.tagged) tagStart(pdf, deps.role);
       if (opts.lang && !pdf.orosLang && typeof pdf.setLanguage === "function") {
         try { pdf.setLanguage(opts.lang); pdf.orosLang = opts.lang; } catch (e) { void e; }
       }
@@ -389,8 +460,11 @@
         ox += cr;
         if (page.ms) {
           var mf = L.master[page.id] || {};
-          M.masterItems(doc, page, side).forEach(function (it) {
-            draw(pdf, it, ox, oy, mf[it.id] && mf[it.id].lines, gstates);
+          // the master's items (running heads, folios) are artifacts
+          art(pdf, function () {
+            M.masterItems(doc, page, side).forEach(function (it) {
+              draw(pdf, it, ox, oy, mf[it.id] && mf[it.id].lines, gstates);
+            });
           });
         }
         M.itemsOn(doc, page.id).forEach(function (it) {
@@ -398,7 +472,7 @@
         });
         pdf.restoreGraphicsState();
       });
-      if (opts.marks) {
+      if (opts.marks) art(pdf, function () {
         var ox0 = slug + b.l, oy0 = slug + b.t, tw = TW;
         if (marks.crop) cropMarks(pdf, ox0, oy0, tw, TH, b);
         if (marks.bleed && (b.t || b.b || b.l || b.r)) bleedMarks(pdf, ox0, oy0, tw, TH, b);
@@ -406,7 +480,7 @@
         if (marks.bars) colourBars(pdf, ox0, oy0, tw, TH, b, slug);
         if (marks.info) pageInfo(pdf, ox0, oy0, tw, TH, b, slug, (opts.title || doc.name || "") + "  ·  " +
           g.map(function (p) { var lb = L.labels && L.labels[L.pageOf[p.id]]; return lb ? lb.label : String(L.pageOf[p.id] + M.firstNumber(doc)); }).join("-") + (opts.stamp ? "  ·  " + opts.stamp : ""));
-      }
+      });
     });
     pdf.orosBoxes = boxes;
     addLinks(pdf, deps.links, at);
@@ -467,7 +541,7 @@
     };
   }
 
-  var api = { build: build, imageCrop: imageCrop, SLUG: SLUG };
+  var api = { build: build, imageCrop: imageCrop, SLUG: SLUG, tagStart: tagStart, mc: mc, art: art };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.pdf = api; }
 })(typeof window !== "undefined" ? window : this);

@@ -980,6 +980,7 @@
     backupDelete:   dropboxBackupDelete,
     wipeAll:        dropboxWipeAll,
     revoke:         dropboxRevoke,
+    space:          dropboxSpace,
     storage:        dropboxStorage
   };
 
@@ -1351,6 +1352,33 @@
     return Promise.resolve({ email: davConf.user + "@" + host, name: davConf.user });
   }
 
+  // SPACE-1: the space the server reports for this account (RFC 4331
+  // quota properties on the orOS folder). Nextcloud answers a negative
+  // quota-available-bytes when there is no limit (or it does not know):
+  // total is then null. null = the server reports neither property.
+  var DAV_QUOTA = '<?xml version="1.0" encoding="utf-8"?><d:propfind xmlns:d="DAV:"><d:prop>' +
+    "<d:quota-available-bytes/><d:quota-used-bytes/></d:prop></d:propfind>";
+  function davQuotaOf(xml) {
+    var avail = parseFloat(davXmlText(davTag(xml, "quota-available-bytes")));
+    var used = parseFloat(davXmlText(davTag(xml, "quota-used-bytes")));
+    var u = isFinite(used) && used >= 0 ? used : null;
+    var a = isFinite(avail) && avail >= 0 ? avail : null;
+    if (u === null && a === null) return null;
+    return { used: u, total: (a !== null && u !== null) ? u + a : null, free: a };
+  }
+  function davSpace() {
+    if (!davConf) return Promise.reject(new Error("not-connected"));
+    return davReq("PROPFIND", null, {
+      abs: davBaseUrl(davConf) + "/",
+      headers: { "Depth": "0", "Content-Type": "application/xml; charset=utf-8" },
+      body: DAV_QUOTA
+    }).then(function (res) {
+      if (res.status === 404) return null;
+      davOk(res, "space");
+      return res.text().then(davQuotaOf);
+    });
+  }
+
   function davKey(key) { return DAV_ROOT + "/" + String(key).replace(/^\/+/, ""); }
 
   // Every object key under `prefix` (folders walked one level at a
@@ -1492,6 +1520,7 @@
     backupDelete:   function (name) { return davDelete(name, false); },
     wipeAll:        davWipeAll,
     revoke:         davRevoke,
+    space:          davSpace,
     storage:        davStorage
   };
 
@@ -1575,6 +1604,28 @@
   function dropReady() {
     if (provider.id !== "dropbox") return Promise.reject(new Error("not-dropbox"));
     return adapterEnsureConnected();
+  }
+  // SPACE-1: { used, total, free } bytes for the whole Dropbox account
+  // (a team account: the team's shared space), null when Dropbox does
+  // not say. Network and sign-in failures reject (errorKey maps them).
+  function dropboxSpaceOf(j) {
+    var al = j && j.allocation;
+    var total = al && +al.allocated || 0;
+    if (!total) return null;
+    var used = al[".tag"] === "team" && +al.used >= 0 ? +al.used : (+j.used || 0);
+    return { used: used, total: total, free: Math.max(0, total - used) };
+  }
+  function dropboxSpace() {
+    return adapterEnsureConnected().then(ensureFreshToken).then(function (token) {
+      return fetch(RPC_API + "users/get_space_usage", { method: "POST", headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" }, body: "null" });
+    }).then(function (res) {
+      if (res.status === 401) throw new Error("auth failed: 401");
+      if (!res.ok) return null;
+      return res.json().then(dropboxSpaceOf);
+    }, function (err) {
+      if (err instanceof TypeError) throw new Error("network error: " + (err.message || "unknown"));
+      throw err;
+    });
   }
   var cloudDrop = {
     available: function () { return provider.id === "dropbox" && isConnected() && !suspended; },
@@ -4548,6 +4599,12 @@
     moveDone:           moveDone,         // promise: null | { moved } | { error }
     onMove:             function (fn) { if (typeof fn === "function") moveListeners.push(fn); },
     getProvider:        function () { return provider.id; },
+    // SPACE-1: Settings › Sync › Space in the cloud. → { used, total, free }
+    // bytes (total/free null = no limit reported) or null = not reported.
+    cloudSpace:         function () {
+      if (!isConnected() || typeof provider.space !== "function") return Promise.resolve(null);
+      return provider.space();
+    },
     disconnect:         disconnect,
     disconnectRevoke:   disconnectRevoke, // SEC-2: revoke at the provider, then forget locally (PAIR-1: a shared sign-in only locally)
     pairBundle:         pairBundle,       // PAIR-1: the sign-in + passphrase for a new browser

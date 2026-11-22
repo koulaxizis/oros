@@ -82,10 +82,10 @@ test("make(cmyk): a book's RGB box and gradient come out in CMYK; X-4 checks sti
 
 test("Export: PDF/X-4 with CMYK in the dialog, through LY_PDFOUT.pdfx; strings EN/EL/DE", () => {
   const pn = read("layout/panels.js");
-  assert.match(pn, /\["print", t\("exp\.print"\)\], \["x4", t\("exp\.x4"\)\], \["screen", t\("exp\.screen"\)\]/);
-  assert.match(pn, /pdfx: expPrefs\.q === "x4", cmyk: expPrefs\.q === "x4" && !!expPrefs\.cmyk/);
+  assert.match(pn, /\["print", t\("exp\.print"\)\], \["x4", t\("exp\.x4"\)\], (\["x1a", t\("exp\.x1a"\)\], )?\["screen", t\("exp\.screen"\)\]/);
+  assert.match(pn, /pdfx: expPrefs\.q === "x4", (x1a: expPrefs\.q === "x1a", )?cmyk: expPrefs\.q === "x4" && !!expPrefs\.cmyk/);
   const io = read("layout/io.js");
-  assert.match(io, /return r\[1\]\.pdfx\(doc, new Uint8Array\(r\[0\]\), \{ cmyk: !!opts\.cmyk \}\);/);
+  assert.match(io, /return r\[1\]\.pdfx\(doc, new Uint8Array\(r\[0\]\), \{ cmyk: !!opts\.cmyk(, x1a: x1a)? \}\);/);
   assert.match(read("layout/pdfout.js"), /window\.LY_PDFOUT = \{ run: run, norm: norm, pdfx: pdfx \};/);
   const L = read("layout/layout.js"), DE = read("i18n/de/layout.js");
   for (const k of ["exp.x4", "exp.cmyk", "exp.cmykHint", "exp.x4Bad"]) {

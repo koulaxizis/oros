@@ -7,20 +7,21 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=television" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Television</title>
-  <link rel="stylesheet" href="../fonts.css?v=8.25.00">
-  <link rel="stylesheet" href="television.css?v=8.25.00">
+  <link rel="stylesheet" href="../fonts.css?v=8.52.00">
+  <link rel="stylesheet" href="television.css?v=8.52.00">
   <!-- hls.js: STATIC tag, requested unversioned so the sw.js precache
        entry matches (Part II sw.js contract: dynamically loaded
        assets must be requested WITHOUT a query string). -->
-  <script src="../i18n.js?v=8.25.00" data-app="television,cast"></script>
-  <script src="../vendor/hls.light.min.js?v=8.25.00"></script>
+  <script src="../i18n.js?v=8.52.00" data-app="television,cast"></script>
+  <script src="../vendor/hls.light.min.js?v=8.52.00"></script>
   <!-- Wave 43: the Reader's shared network layer (direct, then the Mail
        relay) for playlist / guide addresses, and the pure logic. -->
-  <script src="../feeds/core.js?v=8.25.00" defer></script>
-  <script src="../feeds/fetch.js?v=8.25.00" defer></script>
-  <script src="core.js?v=8.25.00" defer></script>
-  <script src="../cast.js?v=8.25.00" defer></script>
-  <script src="television.js?v=8.25.00" defer></script>
+  <script src="../feeds/core.js?v=8.52.00" defer></script>
+  <script src="../feeds/fetch.js?v=8.52.00" defer></script>
+  <script src="core.js?v=8.52.00" defer></script>
+  <script src="vod.js?v=8.52.00" defer></script>
+  <script src="../cast.js?v=8.52.00" defer></script>
+  <script src="television.js?v=8.52.00" defer></script>
 </head>
 <body>
   <div id="tv-app">
@@ -29,6 +30,7 @@
     <header class="tv-top">
       <div class="tv-tabs" role="tablist">
         <button class="tv-tab" data-tab="browse" role="tab" data-i18n="tab.browse"></button>
+        <button class="tv-tab" data-tab="films" role="tab" data-i18n="tab.films"></button>
         <button class="tv-tab" data-tab="lists" role="tab" data-i18n="tab.lists"></button>
         <button class="tv-tab" data-tab="guide" role="tab" data-i18n="tab.guide"></button>
         <button class="tv-tab" data-tab="favorites" role="tab" data-i18n="tab.favorites"></button>
@@ -57,6 +59,8 @@
         <p data-i18n="loading"></p>
       </div>
       <div id="tv-guide" hidden></div>
+      <!-- TV-VOD: Films & shows (films.js draws it) -->
+      <div id="tv-films" hidden></div>
       <div id="tv-grid"></div>
       <div id="tv-empty" hidden>
         <p id="tv-empty-msg"></p>
@@ -81,8 +85,17 @@
         <span id="tvp-meta"></span>
         <span id="tvp-labels"></span>
       </div>
+      <!-- TV-VOD: position in a film -->
+      <div id="tvp-seek" class="tvp-seek" hidden>
+        <button id="tvp-back" class="tv-icon" type="button"></button>
+        <span id="tvp-cur" class="tvp-time">0:00</span>
+        <input id="tvp-pos" type="range" min="0" max="0" step="1" value="0">
+        <span id="tvp-dur" class="tvp-time">–:––</span>
+        <button id="tvp-fwd" class="tv-icon" type="button"></button>
+      </div>
       <p id="tvp-epg" hidden></p>
       <select id="tvp-streampick" hidden></select>
+      <select id="tvp-subs" hidden></select>
       <div class="tvp-controls">
         <button id="tvp-play" class="tv-icon"></button>
         <button id="tvp-mute" class="tv-icon"></button>
@@ -138,10 +151,40 @@
       <div class="tvs-foot"><button id="tvpg-cal" class="tv-btn ghost" type="button" hidden></button><button id="tvpg-watch" class="tv-btn" type="button"></button></div>
     </dialog>
 
+    <!-- ===== TV-VOD: a film's details ===== -->
+    <dialog id="tv-film" class="tv-dlg">
+      <div class="tvp-head">
+        <span class="tv-dlg-title" id="tvf-title"></span>
+        <button id="tvf-close" class="tv-icon" type="button"></button>
+      </div>
+      <div class="tvf-body">
+        <img id="tvf-img" class="tvf-poster" alt="" referrerpolicy="no-referrer" hidden>
+        <div class="tvf-text">
+          <p id="tvf-meta" class="tvf-meta"></p>
+          <p id="tvf-dir" class="tvf-meta" hidden></p>
+          <p id="tvf-tags" class="tvf-meta" hidden></p>
+          <p id="tvf-desc" class="tvf-desc" hidden></p>
+          <p id="tvf-why" class="tvf-why"></p>
+        </div>
+      </div>
+      <div id="tvf-parts-wrap" hidden>
+        <h3 id="tvf-parts-h"></h3>
+        <div id="tvf-parts" class="tvf-parts"></div>
+      </div>
+      <p id="tvf-status" class="tvf-status" hidden></p>
+      <div class="tvs-foot">
+        <a id="tvf-page" class="tv-btn ghost" target="_blank" rel="noopener noreferrer" hidden></a>
+        <button id="tvf-drop" class="tv-btn ghost" type="button" hidden></button>
+        <button id="tvf-wl" class="tv-btn ghost" type="button"></button>
+        <button id="tvf-restart" class="tv-btn ghost" type="button" hidden></button>
+        <button id="tvf-play" class="tv-btn" type="button"></button>
+      </div>
+    </dialog>
+
     <!-- Local toast fallback ONLY (shell transient toast is primary,
          Part VI Toasts contract). Single slot, per Bible. -->
     <div id="tv-toast" hidden></div>
   </div>
-  <script src="../pickers.js?v=8.25.00" defer></script>
+  <script src="../pickers.js?v=8.52.00" defer></script>
 </body>
 </html>

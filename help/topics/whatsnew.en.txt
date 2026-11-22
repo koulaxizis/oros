@@ -3,8 +3,109 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
-## Version 8.26.00
+## Version 8.53.00
 - **Timesheet: Claude keeps your hours with you.** Through orOS Gate, Claude can now make a Timesheet project with its client, hourly rate, day minimum and overtime, mark time as billed with the invoice it went on, and tie each day to its Calendar event. Work that runs past midnight now counts as one working day, with its overtime, instead of a second day with a second minimum.
+
+## Version 8.52.00
+- **orOS Gate: Claude's waiting requests are no longer lost when orOS updates.** A change or question Claude left while orOS was closed now waits for a device whose orOS knows it, and a device that has just opened finishes its update before it works on them. Before, the older copy a phone runs for a moment before it updates could drop them.
+
+## Version 8.51.00
+- **Layout: versions.** More › Versions… keeps the document under a name, compares any version with now (each changed paragraph with its words struck and added) and brings a version back, keeping the current state first.
+
+## Version 8.50.00
+- **Layout: accessible PDF.** Export › Tagged for accessibility (PDF/UA) gives the PDF its structure, so screen readers and phones read it in order: headings, paragraphs, notes, contents and links, picture descriptions and the language. Running heads and page numbers are left out of the reading. E-book PDFs are always tagged.
+
+## Version 8.49.00
+- **Layout: imposition.** Export › Imposition puts the pages on printer's sheets: a stapled booklet, sections of 8, 16 or 32 pages for a sewn or glued book, or two pages on a sheet, with crop marks and creep. Export › Image can save all pages or all spreads in one .zip, and a book cover can carry an EAN-5 price code beside the ISBN.
+
+## Version 8.48.00
+- **Layout: print colours.** More › Print colours… shows the pages as they print: a soft proof through the print profile, each ink plate, or total ink, with too much ink in pink. Preflight now checks ink, rich black on small text, hairlines and text near the trim. Black overprints, swatches can overprint and tints follow their colour. Export › PDF/X-1a puts everything in CMYK, pictures too, and you can use your printer's own profile.
+
+## Version 8.47.00
+- **Layout: a new page size.** Change the page size in Document setup and the contents follow: pictures that bleed still bleed, running heads and page numbers keep their edge, the rest keeps its place in the text area, and pictures and shapes keep their proportions. Text sizes can follow too.
+
+## Version 8.46.00
+- **Photo Lab: AI from Claude and the Assistant.** Claude and the Assistant can now draw a picture from words, remove a background, fill a part of a photo from words (generative fill), grow a photo beyond its edges (generative expand), upscale it, place a picture from Claude's folders as a layer, or open one as a new picture. They use the image AI you chose in the Assistant (Settings › Pictures): the free AI Horde, Hugging Face, OpenAI, Stability AI, or Stable Diffusion WebUI / Forge on your computer. **ComfyUI on your computer** is new there too, and also works in Atelier's Magic edit and Magic expand. Every change is one undo step.
+- **Mockups from Claude and the Assistant.** Claude (through orOS Gate) and the Assistant can now read and change your book mockups, or make a new one: trim, pages and binding, cover pictures from Claude's folders, the e-book on a phone or tablet screen, the camera angle and the background. The picture is saved in Pictures, and also in a folder you choose. You see every change on the card first, and Undo brings the mockup back.
+
+## Version 8.45.00
+- **orOS Gate: Claude asks for a folder of the orOS disk.** When Claude needs a folder in orOS Files (for example Studio/Podcasts, to open a podcast project in Studio), it asks you for it. One tap on «Open for Claude», on any device where orOS is on screen, the phone too, adds it to Claude's folders on all your devices. You can remove it any time in Settings › Connected services › orOS Gate.
+
+## Version 8.44.01
+- **Notices no longer cover the Dock.** The «Local folders for Claude» bar and pop-up notifications now sit above the Dock, or beside it when the Dock is on the left or right.
+
+## Version 8.44.00
+- **Claude can set up your Author Portal steps.** When you ask, Claude (through orOS Gate) or the Assistant can make a Kanban column a step of your authors' production flow, mark it as a finish, and write the name and explanation your author sees. You see it, and you can undo it like any other change.
+
+## Version 8.43.00
+- **Layout: notes, lists and books.** Footnotes and endnotes from the Story Editor, numbered lists in paragraph styles (Greek numerals too), cross-references that follow the page, and links on words, which work in the PDF and the EPUB. More › Contents from styles… makes the contents of any document from the title styles you choose, and More › Book… keeps chapters in separate documents together, with page numbers that run on, the same styles and one PDF.
+
+## Version 8.42.00
+- **Layout: finer Greek typesetting.** Polytonic Greek now hyphenates and goes to capitals the right way, Preflight names any character a font cannot draw, and style lists sort the Greek way. Paragraph styles can set the whole paragraph at once for even spacing, limit how far word and letter spacing may go, let punctuation hang past the margin, balance ragged lines and start with a drop cap. Character styles add small caps, superscript and subscript, and More › Show loose and tight lines marks the lines that need a look.
+
+## Version 8.41.00
+- **Layout: a library for things you reuse, and colour libraries.** Select a logo, a running head or a chapter opener and keep it in the Library (More › Library…) to place it in any document; libraries go to other devices as a file. The Colours panel has ready-made colour sets and reads and writes .ase swatch files from InDesign, Illustrator, Affinity or Scribus. The Story Editor shows each paragraph's style name, can make the text bigger, and marks the text that no longer fits.
+
+## Version 8.40.00
+- **Layout: find, change, spell-check and finer text flow.** Find/Change… (Ctrl+F) finds words or patterns (GREP) in the whole book or one text, changes them, and can set styles at the same time; it has ready-made clean-ups for a book (double spaces, straight quotes to «», three dots to …) and keeps your own searches. Spelling… checks Greek and English and remembers the words you add with the document. Paragraph styles can now say which style comes after Enter, and give a character style to anything a pattern finds (GREP styles). Also new: column and page breaks in the text (Numpad Enter), a baseline grid that lines up lines across pages, frames that spread their paragraphs to the foot, and object styles.
+
+## Version 8.39.00
+- **Layout: easier to work in.** Objects snap to equal gaps while you drag, with the gap shown; sizes and places show as you go; a small toolbar sits over what you select; History… lists every change by name and takes you back to any of them; and in Shortcuts and comfort… you can change any shortcut (they also work with a Greek keyboard) and how far the arrow keys move.
+## Version 8.38.00
+- **Funkwhale in Music.** Search and genres now also bring songs from open.audio, the public pod of the open Funkwhale network. Only songs whose uploader chose a Creative Commons licence or CC0 are shown. `Connect a server` gets an `open.audio` button for your own library there.
+- **Your choice of source stays.** Picking Free Music Archive, Kevin MacLeod, Musopen, National Jukebox, DPLA or Funkwhale in search, or turning them off in `Sources`, is now remembered.
+
+## Version 8.37.00
+- **See which channels are free-to-air.** In `Television`, a `Free-to-air` badge marks channels their broadcaster gives away for free, as listed by Free-TV.
+- **Free services.** `Films & shows` › `Free services` links to official free services such as ERTFLIX, the ERT Archive, ARTE, the ARD and ZDF Mediatheken, the NFB, WikiFlix and Kanopy. They open on their own sites.
+
+## Version 8.36.00
+- **More free films, with subtitles.** `Television` › `Films & shows` now also searches NASA's video library, Europeana and Open Images (with your own free Europeana key, the same one Music uses) and PeerTube (Creative Commons videos). `Filters` › `Sources` turns each source on or off on this device. Films with subtitles get a `Subtitles` list in the player, and subtitles in your language turn on by themselves.
+- **Saved searches.** The bookmark button next to the search box keeps your words and filters as a chip, on all your devices.
+
+## Version 8.35.01
+- **Play starts at the first song.** In Music, the Play button of a playlist, album, artist or genre now always starts at its first song, in order, and turns shuffle off. `Shuffle` still plays it in random order.
+
+## Version 8.35.00
+- **Show your authors where their book is.** In Kanban, `Column settings` › `Author Portal` marks a column as `A step of the creator's production flow`, with a short explanation your author sees on hover, and can mark it as a finish. In a book's card, tick `Show in its creator's Author Portal`: the author then sees a bar with your steps at the top of their Revenue Splitter 1.21.0 portal. At a finish the bar hides, and it comes back when the card moves on to the next step.
+
+## Version 8.34.00
+- **See how much space is left in your cloud.** `Settings` › `Sync` › `Space in the cloud` shows a bar, the free space and how much is used of how much, for Dropbox (your whole account) and for WebDAV or Nextcloud (what the server reports). When it is almost full, it says so and points to `Unused files in the cloud`. The Overview tile is now called `Device storage`, because it is the space on this device, not in the cloud.
+
+## Version 8.33.01
+- **No frame left on the top bar icons.** On a phone, an icon in the top bar (for example the smart cards ✦, the clock or Quick settings) no longer keeps a faint frame after you tap it to close its panel. With a mouse the icons still light up under the pointer, and with the keyboard the focus still shows.
+
+## Version 8.33.00
+- **Studio for long podcasts.** Projects and podcast episodes can now be up to three hours long. Over an hour, Studio mixes, encodes and measures in five-minute parts, so a long episode does not fill the memory. Opus export stays up to one hour.
+- **Markers travel with the project.** A `.orosstudio` file now keeps the project's markers, and its `tracks.txt` lists them.
+- **File for another host.** Each episode can give you its MP3 (with chapters) and a text with the notes, the chapters as `00:00 Title` and the credits, for any podcast host. No feed and no site are made.
+- **Claude can open project files.** Through orOS Gate, Claude can open a `.orosstudio` or `.orosmontage` file it made as a new project in Studio or Montage. You get a notice and can undo it. Claude never publishes.
+
+## Version 8.32.00
+- **Free films and shows in Television.** A new `Films & shows` tab brings about 3,500 free films, series, documentaries, cartoons and newsreels from Wikimedia Commons and the Internet Archive. Search by title, director or year, filter by type, genre, decade, country, language, length and sound, keep a `Watchlist`, and `Continue watching` picks up where you stopped, on all your devices. Only titles orOS has checked as free are shown unless you ask for more. The player now has a position bar and back / forward buttons for films. See [Television](help:a/television).
+
+## Version 8.31.00
+- **Mockups for much more than books.** Books get new bindings, sizes and finishes (foil, embossing, slipcase, belly band, notebook). New products: CD, DVD and Blu-ray, cassette, VHS, vinyl, badges, stickers, keychains, enamel pins, magnets, mugs, posters, cards, T-shirts, tote bags, hoodies, socks and caps, each with a sheet for the printer. Scenes can stand on wood, marble, linen, paper or concrete with a cup, plant or pencil, and `Several in one picture` puts up to 6 mockups together; kits make a whole set from one picture. See [Mockups](help:a/mockups).
+
+## Version 8.30.00
+- **More stations in Radio.** Every list now shows all its stations, 100 at a time, with `More stations`. New `Languages` and `Map` tabs: the map shows stations around the world, and a tap plays one (`Near me` asks for your position once, rounded to about 11 km, and never saves it). Discover can show Top, Trending now, New or updated and Random stations, and a station listed twice shows once. Country lists show their stations again. See [Radio](help:a/radio).
+
+## Version 8.29.00
+- **Walk and Bike routes with no network (experimental).** With no network, Maps now works out Walk and Bike routes on the device from your offline maps, using their roads, paths, steps and cycleways. See [Maps](help:a/maps).
+
+## Version 8.28.00
+- **Claude exports from every app that has Export.** Through orOS Gate (and in the Assistant), Claude can now export Slides (PDF, PowerPoint, PNG), Writer (PDF, Word, Markdown, HTML, text), Spreadsheet (Excel, ODS, CSV), Whiteboard (PNG, SVG, PDF, draw.io), Mind map (PNG, SVG, Markdown, OPML, JSON, orOS file), Studio's mix (WAV, MP3, Opus) and Montage (video, sound, GIF) into a local folder you opened for Claude or one of Claude's folders in Files. Nothing in the document changes and nothing is overwritten.
+
+## Version 8.27.00
+- **Claude saves exports where you want them.** Through orOS Gate, Claude's exports can now also go to a local folder you opened for Claude and/or one of Claude's folders in Files: Layout's print PDF (PDF/X-4 with crop marks too), EPUB and page pictures, Atelier's PNG, JPG and PDF, and Photo Lab's pictures. Nothing is ever overwritten: a taken name gets -2, -3. Files must be at «Claude may also change».
+- **New files show up for Claude at once.** What Claude saves through orOS Gate reaches the copy Claude reads within seconds, so a download link for it works right away.
+
+## Version 8.26.01
+- **Budget: banks are read less often when you use several devices.** With "every 6 hours", each device used to read your banks on its own, so a phone and a computer together could pass a bank's limit of about 4 reads a day and get "too many requests". The devices now share one schedule, and after a bank asks to wait, no device asks it again before the next turn.
+- **Update now in installed orOS.** In installed orOS, orOS Portable and the Live USB, the **Update now** button on the update notice now opens the System panel's update check, as Settings › Check for updates does, instead of saying there is no newer version. orOS takes the new version at its next start.
+
+## Version 8.26.00
+- **Claude keeps all of orOS's tools when it may change your files.** With Files at «Claude may also change», the list of tools orOS gives Claude through orOS Gate had grown too long and Claude lost the file and app tools. orOS Gate now takes the whole list, and if one day it grows past the limit, it shortens the longest descriptions instead of dropping tools.
 
 ## Version 8.25.00
 - **Photo Lab: all 27 Photoshop blend modes**, including dissolve, linear burn, vivid light, hard mix, subtract and divide. They open from and save to Photoshop, GIMP, OpenRaster and Krita files.

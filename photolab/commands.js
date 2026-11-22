@@ -52,6 +52,10 @@
   var EFFECTS = ["none", "shadow", "glow", "inner", "stroke", "overlay"];
   var FX_KEY = { shadow: "sh", glow: "gl", inner: "ig", stroke: "st", overlay: "co" };
   var MAX_SIDE = 8192, MAX_LAYERS = 100;
+  // PL-AI: assistant/imgai.js IDS and STYLE_IDS (a test keeps them equal); "" = the owner's choice
+  var PROVS = ["", "horde", "pollinations", "huggingface", "openai", "stability", "sdwebui", "comfyui"];
+  var AI_STYLES = ["", "photo", "illus", "paint", "three", "sketch", "pixel"];
+  var PIC_RX = /^\/internal\/(?!(.*\/)?\.)(?!.*\/\/)[^\u0000-\u001f\\]+\.(jpe?g|png|webp|gif|bmp|avif|svg|tiff?|heic)$/i;
   var TEXT_DEF = { f: "sans", z: 72, c: "#000000", a: "l", lh: 120 };
 
   function num(lo, hi) { return { t: "num", lo: lo, hi: hi, def: null }; }
@@ -98,7 +102,21 @@
     rotate: { kind: "size", args: { deg: { t: "num", lo: -359, hi: 359, def: null, req: 1 } } },
     flip: { kind: "size", args: { dir: { t: "enum", v: ["h", "v"], def: "h", req: 1 } } },
     rename: { kind: "doc", args: { title: { t: "str", max: 80, req: 1 } } },
-    export: { kind: "out", args: { fmt: { t: "enum", v: ["jpg", "png", "webp"], def: "jpg" }, quality: { t: "int", lo: 10, hi: 100, def: 90 } } }
+    // PL-AI (Chris 2026-11-22 «δώσε στο Photolab πλήρη δυνατότητες χρήσης AI»):
+    // the image AI the owner chose in the Assistant (Settings › Pictures),
+    // or prov for one of the others set up there; nobg runs on the device.
+    generate: { kind: "ai", args: { prompt: { t: "str", max: 2000, req: 1 }, style: oneOf(AI_STYLES), prov: oneOf(PROVS),
+      w: num(64, MAX_SIDE), h: num(64, MAX_SIDE), x: num(-32768, 32768), y: num(-32768, 32768), title: { t: "str", max: 80 } } },
+    nobg: { kind: "ai", args: sel({}) },
+    fill: { kind: "ai", args: { prompt: { t: "str", max: 2000, req: 1 }, x: { t: "num", lo: 0, hi: MAX_SIDE, def: null, req: 1 }, y: { t: "num", lo: 0, hi: MAX_SIDE, def: null, req: 1 },
+      w: { t: "num", lo: 8, hi: MAX_SIDE, def: null, req: 1 }, h: { t: "num", lo: 8, hi: MAX_SIDE, def: null, req: 1 }, prov: oneOf(PROVS) } },
+    expand: { kind: "ai", args: { ratio: oneOf([""].concat(RATIOS)), w: num(1, MAX_SIDE), h: num(1, MAX_SIDE), pos: { t: "enum", v: POS, def: "c" },
+      prompt: { t: "str", max: 2000 }, prov: oneOf(PROVS) } },
+    upscale: { kind: "ai", args: { f: { t: "enum", v: ["2", "3", "4"], def: "2" }, prov: oneOf(PROVS) } },
+    image: { kind: "ai", args: { path: { t: "str", max: 1024, req: 1 }, x: num(-32768, 32768), y: num(-32768, 32768), w: num(1, MAX_SIDE), h: num(1, MAX_SIDE),
+      fit: oneOf(["", "contain", "cover"]), title: { t: "str", max: 80 } } },
+    create: { kind: "new", args: { from: { t: "str", max: 1024, req: 1 }, title: { t: "str", max: 80 } } },
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["jpg", "png", "webp"], def: "jpg" }, quality: { t: "int", lo: 10, hi: 100, def: 90 }, out: { t: "str", max: 1030 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -131,7 +149,15 @@
     "rotate: the whole picture by deg (90, 180, -90 or any angle)",
     "flip: the whole picture, dir h (left-right) | v (top-bottom)",
     "rename: the project's name becomes title",
-    "export: save the picture into the Pictures folder: fmt jpg|png|webp, quality (10-100, jpg and webp)"
+    "generate: AI draws a new picture from the words in prompt, in English (it reads best), as a new photo layer on top: style " + AI_STYLES.slice(1).join("|") + ", w, h (its size, the canvas when left out; scaled to cover it), x, y, title (the layer's name)",
+    "nobg: remove the background of the picked photo layers (as a mask, which can be painted further; on this device, nothing is sent)",
+    "fill: AI redraws the box x, y, w, h of the picture as prompt says (generative fill), as a new layer over it",
+    "expand: AI grows the picture (generative expand / outpaint) to ratio " + RATIOS.join("|") + " or to w, h, the picture anchored at pos, and draws what is beyond its edges (prompt: what is around, optional) on a new bottom layer",
+    "upscale: the whole picture f 2|3|4 times larger (at most " + MAX_SIDE + " px a side); with an AI that can (Stable Diffusion WebUI / Forge, ComfyUI) its sharper copy comes as a top layer",
+    "image: a picture file from Claude's folders on the orOS disk (path, an /internal/ path as files_write or files_upload gave it; Claude's own pictures, ComfyUI's or any other) as a new photo layer: x, y, w, h, fit contain|cover (the canvas), title",
+    "create: open a picture file from Claude's folders as a NEW Photo Lab project (only as the one command, with designs new): from (its /internal/ path), title",
+    "prov (generate, fill, expand, upscale): the image AI to use, " + PROVS.slice(1).join("|") + "; left out, the one the owner chose in the Assistant (Settings › Pictures). It must be set up there (key or address); fill and expand need openai, stability, sdwebui or comfyui. What is sent goes straight from the owner's device to that AI (the box or picture, and the prompt)",
+    "export: save the picture into the Pictures folder: fmt jpg|png|webp, quality (10-100, jpg and webp); out (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Photos with Files at «may change») also saves it there, never over a file, and the answer lists the paths"
   ].join("\n");
 
   // ---------- 1. Checking ----------
@@ -168,6 +194,10 @@
     if (raw.op === "layer" && st.opacity === null && !st.blend && !st.hide && !st.lock && !st.title) return { err: "layer: give opacity, blend, hide, lock or title" };
     if (raw.op === "place" && st.x === null && st.y === null && !st.dx && !st.dy) return { err: "place: give x, y, dx or dy" };
     if (raw.op === "rotate" && !(st.deg % 360)) return { err: "rotate: deg must not be 0" };
+    if (raw.op === "expand" && !st.ratio && (st.w === null || st.h === null)) return { err: "expand: give ratio, or w and h" };
+    if (raw.op === "nobg" && st.what && st.what !== "photo") return { err: "nobg: only photo layers" };
+    if (raw.op === "image" && !PIC_RX.test(st.path)) return { err: "image: path must be an /internal/ path of a picture file in Claude's folders" };
+    if (raw.op === "create" && !PIC_RX.test(st.from)) return { err: "create: from must be an /internal/ path of a picture file in Claude's folders" };
     return { step: st };
   }
   // A command list → { ok, steps } | { ok: false, err }
@@ -181,6 +211,7 @@
       else steps.push(r.step);
     });
     if (errs.length) return { ok: false, err: errs.slice(0, 6).join(". ") };
+    if (steps.length > 1 && steps.some(function (st) { return st.op === "create"; })) return { ok: false, err: "create is the only command of its list (change the new picture with a second edit_in_app)" };
     return { ok: true, steps: steps };
   }
 
@@ -192,7 +223,7 @@
   function pick(doc, st) {
     var ids = idList(st.ids), idSet = {}, has = String(st.has || "").toLowerCase();
     ids.forEach(function (id) { idSet[id] = 1; });
-    var px = CATALOG[st.op] && CATALOG[st.op].kind === "px" && st.op !== "dup" && st.op !== "watermark";
+    var px = CATALOG[st.op] && (CATALOG[st.op].kind === "px" || st.op === "nobg") && st.op !== "dup" && st.op !== "watermark";
     return (doc.layers || []).filter(function (L) {
       if (ids.length && !idSet[L.id]) return false;
       if (st.what && L.k !== KIND_OF[st.what]) return false;
@@ -298,6 +329,21 @@
     return null;
   }
 
+  // PL-AI: the size expand or upscale gives the picture, or null.
+  function aiSize(doc, st) {
+    var w = doc.w, h = doc.h;
+    if (st.op === "upscale") {
+      var f = +st.f || 2, k = Math.min(f, MAX_SIDE / Math.max(w, h));
+      return k > 1.0001 ? { w: Math.round(w * k), h: Math.round(h * k) } : null;
+    }
+    var nw, nh;
+    if (st.ratio) {
+      var p = st.ratio.split(":"), r = +p[0] / +p[1];
+      if (w / h > r) { nw = w; nh = Math.round(w / r); } else { nh = h; nw = Math.round(h * r); }
+    } else { nw = Math.max(w, Math.round(st.w)); nh = Math.max(h, Math.round(st.h)); }
+    nw = Math.min(MAX_SIDE, nw); nh = Math.min(MAX_SIDE, nh);
+    return nw > w || nh > h ? { w: nw, h: nh } : null;
+  }
   // Applies one command to a doc (a copy, or in the app the open
   // record inside PL.docChange) → how many layers or settings changed.
   // px, size and out commands only count here (and size keeps w × h).
@@ -323,6 +369,14 @@
       }
       return isIdentity(st) ? 0 : list.length;
     }
+    if (kind === "ai") {
+      // PL-AI: the app runs them; here they count and keep w × h
+      if (st.op === "nobg") { list = pick(doc, st); if (!list.length) note(env, "noPhoto"); return list.length; }
+      if (st.op === "expand" || st.op === "upscale") { var ez = aiSize(doc, st); if (!ez) return 0; doc.w = ez.w; doc.h = ez.h; return 1; }
+      if (doc.layers && doc.layers.length >= MAX_LAYERS) { note(env, "maxLayers"); return 0; }
+      return 1;
+    }
+    if (kind === "new") return 0;
     if (kind === "size") {
       var z = sizeAfter(doc, st);
       if (!z) return 0;
@@ -456,7 +510,8 @@
   // data: { docs: [{ id, name }] } (the project index's entries).
   function targets(data, folders, open, designs, name) {
     var docs = data && Array.isArray(data.docs) ? data.docs : [];
-    if (designs === "new") return { ok: false, err: "Photo Lab makes no new pictures from commands; use open, named or all" };
+    // PL-AI: a new project from a picture file (create); nothing that exists is picked
+    if (designs === "new") return { ok: true, docs: [{ id: "", name: String(name || "") }], fresh: 1 };
     if (designs === "folder") return { ok: false, err: "Photo Lab has no folders; use open, named or all" };
     if (!docs.length) return { ok: false, err: "the user has no pictures in Photo Lab yet" };
     var list = [];
@@ -483,6 +538,7 @@
   // projects' doc records }.
   function preview(data, ids, steps, ctx) {
     var docs = data && Array.isArray(data.docs) ? data.docs : [], out = { n: 0, d: 0, per: [], cut: 0, made: 0, files: 0, notes: [] };
+    if (steps.length && steps[0].op === "create") { out.made = 1; return out; }
     ids.forEach(function (id) {
       var src = null;
       docs.forEach(function (d) { if (d.id === id) src = d; });
@@ -521,7 +577,7 @@
   var api = {
     CATALOG: CATALOG, ORDER: ORDER, GUIDE: GUIDE, MAX_STEPS: MAX_STEPS, LOOKS: LOOKS, BLENDS: BLENDS, FONTS: FONTS, SHAPES: SHAPES,
     check: check, pick: pick, apply: apply, docPath: docPath, targets: targets, preview: preview, outline: outline,
-    adjOf: adjOf, cropRect: cropRect, resizeTo: resizeTo, sizeAfter: sizeAfter, isIdentity: isIdentity
+    adjOf: adjOf, cropRect: cropRect, resizeTo: resizeTo, sizeAfter: sizeAfter, isIdentity: isIdentity, aiSize: aiSize, PROVS: PROVS, AI_STYLES: AI_STYLES, PIC_RX: PIC_RX
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.PhotoLabCommands = api;

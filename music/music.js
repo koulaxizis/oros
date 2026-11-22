@@ -190,6 +190,7 @@
       "src.mo": "Musopen's public-domain classical recordings, kept on the Internet Archive.",
       "src.jb": "The Library of Congress National Jukebox: recordings from 1900 to 1925, public domain.",
       "src.dp": "Open-licence recordings of American libraries and archives. Needs your own free key.",
+      "src.fw": "Funkwhale (open.audio): music people share on the open Funkwhale network. Only songs with a Creative Commons licence or CC0 are shown. Streaming only.",
       "dp.needKey": "DPLA needs your own free API key.",
       "dp.key": "Your DPLA API key",
       "dp.getKey": "How to get a free key (dp.la)",
@@ -198,6 +199,7 @@
       "dp.forgot": "DPLA key removed.",
       "dp.badKey": "DPLA did not accept the key (32 letters and digits). Check it in Settings › Sources.",
       "dp.note": "DPLA: only recordings with an open licence that can be played here are listed.",
+      "fw.note": "Funkwhale: only songs whose uploader chose a free licence are listed; the rest stay on open.audio.",
       "sv.free": "Free-music servers:",
       "src.more": "More free music elsewhere",
       "src.moby": "mobygratis: Moby's free instrumentals for your own non-commercial videos, films and remixes, under its own licence. Opens the site; it does not play here.",
@@ -243,6 +245,7 @@
       "ss.last": "Last visit {d}",
       "ss.new": "New since your last visit ({n})",
       "sv.h.dogmazic": "Dogmazic: French free-music library, every song under a free licence. Sign in with your free Dogmazic account; as the password use the Subsonic password or the API key from your Dogmazic account settings.",
+      "sv.h.openaudio": "open.audio: the Funkwhale project's public pod. Its public libraries work without a login; for your own library there, add a token from Settings › Applications (read access).",
       "m.share": "Share…", "sh.title": "Share this song", "sh.name": "Send its name as a link",
       "sh.file": "Send the file itself", "sh.fileSub": "A song on this device: send only its name, or the file itself (only if it is yours to give).",
       "sh.big": "Too big to send as a file (100 MB at most).", "sh.fileNo": "This device cannot send this file. Send its name instead.",
@@ -499,6 +502,7 @@
       "src.mo": "Ηχογραφήσεις κλασικής μουσικής του Musopen σε κοινό κτήμα, σωσμένες στο Internet Archive.",
       "src.jb": "Το National Jukebox της Library of Congress: ηχογραφήσεις από το 1900 ως το 1925, σε κοινό κτήμα.",
       "src.dp": "Ηχογραφήσεις με ανοιχτή άδεια από αμερικανικές βιβλιοθήκες και αρχεία. Θέλει το δικό σου δωρεάν κλειδί.",
+      "src.fw": "Funkwhale (open.audio): μουσική που μοιράζονται άνθρωποι στο ανοιχτό δίκτυο Funkwhale. Εμφανίζονται μόνο τραγούδια με άδεια Creative Commons ή CC0. Μόνο online.",
       "dp.needKey": "Το DPLA θέλει το δικό σου δωρεάν κλειδί API.",
       "dp.key": "Το κλειδί σου API του DPLA",
       "dp.getKey": "Πώς παίρνεις δωρεάν κλειδί (dp.la)",
@@ -507,6 +511,7 @@
       "dp.forgot": "Το κλειδί του DPLA αφαιρέθηκε.",
       "dp.badKey": "Το DPLA δεν δέχτηκε το κλειδί (32 γράμματα και αριθμοί). Έλεγξέ το στις Ρυθμίσεις › Πηγές.",
       "dp.note": "DPLA: εμφανίζονται μόνο ηχογραφήσεις με ανοιχτή άδεια που παίζουν εδώ.",
+      "fw.note": "Funkwhale: εμφανίζονται μόνο τραγούδια για τα οποία ο ανεβάζων διάλεξε ελεύθερη άδεια· τα υπόλοιπα μένουν στο open.audio.",
       "sv.free": "Servers ελεύθερης μουσικής:",
       "src.more": "Κι άλλη ελεύθερη μουσική αλλού",
       "src.moby": "mobygratis: δωρεάν ορχηστρικά του Moby για τα δικά σου μη εμπορικά βίντεο, ταινίες και remix, με δική του άδεια. Ανοίγει τον ιστότοπο· δεν παίζει εδώ.",
@@ -552,6 +557,7 @@
       "ss.last": "Τελευταία επίσκεψη {d}",
       "ss.new": "Νέα από την τελευταία σου επίσκεψη ({n})",
       "sv.h.dogmazic": "Dogmazic: γαλλική βιβλιοθήκη ελεύθερης μουσικής, κάθε τραγούδι με ελεύθερη άδεια. Συνδέσου με τον δωρεάν λογαριασμό σου στο Dogmazic· ως κωδικό βάλε τον κωδικό Subsonic ή το κλειδί API από τις ρυθμίσεις του λογαριασμού σου στο Dogmazic.",
+      "sv.h.openaudio": "open.audio: το δημόσιο pod του Funkwhale. Οι δημόσιες βιβλιοθήκες του δουλεύουν χωρίς σύνδεση· για τη δική σου βιβλιοθήκη εκεί, βάλε ένα token από Settings › Applications (πρόσβαση ανάγνωσης).",
       "m.share": "Κοινοποίηση…", "sh.title": "Κοινοποίηση τραγουδιού", "sh.name": "Αποστολή του ονόματος ως σύνδεσμο",
       "sh.file": "Αποστολή του ίδιου του αρχείου", "sh.fileSub": "Τραγούδι σε αυτή τη συσκευή: στείλε μόνο το όνομά του ή το ίδιο το αρχείο (μόνο αν σου ανήκει να το δώσεις).",
       "sh.big": "Πολύ μεγάλο για αποστολή ως αρχείο (έως 100 MB).", "sh.fileNo": "Αυτή η συσκευή δεν μπορεί να στείλει αυτό το αρχείο. Στείλε καλύτερα το όνομά του.",
@@ -750,9 +756,11 @@
         if (["title", "artist", "album", "added"].indexOf(o.sort) >= 0) p.sort = o.sort;
         if (["auto", "el", "latin"].indexOf(o.legacy) >= 0) p.legacy = o.legacy;
         if (o.open === false) p.open = false;
-        if (["all", "jm", "ia", "ov", "cc", "au", "eu"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
+        // MU-FW: every open source counts (the list missed the wave 2b sources, so their choice was lost on reload).
+        var SO = window.OrosMusicOpen ? window.OrosMusicOpen.SOURCE_ORDER : ["jm", "ia", "ov", "cc", "au", "eu"];
+        if (o.osrc === "all" || SO.indexOf(o.osrc) >= 0) p.osrc = o.osrc;
         // MU-SRC: open sources turned off on this device (all on by default).
-        if (Array.isArray(o.soff)) p.soff = o.soff.filter(function (x) { return ["jm", "ia", "ov", "cc", "au", "eu"].indexOf(x) >= 0; });
+        if (Array.isArray(o.soff)) p.soff = o.soff.filter(function (x) { return SO.indexOf(x) >= 0; });
         if (o.ly === "on" || o.ly === "off") p.ly = o.ly;
         if (o.mb === true) p.mb = true;
         // MU-FIND1: the search filters (open.js normFilter).
@@ -894,6 +902,8 @@
   function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: o.f ? r.albums.filter(function (a) { return O.albumPasses(a, o.f); }) : r.albums, more: r.more }; }); }; }
   function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   function fAu(o) { return function (page) { return O.auSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  // MU-FW: Funkwhale (open.audio, licensed songs only).
+  function fFw(o) { return function (page) { return O.fwSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   function fEu(o) { return function (page) { return O.euSearch(Object.assign({}, o, { page: page, key: euKey })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   // MU-SRC2: Kevin MacLeod (searched on the device) and DPLA (the person's key).
   function fKm(o) { return function (page) { return O.kmSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
@@ -903,7 +913,7 @@
   function fSrc(sk, o) {
     o = o || {};
     if (isIaSrc(sk)) return fIa(sk === "ia" ? o : Object.assign({}, o, { scope: sk }));
-    return sk === "jm" ? fJm(o) : sk === "ov" ? fOv(o) : sk === "cc" ? fCc(o) : sk === "au" ? fAu(o) : sk === "eu" ? fEu(o) : sk === "km" ? fKm(o) : fDp(o);
+    return sk === "jm" ? fJm(o) : sk === "ov" ? fOv(o) : sk === "cc" ? fCc(o) : sk === "au" ? fAu(o) : sk === "eu" ? fEu(o) : sk === "km" ? fKm(o) : sk === "fw" ? fFw(o) : fDp(o);
   }
   // MU-SRC: which open sources this device asks (Settings › Sources).
   function srcOn(sk) { return prefs.soff.indexOf(sk) < 0; }
@@ -1418,6 +1428,14 @@
       addr.value = "https://play.dogmazic.net"; name.value = "Dogmazic";
       hint.textContent = t("sv.h.dogmazic");
       user.focus();
+    }));
+    // MU-FW: the open.audio Funkwhale pod; its public libraries need no sign-in.
+    pre.appendChild(document.createTextNode(" "));
+    pre.appendChild(button("open.audio", "pill small-pill", function () {
+      sel.value = "funkwhale"; paint();
+      addr.value = "https://open.audio"; name.value = "open.audio";
+      hint.textContent = t("sv.h.openaudio");
+      addr.focus();
     }));
     form.insertBefore(pre, hint);
     var row = el("div", "dlg-btns");
@@ -2496,8 +2514,11 @@
     if (!rows.length) { showToast(t("play.none")); return; }
     if (!items.length) { showToast(t("missing.toast")); return; }
     if (idx >= 0 && map < 0) { showToast(t("missing.toast")); return; }
-    // The Shuffle button turns shuffle on; Play and a tapped row keep the current setting.
-    var shf = shuffle ? 1 : H.getState().shf;
+    // The Shuffle button turns shuffle on; Play (a whole list) starts at
+    // its first song in order and turns shuffle off (MU-ORDER1: a shuffle
+    // left on from an earlier Shuffle made Play start anywhere); a tapped
+    // row keeps the current setting.
+    var shf = shuffle ? 1 : (idx >= 0 ? H.getState().shf : 0);
     H.playList(items, idx >= 0 ? map : (shf ? -1 : 0), { shf: shf, src: src });
   }
   function toggleLike(x) {
@@ -2965,16 +2986,17 @@
       if (fi.list.length) sec.appendChild(ci);
       feedStatus(sec, kI, srcName(sk));
     });
-    ["jm", "ov", "cc", "km", "au", "eu", "dp"].forEach(function (sk) {
+    ["jm", "ov", "cc", "km", "fw", "au", "eu", "dp"].forEach(function (sk) {
       if (!all && prefs.osrc !== sk) return;
       if (!srcOn(sk) || miss(sk)) return;
-      // Audius, Europeana and DPLA need words or a filter (no "everything" list).
-      if ((sk === "au" || sk === "eu" || sk === "dp") && !q && !fOn) return;
+      // Audius, Funkwhale, Europeana and DPLA need words or a filter (no "everything" list).
+      if ((sk === "au" || sk === "fw" || sk === "eu" || sk === "dp") && !q && !fOn) return;
       sec.appendChild(el("h3", "sub-h", t("o.songs", { s: srcName(sk) })));
       if (KEYS[sk] && !KEYS[sk].get()) { sec.appendChild(keyNote(sk)); return; }
       var k = "s|" + sk + "|" + q + sig, f = feed(k, fSrc(sk, o));
       if (sk === "au") sec.appendChild(el("p", "dim small sec-note", t("au.note")));
       if (sk === "dp") sec.appendChild(el("p", "dim small sec-note", t("dp.note")));
+      if (sk === "fw") sec.appendChild(el("p", "dim small sec-note", t("fw.note")));
       if (f.list.length) sec.appendChild(rowList(f.list, { src: src }));
       feedStatus(sec, k, srcName(sk));
     });
@@ -3336,10 +3358,14 @@
     var bar = el("div", "play-bar");
     var playing = isPlayingFrom(src);
     var go = function (shf) { if (list && list.live) playLive(list, src, shf); else playRows(list, -1, src, shf); };
-    var pb = button(playing ? t("pause") : t("play"), "big-play", function () {
-      if (playing) { H.toggle(); return; }
+    // Playing this list now: the button pauses it. Otherwise (also with
+    // this list's song paused, or back from the last session) it starts
+    // the list from its first song (MU-ORDER1); the player bar resumes.
+    var on = playing && H.getState().playing;
+    var pb = button(on ? t("pause") : t("play"), "big-play", function () {
+      if (isPlayingFrom(src) && H.getState().playing) { H.toggle(); return; }
       go(false);
-    }, playing && H.getState().playing ? I.pause : I.play);
+    }, on ? I.pause : I.play);
     pb.setAttribute("data-src", JSON.stringify(src));
     bar.appendChild(pb);
     bar.appendChild(button(t("shuffle"), "icon-btn", function () { go(true); }, I.shuffle));
@@ -3607,6 +3633,7 @@
       if (srcOn("au")) gl.push(["au", "g|au|" + gg.id, feed("g|au|" + gg.id, fAu({ f: { g: gg.id } }))]);
       if (srcOn("eu") && euKey) gl.push(["eu", "g|eu|" + gg.id, feed("g|eu|" + gg.id, fEu({ f: { g: gg.id } }))]);
       if (srcOn("km")) gl.push(["km", "g|km|" + gg.id, feed("g|km|" + gg.id, fKm({ f: { g: gg.id } }))]);
+      if (srcOn("fw")) gl.push(["fw", "g|fw|" + gg.id, feed("g|fw|" + gg.id, fFw({ f: { g: gg.id } }))]);
       if (srcOn("dp") && dpKey) gl.push(["dp", "g|dp|" + gg.id, feed("g|dp|" + gg.id, fDp({ f: { g: gg.id } }))]);
       gl.filter(function (x) { return srcOn(x[0]); }).forEach(function (x) {
         m.appendChild(el("h2", "sub-h", t("o.songs", { s: srcName(x[0]) })));

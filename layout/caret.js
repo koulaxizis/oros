@@ -25,7 +25,7 @@
     M.chain(doc, sid).forEach(function (f) {
       var fr = L && L.frames ? L.frames[f.id] : null;
       if (!fr) return;
-      fr.lines.forEach(function (ln) { out.push({ fid: f.id, ln: ln }); });
+      fr.lines.forEach(function (ln) { if (!ln.fn) out.push({ fid: f.id, ln: ln }); });
     });
     return out;
   }

@@ -53,7 +53,7 @@ const titleOf = (w, s) => SC.slideItems(w, s.id).filter((x) => x.ph === "title")
 
 test("the catalog, its lists and the guide", () => {
   assert.deepEqual(CMD.ORDER, ["replace", "settext", "textstyle", "colors", "photo", "place", "align", "arrange", "remove", "animate", "add",
-    "pages", "delpages", "movepage", "slide", "bg", "notes", "deck", "rename"]);
+    "pages", "delpages", "movepage", "slide", "bg", "notes", "deck", "rename", "export"]);
   CMD.ORDER.forEach((op) => {
     assert.match(CMD.GUIDE, new RegExp("\\b" + op + ":"), op);
     Object.keys(CMD.CATALOG[op].args).forEach((k) => assert.match(CMD.GUIDE, new RegExp("\\b" + k + "\\b"), op + "." + k));

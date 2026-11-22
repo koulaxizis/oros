@@ -536,7 +536,7 @@
   // and no overtime: "partial"), and a period without work charges
   // nothing. Nothing here touches the stored entries.
   function periodOf(k, per) { return per === "w" ? weekStart(k) : per === "m" ? monthStart(k) : k; }
-  // TS-NIGHT (8.26.00): work past midnight belongs to the working day
+  // TS-NIGHT (8.53.00): work past midnight belongs to the working day
   // it started on. The piece after midnight of an entry shorter than a
   // day that began the day before counts towards that day's minimum
   // and overtime, so a night shift (08:00-01:30) is one day with its

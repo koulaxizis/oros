@@ -125,6 +125,7 @@
       return Promise.resolve(p).then(function () { return k; });
     }
     if (s.op === "watermark") { PL.recipes.watermark(s); return Promise.resolve(1); }
+    if (kind === "ai") return PL.aiedit ? PL.aiedit.run(s, notes) : Promise.resolve(0);   // PL-AI
     // pixels (and dup): each picked layer in turn, the whole layer
     var list = C.pick(d, s).map(function (L) { return L.id; }), done = 0, chain = Promise.resolve();
     var j = s.op === "dup" ? null : RS.job(s);
@@ -140,11 +141,22 @@
     });
     return chain.then(function () { return done; });
   }
+  // GX-2: out (a local write folder or a folder of Claude's) gets a copy
+  var saved = [], outFail = [];
   function exportPic(s) {
     return PL.io.render(s.fmt, s.quality / 100, 1).then(function (blob) {
       if (!blob) return null;
-      var ext = s.fmt === "webp" && blob.type !== "image/webp" ? "png" : s.fmt;
-      return PL.io.saveToPictures(blob, PL.io.fileName(ext));
+      var ext = s.fmt === "webp" && blob.type !== "image/webp" ? "png" : s.fmt, name = PL.io.fileName(ext);
+      return PL.io.saveToPictures(blob, name).then(function (p) {
+        if (p) saved.push(p);
+        if (!s.out) return p;
+        var G = null;
+        try { G = window.parent && window.parent !== window && window.parent.orosGate && typeof window.parent.orosGate.exportAll === "function" ? window.parent.orosGate : null; } catch (e) { G = null; }
+        if (!G) { outFail.push({ to: s.out, why: "gateOff" }); return p; }
+        return Promise.resolve(G.exportAll([s.out], [{ name: name, blob: blob }], "export")).then(function (r) {
+          saved = saved.concat(r.saved); outFail = outFail.concat(r.outFail); return p;
+        }, function () { outFail.push({ to: s.out, why: "error" }); return p; });
+      });
     });
   }
 
@@ -166,9 +178,24 @@
   }
 
   var busy = false;
+  // PL-AI: create, a NEW project from a picture file in Claude's folders
+  function create(key, s) {
+    if (busy || !PL.aiedit || !PL.fs()) { PL.toast(t("as.bad")); back(key, { failed: 1, why: busy ? "busy" : "gone" }); return; }
+    busy = true;
+    PL.saveNow().then(function () { return PL.aiedit.create(s); }).then(function (r) {
+      busy = false;
+      // nothing that existed changed: the new project is the owner's to keep or delete (no Undo deletes it)
+      back(key, { ok: 1, n: 0, d: 0, per: [{ name: r.name, n: 1 }], cut: 0, made: 1, files: 0, notes: [], tok: "" });
+      PL.toast(t("ai.made", { name: r.name }));
+    }, function (e) {
+      busy = false;
+      back(key, { failed: 1, why: e && e.note === "aiOutside" ? "outside" : "nofile", notes: [e && e.note || "aiNoFile"] });
+    });
+  }
   function edit(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "";
     var chk = C.check(rq && rq.steps), known = {};
+    if (chk.ok && chk.steps[0].op === "create") { create(key, chk.steps[0]); return; }
     PL.index().projects.forEach(function (e) { known[e.id] = e; });
     var ids = rq && Array.isArray(rq.docs) ? rq.docs.filter(function (id) { return typeof id === "string" && known[id]; }).slice(0, 500) : [];
     if (!chk.ok || !ids.length || busy || !PL.fs()) {
@@ -226,6 +253,9 @@
           var rep = err && !rec ? { failed: 1, why: "error" }
             : { ok: 1, n: total, d: snaps.length, per: per.slice(0, 50), cut: 0, made: 0, files: files, notes: notes.slice(), tok: rec ? rec.tok : "" };
           if (stopped) rep.stopped = 1;
+          if (rep.ok && saved.length) rep.saved = saved.slice(0, 60);
+          if (rep.ok && outFail.length) rep.outFail = outFail.slice(0, 4);
+          saved = []; outFail = [];
           back(key, rep);
           var msg = stopped ? t("as.stopped") : !total ? (files ? t("as.files", { n: files }) : t("as.done0"))
             : (snaps.length === 1 ? t("as.done1", { n: total }) : t("as.done", { n: total, d: snaps.length })) + (files ? " " + t("as.files", { n: files }) : "");

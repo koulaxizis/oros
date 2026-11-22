@@ -770,16 +770,23 @@
   }
 
 
+  // DOCK-CLEAR (Chris 2026-11-22): toasts keep clear of a pinned Dock at
+  // any edge. launcher.js sets --tb-h (bottom), --ld-sl/--ld-sr/--ld-st
+  // (left/right/top) only while a pinned Dock is shown; 0 otherwise.
+  var T_TOP = 'calc(48px + env(safe-area-inset-top,0px) + var(--ld-st,0px))';
+  var T_BOTTOM = 'calc(20px + var(--tb-h,0px) + env(safe-area-inset-bottom,0px))';
+  var T_LEFT = 'calc(20px + var(--ld-sl,0px))';
+  var T_RIGHT = 'calc(20px + var(--ld-sr,0px))';
   function getPositionStyles(position) {
     const map = {
-      'top-left': { top: 'calc(48px + env(safe-area-inset-top,0px))', left: '20px', right: 'auto' },
-      'top': { top: 'calc(48px + env(safe-area-inset-top,0px))', left: '50%', transform: 'translateX(-50%)', right: 'auto' },
-      'top-right': { top: 'calc(48px + env(safe-area-inset-top,0px))', right: '20px', left: 'auto' },
-      'right': { top: '50%', right: '20px', transform: 'translateY(-50%)', left: 'auto' },
-      'bottom-right': { bottom: '20px', right: '20px', left: 'auto', top: 'auto' },
-      'bottom': { bottom: '20px', left: '50%', transform: 'translateX(-50%)', right: 'auto', top: 'auto' },
-      'bottom-left': { bottom: '20px', left: '20px', right: 'auto', top: 'auto' },
-      'left': { top: '50%', left: '20px', transform: 'translateY(-50%)', right: 'auto' }
+      'top-left': { top: T_TOP, left: T_LEFT, right: 'auto' },
+      'top': { top: T_TOP, left: '50%', transform: 'translateX(-50%)', right: 'auto' },
+      'top-right': { top: T_TOP, right: T_RIGHT, left: 'auto' },
+      'right': { top: '50%', right: T_RIGHT, transform: 'translateY(-50%)', left: 'auto' },
+      'bottom-right': { bottom: T_BOTTOM, right: T_RIGHT, left: 'auto', top: 'auto' },
+      'bottom': { bottom: T_BOTTOM, left: '50%', transform: 'translateX(-50%)', right: 'auto', top: 'auto' },
+      'bottom-left': { bottom: T_BOTTOM, left: T_LEFT, right: 'auto', top: 'auto' },
+      'left': { top: '50%', left: T_LEFT, transform: 'translateY(-50%)', right: 'auto' }
     };
     return map[position] || map['bottom-right'];
   }
@@ -829,7 +836,7 @@
   // SW-Q1: "Update now" under such a notice (index.html orosUpdateNow).
   function updateNowText(state, reason) {
     return window.t(state === 'failed' ? 'update.now.' + ({ space: 1, network: 1, offline: 1 }[reason] ? reason : 'failed')
-      : state === 'current' ? 'update.now.current' : 'update.now.working');
+      : state === 'current' || state === 'system' || state === 'local' ? 'update.now.' + state : 'update.now.working');
   }
   window.orosUpdateNowText = updateNowText;
   function addUpdateNow(el) {
@@ -847,7 +854,7 @@
       btn.disabled = true;
       window.orosUpdateNow(function (st, why) {
         msg.textContent = updateNowText(st, why);
-        btn.disabled = st === 'checking' || st === 'reloading';
+        btn.disabled = st === 'checking' || st === 'reloading' || st === 'system';
       });
     };
     row.append(btn, msg);

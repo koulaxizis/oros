@@ -77,6 +77,21 @@ test("W5: documents and actions through the gate", () => {
   assert.equal(G.ACT_WRITE.indexOf("do_action"), -1, "an action needs the window, not a change switch per app");
 });
 
+// GL-9: a list over the cap loses words of its longest descriptions, never its tools
+test("relay: an oversized device list is shortened, not dropped", () => {
+  const list = new Array(40).fill(0).map((_, i) => ({ name: "tool_" + "abcdefghijklmnopqrstuvwxyz"[i % 26] + "abcdefghijklmnopqrstuvwxyz"[Math.floor(i / 26)],
+    description: "w".repeat(i < 5 ? 7900 : 3000), inputSchema: { type: "object", properties: { a: { type: "string" } } } }));
+  const fit = R.fitDevTools(JSON.parse(JSON.stringify(list)), 100000);
+  assert.equal(fit.length, 40, "every tool stays");
+  assert.ok(JSON.stringify(fit).length <= 100000, "fits the cap");
+  assert.ok(fit.some((t) => /shortened/.test(t.description)), "the longest descriptions carry the note");
+  fit.forEach((t) => assert.ok(t.description.length >= 400, t.name));
+  const same = R.fitDevTools(JSON.parse(JSON.stringify(list)), 1e7);
+  assert.deepEqual(same, list, "a list under the cap is untouched");
+  const kept = R.cleanDevTools(list.map((t) => Object.assign({}, t, { description: "v".repeat(8000) })));
+  assert.equal(kept.length, 40, "40 tools of 8000 characters pass the relay");
+});
+
 test("relay: the device's tools are cleaned and merged", () => {
   const ok = { name: "change_item", description: "x", inputSchema: { type: "object", properties: {} }, annotations: { destructiveHint: true } };
   const clean = R.cleanDevTools([
@@ -97,8 +112,8 @@ test("relay: the device's tools are cleaned and merged", () => {
   ]).map((t) => t.annotations);
   assert.deepEqual(ann, [{ readOnlyHint: false, destructiveHint: true }, { readOnlyHint: false, destructiveHint: false },
                          { readOnlyHint: true, destructiveHint: false }], "no annotations = destructive, as MCP's default");
-  const big = [{ name: "huge_tool", description: "y".repeat(8000), inputSchema: { type: "object", properties: { a: { type: "string", description: "z".repeat(200000) } } } }];
-  assert.deepEqual(R.cleanDevTools(big), [], "an oversized list is dropped");
+  const big = [{ name: "huge_tool", description: "y".repeat(8000), inputSchema: { type: "object", properties: { a: { type: "string", description: "z".repeat(500000) } } } }];
+  assert.deepEqual(R.cleanDevTools(big), [], "a list that cannot fit loses the tool that will not shorten");
   assert.equal(R.cleanDevTools(new Array(30).fill(0).map((_, i) => ({ name: "tool_" + "abcdefghijklmnopqrstuvwxyz"[i % 26] + i, description: "", inputSchema: { type: "object" } }))).length, 0,
     "names with digits are refused");
   const merged = R.withDevTools(clean);
@@ -118,14 +133,15 @@ test("relay: the device's tools are cleaned and merged", () => {
 test("closed orOS: the device runs only the changes the relay may queue", () => {
   // 6.05.02 (Chris 2026-11-10 «Πρέπει να μπορείς να δουλεύεις και με κλειστό το orOS»):
   // every relay change waits, budget_delete and budget_transfer too
-  const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true) && R.LIVE_ONLY.indexOf(t.name) < 0 && R.META_TOOLS.indexOf(t.name) < 0).map((t) => t.name);
+  // (ST-IMP: studio_import / montage_import are edit_in_app by the time anything waits)
+  const relayWrites = R.TOOLS.filter((t) => !(t.annotations && t.annotations.readOnlyHint === true) && R.LIVE_ONLY.indexOf(t.name) < 0 && R.META_TOOLS.indexOf(t.name) < 0 && !R.IMPORT_TOOLS[t.name]).map((t) => t.name);
   assert.deepEqual(R.LIVE_ONLY, ["budget_refresh"], "BK-AO: a bank read needs the device's key, never queued");
   assert.ok(G.QUEUED.indexOf("budget_refresh") < 0);
   assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED, Object.keys(R.FILE_CHANGE), Object.keys(R.SCREEN_TOOLS)).sort(), "5.96.00: changes and links by ref too; F3: Claude's folders; GATE-SCREEN: the screen tools");
   assert.ok(G.QUEUED.indexOf("budget_delete") >= 0 && G.QUEUED.indexOf("budget_transfer") >= 0);
   assert.deepEqual(Object.keys(R.SCREEN_TOOLS).sort(), G.ACT_OPEN.concat(["edit_in_app"]).sort(), "GATE-SCREEN: the relay keeps the same screen tools the device holds");
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
-  assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");
+  assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) \{ ranDrop\(it\.id\); throw KEEP; \}/, "applyQueue checks the list (GQ-KEEP: one it does not know stays queued for a newer orOS)");
 });
 
 test("closed orOS: a queued deletion of items is asked on the device first, one question per call (7.44.00)", () => {

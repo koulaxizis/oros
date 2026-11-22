@@ -2081,7 +2081,7 @@
     crm_contract: "crm_contract = a contract with a CRM partner (title, start, end, reminder before it ends)",
     // AS-ADD5 (wave A4, assistant/additems2.js)
     timesheet: "timesheet = time worked, in Timesheet (billed, and the refs of the invoice it went on and the event it was for, when known)",
-    // TS-GATE (8.26.00, assistant/additems2.js)
+    // TS-GATE (8.53.00, assistant/additems2.js)
     timesheet_project: "timesheet_project = a project in Timesheet with its client (a client not there yet is made), hourly rate, day minimum and overtime",
     meals: "meals = a recipe in Meal Planner",
     travel_plan: "travel_plan = an entry in a trip's itinerary in Travel (a flight, stay, visit, meal…)",
@@ -2243,7 +2243,7 @@
     ["contact", ["crm"], { type: "string", description: "crm: the ref of the contact (from search_data or create_items) who is this customer, or its contact person; CRM links them." }],
     ["role", ["crm"], { type: "string", description: "crm with contact: that person's role, e.g. Accounts." }],
     ["client", ["invoices", "quote", "timesheet_project"], { type: "string", description: "invoices: the client's name as in Invoices (an unknown one is written on the draft only; the user picks or adds the client before issuing). quote: the client's name as in Quote (an unknown one is added there as a client). timesheet_project: the client's name in Timesheet (a new one is made when none has it)." }],
-    // TS-GATE (8.26.00): a Timesheet project's billing; an entry's billed, invoice and event
+    // TS-GATE (8.53.00): a Timesheet project's billing; an entry's billed, invoice and event
     ["rate", ["timesheet_project"], { type: "number", description: "timesheet_project: the hourly rate in the app's currency, e.g. 20." }],
     ["day_minimum", ["timesheet_project"], { type: "number", description: "timesheet_project: the least a working day is charged (a day rate), e.g. 200; time up to it is covered." }],
     ["overtime_after", ["timesheet_project"], { type: "number", description: "timesheet_project: hours of a day after which time is overtime, e.g. 10." }],
@@ -2927,7 +2927,8 @@
   var TOOL_KB_COLS = {
     name: "kanban_add_columns",
     description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column, and rename columns " +
-      "(rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. " +
+      "(rename_columns: each by its id or name, to a new name), and set a column up as a step of the Author Portal production flow " +
+      "(portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay, an empty text clears it). Give any of the three. " +
       "The user sees the columns on one card and must press Add; nothing is saved before that. The card has Undo.",
     params: { type: "object", properties: {
       board: { type: "string", description: "The board name or id (app_summary with app kanban)." },
@@ -2938,7 +2939,16 @@
       rename_columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
         column: { type: "string", description: "The column's id or current name." },
         name: { type: "string", description: "Its new name, at most 60 characters." } },
-        required: ["column", "name"] } } },
+        required: ["column", "name"] } },
+      portal_columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
+        column: { type: "string", description: "The column's id or current name." },
+        step: { type: "boolean", description: "true: a step the author sees in the Author Portal; false: not a step (its texts are kept)." },
+        finish: { type: "boolean", description: "true: a finish; when the book reaches it, the author's bar hides until the card reaches the next step." },
+        name: { type: "string", description: "The step's name for the author (Greek), at most 80 characters; the column's name when empty." },
+        name_en: { type: "string", description: "The step's name in English (optional), at most 80 characters." },
+        about: { type: "string", description: "The short explanation the author sees on hover (Greek), at most 600 characters." },
+        about_en: { type: "string", description: "The explanation in English (optional), at most 600 characters." } },
+        required: ["column"] } } },
       required: ["board"] }
   };
 
@@ -3014,6 +3024,55 @@
     var p = typeof v === "string" ? v.replace(/\s+/g, " ").trim().replace(/\/+$/, "") : "";
     if (/^local:/i.test(p)) return p.length <= 1030 && !/(^|[\/\\])\.\.([\/\\]|$)/.test(p) && !/[\u0000-\u001f]/.test(p) ? p.replace(/[\/\\]+$/, "") : "";
     return p.indexOf("/internal/") === 0 && !/(^|\/)\.\.(\/|$)/.test(p) && p.length <= 400 ? p : "";
+  }
+  // GX-1 (Chris 2026-11-21 «εξαγωγή σε τοπικό φάκελο ή/και orOS Files»,
+  // then «για όλα τα apps που έχουν exports»): every export tool takes
+  // out, one or two places the file also goes: a local write folder the
+  // owner opened (local:<root>/<folder>) and/or a folder of Claude's on
+  // the orOS disk (Files at «may change»; e.g. "Drive/Books/Proofs").
+  // The device checks both again when it writes; nothing is replaced.
+  var OUT_DESC = "Also save the file in: a local write folder the owner opened for Claude (local:<root>/<folder>), and/or a folder of Claude's on the orOS disk " +
+    "(e.g. \"Drive/Books/Proofs\"; Files must be at «Claude may also change»). A list of one or two places. Missing folders are made; nothing is overwritten (a taken name gets -2, -3). " +
+    "The answer's saved lists the paths (files_link or files_read take the orOS ones).";
+  var OUT_SCHEMA = { type: "array", items: { type: "string" }, maxItems: 2, description: OUT_DESC };
+  var OUT_ERR = "out is a local write folder the owner opened for Claude (local:<root>/<folder>) or a folder of Claude's on the orOS disk (e.g. Drive/Books/Proofs), or a list of the two.";
+  function outPlace(v) {
+    var p = typeof v === "string" ? v.normalize("NFC").replace(/\s+/g, " ").trim().replace(/\s*›\s*/g, "/").replace(/\\/g, "/").replace(/\/+$/, "") : "";
+    if (!p) return "";
+    if (/^local:/i.test(p)) return diskPath(p);
+    if (p.indexOf("/internal/") !== 0) p = "/internal/" + p.replace(/^\/+/, "");
+    if (p.length > 400 || /[\u0000-\u001f]/.test(p)) return "";
+    var segs = p.slice(10).split("/");
+    for (var i = 0; i < segs.length; i++) if (!segs[i] || segs[i] === "." || segs[i] === ".." || segs[i].charAt(0) === ".") return "";
+    return p.replace(/\/+/g, "/");
+  }
+  // args.out → { ok, list } | { ok: false, err }
+  function normOut(v) {
+    if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) return { ok: true, list: [] };
+    var raw = Array.isArray(v) ? v : [v];
+    if (raw.length > 2) return { ok: false, err: OUT_ERR };
+    var list = [];
+    for (var i = 0; i < raw.length; i++) {
+      var o = outPlace(raw[i]);
+      if (!o) return { ok: false, err: OUT_ERR };
+      if (list.indexOf(o) < 0) list.push(o);
+    }
+    return { ok: true, list: list };
+  }
+  var OUT_WHY = /^(noBridge|gateOff|locked|notAllowed|paused|outside|badName|noDisk|nameTaken|notAllowedRoot|badPath|bridgePaused|needsReconnect|notThere|notFolder|timeout|error)$/;
+  var OUT_SAY = { gateOff: "orOS Gate is off", locked: "orOS is locked", notAllowed: "Files is not at «Claude may also change»", paused: "the owner paused Claude's changes",
+                  outside: "that folder is not one of Claude's folders", noDisk: "the orOS disk is not reachable", nameTaken: "no free name was left",
+                  noBridge: "no local folder is open on this device", notAllowedRoot: "that is not a local write folder the owner opened for Claude" };
+  // the app's { saved, outFail } → the model's saved / save_failed
+  function outReport(rep, o) {
+    var saved = (Array.isArray(rep.saved) ? rep.saved : []).filter(function (x) { return typeof x === "string" && x.length <= 1100 && !/[\u0000-\u001f]/.test(x); }).slice(0, 4);
+    if (saved.length) o.saved = saved;
+    var bad = (Array.isArray(rep.outFail) ? rep.outFail : []).filter(isObj).slice(0, 4).map(function (f) {
+      var why = typeof f.why === "string" && OUT_WHY.test(f.why) ? f.why : "error";
+      return { to: hsStr(f.to, 1100), why: why, means: OUT_SAY[why] || "the file could not be saved there" };
+    });
+    if (bad.length) o.save_failed = bad;
+    return o;
   }
   function findFile(list, want) {
     want = String(want || "").replace(/\s+/g, " ").trim().toLowerCase();
@@ -3372,7 +3431,8 @@
         title: { type: "string", description: "The Publishing title whose linked Layout document to use (Document setup › Publishing title in Layout), instead of document." },
         edition: { type: "string", description: "The name of the document's EPUB edition when it has more than one; left out: its first EPUB edition." },
         layout: { type: "string", "enum": EP_LAYOUTS, description: "Override the edition's layout for this export; left out: as the edition says." },
-        mark_ready: { type: "boolean", description: "true when the user also wants it marked ready on the title's e-book format in Publishing (only done when the check finds no errors)." }
+        mark_ready: { type: "boolean", description: "true when the user also wants it marked ready on the title's e-book format in Publishing (only done when the check finds no errors)." },
+        out: OUT_SCHEMA
       }
     }
   };
@@ -3382,7 +3442,9 @@
     var doc = hsStr(a.document, EP_NAME), title = hsStr(a.title, EP_NAME), ed = hsStr(a.edition, 60);
     if (!doc && !title) return { ok: false, err: "Give the Layout document's name (document) or its Publishing title (title)." };
     if (a.layout !== undefined && a.layout !== null && a.layout !== "" && EP_LAYOUTS.indexOf(a.layout) < 0) return { ok: false, err: "layout is reflowable, fixed or pictures." };
-    return { ok: true, doc: doc, title: doc ? "" : title, edition: ed, layout: EP_LAYOUTS.indexOf(a.layout) >= 0 ? a.layout : "", ready: a.mark_ready === true ? 1 : 0 };
+    var out = normOut(a.out);
+    if (!out.ok) return out;
+    return { ok: true, doc: doc, title: doc ? "" : title, edition: ed, layout: EP_LAYOUTS.indexOf(a.layout) >= 0 ? a.layout : "", ready: a.mark_ready === true ? 1 : 0, out: out.list };
   }
   var EP_CODE = /^[a-z][a-z0-9-]{0,19}$/, EP_PATH = /^\/internal\/Layout\/EPUB\/[^\/]{1,200}\.epub$/;
   // Layout's report → what the model gets (numbers and codes only).
@@ -3411,7 +3473,7 @@
     if (rep.fontsMissing) o.fontsMissing = n(rep.fontsMissing);
     if (rep.fontsObfuscated) o.fontsObfuscated = n(rep.fontsObfuscated);
     if (/^(yes|errors|noFormat|noDisk)$/.test(rep.ready || "")) o.markedReady = rep.ready;
-    return o;
+    return outReport(rep, o);
   }
 
   // export_pdf (LY-PRO W1, item 31): a print PDF of a Layout document,
@@ -3439,7 +3501,8 @@
         spreads: { type: "boolean", description: "Facing pages side by side (default false: single pages, as printers want)." },
         downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." },
         creep: { type: "number", description: "Creep for a saddle-stitched book in mm, 0-5 (default 0): the innermost pages' content moves this far towards the spine, the outer ones less." },
-        out: { type: "string", description: "Also save the PDF in a local write folder the owner opened for Claude: local:<root>/<folder> (files_list without path lists them; a taken name gets -2, -3). Temporary." }
+        tagged: { type: "boolean", description: "A tagged, accessible PDF (PDF/UA): reading order, headings, notes, picture descriptions, language, link descriptions (default false)." },
+        out: OUT_SCHEMA
       }
     }
   };
@@ -3463,10 +3526,11 @@
     var bleed = typeof a.bleed === "boolean" ? a.bleed : preset !== "screen";
     var creep = a.creep === undefined || a.creep === null || a.creep === "" ? 0 : Number(a.creep);
     if (!isFinite(creep) || creep < 0 || creep > 5) return { ok: false, err: "creep is 0-5 (mm)." };
-    var out = a.out == null || a.out === "" ? "" : diskPath(a.out);
-    if (out && !/^local:/i.test(out) || a.out && !out) return { ok: false, err: "out is a local write folder the owner opened for Claude: local:<root>/<folder>." };
+    var out = normOut(a.out);
+    if (!out.ok) return out;
+    out = out.list;
     return { ok: true, doc: doc, preset: preset, pages: pages === "all" ? "" : pages, bleed: bleed ? 1 : 0, marks: marks,
-             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, out: out };
+             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, tagged: a.tagged === true ? 1 : 0, out: out };
   }
   var PDF_PATH = /^\/internal\/Layout\/PDF\/[^\/]{1,200}\.pdf$/, PF_CODE = /^[a-z][a-zA-Z0-9]{0,19}$/;
   // Layout's report → what the model gets (numbers, codes and pages only).
@@ -3488,9 +3552,8 @@
     });
     o.preflight = { errors: pf.filter(function (p) { return p.severity === "error"; }).length, warnings: pf.filter(function (p) { return p.severity === "warning"; }).length, problems: pf };
     if (rep.down) o.pictures_downsampled = Math.floor(n(rep.down));
-    if (typeof rep.local === "string" && /^local:[^\u0000-\u001f]{1,1100}$/.test(rep.local)) o.local_copy = rep.local;
-    if (typeof rep.localWhy === "string" && PF_CODE.test(rep.localWhy)) o.local_copy_failed = rep.localWhy;
-    return o;
+    if (isObj(rep.tagged)) o.tagged = { elements: Math.floor(n(rep.tagged.elems)), figures: Math.floor(n(rep.tagged.figures)), links: Math.floor(n(rep.tagged.links)) };
+    return outReport(rep, o);
   }
 
   // The tools phase 1 offered (searching only); kept for the tests.
@@ -3499,7 +3562,7 @@
   // Atelier atelier/commands.js) }. Every field any command takes is
   // declared once with one JSON type (a test checks that no name has
   // two types across the apps), so strict providers keep them.
-  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" }, photolab: { what: "pictures", noun: "picture" }, slides: { what: "presentations", noun: "presentation" }, writer: { what: "documents", noun: "document" }, spreadsheet: { what: "sheets", noun: "sheet" }, montage: { what: "projects", noun: "project" }, studio: { what: "projects", noun: "project" }, whiteboard: { what: "boards", noun: "board" }, mindmap: { what: "maps", noun: "map" } };
+  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" }, photolab: { what: "pictures", noun: "picture" }, slides: { what: "presentations", noun: "presentation" }, writer: { what: "documents", noun: "document" }, spreadsheet: { what: "sheets", noun: "sheet" }, montage: { what: "projects", noun: "project" }, studio: { what: "projects", noun: "project" }, whiteboard: { what: "boards", noun: "board" }, mindmap: { what: "maps", noun: "map" }, mockups: { what: "mockups", noun: "mockup" } };
   function specType(spec) {
     if (spec.t === "num" || spec.t === "int") return "number";
     if (spec.t === "bool") return "boolean";
@@ -3532,13 +3595,13 @@
   var EDIT_SEL = "In Atelier, elements are picked with ids (element ids from read_in_app, comma separated), pages (\"\" all, odd, even, first, last or positions like 2-4,6; 1 = the first page), " +
     "what (\"\" every element but page backgrounds, or text, photo, video, shape, icon, line, table, chart, bg) and has (words in the text or a photo's file name); " +
     "a locked element is moved or removed only when named by id. Lengths are in the design's own unit (px, or mm for print). Leave a field out to keep it as it is. " +
-    "In Slides the same four fields pick objects, with pages meaning slides (see the Slides commands). In Writer paragraphs are picked with paras, what and has (see the Writer commands). In Spreadsheet the documents are sheets and cells are picked with range in A1 notation (see the Spreadsheet commands). In Montage the documents are video projects and clips are picked with ids, what, row and has (see the Montage commands). In Studio the documents are song projects; tracks are picked with tracks and what, clips also with ids and has (see the Studio commands). In Whiteboard the documents are boards and objects are picked with ids, what, has and frame (see the Whiteboard commands). In Mind map the documents are maps and ideas are picked with ids, has, branch and level (see the Mind map commands).";
+    "In Slides the same four fields pick objects, with pages meaning slides (see the Slides commands). In Writer paragraphs are picked with paras, what and has (see the Writer commands). In Spreadsheet the documents are sheets and cells are picked with range in A1 notation (see the Spreadsheet commands). In Montage the documents are video projects and clips are picked with ids, what, row and has (see the Montage commands). In Studio the documents are song projects; tracks are picked with tracks and what, clips also with ids and has (see the Studio commands). In Whiteboard the documents are boards and objects are picked with ids, what, has and frame (see the Whiteboard commands). In Mind map the documents are maps and ideas are picked with ids, has, branch and level (see the Mind map commands). In Mockups the documents are 3D book mockups; each command changes the whole mockup (see the Mockups commands).";
   function editTool(cats) {
     var apps = Object.keys(cats || {}).filter(function (a) { return EDIT_APP[a]; }).sort();
     return {
       name: "edit_in_app",
       description: "Change anything in the user's documents of an app on their instruction: texts, fonts, sizes, colours, photos (filters, black and white, adjustments, masks, background removal), " +
-        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names, animation and page timing, new elements, the brand kit, new sizes, files to download, cell values, formulas, cell formats, rows and columns, sorting, video clips (titles, speed, sound, looks, transitions, order, cuts), song projects (track volume, pan, mute, solo, names, order, new and deleted tracks, clip gain, fades, places and cuts, MIDI notes, tempo, loop), whiteboards (notes, texts, shapes, frames, arrows between them, colours, places, grids, removing), mind maps (ideas, their text, colours, emoji, notes, links, ticks, styles, moving and sorting branches, cross-links, boundaries, layout); " +
+        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names, animation and page timing, new elements, the brand kit, new sizes, files to download, cell values, formulas, cell formats, rows and columns, sorting, video clips (titles, speed, sound, looks, transitions, order, cuts), song projects (track volume, pan, mute, solo, names, order, new and deleted tracks, clip gain, fades, places and cuts, MIDI notes, tempo, loop), whiteboards (notes, texts, shapes, frames, arrows between them, colours, places, grids, removing), mind maps (ideas, their text, colours, emoji, notes, links, ticks, styles, moving and sorting branches, cross-links, boundaries, layout), book mockups (trim, pages, binding, cover pictures, e-book on a phone or tablet screen, camera angle, background, picture export); " +
         "or make a new design from the user's description (designs new, create first, then add, bg, pagetime…). Read the document first with read_in_app to know its elements and their ids. " +
         "The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back. " +
         "Use only these commands and fields (any other is refused and the reason comes back). " + EDIT_SEL + "\n" +
@@ -3547,7 +3610,7 @@
         type: "object",
         properties: {
           app: { type: "string", "enum": apps },
-          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets, for Montage video projects, for Studio song projects, for Whiteboard boards, for Mind map maps: open, named or all." },
+          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets, for Montage video projects, for Studio song projects, for Whiteboard boards, for Mind map maps, for Mockups book mockups: open, named or all (Photo Lab and Mockups also new, with create first)." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
           steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } },
           dry_run: { type: "boolean", description: "Only through orOS Gate: say what the commands would change (per document, with notes) without changing anything." }
@@ -5189,7 +5252,7 @@ normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: r
         normAutomation: normAutomation, normRule: normRule, TOOL_RULE: TOOL_RULE, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
-    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
+    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, normOut: normOut, outReport: outReport, OUT_SCHEMA: OUT_SCHEMA, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
     DEV_MAX: DEV_MAX, DEV_FILE: DEV_FILE, DEV_TOTAL: DEV_TOTAL, DEV_PHONE: DEV_PHONE, checkDev: checkDev
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

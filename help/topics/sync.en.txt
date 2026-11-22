@@ -87,6 +87,9 @@ In `Settings`, under `Sync`, `Get from cloud` fetches the latest data and `Send 
 - [[Ctrl+Alt+Shift+P]] push to the cloud
 - [[Ctrl+Alt+Shift+R]] connect or reconnect Dropbox
 
+## Space in the cloud
+In `Settings`, under `Sync`, `Space in the cloud` shows how much room your cloud has left: a bar, the free space, and how much is used of how much. For Dropbox this is your whole Dropbox account, not only orOS. For WebDAV or Nextcloud it is what the server reports for your account; a server with no limit, or one that does not say, shows only the space used (or that it does not say). `Refresh` asks again. When the cloud is almost full, new files may not upload: free some space, for example with `Unused files in the cloud`. The `Device storage` tile in the Overview is the space on this device's browser, not the cloud.
+
 ## Unused files in the cloud
 Files you delete or replace in [Files](app:files) leave their old encrypted copies in your cloud. Nobody can read them, but they take space. In `Settings`, under `Sync`, `Unused files in the cloud` › `Check` shows how many there are and how much space they take; it changes nothing. `Clean up` (tap twice) then removes only copies that no file uses any more and that were stored at least 30 days ago. Nothing on your devices changes.
 

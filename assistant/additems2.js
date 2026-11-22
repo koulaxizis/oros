@@ -13,7 +13,7 @@
 // canonical form, so opening the app rewrites nothing:
 //   timesheet  addEntry { id, p, desc, s, e, billed, task?, tags?, iv?, src?, m }
 //              through mergeTimesheet (lists sorted by id); TS-GATE
-//              (8.26.00): billed, the Invoices document it went on
+//              (8.53.00): billed, the Invoices document it went on
 //              (iv, an invoice's ref) and the Calendar event it was
 //              for (src "cal:<event>:<day>", an event's ref)
 //   timesheet_project  TS-GATE: a project { id, name, client, color,
@@ -210,7 +210,7 @@
     return { ok: true, data: C.mergeTimesheet(d, d) };
   }
 
-  // ---------- 1b. Timesheet: a project (TS-GATE, 8.26.00) ----------
+  // ---------- 1b. Timesheet: a project (TS-GATE, 8.53.00) ----------
   // timesheet.js's project dialog: a project of a client (made when no
   // client has the name), its hourly rate and, optionally, a day
   // minimum (minAmt, the day rate) and overtime after so many hours a

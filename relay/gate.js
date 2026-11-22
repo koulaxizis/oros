@@ -462,7 +462,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_add_columns",
-    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
+    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name), and sets a column up as a step of the Author Portal production flow (portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay as they are, an empty text clears it). Give any of the three. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
     inputSchema: {
       type: "object",
       properties: {
@@ -483,6 +483,20 @@ export const TOOLS = [
             name: { type: "string", description: "Its new name, at most 60 characters." }
           },
           required: ["column", "name"],
+          additionalProperties: false
+        } },
+        portal_columns: { type: "array", minItems: 1, maxItems: 20, items: {
+          type: "object",
+          properties: {
+            column: { type: "string", description: "The column's id or current name." },
+            step: { type: "boolean", description: "true: a step the author sees in the Author Portal; false: not a step (its texts are kept)." },
+            finish: { type: "boolean", description: "true: a finish; when the book reaches it, the author's bar hides until the card reaches the next step." },
+            name: { type: "string", maxLength: 80, description: "The step's name for the author (Greek); the column's name when empty." },
+            name_en: { type: "string", maxLength: 80, description: "The step's name in English (optional)." },
+            about: { type: "string", maxLength: 600, description: "The short explanation the author sees on hover (Greek)." },
+            about_en: { type: "string", maxLength: 600, description: "The explanation in English (optional)." }
+          },
+          required: ["column"],
           additionalProperties: false
         } }
       },
@@ -588,6 +602,72 @@ export const TOOLS = [
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
   },
+  // CF-ASK (Chris 2026-11-22 «Πρόσθεσε τους φακέλους που χρειάζεσαι, σου
+  // δίνω έγκριση»): the same question for a folder of the orOS disk, so
+  // Claude asks for one of «Claude's folders» instead of the owner adding
+  // it in Settings. The owner answers with one tap on any device on screen.
+  {
+    name: "claude_folders_request",
+    description: "Asks the owner to add a folder of the orOS disk to Claude's folders (the folders files_list, files_read, files_write, studio_import, montage_import and export out may use), e.g. \"Studio/Podcasts\". The owner answers with one tap («Open for Claude») on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). The folder need not exist yet: files_write makes it. Never the whole disk, the Trash, or a folder that looks like keys or secrets. Writing there also needs the owner's switch for Files at write. Ask only for the folder the work needs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The folder on the orOS disk, as Files shows it (\"Studio/Podcasts\") or as an /internal/ path (\"/internal/Studio/Podcasts\")." },
+        access: { type: "string", enum: ["read", "write"], description: "What the work needs there, shown to the owner: read (default) or write (new and changed files; every change is notified and undoable, deletions are asked on the device)." },
+        reason: { type: "string", description: "One line for the owner: what it is for." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  // ST-IMP (Chris 2026-11-21, dogfooding the podcast «Πλανόδιο»): a
+  // project file Claude made opens in Studio or Montage as a NEW project.
+  // Each is edit_in_app's create (importCall below), so the owner's
+  // switch, the screen hold, the notice and Undo are edit_in_app's own.
+  // Nothing is ever published: that stays the owner's own button.
+  {
+    name: "studio_import",
+    description: "Opens a .orosstudio project file from Claude's folders on the orOS disk in Studio as a NEW song or podcast project (tracks, clips, effects, markers and its audio), the same as the owner's Import. First bring the file in with files_upload and files_write (or write it with files_write), then pass its path. Nothing that exists changes; the owner is notified and can undo it (undo_change, or Undo in Studio), like every edit_in_app change, and it needs the owner's write switch for Studio. It never publishes anything: no feed, no episode, no upload; publishing stays the owner's own button. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The .orosstudio file on the orOS disk, as files_write or files_list gave it (an /internal/ path, e.g. \"/internal/Claude/Planodio/Planodio-protypo.orosstudio\")." },
+        title: { type: "string", description: "A name for the new project; the file's own name when left out." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
+    name: "montage_import",
+    description: "Opens a .orosmontage project file from Claude's folders on the orOS disk in Montage as a NEW video project (its clips, titles and media), the same as the owner's Import. First bring the file in with files_upload and files_write (or write it with files_write), then pass its path. Nothing that exists changes; the owner is notified and can undo it (undo_change, or Undo in Montage), like every edit_in_app change, and it needs the owner's write switch for Montage. It never publishes or exports anything; that stays the owner's own button. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The .orosmontage file on the orOS disk, as files_write or files_list gave it (an /internal/ path)." },
+        title: { type: "string", description: "A name for the new project; the file's own name when left out." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
+    name: "photolab_import",
+    description: "Opens a picture file from Claude's folders on the orOS disk (one Claude made, ComfyUI's, a photo; jpg, png, webp, svg…) in Photo Lab as a NEW project, the same as the owner's Open. First bring the file in with files_upload and files_write, then pass its path; change it afterwards with edit_in_app (app photolab: generate, nobg, fill, expand, upscale, image and the photo commands). Nothing that exists changes; the owner is notified, and it needs the owner's write switch for Photo Lab. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The picture file on the orOS disk, as files_write or files_list gave it (an /internal/ path in Claude's folders)." },
+        title: { type: "string", description: "A name for the new project; the file's own name when left out." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
   // GL-7 (Chris 2026-11-21 «Πρέπει να βρούμε λύσεις»): a computer left with
   // an old orOS no longer needs the owner at it.
   {
@@ -626,6 +706,28 @@ export const TOOLS = [
   }
 ];
 const TOOL_NAMES = TOOLS.map((t) => t.name);
+// ST-IMP: studio_import / montage_import → edit_in_app's create, which the
+// device checks again (studio|montage commands.js: an /internal/ path of
+// the app's own file type, the only command, designs new). → the call to
+// run, or { err } (for Claude), or null for any other tool.
+export const IMPORT_TOOLS = { studio_import: { app: "studio", ext: ".orosstudio" }, montage_import: { app: "montage", ext: ".orosmontage" },
+  // PL-AI (Chris 2026-11-22): a picture Claude made or brought opens in Photo Lab as a new project
+  photolab_import: { app: "photolab", ext: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".avif", ".svg", ".tif", ".tiff", ".heic"] } };
+export function importCall(p) {
+  const imp = p && Object.prototype.hasOwnProperty.call(IMPORT_TOOLS, p.name) ? IMPORT_TOOLS[p.name] : null;
+  if (!imp) return null;
+  const a = p.arguments && typeof p.arguments === "object" && !Array.isArray(p.arguments) ? p.arguments : {};
+  const path = typeof a.path === "string" ? a.path.trim() : "";
+  const exts = Array.isArray(imp.ext) ? imp.ext : [imp.ext], low = path.toLowerCase();
+  if (!path || path.length > 500 || path.indexOf("/internal/") !== 0 || !exts.some((e) => low.endsWith(e)) || path.split("/").some((x) => x.charAt(0) === ".") ||
+      path.split("/").some((x) => x === "." || x === "..") || /[\\\u0000-\u001f\u007f]/.test(path)) {
+    return { err: p.name + " needs path: the " + exts.join(" / ") + " file's /internal/ path in Claude's folders on the orOS disk (files_upload, then files_write, gives it). Nothing was opened." };
+  }
+  if (a.title !== undefined && typeof a.title !== "string") return { err: p.name + "'s title must be text. Nothing was opened." };
+  const step = { op: "create", from: path };
+  if (a.title) step.title = String(a.title).slice(0, imp.app === "studio" ? 40 : 80);
+  return { name: "edit_in_app", arguments: { app: imp.app, designs: "new", steps: [step] } };
+}
 export const META_TOOLS = ["gate_tools", "gate_call"];
 // GL-5: gate_tools' answer from the list as it is now
 export function gateToolsText(list, name) {
@@ -654,7 +756,11 @@ TOOLS.forEach((t) => { if (t.annotations && t.annotations.readOnlyHint) READ_ONL
 // conversation still sees the tools. Names that clash with ours, odd
 // names and oversized lists are dropped; the device checks every call.
 export const DEV_TOOL_RE = /^[a-z][a-z_]{2,39}$/;
-export const DEV_TOOLS_MAX = 30, DEV_TOOLS_BYTES = 120000;
+// GL-9 (2026-11-21): 30 / 120 KB dropped the whole list once Files at
+// «may change» brought the device's list to 30 tools and ~131 KB; the box
+// is SQLite-backed (2 MB a value), so there is room, and a list over the
+// cap now loses words of its longest descriptions, never its tools.
+export const DEV_TOOLS_MAX = 60, DEV_TOOLS_BYTES = 400000;
 // Ours come first and are never replaced: a device tool with one of
 // our names is dropped (a stale device list can't hide them).
 export function withDevTools(dev) {
@@ -686,6 +792,8 @@ export function isScreenTool(name, args) {
   if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
   return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
 }
+// TRAY-2, CF-ASK: questions for the owner about a folder, kept for a screen
+const FOLDER_ASKS = ["local_folders_request", "claude_folders_request"];
 const LF_NOTE = "Nobody is at an orOS screen now, so the question waits, encrypted, and is asked the next time orOS is on screen on one of the owner's devices (the phone too). Nothing is opened before the owner allows it. Tell the owner to open orOS (on the phone is enough) and answer; change_history shows it pending, and undo_change with change_id cancels it.";
 const SCREEN_NOTE = "This works on the owner's screen (Layout's own work, an app's form or document), and nobody sees orOS right now. It waits, encrypted, and runs the next time orOS is on screen and unlocked on one of the owner's devices, or (Layout's work and edit_in_app) as soon as orOS runs on the owner's computer in the tray or in a minimised orOS window; its report, proofs and previews come only then (read the result afterwards with read_in_app or change_history). Until then change_history shows it pending; undo_change with change_id cancels it. Tell the owner to bring orOS to the front.";
 // closed copy's switches → why Claude may not keep this screen call, or ""
@@ -941,6 +1049,22 @@ export function closedSearch(cp, args, when, pend) {
   if (cp.ans.__ixpart) out.note = (out.note ? out.note + " " : "") + "The copy holds part of the items (" + cp.ans.__ixpart + " in all); open orOS for the rest.";
   return { ok: true, c: "[orOS is closed: this is the copy of " + when + "; refs work for change_item, link_items and link_contact, which wait until orOS opens]\n" + JSON.stringify(out) };
 }
+// Shortens the longest descriptions until the list fits in max bytes
+// (as JSON); the names and schemas stay, so every tool still works.
+const SHORT_NOTE = " … (shortened; orOS checks every argument on the device)";
+export function fitDevTools(list, max) {
+  let size = JSON.stringify(list).length;
+  for (let guard = 0; size > max && guard < 200; guard++) {
+    let big = null;
+    for (const t of list) if (!big || t.description.length > big.description.length) big = t;
+    if (!big || big.description.length <= 400) break;
+    const cut = Math.max(400, big.description.length - (size - max) - SHORT_NOTE.length, Math.floor(big.description.length / 2));
+    big.description = big.description.slice(0, cut) + SHORT_NOTE;
+    size = JSON.stringify(list).length;
+  }
+  while (size > max && list.length) { list.pop(); size = JSON.stringify(list).length; }
+  return list;
+}
 export function cleanDevTools(list) {
   if (!Array.isArray(list)) return [];
   const out = [], seen = {};
@@ -956,7 +1080,7 @@ export function cleanDevTools(list) {
                // MCP's default for a tool that writes is destructive.
                annotations: { readOnlyHint: a.readOnlyHint === true, destructiveHint: a.readOnlyHint === true ? false : a.destructiveHint !== false } });
   }
-  return JSON.stringify(out).length <= DEV_TOOLS_BYTES ? out : [];
+  return fitDevTools(out, DEV_TOOLS_BYTES);
 }
 
 const INSTRUCTIONS = "orOS Gate reads the owner's orOS (a private, encrypted, local-first workspace) through their own open device, " +
@@ -1469,12 +1593,34 @@ function setAtt(ws, a) {
 }
 // The waiting changes a device gets as it connects, oldest first. 6.01.02:
 // one queued after a timeout waits until nb (its late answer may end it).
-export function queueFor(q, now) {
+// GQ-VER (2026-11-22): ver = the device's orOS (verNum; 0 = not said yet):
+// a change that needs a newer orOS (row.mv, minVer) is not sent to it.
+// Left out, every row goes (as before).
+export function queueFor(q, now, ver) {
   const items = [];
-  q.forEach((v, k) => { if (v && !(typeof v.nb === "number" && v.nb > now)) items.push({ id: k.slice(2), c: v.c, t: v.t, s: typeof v.s === "number" ? v.s : 0 }); });
+  q.forEach((v, k) => {
+    if (!v || (typeof v.nb === "number" && v.nb > now)) return;
+    if (ver !== undefined && typeof v.mv === "number" && !(ver >= v.mv)) return;
+    items.push({ id: k.slice(2), c: v.c, t: v.t, s: typeof v.s === "number" ? v.s : 0 });
+  });
   // PEND-1: in the order Claude asked (s: the box's counter), so a change
   // to an item Claude added meanwhile (its p- ref) runs after the add.
   return items.sort((x, y) => x.t - y.t || x.s - y.s).map((x) => ({ id: x.id, c: x.c, t: x.t }));
+}
+// GQ-VER (2026-11-22, Chris: a folder question and an Atelier change
+// queued for the phone never showed): the cached older orOS a phone runs
+// before it updates did not know claude_folders_request and dropped it.
+// The orOS a queued change needs at least (verNum), 0 = any.
+const TOOL_MV = { claude_folders_request: 84500, local_folders_request: 81100 };
+const PL_AI_OPS = ["generate", "nobg", "fill", "expand", "upscale", "image", "create"];
+export function minVer(name, args) {
+  if (Object.prototype.hasOwnProperty.call(TOOL_MV, name)) return TOOL_MV[name];
+  if (name === "edit_in_app" && args && typeof args === "object") {
+    const app = typeof args.app === "string" ? args.app.toLowerCase() : "";
+    if (app === "mockups") return 84600;
+    if (app === "photolab" && Array.isArray(args.steps) && args.steps.some((x) => x && PL_AI_OPS.indexOf(x.op) >= 0)) return 84600;
+  }
+  return 0;
 }
 // "8.13.00" → 81300 (0 when it is not a version)
 export function verNum(s) {
@@ -1895,7 +2041,7 @@ export class GateBox {
     m.seen = now;
     await this.st.put("meta", m);
     const q = await this.st.list({ prefix: "q:" });
-    const items = queueFor(q, now);
+    const items = queueFor(q, now, 0);             // GQ-VER: the rest once the device says its version
     if (items.length) { try { server.send(JSON.stringify({ cq: items })); } catch (e) {} }
     return new Response(null, { status: 101, webSocket: client, headers: { "Sec-WebSocket-Protocol": "gt1" } });
   }
@@ -1909,7 +2055,10 @@ export class GateBox {
     }
     if (typeof msg === "string" && msg.length <= 14 && msg.indexOf("ver:") === 0) {   // GL-6: the device's orOS version
       const n = verNum(msg.slice(4));
-      if (n) { const a = attOf(ws); a.ver = n; a.lt = Date.now(); setAtt(ws, a); }
+      if (n) {
+        const a = attOf(ws), was = a.ver || 0; a.ver = n; a.lt = Date.now(); setAtt(ws, a);
+        if (n !== was) await this.sendNewer(ws, was, n);   // GQ-VER: the changes it can run now
+      }
       return;
     }
     if (msg === "b1") {                              // TRAY-1: a device that runs Layout's work unseen (tray host, desktop window)
@@ -2280,9 +2429,20 @@ export class GateBox {
     if (!on.length) return;
     const q = await this.st.list({ prefix: "q:" }), hd = new Map();
     q.forEach((v, k) => { if (v && v.hd) hd.set(k, v); });
-    const items = queueFor(hd, Date.now());
-    if (!items.length) return;
-    for (const s of on) { try { s.send(JSON.stringify({ cq: items })); } catch (e) {} }
+    for (const s of on) {
+      const items = queueFor(hd, Date.now(), attOf(s).ver || 0);   // GQ-VER
+      if (items.length) { try { s.send(JSON.stringify({ cq: items })); } catch (e) {} }
+    }
+  }
+  // GQ-VER: a device said its version: the waiting changes that need a
+  // newer orOS than it had said (was) and no newer than it has now (ver).
+  async sendNewer(ws, was, ver) {
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    const q = await this.st.list({ prefix: "q:" }), sel = new Map();
+    q.forEach((v, k) => { if (v && typeof v.mv === "number" && v.mv > was && v.mv <= ver) sel.set(k, v); });
+    const items = queueFor(sel, Date.now(), ver);
+    if (items.length) { try { ws.send(JSON.stringify({ cq: items })); } catch (e) {} }
   }
   // A call while no device is open: reads from the copy, changes wait
   // in the queue (since 6.05.02 Budget deletions and transfers too;
@@ -2330,7 +2490,7 @@ export class GateBox {
     // when it has them; create_items (the app in args.app) waits in the
     // queue like the relay's own change tools; the others work on items
     // found in a live session or on the owner's screen, so they need orOS open.
-    if (name === "local_folders_request") {             // TRAY-2: a question for the owner, kept for a screen
+    if (FOLDER_ASKS.indexOf(name) >= 0) {             // TRAY-2, CF-ASK: a question for the owner, kept for a screen
       if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was asked." };
       return await this.queueChange(name, args, kRaw, now, qidWant, LF_NOTE, 1);
     }
@@ -2413,6 +2573,8 @@ export class GateBox {
     // got it; no other device gets it for lateMs (its late answer ends it).
     if (qid === qidWant) row.nb = now + GATE_LIMITS.lateMs;
     if (hd) row.hd = 1;                           // 7.48.00: a deletion waiting for a screen
+    const mv = minVer(name, args);
+    if (mv) row.mv = mv;                          // GQ-VER: only for an orOS that knows it
     await this.st.put("q:" + qid, row);
     const out = { queued: true, pending: true, change_id: qid, note };
     if (name === "create_items" && args && Array.isArray(args.items)) {
@@ -2453,8 +2615,9 @@ export class GateBox {
         try { list = JSON.parse(ans.c); } catch (e) { list = null; }
         if (Array.isArray(list)) {
           const clean = cleanDevTools(list);
-          await this.st.put("devtools", clean);
-          return clean;
+          // GL-9: a list whose tools all fail the checks never wipes the
+          // kept one (a device that has none answers [] and that is kept).
+          if (clean.length || !list.length) { await this.st.put("devtools", clean); return clean; }
         }
       }
     }
@@ -2528,6 +2691,10 @@ export class GateBox {
       const n = this.askUpdate(null);
       return jsonRes(200, rpcOk(id, toolText(n ? "Asked " + n + " open orOS to update now. The orOS desktop app on a computer downloads the newest orOS and switches to it within a few minutes (its launcher 0.9.5 or newer); every orOS reloads by itself when the new version is in. Nothing in the owner's data changes. Check with list_apps in about five minutes." : "No orOS is open right now, so none could be asked. An orOS updates itself when it next starts.", !n)));
     }
+    // ST-IMP: studio_import / montage_import run as edit_in_app's create
+    const imp = importCall(p);
+    if (imp && imp.err) return jsonRes(200, rpcOk(id, toolText(imp.err, true)));
+    if (imp) p = imp;
     if (TOOL_NAMES.indexOf(p.name) < 0 && !(await this.devTools(false)).some((t) => t.name === p.name)) {
       return jsonRes(200, rpcErr(id, -32602, "unknown tool"));
     }
@@ -2580,7 +2747,7 @@ export class GateBox {
       // not refused: it waits like a closed-orOS deletion, for the owner's
       // Delete on a device on screen (offered now, and when one comes on screen).
       const kRaw = await this.unwrapK(tok);
-      ans = kRaw && p.name === "local_folders_request" ? await this.queueChange(p.name, args, kRaw, Date.now(), null, LF_NOTE, 1) :
+      ans = kRaw && FOLDER_ASKS.indexOf(p.name) >= 0 ? await this.queueChange(p.name, args, kRaw, Date.now(), null, LF_NOTE, 1) :
             kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
                  : { ok: false, c: "Nobody answered on the owner's screen and the deletion could not be kept for later. Nothing was deleted. Ask the owner to have orOS on screen and try once more." };
       if (ans.ok) await this.sendHeld();

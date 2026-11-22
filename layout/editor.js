@@ -293,7 +293,7 @@
     // while typing in a frame, its unsaved text flows live
     var doc = LY.inframe ? LY.inframe.layoutDoc(LY.doc) : LY.doc;
     ED.L = R.computeLayout(doc);
-    ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing });
+    ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing, conv: LY.proof ? LY.proof.conv() : null });
     keepPf();
     if (ED.master) {
       var ms = M.find(LY.doc.masters, ED.master);
@@ -305,6 +305,11 @@
   // (read_in_app preflight_now, Chris 2026-11-18): page numbers, at most
   // 200 problems, 30 documents.
   var pfTimer = 0;
+  // Preflight again (a picture landed, the print profile loaded: LY-W9)
+  ED.recheck = function () {
+    if (LY.doc && ED.L) ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing, conv: LY.proof ? LY.proof.conv() : null });
+    ED.render(); updateStatus();
+  };
   function keepPf() {
     clearTimeout(pfTimer);
     pfTimer = setTimeout(function () {
@@ -359,6 +364,8 @@
     ctx.fillRect(0, 0, cv.width, cv.height);
     var getImage = LY.A.get, missing = t("img.missing");
     var vis0 = toWorld(0, 0), vis1 = toWorld(W, H);
+    // a print view (soft proof, one plate, total ink: LY-W9) for the pages only
+    R.setView(LY.proof && LY.proof.view ? LY.proof.view() : null);
 
     world.forEach(function (sp) {
       if (sp.y > vis1[1] + s.bleed || sp.y + sp.h < vis0[1] - s.bleed) return;
@@ -389,6 +396,7 @@
         ctx.strokeRect(-s.bleed, -s.bleed, sp.w + 2 * s.bleed, sp.h + 2 * s.bleed);
       }
     });
+    R.setView(null);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawOverlay();
     if (!ED.preview) drawRulers();
@@ -413,6 +421,30 @@
         ctx.moveTo(x + s.gut, m.t); ctx.lineTo(x + s.gut, s.h - m.b); ctx.stroke();
       }
     }
+    // the baseline grid, when shown (LY-W5b)
+    var bgd = LY.prefs.bgShow === 1 && doc.setup.ext && doc.setup.ext.bg;
+    if (bgd && bgd.i >= 1 && bgd.i * sc >= 3) {
+      ctx.strokeStyle = "rgba(0,150,255,0.22)";
+      ctx.beginPath();
+      for (var gy = bgd.s || 0, gn = 0; gy <= s.h - m.b && gn < 2000; gy += bgd.i, gn++) {
+        if (gy < m.t) continue;
+        ctx.moveTo(m.l, gy); ctx.lineTo(s.w - m.r, gy);
+      }
+      ctx.stroke();
+    }
+    // loose and tight lines, when asked (LY-W6, as InDesign's H&J
+    // violations): yellow loose, pink tight
+    if (LY.prefs.hjShow === 1 && ED.L) {
+      itemsOfP(P).forEach(function (it) {
+        var fr = it.t === "text" && !it.rot && ED.L.frames[it.id];
+        if (!fr) return;
+        fr.lines.forEach(function (ln) {
+          if (!ln.hj) return;
+          ctx.fillStyle = ln.hj > 0 ? "rgba(255,200,0,0.35)" : "rgba(255,80,160,0.3)";
+          ctx.fillRect(it.x + ln.cx0, it.y + ln.y - ln.h * 0.75, ln.cx1 - ln.cx0, ln.h * 0.75 + ln.d);
+        });
+      });
+    }
     // ruler guides of this owner
     ctx.strokeStyle = "rgba(0,180,220,0.8)";
     doc.guides.forEach(function (g) {
@@ -431,6 +463,57 @@
       ctx.strokeRect(it.x, it.y, it.w, it.h);
       ctx.restore();
     });
+  }
+
+  // ---------- LY-N2: equal-gap marks and live measurements ----------
+  function unitOf() { return (LY.doc && LY.doc.setup.unit) || "mm"; }
+  function pill(text, x, y) {
+    ctx.font = "11px system-ui, sans-serif";
+    var w = ctx.measureText(text).width + 10, h = 18;
+    x = Math.max(2, Math.min(W - w - 2, x)); y = Math.max(2, Math.min(H - h - 2, y));
+    ctx.fillStyle = "rgba(20,20,24,0.88)";
+    ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, 4); else ctx.rect(x, y, w, h); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    ctx.fillText(text, x + 5, y + h / 2 + 0.5);
+  }
+  function drawGaps() {
+    var SM = window.LY_SMART;
+    ED.snaps.forEach(function (g) {
+      if (g.o !== "gx" && g.o !== "gy") return;
+      var P = g.P, m = g.m, X = g.o === "gx";
+      var a = X ? toScreen(P.x + m.a0, P.y + m.at) : toScreen(P.x + m.at, P.y + m.a0);
+      var b = X ? toScreen(P.x + m.a1, P.y + m.at) : toScreen(P.x + m.at, P.y + m.a1);
+      ctx.strokeStyle = "rgba(255,0,170,0.95)"; ctx.lineWidth = 1; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+      if (X) { ctx.moveTo(a[0], a[1] - 4); ctx.lineTo(a[0], a[1] + 4); ctx.moveTo(b[0], b[1] - 4); ctx.lineTo(b[0], b[1] + 4); }
+      else { ctx.moveTo(a[0] - 4, a[1]); ctx.lineTo(a[0] + 4, a[1]); ctx.moveTo(b[0] - 4, b[1]); ctx.lineTo(b[0] + 4, b[1]); }
+      ctx.stroke();
+      if (SM) {
+        var txt = SM.fmt(g.gap, unitOf());
+        if (X) pill(txt, (a[0] + b[0]) / 2 - 20, a[1] + 5); else pill(txt, a[0] + 6, (a[1] + b[1]) / 2 - 9);
+      }
+    });
+  }
+  // while an object is moved, resized, turned or drawn: where it is, its size, its angle
+  function drawMeasure() {
+    var SM = window.LY_SMART;
+    if (!SM || !drag || !drag.moved || LY.prefs.measure === 0) return;
+    var u = unitOf(), txt = "", at = null;
+    if (drag.kind === "create" && ED.draft) {
+      var d = ED.draft;
+      txt = SM.fmt(Math.abs(d.x1 - d.x0), u) + " × " + SM.fmt(Math.abs(d.y1 - d.y0), u);
+      at = toScreen(Math.max(d.x0, d.x1), Math.max(d.y0, d.y1));
+    } else if (drag.kind === "move" || drag.kind === "resize" || drag.kind === "rotate") {
+      var items = selItems(), bb = null, P = items.length ? pOf(items[0]) : null;
+      if (!P) return;
+      items.forEach(function (it) { var b = R.itemBox(it); bb = bb ? union(bb, b) : b; });
+      if (!bb) return;
+      if (drag.kind === "move") txt = "X " + SM.fmt(bb.x, u) + " · Y " + SM.fmt(bb.y, u);
+      else if (drag.kind === "resize") { var it0 = items[0]; txt = SM.fmt(Math.abs(it0.w), u) + " × " + SM.fmt(Math.abs(it0.h), u); }
+      else txt = (items[0].rot || 0) + "°";
+      at = toScreen(P.x + bb.x + bb.w, P.y + bb.y + bb.h);
+    }
+    if (txt && at) pill(txt, at[0] + 8, at[1] + 8);
   }
 
   // Screen-space overlay: selection, handles, ports, snaps, marquee.
@@ -476,12 +559,15 @@
     // snap lines
     ctx.strokeStyle = "rgba(255,0,170,0.9)"; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
     ED.snaps.forEach(function (g) {
+      if (g.o === "gx" || g.o === "gy") return;
       ctx.beginPath();
       if (g.o === "v") { var a = toScreen(g.p, 0); ctx.moveTo(a[0], 0); ctx.lineTo(a[0], H); }
       else { var b = toScreen(0, g.p); ctx.moveTo(0, b[1]); ctx.lineTo(W, b[1]); }
       ctx.stroke();
     });
     ctx.setLineDash([]);
+    drawGaps();
+    drawMeasure();
     if (ED.marquee) {
       var q = ED.marquee;
       ctx.fillStyle = "rgba(77,163,255,0.12)"; ctx.strokeStyle = palette.accent;
@@ -606,6 +692,10 @@
     ctx.moveTo(RULER + 0.5, 0); ctx.lineTo(RULER + 0.5, H);
     ctx.stroke();
     ctx.fillStyle = palette.ruler; ctx.fillRect(0, 0, RULER, RULER);
+    // the unit, in the corner: a click there changes it (LY-N2)
+    ctx.fillStyle = palette.text; ctx.font = "8px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(LY.doc.setup.unit || "mm", RULER / 2, RULER / 2 + 0.5);
+    ctx.textAlign = "left";
     // guide being dragged
     if (ED.gdrag && ED.gdrag.at !== null) {
       ctx.strokeStyle = "rgba(0,180,220,0.95)"; ctx.setLineDash([4, 3]);
@@ -616,6 +706,12 @@
     }
     ctx.restore();
   }
+  // the rulers' unit: mm → pt → in → mm (the document's unit, one undo step)
+  ED.nextUnit = function () {
+    var order = ["mm", "pt", "in"], u = LY.doc.setup.unit || "mm", nu = order[(order.indexOf(u) + 1) % 3];
+    LY.op(function (doc, now) { doc.setup.unit = nu; doc.m = Math.max(now, doc.m + 1); });
+    LY.toast(t("ruler.unit", { u: nu }));
+  };
   function inRuler(p) { return !ED.preview && (p[0] < RULER || p[1] < RULER); }
   // A ruler guide under a screen point (owner of the page there).
   function hitGuide(sx, sy, tol) {
@@ -1019,7 +1115,7 @@
 
     if (ED.threadFrom) { threadClick(w); return; }
     if (inRuler(p)) {
-      if (p[0] < RULER && p[1] < RULER) return;
+      if (p[0] < RULER && p[1] < RULER) { ED.nextUnit(); return; }
       startDrag(e, "guide", { o: p[1] < RULER ? "h" : "v", gid: null });
       return;
     }
@@ -1096,6 +1192,8 @@
     var bb = null;
     items.forEach(function (it) { var b = R.itemBox(it); bb = bb ? union(bb, b) : b; });
     drag.bb = bb;
+    // the other objects of the page, for equal gaps (LY-N2)
+    drag.boxes = P ? itemsOfP(P).filter(function (o) { return !o.hide && ED.sel.indexOf(o.id) < 0; }).map(R.itemBox) : [];
     void doc;
   }
   function union(a, b) {
@@ -1167,6 +1265,14 @@
         var sny = snapAxis([b.y + dy, b.y + b.h / 2 + dy, b.y + b.h + dy], drag.lines.ys, tol);
         if (snx) { dx += snx.d; ED.snaps.push({ o: "v", p: drag.P.x + snx.p }); }
         if (sny) { dy += sny.d; ED.snaps.push({ o: "h", p: drag.P.y + sny.p }); }
+        // smart guides: the same gap as between the objects next to it
+        var SM = window.LY_SMART;
+        if (SM && LY.prefs.smart !== 0 && drag.boxes && drag.boxes.length > 1) {
+          var gx = snx ? null : SM.spacing({ x: b.x + dx, y: b.y + dy, w: b.w, h: b.h }, drag.boxes, "x", tol);
+          if (gx) { dx += gx.d; gx.marks.forEach(function (mk) { ED.snaps.push({ o: "gx", P: drag.P, m: mk, gap: gx.gap }); }); }
+          var gy = sny ? null : SM.spacing({ x: b.x + dx, y: b.y + dy, w: b.w, h: b.h }, drag.boxes, "y", tol);
+          if (gy) { dy += gy.d; gy.marks.forEach(function (mk) { ED.snaps.push({ o: "gy", P: drag.P, m: mk, gap: gy.gap }); }); }
+        }
       }
       liveEdit(function (doc) {
         drag.orig.forEach(function (o) {
@@ -1562,6 +1668,10 @@
     });
     if (made.length) ED.select(made);
   }
+  // the selection as a clipboard, and placing one, without touching
+  // the person's own clipboard (the asset library, LY-N3)
+  ED.selClip = function () { var keep = clipboard, c = null; if (copySel()) c = clipboard; clipboard = keep; return c; };
+  ED.pasteClip = function (c) { var keep = clipboard; clipboard = c; try { paste(false); } finally { clipboard = keep; } };
   function duplicate() { if (copySel()) paste(true); }
   ED.duplicate = duplicate;
 
@@ -1594,17 +1704,13 @@
     var mod = e.ctrlKey || e.metaKey;
     if (mod && e.altKey && e.shiftKey) return;            // shell shortcuts
     var k = e.key, code = e.code;
-    if (mod && (code === "KeyZ")) { e.preventDefault(); if (e.shiftKey) LY.redo(); else LY.undo(); return; }
-    if (mod && code === "KeyY") { e.preventDefault(); LY.redo(); return; }
+    // the shortcuts a person can change (LY-N2, smart.js ACTIONS)
+    var act = keyAction(e);
+    if (act) { e.preventDefault(); runAction(act); return; }
+    if (mod && code === "KeyY" && !e.shiftKey && !e.altKey) { e.preventDefault(); LY.redo(); return; }
     if (mod && code === "KeyC") { if (copySel()) { e.preventDefault(); LY.toast(t("toast.copied")); } return; }
     if (mod && code === "KeyX") { if (copySel()) { e.preventDefault(); ED.deleteSel(); } return; }
     if (mod && code === "KeyV") { if (clipboard) { e.preventDefault(); paste(false); } return; }
-    if (mod && code === "KeyD") { e.preventDefault(); duplicate(); return; }
-    if (mod && code === "KeyA") { e.preventDefault(); selectAll(); return; }
-    if (mod && code === "KeyG") { e.preventDefault(); if (e.shiftKey) ED.ungroup(); else ED.group(); return; }
-    if (mod && code === "KeyE") { e.preventDefault(); LY.dlg.exportDlg(); return; }
-    if (mod && (code === "Digit0" || code === "Numpad0")) { e.preventDefault(); ED.fit(); return; }
-    if (mod && (code === "Digit1" || code === "Numpad1")) { e.preventDefault(); ED.setZoom(1); return; }
     if (mod && (k === "=" || k === "+" || code === "NumpadAdd")) { e.preventDefault(); ED.setZoom(ED.zoom * 1.25); return; }
     if (mod && (k === "-" || code === "NumpadSubtract")) { e.preventDefault(); ED.setZoom(ED.zoom / 1.25); return; }
     if (mod) return;
@@ -1615,7 +1721,8 @@
       return;
     }
     if (k === "Delete" || k === "Backspace") { if (ED.sel.length) { e.preventDefault(); ED.deleteSel(); } return; }
-    var step = e.shiftKey ? 10 : 1;
+    var SMk = window.LY_SMART, base = SMk ? SMk.nudge(LY.doc.setup.unit, LY.prefs.nudge) : 1;
+    var step = base * (e.shiftKey ? 10 : e.altKey ? 0.1 : 1);
     if (k === "ArrowLeft") { e.preventDefault(); nudge(-step, 0); return; }
     if (k === "ArrowRight") { e.preventDefault(); nudge(step, 0); return; }
     if (k === "ArrowUp") { e.preventDefault(); nudge(0, -step); return; }
@@ -1625,10 +1732,58 @@
       if (it && it.t === "text") { e.preventDefault(); editText(it.id, null); }
       return;
     }
-    var tools = { KeyV: "select", KeyT: "text", KeyF: "image", KeyR: "rect", KeyE: "ell", KeyL: "line", KeyP: "pen", KeyH: "hand" };
-    if (tools[code] && !e.shiftKey && !e.altKey) { ED.setTool(tools[code]); return; }
-    if (code === "KeyW" && !e.shiftKey) { ED.togglePreview(); }
   }
+
+  // ---------- LY-N2: changeable shortcuts ----------
+  var keyCache = { src: null, map: null };
+  function keyMap() {
+    var SM = window.LY_SMART, src = JSON.stringify(LY.prefs.keys || {});
+    if (!SM) return null;
+    if (keyCache.src !== src) keyCache = { src: src, map: SM.keymap(LY.prefs.keys) };
+    return keyCache.map;
+  }
+  ED.keyMap = keyMap;
+  function keyAction(e) {
+    var SM = window.LY_SMART, map = keyMap();
+    return SM && map ? SM.lookup(map, SM.comboOf(e)) : null;
+  }
+  ED.toggleLock = function () {
+    var ids = ED.sel.slice();
+    if (!ids.length) return;
+    var all = selItems().every(function (it) { return it.lock; });
+    LY.op(function (doc, now) {
+      ids.forEach(function (id) { var it = M.find(doc.items, id); if (it) { it.lock = all ? 0 : 1; M.touch(it, now); } });
+    });
+  };
+  function runAction(id) {
+    var it = selItems()[0];
+    if (id.indexOf("tool.") === 0) { ED.setTool(id.slice(5)); return; }
+    switch (id) {
+      case "preview": ED.togglePreview(); break;
+      case "undo": LY.undo(); break;
+      case "redo": LY.redo(); break;
+      case "dup": duplicate(); break;
+      case "selall": selectAll(); break;
+      case "group": ED.group(); break;
+      case "ungroup": ED.ungroup(); break;
+      case "export": LY.dlg.exportDlg(); break;
+      case "fit": ED.fit(); break;
+      case "zoom100": ED.setZoom(1); break;
+      case "front": case "back": case "fwd": case "bwd": if (ED.sel.length) ED.arrange(id); break;
+      case "lock": ED.toggleLock(); break;
+      case "history": if (LY.dlg.history) LY.dlg.history(); break;
+      case "story": if (it && it.t === "text") LY.story.open(it.id); break;
+      case "keys": if (LY.dlg.keys) LY.dlg.keys(); break;
+      case "find": if (LY.dlg.find) LY.dlg.find(); break;
+      case "spell": if (LY.dlg.spell) LY.dlg.spell(); break;
+    }
+  }
+  ED.runAction = runAction;
+  // for the context toolbar (comfort.js)
+  ED.pOf = pOf;
+  ED.contextMenu = contextMenu;
+  ED.dragging = function () { return !!(drag && drag.moved) || !!pinch; };
+  ED.vecActive = function () { return vecOn(); };
 
   ED.togglePreview = function () {
     ED.preview = !ED.preview;
@@ -1780,7 +1935,7 @@
     LY.on("remote", function () { changed(); LY.emit("sel"); });
     LY.on("sel", updateStatus);
     LY.on("view", updateStatus);
-    LY.A.onChange(function () { if (LY.doc && ED.L) ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing }); ED.render(); updateStatus(); });
+    LY.A.onChange(ED.recheck);
     readPalette();
   }
 

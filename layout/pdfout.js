@@ -30,8 +30,8 @@
     MARKS.forEach(function (k) { if (src[k]) { mk[k] = true; any = true; } });
     return { doc: clean(rq.doc, 200), preset: preset, pages: pages === "all" ? "" : pages, bleed: !!rq.bleed,
              marks: any ? mk : null, spreads: !!rq.spreads, down: rq.down !== 0,
-             creep: Math.max(0, Math.min(5, Number(rq.creep) || 0)),
-             out: typeof rq.out === "string" && /^local:/i.test(rq.out.trim()) ? rq.out.trim().slice(0, 1030) : "" };
+             creep: Math.max(0, Math.min(5, Number(rq.creep) || 0)), tagged: !!rq.tagged,
+             out: (Array.isArray(rq.out) ? rq.out : typeof rq.out === "string" ? [rq.out] : []).filter(function (o) { return typeof o === "string" && o.trim() && o.length <= 1030; }).slice(0, 2) };
   }
   // the document by name: the same name first, else a part of it; the
   // newest one wins
@@ -121,7 +121,7 @@
     var stat = {}, print = q.preset !== "screen";
     var opts = { pages: ids, layout: L, spreads: !!(q.spreads && doc.setup.facing), bleed: print && q.bleed, marks: print ? q.marks : null,
                  ppi: !q.down ? 2400 : q.preset === "screen" ? 150 : 300, rgb: q.preset === "screen", imgStat: stat,
-                 creep: print && q.creep ? q.creep * 72 / 25.4 : 0 };
+                 creep: print && q.creep ? q.creep * 72 / 25.4 : 0, tagged: !!q.tagged };
     // the screen PDF: web and e-mail addresses are links (Chris 2026-11-18)
     if (!print && window.LY_OUT && window.LY_OUT.urlLinks) opts.links = window.LY_OUT.urlLinks(doc, L);
     var fontP = LY.T && LY.T.load ? Promise.resolve(LY.T.load(["sans-r"])).then(null, function () {}) : Promise.resolve();
@@ -130,11 +130,16 @@
       return LY.io.pdfDoc(doc, opts).then(function (pdf) { return { pdf: pdf, libs: r[1] }; });
     }).then(function (o) {
       var boxes = (o.pdf.orosBoxes || []).slice(), n = o.pdf.getNumberOfPages();
-      var bytes = new Uint8Array(o.pdf.output("arraybuffer"));
       var base = { boxes: boxes, n: n, stat: stat, L: L };
+      // tagged (LY-N6): the structure first, PDF/X keeps it
+      var tg = q.tagged && o.pdf.orosTag ? LY.io.tagBytes(o.pdf, doc, opts) : Promise.resolve({ bytes: new Uint8Array(o.pdf.output("arraybuffer")) });
+      return tg.then(function (tb) {
+      if (tb.elems !== undefined) base.tagged = { elems: tb.elems, figures: tb.figures, links: tb.links };
+      var bytes = tb.bytes;
       if (!o.libs) return Object.assign(base, { bytes: bytes, fx: [] });
       return o.libs[1].make(o.libs[0], bytes, { icc: o.libs[2].icc, srgb: o.libs[2].srgb, title: doc.name || LY.docTitle(doc) })
         .then(function (x) { return Object.assign(base, { bytes: x.bytes, fx: x.problems, intent: x.intent, pdfx: "PDF/X-4" }); });
+      });
     });
   }
   function save(doc, q, bytes) {
@@ -150,15 +155,12 @@
     }).then(null, function () { return ""; });
   }
 
-  // LOCAL-1: a copy in a local write folder the owner opened (never
-  // replaces a file: the bridge adds -2, -3) → its local: path or ""
-  function saveLocal(doc, q, bytes) {
-    var L = null;
-    try { L = window.parent && window.parent !== window ? window.parent.orosLocal : null; } catch (e) { L = null; }
-    if (!q.out || !L) return Promise.resolve({ path: "", why: q.out ? "noBridge" : "" });
+  // LOCAL-1, GX-1: a copy in out (a local write folder the owner opened
+  // and/or a folder of Claude's on the orOS disk); never replaces a file
+  function saveOut(doc, q, bytes) {
+    if (!q.out.length) return Promise.resolve({ saved: [], outFail: [] });
     var suffix = q.preset === "pdfx4" ? " - PDF-X-4.pdf" : q.preset === "screen" ? " - screen.pdf" : " - print.pdf";
-    return L.write(q.out, LY.io.fileName(doc, suffix), new Blob([bytes], { type: "application/pdf" }), "export_pdf")
-      .then(function (p) { return { path: p }; }, function (e) { return { path: "", why: e && e.why || "error" }; });
+    return LY.io.saveOut(q.out, LY.io.fileName(doc, suffix), new Blob([bytes], { type: "application/pdf" }), "export_pdf");
   }
   function run(rq, back) {
     var q = norm(rq || {});
@@ -176,7 +178,7 @@
       LY.toast(t("exp.working"));
       var d = LY.doc;
       make(d, q).then(function (res) {
-        return Promise.all([save(d, q, res.bytes), saveLocal(d, q, res.bytes)]).then(function (two) {
+        return Promise.all([save(d, q, res.bytes), saveOut(d, q, res.bytes)]).then(function (two) {
           var path = two[0], loc = two[1];
           var pf = problems(d, res.L);
           (res.fx || []).forEach(function (p) { pf.push({ sev: "err", code: p.code, page: p.page || 0 }); });
@@ -185,9 +187,10 @@
                       trim: b0 ? boxMm(b0.trim) : null, bleedBox: b0 ? boxMm(b0.bleed) : null, problems: pf.slice(0, 80), down: res.stat.down || 0 };
           if (res.intent) rep.intent = res.intent;
           if (res.pdfx) rep.pdfx = res.pdfx;
+          if (res.tagged) rep.tagged = res.tagged;
           if (!path) rep.why = "noDisk";
-          if (loc.path) rep.local = loc.path;
-          if (loc.why) rep.localWhy = loc.why;
+          if (loc.saved.length) rep.saved = loc.saved;
+          if (loc.outFail.length) rep.outFail = loc.outFail;
           keepLast(d, rep);
           LY.toast(path ? t("exp.sentAt", { path: path.slice("/internal/".length) }) : t("ep.noDisk"));
           done(rep);
@@ -204,9 +207,36 @@
   // The person's own PDF/X-4 (Export › Quality › PDF/X-4, LY-PORT-C):
   // a print PDF's bytes → Promise<{ bytes, problems, cmyk }>; o.cmyk
   // converts its colours to the print profile's CMYK.
+  // LY-W9: o.x1a makes PDF/X-1a (all CMYK, pictures too); the
+  // document's own printer profile when it has one (LY.proof), and in
+  // CMYK the colours that overprint do so.
   function pdfx(doc, bytes, o) {
-    return pdfxLib().then(function (r) {
-      return r[1].make(r[0], bytes, { icc: r[2].icc, srgb: r[2].srgb, title: doc.name || LY.docTitle(doc), cmyk: !!(o && o.cmyk) });
+    o = o || {};
+    var own = LY.proof ? LY.proof.profile(doc) : Promise.resolve(null);
+    return Promise.all([pdfxLib(), own]).then(function (q) {
+      var r = q[0], pr = q[1], x1a = !!o.x1a, opt = { icc: pr ? pr.icc : r[2].icc, srgb: r[2].srgb, title: doc.name || LY.docTitle(doc), cmyk: !!o.cmyk, x1a: x1a };
+      if (pr) opt.cond = pr.cond;
+      if (x1a) opt.decode = decodeJpeg;
+      if ((x1a || o.cmyk) && LY.proof) opt.overprint = LY.proof.opFor(doc);
+      return r[1].make(r[0], bytes, opt);
+    });
+  }
+  // a JPEG's pixels → { w, h, data RGBA }
+  function decodeJpeg(bytes) {
+    var blob = new Blob([bytes], { type: "image/jpeg" });
+    var get = typeof createImageBitmap === "function" ? createImageBitmap(blob) : new Promise(function (res, rej) {
+      var u = URL.createObjectURL(blob), im = new Image();
+      im.onload = function () { URL.revokeObjectURL(u); res(im); };
+      im.onerror = function () { URL.revokeObjectURL(u); rej(new Error("jpeg")); };
+      im.src = u;
+    });
+    return get.then(function (im) {
+      var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height, cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      var cx = cv.getContext("2d");
+      cx.drawImage(im, 0, 0);
+      if (im.close) im.close();
+      return { w: w, h: h, data: cx.getImageData(0, 0, w, h).data };
     });
   }
   window.LY_PDFOUT = { run: run, norm: norm, pdfx: pdfx };

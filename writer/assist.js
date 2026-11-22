@@ -160,13 +160,17 @@
     if (done.length) after(done);
     // fingerprints once the editor has taken the new text
     snaps.forEach(function (s) { s.fp = fp(stateOf(H.getDoc(s.id))); });
-    busy = false;
-    var rec = snaps.length ? { tok: newTok(), at: Date.now(), docs: snaps } : null;
+    var rec = snaps.length ? { tok: newTok(), at: Date.now(), docs: snaps } : null, ex = null;
     (rec ? put(rec) : Promise.resolve()).then(function () {
+      // GX-3: the export steps, made as by Export (writer.js WriterExport)
+      return window.orosRecipes.runOuts(ids, chk.steps, function (id, st) { return window.WriterExport ? window.WriterExport.run(id, st.fmt) : []; }).then(function (r) { ex = r; });
+    }).then(null, function () {}).then(function () {
+      busy = false;
       // the changed document opens, so the user sees what changed
       if (snaps.length === 1 && H.activeId() !== snaps[0].id && !document.querySelector("dialog[open]")) H.activateTab(snaps[0].id);
       var rep = err && !snaps.length ? { failed: 1, why: "error" }
         : { ok: 1, n: total, d: snaps.length, per: per.slice(0, 50), cut: 0, notes: notes.slice(), tok: rec ? rec.tok : "" };
+      window.orosRecipes.outRep(rep, ex);
       back(key, rep);
       var msg = !total ? t("as.done0") : snaps.length === 1 ? t("as.done1").replace("{n}", total) : t("as.done").replace("{n}", total).replace("{d}", snaps.length);
       if (rec) H.undoToast(msg, function () { undo({ tok: rec.tok }); });
