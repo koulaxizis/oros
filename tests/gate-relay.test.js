@@ -943,7 +943,8 @@ test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passe
   await newGate(w);
   const b = w.boxes.get(ID);
   const K = crypto.randomBytes(32), KS = b64u(K);
-  const mk = (th) => ({ sent: [], closed: false, __g: { th, v: 0, at: 1 }, send(x) {
+  // (ver: an orOS that knows local_folders_request, GQ-VER)
+  const mk = (th) => ({ sent: [], closed: false, __g: { th, v: 0, at: 1, ver: 85200 }, send(x) {
     this.sent.push(x);
     let q = {};
     try { q = JSON.parse(x); } catch (e) {}
@@ -1121,4 +1122,42 @@ test("GATE-PL11: edit_in_app and studio_import are checked against the copy with
   r = await tc("edit_in_app", { app: "layout", dry_run: true, steps: [{ op: "set" }] });
   assert.equal(r.isError, true);
   assert.match(r.content[0].text, /may not use layout|may not change layout/);
+});
+
+test("GQ-VER: a waiting change that needs a newer orOS goes only to a device that has it (Chris 2026-11-22)", async () => {
+  // the phone's cached older orOS dropped a folder question it did not know
+  assert.equal(G.minVer("claude_folders_request", {}), 84500);
+  assert.equal(G.minVer("local_folders_request", {}), 81100);
+  assert.equal(G.minVer("edit_in_app", { app: "mockups", steps: [] }), 84600);
+  assert.equal(G.minVer("edit_in_app", { app: "photolab", steps: [{ op: "fill" }] }), 84600);
+  assert.equal(G.minVer("edit_in_app", { app: "photolab", steps: [{ op: "tone" }] }), 0);
+  assert.equal(G.minVer("edit_in_app", { app: "atelier", steps: [{ op: "create" }] }), 0);
+  assert.equal(G.minVer("budget_add", {}), 0);
+  const q = new Map([["q:AAAAAAAAAAAAAAAA", { c: "a", t: 1, s: 1 }], ["q:BBBBBBBBBBBBBBBB", { c: "b", t: 2, s: 2, mv: 84500 }]]);
+  assert.deepEqual(G.queueFor(q, 10).map((x) => x.id), ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"], "no version given: every row, as before");
+  assert.deepEqual(G.queueFor(q, 10, 0).map((x) => x.id), ["AAAAAAAAAAAAAAAA"], "version not said yet");
+  assert.deepEqual(G.queueFor(q, 10, 84401).map((x) => x.id), ["AAAAAAAAAAAAAAAA"]);
+  assert.deepEqual(G.queueFor(q, 10, 84500).map((x) => x.id), ["AAAAAAAAAAAAAAAA", "BBBBBBBBBBBBBBBB"]);
+
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const sock = { sent: [], __g: { th: hex(TOK), v: 1, at: 1 }, send(x) { this.sent.push(x); }, close() {} };
+  b.socks.push(sock);
+  const K = crypto.randomBytes(32);
+  const r1 = JSON.parse((await b.box.queueChange("claude_folders_request", { path: "/internal/Studio/Podcasts", access: "write" }, K, Date.now(), null, "n", 1)).c);
+  const r2 = JSON.parse((await b.box.queueChange("budget_add", { lines: [] }, K, Date.now(), null, "n")).c);
+  const rows = await b.st.storage.list({ prefix: "q:" });
+  assert.equal(rows.get("q:" + r1.change_id).mv, 84500, "the folder question needs 8.45.00");
+  assert.equal(rows.get("q:" + r2.change_id).mv, undefined);
+  const cqs = () => sock.sent.map((x) => { try { return JSON.parse(x); } catch (e) { return {}; } }).filter((o) => Array.isArray(o.cq));
+  await b.box.webSocketMessage(sock, "ver:8.44.01");
+  assert.equal(cqs().length, 0, "an older orOS is not offered it");
+  await b.box.sendHeld([sock]);
+  assert.equal(cqs().length, 0, "not as a held one either");
+  await b.box.webSocketMessage(sock, "ver:8.51.00");
+  assert.equal(cqs().length, 1, "offered once the device runs an orOS that knows it");
+  assert.deepEqual(cqs()[0].cq.map((x) => x.id), [r1.change_id]);
+  await b.box.webSocketMessage(sock, "ver:8.51.00");
+  assert.equal(cqs().length, 1, "not again for the same version");
 });

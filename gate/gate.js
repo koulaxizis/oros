@@ -2794,7 +2794,25 @@
   // with the same rules as a live call (the switches and a pause as they
   // are now), then the box is told which ones are done.
   // F3: queued deletions waiting for the owner (id → queue item).
-  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, DECL = { ok: false, c: "declined" };
+  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, KEEP = { keep: 1 }, DECL = { ok: false, c: "declined" };
+  // GQ-SETTLE (2026-11-22): orOS checks for a new release as it starts and
+  // reloads into it, which cut a queued change off half done (and the new
+  // copy then took it as done). The queue waits until that check is over:
+  // no worker installing or waiting, and 10 s since the page started.
+  var Q_SETTLE_MS = 10000, Q_SETTLE_TRIES = 45;
+  function queueSettled(fn, n) {
+    n = n || 0;
+    var sw = null;
+    try { sw = typeof navigator !== "undefined" && navigator.serviceWorker && typeof navigator.serviceWorker.getRegistration === "function" ? navigator.serviceWorker : null; } catch (e) { sw = null; }
+    if (!sw || n >= Q_SETTLE_TRIES) { fn(); return; }
+    sw.getRegistration().then(function (r) {
+      if (!r) { fn(); return; }                     // no service worker here: nothing reloads it
+      var age = typeof performance !== "undefined" && performance.now ? performance.now() : Q_SETTLE_MS;
+      if (r.installing || r.waiting) { setTimeout(function () { queueSettled(fn, n + 1); }, 2000); return; }
+      if (age < Q_SETTLE_MS) { setTimeout(function () { queueSettled(fn, n + 1); }, Q_SETTLE_MS - age + 50); return; }
+      fn();
+    }, function () { fn(); });
+  }
   function heldAgain() {
     var ids = Object.keys(cqHeld);
     if (!ids.length || !ws || ws.readyState !== 1 || document.visibilityState !== "visible") return;
@@ -2804,7 +2822,7 @@
     var o, k = gateKey();
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
-    whenOpen(function () {
+    queueSettled(function () { whenOpen(function () {
       var done = [], files = false, held = [];
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
@@ -2814,7 +2832,11 @@
           ranAdd(it.id);
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
-            if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
+            if (!isObj(x) || typeof x.n !== "string") return { ok: false, c: "refused" };
+            // GQ-KEEP (2026-11-22): a change this orOS does not know (an older
+            // copy, e.g. the cached one that runs before an update) stays queued
+            // for a newer one, never acknowledged as done
+            if (QUEUED.indexOf(x.n) < 0) { ranDrop(it.id); throw KEEP; }
             // 7.44.00 (Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με
             // το orOS κλειστό»): a deletion of items (change_item delete, budget_delete)
             // waits like files_delete: always asked here (askQueued, one question per
@@ -2852,7 +2874,7 @@
               writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
               return res;
             });
-          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else done.push(it.id); });   // never in a loop
+          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else if (e !== KEEP) done.push(it.id); });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
         // 7.48.00: cqh = deletions held for the owner here; the box offers them to a device on screen
@@ -2861,7 +2883,7 @@
         copySoon(2000);
         if (files) fileCopySoon(60000);
       });
-    });
+    }); });
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   // GL-8 (Chris 2026-11-21): a file Claude uploaded (relay files_upload),
@@ -3826,7 +3848,19 @@
   var HOST_TXT = "orOS runs in the background or behind the screen lock on the owner's computer, with nobody at the screen: this needs orOS open and unlocked on a screen. Nothing was done.";
   function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
   function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
-  function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  // GQ-FC (2026-11-22: a PNG an app had just saved into Claude's folders
+  // stayed "not in the copy" for files_link): a later, longer wait no
+  // longer pushes back a sooner one, and a copy asked for while one runs
+  // runs again right after it.
+  var fcAt = 0, fcAgain = false;
+  function fileCopySoon(ms) {
+    ms = typeof ms === "number" ? ms : 60000;
+    var at = Date.now() + ms;
+    if (fcTimer && fcAt && fcAt <= at) return;
+    clearTimeout(fcTimer);
+    fcAt = at;
+    fcTimer = setTimeout(function () { fcTimer = null; fcAt = 0; fileCopy(); }, ms);
+  }
   // GX-1 (Chris 2026-11-21 «δώσε στο gate τη δυνατότητα να μπορεί να
   // κάνει εξαγωγή σε τοπικό φάκελο ή/και orOS Files»): an app's export
   // also goes to out, a local write folder the owner opened
@@ -3923,9 +3957,10 @@
   // The version files_* tools give (assistant.js cfVer): sha256[0:16]; a
   // file over 32 MB that was not read, from its size and time.
   function fcMetaVer(FC, r) { return FC.sha256(new TextEncoder().encode("size:" + r.s + ":" + (r.m || 0))).then(function (h) { return h.slice(0, 16); }); }
+  function fcLater() { if (fcAgain) { fcAgain = false; fileCopySoon(2000); } }
   function fileCopy() {
     var p = pref(), k = gateKey(), D = fcDrop();
-    if (fcBusy) return Promise.resolve(false);
+    if (fcBusy) { fcAgain = true; return Promise.resolve(false); }
     if (!p.on || !k || !ws || ws.readyState !== 1 || !fcFilesOn(p) || strictOn() || !D) return Promise.resolve(false);
     if (locked()) return Promise.resolve(false);
     if (!root.orosFS) return Promise.resolve(false);
@@ -4030,7 +4065,7 @@
         writeJSON(FC_KEY, { at: idx.at, c: newCache, idx: { files: files.map(function (e) { return { h: e.h, c: e.c, t: e.t }; }).filter(function (e) { return e.h; }) }, n: Object.keys(names), up: put, used: pl.used, err: fcErr });
         changed();
       });
-    }).then(function () { fcBusy = false; return true; }, function () { fcBusy = false; return false; });
+    }).then(function () { fcBusy = false; fcLater(); return true; }, function () { fcBusy = false; fcLater(); return false; });
   }
   // The box kept the new index: pieces no index names any more go, once
   // they are a day old (another device may still name them for a while).

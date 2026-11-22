@@ -1765,12 +1765,34 @@ function setAtt(ws, a) {
 }
 // The waiting changes a device gets as it connects, oldest first. 6.01.02:
 // one queued after a timeout waits until nb (its late answer may end it).
-export function queueFor(q, now) {
+// GQ-VER (2026-11-22): ver = the device's orOS (verNum; 0 = not said yet):
+// a change that needs a newer orOS (row.mv, minVer) is not sent to it.
+// Left out, every row goes (as before).
+export function queueFor(q, now, ver) {
   const items = [];
-  q.forEach((v, k) => { if (v && !(typeof v.nb === "number" && v.nb > now)) items.push({ id: k.slice(2), c: v.c, t: v.t, s: typeof v.s === "number" ? v.s : 0 }); });
+  q.forEach((v, k) => {
+    if (!v || (typeof v.nb === "number" && v.nb > now)) return;
+    if (ver !== undefined && typeof v.mv === "number" && !(ver >= v.mv)) return;
+    items.push({ id: k.slice(2), c: v.c, t: v.t, s: typeof v.s === "number" ? v.s : 0 });
+  });
   // PEND-1: in the order Claude asked (s: the box's counter), so a change
   // to an item Claude added meanwhile (its p- ref) runs after the add.
   return items.sort((x, y) => x.t - y.t || x.s - y.s).map((x) => ({ id: x.id, c: x.c, t: x.t }));
+}
+// GQ-VER (2026-11-22, Chris: a folder question and an Atelier change
+// queued for the phone never showed): the cached older orOS a phone runs
+// before it updates did not know claude_folders_request and dropped it.
+// The orOS a queued change needs at least (verNum), 0 = any.
+const TOOL_MV = { claude_folders_request: 84500, local_folders_request: 81100 };
+const PL_AI_OPS = ["generate", "nobg", "fill", "expand", "upscale", "image", "create"];
+export function minVer(name, args) {
+  if (Object.prototype.hasOwnProperty.call(TOOL_MV, name)) return TOOL_MV[name];
+  if (name === "edit_in_app" && args && typeof args === "object") {
+    const app = typeof args.app === "string" ? args.app.toLowerCase() : "";
+    if (app === "mockups") return 84600;
+    if (app === "photolab" && Array.isArray(args.steps) && args.steps.some((x) => x && PL_AI_OPS.indexOf(x.op) >= 0)) return 84600;
+  }
+  return 0;
 }
 // "8.13.00" → 81300 (0 when it is not a version)
 export function verNum(s) {
@@ -2191,7 +2213,7 @@ export class GateBox {
     m.seen = now;
     await this.st.put("meta", m);
     const q = await this.st.list({ prefix: "q:" });
-    const items = queueFor(q, now);
+    const items = queueFor(q, now, 0);             // GQ-VER: the rest once the device says its version
     if (items.length) { try { server.send(JSON.stringify({ cq: items })); } catch (e) {} }
     return new Response(null, { status: 101, webSocket: client, headers: { "Sec-WebSocket-Protocol": "gt1" } });
   }
@@ -2205,7 +2227,10 @@ export class GateBox {
     }
     if (typeof msg === "string" && msg.length <= 14 && msg.indexOf("ver:") === 0) {   // GL-6: the device's orOS version
       const n = verNum(msg.slice(4));
-      if (n) { const a = attOf(ws); a.ver = n; a.lt = Date.now(); setAtt(ws, a); }
+      if (n) {
+        const a = attOf(ws), was = a.ver || 0; a.ver = n; a.lt = Date.now(); setAtt(ws, a);
+        if (n !== was) await this.sendNewer(ws, was, n);   // GQ-VER: the changes it can run now
+      }
       return;
     }
     if (msg === "b1") {                              // TRAY-1: a device that runs Layout's work unseen (tray host, desktop window)
@@ -2576,9 +2601,20 @@ export class GateBox {
     if (!on.length) return;
     const q = await this.st.list({ prefix: "q:" }), hd = new Map();
     q.forEach((v, k) => { if (v && v.hd) hd.set(k, v); });
-    const items = queueFor(hd, Date.now());
-    if (!items.length) return;
-    for (const s of on) { try { s.send(JSON.stringify({ cq: items })); } catch (e) {} }
+    for (const s of on) {
+      const items = queueFor(hd, Date.now(), attOf(s).ver || 0);   // GQ-VER
+      if (items.length) { try { s.send(JSON.stringify({ cq: items })); } catch (e) {} }
+    }
+  }
+  // GQ-VER: a device said its version: the waiting changes that need a
+  // newer orOS than it had said (was) and no newer than it has now (ver).
+  async sendNewer(ws, was, ver) {
+    const m = await this.meta();
+    if (!m || !devList(m).some((d) => d.th === attOf(ws).th)) return;
+    const q = await this.st.list({ prefix: "q:" }), sel = new Map();
+    q.forEach((v, k) => { if (v && typeof v.mv === "number" && v.mv > was && v.mv <= ver) sel.set(k, v); });
+    const items = queueFor(sel, Date.now(), ver);
+    if (items.length) { try { ws.send(JSON.stringify({ cq: items })); } catch (e) {} }
   }
   // A call while no device is open: reads from the copy, changes wait
   // in the queue (since 6.05.02 Budget deletions and transfers too;
@@ -2769,6 +2805,8 @@ export class GateBox {
     // got it; no other device gets it for lateMs (its late answer ends it).
     if (qid === qidWant) row.nb = now + GATE_LIMITS.lateMs;
     if (hd) row.hd = 1;                           // 7.48.00: a deletion waiting for a screen
+    const mv = minVer(name, args);
+    if (mv) row.mv = mv;                          // GQ-VER: only for an orOS that knows it
     await this.st.put("q:" + qid, row);
     const out = { queued: true, pending: true, change_id: qid, note };
     if (name === "create_items" && args && Array.isArray(args.items)) {
