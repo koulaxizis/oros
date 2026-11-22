@@ -35,6 +35,7 @@ const GATE_ONLY = {
   gate_tools: { why: "GL-5: the relay's own list of its tools as they are now, for a conversation that started before a tool was added; the Assistant always has the current list." },
   oros_update: { why: "GL-7: asks the owner's other open devices to fetch and apply the newest orOS, for Claude working from outside while the owner is away; inside orOS the owner presses Update in Settings or the app updates itself." },
   gate_call: { why: "GL-5: runs another gate tool by name for a conversation whose tool list is older; the Assistant always calls its tools directly." },
+  claude_folders_request: { why: "CF-ASK: asking the owner, on any device on screen, to add a folder of the orOS disk to Claude's folders from outside; inside orOS the owner adds it in Settings › Connected services › orOS Gate › Claude's folders." },
   local_folders_request: { why: "Asking the owner, on any device on screen, to open a folder of their computer for Claude from outside; inside orOS the owner opens it in Settings › Connected services › orOS Gate." },
   kanban_add_cards: { twin: ["create_items"] },    // create_items app kanban
   kanban_move_cards: { twin: ["change_item"] },    // change_item action move
@@ -45,6 +46,7 @@ const GATE_ONLY = {
   // ST-IMP (Chris 2026-11-21): the relay runs them as edit_in_app's create
   studio_import: { twin: ["edit_in_app"] },
   montage_import: { twin: ["edit_in_app"] },
+  photolab_import: { twin: ["edit_in_app"] },
   files_upload: { why: "GL-8: brings a file's bytes from Claude's side (outside orOS, e.g. the owner's computer folder) into the box for the next open orOS; the Assistant runs on the device and has the files themselves." },
   files_link: { why: "A one-time download link from the owner's sealed copy is for Claude working from outside with orOS closed; the Assistant runs on the device and reads the live file with files_read." }
 };

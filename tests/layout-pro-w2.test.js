@@ -182,7 +182,12 @@ test("house_pages: front and back pages scaled to the book, fields filled, padde
   const first = d.items.filter((it) => it.pg === order[0].id)[0];
   assert.equal(M.find(d.stories, first.story).paras[0].runs[0].t, "Στην καρδιά του βυθού", "{title} from the book");
   assert.equal(M.find(d.stories, d.items.filter((it) => it.pg === order[1].id)[0].story).paras[0].runs[0].t, "© 2026 Χ. Κουλαξίζης · ISBN {isbn}", "an empty ISBN stays a field (preflight shows it)");
-  assert.ok(near(first.w, 100 * MM * d.setup.w / h.setup.w), "scaled to the book's trim");
+  // the house's title frame follows the book's text area (LY-W8): its place and width in it, not the page's proportions
+  const RT = require(path.join(ROOT, "layout/retrim.js")), h0 = h.items.filter((it) => it.pg === M.pagesInOrder(h)[0].id)[0];
+  const want = RT.mapRect(h0, RT.pageOf(h.setup, "R"), RT.pageOf(d.setup, "R"), "stretch");
+  assert.ok(near(first.w, want.w) && near(first.x, want.x), "scaled to the book's trim");
+  const inner = RT.pageOf(d.setup, "R");
+  assert.ok(first.x >= inner.ml - 0.01 && first.x + first.w <= d.setup.w - inner.mr + 0.01, "inside the book's text area");
   assert.ok(M.find(d.pstyles, "ps-hstitle") && M.find(d.swatches, "sw-hs"), "the styles and swatches they need come too");
   const last = order[order.length - 1], logo = d.items.filter((it) => it.pg === last.id && it.t === "rect")[0];
   assert.ok(logo && near(logo.w, logo.h), "a shape keeps its proportions");

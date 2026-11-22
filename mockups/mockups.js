@@ -562,6 +562,8 @@
       "more.hint": "Your mockups follow you to every device through orOS sync, encrypted. Their pictures travel with your orOS disk.",
       "btn.cancel": "Cancel", "btn.delete": "Delete", "btn.close": "Close",
       "ask.del": "Delete the mockup \"{name}\"? This removes it from all your devices.",
+      "as.bad": "These changes could not be made here.", "as.done0": "Nothing needed changing.", "as.done1": "Changed {n} settings.", "as.done": "Changed {n} settings in {d} mockups.",
+      "as.files": "Pictures made: {n}.", "as.made": "New mockup: {name}", "as.gone": "There is nothing left to undo.", "as.changed": "The mockup was changed since, so it was left as it is.", "as.undone": "Undone.",
       "untitled": "Book mockup", "copyOf": "(copy)", "sub.book": "{w} × {h} mm · {pages} pages · {bind}",
       "toast.saveFail": "Could not save on this device (storage full?)", "toast.full": "You have 200 mockups. Delete one first.",
       "toast.deleted": "Mockup deleted", "toast.dup": "Copy made", "toast.nofs": "Pictures need the orOS disk: open the app inside orOS.",
@@ -1131,6 +1133,8 @@
       "more.hint": "Οι μακέτες σου σε ακολουθούν σε κάθε συσκευή μέσω του sync του orOS, κρυπτογραφημένες. Οι εικόνες τους ταξιδεύουν με τον δίσκο του orOS.",
       "btn.cancel": "Άκυρο", "btn.delete": "Διαγραφή", "btn.close": "Κλείσιμο",
       "ask.del": "Διαγραφή της μακέτας «{name}»; Θα φύγει από όλες τις συσκευές σου.",
+      "as.bad": "Αυτές οι αλλαγές δεν μπόρεσαν να γίνουν εδώ.", "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.done1": "Άλλαξαν {n} ρυθμίσεις.", "as.done": "Άλλαξαν {n} ρυθμίσεις σε {d} μακέτες.",
+      "as.files": "Έγιναν εικόνες: {n}.", "as.made": "Νέα μακέτα: {name}", "as.gone": "Δεν έμεινε κάτι για αναίρεση.", "as.changed": "Η μακέτα άλλαξε στο μεταξύ, οπότε έμεινε όπως είναι.", "as.undone": "Αναιρέθηκε.",
       "untitled": "Μακέτα βιβλίου", "copyOf": "(αντίγραφο)", "sub.book": "{w} × {h} mm · {pages} σελίδες · {bind}",
       "toast.saveFail": "Δεν έγινε αποθήκευση σε αυτή τη συσκευή (γέμισε ο χώρος;)", "toast.full": "Έχεις 200 μακέτες. Διάγραψε πρώτα μία.",
       "toast.deleted": "Η μακέτα διαγράφηκε", "toast.dup": "Έγινε αντίγραφο", "toast.nofs": "Οι εικόνες θέλουν τον δίσκο του orOS: άνοιξε την εφαρμογή μέσα από το orOS.",
@@ -3652,7 +3656,97 @@
     openPrj(target.id);
     return true;
   }
-  window.__orosOpenAt = openTarget;
+  // MK-G (Chris 2026-11-22: add Mockups to the Gate): the
+  // Assistant's and Claude's changes (assist.js, commands.js), loaded on
+  // the first request.
+  function claudeFolders() {
+    var l = [];
+    try { var g = shell() && shell().orosGate; l = g && typeof g.folders === "function" ? g.folders() : []; } catch (e) { l = []; }
+    return Array.isArray(l) ? l : [];
+  }
+  window.MockupsAssistHost = {
+    t: t, toast: toast, undoToast: function (msg) { toast(msg); },
+    busy: function () { return busy || !!document.querySelector("dialog[open]"); },
+    find: function (id) { var p = C.byId(data, id); return p ? clone(p) : null; },
+    // a new book mockup → its id ("" when Mockups is full)
+    create: function (title) {
+      var p = C.blank(C.newId(), Date.now());
+      if (title) p.nm = String(title).slice(0, 80);
+      var r = putAny(p, Date.now());
+      if (!r.ok) return "";
+      storeData();
+      return r.prj.id;
+    },
+    // a changed project → its new m (0 when it could not be saved)
+    save: function (p) {
+      var r = putAny(C.normProject(Object.assign(clone(p), { m: Math.max(1, p.m || 1) })), Date.now());
+      if (!r.ok) return 0;
+      storeData();
+      if (cur && cur.id === r.prj.id) { cur = clone(C.byId(data, r.prj.id)); renderForm(); pushAll(); }
+      thumbSoon();
+      return r.prj.m;
+    },
+    open: function (id) { if (C.byId(data, id) && (!cur || cur.id !== id)) openPrj(id); },
+    // a picture in Claude's folders → its asset id (rejects { why })
+    importPath: function (path) {
+      var F = fsApi();
+      if (!AS || !F) return Promise.reject({ why: "nofs" });
+      if (!claudeFolders().some(function (f) { return typeof f === "string" && (path === f || path.indexOf(f + "/") === 0); })) return Promise.reject({ why: "outside" });
+      return Promise.resolve(F.read(path)).then(function (b) {
+        var name = path.split("/").pop(), type = /\.svg$/i.test(name) ? "image/svg+xml" : (b && b.type) || "";
+        return AS.importFile(new File([b], name, { type: type }));
+      }, function () { throw { why: "nofile" }; }).then(function (r) { return r.id; });
+    },
+    // the mockup as Save makes it → { name, blob } | null
+    exportAs: function (id, fmt) {
+      if (!C.byId(data, id)) return Promise.resolve(null);
+      if (!cur || cur.id !== id) openPrj(id);
+      return ensureStage().then(function () {
+        layoutStage();
+        var p = clone(cur);
+        return picsFor(p).then(function (r) { stage.set(p, r.imgs, r.bg); });
+      }).then(function () { return new Promise(function (ok) { requestAnimationFrame(function () { requestAnimationFrame(ok); }); }); })
+        .then(function () { return makeBlob(fmt); })
+        .then(function (blob) { return { name: fileBase() + "." + fmt, blob: blob }; }, function () { return null; });
+    },
+    // into Pictures → its path ("" when it could not be written)
+    toPictures: function (blob, name) {
+      var F = fsApi();
+      if (!F) return Promise.resolve("");
+      var i = name.lastIndexOf(".");
+      return freePath("/internal/Pictures", name.slice(0, i), name.slice(i)).then(function (p) { return F.write(p, blob).then(function () { return p; }); }).catch(function () { return ""; });
+    }
+  };
+  var assistP = null;
+  function assistLoad() {
+    if (window.MockupsAssist) return Promise.resolve(window.MockupsAssist);
+    if (!assistP) {
+      var v = (document.querySelector('script[src*="mockups.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      var load = function (f) {
+        return new Promise(function (ok, fail) {
+          var s = document.createElement("script");
+          s.src = f + (m ? "?v=" + m[1] : "");
+          s.onload = ok; s.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(s);
+        });
+      };
+      assistP = (window.orosRecipes ? Promise.resolve() : load("../recipes/core.js"))
+        .then(function () { return load("commands.js"); }).then(function () { return load("assist.js"); }).then(function () {
+          if (!window.MockupsAssist) throw new Error("assist");
+          return window.MockupsAssist;
+        });
+      assistP.catch(function () { assistP = null; });
+    }
+    return assistP;
+  }
+  function openTargetAll(target) {
+    if (target && (target.edit || target.editUndo)) {
+      assistLoad().then(function (A) { if (target.edit) A.edit(target.edit); else A.undo(target.editUndo); }, function () { toast(t("as.bad")); });
+      return true;
+    }
+    return openTarget(target);
+  }
+  window.__orosOpenAt = openTargetAll;
 
   // ---------- 9. Wiring & boot ----------
   function applyI18n() {

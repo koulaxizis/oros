@@ -35,10 +35,10 @@
 (function (root) {
   "use strict";
 
-  var M, T, H;
+  var M, T, H, RT;
   if (typeof module !== "undefined" && module.exports) {
-    M = require("../designkit/model.js"); T = require("../designkit/text.js"); H = require("./house.js");
-  } else { M = root.orosDK.model; T = root.orosDK.text; H = root.LY_HOUSE; }
+    M = require("../designkit/model.js"); T = require("../designkit/text.js"); H = require("./house.js"); RT = require("./retrim.js");
+  } else { M = root.orosDK.model; T = root.orosDK.text; H = root.LY_HOUSE; RT = root.LY_RETRIM; }
 
   var MM = 72 / 25.4;
   // the questions: id, group, values (the first, "s", is the series')
@@ -524,14 +524,22 @@
     // pages left out
     if (book.drop.length) dropPages(d, book.drop);
     // page size and margins
-    var sz = SIZES[A("size")];
+    // (LY-W8) the house's pages follow the new trim as a designer would
+    // move them (layout/retrim.js): what runs to the edges still does,
+    // what sits in a margin keeps its edge, the rest keeps its place in
+    // the text area; the margins in proportion unless the sheet sets them
+    var sz = SIZES[A("size")], mg = sheet.a.marg, nu = copy(u);
     if (sz) {
       var w = sz[0] * MM, hh = sz[1] * MM;
-      scale(d, w / u.w, hh / u.h);
-      u.w = w; u.h = hh; u.preset = "custom";
+      if (RT) { var pm = RT.marginsFor(u, w, hh); Object.keys(pm).forEach(function (k) { nu[k] = pm[k]; }); }
+      nu.w = w; nu.h = hh; nu.preset = "custom";
     }
-    var mg = sheet.a.marg;
-    if (mg && typeof mg === "object") ["t", "b", "i", "o"].forEach(function (k) { var v = Number(mg[k]); if (isFinite(v) && v >= 0 && v < 200) u["m" + k] = v * MM; });
+    if (mg && typeof mg === "object") ["t", "b", "i", "o"].forEach(function (k) { var v = Number(mg[k]); if (isFinite(v) && v >= 0 && v < 200) nu["m" + k] = v * MM; });
+    if (RT) RT.retrim(d, nu);
+    else {
+      if (sz) scale(d, nu.w / u.w, nu.h / u.h);
+      Object.keys(nu).forEach(function (k) { u[k] = nu[k]; });
+    }
     // chapters: where they start, how far down
     var ts = ps(d, title);
     if (ts) {

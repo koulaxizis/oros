@@ -84,6 +84,7 @@
   // margins, bleed, slug and gutter are in mm; the trim in st.u.
   // a starter book (LY-N1): layout/starters.js where it is loaded
   function starter() { return node ? require("./starters.js") : root.LY_START; }
+  function retrimLib() { return node ? require("./retrim.js") : root.LY_RETRIM; }
   function makeDoc(st, now) {
     var u = PT_PER[st.u] ? st.u : "mm";
     var w = toPt(st.w, u), h = toPt(st.h, u);
@@ -656,7 +657,7 @@
     if (st.where === "front") back = [];
     if (st.where === "back") front = [];
     if (st.where === "none") { front = []; back = []; }
-    var sx = doc.setup.w / house.setup.w, sy = doc.setup.h / house.setup.h, k = Math.min(sx, sy);
+    var sx = doc.setup.w / house.setup.w, sy = doc.setup.h / house.setup.h, k = Math.min(sx, sy), RT = retrimLib();
     var have = {};
     ["pstyles", "cstyles", "swatches"].forEach(function (list) { (doc[list] || []).forEach(function (e) { have[e.id] = 1; }); });
     function needStyle(list, id) {
@@ -678,8 +679,14 @@
         if (it.pg !== p.id) return;
         var c = JSON.parse(JSON.stringify(it));
         c.id = nid("it"); c.pg = np.id; c.m = now;
-        c.x = r3(c.x * sx); c.y = r3(c.y * sy); c.w = r3(c.w * (c.t === "text" ? sx : k)); c.h = r3(c.h * (c.t === "text" ? sy : k));
-        if (c.t === "img" || c.t === "rect" || c.t === "ell" || c.t === "path") { c.x = r3(it.x * sx + (it.w * sx - c.w) / 2); c.y = r3(it.y * sy + (it.h * sy - c.h) / 2); }
+        if (RT && !it.rot) {
+          // as a designer would move it (LY-W8, layout/retrim.js)
+          var sd = it.side || "R", nr = RT.mapRect({ x: it.x, y: it.y, w: it.w, h: it.h }, RT.pageOf(house.setup, sd), RT.pageOf(doc.setup, sd), RT.kindOf(it));
+          c.x = r3(nr.x); c.y = r3(nr.y); c.w = r3(nr.w); c.h = r3(nr.h);
+        } else {
+          c.x = r3(c.x * sx); c.y = r3(c.y * sy); c.w = r3(c.w * (c.t === "text" ? sx : k)); c.h = r3(c.h * (c.t === "text" ? sy : k));
+          if (c.t === "img" || c.t === "rect" || c.t === "ell" || c.t === "path") { c.x = r3(it.x * sx + (it.w * sx - c.w) / 2); c.y = r3(it.y * sy + (it.h * sy - c.h) / 2); }
+        }
         if (c.fill) needStyle("swatches", c.fill);
         if (c.stroke) needStyle("swatches", c.stroke);
         if (c.t === "text") {

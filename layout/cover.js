@@ -41,7 +41,7 @@
     var f = {
       title: str(pre.title, 200), sub: str(pre.sub, 200), author: str(pre.author, 200),
       blurb: str(pre.blurb, 4000), imprint: str(pre.imprint, 120), isbn: str(pre.isbn, 20),
-      isbnShown: str(pre.isbnShown, 20), price: str(pre.price, 40),
+      isbnShown: str(pre.isbnShown, 20), addon: str(pre.addon, 5), price: str(pre.price, 40),
       pages: numOf(pre.pages) > 0 ? Math.round(numOf(pre.pages)) : 160,
       size: last.size, w: 140, h: 210, paper: last.paper, spine: numOf(pre.spine) > 0 && numOf(pre.spine) <= 150 ? numOf(pre.spine) : "", flap: last.flap, bleed: last.bleed
     };
@@ -117,6 +117,7 @@
       body.appendChild(txt("cov.f.blurb", "blurb", 4000, true));
       var g4 = el("div", "grid2");
       g4.appendChild(txt("cov.f.isbn", "isbn", 20));
+      g4.appendChild(txt("cov.f.addon", "addon", 5));
       g4.appendChild(txt("cov.f.price", "price", 40));
       body.appendChild(g4);
       body.appendChild(txt("cov.f.imprint", "imprint", 120));
@@ -150,6 +151,7 @@
         var w = numOf(f.w), h = numOf(f.h);
         if (!(w >= 50 && w <= 500 && h >= 50 && h <= 700)) { bad.textContent = t("cov.badSize"); bad.hidden = false; return; }
         if (f.isbn.trim() && !CV.isbn13(f.isbn)) { bad.textContent = t("cov.badIsbn"); bad.hidden = false; return; }
+        if (f.addon.trim() && !/^\d{5}$/.test(f.addon.trim())) { bad.textContent = t("cov.badAddon"); bad.hidden = false; return; }
         go.disabled = true;
         last.size = f.size; last.paper = f.paper;
         last.flap = isFinite(numOf(f.flap)) ? numOf(f.flap) : 0;
@@ -158,7 +160,7 @@
           name: f.title.trim() ? t("cov.docName", { title: f.title.trim() }) : t("cov.title"),
           w: w, h: h, pages: f.pages, sheet: CV.paper(f.paper),
           flap: last.flap, bleed: last.bleed, title: f.title, sub: f.sub, author: f.author, blurb: f.blurb,
-          imprint: f.imprint, isbn: f.isbn, isbnShown: f.isbnShown, price: f.price
+          imprint: f.imprint, isbn: f.isbn, isbnShown: f.isbnShown, addon: f.addon.trim(), price: f.price
         };
         if (f.spine !== "" && isFinite(f.spine)) spec.spine = f.spine;
         Promise.all([picture(pics.img), picture(pics.logo)]).then(function (res) {

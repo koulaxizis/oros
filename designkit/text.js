@@ -514,6 +514,37 @@
     }
     return w * size + (track ? n * track * size / 1000 : 0);
   }
+  // Characters of a string that neither the face nor its fallback
+  // draws (LY-W6 glyph check); spaces and controls do not count. An
+  // unloaded face reports nothing.
+  function missingGlyphs(key, str) {
+    var m = metrics(key), out = [];
+    if (!m) return out;
+    var fb = m.fb ? metrics(m.fb) : null;
+    if (m.fb && !fb) return out;   // its fallback is not loaded yet: cannot tell
+    for (var i = 0; i < str.length; i++) {
+      var cp = str.codePointAt(i);
+      if (cp > 0xFFFF) i++;
+      if (cp <= 0x20 || (cp >= 0x7F && cp <= 0xA0) || cp === 0xAD || (cp >= 0x200B && cp <= 0x200F) || cp === 0xFFFC) continue;
+      if (m.map[cp] !== undefined || (fb && fb.map[cp] !== undefined)) continue;
+      var ch = String.fromCodePoint(cp);
+      if (out.indexOf(ch) === -1) out.push(ch);
+    }
+    return out;
+  }
+  // Greek-aware order (LY-W6) for lists people read: accents,
+  // breathings and case set aside first (ά = α, ς = σ, Ἀ = α), then
+  // used to tell apart what is otherwise the same; digits by value.
+  var collator = null;
+  try { collator = typeof Intl !== "undefined" && Intl.Collator ? new Intl.Collator("el", { sensitivity: "base", numeric: true }) : null; } catch (e) { collator = null; }
+  function sortKey(s) {
+    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f\u0345]/g, "").toLowerCase().replace(/\u03C2/g, "\u03C3");
+  }
+  function collate(a, b) {
+    a = String(a || ""); b = String(b || "");
+    var r = collator ? collator.compare(a, b) : (sortKey(a) < sortKey(b) ? -1 : sortKey(a) > sortKey(b) ? 1 : 0);
+    return r || (a < b ? -1 : a > b ? 1 : 0);
+  }
   // Pair kerning in em between two characters, when one file of the
   // face has both (a character drawn by the fallback is not kerned).
   function kernEm(m, a, b) {
@@ -580,7 +611,10 @@
   // starts; sink (pt, 0-600) how far below the top of a column it
   // starts when it opens the column (a chapter's sunk opening; sb is
   // the space everywhere else); sec 1 / 0 its paragraphs are the
-  // titles a running head shows (LY-RH).
+  // titles a running head shows (LY-RH); bl 1 / 0 its baselines sit
+  // on the document's baseline grid (LY-W5b, frame.bgrid).
+  // A paragraph's own ext.brk (a break character typed before it,
+  // LY-W5b) starts it the same way, whatever its style says.
   var BRK = { col: 1, page: 1, odd: 1, even: 1 };
   function bookOf(s, out) {
     var x = s.ext;
@@ -597,6 +631,99 @@
     if (x.nest !== undefined) out.nest = nestOf(x.nest);
     if (x.tabw !== undefined) { var tw = Number(x.tabw); out.tabw = isFinite(tw) ? Math.max(1, Math.min(720, tw)) : 36; }
     if (x.tabs !== undefined) out.tabs = tabsOf(x.tabs);
+    if (x.grep !== undefined) out.grep = grepOf(x.grep);
+    if (x.bl !== undefined) out.bl = x.bl ? 1 : 0;
+    // composition (LY-W6): comp "p" the paragraph composer (else the
+    // line-by-line one); ws [min, max] word spacing in % of a space
+    // (min 50-100, max 100-400) a justified line may use; ls the most
+    // letter spacing (thousandths of an em, 0-100) a justified line
+    // may add once its spaces are at their max; opt 1 optical margins
+    // (punctuation hangs at the edges); dc { n lines 2-10, c letters
+    // 1-10 } a drop cap; bal 1 balanced ragged lines
+    if (x.list !== undefined) out.list = listOf(x.list);
+    if (x.comp !== undefined) out.comp = x.comp === "p" ? "p" : "";
+    if (x.ws !== undefined) {
+      var ws = Array.isArray(x.ws) ? x.ws : [];
+      var mn = Number(ws[0]), mx = Number(ws[1]);
+      out.wsMin = isFinite(mn) ? Math.max(50, Math.min(100, mn)) : 100;
+      out.wsMax = isFinite(mx) ? Math.max(100, Math.min(400, mx)) : 0;
+    }
+    if (x.ls !== undefined) { var lv = Number(x.ls); out.lsMax = isFinite(lv) ? Math.max(0, Math.min(100, lv)) : 0; }
+    if (x.opt !== undefined) out.opt = x.opt ? 1 : 0;
+    if (x.bal !== undefined) out.bal = x.bal ? 1 : 0;
+    if (x.dc !== undefined) {
+      var dn = x.dc && Math.floor(Number(x.dc.n)), dl = x.dc && Math.floor(Number(x.dc.c));
+      out.dc = dn >= 2 && dl >= 1 ? { n: Math.min(10, dn), c: Math.min(10, dl) } : null;
+    }
+  }
+  // GREP styles (LY-W5, ext.grep): [{ re, cs }] up to 10, a JavaScript
+  // regular expression (flag u, at most 200 characters) and the
+  // character style its matches take; a later rule wins where two
+  // overlap. A run with its own character style keeps it (as nested
+  // styles). A pattern that does not compile is left out.
+  var grepCache = {};
+  function grepOf(v) {
+    if (!Array.isArray(v)) return null;
+    var out = v.filter(function (g) { return g && typeof g.re === "string" && g.re && g.re.length <= 200 && typeof g.cs === "string" && g.cs; })
+      .slice(0, 10).map(function (g) { return { re: g.re, cs: g.cs }; })
+      .filter(function (g) { return !!grepRe(g.re); });
+    return out.length ? out : null;
+  }
+  function grepRe(src) {
+    if (Object.prototype.hasOwnProperty.call(grepCache, src)) return grepCache[src];
+    var re = null;
+    try { re = new RegExp(src, "gu"); if (re.test("")) re = null; } catch (e) { re = null; }
+    var keys = Object.keys(grepCache);
+    if (keys.length > 200) delete grepCache[keys[0]];
+    grepCache[src] = re;
+    return re;
+  }
+  function grepCuts(text, rules) {
+    var cuts = [];
+    rules.forEach(function (g) {
+      var re = grepRe(g.re), m, n = 0;
+      if (!re) return;
+      re.lastIndex = 0;
+      while ((m = re.exec(text)) && n++ < 500) {
+        if (!m[0].length) { re.lastIndex++; continue; }
+        cuts.push({ a: m.index, b: m.index + m[0].length, cs: g.cs });
+      }
+    });
+    return cuts;
+  }
+  function textOfRuns(runs) {
+    var text = "";
+    runs.forEach(function (r) { text += r.f ? "\uFFFC" : String(r.t || ""); });
+    return text;
+  }
+  // Runs split at the cuts' edges; a piece inside cuts takes the last
+  // covering cut's character style (runs with their own keep it).
+  function cutRuns(runs, cuts) {
+    if (!cuts.length) return runs;
+    var edges = {};
+    cuts.forEach(function (c) { edges[c.a] = 1; edges[c.b] = 1; });
+    function cover(pos) { var hit = null; cuts.forEach(function (c) { if (pos >= c.a && pos < c.b) hit = c; }); return hit; }
+    var out = [], base = 0;
+    runs.forEach(function (r) {
+      var len = r.f ? 1 : String(r.t || "").length, end = base + len;
+      if (r.cs || r.f || r.ext || !len) {
+        // a field takes the style of the place it is in
+        if (r.f && !r.cs) { var c0 = cover(base); out.push(c0 ? Object.assign({}, r, { cs: c0.cs }) : r); }
+        else out.push(r);
+        base = end; return;
+      }
+      var pos = base, t = String(r.t);
+      while (pos < end) {
+        var stop = end;
+        for (var k = pos + 1; k < end; k++) if (edges[k]) { stop = k; break; }
+        var c = cover(pos), piece = Object.assign({}, r, { t: t.slice(pos - base, stop - base) });
+        if (c) piece.cs = c.cs;
+        out.push(piece);
+        pos = stop;
+      }
+      base = end;
+    });
+    return out;
   }
   // ext.tabs: up to 40 stops in points (0-14400), in order
   function tabsOf(v) {
@@ -615,8 +742,7 @@
     return out.length ? out : null;
   }
   function nestRuns(runs, nest) {
-    var text = "";
-    runs.forEach(function (r) { text += r.f ? "\uFFFC" : String(r.t || ""); });
+    var text = textOfRuns(runs);
     var cuts = [], at = 0;
     for (var i = 0; i < nest.length; i++) {
       var k = text.indexOf(nest[i].to, at);
@@ -657,6 +783,10 @@
     if (typeof f === "string" && FAM_RE.test(f)) out.fam = f;
     else if (s.font !== undefined && s.font !== null) out.fam = "";
     if (s.ext && s.ext.kern !== undefined) out.kern = s.ext.kern ? 1 : 0;
+    // LY-W6: sc 1 small capitals (drawn from the capitals, smaller),
+    // pos "sup" | "sub" superscript or subscript
+    if (s.ext && s.ext.sc !== undefined) out.sc = s.ext.sc ? 1 : 0;
+    if (s.ext && s.ext.pos !== undefined) out.pos = s.ext.pos === "sup" || s.ext.pos === "sub" ? s.ext.pos : "";
   }
   function resolveCs(csMap, id) {
     var chain = [], seen = {}, cur = csMap[id];
@@ -687,6 +817,9 @@
     // a note's mark (ext.sup, LY-NT): smaller and raised; an older
     // orOS shows it at the text's size
     if (run.ext && run.ext.sup) { a.rise = a.size * 0.33; a.size = a.size * 0.65; }
+    else if (cs.pos === "sup") { a.rise = a.size * 0.33; a.size = a.size * 0.65; }
+    else if (cs.pos === "sub") { a.rise = -a.size * 0.14; a.size = a.size * 0.65; }
+    if (cs.sc !== undefined ? cs.sc : ps.sc) a.sc = 1;
     if (cs.kern !== undefined ? cs.kern : ps.kern) a.kern = 1;
     a.key = fontKey(a.fam && FAMILIES[a.fam] ? a.fam : a.font, a.b, a.i);
     return a;
@@ -703,39 +836,55 @@
   // stay together unless the second has a dialytika). Two letters at
   // least on each side. Words with anything but Greek letters are
   // left alone.
-  // i18n-inline-ok: Greek letters (hyphenation data, no UI text)
-  var GR_VOW = "αεηιουωάέήίόύώϊϋΐΰ", GR_DIA = "ϊϋΐΰ", GR_LET = /^[\u0386\u0388-\u03CE]+$/;
+  // Polytonic text (LY-W6) follows the same rules: each letter is read
+  // as its base letter (breathings, accents and the iota subscript
+  // set aside, ῃ is η), and a dialytika still starts a new syllable.
   // i18n-inline-ok: Greek consonant pairs a word can start with
   var GR_ONSET = " βγ βδ βλ βρ γδ γκ γλ γν γρ δρ θλ θν θρ κλ κν κρ κτ μν μπ ντ πλ πν πρ πτ σβ σγ σθ σκ σλ σμ σν σπ στ σφ σχ τζ τμ τρ τσ φθ φλ φρ φτ χθ χλ χν χρ χτ ";
-  var HY_MIN = 2;
+  var GR_LET = /^[\u0386\u0388-\u03CE\u1F00-\u1FBC\u1FC2-\u1FCC\u1FD0-\u1FDB\u1FE0-\u1FEC\u1FF2-\u1FFC]+$/;
+  var HY_MIN = 2, baseCache = {};
+  // a Greek letter → { b: its base letter, lower case, σ for ς; d: 1
+  // when it carries a dialytika }
+  function grBase(ch) {
+    var c = baseCache[ch];
+    if (c) return c;
+    var d = ch.normalize ? ch.normalize("NFD") : ch;
+    var b = d.charAt(0).toLowerCase();
+    if (b === "\u03C2") b = "\u03C3";
+    return (baseCache[ch] = { b: b, d: d.indexOf("\u0308") !== -1 ? 1 : 0 });
+  }
+  var GR_VOW_BASE = "\u03B1\u03B5\u03B7\u03B9\u03BF\u03C5\u03C9";
   // word → offsets where it may break (a "-" then shows)
   function hyphenGreek(word) {
-    var w = word.toLowerCase(), out = [];
-    if (w.length < 2 * HY_MIN || !GR_LET.test(word)) return out;
-    var vow = function (k) { return GR_VOW.indexOf(w[k]) !== -1; };
+    var out = [], n = word.length;
+    if (n < 2 * HY_MIN || !GR_LET.test(word)) return out;
+    var bs = [];
+    for (var i = 0; i < n; i++) bs.push(grBase(word[i]));
+    var w = bs.map(function (x) { return x.b; }).join("");
+    var vow = function (k) { return GR_VOW_BASE.indexOf(w[k]) !== -1; };
     var k = 0;
-    while (k < w.length && !vow(k)) k++;
-    while (k < w.length) {
+    while (k < n && !vow(k)) k++;
+    while (k < n) {
       // the end of this vowel group
       var e = k + 1;
-      while (e < w.length && vow(e) && GR_DIA.indexOf(w[e]) === -1) e++;
-      if (e >= w.length) break;
+      while (e < n && vow(e) && !bs[e].d) e++;
+      if (e >= n) break;
       if (vow(e)) { out.push(e); k = e; continue; }
       // consonants up to the next vowel
       var c = e;
-      while (c < w.length && !vow(c)) c++;
-      if (c >= w.length) break;
-      var n = c - e, at;
-      if (n === 1) at = e;
+      while (c < n && !vow(c)) c++;
+      if (c >= n) break;
+      var at;
+      if (c - e === 1) at = e;
       else at = GR_ONSET.indexOf(" " + w.substr(e, 2) + " ") !== -1 ? e : e + 1;
       out.push(at);
       k = c;
     }
-    return out.filter(function (o) { return o >= HY_MIN && w.length - o >= HY_MIN; });
+    return out.filter(function (o) { return o >= HY_MIN && n - o >= HY_MIN; });
   }
   // A word token's break points as tokens (one-part words; the "h"
   // tokens take no character: auto 1).
-  var EDGE = /^([^\u0386\u0388-\u03CE]*)([\u0386\u0388-\u03CE]+)([^\u0386\u0388-\u03CE]*)$/;
+  var EDGE = /^([^\u0386\u0388-\u03CE\u1F00-\u1FFF]*)([\u0386\u0388-\u03CE\u1F00-\u1FFF]+)([^\u0386\u0388-\u03CE\u1F00-\u1FFF]*)$/;
   function hyphenate(toks) {
     var out = [];
     toks.forEach(function (tk) {
@@ -771,9 +920,22 @@
   // the dialytika (ϊ → Ϊ).
   // i18n-inline-ok: Greek capital letters without tonos (text layout data, no UI text)
   var TONOS = { "Ά": "Α", "Έ": "Ε", "Ή": "Η", "Ί": "Ι", "Ό": "Ο", "Ύ": "Υ", "Ώ": "Ω", "ΐ": "Ϊ", "ΰ": "Ϋ" };
+  // Polytonic letters (LY-W6) lose breathings and accents too; an iota
+  // subscript becomes a capital iota after its letter (ᾳ → ΑΙ).
+  function polyCap(c) {
+    var d = c.normalize ? c.normalize("NFD") : c, b = d.charAt(0);
+    if (!/[\u0391-\u03A9\u03B1-\u03C9]/.test(b)) return c;
+    var dia = d.indexOf("\u0308") !== -1 ? "\u0308" : "", isub = d.indexOf("\u0345") !== -1 ? "\u03B9" : "";
+    return (b + dia).normalize("NFC") + isub;
+  }
+  var CAPS = { caps: 1 };
+  function scOf(a) {
+    if (!a._sc) { a._sc = {}; for (var k in a) if (k !== "_sc" && Object.prototype.hasOwnProperty.call(a, k)) a._sc[k] = a[k]; a._sc.size = a.size * 0.78; a._sc.track = (a.track || 0) + 25; delete a._sc.sc; }
+    return a._sc;
+  }
   function caseOf(a, t) {
     if (!a.caps) return t;
-    return t.replace(/[ΐΰ]/g, function (c) { return TONOS[c]; }).toUpperCase().replace(/[ΆΈΉΊΌΎΏ]/g, function (c) { return TONOS[c]; });
+    return t.replace(/[\u1F00-\u1FFF]/g, polyCap).replace(/[ΐΰ]/g, function (c) { return TONOS[c]; }).toUpperCase().replace(/[ΆΈΉΊΌΎΏ]/g, function (c) { return TONOS[c]; });
   }
 
   // Every part and space carries its offset `o` (and parts their
@@ -783,8 +945,19 @@
   function tokenize(para, ps, csMap) {
     var toks = [], word = null, base = 0;
     var runs = ps.nest && para.runs && para.runs.length ? nestRuns(para.runs, ps.nest) : (para.runs || []);
+    if (ps.grep && runs.length) runs = cutRuns(runs, grepCuts(textOfRuns(runs), ps.grep));
     function flush() { if (word) { toks.push(word); word = null; } }
-    function part(t, a, o, n) { if (!word) word = { k: "w", parts: [] }; word.parts.push({ t: caseOf(a, t), a: a, o: o, n: n }); }
+    function part(t, a, o, n) {
+      if (!word) word = { k: "w", parts: [] };
+      if (!a.sc || a.caps) { word.parts.push({ t: caseOf(a, t), a: a, o: o, n: n }); return; }
+      // small capitals: the lower-case letters as capitals, smaller and
+      // a little spaced; the rest as typed
+      var re = /\p{Ll}+|[^\p{Ll}]+/gu, m;
+      while ((m = re.exec(t))) {
+        var low = /\p{Ll}/u.test(m[0]);
+        word.parts.push({ t: low ? caseOf(CAPS, m[0]) : m[0], a: low ? scOf(a) : a, o: o + m.index, n: m[0].length });
+      }
+    }
     runs.forEach(function (run) {
       var cs = run.cs ? resolveCs(csMap, run.cs) : {};
       var a = runAttrs(ps, cs, run);
@@ -797,6 +970,20 @@
       // a running head (ext.fld "sec", LY-RH): the page's chapter title;
       // its own text is what shows where there is none (a master being
       // edited, an older orOS). Its characters keep their offsets.
+      // a note's reference (LY-W7, ext.fn: the note's id) shows the
+      // note's number, raised; a cross-reference (ext.xr) the page or
+      // text of where it points. Their own text is what an older orOS
+      // shows; its characters keep their offsets.
+      if (run.ext && (typeof run.ext.fn === "string" || (run.ext.xr && typeof run.ext.xr === "object")) && typeof run.t === "string" && run.t) {
+        if (!word) word = { k: "w", parts: [] };
+        if (typeof run.ext.fn === "string") {
+          var fa = {}; for (var ak in a) if (ak !== "_sc" && Object.prototype.hasOwnProperty.call(a, ak)) fa[ak] = a[ak];
+          fa.rise = a.size * 0.33; fa.size = a.size * 0.65;
+          word.parts.push({ t: null, f: "fn", fn: run.ext.fn, fb: run.t, a: fa, o: base, n: run.t.length });
+        } else word.parts.push({ t: null, f: "xr", xr: run.ext.xr, fb: run.t, a: a, o: base, n: run.t.length });
+        base += run.t.length;
+        return;
+      }
       if (run.ext && run.ext.fld === "sec" && typeof run.t === "string") {
         if (!word) word = { k: "w", parts: [] };
         word.parts.push({ t: null, f: "sec", fb: run.t, a: a, o: base, n: run.t.length });
@@ -840,11 +1027,23 @@
     if (p.f === "pn") return String(ctx.pageLabel || "#");
     if (p.f === "pc") return String(ctx.pageCount || "#");
     if (p.f === "sec") return caseOf(p.a, typeof ctx.sec === "string" ? ctx.sec : p.fb || "");
+    if (p.f === "fn") return curNotes && curNotes.num[p.fn] ? String(curNotes.num[p.fn]) : p.fb || "*";
+    if (p.f === "xr") return caseOf(p.a, xrText(p.xr, p.fb));
     return "";
   }
   // the anchored objects' boxes of the chain being laid out:
   // { item id: { w, h } } (styles.obj; none: an object takes no room)
   var curObjs = null;
+  // the notes of the chain being laid out (LY-W7): { num: { id: n },
+  // text: { id: text }, kind "foot" | "end", ps } (styles.notes), and
+  // the cross-reference targets { anchor id: { pg: label, t: text } }
+  // (styles.xr)
+  var curNotes = null, curXr = null;
+  function xrText(x, fb) {
+    var to = x && typeof x.to === "string" && curXr ? curXr[x.to] : null;
+    if (!to) return fb || "?";
+    return x.k === "t" ? to.t : x.k === "tp" ? to.t + " (" + to.pg + ")" : String(to.pg);
+  }
   function objBox(p) { var b = curObjs && curObjs[p.ob]; return b && b.w > 0 && b.h > 0 ? b : null; }
   function partWidth(p, ctx) {
     if (p.f === "obj") { var b = objBox(p); return b ? b.w : 0; }
@@ -884,6 +1083,145 @@
     return (Math.floor((pos + 0.01) / w) + 1) * w;
   }
 
+  // ---------- 6c. Notes (LY-W7) ----------
+  // A note lives in its reference: a run with ext.fn = its id and
+  // ext.ft = its text (paragraphs split by a new line), so it travels
+  // with the text it belongs to (copy, paste, another story); a
+  // story's ext.fn { id: text } is read too. styles.notes:
+  // { kind "foot" | "end", ps (a paragraph style id), start (the first
+  // number of this story, so numbers run through a document) }.
+  function notesOf(story, styles) {
+    var tx = story && story.ext && story.ext.fn;
+    var refs = [], num = {}, text = {};
+    (story && story.paras || []).forEach(function (p) {
+      (p.runs || []).forEach(function (r) {
+        if (!r.ext || typeof r.ext.fn !== "string" || refs.indexOf(r.ext.fn) >= 0) return;
+        refs.push(r.ext.fn);
+        text[r.ext.fn] = typeof r.ext.ft === "string" ? r.ext.ft : tx && typeof tx[r.ext.fn] === "string" ? tx[r.ext.fn] : "";
+      });
+    });
+    if (!refs.length) return null;
+    var cfg = styles.notes || {}, n = Math.max(1, Math.floor(Number(cfg.start)) || 1);
+    refs.forEach(function (id) { num[id] = n++; });
+    var psMap = byId(styles.ps), base = resolvePs(psMap, cfg.ps && psMap[cfg.ps] ? cfg.ps : "ps-base");
+    var own = !!(cfg.ps && psMap[cfg.ps]);
+    return { num: num, text: text, order: refs, kind: cfg.kind === "end" ? "end" : "foot", ps: own ? cfg.ps : null, base: base, styles: styles,
+             key: fontKey(base.font, base.b, base.i), color: base.color };
+  }
+  // the notes as paragraphs: "n" + an en space + the text
+  function noteParas(notes, ids) {
+    var out = [];
+    ids.forEach(function (id) {
+      String(notes.text[id] || "").split("\n").slice(0, 50).forEach(function (t, k) {
+        var runs = [];
+        if (!k) runs.push({ t: notes.num[id] + "\u2002" });
+        if (t) runs.push({ t: t });
+        out.push({ ps: notes.ps || "_fn", runs: runs });
+      });
+    });
+    return out;
+  }
+  // a note set on its own, `w` wide → { lines, h }
+  function noteBlock(notes, id, w) {
+    var st = notes.styles, ps = st.ps;
+    if (!notes.ps) {
+      var b = notes.base, sz = Math.max(5, Math.round(b.size * 0.8 * 10) / 10);
+      ps = ps.concat([{ id: "_fn", m: 0, name: "", base: "ps-base", size: sz, lead: b.lead > 0 ? Math.max(sz * 1.15, b.lead * 0.8) : 0, align: b.align === "j" ? "j" : "l", sb: 0, sa: 1, fi: 0, li: 0, ri: 0, ext: { brk: "" } }]);
+    }
+    var keepO = curObjs, keepN = curNotes, keepX = curXr;
+    var res = layoutChain({ paras: noteParas(notes, [id]) }, [{ id: "_fn", w: w, h: 1e6 }], { ps: ps, cs: st.cs });
+    curObjs = keepO; curNotes = keepN; curXr = keepX;
+    var ls = res.frames._fn.lines, last = ls[ls.length - 1];
+    return { lines: ls, h: last ? last.y + last.d + 2 : 0 };
+  }
+
+  // ---------- 6a. Lists (LY-W7) ----------
+  // A paragraph style's ext.list { f: format, g: list name (default the
+  // style's id), lv: level 1-3, s: first number } numbers its
+  // paragraphs; a paragraph's ext.lr (a number) starts its list again
+  // from there. Counters run through the story; a deeper level starts
+  // again under each new number of the level above.
+  // i18n-inline-ok: Greek numerals (list labels, no UI text)
+  var GR_UNITS = ["", "α", "β", "γ", "δ", "ε", "ϛ", "ζ", "η", "θ"], GR_TENS = ["", "ι", "κ", "λ", "μ", "ν", "ξ", "ο", "π", "ϟ"], GR_HUND = ["", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω", "ϡ"];
+  function greekNum(n) {
+    if (n < 1 || n > 999) return String(n);
+    return GR_HUND[Math.floor(n / 100)] + GR_TENS[Math.floor(n / 10) % 10] + GR_UNITS[n % 10] + "\u0374";
+  }
+  function roman(n) {
+    if (n < 1 || n > 3999) return String(n);
+    var v = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1], r = ["m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"], o = "";
+    for (var i = 0; i < v.length; i++) while (n >= v[i]) { o += r[i]; n -= v[i]; }
+    return o;
+  }
+  function alpha(n) { var o = ""; while (n > 0) { n--; o = String.fromCharCode(97 + n % 26) + o; n = Math.floor(n / 26); } return o; }
+  var LIST_FMT = {
+    "1.": function (n) { return n + "."; }, "1)": function (n) { return n + ")"; }, "(1)": function (n) { return "(" + n + ")"; },
+    "a.": function (n) { return alpha(n) + "."; }, "a)": function (n) { return alpha(n) + ")"; }, "A.": function (n) { return alpha(n).toUpperCase() + "."; },
+    "i.": function (n) { return roman(n) + "."; }, "I.": function (n) { return roman(n).toUpperCase() + "."; },
+    "\u03B1\u0374": greekNum, "\u0391\u0374": function (n) { return greekNum(n).toUpperCase(); }, "\u2022": function () { return "\u2022"; }, "\u2013": function () { return "\u2013"; }
+  };
+  function listOf(v) {
+    // U+0374 and U+02B9 are the same keraia (NFC turns one into the other)
+    var f = v && typeof v.f === "string" ? v.f.replace(/\u02B9/g, "\u0374") : "";
+    if (!v || typeof v !== "object" || !LIST_FMT[f]) return null;
+    var lv = Math.floor(Number(v.lv)), st = Math.floor(Number(v.s));
+    return { f: f, g: typeof v.g === "string" ? v.g.slice(0, 40) : "", lv: lv >= 1 && lv <= 3 ? lv : 1, s: st >= 0 && st < 100000 ? st : 1 };
+  }
+  function listLabel(f, n) { return (LIST_FMT[f] || LIST_FMT["1."])(n); }
+  // each paragraph's label ("" none) for a story
+  function listLabels(paras, psMap) {
+    var out = [], count = {};
+    paras.forEach(function (p, i) {
+      var ps = resolvePs(psMap, p.ps), L = ps.list;
+      if (!L || ps.bul) { out[i] = ""; return; }
+      var g = L.g || p.ps, c = count[g] = count[g] || [0, 0, 0, 0];
+      var lr = p.ext && Number(p.ext.lr);
+      if (lr >= 0 && lr < 100000 && p.ext.lr !== undefined && p.ext.lr !== null) c[L.lv] = Math.floor(lr);
+      else c[L.lv] = c[L.lv] ? c[L.lv] + 1 : L.s;
+      for (var k = L.lv + 1; k < 4; k++) c[k] = 0;
+      out[i] = listLabel(L.f, c[L.lv]);
+    });
+    return out;
+  }
+
+  // ---------- 6b. Optical margins, drop caps, the composer (LY-W6) ----------
+  // How much of a character hangs past the edge of the column.
+  // i18n-inline-ok: punctuation marks (typesetting data, no UI text)
+  var HANG = { ".": 1, ",": 1, "-": 1, "\u2010": 1, "\u00B7": 1, "'": 1, "\"": 1, "\u2018": 1, "\u2019": 1, "\u201C": 1, "\u201D": 1, "\u201E": 1,
+               "\u00AB": 0.5, "\u00BB": 0.5, "\u2039": 0.5, "\u203A": 0.5, ":": 0.5, ";": 0.5, "\u0387": 0.5, "\u2013": 0.5, "\u2014": 0.5, "!": 0.3, "?": 0.3, "\u2026": 0.3 };
+  function edgePart(tok, last) {
+    var ps = tok.parts || [];
+    for (var i = last ? ps.length - 1 : 0; last ? i >= 0 : i < ps.length; i += last ? -1 : 1) if (ps[i].t !== null && ps[i].t.length && ps[i].f !== "obj") return ps[i];
+    return null;
+  }
+  function hangOf(p, ch) { var k = HANG[ch]; return k ? measure(p.a.key, ch, p.a.size, 0) * k : 0; }
+  function hangLeft(tok) { var p = tok && tok.k === "w" ? edgePart(tok, false) : null; return p ? hangOf(p, p.t.charAt(0)) : 0; }
+  function hangRight(tok) { var p = tok && tok.k === "w" ? edgePart(tok, true) : null; return p ? hangOf(p, p.t.charAt(p.t.length - 1)) : 0; }
+
+  // A drop cap: the first letters of the paragraph's first word (as
+  // many as asked, never more than the word), sized so their capitals
+  // stand from the first line's cap height to the n-th line's
+  // baseline. The word token loses them.
+  var CAP_H = 0.7;
+  function dropCap(toks, ps) {
+    if (!ps.dc || !toks.length || toks[0].k !== "w") return null;
+    var p0 = toks[0].parts[0];
+    if (!p0 || p0.t === null || p0.f || !p0.t.length || p0.t.length !== p0.n) return null;
+    var c = Math.min(ps.dc.c, p0.t.length), lead = leadOf(ps, ps.size);
+    var size = (lead * (ps.dc.n - 1) + CAP_H * ps.size) / CAP_H;
+    var txt = p0.t.slice(0, c);
+    var dc = { t: txt, a: p0.a, size: size, o: p0.o, n: c, nLines: ps.dc.n };
+    dc.cw = measure(p0.a.key, txt, size, 0);
+    dc.w = dc.cw + ps.size * 0.3;
+    dc.n = ps.dc.n; dc.nch = c;
+    if (c === p0.t.length) {
+      toks[0].parts.shift();
+      if (!toks[0].parts.length) toks.shift();
+    } else {
+      toks[0].parts[0] = { t: p0.t.slice(c), a: p0.a, o: p0.o + c, n: p0.n - c };
+    }
+    return dc;
+  }
   // Split a word that is wider than any line into pieces that fit.
   function splitWord(w, maxW, ctx) {
     var pieces = [], cur = { k: "w", parts: [] }, curW = 0;
@@ -987,9 +1325,20 @@
   function layoutChain(story, frames, styles) {
     var psMap = byId(styles.ps), csMap = byId(styles.cs);
     curObjs = styles.obj || null;
+    curXr = styles.xr || null;
+    var notes = curNotes = notesOf(story, styles);
     var out = { frames: {}, overset: false, placedParas: 0 };
     frames.forEach(function (f) { out.frames[f.id] = { lines: [] }; });
     if (!frames.length) { out.overset = hasText(story); return out; }
+    // endnotes (LY-W7): the notes follow the story's last paragraph
+    var realN = (story.paras || []).length;
+    if (notes && notes.kind === "end" && notes.order.length) story = { paras: (story.paras || []).concat(noteParas(notes, notes.order)) };
+    var labels = listLabels(story.paras || [], psMap);
+    // footnotes waiting at the foot of each column: key → { f, col, x0,
+    // bottom, h, blocks: [{ lines, h }] }
+    var foot = {}, fnDone = {}, FN_SEP = 9, FN_GAP = 2;
+    function footKey() { return fi * 64 + col; }
+    function footRoom() { var k = foot[footKey()]; return k ? k.h + FN_SEP : 0; }
 
     var fi = 0, col = 0, y = 0, colTop = true, curPi = 0, curLen = 0;
     var geom = null;
@@ -1020,7 +1369,8 @@
       var para = paras[pi];
       var ps = resolvePs(psMap, para.ps);
       curPi = pi;
-      if (ps.brk && !startAt(ps.brk)) { out.overset = true; break; }
+      var pbrk = para.ext && BRK[para.ext.brk] ? para.ext.brk : ps.brk;
+      if (pbrk && !startAt(pbrk)) { out.overset = true; break; }
       var S = snap(), got = place(para, ps, {});
       // lines kept together at a column break: the paragraph moves on
       // whole, or the column before it gives lines to the next
@@ -1032,17 +1382,62 @@
         got = nextCol() && place(para, ps, {});
       }
       if (!got) { out.overset = true; break; }
-      out.placedParas = pi + 1;
+      if (pi < realN) out.placedParas = pi + 1;
     }
+    // the footnotes, at the foot of their columns, under a short rule
+    Object.keys(foot).forEach(function (k) {
+      var F = foot[k], yy = F.bottom - F.h;
+      var rule = { col: F.col, frame: F.f.id, y: yy - FN_SEP + 3, d: 0, h: FN_SEP, runs: [{ x: F.x0, y: yy - FN_SEP + 3, t: "\u00A0", key: notes.key, size: 6, color: notes.color, u: 1, track: 0, w: Math.min(72, F.cw / 3) }], fn: 1, rule: 1, p: -1, cx0: F.x0, cx1: F.x0 + F.cw, x0: F.x0 };
+      out.frames[F.f.id].lines.push(rule);
+      F.blocks.forEach(function (b, bi) {
+        b.lines.forEach(function (ln) {
+          // fk: which note the line belongs to (a tagged PDF's Note, LY-N6)
+          var nl = { col: F.col, frame: F.f.id, y: yy + ln.y, d: ln.d, h: ln.h, fn: 1, fk: k + "/" + bi, p: -1, cx0: F.x0 + ln.cx0, cx1: F.x0 + ln.cx1, x0: F.x0 + ln.x0, runs: ln.runs.map(function (r) {
+            var o = {}; for (var q in r) if (q !== "o" && q !== "n" && q !== "p") o[q] = r[q];
+            o.x = F.x0 + r.x; o.y = yy + r.y; return o;
+          }) };
+          out.frames[F.f.id].lines.push(nl);
+        });
+        yy += b.h;
+      });
+    });
+    var footCols = {};
+    Object.keys(foot).forEach(function (k) { footCols[foot[k].f.id + ":" + foot[k].col] = 1; });
 
+    // vertical justification (LY-W5b, frame ext.vj): a column the text
+    // goes on from gets its free space shared out between paragraphs
+    // (between lines when it holds one paragraph); the last column of
+    // the text stays as it is
+    var lastF = null, lastC = -1;
+    frames.forEach(function (f) { var ls = out.frames[f.id].lines.filter(function (l) { return !l.fn; }); if (ls.length) { lastF = f; lastC = ls[ls.length - 1].col; } });
+    frames.forEach(function (f) {
+      if (!f.vj) return;
+      var byCol = {}, ins = Math.max(0, f.inset || 0), bottom = Math.max(ins, f.h - ins);
+      out.frames[f.id].lines.forEach(function (ln) { if (!ln.fn) (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
+      Object.keys(byCol).forEach(function (c) {
+        if (footCols[f.id + ":" + c]) return;
+        if (f === lastF && +c === lastC && !out.overset) return;
+        var ls = byCol[c], last = ls[ls.length - 1], free = bottom - (last.y + last.d);
+        if (free <= 0.5 || ls.length < 2) return;
+        var gaps = 0, i;
+        for (i = 1; i < ls.length; i++) if (ls[i].p !== ls[i - 1].p) gaps++;
+        var byLine = !gaps, step = free / (byLine ? ls.length - 1 : gaps), dy = 0;
+        for (i = 1; i < ls.length; i++) {
+          if (byLine || ls[i].p !== ls[i - 1].p) dy += step;
+          var ln = ls[i], d0 = dy;
+          ln.y += d0; ln.runs.forEach(function (r) { r.y += d0; });
+        }
+      });
+    });
     // vertical alignment per column
     frames.forEach(function (f) {
-      if (!f.valign || f.valign === "t") return;
+      if (!f.valign || f.valign === "t" || f.vj) return;
       var lines = out.frames[f.id].lines;
       var byCol = {};
-      lines.forEach(function (ln) { (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
+      lines.forEach(function (ln) { if (!ln.fn) (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
       var ins = Math.max(0, f.inset || 0), bottom = Math.max(ins, f.h - ins);
       Object.keys(byCol).forEach(function (c) {
+        if (footCols[f.id + ":" + c]) return;
         var ls = byCol[c], last = ls[ls.length - 1];
         var used = (last.y + last.d) - ins, free = (bottom - ins) - used;
         if (free <= 0) return;
@@ -1055,10 +1450,13 @@
     function snap() {
       var n = {};
       frames.forEach(function (f) { n[f.id] = out.frames[f.id].lines.length; });
-      return { fi: fi, col: col, y: y, colTop: colTop, geom: geom, lastPg: lastPg, n: n };
+      var fs = {};
+      Object.keys(foot).forEach(function (k) { fs[k] = { f: foot[k].f, col: foot[k].col, x0: foot[k].x0, bottom: foot[k].bottom, h: foot[k].h, blocks: foot[k].blocks.slice() }; });
+      return { fi: fi, col: col, y: y, colTop: colTop, geom: geom, lastPg: lastPg, n: n, foot: fs, fnDone: Object.keys(fnDone) };
     }
     function restore(S) {
       fi = S.fi; col = S.col; y = S.y; colTop = S.colTop; geom = S.geom; lastPg = S.lastPg;
+      foot = S.foot; fnDone = {}; S.fnDone.forEach(function (k) { fnDone[k] = 1; });
       frames.forEach(function (f) { out.frames[f.id].lines.length = S.n[f.id]; });
     }
     function pageOf() { return (frames[fi].ctx || {}).pg; }
@@ -1077,6 +1475,7 @@
       var toks = tokenize(para, ps, csMap);
       curLen = toks.len;
       if (ps.bul) toks.unshift({ k: "bul", a: runAttrs(ps, {}, {}) });
+      else if (labels[curPi]) toks.unshift({ k: "bul", a: runAttrs(ps, {}, {}), label: labels[curPi] });
       segs = []; segKey = -1;
       return layoutPara(toks, ps, opt) ? segs : null;
     }
@@ -1094,10 +1493,10 @@
     // room in this column for the first lines (its orph) of a paragraph
     function roomFor(next) {
       var nps = resolvePs(psMap, next.ps);
-      if (nps.brk) return true;
+      if (nps.brk || (next.ext && BRK[next.ext.brk])) return true;
       var key = fontKey(nps.font, nps.b, nps.i), lead = leadOf(nps, nps.size);
       var base = y + nps.sb + lead + lead * ((nps.orph || 1) - 1);
-      return base + descent(key, nps.size) <= geom.bottom + 0.01;
+      return base + descent(key, nps.size) <= geom.bottom - footRoom() + 0.01;
     }
 
     // --- one paragraph; false = ran out of frames ---
@@ -1110,19 +1509,43 @@
         hangBul = toks.shift();
       }
       var li = ps.li, bulletW = 0;
-      if (hangBul) {
+      if (hangBul && hangBul.label) {
+        // a list's number (LY-W7): it hangs in the left indent, which
+        // grows to hold it and a space
+        bulletW = measure(hangBul.a.key, hangBul.label, hangBul.a.size, 0);
+        var gapL = hangBul.a.size * 0.5;
+        if (li < bulletW + gapL) li = bulletW + gapL;
+      } else if (hangBul) {
         bulletW = measure(hangBul.a.key, "•", hangBul.a.size, 0);
         if (li < bulletW * 2) li = bulletW * 2.2;
       }
+      // a drop cap (LY-W6): its letters leave the first word and sink
+      // through the first n lines, which make room for them
+      var dc = hangBul ? null : dropCap(toks, ps), dcLine = null;
       var empty = toks.length === 0;
       // all its words smaller than the style: their size sets the metrics
       var wMax = wordsMaxSize(toks), size0 = wMax > 0 && wMax < ps.size ? wMax : ps.size;
       var wKey = geom.f.sfit ? wordsKey(toks) : "";
+      // the paragraph composer (LY-W6): where its lines end, worked out
+      // for the whole paragraph and redone from wherever a line ends
+      // elsewhere (a wrap, a narrower column)
+      var usePlan = (ps.comp === "p" || ps.bal) && !geom.f.sfit && toks.length > 2, plan = null;
+      function liAt(k) { return li + (dc && k < dc.n ? dc.w : 0); }
+      function stopFor(at) {
+        if (!usePlan) return -1;
+        if (!plan || plan[at] === undefined) {
+          var cw = geom.x1 - geom.x0 - ps.ri;
+          plan = kpPlan(toks, at, function (k) { var n = done + k; return Math.max(1, cw - liAt(n) - (n === 0 && !dc ? ps.fi : 0)); }, ps, geom.f.ctx || {});
+          if (!plan) { usePlan = false; return -1; }
+        }
+        return plan[at];
+      }
       while (ti < toks.length || empty) {
         if (opt.breakAt && done === opt.breakAt) { if (!nextCol()) return false; opt.breakAt = 0; }
+        var stopAt = stopFor(ti);
         // line metrics guess: paragraph size, refined by the line's
         // biggest size after a first fill
-        var maxSize = size0, objH = 0;
+        var maxSize = size0, objH = 0, wasTop = colTop;
         for (var pass = 0; pass < 3; pass++) {
           var lead = leadOf(ps, maxSize);
           var keyA = wKey || fontKey(ps.font, ps.b, ps.i);
@@ -1130,7 +1553,7 @@
           // an anchored object taller than the line's ascent: the line
           // makes room above its baseline (W4b)
           if (objH > asc) { lead += objH - asc; asc = objH; }
-          var placed = placeLine(ti, toks, ps, li, firstLine, asc, desc, lead, hangBul && firstLine ? hangBul : null, bulletW);
+          var placed = placeLine(ti, toks, ps, liAt(done), firstLine && !dc, asc, desc, lead, hangBul && firstLine ? hangBul : null, bulletW, stopAt);
           if (placed === false) return false;
           if (pass < 2 && (placed.objH || 0) > Math.max(objH, asc) + 0.001) { objH = placed.objH; if (placed.maxSize > maxSize) maxSize = placed.maxSize; continue; }
           if (placed.maxSize > maxSize + 0.001 && pass === 0) { maxSize = placed.maxSize; continue; }
@@ -1140,13 +1563,25 @@
             colTop = false;
             break;
           }
+          // footnotes referred to on this line go to the foot of this
+          // column; the line moves on when they do not fit with it
+          if (notes && notes.kind !== "end" && !footHere(placed, wasTop)) {
+            if (!nextCol()) return false;
+            break;
+          }
           ti = placed.next;
+          if (dc && !done) { dcLine = placed; placeCap(placed, dc, li, leadOf(ps, ps.size)); }
           commit(placed);
           firstLine = false;
           done++;
           break;
         }
         if (empty) break;
+      }
+      // a paragraph shorter than its drop cap: the next one starts below it
+      if (dcLine && done < dc.n && dcLine.frame === geom.f.id && dcLine.col === col) {
+        var capFoot = dcLine.y + leadOf(ps, ps.size) * (dc.n - 1);
+        if (capFoot > y) y = capFoot;
       }
       // a line break that ends the paragraph leaves an empty line after
       // it, as in Scribus, InDesign and Word (LY-TAB)
@@ -1162,7 +1597,7 @@
 
     // Find room for one line starting at token ti; returns the line
     // (not yet committed) or false when no frame is left.
-    function placeLine(ti, toks, ps, li, firstLine, asc, desc, lead, bul, bulletW) {
+    function placeLine(ti, toks, ps, li, firstLine, asc, desc, lead, bul, bulletW, stopAt) {
       var guard = 0;
       while (guard++ < 4000) {
         // a one-line frame (text on a path, LY-TP) takes one line
@@ -1171,10 +1606,13 @@
           continue;
         }
         var base = colTop ? y + asc : y + lead;
+        // locked to the baseline grid: down to the next grid line (LY-W5b)
+        var bg = ps.bl && geom.f.bgrid;
+        if (bg) base = bg.o + Math.ceil((base - bg.o - 0.01) / bg.inc) * bg.inc;
         // the first line of a column needs its baseline inside, not its
         // descent: a one-line header or page number whose font is taller
         // here than in the program it came from still shows (LY-TAB)
-        if (base + (colTop ? 0 : desc) > geom.bottom + 0.01) {
+        if (base + (colTop ? 0 : desc) > geom.bottom - footRoom() + 0.01) {
           // a frame too short for even one line: still move on
           if (!nextCol()) return false;
           continue;
@@ -1188,7 +1626,7 @@
           colTop = false;
           continue;
         }
-        return fill(ti, toks, ps, segs, base, asc, desc, lead, bul, bulletW, li, fx1 - fx0);
+        return fill(ti, toks, ps, segs, base, asc, desc, lead, bul, bulletW, li, fx1 - fx0, stopAt === undefined ? -1 : stopAt);
       }
       return false;
     }
@@ -1199,7 +1637,7 @@
       if (tok.o !== undefined) return tok.o;
       return tok.parts && tok.parts.length ? tok.parts[0].o : 0;
     }
-    function fill(ti, toks, ps, segs, base, asc, desc, lead, bul, bulletW, li, fullW) {
+    function fill(ti, toks, ps, segs, base, asc, desc, lead, bul, bulletW, li, fullW, stopAt) {
       var ctx = geom.f.ctx || {};
       // frame slack: a word may pass the edge by this much (Atelier's
       // boxes, sized to Canva's own narrower measure, CV-F3)
@@ -1213,7 +1651,10 @@
         // line once its end, rounded up, reaches the column's right
         // edge rounded down, so the same words go on each line (LY-FIT)
         var over = geom.f.sfit ? function (lw) { return Math.ceil(sx0 + lw - 0.001) >= Math.floor(sx1 + 0.001); } : function (lw) { return lw > avail + 0.001 + slk; };
-        var items = [], w = 0, spaces = 0, pendingSp = [], hyph = null, hyW = 0, lastTab = -1;
+        var items = [], w = 0, spaces = 0, pendingSp = [], hyph = null, hyW = 0, lastTab = -1, spSum = 0;
+        // justified with a minimum word spacing (LY-W6): spaces may give
+        // up to (100 - min) % of their width for a line to fit
+        var shrF = ps.align === "j" && ps.wsMin < 100 ? (100 - ps.wsMin) / 100 : 0;
         while (ti < toks.length) {
           var tk = toks[ti];
           if (tk.k === "br") { ti++; broke = true; break; }
@@ -1237,7 +1678,14 @@
           var spW = 0, nsp = 0;
           pendingSp.forEach(function (s) { if (s.k === "s") { spW += measure(s.a.key, " ", s.a.size, s.a.track); nsp++; } });
           var ww = wordWidth(tk, ctx);
-          if (over(w + spW + ww)) {
+          // the paragraph composer ends the line here
+          if (stopAt >= 0 && ti === stopAt && items.length) {
+            hyph = breakHyph(pendingSp);
+            hyW = hyph && hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0;
+            break;
+          }
+          var hangW = ps.opt ? hangRight(tk, ctx) : 0;
+          if (over(w + spW + ww - (spSum + spW) * shrF - hangW)) {
             if (!items.length) {
               // too wide for a segment narrowed by a wrap: try the
               // next segment / line; wider than the column: split
@@ -1251,30 +1699,53 @@
             // line ends one break earlier
             hyph = breakHyph(pendingSp);
             while (hyph && items.length > 1) {
-              if (!over(w + (hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0))) break;
+              if (!over(w - spSum * shrF + (hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) * (ps.opt ? 0 : 1) : 0))) break;
               var last = items.pop();
-              w -= last.w + last.spW; spaces -= last.nsp; ti = last.ti;
+              w -= last.w + last.spW; spaces -= last.nsp; spSum -= last.spW; ti = last.ti;
               hyph = breakHyph(last.sp);
             }
             hyW = hyph && hyph.hy ? measure(hyph.a.key, "-", hyph.a.size, hyph.a.track) : 0;
             break;
           }
           items.push({ tok: tk, w: ww, sp: pendingSp, spW: spW, nsp: nsp, ti: ti });
-          spaces += nsp;
+          spaces += nsp; spSum += spW;
           w += spW + ww; pendingSp = [];
           ti++;
         }
+        // optical margins (LY-W6): punctuation at the edges hangs out
+        var hl = ps.opt && items.length && !items[0].tab ? hangLeft(items[0].tok, ctx) : 0;
+        var hr0 = !ps.opt || !items.length ? 0 : hyph && hyph.hy ? hyW * HANG["-"] : items[items.length - 1].tab ? 0 : hangRight(items[items.length - 1].tok, ctx);
         // alignment within the segment
-        var align = ps.align, extra = avail - w - hyW, gapAdd = 0, x = sx0;
+        var align = ps.align, extra = avail - w - hyW + hl + hr0, gapAdd = 0, lsAdd = 0, x = sx0 - hl;
         // justify every segment except the paragraph's end and a
         // forced break
         var justifyHere = align === "j" && !broke && ti < toks.length;
-        if (align === "c") x += extra / 2;
+        if (align === "c") x += (extra - hl - hr0) / 2 + hl;
         else if (align === "r") x += extra;
-        else if (justifyHere && spaces > 0 && extra > 0) gapAdd = extra / spaces;
+        else if (justifyHere && spaces > 0 && (extra > 0 || shrF)) {
+          gapAdd = extra / spaces;
+          var spAvg = spSum / Math.max(1, spaces);
+          if (gapAdd < -spAvg * shrF) gapAdd = -spAvg * shrF;
+          // word spacing past its max: letter spacing takes up to its
+          // max, the spaces the rest (as InDesign does)
+          if (ps.wsMax && gapAdd > spAvg * (ps.wsMax - 100) / 100 && ps.lsMax) {
+            var nch = 0;
+            items.forEach(function (it) { if (!it.tab) it.tok.parts.forEach(function (pp) { if (pp.f !== "obj") nch += partText(pp, ctx).length; }); });
+            if (nch > 1) {
+              var room = (gapAdd - spAvg * (ps.wsMax - 100) / 100) * spaces;
+              lsAdd = Math.min(room / nch, ps.lsMax * ps.size / 1000);
+              gapAdd -= lsAdd * nch / spaces;
+            }
+          }
+          var ratio = (spAvg + gapAdd) / spAvg * 100;
+          line.ws = Math.round(ratio);
+          if (ratio > (ps.wsMax || 133) + 0.5) line.hj = 1;
+          else if (ratio < (ps.wsMin < 100 ? ps.wsMin : 80) - 0.5) line.hj = -1;
+        }
         if (si === 0) line.x0 = x;
         if (bul && si === 0) {
-          line.runs.push({ x: Math.max(geom.x0, geom.x0 + li - bulletW * 2.2), y: base, t: "•", key: bul.a.key, size: bul.a.size, color: bul.a.color, u: 0, track: 0, w: bulletW });
+          if (bul.label) line.runs.push({ x: geom.x0 + li - bulletW - bul.a.size * 0.5, y: base, t: bul.label, key: bul.a.key, size: bul.a.size, color: bul.a.color, u: 0, track: 0, w: bulletW, lbl: 1 });
+          else line.runs.push({ x: Math.max(geom.x0, geom.x0 + li - bulletW * 2.2), y: base, t: "•", key: bul.a.key, size: bul.a.size, color: bul.a.color, u: 0, track: 0, w: bulletW });
           line.maxSize = Math.max(line.maxSize, bul.a.size);
         }
         items.forEach(function (it, k) {
@@ -1286,8 +1757,11 @@
             return;
           }
           it.tok.parts.forEach(function (p) {
-            var txt = partText(p, ctx), pw = partWidth(p, ctx);
-            line.runs.push({ x: x, y: base - (p.a.rise || 0), t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: p.a.track || 0, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
+            var txt = partText(p, ctx), pw = partWidth(p, ctx), trk = p.a.track || 0;
+            if (lsAdd && p.f !== "obj" && txt.length) { trk += lsAdd * 1000 / p.a.size; pw += lsAdd * txt.length; }
+            line.runs.push({ x: x, y: base - (p.a.rise || 0), t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: trk, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
+            if (p.f === "fn") line.runs[line.runs.length - 1].fn = p.fn;
+            if (p.f === "xr") line.runs[line.runs.length - 1].xr = p.xr.to;
             if (p.a.kern) line.runs[line.runs.length - 1].kern = 1;
             if (p.f === "obj") {
               var ob = objBox(p);
@@ -1316,6 +1790,99 @@
       return line;
     }
 
+    // the notes a line refers to, not placed yet: room for them at the
+    // foot of this column, or false (the line has to move on; a line at
+    // the top of a column keeps them anyway, so nothing is lost)
+    function footHere(line, atTop) {
+      var ids = [];
+      line.runs.forEach(function (r) { if (r.fn && !fnDone[r.fn] && notes.text[r.fn] !== undefined && ids.indexOf(r.fn) < 0) ids.push(r.fn); });
+      if (!ids.length) return true;
+      var cw = geom.x1 - geom.x0, blocks = ids.map(function (id) { return noteBlock(notes, id, cw); });
+      var need = blocks.reduce(function (a, b) { return a + b.h; }, 0), k = footKey(), F = foot[k];
+      var room = geom.bottom - (F ? F.h : 0) - need - FN_SEP;
+      if (line.y + line.d > room + 0.01 && !atTop) return false;
+      if (!F) F = foot[k] = { f: geom.f, col: col, x0: geom.x0, cw: cw, bottom: geom.bottom, h: 0, blocks: [] };
+      blocks.forEach(function (b) { F.blocks.push(b); F.h += b.h; });
+      ids.forEach(function (id) { fnDone[id] = 1; });
+      return true;
+    }
+    // the drop cap's run, at the start of the first line, its baseline
+    // on the n-th line's
+    function placeCap(line, dc, li, lead) {
+      line.runs.unshift({ x: geom.x0 + li, y: line.y + lead * (dc.n - 1), t: dc.t, key: dc.a.key, size: dc.size, color: dc.a.color, u: 0, track: 0, w: dc.cw, p: curPi, o: dc.o, n: dc.nch, f: 0, dc: 1 });
+      line.o0 = dc.o;
+    }
+    // The paragraph composer: Knuth and Plass's total fit over the
+    // paragraph from token `from`, for lines widthAt(k) wide → { line
+    // start token: next line's start token }, or null when it cannot
+    // (tabs, too long, no way to set it) and the line-by-line one does.
+    // Justified: spaces stretch to wsMax (133 % when unset) and shrink
+    // to wsMin; ragged (left, centre, right): every line may fall short
+    // and how short counts (with balanced ragged lines the last line
+    // too, so a heading's lines come out even).
+    function kpPlan(toks, from, widthAt, ps, ctx) {
+      var n = toks.length;
+      if (n - from > 3000) return null;
+      var just = ps.align === "j", mx = (ps.wsMax || 133) - 100, mn = 100 - (ps.wsMin < 100 ? ps.wsMin : 100);
+      var W = [0], Y = [0], Z = [0], i, tk;
+      for (i = from; i < n; i++) {
+        tk = toks[i];
+        if (tk.k === "t" || tk.k === "bul") return null;
+        var w = 0, y = 0, z = 0;
+        if (tk.k === "w") w = wordWidth(tk, ctx);
+        else if (tk.k === "s") { w = measure(tk.a.key, " ", tk.a.size, tk.a.track); y = w * mx / 100; z = w * mn / 100; }
+        W.push(W[W.length - 1] + w); Y.push(Y[Y.length - 1] + y); Z.push(Z[Z.length - 1] + z);
+      }
+      function at(arr, k) { return arr[k - from]; }
+      function nextWord(k) { while (k < n && toks[k].k !== "w" && toks[k].k !== "br") k++; return k; }
+      // break candidates in order
+      var cands = [];
+      for (i = from + 1; i < n; i++) {
+        tk = toks[i];
+        if (tk.k === "s" && toks[i - 1].k === "w") cands.push({ i: i, next: nextWord(i + 1), pen: 0 });
+        else if (tk.k === "h" && toks[i - 1].k === "w" && i + 1 < n && toks[i + 1].k === "w") cands.push({ i: i, next: i + 1, pen: tk.hy ? 100 : 0, hy: tk.hy ? 1 : 0, hw: tk.hy ? measure(tk.a.key, "-", tk.a.size, tk.a.track) : 0 });
+        else if (tk.k === "br") cands.push({ i: i, next: i + 1, forced: 1 });
+      }
+      cands.push({ i: n, next: n, forced: 1, end: 1 });
+      var active = [{ start: from, line: 0, total: 0, prev: null, hy: 0 }], last = null;
+      for (var ci = 0; ci < cands.length; ci++) {
+        var c = cands[ci], best = null, keep = [];
+        for (var ai = 0; ai < active.length; ai++) {
+          var a = active[ai];
+          if (a.start >= c.i) { keep.push(a); continue; }
+          var L = at(W, c.i) - at(W, a.start) + (c.hw || 0), width = widthAt(a.line);
+          var st = at(Y, c.i) - at(Y, a.start), sh = at(Z, c.i) - at(Z, a.start), r;
+          if (just && !c.forced) r = L < width ? (st > 0 ? (width - L) / st : 10) : L > width ? (sh > 0 ? (width - L) / sh : -10) : 0;
+          else if (just) r = L <= width ? 0 : (sh > 0 ? (width - L) / sh : -10);
+          // balanced: the last line counts too, so a heading's lines come out even
+          else r = L <= width ? (c.forced && !(ps.bal && c.end) ? 0 : (width - L) / (width / 6)) : -10;
+          if (r < -1) {
+            // too long from here on: this start is done, unless nothing
+            // else is left (one word wider than the line)
+            if (active.length === 1 && !keep.length && !best) { r = -1; } else continue;
+          }
+          keep.push(a);
+          // badness grows with the cube of how far the spaces go; not
+          // capped, so a very loose line never ties with a merely loose one
+          var bad = 100 * Math.pow(Math.min(Math.abs(r), 100), 3);
+          var pen = just ? c.pen : c.pen / 5;
+          var d = Math.pow(1 + bad, 2) + (pen ? pen * pen : 0) + (c.hy && a.hy ? 3000 : 0);
+          var tot = a.total + d;
+          if (!best || tot < best.total) best = { start: c.next, line: a.line + 1, total: tot, prev: a, hy: c.hy ? 1 : 0, cand: c };
+        }
+        active = keep;
+        if (c.forced) active = [];
+        if (best) { active.push(best); if (c.end) last = best; }
+        if (!active.length && !c.end) return null;
+      }
+      if (!last) return null;
+      var starts = [];
+      for (var nd = last; nd && nd.prev; nd = nd.prev) starts.unshift([nd.prev.start, nd.start]);
+      var plan = {};
+      starts.forEach(function (x) { plan[x[0]] = x[1]; });
+      return plan;
+    }
+
     // the break before the next word, when it is inside a word (only
     // break opportunities, no space, since the last word)
     function breakHyph(sp) {
@@ -1325,6 +1892,9 @@
     }
     function commit(line) {
       delete line.maxSize; delete line.next; delete line.base; delete line.objH;
+      // an endnote's line: not the story's text (the caret and the
+      // Story Editor leave it alone)
+      if (curPi >= realN) { line.fn = 1; line.runs.forEach(function (r) { delete r.o; delete r.n; }); }
       out.frames[geom.f.id].lines.push(line);
       y = line.y; colTop = false;
       lastPg = pageOf() || null;
@@ -1354,7 +1924,8 @@
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
     resolvePs: resolvePs, resolveCs: resolveCs, runAttrs: runAttrs, byId: byId,
-    nestRuns: nestRuns, layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
+    nestRuns: nestRuns, grepRuns: function (runs, rules) { var g = grepOf(rules); return g ? cutRuns(runs, grepCuts(textOfRuns(runs), g)) : runs; }, layoutChain: layoutChain, freeSegments: freeSegments, missingGlyphs: missingGlyphs, collate: collate, sortKey: sortKey, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek,
+    LIST_FORMATS: Object.keys(LIST_FMT), listLabel: listLabel, listLabels: listLabels, notesOf: notesOf, greekNum: greekNum
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.text = api; }

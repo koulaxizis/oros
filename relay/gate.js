@@ -462,7 +462,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_add_columns",
-    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
+    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name), and sets a column up as a step of the Author Portal production flow (portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay as they are, an empty text clears it). Give any of the three. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
     inputSchema: {
       type: "object",
       properties: {
@@ -483,6 +483,20 @@ export const TOOLS = [
             name: { type: "string", description: "Its new name, at most 60 characters." }
           },
           required: ["column", "name"],
+          additionalProperties: false
+        } },
+        portal_columns: { type: "array", minItems: 1, maxItems: 20, items: {
+          type: "object",
+          properties: {
+            column: { type: "string", description: "The column's id or current name." },
+            step: { type: "boolean", description: "true: a step the author sees in the Author Portal; false: not a step (its texts are kept)." },
+            finish: { type: "boolean", description: "true: a finish; when the book reaches it, the author's bar hides until the card reaches the next step." },
+            name: { type: "string", maxLength: 80, description: "The step's name for the author (Greek); the column's name when empty." },
+            name_en: { type: "string", maxLength: 80, description: "The step's name in English (optional)." },
+            about: { type: "string", maxLength: 600, description: "The short explanation the author sees on hover (Greek)." },
+            about_en: { type: "string", maxLength: 600, description: "The explanation in English (optional)." }
+          },
+          required: ["column"],
           additionalProperties: false
         } }
       },
@@ -588,6 +602,25 @@ export const TOOLS = [
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
   },
+  // CF-ASK (Chris 2026-11-22 «Πρόσθεσε τους φακέλους που χρειάζεσαι, σου
+  // δίνω έγκριση»): the same question for a folder of the orOS disk, so
+  // Claude asks for one of «Claude's folders» instead of the owner adding
+  // it in Settings. The owner answers with one tap on any device on screen.
+  {
+    name: "claude_folders_request",
+    description: "Asks the owner to add a folder of the orOS disk to Claude's folders (the folders files_list, files_read, files_write, studio_import, montage_import and export out may use), e.g. \"Studio/Podcasts\". The owner answers with one tap («Open for Claude») on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). The folder need not exist yet: files_write makes it. Never the whole disk, the Trash, or a folder that looks like keys or secrets. Writing there also needs the owner's switch for Files at write. Ask only for the folder the work needs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The folder on the orOS disk, as Files shows it (\"Studio/Podcasts\") or as an /internal/ path (\"/internal/Studio/Podcasts\")." },
+        access: { type: "string", enum: ["read", "write"], description: "What the work needs there, shown to the owner: read (default) or write (new and changed files; every change is notified and undoable, deletions are asked on the device)." },
+        reason: { type: "string", description: "One line for the owner: what it is for." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
   // ST-IMP (Chris 2026-11-21, dogfooding the podcast «Πλανόδιο»): a
   // project file Claude made opens in Studio or Montage as a NEW project.
   // Each is edit_in_app's create (importCall below), so the owner's
@@ -614,6 +647,20 @@ export const TOOLS = [
       type: "object",
       properties: {
         path: { type: "string", description: "The .orosmontage file on the orOS disk, as files_write or files_list gave it (an /internal/ path)." },
+        title: { type: "string", description: "A name for the new project; the file's own name when left out." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
+    name: "photolab_import",
+    description: "Opens a picture file from Claude's folders on the orOS disk (one Claude made, ComfyUI's, a photo; jpg, png, webp, svg…) in Photo Lab as a NEW project, the same as the owner's Open. First bring the file in with files_upload and files_write, then pass its path; change it afterwards with edit_in_app (app photolab: generate, nobg, fill, expand, upscale, image and the photo commands). Nothing that exists changes; the owner is notified, and it needs the owner's write switch for Photo Lab. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The picture file on the orOS disk, as files_write or files_list gave it (an /internal/ path in Claude's folders)." },
         title: { type: "string", description: "A name for the new project; the file's own name when left out." }
       },
       required: ["path"],
@@ -663,15 +710,18 @@ const TOOL_NAMES = TOOLS.map((t) => t.name);
 // device checks again (studio|montage commands.js: an /internal/ path of
 // the app's own file type, the only command, designs new). → the call to
 // run, or { err } (for Claude), or null for any other tool.
-export const IMPORT_TOOLS = { studio_import: { app: "studio", ext: ".orosstudio" }, montage_import: { app: "montage", ext: ".orosmontage" } };
+export const IMPORT_TOOLS = { studio_import: { app: "studio", ext: ".orosstudio" }, montage_import: { app: "montage", ext: ".orosmontage" },
+  // PL-AI (Chris 2026-11-22): a picture Claude made or brought opens in Photo Lab as a new project
+  photolab_import: { app: "photolab", ext: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".avif", ".svg", ".tif", ".tiff", ".heic"] } };
 export function importCall(p) {
   const imp = p && Object.prototype.hasOwnProperty.call(IMPORT_TOOLS, p.name) ? IMPORT_TOOLS[p.name] : null;
   if (!imp) return null;
   const a = p.arguments && typeof p.arguments === "object" && !Array.isArray(p.arguments) ? p.arguments : {};
   const path = typeof a.path === "string" ? a.path.trim() : "";
-  if (!path || path.length > 500 || path.indexOf("/internal/") !== 0 || !path.toLowerCase().endsWith(imp.ext) ||
+  const exts = Array.isArray(imp.ext) ? imp.ext : [imp.ext], low = path.toLowerCase();
+  if (!path || path.length > 500 || path.indexOf("/internal/") !== 0 || !exts.some((e) => low.endsWith(e)) || path.split("/").some((x) => x.charAt(0) === ".") ||
       path.split("/").some((x) => x === "." || x === "..") || /[\\\u0000-\u001f\u007f]/.test(path)) {
-    return { err: p.name + " needs path: the " + imp.ext + " file's /internal/ path on the orOS disk (files_upload, then files_write, gives it). Nothing was opened." };
+    return { err: p.name + " needs path: the " + exts.join(" / ") + " file's /internal/ path in Claude's folders on the orOS disk (files_upload, then files_write, gives it). Nothing was opened." };
   }
   if (a.title !== undefined && typeof a.title !== "string") return { err: p.name + "'s title must be text. Nothing was opened." };
   const step = { op: "create", from: path };
@@ -743,6 +793,8 @@ export function isScreenTool(name, args) {
   if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
   return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
 }
+// TRAY-2, CF-ASK: questions for the owner about a folder, kept for a screen
+const FOLDER_ASKS = ["local_folders_request", "claude_folders_request"];
 const LF_NOTE = "Nobody is at an orOS screen now, so the question waits, encrypted, and is asked the next time orOS is on screen on one of the owner's devices (the phone too). Nothing is opened before the owner allows it. Tell the owner to open orOS (on the phone is enough) and answer; change_history shows it pending, and undo_change with change_id cancels it.";
 const SCREEN_NOTE = "This works on the owner's screen (Layout's own work, an app's form or document), and nobody sees orOS right now. It waits, encrypted, and runs the next time orOS is on screen and unlocked on one of the owner's devices, or (Layout's work and edit_in_app) as soon as orOS runs on the owner's computer in the tray or in a minimised orOS window; its report, proofs and previews come only then (read the result afterwards with read_in_app or change_history). Until then change_history shows it pending; undo_change with change_id cancels it. Tell the owner to bring orOS to the front.";
 // closed copy's switches → why Claude may not keep this screen call, or ""
@@ -2574,7 +2626,7 @@ export class GateBox {
     // when it has them; create_items (the app in args.app) waits in the
     // queue like the relay's own change tools; the others work on items
     // found in a live session or on the owner's screen, so they need orOS open.
-    if (name === "local_folders_request") {             // TRAY-2: a question for the owner, kept for a screen
+    if (FOLDER_ASKS.indexOf(name) >= 0) {             // TRAY-2, CF-ASK: a question for the owner, kept for a screen
       if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was asked." };
       return await this.queueChange(name, args, kRaw, now, qidWant, LF_NOTE, 1);
     }
@@ -2889,7 +2941,7 @@ export class GateBox {
       // not refused: it waits like a closed-orOS deletion, for the owner's
       // Delete on a device on screen (offered now, and when one comes on screen).
       const kRaw = await this.unwrapK(tok);
-      ans = kRaw && p.name === "local_folders_request" ? await this.queueChange(p.name, args, kRaw, Date.now(), null, LF_NOTE, 1) :
+      ans = kRaw && FOLDER_ASKS.indexOf(p.name) >= 0 ? await this.queueChange(p.name, args, kRaw, Date.now(), null, LF_NOTE, 1) :
             kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
                  : { ok: false, c: "Nobody answered on the owner's screen and the deletion could not be kept for later. Nothing was deleted. Ask the owner to have orOS on screen and try once more." };
       if (ans.ok) await this.sendHeld();

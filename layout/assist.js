@@ -183,7 +183,17 @@
       var cur = LY.findDoc(id);
       if (!cur) return Promise.resolve();
       var editing = steps.filter(function (s) { return s.op !== "rename"; });
-      return LY.recipeGrey(cur, editing, ctl).then(function (ctx) {
+      // version (LY-W11, LY-N7): named versions of the document as it
+      // is, before anything changes
+      var pre = Promise.resolve();
+      steps.forEach(function (v) {
+        if (v.op !== "version") return;
+        pre = pre.then(function () {
+          if (!LY.versions) throw new Error("noStore");
+          return LY.versions.save(LY.findDoc(id), v.name, "claude");
+        }).then(function () { if (notes.length < 40) notes.push("version saved: " + v.name); }, function () { if (notes.length < 40) notes.push("version not saved: " + v.name); });
+      });
+      return pre.then(function () { return LY.recipeGrey(cur, editing, ctl); }).then(function (ctx) {
         cur = LY.findDoc(id);
         if (!cur) return null;
         if (!slow || !LY.pro) return { ctx: ctx, envs: null };

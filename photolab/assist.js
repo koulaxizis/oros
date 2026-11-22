@@ -125,6 +125,7 @@
       return Promise.resolve(p).then(function () { return k; });
     }
     if (s.op === "watermark") { PL.recipes.watermark(s); return Promise.resolve(1); }
+    if (kind === "ai") return PL.aiedit ? PL.aiedit.run(s, notes) : Promise.resolve(0);   // PL-AI
     // pixels (and dup): each picked layer in turn, the whole layer
     var list = C.pick(d, s).map(function (L) { return L.id; }), done = 0, chain = Promise.resolve();
     var j = s.op === "dup" ? null : RS.job(s);
@@ -177,9 +178,24 @@
   }
 
   var busy = false;
+  // PL-AI: create, a NEW project from a picture file in Claude's folders
+  function create(key, s) {
+    if (busy || !PL.aiedit || !PL.fs()) { PL.toast(t("as.bad")); back(key, { failed: 1, why: busy ? "busy" : "gone" }); return; }
+    busy = true;
+    PL.saveNow().then(function () { return PL.aiedit.create(s); }).then(function (r) {
+      busy = false;
+      // nothing that existed changed: the new project is the owner's to keep or delete (no Undo deletes it)
+      back(key, { ok: 1, n: 0, d: 0, per: [{ name: r.name, n: 1 }], cut: 0, made: 1, files: 0, notes: [], tok: "" });
+      PL.toast(t("ai.made", { name: r.name }));
+    }, function (e) {
+      busy = false;
+      back(key, { failed: 1, why: e && e.note === "aiOutside" ? "outside" : "nofile", notes: [e && e.note || "aiNoFile"] });
+    });
+  }
   function edit(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "";
     var chk = C.check(rq && rq.steps), known = {};
+    if (chk.ok && chk.steps[0].op === "create") { create(key, chk.steps[0]); return; }
     PL.index().projects.forEach(function (e) { known[e.id] = e; });
     var ids = rq && Array.isArray(rq.docs) ? rq.docs.filter(function (id) { return typeof id === "string" && known[id]; }).slice(0, 500) : [];
     if (!chk.ok || !ids.length || busy || !PL.fs()) {

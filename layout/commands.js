@@ -127,7 +127,10 @@
     hide: { t: "str", max: 60 }, show: { t: "str", max: 60 }, remove: { t: "bool", def: 0 }, lang: { t: "enum", v: ["el", "en"], def: "el" } } };
   // cancel (alone): stops the commands that hold Layout ("busy")
   CATALOG.cancel = { kind: "doc", args: {} };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel"];
+  // version (LY-W11, LY-N7): a named version of the document as it is
+  // before these commands (assist.js saves it; it changes nothing here)
+  CATALOG.version = { kind: "doc", args: { name: { t: "str", max: 80, req: 1 } } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -178,6 +181,7 @@
     "\naddfont: a font family into the owner's font collection `collection` (default Claude; list_fonts then shows it) and this document's fonts, so defstyle font can use it: " +
     "source free = a Fontsource family by `family` (e.g. Carlito, as fontsource.org names it; its files are kept on the device for offline use), styles regular|bold|italic|bold italic (or 400, 700, 400i, 700i; default all it has); " +
     "source local = the font file `path` local:<root>/<file>.ttf|.otf in a local folder the owner opened (one file per command: add the bold and italic files too), kept in the owner's fonts" +
+    "\nversion: keeps a named version `name` of the document as it is before the other commands (the owner compares and restores it in More › Versions; 30 per document, kept on their device); use it before large changes" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
     "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width); " +
     "colour corrections, kept apart from the file (numbers separated by spaces; empty = as it is; values that change nothing take that correction off; applied in this order): " +
@@ -258,7 +262,7 @@
       doc.m = Math.max(now, (doc.m || 0) + 1);
       return 1;
     }
-    if (st.op === "create" || st.op === "thumbs" || st.op === "cancel") return 0;
+    if (st.op === "create" || st.op === "thumbs" || st.op === "cancel" || st.op === "version") return 0;
     if (st.op === "images") {
       // env.pics: the pictures Layout read and stored, in order
       if (!env.pics) return (st.paths && st.paths.length) || 1;
@@ -414,6 +418,7 @@
       steps.forEach(function (st) {
         if (st.op === "grey") S.greyAssets(w, st).forEach(function (a) { grey[a] = a + "~"; });
         if (st.op === "thumbs") { out.files++; return; }
+        if (st.op === "version") { if (out.notes.length < 40) out.notes.push("version saved first: " + st.name); return; }
         k += apply(w, st, { now: 1, notes: out.notes, grey: grey, docs: docs });
       });
       out.n += k;

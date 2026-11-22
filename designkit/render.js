@@ -22,6 +22,14 @@
 
   // ---------- 1. Geometry ----------
   function rad(d) { return d * Math.PI / 180; }
+  // The document's baseline grid (LY-W5b, setup.ext.bg { s: first line
+  // from the page top, i: every, in pt}) as seen from a frame's top:
+  // { o, inc }; none for a turned frame.
+  function gridOf(doc, it) {
+    var g = doc && doc.setup && doc.setup.ext && doc.setup.ext.bg;
+    if (!g || !(g.i >= 1 && g.i <= 200) || !(g.s >= 0 && g.s <= 2000) || (it.rot || 0) % 360) return null;
+    return { o: g.s - it.y, inc: g.i };
+  }
   // Item corners in owner (page) coordinates, rotation about the
   // centre.
   function corners(it) {
@@ -327,7 +335,7 @@
     var styles = { ps: doc.pstyles, cs: doc.cstyles, obj: objs };
     var masterIds = {};
     doc.masters.forEach(function (m) { masterIds[m.id] = 1; });
-    var out = { frames: {}, master: {}, overset: {}, pageOf: idx, labels: labels };
+    var out = { frames: {}, master: {}, overset: {}, placed: {}, pageOf: idx, labels: labels };
 
     // wrap objects per owner (page or master)
     var wrapsBy = {};
@@ -387,7 +395,7 @@
     function geom(it, ctx, ex) {
       var tp = pathOf(it);
       if (tp) return { id: it.id, w: tp.wk.len, h: it.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: ctx, story: it.story, one: true };
-      return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story, sfit: !!(it.ext && it.ext.sfit) };
+      return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story, sfit: !!(it.ext && it.ext.sfit), vj: !!(it.ext && it.ext.vj), bgrid: gridOf(doc, it) };
     }
 
     // page stories
@@ -397,21 +405,56 @@
       if (idx[it.pg] === undefined) return;
       (stories[it.story] = stories[it.story] || []).push(it);
     });
-    Object.keys(stories).forEach(function (sid) {
-      var st = M.story(doc, sid);
-      var frames = stories[sid].sort(function (a, b) { return a.seq - b.seq || M.cmpStr(a.id, b.id); });
-      var g = frames.map(function (f) {
-        var pi = info[f.pg], pg = M.find(doc.pages, f.pg);
-        var owners = [f.pg];
-        if (pg && pg.ms) owners.push(pg.ms);
-        return geom(f, { pageLabel: pi.label, pageCount: pages.length, pg: f.pg, no: pi.no }, exclFor(f, owners, pi.side, f.pg));
-      });
-      var res = T.layoutChain(st || { paras: [] }, g, styles);
-      bendAll(frames, res);
-      placeAnchored(frames, res, sid);
-      Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
-      if (res.overset) out.overset[sid] = true;
+    // stories in reading order (the page of their first frame, then
+    // top to bottom): note numbers run through the document in it
+    var sids = Object.keys(stories).map(function (sid) {
+      stories[sid].sort(function (a, b) { return a.seq - b.seq || M.cmpStr(a.id, b.id); });
+      return sid;
+    }).sort(function (a, b) {
+      var fa = stories[a][0], fb = stories[b][0];
+      return idx[fa.pg] - idx[fb.pg] || fa.y - fb.y || fa.x - fb.x || M.cmpStr(a, b);
     });
+    // notes (LY-W7): setup.ext.fn { kind "foot" | "end", ps, r "story"
+    // (numbers start again in each story) }
+    var fx = doc.setup && doc.setup.ext && doc.setup.ext.fn;
+    var nCfg = fx && typeof fx === "object" ? fx : {};
+    function layoutPages(xr) {
+      placedA = {};
+      var n = 1;
+      sids.forEach(function (sid) {
+        var st = M.story(doc, sid);
+        var frames = stories[sid];
+        var g = frames.map(function (f) {
+          var pi = info[f.pg], pg = M.find(doc.pages, f.pg);
+          var owners = [f.pg];
+          if (pg && pg.ms) owners.push(pg.ms);
+          return geom(f, { pageLabel: pi.label, pageCount: pages.length, pg: f.pg, no: pi.no }, exclFor(f, owners, pi.side, f.pg));
+        });
+        var sty = { ps: styles.ps, cs: styles.cs, obj: styles.obj, xr: xr, notes: { kind: nCfg.kind, ps: nCfg.ps, start: nCfg.r === "story" ? 1 : n } };
+        var nn = st ? T.notesOf(st, sty) : null;
+        if (nn) n += nn.order.length;
+        var res = T.layoutChain(st || { paras: [] }, g, sty);
+        bendAll(frames, res);
+        placeAnchored(frames, res, sid);
+        Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
+        if (res.overset) out.overset[sid] = true;
+        else delete out.overset[sid];
+        out.placed[sid] = res.placedParas;   // paragraphs that fit whole (the Story Editor marks the rest, LY-N3)
+      });
+    }
+    // cross-references (LY-W7): a run with ext.xr { to: an anchor, k:
+    // "p" page | "t" text | "tp" both } shows where a paragraph with
+    // ext.aid = that anchor fell; a second pass sets them once the
+    // pages are known (a reference that moves the anchor again is
+    // left at the second pass)
+    var hasXr = doc.stories.some(function (st) {
+      return (st.paras || []).some(function (p) { return (p.runs || []).some(function (r) { return r.ext && r.ext.xr; }); });
+    });
+    layoutPages(null);
+    if (hasXr) {
+      out.xr = anchorsOf(doc, sids, stories, out.frames, info);
+      layoutPages(out.xr);
+    }
     out.anchored = {};
     Object.keys(anchored).forEach(function (id) { var it = anchored[id]; if (it.ext.anc && placedA[id]) out.anchored[id] = { pg: it.pg, x: it.x, y: it.y }; });
 
@@ -441,6 +484,25 @@
         if (res.overset) out.overset[sid] = true;
       });
       out.master[p.id] = res0;
+    });
+    return out;
+  }
+
+  // every anchor's place: { aid: { t: the paragraph's text, pg: the
+  // label of the page it starts on } }
+  function anchorsOf(doc, sids, stories, frames, info) {
+    var out = {};
+    sids.forEach(function (sid) {
+      var st = M.story(doc, sid);
+      if (!st) return;
+      stories[sid].forEach(function (f) {
+        ((frames[f.id] || {}).lines || []).forEach(function (ln) {
+          var para = ln.p >= 0 ? st.paras[ln.p] : null, a = para && para.ext && para.ext.aid;
+          if (typeof a !== "string" || out[a]) return;
+          var tx = (para.runs || []).map(function (r) { return typeof r.t === "string" && !(r.ext && (r.ext.fn || r.ext.xr)) ? r.t : ""; }).join("").replace(/\s+/g, " ").trim().slice(0, 200);
+          out[a] = { t: tx, pg: info[f.pg] ? info[f.pg].label : "", pid: f.pg };
+        });
+      });
     });
     return out;
   }
@@ -479,7 +541,31 @@
   // opts.isMissing(assetName) → true when the image file is gone.
   // Result: [{ sev: "err"|"warn", code, id (item), pg (page or master id) }]
   // sorted by page order, errors first on each page.
-  var PF_PPI = 150, PF_MIN_PT = 6;
+  var PF_PPI = 150, PF_MIN_PT = 6, PF_HAIR = 0.25, PF_RB_PT = 12;
+  // Print checks (LY-W9, setup.ext.pf): ink the most ink a colour may
+  // carry (%, 300 by default), safe how far text keeps from the trim
+  // (pt, 3 mm), bop 0 = black does not overprint (on by default).
+  function pfOf(doc) {
+    var x = (doc && doc.setup && doc.setup.ext && doc.setup.ext.pf) || {};
+    var ink = Number(x.ink), safe = Number(x.safe);
+    return { ink: ink >= 200 && ink <= 400 ? ink : 300, safe: safe >= 0 && safe <= 36 ? safe : 72 / 25.4 * 3, bop: x.bop !== 0 };
+  }
+  // a swatch's inks in % (0..100 each), or null for an RGB one with no
+  // profile to convert it
+  function inksOf(sw, conv) {
+    if (!sw) return null;
+    if (sw.mode === "cmyk") return sw.v.slice();
+    if (!conv) return null;
+    return conv.rgb(sw.v[0] / 255, sw.v[1] / 255, sw.v[2] / 255).map(function (v) { return v * 100; });
+  }
+  // overprints: marked so (ext.op), or 100 % black alone while black
+  // overprints
+  function overprints(doc, sw) {
+    if (!sw) return false;
+    if (sw.ext && sw.ext.op) return true;
+    if (!pfOf(doc).bop) return false;
+    return sw.mode === "cmyk" ? sw.v[0] === 0 && sw.v[1] === 0 && sw.v[2] === 0 && sw.v[3] >= 100 : sw.v[0] === 0 && sw.v[1] === 0 && sw.v[2] === 0;
+  }
   function short(inner, outer) { return inner && !outer; }
   function preflight(doc, L, opts) {
     opts = opts || {};
@@ -508,6 +594,19 @@
       });
     }
     scan(L.frames);
+    // characters the fonts cannot draw (LY-W6): the frame says which
+    var noGlyph = {};
+    if (T.missingGlyphs) Object.keys(L.frames || {}).forEach(function (fid) {
+      (L.frames[fid].lines || []).forEach(function (ln) {
+        ln.runs.forEach(function (r) {
+          if (!r.t || r.f) return;
+          T.missingGlyphs(r.key, String(r.t)).forEach(function (ch) {
+            var a = noGlyph[fid] = noGlyph[fid] || [];
+            if (a.indexOf(ch) === -1 && a.length < 20) a.push(ch);
+          });
+        });
+      });
+    });
     Object.keys(L.master || {}).forEach(function (pid) { scan(L.master[pid]); });
     var bleed = doc.setup.bleed, W = doc.setup.w, H = doc.setup.h, facing = doc.setup.facing;
     var emptyStory = {};
@@ -520,6 +619,7 @@
       }
       if (it.t === "text") {
         if (minSize[it.id] < PF_MIN_PT) add("warn", "small", it);
+        if (noGlyph[it.id]) { add("err", "glyph", it); out[out.length - 1].chars = noGlyph[it.id].join(" "); }
         if (emptyStory[it.story] === undefined) {
           var st = M.story(doc, it.story);
           emptyStory[it.story] = !(st && T.hasText(st));
@@ -537,10 +637,65 @@
             short(b.y <= e, b.y <= -bleed + e) || short(b.y + b.h >= H - e, b.y + b.h >= H + bleed - e)) add("warn", "bleed", it);
       }
     });
+    printChecks(doc, L, opts, order, add, out);
     out.sort(function (a, b) {
       return (order[a.pg] - order[b.pg]) || (a.sev === b.sev ? 0 : a.sev === "err" ? -1 : 1) || M.cmpStr(a.code + a.id, b.code + b.id);
     });
     return out;
+  }
+
+  // LY-W9: too much ink, small text in rich black, hairlines, text
+  // near the trim, white that overprints
+  function printChecks(doc, L, opts, order, add, out) {
+    var pf = pfOf(doc), conv = opts.conv || null, memo = {};
+    function sw(id) { return id ? M.find(doc.swatches, id) : null; }
+    function inks(id) {
+      if (!(id in memo)) memo[id] = inksOf(sw(id), conv);
+      return memo[id];
+    }
+    function total(v) { return v ? v[0] + v[1] + v[2] + v[3] : 0; }
+    function white(s) { return s && (s.mode === "cmyk" ? total(s.v) < 0.5 : s.v[0] === 255 && s.v[1] === 255 && s.v[2] === 255); }
+    function colour(it, id) {
+      if (!id) return;
+      var v = inks(id), tot = total(v);
+      if (tot > pf.ink + 0.5) { add("warn", "ink", it); var x = out[out.length - 1]; if (x.id === it.id && x.code === "ink" && !x.n) { x.n = Math.round(tot); x.m = pf.ink; } }
+      var s = sw(id);
+      if (s && s.ext && s.ext.op && white(s)) add("err", "opWhite", it);
+    }
+    function frameLines(id) { var f = (L.frames || {})[id]; return f && f.lines || []; }
+    doc.items.forEach(function (it) {
+      if (it.hide || order[it.pg] === undefined) return;
+      if (it.t !== "line") colour(it, it.fill);
+      if (it.gr && it.gr.st) it.gr.st.forEach(function (st) { colour(it, st[1]); });
+      if (it.stroke && it.sw > 0) {
+        colour(it, it.stroke);
+        if (it.sw < PF_HAIR - 1e-9) add("warn", "hair", it);
+      }
+      if (it.t !== "text") return;
+      var lines = frameLines(it.id), ex = null;
+      lines.forEach(function (ln) {
+        (ln.runs || []).forEach(function (r) {
+          if (!r.t || !String(r.t).trim()) return;
+          colour(it, r.color);
+          var v = r.color ? inks(r.color) : null, s = sw(r.color);
+          // several inks under small text: CMYK swatches only (an RGB
+          // black becomes black ink alone)
+          if (v && s && s.mode === "cmyk" && v[3] >= 80 && v[0] + v[1] + v[2] >= 10 && r.size < PF_RB_PT) add("warn", "richBlack", it);
+          var x0 = r.x, x1 = r.x + (r.w || 0), y0 = r.y - r.size * 0.8, y1 = r.y + r.size * 0.25;
+          if (!ex) ex = [x0, y0, x1, y1];
+          else { ex[0] = Math.min(ex[0], x0); ex[1] = Math.min(ex[1], y0); ex[2] = Math.max(ex[2], x1); ex[3] = Math.max(ex[3], y1); }
+        });
+      });
+      // the text itself (not the frame) near or past the trim, on pages
+      if (!ex || it.rot || order[it.pg] >= 100000 || pathOf(it)) return;
+      var pg = M.find(doc.pages, it.pg), psz = M.pageSize ? M.pageSize(doc, pg) : doc.setup, e = 0.01;
+      var bx0 = it.x + ex[0], by0 = it.y + ex[1], bx1 = it.x + ex[2], by1 = it.y + ex[3];
+      if (bx0 < pf.safe - e || by0 < pf.safe - e || bx1 > psz.w - pf.safe + e || by1 > psz.h - pf.safe + e) {
+        add("warn", "safe", it);
+        var y = out[out.length - 1];
+        if (y.id === it.id && y.code === "safe") y.n = Math.round(pf.safe * 25.4 / 72 * 10) / 10;
+      }
+    });
   }
 
   // Master editing view: master frames laid out with a sample page
@@ -557,7 +712,7 @@
       var g = frames.map(function (f) {
         var c = { pageLabel: master.pre, pageCount: master.pre + "#" }, tp = pathOf(f);
         if (tp) return { id: f.id, w: tp.wk.len, h: f.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: c, one: true };
-        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c, sfit: !!(f.ext && f.ext.sfit) };
+        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c, sfit: !!(f.ext && f.ext.sfit), vj: !!(f.ext && f.ext.vj), bgrid: gridOf(doc, f) };
       });
       var res = T.layoutChain(M.story(doc, sid) || { paras: [] }, g, styles);
       bendAll(frames, res);
@@ -568,10 +723,21 @@
   }
 
   // ---------- 3. Drawing ----------
+  // A print view (LY-W9, layout/proof.js) may stand between the
+  // swatches and the screen: view.color(c {rgb, cmyk}, swatch) → [r,
+  // g, b] (soft proof, one ink plate, total ink), view.image(img) →
+  // drawable, view.op(swatch) true → it overprints (drawn multiplied).
+  var view = null;
+  function setView(v) { view = v && typeof v.color === "function" ? v : null; }
   function rgba(doc, id, op) {
     var c = M.swatchColor(doc, id);
     if (!c) return null;
-    return "rgba(" + c.rgb.join(",") + "," + (op === undefined ? 1 : op) + ")";
+    var rgb = view ? view.color(c, M.find(doc.swatches, id)) : c.rgb;
+    return "rgba(" + rgb.join(",") + "," + (op === undefined ? 1 : op) + ")";
+  }
+  // the overprint of a swatch, in a print view only
+  function opMode(ctx, doc, id) {
+    ctx.globalCompositeOperation = view && view.op && id && view.op(M.find(doc.swatches, id)) ? "multiply" : "source-over";
   }
 
   function roundRectPath(ctx, x, y, w, h, r) {
@@ -641,6 +807,7 @@
         if (!r.t) return;
         ctx.font = r.size + "px " + T.cssStack(r.key);
         ctx.fillStyle = rgba(doc, r.color) || "#000";
+        if (view) opMode(ctx, doc, r.color);
         if (r.g) {                                  // on a path (LY-TP)
           r.g.forEach(function (gl) {
             ctx.save();
@@ -678,6 +845,7 @@
     }
     if (it.t === "line") {
       if (strokeStyle(ctx, doc, it)) {
+        if (view) opMode(ctx, doc, it.stroke);
         ctx.beginPath(); ctx.moveTo(it.x, it.y); ctx.lineTo(it.x + it.w, it.y + it.h); ctx.stroke();
       }
       ctx.restore();
@@ -685,7 +853,7 @@
     }
     outline(ctx, it);
     var paint = it.gr ? gradient(ctx, doc, it) : it.fill ? rgba(doc, it.fill) : null;
-    if (paint) { ctx.fillStyle = paint; ctx.fill(it.eo ? "evenodd" : "nonzero"); }
+    if (paint) { if (view && !it.gr) opMode(ctx, doc, it.fill); ctx.fillStyle = paint; ctx.fill(it.eo ? "evenodd" : "nonzero"); if (view) ctx.globalCompositeOperation = "source-over"; }
     if (it.t === "img") drawImageItem(ctx, doc, it, opts);
     if (it.t === "text") {
       ctx.save();
@@ -695,6 +863,7 @@
     }
     if (strokeStyle(ctx, doc, it)) {
       outline(ctx, it);
+      if (view) opMode(ctx, doc, it.stroke);
       ctx.stroke();
     }
     ctx.restore();
@@ -703,6 +872,7 @@
   function drawImageItem(ctx, doc, it, opts) {
     var img = it.a && opts.getImage ? opts.getImage(it.a) : null;
     if (img) img = adjustedImage(img, adjOf(it));
+    if (img && view && view.image) img = view.image(img) || img;
     if (img) {
       ctx.save();
       roundRectPath(ctx, it.x, it.y, it.w, it.h, it.r);
@@ -785,7 +955,7 @@
 
   var api = {
     corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, flipOf: flipOf, wrapShape: wrapShape, alphaProfile: alphaProfile, adjNorm: adjNorm, adjOf: adjOf, adjKey: adjKey, applyAdj: applyAdj, ADJ_ORDER: ADJ_ORDER, effectivePpi: effectivePpi, uniform: uniform,
-    pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
+    gridOf: gridOf, pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight, setView: setView, pfOf: pfOf, inksOf: inksOf, overprints: overprints,
     drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
