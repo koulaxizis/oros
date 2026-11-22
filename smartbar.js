@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.3.0)
+// orOS — smartbar.js (smart top bar, v1.4.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -11,7 +11,10 @@
 //   the other apps' cards in smartbar-apps.js), and live pills while a
 //   timer, the stopwatch or a recording runs (smartbar-live.js). Each
 //   shows only with something to say; money and event titles hide under
-//   Sensitive work; a click opens its app. fitBar() folds the last chips
+//   Sensitive work; a click opens its app (the event chip and the
+//   shell's weather chip first open a peek panel, PEEK-1, v1.4.0: the
+//   month + today's rows / the days ahead, with "Open Calendar /
+//   Weather" inside). fitBar() folds the last chips
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
@@ -23,7 +26,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.3.0";
+  var VER = "1.4.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
                "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue"];
@@ -152,7 +155,28 @@
   function rowOf(stored) { return (liveOf(stored) ? LIVE.slice() : []).concat(listOf(stored)); }
   function ymdOf(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
 
-  var model = { VER: VER, KEY: KEY, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
+  // PEEK-1: today's rows for the event peek: timed ones by time, then
+  // the rest; never a sensitive app's row; at most `max`.
+  //   rows   the summary's today rows; hidden { appId: true }
+  function peekRows(rows, hidden, max) {
+    var ok = (rows || []).filter(function (r) { return r && typeof r.title === "string" && r.title && !(hidden && hidden[r.app]) && r.kind !== "info"; });
+    ok.sort(function (a, b) {
+      var ma = mins(a.time), mb = mins(b.time);
+      if (ma === null && mb === null) return 0;
+      if (ma === null) return 1;
+      if (mb === null) return -1;
+      return ma - mb;
+    });
+    return ok.slice(0, max || 6);
+  }
+  // "24° / 15°", "24°" or "" (null temperatures left out).
+  function hiLo(max, min) {
+    var a = typeof max === "number" && isFinite(max) ? Math.round(max) + "°" : "";
+    var b = typeof min === "number" && isFinite(min) ? Math.round(min) + "°" : "";
+    return a && b ? a + " / " + b : (a || b);
+  }
+
+  var model = { VER: VER, KEY: KEY, peekRows: peekRows, hiLo: hiLo, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
                 monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS,
@@ -241,6 +265,40 @@
     ".sb-card small { font-size: 12px; color: var(--text-dim); overflow-wrap: anywhere; }",
     ".sb-card.sb-soon b { color: var(--accent); }",
     "@media (max-width: 480px) { #sb-pop { left: 6px; right: 6px; width: auto; } }",
+    // PEEK-1: the peek panel (same frame as #sb-pop)
+    "#sb-peek { position: fixed; z-index: 1200; top: calc(46px + env(safe-area-inset-top, 0px)); right: 8px; width: 340px;",
+    "  max-height: calc(100dvh - 60px - env(safe-area-inset-top, 0px)); overflow: auto; box-sizing: border-box; padding: 10px;",
+    "  background: var(--panel-bg, var(--bar-bg)); color: var(--text); border: 1px solid var(--border); border-radius: 18px;",
+    "  box-shadow: 0 10px 34px var(--shadow, rgba(0,0,0,.4)); font-size: 14px; }",
+    "@media (max-width: 480px) { #sb-peek { left: 6px; right: 6px; width: auto; } }",
+    ".pk-h { display: flex; align-items: center; gap: 10px; padding: 2px 6px 8px; }",
+    ".pk-h svg { width: 30px; height: 30px; flex: none; color: var(--accent); }",
+    ".pk-h b { font-size: 22px; font-variant-numeric: tabular-nums; }",
+    ".pk-h small { display: block; color: var(--text-dim); font-size: 12px; overflow-wrap: anywhere; }",
+    ".pk-day { display: grid; grid-template-columns: minmax(0, 1fr) 26px auto 44px; align-items: center; gap: 8px; min-height: 40px; padding: 0 6px;",
+    "  border-radius: 10px; font-variant-numeric: tabular-nums; }",
+    ".pk-day + .pk-day { border-top: 1px solid color-mix(in srgb, var(--border) 60%, transparent); }",
+    ".pk-day svg { width: 22px; height: 22px; color: var(--accent); }",
+    ".pk-day .pk-pop { color: var(--text-dim); font-size: 12px; text-align: right; }",
+    ".pk-day .pk-d { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    ".pk-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 2px 4px; font-weight: 700; }",
+    ".pk-nav button { min-width: 44px; min-height: 40px; border: none; border-radius: 10px; background: transparent; color: var(--text); font: inherit; font-size: 18px; cursor: pointer; }",
+    ".pk-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; font-variant-numeric: tabular-nums; }",
+    ".pk-wd { font-size: 11px; color: var(--text-dim); padding: 2px 0; }",
+    ".pk-grid button { min-height: 36px; border: none; border-radius: 9px; background: transparent; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; padding: 0; }",
+    ".pk-grid button.pk-out { color: var(--text-dim); opacity: .55; }",
+    ".pk-grid button.pk-now { background: var(--accent); color: var(--accent-ink, var(--bg)); font-weight: 700; }",
+    ".pk-sec { margin: 10px 6px 4px; font-size: 12px; font-weight: 700; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }",
+    ".pk-row { display: flex; align-items: baseline; gap: 10px; width: 100%; min-height: 44px; padding: 6px; box-sizing: border-box; border: none;",
+    "  border-radius: 10px; background: transparent; color: var(--text); font: inherit; text-align: left; cursor: pointer; }",
+    ".pk-row .pk-t { flex: none; width: 46px; color: var(--accent); font-variant-numeric: tabular-nums; font-size: 13px; }",
+    ".pk-row .pk-w { min-width: 0; overflow-wrap: anywhere; }",
+    ".pk-row .pk-a { margin-left: auto; flex: none; color: var(--text-dim); font-size: 12px; }",
+    ".pk-empty { padding: 6px; color: var(--text-dim); font-size: 13px; }",
+    ".pk-open { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px;",
+    "  background: transparent; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }",
+    "#sb-peek button:hover, #sb-peek button:focus-visible { background: var(--accent-soft); outline: none; }",
+    "#sb-peek .pk-grid button.pk-now:hover, #sb-peek .pk-grid button.pk-now:focus-visible { background: var(--accent); outline: 2px solid var(--text); outline-offset: -2px; }",
     // SB3 looks: the bar floats as a rounded pill inside its own 40 px
     // (nothing below moves). Never under high contrast.
     "html[data-oros-bar]:not([data-oros-contrast=\"high\"]) #oros-bar { background: transparent; border-bottom-color: transparent; box-shadow: none;",
@@ -378,6 +436,160 @@
     if (more) { more.el.setAttribute("aria-expanded", "false"); if (focusBtn) more.el.focus(); }
   }
 
+  // ---------- PEEK-1: peek panels ----------
+  // One panel at a time, under the bar like #sb-pop. The weather chip is
+  // the shell's (#wx-chip); the event peek is the event chip's. Data is
+  // painted with textContent; the icons are the shell's own static SVG.
+  var peekEl = null, peekKind = "", peekFrom = null, peekAt = null;
+  function el(tag, cls, text) {
+    var e = doc.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined && text !== null) e.textContent = String(text);
+    return e;
+  }
+  function pbtn(cls, text, fn, label) {
+    var b = el("button", cls, text);
+    b.type = "button";
+    if (label) b.setAttribute("aria-label", label);
+    b.addEventListener("click", function (e) { e.stopPropagation(); fn(e); });
+    return b;
+  }
+  function onPeekKey(e) { if (e.key === "Escape" && peekEl) { e.preventDefault(); closePeek(true); } }
+  function onPeekDown(e) {
+    if (!peekEl || peekEl.contains(e.target) || (peekFrom && peekFrom.contains(e.target))) return;
+    closePeek();
+  }
+  function closePeek(refocus) {
+    if (!peekEl) return;
+    peekEl.remove();
+    peekEl = null;
+    doc.removeEventListener("keydown", onPeekKey, true);
+    doc.removeEventListener("mousedown", onPeekDown, true);
+    doc.removeEventListener("touchstart", onPeekDown, true);
+    var from = peekFrom;
+    peekFrom = null; peekKind = "";
+    if (from) { from.setAttribute("aria-expanded", "false"); if (refocus && doc.contains(from)) from.focus(); }
+  }
+  function openApp(id) { closePeek(); call(function () { host.open(id); }); }
+  function fillWeather(p, w) {
+    var l = loc();
+    var h = el("div", "pk-h");
+    var ic = el("span");
+    ic.innerHTML = w.icon || "";                       // the shell's own static icon
+    h.appendChild(ic);
+    var tx = el("div");
+    tx.appendChild(el("b", null, Math.round(w.temp) + "°"));
+    tx.appendChild(el("small", null, w.place || ""));
+    h.appendChild(tx);
+    p.appendChild(h);
+    var today = ymdOf(new Date());
+    w.days.forEach(function (d) {
+      var dt = new Date(+d.date.slice(0, 4), +d.date.slice(5, 7) - 1, +d.date.slice(8, 10));
+      var name = d.date === today ? t("pk.today") : dt.toLocaleDateString(l, { weekday: "long" });
+      var r = el("div", "pk-day");
+      r.appendChild(el("span", "pk-d", name));
+      var di = el("span");
+      di.innerHTML = d.icon || "";                     // static icon
+      di.setAttribute("aria-hidden", "true");
+      r.appendChild(di);
+      r.appendChild(el("span", null, hiLo(d.max, d.min)));
+      r.appendChild(el("span", "pk-pop", typeof d.pop === "number" && d.pop >= 10 ? Math.round(d.pop) + "%" : ""));
+      r.setAttribute("aria-label", name + ": " + hiLo(d.max, d.min) + (typeof d.pop === "number" && d.pop >= 10 ? ", " + t("pk.rain").replace("{n}", Math.round(d.pop)) : ""));
+      p.appendChild(r);
+    });
+    p.appendChild(pbtn("pk-open", t("pk.open").replace("{app}", appName("weather") || "Weather"), function () { openApp("weather"); }));
+  }
+  function monthOf(y, m) {
+    var W = root.orosWidgets && root.orosWidgets.model;
+    return W && typeof W.monthGrid === "function" ? W.monthGrid(y, m) : [];
+  }
+  function fillEvent(p) {
+    var now = new Date(), today = ymdOf(now), l = loc();
+    if (!peekAt) peekAt = { y: now.getFullYear(), m: now.getMonth() };
+    var nav = el("div", "pk-nav");
+    var title = new Date(peekAt.y, peekAt.m, 1).toLocaleDateString(l, { month: "long", year: "numeric" });
+    function shift(n) {
+      var d = new Date(peekAt.y, peekAt.m + n, 1);
+      peekAt = { y: d.getFullYear(), m: d.getMonth() };
+      repaintPeek(n < 0 ? ".pk-prev" : ".pk-next");
+    }
+    nav.appendChild(pbtn("pk-prev", "‹", function () { shift(-1); }, t("wg.prev")));
+    nav.appendChild(el("span", null, title));
+    nav.appendChild(pbtn("pk-next", "›", function () { shift(1); }, t("wg.next")));
+    p.appendChild(nav);
+    var g = el("div", "pk-grid");
+    for (var i = 0; i < 7; i++) {                     // 1 Jan 2024 is a Monday
+      var wd = el("span", "pk-wd", new Date(2024, 0, 1 + i).toLocaleDateString(l, { weekday: "narrow" }));
+      wd.setAttribute("aria-hidden", "true");
+      g.appendChild(wd);
+    }
+    monthOf(peekAt.y, peekAt.m).forEach(function (week) {
+      week.forEach(function (c) {
+        var long = new Date(c.y, c.m, c.d).toLocaleDateString(l, { weekday: "long", day: "numeric", month: "long" });
+        var b = pbtn((c.out ? "pk-out" : "") + (c.ymd === today ? " pk-now" : ""), c.d, function () {
+          closePeek(); call(function () { host.openDay(c.ymd); });
+        }, long);
+        if (c.ymd === today) b.setAttribute("aria-current", "date");
+        g.appendChild(b);
+      });
+    });
+    p.appendChild(g);
+    p.appendChild(el("div", "pk-sec", t("pk.today")));
+    var res = todayCache, hidden = {};
+    ((res && res.apps) || []).forEach(function (a) { if (a.sensitive) hidden[a.id] = true; });
+    var rows = peekRows(res && res.groups && res.groups.today, hidden, 6);
+    var st = strict();
+    rows.forEach(function (r) {
+      var what = st ? t("sb.event.hidden") : r.title, app = appName(r.app) || r.app;
+      var b = pbtn("pk-row", null, function () {
+        closePeek(); call(function () { root.orosToday.open(r.app, r.target); });
+      }, (r.time ? r.time + " " : "") + what + " · " + app);
+      b.appendChild(el("span", "pk-t", r.time || ""));
+      b.appendChild(el("span", "pk-w", what));
+      b.appendChild(el("span", "pk-a", app));
+      p.appendChild(b);
+    });
+    if (!rows.length) p.appendChild(el("div", "pk-empty", t("pk.none")));
+    p.appendChild(pbtn("pk-open", t("pk.open").replace("{app}", appName("calendar") || "Calendar"), function () { openApp("calendar"); }));
+  }
+  function repaintPeek(focusSel) {
+    if (!peekEl) return;
+    while (peekEl.firstChild) peekEl.removeChild(peekEl.firstChild);
+    if (peekKind === "weather") {
+      var w = call(function () { return host.weather(); });
+      if (!w || !Array.isArray(w.days) || !w.days.length) { closePeek(); return; }
+      fillWeather(peekEl, w);
+    } else fillEvent(peekEl);
+    var f = (focusSel && peekEl.querySelector(focusSel)) || peekEl.querySelector("button");
+    if (f) f.focus();
+  }
+  // → true when a panel opened (or the same one closed); false when there
+  // is nothing to show, so the caller opens the app as before.
+  function peek(kind, from) {
+    if (!host || (kind !== "weather" && kind !== "event") || locked()) return false;
+    if (peekEl && peekKind === kind) { closePeek(true); return true; }
+    closePeek();
+    closePop();
+    if (kind === "weather") {
+      var w = call(function () { return host.weather(); });
+      if (!w || !Array.isArray(w.days) || !w.days.length) return false;
+    }
+    peekKind = kind;
+    peekAt = null;
+    peekFrom = from || null;
+    peekEl = el("div");
+    peekEl.id = "sb-peek";
+    peekEl.setAttribute("role", "dialog");
+    peekEl.setAttribute("aria-label", kind === "weather" ? (appName("weather") || "Weather") : (appName("calendar") || "Calendar"));
+    doc.body.appendChild(peekEl);
+    if (peekFrom) peekFrom.setAttribute("aria-expanded", "true");
+    doc.addEventListener("keydown", onPeekKey, true);
+    doc.addEventListener("mousedown", onPeekDown, true);
+    doc.addEventListener("touchstart", onPeekDown, true);
+    repaintPeek();
+    return true;
+  }
+
   function render() {
     if (!host) return;
     var bar = doc.querySelector("#oros-bar .bar-right");
@@ -424,7 +636,7 @@
       return {
         v: v, l: title, cls: ev.now ? "sb-now" : (ev.left <= SOON_MIN ? "sb-soon" : ""),
         tip: t("sb.event.tip").replace("{t}", title).replace("{h}", r.time + (r.end ? "–" + r.end : "")).replace("{app}", app),
-        go: function () { if (root.orosToday && root.orosToday.open) root.orosToday.open(r.app, r.target); }
+        go: function () { peek("event", chips.event && chips.event.btn); }   // PEEK-1
       };
     },
     focus: function (now) {
@@ -596,7 +808,7 @@
     // lock screen over it).
     var lk = locked();
     if (box.hidden !== lk) { box.hidden = lk; force = true; call(function () { host.fit(); }); }
-    if (lk) { closePop(); return; }
+    if (lk) { closePop(); closePeek(); return; }
     refreshToday(false);
     var now = Date.now(), changed = false;
     Object.keys(chips).forEach(function (k) {
@@ -664,6 +876,8 @@
       save(list(), look);
     },
     wants: function (kind) { return !!host && list().indexOf(kind) !== -1; },
+    // PEEK-1: open the "weather" or "event" peek panel under `from`
+    peek: function (kind, from) { return peek(kind, from); },
     set: function (kind, on) {
       if (!host || KINDS.indexOf(kind) === -1) return;
       save(toggle(list(), kind, !!on));
@@ -704,6 +918,7 @@
       todayAt = 0;
       if (apps) apps.stale();
       closePop();
+      closePeek();
       Object.keys(chips).forEach(function (k) { chips[k].key = ""; });
       render();
     }

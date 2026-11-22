@@ -42,7 +42,7 @@ Auf einem Computer haben die Ersten Schritte auch `Nutze orOS auch auf dem Handy
 
 ## Smarte obere Leiste
 Die obere Leiste kann neben der Uhr ein paar Live-Elemente zeigen. Hake sie in den `Einstellungen` unter `Darstellung` in `Obere Leiste` an und lege ihre Reihenfolge mit den Pfeilen fest. Anfangs ist keines an, und deine Wahl bleibt auf diesem Gerät.
-- `Nächster Termin`: das nächste Element mit Uhrzeit von heute aus [Heute](app:today) (deine Kalendertermine und die anderen Apps, die Heute eine Uhrzeit geben). Ab einer Stunde vorher zählt es herunter („in 20 Min.“); während es läuft, steht dort `Jetzt`. Tippe darauf, um den Termin zu öffnen.
+- `Nächster Termin`: das nächste Element mit Uhrzeit von heute aus [Heute](app:today) (deine Kalendertermine und die anderen Apps, die Heute eine Uhrzeit geben). Ab einer Stunde vorher zählt es herunter („in 20 Min.“); während es läuft, steht dort `Jetzt`. Tippe darauf, um den Monat und das Heutige auf einen Blick zu sehen: tippe auf einen Tag, um ihn im Kalender zu öffnen, auf eine Zeile, um sie zu öffnen, oder auf `Kalender öffnen`.
 - `Fokus-Timer`: die verbleibenden Minuten des Pomodoro, der in [Zeit](app:time) läuft, Fokus oder Pause.
 - `Aufgaben für heute`: wie viele Aufgaben überfällig oder heute fällig sind.
 - `Wasser heute`: was du getrunken hast, verglichen mit deinem Ziel in [Wasser](app:water).
@@ -180,7 +180,7 @@ Ein kleines Symbol mit der aktuellen Temperatur steht von Anfang an in der obere
 1. `Wetter in der Taskleiste anzeigen` zeigt oder versteckt es auf diesem Gerät.
 2. Die Nadel neben einer Stadt wählt die Stadt, die es zeigt. Ist keine Stadt angeheftet, zeigt es deine erste Stadt.
 
-Tippe oder klicke auf das Symbol, um [Wetter](app:weather) zu öffnen; in Wetter bringt es dich zurück zum Desktop.
+Tippe oder klicke auf das Symbol, um die nächsten sieben Tage auf einen Blick zu sehen (Höchst- und Tiefstwert jedes Tages und die Regenwahrscheinlichkeit ab 10 %), mit `Wetter öffnen` am Ende; bevor die erste Vorhersage da ist, öffnet es [Wetter](app:weather) sofort. In Wetter bringt es dich zurück zum Desktop.
 
 Bist du offline oder ist der Wert älter als 3 Stunden, zeigt das Symbol eine durchgestrichene Wolke und keine Temperatur. orOS zeigt nie eine Temperatur, die es nicht hat. Die Wetterdaten kommen von Open-Meteo (siehe [Datenschutz](help:t/privacy)).
 

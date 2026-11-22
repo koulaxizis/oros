@@ -42,7 +42,7 @@ On a computer, First steps also has `Use orOS on your phone too`. It adds an `On
 
 ## Smart top bar
 The top bar can show a few live items next to the clock. Tick them in `Settings`, under `Appearance`, in `Top bar`, and set their order with the arrows. None is on at first, and your choice stays on this device.
-- `Next event`: the next timed item of today from [Today](app:today) (your Calendar events and the other apps that give Today a time). From an hour before, it counts down ("in 20 min"); while it runs it says `Now`. Tap it to open the event.
+- `Next event`: the next timed item of today from [Today](app:today) (your Calendar events and the other apps that give Today a time). From an hour before, it counts down ("in 20 min"); while it runs it says `Now`. Tap it for this month and today's items at a glance: tap a day to open it in the Calendar, a line to open it, or `Open Calendar`.
 - `Focus timer`: the minutes left of the Pomodoro running in [Time](app:time), focus or break.
 - `Tasks for today`: how many tasks are late or due today.
 - `Water today`: what you drank against your goal in [Water](app:water).
@@ -180,7 +180,7 @@ A small icon with the current temperature shows in the top bar from the start. T
 1. `Show the weather in the taskbar` shows or hides it on this device.
 2. The pin next to a city picks the city it shows. With no city pinned, it shows your first city.
 
-Tap or click the icon to open [Weather](app:weather); inside Weather, it takes you back to the desktop.
+Tap or click the icon for the next seven days at a glance (each day's high and low, and the chance of rain from 10 %), with `Open Weather` at the end; before the first forecast has arrived it opens [Weather](app:weather) straight away. Inside Weather, it takes you back to the desktop.
 
 When you are offline, or the reading is more than 3 hours old, the icon shows a crossed-out cloud and no temperature. orOS never shows a temperature it doesn't have. Weather data comes from Open-Meteo (see [Privacy](help:t/privacy)).
 
