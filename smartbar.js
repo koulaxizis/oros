@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.4.0)
+// orOS — smartbar.js (smart top bar, v1.5.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -14,7 +14,9 @@
 //   Sensitive work; a click opens its app (the event chip and the
 //   shell's weather chip first open a peek panel, PEEK-1, v1.4.0: the
 //   month + today's rows / the days ahead, with "Open Calendar /
-//   Weather" inside). fitBar() folds the last chips
+//   Weather" inside). The "ai" card (AI-USE, v1.5.0): the Assistant's
+//   tokens this month on the person's own keys and the free Tavily
+//   searches left, never for local models. fitBar() folds the last chips
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
@@ -26,10 +28,10 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.4.0";
+  var VER = "1.5.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
-               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue"];
+               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai"];
   var MONEY = { budget: 1, sales: 1, invoices: 1 };
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
@@ -176,7 +178,37 @@
     return a && b ? a + " / " + b : (a || b);
   }
 
-  var model = { VER: VER, KEY: KEY, peekRows: peekRows, hiLo: hiLo, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
+  // AI-USE (1.5.0): the Assistant's use this month on the person's own
+  // keys, from its device-local prefs (oros-assistant-prefs): usage
+  // { "YYYY-MM": { pid: { i, o, ws? } } } and srch { "YYYY-MM": { tavily } }.
+  // Local models (on this computer or in the browser) never count.
+  //   → { tok, ws, tav } | null when nothing was used this month
+  var AI_LOCAL = { local: 1, webllm: 1, browser: 1 };
+  var TAVILY_FREE = 1000;                  // Tavily's free searches a month
+  function aiUsage(prefs, mk) {
+    if (!prefs || typeof prefs !== "object") return null;
+    var u = prefs.usage && prefs.usage[mk], s = prefs.srch && prefs.srch[mk];
+    var tok = 0, ws = 0, tav = 0;
+    if (u && typeof u === "object") Object.keys(u).forEach(function (pid) {
+      var r = u[pid];
+      if (AI_LOCAL[pid] || !r || typeof r !== "object") return;
+      var n = function (v) { return typeof v === "number" && isFinite(v) && v > 0 ? v : 0; };
+      tok += n(r.i) + n(r.o);
+      ws += n(r.ws);
+    });
+    if (s && typeof s === "object" && typeof s.tavily === "number" && isFinite(s.tavily) && s.tavily > 0) tav = Math.floor(s.tavily);
+    return tok || ws || tav ? { tok: Math.round(tok), ws: Math.round(ws), tav: tav } : null;
+  }
+  // 950 · 12.4k · 182k · 1.2M
+  function compact(n) {
+    n = Math.max(0, Math.round(Number(n) || 0));
+    if (n < 1000) return String(n);
+    if (n < 100000) return (Math.round(n / 100) / 10).toString().replace(/\.0$/, "") + "k";
+    if (n < 1000000) return Math.round(n / 1000) + "k";
+    return (Math.round(n / 100000) / 10).toString().replace(/\.0$/, "") + "M";
+  }
+
+  var model = { VER: VER, KEY: KEY, peekRows: peekRows, hiLo: hiLo, aiUsage: aiUsage, compact: compact, TAVILY_FREE: TAVILY_FREE, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
                 monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS,
@@ -217,6 +249,7 @@
   var IC = {
     event: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
     focus: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2.5h4"/></svg>',
+    ai: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M10 10h4v4h-4zM9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/></svg>',
     tasks: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12l3 3 5-6"/></svg>',
     continue: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="12" height="9" rx="1.5"/><rect x="15.5" y="9" width="6" height="11" rx="1.5"/><path d="M5 18h7M10.5 14.5l3 3-3 3"/></svg>',
     water: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></svg>',
@@ -647,6 +680,21 @@
       var ph = t(f.phase === "break" ? "sb.focus.break" : "sb.focus.work"), left = clock(f.left);
       return { v: left, l: ph, cls: f.phase === "work" ? "sb-soon" : "",
                tip: t("sb.focus.tip").replace("{p}", ph).replace("{r}", left).replace("{app}", appName("time")), go: function () { host.open("time"); } };
+    },
+    // AI-USE: numbers only (never a prompt); hidden while the Assistant
+    // is locked or hidden on this device.
+    ai: function (now) {
+      if (call(function () { return root.orosLock.apps.state("assistant"); })) return null;
+      var u = aiUsage(readJSON("oros-assistant-prefs"), ymdOf(new Date(now)).slice(0, 7));
+      if (!u) return null;
+      var nf = function (x) { return call(function () { return x.toLocaleString(loc()); }) || String(x); };
+      var near = u.tav >= TAVILY_FREE * 0.8;
+      var srch = u.tav ? t("sb.ai.srch").replace("{n}", nf(u.tav)).replace("{max}", nf(TAVILY_FREE)) : "";
+      var v = u.tok ? compact(u.tok) : nf(u.tav) + "/" + nf(TAVILY_FREE);
+      var l = near && u.tok ? t("sb.ai.near").replace("{n}", nf(u.tav)).replace("{max}", nf(TAVILY_FREE)) : (u.tok ? t("sb.ai.label") : t("sb.ai.searches"));
+      var tip = t("sb.ai.tip").replace("{app}", appName("assistant") || "Assistant").replace("{n}", nf(u.tok)) +
+        (u.ws ? " · " + t("sb.ai.web").replace("{n}", nf(u.ws)) : "") + (srch ? " · " + srch : "");
+      return { v: v, l: l, cls: near ? "sb-soon" : "", tip: tip, go: function () { host.open("assistant"); } };
     },
     tasks: function () {
       var g = todayCache && todayCache.groups;

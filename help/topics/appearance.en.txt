@@ -54,6 +54,7 @@ The top bar can show a few live items next to the clock. Tick them in `Settings`
 - `Next trip`: in how many days your next trip in [Travel](app:travel) starts (up to a month ahead).
 - `Today's meals`: today's meals from your plan in [Meal Planner](app:meals).
 - `The book you are reading`: the book open in [Library](app:library) and how far you are.
+- `AI use this month (your own key)`: how many tokens the [Assistant](app:assistant) used this month with your own keys (Claude, OpenAI and the other services), and how many of Tavily's 1,000 free searches a month it used on this device; it turns to the accent colour from 800. Local models (on your computer or in the browser) never count. Only numbers, never what you asked.
 
 Live pills need no ticking: while a timer or the stopwatch of [Time](app:time) runs, or [Screen Capture](app:capture) records, a pill with its time shows at the start of the bar (the timer that ends first, with "+1" when another one runs too). Tap it to open the app; the button beside it pauses the timer or the stopwatch (resume it in Time) or stops the recording, which then waits in Screen Capture to be saved. On a phone the first live pill stays in the bar and the others go behind the button with the cards. `Live pills` in `Top bar` turns them off on this device.
 
