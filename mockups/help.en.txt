@@ -2,7 +2,7 @@
 Make realistic 3D pictures of your book for a shop page, a post or a press kit. The book is built from its real measures, so the size, the page count and the binding change the picture at once.
 
 ## Getting started
-1. Press `Make a book mockup` (or [[+]] at the top for another one).
+1. Press `Make a mockup` (or [[+]] at the top for another one) and choose what to make: a `Book`, a `Notebook`, a `CD` or a `DVD / Blu-ray`.
 2. On the `Book` tab give the binding, the size and the pages.
 3. On the `Cover` tab choose the pictures of the front, the back and the spine.
 4. On the `Scene` tab drag the picture to turn the camera, and pick a placement and a background.
@@ -10,7 +10,9 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 
 ## The book
 - `Binding`: `Paperback` has a soft cover flush with the pages; `Hardcover` has boards a little larger than the pages, a groove next to the spine, and can have a `Rounded spine`, a `Headband` and a `Ribbon bookmark`.
+- More bindings: `Saddle-stitched` is folded in the middle and stapled, like a magazine or a zine (no spine; pages in fours, at most about 96). `Spiral` has two loose covers and a coil through holes near the edge, in black, silver, white or gold (`Wire colour`); it opens flat. `Board book` is a children's book of thick board pages (the paper turns to `Board pages`). `Lay-flat` is a hardcover whose spread lies flat, like a photo book.
 - `Size`: ready sizes (A5, B-format, 6 × 9″ and more) or your own width and height, in mm or inches.
+- More sizes: 5.25 × 8″, 7 × 10″, 8 × 10″, comics (6.625 × 10.25″), B5, B6 (manga), A5 landscape (21 × 14.8), squares of 8 × 8″ and 25 × 25 cm.
 - `Pages` and `Paper` give the spine: pages × the thickness of one page. The white and cream papers use the figures print-on-demand services give. With `Set the spine width by hand` you type the spine your printer gave you.
 - `Flaps`: on a paperback they are French flaps folded inside the cover; on a hardcover they turn the cover into a dust jacket, and `Cover under the jacket` sets the colour of the boards. Open the cover a little on the `Scene` tab to see them.
 - `Finish`: matte, gloss (shines with the light) or soft-touch. `Page edges` can be white, cream or sprayed in a colour.
@@ -21,16 +23,69 @@ Make realistic 3D pictures of your book for a shop page, a post or a press kit. 
 - Where there is no picture the book takes the `Colour where there is no picture`, and the spine shows the `Spine text`.
 - Pictures stay on your orOS disk and travel to your other devices with it.
 
+## CD, DVD and Blu-ray
+A CD or a DVD has a `Product` tab and a `Pictures` tab in place of `Book` and `Cover`; `Scene`, `Print` and `Save` work as for a book.
+- CD `Packaging`: `Jewel case` (a clear lid with the booklet, a tray, and the tray card seen through the back with its two spines), `Slim case`, `Digipak` (printed card with a tray inside) or `Card sleeve`. `Tray` sets the colour of the tray.
+- DVD: `DVD` or `Blu-ray`, a `Standard` or `Slim` case, and the `Case colour`. The sleeve sits under the clear film of the case.
+- `The disc`: silver, white or black under the printed label. `Label printed from` is where the print stops in the middle: at the hole, or at 22 or 36 mm, leaving a clear ring as many pressing plants do. `The disc next to the case` stands the disc beside it.
+- On the `Pictures` tab each picture names its place: the front (booklet or cover), the inside, the back and the spines, and the `Disc label`, which is cut round with its middle out. A DVD can also take `One full wrap`, the whole sleeve as the printer's sheet.
+- On the `Scene` tab, `Open the case` opens the lid or the front and shows the disc; for a card sleeve, `Slide the disc out` pulls it out.
+- On the `Print` tab, `Sheet` picks one of the sheets the pressing plant asks for: the booklet (4 pages, folded, 120 × 120 mm), the tray card (151 × 118 mm with 6.5 mm spines), the digipak outside and inside, the card sleeve, the DVD sleeve (273 × 183 mm with a 14 mm spine; Blu-ray 148 mm high) and the disc label (118 mm on a 120 mm disc, with the hole). The plant's own template wins: set its bleed here, and check its spine and hub sizes.
+
+## Cassette, VHS and vinyl
+They work like a CD: a `Product` tab, a `Pictures` tab, and the sheets for the printer on the `Print` tab.
+- Cassette: `Clear case` (the J-card folded behind the lid, `3 panels`, `4 panels` or `5 panels` with the extra panels inside), `O-card` (a card sleeve the case slides into) or `Tape only`. `Shell` sets the colour of the tape. The labels go on both sides of the tape: side A in front, side B behind. `Open the case` opens the lid; for an O-card, `Slide the case out` pulls it out.
+- VHS: `Card sleeve` (the tape slides out of the side) or `Clamshell` (a plastic case with the sleeve under its clear film), or `Tape only`. The tape takes a face label and a spine label; the spine picture is used for both spines.
+- Vinyl: `12″ LP` or `7″ single`, a `Single` or `Gatefold` jacket, the `Inner sleeve` (white, black or `Printed`), the `Colour of the record` and, for a 7″, the `Big hole (jukebox)`. `Slide the record out` pulls the inner sleeve and the record out of the jacket. The two record labels are cut round with the hole out.
+- The printer's sheets: the J-card (101.6 mm high: front 65, spine 12.7, flap 15 mm), the O-card, the tape labels (89 × 51 mm), the VHS sleeve (105 × 192 mm panels with a 27 mm spine and the glue flap), the clamshell insert, the face and spine labels, the LP jacket (314 mm panels; gatefold with a wider spine), the inner sleeve (302 mm) and the record labels (100 mm on an LP, 84 mm on a 7″). The plant's own template wins.
+
+## Badges, stickers and other small things
+Badges, stickers, keychains, enamel pins and magnets lie flat on the table to begin with; `Placement` stands them up. Their options are on the `Product` tab.
+- `Badge`: 25 to 75 mm, gloss or matte, with a `Pin` or a `Magnet` on the back. The picture covers the whole circle on the `Print` tab: the middle is the face, the ring round it wraps over the edge and under (the cut circle is 35 to 87 mm).
+- `Sticker`: `Cut to the picture` (a PNG with a see-through background: the cut follows its outline, with a `White edge` of 0, 2 or 3 mm), `Round`, `Square` or `Rounded corners`; matte, gloss, `Holographic` or `Clear`.
+- `Keychain`: acrylic, metal or rubber, cut to the picture (the hole sits on a tab at the top) or round or rectangle (the hole inside), the colour of the `Ring`, and `Printed on both sides` (the back keeps the front's outline).
+- `Enamel pin`: cut to the picture or round, 20 to 50 mm, the `Metal`, and `Hard` (smooth, glossy) or `Soft` enamel (raised metal lines). The mockup shows your picture in a few flat colours with metal lines between them, as the maker would. `On a backing card` adds a 51 × 76 mm card with its own picture.
+- `Magnet`: rectangle (51 × 51 to 102 × 76 mm), round or cut to the picture.
+- On the `Print` tab a cut sheet shows what is cut away, the cut line, the holes and a band to keep text out of. The PDF carries the cut line as a thin 100 % magenta line, as cutting plotters read it; ask your maker how they want it named. If the picture has no see-through background, or parts of it stand apart, the tab says so.
+
+## Mug, poster and cards
+- `Mug`: 11 or 15 oz, the colour `Inside` and of the `Handle`, gloss or matte. One picture goes round it (216 × 89 mm, or 216 × 100 for 15 oz): its middle faces away from the handle, its ends meet under it. Turn the mug on the `Scene` tab to see all round.
+- `Framed poster`: A4 to A1, 30 × 40, 50 × 70 or 61 × 91 cm, portrait or landscape, a black, white, oak, walnut or aluminium `Frame` or `No frame`, a `Mat (passe-partout)`, and a light or dark `Wall` behind. The frame or the mat hides about 4 to 5 mm of the poster's edge.
+- `Postcard or card`: a `Flat postcard` (front and back) or a `Folded card` with its two inside pages, A6, A5, DL or square, portrait or landscape, and an `Envelope` behind it. `Open the card` on the `Scene` tab opens a folded card. On the `Print` tab a folded card has two sheets: the outside (back on the left, front on the right) and the inside.
+
+## Clothes, bags and caps
+- `T-shirt`: laid flat, in white, black, heather grey, navy, red, forest green or sand, with a `Print area` on the `Front` (30 × 40 cm) or the `Left chest` (9.5 × 9.5 cm), and `Print on the back too`. `Tote bag`: natural, black, navy, red, forest green or white cotton canvas, `Long (shoulder)` or `Short (hand)` handles, one side or both.
+- `Hoodie`: laid flat with its hood, kangaroo pocket and drawstrings, in the T-shirt's colours; the `Front` area (28 × 25 cm) sits above the pocket, or the `Left chest`, and `Print on the back too` (30 × 40 cm). `Socks`: a pair in white, black or heather grey with the same picture on the front of both legs (9 × 25 cm); sock printers often print all round, so ask yours for its full template.
+- `Cap`: a `Dad cap` or a `Trucker` with a mesh back and, if you like, `White front panels`, in black, navy, red, forest green, sand or white. The front panel (11 × 5.5 cm) is `Printed` or `Embroidered`; embroidery shows bold shapes in a few colours best. The cap is drawn by orOS itself, so it needs no download.
+- Only what the picture has is printed: a PNG with a clear background prints best. The picture fits whole inside the print area, from its top; the `Print` tab gives the print area at its real size, with no bleed.
+- The real 3D models are our own (made in Blender, free to use). They are downloaded only when you press `Download the 3D model`, once, from orOS's model library, checked, and then kept on this device so they work offline. Until then a flat stand-in shows the print. `Remove the model from this device` frees the space.
+
+## Finishes and extras
+- `Finishes` (on the `Book` tab): `Cover material` is printed paper, linen, book cloth, leather or kraft paper; the cloth ones show their weave in the light. `Rounded corners` rounds the outer corners of the cover and the pages, like a notebook. `Deckled page edges` makes the edges rough and uncut. `Page edges` › `Printed (a picture)` puts a picture of yours on the edges of the pages.
+- `Belly band`: a paper band round the book, with its colour, its `Band height` and its own picture. `Slipcase`: an open box the book slides into, with its colour and picture. `Elastic band`: the band that keeps a notebook shut.
+- `Make it a notebook` sets everything at once: an A5 hardcover with rounded corners, a ribbon, an elastic band, linen and lined pages. `Empty pages` (plain, lined, dotted or squared) is what an open notebook shows where there is no inside picture.
+- `Foil, spot UV and embossing` (on the `Cover` tab): give each effect a picture the size of the front cover. Its white parts (or, in a picture with see-through parts, the drawn parts) get the effect: `Foil` in gold, silver, copper, rose gold or holographic; `Spot UV` shines like varnish on a matte cover; `Embossing` is raised or pressed in. Make the picture in Atelier from the title or the logo of your cover.
+- `Sticker on the cover`: a round or square sticker ("Signed", an award) with its picture, its `Size` and where it sits.
+
 ## Several books
 - `Books in the picture` (on the `Scene` tab): `One book`, `Front + back` (the same book twice, one showing its back), `Series` (side by side, fronts to the camera), `Shelf` (standing in a row, spines to the camera) or `Stack` (lying one on another).
 - For a series, a shelf or a stack, `How many books` goes from 2 to 6, and `Space between them` sets the gap.
+- `Box set` stands the books in a row inside an open box, spines out; the box takes the `Slipcase` colour and picture.
 - On the `Cover` tab, `The other books` gives each book its own pictures, pages and spine text. A book without its own takes the first book's, so a stack of the same book needs nothing more.
+
+## Several mockups in one picture
+- `Several in one picture` (in the gallery, under scenes) puts up to 6 of your mockups together: books and products. Pick each one under `Add one of your mockups…`; `Remove` takes it out again.
+- `Layout`: `On a table` (side by side, standing where they stand) or `Flat from above` (laid out in a grid, as for a shop picture).
+- Each mockup keeps its own pictures and options: change them in its own project and the picture follows.
+- Kits make the products and the picture in one go from one picture of yours: `Band merch kit` (vinyl, CD, T-shirt, tote bag, badge), `Book launch kit` (book, tote bag, mug, postcard, badge), `Brand kit` (mug, cap, tote bag, sticker, poster) and `Clothing kit` (T-shirt, hoodie, cap, socks).
+- A surface and props (`Scene` tab) work here too.
 
 ## Scene and camera
 - Drag the picture to turn around the book. Pinch, or use the mouse wheel, to come closer. The buttons under the picture jump to ready angles.
 - `Placement`: standing, lying on its back or leaning on a wall. `Turn` turns the book on the floor; `Open the cover` opens it up to 160°.
 - `Perspective`: low values look flat like a catalogue picture, high values look close and dramatic. `Move left / right` and `Move up / down` place the book in the frame.
 - `Background`: see-through, a colour, a gradient or a photo. With `Photo`, `Choose a picture` takes one of yours and `Find free photos` searches Openverse and Wikimedia Commons (only photos that allow commercial use). A free photo is saved on your orOS disk with its credit, shown under it; `Copy credit` copies the line to give where you post the picture. `Shadow` sets how dark the floor shadow is.
+- `Surface`: wood, marble, linen, paper or concrete under the product, drawn by orOS at real scale (no photos), or `None (only the shadow)`. `Things beside it`: a coffee cup, a plant and a pencil, at their real size, set round the product without changing its framing.
 - `Light`: where it comes from, how high, how strong, how soft its shadows are, and cool or warm.
 
 ## Open book and e-book
@@ -47,6 +102,7 @@ The `Print` tab makes the cover sheet your printer asks for, from this book's nu
 - `With my cover pictures` puts your front, back and spine (or the full wrap) on the sheet. With `Show the guides` off you get your finished cover with its bleed, ready to send.
 - `Save PNG` and `Save PDF` make it at 300 dpi; the PDF has the trim and bleed boxes print shops read. `Design it in Atelier` makes an Atelier design of the right size with the bleed; the guides show there while you work but never print or export. When it is ready, `More` › `Make a book mockup` in Atelier brings it back onto this book.
 - Your printer's own template wins. If it gives another spine width, type it in `Book` › `Set the spine width by hand`; set its bleed here.
+- Other bindings: a saddle-stitched cover is back and front with the fold in the middle and no spine. A spiral book has two covers cut apart, side by side with their bleed between them; the blue strip with dots by the binding edge is where the holes go, so keep text and faces out of it (the barcode spot moves clear of it too). A board book's cover is back, spine and front like a paperback. A lay-flat book has the sheet of a hardcover case.
 
 ## Saving
 - `Picture shape`: square, 4:5 (posts), 3:2, 4:3, 16:9 or 9:16 (stories). `Size` is the long side, up to 4096 px; some phones draw less, and the app tells you.
