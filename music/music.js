@@ -3987,7 +3987,21 @@
   function paintPlaying() {
     if (!H) return;
     var st = H.getState(), k = st.cur ? st.cur.k : "";
-    [].forEach.call(document.querySelectorAll(".row"), function (li) { li.classList.toggle("now", !!k && li.getAttribute("data-k") === k); });
+    // MU-NOW: the playing row gets a tinted ground and moving bars, so it
+    // shows even when the palette's accent is close to the text colour.
+    [].forEach.call(document.querySelectorAll(".row"), function (li) {
+      var on = !!k && li.getAttribute("data-k") === k;
+      li.classList.toggle("now", on);
+      li.classList.toggle("paused", on && !st.playing);
+      var main = li.querySelector(".row-main"), eq = main && main.querySelector(".eq");
+      if (on) li.setAttribute("aria-current", "true"); else li.removeAttribute("aria-current");
+      if (on && main && !eq) {
+        eq = el("span", "eq");
+        eq.setAttribute("aria-hidden", "true");
+        for (var b = 0; b < 3; b++) eq.appendChild(el("i"));
+        main.insertBefore(eq, main.querySelector(".row-text"));
+      } else if (!on && eq) eq.remove();
+    });
     [].forEach.call(document.querySelectorAll(".big-play"), function (b) {
       var src = null;
       try { src = JSON.parse(b.getAttribute("data-src") || "null"); } catch (e) {}
