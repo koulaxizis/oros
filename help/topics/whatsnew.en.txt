@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.71.00
+- **One gallery for widgets and top bar cards.** Settings › Appearance › Widgets and cards… opens one gallery with every desktop widget and top bar card: search, filter by Desktop or Top bar, see a live preview, add, remove and change the order. It is now the one place for this, so the separate lists in Settings are gone.
+
 ## Version 8.70.01
 - **Music opens on Home again.** Music used to reopen on the tab you used last, so after a search it showed only the genre grid and your recommendations seemed gone. Now it always starts on Home.
 - **You can see which song is playing.** In every song list the playing song now has a tinted row and small moving bars next to its title.

@@ -13915,3 +13915,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** music/music.js, music/music.css, tests/music-home.test.js, shell.js, help/topics/whatsnew.en/el.txt.
 - **Tests:** tests/music-home.test.js; full suite; Playwright Chromium 360px EL: prefs `{tab:"search"}` opens on Home (Search on 8.70.00); mocked Openverse/ccMixter search, tap a song: one row marked (bars, tint, aria-current), the mark moves with the next song.
 - **Not tested:** a real phone, Safari.
+
+### 2026-11-22 — 8.71.00 — One widget gallery for widgets and bar cards (GALLERY-1, widgets 1.5.0, smartbar 1.8.0)
+- **What:** the Widgets… dialog becomes a gallery of desktop widgets and top bar cards (search, All / Desktop / Top bar, inert live preview, Add / Remove, order arrows). Structure review item 8 (Chris 2026-11-22 22:46Z): it is the only place to add, remove and order them; Settings › Appearance has one «Widgets and cards…» button instead of the two lists. `smartbar.preview(kind)` gives a bar card's icon and text.
+- **Files:** widgets.js, smartbar.js, shell.js (act `widgets.gallery`, version), settings/settings.js, settings/core.js, i18n/de/settings.js, translations.js, i18n/de/shell.js, appearance and settings help EN/EL/DE, whatsnew EN/EL, tests (widgets, smartbar, greet-start, vizwall).
+- **Tests:** full suite; Chromium through the real shell at 360 and 1280 EL: Settings button opens the gallery titled «Widgets και κάρτες», 27 rows, no list checkboxes left in Settings.
+- **Not tested:** Safari, a real phone.
