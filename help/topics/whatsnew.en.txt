@@ -3,6 +3,21 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.44.00
+- **Claude can set up your Author Portal steps.** When you ask, Claude (through orOS Gate) or the Assistant can make a Kanban column a step of your authors' production flow, mark it as a finish, and write the name and explanation your author sees. You see it, and you can undo it like any other change.
+
+## Version 8.43.00
+- **Layout: notes, lists and books.** Footnotes and endnotes from the Story Editor, numbered lists in paragraph styles (Greek numerals too), cross-references that follow the page, and links on words, which work in the PDF and the EPUB. More › Contents from styles… makes the contents of any document from the title styles you choose, and More › Book… keeps chapters in separate documents together, with page numbers that run on, the same styles and one PDF.
+
+## Version 8.42.00
+- **Layout: finer Greek typesetting.** Polytonic Greek now hyphenates and goes to capitals the right way, Preflight names any character a font cannot draw, and style lists sort the Greek way. Paragraph styles can set the whole paragraph at once for even spacing, limit how far word and letter spacing may go, let punctuation hang past the margin, balance ragged lines and start with a drop cap. Character styles add small caps, superscript and subscript, and More › Show loose and tight lines marks the lines that need a look.
+
+## Version 8.41.00
+- **Layout: a library for things you reuse, and colour libraries.** Select a logo, a running head or a chapter opener and keep it in the Library (More › Library…) to place it in any document; libraries go to other devices as a file. The Colours panel has ready-made colour sets and reads and writes .ase swatch files from InDesign, Illustrator, Affinity or Scribus. The Story Editor shows each paragraph's style name, can make the text bigger, and marks the text that no longer fits.
+
+## Version 8.40.00
+- **Layout: find, change, spell-check and finer text flow.** Find/Change… (Ctrl+F) finds words or patterns (GREP) in the whole book or one text, changes them, and can set styles at the same time; it has ready-made clean-ups for a book (double spaces, straight quotes to «», three dots to …) and keeps your own searches. Spelling… checks Greek and English and remembers the words you add with the document. Paragraph styles can now say which style comes after Enter, and give a character style to anything a pattern finds (GREP styles). Also new: column and page breaks in the text (Numpad Enter), a baseline grid that lines up lines across pages, frames that spread their paragraphs to the foot, and object styles.
+
 ## Version 8.39.00
 - **Layout: easier to work in.** Objects snap to equal gaps while you drag, with the gap shown; sizes and places show as you go; a small toolbar sits over what you select; History… lists every change by name and takes you back to any of them; and in Shortcuts and comfort… you can change any shortcut (they also work with a Greek keyboard) and how far the arrow keys move.
 ## Version 8.38.00

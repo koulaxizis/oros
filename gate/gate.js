@@ -1562,15 +1562,51 @@
           if (clash) return { ok: false, err: rtag + "another column is already called " + JSON.stringify(clash.name) + "." };
           rn.push({ col: fr.x, from: String(fr.x.name || ""), to: r.s });
         }
-        if (!rn.length && args.columns === undefined) return { ok: false, err: "Nothing to change: the columns already have these names." };
+        if (!rn.length && args.columns === undefined && args.portal_columns === undefined) return { ok: false, err: "Nothing to change: the columns already have these names." };
       }
-      if (args.columns === undefined && ren === undefined) return { ok: false, err: "Give columns to add or rename_columns." };
+      // KB-COLAP (Chris 2026-11-22): portal_columns [{ column, step?, finish?, name?, name_en?, about?, about_en? }] sets a
+      // column's Author Portal step (col.ap, AP-FLOW) like Column settings › Author Portal: keys left out stay, "" clears a text
+      var pcs = args.portal_columns, pa = [];
+      if (pcs !== undefined) {
+        if (typeof M.colAp !== "function") return { ok: false, err: "This orOS is too old for Author Portal steps; update orOS on the device." };
+        if (!Array.isArray(pcs) || !pcs.length || pcs.length > KB_COLS) return { ok: false, err: "portal_columns must hold 1 to " + KB_COLS + " columns." };
+        var apSeen = {}, AP_ARG = { name: ["n", 80], name_en: ["ne", 80], about: ["a", 600], about_en: ["ae", 600] };
+        for (i = 0; i < pcs.length; i++) {
+          var pc = isObj(pcs[i]) ? pcs[i] : {}, ptag = "portal_columns " + (i + 1) + ": ";
+          var fp = kbFind(kbCols(b), pc.column, "column");
+          if (fp.err) return { ok: false, err: ptag + fp.err };
+          if (apSeen[fp.x.id]) return { ok: false, err: ptag + "that column is already set in this call." };
+          apSeen[fp.x.id] = 1;
+          var cur = fp.x.ap ? M.colAp(fp.x.ap) : null, nx = cur ? clone(cur) : { on: 0 }, any = false;
+          if (pc.step !== undefined) { if (typeof pc.step !== "boolean") return { ok: false, err: ptag + "step must be true or false." }; nx.on = pc.step ? 1 : 0; any = true; }
+          if (pc.finish !== undefined) { if (typeof pc.finish !== "boolean") return { ok: false, err: ptag + "finish must be true or false." }; if (pc.finish) nx.e = 1; else delete nx.e; any = true; }
+          for (var ak in AP_ARG) {
+            if (pc[ak] === undefined) continue;
+            if (typeof pc[ak] !== "string" || pc[ak].length > AP_ARG[ak][1]) return { ok: false, err: ptag + ak + " must be text of at most " + AP_ARG[ak][1] + " characters." };
+            nx[AP_ARG[ak][0]] = pc[ak]; any = true;
+          }
+          if (!any) return { ok: false, err: ptag + "give step, finish or a text to set." };
+          var nap = M.colAp(nx);
+          if (JSON.stringify(cur) === JSON.stringify(nap)) continue;
+          pa.push({ col: fp.x, from: cur, to: nap });
+        }
+        if (!pa.length && args.columns === undefined && !rn.length) return { ok: false, err: "Nothing to change: the columns already have these Author Portal settings." };
+      }
+      if (args.columns === undefined && ren === undefined && pcs === undefined) return { ok: false, err: "Give columns to add, rename_columns or portal_columns." };
       undo.ren = {};
       var renTxt = rn.map(function (x) {
         var at = Math.max(now, (x.col.mtime || 0) + 1);
         x.col.name = x.to; x.col.mtime = at;
         undo.ren[x.col.id] = { n: x.from, a: at };
         return JSON.stringify(x.from) + " → " + JSON.stringify(x.to);
+      });
+      undo.ap = {};
+      var apTxt = pa.map(function (x) {
+        var at = undo.ren[x.col.id] ? x.col.mtime : Math.max(now, (x.col.mtime || 0) + 1);   // a column renamed in this call keeps one stamp
+        if (x.to) x.col.ap = x.to; else delete x.col.ap;
+        x.col.mtime = at;
+        undo.ap[x.col.id] = { p: x.from, a: at };
+        return JSON.stringify(String(x.col.name || "")) + (x.to && x.to.on ? (x.to.e ? " (step, finish)" : " (step)") : " (not a step)");
       });
       var list = args.columns === undefined ? [] : Array.isArray(args.columns) ? args.columns : null;
       if (!list || (args.columns !== undefined && !list.length) || list.length > KB_COLS) return { ok: false, err: "columns must hold 1 to " + KB_COLS + " columns." };
@@ -1592,8 +1628,9 @@
       if (ids.length) b.om = now;
       var said = [];
       if (renTxt.length) said.push("Renamed " + renTxt.join(", ") + ".");
+      if (apTxt.length) said.push("Author Portal: " + apTxt.join(", ") + ".");
       if (ids.length) said.push("Added " + ids.length + " column" + (ids.length === 1 ? "" : "s") + " to " + (b.name || "the board") + ".");
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, renamed: renTxt.length, text: said.join(" ") };
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, renamed: renTxt.length + apTxt.length, text: said.join(" ") };
     }
 
     if (op === "add_cards") {
@@ -1807,11 +1844,19 @@
       });
       n++;
     });
-    // KB-COLREN: a renamed column gets its old name back unless it changed since
-    if (isObj(u.ren)) Object.keys(u.ren).forEach(function (id) {
-      var e = u.ren[id], c = kbCols(b).filter(function (x) { return x.id === id; })[0];
-      if (!isObj(e) || !c || (c.mtime || 0) !== e.a) { kept++; return; }
-      c.name = e.n; c.mtime = Math.max(now, e.a + 1); n++;
+    // KB-COLREN / KB-COLAP: a renamed column gets its old name, a column whose Author Portal step was set its old
+    // setting, unless the column changed since (both checked against the stamp before either is put back)
+    var hdr = {};
+    if (isObj(u.ren)) Object.keys(u.ren).forEach(function (id) { hdr[id] = 1; });
+    if (isObj(u.ap)) Object.keys(u.ap).forEach(function (id) { hdr[id] = 1; });
+    Object.keys(hdr).forEach(function (id) {
+      var c = kbCols(b).filter(function (x) { return x.id === id; })[0], e = isObj(u.ren) ? u.ren[id] : null, p = isObj(u.ap) ? u.ap[id] : null;
+      var okR = isObj(e) && c && (c.mtime || 0) === e.a, okP = isObj(p) && c && (c.mtime || 0) === p.a, at = 0;
+      if (e && !okR) kept++;
+      if (p && !okP) kept++;
+      if (okR) { c.name = e.n; at = e.a; n++; }
+      if (okP) { if (p.p) c.ap = p.p; else delete c.ap; at = p.a; n++; }
+      if (at) c.mtime = Math.max(now, at + 1);
     });
     Object.keys(u.cols).forEach(function (id) {
       var cols = kbCols(b), c = cols.filter(function (x) { return x.id === id; })[0];
@@ -2014,21 +2059,21 @@
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
           tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer", budget_balances: "matched Budget's account balances",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
-                   kanban_add_columns: "added or renamed Kanban columns", invoices_record: "recorded invoices issued elsewhere",
+                   kanban_add_columns: "added, renamed or set up Kanban columns", invoices_record: "recorded invoices issued elsewhere",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
-                   kanban_add_columns: "πρόσθεσε ή μετονόμασε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
+                   kanban_add_columns: "πρόσθεσε, μετονόμασε ή ρύθμισε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
-                   kanban_add_columns: "Kanban-Spalten hinzugefügt oder umbenannt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
+                   kanban_add_columns: "Kanban-Spalten hinzugefügt, umbenannt oder eingestellt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
                    link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };

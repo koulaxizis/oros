@@ -923,6 +923,20 @@ test("KB-COLREN: kanban_add_columns also renames columns (not a deletion)", () =
   assert.equal(G.isDeletion("kanban_add_columns", { board: "b", rename_columns: [{ column: "c", name: "ISBN" }] }), false);
 });
 
+test("KB-COLAP: kanban_add_columns also sets Author Portal steps (not a deletion), same keys in the Assistant", () => {
+  const t = G.TOOLS.find((x) => x.name === "kanban_add_columns");
+  const pc = t.inputSchema.properties.portal_columns;
+  assert.ok(pc);
+  assert.deepEqual(pc.items.required, ["column"]);
+  assert.deepEqual(Object.keys(pc.items.properties).sort(), ["about", "about_en", "column", "finish", "name", "name_en", "step"]);
+  assert.equal(pc.items.additionalProperties, false);
+  assert.match(t.description, /portal_columns/);
+  assert.equal(G.isDeletion("kanban_add_columns", { board: "b", portal_columns: [{ column: "c", step: false }] }), false);
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "assistant", "core.js"), "utf8");
+  const at = src.indexOf("var TOOL_KB_COLS"), seg = src.slice(at, src.indexOf("var TOOL_OPEN_FILE", at));
+  ["portal_columns", "step:", "finish:", "name_en:", "about:", "about_en:"].forEach((k) => assert.ok(seg.indexOf(k) > 0, "Assistant has " + k));
+});
+
 test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passed on; a folder request waits for a screen", async () => {
   // Chris 2026-11-21 «να δουλεύεις με το orOS κλειστό στο tray … και πρόσβαση στους φακέλους ακόμη και με έγκριση από κινητό»
   const w = world();

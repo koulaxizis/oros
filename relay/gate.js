@@ -462,7 +462,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_add_columns",
-    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
+    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name), and sets a column up as a step of the Author Portal production flow (portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay as they are, an empty text clears it). Give any of the three. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
     inputSchema: {
       type: "object",
       properties: {
@@ -483,6 +483,20 @@ export const TOOLS = [
             name: { type: "string", description: "Its new name, at most 60 characters." }
           },
           required: ["column", "name"],
+          additionalProperties: false
+        } },
+        portal_columns: { type: "array", minItems: 1, maxItems: 20, items: {
+          type: "object",
+          properties: {
+            column: { type: "string", description: "The column's id or current name." },
+            step: { type: "boolean", description: "true: a step the author sees in the Author Portal; false: not a step (its texts are kept)." },
+            finish: { type: "boolean", description: "true: a finish; when the book reaches it, the author's bar hides until the card reaches the next step." },
+            name: { type: "string", maxLength: 80, description: "The step's name for the author (Greek); the column's name when empty." },
+            name_en: { type: "string", maxLength: 80, description: "The step's name in English (optional)." },
+            about: { type: "string", maxLength: 600, description: "The short explanation the author sees on hover (Greek)." },
+            about_en: { type: "string", maxLength: 600, description: "The explanation in English (optional)." }
+          },
+          required: ["column"],
           additionalProperties: false
         } }
       },

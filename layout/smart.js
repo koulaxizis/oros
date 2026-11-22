@@ -148,7 +148,7 @@
     ["selall", "Mod+KeyA"], ["group", "Mod+KeyG"], ["ungroup", "Mod+Shift+KeyG"], ["export", "Mod+KeyE"],
     ["fit", "Mod+Digit0"], ["zoom100", "Mod+Digit1"], ["front", "Mod+Shift+BracketRight"], ["back", "Mod+Shift+BracketLeft"],
     ["fwd", "Mod+BracketRight"], ["bwd", "Mod+BracketLeft"], ["lock", ""], ["history", "Mod+Alt+KeyZ"],
-    ["story", ""], ["keys", ""]
+    ["story", ""], ["keys", ""], ["find", "Mod+KeyF"], ["spell", ""]
   ];
   // never taken by a changed shortcut: copy, cut, paste, the editing keys and orOS's own (Ctrl+Alt+Shift)
   var RESERVED = ["Mod+KeyC", "Mod+KeyX", "Mod+KeyV", "Escape", "Delete", "Backspace", "Enter", "Tab", "Space",

@@ -413,6 +413,30 @@
         ctx.moveTo(x + s.gut, m.t); ctx.lineTo(x + s.gut, s.h - m.b); ctx.stroke();
       }
     }
+    // the baseline grid, when shown (LY-W5b)
+    var bgd = LY.prefs.bgShow === 1 && doc.setup.ext && doc.setup.ext.bg;
+    if (bgd && bgd.i >= 1 && bgd.i * sc >= 3) {
+      ctx.strokeStyle = "rgba(0,150,255,0.22)";
+      ctx.beginPath();
+      for (var gy = bgd.s || 0, gn = 0; gy <= s.h - m.b && gn < 2000; gy += bgd.i, gn++) {
+        if (gy < m.t) continue;
+        ctx.moveTo(m.l, gy); ctx.lineTo(s.w - m.r, gy);
+      }
+      ctx.stroke();
+    }
+    // loose and tight lines, when asked (LY-W6, as InDesign's H&J
+    // violations): yellow loose, pink tight
+    if (LY.prefs.hjShow === 1 && ED.L) {
+      itemsOfP(P).forEach(function (it) {
+        var fr = it.t === "text" && !it.rot && ED.L.frames[it.id];
+        if (!fr) return;
+        fr.lines.forEach(function (ln) {
+          if (!ln.hj) return;
+          ctx.fillStyle = ln.hj > 0 ? "rgba(255,200,0,0.35)" : "rgba(255,80,160,0.3)";
+          ctx.fillRect(it.x + ln.cx0, it.y + ln.y - ln.h * 0.75, ln.cx1 - ln.cx0, ln.h * 0.75 + ln.d);
+        });
+      });
+    }
     // ruler guides of this owner
     ctx.strokeStyle = "rgba(0,180,220,0.8)";
     doc.guides.forEach(function (g) {
@@ -1636,6 +1660,10 @@
     });
     if (made.length) ED.select(made);
   }
+  // the selection as a clipboard, and placing one, without touching
+  // the person's own clipboard (the asset library, LY-N3)
+  ED.selClip = function () { var keep = clipboard, c = null; if (copySel()) c = clipboard; clipboard = keep; return c; };
+  ED.pasteClip = function (c) { var keep = clipboard; clipboard = c; try { paste(false); } finally { clipboard = keep; } };
   function duplicate() { if (copySel()) paste(true); }
   ED.duplicate = duplicate;
 
@@ -1738,6 +1766,8 @@
       case "history": if (LY.dlg.history) LY.dlg.history(); break;
       case "story": if (it && it.t === "text") LY.story.open(it.id); break;
       case "keys": if (LY.dlg.keys) LY.dlg.keys(); break;
+      case "find": if (LY.dlg.find) LY.dlg.find(); break;
+      case "spell": if (LY.dlg.spell) LY.dlg.spell(); break;
     }
   }
   ED.runAction = runAction;
