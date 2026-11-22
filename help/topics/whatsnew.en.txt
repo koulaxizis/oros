@@ -3,6 +3,27 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.63.00
+- **Layout: alternate layouts.** More › Alternate layouts… makes the same design in another size, such as a book page as a square post or an A5 flyer as an A4 poster. The alternate is a document of its own that you arrange freely, and its texts stay linked: when you change a text in the original, Update brings it over.
+
+## Version 8.62.00
+- **Layout: package for print, InDesign and Scribus.** Export › Package for print makes one .zip for the printer with the document, a print PDF, the pictures, the fonts and a report. Export › For other programs saves an InDesign or Scribus file.
+
+## Version 8.61.00
+- **Layout: symbols.** More › Symbols… keeps a logo or badge as a symbol: place it on any page at any size, change one placement and update the symbol, and every other placement follows.
+
+## Version 8.60.00
+- **Layout: effects.** Properties › Effects adds a drop shadow, an outer glow and a blend mode to frames and shapes, and soft edges to pictures. The PDF shows them as the screen does.
+
+## Version 8.59.00
+- **Layout: index.** Mark words for the book's index in the Story Editor or all at once in More › Index…, then make the index on a new last page, sorted with a heading per letter, sub-topics and page ranges; Update makes it again after the pages move.
+
+## Version 8.58.00
+- **Layout: review.** Track changes in the Story Editor (`✎`) shows added and deleted words, with who and when, to accept or reject. More › Comments… pins comments on the pages, and Proof PDF saves the pages with the comments and changes as notes for the author.
+
+## Version 8.57.00
+- **Layout: tables.** In the Story Editor, `▦` puts a table into the text: merge cells, header rows that repeat on each new page, fills and rules, or read a CSV or spreadsheet file into it. Tables flow from page to page and go out in the PDF and the e-book.
+
 ## Version 8.56.00
 - **Mockups made by Claude.** With the Assistant or orOS Gate, Claude can put a picture into one of your mockups (books and goods alike) and save the result in Mockups/Claude, never over a file. Your mockup is never changed: Claude works on a copy that is not kept. With orOS closed the request is checked against your copy and waits until orOS opens.
 

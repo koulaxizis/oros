@@ -87,7 +87,7 @@ function countExt(doc) {
 }
 
 test("model level and exports", () => {
-  assert.equal(M.MODEL_LEVEL, 2);
+  assert.equal(M.MODEL_LEVEL, 3);
   assert.equal(OLD.MODEL_LEVEL, undefined);
   assert.equal(M.DATA_VER, OLD.DATA_VER);
 });
@@ -256,12 +256,12 @@ test("model level: a document that needs a newer orOS is recognised and kept", (
   const d = clone(layoutDoc());
   assert.equal(M.minLevel(d), 1);
   assert.equal(M.needsNewer(d), false);
-  d.setup.ext = { mv: 3 };
+  d.setup.ext = { mv: 4 };
   const n = M.normDoc(d);
-  assert.equal(M.minLevel(n), 3);
+  assert.equal(M.minLevel(n), 4);
   assert.equal(M.needsNewer(n), true);
   const m = M.mergeData({ ver: 1, docs: [n], dt: {} }, { ver: 1, docs: [OLD.normDoc(clone(n))], dt: {} });
-  assert.equal(m.docs[0].setup.ext.mv, 3);
+  assert.equal(m.docs[0].setup.ext.mv, 4);
   ["2", 2.5, -4, 1, 0].forEach((v) => assert.equal(M.minLevel({ setup: { ext: { mv: v } } }), 1, String(v)));
   assert.equal(M.needsNewer({ setup: { ext: { mv: 2 } } }), false);
 });

@@ -187,6 +187,52 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Wiederherstellen**: holt eine Version zurück. Der jetzige Stand wird vorher als Version behalten, und Rückgängig nimmt das Wiederherstellen zurück.
 - **Claude**: Vor großen Änderungen kann auch Claude eine Version behalten (markiert mit „von Claude“).
 
+## Tabellen
+- **Tabelle einfügen**: Setze im Textmodus die Einfügemarke dorthin, wo die Tabelle hinkommt, und drücke `▦`. Eine Tabelle ist ein Absatz des Textes: Sie fließt mit dem Text von Rahmen zu Rahmen und von Seite zu Seite.
+- **Bearbeiten**: Klicke im Textmodus auf die Tabelle. Schreibe in die Zellen; eine Zelle anklicken und eine andere mit Umschalt+Klick (am Telefon: `Bereich wählen`, dann eine Zelle) wählt einen Bereich, um Zellen zu verbinden oder zu füllen. Füge Zeilen und Spalten hinzu oder lösche sie, teile eine verbundene Zelle, setze die Spaltenbreiten (z. B. `2 1 1`), den Zellenabstand, Stärke und Farbe der Linien und die Absatzformate der Zellen und der Kopfzeilen.
+- **Kopfzeilen** wiederholen sich oben in jeder neuen Spalte oder Seite (abschaltbar). Eine Zeile wird nie geteilt; Zeilen, die eine verbundene Zelle verbindet, bleiben zusammen.
+- **Aus einer Datei**: `Aus einer Datei…` liest eine CSV- oder TSV-Datei oder das erste Blatt einer .xlsx-, .xls- oder .ods-Tabelle in die Tabelle.
+- **Ausgabe**: PDF, Bilder, SVG und EPUB behalten die Tabelle (im E-Book ist sie eine echte Tabelle mit Kopfzeilen).
+- **Claude** kann ebenfalls eine Tabelle in einen Text setzen.
+
+## Korrektur: Änderungen und Kommentare
+- **Änderungen verfolgen**: im Textmodus `✎` › `Änderungen verfolgen: ein`. Ab dann wird jede Änderung am Text, im Textmodus oder direkt im Rahmen getippt, festgehalten: Eingefügtes ist grün und unterstrichen, Gelöschtes bleibt im Textmodus durchgestrichen und verschwindet von der Seite. Zeige auf eine Änderung, um zu sehen, wer sie wann gemacht hat.
+- **Annehmen oder ablehnen**: Text wählen und `✎` › `Änderungen in der Auswahl annehmen` oder `ablehnen`, oder alle auf einmal. Ein gelöschtes Wort verschwindet erst, wenn seine Änderung angenommen wird.
+- **Dein Name**: `✎` › `Dein Name…` (auf diesem Gerät) kennzeichnet deine Änderungen und Kommentare.
+- **Kommentare auf der Seite**: `Mehr › Kommentare…` zeigt die Kommentare als Stecknadeln. `Hinzufügen`, dann auf die Seite tippen, wo er hinkommt. Eine Nadel antippen, um den Kommentar zu ändern, als erledigt zu markieren oder zu löschen; erledigte lassen sich ausblenden.
+- **Korrektur-PDF**: in der Kommentarleiste speichert `Korrektur-PDF` die Seiten mit jedem offenen Kommentar und jeder verfolgten Änderung als Notiz im PDF, bereit für Autorin, Autor oder Lektorat.
+
+## Register
+- **Ein Wort markieren**: Wähle im Textmodus die Wörter aus, dann `¹` › `Registereintrag…`. Das Stichwort sind die Wörter selbst, wenn du kein anderes angibst; ein Unterstichwort ordnet sie unter ihrem Stichwort ein. Markierte Wörter sind gepunktet unterstrichen; fahre darüber, um ihr Stichwort zu sehen.
+- **Überall markieren**: `Mehr › Register…` › ein Wort pro Zeile, `Wort`, `Wort = Stichwort` oder `Wort = Stichwort / Unterstichwort`, dann `Markieren`. Jedes ganze Wort wird markiert, in jeder Schreibung, mit oder ohne Akzente.
+- **Register erstellen**: `Mehr › Register…` › `Register erstellen` setzt es zweispaltig auf eine neue letzte Seite: Stichwörter in der Reihenfolge der Sprache des Dokuments (Griechisch ohne Akzente), eine Überschrift pro Buchstabe, Unterstichwörter unter ihrem Stichwort, Seiten so, wie die Seiten sie zeigen (Abschnitte, römische Ziffern), und Folgen verbunden (3–5). Dort wählst du auch seine Stile.
+- **Register aktualisieren**, wenn sich die Seiten verschieben: Das Register wird aus den Markierungen neu erstellt, sein Titel und Text vor den Einträgen bleiben. In der Stichwortliste desselben Dialogs entfernst du die Markierungen eines Stichworts.
+- **Claude** markiert Begriffe und erstellt das Register mit dem Befehl `index` (Assistent).
+
+## Effekte
+- **Eigenschaften › Effekte** gibt jedem Rahmen oder jeder Form einen Schlagschatten, einen Schein nach außen und eine Füllmethode (Multiplizieren, Negativ multiplizieren, Ineinanderkopieren, Abdunkeln, Aufhellen); ein Bild kann auch weiche Kanten haben. Schatten und Schein folgen der Form, dem Bildrahmen oder den Buchstaben eines Textrahmens ohne Füllung.
+- Die Farbe „keine“ ist Schwarz. Mit einer Füllmethode werden das Objekt und sein Schatten gemeinsam mit dem Darunterliegenden verrechnet.
+- PDF-, SVG- und Bildexporte zeigen die Effekte; in PDF/X-1a zählen sie als Transparenz, und der Export meldet das. Ältere orOS-Versionen zeigen das Objekt ohne Effekte.
+- **Claude** setzt sie mit dem Befehl `effects` (Assistent).
+
+## Symbole
+
+Mehr › Symbole… bewahrt eine Gruppe von Objekten auf, die du immer wieder brauchst, etwa ein Logo, ein Abzeichen oder das Emblem einer Reihe. Wähle die Objekte auf einer Seite aus, gib dem Symbol einen Namen und erstelle es: Die Auswahl wird seine erste Platzierung. Platzieren setzt es auf die sichtbare Seite; verschiebe und skaliere jede Platzierung nach Belieben.
+
+Ändere eine Platzierung, wähle sie aus und nimm Symbol aus dieser Platzierung aktualisieren: Alle anderen Platzierungen ändern sich mit, jede in ihrer eigenen Größe. Lösen macht eine Platzierung wieder zu einfachen Objekten; wird ein Symbol gelöscht, bleiben seine Platzierungen als einfache Objekte. Auch Claude kann Symbole erstellen, platzieren und aktualisieren.
+
+## Paket für die Druckerei, InDesign und Scribus
+
+Exportieren › Paket für die Druckerei erstellt eine .zip für die Druckerei oder einen Grafiker: das Dokument selbst, ein PDF/X-4 mit Beschnitt und Schnittmarken, dieselben Seiten als InDesign- (.idml) und Scribus-Dateien (.sla), die Bilder in voller Größe in Links, die Schriften in Fonts und einen Bericht über Seiten, Farben, Schriften, Bilder und das, was der Preflight gefunden hat.
+
+Exportieren › Für andere Programme speichert eine einzelne InDesign- oder Scribus-Datei mit den Bildern darin. Seiten, Musterseiten, Formate, Farben, Rahmen mit Spalten und Verkettungen, Formen, Linien, Kurven und Bilder öffnen sich so, wie sie hier sind. Schatten, Schein und weiche Kanten werden zu den Effekten von InDesign; Scribus behält Füllmethode und Deckkraft. Verfolgte Änderungen, Kommentare und Symbole bleiben in orOS (Symbole kommen als Gruppen an).
+
+## Alternative Layouts
+
+Mehr › Alternative Layouts… erstellt dasselbe Design in einer anderen Größe: eine Buchseite als quadratischen Post, einen A5-Flyer als A4-Plakat. Geben Sie einen Namen und eine Größe an und wählen Sie, ob die Textgrößen der Seite folgen. Das alternative Layout ist ein eigenes Dokument: Seine Seiten werden so angepasst, wie es ein Gestalter täte (was bis an die Kanten reicht, reicht weiter dorthin, was im Rand steht, behält seine Kante, Bilder behalten ihre Proportionen), und Sie verschieben, skalieren und gestalten darin alles, ohne das Original zu berühren.
+
+Seine Texte bleiben mit denen des Originals verknüpft. Ändern Sie einen Text im Original, zeigt der Dialog des alternativen Layouts, was sich geändert hat, und „Aus dem Original aktualisieren“ übernimmt die neuen Texte sowie neue Formate und Farben; er warnt vorher, wenn ein Text auch im alternativen Layout geändert wurde, weil die Aktualisierung ihn ersetzt. Rahmen und Bilder bleiben, wie Sie sie dort platziert haben. „Verknüpfung lösen“ macht es zu einem normalen Dokument.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

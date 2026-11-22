@@ -755,5 +755,45 @@ body.inframe #cv { cursor: text; }
 .ver-ph { display: flex; align-items: center; gap: 8px; font-size: 12px; opacity: .85; }
 .ver-txt { margin: 4px 0 0; overflow-wrap: anywhere; }
 .ver-txt del { color: var(--danger); text-decoration: line-through; }
+/* tables (LY-W12) */
+.story-ed .sp-tbl { cursor: pointer; user-select: none; padding: 4px 0; }
+.story-ed .stbl { display: inline-flex; flex-wrap: wrap; gap: 8px; align-items: baseline; border: 1px dashed var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; font-family: system-ui, sans-serif; color: var(--text); max-width: 100%; }
+.story-ed .stbl-pv { color: var(--muted, #777); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40ch; }
+.story-ed .sp-tbl:focus-visible .stbl, .story-ed .sp-tbl:hover .stbl { border-color: var(--accent); }
+.tbl-bar { gap: 6px; margin-bottom: 6px; }
+.tbl-grid { overflow: auto; max-height: 46vh; min-height: 140px; flex-shrink: 0; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 10px; }
+.tbl-ed { border-collapse: collapse; min-width: 100%; }
+.tbl-ed td { border: 1px solid var(--border); padding: 0; vertical-align: top; min-width: 90px; }
+.tbl-ed tr.hdr td { font-weight: 600; box-shadow: inset 0 -2px 0 var(--border); }
+.tbl-ed td.on { outline: 2px solid var(--accent); outline-offset: -2px; }
+.tbl-cell { width: 100%; min-height: 32px; border: 0; border-radius: 0; resize: vertical; background: transparent; font: inherit; font-weight: inherit; }
+.tbl-set .pn-row { gap: 10px; align-items: flex-end; }
+/* track changes (LY-W12) and comments on the page (LY-N5) */
+.story-ed .sins { color: #2f8f4e; text-decoration: underline; text-decoration-color: #2f8f4e; }
+.story-ed .sdel { color: var(--danger); text-decoration: line-through; cursor: default; }
+.story-tools .trk-btn.on { background: var(--accent); color: var(--accent-ink, #000); }
+.cm-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.cm-pin { position: absolute; transform: translate(-4px, -100%); pointer-events: auto; min-width: 28px; height: 28px; padding: 0 6px; border-radius: 14px 14px 14px 2px; border: 1px solid rgba(0,0,0,.35); background: #ffcc33; color: #1a1a1a; font: 600 12px/26px system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+.cm-pin.ok { background: #9bb59b; opacity: .75; }
+.cm-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cm-bar { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 6; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; max-width: calc(100% - 32px); padding: 6px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg); color: var(--text); box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+.cm-bar .cm-count { font-size: 12px; padding: 0 4px; }
+.cm-bar.placing .btn.primary { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cm-txt { width: 100%; min-height: 110px; resize: vertical; }
+/* the book's index (LY-W13) */
+.story-ed .six { text-decoration: underline dotted; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.ix-list { max-height: 34vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; margin-bottom: 10px; }
+.ix-row { display: flex; align-items: center; gap: 8px; min-height: 36px; border-bottom: 1px solid var(--border); }
+.ix-row:last-child { border-bottom: 0; }
+.ix-row .ix-t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.sym-list { max-height: 40vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; margin: 10px 0; }
+.sym-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 44px; border-bottom: 1px solid var(--border); padding: 4px 0; }
+.sym-row:last-child { border-bottom: 0; }
+.sym-row .sym-n { flex: 1 1 140px; min-width: 0; }
+.ix-terms { width: 100%; min-height: 84px; resize: vertical; }
 .ver-txt ins { text-decoration: none; background: rgba(47, 158, 106, .22); border-radius: 2px; }
 .pc-prof { font-weight: 600; margin-right: 8px; overflow-wrap: anywhere; }
+/* alternate layouts (LY-W16) */
+.alt-box { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+.alt-box p { margin: 4px 0; }
+.alt-n { flex: 1 1 140px; min-width: 0; overflow-wrap: anywhere; }

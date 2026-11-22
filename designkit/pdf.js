@@ -69,7 +69,8 @@
     return out;
   }
 
-  function setColor(pdf, doc, id, kind) {
+  function setColor(pdf, doc, id, kind) { return setColor0(pdf, doc, id, kind); }
+  function setColor0(pdf, doc, id, kind) {
     var c = M.swatchColor(doc, id);
     if (!c) return false;
     var fn = kind === "fill" ? "setFillColor" : kind === "draw" ? "setDrawColor" : "setTextColor";
@@ -182,13 +183,99 @@
 
   function style(fill, stroke) { return fill && stroke ? "FD" : fill ? "F" : stroke ? "S" : null; }
 
-  function drawItem(pdf, doc, it, ox, oy, lines, images, gstates) {
+  // ---------- Object effects (LY-W14) ----------
+  // A blend mode is an ExtGState jsPDF cannot write: the PDF gets one
+  // per mode (/OBMultiply …) as it is built.
+  var BM_NAME = { multiply: "Multiply", screen: "Screen", overlay: "Overlay", darken: "Darken", lighten: "Lighten" };
+  function blendState(pdf, mode) {
+    var b = pdf.orosBlend;
+    if (!b) {
+      b = pdf.orosBlend = { used: {}, obj: {} };
+      // the ExtGState dictionary is written only when jsPDF has one of its own
+      pdf.addGState("orosNone", new pdf.GState({ opacity: 1, "stroke-opacity": 1 }));
+      pdf.internal.events.subscribe("putResources", function () {
+        Object.keys(b.used).forEach(function (m) {
+          b.obj[m] = pdf.internal.newObject();
+          pdf.internal.write("<< /Type /ExtGState /BM /" + m + " >>");
+          pdf.internal.write("endobj");
+        });
+      });
+      pdf.internal.events.subscribe("putGStateDict", function () {
+        Object.keys(b.used).forEach(function (m) { if (b.obj[m]) pdf.internal.write("/OB" + m + " " + b.obj[m] + " 0 R"); });
+      });
+    }
+    b.used[mode] = 1;
+    pdf.internal.write("/OB" + mode + " gs");
+  }
+  // A shadow or glow: copies of the item in one colour, on two rings
+  // and the centre, each faint enough that where all overlap the
+  // opacity is the effect's own (a blur of width about b).
+  function fxOffsets(b) {
+    if (!(b > 0)) return [[0, 0]];
+    var out = [[0, 0]];
+    [[b / 4, 6], [b / 2, 10]].forEach(function (ring) {
+      for (var k = 0; k < ring[1]; k++) { var a = (k + 0.5) / ring[1] * Math.PI * 2; out.push([ring[0] * Math.cos(a), ring[0] * Math.sin(a)]); }
+    });
+    return out;
+  }
+
+  function drawItem(pdf, doc, it, ox, oy, lines, images, gstates, pass) {
     if (it.hide) return;
+    var fx = pass === undefined && M.itemFx ? M.itemFx(it) : null;
+    if (fx && (fx.sh || fx.gl || fx.bm)) {
+      pdf.saveGraphicsState();
+      if (fx.bm) blendState(pdf, BM_NAME[fx.bm]);
+      // with a blend mode, the shadow stays outside the object (the
+      // object and its shadow blend as one, as on screen); a text
+      // frame's shadow follows its letters, so it is not cut
+      var knock = fx.bm && it.t !== "text" && it.t !== "line";
+      var cast = function (e, dx, dy, pic) {
+        var offs = e ? fxOffsets(e.b) : [], a = e ? 1 - Math.pow(1 - e.o / 100, 1 / offs.length) : 1;
+        art(pdf, function () {
+          if (knock) {
+            pdf.saveGraphicsState();
+            var x0 = ox + it.x, y0 = oy + it.y, cx = x0 + it.w / 2, cy = y0 + it.h / 2, r0 = Math.max(0, Math.min(it.r || 0, it.w / 2, it.h / 2));
+            if (it.rot) rotateAbout(pdf, it.rot, cx, cy);
+            pdf.rect(x0 - 10000, y0 - 10000, it.w + 20000, it.h + 20000, null);
+            if (it.t === "path") pathOf(pdf, R.pathCmds(it), ox, oy);
+            else if (it.t === "ell") pdf.ellipse(cx, cy, it.w / 2, it.h / 2, null);
+            else if (r0) pdf.roundedRect(x0, y0, it.w, it.h, r0, r0, null);
+            else pdf.rect(x0, y0, it.w, it.h, null);
+            pdf.clipEvenOdd(); pdf.discardPath();
+            if (it.rot) rotateAbout(pdf, -it.rot, cx, cy);
+          }
+          if (pic) pdf.addImage(pic.data, "PNG", ox + pic.x, oy + pic.y, pic.w, pic.h, pic.alias, "FAST");
+          offs.forEach(function (d) {
+            drawItem(pdf, doc, Object.assign({}, it, { x: it.x + dx + d[0], y: it.y + dy + d[1] }), ox, oy, lines, images, gstates, { c: e.c, a: a });
+          });
+          if (knock) pdf.restoreGraphicsState();
+        });
+      };
+      // the shadow and glow as the screen paints them (a picture made by
+      // layout/io.js), else as copies
+      var fxi = images["fx:" + it.id];
+      if (fxi) cast(null, 0, 0, fxi);
+      else {
+        if (fx.gl) cast(fx.gl, 0, 0);
+        if (fx.sh) cast(fx.sh, fx.sh.x, fx.sh.y);
+      }
+      drawItem(pdf, doc, it, ox, oy, lines, images, gstates, null);
+      pdf.restoreGraphicsState();
+      return;
+    }
+    // in a shadow copy every colour is the shadow's (black when it names none)
+    var setColor = !pass ? setColor0 : function (pdf_, doc_, id, kind) {
+      if (setColor0(pdf_, doc_, pass.c, kind)) return true;
+      var fn = kind === "fill" ? "setFillColor" : kind === "draw" ? "setDrawColor" : "setTextColor";
+      if (pdf.orosRgb) pdf[fn](0, 0, 0); else pdf[fn](0, 0, 0, 1);
+      return true;
+    };
     var x = ox + it.x, y = oy + it.y;
     pdf.saveGraphicsState();
-    if (it.op < 100) {
-      var key = String(it.op);
-      if (!gstates[key]) gstates[key] = new pdf.GState({ opacity: it.op / 100, "stroke-opacity": it.op / 100 });
+    var op = (it.op === undefined ? 100 : it.op) * (pass ? pass.a : 1);
+    if (op < 100) {
+      var key = String(Math.round(op * 100) / 100);
+      if (!gstates[key]) gstates[key] = new pdf.GState({ opacity: op / 100, "stroke-opacity": op / 100 });
       pdf.setGState(gstates[key]);
     }
     if (it.rot) rotateAbout(pdf, it.rot, x + it.w / 2, y + it.h / 2);
@@ -202,7 +289,8 @@
       pdf.restoreGraphicsState();
       return;
     }
-    var hasFill = !it.gr && !!it.fill && setColor(pdf, doc, it.fill, "fill");
+    var hasFill = pass ? !!(it.gr || it.fill || (it.t === "img" && images[it.id])) && setColor(pdf, doc, "", "fill")
+      : !it.gr && !!it.fill && setColor(pdf, doc, it.fill, "fill");
     var r = Math.max(0, Math.min(it.r || 0, it.w / 2, it.h / 2));
     function shape(st) {
       if (it.t === "path") {
@@ -213,9 +301,9 @@
       else if (r) pdf.roundedRect(x, y, it.w, it.h, r, r, st);
       else pdf.rect(x, y, it.w, it.h, st);
     }
-    if (it.gr) art(pdf, function () { gradFill(pdf, doc, it, ox, oy); });
+    if (it.gr && !pass) art(pdf, function () { gradFill(pdf, doc, it, ox, oy); });
     if (hasFill) art(pdf, function () { shape("F"); });
-    if (it.t === "img") {
+    if (it.t === "img" && !pass) {
       var im = images[it.id];
       if (im) {
         // a picture with a description (ext.alt, not ext.deco) is a
@@ -233,6 +321,7 @@
     }
     if (it.t === "text" && lines) {
       lines.forEach(function (ln) {
+        if (ln.tb) art(pdf, function () { tableRow(ln.tb); });
         var runs = ln.runs.filter(function (run) { return !!run.t; });
         if (!runs.length) return;
         var all = function () { runs.forEach(drawRun); };
@@ -249,6 +338,22 @@
         });
         mc(pdf, { k: "t", key: lt.key, sid: lt.sid, p: lt.p, note: lt.note, r: lt.r, x: x + x0, y: y + top, w: Math.max(0, x1 - x0), h: Math.max(0, bot - top),
                   t: runs.map(function (run) { return run.t; }).join("").slice(0, 300) }, all);
+      });
+    }
+    // a table row's fills and rules (LY-W12): a rule without a swatch is black
+    function tableRow(tb) {
+      tb.fills.forEach(function (f) {
+        pdf.saveGraphicsState();
+        if (setColor(pdf, doc, f[4], "fill")) pdf.rect(x + f[0], y + f[1], f[2], f[3], "F");
+        pdf.restoreGraphicsState();
+      });
+      tb.rules.forEach(function (r) {
+        pdf.saveGraphicsState();
+        if (!r[4] || !setColor(pdf, doc, r[4], "draw")) { if (pdf.orosRgb) pdf.setDrawColor(0, 0, 0); else pdf.setDrawColor(0, 0, 0, 1); }
+        pdf.setLineWidth(r[5]);
+        pdf.setLineDashPattern([], 0);
+        pdf.line(x + r[0], y + r[1], x + r[2], y + r[3]);
+        pdf.restoreGraphicsState();
       });
     }
     function drawRun(run) {
