@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.45.00
+- **Layout: a new page size.** Change the page size in Document setup and the contents follow: pictures that bleed still bleed, running heads and page numbers keep their edge, the rest keeps its place in the text area, and pictures and shapes keep their proportions. Text sizes can follow too.
+
 ## Version 8.44.00
 - **Claude can set up your Author Portal steps.** When you ask, Claude (through orOS Gate) or the Assistant can make a Kanban column a step of your authors' production flow, mark it as a finish, and write the name and explanation your author sees. You see it, and you can undo it like any other change.
 
