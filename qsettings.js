@@ -222,7 +222,8 @@
   var CSS = [
     "#qs-btn { display: inline-flex; align-items: center; gap: 5px; min-height: 40px; padding: 0 9px; margin-left: 2px;",
     "  background: transparent; border: none; border-radius: 999px; color: var(--text); cursor: pointer; font: inherit; font-size: 13px; }",
-    "#qs-btn:hover, #qs-btn:focus-visible, #qs-btn[aria-expanded=\"true\"] { background: var(--accent-soft); outline: none; }",
+    "#qs-btn:focus-visible, #qs-btn[aria-expanded=\"true\"] { background: var(--accent-soft); outline: none; }",
+    "@media (hover: hover) { #qs-btn:hover { background: var(--accent-soft); } }",
     "#qs-btn svg { width: 16px; height: 16px; flex: none; }",
     "#qs-btn .qs-off { opacity: .55; }",
     "#oros-bar.bar-tight #qs-btn { padding: 0 6px; gap: 3px; }",

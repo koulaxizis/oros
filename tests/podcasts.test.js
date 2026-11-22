@@ -55,7 +55,7 @@ const RSS = `<?xml version="1.0" encoding="UTF-8"?>
   <itunes:explicit>false</itunes:explicit>
   <itunes:type>serial</itunes:type>
   <description><![CDATA[<p>Μια εκπομπή.</p>]]></description>
-  <podcast:funding url="https://ko-fi.com/x">Στήριξε</podcast:funding>
+  <podcast:funding url="https://example.org/support">Στήριξε</podcast:funding>
   <item>
     <title>Επεισόδιο 2</title>
     <guid isPermaLink="false">ep-2</guid>
@@ -126,7 +126,7 @@ test("feed: show and episodes from an RSS document", () => {
   assert.deepEqual(f.show.cats, ["History", "Greek History"]);
   assert.equal(f.show.serial, true);
   assert.equal(f.show.explicit, false);
-  assert.equal(f.show.funding[0].url, "https://ko-fi.com/x");
+  assert.equal(f.show.funding[0].url, "https://example.org/support");
   assert.equal(f.show.id, C.showId(FEED_URL));
   assert.equal(f.eps.length, 2, "no audio, duplicate guid and javascript: enclosure are dropped");
   const [e2, e1] = f.eps;

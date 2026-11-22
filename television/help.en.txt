@@ -1,5 +1,5 @@
 # Television
-Television plays free live TV channels from around the world, listed by the community directory iptv-org, and the channels of your own M3U playlists. Browse or search, filter by country, category and language, star the channels you like, and see what is on now and next from an XMLTV programme guide.
+Television plays free live TV channels from around the world, listed by the community directory iptv-org, and the channels of your own M3U playlists. Browse or search, filter by country, category and language, star the channels you like, and see what is on now and next from an XMLTV programme guide. `Films & shows` adds free films, series and documentaries from open archives.
 
 ## Getting started
 The first time, the app downloads the channel directory (`Loading channels…`); this can take a moment. Then `Browse` shows the channels as cards. Tap or click a card to watch it in the player. `Load more` at the bottom shows the next batch.
@@ -37,8 +37,17 @@ Add an XMLTV guide in `Lists & guides` the same way (an address, or `Open file�
 ## Favourites and recent channels
 Tap the star (☆) on a card, or the favourite button in the player, to add a channel to `Favorites`; tap it again to remove it. `Recent` lists the last 20 channels you watched.
 
+## Films & shows
+`Films & shows` gathers free films, series, documentaries, cartoons and newsreels from two open archives: [Wikimedia Commons](https://commons.wikimedia.org) (found through Wikidata) and the [Internet Archive](https://archive.org). Everything plays in the same player as the channels.
+
+- **Discover:** type in `Search films, shows, directors…` (titles in English, Greek and German, directors and years). `Filters` narrows by `Source`, `Type`, `Genre`, `Decade`, country, language, `Length` and `Sound` (silent or with sound), and `Sort` orders the results. `Clear filters` starts again. The country filter searches Wikimedia Commons only, because the Internet Archive does not record countries.
+- **What is free:** every Wikimedia Commons film is free, because Commons keeps only freely licensed or public-domain files. From the Internet Archive, orOS shows by default only what it has checked: films published more than 95 years ago, and the Prelinger Archives. `Also show Internet Archive titles that orOS has not checked` adds the rest, marked `Not checked`; their uploaders call them public domain, but that is not always true, and rights can differ from country to country. A title's window says why it is free.
+- **A title:** tap a card for its details, its parts or episodes, `Source page`, `Watchlist` and `Play`. In the player, the position bar and the back and forward buttons move through the film; a title in parts goes on to the next part by itself.
+- **Continue watching** remembers where you stopped (from 30 seconds in); `Resume at…` goes on from there and `From the start` starts again. A title you watched to the end leaves the list; `Remove from Continue watching` removes it by hand.
+- **Watchlist** keeps the titles you want to see; the button in a title's window or the star in the player adds or removes them.
+
 ## Sync and backup
-Your favourite channels and the addresses of your playlists and guides sync between your devices through [orOS sync](help:t/sync); each device downloads the contents itself. Files you open stay on this device. Recent channels and your volume and mute stay on this device too; the channel directory and your playlists are kept here for a day, and a guide address for the day it was downloaded. There's no export; favourites and addresses are part of the orOS [backup](help:t/backup).
+Your favourite channels, your watchlist, where you stopped in each film, and the addresses of your playlists and guides sync between your devices through [orOS sync](help:t/sync); each device downloads the contents itself. Files you open stay on this device. Recent channels and your volume and mute stay on this device too; the channel directory and your playlists are kept here for a day, the Wikimedia Commons catalogue for a week, and a guide address for the day it was downloaded. There's no export; favourites and addresses are part of the orOS [backup](help:t/backup).
 
 ## Keyboard shortcuts
 In the player:
@@ -46,6 +55,7 @@ In the player:
 - [[M]] mutes or unmutes.
 - [[F]] toggles fullscreen.
 - [[↑]] / [[↓]] turn the volume up or down.
+- [[←]] / [[→]] go back or forward 10 seconds in a film.
 - [[Esc]] closes the player.
 
 ## Tips
@@ -60,3 +70,4 @@ In the player:
 - `http://` streams don't play when orOS runs on `https://`, and streams that need a special referrer or user agent may not play at all.
 - A guide file you open keeps the programmes from the day before to a week ahead; open a newer file after that. The timeline shows today only, and at most 150 channels at a time.
 - Playback stops when you close the player or the app.
+- Films come from what the archives hold: Greek films are few, many old films have no subtitles, and some files are in a format a browser cannot play (WebM on older iPhones and iPads; orOS then picks another format when the archive has one). The Wikimedia Commons catalogue is loaded once a week and can take a minute the first time.

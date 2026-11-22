@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — scene.js (v1.3.0, ES module)
+// orOS Mockups — scene.js (v1.10.0, ES module)
 // The 3D book and its scene, drawn with the vendored three.js
 // (vendor/three, MIT). Loaded by mockups.js with import() only
 // when the editor opens, so the app list stays light.
@@ -20,6 +20,29 @@
 //     the gutter, arching up), the inside pictures on them with a
 //     gutter shadow; the e-book: a tablet, phone or e-reader body with
 //     its screen showing a page (glowing, or grey e-ink)
+//   - bindings (v1.4.0): a saddle-stitched booklet folds round its
+//     pages with two staples in the fold; a spiral book has no spine,
+//     its two covers are held by a coil of wire loops through holes
+//     (MockCore.coilLoops), also across the gutter of the open book
+//   - finishes (v1.5.0): foil, spot UV and emboss / deboss from mask
+//     pictures (finishMaps: foil colour on the cover, roughness /
+//     metalness, clearcoat, bump and iridescence maps in the cover's
+//     own layout), cover materials as a bump pattern, rounded corners
+//     (an alpha map on the cover, a rounded page block), deckled and
+//     printed page edges, a belly band laid along the cover, a
+//     slipcase open at the spine, a sticker, a notebook's elastic
+//     band, ruled empty pages and a box set round a shelf of books
+//   - products (v1.6.0): CD and DVD / Blu-ray from goods/media3d.js,
+//     cassette, VHS and vinyl from goods/analog3d.js (v1.7.0), badge,
+//     sticker, keychain, enamel pin and magnet from goods/small3d.js (v1.8.0),
+//     mug, framed poster and card from goods/home3d.js (v1.8.0),
+//     T-shirt and tote bag from goods/cloth3d.js (v1.9.0; our Blender models,
+//     downloaded on request by goods/cloth.js; hoodie, socks, cap),
+//   - lifestyle surfaces (wood, marble, linen, paper, concrete) and
+//     props (cup, plant, pencil) from surface3d.js (v1.10.0), and a
+//     combo of several mockups in one picture (goods/combo.js),
+//     posed, framed, lit and saved like a book; "open" opens a lid
+//     or slides a disc out (fronts with userData.open)
 //   - turntable frames: drawTo(ctx, w, h, clear, { spin, cam })
 //     draws one finished frame with the set turned a little more
 //   - floor shadow (shadow catcher + contact shadows), a wall when
@@ -31,6 +54,12 @@
 // Exports createStage(host, MockCore) → stage.
 // ============================================================
 import * as THREE from "../vendor/three/three.module.min.js";
+import { build as buildMedia } from "./goods/media3d.js";
+import { build as buildAnalog } from "./goods/analog3d.js";
+import { build as buildSmall } from "./goods/small3d.js";
+import { build as buildHome } from "./goods/home3d.js";
+import { build as buildCloth } from "./goods/cloth3d.js";
+import { surfaceMesh, makeProps, placeProps } from "./surface3d.js";
 
 var S = 0.01;                          // scene units per mm
 
@@ -69,6 +98,34 @@ export function drawBackground(ctx, w, h, bg, img, keep) {
 // The printed sheet as one picture, laid along the cover's arc.
 // maxPx: the longest side of the texture (smaller for big sets).
 export function composeCover(C, bk, art, imgs, maxPx) {
+  var cv = composeBase(C, bk, art, imgs, maxPx);
+  if (bk.stick && imgs.stick) drawSticker(C, bk, cv, imgs.stick);
+  return cv;
+}
+// The sticker on the front cover, with a soft shadow.
+function drawSticker(C, bk, cv, img) {
+  var L = C.layout(bk), p = L.panels.filter(function (q) { return q.k === "front"; })[0];
+  if (!p) return;
+  var ppm = cv.width / L.total, sb = C.stickerBox(bk), kx = p.w / bk.w, ky = cv.height / (L.h * ppm) * (L.h / bk.h);
+  var off = (L.h - bk.h) / 2;                        // a hardcover's boards stand out round the pages
+  var x = (p.x + sb.x * kx) * ppm, y = (off + sb.y) * ppm * ky, w = sb.w * kx * ppm, h = sb.h * ppm * ky;
+  var ctx = cv.getContext("2d");
+  function shape() {
+    ctx.beginPath();
+    if (sb.round) ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, Math.PI * 2);
+    else { var r = Math.min(w, h) * 0.12; ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  }
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.28)"; ctx.shadowBlur = Math.max(2, w * 0.03); ctx.shadowOffsetY = Math.max(1, w * 0.012);
+  shape(); ctx.fillStyle = "#ffffff"; ctx.fill();
+  ctx.restore();
+  ctx.save(); shape(); ctx.clip(); coverFit(ctx, img, x, y, w, h);
+  var g = ctx.createLinearGradient(x, y, x + w, y + h);
+  g.addColorStop(0, "rgba(255,255,255,0.22)"); g.addColorStop(0.5, "rgba(255,255,255,0)"); g.addColorStop(1, "rgba(0,0,0,0.06)");
+  ctx.fillStyle = g; ctx.fillRect(x, y, w, h);
+  ctx.restore();
+}
+function composeBase(C, bk, art, imgs, maxPx) {
   var L = C.layout(bk), mx = maxPx || 4096;
   var ppm = Math.min(10, mx / L.total, mx / L.h);
   var cv = canvas(Math.round(L.total * ppm), Math.round(L.h * ppm)), ctx = cv.getContext("2d");
@@ -107,14 +164,201 @@ export function composeCover(C, bk, art, imgs, maxPx) {
   return cv;
 }
 
-// Stacked page edges: thin lines across the thickness.
-function edgeCanvas(base, across) {
-  var n = 512, cv = across ? canvas(n, 8) : canvas(8, n), ctx = cv.getContext("2d");
+// ---------- Finishes (v1.5.0) ----------
+var FOIL_C = { gold: ["#f6dd8c", "#c89b3c", "#8a6420"], silver: ["#f4f6f8", "#b9bec6", "#7b818a"],
+  copper: ["#f2b38a", "#b8693d", "#7a3d1f"], rose: ["#f6d0c4", "#d39a8a", "#9c6457"], holo: ["#eef3f8", "#c9d3df", "#9aa7b6"] };
+// Material texture of the cover: { rough, sheen, bump (scale), tint }.
+export var TEX_LOOK = {
+  paper: { rough: 0, sheen: 0, bump: 0 },
+  linen: { rough: 0.94, sheen: 0.35, bump: 1.2 },
+  cloth: { rough: 0.9, sheen: 0.5, bump: 1.6 },
+  leather: { rough: 0.5, sheen: 0, bump: 1.4 },
+  kraft: { rough: 0.93, sheen: 0, bump: 0.8, tint: "#d6b98a" }
+};
+function rng(seed) { var s = seed || 7; return function () { s = (s * 16807) % 2147483647; return s / 2147483647; }; }
+// One tile of the cover material's surface (grey = flat), tw px wide.
+function texTile(k, tw) {
+  var n = Math.max(12, Math.min(96, Math.round(tw))), cv = canvas(n, n), ctx = cv.getContext("2d"), r = rng(11);
+  ctx.fillStyle = "#808080"; ctx.fillRect(0, 0, n, n);
+  var i;
+  if (k === "linen" || k === "cloth") {
+    var step = k === "linen" ? Math.max(2, n / 16) : Math.max(3, n / 10);
+    for (i = 0; i < n; i += step) {
+      ctx.fillStyle = "rgba(255,255,255," + (0.18 + r() * 0.2) + ")"; ctx.fillRect(0, i, n, step * 0.5);
+      ctx.fillStyle = "rgba(0,0,0," + (0.12 + r() * 0.18) + ")"; ctx.fillRect(i, 0, step * 0.5, n);
+    }
+    if (k === "cloth") for (i = 0; i < n * 2; i++) { ctx.fillStyle = r() > 0.5 ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)"; ctx.fillRect(r() * n, r() * n, step, 1); }
+  } else if (k === "leather") {
+    for (i = 0; i < n * 1.4; i++) {
+      var x = r() * n, y = r() * n, rad = n * (0.04 + r() * 0.07), g = ctx.createRadialGradient(x, y, 0, x, y, rad);
+      g.addColorStop(0, "rgba(255,255,255,0.35)"); g.addColorStop(0.7, "rgba(255,255,255,0.05)"); g.addColorStop(1, "rgba(0,0,0,0.25)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+    }
+  } else if (k === "kraft") {
+    for (i = 0; i < n * 3; i++) {
+      ctx.strokeStyle = r() > 0.5 ? "rgba(255,255,255,0.25)" : "rgba(0,0,0,0.22)"; ctx.lineWidth = 1;
+      var a = r() * Math.PI, l = n * (0.05 + r() * 0.15), x0 = r() * n, y0 = r() * n;
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0 + Math.cos(a) * l, y0 + Math.sin(a) * l); ctx.stroke();
+    }
+  }
+  return cv;
+}
+// A mask picture laid on the front cover → a canvas whose alpha is the
+// effect (the picture's own see-through if it has any, else white).
+export function maskOn(C, bk, img, fw, fh) {
+  var L = C.layout(bk), p = L.panels.filter(function (q) { return q.k === "front"; })[0];
+  var cv = canvas(fw, fh), ctx = cv.getContext("2d");
+  if (!p || !img) return cv;
+  var ppm = fw / L.total, x = Math.round(p.x * ppm), w = Math.round(p.w * ppm);
+  ctx.save(); ctx.beginPath(); ctx.rect(x, 0, w, fh); ctx.clip(); coverFit(ctx, img, x, 0, w, fh); ctx.restore();
+  var id = ctx.getImageData(x, 0, Math.max(1, w), fh), d = id.data, clear = false, i;
+  for (i = 3; i < d.length; i += 4 * 7) if (d[i] < 245) { clear = true; break; }
+  for (i = 0; i < d.length; i += 4) {
+    var a = clear ? d[i + 3] : (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) * d[i + 3] / 255;
+    d[i] = d[i + 1] = d[i + 2] = 255; d[i + 3] = a;
+  }
+  ctx.putImageData(id, x, 0);
+  return cv;
+}
+// A colour (or gradient) where the mask is.
+function tinted(mask, fill) {
+  var cv = canvas(mask.width, mask.height), ctx = cv.getContext("2d");
+  ctx.fillStyle = fill; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.globalCompositeOperation = "destination-in"; ctx.drawImage(mask, 0, 0);
+  return cv;
+}
+// The finish maps of one cover (null when there is nothing to add).
+// Paints the foil on the cover picture cv itself.
+export function finishMaps(C, bk, pics, cv, baseRough, gloss) {
+  var foil = pics.foil, uv = pics.uv, emb = pics.emb, look = TEX_LOOK[bk.tex] || TEX_LOOK.paper;
+  if (!foil && !uv && !emb && bk.tex === "paper" && !bk.corners) return null;
+  var k = Math.min(1, 2048 / Math.max(cv.width, cv.height)), fw = Math.max(2, Math.round(cv.width * k)), fh = Math.max(2, Math.round(cv.height * k));
+  var L = C.layout(bk), ppm = fw / L.total, out = {};
+  var ctx = cv.getContext("2d");
+  if (bk.tex === "kraft") {
+    ctx.save(); ctx.globalCompositeOperation = "multiply"; ctx.globalAlpha = 0.5; ctx.fillStyle = look.tint; ctx.fillRect(0, 0, cv.width, cv.height); ctx.restore();
+  }
+  var mF = foil ? maskOn(C, bk, foil, fw, fh) : null, mU = uv ? maskOn(C, bk, uv, fw, fh) : null, mE = emb ? maskOn(C, bk, emb, fw, fh) : null;
+  if (mF) {
+    var fc = FOIL_C[bk.foilK] || FOIL_C.gold, g = ctx.createLinearGradient(0, 0, cv.width * 0.6, cv.height);
+    g.addColorStop(0, fc[0]); g.addColorStop(0.45, fc[1]); g.addColorStop(0.7, fc[0]); g.addColorStop(1, fc[2]);
+    var big = canvas(cv.width, cv.height); big.getContext("2d").drawImage(mF, 0, 0, cv.width, cv.height);
+    ctx.drawImage(tinted(big, g), 0, 0);
+  }
+  if (mF || mU || bk.tex !== "paper") {
+    // roughness in G, metalness in B
+    var orm = canvas(fw, fh), o = orm.getContext("2d");
+    o.fillStyle = "rgb(0," + Math.round((look.rough || baseRough) * 255) + ",0)"; o.fillRect(0, 0, fw, fh);
+    if (mU) o.drawImage(tinted(mU, "rgb(0,26,0)"), 0, 0);
+    if (mF) o.drawImage(tinted(mF, "rgb(0," + (bk.foilK === "holo" ? 46 : 72) + ",210)"), 0, 0);
+    out.orm = orm;
+  }
+  if (mU) {
+    var cc = canvas(fw, fh), c2 = cc.getContext("2d");
+    c2.fillStyle = gloss ? "#e6e6e6" : "#000000"; c2.fillRect(0, 0, fw, fh);
+    c2.drawImage(tinted(mU, "#ffffff"), 0, 0);
+    out.cc = cc;
+  }
+  if (mE || look.bump) {
+    var bm = canvas(fw, fh), b = bm.getContext("2d");
+    b.fillStyle = "#808080"; b.fillRect(0, 0, fw, fh);
+    if (look.bump) { b.globalAlpha = 0.9; b.fillStyle = b.createPattern(texTile(bk.tex, 3 * ppm), "repeat"); b.fillRect(0, 0, fw, fh); b.globalAlpha = 1; }
+    if (mE) { b.filter = "blur(" + Math.max(1, ppm * 0.35).toFixed(1) + "px)"; b.drawImage(tinted(mE, bk.embK === "deboss" ? "#000000" : "#ffffff"), 0, 0); b.filter = "none"; }
+    out.bump = bm; out.bumpK = mE ? 2.2 : look.bump;
+  }
+  if (mF && bk.foilK === "holo") out.irid = tinted(mF, "#ffffff");
+  if (bk.corners) out.alpha = cornerMask(C, bk, fw, fh);
+  return out;
+}
+// Rounded corners at the fore-edge of the front and the back (alpha).
+export function cornerMask(C, bk, fw, fh) {
+  var L = C.layout(bk), ppm = fw / L.total, cv = canvas(fw, fh), ctx = cv.getContext("2d");
+  ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, fw, fh);
+  var R = C.CORNER_R * ppm, ky = fh / (L.h * ppm), Ry = R * ky;
+  L.panels.forEach(function (p) {
+    if (p.k !== "front" && p.k !== "back") return;
+    var xe = p.k === "front" ? (p.x + p.w) * ppm : p.x * ppm, dir = p.k === "front" ? -1 : 1;
+    [[0, 1], [fh, -1]].forEach(function (c) {
+      var cx = xe + dir * R, cy = c[0] + c[1] * Ry;
+      ctx.fillStyle = "#000000"; ctx.fillRect(Math.min(xe, cx), Math.min(c[0], cy), R, Ry);
+      ctx.fillStyle = "#ffffff"; ctx.beginPath(); ctx.ellipse(cx, cy, R, Ry, 0, 0, Math.PI * 2); ctx.fill();
+    });
+  });
+  return cv;
+}
+// A page block with rounded corners at the fore-edge: a group of the
+// sides (page edges) and the two page faces.
+function roundBlock(x0, x1, H, zh, r, edgeM, pageM, own) {
+  var pts = [], h = H / 2, N = 8, i;
+  pts.push([x0, -h]); pts.push([x1 - r, -h]);
+  for (i = 1; i <= N; i++) { var a = -Math.PI / 2 + i / N * Math.PI / 2; pts.push([x1 - r + Math.cos(a) * r, -h + r + Math.sin(a) * r]); }
+  pts.push([x1, h - r]);
+  for (i = 1; i <= N; i++) { var b = i / N * Math.PI / 2; pts.push([x1 - r + Math.cos(b) * r, h - r + Math.sin(b) * r]); }
+  pts.push([x0, h]); pts.push([x0, -h]);
+  var len = [0];
+  for (i = 1; i < pts.length; i++) len.push(len[i - 1] + Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]));
+  var tot = len[len.length - 1], pos = [], uv = [], idx = [];
+  for (i = 0; i < pts.length; i++) {
+    pos.push(pts[i][0] * S, pts[i][1] * S, -zh * S, pts[i][0] * S, pts[i][1] * S, zh * S);
+    uv.push(len[i] / tot, 0, len[i] / tot, 1);
+    if (i) { var q = (i - 1) * 2; idx.push(q, q + 2, q + 1, q + 1, q + 2, q + 3); }
+  }
+  var sg = own(new THREE.BufferGeometry());
+  sg.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3));
+  sg.setAttribute("uv", new THREE.Float32BufferAttribute(uv, 2));
+  sg.setIndex(idx); sg.computeVertexNormals();
+  var g = new THREE.Group(), side = new THREE.Mesh(sg, edgeM);
+  side.castShadow = true; side.receiveShadow = true; g.add(side);
+  var sh = new THREE.Shape();
+  sh.moveTo(pts[0][0] * S, pts[0][1] * S);
+  for (i = 1; i < pts.length; i++) sh.lineTo(pts[i][0] * S, pts[i][1] * S);
+  [1, -1].forEach(function (zs) {
+    var cap = new THREE.Mesh(own(new THREE.ShapeGeometry(sh)), pageM);
+    cap.position.z = zs * zh * S;
+    if (zs < 0) cap.rotation.y = Math.PI, cap.position.x = 0, cap.scale.x = -1;
+    cap.receiveShadow = true; g.add(cap);
+  });
+  return g;
+}
+// A picture (or a colour) stretched over w × h mm.
+function picCanvas(img, c, w, h, maxPx) {
+  var k = Math.min(8, (maxPx || 1024) / Math.max(w, h)), cv = canvas(Math.round(w * k), Math.round(h * k)), ctx = cv.getContext("2d");
+  ctx.fillStyle = c; ctx.fillRect(0, 0, cv.width, cv.height);
+  if (img) coverFit(ctx, img, 0, 0, cv.width, cv.height);
+  return cv;
+}
+// Ruled lines on an empty notebook page.
+function ruleCanvas(ctx, cw, ch, W, rule) {
+  var k = cw / W, i;
+  if (rule === "lined") {
+    ctx.strokeStyle = "rgba(90,120,160,0.35)"; ctx.lineWidth = Math.max(1, k * 0.25);
+    for (i = 22 * k; i < ch - 10 * k; i += 7 * k) { ctx.beginPath(); ctx.moveTo(10 * k, i); ctx.lineTo(cw - 10 * k, i); ctx.stroke(); }
+  } else if (rule === "dotted") {
+    ctx.fillStyle = "rgba(70,80,95,0.42)";
+    for (var y = 10 * k; y < ch - 6 * k; y += 5 * k) for (var x = 8 * k; x < cw - 6 * k; x += 5 * k) { ctx.beginPath(); ctx.arc(x, y, Math.max(0.8, k * 0.3), 0, Math.PI * 2); ctx.fill(); }
+  } else if (rule === "grid") {
+    ctx.strokeStyle = "rgba(90,120,160,0.28)"; ctx.lineWidth = Math.max(1, k * 0.2);
+    for (i = 0; i < ch; i += 5 * k) { ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(cw, i); ctx.stroke(); }
+    for (i = 0; i < cw; i += 5 * k) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, ch); ctx.stroke(); }
+  }
+}
+
+// Stacked page edges: thin lines across the thickness (deckle: rougher,
+// with darker torn patches).
+function edgeCanvas(base, across, deckle) {
+  var n = 512, cv = across ? canvas(n, deckle ? 64 : 8) : canvas(deckle ? 64 : 8, n), ctx = cv.getContext("2d");
   ctx.fillStyle = base; ctx.fillRect(0, 0, cv.width, cv.height);
   var seed = 7;
   function rnd() { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }
+  if (deckle) {
+    for (var j = 0; j < 900; j++) {
+      ctx.fillStyle = "rgba(60,45,30," + (0.05 + rnd() * 0.12) + ")";
+      var lx = rnd() * cv.width, ly = rnd() * cv.height;
+      if (across) ctx.fillRect(lx, ly, 1 + rnd() * 2, 2 + rnd() * 10); else ctx.fillRect(lx, ly, 2 + rnd() * 10, 1 + rnd() * 2);
+    }
+  }
   for (var i = 0; i < n; i += 1) {
-    var a = 0.03 + rnd() * 0.09;
+    var a = (deckle ? 0.06 : 0.03) + rnd() * (deckle ? 0.16 : 0.09);
     ctx.fillStyle = rnd() > 0.5 ? "rgba(0,0,0," + a + ")" : "rgba(255,255,255," + a + ")";
     if (across) ctx.fillRect(i, 0, 1, 8); else ctx.fillRect(0, i, 8, 1);
   }
@@ -136,11 +380,12 @@ function contactCanvas() {
 
 // One inside page: the picture filling the page, a shadow toward the
 // gutter. side "l": gutter on the right; "r": on the left.
-function pageCanvas(img, W, H, side, paper, maxPx) {
+function pageCanvas(img, W, H, side, paper, maxPx, rule) {
   var k = Math.min(maxPx / H, maxPx / W, 8), cw = Math.round(W * k), ch = Math.round(H * k);
   var cv = canvas(cw, ch), ctx = cv.getContext("2d");
   ctx.fillStyle = paper; ctx.fillRect(0, 0, cw, ch);
   if (img) coverFit(ctx, img, 0, 0, cw, ch);
+  else if (rule && rule !== "none") ruleCanvas(ctx, cw, ch, W, rule);
   var gx = side === "l" ? cw : 0, g = ctx.createLinearGradient(gx, 0, side === "l" ? cw * 0.82 : cw * 0.18, 0);
   g.addColorStop(0, "rgba(40,30,20,0.34)"); g.addColorStop(0.35, "rgba(40,30,20,0.10)"); g.addColorStop(1, "rgba(40,30,20,0)");
   ctx.fillStyle = g; ctx.fillRect(0, 0, cw, ch);
@@ -318,6 +563,17 @@ export function createStage(host, C) {
   scene.add(floor);
   var turnG = new THREE.Group(), setG = new THREE.Group();
   turnG.add(setG); scene.add(turnG);
+  // lifestyle surface (replaces the shadow catcher) and props (v1.10.0)
+  var surf = null, surfK = "none", props = makeProps(THREE, S);
+  Object.keys(props).forEach(function (k) { turnG.add(props[k]); });
+  function setSurface(k) {
+    if (k === surfK) return;
+    if (surf) { scene.remove(surf); surf.geometry.dispose(); surf.material.map.dispose(); surf.material.dispose(); surf = null; }
+    surfK = k;
+    surf = surfaceMesh(THREE, k, S, 60, ANISO);
+    if (surf) scene.add(surf);
+    floor.visible = !surf;
+  }
   var wall = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.ShadowMaterial({ opacity: 0.4 }));
   wall.receiveShadow = true;
   wall.visible = false;
@@ -337,38 +593,106 @@ export function createStage(host, C) {
     owned.forEach(function (x) { try { x.dispose(); } catch (e) {} });
     owned = []; fronts = []; contactMats = []; built = false;
   }
-  function picsOf(art) {
-    var o = {};
-    C.SLOTS.forEach(function (k) { if (art[k] && state.pics[art[k]]) o[k] = state.pics[art[k]]; });
+  function picsOf(art, kind) {
+    var o = {}, k = kind || (state.p && state.p.kind);
+    var slots = k && k !== "book" ? C.goodSlots(k) : C.SLOTS;
+    slots.forEach(function (k) { if (art[k] && state.pics[art[k]]) o[k] = state.pics[art[k]]; });
     return o;
   }
 
   function materials(bk, art, maxPx) {
-    var cv = composeCover(C, bk, art, picsOf(art), maxPx);
+    var pics = picsOf(art, "book");
+    var cv = composeCover(C, bk, art, pics, maxPx);
+    var fin = bk.fin, look = TEX_LOOK[bk.tex] || TEX_LOOK.paper;
+    var baseRough = fin === "gloss" ? 0.32 : fin === "soft" ? 0.92 : 0.7;
+    var fx = finishMaps(C, bk, pics, cv, baseRough, fin === "gloss");
     var coverTex = own(new THREE.CanvasTexture(cv));
     coverTex.colorSpace = THREE.SRGBColorSpace;
     coverTex.anisotropy = ANISO;
-    var fin = bk.fin;
-    var cover = own(new THREE.MeshPhysicalMaterial({
+    var opt = {
       map: coverTex,
-      roughness: fin === "gloss" ? 0.32 : fin === "soft" ? 0.92 : 0.7,
-      clearcoat: fin === "gloss" ? 0.9 : 0,
+      roughness: look.rough || baseRough,
+      clearcoat: fin === "gloss" && bk.tex === "paper" ? 0.9 : 0,
       clearcoatRoughness: 0.12,
-      sheen: fin === "soft" ? 0.35 : 0, sheenRoughness: 0.9,
+      sheen: look.sheen || (fin === "soft" ? 0.35 : 0), sheenRoughness: 0.9,
       envMapIntensity: fin === "gloss" ? 1.2 : 0.6
-    }));
-    var inside = own(new THREE.MeshStandardMaterial({ color: bk.inC, roughness: 0.9 }));
+    };
+    function data(c) { var t = own(new THREE.CanvasTexture(c)); t.anisotropy = ANISO; return t; }
+    if (fx) {
+      if (fx.orm) { var ot = data(fx.orm); opt.roughnessMap = ot; opt.metalnessMap = ot; opt.roughness = 1; opt.metalness = 1; opt.envMapIntensity = pics.foil ? 1.7 : 1; }
+      if (fx.cc) { opt.clearcoat = 1; opt.clearcoatMap = data(fx.cc); opt.clearcoatRoughness = 0.06; }
+      if (fx.bump) { opt.bumpMap = data(fx.bump); opt.bumpScale = fx.bumpK; }
+      if (fx.irid) { opt.iridescence = 1; opt.iridescenceMap = data(fx.irid); opt.iridescenceIOR = 1.7; opt.iridescenceThicknessRange = [250, 900]; }
+      if (fx.alpha) { opt.alphaMap = data(fx.alpha); opt.alphaTest = 0.5; }
+    }
+    var cover = own(new THREE.MeshPhysicalMaterial(opt));
+    var inside = own(new THREE.MeshStandardMaterial({ color: bk.inC, roughness: 0.9, alphaMap: opt.alphaMap || null, alphaTest: opt.alphaMap ? 0.5 : 0 }));
     var cloth = own(new THREE.MeshStandardMaterial({ color: bk.clothC, roughness: 0.95 }));
     var edgeCol = bk.edge === "cream" ? "#efe4c6" : bk.edge === "color" ? bk.edgeC : "#f6f4ee";
-    var eA = own(new THREE.CanvasTexture(edgeCanvas(edgeCol, true)));
-    var eB = own(new THREE.CanvasTexture(edgeCanvas(edgeCol, false)));
+    var dk = !!(bk.deckle && C.canHave(bk, "deckle"));
+    var eA = own(new THREE.CanvasTexture(edgeCanvas(edgeCol, true, dk)));
+    var eB = own(new THREE.CanvasTexture(edgeCanvas(edgeCol, false, dk)));
     eA.colorSpace = eB.colorSpace = THREE.SRGBColorSpace;
     var edgeA = own(new THREE.MeshStandardMaterial({ map: eA, roughness: 0.95 }));   // fore-edge
     var edgeB = own(new THREE.MeshStandardMaterial({ map: eB, roughness: 0.95 }));   // head + tail
+    var edgeF = edgeA;
+    if (bk.edge === "print" && pics.edgeP) {
+      var d = C.dims(bk), eF = own(new THREE.CanvasTexture(picCanvas(pics.edgeP, edgeCol, d.T, d.H, 1024)));
+      eF.colorSpace = THREE.SRGBColorSpace; eF.anisotropy = ANISO;
+      edgeF = own(new THREE.MeshStandardMaterial({ map: eF, roughness: 0.85 }));
+    }
     var page = own(new THREE.MeshStandardMaterial({ color: bk.edge === "cream" ? "#f3ead3" : "#fbfaf6", roughness: 0.95 }));
-    return { cover: cover, inside: inside, cloth: cloth, edgeA: edgeA, edgeB: edgeB, page: page };
+    return { cover: cover, inside: inside, cloth: cloth, edgeA: edgeA, edgeB: edgeB, edgeF: edgeF, page: page, pics: pics };
   }
 
+  // Belly band, slipcase and elastic band of one book.
+  function extras(bk, d, pr, M, g, fInner, front) {
+    var sc = state.sc;
+    function solid(c, img, w, h) {
+      var t = own(new THREE.CanvasTexture(picCanvas(img, c, w, h, 1024)));
+      t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = ANISO;
+      return own(new THREE.MeshStandardMaterial({ map: t, roughness: 0.75 }));
+    }
+    if (bk.belly && C.canHave(bk, "belly")) {
+      var bh = Math.min(bk.bellyH, d.Hc - 4), off = (d.j || 0) + 0.32, tot = pr.total;
+      var bt = own(new THREE.CanvasTexture(picCanvas(M.pics.belly, bk.bellyC, tot, bh, 2048)));
+      bt.colorSpace = THREE.SRGBColorSpace; bt.anisotropy = ANISO;
+      var bm = own(new THREE.MeshPhysicalMaterial({ map: bt, roughness: 0.55, clearcoat: 0.3 })), bi = own(new THREE.MeshStandardMaterial({ color: bk.bellyC, roughness: 0.9 }));
+      var yc = (-d.Hc / 2 + bh / 2 + 0.2) * S;
+      [["back", g], ["spine", g], ["front", fInner]].forEach(function (x) {
+        var pc = pr.print[x[0]];
+        if (d.bind === "sp" && x[0] === "spine") return;
+        var piece = { pts: pc.pts.map(function (q, i) { return [q[0] + pc.nrm[i][0] * off, q[1] + pc.nrm[i][1] * off]; }), nrm: pc.nrm,
+          th: pc.th.map(function () { return 0.15; }), u: pc.u };
+        var m = new THREE.Mesh(own(slab(piece, bh, tot)), [bm, bi, bm]);
+        m.position.y = yc; m.castShadow = true; x[1].add(m);
+      });
+    }
+    if (bk.slip && C.canHave(bk, "slip")) {
+      front.rotation.y = 0;                       // a book in its case stays shut
+      var c = C.slipcase(bk), t = c.t, w = c.x1 - c.x0, cx = (c.x0 + c.x1) / 2;
+      var out = solid(bk.slipC, M.pics.slip, w, 2 * c.y), sideM = own(new THREE.MeshStandardMaterial({ color: bk.slipC, roughness: 0.8 }));
+      var inM = own(new THREE.MeshStandardMaterial({ color: shade(bk.slipC, -0.35), roughness: 0.9 }));
+      var walls = [
+        [w, 2 * c.y, t, cx, 0, c.z - t / 2, [sideM, sideM, sideM, sideM, out, inM]],
+        [w, 2 * c.y, t, cx, 0, -c.z + t / 2, [sideM, sideM, sideM, sideM, inM, out]],
+        [w, t, 2 * c.z, cx, c.y - t / 2, 0, [sideM, sideM, sideM, inM, sideM, sideM]],
+        [w, t, 2 * c.z, cx, -c.y + t / 2, 0, [sideM, sideM, inM, sideM, sideM, sideM]],
+        [t, 2 * c.y, 2 * c.z, c.x1 - t / 2, 0, 0, [sideM, inM, sideM, sideM, sideM, sideM]]
+      ];
+      walls.forEach(function (a) {
+        var m = new THREE.Mesh(own(new THREE.BoxGeometry(a[0] * S, a[1] * S, a[2] * S)), a[6]);
+        m.position.set(a[3] * S, a[4] * S, a[5] * S); m.castShadow = true; m.receiveShadow = true; g.add(m);
+      });
+    }
+    if (bk.elastic && !bk.slip && sc.open < 3 && d.bind !== "sp") {
+      var h = d.Hc / 2, z = d.zF + (d.j || 0) + 0.5;
+      var path = [[-h - 0.6, 0], [-h, z], [h, z], [h + 0.6, 0], [h, -z], [-h, -z], [-h - 0.6, 0]];
+      var em = own(new THREE.MeshPhysicalMaterial({ color: bk.elasticC, roughness: 0.6, sheen: 0.6, sheenRoughness: 0.5, side: THREE.DoubleSide }));
+      var el = new THREE.Mesh(own(ribbonGeo(path, d.xE - 16, 8)), em);
+      el.castShadow = true; g.add(el);
+    }
+  }
   // One book → { g, front } (front: the cover piece on the hinge).
   function makeBook(bk, M, placeK) {
     var pr = C.profile(bk), d = pr.d, sc = state.sc;
@@ -388,8 +712,42 @@ export function createStage(host, C) {
     var jacket = d.hc && d.flaps;
     var ph = jacket ? d.Hc + 0.2 : d.Hc;
     add(pr.print.back, ph, pr.total, printM, g);
-    add(pr.print.spine, ph, pr.total, printM, g);
+    if (d.bind !== "sp") add(pr.print.spine, ph, pr.total, printM, g);
     add(pr.print.front, ph, pr.total, printM, fInner);
+    if (d.bind === "ss") {
+      // two staples through the fold
+      var stM = own(new THREE.MeshStandardMaterial({ color: "#c9ccd1", metalness: 0.9, roughness: 0.32 }));
+      var stG = own(new THREE.BoxGeometry(0.5 * S, 12 * S, 0.5 * S));
+      [-1, 1].forEach(function (sg) {
+        var st = new THREE.Mesh(stG, stM);
+        st.position.set((d.xS - d.bulge - 0.05) * S, sg * d.H * 0.27 * S, 0);
+        g.add(st);
+      });
+    }
+    if (d.coil) {
+      // the coil: one wire loop round the spine edge through each pair of holes
+      var cl = d.coil, wireC = { black: "#1b1c1f", silver: "#c4c8ce", white: "#f1f1ee", gold: "#c9a24a" }[bk.wire] || "#1b1c1f";
+      var wM = own(new THREE.MeshStandardMaterial({ color: wireC, metalness: bk.wire === "silver" || bk.wire === "gold" ? 0.85 : 0.2, roughness: 0.35 }));
+      var tG = own(new THREE.TorusGeometry(cl.r * S, cl.wire * S, 8, 40));
+      var hM = own(new THREE.MeshBasicMaterial({ color: "#16171a" }));
+      var hG = own(new THREE.CircleGeometry(1.7 * S, 14));
+      C.coilLoops(bk).forEach(function (y, i) {
+        var ring = new THREE.Mesh(tG, wM);
+        ring.rotation.x = Math.PI / 2;
+        ring.rotation.y = 0.06;                       // a coil climbs a little each turn
+        ring.position.set(cl.x * S, y * S, 0);
+        ring.castShadow = true;
+        g.add(ring);
+        // the holes, on the outside of both covers
+        var hf = new THREE.Mesh(hG, hM);
+        hf.position.set(d.xH * S, y * S, (d.zF + 0.02) * S);
+        fInner.add(hf);
+        var hb = new THREE.Mesh(hG, hM);
+        hb.rotation.y = Math.PI;
+        hb.position.set(d.xH * S, y * S, -(d.zF + 0.02) * S);
+        g.add(hb);
+      });
+    }
     if (pr.caseP) {
       var cm = [M.cloth, M.inside, M.cloth], ct = pr.caseP.front.u[pr.caseP.front.u.length - 1];
       add(pr.caseP.back, d.Hc, ct, cm, g);
@@ -398,11 +756,16 @@ export function createStage(host, C) {
     }
     // page block: +x fore-edge, -x spine, +y head, -y tail, +z/-z pages
     var bw = d.block.x1 - d.block.x0, bz = d.block.z * 2;
-    var blk = new THREE.Mesh(own(new THREE.BoxGeometry(bw * S, d.H * S, bz * S)),
-      [M.edgeA, M.edgeA, M.edgeB, M.edgeB, M.page, M.page]);
-    blk.position.x = (d.block.x0 + bw / 2) * S;
-    blk.castShadow = true; blk.receiveShadow = true;
-    g.add(blk);
+    if (bk.corners) {
+      g.add(roundBlock(d.block.x0, d.block.x1, d.H, bz / 2, Math.max(1, C.CORNER_R - d.o), M.edgeB, M.page, own));
+    } else {
+      var blk = new THREE.Mesh(own(new THREE.BoxGeometry(bw * S, d.H * S, bz * S)),
+        [M.edgeF, M.edgeA, M.edgeB, M.edgeB, M.page, M.page]);
+      blk.position.x = (d.block.x0 + bw / 2) * S;
+      blk.castShadow = true; blk.receiveShadow = true;
+      g.add(blk);
+    }
+    extras(bk, d, pr, M, g, fInner, front);
     if (d.hc && bk.band) {
       var bt = own(new THREE.CanvasTexture(stripeCanvas(bk.bandC)));
       bt.colorSpace = THREE.SRGBColorSpace;
@@ -464,7 +827,7 @@ export function createStage(host, C) {
     var cur = C.openCurve(bk, ins.curl, 36), base = bt, n = cur.length;
     var pics = state.pics;
     function half(sg, img, side) {
-      var tex = own(new THREE.CanvasTexture(pageCanvas(img, W, H, side, paper, 2048)));
+      var tex = own(new THREE.CanvasTexture(pageCanvas(img, W, H, side, paper, 2048, ins.rule)));
       tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = ANISO;
       var mat = own(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.92, side: THREE.DoubleSide }));
       var pos = [], uv = [], idx = [];
@@ -505,6 +868,19 @@ export function createStage(host, C) {
     }
     half(-1, pics[ins.l] || null, "l");
     half(1, pics[ins.r] || null, "r");
+    if (d.coil) {
+      // spiral: the loops stand across the gutter
+      var wireC = { black: "#1b1c1f", silver: "#c4c8ce", white: "#f1f1ee", gold: "#c9a24a" }[bk.wire] || "#1b1c1f";
+      var wM = own(new THREE.MeshStandardMaterial({ color: wireC, metalness: bk.wire === "silver" || bk.wire === "gold" ? 0.85 : 0.2, roughness: 0.35 }));
+      var top = base + cur[0][1], rr = Math.max(4, top * 0.6 + 2);
+      var tG = own(new THREE.TorusGeometry(rr * S, d.coil.wire * S, 8, 32));
+      C.coilLoops(bk).forEach(function (y) {
+        var ring = new THREE.Mesh(tG, wM);
+        ring.position.set(0, (top - rr * 0.35) * S, -y * S);
+        ring.castShadow = true;
+        g.add(ring);
+      });
+    }
     return g;
   }
   // The e-book: a device standing, screen to +z.
@@ -563,8 +939,85 @@ export function createStage(host, C) {
     place();
   }
 
+  function buildProduct(p) {
+    var H = { THREE: THREE, S: S, own: own, ANISO: ANISO, pics: picsOf(p.art, p.kind), MP: (typeof window !== "undefined" && window.MockPrint) || null, C: C };
+    return buildMedia(H, p) || buildAnalog(H, p) || buildSmall(H, p) || buildHome(H, p) || buildCloth(H, p);
+  }
+  // Several mockups in one picture (goods/combo.js): each posed as it is
+  // in its own project, side by side on a table, or all flat from above.
+  function buildCombo() {
+    disposeBooks();
+    var p = state.p, list = p.items || [], flat = p.g.lay === "flat", poses = [];
+    list.forEach(function (it) {
+      var obj, placeK = flat ? "lie" : (it.sc.place === "lean" ? "stand" : it.sc.place);
+      if (C.isGood(it)) { var res = buildProduct(it); if (!res) return; obj = res.g; }
+      else { obj = makeBook(it.bk, materials(it.bk, it.art, 2048), placeK).g; }
+      var pose = new THREE.Group();
+      pose.add(obj);
+      if (placeK === "lie") pose.rotation.x = -Math.PI / 2;
+      var pb = boxOf(pose), pc = pb.getCenter(new THREE.Vector3()), ps = pb.getSize(new THREE.Vector3());
+      pose.position.set(-pc.x, -pb.min.y, -pc.z);
+      var slot = new THREE.Group();
+      slot.add(pose);
+      var cm = own(new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, opacity: 0.5 }));
+      var ct = new THREE.Mesh(own(new THREE.PlaneGeometry(1, 1)), cm);
+      ct.rotation.x = -Math.PI / 2; ct.position.y = 0.0005;
+      ct.scale.set(ps.x * 1.2, ps.z * 1.2 + (placeK === "lie" ? 0 : 0.08), 1);
+      ct.renderOrder = 1; ct.userData.skip = true;
+      slot.add(ct); contactMats.push(cm);
+      poses.push({ g: slot, w: ps.x, d: ps.z });
+    });
+    // table: one row, the tallest in the middle; flat: rows of about √n
+    var gap = 40 * S, perRow = flat ? Math.ceil(Math.sqrt(poses.length)) : poses.length, z = 0;
+    for (var r0 = 0; r0 < poses.length; r0 += perRow) {
+      var row = poses.slice(r0, r0 + perRow), wsum = 0, dmax = 0;
+      row.forEach(function (q) { wsum += q.w; dmax = Math.max(dmax, q.d); });
+      var x = -(wsum + gap * (row.length - 1)) / 2;
+      row.forEach(function (q) { q.g.position.set(x + q.w / 2, 0, z + (flat ? 0 : -q.d / 2)); x += q.w + gap; setG.add(q.g); });
+      z += dmax + gap;
+    }
+    leanNow = false;
+    built = poses.length > 0;
+    place();
+  }
+  // A product (CD, DVD…), posed on the floor like one book.
+  function buildGood() {
+    disposeBooks();
+    var p = state.p, placeK = p.sc.place;
+    var res = buildProduct(p);
+    if (!res) { built = false; return; }
+    res.fronts.forEach(function (f) { fronts.push(f); });
+    var pose = new THREE.Group();
+    pose.add(res.g);
+    if (placeK === "lie") pose.rotation.x = -Math.PI / 2;
+    else if (placeK === "lean") pose.rotation.x = -0.24;
+    var pb = boxOf(pose), pc = pb.getCenter(new THREE.Vector3()), ps = pb.getSize(new THREE.Vector3());
+    pose.position.set(-pc.x, -pb.min.y, -pc.z);
+    var slot = new THREE.Group();
+    slot.add(pose);
+    var cm = own(new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false, opacity: 0.5 }));
+    var ct = new THREE.Mesh(own(new THREE.PlaneGeometry(1, 1)), cm);
+    ct.rotation.x = -Math.PI / 2; ct.position.y = 0.0005;
+    ct.scale.set(ps.x * 1.2, ps.z * 1.2 + (placeK === "lie" ? 0 : 0.08), 1);
+    ct.renderOrder = 1; ct.userData.skip = true;
+    slot.add(ct); contactMats.push(cm);
+    setG.add(slot);
+    leanNow = placeK === "lean";
+    built = true;
+    openFronts(p.sc.open);
+    place();
+  }
+  function openFronts(deg) {
+    fronts.forEach(function (f) {
+      if (f.userData && typeof f.userData.open === "function") f.userData.open(deg);
+      else f.rotation.y = -deg * Math.PI / 180;
+    });
+  }
+
   // Every book of the set, posed and laid out.
   function buildSet() {
+    if (state.p.kind === "combo") { buildCombo(); return; }
+    if (C.isGood(state.p)) { buildGood(); return; }
     if (state.p.show === "open" || state.p.show === "ebook") { buildOne(); return; }
     disposeBooks();
     var p = state.p, list = C.setList(p), maxPx = list.length > 2 ? 2048 : 4096, mats = {};
@@ -606,9 +1059,34 @@ export function createStage(host, C) {
       }
       setG.add(slot);
     });
+    if (kind === "box") boxSet(p);
     leanNow = list.some(function (it) { return it.place === "lean"; });
     built = true;
     place();
+  }
+  // A box set: a box round the shelf of books, open toward the spines.
+  function boxSet(p) {
+    var bk = p.bk, pics = picsOf(p.art, "book"), t = 2.5 * S, m = 0.8 * S;
+    setG.updateMatrixWorld(true);
+    var box = boxOf(setG).applyMatrix4(setG.matrixWorld.clone().invert()), sz = box.getSize(new THREE.Vector3());
+    setG.children.forEach(function (c) { c.position.y += t; });
+    var x0 = box.min.x - m - t, x1 = box.max.x + m + t, y1 = box.max.y + t + m + t, z0 = box.min.z - m - t, z1 = box.max.z;
+    var W = x1 - x0, D = z1 - z0;
+    var tex = own(new THREE.CanvasTexture(picCanvas(pics.slip || null, bk.slipC, D / S, y1 / S, 1024)));
+    tex.colorSpace = THREE.SRGBColorSpace; tex.anisotropy = ANISO;
+    var out = own(new THREE.MeshStandardMaterial({ map: tex, roughness: 0.75 })), sideM = own(new THREE.MeshStandardMaterial({ color: bk.slipC, roughness: 0.8 }));
+    var inM = own(new THREE.MeshStandardMaterial({ color: shade(bk.slipC, -0.35), roughness: 0.9 }));
+    [
+      [t, y1, D, x0 + t / 2, y1 / 2, (z0 + z1) / 2, [inM, out, sideM, sideM, sideM, sideM]],
+      [t, y1, D, x1 - t / 2, y1 / 2, (z0 + z1) / 2, [out, inM, sideM, sideM, sideM, sideM]],
+      [W, t, D, (x0 + x1) / 2, y1 - t / 2, (z0 + z1) / 2, [sideM, sideM, sideM, inM, sideM, sideM]],
+      [W, t, D, (x0 + x1) / 2, t / 2, (z0 + z1) / 2, [sideM, sideM, inM, sideM, sideM, sideM]],
+      [W, y1, t, (x0 + x1) / 2, y1 / 2, z0 + t / 2, [sideM, sideM, sideM, sideM, inM, sideM]]
+    ].forEach(function (a) {
+      var w = new THREE.Mesh(own(new THREE.BoxGeometry(a[0], a[1], a[2])), a[6]);
+      w.position.set(a[3], a[4], a[5]); w.castShadow = true; w.receiveShadow = true; setG.add(w);
+    });
+    void sz;
   }
 
   // The set on the floor + framing.
@@ -624,6 +1102,10 @@ export function createStage(host, C) {
     wall.position.set(0, 15, box.min.z - 0.0002);
     var size = box.getSize(new THREE.Vector3());
     frame.R = Math.max(size.x, size.y, size.z) * 0.56 + 0.03;
+    // a combo on a table is a long, low row: let a wide frame use its width
+    frame.wide = state.p && state.p.kind === "combo" ? Math.max(1, size.x / Math.max(size.y, size.z, 1e-6)) : 1;
+    setSurface(sc.surf || "none");
+    placeProps(props, sc.props, box, S);
     frame.cy = (box.min.y + box.max.y) / 2;
     turn();
     lights();
@@ -656,6 +1138,7 @@ export function createStage(host, C) {
     camera.aspect = cw / ch;
     var half = cam.fov * Math.PI / 360;
     var fit = Math.min(1, camera.aspect);                // keep the book inside a tall frame too
+    if (frame.wide > 1 && camera.aspect > 1) fit = Math.max(fit, Math.min(camera.aspect, frame.wide) * 0.88);
     var dist = R / Math.sin(half) / fit / cam.zoom;
     var th = cam.th * Math.PI / 180, ph = cam.ph * Math.PI / 180;
     var dir = new THREE.Vector3(Math.sin(th) * Math.cos(ph), Math.sin(ph), Math.cos(th) * Math.cos(ph));
@@ -732,7 +1215,7 @@ export function createStage(host, C) {
       if (state.p) state.p = Object.assign({}, state.p, { sc: sc });
       if (bgImg !== undefined) state.bgImg = bgImg;
       if (state.p && (rebuild || placeChanged)) { buildSet(); request(); return; }
-      fronts.forEach(function (f) { f.rotation.y = -sc.open * Math.PI / 180; });
+      openFronts(sc.open);
       place();
       request();
     },

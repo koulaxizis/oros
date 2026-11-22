@@ -18,7 +18,7 @@ test("P3: WebVTT out and back, escaped, bounded", () => {
   assert.equal(P.vtt(P.parseVtt(v)), v, "the same bytes again");
   assert.deepEqual(P.parseVtt("not a vtt"), []);
   assert.deepEqual(P.parseVtt(null), []);
-  assert.deepEqual(P.parseVtt("WEBVTT\n\n01:02:03.500 --> 01:02:04.000 align:start\n<v Chris>hello</v>\n"), [], "an episode is at most an hour, a cue past it goes");
+  assert.deepEqual(P.parseVtt("WEBVTT\n\n03:02:03.500 --> 03:02:04.000 align:start\n<v Chris>hello</v>\n"), [], "an episode is at most three hours, a cue past it goes");
   assert.equal(P.normCues(Array.from({ length: 5000 }, (_, i) => ({ start: i * 0.5, end: i * 0.5 + 0.4, text: "x" }))).length, P.LIM.cues);
   assert.equal(P.normCues([{ start: 1, end: 2, text: "y".repeat(900) }])[0].text.length, P.LIM.cue);
   assert.deepEqual(P.normCues([{ start: 5, end: 6, text: "   " }, { start: "1", text: "a" }, null, { start: 20, end: 30, text: "late" }], 10), [], "empty, untimed and late cues go");
@@ -36,7 +36,8 @@ test("P3: the editor's text: one line per cue, times kept, loose lines join the 
     { start: 65.6, end: 90, text: "τρίτο" }
   ], "sorted by time, each ends where the next starts, the last at the episode's end");
   assert.deepEqual(P.fromEdit("no times at all", 60), []);
-  assert.deepEqual(P.fromEdit("[1:02:03] long"), [], "past the one-hour limit it is dropped");
+  assert.deepEqual(P.fromEdit("[3:02:03] long"), [], "past the three-hour limit it is dropped");
+  assert.deepEqual(P.fromEdit("[1:59:00.5] late talk", 7200), [{ start: 7140.5, end: 7200, text: "late talk" }], "past an hour is fine now");
   assert.equal(P.asrLang("el"), "el");
   assert.equal(P.asrLang("pt-BR"), "pt");
   assert.equal(P.asrLang(""), "auto");

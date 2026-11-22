@@ -185,7 +185,7 @@ test("view, targets, preview and the outline for the AI", () => {
   assert.deepEqual(CMD.targets(vw, null, "", "named", "trip").docs.map((d) => d.id), ["p1"]);
   assert.match(CMD.targets(vw, null, "", "named", "zzz").err, /no project is called "zzz"; projects: "Birthday", "Trip"/);
   assert.equal(CMD.targets(vw, null, "", "all").docs.length, 2);
-  assert.match(CMD.targets(vw, null, "", "new").err, /made in Montage itself/);
+  assert.deepEqual(CMD.targets(vw, null, "", "new", "X"), { ok: true, docs: [{ id: "", name: "X" }], fresh: 1 }, "ST-IMP: create (a file as a new project)");
   assert.match(CMD.targets(vw, null, "", "folder").err, /no folders/);
   const pv = CMD.preview(vw, ["p1", "p2"], CMD.check([{ op: "add", what: "title", text: "Hi" }, { op: "rename", title: "X" }]).steps);
   assert.deepEqual([pv.n, pv.d, pv.per.map((x) => x.n)], [4, 2, [2, 2]]);
