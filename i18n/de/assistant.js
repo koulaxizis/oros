@@ -735,7 +735,7 @@ orosPack("de", "assistant", {
  "ed.op.framemod": "Rahmen ändern",
  "ed.f.nofill": "Ohne Füllung",
  "ed.f.del": "Entfernen",
- "ed.op.cancel": "Laufende Befehle stoppen",
+ "ed.op.cancel": "Laufende Befehle stoppen", "ed.op.version": "Zuerst eine Version behalten",
  "ed.f.family": "Schriftfamilie",
  "ed.f.source": "Quelle",
  "ed.f.path": "Schriftdatei",

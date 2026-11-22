@@ -2321,6 +2321,7 @@
       { label: t("more.notes"), disabled: !LY.notes, fn: function () { LY.notes.settings(); } },
       { label: t("more.book"), disabled: !LY.book, fn: function () { LY.book.open(); } },
       { label: t("more.print"), disabled: !LY.proof, fn: function () { LY.proof.dialog(); } },
+      { label: t("more.versions"), disabled: !LY.versions, fn: function () { LY.versions.dialog(); } },
       { label: t("more.sheet"), disabled: !LY.house.hasSheet(doc), fn: function () { LY.house.sheet(); } },
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },

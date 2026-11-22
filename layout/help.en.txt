@@ -181,6 +181,12 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Pictures**: give each picture a `Description` in its settings, or tick `Decorative`. A picture without either is left out of the reading.
 - **Language and title**: the PDF names the book's language (Document setup, else the Publishing title) and shows the document's name as its title. An e-book PDF from an output profile is always tagged. Not with PDF/X-1a or imposition.
 
+## Versions
+- **Keep a version**: `More › Versions…` keeps the whole document under a name (e.g. "Sent to the editor"). The 30 newest versions of each document stay on this device.
+- **Compare**: shows what changed since a version: pages, words, frames, styles, colours, the document's setup, and each changed paragraph with the words taken out struck through and the new words marked. `Show` opens the paragraph.
+- **Restore**: brings a version back. The current state is kept as a version first, and Undo takes the restore back.
+- **Claude**: before large changes Claude can keep a version too (marked "by Claude").
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 
