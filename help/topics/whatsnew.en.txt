@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.29.00
+- **Walk and Bike routes with no network (experimental).** With no network, Maps now works out Walk and Bike routes on the device from your offline maps, using their roads, paths, steps and cycleways. See [Maps](help:a/maps).
+
 ## Version 8.28.00
 - **Claude exports from every app that has Export.** Through orOS Gate (and in the Assistant), Claude can now export Slides (PDF, PowerPoint, PNG), Writer (PDF, Word, Markdown, HTML, text), Spreadsheet (Excel, ODS, CSV), Whiteboard (PNG, SVG, PDF, draw.io), Mind map (PNG, SVG, Markdown, OPML, JSON, orOS file), Studio's mix (WAV, MP3, Opus) and Montage (video, sound, GIF) into a local folder you opened for Claude or one of Claude's folders in Files. Nothing in the document changes and nothing is overwritten.
 
