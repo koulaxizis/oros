@@ -88,8 +88,14 @@
           var errs = res.check.errors.length, eb = res.pub && res.ed && res.ed.fmt && res.ed.fmt.k === "eb";
           var ready = rq.ready === 1 ? (!res.path ? "noDisk" : errs ? "errors" : !eb ? "noFormat" : "yes") : "";
           LY.panels.epubReport(res, prof);
-          done(epubSummary(res, prof, LY.doc, ready));
+          var sum = epubSummary(res, prof, LY.doc, ready), d = LY.doc;
           if (ready === "yes") LY.panels.epubMarkReady(res);
+          // GX-1: a copy in out (a local write folder and/or Claude's folders)
+          return LY.io.saveOut(rq.out, LY.io.fileName(d, ".epub"), new Blob([res.bytes], { type: "application/epub+zip" }), "export_epub").then(function (o) {
+            if (o.saved.length) sum.saved = o.saved;
+            if (o.outFail.length) sum.outFail = o.outFail;
+            done(sum);
+          });
         });
       }).then(null, function (e) {
         try { console.error("[orOS] layout: the Assistant's EPUB failed", e); } catch (x) {}

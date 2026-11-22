@@ -1,5 +1,5 @@
 # Fernsehen
-Fernsehen spielt kostenlose Live-TV-Sender aus aller Welt, gelistet im Community-Verzeichnis iptv-org, und die Sender deiner eigenen M3U-Playlists. Stöbere oder suche, filtere nach Land, Kategorie und Sprache, markiere deine Lieblingssender mit einem Stern und sieh in einem XMLTV-Programmführer, was jetzt und danach läuft.
+Fernsehen spielt kostenlose Live-TV-Sender aus aller Welt, gelistet im Community-Verzeichnis iptv-org, und die Sender deiner eigenen M3U-Playlists. Stöbere oder suche, filtere nach Land, Kategorie und Sprache, markiere deine Lieblingssender mit einem Stern und sieh in einem XMLTV-Programmführer, was jetzt und danach läuft. `Filme & Sendungen` bringt kostenlose Filme, Serien und Dokumentarfilme aus offenen Archiven dazu.
 
 ## Erste Schritte
 Beim ersten Mal lädt die App das Senderverzeichnis herunter (`Sender werden geladen…`); das kann einen Moment dauern. Dann zeigt `Stöbern` die Sender als Karten. Tippe oder klicke auf eine Karte, um sie im Player anzusehen. `Mehr laden` unten zeigt die nächsten.
@@ -37,8 +37,17 @@ Füge einen XMLTV-Programmführer auf dieselbe Weise in `Listen & Programme` hin
 ## Favoriten und zuletzt gesehene Sender
 Tippe auf den Stern (☆) einer Karte oder auf den Favoriten-Knopf im Player, um einen Sender zu `Favoriten` hinzuzufügen; tippe erneut, um ihn zu entfernen. `Zuletzt` listet die letzten 20 Sender, die du gesehen hast.
 
+## Filme & Sendungen
+`Filme & Sendungen` sammelt kostenlose Filme, Serien, Dokumentarfilme, Zeichentrickfilme und Wochenschauen aus zwei offenen Archiven: [Wikimedia Commons](https://commons.wikimedia.org) (gefunden über Wikidata) und dem [Internet Archive](https://archive.org). Alles läuft im selben Player wie die Sender.
+
+- **Entdecken:** tippe in `Filme, Sendungen, Regie suchen…` (Titel auf Englisch, Griechisch und Deutsch, Regie und Jahre). `Filter` grenzt nach `Quelle`, `Art`, `Genre`, `Jahrzehnt`, Land, Sprache, `Länge` und `Ton` (stumm oder mit Ton) ein, und `Sortierung` ordnet die Ergebnisse. `Filter zurücksetzen` fängt neu an. Der Länderfilter sucht nur in Wikimedia Commons, weil das Internet Archive keine Länder erfasst.
+- **Was frei ist:** jeder Film auf Wikimedia Commons ist frei, weil Commons nur frei lizenzierte oder gemeinfreie Dateien behält. Aus dem Internet Archive zeigt orOS zunächst nur, was es geprüft hat: Filme, die vor mehr als 95 Jahren veröffentlicht wurden, und die Prelinger Archives. `Auch Titel des Internet Archive zeigen, die orOS nicht geprüft hat` fügt den Rest hinzu, markiert mit `Nicht geprüft`; wer sie hochgeladen hat, nennt sie gemeinfrei, aber das stimmt nicht immer, und die Rechte können von Land zu Land abweichen. Das Fenster eines Titels sagt, warum er frei ist.
+- **Ein Titel:** tippe auf eine Karte für die Details, die Teile oder Folgen, `Seite der Quelle`, `Merkliste` und `Abspielen`. Im Player bewegen die Positionsleiste und die Knöpfe zurück und vor durch den Film; ein Titel in Teilen geht von selbst zum nächsten Teil weiter.
+- **Weiterschauen** merkt sich, wo du aufgehört hast (ab 30 Sekunden); `Weiter bei…` macht dort weiter, `Von vorn` beginnt neu. Ein Titel, den du bis zum Ende gesehen hast, verlässt die Liste; `Aus „Weiterschauen“ entfernen` nimmt ihn von Hand heraus.
+- **Merkliste** behält die Titel, die du sehen willst; der Knopf im Fenster eines Titels oder der Stern im Player fügt sie hinzu oder entfernt sie.
+
 ## Synchronisierung und Sicherung
-Deine Lieblingssender und die Adressen deiner Playlists und Programmführer werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert; jedes Gerät lädt die Inhalte selbst herunter. Geöffnete Dateien bleiben auf diesem Gerät. Zuletzt gesehene Sender sowie Lautstärke und Stummschaltung bleiben ebenfalls auf diesem Gerät; das Senderverzeichnis und deine Playlists werden hier einen Tag lang behalten, eine Programmführer-Adresse für den Tag, an dem sie heruntergeladen wurde. Es gibt keinen Export; Favoriten und Adressen sind Teil der orOS-[Sicherung](help:t/backup).
+Deine Lieblingssender, deine Merkliste, die Stelle, an der du in jedem Film aufgehört hast, und die Adressen deiner Playlists und Programmführer werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert; jedes Gerät lädt die Inhalte selbst herunter. Geöffnete Dateien bleiben auf diesem Gerät. Zuletzt gesehene Sender sowie Lautstärke und Stummschaltung bleiben ebenfalls auf diesem Gerät; das Senderverzeichnis und deine Playlists werden hier einen Tag lang behalten, der Katalog von Wikimedia Commons eine Woche, eine Programmführer-Adresse für den Tag, an dem sie heruntergeladen wurde. Es gibt keinen Export; Favoriten und Adressen sind Teil der orOS-[Sicherung](help:t/backup).
 
 ## Tastenkürzel
 Im Player:
@@ -46,6 +55,7 @@ Im Player:
 - [[M]] schaltet stumm oder den Ton wieder an.
 - [[F]] schaltet Vollbild um.
 - [[↑]] / [[↓]] machen lauter oder leiser.
+- [[←]] / [[→]] springen in einem Film 10 Sekunden zurück oder vor.
 - [[Esc]] schließt den Player.
 
 ## Tipps
@@ -60,3 +70,4 @@ Im Player:
 - `http://`-Streams spielen nicht, wenn orOS über `https://` läuft, und Streams, die einen besonderen Referrer oder User-Agent brauchen, spielen eventuell gar nicht.
 - Eine geöffnete Programmdatei behält die Sendungen vom Vortag bis eine Woche voraus; öffne danach eine neuere Datei. Die Zeitleiste zeigt nur heute und höchstens 150 Sender auf einmal.
 - Die Wiedergabe stoppt, wenn du den Player oder die App schließt.
+- Die Filme sind, was die Archive haben: griechische Filme gibt es wenige, viele alte Filme haben keine Untertitel, und manche Dateien liegen in einem Format vor, das ein Browser nicht abspielen kann (WebM auf älteren iPhones und iPads; orOS wählt dann ein anderes Format, wenn das Archiv eines hat). Der Katalog von Wikimedia Commons wird einmal pro Woche geladen und kann beim ersten Mal eine Minute dauern.

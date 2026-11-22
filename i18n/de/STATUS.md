@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 50434 of 50441 (99%)
+- Strings: 50808 of 50815 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,7 +16,7 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 2172 / 2172 |
+| assistant | 100% | 2192 / 2192 |
 | atelier | 100% | 1507 / 1507 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 332 / 332 |
@@ -82,7 +82,7 @@ en and el); translators change them there, not in a pack.
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 358 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 1265 / 1265 |
+| layout | 100% | 1435 / 1435 |
 | library | 100% | 330 / 330 |
 | lighthouse | 100% | 215 / 215 |
 | lightsout | 100% | 52 / 52 |
@@ -91,7 +91,7 @@ en and el); translators change them there, not in a pack.
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 504 / 504 |
 | mancala | 100% | 61 / 61 |
-| maps | 100% | 1692 / 1692 |
+| maps | 100% | 1710 / 1710 |
 | mastermind | 100% | 74 / 74 |
 | maze | 100% | 123 / 123 |
 | meals | 100% | 466 / 466 |
@@ -104,7 +104,7 @@ en and el); translators change them there, not in a pack.
 | montage | 100% | 383 / 383 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
-| music | 100% | 541 / 541 |
+| music | 100% | 686 / 686 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 175 / 175 |
 | newsletter | 100% | 1061 / 1061 |
@@ -139,10 +139,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2020 / 2020 |
+| settings | 100% | 2025 / 2025 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1571 / 1571 |
+| shell | 100% | 1587 / 1587 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

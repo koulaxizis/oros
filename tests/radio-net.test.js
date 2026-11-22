@@ -32,7 +32,10 @@ test("no 3 s ceiling: a slow mirror gets company, each request has a generous ce
 
 test("every directory fetch falls back to a stale copy before raising the banner", () => {
   const n = (src.match(/return staleOrEmpty\(/g) || []).length;
-  assert.equal(n, 6, "countries, genres, by country, by tag, search, top voted");
+  // RX-MORE: every station list (country, genre, language, search,
+  // Discover's lists) goes through fetchList
+  assert.equal(n, 4, "countries, genres, languages, fetchList");
+  assert.doesNotMatch(src, /function fetchStationsBy(Country|Tag)\(/);
   assert.doesNotMatch(src, /\.catch\(function\(err\)\{\n\s*console\.warn\("\[radio\][^\n]*\n\s*return \[\];/);
   const stale = Number(/var CACHE_STALE_MS\s*=\s*([\d\s*]+);/.exec(src)[1].split("*").reduce((a, b) => a * Number(b), 1));
   assert.equal(stale, 7 * 24 * 60 * 60 * 1000);

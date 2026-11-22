@@ -13,6 +13,7 @@ const ROOT = path.join(__dirname, "..");
 const B = require(path.join(ROOT, "bundle.js"));
 const C = require(path.join(ROOT, "studio", "core.js"));
 const P = require(path.join(ROOT, "studio", "package.js"));
+const POD = require(path.join(ROOT, "studio", "podcast.js"));
 
 const MIME = "application/x-oros-studio";
 
@@ -184,4 +185,50 @@ test("a chapter of a book (wave A2) stays one only where that book is", () => {
   assert.equal(P.parse(JSON.parse(JSON.stringify(c)), { newId, now: 1000 }).project.bk, undefined);
   const song = P.build(sample(), "pabcdef1", keys, {}).content;
   assert.equal("bk" in song.project, false, "a song's package keeps its bytes");
+});
+
+test("markers (the episode's chapters) ride along in project.mk, with fresh ids on import", async () => {
+  const d = sample();
+  const mk = [{ id: "kbbbbbb0002", t: 754.5, n: "Second" }, { id: "kaaaaaa0001", t: 0, n: "Intro" }];
+  d.projects = d.projects.map((p) => p.id === "pabcdef1" ? Object.assign({}, p, { mk, m: p.m + 1 }) : p);
+  const data = C.mergeStudio(d, d);
+  const built = P.build(data, "pabcdef1", keys, { words: { markers: "Σημάδια" } });
+  assert.deepEqual(built.content.project.mk, [{ id: "kaaaaaa0001", t: 0, n: "Intro" }, { id: "kbbbbbb0002", t: 754.5, n: "Second" }]);
+  assert.match(built.tracksTxt, /Σημάδια:\n   0:00\.000  Intro\n   12:34\.500  Second\n/);
+  // through a real bundle and back
+  const bytes = await B.write({ mime: MIME, app: "studio", schema: "studio/1", content: built.content, meta: { title: "Song" }, media: {} });
+  const back = await B.read(bytes, { mime: MIME, big: true });
+  const r = P.parse(back.content, { newId, now: 7 });
+  assert.deepEqual(r.project.mk.map((x) => [x.t, x.n]), [[0, "Intro"], [754.5, "Second"]]);
+  r.project.mk.forEach((x) => { assert.match(x.id, /^k[a-z0-9]{6,20}$/); assert.ok(!mk.some((o) => o.id === x.id), "fresh id"); });
+  // the project keeps them through core.js and the podcast reader
+  const merged = C.mergeStudio(sample(), Object.assign(C.emptyData(), { projects: [r.project], tracks: r.tracks, sources: r.sources, clips: r.clips }));
+  assert.deepEqual(POD.normMarkers(C.find(merged, "projects", r.project.id).mk).map((x) => x.n), ["Intro", "Second"]);
+});
+
+test("markers: none in old files or projects, hostile values cut down, at most 50", () => {
+  const song = P.build(sample(), "pabcdef1", keys, {});
+  assert.equal("mk" in song.content.project, false, "no markers, no field (older readers see the same bytes)");
+  assert.doesNotMatch(song.tracksTxt, /Markers/);
+  assert.equal(P.parse(JSON.parse(JSON.stringify(song.content)), { newId, now: 1 }).project.mk, undefined);
+  const evil = JSON.parse(JSON.stringify(song.content));
+  evil.project.mk = [
+    { id: "kgood00001", t: 30, n: "<script>alert(1)</script>" + "x".repeat(100) },
+    { id: "kgood00001", t: 40, n: "a second marker with the same id is dropped" },
+    { id: "../evil", t: 5, n: "bad id" },
+    { id: "knan000001", t: NaN, n: "nan" },
+    { id: "kneg000001", t: -50, n: "negative" },
+    { id: "kfar000001", t: 1e12, n: "far" },
+    "junk", null, 7
+  ].concat(Array.from({ length: 80 }, (_, i) => ({ id: "kmany" + String(i).padStart(5, "0"), t: 100 + i, n: "m" + i })));
+  const r = P.parse(evil, { newId, now: 1 });
+  assert.equal(r.project.mk.length, POD.LIM.markers);
+  assert.equal(POD.LIM.markers, 50);
+  assert.deepEqual(r.project.mk.slice(0, 3).map((x) => x.t), [0, 30, 100]);   // negative → 0, dup and bad ids dropped
+  assert.equal(r.project.mk[1].n.length, POD.LIM.mark);
+  assert.ok(r.project.mk.every((x) => x.t >= 0 && x.t <= POD.LIM.dur && typeof x.n === "string"));
+  assert.ok(!r.project.mk.some((x) => x.n === "far"), "past the cap it never reaches the first 50");
+  const notArray = JSON.parse(JSON.stringify(song.content));
+  notArray.project.mk = { 0: { id: "kgood00001", t: 1, n: "x" } };
+  assert.equal(P.parse(notArray, { newId, now: 1 }).project.mk, undefined);
 });

@@ -588,6 +588,39 @@ export const TOOLS = [
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
   },
+  // ST-IMP (Chris 2026-11-21, dogfooding the podcast «Πλανόδιο»): a
+  // project file Claude made opens in Studio or Montage as a NEW project.
+  // Each is edit_in_app's create (importCall below), so the owner's
+  // switch, the screen hold, the notice and Undo are edit_in_app's own.
+  // Nothing is ever published: that stays the owner's own button.
+  {
+    name: "studio_import",
+    description: "Opens a .orosstudio project file from Claude's folders on the orOS disk in Studio as a NEW song or podcast project (tracks, clips, effects, markers and its audio), the same as the owner's Import. First bring the file in with files_upload and files_write (or write it with files_write), then pass its path. Nothing that exists changes; the owner is notified and can undo it (undo_change, or Undo in Studio), like every edit_in_app change, and it needs the owner's write switch for Studio. It never publishes anything: no feed, no episode, no upload; publishing stays the owner's own button. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The .orosstudio file on the orOS disk, as files_write or files_list gave it (an /internal/ path, e.g. \"/internal/Claude/Planodio/Planodio-protypo.orosstudio\")." },
+        title: { type: "string", description: "A name for the new project; the file's own name when left out." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  {
+    name: "montage_import",
+    description: "Opens a .orosmontage project file from Claude's folders on the orOS disk in Montage as a NEW video project (its clips, titles and media), the same as the owner's Import. First bring the file in with files_upload and files_write (or write it with files_write), then pass its path. Nothing that exists changes; the owner is notified and can undo it (undo_change, or Undo in Montage), like every edit_in_app change, and it needs the owner's write switch for Montage. It never publishes or exports anything; that stays the owner's own button. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The .orosmontage file on the orOS disk, as files_write or files_list gave it (an /internal/ path)." },
+        title: { type: "string", description: "A name for the new project; the file's own name when left out." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
   // GL-7 (Chris 2026-11-21 «Πρέπει να βρούμε λύσεις»): a computer left with
   // an old orOS no longer needs the owner at it.
   {
@@ -626,6 +659,25 @@ export const TOOLS = [
   }
 ];
 const TOOL_NAMES = TOOLS.map((t) => t.name);
+// ST-IMP: studio_import / montage_import → edit_in_app's create, which the
+// device checks again (studio|montage commands.js: an /internal/ path of
+// the app's own file type, the only command, designs new). → the call to
+// run, or { err } (for Claude), or null for any other tool.
+export const IMPORT_TOOLS = { studio_import: { app: "studio", ext: ".orosstudio" }, montage_import: { app: "montage", ext: ".orosmontage" } };
+export function importCall(p) {
+  const imp = p && Object.prototype.hasOwnProperty.call(IMPORT_TOOLS, p.name) ? IMPORT_TOOLS[p.name] : null;
+  if (!imp) return null;
+  const a = p.arguments && typeof p.arguments === "object" && !Array.isArray(p.arguments) ? p.arguments : {};
+  const path = typeof a.path === "string" ? a.path.trim() : "";
+  if (!path || path.length > 500 || path.indexOf("/internal/") !== 0 || !path.toLowerCase().endsWith(imp.ext) ||
+      path.split("/").some((x) => x === "." || x === "..") || /[\\\u0000-\u001f\u007f]/.test(path)) {
+    return { err: p.name + " needs path: the " + imp.ext + " file's /internal/ path on the orOS disk (files_upload, then files_write, gives it). Nothing was opened." };
+  }
+  if (a.title !== undefined && typeof a.title !== "string") return { err: p.name + "'s title must be text. Nothing was opened." };
+  const step = { op: "create", from: path };
+  if (a.title) step.title = String(a.title).slice(0, imp.app === "studio" ? 40 : 80);
+  return { name: "edit_in_app", arguments: { app: imp.app, designs: "new", steps: [step] } };
+}
 export const META_TOOLS = ["gate_tools", "gate_call"];
 // GL-5: gate_tools' answer from the list as it is now
 export function gateToolsText(list, name) {
@@ -2549,6 +2601,10 @@ export class GateBox {
       const n = this.askUpdate(null);
       return jsonRes(200, rpcOk(id, toolText(n ? "Asked " + n + " open orOS to update now. The orOS desktop app on a computer downloads the newest orOS and switches to it within a few minutes (its launcher 0.9.5 or newer); every orOS reloads by itself when the new version is in. Nothing in the owner's data changes. Check with list_apps in about five minutes." : "No orOS is open right now, so none could be asked. An orOS updates itself when it next starts.", !n)));
     }
+    // ST-IMP: studio_import / montage_import run as edit_in_app's create
+    const imp = importCall(p);
+    if (imp && imp.err) return jsonRes(200, rpcOk(id, toolText(imp.err, true)));
+    if (imp) p = imp;
     if (TOOL_NAMES.indexOf(p.name) < 0 && !(await this.devTools(false)).some((t) => t.name === p.name)) {
       return jsonRes(200, rpcErr(id, -32602, "unknown tool"));
     }

@@ -110,7 +110,7 @@
       align: oneOf(["", "l", "c", "r", "j"]), bold: ONOFF, fill: { t: "color" }, shape: oneOf([""].concat(SHAPES)), icon: { t: "str", max: 60 }, anim: oneOf(["", "none"].concat(ANIMS)) } },
     brand: { kind: "doc", args: { fonts: { t: "bool", def: 1 }, palette: { t: "bool", def: 1 } } },
     resize: { kind: "size", args: { sizes: { t: "list", of: SIZE, min: 1, max: 12 }, copies: { t: "bool", def: 1 } } },
-    export: { kind: "out", args: { fmt: { t: "enum", v: ["png", "jpg", "pdf"], def: "png" }, scale: { t: "enum", v: [1, 2, 3], def: 1 }, dpi: { t: "enum", v: [150, 300], def: 300 } } },
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["png", "jpg", "pdf"], def: "png" }, scale: { t: "enum", v: [1, 2, 3], def: 1 }, dpi: { t: "enum", v: [150, 300], def: 300 }, out: { t: "str", max: 1030 } } },
     create: { kind: "new", args: { title: { t: "str", max: 120 }, w: { t: "num", lo: 1, hi: 20000, def: 1080, req: 1 }, h: { t: "num", lo: 1, hi: 20000, def: 1080, req: 1 },
       u: { t: "enum", v: ["px", "mm"], def: "px" }, n: { t: "int", lo: 1, hi: 100, def: 1 }, fill: { t: "color" } } }
   };
@@ -146,7 +146,7 @@
     "add: a new element on page `page` (1 = first): what text (needs text; font, size, c, align l|c|r|j, bold) | shape (shape, fill) | icon (icon = a word for it, like heart, phone, star; c) | line (c); x, y, w, h in the design's unit (left out: centred, a sensible size); anim",
     "brand: use the user's brand kit: fonts (titles get the heading font, the rest the body font) and palette (the design's main colours become the kit's colours, white and black stay); false skips one",
     "resize: new sizes: sizes [{w, h, u px|mm}] (1-12); copies true (the default) keeps the design and makes a copy per size, and the commands after it change the copies; copies false changes the design itself to the first size",
-    "export: download the designs as files: fmt png|jpg|pdf, scale 1|2|3 (png, jpg), dpi 150|300 (pdf); the user saves them",
+    "export: the designs as files: fmt png|jpg|pdf, scale 1|2|3 (png, jpg), dpi 150|300 (pdf); with out (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Designs with Files at «may change») they are saved there (never over a file) and the answer lists them, else the user saves them",
     "create: a new design (only as the first command, with designs new): title, w, h, u px|mm, n pages (1-100), fill (background colour); the commands after it fill it in (add, bg, pagetime…)"
   ].join("\n");
 

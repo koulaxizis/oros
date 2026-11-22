@@ -3000,6 +3000,55 @@
     if (/^local:/i.test(p)) return p.length <= 1030 && !/(^|[\/\\])\.\.([\/\\]|$)/.test(p) && !/[\u0000-\u001f]/.test(p) ? p.replace(/[\/\\]+$/, "") : "";
     return p.indexOf("/internal/") === 0 && !/(^|\/)\.\.(\/|$)/.test(p) && p.length <= 400 ? p : "";
   }
+  // GX-1 (Chris 2026-11-21 «εξαγωγή σε τοπικό φάκελο ή/και orOS Files»,
+  // then «για όλα τα apps που έχουν exports»): every export tool takes
+  // out, one or two places the file also goes: a local write folder the
+  // owner opened (local:<root>/<folder>) and/or a folder of Claude's on
+  // the orOS disk (Files at «may change»; e.g. "Drive/Books/Proofs").
+  // The device checks both again when it writes; nothing is replaced.
+  var OUT_DESC = "Also save the file in: a local write folder the owner opened for Claude (local:<root>/<folder>), and/or a folder of Claude's on the orOS disk " +
+    "(e.g. \"Drive/Books/Proofs\"; Files must be at «Claude may also change»). A list of one or two places. Missing folders are made; nothing is overwritten (a taken name gets -2, -3). " +
+    "The answer's saved lists the paths (files_link or files_read take the orOS ones).";
+  var OUT_SCHEMA = { type: "array", items: { type: "string" }, maxItems: 2, description: OUT_DESC };
+  var OUT_ERR = "out is a local write folder the owner opened for Claude (local:<root>/<folder>) or a folder of Claude's on the orOS disk (e.g. Drive/Books/Proofs), or a list of the two.";
+  function outPlace(v) {
+    var p = typeof v === "string" ? v.normalize("NFC").replace(/\s+/g, " ").trim().replace(/\s*›\s*/g, "/").replace(/\\/g, "/").replace(/\/+$/, "") : "";
+    if (!p) return "";
+    if (/^local:/i.test(p)) return diskPath(p);
+    if (p.indexOf("/internal/") !== 0) p = "/internal/" + p.replace(/^\/+/, "");
+    if (p.length > 400 || /[\u0000-\u001f]/.test(p)) return "";
+    var segs = p.slice(10).split("/");
+    for (var i = 0; i < segs.length; i++) if (!segs[i] || segs[i] === "." || segs[i] === ".." || segs[i].charAt(0) === ".") return "";
+    return p.replace(/\/+/g, "/");
+  }
+  // args.out → { ok, list } | { ok: false, err }
+  function normOut(v) {
+    if (v === undefined || v === null || v === "" || (Array.isArray(v) && !v.length)) return { ok: true, list: [] };
+    var raw = Array.isArray(v) ? v : [v];
+    if (raw.length > 2) return { ok: false, err: OUT_ERR };
+    var list = [];
+    for (var i = 0; i < raw.length; i++) {
+      var o = outPlace(raw[i]);
+      if (!o) return { ok: false, err: OUT_ERR };
+      if (list.indexOf(o) < 0) list.push(o);
+    }
+    return { ok: true, list: list };
+  }
+  var OUT_WHY = /^(noBridge|gateOff|locked|notAllowed|paused|outside|badName|noDisk|nameTaken|notAllowedRoot|badPath|bridgePaused|needsReconnect|notThere|notFolder|timeout|error)$/;
+  var OUT_SAY = { gateOff: "orOS Gate is off", locked: "orOS is locked", notAllowed: "Files is not at «Claude may also change»", paused: "the owner paused Claude's changes",
+                  outside: "that folder is not one of Claude's folders", noDisk: "the orOS disk is not reachable", nameTaken: "no free name was left",
+                  noBridge: "no local folder is open on this device", notAllowedRoot: "that is not a local write folder the owner opened for Claude" };
+  // the app's { saved, outFail } → the model's saved / save_failed
+  function outReport(rep, o) {
+    var saved = (Array.isArray(rep.saved) ? rep.saved : []).filter(function (x) { return typeof x === "string" && x.length <= 1100 && !/[\u0000-\u001f]/.test(x); }).slice(0, 4);
+    if (saved.length) o.saved = saved;
+    var bad = (Array.isArray(rep.outFail) ? rep.outFail : []).filter(isObj).slice(0, 4).map(function (f) {
+      var why = typeof f.why === "string" && OUT_WHY.test(f.why) ? f.why : "error";
+      return { to: hsStr(f.to, 1100), why: why, means: OUT_SAY[why] || "the file could not be saved there" };
+    });
+    if (bad.length) o.save_failed = bad;
+    return o;
+  }
   function findFile(list, want) {
     want = String(want || "").replace(/\s+/g, " ").trim().toLowerCase();
     if (!want) return null;
@@ -3357,7 +3406,8 @@
         title: { type: "string", description: "The Publishing title whose linked Layout document to use (Document setup › Publishing title in Layout), instead of document." },
         edition: { type: "string", description: "The name of the document's EPUB edition when it has more than one; left out: its first EPUB edition." },
         layout: { type: "string", "enum": EP_LAYOUTS, description: "Override the edition's layout for this export; left out: as the edition says." },
-        mark_ready: { type: "boolean", description: "true when the user also wants it marked ready on the title's e-book format in Publishing (only done when the check finds no errors)." }
+        mark_ready: { type: "boolean", description: "true when the user also wants it marked ready on the title's e-book format in Publishing (only done when the check finds no errors)." },
+        out: OUT_SCHEMA
       }
     }
   };
@@ -3367,7 +3417,9 @@
     var doc = hsStr(a.document, EP_NAME), title = hsStr(a.title, EP_NAME), ed = hsStr(a.edition, 60);
     if (!doc && !title) return { ok: false, err: "Give the Layout document's name (document) or its Publishing title (title)." };
     if (a.layout !== undefined && a.layout !== null && a.layout !== "" && EP_LAYOUTS.indexOf(a.layout) < 0) return { ok: false, err: "layout is reflowable, fixed or pictures." };
-    return { ok: true, doc: doc, title: doc ? "" : title, edition: ed, layout: EP_LAYOUTS.indexOf(a.layout) >= 0 ? a.layout : "", ready: a.mark_ready === true ? 1 : 0 };
+    var out = normOut(a.out);
+    if (!out.ok) return out;
+    return { ok: true, doc: doc, title: doc ? "" : title, edition: ed, layout: EP_LAYOUTS.indexOf(a.layout) >= 0 ? a.layout : "", ready: a.mark_ready === true ? 1 : 0, out: out.list };
   }
   var EP_CODE = /^[a-z][a-z0-9-]{0,19}$/, EP_PATH = /^\/internal\/Layout\/EPUB\/[^\/]{1,200}\.epub$/;
   // Layout's report → what the model gets (numbers and codes only).
@@ -3396,7 +3448,7 @@
     if (rep.fontsMissing) o.fontsMissing = n(rep.fontsMissing);
     if (rep.fontsObfuscated) o.fontsObfuscated = n(rep.fontsObfuscated);
     if (/^(yes|errors|noFormat|noDisk)$/.test(rep.ready || "")) o.markedReady = rep.ready;
-    return o;
+    return outReport(rep, o);
   }
 
   // export_pdf (LY-PRO W1, item 31): a print PDF of a Layout document,
@@ -3424,7 +3476,7 @@
         spreads: { type: "boolean", description: "Facing pages side by side (default false: single pages, as printers want)." },
         downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." },
         creep: { type: "number", description: "Creep for a saddle-stitched book in mm, 0-5 (default 0): the innermost pages' content moves this far towards the spine, the outer ones less." },
-        out: { type: "string", description: "Also save the PDF in a local write folder the owner opened for Claude: local:<root>/<folder> (files_list without path lists them; a taken name gets -2, -3). Temporary." }
+        out: OUT_SCHEMA
       }
     }
   };
@@ -3448,8 +3500,9 @@
     var bleed = typeof a.bleed === "boolean" ? a.bleed : preset !== "screen";
     var creep = a.creep === undefined || a.creep === null || a.creep === "" ? 0 : Number(a.creep);
     if (!isFinite(creep) || creep < 0 || creep > 5) return { ok: false, err: "creep is 0-5 (mm)." };
-    var out = a.out == null || a.out === "" ? "" : diskPath(a.out);
-    if (out && !/^local:/i.test(out) || a.out && !out) return { ok: false, err: "out is a local write folder the owner opened for Claude: local:<root>/<folder>." };
+    var out = normOut(a.out);
+    if (!out.ok) return out;
+    out = out.list;
     return { ok: true, doc: doc, preset: preset, pages: pages === "all" ? "" : pages, bleed: bleed ? 1 : 0, marks: marks,
              spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, out: out };
   }
@@ -3473,9 +3526,7 @@
     });
     o.preflight = { errors: pf.filter(function (p) { return p.severity === "error"; }).length, warnings: pf.filter(function (p) { return p.severity === "warning"; }).length, problems: pf };
     if (rep.down) o.pictures_downsampled = Math.floor(n(rep.down));
-    if (typeof rep.local === "string" && /^local:[^\u0000-\u001f]{1,1100}$/.test(rep.local)) o.local_copy = rep.local;
-    if (typeof rep.localWhy === "string" && PF_CODE.test(rep.localWhy)) o.local_copy_failed = rep.localWhy;
-    return o;
+    return outReport(rep, o);
   }
 
   // The tools phase 1 offered (searching only); kept for the tests.
@@ -5174,7 +5225,7 @@ normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: r
         normAutomation: normAutomation, normRule: normRule, TOOL_RULE: TOOL_RULE, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
-    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
+    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, normOut: normOut, outReport: outReport, OUT_SCHEMA: OUT_SCHEMA, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
     DEV_MAX: DEV_MAX, DEV_FILE: DEV_FILE, DEV_TOTAL: DEV_TOTAL, DEV_PHONE: DEV_PHONE, checkDev: checkDev
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

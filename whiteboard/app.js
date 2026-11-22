@@ -2540,6 +2540,11 @@
     pid: function () { return board; },
     busy: function () { return !!gesture || !!editing; },
     open: function (id) { if (C.board(data, id)) openBoard(id); },
+    // GX-3: the open board as a file, as Export makes it → { name, blob } | null
+    exportAs: function (fmt) {
+      if (!FMT[fmt]) return Promise.resolve(null);
+      return buildExport(fmt, "all", true).then(function (x) { return x ? { name: x.name, blob: x.blob } : null; });
+    },
     // next = the whole data; withUndo = the open board changed (one
     // step of the board's own Undo).
     set: function (next, withUndo) {

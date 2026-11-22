@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Studio — audio file encoders (v1.1.0)
+// orOS Studio — audio file encoders (v1.2.0; MP3 also streams a long mix in parts)
 // Pure code, no DOM: what Export writes besides WAV.
 //   - MP3: an MPEG-1 Layer III encoder written for orOS (CBR 128, 192
 //     or 320 kbit/s, 44.1 or 48 kHz, mono or stereo). Long blocks only,
@@ -345,23 +345,33 @@
   // ---------- MP3: the encoder ----------
   // channels: Float32Arrays (1 or 2) of samples in -1..1. step(n) encodes up to
   // n more frames and returns true when every frame is written; bytes() is the file.
+  // Streaming (a long mix arriving in parts, so it is never whole in memory):
+  // channels = null, opts.channels (1|2) and opts.samples (the total per
+  // channel) up front; push(chans) adds the next part, step() encodes what
+  // has arrived. The bytes are exactly those of the whole-buffer encoder.
   function Mp3Encoder(channels, rate, kbps, opts) {
     opts = opts || {};
     if (MP3_RATES[rate] == null || MP3_KBPS.indexOf(kbps) <= 0) throw new Error("mp3: unsupported rate or bitrate");
-    this.ch = channels.length > 1 ? 2 : 1;
+    var stream = !channels;
+    if (stream && !(opts.samples >= 0 && opts.samples <= 0x7fffffff)) throw new Error("mp3: samples needed");
+    this.ch = (stream ? opts.channels : channels.length) > 1 ? 2 : 1;
     this.rate = rate; this.kbps = kbps;
     this.sfb = SFB_L[MP3_RATES[rate]];
     // lines above the cut-off carry little anyone hears and cost many bits
     this.lowpass = kbps >= 256 ? 20000 : kbps >= 160 ? 19000 : kbps >= 112 ? 16500 : 12000;
     this.cut = Math.min(576, Math.ceil(this.lowpass / (rate / 1152)));
-    var n = channels[0] ? channels[0].length : 0;
+    var n = stream ? Math.floor(opts.samples) : channels[0] ? channels[0].length : 0;
+    this.n = n;
     this.frames = Math.ceil((n + 576) / 1152) + 1;        // the filter delay plays out in the last frame
     this.pcm = [];
+    this.base = 0;                                        // the sample pcm[c][0] stands for
+    this.have = stream ? 0 : this.frames * 1152;          // samples that have arrived (padding included once all have)
     for (var c = 0; c < this.ch; c++) {
-      var p = new Float32Array(this.frames * 1152);
-      p.set(channels[c].subarray(0, n));
+      var p = new Float32Array(stream ? 0 : this.frames * 1152);
+      if (!stream) p.set(channels[c].subarray(0, n));
       this.pcm.push(p);
     }
+    if (stream && !n) { this.have = this.frames * 1152; this.pcm = this.pcm.map(function () { return new Float32Array(this.have); }, this); }
     this.an = [new Analysis(), new Analysis()];
     this.done = 0;
     var tag = opts.tags ? id3v24(Object.assign({ title: opts.title || "", tool: "orOS Studio" }, opts.tags)) : id3Tag(opts.title || "", "orOS Studio");
@@ -373,10 +383,25 @@
     this.out.set(info, tag.length);
     this.pos = tag.length + info.length;
   }
+  Mp3Encoder.prototype.push = function (chans) {
+    var add = chans[0].length, total = this.frames * 1152, from = this.done * 1152, ch = this.ch;
+    if (this.have >= total) throw new Error("mp3: more samples than announced");
+    if (this.have + add > this.n) throw new Error("mp3: more samples than announced");
+    var keep = this.have - from, last = this.have + add >= this.n, len = keep + add + (last ? total - this.n : 0);
+    for (var c = 0; c < ch; c++) {
+      var p = new Float32Array(len);
+      p.set(this.pcm[c].subarray(from - this.base, this.have - this.base));
+      p.set(chans[Math.min(c, chans.length - 1)].subarray(0, add), keep);
+      this.pcm[c] = p;
+    }
+    this.base = from;
+    this.have = last ? total : this.have + add;
+  };
   Mp3Encoder.prototype.step = function (maxFrames) {
-    var end = Math.min(this.frames, this.done + (maxFrames || 1)), xr = new Float64Array(576);
+    var ready = Math.floor(this.have / 1152);
+    var end = Math.min(this.frames, ready, this.done + (maxFrames || 1)), xr = new Float64Array(576);
     for (var f = this.done; f < end; f++) this.frame(f, xr);
-    this.done = end;
+    this.done = Math.max(this.done, end);
     return this.done >= this.frames;
   };
   Mp3Encoder.prototype.progress = function () { return this.frames ? this.done / this.frames : 1; };
@@ -388,7 +413,7 @@
     for (gr = 0; gr < 2; gr++) {
       g[gr] = [];
       for (c = 0; c < ch; c++) {
-        this.an[c].granule(this.pcm[c], f * 1152 + gr * 576, xr);
+        this.an[c].granule(this.pcm[c], f * 1152 + gr * 576 - this.base, xr);
         var budget = Math.min(4095, Math.floor(left / units));
         for (var z = Math.max(0, this.cut - 16); z < 576; z++) xr[z] *= z >= this.cut ? 0 : (this.cut - z) / 17;
         var q = quantise(xr, this.sfb, budget);

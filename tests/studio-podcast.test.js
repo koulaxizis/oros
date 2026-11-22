@@ -13,7 +13,7 @@ const FEEDS = require("../feeds/core.js");
 const SHOW = {
   id: "hshow0001", m: 5, title: "Ιστορίες της γειτονιάς", author: "Chris & co", desc: "Μια εκπομπή <για> όλους.\n\nΔεύτερη παράγραφος.",
   lang: "el", cat: "Society & Culture", sub: "Documentary", explicit: false, type: "episodic",
-  url: "https://chris.github.io/geitonia", email: "me@example.com", fund: "https://ko-fi.com/me",
+  url: "https://chris.github.io/geitonia", email: "me@example.com", fund: "https://example.org/support",
   cover: "/internal/Studio/Podcasts/hshow0001/cover.jpg"
 };
 function proj(id, m, x) {
@@ -69,7 +69,7 @@ test("P1: episodes and markers are bounded and ordered", () => {
   assert.ok(!list.some((x) => x.n === "dup"), "the first of two equal ids wins");
   const ep = P.normEp({ n: 3.5, se: 200, type: "x", date: -1, kbps: 100, ch: 3, file: "/internal/Studio/Podcasts/hshow0001/../x.mp3", bytes: 9, dur: 9 });
   assert.deepEqual([ep.n, ep.se, ep.type, ep.date, ep.kbps, ep.ch, ep.file, ep.bytes, ep.dur], [0, 99, "full", 0, 96, 1, "", 0, 0]);
-  const ok = P.normEp({ file: "/internal/Studio/Podcasts/hshow0001/001-a.mp3", bytes: 9, dur: 4000 });
+  const ok = P.normEp({ file: "/internal/Studio/Podcasts/hshow0001/001-a.mp3", bytes: 9, dur: 40000 });
   assert.equal(ok.dur, P.LIM.dur);
   assert.equal(P.addMarker([], 12.3456, "kmark0001", "Intro")[0].t, 12.346);
   const two = P.addMarker(P.addMarker([], 30, "kmark0002", "B"), 10, "kmark0001", "A");
@@ -146,7 +146,7 @@ test("P1: the feed is valid RSS that the Podcasts app reads back", () => {
   assert.equal(f.show.lang, "el");
   assert.equal(f.show.img, "https://chris.github.io/geitonia/cover.jpg");
   assert.deepEqual(f.show.cats, ["Society & Culture", "Documentary"]);
-  assert.equal(f.show.funding[0].url, "https://ko-fi.com/me");
+  assert.equal(f.show.funding[0].url, "https://example.org/support");
   assert.equal(f.eps.length, 2);
   const [e2, e1] = f.eps;
   assert.equal(e2.title, "Επεισόδιο 2");
@@ -172,7 +172,7 @@ test("P1: the show's page has no script and nothing from outside", () => {
   assert.ok(!/<script/i.test(html), "no script tag");
   assert.ok(html.includes("&lt;script&gt;"));
   assert.ok(html.includes('<meta http-equiv="Content-Security-Policy" content="' + P.PAGE_CSP + '">'));
-  assert.ok(!/(src|href)="(https?:)?\/\/(?!ko-fi\.com)/.test(html), "only the support link leaves the site");
+  assert.ok(!/(src|href)="(https?:)?\/\/(?!example\.org\/support")/.test(html), "only the support link leaves the site");
   assert.ok(html.includes('<audio controls preload="none" src="episodes/001-epeisodio-1.mp3">'));
   assert.ok(html.includes('<html lang="el">'));
   assert.ok(html.includes("Επεισόδιο 1 · 2026-11-01 · 10:01"));
@@ -252,4 +252,20 @@ test("P1: shows and episode fields survive the Studio merge (wave A0)", () => {
   const kept = C.mergeStudio(Object.assign(C.emptyData(), { projects: [big] }), C.emptyData()).projects[0];
   assert.deepEqual(kept.ep, big.ep, "the episode fields ride along whole");
   assert.deepEqual(kept.mk, big.mk);
+});
+
+test("a file for another host: the description to paste (notes, chapters as time stamps, credits)", () => {
+  assert.equal(P.hostStamp(0), "00:00");
+  assert.equal(P.hostStamp(754.9), "12:34");
+  assert.equal(P.hostStamp(3723), "1:02:03");
+  assert.equal(P.hostStamp(-5), "00:00");
+  const p = { id: "pplanod01", name: "Πλανόδιο 44" };
+  const ep = P.normEp({ n: 44, title: "Πλανόδιο 44", desc: "Μια κουβέντα στον δρόμο.\r\n\r\nΜε τον Χρήστο.", dur: 7200 });
+  const mk = [{ id: "kmark00002", t: 754.5, n: "Δεύτερο" }, { id: "kmark00003", t: 3723, n: "Μετά την ώρα" },
+              { id: "kmark00004", t: 3723.4, n: "Ίδιο δευτερόλεπτο (μισό δευτ. μετά: ήδη έξω)" }, { id: "kmark00005", t: 7300, n: "Μετά το τέλος" }];
+  const txt = P.hostNotes({ p, ep, mk }, { dur: 7200, intro: "Εισαγωγή", credits: "Credits:\n- Ήχος δρόμου, CC0", words: { chapters: "Κεφάλαια" } });
+  assert.equal(txt, "Μια κουβέντα στον δρόμο.\n\nΜε τον Χρήστο.\n\nΚεφάλαια:\n00:00 Εισαγωγή\n12:34 Δεύτερο\n1:02:03 Μετά την ώρα\n\nCredits:\n- Ήχος δρόμου, CC0\n");
+  // nothing but the chapters; and nothing at all
+  assert.equal(P.hostNotes({ p, ep: P.normEp({ dur: 60 }), mk: [{ id: "kmark00009", t: 0, n: "Α\u0000<b>" }] }, { dur: 60 }), "Chapters:\n00:00 Α <b>\n");
+  assert.equal(P.hostNotes({ p, ep: P.normEp({}), mk: [] }, {}), "");
 });

@@ -13,6 +13,7 @@
 //   removeShow(id), newId(kind), playhead(), seek(t), renderMix(r, rate),
 //   mixRange() → { a, b } | null, mixProblem() → "" | toast key,
 //   fs(), dialog(), saveFile(blob, name, mime, desc, ext) → Promise<bool>,
+//   credits() → the credits text of the open project (licence cards), mixParts, mixLen,
 //   toast(text), showDlg(id), hideDlg(id), radioChips(...), shellOpen(app, target),
 //   encoder (StudioEncode)
 // Text goes onto the page with textContent only.
@@ -244,6 +245,7 @@
       $("pod-ep-file").textContent = ep.file ? t("pod.fileReady", { d: P.fmtDur(ep.dur), s: mb(ep.bytes) }) + (P.stale(e) ? " " + t("pod.stale") : "") : t("pod.fileNone");
       $("pod-ep-go").textContent = ep.file ? t("pod.remake") : t("pod.make");
       $("pod-ep-tr").disabled = !ep.file;
+      $("pod-ep-host").disabled = !ep.file;
       trState(s, ep);
       status("pod-ep-err", "");
     }
@@ -296,25 +298,32 @@
       var path = P.epPath(s.id, ep.slug), mk = P.normMarkers(p.mk);
       busy = true; setBusy();
       status("pod-ep-err", t("export.busy"));
-      var rate = 44100;
-      H.renderMix(r, rate).then(function (chans) {
-        var dur = chans[0].length / rate;
-        var pcm = ep.ch === 1 ? [mono(chans)] : chans;
-        return coverBytes(s).then(function (cover) {
-          var e = { p: p, ep: ep, mk: mk };
-          var tags = P.id3Tags(s, e, { dur: dur, intro: t("pod.intro"), untitled: t("pod.untitledEp"), cover: cover, lang3: LANG3[s.lang.slice(0, 2)] || "", tool: "orOS Studio" });
-          var opts = E.id3v24 ? { title: tags.title, tags: tags } : { title: tags.title };
-          var enc = new E.Mp3Encoder(pcm, rate, ep.kbps, opts);
+      var rate = 44100, total = H.mixLen(r, rate), dur = total / rate, enc = null;
+      // the mix arrives in parts (five-minute parts past an hour) and each is
+      // encoded as it comes, so a three-hour episode is never whole in memory
+      coverBytes(s).then(function (cover) {
+        var e = { p: p, ep: ep, mk: mk };
+        var tags = P.id3Tags(s, e, { dur: dur, intro: t("pod.intro"), untitled: t("pod.untitledEp"), cover: cover, lang3: LANG3[s.lang.slice(0, 2)] || "", tool: "orOS Studio" });
+        var opts = E.id3v24 ? { title: tags.title, tags: tags } : { title: tags.title };
+        enc = new E.Mp3Encoder(null, rate, ep.kbps, Object.assign(opts, { channels: ep.ch === 1 ? 1 : 2, samples: total }));
+        var drain = function () {
           return new Promise(function (res, rej) {
             var step = function () {
               try {
-                if (enc.step(60)) { res(enc.bytes()); return; }
+                var before = enc.done, end = enc.step(60);
+                if (end || enc.done === before) { res(); return; }
               } catch (err) { rej(err); return; }
               status("pod-ep-err", t("export.encoding", { n: Math.floor(enc.progress() * 100) }));
               setTimeout(step, 0);
             };
             setTimeout(step, 0);
-          }).then(function (bytes) {
+          });
+        };
+        return H.mixParts(r, rate, function (chans) {
+          enc.push(ep.ch === 1 ? [mono(chans)] : chans);
+          return drain();
+        }, function (i, n) { status("pod-ep-err", t("export.part", { i: i, n: n })); }).then(drain).then(function () {
+          return Promise.resolve(enc.bytes()).then(function (bytes) {
             var blob = new Blob([bytes], { type: "audio/mpeg" });
             return Promise.resolve(fs.mkdir(P.DIR)).then(function () { return fs.mkdir(P.showDir(s.id)); })
               .then(function () { return fs.writeBlob(path, blob); })
@@ -742,6 +751,40 @@
       renderDav();
     }
 
+    // ---------- a file for another host: the episode's MP3 + a description to paste ----------
+    // The show stays on its own host (Spotify for Creators and the like): no
+    // feed, no site. The MP3 is the one "Make the episode file" wrote (tags,
+    // cover, chapters); the notes are podcast.js hostNotes.
+    var host = { file: "", name: "" };
+    function hostOpen() {
+      var s = show(), p = proj(), ep = curEp();
+      if (!s || !p || !ep || !ep.file) return;
+      var e = { p: p, ep: ep, mk: P.normMarkers(p.mk) };
+      host = { file: ep.file, name: (ep.slug || "episode") };
+      $("host-file").textContent = P.epTitle(e, t("pod.untitledEp")) + " · " + t("pod.fileReady", { d: P.fmtDur(ep.dur), s: mb(ep.bytes) });
+      status("host-status", P.stale(e) ? t("pod.stale") : "");
+      $("host-text").value = P.hostNotes(e, { dur: ep.dur, intro: t("pod.intro"), credits: H.credits ? H.credits() : "", words: { chapters: t("host.chapters") } });
+      H.showDlg("host-dlg");
+    }
+    function hostMp3() {
+      var fs = H.fs();
+      if (!fs || !host.file) return;
+      readMaybe(fs, host.file).then(function (b) {
+        if (!b) { status("host-status", t("tr.gone")); return; }
+        return H.saveFile(new Blob([b], { type: "audio/mpeg" }), host.name + ".mp3", "audio/mpeg", "MP3", ".mp3");
+      });
+    }
+    function hostTxt() {
+      var txt = $("host-text").value;
+      if (txt) H.saveFile(new Blob([txt], { type: "text/plain" }), host.name + ".txt", "text/plain", "Text", ".txt");
+    }
+    function hostCopy() {
+      var txt = $("host-text").value, done = function () { H.toast(t("cr.copied")); };
+      var fallback = function () { var a = $("host-text"); a.focus(); a.select(); try { if (document.execCommand("copy")) done(); } catch (e) { /* nothing */ } };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, fallback);
+      else fallback();
+    }
+
     // ---------- the transcript (P3): on request, Whisper on this device, edited, then on the site ----------
     function readMaybe(fs, path) {
       try {
@@ -989,6 +1032,11 @@
       $("pod-dav-forget").addEventListener("click", forgetDavPass);
       $("pod-dav-share").addEventListener("input", renderDav);
       $("pod-ep-tr").addEventListener("click", trOpen);
+      $("pod-ep-host").addEventListener("click", hostOpen);
+      $("host-mp3").addEventListener("click", hostMp3);
+      $("host-txt").addEventListener("click", hostTxt);
+      $("host-copy").addEventListener("click", hostCopy);
+      $("host-close").addEventListener("click", function () { H.hideDlg("host-dlg"); });
       $("tr-make").addEventListener("click", trMake);
       $("tr-stop").addEventListener("click", trStop);
       $("tr-save").addEventListener("click", trSave);

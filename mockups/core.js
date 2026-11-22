@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Mockups — core.js (MockCore, v1.3.0)
+// orOS Mockups — core.js (MockCore, v1.6.0)
 // Pure model of the Mockups app. No DOM, no three.js: Node-tested
 // in tests/mockups.test.js.
 //   - book sizes in mm: trim presets, paper presets, spine width
@@ -30,6 +30,23 @@
 //     its inside spread (openCurve(): the arched pages, dipping into
 //     the gutter) or the e-book on a tablet, phone or e-reader
 //     (device(): body and screen in mm)
+//   - bindings (v1.4.0): paperback, hardcover, saddle-stitched
+//     (folded and stapled, no spine), spiral / wire-o (two loose
+//     covers and a coil), board book (thick board pages) and lay-flat
+//     (a hardcover whose spread lies flat)
+//   - finishes (v1.5.0): foil (gold, silver, copper, rose, holographic),
+//     spot UV and emboss / deboss from mask pictures on the front,
+//     cover material (paper, linen, cloth, leather, kraft), rounded
+//     corners, deckled or printed page edges, a belly band, a
+//     slipcase, a sticker on the cover, a notebook's elastic band and
+//     ruled pages, and a box set (a shelf of books in a box)
+//   - products other than books (v1.6.0): a registry the product
+//     modules (mockups/goods/*.js) fill with addGood(kind, def); their
+//     projects live in their own store "oros-mockups-goods" (synced
+//     slice "mockups-goods"), so a device from before v1.6.0, which
+//     turns every project into a book, never sees them. A project of
+//     a product this device does not know yet is kept as it came
+//     (LWW still applies) and is not shown
 //   - the project model and its merge (synced slice "mockups")
 // Data (localStorage "oros-mockups-data"):
 //   { ver: 1, prj: [project], tombs: { id: m } }
@@ -42,9 +59,11 @@
 (function (root) {
   "use strict";
 
-  var VERSION = "1.3.0";
+  var VERSION = "1.7.0";
   var DATA_VER = 1;
   var DATA_KEY = "oros-mockups-data";
+  var GOODS_KEY = "oros-mockups-goods";
+  var GOODS_MAX_JSON = 65536;            // a project of a product not known here, kept as it came
   var PREFS_KEY = "oros-mockups-prefs";
   var MAX_PRJ = 200;
   var ID_RE = /^k[0-9a-z]{6,24}$/;
@@ -67,7 +86,16 @@
     { k: "letter", w: 215.9, h: 279.4, n: "8.5 × 11″" },
     { k: "sq21", w: 210, h: 210, n: "21 × 21" },
     { k: "kids", w: 216, h: 216, n: "8.5 × 8.5″" },
-    { k: "land", w: 279.4, h: 215.9, n: "11 × 8.5″" }
+    { k: "land", w: 279.4, h: 215.9, n: "11 × 8.5″" },
+    { k: "us525x8", w: 133.35, h: 203.2, n: "5.25 × 8″" },
+    { k: "us7x10", w: 177.8, h: 254, n: "7 × 10″" },
+    { k: "us8x10", w: 203.2, h: 254, n: "8 × 10″" },
+    { k: "comic", w: 168.3, h: 260.4, n: "6.625 × 10.25″" },
+    { k: "b6", w: 128, h: 182, n: "B6" },
+    { k: "b5", w: 176, h: 250, n: "B5" },
+    { k: "a5l", w: 210, h: 148, n: "21 × 14.8" },
+    { k: "sq20", w: 203.2, h: 203.2, n: "8 × 8″" },
+    { k: "sq25", w: 250, h: 250, n: "25 × 25" }
   ];
   // Thickness of ONE page (half a sheet), mm. White and cream follow
   // the figures print-on-demand services publish (0.002252″ and
@@ -78,22 +106,39 @@
     { k: "color", c: 0.0596 },
     { k: "coated", c: 0.05 },
     { k: "bulky", c: 0.075 },
+    { k: "board", c: 0.75 },           // board book: a 1.5 mm board per leaf
     { k: "custom", c: 0 }
   ];
-  var BINDS = ["pb", "hc"];
+  // pb paperback, hc hardcover, ss saddle-stitched, sp spiral / wire-o,
+  // bb board book, lf lay-flat (a hardcover that opens flat)
+  var BINDS = ["pb", "hc", "ss", "sp", "bb", "lf"];
+  var WIRES = ["black", "silver", "white", "gold"];
+  var SS_MAX = 96;                      // most printers staple at most ~96 pages
+  var PUNCH = 9.5;                      // spiral: holes this close to the binding edge (mm)
   var FINISH = ["matte", "gloss", "soft"];
-  var EDGES = ["white", "cream", "color"];
+  var EDGES = ["white", "cream", "color", "print"];
+  var FOILS = ["gold", "silver", "copper", "rose", "holo"];
+  var EMBS = ["emboss", "deboss"];
+  var TEXS = ["paper", "linen", "cloth", "leather", "kraft"];
+  var STICKS = ["round", "square"];
+  var RULES = ["none", "lined", "dotted", "grid"];
+  var CORNER_R = 6;                     // rounded corners, mm
   var PLACES = ["stand", "lie", "lean"];
+  var SURFS = ["none", "wood", "marble", "linen", "paper", "concrete"];   // v2 wave 9: lifestyle surfaces
+  var PROPS = ["cup", "plant", "pencil"];
   var BGS = ["none", "solid", "grad", "photo"];
   var RATIOS = ["1:1", "4:5", "3:2", "4:3", "16:9", "9:16"];
   var SIZES = [1024, 2048, 3000, 4096];
   var FMTS = ["png", "jpg", "webp"];
   var ART_MODES = ["parts", "wrap"];
-  var SLOTS = ["front", "back", "spine", "flapF", "flapB", "wrap"];
+  // cover pictures; then the finish masks (front cover: white = the
+  // effect), the printed fore-edge, the belly band, the slipcase (and
+  // box set) and the sticker
+  var SLOTS = ["front", "back", "spine", "flapF", "flapB", "wrap", "foil", "uv", "emb", "edgeP", "belly", "slip", "stick"];
   var VOL_SLOTS = ["front", "back", "spine", "wrap"];
-  var SETS = ["one", "pair", "row", "shelf", "stack"];
+  var SETS = ["one", "pair", "row", "shelf", "stack", "box"];
   var MAX_VOLS = 5;                     // books after the first one
-  var GAP_DEF = { one: 0, pair: 24, row: 14, shelf: 1, stack: 0 };
+  var GAP_DEF = { one: 0, pair: 24, row: 14, shelf: 1, stack: 0, box: 0.5 };
   var MOTIONS = ["spin", "swing"];
   var SECS = [4, 6, 8, 12];
   var VSIZES = [720, 1080];
@@ -113,7 +158,8 @@
     turn: [-180, 180], open: [0, 160], th: [-180, 180], ph: [-10, 89],
     fov: [8, 70], zoom: [0.5, 3], dx: [-1, 1], dy: [-1, 1],
     az: [-180, 180], el: [10, 85], str: [0, 2], soft: [0, 1], warm: [-1, 1],
-    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80], safe: [0, 20], curl: [0, 1], pdfp: [1, 9999]
+    shadow: [0, 1], ang: [0, 359], n: [2, 6], gap: [0, 80], safe: [0, 20], curl: [0, 1], pdfp: [1, 9999],
+    bellyH: [20, 150], stickD: [15, 90], frac: [0, 1]
   };
 
   // ---------- Helpers ----------
@@ -175,6 +221,25 @@
     o.inC = hex(b.inC, "#f5f2ea");
     o.clothC = hex(b.clothC, "#26303d");
     o.fin = pick(b.fin, FINISH, "matte");
+    o.wire = pick(b.wire, WIRES, "black");
+    // finishes (v1.5.0)
+    o.foilK = pick(b.foilK, FOILS, "gold");
+    o.embK = pick(b.embK, EMBS, "emboss");
+    o.tex = pick(b.tex, TEXS, "paper");
+    o.corners = bit(b.corners);
+    o.deckle = bit(b.deckle);
+    o.belly = bit(b.belly);
+    o.bellyH = num(b.bellyH, LIMIT.bellyH, 60, 1);
+    o.bellyC = hex(b.bellyC, "#e8d9b0");
+    o.slip = bit(b.slip);
+    o.slipC = hex(b.slipC, "#2a2f38");
+    o.stick = bit(b.stick);
+    o.stickK = pick(b.stickK, STICKS, "round");
+    o.stickD = num(b.stickD, LIMIT.stickD, 38, 1);
+    o.stickX = num(b.stickX, LIMIT.frac, 0.78, 0.01);
+    o.stickY = num(b.stickY, LIMIT.frac, 0.18, 0.01);
+    o.elastic = bit(b.elastic);
+    o.elasticC = hex(b.elasticC, "#1f1f22");
     return o;
   }
   // Block thickness (mm): typed by hand, else pages × one page.
@@ -189,8 +254,9 @@
   // at -x, fore-edge at +x), y up, z through the book (front at +z).
   function dims(bk) {
     var b = normBook(bk);
-    var T = blockMm(b), W = b.w, H = b.h, hc = b.bind === "hc";
-    var d = { W: W, H: H, T: T, hc: hc, flaps: !!b.flaps, flapW: Math.min(b.flapW, W - 10), round: hc && !!b.round };
+    var T = blockMm(b), W = b.w, H = b.h, bind = b.bind, hc = bind === "hc" || bind === "lf";
+    var d = { W: W, H: H, T: T, hc: hc, bind: bind, flaps: (bind === "pb" || bind === "hc") && !!b.flaps,
+              flapW: Math.min(b.flapW, W - 10), round: bind === "hc" && !!b.round };
     if (hc) {
       d.b = 2.5;                       // board
       d.o = 3;                         // board overhang (top, bottom, fore-edge)
@@ -206,26 +272,68 @@
       d.bulge = d.round ? Math.max(1.5, T * 0.14) : 0;
     } else {
       d.b = 0; d.o = 0;
-      d.c = 0.35;                      // card cover
+      // card cover; a saddle-stitched cover is a little thinner, a
+      // board book's cover is a laminated board flush with the pages
+      d.c = bind === "bb" ? 1.6 : bind === "ss" ? 0.25 : 0.35;
       d.cs = d.c;
       d.zF = T / 2 + d.c;
       d.xE = W / 2;
       d.xS = -W / 2 - d.c;
-      d.xH = -W / 2 + 6;               // the score line
+      d.xH = -W / 2 + (bind === "bb" ? 5 : 6);   // the score line
       d.groove = 0;
       d.Hc = H;
       d.j = 0;
       d.bulge = 0;
+      if (bind === "ss") {
+        // folded round the pages: the spine is a half round
+        d.xS = -W / 2;
+        d.bulge = d.zF;
+        d.xH = -W / 2 + 0.6;
+      } else if (bind === "sp") {
+        // two loose covers held by a coil through holes near the edge
+        d.hole = 5;                    // hole centre from the binding edge
+        d.xH = -W / 2 + d.hole;
+        var R = d.zF + 2.5;
+        d.coil = { x: round3(-W / 2 + d.hole - Math.sqrt(R * R - d.zF * d.zF)), r: round3(R),
+                   pitch: T + 2 * d.c > 9 ? 12.7 : 8.47, wire: 0.55 };
+      }
     }
     // Page block: flaps lie between cover and first page, so the
     // block gives them room.
     var gap = d.flaps ? (hc ? d.j + 0.05 : d.c + 0.05) : 0;
     d.block = { x0: -W / 2, x1: W / 2, z: T / 2 - gap, h: H };
-    d.spineMm = +(hc ? T + 2 * d.b + 1 : T + 2 * d.c).toFixed(1);
+    d.spineMm = bind === "ss" || bind === "sp" ? 0 : +(hc ? T + 2 * d.b + 1 : T + 2 * d.c).toFixed(1);
     // bleed of the printed sheet; a hardcover case wraps 15 mm round
     // the boards (a dust jacket is a printed sheet like a paperback)
     d.bleed = hc && !d.flaps ? 15 : 3.2;
     return d;
+  }
+  // The coil loops of a spiral binding: y of each (mm, from the middle).
+  // Which finishes the binding can take.
+  function canHave(bk, k) {
+    var b = normBook(bk);
+    if (k === "belly" || k === "slip") return b.bind !== "ss" && b.bind !== "sp";
+    if (k === "deckle") return b.bind !== "bb" && b.bind !== "ss";
+    return true;
+  }
+  // The sticker on the front cover, mm from the top left of the front.
+  function stickerBox(bk) {
+    var b = normBook(bk), d = b.stickD, r = d / 2;
+    var cx = Math.max(r, Math.min(b.w - r, b.stickX * b.w)), cy = Math.max(r, Math.min(b.h - r, b.stickY * b.h));
+    return { x: round3(cx - r), y: round3(cy - r), w: d, h: d, round: b.stickK === "round" };
+  }
+  // A slipcase round the book (inside measures, mm): open at the spine.
+  function slipcase(bk) {
+    var d = dims(bk), t = 2;
+    var x0 = d.xS - (d.bulge || 0), x1 = d.xE + 0.8;
+    return { t: t, x0: round3(x0), x1: round3(x1 + t), y: round3(d.Hc / 2 + 0.8 + t), z: round3(d.zF + 0.6 + t) };
+  }
+  function coilLoops(bk) {
+    var d = dims(bk);
+    if (!d.coil) return [];
+    var n = Math.max(2, Math.floor((d.H - 10) / d.coil.pitch) + 1), y0 = -(n - 1) * d.coil.pitch / 2, out = [];
+    for (var i = 0; i < n; i++) out.push(round3(y0 + i * d.coil.pitch));
+    return out;
   }
 
   // ---------- Cross-section ----------
@@ -397,7 +505,8 @@
   }
   function template(bk, art, tpl) {
     var b = normBook(bk), d = dims(b), o = normTpl(tpl), W = b.w, fw = d.flaps ? d.flapW : 0;
-    var kind = d.hc ? (d.flaps ? "jacket" : "case") : "pb";
+    var kind = d.hc ? (d.flaps ? "jacket" : "case") : (b.bind === "pb" ? "pb" : b.bind);
+    var bl = round3(bleedOf(b, art));
     var parts = [], S, H;
     function add(k, w) { parts.push({ k: k, x: 0, w: round3(w) }); }
     if (kind === "pb") {
@@ -405,6 +514,18 @@
       if (fw) add("flapB", fw);
       add("back", W); add("spine", S); add("front", W);
       if (fw) add("flapF", fw);
+    } else if (kind === "ss") {
+      // one sheet folded in the middle: no spine to print on
+      S = 0; H = b.h;
+      add("back", W); add("front", W);
+    } else if (kind === "sp") {
+      // two loose covers, each cut on its own: side by side with
+      // their bleed between them
+      S = 0; H = b.h;
+      add("back", W); add("gap", 2 * bl); add("front", W);
+    } else if (kind === "bb") {
+      S = d.spineMm; H = b.h;
+      add("back", W); add("spine", S); add("front", W);
     } else if (kind === "case") {
       S = d.spineMm; H = d.Hc;
       add("back", W - 3); add("hingeB", 8); add("spine", S); add("hingeF", 8); add("front", W - 3);
@@ -414,33 +535,47 @@
     }
     var x = 0;
     parts.forEach(function (p) { p.x = round3(x); x += p.w; });
-    var tw = round3(x), bl = round3(bleedOf(b, art)), sf = o.safe, warn = [];
+    var tw = round3(x), sf = o.safe, warn = [];
     var folds = [];
     for (var i = 1; i < parts.length; i++) {
+      if (parts[i].k === "gap" || parts[i - 1].k === "gap") continue;
       var hinge = /^hinge/.test(parts[i].k) || /^hinge/.test(parts[i - 1].k);
       folds.push({ x: parts[i].x, k: hinge ? "hinge" : "fold" });
     }
+    // the trimmed pieces (two for a spiral, else one)
+    var trims = kind === "sp"
+      ? parts.filter(function (p) { return p.k !== "gap"; }).map(function (p) { return { x: p.x, w: p.w }; })
+      : [{ x: 0, w: tw }];
+    // spiral: the strip with the holes, next to the binding edge
+    var punch = kind === "sp" ? [{ x: round3(W - PUNCH), y: 0, w: PUNCH, h: round3(H) }, { x: round3(W + 2 * bl), y: 0, w: PUNCH, h: round3(H) }] : [];
     var safe = [];
     parts.forEach(function (p) {
-      if (/^hinge/.test(p.k)) return;
+      if (/^hinge/.test(p.k) || p.k === "gap") return;
       if (p.k === "spine") {
         if (S < SPINE_TEXT_MIN) return;
         safe.push({ k: p.k, x: round3(p.x + SPINE_SAFE), y: round3(sf), w: round3(p.w - 2 * SPINE_SAFE), h: round3(H - 2 * sf) });
         return;
       }
-      if (p.w - 2 * sf > 1) safe.push({ k: p.k, x: round3(p.x + sf), y: round3(sf), w: round3(p.w - 2 * sf), h: round3(H - 2 * sf) });
+      var l = sf, r = sf;
+      if (kind === "sp") { if (p.k === "back") r = Math.max(sf, PUNCH + 2); else l = Math.max(sf, PUNCH + 2); }
+      if (p.w - l - r > 1) safe.push({ k: p.k, x: round3(p.x + l), y: round3(sf), w: round3(p.w - l - r), h: round3(H - 2 * sf) });
     });
-    if (S < SPINE_TEXT_MIN) warn.push("thin");
+    if (kind !== "ss" && kind !== "sp" && S < SPINE_TEXT_MIN) warn.push("thin");
+    if (kind === "ss") {
+      if (b.pages % 4) warn.push("ss4");
+      if (b.pages > SS_MAX) warn.push("ssMax");
+    }
     var bar = null, back = parts.filter(function (p) { return p.k === "back"; })[0];
     if (o.bar) {
-      if (back.w >= BAR.w + 2 * sf && H >= BAR.h + 2 * sf) {
-        bar = { x: round3(back.x + back.w - sf - BAR.w), y: round3(H - sf - BAR.h), w: BAR.w, h: BAR.h };
+      var rm = kind === "sp" ? Math.max(sf, PUNCH + 2) : sf;
+      if (back.w >= BAR.w + sf + rm && H >= BAR.h + 2 * sf) {
+        bar = { x: round3(back.x + back.w - rm - BAR.w), y: round3(H - sf - BAR.h), w: BAR.w, h: BAR.h };
       } else warn.push("nobar");
     }
     return {
       kind: kind, W: tw, H: round3(H), bleed: bl, spine: round3(S),
       sheet: { w: round3(tw + 2 * bl), h: round3(H + 2 * bl) },
-      parts: parts, folds: folds, safe: safe, bar: bar, warn: warn
+      parts: parts, folds: folds, safe: safe, bar: bar, warn: warn, trims: trims, punch: punch
     };
   }
   // Which part of a full-wrap picture (the whole sheet, bleed
@@ -455,10 +590,18 @@
       var a = ps[0], z = ps[ps.length - 1];
       return [(bl + a.x) / sw, (bl + z.x + z.w) / sw];
     }
+    var lay = layout(bk);
+    if (T.kind === "ss") {
+      // the fold has no panel of its own: the sheet runs round it
+      var k = T.W / lay.total;
+      lay.panels.forEach(function (p) { out.push({ k: p.k, x0: (bl + p.x * k) / sw, x1: (bl + (p.x + p.w) * k) / sw }); });
+      return { panels: out, y0: bl / sh, y1: (bl + T.H) / sh };
+    }
     var map = T.kind === "case"
       ? { back: ["back", "hingeB"], spine: ["spine"], front: ["hingeF", "front"] }
+      : T.kind === "sp" ? { back: ["back"], front: ["front"] }
       : { flapB: ["flapB"], back: ["back"], spine: ["spine"], front: ["front"], flapF: ["flapF"] };
-    layout(bk).panels.forEach(function (p) {
+    lay.panels.forEach(function (p) {
       var s = map[p.k] && span(map[p.k]);
       if (s) out.push({ k: p.k, x0: s[0], x1: s[1] });
     });
@@ -477,6 +620,7 @@
     o.dev = pick(i.dev, DEVICES, "tablet");
     o.dc = pick(i.dc, DCOLS, "black");
     o.pdfp = isInt(i.pdfp) ? Math.max(LIMIT.pdfp[0], Math.min(LIMIT.pdfp[1], i.pdfp)) : 1;
+    o.rule = pick(i.rule, RULES, "none");     // empty pages: plain, lined, dotted or squared
     return o;
   }
   // The top of one half of the open page block, from the gutter (u = 0)
@@ -486,11 +630,14 @@
   function openCurve(bk, curl, n) {
     var b = normBook(bk), t = blockMm(b) / 2, W = b.w, H = b.h;
     var c = typeof curl === "number" && isFinite(curl) ? Math.max(0, Math.min(1, curl)) : 0.5;
+    // lay-flat, spiral and board pages do not dip into the gutter
+    var flat = b.bind === "lf" || b.bind === "sp" || b.bind === "bb";
+    if (b.bind === "bb") c = 0;
     var N = n || 32, out = [];
     var lift = c * Math.min(W, H) * 0.06;            // arch height at full curl
     for (var i = 0; i <= N; i++) {
       var u = i / N;
-      var rise = 1 - Math.pow(1 - Math.min(1, u / 0.16), 2);   // out of the gutter
+      var rise = flat ? 1 : 1 - Math.pow(1 - Math.min(1, u / 0.16), 2);   // out of the gutter
       var arch = Math.pow(Math.sin(Math.PI * Math.min(1, u * 0.92 + 0.04)), 0.7) * (1 - 0.35 * u);
       var y = t * (0.12 + 0.88 * rise) + lift * arch * rise;
       out.push([round3(u * W * (1 - 0.012 * c)), round3(y)]);
@@ -598,12 +745,18 @@
     if (st.k === "pair") return [{ i: 0, back: false, yaw: 12, place: place, dx: 0 }, { i: 1, back: true, yaw: -12, place: place, dx: 0 }];
     for (var i = 0; i < n; i++) {
       if (st.k === "row") out.push({ i: i, back: false, yaw: 0, place: place, dx: 0 });
-      else if (st.k === "shelf") out.push({ i: i, back: false, yaw: 90, place: "stand", dx: 0 });
+      else if (st.k === "shelf" || st.k === "box") out.push({ i: i, back: false, yaw: 90, place: "stand", dx: 0 });
       else out.push({ i: i, back: false, yaw: STACK_YAW[i % STACK_YAW.length], place: "lie", dx: STACK_DX[i % STACK_DX.length] });
     }
     return out;
   }
 
+  function normProps(o) {
+    o = o && typeof o === "object" ? o : {};
+    var out = {};
+    PROPS.forEach(function (k) { out[k] = bit(o[k]); });
+    return out;
+  }
   function normScene(s) {
     s = s && typeof s === "object" ? s : {};
     var cam = s.cam && typeof s.cam === "object" ? s.cam : {};
@@ -626,6 +779,8 @@
         cr: bg.img ? normCr(bg.cr) : null       // credit when the photo came from an open library
       },
       shadow: num(s.shadow, LIMIT.shadow, 0.45, 0.01),
+      surf: pick(s.surf, SURFS, "none"),
+      props: normProps(s.props),
       light: {
         az: num(li.az, LIMIT.az, 20, 1), el: num(li.el, LIMIT.el, 55, 1),
         str: num(li.str, LIMIT.str, 1, 0.01), soft: num(li.soft, LIMIT.soft, 0.6, 0.01),
@@ -702,38 +857,60 @@
   }
 
   // ---------- Data + merge ----------
-  function merge(A, B) {
-    var a = A && typeof A === "object" ? A : {}, b = B && typeof B === "object" ? B : {};
-    var tombs = {};
-    [a.tombs, b.tombs].forEach(function (tm) {
-      if (!tm || typeof tm !== "object" || Array.isArray(tm)) return;
-      Object.keys(tm).forEach(function (k) {
-        if (!ID_RE.test(k) || !isInt(tm[k]) || tm[k] <= 0) return;
-        if (!(k in tombs) || tm[k] > tombs[k]) tombs[k] = tm[k];
+  // One store = { ver, prj, tombs }, its projects normalised by norm.
+  function makeStore(norm) {
+    function merge(A, B) {
+      var a = A && typeof A === "object" ? A : {}, b = B && typeof B === "object" ? B : {};
+      var tombs = {};
+      [a.tombs, b.tombs].forEach(function (tm) {
+        if (!tm || typeof tm !== "object" || Array.isArray(tm)) return;
+        Object.keys(tm).forEach(function (k) {
+          if (!ID_RE.test(k) || !isInt(tm[k]) || tm[k] <= 0) return;
+          if (!(k in tombs) || tm[k] > tombs[k]) tombs[k] = tm[k];
+        });
       });
-    });
-    var best = {};
-    [a.prj, b.prj].forEach(function (list) {
-      (Array.isArray(list) ? list : []).forEach(function (x) {
-        var p = normProject(x);
-        if (p) best[p.id] = newer(best[p.id], p);
+      var best = {};
+      [a.prj, b.prj].forEach(function (list) {
+        (Array.isArray(list) ? list : []).forEach(function (x) {
+          var p = norm(x);
+          if (p) best[p.id] = newer(best[p.id], p);
+        });
       });
-    });
-    var prj = [];
-    Object.keys(best).sort(cmpStr).forEach(function (k) {
-      if (k in tombs && tombs[k] >= best[k].m) return;
-      prj.push(best[k]);
-    });
-    prj = prj.slice(0, MAX_PRJ);
-    var t = {};
-    Object.keys(tombs).sort(cmpStr).forEach(function (k) { t[k] = tombs[k]; });
-    return { ver: DATA_VER, prj: prj, tombs: t };
+      var prj = [];
+      Object.keys(best).sort(cmpStr).forEach(function (k) {
+        if (k in tombs && tombs[k] >= best[k].m) return;
+        prj.push(best[k]);
+      });
+      prj = prj.slice(0, MAX_PRJ);
+      var t = {};
+      Object.keys(tombs).sort(cmpStr).forEach(function (k) { t[k] = tombs[k]; });
+      return { ver: DATA_VER, prj: prj, tombs: t };
+    }
+    function parse(raw) {
+      if (typeof raw !== "string" || !raw) return empty();
+      try { return merge(JSON.parse(raw), null); } catch (e) { return empty(); }
+    }
+    // Put a project in (new or changed): m moves past the old copy and
+    // past its tombstone, so the change always wins.
+    function put(data, p, now) {
+      var cur = merge(data, null), old = byId(cur, p.id);
+      if (!old && cur.prj.length >= MAX_PRJ) return { data: cur, ok: false, why: "full" };
+      var m = Math.max(now, old ? old.m + 1 : 0, (cur.tombs[p.id] || 0) + 1);
+      var n = norm(Object.assign({}, p, { m: m }));
+      if (!n) return { data: cur, ok: false, why: "bad" };
+      cur.prj = cur.prj.filter(function (x) { return x.id !== n.id; }).concat([n]);
+      return { data: merge(cur, null), ok: true, prj: n };
+    }
+    function remove(data, id, now) {
+      var cur = merge(data, null), old = byId(cur, id);
+      if (!old) return cur;
+      var add = {};
+      add[id] = Math.max(now, old.m);
+      return merge(cur, { tombs: add });
+    }
+    return { merge: merge, parse: parse, put: put, remove: remove };
   }
   function empty() { return { ver: DATA_VER, prj: [], tombs: {} }; }
-  function parse(raw) {
-    if (typeof raw !== "string" || !raw) return empty();
-    try { return merge(JSON.parse(raw), null); } catch (e) { return empty(); }
-  }
   function byId(data, id) {
     for (var i = 0; i < data.prj.length; i++) if (data.prj[i].id === id) return data.prj[i];
     return null;
@@ -746,30 +923,89 @@
   function blank(id, now) {
     return normProject({ id: id, m: now, nm: "", bk: { trim: "a5", w: 148, h: 210 }, art: {}, sc: {}, out: {} });
   }
-  // Put a project in (new or changed): m moves past the old copy and
-  // past its tombstone, so the change always wins.
-  function put(data, p, now) {
-    var cur = merge(data, null), old = byId(cur, p.id);
-    if (!old && cur.prj.length >= MAX_PRJ) return { data: cur, ok: false, why: "full" };
-    var m = Math.max(now, old ? old.m + 1 : 0, (cur.tombs[p.id] || 0) + 1);
-    var n = normProject(Object.assign({}, p, { m: m }));
-    if (!n) return { data: cur, ok: false, why: "bad" };
-    cur.prj = cur.prj.filter(function (x) { return x.id !== n.id; }).concat([n]);
-    return { data: merge(cur, null), ok: true, prj: n };
+  var BOOKS = makeStore(normProject);
+  var merge = BOOKS.merge, parse = BOOKS.parse, put = BOOKS.put, remove = BOOKS.remove;
+
+  // ---------- Products other than books (v1.6.0) ----------
+  // def: { group, slots: [extra picture slots], norm(g) → g,
+  //        sheets(p) → [sheet keys], template(p, sheet) → T, sub(g),
+  //        place, cam, out: what a new one starts with }
+  var GOODS = {}, GOOD_ORDER = [];
+  var KIND_RE = /^[a-z][a-z0-9]{1,15}$/;
+  function addGood(kind, def) {
+    if (!KIND_RE.test(kind) || kind === "book" || !def || typeof def.norm !== "function") return false;
+    if (!GOODS[kind]) GOOD_ORDER.push(kind);
+    GOODS[kind] = def;
+    return true;
   }
-  function remove(data, id, now) {
-    var cur = merge(data, null), old = byId(cur, id);
-    if (!old) return cur;
-    var add = {};
-    add[id] = Math.max(now, old.m);
-    return merge(cur, { tombs: add });
+  function good(kind) { return GOODS[kind] || null; }
+  function goodSlots(kind) {
+    var d = GOODS[kind], out = ["front", "back", "spine", "wrap"];
+    if (d && Array.isArray(d.slots)) d.slots.forEach(function (k) { if (out.indexOf(k) < 0) out.push(k); });
+    return out;
   }
+  function normGoodArt(kind, a) {
+    var o = normArt(a);
+    a = a && typeof a === "object" ? a : {};
+    goodSlots(kind).forEach(function (k) { o[k] = asset(a[k]); });
+    // the book-only slots never travel with a product
+    ["flapF", "flapB", "foil", "uv", "emb", "edgeP", "belly", "slip", "stick"].forEach(function (k) {
+      if (goodSlots(kind).indexOf(k) < 0) delete o[k];
+    });
+    return o;
+  }
+  function normGoodProject(p) {
+    if (!p || typeof p !== "object") return null;
+    if (typeof p.id !== "string" || !ID_RE.test(p.id)) return null;
+    if (!isInt(p.m) || p.m <= 0) return null;
+    if (typeof p.kind !== "string" || !KIND_RE.test(p.kind) || p.kind === "book") return null;
+    var d = GOODS[p.kind];
+    if (!d) {
+      // a product of a newer orOS: kept as it came, never shown
+      var raw;
+      try { raw = JSON.stringify(p); } catch (e) { return null; }
+      if (!raw || raw.length > GOODS_MAX_JSON) return null;
+      return JSON.parse(raw);
+    }
+    return {
+      id: p.id, m: p.m,
+      nm: str(p.nm, 80),
+      kind: p.kind,
+      g: d.norm(p.g),
+      art: normGoodArt(p.kind, p.art),
+      sc: normScene(p.sc),
+      out: normOut(p.out),
+      tpl: normTpl(p.tpl),
+      unit: p.unit === "in" ? "in" : "mm"
+    };
+  }
+  var GOODS_STORE = makeStore(normGoodProject);
+  function blankGood(kind, id, now) {
+    if (!GOODS[kind]) return null;
+    return normGoodProject({ id: id, m: now, nm: "", kind: kind, g: {}, art: {}, sc: { place: GOODS[kind].place, cam: GOODS[kind].cam }, out: GOODS[kind].out || {}, tpl: { safe: 3 } });
+  }
+  // Is this a project this device can open? (a book, or a known product)
+  function known(p) { return !!p && (p.kind === "book" || !!GOODS[p.kind]); }
+  function isGood(p) { return !!p && p.kind !== "book"; }
+  // The printer's sheets of a project, and one of them.
+  function sheetsOf(p) {
+    if (!isGood(p)) return ["cover"];
+    var d = GOODS[p.kind];
+    return d && typeof d.sheets === "function" ? d.sheets(p) : [];
+  }
+  function templateOf(p, sheet) {
+    if (!isGood(p)) return template(p.bk, p.art, p.tpl);
+    var d = GOODS[p.kind], list = sheetsOf(p);
+    if (!d || !list.length) return null;
+    return d.template(p, list.indexOf(sheet) >= 0 ? sheet : list[0]);
+  }
+
   // Every picture file a project names (for "in use" checks).
   function assetsOf(p) {
     var out = [];
     if (!p) return out;
-    SLOTS.forEach(function (k) { if (p.art && p.art[k]) out.push(p.art[k]); });
-    if (p.sc && p.sc.bg && p.sc.bg.img) out.push(p.sc.bg.img);
+    (isGood(p) ? goodSlots(p.kind) : SLOTS).forEach(function (k) { if (p.art && p.art[k] && out.indexOf(p.art[k]) < 0) out.push(p.art[k]); });
+    if (p.sc && p.sc.bg && p.sc.bg.img && out.indexOf(p.sc.bg.img) < 0) out.push(p.sc.bg.img);
     if (p.ins) IN_SLOTS.forEach(function (k) { if (p.ins[k] && out.indexOf(p.ins[k]) < 0) out.push(p.ins[k]); });
     if (p.set && Array.isArray(p.set.vols)) p.set.vols.forEach(function (v) {
       VOL_SLOTS.forEach(function (k) { if (v && v[k] && out.indexOf(v[k]) < 0) out.push(v[k]); });
@@ -798,9 +1034,13 @@
   }
 
   var MockCore = {
-    VERSION: VERSION, DATA_VER: DATA_VER, DATA_KEY: DATA_KEY, PREFS_KEY: PREFS_KEY, MAX_PRJ: MAX_PRJ,
+    VERSION: VERSION, DATA_VER: DATA_VER, DATA_KEY: DATA_KEY, GOODS_KEY: GOODS_KEY,
+    addGood: addGood, good: good, goodKinds: function () { return GOOD_ORDER.slice(); }, goodSlots: goodSlots,
+    normGoodProject: normGoodProject, blankGood: blankGood, known: known, isGood: isGood,
+    mergeGoods: GOODS_STORE.merge, parseGoods: GOODS_STORE.parse, putGood: GOODS_STORE.put, removeGood: GOODS_STORE.remove,
+    sheetsOf: sheetsOf, templateOf: templateOf, round3: round3, asset: asset, str: str, PREFS_KEY: PREFS_KEY, MAX_PRJ: MAX_PRJ,
     ID_RE: ID_RE, ASSET_RE: ASSET_RE, LIMIT: LIMIT,
-    TRIMS: TRIMS, PAPERS: PAPERS, BINDS: BINDS, FINISH: FINISH, EDGES: EDGES, PLACES: PLACES, BGS: BGS,
+    TRIMS: TRIMS, PAPERS: PAPERS, BINDS: BINDS, WIRES: WIRES, FOILS: FOILS, EMBS: EMBS, TEXS: TEXS, STICKS: STICKS, RULES: RULES, CORNER_R: CORNER_R, canHave: canHave, stickerBox: stickerBox, slipcase: slipcase, SS_MAX: SS_MAX, PUNCH: PUNCH, coilLoops: coilLoops, FINISH: FINISH, EDGES: EDGES, PLACES: PLACES, BGS: BGS, SURFS: SURFS, PROPS: PROPS,
     RATIOS: RATIOS, SIZES: SIZES, FMTS: FMTS, SLOTS: SLOTS, MM_PER_IN: MM_PER_IN,
     VOL_SLOTS: VOL_SLOTS, SETS: SETS, MAX_VOLS: MAX_VOLS, GAP_DEF: GAP_DEF,
     MOTIONS: MOTIONS, SECS: SECS, VSIZES: VSIZES, VFMTS: VFMTS,
