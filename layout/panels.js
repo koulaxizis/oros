@@ -258,6 +258,7 @@
 
     var sb = blendSection(items);
     if (sb) body.appendChild(sb);
+    body.appendChild(fxSection(items));
 
     // wrap
     var s4 = section(t("props.wrap"));
@@ -360,6 +361,54 @@
 
   // Blend (wave C1, blend.js): two shapes picked → make the steps;
   // a step (or an end picked alone) → steps, Update, Release.
+  // ---------- Effects (LY-W14) ----------
+  // drop shadow, outer glow, soft edges (pictures) and blend mode, in
+  // it.ext.fx (model itemFx reads them checked)
+  var FX_DEF = { sh: { x: 3, y: 3, b: 4, c: "", o: 50 }, gl: { b: 6, c: "", o: 60 } };
+  function fxOf(it) { return (it.ext && it.ext.fx && typeof it.ext.fx === "object") ? it.ext.fx : {}; }
+  function setFx(items, fn) {
+    editSel(function (it) {
+      if (it.lock) return false;
+      var fx = JSON.parse(JSON.stringify(fxOf(it)));
+      if (fn(fx, it) === false) return false;
+      Object.keys(fx).forEach(function (k) { if (fx[k] === undefined || fx[k] === null || fx[k] === "") delete fx[k]; });
+      var x = Object.assign({}, it.ext || {});
+      if (Object.keys(fx).length) x.fx = fx; else delete x.fx;
+      if (Object.keys(x).length) it.ext = x; else delete it.ext;
+    });
+  }
+  function fxSection(items) {
+    var s = section(t("fx.title")), first = M.itemFx(items[0]) || {};
+    var same = function (fn) { var v = fn(items[0]); return items.every(function (it) { return fn(it) === v; }) ? v : ""; };
+    s.appendChild(field(t("fx.bm"), select([["", t("fx.bm.normal")]].concat(M.BLENDS.map(function (b) { return [b, t("fx.bm." + b)]; })),
+      same(function (it) { return (M.itemFx(it) || {}).bm || ""; }), function (v) { setFx(items, function (fx) { fx.bm = v || undefined; }); })));
+    [["sh", "fx.sh"], ["gl", "fx.gl"]].forEach(function (d) {
+      var k = d[0], on = items.every(function (it) { return !!(M.itemFx(it) || {})[k]; });
+      s.appendChild(check(t(d[1]), on, function (v) {
+        setFx(items, function (fx) { if (v) fx[k] = Object.assign({}, FX_DEF[k], fx[k] || {}); else delete fx[k]; });
+      }));
+      if (!on) return;
+      var e = first[k] || FX_DEF[k], g = el("div", "grid2");
+      var num = function (f, lbl, lo, hi, st) {
+        g.appendChild(field(t(lbl), numInput(e[f], function (v) {
+          setFx(items, function (fx) { fx[k] = Object.assign({}, FX_DEF[k], fx[k] || {}); fx[k][f] = Math.max(lo, Math.min(hi, v)); });
+        }, { unit: "raw", min: lo, max: hi, step: st })));
+      };
+      if (k === "sh") { num("x", "fx.x", -144, 144, 0.5); num("y", "fx.y", -144, 144, 0.5); }
+      num("b", "fx.b", k === "gl" ? 0.5 : 0, 72, 0.5);
+      num("o", "fx.o", 0, 100, 5);
+      s.appendChild(g);
+      s.appendChild(el("span", "fld-lbl", t("fx.c")));
+      s.appendChild(swatchPicker(e.c || "", function (id) { setFx(items, function (fx) { fx[k] = Object.assign({}, FX_DEF[k], fx[k] || {}); fx[k].c = id || ""; }); }, true));
+    });
+    if (items.every(function (it) { return it.t === "img"; })) {
+      s.appendChild(field(t("fx.fe"), numInput(first.fe || 0, function (v) {
+        setFx(items, function (fx) { fx.fe = v > 0 ? Math.min(144, v) : undefined; });
+      }, { unit: "raw", min: 0, max: 144, step: 1 })));
+    }
+    return s;
+  }
+
   function blendSection(items) {
     var doc = LY.doc, g = "";
     items.forEach(function (it) { if (!g) g = BL.groupOf(it); });

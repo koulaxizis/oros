@@ -120,7 +120,28 @@
       if (!out) return "";
       var tf = it.rot && it.t !== "line" ? at("transform", "rotate(" + n2(it.rot) + " " + n2(it.x + it.w / 2) + " " + n2(it.y + it.h / 2) + ")") : "";
       var op = it.op === undefined ? 100 : it.op;
-      return "<g" + tf + (op < 100 ? at("opacity", n2(op / 100)) : "") + ">" + out + "</g>";
+      var g = "<g" + tf + (op < 100 ? at("opacity", n2(op / 100)) : "") + ">" + out + "</g>";
+      // object effects (LY-W14): shadow and glow as a filter, the blend
+      // mode as mix-blend-mode (soft edges are in the picture itself)
+      var fx = M.itemFx ? M.itemFx(it) : null;
+      if (!fx || (!fx.sh && !fx.gl && !fx.bm)) return g;
+      var fa = "";
+      if (fx.sh || fx.gl) {
+        var fid = id("f"), pad = M.fxPad(fx) * 2 + Math.max(it.w, it.h), parts = "", merge = "";
+        var blur = function (e, dx, dy, k) {
+          parts += '<feGaussianBlur in="SourceAlpha"' + at("stdDeviation", n2(e.b / 2)) + "/>" + (dx || dy ? "<feOffset" + at("dx", n2(dx)) + at("dy", n2(dy)) + "/>" : "") +
+            '<feComponentTransfer result="' + k + 'a"><feFuncA type="linear"' + at("slope", n2(e.o / 100)) + "/></feComponentTransfer>" +
+            "<feFlood" + at("flood-color", (e.c && hex(doc, e.c)) || "#000000") + "/>" + '<feComposite in2="' + k + 'a" operator="in" result="' + k + '"/>';
+          merge += '<feMergeNode in="' + k + '"/>';
+        };
+        if (fx.gl) blur(fx.gl, 0, 0, "gl");
+        if (fx.sh) blur(fx.sh, fx.sh.x, fx.sh.y, "sh");
+        defs.push('<filter id="' + fid + '" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB"' + at("x", n2(it.x - pad)) + at("y", n2(it.y - pad)) +
+          at("width", n2(it.w + 2 * pad)) + at("height", n2(it.h + 2 * pad)) + ">" + parts + "<feMerge>" + merge + '<feMergeNode in="SourceGraphic"/></feMerge></filter>');
+        fa += at("filter", "url(#" + fid + ")");
+      }
+      if (fx.bm) fa += at("style", "mix-blend-mode:" + fx.bm);
+      return "<g" + fa + ">" + g + "</g>";
     }
 
     function textSvg(it, lines) {

@@ -209,6 +209,12 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Register aktualisieren**, wenn sich die Seiten verschieben: Das Register wird aus den Markierungen neu erstellt, sein Titel und Text vor den Einträgen bleiben. In der Stichwortliste desselben Dialogs entfernst du die Markierungen eines Stichworts.
 - **Claude** markiert Begriffe und erstellt das Register mit dem Befehl `index` (Assistent).
 
+## Effekte
+- **Eigenschaften › Effekte** gibt jedem Rahmen oder jeder Form einen Schlagschatten, einen Schein nach außen und eine Füllmethode (Multiplizieren, Negativ multiplizieren, Ineinanderkopieren, Abdunkeln, Aufhellen); ein Bild kann auch weiche Kanten haben. Schatten und Schein folgen der Form, dem Bildrahmen oder den Buchstaben eines Textrahmens ohne Füllung.
+- Die Farbe „keine“ ist Schwarz. Mit einer Füllmethode werden das Objekt und sein Schatten gemeinsam mit dem Darunterliegenden verrechnet.
+- PDF-, SVG- und Bildexporte zeigen die Effekte; in PDF/X-1a zählen sie als Transparenz, und der Export meldet das. Ältere orOS-Versionen zeigen das Objekt ohne Effekte.
+- **Claude** setzt sie mit dem Befehl `effects` (Assistent).
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

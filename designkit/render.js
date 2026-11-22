@@ -857,6 +857,119 @@
   //   drawable | null, preview, missing: label for a missing image }
   function drawItem(ctx, doc, it, opts) {
     if (it.hide) return;
+    var fx = M.itemFx ? M.itemFx(it) : null;
+    if (fx && !(opts && opts.noFx)) { drawFx(ctx, doc, it, opts || {}, fx); return; }
+    drawPlain(ctx, doc, it, opts || {});
+  }
+
+  // ---------- Object effects (LY-W14) ----------
+  // The item is drawn on a layer as big as the canvas; the layer's
+  // soft edges, glow and shadow are painted with the canvas's own
+  // shadows (a copy far off the canvas casts them, so only the shadow
+  // lands), then the layer itself, in the blend mode.
+  var layers = [];
+  function layer(ctx, k) {
+    var c = ctx.canvas;
+    if (!c || !(c.width > 0) || !ctx.getTransform) return null;
+    var l = layers[k];
+    try {
+      if (!l) l = layers[k] = typeof OffscreenCanvas !== "undefined" ? new OffscreenCanvas(c.width, c.height) : c.ownerDocument ? c.ownerDocument.createElement("canvas") : null;
+    } catch (e) { l = null; }
+    if (!l) return null;
+    if (l.width !== c.width || l.height !== c.height) { l.width = c.width; l.height = c.height; }
+    var lc = l.getContext("2d");
+    lc.setTransform(1, 0, 0, 1, 0, 0);
+    lc.globalCompositeOperation = "source-over"; lc.globalAlpha = 1; lc.shadowColor = "rgba(0,0,0,0)";
+    lc.clearRect(0, 0, l.width, l.height);
+    return { c: l, x: lc };
+  }
+  function fxColor(doc, id, o) {
+    var c = id && M.swatchColor(doc, id), rgb = c ? (view ? view.color(c, M.find(doc.swatches, id)) : c.rgb) : [0, 0, 0];
+    return "rgba(" + rgb.join(",") + "," + Math.max(0, Math.min(1, o / 100)) + ")";
+  }
+  // the transform's scale (px per pt)
+  function scaleOf(tr) { return Math.sqrt(tr.a * tr.a + tr.b * tr.b) || 1; }
+  // soft edges: the layer keeps only what lies inside a blurred copy
+  // of the item's outline, set fe/2 inside it (also used for the
+  // pictures a PDF carries, layout/io.js)
+  function feather(lc, w, h, tr, it, fe) {
+    var m = layer({ canvas: { width: w, height: h, ownerDocument: typeof document !== "undefined" ? document : null }, getTransform: true }, 2);
+    if (!m) return false;
+    var mx = m.x, sc = scaleOf(tr), ins = fe / 2;
+    var inner = Object.assign({}, it, { x: it.x + ins, y: it.y + ins, w: Math.max(0.1, it.w - fe), h: Math.max(0.1, it.h - fe), r: Math.max(0, (it.r || 0) - ins) });
+    mx.setTransform(tr.a, tr.b, tr.c, tr.d, tr.e - w * 2, tr.f);
+    if (it.rot) { var cx = it.x + it.w / 2, cy = it.y + it.h / 2; mx.translate(cx, cy); mx.rotate(rad(it.rot)); mx.translate(-cx, -cy); }
+    mx.shadowColor = "#fff"; mx.shadowBlur = fe * sc; mx.shadowOffsetX = w * 2; mx.shadowOffsetY = 0;
+    mx.fillStyle = "#fff";
+    outline(mx, inner); mx.fill();
+    lc.save();
+    lc.setTransform(1, 0, 0, 1, 0, 0);
+    lc.globalCompositeOperation = "destination-in";
+    lc.drawImage(m.c, 0, 0);
+    lc.restore();
+    return true;
+  }
+  function drawFx(ctx, doc, it, opts, fx) {
+    var tr = ctx.getTransform ? ctx.getTransform() : null, L = tr && layer(ctx, 1);
+    if (!L) {
+      // no layer (a context without a canvas): the blend mode only
+      ctx.save();
+      if (fx.bm) ctx.globalCompositeOperation = fx.bm;
+      drawPlain(ctx, doc, it, opts);
+      ctx.restore();
+      return;
+    }
+    var lc = L.x, W = L.c.width, sc = scaleOf(tr);
+    lc.setTransform(tr);
+    drawPlain(lc, doc, it, opts);
+    if (fx.fe) feather(lc, W, L.c.height, tr, it, fx.fe);
+    // with a blend mode the object and its shadow blend as one (a group)
+    // (opts.shadowOnly: the shadow and glow alone, for the PDF)
+    var only = !!opts.shadowOnly;
+    var G = !only && fx.bm && (fx.sh || fx.gl) ? layer(ctx, 3) : null, gc = G ? G.x : ctx;
+    gc.save();
+    gc.setTransform(1, 0, 0, 1, 0, 0);
+    gc.globalAlpha = 1;
+    if (fx.bm && !G && !only) gc.globalCompositeOperation = fx.bm;
+    var cast = function (blur, col, dx, dy) {
+      gc.shadowColor = col; gc.shadowBlur = blur * sc;
+      gc.shadowOffsetX = W * 2 + dx * tr.a + dy * tr.c; gc.shadowOffsetY = dx * tr.b + dy * tr.d;
+      gc.drawImage(L.c, -W * 2, 0);
+    };
+    if (fx.gl) cast(fx.gl.b, fxColor(doc, fx.gl.c, fx.gl.o), 0, 0);
+    if (fx.sh) cast(fx.sh.b, fxColor(doc, fx.sh.c, fx.sh.o), fx.sh.x, fx.sh.y);
+    gc.shadowColor = "rgba(0,0,0,0)"; gc.shadowBlur = 0; gc.shadowOffsetX = 0; gc.shadowOffsetY = 0;
+    if (!only) gc.drawImage(L.c, 0, 0);
+    gc.restore();
+    if (G) {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = fx.bm;
+      ctx.drawImage(G.c, 0, 0);
+      ctx.restore();
+    }
+  }
+
+  // An item's shadow and glow alone as a picture, for the PDF (the same
+  // pixels as the screen): → { canvas, x, y, w, h } (its place in pt on
+  // the page) or null. s = px per pt; opts as drawItem's.
+  function fxImage(doc, it, s, opts, mk) {
+    var fx = M.itemFx ? M.itemFx(it) : null;
+    if (!fx || !(fx.sh || fx.gl)) return null;
+    var pad = M.fxPad(fx) * 1.5 + 2, a = rad(it.rot || 0), cw = Math.abs(it.w * Math.cos(a)) + Math.abs(it.h * Math.sin(a)), ch = Math.abs(it.w * Math.sin(a)) + Math.abs(it.h * Math.cos(a));
+    var cx = it.x + it.w / 2, cy = it.y + it.h / 2;
+    var x0 = cx - cw / 2 - pad, y0 = cy - ch / 2 - pad, w = cw + 2 * pad, h = ch + 2 * pad;
+    s = Math.max(0.5, Math.min(s, 4000 / w, 4000 / h));
+    var cv = mk ? mk(Math.ceil(w * s), Math.ceil(h * s)) : null;
+    if (!cv) return null;
+    var ctx = cv.getContext("2d");
+    ctx.setTransform(s, 0, 0, s, -x0 * s, -y0 * s);
+    drawFx(ctx, doc, it, Object.assign({}, opts || {}, { shadowOnly: 1 }), fx);
+    return { canvas: cv, x: x0, y: y0, w: cv.width / s, h: cv.height / s };
+  }
+
+  function drawPlain(ctx, doc, it, opts) {
     ctx.save();
     ctx.globalAlpha = (it.op === undefined ? 100 : it.op) / 100;
     if (it.rot) {
@@ -976,7 +1089,7 @@
   var api = {
     corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, flipOf: flipOf, wrapShape: wrapShape, alphaProfile: alphaProfile, adjNorm: adjNorm, adjOf: adjOf, adjKey: adjKey, applyAdj: applyAdj, ADJ_ORDER: ADJ_ORDER, effectivePpi: effectivePpi, uniform: uniform,
     gridOf: gridOf, pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight, setView: setView, pfOf: pfOf, inksOf: inksOf, overprints: overprints,
-    drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
+    drawItem: drawItem, feather: feather, fxImage: fxImage, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.render = api; }

@@ -136,8 +136,12 @@
     widths: { t: "str", max: 200 }, rule: { t: "num", lo: -1, hi: 12, def: -1 }, padding: { t: "num", lo: -1, hi: 36, def: -1 },
     rule_color: { t: "color" }, header_fill: { t: "color" }, style: { t: "str", max: 60 } } };
   // index (LY-W13): words marked for the book's index, the index made
+  // effects (LY-W14): shadow, glow, soft edges, blend mode on frames
+  CATALOG.effects = { kind: "doc", args: { frame: { t: "str", max: 400, req: 1 }, blend: { t: "enum", v: ["", "normal", "multiply", "screen", "overlay", "darken", "lighten"], def: "" },
+    shadow_x: { t: "num", lo: -145, hi: 144, def: -145 }, shadow_y: { t: "num", lo: -145, hi: 144, def: -145 }, shadow_blur: { t: "num", lo: -1, hi: 72, def: -1 }, shadow_opacity: { t: "int", lo: -1, hi: 100, def: -1 }, shadow_color: { t: "color" },
+    glow_blur: { t: "num", lo: -1, hi: 72, def: -1 }, glow_opacity: { t: "int", lo: -1, hi: 100, def: -1 }, glow_color: { t: "color" }, soft_edges: { t: "num", lo: -1, hi: 144, def: -1 } } };
   CATALOG.index = { kind: "doc", args: { terms: { t: "list", of: { t: "str", max: 200 }, max: 200 }, unmark: { t: "str", max: 120 }, build: { t: "bool", def: 1 }, title: { t: "str", max: 120 } } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index"];
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index", "effects"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -192,6 +196,8 @@
     "\ntable: a table into the story `story` (or the frame `frame` of it): rows one entry per row, cells separated by | (\\n = a new line in a cell), header the first rows that repeat at the top of each new column or page (repeat false = not repeated), " +
     "after_para after that paragraph (1 = the first; 0 = at the end), replace n = the story's n-th table becomes this one, widths relative column widths (e.g. \"2 1 1\"), rule the rule width in pt (0 = none, -1 = 0.5), padding the cell padding in pt (-1 = 4), " +
     "rule_color and header_fill #rrggbb, style the paragraph style of the cells; rows never split, the owner merges cells in the Story Editor" +
+    "\neffects: on the frames `frame` (ids, comma-separated): blend normal|multiply|screen|overlay|darken|lighten; a drop shadow shadow_x shadow_y (offset in pt, -144..144; -145 = as it is) shadow_blur (pt) shadow_opacity (%, 0 = no shadow) shadow_color #rrggbb (none = black); " +
+    "an outer glow glow_blur glow_opacity (0 = none) glow_color; soft_edges in pt for pictures (0 = none); -1 or empty leaves a field as it is; the PDF and every export show them" +
     "\nindex: the book's index: terms one entry per word or phrase to mark wherever it stands in the text (any case or accents, whole words): \"word\", \"word = Topic\" or \"word = Topic / Sub-topic\"; " +
     "unmark a topic whose marks go (* = every mark); build true makes the index again from the marks (a new last page with two columns titled `title`, default Index, or its Greek word in a Greek book, when the book has none); pages as the pages show them" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
@@ -299,6 +305,13 @@
     if (st.op === "retext") return PRO.setStory(doc, st, now);
     if (st.op === "table") return PRO.addTable(doc, st, now);
     if (st.op === "index") return applyIndex(doc, st, env, now);
+    if (st.op === "effects") {
+      // shadow_x/y -145 = as it is (an offset can be below 0)
+      var ef = Object.assign({}, st);
+      if (ef.shadow_x <= -145) delete ef.shadow_x;
+      if (ef.shadow_y <= -145) delete ef.shadow_y;
+      return PRO.setEffects(doc, String(st.frame).split(/[\s,]+/).filter(Boolean).slice(0, 200), ef, now);
+    }
     if (st.op === "house_pages") {
       var house = env.house || houseIn(env.docs, st.house, doc.id);
       if (!house) { if (env.notes && env.notes.indexOf("noHouse") < 0) env.notes.push("noHouse"); return 0; }

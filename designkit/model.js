@@ -842,6 +842,37 @@
     return c ? "rgb(" + c.rgb.join(",") + ")" : null;
   }
 
+  // ---------- Object effects (LY-W14) ----------
+  // it.ext.fx { sh: drop shadow { x, y (offset pt), b (blur pt), c (swatch,
+  // "" black), o (opacity %) }, gl: outer glow { b, c, o }, fe: soft edges
+  // of a picture (pt), bm: blend mode }. Kept as written; read checked.
+  var BLENDS = ["multiply", "screen", "overlay", "darken", "lighten"];
+  function fxNum(v, lo, hi, d) { v = Number(v); return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; }
+  function itemFx(it) {
+    var x = it && it.ext && it.ext.fx;
+    if (!x || typeof x !== "object") return null;
+    var o = {}, col = function (c) { return isId(c) ? c : ""; };
+    if (x.sh && typeof x.sh === "object") {
+      var sh = { x: fxNum(x.sh.x, -144, 144, 3), y: fxNum(x.sh.y, -144, 144, 3), b: fxNum(x.sh.b, 0, 72, 4), c: col(x.sh.c), o: fxNum(x.sh.o, 0, 100, 50) };
+      if (sh.o > 0) o.sh = sh;
+    }
+    if (x.gl && typeof x.gl === "object") {
+      var gl = { b: fxNum(x.gl.b, 0.5, 72, 6), c: col(x.gl.c), o: fxNum(x.gl.o, 0, 100, 60) };
+      if (gl.o > 0) o.gl = gl;
+    }
+    if (it.t === "img" && fxNum(x.fe, 0, 144, 0) > 0) o.fe = fxNum(x.fe, 0, 144, 0);
+    if (BLENDS.indexOf(x.bm) >= 0) o.bm = x.bm;
+    return Object.keys(o).length ? o : null;
+  }
+  // how far past its box an item's effects paint (pt)
+  function fxPad(fx) {
+    if (!fx) return 0;
+    var p = 0;
+    if (fx.sh) p = Math.max(p, Math.max(Math.abs(fx.sh.x), Math.abs(fx.sh.y)) + fx.sh.b);
+    if (fx.gl) p = Math.max(p, fx.gl.b);
+    return p;
+  }
+
   function storyOfDoc(doc, id) { return find(doc.stories, id); }
   function docBytes(doc) { return JSON.stringify(doc).length; }
 
@@ -855,6 +886,7 @@
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
     newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, pageSize: pageSize, creepOf: creepOf, pageLabels: pageLabels, numFmt: numFmt, secOfPage: secOfPage, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
+    BLENDS: BLENDS, itemFx: itemFx, fxPad: fxPad,
     swatchColor: swatchColor, tintOf: tintOf, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })
   };

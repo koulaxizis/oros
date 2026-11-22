@@ -206,16 +206,55 @@
       var ch = Math.max(1, Math.round(Math.min(src.h, crop.rect.h / 72 * ppi)));
       var cv = document.createElement("canvas");
       cv.width = cw; cv.height = ch;
-      var png = /\.png$/.test(it.a) && !flat;
+      // soft edges (LY-W14): the picture carries them as transparency
+      var fx = M.itemFx ? M.itemFx(it) : null, fe = fx && fx.fe || 0;
+      var png = (/\.png$/.test(it.a) || fe > 0) && !flat;
       var cx = cv.getContext("2d");
-      if (flat) { cx.fillStyle = "#fff"; cx.fillRect(0, 0, cw, ch); }
+      if (flat && !fe) { cx.fillStyle = "#fff"; cx.fillRect(0, 0, cw, ch); }
       mirror(cx, crop, cw, ch);
       cx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
       var adj = adjust(cx, it, cw, ch);
+      if (fe) {
+        var sx = cw / crop.rect.w, sy = ch / crop.rect.h;
+        cx.setTransform(1, 0, 0, 1, 0, 0);
+        LY.R.feather(cx, cw, ch, { a: sx, b: 0, c: 0, d: sy, e: -(it.x + crop.rect.x) * sx, f: -(it.y + crop.rect.y) * sy }, Object.assign({}, it, { rot: 0 }), fe);
+        if (flat) { cx.globalCompositeOperation = "destination-over"; cx.fillStyle = "#fff"; cx.fillRect(0, 0, cw, ch); cx.globalCompositeOperation = "source-over"; }
+        adj = (adj ? adj + "-" : "") + "fe" + fe;
+      }
       return toBlob(cv, png ? "image/png" : "image/jpeg", flat ? 0.95 : 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
         return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (flat ? "w" : "") + (crop.fh ? "h" : "") + (crop.fv ? "v" : "") + (adj ? "-" + adj : ""), down: cw < Math.round(src.w) - 1 };
       });
     });
+  }
+
+  // Shadows and glows (LY-W14) as the screen paints them: one PNG per
+  // item, under the item in the PDF (images["fx:" + id]). A master's
+  // text frame differs from page to page, so the PDF draws its shadow
+  // itself (designkit/pdf.js).
+  function fxPictures(doc, pageIds, L, images, ppi) {
+    var want = {}, seen = {}, list = [];
+    pageIds.forEach(function (id) { want[id] = 1; });
+    M.pagesInOrder(doc).forEach(function (pg, idx) {
+      if (!want[pg.id]) return;
+      M.masterItems(doc, pg, M.sideOf(doc, idx)).filter(function (it) { return it.t !== "text"; }).concat(M.itemsOn(doc, pg.id)).forEach(function (it) {
+        var fx = M.itemFx(it);
+        if (fx && (fx.sh || fx.gl) && !it.hide && !seen[it.id]) { seen[it.id] = 1; list.push(it); }
+      });
+    });
+    if (!list.length) return Promise.resolve();
+    L = L || LY.R.computeLayout(doc);
+    var mk = function (w, h) { var c = document.createElement("canvas"); c.width = w; c.height = h; return c; };
+    var chain = Promise.resolve();
+    list.forEach(function (it) {
+      chain = chain.then(function () { return it.t === "img" && it.a ? A.load(it.a).catch(function () { return null; }) : null; }).then(function (img) {
+        var pic = LY.R.fxImage(doc, it, ppi / 72, { lines: function (id) { var f = L.frames[id]; return f && f.lines; }, getImage: function () { return img; }, preview: true }, mk);
+        if (!pic) return null;
+        return toBlob(pic.canvas, "image/png").then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+          images["fx:" + it.id] = { data: new Uint8Array(ab), x: pic.x, y: pic.y, w: pic.w, h: pic.h, alias: "fx-" + it.id + "-" + (it.m || 0) + "-" + ppi };
+        });
+      }).catch(function () { /* the PDF draws this one's shadow itself */ });
+    });
+    return chain;
   }
 
   // A PDF of any document (not only the open one) → Promise<Blob>.
@@ -280,6 +319,8 @@
         });
       });
       return chain;
+    }).then(function () {
+      return fxPictures(doc, pages, opts.layout || (doc === LY.doc && ED.L ? ED.L : null), images, Math.min(opts.ppi || 300, 150));
     }).then(function () {
       return opts.cover ? coverPage(JsPDF, doc, opts.cover, opts.ppi || 150, !!opts.tagged) : null;
     }).then(function (first) {
