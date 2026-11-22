@@ -2775,7 +2775,25 @@
   // with the same rules as a live call (the switches and a pause as they
   // are now), then the box is told which ones are done.
   // F3: queued deletions waiting for the owner (id → queue item).
-  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, DECL = { ok: false, c: "declined" };
+  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, KEEP = { keep: 1 }, DECL = { ok: false, c: "declined" };
+  // GQ-SETTLE (2026-11-22): orOS checks for a new release as it starts and
+  // reloads into it, which cut a queued change off half done (and the new
+  // copy then took it as done). The queue waits until that check is over:
+  // no worker installing or waiting, and 10 s since the page started.
+  var Q_SETTLE_MS = 10000, Q_SETTLE_TRIES = 45;
+  function queueSettled(fn, n) {
+    n = n || 0;
+    var sw = null;
+    try { sw = typeof navigator !== "undefined" && navigator.serviceWorker && typeof navigator.serviceWorker.getRegistration === "function" ? navigator.serviceWorker : null; } catch (e) { sw = null; }
+    if (!sw || n >= Q_SETTLE_TRIES) { fn(); return; }
+    sw.getRegistration().then(function (r) {
+      if (!r) { fn(); return; }                     // no service worker here: nothing reloads it
+      var age = typeof performance !== "undefined" && performance.now ? performance.now() : Q_SETTLE_MS;
+      if (r.installing || r.waiting) { setTimeout(function () { queueSettled(fn, n + 1); }, 2000); return; }
+      if (age < Q_SETTLE_MS) { setTimeout(function () { queueSettled(fn, n + 1); }, Q_SETTLE_MS - age + 50); return; }
+      fn();
+    }, function () { fn(); });
+  }
   function heldAgain() {
     var ids = Object.keys(cqHeld);
     if (!ids.length || !ws || ws.readyState !== 1 || document.visibilityState !== "visible") return;
@@ -2785,7 +2803,7 @@
     var o, k = gateKey();
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
-    whenOpen(function () {
+    queueSettled(function () { whenOpen(function () {
       var done = [], files = false, held = [];
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
@@ -2795,7 +2813,11 @@
           ranAdd(it.id);
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
-            if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
+            if (!isObj(x) || typeof x.n !== "string") return { ok: false, c: "refused" };
+            // GQ-KEEP (2026-11-22): a change this orOS does not know (an older
+            // copy, e.g. the cached one that runs before an update) stays queued
+            // for a newer one, never acknowledged as done
+            if (QUEUED.indexOf(x.n) < 0) { ranDrop(it.id); throw KEEP; }
             // 7.44.00 (Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με
             // το orOS κλειστό»): a deletion of items (change_item delete, budget_delete)
             // waits like files_delete: always asked here (askQueued, one question per
@@ -2833,7 +2855,7 @@
               writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
               return res;
             });
-          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else done.push(it.id); });   // never in a loop
+          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else if (e !== KEEP) done.push(it.id); });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
         // 7.48.00: cqh = deletions held for the owner here; the box offers them to a device on screen
@@ -2842,7 +2864,7 @@
         copySoon(2000);
         if (files) fileCopySoon(60000);
       });
-    });
+    }); });
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   // GL-8 (Chris 2026-11-21): a file Claude uploaded (relay files_upload),

@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.52.00
+- **orOS Gate: Claude's waiting requests are no longer lost when orOS updates.** A change or question Claude left while orOS was closed now waits for a device whose orOS knows it, and a device that has just opened finishes its update before it works on them. Before, the older copy a phone runs for a moment before it updates could drop them.
+
 ## Version 8.51.00
 - **Layout: versions.** More › Versions… keeps the document under a name, compares any version with now (each changed paragraph with its words struck and added) and brings a version back, keeping the current state first.
 
