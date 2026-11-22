@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.65.00
+- **Counts on icons.** Dock icons and desktop shortcuts now show a small red number: an app's unread notifications, and for To-Do and Today the tasks whose day has passed. Opening the app's notices clears it. Private apps, locked apps, Passwords and the Assistant never show one, and none show while Sensitive work is on. Turn it off in Settings › Appearance › Dock › Show counts on icons.
+
 ## Version 8.64.00
 - **Files: Duplicates.** Duplicates in the Files sidebar finds files that are exactly the same, byte for byte, whatever their names. It also finds identical folders, and pictures or songs that differ only in hidden details such as camera data or tags. One copy of every group always stays, and nothing is removed until you choose Move to Trash, after a last byte-by-byte check. Dropbox and This computer have their own Duplicates button, which also shows copies you already have on the orOS disk. Photos that look alike still open in Photos.
 

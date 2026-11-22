@@ -13860,3 +13860,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** files/dupes-core.js (new), files/dupes.js (new), files/dupes.css (new), files/files.js, files/photos.js, files/dropbox.js, files/computer.js, shell.js (reset list), i18n/de/files.js, files/help.en.txt, files/help.el.txt, i18n/de/help/files.txt, i18n/apps.json, i18n/de/STATUS.md, sw.js, tests/files-dupes.test.js (new).
 - **Tests:** tests/files-dupes.test.js (17); full suite; Chromium through the real shell at 1280 EN and 360 EL (K1 groups and refused last copy, changed copy left alone; K2 EXIF/ID3 fixtures and a twin folder; K3 with a mocked This computer API and a fake Dropbox source); first-open budget for Files.
 - **Not tested:** a real phone, Safari, a real Dropbox account or This computer bridge, cloud-only orOS Drive files, libraries with thousands of files.
+
+### 2026-11-22 — 8.65.00 — Counts on Dock icons and desktop shortcuts (BADGE-1, launcher 1.8.0)
+- **What:** a small red count on Dock icons and desktop shortcuts: unread inbox notices per app (notifications.js `ns`) plus late tasks for To-Do and Today; never on searchOff apps, Passwords, the Assistant or a locked app, none under Sensitive work; device-local switch Settings › Appearance › Dock › Show counts on icons (on by default). Chris approved video idea #1 (2026-11-22 18:49Z).
+- **Files:** launcher.js, notifications.js (`oros-notifs-changed`), shell.js (Settings bridge `dock:badges`, version), settings/settings.js, settings/core.js, i18n/de/settings.js, translations.js, i18n/de/shell.js, settings help EN/EL/DE, whatsnew EN/EL, tests/launcher.test.js, tests/settings.test.js.
+- **Tests:** launcher + settings tests; full suite; Chromium through the real shell at 1280 EN and 360 EL (counts on Dock and desktop, 99+, a locked app and Passwords without one, Sensitive work hides all, the switch).
+- **Not tested:** a real phone, Safari, counts arriving from sync on a second device.
