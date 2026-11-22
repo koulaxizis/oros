@@ -2,7 +2,10 @@ name: F-Droid repository
 
 # Publishes the orOS APKs as an F-Droid repository (FDROID-1), so F-Droid,
 # Droid-ify and Obtainium keep them up to date:
-#   https://koulaxizis.github.io/oros-fdroid/repo
+#   https://apps.koulaxizis.workers.dev/oros-fdroid/repo
+# (our download counter, tools/apps-counter, which serves the files of
+# https://koulaxizis.github.io/oros-fdroid/ unchanged; that address keeps
+# working for phones that added it before 2026-11-22)
 # It runs after each "Android app" build on main, takes the signed APKs
 # from the "android-apks" release, and publishes only when the Android
 # shell changed since the last publish (android/, glarolykoi-android/,
@@ -60,6 +63,7 @@ jobs:
     timeout-minutes: 15   # job takes 10 s-2 min
     env:
       SITE: https://koulaxizis.github.io/oros-fdroid
+      REPO_URL: https://apps.koulaxizis.workers.dev/oros-fdroid/repo
       DEST: koulaxizis/oros-fdroid
     steps:
       - uses: actions/checkout@v4
@@ -181,7 +185,7 @@ jobs:
           apksigner=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)
           umask 077
           cat > "$fd/config.yml" <<EOF
-          repo_url: $SITE/repo
+          repo_url: $REPO_URL
           repo_name: orOS
           repo_description: "orOS and its single apps: notes, calendar, office, money, health, maps and more. Offline-first, no account, no ads, no tracking. Free and open source (MIT), free forever."
           repo_icon: icon.png
@@ -241,7 +245,7 @@ jobs:
           The orOS Android apps, kept up to date by F-Droid, Droid-ify or Obtainium.
           Built by [koulaxizis/oros](https://github.com/koulaxizis/oros) (.github/workflows/fdroid.yml); do not edit by hand.
 
-          Repository: $SITE/repo
+          Repository: $REPO_URL (also $SITE/repo)
           EOF
           cd "$site"
           git init -q -b main
