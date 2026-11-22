@@ -2912,7 +2912,8 @@
   var TOOL_KB_COLS = {
     name: "kanban_add_columns",
     description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column, and rename columns " +
-      "(rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. " +
+      "(rename_columns: each by its id or name, to a new name), and set a column up as a step of the Author Portal production flow " +
+      "(portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay, an empty text clears it). Give any of the three. " +
       "The user sees the columns on one card and must press Add; nothing is saved before that. The card has Undo.",
     params: { type: "object", properties: {
       board: { type: "string", description: "The board name or id (app_summary with app kanban)." },
@@ -2923,7 +2924,16 @@
       rename_columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
         column: { type: "string", description: "The column's id or current name." },
         name: { type: "string", description: "Its new name, at most 60 characters." } },
-        required: ["column", "name"] } } },
+        required: ["column", "name"] } },
+      portal_columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
+        column: { type: "string", description: "The column's id or current name." },
+        step: { type: "boolean", description: "true: a step the author sees in the Author Portal; false: not a step (its texts are kept)." },
+        finish: { type: "boolean", description: "true: a finish; when the book reaches it, the author's bar hides until the card reaches the next step." },
+        name: { type: "string", description: "The step's name for the author (Greek), at most 80 characters; the column's name when empty." },
+        name_en: { type: "string", description: "The step's name in English (optional), at most 80 characters." },
+        about: { type: "string", description: "The short explanation the author sees on hover (Greek), at most 600 characters." },
+        about_en: { type: "string", description: "The explanation in English (optional), at most 600 characters." } },
+        required: ["column"] } } },
       required: ["board"] }
   };
 
