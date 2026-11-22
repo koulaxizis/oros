@@ -1,0 +1,123 @@
+{
+ "count": 576,
+ "next": "https://open.audio/api/v2/tracks/?page=2&page_size=50&playable=true&tag=jazz",
+ "previous": null,
+ "results": [
+  {
+   "id": 498230,
+   "title": "Bárbara Morrison: Voz, alma y legado",
+   "artist_credit": [
+    {
+     "credit": "Sonoridad",
+     "joinphrase": ""
+    }
+   ],
+   "album": null,
+   "uploads": [
+    {
+     "duration": null,
+     "mimetype": "audio/mpeg",
+     "listen_url": "/api/v2/listen/497e1283-cfbf-4b15-baf1-6f21f98e8e10/?upload=61f508ba-bf1f-41b7-a534-1d05cdd4adc0"
+    }
+   ],
+   "listen_url": "/api/v2/listen/497e1283-cfbf-4b15-baf1-6f21f98e8e10/",
+   "license": "cc0-1.0",
+   "is_playable": true,
+   "tags": [
+    "blues",
+    "jazz",
+    "WorldMusic"
+   ],
+   "cover": {
+    "urls": {
+     "medium_square_crop": "https://s3.eu-central-2.wasabisys.com/open-audio/x.jpg?X-Amz-Expires=3600"
+    }
+   }
+  },
+  {
+   "id": 489954,
+   "title": "Dinah Washington: La reina del Blues",
+   "artist_credit": [
+    {
+     "credit": "Sonoridad",
+     "joinphrase": ""
+    }
+   ],
+   "album": null,
+   "uploads": [
+    {
+     "duration": 1803,
+     "mimetype": "audio/mpeg",
+     "listen_url": "/api/v2/listen/c0f0595c-2475-4bc7-8718-243da003d18a/?upload=9b9877dd-39e2-49db-83e8-f47915441dd3"
+    }
+   ],
+   "listen_url": "/api/v2/listen/c0f0595c-2475-4bc7-8718-243da003d18a/",
+   "license": "cc0-1.0",
+   "is_playable": true,
+   "tags": [
+    "blues",
+    "jazz",
+    "WorldMusic"
+   ],
+   "cover": {
+    "urls": {
+     "medium_square_crop": "https://s3.eu-central-2.wasabisys.com/open-audio/x.jpg?X-Amz-Expires=3600"
+    }
+   }
+  },
+  {
+   "id": 445131,
+   "title": "Repair My Heart",
+   "artist_credit": [
+    {
+     "credit": "Sockpuppet",
+     "joinphrase": ""
+    }
+   ],
+   "album": {
+    "title": "Transitions"
+   },
+   "uploads": [
+    {
+     "duration": 191,
+     "mimetype": "audio/mpeg",
+     "listen_url": "/api/v2/listen/3ce76ff9-36af-45ca-bd5f-d1383b54bd49/?upload=75219002-9651-477a-8e16-f48b653c5090"
+    }
+   ],
+   "listen_url": "/api/v2/listen/3ce76ff9-36af-45ca-bd5f-d1383b54bd49/",
+   "license": "cc-by-nc-sa-4.0",
+   "is_playable": true,
+   "tags": [
+    "jazz"
+   ],
+   "cover": null
+  },
+  {
+   "id": 468579,
+   "title": "The Jazz Process",
+   "artist_credit": [
+    {
+     "credit": "Jazz One",
+     "joinphrase": ""
+    }
+   ],
+   "album": {
+    "title": "Dusty Fingers"
+   },
+   "uploads": [
+    {
+     "duration": 344,
+     "mimetype": "audio/mpeg",
+     "listen_url": "/api/v2/listen/c9c0436d-895b-46d6-ba55-18fd1ca641c3/?upload=853de660-c9fe-4d6e-b776-3bbb7e6dc15d"
+    }
+   ],
+   "listen_url": "/api/v2/listen/c9c0436d-895b-46d6-ba55-18fd1ca641c3/",
+   "license": null,
+   "is_playable": true,
+   "tags": [
+    "jazz"
+   ],
+   "cover": null
+  }
+ ]
+}

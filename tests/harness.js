@@ -98,6 +98,10 @@ class FakeDropbox {
         this.log.push({ device, op: "delete", path: args.path, status: 200 });
         return jsonResponse(200, {});
       }
+      if (endpoint === "users/get_space_usage") {     // SPACE-1: this.space = the answer, null = refused
+        if (this.space === null) return jsonResponse(500, {});
+        return jsonResponse(200, this.space || { used: 0, allocation: { ".tag": "individual", allocated: 0 } });
+      }
       if (endpoint === "auth/token/revoke") {
         this.log.push({ device, op: "revoke", status: 200 });
         return jsonResponse(200, null);
@@ -253,6 +257,13 @@ class FakeWebDAV {
         if (!this.dirs.has(parent)) return textResponse(409, "");
         this.dirs.add(p);
         return textResponse(201, "");
+      }
+      if (method === "PROPFIND" && p === "" && /quota-available-bytes/.test(String(opts.body || ""))) {   // SPACE-1
+        const q = this.quota || {};
+        const props = (q.used !== undefined ? "<d:quota-used-bytes>" + q.used + "</d:quota-used-bytes>" : "") +
+          (q.avail !== undefined ? "<d:quota-available-bytes>" + q.avail + "</d:quota-available-bytes>" : "");
+        return textResponse(207, '<?xml version="1.0"?><d:multistatus xmlns:d="DAV:"><d:response><d:href>' + DAV_URL + DAV_DIR +
+          '/</d:href><d:propstat><d:prop>' + props + "</d:prop><d:status>HTTP/1.1 200 OK</d:status></d:propstat></d:response></d:multistatus>");
       }
       if (method === "PROPFIND") {
         if (!this.dirs.has(p)) {

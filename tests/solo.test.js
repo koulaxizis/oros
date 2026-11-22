@@ -442,7 +442,7 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   // page apps (STUDIO-RA, android/page-apps.json) are built as flavours too
   const pg = JSON.parse(read("android/page-apps.json")).apps;
   // Koulaxizis Apps (APPS-M3) comes from its own workflow and release
-  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk", "koulaxizis-apps.apk", "oros-glarolykoi.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
+  assert.deepEqual(l.map((a) => a.apk).sort(), ["oros.apk", "oros-drive.apk", "koulaxizis-apps.apk", "oros-glarolykoi.apk", "oros-waymark.apk"].concat(Object.keys(pk).concat(Object.keys(pg)).map((id) => "oros-" + id + ".apk")).sort());
   Object.keys(pg).forEach((id) => {
     const a = l.find((x) => x.id === id);
     assert.equal(a.pkg, pg[id].package);
@@ -459,6 +459,17 @@ test("F-Droid repo (FDROID-1): packages, links, launch version and metadata for 
   assert.equal(M.texts(gl, "el").name, "Γλαρόλυκοι");
   assert.match(read("glarolykoi-android/app/build.gradle"), /applicationId 'net\.glarolykoi\.android'/);
   assert.match(read(".github/workflows/android.yml"), /app-glarolykoi-release\.apk/);
+  // Waymark (site.waymarked.app) is built by the same workflow from
+  // koulaxizis/waymark at the commit pinned in .github/waymark.env
+  assert.ok(!pk.waymark, "a single app called waymark would publish a second oros-waymark.apk");
+  const wm = l.find((a) => a.id === "waymark");
+  assert.equal(wm.pkg, "site.waymarked.app");
+  assert.equal(M.texts(wm, "el").name, "Waymark");
+  assert.match(read(".github/waymark.env"), /^commit=[0-9a-f]{40}$/m);
+  assert.match(read(".github/waymark.env"), /^version=\d+\.\d+\.\d+$/m);
+  assert.match(read(".github/waymark.env"), /^build=\d{1,2}$/m);
+  assert.match(read(".github/workflows/android.yml"), /repository: koulaxizis\/waymark/);
+  assert.match(read(".github/workflows/android.yml"), /app-waymark-release\.apk/);
   l.forEach((a) => {
     assert.ok(fs.existsSync(a.icon), a.icon);
     ["en", "el"].forEach((lg) => {

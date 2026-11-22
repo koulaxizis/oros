@@ -238,6 +238,18 @@ html, body {
 }
 /* Favorite star — span (NOT a button-inside-button, Part VII),
    touch twin wired in JS. */
+/* TV-VOD3: official free-to-air badge (Free-TV list) */
+.tv-free {
+  position: absolute;
+  top: 6px; left: 6px;
+  max-width: calc(100% - 52px);
+  padding: 2px 6px;
+  font-size: 10px; font-weight: 700; line-height: 1.3;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
 .tv-fav {
   position: absolute;
   top: 4px; right: 4px;
@@ -605,6 +617,195 @@ dialog.tv-dlg::backdrop { background: rgba(0, 0, 0, 0.6); }
   .tv-tab { padding: 8px 10px; font-size: 13px; }
   .tv-manage { margin-left: 0; }
   .tvg-row { height: 52px; }
+}
+
+/* ---------- TV-VOD: Films & shows (films.js) ---------- */
+#tv-main.films-mode #tv-grid, #tv-main.films-mode #tv-more-row, #tv-main.films-mode #tv-loading,
+#tv-main.films-mode #tv-empty { display: none; }
+#tv-films { display: flex; flex-direction: column; gap: 10px; }
+.tvf-sub { display: flex; gap: 6px; flex-wrap: wrap; }
+.tvf-chip {
+  min-height: 36px;
+  padding: 6px 12px;
+  font: inherit; font-size: 13px; font-weight: 700;
+  color: var(--text-dim);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+}
+.tvf-chip:hover { color: var(--text); border-color: var(--accent); }
+.tvf-chip.on { color: var(--accent); background: var(--accent-soft); border-color: var(--accent); }
+.tvf-bar { display: flex; gap: 8px; }
+#tvf-q {
+  flex: 1; min-width: 0;
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit; font-size: 13px;
+  background: var(--panel-bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+}
+#tvf-q:focus { border-color: var(--accent); }
+.tvf-fbtn { display: inline-flex; align-items: center; gap: 4px; white-space: nowrap; }
+.tvf-fbtn svg { width: 16px; height: 16px; }
+.tvf-panel {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  align-items: end;
+  padding: 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.tvf-panel select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 10px;
+  font: inherit; font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  cursor: pointer;
+}
+.tvf-panel select:focus { border-color: var(--accent); }
+.tvf-panel select option { background: var(--panel-bg); color: var(--text); }
+/* TV-VOD2: save-search button, saved searches, Sources window, subtitles */
+.tvf-save { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; padding-left: 10px; padding-right: 10px; }
+.tvf-save svg { width: 16px; height: 16px; }
+.tvf-save:disabled { opacity: .45; cursor: default; }
+.tvf-saved { display: flex; flex-wrap: wrap; gap: 6px; }
+.tvf-saved[hidden] { display: none; }
+.tvf-ss { display: inline-flex; align-items: stretch; max-width: 100%; }
+.tvf-ss-go { border-radius: 999px 0 0 999px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: calc(100vw - 90px); }
+.tvf-ss-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 36px; min-height: 36px; padding: 0 8px;
+  color: var(--text-dim); background: transparent;
+  border: 1px solid var(--border); border-left: 0; border-radius: 0 999px 999px 0; cursor: pointer;
+}
+.tvf-ss-x:hover { color: var(--danger); }
+.tvf-ss-x svg { width: 14px; height: 14px; }
+.tvf-srcrow { align-items: flex-start; padding: 6px 0; }
+.tvf-srcrow input { margin-top: 2px; }
+.tvf-srcrow b { display: block; font-size: 13px; }
+.tvf-srcdesc { display: block; font-size: 12px; color: var(--text-dim); line-height: 1.45; }
+.tvf-link { font-size: 12.5px; color: var(--accent); align-self: flex-start; }
+#tvp-subs {
+  min-height: 40px; margin: 4px 0; padding: 8px 10px;
+  font: inherit; font-size: 12.5px;
+  background: var(--panel-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  max-width: 100%;
+}
+#tvp-subs:focus { border-color: var(--accent); }
+#tvp-subs option { background: var(--panel-bg); color: var(--text); }
+#tvp-video::cue { font-size: 1em; background: rgba(0, 0, 0, .72); color: #fff; }
+.tvf-check { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 12.5px; cursor: pointer; }
+.tvf-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
+.tvf-clear { justify-self: start; }
+.tvf-note { font-size: 12.5px; color: var(--text-dim); line-height: 1.45; }
+.tvf-empty { font-size: 13px; color: var(--text-dim); padding: 32px 0; text-align: center; }
+.tvf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+.tvf-card {
+  display: flex; flex-direction: column; gap: 4px;
+  min-width: 0;
+  padding: 0 0 8px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.tvf-card:hover, .tvf-card:focus-visible { border-color: var(--accent); }
+.tvf-grid.tvf-svcs { grid-template-columns: 1fr; }
+.tvf-svc {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 12px;
+  color: var(--text); text-decoration: none;
+  background: var(--panel-bg);
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.tvf-svc:hover, .tvf-svc:focus-visible { border-color: var(--accent); }
+.tvf-svc b { font-size: 14px; }
+.tvf-svc-go { font-size: 12px; font-weight: 700; color: var(--accent); }
+.tvf-thumb {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: var(--bg);
+}
+.tvf-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tvf-src, .tvf-flag {
+  position: absolute;
+  top: 6px;
+  padding: 2px 6px;
+  font-size: 10.5px; font-weight: 700;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+}
+.tvf-src { left: 6px; }
+.tvf-flag { right: 6px; color: #ffd8a8; }
+.tvf-prog { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(0, 0, 0, 0.5); }
+.tvf-prog span { display: block; height: 100%; background: var(--accent); }
+.tvf-title {
+  padding: 4px 8px 0;
+  font-size: 13px; font-weight: 700; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; overflow-wrap: anywhere;
+}
+.tvf-meta { padding: 0 8px; font-size: 11.5px; color: var(--text-dim); overflow-wrap: anywhere; }
+.tvf-more-row { display: flex; justify-content: center; padding: 6px 0 12px; }
+
+/* details window */
+.tvf-body { display: flex; gap: 12px; align-items: flex-start; }
+.tvf-poster { width: 160px; max-width: 40%; border-radius: 8px; object-fit: cover; flex: none; }
+.tvf-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.tvf-text .tvf-meta { padding: 0; font-size: 12.5px; }
+.tvf-desc { font-size: 13px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 40vh; overflow-y: auto; }
+.tvf-why { font-size: 12px; line-height: 1.45; color: var(--ok); }
+.tvf-why.warn { color: var(--warn); }
+#tvf-parts-wrap { padding-top: 10px; }
+#tvf-parts-wrap h3 { font-size: 13.5px; font-weight: 800; padding-bottom: 6px; }
+.tvf-parts { display: flex; flex-direction: column; gap: 4px; max-height: 30vh; overflow-y: auto; }
+.tvf-part {
+  min-height: 40px;
+  padding: 6px 10px;
+  font: inherit; font-size: 12.5px;
+  text-align: left;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+}
+.tvf-part:hover { border-color: var(--accent); }
+.tvf-status { font-size: 12.5px; color: var(--text-dim); padding-top: 8px; }
+
+/* player: position in a film */
+.tvp-seek { display: flex; align-items: center; gap: 6px; padding: 6px 0 0; }
+.tvp-time { font-size: 12px; color: var(--text-dim); font-variant-numeric: tabular-nums; min-width: 38px; text-align: center; }
+#tvp-pos { flex: 1; min-width: 0; height: 44px; accent-color: var(--accent); cursor: pointer; }
+
+@media (max-width: 480px) {
+  .tvf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .tvf-panel { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tvf-body { flex-direction: column; }
+  .tvf-poster { width: 100%; max-width: none; max-height: 200px; }
+  .tvp-time { min-width: 0; font-size: 11px; }
 }
 
 /* Authority guard — LAST RULE (Part VII) */

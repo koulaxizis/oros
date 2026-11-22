@@ -42,6 +42,9 @@ const GATE_ONLY = {
   // INV-EXT (Chris 2026-11-18 card «Νέο εργαλείο στο Gate»)
   invoices_record: { why: "Recording a batch of documents issued at another provider is bookkeeping import Claude does from outside (an export of that provider); inside orOS the owner records one with Invoices › New › Record an invoice issued elsewhere." },
   // GATE-FILES F2: the Assistant runs on the device and reads the live disk (files_read); a download link is for a cloud thread with orOS closed
+  // ST-IMP (Chris 2026-11-21): the relay runs them as edit_in_app's create
+  studio_import: { twin: ["edit_in_app"] },
+  montage_import: { twin: ["edit_in_app"] },
   files_upload: { why: "GL-8: brings a file's bytes from Claude's side (outside orOS, e.g. the owner's computer folder) into the box for the next open orOS; the Assistant runs on the device and has the files themselves." },
   files_link: { why: "A one-time download link from the owner's sealed copy is for Claude working from outside with orOS closed; the Assistant runs on the device and reads the live file with files_read." }
 };
@@ -109,6 +112,17 @@ test("the relay takes the device's whole tool list", () => {
   assert.deepEqual(R.cleanDevTools(t).map((x) => x.name), t.map((x) => x.name).filter((n) => !own.has(n)), "none dropped (the relay keeps its own search_data, app_summary, read_item)");
   t.forEach((x) => assert.ok(x.description.length <= 8000, x.name + ": the relay cuts descriptions at 8000"));
   assert.ok(C.GATE_TOOLS.length <= R.DEV_TOOLS_MAX, "DEV_TOOLS_MAX holds every gate tool");
+  // GL-9: Files at «may change» added the files_* tools and the list went
+  // over the old 120 KB cap, so the relay dropped all of it
+  const all = C.gateTools(C.toolsFor({ data: 1, summary: 1, fonts: 1, entries: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo", "calendar", "notes", "crm", "contacts"],
+    links: 1, partnerLinks: 1, actions: ["timer", "open"], history: 1, edits: { writer: { CATALOG: {} } }, recipes: ["layout", "atelier"],
+    newsletter: 1, cover: 1, rules: 1, files: "write", lines: ["budget", "invoices", "stock", "publish"], kbCols: 1 }));
+  ["files_list", "files_write", "edit_in_app", "read_in_app"].forEach((n) => assert.ok(all.some((x) => x.name === n), n + " in the full list"));
+  assert.ok(all.length >= 25 && JSON.stringify(all).length > 120000, "the full list is past the old 30 / 120 KB cap");
+  const cl = R.cleanDevTools(all);
+  assert.deepEqual(cl.map((x) => x.name), all.map((x) => x.name).filter((n) => !own.has(n)), "every gate tool passes the relay");
+  assert.ok(JSON.stringify(all).length * 2 < R.DEV_TOOLS_BYTES, "room to grow: the whole list is under half the cap");
+  assert.ok(!cl.some((x) => /shortened/.test(x.description)), "nothing is shortened today");
 });
 
 // FM-7: the families of Settings › Fonts, read only, on both sides.

@@ -209,8 +209,8 @@
       "ms": 52
     },
     "layout": {
-      "bytes": 2172099,
-      "ms": 329
+      "bytes": 2607948,
+      "ms": 350
     },
     "library": {
       "bytes": 677887,
@@ -273,8 +273,8 @@
       "ms": 44
     },
     "mockups": {
-      "bytes": 402431,
-      "ms": 49
+      "bytes": 613927,
+      "ms": 142
     },
     "montage": {
       "bytes": 1093404,
@@ -369,8 +369,8 @@
       "ms": 64
     },
     "radio": {
-      "bytes": 312319,
-      "ms": 54
+      "bytes": 387362,
+      "ms": 78
     },
     "realm": {
       "bytes": 348407,
@@ -469,8 +469,8 @@
       "ms": 45
     },
     "television": {
-      "bytes": 746495,
-      "ms": 80
+      "bytes": 900008,
+      "ms": 95
     },
     "tetris": {
       "bytes": 184319,

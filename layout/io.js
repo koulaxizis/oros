@@ -344,6 +344,23 @@
   function sha1(bytes) {
     return crypto.subtle.digest("SHA-1", bytes).then(function (ab) { return new Uint8Array(ab); });
   }
+  // GX-1: an export made for the Assistant or orOS Gate also goes to out
+  // (≤ 2 places: local:<root>/<folder> and/or a folder of Claude's on the
+  // orOS disk). The shell's orOS Gate checks and writes it (gate.js
+  // exportTo; a local folder also without it). → { saved, outFail }
+  function saveOut(outs, name, blob, tool) {
+    var list = (Array.isArray(outs) ? outs : typeof outs === "string" && outs ? [outs] : []).filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 2);
+    var saved = [], outFail = [], P = null;
+    try { P = window.parent && window.parent !== window ? window.parent : null; } catch (e) { P = null; }
+    var G = P && P.orosGate && typeof P.orosGate.exportTo === "function" ? P.orosGate : null, L = P && P.orosLocal && typeof P.orosLocal.write === "function" ? P.orosLocal : null;
+    return list.reduce(function (pr, o) {
+      return pr.then(function () {
+        var go = G ? G.exportTo(o, name, blob, tool) : /^local:/i.test(o) && L ? L.write(o.trim(), name, blob, tool) : Promise.reject({ why: /^local:/i.test(o) ? "noBridge" : "gateOff" });
+        return Promise.resolve(go).then(function (p) { if (typeof p === "string" && p) saved.push(p); else outFail.push({ to: o, why: "error" }); },
+          function (e) { outFail.push({ to: o, why: e && typeof e.why === "string" ? e.why : "error" }); });
+      });
+    }, Promise.resolve()).then(function () { return { saved: saved, outFail: outFail }; });
+  }
   function diskFs() {
     try {
       var f = window.parent && window.parent !== window ? window.parent.orosFS : window.orosFS;
@@ -1940,7 +1957,7 @@
   }
 
   LY.io = {
-    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, portFolder: portFolder, compareDoc: compareDoc, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, saveOut: saveOut, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, portFolder: portFolder, compareDoc: compareDoc, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     adjust: adjust, placePage: placePage, pageImage: pageImage, pageKind: pageKind, wrapProfile: wrapProfile, fillWrapProfiles: fillWrapProfiles, saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

@@ -100,6 +100,8 @@ They come from Waymarked Trails. Turn on as many as you like; this device rememb
 - how visible the path is on the ground, the incline, the width, and whether you may walk, ride or take a horse there;
 - the marked routes it belongs to (international, national, regional or local), with `Waymarked Trails` to see the whole route.
 
+`Report a problem on this path` (at the bottom) picks what is wrong (blocked, overgrown, signs missing, a damaged bridge or steps, the path is gone, dangerous, something else) and opens a new OpenStreetMap note at that spot with the path and its link already written; add details and send it as any note (see OpenStreetMap notes).
+
 To browse the marked routes around you, open Discover › `Trails`.
 
 Only what has been mapped is shown. If a detail is missing, it isn't known yet; you can add it with Quests or Edit places. Offline maps now draw cycleways in blue, tracks in brown and footpaths in red, all dashed.
@@ -159,7 +161,7 @@ Changes wait in the panel until you tap `Upload`; they go in one changeset with 
 
 Help OpenStreetMap by answering small questions about what's around you. You don't need to know any tags.
 
-1. Tap `Quests` (the pin with a question mark) and zoom in to street level. Pins show the open questions: 🪑 bench backrest, 🚏 bus stop shelter, 🚌 bench at the stop, 🚸 crossing type, 💡 street lights, 🛣️ surface, 🕒 opening hours, ♿ wheelchair access, 🚻 toilets fee, ♻️ recycling, 🛐 religion, 🏢 building floors, 🔢 house number, 🛝 playground access, 🚬 smoking, 🏧 ATM at the bank, 🚦 speed limit, 🏷️ street name, 🪜 number of steps, 🤚 handrail, 🦯 tactile paving at the crossing, 🪧 stop name, 🚧 level crossing barrier, 🅿️ parking fee, 🚗 kind of car park, 🚲 bicycle parking spaces, ☂️ covered bicycle parking, 🥗 vegetarian food, 🌱 vegan food, 💳 ways to pay, 📶 Wi-Fi, 🚾 wheelchair toilet, ❤️ defibrillator indoors, 🧯 fire hydrant, 📮 postbox collection times, 🏠 kind of building.
+1. Tap `Quests` (the pin with a question mark) and zoom in to street level. Pins show the open questions: 🪑 bench backrest, 🚏 bus stop shelter, 🚌 bench at the stop, 🚸 crossing type, 💡 street lights, 🛣️ surface, 🕒 opening hours, ♿ wheelchair access, 🚻 toilets fee, ♻️ recycling, 🛐 religion, 🏢 building floors, 🔢 house number, 🛝 playground access, 🚬 smoking, 🏧 ATM at the bank, 🚦 speed limit, 🏷️ street name, 🪜 number of steps, 🤚 handrail, 🦯 tactile paving at the crossing, 🪧 stop name, 🚧 level crossing barrier, 🅿️ parking fee, 🚗 kind of car park, 🚲 bicycle parking spaces, ☂️ covered bicycle parking, 🥗 vegetarian food, 🌱 vegan food, 💳 ways to pay, 📶 Wi-Fi, 🚾 wheelchair toilet, ❤️ defibrillator indoors, 🧯 fire hydrant, 📮 postbox collection times, 🏠 kind of building, and for walkers and cyclists 🥾 hiking difficulty (T1 to T6), 👀 how visible a path is, 🚜 how firm a track is, 🚲 bikes on a path, ↔️ separate lanes for bikes and walkers, 🛞 a bike ramp on steps, 💧 drinking water at a spring or tap, 🛖 kind of shelter.
 2. Tap a pin (or a row in the list) and tap the answer. The next question nearby opens by itself.
 3. `Can't say` skips the question for now. `Hide here` hides it for that place on all your devices. `It's not there any more` opens a new note at the spot, so mappers can check.
 4. Some answers get old: Maps asks again after some years (opening hours after one year) and `Still the same` confirms them.
@@ -178,6 +180,7 @@ An overlay colours the streets or buildings around you by one thing, so the gaps
 - 💡 `Street lights`: lit or not.
 - 🛣️ `Surface`: asphalt, paving stones, gravel, ground and more.
 - 🚶 `Sidewalks`: on both sides, one side, a separate path or none. Arrows on the chosen street show its direction: left and right are as you see them walking that way.
+- 🚴 `Cycle lanes`: a separated cycle track, a painted lane, bike marks on a shared lane, a separate cycleway drawn next to the street, or nothing for bikes.
 - 🔢 `Addresses`: which buildings have a house number. Type the number or tap `It has no number`.
 - 🏢 `Buildings`: floors and kind of building in one form (empty fields stay as they are).
 
@@ -269,7 +272,7 @@ Each pack shows its size, its detail, when you downloaded it and the date of the
 
 - `Offline map (downloaded)` in the layers button shows your packs; outside them the map is hatched. When the device goes offline over a pack, Maps switches to it by itself, and back when you're online again. Past the pack's top detail the map is drawn larger, still sharp.
 - Offline, the search finds names from your packs: towns and neighbourhoods, streets, shops and other places, parks and water, and addresses where the map data has them. Accents don't matter, and Latin letters find Greek names (`plaka` finds Πλάκα). The rows say `(offline)`.
-- New routes still need a connection.
+- With no connection, `Walk` and `Bike` routes come from your packs (experimental): Maps works the route out on the device from the roads, paths, steps and cycleways of a pack that holds every stop, at `Streets, shops and places` detail or more. The route bar says `Offline · experimental`, and `Directions` shows the kinds of way. The packs don't know one-way rules for bikes, who may use a way, turn rules or heights, so check on the spot; the time is for flat ground. The same happens when you're online but the route servers can't be reached. Car routes still need a connection.
 - `Map source (advanced)` takes the address of your own PMTiles file (vector tiles in the Protomaps layout) instead of the default.
 
 ## Online services and privacy
@@ -312,7 +315,7 @@ Saved places, your track list (names, activities, colours, folders, statistics),
 
 ## Limits
 
-- New routes need a connection. Offline you get your offline maps (map and search), areas you looked at before, saved places and your last route. Without an offline map, search needs a connection.
+- New car routes need a connection (Walk and Bike come from your offline maps, see Offline maps). Offline you get your offline maps (map and search), areas you looked at before, saved places and your last route. Without an offline map, search needs a connection.
 - Offline maps need a browser that can store files for a site (recent Chrome, Edge, Firefox, Safari 26). The browser may remove them when the device runs out of space. The offline map is drawn more simply than the online one: no house numbers or one-way arrows on the map, no hill shading, and names near the edge of a map tile may not show.
 - Offline search finds only names in the map data, not every address; one area pack holds at most 600,000 map tiles, so a whole country comes with less detail.
 - Navigation needs GPS, and Maps has to stay open.

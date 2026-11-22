@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.23.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.39.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -47,6 +47,7 @@
     wallpaper:       null,   // wallpaper id (see WALLPAPERS)
     wpart:           null,   // "Mine" wallpaper recipe (Wallpaper Generator) or null
     wpland:          null,   // "Living land" { style, seed, motion } or null (= defaults)
+    wpviz:           null,   // "Light show" { style } or null (= glow), VIZWALL-1
     icons:           "classic", // icon pack (ICONPACK-1, iconpacks.css)
     apps:            [],
     aliases:         [],     // APP-ALIAS: old app ids that now live inside another app (apps.json "aliases")
@@ -62,6 +63,7 @@
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
     vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
+    syncSpace:       null,   // SPACE-1: { busy, provider, at, used, total, free, none, err } once Settings asked
     syncRestoring:   null,   // A43: name of the backup being restored
     syncOldPassFor:  null,   // A43: backup that needs its old passphrase
     syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
@@ -103,6 +105,7 @@
   var WALLPAPERS = [
     { id: "custom",   css: "" },  // "Mine": drawn from state.wpart (5b)
     { id: "land",     css: "" },  // "Living land": wallpaper/land.js around the desktop items (5b'')
+    { id: "viz",      css: "" },  // "Light show": vizkit.js moving with the music (5b-viz, VIZWALL-1)
     { id: "dusk",     css: "linear-gradient(160deg, #1b2735 0%, #10151f 45%, #0b0f17 100%)" },
     { id: "midnight", css: "linear-gradient(165deg, #0d1117 0%, #06080c 60%, #000000 100%)" },
     { id: "plum",     css: "radial-gradient(ellipse at 30% 20%, #4a2545 0%, #2c1626 55%, #190d17 100%)" },
@@ -374,6 +377,7 @@
     localStorage.setItem("oros-wallpaper", state.wallpaper);
     state.wpart = wpArtRead();
     state.wpland = wpLandRead();
+    state.wpviz = wpVizRead();
     state.icons = iconsCanon(localStorage.getItem(ICONS_KEY)) || "classic";
 
     state.theme = localStorage.getItem("oros-theme") === "light" ? "light" : "dark";
@@ -545,9 +549,10 @@
     // Inline style: wins over any #oros-desktop background rule
     // (specificity-proof — the v0.4.0 class-based approach lost to
     // the existing ID rule).
-    if (w.id === "custom" || wpPic()) { wpLandStop(); wpCustomApply(desktop); }
-    else if (w.id === "land") { wpCustomStop(); wpLandApply(desktop); }
-    else { wpCustomStop(); wpLandStop(); desktop.style.background = w.css; }
+    if (w.id === "custom" || wpPic()) { wpLandStop(); wpVizStop(); wpCustomApply(desktop); }
+    else if (w.id === "land") { wpCustomStop(); wpVizStop(); wpLandApply(desktop); }
+    else if (w.id === "viz") { wpCustomStop(); wpLandStop(); wpVizApply(desktop); }
+    else { wpCustomStop(); wpLandStop(); wpVizStop(); desktop.style.background = w.css; }
 
     // Keep the class for potential future hooks, cleaned of stale ids
     var classes = desktop.className.split(/\s+/);
@@ -884,6 +889,166 @@
     applyWallpaper();
     noteLocalChange();
     renderMenu();
+  }
+
+  // ---------- 5b-viz. "Light show" (VIZWALL-1, vizkit.js on first use) ----------
+  // The Light show of Music, Radio and Podcasts (MU-VIZ) as the desktop
+  // wallpaper: it moves with whatever plays. Only { style } travels
+  // (shell field wpviz, null = glow); nothing else is kept or sent.
+  // The shell follows the player that plays (Music, then Podcasts, then
+  // Radio) and listens as "wall": Music lets it hear songs from the
+  // device; Radio and Podcasts only give sound that is already readable
+  // (their own Light show, the podcast effects) and never restart a
+  // stream for it, so otherwise the light moves calmly on its own.
+  // Rules (vizkit.js): at most 30 fps, only while the desktop shows,
+  // nothing playing = the still picture and no loop, still with reduced
+  // motion, Energy saver, a low battery or a slow device; softer light
+  // (0.5) so the icons stay readable.
+  var WP_VIZ_KEY = "oros-wallpaper-viz";
+  var WP_VIZ_STYLES = ["glow", "rings", "bars", "wave"];
+  var WP_VIZ_TICK_MS = 1500;
+  var wpVizCtl = null;     // { cv, v, src, iv, playing } while it is the desktop
+  var wpVizKitP = null;
+
+  // Canonical { style }, or null when v is not an object.
+  function wpvizCanon(v) {
+    if (!v || typeof v !== "object" || Array.isArray(v)) return null;
+    return { style: WP_VIZ_STYLES.indexOf(v.style) >= 0 ? v.style : "glow" };
+  }
+  function wpVizRead() {
+    try { return wpvizCanon(JSON.parse(localStorage.getItem(WP_VIZ_KEY))); }
+    catch (e) { return null; }
+  }
+  function wpVizWrite(r) {
+    try {
+      if (r) localStorage.setItem(WP_VIZ_KEY, JSON.stringify(r));
+      else localStorage.removeItem(WP_VIZ_KEY);
+    } catch (e) {}
+  }
+  function wpVizNow() { return state.wpviz || wpvizCanon({}); }
+  // The dark base under the light: the accent at 9 % on near black.
+  function wpVizBase(accent) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(String(accent || "").trim()), c = m ? parseInt(m[1], 16) : 0xa78bfa;
+    var mix = function (x, b) { return Math.round(b + (x - b) * 0.09); };
+    var r = mix(c >> 16 & 255, 8), g = mix(c >> 8 & 255, 8), b = mix(c & 255, 13);
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+  }
+  function wpVizKit() {
+    if (window.OrosViz) return Promise.resolve(window.OrosViz);
+    if (!wpVizKitP) {
+      wpVizKitP = new Promise(function (ok, fail) {
+        var sc = document.createElement("script");
+        sc.src = "vizkit.js?v=" + APP_VERSION;
+        sc.onload = function () { if (window.OrosViz) ok(window.OrosViz); else fail(new Error("vizkit")); };
+        sc.onerror = function () { sc.remove(); fail(new Error("vizkit")); };
+        document.head.appendChild(sc);
+      });
+      wpVizKitP.catch(function () { wpVizKitP = null; });
+    }
+    return wpVizKitP;
+  }
+  // The player that plays now, as { id, h } (h: viz(on, who), vizFrame()),
+  // or null. Music first, then Podcasts, then Radio (one plays at a time:
+  // audio focus).
+  function wpVizPlaying() {
+    var mu = hostApi(window.__orosMusicHost), pc = hostApi(window.__orosPodcastsHost), rx = window.__orosRadioHost;
+    var ok = function (h) { return !!(h && typeof h.viz === "function" && typeof h.vizFrame === "function"); };
+    var on = function (h) { try { var s = h.getState(); return !!(s && s.playing); } catch (e) { return false; } };
+    if (ok(mu) && on(mu)) return { id: "music", h: mu };
+    if (ok(pc) && on(pc)) return { id: "podcasts", h: pc };
+    if (rx && rx.audio && ok(rx.api) && !rx.audio.paused) return { id: "radio", h: rx.api };
+    return null;
+  }
+  // The Music and Podcasts hosts keep their calls under .api.
+  function hostApi(h) { return h && h.api && typeof h.api.getState === "function" ? h.api : h; }
+  function wpVizCovered() {
+    return !!state.running || document.hidden || document.documentElement.getAttribute("data-oros-contrast") === "high";
+  }
+  // Listen to p (or to nobody), letting go of the one before.
+  function wpVizListen(p) {
+    var C = wpVizCtl;
+    if (!C) return;
+    var id = p ? p.id : "";
+    if ((C.src ? C.src.id : "") === id) return;
+    if (C.src) { try { C.src.h.viz(false, "wall"); } catch (e) {} }
+    C.src = p;
+    if (p) { try { p.h.viz(true, "wall"); } catch (e) {} }
+  }
+  // Every WP_VIZ_TICK_MS while it is the desktop: who plays, covered or not.
+  function wpVizTick() {
+    var C = wpVizCtl;
+    if (!C) return;
+    var covered = wpVizCovered();
+    var p = covered ? null : wpVizPlaying();
+    wpVizListen(p);
+    var was = C.playing;
+    C.playing = !!p;
+    if (C.v && !covered && (C.playing || was !== C.playing || C.wasCovered)) C.v.wake();
+    C.wasCovered = covered;
+  }
+  function wpVizApply(desktop) {
+    desktop.style.background = wpVizBase(wpAccent());
+    if (wpVizCtl) {
+      if (wpVizCtl.v) { wpVizCtl.v.setStyle(wpVizNow().style); wpVizCtl.v.redraw(); }
+      return;
+    }
+    var C = wpVizCtl = { cv: null, v: null, src: null, iv: 0, playing: false, wasCovered: false };
+    wpVizKit().then(function (V) {
+      if (wpVizCtl !== C) return;
+      var cv = document.getElementById("wp-viz");
+      if (!cv) {
+        cv = document.createElement("canvas");
+        cv.id = "wp-viz";
+        cv.setAttribute("aria-hidden", "true");
+        desktop.insertBefore(cv, desktop.firstChild);
+      }
+      C.cv = cv;
+      C.v = V.create(cv, {
+        style: wpVizNow().style,
+        source: function () { return C.src ? C.src.h.vizFrame() : null; },
+        playing: function () { return !!C.playing; },
+        colors: function () { return { a: wpAccent(), bg: wpVizBase(wpAccent()) }; },
+        saver: function () { return document.documentElement.getAttribute("data-oros-saver") === "1"; },
+        paused: wpVizCovered,
+        soft: 0.5,
+        rest: true
+      });
+      C.iv = setInterval(wpVizTick, WP_VIZ_TICK_MS);
+      wpVizTick();
+    }, function () {});
+  }
+  function wpVizStop() {
+    var C = wpVizCtl;
+    if (!C) return;
+    wpVizCtl = null;
+    if (C.iv) clearInterval(C.iv);
+    if (C.src) { try { C.src.h.viz(false, "wall"); } catch (e) {} }
+    if (C.v) { try { C.v.destroy(); } catch (e) {} }
+    var cv = document.getElementById("wp-viz");
+    if (cv) cv.parentNode.removeChild(cv);
+  }
+  // An app opened or closed, Energy saver changed: follow it now.
+  function wpVizRefresh() {
+    if (!wpVizCtl) return;
+    wpVizTick();
+    if (wpVizCtl && wpVizCtl.v) wpVizCtl.v.check();
+  }
+  document.addEventListener("oros-power", wpVizRefresh);
+  // A user action (Settings, Wallpaper Generator): the style, and the
+  // Light show becomes the wallpaper. Syncs.
+  function wpVizSet(style) {
+    if (WP_VIZ_STYLES.indexOf(style) < 0) return false;
+    state.wpviz = wpvizCanon({ style: style });
+    wpVizWrite(state.wpviz);
+    if (wpPic()) wpPicClear();
+    if (state.wallpaper !== "viz") {
+      state.wallpaper = "viz";
+      localStorage.setItem("oros-wallpaper", state.wallpaper);
+    }
+    applyWallpaper();
+    noteLocalChange();
+    renderMenu();
+    return true;
   }
 
   // The colour maths of "Accent from wallpaper" (WPACC-1), pure: no
@@ -1249,6 +1414,11 @@
       wpLandNewShape({ style: c.style, seed: c.seed });
       return true;
     },
+    // VIZWALL-1: the Light show with this style becomes the wallpaper.
+    setViz: function (v) {
+      if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+      return wpVizSet(v.style);
+    },
     // recipe = the picture part (no daily / live); daily, live = the options;
     // land = { style, seed, motion } while Living land is the desktop
     get: function () {
@@ -1257,7 +1427,8 @@
                recipe: r && A && A.picture ? A.picture(r) : r,
                picture: pic ? pic.at : null,
                daily: !!(r && r.daily), live: !!(r && r.live),
-               land: !pic && state.wallpaper === "land" ? wpLandNow() : null };
+               land: !pic && state.wallpaper === "land" ? wpLandNow() : null,
+               viz: !pic && state.wallpaper === "viz" ? wpVizNow() : null };
     }
   };
 
@@ -1265,6 +1436,7 @@
   (function () {
     var t = null;
     window.addEventListener("resize", function () {
+      if (wpVizCtl && wpVizCtl.v) { clearTimeout(t); t = setTimeout(function () { if (wpVizCtl && wpVizCtl.v) wpVizCtl.v.redraw(); }, 300); return; }
       if (state.wallpaper !== "custom") return;
       clearTimeout(t);
       t = setTimeout(applyWallpaper, 700);
@@ -6949,7 +7121,7 @@
   }
 
   // Names: translations.js "wp.name.<id>"; any other id shows as it is.
-  var WALLPAPER_NAMED = { dusk: 1, midnight: 1, plum: 1, forest: 1, ember: 1, nordic: 1, aurora: 1, sand: 1, mono: 1, nebula: 1, borealis: 1, hex: 1, obsidian: 1, terrazzo: 1, dots: 1, custom: 1, land: 1, clear: 1 };
+  var WALLPAPER_NAMED = { viz: 1, dusk: 1, midnight: 1, plum: 1, forest: 1, ember: 1, nordic: 1, aurora: 1, sand: 1, mono: 1, nebula: 1, borealis: 1, hex: 1, obsidian: 1, terrazzo: 1, dots: 1, custom: 1, land: 1, clear: 1 };
   function wallpaperTitle(id) {
     return WALLPAPER_NAMED[id] ? window.t("wp.name." + id) : id;
   }
@@ -7008,7 +7180,7 @@
     } catch (e) {}
   }
 
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "icons", "fopen", "keys"];
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "wpviz", "icons", "fopen", "keys"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -7021,6 +7193,7 @@
       case "autoexport":   return "off";
       case "wpart":        return null;
       case "wpland":       return null;
+      case "wpviz":        return null;
       case "icons":        return "classic";
       case "fopen":        return {};
       case "keys":         return {};
@@ -7046,6 +7219,10 @@
         if (v === null) return null;
         var wl = wplandCanon(v);
         return wl ? wl : undefined;
+      case "wpviz":
+        if (v === null) return null;
+        var wz = wpvizCanon(v);
+        return wz ? wz : undefined;
       case "icons":        return iconsCanon(v);
       case "fopen":        return fopenCanon(v);
       case "keys":         return keysCanon(v);
@@ -7071,7 +7248,7 @@
       lang: state.lang, theme: state.theme, skin: state.skin,
       wallpaper: state.wallpaper, syncInterval: syncInterval,
       autoexport: state.autoexport, weather: wxRead(),
-      wpart: state.wpart, wpland: state.wpland, icons: state.icons,
+      wpart: state.wpart, wpland: state.wpland, wpviz: state.wpviz, icons: state.icons,
       fopen: fopenRead(), keys: keysRead()
     };
     var out = {};
@@ -7268,6 +7445,7 @@
       weather:      vals.weather,
       wpart:        vals.wpart,   // "Mine" wallpaper recipe (Wallpaper Generator)
       wpland:       vals.wpland,  // "Living land" { style, seed, motion } (wallpaper/land.js)
+      wpviz:        vals.wpviz,   // "Light show" { style } (vizkit.js, VIZWALL-1)
       icons:        vals.icons,   // icon pack (ICONPACK-1)
       fopen:        vals.fopen,   // default apps per file type (DEF-APPS D1)
       keys:         vals.keys,    // the person's own shortcut keys (DEF-APPS D2)
@@ -7331,6 +7509,10 @@
     if (data.wpland !== undefined && shellCanon("wpland", data.wpland) !== undefined) {
       state.wpland = shellCanon("wpland", data.wpland);
       wpLandWrite(state.wpland);
+    }
+    if (data.wpviz !== undefined && shellCanon("wpviz", data.wpviz) !== undefined) {
+      state.wpviz = shellCanon("wpviz", data.wpviz);
+      wpVizWrite(state.wpviz);
     }
     // Default apps (DEF-APPS D1): pulled, written for fileopen.js only
     // (no push from a pull).
@@ -8291,6 +8473,7 @@
       state.syncUserEmail = null;
       state.syncBackups = null;
       state.vaultClean = null;
+      state.syncSpace = null;
       renderMenu();
       return;
     }
@@ -8301,9 +8484,42 @@
       state.syncUserEmail = null;
       state.syncBackups = null;
       state.vaultClean = null;
+      state.syncSpace = null;
       state.syncAutoErr = null;
       setSyncMsg("ok", syncDisconnectKey(r));
     });
+  }
+  // SPACE-1: Settings › Sync › Space in the cloud. The page asks when
+  // it shows the card; the answer is kept for SPACE_FRESH_MS (or until
+  // Refresh, another cloud or a disconnect), so re-renders ask nothing.
+  var SPACE_FRESH_MS = 10 * 60 * 1000;
+  function syncSpaceFor() {
+    var S = window.orosSync, k = state.syncSpace;
+    if (!S || !S.isConnected() || !k) return null;
+    if (k.provider !== S.getProvider()) return null;
+    return { busy: !!k.busy, used: k.used, total: k.total, free: k.free, none: !!k.none, err: k.err || null,
+      stale: !k.busy && Date.now() - (k.at || 0) > SPACE_FRESH_MS };
+  }
+  function syncSpaceLoad(force) {
+    var S = window.orosSync;
+    if (!S || typeof S.cloudSpace !== "function" || !S.isConnected()) return;
+    var k = state.syncSpace, pid = S.getProvider();
+    if (k && k.busy) return;
+    if (!force && k && k.provider === pid && Date.now() - (k.at || 0) <= SPACE_FRESH_MS) return;
+    state.syncSpace = { busy: true, provider: pid, at: Date.now(),
+      used: k && k.provider === pid ? k.used : null, total: k && k.provider === pid ? k.total : null,
+      free: k && k.provider === pid ? k.free : null, none: false, err: null };
+    settingsNotify();
+    function num(v) { return typeof v === "number" && isFinite(v) && v >= 0 ? v : null; }
+    S.cloudSpace().then(function (r) {
+      if (!state.syncSpace || state.syncSpace.provider !== pid) return;
+      state.syncSpace = r ? { busy: false, provider: pid, at: Date.now(), used: num(r.used), total: num(r.total), free: num(r.free), none: false, err: null }
+                          : { busy: false, provider: pid, at: Date.now(), used: null, total: null, free: null, none: true, err: null };
+    }, function (err) {
+      if (!state.syncSpace || state.syncSpace.provider !== pid) return;
+      state.syncSpace = { busy: false, provider: pid, at: Date.now(), used: null, total: null, free: null, none: false,
+        err: window.t(S.errorKey ? S.errorKey(err) : "sync.err.generic") };
+    }).then(settingsNotify);
   }
   // VD-GC: Settings › Sync › Unused files in the cloud. Look first
   // (usage: changes nothing), then clean up only on the person's tap.
@@ -9629,6 +9845,9 @@
         { name: "Audius", url: "https://audius.co/",
           by: "The Audius community; each track by its artist", lic: { k: "cr.lic.audius" },
           k: "cr.audius" },
+        { name: "open.audio (Funkwhale)", url: "https://open.audio/",
+          by: "The Funkwhale project's public pod; each song by its uploader", lic: { k: "cr.lic.openaudio" },
+          k: "cr.openaudio" },
         { name: "Europeana", url: "https://www.europeana.eu/",
           by: "Europeana Foundation; each recording by its archive", lic: { k: "cr.lic.europeana" },
           k: "cr.europeana" },
@@ -13090,12 +13309,17 @@
                own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
+      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice() } : null,   // VIZWALL-1
       land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;
         if (w.id === "land") {
           var LT = window.OrosLand, lu = (LT && typeof LT.thumb === "function") ? LT.thumb(wpAccent(), state.theme, wpLandNow().style) : "";
           css = lu ? 'url("' + lu + '") center / cover no-repeat, #17393f' : "linear-gradient(160deg, #17393f 0%, #0f2a33 70%)";
+        }
+        if (w.id === "viz") {      // VIZWALL-1: a still picture of the light
+          var vb = wpVizBase(wpAccent());
+          css = "radial-gradient(circle at 34% 40%, " + wpAccent() + "99 0%, transparent 42%), radial-gradient(circle at 70% 62%, " + wpAccent() + "55 0%, transparent 38%), " + vb;
         }
         if (w.id === "custom") {
           if (!hasArt) css = null;   // nothing made yet → "make one"
@@ -13141,6 +13365,8 @@
         canClean: !!(window.orosVault && typeof window.orosVault.cleanUp === "function"),
         clean: (connected && state.vaultClean) ? JSON.parse(JSON.stringify(state.vaultClean)) : null,
         cleanDays: (window.orosVault && window.orosVault.cleanMinAgeDays) || 30,
+        canSpace: !!(S && typeof S.cloudSpace === "function"),
+        space: connected ? syncSpaceFor() : null,
         restoring: state.syncRestoring,
         // SOS-1: { kind: "sos"|"reset", n, verified } when a signal stopped sync here.
         signal: (S && typeof S.cloudSignal === "function") ? S.cloudSignal() : null,
@@ -13277,6 +13503,7 @@
         return;
       case "wpland:motion": wpLandNewShape({ motion: value ? 1 : 0 }); settingsNotify(); return;
       case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
+      case "wpviz:style":   if (wpVizSet(value)) settingsNotify(); return;   // VIZWALL-1
       case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
       case "wpaccent:on":   wpAccSetUser("on", value); return;      // WPACC-1, this device
       case "wpaccent:pick": wpAccSetUser("pick", value); return;
@@ -13383,6 +13610,7 @@
       case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
       case "sync.disconnect": syncDisconnectUser(); return;
       case "sync.backups.load": syncBackupsLoad(); return;
+      case "sync.space":        syncSpaceLoad(!!(arg && arg.force)); return;
       case "sync.clean.check":  if (S && S.isConnected() && S.hasPassphrase()) vaultCleanCheck(); return;
       case "sync.clean.run":    if (S && S.isConnected() && S.hasPassphrase()) vaultCleanRun(); return;
       case "sync.restore":
@@ -14587,6 +14815,7 @@
     if (SOLO) { soloMenuClose(); soloPaint(); }
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations pause under an app
     if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather pauses too
+    wpVizRefresh();  // VIZWALL-1: no light under an app
     wpLandRefresh();
     zoomOpen(app);   // ZOOM-1: drawn after the work is done
   }
@@ -14614,6 +14843,7 @@
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations move again
     if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather moves again
     wpLandRefresh();   // the desktop may have changed while hidden
+    wpVizRefresh();    // VIZWALL-1: the light moves again
     tourMaybe();   // a first-run tour put off by a launch-param app
     tipEnd();
     zoomClose(prev, zoomFromRect);   // ZOOM-1: shrinks into its icon or the Dock
@@ -17527,20 +17757,22 @@
   function qsMedia() {
     var out = [];
     var label = function (id) { var k = "app." + id, v = window.t(k); return v === k ? id : v; };
-    var mu = window.__orosMusicHost;
+    var mu = hostApi(window.__orosMusicHost);   // VIZWALL-1 fix: the calls are under .api
     if (mu && typeof mu.getState === "function") {
       var ms = mu.getState();
       if (ms && ms.cur) out.push({ id: "music", name: label("music"), playing: !!ms.playing,
         title: (ms.cur.t || "") + (ms.cur.a ? " · " + ms.cur.a : ""),
         toggle: function () { mu.toggle(); }, open: function () { openAppById("music"); },
+        pos: +ms.pos || 0, dur: +ms.dur || 0,   // WG-MEDIA-2: the card's progress
         next: ms.hasNext ? function () { mu.next(); } : null, prev: function () { mu.prev(); } });
     }
-    var pc = window.__orosPodcastsHost;
+    var pc = hostApi(window.__orosPodcastsHost);
     if (pc && typeof pc.getState === "function") {
       var ps = pc.getState();
       if (ps && ps.cur) out.push({ id: "podcasts", name: label("podcasts"), playing: !!ps.playing,
         title: (ps.cur.title || "") + (ps.cur.show ? " · " + ps.cur.show : ""),
         toggle: function () { pc.toggle(); }, open: function () { openAppById("podcasts"); },
+        pos: +ps.pos || 0, dur: +ps.dur || 0,
         next: function () { pc.next(); } });
     }
     var rx = window.__orosRadioHost;
@@ -17549,7 +17781,7 @@
       try { rs = rx.api.getState(); } catch (e) {}
       if (rs && rs.current && rs.current.name) {
         var on = !rx.audio.paused;
-        out.push({ id: "radio", name: label("radio"), playing: on, title: rs.current.name,
+        out.push({ id: "radio", name: label("radio"), playing: on, title: rs.current.name, live: true,
           toggle: function () { if (!rx.audio.paused) rxTrayStop(); else rxTrayPlay(); },
           open: function () { openAppById("radio"); } });
       }
@@ -17561,6 +17793,28 @@
         toggle: function () { mx.toggle(); }, open: function () { openAppById("mixer"); } });
     }
     return out;
+  }
+  // WG-MEDIA-2: the cover of what plays, as the player gave it to the
+  // Media Session (Music's cover, the episode's picture, the station's
+  // icon), when its title is the one shown; "" otherwise. Only blob:,
+  // https: and data:image addresses.
+  function wgMediaArt(title) {
+    var ms = navigator.mediaSession, md = ms && ms.metadata;
+    if (!md || !md.title || String(title || "").indexOf(md.title) !== 0) return "";
+    var a = md.artwork && md.artwork[0], src = a && String(a.src || "");
+    return /^(blob:|https:\/\/|data:image\/)/i.test(src) ? src : "";
+  }
+  // The Media card's little light listens like the wallpaper (passive:
+  // it never restarts a stream), as its own listener "widget".
+  var wgTap = null;
+  function wgMediaTap(on) {
+    var p = on ? wpVizPlaying() : null;
+    if ((wgTap ? wgTap.id : "") !== (p ? p.id : "")) {
+      if (wgTap) { try { wgTap.h.viz(false, "widget"); } catch (e) {} }
+      wgTap = p;
+      if (p) { try { p.h.viz(true, "widget"); } catch (e) {} }
+    }
+    return !!p;
   }
   // Lock-screen info (APPLOCK-1 wave 4, lock.js paintInfo): what the
   // lock screen may show when the owner switched it on. Never a title,
@@ -17961,6 +18215,8 @@
       appName: function (id) { var k = "app." + id, v = window.t(k); return v === k ? "" : v; },
       weather: wgWeather,
       media: qsMedia,
+      mediaArt: wgMediaArt,                 // WG-MEDIA-2: the cover of what plays
+      mediaLight: { kit: wpVizKit, tap: wgMediaTap, frame: function () { return wgTap ? wgTap.h.vizFrame() : null; } },
       settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
       sync: {
         state: function () {

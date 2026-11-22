@@ -3655,6 +3655,11 @@
     pid: function () { return prefs.map || ""; },
     busy: function () { return !!editing || !!drop; },
     open: function (id) { if (MAPS[id]) openMap(id); },
+    // GX-3: the open map as a file, as Export makes it (unfolded, light) → { name, blob } | null
+    exportAs: function (fmt) {
+      if (!FMT[fmt] || !R) return Promise.resolve(null);
+      return buildExport(fmt, R.root.id, { fmt: fmt, dark: false, transparent: false }).then(function (x) { return x ? { name: x.name + FMT[fmt].ext, blob: x.blob } : null; });
+    },
     // next = the whole data; withUndo = the open map changed (one step
     // of Mind map's own Undo: every row of the map, before and after).
     set: function (next, withUndo) {

@@ -1,0 +1,766 @@
+{
+ "nasa": {
+  "collection": {
+   "version": "1.1",
+   "href": "http://images-api.nasa.gov/search?q=apollo&media_type=video&page_size=5",
+   "items": [
+    {
+     "href": "https://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/collection.json",
+     "data": [
+      {
+       "center": "AFRC",
+       "date_created": "2021-01-30T00:00:00Z",
+       "description": "Apollo Digest Series:  Spacecraft for Apollo  This covers the various elements of the Saturn V and Command Module, Service Module (the “basement”), and  Lunar Module. These were the portions critical for the descent and landing on the moon.",
+       "media_type": "video",
+       "nasa_id": "NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo",
+       "title": "Apollo Digest Series:  Spacecraft for Apollo"
+      }
+     ],
+     "links": [
+      {
+       "href": "https://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~large.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 800,
+       "size": 25000,
+       "height": 450
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~medium.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 400,
+       "size": 12000,
+       "height": 225
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~small.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 200,
+       "size": 5000,
+       "height": 112
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~thumb.jpg",
+       "rel": "preview",
+       "render": "image",
+       "width": 300,
+       "size": 9000,
+       "height": 168
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo.srt",
+       "rel": "captions"
+      }
+     ]
+    },
+    {
+     "href": "https://images-assets.nasa.gov/video/Official Celebration of Apollo 17 50th Anniversary/collection.json",
+     "data": [
+      {
+       "center": "HQ",
+       "date_created": "2022-12-15T00:00:00Z",
+       "description": "NASA honors the crew of Apollo 17; Harrison Schmitt, Eugene Cernan, and Ronald Evans. Commemorating the 50th anniversary of NASA’s final mission of the Apollo Program.",
+       "media_type": "video",
+       "nasa_id": "Official Celebration of Apollo 17 50th Anniversary",
+       "title": "Official Celebration of Apollo 17 50th Anniversary"
+      }
+     ],
+     "links": [
+      {
+       "href": "https://images-assets.nasa.gov/video/Official Celebration of Apollo 17 50th Anniversary/Official Celebration of Apollo 17 50th Anniversary~large.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 800,
+       "size": 34000,
+       "height": 450
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/Official Celebration of Apollo 17 50th Anniversary/Official Celebration of Apollo 17 50th Anniversary~medium.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 400,
+       "size": 11000,
+       "height": 225
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/Official Celebration of Apollo 17 50th Anniversary/Official Celebration of Apollo 17 50th Anniversary~small.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 200,
+       "size": 3900,
+       "height": 112
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/Official Celebration of Apollo 17 50th Anniversary/Official Celebration of Apollo 17 50th Anniversary~thumb.jpg",
+       "rel": "preview",
+       "render": "image",
+       "width": 300,
+       "size": 7600,
+       "height": 168
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/Official Celebration of Apollo 17 50th Anniversary/Official Celebration of Apollo 17 50th Anniversary.srt",
+       "rel": "captions"
+      }
+     ]
+    },
+    {
+     "href": "https://images-assets.nasa.gov/video/al worden_fixed/collection.json",
+     "data": [
+      {
+       "center": "HQ",
+       "date_created": "2020-03-18T00:00:00Z",
+       "description": "Remembering Apollo 15 Astronaut Al Worden",
+       "description_508": "Remembering Apollo 15 Astronaut Al Worden",
+       "media_type": "video",
+       "nasa_id": "al worden_fixed",
+       "title": "Remembering Apollo 15 Astronaut Al Worden"
+      }
+     ],
+     "links": [
+      {
+       "href": "https://images-assets.nasa.gov/video/al worden_fixed/al worden_fixed~large.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 800,
+       "size": 14000,
+       "height": 450
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/al worden_fixed/al worden_fixed~medium.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 400,
+       "size": 5600,
+       "height": 225
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/al worden_fixed/al worden_fixed~small.jpg",
+       "rel": "alternate",
+       "render": "image",
+       "width": 200,
+       "size": 2900,
+       "height": 112
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/al worden_fixed/al worden_fixed~thumb.jpg",
+       "rel": "preview",
+       "render": "image",
+       "width": 300,
+       "size": 3700,
+       "height": 168
+      },
+      {
+       "href": "https://images-assets.nasa.gov/video/al worden_fixed/al worden_fixed.srt",
+       "rel": "captions"
+      }
+     ]
+    }
+   ],
+   "metadata": {
+    "total_hits": 223
+   },
+   "links": [
+    {
+     "rel": "next",
+     "prompt": "Next",
+     "href": "http://images-api.nasa.gov/search?q=apollo&media_type=video&page_size=5&page=2"
+    }
+   ]
+  }
+ },
+ "nasaAsset": {
+  "collection": {
+   "version": "1.1",
+   "href": "http://images-api.nasa.gov/asset/NDTV000908_Apollo_Digest_Series_Spacecraft%20for%20Apollo",
+   "items": [
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~orig.mp4"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo.srt"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~large.mp4"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~medium.mp4"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~mobile.mp4"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~preview.mp4"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~small.mp4"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/metadata.json"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~small_1.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~small_2.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~small_3.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~small.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~small_4.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~small_5.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~medium_1.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~medium_2.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~medium_3.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~medium.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~medium_4.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~medium_5.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~large_1.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~large_2.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~large_3.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~large.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~large_4.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~large_5.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~thumb_1.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~thumb_2.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~thumb_3.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~thumb.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~thumb_4.jpg"
+    },
+    {
+     "href": "http://images-assets.nasa.gov/video/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo/NDTV000908_Apollo_Digest_Series_Spacecraft for Apollo~thumb_5.jpg"
+    }
+   ]
+  }
+ },
+ "eu": {
+  "apikey": "api2demo",
+  "success": true,
+  "requestNumber": 999,
+  "itemsCount": 50,
+  "totalResults": 7584,
+  "items": [
+   {
+    "id": "/08604/_filmportal_de_node_1224912",
+    "title": [
+     "Guerre 1914-1915. Le General Joffre en Alsace"
+    ],
+    "year": [
+     "1915"
+    ],
+    "country": [
+     "Germany"
+    ],
+    "language": [
+     "de"
+    ],
+    "rights": [
+     "http://creativecommons.org/publicdomain/mark/1.0/"
+    ],
+    "dataProvider": [
+     "DFF – German Film Institute & Film Museum"
+    ],
+    "dcDescription": [
+     "This French film shows General Joseph Joffre, the commander of the French army, visiting a battalion of mountain troops in Alsace. Among other things, Joffre awards medals to some of the soldiers and ",
+     "Dieser französische Film zeigt General Joseph Joffre, den Befehlshaber der französischen Armee, beim Besuch eines Gebirgsjägerbataillons im Elsass. Unter anderem zeichnet Joffre einige Soldaten mit Or"
+    ],
+    "edmIsShownBy": [
+     "https://www.filmportal.de/sites/default/files/video/71578_13049_Le_General_Joffre_en_Alsace.mp4"
+    ],
+    "edmPreview": [
+     "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fwww.filmportal.de%2Fsites%2Fdefault%2Ffiles%2Fvideo_thumb%2F71578_13049_Le_General_Joffre_en_Alsace.jpg&type=VIDEO"
+    ],
+    "type": "VIDEO"
+   },
+   {
+    "id": "/08604/_filmportal_de_node_1224919",
+    "title": [
+     "En Artois. Le Drapeau de Chasseurs"
+    ],
+    "year": [
+     "1915"
+    ],
+    "country": [
+     "Germany"
+    ],
+    "language": [
+     "de"
+    ],
+    "rights": [
+     "http://creativecommons.org/publicdomain/mark/1.0/"
+    ],
+    "dataProvider": [
+     "DFF – German Film Institute & Film Museum"
+    ],
+    "dcDescription": [
+     "The film shows a ceremony of a combat unit north of Arras. Among others, General Victor d'Urbal can be seen awarding war medals to soldiers. \"En Artois. Le Drapeau de Chasseurs\" was distributed in the",
+     "Der Film zeigt eine Zeremonie einer Jägertruppe nördlich von Arras. Zu sehen ist unter anderem General Victor d’Urbal bei der Verleihung von Kriegsorden an Soldaten. \"En Artois. Le Drapeau de Chasseur"
+    ],
+    "edmIsShownBy": [
+     "https://www.filmportal.de/sites/default/files/video/71579_13050_Le_drapeau_de_chasseurs.mp4"
+    ],
+    "edmPreview": [
+     "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fwww.filmportal.de%2Fsites%2Fdefault%2Ffiles%2Fvideo_thumb%2F71579_13050_Le_drapeau_de_chasseurs.jpg&type=VIDEO"
+    ],
+    "type": "VIDEO"
+   },
+   {
+    "id": "/08604/_filmportal_de_node_1224927",
+    "title": [
+     "Guerre 1914-15-16. Le Président de la République, le Prince de Serbie et le Général en Chef sur le Front de Verdun"
+    ],
+    "year": [
+     "1916"
+    ],
+    "country": [
+     "Germany"
+    ],
+    "language": [
+     "de"
+    ],
+    "rights": [
+     "http://creativecommons.org/publicdomain/mark/1.0/"
+    ],
+    "dataProvider": [
+     "DFF – German Film Institute & Film Museum"
+    ],
+    "dcDescription": [
+     "This French film shows a joint visit to the Verdun front by French President Raymond Poincaré, Serbian Prince Regent Alexander I, and French Brigadier General Philippe Pétain. Featured are the present",
+     "Dieser französische Film zeigt einen gemeinsamen Frontbesuch des französischen Präsidenten Raymond Poincaré, des serbischen Prinzregenten Alexander I. und des französischen Brigadegenerals Philippe Pé"
+    ],
+    "edmIsShownBy": [
+     "https://www.filmportal.de/sites/default/files/video/71581_13052_President_de_la_republique_le_Prince_de_Serbie_et_General_en_Chef.mp4"
+    ],
+    "edmPreview": [
+     "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fwww.filmportal.de%2Fsites%2Fdefault%2Ffiles%2Fvideo_thumb%2F71581_13052_President_de_la_republique_le_Prince_de_Serbie_et_General_en_Chef.jpg&type=VIDEO"
+    ],
+    "type": "VIDEO"
+   },
+   {
+    "id": "/08604/_filmportal_de_node_1224939",
+    "title": [
+     "Le 14 Juillet 1917. La fête des drapeaux"
+    ],
+    "year": [
+     "1917"
+    ],
+    "country": [
+     "Germany"
+    ],
+    "language": [
+     "de"
+    ],
+    "rights": [
+     "http://creativecommons.org/publicdomain/mark/1.0/"
+    ],
+    "dataProvider": [
+     "DFF – German Film Institute & Film Museum"
+    ],
+    "dcDescription": [
+     "This French film shows a flag ceremony in Paris on July 14, 1917. Among others, President Poincaré can be seen honoring soldiers. \"Le 14 Juillet 1917\" was distributed in the 28mm format that Pathé Frè",
+     "Dieser französische Film zeigt eine Flaggenzeremonie am 14. Juli 1917 in Paris. Zu sehen ist unter anderem Präsident Poincaré bei der Auszeichnung von Soldaten. \"Le 14 Juillet 1917\" wurde im 28mm-Form"
+    ],
+    "edmIsShownBy": [
+     "https://www.filmportal.de/sites/default/files/video/71581_13_052_La_fete_des_drapeaux.mp4"
+    ],
+    "edmPreview": [
+     "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fwww.filmportal.de%2Fsites%2Fdefault%2Ffiles%2Fvideo_thumb%2F71581_13_052_La_fete_des_drapeaux.jpg&type=VIDEO"
+    ],
+    "type": "VIDEO"
+   }
+  ]
+ },
+ "oi": {
+  "apikey": "api2demo",
+  "success": true,
+  "requestNumber": 999,
+  "itemsCount": 4,
+  "totalResults": 6398,
+  "items": [
+   {
+    "id": "/2051906/data_euscreenXL_https___www_openbeelden_nl_media_1005287",
+    "title": [
+     "WIELERWEDSTRIJDEN IN HET VONDELPARK",
+     "Weeknummer 23-17"
+    ],
+    "country": [
+     "Netherlands"
+    ],
+    "language": [
+     "nl"
+    ],
+    "rights": [
+     "http://creativecommons.org/publicdomain/mark/1.0/"
+    ],
+    "dataProvider": [
+     "Netherlands Institute for Sound & Vision"
+    ],
+    "dcCreator": [
+     "Polygoon-Profilti (producent) / Nederlands Instituut voor Beeld en Geluid (beheerder)"
+    ],
+    "dcDescription": [
+     "Bioscoopjournaals waarin Nederlandse onderwerpen van een bepaalde week worden gepresenteerd.",
+     "Beeldverslagje van een internationale wielerwedstrijd over 100 km in het Vondelpark. Doel was met de opbrengst het noodlijdende en verwaarloosde park op te knappen. Door het gebrek aan publiek ivm de "
+    ],
+    "edmIsShownBy": [
+     "https://www.openbeelden.nl/files/10/05/1005296.1005291.WEEKNUMMER231-HRE00004AE6.mp4"
+    ],
+    "edmPreview": [
+     "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fwww.openbeelden.nl%2Fimages%2F1005407%2FWIELERWEDSTRIJDEN_IN_HET_VONDELPARK_%25280_38%2529.png&type=VIDEO"
+    ],
+    "type": "VIDEO"
+   },
+   {
+    "id": "/2051906/data_euscreenXL_https___www_openbeelden_nl_media_1005717",
+    "title": [
+     "VOETBALWEDSTRIJD TUSCHINSKI - CINEMA ROYAL",
+     "Weeknummer 28-18"
+    ],
+    "country": [
+     "Netherlands"
+    ],
+    "language": [
+     "nl"
+    ],
+    "rights": [
+     "http://creativecommons.org/publicdomain/mark/1.0/"
+    ],
+    "dataProvider": [
+     "Netherlands Institute for Sound & Vision"
+    ],
+    "dcCreator": [
+     "Polygoon-Profilti (producent) / Nederlands Instituut voor Beeld en Geluid (beheerder)"
+    ],
+    "dcDescription": [
+     "Bioscoopjournaals waarin Nederlandse onderwerpen van een bepaalde week worden gepresenteerd.",
+     "Voetbalwedstrijd tussen personeel van de bioscopen Tuschinski en Cinema Royal te Amsterdam. SHOTS: -Beide elftallen poseren 10\"; -publiek 16\" -toss en spelfragmenten 32\"."
+    ],
+    "edmIsShownBy": [
+     "https://www.openbeelden.nl/files/10/05/1005726.1005721.VOETBALWEDSTR-FHD00Z04FHW.mp4"
+    ],
+    "edmPreview": [
+     "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fwww.openbeelden.nl%2Fimages%2F1006217%2FVOETBALWEDSTRIJD_TUSCHINSKI_-_CINEMA_ROYAL_%25280_51%2529.png&type=VIDEO"
+    ],
+    "type": "VIDEO"
+   },
+   {
+    "id": "/2051906/data_euscreenXL_https___www_openbeelden_nl_media_10245",
+    "title": [
+     "Match for the Dutch Football Cup",
+     "Dutch soccer cup match",
+     "Wedstrijd om de Nederlandse voetbalbeker",
+     "Weeknummer 44-24",
+     "Week number 44-24"
+    ],
+    "country": [
+     "Netherlands"
+    ],
+    "language": [
+     "nl"
+    ],
+    "rights": [
+     "http://creativecommons.org/publicdomain/mark/1.0/"
+    ],
+    "dataProvider": [
+     "Netherlands Institute for Sound & Vision"
+    ],
+    "dcCreator": [
+     "Nederlands Instituut voor Beeld en Geluid (beheerder)",
+     "Netherlands Institute for Sound and Vision (curator)"
+    ],
+    "dcDescription": [
+     "In Eindhoven the final of the Dutch football cup is played between Willem II (striped shirts) and Groene Ster (9-2). After the match, the cup was presented by Football Association chairman Karel Lotsy",
+     "Cinema newsreels in which Dutch subjects of a certain week are presented.",
+     "Newsreels in which Dutch subjects of a certain week are presented.",
+     "The final for the Dutch soccer cup between Willem II (striped shirts) and Groene Ster (9-2) is held in Eindhoven. After the match the cup is handed out by the chariman of the national soccer associati",
+     "Bioscoopjournaals waarin Nederlandse onderwerpen van een bepaalde week worden gepresenteerd.",
+     "In Eindhoven wordt de finale gespeeld om de voetbalbeker van Nederland tussen Willem II (gestreepte shirts) en Groene Ster (9-2). Na de wedstrijd wordt de beker uitgereikt door voetbalbondsvoorzitter "
+    ],
+    "edmIsShownBy": [
+     "https://www.openbeelden.nl/files/10/661694.10247.WEEKNUMMER442-HRE00012836_65360_125840.mp4"
+    ],
+    "edmPreview": [
+     "https://api.europeana.eu/thumbnail/v2/url.json?uri=https%3A%2F%2Fwww.openbeelden.nl%2Fimages%2F603316%2FWedstrijd_om_de_Nederlandse_voetbalbeker_%25280_30%2529.png&type=VIDEO"
+    ],
+    "type": "VIDEO"
+   }
+  ]
+ },
+ "pt": {
+  "total": 2991,
+  "data": [
+   {
+    "uuid": "c2285a8b-126f-4fa5-a553-8699e3e888d4",
+    "name": "Starving Gaza： \"How Israel’s man-made famine is killing Palestinians\" ｜ Fault Lines Documentary",
+    "url": "https://video.liberta.vip/videos/watch/c2285a8b-126f-4fa5-a553-8699e3e888d4",
+    "duration": 1500,
+    "isLive": false,
+    "nsfw": false,
+    "licence": {
+     "id": 6,
+     "label": "Attribution - Non Commercial - No Derivatives"
+    },
+    "category": {
+     "id": 11,
+     "label": "News & Politics"
+    },
+    "language": {
+     "id": "en",
+     "label": "English"
+    },
+    "account": {
+     "host": "video.liberta.vip",
+     "displayName": "RedDread"
+    },
+    "channel": {
+     "displayName": "Films - Documentaires"
+    },
+    "thumbnailUrl": "https://video.liberta.vip/lazy-static/thumbnails/8d957642-e244-4fdf-b1ba-f40c20e1915c.jpg",
+    "publishedAt": "2024-10-03T13:13:00.365Z",
+    "originallyPublishedAt": null,
+    "views": 161,
+    "description": "(Documentary\r\n\r\nStarving Gaza\r\n\r\nA Palestinian doctor tries to save severely malnourished children amid Israel’s US-backed illegal siege on Gaza.\r\n\r\nAhmed Nasser is one of a handful of doctors in nort"
+   },
+   {
+    "uuid": "3d6a7533-275b-4664-b271-9ef86b9e569f",
+    "name": "Get Lamp (2010) (documentary about interactive fiction and text adventures)",
+    "url": "https://fedi.video/videos/watch/3d6a7533-275b-4664-b271-9ef86b9e569f",
+    "duration": 5439,
+    "isLive": false,
+    "nsfw": false,
+    "licence": {
+     "id": 5,
+     "label": "Attribution - Non Commercial - Share Alike"
+    },
+    "category": {
+     "id": 7,
+     "label": "Gaming"
+    },
+    "language": {
+     "id": "en",
+     "label": "English"
+    },
+    "account": {
+     "host": "fedi.video",
+     "displayName": "Fedi.Video on PeerTube"
+    },
+    "channel": {
+     "displayName": "Documentaries"
+    },
+    "thumbnailUrl": "https://fedi.video/lazy-static/thumbnails/c7a28815-109d-48c6-871c-75cff25438da.jpg",
+    "publishedAt": "2024-08-13T03:26:35.651Z",
+    "originallyPublishedAt": "2010-07-01T11:00:00.000Z",
+    "views": 135,
+    "description": "Documentary about interactive fiction and text adventures, from \"Adventure\" onwards. It features interviews with many different game designers, players and other people related to the topic. It also l"
+   },
+   {
+    "uuid": "715e7247-3d57-4021-9436-bce0c1fb2808",
+    "name": "Infocom: The Documentary (2010) (about the famous interactive fiction / text adventure developers)",
+    "url": "https://fedi.video/videos/watch/715e7247-3d57-4021-9436-bce0c1fb2808",
+    "duration": 2826,
+    "isLive": false,
+    "nsfw": false,
+    "licence": {
+     "id": 2,
+     "label": "Attribution - Share Alike"
+    },
+    "category": {
+     "id": 7,
+     "label": "Gaming"
+    },
+    "language": {
+     "id": "en",
+     "label": "English"
+    },
+    "account": {
+     "host": "fedi.video",
+     "displayName": "Fedi.Video on PeerTube"
+    },
+    "channel": {
+     "displayName": "Documentaries"
+    },
+    "thumbnailUrl": "https://fedi.video/lazy-static/thumbnails/a48a2ff3-e003-4a4e-871d-7f64bd3cbc21.jpg",
+    "publishedAt": "2023-11-24T03:03:06.803Z",
+    "originallyPublishedAt": "2010-07-01T11:00:00.000Z",
+    "views": 83,
+    "description": "Documentary about the legendary text adventure developer Infocom, who created many of the most popular and enduring works of interactive fiction, perhaps most famously the \"Zork\" series.\r\n\r\nDocumentar"
+   }
+  ]
+ },
+ "ptb": {
+  "total": 1238,
+  "data": [
+   {
+    "uuid": "20f9cc94-1c52-4485-bca3-272df8a899a2",
+    "name": "Inverse Kinematics Bone Constraint",
+    "url": "https://video.blender.org/videos/watch/20f9cc94-1c52-4485-bca3-272df8a899a2",
+    "duration": 75,
+    "isLive": false,
+    "nsfw": false,
+    "licence": {
+     "id": 2,
+     "label": "Attribution - Share Alike"
+    },
+    "category": {
+     "id": null,
+     "label": "Unknown"
+    },
+    "language": {
+     "id": null,
+     "label": "Unknown"
+    },
+    "account": {
+     "host": "video.blender.org",
+     "displayName": "blender_docs"
+    },
+    "channel": {
+     "displayName": "blender_docs_channel"
+    },
+    "thumbnailUrl": "https://video.blender.org/lazy-static/thumbnails/97f72f1a-3726-4703-ab20-175acc6fd33a.jpg",
+    "publishedAt": "2021-09-04T21:22:58.919Z",
+    "views": 15234,
+    "description": ""
+   },
+   {
+    "uuid": "b29290cc-dc51-4a12-bcb2-2aa5fece7605",
+    "name": "OVERGROWN: a feature film project by Blender Studio",
+    "url": "https://video.blender.org/videos/watch/b29290cc-dc51-4a12-bcb2-2aa5fece7605",
+    "duration": 70,
+    "isLive": false,
+    "nsfw": false,
+    "licence": {
+     "id": null,
+     "label": "Unknown"
+    },
+    "category": {
+     "id": null,
+     "label": "Unknown"
+    },
+    "language": {
+     "id": null,
+     "label": "Unknown"
+    },
+    "account": {
+     "host": "video.blender.org",
+     "displayName": "Blender"
+    },
+    "channel": {
+     "displayName": "Blender Studio"
+    },
+    "thumbnailUrl": "https://video.blender.org/lazy-static/thumbnails/2d0a6dff-ad41-4e1c-a921-53338b30759c.jpg",
+    "publishedAt": "2026-07-10T14:00:16.560Z",
+    "views": 12778,
+    "description": "Blender Studio is now working on a feature film called OVERGROWN! Learn more at https://studio.blender.org/projects/overgrown/\r\n\r\nOVERGROWN is a post-human and robo-apocalyptic feature film for the fu"
+   }
+  ]
+ },
+ "ptVideo": {
+  "uuid": "1ba07bbb-1456-4293-99a6-833fa450eda0",
+  "files": [
+   {
+    "fileUrl": "https://video.blender.org/object-storage/web_videos/f91fd74e-a81f-48ec-b92b-c9504ac46e31-1080.mp4",
+    "resolution": {
+     "id": 1080,
+     "label": "1080p"
+    }
+   }
+  ],
+  "streamingPlaylists": [
+   {
+    "playlistUrl": "https://video.blender.org/object-storage/streaming_playlists/hls/1ba07bbb-1456-4293-99a6-833fa450eda0/ee4afc50-6050-4a78-8527-bd1d04084fc2-master.m3u8",
+    "files": []
+   }
+  ]
+ },
+ "ptVideoUuid": "1ba07bbb-1456-4293-99a6-833fa450eda0",
+ "ptVideoHost": "video.blender.org",
+ "commonsSubs": {
+  "batchcomplete": true,
+  "query": {
+   "allpages": [
+    {
+     "pageid": 203087447,
+     "ns": 102,
+     "title": "TimedText:Nosferatu (1922).webm.English.srt"
+    },
+    {
+     "pageid": 150262768,
+     "ns": 102,
+     "title": "TimedText:Nosferatu (1922).webm.en.srt"
+    },
+    {
+     "pageid": 181788472,
+     "ns": 102,
+     "title": "TimedText:Nosferatu (1922).webm.es.srt"
+    },
+    {
+     "pageid": 185747550,
+     "ns": 102,
+     "title": "TimedText:Nosferatu (1922).webm.it.srt"
+    },
+    {
+     "pageid": 158416826,
+     "ns": 102,
+     "title": "TimedText:Nosferatu (1922).webm.pt-br.srt"
+    },
+    {
+     "pageid": 190564267,
+     "ns": 102,
+     "title": "TimedText:Nosferatu (1922).webm.ru.srt"
+    },
+    {
+     "pageid": 156353643,
+     "ns": 102,
+     "title": "TimedText:Nosferatu (1922).webm.sr.srt"
+    },
+    {
+     "pageid": 195063801,
+     "ns": 102,
+     "title": "TimedText:Nosferatu (1922).webm.sv.srt"
+    }
+   ]
+  }
+ }
+}

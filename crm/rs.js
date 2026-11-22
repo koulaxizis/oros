@@ -427,6 +427,28 @@
 //   plan({ kanban, crm, publish, board, map, chosen: [card id], shopId, firstShopId, today, dayOf })
 //     → { body: { v, sent, works }, left: [{ card, t, why noben|badid|notitle|old|max }], board }
 //   req(body) → the request; parseSaved(json) → { saved, skipped: [{ id, why }] } | null
+//
+// v2 (AP-FLOW, Chris 2026-11-21, Revenue Splitter 1.21.0): the steps are
+// the publisher's own. In Kanban a column can be a step of the creator's
+// production flow (column key ap { on, n name, ne English name, a
+// explanation, ae English explanation }), and a card is shown to its
+// creator when it is ticked in the card (card key ap = 1; ap = 0 is an
+// explicit no; without ap the older CRM tick, cset.pc, still counts).
+// As soon as any board has a step column, plan() sends v2:
+//   { v: 2, sent, flows: [{ id: board id, steps: [{ id: column id, name,
+//     name_en, about, about_en }] }], works: [{ id, ben, title, flow, step,
+//     since, release, note, products: [shop product ids] }] }
+// in the order of the columns; a card in a column that is not a step is
+// at the last step before it (none before → not sent, "nostep"). A step
+// may be a finish (ap.e): the board's steps are parts that end at each
+// finish (and at the last step), each part its own flow ("<board>",
+// "<board>-2"…); a card at a finish is not sent ("done"), so the bar
+// hides until the card reaches the next part's first step. Only flows
+// that carry a work go. products: the shop
+// products of the Publishing title with the card's name (its formats'
+// wp links for this shop). Nothing else from the board leaves orOS.
+//   stepBoards(kanban) → [board]; flowOf(board) → { steps, at: [step index per column, -1 none] }
+//   sentKey(body) → the text the last-sent record compares
 // ============================================================
 (function (root) {
   "use strict";
@@ -563,8 +585,107 @@
     return d.getFullYear() + "-" + (mm < 10 ? "0" : "") + mm + "-" + (dd < 10 ? "0" : "") + dd;
   }
 
+  function isStep(col) { return isObj(col) && isObj(col.ap) && col.ap.on === 1 && typeof col.id === "string" && RS_ID.test(col.id); }
+  function stepBoards(kanban) {
+    return (isObj(kanban) && Array.isArray(kanban.boards) ? kanban.boards : []).filter(function (b) {
+      return isObj(b) && !b.archived && !/^tpl-/.test(b.id || "") && typeof b.id === "string" && RS_ID.test(b.id) &&
+             Array.isArray(b.columns) && b.columns.some(isStep);
+    });
+  }
+  // The board's steps in column order, split into parts at each finish
+  // (ap.e, Chris 2026-11-21: «Κυκλοφορία» of the print book is a finish,
+  // the audiobook's steps after it are the next part); the last step is
+  // always a finish. segs[k] = { from, to } step indexes.
+  function flowOf(board) {
+    var steps = [], at = [], cur = -1, ends = [];
+    (board && Array.isArray(board.columns) ? board.columns : []).forEach(function (col) {
+      if (isStep(col)) {
+        var ap = col.ap, name = clean(ap.n, 80) || clean(col.name, 80);
+        if (name) {
+          steps.push({ id: col.id, name: name, name_en: clean(ap.ne, 80), about: cleanText(ap.a, 600), about_en: cleanText(ap.ae, 600) });
+          cur = steps.length - 1;
+          ends.push(ap.e === 1);
+        }
+      }
+      at.push(cur);
+    });
+    var segs = [], from = 0;
+    steps.forEach(function (s, i) {
+      if (ends[i] || i === steps.length - 1) { segs.push({ from: from, to: i }); from = i + 1; }
+    });
+    return { steps: steps, at: at, segs: segs };
+  }
+  function segOf(fl, si) {
+    for (var k = 0; k < fl.segs.length; k++) if (si >= fl.segs[k].from && si <= fl.segs[k].to) return k;
+    return -1;
+  }
+  // the flow id of a part: the board's id, "<board>-2", "-3"… for later parts
+  function partId(board, k) { var id = k ? board.id + "-" + (k + 1) : board.id; return RS_ID.test(id) ? id : ""; }
+  function cleanText(v, max) {
+    return typeof v === "string" ? v.replace(/[\u0000-\u0009\u000b-\u001f\u007f<>]+/g, " ").replace(/[ \t]{2,}/g, " ").trim().slice(0, max).trim() : "";
+  }
+  function productsOf(t, shopId, firstShopId) {
+    var out = [];
+    (t && Array.isArray(t.fmts) ? t.fmts : []).forEach(function (f) {
+      var wp = f && f.wp;
+      if (!isObj(wp) || typeof wp.id !== "number" || wp.id <= 0 || Math.floor(wp.id) !== wp.id) return;
+      if ((wp.a || firstShopId || "") !== shopId || out.indexOf(wp.id) >= 0 || out.length >= 5) return;
+      out.push(wp.id);
+    });
+    return out;
+  }
+  function planV2(o, boards) {
+    var today = YMD.test(o.today || "") ? o.today : "", dayOf = typeof o.dayOf === "function" ? o.dayOf : localDay;
+    var out = { body: { v: 2, sent: today, flows: [], works: [] }, left: [], board: null, at: {} };
+    if (!today) return out;
+    var works = [], used = {}, pick = {};
+    (Array.isArray(o.chosen) ? o.chosen : []).forEach(function (id) { if (typeof id === "string") pick[id] = 1; });
+    var flows = {};
+    boards.forEach(function (board) {
+      var fl = flowOf(board);
+      if (!fl.steps.length) return;
+      board.columns.forEach(function (col, ci) {
+        (isObj(col) && Array.isArray(col.cards) ? col.cards : []).forEach(function (card) {
+          if (!isObj(card) || !(card.ap === 1 || (card.ap === undefined && pick[card.id]))) return;
+          var title = clean(card.text, TITLE_MAX), si = fl.at[ci];
+          if (si < 0) { out.left.push({ card: card.id, t: title, why: "nostep" }); return; }
+          var k = segOf(fl, si), seg = fl.segs[k], step = fl.steps[si], fid = partId(board, k);
+          out.at[card.id] = { step: step.name, i: si - seg.from + 1, n: seg.to - seg.from + 1, end: si === seg.to };
+          // at a finish (or past it, before the next step): the bar hides
+          if (si === seg.to) { out.left.push({ card: card.id, t: title, why: "done" }); return; }
+          if (!fid) { out.left.push({ card: card.id, t: title, why: "badid" }); return; }
+          flows[fid] = fl.steps.slice(seg.from, seg.to + 1);
+          var since = sinceOf(card, dayOf) || today;
+          var t = titleOf(o.publish, card.text), release = t && YMD.test(t.rel || "") ? t.rel : "";
+          if (!title) { out.left.push({ card: card.id, t: "", why: "notitle" }); return; }
+          if (typeof card.id !== "string" || !RS_ID.test(card.id) || card.id.length > 60) { out.left.push({ card: card.id, t: title, why: "badid" }); return; }
+          var names = creators(o.crm, o.publish, board, card, o.shopId, o.firstShopId);
+          out.at[card.id].who = names;
+          if (!names.length) { out.left.push({ card: card.id, t: title, why: "noben" }); return; }
+          var note = noteOf(card.notes), products = productsOf(t, o.shopId, o.firstShopId);
+          names.forEach(function (n, i) {
+            works.push({ id: names.length > 1 ? card.id + "-" + (i + 1) : card.id, ben: n, title: title, flow: fid, step: step.id,
+                         since: since, release: release, note: note, products: products });
+          });
+          used[fid] = 1;
+        });
+      });
+    });
+    works.sort(function (a, b) { return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0); });
+    if (works.length > MAX_WORKS) {
+      works.slice(MAX_WORKS).forEach(function (w) { out.left.push({ card: w.id, t: w.title, why: "max" }); });
+      works = works.slice(0, MAX_WORKS);
+    }
+    out.body.flows = Object.keys(used).sort().map(function (id) { return { id: id, steps: flows[id] }; });
+    out.body.works = works;
+    return out;
+  }
+  function sentKey(body) { return JSON.stringify(body && body.v === 2 ? { f: body.flows, w: body.works } : (body ? body.works : [])); }
+
   function plan(o) {
     o = o || {};
+    var sb = stepBoards(o.kanban);
+    if (sb.length) return planV2(o, sb);
     var today = YMD.test(o.today || "") ? o.today : "", dayOf = typeof o.dayOf === "function" ? o.dayOf : localDay;
     var out = { body: { v: 1, sent: today, works: [] }, left: [], board: null };
     var board = boardByName(o.kanban, o.board);
@@ -605,7 +726,7 @@
   }
 
   // the shop's answer { saved, skipped: [{ id, why }] } | null
-  var WHY = ["bad_id", "unknown_ben", "bad_title", "bad_phase", "bad_since", "bad_release", "duplicate_id", "not_an_object"];
+  var WHY = ["bad_id", "unknown_ben", "bad_title", "bad_phase", "bad_since", "bad_release", "duplicate_id", "not_an_object", "bad_flow", "bad_step"];
   function parseSaved(j) {
     if (!isObj(j) || typeof j.saved !== "number" || Math.floor(j.saved) !== j.saved || j.saved < 0) return null;
     var skipped = [];
@@ -618,7 +739,8 @@
   function req(body) { return { m: "POST", path: "/rs/production", body: body }; }
 
   var API = { DEFAULT_MAP: DEFAULT_MAP, parseSaved: parseSaved, req: req, WHY: WHY, fold: fold, boardByName: boardByName, columnPhases: columnPhases,
-              noteOf: noteOf, plan: plan, MAX_WORKS: MAX_WORKS, DONE_DAYS: DONE_DAYS };
+              noteOf: noteOf, plan: plan, MAX_WORKS: MAX_WORKS, DONE_DAYS: DONE_DAYS,
+              stepBoards: stepBoards, flowOf: flowOf, sentKey: sentKey, isStep: isStep };
   // lives in rs.js (one precached file): under Node it is require("crm/rs.js").prod
   if (typeof module !== "undefined" && module.exports) module.exports.prod = API;
   if (root) root.OrosCrmProd = API;

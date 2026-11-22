@@ -2116,3 +2116,13 @@ body.trn-itin .route-alt { opacity: 0.25; }
 .wh-call { text-decoration: none; text-align: center; border-color: var(--danger); color: var(--danger); font-weight: 700; }
 .wh-sms { text-decoration: none; text-align: center; }
 .wh-help { margin: 0 0 8px; }
+
+/* ---------- Hiking and cycling, wave H7: report a problem on a path ---------- */
+.trl-prob-btn { margin-top: 8px; width: 100%; }
+.trl-prob-list { display: flex; flex-direction: column; gap: 6px; }
+.trl-prob-list .osm-btn { text-align: left; white-space: normal; min-height: 40px; }
+
+/* ---------- Hiking and cycling, wave H8: offline walking and cycling routes ---------- */
+.ofr-chip { color: var(--accent); font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+@media (pointer: coarse) and (max-width: 400px) { .ofr-chip { font-size: 11px; line-height: 1.2; } }
+.ofr-box .odr-note { margin-bottom: 6px; }

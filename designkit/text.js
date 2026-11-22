@@ -963,12 +963,15 @@
       });
       segs = next;
     });
-    return segs.filter(function (s) { return s[1] - s[0] >= minW; });
+    // a slice left by a wrap must be wide enough; the whole line (no
+    // wrap across it) always is, however narrow the frame (CV-F3)
+    return segs.filter(function (s) { return s[1] - s[0] >= minW || (s[0] === x0 && s[1] === x1); });
   }
 
   // ---------- 8. Layout ----------
   // frames: ordered chain, each
   //   { id, w, h, cols, gut, inset, valign: "t"|"c"|"b", excl: [],
+  //     slack (optional: a word may pass the right edge by this much),
   //     one (true: the frame holds one line, whatever its height),
   //     ctx: { pageLabel, pageCount, sec (the page's running head
   //     text, LY-RH) } }
@@ -1198,6 +1201,9 @@
     }
     function fill(ti, toks, ps, segs, base, asc, desc, lead, bul, bulletW, li, fullW) {
       var ctx = geom.f.ctx || {};
+      // frame slack: a word may pass the edge by this much (Atelier's
+      // boxes, sized to Canva's own narrower measure, CV-F3)
+      var slk = geom.f.slack > 0 ? geom.f.slack : 0;
       var line = { col: col, frame: geom.f.id, y: base, d: desc, h: lead, runs: [], maxSize: 0, next: ti, base: base,
                    p: curPi, o0: tokO(toks[ti]), o1: curLen, cx0: geom.x0, cx1: geom.x1, x0: segs[0][0] };
       var broke = false;
@@ -1206,7 +1212,7 @@
         // does a line `lw` wide still fit? Scribus's frames (sfit) end a
         // line once its end, rounded up, reaches the column's right
         // edge rounded down, so the same words go on each line (LY-FIT)
-        var over = geom.f.sfit ? function (lw) { return Math.ceil(sx0 + lw - 0.001) >= Math.floor(sx1 + 0.001); } : function (lw) { return lw > avail + 0.001; };
+        var over = geom.f.sfit ? function (lw) { return Math.ceil(sx0 + lw - 0.001) >= Math.floor(sx1 + 0.001); } : function (lw) { return lw > avail + 0.001 + slk; };
         var items = [], w = 0, spaces = 0, pendingSp = [], hyph = null, hyW = 0, lastTab = -1;
         while (ti < toks.length) {
           var tk = toks[ti];
@@ -1235,7 +1241,7 @@
             if (!items.length) {
               // too wide for a segment narrowed by a wrap: try the
               // next segment / line; wider than the column: split
-              if (ww <= fullW + 0.001 && avail < fullW - 0.001) break;
+              if (ww <= fullW + 0.001 + slk && avail < fullW - 0.001) break;
               var pieces = splitWord(tk, avail, ctx);
               if (pieces.length > 1) { toks.splice.apply(toks, [ti, 1].concat(pieces)); continue; }
               items.push({ tok: tk, w: ww, sp: [], spW: 0, nsp: 0, ti: ti }); w += ww; ti++;

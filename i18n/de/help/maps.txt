@@ -100,6 +100,8 @@ Sie kommen von Waymarked Trails. Schalte so viele ein, wie du willst; dieses Ger
 - wie gut der Pfad im Gelände sichtbar ist, die Steigung, die Breite, und ob du dort gehen, fahren oder reiten darfst;
 - die markierten Routen, zu denen er gehört (international, national, regional oder lokal), mit `Waymarked Trails`, um die ganze Route zu sehen.
 
+`Problem auf diesem Weg melden` (ganz unten) wählt, was nicht stimmt (gesperrt, zugewachsen, Markierungen fehlen, Brücke oder Stufen beschädigt, den Weg gibt es nicht mehr, gefährlich, etwas anderes), und öffnet an der Stelle einen neuen OpenStreetMap-Hinweis, in dem der Weg und sein Link schon stehen; ergänze Details und sende ihn wie jeden Hinweis (siehe OpenStreetMap-Hinweise).
+
 Um die markierten Routen um dich herum zu durchsuchen, öffne Entdecken › `Touren`.
 
 Es wird nur gezeigt, was kartiert ist. Fehlt eine Angabe, ist sie noch nicht bekannt; du kannst sie mit Fragen oder Orte bearbeiten ergänzen. Offline-Karten zeichnen Radwege jetzt blau, Feldwege braun und Fußpfade rot, alle gestrichelt.
@@ -159,7 +161,7 @@ Ein oranger Ring um einen Punkt heißt, dem Ort fehlt etwas Wichtiges (sein Name
 
 Hilf OpenStreetMap, indem du kleine Fragen zu deiner Umgebung beantwortest. Du musst keine Tags kennen.
 
-1. Tippe auf `Fragen` (die Stecknadel mit Fragezeichen) und zoome auf Straßenebene. Stecknadeln zeigen die offenen Fragen: 🪑 Lehne der Bank, 🚏 Wartehäuschen, 🚌 Bank an der Haltestelle, 🚸 Art des Übergangs, 💡 Straßenbeleuchtung, 🛣️ Belag, 🕒 Öffnungszeiten, ♿ Rollstuhlzugang, 🚻 Toilettengebühr, ♻️ Recycling, 🛐 Religion, 🏢 Stockwerke, 🔢 Hausnummer, 🛝 Zugang zum Spielplatz, 🚬 Rauchen, 🏧 Geldautomat an der Bank, 🚦 Tempolimit, 🏷️ Straßenname, 🪜 Anzahl der Stufen, 🤚 Handlauf, 🦯 Blindenleitsystem am Übergang, 🪧 Name der Haltestelle, 🚧 Schranke am Bahnübergang, 🅿️ Parkgebühr, 🚗 Art des Parkplatzes, 🚲 Fahrradstellplätze, ☂️ überdachte Fahrradstellplätze, 🥗 vegetarisches Essen, 🌱 veganes Essen, 💳 Zahlungsarten, 📶 WLAN, 🚾 Rollstuhl-WC, ❤️ Defibrillator drinnen, 🧯 Hydrant, 📮 Leerungszeiten, 🏠 Gebäudeart.
+1. Tippe auf `Fragen` (die Stecknadel mit Fragezeichen) und zoome auf Straßenebene. Stecknadeln zeigen die offenen Fragen: 🪑 Lehne der Bank, 🚏 Wartehäuschen, 🚌 Bank an der Haltestelle, 🚸 Art des Übergangs, 💡 Straßenbeleuchtung, 🛣️ Belag, 🕒 Öffnungszeiten, ♿ Rollstuhlzugang, 🚻 Toilettengebühr, ♻️ Recycling, 🛐 Religion, 🏢 Stockwerke, 🔢 Hausnummer, 🛝 Zugang zum Spielplatz, 🚬 Rauchen, 🏧 Geldautomat an der Bank, 🚦 Tempolimit, 🏷️ Straßenname, 🪜 Anzahl der Stufen, 🤚 Handlauf, 🦯 Blindenleitsystem am Übergang, 🪧 Name der Haltestelle, 🚧 Schranke am Bahnübergang, 🅿️ Parkgebühr, 🚗 Art des Parkplatzes, 🚲 Fahrradstellplätze, ☂️ überdachte Fahrradstellplätze, 🥗 vegetarisches Essen, 🌱 veganes Essen, 💳 Zahlungsarten, 📶 WLAN, 🚾 Rollstuhl-WC, ❤️ Defibrillator drinnen, 🧯 Hydrant, 📮 Leerungszeiten, 🏠 Gebäudeart, und für Wandernde und Radfahrende 🥾 Wanderschwierigkeit (T1 bis T6), 👀 wie gut ein Pfad sichtbar ist, 🚜 wie fest ein Feldweg ist, 🚲 Räder auf dem Weg, ↔️ getrennte Spuren für Rad und Fußgänger, 🛞 Schieberinne an Treppen, 💧 Trinkwasser an Quelle oder Hahn, 🛖 Art der Schutzhütte.
 2. Tippe auf eine Stecknadel (oder eine Zeile der Liste) und dann auf die Antwort. Die nächste Frage in der Nähe öffnet sich von selbst.
 3. `Weiß nicht` überspringt die Frage vorerst. `Hier ausblenden` blendet sie für diesen Ort auf all deinen Geräten aus. `Gibt es nicht mehr` öffnet an der Stelle einen neuen Hinweis, damit Kartierende nachsehen können.
 4. Manche Antworten veralten: Karten fragt nach einigen Jahren erneut (Öffnungszeiten nach einem Jahr), und `Immer noch gleich` bestätigt sie.
@@ -178,6 +180,7 @@ Eine Ebene färbt die Straßen oder Gebäude um dich herum nach einer Eigenschaf
 - 💡 `Straßenbeleuchtung`: beleuchtet oder nicht.
 - 🛣️ `Belag`: Asphalt, Pflaster, Schotter, Erde und mehr.
 - 🚶 `Gehwege`: auf beiden Seiten, einer Seite, ein eigener Weg oder keiner. Pfeile auf der gewählten Straße zeigen ihre Richtung: links und rechts gelten so, wie du sie siehst, wenn du in diese Richtung gehst.
+- 🚴 `Radwege`: ein baulich getrennter Radweg, ein markierter Radfahrstreifen, Radpiktogramme auf einer gemeinsamen Spur, ein eigener Radweg neben der Straße oder nichts für Räder.
 - 🔢 `Adressen`: welche Gebäude eine Hausnummer haben. Gib die Nummer ein oder tippe auf `Es hat keine Nummer`.
 - 🏢 `Gebäude`: Stockwerke und Gebäudeart in einem Formular (leere Felder bleiben, wie sie sind).
 
@@ -269,7 +272,7 @@ Jedes Paket zeigt seine Größe, seine Details, wann du es heruntergeladen hast 
 
 - `Offline-Karte (heruntergeladen)` in der Ebenen-Taste zeigt deine Pakete; außerhalb davon ist die Karte schraffiert. Geht das Gerät über einem Paket offline, wechselt Karten von selbst dorthin und zurück, wenn du wieder online bist. Über die höchste Detailstufe des Pakets hinaus wird die Karte größer gezeichnet, bleibt aber scharf.
 - Offline findet die Suche Namen aus deinen Paketen: Städte und Viertel, Straßen, Geschäfte und andere Orte, Parks und Gewässer sowie Adressen, wo die Kartendaten sie haben. Akzente spielen keine Rolle, und lateinische Buchstaben finden griechische Namen (`plaka` findet Πλάκα). Die Zeilen sagen `(offline)`.
-- Neue Routen brauchen weiterhin eine Verbindung.
+- Ohne Verbindung kommen Routen `Zu Fuß` und `Fahrrad` aus deinen Paketen (experimentell): Karten berechnet die Route auf dem Gerät aus den Straßen, Wegen, Treppen und Radwegen eines Pakets, das alle Halte enthält, mit dem Detail `Straßen, Geschäfte und Orte` oder mehr. Die Routenleiste zeigt `Offline · experimentell`, und die `Wegbeschreibung` zeigt die Arten der Wege. Die Pakete kennen keine Einbahnregeln für Räder, wer einen Weg benutzen darf, Abbiegeverbote oder Höhen, prüfe also vor Ort; die Zeit gilt für ebenes Gelände. Dasselbe passiert, wenn du online bist, die Routenserver aber nicht erreichbar sind. Autorouten brauchen weiterhin eine Verbindung.
 - `Kartenquelle (erweitert)` nimmt statt der Standardquelle die Adresse deiner eigenen PMTiles-Datei (Vektorkacheln im Protomaps-Layout).
 
 ## Online-Dienste und Datenschutz
@@ -312,7 +315,7 @@ Gespeicherte Orte, deine Streckenliste (Namen, Aktivitäten, Farben, Ordner, Sta
 
 ## Grenzen
 
-- Neue Routen brauchen eine Verbindung. Offline hast du deine Offline-Karten (Karte und Suche), früher angesehene Gebiete, gespeicherte Orte und deine letzte Route. Ohne Offline-Karte braucht die Suche eine Verbindung.
+- Neue Autorouten brauchen eine Verbindung (Zu Fuß und Fahrrad kommen aus deinen Offline-Karten, siehe Offline-Karten). Offline hast du deine Offline-Karten (Karte und Suche), früher angesehene Gebiete, gespeicherte Orte und deine letzte Route. Ohne Offline-Karte braucht die Suche eine Verbindung.
 - Offline-Karten brauchen einen Browser, der Dateien für eine Website speichern kann (aktuelles Chrome, Edge, Firefox, Safari 26). Der Browser kann sie entfernen, wenn der Gerätespeicher knapp wird. Die Offline-Karte ist einfacher gezeichnet als die Online-Karte: keine Hausnummern oder Einbahnpfeile auf der Karte, keine Schummerung, und Namen nahe am Rand einer Kartenkachel erscheinen eventuell nicht.
 - Die Offline-Suche findet nur Namen in den Kartendaten, nicht jede Adresse; ein Gebietspaket fasst höchstens 600.000 Kartenkacheln, daher kommt ein ganzes Land mit weniger Details.
 - Navigation braucht GPS, und Karten muss offen bleiben.

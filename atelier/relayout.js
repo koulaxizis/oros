@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Atelier — relayout.js: a design in another size (v1.0.0)
+// orOS Atelier — relayout.js: a design in another size (v1.1.0)
 // "Magic resize": the elements are placed again for the new page
 // instead of the whole page being shrunk into it.
 //   - content scale k = min(new w / old w, new h / old h): sizes,
@@ -13,6 +13,11 @@
 //     axis; a stretched photo is cropped to fill its new box
 //   - page backgrounds cover the new page
 //   - an element that was inside the page stays inside it
+// Magic Switch (CV-2b, v1.1.0): textSegments() lists the lines of the
+// design's text elements for the translation panel, translated() puts
+// the translations back into a copy (a text's own runs of styling are
+// dropped: they no longer fit its new words); relayout() of that copy
+// then measures the new text heights.
 // Pure: works on a copy of the design. textHeight (AX.textHeight) is
 // passed in so this file needs no fonts. Exposes window.AtelierRelayout
 // (browser) or module.exports.
@@ -96,7 +101,48 @@
     return d;
   }
 
-  var api = { relayout: relayout, EDGE: EDGE, SPAN: SPAN };
+  // The non-empty lines of every text element, in order:
+  // { segs: [string], map: [{ id, line }] } (line = index in ax.tx's lines).
+  function textSegments(doc) {
+    var segs = [], map = [];
+    (doc.items || []).forEach(function (it) {
+      if (!it.ax || it.ax.k !== "text") return;
+      String(it.ax.tx || "").split("\n").forEach(function (ln, i) {
+        if (!ln.trim()) return;
+        segs.push(ln.trim());
+        map.push({ id: it.id, line: i });
+      });
+    });
+    return { segs: segs, map: map };
+  }
+  // A copy of doc with each mapped line replaced by out[i] (a missing
+  // or empty translation keeps the line).
+  function translated(doc, map, out) {
+    var d = JSON.parse(JSON.stringify(doc)), by = {};
+    d.items.forEach(function (it) { by[it.id] = it; });
+    var lines = {};
+    map.forEach(function (m, i) {
+      var it = by[m.id], tx = out && out[i];
+      if (!it || !it.ax || typeof tx !== "string" || !tx.trim()) return;
+      if (!lines[m.id]) lines[m.id] = String(it.ax.tx || "").split("\n");
+      var ln = lines[m.id][m.line];
+      if (ln == null) return;
+      var lead = /^\s*/.exec(ln)[0], tail = /\s*$/.exec(ln)[0];
+      lines[m.id][m.line] = lead + tx.replace(/\s*\n\s*/g, " ").trim() + tail;
+    });
+    Object.keys(lines).forEach(function (id) {
+      var it = by[id], tx = lines[id].join("\n");
+      if (tx === it.ax.tx) return;
+      it.ax.tx = tx;
+      if (it.ext && it.ext.runs) {
+        delete it.ext.runs;
+        if (!Object.keys(it.ext).length) delete it.ext;
+      }
+    });
+    return d;
+  }
+
+  var api = { relayout: relayout, textSegments: textSegments, translated: translated, EDGE: EDGE, SPAN: SPAN };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.AtelierRelayout = api;
 })(typeof window !== "undefined" ? window : this);

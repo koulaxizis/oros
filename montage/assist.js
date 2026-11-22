@@ -21,6 +21,12 @@
    newer work. Undo data: IndexedDB oros-montage-assist (store
    "undo"), this device only, 30 days, 50 entries. Loaded on the first
    request (montage.js), with commands.js.
+   create (designs "new", Gate's montage_import): an .orosmontage from
+   the disk opens as a NEW project through Montage's own import
+   (MontageAssistHost.importFile); the report counts it as made, and
+   Undo removes that project, only while it is unchanged (its media stay
+   in the media store, as after any deleted project). Nothing is ever
+   published from here.
    ============================================================ */
 (function () {
   "use strict";
@@ -97,9 +103,32 @@
   function stateOf(rec) { return JSON.stringify(rec.projects.map(function (x) { return projJson(x.id); })); }
 
   var busy = false;
+  // why a create failed, for the model (English)
+  var WHY = { nofile: "there is no such file on the owner's orOS disk (upload it with files_upload first)", notbundle: "the file is not a .orosmontage project",
+              newer: "the file was made by a newer orOS; the owner must update orOS first", nodisk: "this device has no orOS disk" };
+  // create: one file → one new project
+  function create(key, st) {
+    if (busy) { H.toast(t("as.bad")); back(key, { failed: 1, why: "busy" }); return; }
+    busy = true;
+    Promise.resolve(H.importFile(st.from, st.title)).then(function (r) {
+      busy = false;
+      if (!r || !r.pid) { var why = r && r.err || "error"; back(key, { failed: 1, why: why, notes: WHY[why] ? [WHY[why]] : [] }); return; }
+      var rec = { tok: newTok(), at: Date.now(), projects: [{ id: r.pid, before: null, made: 1 }] };
+      rec.fp = fp(stateOf(rec));
+      return put(rec).then(function () {
+        back(key, { ok: 1, n: 0, d: 0, per: [{ name: r.name, n: 1 }], cut: 0, made: 1, notes: [], tok: rec.tok });
+        H.undoToast(t("as.made1", { name: r.name }), function () { undo({ tok: rec.tok }); });
+      });
+    }, function (e) {
+      busy = false;
+      try { console.error("[orOS] montage: the Assistant's import failed", e); } catch (x) {}
+      back(key, { failed: 1, why: "error" });
+    });
+  }
   function edit(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "";
     var chk = K.check(rq && rq.steps);
+    if (chk.ok && chk.steps[0].op === "create") { create(key, chk.steps[0]); return; }
     var ids = rq && Array.isArray(rq.docs) ? rq.docs.filter(function (id) { return typeof id === "string" && H.data().projects[id]; }).slice(0, 300) : [];
     if (!chk.ok || !ids.length || busy) {
       H.toast(t("as.bad"));
@@ -130,12 +159,20 @@
       H.set(next, perIds.indexOf(H.pid()) >= 0);
       rec.fp = fp(stateOf(rec));
     }
-    busy = false;
+    var ex = null;
     (changed ? put(rec) : Promise.resolve()).then(function () {
+      // GX-3: the export steps: each project opens and renders as by Export
+      return window.orosRecipes.runOuts(ids, chk.steps, function (id, st) {
+        if (H.pid() !== id) H.open(id);
+        return new Promise(function (ok) { setTimeout(ok, 300); }).then(function () { return H.exportAs(st.fmt); }).then(function (x) { return x ? [x] : []; });
+      }).then(function (r) { ex = r; });
+    }).then(null, function () {}).then(function () {
+      busy = false;
       /* the changed project opens, so the user sees what changed */
       if (perIds.length === 1 && perIds[0] !== H.pid() && !document.querySelector("dialog[open]")) H.open(perIds[0]);
       var rep = err && !changed ? { failed: 1, why: "error" }
         : { ok: 1, n: changed ? total : 0, d: changed ? per.length : 0, per: changed ? per.slice(0, 50) : [], cut: 0, notes: notes.slice(), tok: changed ? rec.tok : "" };
+      window.orosRecipes.outRep(rep, ex);
       back(key, rep);
       var msg = !changed ? t("as.done0") : per.length === 1 ? t("as.done1", { n: total }) : t("as.done", { n: total, d: per.length });
       if (changed) H.undoToast(msg, function () { undo({ tok: rec.tok }); });
@@ -152,8 +189,9 @@
       if (lost || fp(stateOf(rec)) !== rec.fp) { H.toast(t("as.changed")); back(key, { failed: 1, why: "changed" }); return; }
       var next = H.data(), now = Date.now(), open = false;
       rec.projects.forEach(function (x) {
-        next = C.restoreProject(next, x.id, x.before, now);
-        if (x.id === H.pid()) open = true;
+        /* a project create made goes again */
+        next = x.made ? C.delProject(next, x.id, now) : C.restoreProject(next, x.id, x.before, now);
+        if (x.id === H.pid() && !x.made) open = true;
       });
       H.set(next, open);
       rec.st = "undone";

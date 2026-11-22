@@ -981,6 +981,89 @@
     body.appendChild(s);
   };
 
+  // --- Photo effects (wave CV-2, photofx.js): shadow, duotone, blur edges, frame ---
+  VIEWS.pfx = function (body) {
+    var it = sel1(), PF = window.AtelierPhotoFx;
+    if (!it || it.ax.k !== "photo") { body.appendChild(el("p", "hint", t("ctx.hint"))); return; }
+    var p = PF.of(it) || {};
+    function setPfx(fn) {
+      edit(function (x) {
+        if (x.ax.k !== "photo") return;
+        var q = PF.norm(x.ext && x.ext.pfx) || {};
+        fn(q);
+        q = PF.norm(q);
+        var ext = Object.assign({}, x.ext || {});
+        if (q) ext.pfx = q; else delete ext.pfx;
+        x.ext = ext;
+      });
+    }
+    function colourIn(v, on) {
+      var i = el("input", "pfx-col"); i.type = "color"; i.value = v;
+      i.addEventListener("input", function () { AT.beginGesture(); on(i.value); });
+      i.addEventListener("change", function () { AT.endGesture(); });
+      return i;
+    }
+    function row(label, node) { var r = el("div", "pn-row"); r.appendChild(el("span", "fld-lbl", label)); r.appendChild(node); return r; }
+    function seg(list, cur, pick) {
+      var g = el("div", "seg wrap pfx-seg");
+      list.forEach(function (o) {
+        var b = btn("seg-btn" + (cur === o[0] ? " on" : ""), o[1], function () { pick(o[0]); });
+        g.appendChild(b);
+      });
+      return g;
+    }
+    // shadow
+    var s1 = sec(t("pfx.shadow"));
+    var st = p.sh ? p.sh.t : "";
+    s1.appendChild(seg([["", t("pfx.none")], ["drop", t("pfx.drop")], ["glow", t("pfx.glow")]], st, function (v) {
+      setPfx(function (q) { if (!v) delete q.sh; else q.sh = Object.assign({}, PF.DEF.sh[v]); });
+    }));
+    if (p.sh) {
+      s1.appendChild(row(t("pfx.color"), colourIn(p.sh.c, function (v) { setPfx(function (q) { if (q.sh) q.sh.c = v; }); })));
+      s1.appendChild(slider(t("pfx.op"), 0, 100, 1, p.sh.op, function (v) { setPfx(function (q) { if (q.sh) q.sh.op = v; }); }));
+      s1.appendChild(slider(t("pfx.bl"), 0, 50, 1, p.sh.bl, function (v) { setPfx(function (q) { if (q.sh) q.sh.bl = v; }); }));
+      if (p.sh.t === "drop") {
+        s1.appendChild(slider(t("pfx.d"), 0, 50, 1, p.sh.d, function (v) { setPfx(function (q) { if (q.sh) q.sh.d = v; }); }));
+        s1.appendChild(slider(t("pfx.ang"), 0, 359, 1, p.sh.ang, function (v) { setPfx(function (q) { if (q.sh) q.sh.ang = v; }); }, function (n) { return n + "°"; }));
+      }
+    }
+    body.appendChild(s1);
+    // duotone
+    var s2 = sec(t("pfx.duo"));
+    var dg = el("div", "pfx-duo");
+    var off = btn("pfx-duo-b" + (!p.duo ? " on" : ""), t("pfx.none"), function () { setPfx(function (q) { delete q.duo; }); });
+    dg.appendChild(off);
+    PF.DUO.forEach(function (d) {
+      var on = p.duo && p.duo.a === d[0] && p.duo.b === d[1];
+      var b = btn("pfx-duo-b" + (on ? " on" : ""), "", function () { setPfx(function (q) { q.duo = { a: d[0], b: d[1] }; }); });
+      b.style.background = "linear-gradient(135deg," + d[0] + "," + d[1] + ")";
+      b.setAttribute("aria-label", t("pfx.duo") + " " + d[0] + " " + d[1]);
+      dg.appendChild(b);
+    });
+    s2.appendChild(dg);
+    if (p.duo) {
+      s2.appendChild(row(t("pfx.duoA"), colourIn(p.duo.a, function (v) { setPfx(function (q) { if (q.duo) q.duo.a = v; }); })));
+      s2.appendChild(row(t("pfx.duoB"), colourIn(p.duo.b, function (v) { setPfx(function (q) { if (q.duo) q.duo.b = v; }); })));
+    }
+    body.appendChild(s2);
+    // blur edges
+    var s3 = sec(t("pfx.eb"));
+    s3.appendChild(slider(t("pfx.eb"), 0, 100, 1, p.eb || 0, function (v) { setPfx(function (q) { q.eb = v; }); }));
+    body.appendChild(s3);
+    // frame
+    var s4 = sec(t("pfx.frame"));
+    var ft = p.fr ? p.fr.t : "";
+    s4.appendChild(seg([["", t("pfx.none")], ["border", t("pfx.border")], ["polaroid", t("pfx.polaroid")]], ft, function (v) {
+      setPfx(function (q) { if (!v) delete q.fr; else q.fr = Object.assign({}, PF.DEF.fr[v], q.fr ? { c: q.fr.c } : {}); });
+    }));
+    if (p.fr) {
+      s4.appendChild(row(t("pfx.color"), colourIn(p.fr.c, function (v) { setPfx(function (q) { if (q.fr) q.fr.c = v; }); })));
+      s4.appendChild(slider(t("pfx.fw"), 1, 30, 1, p.fr.w, function (v) { setPfx(function (q) { if (q.fr) q.fr.w = v; }); }));
+    }
+    body.appendChild(s4);
+    if (PF.of(it)) body.appendChild(btn("btn small block", t("pfx.reset"), function () { setPfx(function (q) { Object.keys(q).forEach(function (k) { delete q[k]; }); }); }));
+  };
+
   // --- Mask (photos) ---
   VIEWS.mask = function (body) {
     var it = sel1();
@@ -1496,6 +1579,7 @@
   function photoTools(bar, it) {
     bar.appendChild(btn("ctx-txt" + (view === "filters" ? " on" : ""), t("ctx.filters"), function () { openView("filters"); }));
     bar.appendChild(btn("ctx-txt" + (view === "adjust" ? " on" : ""), t("ctx.adjust"), function () { openView("adjust"); }));
+    bar.appendChild(btn("ctx-txt" + (view === "pfx" ? " on" : ""), t("ctx.pfx"), function () { openView("pfx"); }));
     bar.appendChild(tool("crop", t("ctx.crop"), function () { ED.enterCrop(it.id); }));
     bar.appendChild(tool("flip", t("ctx.flip"), function (b) {
       AT.menu(b, [
@@ -1520,7 +1604,7 @@
   }
 
   // ---------- 4. Wiring ----------
-  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, mask: 1, position: 1, animate: 1, fonts: 1, video: 1 };
+  var CONTEXT_VIEWS = { colour: 1, effects: 1, filters: 1, adjust: 1, pfx: 1, mask: 1, position: 1, animate: 1, fonts: 1, video: 1 };
   function viewFits() {
     if (!view || !CONTEXT_VIEWS[view] || view === "animate") return true;
     var one = sel1(), list = ED.selItems();

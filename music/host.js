@@ -223,13 +223,21 @@
   function fs() { return w.orosFS || null; }
   function sameOrigin(u) { return /^blob:/.test(u) || u.indexOf(w.location.origin + "/") === 0; }
   function revoke(u) { if (/^blob:/.test(u || "")) { try { w.URL.revokeObjectURL(u); } catch (e) {} } }
+  // A seek waiting for a song's metadata belongs to that song only: a
+  // new source drops it (MU-ORDER1: the restored song's place was
+  // applied to the next song loaded on the same deck).
+  function dropSeek(el) {
+    if (el._seek) { el.removeEventListener("loadedmetadata", el._seek); el._seek = null; }
+  }
   function setSrc(el, u) {
+    dropSeek(el);
     if (el._blob && el._blob !== u) revoke(el._blob);
     el._blob = /^blob:/.test(u) ? u : "";
     el._same = sameOrigin(u);
     el.src = u;
   }
   function clearDeck(el) {
+    dropSeek(el);
     try { el.pause(); } catch (e) {}
     try { el.removeAttribute("src"); el.load(); } catch (e) {}
     revoke(el._blob); el._blob = ""; el._same = false; el._fade = 1;
@@ -385,7 +393,10 @@
   // moves on its own. A deck is routed for the light only while the
   // context runs (a suspended context would silence it); once routed
   // it stays routed, like an equalizer deck.
-  var viz = { on: false, an: null, f: null, w: null };
+  // Listeners (VIZWALL-1): "app" (the Music app's Light show, also when
+  // no name is given), "wall" (the desktop wallpaper), "widget" (the
+  // Media card); the tap is on while any of them listens.
+  var viz = { on: false, who: {}, an: null, f: null, w: null };
   function vizNode() {
     if (viz.an) return viz.an;
     if (!graph()) return null;
@@ -404,8 +415,10 @@
     if (ctx.state === "running") { route(el); return; }
     try { ctx.resume().then(function () { if (viz.on && ctx.state === "running" && el._same && el.getAttribute("src")) route(el); }, function () {}); } catch (e) {}
   }
-  function vizSet(on) {
-    viz.on = !!on;
+  function vizSet(on, who) {
+    who = who === "wall" || who === "widget" ? who : "app";
+    if (on) viz.who[who] = 1; else delete viz.who[who];
+    viz.on = Object.keys(viz.who).length > 0;
     if (viz.on && vizNode()) decks.forEach(function (el) { if (el.getAttribute("src")) vizRoute(el); });
     return viz.on;
   }
@@ -593,7 +606,12 @@
       gainFor(audio, r[1]);
       var at = +start > 0 ? +start : 0;
       if (at) {
-        var a = audio, seek = function () { a.removeEventListener("loadedmetadata", seek); if (!isFinite(a.duration) || at < a.duration - 2) { try { a.currentTime = at; } catch (e) {} } };
+        var a = audio, seek = function () {
+          dropSeek(a);
+          if (my !== loadSeq || a !== audio) return;
+          if (!isFinite(a.duration) || at < a.duration - 2) { try { a.currentTime = at; } catch (e) {} }
+        };
+        a._seek = seek;
         a.addEventListener("loadedmetadata", seek);
       }
       saveLocal(true);
@@ -1164,7 +1182,7 @@
     setVolume: function (v) { v = +v; if (v >= 0 && v <= 1) { local.vol = v; volAll(); saveLocal(); host.notify("volume"); } },
     sound: function () { return own(sound); },
     // MU-VIZ: the light show of the full player (see vizFrame).
-    viz: function (on) { return vizSet(on); },
+    viz: function (on, who) { return vizSet(on, who); },
     vizFrame: vizFrame,
     setSound: setSound,
     sleep: function (v) { sleepSet(v === "end" ? "end" : +v || 0); },
@@ -1217,6 +1235,9 @@
     if (!q.cur) return;
     var tries = 0;
     var go = function () {
+      // A song started meanwhile wins: the last session's song does not
+      // come back over it (MU-ORDER1).
+      if (loadSeq > 0) return;
       if (fs() || ++tries > 20) { load(q.cur, local.pos, false).then(chip); return; }
       w.setTimeout(go, 250);
     };

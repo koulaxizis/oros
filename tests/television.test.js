@@ -274,3 +274,26 @@ test("calPayload: Remind me prefill for the Calendar (BR-W8)", () => {
   assert.equal(long.location.length, 150);
   assert.equal(long.note.length, 500);
 });
+
+// TV-VOD3: official free-to-air badge from the Free-TV/IPTV playlist (lines as published, 2026-11-22).
+test("freeTvIndex / isFreeTv: ids without case or feed, country + name for the rest", () => {
+  const C = require("../television/core.js");
+  const txt = [
+    '#EXTM3U x-tvg-url="https://example.org/epg.xml.gz"',
+    '#EXTINF:-1 tvg-name="ERT 1" tvg-logo="https://i.imgur.com/WWMe8IY.png" tvg-id="ERT1.gr" tvg-chno="1" tvg-country="GR" group-title="Greece",ERT 1 Ⓖ',
+    'https://ert-live.siliconweb.com/bpk-tv/ERT1/default/index.mpd',
+    '#EXTINF:-1 tvg-name="Encuentro" tvg-id="Encuentro.ar@SD" group-title="Argentina",Encuentro Ⓨ Ⓖ',
+    'https://www.youtube.com/watch?v=x',
+    '#EXTINF:-1 tvg-id="<script>" group-title="X",Bad',
+    'https://example.org/a.m3u8'
+  ].join("\n");
+  const idx = C.freeTvIndex(txt);
+  assert.equal(idx.n, 2);
+  assert.ok(C.isFreeTv(idx, { id: "ERT1.gr" }));
+  assert.ok(C.isFreeTv(idx, { id: "ert1.gr@HD" }));
+  assert.ok(C.isFreeTv(idx, { id: "encuentro.ar" }));
+  assert.ok(C.isFreeTv(idx, { id: "Other.gr", name: "ERT 1 HD", country: "GR" }));
+  assert.ok(!C.isFreeTv(idx, { id: "Other.cy", name: "ERT 1", country: "CY" }));
+  assert.ok(!C.isFreeTv(idx, { id: "HBO.us", name: "HBO", country: "US" }));
+  assert.ok(!C.isFreeTv(null, { id: "ERT1.gr" }));
+});

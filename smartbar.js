@@ -209,7 +209,9 @@
     ".sb-chip { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 8px; background: transparent;",
     "  border: none; border-radius: 8px; color: var(--text); font: inherit; font-size: 12.5px; font-weight: 600;",
     "  font-variant-numeric: tabular-nums; white-space: nowrap; cursor: pointer; }",
-    ".sb-chip:hover, .sb-chip:focus-visible { background: var(--accent-soft); outline: none; }",
+    ".sb-chip:focus-visible { background: var(--accent-soft); outline: none; }",
+    // Touch screens keep :hover on the last tapped button: hover only where it is real.
+    "@media (hover: hover) { .sb-chip:hover { background: var(--accent-soft); } }",
     ".sb-chip svg { display: block; flex-shrink: 0; pointer-events: none; color: var(--accent); }",
     ".sb-chip .sb-v { pointer-events: none; }",
     ".sb-chip .sb-l { pointer-events: none; font-weight: 500; color: var(--text-dim); max-width: 16ch; overflow: hidden; text-overflow: ellipsis; }",

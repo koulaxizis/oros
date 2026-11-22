@@ -15,9 +15,9 @@ import java.util.Set;
  * SHA-256 of the repository's signing certificate, pinned here: an index
  * signed by any other key is refused. A new project is one more line in
  * {@link #ALL} and a manager update. A project can also be a section of
- * another project's repository ({@link #from}, {@link #only}): the
- * Glarolykoi app is published in the orOS repository but has its own
- * section on the screen, with the same checks and one download.
+ * another project's repository ({@link #from}, {@link #only}): Waymark
+ * and the Glarolykoi app are published in the orOS repository but each has
+ * its own section on the screen, with the same checks and one download.
  */
 final class Source {
     final String id;
@@ -74,6 +74,10 @@ final class Source {
         new Source("noxpress", "Noxpress",
             "https://koulaxizis.github.io/noxpress-fdroid/repo",
             "21441E31A60A89708C6CECE649390C1863EC8CA147F08DA7399AE7646E02EE4E"),
+        // Waymark (site.waymarked.app, built from koulaxizis/waymark): a
+        // project of its own, not an orOS app, published in the orOS F-Droid
+        // repository and shown as its own section before Glarolykoi.
+        section("waymark", "Waymark", OROS, "site.waymarked.app"),
         // Glarolykoi (GL-1, glarolykoi-android/ in the orOS repo): published
         // in the orOS F-Droid repository, shown as its own project.
         section("glarolykoi", "Glarolykoi", OROS, "net.glarolykoi.android")
