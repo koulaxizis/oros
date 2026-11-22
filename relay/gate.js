@@ -1783,7 +1783,7 @@ export function queueFor(q, now, ver) {
 // queued for the phone never showed): the cached older orOS a phone runs
 // before it updates did not know claude_folders_request and dropped it.
 // The orOS a queued change needs at least (verNum), 0 = any.
-const TOOL_MV = { claude_folders_request: 84500, local_folders_request: 81100 };
+const TOOL_MV = { claude_folders_request: 84500, local_folders_request: 81100, mockup_render: 85500 };   // GATE-PL10: 8.55.00
 const PL_AI_OPS = ["generate", "nobg", "fill", "expand", "upscale", "image", "create"];
 export function minVer(name, args) {
   if (Object.prototype.hasOwnProperty.call(TOOL_MV, name)) return TOOL_MV[name];

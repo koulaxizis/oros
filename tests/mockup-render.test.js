@@ -45,6 +45,7 @@ test("GATE-PL10: requests, templates, slots and names are checked", () => {
   assert.match(t.description, /Mockups\/Claude/);
   // the relay with orOS closed
   const idx = { f: ["/internal/Mockups/Claude"], files: [{ p: "/internal/Mockups/Claude/front.png" }] };
+  assert.equal(R.minVer("mockup_render", {}), 85500, "GQ-VER: waits for an orOS that knows mockup_render (8.55.00)");
   assert.deepEqual(R.mockupCheck({ tpl: ["Βυθός"] }, { template: "βυθος", image: "/internal/Mockups/Claude/front.png" }, idx, [], { files: "write" }), []);
   assert.match(R.mockupCheck({ tpl: ["Βυθός"] }, { template: "Κύκλοι", image: "/internal/Mockups/Claude/front.png" }, idx, [], { files: "write" })[0], /no mockup is called "Κύκλοι"; mockups: "Βυθός"/);
   assert.match(R.mockupCheck(null, { template: "x", image: "/internal/Mockups/Claude/new.png" }, idx, [], { files: "write" })[0], /neither in the copy/);
