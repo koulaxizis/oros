@@ -1895,7 +1895,14 @@ function renderMain(){
   var isFilms = state.viewMode === "films";
   if(main0()) main0().classList.toggle("films-mode", isFilms);
   if(films){
-    if(isFilms){ films.removeAttribute("hidden"); if(window.orosTvFilms) window.orosTvFilms.render(films); }
+    if(isFilms){
+      films.removeAttribute("hidden");
+      loadFilms().then(function(){
+        if(state.viewMode === "films" && window.orosTvFilms) window.orosTvFilms.render(films);
+      }, function(){
+        if(state.viewMode === "films") films.textContent = t(state.offline ? "vod.offline" : "vod.err.net");
+      });
+    }
     else films.setAttribute("hidden", "");
   }
 
@@ -2729,6 +2736,29 @@ function toggleFullscreen(){
 }
 
 /* ===== TV-VOD: films in the player ===== */
+
+// films.js (the Films & shows page) and Music's lb.js (the sealed
+// Europeana key) load only when the tab first opens: a phone that only
+// watches channels never downloads them (first-open budget, TV-VOD2).
+// vod.js stays in the page, because sync merges watchlists without it.
+var filmsLoad = null;
+function loadFilms(){
+  if(window.orosTvFilms) return Promise.resolve();
+  if(filmsLoad) return filmsLoad;
+  filmsLoad = ["../music/lb.js", "films.js"].reduce(function(p, src){
+    return p.then(function(){
+      return new Promise(function(res, rej){
+        var s = document.createElement("script");
+        s.src = src + (SCRIPT_V ? "?v=" + encodeURIComponent(SCRIPT_V) : "");
+        s.onload = function(){ res(); };
+        s.onerror = function(){ rej(new Error("load")); };
+        document.head.appendChild(s);
+      });
+    });
+  }, Promise.resolve());
+  filmsLoad.then(null, function(){ filmsLoad = null; });
+  return filmsLoad;
+}
 
 // A film plays in the same player as a channel: one https stream, a
 // position bar, and the place it stopped (resume points, synced: Chris
