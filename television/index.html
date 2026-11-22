@@ -22,6 +22,7 @@
   <script src="vod.js?v=8.32.00" defer></script>
   <script src="../cast.js?v=8.32.00" defer></script>
   <script src="television.js?v=8.32.00" defer></script>
+  <script src="../music/lb.js?v=8.32.00" defer></script>
   <script src="films.js?v=8.32.00" defer></script>
 </head>
 <body>
@@ -96,6 +97,7 @@
       </div>
       <p id="tvp-epg" hidden></p>
       <select id="tvp-streampick" hidden></select>
+      <select id="tvp-subs" hidden></select>
       <div class="tvp-controls">
         <button id="tvp-play" class="tv-icon"></button>
         <button id="tvp-mute" class="tv-icon"></button>
@@ -173,7 +175,7 @@
       </div>
       <p id="tvf-status" class="tvf-status" hidden></p>
       <div class="tvs-foot">
-        <a id="tvf-src" class="tv-btn ghost" target="_blank" rel="noopener noreferrer" hidden></a>
+        <a id="tvf-page" class="tv-btn ghost" target="_blank" rel="noopener noreferrer" hidden></a>
         <button id="tvf-drop" class="tv-btn ghost" type="button" hidden></button>
         <button id="tvf-wl" class="tv-btn ghost" type="button"></button>
         <button id="tvf-restart" class="tv-btn ghost" type="button" hidden></button>

@@ -22,7 +22,10 @@ if(!V || !H) return;
 var WD_CACHE = "vod-wd-v1";          // Cache Storage entry (television.js csGet / csPut)
 var WD_TTL = 7 * 24 * 3600 * 1000;
 var DECADES = [1890, 1900, 1910, 1920, 1930, 1940, 1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
-var SRC_NAME = { wd: "Wikimedia Commons", ia: "Internet Archive" };
+var SRC_NAME = { wd: "Wikimedia Commons", ia: "Internet Archive", na: "NASA", eu: "Europeana", oi: "Open Images", pt: "PeerTube" };
+var SRC_BADGE = { wd: "Commons", ia: "Archive", na: "NASA", eu: "Europeana", oi: "Open Images", pt: "PeerTube" };
+var PREFS = "oros-television-vod";   // device-local: { off: { <src>: 1 } } sources switched off here
+var EU_HOME = "https://pro.europeana.eu/page/get-api";
 
 var F = {
   built: false,
@@ -30,8 +33,38 @@ var F = {
   q: "", f: {}, open: false, // search, filters, filter panel open
   seq: 0, busy: false, items: [], more: false, page: 1, notes: [],
   wd: null, wdAt: 0, wdBusy: null, wdOld: false,
-  timer: null, cur: null     // the item in the details window
+  timer: null, cur: null,    // the item in the details window
+  parts: null, subs: null,   // its Internet Archive parts and subtitle files
+  euKey: null                // the person's own Europeana key (Music's lb.js secret), null = not read yet
 };
+
+/* ===== sources on this device ===== */
+
+function prefs(){
+  try{
+    var p = JSON.parse(localStorage.getItem(PREFS) || "{}");
+    return p && typeof p === "object" && p.off && typeof p.off === "object" ? p : { off: {} };
+  }catch(e){ return { off: {} }; }
+}
+function setOff(src, off){
+  var p = prefs();
+  if(off) p.off[src] = 1; else delete p.off[src];
+  try{ localStorage.setItem(PREFS, JSON.stringify({ off: p.off })); }catch(e){ H.transient(t("vod.src.noSave")); }
+}
+function LB(){ return window.OrosMusicLB && typeof window.OrosMusicLB.secret === "function" ? window.OrosMusicLB : null; }
+function loadKey(){
+  if(F.euKey !== null) return Promise.resolve(F.euKey);
+  var lb = LB();
+  if(!lb) return Promise.resolve(F.euKey = "");
+  return lb.secret("europeana").then(function(k){ F.euKey = V.euKeyOk(k || "") ? k.trim() : ""; return F.euKey; },
+    function(){ F.euKey = ""; return ""; });
+}
+function needsKey(src){ return src === "eu" || src === "oi"; }
+// Sources a search asks: switched on here, with a key where one is needed.
+function sourcesOn(){
+  var off = prefs().off;
+  return V.SOURCES.filter(function(s){ return !off[s] && (!needsKey(s) || F.euKey); });
+}
 var el = {};
 
 function t(k, v){
@@ -84,6 +117,7 @@ function getText(url, accept, timeout){
   if(FF && typeof FF.fetchOne === "function"){
     return FF.fetchOne(url, { accept: accept, timeout: timeout || 25000 }).then(function(r){
       if(r.status === 429 || r.status === 503) throw new NetErr("busy");
+      if(r.status === 401 || r.status === 403) throw new NetErr("denied");
       if(!r.status || r.status >= 400) throw new NetErr("http");
       return r.text || "";
     }, function(e){ throw new NetErr((e && e.code) === "offline" ? "offline" : "net"); });
@@ -91,7 +125,7 @@ function getText(url, accept, timeout){
   return fetch(url, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", headers: accept ? { Accept: accept } : {} })
     .then(function(r){
       if(r.status === 429 || r.status === 503) throw new NetErr("busy");
-      if(!r.ok) throw new NetErr("http");
+      if(!r.ok) throw new NetErr(r.status === 401 || r.status === 403 ? "denied" : "http");
       return r.text();
     }, function(){ throw new NetErr("net"); });
 }
@@ -177,9 +211,16 @@ function build(box){
   fb.type = "button";
   fb.setAttribute("aria-expanded", "false");
   fb.addEventListener("click", function(){ F.open = !F.open; drawPanel(); });
-  bar.appendChild(q); bar.appendChild(fb);
+  var sv = mk("button", "tv-btn ghost tvf-save");
+  sv.type = "button";
+  sv.innerHTML = SVG + '<path d="M6 3h12v18l-6-4-6 4z"/></svg>';
+  sv.addEventListener("click", saveThis);
+  bar.appendChild(q); bar.appendChild(sv); bar.appendChild(fb);
   box.appendChild(bar);
-  el.q = q; el.fbtn = fb; el.bar = bar;
+  el.q = q; el.fbtn = fb; el.bar = bar; el.save = sv;
+  el.saved = mk("div", "tvf-saved");
+  el.saved.hidden = true;
+  box.appendChild(el.saved);
 
   var panel = mk("div", "tvf-panel");
   panel.hidden = true;
@@ -213,6 +254,11 @@ function build(box){
   clr.type = "button";
   clr.addEventListener("click", function(){ F.f = {}; search(true); });
   panel.appendChild(clr);
+  var srcBtn = mk("button", "tv-btn ghost tvf-clear");
+  srcBtn.type = "button";
+  srcBtn.addEventListener("click", openSources);
+  panel.appendChild(srcBtn);
+  el.srcBtn = srcBtn;
   box.appendChild(panel);
   el.panel = panel; el.S = S; el.all = all; el.allTxt = allTxt; el.clear = clr;
 
@@ -227,6 +273,7 @@ function build(box){
   box.appendChild(el.note); box.appendChild(el.grid); box.appendChild(el.empty); box.appendChild(moreRow);
   F.built = true;
   setupDetails();
+  loadKey().then(function(){ if(F.view === "discover") drawPanel(); });
 }
 
 function fillSelect(s, list, allKey){
@@ -243,7 +290,7 @@ function texts(){
   el.q.setAttribute("aria-label", t("vod.search.ph"));
   ["discover", "continue", "watch"].forEach(function(v){ el["chip_" + v].textContent = t("vod." + v); });
   Object.keys(el.S).forEach(function(k){ el.S[k].cap.textContent = t(el.S[k].key); el.S[k].sel.setAttribute("aria-label", t(el.S[k].key)); });
-  fillSelect(el.S.src, [["wd", SRC_NAME.wd], ["ia", SRC_NAME.ia]], "vod.src.all");
+  fillSelect(el.S.src, V.SOURCES.map(function(x){ return [x, SRC_NAME[x]]; }), "vod.src.all");
   fillSelect(el.S.ty, V.TYPES.map(function(x){ return [x, t("vod.ty." + x)]; }), "vod.ty.all");
   fillSelect(el.S.g, V.GENRES.map(function(x){ return [x, t("vod.g." + x)]; })
     .sort(function(a, b){ return a[1].localeCompare(b[1], H.loc()); }), "vod.g.all");
@@ -262,6 +309,9 @@ function texts(){
   V.SORTS.forEach(function(x){ opt(srt.sel, x === "pop" ? "" : x, t("vod.sort." + x)); });
   el.allTxt.textContent = t("vod.all");
   el.clear.textContent = t("vod.clear");
+  el.srcBtn.textContent = t("vod.src.btn");
+  el.save.setAttribute("title", t("vod.ss.save"));
+  el.save.setAttribute("aria-label", t("vod.ss.save"));
   el.more.textContent = t("more");
 }
 
@@ -276,7 +326,133 @@ function drawPanel(){
     el.S[k].sel.value = v == null ? "" : String(v);
   });
   el.all.checked = !!F.f.all;
-  el.all.closest("label").hidden = F.f.src === "wd";
+  el.all.closest("label").hidden = !!F.f.src && F.f.src !== "ia" && F.f.src !== "pt";
+  el.save.disabled = !F.q && !Object.keys(F.f).length;
+  drawSaved();
+}
+
+/* ===== saved searches (synced, D4) ===== */
+
+function filterWords(f){
+  var p = [];
+  if(f.src) p.push(SRC_NAME[f.src]);
+  if(f.ty) p.push(t("vod.ty." + f.ty));
+  if(f.g) p.push(t("vod.g." + f.g));
+  if(f.dec) p.push(f.dec + "–" + (f.dec + 9));
+  if(f.c) p.push(regionName(f.c));
+  if(f.l) p.push(langName(f.l));
+  if(f.len) p.push(t("vod.len." + f.len));
+  if(f.snd) p.push(t("vod.snd." + f.snd));
+  return p.join(" · ");
+}
+function saveThis(){
+  var f = V.normFilter(F.f);
+  delete f.sort;
+  var name = [F.q, filterWords(f)].filter(Boolean).join(" · ").slice(0, 80);
+  if(H.saveSearch({ n: name, q: F.q, f: F.f })) H.transient(t("vod.ss.saved"));
+  else H.transient(t("vod.ss.there"));
+  drawSaved();
+}
+function drawSaved(){
+  if(!el.saved) return;
+  var list = V.savedList(H.data() || {});
+  el.saved.innerHTML = "";
+  el.saved.hidden = F.view !== "discover" || !list.length;
+  list.forEach(function(x){
+    var wrap = mk("span", "tvf-ss");
+    var b = mk("button", "tvf-chip tvf-ss-go", x.n);
+    b.type = "button";
+    b.addEventListener("click", function(){
+      F.q = x.q; F.f = V.normFilter(x.f);
+      el.q.value = x.q;
+      drawPanel();
+      search(true);
+    });
+    var del = mk("button", "tvf-ss-x");
+    del.type = "button";
+    del.innerHTML = SVG + '<path d="M6 6l12 12M18 6L6 18"/></svg>';
+    del.setAttribute("aria-label", t("vod.ss.drop", { name: x.n }));
+    del.setAttribute("title", t("vod.ss.drop", { name: x.n }));
+    del.addEventListener("click", function(){ H.dropSearch(x.id); drawSaved(); });
+    wrap.appendChild(b); wrap.appendChild(del);
+    el.saved.appendChild(wrap);
+  });
+}
+
+/* ===== Sources window (this device) ===== */
+
+function openSources(){
+  var d = document.getElementById("tv-vodsrc");
+  if(!d){
+    d = document.createElement("dialog");
+    d.id = "tv-vodsrc";
+    d.className = "tv-dlg tv-dlg-sm";
+    document.body.appendChild(d);
+    d.addEventListener("click", function(e){ if(e.target === d) d.close(); });
+    d.addEventListener("close", function(){ search(true); });
+  }
+  d.innerHTML = "";
+  var head = mk("div", "tvp-head");
+  head.appendChild(mk("span", "tv-dlg-title", t("vod.src.title")));
+  var x = mk("button", "tv-icon");
+  x.type = "button";
+  x.innerHTML = SVG + '<path d="M6 6l12 12M18 6L6 18"/></svg>';
+  x.setAttribute("aria-label", t("close"));
+  x.addEventListener("click", function(){ d.close(); });
+  head.appendChild(x);
+  d.appendChild(head);
+  d.appendChild(mk("p", "tvs-hint", t("vod.src.hint")));
+  var off = prefs().off;
+  V.SOURCES.forEach(function(src){
+    var row = mk("label", "tvf-check tvf-srcrow");
+    var cb = document.createElement("input");
+    cb.type = "checkbox";
+    cb.checked = !off[src];
+    cb.addEventListener("change", function(){ setOff(src, !cb.checked); });
+    var txt = mk("span", "");
+    txt.appendChild(mk("b", "", SRC_NAME[src]));
+    txt.appendChild(mk("span", "tvf-srcdesc", t("vod.src." + src)));
+    row.appendChild(cb); row.appendChild(txt);
+    d.appendChild(row);
+  });
+  // Europeana: the person's own free key, shared with Music.
+  var sec = mk("div", "tvs-sec");
+  sec.appendChild(mk("h3", "", t("vod.eu.h")));
+  sec.appendChild(mk("p", "tvs-hint", t(LB() ? "vod.eu.hint" : "vod.eu.none")));
+  var link = mk("a", "tvf-link", t("vod.eu.get"));
+  link.href = EU_HOME; link.target = "_blank"; link.rel = "noopener noreferrer";
+  sec.appendChild(link);
+  var add = mk("div", "tvs-add");
+  var inp = document.createElement("input");
+  inp.type = "password"; inp.autocomplete = "off"; inp.spellcheck = false;
+  inp.placeholder = t(F.euKey ? "vod.eu.set" : "vod.eu.ph");
+  inp.setAttribute("aria-label", t("vod.eu.ph"));
+  var save = mk("button", "tv-btn", t("vod.eu.save"));
+  save.type = "button";
+  var st = mk("p", "tvs-st", F.euKey ? t("vod.eu.ok") : "");
+  save.addEventListener("click", function(){
+    var k = inp.value.trim(), lb = LB();
+    if(!lb || !V.euKeyOk(k)){ st.textContent = t("vod.eu.bad"); st.classList.add("err"); return; }
+    lb.saveSecret("europeana", k).then(function(){
+      F.euKey = k; inp.value = ""; inp.placeholder = t("vod.eu.set");
+      st.textContent = t("vod.eu.ok"); st.classList.remove("err"); forget.hidden = false;
+    }, function(){ st.textContent = t("vod.eu.fail"); st.classList.add("err"); });
+  });
+  var forget = mk("button", "tv-btn ghost", t("vod.eu.forget"));
+  forget.type = "button";
+  forget.hidden = !F.euKey;
+  forget.addEventListener("click", function(){
+    var lb = LB();
+    if(!lb) return;
+    lb.forgetSecret("europeana").then(function(){
+      F.euKey = ""; inp.placeholder = t("vod.eu.ph"); st.textContent = t("vod.eu.gone"); forget.hidden = true;
+    });
+  });
+  save.disabled = !LB(); inp.disabled = !LB();
+  add.appendChild(inp); add.appendChild(save);
+  sec.appendChild(add); sec.appendChild(st); sec.appendChild(forget);
+  d.appendChild(sec);
+  if(!d.open) d.showModal();
 }
 
 /* ===== drawing ===== */
@@ -299,6 +475,7 @@ function draw(){
   el.chip_watch.textContent = t("vod.watch") + (nw ? " (" + nw + ")" : "");
   var disc = F.view === "discover";
   el.bar.hidden = !disc;
+  drawSaved();
   if(disc) drawPanel(); else el.panel.hidden = true;
   if(disc){
     if(!F.items.length && !F.busy && !F.notes.length) search(true);
@@ -331,7 +508,7 @@ function card(it, data){
     img.src = it.im;
     fig.appendChild(img);
   }
-  fig.appendChild(mk("span", "tvf-src", it.s === "wd" ? "Commons" : "Archive"));
+  fig.appendChild(mk("span", "tvf-src", SRC_BADGE[it.s] || it.s));
   if(!it.ok) fig.appendChild(mk("span", "tvf-flag", t("vod.unchecked")));
   var rp = V.resumeOf(data, it.k);
   if(rp && rp.d){
@@ -365,19 +542,29 @@ function drawResults(){
 
 function srcErr(src, e){
   if(e && e.code === "offline") return t("vod.offline");
+  if(e && e.code === "key") return t("vod.eu.badKey");
   return t(e && e.code === "busy" ? "vod.busy" : "vod.err", { src: SRC_NAME[src] });
 }
 
 // reset: a new search from page 1; otherwise the next page of every source.
 function search(reset){
+  // The Europeana key is read once (sealed store, asynchronous) before
+  // the first search, so its sources are asked from the start.
+  if(F.euKey === null){ loadKey().then(function(){ search(reset); }); return; }
   if(reset){ F.page = 1; F.items = []; F.more = false; F.notes = []; el.grid.innerHTML = ""; }
   else F.page++;
   var seq = ++F.seq, page = F.page, f = V.normFilter(F.f), q = F.q;
-  var srcs = f.src ? [f.src] : ["wd", "ia"];
   var notes = [];
-  if(srcs.indexOf("ia") >= 0 && !V.filterSupport("ia", f)){
-    srcs = srcs.filter(function(s){ return s !== "ia"; });
-    if(reset) notes.push(t("vod.noIaCountry"));
+  var srcs = f.src ? [f.src] : sourcesOn();
+  if(f.src && needsKey(f.src) && !F.euKey){
+    srcs = [];
+    if(reset) notes.push(t("vod.eu.need"));
+  }
+  // Never results that ignore a filter: such a source is left out, named.
+  var left = srcs.filter(function(s){ return V.filterMissing(s, f).length; });
+  if(left.length){
+    srcs = srcs.filter(function(s){ return left.indexOf(s) < 0; });
+    if(reset) notes.push(t("vod.leftOut", { src: left.map(function(s){ return SRC_NAME[s]; }).join(", ") }));
   }
   if(H.offline()){
     F.busy = false; F.notes = [t("vod.offline")];
@@ -394,9 +581,31 @@ function search(reset){
         return V.wdFilter(items, { q: q, f: f, page: page, lang: lang() });
       }).then(null, function(e){ notes.push(srcErr("wd", e)); return null; });
     }
-    return getJSON(V.iaSearchUrl({ q: q, f: f, page: page, now: Date.now() })).then(function(j){
-      return V.iaParseSearch(j, { f: f, page: page, now: Date.now() });
-    }).then(null, function(e){ notes.push(srcErr("ia", e)); return null; });
+    var url, parse;
+    if(s === "ia"){
+      url = V.iaSearchUrl({ q: q, f: f, page: page, now: Date.now() });
+      parse = function(j){ return V.iaParseSearch(j, { f: f, page: page, now: Date.now() }); };
+    }else if(s === "na"){
+      url = V.naSearchUrl({ q: q, f: f, page: page });
+      parse = function(j){ return V.naParseSearch(j, { page: page }); };
+    }else if(s === "pt"){
+      url = V.ptSearchUrl({ q: q, f: f, page: page });
+      parse = function(j){ return V.ptParseSearch(j, { f: f, page: page }); };
+    }else{
+      url = V.euSearchUrl({ q: q, f: f, page: page, key: F.euKey, src: s });
+      parse = function(j){
+        var r = V.euParseSearch(j, { src: s, page: page });
+        if(r.error) throw new NetErr(r.error);
+        return r;
+      };
+    }
+    return getJSON(url).then(parse).then(null, function(e){
+      // Europeana answers a wrong key with 401 / 403.
+      if(e && e.code === "denied" && needsKey(s)) e = new NetErr("key");
+      var m = srcErr(s, e);
+      if(notes.indexOf(m) < 0) notes.push(m);
+      return null;
+    });
   });
   Promise.all(jobs).then(function(res){
     if(seq !== F.seq) return;
@@ -467,14 +676,22 @@ function detailButtons(){
 }
 
 function pageOf(it){
-  if(it.s === "ia") return "https://archive.org/details/" + encodeURIComponent(it.k.slice(3));
-  return "https://www.wikidata.org/wiki/" + it.k.slice(3);
+  if(it.pg) return it.pg;
+  var id = it.k.slice(3);
+  if(it.s === "ia") return "https://archive.org/details/" + encodeURIComponent(id);
+  if(it.s === "na") return "https://images.nasa.gov/details/" + encodeURIComponent(id);
+  if(it.s === "eu" || it.s === "oi") return "https://www.europeana.eu/item" + id;
+  if(it.s === "pt") return "https://" + id.replace("/", "/w/");
+  return "https://www.wikidata.org/wiki/" + id;
 }
 
 function whyText(it){
   if(it.why === "age") return t("vod.why.age", { y: it.y });
   if(it.why === "prelinger") return t("vod.why.prelinger");
-  if(it.why === "listed") return t("vod.why.listed");
+  if(it.why === "listed") return t(it.s === "pt" ? "vod.why.ptlisted" : "vod.why.listed", { lic: it.lic || "" });
+  if(it.why === "nasa") return t("vod.why.nasa");
+  if(it.why === "open") return t("vod.why.open", { lic: it.lic || "", by: it.by || SRC_NAME[it.s] });
+  if(it.why === "pt") return t("vod.why.pt", { lic: it.lic || "", by: it.by || "" });
   return t("vod.why.commons");
 }
 
@@ -482,12 +699,12 @@ function whyText(it){
 // description; a Commons film lists its files as parts.
 function openDetails(it){
   if(!el.dlg || !it) return;
-  F.cur = it; F.parts = null;
+  F.cur = it; F.parts = null; F.subs = null;
   $("tvf-title").textContent = title(it);
   var sub = it.st ? (it.st[lang()] || it.st.en || "") : "";
   $("tvf-meta").textContent = (sub ? t("vod.ofSeries", { name: sub }) + " · " : "") + metaLine(it);
   var dir = $("tvf-dir");
-  dir.textContent = it.dir ? t("vod.dir", { name: it.dir }) : "";
+  dir.textContent = it.dir ? t(it.s === "wd" ? "vod.dir" : "vod.by", { name: it.dir }) : "";
   dir.hidden = !it.dir;
   var tags = [];
   (it.g || []).forEach(function(g){ tags.push(t("vod.g." + g)); });
@@ -498,10 +715,11 @@ function openDetails(it){
   $("tvf-tags").hidden = !tags.length;
   var img = $("tvf-img");
   if(it.im){ img.src = it.im; img.hidden = false; } else { img.removeAttribute("src"); img.hidden = true; }
-  $("tvf-desc").hidden = true;
+  $("tvf-desc").textContent = it.ds || "";
+  $("tvf-desc").hidden = !it.ds;
   $("tvf-why").textContent = whyText(it);
   $("tvf-why").classList.toggle("warn", !it.ok);
-  var src = $("tvf-src");
+  var src = $("tvf-page");
   src.href = pageOf(it);
   src.textContent = t("vod.source");
   src.hidden = false;
@@ -512,7 +730,7 @@ function openDetails(it){
   if(!el.dlg.open) el.dlg.showModal();
   if(it.s === "ia") loadIaItem(it);
   else if(it.v && it.v.length > 1) showParts(it, it.v.map(function(f, i){ return { name: t("vod.part", { n: i + 1 }), file: f }; }));
-  else if(!it.v){
+  else if(!it.v && it.s === "wd"){
     // From Continue / Watchlist: the catalogue knows the files.
     catalogue().then(function(items){
       if(F.cur !== it) return;
@@ -529,7 +747,7 @@ function loadIaItem(it){
     var m = V.iaParseMeta(j, it.k.slice(3));
     if(!m || m.closed){ status(t("vod.err.closed")); $("tvf-play").disabled = true; return; }
     status("");
-    F.parts = m.parts;
+    F.parts = m.parts; F.subs = m.subs || [];
     if(m.desc){ $("tvf-desc").textContent = m.desc; $("tvf-desc").hidden = false; }
     if(m.parts.length > 1) showParts(it, m.parts);
   }, function(e){
@@ -579,7 +797,7 @@ function play(it, part, fresh, auto){
       it: stored(it), url: r.url, page: r.page || pageOf(it),
       title: title(it) + (parts > 1 ? " · " + (r.name || t("vod.part", { n: n + 1 })) : ""),
       meta: meta, labels: r.lic ? t("vod.lic", { lic: r.lic }) : "",
-      part: n, parts: parts, at: at,
+      part: n, parts: parts, at: at, subs: r.subs || null, subText: function(u){ return getText(u, "text/vtt, application/x-subrip, text/plain"); },
       onEnd: n + 1 < parts ? function(){ play(it, n + 1, true, true); } : null
     });
     if(el.dlg.open) el.dlg.close();
@@ -587,22 +805,60 @@ function play(it, part, fresh, auto){
     $("tvf-play").disabled = false;
     if(F.cur !== it) return;
     status(e && e.code === "closed" ? t("vod.err.closed") : e && e.code === "format" ? t("vod.err.format")
+      : e && e.code === "key" ? t("vod.eu.need")
       : e && e.code === "offline" ? t("vod.offline") : t("vod.err.net"));
   });
 }
 
-// -> Promise<{ url, page, parts, name, lic }>
+// Subtitle tracks for the player: [{ l, url, srt, auto, label }];
+// a failed lookup just means none.
+function subsOf(url, parse){
+  return getJSON(url).then(parse, function(){ return []; });
+}
+
+// -> Promise<{ url, page, parts, name, lic, hls, subs }>; subs may be a
+// promise (the player adds the tracks when they arrive).
 function resolve(it, n){
+  var id = it.k.slice(3);
   if(it.s === "ia"){
-    var got = F.parts && F.cur === it ? Promise.resolve({ parts: F.parts })
-      : getJSON(V.iaMetaUrl(it.k.slice(3))).then(function(j){ return V.iaParseMeta(j, it.k.slice(3)); });
+    var got = F.parts && F.cur === it ? Promise.resolve({ parts: F.parts, subs: F.subs || [] })
+      : getJSON(V.iaMetaUrl(id)).then(function(j){ return V.iaParseMeta(j, id); });
     return got.then(function(m){
       if(!m || !m.parts || !m.parts.length) throw new NetErr("closed");
-      F.parts = m.parts;
+      F.parts = m.parts; F.subs = m.subs || [];
       var ok = m.parts.filter(function(p){ return !p.ogg || canPlay("video/ogg"); });
       var p = m.parts[n] && (!m.parts[n].ogg || canPlay("video/ogg")) ? m.parts[n] : ok[0];
       if(!p) throw new NetErr("format");
-      return { url: p.url, page: pageOf(it), parts: m.parts.length, name: p.name };
+      // One part: every subtitle file; several: the ones named after this part.
+      var base = p.url.replace(/^.*\//, "").replace(/\.[A-Za-z0-9]{2,5}$/, "");
+      var subs = (m.subs || []).filter(function(s){ return m.parts.length < 2 || decodeURIComponent(s.url.replace(/^.*\//, "")).indexOf(decodeURIComponent(base)) === 0; });
+      return { url: p.url, page: pageOf(it), parts: m.parts.length, name: p.name, subs: subs };
+    });
+  }
+  if(it.s === "na"){
+    return getJSON(V.naAssetUrl(id)).then(function(j){
+      var a = V.naParseAsset(j);
+      if(!a) throw new NetErr("closed");
+      return { url: a.url, page: pageOf(it), parts: 1, lic: t("vod.lic.nasa"), subs: a.subs };
+    });
+  }
+  if(it.s === "eu" || it.s === "oi"){
+    if(it.u) return Promise.resolve({ url: it.u, page: pageOf(it), parts: 1, lic: it.lic });
+    return loadKey().then(function(key){
+      if(!V.euKeyOk(key)) throw new NetErr("key");
+      return getJSON(V.euRecordUrl(id, key));
+    }).then(function(j){
+      var r = V.euParseRecord(j);
+      if(!r) throw new NetErr("closed");
+      return { url: r.url, page: pageOf(it), parts: 1, lic: it.lic };
+    });
+  }
+  if(it.s === "pt"){
+    return getJSON(V.ptVideoUrl(it.k)).then(function(j){
+      var r = V.ptParseVideo(j, it.k, canPlay);
+      if(!r) throw new NetErr("format");
+      return { url: r.url, hls: r.hls, page: pageOf(it), parts: 1, lic: it.lic,
+        subs: subsOf(V.ptCaptionsUrl(it.k), function(c){ return V.ptParseCaptions(c, it.k); }) };
     });
   }
   var files = it.v && it.v.length ? Promise.resolve(it.v) : catalogue().then(function(items){
@@ -618,7 +874,8 @@ function resolve(it, n){
       if(p0 && p0.missing) throw new NetErr("closed");
       var pick = V.commonsPick(j, canPlay);
       if(!pick) throw new NetErr("format");
-      return { url: pick.url, page: pick.page || V.filePath(file), parts: v.length, lic: pick.lic };
+      return { url: pick.url, page: pick.page || V.filePath(file), parts: v.length, lic: pick.lic,
+        subs: subsOf(V.commonsSubsUrl(file), function(c){ return V.commonsParseSubs(c, file); }) };
     });
   });
 }

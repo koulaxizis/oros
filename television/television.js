@@ -144,7 +144,7 @@ var STRINGS = {
     "vod.sort.old": "Oldest first",
     "vod.sort.new": "Newest first",
     "vod.sort.az": "Title A–Z",
-    "vod.all": "Also show Internet Archive titles that orOS has not checked",
+    "vod.all": "Also show titles that orOS has not checked (Internet Archive, PeerTube)",
     "vod.unchecked": "Not checked",
     "vod.loading": "Loading the film catalogue…",
     "vod.searching": "Searching…",
@@ -152,7 +152,6 @@ var STRINGS = {
     "vod.err": "{src} could not be reached.",
     "vod.busy": "{src} is busy. Try again in a minute.",
     "vod.offline": "You are offline. Films need a connection.",
-    "vod.noIaCountry": "The Internet Archive does not record countries, so only Wikimedia Commons is searched.",
     "vod.noContinue": "Films you start show up here, so you can pick up where you left off.",
     "vod.noWatch": "Press Watchlist in a film's details to keep it here.",
     "vod.play": "Play",
@@ -186,6 +185,46 @@ var STRINGS = {
     "vod.fwd30": "Forward 30 seconds",
     "vod.cat.old": "Showing the catalogue from {date}; the new one could not be loaded.",
     "vod.count": "{n} titles",
+    "vod.by": "By {name}",
+    "vod.lic.nasa": "Public domain (NASA)",
+    "vod.src.btn": "Sources",
+    "vod.src.title": "Film sources",
+    "vod.src.hint": "Choose which sources are searched on this device. Each one shows only videos it marks as free to watch.",
+    "vod.src.noSave": "This device could not keep your choice of sources.",
+    "vod.src.wd": "Films and series on Wikidata whose video Wikimedia Commons keeps: public domain or a free licence.",
+    "vod.src.ia": "Feature films, shorts and series from the Internet Archive: public domain by age and the Prelinger Archives.",
+    "vod.src.na": "NASA's video library: missions, launches and documentaries.",
+    "vod.src.eu": "Europe's archives through Europeana: newsreels and films with an open licence. Needs your own free key.",
+    "vod.src.oi": "Open Images from the Netherlands Institute for Sound & Vision: newsreels and films with an open licence. It comes through Europeana, so it needs the same key.",
+    "vod.src.pt": "Videos with a Creative Commons licence on PeerTube servers, found through Sepia Search. Checked only on the Blender Studio and Framatube servers.",
+    "vod.eu.h": "Europeana key",
+    "vod.eu.hint": "Europeana gives everyone a free key. It stays sealed on this device, is shared with Music and never syncs.",
+    "vod.eu.none": "The key store can't be opened here, so Europeana and Open Images stay off.",
+    "vod.eu.get": "Get a free key",
+    "vod.eu.ph": "Paste your Europeana key",
+    "vod.eu.set": "A key is saved. Paste a new one to replace it",
+    "vod.eu.save": "Save key",
+    "vod.eu.ok": "Key saved on this device.",
+    "vod.eu.bad": "That doesn't look like a Europeana key.",
+    "vod.eu.fail": "The key could not be saved on this device.",
+    "vod.eu.forget": "Forget key",
+    "vod.eu.gone": "Key removed from this device.",
+    "vod.eu.need": "Europeana and Open Images need your own free key. Add it under Filters › Sources.",
+    "vod.eu.badKey": "Europeana did not accept your key. Check it under Filters › Sources.",
+    "vod.leftOut": "Not searched with these filters: {src}.",
+    "vod.ss.save": "Save this search",
+    "vod.ss.saved": "Search saved",
+    "vod.ss.there": "This search is already saved",
+    "vod.ss.drop": "Remove the saved search {name}",
+    "vod.subs": "Subtitles",
+    "vod.subs.off": "Subtitles off",
+    "vod.subs.auto": "automatic",
+    "vod.subs.unknown": "Other language",
+    "vod.subs.fail": "The subtitles could not be loaded.",
+    "vod.why.nasa": "NASA's own videos are not under copyright. Logos and footage from others keep their own rules.",
+    "vod.why.open": "{by} shares this through Europeana under {lic}.",
+    "vod.why.pt": "Published by {by} on its own PeerTube server under {lic}.",
+    "vod.why.ptlisted": "The uploader marked this {lic}, but orOS has not checked it.",
     "manage":         "Lists & guides",
     "filter.group":   "Group",
     "filter.allGroups": "All groups",
@@ -328,7 +367,7 @@ var STRINGS = {
     "vod.sort.old": "Οι παλαιότερες πρώτα",
     "vod.sort.new": "Οι νεότερες πρώτα",
     "vod.sort.az": "Τίτλος Α–Ω",
-    "vod.all": "Δείξε και τίτλους του Internet Archive που δεν έχει ελέγξει το orOS",
+    "vod.all": "Δείξε και τίτλους που δεν έχει ελέγξει το orOS (Internet Archive, PeerTube)",
     "vod.unchecked": "Χωρίς έλεγχο",
     "vod.loading": "Φόρτωση του καταλόγου ταινιών…",
     "vod.searching": "Αναζήτηση…",
@@ -336,7 +375,6 @@ var STRINGS = {
     "vod.err": "Δεν ήταν δυνατή η σύνδεση με {src}.",
     "vod.busy": "Το {src} είναι απασχολημένο. Δοκίμασε ξανά σε ένα λεπτό.",
     "vod.offline": "Είσαι εκτός σύνδεσης. Οι ταινίες θέλουν σύνδεση.",
-    "vod.noIaCountry": "Το Internet Archive δεν καταγράφει χώρες, γι' αυτό η αναζήτηση γίνεται μόνο στα Wikimedia Commons.",
     "vod.noContinue": "Οι ταινίες που αρχίζεις εμφανίζονται εδώ, για να συνεχίσεις από εκεί που σταμάτησες.",
     "vod.noWatch": "Πάτα «Να δω» στις λεπτομέρειες μιας ταινίας για να τη βρίσκεις εδώ.",
     "vod.play": "Αναπαραγωγή",
@@ -370,6 +408,46 @@ var STRINGS = {
     "vod.fwd30": "Μπροστά 30 δευτερόλεπτα",
     "vod.cat.old": "Εμφανίζεται ο κατάλογος της {date}· ο νέος δεν φορτώθηκε.",
     "vod.count": "{n} τίτλοι",
+    "vod.by": "Από: {name}",
+    "vod.lic.nasa": "Κοινό κτήμα (NASA)",
+    "vod.src.btn": "Πηγές",
+    "vod.src.title": "Πηγές ταινιών",
+    "vod.src.hint": "Διάλεξε σε ποιες πηγές γίνεται αναζήτηση σε αυτή τη συσκευή. Κάθε πηγή δείχνει μόνο βίντεο που δηλώνει ελεύθερα για προβολή.",
+    "vod.src.noSave": "Η συσκευή δεν μπόρεσε να κρατήσει την επιλογή των πηγών.",
+    "vod.src.wd": "Ταινίες και σειρές του Wikidata με βίντεο στα Wikimedia Commons: κοινό κτήμα ή ελεύθερη άδεια.",
+    "vod.src.ia": "Ταινίες μεγάλου και μικρού μήκους και σειρές από το Internet Archive: κοινό κτήμα λόγω παλαιότητας και τα Prelinger Archives.",
+    "vod.src.na": "Η βιντεοθήκη της NASA: αποστολές, εκτοξεύσεις και ντοκιμαντέρ.",
+    "vod.src.eu": "Τα ευρωπαϊκά αρχεία μέσω Europeana: επίκαιρα και ταινίες με ανοιχτή άδεια. Θέλει το δικό σου δωρεάν κλειδί.",
+    "vod.src.oi": "Open Images από το Ολλανδικό Ινστιτούτο Ήχου και Εικόνας: επίκαιρα και ταινίες με ανοιχτή άδεια. Έρχεται μέσω Europeana, άρα θέλει το ίδιο κλειδί.",
+    "vod.src.pt": "Βίντεο με άδεια Creative Commons σε servers του PeerTube, μέσω του Sepia Search. Ελεγμένα μόνο στους servers του Blender Studio και του Framatube.",
+    "vod.eu.h": "Κλειδί Europeana",
+    "vod.eu.hint": "Η Europeana δίνει σε όλους δωρεάν κλειδί. Μένει σφραγισμένο σε αυτή τη συσκευή, το μοιράζεται με τη Μουσική και δεν συγχρονίζεται ποτέ.",
+    "vod.eu.none": "Η αποθήκη κλειδιών δεν ανοίγει εδώ, γι' αυτό η Europeana και τα Open Images μένουν κλειστά.",
+    "vod.eu.get": "Πάρε δωρεάν κλειδί",
+    "vod.eu.ph": "Επικόλλησε το κλειδί σου της Europeana",
+    "vod.eu.set": "Υπάρχει αποθηκευμένο κλειδί. Επικόλλησε νέο για αντικατάσταση",
+    "vod.eu.save": "Αποθήκευση κλειδιού",
+    "vod.eu.ok": "Το κλειδί αποθηκεύτηκε σε αυτή τη συσκευή.",
+    "vod.eu.bad": "Αυτό δεν μοιάζει με κλειδί της Europeana.",
+    "vod.eu.fail": "Το κλειδί δεν αποθηκεύτηκε σε αυτή τη συσκευή.",
+    "vod.eu.forget": "Διαγραφή κλειδιού",
+    "vod.eu.gone": "Το κλειδί διαγράφηκε από αυτή τη συσκευή.",
+    "vod.eu.need": "Η Europeana και τα Open Images θέλουν το δικό σου δωρεάν κλειδί. Πρόσθεσέ το στα Φίλτρα › Πηγές.",
+    "vod.eu.badKey": "Η Europeana δεν δέχτηκε το κλειδί σου. Έλεγξέ το στα Φίλτρα › Πηγές.",
+    "vod.leftOut": "Δεν έγινε αναζήτηση με αυτά τα φίλτρα σε: {src}.",
+    "vod.ss.save": "Αποθήκευση αναζήτησης",
+    "vod.ss.saved": "Η αναζήτηση αποθηκεύτηκε",
+    "vod.ss.there": "Αυτή η αναζήτηση είναι ήδη αποθηκευμένη",
+    "vod.ss.drop": "Αφαίρεση της αποθηκευμένης αναζήτησης {name}",
+    "vod.subs": "Υπότιτλοι",
+    "vod.subs.off": "Χωρίς υπότιτλους",
+    "vod.subs.auto": "αυτόματοι",
+    "vod.subs.unknown": "Άλλη γλώσσα",
+    "vod.subs.fail": "Οι υπότιτλοι δεν φόρτωσαν.",
+    "vod.why.nasa": "Τα βίντεο της ίδιας της NASA δεν έχουν πνευματικά δικαιώματα. Λογότυπα και πλάνα άλλων έχουν τους δικούς τους όρους.",
+    "vod.why.open": "Το μοιράζεται {by} μέσω Europeana με άδεια {lic}.",
+    "vod.why.pt": "Το δημοσιεύει {by} στον δικό του server PeerTube με άδεια {lic}.",
+    "vod.why.ptlisted": "Όποιος το ανέβασε το δήλωσε {lic}, αλλά το orOS δεν το έχει ελέγξει.",
     "manage":         "Λίστες & οδηγοί",
     "filter.group":   "Ομάδα",
     "filter.allGroups": "Όλες οι ομάδες",
@@ -2660,9 +2738,90 @@ var vod = { it: null, part: 0, parts: 1, at: 0, saved: 0, synced: 0, drag: false
 
 function vodReset(){
   vod.it = null; vod.part = 0; vod.parts = 1; vod.at = 0; vod.drag = false; vod.onEnd = null;
+  subsReset();
 }
 
-// o: { it, url, page, title, meta, labels, part, parts, at, onEnd }
+// Subtitles (TV-VOD2): the film's tracks ({ l, url, srt, auto, label })
+// in a list under the picture, off unless one is in the reader's
+// language. The text is fetched only when a track is chosen, SubRip is
+// turned into WebVTT (vod.js srtToVtt) and given to the video as a blob
+// <track>: cues are text, never markup that runs.
+var subs = { list: [], seq: 0, blob: "", load: null };
+
+function subsReset(){
+  subs.seq++; subs.list = []; subs.load = null;
+  var v = $("#tvp-video");
+  if(v) Array.prototype.slice.call(v.querySelectorAll("track")).forEach(function(tr){ v.removeChild(tr); });
+  if(subs.blob){ try{ URL.revokeObjectURL(subs.blob); }catch(e){} subs.blob = ""; }
+  var sel = $("#tvp-subs");
+  if(sel){ sel.hidden = true; sel.textContent = ""; }
+}
+
+function subName(s){
+  var n = s.l ? langLabel(s.l) : (s.label || s.name || t("vod.subs.unknown"));
+  return n + (s.auto ? " · " + t("vod.subs.auto") : "");
+}
+
+function langLabel(code){
+  try{
+    var dn = new Intl.DisplayNames([activeLang()], { type: "language" });
+    var n = dn.of(code);
+    if(n && n !== code) return n.charAt(0).toLocaleUpperCase(activeLang()) + n.slice(1);
+  }catch(e){}
+  return code;
+}
+
+function subsSet(list, load){
+  var seq = subs.seq;
+  Promise.resolve(list).then(function(arr){
+    if(seq !== subs.seq || !Array.isArray(arr) || !arr.length) return;
+    subs.list = arr.slice(0, 30); subs.load = load;
+    var sel = $("#tvp-subs");
+    if(!sel) return;
+    sel.textContent = "";
+    var off = document.createElement("option");
+    off.value = ""; off.textContent = t("vod.subs.off");
+    sel.appendChild(off);
+    var pick = "";
+    subs.list.forEach(function(s, i){
+      var o = document.createElement("option");
+      o.value = String(i); o.textContent = subName(s);
+      sel.appendChild(o);
+      if(!pick && !s.auto && s.l && s.l.split("-")[0] === activeLang()) pick = String(i);
+    });
+    sel.value = pick;
+    sel.hidden = false;
+    if(pick) subsShow(+pick);
+  }, function(){});
+}
+
+function subsShow(i){
+  var v = $("#tvp-video"), s = subs.list[i], seq = ++subs.seq;
+  if(!v) return;
+  Array.prototype.slice.call(v.querySelectorAll("track")).forEach(function(tr){ v.removeChild(tr); });
+  if(subs.blob){ try{ URL.revokeObjectURL(subs.blob); }catch(e){} subs.blob = ""; }
+  if(!s || !subs.load) return;
+  subs.load(s.url).then(function(text){
+    if(seq !== subs.seq) return;
+    var vtt = V.srtToVtt(text);
+    if(!/-->/.test(vtt)) throw new Error("empty");
+    subs.blob = URL.createObjectURL(new Blob([vtt], { type: "text/vtt" }));
+    var tr = document.createElement("track");
+    tr.kind = "subtitles"; tr.src = subs.blob; tr.default = true;
+    if(s.l) tr.srclang = s.l;
+    tr.label = subName(s);
+    v.appendChild(tr);
+    if(tr.track) tr.track.mode = "showing";
+  }).catch(function(){
+    if(seq !== subs.seq) return;
+    transientNote(t("vod.subs.fail"));
+    var sel = $("#tvp-subs");
+    if(sel) sel.value = "";
+  });
+}
+
+// o: { it, url, page, title, meta, labels, part, parts, at, onEnd,
+//      subs: [track] | Promise<[track]>, subText: url -> Promise<text> }
 function playVod(o){
   if(!o || !o.it || !/^https:\/\//i.test(String(o.url || ""))) return;
   // The next part of a film plays in the open player (closing it would
@@ -2671,10 +2830,12 @@ function playVod(o){
   if(state.hls){ state.hls.destroy(); state.hls = null; }
   vod.it = o.it; vod.part = o.part || 0; vod.parts = o.parts || 1; vod.at = o.at || 0;
   vod.saved = Date.now(); vod.synced = Date.now(); vod.onEnd = typeof o.onEnd === "function" ? o.onEnd : null;
+  subsReset();
   openPlayer({
     id: o.it.k, name: o.title || o.it.t, streams: [{ url: o.url }],
     website: o.page || "", vod: o.it, meta: o.meta || "", labels: o.labels || ""
   });
+  if(o.subs && typeof o.subText === "function") subsSet(o.subs, o.subText);
 }
 
 function clock(sec){
@@ -2753,6 +2914,8 @@ function setupVodPlayer(){
       vodSeekUI();
     });
   }
+  var sel = $("#tvp-subs");
+  if(sel) sel.addEventListener("change", function(){ subsShow(sel.value === "" ? -1 : +sel.value); });
   var back = $("#tvp-back"), fwd = $("#tvp-fwd");
   if(back) back.addEventListener("click", function(){ vodSkip(-10); });
   if(fwd) fwd.addEventListener("click", function(){ vodSkip(30); });
@@ -2779,6 +2942,27 @@ function dropResume(k){
   transientNote(t("vod.cont.dropped"));
 }
 
+// Saved searches (synced, vod.js saveSearch / dropSearch): the id, or
+// "" when the same search is already saved or there is nothing to save.
+function saveSearch(o){
+  if(!state.data || !o) return "";
+  var payload = sliceGet();
+  var id = V.saveSearch(payload, o, Date.now());
+  if(!id) return "";
+  sliceSet(payload);
+  commitLocal();
+  return id;
+}
+
+function dropSearch(id){
+  if(!state.data) return false;
+  var payload = sliceGet();
+  if(!V.dropSearch(payload, id, Date.now())) return false;
+  sliceSet(payload);
+  commitLocal();
+  return true;
+}
+
 // What films.js may use (same frame, same script order).
 window.__orosTvHost = {
   t: t, lang: activeLang, loc: loc, transient: transientNote,
@@ -2786,6 +2970,7 @@ window.__orosTvHost = {
   offline: function(){ return state.offline; },
   playing: function(){ return state.playerCh && state.playerCh.vod ? state.playerCh.vod.k : ""; },
   playVod: playVod, toggleWatch: toggleWatch, dropResume: dropResume,
+  saveSearch: saveSearch, dropSearch: dropSearch,
   csGet: csGet, csPut: csPut, clock: clock
 };
 
@@ -3133,7 +3318,7 @@ function applyI18n(){
   var fsBtn = $("#tvp-fs");
   if(fsBtn) fsBtn.setAttribute("title", t("fullscreen"));
 
-  [["#tvp-back", "vod.back10"], ["#tvp-fwd", "vod.fwd30"], ["#tvp-pos", "vod.seek"]].forEach(function(p){
+  [["#tvp-back", "vod.back10"], ["#tvp-fwd", "vod.fwd30"], ["#tvp-pos", "vod.seek"], ["#tvp-subs", "vod.subs"]].forEach(function(p){
     var el = $(p[0]);
     if(!el) return;
     if(p[0] !== "#tvp-pos") el.setAttribute("title", t(p[1]));
