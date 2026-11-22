@@ -25,7 +25,7 @@
 (function () {
   "use strict";
 
-  var PL = window.PL, C = PL.C, T = PL.T, FX = PL.FX, A = PL.A;
+  var PL = window.PL, C = PL.C, T = PL.T, FX = PL.FX, A = PL.A, BX = window.PhotoLab.blendx;
   var TILE = T.TILE;
 
   var cv, ctx, docBuf, docCtx, layBuf, layCtx;
@@ -276,6 +276,12 @@
   }
 
   // A doc rect → device px (axis-aligned transform), clipped to w×h.
+  // device px → document px under tf (dissolve's noise sticks to the
+  // picture, not to the screen)
+  function docOf(tf) {
+    if (!tf) return null;
+    return function (x, y) { return [Math.floor((x + 0.5 - tf.e) / tf.a), Math.floor((y + 0.5 - tf.f) / tf.d)]; };
+  }
   function devRect(b, tf, w, h) {
     var x0 = Math.max(0, Math.floor(tf.a * b.x + tf.e)), y0 = Math.max(0, Math.floor(tf.d * b.y + tf.f));
     var x1 = Math.min(w, Math.ceil(tf.a * (b.x + b.w) + tf.e)), y1 = Math.min(h, Math.ceil(tf.d * (b.y + b.h) + tf.f));
@@ -338,11 +344,10 @@
       gg.setTransform(g.getTransform());
       gg.imageSmoothingEnabled = g.imageSmoothingEnabled;
       compositeTree(gg, lb, clip, preview, n.kids, depth + 1);
+      var gb = G.bl === "pass" ? "normal" : G.bl;
       g.save();
       g.setTransform(1, 0, 0, 1, 0, 0);
-      g.globalAlpha = G.op / 100;
-      g.globalCompositeOperation = C.blendOp(G.bl === "pass" ? "normal" : G.bl);
-      g.drawImage(cv, 0, 0);
+      BX.drawOver(g, cv, 0, 0, G.op / 100, gb, C.blendOp(gb), null, docOf(gg.getTransform()));
       g.restore();
     });
     flush();
@@ -378,9 +383,9 @@
       }
       g.save();
       g.setTransform(1, 0, 0, 1, 0, 0);
-      g.globalAlpha = L.op / 100;
-      g.globalCompositeOperation = C.blendOp(L.bl);
-      g.drawImage(src, 0, 0);
+      // a per-pixel mode (PS-5) reads back only where the layer can reach
+      var bbox = BX.isSoft(L.bl) && !moved ? devRect(fxBounds(L) || { x: 0, y: 0, w: 0, h: 0 }, tf, lb.width, lb.height) : null;
+      if (!BX.isSoft(L.bl) || moved || bbox) BX.drawOver(g, src, 0, 0, L.op / 100, L.bl, C.blendOp(L.bl), bbox, docOf(tf));
       g.restore();
     });
   }

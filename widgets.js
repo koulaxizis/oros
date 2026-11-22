@@ -12,6 +12,12 @@
 //     Today summary; a row → its app), Weather (the top bar's weather;
 //     → Weather), Playing (Play / Pause for the shell's sounds) and Sync
 //     (its state, Sync now).
+//   • Playing (WG-MEDIA-2, 1.4.0): the player that plays large, with its
+//     cover (what it gave the Media Session), title, progress (Radio:
+//     Live), Previous / Play-Pause / Next and a small light (vizkit.js
+//     bars) that moves with the sound; "Hide the light" in the card's
+//     menu (device-local oros-wg-light "0"). The light listens only
+//     while the desktop shows and never restarts a stream.
 //   • First steps (START-1, 1.1.0): a few first things to do, each
 //     ticked by itself from what the person has really done (a note, a
 //     task, a wallpaper, an icon pack, sync, the Assistant, installing);
@@ -269,6 +275,24 @@
     ".wg-wx .wg-temp { font-size: 34px; font-weight: 800; line-height: 1; }",
     ".wg-wx .wg-place { font-size: 13px; color: var(--text-dim); }",
     ".wg-media { display: flex; align-items: center; gap: 8px; }",
+    // WG-MEDIA-2: the big row of the player that plays
+    ".wg-mbig { display: flex; flex-direction: column; gap: 8px; padding: 2px 2px 6px; }",
+    ".wg-mtop { display: flex; align-items: center; gap: 10px; min-width: 0; }",
+    ".wg-cover { flex: none; width: 56px; height: 56px; border-radius: 10px; background: var(--accent-soft, rgba(127,127,127,.2)) center / cover no-repeat;",
+    "  display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: var(--accent); }",
+    ".wg-cover-img .wg-cover-l { visibility: hidden; }",
+    ".wg-mtitle { flex: 1; min-width: 0; flex-direction: column; align-items: flex-start; gap: 2px; padding: 4px 6px; }",
+    ".wg-mtitle .wg-what { width: 100%; font-weight: 700; font-size: 14.5px; }",
+    ".wg-mtitle .wg-app { max-width: 100%; font-size: 12.5px; }",
+    ".wg-mprog .wg-bar { height: 4px; margin: 0; }",
+    ".wg-mtime { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-top: 3px; }",
+    ".wg-mlive { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; color: var(--accent); }",
+    ".wg-mlight { display: block; width: 100%; height: 40px; border-radius: 8px; }",
+    ".wg-mctl { display: flex; align-items: center; justify-content: center; gap: 14px; }",
+    ".wg-mbtn { width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; padding: 0; }",
+    ".wg-mbtn svg { width: 20px; height: 20px; }",
+    ".wg-mbig + .wg-media { border-top: 1px solid var(--border); padding-top: 6px; }",
+
     ".wg-media .wg-row { flex: 1; min-width: 0; flex-direction: column; align-items: flex-start; gap: 0; }",
     ".wg-media .wg-what { width: 100%; font-weight: 700; }",
     ".wg-play { width: 40px; height: 40px; flex: none; border-radius: 50%; background: var(--accent); color: var(--wg-on, #fff); display: inline-flex;",
@@ -318,6 +342,8 @@
   var SV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
   var IC_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
   var IC_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  var IC_PREV = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.5" height="14" rx="1"/><path d="M19 5.8v12.4a.8.8 0 0 1-1.2.7L9 12.7a.8.8 0 0 1 0-1.4l8.8-6.2a.8.8 0 0 1 1.2.7z"/></svg>';
+  var IC_NEXT = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="16.5" y="5" width="2.5" height="14" rx="1"/><path d="M5 5.8v12.4a.8.8 0 0 0 1.2.7l8.8-6.2a.8.8 0 0 0 0-1.4L6.2 5.1A.8.8 0 0 0 5 5.8z"/></svg>';
   var IC_UP = SV + '<path d="M18 15l-6-6-6 6"/></svg>';
   var IC_DOWN = SV + '<path d="M6 9l6 6 6-6"/></svg>';
   var IC_TICK = SV.replace('stroke-width="2"', 'stroke-width="3"') + '<path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
@@ -341,6 +367,48 @@
     return b;
   }
   function nameOf(kind) { return t("wg." + kind); }
+  // m:ss (h:mm:ss from an hour), for the Media card's progress.
+  function clock(s) {
+    s = Math.max(0, Math.floor(+s || 0));
+    var h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60, x = s % 60;
+    return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (x < 10 ? "0" : "") + x;
+  }
+
+  // WG-MEDIA-2: the Media card's little light. Device-local on / off
+  // (oros-wg-light "0" = off; absent = on), from the card's menu.
+  var LIGHT_KEY = "oros-wg-light";
+  function mediaLightOn() {
+    try { return root.localStorage.getItem(LIGHT_KEY) !== "0"; } catch (e) { return true; }
+  }
+  function mediaLightSet(on) {
+    try { if (on) root.localStorage.removeItem(LIGHT_KEY); else root.localStorage.setItem(LIGHT_KEY, "0"); } catch (e) {}
+    if (cards.media) { cards.media.key = ""; PAINT.media(cards.media); }
+  }
+  function mediaLightStart(c) {
+    var L = host.mediaLight, mp = c.mp;
+    if (!L || !mp || !mp.cv) return;
+    call(function () {
+      L.kit().then(function (V) {
+        if (c.mp !== mp || !V) return;
+        mp.v = V.create(mp.cv, {
+          style: "bars",
+          source: function () { return L.frame(); },
+          playing: function () { return !!(c.mp && c.mp.playing); },
+          colors: function () { return { a: getComputedStyle(doc.documentElement).getPropertyValue("--accent").trim(), bg: "transparent" }; },
+          saver: function () { return doc.documentElement.getAttribute("data-oros-saver") === "1"; },
+          paused: covered,
+          soft: 0.8,
+          rest: true
+        });
+        L.tap(mp.playing && !covered());
+      }, function () {});
+    });
+  }
+  function mediaLightStop(c) {
+    if (c.mp && c.mp.v) { try { c.mp.v.destroy(); } catch (e) {} c.mp.v = null; }
+    mediaLightRelease();
+  }
+  function mediaLightRelease() { if (host && host.mediaLight) call(function () { host.mediaLight.tap(false); }); }
 
   // ---------- 3. Layout ----------
   function covered() { return !!call(function () { return host.running(); }); }
@@ -472,6 +540,10 @@
     var items = [];
     if (i > 0) items.push([t("wg.up"), function () { save(move(l, kind, i - 1)); }]);
     if (i < l.length - 1) items.push([t("wg.down"), function () { save(move(l, kind, i + 1)); }]);
+    if (kind === "media" && host.mediaLight) {
+      var lon = mediaLightOn();
+      items.push([t(lon ? "wg.media.lightOff" : "wg.media.lightOn"), function () { mediaLightSet(!lon); }]);
+    }
     items.push([t("wg.remove"), function () { save(toggle(l, kind, false)); }]);
     if (kind === "clock") {
       var cs = clockStyle();
@@ -560,6 +632,7 @@
 
   // ---------- 5. The widgets ----------
   function paintAll(force) {
+    if (box && covered() && !force) { mediaLightRelease(); return; }   // WG-MEDIA-2: no listening under an app
     if (!box || (covered() && !force)) return;
     var on = onAccent();
     if (on) box.style.setProperty("--wg-on", on);
@@ -752,25 +825,100 @@
         b.appendChild(go);
       });
     },
+    // WG-MEDIA-2: the player that plays (or the first one) large: its
+    // cover, title, progress, Previous / Play-Pause / Next and a small
+    // light that moves with the sound (vizkit.js, the wallpaper's rules:
+    // passive listener, only while the desktop shows, still with reduced
+    // motion, Energy saver or a low battery). The others stay as rows.
+    // The body is rebuilt only when what it shows changes; the progress
+    // and the cover are updated in place every second.
     media: function (c) {
       var list2 = call(function () { return host.media(); }) || [];
-      var key = JSON.stringify(list2.map(function (m) { return [m.id, m.title, m.playing]; })) + host.lang();
+      var main = list2.filter(function (m) { return m.playing; })[0] || list2[0] || null;
+      var rest = list2.filter(function (m) { return m !== main; }).slice(0, 2);
+      var light = mediaLightOn() && !!host.mediaLight;
+      var key = JSON.stringify(list2.map(function (m) { return [m.id, m.title, m.playing, !!m.next, !!m.prev, !!m.live, m.dur > 0]; })) + host.lang() + light;
       fill(c, key, function (b) {
-        if (!list2.length) { b.appendChild(el("div", "wg-empty", t("wg.media.none"))); return; }
-        list2.slice(0, 3).forEach(function (m) {
+        mediaLightStop(c);
+        c.mp = null;
+        if (!main) { b.appendChild(el("div", "wg-empty", t("wg.media.none"))); return; }
+        var big = el("div", "wg-mbig");
+        var top = el("div", "wg-mtop");
+        var cov = el("div", "wg-cover");
+        cov.setAttribute("aria-hidden", "true");
+        cov.appendChild(el("span", "wg-cover-l", (main.title || main.name || "?").trim().charAt(0).toUpperCase()));
+        top.appendChild(cov);
+        var o = btn("wg-row wg-mtitle", null, function () { main.open(); }, main.name + " · " + (main.title || ""));
+        var parts = String(main.title || "").split(" · ");
+        o.appendChild(el("span", "wg-what", parts[0] || main.name));
+        o.appendChild(el("span", "wg-app", parts.slice(1).join(" · ") || main.name));
+        top.appendChild(o);
+        big.appendChild(top);
+        var pr = null, cur = null, len = null;
+        if (main.live) big.appendChild(el("div", "wg-mlive", t("wg.media.live")));
+        else if (main.dur > 0) {
+          var pw = el("div", "wg-mprog");
+          var bar = el("div", "wg-bar");
+          pr = el("span");
+          bar.appendChild(pr);
+          pw.appendChild(bar);
+          var tm = el("div", "wg-mtime");
+          cur = el("span"); len = el("span");
+          tm.appendChild(cur); tm.appendChild(len);
+          pw.appendChild(tm);
+          big.appendChild(pw);
+        }
+        var cv = null;
+        if (light) {
+          cv = el("canvas", "wg-mlight");
+          cv.setAttribute("aria-hidden", "true");
+          big.appendChild(cv);
+        }
+        var ctl = el("div", "wg-mctl");
+        var again = function () { setTimeout(function () { c.key = ""; PAINT.media(c); }, 250); };
+        if (main.prev) { var pv = btn("wg-mbtn", null, function () { main.prev(); again(); }, t("wg.media.prev") + " · " + main.name); pv.innerHTML = IC_PREV; ctl.appendChild(pv); }
+        var p = btn("wg-play", null, function () { main.toggle(); again(); }, t(main.playing ? "qs.pause" : "qs.play") + " · " + main.name);
+        p.innerHTML = main.playing ? IC_PAUSE : IC_PLAY;
+        ctl.appendChild(p);
+        if (main.next) { var nx = btn("wg-mbtn", null, function () { main.next(); again(); }, t("wg.media.next") + " · " + main.name); nx.innerHTML = IC_NEXT; ctl.appendChild(nx); }
+        big.appendChild(ctl);
+        b.appendChild(big);
+        rest.forEach(function (m) {
           var rowEl = el("div", "wg-media");
-          var o = btn("wg-row", null, function () { m.open(); }, m.name);
-          o.appendChild(el("span", "wg-what", m.name));
-          o.appendChild(el("span", "wg-app", m.title || ""));
-          rowEl.appendChild(o);
-          var p = btn("wg-play", null, function () { m.toggle(); setTimeout(function () { c.key = ""; PAINT.media(c); }, 250); },
+          var o2 = btn("wg-row", null, function () { m.open(); }, m.name);
+          o2.appendChild(el("span", "wg-what", m.name));
+          o2.appendChild(el("span", "wg-app", m.title || ""));
+          rowEl.appendChild(o2);
+          var p2 = btn("wg-play", null, function () { m.toggle(); setTimeout(function () { c.key = ""; PAINT.media(c); }, 250); },
             t(m.playing ? "qs.pause" : "qs.play") + " · " + m.name);
-          p.innerHTML = m.playing ? IC_PAUSE : IC_PLAY;
-          rowEl.appendChild(p);
+          p2.innerHTML = m.playing ? IC_PAUSE : IC_PLAY;
+          rowEl.appendChild(p2);
           b.appendChild(rowEl);
         });
+        c.mp = { cov: cov, art: "", pr: pr, cur: cur, len: len, cv: cv, playing: !!main.playing };
+        if (cv) mediaLightStart(c);
       });
+      // In place, every paint: the cover once it is known, the progress.
+      var mp = c.mp;
+      if (!mp || !main) return;
+      var art = String(call(function () { return host.mediaArt ? host.mediaArt(main.title) : ""; }) || "");
+      if (art !== mp.art) {
+        mp.art = art;
+        mp.cov.style.backgroundImage = art ? 'url("' + art.replace(/["\\\n\r]/g, "") + '")' : "";
+        mp.cov.classList.toggle("wg-cover-img", !!art);
+      }
+      if (mp.pr) {
+        var d = +main.dur || 0, at = Math.max(0, Math.min(d, +main.pos || 0));
+        mp.pr.style.width = (d ? at / d * 100 : 0).toFixed(1) + "%";
+        mp.cur.textContent = clock(at);
+        mp.len.textContent = clock(d);
+      }
+      if (mp.v) {
+        call(function () { host.mediaLight.tap(!!main.playing && !covered()); });
+        if (main.playing && !covered()) mp.v.wake();
+      }
     },
+
     // PHONE-1: the address of this orOS as a QR code (no secret in it)
     // and one line on sync. The shell gives the address and, once its
     // QR encoder (qr/qr-encode.js) is loaded, the dark modules.

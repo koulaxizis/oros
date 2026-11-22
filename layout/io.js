@@ -344,6 +344,23 @@
   function sha1(bytes) {
     return crypto.subtle.digest("SHA-1", bytes).then(function (ab) { return new Uint8Array(ab); });
   }
+  // GX-1: an export made for the Assistant or orOS Gate also goes to out
+  // (≤ 2 places: local:<root>/<folder> and/or a folder of Claude's on the
+  // orOS disk). The shell's orOS Gate checks and writes it (gate.js
+  // exportTo; a local folder also without it). → { saved, outFail }
+  function saveOut(outs, name, blob, tool) {
+    var list = (Array.isArray(outs) ? outs : typeof outs === "string" && outs ? [outs] : []).filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 2);
+    var saved = [], outFail = [], P = null;
+    try { P = window.parent && window.parent !== window ? window.parent : null; } catch (e) { P = null; }
+    var G = P && P.orosGate && typeof P.orosGate.exportTo === "function" ? P.orosGate : null, L = P && P.orosLocal && typeof P.orosLocal.write === "function" ? P.orosLocal : null;
+    return list.reduce(function (pr, o) {
+      return pr.then(function () {
+        var go = G ? G.exportTo(o, name, blob, tool) : /^local:/i.test(o) && L ? L.write(o.trim(), name, blob, tool) : Promise.reject({ why: /^local:/i.test(o) ? "noBridge" : "gateOff" });
+        return Promise.resolve(go).then(function (p) { if (typeof p === "string" && p) saved.push(p); else outFail.push({ to: o, why: "error" }); },
+          function (e) { outFail.push({ to: o, why: e && typeof e.why === "string" ? e.why : "error" }); });
+      });
+    }, Promise.resolve()).then(function () { return { saved: saved, outFail: outFail }; });
+  }
   function diskFs() {
     try {
       var f = window.parent && window.parent !== window ? window.parent.orosFS : window.orosFS;
@@ -989,7 +1006,7 @@
   // name); pdf: its print PDF, whose line breaks the text takes.
   // → Promise of a report (the Assistant's card) or null:
   // { sla: 1, pages, items, skipped, placed, missing, fit }
-  function importSla(f, pics, pdf) {
+  function importSla(f, pics, pdf, opts) {
     if (f.size > FOREIGN_MAX || !window.LY_SLA) { LY.toast(t("sla.bad")); return Promise.resolve(null); }
     LY.toast(t("sla.working"));
     // a compressed .sla.gz is unpacked first (gzip magic, not the name)
@@ -999,7 +1016,7 @@
     }).then(function (txt) {
       var res = null;
       if (typeof txt !== "string") { LY.toast(t("sla.bad")); return; }
-      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
+      try { res = window.LY_SLA.convert(txt, { now: LY.now(), name: (opts && opts.name) || baseName(f, /\.sla(\.gz)?$/i) }); } catch (e) { res = null; }
       if (!res) { LY.toast(t("sla.bad")); return; }
       var fit = null;
       return useSrcFonts(res.doc).then(function () { return pdf ? fitToPdf(res.doc, pdf) : { msg: "" }; }).then(function (fr) {
@@ -1010,15 +1027,19 @@
       });
     }).then(null, function () { LY.toast(t("sla.bad")); return null; });
   }
-  function importIdml(f) {
-    if (f.size > FOREIGN_MAX || !window.LY_IDML) { LY.toast(t("idml.bad")); return; }
+  // pics: pictures to fill the linked frames with, by name (a folder
+  // port, LY-PORT3); opts.name: the new document's name
+  function importIdml(f, pics, opts) {
+    if (f.size > FOREIGN_MAX || !window.LY_IDML) { LY.toast(t("idml.bad")); return Promise.resolve(null); }
     LY.toast(t("idml.working"));
     return f.arrayBuffer().then(function (buf) {
-      return window.LY_IDML.open(buf, { now: LY.now(), name: baseName(f, /\.idml$/i) });
+      return window.LY_IDML.open(buf, { now: LY.now(), name: (opts && opts.name) || baseName(f, /\.idml$/i) });
     }).then(function (res) {
-      if (!res) { LY.toast(t("idml.bad")); return; }
-      return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }), "idml.skipped");
-    }).then(null, function () { LY.toast(t("idml.bad")); });
+      if (!res) { LY.toast(t("idml.bad")); return null; }
+      return addForeign(res, function (im) { return Promise.resolve(window.LY_IDML.imageBlob(im)); }, t("idml.done", { p: res.stats.pages, n: res.stats.items }), "idml.skipped", pics).then(function (pl) {
+        return { idml: 1, pages: res.stats.pages, items: res.stats.items, skipped: res.stats.skipped, placed: pl.placed, missing: pl.missing };
+      });
+    }).then(null, function () { LY.toast(t("idml.bad")); return null; });
   }
   // ---------- A page of another file as a picture (LY-PRO W4b) ----------
   // A PDF, Scribus (.sla, .sla.gz) or InDesign (.idml) page, drawn at
@@ -1771,8 +1792,172 @@
     if (made) ED.select([made.id]);
   }
 
+  // ---------- Compare with a PDF, port a folder (LY-PORT-D, LY-PORT3) ----------
+  // A document's pages beside a PDF's (rebuild.js compare): pictures
+  // loaded first; opts.shift "auto" finds how many pages the PDF has
+  // before ours (an e-book's cover), opts.keep false keeps only the
+  // numbers. → Promise<{ pages, total, of, shift }>
+  function compareDoc(doc, file, opts) {
+    opts = opts || {};
+    var RB = window.LY_REBUILD, R = LY.R;
+    if (!RB || !doc || !file) return Promise.reject(new Error("compare"));
+    var order = M.pagesInOrder(doc), chain = Promise.resolve(), L = null;
+    doc.items.forEach(function (it) { if (it.t === "img" && it.a) chain = chain.then(function () { return LY.A.load(it.a); }).then(null, function () {}); });
+    var ours = function (i, w, h) {
+      var pg = order[i];
+      if (!pg) return null;
+      L = L || R.computeLayout(doc);
+      var sz = M.pageSize ? M.pageSize(doc, pg) : doc.setup;
+      var full = R.renderPage(doc, pg, L, w / sz.w, { getImage: LY.A.get, background: "#fff" });
+      var c = document.createElement("canvas"); c.width = w; c.height = h;
+      var x = c.getContext("2d", { willReadFrequently: true });
+      x.fillStyle = "#fff"; x.fillRect(0, 0, w, h);
+      x.drawImage(full, 0, 0, w, h);
+      return c;
+    };
+    var buf = null;
+    return chain.then(function () { return file.arrayBuffer(); }).then(function (b) {
+      buf = b;
+      if (opts.shift !== "auto") return { shift: +opts.shift || 0 };
+      return RB.shiftOf(buf.slice(0), ours, order.length, { range: 6 });
+    }).then(function (sh) {
+      return RB.compare(buf, ours, order.length, { dpi: opts.dpi || 50, shift: sh.shift, keep: opts.keep !== false, cancelled: opts.cancelled });
+    });
+  }
+
+  // Home › Open › Port a folder of books: every Scribus or InDesign file
+  // in a folder of past work opens as a new document with the pictures
+  // of its own folder (its print PDF, when there is one, also gives the
+  // Scribus text its line breaks), is compared with its PDF and goes
+  // into one report, which can be saved as CSV. Nothing in the folder
+  // changes.
+  var portBusy = false;
+  function portFolder() {
+    if (portBusy || !window.LY_PORT) return;
+    window.OrosBundle.pickFolder().then(function (files) {
+      if (!files) return;
+      var plan = window.LY_PORT.plan(files);
+      if (!plan.books.length) { LY.toast(t("port.none")); return; }
+      portPlanDlg(plan);
+    }).then(null, function () { LY.toast(t("imp.bad")); });
+  }
+  function portPlanDlg(plan) {
+    var withPdf = plan.books.filter(function (b) { return b.pdf; }).length;
+    LY.openDialog(t("port.title"), function (body, close) {
+      body.appendChild(el("p", "", t("port.found", { n: plan.books.length, p: withPdf })));
+      if (plan.more) body.appendChild(el("p", "hint warn", t("port.more", { n: plan.more })));
+      body.appendChild(el("p", "hint", t("port.hint")));
+      var ul = el("ul", "links-list");
+      plan.books.forEach(function (b) {
+        var li = el("li", "links-row");
+        li.appendChild(el("span", "links-name", b.name));
+        li.appendChild(el("span", "links-meta", b.path + " · " + t("port.pics", { n: b.pics.length }) + " · " + (b.pdf ? "PDF: " + b.pdfPath.split("/").pop() : t("port.noPdf"))));
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      var cmpBox = el("input"); cmpBox.type = "checkbox"; cmpBox.checked = withPdf > 0; cmpBox.disabled = !withPdf; cmpBox.id = "port-cmp";
+      var lab = el("label", "chk"); lab.appendChild(cmpBox); lab.appendChild(document.createTextNode(" " + t("port.cmp")));
+      body.appendChild(lab);
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn", t("btn.cancel")); c.type = "button"; c.addEventListener("click", close);
+      var go = el("button", "btn primary", t("port.go")); go.type = "button";
+      go.addEventListener("click", function () { var cmp = cmpBox.checked; close(); portRun(plan, cmp); });
+      act.appendChild(c); act.appendChild(el("span", "spacer")); act.appendChild(go);
+      body.appendChild(act);
+    }, true);
+  }
+  function portRun(plan, cmp) {
+    portBusy = true;
+    var rows = [], stop = false, status = null, k = 0, n = plan.books.length;
+    LY.openDialog(t("port.title"), function (body) {
+      status = el("p", "", t("port.working", { i: 1, n: n, f: plan.books[0].name }));
+      status.setAttribute("aria-live", "polite");
+      body.appendChild(status);
+      var act = el("div", "dlg-actions");
+      var s = el("button", "btn", t("port.stop")); s.type = "button";
+      s.addEventListener("click", function () { stop = true; s.disabled = true; });
+      act.appendChild(el("span", "spacer")); act.appendChild(s);
+      body.appendChild(act);
+    });
+    var chain = Promise.resolve();
+    plan.books.forEach(function (b) {
+      chain = chain.then(function () {
+        if (stop) return;
+        k++;
+        if (status) status.textContent = t("port.working", { i: k, n: n, f: b.name });
+        var before = {};
+        LY.data().docs.forEach(function (d) { before[d.id] = 1; });
+        var row = { book: b, rep: null, doc: null, cmp: null };
+        rows.push(row);
+        var imp = b.kind === "idml" ? importIdml(b.file, b.pics, { name: b.name }) : importSla(b.file, b.pics, b.pdf, { name: b.name });
+        return Promise.resolve(imp).then(function (rep) {
+          row.rep = rep;
+          row.doc = LY.data().docs.filter(function (d) { return !d.del && !before[d.id]; })[0] || null;
+          if (!row.doc || !cmp || !b.pdf || stop) return;
+          if (status) status.textContent = t("port.comparing", { f: b.name });
+          return compareDoc(row.doc, b.pdf, { shift: "auto", keep: false, dpi: 36, cancelled: function () { return stop; } }).then(function (res) {
+            row.cmp = res;
+          }, function () { row.cmpFail = 1; });
+        }, function () { row.rep = null; });
+      });
+    });
+    chain.then(function () {
+      portBusy = false;
+      portReport(rows, n, stop);
+    });
+  }
+  function portRows(rows) {
+    var P = window.LY_PORT, head = t("port.csvHead").split("|"), out = [head];
+    rows.forEach(function (r) {
+      var sc = r.cmp ? P.scoreOf(r.cmp.pages) : null;
+      out.push([r.book.name, r.book.path, r.rep ? r.rep.pages : "", r.rep ? r.rep.items : "", r.rep ? r.rep.missing : "", r.book.pdfPath,
+        r.cmp ? r.cmp.shift : "", sc ? sc.mean : "", sc ? sc.over : "", sc && sc.worst !== null ? sc.worst : "", sc && sc.worstPct !== null ? sc.worstPct : "",
+        !r.doc ? t("port.fail") : r.cmpFail ? t("cmp.fail") : ""]);
+    });
+    return out;
+  }
+  function portReport(rows, n, stopped) {
+    var P = window.LY_PORT, done = rows.filter(function (r) { return r.doc; }), cmpd = rows.filter(function (r) { return r.cmp && r.cmp.pages.length; });
+    var fmt = function (v) { return LY.BASE === "el" ? String(v).replace(".", ",") : String(v); };
+    var all = [];
+    cmpd.forEach(function (r) { all = all.concat(r.cmp.pages); });
+    var avg = P.scoreOf(all).mean;
+    LY.openDialog(t("port.title"), function (body, close) {
+      body.appendChild(el("p", "", t("port.done", { n: done.length, c: cmpd.length })));
+      if (stopped) body.appendChild(el("p", "hint warn", t("port.stopped", { n: rows.length, t: n })));
+      if (avg !== null) body.appendChild(el("p", "hint", t("port.avg", { p: fmt(avg) })));
+      var ul = el("ul", "links-list");
+      rows.forEach(function (r) {
+        var sc = r.cmp ? P.scoreOf(r.cmp.pages) : null;
+        var li = el("li", "links-row" + (!r.doc || (sc && sc.mean > 2) ? " warn" : ""));
+        li.appendChild(el("span", "links-name", r.book.name));
+        var meta = !r.doc ? t("port.fail") : t("port.row", { p: r.rep ? r.rep.pages : r.doc.pages.length, m: r.rep && r.rep.missing ? r.rep.missing : 0 });
+        if (sc && sc.mean !== null) meta += " · " + t("port.diff", { p: fmt(sc.mean), o: sc.over });
+        else if (r.book.pdf && r.doc) meta += " · " + (r.cmpFail ? t("cmp.fail") : t("port.noCmp"));
+        if (r.cmp && r.cmp.shift > 0) meta += " · " + t("port.shift", { n: r.cmp.shift });
+        li.appendChild(el("span", "links-meta", meta));
+        if (r.doc) {
+          var acts = el("span", "links-acts"), o = el("button", "btn small", t("port.open")); o.type = "button";
+          o.addEventListener("click", function () { close(); LY.openDoc(r.doc.id); });
+          acts.appendChild(o); li.appendChild(acts);
+        }
+        ul.appendChild(li);
+      });
+      body.appendChild(ul);
+      var act = el("div", "dlg-actions");
+      var sv = el("button", "btn", t("port.csv")); sv.type = "button";
+      sv.addEventListener("click", function () {
+        saveBlob(new Blob([P.csv(portRows(rows))], { type: "text/csv" }), t("port.csvName") + ".csv", "text/csv", "CSV", ".csv");
+      });
+      act.appendChild(sv); act.appendChild(el("span", "spacer"));
+      var c = el("button", "btn primary", t("btn.close")); c.type = "button"; c.addEventListener("click", close);
+      act.appendChild(c);
+      body.appendChild(act);
+    }, true);
+  }
+
   LY.io = {
-    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, saveOut: saveOut, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, portFolder: portFolder, compareDoc: compareDoc, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     adjust: adjust, placePage: placePage, pageImage: pageImage, pageKind: pageKind, wrapProfile: wrapProfile, fillWrapProfiles: fillWrapProfiles, saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

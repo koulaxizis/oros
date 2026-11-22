@@ -599,7 +599,12 @@ function ensureHost(){
   // once per host for the session (a GET aborted at the headers), then
   // the stream loads with crossOrigin="anonymous". Without the light
   // show nothing of this runs and streams load exactly as before.
-  var viz = { on: false, ok: {}, retried: "", ctx: null, an: null, src: null, track: null, f: null, w: null };
+  // viz.on = the app's own Light show (it may restart a stream once to
+  // read it); viz.wall = a passive listener is there (VIZWALL-1: the
+  // desktop wallpaper "wall", the Media card "widget", in viz.pass),
+  // which only reads a stream that is already readable and never
+  // restarts one.
+  var viz = { on: false, wall: false, pass: {}, ok: {}, retried: "", ctx: null, an: null, src: null, track: null, f: null, w: null };
   function vizOrigin(u){ try{ return new w.URL(u, w.location.href).origin; }catch(e){ return ""; } }
   function vizProbe(u){
     var o = vizOrigin(u);
@@ -648,7 +653,7 @@ function ensureHost(){
     return true;
   }
   function vizCapture(){
-    if(!viz.on || !audio.crossOrigin || typeof audio.captureStream !== "function") return;
+    if(!(viz.on || viz.wall) || !audio.crossOrigin || typeof audio.captureStream !== "function") return;
     var AC = w.AudioContext || w.webkitAudioContext;
     if(!AC) return;
     try{
@@ -783,18 +788,24 @@ function ensureHost(){
         host.notify();
       }
     },
-    // MU-VIZ: the light show (see vizCapture). → on
-    viz: function(on){
-      viz.on = !!on;
-      if(viz.on){
+    // MU-VIZ: the light show (see vizCapture). who "wall" (the desktop
+    // wallpaper) or "widget" (the Media card), VIZWALL-1: they listen only
+    // to a stream that is already readable and never restart it.
+    // → the app's own light is on
+    viz: function(on, who){
+      if(who === "wall" || who === "widget"){
+        if(on) viz.pass[who] = 1; else delete viz.pass[who];
+        viz.wall = Object.keys(viz.pass).length > 0;
+      }else viz.on = !!on;
+      if(viz.on || viz.wall){
         if(viz.ctx && viz.ctx.state === "suspended"){ try{ viz.ctx.resume().catch(function(){}); }catch(e){} }
-        if(audio.crossOrigin) vizCapture(); else vizUpgrade();
+        if(audio.crossOrigin) vizCapture(); else if(viz.on) vizUpgrade();
       }else vizStop();
       return viz.on;
     },
     // → { live, f, w, rate } (arrays of the shell window, read only) or null.
     vizFrame: function(){
-      if(!viz.on) return null;
+      if(!viz.on && !viz.wall) return null;
       var live = !!(viz.src && viz.track && viz.track.readyState === "live" && !audio.paused && viz.ctx && viz.ctx.state === "running");
       if(live){ try{ viz.an.getByteFrequencyData(viz.f); viz.an.getByteTimeDomainData(viz.w); }catch(e){ live = false; } }
       return { live: live, f: viz.f, w: viz.w, rate: viz.ctx ? viz.ctx.sampleRate : 48000 };

@@ -1859,6 +1859,7 @@
   // inside Claude's folders (FILES_KEY, synced). Files stays outside
   // ACT: change_item on files is not offered through the gate.
   var FILE_READ = ["files_list", "files_read"], FILE_WRITE = ["files_write", "files_move", "files_delete"];
+  var FRESH_COPY = FILE_WRITE.concat(["export_pdf", "export_epub", "edit_in_app"]);
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
@@ -2398,6 +2399,7 @@
       if (ev.data.indexOf('{"hi"') === 0) { onHi(ev.data); return; }
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
       if (ev.data.indexOf('{"lf"') === 0) { onLf(sock, ev.data); return; }
+      if (ev.data.indexOf('{"upd"') === 0) { onUpd(); return; }
       if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
       if (ev.data.indexOf('{"snapok"') === 0) return;
       if (ev.data.indexOf('{"fidxok"') === 0) { fileCopyAck(); return; }
@@ -2797,6 +2799,51 @@
     });
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
+  // GL-8 (Chris 2026-11-21): a file Claude uploaded (relay files_upload),
+  // sealed in the box under FK = HMAC-K("orOS-gate-up|" + id): fetched in
+  // calls of up to 20 pieces, opened, checked against its SHA-256 → Blob.
+  function upFetch(id, path) {
+    var p = pref(), k = gateKey();
+    if (!k || !p.id || !p.tok) return Promise.reject(new Error("no gate key"));
+    var te = new TextEncoder();
+    return crypto.subtle.importKey("raw", keyBytes(k), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]).then(function (hk) {
+      return crypto.subtle.sign("HMAC", hk, te.encode("orOS-gate-up|" + id));
+    }).then(function (raw) {
+      return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["decrypt"]);
+    }).then(function (fk) {
+      var parts = [], head = null;
+      function more(from) {
+        return devCall({ act: "up", id: p.id, tok: p.tok, up: id, from: from }).then(function (d) {
+          if (!isObj(d) || !Array.isArray(d.p) || typeof d.n !== "number") throw new Error("bad answer");
+          head = d;
+          return d.p.reduce(function (ch, sealed, j) {
+            return ch.then(function () {
+              var x = String(sealed).split(".");
+              return crypto.subtle.decrypt({ name: "AES-GCM", iv: keyBytes(x[0]), additionalData: te.encode("orOS-gate-up|" + id + "|" + (from + j)) }, fk, keyBytes(x[1] || ""));
+            }).then(function (pt) { parts.push(new Uint8Array(pt)); });
+          }, Promise.resolve()).then(function () {
+            return from + d.p.length < d.n && d.p.length ? more(from + d.p.length) : null;
+          });
+        }, function (e) { throw new Error(e && e.code === "gone" ? "gone" : "the box did not answer"); });
+      }
+      return more(0).then(function () {
+        var blob = new Blob(parts, { type: upType(path) !== "application/octet-stream" ? upType(path) : upType(head.name) });
+        if (blob.size !== head.s) throw new Error("size");
+        return blob.arrayBuffer().then(function (buf) { return crypto.subtle.digest("SHA-256", buf); }).then(function (h) {
+          var hex = Array.prototype.map.call(new Uint8Array(h), function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+          if (hex !== head.h) throw new Error("checksum");
+          return blob;
+        });
+      });
+    });
+  }
+  function upDrop(id) {
+    var p = pref();
+    if (p.id && p.tok) devCall({ act: "up", id: p.id, tok: p.tok, up: id, from: 0, del: true }).catch(function () {});
+  }
+  var UP_TYPES = { jpg: "image/jpeg", jpeg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", tif: "image/tiff", tiff: "image/tiff",
+                   pdf: "application/pdf", svg: "image/svg+xml", otf: "font/otf", ttf: "font/ttf", woff2: "font/woff2" };
+  function upType(name) { var m = /\.([a-z0-9]{1,5})$/i.exec(String(name || "")); return m && UP_TYPES[m[1].toLowerCase()] || "application/octet-stream"; }
   function dirty() { try { if (root.orosSync && typeof root.orosSync.markDirty === "function") root.orosSync.markDirty(); } catch (e) {} }
   // ---- HELPER-1: who helps with the data (synced) ----
   var HELPER_KEY = "oros-ai-helper", helperBusy = false;
@@ -2989,6 +3036,32 @@
     // GL-6 (Chris 2026-11-21): this orOS's version, so the box asks the newest device first
     try { var av = String(root.__orosAppVersion || ""); if (sock && sock.readyState === 1 && /^\d{1,3}\.\d{2}\.\d{2}$/.test(av)) sock.send("ver:" + av); } catch (e) {}
   }
+  // GL-7 (Chris 2026-11-21 «Πρέπει να βρούμε λύσεις»): the owner pressed
+  // "Update orOS on my computers" on another device, or Claude asked
+  // (relay tool oros_update). The orOS desktop app asks its launcher to
+  // download and swap in the newest orOS now (oros-portable /__oros/update,
+  // 0.9.5+); every orOS then asks its service worker for the new version,
+  // which reloads the page by itself. Nothing in the owner's data changes.
+  var updAt = 0, UPD_GAP = 5 * 60 * 1000;
+  function swCheck() {
+    try { if (navigator.serviceWorker) navigator.serviceWorker.getRegistration().then(function (r) { if (r) r.update().then(null, function () {}); }, function () {}); } catch (e) {}
+  }
+  function onUpd() {
+    var now = Date.now();
+    if (now - updAt < UPD_GAP) return;
+    updAt = now;
+    var go = deskApp() ? fetch("/__oros/update", { method: "POST", cache: "no-store", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-Oros-Gate": "1" }, body: "{}" }).then(null, function () {}) : Promise.resolve();
+    go.then(function () {
+      swCheck();
+      // the download takes a minute or two on the desktop app: ask again
+      [90, 180, 300, 600].forEach(function (s) { setTimeout(swCheck, s * 1000); });
+    });
+  }
+  // → true when the ask went to the box (it passes it to the other devices)
+  function askUpdate() {
+    try { if (ws && ws.readyState === 1) { ws.send('{"upd":1}'); return true; } } catch (e) {}
+    return false;
+  }
   try {
     document.addEventListener("visibilitychange", function () {
       var hidden = document.visibilityState === "hidden";
@@ -3072,8 +3145,11 @@
     }
     if (name === "__tools") {
       return actFrame().then(function (F) {
-        var list = [];
-        try { list = F ? F.tools() || [] : []; } catch (e) { list = []; }
+        // GL-9: a frame that did not start answers not-ok, so the relay
+        // keeps the list it has instead of storing an empty one
+        if (!F) return { ok: false, c: "orOS could not start its tools on the device.", quiet: 1 };
+        var list;
+        try { list = F.tools() || []; } catch (e) { return { ok: false, c: "orOS could not list its tools.", quiet: 1 }; }
         return { ok: true, c: JSON.stringify(list), quiet: 1 };
       });
     }
@@ -3101,7 +3177,18 @@
           if (miss.length) return { ok: false, c: "No item for " + miss.slice(0, 5).join(", ") + ": its add was not applied (refused, cancelled or still waiting). Find the item with search_data. Nothing was changed." };
           args = mapRefs(args, function (r) { return pm[r]; });
         }
-        return F.run(name, args, opt.at ? { at: opt.at } : undefined).then(function (r) {
+        // GL-8: files_write with an upload → the file's bytes from the box
+        var upId = name === "files_write" && typeof args.upload === "string" ? args.upload : "";
+        return (upId ? upFetch(upId, args.path).then(function (blob) {
+          var a2 = Object.assign({}, args, { blob: blob });
+          delete a2.upload;
+          return a2;
+        }) : Promise.resolve(args)).then(function (args2) {
+          return F.run(name, args2, opt.at ? { at: opt.at } : undefined);
+        }, function (e) {
+          return { ok: false, c: e && e.message === "gone" ? "That upload is no longer in the box (it expired after 7 days or was written already). Nothing was written." : "The upload could not be opened on the device (" + (e && e.message || "error") + "). Nothing was written." };
+        }).then(function (r) {
+          if (upId && r && r.ok) upDrop(upId);
           var out = { ok: !!r.ok, c: r.c || "", a: Array.isArray(r.a) ? r.a : [], k: r.k || 0 };
           if (r.ok && Array.isArray(r.made) && r.made.length) out.made = r.made;
           // One record per change (5.78.00 remember): synced, notified, in
@@ -3605,6 +3692,58 @@
   function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
   function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
   function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  // GX-1 (Chris 2026-11-21 «δώσε στο gate τη δυνατότητα να μπορεί να
+  // κάνει εξαγωγή σε τοπικό φάκελο ή/και orOS Files»): an app's export
+  // also goes to out, a local write folder the owner opened
+  // (local:<root>/<folder>, localroots.js) or a folder of Claude's on the
+  // orOS disk while Files is at «may change» and not paused. Never
+  // replaces a file (name-2.ext, -3…). → the saved path, or throws { why }.
+  var EXPORT_WHY = ["noBridge", "gateOff", "locked", "notAllowed", "paused", "outside", "badName", "noDisk", "nameTaken", "error"];
+  function exportTo(out, name, blob, tool) {
+    out = typeof out === "string" ? out.trim() : "";
+    var fail = function (why) { return Promise.reject({ why: why }); };
+    if (!out || !blob || typeof blob.size !== "number") return fail("error");
+    if (/^local:/i.test(out)) {
+      var L = root.orosLocal;
+      if (!L || typeof L.write !== "function") return fail("noBridge");
+      return Promise.resolve(L.write(out, name, blob, String(tool || "export").slice(0, 40))).then(null, function (e) { throw { why: e && typeof e.why === "string" ? e.why : "error" }; });
+    }
+    return claudeFiles().then(function (CF) {
+      var p = pref(), dir = CF.normPath(out), now = Date.now();
+      name = typeof name === "string" ? name.trim() : "";
+      var why = !p.on ? "gateOff" : locked() ? "locked" : !isObj(p.lv) || p.lv.files !== "write" || barred("files") ? "notAllowed"
+        : !canWrite(p.lv, p.hold, "files", now) ? "paused" : CF.reach(dir, CF.cleanFolders(foldersRead().f)) ? "outside" : CF.validName(name) ? "badName" : "";
+      if (why) throw { why: why };
+      var FS = root.orosFS;
+      if (!FS || typeof FS.write !== "function" || typeof FS.stat !== "function") throw { why: "noDisk" };
+      var dot = name.lastIndexOf("."), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : "";
+      var free = function (k) {
+        if (k > 99) return Promise.resolve("");
+        var path = dir + "/" + (k === 1 ? name : base + "-" + k + ext);
+        return Promise.resolve().then(function () { return FS.stat(path); }).then(function (st) { return st ? free(k + 1) : path; }, function () { return path; });
+      };
+      return Promise.resolve(typeof FS.mkdir === "function" ? FS.mkdir(dir) : null).then(null, function () {}).then(function () { return free(1); }).then(function (path) {
+        if (!path) throw { why: "nameTaken" };
+        return Promise.resolve(FS.write(path, blob)).then(function () { fileCopySoon(3000); return path; }, function () { throw { why: "error" }; });
+      });
+    });
+  }
+  // GX-2: several files (an app's export) to each place of out (≤ 2)
+  // → { saved: [paths], outFail: [{ to, why }] }
+  function exportAll(outs, files, tool) {
+    var list = (Array.isArray(outs) ? outs : typeof outs === "string" && outs ? [outs] : []).filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 2);
+    var saved = [], outFail = [];
+    return list.reduce(function (pr, o) {
+      return pr.then(function () {
+        return (Array.isArray(files) ? files : []).slice(0, 200).reduce(function (p2, f) {
+          return p2.then(function () {
+            if (outFail.some(function (x) { return x.to === o; })) return;
+            return exportTo(o, f && f.name, f && f.blob, tool).then(function (p) { saved.push(p); }, function (e) { outFail.push({ to: o, why: e && e.why || "error" }); });
+          });
+        }, Promise.resolve());
+      });
+    }, Promise.resolve()).then(function () { return { saved: saved, outFail: outFail }; });
+  }
   function fcFilesOn(p) { return isObj(p.lv) && (p.lv.files === "read" || p.lv.files === "write"); }
   // Every file under the folders: [{ p, s, m, cloud: { h } | null }]
   function fcWalk(CF, folders) {
@@ -3816,6 +3955,9 @@
     askLast = "";
     run(q.n, q.a).then(function (res) {
       if (res && res.ok && q.n !== "__tools") ranAdd(q.q);
+      // GX-4: what Claude just wrote or exported is in the files copy within
+      // seconds, so files_link finds it (it was 60 s and more)
+      if (res && res.ok && FRESH_COPY.indexOf(q.n) >= 0) fileCopySoon(3000);
       // 7.48.00: a deletion this screen could not ask about (nobody here)
       // is handed back to the box, which queues it for a device on screen.
       if (res && !res.ok && askLast === "none" && (core.delCount(q.n, q.a) || q.n === "edit_in_app")) {   // TRAY-3: Layout's removals too
@@ -3828,6 +3970,7 @@
 
   /* ---------- API for Settings ---------- */
   var api = {
+    askUpdate: askUpdate,   // GL-7: Settings › orOS Gate › Update orOS on my computers
     // For the hidden Assistant frame (assistant.js GATE).
     frameReady: function () { if (actReady) actReady(); },
     act: ACT.concat(DOCS, ["files"]),
@@ -3875,6 +4018,9 @@
     refreshFileCopy: function () { return fileCopy(); },
     // Claude's folders on the orOS disk (synced): [path]
     folders: function () { return foldersRead().f.slice(); },
+    exportAll: exportAll,   // GX-2: an app's files to out
+    exportTo: exportTo,   // GX-1: an export also into a local folder or Claude's folders on the orOS disk
+    EXPORT_WHY: EXPORT_WHY,
     // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
     setFolders: function (list) {
       return claudeFiles().then(function (CF) {

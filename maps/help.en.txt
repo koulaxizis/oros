@@ -12,7 +12,7 @@ Type a place or address in `Search a place…`. Suggestions appear from the thir
 
 - A pin's popup has `Save` (star), `Route` (from your location to there) and `From here`.
 - Right-click the map, or long-press on a phone, to use any point: `Go here`, `Start here`, `Add as stop` (once a route is set) and `Save`.
-- A long-press also offers `Measure distance` and `I parked here` (see Measure and parking below).
+- A long-press also offers `Measure distance` and `I parked here` (see Measure and parking below), and `Where am I` and `Coordinates of this point` (see Hiking and cycling).
 - `Saved places` lists everything you starred. Tap a place to fly there. The pencil renames it (`Rename place`) and the × deletes it, with `Undo`.
 
 ### Favourite groups
@@ -26,7 +26,7 @@ Type a place or address in `Search a place…`. Suggestions appear from the thir
 
 The compass button opens `Discover`, which looks around the middle of the map. Long-press › `What's nearby` does the same for any point.
 
-- **Places**: pick a kind (restaurants, cafés, bars, fast food, supermarkets, bakeries, pharmacies, ATMs and banks, fuel and charging, toilets, sights and museums, parks). Each place shows whether it's open now and when it closes or opens, read from its OpenStreetMap opening hours; `Open now` keeps only the open ones. Tap one for its hours, address, phone and website, `Go here` and `Save`.
+- **Places**: pick a kind (restaurants, cafés, bars, fast food, supermarkets, bakeries, pharmacies, ATMs and banks, fuel and charging, toilets, sights and museums, parks, and for the outdoors water and springs, shelters and huts, peaks and viewpoints, camping and picnic, bike repair and parking). Each place shows whether it's open now and when it closes or opens, read from its OpenStreetMap opening hours; `Open now` keeps only the open ones. Tap one for its hours, address, phone and website, `Go here` and `Save`. Outdoor places show what they are instead (spring, mountain hut, pass…), their height, and for water whether it is marked as drinking water, not drinking water or not known: green, red or grey.
 - **Trails**: the marked hiking, cycling and MTB routes that cross the map, nearest first (zoom in to about a town to see them). `All`, `Hiking`, `Cycling` or `MTB` picks the kind. Tap one for its page: the whole route on the map, from where to where, its length, the elevation along it with climb and descent and, for hiking, the walking time both ways by the DIN 33466 hiking rule. `Go to the start` plans a route there, `Save to My tracks` keeps it to follow later, `Download GPX` saves a file, and the links open it on Waymarked Trails and OpenStreetMap.
 - **Wikipedia**: articles about places around you, in the language of orOS, with a picture when there is one. The popup links to the article.
 - **Photos**: street-level photos from Panoramax, the open alternative to Street View, once you zoom in close. The dot's arrow shows which way the photo looks; tap a photo to see it larger and open it in Panoramax.
@@ -100,6 +100,8 @@ They come from Waymarked Trails. Turn on as many as you like; this device rememb
 - how visible the path is on the ground, the incline, the width, and whether you may walk, ride or take a horse there;
 - the marked routes it belongs to (international, national, regional or local), with `Waymarked Trails` to see the whole route.
 
+`Report a problem on this path` (at the bottom) picks what is wrong (blocked, overgrown, signs missing, a damaged bridge or steps, the path is gone, dangerous, something else) and opens a new OpenStreetMap note at that spot with the path and its link already written; add details and send it as any note (see OpenStreetMap notes).
+
 To browse the marked routes around you, open Discover › `Trails`.
 
 Only what has been mapped is shown. If a detail is missing, it isn't known yet; you can add it with Quests or Edit places. Offline maps now draw cycleways in blue, tracks in brown and footpaths in red, all dashed.
@@ -110,6 +112,8 @@ Only what has been mapped is shown. If a detail is missing, it isn't known yet; 
 - Bike: `Touring` (the default: cycleways and quiet roads, some gravel), `Road bike` (smooth asphalt), `Quiet roads` (avoids busy roads), `Gravel`, `Mountain bike` and `Standard` (the quickest way).
 
 These routes come from BRouter. The route bar then shows the climb and descent (↗ ↘), and `Directions` shows the elevation along the route, the lowest and highest point, and two bars: the `Surface` (paved, gravel, earth, not known) and the `Kind of way` (road, track, path, cycleway, steps), each with how much of the route it is. The walking time follows the DIN 33466 hiking rule: 4 km/h on the flat, 300 m up or 500 m down an hour. If BRouter doesn't answer, you get the standard route and a message. In `Maps settings` › `Trail router` you can use your own BRouter server instead of brouter.de. The route types stay on this device.
+
+**Where am I**: tap your position (the purple pin) › `Where am I`, or long-press anywhere › `Where am I`. You get your position as decimal degrees, degrees-minutes-seconds, degrees and minutes (as GPS units show it) and UTM, each with `Copy`, with the accuracy, the elevation and the nearest address. `Turn on the compass` shows which way you're facing (on an iPhone it asks for the motion sensor first). Below are today's sunrise and sunset there and how much daylight is left. `Call 112` dials the European emergency number (it works without a SIM card or credit), and `Text my position` opens a message with your coordinates, accuracy, elevation, time and a map link already written: you choose who gets it and send it yourself. Long-press › `Coordinates of this point` shows the same formats for any point. Nothing here is saved or sent by Maps.
 
 ## OpenStreetMap notes
 
@@ -157,7 +161,7 @@ Changes wait in the panel until you tap `Upload`; they go in one changeset with 
 
 Help OpenStreetMap by answering small questions about what's around you. You don't need to know any tags.
 
-1. Tap `Quests` (the pin with a question mark) and zoom in to street level. Pins show the open questions: 🪑 bench backrest, 🚏 bus stop shelter, 🚌 bench at the stop, 🚸 crossing type, 💡 street lights, 🛣️ surface, 🕒 opening hours, ♿ wheelchair access, 🚻 toilets fee, ♻️ recycling, 🛐 religion, 🏢 building floors, 🔢 house number, 🛝 playground access, 🚬 smoking, 🏧 ATM at the bank, 🚦 speed limit, 🏷️ street name, 🪜 number of steps, 🤚 handrail, 🦯 tactile paving at the crossing, 🪧 stop name, 🚧 level crossing barrier, 🅿️ parking fee, 🚗 kind of car park, 🚲 bicycle parking spaces, ☂️ covered bicycle parking, 🥗 vegetarian food, 🌱 vegan food, 💳 ways to pay, 📶 Wi-Fi, 🚾 wheelchair toilet, ❤️ defibrillator indoors, 🧯 fire hydrant, 📮 postbox collection times, 🏠 kind of building.
+1. Tap `Quests` (the pin with a question mark) and zoom in to street level. Pins show the open questions: 🪑 bench backrest, 🚏 bus stop shelter, 🚌 bench at the stop, 🚸 crossing type, 💡 street lights, 🛣️ surface, 🕒 opening hours, ♿ wheelchair access, 🚻 toilets fee, ♻️ recycling, 🛐 religion, 🏢 building floors, 🔢 house number, 🛝 playground access, 🚬 smoking, 🏧 ATM at the bank, 🚦 speed limit, 🏷️ street name, 🪜 number of steps, 🤚 handrail, 🦯 tactile paving at the crossing, 🪧 stop name, 🚧 level crossing barrier, 🅿️ parking fee, 🚗 kind of car park, 🚲 bicycle parking spaces, ☂️ covered bicycle parking, 🥗 vegetarian food, 🌱 vegan food, 💳 ways to pay, 📶 Wi-Fi, 🚾 wheelchair toilet, ❤️ defibrillator indoors, 🧯 fire hydrant, 📮 postbox collection times, 🏠 kind of building, and for walkers and cyclists 🥾 hiking difficulty (T1 to T6), 👀 how visible a path is, 🚜 how firm a track is, 🚲 bikes on a path, ↔️ separate lanes for bikes and walkers, 🛞 a bike ramp on steps, 💧 drinking water at a spring or tap, 🛖 kind of shelter.
 2. Tap a pin (or a row in the list) and tap the answer. The next question nearby opens by itself.
 3. `Can't say` skips the question for now. `Hide here` hides it for that place on all your devices. `It's not there any more` opens a new note at the spot, so mappers can check.
 4. Some answers get old: Maps asks again after some years (opening hours after one year) and `Still the same` confirms them.
@@ -176,6 +180,7 @@ An overlay colours the streets or buildings around you by one thing, so the gaps
 - 💡 `Street lights`: lit or not.
 - 🛣️ `Surface`: asphalt, paving stones, gravel, ground and more.
 - 🚶 `Sidewalks`: on both sides, one side, a separate path or none. Arrows on the chosen street show its direction: left and right are as you see them walking that way.
+- 🚴 `Cycle lanes`: a separated cycle track, a painted lane, bike marks on a shared lane, a separate cycleway drawn next to the street, or nothing for bikes.
 - 🔢 `Addresses`: which buildings have a house number. Type the number or tap `It has no number`.
 - 🏢 `Buildings`: floors and kind of building in one form (empty fields stay as they are).
 

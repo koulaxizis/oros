@@ -7,6 +7,8 @@
 //   - surface:   road surface (surface)
 //   - sidewalk:  sidewalks on each side (sidewalk, sidewalk:left/right/both)
 //   - address:   house numbers on buildings (addr:housenumber)
+//   - cycleway:  cycle lanes and tracks along roads (cycleway,
+//                cycleway:both / :left / :right), wave H7 (v1.2.0)
 // Changes are ordinary quest answers (quests-core.js): lit, surface and
 // house numbers use the quests way_lit, way_surface and housenumber, so
 // older versions keep them; sidewalks use the overlay-only quest
@@ -65,7 +67,21 @@
       "ov.sw.left": "Only on the left of the arrows",
       "ov.sw.right": "Only on the right of the arrows",
       "ov.sw.separate": "Drawn as a separate path",
-      "ov.sw.no": "No sidewalk"
+      "ov.sw.no": "No sidewalk",
+      "ov.cycleway.title": "Cycle lanes",
+      "ov.cycleway.q": "What does {name} have for bikes?",
+      "ov.cycleway.lg.track": "Separated cycle track",
+      "ov.cycleway.lg.lane": "Painted cycle lane",
+      "ov.cycleway.lg.shared": "Shared lane (bike marks)",
+      "ov.cycleway.lg.sep": "Separate cycleway nearby",
+      "ov.cycleway.lg.no": "Nothing for bikes",
+      "ov.cycleway.lg.miss": "Not known yet",
+      "ov.cw.track": "A cycle track, separated from the road, both sides",
+      "ov.cw.lane": "A painted cycle lane, both sides",
+      "ov.cw.shared_lane": "Bike marks on the road (shared lane)",
+      "ov.cw.share_busway": "Bikes share the bus lane",
+      "ov.cw.separate": "A separate cycleway is drawn next to it",
+      "ov.cw.no": "Nothing for bikes"
     },
     el: {
       "ov.lit.title": "Φωτισμός δρόμων",
@@ -105,7 +121,21 @@
       "ov.sw.left": "Μόνο αριστερά από τα βελάκια",
       "ov.sw.right": "Μόνο δεξιά από τα βελάκια",
       "ov.sw.separate": "Σχεδιασμένο ως ξεχωριστό μονοπάτι",
-      "ov.sw.no": "Χωρίς πεζοδρόμιο"
+      "ov.sw.no": "Χωρίς πεζοδρόμιο",
+      "ov.cycleway.title": "Ποδηλατολωρίδες",
+      "ov.cycleway.q": "Τι έχει για ποδήλατα: {name};",
+      "ov.cycleway.lg.track": "Χωριστός ποδηλατόδρομος",
+      "ov.cycleway.lg.lane": "Βαμμένη ποδηλατολωρίδα",
+      "ov.cycleway.lg.shared": "Κοινή λωρίδα (σήματα ποδηλάτου)",
+      "ov.cycleway.lg.sep": "Ξεχωριστός ποδηλατόδρομος δίπλα",
+      "ov.cycleway.lg.no": "Τίποτα για ποδήλατα",
+      "ov.cycleway.lg.miss": "Άγνωστο ακόμα",
+      "ov.cw.track": "Ποδηλατόδρομος χωριστός από τον δρόμο, και στις δύο πλευρές",
+      "ov.cw.lane": "Βαμμένη ποδηλατολωρίδα, και στις δύο πλευρές",
+      "ov.cw.shared_lane": "Σήματα ποδηλάτου στον δρόμο (κοινή λωρίδα)",
+      "ov.cw.share_busway": "Τα ποδήλατα μοιράζονται τη λεωφορειολωρίδα",
+      "ov.cw.separate": "Δίπλα σχεδιάζεται ξεχωριστός ποδηλατόδρομος",
+      "ov.cw.no": "Τίποτα για ποδήλατα"
     }
   };
   if (typeof window !== "undefined" && window.orosI18n) window.orosI18n.table(STR, "maps", window.orosI18n.lang());
@@ -117,12 +147,13 @@
   }
   function fill(x, k) { var r = L(k); Object.keys(r).forEach(function (c) { x[c] = r[c]; }); return x; }
 
-  var VER = "1.1.0";
+  var VER = "1.2.0";
   var LIM = { els: 2000, pts: 600 };
   // colours (fixed: they sit on the map, not on the page)
   var C = { yes: "#f2c200", no: "#5c6bc0", miss: "#e53935", paved: "#78909c", stones: "#a1887f",
     gravel: "#d4a54a", soft: "#7cb342", other: "#ab47bc", both: "#2e7d32", one: "#9ccc65", sep: "#1e88e5",
-    none: "#757575", num: "#43a047", nonum: "#1e88e5" };
+    none: "#757575", num: "#43a047", nonum: "#1e88e5",
+    cw_track: "#2e7d32", cw_lane: "#f2c200", cw_shared: "#9ccc65", cw_sep: "#1e88e5", cw_no: "#757575" };
 
   function isNum(v) { return typeof v === "number" && isFinite(v); }
   function okLat(v) { return isNum(v) && v >= -90 && v <= 90; }
@@ -188,6 +219,40 @@
     return set;
   }
 
+  // ---------- cycle lanes (wave H7) ----------
+  // → { l, r, scheme } with a cycleway value per side ("" unknown);
+  // scheme as for sidewalks: "plain" (cycleway=), "both", "sub" or "".
+  var CW_VALS = ["track", "lane", "shared_lane", "share_busway", "separate", "no", "opposite_lane", "opposite_track", "opposite", "shoulder"];
+  function cwSides(t) {
+    t = t || {};
+    var l = "", r = "", scheme = "";
+    function v(x) { return x === "none" ? "no" : (CW_VALS.indexOf(x) >= 0 ? x : ""); }
+    if (v(t.cycleway)) { l = r = v(t.cycleway); scheme = "plain"; }
+    if (v(t["cycleway:both"])) { l = r = v(t["cycleway:both"]); scheme = scheme || "both"; }
+    if (v(t["cycleway:left"])) { l = v(t["cycleway:left"]); scheme = scheme || "sub"; }
+    if (v(t["cycleway:right"])) { r = v(t["cycleway:right"]); scheme = scheme || "sub"; }
+    return { l: l, r: r, scheme: scheme };
+  }
+  var CW_RANK = { track: 5, opposite_track: 5, lane: 4, opposite_lane: 4, shoulder: 3, shared_lane: 3, share_busway: 3, opposite: 2, separate: 2, no: 1 };
+  function cwGroup(v) {
+    if (v === "track" || v === "opposite_track") return "track";
+    if (v === "lane" || v === "opposite_lane") return "lane";
+    if (v === "shared_lane" || v === "share_busway" || v === "shoulder" || v === "opposite") return "shared";
+    if (v === "separate") return "sep";
+    if (v === "no") return "no";
+    return "";
+  }
+  var CW_OPTS = ["track", "lane", "shared_lane", "share_busway", "separate", "no"];
+  // Tags for a choice, in the scheme the way already uses (both sides).
+  function cycleSet(t, v) {
+    if (CW_OPTS.indexOf(v) < 0) return null;
+    var s = cwSides(t), set = {};
+    if (s.scheme === "plain") set.cycleway = v;
+    else if (s.scheme === "sub") { set["cycleway:left"] = v; set["cycleway:right"] = v; }
+    else set["cycleway:both"] = v;
+    return set;
+  }
+
   // ---------- overlays ----------
   var OVERLAYS = [
     { id: "lit", icon: "💡", qid: "way_lit", kind: "line", zoom: 16,
@@ -239,6 +304,25 @@
         var s = sides(t);
         return SW_OPTS.filter(function (x) { return s.scheme !== "both" || x.set.l === x.set.r; });
       } },
+    { id: "cycleway", icon: "🚴", qid: "cycleway", kind: "line", zoom: 16,
+      sel: 'way["highway"~"' + re(WALK_HW) + '"]',
+      applies: function (t) { return inList(t.highway, WALK_HW) && t.area !== "yes"; },
+      legend: [["track"], ["lane"], ["shared"], ["sep"], ["no"], ["miss"]],
+      style: function (t) {
+        var s = cwSides(t);
+        var best = (CW_RANK[s.l] || 0) >= (CW_RANK[s.r] || 0) ? s.l : s.r;
+        var g = cwGroup(best);
+        if (!g) return { c: C.miss, dash: true };
+        return { c: C["cw_" + g], dash: s.l !== s.r && (s.l === "" || s.r === "") };
+      },
+      value: function (t) {
+        var s = cwSides(t);
+        if (!s.l && !s.r) return "";
+        return s.l === s.r ? s.l : (s.l || "?") + " | " + (s.r || "?");
+      },
+      options: function (t) {
+        return CW_OPTS.map(function (v) { return o("cw", v, cycleSet(t, v)); });
+      } },
     { id: "address", icon: "🔢", qid: "housenumber", kind: "area", zoom: 17, text: true,
       sel: 'way["building"]',
       applies: function (t) { return !!t.building && t.building !== "no"; },
@@ -280,7 +364,7 @@
   OVERLAYS.forEach(function (x) { BY_ID[x.id] = x; });
   // A legend line's text in a language (l = one entry of ov.legend).
   function legendText(ov, l, lang) { var r = L("ov." + ov.id + ".lg." + l[0]); return r[lang] || r.en; }
-  function legendColor(k) { return C[k] || C.other; }
+  function legendColor(k, ov) { return (ov === "cycleway" && C["cw_" + k]) || C[k] || C.other; }
 
   // ---------- Overpass ----------
   function query(id, s, w, n, e) {
@@ -402,7 +486,7 @@
 
   var api = {
     VER: VER, LIM: LIM, OVERLAYS: OVERLAYS, BY_ID: BY_ID, SW_OPTS: SW_OPTS,
-    sides: sides, sidewalkSet: sidewalkSet, buildingSet: buildingSet, buildingKinds: buildingKinds, query: query, parse: parse, middle: middle,
+    sides: sides, sidewalkSet: sidewalkSet, cwSides: cwSides, cycleSet: cycleSet, buildingSet: buildingSet, buildingKinds: buildingKinds, query: query, parse: parse, middle: middle,
     bearing: bearing, arrows: arrows, answer: answer, legendColor: legendColor, legendText: legendText, text: text
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

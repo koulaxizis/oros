@@ -2097,3 +2097,27 @@ body.trn-itin .route-alt { opacity: 0.25; }
 .trk-pt-row { align-items: center; gap: 8px; }
 .trk-pt-img { width: 56px; height: 56px; object-fit: cover; border-radius: 8px; flex-shrink: 0; }
 .trk-pt-file { width: 100%; box-sizing: border-box; }
+
+/* ---------- Hiking and cycling, wave H6: Where am I ---------- */
+.wh-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+.wh-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.wh-lab { font-size: 11px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .04em; }
+.wh-val { font-size: 14px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.wh-copy { flex-shrink: 0; min-height: 32px; }
+.wh-facts { margin: 8px 0; overflow-wrap: anywhere; }
+.wh-compass { display: flex; align-items: center; gap: 12px; margin: 10px 0; }
+.wh-dial { position: relative; width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--border); flex-shrink: 0; }
+.wh-n { position: absolute; top: 2px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; color: #e06c75; }
+.wh-needle { position: absolute; left: 50%; top: 50%; width: 0; height: 0; margin: -18px 0 0 -6px; transform-origin: 6px 18px;
+  border-left: 6px solid transparent; border-right: 6px solid transparent; border-bottom: 18px solid #e06c75; transition: transform .2s linear; }
+.wh-ctext { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.wh-facing { font-size: 14px; }
+.wh-sun { margin: 6px 0 10px; }
+.wh-call { text-decoration: none; text-align: center; border-color: var(--danger); color: var(--danger); font-weight: 700; }
+.wh-sms { text-decoration: none; text-align: center; }
+.wh-help { margin: 0 0 8px; }
+
+/* ---------- Hiking and cycling, wave H7: report a problem on a path ---------- */
+.trl-prob-btn { margin-top: 8px; width: 100%; }
+.trl-prob-list { display: flex; flex-direction: column; gap: 6px; }
+.trl-prob-list .osm-btn { text-align: left; white-space: normal; min-height: 40px; }

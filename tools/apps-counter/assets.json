@@ -45,7 +45,8 @@
       "oros-base.apk": "online.useoros.base",
       "oros-studioremote.apk": "online.useoros.studioremote",
       "oros-drive.apk": "online.useoros.drive",
-      "oros-glarolykoi.apk": "net.glarolykoi.android"
+      "oros-glarolykoi.apk": "net.glarolykoi.android",
+      "oros-waymark.apk": "site.waymarked.app"
     },
     "koulaxizis-apps": {
       "koulaxizis-apps.apk": "gr.koulaxizis.apps"

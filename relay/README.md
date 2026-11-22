@@ -123,7 +123,7 @@ with each call; the relay stores and logs nothing.
 | `token` | `code`, `verifier` (PKCE), `redirect` (a page of an allowed origin) | `{ access, refresh, expires, scope }` |
 | `refresh` | `refresh` | same (Canva refresh tokens work once) |
 | `designs` | `token`, `cont?`, `query?` | `{ items[{ id, title, thumb, tw, th, pages, updated, types }], cont }` |
-| `export` | `token`, `id` | `{ job, status, urls, err }` (PowerPoint export) |
+| `export` | `token`, `id`, `kind?` (`"pptx"` default, or `"pdf"`) | `{ job, status, urls, err }` (PowerPoint export, or Canva's PDF of the design for its effects) |
 | `job` | `token`, `job` | same |
 | `file` | `url` (https, `*.canva.com` only, every redirect hop checked) | the file's bytes, `application/octet-stream`, ≤60 MB |
 

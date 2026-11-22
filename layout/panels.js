@@ -12,7 +12,7 @@
 
   var LY = window.LY, M = LY.M, R = LY.R, T = LY.T, t = LY.t, $ = LY.$, el = LY.el;
   var ED = LY.ed, BL = window.LayoutBlend;
-  var TABS = ["props", "pages", "styles", "colors"];
+  var TABS = ["props", "pages", "styles", "colors", "learn"];
   var tab = "props";
 
   // ---------- Form helpers ----------
@@ -180,6 +180,7 @@
     if (tab === "props") buildProps(body);
     else if (tab === "pages") buildPages(body);
     else if (tab === "styles") buildStyles(body);
+    else if (tab === "learn" && LY.startUI) LY.startUI.learn(body);
     else buildColors(body);
     body.scrollTop = scroll;
   }
@@ -784,28 +785,14 @@
   // before it goes out. Pages in order, as many as both have.
   var cmpBusy = false;
   function compareDlg() {
-    var doc = LY.doc, RB = window.LY_REBUILD;
-    if (!doc || !RB || cmpBusy) return;
+    var doc = LY.doc;
+    if (!doc || !window.LY_REBUILD || cmpBusy) return;
     LY.io.pickFile(".pdf,application/pdf").then(function (f) {
       if (!f) return;
       cmpBusy = true;
       LY.toast(t("cmp.working"));
-      var order = M.pagesInOrder(doc), L = ED.L || LY.R.computeLayout(doc), chain = Promise.resolve();
-      doc.items.forEach(function (it) { if (it.t === "img" && it.a) chain = chain.then(function () { return LY.A.load(it.a); }).then(null, function () {}); });
-      var ours = function (i, w, h) {
-        var pg = order[i];
-        if (!pg) return null;
-        var sz = M.pageSize ? M.pageSize(doc, pg) : doc.setup;
-        var full = LY.R.renderPage(doc, pg, L, w / sz.w, { getImage: LY.A.get, background: "#fff" });
-        var c = document.createElement("canvas"); c.width = w; c.height = h;
-        var x = c.getContext("2d", { willReadFrequently: true });
-        x.fillStyle = "#fff"; x.fillRect(0, 0, w, h);
-        x.drawImage(full, 0, 0, w, h);
-        return c;
-      };
-      chain.then(function () { return f.arrayBuffer(); }).then(function (buf) {
-        return RB.compare(buf, ours, order.length, { dpi: 50 });
-      }).then(function (res) {
+      // the PDF may have pages before ours (an e-book's cover): found first (LY-PORT3)
+      LY.io.compareDoc(doc, f, { shift: "auto" }).then(function (res) {
         cmpBusy = false;
         compareReport(doc, res, f.name || "PDF");
       }, function (e) {
@@ -823,6 +810,7 @@
     LY.openDialog(t("cmp.title"), function (body, close) {
       body.appendChild(el("p", "", t("cmp.sum", { f: name, n: pages.length, p: fmt(mean) })));
       if (res.total !== res.of) body.appendChild(el("p", "hint", t("cmp.count", { a: res.total, b: res.of })));
+      if (res.shift > 0) body.appendChild(el("p", "hint", t("port.shift", { n: res.shift })));
       body.appendChild(el("p", "hint", over.length === 1 ? t("cmp.over1") : over.length ? t("cmp.over", { n: over.length }) : t("cmp.allOk")));
       body.appendChild(el("p", "hint", t("cmp.hint")));
       var list = el("div", "cmp-list");
@@ -1501,6 +1489,12 @@
     var s = newDocSetup();
     var pick = "";
     LY.openDialog(t("new.title"), function (body, close) {
+      // a book, step by step (LY-N1, startui.js)
+      if (LY.startUI) {
+        var sb = btn(t("start.open"), function () { close(); LY.startUI.open(); });
+        sb.classList.add("st-open");
+        body.appendChild(sb);
+      }
       var name = el("input", "inp"); name.type = "text"; name.maxLength = 120; name.value = t("doc.untitled");
       body.appendChild(field(t("new.name"), name));
       // start from: blank or one of the templates (page 1 as a thumbnail)

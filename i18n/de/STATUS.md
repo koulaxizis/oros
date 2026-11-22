@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 50173 of 50180 (99%)
+- Strings: 50434 of 50441 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,7 +16,7 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 2147 / 2147 |
+| assistant | 100% | 2172 / 2172 |
 | atelier | 100% | 1507 / 1507 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 332 / 332 |
@@ -82,7 +82,7 @@ en and el); translators change them there, not in a pack.
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 358 / 358 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 1194 / 1194 |
+| layout | 100% | 1265 / 1265 |
 | library | 100% | 330 / 330 |
 | lighthouse | 100% | 215 / 215 |
 | lightsout | 100% | 52 / 52 |
@@ -91,7 +91,7 @@ en and el); translators change them there, not in a pack.
 | mahjong | 100% | 70 / 70 |
 | mail | 100% | 504 / 504 |
 | mancala | 100% | 61 / 61 |
-| maps | 100% | 1538 / 1538 |
+| maps | 100% | 1692 / 1692 |
 | mastermind | 100% | 74 / 74 |
 | maze | 100% | 123 / 123 |
 | meals | 100% | 466 / 466 |
@@ -139,10 +139,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2015 / 2015 |
+| settings | 100% | 2020 / 2020 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1565 / 1565 |
+| shell | 100% | 1571 / 1571 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |

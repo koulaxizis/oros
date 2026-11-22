@@ -10,14 +10,19 @@
 //     rules mixed with times it can't place) gives "unknown", never a
 //     wrong "open".
 //   - Nearby places: categories, the Overpass query around a point,
-//     parsing and sorting by distance.
+//     parsing and sorting by distance. Since wave H6 (hiking and
+//     cycling, v1.1.0) also outdoor categories (water and springs,
+//     shelters and huts, peaks and viewpoints, camping and picnic, bike
+//     repair and parking) with the kind, the height, "drinking water"
+//     yes / no / not known, seasonal and fee; a category may union
+//     several Overpass filters (q as a list).
 //   - Wikipedia geosearch URL + parsing, Panoramax search URL +
 //     parsing. All three are free, keyless and CORS-open.
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
   var DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
   var DAY_MIN = 1440;
 
@@ -179,8 +184,44 @@
     { id: "fuel", q: '["amenity"~"^(fuel|charging_station)$"]', icon: "⛽" },
     { id: "toilets", q: '["amenity"="toilets"]', icon: "🚻" },
     { id: "museum", q: '["tourism"~"^(museum|gallery|attraction|viewpoint)$"]', icon: "🏛" },
-    { id: "park", q: '["leisure"~"^(park|playground)$"]', icon: "🌳" }
+    { id: "park", q: '["leisure"~"^(park|playground)$"]', icon: "🌳" },
+    // wave H6: outdoors (out: no opening hours expected)
+    { id: "water", out: 1, icon: "💧", q: ['["amenity"="drinking_water"]', '["natural"="spring"]', '["man_made"="water_tap"]', '["amenity"="water_point"]'] },
+    { id: "shelter", out: 1, icon: "🛖", q: ['["amenity"="shelter"]', '["tourism"~"^(alpine_hut|wilderness_hut)$"]'] },
+    { id: "peak", out: 1, icon: "⛰", q: ['["natural"~"^(peak|saddle|volcano)$"]', '["tourism"="viewpoint"]'] },
+    { id: "camp", out: 1, icon: "⛺", q: ['["tourism"~"^(camp_site|picnic_site)$"]', '["leisure"~"^(picnic_table|firepit)$"]'] },
+    { id: "bike", out: 1, icon: "🚲", q: ['["amenity"~"^(bicycle_repair_station|bicycle_rental|compressed_air)$"]', '["shop"="bicycle"]', '["amenity"="bicycle_parking"]["access"!~"^(private|customers)$"]'] }
   ];
+  // the specific kind of an outdoor place (for its label)
+  var KINDS = [
+    ["natural", "spring"], ["amenity", "drinking_water"], ["man_made", "water_tap"], ["amenity", "water_point"],
+    ["tourism", "alpine_hut"], ["tourism", "wilderness_hut"], ["amenity", "shelter"],
+    ["natural", "peak"], ["natural", "volcano"], ["natural", "saddle"], ["tourism", "viewpoint"],
+    ["tourism", "camp_site"], ["tourism", "picnic_site"], ["leisure", "picnic_table"], ["leisure", "firepit"],
+    ["amenity", "bicycle_repair_station"], ["amenity", "bicycle_rental"], ["amenity", "compressed_air"], ["shop", "bicycle"], ["amenity", "bicycle_parking"]
+  ];
+  function kindOf(t) {
+    for (var i = 0; i < KINDS.length; i++) if (t[KINDS[i][0]] === KINDS[i][1]) return KINDS[i][1];
+    return "";
+  }
+  // "1120", "1120 m", "1,120.5" → metres, or null (feet are converted)
+  function eleOf(s) {
+    if (typeof s !== "string") return null;
+    var m = /^\s*(-?\d{1,5}(?:[.,]\d+)?)\s*(m|ft|')?\s*$/i.exec(s.replace(/(\d),(\d{3})(?!\d)/, "$1$2"));
+    if (!m) return null;
+    var v = parseFloat(m[1].replace(",", "."));
+    if (m[2] && /^(ft|')$/i.test(m[2])) v *= 0.3048;
+    return v > -500 && v < 9000 ? Math.round(v) : null;
+  }
+  // drinking water: "yes" | "no" | "" (not known); a drinking_water
+  // amenity is drinkable unless tagged otherwise
+  function drinkOf(t, kind) {
+    var d = t.drinking_water;
+    if (d === "no" || d === "not_recommended" || t["drinking_water:legal"] === "no") return "no";
+    if (d === "yes" || d === "treated" || d === "conditional") return "yes";
+    if (kind === "drinking_water") return "yes";
+    return "";
+  }
   function catById(id) {
     for (var i = 0; i < CATS.length; i++) if (CATS[i].id === id) return CATS[i];
     return null;
@@ -190,7 +231,9 @@
     var c = catById(catId);
     if (!c || !isFinite(lat) || !isFinite(lon)) return "";
     var r = Math.max(100, Math.min(5000, Math.round(radius || 1500)));
-    return "[out:json][timeout:20];nwr" + c.q + "(around:" + r + "," + r6(lat) + "," + r6(lon) + ");out tags center 200;";
+    var around = "(around:" + r + "," + r6(lat) + "," + r6(lon) + ")";
+    if (Array.isArray(c.q)) return "[out:json][timeout:20];(" + c.q.map(function (q) { return "nwr" + q + around + ";"; }).join("") + ");out tags center 200;";
+    return "[out:json][timeout:20];nwr" + c.q + around + ";out tags center 200;";
   }
   function dist(a, b) {
     var R = 6371008.8, rad = Math.PI / 180;
@@ -216,7 +259,10 @@
       var t = e.tags;
       var name = clean((lang && t["name:" + lang]) || t.name || t.brand || t.operator || "", 120);
       var site = clean(t.website || t["contact:website"] || "", 300);
+      var kind = kindOf(t);
       out.push({
+        kind: kind, ele: eleOf(t.ele), drink: drinkOf(t, kind),
+        seasonal: t.seasonal && t.seasonal !== "no" ? 1 : 0, fee: t.fee === "yes" ? 1 : 0,
         id: id, cat: catId, lat: lat, lon: lon, name: name,
         hours: clean(t.opening_hours || "", 600),
         phone: clean(t.phone || t["contact:phone"] || "", 60),
@@ -298,7 +344,7 @@
   }
 
   var api = {
-    VER: VER, DAYS: DAYS, CATS: CATS, PANORAMAX: PANORAMAX,
+    VER: VER, DAYS: DAYS, CATS: CATS, PANORAMAX: PANORAMAX, eleOf: eleOf, kindOf: kindOf, drinkOf: drinkOf,
     parseHours: parseHours, status: status,
     catById: catById, nearbyQuery: nearbyQuery, parseNearby: parseNearby, dist: dist, radiusFor: radiusFor,
     wikiUrl: wikiUrl, parseWiki: parseWiki, photosUrl: photosUrl, parsePhotos: parsePhotos

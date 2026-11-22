@@ -12,7 +12,7 @@ Gib einen Ort oder eine Adresse in `Ort suchen…` ein. Vorschläge erscheinen a
 
 - Das Popup einer Stecknadel hat `Speichern` (Stern), `Route` (von deinem Standort dorthin) und `Von hier`.
 - Klicke mit der rechten Maustaste auf die Karte oder drücke am Handy lange, um einen beliebigen Punkt zu nutzen: `Hierhin`, `Hier starten`, `Als Zwischenstopp` (sobald eine Route steht) und `Speichern`.
-- Langes Drücken bietet auch `Entfernung messen` und `Hier geparkt` (siehe Messen und Parken unten).
+- Langes Drücken bietet auch `Entfernung messen` und `Hier geparkt` (siehe Messen und Parken unten) sowie `Wo bin ich` und `Koordinaten dieses Punkts` (siehe Wandern und Radfahren).
 - `Gespeicherte Orte` listet alles, was du mit dem Stern markiert hast. Tippe auf einen Ort, um dorthin zu fliegen. Der Stift benennt ihn um (`Ort umbenennen`) und das × löscht ihn, mit `Rückgängig`.
 
 ### Favoritengruppen
@@ -26,7 +26,7 @@ Gib einen Ort oder eine Adresse in `Ort suchen…` ein. Vorschläge erscheinen a
 
 Die Kompass-Taste öffnet `Entdecken`, das sich rund um die Kartenmitte umsieht. Langes Drücken › `Was ist in der Nähe` macht dasselbe für einen beliebigen Punkt.
 
-- **Orte**: wähle eine Art (Restaurants, Cafés, Bars, Fast Food, Supermärkte, Bäckereien, Apotheken, Geldautomaten und Banken, Tanken und Laden, Toiletten, Sehenswürdigkeiten und Museen, Parks). Jeder Ort zeigt, ob er gerade geöffnet hat und wann er schließt oder öffnet, gelesen aus seinen Öffnungszeiten in OpenStreetMap; `Jetzt geöffnet` behält nur die offenen. Tippe auf einen für Öffnungszeiten, Adresse, Telefon und Website, `Hierhin` und `Speichern`.
+- **Orte**: wähle eine Art (Restaurants, Cafés, Bars, Fast Food, Supermärkte, Bäckereien, Apotheken, Geldautomaten und Banken, Tanken und Laden, Toiletten, Sehenswürdigkeiten und Museen, Parks, und für draußen Wasser und Quellen, Schutzhütten, Gipfel und Aussicht, Camping und Picknick, Radreparatur und -parken). Jeder Ort zeigt, ob er gerade geöffnet hat und wann er schließt oder öffnet, gelesen aus seinen Öffnungszeiten in OpenStreetMap; `Jetzt geöffnet` behält nur die offenen. Tippe auf einen für Öffnungszeiten, Adresse, Telefon und Website, `Hierhin` und `Speichern`. Orte draußen zeigen stattdessen, was sie sind (Quelle, Berghütte, Pass…), ihre Höhe und beim Wasser, ob es als Trinkwasser, kein Trinkwasser oder unbekannt eingetragen ist: grün, rot oder grau.
 - **Touren**: die markierten Wander-, Rad- und MTB-Routen, die durch die Karte laufen, die nächsten zuerst (zoome etwa auf eine Stadt heran, um sie zu sehen). `Alle`, `Wandern`, `Rad` oder `MTB` wählt die Art. Tippe auf eine für ihre Seite: die ganze Route auf der Karte, von wo nach wo, ihre Länge, das Höhenprofil mit Anstieg und Abstieg und beim Wandern die Gehzeit in beide Richtungen nach der Wanderregel DIN 33466. `Zum Start` plant eine Route dorthin, `In Meine Strecken speichern` behält sie zum späteren Folgen, `GPX herunterladen` speichert eine Datei, und die Links öffnen sie auf Waymarked Trails und OpenStreetMap.
 - **Wikipedia**: Artikel über Orte um dich herum, in der Sprache von orOS, mit Bild, wenn es eins gibt. Das Popup verlinkt den Artikel.
 - **Fotos**: Straßenfotos von Panoramax, der offenen Alternative zu Street View, sobald du nah heranzoomst. Der Pfeil am Punkt zeigt, in welche Richtung das Foto blickt; tippe auf ein Foto, um es größer zu sehen und in Panoramax zu öffnen.
@@ -100,6 +100,8 @@ Sie kommen von Waymarked Trails. Schalte so viele ein, wie du willst; dieses Ger
 - wie gut der Pfad im Gelände sichtbar ist, die Steigung, die Breite, und ob du dort gehen, fahren oder reiten darfst;
 - die markierten Routen, zu denen er gehört (international, national, regional oder lokal), mit `Waymarked Trails`, um die ganze Route zu sehen.
 
+`Problem auf diesem Weg melden` (ganz unten) wählt, was nicht stimmt (gesperrt, zugewachsen, Markierungen fehlen, Brücke oder Stufen beschädigt, den Weg gibt es nicht mehr, gefährlich, etwas anderes), und öffnet an der Stelle einen neuen OpenStreetMap-Hinweis, in dem der Weg und sein Link schon stehen; ergänze Details und sende ihn wie jeden Hinweis (siehe OpenStreetMap-Hinweise).
+
 Um die markierten Routen um dich herum zu durchsuchen, öffne Entdecken › `Touren`.
 
 Es wird nur gezeigt, was kartiert ist. Fehlt eine Angabe, ist sie noch nicht bekannt; du kannst sie mit Fragen oder Orte bearbeiten ergänzen. Offline-Karten zeichnen Radwege jetzt blau, Feldwege braun und Fußpfade rot, alle gestrichelt.
@@ -110,6 +112,8 @@ Es wird nur gezeigt, was kartiert ist. Fehlt eine Angabe, ist sie noch nicht bek
 - Fahrrad: `Touren` (Standardwahl: Radwege und ruhige Straßen, etwas Schotter), `Rennrad` (glatter Asphalt), `Ruhige Straßen` (meidet stark befahrene Straßen), `Gravel`, `Mountainbike` und `Standard` (der schnellste Weg).
 
 Diese Routen kommen von BRouter. Die Routenleiste zeigt dann Anstieg und Abstieg (↗ ↘), und die `Wegbeschreibung` zeigt das Höhenprofil entlang der Route, den tiefsten und höchsten Punkt und zwei Balken: die `Oberfläche` (befestigt, Schotter, Erde, unbekannt) und die `Art des Weges` (Straße, Feldweg, Pfad, Radweg, Treppe), jeweils mit ihrem Anteil an der Route. Die Gehzeit folgt der Wanderregel DIN 33466: 4 km/h in der Ebene, 300 m bergauf oder 500 m bergab pro Stunde. Antwortet BRouter nicht, bekommst du die Standardroute und eine Meldung. Unter `Karten-Einstellungen` › `Wegerouter` kannst du statt brouter.de deinen eigenen BRouter-Server nutzen. Die Routentypen bleiben auf diesem Gerät.
+
+**Wo bin ich**: Tippe auf deine Position (die lila Nadel) › `Wo bin ich`, oder drücke lange irgendwo › `Wo bin ich`. Du bekommst deine Position in Dezimalgrad, Grad-Minuten-Sekunden, Grad und Minuten (wie GPS-Geräte sie zeigen) und UTM, jeweils mit `Kopieren`, dazu Genauigkeit, Höhe und die nächste Adresse. `Kompass einschalten` zeigt, wohin du schaust (auf dem iPhone fragt es zuerst nach dem Bewegungssensor). Darunter stehen der heutige Sonnenauf- und -untergang dort und wie viel Tageslicht bleibt. `112 anrufen` wählt die europäische Notrufnummer (sie funktioniert auch ohne SIM-Karte oder Guthaben), und `Position per SMS senden` öffnet eine Nachricht mit Koordinaten, Genauigkeit, Höhe, Uhrzeit und Kartenlink, schon ausgefüllt: Du wählst, wer sie bekommt, und sendest sie selbst. Langes Drücken › `Koordinaten dieses Punkts` zeigt dieselben Formate für jeden Punkt. Karten speichert oder sendet hier nichts.
 
 ## OpenStreetMap-Hinweise
 
@@ -157,7 +161,7 @@ Ein oranger Ring um einen Punkt heißt, dem Ort fehlt etwas Wichtiges (sein Name
 
 Hilf OpenStreetMap, indem du kleine Fragen zu deiner Umgebung beantwortest. Du musst keine Tags kennen.
 
-1. Tippe auf `Fragen` (die Stecknadel mit Fragezeichen) und zoome auf Straßenebene. Stecknadeln zeigen die offenen Fragen: 🪑 Lehne der Bank, 🚏 Wartehäuschen, 🚌 Bank an der Haltestelle, 🚸 Art des Übergangs, 💡 Straßenbeleuchtung, 🛣️ Belag, 🕒 Öffnungszeiten, ♿ Rollstuhlzugang, 🚻 Toilettengebühr, ♻️ Recycling, 🛐 Religion, 🏢 Stockwerke, 🔢 Hausnummer, 🛝 Zugang zum Spielplatz, 🚬 Rauchen, 🏧 Geldautomat an der Bank, 🚦 Tempolimit, 🏷️ Straßenname, 🪜 Anzahl der Stufen, 🤚 Handlauf, 🦯 Blindenleitsystem am Übergang, 🪧 Name der Haltestelle, 🚧 Schranke am Bahnübergang, 🅿️ Parkgebühr, 🚗 Art des Parkplatzes, 🚲 Fahrradstellplätze, ☂️ überdachte Fahrradstellplätze, 🥗 vegetarisches Essen, 🌱 veganes Essen, 💳 Zahlungsarten, 📶 WLAN, 🚾 Rollstuhl-WC, ❤️ Defibrillator drinnen, 🧯 Hydrant, 📮 Leerungszeiten, 🏠 Gebäudeart.
+1. Tippe auf `Fragen` (die Stecknadel mit Fragezeichen) und zoome auf Straßenebene. Stecknadeln zeigen die offenen Fragen: 🪑 Lehne der Bank, 🚏 Wartehäuschen, 🚌 Bank an der Haltestelle, 🚸 Art des Übergangs, 💡 Straßenbeleuchtung, 🛣️ Belag, 🕒 Öffnungszeiten, ♿ Rollstuhlzugang, 🚻 Toilettengebühr, ♻️ Recycling, 🛐 Religion, 🏢 Stockwerke, 🔢 Hausnummer, 🛝 Zugang zum Spielplatz, 🚬 Rauchen, 🏧 Geldautomat an der Bank, 🚦 Tempolimit, 🏷️ Straßenname, 🪜 Anzahl der Stufen, 🤚 Handlauf, 🦯 Blindenleitsystem am Übergang, 🪧 Name der Haltestelle, 🚧 Schranke am Bahnübergang, 🅿️ Parkgebühr, 🚗 Art des Parkplatzes, 🚲 Fahrradstellplätze, ☂️ überdachte Fahrradstellplätze, 🥗 vegetarisches Essen, 🌱 veganes Essen, 💳 Zahlungsarten, 📶 WLAN, 🚾 Rollstuhl-WC, ❤️ Defibrillator drinnen, 🧯 Hydrant, 📮 Leerungszeiten, 🏠 Gebäudeart, und für Wandernde und Radfahrende 🥾 Wanderschwierigkeit (T1 bis T6), 👀 wie gut ein Pfad sichtbar ist, 🚜 wie fest ein Feldweg ist, 🚲 Räder auf dem Weg, ↔️ getrennte Spuren für Rad und Fußgänger, 🛞 Schieberinne an Treppen, 💧 Trinkwasser an Quelle oder Hahn, 🛖 Art der Schutzhütte.
 2. Tippe auf eine Stecknadel (oder eine Zeile der Liste) und dann auf die Antwort. Die nächste Frage in der Nähe öffnet sich von selbst.
 3. `Weiß nicht` überspringt die Frage vorerst. `Hier ausblenden` blendet sie für diesen Ort auf all deinen Geräten aus. `Gibt es nicht mehr` öffnet an der Stelle einen neuen Hinweis, damit Kartierende nachsehen können.
 4. Manche Antworten veralten: Karten fragt nach einigen Jahren erneut (Öffnungszeiten nach einem Jahr), und `Immer noch gleich` bestätigt sie.
@@ -176,6 +180,7 @@ Eine Ebene färbt die Straßen oder Gebäude um dich herum nach einer Eigenschaf
 - 💡 `Straßenbeleuchtung`: beleuchtet oder nicht.
 - 🛣️ `Belag`: Asphalt, Pflaster, Schotter, Erde und mehr.
 - 🚶 `Gehwege`: auf beiden Seiten, einer Seite, ein eigener Weg oder keiner. Pfeile auf der gewählten Straße zeigen ihre Richtung: links und rechts gelten so, wie du sie siehst, wenn du in diese Richtung gehst.
+- 🚴 `Radwege`: ein baulich getrennter Radweg, ein markierter Radfahrstreifen, Radpiktogramme auf einer gemeinsamen Spur, ein eigener Radweg neben der Straße oder nichts für Räder.
 - 🔢 `Adressen`: welche Gebäude eine Hausnummer haben. Gib die Nummer ein oder tippe auf `Es hat keine Nummer`.
 - 🏢 `Gebäude`: Stockwerke und Gebäudeart in einem Formular (leere Felder bleiben, wie sie sind).
 

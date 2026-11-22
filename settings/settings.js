@@ -419,6 +419,12 @@
       grid.appendChild(b);
     });
     c3.appendChild(grid);
+    if (s.viz) {                                       // Light show (VIZWALL-1): the style
+      var vst = (s.viz.styles || ["glow"]).map(function (v) { return { value: v, label: t("a.wallpaper.viz." + v) }; });
+      c3.appendChild(row(t("a.wallpaper.viz.style"), segmented(vst, s.viz.style, "wpviz:style",
+        function (v) { set("wpviz:style", v); }, t("a.wallpaper.viz.style")), { stack: true }));
+      c3.appendChild(el("p", "hint", t("a.wallpaper.viz.hint")));
+    }
     if (s.land) {                                      // Living land: style, motion, another shape
       var lst = (s.land.styles || ["islands"]).map(function (v) { return { value: v, label: t("a.wallpaper.land." + v) }; });
       c3.appendChild(row(t("a.wallpaper.land.style"), segmented(lst, s.land.style, "wpland:style",
@@ -1731,6 +1737,14 @@
         c.appendChild(fb);
         localSection(c, G);
       }
+      // GL-7 (Chris 2026-11-21): update orOS on the other devices from here (the phone)
+      if (typeof G.askUpdate === "function") {
+        var ub = el("div", "gt-folders");
+        ub.appendChild(el("div", "pair-label", t("gt.upd.title")));
+        ub.appendChild(el("div", "hint", updMsg || t("gt.upd.hint")));
+        ub.appendChild(button(t("gt.upd.btn"), "gt.upd.btn", function () { updMsg = t(G.askUpdate() ? "gt.upd.sent" : "gt.upd.off"); render(); }, "btn-sm"));
+        c.appendChild(ub);
+      }
       // GATE-HOST (PEND-1 wave 2): an installed orOS Portable or orOS USB
       // keeps the Gate open in the background while every window is closed.
       if (G.host && typeof G.host.state === "function") {
@@ -1856,7 +1870,7 @@
   // Layout may read through orOS Gate (read roots) and write proofs and
   // print PDFs to (write roots), picked with the browser's folder
   // picker; localroots.js in the shell keeps them (this device only).
-  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null;
+  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null, updMsg = "";
   function localApi() { var p = parentWin(); try { return p && p.orosLocal ? p.orosLocal : null; } catch (e) { return null; } }
   function localSection(c, G) {
     var L = localApi();

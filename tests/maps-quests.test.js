@@ -17,8 +17,8 @@ const node = (id, tags, ts) => ({ t: "n", id, lat: 37.98, lon: 23.72, tags, ts: 
 const way = (id, tags, ts) => ({ t: "w", id, lat: 37.98, lon: 23.72, tags, ts: ts || NOW - 86400000 });
 const ids = (els, opts) => Q.openQuests(els, Object.assign({ now: NOW }, opts)).map((x) => x.el.t + x.el.id + ":" + x.q.id + ":" + x.mode);
 
-test("36 quests (16 + 20 in wave 8), unique ids, every text in EN and EL, every option tag valid", () => {
-  assert.equal(Q.QUESTS.length, 36);
+test("44 quests (16 + 20 in wave 8 + 8 in wave H7), unique ids, every text in EN and EL, every option tag valid", () => {
+  assert.equal(Q.QUESTS.length, 44);
   const seen = new Set();
   Q.QUESTS.forEach((q) => {
     assert.ok(!seen.has(q.id)); seen.add(q.id);

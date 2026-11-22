@@ -25,7 +25,7 @@
 (function (root) {
   "use strict";
   var ROOT = "/internal", TRASH = ROOT + "/.trash";
-  var FOLDERS_MAX = 50, LIST_MAX = 200, DEPTH_MAX = 3, READ_MAX = 100000, WRITE_BYTES = 1048576, PATHS_MAX = 50;
+  var FOLDERS_MAX = 50, LIST_MAX = 200, DEPTH_MAX = 3, READ_MAX = 100000, WRITE_BYTES = 1048576, BLOB_BYTES = 25 * 1048576, PATHS_MAX = 50;
   var BAD = /[\\/:*?"<>|\u0000-\u001f]/;
   // Names that look like keys or secrets: never listed, read or written,
   // whatever folder they are in (the list only grows).
@@ -38,6 +38,7 @@
   var MEDIA = { wav: 1, mp3: 1, flac: 1, ogg: 1, oga: 1, opus: 1, m4a: 1, aac: 1, aif: 1, aiff: 1, mp4: 1, mov: 1, mkv: 1, webm: 1, avi: 1, m4v: 1 };
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
+  function isBlob(v) { return !!v && typeof v === "object" && typeof v.size === "number" && typeof v.arrayBuffer === "function"; }
   function bad(msg) { return { ok: false, err: msg }; }
   function baseName(p) { return String(p).slice(String(p).lastIndexOf("/") + 1); }
   function parentOf(p) { var i = String(p).lastIndexOf("/"); return i > 0 ? p.slice(0, i) : "/"; }
@@ -142,6 +143,18 @@
     a = isObj(a) ? a : {};
     var p = normPath(a.path), why = reach(p, folders);
     if (why) return bad(why);
+    // GL-8: a file of any kind Claude uploaded through orOS Gate (relay
+    // files_upload), opened on the device into a Blob: only a new file
+    if (isBlob(a.blob)) {
+      if (a.text !== undefined) return bad("Give text or upload, not both.");
+      if (a.blob.size > BLOB_BYTES) return bad("The file is " + a.blob.size + " bytes; an upload takes at most " + BLOB_BYTES + " (25 MB).");
+      var eb = validName(baseName(p));
+      if (eb) return bad(eb);
+      if (a.mode != null && a.mode !== "" && a.mode !== "create") return bad("An upload makes a new file (mode create).");
+      if (folders.indexOf(p) >= 0) return bad("\"" + show(p) + "\" is one of Claude's folders itself, not a file.");
+      if (cur && cur.st) return bad("\"" + show(p) + "\" already exists" + (cur.st.dir ? " (a folder)" : " (version " + (cur.v || "?") + ")") + ". Pick another name.");
+      return { ok: true, step: { k: "make", path: p, blob: a.blob } };
+    }
     if (typeof a.text !== "string") return bad("text must be the file's whole new content (text only; at most 1 MB).");
     var bytes = utf8Len(a.text);
     if (bytes > WRITE_BYTES) return bad("The text is " + bytes + " bytes; files_write takes at most " + WRITE_BYTES + " (1 MB).");
@@ -260,7 +273,8 @@
         return chk.then(function (why) {
           if (why) { fail = why; return; }
           if (x.k === "make") {
-            return Promise.resolve(fs.writeText(x.path, x.text)).then(function () { return Promise.all([statOf(fs, x.path), verOf(x.path)]); })
+            if (x.blob && typeof fs.write !== "function") { fail = "This device's orOS cannot write files of this kind yet."; return; }
+            return Promise.resolve(x.blob ? fs.write(x.path, x.blob) : fs.writeText(x.path, x.text)).then(function () { return Promise.all([statOf(fs, x.path), verOf(x.path)]); })
               .then(function (r) { done.push({ k: "unmake", path: x.path, st: r[0], v: r[1] }); });
           }
           if (x.k === "replace") {

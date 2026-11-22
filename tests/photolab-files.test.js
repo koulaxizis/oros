@@ -104,7 +104,7 @@ test("psd: raw, ZIP and ZIP-with-prediction channels; the mask stays a mask; gro
       ch: [{ id: 0, bytes: raw(R) }, { id: 1, bytes: zip(G) }, { id: 2, bytes: zipPred(B, 4) }, { id: -1, bytes: raw(A) },
            { id: -2, bytes: raw(mask) }], mask: [0, 0, 2, 2, 255, 0] },
     { rect: [0, 0, 0, 0], ch: [], section: 1, op: 128, flags: 2, name: "Group" },
-    { rect: [1, 1, 2, 2], key: "fsub", name: "Odd blend", ch: [{ id: 0, bytes: raw([1]) }, { id: 1, bytes: raw([2]) }, { id: 2, bytes: raw([3]) }] }
+    { rect: [1, 1, 2, 2], key: "zzzz", name: "Odd blend", ch: [{ id: 0, bytes: raw([1]) }, { id: 1, bytes: raw([2]) }, { id: 2, bytes: raw([3]) }] }
   ] });
   const r = await PSD.read(file);
   assert.equal(r.layers.length, 2);

@@ -96,13 +96,153 @@
       "info.file": "File", "info.format": "Format", "info.size": "Size", "info.genre": "Genre", "info.year": "Year", "info.track": "Track",
       "info.length": "Length",
       "liked.empty": "Songs you like appear here. Tap the heart on any song.",
-      "home.free": "Free music", "home.freeSub": "Open catalogues: Jamendo, Internet Archive, Openverse and ccMixter. Every song shows its licence.",
+      "home.free": "Free music", "home.freeSub": "Open catalogues: Jamendo, Internet Archive, Free Music Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Musopen, the National Jukebox, Europeana and DPLA. Every song shows its licence (Audius: free to listen).",
       "home.genres": "Free music by genre", "kind.free": "Free music", "home.moods": "Moods (Jamendo)", "kind.mood": "Mood",
       "o.title": "Free music online", "o.all": "All", "o.loading": "Loading…", "o.more": "Show more", "o.none": "Nothing found here.",
       "o.fromQueue": "The list did not load this time. These are the songs playing from here.",
       "o.err": "No answer from {s}.", "o.busy": "Too many requests to {s}. Try again in a minute.", "o.offline": "You are offline.",
       "o.retry": "Try again", "o.closed": "This item has no open licence, so Music does not play it.", "o.wait": "Searching online…",
       "o.albums": "Albums · {s}", "o.songs": "Songs · {s}",
+      "fl.btn": "Filters",
+      "fl.btnN": "Filters ({n} on)",
+      "fl.title": "Search filters",
+      "fl.hint": "Filters work with or without words. A source that cannot use a filter is left out, so nothing shown ignores it.",
+      "fl.any": "Any",
+      "fl.apply": "Show results",
+      "fl.clear": "Clear filters",
+      "fl.active": "Active filters",
+      "fl.remove": "Remove filter {f}",
+      "fl.g.g": "Genre",
+      "fl.g.cc": "Country",
+      "fl.g.dur": "Length",
+      "fl.g.lic": "Licence",
+      "fl.g.y": "Year",
+      "fl.g.vi": "Vocals",
+      "fl.g.mood": "Mood",
+      "fl.g.sp": "Tempo",
+      "fl.g.gd": "Voice",
+      "fl.g.ae": "Sound",
+      "fl.g.off": "Offline",
+      "fl.ccNote": "Jamendo and live recordings",
+      "fl.dur.s": "Under 2 min",
+      "fl.dur.m": "2–5 min",
+      "fl.dur.l": "5–10 min",
+      "fl.dur.xl": "Over 10 min",
+      "fl.pd": "Public domain or CC0",
+      "fl.pdHint": "No conditions at all.",
+      "fl.com": "Allows commercial use",
+      "fl.comHint": "Leaves out NC (non-commercial) licences.",
+      "fl.mod": "Allows changes and remixes",
+      "fl.modHint": "Leaves out ND (no derivatives) licences.",
+      "fl.off": "Can be kept offline",
+      "fl.offHint": "Only songs whose licence and source allow a copy on this device.",
+      "fl.y0": "From",
+      "fl.y1": "To",
+      "fl.from": "from {y}",
+      "fl.to": "until {y}",
+      "fl.vocal": "With vocals",
+      "fl.instr": "Instrumental",
+      "fl.sp.verylow": "Very slow",
+      "fl.sp.low": "Slow",
+      "fl.sp.medium": "Medium",
+      "fl.sp.high": "Fast",
+      "fl.sp.veryhigh": "Very fast",
+      "fl.gd.female": "Female voice",
+      "fl.gd.male": "Male voice",
+      "fl.ae.acoustic": "Acoustic",
+      "fl.ae.electric": "Electric",
+      "fl.sort": "Order",
+      "fl.sort.rel": "Best match",
+      "fl.sort.pop": "Most popular",
+      "fl.sort.new": "Newest",
+      "fl.skipped": "Left out:",
+      "fl.skipOne": "{s} (cannot filter by {f})",
+      "fl.skipMine": "Your music is left out: it cannot be filtered by {f}.",
+      "fl.mine": "Your music",
+      "fl.needOpen": "Turn on free music online in Settings to search the open catalogues with filters.",
+      "au.free": "Free to listen",
+      "au.freeLong": "The artist shares this song to be heard for free on Audius. It has no free licence: listen only, no copies or reuse.",
+      "au.note": "Audius: artists share these songs to be heard for free. Most have no free licence, so they stream only and a licence filter leaves Audius out.",
+      "eu.needKey": "Europeana needs your own free API key.",
+      "eu.addKey": "Add key",
+      "eu.key": "Your Europeana API key",
+      "eu.keyPh": "Paste your key",
+      "eu.keySaved": "Key saved (paste a new one to change it)",
+      "eu.getKey": "Get a free key at europeana.eu",
+      "eu.keyHint": "The key stays on this device, sealed, never synced and never sent anywhere but api.europeana.eu.",
+      "eu.save": "Save key",
+      "eu.saved": "Europeana key saved.",
+      "eu.saveErr": "The key could not be saved on this device.",
+      "eu.forget": "Remove key",
+      "eu.forgot": "Europeana key removed.",
+      "eu.badKey": "Europeana did not accept the key. Check it in Settings › Sources.",
+      "src.btn": "Sources",
+      "src.title": "Sources",
+      "src.hint": "Which open catalogues Music asks when you browse or search. Each is asked straight from this device, only then.",
+      "src.jm": "Independent artists under Creative Commons. Streaming only.",
+      "src.ia": "Netlabels, classical and the Live Music Archive; open licences only.",
+      "src.ov": "Creative Commons and public-domain songs from Wikimedia Commons, Freesound and more.",
+      "src.cc": "Creative Commons remixes, instrumentals and a cappellas.",
+      "src.au": "Free to listen: artists share songs to be heard, mostly without a free licence. Streaming only.",
+      "src.eu": "Open-licence recordings of Europe's archives and radios. Needs your own free key.",
+      "src.fm": "The Free Music Archive's Creative Commons albums, kept on the Internet Archive.",
+      "src.km": "Kevin MacLeod's 1,400+ instrumental pieces (incompetech), all CC BY 4.0. Can be kept offline.",
+      "src.mo": "Musopen's public-domain classical recordings, kept on the Internet Archive.",
+      "src.jb": "The Library of Congress National Jukebox: recordings from 1900 to 1925, public domain.",
+      "src.dp": "Open-licence recordings of American libraries and archives. Needs your own free key.",
+      "dp.needKey": "DPLA needs your own free API key.",
+      "dp.key": "Your DPLA API key",
+      "dp.getKey": "How to get a free key (dp.la)",
+      "dp.keyHint": "The key stays on this device, sealed, never synced and never sent anywhere but api.dp.la.",
+      "dp.saved": "DPLA key saved.",
+      "dp.forgot": "DPLA key removed.",
+      "dp.badKey": "DPLA did not accept the key (32 letters and digits). Check it in Settings › Sources.",
+      "dp.note": "DPLA: only recordings with an open licence that can be played here are listed.",
+      "sv.free": "Free-music servers:",
+      "src.more": "More free music elsewhere",
+      "src.moby": "mobygratis: Moby's free instrumentals for your own non-commercial videos, films and remixes, under its own licence. Opens the site; it does not play here.",
+      "fl.sort.dig": "Deep dig: rarely played, best rated (Internet Archive)",
+      "fl.ll": "Lossless only (FLAC)",
+      "fl.llHint": "Albums that also come in a lossless format. Only the Internet Archive collections can tell.",
+      "fl.g.ll": "Lossless",
+      "m.credits": "Copy credits",
+      "crd.none": "No songs from the open catalogues in this list.",
+      "crd.copied": "Credits for {n} songs copied.",
+      "lma.title": "Concert explorer",
+      "lab.title": "Netlabels",
+      "lab.sub": "Free record labels on the Internet Archive, each with its own Creative Commons releases.",
+      "lab.find": "Find a netlabel",
+      "lab.found": "Netlabels",
+      "lab.top": "Most played netlabels",
+      "lab.one": "Netlabel",
+      "lma.sub": "Live Music Archive: concert tapes of bands that allow free, non-commercial sharing. Band, year, show.",
+      "lma.find": "Find a band",
+      "lma.go": "Find",
+      "lma.found": "Bands",
+      "lma.top": "Most played bands",
+      "lma.plays": "{n} plays",
+      "lma.band": "Band",
+      "lma.shows": "{n} shows in {y} years",
+      "lma.year": "Year",
+      "lma.nShows": "{n} shows",
+      "lma.lossless": "Lossless",
+      "lma.sbd": "Soundboard: recorded from the mixing desk",
+      "lma.aud": "Audience: recorded from the crowd",
+      "lma.mtx": "Matrix: soundboard and audience mixed",
+      "lma.noneKind": "No show of this year matches. Choose All.",
+      "ss.title": "Saved searches",
+      "ss.save": "Save search",
+      "ss.saved": "Saved search",
+      "ss.unsave": "Remove saved search",
+      "ss.name": "Name",
+      "ss.saveBtn": "Save",
+      "ss.untitled": "My search",
+      "ss.done": "Saved “{n}”. It is under Search on every device.",
+      "ss.removed": "Removed “{n}”.",
+      "ss.more": "More for “{n}”",
+      "ss.last": "Last visit {d}",
+      "ss.new": "New since your last visit ({n})",
+      "sv.h.dogmazic": "Dogmazic: French free-music library, every song under a free licence. Sign in with your free Dogmazic account; as the password use the Subsonic password or the API key from your Dogmazic account settings.",
       "m.share": "Share…", "sh.title": "Share this song", "sh.name": "Send its name as a link",
       "sh.file": "Send the file itself", "sh.fileSub": "A song on this device: send only its name, or the file itself (only if it is yours to give).",
       "sh.big": "Too big to send as a file (100 MB at most).", "sh.fileNo": "This device cannot send this file. Send its name instead.",
@@ -115,7 +255,7 @@
       "toast.offNo": "The licence or the source does not allow an offline copy of this song.", "toast.offHave": "Already saved for offline.",
       "toast.offDel": "Offline copy removed.", "toast.offDels": "Offline copies removed.",
       "lib.offline": "Offline", "off.empty": "Songs from the free catalogues that you save for offline appear here.", "off.badge": "Saved for offline",
-      "s.open": "Free music online (Jamendo, Internet Archive, Openverse, ccMixter)",
+      "s.open": "Free music online (Jamendo, Internet Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Europeana and more)",
       "s.openHint": "Only when you browse or search. The requests go straight to those services, with no account and no tracking.",
       "s.offInfo": "Offline copies: {n} · {s}", "s.offClear": "Delete all offline copies",
       "s.offClearQ": "Delete all offline copies ({n})? The songs stay in your playlists and play online.",
@@ -265,13 +405,153 @@
       "info.file": "Αρχείο", "info.format": "Μορφή", "info.size": "Μέγεθος", "info.genre": "Είδος", "info.year": "Έτος", "info.track": "Κομμάτι",
       "info.length": "Διάρκεια",
       "liked.empty": "Τα τραγούδια που σου αρέσουν εμφανίζονται εδώ. Πάτησε την καρδιά σε οποιοδήποτε τραγούδι.",
-      "home.free": "Ελεύθερη μουσική", "home.freeSub": "Ανοιχτοί κατάλογοι: Jamendo, Internet Archive, Openverse και ccMixter. Κάθε τραγούδι δείχνει την άδειά του.",
+      "home.free": "Ελεύθερη μουσική", "home.freeSub": "Ανοιχτοί κατάλογοι: Jamendo, Internet Archive, Free Music Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Musopen, National Jukebox, Europeana και DPLA. Κάθε τραγούδι δείχνει την άδειά του (Audius: δωρεάν ακρόαση).",
       "home.genres": "Ελεύθερη μουσική ανά είδος", "kind.free": "Ελεύθερη μουσική", "home.moods": "Διάθεση (Jamendo)", "kind.mood": "Διάθεση",
       "o.title": "Ελεύθερη μουσική online", "o.all": "Όλα", "o.loading": "Φόρτωση…", "o.more": "Δείξε περισσότερα", "o.none": "Δεν βρέθηκε τίποτα εδώ.",
       "o.fromQueue": "Η λίστα δεν φόρτωσε αυτή τη φορά. Αυτά είναι τα τραγούδια που παίζουν από εδώ.",
       "o.err": "Δεν ήρθε απάντηση από {s}.", "o.busy": "Πολλά αιτήματα προς {s}. Δοκίμασε ξανά σε ένα λεπτό.", "o.offline": "Δεν υπάρχει σύνδεση.",
       "o.retry": "Δοκίμασε ξανά", "o.closed": "Αυτό δεν έχει ανοιχτή άδεια, οπότε η Μουσική δεν το παίζει.", "o.wait": "Αναζήτηση online…",
       "o.albums": "Άλμπουμ · {s}", "o.songs": "Τραγούδια · {s}",
+      "fl.btn": "Φίλτρα",
+      "fl.btnN": "Φίλτρα ({n} ενεργά)",
+      "fl.title": "Φίλτρα αναζήτησης",
+      "fl.hint": "Τα φίλτρα δουλεύουν με λέξεις ή χωρίς. Μια πηγή που δεν μπορεί να εφαρμόσει ένα φίλτρο παραλείπεται, ώστε τίποτα από όσα βλέπεις να μην το αγνοεί.",
+      "fl.any": "Όλα",
+      "fl.apply": "Εμφάνιση αποτελεσμάτων",
+      "fl.clear": "Καθαρισμός φίλτρων",
+      "fl.active": "Ενεργά φίλτρα",
+      "fl.remove": "Αφαίρεση φίλτρου {f}",
+      "fl.g.g": "Είδος",
+      "fl.g.cc": "Χώρα",
+      "fl.g.dur": "Διάρκεια",
+      "fl.g.lic": "Άδεια",
+      "fl.g.y": "Χρονιά",
+      "fl.g.vi": "Φωνητικά",
+      "fl.g.mood": "Διάθεση",
+      "fl.g.sp": "Τέμπο",
+      "fl.g.gd": "Φωνή",
+      "fl.g.ae": "Ήχος",
+      "fl.g.off": "Χωρίς σύνδεση",
+      "fl.ccNote": "Jamendo και ζωντανές ηχογραφήσεις",
+      "fl.dur.s": "Κάτω από 2 λεπτά",
+      "fl.dur.m": "2–5 λεπτά",
+      "fl.dur.l": "5–10 λεπτά",
+      "fl.dur.xl": "Πάνω από 10 λεπτά",
+      "fl.pd": "Κοινό κτήμα ή CC0",
+      "fl.pdHint": "Χωρίς κανέναν όρο.",
+      "fl.com": "Επιτρέπει εμπορική χρήση",
+      "fl.comHint": "Αφήνει έξω τις άδειες NC (μη εμπορική χρήση).",
+      "fl.mod": "Επιτρέπει αλλαγές και remix",
+      "fl.modHint": "Αφήνει έξω τις άδειες ND (χωρίς παράγωγα έργα).",
+      "fl.off": "Μπορεί να μείνει χωρίς σύνδεση",
+      "fl.offHint": "Μόνο τραγούδια που η άδεια και η πηγή τους επιτρέπουν αντίγραφο σε αυτή τη συσκευή.",
+      "fl.y0": "Από",
+      "fl.y1": "Έως",
+      "fl.from": "από {y}",
+      "fl.to": "έως {y}",
+      "fl.vocal": "Με φωνητικά",
+      "fl.instr": "Ορχηστρικό",
+      "fl.sp.verylow": "Πολύ αργό",
+      "fl.sp.low": "Αργό",
+      "fl.sp.medium": "Μέτριο",
+      "fl.sp.high": "Γρήγορο",
+      "fl.sp.veryhigh": "Πολύ γρήγορο",
+      "fl.gd.female": "Γυναικεία φωνή",
+      "fl.gd.male": "Ανδρική φωνή",
+      "fl.ae.acoustic": "Ακουστικό",
+      "fl.ae.electric": "Ηλεκτρικό",
+      "fl.sort": "Σειρά",
+      "fl.sort.rel": "Καλύτερη αντιστοιχία",
+      "fl.sort.pop": "Πιο δημοφιλή",
+      "fl.sort.new": "Πιο πρόσφατα",
+      "fl.skipped": "Παραλείφθηκαν:",
+      "fl.skipOne": "{s} (δεν φιλτράρει κατά {f})",
+      "fl.skipMine": "Η μουσική σου παραλείπεται: δεν φιλτράρεται κατά {f}.",
+      "fl.mine": "Η μουσική σου",
+      "fl.needOpen": "Άνοιξε την ελεύθερη μουσική online στις Ρυθμίσεις για να ψάχνεις στους ανοιχτούς καταλόγους με φίλτρα.",
+      "au.free": "Δωρεάν ακρόαση",
+      "au.freeLong": "Ο καλλιτέχνης μοιράζεται αυτό το τραγούδι για δωρεάν ακρόαση στο Audius. Δεν έχει ελεύθερη άδεια: μόνο ακρόαση, χωρίς αντίγραφα ή επαναχρησιμοποίηση.",
+      "au.note": "Audius: οι καλλιτέχνες μοιράζονται αυτά τα τραγούδια για δωρεάν ακρόαση. Τα περισσότερα δεν έχουν ελεύθερη άδεια, οπότε παίζουν μόνο online και ένα φίλτρο άδειας αφήνει έξω το Audius.",
+      "eu.needKey": "Η Europeana θέλει το δικό σου δωρεάν κλειδί API.",
+      "eu.addKey": "Προσθήκη κλειδιού",
+      "eu.key": "Το κλειδί σου API της Europeana",
+      "eu.keyPh": "Επικόλλησε το κλειδί σου",
+      "eu.keySaved": "Το κλειδί αποθηκεύτηκε (επικόλλησε νέο για αλλαγή)",
+      "eu.getKey": "Πάρε δωρεάν κλειδί στο europeana.eu",
+      "eu.keyHint": "Το κλειδί μένει σε αυτή τη συσκευή, σφραγισμένο, δεν συγχρονίζεται και δεν πηγαίνει πουθενά αλλού εκτός από το api.europeana.eu.",
+      "eu.save": "Αποθήκευση κλειδιού",
+      "eu.saved": "Το κλειδί της Europeana αποθηκεύτηκε.",
+      "eu.saveErr": "Το κλειδί δεν αποθηκεύτηκε σε αυτή τη συσκευή.",
+      "eu.forget": "Αφαίρεση κλειδιού",
+      "eu.forgot": "Το κλειδί της Europeana αφαιρέθηκε.",
+      "eu.badKey": "Η Europeana δεν δέχτηκε το κλειδί. Έλεγξέ το στις Ρυθμίσεις › Πηγές.",
+      "src.btn": "Πηγές",
+      "src.title": "Πηγές",
+      "src.hint": "Ποιους ανοιχτούς καταλόγους ρωτά η Μουσική όταν περιηγείσαι ή ψάχνεις. Ο καθένας ρωτιέται κατευθείαν από αυτή τη συσκευή, μόνο τότε.",
+      "src.jm": "Ανεξάρτητοι καλλιτέχνες με άδειες Creative Commons. Μόνο online.",
+      "src.ia": "Netlabels, κλασική και το Live Music Archive· μόνο ανοιχτές άδειες.",
+      "src.ov": "Τραγούδια Creative Commons και κοινού κτήματος από Wikimedia Commons, Freesound και άλλες πηγές.",
+      "src.cc": "Remix, ορχηστρικά και a cappella με άδειες Creative Commons.",
+      "src.au": "Δωρεάν ακρόαση: οι καλλιτέχνες μοιράζονται τραγούδια για να ακουστούν, τα περισσότερα χωρίς ελεύθερη άδεια. Μόνο online.",
+      "src.eu": "Ηχογραφήσεις με ανοιχτή άδεια από αρχεία και ραδιόφωνα της Ευρώπης. Θέλει το δικό σου δωρεάν κλειδί.",
+      "src.fm": "Τα άλμπουμ Creative Commons του Free Music Archive, σωσμένα στο Internet Archive.",
+      "src.km": "Πάνω από 1.400 ορχηστρικά κομμάτια του Kevin MacLeod (incompetech), όλα CC BY 4.0. Μπορούν να μείνουν offline.",
+      "src.mo": "Ηχογραφήσεις κλασικής μουσικής του Musopen σε κοινό κτήμα, σωσμένες στο Internet Archive.",
+      "src.jb": "Το National Jukebox της Library of Congress: ηχογραφήσεις από το 1900 ως το 1925, σε κοινό κτήμα.",
+      "src.dp": "Ηχογραφήσεις με ανοιχτή άδεια από αμερικανικές βιβλιοθήκες και αρχεία. Θέλει το δικό σου δωρεάν κλειδί.",
+      "dp.needKey": "Το DPLA θέλει το δικό σου δωρεάν κλειδί API.",
+      "dp.key": "Το κλειδί σου API του DPLA",
+      "dp.getKey": "Πώς παίρνεις δωρεάν κλειδί (dp.la)",
+      "dp.keyHint": "Το κλειδί μένει σε αυτή τη συσκευή, σφραγισμένο, δεν συγχρονίζεται και δεν πηγαίνει πουθενά αλλού εκτός από το api.dp.la.",
+      "dp.saved": "Το κλειδί του DPLA αποθηκεύτηκε.",
+      "dp.forgot": "Το κλειδί του DPLA αφαιρέθηκε.",
+      "dp.badKey": "Το DPLA δεν δέχτηκε το κλειδί (32 γράμματα και αριθμοί). Έλεγξέ το στις Ρυθμίσεις › Πηγές.",
+      "dp.note": "DPLA: εμφανίζονται μόνο ηχογραφήσεις με ανοιχτή άδεια που παίζουν εδώ.",
+      "sv.free": "Servers ελεύθερης μουσικής:",
+      "src.more": "Κι άλλη ελεύθερη μουσική αλλού",
+      "src.moby": "mobygratis: δωρεάν ορχηστρικά του Moby για τα δικά σου μη εμπορικά βίντεο, ταινίες και remix, με δική του άδεια. Ανοίγει τον ιστότοπο· δεν παίζει εδώ.",
+      "fl.sort.dig": "Βαθύ σκάψιμο: σπάνια ακουσμένα, τα καλύτερα πρώτα (Internet Archive)",
+      "fl.ll": "Μόνο lossless (FLAC)",
+      "fl.llHint": "Άλμπουμ που υπάρχουν και σε μορφή χωρίς απώλειες. Μόνο οι συλλογές του Internet Archive το δείχνουν.",
+      "fl.g.ll": "Lossless",
+      "m.credits": "Αντιγραφή credits",
+      "crd.none": "Δεν υπάρχουν τραγούδια από τους ανοιχτούς καταλόγους σε αυτή τη λίστα.",
+      "crd.copied": "Αντιγράφηκαν τα credits για {n} τραγούδια.",
+      "lma.title": "Εξερεύνηση συναυλιών",
+      "lab.title": "Netlabels",
+      "lab.sub": "Ελεύθερες δισκογραφικές στο Internet Archive, η καθεμία με τις δικές της κυκλοφορίες Creative Commons.",
+      "lab.find": "Βρες netlabel",
+      "lab.found": "Netlabels",
+      "lab.top": "Τα πιο ακουσμένα netlabels",
+      "lab.one": "Netlabel",
+      "lma.sub": "Live Music Archive: ηχογραφήσεις συναυλιών από συγκροτήματα που επιτρέπουν ελεύθερη, μη εμπορική διάδοση. Συγκρότημα, χρονιά, συναυλία.",
+      "lma.find": "Βρες συγκρότημα",
+      "lma.go": "Εύρεση",
+      "lma.found": "Συγκροτήματα",
+      "lma.top": "Τα πιο ακουσμένα συγκροτήματα",
+      "lma.plays": "{n} ακροάσεις",
+      "lma.band": "Συγκρότημα",
+      "lma.shows": "{n} συναυλίες σε {y} χρονιές",
+      "lma.year": "Χρονιά",
+      "lma.nShows": "{n} συναυλίες",
+      "lma.lossless": "Lossless",
+      "lma.sbd": "Soundboard: ηχογράφηση από την κονσόλα",
+      "lma.aud": "Audience: ηχογράφηση από το κοινό",
+      "lma.mtx": "Matrix: μείξη κονσόλας και κοινού",
+      "lma.noneKind": "Καμία συναυλία αυτής της χρονιάς δεν ταιριάζει. Διάλεξε «Όλα».",
+      "ss.title": "Αποθηκευμένες αναζητήσεις",
+      "ss.save": "Αποθήκευση αναζήτησης",
+      "ss.saved": "Αποθηκευμένη αναζήτηση",
+      "ss.unsave": "Αφαίρεση αποθηκευμένης αναζήτησης",
+      "ss.name": "Όνομα",
+      "ss.saveBtn": "Αποθήκευση",
+      "ss.untitled": "Η αναζήτησή μου",
+      "ss.done": "Αποθηκεύτηκε η «{n}». Τη βρίσκεις στην Αναζήτηση σε κάθε συσκευή.",
+      "ss.removed": "Αφαιρέθηκε η «{n}».",
+      "ss.more": "Περισσότερα για «{n}»",
+      "ss.last": "Τελευταία επίσκεψη {d}",
+      "ss.new": "Νέα από την τελευταία σου επίσκεψη ({n})",
+      "sv.h.dogmazic": "Dogmazic: γαλλική βιβλιοθήκη ελεύθερης μουσικής, κάθε τραγούδι με ελεύθερη άδεια. Συνδέσου με τον δωρεάν λογαριασμό σου στο Dogmazic· ως κωδικό βάλε τον κωδικό Subsonic ή το κλειδί API από τις ρυθμίσεις του λογαριασμού σου στο Dogmazic.",
       "m.share": "Κοινοποίηση…", "sh.title": "Κοινοποίηση τραγουδιού", "sh.name": "Αποστολή του ονόματος ως σύνδεσμο",
       "sh.file": "Αποστολή του ίδιου του αρχείου", "sh.fileSub": "Τραγούδι σε αυτή τη συσκευή: στείλε μόνο το όνομά του ή το ίδιο το αρχείο (μόνο αν σου ανήκει να το δώσεις).",
       "sh.big": "Πολύ μεγάλο για αποστολή ως αρχείο (έως 100 MB).", "sh.fileNo": "Αυτή η συσκευή δεν μπορεί να στείλει αυτό το αρχείο. Στείλε καλύτερα το όνομά του.",
@@ -284,7 +564,7 @@
       "toast.offNo": "Η άδεια ή η πηγή δεν επιτρέπει αντίγραφο χωρίς σύνδεση για αυτό το τραγούδι.", "toast.offHave": "Είναι ήδη αποθηκευμένο για χωρίς σύνδεση.",
       "toast.offDel": "Το αντίγραφο αφαιρέθηκε.", "toast.offDels": "Τα αντίγραφα αφαιρέθηκαν.",
       "lib.offline": "Χωρίς σύνδεση", "off.empty": "Εδώ εμφανίζονται τα τραγούδια από τους ελεύθερους καταλόγους που αποθηκεύεις για χωρίς σύνδεση.", "off.badge": "Αποθηκευμένο για χωρίς σύνδεση",
-      "s.open": "Ελεύθερη μουσική online (Jamendo, Internet Archive, Openverse, ccMixter)",
+      "s.open": "Ελεύθερη μουσική online (Jamendo, Internet Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Europeana και άλλοι)",
       "s.openHint": "Μόνο όταν περιηγείσαι ή ψάχνεις. Τα αιτήματα πάνε κατευθείαν σε αυτές τις υπηρεσίες, χωρίς λογαριασμό και χωρίς παρακολούθηση.",
       "s.offInfo": "Αντίγραφα χωρίς σύνδεση: {n} · {s}", "s.offClear": "Διαγραφή όλων των αντιγράφων",
       "s.offClearQ": "Να διαγραφούν όλα τα αντίγραφα χωρίς σύνδεση ({n}); Τα τραγούδια μένουν στις λίστες σου και παίζουν online.",
@@ -454,13 +734,14 @@
     eq: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 4v16M12 4v16M18 4v16"/><path d="M4 14h4M10 8h4M16 16h4"/></svg>',
     viz: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="3.5"/></svg>',
     expand: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
     grip: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>'
   };
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, viz: { on: false, st: "glow" } };
+    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, viz: { on: false, st: "glow" }, fl: {}, soff: [] };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
@@ -469,9 +750,13 @@
         if (["title", "artist", "album", "added"].indexOf(o.sort) >= 0) p.sort = o.sort;
         if (["auto", "el", "latin"].indexOf(o.legacy) >= 0) p.legacy = o.legacy;
         if (o.open === false) p.open = false;
-        if (["all", "jm", "ia", "ov", "cc"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
+        if (["all", "jm", "ia", "ov", "cc", "au", "eu"].indexOf(o.osrc) >= 0) p.osrc = o.osrc;
+        // MU-SRC: open sources turned off on this device (all on by default).
+        if (Array.isArray(o.soff)) p.soff = o.soff.filter(function (x) { return ["jm", "ia", "ov", "cc", "au", "eu"].indexOf(x) >= 0; });
         if (o.ly === "on" || o.ly === "off") p.ly = o.ly;
         if (o.mb === true) p.mb = true;
+        // MU-FIND1: the search filters (open.js normFilter).
+        if (o.fl && typeof o.fl === "object" && window.OrosMusicOpen) p.fl = window.OrosMusicOpen.normFilter(o.fl);
         // MU-VIZ: the light show of the full player (on, style).
         if (o.viz && typeof o.viz === "object") {
           p.viz.on = o.viz.on === true;
@@ -604,9 +889,40 @@
       playPending();
     });
   }
-  function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.albums, more: r.more }; }); }; }
-  function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.tracks, more: r.more }; }); }; }
-  function fCc(o) { return function (page) { return O.ccSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: r.tracks, more: r.more }; }); }; }
+  // o.f = search filters (MU-FIND1): what a source sends back is checked again here.
+  function keepT(o, l) { return o.f ? l.filter(function (r) { return O.trackPasses(r, o.f); }) : l; }
+  function fIa(o) { return function (page) { return O.iaSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: o.f ? r.albums.filter(function (a) { return O.albumPasses(a, o.f); }) : r.albums, more: r.more }; }); }; }
+  function fOv(o) { return function (page) { return O.ovSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  function fAu(o) { return function (page) { return O.auSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  function fEu(o) { return function (page) { return O.euSearch(Object.assign({}, o, { page: page, key: euKey })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  // MU-SRC2: Kevin MacLeod (searched on the device) and DPLA (the person's key).
+  function fKm(o) { return function (page) { return O.kmSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  function fDp(o) { return function (page) { return O.dpSearch(Object.assign({}, o, { page: page, key: dpKey })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
+  // Internet Archive collections shown as their own sources (fm, mo, jb).
+  function isIaSrc(sk) { return O.IA_SOURCES.indexOf(sk) >= 0; }
+  function fSrc(sk, o) {
+    o = o || {};
+    if (isIaSrc(sk)) return fIa(sk === "ia" ? o : Object.assign({}, o, { scope: sk }));
+    return sk === "jm" ? fJm(o) : sk === "ov" ? fOv(o) : sk === "cc" ? fCc(o) : sk === "au" ? fAu(o) : sk === "eu" ? fEu(o) : sk === "km" ? fKm(o) : fDp(o);
+  }
+  // MU-SRC: which open sources this device asks (Settings › Sources).
+  function srcOn(sk) { return prefs.soff.indexOf(sk) < 0; }
+  // The person's own Europeana and DPLA keys, read once from the sealed store.
+  var euKey = null, dpKey = null;
+  function loadEuKey() {
+    var L = window.OrosMusicLB;
+    if (!L || typeof L.secret !== "function") return;
+    L.secret("europeana").then(function (k) { euKey = O && O.euKeyOk(k || "") ? k : null; if (euKey) renderKeepScroll(); });
+    L.secret("dpla").then(function (k) { dpKey = O && O.dpKeyOk(k || "") ? k : null; if (dpKey) renderKeepScroll(); });
+  }
+  // Key sources: their key, check, sealed name, where to get one.
+  var KEYS = {
+    eu: { get: function () { return euKey; }, set: function (v) { euKey = v; }, ok: function (v) { return O.euKeyOk(v); }, name: "europeana",
+      url: "https://pro.europeana.eu/page/get-api", max: 40 },
+    dp: { get: function () { return dpKey; }, set: function (v) { dpKey = v; }, ok: function (v) { return O.dpKeyOk(v); }, name: "dpla",
+      url: "https://pro.dp.la/developers/api-codex", max: 32 }
+  };
+  function fCc(o) { return function (page) { return O.ccSearch(Object.assign({}, o, { page: page })).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; }); }; }
   // Jamendo songs asked in more than one way (a mood, MU-MOOD2): page 1
   // goes down the list until one way answers with songs, later pages
   // keep that way.
@@ -628,6 +944,7 @@
       var q = Object.assign({}, o, { page: page });
       if (o.albums) return O.jmAlbums(q).then(function (r) { return { list: r.albums, more: r.more }; });
       if (o.radios) return O.jmRadios().then(function (r) { return { list: r.radios, more: false }; });
+      if (o.f) return O.jmFiltered(q).then(function (r) { return { list: keepT(o, r.tracks), more: r.more }; });
       return O.jmTracks(q).then(function (r) { return { list: r.tracks, more: r.more }; });
     };
   }
@@ -635,7 +952,7 @@
   function albumOf(sk, id) { return sk === "jm" ? O.jmAlbum(id) : O.iaAlbum(id); }
   function fAlbum(sk, id) { return function () { return albumOf(sk, id).then(function (r) { return { list: r.tracks, more: false, extra: r.album }; }); }; }
   function errText(code, s) {
-    return code === "busy" ? t("o.busy", { s: s }) : code === "offline" ? t("o.offline") : code === "closed" ? t("o.closed") : t("o.err", { s: s });
+    return code === "key" ? t(s === srcName("dp") ? "dp.badKey" : "eu.badKey") : code === "busy" ? t("o.busy", { s: s }) : code === "offline" ? t("o.offline") : code === "closed" ? t("o.closed") : t("o.err", { s: s });
   }
   // Loading / error / "show more" under a list of an open catalogue.
   function feedStatus(box, key, s, noMore) {
@@ -686,7 +1003,12 @@
     var s1 = section(m, t("home.free"));
     s1.appendChild(el("p", "dim small sec-note", t("home.freeSub")));
     var row = el("div", "cards");
+    if (srcOn("ia")) {
+      row.appendChild(card(cover("", "lma", "", I.globe), t("lma.title"), "Live Music Archive", function () { openView({ kind: "lma" }); }));
+      row.appendChild(card(cover("", "labels", "", I.globe), t("lab.title"), "Internet Archive", function () { openView({ kind: "labels" }); }));
+    }
     O.BROWSE.forEach(function (b) {
+      if (!srcOn(b.src)) return;
       var name = O.browseName(b.id, LANG);
       row.appendChild(card(cover("", b.id, "", I.globe), name, srcName(b.src), function () { openView({ kind: "browse", id: b.id }); }));
     });
@@ -1088,6 +1410,16 @@
     sel.addEventListener("change", paint);
     form.addEventListener("input", function (e) { if (e.target !== sel) msg.textContent = ""; });
     paint();
+    // MU-SRC2: free-music servers that speak Subsonic, filled in with one tap.
+    var pre = el("p", "dim small sv-pre");
+    pre.appendChild(el("span", "", t("sv.free") + " "));
+    pre.appendChild(button("Dogmazic", "pill small-pill", function () {
+      sel.value = "subsonic"; paint();
+      addr.value = "https://play.dogmazic.net"; name.value = "Dogmazic";
+      hint.textContent = t("sv.h.dogmazic");
+      user.focus();
+    }));
+    form.insertBefore(pre, hint);
     var row = el("div", "dlg-btns");
     row.appendChild(button(t("cancel"), "txt-btn", function () { dlg.close(); }));
     var ok = el("button", "txt-btn accent", t("sv.go"));
@@ -2404,6 +2736,103 @@
     return b;
   }
   function likedCover(cls) { var c = el("span", "cover liked " + (cls || "")); c.innerHTML = I.heartOn; return c; }
+  // ---------- Saved searches (MU-DIG, synced "ss") ----------
+  // The saved search the screen shows now (same words, filter and source), or null.
+  function currentSaved() {
+    if (!O) return null;
+    var q = searchQ.trim(), sig = O.filterSig(FL()), src = prefs.osrc === "all" ? "" : prefs.osrc;
+    return C.savedList(D()).filter(function (x) { return (x.q || "") === q && O.filterSig(x.f || {}) === sig && (x.src || "") === src; })[0] || null;
+  }
+  function savedSummary(x) {
+    var F = O.normFilter(x.f || {}), parts = [];
+    if (x.q) parts.push("“" + x.q + "”");
+    O.groupsOf(F).forEach(function (k) { parts.push(groupText(k, F)); });
+    if (F.sort === "dig") parts.push(t("fl.sort.dig"));
+    if (x.src) parts.push(srcName(x.src));
+    return parts.join(" · ");
+  }
+  function saveSearchRow() {
+    var row = el("div", "chips ss-row"), cur = currentSaved();
+    if (cur) {
+      var b = button("✓ " + t("ss.saved"), "chip on", function () {
+        mutate(function (d, now) { return C.setSaved(d, cur, 0, now).data; });
+        showToast(t("ss.removed", { n: cur.n })); renderKeepScroll();
+      });
+      b.setAttribute("aria-pressed", "true");
+      b.title = t("ss.unsave");
+      row.appendChild(b);
+      return row;
+    }
+    row.appendChild(button("+ " + t("ss.save"), "chip", function () {
+      var q = searchQ.trim(), F = FL();
+      var def = q || O.groupsOf(F).map(function (k) { return groupText(k, F); }).join(", ") || t("ss.untitled");
+      promptDlg(t("ss.save"), t("ss.name"), def.slice(0, 80), t("ss.saveBtn"), function (name) {
+        mutate(function (d, now) { return C.setSaved(d, { n: name, q: q, f: F, src: prefs.osrc === "all" ? "" : prefs.osrc }, 1, now).data; });
+        showToast(t("ss.done", { n: name })); renderKeepScroll();
+      });
+    }));
+    return row;
+  }
+  // The save chip follows the words as they are typed (the results below redraw without the bar).
+  function ssRowInto(h) {
+    h.textContent = "";
+    if (O && openOn() && (searchQ.trim() || O.filterOn(FL()))) h.appendChild(saveSearchRow());
+  }
+  function openSaved(x) {
+    searchQ = x.q || ""; onlineQ = searchQ;
+    prefs.fl = O.normFilter(x.f || {});
+    prefs.osrc = x.src && O.SOURCES[x.src] ? x.src : "all";
+    savePrefs();
+    renderKeepScroll();
+  }
+  function savedSection(box) {
+    var list = C.savedList(D());
+    if (!list.length) return;
+    box.appendChild(el("h2", "sub-h", t("ss.title")));
+    var wrap = el("div", "lib-list ss-list");
+    list.forEach(function (x) {
+      var r = el("div", "ss-item");
+      var b = el("button", "ss-open");
+      b.type = "button";
+      b.appendChild(el("span", "ss-n", x.n));
+      b.appendChild(el("span", "dim small", savedSummary(x)));
+      var seen = ssSeen()[x.k];
+      if (seen && seen.at) b.appendChild(el("span", "dim small", t("ss.last", { d: fmtDay(new Date(seen.at).toISOString().slice(0, 10)) })));
+      b.addEventListener("click", function () { openSaved(x); });
+      r.appendChild(b);
+      r.appendChild(button(t("ss.more", { n: x.n }), "icon-btn", function () {
+        menuDlg([
+          [t("m.rename"), function () { promptDlg(t("m.rename"), t("ss.name"), x.n, t("pl.save"), function (name) { mutate(function (d, now) { return C.setSaved(d, Object.assign({}, x, { n: name }), 1, now).data; }); }); }],
+          [t("ss.unsave"), function () { mutate(function (d, now) { return C.setSaved(d, x, 0, now).data; }); showToast(t("ss.removed", { n: x.n })); }, true]
+        ], x.n);
+      }, I.more));
+      wrap.appendChild(r);
+    });
+    box.appendChild(wrap);
+  }
+  // "New since last visit": per device, the result keys each saved search
+  // has shown (hashed, capped). Lost or blocked storage only loses the marks.
+  var SS_SEEN = "oros-music-ss-seen", ssSeenMem = null, ssBase = {};
+  function ssSeen() {
+    if (ssSeenMem) return ssSeenMem;
+    try { ssSeenMem = JSON.parse(localStorage.getItem(SS_SEEN) || "{}") || {}; } catch (e) { ssSeenMem = {}; }
+    if (typeof ssSeenMem !== "object" || Array.isArray(ssSeenMem)) ssSeenMem = {};
+    return ssSeenMem;
+  }
+  // Called with every result key a saved search shows; returns the keys new since the last visit.
+  function ssMark(k, keys) {
+    var all = ssSeen(), rec = all[k] && Array.isArray(all[k].h) ? all[k] : null;
+    if (!(k in ssBase)) ssBase[k] = rec ? { at: rec.at, h: rec.h.slice() } : null;
+    var base = ssBase[k], hs = keys.map(function (x) { return C.hash(String(x)); });
+    var fresh = base ? keys.filter(function (x, i) { return base.h.indexOf(hs[i]) < 0; }) : [];
+    var h = (rec ? rec.h : []).slice();
+    hs.forEach(function (x) { if (h.indexOf(x) < 0) h.push(x); });
+    if (h.length > 3000) h = h.slice(h.length - 3000);
+    all[k] = { at: Date.now(), h: h };
+    Object.keys(all).forEach(function (id) { if (!C.savedList(D()).some(function (x) { return x.k === id; })) delete all[id]; });
+    try { localStorage.setItem(SS_SEEN, JSON.stringify(all)); } catch (e) {}
+    return fresh;
+  }
   function renderSearch(m) {
     var bar = el("div", "search-bar");
     var inp = el("input");
@@ -2411,7 +2840,7 @@
     inp.setAttribute("aria-label", t("search.ph"));
     inp.autocomplete = "off";
     var timer = null;
-    var refresh = function () { var r = $("search-res"); if (r) { r.textContent = ""; searchResults(r); } };
+    var refresh = function () { var h = $("ss-hold"); if (h) ssRowInto(h); var r = $("search-res"); if (r) { r.textContent = ""; searchResults(r); } };
     inp.addEventListener("input", function () {
       searchQ = inp.value;
       clearTimeout(timer);
@@ -2425,8 +2854,23 @@
       clearTimeout(onlineTimer);
       if (onlineQ !== searchQ.trim()) { onlineQ = searchQ.trim(); refresh(); }
     });
-    bar.appendChild(inp);
+    var row = el("div", "search-row");
+    row.appendChild(inp);
+    if (O) {
+      var nOn = O.groupsOf(FL()).length;
+      var fb = button(t("fl.btn"), "icon-btn fl-btn" + (nOn ? " on" : ""), filtersDlg, I.filter);
+      fb.id = "fl-btn";
+      fb.setAttribute("aria-haspopup", "dialog");
+      if (nOn) { fb.setAttribute("aria-label", t("fl.btnN", { n: nOn })); fb.title = t("fl.btnN", { n: nOn }); fb.appendChild(el("span", "fl-n", String(nOn))); }
+      row.appendChild(fb);
+    }
+    bar.appendChild(row);
     m.appendChild(bar);
+    if (O && O.filterOn(FL())) m.appendChild(filterChips());
+    var hold = el("div", "");
+    hold.id = "ss-hold";
+    ssRowInto(hold);
+    m.appendChild(hold);
     var res = el("div", "");
     res.id = "search-res";
     m.appendChild(res);
@@ -2434,7 +2878,9 @@
   }
   function searchResults(box) {
     var q = searchQ.trim();
+    if (!q && O && O.filterOn(FL())) { exploreResults(box); return; }
     if (!q) {
+      if (O && openOn()) savedSection(box);
       if (openOn()) {
         box.appendChild(el("h2", "sub-h", t("home.genres")));
         var og = el("div", "genre-grid");
@@ -2467,7 +2913,9 @@
       } else box.appendChild(el("p", "empty", t("search.hint")));
       return;
     }
-    var r = C.search(tracks, q, LANG);
+    var F = FL(), fOn = !!(O && O.filterOn(F)), locMiss = fOn ? O.filterMissing("loc", F) : [];
+    var r = fOn && locMiss.length ? { songs: [], albums: [], artists: [] } : C.search(fOn ? tracks.filter(function (x) { return O.localPasses(x, F); }) : tracks, q, LANG);
+    if (fOn && locMiss.length && tracks.length) box.appendChild(el("p", "dim small o-note fl-skip", t("fl.skipMine", { f: missText(locMiss) })));
     var w = C.words(q);
     var pls = D().pls.filter(function (p) { var f = C.fold(p.n); return w.every(function (x) { return f.indexOf(x) >= 0; }); });
     if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !openOn() && !svLib().length && !A) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
@@ -2487,37 +2935,290 @@
       box.appendChild(el("h2", "sub-h", t("sec.pls")));
       var cp = el("div", "cards"); pls.forEach(function (p) { cp.appendChild(plCard(p)); }); box.appendChild(cp);
     }
-    if (SV && q.length >= 2) serverResults(box, q);
-    if (A && O && q.length >= 2) mbResults(box, q);
+    if (SV && q.length >= 2 && !fOn) serverResults(box, q);
+    if (A && O && q.length >= 2 && !fOn) mbResults(box, q);
     if (openOn() && q.length >= 2) onlineResults(box, q);
   }
   var onlineQ = "", onlineTimer = null;
   function onlineResults(box, q) {
     var sec = section(box, t("o.title"));
     var chips = el("div", "chips");
-    ["all", "jm", "ia", "ov", "cc"].forEach(function (k) {
+    if (prefs.osrc !== "all" && !srcOn(prefs.osrc)) prefs.osrc = "all";
+    ["all"].concat(O.SOURCE_ORDER.filter(srcOn)).forEach(function (k) {
       var b = button(k === "all" ? t("o.all") : srcName(k), "chip" + (prefs.osrc === k ? " on" : ""), function () { prefs.osrc = k; savePrefs(); renderKeepScroll(); });
       b.setAttribute("aria-pressed", prefs.osrc === k ? "true" : "false");
       chips.appendChild(b);
     });
     sec.appendChild(chips);
     if (onlineQ !== q) { sec.appendChild(el("p", "dim small o-note", t("o.wait"))); return; }
-    var all = prefs.osrc === "all", src = { kind: "osearch", id: q, n: q };
-    if (all || prefs.osrc === "ia") {
-      var kI = "s|ia|" + q, fi = feed(kI, fIa({ q: q }));
-      sec.appendChild(el("h3", "sub-h", t("o.albums", { s: srcName("ia") })));
+    var all = prefs.osrc === "all", src = { kind: "osearch", id: q, n: q || t("fl.title") };
+    // MU-FIND1: a source that cannot honour a filter is left out, with a line saying why.
+    var F = FL(), fOn = O.filterOn(F), sig = fOn ? "|" + O.filterSig(F) : "", skipped = [];
+    var o = fOn ? { q: q, f: F } : { q: q };
+    var miss = function (sk) { var l = fOn ? O.filterMissing(sk, F) : []; if (l.length) skipped.push(t("fl.skipOne", { s: srcName(sk), f: missText(l) })); return l.length > 0; };
+    O.IA_SOURCES.forEach(function (sk) {
+      if ((!all && prefs.osrc !== sk) || !srcOn(sk) || miss(sk)) return;
+      var kI = "s|" + sk + "|" + q + sig, fi = feed(kI, fSrc(sk, o));
+      sec.appendChild(el("h3", "sub-h", t("o.albums", { s: srcName(sk) })));
       var ci = el("div", all ? "cards" : "grid");
       fi.list.forEach(function (a) { ci.appendChild(oAlbumCard(a)); });
       if (fi.list.length) sec.appendChild(ci);
-      feedStatus(sec, kI, srcName("ia"));
-    }
-    ["jm", "ov", "cc"].forEach(function (sk) {
+      feedStatus(sec, kI, srcName(sk));
+    });
+    ["jm", "ov", "cc", "km", "au", "eu", "dp"].forEach(function (sk) {
       if (!all && prefs.osrc !== sk) return;
-      var k = "s|" + sk + "|" + q, f = feed(k, sk === "jm" ? fJm({ q: q }) : sk === "ov" ? fOv({ q: q }) : fCc({ q: q }));
+      if (!srcOn(sk) || miss(sk)) return;
+      // Audius, Europeana and DPLA need words or a filter (no "everything" list).
+      if ((sk === "au" || sk === "eu" || sk === "dp") && !q && !fOn) return;
       sec.appendChild(el("h3", "sub-h", t("o.songs", { s: srcName(sk) })));
+      if (KEYS[sk] && !KEYS[sk].get()) { sec.appendChild(keyNote(sk)); return; }
+      var k = "s|" + sk + "|" + q + sig, f = feed(k, fSrc(sk, o));
+      if (sk === "au") sec.appendChild(el("p", "dim small sec-note", t("au.note")));
+      if (sk === "dp") sec.appendChild(el("p", "dim small sec-note", t("dp.note")));
       if (f.list.length) sec.appendChild(rowList(f.list, { src: src }));
       feedStatus(sec, k, srcName(sk));
     });
+    // MU-DIG: what a saved search shows for the first time since the last visit.
+    var cur = currentSaved();
+    if (cur) {
+      var keys = [], byKey = {};
+      Object.keys(feeds).forEach(function (fk) {
+        if (fk.indexOf("s|") !== 0 || fk.slice(fk.indexOf("|", 2) + 1) !== q + sig) return;
+        feeds[fk].list.forEach(function (x) { var id = x.k || (x.s + ":" + x.id); if (byKey[id]) return; keys.push(id); byKey[id] = x; });
+      });
+      var fresh = ssMark(cur.k, keys);
+      if (fresh.length) {
+        var nb = el("div", "ss-new");
+        nb.appendChild(el("h3", "sub-h", t("ss.new", { n: fresh.length })));
+        var songs = fresh.map(function (id) { return byKey[id]; }).filter(function (x) { return x && x.k; });
+        var albums = fresh.map(function (id) { return byKey[id]; }).filter(function (x) { return x && !x.k; });
+        if (albums.length) { var ca = el("div", "cards"); albums.forEach(function (a) { ca.appendChild(oAlbumCard(a)); }); nb.appendChild(ca); }
+        if (songs.length) nb.appendChild(rowList(songs, { src: src }));
+        sec.insertBefore(nb, chips.nextSibling);
+      }
+    }
+    if (skipped.length) {
+      var note = el("div", "o-note fl-skip");
+      note.appendChild(el("span", "dim small", t("fl.skipped") + " " + skipped.join(" · ")));
+      sec.appendChild(note);
+    }
+  }
+  // ---------- Search filters (MU-FIND1) ----------
+  function FL() { return O ? O.normFilter(prefs.fl) : {}; }
+  function setFL(F) { prefs.fl = O ? O.normFilter(F) : {}; savePrefs(); renderKeepScroll(); }
+  // "genre, country" for the groups a source cannot honour.
+  function missText(groups) {
+    return groups.map(function (k) { var w = t("fl.g." + k); return LANG === "de" ? w : w.toLocaleLowerCase(loc()); }).join(", ");
+  }
+  function durName(d) { return t("fl.dur." + d); }
+  // The value of one group, as a chip shows it.
+  function groupText(k, F) {
+    if (k === "g") return O.genreName(F.g, LANG);
+    if (k === "cc") return regionName(F.cc);
+    if (k === "dur") return durName(F.dur);
+    if (k === "lic") return [F.pd ? t("fl.pd") : "", F.com ? t("fl.com") : "", F.mod ? t("fl.mod") : ""].filter(Boolean).join(" + ");
+    if (k === "y") return F.y0 && F.y1 ? F.y0 + "–" + F.y1 : F.y0 ? t("fl.from", { y: F.y0 }) : t("fl.to", { y: F.y1 });
+    if (k === "vi") return t(F.vi === "v" ? "fl.vocal" : "fl.instr");
+    if (k === "mood") return O.moodName(F.mood, LANG);
+    if (k === "sp") return t("fl.sp." + F.sp);
+    if (k === "gd") return t("fl.gd." + F.gd);
+    if (k === "ae") return t("fl.ae." + F.ae);
+    if (k === "off") return t("fl.off");
+    if (k === "ll") return t("fl.ll");
+    return "";
+  }
+  var GROUP_KEYS = { g: ["g"], cc: ["cc"], dur: ["dur"], lic: ["pd", "com", "mod"], y: ["y0", "y1"], vi: ["vi"], mood: ["mood"], sp: ["sp"], gd: ["gd"], ae: ["ae"], off: ["off"], ll: ["ll"] };
+  function filterChips() {
+    var F = FL(), row = el("div", "chips wrap fl-chips");
+    row.setAttribute("aria-label", t("fl.active"));
+    O.groupsOf(F).forEach(function (k) {
+      var b = button("", "chip on fl-chip", function () {
+        var G = Object.assign({}, F);
+        GROUP_KEYS[k].forEach(function (x) { delete G[x]; });
+        setFL(G);
+      });
+      var label = t("fl.g." + k) + ": " + groupText(k, F);
+      b.appendChild(el("span", "", groupText(k, F)));
+      b.appendChild(el("span", "fl-x", "×"));
+      b.setAttribute("aria-label", t("fl.remove", { f: label }));
+      b.title = t("fl.remove", { f: label });
+      row.appendChild(b);
+    });
+    row.appendChild(button(t("fl.clear"), "chip", function () { setFL({ sort: F.sort }); }));
+    return row;
+  }
+  // No words, filters on: the songs on this device that pass, then the open catalogues.
+  function exploreResults(box) {
+    var F = FL(), miss = O.filterMissing("loc", F);
+    if (tracks.length) {
+      if (miss.length) box.appendChild(el("p", "dim small o-note fl-skip", t("fl.skipMine", { f: missText(miss) })));
+      else {
+        var mine = C.sortTracks(tracks.filter(function (x) { return O.localPasses(x, F); }), "title", LANG);
+        box.appendChild(el("h2", "sub-h", t("fl.mine")));
+        if (mine.length) box.appendChild(rowList(mine.slice(0, 100), { src: { kind: "search", id: "", n: t("fl.title") } }));
+        else box.appendChild(el("p", "dim small o-note", t("o.none")));
+      }
+    }
+    if (openOn()) onlineResults(box, "");
+    else box.appendChild(el("p", "empty", t("fl.needOpen")));
+  }
+  // ---------- Sources (MU-SRC) ----------
+  function keyNote(sk) {
+    var p = el("div", "o-note");
+    p.appendChild(el("span", "dim small", t(sk + ".needKey")));
+    p.appendChild(button(t("eu.addKey"), "pill small-pill", sourcesDlg));
+    return p;
+  }
+  function sourcesDlg() {
+    var dlg = makeDialog("mu-sources", "menu-dlg");
+    dlg.addEventListener("close", function () { setTimeout(renderKeepScroll, 0); });
+    dlg.appendChild(el("h2", "dlg-title", t("src.title")));
+    dlg.appendChild(el("p", "dim small dlg-sub", t("src.hint")));
+    O.SOURCE_ORDER.forEach(function (sk) {
+      var lab = el("label", "check");
+      var c = el("input");
+      c.type = "checkbox"; c.checked = srcOn(sk);
+      c.addEventListener("change", function () {
+        prefs.soff = prefs.soff.filter(function (x) { return x !== sk; });
+        if (!c.checked) prefs.soff.push(sk);
+        savePrefs(); renderKeepScroll();
+      });
+      lab.appendChild(c);
+      lab.appendChild(el("span", "", srcName(sk)));
+      dlg.appendChild(lab);
+      dlg.appendChild(el("p", "dim small", t("src." + sk)));
+    });
+    // MU-SRC2: free music elsewhere, as links only (its licence does not let other apps play it).
+    dlg.appendChild(el("h3", "sub-h", t("src.more")));
+    var moby = el("a", "link", "mobygratis.com");
+    moby.href = "https://mobygratis.com/"; moby.target = "_blank"; moby.rel = "noopener noreferrer";
+    moby.addEventListener("click", function (e) { e.preventDefault(); openExt(moby.href); });
+    dlg.appendChild(el("p", "")).appendChild(moby);
+    dlg.appendChild(el("p", "dim small", t("src.moby")));
+    // Europeana and DPLA: the person's own keys.
+    var L = window.OrosMusicLB;
+    if (L && typeof L.saveSecret === "function") ["eu", "dp"].forEach(function (sk) { dlg.appendChild(keyForm(sk, L, dlg)); });
+    dlg.appendChild(el("div", "dlg-btns")).appendChild(button(t("close"), "txt-btn", function () { dlg.close(); }));
+    openDialog(dlg);
+  }
+  function keyForm(sk, L, dlg) {
+    var K = KEYS[sk], form = el("form", "");
+    var f0 = el("label", "field");
+    f0.appendChild(el("span", "dim small", t(sk + ".key")));
+    var inp = el("input");
+    inp.type = "password"; inp.autocomplete = "off"; inp.spellcheck = false; inp.maxLength = K.max;
+    inp.setAttribute("autocapitalize", "none");
+    inp.placeholder = K.get() ? t("eu.keySaved") : t("eu.keyPh");
+    f0.appendChild(inp);
+    form.appendChild(f0);
+    var get = el("a", "link small", t(sk + ".getKey"));
+    get.href = K.url; get.target = "_blank"; get.rel = "noopener noreferrer";
+    get.addEventListener("click", function (e) { e.preventDefault(); openExt(get.href); });
+    form.appendChild(el("p", "dim small")).appendChild(get);
+    form.appendChild(el("p", "dim small", t(sk + ".keyHint")));
+    var row = el("div", "dlg-btns");
+    if (K.get()) row.appendChild(button(t("eu.forget"), "txt-btn danger", function () { L.forgetSecret(K.name).then(function () { K.set(null); dlg.close(); showToast(t(sk + ".forgot")); renderKeepScroll(); }); }));
+    var ok = el("button", "txt-btn accent", t("eu.save"));
+    ok.type = "submit";
+    row.appendChild(ok);
+    form.appendChild(row);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var v = inp.value.trim();
+      if (!K.ok(v)) { showToast(t(sk + ".badKey")); inp.focus(); return; }
+      L.saveSecret(K.name, v).then(function () {
+        K.set(v);
+        Object.keys(feeds).forEach(function (k) { if (k.indexOf("|" + sk + "|") >= 0) delete feeds[k]; });
+        dlg.close(); showToast(t(sk + ".saved")); renderKeepScroll();
+      }, function () { showToast(t("eu.saveErr")); });
+    });
+    return form;
+  }
+  function filtersDlg() {
+    var F = FL();
+    var dlg = makeDialog("mu-filters", "menu-dlg fl-dlg");
+    dlg.setAttribute("aria-labelledby", "fl-title");
+    var form = el("form", "");
+    form.method = "dialog";
+    var h = el("h2", "dlg-title", t("fl.title"));
+    h.id = "fl-title";
+    form.appendChild(h);
+    form.appendChild(el("p", "dim small dlg-sub", t("fl.hint")));
+    var grid = el("div", "fl-grid");
+    function sel(label, opts, val, note) {
+      var lab = el("label", "field");
+      lab.appendChild(el("span", "dim small", label + (note ? " · " + note : "")));
+      var s0 = el("select");
+      opts.forEach(function (x) { var o = el("option", "", x[1]); o.value = x[0]; if (String(val || "") === x[0]) o.selected = true; s0.appendChild(o); });
+      lab.appendChild(s0);
+      grid.appendChild(lab);
+      return s0;
+    }
+    var any = [["", t("fl.any")]];
+    var gS = sel(t("fl.g.g"), any.concat(O.OPEN_GENRES.map(function (g) { return [g[0], O.genreName(g[0], LANG)]; })), F.g);
+    var col = typeof Intl !== "undefined" && Intl.Collator ? new Intl.Collator(loc()) : null;
+    var ccs = O.countryCodes().map(function (c) { return [c, regionName(c)]; }).sort(function (a, b) { return col ? col.compare(a[1], b[1]) : a[1] < b[1] ? -1 : 1; });
+    var cS = sel(t("fl.g.cc"), any.concat(ccs), F.cc, t("fl.ccNote"));
+    var dS = sel(t("fl.g.dur"), any.concat(["s", "m", "l", "xl"].map(function (d) { return [d, durName(d)]; })), F.dur);
+    var vS = sel(t("fl.g.vi"), any.concat([["v", t("fl.vocal")], ["i", t("fl.instr")]]), F.vi);
+    var mS = sel(t("fl.g.mood"), any.concat(O.MOODS.map(function (x) { return [x[0], O.moodName(x[0], LANG)]; })), F.mood, "Jamendo");
+    var pS = sel(t("fl.g.sp"), any.concat(O.SPEEDS.map(function (x) { return [x, t("fl.sp." + x)]; })), F.sp, "Jamendo");
+    var gdS = sel(t("fl.g.gd"), any.concat([["female", t("fl.gd.female")], ["male", t("fl.gd.male")]]), F.gd, "Jamendo");
+    var aS = sel(t("fl.g.ae"), any.concat([["acoustic", t("fl.ae.acoustic")], ["electric", t("fl.ae.electric")]]), F.ae, "Jamendo");
+    var sS = sel(t("fl.sort"), [["", t("fl.sort.rel")], ["pop", t("fl.sort.pop")], ["new", t("fl.sort.new")], ["dig", t("fl.sort.dig")]], F.sort);
+    form.appendChild(grid);
+    // Years
+    var yr = el("div", "fl-years");
+    function yIn(label, v) {
+      var lab = el("label", "field");
+      lab.appendChild(el("span", "dim small", label));
+      var i0 = el("input");
+      i0.type = "number"; i0.inputMode = "numeric"; i0.min = "1800"; i0.max = "2100"; i0.step = "1"; i0.placeholder = label;
+      if (v) i0.value = String(v);
+      lab.appendChild(i0);
+      yr.appendChild(lab);
+      return i0;
+    }
+    var y0 = yIn(t("fl.y0"), F.y0), y1 = yIn(t("fl.y1"), F.y1);
+    form.appendChild(el("h3", "sub-h", t("fl.g.y")));
+    form.appendChild(yr);
+    // Licence + offline
+    form.appendChild(el("h3", "sub-h", t("fl.g.lic")));
+    function chk(key, label, on, hint) {
+      var lab = el("label", "toggle-row fl-check");
+      var c = el("input");
+      c.type = "checkbox"; c.checked = !!on;
+      lab.appendChild(c);
+      var tx = el("span", "");
+      tx.appendChild(el("span", "", label));
+      if (hint) tx.appendChild(el("span", "dim small fl-hint", hint));
+      lab.appendChild(tx);
+      form.appendChild(lab);
+      return c;
+    }
+    var pdC = chk("pd", t("fl.pd"), F.pd, t("fl.pdHint"));
+    var comC = chk("com", t("fl.com"), F.com, t("fl.comHint"));
+    var modC = chk("mod", t("fl.mod"), F.mod, t("fl.modHint"));
+    form.appendChild(el("h3", "sub-h", t("fl.g.off")));
+    var offC = chk("off", t("fl.off"), F.off, t("fl.offHint"));
+    var llC = chk("ll", t("fl.ll"), F.ll, t("fl.llHint"));
+    var row = el("div", "dlg-btns");
+    row.appendChild(button(t("fl.clear"), "txt-btn", function () { dlg.close(); setFL({}); }));
+    row.appendChild(button(t("cancel"), "txt-btn", function () { dlg.close(); }));
+    var ok = el("button", "txt-btn accent", t("fl.apply"));
+    ok.type = "submit";
+    row.appendChild(ok);
+    form.appendChild(row);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      var G = { g: gS.value, cc: cS.value, dur: dS.value, vi: vS.value, mood: mS.value, sp: pS.value, gd: gdS.value, ae: aS.value, sort: sS.value,
+        y0: y0.value, y1: y1.value, pd: pdC.checked ? 1 : 0, com: comC.checked ? 1 : 0, mod: modC.checked ? 1 : 0, off: offC.checked ? 1 : 0, ll: llC.checked ? 1 : 0 };
+      dlg.close();
+      setFL(G);
+    });
+    dlg.appendChild(form);
+    openDialog(dlg);
+    gS.focus();
   }
   function renderLib(m) {
     var chips = el("div", "chips");
@@ -2736,7 +3437,7 @@
       var gl = C.sortTracks(g.list, "artist", LANG);
       pageHead(m, cover("", g.n, "big"), t("kind.genre"), g.n, el("div", "ph-sub dim", nSongs(g.list.length)), gl, src);
       m.appendChild(rowList(gl, { src: src }));
-    } else if (O && (v.kind === "browse" || v.kind === "ogenre" || v.kind === "omood" || v.kind === "ia" || v.kind === "jm" || v.kind === "oartist")) {
+    } else if (O && (v.kind === "browse" || v.kind === "ogenre" || v.kind === "omood" || v.kind === "ia" || v.kind === "jm" || v.kind === "oartist" || v.kind === "lma" || v.kind === "lmaband" || v.kind === "labels" || v.kind === "label")) {
       renderOpen(m, v);
     } else if (LB && v.kind === "lbpl") {
       renderLbPl(m, v);
@@ -2759,6 +3460,109 @@
 
   // Pages of the open catalogues: a shelf, a genre, an Internet
   // Archive album, an artist.
+  // ---------- Live Music Archive explorer (MU-DIG) ----------
+  var lmaQ = { etree: "", netlabels: "" }, lmaYear = {}, lmaKindF = "";
+  function fmtCount(n) { try { return new Intl.NumberFormat(loc(), { notation: "compact" }).format(n); } catch (e) { return String(n); } }
+  // parent "etree": bands of the Live Music Archive; "netlabels": netlabels (label pages).
+  function lmaBandsPage(m, parent) {
+    parent = parent === "netlabels" ? "netlabels" : "etree";
+    var lab = parent === "netlabels", title = t(lab ? "lab.title" : "lma.title");
+    var src = { kind: lab ? "labels" : "lma", id: "", n: title };
+    pageHead(m, cover("", lab ? "labels" : "lma", "big", I.globe), t("kind.free"), title, el("div", "ph-sub dim", t(lab ? "lab.sub" : "lma.sub")), null, src);
+    var form = el("form", "search-row lma-find");
+    var inp = el("input");
+    inp.type = "search"; inp.id = "lma-q"; inp.placeholder = t(lab ? "lab.find" : "lma.find"); inp.value = lmaQ[parent]; inp.autocomplete = "off";
+    inp.setAttribute("aria-label", inp.placeholder);
+    form.appendChild(inp);
+    var go = el("button", "txt-btn accent", t("lma.go"));
+    go.type = "submit";
+    form.appendChild(go);
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+      lmaQ[parent] = inp.value.trim().slice(0, 80);
+      renderKeepScroll();
+      setTimeout(function () { var x = $("lma-q"); if (x) x.focus(); }, 0);
+    });
+    m.appendChild(form);
+    var lq = lmaQ[parent];
+    m.appendChild(el("h2", "sub-h", lab ? t(lq ? "lab.found" : "lab.top") : t(lq ? "lma.found" : "lma.top")));
+    var k = "lma|" + parent + "|" + lq, f = feed(k, function (page) {
+      return O.lmaBands({ q: lq, page: page, parent: parent }).then(function (r) { return { list: r.bands, more: r.more }; });
+    });
+    var g = el("div", "grid");
+    f.list.forEach(function (b) {
+      g.appendChild(card(cover(b.art, b.n, ""), b.n, t("lma.plays", { n: fmtCount(b.dl) }), function () { openView({ kind: lab ? "label" : "lmaband", id: b.id, n: b.n }); }));
+    });
+    if (f.list.length) m.appendChild(g);
+    feedStatus(m, k, lab ? "Internet Archive" : "Live Music Archive");
+  }
+  // A netlabel's albums, newest first.
+  function labelPage(m, v) {
+    var id = v.id, name = v.n || id, src = { kind: "label", id: id, n: name };
+    pageHead(m, cover("https://archive.org/services/img/" + id, name, "big", I.globe), t("lab.one"), name, el("div", "ph-sub dim", "Internet Archive"), null, src);
+    var k = "lab|" + id, f = feed(k, fIa({ coll: id, sort: "publicdate desc" }));
+    var g = el("div", "grid");
+    f.list.forEach(function (a) { g.appendChild(oAlbumCard(a)); });
+    if (f.list.length) m.appendChild(g);
+    feedStatus(m, k, "Internet Archive");
+  }
+  function lmaBandPage(m, v) {
+    var band = v.id, name = v.n || band, src = { kind: "lmaband", id: band, n: name };
+    var ky = "lmay|" + band, fy = feed(ky, function () {
+      return O.lmaYears(band).then(function (ys) { return { list: ys.map(function (y) { return { k: String(y.y), y: y.y, n: y.n }; }), more: false }; });
+    });
+    var total = fy.list.reduce(function (a, y) { return a + y.n; }, 0);
+    pageHead(m, cover("https://archive.org/services/img/" + band, name, "big", I.globe), t("lma.band"), name,
+      el("div", "ph-sub dim", total ? t("lma.shows", { n: total, y: fy.list.length }) : "Live Music Archive"), null, src);
+    if (!fy.list.length) { feedStatus(m, ky, "Live Music Archive"); return; }
+    if (!lmaYear[band]) lmaYear[band] = fy.list.slice().sort(function (a, b) { return b.n - a.n || b.y - a.y; })[0].y;
+    var yr = lmaYear[band];
+    m.appendChild(el("h2", "sub-h", t("lma.year")));
+    var chips = el("div", "chips wrap lma-years");
+    fy.list.forEach(function (y) {
+      var b = button(String(y.y), "chip" + (y.y === yr ? " on" : ""), function () { lmaYear[band] = y.y; renderKeepScroll(); });
+      b.setAttribute("aria-pressed", y.y === yr ? "true" : "false");
+      b.title = t("lma.nShows", { n: y.n });
+      chips.appendChild(b);
+    });
+    m.appendChild(chips);
+    var kinds = el("div", "chips wrap lma-kinds");
+    [["", t("o.all")], ["sbd", "SBD"], ["aud", "AUD"], ["mtx", "Matrix"], ["ll", t("lma.lossless")]].forEach(function (x) {
+      var b = button(x[1], "chip" + (lmaKindF === x[0] ? " on" : ""), function () { lmaKindF = x[0]; renderKeepScroll(); });
+      b.setAttribute("aria-pressed", lmaKindF === x[0] ? "true" : "false");
+      if (x[0] === "sbd") b.title = t("lma.sbd");
+      if (x[0] === "aud") b.title = t("lma.aud");
+      if (x[0] === "mtx") b.title = t("lma.mtx");
+      kinds.appendChild(b);
+    });
+    m.appendChild(kinds);
+    var ks = "lmas|" + band + "|" + yr, fs = feed(ks, function (page) {
+      return O.lmaShows(band, yr, page).then(function (r) { return { list: r.shows.map(function (x) { return Object.assign({ k: x.id }, x); }), more: r.more }; });
+    });
+    var shown = fs.list.filter(function (x) { return !lmaKindF || (lmaKindF === "ll" ? x.ll : x.kind === lmaKindF); });
+    var list = el("div", "lma-list");
+    shown.forEach(function (x) {
+      var b = el("button", "lma-show");
+      b.type = "button";
+      b.appendChild(el("span", "lma-d", (x.date ? fmtDay(x.date) + " · " : "") + x.n));
+      var sub = el("span", "lma-s dim small");
+      if (x.at) sub.appendChild(el("span", "", x.at));
+      if (x.kind) { var kb = el("span", "lic", x.kind === "mtx" ? "Matrix" : x.kind.toUpperCase()); kb.title = t("lma." + x.kind); sub.appendChild(kb); }
+      if (x.ll) sub.appendChild(el("span", "lic", t("lma.lossless")));
+      if (x.r) sub.appendChild(el("span", "", "★ " + x.r));
+      b.appendChild(sub);
+      b.addEventListener("click", function () { openView({ kind: "ia", id: x.id }); });
+      list.appendChild(b);
+    });
+    if (shown.length) m.appendChild(list);
+    else if (fs.list.length && !fs.busy) m.appendChild(el("p", "dim small o-note", t("lma.noneKind")));
+    feedStatus(m, ks, "Live Music Archive");
+  }
+  function fmtDay(d) {
+    var x = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+    if (!x) return d;
+    try { return new Date(Date.UTC(+x[1], +x[2] - 1, +x[3])).toLocaleDateString(loc(), { timeZone: "UTC", day: "numeric", month: "short", year: "numeric" }); } catch (e) { return d; }
+  }
   function renderOpen(m, v) {
     var src, f, k;
     if (v.kind === "browse") {
@@ -2767,8 +3571,8 @@
       var name = O.browseName(b.id, LANG);
       src = { kind: "browse", id: b.id, n: name };
       k = "b|" + b.id;
-      f = feed(k, b.src === "ia" ? fIa(b.ia) : b.src === "cc" ? fCc(b.cc) : b.src === "jm" ? fJm(b.jm) : fOv(b.ov));
-      var cardsOnly = b.src === "ia" || (b.jm && (b.jm.albums || b.jm.radios));
+      f = feed(k, fSrc(b.src, b[b.src]));
+      var cardsOnly = isIaSrc(b.src) || (b.jm && (b.jm.albums || b.jm.radios));
       pageHead(m, cover("", b.id, "big", I.globe), t("kind.free"), name, el("div", "ph-sub dim", srcName(b.src)), cardsOnly ? null : liveFeeds([k]), src);
       if (cardsOnly) { var g = el("div", "grid"); f.list.forEach(function (a) { g.appendChild(b.jm && b.jm.radios ? radioCard(a) : oAlbumCard(a)); }); m.appendChild(g); }
       else m.appendChild(rowList(f.list, { src: src }));
@@ -2798,11 +3602,23 @@
       fi.list.forEach(function (a) { ci.appendChild(oAlbumCard(a)); });
       if (fi.list.length) m.appendChild(ci);
       feedStatus(m, ki, srcName("ia"));
-      [["jm", kj, fj], ["ov", ko, fo], ["cc", kc, fc]].forEach(function (x) {
+      // MU-SRC: Audius and (with the person's key) Europeana in genres too.
+      var gl = [["jm", kj, fj], ["ov", ko, fo], ["cc", kc, fc]];
+      if (srcOn("au")) gl.push(["au", "g|au|" + gg.id, feed("g|au|" + gg.id, fAu({ f: { g: gg.id } }))]);
+      if (srcOn("eu") && euKey) gl.push(["eu", "g|eu|" + gg.id, feed("g|eu|" + gg.id, fEu({ f: { g: gg.id } }))]);
+      if (srcOn("km")) gl.push(["km", "g|km|" + gg.id, feed("g|km|" + gg.id, fKm({ f: { g: gg.id } }))]);
+      if (srcOn("dp") && dpKey) gl.push(["dp", "g|dp|" + gg.id, feed("g|dp|" + gg.id, fDp({ f: { g: gg.id } }))]);
+      gl.filter(function (x) { return srcOn(x[0]); }).forEach(function (x) {
         m.appendChild(el("h2", "sub-h", t("o.songs", { s: srcName(x[0]) })));
         if (x[2].list.length) m.appendChild(rowList(x[2].list, { src: src }));
         feedStatus(m, x[1], srcName(x[0]));
       });
+    } else if (v.kind === "lma" || v.kind === "labels") {
+      lmaBandsPage(m, v.kind === "labels" ? "netlabels" : "etree");
+    } else if (v.kind === "label") {
+      labelPage(m, v);
+    } else if (v.kind === "lmaband") {
+      lmaBandPage(m, v);
     } else if (v.kind === "omood") {
       var mo = O.moodOf(v.id);
       if (!mo) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
@@ -2950,6 +3766,7 @@
         subEl.insertBefore(oi, subEl.firstChild);
       }
       if (r.li) { var lb0 = el("span", "lic", O.licShort(r.li)); lb0.title = O.licLabel(r.li, LANG); subEl.insertBefore(lb0, subEl.firstChild); }
+      else if (r.s === "au") { var lb1 = el("span", "lic lic-free", t("au.free")); lb1.title = t("au.freeLong"); subEl.insertBefore(lb1, subEl.firstChild); }
     }
     tx.appendChild(subEl);
     main.appendChild(tx);
@@ -3023,10 +3840,22 @@
       }],
       [t("m.addQueue"), function () { var it = itemsOf(p.it); if (it.length) { H.addLast(it); showToast(t("toast.queued")); } }],
       [t("m.share"), function () { shareList(p.n, "pl", "", "", p.it.map(function (r) { return playable(r) || r; }), ""); }],
+      [t("m.credits"), function () { copyCredits(p.n, p.it); }],
       [t("m.deletePl"), function () {
         confirmDlg(t("pl.deleteQ", { n: p.n }), t("m.deletePl"), function () { mutate(function (d, now) { return C.deletePl(d, p.id, now); }); goBack(); });
       }, true]
     ], p.n);
+  }
+  // MU-DIG: the credit lines of a playlist's open-catalogue songs, for reuse.
+  function creditsText(name, list) {
+    var lines = [];
+    (list || []).forEach(function (r) { if (C.isRemote(r) && r.s !== "ln") { var c = O.credit(r, LANG); if (c && lines.indexOf(c) < 0) lines.push(c); } });
+    return lines.length ? name + "\n\n" + lines.join("\n") + "\n" : "";
+  }
+  function copyCredits(name, list) {
+    var text = O ? creditsText(name, list) : "";
+    if (!text) { showToast(t("crd.none")); return; }
+    copyText(text, function () { showToast(t("crd.copied", { n: text.split("\n").length - 3 })); });
   }
   function card(art, title, sub, fn, playFn) {
     var c = el("div", "card");
@@ -3353,7 +4182,7 @@
         ta.textContent = "";
         ta.appendChild(c.s === "sv" ? svArtistLink(c, "dim") : isOpen(c) ? oArtistLink(c, "dim") : c.s ? el("span", "dim", c.a || "") : artistLink(c.a, "dim"));
         licLine.hidden = !isOpen(c);
-        licLine.textContent = isOpen(c) ? [c.li ? O.licLabel(c.li, LANG) : "", O.sourceName(c)].filter(Boolean).join(" · ") : "";
+        licLine.textContent = isOpen(c) ? [c.li ? O.licLabel(c.li, LANG) : c.s === "au" ? t("au.free") : "", O.sourceName(c)].filter(Boolean).join(" · ") : "";
         fromN.textContent = (st.src && st.src.n) || t("now.lib");
         var liked = C.isLiked(D(), c.k);
         like.innerHTML = liked ? I.heartOn : I.heart;
@@ -3789,6 +4618,7 @@
       ol.appendChild(el("span", "", t("s.open")));
       dlg.appendChild(ol);
       dlg.appendChild(el("p", "dim small", t("s.openHint")));
+      if (prefs.open) dlg.appendChild(el("div", "menu-col")).appendChild(button(t("src.btn"), "", function () { dlg.close(); sourcesDlg(); }));
       if (A) {
         var ml = el("label", "check");
         var mc = el("input");
@@ -4094,6 +4924,7 @@
       H = api;
       unsub = H.subscribe(onHost);
       window.addEventListener("pagehide", function () { if (unsub) unsub(); });
+      loadEuKey();
       return Promise.all([loadIndex(), loadOff().catch(function () {}), SV ? SV.ready().catch(function () {}) : null]).then(function () {
         renderAll();
         var tg = null;
