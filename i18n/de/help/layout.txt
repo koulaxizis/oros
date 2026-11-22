@@ -151,6 +151,14 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Kapitälchen, hoch- und tiefgestellt**: in einem Zeichenformat.
 - **Lockere und enge Zeilen**: `Mehr › Lockere und enge Zeilen zeigen` markiert Blocksatzzeilen außerhalb der Grenzen (gelb locker, rosa eng).
 
+## Fußnoten, Listen, Querverweise und Bücher
+- **Fußnoten und Endnoten**: im Textmodus die Schaltfläche `¹` › `Fußnote einfügen…`. Die Fußnote wird selbst nummeriert und unten in ihrer Spalte gesetzt; eine Zeile, die sie zurücklassen würde, geht mit ihr weiter. Klicke die Nummer einer Fußnote an, um sie zu ändern oder zu entfernen. `Mehr › Fußnoten…` setzt sie stattdessen nach den Text (Endnoten), legt ihr Absatzformat fest und ob die Nummerierung in jedem Textabschnitt neu beginnt. Im EPUB öffnen sie sich als Pop-up.
+- **Listen**: die `Liste` eines Absatzformats nummeriert seine Absätze (1. a) i. αʹ Αʹ und mehr, oder Aufzählungszeichen). Formate mit demselben Listennamen teilen die Nummern; Ebene 2 beginnt unter jeder Ebene 1 neu.
+- **Querverweise**: `¹ › Querverweis einfügen…` zeigt auf eine Überschrift oder einen beliebigen Absatz und zeigt seine Seite, seinen Text oder beides; die Seite folgt, wenn sich der Text verschiebt. Im PDF ist er ein Link zu dieser Seite, im EPUB zum Absatz.
+- **Links**: Wörter auswählen und `¹ › Link…` für eine Web- oder E-Mail-Adresse; er funktioniert im PDF und im EPUB.
+- **Inhaltsverzeichnis in jedem Dokument**: `Mehr › Inhaltsverzeichnis aus Formaten…` wählt die Formate der Überschriften und ihre Ebene, das Format jeder Ebene und was zwischen Titel und Seite steht; gibt es keines, kommt es in einen neuen Rahmen. `Mehr › Inhaltsverzeichnis aktualisieren` folgt später den Seiten.
+- **Bücher**: `Mehr › Buch…` hält Kapitel in getrennten Dokumenten zusammen: ihre Reihenfolge, fortlaufende Seitenzahlen (auf Wunsch jedes Dokument auf einer rechten Seite), Formate und Farben wie im ersten Dokument und ein PDF des ganzen Buchs.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

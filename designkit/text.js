@@ -640,6 +640,7 @@
     // may add once its spaces are at their max; opt 1 optical margins
     // (punctuation hangs at the edges); dc { n lines 2-10, c letters
     // 1-10 } a drop cap; bal 1 balanced ragged lines
+    if (x.list !== undefined) out.list = listOf(x.list);
     if (x.comp !== undefined) out.comp = x.comp === "p" ? "p" : "";
     if (x.ws !== undefined) {
       var ws = Array.isArray(x.ws) ? x.ws : [];
@@ -969,6 +970,20 @@
       // a running head (ext.fld "sec", LY-RH): the page's chapter title;
       // its own text is what shows where there is none (a master being
       // edited, an older orOS). Its characters keep their offsets.
+      // a note's reference (LY-W7, ext.fn: the note's id) shows the
+      // note's number, raised; a cross-reference (ext.xr) the page or
+      // text of where it points. Their own text is what an older orOS
+      // shows; its characters keep their offsets.
+      if (run.ext && (typeof run.ext.fn === "string" || (run.ext.xr && typeof run.ext.xr === "object")) && typeof run.t === "string" && run.t) {
+        if (!word) word = { k: "w", parts: [] };
+        if (typeof run.ext.fn === "string") {
+          var fa = {}; for (var ak in a) if (ak !== "_sc" && Object.prototype.hasOwnProperty.call(a, ak)) fa[ak] = a[ak];
+          fa.rise = a.size * 0.33; fa.size = a.size * 0.65;
+          word.parts.push({ t: null, f: "fn", fn: run.ext.fn, fb: run.t, a: fa, o: base, n: run.t.length });
+        } else word.parts.push({ t: null, f: "xr", xr: run.ext.xr, fb: run.t, a: a, o: base, n: run.t.length });
+        base += run.t.length;
+        return;
+      }
       if (run.ext && run.ext.fld === "sec" && typeof run.t === "string") {
         if (!word) word = { k: "w", parts: [] };
         word.parts.push({ t: null, f: "sec", fb: run.t, a: a, o: base, n: run.t.length });
@@ -1012,11 +1027,23 @@
     if (p.f === "pn") return String(ctx.pageLabel || "#");
     if (p.f === "pc") return String(ctx.pageCount || "#");
     if (p.f === "sec") return caseOf(p.a, typeof ctx.sec === "string" ? ctx.sec : p.fb || "");
+    if (p.f === "fn") return curNotes && curNotes.num[p.fn] ? String(curNotes.num[p.fn]) : p.fb || "*";
+    if (p.f === "xr") return caseOf(p.a, xrText(p.xr, p.fb));
     return "";
   }
   // the anchored objects' boxes of the chain being laid out:
   // { item id: { w, h } } (styles.obj; none: an object takes no room)
   var curObjs = null;
+  // the notes of the chain being laid out (LY-W7): { num: { id: n },
+  // text: { id: text }, kind "foot" | "end", ps } (styles.notes), and
+  // the cross-reference targets { anchor id: { pg: label, t: text } }
+  // (styles.xr)
+  var curNotes = null, curXr = null;
+  function xrText(x, fb) {
+    var to = x && typeof x.to === "string" && curXr ? curXr[x.to] : null;
+    if (!to) return fb || "?";
+    return x.k === "t" ? to.t : x.k === "tp" ? to.t + " (" + to.pg + ")" : String(to.pg);
+  }
   function objBox(p) { var b = curObjs && curObjs[p.ob]; return b && b.w > 0 && b.h > 0 ? b : null; }
   function partWidth(p, ctx) {
     if (p.f === "obj") { var b = objBox(p); return b ? b.w : 0; }
@@ -1054,6 +1081,107 @@
     for (var i = 0; i < st.length; i++) if (st[i] > pos + 0.01) return st[i];
     var w = ps.tabw || 36;
     return (Math.floor((pos + 0.01) / w) + 1) * w;
+  }
+
+  // ---------- 6c. Notes (LY-W7) ----------
+  // A note lives in its reference: a run with ext.fn = its id and
+  // ext.ft = its text (paragraphs split by a new line), so it travels
+  // with the text it belongs to (copy, paste, another story); a
+  // story's ext.fn { id: text } is read too. styles.notes:
+  // { kind "foot" | "end", ps (a paragraph style id), start (the first
+  // number of this story, so numbers run through a document) }.
+  function notesOf(story, styles) {
+    var tx = story && story.ext && story.ext.fn;
+    var refs = [], num = {}, text = {};
+    (story && story.paras || []).forEach(function (p) {
+      (p.runs || []).forEach(function (r) {
+        if (!r.ext || typeof r.ext.fn !== "string" || refs.indexOf(r.ext.fn) >= 0) return;
+        refs.push(r.ext.fn);
+        text[r.ext.fn] = typeof r.ext.ft === "string" ? r.ext.ft : tx && typeof tx[r.ext.fn] === "string" ? tx[r.ext.fn] : "";
+      });
+    });
+    if (!refs.length) return null;
+    var cfg = styles.notes || {}, n = Math.max(1, Math.floor(Number(cfg.start)) || 1);
+    refs.forEach(function (id) { num[id] = n++; });
+    var psMap = byId(styles.ps), base = resolvePs(psMap, cfg.ps && psMap[cfg.ps] ? cfg.ps : "ps-base");
+    var own = !!(cfg.ps && psMap[cfg.ps]);
+    return { num: num, text: text, order: refs, kind: cfg.kind === "end" ? "end" : "foot", ps: own ? cfg.ps : null, base: base, styles: styles,
+             key: fontKey(base.font, base.b, base.i), color: base.color };
+  }
+  // the notes as paragraphs: "n" + an en space + the text
+  function noteParas(notes, ids) {
+    var out = [];
+    ids.forEach(function (id) {
+      String(notes.text[id] || "").split("\n").slice(0, 50).forEach(function (t, k) {
+        var runs = [];
+        if (!k) runs.push({ t: notes.num[id] + "\u2002" });
+        if (t) runs.push({ t: t });
+        out.push({ ps: notes.ps || "_fn", runs: runs });
+      });
+    });
+    return out;
+  }
+  // a note set on its own, `w` wide → { lines, h }
+  function noteBlock(notes, id, w) {
+    var st = notes.styles, ps = st.ps;
+    if (!notes.ps) {
+      var b = notes.base, sz = Math.max(5, Math.round(b.size * 0.8 * 10) / 10);
+      ps = ps.concat([{ id: "_fn", m: 0, name: "", base: "ps-base", size: sz, lead: b.lead > 0 ? Math.max(sz * 1.15, b.lead * 0.8) : 0, align: b.align === "j" ? "j" : "l", sb: 0, sa: 1, fi: 0, li: 0, ri: 0, ext: { brk: "" } }]);
+    }
+    var keepO = curObjs, keepN = curNotes, keepX = curXr;
+    var res = layoutChain({ paras: noteParas(notes, [id]) }, [{ id: "_fn", w: w, h: 1e6 }], { ps: ps, cs: st.cs });
+    curObjs = keepO; curNotes = keepN; curXr = keepX;
+    var ls = res.frames._fn.lines, last = ls[ls.length - 1];
+    return { lines: ls, h: last ? last.y + last.d + 2 : 0 };
+  }
+
+  // ---------- 6a. Lists (LY-W7) ----------
+  // A paragraph style's ext.list { f: format, g: list name (default the
+  // style's id), lv: level 1-3, s: first number } numbers its
+  // paragraphs; a paragraph's ext.lr (a number) starts its list again
+  // from there. Counters run through the story; a deeper level starts
+  // again under each new number of the level above.
+  // i18n-inline-ok: Greek numerals (list labels, no UI text)
+  var GR_UNITS = ["", "α", "β", "γ", "δ", "ε", "ϛ", "ζ", "η", "θ"], GR_TENS = ["", "ι", "κ", "λ", "μ", "ν", "ξ", "ο", "π", "ϟ"], GR_HUND = ["", "ρ", "σ", "τ", "υ", "φ", "χ", "ψ", "ω", "ϡ"];
+  function greekNum(n) {
+    if (n < 1 || n > 999) return String(n);
+    return GR_HUND[Math.floor(n / 100)] + GR_TENS[Math.floor(n / 10) % 10] + GR_UNITS[n % 10] + "\u0374";
+  }
+  function roman(n) {
+    if (n < 1 || n > 3999) return String(n);
+    var v = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1], r = ["m", "cm", "d", "cd", "c", "xc", "l", "xl", "x", "ix", "v", "iv", "i"], o = "";
+    for (var i = 0; i < v.length; i++) while (n >= v[i]) { o += r[i]; n -= v[i]; }
+    return o;
+  }
+  function alpha(n) { var o = ""; while (n > 0) { n--; o = String.fromCharCode(97 + n % 26) + o; n = Math.floor(n / 26); } return o; }
+  var LIST_FMT = {
+    "1.": function (n) { return n + "."; }, "1)": function (n) { return n + ")"; }, "(1)": function (n) { return "(" + n + ")"; },
+    "a.": function (n) { return alpha(n) + "."; }, "a)": function (n) { return alpha(n) + ")"; }, "A.": function (n) { return alpha(n).toUpperCase() + "."; },
+    "i.": function (n) { return roman(n) + "."; }, "I.": function (n) { return roman(n).toUpperCase() + "."; },
+    "\u03B1\u0374": greekNum, "\u0391\u0374": function (n) { return greekNum(n).toUpperCase(); }, "\u2022": function () { return "\u2022"; }, "\u2013": function () { return "\u2013"; }
+  };
+  function listOf(v) {
+    // U+0374 and U+02B9 are the same keraia (NFC turns one into the other)
+    var f = v && typeof v.f === "string" ? v.f.replace(/\u02B9/g, "\u0374") : "";
+    if (!v || typeof v !== "object" || !LIST_FMT[f]) return null;
+    var lv = Math.floor(Number(v.lv)), st = Math.floor(Number(v.s));
+    return { f: f, g: typeof v.g === "string" ? v.g.slice(0, 40) : "", lv: lv >= 1 && lv <= 3 ? lv : 1, s: st >= 0 && st < 100000 ? st : 1 };
+  }
+  function listLabel(f, n) { return (LIST_FMT[f] || LIST_FMT["1."])(n); }
+  // each paragraph's label ("" none) for a story
+  function listLabels(paras, psMap) {
+    var out = [], count = {};
+    paras.forEach(function (p, i) {
+      var ps = resolvePs(psMap, p.ps), L = ps.list;
+      if (!L || ps.bul) { out[i] = ""; return; }
+      var g = L.g || p.ps, c = count[g] = count[g] || [0, 0, 0, 0];
+      var lr = p.ext && Number(p.ext.lr);
+      if (lr >= 0 && lr < 100000 && p.ext.lr !== undefined && p.ext.lr !== null) c[L.lv] = Math.floor(lr);
+      else c[L.lv] = c[L.lv] ? c[L.lv] + 1 : L.s;
+      for (var k = L.lv + 1; k < 4; k++) c[k] = 0;
+      out[i] = listLabel(L.f, c[L.lv]);
+    });
+    return out;
   }
 
   // ---------- 6b. Optical margins, drop caps, the composer (LY-W6) ----------
@@ -1197,9 +1325,20 @@
   function layoutChain(story, frames, styles) {
     var psMap = byId(styles.ps), csMap = byId(styles.cs);
     curObjs = styles.obj || null;
+    curXr = styles.xr || null;
+    var notes = curNotes = notesOf(story, styles);
     var out = { frames: {}, overset: false, placedParas: 0 };
     frames.forEach(function (f) { out.frames[f.id] = { lines: [] }; });
     if (!frames.length) { out.overset = hasText(story); return out; }
+    // endnotes (LY-W7): the notes follow the story's last paragraph
+    var realN = (story.paras || []).length;
+    if (notes && notes.kind === "end" && notes.order.length) story = { paras: (story.paras || []).concat(noteParas(notes, notes.order)) };
+    var labels = listLabels(story.paras || [], psMap);
+    // footnotes waiting at the foot of each column: key → { f, col, x0,
+    // bottom, h, blocks: [{ lines, h }] }
+    var foot = {}, fnDone = {}, FN_SEP = 9, FN_GAP = 2;
+    function footKey() { return fi * 64 + col; }
+    function footRoom() { var k = foot[footKey()]; return k ? k.h + FN_SEP : 0; }
 
     var fi = 0, col = 0, y = 0, colTop = true, curPi = 0, curLen = 0;
     var geom = null;
@@ -1243,20 +1382,39 @@
         got = nextCol() && place(para, ps, {});
       }
       if (!got) { out.overset = true; break; }
-      out.placedParas = pi + 1;
+      if (pi < realN) out.placedParas = pi + 1;
     }
+    // the footnotes, at the foot of their columns, under a short rule
+    Object.keys(foot).forEach(function (k) {
+      var F = foot[k], yy = F.bottom - F.h;
+      var rule = { col: F.col, frame: F.f.id, y: yy - FN_SEP + 3, d: 0, h: FN_SEP, runs: [{ x: F.x0, y: yy - FN_SEP + 3, t: "\u00A0", key: notes.key, size: 6, color: notes.color, u: 1, track: 0, w: Math.min(72, F.cw / 3) }], fn: 1, p: -1, cx0: F.x0, cx1: F.x0 + F.cw, x0: F.x0 };
+      out.frames[F.f.id].lines.push(rule);
+      F.blocks.forEach(function (b) {
+        b.lines.forEach(function (ln) {
+          var nl = { col: F.col, frame: F.f.id, y: yy + ln.y, d: ln.d, h: ln.h, fn: 1, p: -1, cx0: F.x0 + ln.cx0, cx1: F.x0 + ln.cx1, x0: F.x0 + ln.x0, runs: ln.runs.map(function (r) {
+            var o = {}; for (var q in r) if (q !== "o" && q !== "n" && q !== "p") o[q] = r[q];
+            o.x = F.x0 + r.x; o.y = yy + r.y; return o;
+          }) };
+          out.frames[F.f.id].lines.push(nl);
+        });
+        yy += b.h;
+      });
+    });
+    var footCols = {};
+    Object.keys(foot).forEach(function (k) { footCols[foot[k].f.id + ":" + foot[k].col] = 1; });
 
     // vertical justification (LY-W5b, frame ext.vj): a column the text
     // goes on from gets its free space shared out between paragraphs
     // (between lines when it holds one paragraph); the last column of
     // the text stays as it is
     var lastF = null, lastC = -1;
-    frames.forEach(function (f) { var ls = out.frames[f.id].lines; if (ls.length) { lastF = f; lastC = ls[ls.length - 1].col; } });
+    frames.forEach(function (f) { var ls = out.frames[f.id].lines.filter(function (l) { return !l.fn; }); if (ls.length) { lastF = f; lastC = ls[ls.length - 1].col; } });
     frames.forEach(function (f) {
       if (!f.vj) return;
       var byCol = {}, ins = Math.max(0, f.inset || 0), bottom = Math.max(ins, f.h - ins);
-      out.frames[f.id].lines.forEach(function (ln) { (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
+      out.frames[f.id].lines.forEach(function (ln) { if (!ln.fn) (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
       Object.keys(byCol).forEach(function (c) {
+        if (footCols[f.id + ":" + c]) return;
         if (f === lastF && +c === lastC && !out.overset) return;
         var ls = byCol[c], last = ls[ls.length - 1], free = bottom - (last.y + last.d);
         if (free <= 0.5 || ls.length < 2) return;
@@ -1275,9 +1433,10 @@
       if (!f.valign || f.valign === "t" || f.vj) return;
       var lines = out.frames[f.id].lines;
       var byCol = {};
-      lines.forEach(function (ln) { (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
+      lines.forEach(function (ln) { if (!ln.fn) (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
       var ins = Math.max(0, f.inset || 0), bottom = Math.max(ins, f.h - ins);
       Object.keys(byCol).forEach(function (c) {
+        if (footCols[f.id + ":" + c]) return;
         var ls = byCol[c], last = ls[ls.length - 1];
         var used = (last.y + last.d) - ins, free = (bottom - ins) - used;
         if (free <= 0) return;
@@ -1290,10 +1449,13 @@
     function snap() {
       var n = {};
       frames.forEach(function (f) { n[f.id] = out.frames[f.id].lines.length; });
-      return { fi: fi, col: col, y: y, colTop: colTop, geom: geom, lastPg: lastPg, n: n };
+      var fs = {};
+      Object.keys(foot).forEach(function (k) { fs[k] = { f: foot[k].f, col: foot[k].col, x0: foot[k].x0, bottom: foot[k].bottom, h: foot[k].h, blocks: foot[k].blocks.slice() }; });
+      return { fi: fi, col: col, y: y, colTop: colTop, geom: geom, lastPg: lastPg, n: n, foot: fs, fnDone: Object.keys(fnDone) };
     }
     function restore(S) {
       fi = S.fi; col = S.col; y = S.y; colTop = S.colTop; geom = S.geom; lastPg = S.lastPg;
+      foot = S.foot; fnDone = {}; S.fnDone.forEach(function (k) { fnDone[k] = 1; });
       frames.forEach(function (f) { out.frames[f.id].lines.length = S.n[f.id]; });
     }
     function pageOf() { return (frames[fi].ctx || {}).pg; }
@@ -1312,6 +1474,7 @@
       var toks = tokenize(para, ps, csMap);
       curLen = toks.len;
       if (ps.bul) toks.unshift({ k: "bul", a: runAttrs(ps, {}, {}) });
+      else if (labels[curPi]) toks.unshift({ k: "bul", a: runAttrs(ps, {}, {}), label: labels[curPi] });
       segs = []; segKey = -1;
       return layoutPara(toks, ps, opt) ? segs : null;
     }
@@ -1332,7 +1495,7 @@
       if (nps.brk || (next.ext && BRK[next.ext.brk])) return true;
       var key = fontKey(nps.font, nps.b, nps.i), lead = leadOf(nps, nps.size);
       var base = y + nps.sb + lead + lead * ((nps.orph || 1) - 1);
-      return base + descent(key, nps.size) <= geom.bottom + 0.01;
+      return base + descent(key, nps.size) <= geom.bottom - footRoom() + 0.01;
     }
 
     // --- one paragraph; false = ran out of frames ---
@@ -1345,7 +1508,13 @@
         hangBul = toks.shift();
       }
       var li = ps.li, bulletW = 0;
-      if (hangBul) {
+      if (hangBul && hangBul.label) {
+        // a list's number (LY-W7): it hangs in the left indent, which
+        // grows to hold it and a space
+        bulletW = measure(hangBul.a.key, hangBul.label, hangBul.a.size, 0);
+        var gapL = hangBul.a.size * 0.5;
+        if (li < bulletW + gapL) li = bulletW + gapL;
+      } else if (hangBul) {
         bulletW = measure(hangBul.a.key, "•", hangBul.a.size, 0);
         if (li < bulletW * 2) li = bulletW * 2.2;
       }
@@ -1375,7 +1544,7 @@
         var stopAt = stopFor(ti);
         // line metrics guess: paragraph size, refined by the line's
         // biggest size after a first fill
-        var maxSize = size0, objH = 0;
+        var maxSize = size0, objH = 0, wasTop = colTop;
         for (var pass = 0; pass < 3; pass++) {
           var lead = leadOf(ps, maxSize);
           var keyA = wKey || fontKey(ps.font, ps.b, ps.i);
@@ -1391,6 +1560,12 @@
             // nothing fitted beside a wrap: nudge down, try again
             y = placed.y - lead + Math.max(1, lead / 4);
             colTop = false;
+            break;
+          }
+          // footnotes referred to on this line go to the foot of this
+          // column; the line moves on when they do not fit with it
+          if (notes && notes.kind !== "end" && !footHere(placed, wasTop)) {
+            if (!nextCol()) return false;
             break;
           }
           ti = placed.next;
@@ -1436,7 +1611,7 @@
         // the first line of a column needs its baseline inside, not its
         // descent: a one-line header or page number whose font is taller
         // here than in the program it came from still shows (LY-TAB)
-        if (base + (colTop ? 0 : desc) > geom.bottom + 0.01) {
+        if (base + (colTop ? 0 : desc) > geom.bottom - footRoom() + 0.01) {
           // a frame too short for even one line: still move on
           if (!nextCol()) return false;
           continue;
@@ -1568,7 +1743,8 @@
         }
         if (si === 0) line.x0 = x;
         if (bul && si === 0) {
-          line.runs.push({ x: Math.max(geom.x0, geom.x0 + li - bulletW * 2.2), y: base, t: "•", key: bul.a.key, size: bul.a.size, color: bul.a.color, u: 0, track: 0, w: bulletW });
+          if (bul.label) line.runs.push({ x: geom.x0 + li - bulletW - bul.a.size * 0.5, y: base, t: bul.label, key: bul.a.key, size: bul.a.size, color: bul.a.color, u: 0, track: 0, w: bulletW, lbl: 1 });
+          else line.runs.push({ x: Math.max(geom.x0, geom.x0 + li - bulletW * 2.2), y: base, t: "•", key: bul.a.key, size: bul.a.size, color: bul.a.color, u: 0, track: 0, w: bulletW });
           line.maxSize = Math.max(line.maxSize, bul.a.size);
         }
         items.forEach(function (it, k) {
@@ -1583,6 +1759,8 @@
             var txt = partText(p, ctx), pw = partWidth(p, ctx), trk = p.a.track || 0;
             if (lsAdd && p.f !== "obj" && txt.length) { trk += lsAdd * 1000 / p.a.size; pw += lsAdd * txt.length; }
             line.runs.push({ x: x, y: base - (p.a.rise || 0), t: txt, key: p.a.key, size: p.a.size, color: p.a.color, u: p.a.u ? 1 : 0, track: trk, w: pw, p: curPi, o: p.o, n: p.n, f: p.f ? 1 : 0 });
+            if (p.f === "fn") line.runs[line.runs.length - 1].fn = p.fn;
+            if (p.f === "xr") line.runs[line.runs.length - 1].xr = p.xr.to;
             if (p.a.kern) line.runs[line.runs.length - 1].kern = 1;
             if (p.f === "obj") {
               var ob = objBox(p);
@@ -1611,6 +1789,22 @@
       return line;
     }
 
+    // the notes a line refers to, not placed yet: room for them at the
+    // foot of this column, or false (the line has to move on; a line at
+    // the top of a column keeps them anyway, so nothing is lost)
+    function footHere(line, atTop) {
+      var ids = [];
+      line.runs.forEach(function (r) { if (r.fn && !fnDone[r.fn] && notes.text[r.fn] !== undefined && ids.indexOf(r.fn) < 0) ids.push(r.fn); });
+      if (!ids.length) return true;
+      var cw = geom.x1 - geom.x0, blocks = ids.map(function (id) { return noteBlock(notes, id, cw); });
+      var need = blocks.reduce(function (a, b) { return a + b.h; }, 0), k = footKey(), F = foot[k];
+      var room = geom.bottom - (F ? F.h : 0) - need - FN_SEP;
+      if (line.y + line.d > room + 0.01 && !atTop) return false;
+      if (!F) F = foot[k] = { f: geom.f, col: col, x0: geom.x0, cw: cw, bottom: geom.bottom, h: 0, blocks: [] };
+      blocks.forEach(function (b) { F.blocks.push(b); F.h += b.h; });
+      ids.forEach(function (id) { fnDone[id] = 1; });
+      return true;
+    }
     // the drop cap's run, at the start of the first line, its baseline
     // on the n-th line's
     function placeCap(line, dc, li, lead) {
@@ -1697,6 +1891,9 @@
     }
     function commit(line) {
       delete line.maxSize; delete line.next; delete line.base; delete line.objH;
+      // an endnote's line: not the story's text (the caret and the
+      // Story Editor leave it alone)
+      if (curPi >= realN) { line.fn = 1; line.runs.forEach(function (r) { delete r.o; delete r.n; }); }
       out.frames[geom.f.id].lines.push(line);
       y = line.y; colTop = false;
       lastPg = pageOf() || null;
@@ -1726,7 +1923,8 @@
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
     resolvePs: resolvePs, resolveCs: resolveCs, runAttrs: runAttrs, byId: byId,
-    nestRuns: nestRuns, grepRuns: function (runs, rules) { var g = grepOf(rules); return g ? cutRuns(runs, grepCuts(textOfRuns(runs), g)) : runs; }, layoutChain: layoutChain, freeSegments: freeSegments, missingGlyphs: missingGlyphs, collate: collate, sortKey: sortKey, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
+    nestRuns: nestRuns, grepRuns: function (runs, rules) { var g = grepOf(rules); return g ? cutRuns(runs, grepCuts(textOfRuns(runs), g)) : runs; }, layoutChain: layoutChain, freeSegments: freeSegments, missingGlyphs: missingGlyphs, collate: collate, sortKey: sortKey, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek,
+    LIST_FORMATS: Object.keys(LIST_FMT), listLabel: listLabel, listLabels: listLabels, notesOf: notesOf, greekNum: greekNum
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.text = api; }

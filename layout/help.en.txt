@@ -151,6 +151,14 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Small caps, superscript, subscript**: in a character style.
 - **Loose and tight lines**: `More › Show loose and tight lines` marks justified lines whose spaces go past the limits (yellow loose, pink tight).
 
+## Notes, lists, cross-references and books
+- **Footnotes and endnotes**: in the Story Editor, the `¹` button › `Insert a note…`. The note is numbered by itself and set at the foot of its column; a line that would leave its note behind moves on with it. Click a note's number to change or remove it. `More › Notes…` puts them after the text instead (endnotes), sets their paragraph style and whether numbers start again in each story. In an EPUB they open as pop-ups.
+- **Lists**: a paragraph style's `List` numbers its paragraphs (1. a) i. αʹ Αʹ and more, or bullets). Styles with the same list name share the numbers; level 2 starts again under each level 1.
+- **Cross-references**: `¹ › Insert a cross-reference…` points at a title or any paragraph and shows its page, its text or both; the page follows when the text moves. In a PDF it is a link to that page, in an EPUB to the paragraph.
+- **Links**: select words and `¹ › Link…` for a web or e-mail address; it works in the PDF and the EPUB.
+- **Contents in any document**: `More › Contents from styles…` picks the title styles and their levels, each level's style, and what goes between title and page (`Title | σελ. 12`); a new frame takes them when there is none. `More › Update contents` follows the pages later.
+- **Books**: `More › Book…` keeps chapters in separate documents together: their order, page numbers that run on (each document on a right-hand page if you like), styles and colours as the first document's, and one PDF of the whole book.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

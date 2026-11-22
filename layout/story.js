@@ -19,7 +19,7 @@
   var ED = LY.ed;
   var SAVE_MS = 600;
 
-  var S = { sid: null, item: null, dirty: false, baseM: 0, lastKey: "", timer: null, sel: null, curPs: null, pext: {}, pextN: 0 };
+  var S = { sid: null, item: null, dirty: false, baseM: 0, lastKey: "", timer: null, sel: null, curPs: null, pext: {}, pextN: 0, noteNo: {} };
   var ed, tools, foot, psSel, csSel;
 
   function story() { return S.sid && LY.doc ? M.story(LY.doc, S.sid) : null; }
@@ -175,6 +175,20 @@
         node.setAttribute("data-t", r.t);
         node.title = t("story.sec");
         endsWithBr = false;
+      } else if (r.ext && (typeof r.ext.fn === "string" || (r.ext.xr && typeof r.ext.xr === "object"))) {
+        // a note's reference or a cross-reference (LY-W7): one piece;
+        // its run rides by key, so its ext is never lost
+        var rk = "r" + (++S.pextN);
+        S.pext[rk] = r.ext;
+        var isFn = typeof r.ext.fn === "string";
+        node = el(isFn ? "sup" : "span", "sf " + (isFn ? "sfn" : "sxr"), isFn ? noteMark(r.ext.fn) : "\u2192 " + xrLabel(r.ext.xr));
+        node.contentEditable = "false";
+        node.setAttribute("data-f", "rx");
+        node.setAttribute("data-rx", rk);
+        node.setAttribute("data-t", r.t || "*");
+        node.setAttribute("data-fn", isFn ? r.ext.fn : "");
+        node.title = isFn ? String(r.ext.ft || "").slice(0, 300) || t("note.empty") : t("xr.title");
+        endsWithBr = false;
       } else if (r.ext && r.ext.sup) {
         // a note's mark (LY-NT): one piece, raised
         node = el("sup", "sf", r.t);
@@ -189,6 +203,15 @@
           if (part) node.appendChild(document.createTextNode(part));
         });
         endsWithBr = r.t.charAt(r.t.length - 1) === "\n";
+      }
+      if (r.ext && !r.f && !r.ext.fld && !r.ext.sup && node.nodeType === 11) {
+        // any other ext of a run (a link, LY-W7, or another program's)
+        // rides on a span by key, so typing in it keeps it
+        var xk = "r" + (++S.pextN), sx = el("span", r.ext.href ? "sx slink" : "sx");
+        S.pext[xk] = r.ext;
+        sx.setAttribute("data-rx", xk);
+        if (r.ext.href) sx.title = String(r.ext.href);
+        sx.appendChild(node); node = sx;
       }
       if (r.u) { var u = document.createElement("u"); u.appendChild(node); node = u; }
       if (r.i) { var i = document.createElement("i"); i.appendChild(node); node = i; }
@@ -208,9 +231,20 @@
     return d;
   }
 
+  // a note's number in this story, as the editor shows it
+  function noteMark(id) { return String(S.noteNo[id] || "*"); }
+  // where a cross-reference points, in words
+  function xrLabel(x) {
+    var a = LY.notes ? LY.notes.anchor(x && x.to) : null;
+    return a ? a.t.slice(0, 40) : "?";
+  }
+
   function render(paras, range) {
     styleMaps();
     S.pext = {};
+    S.noteNo = {};
+    var nn = 0;
+    paras.forEach(function (p) { p.runs.forEach(function (r) { if (r.ext && typeof r.ext.fn === "string" && !S.noteNo[r.ext.fn]) S.noteNo[r.ext.fn] = ++nn; }); });
     var frag = document.createDocumentFragment();
     paras.forEach(function (p) { frag.appendChild(renderPara(p)); });
     ed.innerHTML = "";
@@ -262,14 +296,17 @@
         var dl = window.getComputedStyle(a).textDecorationLine || "";
         if (dl.indexOf("underline") >= 0) { f.u = 1; break; }
       }
+      var rx = e.closest && e.closest("[data-rx]");
+      if (rx && ed.contains(rx) && S.pext[rx.getAttribute("data-rx")]) f.ext = JSON.parse(JSON.stringify(S.pext[rx.getAttribute("data-rx")]));
       var c = e.closest && e.closest("[data-cs]");
       if (c && ed.contains(c) && M.isId(c.getAttribute("data-cs"))) f.cs = c.getAttribute("data-cs");
       return f;
     }
+    function sameExt(a, b) { return !a.ext && !b.ext || (a.ext && b.ext && a.ext.href && !a.ext.fn && !a.ext.xr && JSON.stringify(a.ext) === JSON.stringify(b.ext)); }
     function add(run) {
       ensure();
       var last = cur.runs[cur.runs.length - 1];
-      if (last && !last.f && !run.f && !last.ext && !run.ext && last.cs === run.cs && last.b === run.b && last.i === run.i && last.u === run.u) last.t += run.t;
+      if (last && !last.f && !run.f && sameExt(last, run) && last.cs === run.cs && last.b === run.b && last.i === run.i && last.u === run.u) last.t += run.t;
       else cur.runs.push(run);
       curLen += runLen(run);
     }
@@ -285,9 +322,14 @@
       if (tag === "BR") { add({ t: "\n" }); trailingBr = true; return; }
       if (node.hasAttribute("data-f")) {
         var f = node.getAttribute("data-f");
-        if (f === "pn" || f === "pc") { add(withFmt({ f: f }, fmtFor(node.firstChild || node))); trailingBr = false; }
-        if (f === "sec") { add(withFmt({ t: node.getAttribute("data-t") || " ", ext: { fld: "sec" } }, fmtFor(node.firstChild || node))); trailingBr = false; }
-        if (f === "sup" && node.getAttribute("data-t")) { add(withFmt({ t: node.getAttribute("data-t"), ext: { sup: 1 } }, fmtFor(node.firstChild || node))); trailingBr = false; }
+        if (f === "pn" || f === "pc") { add(withFmt({ f: f }, fmtFor(node))); trailingBr = false; }
+        if (f === "sec") { add(withFmt({ t: node.getAttribute("data-t") || " ", ext: { fld: "sec" } }, fmtFor(node))); trailingBr = false; }
+        if (f === "rx" && S.pext[node.getAttribute("data-rx")]) {
+          var fx = fmtFor(node);
+          delete fx.ext;
+          add(withFmt({ t: node.getAttribute("data-t") || "*", ext: JSON.parse(JSON.stringify(S.pext[node.getAttribute("data-rx")])) }, fx)); trailingBr = false;
+        }
+        if (f === "sup" && node.getAttribute("data-t")) { add(withFmt({ t: node.getAttribute("data-t"), ext: { sup: 1 } }, fmtFor(node))); trailingBr = false; }
         return;
       }
       var block = BLOCK[tag] && node !== ed;
@@ -327,7 +369,7 @@
           if (atom) {
             if (o === count) { found = { node: n, off: k }; return; }
             if (c.tagName === "BR" && !c.nextSibling && n === d) return;   // placeholder
-            var len = /^(sec|sup)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : 1;   // a running head or a note's mark counts its own text
+            var len = /^(sec|sup|rx)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : 1;   // a running head or a note's mark counts its own text
             if (o < count + len) { found = { node: n, off: k + 1 }; return; }
             count += len;
           } else walk(c);
@@ -557,6 +599,16 @@
     sec.addEventListener("mousedown", function (e) { e.preventDefault(); });
     sec.addEventListener("click", insertSec);
     tools.appendChild(sec);
+    // notes, cross-references and links (LY-W7)
+    var nt = el("button", "icon-btn sf-btn", "¹");
+    nt.type = "button"; nt.title = t("note.menu"); nt.setAttribute("aria-label", t("note.menu"));
+    nt.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    nt.addEventListener("click", function () {
+      rememberSel();
+      LY.menu(nt, [{ label: t("note.ins"), fn: insertNote }, { label: t("xr.ins"), fn: insertXref }, { label: t("link.ins"), fn: linkCmd },
+        { label: t("note.settings"), fn: function () { flush(); LY.notes.settings(); } }]);
+    });
+    tools.appendChild(nt);
     // break characters (LY-W5b)
     var brk = el("button", "icon-btn sf-btn", "⤓");
     brk.type = "button"; brk.title = t("brk.menu"); brk.setAttribute("aria-label", t("brk.menu"));
@@ -602,6 +654,96 @@
       p.runs.splice(i, 0, withFmt({ t: fb, ext: { fld: "sec" } }, fmtAt(paras, a)));
       var c = { p: a.p, o: a.o + fb.length };
       return { a: c, b: c };
+    });
+  }
+
+  // the story changed under the editor by a command of its own (an
+  // anchor on a paragraph): shown again, the caret kept
+  function reload() {
+    if (!isOpen()) return;
+    var m = readModel(), st = story();
+    if (!st) return;
+    S.baseM = st.m;
+    render(JSON.parse(JSON.stringify(st.paras)), { a: m.a, b: m.b });
+    rememberSel();
+  }
+
+  // ---------- Notes, cross-references and links (LY-W7) ----------
+  function newNoteId() { return "n" + Math.random().toString(36).slice(2, 10).replace(/[^a-z0-9]/g, "") + (Date.now() % 1000); }
+  // a footnote or endnote here: its text asked first; the reference
+  // is one piece that holds the note (ext.fn id, ext.ft text)
+  function insertNote() {
+    if (!isOpen() || !LY.notes) return;
+    rememberSel();
+    LY.notes.editNote("", function (txt) {
+      if (txt === null || !txt.trim()) return;
+      modelEdit(function (paras, a, b) {
+        var p = paras[b.p], i = cut(p, b.o);
+        p.runs.splice(i, 0, withFmt({ t: "*", ext: { fn: newNoteId(), ft: txt.slice(0, 4000) } }, fmtAt(paras, b)));
+        var c = { p: b.p, o: b.o + 1 };
+        return { a: c, b: c };
+      });
+    });
+  }
+  // a note's text changed or the note removed (null text)
+  function setNote(id, txt) {
+    modelEdit(function (paras) {
+      var hit = false;
+      paras.forEach(function (p) {
+        p.runs = p.runs.filter(function (r) {
+          if (!r.ext || r.ext.fn !== id) return true;
+          hit = true;
+          if (txt === null) return false;
+          r.ext = JSON.parse(JSON.stringify(r.ext));
+          r.ext.ft = txt.slice(0, 4000);
+          return true;
+        });
+      });
+      return hit ? undefined : false;
+    });
+  }
+  function editNoteAt(node) {
+    var id = node.getAttribute("data-fn"), x = S.pext[node.getAttribute("data-rx")];
+    if (!id || !x) return;
+    LY.notes.editNote(String(x.ft || ""), function (txt) {
+      if (txt === null) return;
+      setNote(id, txt.trim() ? txt : null);
+    }, true);
+  }
+  // a cross-reference to a paragraph anywhere in the document
+  function insertXref() {
+    if (!isOpen() || !LY.notes) return;
+    flush();
+    rememberSel();
+    LY.notes.pickAnchor(function (to, k) {
+      if (!to) return;
+      modelEdit(function (paras, a, b) {
+        deleteRange(paras, a, b);
+        var p = paras[a.p], i = cut(p, a.o);
+        p.runs.splice(i, 0, withFmt({ t: "?", ext: { xr: { to: to, k: k } } }, fmtAt(paras, a)));
+        var c = { p: a.p, o: a.o + 1 };
+        return { a: c, b: c };
+      });
+    });
+  }
+  // a link on the selected words (ext.href; empty removes it)
+  function linkCmd() {
+    if (!isOpen() || !LY.notes) return;
+    rememberSel();
+    var m = readModel(), cur = "";
+    if (m.a.p === m.b.p && m.a.o === m.b.o) { LY.toast(t("link.pick")); return; }
+    eachRun(m.paras, m.a, m.b, function (r) { if (!cur && r.ext && r.ext.href) cur = r.ext.href; });
+    LY.notes.editLink(cur, function (url) {
+      if (url === null) return;
+      modelEdit(function (paras, a, b) {
+        eachRun(paras, a, b, function (r) {
+          if (r.f || (r.ext && (r.ext.fn || r.ext.xr))) return;
+          var x = r.ext ? JSON.parse(JSON.stringify(r.ext)) : {};
+          if (url) x.href = url; else delete x.href;
+          if (Object.keys(x).length) r.ext = x; else delete r.ext;
+        });
+        return { a: a, b: b };
+      });
     });
   }
 
@@ -703,6 +845,10 @@
     $("story-close").addEventListener("click", close);
     try { document.execCommand("defaultParagraphSeparator", false, "div"); } catch (e) {}
 
+    ed.addEventListener("click", function (e) {
+      var n = e.target && e.target.closest ? e.target.closest(".sfn") : null;
+      if (n && ed.contains(n) && LY.notes) { e.preventDefault(); rememberSel(); editNoteAt(n); }
+    });
     ed.addEventListener("input", onInput);
     ed.addEventListener("blur", flush);
     ed.addEventListener("paste", function (e) {
@@ -760,7 +906,7 @@
       var st = its.length === 1 ? M.story(LY.doc, its[0].story) : null;
       return st && st.paras[0] ? st.paras[0].ps : null;
     },
-    applyPs: applyPs, applyCs: applyCs
+    applyPs: applyPs, applyCs: applyCs, insertNote: insertNote, insertXref: insertXref, link: linkCmd, reload: reload
   };
   // paragraph helpers shared with in-frame editing (inframe.js)
   LY.storyOps = { insertBreak: insertBreak, nextPs: nextPs, runLen: runLen, paraLen: paraLen, cut: cut, eachRun: eachRun, deleteRange: deleteRange, fmtAt: fmtAt, insertAt: insertAt };

@@ -1172,6 +1172,7 @@
           st.ext.next || "", function (v) { if (v) st.ext.next = v; else delete st.ext.next; })));
         body.appendChild(g3);
         body.appendChild(compEditor(st));
+        body.appendChild(listEditor(st));
         body.appendChild(grepEditor(st));
       }
       body.appendChild(el("span", "fld-lbl", t("sty.color")));
@@ -1265,6 +1266,40 @@
   // composition of a paragraph style (LY-W6): composer, word and
   // letter spacing limits, optical margins, balanced ragged lines and
   // a drop cap; all in ext, inherited like the rest
+  // numbered and bulleted lists (LY-W7): ext.list { f, lv, g, s }; a
+  // style without one takes its base style's, "none" stops that
+  function listEditor(st) {
+    var w = el("div");
+    w.appendChild(el("span", "fld-lbl", t("sty.list")));
+    var g = el("div", "grid2");
+    var cur = st.ext.list, L = cur && typeof cur === "object" ? JSON.parse(JSON.stringify(cur)) : null;
+    function put() { if (L) st.ext.list = L; }
+    var fmts = [["", t("sty.inherit")], ["-", t("sty.listNone")]].concat(LY.T.LIST_FORMATS.map(function (f) { return [f, t("sty.listEx", { a: LY.T.listLabel(f, 1), b: LY.T.listLabel(f, 2), c: LY.T.listLabel(f, 3) })]; }));
+    var opts = el("div", "grid2");
+    function showOpts() { opts.hidden = !L; }
+    g.appendChild(field(t("sty.listF"), select(fmts, cur === null ? "-" : L ? L.f.replace(/\u02B9/g, "\u0374") : "", function (v) {
+      if (v === "") { delete st.ext.list; L = null; }
+      else if (v === "-") { st.ext.list = null; L = null; }
+      else { L = L || { lv: 1 }; L.f = v; put(); }
+      showOpts();
+    })));
+    opts.appendChild(field(t("sty.listLv"), select([["1", "1"], ["2", "2"], ["3", "3"]], String(L && L.lv || 1), function (v) { if (L) { L.lv = Number(v); put(); } })));
+    var sn = el("input", "inp");
+    sn.type = "number"; sn.min = 0; sn.max = 99999; sn.placeholder = "1";
+    if (L && L.s !== undefined) sn.value = L.s;
+    sn.addEventListener("change", function () { if (!L) return; if (sn.value === "") delete L.s; else L.s = Math.max(0, Math.min(99999, Math.floor(+sn.value))); put(); });
+    opts.appendChild(field(t("sty.listS"), sn));
+    var gn = el("input", "inp");
+    gn.type = "text"; gn.maxLength = 40; gn.placeholder = t("sty.listGPh");
+    if (L && L.g) gn.value = L.g;
+    gn.addEventListener("change", function () { if (!L) return; var v = gn.value.trim().slice(0, 40); if (v) L.g = v; else delete L.g; put(); });
+    opts.appendChild(field(t("sty.listG"), gn));
+    w.appendChild(g);
+    w.appendChild(opts);
+    showOpts();
+    w.appendChild(el("p", "hint", t("sty.listHint")));
+    return w;
+  }
   function compEditor(st) {
     var w = el("div");
     w.appendChild(el("span", "fld-lbl", t("sty.comp")));
@@ -2193,6 +2228,9 @@
       { label: t("more.house"), fn: function () { LY.house.open(); } },
       { label: t("more.auto"), fn: function () { LY.house.auto(); } },
       { label: t("more.toc"), disabled: !LY.house.hasToc(doc), fn: function () { LY.house.updateToc(); } },
+      { label: t("more.contents"), disabled: !LY.notes, fn: function () { LY.notes.toc(); } },
+      { label: t("more.notes"), disabled: !LY.notes, fn: function () { LY.notes.settings(); } },
+      { label: t("more.book"), disabled: !LY.book, fn: function () { LY.book.open(); } },
       { label: t("more.sheet"), disabled: !LY.house.hasSheet(doc), fn: function () { LY.house.sheet(); } },
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
