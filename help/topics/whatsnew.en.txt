@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.34.00
+- **See how much space is left in your cloud.** `Settings` › `Sync` › `Space in the cloud` shows a bar, the free space and how much is used of how much, for Dropbox (your whole account) and for WebDAV or Nextcloud (what the server reports). When it is almost full, it says so and points to `Unused files in the cloud`. The Overview tile is now called `Device storage`, because it is the space on this device, not in the cloud.
+
 ## Version 8.33.01
 - **No frame left on the top bar icons.** On a phone, an icon in the top bar (for example the smart cards ✦, the clock or Quick settings) no longer keeps a faint frame after you tap it to close its panel. With a mouse the icons still light up under the pointer, and with the keyboard the focus still shows.
 

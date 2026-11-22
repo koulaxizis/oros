@@ -64,6 +64,11 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
 .page-title:focus { outline: none; }
 .hint { color: var(--text-dim); font-size: 13px; line-height: 1.45; }
 .hint.warn { color: var(--warn); }
+/* SPACE-1: Settings › Sync › Space in the cloud */
+.sp-bar { height: 8px; border-radius: 4px; background: var(--accent-soft); margin: 4px 0 8px; overflow: hidden; }
+.sp-fill { display: block; height: 100%; border-radius: 4px; background: var(--accent); }
+.sp-bar.low .sp-fill { background: var(--warn); }
+.sp-free { font-size: 15px; font-weight: 700; margin-bottom: 2px; overflow-wrap: anywhere; }
 [hidden] { display: none !important; }
 
 /* ---------- 2. Toolbar ---------- */
