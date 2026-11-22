@@ -127,6 +127,18 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **History…** (in the `More` menu, or [[Ctrl+Alt+Z]]): every undo step by name, such as Move, Add 3 objects or Style “Body”, with its time; click one to go back to it, or forward again.
 - **Shortcuts and comfort…** (`More` menu): change any shortcut by clicking it and pressing the new keys. Letters mean the keys' places, so the shortcuts also work with a Greek keyboard. Set how far the arrow keys move ([[Shift]] ten times as far, [[Alt]] a tenth), and switch smart guides, measurements or the toolbar off. Saved on this device.
 
+## Find, change and spelling
+- **Find/Change…** (`More` menu, or [[Ctrl+F]]): find text in the whole document or in one story, optionally only in paragraphs of one style. **Text** finds what you type; **GREP** takes a regular expression (\d a digit, \s a space, ( ) a group; in Change to, $1 is the first group and \n starts a new paragraph). The change can also set a paragraph style or put a character style on what it changes. `Find` lists every hit (click one to open it in the Story Editor), `Next` goes from hit to hit, `Change` changes the one shown, `Change all` changes them all as one undo step. `Queries…` has ready-made clean-ups for a book (double spaces, space before punctuation, a hyphen between spaces to a dash, straight quotes to «», three dots to an ellipsis) and the queries you saved on this device.
+- **Spelling…** (`More` menu): checks every word against the Greek and English dictionaries (the same as Writer's; they load the first time and then work offline). For each unknown word: `Show` it, see `Suggestions` (one click changes it everywhere), `Add to dictionary` (the document's own dictionary, which travels with the document) or `Ignore`. The words of your dictionary in Writer count too.
+- **Next style**: in a paragraph style, `Next style` is the style a new paragraph gets when you press [[Enter]] at the end of one, e.g. Heading → Body.
+- **GREP styles**: in a paragraph style, a character style on everything a regular expression finds, e.g. numbers in another font or the speaker's name in small capitals. Up to 10 per style.
+
+## Breaks, baseline grid and object styles
+- **Breaks**: in the Story Editor, `⤓` puts a column, page, odd page or even page break at the caret; the text after it starts there. While typing, [[Numpad Enter]] is a column break and [[Ctrl+Numpad Enter]] a page break. The Story Editor marks each break.
+- **Baseline grid**: in `Document setup…`, set where the first line sits and how far apart the lines are; `Show the baseline grid` draws it. Paragraph styles with `Lock to baseline grid` put every line on it, so the lines of facing pages and columns line up.
+- **Justify** (text frame, vertical alignment): the free space at the foot of a column is shared out between its paragraphs, so the columns end at the same height. The last column of a text stays as it is.
+- **Object styles** (properties panel): `New from this` saves a frame's or shape's looks (fill, stroke, corners, opacity, wrap; for text frames inset, columns and alignment) under a name; pick it for other objects; `Redefine from this` changes every object that uses it. They travel with the document.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

@@ -580,7 +580,10 @@
   // starts; sink (pt, 0-600) how far below the top of a column it
   // starts when it opens the column (a chapter's sunk opening; sb is
   // the space everywhere else); sec 1 / 0 its paragraphs are the
-  // titles a running head shows (LY-RH).
+  // titles a running head shows (LY-RH); bl 1 / 0 its baselines sit
+  // on the document's baseline grid (LY-W5b, frame.bgrid).
+  // A paragraph's own ext.brk (a break character typed before it,
+  // LY-W5b) starts it the same way, whatever its style says.
   var BRK = { col: 1, page: 1, odd: 1, even: 1 };
   function bookOf(s, out) {
     var x = s.ext;
@@ -597,6 +600,77 @@
     if (x.nest !== undefined) out.nest = nestOf(x.nest);
     if (x.tabw !== undefined) { var tw = Number(x.tabw); out.tabw = isFinite(tw) ? Math.max(1, Math.min(720, tw)) : 36; }
     if (x.tabs !== undefined) out.tabs = tabsOf(x.tabs);
+    if (x.grep !== undefined) out.grep = grepOf(x.grep);
+    if (x.bl !== undefined) out.bl = x.bl ? 1 : 0;
+  }
+  // GREP styles (LY-W5, ext.grep): [{ re, cs }] up to 10, a JavaScript
+  // regular expression (flag u, at most 200 characters) and the
+  // character style its matches take; a later rule wins where two
+  // overlap. A run with its own character style keeps it (as nested
+  // styles). A pattern that does not compile is left out.
+  var grepCache = {};
+  function grepOf(v) {
+    if (!Array.isArray(v)) return null;
+    var out = v.filter(function (g) { return g && typeof g.re === "string" && g.re && g.re.length <= 200 && typeof g.cs === "string" && g.cs; })
+      .slice(0, 10).map(function (g) { return { re: g.re, cs: g.cs }; })
+      .filter(function (g) { return !!grepRe(g.re); });
+    return out.length ? out : null;
+  }
+  function grepRe(src) {
+    if (Object.prototype.hasOwnProperty.call(grepCache, src)) return grepCache[src];
+    var re = null;
+    try { re = new RegExp(src, "gu"); if (re.test("")) re = null; } catch (e) { re = null; }
+    var keys = Object.keys(grepCache);
+    if (keys.length > 200) delete grepCache[keys[0]];
+    grepCache[src] = re;
+    return re;
+  }
+  function grepCuts(text, rules) {
+    var cuts = [];
+    rules.forEach(function (g) {
+      var re = grepRe(g.re), m, n = 0;
+      if (!re) return;
+      re.lastIndex = 0;
+      while ((m = re.exec(text)) && n++ < 500) {
+        if (!m[0].length) { re.lastIndex++; continue; }
+        cuts.push({ a: m.index, b: m.index + m[0].length, cs: g.cs });
+      }
+    });
+    return cuts;
+  }
+  function textOfRuns(runs) {
+    var text = "";
+    runs.forEach(function (r) { text += r.f ? "\uFFFC" : String(r.t || ""); });
+    return text;
+  }
+  // Runs split at the cuts' edges; a piece inside cuts takes the last
+  // covering cut's character style (runs with their own keep it).
+  function cutRuns(runs, cuts) {
+    if (!cuts.length) return runs;
+    var edges = {};
+    cuts.forEach(function (c) { edges[c.a] = 1; edges[c.b] = 1; });
+    function cover(pos) { var hit = null; cuts.forEach(function (c) { if (pos >= c.a && pos < c.b) hit = c; }); return hit; }
+    var out = [], base = 0;
+    runs.forEach(function (r) {
+      var len = r.f ? 1 : String(r.t || "").length, end = base + len;
+      if (r.cs || r.f || r.ext || !len) {
+        // a field takes the style of the place it is in
+        if (r.f && !r.cs) { var c0 = cover(base); out.push(c0 ? Object.assign({}, r, { cs: c0.cs }) : r); }
+        else out.push(r);
+        base = end; return;
+      }
+      var pos = base, t = String(r.t);
+      while (pos < end) {
+        var stop = end;
+        for (var k = pos + 1; k < end; k++) if (edges[k]) { stop = k; break; }
+        var c = cover(pos), piece = Object.assign({}, r, { t: t.slice(pos - base, stop - base) });
+        if (c) piece.cs = c.cs;
+        out.push(piece);
+        pos = stop;
+      }
+      base = end;
+    });
+    return out;
   }
   // ext.tabs: up to 40 stops in points (0-14400), in order
   function tabsOf(v) {
@@ -615,8 +689,7 @@
     return out.length ? out : null;
   }
   function nestRuns(runs, nest) {
-    var text = "";
-    runs.forEach(function (r) { text += r.f ? "\uFFFC" : String(r.t || ""); });
+    var text = textOfRuns(runs);
     var cuts = [], at = 0;
     for (var i = 0; i < nest.length; i++) {
       var k = text.indexOf(nest[i].to, at);
@@ -783,6 +856,7 @@
   function tokenize(para, ps, csMap) {
     var toks = [], word = null, base = 0;
     var runs = ps.nest && para.runs && para.runs.length ? nestRuns(para.runs, ps.nest) : (para.runs || []);
+    if (ps.grep && runs.length) runs = cutRuns(runs, grepCuts(textOfRuns(runs), ps.grep));
     function flush() { if (word) { toks.push(word); word = null; } }
     function part(t, a, o, n) { if (!word) word = { k: "w", parts: [] }; word.parts.push({ t: caseOf(a, t), a: a, o: o, n: n }); }
     runs.forEach(function (run) {
@@ -1020,7 +1094,8 @@
       var para = paras[pi];
       var ps = resolvePs(psMap, para.ps);
       curPi = pi;
-      if (ps.brk && !startAt(ps.brk)) { out.overset = true; break; }
+      var pbrk = para.ext && BRK[para.ext.brk] ? para.ext.brk : ps.brk;
+      if (pbrk && !startAt(pbrk)) { out.overset = true; break; }
       var S = snap(), got = place(para, ps, {});
       // lines kept together at a column break: the paragraph moves on
       // whole, or the column before it gives lines to the next
@@ -1035,9 +1110,33 @@
       out.placedParas = pi + 1;
     }
 
+    // vertical justification (LY-W5b, frame ext.vj): a column the text
+    // goes on from gets its free space shared out between paragraphs
+    // (between lines when it holds one paragraph); the last column of
+    // the text stays as it is
+    var lastF = null, lastC = -1;
+    frames.forEach(function (f) { var ls = out.frames[f.id].lines; if (ls.length) { lastF = f; lastC = ls[ls.length - 1].col; } });
+    frames.forEach(function (f) {
+      if (!f.vj) return;
+      var byCol = {}, ins = Math.max(0, f.inset || 0), bottom = Math.max(ins, f.h - ins);
+      out.frames[f.id].lines.forEach(function (ln) { (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
+      Object.keys(byCol).forEach(function (c) {
+        if (f === lastF && +c === lastC && !out.overset) return;
+        var ls = byCol[c], last = ls[ls.length - 1], free = bottom - (last.y + last.d);
+        if (free <= 0.5 || ls.length < 2) return;
+        var gaps = 0, i;
+        for (i = 1; i < ls.length; i++) if (ls[i].p !== ls[i - 1].p) gaps++;
+        var byLine = !gaps, step = free / (byLine ? ls.length - 1 : gaps), dy = 0;
+        for (i = 1; i < ls.length; i++) {
+          if (byLine || ls[i].p !== ls[i - 1].p) dy += step;
+          var ln = ls[i], d0 = dy;
+          ln.y += d0; ln.runs.forEach(function (r) { r.y += d0; });
+        }
+      });
+    });
     // vertical alignment per column
     frames.forEach(function (f) {
-      if (!f.valign || f.valign === "t") return;
+      if (!f.valign || f.valign === "t" || f.vj) return;
       var lines = out.frames[f.id].lines;
       var byCol = {};
       lines.forEach(function (ln) { (byCol[ln.col] = byCol[ln.col] || []).push(ln); });
@@ -1094,7 +1193,7 @@
     // room in this column for the first lines (its orph) of a paragraph
     function roomFor(next) {
       var nps = resolvePs(psMap, next.ps);
-      if (nps.brk) return true;
+      if (nps.brk || (next.ext && BRK[next.ext.brk])) return true;
       var key = fontKey(nps.font, nps.b, nps.i), lead = leadOf(nps, nps.size);
       var base = y + nps.sb + lead + lead * ((nps.orph || 1) - 1);
       return base + descent(key, nps.size) <= geom.bottom + 0.01;
@@ -1171,6 +1270,9 @@
           continue;
         }
         var base = colTop ? y + asc : y + lead;
+        // locked to the baseline grid: down to the next grid line (LY-W5b)
+        var bg = ps.bl && geom.f.bgrid;
+        if (bg) base = bg.o + Math.ceil((base - bg.o - 0.01) / bg.inc) * bg.inc;
         // the first line of a column needs its baseline inside, not its
         // descent: a one-line header or page number whose font is taller
         // here than in the program it came from still shows (LY-TAB)
@@ -1354,7 +1456,7 @@
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
     resolvePs: resolvePs, resolveCs: resolveCs, runAttrs: runAttrs, byId: byId,
-    nestRuns: nestRuns, layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
+    nestRuns: nestRuns, grepRuns: function (runs, rules) { var g = grepOf(rules); return g ? cutRuns(runs, grepCuts(textOfRuns(runs), g)) : runs; }, layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.text = api; }

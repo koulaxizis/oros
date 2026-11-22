@@ -413,6 +413,17 @@
         ctx.moveTo(x + s.gut, m.t); ctx.lineTo(x + s.gut, s.h - m.b); ctx.stroke();
       }
     }
+    // the baseline grid, when shown (LY-W5b)
+    var bgd = LY.prefs.bgShow === 1 && doc.setup.ext && doc.setup.ext.bg;
+    if (bgd && bgd.i >= 1 && bgd.i * sc >= 3) {
+      ctx.strokeStyle = "rgba(0,150,255,0.22)";
+      ctx.beginPath();
+      for (var gy = bgd.s || 0, gn = 0; gy <= s.h - m.b && gn < 2000; gy += bgd.i, gn++) {
+        if (gy < m.t) continue;
+        ctx.moveTo(m.l, gy); ctx.lineTo(s.w - m.r, gy);
+      }
+      ctx.stroke();
+    }
     // ruler guides of this owner
     ctx.strokeStyle = "rgba(0,180,220,0.8)";
     doc.guides.forEach(function (g) {
@@ -1738,6 +1749,8 @@
       case "history": if (LY.dlg.history) LY.dlg.history(); break;
       case "story": if (it && it.t === "text") LY.story.open(it.id); break;
       case "keys": if (LY.dlg.keys) LY.dlg.keys(); break;
+      case "find": if (LY.dlg.find) LY.dlg.find(); break;
+      case "spell": if (LY.dlg.spell) LY.dlg.spell(); break;
     }
   }
   ED.runAction = runAction;
