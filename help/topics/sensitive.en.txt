@@ -33,7 +33,7 @@ Dropbox cannot read your data, but it does know your account, the addresses (IP)
 Your own Nextcloud or WebDAV server, at home or with a host you trust, removes this company from the picture.
 
 ### The relay
-Some features go through the orOS relay: [Mail](app:mail), Calendar and Contacts sync with your own server when you turn the relay on, link previews, short links, [Transfer](app:transfer) and notifications. The relay keeps no logs, but it runs on Cloudflare, which sees connection addresses. Mail and calendar content passes through it unencrypted (only the connection is encrypted).
+Some features go through the orOS relay: [Mail](app:mail), Calendar and Contacts sync with your own server when you allowed the relay for it, link previews, short links, [Transfer](app:transfer) and notifications. The relay keeps no logs, but it runs on Cloudflare, which sees connection addresses. Mail and calendar content passes through it unencrypted (only the connection is encrypted).
 
 ### Notifications
 Notifications are off by default. If you turn them on in Chrome, they are delivered through Google's service, which sees that a notification arrived and when, not what it says.

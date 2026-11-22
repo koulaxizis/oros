@@ -33,7 +33,7 @@ Dropbox kann deine Daten nicht lesen, kennt aber dein Konto, die Adressen (IP), 
 Ein eigener Nextcloud- oder WebDAV-Server, zu Hause oder bei einem Anbieter deines Vertrauens, nimmt diese Firma aus dem Spiel.
 
 ### Das Relay
-Manche Funktionen laufen über das orOS-Relay: [Mail](app:mail), die Synchronisierung von Kalender und Kontakten mit deinem eigenen Server, wenn du das Relay einschaltest, Linkvorschauen, Kurzlinks, [Transfer](app:transfer) und Benachrichtigungen. Das Relay führt keine Protokolle, läuft aber bei Cloudflare, das die Verbindungsadressen sieht. Inhalte von E-Mail und Kalender laufen dort unverschlüsselt durch (verschlüsselt ist nur die Verbindung).
+Manche Funktionen laufen über das orOS-Relay: [Mail](app:mail), die Synchronisierung von Kalender und Kontakten mit deinem eigenen Server, wenn du das Relay für ihn erlaubst, Linkvorschauen, Kurzlinks, [Transfer](app:transfer) und Benachrichtigungen. Das Relay führt keine Protokolle, läuft aber bei Cloudflare, das die Verbindungsadressen sieht. Inhalte von E-Mail und Kalender laufen dort unverschlüsselt durch (verschlüsselt ist nur die Verbindung).
 
 ### Benachrichtigungen
 Benachrichtigungen sind standardmäßig aus. Schaltest du sie in Chrome ein, werden sie über den Dienst von Google zugestellt, der sieht, dass und wann eine Benachrichtigung kam, nicht was darin steht.

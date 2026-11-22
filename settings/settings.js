@@ -2082,9 +2082,8 @@
     return wrap;
   }
 
-  // W3: "Through the orOS relay" (servers without CORS, the user's
-  // choice) and "Sign in with Nextcloud" (Login Flow v2: no password
-  // typed here).
+  // W3: "Sign in with Nextcloud" (Login Flow v2: no password typed
+  // here). The relay is asked for only when a server needs it (STRUCT-5).
   function davForm(y) {
     var form = el("form", "pass dav-form");
     form.setAttribute("autocomplete", "off");
@@ -2092,16 +2091,7 @@
     form.appendChild(el("div", "hint", t("y.dav.hint")));
     form.appendChild(davInput("url", t("y.dav.url"), "url", t("y.dav.url.ph"), "url"));
     form.appendChild(davInput("dir", t("y.dav.dir"), "text", "orOS", "off"));
-    var rl = el("label", "check");
-    var rc = el("input");
-    rc.type = "checkbox";
-    rc.setAttribute("data-k", "dav-relay");
-    rc.checked = dav.relay;
-    rc.addEventListener("change", function () { dav.relay = rc.checked; });
-    rl.appendChild(rc);
-    rl.appendChild(el("span", null, t("y.dav.relay")));
-    form.appendChild(rl);
-    form.appendChild(el("div", "hint", t("y.dav.relay.hint")));
+    // STRUCT-5: no relay switch; the shell asks once when a server needs it.
     if (y.ncAvailable) {
       form.appendChild(actions(y.ncWaiting
         ? button(t("y.dav.nc.cancel"), "y.dav.nc.cancel", function () { act("sync.cancelNc"); })
@@ -2682,16 +2672,7 @@
     var form = el("form", "pass dav-form");
     form.setAttribute("autocomplete", "off");
     form.appendChild(cdInput("url", t("cd.url"), "url", t("cd.url.ph"), "url"));
-    var rl = el("label", "check");
-    var rc = el("input");
-    rc.type = "checkbox";
-    rc.setAttribute("data-k", "cd-relay");
-    rc.checked = cd.relay;
-    rc.addEventListener("change", function () { cd.relay = rc.checked; });
-    rl.appendChild(rc);
-    rl.appendChild(el("span", null, t("cd.relay")));
-    form.appendChild(rl);
-    form.appendChild(el("div", "hint", t("cd.relay.hint")));
+    // STRUCT-5: no relay switch; orOS asks once when the server needs it.
     // W6: Nextcloud Login Flow v2 (davkit ncLogin): no password typed here.
     form.appendChild(actions(cd.ncWait
       ? button(t("cd.nc.cancel"), "cd.nc.cancel", function () { D.ncCancel(); })
@@ -2716,10 +2697,16 @@
       cd.busy = true;
       cd.msg = { kind: "dim", key: "cd.working" };
       render();
-      D.connect({ url: cd.url, user: cd.user, relay: cd.relay }, pass).then(function () {
-        cd.busy = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render();
-      }, function (e) {
-        cd.busy = false; cd.msg = cdErr(e); render();
+      var R = relayApi(), relay = !!(R && R.allowed(cd.url));
+      var done = function () { cd.busy = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render(); };
+      var failed = function (e) { cd.busy = false; cd.msg = cdErr(e); render(); };
+      D.connect({ url: cd.url, user: cd.user, relay: relay }, pass).then(done, function (e) {
+        // STRUCT-5: the browser could not reach the server: ask once.
+        if (relay || !R || !cdNeedsRelay(e)) { failed(e); return; }
+        R.ask(cd.url).then(function (ok) {
+          if (!ok) { failed(e); return; }
+          D.connect({ url: cd.url, user: cd.user, relay: true }, pass).then(done, failed);
+        });
       });
     });
     return form;
@@ -2735,7 +2722,8 @@
     cd.ncWait = true;
     cd.msg = { kind: "dim", key: "cd.working" };
     render();
-    D.ncLogin({ url: cd.url, relay: cd.relay }, function (url) {
+    var R = relayApi(), relay = !!(R && R.allowed(cd.url));
+    D.ncLogin({ url: cd.url, relay: relay }, function (url) {
       cd.msg = { kind: "dim", key: "cd.nc.wait" };
       render();
       if (w && !w.closed) w.location.href = url;
@@ -2744,8 +2732,15 @@
       cd.busy = false; cd.ncWait = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render();
     }, function (e) {
       try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (x) {}
-      cd.busy = false; cd.ncWait = false; cd.msg = cdErr(e); render();
+      cd.busy = false; cd.ncWait = false;
+      if (relay || !R || !cdNeedsRelay(e)) { cd.msg = cdErr(e); render(); return; }
+      R.ask(cd.url).then(function (ok) { cd.msg = ok ? { kind: "dim", key: "cd.nc.again" } : cdErr(e); render(); });
     });
+  }
+  // A CalDAV/CardDAV error the relay may cure (the browser was not let in).
+  function cdNeedsRelay(e) {
+    var code = String((e && e.message) || "").replace(/^cd-/, "");
+    return navigator.onLine !== false && (code === "unreachable" || code === "etag");
   }
   // W6: the shell's background pass (shell.js 10e) and its last result.
   function cdBgInfo() {
