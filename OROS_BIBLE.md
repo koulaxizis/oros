@@ -13868,3 +13868,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** launcher.js, notifications.js (`oros-notifs-changed`), shell.js (Settings bridge `dock:badges`, version), settings/settings.js, settings/core.js, i18n/de/settings.js, translations.js, i18n/de/shell.js, settings help EN/EL/DE, whatsnew EN/EL, tests/launcher.test.js, tests/settings.test.js.
 - **Tests:** launcher + settings tests; full suite; Chromium through the real shell at 1280 EN and 360 EL (counts on Dock and desktop, 99+, a locked app and Passwords without one, Sensitive work hides all, the switch).
 - **Not tested:** a real phone, Safari, counts arriving from sync on a second device.
+
+### 2026-11-22 — 8.66.00 — Peek panels from the weather chip and the next-event card (PEEK-1, smartbar 1.4.0)
+- **What:** the shell's weather chip opens a 7-day peek (high, low, rain; the tray cache now keeps `daily`), the next-event card opens the month grid with today's rows; both with Open Weather / Open Calendar inside; 360 px safe. Chris approved video idea #2 (2026-11-22 18:49Z).
+- **Files:** smartbar.js, shell.js (wxDailyRows, wxPeekData, weather chip, version), translations.js, i18n/de/shell.js, appearance help EN/EL/DE, whatsnew EN/EL, tests/smartbar.test.js.
+- **Tests:** smartbar tests (PEEK-1); full suite; Chromium through the real shell at 1280 EN and 360 EL (both peeks, Escape and outside click close, focus back to the chip).
+- **Not tested:** a real phone, Safari, a weather cache from before this version (fills on the next fetch).
