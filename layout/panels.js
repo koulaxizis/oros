@@ -2381,6 +2381,7 @@
       { label: t("more.notes"), disabled: !LY.notes, fn: function () { LY.notes.settings(); } },
       { label: t("more.index"), disabled: !LY.bookIndex, fn: function () { LY.bookIndex.dialog(); } },
       { label: t("more.symbols"), disabled: !LY.symbols, fn: function () { LY.symbols.dialog(); } },
+      { label: t("more.alt"), disabled: !LY.altLayouts, fn: function () { LY.altLayouts.dialog(); } },
       { label: t("more.book"), disabled: !LY.book, fn: function () { LY.book.open(); } },
       { label: t("more.print"), disabled: !LY.proof, fn: function () { LY.proof.dialog(); } },
       { label: t("more.versions"), disabled: !LY.versions, fn: function () { LY.versions.dialog(); } },
