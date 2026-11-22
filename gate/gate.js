@@ -3836,7 +3836,19 @@
   var HOST_TXT = "orOS runs in the background or behind the screen lock on the owner's computer, with nobody at the screen: this needs orOS open and unlocked on a screen. Nothing was done.";
   function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
   function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
-  function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  // GQ-FC (2026-11-22: a PNG an app had just saved into Claude's folders
+  // stayed "not in the copy" for files_link): a later, longer wait no
+  // longer pushes back a sooner one, and a copy asked for while one runs
+  // runs again right after it.
+  var fcAt = 0, fcAgain = false;
+  function fileCopySoon(ms) {
+    ms = typeof ms === "number" ? ms : 60000;
+    var at = Date.now() + ms;
+    if (fcTimer && fcAt && fcAt <= at) return;
+    clearTimeout(fcTimer);
+    fcAt = at;
+    fcTimer = setTimeout(function () { fcTimer = null; fcAt = 0; fileCopy(); }, ms);
+  }
   // GX-1 (Chris 2026-11-21 «δώσε στο gate τη δυνατότητα να μπορεί να
   // κάνει εξαγωγή σε τοπικό φάκελο ή/και orOS Files»): an app's export
   // also goes to out, a local write folder the owner opened
@@ -3933,9 +3945,10 @@
   // The version files_* tools give (assistant.js cfVer): sha256[0:16]; a
   // file over 32 MB that was not read, from its size and time.
   function fcMetaVer(FC, r) { return FC.sha256(new TextEncoder().encode("size:" + r.s + ":" + (r.m || 0))).then(function (h) { return h.slice(0, 16); }); }
+  function fcLater() { if (fcAgain) { fcAgain = false; fileCopySoon(2000); } }
   function fileCopy() {
     var p = pref(), k = gateKey(), D = fcDrop();
-    if (fcBusy) return Promise.resolve(false);
+    if (fcBusy) { fcAgain = true; return Promise.resolve(false); }
     if (!p.on || !k || !ws || ws.readyState !== 1 || !fcFilesOn(p) || strictOn() || !D) return Promise.resolve(false);
     if (locked()) return Promise.resolve(false);
     if (!root.orosFS) return Promise.resolve(false);
@@ -4040,7 +4053,7 @@
         writeJSON(FC_KEY, { at: idx.at, c: newCache, idx: { files: files.map(function (e) { return { h: e.h, c: e.c, t: e.t }; }).filter(function (e) { return e.h; }) }, n: Object.keys(names), up: put, used: pl.used, err: fcErr });
         changed();
       });
-    }).then(function () { fcBusy = false; return true; }, function () { fcBusy = false; return false; });
+    }).then(function () { fcBusy = false; fcLater(); return true; }, function () { fcBusy = false; fcLater(); return false; });
   }
   // The box kept the new index: pieces no index names any more go, once
   // they are a day old (another device may still name them for a while).
