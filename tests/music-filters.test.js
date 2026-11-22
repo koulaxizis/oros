@@ -215,7 +215,7 @@ test("Europeana: own key, refinements, open licences only", () => {
 });
 
 test("sources: order, names, Audius shelf", () => {
-  assert.deepEqual(O.SOURCE_ORDER, ["jm", "ia", "fm", "ov", "cc", "km", "au", "mo", "jb", "eu", "dp"]);
+  assert.deepEqual(O.SOURCE_ORDER, ["jm", "ia", "fm", "ov", "cc", "km", "fw", "au", "mo", "jb", "eu", "dp"]);
   O.SOURCE_ORDER.forEach((s) => assert.ok(O.SOURCES[s].name));
   assert.equal(O.browseOf("autrend").src, "au");
   assert.equal(O.browseName("autrend", "el"), "Δημοφιλή στο Audius");
@@ -380,4 +380,60 @@ test("concert explorer: bands, years, shows", () => {
     venue: "Barton Hall", coverage: "Ithaca, NY", format: ["Flac", "VBR MP3"], avg_rating: 4.87, downloads: 100 }, { identifier: "" }] } }, 1);
   assert.deepEqual(s.shows, [{ id: "gd1977-05-08.sbd", n: "Barton Hall", t: "Grateful Dead Live at Barton Hall", date: "1977-05-08", at: "Ithaca, NY", kind: "sbd", dl: 100, ll: 1, r: 4.9 }]);
   assert.equal(O.lmaShow({ identifier: "x1", coverage: "Unknown, Unknown" }).at, "");
+});
+
+// ---------- MU-FW: Funkwhale (open.audio) ----------
+test("Funkwhale: addresses, licensed songs only, kept listen link", () => {
+  const s = q(O.fwUrl({ q: " blue  note ", f: { g: "jazz", pd: 1, sort: "new" }, page: 3 }));
+  assert.equal(s.get("q"), "blue note");
+  assert.equal(s.get("tag"), "jazz");
+  assert.equal(s.get("playable"), "true");
+  assert.equal(s.get("license"), "cc0-1.0");
+  assert.equal(s.get("ordering"), "-creation_date");
+  assert.equal(s.get("page_size"), "50");
+  assert.equal(s.get("page"), "3");
+  assert.match(O.fwUrl({ q: "x" }), /^https:\/\/open\.audio\/api\/v2\/tracks\/\?q=x&playable=true&page_size=50&page=1$/);
+  assert.equal(O.fwLicence("cc0-1.0"), "cc0");
+  assert.equal(O.fwLicence("cc-by-nc-sa-4.0"), "by-nc-sa 4.0");
+  assert.equal(O.fwLicence("cc-by-3.0-br"), "by 3.0");
+  assert.equal(O.fwLicence("cc-by-nc-nd-3.0-us"), "by-nc-nd 3.0");
+  assert.equal(O.fwLicence("LAL-1.3"), "");
+  assert.equal(O.fwLicence(null), "");
+  // A real open.audio answer (tag=jazz, trimmed): the song without a licence is left out.
+  const j = JSON.parse(fs.readFileSync(path.join(__dirname, "fixtures/music-funkwhale.json"), "utf8"));
+  const r = O.fwParse(j);
+  assert.equal(j.results.length, 4);
+  assert.deepEqual(r.tracks.map((x) => x.t), ["Bárbara Morrison: Voz, alma y legado", "Dinah Washington: La reina del Blues", "Repair My Heart"]);
+  assert.equal(r.more, false);                       // 4 results, fewer than a page
+  const a = r.tracks[2];
+  assert.equal(a.s, "fw");
+  assert.equal(a.a, "Sockpuppet");
+  assert.equal(a.al, "Transitions");
+  assert.equal(a.d, 191);
+  assert.equal(a.li, "by-nc-sa 4.0");
+  assert.match(a.u, /^https:\/\/open\.audio\/api\/v2\/listen\/[0-9a-f-]{36}\/$/);
+  assert.equal(a.pg, "https://open.audio/library/tracks/445131");
+  assert.equal(a.art, undefined);                    // signed covers expire: never kept
+  assert.equal(a.off, undefined);
+  assert.equal(r.tracks[0].d, undefined);            // no upload length
+  // Hostile answers.
+  const bad = O.fwParse({ next: "x", results: [
+    { id: 1, title: "<img src=x onerror=alert(1)>", license: "cc-by-4.0", listen_url: "/api/v2/listen/../../evil/" },
+    { id: "2", title: "S", license: "cc-by-4.0", listen_url: "/api/v2/listen/497e1283-cfbf-4b15-baf1-6f21f98e8e10/" },
+    { id: 3, title: "T", license: "cc-by-4.0", listen_url: "https://evil.example/api/v2/listen/497e1283-cfbf-4b15-baf1-6f21f98e8e10/" },
+    { id: 4, title: "Ok", license: "cc-by-4.0", is_playable: false, listen_url: "/api/v2/listen/497e1283-cfbf-4b15-baf1-6f21f98e8e10/" },
+    { id: 5, title: "<b>Ok</b>", license: "cc-by-4.0", artist_credit: [{ credit: "A", joinphrase: " & " }, { credit: "B" }],
+      listen_url: "/api/v2/listen/497e1283-cfbf-4b15-baf1-6f21f98e8e10/" }] });
+  assert.equal(bad.tracks.length, 1);
+  assert.equal(bad.tracks[0].t, "<b>Ok</b>");        // text only: the app writes it with textContent
+  assert.equal(bad.tracks[0].a, "A & B");
+  // Travels in the synced slice like the other open sources.
+  assert.equal(C.normRef(a).s, "fw");
+  assert.equal(C.normRef(a).u, a.u);
+  assert.equal(C.isRemote(a), true);
+  assert.deepEqual(O.filterMissing("fw", { g: "jazz", dur: "m", pd: 1, com: 1 }), []);
+  assert.deepEqual(O.filterMissing("fw", { off: 1, y0: 1990 }), ["y", "off"]);
+  assert.equal(O.trackPasses(a, { com: 1 }), false);  // NC
+  assert.equal(O.trackPasses(r.tracks[0], { pd: 1 }), true);
+  assert.equal(O.trackPasses(a, { off: 1 }), false);
 });

@@ -34,7 +34,9 @@
   // ccMixter pages hold 10: its server drops the connection when one
   // answer passes about 128 KB, and 20 search hits with many files each
   // (stems, zips, flac) went past that (MU-CC1, 2026-11-11).
-  var PAGE = { ia: 24, ov: 20, cc: 10, jm: 20, au: 20, eu: 20, km: 20, dp: 20 };
+  // Funkwhale pages hold 50: most songs on a pod carry no licence and are
+  // left out on the device, so a page of 20 often showed none (MU-FW).
+  var PAGE = { ia: 24, ov: 20, cc: 10, jm: 20, au: 20, eu: 20, km: 20, dp: 20, fw: 50 };
   // Registered by Chris at devportal.jamendo.com (2026-10-16); public,
   // one for every orOS user, non-commercial use.
   var JM_CLIENT = "e04c6e83";
@@ -56,10 +58,13 @@
     mo: { name: "Musopen", home: "https://archive.org/details/musopen" },
     jb: { name: "National Jukebox", home: "https://www.loc.gov/collections/national-jukebox/" },
     km: { name: "Kevin MacLeod", home: "https://incompetech.com/music/royalty-free/" },
-    dp: { name: "DPLA", home: "https://dp.la/" }
+    dp: { name: "DPLA", home: "https://dp.la/" },
+    // MU-FW: the public libraries of the open.audio Funkwhale pod (and the
+    // pods it follows); only songs with a Creative Commons licence or CC0.
+    fw: { name: "Funkwhale", home: "https://open.audio/" }
   };
   // The order sources are shown in.
-  var SOURCE_ORDER = ["jm", "ia", "fm", "ov", "cc", "km", "au", "mo", "jb", "eu", "dp"];
+  var SOURCE_ORDER = ["jm", "ia", "fm", "ov", "cc", "km", "fw", "au", "mo", "jb", "eu", "dp"];
   // Sources whose albums are Internet Archive items (one search each).
   var IA_SOURCES = ["ia", "fm", "mo", "jb"];
   // Openverse's own sources, for the credit line.
@@ -538,6 +543,54 @@
     return { tracks: list.map(auTrack).filter(Boolean), more: list.length >= PAGE.au };
   }
 
+  // ---------- 5c2. Funkwhale (MU-FW) ----------
+  // open.audio, the Funkwhale project's public pod, API v2 with no
+  // sign-in. People upload their own music there and choose a licence
+  // per song; most choose none, so only songs with a Creative Commons
+  // licence or CC0 are shown (the rest stays on the pod). A song's
+  // address is the pod's listen link, which sends the player on to a
+  // signed storage address that expires after an hour, so the listen
+  // link is what is kept, never the storage address. Covers are signed
+  // the same way and are left out. Streaming only.
+  var FW_BASE = "https://open.audio";
+  function fwLicence(v) {
+    var s = String(v || "").toLowerCase().trim();
+    if (s === "cc0-1.0") return "cc0";
+    var m = /^cc-(by(?:-nc)?(?:-sa|-nd)?)-(\d\.\d)(?:-[a-z]{2,3})?$/.exec(s);
+    return m ? licFromCode(m[1], m[2]) : "";
+  }
+  // o: { q, f, page } — words and / or a genre (a pod tag).
+  function fwUrl(o) {
+    o = o || {};
+    var F = o.f ? normFilter(o.f) : {}, n = PAGE.fw;
+    var p = { q: String(o.q || "").replace(/\s+/g, " ").trim().slice(0, 120), tag: F.g || "", playable: "true",
+      page_size: n, page: Math.max(1, o.page || 1) };
+    // CC0 is one licence the pod can filter on; the other licence filters are checked here.
+    if (F.pd) p.license = "cc0-1.0";
+    if (F.sort === "new") p.ordering = "-creation_date";
+    return FW_BASE + "/api/v2/tracks/?" + qs(p);
+  }
+  function fwTrack(x) {
+    if (!x || typeof x !== "object" || x.is_playable === false) return null;
+    var id = typeof x.id === "number" && x.id > 0 && x.id < 1e12 ? String(Math.floor(x.id)) : "";
+    var lu = typeof x.listen_url === "string" && /^\/api\/v[12]\/listen\/[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}\/$/.test(x.listen_url) ? x.listen_url : "";
+    var li = fwLicence(x.license);
+    if (!id || !lu || !li) return null;
+    var up = Array.isArray(x.uploads) && x.uploads[0] && typeof x.uploads[0] === "object" ? x.uploads[0] : {};
+    var who = (Array.isArray(x.artist_credit) ? x.artist_credit : []).map(function (c) {
+      return c && typeof c === "object" ? (typeof c.credit === "string" ? c.credit : "") + (typeof c.joinphrase === "string" ? c.joinphrase : "") : "";
+    }).join("");
+    var o = { k: key("fw", id), t: str(x.title) || "?", a: str(who), d: secs(+up.duration || 0), s: "fw", li: li,
+      u: FW_BASE + lu, pg: FW_BASE + "/library/tracks/" + id };
+    var al = x.album && typeof x.album === "object" ? str(x.album.title) : "";
+    if (al) o.al = al;
+    return ref(o);
+  }
+  function fwParse(j) {
+    var list = j && Array.isArray(j.results) ? j.results : [];
+    return { tracks: list.map(fwTrack).filter(Boolean), more: !!(j && j.next) && list.length >= PAGE.fw };
+  }
+
   // ---------- 5d. Europeana (MU-SRC) ----------
   // Sound items with an open licence (reusability=open: CC0, public
   // domain, BY, BY-SA) from Europe's archives and radios. The Search API
@@ -908,6 +961,7 @@
     });
   }
   function auSearch(o) { o = o || {}; return getJSON(auUrl(o)).then(auParse); }
+  function fwSearch(o) { o = o || {}; return getJSON(fwUrl(o)).then(fwParse); }
   function euSearch(o) {
     o = o || {};
     if (!euKeyOk(o.key)) return Promise.reject(new OpenError("key"));
@@ -998,6 +1052,7 @@
     jb: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
     km: { g: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1, off: 1 },
     dp: { g: 1, cc: 1, lic: 1, y: 1 },
+    fw: { g: 1, dur: 1, lic: 1 },
     loc: { g: 1, dur: 1, y: 1 }
   };
   // The groups of F that source src cannot honour.
@@ -1152,7 +1207,7 @@
   }
 
   var api = {
-    VERSION: "1.7.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.8.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,
@@ -1170,6 +1225,7 @@
     jmCountryUrl: jmCountryUrl, jmParseIds: jmParseIds, jmFiltered: jmFiltered,
     IA_SOURCES: IA_SOURCES, iaBase: iaBase, jbLastYear: jbLastYear, jbOk: jbOk,
     KM_URL: KM_URL, kmTrack: kmTrack, kmPick: kmPick, kmSpeed: kmSpeed, kmSearch: kmSearch,
+    FW_BASE: FW_BASE, fwLicence: fwLicence, fwUrl: fwUrl, fwTrack: fwTrack, fwParse: fwParse, fwSearch: fwSearch,
     dpKeyOk: dpKeyOk, dpUrl: dpUrl, dpParse: dpParse, dpSearch: dpSearch,
     IA_LL: IA_LL, lmaBandsUrl: lmaBandsUrl, lmaParseBands: lmaParseBands, lmaYearsUrl: lmaYearsUrl, lmaAddYears: lmaAddYears,
     lmaShowsUrl: lmaShowsUrl, lmaKind: lmaKind, lmaShow: lmaShow, lmaParseShows: lmaParseShows, lmaBands: lmaBands, lmaYears: lmaYears, lmaShows: lmaShows,
