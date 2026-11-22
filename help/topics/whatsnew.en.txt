@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.47.00
+- **Layout: imposition.** Export › Imposition puts the pages on printer's sheets: a stapled booklet, sections of 8, 16 or 32 pages for a sewn or glued book, or two pages on a sheet, with crop marks and creep. Export › Image can save all pages or all spreads in one .zip, and a book cover can carry an EAN-5 price code beside the ISBN.
+
 ## Version 8.46.00
 - **Layout: print colours.** More › Print colours… shows the pages as they print: a soft proof through the print profile, each ink plate, or total ink, with too much ink in pink. Preflight now checks ink, rich black on small text, hairlines and text near the trim. Black overprints, swatches can overprint and tints follow their colour. Export › PDF/X-1a puts everything in CMYK, pictures too, and you can use your printer's own profile.
 
