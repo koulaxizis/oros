@@ -536,6 +536,16 @@
   // and no overtime: "partial"), and a period without work charges
   // nothing. Nothing here touches the stored entries.
   function periodOf(k, per) { return per === "w" ? weekStart(k) : per === "m" ? monthStart(k) : k; }
+  // TS-NIGHT (8.53.00): work past midnight belongs to the working day
+  // it started on. The piece after midnight of an entry shorter than a
+  // day that began the day before counts towards that day's minimum
+  // and overtime, so a night shift (08:00-01:30) is one day with its
+  // overtime, not a second day with a second minimum. Only billing
+  // uses this; hours per calendar day stay as they are.
+  function workDay(pc) {
+    var sk = dayKeyOf(pc.x.s);
+    return sk !== pc.k && pc.e - pc.x.s < DAY && addDays(sk, 1) === pc.k ? sk : pc.k;
+  }
   function periodEnd(from, per) { return per === "w" ? addDays(from, 6) : per === "m" ? monthEnd(from) : from; }
   // Whose minimum / overtime applies to a project: { key, src (the
   // record), pid, cid }, or null.
@@ -576,7 +586,7 @@
       if (!pc.bill) return;
       var b = billingOf(data, project(data, pc.x.p));
       if (!b) return;
-      var per = b.src.minPer, from = periodOf(pc.k, per), gk = b.key + TASK_SEP + from;
+      var per = b.src.minPer, from = periodOf(workDay(pc), per), gk = b.key + TASK_SEP + from;
       if (!groups[gk]) { groups[gk] = { b: b, from: from, to: periodEnd(from, per), list: [] }; order.push(gk); }
       groups[gk].list.push(pc);
     });

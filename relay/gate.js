@@ -997,7 +997,7 @@ export function queuedName(n, a) {
 // The app a waiting change belongs to (refs: from the copy's index or a p- ref).
 export function pendApp(n, a, byRef) {
   const o = a && typeof a === "object" ? a : {};
-  if (n === "create_items") return typeof o.app === "string" ? o.app.replace(/^(crm|travel)_.*$/, "$1") : "";
+  if (n === "create_items") return typeof o.app === "string" ? o.app.replace(/^(crm|travel|timesheet)_.*$/, "$1") : "";
   if (/^budget_/.test(n)) return "budget";
   if (/^kanban_/.test(n)) return "kanban";
   if (/^invoices_/.test(n)) return "invoices";
@@ -1757,6 +1757,8 @@ export function minVer(name, args) {
     if (app === "mockups") return 84600;
     if (app === "photolab" && Array.isArray(args.steps) && args.steps.some((x) => x && PL_AI_OPS.indexOf(x.op) >= 0)) return 84600;
   }
+  // TS-GATE (8.55.00): a Timesheet project; an older orOS does not know the kind
+  if (name === "create_items" && args && typeof args === "object" && String(args.app || "").toLowerCase() === "timesheet_project") return 85500;
   return 0;
 }
 // "8.13.00" → 81300 (0 when it is not a version)
@@ -2602,7 +2604,7 @@ export class GateBox {
     const appsOf = (n, a) => {
       const o = a && typeof a === "object" ? a : {};
       if (n === "change_history") return null;
-      if (typeof o.app === "string" && o.app) return [o.app.toLowerCase().replace(/^(crm|travel)_.*$/, "$1")];
+      if (typeof o.app === "string" && o.app) return [o.app.toLowerCase().replace(/^(crm|travel|timesheet)_.*$/, "$1")];
       if (Array.isArray(o.apps) && o.apps.length) return o.apps.map((x) => String(x).toLowerCase());
       const m = /^([a-z]+)_/.exec(n);
       return m && ["budget", "kanban", "invoices", "stock", "publish", "files"].indexOf(m[1]) >= 0 ? [m[1]] : null;
@@ -2673,7 +2675,7 @@ export class GateBox {
         if (no.length) return { ok: false, c: "Claude may not change " + no.join(", ") + " (the owner's switch, as of " + when + "). Nothing was changed." };
         app = byRef[refs[0]];
       } else if (name !== "create_items") return { ok: false, c: name + " needs orOS open on one of the owner's devices (it works on items found while orOS is open, or on the owner's screen). Nothing was changed." };
-      else app = args && typeof args.app === "string" ? args.app.replace(/^(crm|travel)_.*$/, "$1") : "";
+      else app = args && typeof args.app === "string" ? args.app.replace(/^(crm|travel|timesheet)_.*$/, "$1") : "";
     }
     if (!cp.lv || cp.lv[app] !== "write") return { ok: false, c: "Claude may not change " + app + " (the owner's switch, as of " + when + ")." };
     if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was changed." };

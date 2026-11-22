@@ -1898,7 +1898,7 @@
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
       "plants (complete = watered today, update: title / note) · " +
       "notes (a page, update: title / text = replace the whole text / text_add = add a paragraph at the end / labels, move: notebook = another notebook, with the pages under it, delete: the pages under it move up one level) · " +
-      "timesheet (an entry, update or reschedule: title / date / start / end, in local time) · " +
+      "timesheet (an entry, update or reschedule: title / date / start / end, in local time / project = a project's name (\"\" = none) / billed / invoice = the ref of the Invoices document it went on (makes it billed; \"\" clears) / event = the ref of the Calendar event it was for (\"\" clears)) · " +
       "invoices (complete = the invoice was paid: amount = only a part, date = the day paid, how) · " +
       "chores (complete / reopen = today's turn of the chore, update: title) · " +
       "meals (a recipe, update: title / note / servings) · " +
@@ -1951,6 +1951,10 @@
         queue: { type: "string", "enum": ["next", "end", "off"], description: "podcasts: the episode goes first in the queue (next), last (end) or out of it (off)." },
         author: { type: "string", description: "library: the book's author." },
         how: { type: "string", "enum": ["bank", "cash", "card", "iris", "paypal", "other"], description: "invoices: how it was paid." },
+        project: { type: "string", description: "timesheet: the name of the project the entry belongs to (\"\" = none)." },
+        billed: { type: "boolean", description: "timesheet: the entry is on an invoice (true) or still to invoice (false)." },
+        invoice: { type: "string", description: "timesheet: the ref of the Invoices document the entry went on (search_data, app invoices; makes it billed); \"\" clears it." },
+        event: { type: "string", description: "timesheet: the ref of the Calendar event the entry was for (search_data or app_summary, app calendar); \"\" clears it." },
         end_date: { type: "string", description: "travel: the trip's last day YYYY-MM-DD." },
         plan_start: { type: "string", description: "kanban: the card's planned first day on the Timeline (Gantt) YYYY-MM-DD, at most its due date; \"\" clears it." },
         milestone: { type: "boolean", description: "kanban: true makes the card a milestone (one day, its due date), false a normal card." },
@@ -2076,7 +2080,9 @@
     crm_deal: "crm_deal = a CRM deal (a sale or job in the pipeline)",
     crm_contract: "crm_contract = a contract with a CRM partner (title, start, end, reminder before it ends)",
     // AS-ADD5 (wave A4, assistant/additems2.js)
-    timesheet: "timesheet = time worked, in Timesheet",
+    timesheet: "timesheet = time worked, in Timesheet (billed, and the refs of the invoice it went on and the event it was for, when known)",
+    // TS-GATE (8.55.00, assistant/additems2.js)
+    timesheet_project: "timesheet_project = a project in Timesheet with its client (a client not there yet is made), hourly rate, day minimum and overtime",
     meals: "meals = a recipe in Meal Planner",
     travel_plan: "travel_plan = an entry in a trip's itinerary in Travel (a flight, stay, visit, meal…)",
     travel_pack: "travel_pack = an item on a trip's packing list in Travel",
@@ -2102,7 +2108,7 @@
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
-    ["name", ["contacts", "crm"], { type: "string", description: "Full name (a person), or the company's name (a CRM company)." }],
+    ["name", ["contacts", "crm", "timesheet_project"], { type: "string", description: "Full name (a person), or the company's name (a CRM company). timesheet_project: the project's name (required)." }],
     ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "crm_contract", "timesheet", "meals", "travel_plan", "travel_pack",
                "habits", "fitness", "garage", "plants", "petcare", "shelf", "publish", "wiki", "split"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry, packing item, habit, workout, plant, shelf title or published book's title (budget: use note; timesheet: what was done; garage: what was done, e.g. Oil change, or what expires, e.g. Insurance; petcare: the vaccine, medicine or visit reason, none for a weight; split: what was paid for)." }],
     ["days", ["habits"], { type: "array", items: { type: "integer" }, description: "habits: weekdays, 0 = Monday … 6 = Sunday (leave out for any day)." }],
@@ -2236,7 +2242,16 @@
     ["tax_office", ["crm"], { type: "string", description: "crm: tax office (e.g. Greek ΔΟΥ)." }],
     ["contact", ["crm"], { type: "string", description: "crm: the ref of the contact (from search_data or create_items) who is this customer, or its contact person; CRM links them." }],
     ["role", ["crm"], { type: "string", description: "crm with contact: that person's role, e.g. Accounts." }],
-    ["client", ["invoices", "quote"], { type: "string", description: "invoices: the client's name as in Invoices (an unknown one is written on the draft only; the user picks or adds the client before issuing). quote: the client's name as in Quote (an unknown one is added there as a client)." }],
+    ["client", ["invoices", "quote", "timesheet_project"], { type: "string", description: "invoices: the client's name as in Invoices (an unknown one is written on the draft only; the user picks or adds the client before issuing). quote: the client's name as in Quote (an unknown one is added there as a client). timesheet_project: the client's name in Timesheet (a new one is made when none has it)." }],
+    // TS-GATE (8.55.00): a Timesheet project's billing; an entry's billed, invoice and event
+    ["rate", ["timesheet_project"], { type: "number", description: "timesheet_project: the hourly rate in the app's currency, e.g. 20." }],
+    ["day_minimum", ["timesheet_project"], { type: "number", description: "timesheet_project: the least a working day is charged (a day rate), e.g. 200; time up to it is covered." }],
+    ["overtime_after", ["timesheet_project"], { type: "number", description: "timesheet_project: hours of a day after which time is overtime, e.g. 10." }],
+    ["overtime_rate", ["timesheet_project"], { type: "number", description: "timesheet_project: the hourly rate of overtime (leave out for the usual rate)." }],
+    ["billable", ["timesheet_project"], { type: "boolean", description: "timesheet_project: false for time that is not charged (default true)." }],
+    ["billed", ["timesheet"], { type: "boolean", description: "timesheet: true when this time is already on an invoice (or invoiced elsewhere)." }],
+    ["invoice", ["timesheet"], { type: "string", description: "timesheet: the ref of the Invoices document this time went on (search_data, app invoices); makes it billed." }],
+    ["event", ["timesheet"], { type: "string", description: "timesheet: the ref of the Calendar event this time was for (search_data or app_summary, app calendar)." }],
     ["lines", ["invoices", "quote"], { type: "array", description: "invoices, quote: the draft's lines, 1 to 50 (required).",
                items: { type: "object", properties: { text: { type: "string", description: "What was sold or done (200 characters)." },
                                                       qty: { type: "number", description: "Quantity, more than 0." },
@@ -2280,7 +2295,7 @@
         "The user sees one card with every item and a tick on each, and must press Add; nothing is saved before that. " +
         "An item that looks like one already there starts unticked; the result names it with its ref, so change it with change_item instead. " +
         "The result gives a ref for every item made" + (people ? ": use a new contact's ref as contact of a CRM customer, or with link_contact" : "") + ". " +
-        "Lists, notebooks, folders, boards, columns, labels, categories, Timesheet projects, Garage vehicles and pets must be the user's own (search_data or list_apps shows them); " +
+        "Lists, notebooks, folders, boards, columns, labels, categories, Timesheet projects (a new one: timesheet_project), Garage vehicles and pets must be the user's own (search_data or list_apps shows them); " +
         "only a To-Do list is made when none has the name. Give only what the user said or the documents show.",
       params: {
         type: "object",
@@ -4075,7 +4090,7 @@
       var CR_WHAT = { contacts: "contacts", crm: "CRM customers or partners", todo: "To-Do tasks", calendar: "Calendar events",
                       budget: "Budget expenses or income", notes: "notes", bookmarks: "bookmarks", kanban: "Kanban cards",
                       crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals", crm_contract: "CRM contracts",
-                      timesheet: "time worked (Timesheet)", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
+                      timesheet: "time worked (Timesheet)", timesheet_project: "Timesheet projects with their client, rate, day minimum and overtime", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
                       stickies: "sticky notes", habits: "habits", fitness: "finished workouts", garage: "Garage services and renewals",
                       plants: "plants (Plant Care)", petcare: "pet health records", shelf: "Media Shelf titles (books, films, games…)",
                       publish: "titles the user publishes (Publishing; a list or catalogue of titles: all of them in one create_items call, never one card per title)",
