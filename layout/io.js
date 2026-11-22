@@ -850,6 +850,12 @@
     if (!doc) return;
     if (doc === LY.doc && LY.flushStory) LY.flushStory();
     doc = LY.findDoc(doc.id) || doc;
+    bundleBytes(doc).then(function (bytes) {
+      return saveBlob(new Blob([bytes], { type: BUNDLE_MIME }), fileName(doc, ".oroslayout"), BUNDLE_MIME, "orOS Layout", ".oroslayout");
+    }).then(function (ok) { if (ok) LY.toast(t("exp.pkgDone")); }, function () { LY.toast(t("exp.fail")); });
+  }
+  // the .oroslayout bytes of a document (also inside the print package, LY-W15)
+  function bundleBytes(doc) {
     var media = {}, chain = Promise.resolve();
     assetIds(doc).forEach(function (id) {
       chain = chain.then(function () { return A.blob(id); }).then(function (b) { if (b) media[id] = b; });
@@ -857,16 +863,14 @@
     fontFiles(doc).forEach(function (name) {
       chain = chain.then(function () { return F.blob(name); }).then(function (b) { if (b) media[name] = b; });
     });
-    chain.then(function () { return thumbOf(doc); }).then(function (thumb) {
+    return chain.then(function () { return thumbOf(doc); }).then(function (thumb) {
       return window.OrosBundle.write({
         mime: BUNDLE_MIME, app: "layout", schema: "layout/" + PKG_VER,
         content: { kind: PKG_KIND, ver: PKG_VER, doc: doc },
         meta: { title: doc.name || "", modified: doc.m, id: doc.id, language: LY.LANG, generator: "orOS Layout" },
         media: media, thumbnail: thumb, date: new Date()
       });
-    }).then(function (bytes) {
-      return saveBlob(new Blob([bytes], { type: BUNDLE_MIME }), fileName(doc, ".oroslayout"), BUNDLE_MIME, "orOS Layout", ".oroslayout");
-    }).then(function (ok) { if (ok) LY.toast(t("exp.pkgDone")); }, function () { LY.toast(t("exp.fail")); });
+    });
   }
   function bundleFail(e) { say(e && e.code === "newer" ? t("imp.newer") : t("imp.bad")); }
   function fromBundle(r) {
@@ -2107,7 +2111,7 @@
   }
 
   LY.io = {
-    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, tagBytes: tagBytes, freePdfPath: freePdfPath, diskFs: diskFs, saveOut: saveOut, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, portFolder: portFolder, compareDoc: compareDoc, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, tagBytes: tagBytes, freePdfPath: freePdfPath, diskFs: diskFs, saveOut: saveOut, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, bundleBytes: bundleBytes, assetIds: assetIds, fontFiles: fontFiles, importPackage: importPackage, importFolder: importFolder, portFolder: portFolder, compareDoc: compareDoc, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     adjust: adjust, placePage: placePage, pageImage: pageImage, pageKind: pageKind, wrapProfile: wrapProfile, fillWrapProfiles: fillWrapProfiles, saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

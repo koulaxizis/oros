@@ -221,6 +221,12 @@ More › Symbols… keeps a group of objects you use again and again, such as a 
 
 Change one placement, select it and choose Update the symbol from this placement: every other placement changes too, each at its own size, and text keeps its frame. Detach makes a placement plain objects again; deleting a symbol leaves its placements as plain objects. Claude can make, place and update symbols too.
 
+## Package for print, InDesign and Scribus
+
+Export › Package for print makes one .zip for the printer or a designer: the document itself, a PDF/X-4 with bleed and crop marks, the same pages as InDesign (.idml) and Scribus (.sla) files, the pictures at full size in Links, the fonts in Fonts and a report of the pages, colours, fonts, pictures and what Preflight found.
+
+Export › For other programs saves one InDesign or Scribus file on its own, with the pictures inside it. Pages, masters, styles, colours, frames with their columns and threads, shapes, lines, curves and pictures open as they are here. Shadows, glows and soft edges become InDesign's own effects; Scribus keeps the blend mode and the opacity. Tracked changes, comments and symbols stay in orOS (symbols arrive as groups).
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 
