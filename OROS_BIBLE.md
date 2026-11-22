@@ -13892,3 +13892,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** layout/commands.js, layout/assist.js, layout/layout.js, assistant/core.js, assistant/assistant.js, assistant/index.html, i18n/de/assistant.js, layout/help.en.txt, layout/help.el.txt, i18n/de/help/layout.txt, tests/layout-w16.test.js, tests/layout-commands.test.js.
 - **Tests:** tests/layout-w16.test.js (8); full suite; Layout in the real shell (Greek): the command made a square post from an A5 flyer with a new frame in the same run, then updated it after the original's text changed; no page errors.
 - **Not tested:** a live Claude conversation and a Gate call (the same edit path as every other command).
+
+### 2026-11-22 — 8.69.00 — Battery card in the smart bar (BAT-1, smartbar 1.6.0)
+- **What:** kind `battery`: percent and charging from `navigator.getBattery()` (one manager, its own events); `model.batteryCard` gives `null` on mains (100 % charging, chargingTime 0) or junk, `low` at ≤ 20 % not charging; a tap opens Quick settings (`orosQS.open()`). Chris approved video idea #6 (2026-11-22 18:49Z).
+- **Files:** smartbar.js, translations.js, i18n/de/shell.js, appearance help EN/EL/DE, whatsnew EN/EL, tests/smartbar.test.js.
+- **Tests:** smartbar tests (BAT-1); full suite; Chromium through the real shell at 1280 EN and 360 EL with a stubbed battery at 17 % not charging (low colour, in the +N fold on a phone); charging and the Quick settings tap only in unit tests and by reading.
+- **Not tested:** a real laptop or phone battery, Safari and Firefox (no Battery API there: the card stays away).

@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.69.00
+- **Battery in the top bar.** A new top bar card shows the battery's percent and whether it is charging, where your browser reports a battery. It turns red under 20 % when not charging, and stays away on a computer that runs on mains. Tap it to open Quick settings. Add it in Settings › Appearance › Top bar.
+
 ## Version 8.68.00
 - **Layout: Claude makes alternate layouts.** Ask the Assistant (or Claude through orOS Gate) for the same document in another size, for example a square post of a flyer: it makes the alternate, keeps its texts linked, and updates it from the original when you ask.
 
