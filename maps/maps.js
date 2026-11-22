@@ -1415,14 +1415,21 @@
   //   replace it with "Calculating…".
   //   onDone(ok) → called once the route is painted (true) or failed
   //   (false). Not called for a request that a newer one replaced.
+  // Wave H8: Walk / Bike with no network, from the offline map packs.
+  function canRouteOffline() {
+    return !!(mapsHost.offlineRoute && mapsHost.offlineRoute(routeProfile, routePoints(), true));
+  }
   function calcRoute(silent, onDone) {
     function done(ok) { if (typeof onDone === "function") onDone(ok); }
     if (!routeFrom || !routeTo) { done(false); return; }
-    if (!navigator.onLine) { showToast(t("route.offline")); done(false); return; }
+    var maybeOffline = mapsHost.offlineRoute && (routeProfile === "foot" || routeProfile === "bike");
+    if (!navigator.onLine && !maybeOffline) { showToast(t("route.offline")); done(false); return; }
     var my = ++routeSeq;
     resolveMe(function (ok) {
       if (my !== routeSeq) return;          // cleared or replaced meanwhile
       if (!ok || !routeFrom || !routeTo) { done(false); return; }
+      // with no network only a route from the offline packs can come
+      if (!navigator.onLine && !canRouteOffline()) { showToast(t("route.offline")); done(false); return; }
       fetchRoute(my, silent, done);
     });
   }
@@ -1469,11 +1476,27 @@
     // Wave H2 (outdoor.js): Walk and Bike can come from the trail
     // router (BRouter); if it fails, the standard OSRM route is used.
     var outdoor = mapsHost.outdoorFetch ? mapsHost.outdoorFetch(routeProfile, routePoints()) : null;
-    var req = outdoor ? outdoor.catch(function () {
-      if (my !== routeSeq) throw 0;
-      if (mapsHost.outdoorFailed) mapsHost.outdoorFailed();
-      return osrm();
-    }) : osrm();
+    // Wave H8 (offroute.js, experimental): with no network, Walk and
+    // Bike come from the offline map packs on this device; a network
+    // error (not a server's answer) falls back to them too.
+    function offline(err) {
+      var o = my === routeSeq && mapsHost.offlineRoute ? mapsHost.offlineRoute(routeProfile, routePoints()) : null;
+      if (!o) throw err;
+      return o;
+    }
+    var req;
+    if (navigator.onLine === false && canRouteOffline()) req = offline(0);
+    else {
+      req = outdoor ? outdoor.catch(function () {
+        if (my !== routeSeq) throw 0;
+        if (mapsHost.outdoorFailed) mapsHost.outdoorFailed();
+        return osrm();
+      }) : osrm();
+      req = req.catch(function (err) {
+        if (err && err.status) throw err;
+        return offline(err);
+      });
+    }
 
     req
       .then(function (json) {
@@ -1506,7 +1529,7 @@
         }
         // Transient OSRM failure: keep the last GOOD route painted and
         // the offline snapshot intact — never wipe data on a fetch error.
-        showToast(t("route.err"));
+        if (!(err && err.told)) showToast(t("route.err"));   // offroute.js has said why
         done(false);
       });
   }
@@ -2714,7 +2737,7 @@
 
     // Deviation → re-route (12s debounce so OSRM isn't hammered)
     // (offline there is nothing to ask — keep guiding on the old route)
-    if (near.dist > 55 && navigator.onLine && Date.now() - navRerouteAt > 12000) {
+    if (near.dist > 55 && (navigator.onLine || canRouteOffline()) && Date.now() - navRerouteAt > 12000) {
       navRerouteAt = Date.now();
       // Stops already reached stay behind: the new route goes from
       // here through the stops still ahead.
@@ -4150,6 +4173,11 @@
     //   or null (use OSRM); outdoorFailed() is told when it fell back.
     outdoorFetch: null,
     outdoorFailed: null,
+    // Wave H8 (offroute.js): offlineRoute(profile, pts) → Promise of an
+    // OSRM-shaped answer from the offline packs, or null (no pack holds
+    // the stops, or not Walk / Bike); offlineRoute(profile, pts, true)
+    // only says whether it could (true / false), without routing.
+    offlineRoute: null,
     routeHooks: [],
     extrasHooks: [],
     routeProfile: function () { return routeProfile; },

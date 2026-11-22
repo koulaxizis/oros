@@ -98,7 +98,7 @@
     rotate: { kind: "size", args: { deg: { t: "num", lo: -359, hi: 359, def: null, req: 1 } } },
     flip: { kind: "size", args: { dir: { t: "enum", v: ["h", "v"], def: "h", req: 1 } } },
     rename: { kind: "doc", args: { title: { t: "str", max: 80, req: 1 } } },
-    export: { kind: "out", args: { fmt: { t: "enum", v: ["jpg", "png", "webp"], def: "jpg" }, quality: { t: "int", lo: 10, hi: 100, def: 90 } } }
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["jpg", "png", "webp"], def: "jpg" }, quality: { t: "int", lo: 10, hi: 100, def: 90 }, out: { t: "str", max: 1030 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -131,7 +131,7 @@
     "rotate: the whole picture by deg (90, 180, -90 or any angle)",
     "flip: the whole picture, dir h (left-right) | v (top-bottom)",
     "rename: the project's name becomes title",
-    "export: save the picture into the Pictures folder: fmt jpg|png|webp, quality (10-100, jpg and webp)"
+    "export: save the picture into the Pictures folder: fmt jpg|png|webp, quality (10-100, jpg and webp); out (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Photos with Files at «may change») also saves it there, never over a file, and the answer lists the paths"
   ].join("\n");
 
   // ---------- 1. Checking ----------

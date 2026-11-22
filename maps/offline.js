@@ -817,6 +817,23 @@
     }
     return null;
   }
+  // Wave H8 (offroute.js): the decoded tile z/x/y from a ready pack at
+  // that very level (never a coarser one), or null.
+  H.offlineTile = function (z, x, y) {
+    var src = findSource(z, x, y);
+    if (!src || src.d) return Promise.resolve(null);
+    return tileLayers(src.p, src.i);
+  };
+  // The top level of a ready pack holding all these points, or -1.
+  H.offlineCover = function (pts) {
+    var best = -1;
+    readyPacks().forEach(function (p) {
+      var b = p.meta.bbox;
+      var all = (pts || []).every(function (q) { return q && q.lon >= b[0] && q.lon <= b[2] && q.lat >= b[1] && q.lat <= b[3]; });
+      if (all && pts.length) best = Math.max(best, p.plan.maxz);
+    });
+    return best;
+  };
   var OfflineLayer = L.GridLayer.extend({
     createTile: function (coords, done) {
       var S = this.getTileSize().x, dpr = Math.min(2, window.devicePixelRatio || 1);

@@ -197,10 +197,77 @@
   // The recipes of one app, in order.
   function ofApp(data, app) { return (data && data.list || []).filter(function (r) { return r.app === app; }); }
 
+  // GX-3 (Chris 2026-11-21 «εφάρμοσε το για όλα τα apps που έχουν
+  // exports»): the export steps of the apps' edit_in_app commands. For each
+  // document and each step, make(id, step) gives its files ([{ name, blob }])
+  // and the shell's orOS Gate saves them into step.out (gate.js exportAll:
+  // a local write folder or a folder of Claude's, never over a file).
+  // → { saved, outFail }, as the app's report carries them.
+  function gateOf() {
+    try { var p = root.parent && root.parent !== root ? root.parent : null; return p && p.orosGate && typeof p.orosGate.exportAll === "function" ? p.orosGate : null; } catch (e) { return null; }
+  }
+  function runOuts(ids, steps, make) {
+    var outs = (steps || []).filter(function (st) { return st && st.op === "export"; }), ex = { saved: [], outFail: [] };
+    if (!outs.length) return Promise.resolve(ex);
+    var G = gateOf();
+    return (ids || []).reduce(function (pr, id) {
+      return pr.then(function () {
+        return outs.reduce(function (p2, st) {
+          return p2.then(function () {
+            if (!G) { ex.outFail.push({ to: st.out, why: "gateOff" }); return; }
+            return Promise.resolve().then(function () { return make(id, st); }).then(function (fl) {
+              if (fl === null) return;   // nothing to make for this one (a workbook's other sheets)
+              fl = (Array.isArray(fl) ? fl : []).filter(function (f) { return f && f.blob && typeof f.name === "string"; });
+              if (!fl.length) { ex.outFail.push({ to: st.out, why: "error" }); return; }
+              return Promise.resolve(G.exportAll([st.out], fl, "export")).then(function (r) {
+                ex.saved = ex.saved.concat(r && r.saved || []);
+                ex.outFail = ex.outFail.concat(r && r.outFail || []);
+              });
+            }).then(null, function () { ex.outFail.push({ to: st.out, why: "error" }); });
+          });
+        }, Promise.resolve());
+      });
+    }, Promise.resolve()).then(function () { return ex; });
+  }
+  // An app's own Export run with its save dialog swapped for a sink (the
+  // app's dialogHost() returns root.__orosExportSink while it is set):
+  // → the files it saved, once they stop coming (or after ms).
+  function capture(fn, ms) {
+    if (root.__orosExportSink) return Promise.resolve([]);
+    var got = [], last = 0, end = Date.now() + (ms || 90000);
+    root.__orosExportSink = { saveFile: function (o) {
+      if (o && o.blob && typeof o.blob.size === "number") { got.push({ name: String(o.filename || "export").slice(0, 200), blob: o.blob }); last = Date.now(); }
+      return Promise.resolve({ ok: true });
+    }, openFile: function () { return Promise.resolve(null); } };
+    return Promise.resolve().then(fn).then(null, function () {}).then(function (v) {
+      // a promise that resolved: what it saved is in; else wait for the files
+      var soon = Date.now() + (v === "__done" ? 0 : 15000);
+      return new Promise(function (ok) {
+        (function wait() {
+          var now = Date.now();
+          if (now > end || (got.length && now - last > 600) || (!got.length && now > soon)) { ok(); return; }
+          setTimeout(wait, 100);
+        })();
+      });
+    }).then(function () { root.__orosExportSink = null; return got; });
+  }
+  // the report's saved / outFail from runOuts' result
+  function outRep(rep, ex) {
+    if (rep && rep.ok && ex) {
+      if (ex.saved.length) rep.saved = ex.saved.slice(0, 60);
+      if (ex.outFail.length) rep.outFail = ex.outFail.slice(0, 4);
+    }
+    return rep;
+  }
+  // a command module's preview: the files its export steps make
+  function outFiles(steps, docs) {
+    return (steps || []).filter(function (st) { return st && st.op === "export"; }).length * (docs || 0);
+  }
+
   var api = {
     VER: VER, MAX: MAX, MAX_STEPS: MAX_STEPS, MAX_NAME: MAX_NAME,
     normRecipe: normRecipe, merge: merge, empty: empty, arg: arg, normStep: normStep, check: check,
-    newId: newId, ofApp: ofApp
+    newId: newId, ofApp: ofApp, runOuts: runOuts, outRep: outRep, outFiles: outFiles, capture: capture
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.orosRecipes = api;

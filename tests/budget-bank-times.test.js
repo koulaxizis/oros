@@ -91,11 +91,11 @@ test("set.bat / set.bam: kept when valid, dropped otherwise, merged with the set
   assert.deepEqual(B.mergeBudget(a, b), B.mergeBudget(b, a));
 });
 
-test("banklive: set times replace the 6-hour rule, bt is written only with set times, the hidden run reports", () => {
+test("banklive: set times replace the 6-hour rule, bt is written in both modes (BK-6S, also after a 429), the hidden run reports", () => {
   const lv = read("budget/banklive.js");
   // BK-AO: the mode (off / set times / every 6 hours) is bankapi.js autoDue, as in the shell
   assert.match(lv, /function isDue\(now\) \{\s*var dev = load\(DEV_KEY\);\s*return !!K\.autoDue\(A\.data\(\)\.set, live\(\), dev && dev\.t, 0, now\);/);
-  assert.match(lv, /if \(sched\) rows\.forEach\(function \(r\) \{ if \(!errs\[r\.id\]\) put\(r\.id, \{ bt: at \}\); \}\);/);
+  assert.match(lv, /\n      rows\.forEach\(function \(r\) \{ if \(!errs\[r\.id\] \|\| errs\[r\.id\] === "busy"\) put\(r\.id, \{ bt: at \}\); \}\);/);
   assert.match(lv, /oros: "bank-bg-done", app: "budget"/);
   assert.match(lv, /var QUIET = \{ keys: 1, noapp: 1, offline: 1 \};/);
   // the hidden run takes no bank answers and runs nothing else
