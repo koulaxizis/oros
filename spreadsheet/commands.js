@@ -60,7 +60,9 @@
     merge: { kind: "doc", args: { range: RANGE_REQ, each: oneOf(["", "row", "col"]) } },
     unmerge: { kind: "doc", args: { range: RANGE_REQ } },
     freeze: { kind: "doc", args: { cell: { t: "str", max: 8, req: 1 } } },
-    rename: { kind: "doc", args: { title: { t: "str", max: 24, req: 1 } } }
+    rename: { kind: "doc", args: { title: { t: "str", max: 24, req: 1 } } },
+    // GX-3: as a file into out (nothing changes)
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["xlsx", "ods", "csv"], def: "xlsx" }, out: { t: "str", max: 1030, req: 1 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -82,7 +84,8 @@
     "merge: merge range into one cell (only its top-left value stays); each row|col merges each row or each column of it separately",
     "unmerge: split the merged cells in range",
     "freeze: keep the rows above and the columns left of `cell` in view while scrolling (B2 freezes row 1 and column A; A1 unfreezes)",
-    "rename: the sheet's name becomes `title`"
+    "rename: the sheet's name becomes `title`",
+    "export: saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Sheets with Files at «may change»; never over a file): fmt xlsx | ods (the whole workbook, once) | csv (each sheet named); changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------
@@ -466,6 +469,7 @@
   // things changed. env: { notes: [], lang: "en" | "el" } (the
   // language sheet names in formulas are read in).
   function apply(w, sid, st, env) {
+    if (CATALOG[st.op] && CATALOG[st.op].kind === "out") return 0;   // GX-3: assist.js makes the file
     env = env || {};
     var sh = sheetOf(w, sid);
     if (!sh) return 0;
@@ -695,6 +699,7 @@
       steps.forEach(function (st) { k += apply(w, id, st, env); });
       if (k) { out.n += k; out.d++; out.per.push({ id: id, name: sheetName(sheetOf(w, id), env.lang), n: k }); }
     });
+    steps.forEach(function (st) { if (st.op === "export") out.files = (out.files || 0) + (st.fmt === "csv" ? ids.length : 1); });   // GX-3
     return out;
   }
   // A sheet for the model: its size, frozen panes, column widths, row

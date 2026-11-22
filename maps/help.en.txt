@@ -272,7 +272,7 @@ Each pack shows its size, its detail, when you downloaded it and the date of the
 
 - `Offline map (downloaded)` in the layers button shows your packs; outside them the map is hatched. When the device goes offline over a pack, Maps switches to it by itself, and back when you're online again. Past the pack's top detail the map is drawn larger, still sharp.
 - Offline, the search finds names from your packs: towns and neighbourhoods, streets, shops and other places, parks and water, and addresses where the map data has them. Accents don't matter, and Latin letters find Greek names (`plaka` finds Πλάκα). The rows say `(offline)`.
-- New routes still need a connection.
+- With no connection, `Walk` and `Bike` routes come from your packs (experimental): Maps works the route out on the device from the roads, paths, steps and cycleways of a pack that holds every stop, at `Streets, shops and places` detail or more. The route bar says `Offline · experimental`, and `Directions` shows the kinds of way. The packs don't know one-way rules for bikes, who may use a way, turn rules or heights, so check on the spot; the time is for flat ground. The same happens when you're online but the route servers can't be reached. Car routes still need a connection.
 - `Map source (advanced)` takes the address of your own PMTiles file (vector tiles in the Protomaps layout) instead of the default.
 
 ## Online services and privacy
@@ -315,7 +315,7 @@ Saved places, your track list (names, activities, colours, folders, statistics),
 
 ## Limits
 
-- New routes need a connection. Offline you get your offline maps (map and search), areas you looked at before, saved places and your last route. Without an offline map, search needs a connection.
+- New car routes need a connection (Walk and Bike come from your offline maps, see Offline maps). Offline you get your offline maps (map and search), areas you looked at before, saved places and your last route. Without an offline map, search needs a connection.
 - Offline maps need a browser that can store files for a site (recent Chrome, Edge, Firefox, Safari 26). The browser may remove them when the device runs out of space. The offline map is drawn more simply than the online one: no house numbers or one-way arrows on the map, no hill shading, and names near the edge of a map tile may not show.
 - Offline search finds only names in the map data, not every address; one area pack holds at most 600,000 map tiles, so a whole country comes with less detail.
 - Navigation needs GPS, and Maps has to stay open.
