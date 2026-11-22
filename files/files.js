@@ -1888,7 +1888,12 @@
       vault: vaultApi,
       important: markedFile,
       openFile: openFileAt,
+      openFolder: function (p) { navigate(p); },
       preview: openPreview,
+      cleanCore: function () {
+        return cleanScript("clean-core.js", function () { return !!window.orosClean; }).then(function () { return window.orosClean; });
+      },
+      photosAlike: function () { loadPhotos().then(function (ph) { if (ph && ph.findAlike) ph.findAlike(); }, function () {}); },
       trash: function (p) {
         return moveToTrash(p).then(function () { favDropPath(p); markDirty(); });
       },

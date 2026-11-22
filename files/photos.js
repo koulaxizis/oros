@@ -620,7 +620,12 @@
     return r;
   }
 
+  var scanP = null;                     // the last scan (findAlike waits for it)
   function scan() {
+    scanP = scan1();
+    return scanP;
+  }
+  function scan1() {
     var gen = ++scanGen;
     scanning = true;
     paintMsg();
@@ -2301,6 +2306,13 @@
     leave: leave,
     isActive: function () { return active; },
     refresh: function () { if (active) scan(); },
+    // Files › Duplicates › Look-alike photos: Photos' own finder.
+    findAlike: function () {
+      if (!active) enter();
+      if (selecting) setSelecting(false);
+      tab = "all"; albumId = ""; here = null; dupes = null; tagId = "";
+      (scanP || Promise.resolve()).then(function () { if (active && !dupes) findDupes(); });
+    },
     tagsChanged: tagsChanged,
     carry: carry,
     t: t

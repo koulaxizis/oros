@@ -50,8 +50,8 @@
       "dp.comparing":   "Comparing contents… {i} of {n} files",
       "dp.stopped":     "Stopped. Search again to finish.",
       "dp.none":        "No duplicates: no two files here have the same contents.",
-      "dp.sumOne":      "1 group of identical files. {b} can be freed.",
-      "dp.sum":         "{g} groups of identical files. {b} can be freed.",
+      "dp.sumOne":      "1 group of duplicates. {b} can be freed.",
+      "dp.sum":         "{g} groups of duplicates. {b} can be freed.",
       "dp.how":         "Identical means every byte is the same, whatever the names. In each group one copy stays (unticked); the ticked ones can go to the Trash.",
       "dp.copies":      "{n} copies · {s} each",
       "dp.stays":       "Stays",
@@ -69,7 +69,18 @@
       "dp.trashed":     "{n} moved to the Trash.",
       "dp.changed":     "{n} left alone: they no longer match the copy that stays.",
       "dp.fail":        "“{name}” could not be moved to the Trash.",
-      "dp.noDisk":      "The orOS disk is not available here."
+      "dp.noDisk":      "The orOS disk is not available here.",
+      "dp.details":     "Comparing pictures and sounds without their hidden details… {i} of {n}",
+      "dp.sec.dir":     "Identical folders",
+      "dp.sec.same":    "Identical files",
+      "dp.sec.meta":    "Same picture or sound, other hidden details",
+      "dp.dirHow":      "Every file in them is the same, byte for byte. The files of a folder that goes are not listed again below.",
+      "dp.metaHow":     "The picture or sound is the same byte for byte; the hidden details differ (camera, date, place, tags). Nothing is ticked: tick what you do not need.",
+      "dp.dirCopies":   "{n} folders · {f} files · {s} each",
+      "dp.versions":    "{n} versions",
+      "dp.files":       "{n} files",
+      "dp.openDir":     "Open the folder",
+      "dp.alike":       "Photos that look alike…"
     },
     el: {
       "dp.tree":        "Διπλότυπα",
@@ -82,8 +93,8 @@
       "dp.comparing":   "Συγκρίνω περιεχόμενα… {i} από {n} αρχεία",
       "dp.stopped":     "Διακόπηκε. Κάνε νέα αναζήτηση για να τελειώσει.",
       "dp.none":        "Δεν υπάρχουν διπλότυπα: κανένα αρχείο εδώ δεν έχει ίδιο περιεχόμενο με άλλο.",
-      "dp.sumOne":      "1 ομάδα ίδιων αρχείων. Μπορούν να ελευθερωθούν {b}.",
-      "dp.sum":         "{g} ομάδες ίδιων αρχείων. Μπορούν να ελευθερωθούν {b}.",
+      "dp.sumOne":      "1 ομάδα διπλότυπων. Μπορούν να ελευθερωθούν {b}.",
+      "dp.sum":         "{g} ομάδες διπλότυπων. Μπορούν να ελευθερωθούν {b}.",
       "dp.how":         "Ίδια σημαίνει ότι κάθε byte είναι ίδιο, όποια κι αν είναι τα ονόματα. Σε κάθε ομάδα ένα αντίγραφο μένει (χωρίς σημάδι)· τα σημαδεμένα μπορούν να πάνε στον Κάδο.",
       "dp.copies":      "{n} αντίγραφα · {s} το καθένα",
       "dp.stays":       "Μένει",
@@ -101,7 +112,18 @@
       "dp.trashed":     "{n} μετακινήθηκαν στον Κάδο.",
       "dp.changed":     "{n} δεν μετακινήθηκαν: δεν είναι πια ίδια με το αντίγραφο που μένει.",
       "dp.fail":        "Το «{name}» δεν μετακινήθηκε στον Κάδο.",
-      "dp.noDisk":      "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ."
+      "dp.noDisk":      "Ο δίσκος του orOS δεν είναι διαθέσιμος εδώ.",
+      "dp.details":     "Συγκρίνω εικόνες και ήχους χωρίς τα κρυφά τους στοιχεία… {i} από {n}",
+      "dp.sec.dir":     "Ίδιοι φάκελοι",
+      "dp.sec.same":    "Ίδια αρχεία",
+      "dp.sec.meta":    "Ίδια εικόνα ή ήχος, άλλα κρυφά στοιχεία",
+      "dp.dirHow":      "Κάθε αρχείο τους είναι ίδιο, byte προς byte. Τα αρχεία ενός φακέλου που φεύγει δεν ξαναγράφονται πιο κάτω.",
+      "dp.metaHow":     "Η εικόνα ή ο ήχος είναι ίδια byte προς byte· διαφέρουν τα κρυφά στοιχεία (κάμερα, ημερομηνία, τοποθεσία, ετικέτες). Τίποτα δεν είναι σημαδεμένο: σημάδεψε όσα δεν χρειάζεσαι.",
+      "dp.dirCopies":   "{n} φάκελοι · {f} αρχεία · {s} ο καθένας",
+      "dp.versions":    "{n} εκδοχές",
+      "dp.files":       "{n} αρχεία",
+      "dp.openDir":     "Άνοιγμα του φακέλου",
+      "dp.alike":       "Φωτογραφίες που μοιάζουν…"
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "files", LANG);
@@ -194,9 +216,9 @@
     return blobOf(f.p).then(function (b) { return b.slice(off, off + n).arrayBuffer(); }).then(function (ab) { return new Uint8Array(ab); });
   }
   // head / full SHA-256, from the cache while path, size and time hold.
-  function hashed(f, field, work) {
+  function hashed(f, field, work, any) {
     return cacheGet(f.p).then(function (rec) {
-      if (CORE.cacheOk(rec, f) && CORE.isHash(rec[field])) return rec[field];
+      if (CORE.cacheOk(rec, f) && (any ? typeof rec[field] === "string" && rec[field] : CORE.isHash(rec[field]))) return rec[field];
       return work().then(function (h) {
         var next = CORE.cacheOk(rec, f) ? rec : { p: f.p, s: f.s, m: f.m };
         next[field] = h;
@@ -276,8 +298,10 @@
     function live() { return g === gen; }
     var painted = 0;
     function throttled() { var now = Date.now(); if (now - painted > 250) { painted = now; paintMsg(); } }
+    var all = [];
     walk(g, function (n) { state.n = n; throttled(); }).then(function (files) {
       if (!live()) return null;
+      all = files;
       files.forEach(function (f) { f.imp = ctx.important ? !!ctx.important(f.p) : false; });
       state.phase = "compare";
       state.i = 0;
@@ -288,11 +312,16 @@
         tick: function () { state.i++; throttled(); }
       });
     }).then(function (groups) {
-      if (!live() || !groups) return;
-      state.phase = "done";
-      state.groups = groups;
-      state.picked = CORE.defaultPicks(groups);
-      paint();
+      if (!live() || !groups) return null;
+      var dirs = CORE.folderTwins(all, base);
+      var same = CORE.outsideFolders(groups, dirs);
+      return metaStage(all, live, throttled).then(function (meta) {
+        if (!live()) return;
+        state.phase = "done";
+        state.groups = dirs.concat(same, CORE.outsideFolders(meta || [], dirs));
+        state.picked = CORE.defaultPicks(state.groups);
+        paint();
+      });
     }, function () {
       if (!live()) return;
       state.phase = "done";
@@ -300,17 +329,81 @@
       paint();
     });
   }
+  // K2: pictures and sounds that differ only in hidden details. A
+  // cheap first key from a few bytes (JPEG scan length, MP3 sound
+  // length, PNG IHDR, WebP VP8X canvas); only files that share one
+  // are read whole, cleaned (clean-core) and hashed. Local files only.
+  function cleanCore() {
+    if (window.orosClean) return Promise.resolve(window.orosClean);
+    return ctx && ctx.cleanCore ? ctx.cleanCore() : Promise.reject(new Error("clean"));
+  }
+  function bytesAt(p, off, n) {
+    return blobOf(p).then(function (b) {
+      var a = off < 0 ? Math.max(0, b.size + off) : off;
+      return b.slice(a, a + n).arrayBuffer();
+    }).then(function (ab) { return new Uint8Array(ab); });
+  }
+  function hexOf(u) { var s2 = ""; for (var i = 0; i < u.length; i++) s2 += (u[i] < 16 ? "0" : "") + u[i].toString(16); return s2; }
+  function preKey(f) {
+    return hashed(f, "z", function () {
+      if (f.kind === "jpeg") return bytesAt(f.p, 0, CORE.JPEG_HEAD).then(function (h) { var n = CORE.jpegScanLen(h, f.s); return n > 0 ? "j" + n : "-"; });
+      if (f.kind === "mp3") return Promise.all([bytesAt(f.p, 0, 10), f.s >= 128 ? bytesAt(f.p, -128, 128) : Promise.resolve(null)]).then(function (r) {
+        var rg = CORE.mp3Range(r[0], r[1], f.s);
+        return rg ? "m" + (rg[1] - rg[0]) : "-";
+      });
+      return bytesAt(f.p, 0, 40).then(function (h) {
+        if (f.kind === "png") return h.length >= 29 && h[12] === 0x49 && h[13] === 0x48 ? "p" + hexOf(h.subarray(16, 29)) : "-";
+        // A WebP without VP8X cannot hold EXIF or XMP.
+        return h.length >= 30 && h[12] === 0x56 && h[15] === 0x58 ? "w" + hexOf(h.subarray(24, 30)) : "-";
+      });
+    }, true);
+  }
+  function contentHash(f, fresh) {
+    function work() {
+      return cleanCore().then(function (C) {
+        return blobOf(f.p).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+          var out = CORE.stripped(f.kind, new Uint8Array(ab), C);
+          return out ? sha(out) : "-";
+        });
+      });
+    }
+    return fresh ? work() : hashed(f, "c", work, true);
+  }
+  function metaStage(files, live, throttled) {
+    var cand = files.filter(function (f) { f.kind = CORE.metaKind(f.p); return f.kind && !f.cloud && f.s <= CORE.META_MAX; });
+    if (cand.length < 2) return Promise.resolve([]);
+    state.phase = "details";
+    state.i = 0; state.n = cand.length;
+    paintMsg();
+    function seq(list, fn) {
+      return list.reduce(function (pr, x) { return pr.then(function () { return live() ? fn(x) : null; }); }, Promise.resolve());
+    }
+    return seq(cand, function (f) {
+      return preKey(f).then(function (z) { f.pre = z !== "-" ? f.kind + z : ""; }, function () { f.pre = ""; })
+        .then(function () { state.i++; throttled(); });
+    }).then(function () {
+      var groupsPre = CORE.splitBy(cand, function (f) { return f.pre; }).filter(function (g) {
+        var ks = {};
+        g.forEach(function (f) { ks[f.k || "p:" + f.p] = true; });
+        return Object.keys(ks).length > 1;
+      });
+      var todo = [];
+      groupsPre.forEach(function (g) { todo = todo.concat(g); });
+      state.i = 0; state.n = todo.length;
+      paintMsg();
+      return seq(todo, function (f) {
+        return contentHash(f).then(function (c) { f.c = CORE.isHash(c) ? c : ""; }, function () { f.c = ""; })
+          .then(function () { state.i++; throttled(); });
+      }).then(function () { return live() ? CORE.metaGroups(todo) : []; });
+    }).catch(function () { return []; });
+  }
+
   function stop() {
     gen++;
     if (state) { state.phase = "stopped"; paint(); }
   }
 
   // ---------- moving to the Trash ----------
-  function groupOf(p) {
-    var out = null;
-    (state.groups || []).forEach(function (g) { g.items.forEach(function (x) { if (x.p === p) out = g; }); });
-    return out;
-  }
   function itemOf(g, p) {
     for (var i = 0; i < g.items.length; i++) if (g.items[i].p === p) return g.items[i];
     return null;
@@ -338,6 +431,71 @@
       }
       return CORE.sameFiles({ p: keep.p, s: x.s }, now, readPart);
     }).then(back, function () { return back(false); });
+  }
+  // Pictures and sounds: the same content without the details, now.
+  function stillSameContent(x, keep) {
+    var fs = disk();
+    return Promise.all([fs.stat(x.p), fs.stat(keep.p)]).then(function (st) {
+      if (!st[0] || !st[1] || st[0].dir || st[1].dir || st[0].size !== x.s || st[1].size !== keep.s) return false;
+      return Promise.all([contentHash(x, true), contentHash(keep, true)]).then(function (h) {
+        return CORE.isHash(h[0]) && h[0] === h[1];
+      });
+    }).catch(function () { return false; });
+  }
+  // Every file under a folder, hidden and empty ones too, plus its
+  // cloud-only orOS Drive files: rel path → { p, s, h?, cloud }.
+  function listAll(dir) {
+    var fs = disk(), v = vault(), out = {}, dirs = [dir], n = 0;
+    function next() {
+      if (!dirs.length) return Promise.resolve();
+      if (++n > CORE.MAX_DIRS) return Promise.reject(new Error("big"));
+      var d = dirs.shift();
+      return fs.ls(d).then(function (list) {
+        var stats = [];
+        (list || []).forEach(function (e) {
+          if (!e || !e.name) return;
+          var p = d + "/" + e.name;
+          if (e.dir) dirs.push(p);
+          else stats.push(fs.stat(p).then(function (st) { out[p.slice(dir.length + 1)] = { p: p, s: st ? st.size || 0 : -1 }; }));
+        });
+        return Promise.all(stats);
+      }).then(next);
+    }
+    return next().then(function () {
+      if (v && typeof v.remoteOnly === "function") {
+        (v.remoteOnly(dir) || []).forEach(function (e) {
+          if (e && e.path && e.path.indexOf(dir + "/") === 0) {
+            var rel = e.path.slice(dir.length + 1);
+            if (!out[rel]) out[rel] = { p: e.path, s: e.s || 0, h: e.h || "", cloud: true };
+          }
+        });
+      }
+      return out;
+    });
+  }
+  function freshHash(f) {
+    if (f.cloud) return Promise.resolve(CORE.isHash(f.h) ? f.h : "");
+    if (f.s > CORE.HASH_MAX) return Promise.resolve("");
+    return blobOf(f.p).then(function (b) { return b.arrayBuffer(); }).then(sha);
+  }
+  // Folders: the same files (names, sizes, every byte) on both sides.
+  function stillSameFolder(x, keep) {
+    return Promise.all([listAll(x.p), listAll(keep.p)]).then(function (r) {
+      var a = r[0], b = r[1], names = Object.keys(a);
+      if (!names.length || names.length !== Object.keys(b).length) return false;
+      for (var i = 0; i < names.length; i++) {
+        var q = b[names[i]];
+        if (!q || q.s !== a[names[i]].s || q.s < 0) return false;
+      }
+      return names.reduce(function (pr, rel) {
+        return pr.then(function (ok) {
+          if (!ok) return false;
+          var f1 = a[rel], f2 = b[rel];
+          if (!f1.cloud && !f2.cloud) return f1.s === 0 ? true : CORE.sameFiles(f1, f2, readPart);
+          return Promise.all([freshHash(f1), freshHash(f2)]).then(function (h) { return CORE.isHash(h[0]) && h[0] === h[1]; });
+        });
+      }, Promise.resolve(true));
+    }).catch(function () { return false; });
   }
   function confirmDlg(text, okText) {
     return new Promise(function (resolve) {
@@ -373,13 +531,20 @@
       paintMsg();
       paintBar();
       var gone = {}, moved = 0, changed = 0;
+      function goneWith(p) {
+        if (gone[p]) return true;
+        for (var q in gone) if (p.indexOf(q + "/") === 0) return true;
+        return false;
+      }
       var chain = Promise.resolve();
       todo.forEach(function (it) {
         chain = chain.then(function () {
           if (g0 !== gen) return null;
-          var g = groupOf(it.p), x = g && itemOf(g, it.p), keep = g && itemOf(g, it.keep);
-          if (!x || !keep || gone[keep.p]) { changed++; return null; }
-          return stillSame(x, keep, g.k).then(function (same) {
+          var g = st.groups[it.gi], x = g && itemOf(g, it.p), keep = g && itemOf(g, it.keep);
+          if (x && goneWith(x.p)) return null;                  // went with its folder
+          if (!x || !keep || goneWith(keep.p)) { changed++; return null; }
+          var check = g.kind === "dir" ? stillSameFolder(x, keep) : g.kind === "meta" ? stillSameContent(x, keep) : stillSame(x, keep, g.k);
+          return check.then(function (same) {
             if (!same) { changed++; return null; }
             return ctx.trash(x.p).then(function () { gone[x.p] = true; moved++; },
               function () { toast(t("dp.fail", { name: baseName(x.p) })); });
@@ -463,6 +628,7 @@
     if (state.busy) line = t("dp.working", { i: Math.min(state.i + 1, state.n), n: state.n });
     else if (state.phase === "walk") line = t("dp.listing", { n: state.n });
     else if (state.phase === "compare") line = t("dp.comparing", { i: Math.min(state.i, state.n), n: state.n });
+    else if (state.phase === "details") line = t("dp.details", { i: Math.min(state.i, state.n), n: state.n });
     else if (state.phase === "stopped") line = t("dp.stopped");
     else if (state.phase === "nodisk") line = t("dp.noDisk");
     else if (state.groups) {
@@ -470,12 +636,12 @@
       line = !tot.groups ? t("dp.none") : tot.groups === 1 ? t("dp.sumOne", { b: fmtBytes(tot.waste) }) : t("dp.sum", { g: tot.groups, b: fmtBytes(tot.waste) });
     }
     m.appendChild(el("span", "", line));
-    if (!state.busy && (state.phase === "walk" || state.phase === "compare")) {
+    if (!state.busy && (state.phase === "walk" || state.phase === "compare" || state.phase === "details")) {
       var b = el("button", "dp-stop", t("dp.stop"));
       b.type = "button";
       b.addEventListener("click", stop);
       m.appendChild(b);
-      if (state.phase === "compare" && state.n) {
+      if ((state.phase === "compare" || state.phase === "details") && state.n) {
         var pr = el("progress", "dp-prog");
         pr.max = state.n;
         pr.value = Math.min(state.i, state.n);
@@ -484,6 +650,13 @@
     }
     if (state.phase === "done" && state.groups && state.groups.length && !state.busy) {
       m.appendChild(el("p", "dp-how", t("dp.how")));
+    }
+    // Photos that only look alike (bursts, retakes): Photos' own finder.
+    if (state.phase === "done" && !state.busy && ctx && ctx.photosAlike) {
+      var al = el("button", "dp-stop dp-alike", t("dp.alike"));
+      al.type = "button";
+      al.addEventListener("click", function () { ctx.photosAlike(); });
+      m.appendChild(al);
     }
   }
   function paintBar() {
@@ -507,8 +680,13 @@
     cb.setAttribute("aria-label", baseName(x.p) + " · " + shown(dirName(x.p)));
     // The name opens the preview here (the results stay); a cloud-only
     // copy has nothing to show on this device.
-    var what = el(x.cloud ? "div" : "button", "dp-what");
-    if (!x.cloud) {
+    var isDir = g.kind === "dir";
+    var what = el(x.cloud && !isDir ? "div" : "button", "dp-what");
+    if (isDir) {
+      what.type = "button";
+      what.title = t("dp.openDir");
+      what.addEventListener("click", function () { if (ctx && ctx.openFolder) ctx.openFolder(x.p); });
+    } else if (!x.cloud) {
       what.type = "button";
       what.title = t("dp.preview");
       what.addEventListener("click", function () { if (ctx && ctx.preview) ctx.preview(x.p); });
@@ -516,6 +694,8 @@
     what.appendChild(el("span", "dp-name", baseName(x.p)));
     what.appendChild(el("span", "dp-sub", shown(dirName(x.p))));
     var meta = el("span", "dp-meta");
+    if (isDir) meta.appendChild(el("span", "", t("dp.files", { n: x.n })));
+    if (g.kind === "meta") meta.appendChild(el("span", "", fmtBytes(x.s)));
     var d = fmtDate(x.m);
     if (d) meta.appendChild(el("span", "", d));
     if (x.cloud) {
@@ -540,7 +720,11 @@
     open.innerHTML = ICON.folder;
     open.title = t("dp.open");
     open.setAttribute("aria-label", t("dp.open") + ": " + baseName(x.p));
-    open.addEventListener("click", function () { if (ctx && ctx.openFile) ctx.openFile(x.p); });
+    open.addEventListener("click", function () {
+      if (!ctx) return;
+      if (isDir) { if (ctx.openFolder) ctx.openFolder(dirName(x.p)); }
+      else if (ctx.openFile) ctx.openFile(x.p);
+    });
     var tick = el("label", "dp-tick");
     tick.appendChild(cb);
     r.appendChild(tick);
@@ -553,9 +737,19 @@
     if (!list) return;
     list.innerHTML = "";
     if (!state || state.phase !== "done" || !state.groups) return;
+    var lastKind = "";
     state.groups.slice(0, state.limit).forEach(function (g) {
+      if (g.kind !== lastKind) {
+        lastKind = g.kind;
+        list.appendChild(el("h2", "dp-sec", t(g.kind === "dir" ? "dp.sec.dir" : g.kind === "meta" ? "dp.sec.meta" : "dp.sec.same")));
+        if (g.kind === "meta") list.appendChild(el("p", "dp-note", t("dp.metaHow")));
+        if (g.kind === "dir") list.appendChild(el("p", "dp-note", t("dp.dirHow")));
+      }
       var sec = el("section", "dp-group");
-      sec.appendChild(el("h3", "dp-head", t("dp.copies", { n: g.items.length, s: fmtBytes(g.s) })));
+      var head = g.kind === "meta" ? t("dp.versions", { n: g.items.length })
+        : g.kind === "dir" ? t("dp.dirCopies", { n: g.items.length, f: g.items[0].n, s: fmtBytes(g.s) })
+        : t("dp.copies", { n: g.items.length, s: fmtBytes(g.s) });
+      sec.appendChild(el("h3", "dp-head", head));
       var ul = el("ul", "dp-items");
       g.items.forEach(function (x) { ul.appendChild(row(g, x)); });
       sec.appendChild(ul);

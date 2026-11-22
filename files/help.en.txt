@@ -72,6 +72,9 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 - It compares sizes first, then the contents (SHA-256). Files only in the cloud (orOS Drive) are compared with the fingerprint orOS sync already keeps, so nothing is downloaded. The Trash, hidden folders and empty files are left out.
 - The groups that free the most space come first. In each group one copy stays (unticked, marked `Stays`): a favourite, a document, a tagged file or an album photo first, then one on this device, then the oldest. The others are ticked; untick any you want to keep. One copy of every file always stays.
 - `Move to Trash` asks first. Right before each move, the copy that stays and the copy that goes are compared again byte by byte; a copy that changed in the meantime is left alone. Everything goes to the Trash, so you can restore it for 30 days.
+- `Identical folders` come first: folders where every file is the same, byte for byte. The whole folder goes to the Trash at once, and its files are not listed again under `Identical files`.
+- `Same picture or sound, other hidden details` lists JPEG, PNG and WebP pictures and MP3 files whose picture or sound is the same byte for byte while the hidden details differ (camera, date, place, tags). Nothing there is ticked, because the details differ: tick what you do not need. Files only in the cloud are not compared this way.
+- `Photos that look alike…` opens the finder in Photos, for bursts and retakes that are not the same file.
 - Tap a name to preview the file, or the folder button to see it in its folder. `Search again` runs a new search; a second search is quick, because the fingerprints are kept on this device.
 
 ## Import, preview and edit

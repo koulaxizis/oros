@@ -167,3 +167,92 @@ test("cacheOk: a stored hash is reused only for the same path, size and time", (
   assert.equal(D.cacheOk({ p: "/internal/a", s: 3, m: 0 }, { p: "/internal/a", s: 3, m: 0 }), false);
   assert.equal(D.hex(new Uint8Array([0, 15, 255]).buffer), "000fff");
 });
+
+// ---------- K2 ----------
+const C = require("../files/clean-core.js");
+
+// A tiny JPEG: SOI, optional APP1 Exif / COM, then SOS + "image" + EOI.
+function jpeg(extra) {
+  const parts = [Buffer.from([0xff, 0xd8])];
+  if (extra === "exif") {
+    const body = Buffer.concat([Buffer.from("Exif\0\0"), Buffer.from([0x4d, 0x4d, 0, 0x2a, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0])]);
+    const len = body.length + 2;
+    parts.push(Buffer.from([0xff, 0xe1, len >> 8, len & 255]), body);
+  }
+  if (extra === "com") parts.push(Buffer.from([0xff, 0xfe, 0, 7]), Buffer.from("hello"));
+  parts.push(Buffer.from([0xff, 0xda, 0, 4, 1, 2]), Buffer.from("pixels-pixels-pixels"), Buffer.from([0xff, 0xd9]));
+  return new Uint8Array(Buffer.concat(parts));
+}
+
+test("metaKind and jpegScanLen: the scan length is the same with other details", () => {
+  assert.equal(D.metaKind("/a/B.JPG"), "jpeg");
+  assert.equal(D.metaKind("/a/b.mp3"), "mp3");
+  assert.equal(D.metaKind("/a/b.txt"), "");
+  const a = jpeg(), b = jpeg("exif"), c = jpeg("com");
+  assert.notEqual(a.length, b.length);
+  assert.equal(D.jpegScanLen(a, a.length), D.jpegScanLen(b, b.length));
+  assert.equal(D.jpegScanLen(a, a.length), D.jpegScanLen(c, c.length));
+  assert.equal(D.jpegScanLen(new Uint8Array([1, 2, 3, 4]), 4), -1);
+  assert.equal(D.jpegScanLen(a.subarray(0, 3), a.length), -1);
+});
+
+test("stripped: JPEG without its details is the same bytes; MP3 without ID3", () => {
+  const a = jpeg(), b = jpeg("exif"), c = jpeg("com");
+  const h = (u) => sha(Buffer.from(u));
+  assert.equal(h(D.stripped("jpeg", b, C)), h(D.stripped("jpeg", a, C)));
+  assert.equal(h(D.stripped("jpeg", c, C)), h(D.stripped("jpeg", a, C)));
+  const sound = Buffer.from("frames-of-sound");
+  const id3 = Buffer.concat([Buffer.from("ID3"), Buffer.from([3, 0, 0, 0, 0, 0, 5]), Buffer.from("TIT2x")]);
+  const v1 = Buffer.concat([Buffer.from("TAG"), Buffer.alloc(125, 65)]);
+  const m1 = new Uint8Array(Buffer.concat([id3, sound, v1])), m2 = new Uint8Array(sound);
+  assert.equal(h(D.stripped("mp3", m1, C)), h(D.stripped("mp3", m2, C)));
+  assert.deepEqual(D.mp3Range(m1.subarray(0, 10), m1.subarray(m1.length - 128), m1.length), [15, 15 + sound.length]);
+  assert.equal(D.stripped("jpeg", new Uint8Array([0xff, 0xd8, 0x00, 0x01, 2, 3]), C), null);
+});
+
+test("metaGroups: same stripped content, more than one exact copy set, never pre-ticked", () => {
+  const c = "c".repeat(64), d = "d".repeat(64);
+  const files = [
+    { p: "/internal/a.jpg", s: 100, m: 1, kind: "jpeg", c, k: "k1" },
+    { p: "/internal/b.jpg", s: 120, m: 2, kind: "jpeg", c, k: "k2" },
+    { p: "/internal/b2.jpg", s: 120, m: 3, kind: "jpeg", c, k: "k2" },   // exact twin of b: one row
+    { p: "/internal/x.jpg", s: 50, m: 1, kind: "jpeg", c: d, k: "k3" },
+    { p: "/internal/y.jpg", s: 50, m: 2, kind: "jpeg", c: d, k: "k3" }    // only an exact pair: not meta
+  ];
+  const g = D.metaGroups(files);
+  assert.equal(g.length, 1);
+  assert.equal(g[0].kind, "meta");
+  assert.deepEqual(g[0].items.map((x) => x.p), ["/internal/a.jpg", "/internal/b.jpg"]);
+  assert.equal(g[0].waste, 100);
+  assert.deepEqual(D.defaultPicks(g), {});
+  assert.deepEqual(D.plan(g, { "/internal/b.jpg": true }).map((x) => [x.p, x.keep]), [["/internal/b.jpg", "/internal/a.jpg"]]);
+});
+
+test("folderTwins: whole folders with the same content, outermost only; one unique file spoils a folder", () => {
+  const f = (p, k, s, m) => ({ p, k, s: s || 10, m: m || 1 });
+  const files = [
+    f("/internal/Trip/a.jpg", "h1", 10, 1), f("/internal/Trip/sub/b.jpg", "h2", 20, 1),
+    f("/internal/Copy of Trip/a.jpg", "h1", 10, 5), f("/internal/Copy of Trip/sub/b.jpg", "h2", 20, 5),
+    f("/internal/Other/a.jpg", "h1"), f("/internal/Other/extra.txt", undefined),       // unique file
+    f("/internal/X/one.txt", "h3"), f("/internal/Y/one.txt", "h3"), f("/internal/Y/two.txt", "h3")   // other content
+  ];
+  const g = D.folderTwins(files, "/internal");
+  assert.equal(g.length, 1);
+  assert.equal(g[0].kind, "dir");
+  assert.deepEqual(g[0].items.map((x) => x.p), ["/internal/Trip", "/internal/Copy of Trip"]);   // older first
+  assert.equal(g[0].items[0].n, 2);
+  assert.equal(g[0].waste, 30);
+  // The sub folders are twins too, but go with their parents.
+  assert.ok(!g.some((x) => x.items.some((i) => /sub$/.test(i.p))));
+  // A search inside Trip's parent only: base itself is never a member.
+  assert.deepEqual(D.folderTwins(files, "/internal/Trip"), []);
+  // File groups lose the copies inside the folder that goes.
+  const fg = [{ kind: "same", k: "h1", s: 10, items: [files[0], files[2], files[4]], waste: 20 }, { kind: "same", k: "h2", s: 20, items: [files[1], files[3]], waste: 20 }];
+  const left = D.outsideFolders(fg, g);
+  assert.equal(left.length, 1);
+  assert.deepEqual(left[0].items.map((x) => x.p), ["/internal/Trip/a.jpg", "/internal/Other/a.jpg"]);
+  // A folder moved to the Trash takes its copies out of every group.
+  const after = D.without(fg, { "/internal/Copy of Trip": true });
+  assert.equal(after.length, 1);
+  assert.equal(after[0].items.length, 2);
+});
