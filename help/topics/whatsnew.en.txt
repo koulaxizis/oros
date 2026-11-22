@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.35.00
+- **Show your authors where their book is.** In Kanban, `Column settings` › `Author Portal` marks a column as `A step of the creator's production flow`, with a short explanation your author sees on hover, and can mark it as a finish. In a book's card, tick `Show in its creator's Author Portal`: the author then sees a bar with your steps at the top of their Revenue Splitter 1.21.0 portal. At a finish the bar hides, and it comes back when the card moves on to the next step.
+
 ## Version 8.34.00
 - **See how much space is left in your cloud.** `Settings` › `Sync` › `Space in the cloud` shows a bar, the free space and how much is used of how much, for Dropbox (your whole account) and for WebDAV or Nextcloud (what the server reports). When it is almost full, it says so and points to `Unused files in the cloud`. The Overview tile is now called `Device storage`, because it is the space on this device, not in the cloud.
 
