@@ -1873,10 +1873,11 @@
                 "files_write", "files_move", "files_delete"]
                 // GATE-SCREEN (Chris 2026-11-19): the tools that work on the owner's screen wait for one
                 .concat(["propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                         "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app"]);
+                         "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app",
+                         "mockup_render"]);   // GATE-PL10: a picture into Claude's folders or a local folder, never over a file
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf"].concat(FILE_READ, FILE_WRITE);
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf"].concat(FILE_READ, FILE_WRITE, ["mockup_render"]);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
@@ -1892,7 +1893,8 @@
   // (sendHeld, as 7.48.00 does for deletions). do_action is never kept:
   // playing or opening something hours later is not what was asked.
   var SCREEN_HELD = "__screen";
-  function screenTool(name, args) { return ACT_OPEN.indexOf(name) >= 0 || (name === "edit_in_app" && !(isObj(args) && args.dry_run === true)); }
+  // GATE-PL10: mockup_render draws on the device (WebGL), like Layout's work
+  function screenTool(name, args) { return ACT_OPEN.indexOf(name) >= 0 || name === "mockup_render" || (name === "edit_in_app" && !(isObj(args) && args.dry_run === true)); }
   function offScreen() { return away() || document.visibilityState !== "visible"; }
   // TRAY-1 (Chris 2026-11-21 «να δουλεύεις με το orOS κλειστό στο tray»):
   // Layout's book work and edit_in_app need nobody to look at them. On the
@@ -1901,7 +1903,7 @@
   // Portable, its own browser) they run at once; proposals that the owner
   // reads (propose_*, newsletter_*) still wait for a screen, and so does
   // every deletion (askDelete answers "none" off screen → __held).
-  var BACK_OK = ["book_cover", "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app"];
+  var BACK_OK = ["book_cover", "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app", "mockup_render"];
   function deskApp() { return typeof location !== "undefined" && /^http:\/\/(localhost|127\.0\.0\.1):47800$/.test(String(location.origin || "")); }
   // TRAY-3 (Chris 2026-11-21 «εφάρμοσε τις ίδιες δυνατότητες για όλες
   // τις εργασίες του Gate»): in an orOS desktop window that is minimised
@@ -2718,6 +2720,16 @@
           return F.editPack().then(function (pk) {
             var txt = isObj(pk) && Object.keys(pk).length ? JSON.stringify(pk) : "", b = utf8Len(txt);
             if (txt && size + b <= COPY_MAX) { ans.__edit = txt; size += b; }
+            // GATE-PL10: the mockups' names, for mockup_render with orOS closed
+            if (ok.indexOf("mockups") >= 0) {
+              var names = [];
+              ["oros-mockups-data", "oros-mockups-goods"].forEach(function (k) {
+                var d = readStore(k);
+                (isObj(d) && Array.isArray(d.prj) ? d.prj : []).forEach(function (x) { if (isObj(x) && !x.del && typeof x.nm === "string" && x.nm.trim()) names.push(x.nm.trim().slice(0, 120)); });
+              });
+              var mt = JSON.stringify({ tpl: names.slice(0, 300) }), mb = utf8Len(mt);
+              if (size + mb <= COPY_MAX) { ans.__mock = mt; size += mb; }
+            }
           }, function () {});
         });
       }).then(null, function () { ans.__ixerr = "index failed"; });

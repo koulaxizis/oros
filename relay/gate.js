@@ -737,7 +737,8 @@ export const LIVE_ONLY = ["budget_refresh"];
 // checks it). With nobody at a screen they wait, held (hd), for a device
 // that shows orOS (sendHeld); the device checks every rule again then.
 export const SCREEN_TOOLS = { propose_entry: "", propose_automation: "", propose_rule: "automations", newsletter_add: "newsletter", newsletter_check: "newsletter",
-  book_cover: "layout", rebuild_in_layout: "layout", learn_house_style: "layout", layout_book: "layout", add_house_rule: "layout", export_epub: "layout", export_pdf: "layout", edit_in_app: "" };
+  book_cover: "layout", rebuild_in_layout: "layout", learn_house_style: "layout", layout_book: "layout", add_house_rule: "layout", export_epub: "layout", export_pdf: "layout", edit_in_app: "",
+  mockup_render: "mockups" };   // GATE-PL10: Mockups draws it on a device (WebGL)
 export function isScreenTool(name, args) {
   if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
   return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
@@ -863,6 +864,40 @@ export function editCheck(pack, args, ctx) {
     out.notes.push(pk.open ? "designs open: the document open when the commands run (in the copy: " + JSON.stringify(String(pk.open).slice(0, 80)) + ")" : "designs open: no document was open in the copy; name it (designs named) to be sure");
   }
   return out;
+}
+// GATE-PL10: mockup_render with orOS closed. mock: { tpl: [names] } from
+// the copy (null: an older orOS); idx: the copy of Claude's folders (null:
+// none); queued: paths waiting in files_write / files_move. → [errors]
+export function mockupCheck(mock, args, idx, queued, lv) {
+  const a = args && typeof args === "object" ? args : {}, errs = [];
+  const tname = typeof a.template === "string" ? a.template.trim() : "";
+  if (!tname) errs.push("template: the name of one of the owner's mockups");
+  else if (mock && Array.isArray(mock.tpl)) {
+    const q = foldTxt(tname), names = mock.tpl.filter((x) => typeof x === "string");
+    let hit = names.filter((d) => foldTxt(d) === q);
+    if (!hit.length) hit = names.filter((d) => foldTxt(d).indexOf(q) >= 0);
+    if (!hit.length) errs.push("no mockup is called " + JSON.stringify(tname.slice(0, 80)) + "; mockups: " + names.slice(0, 30).map((d) => JSON.stringify(d)).join(", "));
+    else if (hit.length > 1 && !hit.every((d) => foldTxt(d) === foldTxt(hit[0]))) errs.push("several mockups match " + JSON.stringify(tname.slice(0, 80)) + ": " + hit.slice(0, 20).map((d) => JSON.stringify(d)).join(", ") + "; give the whole name");
+  }
+  const img = typeof a.image === "string" ? a.image.trim() : "";
+  if (!img) errs.push("image: the picture's path");
+  else if (!/^local:/i.test(img)) {
+    const fp = filePath(img);
+    if (!fp) errs.push("image: a /internal/… path on the orOS disk or local:<root>/<path>");
+    else if (idx && Array.isArray(idx.files) && !(Array.isArray(queued) && queued.indexOf(fp) >= 0) && !idx.files.some((x) => x && x.p === fp)) {
+      errs.push("image: " + JSON.stringify(fileShow(fp).slice(0, 200)) + " is neither in the copy of Claude's folders nor waiting in a files_write (bring it in with files_upload and files_write first)");
+    }
+  }
+  const out = typeof a.out === "string" && a.out.trim() ? a.out.trim() : "/internal/Mockups/Claude";
+  if (!/^local:/i.test(out)) {
+    const op = filePath(out);
+    if (!op) errs.push("out: a folder /internal/… on the orOS disk or local:<root>/<folder>");
+    else {
+      if (!(lv && lv.files === "write")) errs.push("saving on the orOS disk needs Files at «may change» (the owner's switch)");
+      if (idx && Array.isArray(idx.f) && !idx.f.some((d) => underDir(op, d))) errs.push("out: " + JSON.stringify(fileShow(op)) + " is outside Claude's folders: " + idx.f.map(fileShow).join(", "));
+    }
+  }
+  return errs;
 }
 // GATE-PL11: a dry run's answer with orOS closed
 export function closedDryText(chk, args, when) {
@@ -2550,6 +2585,10 @@ export class GateBox {
           if (chk && chk.errs.length) return { ok: false, c: "Checked with orOS closed, against the copy of " + when + ": " + chk.errs.join(". ") + ". Nothing was " + (dry ? "changed." : "kept; fix the commands and send them again.") };
           if (dry) return { ok: true, c: closedDryText(chk, args, when) };
         }
+        if (name === "mockup_render") {                  // GATE-PL10: checked against the copy too
+          const errs = await this.closedMockup(cp, args, kRaw);
+          if (errs.length) return { ok: false, c: "Checked with orOS closed, against the copy of " + when + ": " + errs.join(". ") + ". Nothing was kept; fix it and send it again." };
+        }
         return await this.queueChange(name, args, kRaw, now, qidWant, "orOS is closed. " + SCREEN_NOTE, 1);
       }
       if (REF_QUEUED.indexOf(name) >= 0) {
@@ -2589,6 +2628,13 @@ export class GateBox {
     };
     // no copy of Claude's folders (none picked, Files off, no Dropbox): only the queue is known
     return editCheck(pack, args, { hasFile: idx ? has : (raw) => (q.paths.indexOf(filePath(raw)) >= 0 ? true : null), newDocs: q.docs[app] || [] });
+  }
+  // GATE-PL10: mockup_render against the copy → [errors]
+  async closedMockup(cp, args, kRaw) {
+    let mock = null;
+    try { mock = typeof cp.ans.__mock === "string" ? JSON.parse(cp.ans.__mock) : null; } catch (e) { mock = null; }
+    const idx = await this.readFileIndex(kRaw), q = await this.queuedNames(kRaw);
+    return mockupCheck(mock, args, idx, q.paths, cp.lv);
   }
   // GATE-PL11: what the waiting changes bring: file paths, new documents' names
   async queuedNames(kRaw) {

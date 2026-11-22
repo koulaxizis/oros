@@ -65,3 +65,7 @@ In Atelier schickt `Mehr` › `Buch-Mockup erstellen` das Design hierher: Seite 
 - Jedes Mockup wird mit seinen Einstellungen gespeichert und folgt dir per orOS-Synchronisierung verschlüsselt auf jedes Gerät.
 - `Mehr` (die drei Punkte) hat `Dieses Mockup duplizieren`, `Kamera und Licht zurücksetzen` und `Dieses Mockup löschen`.
 - Tastenkürzel: Ctrl+Shift+S speichert das Bild. Auf dem Bild: Pfeiltasten drehen die Kamera, + und − kommen näher oder entfernen sich.
+
+## Mockups von Claude
+- Mit dem Assistenten oder orOS Gate kann Claude ein Bild in eines deiner Mockups setzen und das Ergebnis speichern (`mockup_render`). Dein Mockup ändert sich nie: Claude arbeitet an einer Kopie, die nicht behalten wird.
+- Das Bild wird in `Mockups/Claude` auf der orOS-Festplatte gespeichert (oder in einem anderen Ordner von Claude), nie über eine Datei: ein vergebener Name bekommt eine Nummer. Über das Gate braucht es Mockups und Dateien auf «Darf ändern».

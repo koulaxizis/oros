@@ -303,7 +303,7 @@
       "pdf.repPf": "Preflight: {e} errors, {w} warnings", "pdf.repPfOk": "Preflight: nothing to fix",
       "pdf.working": "{app} is making the PDF…", "pdf.failed": "{app} could not make the PDF. Nothing was made.",
       "pdf.noDoc": "{app} has no document of that name.", "pdf.busy": "{app} is busy with another export or dialog. Try again in a moment.",
-      "pdf.noDisk": "The PDF was made but the orOS disk could not be reached, so it was not saved.", "pdf.go": "Make the PDF",
+      "pdf.noDisk": "The PDF was made but the orOS disk could not be reached, so it was not saved.", "pdf.go": "Make the PDF", "mk.head": "A mockup picture in {app}", "mk.image": "Picture: {path}", "mk.slot": "Place: {slot}", "mk.out": "Saved in {path}, never over a file", "mk.go": "Make the picture", "mk.working": "{app} is making the picture…", "mk.failed": "{app} could not make the picture. Nothing was saved.",
       "ep.head": "Make an EPUB · {app}",
       "ep.byTitle": "The document linked to the Publishing title {t}.",
       "ep.lay.reflowable": "Reflowable text", "ep.lay.fixed": "Fixed layout, text as text", "ep.lay.pictures": "Fixed layout, pages as pictures",
@@ -976,7 +976,7 @@
       "pdf.repPf": "Preflight: {e} σφάλματα, {w} προειδοποιήσεις", "pdf.repPfOk": "Preflight: τίποτα για διόρθωση",
       "pdf.working": "Η {app} φτιάχνει το PDF…", "pdf.failed": "Η {app} δεν μπόρεσε να φτιάξει το PDF. Δεν έγινε τίποτα.",
       "pdf.noDoc": "Η {app} δεν έχει έγγραφο με αυτό το όνομα.", "pdf.busy": "Η {app} είναι απασχολημένη με άλλη εξαγωγή ή παράθυρο. Δοκίμασε ξανά σε λίγο.",
-      "pdf.noDisk": "Το PDF έγινε, αλλά ο δίσκος του orOS δεν ήταν προσβάσιμος, οπότε δεν αποθηκεύτηκε.", "pdf.go": "Φτιάξε το PDF",
+      "pdf.noDisk": "Το PDF έγινε, αλλά ο δίσκος του orOS δεν ήταν προσβάσιμος, οπότε δεν αποθηκεύτηκε.", "pdf.go": "Φτιάξε το PDF", "mk.head": "Εικόνα μακέτας στις {app}", "mk.image": "Εικόνα: {path}", "mk.slot": "Θέση: {slot}", "mk.out": "Σώζεται στο {path}, ποτέ πάνω σε αρχείο", "mk.go": "Φτιάξε την εικόνα", "mk.working": "Οι {app} φτιάχνουν την εικόνα…", "mk.failed": "Οι {app} δεν μπόρεσαν να φτιάξουν την εικόνα. Δεν σώθηκε τίποτα.",
       "ep.head": "Δημιουργία EPUB · {app}",
       "ep.byTitle": "Το έγγραφο που συνδέεται με τον τίτλο {t} των Εκδόσεων.",
       "ep.lay.reflowable": "Κείμενο ελεύθερης ροής", "ep.lay.fixed": "Σταθερή διάταξη, κείμενο ως κείμενο", "ep.lay.pictures": "Σταθερή διάταξη, σελίδες ως εικόνες",
@@ -3223,7 +3223,7 @@
     var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
-                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn,
+                                            recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn, mockup: !builtin && !!installed().mockups,
                                             lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat });
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
@@ -3432,6 +3432,7 @@
     if (/^(learn_house_style|layout_book|add_house_rule)$/.test(call.name)) return Promise.resolve(proposeHouse(c, call.name, call.args));
     if (call.name === "export_epub") return Promise.resolve(proposeEpub(c, call.args));
     if (call.name === "export_pdf") return Promise.resolve(proposePdf(c, call.args));
+    if (call.name === "mockup_render") return Promise.resolve(proposeMockup(c, call.args));   // GATE-PL10
     if (call.name === "propose_automation") return Promise.resolve(proposeAutomation(call.args));
     if (call.name === "propose_rule") return Promise.resolve(proposeRule(call.args));
     if (call.name === "read_in_app") return readInApp(c, call.args, apps);
@@ -3780,6 +3781,32 @@
     var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", preset: ui.preset, pages: ui.pages || "", bleed: ui.bleed ? 1 : 0, marks: ui.marks || {}, spreads: ui.spreads ? 1 : 0, down: ui.down ? 1 : 0, creep: Number(ui.creep) || 0, out: outList(ui.out) };
     try { p.__orosOpenAt("layout", { pdfOut: rq }); return true; } catch (e) { return false; }
   }
+  // mockup_render (GATE-PL10): checked now; the card's button hands it
+  // to Mockups ({ render }), which makes the picture, saves it under a
+  // free name and leaves its report under the key.
+  function proposeMockup(c, args) {
+    if (!installed().mockups) return { content: "Error: Mockups is not installed.", err: 1, ui: { k: "mockErr" } };
+    var e = C.normMockup(args);
+    if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "mockErr" } };
+    var ui = { k: "mockup", template: e.template, image: e.image, slot: e.slot, fmt: e.fmt, name: e.name, out: e.out, key: attId(), st: "" };
+    return { content: "Shown to the user as a card: a mockup picture from \u201c" + e.template + "\u201d with " + e.image + ". Mockups makes it on the device when they press the button; nothing is made yet. The report will be added here when Mockups is done.", ui: ui };
+  }
+  function runMockup(ui, gate) {
+    var p = shell();
+    if (!p || typeof p.__orosOpenAt !== "function") return false;
+    var rq = { key: ui.key, template: ui.template, image: ui.image, slot: ui.slot || "", fmt: ui.fmt || "", name: ui.name || "", out: ui.out || "", gate: gate ? 1 : 0 };
+    try { p.__orosOpenAt("mockups", { render: rq }); return true; } catch (e) { return false; }
+  }
+  function takeMockup(r, c) {
+    var ui = r.ui, key = ui && ui.key, rep = key ? attRb[key] : null;
+    if (!rep || ui.st !== "opened") return false;
+    ui.rep = C.mockupReport(rep);
+    ui.st = ui.rep && !ui.rep.failed ? "done" : "failed";
+    var txt = C.mockupText(rep);
+    r.content = ui.st === "failed" ? "The user pressed the button, but " + txt.charAt(0).toLowerCase() + txt.slice(1) : txt;
+    saveChat(c).then(function () { delete attRb[key]; }, function () {});
+    return true;
+  }
   function pdfText(rep) {
     return !rep || rep.failed ? "Layout could not make the PDF. Nothing was made. Report: " + JSON.stringify(rep)
       : "Layout made the PDF on the device and saved it. Report: " + JSON.stringify(rep);
@@ -3801,7 +3828,7 @@
     if (!chat) return;
     var hit = false;
     chat.msgs.forEach(function (m) {
-      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "epub" && takeEpub(r, chat)) || (r.ui.k === "pdf" && takePdf(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
+      if (m && m.r === "tool") (m.results || []).forEach(function (r) { if (r.ui && ((r.ui.k === "rebuild" && takeRebuilt(r, chat)) || (r.ui.k === "house" && takeHouse(r, chat)) || (r.ui.k === "epub" && takeEpub(r, chat)) || (r.ui.k === "pdf" && takePdf(r, chat)) || (r.ui.k === "mockup" && takeMockup(r, chat)) || (r.ui.k === "edit" && takeEdited(r, chat)))) hit = true; });
     });
     if (hit) renderMessages();
   }
@@ -7603,6 +7630,8 @@
         if (ui.k === "epubErr") return;
         if (ui.k === "pdf") { drawPdf(host, r, c); return; }
         if (ui.k === "pdfErr") return;
+        if (ui.k === "mockup") { drawMockup(host, r, c); return; }
+        if (ui.k === "mockErr") return;
         if (ui.k === "recipe") { drawRecipe(host, r, c); return; }
         if (ui.k === "recipeErr") return;
         if (ui.k === "rule") { drawRule(host, r, c); return; }
@@ -8015,6 +8044,41 @@
         ui.st = "opened";
         saveChat(c).then(function () {
           if (!runPdf(ui, c)) { ui.st = "failed"; r.content = "The request could not be handed to Layout. Nothing was made."; saveChat(c); }
+          renderMessages();
+        });
+      }));
+      card.appendChild(acts);
+    }
+    host.appendChild(card);
+  }
+  // A mockup_render card (GATE-PL10): which mockup and picture, then Mockups' report.
+  function drawMockup(host, r, c) {
+    var ui = r.ui, have = installed();
+    if (!have.mockups) { host.appendChild(el("div", "tool-line", t("entry.gone", { app: "Mockups" }))); return; }
+    takeMockup(r, c);
+    var name = have.mockups, card = el("section", "entry-card");
+    card.appendChild(el("h3", "entry-head", t("mk.head", { app: name })));
+    card.appendChild(el("p", "entry-title", ui.template || ""));
+    var bits = [t("mk.image", { path: String(ui.image || "").replace(/^\/internal\//, "") })];
+    if (ui.slot) bits.push(t("mk.slot", { slot: ui.slot }));
+    bits.push(t("mk.out", { path: String(ui.out || "").replace(/^\/internal\//, "") }));
+    card.appendChild(el("p", "dlg-hint", bits.join(" · ")));
+    var rp = ui.rep;
+    if (ui.st === "done" && rp) {
+      card.appendChild(el("p", "entry-state", t("ep.repPath", { path: String(rp.path || "").replace(/^\/internal\//, "") })));
+    } else if (ui.st === "opened") {
+      card.appendChild(el("p", "entry-state", t("mk.working", { app: name })));
+    } else if (ui.st === "failed") {
+      card.appendChild(el("p", "entry-state err", t("mk.failed", { app: name })));
+    } else if (ui.st) {
+      card.appendChild(el("p", "entry-state", t("entry." + ui.st, { app: name })));
+    } else {
+      var acts = el("div", "dlg-actions");
+      acts.appendChild(button(t("entry.dismiss"), "", function () { ui.st = "dismissed"; saveChat(c); renderMessages(); }));
+      acts.appendChild(button(t("mk.go"), "primary", function () {
+        ui.st = "opened";
+        saveChat(c).then(function () {
+          if (!runMockup(ui, false)) { ui.st = "failed"; r.content = "The request could not be handed to Mockups. Nothing was made."; saveChat(c); }
           renderMessages();
         });
       }));
@@ -9731,6 +9795,7 @@
                              entries: on && entryKinds().length > 0, recipes: on ? recipeApps().filter(function (a) { return rd[a.id]; }).map(function (a) { return a.id; }) : [],
                              rules: on && rd.automations && !!window.OrosAutoCore, newsletter: on && rd.newsletter, cover: on && rd.layout,
                              rebuild: on && rd.layout, house: on && rd.layout, epub: on && rd.layout,
+                             mockup: !!rd.mockups,   // GATE-PL10: Mockups allowed (read is enough: nothing in it changes)
                              files: (!cfRaw().length || !rd.files) && !(rd.layout && localOpen()) ? false : rd.files && cfRaw().length && appOf(ga.write, "files") ? "write" : true });
     // edit_in_app only for the documents Claude may change
     var wc = editCats(ga.write), ed = Object.keys(wc).length ? C.toolsFor({ data: true, edits: wc }).filter(function (x) { return x.name === "edit_in_app"; }) : [];
@@ -9761,6 +9826,11 @@
     var call = { id: "g", name: name, args: args && typeof args === "object" && !Array.isArray(args) ? args : {} };
     if (name === "edit_in_app") return gateEdit(call.args, apps, Date.now() + 21000);
     if (name === "do_action") return Promise.resolve(gateDo(call.args, apps));
+    if (name === "mockup_render") {                   // GATE-PL10
+      var mr = proposeMockup(gateConv, call.args);
+      if (mr.err) return Promise.resolve({ ok: false, c: String(mr.content || "").replace(/^Error: /, "") });
+      return gateMockup(mr.ui, apps, Date.now() + 21000);
+    }
     if (C.GATE_OPEN.indexOf(name) >= 0) {
       return runTool(gateConv, call, apps).then(function (r) {
         if (r.err) return { ok: false, c: gateSay(String(r.content || "")).replace(/^Error: /, "") };
@@ -10006,6 +10076,33 @@
         delete gateWait[key];
         var r = C.epubReport(rep);
         resolve(r && !r.failed ? { ok: true, a: ["layout"], k: 1, c: epubText(r) } : { ok: false, c: epubText(r) });
+      };
+      gateWatch();
+    });
+  }
+  // mockup_render through the gate (GATE-PL10): Mockups opens (on the
+  // owner's screen, the tray's background host or a minimised window),
+  // makes the picture and saves it with the gate's own rules (exportTo:
+  // Claude's folders at «may change», a local write folder); its report
+  // is the answer, or past the deadline a note.
+  function gateMockup(ui, apps, deadline) {
+    var have = installed(), rd = {};
+    apps.forEach(function (x) { rd[x.id] = 1; });
+    if (!rd.mockups) return Promise.resolve({ ok: false, c: "The owner does not let Claude use " + (have.mockups || "Mockups") + "." });
+    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk("mockups") : "orOS Gate is not running.";
+    if (why) return Promise.resolve({ ok: false, c: why });
+    if (!runMockup(ui, true)) return Promise.resolve({ ok: false, c: "The request could not be handed to Mockups. Nothing was made." });
+    return new Promise(function (resolve) {
+      var key = ui.key;
+      var timer = setTimeout(function () {
+        delete gateWait[key];
+        resolve({ ok: true, a: ["mockups"], k: 1, c: "Mockups is open on the owner's device and still making the picture. It goes to " + String(ui.out || "").replace(/^\/internal\//, "") + " under a free name; files_list there shows it when it is done." });
+      }, Math.max(2000, deadline - Date.now()));
+      gateWait[key] = function (rep) {
+        clearTimeout(timer);
+        delete gateWait[key];
+        var r = C.mockupReport(rep);
+        resolve(r && !r.failed ? { ok: true, a: ["mockups"], k: 1, c: C.mockupText(rep) } : { ok: false, c: C.mockupText(rep) });
       };
       gateWatch();
     });

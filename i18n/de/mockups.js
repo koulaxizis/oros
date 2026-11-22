@@ -615,6 +615,7 @@ orosPack("de", "mockups", {
  "toast.fromAtelier": "Cover aus Atelier: Prüf Größe und Seiten.",
  "toast.full": "Du hast 200 Mockups. Lösch zuerst eins.",
  "toast.makeFail": "Das Bild ließ sich auf diesem Gerät nicht erstellen.",
+ "rd.making": "Claudes Mockup: das Bild entsteht…", "rd.done": "Claudes Mockup gespeichert: {name}", "rd.fail": "Claudes Mockup ließ sich nicht erstellen.",
  "toast.making": "Bild wird erstellt…",
  "toast.moFail": "Das Video ließ sich auf diesem Gerät nicht erstellen.",
  "toast.moStop": "Gestoppt",

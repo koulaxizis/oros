@@ -568,6 +568,7 @@
       "toast.badImg": "That file is not a picture orOS can read.", "toast.saved": "Picture saved",
       "toast.pics": "Saved in Pictures as {name}", "toast.picsFail": "Could not save in Pictures.",
       "toast.making": "Making the picture…", "toast.makeFail": "The picture could not be made on this device.",
+      "rd.making": "Claude's mockup: making the picture…", "rd.done": "Claude's mockup saved: {name}", "rd.fail": "Claude's mockup could not be made.",
       "toast.atelier": "Opened in Atelier as a new design.", "toast.noAtelier": "Atelier is not installed.",
       "toast.wrapShape": "This picture's shape does not match this book's wrap. Check the size, pages and bleed.",
       "toast.fromAtelier": "Cover from Atelier: check the size and the pages.",
@@ -1136,6 +1137,7 @@
       "toast.badImg": "Αυτό το αρχείο δεν είναι εικόνα που διαβάζει το orOS.", "toast.saved": "Η εικόνα αποθηκεύτηκε",
       "toast.pics": "Αποθηκεύτηκε στις Εικόνες ως {name}", "toast.picsFail": "Δεν έγινε αποθήκευση στις Εικόνες.",
       "toast.making": "Φτιάχνω την εικόνα…", "toast.makeFail": "Η εικόνα δεν μπόρεσε να γίνει σε αυτή τη συσκευή.",
+      "rd.making": "Μακέτα του Claude: φτιάχνω την εικόνα…", "rd.done": "Η μακέτα του Claude σώθηκε: {name}", "rd.fail": "Η μακέτα του Claude δεν μπόρεσε να γίνει.",
       "toast.atelier": "Άνοιξε στο Ατελιέ ως νέο σχέδιο.", "toast.noAtelier": "Το Ατελιέ δεν είναι εγκατεστημένο.",
       "toast.wrapShape": "Το σχήμα αυτής της εικόνας δεν ταιριάζει με το ενιαίο εξώφυλλο του βιβλίου. Έλεγξε μέγεθος, σελίδες και bleed.",
       "toast.fromAtelier": "Εξώφυλλο από το Ατελιέ: έλεγξε το μέγεθος και τις σελίδες.",
@@ -3503,10 +3505,126 @@
     }
     return null;
   }
+  // ---------- 6c. A mockup for Claude or the Assistant (GATE-PL10) ----------
+  // { render: { key, template, image, slot, fmt, name, out, gate } } from
+  // the Assistant's mockup_render card or orOS Gate (Chris 2026-11-22,
+  // dogfooding the podcast Planodio, item 10). The template (one of the owner's
+  // mockups, by name) is copied in memory under a new id, the picture
+  // (orOS disk or a local folder the owner opened) goes into one slot,
+  // the stage draws it and the picture is saved under a free name: never
+  // over a file, the template unchanged, no project added. Only numbers
+  // and the path go back under `key`.
+  var rdBusy = false;
+  function rdBack(key) {
+    return function (rep) {
+      if (!key) return;
+      try {
+        var st = window.parent && window.parent !== window ? window.parent.orosAssistAtt : null;
+        if (!st) return;
+        if (!st.rb) st.rb = {};
+        st.rb[key] = rep;
+        if (typeof st.onRb === "function") st.onRb(key);
+      } catch (e) {}
+    };
+  }
+  function rdRead(path) {
+    var P = shell();
+    if (/^local:/i.test(path)) {
+      var L = P && P.orosLocal;
+      if (!L || typeof L.read !== "function") return Promise.reject({ why: "noBridge" });
+      return Promise.resolve(L.read(path, "mockup_render")).then(null, function (e) { throw { why: e && e.why || "noImage" }; });
+    }
+    var F = fsApi();
+    if (!F) return Promise.reject({ why: "noDisk" });
+    return Promise.resolve(F.read(path)).then(function (b) {
+      if (!b) throw { why: "noImage" };
+      var name = path.split("/").pop(), blob = b instanceof Blob ? b : new Blob([b]);
+      return new File([blob], name, { type: blob.type || "" });
+    }, function () { throw { why: "noImage" }; });
+  }
+  // the picture to each place of out; through the gate with its own rules
+  // (Claude's folders at «may change», a local write folder), from the
+  // Assistant's card (the owner pressed it) also elsewhere on the orOS disk
+  function rdSave(q, name, blob) {
+    var P = shell(), G = P && P.orosGate, L = P && P.orosLocal, saved = [], outFail = [];
+    return q.out.reduce(function (pr, o) {
+      return pr.then(function () {
+        var go;
+        if (/^local:/i.test(o)) go = L && typeof L.write === "function" ? L.write(o, name, blob, "mockup_render") : Promise.reject({ why: "noBridge" });
+        else if (q.gate) go = G && typeof G.exportTo === "function" ? G.exportTo(o, name, blob, "mockup_render") : Promise.reject({ why: "gateOff" });
+        else {
+          var F = fsApi(), dot = name.lastIndexOf(".");
+          go = !F ? Promise.reject({ why: "noDisk" }) : Promise.resolve(typeof F.mkdir === "function" ? F.mkdir(o) : null).then(null, function () {}).then(function () {
+            return freePath(o, name.slice(0, dot), name.slice(dot));
+          }).then(function (p) { return Promise.resolve(F.write(p, blob)).then(function () { return p; }); });
+        }
+        return Promise.resolve(go).then(function (p) { if (typeof p === "string" && p) saved.push(p); else outFail.push({ to: o, why: "error" }); },
+          function (e) { outFail.push({ to: o, why: e && typeof e.why === "string" ? e.why : "error" }); });
+      });
+    }, Promise.resolve()).then(function () { return { saved: saved, outFail: outFail }; });
+  }
+  function renderFor(rq) {
+    var q = C.renderReq(rq), back = rdBack(rq && typeof rq.key === "string" ? rq.key.slice(0, 80) : "");
+    if (!q) { back({ failed: 1, why: "bad" }); return; }
+    if (rdBusy || busy || document.querySelector("dialog[open]")) { back({ failed: 1, why: "busy" }); return; }
+    if (!AS) { back({ failed: 1, why: "noDisk" }); return; }
+    var pk = C.pickTemplate(allPrj(), q.template, label);
+    if (pk.err) { back({ failed: 1, why: pk.err === "none" ? "noTemplate" : "several", names: pk.names }); return; }
+    var tpl = pk.p, slot = C.renderSlot(tpl, q.slot);
+    if (!slot) { back({ failed: 1, why: "badSlot", slots: tpl.kind === "book" ? C.SLOTS.slice() : C.goodSlots(tpl.kind) }); return; }
+    var dm = C.good(tpl.kind);
+    if (dm && dm.model && (!window.MockCloth || !window.MockCloth.buffer(dm.model))) { back({ failed: 1, why: "model" }); return; }
+    if (cur && saveTimer) saveNow();
+    var prevId = cur ? cur.id : "", fmt = q.fmt || (tpl.out && tpl.out.fmt) || "png", made = null;
+    rdBusy = true;
+    toast(t("rd.making"));
+    rdRead(q.image).then(function (f) {
+      return AS.importFile(f).then(null, function () { throw { why: "badImage" }; });
+    }).then(function (img) {
+      // the copy: a new id, never saved (busy blocks every change)
+      var p = clone(tpl);
+      p.id = C.newId(); p.art[slot] = img.id;
+      if (slot === "wrap" && p.art.mode !== undefined) p.art.mode = "wrap";
+      p = normAny(p);
+      if (!p) throw { why: "error" };
+      clearMotion();
+      cur = p;
+      $("home").hidden = true; $("editor").hidden = false;
+      setBusy(true);
+      return ensureStage().then(null, function () { throw { why: "nogl" }; }).then(function () {
+        layoutStage();
+        var c = clone(cur);
+        if (c.kind === "combo" && window.MockCombo) c.items = c.g.items.map(findPrj).filter(window.MockCombo.canHold).map(clone);
+        return picsFor(c).then(function (r) { stage.set(c, r.imgs, r.bg); });
+      }).then(function () { return makeBlob(fmt); }).then(function (blob) {
+        var sz = C.outSize(cur.out), f = stage.fit(sz.w, sz.h);
+        made = { w: f.w, h: f.h, bytes: blob.size };
+        return rdSave(q, C.renderName(q, label(tpl), fmt), blob);
+      });
+    }).then(function (res) {
+      rdEnd(prevId);
+      if (!res.saved.length) { toast(t("rd.fail")); back({ failed: 1, why: "save", outFail: res.outFail }); return; }
+      toast(t("rd.done", { name: res.saved[0].split("/").pop() }));
+      var rep = { ok: 1, path: res.saved[0], saved: res.saved, template: label(tpl), kind: tpl.kind, slot: slot, fmt: fmt, w: made.w, h: made.h, bytes: made.bytes };
+      if (res.outFail.length) rep.outFail = res.outFail;
+      back(rep);
+    }, function (e) {
+      rdEnd(prevId);
+      toast(t("rd.fail"));
+      back({ failed: 1, why: e && typeof e.why === "string" ? e.why : "error" });
+    });
+  }
+  function rdEnd(prevId) {
+    rdBusy = false;
+    if (busy) setBusy(false);
+    cur = null;
+    if (prevId && findPrj(prevId)) openPrj(prevId); else showHome();
+  }
   // Deep links: { id } opens a mockup (search); { cover: {front, back,
   // spine, wrap, name, w, h} } makes a new one (Atelier, BR-AT-MK).
   function openTarget(target) {
     if (!target || typeof target !== "object") return false;
+    if (target.render && typeof target.render === "object") { renderFor(target.render); return true; }   // GATE-PL10
     if (target.cover) {
       var c = C.parseCover(target.cover);
       if (!c) return false;
