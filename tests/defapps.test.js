@@ -90,7 +90,9 @@ test("settings: Default apps first, scope All devices, Reset all", () => {
   });
   assert.equal(C.STRINGS.en["s.files"], "Default apps");
   assert.equal(C.STRINGS.el["s.files"], "Προεπιλεγμένες εφαρμογές");
-  assert.ok(C.FIND.some((f) => f[0] === "default-apps" && f[1] === "files" && f[2] === "f.choose"));
+  // STRUCT-6: Default apps is a part of Apps now; the row keeps its old id as the part.
+  assert.ok(C.FIND.some((f) => f[0] === "default-apps" && f[1] === "apps" && f[2] === "f.choose"));
+  assert.equal(C.resolve("files"), "apps");
 });
 
 test("files: a type with a chosen app opens there, not in the preview", () => {

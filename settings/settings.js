@@ -80,17 +80,11 @@
     accessibility: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="4.5" r="1.5"/><path d="M5 8l7 1.5L19 8M12 9.5V14M9 21l3-7 3 7"/></svg>',
     notifications: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>',
     sync: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.5 19a4.5 4.5 0 1 0-1.4-8.8A6 6 0 0 0 4.5 12 3.5 3.5 0 0 0 6 19z"/><rect x="9.5" y="13" width="5" height="4" rx="1"/><path d="M10.5 13v-1.2a1.5 1.5 0 0 1 3 0V13"/></svg>',
-    backup: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 10v6M9 13l3 3 3-3"/></svg>',
     language: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
-    solo: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="13" width="8" height="8" rx="2"/><path d="M17 3v6M14 6h6"/></svg>',
     system: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
     fonts: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 19 8.5 5h1L15 19M5.2 14h7.6"/><path d="M21 19v-5.5a2.75 2.75 0 0 0-5.5 0M21 16.2c-1-.9-5.6-1.2-5.6 1.2 0 2.4 4.4 2 5.6-.6"/></svg>',
-    device: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 10.5v5"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor"/><path d="M10.5 18.5h3"/></svg>',
     screentime: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 2.5h11"/><path d="M6.5 21.5h11"/><path d="M7.5 2.5v3.2a4.5 4.5 0 0 0 1.6 3.4L12 12l2.9-2.9a4.5 4.5 0 0 0 1.6-3.4V2.5"/><path d="M7.5 21.5v-3.2a4.5 4.5 0 0 1 1.6-3.4L12 12l2.9 2.9a4.5 4.5 0 0 1 1.6 3.4v3.2"/></svg>',
-    files: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 14h6M12 11v6"/></svg>',
-    menu: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
-    users: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2a5 5 0 0 1 5.5 4.8"/></svg>',
-    sensitive: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.5-3 8.3-7 10-4-1.7-7-5.5-7-10V6z"/><path d="M9.5 12l2 2 3-3.5"/></svg>',
+    apps: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="M14 17.5h7M17.5 14v7"/></svg>',
     lock: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1" fill="currentColor"/></svg>',
     services: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg>',
     chevron: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>',
@@ -1472,21 +1466,39 @@
   function gateWhen(ms) {
     return new Date(ms).toLocaleString(document.documentElement.lang || undefined, { dateStyle: "short", timeStyle: "short" });
   }
-  function secGate(host) {
-    var G = gateApi();
-    if (!G) return;
-    if (!gateOff) gateOff = G.onChange(function () { render(); });
+  // STRUCT-1/7: a closed «More options» part at the end of a card; it
+  // keeps its open state across repaints (memory only).
+  var moreOpen = {};
+  function moreBox(key) {
+    var box = el("details", "more-opts");
+    box.open = !!moreOpen[key];
+    box.addEventListener("toggle", function () { moreOpen[key] = box.open; });
+    var sum = el("summary", null, t("more.opts"));
+    sum.setAttribute("data-k", "more:" + key);
+    box.appendChild(sum);
+    var body = el("div", "more-body");
+    box.appendChild(body);
+    return { box: box, body: body };
+  }
+  // STRUCT-2: the Gate is the last part of the «Assistant and Claude» card.
+  function gateInto(c, G) {
     var st = G.state();
-    var c = card(t("gt.title"), "gate");
+    var gh = el("div", "card-head");
+    gh.appendChild(el("h4", "sub", t("gt.title")));
+    gh.appendChild(scopeBadge("gate"));
+    c.appendChild(gh);
     c.appendChild(row(t("gt.switch"), switchBtn(st.on, "gt.switch", function (v) {
       gateNote = ""; gateInfo = null;
       (v ? G.enable() : G.disable()).then(function () { render(); }, function (e) { gateNote = e && e.code === "norelay" ? "gt.relay.need" : e && e.code === "helper" ? "gt.helper" : "gt.fail"; render(); });
     }, t("gt.switch")), { hint: t("gt.hint") }));
     if (gateNote) c.appendChild(el("div", "hint", t(gateNote)));
+    // STRUCT-1 (structure review, Chris 2026-11-22): the essentials stay in
+    // view; the rest of the Gate sits under one «More options» at the end.
+    var mo = moreBox("gate"), m = mo.body;
     // Own relay (5.82.00): the gate can run on the owner's own Worker.
     if (typeof G.relayInfo === "function") {
       var ri = G.relayInfo();
-      c.appendChild(el("div", "hint", !st.on && !ri.mine ? t("gt.relay.need") : t("gt.relay.now." + ri.kind, { url: ri.url })));
+      (!st.on && !ri.mine ? c : m).appendChild(el("div", "hint", !st.on && !ri.mine ? t("gt.relay.need") : t("gt.relay.now." + ri.kind, { url: ri.url })));
       var ru = el("input", "dav-input");
       ru.id = "f-gt-relay";
       ru.type = "url";
@@ -1494,8 +1506,8 @@
       ru.spellcheck = false;
       ru.placeholder = "https://my-relay.example.workers.dev";
       ru.value = ri.own;
-      c.appendChild(row(t("gt.relay"), ru, { hint: t("gt.relay.hint"), forId: "f-gt-relay", stack: true }));
-      c.appendChild(actions(
+      m.appendChild(row(t("gt.relay"), ru, { hint: t("gt.relay.hint"), forId: "f-gt-relay", stack: true }));
+      m.appendChild(actions(
         button(t("gt.relay.save"), "gt.relay.save", function () {
           var v = ru.value.trim();
           var go = function (ok) { if (!ok) { gateNote = "gt.relay.bad"; render(); return; }
@@ -1517,15 +1529,15 @@
       jn.placeholder = "XXXX-XXXX";
       if (!gatePre && typeof G.takeJoin === "function") gatePre = G.takeJoin() || "";
       if (gatePre) jn.value = gatePre.slice(0, 4) + "-" + gatePre.slice(4);
-      c.appendChild(row(t("gt.join"), jn, { hint: t("gt.join.hint"), forId: "f-gt-join", stack: true }));
-      if (gatePre) c.appendChild(el("div", "hint", t("gt.join.scanned")));
+      m.appendChild(row(t("gt.join"), jn, { hint: t("gt.join.hint"), forId: "f-gt-join", stack: true }));
+      if (gatePre) m.appendChild(el("div", "hint", t("gt.join.scanned")));
       var sendJoin = function () {
         gateNote = "";
         G.join(jn.value).then(function () { gatePre = ""; gateNote = "gt.join.ok"; gateInfo = null; render(); },
           function (e) { gateNote = e && e.code === "nojoin" ? "gt.join.bad" : e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
       };
       jn.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); sendJoin(); } });
-      c.appendChild(actions(button(t("gt.join.go"), "gt.join.go", sendJoin)));
+      m.appendChild(actions(button(t("gt.join.go"), "gt.join.go", sendJoin)));
     }
     if (st.on) {
       c.appendChild(el("div", "hint", t("gt.conn." + (["on", "connecting", "other", "gone"].indexOf(st.conn) >= 0 ? st.conn : "connecting"))));
@@ -1543,28 +1555,28 @@
       })));
       if (typeof G.invite === "function") {
         if (gateJoin && gateJoin.exp > Date.now()) {
-          c.appendChild(el("div", "hint", t("gt.invite.code", { code: gateJoin.code.slice(0, 4) + "-" + gateJoin.code.slice(4) })));
+          m.appendChild(el("div", "hint", t("gt.invite.code", { code: gateJoin.code.slice(0, 4) + "-" + gateJoin.code.slice(4) })));
           var qr = typeof G.joinLink === "function" ? gateQr(G.joinLink(gateJoin.code)) : null;
           if (qr) {
             var qb = el("div", "gt-qr-box");
             qb.appendChild(qr);
-            c.appendChild(qb);
-            c.appendChild(el("div", "hint", t("gt.invite.qr.hint")));
+            m.appendChild(qb);
+            m.appendChild(el("div", "hint", t("gt.invite.qr.hint")));
           }
-          c.appendChild(el("div", "hint", t("gt.invite.wait")));
+          m.appendChild(el("div", "hint", t("gt.invite.wait")));
         }
         // With orOS sync on, the owner's devices join by themselves: the
         // code and QR stay behind a small link for a device without sync.
         var synced = typeof G.syncOn === "function" && G.syncOn();
-        c.appendChild(el("div", "hint", t(synced ? "gt.seat.sync" : "gt.seat")));
+        m.appendChild(el("div", "hint", t(synced ? "gt.seat.sync" : "gt.seat")));
         if (!synced || gateNoSync || gateJoin) {
-          c.appendChild(actions(button(t("gt.invite"), "gt.invite", function () {
+          m.appendChild(actions(button(t("gt.invite"), "gt.invite", function () {
             gateNote = "";
             G.invite().then(function (d) { gateJoin = d; render(); gateWatchJoin(G); },
               function (e) { gateNote = e && e.code === "full" ? "gt.join.full" : "gt.fail"; render(); });
           })));
         } else {
-          c.appendChild(actions(button(t("gt.nosync"), "gt.nosync", function () { gateNoSync = true; render(); })));
+          m.appendChild(actions(button(t("gt.nosync"), "gt.nosync", function () { gateNoSync = true; render(); })));
         }
       }
       if (typeof G.pair === "function") {
@@ -1575,13 +1587,13 @@
         pc.autocomplete = "off";
         pc.spellcheck = false;
         pc.placeholder = "XXXX-XXXX";
-        c.appendChild(row(t("gt.pair"), pc, { hint: t("gt.pair.hint"), forId: "f-gt-pair", stack: true }));
+        m.appendChild(row(t("gt.pair"), pc, { hint: t("gt.pair.hint"), forId: "f-gt-pair", stack: true }));
         var sendPair = function () {
           G.pair(pc.value).then(function () { gateNote = "gt.pair.ok"; gateInfo = null; render(); },
             function (e) { gateNote = e && e.code === "nopair" ? "gt.pair.bad" : e && e.code === "rate" ? "gt.pair.rate" : "gt.fail"; render(); });
         };
         pc.addEventListener("keydown", function (ev) { if (ev.key === "Enter") { ev.preventDefault(); sendPair(); } });
-        c.appendChild(actions(button(t("gt.pair.go"), "gt.pair.go", sendPair)));
+        m.appendChild(actions(button(t("gt.pair.go"), "gt.pair.go", sendPair)));
       }
       c.appendChild(el("div", "hint", t("gt.apps.hint")));
       // One box per app, the same in every column: the name and its read
@@ -1738,8 +1750,8 @@
               G.dropCopy().then(function () { gateNote = "gt.fcopy.dropped"; render(); }, function () { gateNote = "gt.fail"; render(); });
             })));
         }
-        c.appendChild(fb);
-        localSection(c, G);
+        m.appendChild(fb);
+        localSection(m, G);
       }
       // GL-7 (Chris 2026-11-21): update orOS on the other devices from here (the phone)
       if (typeof G.askUpdate === "function") {
@@ -1747,7 +1759,7 @@
         ub.appendChild(el("div", "pair-label", t("gt.upd.title")));
         ub.appendChild(el("div", "hint", updMsg || t("gt.upd.hint")));
         ub.appendChild(button(t("gt.upd.btn"), "gt.upd.btn", function () { updMsg = t(G.askUpdate() ? "gt.upd.sent" : "gt.upd.off"); render(); }, "btn-sm"));
-        c.appendChild(ub);
+        m.appendChild(ub);
       }
       // GATE-HOST (PEND-1 wave 2): an installed orOS Portable or orOS USB
       // keeps the Gate open in the background while every window is closed.
@@ -1768,8 +1780,8 @@
           }, t(usb ? "gt.host.usb" : "gt.host"));
           if (strict) hs.disabled = true;
           hl.appendChild(hs);
-          c.appendChild(hl);
-          c.appendChild(el("div", "hint", usb
+          m.appendChild(hl);
+          m.appendChild(el("div", "hint", usb
             ? t("gt.host.usb.hint") + " " + (strict ? t("gt.host.strict") : gateHost.on ? t("gt.host.usb.on") : t("gt.host.usb.off"))
             : t("gt.host.hint") + " " + (strict ? t("gt.host.strict") : gateHost.on ? (gateHost.running ? t("gt.host.running") : t("gt.host.waiting")) : t("gt.host.off"))));
         }
@@ -1785,19 +1797,19 @@
                     button(t("gt.hold.240"), "gt.hold.240", function () { setHold(240); }),
                     button(t("gt.hold.inf"), "gt.hold.inf", function () { setHold(Infinity); })));
         var PP = window.orosPush;
-        c.appendChild(el("div", "hint", PP && PP.enabled && PP.enabled() ? t("gt.push.on") : t("gt.push.off")));
+        m.appendChild(el("div", "hint", PP && PP.enabled && PP.enabled() ? t("gt.push.on") : t("gt.push.off")));
         // The daily email (5.79.00): from the owner's Mail account to itself.
         if (typeof G.digest === "function") {
           var dg = G.digest();
           var dl = el("div", "pair");
           dl.appendChild(el("span", "pair-label", t("gt.dig")));
           dl.appendChild(switchBtn(dg.on, "gt.dig", function (v) { if (!G.setDigest({ on: v })) gateNote = "gt.fail"; render(); }, t("gt.dig")));
-          c.appendChild(dl);
+          m.appendChild(dl);
           if (dg.on && dg.accounts.length > 1) {
-            c.appendChild(row(t("gt.dig.acct"), select(dg.accounts.map(function (a) { return { value: a.id, label: a.email }; }),
+            m.appendChild(row(t("gt.dig.acct"), select(dg.accounts.map(function (a) { return { value: a.id, label: a.email }; }),
               dg.acct || dg.accounts[0].id, "gt-dig-acct", function (v) { if (!G.setDigest({ acct: v })) gateNote = "gt.fail"; render(); }), { forId: "f-gt-dig-acct" }));
           }
-          c.appendChild(el("div", "hint", !dg.on ? t("gt.dig.off") : !dg.accounts.length ? t("gt.dig.nomail") :
+          m.appendChild(el("div", "hint", !dg.on ? t("gt.dig.off") : !dg.accounts.length ? t("gt.dig.nomail") :
             t("gt.dig.hint", { addr: (dg.accounts.filter(function (a) { return a.id === dg.acct; })[0] || dg.accounts[0]).email }) +
             (dg.at ? " " + t("gt.dig.last", { when: gateWhen(dg.at) }) : "") + (dg.fails ? " " + t("gt.dig.fail", { n: dg.fails }) : "")));
         }
@@ -1844,30 +1856,31 @@
         G.info().then(function (d) { gateInfo = d || { links: 0 }; render(); }, function () { gateInfo = { links: -1 }; render(); });
       }
       if (gateInfo.links !== null) {
-        c.appendChild(el("div", "hint", gateInfo.links < 0 ? t("gt.info.fail") :
+        m.appendChild(el("div", "hint", gateInfo.links < 0 ? t("gt.info.fail") :
           t("gt.links", { n: gateInfo.links }) + (gateInfo.last ? " · " + t("gt.last", { when: gateWhen(gateInfo.last) }) : "") +
           (typeof gateInfo.devices === "number" ? " · " + t("gt.devs", { n: gateInfo.devices }) : "")));
       }
-      c.appendChild(el("div", "hint", t("gt.shared")));
-      c.appendChild(el("div", "hint", t("gt.closed")));
+      m.appendChild(el("div", "hint", t("gt.shared")));
+      m.appendChild(el("div", "hint", t("gt.closed")));
       c.appendChild(actions(
         confirmBtn(t("gt.revoke"), t("gt.revoke.sure"), "gt.revoke", function () {
           G.revoke().then(function () { gateInfo = null; gateNote = "gt.revoked"; render(); }, function () { gateNote = "gt.fail"; render(); });
-        }),
-        button(t(gateLogOpen ? "gt.log.hide" : "gt.log"), "gt.log", function () { gateLogOpen = !gateLogOpen; render(); })
+        })
       ));
+      m.appendChild(actions(button(t(gateLogOpen ? "gt.log.hide" : "gt.log"), "gt.log", function () { gateLogOpen = !gateLogOpen; render(); })));
       if (gateLogOpen) {
         var log = G.log().slice(0, 50);
-        if (!log.length) c.appendChild(el("p", "msg msg-dim", t("gt.log.none")));
+        if (!log.length) m.appendChild(el("p", "msg msg-dim", t("gt.log.none")));
         log.forEach(function (e) {
           var ln = el("div", "hint", e.lp ? gateWhen(e.t) + " · " + t("gt.loc.log." + e.n.slice(6)) + " · " + e.lp + (e.n === "local-list" ? "" : " · " + Math.max(1, Math.round((e.sz || 0) / 1024)) + " KB") + (e.c ? " · " + e.c : "")
             : gateWhen(e.t) + " · " + e.n + (e.a && e.a.length ? " · " + e.a.join(", ") : "") + " · " + (e.ok ? gateItems(e.k || 0) : t("gt.log.refused")));
-          c.appendChild(ln);
+          m.appendChild(ln);
         });
-        if (log.length) c.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
+        if (log.length) m.appendChild(actions(button(t("gt.log.clear"), "gt.log.clear", function () { G.clearLog(); })));
       }
     }
-    host.appendChild(c);
+    if (!st.on && typeof G.relayInfo === "function" && !G.relayInfo().mine) mo.box.open = true;   // the relay field is the step that is missing
+    if (m.childNodes.length) c.appendChild(mo.box);
   }
 
   // LOCAL-1 (temporary, Chris 2026-11-18): folders of this device that
@@ -1980,19 +1993,15 @@
   // HELPER-1: who helps with the data, the Assistant, Claude (through
   // orOS Gate) or both. Synced; gate/gate.js keeps it and acts on it.
   var helperAsk = "";
-  function secHelper(host) {
-    var G = gateApi();
-    if (!G || typeof G.helper !== "function") return;
-    if (!gateOff) gateOff = G.onChange(function () { render(); });
+  function helperInto(c, G) {
     var cur = G.helper();
-    var c = card(t("hp.title"), "helper");
     c.appendChild(el("p", "hint", t("hp.hint")));
-    c.appendChild(segmented(C.HELPER_OPTS.map(function (v) { return { value: v, label: t("hp." + v) }; }), helperAsk || cur, "hp", function (v) {
+    c.appendChild(row(t("hp.title"), segmented(C.HELPER_OPTS.map(function (v) { return { value: v, label: t("hp." + v) }; }), helperAsk || cur, "hp", function (v) {
       if (v === "assistant" && G.state().on) { helperAsk = v; render(); return; }
       helperAsk = "";
       if (!G.setHelper(v)) gateNote = "gt.fail";
       render();
-    }, t("hp.title")));
+    }, t("hp.title")), { stack: true }));
     if (helperAsk === "assistant") {
       c.appendChild(el("p", "msg msg-dim", t("hp.sure")));
       c.appendChild(actions(
@@ -2001,9 +2010,8 @@
     } else {
       c.appendChild(el("p", "hint", t("hp.now." + cur)));
     }
-    host.appendChild(c);
   }
-  function secClaude(host) {
+  function claudeInto(c) {
     var d = claudeDoc(), de = d && d.documentElement;
     if (de && !claudeWatch && typeof MutationObserver === "function") {
       claudeWatch = true;
@@ -2014,7 +2022,7 @@
     }
     var info = C.claudeDesk(de ? de.getAttribute("data-oros-sys-claude") : null,
       de ? de.getAttribute("data-oros-sys-claude-why") : null, navigator.userAgent, !!phone());
-    var c = card(t("cl.title"));
+    c.appendChild(el("h4", "sub", t("cl.title")));
     c.appendChild(el("p", "hint", t("cl.hint")));
     c.appendChild(actions(button(t("cl.web"), "cl.web", function () {
       window.open(C.CLAUDE_WEB, "_blank", "noopener");
@@ -2046,6 +2054,20 @@
       }
     }
     c.appendChild(el("p", "hint", t("cl.gate")));
+  }
+  // STRUCT-2 (structure review, Chris 2026-11-22): one card «Assistant and
+  // Claude»: who helps on top; Claude (window, desktop app) and orOS Gate
+  // under it, only while the choice includes Claude.
+  function secAiCard(host) {
+    var G = gateApi();
+    var hasHelper = !!(G && typeof G.helper === "function");
+    if (G && !gateOff) gateOff = G.onChange(function () { render(); });
+    var c = card(t("aic.title"), hasHelper ? "helper" : null);
+    if (hasHelper) helperInto(c, G);
+    if (!hasHelper || G.helper() !== "assistant") {
+      claudeInto(c);
+      if (G) gateInto(c, G);
+    }
     host.appendChild(c);
   }
 
@@ -2492,6 +2514,7 @@
     var formFor = st === "off" ? "connect" : st === "locked" ? "" : "move";
     if (dav.open && formFor !== (dav.move ? "move" : "connect")) { dav.open = false; dav.move = false; dav.pass = ""; }
     if (dav.move && y.provider !== "dropbox") { dav.open = false; dav.move = false; dav.pass = ""; }
+    var ym = null, cpp = null;   // STRUCT-7: «More options» and its hand sync card (connected only)
     var c1 = card(null);
     var status = el("div", "status status-" + st);
     status.appendChild(el("span", "dot"));
@@ -2585,14 +2608,21 @@
       });
       c1.appendChild(form);
     } else {
-      c1.appendChild(actions(
+      // STRUCT-7 (structure review, Chris 2026-11-22): connected, the page
+      // shows the status, Add a browser and Cloud backups; sending and
+      // getting by hand, the interval, space, clean-up, moving to another
+      // cloud, the passphrase and Disconnect sit under «More options».
+      ym = moreBox("sync");
+      cpp = card(null);
+      cpp.appendChild(actions(
         button(t("y.pull"), "y.pull", function () { act("sync.pull"); }),
         button(t("y.push"), "y.push", function () { act("sync.push"); })));
       // WebDAV W4: move this cloud to the other provider.
       if (y.moveAvailable && dav.move && dav.open) {
-        c1.appendChild(davForm(y));
+        cpp.appendChild(davForm(y));
+        ym.box.open = true;
       } else if (y.moveAvailable && y.provider === "dropbox" && y.davAvailable) {
-        c1.appendChild(actions(button(t("y.move.dav"), "y.move.dav", function () {
+        cpp.appendChild(actions(button(t("y.move.dav"), "y.move.dav", function () {
           dav.open = true;
           dav.move = true;
           render();
@@ -2600,8 +2630,8 @@
           if (f) f.focus();
         })));
       } else if (y.moveAvailable && y.provider === "webdav") {
-        c1.appendChild(actions(button(t("y.move.db"), "y.move.db", function () { act("sync.moveDb"); })));
-        c1.appendChild(el("div", "hint", t("y.move.db.hint")));
+        cpp.appendChild(actions(button(t("y.move.db"), "y.move.db", function () { act("sync.moveDb"); })));
+        cpp.appendChild(el("div", "hint", t("y.move.db.hint")));
       }
     }
     if (y.msg && y.msg.text) {
@@ -2615,16 +2645,18 @@
 
     if (st === "on" || st === "dirty") {
       if (y.pairAvailable) host.appendChild(pairOldCard(y));
+      if (y.canRestore) host.appendChild(backupsCard(y));
+      var mb = ym ? ym.body : host;
+      if (cpp) mb.appendChild(cpp);
       var c2 = card(null);
       c2.appendChild(row(t("y.interval"), select(y.intervals.map(function (n) {
         return { value: n, label: C.intervalLabel(LANG, n) };
       }), y.interval, "y.interval", function (v) { set("syncInterval", parseInt(v, 10)); }),
         { scope: "syncInterval", forId: "f-y.interval" }));
-      host.appendChild(c2);
+      mb.appendChild(c2);
 
-      if (y.canSpace) host.appendChild(spaceCard(y));
-      if (y.canRestore) host.appendChild(backupsCard(y));
-      if (y.canClean) host.appendChild(cleanCard(y));
+      if (y.canSpace) mb.appendChild(spaceCard(y));
+      if (y.canClean) mb.appendChild(cleanCard(y));
 
       var c3 = card(null);
       c3.appendChild(actions(
@@ -2634,7 +2666,8 @@
           act("sync.disconnect");
         }, "danger")));
       if (y.paired) c3.appendChild(el("div", "hint", t("y.paired")));
-      host.appendChild(c3);
+      mb.appendChild(c3);
+      if (ym) host.appendChild(ym.box);
     }
     host.appendChild(caldavCard());
   }
@@ -3448,7 +3481,7 @@
   // turning it off asks for the lock's PIN or passphrase and brings the
   // earlier lock times and push back. The typed secret stays in `sv.cur`
   // only until it is handed over.
-  var sv = { level: "on", off: false, cur: "", msg: null, gateMsg: null, dz: false, dzCur: "", dzA: "", dzB: "", dzCloud: false, dzMsg: null,
+  var sv = { level: "on", off: false, cur: "", msg: null, dz: false, dzCur: "", dzA: "", dzB: "", dzCloud: false, dzMsg: null,
     tv: false, tvPass: "", tvMsg: null, dm: false, dmCur: "", dmDays: 7, dmMsg: null };
   var SV_ITEMS = ["lock", "lockPass", "lockTimes", "remember", "push", "bio", "davRelay", "backup", "passLen", "worker"];
 
@@ -3648,19 +3681,8 @@
     if (gs && gs.on) {
       var cg = card(t("sv.gate"));
       cg.appendChild(el("p", "hint", t(cur ? "sv.gate.on" : "sv.gate.off")));
-      cg.appendChild(actions(confirmBtn(t("sv.gate.drop"), t("sv.gate.confirm"), "sv-gate-drop", function () {
-        sv.gateMsg = { kind: "dim", key: "l.msg.working" };
-        render();
-        Promise.resolve().then(function () { return G.dropCopy(); }).then(function () {
-          sv.gateMsg = { kind: "ok", key: "sv.gate.done" };
-          render();
-        }, function (e) {
-          var code = e && (e.code || e.message);
-          sv.gateMsg = { kind: "err", key: "sv.gate.err." + (/^(gate-off|offline|locked)$/.test(code) ? code : "other") };
-          render();
-        });
-      }, "danger")));
-      if (sv.gateMsg) cg.appendChild(el("p", "msg msg-" + sv.gateMsg.kind, t(sv.gateMsg.key)));
+      // STRUCT-1: deleting the copy now lives in one place, orOS Gate › More options.
+      cg.appendChild(linkRow(t("sv.gate.goto"), "sv-gate-goto", function () { moreOpen.gate = true; go("services", true); }));
       host.appendChild(cg);
     }
 
@@ -4734,9 +4756,7 @@
   }
   function secServices(host) {
     secPhoneHealth(host);
-    secHelper(host);
-    secClaude(host);
-    secGate(host);
+    secAiCard(host);
     var Lk = links();
     if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }
     var c0 = card(null);
@@ -5230,8 +5250,6 @@
     }
     host.appendChild(c1);
 
-    var has = {};
-    (s.apps || []).forEach(function (id) { has[id] = true; });
     var c2 = card(t("x.more"));
     c2.appendChild(linkRow(t("x.device"), "x.device", function () { go("device", true); }));   // was the Device Info app
     c2.appendChild(linkRow(t("x.about"), "x.about", function () { act("info"); }));
@@ -5240,12 +5258,15 @@
       window.open("../media-kit/?lang=" + (LANG === "el" ? "el" : "en"), "_blank", "noopener");
     }));
     c2.appendChild(linkRow(t("x.sharelinks"), "x.sharelinks", function () { act("shareLinks"); }));
-    if (has.weather) c2.appendChild(linkRow(t("x.weather"), "x.weather", function () { act("openApp", "weather"); }));
-    if (has.wallpaper) c2.appendChild(linkRow(t("x.wallgen"), "x.wallgen", function () { act("openApp", "wallpaper"); }));
     host.appendChild(c2);
 
     if (s.shortcuts && s.shortcuts.length) secShortcuts(host, s);
 
+    // STRUCT-6: the desktop features under one heading
+    if (s.multitask || s.clip || s.pocket || s.cont || s.overview || s.pcfiles) {
+      var dh = el("h3", "sec-part", t("x.desk"));
+      host.appendChild(dh);
+    }
     // Multitasking: on by default on computers, off on phones, this device only.
     if (s.multitask) {
       var mtc = card(t("mt.title"), "multitask");
@@ -5515,7 +5536,7 @@
   }
 
   function go(id, focusPage) {
-    current = C.isSection(id) ? id : null;
+    current = C.resolve(id);
     armed.key = null;
     saveUi();
     render();
@@ -5524,13 +5545,41 @@
       var h = $("page-title");
       if (h) h.focus();
     }
+    toPart(C.partOf(id));
   }
 
+  // STRUCT-6: a part of a section that used to be a section of its own
+  // starts with its old name as a heading (id "part-<old id>"), so a
+  // deep link to the old id can scroll to it.
+  function part(host, id) {
+    var h = el("h3", "sec-part", t("s." + id));
+    h.id = "part-" + id;
+    host.appendChild(h);
+  }
+  function both(first, rest) {
+    return function (host, s) {
+      first(host, s);
+      rest.forEach(function (r) { part(host, r[0]); r[1](host, s); });
+    };
+  }
   var SECTION_FN = {
-    appearance: secAppearance, fonts: secFonts, accessibility: secAccessibility, menu: secMenu, notifications: secNotifications, sync: secSync, lock: secLock, sensitive: secSensitive, users: secUsers,
-    backup: secBackup, language: secLanguage, files: secFiles, solo: secSolo, services: secServices, system: secSystem,
-    device: secDevice, screentime: secScreenTime
+    appearance: secAppearance, fonts: secFonts, accessibility: secAccessibility, notifications: secNotifications,
+    sync: both(secSync, [["backup", secBackup]]),
+    lock: both(secLock, [["sensitive", secSensitive], ["users", secUsers]]),
+    language: secLanguage,
+    apps: both(function (host, s) { part(host, "menu"); secMenu(host, s); }, [["files", secFiles], ["solo", secSolo]]),
+    services: secServices,
+    system: both(secSystem, [["device", secDevice]]),
+    screentime: secScreenTime
   };
+  // After a deep link to a folded part: bring its heading into view.
+  function toPart(id) {
+    if (!id) return;
+    setTimeout(function () {
+      var h = $("part-" + id);
+      if (h && typeof h.scrollIntoView === "function") h.scrollIntoView({ block: "start" });
+    }, 0);
+  }
 
   function renderNav(s) {
     var nav = $("nav-list");
@@ -5708,6 +5757,10 @@
     if (!box) return false;
     box.classList.add("find-hit");
     if (!first) return true;
+    // STRUCT-1/7: a setting under a closed «More options» opens it
+    for (var d = box.parentNode; d && d !== document.body; d = d.parentNode) {
+      if (d.tagName === "DETAILS" && !d.open) d.open = true;
+    }
     try { box.scrollIntoView({ block: "center" }); } catch (e) { box.scrollIntoView(); }
     var ctl = box.tagName === "BUTTON" ? box
       : box.querySelector("button, select, input[type=checkbox], input[type=range]");
@@ -5915,6 +5968,7 @@
       if (p && typeof p.__orosTakeTarget === "function") target = p.__orosTakeTarget("settings");
     } catch (e) {}
     current = C.sectionOf(target) || loadUi();
+    toPart(C.partOf(target && typeof target === "object" ? target.section : target));
     try { if (!target && sessionStorage.getItem(TR_KEY) === "1") { current = "language"; setTimeout(openTranslate, 0); } } catch (e) {}
     // { section, item }: item = a FIND row id, lit up like a search pick.
     window.__orosOpenAt = function (tg) {
@@ -5922,7 +5976,7 @@
       if (!id) return;
       var it = tg && typeof tg === "object" && typeof tg.item === "string" ? C.findItem(tg.item) : null;
       if (it && it[1] === id) findPick({ section: id, item: it[0] });
-      else go(id, true);
+      else go(tg && typeof tg === "object" ? tg.section : tg, true);
     };
 
     var S = shell();

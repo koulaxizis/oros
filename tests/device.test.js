@@ -199,14 +199,15 @@ test("merge: Device Info lives in Settings › Device (APP-ALIAS)", () => {
   }
   assert.ok(read("device/index.html").includes('"../?open=device"'));
   const S = require(path.join(__dirname, "..", "settings", "core.js"));
-  // agreed with the Fonts thread: "device" right after "system"
-  assert.equal(S.SECTIONS[S.SECTIONS.indexOf("system") + 1], "device");
+  // STRUCT-6 (2026-11-22): "device" is a part of System now; the old id still lands there
+  assert.equal(S.resolve("device"), "system");
+  assert.equal(S.partOf("device"), "device");
   const js = read("settings/settings.js"), html = read("settings/index.html");
   // loaded only when the section opens (Settings size budget)
   assert.ok(!/device\//.test(html), "Settings' page loads nothing of it up front");
   assert.ok(js.includes('loadScript("../device/core.js")') && js.includes('loadScript("../device/view.js")'));
   assert.ok(js.includes('window.orosI18n.ensure(LANG, "device", resolve)'), "the device language pack comes along");
-  assert.ok(/device: secDevice/.test(js));
+  assert.ok(/\["device", secDevice\]/.test(js));
   // the menu row and every old way in land on the section
   assert.ok(read("shell.js").includes('window.orosSettings.open("device");'));
   assert.ok(!read("shell.js").includes('openAppById("device")'));

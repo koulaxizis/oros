@@ -8,7 +8,12 @@
   "use strict";
 
   // The groups, in the order shown. A deep link names one of these.
-  var SECTIONS = ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device", "screentime"];
+  // STRUCT-6 (structure review, Chris 2026-11-22): 11 sections. The
+  // sections that were folded into another keep their id as an alias, so
+  // deep links (orosSettings.open("sensitive")), stored ids and search
+  // rows still land on the right page and part of it.
+  var SECTIONS = ["appearance", "fonts", "accessibility", "notifications", "sync", "lock", "language", "apps", "services", "system", "screentime"];
+  var ALIAS = { backup: "sync", sensitive: "lock", users: "lock", menu: "apps", files: "apps", solo: "apps", device: "system" };
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -148,8 +153,6 @@
     ["mediakit", "system", "x.mediakit", "x.more"],
     ["sharelinks", "system", "x.sharelinks", "x.more"],
     ["report", "system", "x.report"],
-    ["weather", "system", "x.weather", "x.more", null, "app:weather"],
-    ["wallgen", "system", "x.wallgen", "x.more", null, "app:wallpaper"],
     ["shortcuts", "system", "x.shortcuts"],
     ["multitask", "system", "mt.on", "mt.title", null, "multitask"],
     ["clip", "system", "ch.on", "ch.title", "ch.strict", "clip"],
@@ -176,6 +179,14 @@
     ["screentime-bed", "screentime", "st.bed", null, "st.on"],
     ["screentime-clear", "screentime", "st.clear", null, "st.on"]
   ];
+  // STRUCT-6: rows of a folded section live on the section that took it
+  // in; the old section's name becomes the card in the path when the row
+  // had none ("Lock and privacy › Sensitive work").
+  FIND.forEach(function (f) {
+    if (!Object.prototype.hasOwnProperty.call(ALIAS, f[1])) return;
+    if (!f[3]) f[3] = "s." + f[1];
+    f[1] = ALIAS[f[1]];
+  });
 
   var POSITIONS = ["top-left", "top", "top-right", "right",
                    "bottom-right", "bottom", "bottom-left", "left"];
@@ -192,16 +203,17 @@
       "on": "On", "off": "Off",
       "noShell": "Open Settings from the orOS menu: it needs the orOS desktop around it.",
 
-      "s.appearance": "Appearance", "s.notifications": "Notifications", "s.sync": "Sync",
+      "s.appearance": "Appearance", "s.notifications": "Notifications", "s.sync": "Sync and backups",
       "s.backup": "Backups", "s.language": "Language & search", "s.system": "System",
       "s.menu": "Menu",
       "d.appearance": "Theme, colours, wallpaper, decorations, Dock, screen pet",
       "d.menu": "Which apps the menu shows",
       "d.notifications": "Pop-ups, sound, focus modes, per app",
-      "d.sync": "Encrypted sync through Dropbox",
+      "d.sync": "Encrypted sync, cloud backups and backup files",
+      "s.apps": "Apps", "d.apps": "The menu, which app opens each file type, single apps",
       "d.backup": "Backup files and the backup folder",
       "d.language": "Language, on-screen keyboard and what the menu search looks in",
-      "d.system": "Version, shortcuts, about, factory reset",
+      "d.system": "Version, device, shortcuts, desktop features, reset",
       "s.device": "Device", "d.device": "Space, battery, network, screen, browser features",
       "dv.loading": "Reading this device…", "dv.loadFail": "Could not load this section. Check the connection and open it again.",
       "dv.running": "Running now", "dv.storage": "Storage", "dv.apps": "Space per app", "dv.battery": "Battery", "dv.network": "Network",
@@ -444,6 +456,8 @@
       "n.phone.allow": "Allow",
       "n.phone.exact": "Android may ring them a few minutes late. Allow alarms for exact times.",
       "hp.title": "Who helps with your data",
+      "aic.title": "Assistant and Claude",
+      "more.opts": "More options",
       "hp.hint": "Choose who may work with your orOS data: the Assistant here in orOS, Claude through orOS Gate (on claude.ai and in Claude desktop), or both. The choice reaches all your devices.",
       "hp.both": "Both",
       "hp.assistant": "Assistant only",
@@ -1159,6 +1173,7 @@
       "x.version": "orOS version", "x.updates": "Check for updates",
       "x.install": "Install orOS as an app", "x.install.hint": "Opens in its own window, works offline, starts from your home screen.",
       "x.shortcuts": "Keyboard shortcuts", "x.more": "More",
+      "x.desk": "Desktop features",
       "sc.hint": "Every orOS shortcut is {p}a key. Change sets another key: press a letter or a digit. Off frees the key for the app you are in. Your keys follow you to all your devices.",
       "sc.change": "Change", "sc.turnoff": "Off", "sc.default": "Default", "sc.cancel": "Cancel", "sc.swap": "Swap",
       "sc.off": "Off", "sc.press": "Press a letter or a digit (Esc cancels)…",
@@ -1166,8 +1181,7 @@
       "sc.resetAll": "Reset all to the defaults",
       "x.device": "Device info", "x.about": "About orOS, credits and licences",
       "x.mediakit": "Media kit (logos, press texts)",
-      "x.apps": "Settings inside apps", "x.weather": "Weather on the taskbar",
-      "x.wallgen": "Wallpaper Generator",
+      "x.apps": "Settings inside apps",
       "x.sharelinks": "My shared links",
       "x.report": "Report a problem",
       "x.report.hint": "Makes one text file to send to whoever helps you: the orOS version, your browser and device, how sync and backups are set up here and the last errors orOS noticed. Your notes, files, names, addresses, passwords and keys are never in it, and orOS sends it nowhere: you decide where it goes.",
@@ -1207,8 +1221,8 @@
       "x.reset": "Factory reset", "x.reset.confirm": "Tap again to erase everything",
       "x.reset.hint": "Permanent: erases all orOS data and settings on this device, the backups in the backup folder, all cloud data and cloud backups, and this device's Dropbox sign-in, then starts orOS like new. Your other devices stop syncing and ask whether to erase themselves too or keep their data. Export a backup file first if you may need anything.",
       "x.reset.working": "Erasing…",
-      "s.lock": "Screen lock",
-      "d.lock": "PIN or passphrase on start and when you step away",
+      "s.lock": "Lock and privacy",
+      "d.lock": "Screen lock, Sensitive work, users of this computer",
       "s.sensitive": "Sensitive work",
       "d.sensitive": "Stricter settings for work that must not leak",
       "sv.intro": "For journalists, their sources and anyone whose work must not leak. One switch tightens the screen lock, keeps no sync passphrase on this device, turns off push and stops orOS from fetching through its relay. It applies to this device only, and no data is deleted.",
@@ -1256,15 +1270,9 @@
       "sv.sos.open": "Open SOS",
       "sv.honest": "What it cannot do: it does not encrypt your data on this device yet, and it does not protect against spyware or browser extensions. Hardcore's block works while orOS runs installed for offline use; a hard reload skips it until the next normal start. To talk to a source, use Signal or SecureDrop, not orOS.",
       "sv.gate": "Claude's closed copy",
+      "sv.gate.goto": "Delete it now in orOS Gate › More options",
       "sv.gate.on": "While Sensitive work is on, this device no longer refreshes the copy of your chosen apps and folders that Claude can read through orOS Gate when orOS is closed. Another device of yours can still refresh it, unless the mode is on there too.",
       "sv.gate.off": "orOS Gate keeps a sealed copy of your chosen apps and folders so Claude can read them when orOS is closed. Turning on Sensitive work stops this device from refreshing it; another device of yours can still refresh it.",
-      "sv.gate.drop": "Delete Claude's closed copy now",
-      "sv.gate.confirm": "Tap again to delete it",
-      "sv.gate.done": "Claude's closed copy is deleted from the relay and your Dropbox.",
-      "sv.gate.err.gate-off": "orOS Gate is off, so there is no copy to delete.",
-      "sv.gate.err.offline": "orOS Gate is not connected right now. Try again when it is online.",
-      "sv.gate.err.locked": "Unlock orOS first, then try again.",
-      "sv.gate.err.other": "It did not work. Try again.",
       "sv.panic": "Panic lock",
       "sv.panic.text": "Press Esc three times quickly to lock orOS at once, wherever you are. On a phone, use Lock now here or in the menu.",
       "sv.dz": "Duress PIN",
@@ -1740,8 +1748,6 @@
       "w.mediakit": "media kit press logo logos wallpapers brand",
       "w.sharelinks": "share links shared",
       "w.report": "problem bug error log logs diagnostics support help crash report",
-      "w.weather": "taskbar temperature forecast",
-      "w.wallgen": "make wallpaper generator create",
       "w.shortcuts": "keys keyboard hotkeys ctrl change remap rebind",
       "w.clip": "clipboard history copy paste copied cut",
       "w.pocket": "pocket shelf holding keep drop send later dock",
@@ -1790,16 +1796,17 @@
       "on": "Ναι", "off": "Όχι",
       "noShell": "Άνοιξε τις Ρυθμίσεις από το μενού του orOS: χρειάζονται την επιφάνεια εργασίας του orOS γύρω τους.",
 
-      "s.appearance": "Εμφάνιση", "s.notifications": "Ειδοποιήσεις", "s.sync": "Συγχρονισμός",
+      "s.appearance": "Εμφάνιση", "s.notifications": "Ειδοποιήσεις", "s.sync": "Συγχρονισμός και αντίγραφα",
       "s.backup": "Αντίγραφα ασφαλείας", "s.language": "Γλώσσα και αναζήτηση", "s.system": "Σύστημα",
       "s.menu": "Μενού",
       "d.appearance": "Θέμα, χρώματα, ταπετσαρία, διακόσμηση, Dock, συντροφάκι",
       "d.menu": "Ποιες εφαρμογές δείχνει το μενού",
       "d.notifications": "Αναδυόμενα, ήχος, λειτουργίες συγκέντρωσης, ανά εφαρμογή",
-      "d.sync": "Κρυπτογραφημένος συγχρονισμός μέσω Dropbox",
+      "d.sync": "Κρυπτογραφημένος συγχρονισμός, αντίγραφα στο cloud και αρχεία αντιγράφων",
+      "s.apps": "Εφαρμογές", "d.apps": "Το μενού, ποια εφαρμογή ανοίγει κάθε τύπο αρχείου, μεμονωμένες εφαρμογές",
       "d.backup": "Αρχεία αντιγράφων και φάκελος αντιγράφων",
       "d.language": "Γλώσσα, πληκτρολόγιο οθόνης και πού ψάχνει η αναζήτηση του μενού",
-      "d.system": "Έκδοση, συντομεύσεις, σχετικά, επαναφορά",
+      "d.system": "Έκδοση, συσκευή, συντομεύσεις, λειτουργίες επιφάνειας εργασίας, επαναφορά",
       "s.device": "Συσκευή", "d.device": "Χώρος, μπαταρία, δίκτυο, οθόνη, δυνατότητες browser",
       "dv.loading": "Διαβάζω αυτή τη συσκευή…", "dv.loadFail": "Η ενότητα δεν φόρτωσε. Έλεγξε τη σύνδεση και άνοιξέ την ξανά.",
       "dv.running": "Ανοιχτά τώρα", "dv.storage": "Χώρος", "dv.apps": "Χώρος ανά εφαρμογή", "dv.battery": "Μπαταρία", "dv.network": "Δίκτυο",
@@ -2042,6 +2049,8 @@
       "n.phone.allow": "Να επιτραπεί",
       "n.phone.exact": "Το Android μπορεί να τις χτυπήσει λίγα λεπτά αργότερα. Επίτρεψε τα ξυπνητήρια για ακριβή ώρα.",
       "hp.title": "Ποιος βοηθά με τα δεδομένα σου",
+      "aic.title": "Βοηθός και Claude",
+      "more.opts": "Περισσότερες επιλογές",
       "hp.hint": "Διάλεξε ποιος μπορεί να δουλεύει με τα δεδομένα σου στο orOS: ο Βοηθός εδώ στο orOS, ο Claude μέσω του orOS Gate (στο claude.ai και στο Claude desktop), ή και οι δύο. Η επιλογή φτάνει σε όλες τις συσκευές σου.",
       "hp.both": "Και οι δύο",
       "hp.assistant": "Μόνο ο Βοηθός",
@@ -2757,6 +2766,7 @@
       "x.version": "Έκδοση orOS", "x.updates": "Έλεγχος για ενημέρωση",
       "x.install": "Εγκατάσταση του orOS ως εφαρμογή", "x.install.hint": "Ανοίγει σε δικό του παράθυρο, δουλεύει offline, ξεκινά από την αρχική οθόνη.",
       "x.shortcuts": "Συντομεύσεις πληκτρολογίου", "x.more": "Περισσότερα",
+      "x.desk": "Λειτουργίες επιφάνειας εργασίας",
       "sc.hint": "Κάθε συντόμευση του orOS είναι {p}ένα πλήκτρο. Με την «Αλλαγή» ορίζεις άλλο πλήκτρο: πάτα ένα γράμμα ή έναν αριθμό. Το «Ανενεργή» αφήνει το πλήκτρο ελεύθερο για την εφαρμογή που χρησιμοποιείς. Τα πλήκτρα σου ισχύουν σε όλες τις συσκευές σου.",
       "sc.change": "Αλλαγή", "sc.turnoff": "Ανενεργή", "sc.default": "Προεπιλογή", "sc.cancel": "Άκυρο", "sc.swap": "Αντάλλαξε",
       "sc.off": "Ανενεργή", "sc.press": "Πάτα ένα γράμμα ή έναν αριθμό (Esc για άκυρο)…",
@@ -2764,8 +2774,7 @@
       "sc.resetAll": "Επαναφορά όλων στις προεπιλογές",
       "x.device": "Πληροφορίες συσκευής", "x.about": "Σχετικά με το orOS, credits και άδειες",
       "x.mediakit": "Media kit (λογότυπα, κείμενα τύπου)",
-      "x.apps": "Ρυθμίσεις μέσα σε εφαρμογές", "x.weather": "Ο καιρός στη γραμμή εργασιών",
-      "x.wallgen": "Γεννήτρια ταπετσαρίας",
+      "x.apps": "Ρυθμίσεις μέσα σε εφαρμογές",
       "x.sharelinks": "Οι σύνδεσμοί μου",
       "x.report": "Αναφορά προβλήματος",
       "x.report.hint": "Φτιάχνει ένα αρχείο κειμένου για όποιον σε βοηθά: την έκδοση του orOS, τον browser και τη συσκευή σου, πώς είναι ρυθμισμένοι εδώ ο συγχρονισμός και τα αντίγραφα ασφαλείας και τα τελευταία σφάλματα που είδε το orOS. Οι σημειώσεις, τα αρχεία, τα ονόματα, οι διευθύνσεις, οι κωδικοί και τα κλειδιά σου δεν μπαίνουν ποτέ μέσα, και το orOS δεν το στέλνει πουθενά: εσύ αποφασίζεις πού θα πάει.",
@@ -2805,8 +2814,8 @@
       "x.reset": "Επαναφορά εργοστασιακών", "x.reset.confirm": "Πάτα ξανά για να σβηστούν όλα",
       "x.reset.hint": "Οριστικό: σβήνει όλα τα δεδομένα και τις ρυθμίσεις του orOS σε αυτή τη συσκευή, τα αντίγραφα στον φάκελο αντιγράφων, όλα τα δεδομένα και τα αντίγραφα στο cloud, και τη σύνδεση Dropbox αυτής της συσκευής, και ξεκινά το orOS σαν καινούργιο. Οι άλλες συσκευές σου σταματούν το sync και ρωτούν αν θα σβηστούν κι αυτές ή αν θα κρατήσουν τα δεδομένα τους. Κάνε πρώτα εξαγωγή αρχείου αν μπορεί να χρειαστείς κάτι.",
       "x.reset.working": "Σβήνονται…",
-      "s.lock": "Κλείδωμα οθόνης",
-      "d.lock": "PIN ή φράση στην εκκίνηση και όταν απομακρύνεσαι",
+      "s.lock": "Κλείδωμα και ιδιωτικότητα",
+      "d.lock": "Κλείδωμα οθόνης, Ευαίσθητη δουλειά, χρήστες του υπολογιστή",
       "s.sensitive": "Ευαίσθητη δουλειά",
       "d.sensitive": "Αυστηρότερες ρυθμίσεις για δουλειά που δεν πρέπει να διαρρεύσει",
       "sv.intro": "Για δημοσιογράφους, τις πηγές τους και όποιον η δουλειά του δεν πρέπει να διαρρεύσει. Ένας διακόπτης κάνει αυστηρότερο το κλείδωμα οθόνης, δεν κρατά τον κωδικό συγχρονισμού σε αυτή τη συσκευή, κλείνει τις ειδοποιήσεις push και σταματά το orOS να φέρνει περιεχόμενο μέσω του relay. Ισχύει μόνο σε αυτή τη συσκευή και δεν σβήνει δεδομένα.",
@@ -2854,15 +2863,9 @@
       "sv.sos.open": "Άνοιξε το SOS",
       "sv.honest": "Τι δεν μπορεί να κάνει: δεν κρυπτογραφεί ακόμη τα δεδομένα σου σε αυτή τη συσκευή και δεν προστατεύει από spyware ή επεκτάσεις του browser. Η φραγή του Hardcore ισχύει όσο το orOS τρέχει εγκατεστημένο για χρήση χωρίς σύνδεση· μια πλήρης επαναφόρτωση την παρακάμπτει μέχρι την επόμενη κανονική έναρξη. Για επικοινωνία με πηγή, χρησιμοποίησε Signal ή SecureDrop, όχι το orOS.",
       "sv.gate": "Κλειστό αντίγραφο του Claude",
+      "sv.gate.goto": "Σβήσ' το τώρα στο orOS Gate › Περισσότερες επιλογές",
       "sv.gate.on": "Όσο η Ευαίσθητη δουλειά είναι ανοιχτή, αυτή η συσκευή δεν ανανεώνει πια το αντίγραφο των εφαρμογών και φακέλων που διάλεξες, το οποίο διαβάζει ο Claude μέσω του orOS Gate όταν το orOS είναι κλειστό. Μια άλλη συσκευή σου μπορεί ακόμη να το ανανεώνει, εκτός αν η λειτουργία είναι ανοιχτή κι εκεί.",
       "sv.gate.off": "Το orOS Gate κρατά ένα σφραγισμένο αντίγραφο των εφαρμογών και φακέλων που διάλεξες, ώστε ο Claude να τα διαβάζει όταν το orOS είναι κλειστό. Με την Ευαίσθητη δουλειά ανοιχτή, αυτή η συσκευή σταματά να το ανανεώνει· μια άλλη συσκευή σου μπορεί ακόμη να το ανανεώνει.",
-      "sv.gate.drop": "Σβήσε τώρα το κλειστό αντίγραφο του Claude",
-      "sv.gate.confirm": "Πάτα ξανά για σβήσιμο",
-      "sv.gate.done": "Το κλειστό αντίγραφο του Claude σβήστηκε από το relay και το Dropbox σου.",
-      "sv.gate.err.gate-off": "Το orOS Gate είναι κλειστό, άρα δεν υπάρχει αντίγραφο για σβήσιμο.",
-      "sv.gate.err.offline": "Το orOS Gate δεν είναι συνδεδεμένο αυτή τη στιγμή. Δοκίμασε ξανά όταν συνδεθεί.",
-      "sv.gate.err.locked": "Ξεκλείδωσε πρώτα το orOS και δοκίμασε ξανά.",
-      "sv.gate.err.other": "Δεν πέτυχε. Δοκίμασε ξανά.",
       "sv.panic": "Κλείδωμα πανικού",
       "sv.panic.text": "Πάτα Esc τρεις φορές γρήγορα για να κλειδώσει αμέσως το orOS, όπου κι αν βρίσκεσαι. Στο κινητό, χρησιμοποίησε το Κλείδωμα τώρα εδώ ή στο μενού.",
       "sv.dz": "PIN πίεσης",
@@ -3337,8 +3340,6 @@
       "w.mediakit": "media kit τύπος δημοσιογράφοι λογότυπο λογότυπα ταπετσαρίες wallpapers",
       "w.sharelinks": "κοινοποίηση σύνδεσμοι κοινόχρηστοι",
       "w.report": "πρόβλημα σφάλμα λάθος αναφορά καταγραφή logs διάγνωση υποστήριξη βοήθεια κόλλησε",
-      "w.weather": "καιρός θερμοκρασία μπάρα",
-      "w.wallgen": "δημιουργία ταπετσαρίας φόντο",
       "w.shortcuts": "πλήκτρα συντομεύσεις πληκτρολόγιο ctrl αλλαγή",
       "w.clip": "πρόχειρο ιστορικό αντιγραφή επικόλληση αποκοπή",
       "w.pocket": "τσέπη ράφι κράτα αποθήκευση στείλε αργότερα dock",
@@ -3405,6 +3406,14 @@
   }
 
   function isSection(id) { return SECTIONS.indexOf(id) !== -1; }
+  // A section id or the id of a part folded into one → the section shown.
+  function resolve(id) {
+    if (typeof id !== "string") return null;
+    if (Object.prototype.hasOwnProperty.call(ALIAS, id)) return ALIAS[id];
+    return isSection(id) ? id : null;
+  }
+  // The part of a section an old id points to ("sensitive" in "lock"), or null.
+  function partOf(id) { return typeof id === "string" && Object.prototype.hasOwnProperty.call(ALIAS, id) ? id : null; }
 
   // Users (the orOS Portable / orOS USB launcher, users.go): the same
   // rule as the launcher, a PIN of 4-12 digits or 6+ characters.
@@ -3419,7 +3428,7 @@
   // else null. Never trusts the shape it is given.
   function sectionOf(target) {
     var id = (target && typeof target === "object") ? target.section : target;
-    return (typeof id === "string" && isSection(id)) ? id : null;
+    return resolve(id);
   }
 
   function scopeOf(name) { return SCOPE[name] || "device"; }
@@ -3582,11 +3591,11 @@
   }
 
   var api = {
-    SECTIONS: SECTIONS, SCOPE: SCOPE, STRINGS: STRINGS, FIND: FIND,
+    SECTIONS: SECTIONS, ALIAS: ALIAS, SCOPE: SCOPE, STRINGS: STRINGS, FIND: FIND,
     usersPassOk: usersPassOk,
     stDur: stDur,
     POSITIONS: POSITIONS, STYLES: STYLES, SOUNDS: SOUNDS, DURATIONS: DURATIONS,
-    t: t, langOf: langOf, isSection: isSection, sectionOf: sectionOf, scopeOf: scopeOf,
+    t: t, langOf: langOf, isSection: isSection, resolve: resolve, partOf: partOf, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,
     intervalLabel: intervalLabel, syncState: syncState, fold: fold, menuGroups: menuGroups, gateFilter: gateFilter, gateBulk: gateBulk,
     claudeDesk: claudeDesk, CLAUDE_WEB: CLAUDE_WEB, CLAUDE_DL: CLAUDE_DL, HELPER_OPTS: ["both", "assistant", "claude"],
