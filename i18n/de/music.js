@@ -640,6 +640,8 @@ orosPack("de", "music", {
  "dp.forgot": "DPLA-Schlüssel entfernt.",
  "dp.badKey": "DPLA hat den Schlüssel nicht angenommen (32 Buchstaben und Ziffern). Prüfe ihn unter Einstellungen › Quellen.",
  "dp.note": "DPLA: Es werden nur Aufnahmen mit offener Lizenz gezeigt, die hier abspielbar sind.",
+ "src.fw": "Funkwhale (open.audio): Musik, die Menschen im offenen Funkwhale-Netz teilen. Gezeigt werden nur Songs mit Creative-Commons-Lizenz oder CC0. Nur Streaming.",
+ "fw.note": "Funkwhale: Es werden nur Songs gezeigt, für die die hochladende Person eine freie Lizenz gewählt hat; der Rest bleibt auf open.audio.",
  "sv.free": "Server mit freier Musik:",
  "src.more": "Mehr freie Musik anderswo",
  "src.moby": "mobygratis: Mobys kostenlose Instrumentals für deine eigenen nicht kommerziellen Videos, Filme und Remixe, unter eigener Lizenz. Öffnet die Website; wird hier nicht abgespielt.",
@@ -684,5 +686,6 @@ orosPack("de", "music", {
  "ss.more": "Mehr zu „{n}“",
  "ss.last": "Letzter Besuch {d}",
  "ss.new": "Neu seit deinem letzten Besuch ({n})",
- "sv.h.dogmazic": "Dogmazic: französische Bibliothek freier Musik, jeder Song unter freier Lizenz. Melde dich mit deinem kostenlosen Dogmazic-Konto an; als Passwort das Subsonic-Passwort oder den API-Schlüssel aus deinen Dogmazic-Kontoeinstellungen."
+ "sv.h.dogmazic": "Dogmazic: französische Bibliothek freier Musik, jeder Song unter freier Lizenz. Melde dich mit deinem kostenlosen Dogmazic-Konto an; als Passwort das Subsonic-Passwort oder den API-Schlüssel aus deinen Dogmazic-Kontoeinstellungen.",
+ "sv.h.openaudio": "open.audio: der öffentliche Pod des Funkwhale-Projekts. Seine öffentlichen Bibliotheken gehen ohne Anmeldung; für deine eigene Bibliothek dort ein Token unter Einstellungen › Anwendungen (Lesezugriff) hinzufügen."
 });
