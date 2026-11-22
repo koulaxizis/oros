@@ -163,6 +163,13 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Dokument einrichten** mit anderer Breite oder Höhe verschiebt die Inhalte, wie es ein Gestalter täte: was bis an die Ränder reicht, reicht wieder dorthin, Seitenzahlen und Kolumnentitel behalten ihre Kante, alles andere behält seinen Platz im Satzspiegel, Bilder und Formen ihre Proportionen. Ändert sich nur das Format, folgen die Ränder im Verhältnis; `Auch Schriftgrößen im Verhältnis` ändert auch die Formate.
 - Hausstile und ihre vorderen und hinteren Seiten passen sich ebenso jedem Format an.
 
+## Druckfarben
+- **Die Farben sehen**: `Mehr › Druckfarben…` zeigt die Seiten, wie sie gedruckt werden: Proof (die Farben durch das Druckprofil), je eine Druckplatte (Cyan, Magenta, Gelb, Schwarz) oder den Farbauftrag, in Pink, wo mehr Farbe als die Grenze hinkäme. Ein Klick auf das Schild über den Seiten schaltet zu den normalen Farben zurück.
+- **Druckprofil**: es ist Coated FOGRA39, außer du gibst das CMYK-Profil der Druckerei (.icc). Es bleibt beim Dokument, und das PDF/X nutzt es.
+- **Druckprüfungen**: Die Preflight-Prüfung warnt vor zu viel Farbe, kleiner Schrift in Tiefschwarz, Linien dünner als 0,25 pt, Text zu nah am Beschnitt und überdruckendem Weiß. Grenze und Abstand stellst du in Druckfarben ein.
+- **Überdrucken und Tonwerte**: 100 % Schwarz überdruckt, damit schwarzer Text nie einen weißen Spalt zeigt; abschalten in Druckfarben. Auch ein Farbfeld kann überdrucken, und ein Farbfeld kann ein Tonwert eines anderen sein: Ändert sich die Farbe, folgen ihre Tonwerte.
+- **PDF/X-1a**: `Export › PDF/X-1a` bringt alles in CMYK, auch die Bilder, für Druckereien, die das verlangen. Es kennt keine Transparenz: transparente Bilder kommen auf Weiß, und der Bericht sagt, was sich sonst ändern musste.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

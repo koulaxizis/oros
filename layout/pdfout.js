@@ -201,9 +201,36 @@
   // The person's own PDF/X-4 (Export › Quality › PDF/X-4, LY-PORT-C):
   // a print PDF's bytes → Promise<{ bytes, problems, cmyk }>; o.cmyk
   // converts its colours to the print profile's CMYK.
+  // LY-W9: o.x1a makes PDF/X-1a (all CMYK, pictures too); the
+  // document's own printer profile when it has one (LY.proof), and in
+  // CMYK the colours that overprint do so.
   function pdfx(doc, bytes, o) {
-    return pdfxLib().then(function (r) {
-      return r[1].make(r[0], bytes, { icc: r[2].icc, srgb: r[2].srgb, title: doc.name || LY.docTitle(doc), cmyk: !!(o && o.cmyk) });
+    o = o || {};
+    var own = LY.proof ? LY.proof.profile(doc) : Promise.resolve(null);
+    return Promise.all([pdfxLib(), own]).then(function (q) {
+      var r = q[0], pr = q[1], x1a = !!o.x1a, opt = { icc: pr ? pr.icc : r[2].icc, srgb: r[2].srgb, title: doc.name || LY.docTitle(doc), cmyk: !!o.cmyk, x1a: x1a };
+      if (pr) opt.cond = pr.cond;
+      if (x1a) opt.decode = decodeJpeg;
+      if ((x1a || o.cmyk) && LY.proof) opt.overprint = LY.proof.opFor(doc);
+      return r[1].make(r[0], bytes, opt);
+    });
+  }
+  // a JPEG's pixels → { w, h, data RGBA }
+  function decodeJpeg(bytes) {
+    var blob = new Blob([bytes], { type: "image/jpeg" });
+    var get = typeof createImageBitmap === "function" ? createImageBitmap(blob) : new Promise(function (res, rej) {
+      var u = URL.createObjectURL(blob), im = new Image();
+      im.onload = function () { URL.revokeObjectURL(u); res(im); };
+      im.onerror = function () { URL.revokeObjectURL(u); rej(new Error("jpeg")); };
+      im.src = u;
+    });
+    return get.then(function (im) {
+      var w = im.naturalWidth || im.width, h = im.naturalHeight || im.height, cv = document.createElement("canvas");
+      cv.width = w; cv.height = h;
+      var cx = cv.getContext("2d");
+      cx.drawImage(im, 0, 0);
+      if (im.close) im.close();
+      return { w: w, h: h, data: cx.getImageData(0, 0, w, h).data };
     });
   }
   window.LY_PDFOUT = { run: run, norm: norm, pdfx: pdfx };

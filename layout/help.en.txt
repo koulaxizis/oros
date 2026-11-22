@@ -163,6 +163,13 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Document setup** with another width or height moves the contents the way a designer would: frames that run to the edges still do, page numbers and running heads keep their edge, the rest keeps its place in the text area, pictures and shapes keep their proportions. With only the size changed, the margins follow in proportion; `Text sizes in proportion too` also sizes the styles.
 - House styles and their front and back pages fit any trim the same way.
 
+## Print colours
+- **See the inks**: `More › Print colours…` shows the pages as they print: Proof (the colours through the print profile), one ink plate at a time (Cyan, Magenta, Yellow, Black), or Total ink, in pink where more ink would go than the limit. Click the label over the pages to go back to normal colours.
+- **Print profile**: it is Coated FOGRA39 unless you give the printer's own CMYK profile (.icc). It stays with the document, and the PDF/X uses it.
+- **Print checks**: Preflight warns about too much ink, small text in rich black, lines thinner than 0.25 pt, text too close to the trim and white that overprints. Set the ink limit and the distance from the trim in Print colours.
+- **Overprint and tints**: 100 % black overprints, so black text never shows a white gap around it; switch it off in Print colours. A swatch can overprint too, and a swatch can be a tint of another: change the colour and its tints follow.
+- **PDF/X-1a**: `Export › PDF/X-1a` puts everything in CMYK, pictures too, for printers that ask for it. It holds no transparency: transparent pictures go on white, and the report says what else had to change.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

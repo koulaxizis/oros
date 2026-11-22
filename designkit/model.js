@@ -812,9 +812,18 @@
 
   // Swatch → { rgb: [r,g,b], cmyk: [c,m,y,k] | null }. CMYK on
   // screen is a naive conversion (no ICC profile).
+  // A tint of another swatch (LY-W9, ext.tp = its id, ext.tt = %):
+  // its values follow that swatch; v keeps the last ones for readers
+  // that do not know tints.
+  function tintOf(base, pct) {
+    var f = Math.max(0, Math.min(100, Number(pct) || 0)) / 100;
+    return base.mode === "cmyk" ? base.v.map(function (x) { return Math.round(x * f * 10) / 10; }) : base.v.map(function (x) { return Math.round(255 - (255 - x) * f); });
+  }
   function swatchColor(doc, id) {
     var s = id ? find(doc.swatches, id) : null;
     if (!s) return null;
+    var b = s.ext && s.ext.tp ? find(doc.swatches, s.ext.tp) : null;
+    if (b && b !== s && !(b.ext && b.ext.tp)) s = { mode: b.mode, v: tintOf(b, s.ext.tt) };
     if (s.mode === "rgb") return { rgb: s.v.slice(), cmyk: null };
     var c = s.v[0] / 100, m = s.v[1] / 100, y = s.v[2] / 100, k = s.v[3] / 100;
     return { rgb: [Math.round(255 * (1 - c) * (1 - k)), Math.round(255 * (1 - m) * (1 - k)), Math.round(255 * (1 - y) * (1 - k))], cmyk: s.v.slice() };
@@ -837,7 +846,7 @@
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
     newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, pageSize: pageSize, creepOf: creepOf, pageLabels: pageLabels, numFmt: numFmt, secOfPage: secOfPage, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
-    swatchColor: swatchColor, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
+    swatchColor: swatchColor, tintOf: tintOf, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

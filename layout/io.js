@@ -194,7 +194,8 @@
     return LY.R.adjKey(a);
   }
   // The visible part of one image, resampled to `ppi` (never up).
-  function cropImage(it, ppi) {
+  // flat: on white, as a JPEG (PDF/X-1a holds no transparency, LY-W9)
+  function cropImage(it, ppi, flat) {
     var crop = P.imageCrop(it);
     if (!crop) return Promise.resolve(null);
     return A.load(it.a).then(function (img) {
@@ -205,13 +206,14 @@
       var ch = Math.max(1, Math.round(Math.min(src.h, crop.rect.h / 72 * ppi)));
       var cv = document.createElement("canvas");
       cv.width = cw; cv.height = ch;
-      var png = /\.png$/.test(it.a);
+      var png = /\.png$/.test(it.a) && !flat;
       var cx = cv.getContext("2d");
+      if (flat) { cx.fillStyle = "#fff"; cx.fillRect(0, 0, cw, ch); }
       mirror(cx, crop, cw, ch);
       cx.drawImage(img, src.x, src.y, src.w, src.h, 0, 0, cw, ch);
       var adj = adjust(cx, it, cw, ch);
-      return toBlob(cv, png ? "image/png" : "image/jpeg", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
-        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (crop.fh ? "h" : "") + (crop.fv ? "v" : "") + (adj ? "-" + adj : ""), down: cw < Math.round(src.w) - 1 };
+      return toBlob(cv, png ? "image/png" : "image/jpeg", flat ? 0.95 : 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+        return { data: new Uint8Array(ab), fmt: png ? "PNG" : "JPEG", rect: crop.rect, alias: it.id + "-" + ppi + (flat ? "w" : "") + (crop.fh ? "h" : "") + (crop.fv ? "v" : "") + (adj ? "-" + adj : ""), down: cw < Math.round(src.w) - 1 };
       });
     });
   }
@@ -233,7 +235,7 @@
       JsPDF = J;
       var chain = Promise.resolve();
       imageItems(doc, pages).forEach(function (it) {
-        chain = chain.then(function () { return cropImage(it, opts.ppi || 300); }).then(function (im) {
+        chain = chain.then(function () { return cropImage(it, opts.ppi || 300, !!opts.x1a); }).then(function (im) {
           if (!im) return;
           images[it.id] = im;
           if (opts.imgStat) { opts.imgStat.n = (opts.imgStat.n || 0) + 1; if (im.down) opts.imgStat.down = (opts.imgStat.down || 0) + 1; }
@@ -550,12 +552,12 @@
     LY.flushStory && LY.flushStory();
     exporting = true;
     LY.toast(t("exp.working"));
-    var bad = 0, x4 = !!(opts && opts.pdfx), name = fileName(doc, x4 ? " (PDF-X-4).pdf" : ".pdf");
+    var bad = 0, x1a = !!(opts && opts.x1a), x4 = !!(opts && opts.pdfx) || x1a, name = fileName(doc, x1a ? " (PDF-X-1a).pdf" : x4 ? " (PDF-X-4).pdf" : ".pdf");
     pdfBlob(doc, opts).then(function (blob) {
       // PDF/X-4 for the printer (LY-PORT-C), its colours in CMYK when asked
       if (!x4) return blob;
       return Promise.all([blob.arrayBuffer(), script("pdfout.js", "LY_PDFOUT")]).then(function (r) {
-        return r[1].pdfx(doc, new Uint8Array(r[0]), { cmyk: !!opts.cmyk });
+        return r[1].pdfx(doc, new Uint8Array(r[0]), { cmyk: !!opts.cmyk, x1a: x1a });
       }).then(function (x) { bad = (x.problems || []).length; return new Blob([x.bytes], { type: "application/pdf" }); });
     }).then(function (blob) {
       if (opts && opts.send) return sendPdf(blob, name);
@@ -563,7 +565,7 @@
     }).then(function (ok) {
       exporting = false;
       if (ok === "sent") return;
-      if (ok) LY.toast(bad ? t("exp.x4Bad", { n: bad }) : t("exp.done"));
+      if (ok) LY.toast(bad ? t(x1a ? "exp.x1aBad" : "exp.x4Bad", { n: bad }) : t("exp.done"));
     }, function (e) {
       exporting = false;
       try { console.error("[orOS] layout: PDF export failed", e); } catch (x) {}

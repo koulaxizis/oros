@@ -293,7 +293,7 @@
     // while typing in a frame, its unsaved text flows live
     var doc = LY.inframe ? LY.inframe.layoutDoc(LY.doc) : LY.doc;
     ED.L = R.computeLayout(doc);
-    ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing });
+    ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing, conv: LY.proof ? LY.proof.conv() : null });
     keepPf();
     if (ED.master) {
       var ms = M.find(LY.doc.masters, ED.master);
@@ -305,6 +305,11 @@
   // (read_in_app preflight_now, Chris 2026-11-18): page numbers, at most
   // 200 problems, 30 documents.
   var pfTimer = 0;
+  // Preflight again (a picture landed, the print profile loaded: LY-W9)
+  ED.recheck = function () {
+    if (LY.doc && ED.L) ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing, conv: LY.proof ? LY.proof.conv() : null });
+    ED.render(); updateStatus();
+  };
   function keepPf() {
     clearTimeout(pfTimer);
     pfTimer = setTimeout(function () {
@@ -359,6 +364,8 @@
     ctx.fillRect(0, 0, cv.width, cv.height);
     var getImage = LY.A.get, missing = t("img.missing");
     var vis0 = toWorld(0, 0), vis1 = toWorld(W, H);
+    // a print view (soft proof, one plate, total ink: LY-W9) for the pages only
+    R.setView(LY.proof && LY.proof.view ? LY.proof.view() : null);
 
     world.forEach(function (sp) {
       if (sp.y > vis1[1] + s.bleed || sp.y + sp.h < vis0[1] - s.bleed) return;
@@ -389,6 +396,7 @@
         ctx.strokeRect(-s.bleed, -s.bleed, sp.w + 2 * s.bleed, sp.h + 2 * s.bleed);
       }
     });
+    R.setView(null);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawOverlay();
     if (!ED.preview) drawRulers();
@@ -1927,7 +1935,7 @@
     LY.on("remote", function () { changed(); LY.emit("sel"); });
     LY.on("sel", updateStatus);
     LY.on("view", updateStatus);
-    LY.A.onChange(function () { if (LY.doc && ED.L) ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing }); ED.render(); updateStatus(); });
+    LY.A.onChange(ED.recheck);
     readPalette();
   }
 
