@@ -108,15 +108,18 @@
   }
 
   // The copies pre-ticked for the Trash: all but the first of each
-  // group, never in a "meta" group (its copies differ in details).
+  // group, never in a "meta" group (its copies differ in details) or a
+  // "there" group (copies in another place of one on the orOS disk).
   function defaultPicks(gs) {
     var out = {};
-    (gs || []).forEach(function (g) { if (g.kind !== "meta") g.items.forEach(function (x, i) { if (i) out[x.p] = true; }); });
+    (gs || []).forEach(function (g) { if (g.kind !== "meta" && g.kind !== "there") g.items.forEach(function (x, i) { if (i) out[x.p] = true; }); });
     return out;
   }
-  // May `p` be ticked? Only while another copy of its group stays.
+  // May `p` be ticked? Only while another copy of its group stays;
+  // a fixed copy (the orOS disk's, in a "there" group) never.
   function canPick(g, picked, p) {
     if (!g) return false;
+    for (var i = 0; i < g.items.length; i++) if (g.items[i].p === p && g.items[i].fixed) return false;
     var left = 0;
     g.items.forEach(function (x) { if (x.p !== p && !picked[x.p]) left++; });
     return left > 0;
@@ -129,10 +132,10 @@
     var done = {};
     (gs || []).forEach(function (g, gi) {
       var keep = null;
-      g.items.forEach(function (x) { if (!keep && !picked[x.p]) keep = x; });
+      g.items.forEach(function (x) { if (!keep && (x.fixed || !picked[x.p])) keep = x; });
       if (!keep) return;
       g.items.forEach(function (x) {
-        if (!picked[x.p] || done[x.p]) return;
+        if (!picked[x.p] || done[x.p] || x.fixed) return;
         done[x.p] = true;
         out.push({ p: x.p, keep: keep.p, s: x.s, k: g.k, gi: gi });
       });

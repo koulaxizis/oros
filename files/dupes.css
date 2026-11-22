@@ -46,6 +46,7 @@ button.dp-what:hover, button.dp-what:focus-visible { background: var(--accent-so
 .dp-cloud svg { width: 12px; height: 12px; }
 .dp-stays { display: none; padding: 0 6px; border-radius: 9px; background: var(--accent-soft, #2a2832); color: var(--text, #e8e6f0); font-weight: 600; }
 .dp-row.keep .dp-stays { display: inline-block; }
+.dp-here { padding: 0 6px; border-radius: 9px; border: 1px solid var(--border, #2c2b31); }
 .dp-row.keep .dp-name { font-weight: 600; }
 .dp-open { flex: none; }
 .dp-selbar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px solid var(--border, #2c2b31); background: var(--bar-bg, #232229); flex-wrap: wrap; }

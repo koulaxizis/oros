@@ -256,3 +256,23 @@ test("folderTwins: whole folders with the same content, outermost only; one uniq
   assert.equal(after.length, 1);
   assert.equal(after[0].items.length, 2);
 });
+
+// ---------- K3 ----------
+test("a 'there' group: the orOS disk copy is fixed, never ticked, never removed", () => {
+  const g = [{ kind: "there", k: "t:/internal/a", s: 5, items: [{ p: "/internal/a", s: 5, fixed: true }, { p: "dbx:/a", s: 5 }, { p: "dbx:/b/a", s: 5 }], waste: 10 }];
+  assert.deepEqual(D.defaultPicks(g), {});
+  assert.equal(D.canPick(g[0], {}, "/internal/a"), false);
+  assert.equal(D.canPick(g[0], { "dbx:/a": true }, "dbx:/b/a"), true);   // the disk copy stays
+  assert.deepEqual(D.plan(g, { "dbx:/a": true, "dbx:/b/a": true, "/internal/a": true }).map((x) => [x.p, x.keep]),
+    [["dbx:/a", "/internal/a"], ["dbx:/b/a", "/internal/a"]]);
+});
+
+test("wanted and folderTwins work for Dropbox and computer paths", () => {
+  assert.equal(D.wanted("dbx:/Photos/a.jpg", 3, "dbx:"), true);
+  assert.equal(D.wanted("dbx:/Photos/a.jpg", 3, "dbx:/Photos"), true);
+  assert.equal(D.wanted("dbx:/.git/a", 3, "dbx:"), false);
+  assert.equal(D.wanted("/computer/home/Pictures/a.jpg", 3, "/computer/home"), true);
+  const f = (p, k) => ({ p, k, s: 4, m: 1 });
+  const g = D.folderTwins([f("dbx:/A/x", "x:1"), f("dbx:/B/x", "x:1")], "dbx:");
+  assert.deepEqual(g.map((x) => x.items.map((i) => i.p)), [["dbx:/A", "dbx:/B"]]);
+});

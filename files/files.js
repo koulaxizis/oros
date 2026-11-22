@@ -1596,7 +1596,8 @@
       markDirty: markDirty,
       zipCreate: zipCreate,
       zipExtract: zipExtract,
-      zipOpen: zipOpen
+      zipOpen: zipOpen,
+      findDupes: openDupes
     });
   }
 
@@ -1619,7 +1620,8 @@
       trash: TRASH,
       isImageExt: isImageExt,
       isTextExt: isTextExt,
-      mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); }
+      mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); },
+      findDupes: openDupes
     });
   }
 
@@ -1849,9 +1851,10 @@
     wrap.appendChild(node);
     return wrap;
   }
-  // Duplicates of the whole disk (ROOT) or of one folder of it.
-  function openDupes(folder) {
-    loadDupes().then(function (d) { if (d) d.enter(folder || ROOT); }, function () {});
+  // Duplicates of the whole disk (ROOT) or of one folder of it; place
+  // "computer" / "dropbox": a folder of This computer or the Dropbox.
+  function openDupes(folder, place) {
+    loadDupes().then(function (d) { if (d) d.enter(folder || ROOT, place); }, function () {});
   }
   // A file the person marked keeps its place in a group of copies:
   // a favourite, a document of the archive, a file with tags, or an
@@ -1892,6 +1895,15 @@
       preview: openPreview,
       cleanCore: function () {
         return cleanScript("clean-core.js", function () { return !!window.orosClean; }).then(function () { return window.orosClean; });
+      },
+      source: function (place) {
+        var m = place === "dropbox" ? dbx() : place === "computer" ? cmp() : null;
+        return m && typeof m.dupesSource === "function" ? m.dupesSource() : null;
+      },
+      dbxHash: function (bytes) {
+        var C2 = window.OrosDropboxCore;
+        if (!C2 || !C2.contentHash) return Promise.reject(new Error("dbx"));
+        return C2.contentHash(bytes, function (b) { return crypto.subtle.digest("SHA-256", b); });
       },
       photosAlike: function () { loadPhotos().then(function (ph) { if (ph && ph.findAlike) ph.findAlike(); }, function () {}); },
       trash: function (p) {

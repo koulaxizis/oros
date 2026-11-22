@@ -77,10 +77,24 @@
       "dp.dirHow":      "Every file in them is the same, byte for byte. The files of a folder that goes are not listed again below.",
       "dp.metaHow":     "The picture or sound is the same byte for byte; the hidden details differ (camera, date, place, tags). Nothing is ticked: tick what you do not need.",
       "dp.dirCopies":   "{n} folders · {f} files · {s} each",
+      "dp.dirCopies1":  "{n} folders · 1 file · {s} each",
       "dp.versions":    "{n} versions",
       "dp.files":       "{n} files",
+      "dp.file1":       "1 file",
       "dp.openDir":     "Open the folder",
-      "dp.alike":       "Photos that look alike…"
+      "dp.alike":       "Photos that look alike…",
+      "dp.scopeDbx":    "in Dropbox {f}",
+      "dp.scopeCmp":    "on this computer, {f}",
+      "dp.noPlace":     "This place is not available here.",
+      "dp.noDbx":       "The Dropbox could not be read. Open Dropbox in the folder list, sign in, and try again.",
+      "dp.there":       "Comparing with the orOS disk… {i} of {n}",
+      "dp.sec.there":   "Already on the orOS disk",
+      "dp.thereDbx":    "The orOS disk has the same file, byte for byte (the copy marked “On the orOS disk” stays). Nothing is ticked: tick what can go from the Dropbox.",
+      "dp.thereCmp":    "The orOS disk has the same file, byte for byte (the copy marked “On the orOS disk” stays). Nothing is ticked: tick what can go from this computer.",
+      "dp.onDisk":      "On the orOS disk",
+      "dp.trashDbx":    "Delete in Dropbox",
+      "dp.trashAskDbx": "Delete {n} in the Dropbox? Each one is checked first: unchanged since the search, and the copy that stays still has the same content. Dropbox keeps deleted files for a while; restore them on dropbox.com.",
+      "dp.trashAskCmp": "Move {n} to this computer's Trash? Each one is compared byte by byte with the copy that stays first. You can restore them from the computer's Trash."
     },
     el: {
       "dp.tree":        "Διπλότυπα",
@@ -120,10 +134,24 @@
       "dp.dirHow":      "Κάθε αρχείο τους είναι ίδιο, byte προς byte. Τα αρχεία ενός φακέλου που φεύγει δεν ξαναγράφονται πιο κάτω.",
       "dp.metaHow":     "Η εικόνα ή ο ήχος είναι ίδια byte προς byte· διαφέρουν τα κρυφά στοιχεία (κάμερα, ημερομηνία, τοποθεσία, ετικέτες). Τίποτα δεν είναι σημαδεμένο: σημάδεψε όσα δεν χρειάζεσαι.",
       "dp.dirCopies":   "{n} φάκελοι · {f} αρχεία · {s} ο καθένας",
+      "dp.dirCopies1":  "{n} φάκελοι · 1 αρχείο · {s} ο καθένας",
       "dp.versions":    "{n} εκδοχές",
       "dp.files":       "{n} αρχεία",
+      "dp.file1":       "1 αρχείο",
       "dp.openDir":     "Άνοιγμα του φακέλου",
-      "dp.alike":       "Φωτογραφίες που μοιάζουν…"
+      "dp.alike":       "Φωτογραφίες που μοιάζουν…",
+      "dp.scopeDbx":    "στο Dropbox {f}",
+      "dp.scopeCmp":    "σε αυτόν τον υπολογιστή, {f}",
+      "dp.noPlace":     "Αυτή η θέση δεν είναι διαθέσιμη εδώ.",
+      "dp.noDbx":       "Το Dropbox δεν διαβάστηκε. Άνοιξε το Dropbox στη λίστα φακέλων, συνδέσου και δοκίμασε ξανά.",
+      "dp.there":       "Σύγκριση με τον δίσκο του orOS… {i} από {n}",
+      "dp.sec.there":   "Υπάρχουν ήδη στον δίσκο του orOS",
+      "dp.thereDbx":    "Ο δίσκος του orOS έχει το ίδιο αρχείο, byte προς byte (το αντίγραφο με την ένδειξη «Στον δίσκο του orOS» μένει). Τίποτα δεν είναι σημαδεμένο: σημάδεψε όσα μπορούν να φύγουν από το Dropbox.",
+      "dp.thereCmp":    "Ο δίσκος του orOS έχει το ίδιο αρχείο, byte προς byte (το αντίγραφο με την ένδειξη «Στον δίσκο του orOS» μένει). Τίποτα δεν είναι σημαδεμένο: σημάδεψε όσα μπορούν να φύγουν από αυτόν τον υπολογιστή.",
+      "dp.onDisk":      "Στον δίσκο του orOS",
+      "dp.trashDbx":    "Διαγραφή στο Dropbox",
+      "dp.trashAskDbx": "Να διαγραφούν {n} στο Dropbox; Πρώτα ελέγχεται το καθένα: ότι δεν άλλαξε από την αναζήτηση και ότι το αντίγραφο που μένει έχει ακόμη το ίδιο περιεχόμενο. Το Dropbox κρατά τα διαγραμμένα για λίγο καιρό· η επαναφορά γίνεται στο dropbox.com.",
+      "dp.trashAskCmp": "Να πάνε {n} στον Κάδο του υπολογιστή; Πρώτα το καθένα συγκρίνεται byte προς byte με το αντίγραφο που μένει. Μπορείς να τα επαναφέρεις από τον Κάδο του υπολογιστή."
     }
   };
   if (window.orosI18n) window.orosI18n.table(STRINGS, "files", LANG);
@@ -152,7 +180,13 @@
   }
   function baseName(p) { return p.slice(p.lastIndexOf("/") + 1); }
   function dirName(p) { return p.slice(0, p.lastIndexOf("/")) || ROOT; }
-  function shown(p) { return p === ROOT ? "/" : p.indexOf(ROOT + "/") === 0 ? p.slice(ROOT.length) : p; }
+  function shown(p) {
+    if (p === ROOT) return "/";
+    if (p.indexOf(ROOT + "/") === 0) return p.slice(ROOT.length);
+    if (p.indexOf("dbx:") === 0) return p.slice(4) || "/";
+    if (p.indexOf("/computer") === 0) return p.slice(9) || "/";
+    return p;
+  }
   function fmtBytes(n) {
     var u = ["B", "KB", "MB", "GB", "TB"], i = 0, v = n || 0;
     while (v >= 1024 && i < u.length - 1) { v /= 1024; i++; }
@@ -167,6 +201,8 @@
   var ctx = null;
   var active = false;
   var base = ROOT;                      // the folder searched
+  var place = "disk";                   // "disk" | "computer" | "dropbox" (K3)
+  var src = null;                       // ctx.source(place) for computer / dropbox
   var gen = 0;                          // a new search or leave stops the old one
   var state = null;                     // { phase, n, i, groups, picked, limit, busy }
 
@@ -211,8 +247,15 @@
   function sha(buf) {
     return crypto.subtle.digest("SHA-256", buf).then(CORE.hex);
   }
-  function blobOf(p) { return disk().read(p); }
+  // Paths say where a file is: "/internal/…" the orOS disk,
+  // "/computer/…" This computer, "dbx:/…" the Dropbox (never read here:
+  // Dropbox gives its content_hash).
+  function isCmp(p) { return p.indexOf("/computer/") === 0; }
+  function isDbx(p) { return p.indexOf("dbx:") === 0; }
+  function blobOf(p) { return isCmp(p) ? src.blob(p) : disk().read(p); }
+  function statOf(p) { return isCmp(p) ? src.stat(p) : disk().stat(p); }
   function readPart(f, off, n) {
+    if (isCmp(f.p)) return src.read(f.p, off, n);
     return blobOf(f.p).then(function (b) { return b.slice(off, off + n).arrayBuffer(); }).then(function (ab) { return new Uint8Array(ab); });
   }
   // head / full SHA-256, from the cache while path, size and time hold.
@@ -229,7 +272,7 @@
   }
   function headHash(f) {
     return hashed(f, "q", function () {
-      return blobOf(f.p).then(function (b) { return b.slice(0, CORE.HEAD).arrayBuffer(); }).then(sha);
+      return readPart(f, 0, Math.min(CORE.HEAD, f.s)).then(sha);
     });
   }
   function fullHash(f) {
@@ -239,8 +282,15 @@
   }
 
   // ---------- walk ----------
-  function walk(g, onCount) {
-    var fs = disk(), found = [], dirs = [base], seen = 0;
+  function walk(g, onCount, from) {
+    from = from || base;
+    var live0 = function () { return g === gen; };
+    if (isCmp(from) || isDbx(from)) {
+      return src.list(from, false, live0, onCount).then(function (l) {
+        return (l || []).filter(function (f) { return CORE.wanted(f.p, f.s, from); });
+      });
+    }
+    var fs = disk(), found = [], dirs = [from], seen = 0;
     function live() { return g === gen; }
     function next() {
       if (!live() || !dirs.length || found.length >= CORE.MAX_FILES || seen >= CORE.MAX_DIRS) return Promise.resolve();
@@ -276,16 +326,16 @@
         var have = {};
         found.forEach(function (f) { have[f.p] = true; });
         var dr = v.driveRoot || ROOT + "/Drive";
-        var from = base.indexOf(dr + "/") === 0 || base === dr ? base : dr;
-        if (from === base || dr.indexOf(base + "/") === 0) {
+        var at = from.indexOf(dr + "/") === 0 || from === dr ? from : dr;
+        if (at === from || dr.indexOf(from + "/") === 0) {
           try {
-            (v.remoteOnly(from) || []).forEach(function (e) {
+            (v.remoteOnly(at) || []).forEach(function (e) {
               if (e && !have[e.path] && found.length < CORE.MAX_FILES) found.push({ p: e.path, s: e.s || 0, m: e.m ? Date.parse(e.m) || 0 : 0, h: e.h || "", cloud: true });
             });
           } catch (e2) {}
         }
       }
-      return found.filter(function (f) { return CORE.wanted(f.p, f.s, base); });
+      return found.filter(function (f) { return CORE.wanted(f.p, f.s, from); });
     });
   }
 
@@ -294,7 +344,7 @@
     var g = ++gen, fs = disk();
     state = { phase: "walk", n: 0, i: 0, groups: null, picked: {}, limit: PAGE, busy: false };
     paint();
-    if (!fs || !window.crypto || !crypto.subtle) { state.phase = "nodisk"; paint(); return; }
+    if (!fs || !window.crypto || !crypto.subtle || (place !== "disk" && !src)) { state.phase = "nodisk"; paint(); return; }
     function live() { return g === gen; }
     var painted = 0;
     function throttled() { var now = Date.now(); if (now - painted > 250) { painted = now; paintMsg(); } }
@@ -302,7 +352,12 @@
     walk(g, function (n) { state.n = n; throttled(); }).then(function (files) {
       if (!live()) return null;
       all = files;
-      files.forEach(function (f) { f.imp = ctx.important ? !!ctx.important(f.p) : false; });
+      if (place === "disk") files.forEach(function (f) { f.imp = ctx.important ? !!ctx.important(f.p) : false; });
+      if (place === "dropbox") {
+        // Dropbox lists every file with its content_hash: nothing to read.
+        files.forEach(function (f) { f.k = CORE.isHash(f.h) ? "x:" + f.h : ""; });
+        return CORE.groups(files.filter(function (f) { return f.k; }));
+      }
       state.phase = "compare";
       state.i = 0;
       state.n = CORE.bySize(files).reduce(function (a, x) { return a + x.length; }, 0);
@@ -315,17 +370,21 @@
       if (!live() || !groups) return null;
       var dirs = CORE.folderTwins(all, base);
       var same = CORE.outsideFolders(groups, dirs);
-      return metaStage(all, live, throttled).then(function (meta) {
+      var there = [];
+      return thereStage(all, live, throttled).then(function (th) {
+        there = CORE.outsideFolders(th || [], dirs);
+        return place === "dropbox" ? [] : metaStage(all, live, throttled);
+      }).then(function (meta) {
         if (!live()) return;
         state.phase = "done";
-        state.groups = dirs.concat(same, CORE.outsideFolders(meta || [], dirs));
+        state.groups = dirs.concat(same, there, CORE.outsideFolders(meta || [], dirs));
         state.picked = CORE.defaultPicks(state.groups);
         paint();
       });
-    }, function () {
+    }).then(null, function () {
       if (!live()) return;
-      state.phase = "done";
-      state.groups = [];
+      state.phase = place === "dropbox" ? "noplace" : "done";
+      state.groups = state.phase === "done" ? [] : null;
       paint();
     });
   }
@@ -337,21 +396,19 @@
     if (window.orosClean) return Promise.resolve(window.orosClean);
     return ctx && ctx.cleanCore ? ctx.cleanCore() : Promise.reject(new Error("clean"));
   }
-  function bytesAt(p, off, n) {
-    return blobOf(p).then(function (b) {
-      var a = off < 0 ? Math.max(0, b.size + off) : off;
-      return b.slice(a, a + n).arrayBuffer();
-    }).then(function (ab) { return new Uint8Array(ab); });
+  function bytesAt(f, off, n) {
+    var a = off < 0 ? Math.max(0, f.s + off) : off;
+    return readPart(f, a, Math.max(0, Math.min(n, f.s - a)));
   }
   function hexOf(u) { var s2 = ""; for (var i = 0; i < u.length; i++) s2 += (u[i] < 16 ? "0" : "") + u[i].toString(16); return s2; }
   function preKey(f) {
     return hashed(f, "z", function () {
-      if (f.kind === "jpeg") return bytesAt(f.p, 0, CORE.JPEG_HEAD).then(function (h) { var n = CORE.jpegScanLen(h, f.s); return n > 0 ? "j" + n : "-"; });
-      if (f.kind === "mp3") return Promise.all([bytesAt(f.p, 0, 10), f.s >= 128 ? bytesAt(f.p, -128, 128) : Promise.resolve(null)]).then(function (r) {
+      if (f.kind === "jpeg") return bytesAt(f, 0, CORE.JPEG_HEAD).then(function (h) { var n = CORE.jpegScanLen(h, f.s); return n > 0 ? "j" + n : "-"; });
+      if (f.kind === "mp3") return Promise.all([bytesAt(f, 0, 10), f.s >= 128 ? bytesAt(f, -128, 128) : Promise.resolve(null)]).then(function (r) {
         var rg = CORE.mp3Range(r[0], r[1], f.s);
         return rg ? "m" + (rg[1] - rg[0]) : "-";
       });
-      return bytesAt(f.p, 0, 40).then(function (h) {
+      return bytesAt(f, 0, 40).then(function (h) {
         if (f.kind === "png") return h.length >= 29 && h[12] === 0x49 && h[13] === 0x48 ? "p" + hexOf(h.subarray(16, 29)) : "-";
         // A WebP without VP8X cannot hold EXIF or XMP.
         return h.length >= 30 && h[12] === 0x56 && h[15] === 0x58 ? "w" + hexOf(h.subarray(24, 30)) : "-";
@@ -398,6 +455,62 @@
     }).catch(function () { return []; });
   }
 
+  // K3: files of This computer / the Dropbox that the orOS disk
+  // already holds, byte for byte. The disk side is walked whole; only
+  // sizes the other place shares are hashed (SHA-256 for This computer,
+  // Dropbox's content hash for the Dropbox; cloud-only disk files by
+  // the vault's SHA-256 for This computer only). Never pre-ticked.
+  function diskKey(d) {
+    if (d.kx !== undefined) return Promise.resolve(d.kx);
+    var job;
+    if (place === "dropbox") {
+      job = d.cloud ? Promise.resolve("") : hashed(d, "x", function () {
+        return blobOf(d.p).then(function (b) { return b.arrayBuffer(); }).then(function (ab) { return ctx.dbxHash(new Uint8Array(ab)); });
+      });
+    } else job = d.cloud ? Promise.resolve(CORE.isHash(d.h) ? d.h : "") : d.s > CORE.HASH_MAX ? Promise.resolve("") : fullHash(d);
+    return job.then(function (k) { d.kx = k || ""; return d.kx; }, function () { d.kx = ""; return ""; });
+  }
+  function thereStage(others, live, throttled) {
+    if (place === "disk") return Promise.resolve([]);
+    state.phase = "there";
+    state.i = 0; state.n = 0;
+    paintMsg();
+    return walk(gen, null, ROOT).then(function (diskFiles) {
+      var bySize = {};
+      diskFiles.forEach(function (d) { (bySize[d.s] = bySize[d.s] || []).push(d); });
+      var cands = others.filter(function (f) { return bySize[f.s] && (place === "dropbox" ? CORE.isHash(f.h) : f.s <= CORE.HASH_MAX); });
+      state.n = cands.length;
+      var found = {};
+      function seq(list, fn) {
+        return list.reduce(function (pr, x) { return pr.then(function () { return live() ? fn(x) : null; }); }, Promise.resolve());
+      }
+      return seq(cands, function (f) {
+        var mine = place === "dropbox" ? Promise.resolve(f.h) : fullHash(f);
+        return mine.then(function (hf) {
+          if (!CORE.isHash(hf)) return null;
+          var list = bySize[f.s].slice().sort(CORE.keepOrder), hit = null;
+          return seq(list, function (d) {
+            if (hit) return null;
+            return diskKey(d).then(function (k) { if (k && k === hf) hit = d; });
+          }).then(function () {
+            if (!hit) return;
+            var g = found[hit.p] || (found[hit.p] = { kind: "there", k: "t:" + hit.p, s: hit.s, items: [{ p: hit.p, s: hit.s, m: hit.m, h: hit.h, cloud: hit.cloud, fixed: true }] });
+            g.items.push(f);
+          });
+        }, function () {}).then(function () { state.i++; throttled(); });
+      }).then(function () {
+        if (!live()) return [];
+        var out = Object.keys(found).map(function (k) {
+          var g = found[k];
+          g.waste = CORE.wasteOf("there", g.items, g.s);
+          return g;
+        });
+        out.sort(function (a, b) { return b.waste - a.waste || (a.items[0].p < b.items[0].p ? -1 : 1); });
+        return out;
+      });
+    });
+  }
+
   function stop() {
     gen++;
     if (state) { state.phase = "stopped"; paint(); }
@@ -410,7 +523,8 @@
   }
   // The copy kept and the copy removed, read again right now.
   function stillSame(x, keep, k) {
-    var fs = disk(), v = vault();
+    if (isDbx(x.p)) return stillSameDbx(x, keep);
+    var v = vault();
     var fetched = false;
     var pre = x.cloud && v && typeof v.fetch === "function"
       ? v.fetch(x.p).then(function () { fetched = true; })
@@ -420,7 +534,7 @@
       return ok;
     }
     return pre.then(function () {
-      return Promise.all([fs.stat(x.p), keep.cloud ? Promise.resolve({ size: keep.s }) : fs.stat(keep.p)]);
+      return Promise.all([statOf(x.p), keep.cloud ? Promise.resolve({ size: keep.s }) : statOf(keep.p)]);
     }).then(function (st) {
       if (!st[0] || !st[1] || st[0].dir || st[1].dir || st[0].size !== x.s || st[1].size !== x.s) return false;
       var now = { p: x.p, s: x.s };
@@ -432,10 +546,29 @@
       return CORE.sameFiles({ p: keep.p, s: x.s }, now, readPart);
     }).then(back, function () { return back(false); });
   }
+  // A Dropbox copy: unchanged since it was listed (same rev and
+  // content hash), and the copy that stays still holds that content
+  // (another Dropbox file by its metadata, a disk file by a fresh
+  // Dropbox content hash of its bytes). delete_v2 then takes the rev.
+  function stillSameDbx(x, keep) {
+    return src.meta(x.p).then(function (m) {
+      if (!m || m.rev !== x.rev || m.h !== x.h || !CORE.isHash(x.h)) return false;
+      if (isDbx(keep.p)) return src.meta(keep.p).then(function (k) { return !!k && k.h === x.h; });
+      if (keep.cloud) return false;
+      return statOf(keep.p).then(function (st) {
+        if (!st || st.dir || st.size !== x.s) return false;
+        return blobOf(keep.p).then(function (b) { return b.arrayBuffer(); }).then(function (ab) { return ctx.dbxHash(new Uint8Array(ab)); })
+          .then(function (h) { return h === x.h; });
+      });
+    }).catch(function () { return false; });
+  }
+  function removeOne(x) {
+    if (isDbx(x.p) || isCmp(x.p)) return src.remove(x);
+    return ctx.trash(x.p);
+  }
   // Pictures and sounds: the same content without the details, now.
   function stillSameContent(x, keep) {
-    var fs = disk();
-    return Promise.all([fs.stat(x.p), fs.stat(keep.p)]).then(function (st) {
+    return Promise.all([statOf(x.p), statOf(keep.p)]).then(function (st) {
       if (!st[0] || !st[1] || st[0].dir || st[1].dir || st[0].size !== x.s || st[1].size !== keep.s) return false;
       return Promise.all([contentHash(x, true), contentHash(keep, true)]).then(function (h) {
         return CORE.isHash(h[0]) && h[0] === h[1];
@@ -445,6 +578,13 @@
   // Every file under a folder, hidden and empty ones too, plus its
   // cloud-only orOS Drive files: rel path → { p, s, h?, cloud }.
   function listAll(dir) {
+    if (isDbx(dir) || isCmp(dir)) {
+      return src.list(dir, true).then(function (l) {
+        var o = {};
+        (l || []).forEach(function (f) { o[f.p.slice(dir.length + 1)] = { p: f.p, s: f.s, h: f.h || "", rev: f.rev || "", dbx: isDbx(f.p) }; });
+        return o;
+      });
+    }
     var fs = disk(), v = vault(), out = {}, dirs = [dir], n = 0;
     function next() {
       if (!dirs.length) return Promise.resolve();
@@ -491,6 +631,7 @@
         return pr.then(function (ok) {
           if (!ok) return false;
           var f1 = a[rel], f2 = b[rel];
+          if (f1.dbx || f2.dbx) return CORE.isHash(f1.h) && f1.h === f2.h;
           if (!f1.cloud && !f2.cloud) return f1.s === 0 ? true : CORE.sameFiles(f1, f2, readPart);
           return Promise.all([freshHash(f1), freshHash(f2)]).then(function (h) { return CORE.isHash(h[0]) && h[0] === h[1]; });
         });
@@ -518,12 +659,15 @@
       no.focus();
     });
   }
+  function trashLabel() { return t(place === "dropbox" ? "dp.trashDbx" : "dp.trash"); }
   function trashPicked() {
     if (!state || !state.groups || state.busy || !ctx || !ctx.trash) return;
     var todo = CORE.plan(state.groups, state.picked);
     if (!todo.length) return;
-    var msg = todo.length === 1 ? t("dp.trashAskOne") : t("dp.trashAsk", { n: todo.length });
-    confirmDlg(msg, t("dp.trash")).then(function (ok) {
+    var msg = place === "dropbox" ? t("dp.trashAskDbx", { n: todo.length })
+      : place === "computer" ? t("dp.trashAskCmp", { n: todo.length })
+      : todo.length === 1 ? t("dp.trashAskOne") : t("dp.trashAsk", { n: todo.length });
+    confirmDlg(msg, trashLabel()).then(function (ok) {
       if (!ok || !state || state.busy) return;
       var g0 = gen, st = state;
       st.busy = true;
@@ -546,7 +690,7 @@
           var check = g.kind === "dir" ? stillSameFolder(x, keep) : g.kind === "meta" ? stillSameContent(x, keep) : stillSame(x, keep, g.k);
           return check.then(function (same) {
             if (!same) { changed++; return null; }
-            return ctx.trash(x.p).then(function () { gone[x.p] = true; moved++; },
+            return removeOne(x).then(function () { gone[x.p] = true; moved++; },
               function () { toast(t("dp.fail", { name: baseName(x.p) })); });
           });
         }).then(function () { st.i++; paintMsg(); });
@@ -630,18 +774,20 @@
     else if (state.phase === "compare") line = t("dp.comparing", { i: Math.min(state.i, state.n), n: state.n });
     else if (state.phase === "details") line = t("dp.details", { i: Math.min(state.i, state.n), n: state.n });
     else if (state.phase === "stopped") line = t("dp.stopped");
-    else if (state.phase === "nodisk") line = t("dp.noDisk");
+    else if (state.phase === "nodisk") line = t(place === "disk" ? "dp.noDisk" : "dp.noPlace");
+    else if (state.phase === "noplace") line = t("dp.noDbx");
+    else if (state.phase === "there") line = t("dp.there", { i: Math.min(state.i, state.n), n: state.n });
     else if (state.groups) {
       var tot = CORE.totals(state.groups);
       line = !tot.groups ? t("dp.none") : tot.groups === 1 ? t("dp.sumOne", { b: fmtBytes(tot.waste) }) : t("dp.sum", { g: tot.groups, b: fmtBytes(tot.waste) });
     }
     m.appendChild(el("span", "", line));
-    if (!state.busy && (state.phase === "walk" || state.phase === "compare" || state.phase === "details")) {
+    if (!state.busy && (state.phase === "walk" || state.phase === "compare" || state.phase === "details" || state.phase === "there")) {
       var b = el("button", "dp-stop", t("dp.stop"));
       b.type = "button";
       b.addEventListener("click", stop);
       m.appendChild(b);
-      if ((state.phase === "compare" || state.phase === "details") && state.n) {
+      if ((state.phase === "compare" || state.phase === "details" || state.phase === "there") && state.n) {
         var pr = el("progress", "dp-prog");
         pr.max = state.n;
         pr.value = Math.min(state.i, state.n);
@@ -652,7 +798,7 @@
       m.appendChild(el("p", "dp-how", t("dp.how")));
     }
     // Photos that only look alike (bursts, retakes): Photos' own finder.
-    if (state.phase === "done" && !state.busy && ctx && ctx.photosAlike) {
+    if (state.phase === "done" && !state.busy && place === "disk" && ctx && ctx.photosAlike) {
       var al = el("button", "dp-stop dp-alike", t("dp.alike"));
       al.type = "button";
       al.addEventListener("click", function () { ctx.photosAlike(); });
@@ -681,11 +827,12 @@
     // The name opens the preview here (the results stay); a cloud-only
     // copy has nothing to show on this device.
     var isDir = g.kind === "dir";
+    var other = isDbx(x.p) || isCmp(x.p);          // This computer / Dropbox
     var what = el(x.cloud && !isDir ? "div" : "button", "dp-what");
-    if (isDir) {
+    if (isDir || other) {
       what.type = "button";
-      what.title = t("dp.openDir");
-      what.addEventListener("click", function () { if (ctx && ctx.openFolder) ctx.openFolder(x.p); });
+      what.title = t(isDir ? "dp.openDir" : "dp.open");
+      what.addEventListener("click", function () { openAt(x.p, isDir); });
     } else if (!x.cloud) {
       what.type = "button";
       what.title = t("dp.preview");
@@ -694,7 +841,7 @@
     what.appendChild(el("span", "dp-name", baseName(x.p)));
     what.appendChild(el("span", "dp-sub", shown(dirName(x.p))));
     var meta = el("span", "dp-meta");
-    if (isDir) meta.appendChild(el("span", "", t("dp.files", { n: x.n })));
+    if (isDir) meta.appendChild(el("span", "", x.n === 1 ? t("dp.file1") : t("dp.files", { n: x.n })));
     if (g.kind === "meta") meta.appendChild(el("span", "", fmtBytes(x.s)));
     var d = fmtDate(x.m);
     if (d) meta.appendChild(el("span", "", d));
@@ -704,6 +851,7 @@
       c.appendChild(document.createTextNode(" " + t("dp.cloud")));
       meta.appendChild(c);
     }
+    if (x.fixed) meta.appendChild(el("span", "dp-here", t("dp.onDisk")));
     meta.appendChild(el("span", "dp-stays", t("dp.stays")));
     what.appendChild(meta);
     r.classList.toggle("keep", !cb.checked);
@@ -722,15 +870,22 @@
     open.setAttribute("aria-label", t("dp.open") + ": " + baseName(x.p));
     open.addEventListener("click", function () {
       if (!ctx) return;
-      if (isDir) { if (ctx.openFolder) ctx.openFolder(dirName(x.p)); }
+      if (other) openAt(x.p, false);
+      else if (isDir) { if (ctx.openFolder) ctx.openFolder(dirName(x.p)); }
       else if (ctx.openFile) ctx.openFile(x.p);
     });
     var tick = el("label", "dp-tick");
-    tick.appendChild(cb);
+    if (x.fixed) { tick = el("span", "dp-tick"); r.classList.add("fixed"); }   // the orOS disk copy: stays, no box
+    else tick.appendChild(cb);
     r.appendChild(tick);
     r.appendChild(what);
     r.appendChild(open);
     return r;
+  }
+  // Shows a file or folder of This computer / the Dropbox in its place.
+  function openAt(p, isDir) {
+    if (!src || !src.open) return;
+    if (isDir) src.open(p + "/x"); else src.open(p);
   }
   function paintList() {
     var list = $("dp-list");
@@ -741,13 +896,14 @@
     state.groups.slice(0, state.limit).forEach(function (g) {
       if (g.kind !== lastKind) {
         lastKind = g.kind;
-        list.appendChild(el("h2", "dp-sec", t(g.kind === "dir" ? "dp.sec.dir" : g.kind === "meta" ? "dp.sec.meta" : "dp.sec.same")));
+        list.appendChild(el("h2", "dp-sec", t(g.kind === "dir" ? "dp.sec.dir" : g.kind === "meta" ? "dp.sec.meta" : g.kind === "there" ? "dp.sec.there" : "dp.sec.same")));
+        if (g.kind === "there") list.appendChild(el("p", "dp-note", t(place === "dropbox" ? "dp.thereDbx" : "dp.thereCmp")));
         if (g.kind === "meta") list.appendChild(el("p", "dp-note", t("dp.metaHow")));
         if (g.kind === "dir") list.appendChild(el("p", "dp-note", t("dp.dirHow")));
       }
       var sec = el("section", "dp-group");
       var head = g.kind === "meta" ? t("dp.versions", { n: g.items.length })
-        : g.kind === "dir" ? t("dp.dirCopies", { n: g.items.length, f: g.items[0].n, s: fmtBytes(g.s) })
+        : g.kind === "dir" ? (g.items[0].n === 1 ? t("dp.dirCopies1", { n: g.items.length, s: fmtBytes(g.s) }) : t("dp.dirCopies", { n: g.items.length, f: g.items[0].n, s: fmtBytes(g.s) }))
         : t("dp.copies", { n: g.items.length, s: fmtBytes(g.s) });
       sec.appendChild(el("h3", "dp-head", head));
       var ul = el("ul", "dp-items");
@@ -766,7 +922,11 @@
     if (!active) return;
     ensurePanel();
     var sc = $("dp-scope");
-    if (sc) sc.textContent = base === ROOT ? t("dp.scopeAll") : t("dp.scope", { f: shown(base) });
+    if (sc) sc.textContent = place === "dropbox" ? t("dp.scopeDbx", { f: shown(base) })
+      : place === "computer" ? t("dp.scopeCmp", { f: shown(base) })
+      : base === ROOT ? t("dp.scopeAll") : t("dp.scope", { f: shown(base) });
+    var tb = $("dp-trash");
+    if (tb) tb.textContent = trashLabel();
     paintMsg();
     paintList();
     paintBar();
@@ -795,10 +955,17 @@
   }
 
   // ---------- enter / leave ----------
-  function enter(folder) {
-    var f = typeof folder === "string" && (folder === ROOT || folder.indexOf(ROOT + "/") === 0) && !CORE.skipDir(folder) ? folder : ROOT;
+  function enter(folder, where) {
+    var pl = where === "dropbox" || where === "computer" ? where : "disk";
+    var f;
+    if (pl === "dropbox") f = typeof folder === "string" && folder.indexOf("dbx:") === 0 ? folder.replace(/\/+$/, "") : "dbx:";
+    else if (pl === "computer") f = typeof folder === "string" && folder.indexOf("/computer/") === 0 ? folder : "/computer/home";
+    else f = typeof folder === "string" && (folder === ROOT || folder.indexOf(ROOT + "/") === 0) && !CORE.skipDir(folder) ? folder : ROOT;
+    // The place modules leave (and lose their view) when this enters.
+    src = pl === "disk" ? null : (ctx && ctx.source ? ctx.source(pl) : null);
     if (ctx && ctx.onEnter) ctx.onEnter();
     active = true;
+    place = pl;
     base = f;
     document.body.classList.add("dp-mode");
     ensurePanel();
