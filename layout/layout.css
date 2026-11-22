@@ -793,3 +793,7 @@ body.inframe #cv { cursor: text; }
 .ix-terms { width: 100%; min-height: 84px; resize: vertical; }
 .ver-txt ins { text-decoration: none; background: rgba(47, 158, 106, .22); border-radius: 2px; }
 .pc-prof { font-weight: 600; margin-right: 8px; overflow-wrap: anywhere; }
+/* alternate layouts (LY-W16) */
+.alt-box { border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; margin: 8px 0; }
+.alt-box p { margin: 4px 0; }
+.alt-n { flex: 1 1 140px; min-width: 0; overflow-wrap: anywhere; }

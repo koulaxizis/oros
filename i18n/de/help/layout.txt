@@ -227,6 +227,12 @@ Exportieren › Paket für die Druckerei erstellt eine .zip für die Druckerei o
 
 Exportieren › Für andere Programme speichert eine einzelne InDesign- oder Scribus-Datei mit den Bildern darin. Seiten, Musterseiten, Formate, Farben, Rahmen mit Spalten und Verkettungen, Formen, Linien, Kurven und Bilder öffnen sich so, wie sie hier sind. Schatten, Schein und weiche Kanten werden zu den Effekten von InDesign; Scribus behält Füllmethode und Deckkraft. Verfolgte Änderungen, Kommentare und Symbole bleiben in orOS (Symbole kommen als Gruppen an).
 
+## Alternative Layouts
+
+Mehr › Alternative Layouts… erstellt dasselbe Design in einer anderen Größe: eine Buchseite als quadratischen Post, einen A5-Flyer als A4-Plakat. Geben Sie einen Namen und eine Größe an und wählen Sie, ob die Textgrößen der Seite folgen. Das alternative Layout ist ein eigenes Dokument: Seine Seiten werden so angepasst, wie es ein Gestalter täte (was bis an die Kanten reicht, reicht weiter dorthin, was im Rand steht, behält seine Kante, Bilder behalten ihre Proportionen), und Sie verschieben, skalieren und gestalten darin alles, ohne das Original zu berühren.
+
+Seine Texte bleiben mit denen des Originals verknüpft. Ändern Sie einen Text im Original, zeigt der Dialog des alternativen Layouts, was sich geändert hat, und „Aus dem Original aktualisieren“ übernimmt die neuen Texte sowie neue Formate und Farben; er warnt vorher, wenn ein Text auch im alternativen Layout geändert wurde, weil die Aktualisierung ihn ersetzt. Rahmen und Bilder bleiben, wie Sie sie dort platziert haben. „Verknüpfung lösen“ macht es zu einem normalen Dokument.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 
