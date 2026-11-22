@@ -193,7 +193,7 @@
     "after_para after that paragraph (1 = the first; 0 = at the end), replace n = the story's n-th table becomes this one, widths relative column widths (e.g. \"2 1 1\"), rule the rule width in pt (0 = none, -1 = 0.5), padding the cell padding in pt (-1 = 4), " +
     "rule_color and header_fill #rrggbb, style the paragraph style of the cells; rows never split, the owner merges cells in the Story Editor" +
     "\nindex: the book's index: terms one entry per word or phrase to mark wherever it stands in the text (any case or accents, whole words): \"word\", \"word = Topic\" or \"word = Topic / Sub-topic\"; " +
-    "unmark a topic whose marks go (* = every mark); build true makes the index again from the marks (a new last page with two columns titled `title`, default Index or Ευρετήριο, when the book has none); pages as the pages show them" +
+    "unmark a topic whose marks go (* = every mark); build true makes the index again from the marks (a new last page with two columns titled `title`, default Index, or its Greek word in a Greek book, when the book has none); pages as the pages show them" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
     "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width); " +
     "colour corrections, kept apart from the file (numbers separated by spaces; empty = as it is; values that change nothing take that correction off; applied in this order): " +
@@ -381,7 +381,7 @@
     if (!st.build) return n;
     if (!IX.idxStory(doc)) {
       var lang = doc.setup.ext && typeof doc.setup.ext.lang === "string" ? doc.setup.ext.lang : "el";
-      if (!IX.place(doc, now, st.title || (/^el/.test(lang) ? "Ευρετήριο" : "Index"), env.idf)) return n;
+      if (!IX.place(doc, now, st.title || (/^el/.test(lang) ? "Ευρετήριο" : "Index"), env.idf)) return n; // i18n-inline-ok: the title written into the book, in the book's language
       n++;
     }
     if (!hasEngine()) { if (env.notes && env.notes.indexOf("indexLater") < 0) env.notes.push("indexLater"); return n + 1; }
