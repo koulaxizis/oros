@@ -43,6 +43,7 @@ Ist [CRM](app:crm) auf diesem Gerät, hat ein Kunde ein Feld `Kunde im CRM`: Wä
 Beispiel: Tagessatz 100 € mit Überstunden ab 8 Stunden zu 15 €/h: 3 oder 8 Stunden kosten 100 €, 12 Stunden 100 € + 4 × 15 €. Berichte zeigen die Teile unter der Tabelle: `Arbeitszeit`, `Überstunden`, `Aufgefüllt bis zum Minimum` und `Gesamt abzurechnen`.
 - Es zählt nur abrechenbare Zeit in den Filtern des Berichts. Ein Tag, eine Woche oder ein Monat ohne Arbeit kostet nichts.
 - Ein Minimum pro Woche oder Monat zählt nur für ganze Wochen oder Monate im Zeitraum des Berichts (für ein monatliches Minimum wähle `Dieser Monat` oder `Letzter Monat`). Der Hinweis über der Tabelle sagt, wenn eine(r) ausgelassen wurde.
+- Arbeit über Mitternacht hinaus (etwa 08:00 bis 01:30) gehört zum Tag, an dem sie begann: ein Tagesminimum, und die Stunden nach Mitternacht zählen als Überstunden dieses Tages.
 - Deine Einträge behalten ihre echten Zeiten: Minimum und Überstunden ändern nur Berichte, CSV, Angebote und Rechnungen.
 
 `Zusatzkosten hinzufügen` unter den Einträgen des Tages erfasst Kosten neben den Stunden, etwa Benzin oder Arbeit außer Haus: `Datum`, `Projekt` (oder nur ein Kunde), `Wofür` und `Betrag`. Zusatzkosten stehen unter den Einträgen des Tages, zählen zum Betrag des Berichts und werden darunter aufgelistet (tippe eine an, um sie zu bearbeiten), kommen als Zeilen ohne Uhrzeiten ins CSV und werden eigene Zeilen in `Angebot erstellen` und `Rechnung erstellen`. `… als abgerechnet markieren` markiert sie mit.

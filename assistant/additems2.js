@@ -11,8 +11,15 @@
 //
 // Every new record is written as the app writes it, in the app's
 // canonical form, so opening the app rewrites nothing:
-//   timesheet  addEntry { id, p, desc, s, e, billed: 0, task?, tags?, m }
-//              through mergeTimesheet (lists sorted by id)
+//   timesheet  addEntry { id, p, desc, s, e, billed, task?, tags?, iv?, src?, m }
+//              through mergeTimesheet (lists sorted by id); TS-GATE
+//              (8.55.00): billed, the Invoices document it went on
+//              (iv, an invoice's ref) and the Calendar event it was
+//              for (src "cal:<event>:<day>", an event's ref)
+//   timesheet_project  TS-GATE: a project { id, name, client, color,
+//              rate, bill, arch, minAmt?, minPer: "d", otH?, otRate?, m }
+//              and, when no client has the name, its client
+//              { id, name, rate: 0, m }, as the app's dialogs write them
 //   meals      putRecipe: normRecipe, ingredients read by the app's
 //              own parseIngLine, through mergeMeals
 //   travel     newEntry / newItem: every field with its own stamp f,
@@ -119,6 +126,15 @@
     if (r.err) return r;
     o.tags = C.normTags ? C.normTags(r.v) : r.v;
     if (!o.desc && !o.project) return { err: w + "give a title (what was done) or a project." };
+    // TS-GATE: billed, and the refs of the invoice it went on and the
+    // event it was for (assistant.js tsRefsOf turns them into iv / src)
+    if (has(x, "billed") && x.billed !== null && x.billed !== undefined && typeof x.billed !== "boolean") return { err: w + "billed must be true or false." };
+    o.invoiceRef = one(typeof x.invoice === "string" ? x.invoice : "");
+    o.eventRef = one(typeof x.event === "string" ? x.event : "");
+    if (has(x, "invoice") && x.invoice !== null && x.invoice !== "" && !o.invoiceRef) return { err: w + "invoice must be an invoice's ref from search_data (app invoices)." };
+    if (has(x, "event") && x.event !== null && x.event !== "" && !o.eventRef) return { err: w + "event must be a Calendar event's ref from search_data or app_summary (app calendar)." };
+    if (o.invoiceRef && x.billed === false) return { err: w + "an entry with an invoice is billed; leave billed out or true." };
+    o.billed = x.billed === true || !!o.invoiceRef;
     return { o: o, key: fold(o.project) + "|" + o.s + "|" + o.e };
   }
   function tsResolve(d, items) {
@@ -153,6 +169,8 @@
       if (x.p) f.push(["project", x.p.name]);
       if (o.task) f.push(["task", o.task]);
       if (o.tags.length) f.push(["labels", o.tags.join(", ")]);
+      if (o.billed) f.push(["billed", o.ivTitle || "yes"]);
+      if (o.evTitle) f.push(["event", o.evTitle]);
       return { title: o.desc || x.p.name, fields: f, dup: x.dup };
     }) };
   }
@@ -166,9 +184,11 @@
       var id;
       do { id = C.newId(); } while (byId(d.entries, id) || ids.indexOf(id) >= 0);
       ids.push(id);
-      var x = { id: id, p: r.res[i].p ? r.res[i].p.id : "", desc: o.desc, s: o.s, e: o.e, billed: 0, m: s };
+      var x = { id: id, p: r.res[i].p ? r.res[i].p.id : "", desc: o.desc, s: o.s, e: o.e, billed: o.billed ? 1 : 0, m: s };
       if (o.task) x.task = o.task;
       if (o.tags.length) x.tags = o.tags.slice();
+      if (o.billed && o.iv) x.iv = o.iv;
+      if (o.src) x.src = o.src;
       d.entries.push(x);
       made.push({ i: i, id: id, title: o.desc || r.res[i].p.name, target: { entry: id } });
     });
@@ -186,6 +206,135 @@
     u.items.forEach(function (it) {
       var x = byId(d.entries, it.id);
       if (x) d.entries[d.entries.indexOf(x)] = { id: x.id, m: stampAfter(now, x.m), del: 1 };
+    });
+    return { ok: true, data: C.mergeTimesheet(d, d) };
+  }
+
+  // ---------- 1b. Timesheet: a project (TS-GATE, 8.55.00) ----------
+  // timesheet.js's project dialog: a project of a client (made when no
+  // client has the name), its hourly rate and, optionally, a day
+  // minimum (minAmt, the day rate) and overtime after so many hours a
+  // day (otH, otRate) — normBilling's day period. Money is given in
+  // the app's currency units and kept in cents.
+  function centsArg(x, k, max, w) {
+    if (!has(x, k) || x[k] === null || x[k] === undefined || x[k] === "") return { v: 0 };
+    var n = typeof x[k] === "number" ? x[k] : NaN;
+    if (!isFinite(n) || n < 0 || n * 100 > max) return { err: w + k + " must be an amount from 0 to " + Math.floor(max / 100) + ", e.g. 20 or 12.5." };
+    return { v: Math.round(n * 100) };
+  }
+  function normTsProject(x, w) {
+    var C = core("timesheet");
+    if (!C) return { err: "Timesheet is not available." };
+    var r = text1(x, "name", C.LIM.name, w, "a project's name");
+    if (r.err) return r;
+    if (!r.v) return { err: w + "name (the project's name) is required." };
+    var o = { name: r.v };
+    r = text1(x, "client", C.LIM.name, w, "a client's name");
+    if (r.err) return r;
+    o.client = r.v;
+    r = centsArg(x, "rate", C.LIM.rate[1], w);
+    if (r.err) return r;
+    o.rate = r.v;
+    r = centsArg(x, "day_minimum", C.LIM.minAmt[1], w);
+    if (r.err) return r;
+    o.minAmt = r.v;
+    r = centsArg(x, "overtime_rate", C.LIM.rate[1], w);
+    if (r.err) return r;
+    o.otRate = r.v;
+    o.otH = 0;
+    if (has(x, "overtime_after") && x.overtime_after !== null && x.overtime_after !== "") {
+      var h = x.overtime_after;
+      if (typeof h !== "number" || !isFinite(h) || h <= 0 || h > 24 || Math.round(h * 60) !== h * 60) return { err: w + "overtime_after is the hours of a day after which time is overtime, more than 0 and at most 24, e.g. 10 or 8.5." };
+      o.otH = Math.round(h * 60);
+    }
+    if (o.otRate && !o.otH) return { err: w + "overtime_rate needs overtime_after (the hours of a day after which it applies)." };
+    if (has(x, "billable") && x.billable !== null && x.billable !== undefined && typeof x.billable !== "boolean") return { err: w + "billable must be true or false." };
+    o.bill = x.billable === false ? 0 : 1;
+    return { o: o, key: fold(o.name) };
+  }
+  function tsLiveOf(list) { return (Array.isArray(list) ? list : []).filter(function (p) { return isObj(p) && !p.del && typeof p.name === "string"; }); }
+  function tpResolve(d, items) {
+    var projects = tsLiveOf(d.projects), clients = tsLiveOf(d.clients);
+    return items.map(function (o) {
+      var dup = null, f = fold(o.name);
+      projects.forEach(function (p) { if (!dup && fold(p.name) === f) dup = { id: p.id, title: p.name, target: { project: p.id } }; });
+      var c = null, fc = fold(o.client);
+      if (o.client) clients.forEach(function (x) { if (!c && fold(x.name) === fc) c = x; });
+      return { dup: dup, client: c };
+    });
+  }
+  function tpFields(o, res) {
+    var f = [];
+    if (o.client) f.push(["client", o.client + (res.client ? "" : " (new)")]);
+    if (o.rate) f.push(["rate", H.money(o.rate) + "/h"]);
+    if (o.minAmt) f.push(["day minimum", H.money(o.minAmt)]);
+    if (o.otH) f.push(["overtime after", (o.otH / 60) + " h" + (o.otRate ? " at " + H.money(o.otRate) + "/h" : "")]);
+    if (!o.bill) f.push(["billable", "no"]);
+    return f;
+  }
+  function tpPlan(d, items) {
+    d = tsBase(d);
+    if (!isObj(d) || !Array.isArray(d.projects) || !Array.isArray(d.clients)) return notOpened("Timesheet");
+    var res = tpResolve(d, items);
+    return { ok: true, rows: items.map(function (o, i) { return { title: o.name, fields: tpFields(o, res[i]), dup: res[i].dup }; }) };
+  }
+  function tpApply(d, items, now, skip) {
+    d = tsBase(d);
+    var C = core("timesheet");
+    if (!isObj(d) || !Array.isArray(d.projects) || !Array.isArray(d.clients)) return notOpened("Timesheet");
+    var res = tpResolve(d, items), s = stampAfter(now, 0), made = [], undo = { app: "timesheet_project", t: "new", items: [] };
+    var taken = {}, newClients = {};
+    function freshId() {
+      var id;
+      do { id = C.newId(); } while (taken[id] || byId(d.projects, id) || byId(d.clients, id));
+      taken[id] = 1;
+      return id;
+    }
+    var color = tsLiveOf(d.projects).length;
+    items.forEach(function (o, i) {
+      if (skip && skip[i]) return;
+      var cid = "";
+      if (o.client) {
+        var fc = fold(o.client);
+        if (res[i].client) cid = res[i].client.id;
+        else if (newClients[fc]) cid = newClients[fc];
+        else {
+          cid = newClients[fc] = freshId();
+          d.clients.push({ id: cid, name: o.client, rate: 0, m: s });
+          undo.items.push({ list: "clients", id: cid });
+        }
+      }
+      var id = freshId();
+      var p = { id: id, name: o.name, client: cid, color: color++ % C.COLORS.length, rate: o.rate, bill: o.bill, arch: 0, m: s };
+      if (o.minAmt || o.otH) {
+        if (o.minAmt) p.minAmt = o.minAmt;
+        if (o.otH) p.otH = o.otH;
+        p.minPer = "d";
+        if (o.otRate) p.otRate = o.otRate;
+      }
+      d.projects.push(p);
+      undo.items.push({ list: "projects", id: id });
+      made.push({ i: i, id: id, title: o.name, target: { project: id } });
+    });
+    d = C.mergeTimesheet(d, d);
+    undo.items.forEach(function (it) { it.x = clone(byId(d[it.list], it.id)); });
+    return { ok: true, data: d, made: made, undo: undo };
+  }
+  function tpUndo(d, u, now) {
+    var C = core("timesheet");
+    if (!C || !isObj(d) || !Array.isArray(d.projects)) return bad("Timesheet has no projects.");
+    for (var i = 0; i < u.items.length; i++) {
+      var x = byId(d[u.items[i].list] || [], u.items[i].id);
+      if (x && JSON.stringify(x) !== JSON.stringify(u.items[i].x)) return bad("A new project or client was changed since; nothing was undone.");
+    }
+    var used = {};
+    (d.entries || []).concat(d.extras || []).forEach(function (x) { if (isObj(x) && !x.del) { used[x.p] = 1; used[x.c] = 1; } });
+    for (var j = 0; j < u.items.length; j++) {
+      if (u.items[j].list === "projects" && used[u.items[j].id]) return bad("Time was already logged on a new project; nothing was undone.");
+    }
+    u.items.forEach(function (it) {
+      var list = d[it.list], x = byId(list, it.id);
+      if (x) list[list.indexOf(x)] = { id: x.id, m: stampAfter(now, x.m), del: 1 };
     });
     return { ok: true, data: C.mergeTimesheet(d, d) };
   }
@@ -527,6 +676,7 @@
 
   A.extend({
     timesheet: { key: "oros-timesheet-data", name: "Timesheet", norm: normTs, plan: tsPlan, apply: tsApply, undo: tsUndo },
+    timesheet_project: { key: "oros-timesheet-data", name: "Timesheet", norm: normTsProject, plan: tpPlan, apply: tpApply, undo: tpUndo },
     meals: { key: "oros-meals-data", name: "Meal Planner", norm: normRecipe, plan: mlPlan, apply: mlApply, undo: mlUndo },
     travel_plan: { key: "oros-travel-data", name: "Travel", norm: normTvPlan, plan: tvPlanOf("plan"), apply: tvApplyOf("plan"), undo: tvUndoOf("plan") },
     travel_pack: { key: "oros-travel-data", name: "Travel", norm: normTvPack, plan: tvPlanOf("pack"), apply: tvApplyOf("pack"), undo: tvUndoOf("pack") },

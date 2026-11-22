@@ -43,6 +43,7 @@ Open a project (or a client, for all its projects without their own) on `Project
 For example a day rate of 100 € with overtime after 8 hours at 15 €/h: 3 hours or 8 hours cost 100 €, 12 hours cost 100 € + 4 × 15 €. Reports show the parts under the table: `Work time`, `Overtime`, `Up to the minimum charge` and the `Total to charge`.
 - Only billable time in the report's filters counts. A day, week or month without work charges nothing.
 - A minimum per week or month counts only for whole weeks or months inside the report's period (for a monthly minimum, pick `This month` or `Last month`). The note above the table says when one was left out.
+- Work that runs past midnight (say 08:00 to 01:30) belongs to the day it started: one day minimum, and the hours after midnight count as that day's overtime.
 - Your entries keep their real times: the minimum and the overtime only change reports, CSV, quotes and invoices.
 
 `Add an extra charge` under the day's entries records a cost beyond the hours, such as fuel or work away from the office: a `Date`, a `Project` (or just a client), `What it is for` and the `Amount`. Extra charges show under the day's entries, are added to the report's amount and listed under it (tap one to edit it), come into the CSV as rows without times, and become their own lines in `Create quote` and `Create invoice`. `Mark … as invoiced` marks them too.

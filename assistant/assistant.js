@@ -5207,11 +5207,30 @@
     if (!f || typeof f.path !== "string" || typeof f.text !== "string" || !F || typeof F.writeText !== "function") return;
     try { Promise.resolve(F.writeText(f.path, f.text)).catch(function () {}); } catch (e) {}
   }
+  // TS-GATE (8.55.00): change_item's invoice / event on a Timesheet
+  // entry are refs; here they become { id, title } / { src, title }
+  // (edits2.js timesheetChange), "" stays "" (clears).
+  function tsChangeRefs(c, ch) {
+    var s = ch.set || {};
+    if (typeof s.invoice === "string" && s.invoice) {
+      var ri = c.refs ? c.refs[s.invoice.trim()] : null;
+      if (!ri || ri.app !== "invoices" || !ri.target || typeof ri.target.invoice !== "string") return "invoice " + s.invoice + " is not an invoice's ref. Find the invoice with search_data (app invoices) first.";
+      s.invoice = { id: ri.target.invoice, title: String(ri.title || "").slice(0, 80) };
+    }
+    if (typeof s.event === "string" && s.event) {
+      var re = c.refs ? c.refs[s.event.trim()] : null;
+      if (!re || re.app !== "calendar" || !re.target || typeof re.target.id !== "string" || typeof re.target.date !== "string") return "event " + s.event + " is not a Calendar event's ref. Find the event with search_data or app_summary (app calendar) first.";
+      s.event = { src: "cal:" + re.target.id + ":" + re.target.date, title: String(re.title || "").slice(0, 80) + " · " + re.target.date };
+    }
+    return "";
+  }
   function changeItem0(c, args, apps) {
     if (args && Array.isArray(args.changes)) return changeList(c, args, apps);
     if (args && Array.isArray(args.refs)) return changeMany(c, args, apps);
     var ch = E.normArgs(args);
     if (!ch.ok) return Promise.resolve({ content: "Error: " + ch.err, err: 1 });
+    var tsE = tsChangeRefs(c, ch);
+    if (tsE) return Promise.resolve({ content: "Error: " + tsE, err: 1 });
     var r = c.refs ? c.refs[ch.ref] : null;
     if (!r) return Promise.resolve({ content: "Error: unknown ref. Find the item with search_data or app_summary first.", err: 1 });
     var app = null;
@@ -5289,6 +5308,8 @@
       one.ref = refs[i];
       var ch = E.normArgs(one);
       if (!ch.ok) return Promise.resolve({ content: "Error: " + ch.err, err: 1 });
+      var tsE2 = tsChangeRefs(c, ch);
+      if (tsE2) return Promise.resolve({ content: "Error: " + tsE2, err: 1 });
       var r = c.refs ? c.refs[ch.ref] : null;
       if (!r) { miss.push(refs[i]); continue; }
       if (appId && r.app !== appId) return Promise.resolve({ content: "Error: refs must all be items of the same app.", err: 1 });
@@ -5386,6 +5407,8 @@
       var ch = E.normArgs(one);
       var who = typeof list[i].ref === "string" && list[i].ref ? list[i].ref : "changes[" + i + "]";
       if (!ch.ok) { bad.push(who + ": " + ch.err); continue; }
+      var tsE3 = tsChangeRefs(c, ch);
+      if (tsE3) { bad.push(who + ": " + tsE3); continue; }
       if (seen[ch.ref]) { bad.push(ch.ref + ": it is in changes twice; put all of its changes in one entry."); continue; }
       seen[ch.ref] = 1;
       var r = c.refs ? c.refs[ch.ref] : null;
@@ -5649,6 +5672,9 @@
     if (crm) CRM_ADD.forEach(function (id) { out.push({ id: id, name: crm.name, icon: crm.icon, of: "crm" }); });
     var tv = apps.filter(function (a) { return a.id === "travel" && have[a.id]; })[0];
     if (tv) TRAVEL_ADD.forEach(function (id) { out.push({ id: id, name: tv.name, icon: tv.icon, of: "travel" }); });
+    // TS-GATE (8.55.00): a Timesheet project (and its client), whenever Timesheet is allowed
+    var ts = out.filter(function (a) { return a.id === "timesheet"; })[0];
+    if (ts) TS_ADD.forEach(function (id) { out.push({ id: id, name: ts.name, icon: ts.icon, of: "timesheet" }); });
     return out;
   }
   // AS-ADD2 (wave A1): the everyday apps' new items are in
@@ -5663,7 +5689,9 @@
   // each), in assistant/additems2.js with the app's own core.
   var ADD2_IDS = ["timesheet", "meals", "stickies"];
   var TRAVEL_ADD = ["travel_plan", "travel_pack"];
-  var ADD2_CORES = { timesheet: ["orosTimesheetCore", "../timesheet/core.js"], meals: ["OrosMealsCore", "../meals/core.js"],
+  var TS_ADD = ["timesheet_project"];
+  var ADD2_CORES = { timesheet: ["orosTimesheetCore", "../timesheet/core.js"], timesheet_project: ["orosTimesheetCore", "../timesheet/core.js"],
+                     meals: ["OrosMealsCore", "../meals/core.js"],
                      stickies: ["StickiesCore", "../stickies/core.js"] };
   // Wave 4 (AS-ADD6): habits, finished workouts, a vehicle's services
   // and renewals, plants, a pet's health records and Media Shelf
@@ -5679,7 +5707,7 @@
                      publish: ["OrosPublishCore", "../publish/core.js"], invoices: ["OrosInvoicesCore", "../invoices/core.js"],
                      quote: ["OrosQuoteCore", "../quote/core.js"], wiki: ["WikiCore", "../wiki/core.js"],
                      flashcards: ["FlashcardsCore", "../flashcards/core.js"], base: ["OrosBaseCore", "../base/core.js"] };
-  ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD, ADD3_IDS);
+  ADD_IDS = ADD_IDS.concat(ADD2_IDS, TRAVEL_ADD, TS_ADD, ADD3_IDS);
   var addScripts = {};
   function loadOnce(src) {
     if (!addScripts[src]) {
@@ -5697,7 +5725,7 @@
     if (ADD_IDS.indexOf(appId) < 0 && CRM_ADD.indexOf(appId) < 0) return Promise.resolve(null);
     var need = [window.OrosAssistAdd ? null : "additems.js"];
     if (appId === "bookmarks" && !window.OrosBookmarksCore) need.push("../bookmarks/core.js");
-    var c2 = ADD2_CORES[appId] || ADD3_CORES[appId], two = ADD2_IDS.indexOf(appId) >= 0 || TRAVEL_ADD.indexOf(appId) >= 0;
+    var c2 = ADD2_CORES[appId] || ADD3_CORES[appId], two = ADD2_IDS.indexOf(appId) >= 0 || TRAVEL_ADD.indexOf(appId) >= 0 || TS_ADD.indexOf(appId) >= 0;
     var three = ADD3_IDS.indexOf(appId) >= 0;
     if (c2 && !window[c2[0]]) need.push(c2[1]);
     return Promise.all(need.filter(Boolean).map(loadOnce)).then(function () {
@@ -5749,6 +5777,27 @@
         return "Error: items[" + i + "]: trip " + items[i].trip + " is not a trip's ref. Find the trip with search_data (app travel) first; a new trip is made in Travel.";
       }
       items[i].tripId = r.target.trip;
+    }
+    return "";
+  }
+  // TS-GATE (8.55.00): a Timesheet entry's invoice and event, refs
+  // from search_data (Invoices: { invoice }, Calendar: { id, date }),
+  // never a number or a name. The plan card shows their titles.
+  function tsRefsOf(c, items) {
+    for (var i = 0; i < items.length; i++) {
+      var o = items[i], w = "Error: items[" + i + "]: ";
+      if (o.invoiceRef) {
+        var ri = c.refs ? c.refs[o.invoiceRef.replace(/^oros:/, "").trim()] : null;
+        if (!ri || ri.app !== "invoices" || !ri.target || typeof ri.target.invoice !== "string") return w + "invoice " + o.invoiceRef + " is not an invoice's ref. Find the invoice with search_data (app invoices) first.";
+        o.iv = ri.target.invoice;
+        o.ivTitle = String(ri.title || "").slice(0, 80);
+      }
+      if (o.eventRef) {
+        var re = c.refs ? c.refs[o.eventRef.replace(/^oros:/, "").trim()] : null;
+        if (!re || re.app !== "calendar" || !re.target || typeof re.target.id !== "string" || typeof re.target.date !== "string") return w + "event " + o.eventRef + " is not a Calendar event's ref. Find the event with search_data or app_summary (app calendar) first.";
+        o.src = "cal:" + re.target.id + ":" + re.target.date;
+        o.evTitle = String(re.title || "").slice(0, 80) + " · " + re.target.date;
+      }
     }
     return "";
   }
@@ -5825,6 +5874,10 @@
     if (app.of === "crm" || app.of === "travel") {
       var eR = app.of === "crm" ? crmRefsOf(c, items) : tripRefsOf(c, items);
       if (eR) return Promise.resolve({ content: eR, err: 1 });
+    }
+    if (app.id === "timesheet") {
+      var tR = tsRefsOf(c, items);
+      if (tR) return Promise.resolve({ content: tR, err: 1 });
     }
     if (app.id === "crm") {
       var ctApp = createApps(apps).filter(function (a) { return a.id === "contacts"; })[0];
