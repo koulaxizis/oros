@@ -141,7 +141,7 @@ test("closed orOS: the device runs only the changes the relay may queue", () => 
   assert.ok(G.QUEUED.indexOf("budget_delete") >= 0 && G.QUEUED.indexOf("budget_transfer") >= 0);
   assert.deepEqual(Object.keys(R.SCREEN_TOOLS).sort(), G.ACT_OPEN.concat(["edit_in_app"]).sort(), "GATE-SCREEN: the relay keeps the same screen tools the device holds");
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
-  assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");
+  assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) \{ ranDrop\(it\.id\); throw KEEP; \}/, "applyQueue checks the list (GQ-KEEP: one it does not know stays queued for a newer orOS)");
 });
 
 test("closed orOS: a queued deletion of items is asked on the device first, one question per call (7.44.00)", () => {
