@@ -13876,3 +13876,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** smartbar.js, shell.js (wxDailyRows, wxPeekData, weather chip, version), translations.js, i18n/de/shell.js, appearance help EN/EL/DE, whatsnew EN/EL, tests/smartbar.test.js.
 - **Tests:** smartbar tests (PEEK-1); full suite; Chromium through the real shell at 1280 EN and 360 EL (both peeks, Escape and outside click close, focus back to the chip).
 - **Not tested:** a real phone, Safari, a weather cache from before this version (fills on the next fetch).
+
+### 2026-11-22 — 8.67.00 — AI use card in the smart bar (AI-USE, smartbar 1.5.0)
+- **What:** kind `ai`: this month's tokens on the person's own keys (`oros-assistant-prefs` usage, local/webllm/browser never) and Tavily searches vs the free 1,000 (assistant.js counts successful searches in `prefs.srch`, 3 months kept); `sb-soon` from 800; hidden when the Assistant is locked; never prompts or content. Chris approved video idea #5 (2026-11-22 18:49Z).
+- **Files:** smartbar.js, assistant/assistant.js, translations.js, i18n/de/shell.js, appearance help EN/EL/DE, whatsnew EN/EL, tests/smartbar.test.js, tests/continue.test.js (KINDS regex).
+- **Tests:** smartbar tests (AI-USE); full suite; Chromium through the real shell at 1280 EN and 360 EL (card with own-key usage and 812 searches in the warning colour; local model use seeded alongside and not counted).
+- **Not tested:** a real Claude or Tavily key, Safari, a real phone.
