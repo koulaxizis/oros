@@ -905,6 +905,9 @@
 
   function updateBadge() {
     const unreadCount = state.slice.items.filter(i => !i.readAt).length;
+    // BADGE-1: the Dock and desktop shortcuts repaint their counts
+    // (launcher.js listens; it debounces to one paint per frame).
+    try { document.dispatchEvent(new CustomEvent('oros-notifs-changed')); } catch (e) {}
     
     // Find taskbar bell element
     const bellBtn = document.getElementById('oros-taskbar-bell');

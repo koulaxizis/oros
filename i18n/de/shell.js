@@ -456,6 +456,8 @@ orosPack("de", "shell", {
  "install.trigger": "orOS installieren",
  "lang.tooltip": "Sprache wechseln",
  "ln.autohide": "Automatisch ausblenden",
+ "ln.badges": "Zahlen an den Symbolen",
+ "ln.badgeAria": "{n} offen",
  "ln.desk": "Auf dem Desktop",
  "ln.deskLabel": "Desktop-Verknüpfungen",
  "osk.title": "Bildschirmtastatur",

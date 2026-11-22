@@ -264,3 +264,33 @@ test("dockSide: the chosen edge on a large screen, the bottom on a small one", (
   for (const junk of [undefined, null, "", "middle", "Left", 3, {}]) assert.equal(L.dockSide(junk, 1280, 800), "bottom");
   assert.equal(L.dockSide("left", NaN, 800), "bottom");
 });
+
+// BADGE-1 (launcher 1.8.0): counts on the Dock and desktop shortcuts.
+test("badgeCounts: unread inbox items per app + late tasks, sensitive apps never", () => {
+  const items = [
+    { ns: "mail", readAt: null }, { ns: "mail" }, { ns: "mail", readAt: 5 },
+    { ns: "calendar" }, { ns: "passwords" }, { ns: "assistant" }, { ns: "diary" },
+    { ns: "Bad NS" }, null, "x", { ns: 3 },
+  ];
+  const c = L.badgeCounts(items, { todo: 4, today: "2", notes: 0, budget: -1 }, { diary: true });
+  assert.deepEqual(c, { mail: 2, calendar: 1, todo: 4, today: 2 });
+  assert.deepEqual(L.badgeCounts(null, null, null), {});
+  assert.deepEqual(L.badgeCounts([{ ns: "todo" }], { todo: 2 }), { todo: 3 });
+  assert.deepEqual(L.BADGE_NEVER, ["assistant", "passwords"]);
+});
+
+test("badgeText: 99+ above 99", () => {
+  assert.equal(L.badgeText(1), "1");
+  assert.equal(L.badgeText(99), "99");
+  assert.equal(L.badgeText(100), "99+");
+});
+
+test("lateTasks: only tasks whose day passed", () => {
+  const rows = [
+    { kind: "task", due: "2026-11-20" }, { kind: "task", due: "2026-11-22" },
+    { kind: "event", due: "2026-11-01" }, { kind: "task" }, { kind: "task", due: "junk" }, null,
+    { kind: "task", due: "2026-11-21" },
+  ];
+  assert.equal(L.lateTasks(rows, "2026-11-22"), 2);
+  assert.equal(L.lateTasks(null, "2026-11-22"), 0);
+});
