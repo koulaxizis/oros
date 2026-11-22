@@ -2912,7 +2912,8 @@
   var TOOL_KB_COLS = {
     name: "kanban_add_columns",
     description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column, and rename columns " +
-      "(rename_columns: each by its id or name, to a new name). Give columns, rename_columns or both. " +
+      "(rename_columns: each by its id or name, to a new name), and set a column up as a step of the Author Portal production flow " +
+      "(portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay, an empty text clears it). Give any of the three. " +
       "The user sees the columns on one card and must press Add; nothing is saved before that. The card has Undo.",
     params: { type: "object", properties: {
       board: { type: "string", description: "The board name or id (app_summary with app kanban)." },
@@ -2923,7 +2924,16 @@
       rename_columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
         column: { type: "string", description: "The column's id or current name." },
         name: { type: "string", description: "Its new name, at most 60 characters." } },
-        required: ["column", "name"] } } },
+        required: ["column", "name"] } },
+      portal_columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
+        column: { type: "string", description: "The column's id or current name." },
+        step: { type: "boolean", description: "true: a step the author sees in the Author Portal; false: not a step (its texts are kept)." },
+        finish: { type: "boolean", description: "true: a finish; when the book reaches it, the author's bar hides until the card reaches the next step." },
+        name: { type: "string", description: "The step's name for the author (Greek), at most 80 characters; the column's name when empty." },
+        name_en: { type: "string", description: "The step's name in English (optional), at most 80 characters." },
+        about: { type: "string", description: "The short explanation the author sees on hover (Greek), at most 600 characters." },
+        about_en: { type: "string", description: "The explanation in English (optional), at most 600 characters." } },
+        required: ["column"] } } },
       required: ["board"] }
   };
 
@@ -3476,6 +3486,7 @@
         spreads: { type: "boolean", description: "Facing pages side by side (default false: single pages, as printers want)." },
         downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." },
         creep: { type: "number", description: "Creep for a saddle-stitched book in mm, 0-5 (default 0): the innermost pages' content moves this far towards the spine, the outer ones less." },
+        tagged: { type: "boolean", description: "A tagged, accessible PDF (PDF/UA): reading order, headings, notes, picture descriptions, language, link descriptions (default false)." },
         out: OUT_SCHEMA
       }
     }
@@ -3504,7 +3515,7 @@
     if (!out.ok) return out;
     out = out.list;
     return { ok: true, doc: doc, preset: preset, pages: pages === "all" ? "" : pages, bleed: bleed ? 1 : 0, marks: marks,
-             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, out: out };
+             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, tagged: a.tagged === true ? 1 : 0, out: out };
   }
   var PDF_PATH = /^\/internal\/Layout\/PDF\/[^\/]{1,200}\.pdf$/, PF_CODE = /^[a-z][a-zA-Z0-9]{0,19}$/;
   // Layout's report → what the model gets (numbers, codes and pages only).
@@ -3526,6 +3537,7 @@
     });
     o.preflight = { errors: pf.filter(function (p) { return p.severity === "error"; }).length, warnings: pf.filter(function (p) { return p.severity === "warning"; }).length, problems: pf };
     if (rep.down) o.pictures_downsampled = Math.floor(n(rep.down));
+    if (isObj(rep.tagged)) o.tagged = { elements: Math.floor(n(rep.tagged.elems)), figures: Math.floor(n(rep.tagged.figures)), links: Math.floor(n(rep.tagged.links)) };
     return outReport(rep, o);
   }
 
@@ -3535,7 +3547,7 @@
   // Atelier atelier/commands.js) }. Every field any command takes is
   // declared once with one JSON type (a test checks that no name has
   // two types across the apps), so strict providers keep them.
-  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" }, photolab: { what: "pictures", noun: "picture" }, slides: { what: "presentations", noun: "presentation" }, writer: { what: "documents", noun: "document" }, spreadsheet: { what: "sheets", noun: "sheet" }, montage: { what: "projects", noun: "project" }, studio: { what: "projects", noun: "project" }, whiteboard: { what: "boards", noun: "board" }, mindmap: { what: "maps", noun: "map" } };
+  var EDIT_APP = { atelier: { what: "designs", noun: "design" }, layout: { what: "documents", noun: "document" }, photolab: { what: "pictures", noun: "picture" }, slides: { what: "presentations", noun: "presentation" }, writer: { what: "documents", noun: "document" }, spreadsheet: { what: "sheets", noun: "sheet" }, montage: { what: "projects", noun: "project" }, studio: { what: "projects", noun: "project" }, whiteboard: { what: "boards", noun: "board" }, mindmap: { what: "maps", noun: "map" }, mockups: { what: "mockups", noun: "mockup" } };
   function specType(spec) {
     if (spec.t === "num" || spec.t === "int") return "number";
     if (spec.t === "bool") return "boolean";
@@ -3568,13 +3580,13 @@
   var EDIT_SEL = "In Atelier, elements are picked with ids (element ids from read_in_app, comma separated), pages (\"\" all, odd, even, first, last or positions like 2-4,6; 1 = the first page), " +
     "what (\"\" every element but page backgrounds, or text, photo, video, shape, icon, line, table, chart, bg) and has (words in the text or a photo's file name); " +
     "a locked element is moved or removed only when named by id. Lengths are in the design's own unit (px, or mm for print). Leave a field out to keep it as it is. " +
-    "In Slides the same four fields pick objects, with pages meaning slides (see the Slides commands). In Writer paragraphs are picked with paras, what and has (see the Writer commands). In Spreadsheet the documents are sheets and cells are picked with range in A1 notation (see the Spreadsheet commands). In Montage the documents are video projects and clips are picked with ids, what, row and has (see the Montage commands). In Studio the documents are song projects; tracks are picked with tracks and what, clips also with ids and has (see the Studio commands). In Whiteboard the documents are boards and objects are picked with ids, what, has and frame (see the Whiteboard commands). In Mind map the documents are maps and ideas are picked with ids, has, branch and level (see the Mind map commands).";
+    "In Slides the same four fields pick objects, with pages meaning slides (see the Slides commands). In Writer paragraphs are picked with paras, what and has (see the Writer commands). In Spreadsheet the documents are sheets and cells are picked with range in A1 notation (see the Spreadsheet commands). In Montage the documents are video projects and clips are picked with ids, what, row and has (see the Montage commands). In Studio the documents are song projects; tracks are picked with tracks and what, clips also with ids and has (see the Studio commands). In Whiteboard the documents are boards and objects are picked with ids, what, has and frame (see the Whiteboard commands). In Mind map the documents are maps and ideas are picked with ids, has, branch and level (see the Mind map commands). In Mockups the documents are 3D book mockups; each command changes the whole mockup (see the Mockups commands).";
   function editTool(cats) {
     var apps = Object.keys(cats || {}).filter(function (a) { return EDIT_APP[a]; }).sort();
     return {
       name: "edit_in_app",
       description: "Change anything in the user's documents of an app on their instruction: texts, fonts, sizes, colours, photos (filters, black and white, adjustments, masks, background removal), " +
-        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names, animation and page timing, new elements, the brand kit, new sizes, files to download, cell values, formulas, cell formats, rows and columns, sorting, video clips (titles, speed, sound, looks, transitions, order, cuts), song projects (track volume, pan, mute, solo, names, order, new and deleted tracks, clip gain, fades, places and cuts, MIDI notes, tempo, loop), whiteboards (notes, texts, shapes, frames, arrows between them, colours, places, grids, removing), mind maps (ideas, their text, colours, emoji, notes, links, ticks, styles, moving and sorting branches, cross-links, boundaries, layout); " +
+        "positions, sizes, alignment, layers, pages (add, copy, remove, move), page backgrounds, bleed, names, animation and page timing, new elements, the brand kit, new sizes, files to download, cell values, formulas, cell formats, rows and columns, sorting, video clips (titles, speed, sound, looks, transitions, order, cuts), song projects (track volume, pan, mute, solo, names, order, new and deleted tracks, clip gain, fades, places and cuts, MIDI notes, tempo, loop), whiteboards (notes, texts, shapes, frames, arrows between them, colours, places, grids, removing), mind maps (ideas, their text, colours, emoji, notes, links, ticks, styles, moving and sorting branches, cross-links, boundaries, layout), book mockups (trim, pages, binding, cover pictures, e-book on a phone or tablet screen, camera angle, background, picture export); " +
         "or make a new design from the user's description (designs new, create first, then add, bg, pagetime…). Read the document first with read_in_app to know its elements and their ids. " +
         "The user sees the commands in plain words and how many things each design will get changed on a card, and presses Apply; nothing changes before that, and the card's Undo takes everything back. " +
         "Use only these commands and fields (any other is refused and the reason comes back). " + EDIT_SEL + "\n" +
@@ -3583,7 +3595,7 @@
         type: "object",
         properties: {
           app: { type: "string", "enum": apps },
-          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets, for Montage video projects, for Studio song projects, for Whiteboard boards, for Mind map maps: open, named or all." },
+          designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets, for Montage video projects, for Studio song projects, for Whiteboard boards, for Mind map maps, for Mockups book mockups: open, named or all (Photo Lab and Mockups also new, with create first)." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
           steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } },
           dry_run: { type: "boolean", description: "Only through orOS Gate: say what the commands would change (per document, with notes) without changing anything. With every orOS closed it checks the commands, fields, values, documents' names and files against the owner's encrypted copy (counts come only with orOS open); every edit_in_app is checked that way before it waits for orOS." }

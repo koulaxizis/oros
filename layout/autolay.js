@@ -42,7 +42,7 @@
   var MAX_PASSES = 12, GUESS_LEN = 80, FRONT_MAX = 40;
   var TOC_TAIL = /(\t|\s{2,}|\.{3,}|…+|\s)(\d{1,4})\s*$/;
 
-  function textOf(p) { return (p.runs || []).map(function (r) { return r.t || ""; }).join(""); }
+  function textOf(p) { return (p.runs || []).map(function (r) { return r.ext && (r.ext.fn || r.ext.xr) ? "" : r.t || ""; }).join(""); }
 
   // ---------- 2. Fields ----------
   function fillFields(d, meta) {
@@ -193,16 +193,34 @@
   // chapter after a part, LY-IN) and their pages. Its first entry
   // gives the look: its paragraph style, the text between title and
   // number, its runs' attributes. → entries, or -1 when there is none.
+  // Any document (LY-W7): setup.ext.toc { ps: [[style id, level 1-3]],
+  // eps: [the entries' styles per level], sep: the text between title
+  // and page ("\t" or like " | p. ") } names the titles itself.
+  function tocCfg(d) {
+    var c = d.setup.ext && d.setup.ext.toc;
+    if (!c || typeof c !== "object" || !Array.isArray(c.ps)) return null;
+    var heads = {}, n = 0;
+    c.ps.forEach(function (x) {
+      var id = Array.isArray(x) ? x[0] : null, lv = Array.isArray(x) ? Math.floor(Number(x[1])) : 0;
+      if (typeof id === "string" && M.find(d.pstyles, id) && lv >= 1 && lv <= 3 && !heads[id]) { heads[id] = lv; n++; }
+    });
+    if (!n) return null;
+    return { heads: heads, eps: Array.isArray(c.eps) ? c.eps.map(function (id) { return typeof id === "string" && M.find(d.pstyles, id) ? id : ""; }) : [],
+             sep: typeof c.sep === "string" && c.sep.length <= 30 && c.sep.indexOf("\n") < 0 ? c.sep : "" };
+  }
   function toc(d, L) {
-    var h = H.houseOf(d), sx = d.setup.ext && d.setup.ext.start;
+    var h = H.houseOf(d), sx = d.setup.ext && d.setup.ext.start, cfg = tocCfg(d);
     // a book made from a starter (LY-N1) names its chapter titles' style
     var title = (h && h.roles && h.roles.title) || (sx && typeof sx.title === "string" && M.find(d.pstyles, sx.title) ? sx.title : null);
     var st = null, heads = {}, book = d.setup.ext && d.setup.ext.book;
     d.stories.forEach(function (s) { if (s.ext && s.ext.hs === "toc") st = s; });
-    if (!st || !title) return -1;
-    heads[title] = 1;
-    if (M.find(d.pstyles, "ps-hsopen")) heads["ps-hsopen"] = 1;
-    ((book && Array.isArray(book.partPs)) ? book.partPs : []).forEach(function (id) { heads[id] = 1; });
+    if (!st || (!title && !cfg)) return -1;
+    if (cfg) heads = cfg.heads;
+    else {
+      heads[title] = 1;
+      if (M.find(d.pstyles, "ps-hsopen")) heads["ps-hsopen"] = 1;
+      ((book && Array.isArray(book.partPs)) ? book.partPs : []).forEach(function (id) { heads[id] = 1; });
+    }
     L = L || R.computeLayout(d);
     var tpl = null;
     st.paras.some(function (p) { var m = TOC_TAIL.exec(textOf(p)); if (m) { tpl = { p: p, sep: m[1] }; return true; } return false; });
@@ -222,17 +240,17 @@
       });
       s.paras.forEach(function (p, k) {
         if (!heads[p.ps] || !textOf(p).trim() || at[k] === undefined) return;
-        entries.push({ t: textOf(p).replace(/\s+/g, " ").trim(), no: labels ? labels[at[k]].label : at[k] + first, k: at[k] });
+        entries.push({ t: textOf(p).replace(/\s+/g, " ").trim(), no: labels ? labels[at[k]].label : at[k] + first, k: at[k], lv: heads[p.ps] || 1, o: entries.length });
       });
     });
-    entries.sort(function (a, b) { return a.k - b.k; });
-    var ps = tpl ? tpl.p.ps : (plain[0] && plain[0].ps) || "ps-base", sep = tpl ? tpl.sep : "\t";
+    entries.sort(function (a, b) { return a.k - b.k || a.o - b.o; });
+    var ps = tpl ? tpl.p.ps : (plain[0] && plain[0].ps) || "ps-base", sep = cfg && cfg.sep ? cfg.sep : tpl ? tpl.sep : "\t";
     var attrs = {};
     if (tpl && tpl.p.runs[0]) Object.keys(tpl.p.runs[0]).forEach(function (k) { if (k !== "t" && k !== "f") attrs[k] = tpl.p.runs[0][k]; });
     st.paras = before.concat(entries.map(function (e) {
       var r = { t: e.t + sep + e.no };
       Object.keys(attrs).forEach(function (k) { r[k] = attrs[k]; });
-      return { ps: ps, runs: [r] };
+      return { ps: (cfg && cfg.eps[e.lv - 1]) || ps, runs: [r] };
     }));
     if (!st.paras.length) st.paras = [{ ps: ps, runs: [] }];
     return entries.length;
@@ -582,7 +600,7 @@
     return { doc: d, report: report };
   }
 
-  var api = { FIELDS: FIELDS, build: build, structure: structure, fillFields: fillFields, toc: toc, flow: flow };
+  var api = { FIELDS: FIELDS, build: build, structure: structure, fillFields: fillFields, toc: toc, tocCfg: tocCfg, flow: flow };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else root.LY_AUTO = api;
 })(typeof window !== "undefined" ? window : this);

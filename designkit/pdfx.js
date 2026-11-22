@@ -25,6 +25,18 @@
 //   converts them). cmyk() → { rgb(r, g, b) → [c, m, y, k] (0..1) }
 //   from the profile bytes; recolor(text, conv) rewrites one content
 //   stream's rg / RG.
+// 1.2.0 (LY-W9) cmyk() also gives lab(c, m, y, k) (the profile's
+//   A2B1), show(c, m, y, k) and proof(r, g, b) → sRGB 0..1, what the
+//   ink looks like on paper (soft proof, relative colorimetric);
+//   grid(fn, n) a 3D table of fn on 0..255 bytes (fast per pixel).
+//   recolor(text, conv, op): op(cmyk 0..1, "f" | "s") true → that
+//   colour overprints: "/OPsf gs" before it switches (OP, op, OPM 1;
+//   q / Q keep the state). make(..., { overprint: op }) sets that on
+//   pages; make(..., { x1a: true, decode }) makes PDF/X-1a:2003
+//   instead: every colour CMYK, pictures too (decode(bytes, filter) →
+//   Promise<{ w, h, data RGBA }> reads a JPEG; Flate RGB is read here),
+//   no sRGB profile, PDF 1.4, and transparency reported
+//   ("transparency"), never left in silently.
 // Pure (no DOM): Node tests run it. Exposes orosDK.pdfx / module.exports.
 // ============================================================
 (function (root) {
@@ -60,14 +72,15 @@
     return '<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>\n' +
       '<x:xmpmeta xmlns:x="adobe:ns:meta/">\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
       '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" ' +
-      'xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:pdfxid="http://www.npes.org/pdfx/ns/id/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/">\n' +
+      'xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:pdfxid="http://www.npes.org/pdfx/ns/id/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"' + (o.ua ? ' xmlns:pdfuaid="http://www.aiim.org/pdfua/ns/id/"' : "") + '>\n' +
       '<dc:format>application/pdf</dc:format>\n' +
       '<dc:title><rdf:Alt><rdf:li xml:lang="x-default">' + xmlEsc(o.title) + '</rdf:li></rdf:Alt></dc:title>\n' +
       '<xmp:CreatorTool>' + xmlEsc(o.creator) + '</xmp:CreatorTool>\n' +
       '<xmp:CreateDate>' + o.date + '</xmp:CreateDate>\n<xmp:ModifyDate>' + o.date + '</xmp:ModifyDate>\n<xmp:MetadataDate>' + o.date + '</xmp:MetadataDate>\n' +
       '<pdf:Producer>' + xmlEsc(o.producer) + '</pdf:Producer>\n<pdf:Trapped>False</pdf:Trapped>\n' +
-      '<pdfxid:GTS_PDFXVersion>PDF/X-4</pdfxid:GTS_PDFXVersion>\n' +
+      '<pdfxid:GTS_PDFXVersion>' + (o.ver || "PDF/X-4") + '</pdfxid:GTS_PDFXVersion>\n' +
       '<xmpMM:DocumentID>uuid:' + o.docId + '</xmpMM:DocumentID>\n<xmpMM:InstanceID>uuid:' + o.instId + '</xmpMM:InstanceID>\n<xmpMM:RenditionClass>default</xmpMM:RenditionClass>\n<xmpMM:VersionID>1</xmpMM:VersionID>\n' +
+      (o.ua ? '<pdfuaid:part>1</pdfuaid:part>\n' : "") +
       '</rdf:Description>\n</rdf:RDF>\n</x:xmpmeta>\n' + new Array(20).join("                                                  \n") + '<?xpacket end="w"?>';
   }
 
@@ -193,6 +206,55 @@
     var fx = f(X / 0.9642), fy = f(Y), fz = f(Z / 0.8249);
     return [116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)];
   }
+  // Lab (D50) → sRGB 0..1, clipped
+  function labSrgb(L, a, bb) {
+    var fy = (L + 16) / 116, fx = fy + a / 500, fz = fy - bb / 200;
+    var inv = function (t) { return t > 6 / 29 ? t * t * t : 3 * (6 / 29) * (6 / 29) * (t - 4 / 29); };
+    var X = 0.9642 * inv(fx), Y = inv(fy), Z = 0.8249 * inv(fz);
+    var r = 3.1338561 * X - 1.6168667 * Y - 0.4906146 * Z, g = -0.9787684 * X + 1.9161415 * Y + 0.0334540 * Z, b = 0.0719453 * X - 0.2289914 * Y + 1.4052427 * Z;
+    var gam = function (c) { c = Math.max(0, Math.min(1, c)); return c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055; };
+    return [gam(r), gam(g), gam(b)];
+  }
+  // fn(r, g, b 0..1) → n outputs (0..1) on an s×s×s grid; the result
+  // reads bytes: at(r, g, b 0..255, out) fills out[] (trilinear)
+  function grid(fn, nOut, s) {
+    s = s || 17;
+    var T = new Float32Array(s * s * s * nOut), i = 0;
+    for (var a = 0; a < s; a++) for (var b = 0; b < s; b++) for (var c = 0; c < s; c++) {
+      var v = fn(a / (s - 1), b / (s - 1), c / (s - 1));
+      for (var k = 0; k < nOut; k++) T[i++] = v[k];
+    }
+    var sc = (s - 1) / 255;
+    return function at(r, g, b, out) {
+      var x = r * sc, y = g * sc, z = b * sc, x0 = Math.min(s - 2, x | 0), y0 = Math.min(s - 2, y | 0), z0 = Math.min(s - 2, z | 0);
+      var fx = x - x0, fy = y - y0, fz = z - z0;
+      for (var k = 0; k < nOut; k++) {
+        var o = ((x0 * s + y0) * s + z0) * nOut + k, sz = nOut, sy = s * nOut, sx = s * s * nOut;
+        var c00 = T[o] + (T[o + sz] - T[o]) * fz, c01 = T[o + sy] + (T[o + sy + sz] - T[o + sy]) * fz;
+        var c10 = T[o + sx] + (T[o + sx + sz] - T[o + sx]) * fz, c11 = T[o + sx + sy] + (T[o + sx + sy + sz] - T[o + sx + sy]) * fz;
+        var c0 = c00 + (c01 - c00) * fy, c1 = c10 + (c11 - c10) * fy;
+        out[k] = c0 + (c1 - c0) * fx;
+      }
+      return out;
+    };
+  }
+  // an ICC profile's header and name → { cls, space, name } or null
+  function profileInfo(icc) {
+    var b = icc instanceof Uint8Array ? icc : new Uint8Array(icc);
+    if (b.length < 132 || String.fromCharCode(b[36], b[37], b[38], b[39]) !== "acsp") return null;
+    var str = function (o) { return String.fromCharCode(b[o], b[o + 1], b[o + 2], b[o + 3]); };
+    var out = { cls: str(12), space: str(16).trim(), name: "" }, t = tagOf(b, "desc");
+    if (t && t.off + 12 < b.length) {
+      var ty = str(t.off), nm = "";
+      if (ty === "desc") { var n = Math.min(u32(b, t.off + 8), 200); for (var i = 0; i < n - 1 && t.off + 12 + i < b.length; i++) nm += String.fromCharCode(b[t.off + 12 + i]); }
+      else if (ty === "mluc" && u32(b, t.off + 8) > 0) {
+        var len = u32(b, t.off + 20), off = t.off + u32(b, t.off + 24);
+        for (var j = 0; j + 1 < Math.min(len, 400) && off + j + 1 < b.length; j += 2) nm += String.fromCharCode((b[off + j] << 8) | b[off + j + 1]);
+      }
+      out.name = nm.replace(/[\u0000-\u001f\u007f]/g, "").trim().slice(0, 60);
+    }
+    return out;
+  }
   function cmyk(icc) {
     var b = icc instanceof Uint8Array ? icc : new Uint8Array(icc);
     var tB = tagOf(b, "B2A1"), tA = tagOf(b, "A2B1");
@@ -221,16 +283,36 @@
       out = out.map(function (v) { v = Math.max(0, Math.min(1, v)); return v < 0.002 ? 0 : v > 0.998 ? 1 : v; });
       return (memo[key] = out);
     }
-    return { rgb: rgb, kFor: kFor };
+    // what the inks look like: the profile's Lab, its paper as white
+    function lab(c, m, y, k) { return labOut(toL([c, m, y, k])); }
+    function show(c, m, y, k) {
+      var L = lab(c, m, y, k), s = paper > 1 ? 100 / paper : 1;
+      return labSrgb(Math.min(100, L[0] * s), L[1], L[2]);
+    }
+    function proof(r, g, bl) { var q = rgb(r, g, bl); return show(q[0], q[1], q[2], q[3]); }
+    return { rgb: rgb, kFor: kFor, lab: lab, show: show, proof: proof };
   }
   function num(v) { var s = (Math.round(v * 10000) / 10000).toString(); return s.indexOf("e") >= 0 ? "0" : s; }
   // One content stream: every "r g b rg" / "r g b RG" → "c m y k k" /
   // "… K". Strings, hex strings, comments and inline images are left
-  // as they are. → { text, n } (n colours changed).
-  function recolor(src, conv) {
-    var out = "", i = 0, L = src.length, ops = [], n = 0, last = 0;
+  // as they are. conv null leaves the colours. op(cmyk, "f" | "s")
+  // true → the colour overprints: "/OPsf gs" goes before it when the
+  // state changes (OP00 .. OP11, stroke then fill; q / Q keep it).
+  // → { text, n (colours changed), ops (gs inserted) }.
+  function recolor(src, conv, op) {
+    var out = "", i = 0, L = src.length, ops = [], n = 0, last = 0, nOp = 0;
+    var st = { s: false, f: false }, stack = [];
     var DELIM = "()<>[]{}/%";
     function isWs(c) { return c === " " || c === "\n" || c === "\r" || c === "\t" || c === "\f" || c === "\0"; }
+    // the gs that the colour about to be set needs ("" none)
+    function gsFor(q, kind) {
+      if (!op) return "";
+      var want = !!op(q, kind), cur = kind === "f" ? st.f : st.s;
+      if (want === cur) return "";
+      if (kind === "f") st.f = want; else st.s = want;
+      nOp++;
+      return "/OP" + (st.s ? 1 : 0) + (st.f ? 1 : 0) + " gs ";
+    }
     while (i < L) {
       var c = src[i];
       if (isWs(c)) { i++; continue; }
@@ -243,17 +325,27 @@
       if (c === "<" && src[i + 1] !== "<") { while (i < L && src[i] !== ">") i++; i++; ops = []; continue; }
       if (c === "<" || c === ">") { i += src[i + 1] === c ? 2 : 1; ops = []; continue; }
       if (c === "[" || c === "]" || c === "{" || c === "}") { i++; ops = []; continue; }
-      var st = i;
+      var s0 = i;
       if (c === "/") i++;
       while (i < L && !isWs(src[i]) && DELIM.indexOf(src[i]) < 0) i++;
-      if (i === st) { i++; continue; }
-      var tok = src.slice(st, i);
-      if (/^[-+]?(\d+\.?\d*|\.\d+)$/.test(tok)) { ops.push({ v: +tok, s: st }); continue; }
+      if (i === s0) { i++; continue; }
+      var tok = src.slice(s0, i);
+      if (/^[-+]?(\d+\.?\d*|\.\d+)$/.test(tok)) { ops.push({ v: +tok, s: s0 }); continue; }
+      var cl = function (v) { return Math.max(0, Math.min(1, v)); };
       if ((tok === "rg" || tok === "RG") && ops.length >= 3) {
-        var a = ops.slice(-3), q = conv(Math.max(0, Math.min(1, a[0].v)), Math.max(0, Math.min(1, a[1].v)), Math.max(0, Math.min(1, a[2].v)));
-        out += src.slice(last, a[0].s) + q.map(num).join(" ") + " " + (tok === "rg" ? "k" : "K");
-        last = i; n++;
-      } else if (tok === "BI") {
+        var a = ops.slice(-3), rgb3 = [cl(a[0].v), cl(a[1].v), cl(a[2].v)];
+        var q = conv ? conv(rgb3[0], rgb3[1], rgb3[2]) : null, g1 = gsFor(q || rgbK(rgb3), tok === "rg" ? "f" : "s");
+        if (q) { out += src.slice(last, a[0].s) + g1 + q.map(num).join(" ") + " " + (tok === "rg" ? "k" : "K"); last = i; n++; }
+        else if (g1) { out += src.slice(last, a[0].s) + g1; last = a[0].s; }
+      } else if ((tok === "k" || tok === "K") && ops.length >= 4 && op) {
+        var a4 = ops.slice(-4), g2 = gsFor(a4.map(function (x) { return cl(x.v); }), tok === "k" ? "f" : "s");
+        if (g2) { out += src.slice(last, a4[0].s) + g2; last = a4[0].s; }
+      } else if ((tok === "g" || tok === "G") && ops.length >= 1 && op) {
+        var a1 = ops[ops.length - 1], g3 = gsFor([0, 0, 0, 1 - cl(a1.v)], tok === "g" ? "f" : "s");
+        if (g3) { out += src.slice(last, a1.s) + g3; last = a1.s; }
+      } else if (tok === "q") stack.push({ s: st.s, f: st.f });
+      else if (tok === "Q") { if (stack.length) st = stack.pop(); }
+      else if (tok === "BI") {
         // an inline image: up to "EI" after its data
         var e = src.indexOf("EI", i);
         while (e > 0 && !(isWs(src[e - 1]) && (e + 2 >= L || isWs(src[e + 2])))) e = src.indexOf("EI", e + 2);
@@ -261,21 +353,50 @@
       }
       ops = [];
     }
-    return { text: out + src.slice(last), n: n };
+    return { text: out + src.slice(last), n: n, ops: nOp };
+  }
+  // an RGB colour as naive CMYK (only to decide overprint when nothing
+  // converts: pure black is 0 0 0 1)
+  function rgbK(v) {
+    var k = 1 - Math.max(v[0], v[1], v[2]);
+    return k >= 1 ? [0, 0, 0, 1] : [(1 - v[0] - k) / (1 - k), (1 - v[1] - k) / (1 - k), (1 - v[2] - k) / (1 - k), k];
   }
   function latin1(s) { var b = new Uint8Array(s.length); for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i) & 255; return b; }
   // Every page's content and every form's: rg / RG to CMYK; gradients
   // (shadings with /DeviceRGB, functions of type 2 or 3 of type 2) too.
-  function toCmyk(P, doc, conv) {
-    var ctx = doc.context, N = P.PDFName.of, count = 0, f = function (r, g, b) { return conv.rgb(r, g, b); };
+  // the four overprint states a page may switch between (stroke, fill)
+  function opStates(P, ctx) {
+    var N = P.PDFName.of, out = {};
+    [0, 1].forEach(function (s) {
+      [0, 1].forEach(function (f) {
+        var g = ctx.obj({ Type: "ExtGState" });
+        g.set(N("OP"), s ? P.PDFBool.True : P.PDFBool.False);
+        g.set(N("op"), f ? P.PDFBool.True : P.PDFBool.False);
+        g.set(N("OPM"), ctx.obj(s || f ? 1 : 0));
+        out["OP" + s + f] = ctx.register(g);
+      });
+    });
+    return out;
+  }
+  function toCmyk(P, doc, conv, op) {
+    var ctx = doc.context, N = P.PDFName.of, count = 0, f = conv ? function (r, g, b) { return conv.rgb(r, g, b); } : null, states = null;
     doc.getPages().forEach(function (pg) {
       var text = streamText(P, ctx, pg.node.get(N("Contents")));
       if (text === null) return;
-      var r = recolor(text, f);
-      if (!r.n) return;
+      var r = recolor(text, f, op || null);
+      if (!r.n && !r.ops) return;
       count += r.n;
       pg.node.set(N("Contents"), ctx.register(ctx.flateStream(latin1(r.text))));
+      if (!r.ops) return;
+      states = states || opStates(P, ctx);
+      var res = pg.node.Resources();
+      if (!res) { res = ctx.obj({}); pg.node.set(N("Resources"), res); }
+      var gs = res.get(N("ExtGState"));
+      if (gs instanceof P.PDFRef) gs = ctx.lookup(gs);
+      if (!gs || typeof gs.set !== "function") { gs = ctx.obj({}); res.set(N("ExtGState"), gs); }
+      Object.keys(states).forEach(function (k) { gs.set(N(k), states[k]); });
     });
+    if (!f) return count;
     ctx.enumerateIndirectObjects().forEach(function (pair) {
       var ref = pair[0], obj = pair[1], dict = obj && obj.dict ? obj.dict : obj;
       if (!dict || typeof dict.get !== "function") return;
@@ -337,9 +458,107 @@
     return count;
   }
 
+  // PNG predictors (10..15) undone: rows of `bpr` bytes, `bpp` per pixel
+  function unpredict(b, bpr, bpp) {
+    var rows = Math.floor(b.length / (bpr + 1)), out = new Uint8Array(rows * bpr);
+    for (var y = 0; y < rows; y++) {
+      var t = b[y * (bpr + 1)], s0 = y * (bpr + 1) + 1, o = y * bpr;
+      for (var x = 0; x < bpr; x++) {
+        var a = x >= bpp ? out[o + x - bpp] : 0, up = y ? out[o - bpr + x] : 0, c = x >= bpp && y ? out[o - bpr + x - bpp] : 0, v = b[s0 + x];
+        if (t === 1) v += a; else if (t === 2) v += up; else if (t === 3) v += (a + up) >> 1;
+        else if (t === 4) { var p = a + up - c, pa = Math.abs(p - a), pb = Math.abs(p - up), pc = Math.abs(p - c); v += pa <= pb && pa <= pc ? a : pb <= pc ? up : c; }
+        out[o + x] = v & 255;
+      }
+    }
+    return out;
+  }
+  function numOf(x) { return x && typeof x.asNumber === "function" ? x.asNumber() : NaN; }
+  // PDF/X-1a: every RGB picture becomes DeviceCMYK through the profile
+  // (one 33³ table); a JPEG is read by decode(), Flate here.
+  function x1aImages(P, doc, conv, decode, problems) {
+    var ctx = doc.context, N = P.PDFName.of, jobs = [], at = null, n = 0;
+    function bad(code) { if (!problems.some(function (q) { return q.code === code; })) problems.push({ code: code }); }
+    ctx.enumerateIndirectObjects().forEach(function (pair) {
+      var ref = pair[0], obj = pair[1], d = obj && obj.dict;
+      if (!d || d.get(N("Subtype")) !== N("Image")) return;
+      if (d.get(N("SMask")) || d.get(N("Mask"))) bad("transparency");
+      var cs = d.get(N("ColorSpace"));
+      if (cs === N("DeviceGray") || cs === N("DeviceCMYK") || d.get(N("ImageMask"))) return;
+      if (cs !== N("DeviceRGB")) { bad("x1aImage"); return; }
+      var w = numOf(d.get(N("Width"))), h = numOf(d.get(N("Height"))), bpc = numOf(d.get(N("BitsPerComponent")));
+      var f = d.get(N("Filter"));
+      if (f instanceof P.PDFArray) f = f.size() === 1 ? f.get(0) : null;
+      if (!(w > 0 && h > 0) || bpc !== 8) { bad("x1aImage"); return; }
+      jobs.push(function () {
+        var px;
+        if (f === N("DCTDecode")) {
+          if (!decode) { bad("x1aImage"); return Promise.resolve(); }
+          px = Promise.resolve(decode(obj.contents, "jpeg")).then(function (im) {
+            if (!im || im.w !== w || im.h !== h) return null;
+            var rgb = new Uint8Array(w * h * 3), a = im.data;
+            for (var i = 0, j = 0; j < rgb.length; i += 4, j += 3) { rgb[j] = a[i]; rgb[j + 1] = a[i + 1]; rgb[j + 2] = a[i + 2]; }
+            return rgb;
+          });
+        } else if (!f || f === N("FlateDecode")) {
+          px = new Promise(function (res) {
+            var raw = P.decodePDFRawStream(obj).decode(), dp = d.get(N("DecodeParms"));
+            if (dp instanceof P.PDFRef) dp = ctx.lookup(dp);
+            var pr = dp && typeof dp.get === "function" ? numOf(dp.get(N("Predictor"))) : 1;
+            if (pr >= 10) raw = unpredict(raw, w * 3, 3);
+            else if (pr > 1) raw = null;
+            res(raw && raw.length >= w * h * 3 ? raw : null);
+          });
+        } else px = Promise.resolve(null);
+        return px.then(function (rgb) {
+          if (!rgb) { bad("x1aImage"); return; }
+          at = at || grid(function (r, g, b) { return conv.rgb(r, g, b); }, 4, 33);
+          var out = new Uint8Array(w * h * 4), q = [0, 0, 0, 0];
+          for (var i = 0, j = 0; i < w * h * 3; i += 3, j += 4) {
+            at(rgb[i], rgb[i + 1], rgb[i + 2], q);
+            out[j] = Math.round(q[0] * 255); out[j + 1] = Math.round(q[1] * 255); out[j + 2] = Math.round(q[2] * 255); out[j + 3] = Math.round(q[3] * 255);
+          }
+          var nd = { Type: "XObject", Subtype: "Image", Width: w, Height: h, ColorSpace: "DeviceCMYK", BitsPerComponent: 8 };
+          var keep = ["SMask", "Mask", "Interpolate", "Intent"];
+          keep.forEach(function (k) { var v = d.get(N(k)); if (v) nd[k] = v; });
+          ctx.assign(ref, ctx.flateStream(out, nd));
+          n++;
+        }, function () { bad("x1aImage"); });
+      });
+    });
+    return jobs.reduce(function (p, job) { return p.then(job); }, Promise.resolve()).then(function () { return n; });
+  }
+  // what PDF/X-1a cannot hold: soft masks, opacity, blend modes
+  function transparencyIn(P, doc) {
+    var ctx = doc.context, N = P.PDFName.of, found = false;
+    ctx.enumerateIndirectObjects().forEach(function (pair) {
+      var obj = pair[1], d = obj && obj.dict ? obj.dict : obj;
+      if (found || !d || typeof d.get !== "function") return;
+      check(d);
+    });
+    function check(d) {
+      if (d.get(N("Type")) === N("ExtGState") || d.get(N("ca")) || d.get(N("CA"))) {
+        var ca = numOf(d.get(N("ca"))), CA = numOf(d.get(N("CA"))), sm = d.get(N("SMask")), bm = d.get(N("BM"));
+        if ((ca < 1) || (CA < 1) || (sm && sm !== N("None")) || (bm && bm !== N("Normal") && bm !== N("Compatible"))) found = true;
+      }
+      if (d.get(N("Group")) && !found) {
+        var g = d.get(N("Group"));
+        if (g instanceof P.PDFRef) g = ctx.lookup(g);
+        if (g && typeof g.get === "function" && g.get(N("S")) === N("Transparency")) found = true;
+      }
+    }
+    // inline ExtGState dictionaries in resources
+    doc.getPages().forEach(function (pg) {
+      var res = pg.node.Resources(), gs = res && res.get(N("ExtGState"));
+      if (gs instanceof P.PDFRef) gs = ctx.lookup(gs);
+      if (gs && typeof gs.keys === "function") gs.keys().forEach(function (k) { var v = gs.get(k); if (v instanceof P.PDFRef) v = ctx.lookup(v); if (v && typeof v.get === "function") check(v); });
+    });
+    return found;
+  }
+
   function make(P, bytes, opts) {
     opts = opts || {};
-    if (!opts.icc || !opts.srgb) return Promise.reject(new Error("profiles"));
+    var x1a = !!opts.x1a, ver = x1a ? "PDF/X-1a:2003" : "PDF/X-4";
+    if (!opts.icc || (!opts.srgb && !x1a)) return Promise.reject(new Error("profiles"));
     var N = P.PDFName.of;
     return P.PDFDocument.load(bytes, { updateMetadata: false }).then(function (doc) {
       var ctx = doc.context, problems = [];
@@ -348,18 +567,21 @@
       // the profiles
       var icc = ctx.flateStream(opts.icc, { N: 4 });
       var iccRef = ctx.register(icc);
-      var srgb = ctx.flateStream(opts.srgb, { N: 3 });
-      var srgbRef = ctx.register(srgb);
-      var srgbCS = ctx.obj([N("ICCBased"), srgbRef]);
-      var srgbCSRef = ctx.register(srgbCS);
+      var srgbCSRef = null;
+      if (!x1a) {
+        var srgb = ctx.flateStream(opts.srgb, { N: 3 });
+        srgbCSRef = ctx.register(ctx.obj([N("ICCBased"), ctx.register(srgb)]));
+      }
       // OutputIntent
       var oi = ctx.obj({ Type: "OutputIntent", S: "GTS_PDFX", OutputConditionIdentifier: P.PDFString.of(cond.id), RegistryName: P.PDFString.of(cond.registry),
                          Info: P.PDFString.of(cond.info), OutputCondition: P.PDFString.of(cond.info) });
       oi.set(N("DestOutputProfile"), iccRef);
       doc.catalog.set(N("OutputIntents"), ctx.obj([ctx.register(oi)]));
       pruneFonts(P, doc);
-      var conv = opts.cmyk ? cmyk(opts.icc) : null, changed = conv ? toCmyk(P, doc, conv) : 0;
-      if (opts.cmyk && !conv) problems.push({ code: "cmykProfile" });
+      var conv = opts.cmyk || x1a ? cmyk(opts.icc) : null, changed = conv || opts.overprint ? toCmyk(P, doc, conv, opts.overprint) : 0;
+      if ((opts.cmyk || x1a) && !conv) problems.push({ code: "cmykProfile" });
+      if (x1a && transparencyIn(P, doc)) problems.push({ code: "transparency" });
+      return (x1a && conv ? x1aImages(P, doc, conv, opts.decode, problems) : Promise.resolve(0)).then(function (pics) {
       // pictures: DeviceRGB → sRGB; fonts must be embedded
       ctx.enumerateIndirectObjects().forEach(function (pair) {
         var obj = pair[1], dict = obj && obj.dict ? obj.dict : obj;
@@ -367,7 +589,7 @@
         var sub = dict.get(N("Subtype")), type = dict.get(N("Type"));
         if (sub === N("Image")) {
           var cs = dict.get(N("ColorSpace"));
-          if (cs === N("DeviceRGB")) dict.set(N("ColorSpace"), srgbCSRef);
+          if (cs === N("DeviceRGB")) { if (srgbCSRef) dict.set(N("ColorSpace"), srgbCSRef); else problems.push({ code: "x1aImage" }); }
         }
         if (type === N("Font") && (sub === N("Type1") || sub === N("TrueType") || sub === N("Type0"))) {
           if (sub === N("Type1") && !dict.get(N("FontDescriptor"))) problems.push({ code: "fontNotEmbedded" });
@@ -384,7 +606,7 @@
         var csd = res.get(N("ColorSpace"));
         if (csd && csd instanceof P.PDFRef) csd = ctx.lookup(csd);
         if (!csd || typeof csd.set !== "function") { csd = ctx.obj({}); res.set(N("ColorSpace"), csd); }
-        csd.set(N("DefaultRGB"), srgbCSRef);
+        if (srgbCSRef) csd.set(N("DefaultRGB"), srgbCSRef);
         var media = boxOf(pg, P, "MediaBox"), trim = boxOf(pg, P, "TrimBox"), bleed = boxOf(pg, P, "BleedBox");
         if (!trim) problems.push({ code: "noTrimBox", page: i + 1 });
         if (bleed && media && (bleed[0] < media[0] - 0.01 || bleed[1] < media[1] - 0.01 || bleed[2] > media[2] + 0.01 || bleed[3] > media[3] + 0.01)) problems.push({ code: "bleedOutside", page: i + 1 });
@@ -400,23 +622,29 @@
       info.set(N("CreationDate"), P.PDFString.of(pdfDate(now)));
       info.set(N("ModDate"), P.PDFString.of(pdfDate(now)));
       info.set(N("Trapped"), N("False"));
-      info.set(N("GTS_PDFXVersion"), P.PDFString.of("PDF/X-4"));
+      info.set(N("GTS_PDFXVersion"), P.PDFString.of(ver));
       ctx.trailerInfo.Info = ctx.register(info);
       // XMP is UTF-8 (a string would be written as Latin-1)
-      var meta = ctx.stream(utf8(xmp({ title: title, creator: creator, producer: producer, date: isoDate(now), docId: uuid(randBytes), instId: uuid(randBytes) })),
+      var meta = ctx.stream(utf8(xmp({ ver: ver, title: title, creator: creator, producer: producer, date: isoDate(now), docId: uuid(randBytes), instId: uuid(randBytes),
+                                       ua: !!doc.catalog.get(N("StructTreeRoot")) })),   // a tagged PDF stays PDF/UA (LY-N6)
                             { Type: "Metadata", Subtype: "XML" });
       doc.catalog.set(N("Metadata"), ctx.register(meta));
       var id = P.PDFHexString.of(hex(randBytes(16)));
       ctx.trailerInfo.ID = ctx.obj([id, id]);
       return doc.save({ useObjectStreams: false, updateFieldAppearances: false }).then(function (out) {
-        var res = { bytes: out, boxes: boxes, problems: problems, intent: cond.info };
+        // PDF/X-1a:2003 is PDF 1.4 (no object streams, as here); pdf-lib
+        // always writes "%PDF-1.7", and the same length keeps every offset
+        if (x1a && String.fromCharCode(out[0], out[1], out[2], out[3], out[4], out[5], out[6], out[7]) === "%PDF-1.7") out[7] = 0x34;
+        var res = { bytes: out, boxes: boxes, problems: problems, intent: cond.info, pdfx: ver };
         if (conv) res.cmyk = changed;
+        if (x1a) res.pictures = pics;
         return res;
+      });
       });
     });
   }
 
-  var api = { make: make, FOGRA39: FOGRA39, cmyk: cmyk, recolor: recolor, srgbLab: srgbLab };
+  var api = { make: make, FOGRA39: FOGRA39, cmyk: cmyk, recolor: recolor, srgbLab: srgbLab, labSrgb: labSrgb, grid: grid, unpredict: unpredict, profileInfo: profileInfo };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.pdfx = api; }
 })(typeof window !== "undefined" ? window : this);

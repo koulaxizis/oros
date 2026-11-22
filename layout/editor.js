@@ -293,7 +293,7 @@
     // while typing in a frame, its unsaved text flows live
     var doc = LY.inframe ? LY.inframe.layoutDoc(LY.doc) : LY.doc;
     ED.L = R.computeLayout(doc);
-    ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing });
+    ED.pf = R.preflight(doc, ED.L, { isMissing: LY.A.isMissing, conv: LY.proof ? LY.proof.conv() : null });
     keepPf();
     if (ED.master) {
       var ms = M.find(LY.doc.masters, ED.master);
@@ -305,6 +305,11 @@
   // (read_in_app preflight_now, Chris 2026-11-18): page numbers, at most
   // 200 problems, 30 documents.
   var pfTimer = 0;
+  // Preflight again (a picture landed, the print profile loaded: LY-W9)
+  ED.recheck = function () {
+    if (LY.doc && ED.L) ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing, conv: LY.proof ? LY.proof.conv() : null });
+    ED.render(); updateStatus();
+  };
   function keepPf() {
     clearTimeout(pfTimer);
     pfTimer = setTimeout(function () {
@@ -359,6 +364,8 @@
     ctx.fillRect(0, 0, cv.width, cv.height);
     var getImage = LY.A.get, missing = t("img.missing");
     var vis0 = toWorld(0, 0), vis1 = toWorld(W, H);
+    // a print view (soft proof, one plate, total ink: LY-W9) for the pages only
+    R.setView(LY.proof && LY.proof.view ? LY.proof.view() : null);
 
     world.forEach(function (sp) {
       if (sp.y > vis1[1] + s.bleed || sp.y + sp.h < vis0[1] - s.bleed) return;
@@ -389,6 +396,7 @@
         ctx.strokeRect(-s.bleed, -s.bleed, sp.w + 2 * s.bleed, sp.h + 2 * s.bleed);
       }
     });
+    R.setView(null);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawOverlay();
     if (!ED.preview) drawRulers();
@@ -412,6 +420,30 @@
         ctx.beginPath(); ctx.moveTo(x, m.t); ctx.lineTo(x, s.h - m.b);
         ctx.moveTo(x + s.gut, m.t); ctx.lineTo(x + s.gut, s.h - m.b); ctx.stroke();
       }
+    }
+    // the baseline grid, when shown (LY-W5b)
+    var bgd = LY.prefs.bgShow === 1 && doc.setup.ext && doc.setup.ext.bg;
+    if (bgd && bgd.i >= 1 && bgd.i * sc >= 3) {
+      ctx.strokeStyle = "rgba(0,150,255,0.22)";
+      ctx.beginPath();
+      for (var gy = bgd.s || 0, gn = 0; gy <= s.h - m.b && gn < 2000; gy += bgd.i, gn++) {
+        if (gy < m.t) continue;
+        ctx.moveTo(m.l, gy); ctx.lineTo(s.w - m.r, gy);
+      }
+      ctx.stroke();
+    }
+    // loose and tight lines, when asked (LY-W6, as InDesign's H&J
+    // violations): yellow loose, pink tight
+    if (LY.prefs.hjShow === 1 && ED.L) {
+      itemsOfP(P).forEach(function (it) {
+        var fr = it.t === "text" && !it.rot && ED.L.frames[it.id];
+        if (!fr) return;
+        fr.lines.forEach(function (ln) {
+          if (!ln.hj) return;
+          ctx.fillStyle = ln.hj > 0 ? "rgba(255,200,0,0.35)" : "rgba(255,80,160,0.3)";
+          ctx.fillRect(it.x + ln.cx0, it.y + ln.y - ln.h * 0.75, ln.cx1 - ln.cx0, ln.h * 0.75 + ln.d);
+        });
+      });
     }
     // ruler guides of this owner
     ctx.strokeStyle = "rgba(0,180,220,0.8)";
@@ -1636,6 +1668,10 @@
     });
     if (made.length) ED.select(made);
   }
+  // the selection as a clipboard, and placing one, without touching
+  // the person's own clipboard (the asset library, LY-N3)
+  ED.selClip = function () { var keep = clipboard, c = null; if (copySel()) c = clipboard; clipboard = keep; return c; };
+  ED.pasteClip = function (c) { var keep = clipboard; clipboard = c; try { paste(false); } finally { clipboard = keep; } };
   function duplicate() { if (copySel()) paste(true); }
   ED.duplicate = duplicate;
 
@@ -1738,6 +1774,8 @@
       case "history": if (LY.dlg.history) LY.dlg.history(); break;
       case "story": if (it && it.t === "text") LY.story.open(it.id); break;
       case "keys": if (LY.dlg.keys) LY.dlg.keys(); break;
+      case "find": if (LY.dlg.find) LY.dlg.find(); break;
+      case "spell": if (LY.dlg.spell) LY.dlg.spell(); break;
     }
   }
   ED.runAction = runAction;
@@ -1897,7 +1935,7 @@
     LY.on("remote", function () { changed(); LY.emit("sel"); });
     LY.on("sel", updateStatus);
     LY.on("view", updateStatus);
-    LY.A.onChange(function () { if (LY.doc && ED.L) ED.pf = R.preflight(LY.doc, ED.L, { isMissing: LY.A.isMissing }); ED.render(); updateStatus(); });
+    LY.A.onChange(ED.recheck);
     readPalette();
   }
 

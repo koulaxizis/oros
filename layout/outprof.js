@@ -236,13 +236,30 @@
       if (!st) return;
       var spans = {};
       (st.paras || []).forEach(function (p, pi) {
-        var tx = paraText(p), m, list = [];
+        var tx = paraText(p), m, list = [], o = 0;
+        // links set on words (ext.href, LY-W7)
+        (p.runs || []).forEach(function (r) {
+          var n = r.f ? 1 : String(r.t || "").length, h = r.ext && r.ext.href;
+          if (typeof h === "string" && /^(https?:\/\/|mailto:)/i.test(h) && n) {
+            var last = list[list.length - 1];
+            if (last && last.url === h && last.b === o) last.b = o + n;
+            else list.push({ a: o, b: o + n, url: h });
+          }
+          o += n;
+        });
         URL_RE.lastIndex = 0;
         while ((m = URL_RE.exec(tx)) && list.length < 50) {
           var u = m[0], url = /@/.test(u) && !/^(https?:|www\.)/i.test(u) ? "mailto:" + u : /^www\./i.test(u) ? "https://" + u : u;
           list.push({ a: m.index, b: m.index + u.length, url: url });
         }
         if (list.length) spans[pi] = list;
+      });
+      // cross-references go to the page of their paragraph
+      (L.frames[f.it.id] ? L.frames[f.it.id].lines : []).forEach(function (ln) {
+        (ln.runs || []).forEach(function (r) {
+          var x = typeof r.xr === "string" && L.xr ? L.xr[r.xr] : null;
+          if (x && x.pid && x.pid !== f.pg && r.w > 0 && out.length < 2000) out.push({ pg: f.pg, x: f.it.x + r.x, y: f.it.y + ln.y - ln.h + (ln.d || 0), w: r.w, h: ln.h, to: x.pid });
+        });
       });
       if (!Object.keys(spans).length) return;
       L.frames[f.it.id].lines.forEach(function (ln) {

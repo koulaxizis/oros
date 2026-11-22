@@ -41,7 +41,7 @@ test("expandRect / padFor: the grown picture", () => {
 
 test("only services that can fill a painted part are used", () => {
   const can = IA.IDS.filter((id) => IA.PROVIDERS[id].mask);
-  assert.deepEqual(can, ["openai", "stability", "sdwebui"]);
+  assert.deepEqual(can, ["openai", "stability", "sdwebui", "comfyui"]);
   can.forEach((id) => assert.ok(IA.buildEdit(IA.conf({ prov: id }), "k", { prompt: "p" }), id));
 });
 

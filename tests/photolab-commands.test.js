@@ -219,7 +219,7 @@ test("the same commands twice change nothing more", () => {
   assert.equal(twice.n, 0);
 });
 
-test("which pictures: the open one, by name, all; folders and new are refused", () => {
+test("which pictures: the open one, by name, all; folders are refused; new is a picture from a file (PL-AI)", () => {
   const data = { docs: [{ id: "pabcdef1", name: "Beach day" }, { id: "pabcdef2", name: "Beach night" }, { id: "pabcdef3", name: "Portrait" }] };
   assert.deepEqual(CMD.targets(data, null, "pabcdef3", "open", "").docs.map((x) => x.id), ["pabcdef3"]);
   assert.match(CMD.targets(data, null, "", "open", "").err, /no picture is open/);
@@ -228,7 +228,7 @@ test("which pictures: the open one, by name, all; folders and new are refused", 
   assert.match(CMD.targets(data, null, "", "named", "dog").err, /no picture is called "dog"/);
   assert.equal(CMD.targets(data, null, "", "all", "").docs.length, 3);
   assert.match(CMD.targets(data, null, "", "folder", "x").err, /no folders/);
-  assert.match(CMD.targets(data, null, "", "new", "x").err, /no new pictures/);
+  assert.deepEqual(CMD.targets(data, null, "", "new", "x"), { ok: true, docs: [{ id: "", name: "x" }], fresh: 1 });
   assert.match(CMD.targets({ docs: [] }, null, "", "all", "").err, /no pictures/);
   assert.equal(CMD.docPath("pabcdef1"), "/internal/Photo Lab/pabcdef1/doc.json");
 });
@@ -273,7 +273,7 @@ test("wiring: Photo Lab applies and undoes through assist.js; the Assistant load
   const app = read("photolab/app.js"), as = read("photolab/assist.js"), html = read("photolab/index.html");
   // loaded on the first request (Photo Lab's first-open budget)
   assert.match(app, /if \(target\.edit \|\| target\.editUndo\) \{\n\s+assist\(\)\.then\(function \(A\) \{ if \(target\.edit\) A\.edit\(target\.edit\); else A\.undo\(target\.editUndo\); \}/);
-  assert.match(app, /load\("commands\.js"\)\.then\(function \(\) \{ return load\("assist\.js"\); \}\)/);
+  assert.match(app, /load\("commands\.js"\)\.then\(function \(\) \{ return load\("aiedit\.js"\); \}\)\.then\(function \(\) \{ return load\("assist\.js"\); \}\)/);
   assert.match(app, /PL\.prefs\.doc = st\.doc\.id/);
   assert.match(app, /PL\.putIndex = function/);
   assert.ok(html.indexOf('src="assist.js') < 0 && html.indexOf('src="commands.js') < 0, "not loaded at first open");

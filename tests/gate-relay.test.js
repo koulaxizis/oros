@@ -245,7 +245,7 @@ test("mcp: 401 with resource metadata, then initialize and tools/list", async ()
   const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json();
   assert.deepEqual(list.result.tools.map((x) => x.name), ["list_apps", "search_data", "app_summary", "budget_lines",
     "invoice_list", "stock_items", "publish_titles", "budget_add", "budget_change", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_refresh", "budget_delete",
-    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "invoices_record", "files_link", "files_upload", "local_folders_request", "studio_import", "montage_import", "oros_update", "gate_tools", "gate_call"]);
+    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "invoices_record", "files_link", "files_upload", "local_folders_request", "claude_folders_request", "studio_import", "montage_import", "photolab_import", "oros_update", "gate_tools", "gate_call"]);
   const ro = list.result.tools.filter((x) => x.annotations.readOnlyHint).map((x) => x.name);
   assert.equal(ro.length, 11, "only the budget_*, kanban_* and invoices_record writers are not read-only (+ files_link, GATE-FILES F2; gate_tools GL-5; oros_update GL-7; files_upload GL-8)");
   assert.equal(list.result.tools.find((x) => x.name === "budget_delete").annotations.destructiveHint, true);
@@ -923,6 +923,20 @@ test("KB-COLREN: kanban_add_columns also renames columns (not a deletion)", () =
   assert.equal(G.isDeletion("kanban_add_columns", { board: "b", rename_columns: [{ column: "c", name: "ISBN" }] }), false);
 });
 
+test("KB-COLAP: kanban_add_columns also sets Author Portal steps (not a deletion), same keys in the Assistant", () => {
+  const t = G.TOOLS.find((x) => x.name === "kanban_add_columns");
+  const pc = t.inputSchema.properties.portal_columns;
+  assert.ok(pc);
+  assert.deepEqual(pc.items.required, ["column"]);
+  assert.deepEqual(Object.keys(pc.items.properties).sort(), ["about", "about_en", "column", "finish", "name", "name_en", "step"]);
+  assert.equal(pc.items.additionalProperties, false);
+  assert.match(t.description, /portal_columns/);
+  assert.equal(G.isDeletion("kanban_add_columns", { board: "b", portal_columns: [{ column: "c", step: false }] }), false);
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "assistant", "core.js"), "utf8");
+  const at = src.indexOf("var TOOL_KB_COLS"), seg = src.slice(at, src.indexOf("var TOOL_OPEN_FILE", at));
+  ["portal_columns", "step:", "finish:", "name_en:", "about:", "about_en:"].forEach((k) => assert.ok(seg.indexOf(k) > 0, "Assistant has " + k));
+});
+
 test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passed on; a folder request waits for a screen", async () => {
   // Chris 2026-11-21 «να δουλεύεις με το orOS κλειστό στο tray … και πρόσβαση στους φακέλους ακόμη και με έγκριση από κινητό»
   const w = world();
@@ -981,6 +995,20 @@ test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passe
   const tool = G.TOOLS.find((x) => x.name === "local_folders_request");
   assert.deepEqual(tool.inputSchema.required, ["path"]);
   assert.deepEqual(tool.inputSchema.properties.access.enum, ["read", "write"]);
+  // CF-ASK (Chris 2026-11-22): a folder of the orOS disk for Claude's folders waits for a screen the same way
+  r = await tc("claude_folders_request", { path: "Studio/Podcasts", access: "write", reason: "studio_import" });
+  assert.equal(r.isError, false, r.content[0].text);
+  out = JSON.parse(r.content[0].text);
+  assert.equal(out.queued, true);
+  assert.match(out.note, /Nothing is opened before the owner allows it/);
+  rows = [...(await b.st.storage.list({ prefix: "q:" })).values()];
+  assert.equal(rows.length, 2);
+  const cf = await Promise.all(rows.map(async (x) => JSON.parse(await G.openText(K, x.c))));
+  assert.deepEqual(cf.map((x) => x.n).sort(), ["claude_folders_request", "local_folders_request"]);
+  assert.ok(rows.every((x) => x.hd === 1));
+  const ct = G.TOOLS.find((x) => x.name === "claude_folders_request");
+  assert.deepEqual(ct.inputSchema.required, ["path"]);
+  assert.equal(ct.annotations.readOnlyHint, false);
 });
 
 test("GL-7: oros_update asks every open orOS to update; a device's Update asks the others", async () => {

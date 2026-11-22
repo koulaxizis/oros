@@ -127,6 +127,66 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **History…** (in the `More` menu, or [[Ctrl+Alt+Z]]): every undo step by name, such as Move, Add 3 objects or Style “Body”, with its time; click one to go back to it, or forward again.
 - **Shortcuts and comfort…** (`More` menu): change any shortcut by clicking it and pressing the new keys. Letters mean the keys' places, so the shortcuts also work with a Greek keyboard. Set how far the arrow keys move ([[Shift]] ten times as far, [[Alt]] a tenth), and switch smart guides, measurements or the toolbar off. Saved on this device.
 
+## Find, change and spelling
+- **Find/Change…** (`More` menu, or [[Ctrl+F]]): find text in the whole document or in one story, optionally only in paragraphs of one style. **Text** finds what you type; **GREP** takes a regular expression (\d a digit, \s a space, ( ) a group; in Change to, $1 is the first group and \n starts a new paragraph). The change can also set a paragraph style or put a character style on what it changes. `Find` lists every hit (click one to open it in the Story Editor), `Next` goes from hit to hit, `Change` changes the one shown, `Change all` changes them all as one undo step. `Queries…` has ready-made clean-ups for a book (double spaces, space before punctuation, a hyphen between spaces to a dash, straight quotes to «», three dots to an ellipsis) and the queries you saved on this device.
+- **Spelling…** (`More` menu): checks every word against the Greek and English dictionaries (the same as Writer's; they load the first time and then work offline). For each unknown word: `Show` it, see `Suggestions` (one click changes it everywhere), `Add to dictionary` (the document's own dictionary, which travels with the document) or `Ignore`. The words of your dictionary in Writer count too.
+- **Next style**: in a paragraph style, `Next style` is the style a new paragraph gets when you press [[Enter]] at the end of one, e.g. Heading → Body.
+- **GREP styles**: in a paragraph style, a character style on everything a regular expression finds, e.g. numbers in another font or the speaker's name in small capitals. Up to 10 per style.
+
+## Breaks, baseline grid and object styles
+- **Breaks**: in the Story Editor, `⤓` puts a column, page, odd page or even page break at the caret; the text after it starts there. While typing, [[Numpad Enter]] is a column break and [[Ctrl+Numpad Enter]] a page break. The Story Editor marks each break.
+- **Baseline grid**: in `Document setup…`, set where the first line sits and how far apart the lines are; `Show the baseline grid` draws it. Paragraph styles with `Lock to baseline grid` put every line on it, so the lines of facing pages and columns line up.
+- **Justify** (text frame, vertical alignment): the free space at the foot of a column is shared out between its paragraphs, so the columns end at the same height. The last column of a text stays as it is.
+- **Object styles** (properties panel): `New from this` saves a frame's or shape's looks (fill, stroke, corners, opacity, wrap; for text frames inset, columns and alignment) under a name; pick it for other objects; `Redefine from this` changes every object that uses it. They travel with the document.
+
+## Story Editor, library and swatch libraries
+- **Story Editor**: `¶` shows each paragraph's style name in a column beside the text; `A−` and `A+` make the text smaller or bigger (only on screen, remembered on this device). Paragraphs that do not fit in the frames any more are marked from where the overset starts.
+- **Library** (`More › Library…`): select objects and `Add the selection` keeps them, with their text, colours and styles, for any document on this device; click one to place it on the current page. Rename or remove them there; `Export…` and `Import…` take a library to another device as a `.oroslib` file. Pictures are named, not copied.
+- **Swatch libraries** (Colours panel): `Libraries…` adds ready-made sets (print basics, sea, earth, pastel, greys); `Import .ase…` reads swatch files from InDesign, Illustrator, Photoshop, Affinity or Scribus (RGB, CMYK, grey and Lab, spot colours stay spot); `Export .ase` writes the document's colours for them. Colours already in the document are skipped.
+
+## Greek and composition
+- **Greek**: hyphenation also reads polytonic text (breathings, accents and the iota subscript are set aside: ἄν-θρω-πος); all caps drop them and keep the dialytika (ᾠδή → ΩΙΔΗ). Lists of styles sort the Greek way (ά with α, ς with σ).
+- **Glyph check**: Preflight lists every frame with characters its font cannot draw, and which ones.
+- **Composition** (paragraph style, Composition): `Whole paragraph` weighs all lines of a paragraph together, for even spacing; word spacing least and most (%) and letter spacing most set how far a justified line may go; `Optical margins` lets punctuation hang past the edge; `Balance ragged lines` evens out lines that are not justified; a drop cap sinks the first letters through two or more lines.
+- **Small caps, superscript, subscript**: in a character style.
+- **Loose and tight lines**: `More › Show loose and tight lines` marks justified lines whose spaces go past the limits (yellow loose, pink tight).
+
+## Notes, lists, cross-references and books
+- **Footnotes and endnotes**: in the Story Editor, the `¹` button › `Insert a note…`. The note is numbered by itself and set at the foot of its column; a line that would leave its note behind moves on with it. Click a note's number to change or remove it. `More › Notes…` puts them after the text instead (endnotes), sets their paragraph style and whether numbers start again in each story. In an EPUB they open as pop-ups.
+- **Lists**: a paragraph style's `List` numbers its paragraphs (1. a) i. αʹ Αʹ and more, or bullets). Styles with the same list name share the numbers; level 2 starts again under each level 1.
+- **Cross-references**: `¹ › Insert a cross-reference…` points at a title or any paragraph and shows its page, its text or both; the page follows when the text moves. In a PDF it is a link to that page, in an EPUB to the paragraph.
+- **Links**: select words and `¹ › Link…` for a web or e-mail address; it works in the PDF and the EPUB.
+- **Contents in any document**: `More › Contents from styles…` picks the title styles and their levels, each level's style, and what goes between title and page (`Title | σελ. 12`); a new frame takes them when there is none. `More › Update contents` follows the pages later.
+- **Books**: `More › Book…` keeps chapters in separate documents together: their order, page numbers that run on (each document on a right-hand page if you like), styles and colours as the first document's, and one PDF of the whole book.
+
+## A new page size
+- **Document setup** with another width or height moves the contents the way a designer would: frames that run to the edges still do, page numbers and running heads keep their edge, the rest keeps its place in the text area, pictures and shapes keep their proportions. With only the size changed, the margins follow in proportion; `Text sizes in proportion too` also sizes the styles.
+- House styles and their front and back pages fit any trim the same way.
+
+## Print colours
+- **See the inks**: `More › Print colours…` shows the pages as they print: Proof (the colours through the print profile), one ink plate at a time (Cyan, Magenta, Yellow, Black), or Total ink, in pink where more ink would go than the limit. Click the label over the pages to go back to normal colours.
+- **Print profile**: it is Coated FOGRA39 unless you give the printer's own CMYK profile (.icc). It stays with the document, and the PDF/X uses it.
+- **Print checks**: Preflight warns about too much ink, small text in rich black, lines thinner than 0.25 pt, text too close to the trim and white that overprints. Set the ink limit and the distance from the trim in Print colours.
+- **Overprint and tints**: 100 % black overprints, so black text never shows a white gap around it; switch it off in Print colours. A swatch can overprint too, and a swatch can be a tint of another: change the colour and its tints follow.
+- **PDF/X-1a**: `Export › PDF/X-1a` puts everything in CMYK, pictures too, for printers that ask for it. It holds no transparency: transparent pictures go on white, and the report says what else had to change.
+
+## Imposition and images
+- **Booklets and sections**: `Export › Imposition` puts the pages on printer's sheets: a booklet (one stack folded and stapled), sections of 8, 16 or 32 pages for a sewn or glued book, or two pages on a sheet. Blank pages fill the last sheet; crop marks, the fold and creep go on the sheets.
+- **Every page as an image**: in `Export › Image`, `All pages` or `All spreads` saves them all in one .zip.
+- **Price code**: a book cover can carry an EAN-5 price code beside the ISBN barcode (e.g. 90000).
+
+## Accessible PDF
+- **Tagged PDF**: tick `Export › Tagged for accessibility (PDF/UA)` and the PDF carries its structure: headings (the levels the bookmarks use), paragraphs, footnotes and endnotes, the contents as a list of links, and pictures with their description. Screen readers and reflow on phones read it in order, story by story.
+- **What stays out**: running heads, page numbers, master items, frames, rules and decorative pictures are marked as decoration, so they are not read aloud.
+- **Pictures**: give each picture a `Description` in its settings, or tick `Decorative`. A picture without either is left out of the reading.
+- **Language and title**: the PDF names the book's language (Document setup, else the Publishing title) and shows the document's name as its title. An e-book PDF from an output profile is always tagged. Not with PDF/X-1a or imposition.
+
+## Versions
+- **Keep a version**: `More › Versions…` keeps the whole document under a name (e.g. "Sent to the editor"). The 30 newest versions of each document stay on this device.
+- **Compare**: shows what changed since a version: pages, words, frames, styles, colours, the document's setup, and each changed paragraph with the words taken out struck through and the new words marked. `Show` opens the paragraph.
+- **Restore**: brings a version back. The current state is kept as a version first, and Undo takes the restore back.
+- **Claude**: before large changes Claude can keep a version too (marked "by Claude").
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 
