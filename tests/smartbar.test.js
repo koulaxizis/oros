@@ -149,7 +149,8 @@ test("shell strings for every chip in EN, EL and DE", () => {
     "sb.invoices.tip", "sb.trip.today", "sb.trip.tomorrow", "sb.trip.in", "sb.trip.tip", "sb.timer.tip",
     "sb.habits.one", "sb.plants.one", "sb.chores.one", "sb.kanban.one", "sb.invoices.one",
     "sb.tmr.name", "sb.tmr.tip", "sb.tmr.stop", "sb.sw.label", "sb.sw.tip", "sb.sw.stop", "sb.rec.paused", "sb.rec.tip", "sb.rec.tip.p", "sb.rec.stop",
-    "sb.ai.label", "sb.ai.searches", "sb.ai.near", "sb.ai.tip", "sb.ai.web", "sb.ai.srch"]);
+    "sb.ai.label", "sb.ai.searches", "sb.ai.near", "sb.ai.tip", "sb.ai.web", "sb.ai.srch",
+    "sb.bat.label", "sb.bat.charging", "sb.bat.low", "sb.bat.tip"]);
   keys.forEach((k) => {
     assert.strictEqual(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
@@ -409,4 +410,18 @@ test("AI-USE compact numbers and wiring", () => {
   assert.match(as, /addSearch\(src\);/);                               // one answered search counted
   assert.match(as, /if \(p\.srch && typeof p\.srch === "object"\) prefs\.srch = p\.srch;/);
   assert.doesNotMatch(as.slice(as.indexOf("function addSearch"), as.indexOf("function provName")), /\bq\b|query/);
+});
+
+// BAT-1 (smartbar 1.6.0): the battery card.
+test("BAT-1 batteryCard: percent, charging, low under 20 %, none on mains or junk", () => {
+  assert.deepStrictEqual(M.batteryCard({ level: 0.82, charging: false, chargingTime: Infinity }), { pct: 82, charging: false, low: false });
+  assert.deepStrictEqual(M.batteryCard({ level: 0.2, charging: false }), { pct: 20, charging: false, low: true });
+  assert.deepStrictEqual(M.batteryCard({ level: 0.15, charging: true, chargingTime: 3600 }), { pct: 15, charging: true, low: false });
+  assert.deepStrictEqual(M.batteryCard({ level: 1, charging: true, chargingTime: 600 }), { pct: 100, charging: true, low: false });
+  assert.strictEqual(M.batteryCard({ level: 1, charging: true, chargingTime: 0 }), null);     // a desktop on mains
+  [null, {}, { level: NaN }, { level: 2 }, { level: -0.1 }].forEach((b) => assert.strictEqual(M.batteryCard(b), null));
+  assert.ok(M.KINDS.includes("battery"));
+  const src = read("smartbar.js");
+  assert.match(src, /root\.orosQS\.open\(\)/);                 // a tap opens Quick settings
+  assert.doesNotMatch(src, /setInterval/);                       // followed through the battery's own events
 });

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.5.0)
+// orOS — smartbar.js (smart top bar, v1.6.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -16,7 +16,9 @@
 //   month + today's rows / the days ahead, with "Open Calendar /
 //   Weather" inside). The "ai" card (AI-USE, v1.5.0): the Assistant's
 //   tokens this month on the person's own keys and the free Tavily
-//   searches left, never for local models. fitBar() folds the last chips
+//   searches left, never for local models. The "battery" card (BAT-1,
+//   v1.6.0): percent and charging where the browser reports a battery;
+//   a tap opens Quick settings. fitBar() folds the last chips
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
@@ -28,10 +30,10 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.5.0";
+  var VER = "1.6.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
-               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai"];
+               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery"];
   var MONEY = { budget: 1, sales: 1, invoices: 1 };
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
@@ -208,7 +210,19 @@
     return (Math.round(n / 100000) / 10).toString().replace(/\.0$/, "") + "M";
   }
 
-  var model = { VER: VER, KEY: KEY, peekRows: peekRows, hiLo: hiLo, aiUsage: aiUsage, compact: compact, TAVILY_FREE: TAVILY_FREE, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
+  // BAT-1: what the battery card says, from navigator.getBattery()'s
+  // { level 0–1, charging, chargingTime }. A computer on mains power
+  // reports a full battery that charges in 0 s: no card then.
+  //   → { pct, charging, low } | null
+  var BAT_LOW = 20;
+  function batteryCard(b) {
+    if (!b || typeof b.level !== "number" || !isFinite(b.level) || b.level < 0 || b.level > 1) return null;
+    var pct = Math.round(b.level * 100), charging = b.charging === true;
+    if (pct === 100 && charging && b.chargingTime === 0) return null;
+    return { pct: pct, charging: charging, low: !charging && pct <= BAT_LOW };
+  }
+
+  var model = { VER: VER, KEY: KEY, batteryCard: batteryCard, BAT_LOW: BAT_LOW, peekRows: peekRows, hiLo: hiLo, aiUsage: aiUsage, compact: compact, TAVILY_FREE: TAVILY_FREE, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
                 monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS,
@@ -249,6 +263,7 @@
   var IC = {
     event: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
     focus: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2.5h4"/></svg>',
+    battery: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="17" height="10" rx="2.5"/><path d="M22 10.5v3"/></svg>',
     ai: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M10 10h4v4h-4zM9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/></svg>',
     tasks: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12l3 3 5-6"/></svg>',
     continue: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="12" height="9" rx="1.5"/><rect x="15.5" y="9" width="6" height="11" rx="1.5"/><path d="M5 18h7M10.5 14.5l3 3-3 3"/></svg>',
@@ -469,6 +484,26 @@
     if (more) { more.el.setAttribute("aria-expanded", "false"); if (focusBtn) more.el.focus(); }
   }
 
+  // BAT-1: navigator.getBattery() once, the first time the card is on.
+  var bat = null, batAsked = false;
+  function watchBattery() {
+    if (batAsked) return;
+    batAsked = true;
+    var nav = root.navigator;
+    if (!nav || typeof nav.getBattery !== "function") return;
+    call(function () {
+      nav.getBattery().then(function (b) {
+        var up = function () {
+          bat = { level: b.level, charging: b.charging, chargingTime: b.chargingTime };
+          if (chips.battery) chips.battery.key = "";
+          paint(false);
+        };
+        ["levelchange", "chargingchange", "chargingtimechange"].forEach(function (ev) { b.addEventListener(ev, up); });
+        up();
+      }, function () {});
+    });
+  }
+
   // ---------- PEEK-1: peek panels ----------
   // One panel at a time, under the bar like #sb-pop. The weather chip is
   // the shell's (#wx-chip); the event peek is the event chip's. Data is
@@ -680,6 +715,17 @@
       var ph = t(f.phase === "break" ? "sb.focus.break" : "sb.focus.work"), left = clock(f.left);
       return { v: left, l: ph, cls: f.phase === "work" ? "sb-soon" : "",
                tip: t("sb.focus.tip").replace("{p}", ph).replace("{r}", left).replace("{app}", appName("time")), go: function () { host.open("time"); } };
+    },
+    // BAT-1: the battery the browser reports, read once and then followed
+    // through its own events (no polling).
+    battery: function () {
+      watchBattery();
+      var c = batteryCard(bat);
+      if (!c) return null;
+      var state = t(c.charging ? "sb.bat.charging" : (c.low ? "sb.bat.low" : "sb.bat.label"));
+      return { v: c.pct + "%", l: c.charging || c.low ? state : "", cls: c.low ? "sb-soon" : (c.charging ? "sb-now" : ""),
+               tip: t("sb.bat.tip").replace("{n}", c.pct).replace("{s}", state),
+               go: function () { call(function () { root.orosQS.open(); }); } };
     },
     // AI-USE: numbers only (never a prompt); hidden while the Assistant
     // is locked or hidden on this device.
