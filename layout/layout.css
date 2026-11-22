@@ -780,5 +780,12 @@ body.inframe #cv { cursor: text; }
 .cm-bar .cm-count { font-size: 12px; padding: 0 4px; }
 .cm-bar.placing .btn.primary { outline: 2px solid var(--accent); outline-offset: 2px; }
 .cm-txt { width: 100%; min-height: 110px; resize: vertical; }
+/* the book's index (LY-W13) */
+.story-ed .six { text-decoration: underline dotted; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+.ix-list { max-height: 34vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; margin-bottom: 10px; }
+.ix-row { display: flex; align-items: center; gap: 8px; min-height: 36px; border-bottom: 1px solid var(--border); }
+.ix-row:last-child { border-bottom: 0; }
+.ix-row .ix-t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.ix-terms { width: 100%; min-height: 84px; resize: vertical; }
 .ver-txt ins { text-decoration: none; background: rgba(47, 158, 106, .22); border-radius: 2px; }
 .pc-prof { font-weight: 600; margin-right: 8px; overflow-wrap: anywhere; }

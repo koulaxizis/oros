@@ -202,6 +202,13 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Kommentare auf der Seite**: `Mehr › Kommentare…` zeigt die Kommentare als Stecknadeln. `Hinzufügen`, dann auf die Seite tippen, wo er hinkommt. Eine Nadel antippen, um den Kommentar zu ändern, als erledigt zu markieren oder zu löschen; erledigte lassen sich ausblenden.
 - **Korrektur-PDF**: in der Kommentarleiste speichert `Korrektur-PDF` die Seiten mit jedem offenen Kommentar und jeder verfolgten Änderung als Notiz im PDF, bereit für Autorin, Autor oder Lektorat.
 
+## Register
+- **Ein Wort markieren**: Wähle im Textmodus die Wörter aus, dann `¹` › `Registereintrag…`. Das Stichwort sind die Wörter selbst, wenn du kein anderes angibst; ein Unterstichwort ordnet sie unter ihrem Stichwort ein. Markierte Wörter sind gepunktet unterstrichen; fahre darüber, um ihr Stichwort zu sehen.
+- **Überall markieren**: `Mehr › Register…` › ein Wort pro Zeile, `Wort`, `Wort = Stichwort` oder `Wort = Stichwort / Unterstichwort`, dann `Markieren`. Jedes ganze Wort wird markiert, in jeder Schreibung, mit oder ohne Akzente.
+- **Register erstellen**: `Mehr › Register…` › `Register erstellen` setzt es zweispaltig auf eine neue letzte Seite: Stichwörter in der Reihenfolge der Sprache des Dokuments (Griechisch ohne Akzente), eine Überschrift pro Buchstabe, Unterstichwörter unter ihrem Stichwort, Seiten so, wie die Seiten sie zeigen (Abschnitte, römische Ziffern), und Folgen verbunden (3–5). Dort wählst du auch seine Stile.
+- **Register aktualisieren**, wenn sich die Seiten verschieben: Das Register wird aus den Markierungen neu erstellt, sein Titel und Text vor den Einträgen bleiben. In der Stichwortliste desselben Dialogs entfernst du die Markierungen eines Stichworts.
+- **Claude** markiert Begriffe und erstellt das Register mit dem Befehl `index` (Assistent).
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

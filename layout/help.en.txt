@@ -202,6 +202,13 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Comments on the page**: `More › Comments…` shows the comments as pins. `Add`, then tap the page where it goes. Tap a pin to change it, resolve it or delete it; resolved comments can be hidden.
 - **Proof PDF**: in the comments bar, `Proof PDF` saves the pages with every open comment and every tracked change as a note in the PDF, ready for an author or an editor.
 
+## Index
+- **Mark a word**: in the Story Editor select the words, then `¹` › `Index entry…`. The topic is the words themselves unless you give another; a sub-topic files it under its topic. Marked words have a dotted underline; hover them to see their topic.
+- **Mark them everywhere**: `More › Index…` › one word per line, `word`, `word = Topic` or `word = Topic / Sub-topic`, then `Mark them`. Every whole word is marked, in any case and with or without accents.
+- **Make the index**: `More › Index…` › `Make the index` puts it on a new last page in two columns: topics in the order of the document's language (Greek without accents), a heading per letter, sub-topics under their topic, pages as the pages show them (sections, roman numerals) and runs joined (3–5). Choose its styles there.
+- **Update the index** after the pages move: the index is made again from the marks, its title and any text before the entries stay. The topic list in the same dialog unmarks a topic.
+- **Claude** can mark terms and make the index with the `index` command (Assistant).
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 
