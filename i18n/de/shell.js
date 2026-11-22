@@ -457,6 +457,7 @@ orosPack("de", "shell", {
  "lang.tooltip": "Sprache wechseln",
  "ln.autohide": "Automatisch ausblenden",
  "ln.badges": "Zahlen an den Symbolen",
+ "ln.cards": "Karten im Dock",
  "ln.badgeAria": "{n} offen",
  "ln.desk": "Auf dem Desktop",
  "ln.deskLabel": "Desktop-Verknüpfungen",

@@ -13337,6 +13337,7 @@
       return { on: !!p.on, size: p.size, magnify: !!p.magnify, autohide: !!p.autohide,
                over: !!p.over, fine: !!p.fine, pinned: Number(p.pinned) || 0,
                badges: p.badges !== false,          // BADGE-1 (launcher 1.8.0): counts on icons
+               cards: p.cards === true,             // DOCK-CARDS (launcher 1.9.0): bar cards in the Dock
                style: typeof p.style === "string" ? p.style : null,
                hover: typeof p.hover === "string" ? p.hover : null,
                pos: typeof p.pos === "string" ? p.pos : null,
@@ -13616,7 +13617,7 @@
       case "wpaccent:on":   wpAccSetUser("on", value); return;      // WPACC-1, this device
       case "wpaccent:pick": wpAccSetUser("pick", value); return;
     }
-    if (/^dock:(on|size|magnify|autohide|over|style|hover|pos|badges)$/.test(name)) {
+    if (/^dock:(on|size|magnify|autohide|over|style|hover|pos|badges|cards)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
       return;

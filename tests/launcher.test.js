@@ -294,3 +294,36 @@ test("lateTasks: only tasks whose day passed", () => {
   assert.equal(L.lateTasks(rows, "2026-11-22"), 2);
   assert.equal(L.lateTasks(null, "2026-11-22"), 0);
 });
+
+test("DOCK-CARDS cardsHere: only when turned on, the Dock shows at the bottom and the window is 760 px or wider", () => {
+  const on = { on: true, cards: true };
+  assert.equal(L.cardsHere(on, 760, "bottom"), true);
+  assert.equal(L.cardsHere(on, 759, "bottom"), false, "narrow: the top bar keeps them");
+  assert.equal(L.cardsHere(on, 1280, "left"), false, "a side Dock: the top bar keeps them");
+  assert.equal(L.cardsHere({ on: false, cards: true }, 1280, "bottom"), false, "Dock off");
+  assert.equal(L.cardsHere({ on: true }, 1280, "bottom"), false, "off by default");
+  assert.equal(L.cardsHere(null, 1280, "bottom"), false);
+  assert.equal(L.CARDS_W, 760);
+});
+
+test("DOCK-CARDS wiring: one holder, an event when it comes or goes, the smart bar moves its row and never fits the Dock", () => {
+  const fs = require("fs");
+  const R = (f) => fs.readFileSync(path.join(__dirname, "..", f), "utf8");
+  const src = R("launcher.js");
+  assert.match(src, /cards: p\.cards === true/);
+  assert.match(src, /placeCards\(cardsHere\(p, root\.innerWidth, side\) \? bar2 : null\);/);
+  assert.match(src, /doc\.dispatchEvent\(new CustomEvent\("oros-dock-cards"\)\)/);
+  assert.match(src, /function removeDock\(\) \{\n    placeCards\(null\);/);
+  assert.match(src, /cardSlot: function \(\) \{ return cardsEl && cardsEl\.isConnected \? cardsEl : null; \}/);
+  const sb = R("smartbar.js");
+  assert.match(sb, /doc\.addEventListener\("oros-dock-cards"/);
+  assert.match(sb, /if \(!box \|\| inDock\(\)\) return false;/);
+  assert.match(sb, /placeUp\(peekEl, peekFrom\);/);
+  assert.match(R("settings/settings.js"), /set\("dock:cards", v\)/);
+  const core = R("settings/core.js"), de = R("i18n/de/settings.js"), tr = R("translations.js"), des = R("i18n/de/shell.js");
+  assert.equal((core.match(/"k\.cards": /g) || []).length, 2);
+  assert.equal((core.match(/"k\.cards\.hint": /g) || []).length, 2);
+  assert.ok(de.includes('"k.cards":') && de.includes('"k.cards.hint":'));
+  assert.equal((tr.match(/"ln\.cards": /g) || []).length, 2);
+  assert.ok(des.includes('"ln.cards":'));
+});

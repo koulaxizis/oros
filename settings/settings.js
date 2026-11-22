@@ -449,6 +449,8 @@
       // BADGE-1: counts on the Dock and desktop shortcuts (also with the Dock off)
       if (typeof d.badges === "boolean") c5.appendChild(row(t("k.badges"), switchBtn(d.badges, "dock:badges", function (v) { set("dock:badges", v); }, t("k.badges")), { hint: t("k.badges.hint") }));
       if (d.on) {
+        // DOCK-CARDS: the top bar's cards at the end of a bottom Dock (wide screens)
+        if (typeof d.cards === "boolean") c5.appendChild(row(t("k.cards"), switchBtn(d.cards, "dock:cards", function (v) { set("dock:cards", v); }, t("k.cards")), { hint: t("k.cards.hint") }));
         var sizeRow = row(t("k.size"), null);
         sizeRow.appendChild(segmented(["s", "m", "l"].map(function (k) {
           return { value: k, label: t("k.size." + k) };
