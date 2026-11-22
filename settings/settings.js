@@ -488,64 +488,25 @@
       host.appendChild(c5);
     }
 
-    // Desktop widgets (widgets.js through the shell; none in a single app)
-    if (s.widgets) {
+    // GALLERY-1 + structure review 8 (Chris 2026-11-22): the widget
+    // gallery is the one place to add, remove and order desktop widgets
+    // and top bar cards; here only the button that opens it.
+    if (s.widgets || s.smartbar) {
       var cw = card(t("g.title"), "widgets");
       cw.appendChild(el("p", "hint", t("g.hint")));
-      var wl = el("div", "checks");
-      s.widgets.list.forEach(function (w) {
-        var lab = el("label", "check");
-        var cb = el("input");
-        cb.type = "checkbox";
-        cb.checked = !!w.on;
-        cb.setAttribute("data-k", "widgets:" + w.id);
-        cb.addEventListener("change", function () { set("widgets:" + w.id, cb.checked); });
-        lab.appendChild(cb);
-        lab.appendChild(el("span", null, w.name));
-        wl.appendChild(lab);
-      });
-      cw.appendChild(wl);
-      // GALLERY-1: the one gallery (search, previews, order) for both
-      cw.appendChild(button(t("g.gallery"), "widgets.gallery", function () { act("widgets.gallery"); }));
+      cw.appendChild(button(t("g.gallery"), "widgets.gallery", function () { act("widgets.gallery"); }, "primary"));
       host.appendChild(cw);
     }
 
-    // Smart top bar (smartbar.js through the shell; none in a single app)
+    // Smart top bar (smartbar.js through the shell; none in a single app):
+    // how it looks and the live pills; its cards are in the gallery.
     if (s.smartbar) {
       var cb2 = card(t("sb.title"), "smartbar");
-      cb2.appendChild(el("p", "hint", t("sb.hint")));
-      cb2.appendChild(button(t("g.gallery"), "smartbar.gallery", function () { act("widgets.gallery"); }));
       // SB-LIVE: timers, stopwatch and recording show by themselves
       if (typeof s.smartbar.live === "boolean") {
         cb2.appendChild(row(t("sb.live"), switchBtn(s.smartbar.live, "smartbar-live", function (v) { set("smartbar-live", v); }, t("sb.live")),
           { hint: t("sb.live.hint") }));
       }
-      var sl = el("div", "sb-list");
-      var onIds = s.smartbar.list.filter(function (w) { return w.on; }).map(function (w) { return w.id; });
-      s.smartbar.list.forEach(function (w) {
-        var line = el("div", "sb-line");
-        var lab = el("label", "check");
-        var cb = el("input");
-        cb.type = "checkbox";
-        cb.checked = !!w.on;
-        cb.setAttribute("data-k", "smartbar:" + w.id);
-        cb.addEventListener("change", function () { set("smartbar:" + w.id, cb.checked); });
-        lab.appendChild(cb);
-        lab.appendChild(el("span", null, w.name));
-        line.appendChild(lab);
-        if (w.on) {
-          var at = onIds.indexOf(w.id);
-          [[-1, "sb.left", "\u2190"], [1, "sb.right", "\u2192"]].forEach(function (m) {
-            var mb = button(m[2], "smartbar-move:" + w.id + ":" + m[0], function () { set("smartbar-move:" + w.id, m[0]); }, "sb-mv");
-            mb.setAttribute("aria-label", t(m[1]).replace("{w}", w.name));
-            mb.title = t(m[1]).replace("{w}", w.name);
-            mb.disabled = m[0] < 0 ? at === 0 : at === onIds.length - 1;
-            line.appendChild(mb);
-          });
-        }
-        sl.appendChild(line);
-      });
-      cb2.appendChild(sl);
       cb2.appendChild(el("p", "hint", t("sb.money")));
       if (s.smartbar.looks) {
         var lsel = select(s.smartbar.looks.map(function (v) { return { value: v, label: t("sb.look." + (v || "classic")) }; }),

@@ -63,7 +63,7 @@ test("wiring: page, precache, shell, Settings, desktop menu", () => {
   assert.match(sh, /widgets: window\.orosWidgets && window\.orosWidgets\.snapshot \? window\.orosWidgets\.snapshot\(\) : null,/);
   assert.match(sh, /if \(\/\^widgets:\/\.test\(name\)\)/);
   assert.match(sh, /if \(\(!wxTrayOn\(\) && !wgWantsWeather\(\)\) \|\| !navigator\.onLine\) return;/);
-  assert.match(read("settings/settings.js"), /set\("widgets:" \+ w\.id, cb\.checked\)/);
+  assert.match(read("settings/settings.js"), /act\("widgets\.gallery"\)/);   // GALLERY-1: the gallery is the one place
   assert.match(read("quickmenu.js"), /#wg-col, /);
   assert.match(read("widgets.js"), /root\.__orosDeskItems = root\.__orosDeskItems \|\| \[\]\)\.push/);
 });
@@ -110,7 +110,8 @@ test("GALLERY-1 wiring: previews are inert, never paint Playing or First steps, 
   assert.match(sb, /preview: function \(kind\) \{\n      if \(!host \|\| KINDS\.indexOf\(kind\) === -1 \|\| locked\(\)\) return null;/);
   assert.match(read("shell.js"), /case "widgets\.gallery": if \(window\.orosWidgets && window\.orosWidgets\.edit\) window\.orosWidgets\.edit\(\); return;/);
   const st = read("settings/settings.js");
-  assert.equal((st.match(/act\("widgets\.gallery"\)/g) || []).length, 2, "from Desktop widgets and from Top bar");
+  assert.equal((st.match(/act\("widgets\.gallery"\)/g) || []).length, 1, "one button in Settings › Appearance");
+  assert.doesNotMatch(st, /set\("(widgets|smartbar):" \+ w\.id/, "no second list of cards in Settings (structure review 8)");
   for (const [f, re] of [["settings/core.js", /"g\.gallery": /g], ["i18n/de/settings.js", /"g\.gallery": /g]]) {
     assert.equal((read(f).match(re) || []).length, f.endsWith("core.js") ? 2 : 1, f);
   }
