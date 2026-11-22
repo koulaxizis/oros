@@ -215,6 +215,12 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - The PDF, SVG and image exports show the effects; in PDF/X-1a they count as transparency, and the export says so. Older orOS versions show the object without its effects.
 - **Claude** can set them with the `effects` command (Assistant).
 
+## Symbols
+
+More › Symbols… keeps a group of objects you use again and again, such as a logo, a badge or the emblem of a series. Select the objects on a page, give the symbol a name and make it: the selection becomes its first placement. Place puts it on the page in view; drag and resize each placement as you like.
+
+Change one placement, select it and choose Update the symbol from this placement: every other placement changes too, each at its own size, and text keeps its frame. Detach makes a placement plain objects again; deleting a symbol leaves its placements as plain objects. Claude can make, place and update symbols too.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

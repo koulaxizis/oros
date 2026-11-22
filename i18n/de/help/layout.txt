@@ -215,6 +215,12 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - PDF-, SVG- und Bildexporte zeigen die Effekte; in PDF/X-1a zählen sie als Transparenz, und der Export meldet das. Ältere orOS-Versionen zeigen das Objekt ohne Effekte.
 - **Claude** setzt sie mit dem Befehl `effects` (Assistent).
 
+## Symbole
+
+Mehr › Symbole… bewahrt eine Gruppe von Objekten auf, die du immer wieder brauchst, etwa ein Logo, ein Abzeichen oder das Emblem einer Reihe. Wähle die Objekte auf einer Seite aus, gib dem Symbol einen Namen und erstelle es: Die Auswahl wird seine erste Platzierung. Platzieren setzt es auf die sichtbare Seite; verschiebe und skaliere jede Platzierung nach Belieben.
+
+Ändere eine Platzierung, wähle sie aus und nimm Symbol aus dieser Platzierung aktualisieren: Alle anderen Platzierungen ändern sich mit, jede in ihrer eigenen Größe. Lösen macht eine Platzierung wieder zu einfachen Objekten; wird ein Symbol gelöscht, bleiben seine Platzierungen als einfache Objekte. Auch Claude kann Symbole erstellen, platzieren und aktualisieren.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

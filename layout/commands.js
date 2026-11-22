@@ -141,7 +141,10 @@
     shadow_x: { t: "num", lo: -145, hi: 144, def: -145 }, shadow_y: { t: "num", lo: -145, hi: 144, def: -145 }, shadow_blur: { t: "num", lo: -1, hi: 72, def: -1 }, shadow_opacity: { t: "int", lo: -1, hi: 100, def: -1 }, shadow_color: { t: "color" },
     glow_blur: { t: "num", lo: -1, hi: 72, def: -1 }, glow_opacity: { t: "int", lo: -1, hi: 100, def: -1 }, glow_color: { t: "color" }, soft_edges: { t: "num", lo: -1, hi: 144, def: -1 } } };
   CATALOG.index = { kind: "doc", args: { terms: { t: "list", of: { t: "str", max: 200 }, max: 200 }, unmark: { t: "str", max: 120 }, build: { t: "bool", def: 1 }, title: { t: "str", max: 120 } } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index", "effects"];
+  // symbol (LY-W14): a symbol made, placed, updated, detached, renamed, deleted
+  CATALOG.symbol = { kind: "doc", args: { act: { t: "enum", v: ["place", "make", "update", "detach", "rename", "delete"], def: "place" }, name: { t: "str", max: 60, req: 1 },
+    frame: { t: "str", max: 400 }, new_name: { t: "str", max: 60 }, page: { t: "int", lo: 1, hi: 9999, def: 1 }, x: MMv(-1, 5000, -1), y: MMv(-1, 5000, -1), w: MMv(-1, 5000, -1) } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index", "effects", "symbol"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -198,6 +201,9 @@
     "rule_color and header_fill #rrggbb, style the paragraph style of the cells; rows never split, the owner merges cells in the Story Editor" +
     "\neffects: on the frames `frame` (ids, comma-separated): blend normal|multiply|screen|overlay|darken|lighten; a drop shadow shadow_x shadow_y (offset in pt, -144..144; -145 = as it is) shadow_blur (pt) shadow_opacity (%, 0 = no shadow) shadow_color #rrggbb (none = black); " +
     "an outer glow glow_blur glow_opacity (0 = none) glow_color; soft_edges in pt for pictures (0 = none); -1 or empty leaves a field as it is; the PDF and every export show them" +
+    "\nsymbol: a reusable group of objects (a logo, a badge, a series emblem) by `name`: act make = the frames `frame` (ids, comma-separated, one page) become the symbol and its first placement; " +
+    "place = a placement on page `page` at x y (mm from the page's top-left corner; -1 = centred) w wide (mm; -1 = its own size); update = the symbol becomes what its placement holding frame `frame` is now and every other placement follows; " +
+    "detach = the placement holding `frame` becomes plain objects; rename to new_name; delete = the symbol goes, its placements stay as plain objects" +
     "\nindex: the book's index: terms one entry per word or phrase to mark wherever it stands in the text (any case or accents, whole words): \"word\", \"word = Topic\" or \"word = Topic / Sub-topic\"; " +
     "unmark a topic whose marks go (* = every mark); build true makes the index again from the marks (a new last page with two columns titled `title`, default Index, or its Greek word in a Greek book, when the book has none); pages as the pages show them" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
@@ -305,6 +311,7 @@
     if (st.op === "retext") return PRO.setStory(doc, st, now);
     if (st.op === "table") return PRO.addTable(doc, st, now);
     if (st.op === "index") return applyIndex(doc, st, env, now);
+    if (st.op === "symbol") return applySymbol(doc, st, env, now);
     if (st.op === "effects") {
       // shadow_x/y -145 = as it is (an offset can be below 0)
       var ef = Object.assign({}, st);
@@ -399,6 +406,23 @@
     }
     if (!hasEngine()) { if (env.notes && env.notes.indexOf("indexLater") < 0) env.notes.push("indexLater"); return n + 1; }
     return n + (IX.update(doc, now) ? 1 : 0);
+  }
+
+  // symbol (LY-W14)
+  function applySymbol(doc, st, env, now) {
+    var SY = node ? require("./symbols.js") : root.LY_SYM;
+    if (!SY) return 0;
+    var ids = String(st.frame || "").split(/[\s,]+/).filter(Boolean).slice(0, 200);
+    if (st.act === "make") { var r = SY.make(doc, ids, st.name, now, env.idf); return r.err ? 0 : r.it.length; }
+    if (st.act === "update") return ids.length ? Math.max(0, SY.redefine(doc, ids[0], now, env.idf)) : 0;
+    if (st.act === "detach") return ids.length ? SY.detach(doc, ids[0], now) : 0;
+    if (st.act === "rename") return SY.rename(doc, st.name, st.new_name, now);
+    if (st.act === "delete") return SY.remove(doc, st.name, now);
+    var sym = SY.find(doc, st.name), pg = M.pagesInOrder(doc)[(st.page || 1) - 1];
+    if (!sym || !pg) return 0;
+    var s = M.pageSize(doc, pg), MM = 72 / 25.4, w = st.w > 0 ? st.w * MM : sym.w, h = sym.h * w / sym.w;
+    var x = st.x >= 0 ? st.x * MM : (s.w - w) / 2, y = st.y >= 0 ? st.y * MM : (s.h - h) / 2;
+    return SY.place(doc, sym.id, pg.id, x, y, now, env.idf, w).length;
   }
 
   // A house style document (LY-HS: setup.ext.house) by name, or the
