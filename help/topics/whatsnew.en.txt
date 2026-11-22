@@ -3,6 +3,12 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.33.00
+- **Studio for long podcasts.** Projects and podcast episodes can now be up to three hours long. Over an hour, Studio mixes, encodes and measures in five-minute parts, so a long episode does not fill the memory. Opus export stays up to one hour.
+- **Markers travel with the project.** A `.orosstudio` file now keeps the project's markers, and its `tracks.txt` lists them.
+- **File for another host.** Each episode can give you its MP3 (with chapters) and a text with the notes, the chapters as `00:00 Title` and the credits, for any podcast host. No feed and no site are made.
+- **Claude can open project files.** Through orOS Gate, Claude can open a `.orosstudio` or `.orosmontage` file it made as a new project in Studio or Montage. You get a notice and can undo it. Claude never publishes.
+
 ## Version 8.32.00
 - **Free films and shows in Television.** A new `Films & shows` tab brings about 3,500 free films, series, documentaries, cartoons and newsreels from Wikimedia Commons and the Internet Archive. Search by title, director or year, filter by type, genre, decade, country, language, length and sound, keep a `Watchlist`, and `Continue watching` picks up where you stopped, on all your devices. Only titles orOS has checked as free are shown unless you ask for more. The player now has a position bar and back / forward buttons for films. See [Television](help:a/television).
 

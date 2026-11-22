@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Studio — loudness and level meter (studio/meter.js, v1.1.0)
+// orOS Studio — loudness and level meter (studio/meter.js, v1.2.0)
 // Pure code, no DOM, no Web Audio: the same numbers in the live master
 // meter (meter.worklet.js), in "Measure the song / a file", in the
 // reference comparison and in the audiobook checks (ACX, Storytel).
@@ -24,7 +24,8 @@
 //     not digital silence), room tone at the head and tail, the longest
 //     run of digital silence, DC offset, clipped samples.
 //   analyse(chans, srate)        both over a whole buffer → report;
-//   new Analysis(chans, srate)   the same a slice at a time (.step(n)).
+//   new Analysis(chans, srate)   the same a slice at a time (.step(n));
+//   Analysis.parts(srate, ch)    the same over parts fed in turn (.feed).
 //   check(report, specId)        a report against ACX / Storytel →
 //     [{ k, ok, v, lo?, hi? }] (dB, seconds).
 //   platform(report, id)         what a streaming service does to it.
@@ -294,10 +295,22 @@
     return this.o >= this.n;
   };
   Analysis.prototype.progress = function () { return this.n ? this.o / this.n : 1; };
+  // A long mix (Studio projects over an hour) arrives in parts: feed each
+  // part in turn; the result is the same as one Analysis over the whole.
+  //   var A = Analysis.parts(srate, channels); A.feed(chans); … A.result()
+  Analysis.parts = function (srate, channels) {
+    var A = new Analysis([new Float32Array(0)].concat(channels > 1 ? [new Float32Array(0)] : []), srate);
+    A.chs = channels;
+    return A;
+  };
+  Analysis.prototype.feed = function (chans) {
+    var n = chans[0].length;
+    if (n > 0) { this.M.push(chans, n, 0); this.L.push(chans, n, 0); }
+  };
   Analysis.prototype.result = function () {
     var a = this.M.read(), b = this.L.read();
     return {
-      srate: this.sr, ch: this.chans.length, dur: b.dur,
+      srate: this.sr, ch: this.chs || this.chans.length, dur: b.dur,
       i: a.i, lra: a.lra, mmax: a.mmax, smax: a.smax, tp: db(a.tp), sp: db(a.sp),
       rms: b.rms, floor: b.floor, head: b.head, tail: b.tail, voice: b.voice,
       zero: b.zero, dc: b.dc, clip: b.clip, peakAt: b.peakAt, clipAt: b.clipAt
@@ -366,7 +379,7 @@
   }
 
   var api = {
-    VERSION: "1.1.0", Meter: Meter, Levels: Levels, Analysis: Analysis, analyse: analyse, check: check, gainFor: gainFor,
+    VERSION: "1.2.0", Meter: Meter, Levels: Levels, Analysis: Analysis, analyse: analyse, check: check, gainFor: gainFor,
     platform: platform, PLATFORMS: PLATFORMS, SPECS: SPECS, lufs: lufs, db: db, kweights: kweights, NB: NB
   };
   root.StudioMeter = api;
