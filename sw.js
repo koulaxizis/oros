@@ -932,7 +932,7 @@ var PRECACHE_URLS = [
   "layout/rebuild.js",
   "layout/port.js",
   "layout/starters.js",
-  "layout/startui.js", "layout/smart.js", "layout/comfort.js", "layout/findchange.js", "layout/findui.js", "layout/objstyles.js", "layout/swatchlib.js", "layout/library.js", "layout/notes.js", "layout/book.js", "layout/retrim.js", "layout/proof.js",
+  "layout/startui.js", "layout/smart.js", "layout/comfort.js", "layout/findchange.js", "layout/findui.js", "layout/objstyles.js", "layout/swatchlib.js", "layout/library.js", "layout/notes.js", "layout/book.js", "layout/retrim.js", "layout/proof.js", "layout/impose.js",
   "designkit/zipin.js",
   "layout/wordin.js",
   "layout/io.js",

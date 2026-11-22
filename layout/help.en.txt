@@ -170,6 +170,11 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Overprint and tints**: 100 % black overprints, so black text never shows a white gap around it; switch it off in Print colours. A swatch can overprint too, and a swatch can be a tint of another: change the colour and its tints follow.
 - **PDF/X-1a**: `Export › PDF/X-1a` puts everything in CMYK, pictures too, for printers that ask for it. It holds no transparency: transparent pictures go on white, and the report says what else had to change.
 
+## Imposition and images
+- **Booklets and sections**: `Export › Imposition` puts the pages on printer's sheets: a booklet (one stack folded and stapled), sections of 8, 16 or 32 pages for a sewn or glued book, or two pages on a sheet. Blank pages fill the last sheet; crop marks, the fold and creep go on the sheets.
+- **Every page as an image**: in `Export › Image`, `All pages` or `All spreads` saves them all in one .zip.
+- **Price code**: a book cover can carry an EAN-5 price code beside the ISBN barcode (e.g. 90000).
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

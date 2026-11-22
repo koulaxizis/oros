@@ -1852,6 +1852,11 @@
   // ---------- Export dialog ----------
   var imgPrefs = { page: "", dpi: 150, fmt: "png" };
   var expPrefs = { range: "all", custom: "", spreads: 0, bleed: 1, marks: 0, q: "print", cmyk: 1 };
+  function impOf(v) {
+    if (!v) return null;
+    var m = /^sig(\d+)$/.exec(v);
+    return m ? { kind: "sig", sig: +m[1] } : { kind: v };
+  }
   function exportDlg() {
     var doc = LY.doc;
     LY.openDialog(t("exp.title"), function (body, close) {
@@ -1877,6 +1882,12 @@
         cr.addEventListener("input", function () { var v = parseFloat(cr.value); expPrefs.creep = isFinite(v) ? Math.max(0, Math.min(5, v)) : 0; });
         body.appendChild(field(t("exp.creep"), cr));
       }
+      // imposition (LY-W10): a booklet, folded sections or two up
+      if (doc.pages.length >= 2) {
+        var IMP = [["", t("imp.none")], ["saddle", t("imp.saddle")], ["sig16", t("imp.sig", { n: 16 })], ["sig8", t("imp.sig", { n: 8 })], ["sig32", t("imp.sig", { n: 32 })], ["twoUp", t("imp.twoUp")]];
+        body.appendChild(field(t("imp.title"), select(IMP, expPrefs.imp || "", function (v) { expPrefs.imp = v; })));
+        body.appendChild(el("p", "hint", t("imp.hint")));
+      }
       var qWrap = el("div"), x4Wrap = el("div");
       // PDF/X-4 for the printer, its colours in CMYK when asked (LY-PORT-C)
       function drawQ() {
@@ -1897,7 +1908,7 @@
         var pages = pickPages(doc);
         if (!pages) { LY.toast(t("exp.badRange")); return; }
         close();
-        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", x1a: expPrefs.q === "x1a", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk });
+        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", x1a: expPrefs.q === "x1a", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk, impose: impOf(expPrefs.imp) });
       }, "primary"));
       body.appendChild(act);
       // the same PDF, saved in Files › Layout › PDF and offered to an app
@@ -1906,7 +1917,7 @@
           var pages = pickPages(doc);
           if (!pages) { LY.toast(t("exp.badRange")); return; }
           close();
-          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", x1a: expPrefs.q === "x1a", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk });
+          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", x1a: expPrefs.q === "x1a", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk, impose: impOf(expPrefs.imp) });
         }, "block");
         sendB.id = "exp-send";
         sendB.setAttribute("aria-haspopup", "dialog");
@@ -1915,13 +1926,19 @@
       // one page as an image
       body.appendChild(el("h3", "pn-h", t("exp.img")));
       var order = M.pagesInOrder(doc), cur = ED.curPage();
-      var pgSel = select(order.map(function (p, i) { return [p.id, t("pf.page", { n: i + 1 })]; }), cur ? cur.id : order[0].id, function (v) { imgPrefs.page = v; });
+      // all pages or all spreads go out as a .zip (LY-W10)
+      var pgOpts = order.map(function (p, i) { return [p.id, t("pf.page", { n: i + 1 })]; });
+      if (order.length > 1) pgOpts.push(["*", t("imp.allPages")]);
+      if (order.length > 1 && doc.setup.facing) pgOpts.push(["**", t("imp.allSpreads")]);
+      var pgSel = select(pgOpts, imgPrefs.page === "*" || imgPrefs.page === "**" ? imgPrefs.page : cur ? cur.id : order[0].id, function (v) { imgPrefs.page = v; drawImg(); });
       imgPrefs.page = pgSel.value;
       var dpiWrap = el("div"), fmtWrap = el("div");
       function drawImg() {
         dpiWrap.innerHTML = ""; fmtWrap.innerHTML = "";
         dpiWrap.appendChild(seg([["72", "72 dpi"], ["150", "150 dpi"], ["300", "300 dpi"]], String(imgPrefs.dpi), function (v) { imgPrefs.dpi = +v; drawImg(); }));
-        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"], ["svg", "SVG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+        var many = imgPrefs.page === "*" || imgPrefs.page === "**";
+        if (many && imgPrefs.fmt === "svg") imgPrefs.fmt = "png";
+        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"]].concat(many ? [] : [["svg", "SVG"]]), imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
         if (resField) resField.hidden = imgPrefs.fmt === "svg";   // an SVG has no resolution
       }
       drawImg();

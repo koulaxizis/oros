@@ -170,6 +170,11 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Überdrucken und Tonwerte**: 100 % Schwarz überdruckt, damit schwarzer Text nie einen weißen Spalt zeigt; abschalten in Druckfarben. Auch ein Farbfeld kann überdrucken, und ein Farbfeld kann ein Tonwert eines anderen sein: Ändert sich die Farbe, folgen ihre Tonwerte.
 - **PDF/X-1a**: `Export › PDF/X-1a` bringt alles in CMYK, auch die Bilder, für Druckereien, die das verlangen. Es kennt keine Transparenz: transparente Bilder kommen auf Weiß, und der Bericht sagt, was sich sonst ändern musste.
 
+## Ausschießen und Bilder
+- **Broschüren und Lagen**: `Export › Ausschießen` bringt die Seiten auf Druckbogen: eine Broschüre (ein Stapel, gefalzt und geheftet), Lagen zu 8, 16 oder 32 Seiten für ein fadengeheftetes oder klebegebundenes Buch, oder zwei Seiten auf einem Bogen. Leere Seiten füllen den letzten Bogen; Schnittmarken, Falz und Bundzuwachs kommen auf die Bogen.
+- **Jede Seite als Bild**: unter `Export › Bild` speichert `Alle Seiten` oder `Alle Doppelseiten` alle in einer .zip.
+- **Preiscode**: ein Buchumschlag kann neben dem ISBN-Strichcode einen EAN-5-Preiscode tragen (z. B. 90000).
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

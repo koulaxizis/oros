@@ -553,7 +553,21 @@
     exporting = true;
     LY.toast(t("exp.working"));
     var bad = 0, x1a = !!(opts && opts.x1a), x4 = !!(opts && opts.pdfx) || x1a, name = fileName(doc, x1a ? " (PDF-X-1a).pdf" : x4 ? " (PDF-X-4).pdf" : ".pdf");
-    pdfBlob(doc, opts).then(function (blob) {
+    // imposition (LY-W10): the pages as they are, then on the sheets
+    // (marks and creep are the sheets' then, not the pages')
+    var imp = opts && opts.impose && opts.impose.kind ? opts.impose : null;
+    if (imp) name = name.replace(/\.pdf$/, " - " + t("imp.file." + imp.kind) + ".pdf");
+    var bopts = imp ? Object.assign({}, opts, { marks: false, creep: 0, spreads: false }) : opts;
+    pdfBlob(doc, bopts).then(function (blob) {
+      if (!imp) return blob;
+      return Promise.all([blob.arrayBuffer(), script("impose.js", "LY_IMPOSE"), script("../vendor/pdf-lib/pdf-lib.min.js", "PDFLib")]).then(function (r) {
+        var n = new Uint8Array(r[0]);
+        return r[2].PDFDocument.load(n, { updateMetadata: false }).then(function (d0) {
+          var pl = r[1].plan(d0.getPageCount(), imp.kind, { sig: imp.sig, creep: opts.creep || 0 });
+          return r[1].make(r[2], n, pl, { marks: !!opts.marks });
+        });
+      }).then(function (x) { return new Blob([x.bytes], { type: "application/pdf" }); });
+    }).then(function (blob) {
       // PDF/X-4 for the printer (LY-PORT-C), its colours in CMYK when asked
       if (!x4) return blob;
       return Promise.all([blob.arrayBuffer(), script("pdfout.js", "LY_PDFOUT")]).then(function (r) {
@@ -619,9 +633,58 @@
 
   // ---------- PNG / JPG of one page ----------
   var IMG_MAX_PX = 16e6;
+  // every page, or every spread, as images in one .zip (LY-W10)
+  function exportImages(doc, opts) {
+    var spreads = opts.page === "**", groups = spreads ? M.spreads(doc) : M.pagesInOrder(doc).map(function (p) { return [p]; });
+    var jpg = opts.fmt === "jpg", ext = jpg ? ".jpg" : ".png", files = [], capped = false;
+    var chain = script("../atelier/zip.js", "AtelierZip");
+    groups.forEach(function (g, gi) {
+      chain = chain.then(function () {
+        var c2 = Promise.resolve();
+        g.forEach(function (pg) { imageItems(doc, [pg.id]).forEach(function (it) { c2 = c2.then(function () { return A.load(it.a); }); }); });
+        return c2;
+      }).then(function () {
+        var sizes = g.map(function (pg) { return M.pageSize(doc, pg); }), w = sizes.reduce(function (a, z) { return a + z.w; }, 0), h = Math.max.apply(null, sizes.map(function (z) { return z.h; }));
+        var scale = (opts.dpi || 150) / 72;
+        if (w * h * scale * scale > IMG_MAX_PX) { scale = Math.sqrt(IMG_MAX_PX / (w * h)); capped = true; }
+        var cv = document.createElement("canvas"), x = 0;
+        cv.width = Math.max(1, Math.round(w * scale)); cv.height = Math.max(1, Math.round(h * scale));
+        var cx = cv.getContext("2d");
+        cx.fillStyle = "#fff"; cx.fillRect(0, 0, cv.width, cv.height);
+        g.forEach(function (pg, k) {
+          var one = LY.R.renderPage(doc, pg, ED.L, scale, { getImage: A.get, background: "#fff" });
+          cx.drawImage(one, Math.round(x * scale), 0);
+          x += sizes[k].w;
+        });
+        return toBlob(cv, jpg ? "image/jpeg" : "image/png", 0.92);
+      }).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
+        var n = String(gi + 1);
+        while (n.length < String(groups.length).length) n = "0" + n;
+        files.push({ name: (spreads ? t("imp.spreadN") : t("imp.pageN")) + "-" + n + ext, data: new Uint8Array(ab) });
+      });
+    });
+    return chain.then(function () {
+      var bytes = window.AtelierZip.write(files, new Date());
+      return saveBlob(new Blob([bytes], { type: "application/zip" }), fileName(doc, " - " + (spreads ? t("imp.spreads") : t("imp.pages")) + ".zip"), "application/zip", "ZIP", ".zip");
+    }).then(function (ok) { return { ok: ok, capped: capped }; });
+  }
   function exportImage(opts) {
     var doc = LY.doc;
     if (!doc || exporting) return;
+    if (opts.page === "*" || opts.page === "**") {
+      LY.flushStory && LY.flushStory();
+      exporting = true;
+      LY.toast(t("exp.working"));
+      exportImages(doc, opts).then(function (r) {
+        exporting = false;
+        if (r.ok) LY.toast(r.capped ? t("exp.capped", { n: "≤ " + (opts.dpi || 150) }) : t("exp.done"));
+      }, function (e) {
+        exporting = false;
+        try { console.error("[orOS] layout: images export failed", e); } catch (x) {}
+        LY.toast(t("exp.fail"));
+      });
+      return;
+    }
     var order = M.pagesInOrder(doc), page = M.find(doc.pages, opts.page);
     if (!page) return;
     LY.flushStory && LY.flushStory();
