@@ -2758,6 +2758,13 @@
           }
           ans.__index = JSON.stringify(list);
           if (n < r.items.length) ans.__ixpart = String(r.items.length);
+          // GATE-PL11: edit_in_app's commands and the documents' names, so
+          // the relay checks a dry run (and every queued edit) with orOS closed
+          if (typeof F.editPack !== "function") return;
+          return F.editPack().then(function (pk) {
+            var txt = isObj(pk) && Object.keys(pk).length ? JSON.stringify(pk) : "", b = utf8Len(txt);
+            if (txt && size + b <= COPY_MAX) { ans.__edit = txt; size += b; }
+          }, function () {});
         });
       }).then(null, function () { ans.__ixerr = "index failed"; });
     }).then(function () {
@@ -3105,7 +3112,7 @@
       var typed = typeof args.path === "string" ? args.path.trim().slice(0, 1024) : "", path = CF.normPath(typed);
       if (!path || path === "/internal") return { ok: false, c: "path must be a folder of the orOS disk, e.g. \"Studio/Podcasts\" (not the whole disk). Nothing was asked." };
       if (CF.secret(path)) return { ok: false, c: "\"" + CF.show(path) + "\" looks like a folder of keys or secrets; it is never opened for Claude. Nothing was asked." };
-      var cur = foldersRead().f, wantW = args.access === "write";
+      var cur = foldersEff(), wantW = args.access === "write";   // GATE-PL9: app folders count
       var filesW = isObj(p.lv) && p.lv.files === "write", wNote = wantW && !filesW ? " Writing there also needs the owner's switch for Files at write (it is not now)." : "";
       var has = cur.filter(function (f) { return path === f || path.indexOf(f + "/") === 0; })[0];
       if (has) return { ok: true, a: [], k: 0, c: "Already one of Claude's folders" + (has === path ? "" : " (inside " + CF.show(has) + ")") + ": " + path + ". Nothing was asked." + wNote };
@@ -3655,7 +3662,43 @@
     }).slice(0, 50).sort();
     var out = { ver: 1, m: Math.floor(x.m), f: f };
     if (typeof x.q === "number" && isFinite(x.q) && x.q >= 52428800) out.q = Math.min(Math.floor(x.q), 1e12);   // F2: the closed copy's quota (bytes)
+    // GATE-PL9: the app folders the owner took off the list
+    var nd = Array.isArray(x.nd) ? x.nd.filter(function (p, i, l) { return appFolder(p) && l.indexOf(p) === i; }).sort() : [];
+    if (nd.length) out.nd = nd;
     return out;
+  }
+  // GATE-PL9 (Chris 2026-11-22, dogfooding the podcast «Πλανόδιο», item 9):
+  // each of these apps, when installed, brings its own folder into
+  // Claude's folders without any setup, so studio_import, montage_import
+  // and mockup_render have a place for their files. They are not stored
+  // in the list (a device that has not pulled the owner's list yet must
+  // not write over it); the owner can take one off (nd, synced), and
+  // writing there follows the Files switch like every other folder.
+  var APP_FOLDERS = { studio: "/internal/Studio/Podcasts", montage: "/internal/Montage/Projects", mockups: "/internal/Mockups/Claude" };
+  function appFolder(p) { return Object.keys(APP_FOLDERS).some(function (id) { return APP_FOLDERS[id] === p; }); }
+  function appFoldersOn(fr) {
+    var have = {}, nd = fr && Array.isArray(fr.nd) ? fr.nd : [];
+    offered().forEach(function (a) { if (a && a.id) have[a.id] = 1; });
+    return Object.keys(APP_FOLDERS).filter(function (id) { return have[id] && nd.indexOf(APP_FOLDERS[id]) < 0; }).map(function (id) { return APP_FOLDERS[id]; });
+  }
+  // The folders Claude may use: the owner's list and the app folders
+  // (cleaned again by claudefiles.js where they are used).
+  function foldersEff() {
+    var fr = foldersRead(), out = fr.f.slice();
+    appFoldersOn(fr).forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
+    return out.sort();
+  }
+  // The app folders exist on the disk (made once, empty; never removed).
+  var appDirsDone = {};
+  function appFoldersMake() {
+    var FS = root.orosFS;
+    if (!pref().on || locked() || !FS || typeof FS.mkdir !== "function" || typeof FS.stat !== "function") return Promise.resolve();
+    return appFoldersOn(foldersRead()).filter(function (p) { return !appDirsDone[p]; }).reduce(function (pr, p) {
+      return pr.then(function () {
+        return Promise.resolve().then(function () { return FS.stat(p); }).then(function (st) { return st ? st : FS.mkdir(p); }, function () { return FS.mkdir(p); })
+          .then(function () { appDirsDone[p] = 1; }, function () {});
+      });
+    }, Promise.resolve());
   }
   var cfP = null;
   function claudeFiles() {
@@ -3826,7 +3869,7 @@
       var p = pref(), dir = CF.normPath(out), now = Date.now();
       name = typeof name === "string" ? name.trim() : "";
       var why = !p.on ? "gateOff" : locked() ? "locked" : !isObj(p.lv) || p.lv.files !== "write" || barred("files") ? "notAllowed"
-        : !canWrite(p.lv, p.hold, "files", now) ? "paused" : CF.reach(dir, CF.cleanFolders(foldersRead().f)) ? "outside" : CF.validName(name) ? "badName" : "";
+        : !canWrite(p.lv, p.hold, "files", now) ? "paused" : CF.reach(dir, CF.cleanFolders(foldersEff())) ? "outside" : CF.validName(name) ? "badName" : "";
       if (why) throw { why: why };
       var FS = root.orosFS;
       if (!FS || typeof FS.write !== "function" || typeof FS.stat !== "function") throw { why: "noDisk" };
@@ -3909,8 +3952,8 @@
     if (!p.on || !k || !ws || ws.readyState !== 1 || !fcFilesOn(p) || strictOn() || !D) return Promise.resolve(false);
     if (locked()) return Promise.resolve(false);
     if (!root.orosFS) return Promise.resolve(false);
-    var fr = foldersRead();
-    if (!fr.f.length) return Promise.resolve(false);
+    var fr = foldersRead(), eff = foldersEff();      // GATE-PL9: the app folders too
+    if (!eff.length) return Promise.resolve(false);
     fcBusy = true;
     fcErr = "";
     var kRaw = keyBytes(k), gid = p.id, st = fcState(), cache = isObj(st.c) ? st.c : {}, FC, CF;
@@ -3919,7 +3962,7 @@
     return Promise.all([fcMod(), claudeFiles()]).then(function (m) {
       FC = m[0]; CF = m[1];
       known = FC.known(st.idx);
-      return fcWalk(CF, CF.cleanFolders(fr.f));
+      return appFoldersMake().then(function () { return fcWalk(CF, CF.cleanFolders(eff)); });
     }).then(function (r) {
       rows = r;
       // hashes: cloud entries carry theirs; unchanged files keep theirs
@@ -3999,7 +4042,7 @@
       }, Promise.resolve()).then(function () { return pl; });
     }).then(function (pl) {
       var pp = pref();
-      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(fr.f), q: FC.quotaOf(fr.q), used: pl.used, files: files,
+      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(eff), q: FC.quotaOf(fr.q), used: pl.used, files: files,
                   w: isObj(pp.lv) && pp.lv.files === "write" ? 1 : 0 };   // F3: the relay checks closed changes against these
       if (typeof pp.hold === "number" && pp.hold > Date.now()) idx.hold = pp.hold;
       var text = JSON.stringify(idx);
@@ -4126,26 +4169,37 @@
       var cur = foldersRead(), q = Math.floor(+bytes || 0);
       if (!(q >= 52428800)) return false;
       var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: cur.f, q: q };
+      if (cur.nd) next.nd = cur.nd;
       if (!writeJSON(FILES_KEY, next)) return false;
       dirty(); changed(); fileCopySoon(5000);
       return true;
     },
     refreshFileCopy: function () { return fileCopy(); },
-    // Claude's folders on the orOS disk (synced): [path]
-    folders: function () { return foldersRead().f.slice(); },
+    // Claude's folders on the orOS disk (synced): [path], with the app
+    // folders (GATE-PL9), none inside another one on the list
+    folders: function () { var l = foldersEff(); return l.filter(function (p) { return !l.some(function (q) { return q !== p && p.indexOf(q + "/") === 0; }); }); },
+    // GATE-PL9: the app folders of this device (for Settings to mark them)
+    appFolders: function () { return appFoldersOn({}); },
     exportAll: exportAll,   // GX-2: an app's files to out
     exportTo: exportTo,   // GX-1: an export also into a local folder or Claude's folders on the orOS disk
     EXPORT_WHY: EXPORT_WHY,
     // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
     setFolders: function (list) {
       return claudeFiles().then(function (CF) {
-        var cur = foldersRead(), f = CF.cleanFolders(list);
-        if (JSON.stringify(f) === JSON.stringify(cur.f)) return f;
+        var cur = foldersRead(), all = CF.cleanFolders(list), mine = appFoldersOn({});
+        // GATE-PL9: an app folder left off the list is taken off (nd); one
+        // inside another folder of the list is still reachable, not off
+        var nd = mine.filter(function (d) { return all.indexOf(d) < 0 && !all.some(function (q) { return d.indexOf(q + "/") === 0; }); })
+          .concat((cur.nd || []).filter(function (d) { return mine.indexOf(d) < 0; })).sort();
+        // only this device's app folders are computed; another app's stays as listed
+        var f = all.filter(function (d) { return mine.indexOf(d) < 0; });
+        if (JSON.stringify(f) === JSON.stringify(cur.f) && JSON.stringify(nd) === JSON.stringify(cur.nd || [])) return all;
         var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: f };
         if (cur.q) next.q = cur.q;
+        if (nd.length) next.nd = nd;
         if (!writeJSON(FILES_KEY, next)) throw new Error("save");
         dirty(); changed(); fileCopySoon(5000);
-        return f;
+        return all;
       });
     },
     relayUrl: function () { return relay() + "/mcp"; },
@@ -4514,6 +4568,7 @@
         if (!pref().on) return;                        // a computer without the Gate: nothing to do
         connect();
         chgSlice(0); digSlice(0); foldersSlice(0); seatSlice(0); helperSlice(0); helperApply();
+        setTimeout(appFoldersMake, 12000);             // GATE-PL9
         setInterval(function () { copySoon(0); }, 30 * 60000);
         setInterval(function () { fileCopySoon(0); }, 30 * 60000);
         setInterval(function () { if (strictOn()) { hostSet(false); hostBye(); } }, 60000);
@@ -4564,6 +4619,7 @@
     // SY-AD (5.96.00): data Claude wrote before this version for an app
     // never opened on this device (Publishing, CRM…) reaches sync now.
     setTimeout(adoptWritten, 8000);
+    setTimeout(appFoldersMake, 12000);               // GATE-PL9: the app folders exist on the disk
     setTimeout(digCheck, 60000);
     clearInterval(digTimer);
     digTimer = setInterval(digCheck, 10 * 60000);

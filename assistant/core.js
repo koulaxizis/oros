@@ -3598,7 +3598,7 @@
           designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets, for Montage video projects, for Studio song projects, for Whiteboard boards, for Mind map maps, for Mockups book mockups: open, named or all (Photo Lab and Mockups also new, with create first)." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
           steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } },
-          dry_run: { type: "boolean", description: "Only through orOS Gate: say what the commands would change (per document, with notes) without changing anything." }
+          dry_run: { type: "boolean", description: "Only through orOS Gate: say what the commands would change (per document, with notes) without changing anything. With every orOS closed it checks the commands, fields, values, documents' names and files against the owner's encrypted copy (counts come only with orOS open); every edit_in_app is checked that way before it waits for orOS." }
         },
         required: ["app", "steps"]
       }

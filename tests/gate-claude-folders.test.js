@@ -82,7 +82,8 @@ test("CF-ASK: Claude asks for a folder of the orOS disk; hidden it is held, refu
       for (let i = 0; i < 40 && !o.got.some((x) => x.r === q.repeat(16)); i++) await o.page.waitForTimeout(250);
       return o.got.find((x) => x.r === q.repeat(16));
     };
-    const args = { path: "Studio/Podcasts", access: "write", reason: "The «Πλανόδιο» project file for studio_import" };
+    // GATE-PL9: Studio/Podcasts is Claude's by itself where Studio is installed
+    const args = { path: "Podcasts/Planodio", access: "write", reason: "The «Πλανόδιο» project file for studio_import" };
     const held = await ask("H", args);
     assert.ok(held && held.ok === false && held.c === "__held", "nobody at the screen: kept for one " + JSON.stringify(held));
     assert.match((await ask("D", { path: "/internal" })).c, /not the whole disk/);
@@ -97,19 +98,21 @@ test("CF-ASK: Claude asks for a folder of the orOS disk; hidden it is held, refu
     const yes = o.page.getByRole("button", { name: "Open for Claude" });
     await yes.waitFor({ timeout: 10000 });
     assert.ok(await o.page.getByText("Add a folder to Claude's folders?").first().isVisible());
-    assert.ok(await o.page.getByText("Studio/Podcasts").first().isVisible());
+    assert.ok(await o.page.getByText("Podcasts/Planodio").first().isVisible());
     await yes.click();
     for (let i = 0; i < 20 && !o.got.some((x) => x.r === "A".repeat(16)); i++) await o.page.waitForTimeout(250);
     const ans = o.got.find((x) => x.r === "A".repeat(16));
     assert.ok(ans && ans.ok, JSON.stringify(ans));
-    assert.match(ans.c, /added it to Claude's folders: \/internal\/Studio\/Podcasts/);
+    assert.match(ans.c, /added it to Claude's folders: \/internal\/Podcasts\/Planodio/);
     assert.match(ans.c, /Files at write \(it is not now\)/, "write was asked with Files at read");
     const saved = await o.page.evaluate(() => JSON.parse(localStorage.getItem("oros-gate-files")));
-    assert.deepEqual(saved.f, ["/internal/Layout/PDF", "/internal/Studio/Podcasts"]);
+    assert.deepEqual(saved.f, ["/internal/Layout/PDF", "/internal/Podcasts/Planodio"]);
     assert.ok(saved.m > 1);
     // the same again: already there, nothing asked
-    const again = await ask("B", { path: "/internal/Studio/Podcasts" });
-    assert.match(again.c, /^Already one of Claude's folders: \/internal\/Studio\/Podcasts/);
+    const again = await ask("B", { path: "/internal/Podcasts/Planodio" });
+    assert.match(again.c, /^Already one of Claude's folders: \/internal\/Podcasts\/Planodio/);
+    const app = await ask("P", { path: "Studio/Podcasts" });
+    assert.match(app.c, /^Already one of Claude's folders: \/internal\/Studio\/Podcasts/, "an app folder (GATE-PL9) is never asked for");
     // the owner says no
     o.sock().send(JSON.stringify({ q: "N".repeat(16), n: "claude_folders_request", a: { path: "Music" }, dl: Date.now() + 25000 }));
     const no = o.page.getByRole("button", { name: "Don't open" });
@@ -117,7 +120,7 @@ test("CF-ASK: Claude asks for a folder of the orOS disk; hidden it is held, refu
     await no.click();
     for (let i = 0; i < 20 && !o.got.some((x) => x.r === "N".repeat(16)); i++) await o.page.waitForTimeout(250);
     assert.match(o.got.find((x) => x.r === "N".repeat(16)).c, /did not add that folder/);
-    assert.deepEqual(await o.page.evaluate(() => JSON.parse(localStorage.getItem("oros-gate-files")).f), ["/internal/Layout/PDF", "/internal/Studio/Podcasts"]);
+    assert.deepEqual(await o.page.evaluate(() => JSON.parse(localStorage.getItem("oros-gate-files")).f), ["/internal/Layout/PDF", "/internal/Podcasts/Planodio"]);
     assert.deepEqual(o.errs, []);
   } finally { await br.close(); srv.close(); }
 });

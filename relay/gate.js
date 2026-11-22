@@ -628,11 +628,11 @@ export const TOOLS = [
   // Nothing is ever published: that stays the owner's own button.
   {
     name: "studio_import",
-    description: "Opens a .orosstudio project file from Claude's folders on the orOS disk in Studio as a NEW song or podcast project (tracks, clips, effects, markers and its audio), the same as the owner's Import. First bring the file in with files_upload and files_write (or write it with files_write), then pass its path. Nothing that exists changes; the owner is notified and can undo it (undo_change, or Undo in Studio), like every edit_in_app change, and it needs the owner's write switch for Studio. It never publishes anything: no feed, no episode, no upload; publishing stays the owner's own button. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    description: "Opens a .orosstudio project file from Claude's folders on the orOS disk in Studio as a NEW song or podcast project (tracks, clips, effects, markers and its audio), the same as the owner's Import. First bring the file in with files_upload and files_write (or write it with files_write), best into Studio/Podcasts, the folder of Claude's folders made for Studio, then pass its path. With orOS closed the file and the call are checked against the copy before the call waits. Nothing that exists changes; the owner is notified and can undo it (undo_change, or Undo in Studio), like every edit_in_app change, and it needs the owner's write switch for Studio. It never publishes anything: no feed, no episode, no upload; publishing stays the owner's own button. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
     inputSchema: {
       type: "object",
       properties: {
-        path: { type: "string", description: "The .orosstudio file on the orOS disk, as files_write or files_list gave it (an /internal/ path, e.g. \"/internal/Claude/Planodio/Planodio-protypo.orosstudio\")." },
+        path: { type: "string", description: "The .orosstudio file on the orOS disk, as files_write or files_list gave it (an /internal/ path, e.g. \"/internal/Studio/Podcasts/Planodio-protypo.orosstudio\")." },
         title: { type: "string", description: "A name for the new project; the file's own name when left out." }
       },
       required: ["path"],
@@ -642,7 +642,7 @@ export const TOOLS = [
   },
   {
     name: "montage_import",
-    description: "Opens a .orosmontage project file from Claude's folders on the orOS disk in Montage as a NEW video project (its clips, titles and media), the same as the owner's Import. First bring the file in with files_upload and files_write (or write it with files_write), then pass its path. Nothing that exists changes; the owner is notified and can undo it (undo_change, or Undo in Montage), like every edit_in_app change, and it needs the owner's write switch for Montage. It never publishes or exports anything; that stays the owner's own button. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    description: "Opens a .orosmontage project file from Claude's folders on the orOS disk in Montage as a NEW video project (its clips, titles and media), the same as the owner's Import. First bring the file in with files_upload and files_write (or write it with files_write), best into Montage/Projects, the folder of Claude's folders made for Montage, then pass its path. With orOS closed the file and the call are checked against the copy before the call waits. Nothing that exists changes; the owner is notified and can undo it (undo_change, or Undo in Montage), like every edit_in_app change, and it needs the owner's write switch for Montage. It never publishes or exports anything; that stays the owner's own button. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
     inputSchema: {
       type: "object",
       properties: {
@@ -807,6 +807,125 @@ export function screenRefusal(name, args, lv, hold, now, when) {
   if (typeof hold === "number" && hold > now) return "The owner paused Claude's changes until " + new Date(hold).toISOString() + ". Nothing was kept.";
   return "";
 }
+// ---- GATE-PL11 (Chris 2026-11-22, dogfooding the podcast «Πλανόδιο»,
+// item 11): edit_in_app checked with every orOS closed. The device seals
+// each app's commands into the copy (ans.__edit: per app the catalog's
+// field specs as plain data, the most commands, the documents' names and
+// the open one's; assistant.js gateEditPack). The checks here are the
+// ones every app's commands.js makes first (unknown command or field,
+// a value of the wrong kind, out of its list or range, a missing field;
+// tests/gate-closed-check.test.js keeps it never stricter); the app
+// checks everything again, with its own rules, when the command runs.
+// Nothing here runs code from the copy.
+const PL_COLOR = /^#[0-9a-f]{6}$/, PL_FONT = /^(sans|serif|mono|fs_[a-z0-9]+(_[a-z0-9]+)*)$/;
+function plNum(v) { return typeof v === "number" && isFinite(v); }
+// recipes/core.js arg() → false where it gives undefined (a bad value)
+export function specOk(sp, v, d) {
+  if (!sp || typeof sp !== "object" || (d || 0) > 5) return true;
+  switch (sp.t) {
+    case "str": return typeof v === "string" ? !(sp.req && !v.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")) : !sp.req;
+    case "color": return typeof v === "string" && PL_COLOR.test(v.toLowerCase()) ? true : !sp.req;
+    case "font": return typeof v === "string" && v.length <= 63 && PL_FONT.test(v) ? true : !sp.req;
+    case "num": case "int": return plNum(v) ? true : !sp.req && sp.def !== undefined;
+    case "enum": case "bool": return true;
+    case "list": {
+      if (!Array.isArray(v)) return false;
+      const n = v.slice(0, plNum(sp.max) ? sp.max : 20).filter((x) => specOk(sp.of, x, (d || 0) + 1)).length;
+      return n >= (plNum(sp.min) ? sp.min : 0);
+    }
+    case "obj": {
+      if (!v || typeof v !== "object" || Array.isArray(v)) return false;
+      const f = sp.f && typeof sp.f === "object" ? sp.f : {};
+      return Object.keys(f).every((k) => specOk(f[k], v[k], (d || 0) + 1));
+    }
+  }
+  return true;
+}
+function plGiven(v) { return v !== null && v !== undefined && v !== ""; }
+// one command → [errors] (English, for Claude), as the apps' checkStep
+export function stepErrs(ops, raw) {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw) || typeof raw.op !== "string") return ["a command needs op"];
+  if (!Object.prototype.hasOwnProperty.call(ops, raw.op)) return ["unknown command " + JSON.stringify(raw.op.slice(0, 40)) + " (use " + Object.keys(ops).slice(0, 60).join(", ") + ")"];
+  const args = ops[raw.op] && typeof ops[raw.op] === "object" ? ops[raw.op] : {}, bad = [];
+  Object.keys(raw).forEach((k) => {
+    if (k === "op" || raw[k] === null || raw[k] === undefined) return;
+    const sp = Object.prototype.hasOwnProperty.call(args, k) ? args[k] : null;
+    if (!sp) { bad.push(k + " is not a field of " + raw.op); return; }
+    const v = raw[k];
+    if (!specOk(sp, v, 0) || (sp.t === "enum" && Array.isArray(sp.v) && sp.v.indexOf(v) < 0) ||
+        ((sp.t === "num" || sp.t === "int") && plNum(v) && ((plNum(sp.lo) && v < sp.lo) || (plNum(sp.hi) && v > sp.hi)))) {
+      bad.push(k + " " + String(JSON.stringify(v)).slice(0, 60) + " is not allowed");
+    }
+  });
+  Object.keys(args).forEach((k) => { if (args[k] && args[k].req && !plGiven(raw[k])) bad.push(k + " is missing"); });
+  return bad.length ? [raw.op + ": " + bad.join("; ")] : [];
+}
+// edit_in_app's arguments against the copy's pack → { errs, docs, notes, n, fresh }.
+// ctx: { hasFile(path) → bool (in Claude's folders' copy or a waiting
+// files_write), newDocs: [names a waiting create makes] }.
+export function editCheck(pack, args, ctx) {
+  const a = args && typeof args === "object" ? args : {}, c = ctx || {}, out = { errs: [], docs: [], notes: [], n: 0, fresh: false };
+  const app = typeof a.app === "string" ? a.app.toLowerCase() : "";
+  const pk = pack && typeof pack === "object" && Object.prototype.hasOwnProperty.call(pack, app) ? pack[app] : null;
+  if (!pk || typeof pk.ops !== "object") {
+    out.errs.push((app ? app + " has no documents Claude may change on the owner's devices" : "app is missing") + " (apps: " + Object.keys(pack || {}).join(", ") + ")");
+    return out;
+  }
+  const steps = a.steps;
+  if (!Array.isArray(steps) || !steps.length) { out.errs.push("steps is empty"); return out; }
+  const max = plNum(pk.max) && pk.max > 0 ? pk.max : 40;
+  if (steps.length > max) { out.errs.push("at most " + max + " commands"); return out; }
+  out.n = steps.length;
+  steps.forEach((st, i) => { stepErrs(pk.ops, st).forEach((e) => out.errs.push("command " + (i + 1) + " " + e)); });
+  if (out.errs.length > 6) out.errs.length = 6;
+  const hasCreate = steps.some((st) => st && st.op === "create");
+  let designs = a.designs === undefined || a.designs === "" ? "open" : String(a.designs);
+  if (["open", "named", "folder", "all", "new"].indexOf(designs) < 0) { out.errs.push("designs must be open, named, folder, all or new"); return out; }
+  if (hasCreate) {
+    if (!steps[0] || steps[0].op !== "create") out.errs.push("create must be the first command");
+    else designs = "new";
+    const from = steps[0] && typeof steps[0].from === "string" ? steps[0].from.trim() : "";
+    const there = from && typeof c.hasFile === "function" ? c.hasFile(from) : null;
+    if (from && there === null) out.notes.push("the file " + JSON.stringify(fileShow(from).slice(0, 200)) + " is looked for when the commands run (no copy of Claude's folders to check it in)");
+    if (from && there === false) {
+      out.errs.push("create: " + JSON.stringify(fileShow(from).slice(0, 200)) + " is neither in the copy of Claude's folders nor waiting in a files_write (bring it in with files_upload and files_write first)");
+    }
+    out.fresh = true;
+    out.docs = [String(steps[0] && steps[0].title || (from ? from.slice(from.lastIndexOf("/") + 1).replace(/\.[^.]*$/, "") : "") || a.name || "").slice(0, 120)];
+    return out;
+  }
+  if (designs === "new") { out.errs.push("designs new needs create as the first command"); return out; }
+  const names = (Array.isArray(pk.docs) ? pk.docs : []).concat(Array.isArray(c.newDocs) ? c.newDocs : []).filter((x) => typeof x === "string" && x);
+  const name = typeof a.name === "string" ? a.name.trim() : "";
+  if ((designs === "named" || designs === "folder") && !name) { out.errs.push("give the " + (designs === "folder" ? "folder's" : "document's") + " name"); return out; }
+  if (designs === "named") {
+    const q = foldTxt(name);
+    let hit = names.filter((d) => foldTxt(d) === q);
+    if (!hit.length) hit = names.filter((d) => foldTxt(d).indexOf(q) >= 0);
+    if (!hit.length) out.errs.push("no document is called " + JSON.stringify(name.slice(0, 80)) + "; documents: " + names.slice(0, 30).map((d) => JSON.stringify(d)).join(", "));
+    else if (hit.length > 1) out.errs.push("several documents match " + JSON.stringify(name.slice(0, 80)) + ": " + hit.slice(0, 20).map((d) => JSON.stringify(d)).join(", ") + "; give the whole name");
+    else out.docs = hit;
+  } else if (designs === "all") {
+    if (!names.length) out.errs.push("there are no documents in " + app + " yet");
+    out.docs = names.slice(0, 50);
+  } else if (designs === "folder") {
+    out.notes.push("the folder " + JSON.stringify(name.slice(0, 80)) + " is found when the commands run");
+  } else {
+    out.docs = pk.open ? [String(pk.open)] : [];
+    out.notes.push(pk.open ? "designs open: the document open when the commands run (in the copy: " + JSON.stringify(String(pk.open).slice(0, 80)) + ")" : "designs open: no document was open in the copy; name it (designs named) to be sure");
+  }
+  return out;
+}
+// GATE-PL11: a dry run's answer with orOS closed
+export function closedDryText(chk, args, when) {
+  const a = args && typeof args === "object" ? args : {};
+  const o = { dry_run: true, checked_with_oros_closed: true, copy_of: when, app: typeof a.app === "string" ? a.app.toLowerCase() : "", commands: chk.n };
+  if (chk.fresh) o.new_document = chk.docs[0] || "";
+  else o.documents = chk.docs;
+  if (chk.notes.length) o.notes = chk.notes.slice(0, 10);
+  o.note = "Nothing was changed. The commands, their fields and values, the documents' names and the files were checked against the copy; how many things each document would get, and the app's own rules, are known only when orOS runs them (a dry run with orOS open counts them).";
+  return JSON.stringify(o);
+}
 export function foldTxt(x) {
   return String(x == null ? "" : x).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
 }
@@ -855,7 +974,25 @@ export function pendHead(n, a, t) {
   } else {
     h.a.refs = refsIn(o).slice(0, 20);
   }
+  // null = nothing named (a bad path…), so the whole row is never opened for it
+  if (QUEUED_NAMED.indexOf(n) >= 0) h.f = queuedName(n, o);
   return h;
+}
+// GATE-PL11 (Mail thread review 2026-11-22): what a waiting row adds to
+// Claude's folders or to an app's documents, kept in the small header h
+// (key f, apart from a so refsIn/pendingOf never see it), so the closed
+// checks never open the whole rows: files_write path / files_move to
+// → { p }; an edit_in_app create → { app, d: its document's name }.
+export const QUEUED_NAMED = ["files_write", "files_move", "edit_in_app"];
+export function queuedName(n, a) {
+  const o = a && typeof a === "object" ? a : {};
+  if (n === "files_write" || n === "files_move") { const p = filePath(n === "files_write" ? o.path : o.to); return p ? { p } : null; }
+  if (n === "edit_in_app" && Array.isArray(o.steps) && o.steps[0] && o.steps[0].op === "create" && typeof o.app === "string") {
+    const st = o.steps[0], from = typeof st.from === "string" ? st.from : "";
+    const d = String(st.title || (from ? from.slice(from.lastIndexOf("/") + 1).replace(/\.[^.]*$/, "") : "") || "").slice(0, 120);
+    return d ? { app: o.app.toLowerCase().slice(0, 40), d } : null;
+  }
+  return null;
 }
 // The app a waiting change belongs to (refs: from the copy's index or a p- ref).
 export function pendApp(n, a, byRef) {
@@ -2508,9 +2645,17 @@ export class GateBox {
         return { ok: false, c: "This needs orOS open; it is closed now (the copy of " + when + " does not have it). Ask the owner to open orOS." };
       }
       if (Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) {
-        if (!isScreenTool(name, args)) return { ok: false, c: "A dry run needs orOS open on one of the owner's devices (it reads the documents there). Nothing was changed." };
+        const dry = !isScreenTool(name, args);
         const why = screenRefusal(name, args, cp.lv, cp.hold, now, when);
         if (why) return { ok: false, c: why };
+        // GATE-PL11: checked against the copy first, so a mistake shows now,
+        // not hours later on a device; a dry run ends here
+        if (name === "edit_in_app") {
+          const chk = await this.closedEdit(cp, args, kRaw);
+          if (!chk && dry) return { ok: false, c: "A dry run with orOS closed needs a copy made by a newer orOS (it carries the commands to check against), and the owner's last copy is older. Ask the owner to open orOS once (or use oros_update when it is open). Nothing was changed." };
+          if (chk && chk.errs.length) return { ok: false, c: "Checked with orOS closed, against the copy of " + when + ": " + chk.errs.join(". ") + ". Nothing was " + (dry ? "changed." : "kept; fix the commands and send them again.") };
+          if (dry) return { ok: true, c: closedDryText(chk, args, when) };
+        }
         return await this.queueChange(name, args, kRaw, now, qidWant, "orOS is closed. " + SCREEN_NOTE, 1);
       }
       if (REF_QUEUED.indexOf(name) >= 0) {
@@ -2534,6 +2679,47 @@ export class GateBox {
     if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was changed." };
     if (isDeletion(name, args)) return await this.queueChange(name, args, kRaw, now, qidWant, "orOS is closed: this deletion waits, encrypted. The next time orOS is open on one of the owner's devices, the owner is asked there (the app and the titles) and nothing is deleted without their Delete; one call is one question, so send a batch as one call. Tell the owner to open orOS and confirm. undo_change with change_id cancels it before then.");
     return await this.queueChange(name, args, kRaw, now, qidWant, "orOS is closed: this change waits, encrypted, and is applied the next time orOS opens on one of the owner's devices, with the time you asked; the owner is notified and can undo it there. Until then search_data, app_summary and change_history show it as done, marked pending; new items have p- refs that change_item, link_items and link_contact take now; undo_change with change_id cancels it before it is applied. If the owner changed the same item after you asked, the owner's change stays and yours is reported as not applied.");
+  }
+  // GATE-PL11: edit_in_app against the copy's pack (null: a copy from an
+  // orOS without one). The files a create takes: in the copy of Claude's
+  // folders, or waiting in the queue (files_write, files_move's to).
+  async closedEdit(cp, args, kRaw) {
+    let pack = null;
+    try { pack = typeof cp.ans.__edit === "string" ? JSON.parse(cp.ans.__edit) : null; } catch (e) { pack = null; }
+    if (!pack || typeof pack !== "object" || Array.isArray(pack)) return null;
+    const idx = await this.readFileIndex(kRaw), q = await this.queuedNames(kRaw);
+    const app = args && typeof args.app === "string" ? args.app.toLowerCase() : "";
+    const has = (raw) => {
+      const fp = filePath(raw);
+      return !!fp && (q.paths.indexOf(fp) >= 0 || (Array.isArray(idx.files) && idx.files.some((x) => x && x.p === fp)));
+    };
+    // no copy of Claude's folders (none picked, Files off, no Dropbox): only the queue is known
+    return editCheck(pack, args, { hasFile: idx ? has : (raw) => (q.paths.indexOf(filePath(raw)) >= 0 ? true : null), newDocs: q.docs[app] || [] });
+  }
+  // GATE-PL11: what the waiting changes bring: file paths, new documents' names
+  async queuedNames(kRaw) {
+    const out = { paths: [], docs: {} };
+    if (!kRaw) return out;
+    const q = await this.st.list({ prefix: "q:" });
+    for (const [, v] of q) {
+      // the small header h; the whole row c only for a row from before h.f
+      let f = null;
+      try {
+        const h = typeof v.h === "string" ? JSON.parse(await openText(kRaw, v.h)) : null;
+        if (h && typeof h.n === "string") {
+          if (QUEUED_NAMED.indexOf(h.n) < 0) continue;
+          if (h.f !== undefined) f = h.f;
+          else { const x = JSON.parse(await openText(kRaw, v.c)); f = x && typeof x.n === "string" ? queuedName(x.n, x.a) : null; }
+        } else {
+          const x = JSON.parse(await openText(kRaw, v.c));
+          f = x && typeof x.n === "string" ? queuedName(x.n, x.a) : null;
+        }
+      } catch (e) { f = null; }
+      if (!f || typeof f !== "object") continue;
+      if (typeof f.p === "string") { const p = filePath(f.p); if (p) out.paths.push(p); }
+      if (typeof f.app === "string" && typeof f.d === "string" && f.d) (out.docs[f.app] = out.docs[f.app] || []).push(f.d.slice(0, 120));
+    }
+    return out;
   }
   // PEND-1: the queue, opened in memory with the call's K, as the copy is.
   async pending(kRaw, cp) {
@@ -2771,7 +2957,7 @@ export class GateBox {
                   typeof ans.c === "string" ? ans.c.slice(0, 2000) : "orOS refused the call.";
       return jsonRes(200, rpcOk(id, toolText(why, true)));
     }
-    if (!READ_ONLY[p.name]) await this.wakeAll(m, now);
+    if (!READ_ONLY[p.name] && !(p.name === "edit_in_app" && args.dry_run === true)) await this.wakeAll(m, now);   // GATE-PL11: a dry run changes nothing
     return jsonRes(200, rpcOk(id, toolText(typeof ans.c === "string" ? ans.c : "", false)));
   }
   // After a change: the owner's devices get one generic notification
