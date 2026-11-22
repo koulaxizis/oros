@@ -144,6 +144,21 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Bibliothek** (`Mehr › Bibliothek…`): Wähle Objekte aus; `Auswahl hinzufügen` bewahrt sie mit Text, Farben und Formaten für jedes Dokument auf diesem Gerät auf; ein Klick platziert eines auf der aktuellen Seite. Dort benennst oder entfernst du sie; `Exportieren…` und `Importieren…` bringen eine Bibliothek als `.oroslib`-Datei auf ein anderes Gerät. Bilder werden genannt, nicht kopiert.
 - **Farbfeldbibliotheken** (Bedienfeld Farben): `Bibliotheken…` fügt fertige Sätze hinzu (Druck-Grundfarben, Meer, Erde, Pastell, Grautöne); `.ase importieren…` liest Farbfelddateien aus InDesign, Illustrator, Photoshop, Affinity oder Scribus (RGB, CMYK, Grau und Lab; Volltonfarben bleiben Volltonfarben); `.ase exportieren` schreibt die Farben des Dokuments für sie. Farben, die schon im Dokument sind, werden übersprungen.
 
+## Griechisch und Satz
+- **Griechisch**: Die Silbentrennung liest auch polytonischen Text (Hauche, Akzente und Iota subscriptum bleiben außen vor: ἄν-θρω-πος); Großbuchstaben verlieren sie und behalten das Trema (ᾠδή → ΩΙΔΗ). Formatlisten sortieren griechisch (ά wie α, ς wie σ).
+- **Glyphenprüfung**: Die Preflight-Prüfung nennt jeden Rahmen mit Zeichen, die seine Schrift nicht hat, und welche.
+- **Satz** (Absatzformat, Satz): `Ganzer Absatz` wägt alle Zeilen eines Absatzes zusammen ab, für gleichmäßige Abstände; Wortabstand mindestens und höchstens (%) und Zeichenabstand höchstens legen fest, wie weit eine Blocksatzzeile gehen darf; `Optischer Randausgleich` lässt Satzzeichen über den Rand hängen; `Flattersatz ausgleichen` gleicht Zeilen ohne Blocksatz an; eine Initiale senkt die ersten Buchstaben über zwei oder mehr Zeilen.
+- **Kapitälchen, hoch- und tiefgestellt**: in einem Zeichenformat.
+- **Lockere und enge Zeilen**: `Mehr › Lockere und enge Zeilen zeigen` markiert Blocksatzzeilen außerhalb der Grenzen (gelb locker, rosa eng).
+
+## Fußnoten, Listen, Querverweise und Bücher
+- **Fußnoten und Endnoten**: im Textmodus die Schaltfläche `¹` › `Fußnote einfügen…`. Die Fußnote wird selbst nummeriert und unten in ihrer Spalte gesetzt; eine Zeile, die sie zurücklassen würde, geht mit ihr weiter. Klicke die Nummer einer Fußnote an, um sie zu ändern oder zu entfernen. `Mehr › Fußnoten…` setzt sie stattdessen nach den Text (Endnoten), legt ihr Absatzformat fest und ob die Nummerierung in jedem Textabschnitt neu beginnt. Im EPUB öffnen sie sich als Pop-up.
+- **Listen**: die `Liste` eines Absatzformats nummeriert seine Absätze (1. a) i. αʹ Αʹ und mehr, oder Aufzählungszeichen). Formate mit demselben Listennamen teilen die Nummern; Ebene 2 beginnt unter jeder Ebene 1 neu.
+- **Querverweise**: `¹ › Querverweis einfügen…` zeigt auf eine Überschrift oder einen beliebigen Absatz und zeigt seine Seite, seinen Text oder beides; die Seite folgt, wenn sich der Text verschiebt. Im PDF ist er ein Link zu dieser Seite, im EPUB zum Absatz.
+- **Links**: Wörter auswählen und `¹ › Link…` für eine Web- oder E-Mail-Adresse; er funktioniert im PDF und im EPUB.
+- **Inhaltsverzeichnis in jedem Dokument**: `Mehr › Inhaltsverzeichnis aus Formaten…` wählt die Formate der Überschriften und ihre Ebene, das Format jeder Ebene und was zwischen Titel und Seite steht; gibt es keines, kommt es in einen neuen Rahmen. `Mehr › Inhaltsverzeichnis aktualisieren` folgt später den Seiten.
+- **Bücher**: `Mehr › Buch…` hält Kapitel in getrennten Dokumenten zusammen: ihre Reihenfolge, fortlaufende Seitenzahlen (auf Wunsch jedes Dokument auf einer rechten Seite), Formate und Farben wie im ersten Dokument und ein PDF des ganzen Buchs.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

@@ -1046,7 +1046,7 @@
   function styleOrder(a, b) {
     var sa = /^(ps|cs)-[a-z0-9]+$/.test(a.id) && a.id.length < 12, sb = /^(ps|cs)-[a-z0-9]+$/.test(b.id) && b.id.length < 12;
     if (sa !== sb) return sa ? -1 : 1;
-    return LY.label(a.name).localeCompare(LY.label(b.name));
+    return T.collate(LY.label(a.name), LY.label(b.name));
   }
   function styleRow(st, kind, on, open) {
     var r = el("div", "sty-row" + (on ? " on" : ""));
@@ -1118,6 +1118,10 @@
       });
       st.ext = st.ext || {};   // an empty ext is dropped when the style is saved
       flags.appendChild(triState(t("sty.kern"), st.ext, "kern"));
+      // small capitals; for character styles also superscript and
+      // subscript (LY-W6)
+      flags.appendChild(triState(t("sty.sc"), st.ext, "sc"));
+      if (kind === "cs") flags.appendChild(select([["", t("sty.posNone")], ["sup", t("sty.posSup")], ["sub", t("sty.posSub")]], st.ext.pos || "", function (v) { if (v) st.ext.pos = v; else delete st.ext.pos; }));
       body.appendChild(flags);
       if (kind === "ps") {
         body.appendChild(el("span", "fld-lbl", t("sty.align")));
@@ -1167,6 +1171,8 @@
         g3.appendChild(field(t("sty.next"), select([["", t("sty.nextSame")]].concat(others.filter(function (x) { return x.id !== "ps-base"; }).map(function (x) { return [x.id, LY.label(x.name)]; })),
           st.ext.next || "", function (v) { if (v) st.ext.next = v; else delete st.ext.next; })));
         body.appendChild(g3);
+        body.appendChild(compEditor(st));
+        body.appendChild(listEditor(st));
         body.appendChild(grepEditor(st));
       }
       body.appendChild(el("span", "fld-lbl", t("sty.color")));
@@ -1257,6 +1263,86 @@
     return inp;
   }
   // Three states: inherit / on / off.
+  // composition of a paragraph style (LY-W6): composer, word and
+  // letter spacing limits, optical margins, balanced ragged lines and
+  // a drop cap; all in ext, inherited like the rest
+  // numbered and bulleted lists (LY-W7): ext.list { f, lv, g, s }; a
+  // style without one takes its base style's, "none" stops that
+  function listEditor(st) {
+    var w = el("div");
+    w.appendChild(el("span", "fld-lbl", t("sty.list")));
+    var g = el("div", "grid2");
+    var cur = st.ext.list, L = cur && typeof cur === "object" ? JSON.parse(JSON.stringify(cur)) : null;
+    function put() { if (L) st.ext.list = L; }
+    var fmts = [["", t("sty.inherit")], ["-", t("sty.listNone")]].concat(LY.T.LIST_FORMATS.map(function (f) { return [f, t("sty.listEx", { a: LY.T.listLabel(f, 1), b: LY.T.listLabel(f, 2), c: LY.T.listLabel(f, 3) })]; }));
+    var opts = el("div", "grid2");
+    function showOpts() { opts.hidden = !L; }
+    g.appendChild(field(t("sty.listF"), select(fmts, cur === null ? "-" : L ? L.f.replace(/\u02B9/g, "\u0374") : "", function (v) {
+      if (v === "") { delete st.ext.list; L = null; }
+      else if (v === "-") { st.ext.list = null; L = null; }
+      else { L = L || { lv: 1 }; L.f = v; put(); }
+      showOpts();
+    })));
+    opts.appendChild(field(t("sty.listLv"), select([["1", "1"], ["2", "2"], ["3", "3"]], String(L && L.lv || 1), function (v) { if (L) { L.lv = Number(v); put(); } })));
+    var sn = el("input", "inp");
+    sn.type = "number"; sn.min = 0; sn.max = 99999; sn.placeholder = "1";
+    if (L && L.s !== undefined) sn.value = L.s;
+    sn.addEventListener("change", function () { if (!L) return; if (sn.value === "") delete L.s; else L.s = Math.max(0, Math.min(99999, Math.floor(+sn.value))); put(); });
+    opts.appendChild(field(t("sty.listS"), sn));
+    var gn = el("input", "inp");
+    gn.type = "text"; gn.maxLength = 40; gn.placeholder = t("sty.listGPh");
+    if (L && L.g) gn.value = L.g;
+    gn.addEventListener("change", function () { if (!L) return; var v = gn.value.trim().slice(0, 40); if (v) L.g = v; else delete L.g; put(); });
+    opts.appendChild(field(t("sty.listG"), gn));
+    w.appendChild(g);
+    w.appendChild(opts);
+    showOpts();
+    w.appendChild(el("p", "hint", t("sty.listHint")));
+    return w;
+  }
+  function compEditor(st) {
+    var w = el("div");
+    w.appendChild(el("span", "fld-lbl", t("sty.comp")));
+    var g = el("div", "grid2");
+    g.appendChild(field(t("sty.composer"), select([["", t("sty.inherit")], ["s", t("sty.compS")], ["p", t("sty.compP")]],
+      st.ext.comp === undefined ? "" : st.ext.comp === "p" ? "p" : "s", function (v) { if (v === "") delete st.ext.comp; else st.ext.comp = v === "p" ? "p" : ""; })));
+    var ws = Array.isArray(st.ext.ws) ? st.ext.ws.slice(0, 2) : null;
+    function wsInput(k, lo, hi, ph) {
+      var inp = el("input", "inp");
+      inp.type = "number"; inp.min = lo; inp.max = hi; inp.placeholder = ph;
+      if (ws && ws[k] !== undefined && ws[k] !== null) inp.value = ws[k];
+      inp.addEventListener("change", function () {
+        var v = inp.value === "" ? null : Math.max(lo, Math.min(hi, +inp.value));
+        ws = ws || [null, null]; ws[k] = v;
+        if (ws[0] === null && ws[1] === null) { delete st.ext.ws; ws = null; }
+        else st.ext.ws = [ws[0] === null ? 100 : ws[0], ws[1] === null ? 133 : ws[1]];
+      });
+      return inp;
+    }
+    g.appendChild(field(t("sty.wsMin"), wsInput(0, 50, 100, "100")));
+    g.appendChild(field(t("sty.wsMax"), wsInput(1, 100, 400, "133")));
+    g.appendChild(field(t("sty.lsMax"), optNum(st.ext, "ls", 0, 100)));
+    var dcN = el("input", "inp"), dcC = el("input", "inp");
+    dcN.type = dcC.type = "number"; dcN.min = 0; dcN.max = 10; dcC.min = 1; dcC.max = 10;
+    dcN.placeholder = "0"; dcC.placeholder = "1";
+    if (st.ext.dc) { dcN.value = st.ext.dc.n; dcC.value = st.ext.dc.c; }
+    function setDc() {
+      var n = Math.floor(+dcN.value || 0), c = Math.floor(+dcC.value || 1);
+      if (dcN.value === "") delete st.ext.dc;
+      else if (n < 2) st.ext.dc = null;
+      else st.ext.dc = { n: Math.min(10, n), c: Math.max(1, Math.min(10, c)) };
+    }
+    dcN.addEventListener("change", setDc); dcC.addEventListener("change", setDc);
+    g.appendChild(field(t("sty.dcN"), dcN));
+    g.appendChild(field(t("sty.dcC"), dcC));
+    w.appendChild(g);
+    var r = el("div", "pn-row wrap");
+    r.appendChild(triState(t("sty.opt"), st.ext, "opt"));
+    r.appendChild(triState(t("sty.bal"), st.ext, "bal"));
+    w.appendChild(r);
+    w.appendChild(el("p", "hint", t("sty.compHint")));
+    return w;
+  }
   function triState(label, st, key) {
     var b = el("button", "tri");
     b.type = "button";
@@ -2111,7 +2197,7 @@
         var b = el("button", "pf-item " + x.sev);
         b.type = "button";
         b.appendChild(el("span", "pf-dot"));
-        var msg = x.code === "ppi" && it ? t("pf.ppi", { n: Math.round(R.effectivePpi(it)) }) : t("pf." + x.code);
+        var msg = x.code === "ppi" && it ? t("pf.ppi", { n: Math.round(R.effectivePpi(it)) }) : x.code === "glyph" ? t("pf.glyph", { c: x.chars || "" }) : t("pf." + x.code);
         b.appendChild(el("span", "", msg + (it ? " · " + typeName(it) : "")));
         b.addEventListener("click", function () { close(); ED.gotoItem(x.id); });
         li.appendChild(b);
@@ -2142,6 +2228,9 @@
       { label: t("more.house"), fn: function () { LY.house.open(); } },
       { label: t("more.auto"), fn: function () { LY.house.auto(); } },
       { label: t("more.toc"), disabled: !LY.house.hasToc(doc), fn: function () { LY.house.updateToc(); } },
+      { label: t("more.contents"), disabled: !LY.notes, fn: function () { LY.notes.toc(); } },
+      { label: t("more.notes"), disabled: !LY.notes, fn: function () { LY.notes.settings(); } },
+      { label: t("more.book"), disabled: !LY.book, fn: function () { LY.book.open(); } },
       { label: t("more.sheet"), disabled: !LY.house.hasSheet(doc), fn: function () { LY.house.sheet(); } },
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
@@ -2149,6 +2238,7 @@
       { label: t("more.find"), fn: function () { LY.dlg.find(); } },
       { label: t("more.spell"), fn: function () { LY.dlg.spell(); } },
       { label: t("more.lib"), disabled: !LY.dlg.lib, fn: function () { LY.dlg.lib(); } },
+      { label: t(LY.prefs.hjShow === 1 ? "more.hjOff" : "more.hjOn"), fn: function () { if (LY.prefs.hjShow === 1) delete LY.prefs.hjShow; else LY.prefs.hjShow = 1; LY.savePrefs(); ED.render(); LY.toast(t(LY.prefs.hjShow === 1 ? "hj.on" : "hj.off")); } },
       { label: t("more.history"), disabled: !LY.canUndo() && !LY.canRedo(), fn: function () { LY.dlg.history(); } },
       { label: t("more.keys"), fn: function () { LY.dlg.keys(); } },
       { sep: true },

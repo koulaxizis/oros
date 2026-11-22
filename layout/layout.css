@@ -725,3 +725,18 @@ body.inframe #cv { cursor: text; }
 .swl-name { flex: 1 1 140px; }
 .swl-chips { display: flex; gap: 3px; flex-wrap: wrap; }
 .swl-chips .sw-chip { width: 16px; height: 16px; }
+
+/* ---------- notes, cross-references, links, contents, books (LY-W7) ---------- */
+.story-ed .sfn { cursor: pointer; font-size: .75em; min-width: 1.2em; text-align: center; vertical-align: .5em; }
+.story-ed .sxr { font-weight: 600; }
+.story-ed .slink { color: var(--accent, #2563eb); text-decoration: underline; }
+.note-text { width: 100%; min-height: 7em; resize: vertical; font: inherit; }
+.xr-list { display: flex; flex-direction: column; gap: 2px; max-height: 45vh; overflow: auto; margin: 8px 0; }
+.xr-item { text-align: left; padding: 8px 10px; min-height: 40px; border: 1px solid var(--line, #ddd); border-radius: 6px; background: var(--bg2, transparent); color: inherit; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.xr-item:hover, .xr-item:focus-visible { border-color: var(--accent, #2563eb); }
+.toc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px 12px; max-height: 40vh; overflow: auto; margin-bottom: 8px; }
+.book-name { font-weight: 600; margin: 0 0 6px; }
+.book-list { margin: 0 0 10px; padding-left: 1.4em; }
+.book-item { display: flex; align-items: center; gap: 4px; padding: 2px 0; }
+.book-item.here .book-doc { font-weight: 600; }
+.book-doc { flex: 1; min-width: 0; overflow-wrap: anywhere; }

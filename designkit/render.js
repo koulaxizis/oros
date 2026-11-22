@@ -405,22 +405,56 @@
       if (idx[it.pg] === undefined) return;
       (stories[it.story] = stories[it.story] || []).push(it);
     });
-    Object.keys(stories).forEach(function (sid) {
-      var st = M.story(doc, sid);
-      var frames = stories[sid].sort(function (a, b) { return a.seq - b.seq || M.cmpStr(a.id, b.id); });
-      var g = frames.map(function (f) {
-        var pi = info[f.pg], pg = M.find(doc.pages, f.pg);
-        var owners = [f.pg];
-        if (pg && pg.ms) owners.push(pg.ms);
-        return geom(f, { pageLabel: pi.label, pageCount: pages.length, pg: f.pg, no: pi.no }, exclFor(f, owners, pi.side, f.pg));
-      });
-      var res = T.layoutChain(st || { paras: [] }, g, styles);
-      bendAll(frames, res);
-      placeAnchored(frames, res, sid);
-      Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
-      if (res.overset) out.overset[sid] = true;
-      out.placed[sid] = res.placedParas;   // paragraphs that fit whole (the Story Editor marks the rest, LY-N3)
+    // stories in reading order (the page of their first frame, then
+    // top to bottom): note numbers run through the document in it
+    var sids = Object.keys(stories).map(function (sid) {
+      stories[sid].sort(function (a, b) { return a.seq - b.seq || M.cmpStr(a.id, b.id); });
+      return sid;
+    }).sort(function (a, b) {
+      var fa = stories[a][0], fb = stories[b][0];
+      return idx[fa.pg] - idx[fb.pg] || fa.y - fb.y || fa.x - fb.x || M.cmpStr(a, b);
     });
+    // notes (LY-W7): setup.ext.fn { kind "foot" | "end", ps, r "story"
+    // (numbers start again in each story) }
+    var fx = doc.setup && doc.setup.ext && doc.setup.ext.fn;
+    var nCfg = fx && typeof fx === "object" ? fx : {};
+    function layoutPages(xr) {
+      placedA = {};
+      var n = 1;
+      sids.forEach(function (sid) {
+        var st = M.story(doc, sid);
+        var frames = stories[sid];
+        var g = frames.map(function (f) {
+          var pi = info[f.pg], pg = M.find(doc.pages, f.pg);
+          var owners = [f.pg];
+          if (pg && pg.ms) owners.push(pg.ms);
+          return geom(f, { pageLabel: pi.label, pageCount: pages.length, pg: f.pg, no: pi.no }, exclFor(f, owners, pi.side, f.pg));
+        });
+        var sty = { ps: styles.ps, cs: styles.cs, obj: styles.obj, xr: xr, notes: { kind: nCfg.kind, ps: nCfg.ps, start: nCfg.r === "story" ? 1 : n } };
+        var nn = st ? T.notesOf(st, sty) : null;
+        if (nn) n += nn.order.length;
+        var res = T.layoutChain(st || { paras: [] }, g, sty);
+        bendAll(frames, res);
+        placeAnchored(frames, res, sid);
+        Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
+        if (res.overset) out.overset[sid] = true;
+        else delete out.overset[sid];
+        out.placed[sid] = res.placedParas;   // paragraphs that fit whole (the Story Editor marks the rest, LY-N3)
+      });
+    }
+    // cross-references (LY-W7): a run with ext.xr { to: an anchor, k:
+    // "p" page | "t" text | "tp" both } shows where a paragraph with
+    // ext.aid = that anchor fell; a second pass sets them once the
+    // pages are known (a reference that moves the anchor again is
+    // left at the second pass)
+    var hasXr = doc.stories.some(function (st) {
+      return (st.paras || []).some(function (p) { return (p.runs || []).some(function (r) { return r.ext && r.ext.xr; }); });
+    });
+    layoutPages(null);
+    if (hasXr) {
+      out.xr = anchorsOf(doc, sids, stories, out.frames, info);
+      layoutPages(out.xr);
+    }
     out.anchored = {};
     Object.keys(anchored).forEach(function (id) { var it = anchored[id]; if (it.ext.anc && placedA[id]) out.anchored[id] = { pg: it.pg, x: it.x, y: it.y }; });
 
@@ -450,6 +484,25 @@
         if (res.overset) out.overset[sid] = true;
       });
       out.master[p.id] = res0;
+    });
+    return out;
+  }
+
+  // every anchor's place: { aid: { t: the paragraph's text, pg: the
+  // label of the page it starts on } }
+  function anchorsOf(doc, sids, stories, frames, info) {
+    var out = {};
+    sids.forEach(function (sid) {
+      var st = M.story(doc, sid);
+      if (!st) return;
+      stories[sid].forEach(function (f) {
+        ((frames[f.id] || {}).lines || []).forEach(function (ln) {
+          var para = ln.p >= 0 ? st.paras[ln.p] : null, a = para && para.ext && para.ext.aid;
+          if (typeof a !== "string" || out[a]) return;
+          var tx = (para.runs || []).map(function (r) { return typeof r.t === "string" && !(r.ext && (r.ext.fn || r.ext.xr)) ? r.t : ""; }).join("").replace(/\s+/g, " ").trim().slice(0, 200);
+          out[a] = { t: tx, pg: info[f.pg] ? info[f.pg].label : "", pid: f.pg };
+        });
+      });
     });
     return out;
   }
@@ -517,6 +570,19 @@
       });
     }
     scan(L.frames);
+    // characters the fonts cannot draw (LY-W6): the frame says which
+    var noGlyph = {};
+    if (T.missingGlyphs) Object.keys(L.frames || {}).forEach(function (fid) {
+      (L.frames[fid].lines || []).forEach(function (ln) {
+        ln.runs.forEach(function (r) {
+          if (!r.t || r.f) return;
+          T.missingGlyphs(r.key, String(r.t)).forEach(function (ch) {
+            var a = noGlyph[fid] = noGlyph[fid] || [];
+            if (a.indexOf(ch) === -1 && a.length < 20) a.push(ch);
+          });
+        });
+      });
+    });
     Object.keys(L.master || {}).forEach(function (pid) { scan(L.master[pid]); });
     var bleed = doc.setup.bleed, W = doc.setup.w, H = doc.setup.h, facing = doc.setup.facing;
     var emptyStory = {};
@@ -529,6 +595,7 @@
       }
       if (it.t === "text") {
         if (minSize[it.id] < PF_MIN_PT) add("warn", "small", it);
+        if (noGlyph[it.id]) { add("err", "glyph", it); out[out.length - 1].chars = noGlyph[it.id].join(" "); }
         if (emptyStory[it.story] === undefined) {
           var st = M.story(doc, it.story);
           emptyStory[it.story] = !(st && T.hasText(st));

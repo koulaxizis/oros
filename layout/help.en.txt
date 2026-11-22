@@ -144,6 +144,21 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Library** (`More › Library…`): select objects and `Add the selection` keeps them, with their text, colours and styles, for any document on this device; click one to place it on the current page. Rename or remove them there; `Export…` and `Import…` take a library to another device as a `.oroslib` file. Pictures are named, not copied.
 - **Swatch libraries** (Colours panel): `Libraries…` adds ready-made sets (print basics, sea, earth, pastel, greys); `Import .ase…` reads swatch files from InDesign, Illustrator, Photoshop, Affinity or Scribus (RGB, CMYK, grey and Lab, spot colours stay spot); `Export .ase` writes the document's colours for them. Colours already in the document are skipped.
 
+## Greek and composition
+- **Greek**: hyphenation also reads polytonic text (breathings, accents and the iota subscript are set aside: ἄν-θρω-πος); all caps drop them and keep the dialytika (ᾠδή → ΩΙΔΗ). Lists of styles sort the Greek way (ά with α, ς with σ).
+- **Glyph check**: Preflight lists every frame with characters its font cannot draw, and which ones.
+- **Composition** (paragraph style, Composition): `Whole paragraph` weighs all lines of a paragraph together, for even spacing; word spacing least and most (%) and letter spacing most set how far a justified line may go; `Optical margins` lets punctuation hang past the edge; `Balance ragged lines` evens out lines that are not justified; a drop cap sinks the first letters through two or more lines.
+- **Small caps, superscript, subscript**: in a character style.
+- **Loose and tight lines**: `More › Show loose and tight lines` marks justified lines whose spaces go past the limits (yellow loose, pink tight).
+
+## Notes, lists, cross-references and books
+- **Footnotes and endnotes**: in the Story Editor, the `¹` button › `Insert a note…`. The note is numbered by itself and set at the foot of its column; a line that would leave its note behind moves on with it. Click a note's number to change or remove it. `More › Notes…` puts them after the text instead (endnotes), sets their paragraph style and whether numbers start again in each story. In an EPUB they open as pop-ups.
+- **Lists**: a paragraph style's `List` numbers its paragraphs (1. a) i. αʹ Αʹ and more, or bullets). Styles with the same list name share the numbers; level 2 starts again under each level 1.
+- **Cross-references**: `¹ › Insert a cross-reference…` points at a title or any paragraph and shows its page, its text or both; the page follows when the text moves. In a PDF it is a link to that page, in an EPUB to the paragraph.
+- **Links**: select words and `¹ › Link…` for a web or e-mail address; it works in the PDF and the EPUB.
+- **Contents in any document**: `More › Contents from styles…` picks the title styles and their levels, each level's style, and what goes between title and page (`Title | σελ. 12`); a new frame takes them when there is none. `More › Update contents` follows the pages later.
+- **Books**: `More › Book…` keeps chapters in separate documents together: their order, page numbers that run on (each document on a right-hand page if you like), styles and colours as the first document's, and one PDF of the whole book.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

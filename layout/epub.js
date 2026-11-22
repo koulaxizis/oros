@@ -246,6 +246,19 @@
       base += txt.length;
       if (!html) return;
       if (run.ext && run.ext.sup) html = "<sup>" + html + "</sup>";
+      // notes, cross-references and links (LY-W7)
+      var ep = EP;
+      if (ep && run.ext && typeof run.ext.fn === "string") {
+        var nn = ++ep.n, nid = "fn" + nn;
+        ep.notes.push({ id: nid, n: nn, t: typeof run.ext.ft === "string" ? run.ext.ft : "" });
+        html = "<sup><a epub:type=\"noteref\" role=\"doc-noteref\" id=\"" + nid + "r\" href=\"#" + nid + "\">" + nn + "</a></sup>";
+      } else if (ep && run.ext && run.ext.xr && typeof run.ext.xr.to === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(run.ext.xr.to)) {
+        var x = ep.xr && ep.xr[run.ext.xr.to], k = run.ext.xr.k;
+        var lbl = x ? (k === "t" ? x.t : k === "tp" ? x.t + " (" + x.pg + ")" : String(x.pg)) : txt;
+        html = "<a href=\"#XR:" + run.ext.xr.to + "\">" + esc(lbl) + "</a>";
+      } else if (run.ext && typeof run.ext.href === "string" && /^(https?:\/\/|mailto:)[^\s"<>]{3,2000}$/i.test(run.ext.href)) {
+        html = "<a href=\"" + esc(run.ext.href) + "\">" + html + "</a>";
+      }
       if (run.u) html = "<span class=\"u\">" + html + "</span>";
       if (run.i) html = "<em>" + html + "</em>";
       if (run.b) html = "<strong>" + html + "</strong>";
@@ -253,6 +266,14 @@
       out += html;
     });
     return out + marks(Infinity);
+  }
+  // the notes and cross-references of the book being made (LY-W7)
+  var EP = null;
+  function notesHtml(ch) {
+    if (!ch.notes || !ch.notes.length) return "";
+    return ch.notes.map(function (n) {
+      return "<aside epub:type=\"footnote\" role=\"doc-footnote\" id=\"" + n.id + "\"><p><a href=\"#" + n.id + "r\">" + n.n + "</a> " + piece(n.t) + "</p></aside>";
+    }).join("");
   }
   function piece(s) {
     return esc(s.replace(/\t/g, " ")).replace(/\n/g, "<br/>");
@@ -279,7 +300,16 @@
     (opts.pages || F.order.map(function (p) { return p.id; })).forEach(function (id) { outSet[id] = 1; });
     var report = { chapters: 0, headings: 0, images: 0, noAlt: [], overset: F.rep.overset, shapes: F.rep.shapes, dropped: F.rep.dropped, fonts: [], pages: 0, warnings: [] };
     function level(ps) { if (!(ps in lvl)) lvl[ps] = O.level(doc, ps); return lvl[ps]; }
-    function newChapter() { cur = { n: chapters.length + 1, html: [], title: "", ids: 0 }; chapters.push(cur); }
+    EP = { n: 0, notes: [], xr: L && L.xr };
+    var anchors = {};
+    function newChapter() { flushNotes(); cur = { n: chapters.length + 1, html: [], title: "", ids: 0, notes: [] }; chapters.push(cur); }
+    function flushNotes() { if (cur && EP.notes.length) { cur.notes = cur.notes.concat(EP.notes); EP.notes = []; } }
+    function aidAttr(para) {
+      var a = para.ext && para.ext.aid;
+      if (typeof a !== "string" || !/^[A-Za-z0-9_-]{1,40}$/.test(a) || anchors[a]) return "";
+      anchors[a] = cur.n;
+      return " id=\"a-" + a + "\"";
+    }
     function marker(page) {
       // the print edition's pages from nextPage up to this one
       if (!pageList) return "";
@@ -335,19 +365,33 @@
       if (lv > 0) {
         closeList();
         var hid = "h" + (++cur.ids);
+        var ha = aidAttr(para);
+        if (ha) cur.html.push("<span" + ha + "></span>");
         cur.html.push("<h" + lv + " id=\"" + hid + "\" class=\"" + para.ps + "\">" + inner + "</h" + lv + ">");
         heads.push({ t: text.slice(0, 300), lvl: lv, file: cur.n, id: hid });
         if (!cur.title) cur.title = text.slice(0, 200);
       } else if (ps.bul) {
         if (!ul) { cur.html.push("<ul class=\"" + para.ps + "\">"); ul = true; }
-        cur.html.push("<li>" + inner + "</li>");
+        cur.html.push("<li" + aidAttr(para) + ">" + inner + "</li>");
       } else {
         closeList();
-        cur.html.push("<p class=\"" + para.ps + "\">" + inner + "</p>");
+        cur.html.push("<p" + aidAttr(para) + " class=\"" + para.ps + "\">" + inner + "</p>");
       }
     });
     closeList();
     if (!chapters.length) newChapter();
+    flushNotes();
+    // cross-references: to the chapter file their paragraph went to
+    chapters.forEach(function (ch) {
+      ch.html = ch.html.map(function (h) {
+        return h.indexOf("#XR:") < 0 ? h : h.replace(/href="#XR:([A-Za-z0-9_-]{1,40})"/g, function (m, a) {
+          return anchors[a] ? "href=\"" + (anchors[a] === ch.n ? "" : "c" + pad(anchors[a]) + ".xhtml") + "#a-" + a + "\"" : "href=\"#\"";
+        });
+      });
+      var nh = notesHtml(ch);
+      if (nh) ch.html.push(nh);
+    });
+    EP = null;
     // pages after the last text (pictures only, empty) still get a mark
     cur = chapters[chapters.length - 1];
     var tail = marker(F.order.length - 1);
