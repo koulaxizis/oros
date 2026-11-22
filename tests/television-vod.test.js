@@ -358,3 +358,131 @@ test("bad entries are dropped and the lists are capped", () => {
   assert.ok(!("wd:Q1" in big.rp));    // the oldest go first
   assert.ok("wd:Q260" in big.rp);
 });
+
+// ---------- TV-VOD2: NASA, Europeana / Open Images, PeerTube, subtitles, saved searches ----------
+// Fixtures: real answers of each API (2026-11-22), trimmed to a few items.
+const FX = JSON.parse(require("fs").readFileSync(require("path").join(__dirname, "fixtures", "television-vod2.json"), "utf8"));
+
+test("filterMissing: a source that cannot apply a filter is named, never asked", () => {
+  assert.deepEqual(V.filterMissing("wd", { c: "gr", g: "drama", l: "el" }), []);
+  assert.deepEqual(V.filterMissing("na", { dec: 1960, ty: "doc" }), []);
+  assert.ok(V.filterMissing("na", { c: "gr" }).length > 0);
+  assert.ok(V.filterMissing("eu", { g: "comedy" }).length > 0);
+  assert.deepEqual(V.filterMissing("eu", { c: "de", dec: 1910, l: "de" }), []);
+  assert.ok(V.filterMissing("pt", { dec: 1950 }).length > 0);
+  assert.deepEqual(V.filterMissing("pt", { len: "long", l: "fr" }), []);
+});
+
+test("NASA: search and asset parse; public domain, medium file first, subtitles", () => {
+  const url = V.naSearchUrl({ q: "apollo", f: { dec: 1960 }, page: 1 });
+  assert.match(url, /^https:\/\/images-api\.nasa\.gov\/search\?/);
+  assert.match(url, /media_type=video/);
+  assert.match(url, /year_start=1960/);
+  const r = V.naParseSearch(FX.nasa, { page: 1 });
+  assert.ok(r.items.length > 0);
+  r.items.forEach((it) => {
+    assert.equal(it.s, "na"); assert.equal(it.ok, 1); assert.equal(it.why, "nasa"); assert.equal(it.ty, "doc");
+    assert.match(it.pg, /^https:\/\/images\.nasa\.gov\/details\//);
+    if (it.im) assert.match(it.im, /^https:\/\//);
+  });
+  const a = V.naParseAsset(FX.nasaAsset);
+  assert.match(a.url, /^https:\/\/images-assets\.nasa\.gov\/.+\.mp4$/);
+  assert.ok(Array.isArray(a.subs));
+  a.subs.forEach((s) => assert.match(s.url, /^https:\/\/.+\.(srt|vtt)$/));
+  assert.equal(V.naParseAsset({ collection: { items: [{ href: "javascript:alert(1)" }] } }), null);
+});
+
+test("Europeana: own key in the URL, open licences, playable files only, Open Images apart", () => {
+  const u = V.euSearchUrl({ q: "paris", f: { c: "fr", dec: 1920 }, page: 2, key: "abc123", src: "eu" });
+  assert.match(u, /^https:\/\/api\.europeana\.eu\/record\/v2\/search\.json\?wskey=abc123&/);
+  assert.match(u, /reusability=open/);
+  assert.match(u, /NOT%20DATA_PROVIDER/);
+  assert.match(u, /COUNTRY%3A%22France%22/);
+  assert.match(u, /start=25&/);
+  const o = V.euSearchUrl({ q: "", f: {}, page: 1, key: "abc123", src: "oi" });
+  assert.ok(!/NOT%20DATA_PROVIDER/.test(o));
+  assert.match(o, /DATA_PROVIDER%3A%22Netherlands/);
+  const r = V.euParseSearch(FX.eu, { src: "eu", page: 1 });
+  assert.ok(r.items.length > 0);
+  r.items.forEach((it) => {
+    assert.equal(it.s, "eu"); assert.equal(it.ok, 1); assert.equal(it.why, "open");
+    assert.match(it.u, /^https:\/\/.+\.(mp4|m4v|ogv|ogg|webm)(\?|$)/i);
+    assert.ok(it.lic);
+    assert.match(it.pg, /^https:\/\/www\.europeana\.eu\/item\//);
+  });
+  assert.ok(r.items.some((it) => (it.c || []).indexOf("de") >= 0));
+  const oi = V.euParseSearch(FX.oi, { src: "oi", page: 1 });
+  assert.ok(oi.items.length > 0 && oi.items.every((it) => it.s === "oi" && /^https:\/\/www\.openbeelden\.nl\//.test(it.u)));
+  assert.deepEqual(V.euParseSearch({ success: false, error: "Invalid API key" }, {}).error, "key");
+  assert.equal(V.euKeyOk("ab cd"), false);
+  assert.equal(V.euKeyOk("abcdef12"), true);
+  assert.equal(V.euLic("http://creativecommons.org/licenses/by-sa/4.0/"), "CC BY-SA 4.0");
+  assert.equal(V.euLic("http://rightsstatements.org/vocab/InC/1.0/"), "");
+  const rec = V.euParseRecord({ object: { aggregations: [{ edmIsShownBy: "http://example.org/a.mp4" }] } });
+  assert.equal(rec.url, "https://example.org/a.mp4");
+  assert.equal(V.euParseRecord({ object: { aggregations: [{ edmIsShownBy: "https://example.org/page.html" }] } }), null);
+});
+
+test("PeerTube: CC only; checked only on own-work servers, the rest behind the switch", () => {
+  const u = V.ptSearchUrl({ q: "", f: { len: "long", l: "fr", ty: "film" }, page: 1 });
+  assert.match(u, /^https:\/\/sepiasearch\.org\/api\/v1\/search\/videos\?/);
+  assert.match(u, /nsfw=false/); assert.match(u, /durationMin=2400/); assert.match(u, /categoryOneOf=2/);
+  assert.equal(V.ptParseSearch(FX.pt, { f: {} }).items.length, 0);       // none of these is checked
+  const all = V.ptParseSearch(FX.pt, { f: { all: 1 } }).items;
+  assert.ok(all.length > 0 && all.every((it) => it.ok === 0 && it.why === "listed"));
+  const own = V.ptParseSearch(FX.ptb, { f: {} }).items;
+  assert.ok(own.length > 0 && own.every((it) => it.ok === 1 && it.why === "pt" && /^pt:video\.blender\.org\//.test(it.k)));
+  own.forEach((it) => assert.ok(it.d >= 1));
+  const k = "pt:" + FX.ptVideoHost + "/" + FX.ptVideoUuid;
+  assert.equal(V.ptVideoUrl(k), "https://video.blender.org/api/v1/videos/" + FX.ptVideoUuid);
+  assert.equal(V.ptVideoUrl("pt:evil.example/../x"), "");
+  const v = V.ptParseVideo(FX.ptVideo, k, () => "maybe");
+  assert.match(v.url, /^https:\/\/video\.blender\.org\//);
+  const h = V.ptParseVideo(FX.ptVideo, k, () => "");
+  assert.ok(!h || (h.hls === 1 && /\.m3u8/.test(h.url)));
+  const caps = V.ptParseCaptions({ data: [{ language: { id: "fr", label: "French" }, captionPath: "/lazy-static/video-captions/x-fr.vtt" }, { language: { id: "en" }, captionPath: "javascript:x" }] }, k);
+  assert.deepEqual(caps.map((c) => c.url), ["https://video.blender.org/lazy-static/video-captions/x-fr.vtt"]);
+});
+
+test("subtitles: Commons TimedText list, SubRip to WebVTT, file-name languages", () => {
+  const s = V.commonsParseSubs(FX.commonsSubs, "Nosferatu (1922).webm");
+  assert.ok(s.length >= 3);
+  assert.ok(s.some((x) => x.l === "en"));
+  assert.equal(s.filter((x) => x.l === "en").length, 1);
+  s.forEach((x) => { assert.match(x.url, /^https:\/\/commons\.wikimedia\.org\/w\/api\.php\?/); assert.match(x.url, /trackformat=vtt/); });
+  assert.match(V.commonsSubsUrl("Nosferatu (1922).webm"), /apprefix=Nosferatu_\(1922\)\.webm&/);
+  const vtt = V.srtToVtt("﻿1\r\n00:00:01,500 --> 00:00:03,000\r\n<i>Hello</i>\r\n");
+  assert.equal(vtt, "WEBVTT\n\n1\n00:00:01.500 --> 00:00:03.000\n<i>Hello</i>\n");
+  assert.equal(V.srtToVtt("WEBVTT\n\nx"), "WEBVTT\n\nx");
+  assert.equal(V.subLang("film.el.srt"), "el");
+  assert.equal(V.subLang("Film_greek.srt"), "el");
+  assert.equal(V.subLang("film.asr.srt"), "");
+  assert.equal(V.subLang("film.srt"), "");
+});
+
+test("saved searches: synced, no duplicates, removal wins when newer, merge symmetric", () => {
+  const a = {}, b = {};
+  const id = V.saveSearch(a, { n: "noir", q: "noir", f: { dec: 1940 } }, 1000, "aaaa1111");
+  assert.equal(id, "aaaa1111");
+  assert.equal(V.saveSearch(a, { n: "again", q: "NOIR", f: { dec: 1940 } }, 1100), "");
+  assert.equal(V.saveSearch(a, { n: "", q: "", f: {} }, 1200), "");
+  V.saveSearch(b, { n: "nasa", q: "", f: { src: "na" } }, 1500, "bbbb2222");
+  const ab = V.mergeVod(a, b, {}), ba = V.mergeVod(b, a, {});
+  assert.equal(JSON.stringify(ab), JSON.stringify(ba));
+  assert.deepEqual(V.savedList(ab).map((x) => x.id), ["bbbb2222", "aaaa1111"]);
+  const c = JSON.parse(JSON.stringify(ab));
+  assert.ok(V.dropSearch(c, "aaaa1111", 2000));
+  const m = V.mergeVod(ab, c, {});
+  assert.deepEqual(V.savedList(m).map((x) => x.id), ["bbbb2222"]);
+  const bad = { ss: { "BAD id": { n: "x", m: 1 }, okid1234: { n: "<b>", q: "a", m: 2 } } };
+  V.normVod(bad);
+  assert.deepEqual(Object.keys(bad.ss), ["okid1234"]);
+});
+
+test("newer-source keys survive normalisation; Commons / Archive keys stay strict", () => {
+  assert.ok(V.item({ k: "na:as11-apollo-11-launch", t: "x" }));
+  assert.ok(V.item({ k: "eu:/08604/_filmportal_de_node_1224912", t: "x" }));
+  assert.ok(V.item({ k: "pt:video.blender.org/0b7c4a1e-1111-2222-3333-444455556666", t: "x" }));
+  assert.equal(V.item({ k: "wd:Q1 OR 1", t: "x" }), null);
+  assert.equal(V.item({ k: "xx:<script>", t: "x" }), null);
+});

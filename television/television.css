@@ -663,6 +663,37 @@ dialog.tv-dlg::backdrop { background: rgba(0, 0, 0, 0.6); }
 }
 .tvf-panel select:focus { border-color: var(--accent); }
 .tvf-panel select option { background: var(--panel-bg); color: var(--text); }
+/* TV-VOD2: save-search button, saved searches, Sources window, subtitles */
+.tvf-save { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; padding-left: 10px; padding-right: 10px; }
+.tvf-save svg { width: 16px; height: 16px; }
+.tvf-save:disabled { opacity: .45; cursor: default; }
+.tvf-saved { display: flex; flex-wrap: wrap; gap: 6px; }
+.tvf-saved[hidden] { display: none; }
+.tvf-ss { display: inline-flex; align-items: stretch; max-width: 100%; }
+.tvf-ss-go { border-radius: 999px 0 0 999px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: calc(100vw - 90px); }
+.tvf-ss-x {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 36px; min-height: 36px; padding: 0 8px;
+  color: var(--text-dim); background: transparent;
+  border: 1px solid var(--border); border-left: 0; border-radius: 0 999px 999px 0; cursor: pointer;
+}
+.tvf-ss-x:hover { color: var(--danger); }
+.tvf-ss-x svg { width: 14px; height: 14px; }
+.tvf-srcrow { align-items: flex-start; padding: 6px 0; }
+.tvf-srcrow input { margin-top: 2px; }
+.tvf-srcrow b { display: block; font-size: 13px; }
+.tvf-srcdesc { display: block; font-size: 12px; color: var(--text-dim); line-height: 1.45; }
+.tvf-link { font-size: 12.5px; color: var(--accent); align-self: flex-start; }
+#tvp-subs {
+  min-height: 40px; margin: 4px 0; padding: 8px 10px;
+  font: inherit; font-size: 12.5px;
+  background: var(--panel-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 8px;
+  max-width: 100%;
+}
+#tvp-subs:focus { border-color: var(--accent); }
+#tvp-subs option { background: var(--panel-bg); color: var(--text); }
+#tvp-video::cue { font-size: 1em; background: rgba(0, 0, 0, .72); color: #fff; }
 .tvf-check { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 12.5px; cursor: pointer; }
 .tvf-check input { width: 18px; height: 18px; accent-color: var(--accent); flex: none; }
 .tvf-clear { justify-self: start; }

@@ -47,9 +47,15 @@
   "use strict";
 
   var PAGE = 24;
+  // Keys of every source: "wd:Q…", "ia:<id>", "na:<NASA id>", "eu:/<id>",
+  // "oi:/<id>", "pt:<host>/<uuid>"; any later two-letter source too, so
+  // a synced entry from a newer version is kept here (TV-VOD2).
+  var KEY_RE = /^(wd:Q\d{1,12}|ia:[A-Za-z0-9][A-Za-z0-9._-]{0,99}|(?!wd:|ia:)[a-z]{2}:[A-Za-z0-9\/][A-Za-z0-9 _.,'()\/:-]{0,199})$/;
   var MAX_WD = 8000;           // catalogue items kept
   var MAX_WATCH = 400;         // synced watchlist entries (removed ones included)
   var MAX_RESUME = 200;        // synced resume positions
+  var MAX_SAVED = 60;          // synced saved searches (removed ones included)
+  var SS_KEY = /^[a-z0-9]{4,24}$/;
   var YEAR_MIN = 1880;
 
   // ---------- 1. Small helpers ----------
@@ -69,7 +75,8 @@
   }
   function https(u) {
     var s = str(u).trim();
-    if (/^http:\/\/(commons\.wikimedia\.org|upload\.wikimedia\.org|archive\.org|([a-z0-9-]+\.)*archive\.org)(\/|$)/i.test(s)) s = "https://" + s.slice(7);
+    if (/^http:\/\/(commons\.wikimedia\.org|upload\.wikimedia\.org|archive\.org|([a-z0-9-]+\.)*archive\.org|images-assets\.nasa\.gov|images-api\.nasa\.gov|www\.openbeelden\.nl)(\/|$)/i.test(s)) s = "https://" + s.slice(7);
+    s = s.replace(/ /g, "%20");
     return /^https:\/\/[^\s"'<>]+$/i.test(s) && s.length <= 1500 ? s : "";
   }
   function qs(p) {
@@ -171,6 +178,10 @@
   //      src ("" | "wd" | "ia"), all (1 = also unchecked IA titles),
   //      sort ("pop" | "old" | "new" | "az") }
   var SORTS = ["pop", "old", "new", "az"];
+  // wd Commons, ia Internet Archive, na NASA, eu Europeana (own key),
+  // oi Open Images (Netherlands Institute for Sound & Vision, read
+  // through Europeana), pt PeerTube (Sepia Search).
+  var SOURCES = ["wd", "ia", "na", "eu", "oi", "pt"];
   function normFilter(f) {
     f = f && typeof f === "object" ? f : {};
     var o = {};
@@ -182,18 +193,36 @@
     if (/^[a-z]{2,3}$/.test(str(f.l))) o.l = f.l;
     if (f.len === "short" || f.len === "long") o.len = f.len;
     if (f.snd === "silent" || f.snd === "sound") o.snd = f.snd;
-    if (f.src === "wd" || f.src === "ia") o.src = f.src;
+    if (SOURCES.indexOf(f.src) >= 0) o.src = f.src;
     if (f.all === 1 || f.all === true) o.all = 1;
     if (SORTS.indexOf(f.sort) > 0) o.sort = f.sort;
     return o;
   }
-  // Which filters a source can apply. The Internet Archive knows no
-  // country of production, so a country filter leaves it out.
-  function filterSupport(src, f) {
+  // Which of the chosen filters a source cannot apply: such a source is
+  // left out (never results that ignore a filter, as Music MU-FIND).
+  // The Internet Archive knows no country of production; NASA has only
+  // documentaries and years; Europeana knows years, the archive's
+  // country and the language; PeerTube knows language, length and a
+  // few categories but not when a film was made.
+  var CAN = {
+    wd: { ty: 1, g: 1, dec: 1, c: 1, l: 1, len: 1, snd: 1 },
+    ia: { ty: 1, g: 1, dec: 1, l: 1, len: 1, snd: 1 },
+    na: { ty: "doc", dec: 1 },
+    eu: { dec: 1, c: 1, l: 1 },
+    oi: { dec: 1, c: 1, l: 1 },
+    pt: { ty: "film news", g: "comedy", l: 1, len: 1 }
+  };
+  function filterMissing(src, f) {
     f = normFilter(f);
-    if (src === "ia") return !f.c;
-    return true;
+    var can = CAN[src] || {}, out = [];
+    ["ty", "g", "dec", "c", "l", "len", "snd"].forEach(function (k) {
+      if (f[k] == null) return;
+      var c = can[k];
+      if (!c || (typeof c === "string" && c.split(" ").indexOf(String(f[k])) < 0)) out.push(k);
+    });
+    return out;
   }
+  function filterSupport(src, f) { return !filterMissing(src, f).length; }
   function isShort(it) { return it.ty === "short" || (it.d > 0 && it.d < 40); }
   function lenOk(it, len) {
     if (!len) return true;
@@ -313,8 +342,12 @@
       var nm = str(f.title) || k.replace(/^.*\//, "").replace(/\.[A-Za-z0-9]{2,5}$/, "").replace(/[_]+/g, " ");
       return { url: iaPath(id, f.name), name: clip(nm, 160), min: minutes(f.length, true), ogg: str(f.format) === "Ogg Video" ? 1 : 0 };
     }).slice(0, 200);
+    var subs = j.files.filter(function (f) { return f && typeof f.name === "string" && /\.(srt|vtt)$/i.test(f.name) && !/(^|\/)__ia_/.test(f.name); })
+      .slice(0, 12).map(function (f) {
+        return { l: subLang(f.name), url: iaPath(id, f.name), srt: /\.srt$/i.test(f.name) ? 1 : 0, auto: /\.asr\./i.test(f.name) ? 1 : 0, name: clip(f.name, 120) };
+      });
     return {
-      parts: parts, closed: parts.length ? 0 : 1,
+      parts: parts, closed: parts.length ? 0 : 1, subs: subs,
       desc: clip(stripHtml(m.description), 2000),
       page: "https://archive.org/details/" + encodeURIComponent(id),
       lic: str(m.licenseurl)
@@ -522,6 +555,7 @@
 
   // ---------- 6. The one item shape ----------
   var TY_OK = {}; TYPES.forEach(function (t) { TY_OK[t] = 1; });
+  var WHY_RE = /^(commons|age|prelinger|listed|nasa|open|pt)$/;
   function codes(a, re, n) {
     var out = [];
     (Array.isArray(a) ? a : []).forEach(function (x) { if (typeof x === "string" && re.test(x) && out.indexOf(x) < 0 && out.length < n) out.push(x); });
@@ -530,7 +564,7 @@
   function item(o) {
     if (!o || typeof o !== "object") return null;
     var k = str(o.k);
-    if (!/^(wd:Q\d{1,12}|ia:[A-Za-z0-9][A-Za-z0-9._-]{0,99})$/.test(k)) return null;
+    if (!KEY_RE.test(k)) return null;
     var it = { k: k, s: k.slice(0, 2), t: clip(o.t, 200) || k };
     if (o.tl && typeof o.tl === "object") {
       var tl = {};
@@ -554,14 +588,20 @@
     if (/^wd:Q\d{1,12}$/.test(str(o.ser))) it.ser = o.ser;
     var sl = Math.floor(+o.sl || 0); it.sl = sl > 0 ? sl : 0;
     it.ok = o.ok ? 1 : 0;
-    it.why = /^(commons|age|prelinger|listed)$/.test(str(o.why)) ? o.why : (it.ok ? "commons" : "listed");
+    it.why = WHY_RE.test(str(o.why)) ? o.why : (it.ok ? "commons" : "listed");
     if (o.snd === "silent" || o.snd === "sound") it.snd = o.snd;
     if (o.col === "bw" || o.col === "color") it.col = o.col;
+    var u = https(o.u); if (u) it.u = u;
+    var lic = clip(o.lic, 80); if (lic) it.lic = lic;
+    var pg = https(o.pg); if (pg) it.pg = pg;
+    var ds = clip(o.ds, 600); if (ds) it.ds = ds;
+    var by = clip(o.by, 120); if (by) it.by = by;
     return it;
   }
 
   // ---------- 7. Synced fields of the TELEVISION slice ----------
   // wl  watchlist     { <k>: { t, y?, im?, ty, w?, m, x? } }   x = removed
+  // ss  saved searches { <id>: { n name, q?, f?, m, x? } }   (TV-VOD2)
   // rp  resume points { <k>: { t, y?, im?, ty, w?, p, d, n?, m, f?, x? } }
   //      w = why an Internet Archive title is free (age | prelinger | listed).
   //      p = seconds watched, d = length in seconds, n = part (0 = first),
@@ -570,18 +610,23 @@
   // symmetric, idempotent and associative; a removal is an entry too
   // (x: 1), which keeps a removed title from coming back. Written only
   // when non-empty, keys sorted (old data loads unchanged).
-  var KEY_RE = /^(wd:Q\d{1,12}|ia:[A-Za-z0-9][A-Za-z0-9._-]{0,99})$/;
   function entry(e, kind) {
     if (!e || typeof e !== "object") return null;
     var m = Math.floor(+e.m || 0);
     if (!(m > 0)) return null;
     var o = { m: m };
     if (e.x) { o.x = 1; return o; }
+    if (kind === "ss") {
+      o.n = clip(e.n, 80);
+      var q = clip(e.q, 120); if (q) o.q = q;
+      var f = normFilter(e.f); if (Object.keys(f).length) o.f = f;
+      return o.n || o.q || o.f ? o : null;
+    }
     o.t = clip(e.t, 200);
     var y = Math.floor(+e.y || 0); if (y >= YEAR_MIN && y <= 2100) o.y = y;
     var im = https(e.im); if (im) o.im = im;
     o.ty = TY_OK[e.ty] ? e.ty : "film";
-    if (/^(age|prelinger|listed)$/.test(str(e.w))) o.w = e.w;
+    if (/^(age|prelinger|listed|nasa|open|pt)$/.test(str(e.w))) o.w = e.w;
     if (kind === "rp") {
       var p = Math.floor(+e.p || 0), d = Math.floor(+e.d || 0);
       o.p = p > 0 && p < 360000 ? p : 0;
@@ -607,8 +652,9 @@
   function normMap(src, kind, cap) {
     var out = {};
     if (src && typeof src === "object" && !Array.isArray(src)) {
+      var re = kind === "ss" ? SS_KEY : KEY_RE;
       Object.keys(src).forEach(function (k) {
-        if (!KEY_RE.test(k)) return;
+        if (!re.test(k)) return;
         var e = entry(src[k], kind);
         if (e) out[k] = e;
       });
@@ -618,13 +664,14 @@
     Object.keys(out).sort().forEach(function (k) { sorted[k] = out[k]; });
     return sorted;
   }
-  // In place: obj.wl / obj.rp canonical, absent when empty.
+  // In place: obj.wl / obj.rp / obj.ss canonical, absent when empty.
   function normVod(obj) {
     if (!obj || typeof obj !== "object") return obj;
-    var wl = normMap(obj.wl, "wl", MAX_WATCH), rp = normMap(obj.rp, "rp", MAX_RESUME);
-    delete obj.wl; delete obj.rp;
+    var wl = normMap(obj.wl, "wl", MAX_WATCH), rp = normMap(obj.rp, "rp", MAX_RESUME), ss = normMap(obj.ss, "ss", MAX_SAVED);
+    delete obj.wl; delete obj.rp; delete obj.ss;
     if (Object.keys(wl).length) obj.wl = wl;
     if (Object.keys(rp).length) obj.rp = rp;
+    if (Object.keys(ss).length) obj.ss = ss;
     return obj;
   }
   function mergeMap(a, b, kind, cap) {
@@ -637,9 +684,11 @@
     var out = into || {};
     var wl = mergeMap(remote && remote.wl, local && local.wl, "wl", MAX_WATCH);
     var rp = mergeMap(remote && remote.rp, local && local.rp, "rp", MAX_RESUME);
-    delete out.wl; delete out.rp;
+    var ss = mergeMap(remote && remote.ss, local && local.ss, "ss", MAX_SAVED);
+    delete out.wl; delete out.rp; delete out.ss;
     if (Object.keys(wl).length) out.wl = wl;
     if (Object.keys(rp).length) out.rp = rp;
+    if (Object.keys(ss).length) out.ss = ss;
     return out;
   }
   function stamp(prev, now) { return Math.max(Math.floor(+now || Date.now()), prev ? prev.m + 1 : 0); }
@@ -647,7 +696,7 @@
     var o = { t: it.t, ty: it.ty };
     if (it.y) o.y = it.y;
     if (it.im) o.im = it.im;
-    if (it.s === "ia" && /^(age|prelinger|listed)$/.test(str(it.why))) o.w = it.why;
+    if (it.s !== "wd" && /^(age|prelinger|listed|nasa|open|pt)$/.test(str(it.why))) o.w = it.why;
     return o;
   }
   function watchOn(obj, k) { var e = obj && obj.wl && obj.wl[k]; return !!(e && !e.x); }
@@ -711,12 +760,321 @@
   function continueList(obj) { return listOf(obj && obj.rp, function (e) { return !e.x && !e.f && (e.p >= 30 || e.n); }); }
   function watchList(obj) { return listOf(obj && obj.wl, function (e) { return !e.x; }); }
 
+  // Saved searches (synced, D4): newest first.
+  function savedList(obj) {
+    var m = obj && obj.ss || {};
+    return Object.keys(m).filter(function (k) { return !m[k].x; })
+      .sort(function (a, b) { return m[b].m - m[a].m || (a < b ? -1 : 1); })
+      .map(function (k) { return { id: k, n: m[k].n, q: m[k].q || "", f: m[k].f || {} }; });
+  }
+  function sameSearch(a, b) { return fold(a.q || "") === fold(b.q || "") && JSON.stringify(normFilter(a.f)) === JSON.stringify(normFilter(b.f)); }
+  // -> the id saved, or "" when nothing changed (the same search is there).
+  function saveSearch(obj, o, now, id) {
+    if (!obj || !o) return "";
+    var q = clip(o.q, 120), f = normFilter(o.f);
+    if (!q && !Object.keys(f).length) return "";
+    if (savedList(obj).some(function (x) { return sameSearch(x, { q: q, f: f }); })) return "";
+    id = SS_KEY.test(str(id)) ? id : "s" + Math.floor(+now || Date.now()).toString(36);
+    var prev = obj.ss && obj.ss[id];
+    var e = { n: clip(o.n, 80) || q || "?", m: stamp(prev, now) };
+    if (q) e.q = q;
+    if (Object.keys(f).length) e.f = f;
+    obj.ss = obj.ss || {};
+    obj.ss[id] = e;
+    normVod(obj);
+    return obj.ss && obj.ss[id] ? id : "";
+  }
+  function dropSearch(obj, id, now) {
+    var prev = obj && obj.ss && obj.ss[id];
+    if (!prev || prev.x) return false;
+    obj.ss[id] = { x: 1, m: stamp(prev, now) };
+    normVod(obj);
+    return true;
+  }
+
+  // ---------- 8. More sources (TV-VOD2) ----------
+  // na  NASA Image and Video Library: works of the US government, in
+  //     the public domain (NASA media guidelines; a credit line names
+  //     any other owner). No key; search and asset lists answer CORS.
+  function naId(id) { return typeof id === "string" && /^[A-Za-z0-9][A-Za-z0-9 _.,'()-]{0,150}$/.test(id) ? id : ""; }
+  function naSearchUrl(o) {
+    o = o || {};
+    var f = normFilter(o.f), p = { media_type: "video", page_size: PAGE, page: Math.max(1, Math.floor(+o.page || 1)) };
+    var q = clip(o.q, 120);
+    if (q) p.q = q;
+    if (f.dec) { p.year_start = f.dec; p.year_end = f.dec + 9; }
+    return "https://images-api.nasa.gov/search?" + qs(p);
+  }
+  function naParseSearch(j, o) {
+    var c = j && j.collection;
+    var list = c && Array.isArray(c.items) ? c.items : [];
+    var items = list.map(function (x) {
+      var d = x && Array.isArray(x.data) ? x.data[0] : null;
+      if (!d || d.media_type !== "video" || !naId(d.nasa_id)) return null;
+      var im = "";
+      (Array.isArray(x.links) ? x.links : []).some(function (l) {
+        if (l && l.render === "image" && /~(medium|small|thumb)\.jpg$/.test(str(l.href))) { im = https(l.href); return true; }
+        return false;
+      });
+      return item({
+        k: "na:" + d.nasa_id, t: clip(d.title, 200) || d.nasa_id, y: year(d.date_created), ty: "doc",
+        im: im, ok: 1, why: "nasa", lic: "Public domain (NASA)", by: clip(d.secondary_creator || d.photographer || d.center, 120),
+        ds: clip(stripHtml(d.description), 600), pg: "https://images.nasa.gov/details/" + encodeURIComponent(d.nasa_id)
+      });
+    }).filter(Boolean);
+    var total = c && c.metadata && typeof c.metadata.total_hits === "number" ? c.metadata.total_hits : items.length;
+    var page = Math.max(1, Math.floor(+(o && o.page) || 1));
+    return { items: items, total: total, more: list.length >= PAGE && page * PAGE < Math.min(total, 10000) };
+  }
+  function naAssetUrl(id) { return "https://images-api.nasa.gov/asset/" + encodeURIComponent(naId(id)); }
+  // -> { url, subs: [{ l, url, srt }] } | null. Medium first (light,
+  // about 720 lines), then the other sizes; the original last.
+  var NA_SIZES = ["medium", "large", "mobile", "small", "orig"];
+  function naParseAsset(j) {
+    var hrefs = (j && j.collection && Array.isArray(j.collection.items) ? j.collection.items : [])
+      .map(function (x) { return https(x && x.href); }).filter(Boolean);
+    var url = "";
+    NA_SIZES.some(function (sz) {
+      var re = new RegExp("~" + sz + "\\.mp4$", "i");
+      return hrefs.some(function (h) { if (re.test(h)) { url = h; return true; } return false; });
+    });
+    if (!url) hrefs.some(function (h) { if (/\.mp4$/i.test(h)) { url = h; return true; } return false; });
+    if (!url) return null;
+    var subs = hrefs.filter(function (h) { return /\.(srt|vtt)$/i.test(h); }).slice(0, 4).map(function (h) {
+      return { l: "en", url: h, srt: /\.srt$/i.test(h) ? 1 : 0 };
+    });
+    return { url: url, subs: subs };
+  }
+
+  // eu  Europeana (each user's own free key, shared with Music, lb.js
+  //     secret "europeana"): videos with an open licence (reusability
+  //     = open: public domain, CC0, BY, BY-SA) whose file a browser can
+  //     play (MIME video/mp4 or video/ogg, given as two qf: Europeana
+  //     ORs the same field). oi = the Netherlands Institute for Sound &
+  //     Vision (Open Images) from the same API, shown as its own source;
+  //     eu leaves that provider out so nothing shows twice.
+  var OI_PROVIDER = "Netherlands Institute for Sound & Vision";
+  var EU_COUNTRY = {
+    at: "Austria", be: "Belgium", bg: "Bulgaria", hr: "Croatia", cy: "Cyprus", cz: "Czech Republic", dk: "Denmark",
+    ee: "Estonia", fi: "Finland", fr: "France", de: "Germany", gr: "Greece", hu: "Hungary", ie: "Ireland", it: "Italy",
+    lv: "Latvia", lt: "Lithuania", lu: "Luxembourg", mt: "Malta", nl: "Netherlands", pl: "Poland", pt: "Portugal",
+    ro: "Romania", sk: "Slovakia", si: "Slovenia", es: "Spain", se: "Sweden", gb: "United Kingdom", no: "Norway",
+    ch: "Switzerland", rs: "Serbia", ua: "Ukraine", is: "Iceland", me: "Montenegro", mk: "North Macedonia", al: "Albania"
+  };
+  var EU_COUNTRY_BACK = {};
+  Object.keys(EU_COUNTRY).forEach(function (c) { EU_COUNTRY_BACK[EU_COUNTRY[c].toLowerCase()] = c; });
+  function euKeyOk(k) { return typeof k === "string" && /^[A-Za-z0-9]{4,40}$/.test(k.trim()); }
+  function euWords(q) { return str(q).replace(/[\\+\-!(){}[\]^"~*?:/&|<>=]/g, " ").replace(/\s+/g, " ").trim().slice(0, 120); }
+  function euSearchUrl(o) {
+    o = o || {};
+    var f = normFilter(o.f), oi = o.src === "oi";
+    var w = euWords(o.q) || "*";
+    var query = oi ? w : w + " NOT DATA_PROVIDER:\"" + OI_PROVIDER + "\"";
+    var p = "wskey=" + encodeURIComponent(str(o.key).trim()) + "&query=" + encodeURIComponent(query) +
+      "&qf=" + encodeURIComponent("TYPE:VIDEO") + "&qf=" + encodeURIComponent("MIME_TYPE:video/mp4") + "&qf=" + encodeURIComponent("MIME_TYPE:video/ogg") +
+      "&reusability=open&media=true&profile=rich&rows=" + PAGE + "&start=" + ((Math.max(1, Math.floor(+o.page || 1)) - 1) * PAGE + 1);
+    if (oi) p += "&qf=" + encodeURIComponent("DATA_PROVIDER:\"" + OI_PROVIDER + "\"");
+    if (f.c && EU_COUNTRY[f.c]) p += "&qf=" + encodeURIComponent("COUNTRY:\"" + EU_COUNTRY[f.c] + "\"");
+    if (f.l) p += "&qf=" + encodeURIComponent("LANGUAGE:" + f.l);
+    if (f.dec) p += "&qf=" + encodeURIComponent("YEAR:[" + f.dec + " TO " + (f.dec + 9) + "]");
+    if (f.sort === "new" || f.sort === "old") p += "&sort=" + encodeURIComponent("YEAR " + (f.sort === "new" ? "desc" : "asc"));
+    return "https://api.europeana.eu/record/v2/search.json?" + p;
+  }
+  // Licence names the app shows for the rights statements reusability=open returns.
+  function euLic(u) {
+    u = str(u);
+    if (/publicdomain\/mark/.test(u)) return "Public domain";
+    if (/publicdomain\/zero/.test(u)) return "CC0";
+    var m = /licenses\/(by(?:-sa)?)\/(\d\.\d)/.exec(u);
+    return m ? "CC " + m[1].toUpperCase() + " " + m[2] : "";
+  }
+  function euId(id) { return typeof id === "string" && /^\/[A-Za-z0-9_\/.-]{3,190}$/.test(id) ? id : ""; }
+  function euItem(x, src) {
+    if (!x) return null;
+    var id = euId(x.id);
+    var u = https(str(x.edmIsShownBy).replace(/^http:\/\//i, "https://"));
+    if (!id || !u || !/\.(mp4|m4v|ogv|ogg|webm)(\?|$)/i.test(u)) return null;
+    var lic = "";
+    arr(x.rights).some(function (r) { lic = euLic(r); return !!lic; });
+    if (!lic) return null;
+    var c = EU_COUNTRY_BACK[str(x.country).toLowerCase()];
+    var langs = arr(x.language).map(str).filter(function (l) { return /^[a-z]{2,3}$/.test(l); });
+    var prev = https(x.edmPreview);
+    return item({
+      k: src + ":" + id, t: clip(x.title, 200) || id, y: year(x.year), ty: "news",
+      c: c ? [c] : [], l: langs, im: /^https:\/\/api\.europeana\.eu\/thumbnail\//.test(prev) ? prev : "",
+      u: u, lic: lic, ok: 1, why: "open", by: clip(x.dataProvider, 120), dir: clip(x.dcCreator, 160),
+      ds: clip(x.dcDescription, 600), pg: "https://www.europeana.eu/item" + id, sl: 0
+    });
+  }
+  function euParseSearch(j, o) {
+    if (!j || j.success === false) return { error: /key/i.test(str(j && j.error)) ? "key" : "http", items: [], more: false };
+    var src = o && o.src === "oi" ? "oi" : "eu";
+    var list = Array.isArray(j.items) ? j.items : [];
+    var items = list.map(function (x) { return euItem(x, src); }).filter(Boolean);
+    var total = typeof j.totalResults === "number" ? j.totalResults : items.length;
+    var page = Math.max(1, Math.floor(+(o && o.page) || 1));
+    return { items: items, total: total, more: list.length >= PAGE && page * PAGE < Math.min(total, 1000) };
+  }
+  // A title from Continue watching / Watchlist: its record gives the file again.
+  function euRecordUrl(id, key) { return "https://api.europeana.eu/record/v2" + euId(id) + ".json?wskey=" + encodeURIComponent(str(key).trim()); }
+  function euParseRecord(j) {
+    var a = j && j.object && Array.isArray(j.object.aggregations) ? j.object.aggregations[0] : null;
+    var u = a ? https(str(a.edmIsShownBy).replace(/^http:\/\//i, "https://")) : "";
+    return u && /\.(mp4|m4v|ogv|ogg|webm)(\?|$)/i.test(u) ? { url: u } : null;
+  }
+
+  // pt  PeerTube, searched through Sepia Search (Framasoft's index of
+  //     public instances): only videos with a Creative Commons licence
+  //     or a public-domain dedication (ids 1–7), no lives, no NSFW. As
+  //     with the Internet Archive, a licence is the uploader's word, so
+  //     only instances that publish their own work count as checked
+  //     (PT_OWN); the rest show behind the same switch, marked.
+  var PT_LIC = [1, 2, 3, 4, 5, 6, 7];
+  var PT_OWN = { "video.blender.org": 1, "framatube.org": 1 };
+  var PT_CAT = { film: 2, news: 11, comedy: 9 };
+  function ptHost(h) { return typeof h === "string" && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(h) && h.length <= 100 ? h : ""; }
+  function ptUuid(u) { return typeof u === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(u) ? u : ""; }
+  function ptSearchUrl(o) {
+    o = o || {};
+    var f = normFilter(o.f), page = Math.max(1, Math.floor(+o.page || 1));
+    var p = "count=" + PAGE + "&start=" + (page - 1) * PAGE + "&nsfw=false&isLive=false";
+    PT_LIC.forEach(function (n) { p += "&licenceOneOf=" + n; });
+    var q = clip(o.q, 120);
+    if (q) p += "&search=" + encodeURIComponent(q);
+    if (f.l) p += "&languageOneOf=" + encodeURIComponent(f.l);
+    if (f.len === "short") p += "&durationMax=2399";
+    if (f.len === "long") p += "&durationMin=2400";
+    var cat = f.g === "comedy" ? PT_CAT.comedy : f.ty === "news" ? PT_CAT.news : f.ty === "film" ? PT_CAT.film : 0;
+    if (cat) p += "&categoryOneOf=" + cat;
+    p += "&sort=" + (f.sort === "new" ? "-publishedAt" : f.sort === "old" ? "publishedAt" : q ? "-match" : "-views");
+    return "https://sepiasearch.org/api/v1/search/videos?" + p;
+  }
+  var PT_DOC = { 6: 1, 13: 1, 14: 1, 15: 1, 16: 1 };
+  function ptItem(x) {
+    if (!x || x.isLive || x.nsfw) return null;
+    var host = ptHost(x.account && x.account.host) || ptHost(str(x.url).replace(/^https:\/\/([^/]+)\/.*$/, "$1"));
+    var uuid = ptUuid(x.uuid);
+    var lic = x.licence && PT_LIC.indexOf(+x.licence.id) >= 0 ? clip(x.licence.label, 80) : "";
+    if (!host || !uuid || !lic) return null;
+    var cat = x.category ? +x.category.id : 0;
+    var d = +x.duration > 0 ? Math.max(1, Math.round(+x.duration / 60)) : 0;
+    var ty = cat === 11 ? "news" : PT_DOC[cat] ? "doc" : d > 0 && d < 40 ? "short" : "film";
+    var own = !!PT_OWN[host];
+    var im = https(x.thumbnailUrl || x.previewUrl);
+    return item({
+      k: "pt:" + host + "/" + uuid, t: clip(x.name, 200) || uuid, y: year(x.originallyPublishedAt || x.publishedAt), d: d, ty: ty,
+      l: x.language && /^[a-z]{2,3}$/.test(str(x.language.id)) ? [x.language.id] : [],
+      im: im, lic: lic, ok: own ? 1 : 0, why: own ? "pt" : "listed", by: clip((x.channel && x.channel.displayName) || (x.account && x.account.displayName), 120),
+      ds: clip(stripHtml(x.description), 600), pg: https(x.url) || "https://" + host + "/w/" + uuid,
+      sl: Math.max(0, Math.floor(+x.views || 0))
+    });
+  }
+  function ptParseSearch(j, o) {
+    o = o || {};
+    var f = normFilter(o.f);
+    var list = j && Array.isArray(j.data) ? j.data : [];
+    var items = list.map(ptItem).filter(function (it) { return it && (f.all || it.ok) && lenOk(it, f.len); });
+    var total = j && typeof j.total === "number" ? j.total : items.length;
+    var page = Math.max(1, Math.floor(+o.page || 1));
+    return { items: items, total: total, more: list.length >= PAGE && page * PAGE < Math.min(total, 1000) };
+  }
+  function ptSplit(k) {
+    var m = /^pt:([^/]+)\/(.+)$/.exec(str(k));
+    return m && ptHost(m[1]) && ptUuid(m[2]) ? { host: m[1], uuid: m[2] } : null;
+  }
+  function ptVideoUrl(k) { var p = ptSplit(k); return p ? "https://" + p.host + "/api/v1/videos/" + p.uuid : ""; }
+  function ptCaptionsUrl(k) { var p = ptSplit(k); return p ? "https://" + p.host + "/api/v1/videos/" + p.uuid + "/captions" : ""; }
+  // -> { url, hls? } | null: a web-video file closest to 720 lines that
+  // this browser plays, else the HLS playlist (Television's hls.js).
+  function ptParseVideo(j, k, canPlay) {
+    var p = ptSplit(k);
+    if (!p || !j || typeof j !== "object") return null;
+    var can = typeof canPlay === "function" ? canPlay : function () { return "maybe"; };
+    var host = "https://" + p.host + "/";
+    var files = (Array.isArray(j.files) ? j.files : []).map(function (f) {
+      var u = https(f && (f.fileUrl || f.fileDownloadUrl));
+      return u && u.indexOf(host) === 0 ? { url: u, h: f.resolution ? +f.resolution.id || 0 : 0 } : null;
+    }).filter(function (f) { return f && f.h > 0 && can("video/mp4"); });
+    if (files.length) {
+      files.sort(function (a, b) { return Math.abs(720 - a.h) - Math.abs(720 - b.h) || a.h - b.h; });
+      return { url: files[0].url };
+    }
+    var hls = "";
+    (Array.isArray(j.streamingPlaylists) ? j.streamingPlaylists : []).some(function (pl) {
+      var u = https(pl && pl.playlistUrl);
+      if (u && u.indexOf(host) === 0 && /\.m3u8(\?|$)/.test(u)) { hls = u; return true; }
+      return false;
+    });
+    return hls ? { url: hls, hls: 1 } : null;
+  }
+  function ptParseCaptions(j, k) {
+    var p = ptSplit(k);
+    if (!p) return [];
+    return (j && Array.isArray(j.data) ? j.data : []).map(function (c) {
+      var path = str(c && (c.captionPath || c.fileUrl));
+      var url = /^https:\/\//.test(path) ? https(path) : /^\/[A-Za-z0-9_\/.-]+\.vtt$/.test(path) ? "https://" + p.host + path : "";
+      var l = c && c.language ? str(c.language.id) : "";
+      return url && /^[a-z]{2,3}(-[A-Za-z]{2,4})?$/.test(l) ? { l: l, url: url, label: clip(c.language.label, 40) } : null;
+    }).filter(Boolean).slice(0, 30);
+  }
+
+  // ---------- 9. Subtitles (TV-VOD2) ----------
+  // Commons keeps them as TimedText pages ("File.webm.<lang>.srt"); the
+  // timedtext API returns any of them as WebVTT with CORS. The Internet
+  // Archive and NASA keep .srt / .vtt files next to the video
+  // (converted here); PeerTube gives WebVTT. Shown as text cues only.
+  function commonsSubsUrl(file) {
+    return "https://commons.wikimedia.org/w/api.php?" + qs({
+      action: "query", format: "json", formatversion: "2", origin: "*", list: "allpages",
+      apnamespace: "102", apprefix: str(file).replace(/ /g, "_"), aplimit: "60"
+    });
+  }
+  function commonsParseSubs(j, file) {
+    var pages = j && j.query && Array.isArray(j.query.allpages) ? j.query.allpages : [];
+    var pre = "TimedText:" + str(file).replace(/_/g, " ") + ".", seen = {};
+    return pages.map(function (p) {
+      var t = str(p && p.title).replace(/_/g, " ");
+      if (t.indexOf(pre) !== 0) return null;
+      var m = /^([a-z]{2,3}(-[a-z]{2,4})?)\.srt$/i.exec(t.slice(pre.length));
+      if (!m || seen[m[1].toLowerCase()]) return null;
+      seen[m[1].toLowerCase()] = 1;
+      return { l: m[1].toLowerCase(), url: "https://commons.wikimedia.org/w/api.php?" + qs({
+        action: "timedtext", title: "File:" + str(file), lang: m[1].toLowerCase(), trackformat: "vtt", origin: "*" }) };
+    }).filter(Boolean);
+  }
+  // SubRip -> WebVTT (times "00:01:02,345" -> "00:01:02.345", cue numbers kept).
+  function srtToVtt(text) {
+    var t = str(text).replace(/^\uFEFF/, "").replace(/\r\n?/g, "\n");
+    if (/^WEBVTT/.test(t)) return t;
+    return "WEBVTT\n\n" + t.replace(/(\d{1,2}:\d{2}:\d{2}),(\d{3})/g, "$1.$2").trim() + "\n";
+  }
+  // Language of an Internet Archive subtitle file: "film.el.srt",
+  // "film_greek.srt"; "" when it does not say. ".asr." = made by speech
+  // recognition (auto: 1).
+  var SUB_NAMES = { english: "en", greek: "el", german: "de", french: "fr", spanish: "es", italian: "it", portuguese: "pt", russian: "ru", dutch: "nl" };
+  function subLang(name) {
+    var n = str(name).toLowerCase().replace(/\.(srt|vtt)$/, "");
+    var m = /[._-]([a-z]{2,3})(-[a-z]{2,4})?$/.exec(n);
+    if (m && (IA_LANG[m[1]] || /^(en|el|de|fr|es|it|pt|ru|nl|sv|da|pl|ja|zh|ko|ar|tr|fi|no|cs|hu|ro)$/.test(m[1])) && m[1] !== "asr") return m[1];
+    var w = /([a-z]+)$/.exec(n);
+    return w && SUB_NAMES[w[1]] ? SUB_NAMES[w[1]] : "";
+  }
+
   var api = {
     PAGE: PAGE, TYPES: TYPES, GENRES: GENRE_IDS, SORTS: SORTS, IA_LANG: IA_LANG, WD_QUERIES: WD_QUERIES,
     ageLimit: ageLimit, minutes: minutes, fold: fold, normFilter: normFilter, filterSupport: filterSupport,
     iaSearchUrl: iaSearchUrl, iaParseSearch: iaParseSearch, iaItem: iaItem, iaMetaUrl: iaMetaUrl, iaParseMeta: iaParseMeta,
     wdQueryUrl: wdQueryUrl, parseTsv: parseTsv, wdBuild: wdBuild, wdFilter: wdFilter, titleIn: titleIn, filePath: filePath,
     commonsInfoUrl: commonsInfoUrl, commonsPick: commonsPick, stripHtml: stripHtml,
+    SOURCES: SOURCES, filterMissing: filterMissing,
+    naSearchUrl: naSearchUrl, naParseSearch: naParseSearch, naAssetUrl: naAssetUrl, naParseAsset: naParseAsset,
+    euKeyOk: euKeyOk, euSearchUrl: euSearchUrl, euParseSearch: euParseSearch, euRecordUrl: euRecordUrl, euParseRecord: euParseRecord, euLic: euLic,
+    EU_COUNTRY: EU_COUNTRY,
+    ptSearchUrl: ptSearchUrl, ptParseSearch: ptParseSearch, ptVideoUrl: ptVideoUrl, ptCaptionsUrl: ptCaptionsUrl,
+    ptParseVideo: ptParseVideo, ptParseCaptions: ptParseCaptions,
+    commonsSubsUrl: commonsSubsUrl, commonsParseSubs: commonsParseSubs, srtToVtt: srtToVtt, subLang: subLang,
+    savedList: savedList, saveSearch: saveSearch, dropSearch: dropSearch,
     item: item, normVod: normVod, mergeVod: mergeVod, watchOn: watchOn, setWatch: setWatch,
     resumeOf: resumeOf, setResume: setResume, dropResume: dropResume, continueList: continueList, watchList: watchList
   };
