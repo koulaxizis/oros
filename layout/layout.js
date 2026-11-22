@@ -484,6 +484,7 @@
       "toast.fontFail": "The fonts could not be loaded.", "toast.maxItems": "A document can have at most {n} objects.",
       "toast.flowDone": "Text placed on {n} new pages.", "toast.flowMax": "Stopped after {n} pages: the text still overflows.",
       "toast.copied": "Copied", "ed.paste": "Paste",
+      "cb.title": "Selection tools", "cb.more": "More", "ruler.unit": "Rulers and sizes now in {u}.", "more.history": "History…", "more.keys": "Shortcuts and comfort…", "hist.title": "History", "hist.none": "No changes to go back to yet.", "hist.start": "When the history starts", "hist.now": "now", "hist.hint": "Click a step to go back to it, or forward again. A new change after going back drops the steps ahead.", "hist.add": "Add an object", "hist.addN": "Add {n} objects", "hist.del": "Delete an object", "hist.delN": "Delete {n} objects", "hist.move": "Move", "hist.moveN": "Move {n} objects", "hist.resize": "Resize", "hist.resizeN": "Resize {n} objects", "hist.rotate": "Rotate", "hist.rotateN": "Rotate {n} objects", "hist.change": "Change an object", "hist.changeN": "Change {n} objects", "hist.text": "Edit text", "hist.style": "Change styles", "hist.styleN": "Style “{name}”", "hist.colour": "Change colours", "hist.pages": "Change pages", "hist.master": "Change a master", "hist.setup": "Document setup", "hist.guide": "Guides", "hist.edit": "Several changes", "keys.title": "Shortcuts and comfort", "keys.press": "Press the keys…", "keys.none": "none", "keys.change": "Click to change", "keys.default": "Default", "keys.clear": "No shortcut", "keys.reserved": "{k} is kept for typing, copying or orOS itself.", "keys.clash": "{k} was the shortcut of “{a}”, which now has none.", "keys.hint": "Click a shortcut and press the new keys (Esc keeps the old one). Letters are the keys' places, so they work with a Greek keyboard too. Saved on this device.", "keys.comfort": "Comfort", "keys.nudge": "Arrow keys move by ({u})", "keys.nudgeHint": "Shift moves ten times as far, Alt a tenth as far. Click the corner of the rulers to change mm, pt or in.", "keys.smart": "Smart guides: snap to equal gaps", "keys.measure": "Show sizes and places while dragging", "keys.ctxbar": "Toolbar over the selection", "keys.resetAll": "All shortcuts back to default", "ka.tool.select": "Select", "ka.tool.text": "Text frame", "ka.tool.image": "Image frame", "ka.tool.rect": "Rectangle", "ka.tool.ell": "Ellipse", "ka.tool.line": "Line", "ka.tool.pen": "Pen", "ka.tool.hand": "Hand", "ka.preview": "Preview", "ka.undo": "Undo", "ka.redo": "Redo", "ka.dup": "Duplicate", "ka.selall": "Select all on this page", "ka.group": "Group", "ka.ungroup": "Ungroup", "ka.export": "Export", "ka.fit": "Fit page", "ka.zoom100": "Zoom 100 %", "ka.front": "Bring to front", "ka.back": "Send to back", "ka.fwd": "Bring forward", "ka.bwd": "Send backward", "ka.lock": "Lock position", "ka.history": "History", "ka.story": "Story Editor", "ka.keys": "Shortcuts and comfort",
       "dlg.rename": "Rename", "dlg.delDoc": "Delete this document?", "dlg.delDocSub": "You can undo right after.",
       "home.recipes": "Automations",
       "more.recipes": "Automations…",
@@ -1183,6 +1184,7 @@
       "toast.fontFail": "Οι γραμματοσειρές δεν φόρτωσαν.", "toast.maxItems": "Ένα έγγραφο έχει το πολύ {n} αντικείμενα.",
       "toast.flowDone": "Το κείμενο μπήκε σε {n} νέες σελίδες.", "toast.flowMax": "Σταμάτησα στις {n} σελίδες: το κείμενο ακόμα περισσεύει.",
       "toast.copied": "Αντιγράφηκε", "ed.paste": "Επικόλληση",
+      "cb.title": "Εργαλεία επιλογής", "cb.more": "Περισσότερα", "ruler.unit": "Χάρακες και μεγέθη τώρα σε {u}.", "more.history": "Ιστορικό…", "more.keys": "Συντομεύσεις και άνεση…", "hist.title": "Ιστορικό", "hist.none": "Δεν υπάρχουν ακόμη αλλαγές για επιστροφή.", "hist.start": "Αρχή του ιστορικού", "hist.now": "τώρα", "hist.hint": "Πάτα ένα βήμα για να γυρίσεις σε αυτό, ή ξανά μπροστά. Μια νέα αλλαγή αφού γυρίσεις πίσω σβήνει τα βήματα που ήταν μπροστά.", "hist.add": "Προσθήκη αντικειμένου", "hist.addN": "Προσθήκη {n} αντικειμένων", "hist.del": "Διαγραφή αντικειμένου", "hist.delN": "Διαγραφή {n} αντικειμένων", "hist.move": "Μετακίνηση", "hist.moveN": "Μετακίνηση {n} αντικειμένων", "hist.resize": "Αλλαγή μεγέθους", "hist.resizeN": "Αλλαγή μεγέθους {n} αντικειμένων", "hist.rotate": "Περιστροφή", "hist.rotateN": "Περιστροφή {n} αντικειμένων", "hist.change": "Αλλαγή αντικειμένου", "hist.changeN": "Αλλαγή {n} αντικειμένων", "hist.text": "Επεξεργασία κειμένου", "hist.style": "Αλλαγή στυλ", "hist.styleN": "Στυλ «{name}»", "hist.colour": "Αλλαγή χρωμάτων", "hist.pages": "Αλλαγή σελίδων", "hist.master": "Αλλαγή master", "hist.setup": "Ρυθμίσεις εγγράφου", "hist.guide": "Οδηγοί", "hist.edit": "Πολλές αλλαγές", "keys.title": "Συντομεύσεις και άνεση", "keys.press": "Πάτα τα πλήκτρα…", "keys.none": "καμία", "keys.change": "Πάτα για αλλαγή", "keys.default": "Αρχική", "keys.clear": "Χωρίς συντόμευση", "keys.reserved": "Το {k} μένει για πληκτρολόγηση, αντιγραφή ή για το ίδιο το orOS.", "keys.clash": "Το {k} ήταν η συντόμευση του «{a}», που τώρα δεν έχει καμία.", "keys.hint": "Πάτα μια συντόμευση και μετά τα νέα πλήκτρα (το Esc κρατά την παλιά). Τα γράμματα είναι οι θέσεις των πλήκτρων, άρα δουλεύουν και με ελληνικό πληκτρολόγιο. Αποθηκεύονται σε αυτή τη συσκευή.", "keys.comfort": "Άνεση", "keys.nudge": "Τα βελάκια μετακινούν κατά ({u})", "keys.nudgeHint": "Με Shift δέκα φορές πιο μακριά, με Alt το ένα δέκατο. Πάτα τη γωνία των χαράκων για mm, pt ή in.", "keys.smart": "Έξυπνοι οδηγοί: έλξη σε ίσες αποστάσεις", "keys.measure": "Μεγέθη και θέσεις την ώρα που σέρνεις", "keys.ctxbar": "Γραμμή εργαλείων πάνω από την επιλογή", "keys.resetAll": "Όλες οι συντομεύσεις στις αρχικές", "ka.tool.select": "Επιλογή", "ka.tool.text": "Πλαίσιο κειμένου", "ka.tool.image": "Πλαίσιο εικόνας", "ka.tool.rect": "Ορθογώνιο", "ka.tool.ell": "Έλλειψη", "ka.tool.line": "Γραμμή", "ka.tool.pen": "Πένα", "ka.tool.hand": "Χέρι", "ka.preview": "Προεπισκόπηση", "ka.undo": "Αναίρεση", "ka.redo": "Επανάληψη", "ka.dup": "Διπλασιασμός", "ka.selall": "Επιλογή όλων στη σελίδα", "ka.group": "Ομαδοποίηση", "ka.ungroup": "Κατάργηση ομάδας", "ka.export": "Εξαγωγή", "ka.fit": "Προσαρμογή σελίδας", "ka.zoom100": "Ζουμ 100 %", "ka.front": "Μπροστά απ' όλα", "ka.back": "Πίσω απ' όλα", "ka.fwd": "Ένα μπροστά", "ka.bwd": "Ένα πίσω", "ka.lock": "Κλείδωμα θέσης", "ka.history": "Ιστορικό", "ka.story": "Επεξεργαστής κειμένου", "ka.keys": "Συντομεύσεις και άνεση",
       "dlg.rename": "Μετονομασία", "dlg.delDoc": "Διαγραφή αυτού του εγγράφου;", "dlg.delDocSub": "Μπορείς να το αναιρέσεις αμέσως μετά.",
       "home.recipes": "Αυτοματισμοί",
       "more.recipes": "Αυτοματισμοί…",
@@ -1628,6 +1630,15 @@
       Object.keys(p.hints).slice(0, 40).forEach(function (k) { if (/^[a-z]{1,20}$/.test(k) && p.hints[k] === 1) hs[k] = 1; });
       LY.prefs.hints = hs;
     }
+    // working comfort (LY-N2, smart.js / comfort.js): changed shortcuts,
+    // the arrow-key step, and 0 = off for smart guides, measurements, the toolbar
+    if (p.keys && typeof p.keys === "object" && window.LY_SMART) {
+      var ks = window.LY_SMART.normKeys(p.keys);
+      if (Object.keys(ks).length) LY.prefs.keys = ks;
+    }
+    var nv = Number(p.nudge);
+    if (p.nudge !== undefined && isFinite(nv) && nv > 0 && nv <= 100) LY.prefs.nudge = nv;
+    ["smart", "measure", "ctxbar"].forEach(function (k) { if (p[k] === 0) LY.prefs[k] = 0; });
   }
   function savePrefs() {
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(LY.prefs)); } catch (e) {}
@@ -1823,8 +1834,11 @@
   };
   LY.inGesture = function () { return !!gesture; };
 
+  // Undo steps are { s: the document before the change (JSON), at: when
+  // it changed }; the named history (LY-N2) reads them, naming each step
+  // only when it is shown (smart.js describe).
   function pushUndo(snap) {
-    undoStack.push(snap);
+    undoStack.push({ s: snap, at: Date.now() });
     if (undoStack.length > UNDO_MAX) undoStack.shift();
     redoStack = [];
   }
@@ -1870,21 +1884,55 @@
   // stamps aside (a story's h is its stamp history; an item's h is its height)
   function withoutM(e, c) { var o = {}; Object.keys(e).forEach(function (k) { if (k !== "m" && !(k === "h" && c === "stories")) o[k] = e[k]; }); return o; }
 
-  LY.undo = function () {
-    if (!LY.doc || !undoStack.length) return;
+  // back = how many steps (1 = one undo); the steps in between move to
+  // the redo stack in order, so Redo walks them again.
+  function undoSteps(back) {
+    if (!LY.doc || !undoStack.length || back < 1) return;
+    back = Math.min(back, undoStack.length);
     LY.flushStory && LY.flushStory();
-    var snap = undoStack.pop();
-    redoStack.push(JSON.stringify(LY.doc));
-    replaceDoc(applyState(JSON.parse(snap)));
+    var e = null, next = JSON.stringify(LY.doc);
+    for (var i = 0; i < back; i++) {
+      e = undoStack.pop();
+      redoStack.push({ s: next, at: e.at });
+      next = e.s;
+    }
+    replaceDoc(applyState(JSON.parse(e.s)));
     commit();
-  };
-  LY.redo = function () {
-    if (!LY.doc || !redoStack.length) return;
-    var snap = redoStack.pop();
-    undoStack.push(JSON.stringify(LY.doc));
-    replaceDoc(applyState(JSON.parse(snap)));
+  }
+  function redoSteps(fwd) {
+    if (!LY.doc || !redoStack.length || fwd < 1) return;
+    fwd = Math.min(fwd, redoStack.length);
+    var e = null, prev = JSON.stringify(LY.doc);
+    for (var i = 0; i < fwd; i++) {
+      e = redoStack.pop();
+      undoStack.push({ s: prev, at: e.at });
+      prev = e.s;
+    }
+    replaceDoc(applyState(JSON.parse(e.s)));
     commit();
+  }
+  LY.undo = function () { undoSteps(1); };
+  LY.redo = function () { redoSteps(1); };
+  // The named history: the states the undo steps lead through, oldest
+  // first, at most `max` (default 40) before now and every one after:
+  // [{ i (0 = now, -n = n steps back, +n = n steps forward), at, d: { k, n, name } }]
+  LY.history = function (max) {
+    if (!LY.doc) return [];
+    max = max || 40;
+    var states = [], from = Math.max(0, undoStack.length - max);
+    for (var a = from; a < undoStack.length; a++) states.push({ s: undoStack[a].s, at: undoStack[a].at, i: a - undoStack.length });
+    states.push({ s: null, i: 0 });
+    for (var b = redoStack.length - 1; b >= 0; b--) states.push({ s: redoStack[b].s, at: redoStack[b].at, i: redoStack.length - b });
+    var S = window.LY_SMART, parsed = states.map(function (st) { try { return st.s ? JSON.parse(st.s) : LY.doc; } catch (e) { return null; } });
+    var out = [];
+    states.forEach(function (st, k) {
+      if (!k) { if (from === 0) out.push({ i: st.i, start: true }); return; }
+      // the step from the state before to this one; it happened at the earlier state's time
+      out.push({ i: st.i, at: st.i > 0 ? st.at : states[k - 1].at, d: S ? S.describe(parsed[k - 1], parsed[k]) : { k: "edit", n: 0 } });
+    });
+    return out;
   };
+  LY.historyGo = function (i) { if (i < 0) undoSteps(-i); else if (i > 0) redoSteps(i); };
   // Data-level edits of any stored document (automations, recipes.js).
   // putDoc: an edited copy replaces a document that is not open.
   // restoreDoc: a document goes back to a snapshot with fresh stamps

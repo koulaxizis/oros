@@ -3,6 +3,8 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.39.00
+- **Layout: easier to work in.** Objects snap to equal gaps while you drag, with the gap shown; sizes and places show as you go; a small toolbar sits over what you select; History… lists every change by name and takes you back to any of them; and in Shortcuts and comfort… you can change any shortcut (they also work with a Greek keyboard) and how far the arrow keys move.
 ## Version 8.38.00
 - **Funkwhale in Music.** Search and genres now also bring songs from open.audio, the public pod of the open Funkwhale network. Only songs whose uploader chose a Creative Commons licence or CC0 are shown. `Connect a server` gets an `open.audio` button for your own library there.
 - **Your choice of source stays.** Picking Free Music Archive, Kevin MacLeod, Musopen, National Jukebox, DPLA or Funkwhale in search, or turning them off in `Sources`, is now remembered.
