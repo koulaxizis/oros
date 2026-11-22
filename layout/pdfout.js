@@ -30,7 +30,7 @@
     MARKS.forEach(function (k) { if (src[k]) { mk[k] = true; any = true; } });
     return { doc: clean(rq.doc, 200), preset: preset, pages: pages === "all" ? "" : pages, bleed: !!rq.bleed,
              marks: any ? mk : null, spreads: !!rq.spreads, down: rq.down !== 0,
-             creep: Math.max(0, Math.min(5, Number(rq.creep) || 0)),
+             creep: Math.max(0, Math.min(5, Number(rq.creep) || 0)), tagged: !!rq.tagged,
              out: (Array.isArray(rq.out) ? rq.out : typeof rq.out === "string" ? [rq.out] : []).filter(function (o) { return typeof o === "string" && o.trim() && o.length <= 1030; }).slice(0, 2) };
   }
   // the document by name: the same name first, else a part of it; the
@@ -121,7 +121,7 @@
     var stat = {}, print = q.preset !== "screen";
     var opts = { pages: ids, layout: L, spreads: !!(q.spreads && doc.setup.facing), bleed: print && q.bleed, marks: print ? q.marks : null,
                  ppi: !q.down ? 2400 : q.preset === "screen" ? 150 : 300, rgb: q.preset === "screen", imgStat: stat,
-                 creep: print && q.creep ? q.creep * 72 / 25.4 : 0 };
+                 creep: print && q.creep ? q.creep * 72 / 25.4 : 0, tagged: !!q.tagged };
     // the screen PDF: web and e-mail addresses are links (Chris 2026-11-18)
     if (!print && window.LY_OUT && window.LY_OUT.urlLinks) opts.links = window.LY_OUT.urlLinks(doc, L);
     var fontP = LY.T && LY.T.load ? Promise.resolve(LY.T.load(["sans-r"])).then(null, function () {}) : Promise.resolve();
@@ -130,11 +130,16 @@
       return LY.io.pdfDoc(doc, opts).then(function (pdf) { return { pdf: pdf, libs: r[1] }; });
     }).then(function (o) {
       var boxes = (o.pdf.orosBoxes || []).slice(), n = o.pdf.getNumberOfPages();
-      var bytes = new Uint8Array(o.pdf.output("arraybuffer"));
       var base = { boxes: boxes, n: n, stat: stat, L: L };
+      // tagged (LY-N6): the structure first, PDF/X keeps it
+      var tg = q.tagged && o.pdf.orosTag ? LY.io.tagBytes(o.pdf, doc, opts) : Promise.resolve({ bytes: new Uint8Array(o.pdf.output("arraybuffer")) });
+      return tg.then(function (tb) {
+      if (tb.elems !== undefined) base.tagged = { elems: tb.elems, figures: tb.figures, links: tb.links };
+      var bytes = tb.bytes;
       if (!o.libs) return Object.assign(base, { bytes: bytes, fx: [] });
       return o.libs[1].make(o.libs[0], bytes, { icc: o.libs[2].icc, srgb: o.libs[2].srgb, title: doc.name || LY.docTitle(doc) })
         .then(function (x) { return Object.assign(base, { bytes: x.bytes, fx: x.problems, intent: x.intent, pdfx: "PDF/X-4" }); });
+      });
     });
   }
   function save(doc, q, bytes) {
@@ -182,6 +187,7 @@
                       trim: b0 ? boxMm(b0.trim) : null, bleedBox: b0 ? boxMm(b0.bleed) : null, problems: pf.slice(0, 80), down: res.stat.down || 0 };
           if (res.intent) rep.intent = res.intent;
           if (res.pdfx) rep.pdfx = res.pdfx;
+          if (res.tagged) rep.tagged = res.tagged;
           if (!path) rep.why = "noDisk";
           if (loc.saved.length) rep.saved = loc.saved;
           if (loc.outFail.length) rep.outFail = loc.outFail;

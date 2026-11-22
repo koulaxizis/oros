@@ -3773,13 +3773,13 @@
     if (!installed().layout) return { content: "Error: Layout is not installed.", err: 1, ui: { k: "pdfErr" } };
     var e = C.normPdf(args);
     if (!e.ok) return { content: "Error: " + e.err, err: 1, ui: { k: "pdfErr" } };
-    var ui = { k: "pdf", doc: e.doc, preset: e.preset, pages: e.pages, bleed: e.bleed, marks: e.marks, spreads: e.spreads, down: e.down, creep: e.creep || 0, out: e.out || [], key: attId(), st: "" };
+    var ui = { k: "pdf", doc: e.doc, preset: e.preset, pages: e.pages, bleed: e.bleed, marks: e.marks, spreads: e.spreads, down: e.down, creep: e.creep || 0, tagged: e.tagged ? 1 : 0, out: e.out || [], key: attId(), st: "" };
     return { content: "Shown to the user as a card: making a " + e.preset + " PDF of \u201c" + e.doc + "\u201d. Layout does it on the device when they press the button; nothing is made yet. The report will be added here when Layout is done.", ui: ui };
   }
   function runPdf(ui, c) {
     var p = shell();
     if (!p || typeof p.__orosOpenAt !== "function") return false;
-    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", preset: ui.preset, pages: ui.pages || "", bleed: ui.bleed ? 1 : 0, marks: ui.marks || {}, spreads: ui.spreads ? 1 : 0, down: ui.down ? 1 : 0, creep: Number(ui.creep) || 0, out: outList(ui.out) };
+    var rq = { key: ui.key, chat: c.id, doc: ui.doc || "", preset: ui.preset, pages: ui.pages || "", bleed: ui.bleed ? 1 : 0, marks: ui.marks || {}, spreads: ui.spreads ? 1 : 0, down: ui.down ? 1 : 0, creep: Number(ui.creep) || 0, tagged: ui.tagged ? 1 : 0, out: outList(ui.out) };
     try { p.__orosOpenAt("layout", { pdfOut: rq }); return true; } catch (e) { return false; }
   }
   function pdfText(rep) {

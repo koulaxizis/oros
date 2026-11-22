@@ -945,6 +945,7 @@ var PRECACHE_URLS = [
   "layout/epubout.js",
   "layout/pdfout.js",
   "designkit/pdfx.js",
+  "designkit/tagpdf.js",
   "vendor/icc/ISOcoated_v2_eci.icc",
   "vendor/icc/sRGB_IEC61966-2-1.icc",
   "vendor/icc/LICENSES.md",

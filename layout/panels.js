@@ -1901,6 +1901,14 @@
       drawQ();
       body.appendChild(field(t("exp.quality"), qWrap));
       body.appendChild(x4Wrap);
+      // a tagged, accessible PDF (LY-N6): reading order, headings,
+      // picture descriptions, language, bookmarks
+      body.appendChild(check(t("exp.tag"), !!expPrefs.tag, function (v) { expPrefs.tag = v; }));
+      body.appendChild(el("p", "hint", t("exp.tagHint")));
+      function pdfOpts(pages) {
+        return { pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4,
+                 pdfx: expPrefs.q === "x4", x1a: expPrefs.q === "x1a", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk, impose: impOf(expPrefs.imp), tagged: !!expPrefs.tag };
+      }
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
       act.appendChild(btn(t("btn.cancel"), close));
@@ -1908,7 +1916,7 @@
         var pages = pickPages(doc);
         if (!pages) { LY.toast(t("exp.badRange")); return; }
         close();
-        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", x1a: expPrefs.q === "x1a", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk, impose: impOf(expPrefs.imp) });
+        LY.io.exportPdf(pdfOpts(pages));
       }, "primary"));
       body.appendChild(act);
       // the same PDF, saved in Files › Layout › PDF and offered to an app
@@ -1917,7 +1925,7 @@
           var pages = pickPages(doc);
           if (!pages) { LY.toast(t("exp.badRange")); return; }
           close();
-          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", x1a: expPrefs.q === "x1a", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk, impose: impOf(expPrefs.imp) });
+          LY.io.exportPdf(Object.assign({ send: true }, pdfOpts(pages)));
         }, "block");
         sendB.id = "exp-send";
         sendB.setAttribute("aria-haspopup", "dialog");

@@ -222,8 +222,46 @@
   // opts: pages (ids, default all), spreads, bleed, marks, ppi; and for
   // an e-book (LY-OUT): rgb, lang, links, outline, layout (of `doc`),
   // cover ({ doc, page } a Book cover's page: its front panel first).
+  // opts.tagged (LY-N6): a tagged, accessible PDF (PDF/UA-1).
   function pdfBlob(doc, opts) {
-    return pdfDoc(doc, opts).then(function (pdf) { return pdf.output("blob"); });
+    return pdfDoc(doc, opts).then(function (pdf) {
+      if (!opts.tagged || !pdf.orosTag) return pdf.output("blob");
+      return tagPdf(pdf, doc, opts);
+    });
+  }
+  // ---------- tagged PDF (LY-N6) ----------
+  // Each paragraph's role: a contents line, a heading (the levels the
+  // bookmarks use, outprof.js), else a paragraph.
+  function roleFor(doc) {
+    var O = window.LY_OUT, lv = {};
+    return function (sid, p) {
+      var st = M.story(doc, sid), para = st && st.paras && st.paras[p];
+      if (!para) return "P";
+      if (st.ext && st.ext.hs === "toc") return "TOCI";
+      if (!O || typeof O.level !== "function") return "P";
+      if (!(para.ps in lv)) lv[para.ps] = O.level(doc, para.ps);
+      return lv[para.ps] ? "H" + Math.min(6, lv[para.ps]) : "P";
+    };
+  }
+  // the document's language: its own, the Publishing title's, else
+  // the one orOS speaks (PDF/UA wants one)
+  function docLang(doc, opts) {
+    var O = window.LY_OUT, l = opts.lang || (O && typeof O.lang === "function" ? O.lang(doc, null) : "");
+    return l || document.documentElement.lang || "en";
+  }
+  function tagPdf(pdf, doc, opts) {
+    return tagBytes(pdf, doc, opts).then(function (x) {
+      if (opts.tagStat) { opts.tagStat.elems = x.elems; opts.tagStat.figures = x.figures; opts.tagStat.links = x.links; }
+      return new Blob([x.bytes], { type: "application/pdf" });
+    });
+  }
+  // → Promise<{ bytes, elems, figures, links, notes }>
+  function tagBytes(pdf, doc, opts) {
+    var bytes = new Uint8Array(pdf.output("arraybuffer"));
+    return Promise.all([script("../designkit/tagpdf.js", "DK_TAGPDF"), script("../vendor/pdf-lib/pdf-lib.min.js", "PDFLib")]).then(function (r) {
+      return r[0].make(r[1], bytes, pdf.orosTag, { title: doc.name, lang: docLang(doc, opts),
+        linkText: function (s, kind) { return kind === "page" && s ? s.replace(/\t/g, " ") : s; } });
+    });
   }
   // ...the jsPDF document itself (its orosBoxes: TrimBox / BleedBox per
   // PDF page, read by the PDF/X step, LY-PRO W1); opts.imgStat (an
@@ -243,11 +281,11 @@
       });
       return chain;
     }).then(function () {
-      return opts.cover ? coverPage(JsPDF, doc, opts.cover, opts.ppi || 150) : null;
+      return opts.cover ? coverPage(JsPDF, doc, opts.cover, opts.ppi || 150, !!opts.tagged) : null;
     }).then(function (first) {
       var L = opts.layout || (doc === LY.doc && ED.L ? ED.L : LY.R.computeLayout(doc));
-      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "", creep: opts.creep || 0 },
-        { jsPDF: JsPDF, layout: L, images: images, pdf: first, links: opts.links, outline: opts.outline });
+      var pdf = P.build(doc, { pages: pages, spreads: !!(opts.spreads && doc.setup.facing), bleed: opts.bleed, marks: opts.marks, title: doc.name, rgb: !!opts.rgb, lang: opts.lang || "", creep: opts.creep || 0, tagged: !!opts.tagged },
+        { jsPDF: JsPDF, layout: L, images: images, pdf: first, links: opts.links, outline: opts.outline, role: opts.tagged ? roleFor(doc) : null });
       return pdf;
     });
   }
@@ -274,7 +312,7 @@
     });
   }
   // ...as the first page of an e-book PDF, the size of the book's page.
-  function coverPage(JsPDF, book, cov, ppi) {
+  function coverPage(JsPDF, book, cov, ppi, tagged) {
     return frontPanel(cov.doc, ppi).then(function (fp) {
       if (!fp) return null;
       return fp.blob.arrayBuffer().then(function (ab) {
@@ -283,7 +321,10 @@
         pdf.setProperties({ title: book.name, creator: "orOS Layout" });
         // the picture keeps its proportions, centred on the page
         var k = Math.min(W / fw, H / fh), w = fw * k, h = fh * k;
-        pdf.addImage(new Uint8Array(ab), "JPEG", (W - w) / 2, (H - h) / 2, w, h, "cover", "FAST");
+        var paint = function () { pdf.addImage(new Uint8Array(ab), "JPEG", (W - w) / 2, (H - h) / 2, w, h, "cover", "FAST"); };
+        // tagged (LY-N6): the cover is a Figure, the book's title its text
+        if (tagged) { P.tagStart(pdf); P.mc(pdf, { k: "f", key: "fig:cover", alt: t("tag.cover", { title: book.name || "" }), x: (W - w) / 2, y: (H - h) / 2, w: w, h: h }, paint); }
+        else paint();
         return pdf;
       });
     });
@@ -314,6 +355,7 @@
     } else {
       var heads = O.headings(d, L);
       opts.rgb = true;
+      opts.tagged = prof.tag !== 0;   // an e-book PDF is tagged (PDF/UA, LY-N6) unless the profile says no
       opts.lang = O.lang(d, ed.pub);
       opts.outline = heads;
       opts.links = O.tocLinks(d, L, heads).concat(O.urlLinks ? O.urlLinks(d, L) : []);
@@ -558,6 +600,8 @@
     var imp = opts && opts.impose && opts.impose.kind ? opts.impose : null;
     if (imp) name = name.replace(/\.pdf$/, " - " + t("imp.file." + imp.kind) + ".pdf");
     var bopts = imp ? Object.assign({}, opts, { marks: false, creep: 0, spreads: false }) : opts;
+    // tags (LY-N6) do not survive imposition, and PDF/X-1a is PDF 1.4
+    if (bopts.tagged && (imp || x1a)) bopts = Object.assign({}, bopts, { tagged: false });
     pdfBlob(doc, bopts).then(function (blob) {
       if (!imp) return blob;
       return Promise.all([blob.arrayBuffer(), script("impose.js", "LY_IMPOSE"), script("../vendor/pdf-lib/pdf-lib.min.js", "PDFLib")]).then(function (r) {
@@ -2022,7 +2066,7 @@
   }
 
   LY.io = {
-    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, freePdfPath: freePdfPath, diskFs: diskFs, saveOut: saveOut, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, portFolder: portFolder, compareDoc: compareDoc, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
+    mirror: mirror, relinkPick: relinkPick, ocrPicture: ocrPicture, exportPdf: exportPdf, canSendPdf: canSendPdf, exportProfile: exportProfile, exportEpub: exportEpub, epubOf: epubOf, script: script, saveEpub: saveEpub, previewEpub: previewEpub, checkEpubFile: checkEpubFile, pdfBlob: pdfBlob, pdfDoc: pdfDoc, tagBytes: tagBytes, freePdfPath: freePdfPath, diskFs: diskFs, saveOut: saveOut, PDF_DIR: PDF_DIR, saveBlob: saveBlob, fileName: fileName, exportImage: exportImage, svgOf: svgOf, svgSelection: svgSelection, exportPackage: exportPackage, importPackage: importPackage, importFolder: importFolder, portFolder: portFolder, compareDoc: compareDoc, openFile: openFile, importMany: importMany, importDisk: importDisk, packagesIn: packagesIn,
     placeImage: placeImage, importText: importText, readDoc: readDoc, TEXT_ACCEPT: TEXT_ACCEPT, openSla: importSla, isPicture: isPicture, placeFromBlob: placeFromBlob, rebuildPdf: rebuildPdf, rebuild: rebuild,
     // for the data merge (mergeui.js)
     adjust: adjust, placePage: placePage, pageImage: pageImage, pageKind: pageKind, wrapProfile: wrapProfile, fillWrapProfiles: fillWrapProfiles, saveBlob: saveBlob, pickFile: pickFile, pickFiles: pickFiles, greyBlob: greyBlob, loadJsPDF: loadJsPDF, fileName: fileName

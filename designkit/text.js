@@ -1387,11 +1387,12 @@
     // the footnotes, at the foot of their columns, under a short rule
     Object.keys(foot).forEach(function (k) {
       var F = foot[k], yy = F.bottom - F.h;
-      var rule = { col: F.col, frame: F.f.id, y: yy - FN_SEP + 3, d: 0, h: FN_SEP, runs: [{ x: F.x0, y: yy - FN_SEP + 3, t: "\u00A0", key: notes.key, size: 6, color: notes.color, u: 1, track: 0, w: Math.min(72, F.cw / 3) }], fn: 1, p: -1, cx0: F.x0, cx1: F.x0 + F.cw, x0: F.x0 };
+      var rule = { col: F.col, frame: F.f.id, y: yy - FN_SEP + 3, d: 0, h: FN_SEP, runs: [{ x: F.x0, y: yy - FN_SEP + 3, t: "\u00A0", key: notes.key, size: 6, color: notes.color, u: 1, track: 0, w: Math.min(72, F.cw / 3) }], fn: 1, rule: 1, p: -1, cx0: F.x0, cx1: F.x0 + F.cw, x0: F.x0 };
       out.frames[F.f.id].lines.push(rule);
-      F.blocks.forEach(function (b) {
+      F.blocks.forEach(function (b, bi) {
         b.lines.forEach(function (ln) {
-          var nl = { col: F.col, frame: F.f.id, y: yy + ln.y, d: ln.d, h: ln.h, fn: 1, p: -1, cx0: F.x0 + ln.cx0, cx1: F.x0 + ln.cx1, x0: F.x0 + ln.x0, runs: ln.runs.map(function (r) {
+          // fk: which note the line belongs to (a tagged PDF's Note, LY-N6)
+          var nl = { col: F.col, frame: F.f.id, y: yy + ln.y, d: ln.d, h: ln.h, fn: 1, fk: k + "/" + bi, p: -1, cx0: F.x0 + ln.cx0, cx1: F.x0 + ln.cx1, x0: F.x0 + ln.x0, runs: ln.runs.map(function (r) {
             var o = {}; for (var q in r) if (q !== "o" && q !== "n" && q !== "p") o[q] = r[q];
             o.x = F.x0 + r.x; o.y = yy + r.y; return o;
           }) };

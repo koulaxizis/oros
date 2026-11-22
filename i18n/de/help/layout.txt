@@ -175,6 +175,12 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Jede Seite als Bild**: unter `Export › Bild` speichert `Alle Seiten` oder `Alle Doppelseiten` alle in einer .zip.
 - **Preiscode**: ein Buchumschlag kann neben dem ISBN-Strichcode einen EAN-5-Preiscode tragen (z. B. 90000).
 
+## Barrierefreies PDF
+- **PDF mit Tags**: Kreuz `Exportieren › Mit Tags für Barrierefreiheit (PDF/UA)` an, und das PDF trägt seine Struktur: Überschriften (die Ebenen der Lesezeichen), Absätze, Fuß- und Endnoten, das Inhaltsverzeichnis als Liste von Links und Bilder mit ihrer Beschreibung. Bildschirmleser und das Umfließen auf dem Handy lesen es der Reihe nach, Textabschnitt für Textabschnitt.
+- **Was draußen bleibt**: Kolumnentitel, Seitenzahlen, Musterseiten-Elemente, Rahmen, Linien und dekorative Bilder sind als Schmuck markiert und werden nicht vorgelesen.
+- **Bilder**: Gib jedem Bild eine `Beschreibung` in seinen Einstellungen oder kreuz `Dekorativ` an. Ein Bild ohne beides bleibt beim Lesen außen vor.
+- **Sprache und Titel**: Das PDF nennt die Sprache des Buchs (Dokument einrichten, sonst der Titel in Publishing) und zeigt den Namen des Dokuments als Titel. Ein E-Book-PDF aus einem Ausgabeprofil hat immer Tags. Nicht mit PDF/X-1a oder Ausschießen.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

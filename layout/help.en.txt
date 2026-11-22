@@ -175,6 +175,12 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Every page as an image**: in `Export › Image`, `All pages` or `All spreads` saves them all in one .zip.
 - **Price code**: a book cover can carry an EAN-5 price code beside the ISBN barcode (e.g. 90000).
 
+## Accessible PDF
+- **Tagged PDF**: tick `Export › Tagged for accessibility (PDF/UA)` and the PDF carries its structure: headings (the levels the bookmarks use), paragraphs, footnotes and endnotes, the contents as a list of links, and pictures with their description. Screen readers and reflow on phones read it in order, story by story.
+- **What stays out**: running heads, page numbers, master items, frames, rules and decorative pictures are marked as decoration, so they are not read aloud.
+- **Pictures**: give each picture a `Description` in its settings, or tick `Decorative`. A picture without either is left out of the reading.
+- **Language and title**: the PDF names the book's language (Document setup, else the Publishing title) and shows the document's name as its title. An e-book PDF from an output profile is always tagged. Not with PDF/X-1a or imposition.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

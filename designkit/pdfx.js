@@ -72,7 +72,7 @@
     return '<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>\n' +
       '<x:xmpmeta xmlns:x="adobe:ns:meta/">\n<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n' +
       '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" ' +
-      'xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:pdfxid="http://www.npes.org/pdfx/ns/id/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/">\n' +
+      'xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:pdfxid="http://www.npes.org/pdfx/ns/id/" xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"' + (o.ua ? ' xmlns:pdfuaid="http://www.aiim.org/pdfua/ns/id/"' : "") + '>\n' +
       '<dc:format>application/pdf</dc:format>\n' +
       '<dc:title><rdf:Alt><rdf:li xml:lang="x-default">' + xmlEsc(o.title) + '</rdf:li></rdf:Alt></dc:title>\n' +
       '<xmp:CreatorTool>' + xmlEsc(o.creator) + '</xmp:CreatorTool>\n' +
@@ -80,6 +80,7 @@
       '<pdf:Producer>' + xmlEsc(o.producer) + '</pdf:Producer>\n<pdf:Trapped>False</pdf:Trapped>\n' +
       '<pdfxid:GTS_PDFXVersion>' + (o.ver || "PDF/X-4") + '</pdfxid:GTS_PDFXVersion>\n' +
       '<xmpMM:DocumentID>uuid:' + o.docId + '</xmpMM:DocumentID>\n<xmpMM:InstanceID>uuid:' + o.instId + '</xmpMM:InstanceID>\n<xmpMM:RenditionClass>default</xmpMM:RenditionClass>\n<xmpMM:VersionID>1</xmpMM:VersionID>\n' +
+      (o.ua ? '<pdfuaid:part>1</pdfuaid:part>\n' : "") +
       '</rdf:Description>\n</rdf:RDF>\n</x:xmpmeta>\n' + new Array(20).join("                                                  \n") + '<?xpacket end="w"?>';
   }
 
@@ -624,7 +625,8 @@
       info.set(N("GTS_PDFXVersion"), P.PDFString.of(ver));
       ctx.trailerInfo.Info = ctx.register(info);
       // XMP is UTF-8 (a string would be written as Latin-1)
-      var meta = ctx.stream(utf8(xmp({ ver: ver, title: title, creator: creator, producer: producer, date: isoDate(now), docId: uuid(randBytes), instId: uuid(randBytes) })),
+      var meta = ctx.stream(utf8(xmp({ ver: ver, title: title, creator: creator, producer: producer, date: isoDate(now), docId: uuid(randBytes), instId: uuid(randBytes),
+                                       ua: !!doc.catalog.get(N("StructTreeRoot")) })),   // a tagged PDF stays PDF/UA (LY-N6)
                             { Type: "Metadata", Subtype: "XML" });
       doc.catalog.set(N("Metadata"), ctx.register(meta));
       var id = P.PDFHexString.of(hex(randBytes(16)));
