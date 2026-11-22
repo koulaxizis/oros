@@ -237,7 +237,9 @@ test("export_pdf: checked arguments, the report the model gets, the gate lists",
   assert.equal(C.pdfReport({ ok: 1, path: "/internal/Notes/x.pdf" }).path, "", "only Layout's PDF folder");
   assert.deepEqual(C.pdfReport({ failed: 1, why: "noDoc" }), { failed: true, why: "noDoc" });
   assert.ok(C.GATE_TOOLS.indexOf("export_pdf") !== -1);
-  assert.ok(C.GATE_TOOLS.length <= 30, "the relay takes 30 tools");
+  // GL-9: the relay keeps up to DEV_TOOLS_MAX (60) device tools
+  assert.ok(C.GATE_TOOLS.length <= 60, "the relay takes 60 tools (relay/gate.js DEV_TOOLS_MAX)");
+  assert.match(read("relay/gate.js"), /DEV_TOOLS_MAX = 60\b/);
   assert.match(read("gate/gate.js"), /"export_pdf"/);
 });
 

@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.56.00
+- **Mockups made by Claude.** With the Assistant or orOS Gate, Claude can put a picture into one of your mockups (books and goods alike) and save the result in Mockups/Claude, never over a file. Your mockup is never changed: Claude works on a copy that is not kept. With orOS closed the request is checked against your copy and waits until orOS opens.
+
 ## Version 8.55.00
 - **Timesheet: Claude keeps your hours with you.** Through orOS Gate, Claude can now make a Timesheet project with its client, hourly rate, day minimum and overtime, mark time as billed with the invoice it went on, and tie each day to its Calendar event. Work that runs past midnight now counts as one working day, with its overtime, instead of a second day with a second minimum.
 

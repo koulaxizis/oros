@@ -3481,6 +3481,79 @@
   // intent, or print / screen), saved under /internal/Layout/PDF/; the
   // report has the path, pages, boxes in mm, size and the preflight.
   var PDF_PRESETS = ["print", "screen", "pdfx4"], PDF_MARKS = ["crop", "bleed", "reg", "bars", "info"];
+  // GATE-PL10 (Chris 2026-11-22, dogfooding «Πλανόδιο», item 10): a
+  // mockup picture from one of the user's mockups and a picture; Mockups
+  // makes it on the device (mockups.js renderFor) and saves it under a
+  // free name, never over a file; the template is never changed.
+  var TOOL_MOCKUP = {
+    name: "mockup_render",
+    description: "Make a mockup picture in Mockups: one of the user's mockups (a book, notebook, CD, T-shirt, mug… as they set it up: size, angle, light, background) is the template, and a picture goes into one of its places (the front cover by default, or the full wrap of a book laid out as one wrap). " +
+      "The picture is saved as a new PNG, JPG or WebP file (never over a file: a taken name gets -2, -3…), by default in Mockups/Claude on the orOS disk. The template mockup is not changed and no mockup is added. " +
+      "The user presses a button on a card first; Mockups makes it on the device and its report (the saved path, size) comes back.",
+    params: {
+      type: "object",
+      properties: {
+        template: { type: "string", description: "The name of one of the user's mockups, as Mockups shows it (the same name, or a part of it that only one has)." },
+        image: { type: "string", description: "The picture to put in: a path on the orOS disk (/internal/…, e.g. in Claude's folders) or local:<root>/<path> in a local folder the user opened; JPG, PNG, WebP, GIF, BMP or AVIF." },
+        slot: { type: "string", description: "Where the picture goes: front (the default), back, spine, wrap (a whole book cover in one picture), or a product's own place (disc, inside, tray, labelA, face…). Left out: front, or wrap when the template is laid out as one wrap." },
+        format: { type: "string", "enum": ["png", "jpg", "webp"], description: "The file type; the template's own when left out." },
+        name: { type: "string", description: "The file's name without its type; \"<template> - <picture>\" when left out." },
+        out: { type: "string", description: "The folder it is saved in: /internal/… on the orOS disk (Mockups/Claude when left out) or local:<root>/<folder> in a local folder the user opened for writing." }
+      },
+      required: ["template", "image"]
+    }
+  };
+  // mockup_render's arguments → { ok, template, image, slot, fmt, name, out } | { ok: false, err }
+  function normMockup(args) {
+    var a = isObj(args) ? args : {};
+    var template = squash(a.template || "").slice(0, 120);
+    if (!template) return bad("template: the name of one of the user's mockups.");
+    var img = typeof a.image === "string" ? a.image.trim() : "";
+    var body = /^local:/i.test(img) ? img.slice(6) : img.indexOf("/internal/") === 0 ? img.slice(10) : null;
+    if (!img || img.length > 1030 || body === null || /[\\\u0000-\u001f\u007f]/.test(img) || body.split("/").some(function (x) { return !x || x === "." || x === ".."; }))
+      return bad("image: a picture's /internal/… path on the orOS disk or local:<root>/<path>.");
+    if (!/\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(img)) return bad("image must be a JPG, PNG, WebP, GIF, BMP or AVIF picture.");
+    var slot = a.slot === undefined || a.slot === "" ? "" : String(a.slot);
+    if (slot && !/^[a-zA-Z]{1,12}$/.test(slot)) return bad("slot: front, back, spine, wrap or a product's own place.");
+    var fmt = a.format === undefined || a.format === "" ? "" : String(a.format);
+    if (fmt && ["png", "jpg", "webp"].indexOf(fmt) < 0) return bad("format must be png, jpg or webp.");
+    var name = squash(a.name || "").replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 120);
+    var out = typeof a.out === "string" ? a.out.trim().replace(/\/+$/, "") : "";
+    if (out) {
+      var ob = /^local:/i.test(out) ? out.slice(6) : out.indexOf("/internal/") === 0 ? out.slice(10) : null;
+      if (out.length > 1030 || ob === null || /[\\\u0000-\u001f\u007f]/.test(out) || ob.split("/").some(function (x) { return !x || x === "." || x === ".." || x.charAt(0) === "."; }))
+        return bad("out: a folder /internal/… on the orOS disk or local:<root>/<folder>.");
+    }
+    return { ok: true, template: template, image: img, slot: slot, fmt: fmt, name: name, out: out || "/internal/Mockups/Claude" };
+  }
+  // Mockups' report, kept to plain numbers and paths
+  function mockupReport(rep) {
+    var r = isObj(rep) ? rep : {};
+    if (!r.ok) {
+      var o = { failed: 1, why: /^[a-zA-Z]{1,20}$/.test(String(r.why || "")) ? String(r.why) : "error" };
+      if (Array.isArray(r.names)) o.names = r.names.slice(0, 30).map(function (x) { return String(x).slice(0, 120); });
+      if (Array.isArray(r.slots)) o.slots = r.slots.slice(0, 30).map(String);
+      if (Array.isArray(r.outFail)) o.save_failed = r.outFail.slice(0, 2).map(function (x) { return { to: String(x && x.to || "").slice(0, 300), why: String(x && x.why || "error").slice(0, 30) }; });
+      return o;
+    }
+    var out = { made: true, path: String(r.path || "").slice(0, 1100), template: String(r.template || "").slice(0, 120), kind: String(r.kind || "").slice(0, 20),
+                slot: String(r.slot || "").slice(0, 12), format: String(r.fmt || "").slice(0, 5), width: +r.w || 0, height: +r.h || 0, bytes: +r.bytes || 0 };
+    if (Array.isArray(r.saved) && r.saved.length > 1) out.also_saved = r.saved.slice(1, 2).map(function (x) { return String(x).slice(0, 1100); });
+    if (Array.isArray(r.outFail) && r.outFail.length) out.save_failed = r.outFail.slice(0, 2).map(function (x) { return { to: String(x && x.to || "").slice(0, 300), why: String(x && x.why || "error").slice(0, 30) }; });
+    return out;
+  }
+  var MOCKUP_WHY = {
+    bad: "the request was not valid", busy: "Mockups is busy with something else on the device; try again in a minute",
+    noTemplate: "no mockup has that name", several: "several mockups match that name; give the whole name",
+    badSlot: "that template has no such place for a picture", model: "this template's 3D model is not downloaded on the device (the owner downloads it once in Mockups)",
+    noImage: "the picture could not be read (check the path)", badImage: "the file is not a picture Mockups can use", noBridge: "the local folder is not open on that device",
+    noDisk: "the orOS disk is not ready on the device", nogl: "this device cannot draw 3D (WebGL is off)", save: "the picture could not be saved", error: "something failed on the device"
+  };
+  function mockupText(rep) {
+    var r = mockupReport(rep);
+    if (r.failed) return "Mockups could not make the picture: " + (MOCKUP_WHY[r.why] || MOCKUP_WHY.error) + ". Nothing was saved. Report: " + JSON.stringify(r);
+    return "Mockups made the picture on the device and saved it (never over a file; the template is unchanged). Report: " + JSON.stringify(r);
+  }
   var TOOL_PDF = {
     name: "export_pdf",
     description: "Make a print PDF of a Layout document on the device: preset pdfx4 (PDF/X-4 for the printer: the print profile Coated FOGRA39 as output intent, " +
@@ -3688,6 +3761,7 @@
     if (opts.rebuild) out.push(TOOL_REBUILD);
     if (opts.house) out.push(TOOL_HS_LEARN, TOOL_HS_BOOK, TOOL_HS_RULE);
     if (opts.epub) out.push(TOOL_EPUB, TOOL_PDF);
+    if (opts.mockup) out.push(TOOL_MOCKUP);   // GATE-PL10
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     if (opts.creates && opts.creates.length) out.push(createTool(opts.creates));
     if (opts.data && opts.links) out.push(TOOL_LINK);
@@ -3720,7 +3794,7 @@
   var GATE_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                     "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
                     "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf",
-                    "files_list", "files_read", "files_write", "files_move", "files_delete"];
+                    "files_list", "files_read", "files_write", "files_move", "files_delete", "mockup_render"];
   // GATE-PAR P3 (2026-11-08): the Assistant's tools that hand work to an
   // app's own window. Through the gate the app opens on the owner's
   // screen with it at once (Layout does its work and reports; a form is
@@ -3786,6 +3860,8 @@
       x.description = say(x.description);
       if (GATE_OPEN.indexOf(x.name) >= 0) x.description = (GATE_OPEN_HEAD[x.name] || openSay(x.description)) + GATE_OPEN_SAY;
       if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
+      if (x.name === "mockup_render") x.description = x.description.replace("The user presses a button on a card first; Mockups makes it on the device and its report (the saved path, size) comes back.",   // GATE-PL10
+        "Through orOS Gate it needs Mockups allowed (read is enough) and, on the orOS disk, a folder of Claude's folders with Files at «may change» (Mockups/Claude is one by itself); nothing is ever replaced. Bring the picture in first with files_upload and files_write. It runs where orOS is on screen or on the owner's computer in the tray; with nobody there (or orOS closed) it waits, encrypted, after a check against the copy, and its report comes then (files_list shows the picture). The report gives the saved path and size.");
       walk(x.params);
       var ro = /^(search_data|read_item|app_summary|list_fonts|read_in_app|change_history|files_list|files_read)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
@@ -5252,7 +5328,7 @@ normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: r
         normAutomation: normAutomation, normRule: normRule, TOOL_RULE: TOOL_RULE, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
-    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, normOut: normOut, outReport: outReport, OUT_SCHEMA: OUT_SCHEMA, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
+    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, normMockup: normMockup, mockupReport: mockupReport, mockupText: mockupText, normOut: normOut, outReport: outReport, OUT_SCHEMA: OUT_SCHEMA, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
     DEV_MAX: DEV_MAX, DEV_FILE: DEV_FILE, DEV_TOTAL: DEV_TOTAL, DEV_PHONE: DEV_PHONE, checkDev: checkDev
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

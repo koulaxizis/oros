@@ -121,3 +121,7 @@ In Atelier, `More` › `Make a book mockup` sends the design here: page 1 become
 - Every mockup is kept with its settings and follows you to every device through orOS sync, encrypted.
 - `More` (the three dots) has `Duplicate this mockup`, `Reset the camera and light` and `Delete this mockup`.
 - Shortcut: Ctrl+Shift+S saves the picture. On the picture: arrow keys turn the camera, + and − come closer or move away.
+
+## Mockups made by Claude
+- With the Assistant or orOS Gate, Claude can put a picture into one of your mockups and save the result (`mockup_render`). Your mockup is never changed: Claude works on a copy that is not kept.
+- The picture is saved in `Mockups/Claude` on the orOS disk (or another of Claude's folders), never over a file: a taken name gets a number. Through the Gate this needs Mockups and Files at «May change».

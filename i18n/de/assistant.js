@@ -1623,7 +1623,7 @@ orosPack("de", "assistant", {
  "pdf.repPf": "Preflight: {e} Fehler, {w} Warnungen", "pdf.repPfOk": "Preflight: nichts zu beheben",
  "pdf.working": "{app} erstellt das PDF…", "pdf.failed": "{app} konnte das PDF nicht erstellen. Es wurde nichts erstellt.",
  "pdf.noDoc": "{app} hat kein Dokument mit diesem Namen.", "pdf.busy": "{app} ist mit einem anderen Export oder Dialog beschäftigt. Versuche es gleich noch einmal.",
- "pdf.noDisk": "Das PDF wurde erstellt, aber die orOS-Festplatte war nicht erreichbar, daher wurde es nicht gespeichert.", "pdf.go": "PDF erstellen",
+ "pdf.noDisk": "Das PDF wurde erstellt, aber die orOS-Festplatte war nicht erreichbar, daher wurde es nicht gespeichert.", "pdf.go": "PDF erstellen", "mk.head": "Ein Mockup-Bild in {app}", "mk.image": "Bild: {path}", "mk.slot": "Stelle: {slot}", "mk.out": "Gespeichert in {path}, nie über eine Datei", "mk.go": "Bild erstellen", "mk.working": "{app} erstellt das Bild…", "mk.failed": "{app} konnte das Bild nicht erstellen. Nichts wurde gespeichert.",
  "ep.head": "EPUB erstellen · {app}",
  "ep.byTitle": "Das Dokument, das mit dem Publishing-Titel {t} verbunden ist.",
  "ep.lay.reflowable": "Fließtext",
