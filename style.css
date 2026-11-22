@@ -2327,8 +2327,9 @@ html[data-oros-transparency][data-oros-bar] #oros-bar::before { background: var(
 html[data-oros-transparency] #oros-ov { background: rgba(0, 0, 0, 0.86); }
 html[data-oros-transparency] .ld-tile { --gl-tint: rgba(16, 16, 20, 0.88) !important; }
 
-/* LOCAL-1: the local-folder bridge is on (localroots.js) */
-#oros-local-bar { position: fixed; left: 50%; bottom: 12px; transform: translateX(-50%); z-index: 2147483000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
+/* LOCAL-1: the local-folder bridge is on (localroots.js). DOCK-CLEAR: it sits
+   above a pinned Dock (--tb-h) and centres between a left/right Dock. */
+#oros-local-bar { position: fixed; left: calc(50% + (var(--ld-sl, 0px) - var(--ld-sr, 0px)) / 2); bottom: calc(12px + var(--tb-h, 0px) + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 2147483000; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px;
   max-width: calc(100vw - 32px); padding: 6px 10px; border-radius: 10px; background: var(--panel-bg, #1d1b16); color: var(--text, #eee); border: 1px solid var(--accent, #d4af37);
   font: 12px/1.35 system-ui, sans-serif; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
 #oros-local-bar button { font: inherit; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--border, #555); background: transparent; color: inherit; cursor: pointer; }
