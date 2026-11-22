@@ -654,6 +654,20 @@ export const TOOLS = [
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
   },
+  {
+    name: "photolab_import",
+    description: "Opens a picture file from Claude's folders on the orOS disk (one Claude made, ComfyUI's, a photo; jpg, png, webp, svg…) in Photo Lab as a NEW project, the same as the owner's Open. First bring the file in with files_upload and files_write, then pass its path; change it afterwards with edit_in_app (app photolab: generate, nobg, fill, expand, upscale, image and the photo commands). Nothing that exists changes; the owner is notified, and it needs the owner's write switch for Photo Lab. It runs where orOS is on screen (or on the owner's computer in the tray), and waits like edit_in_app when nobody is.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The picture file on the orOS disk, as files_write or files_list gave it (an /internal/ path in Claude's folders)." },
+        title: { type: "string", description: "A name for the new project; the file's own name when left out." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
   // GL-7 (Chris 2026-11-21 «Πρέπει να βρούμε λύσεις»): a computer left with
   // an old orOS no longer needs the owner at it.
   {
@@ -696,15 +710,18 @@ const TOOL_NAMES = TOOLS.map((t) => t.name);
 // device checks again (studio|montage commands.js: an /internal/ path of
 // the app's own file type, the only command, designs new). → the call to
 // run, or { err } (for Claude), or null for any other tool.
-export const IMPORT_TOOLS = { studio_import: { app: "studio", ext: ".orosstudio" }, montage_import: { app: "montage", ext: ".orosmontage" } };
+export const IMPORT_TOOLS = { studio_import: { app: "studio", ext: ".orosstudio" }, montage_import: { app: "montage", ext: ".orosmontage" },
+  // PL-AI (Chris 2026-11-22): a picture Claude made or brought opens in Photo Lab as a new project
+  photolab_import: { app: "photolab", ext: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".avif", ".svg", ".tif", ".tiff", ".heic"] } };
 export function importCall(p) {
   const imp = p && Object.prototype.hasOwnProperty.call(IMPORT_TOOLS, p.name) ? IMPORT_TOOLS[p.name] : null;
   if (!imp) return null;
   const a = p.arguments && typeof p.arguments === "object" && !Array.isArray(p.arguments) ? p.arguments : {};
   const path = typeof a.path === "string" ? a.path.trim() : "";
-  if (!path || path.length > 500 || path.indexOf("/internal/") !== 0 || !path.toLowerCase().endsWith(imp.ext) ||
+  const exts = Array.isArray(imp.ext) ? imp.ext : [imp.ext], low = path.toLowerCase();
+  if (!path || path.length > 500 || path.indexOf("/internal/") !== 0 || !exts.some((e) => low.endsWith(e)) || path.split("/").some((x) => x.charAt(0) === ".") ||
       path.split("/").some((x) => x === "." || x === "..") || /[\\\u0000-\u001f\u007f]/.test(path)) {
-    return { err: p.name + " needs path: the " + imp.ext + " file's /internal/ path on the orOS disk (files_upload, then files_write, gives it). Nothing was opened." };
+    return { err: p.name + " needs path: the " + exts.join(" / ") + " file's /internal/ path in Claude's folders on the orOS disk (files_upload, then files_write, gives it). Nothing was opened." };
   }
   if (a.title !== undefined && typeof a.title !== "string") return { err: p.name + "'s title must be text. Nothing was opened." };
   const step = { op: "create", from: path };

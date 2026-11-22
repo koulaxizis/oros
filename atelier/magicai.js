@@ -31,7 +31,7 @@
   function frameFor(pid, rw, rh) {
     var r = rw / rh;
     if (pid === "openai") return r > 1.2 ? { w: 1536, h: 1024 } : r < 0.83 ? { w: 1024, h: 1536 } : { w: 1024, h: 1024 };
-    if (pid === "sdwebui") {
+    if (pid === "sdwebui" || pid === "comfyui") {
       return r >= 1 ? { w: 1024, h: Math.max(256, Math.round(1024 / r / 64) * 64) } : { w: Math.max(256, Math.round(1024 * r / 64) * 64), h: 1024 };
     }
     return r >= 1 ? { w: 1024, h: Math.max(64, Math.round(1024 / r)) } : { w: Math.max(64, Math.round(1024 * r)), h: 1024 };

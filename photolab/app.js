@@ -769,7 +769,7 @@
           document.head.appendChild(s);
         });
       }
-      assistP = load("commands.js").then(function () { return load("assist.js"); }).then(function () {
+      assistP = load("commands.js").then(function () { return load("aiedit.js"); }).then(function () { return load("assist.js"); }).then(function () {
         if (!PL.assist) throw new Error("assist");
         return PL.assist;
       });

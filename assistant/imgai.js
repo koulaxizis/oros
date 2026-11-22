@@ -1,5 +1,6 @@
 // ============================================================
-// orOS — assistant/imgai.js: image AI providers (v1.1.0)
+// orOS — assistant/imgai.js: image AI providers (v1.2.0)
+// v1.2.0 (PL-AI): ComfyUI on the owner's computer; WebUI upscale.
 // Shared by the Assistant (Settings › Image AI: choose, key, test)
 // and Atelier (Image from text; Magic edit and Magic expand). The
 // choice is kept on this device only (localStorage IMG_PREF); keys
@@ -49,11 +50,18 @@
       base: "https://api.stability.ai", keyUrl: "https://platform.stability.ai/account/keys", model: "core"
     },
     sdwebui: {
-      name: "Stable Diffusion WebUI / Forge", kind: "sdwebui", key: "no", local: 1, n: 4, mask: 1, expand: 1,
+      name: "Stable Diffusion WebUI / Forge", kind: "sdwebui", key: "no", local: 1, n: 4, mask: 1, expand: 1, upscale: 1,
       base: "", defaultBase: "http://127.0.0.1:7860", model: ""
+    },
+    // PL-AI (Chris 2026-11-22): ComfyUI on the owner's computer, run with
+    // --enable-cors-header; model = the checkpoint's file name there.
+    comfyui: {
+      name: "ComfyUI", kind: "comfyui", key: "no", local: 1, n: 1, mask: 1, expand: 1,
+      base: "", defaultBase: "http://127.0.0.1:8188", model: "sd_xl_base_1.0.safetensors"
     }
   };
-  var IDS = ["horde", "pollinations", "huggingface", "openai", "stability", "sdwebui"];
+  var IDS = ["horde", "pollinations", "huggingface", "openai", "stability", "sdwebui", "comfyui"];
+  var COMFY_WAIT = 900000, COMFY_POLL = 2000;   // a CPU may take minutes
   // Key ids the Assistant keeps for image AI only (the others are the
   // text providers' own).
   var KEY_EXTRA = ["stability", "horde"];
@@ -157,6 +165,8 @@
         headers: Object.assign({ Accept: "image/*" }, auth),
         form: [["prompt", prompt], ["aspect_ratio", size], ["output_format", "png"]], reply: "image" };
     }
+    if (pid === "comfyui") return { url: cf.base + "/prompt", method: "POST", headers: { "Content-Type": "application/json" },
+      json: { prompt: comfyFlow(cf.model, prompt, +wh[0], +wh[1], opts.seed, null) }, reply: "comfy" };
     if (pid === "sdwebui") {
       return { url: cf.base + "/sdapi/v1/txt2img", method: "POST", headers: { "Content-Type": "application/json" },
         json: { prompt: prompt, width: +wh[0], height: +wh[1], batch_size: n, steps: 25 }, reply: "sd-b64" };
@@ -182,6 +192,12 @@
         form: [["prompt", prompt], ["image", { blob: opts.image, name: "image.png" }], ["mask", { blob: opts.maskBw, name: "mask.png" }],
                ["output_format", "png"]], reply: "image" };
     }
+    if (pid === "comfyui") {
+      // the picture and the mask (transparent = change, as for OpenAI) are uploaded first (run)
+      return { url: cf.base + "/prompt", method: "POST", headers: { "Content-Type": "application/json" },
+        json: { prompt: comfyFlow(cf.model, prompt, 0, 0, opts.seed, { image: "@image", mask: "@mask" }) }, reply: "comfy",
+        uploads: [["@image", { blob: opts.image, name: "oros-image.png" }], ["@mask", { blob: opts.mask, name: "oros-mask.png" }]] };
+    }
     if (pid === "sdwebui") {
       return { url: cf.base + "/sdapi/v1/img2img", method: "POST", headers: { "Content-Type": "application/json" },
         json: { prompt: prompt, init_images: [opts.imageB64], mask: opts.maskB64, inpainting_fill: 1, inpaint_full_res: false,
@@ -204,6 +220,35 @@
       form: form, reply: "image" };
   }
 
+  // PL-AI: a sharper, bigger copy (Stable Diffusion WebUI's extras).
+  // b64: the picture as a data URL; f: 2-4.
+  function buildUpscale(cf, opts) {
+    if (cf.pid !== "sdwebui") return null;
+    return { url: cf.base + "/sdapi/v1/extra-single-image", method: "POST", headers: { "Content-Type": "application/json" },
+      json: { image: opts.b64, upscaling_resize: Math.max(1, Math.min(4, +opts.f || 2)), upscaler_1: opts.upscaler || "R-ESRGAN 4x+" }, reply: "sd-one" };
+  }
+
+  // ComfyUI's API graph: SDXL text to picture, or (inp: uploaded names)
+  // the masked part of a picture redrawn (VAEEncodeForInpaint; the
+  // mask's alpha: transparent = change).
+  function comfyFlow(model, prompt, w, h, seed, inp) {
+    var g = {
+      "4": { class_type: "CheckpointLoaderSimple", inputs: { ckpt_name: model || "sd_xl_base_1.0.safetensors" } },
+      "6": { class_type: "CLIPTextEncode", inputs: { text: prompt, clip: ["4", 1] } },
+      "7": { class_type: "CLIPTextEncode", inputs: { text: "blurry, low quality, watermark, text", clip: ["4", 1] } },
+      "3": { class_type: "KSampler", inputs: { seed: seed != null ? seed : Math.floor(Math.random() * 1e9), steps: 20, cfg: 6, sampler_name: "euler", scheduler: "normal",
+        denoise: 1, model: ["4", 0], positive: ["6", 0], negative: ["7", 0], latent_image: ["5", 0] } },
+      "8": { class_type: "VAEDecode", inputs: { samples: ["3", 0], vae: ["4", 2] } },
+      "9": { class_type: "SaveImage", inputs: { filename_prefix: "orOS", images: ["8", 0] } }
+    };
+    if (inp) {
+      g["10"] = { class_type: "LoadImage", inputs: { image: inp.image } };
+      g["11"] = { class_type: "LoadImageMask", inputs: { image: inp.mask, channel: "alpha" } };
+      g["5"] = { class_type: "VAEEncodeForInpaint", inputs: { pixels: ["10", 0], vae: ["4", 2], mask: ["11", 0], grow_mask_by: 8 } };
+    } else g["5"] = { class_type: "EmptyLatentImage", inputs: { width: w, height: h, batch_size: 1 } };
+    return g;
+  }
+
   function hordeHeaders(key, json) {
     var h = { apikey: key || HORDE_ANON, "Client-Agent": HORDE_AGENT };
     if (json) h["Content-Type"] = "application/json";
@@ -219,6 +264,7 @@
     if (cf.pid === "openai") return { url: cf.base + "/models", method: "GET", headers: auth };
     if (cf.pid === "stability") return { url: cf.base + "/v1/user/balance", method: "GET", headers: auth };
     if (cf.pid === "sdwebui") return { url: cf.base + "/sdapi/v1/sd-models", method: "GET", headers: {} };
+    if (cf.pid === "comfyui") return { url: cf.base + "/system_stats", method: "GET", headers: {} };
     return null;
   }
 
@@ -278,9 +324,62 @@
     });
   }
 
+  // ComfyUI: upload the pictures, queue the graph, ask until it is done,
+  // fetch what SaveImage wrote.
+  function comfyRun(req, signal, deps) {
+    deps = deps || {};
+    var base = req.url.replace(/\/prompt$/, ""), flow = JSON.parse(JSON.stringify(req.json.prompt));
+    var sleep = deps.sleep || function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+    var now = deps.now || Date.now, t0 = now();
+    function call(url, init) {
+      init = Object.assign({ credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer", signal: signal }, init || {});
+      return fetch(url, init).catch(function (e) { if (signal && signal.aborted) throw e; throw new ImageError("net"); }).then(function (res) {
+        if (!res.ok) return res.text().catch(function () { return ""; }).then(function (b) { throw new ImageError("http", String(b).slice(0, 200), res.status); });
+        return res;
+      });
+    }
+    var up = Promise.resolve();
+    (req.uploads || []).forEach(function (u) {
+      up = up.then(function () {
+        var fd = new FormData();
+        fd.append("image", u[1].blob, u[1].name);
+        fd.append("type", "input");
+        fd.append("overwrite", "true");
+        return call(base + "/upload/image", { method: "POST", body: fd }).then(function (r) { return r.json(); }).then(function (j) {
+          var name = (j.subfolder ? j.subfolder + "/" : "") + j.name;
+          Object.keys(flow).forEach(function (k) { var i = flow[k].inputs; Object.keys(i).forEach(function (f) { if (i[f] === u[0]) i[f] = name; }); });
+        });
+      });
+    });
+    return up.then(function () {
+      return call(base + "/prompt", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ prompt: flow, client_id: "oros" }) });
+    }).then(function (r) { return r.json(); }).then(function (j) {
+      var id = String(j && j.prompt_id || "");
+      if (!/^[\w-]{1,80}$/.test(id)) throw new ImageError("bad");
+      var loop = function () {
+        if (signal && signal.aborted) return Promise.reject(new DOMException("Aborted", "AbortError"));
+        if (now() - t0 > COMFY_WAIT) return Promise.reject(new ImageError("http", "timeout"));
+        return call(base + "/history/" + id).then(function (r) { return r.json(); }).then(function (h) {
+          var e = h && h[id];
+          if (!e) return sleep(COMFY_POLL).then(loop);
+          if (e.status && e.status.status_str === "error") throw new ImageError("http", "ComfyUI error");
+          var pics = [];
+          Object.keys(e.outputs || {}).forEach(function (k) { (e.outputs[k].images || []).forEach(function (im) { if (im && im.type === "output") pics.push(im); }); });
+          if (!pics.length) return sleep(COMFY_POLL).then(loop);
+          return Promise.all(pics.slice(0, 4).map(function (im) {
+            return call(base + "/view?filename=" + encodeURIComponent(im.filename) + "&subfolder=" + encodeURIComponent(im.subfolder || "") + "&type=output")
+              .then(function (r) { return r.blob(); });
+          }));
+        });
+      };
+      return loop();
+    });
+  }
+
   // → Promise<Blob[]>
   function run(req, signal, deps) {
     if (!req) return Promise.reject(new ImageError("unsupported"));
+    if (req.reply === "comfy") return comfyRun(req, signal, deps);
     var init = { method: req.method, headers: req.headers || {}, signal: signal, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" };
     if (req.json) init.body = JSON.stringify(req.json);
     else if (req.form) {
@@ -307,6 +406,7 @@
         return [b];
       });
       return res.json().then(function (j) {
+        if (req.reply === "sd-one") { if (typeof j.image !== "string" || !j.image) throw new ImageError("bad"); return [b64Blob(j.image, "image/png")]; }
         var list = req.reply === "json-b64" ? (j.data || []).map(function (d) { return d.b64_json; }) : (j.images || []);
         list = list.filter(function (x) { return typeof x === "string" && x; });
         if (!list.length) throw new ImageError("bad");
@@ -319,7 +419,7 @@
     IMG_PREF: IMG_PREF, PROVIDERS: PROVIDERS, IDS: IDS, KEY_EXTRA: KEY_EXTRA,
     normPref: normPref, readPref: readPref, writePref: writePref, conf: conf, use: use,
     STYLES: STYLES, STYLE_IDS: STYLE_IDS, styled: styled, MAX_PROMPT: MAX_PROMPT, sizeFor: sizeFor,
-    buildGenerate: buildGenerate, buildEdit: buildEdit, buildExpand: buildExpand, buildTest: buildTest,
+    buildGenerate: buildGenerate, buildEdit: buildEdit, buildExpand: buildExpand, buildTest: buildTest, buildUpscale: buildUpscale, comfyFlow: comfyFlow,
     run: run, ImageError: ImageError, b64Blob: b64Blob, hordeWait: hordeWait, HORDE_ANON: HORDE_ANON
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

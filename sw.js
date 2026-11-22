@@ -2416,6 +2416,7 @@ var PRECACHE_URLS = [
   "studio/search.js",
   "photolab/commands.js",
   "photolab/assist.js",
+  "photolab/aiedit.js",
   "slides/commands.js",
   "slides/assist.js",
   "photolab/raw.js",
