@@ -453,6 +453,7 @@ orosPack("de", "settings", {
  "fm.where.oros": "Die Schrift von orOS auf diesem Gerät",
  "fm.where.untitled": "Ohne Titel",
  "fm.where.writer": "Writer",
+ "g.gallery": "Widget-Galerie…",
  "g.hint": "Karten auf dem Desktop, nur auf diesem Gerät. Um ihre Reihenfolge zu ändern, ziehe eine Karte an ihrem Titel oder klicke sie mit der rechten Maustaste an (lange drücken auf einem Touchscreen).",
  "s.screentime": "Bildschirmzeit",
  "sb.title": "Obere Leiste",

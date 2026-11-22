@@ -82,3 +82,41 @@ test("strings: every wg.* key exists in EN, EL and DE", () => {
     assert.ok(de.includes('"' + k + '":'), "DE " + k);
   }
 });
+
+test("GALLERY-1 search: case, accents and final sigma fold; place filter; every word must match", () => {
+  const it = { name: "Καιρός", place: "desk" };
+  assert.equal(W.fold("ΚΑΙΡΌΣ"), "καιροσ");
+  assert.equal(W.galMatchOf(it, "καιρος", "all", "Επιφάνεια εργασίας"), true);
+  assert.equal(W.galMatchOf(it, "  ", "all", ""), true);
+  assert.equal(W.galMatchOf(it, "καιρος", "bar", ""), false, "the place filter comes first");
+  assert.equal(W.galMatchOf(it, "καιρ επιφανεια", "desk", "Επιφάνεια εργασίας"), true);
+  assert.equal(W.galMatchOf(it, "καιρ μπαρα", "all", "Επιφάνεια εργασίας"), false);
+  assert.equal(W.galMatchOf({ name: "Battery", place: "bar" }, "BAT", "bar", "Top bar"), true);
+});
+
+test("GALLERY-1 wiring: previews are inert, never paint Playing or First steps, bar cards through smartbar.preview", () => {
+  const src = read("widgets.js");
+  assert.deepEqual(W.PREVIEW_PAINT.filter((k) => W.KINDS.indexOf(k) === -1), []);
+  assert.equal(W.PREVIEW_PAINT.indexOf("media"), -1);
+  assert.equal(W.PREVIEW_PAINT.indexOf("start"), -1);
+  const dp = src.slice(src.indexOf("function deskPreview("), src.indexOf("function barPreview("));
+  assert.match(dp, /box2\.inert = true;/);
+  assert.match(dp, /aria-hidden", "true"/);
+  const bp = src.slice(src.indexOf("function barPreview("), src.indexOf("function galSet("));
+  assert.match(bp, /root\.orosSmartBar\.preview\(kind\)/);
+  assert.match(bp, /el\("b", null, p\.v \|\| "—"\)/, "the card's text only through textContent");
+  assert.match(src, /\.wg-prev \{[^}]*pointer-events: none/);
+  const sb = read("smartbar.js");
+  assert.match(sb, /preview: function \(kind\) \{\n      if \(!host \|\| KINDS\.indexOf\(kind\) === -1 \|\| locked\(\)\) return null;/);
+  assert.match(read("shell.js"), /case "widgets\.gallery": if \(window\.orosWidgets && window\.orosWidgets\.edit\) window\.orosWidgets\.edit\(\); return;/);
+  const st = read("settings/settings.js");
+  assert.equal((st.match(/act\("widgets\.gallery"\)/g) || []).length, 2, "from Desktop widgets and from Top bar");
+  for (const [f, re] of [["settings/core.js", /"g\.gallery": /g], ["i18n/de/settings.js", /"g\.gallery": /g]]) {
+    assert.equal((read(f).match(re) || []).length, f.endsWith("core.js") ? 2 : 1, f);
+  }
+  const tr = read("translations.js"), de = read("i18n/de/shell.js");
+  for (const k of ["addDesk", "addBar", "startPv"]) {
+    assert.equal((tr.match(new RegExp('"wg\\.gal\\.' + k + '":', "g")) || []).length, 2, "EN+EL " + k);
+    assert.ok(de.includes('"wg.gal.' + k + '":'), "DE " + k);
+  }
+});

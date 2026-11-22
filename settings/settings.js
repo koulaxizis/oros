@@ -505,6 +505,8 @@
         wl.appendChild(lab);
       });
       cw.appendChild(wl);
+      // GALLERY-1: the one gallery (search, previews, order) for both
+      cw.appendChild(button(t("g.gallery"), "widgets.gallery", function () { act("widgets.gallery"); }));
       host.appendChild(cw);
     }
 
@@ -512,6 +514,7 @@
     if (s.smartbar) {
       var cb2 = card(t("sb.title"), "smartbar");
       cb2.appendChild(el("p", "hint", t("sb.hint")));
+      cb2.appendChild(button(t("g.gallery"), "smartbar.gallery", function () { act("widgets.gallery"); }));
       // SB-LIVE: timers, stopwatch and recording show by themselves
       if (typeof s.smartbar.live === "boolean") {
         cb2.appendChild(row(t("sb.live"), switchBtn(s.smartbar.live, "smartbar-live", function (v) { set("smartbar-live", v); }, t("sb.live")),
