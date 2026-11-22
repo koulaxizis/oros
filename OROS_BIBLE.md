@@ -13550,3 +13550,12 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** style.css, smartbar.js, smartbar-live.js, qsettings.js, help/topics/whatsnew.en/el.txt, shell.js.
 - **Tests:** full `node --test tests/*.test.js`. Playwright Chromium, Pixel 7 touch emulation at 360 px, glass look: before, every visible bar button kept `rgba(212,175,55,.2)` after two taps; after, all transparent. Desktop 1280 px with a mouse: hover still highlights. Keyboard Tab: `:focus-visible` outline still shows.
   - Not tested: a real phone, Safari.
+
+### 2026-11-22 — orOS 8.34.00 — Space left in the cloud in Settings › Sync (SPACE-1, #1213)
+
+- **Why:** Chris, 2026-11-21 18:38: "How can I see inside orOS how much space is left on the disk (Dropbox or Nextcloud)?" sync.js already asked Dropbox (`cloudDrop.space()`, Transfer and Gate only) but showed it nowhere, and never asked WebDAV.
+- **Rule (SPACE-1):** see Part II, after the sync provider contract: provider `space()`, `orosSync.cloudSpace()`, read only, 10-minute cache in the shell, warning at 90 %.
+- **Changes:** sync.js (`dropboxSpace`, `davSpace`, `davQuotaOf`, `cloudSpace`), shell.js (`state.syncSpace`, `syncSpaceLoad`, `sync.space` action), settings (`spaceCard`, `spPct`, `.sp-*` CSS, search row `cloud-space`), Overview tile `Device storage` (EN/EL/DE), help (settings + sync topic, EN/EL/DE), What's new EN/EL.
+- **Files:** sync.js, shell.js, settings/settings.js, settings/settings.css, settings/core.js, settings/help.en/el.txt, translations.js, i18n/de/settings.js, i18n/de/shell.js, i18n/de/help/settings.txt, i18n/de/help/topics/sync.txt, help/topics/sync.en/el.txt, help/topics/whatsnew.en/el.txt, tests/harness.js, tests/sync-space.test.js, tests/settings.test.js.
+- **Tests:** full `node --test tests/*.test.js`; `tests/sync-space.test.js` (Dropbox individual/team/unknown/refused, WebDAV quota/no limit/no properties/offline, not connected asks nothing). Playwright Chromium (LANG=C.UTF-8) at 360 px in EN/EL/DE: card, no horizontal overflow, no small targets, no console errors; 98 % shows the warning.
+  - Not tested: a real Dropbox account, a real Nextcloud server, a real phone, Safari.
