@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.6.0)
+// orOS — smartbar.js (smart top bar, v1.8.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -18,7 +18,11 @@
 //   tokens this month on the person's own keys and the free Tavily
 //   searches left, never for local models. The "battery" card (BAT-1,
 //   v1.6.0): percent and charging where the browser reports a battery;
-//   a tap opens Quick settings. fitBar() folds the last chips
+//   a tap opens Quick settings. The "playing" card (NOWPLAY-1, v1.7.0):
+//   what Music, Podcasts, Radio or the Sound Mixer plays; a tap opens a
+//   peek with Previous / Play-Pause / Next. preview(kind) (GALLERY-1,
+//   v1.8.0) gives widgets.js's one widget gallery a card's icon and
+//   text as it would show now. fitBar() folds the last chips
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
@@ -30,10 +34,10 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.6.0";
+  var VER = "1.8.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
-               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery"];
+               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing"];
   var MONEY = { budget: 1, sales: 1, invoices: 1 };
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
@@ -222,7 +226,17 @@
     return { pct: pct, charging: charging, low: !charging && pct <= BAT_LOW };
   }
 
-  var model = { VER: VER, KEY: KEY, batteryCard: batteryCard, BAT_LOW: BAT_LOW, peekRows: peekRows, hiLo: hiLo, aiUsage: aiUsage, compact: compact, TAVILY_FREE: TAVILY_FREE, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
+  // NOWPLAY-1: the player for the card: the one that plays, else none.
+  //   list = the shell's players [{ id, name, playing, title }]
+  //   → { m, what, sub } | null (what = the title's first part)
+  function playingOf(list) {
+    var m = (Array.isArray(list) ? list : []).filter(function (x) { return x && x.playing; })[0];
+    if (!m) return null;
+    var parts = String(m.title || "").split(" · ");
+    return { m: m, what: parts[0] || String(m.name || ""), sub: parts.slice(1).join(" · ") };
+  }
+
+  var model = { VER: VER, KEY: KEY, playingOf: playingOf, batteryCard: batteryCard, BAT_LOW: BAT_LOW, peekRows: peekRows, hiLo: hiLo, aiUsage: aiUsage, compact: compact, TAVILY_FREE: TAVILY_FREE, KINDS: KINDS, MONEY: MONEY, SOON_MIN: SOON_MIN,
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
                 monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS,
@@ -263,6 +277,7 @@
   var IC = {
     event: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
     focus: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2M10 2.5h4"/></svg>',
+    playing: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l11-2v13"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="17.5" cy="16" r="2.5"/></svg>',
     battery: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="7" width="17" height="10" rx="2.5"/><path d="M22 10.5v3"/></svg>',
     ai: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M10 10h4v4h-4zM9 2.5V6M15 2.5V6M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/></svg>',
     tasks: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="M8 12l3 3 5-6"/></svg>',
@@ -345,6 +360,12 @@
     ".pk-empty { padding: 6px; color: var(--text-dim); font-size: 13px; }",
     ".pk-open { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px;",
     "  background: transparent; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }",
+    ".pk-mt { font-size: 16px !important; overflow-wrap: anywhere; }",
+    ".pk-ctl { display: flex; justify-content: center; gap: 14px; padding: 6px 0 2px; }",
+    ".pk-mb { width: 48px; height: 48px; border: none; border-radius: 50%; background: transparent; color: var(--text); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; padding: 0; }",
+    ".pk-mb svg { width: 22px; height: 22px; }",
+    ".pk-mb.pk-play { background: var(--accent); color: var(--accent-ink, var(--bg)); }",
+    "#sb-peek .pk-mb.pk-play:hover, #sb-peek .pk-mb.pk-play:focus-visible { background: var(--accent); outline: 2px solid var(--text); outline-offset: 2px; }",
     "#sb-peek button:hover, #sb-peek button:focus-visible { background: var(--accent-soft); outline: none; }",
     "#sb-peek .pk-grid button.pk-now:hover, #sb-peek .pk-grid button.pk-now:focus-visible { background: var(--accent); outline: 2px solid var(--text); outline-offset: -2px; }",
     // SB3 looks: the bar floats as a rounded pill inside its own 40 px
@@ -620,10 +641,42 @@
     if (!rows.length) p.appendChild(el("div", "pk-empty", t("pk.none")));
     p.appendChild(pbtn("pk-open", t("pk.open").replace("{app}", appName("calendar") || "Calendar"), function () { openApp("calendar"); }));
   }
+  // NOWPLAY-1: what plays, with Previous / Play-Pause / Next and Open.
+  var IC_PREV = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="5" y="5" width="2.5" height="14" rx="1"/><path d="M19 5.8v12.4a.8.8 0 0 1-1.2.7L9 12.7a.8.8 0 0 1 0-1.4l8.8-6.2a.8.8 0 0 1 1.2.7z"/></svg>';
+  var IC_NEXT = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="16.5" y="5" width="2.5" height="14" rx="1"/><path d="M5 5.8v12.4a.8.8 0 0 0 1.2.7l8.8-6.2a.8.8 0 0 0 0-1.4L6.2 5.1A.8.8 0 0 0 5 5.8z"/></svg>';
+  var IC_PLAY = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>';
+  var IC_PAUSE = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>';
+  var mediaShown = null;               // the player the panel shows (kept while it pauses)
+  function fillMedia(p) {
+    var list = call(function () { return host.media(); }) || [];
+    var m = null;
+    if (mediaShown) list.forEach(function (x) { if (x && x.id === mediaShown) m = x; });
+    if (!m) { var pl = playingOf(list); m = pl ? pl.m : null; }
+    if (!m) return false;
+    mediaShown = m.id;
+    var parts = String(m.title || "").split(" · "), st = strict();
+    var h = el("div", "pk-h");
+    var tx = el("div");
+    tx.appendChild(el("b", "pk-mt", st ? m.name : (parts[0] || m.name)));
+    tx.appendChild(el("small", null, st ? "" : [parts.slice(1).join(" · "), m.name].filter(Boolean).join(" · ")));
+    h.appendChild(tx);
+    p.appendChild(h);
+    var ctl = el("div", "pk-ctl");
+    var again = function (sel) { setTimeout(function () { repaintPeek(sel); }, 250); };
+    function cb(cls, ic, label, fn) { var b = pbtn(cls, null, fn, label); b.innerHTML = ic; ctl.appendChild(b); }   // static icons
+    if (typeof m.prev === "function") cb("pk-mb pk-prev", IC_PREV, t("wg.media.prev") + " · " + m.name, function () { m.prev(); again(".pk-prev"); });
+    cb("pk-mb pk-play", m.playing ? IC_PAUSE : IC_PLAY, t(m.playing ? "qs.pause" : "qs.play") + " · " + m.name, function () { m.toggle(); again(".pk-play"); });
+    if (typeof m.next === "function") cb("pk-mb pk-next", IC_NEXT, t("wg.media.next") + " · " + m.name, function () { m.next(); again(".pk-next"); });
+    p.appendChild(ctl);
+    p.appendChild(pbtn("pk-open", t("pk.open").replace("{app}", m.name), function () { closePeek(); call(function () { m.open(); }); }));
+    return true;
+  }
   function repaintPeek(focusSel) {
     if (!peekEl) return;
     while (peekEl.firstChild) peekEl.removeChild(peekEl.firstChild);
-    if (peekKind === "weather") {
+    if (peekKind === "media") {
+      if (!fillMedia(peekEl)) { closePeek(); return; }
+    } else if (peekKind === "weather") {
       var w = call(function () { return host.weather(); });
       if (!w || !Array.isArray(w.days) || !w.days.length) { closePeek(); return; }
       fillWeather(peekEl, w);
@@ -634,7 +687,7 @@
   // → true when a panel opened (or the same one closed); false when there
   // is nothing to show, so the caller opens the app as before.
   function peek(kind, from) {
-    if (!host || (kind !== "weather" && kind !== "event") || locked()) return false;
+    if (!host || (kind !== "weather" && kind !== "event" && kind !== "media") || locked()) return false;
     if (peekEl && peekKind === kind) { closePeek(true); return true; }
     closePeek();
     closePop();
@@ -642,13 +695,15 @@
       var w = call(function () { return host.weather(); });
       if (!w || !Array.isArray(w.days) || !w.days.length) return false;
     }
+    if (kind === "media" && !playingOf(call(function () { return host.media(); }))) return false;
     peekKind = kind;
     peekAt = null;
+    mediaShown = null;
     peekFrom = from || null;
     peekEl = el("div");
     peekEl.id = "sb-peek";
     peekEl.setAttribute("role", "dialog");
-    peekEl.setAttribute("aria-label", kind === "weather" ? (appName("weather") || "Weather") : (appName("calendar") || "Calendar"));
+    peekEl.setAttribute("aria-label", kind === "weather" ? (appName("weather") || "Weather") : kind === "media" ? t("sb.k.playing") : (appName("calendar") || "Calendar"));
     doc.body.appendChild(peekEl);
     if (peekFrom) peekFrom.setAttribute("aria-expanded", "true");
     doc.addEventListener("keydown", onPeekKey, true);
@@ -715,6 +770,16 @@
       var ph = t(f.phase === "break" ? "sb.focus.break" : "sb.focus.work"), left = clock(f.left);
       return { v: left, l: ph, cls: f.phase === "work" ? "sb-soon" : "",
                tip: t("sb.focus.tip").replace("{p}", ph).replace("{r}", left).replace("{app}", appName("time")), go: function () { host.open("time"); } };
+    },
+    // NOWPLAY-1: only while something plays; the title hides under
+    // Sensitive work (the app's name stays).
+    playing: function () {
+      var p = playingOf(call(function () { return host.media(); }));
+      if (!p) return null;
+      var app = p.m.name || "", what = strict() ? app : p.what;
+      return { v: what, l: strict() ? "" : app, cls: "sb-txt",
+               tip: t("sb.play.tip").replace("{t}", what).replace("{app}", app),
+               go: function () { peek("media", chips.playing && chips.playing.btn); } };
     },
     // BAT-1: the battery the browser reports, read once and then followed
     // through its own events (no polling).
@@ -970,6 +1035,14 @@
       save(list(), look);
     },
     wants: function (kind) { return !!host && list().indexOf(kind) !== -1; },
+    // GALLERY-1: what a card would show now, for widgets.js's gallery:
+    // its fixed icon and the same text as the chip (null when locked).
+    // A card with nothing to say gives v "" and the gallery says so.
+    preview: function (kind) {
+      if (!host || KINDS.indexOf(kind) === -1 || locked()) return null;
+      var s = call(function () { return STATE[kind] ? STATE[kind](Date.now()) : null; }) || null;
+      return { icon: icon(kind), v: s ? String(s.v || "") : "", l: s ? String(s.l || "") : "" };
+    },
     // PEEK-1: open the "weather" or "event" peek panel under `from`
     peek: function (kind, from) { return peek(kind, from); },
     set: function (kind, on) {

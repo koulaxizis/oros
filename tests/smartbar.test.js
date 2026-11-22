@@ -120,7 +120,8 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
   // chip text goes in through textContent only; innerHTML is for the fixed icons
   // PEEK-1: the peek panels add the shell's own weather icons (wxIconFor / wxDayIcon, static SVG)
   assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = IC.more;", "innerHTML = icon(k);",
-    'innerHTML = w.icon || "";', 'innerHTML = d.icon || "";']);
+    'innerHTML = w.icon || "";', 'innerHTML = d.icon || "";', "innerHTML = ic;"]);
+  assert.match(src, /function cb\(cls, ic, label, fn\)/);           // NOWPLAY-1: ic is one of IC_PREV / IC_PLAY / IC_PAUSE / IC_NEXT
   assert.match(sh, /icon: wxDayIcon\(r\.code\)/);
   assert.match(src, /if \(strict\(\)\) return null;[\s\S]*if \(strict\(\)\) return null;/);
 });
@@ -128,7 +129,9 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
 test("Settings: card, search row, scope, and strings in EN, EL and DE", () => {
   const set = read("settings/settings.js");
   assert.match(set, /if \(s\.smartbar\) \{/);
-  assert.match(set, /set\("smartbar:" \+ w\.id, cb\.checked\)/);
+  // GALLERY-1 + structure review 8: cards are added and ordered only in the widget gallery
+  assert.match(set, /act\("widgets\.gallery"\)/);
+  assert.match(set, /set\("smartbar-look", v\)/);
   const C = require("../settings/core.js");
   assert.strictEqual(C.scopeOf("smartbar"), "device");
   const core = read("settings/core.js");
@@ -150,7 +153,7 @@ test("shell strings for every chip in EN, EL and DE", () => {
     "sb.habits.one", "sb.plants.one", "sb.chores.one", "sb.kanban.one", "sb.invoices.one",
     "sb.tmr.name", "sb.tmr.tip", "sb.tmr.stop", "sb.sw.label", "sb.sw.tip", "sb.sw.stop", "sb.rec.paused", "sb.rec.tip", "sb.rec.tip.p", "sb.rec.stop",
     "sb.ai.label", "sb.ai.searches", "sb.ai.near", "sb.ai.tip", "sb.ai.web", "sb.ai.srch",
-    "sb.bat.label", "sb.bat.charging", "sb.bat.low", "sb.bat.tip"]);
+    "sb.bat.label", "sb.bat.charging", "sb.bat.low", "sb.bat.tip", "sb.play.tip"]);
   keys.forEach((k) => {
     assert.strictEqual(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
@@ -424,4 +427,23 @@ test("BAT-1 batteryCard: percent, charging, low under 20 %, none on mains or jun
   const src = read("smartbar.js");
   assert.match(src, /root\.orosQS\.open\(\)/);                 // a tap opens Quick settings
   assert.doesNotMatch(src, /setInterval/);                       // followed through the battery's own events
+});
+
+// NOWPLAY-1 (smartbar 1.7.0): the "Now playing" card and its peek.
+test("NOWPLAY-1 playingOf: only a player that plays, title split from its artist", () => {
+  const list = [
+    { id: "radio", name: "Radio", playing: false, title: "ERT" },
+    { id: "music", name: "Music", playing: true, title: "Song · Artist · Album" }
+  ];
+  const p = M.playingOf(list);
+  assert.strictEqual(p.m.id, "music");
+  assert.strictEqual(p.what, "Song");
+  assert.strictEqual(p.sub, "Artist · Album");
+  assert.strictEqual(M.playingOf([{ id: "radio", playing: false, title: "x" }]), null);
+  assert.strictEqual(M.playingOf(null), null);
+  assert.strictEqual(M.playingOf([{ id: "mixer", name: "Mixer", playing: true, title: "" }]).what, "Mixer");
+  assert.ok(M.KINDS.includes("playing"));
+  const src = read("smartbar.js"), sh = read("shell.js");
+  assert.match(sh, /media: function \(\) \{ return qsMedia\(\)\.filter\(function \(m\) \{ return !appLockSet\(m\.id\); \}\); \}/);
+  assert.match(src, /var app = p\.m\.name \|\| "", what = strict\(\) \? app : p\.what;/);   // the title hides under Sensitive work
 });

@@ -9,7 +9,7 @@
 //     window is only the screen over it
 //   - the music files are on the orOS disk, /internal/Music
 //     (library.js scans them; store.js keeps the device index)
-//   - device-local: prefs "oros-music-prefs" (tab, library view,
+//   - device-local: prefs "oros-music-prefs" (library view; the tab is saved but every start opens on Home,
 //     sort, old-tag encoding, LRCLIB yes/no), lyrics found online
 //     "oros-music-lyrics"; the sound settings live in the host
 //     ("oros-music-sound": equalizer, crossfade, ReplayGain)
@@ -751,7 +751,9 @@
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
-        if (["home", "search", "lib"].indexOf(o.tab) >= 0) p.tab = o.tab;
+        // MU-HOME: every start opens on Home, like Spotify. The last tab is
+        // no longer restored: reopening on Search hid the whole Home
+        // (recommendations, most played, genres) behind the genre grid.
         if (["pl", "songs", "albums", "artists", "genres", "folders", "offline", "servers"].indexOf(o.lib) >= 0) p.lib = o.lib;
         if (["title", "artist", "album", "added"].indexOf(o.sort) >= 0) p.sort = o.sort;
         if (["auto", "el", "latin"].indexOf(o.legacy) >= 0) p.legacy = o.legacy;
@@ -3985,7 +3987,21 @@
   function paintPlaying() {
     if (!H) return;
     var st = H.getState(), k = st.cur ? st.cur.k : "";
-    [].forEach.call(document.querySelectorAll(".row"), function (li) { li.classList.toggle("now", !!k && li.getAttribute("data-k") === k); });
+    // MU-NOW: the playing row gets a tinted ground and moving bars, so it
+    // shows even when the palette's accent is close to the text colour.
+    [].forEach.call(document.querySelectorAll(".row"), function (li) {
+      var on = !!k && li.getAttribute("data-k") === k;
+      li.classList.toggle("now", on);
+      li.classList.toggle("paused", on && !st.playing);
+      var main = li.querySelector(".row-main"), eq = main && main.querySelector(".eq");
+      if (on) li.setAttribute("aria-current", "true"); else li.removeAttribute("aria-current");
+      if (on && main && !eq) {
+        eq = el("span", "eq");
+        eq.setAttribute("aria-hidden", "true");
+        for (var b = 0; b < 3; b++) eq.appendChild(el("i"));
+        main.insertBefore(eq, main.querySelector(".row-text"));
+      } else if (!on && eq) eq.remove();
+    });
     [].forEach.call(document.querySelectorAll(".big-play"), function (b) {
       var src = null;
       try { src = JSON.parse(b.getAttribute("data-src") || "null"); } catch (e) {}

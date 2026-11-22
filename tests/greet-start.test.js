@@ -72,7 +72,7 @@ test("First steps: the widget's own wiring", () => {
   assert.match(src, /firstRun: function \(\) \{\n      if \(!host\) return;\n      var l = firstList\(stored\(\), wide\(\), phone\(\)\);\n      if \(l\) save\(l\);/);
   assert.match(src, /did: function \(step\) \{/);
   assert.match(src, /if \(kind === "start" && on\) startReopen\(\);/);
-  assert.match(src, /if \(kind === "start" && cb\.checked\) startReopen\(\);/);
+  assert.match(src, /if \(it\.id === "start" && on\) startReopen\(\);/);
   // Text only through textContent; the one innerHTML is the static tick.
   const paint = src.slice(src.indexOf("    start: function (c, force) {"), src.indexOf("    clock: function (c) {"));
   assert.deepEqual(paint.match(/innerHTML = [A-Za-z_]+/g), ["innerHTML = IC_TICK"]);

@@ -208,7 +208,15 @@ input[type="range"] { accent-color: var(--accent); width: 100%; }
 .row-t { font-weight: 700; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-s { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-d { font-size: 13px; font-variant-numeric: tabular-nums; width: 44px; text-align: right; flex: 0 0 auto; }
+.row.now { background: var(--accent-soft); }
 .row.now .row-t { color: var(--accent); }
+/* MU-NOW: moving bars next to the playing song (still while paused). */
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; width: 14px; height: 14px; flex: 0 0 auto; color: var(--accent); }
+.eq i { display: block; width: 3px; height: 40%; background: currentColor; border-radius: 1px; animation: mu-eq 0.9s ease-in-out infinite alternate; }
+.eq i:nth-child(2) { height: 100%; animation-delay: -0.3s; }
+.eq i:nth-child(3) { height: 65%; animation-delay: -0.6s; }
+.row.paused .eq i { animation-play-state: paused; }
+@keyframes mu-eq { from { height: 25%; } to { height: 100%; } }
 .row.missing { opacity: 0.5; }
 .lib-list { display: flex; flex-direction: column; gap: 2px; }
 .lib-row {
