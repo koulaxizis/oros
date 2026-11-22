@@ -13674,3 +13674,12 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** designkit/text.js, designkit/render.js, layout/notes.js (new), layout/book.js (new), layout/story.js, layout/autolay.js, layout/houseui.js, layout/outprof.js, layout/epub.js, layout/caret.js, layout/panels.js, layout/layout.js, layout/layout.css, layout/index.html, sw.js, layout/help.en/el.txt, i18n/de/layout.js, i18n/de/help/layout.txt, tests/layout-w7.test.js (new), shell.js (APP_VERSION), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md (LY-W7, Part IX, this entry).
 - **Tests:** full `node --test tests/*.test.js`; W7 tests for footnotes at the column foot, a line moving with its note, numbering through the document and per story, endnotes, lists, cross-references (three kinds, a lost anchor), PDF links, EPUB notes, links and cross-references (epubcheck clean), contents from styles, books; the real shell on desktop and at 360 px (list in the style dialog, a note, a cross-reference, a link, typing keeps them, contents made, a book made, endnotes). Not tested: a real device; the book PDF on a phone.
 - **Next:** W8 house templates scaled to any trim (plan.md §5).
+
+### 2026-11-22 — orOS 8.44.00 — Gate and Assistant set Kanban columns up as Author Portal steps (KB-COLAP, #1224)
+
+- **Why:** Chris, 2026-11-22 10:14: «Βάλε τη δυνατότητα και θα σου λέω αν χρειάζεται»: Claude (Gate) and the Assistant should be able to set the Author Portal step, finish and author texts of a Kanban column (AP-FLOW, 8.35.00), e.g. the «Βιβλία» defaults.
+- **Rule (KB-COLAP):** see Part VI, AP-FLOW: `kanban_add_columns` `portal_columns`, merged like Column settings › Author Portal, one header stamp, undo record `ap`.
+- **Changes:** gate/gate.js (`kanbanWrite` add_columns, `kanbanUndo`, change labels), relay/gate.js (schema and description; Mail thread OK at 9947148fc), assistant/core.js (`TOOL_KB_COLS`), assistant/assistant.js (`kanbanColumns` rows, `kbap.*` strings EN/EL), i18n/de/assistant.js, What's new EN/EL.
+- **Files:** gate/gate.js, relay/gate.js, assistant/core.js, assistant/assistant.js, i18n/de/assistant.js, tests/gate-kanban.test.js, tests/gate-relay.test.js, shell.js, help/topics/whatsnew.en/el.txt.
+- **Tests:** full `node --test tests/*.test.js`; gate-kanban (merge into ap, keys left out stay, empty text clears, step false keeps texts, merge wins, undo, rename and portal in one call, kept, refusals), gate-relay (schema, Assistant keys).
+  - Not tested: a real Claude session through Gate, a real phone.
