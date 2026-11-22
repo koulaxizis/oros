@@ -18293,6 +18293,8 @@
       fit: function () { queueFitBar(); },
       barwin: function () { return BARWIN; },  // SB-LIVE: no stop buttons in the desktop bar window
       weather: function () { return wxPeekData(); },                 // PEEK-1
+      // NOWPLAY-1: the players (never a locked app's), with their controls
+      media: function () { return qsMedia().filter(function (m) { return !appLockSet(m.id); }); },
       openDay: function (ymd) { window.__orosOpenCalendar("-", ymd); }   // PEEK-1: a day of the month
     });
   }

@@ -1493,6 +1493,8 @@ orosPack("de", "shell", {
  "sb.k.reading": "Das Buch, das du liest",
  "sb.k.ai": "KI-Nutzung diesen Monat (eigener Schlüssel)",
  "sb.k.battery": "Akku",
+ "sb.k.playing": "Läuft gerade",
+ "sb.play.tip": "Läuft: {t} · {app}",
  "sb.bat.label": "Akku",
  "sb.bat.charging": "lädt",
  "sb.bat.low": "schwach",
