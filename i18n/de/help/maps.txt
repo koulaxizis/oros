@@ -272,7 +272,7 @@ Jedes Paket zeigt seine Größe, seine Details, wann du es heruntergeladen hast 
 
 - `Offline-Karte (heruntergeladen)` in der Ebenen-Taste zeigt deine Pakete; außerhalb davon ist die Karte schraffiert. Geht das Gerät über einem Paket offline, wechselt Karten von selbst dorthin und zurück, wenn du wieder online bist. Über die höchste Detailstufe des Pakets hinaus wird die Karte größer gezeichnet, bleibt aber scharf.
 - Offline findet die Suche Namen aus deinen Paketen: Städte und Viertel, Straßen, Geschäfte und andere Orte, Parks und Gewässer sowie Adressen, wo die Kartendaten sie haben. Akzente spielen keine Rolle, und lateinische Buchstaben finden griechische Namen (`plaka` findet Πλάκα). Die Zeilen sagen `(offline)`.
-- Neue Routen brauchen weiterhin eine Verbindung.
+- Ohne Verbindung kommen Routen `Zu Fuß` und `Fahrrad` aus deinen Paketen (experimentell): Karten berechnet die Route auf dem Gerät aus den Straßen, Wegen, Treppen und Radwegen eines Pakets, das alle Halte enthält, mit dem Detail `Straßen, Geschäfte und Orte` oder mehr. Die Routenleiste zeigt `Offline · experimentell`, und die `Wegbeschreibung` zeigt die Arten der Wege. Die Pakete kennen keine Einbahnregeln für Räder, wer einen Weg benutzen darf, Abbiegeverbote oder Höhen, prüfe also vor Ort; die Zeit gilt für ebenes Gelände. Dasselbe passiert, wenn du online bist, die Routenserver aber nicht erreichbar sind. Autorouten brauchen weiterhin eine Verbindung.
 - `Kartenquelle (erweitert)` nimmt statt der Standardquelle die Adresse deiner eigenen PMTiles-Datei (Vektorkacheln im Protomaps-Layout).
 
 ## Online-Dienste und Datenschutz
@@ -315,7 +315,7 @@ Gespeicherte Orte, deine Streckenliste (Namen, Aktivitäten, Farben, Ordner, Sta
 
 ## Grenzen
 
-- Neue Routen brauchen eine Verbindung. Offline hast du deine Offline-Karten (Karte und Suche), früher angesehene Gebiete, gespeicherte Orte und deine letzte Route. Ohne Offline-Karte braucht die Suche eine Verbindung.
+- Neue Autorouten brauchen eine Verbindung (Zu Fuß und Fahrrad kommen aus deinen Offline-Karten, siehe Offline-Karten). Offline hast du deine Offline-Karten (Karte und Suche), früher angesehene Gebiete, gespeicherte Orte und deine letzte Route. Ohne Offline-Karte braucht die Suche eine Verbindung.
 - Offline-Karten brauchen einen Browser, der Dateien für eine Website speichern kann (aktuelles Chrome, Edge, Firefox, Safari 26). Der Browser kann sie entfernen, wenn der Gerätespeicher knapp wird. Die Offline-Karte ist einfacher gezeichnet als die Online-Karte: keine Hausnummern oder Einbahnpfeile auf der Karte, keine Schummerung, und Namen nahe am Rand einer Kartenkachel erscheinen eventuell nicht.
 - Die Offline-Suche findet nur Namen in den Kartendaten, nicht jede Adresse; ein Gebietspaket fasst höchstens 600.000 Kartenkacheln, daher kommt ein ganzes Land mit weniger Details.
 - Navigation braucht GPS, und Karten muss offen bleiben.
