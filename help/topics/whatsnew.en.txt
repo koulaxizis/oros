@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.64.00
+- **Files: Duplicates.** Duplicates in the Files sidebar finds files that are exactly the same, byte for byte, whatever their names. It also finds identical folders, and pictures or songs that differ only in hidden details such as camera data or tags. One copy of every group always stays, and nothing is removed until you choose Move to Trash, after a last byte-by-byte check. Dropbox and This computer have their own Duplicates button, which also shows copies you already have on the orOS disk. Photos that look alike still open in Photos.
+
 ## Version 8.63.00
 - **Layout: alternate layouts.** More › Alternate layouts… makes the same design in another size, such as a book page as a square post or an A5 flyer as an A4 poster. The alternate is a document of its own that you arrange freely, and its texts stay linked: when you change a text in the original, Update brings it over.
 

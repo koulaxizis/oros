@@ -52,6 +52,7 @@
       "c.opening":     "Opening {name}…",
       "c.up":          "Go to parent folder",
       "c.refresh":     "Refresh",
+      "c.dupes":       "Find duplicates here",
       "c.newFolder":   "New folder",
       "c.newFolderName": "New folder",
       "c.trash":       "Trash of this computer",
@@ -136,6 +137,7 @@
       "c.opening":     "Άνοιγμα του {name}…",
       "c.up":          "Στον γονικό φάκελο",
       "c.refresh":     "Ανανέωση",
+      "c.dupes":       "Εύρεση διπλότυπων εδώ",
       "c.newFolder":   "Νέος φάκελος",
       "c.newFolderName": "Νέος φάκελος",
       "c.trash":       "Κάδος αυτού του υπολογιστή",
@@ -381,6 +383,11 @@
     tr.id = "cmp-trash";
     bar.appendChild(tr);
     bar.appendChild(btn("tool", ICON.refresh, t("c.refresh"), function () { load(); }));
+    // Files › Duplicates over this folder (DUPES-1 K3); at the top,
+    // the home folder (all disks at once would be too much).
+    if (ctx && ctx.findDupes) bar.appendChild(btn("tool", '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></svg>', t("c.dupes"), function () {
+      ctx.findDupes(cwd === PREFIX || trashMode ? PREFIX + "/home" : cwd, "computer");
+    }));
     var host = $("bar");
     if (host) host.appendChild(bar);
 
@@ -1050,7 +1057,52 @@
     });
   }
 
+  // Files › Duplicates (dupes.js, DUPES-1 K3): what it needs of this
+  // computer's files. Parts are read with a Range request; removing is
+  // the computer's own Trash (op trash; a Windows removable disk
+  // refuses: the file stays).
+  function dupesSource() {
+    if (!available || !api) return null;
+    return {
+      kind: "computer",
+      list: function (base, all, live, onCount) {
+        var out = [], dirs = [base], n = 0;
+        function next() {
+          if ((live && !live()) || !dirs.length || n > 20000 || out.length >= 100000) return Promise.resolve(out);
+          var d = dirs.shift();
+          n++;
+          return api.list(d).then(function (l) {
+            (l || []).forEach(function (e) {
+              if (!e || !e.name || (!all && e.name.charAt(0) === ".")) return;
+              if (e.dir) dirs.push(e.path);
+              else out.push({ p: e.path, s: e.size || 0, m: e.mtime || 0 });
+            });
+            if (onCount) onCount(out.length);
+          }, function () {}).then(next);
+        }
+        return next();
+      },
+      read: function (p, off, len) {
+        var url = api.rawUrl(p);
+        if (!url || !(len > 0)) return Promise.resolve(new Uint8Array(0));
+        return fetch(url, { credentials: "same-origin", cache: "no-store", headers: { Range: "bytes=" + off + "-" + (off + len - 1) } }).then(function (r) {
+          if (!r.ok) throw new Error("read");
+          return r.arrayBuffer().then(function (ab) {
+            var u = new Uint8Array(ab);
+            return r.status === 206 ? u : u.subarray(off, off + len);     // no Range support: the whole file came
+          });
+        });
+      },
+      blob: function (p) { return api.read(p).then(function (x) { return x.blob; }); },
+      stat: function (p) { return api.stat(p); },
+      remove: function (x) { return api.op({ op: "trash", path: x.p }); },
+      open: function (p) { enter(C.parentOf(p)); },
+      label: function (p) { return p; }
+    };
+  }
+
   window.OrosFilesComputer = {
+    dupesSource: dupesSource,
     init: init,
     treeNode: treeNode,
     enter: enter,

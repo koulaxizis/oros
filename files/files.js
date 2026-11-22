@@ -234,6 +234,9 @@
       "tree.docs":     "Documents",
       "tree.photos":   "Photos",
       "tree.photosFail": "Photos could not be opened. Check the connection and try again.",
+      "tree.dupes":    "Duplicates",
+      "tree.dupesFail": "Duplicates could not be opened. Check the connection and try again.",
+      "menu.dupes":    "Find duplicates here",
       "fav.add":       "Add to Favourites",
       "fav.remove":    "Remove from Favourites",
       "fav.added":     "Added to Favourites",
@@ -524,6 +527,9 @@
       "tree.docs":     "Έγγραφα",
       "tree.photos":   "Φωτογραφίες",
       "tree.photosFail": "Οι Φωτογραφίες δεν άνοιξαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "tree.dupes":    "Διπλότυπα",
+      "tree.dupesFail": "Τα Διπλότυπα δεν άνοιξαν. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "menu.dupes":    "Εύρεση διπλότυπων εδώ",
       "fav.add":       "Προσθήκη στα Αγαπημένα",
       "fav.remove":    "Αφαίρεση από τα Αγαπημένα",
       "fav.added":     "Προστέθηκε στα Αγαπημένα",
@@ -721,6 +727,7 @@
   var SMART_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v3"/><path d="M3 7v10a2 2 0 0 0 2 2h6"/><circle cx="17" cy="16" r="3"/><path d="M21 20l-1.8-1.8"/></svg>';
   var PLUS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
   var DOCS_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M5 9v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9M10 13h4"/></svg>';
+  var DUPES_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></svg>';
   var PHOTO_SVG = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
   var TRASH_SVG =
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
@@ -1381,6 +1388,8 @@
     if (dv) host.appendChild(dv.treeNode());
     var pc = cmp();
     if (pc) host.appendChild(pc.treeNode());
+    var dp = dupes();
+    host.appendChild(dp ? dp.treeNode() : dupesStubNode());
     host.appendChild(makeSpecialNode("trash", t("tree.trash"), TRASH_SVG));
     var d = dbx();
     if (d) host.appendChild(d.treeNode());
@@ -1417,10 +1426,16 @@
     var p = window.OrosFilesPhotos;
     return (p && typeof p.treeNode === "function") ? p : null;
   }
+  // Duplicates (files/dupes.js, dupes-core.js): exact duplicates of
+  // the disk or of one folder; device-local, loaded on first use.
+  function dupes() {
+    var d = window.OrosFilesDupes;
+    return (d && typeof d.treeNode === "function") ? d : null;
+  }
   // Places shown instead of the disk. Each module has treeNode(),
   // isActive() and leave(); a new place (Photos, …) adds its global
   // name here and calls ctx.onEnter (= leavePlaces(itself)) on enter.
-  var PLACE_GLOBALS = ["OrosFilesDropbox", "OrosFilesDrive", "OrosFilesComputer", "OrosFilesDocs", "OrosFilesPhotos"];
+  var PLACE_GLOBALS = ["OrosFilesDropbox", "OrosFilesDrive", "OrosFilesComputer", "OrosFilesDocs", "OrosFilesPhotos", "OrosFilesDupes"];
   function places() {
     var out = [];
     PLACE_GLOBALS.forEach(function (g) {
@@ -1581,7 +1596,8 @@
       markDirty: markDirty,
       zipCreate: zipCreate,
       zipExtract: zipExtract,
-      zipOpen: zipOpen
+      zipOpen: zipOpen,
+      findDupes: openDupes
     });
   }
 
@@ -1604,7 +1620,8 @@
       trash: TRASH,
       isImageExt: isImageExt,
       isTextExt: isTextExt,
-      mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); }
+      mimeFor: function (name) { return isTextExt(name) ? "text/plain" : mimeForExt(extOf(name)); },
+      findDupes: openDupes
     });
   }
 
@@ -1781,6 +1798,114 @@
       pickFolder: pickFolderDialog,
       ver: SCRIPT_V,
       ocr: ocrKit,
+      trash: function (p) {
+        return moveToTrash(p).then(function () { favDropPath(p); markDirty(); });
+      },
+      onDiskChanged: forceStorageRecalc
+    });
+  }
+
+  // dupes.css, dupes-core.js and dupes.js load the first time
+  // Duplicates opens (never at boot), like Photos.
+  var DUPES_SCRIPTS = ["dupes-core.js", "dupes.js"];
+  var dupesLoading = null;
+  function loadDupes() {
+    if (dupes()) return Promise.resolve(dupes());
+    if (!dupesLoading) {
+      var ver = "?v=" + encodeURIComponent(SCRIPT_V);
+      var css = document.getElementById("dupes-css") ? Promise.resolve() : new Promise(function (res) {
+        var l = document.createElement("link");
+        l.id = "dupes-css";
+        l.rel = "stylesheet";
+        l.href = "dupes.css" + ver;
+        l.onload = l.onerror = function () { res(); };
+        document.head.appendChild(l);
+      });
+      dupesLoading = DUPES_SCRIPTS.reduce(function (p, src) {
+        return p.then(function () {
+          return new Promise(function (res, rej) {
+            var sc = document.createElement("script");
+            sc.src = src + ver;
+            sc.onload = res;
+            sc.onerror = function () { sc.remove(); rej(new Error(src)); };
+            document.head.appendChild(sc);
+          });
+        });
+      }, css).then(function () {
+        if (!dupes()) throw new Error("dupes");
+        initDupes();
+        return dupes();
+      });
+      dupesLoading.then(null, function () {
+        dupesLoading = null;
+        transientNote(t("tree.dupesFail"));
+      });
+    }
+    return dupesLoading;
+  }
+  function dupesStubNode() {
+    var wrap = document.createElement("div");
+    wrap.className = "dbx-tree dp-tree";
+    var node = makeSpecialNode("dupes", t("tree.dupes"), DUPES_SVG, function () { openDupes(ROOT); });
+    node.classList.remove("special", "selected");
+    wrap.appendChild(node);
+    return wrap;
+  }
+  // Duplicates of the whole disk (ROOT) or of one folder of it; place
+  // "computer" / "dropbox": a folder of This computer or the Dropbox.
+  function openDupes(folder, place) {
+    loadDupes().then(function (d) { if (d) d.enter(folder || ROOT, place); }, function () {});
+  }
+  // A file the person marked keeps its place in a group of copies:
+  // a favourite, a document of the archive, a file with tags, or an
+  // album photo the album knows by its path.
+  function markedFile(p) {
+    try {
+      if (CORE.favIs(favs, p)) return true;
+      var dc = docs();
+      if (dc && typeof dc.isDocument === "function" && dc.isDocument(p)) return true;
+      var tg = tags();
+      if (tg && tg.tagsFor(p).length) return true;
+      var raw = JSON.parse(localStorage.getItem("oros-files-albums") || "null");
+      if (raw && Array.isArray(raw.albums)) {
+        for (var i = 0; i < raw.albums.length; i++) {
+          var it = raw.albums[i] && raw.albums[i].it;
+          if (Array.isArray(it) && it.some(function (x) { return x && x.k === "p:" + p; })) return true;
+        }
+      }
+    } catch (e) {}
+    return false;
+  }
+  function initDupes() {
+    var dp = dupes();
+    if (!dp) return;
+    dp.init({
+      toast: transientNote,
+      closeDrawer: closeTreeDrawer,
+      onEnter: function () {
+        leavePlaces(dupes());
+        view = "files"; setSelectMode(false); clearSelection();
+      },
+      afterEnter: renderTree,
+      fs: FS,
+      vault: vaultApi,
+      important: markedFile,
+      openFile: openFileAt,
+      openFolder: function (p) { navigate(p); },
+      preview: openPreview,
+      cleanCore: function () {
+        return cleanScript("clean-core.js", function () { return !!window.orosClean; }).then(function () { return window.orosClean; });
+      },
+      source: function (place) {
+        var m = place === "dropbox" ? dbx() : place === "computer" ? cmp() : null;
+        return m && typeof m.dupesSource === "function" ? m.dupesSource() : null;
+      },
+      dbxHash: function (bytes) {
+        var C2 = window.OrosDropboxCore;
+        if (!C2 || !C2.contentHash) return Promise.reject(new Error("dbx"));
+        return C2.contentHash(bytes, function (b) { return crypto.subtle.digest("SHA-256", b); });
+      },
+      photosAlike: function () { loadPhotos().then(function (ph) { if (ph && ph.findAlike) ph.findAlike(); }, function () {}); },
       trash: function (p) {
         return moveToTrash(p).then(function () { favDropPath(p); markDirty(); });
       },
@@ -3907,6 +4032,9 @@
       if (!many && appsForFile(p.name).length) {
         ctxMenu.appendChild(mkItem(APP_SVG, "menu.openWith", function () { openInApp(p.path, true); }));
       }
+    }
+    if (p.dir && !many && view !== "trash" && !CORE.isTrashPath(p.path) && p.path.indexOf(ROOT + "/") === 0) {
+      ctxMenu.appendChild(mkItem(DUPES_SVG, "menu.dupes", function () { openDupes(p.path); }));
     }
     if (!many) {
       var faved = CORE.favIs(favs, p.path);
