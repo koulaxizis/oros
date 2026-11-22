@@ -24,6 +24,7 @@
   var M = node ? require("../designkit/model.js") : root.orosDK && root.orosDK.model;
   if (!M) return;
   function Rd() { return node ? require("../designkit/render.js") : root.orosDK && root.orosDK.render; }
+  function Tb() { return node ? require("../designkit/table.js") : root.orosDK && root.orosDK.table; }
   var MM = 72 / 25.4;
   var PT_PER = { pt: 1, mm: MM, in: 72, px: 72 / 96 };
 
@@ -642,6 +643,47 @@
     return 1;
   }
 
+  // table (LY-W12): a table into a story (story id, or a frame of it):
+  // rows "a | b | c", header rows repeated, after paragraph after_para
+  // (0 = the end); replace n = the story's n-th table becomes this one.
+  // → 1 placed, 0 not
+  function addTable(doc, st, now) {
+    var TB = Tb(), sid = st.story, fr = !sid && st.frame ? M.find(doc.items, st.frame) : null;
+    if (fr && fr.t === "text") sid = fr.story;
+    var story = sid && M.find(doc.stories, sid);
+    if (!story || !TB) return 0;
+    var grid = (st.rows || []).map(function (r) { return String(r == null ? "" : r).split("|").map(function (c) { return c.trim().replace(/\\n/g, "\n"); }); });
+    var tb = TB.fromGrid(grid, { hdr: st.header > 0 });
+    if (!tb) return 0;
+    tb.hdr = Math.max(0, Math.min(tb.rows.length - 1, st.header | 0));
+    var ws = String(st.widths || "").trim().split(/[\s,;]+/).map(Number).filter(function (v) { return v > 0; });
+    if (ws.length === tb.cols.length) tb.cols = ws;
+    if (st.rule >= 0) tb.bw = st.rule;
+    if (st.padding >= 0) tb.pad = st.padding;
+    if (st.header_fill) { var hf = swatchFor(doc, st.header_fill, now); if (hf) tb.hf = hf; }
+    if (st.rule_color) { var bc = swatchFor(doc, st.rule_color, now); if (bc) tb.bc = bc; }
+    if (st.repeat === 0) tb.rep = 0;
+    tb = TB.norm(tb);
+    if (!tb) return 0;
+    var ps = (st.style && styleNamed(doc.pstyles, st.style)) || null;
+    var paras = story.paras, para = { ps: ps ? ps.id : "ps-base", runs: [], ext: { tbl: tb } };
+    if (st.replace > 0) {
+      var k = 0, at = -1;
+      paras.forEach(function (p, i) { if (p.ext && p.ext.tbl && ++k === st.replace) at = i; });
+      if (at < 0) return 0;
+      if (!ps) para.ps = paras[at].ps;
+      paras[at] = Object.assign({}, paras[at], { ps: para.ps, ext: Object.assign({}, paras[at].ext, { tbl: tb }) });
+    } else {
+      var n = st.after_para > 0 ? Math.min(st.after_para, paras.length) : paras.length;
+      // an empty story's one empty paragraph gives way
+      if (paras.length === 1 && !paras[0].runs.length && !paras[0].ext) { paras.length = 0; n = 0; }
+      paras.splice(n, 0, para);
+    }
+    if (M.tableLevel(doc) > 1) { doc.setup.ext = Object.assign({}, doc.setup.ext || {}); if (!(doc.setup.ext.mv >= 3)) { doc.setup.ext.mv = 3; doc.m = Math.max(now, (doc.m || 0) + 1); } }
+    M.touch(story, now);
+    return 1;
+  }
+
   // house_pages: the front and back pages of a house style document
   // (LY-HS: pages before / after its body page) copied into the book,
   // scaled to its trim, their fields ({title} {author} …) filled from
@@ -1069,7 +1111,7 @@
 
   var api = { setPicture: setPicture, setPage: setPage, setWrap: setWrap, anchorItem: anchorItem, releaseItem: releaseItem, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
-              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, masterField: masterField, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
+              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, masterField: masterField, setStory: setStory, addTable: addTable, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;
   else root.LayoutPro = api;
 })(typeof window !== "undefined" ? window : this);

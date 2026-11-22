@@ -2303,7 +2303,7 @@
   LY.dlg = { links: linksDlg, newDoc: newDocDlg, setup: setupDlg, exportDlg: exportDlg, style: styleDlg, swatch: swatchDlg, rec: recDlg, preflight: preflightDlg, compare: compareDlg };
   LY.panels = Object.assign(LY.panels || {}, { epubReport: epubReport, epubMarkReady: markInPublishing });
   // the small widgets, for dialogs in other files (mergeui.js)
-  LY.ui = { field: field, select: select, check: check, seg: seg, btn: btn };
+  LY.ui = { field: field, select: select, check: check, seg: seg, btn: btn, swatchPicker: swatchPicker };
 
   // ---------- More menu + panel toggle ----------
   function moreMenu() {

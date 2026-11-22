@@ -850,7 +850,7 @@ orosPack("de", "assistant", {
  "ed.op.framemod": "Rahmen ändern",
  "ed.f.nofill": "Ohne Füllung",
  "ed.f.del": "Entfernen",
- "ed.op.cancel": "Laufende Befehle stoppen", "ed.op.version": "Zuerst eine Version behalten",
+ "ed.op.cancel": "Laufende Befehle stoppen", "ed.op.version": "Zuerst eine Version behalten", "ed.op.table": "Tabelle", "ed.f.repeat": "Kopfzeilen wiederholt", "ed.f.after_para": "nach Absatz", "ed.f.replace": "ersetzt Tabelle Nr.", "ed.f.widths": "Spaltenbreiten", "ed.f.rule": "Linienstärke (pt)", "ed.f.padding": "Zellenabstand (pt)", "ed.f.rule_color": "Linienfarbe", "ed.f.header_fill": "Kopfzeilenfüllung",
  "ed.f.family": "Schriftfamilie",
  "ed.f.source": "Quelle",
  "ed.f.path": "Schriftdatei",

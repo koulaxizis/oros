@@ -354,6 +354,24 @@
         return;
       }
       var para = e.para, ps = T.resolvePs(psMap, para.ps), lv = level(para.ps);
+      // a table (LY-W12): an HTML table, header rows in <thead>
+      var tbl = para.ext && para.ext.tbl;
+      if (tbl && Array.isArray(tbl.rows) && tbl.rows.length) {
+        if (!cur) newChapter();
+        closeList();
+        var hdr = Math.max(0, Math.min(tbl.rows.length - 1, Math.round(Number(tbl.hdr) || 0)));
+        var rowHtml = function (r, i) {
+          var tag = i < hdr ? "th" : "td";
+          return "<tr>" + (r.c || []).filter(function (c) { return c && !c.x; }).map(function (c) {
+            var sp = (c.s > 1 ? " colspan=\"" + Math.round(c.s) + "\"" : "") + (c.r > 1 ? " rowspan=\"" + Math.round(c.r) + "\"" : "");
+            return "<" + tag + (tag === "th" ? " scope=\"col\"" : "") + sp + ">" + String(c.t || "").split("\n").map(esc).join("<br/>") + "</" + tag + ">";
+          }).join("") + "</tr>";
+        };
+        report.tables = (report.tables || 0) + 1;
+        cur.html.push(marker(e.page) + "<table class=\"tbl\">" + (hdr ? "<thead>" + tbl.rows.slice(0, hdr).map(rowHtml).join("") + "</thead>" : "") +
+          "<tbody>" + tbl.rows.slice(hdr).map(function (r, i) { return rowHtml(r, i + hdr); }).join("") + "</tbody></table>");
+        return;
+      }
       var text = O.paraText(para);
       var opens = lv === 1 || lv === 2 || ps.brk === "page" || ps.brk === "odd" || ps.brk === "even";
       if (!cur || (opens && cur.html.length)) { closeList(); newChapter(); }
@@ -573,6 +591,7 @@
         css.push("figure.fig { margin: 1em 0; text-align: center; page-break-inside: avoid; break-inside: avoid; }");
         css.push("figure.fig img { max-width: 100%; height: auto; }");
         css.push("figure.fig figcaption { margin-top: 0.4em; }");
+        css.push("table.tbl { border-collapse: collapse; width: 100%; margin: 1em 0; } table.tbl th, table.tbl td { border: 1px solid #000; padding: 0.25em 0.4em; vertical-align: top; text-align: left; } table.tbl th { font-weight: bold; }");
         Object.keys(c.psUsed).sort().forEach(function (id) {
           css.push(psCss(doc, id, T.resolvePs(c.psMap, id), c.base, c.lvl[id] || 0));
         });

@@ -187,6 +187,14 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Restore**: brings a version back. The current state is kept as a version first, and Undo takes the restore back.
 - **Claude**: before large changes Claude can keep a version too (marked "by Claude").
 
+## Tables
+- **Insert a table**: in the Story Editor, put the caret where the table goes and press `▦`. A table is a paragraph of the story: it flows with the text, from frame to frame and page to page.
+- **Edit it**: click the table in the Story Editor. Type in the cells; click a cell and Shift+click another (on a phone: `Select a range`, then a cell) to select a range, then merge the cells or give them a fill. Add or delete rows and columns, split a merged cell, set the column widths (e.g. `2 1 1`), the padding, the rule width and colour, and the paragraph styles of the cells and the header.
+- **Header rows** repeat at the top of each new column or page (turn that off if you like). A row never splits; rows joined by a merged cell stay together.
+- **From a file**: `From a file…` reads a CSV or TSV file or the first sheet of an .xlsx, .xls or .ods spreadsheet into the table.
+- **Out**: the PDF, the pictures, SVG and EPUB keep the table (in an e-book it is a real table, with its header).
+- **Claude** can put a table into a story too.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

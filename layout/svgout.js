@@ -126,6 +126,11 @@
     function textSvg(it, lines) {
       var s = "";
       lines.forEach(function (ln) {
+        // a table row (LY-W12): cell fills, then rules (black without a swatch)
+        if (ln.tb) {
+          ln.tb.fills.forEach(function (f) { var c = hex(doc, f[4]); if (c) s += "<rect" + at("x", n2(it.x + f[0])) + at("y", n2(it.y + f[1])) + at("width", n2(f[2])) + at("height", n2(f[3])) + at("fill", c) + "/>"; });
+          ln.tb.rules.forEach(function (r) { s += "<line" + at("x1", n2(it.x + r[0])) + at("y1", n2(it.y + r[1])) + at("x2", n2(it.x + r[2])) + at("y2", n2(it.y + r[3])) + at("stroke", (r[4] && hex(doc, r[4])) || "#000000") + at("stroke-width", n2(r[5])) + "/>"; });
+        }
         ln.runs.forEach(function (r) {
           if (!r.t || !r.t.trim() && !r.g) return;
           keys[r.key] = 1;

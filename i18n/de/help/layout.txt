@@ -187,6 +187,14 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Wiederherstellen**: holt eine Version zurück. Der jetzige Stand wird vorher als Version behalten, und Rückgängig nimmt das Wiederherstellen zurück.
 - **Claude**: Vor großen Änderungen kann auch Claude eine Version behalten (markiert mit „von Claude“).
 
+## Tabellen
+- **Tabelle einfügen**: Setze im Textmodus die Einfügemarke dorthin, wo die Tabelle hinkommt, und drücke `▦`. Eine Tabelle ist ein Absatz des Textes: Sie fließt mit dem Text von Rahmen zu Rahmen und von Seite zu Seite.
+- **Bearbeiten**: Klicke im Textmodus auf die Tabelle. Schreibe in die Zellen; eine Zelle anklicken und eine andere mit Umschalt+Klick (am Telefon: `Bereich wählen`, dann eine Zelle) wählt einen Bereich, um Zellen zu verbinden oder zu füllen. Füge Zeilen und Spalten hinzu oder lösche sie, teile eine verbundene Zelle, setze die Spaltenbreiten (z. B. `2 1 1`), den Zellenabstand, Stärke und Farbe der Linien und die Absatzformate der Zellen und der Kopfzeilen.
+- **Kopfzeilen** wiederholen sich oben in jeder neuen Spalte oder Seite (abschaltbar). Eine Zeile wird nie geteilt; Zeilen, die eine verbundene Zelle verbindet, bleiben zusammen.
+- **Aus einer Datei**: `Aus einer Datei…` liest eine CSV- oder TSV-Datei oder das erste Blatt einer .xlsx-, .xls- oder .ods-Tabelle in die Tabelle.
+- **Ausgabe**: PDF, Bilder, SVG und EPUB behalten die Tabelle (im E-Book ist sie eine echte Tabelle mit Kopfzeilen).
+- **Claude** kann ebenfalls eine Tabelle in einen Text setzen.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 
