@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.55.00
+- **Mockups made by Claude.** With the Assistant or orOS Gate, Claude can put a picture into one of your mockups (books and goods alike) and save the result in Mockups/Claude, never over a file. Your mockup is never changed: Claude works on a copy that is not kept. With orOS closed the request is checked against your copy and waits until orOS opens.
+
 ## Version 8.54.00
 - **orOS Gate: folders for Claude's apps.** Studio/Podcasts, Montage/Projects and Mockups/Claude are Claude's folders by themselves when the app is installed, so Claude can bring a podcast or a project in with no setup. You can take one off in Settings › orOS Gate.
 - **orOS Gate: checked with orOS closed.** When no orOS is open, Claude's edits for an app (and their dry runs) are checked against your encrypted copy first, so a mistake shows at once instead of waiting in the queue.
