@@ -13540,3 +13540,12 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
   - studio_import and montage_import through `__orosOpenAt` in an iframe with a fake disk: missing file, new project with markers, Undo.
   - Not tested: a real phone, a real 3-hour recording.
 - **Next:** proposals: stream recording takes and decoded sources instead of holding them in memory; Ogg/Opus streaming for mixes over an hour.
+
+### 2026-11-22 — orOS 8.33.01 — Top bar icons keep no hover frame after a tap on touch screens (BAR-HOVER-1, #1212)
+
+- **Why:** Chris, 2026-11-21 (Android PWA, glass bar): an icon tapped to open its panel and tapped again to close it kept a faint frame (seen on the smart cards ✦2 fold button). Touch browsers keep `:hover` on the last tapped element, and every top-bar button painted `background: var(--accent-soft)` on `:hover`.
+- **Rule (BAR-HOVER-1):** a top-bar button's `:hover` style lives only under `@media (hover: hover)`. `:focus-visible` and open states (`aria-expanded="true"`, `.sb-now`) stay outside it, so keyboard focus and the open panel still show. New bar buttons follow the same rule.
+- **Changes:** `style.css` (menu, language, sync dot, help, update-ready, open apps, Time and Pocket tray chips, strict badge, weather chip, clock, date, keyboard button), `smartbar.js` (`.sb-chip`, also the fold button), `smartbar-live.js` (live pills), `qsettings.js` (`#qs-btn`).
+- **Files:** style.css, smartbar.js, smartbar-live.js, qsettings.js, help/topics/whatsnew.en/el.txt, shell.js.
+- **Tests:** full `node --test tests/*.test.js`. Playwright Chromium, Pixel 7 touch emulation at 360 px, glass look: before, every visible bar button kept `rgba(212,175,55,.2)` after two taps; after, all transparent. Desktop 1280 px with a mouse: hover still highlights. Keyboard Tab: `:focus-visible` outline still shows.
+  - Not tested: a real phone, Safari.
