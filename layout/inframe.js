@@ -109,6 +109,13 @@
       return { a: c, b: c };
     });
   }
+  function breakAt(kind) {
+    edit(function (paras, a, b) {
+      O().deleteRange(paras, a, b);
+      var c = O().insertBreak(paras, a, kind);
+      return { a: c, b: c };
+    });
+  }
   // Shift+Enter: a line break inside the paragraph
   function lineBreak() {
     edit(function (paras, a, b) {
@@ -209,6 +216,8 @@
     if (k === "Escape") { e.preventDefault(); stop(true); return; }
     if (k === "Backspace") { e.preventDefault(); del(-1, mod || e.altKey); return; }
     if (k === "Delete") { e.preventDefault(); del(1, mod || e.altKey); return; }
+    // Numpad Enter: a column break; with Ctrl, a page break (LY-W5b)
+    if (k === "Enter" && e.code === "NumpadEnter" && !e.shiftKey) { e.preventDefault(); breakAt(mod ? "page" : "col"); return; }
     if (k === "Enter") { e.preventDefault(); if (e.shiftKey) lineBreak(); else insert("\n"); return; }
     if (k === "Tab") { e.preventDefault(); insert(" "); return; }
     if (!mod) return;
@@ -222,6 +231,7 @@
       commit();
       if (code === "KeyY" || e.shiftKey) LY.redo(); else LY.undo();
     }
+    else if (code === "KeyF" && LY.dlg && LY.dlg.find) { e.preventDefault(); commit(); LY.dlg.find(); }
     else if (code === "KeyC") { if (copy()) e.preventDefault(); }
     else if (code === "KeyX") { if (copy()) { e.preventDefault(); del(1, false); } }
     // Ctrl+V: the paste event brings the text

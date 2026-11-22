@@ -249,6 +249,8 @@
       s2.appendChild(rc);
     }
     body.appendChild(s2);
+    // object styles (LY-W5b, objstyles.js)
+    if (window.LY_OS) body.appendChild(window.LY_OS.section(items));
 
     if (one && (one.t === "rect" || one.t === "ell" || one.t === "path")) body.appendChild(gradSection(one));
     if (one && one.t === "text") body.appendChild(textSection(one));
@@ -449,7 +451,16 @@
     g.appendChild(field(t("props.ins"), numInput(it.ins, function (v) { editSel(function (x) { if (x.t !== "text") return false; x.ins = Math.max(0, v); }); }, { min: 0 })));
     s.appendChild(g);
     s.appendChild(el("span", "fld-lbl", t("props.va")));
-    s.appendChild(seg([["t", t("props.va.t")], ["c", t("props.va.c")], ["b", t("props.va.b")]], it.va, function (v) { editSel(function (x) { if (x.t !== "text") return false; x.va = v; }); }));
+    // justify = frame ext.vj (LY-W5b): va stays as it was, so an older orOS keeps it
+    var vjOn = !!(it.ext && it.ext.vj);
+    s.appendChild(seg([["t", t("props.va.t")], ["c", t("props.va.c")], ["b", t("props.va.b")], ["j", t("props.va.j")]], vjOn ? "j" : it.va, function (v) {
+      editSel(function (x) {
+        if (x.t !== "text") return false;
+        if (v === "j") { x.ext = x.ext || {}; x.ext.vj = 1; return; }
+        x.va = v;
+        if (x.ext) { delete x.ext.vj; if (!Object.keys(x.ext).length) delete x.ext; }
+      });
+    }));
     if (ch.length > 1) s.appendChild(el("p", "hint", t("props.chain", { i: i + 1, n: ch.length })));
     var tp = it.ext && it.ext.tp, VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
     if (tp && VC && VC.tpSet) {                     // text on a path (wave V3)
@@ -1035,7 +1046,7 @@
   function styleOrder(a, b) {
     var sa = /^(ps|cs)-[a-z0-9]+$/.test(a.id) && a.id.length < 12, sb = /^(ps|cs)-[a-z0-9]+$/.test(b.id) && b.id.length < 12;
     if (sa !== sb) return sa ? -1 : 1;
-    return LY.label(a.name).localeCompare(LY.label(b.name));
+    return T.collate(LY.label(a.name), LY.label(b.name));
   }
   function styleRow(st, kind, on, open) {
     var r = el("div", "sty-row" + (on ? " on" : ""));
@@ -1107,6 +1118,10 @@
       });
       st.ext = st.ext || {};   // an empty ext is dropped when the style is saved
       flags.appendChild(triState(t("sty.kern"), st.ext, "kern"));
+      // small capitals; for character styles also superscript and
+      // subscript (LY-W6)
+      flags.appendChild(triState(t("sty.sc"), st.ext, "sc"));
+      if (kind === "cs") flags.appendChild(select([["", t("sty.posNone")], ["sup", t("sty.posSup")], ["sub", t("sty.posSub")]], st.ext.pos || "", function (v) { if (v) st.ext.pos = v; else delete st.ext.pos; }));
       body.appendChild(flags);
       if (kind === "ps") {
         body.appendChild(el("span", "fld-lbl", t("sty.align")));
@@ -1128,6 +1143,7 @@
         bk.appendChild(triState(t("sty.hyph"), st.ext, "hyph"));
         bk.appendChild(triState(t("sty.kwn"), st.ext, "kwn"));
         bk.appendChild(triState(t("sty.sec"), st.ext, "sec"));
+        bk.appendChild(triState(t("sty.bl"), st.ext, "bl"));
         body.appendChild(bk);
         var g3 = el("div", "grid2");
         g3.appendChild(field(t("sty.orph"), optNum(st.ext, "orph", 1, 9)));
@@ -1151,7 +1167,13 @@
           g3.appendChild(field(t("sty.lvl"), select([["", t("sty.lvlAuto", { n: guess ? t("sty.lvlN", { n: guess }) : t("sty.lvl0") })], ["0", t("sty.lvl0")], ["1", t("sty.lvlN", { n: 1 })], ["2", t("sty.lvlN", { n: 2 })], ["3", t("sty.lvlN", { n: 3 })]],
             st.ext.lvl === undefined ? "" : String(st.ext.lvl), function (v) { if (v === "") delete st.ext.lvl; else st.ext.lvl = +v; })));
         }
+        // next style: what Enter at the end of a paragraph gives (LY-W5)
+        g3.appendChild(field(t("sty.next"), select([["", t("sty.nextSame")]].concat(others.filter(function (x) { return x.id !== "ps-base"; }).map(function (x) { return [x.id, LY.label(x.name)]; })),
+          st.ext.next || "", function (v) { if (v) st.ext.next = v; else delete st.ext.next; })));
         body.appendChild(g3);
+        body.appendChild(compEditor(st));
+        body.appendChild(listEditor(st));
+        body.appendChild(grepEditor(st));
       }
       body.appendChild(el("span", "fld-lbl", t("sty.color")));
       var colWrap = el("div");
@@ -1183,6 +1205,50 @@
       body.appendChild(act);
     }, true);
   }
+  // GREP styles (LY-W5): up to 10 rules { re, cs }, a character style
+  // on every match of a JavaScript regular expression in the paragraph.
+  function grepEditor(st) {
+    var wrap = el("div", "grep-ed");
+    wrap.appendChild(el("span", "fld-lbl", t("sty.grep")));
+    var list = el("div", "grep-list");
+    wrap.appendChild(list);
+    var rules = Array.isArray(st.ext.grep) ? st.ext.grep.map(function (r) { return { re: r.re, cs: r.cs }; }) : [];
+    var css = [["", t("sty.nestNone")]].concat(LY.doc.cstyles.map(function (c) { return [c.id, LY.label(c.name)]; }));
+    function store() {
+      var ok = rules.filter(function (r) { return r.re && r.cs && !window.LY_FIND.compile({ find: r.re, grep: 1, cs: 1 }).error; });
+      if (ok.length) st.ext.grep = ok.slice(0, 10).map(function (r) { return { re: r.re.slice(0, 200), cs: r.cs }; }); else delete st.ext.grep;
+    }
+    function draw() {
+      list.innerHTML = "";
+      rules.forEach(function (r, i) {
+        var row = el("div", "grep-row");
+        var inp = el("input", "inp mono");
+        inp.type = "text"; inp.maxLength = 200; inp.value = r.re; inp.spellcheck = false;
+        inp.placeholder = "\\d+"; inp.setAttribute("aria-label", t("sty.grepRe"));
+        var bad = el("span", "grep-bad");
+        function check() {
+          var c = r.re ? window.LY_FIND.compile({ find: r.re, grep: 1, cs: 1 }) : {};
+          bad.textContent = c.error ? t("sty.grepBad") : "";
+          inp.setAttribute("aria-invalid", c.error ? "true" : "false");
+        }
+        inp.addEventListener("input", function () { r.re = inp.value; check(); store(); });
+        var sel = select(css, r.cs || "", function (v) { r.cs = v; store(); });
+        sel.setAttribute("aria-label", t("sty.grepCs"));
+        var x = LY.iconBtn("close", t("sty.grepDel"), "small");
+        x.addEventListener("click", function () { rules.splice(i, 1); store(); draw(); });
+        row.appendChild(inp); row.appendChild(sel); row.appendChild(x);
+        list.appendChild(row);
+        list.appendChild(bad);
+        check();
+      });
+      add.disabled = rules.length >= 10;
+    }
+    var add = btn(t("sty.grepAdd"), function () { rules.push({ re: "", cs: LY.doc.cstyles[0] ? LY.doc.cstyles[0].id : "" }); draw(); var f = list.querySelectorAll("input"); if (f.length) f[f.length - 1].focus(); });
+    wrap.appendChild(add);
+    wrap.appendChild(el("p", "hint", t("sty.grepHint")));
+    draw();
+    return wrap;
+  }
   // A number that may be "as base" (empty).
   function optNum(st, key, min, max) {
     var inp = el("input", "inp num");
@@ -1197,6 +1263,86 @@
     return inp;
   }
   // Three states: inherit / on / off.
+  // composition of a paragraph style (LY-W6): composer, word and
+  // letter spacing limits, optical margins, balanced ragged lines and
+  // a drop cap; all in ext, inherited like the rest
+  // numbered and bulleted lists (LY-W7): ext.list { f, lv, g, s }; a
+  // style without one takes its base style's, "none" stops that
+  function listEditor(st) {
+    var w = el("div");
+    w.appendChild(el("span", "fld-lbl", t("sty.list")));
+    var g = el("div", "grid2");
+    var cur = st.ext.list, L = cur && typeof cur === "object" ? JSON.parse(JSON.stringify(cur)) : null;
+    function put() { if (L) st.ext.list = L; }
+    var fmts = [["", t("sty.inherit")], ["-", t("sty.listNone")]].concat(LY.T.LIST_FORMATS.map(function (f) { return [f, t("sty.listEx", { a: LY.T.listLabel(f, 1), b: LY.T.listLabel(f, 2), c: LY.T.listLabel(f, 3) })]; }));
+    var opts = el("div", "grid2");
+    function showOpts() { opts.hidden = !L; }
+    g.appendChild(field(t("sty.listF"), select(fmts, cur === null ? "-" : L ? L.f.replace(/\u02B9/g, "\u0374") : "", function (v) {
+      if (v === "") { delete st.ext.list; L = null; }
+      else if (v === "-") { st.ext.list = null; L = null; }
+      else { L = L || { lv: 1 }; L.f = v; put(); }
+      showOpts();
+    })));
+    opts.appendChild(field(t("sty.listLv"), select([["1", "1"], ["2", "2"], ["3", "3"]], String(L && L.lv || 1), function (v) { if (L) { L.lv = Number(v); put(); } })));
+    var sn = el("input", "inp");
+    sn.type = "number"; sn.min = 0; sn.max = 99999; sn.placeholder = "1";
+    if (L && L.s !== undefined) sn.value = L.s;
+    sn.addEventListener("change", function () { if (!L) return; if (sn.value === "") delete L.s; else L.s = Math.max(0, Math.min(99999, Math.floor(+sn.value))); put(); });
+    opts.appendChild(field(t("sty.listS"), sn));
+    var gn = el("input", "inp");
+    gn.type = "text"; gn.maxLength = 40; gn.placeholder = t("sty.listGPh");
+    if (L && L.g) gn.value = L.g;
+    gn.addEventListener("change", function () { if (!L) return; var v = gn.value.trim().slice(0, 40); if (v) L.g = v; else delete L.g; put(); });
+    opts.appendChild(field(t("sty.listG"), gn));
+    w.appendChild(g);
+    w.appendChild(opts);
+    showOpts();
+    w.appendChild(el("p", "hint", t("sty.listHint")));
+    return w;
+  }
+  function compEditor(st) {
+    var w = el("div");
+    w.appendChild(el("span", "fld-lbl", t("sty.comp")));
+    var g = el("div", "grid2");
+    g.appendChild(field(t("sty.composer"), select([["", t("sty.inherit")], ["s", t("sty.compS")], ["p", t("sty.compP")]],
+      st.ext.comp === undefined ? "" : st.ext.comp === "p" ? "p" : "s", function (v) { if (v === "") delete st.ext.comp; else st.ext.comp = v === "p" ? "p" : ""; })));
+    var ws = Array.isArray(st.ext.ws) ? st.ext.ws.slice(0, 2) : null;
+    function wsInput(k, lo, hi, ph) {
+      var inp = el("input", "inp");
+      inp.type = "number"; inp.min = lo; inp.max = hi; inp.placeholder = ph;
+      if (ws && ws[k] !== undefined && ws[k] !== null) inp.value = ws[k];
+      inp.addEventListener("change", function () {
+        var v = inp.value === "" ? null : Math.max(lo, Math.min(hi, +inp.value));
+        ws = ws || [null, null]; ws[k] = v;
+        if (ws[0] === null && ws[1] === null) { delete st.ext.ws; ws = null; }
+        else st.ext.ws = [ws[0] === null ? 100 : ws[0], ws[1] === null ? 133 : ws[1]];
+      });
+      return inp;
+    }
+    g.appendChild(field(t("sty.wsMin"), wsInput(0, 50, 100, "100")));
+    g.appendChild(field(t("sty.wsMax"), wsInput(1, 100, 400, "133")));
+    g.appendChild(field(t("sty.lsMax"), optNum(st.ext, "ls", 0, 100)));
+    var dcN = el("input", "inp"), dcC = el("input", "inp");
+    dcN.type = dcC.type = "number"; dcN.min = 0; dcN.max = 10; dcC.min = 1; dcC.max = 10;
+    dcN.placeholder = "0"; dcC.placeholder = "1";
+    if (st.ext.dc) { dcN.value = st.ext.dc.n; dcC.value = st.ext.dc.c; }
+    function setDc() {
+      var n = Math.floor(+dcN.value || 0), c = Math.floor(+dcC.value || 1);
+      if (dcN.value === "") delete st.ext.dc;
+      else if (n < 2) st.ext.dc = null;
+      else st.ext.dc = { n: Math.min(10, n), c: Math.max(1, Math.min(10, c)) };
+    }
+    dcN.addEventListener("change", setDc); dcC.addEventListener("change", setDc);
+    g.appendChild(field(t("sty.dcN"), dcN));
+    g.appendChild(field(t("sty.dcC"), dcC));
+    w.appendChild(g);
+    var r = el("div", "pn-row wrap");
+    r.appendChild(triState(t("sty.opt"), st.ext, "opt"));
+    r.appendChild(triState(t("sty.bal"), st.ext, "bal"));
+    w.appendChild(r);
+    w.appendChild(el("p", "hint", t("sty.compHint")));
+    return w;
+  }
   function triState(label, st, key) {
     var b = el("button", "tri");
     b.type = "button";
@@ -1246,9 +1392,67 @@
       r.addEventListener("click", function () { swatchDlg(sw.id); });
       s.appendChild(r);
     });
-    s.appendChild(btn(t("colors.new"), function () { swatchDlg(null); }, "small"));
+    var sr = el("div", "pn-row wrap");
+    sr.appendChild(btn(t("colors.new"), function () { swatchDlg(null); }, "small"));
+    if (window.LY_SWLIB) {
+      sr.appendChild(btn(t("swl.libs"), swatchLibDlg, "small"));
+      sr.appendChild(btn(t("swl.import"), importAse, "small"));
+      var exA = btn(t("swl.export"), exportAse, "small");
+      exA.disabled = !doc.swatches.length;
+      sr.appendChild(exA);
+    }
+    s.appendChild(sr);
     body.appendChild(s);
     body.appendChild(el("p", "hint", t("colors.note")));
+  }
+  // swatch libraries (LY-N3): ready-made ones, and .ase files from
+  // InDesign, Illustrator, Affinity or Scribus; doubles are skipped
+  function addSwatches(list) {
+    var added = 0;
+    LY.op(function (doc, now) {
+      var made = window.LY_SWLIB.merge(doc.swatches, list, function () { return M.newId("sw"); });
+      made.forEach(function (x) { x.m = now; var n = M.normSwatch(x); if (n) { doc.swatches.push(n); added++; } });
+      if (!added) return false;
+    });
+    LY.toast(added ? t("swl.added", { n: added }) : t("swl.none"));
+  }
+  function swatchLibDlg() {
+    var L = window.LY_SWLIB;
+    LY.openDialog(t("swl.title"), function (body, close) {
+      L.LIBS.forEach(function (lib) {
+        var row = el("div", "swl-row");
+        row.appendChild(el("span", "swl-name", t("swl.lib." + lib.id)));
+        var chips = el("span", "swl-chips");
+        var tmp = { swatches: lib.sw.map(function (x, i) { return M.normSwatch({ id: "sw-l" + i, name: x.name, mode: x.mode, v: x.v }); }) };
+        tmp.swatches.forEach(function (x) { var c = el("span", "sw-chip"); c.style.background = M.cssColor(tmp, x.id); c.title = x.name; chips.appendChild(c); });
+        row.appendChild(chips);
+        var b = btn(t("swl.add"), function () { close(); addSwatches(lib.sw); }, "small");
+        b.setAttribute("aria-label", t("swl.add") + ": " + t("swl.lib." + lib.id));
+        row.appendChild(b);
+        body.appendChild(row);
+      });
+      body.appendChild(el("p", "hint", t("swl.hint")));
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn", t("btn.close")); c.type = "button";
+      c.addEventListener("click", close);
+      act.appendChild(c);
+      body.appendChild(act);
+    });
+  }
+  function importAse() {
+    LY.io.pickFile(".ase,application/octet-stream").then(function (f) {
+      if (!f) return;
+      if (f.size > 2000000) { LY.toast(t("swl.bad")); return; }
+      f.arrayBuffer().then(function (buf) {
+        var r = window.LY_SWLIB.parseASE(buf);
+        if (r.error || !r.swatches.length) { LY.toast(t("swl.bad")); return; }
+        addSwatches(r.swatches);
+      });
+    });
+  }
+  function exportAse() {
+    var doc = LY.doc, bytes = window.LY_SWLIB.writeASE(doc.swatches.map(function (x) { return { name: LY.label(x.name), mode: x.mode, v: x.v, spot: x.ext && x.ext.spot }; }));
+    LY.io.saveBlob(new Blob([bytes], { type: "application/octet-stream" }), LY.io.fileName(doc, ".ase"), "application/octet-stream", "Adobe Swatch Exchange", ".ase");
   }
   function hex2(n) { return ("0" + Math.round(n).toString(16)).slice(-2); }
 
@@ -1548,6 +1752,29 @@
     var s = JSON.parse(JSON.stringify(LY.doc.setup));
     LY.openDialog(t("setup.title"), function (body, close) {
       setupForm(body, s, false);
+      // the baseline grid (LY-W5b): setup.ext.bg { s, i } in pt
+      body.appendChild(el("h3", "pn-h", t("bg.title")));
+      var bg = s.ext && s.ext.bg ? { s: s.ext.bg.s, i: s.ext.bg.i } : { s: null, i: null };
+      var gg = el("div", "grid2");
+      function bgNum(key, min, max) {
+        var inp = el("input", "inp num");
+        inp.type = "text"; inp.inputMode = "decimal"; inp.placeholder = t("bg.off");
+        inp.value = bg[key] == null ? "" : String(bg[key]);
+        inp.addEventListener("change", function () {
+          var v = parseFloat(String(inp.value).replace(",", "."));
+          bg[key] = inp.value.trim() === "" || !isFinite(v) ? null : Math.min(max, Math.max(min, v));
+          inp.value = bg[key] == null ? "" : String(bg[key]);
+          s.ext = s.ext || {};
+          if (bg.i != null) s.ext.bg = { s: bg.s == null ? 0 : bg.s, i: bg.i }; else delete s.ext.bg;
+          if (!Object.keys(s.ext).length) delete s.ext;
+        });
+        return inp;
+      }
+      gg.appendChild(field(t("bg.start") + " (pt)", bgNum("s", 0, 2000)));
+      gg.appendChild(field(t("bg.every") + " (pt)", bgNum("i", 1, 200)));
+      body.appendChild(gg);
+      body.appendChild(check(t("bg.show"), LY.prefs.bgShow === 1, function (v) { if (v) LY.prefs.bgShow = 1; else delete LY.prefs.bgShow; LY.savePrefs(); ED.render(); }));
+      body.appendChild(el("p", "hint", t("bg.hint")));
       body.appendChild(el("p", "hint", t("setup.note")));
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
@@ -1970,7 +2197,7 @@
         var b = el("button", "pf-item " + x.sev);
         b.type = "button";
         b.appendChild(el("span", "pf-dot"));
-        var msg = x.code === "ppi" && it ? t("pf.ppi", { n: Math.round(R.effectivePpi(it)) }) : t("pf." + x.code);
+        var msg = x.code === "ppi" && it ? t("pf.ppi", { n: Math.round(R.effectivePpi(it)) }) : x.code === "glyph" ? t("pf.glyph", { c: x.chars || "" }) : t("pf." + x.code);
         b.appendChild(el("span", "", msg + (it ? " · " + typeName(it) : "")));
         b.addEventListener("click", function () { close(); ED.gotoItem(x.id); });
         li.appendChild(b);
@@ -2001,10 +2228,17 @@
       { label: t("more.house"), fn: function () { LY.house.open(); } },
       { label: t("more.auto"), fn: function () { LY.house.auto(); } },
       { label: t("more.toc"), disabled: !LY.house.hasToc(doc), fn: function () { LY.house.updateToc(); } },
+      { label: t("more.contents"), disabled: !LY.notes, fn: function () { LY.notes.toc(); } },
+      { label: t("more.notes"), disabled: !LY.notes, fn: function () { LY.notes.settings(); } },
+      { label: t("more.book"), disabled: !LY.book, fn: function () { LY.book.open(); } },
       { label: t("more.sheet"), disabled: !LY.house.hasSheet(doc), fn: function () { LY.house.sheet(); } },
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },
+      { label: t("more.find"), fn: function () { LY.dlg.find(); } },
+      { label: t("more.spell"), fn: function () { LY.dlg.spell(); } },
+      { label: t("more.lib"), disabled: !LY.dlg.lib, fn: function () { LY.dlg.lib(); } },
+      { label: t(LY.prefs.hjShow === 1 ? "more.hjOff" : "more.hjOn"), fn: function () { if (LY.prefs.hjShow === 1) delete LY.prefs.hjShow; else LY.prefs.hjShow = 1; LY.savePrefs(); ED.render(); LY.toast(t(LY.prefs.hjShow === 1 ? "hj.on" : "hj.off")); } },
       { label: t("more.history"), disabled: !LY.canUndo() && !LY.canRedo(), fn: function () { LY.dlg.history(); } },
       { label: t("more.keys"), fn: function () { LY.dlg.keys(); } },
       { sep: true },

@@ -127,6 +127,38 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Verlauf…** (im Menü `Mehr`, oder [[Ctrl+Alt+Z]]): jeder Rückgängig-Schritt mit Namen, etwa Verschieben, 3 Objekte hinzufügen oder Format „Text“, mit seiner Uhrzeit; ein Klick geht dorthin zurück oder wieder vor.
 - **Tastenkürzel und Komfort…** (Menü `Mehr`): Ändere jedes Kürzel, indem du es anklickst und die neuen Tasten drückst. Buchstaben meinen die Tastenplätze, die Kürzel gehen also auch mit griechischer Tastatur. Lege fest, wie weit die Pfeiltasten verschieben ([[Shift]] zehnmal so weit, [[Alt]] ein Zehntel), und schalte Hilfslinien, Maße oder Werkzeugleiste aus. Auf diesem Gerät gespeichert.
 
+## Suchen, Ersetzen und Rechtschreibung
+- **Suchen/Ersetzen…** (Menü `Mehr`, oder [[Ctrl+F]]): findet Text im ganzen Dokument oder in einem Textabschnitt, auf Wunsch nur in Absätzen eines Formats. **Text** findet, was du tippst; **GREP** nimmt einen regulären Ausdruck (\d eine Ziffer, \s ein Leerzeichen, ( ) eine Gruppe; in „Ersetzen durch“ ist $1 die erste Gruppe und \n beginnt einen neuen Absatz). Die Änderung kann auch ein Absatzformat setzen oder ein Zeichenformat auf das Geänderte legen. `Suchen` listet alle Treffer (ein Klick öffnet ihn im Textmodus), `Weiter` geht von Treffer zu Treffer, `Ersetzen` ändert den gezeigten, `Alle ersetzen` ändert alle in einem Rückgängig-Schritt. `Abfragen…` enthält fertige Aufräumarbeiten für ein Buch (doppelte Leerzeichen, Leerzeichen vor Satzzeichen, Bindestrich zwischen Leerzeichen zum Gedankenstrich, gerade Anführungszeichen zu «», drei Punkte zu Auslassungspunkten) und die auf diesem Gerät gespeicherten Abfragen.
+- **Rechtschreibung…** (Menü `Mehr`): prüft jedes Wort mit den griechischen und englischen Wörterbüchern (dieselben wie in Writer; sie laden beim ersten Mal und funktionieren danach offline). Für jedes unbekannte Wort: `Zeigen`, `Vorschläge` (ein Klick ändert es überall), `Ins Wörterbuch` (das eigene Wörterbuch des Dokuments, das mit ihm reist) oder `Ignorieren`. Die Wörter deines Wörterbuchs in Writer zählen auch.
+- **Nächstes Format**: In einem Absatzformat ist `Nächstes Format` das Format, das ein neuer Absatz bekommt, wenn du am Ende eines Absatzes [[Enter]] drückst, z. B. Überschrift → Text.
+- **GREP-Stile**: In einem Absatzformat ein Zeichenformat auf allem, was ein regulärer Ausdruck findet, z. B. Zahlen in einer anderen Schrift oder der Name des Sprechers in Kapitälchen. Bis zu 10 pro Format.
+
+## Umbrüche, Grundlinienraster und Objektformate
+- **Umbrüche**: Im Textmodus setzt `⤓` an der Einfügemarke einen Spalten-, Seiten-, ungeraden oder geraden Seitenumbruch; der Text danach beginnt dort. Beim Tippen ist [[Enter im Ziffernblock]] ein Spaltenumbruch und [[Strg+Enter im Ziffernblock]] ein Seitenumbruch. Der Textmodus markiert jeden Umbruch.
+- **Grundlinienraster**: In `Dokument einrichten…` legst du fest, wo die erste Linie liegt und wie weit die Linien auseinander sind; `Grundlinienraster zeigen` zeichnet es. Absatzformate mit `Am Grundlinienraster ausrichten` setzen jede Zeile darauf, damit die Zeilen gegenüberliegender Seiten und Spalten fluchten.
+- **Ausgleichen** (Textrahmen, vertikale Ausrichtung): Der freie Platz am Fuß einer Spalte wird zwischen ihren Absätzen verteilt, damit die Spalten gleich hoch enden. Die letzte Spalte eines Textes bleibt, wie sie ist.
+- **Objektformate** (Eigenschaften): `Neu aus diesem` speichert das Aussehen eines Rahmens oder einer Form (Füllung, Kontur, Ecken, Deckkraft, Umfluss; bei Textrahmen Abstand, Spalten und Ausrichtung) unter einem Namen; wähle es für andere Objekte; `Aus diesem neu definieren` ändert jedes Objekt, das es nutzt. Sie reisen mit dem Dokument.
+
+## Textmodus, Bibliothek und Farbfeldbibliotheken
+- **Textmodus**: `¶` zeigt den Formatnamen jedes Absatzes in einer Spalte neben dem Text; `A−` und `A+` machen die Schrift kleiner oder größer (nur am Bildschirm, auf diesem Gerät gemerkt). Absätze, die nicht mehr in die Rahmen passen, sind ab dem Übersatz markiert.
+- **Bibliothek** (`Mehr › Bibliothek…`): Wähle Objekte aus; `Auswahl hinzufügen` bewahrt sie mit Text, Farben und Formaten für jedes Dokument auf diesem Gerät auf; ein Klick platziert eines auf der aktuellen Seite. Dort benennst oder entfernst du sie; `Exportieren…` und `Importieren…` bringen eine Bibliothek als `.oroslib`-Datei auf ein anderes Gerät. Bilder werden genannt, nicht kopiert.
+- **Farbfeldbibliotheken** (Bedienfeld Farben): `Bibliotheken…` fügt fertige Sätze hinzu (Druck-Grundfarben, Meer, Erde, Pastell, Grautöne); `.ase importieren…` liest Farbfelddateien aus InDesign, Illustrator, Photoshop, Affinity oder Scribus (RGB, CMYK, Grau und Lab; Volltonfarben bleiben Volltonfarben); `.ase exportieren` schreibt die Farben des Dokuments für sie. Farben, die schon im Dokument sind, werden übersprungen.
+
+## Griechisch und Satz
+- **Griechisch**: Die Silbentrennung liest auch polytonischen Text (Hauche, Akzente und Iota subscriptum bleiben außen vor: ἄν-θρω-πος); Großbuchstaben verlieren sie und behalten das Trema (ᾠδή → ΩΙΔΗ). Formatlisten sortieren griechisch (ά wie α, ς wie σ).
+- **Glyphenprüfung**: Die Preflight-Prüfung nennt jeden Rahmen mit Zeichen, die seine Schrift nicht hat, und welche.
+- **Satz** (Absatzformat, Satz): `Ganzer Absatz` wägt alle Zeilen eines Absatzes zusammen ab, für gleichmäßige Abstände; Wortabstand mindestens und höchstens (%) und Zeichenabstand höchstens legen fest, wie weit eine Blocksatzzeile gehen darf; `Optischer Randausgleich` lässt Satzzeichen über den Rand hängen; `Flattersatz ausgleichen` gleicht Zeilen ohne Blocksatz an; eine Initiale senkt die ersten Buchstaben über zwei oder mehr Zeilen.
+- **Kapitälchen, hoch- und tiefgestellt**: in einem Zeichenformat.
+- **Lockere und enge Zeilen**: `Mehr › Lockere und enge Zeilen zeigen` markiert Blocksatzzeilen außerhalb der Grenzen (gelb locker, rosa eng).
+
+## Fußnoten, Listen, Querverweise und Bücher
+- **Fußnoten und Endnoten**: im Textmodus die Schaltfläche `¹` › `Fußnote einfügen…`. Die Fußnote wird selbst nummeriert und unten in ihrer Spalte gesetzt; eine Zeile, die sie zurücklassen würde, geht mit ihr weiter. Klicke die Nummer einer Fußnote an, um sie zu ändern oder zu entfernen. `Mehr › Fußnoten…` setzt sie stattdessen nach den Text (Endnoten), legt ihr Absatzformat fest und ob die Nummerierung in jedem Textabschnitt neu beginnt. Im EPUB öffnen sie sich als Pop-up.
+- **Listen**: die `Liste` eines Absatzformats nummeriert seine Absätze (1. a) i. αʹ Αʹ und mehr, oder Aufzählungszeichen). Formate mit demselben Listennamen teilen die Nummern; Ebene 2 beginnt unter jeder Ebene 1 neu.
+- **Querverweise**: `¹ › Querverweis einfügen…` zeigt auf eine Überschrift oder einen beliebigen Absatz und zeigt seine Seite, seinen Text oder beides; die Seite folgt, wenn sich der Text verschiebt. Im PDF ist er ein Link zu dieser Seite, im EPUB zum Absatz.
+- **Links**: Wörter auswählen und `¹ › Link…` für eine Web- oder E-Mail-Adresse; er funktioniert im PDF und im EPUB.
+- **Inhaltsverzeichnis in jedem Dokument**: `Mehr › Inhaltsverzeichnis aus Formaten…` wählt die Formate der Überschriften und ihre Ebene, das Format jeder Ebene und was zwischen Titel und Seite steht; gibt es keines, kommt es in einen neuen Rahmen. `Mehr › Inhaltsverzeichnis aktualisieren` folgt später den Seiten.
+- **Bücher**: `Mehr › Buch…` hält Kapitel in getrennten Dokumenten zusammen: ihre Reihenfolge, fortlaufende Seitenzahlen (auf Wunsch jedes Dokument auf einer rechten Seite), Formate und Farben wie im ersten Dokument und ein PDF des ganzen Buchs.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 
