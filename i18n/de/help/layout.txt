@@ -115,10 +115,17 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 
 ## Tastenkürzel
 - [[V]] [[T]] [[F]] [[R]] [[E]] [[L]] [[H]] wählen ein Werkzeug; [[W]] schaltet die Vorschau um.
-- Pfeiltasten verschieben die Auswahl ein Stück ([[Shift]] für größere Schritte); [[Delete]] entfernt sie.
+- Pfeiltasten verschieben die Auswahl um 0,5 mm (oder was in Tastenkürzel und Komfort steht; [[Shift]] zehnmal, [[Alt]] ein Zehntel); [[Delete]] entfernt sie. Jedes Kürzel lässt sich in `Tastenkürzel und Komfort…` ändern.
 - [[Ctrl+Z]] / [[Ctrl+Y]] machen rückgängig und wiederholen; [[Ctrl+C]], [[Ctrl+X]], [[Ctrl+V]], [[Ctrl+D]] dupliziert, [[Ctrl+A]] wählt alles aus.
 - [[Ctrl+G]] gruppiert, [[Ctrl+Shift+G]] hebt die Gruppierung auf; [[Ctrl+E]] öffnet den Export.
 - Beim Tippen in einem Rahmen oder im Textmodus: [[Ctrl+B]], [[Ctrl+I]], [[Ctrl+U]]; [[Esc]] beendet.
+
+## Komfort bei der Arbeit
+- **Intelligente Hilfslinien**: Beim Ziehen rastet ein Objekt an Seitenrändern, Rändern, Spalten, Hilfslinien und den anderen Objekten ein, und am gleichen Abstand wie zwischen den Objekten daneben; rosa Marken zeigen die gleichen Abstände mit ihrem Maß. Mit [[Alt]] ziehst du frei.
+- **Maße beim Ziehen**: Ein kleines Schild zeigt beim Verschieben die Lage, beim Größeändern oder Zeichnen die Größe und beim Drehen den Winkel, in der Einheit des Dokuments. Klicke auf die Ecke, wo sich die Lineale treffen, für mm, pt oder in.
+- **Werkzeugleiste über der Auswahl**: was eine Auswahl am häufigsten braucht, direkt darüber: `Text bearbeiten` oder `Bild platzieren…`, `Duplizieren`, `In den Vordergrund`, `In den Hintergrund`, `Gruppieren`, `Position sperren`, `Löschen` und `Mehr` für den Rest.
+- **Verlauf…** (im Menü `Mehr`, oder [[Ctrl+Alt+Z]]): jeder Rückgängig-Schritt mit Namen, etwa Verschieben, 3 Objekte hinzufügen oder Format „Text“, mit seiner Uhrzeit; ein Klick geht dorthin zurück oder wieder vor.
+- **Tastenkürzel und Komfort…** (Menü `Mehr`): Ändere jedes Kürzel, indem du es anklickst und die neuen Tasten drückst. Buchstaben meinen die Tastenplätze, die Kürzel gehen also auch mit griechischer Tastatur. Lege fest, wie weit die Pfeiltasten verschieben ([[Shift]] zehnmal so weit, [[Alt]] ein Zehntel), und schalte Hilfslinien, Maße oder Werkzeugleiste aus. Auf diesem Gerät gespeichert.
 
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.

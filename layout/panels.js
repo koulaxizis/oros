@@ -2005,6 +2005,8 @@
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },
+      { label: t("more.history"), disabled: !LY.canUndo() && !LY.canRedo(), fn: function () { LY.dlg.history(); } },
+      { label: t("more.keys"), fn: function () { LY.dlg.keys(); } },
       { sep: true },
       { label: t("more.pkg"), fn: function () { LY.io.exportPackage(doc); } },
       { label: t("more.epubCheck"), fn: function () { LY.io.checkEpubFile(); } }

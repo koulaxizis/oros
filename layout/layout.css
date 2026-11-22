@@ -661,3 +661,21 @@ body.inframe #cv { cursor: text; }
 .hint-bar > span { flex: 1 1 auto; }
 .st-open { margin-top: 6px; }
 @media (max-width: 520px) { .st-kinds { grid-template-columns: 1fr 1fr; max-height: 46vh; } .st-kind { padding: 8px; } }
+
+/* Working comfort (LY-N2): context toolbar, History, Shortcuts and comfort */
+.ctx-bar { position: absolute; z-index: 6; display: flex; gap: 2px; padding: 3px; background: var(--panel-bg); border: 1px solid var(--border, rgba(127,127,127,.35)); border-radius: 10px; box-shadow: 0 4px 14px rgba(0,0,0,.35); }
+.ctx-bar[hidden] { display: none; }
+.ctx-bar .icon-btn { min-width: 32px; min-height: 32px; }
+@media (pointer: coarse) { .ctx-bar .icon-btn { min-width: 40px; min-height: 40px; } }
+.hist-list { list-style: none; margin: 0; padding: 0; max-height: 55vh; overflow-y: auto; }
+.hist-btn { display: flex; width: 100%; gap: 10px; justify-content: space-between; align-items: center; text-align: start; padding: 8px 10px; min-height: 40px; border: 0; border-bottom: 1px solid var(--line, rgba(127,127,127,.2)); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.hist-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.hist-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.hist-row.now .hist-btn { font-weight: 600; color: var(--accent); cursor: default; }
+.hist-row.future .hist-btn { opacity: .6; }
+.hist-time { font-size: 12px; opacity: .7; white-space: nowrap; }
+.keys-list { display: flex; flex-direction: column; max-height: 42vh; overflow-y: auto; margin-bottom: 12px; }
+.keys-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--line, rgba(127,127,127,.15)); }
+.keys-name { flex: 1 1 auto; min-width: 0; }
+.keys-key { min-width: 96px; font-variant-numeric: tabular-nums; }
+.keys-key.on { border-color: var(--accent); color: var(--accent); }
