@@ -162,7 +162,7 @@
     busy = true;
     if (AT.ed && AT.ed.exitText) AT.ed.exitText();
     AT.endGesture();
-    var steps = chk.steps, notes = [], snaps = [], made = [], per = [], files = [], total = 0, docsChanged = 0, cut = 0;
+    var steps = chk.steps, notes = [], snaps = [], made = [], per = [], files = [], total = 0, docsChanged = 0, cut = 0, saved = [], outFail = [];
     var slow = steps.some(function (s) { var k = C.CATALOG[s.op].kind; return k === "async" || k === "out"; });
     var CUT = window.AtelierCutout, cutOne = AT.recipes && AT.recipes.cutOne;
     var ctl = new AbortController(), stat = null, dlg = AT.$("dlg");
@@ -225,7 +225,15 @@
             works.forEach(function (o) {
               c3 = c3.then(function () {
                 if (ctl.signal.aborted) return;
-                return AT.io.renderFiles(M.normDoc(JSON.parse(JSON.stringify(o.w))), st).then(function (fl) { files = files.concat(fl); });
+                return AT.io.renderFiles(M.normDoc(JSON.parse(JSON.stringify(o.w))), st).then(function (fl) {
+                  // GX-2: with out, the files go there (the shell's orOS Gate checks it)
+                  if (!st.out) { files = files.concat(fl); return; }
+                  return outSave(st.out, fl).then(function (r) {
+                    saved = saved.concat(r.saved);
+                    outFail = outFail.concat(r.outFail);
+                    if (r.outFail.length) files = files.concat(fl);
+                  });
+                });
               });
             });
             return c3;
@@ -309,6 +317,8 @@
         var rep = err && !rec ? { failed: 1, why: "error" }
           : { ok: 1, n: total, d: docsChanged, per: per.slice(0, 50), cut: cut, made: made.length, files: files.length, notes: notes.slice(), tok: rec ? rec.tok : "" };
         if (stopped) rep.stopped = 1;
+        if (saved.length && rep.ok) rep.saved = saved.slice(0, 60);
+        if (outFail.length && rep.ok) rep.outFail = outFail.slice(0, 4);
         back(key, rep);
         var msg = stopped ? t("as.stopped") : made.length && !total ? t("as.made", { n: made.length })
           : !total ? (files.length ? t("as.files", { n: files.length }) : t("as.done0"))
@@ -320,6 +330,13 @@
     }
   }
 
+  // GX-2: an export's files into out (orosGate.exportAll in the shell)
+  function outSave(out, fl) {
+    var G = null;
+    try { G = window.parent && window.parent !== window && window.parent.orosGate && typeof window.parent.orosGate.exportAll === "function" ? window.parent.orosGate : null; } catch (e) { G = null; }
+    if (!G) return Promise.resolve({ saved: [], outFail: [{ to: out, why: "gateOff" }] });
+    return Promise.resolve(G.exportAll([out], fl, "export")).then(null, function () { return { saved: [], outFail: [{ to: out, why: "error" }] }; });
+  }
   function undo(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "", tok = rq && typeof rq.tok === "string" ? rq.tok : "";
     return get(tok).then(function (rec) {

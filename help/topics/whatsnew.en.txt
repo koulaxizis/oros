@@ -3,6 +3,32 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.32.00
+- **Free films and shows in Television.** A new `Films & shows` tab brings about 3,500 free films, series, documentaries, cartoons and newsreels from Wikimedia Commons and the Internet Archive. Search by title, director or year, filter by type, genre, decade, country, language, length and sound, keep a `Watchlist`, and `Continue watching` picks up where you stopped, on all your devices. Only titles orOS has checked as free are shown unless you ask for more. The player now has a position bar and back / forward buttons for films. See [Television](help:a/television).
+
+## Version 8.31.00
+- **Mockups for much more than books.** Books get new bindings, sizes and finishes (foil, embossing, slipcase, belly band, notebook). New products: CD, DVD and Blu-ray, cassette, VHS, vinyl, badges, stickers, keychains, enamel pins, magnets, mugs, posters, cards, T-shirts, tote bags, hoodies, socks and caps, each with a sheet for the printer. Scenes can stand on wood, marble, linen, paper or concrete with a cup, plant or pencil, and `Several in one picture` puts up to 6 mockups together; kits make a whole set from one picture. See [Mockups](help:a/mockups).
+
+## Version 8.30.00
+- **More stations in Radio.** Every list now shows all its stations, 100 at a time, with `More stations`. New `Languages` and `Map` tabs: the map shows stations around the world, and a tap plays one (`Near me` asks for your position once, rounded to about 11 km, and never saves it). Discover can show Top, Trending now, New or updated and Random stations, and a station listed twice shows once. Country lists show their stations again. See [Radio](help:a/radio).
+
+## Version 8.29.00
+- **Walk and Bike routes with no network (experimental).** With no network, Maps now works out Walk and Bike routes on the device from your offline maps, using their roads, paths, steps and cycleways. See [Maps](help:a/maps).
+
+## Version 8.28.00
+- **Claude exports from every app that has Export.** Through orOS Gate (and in the Assistant), Claude can now export Slides (PDF, PowerPoint, PNG), Writer (PDF, Word, Markdown, HTML, text), Spreadsheet (Excel, ODS, CSV), Whiteboard (PNG, SVG, PDF, draw.io), Mind map (PNG, SVG, Markdown, OPML, JSON, orOS file), Studio's mix (WAV, MP3, Opus) and Montage (video, sound, GIF) into a local folder you opened for Claude or one of Claude's folders in Files. Nothing in the document changes and nothing is overwritten.
+
+## Version 8.27.00
+- **Claude saves exports where you want them.** Through orOS Gate, Claude's exports can now also go to a local folder you opened for Claude and/or one of Claude's folders in Files: Layout's print PDF (PDF/X-4 with crop marks too), EPUB and page pictures, Atelier's PNG, JPG and PDF, and Photo Lab's pictures. Nothing is ever overwritten: a taken name gets -2, -3. Files must be at «Claude may also change».
+- **New files show up for Claude at once.** What Claude saves through orOS Gate reaches the copy Claude reads within seconds, so a download link for it works right away.
+
+## Version 8.26.01
+- **Budget: banks are read less often when you use several devices.** With "every 6 hours", each device used to read your banks on its own, so a phone and a computer together could pass a bank's limit of about 4 reads a day and get "too many requests". The devices now share one schedule, and after a bank asks to wait, no device asks it again before the next turn.
+- **Update now in installed orOS.** In installed orOS, orOS Portable and the Live USB, the **Update now** button on the update notice now opens the System panel's update check, as Settings › Check for updates does, instead of saying there is no newer version. orOS takes the new version at its next start.
+
+## Version 8.26.00
+- **Claude keeps all of orOS's tools when it may change your files.** With Files at «Claude may also change», the list of tools orOS gives Claude through orOS Gate had grown too long and Claude lost the file and app tools. orOS Gate now takes the whole list, and if one day it grows past the limit, it shortens the longest descriptions instead of dropping tools.
+
 ## Version 8.25.00
 - **Photo Lab: all 27 Photoshop blend modes**, including dissolve, linear burn, vivid light, hard mix, subtract and divide. They open from and save to Photoshop, GIMP, OpenRaster and Krita files.
 - **Photo Lab: Skew, Distort, Perspective and Warp** (Edit menu, or the Mode list while transforming), plus **Filter › Liquify** (Ctrl+Shift+X) to push, twirl, pucker and bloat.

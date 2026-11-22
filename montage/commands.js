@@ -71,7 +71,9 @@
     remove: { kind: "doc", args: sel({}) },
     project: { kind: "doc", args: { ratio: oneOf([""].concat(M.RATIOS)), fps: i(30, 60), back: { t: "color" }, duck: i(0, 90) } },
     rename: { kind: "doc", args: { title: { t: "str", max: 80, req: 1 } } },
-    create: { kind: "new", args: { from: { t: "str", max: 500, req: 1 }, title: { t: "str", max: 80 } } }
+    create: { kind: "new", args: { from: { t: "str", max: 500, req: 1 }, title: { t: "str", max: 80 } } },
+    // GX-3: the project rendered as a file into out (nothing changes)
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["video", "sound", "gif"], def: "video" }, out: { t: "str", max: 1030, req: 1 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -93,7 +95,8 @@
     "remove: delete the picked clips (needs ids, what, row or has)",
     "project: ratio " + M.RATIOS.join("|") + ", fps 30|60, back (the colour behind everything), duck (0-90: how much the music drops under the voice, 0 = off)",
     "rename: the project's name becomes `title`",
-    "create: open a .orosmontage file from Claude's folders as a NEW project (only as the one command, with designs new): from (its /internal/ path, as files_upload or files_write gave it), title (the new project's name; the file's own name when empty). Nothing that exists changes, the user can undo it, and nothing is published"
+    "create: open a .orosmontage file from Claude's folders as a NEW project (only as the one command, with designs new): from (its /internal/ path, as files_upload or files_write gave it), title (the new project's name; the file's own name when empty). Nothing that exists changes, the user can undo it, and nothing is published",
+    "export: the project rendered as Export makes it (fmt video: MP4 or WebM, as the device can; sound: the sound alone; gif: a short GIF), saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Videos with Files at «may change»; never over a file); changes nothing; a long video takes as long as its length or more"
   ].join("\n");
 
   // ---------- 1. Checking ----------
@@ -201,6 +204,7 @@
   // One command on a project copy (work()) → how many things changed.
   // env: { notes: [], now: ms, newId: () → a fresh clip id }.
   function apply(w, st, env) {
+    if (CATALOG[st.op] && CATALOG[st.op].kind === "out") return 0;   // GX-3: assist.js makes the file
     env = env || {};
     var now = env.now || Date.now(), p = proj(w);
     if (!p) return 0;
@@ -404,6 +408,7 @@
       var w = work(recs[id]), k = 0;
       steps.forEach(function (st) { k += apply(w, st, env); });
       if (k) { out.n += k; out.d++; out.per.push({ id: id, name: proj(w).name, n: k }); }
+      if (R.outFiles(steps, 1)) out.files = (out.files || 0) + R.outFiles(steps, 1);   // GX-3
     });
     return out;
   }

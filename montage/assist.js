@@ -159,12 +159,20 @@
       H.set(next, perIds.indexOf(H.pid()) >= 0);
       rec.fp = fp(stateOf(rec));
     }
-    busy = false;
+    var ex = null;
     (changed ? put(rec) : Promise.resolve()).then(function () {
+      // GX-3: the export steps: each project opens and renders as by Export
+      return window.orosRecipes.runOuts(ids, chk.steps, function (id, st) {
+        if (H.pid() !== id) H.open(id);
+        return new Promise(function (ok) { setTimeout(ok, 300); }).then(function () { return H.exportAs(st.fmt); }).then(function (x) { return x ? [x] : []; });
+      }).then(function (r) { ex = r; });
+    }).then(null, function () {}).then(function () {
+      busy = false;
       /* the changed project opens, so the user sees what changed */
       if (perIds.length === 1 && perIds[0] !== H.pid() && !document.querySelector("dialog[open]")) H.open(perIds[0]);
       var rep = err && !changed ? { failed: 1, why: "error" }
         : { ok: 1, n: changed ? total : 0, d: changed ? per.length : 0, per: changed ? per.slice(0, 50) : [], cut: 0, notes: notes.slice(), tok: changed ? rec.tok : "" };
+      window.orosRecipes.outRep(rep, ex);
       back(key, rep);
       var msg = !changed ? t("as.done0") : per.length === 1 ? t("as.done1", { n: total }) : t("as.done", { n: total, d: per.length });
       if (changed) H.undoToast(msg, function () { undo({ tok: rec.tok }); });

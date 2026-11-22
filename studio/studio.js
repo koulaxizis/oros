@@ -3964,17 +3964,21 @@
   // dest "music": the file goes onto the orOS disk under /internal/Music
   // and plays in Music ("lyrics": opens in Lyric Sync instead);
   // otherwise the save dialog, as always.
-  function doExport(dest) {
+  // GX-3: dest "capture" (the export step) hands { name, blob } or null to
+  // cb instead of saving, in fmtWant (wav, mp3, opus) when given
+  function doExport(dest, fmtWant, cb) {
+    var give = function (x) { if (typeof cb === "function") { var f = cb; cb = null; f(x); } };
     var clips = projClips(), r = C.exportRange(proj, clips);
-    if (r.b - r.a < C.MIN_LEN) { showToast(t("export.empty")); return; }
-    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); return; }
+    if (r.b - r.a < C.MIN_LEN) { showToast(t("export.empty")); give(null); return; }
+    if (clips.some(function (c) { return !C.isMidi(c) && C.clipEnd(c) > r.a && c.at < r.b && !buffers[c.s]; })) { showToast(t("toast.missing")); give(null); return; }
     var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
-    if (!OAC) { showToast(t("toast.noAudio")); return; }
-    var fmt = prefs.fmt === "opus" && opusOk === false ? "wav" : prefs.fmt;
+    if (!OAC) { showToast(t("toast.noAudio")); give(null); return; }
+    var want = /^(wav|mp3|opus)$/.test(fmtWant || "") ? fmtWant : prefs.fmt;
+    var fmt = want === "opus" && opusOk === false ? "wav" : want;
     var rate = fmt === "opus" ? 48000 : prefs.rate;
-    var fail = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.noAudio")); };
+    var fail = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.noAudio")); give(null); };
     var title = proj.name || t("proj.untitled");
-    if (mixLong(r, rate)) { exportLong(dest, r, fmt, rate, title); return; }
+    if (mixLong(r, rate)) { exportLong(dest, r, fmt, rate, title, give); return; }
     $("export-status").textContent = t("export.busy");
     exportBusy(true);
     renderMix(r, rate).then(function (chans) { done(chans); }, fail);
@@ -3983,11 +3987,12 @@
         exportBusy(false);
         $("export-status").textContent = "";
         hideDlg("export-dlg");
-        if (dest === "send") sendMix(new Blob([bytes], { type: mime }), C.fileName(title, ext));
+        if (dest === "capture") give({ name: C.fileName(title, ext), blob: new Blob([bytes], { type: mime }) });
+        else if (dest === "send") sendMix(new Blob([bytes], { type: mime }), C.fileName(title, ext));
         else if (dest === "music" || dest === "lyrics") addToMusic(new Blob([bytes], { type: mime }), C.fileName(title, ext), dest === "lyrics" ? title : null);
         else saveBlob(new Blob([bytes], { type: mime }), C.fileName(title, ext), mime, desc, "." + ext);
       };
-      var broke = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.exportFail")); };
+      var broke = function () { exportBusy(false); $("export-status").textContent = ""; showToast(t("toast.exportFail")); give(null); };
       var pct = function (x) { $("export-status").textContent = t("export.encoding", { n: Math.floor(x * 100) }); };
       if (fmt === "mp3") {
         var enc;
@@ -4012,8 +4017,9 @@
   // comes (MP3 through the streaming encoder, WAV as its samples after one
   // header), so the whole mix is never in memory at once. Opus stays for
   // mixes up to an hour (the browser's encoder wants the whole buffer).
-  function exportLong(dest, r, fmt, rate, title) {
-    if (fmt === "opus") { showToast(t("export.opusLong")); return; }
+  function exportLong(dest, r, fmt, rate, title, give) {
+    give = give || function () {};
+    if (fmt === "opus") { showToast(t("export.opusLong")); give(null); return; }
     var total = C.partPlan(r, rate).reduce(function (n, p) { return n + p.len; }, 0), enc = null, wav = [], parts = 0;
     var status = function (s) { $("export-status").textContent = s; };
     exportBusy(true);
@@ -4031,10 +4037,11 @@
       status("");
       hideDlg("export-dlg");
       var ext = enc ? "mp3" : "wav", mime = blob.type;
-      if (dest === "send") sendMix(blob, C.fileName(title, ext));
+      if (dest === "capture") give({ name: C.fileName(title, ext), blob: blob });
+      else if (dest === "send") sendMix(blob, C.fileName(title, ext));
       else if (dest === "music" || dest === "lyrics") addToMusic(blob, C.fileName(title, ext), dest === "lyrics" ? title : null);
       else saveBlob(blob, C.fileName(title, ext), mime, enc ? "MP3" : "WAV", "." + ext);
-    }, function () { exportBusy(false); status(""); showToast(parts ? t("toast.exportFail") : t("toast.noAudio")); });
+    }, function () { exportBusy(false); status(""); showToast(parts ? t("toast.exportFail") : t("toast.noAudio")); give(null); });
   }
 
   // ---------- 9a. To other apps: Music, Ringtone Composer ----------
@@ -4405,6 +4412,19 @@
     rm: function (paths) {
       var fs = fsApi();
       if (fs && typeof fs.rm === "function") (paths || []).forEach(function (p) { try { Promise.resolve(fs.rm(p)).catch(function () {}); } catch (e) {} });
+    },
+    // GX-3: the open project's mix as Export makes it, once its sounds are
+    // loaded (up to 30 s) → { name, blob } | null
+    exportAs: function (fmt) {
+      return new Promise(function (ok) {
+        var tries = 0;
+        (function go() {
+          if (!proj) { ok(null); return; }
+          var miss = projClips().some(function (c) { return !C.isMidi(c) && !buffers[c.s]; });
+          if (miss && tries++ < 60) { setTimeout(go, 500); return; }
+          doExport("capture", fmt, ok);
+        })();
+      });
     },
     // next = the whole data; withUndo = the open project changed (one
     // step of Studio's own Undo).

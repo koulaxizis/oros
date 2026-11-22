@@ -68,7 +68,9 @@
     mermaid: { kind: "doc", args: { text: { t: "str", max: 20000, req: 1 }, x: POS.x, y: POS.y } },
     connect: { kind: "doc", args: plus({ from: { t: "str", max: 200, req: 1 }, to: { t: "str", max: 200, req: 1 }, text: { t: "str", max: 120 }, c: { t: "color" } }, LINE) },
     remove: { kind: "doc", args: sel({}) },
-    rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } }
+    rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } },
+    // GX-3: the board as a file into out (nothing changes)
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["png", "svg", "pdf", "drawio"], def: "png" }, out: { t: "str", max: 1030, req: 1 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -90,7 +92,8 @@
     "mermaid: draw a Mermaid flowchart (text starting graph TD|LR or flowchart TD|LR: boxes A[..] A(..) A([..]) A{..} A[(..)] A((..)) A{{..}} A[/../], links --> --- -.-> ==> with labels -->|yes| or -- yes -->, A & B --> C, subgraph .. end) as shapes and arrows laid out as a flow, at x, y (default: to the right of everything)",
     "connect: an arrow from the object `from` to the object `to` (an id, or words of its text), with text (its label), c, ends, dash, route, starthead, endhead",
     "remove: delete the picked objects (needs ids, what, has or frame)",
-    "rename: the board's name becomes `title`"
+    "rename: the board's name becomes `title`",
+    "export: the whole board as a file, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Boards with Files at «may change»; never over a file): fmt png | svg | pdf | drawio; changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------
@@ -256,6 +259,7 @@
   // board's name) changed. env: { notes: [], now: ms, newId: () → a
   // fresh object id }.
   function apply(w, st, env) {
+    if (CATALOG[st.op] && CATALOG[st.op].kind === "out") return 0;   // GX-3: assist.js makes the file
     env = env || {};
     var now = env.now || Date.now(), b = brd(w);
     if (!b) return 0;
@@ -461,6 +465,7 @@
       var w = work(recs[id], id), k = 0;
       steps.forEach(function (st) { k += apply(w, st, env); });
       if (k) { out.n += k; out.d++; out.per.push({ id: id, name: brd(w).name, n: k }); }
+      if (R.outFiles(steps, 1)) out.files = (out.files || 0) + R.outFiles(steps, 1);   // GX-3
     });
     return out;
   }

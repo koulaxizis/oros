@@ -67,7 +67,9 @@
     deltrack: { kind: "doc", args: sel(TSEL, {}) },
     project: { kind: "doc", args: { bpm: n(S.MIN_BPM, S.MAX_BPM), sig: i(2, 7), vol: n(S.VOL_MIN, S.VOL_MAX), loop: ONOFF, bars: { t: "str", max: 20 } } },
     rename: { kind: "doc", args: { title: { t: "str", max: S.MAX_NAME, req: 1 } } },
-    create: { kind: "new", args: { from: { t: "str", max: 500, req: 1 }, title: { t: "str", max: S.MAX_NAME } } }
+    create: { kind: "new", args: { from: { t: "str", max: 500, req: 1 }, title: { t: "str", max: S.MAX_NAME } } },
+    // GX-3: the project's mix as a file into out (nothing changes)
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["wav", "mp3", "opus"], def: "wav" }, out: { t: "str", max: 1030, req: 1 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -85,7 +87,8 @@
     "deltrack: delete the picked tracks and their clips (needs tracks or what)",
     "project: bpm (" + S.MIN_BPM + "-" + S.MAX_BPM + ", MIDI clips keep their bars and beats, audio stays in time), sig (beats in a bar, 2-7), vol (the master, dB), loop on|off, bars (the loop, e.g. \"5-8\" = bars 5 to 8)",
     "rename: the project's name becomes `title`",
-    "create: open a .orosstudio file from Claude's folders as a NEW project (only as the one command, with designs new): from (its /internal/ path, as files_upload or files_write gave it), title (the new project's name; the file's own name when empty). Nothing that exists changes, the user can undo it, and nothing is published"
+    "create: open a .orosstudio file from Claude's folders as a NEW project (only as the one command, with designs new): from (its /internal/ path, as files_upload or files_write gave it), title (the new project's name; the file's own name when empty). Nothing that exists changes, the user can undo it, and nothing is published",
+    "export: the project's mix (as Export makes it: the loop range or the whole song) as a file, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Mixes with Files at «may change»; never over a file): fmt wav | mp3 | opus; changes nothing"
   ].join("\n") + "\nA project that is a part of an audiobook (opening, chapter or closing credits) is named \"<book> · <part>\" and its outline carries `book` (the book, the part's place, the other parts, the requirements ACX or Storytel, whether it is normalised); the same commands work on it. Checking, normalising and exporting a book are done in Studio's Books window, not by commands.";
 
   // ---------- 1. Checking ----------
@@ -251,6 +254,7 @@
   // → a fresh id, trackName: (n, inst) → a new track's name in the
   // user's language }.
   function apply(w, st, env) {
+    if (CATALOG[st.op] && CATALOG[st.op].kind === "out") return 0;   // GX-3: assist.js makes the file
     env = env || {};
     var now = env.now || Date.now(), p = proj(w);
     if (!p) return 0;
@@ -480,6 +484,7 @@
       var w = work(recs[id], id), k = 0;
       steps.forEach(function (st) { k += apply(w, st, env); });
       if (k) { out.n += k; out.d++; out.per.push({ id: id, name: proj(w).name, n: k }); }
+      if (R.outFiles(steps, 1)) out.files = (out.files || 0) + R.outFiles(steps, 1);   // GX-3
     });
     return out;
   }

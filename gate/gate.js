@@ -1859,6 +1859,7 @@
   // inside Claude's folders (FILES_KEY, synced). Files stays outside
   // ACT: change_item on files is not offered through the gate.
   var FILE_READ = ["files_list", "files_read"], FILE_WRITE = ["files_write", "files_move", "files_delete"];
+  var FRESH_COPY = FILE_WRITE.concat(["export_pdf", "export_epub", "edit_in_app"]);
   // The changes the relay may queue while orOS is closed (relay/gate.js
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
@@ -3144,8 +3145,11 @@
     }
     if (name === "__tools") {
       return actFrame().then(function (F) {
-        var list = [];
-        try { list = F ? F.tools() || [] : []; } catch (e) { list = []; }
+        // GL-9: a frame that did not start answers not-ok, so the relay
+        // keeps the list it has instead of storing an empty one
+        if (!F) return { ok: false, c: "orOS could not start its tools on the device.", quiet: 1 };
+        var list;
+        try { list = F.tools() || []; } catch (e) { return { ok: false, c: "orOS could not list its tools.", quiet: 1 }; }
         return { ok: true, c: JSON.stringify(list), quiet: 1 };
       });
     }
@@ -3688,6 +3692,58 @@
   function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
   function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
   function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  // GX-1 (Chris 2026-11-21 «δώσε στο gate τη δυνατότητα να μπορεί να
+  // κάνει εξαγωγή σε τοπικό φάκελο ή/και orOS Files»): an app's export
+  // also goes to out, a local write folder the owner opened
+  // (local:<root>/<folder>, localroots.js) or a folder of Claude's on the
+  // orOS disk while Files is at «may change» and not paused. Never
+  // replaces a file (name-2.ext, -3…). → the saved path, or throws { why }.
+  var EXPORT_WHY = ["noBridge", "gateOff", "locked", "notAllowed", "paused", "outside", "badName", "noDisk", "nameTaken", "error"];
+  function exportTo(out, name, blob, tool) {
+    out = typeof out === "string" ? out.trim() : "";
+    var fail = function (why) { return Promise.reject({ why: why }); };
+    if (!out || !blob || typeof blob.size !== "number") return fail("error");
+    if (/^local:/i.test(out)) {
+      var L = root.orosLocal;
+      if (!L || typeof L.write !== "function") return fail("noBridge");
+      return Promise.resolve(L.write(out, name, blob, String(tool || "export").slice(0, 40))).then(null, function (e) { throw { why: e && typeof e.why === "string" ? e.why : "error" }; });
+    }
+    return claudeFiles().then(function (CF) {
+      var p = pref(), dir = CF.normPath(out), now = Date.now();
+      name = typeof name === "string" ? name.trim() : "";
+      var why = !p.on ? "gateOff" : locked() ? "locked" : !isObj(p.lv) || p.lv.files !== "write" || barred("files") ? "notAllowed"
+        : !canWrite(p.lv, p.hold, "files", now) ? "paused" : CF.reach(dir, CF.cleanFolders(foldersRead().f)) ? "outside" : CF.validName(name) ? "badName" : "";
+      if (why) throw { why: why };
+      var FS = root.orosFS;
+      if (!FS || typeof FS.write !== "function" || typeof FS.stat !== "function") throw { why: "noDisk" };
+      var dot = name.lastIndexOf("."), base = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : "";
+      var free = function (k) {
+        if (k > 99) return Promise.resolve("");
+        var path = dir + "/" + (k === 1 ? name : base + "-" + k + ext);
+        return Promise.resolve().then(function () { return FS.stat(path); }).then(function (st) { return st ? free(k + 1) : path; }, function () { return path; });
+      };
+      return Promise.resolve(typeof FS.mkdir === "function" ? FS.mkdir(dir) : null).then(null, function () {}).then(function () { return free(1); }).then(function (path) {
+        if (!path) throw { why: "nameTaken" };
+        return Promise.resolve(FS.write(path, blob)).then(function () { fileCopySoon(3000); return path; }, function () { throw { why: "error" }; });
+      });
+    });
+  }
+  // GX-2: several files (an app's export) to each place of out (≤ 2)
+  // → { saved: [paths], outFail: [{ to, why }] }
+  function exportAll(outs, files, tool) {
+    var list = (Array.isArray(outs) ? outs : typeof outs === "string" && outs ? [outs] : []).filter(function (x) { return typeof x === "string" && x.trim(); }).slice(0, 2);
+    var saved = [], outFail = [];
+    return list.reduce(function (pr, o) {
+      return pr.then(function () {
+        return (Array.isArray(files) ? files : []).slice(0, 200).reduce(function (p2, f) {
+          return p2.then(function () {
+            if (outFail.some(function (x) { return x.to === o; })) return;
+            return exportTo(o, f && f.name, f && f.blob, tool).then(function (p) { saved.push(p); }, function (e) { outFail.push({ to: o, why: e && e.why || "error" }); });
+          });
+        }, Promise.resolve());
+      });
+    }, Promise.resolve()).then(function () { return { saved: saved, outFail: outFail }; });
+  }
   function fcFilesOn(p) { return isObj(p.lv) && (p.lv.files === "read" || p.lv.files === "write"); }
   // Every file under the folders: [{ p, s, m, cloud: { h } | null }]
   function fcWalk(CF, folders) {
@@ -3899,6 +3955,9 @@
     askLast = "";
     run(q.n, q.a).then(function (res) {
       if (res && res.ok && q.n !== "__tools") ranAdd(q.q);
+      // GX-4: what Claude just wrote or exported is in the files copy within
+      // seconds, so files_link finds it (it was 60 s and more)
+      if (res && res.ok && FRESH_COPY.indexOf(q.n) >= 0) fileCopySoon(3000);
       // 7.48.00: a deletion this screen could not ask about (nobody here)
       // is handed back to the box, which queues it for a device on screen.
       if (res && !res.ok && askLast === "none" && (core.delCount(q.n, q.a) || q.n === "edit_in_app")) {   // TRAY-3: Layout's removals too
@@ -3959,6 +4018,9 @@
     refreshFileCopy: function () { return fileCopy(); },
     // Claude's folders on the orOS disk (synced): [path]
     folders: function () { return foldersRead().f.slice(); },
+    exportAll: exportAll,   // GX-2: an app's files to out
+    exportTo: exportTo,   // GX-1: an export also into a local folder or Claude's folders on the orOS disk
+    EXPORT_WHY: EXPORT_WHY,
     // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
     setFolders: function (list) {
       return claudeFiles().then(function (CF) {

@@ -77,6 +77,21 @@ test("W5: documents and actions through the gate", () => {
   assert.equal(G.ACT_WRITE.indexOf("do_action"), -1, "an action needs the window, not a change switch per app");
 });
 
+// GL-9: a list over the cap loses words of its longest descriptions, never its tools
+test("relay: an oversized device list is shortened, not dropped", () => {
+  const list = new Array(40).fill(0).map((_, i) => ({ name: "tool_" + "abcdefghijklmnopqrstuvwxyz"[i % 26] + "abcdefghijklmnopqrstuvwxyz"[Math.floor(i / 26)],
+    description: "w".repeat(i < 5 ? 7900 : 3000), inputSchema: { type: "object", properties: { a: { type: "string" } } } }));
+  const fit = R.fitDevTools(JSON.parse(JSON.stringify(list)), 100000);
+  assert.equal(fit.length, 40, "every tool stays");
+  assert.ok(JSON.stringify(fit).length <= 100000, "fits the cap");
+  assert.ok(fit.some((t) => /shortened/.test(t.description)), "the longest descriptions carry the note");
+  fit.forEach((t) => assert.ok(t.description.length >= 400, t.name));
+  const same = R.fitDevTools(JSON.parse(JSON.stringify(list)), 1e7);
+  assert.deepEqual(same, list, "a list under the cap is untouched");
+  const kept = R.cleanDevTools(list.map((t) => Object.assign({}, t, { description: "v".repeat(8000) })));
+  assert.equal(kept.length, 40, "40 tools of 8000 characters pass the relay");
+});
+
 test("relay: the device's tools are cleaned and merged", () => {
   const ok = { name: "change_item", description: "x", inputSchema: { type: "object", properties: {} }, annotations: { destructiveHint: true } };
   const clean = R.cleanDevTools([
@@ -97,8 +112,8 @@ test("relay: the device's tools are cleaned and merged", () => {
   ]).map((t) => t.annotations);
   assert.deepEqual(ann, [{ readOnlyHint: false, destructiveHint: true }, { readOnlyHint: false, destructiveHint: false },
                          { readOnlyHint: true, destructiveHint: false }], "no annotations = destructive, as MCP's default");
-  const big = [{ name: "huge_tool", description: "y".repeat(8000), inputSchema: { type: "object", properties: { a: { type: "string", description: "z".repeat(200000) } } } }];
-  assert.deepEqual(R.cleanDevTools(big), [], "an oversized list is dropped");
+  const big = [{ name: "huge_tool", description: "y".repeat(8000), inputSchema: { type: "object", properties: { a: { type: "string", description: "z".repeat(500000) } } } }];
+  assert.deepEqual(R.cleanDevTools(big), [], "a list that cannot fit loses the tool that will not shorten");
   assert.equal(R.cleanDevTools(new Array(30).fill(0).map((_, i) => ({ name: "tool_" + "abcdefghijklmnopqrstuvwxyz"[i % 26] + i, description: "", inputSchema: { type: "object" } }))).length, 0,
     "names with digits are refused");
   const merged = R.withDevTools(clean);
