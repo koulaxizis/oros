@@ -338,7 +338,7 @@ test("wiring W2: Overview section, Today card and the smart bar kind use the sam
   assert.match(ov, /\.ov-fname"\)\.textContent = it\.title/);
   assert.doesNotMatch(ov, /innerHTML[^;]*it\.title/);
   const sb = fs.readFileSync(path.join(ROOT, "smartbar.js"), "utf8");
-  assert.match(sb, /"reading", "continue"\]/);
+  assert.match(sb, /"reading", "continue"[\],]/);
   assert.match(sb, /continue: function \(now\)/);
   const today = fs.readFileSync(path.join(ROOT, "today", "today.js"), "utf8");
   assert.match(today, /var cc = contCard\(\);/);

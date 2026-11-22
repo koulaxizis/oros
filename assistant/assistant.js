@@ -1496,7 +1496,7 @@
 
   // ---------- 2. Data + prefs ----------
   var data = C.emptyData();
-  var prefs = { open: "", keep: 1, usage: {}, sealOk: {}, gone: {}, clr: {} };
+  var prefs = { open: "", keep: 1, usage: {}, srch: {}, sealOk: {}, gone: {}, clr: {} };
 
   function load() {
     try {
@@ -1521,6 +1521,7 @@
         if (typeof p.open === "string") prefs.open = p.open.slice(0, 40);
         prefs.keep = p.keep === 0 ? 0 : 1;
         if (p.usage && typeof p.usage === "object") prefs.usage = p.usage;
+        if (p.srch && typeof p.srch === "object") prefs.srch = p.srch;   // AI-USE: searches of a free quota
         if (p.sealOk && typeof p.sealOk === "object") prefs.sealOk = p.sealOk;
         prefs.gone = C.normGone(p.gone, Date.now());
         if (p.clr && typeof p.clr === "object") prefs.clr = p.clr;
@@ -1539,6 +1540,18 @@
     row.o += u.o || 0;
     if (u.ws) row.ws = (row.ws || 0) + u.ws;
     Object.keys(prefs.usage).sort().slice(0, -3).forEach(function (k) { delete prefs.usage[k]; });
+    savePrefs();
+  }
+
+  // AI-USE (smart bar card): searches made through a service with a free
+  // monthly quota (Tavily: 1,000), counted on this device by month,
+  // the last 3 months kept. A number only, never the query.
+  function addSearch(src) {
+    if (src !== "tavily") return;
+    var mk = C.monthKey(Date.now());
+    var month = prefs.srch[mk] && typeof prefs.srch[mk] === "object" ? prefs.srch[mk] : (prefs.srch[mk] = {});
+    month[src] = (Number(month[src]) || 0) + 1;
+    Object.keys(prefs.srch).sort().slice(0, -3).forEach(function (k) { delete prefs.srch[k]; });
     savePrefs();
   }
 
@@ -3115,6 +3128,7 @@
       if (req.err) throw { why: "setup" };
       return webFetch(req).then(function (r) {
         if (!r.ok) throw { why: webWhy(null, r) };
+        addSearch(src);                                  // AI-USE: one answered search
         return r.json().catch(function () { throw { why: "fail" }; });
       }, function (e) { throw { why: webWhy(e) }; }).then(function (j) { return C.searchParse(src, j); });
     });

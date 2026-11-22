@@ -148,7 +148,8 @@ test("shell strings for every chip in EN, EL and DE", () => {
     "sb.habits.label", "sb.plants.label", "sb.chores.label", "sb.kanban.label", "sb.invoices.label", "sb.list.tip", "sb.list.more",
     "sb.invoices.tip", "sb.trip.today", "sb.trip.tomorrow", "sb.trip.in", "sb.trip.tip", "sb.timer.tip",
     "sb.habits.one", "sb.plants.one", "sb.chores.one", "sb.kanban.one", "sb.invoices.one",
-    "sb.tmr.name", "sb.tmr.tip", "sb.tmr.stop", "sb.sw.label", "sb.sw.tip", "sb.sw.stop", "sb.rec.paused", "sb.rec.tip", "sb.rec.tip.p", "sb.rec.stop"]);
+    "sb.tmr.name", "sb.tmr.tip", "sb.tmr.stop", "sb.sw.label", "sb.sw.tip", "sb.sw.stop", "sb.rec.paused", "sb.rec.tip", "sb.rec.tip.p", "sb.rec.stop",
+    "sb.ai.label", "sb.ai.searches", "sb.ai.near", "sb.ai.tip", "sb.ai.web", "sb.ai.srch"]);
   keys.forEach((k) => {
     assert.strictEqual(tr.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
     assert.ok(de.includes('"' + k + '":'), k + " in DE");
@@ -383,4 +384,29 @@ test("PEEK-1 wiring: the weather chip peeks first, the shell keeps 7 days, panel
     assert.ok(read("translations.js").split('"' + k + '"').length === 3, k + " EN + EL");
     assert.ok(read("i18n/de/shell.js").includes('"' + k + '"'), k + " DE");
   });
+});
+
+// AI-USE (smartbar 1.5.0): the Assistant's use this month on the person's own keys.
+test("AI-USE aiUsage: own keys only, local models never, Tavily searches, nothing = null", () => {
+  const prefs = { usage: {
+    "2026-11": { anthropic: { i: 1200, o: 300, ws: 2 }, openai: { i: 50, o: 50 }, local: { i: 99999, o: 99999 }, webllm: { i: 5, o: 5 }, browser: { i: 1, o: 1 }, bad: null },
+    "2026-10": { anthropic: { i: 7, o: 7 } } },
+    srch: { "2026-11": { tavily: 812 } } };
+  assert.deepStrictEqual(M.aiUsage(prefs, "2026-11"), { tok: 1600, ws: 2, tav: 812 });
+  assert.deepStrictEqual(M.aiUsage(prefs, "2026-10"), { tok: 14, ws: 0, tav: 0 });
+  assert.strictEqual(M.aiUsage(prefs, "2026-09"), null);
+  assert.strictEqual(M.aiUsage({ usage: { "2026-11": { local: { i: 9, o: 9 } } } }, "2026-11"), null);
+  assert.strictEqual(M.aiUsage(null, "2026-11"), null);
+  assert.deepStrictEqual(M.aiUsage({ srch: { "2026-11": { tavily: 3 } } }, "2026-11"), { tok: 0, ws: 0, tav: 3 });
+  assert.strictEqual(M.TAVILY_FREE, 1000);
+});
+
+test("AI-USE compact numbers and wiring", () => {
+  assert.deepStrictEqual([0, 950, 12400, 12000, 182345, 1234567, 2000000].map(M.compact), ["0", "950", "12.4k", "12k", "182k", "1.2M", "2M"]);
+  assert.ok(M.KINDS.includes("ai"));
+  const src = read("smartbar.js"), as = read("assistant/assistant.js");
+  assert.match(src, /orosLock\.apps\.state\("assistant"\)/);          // hidden while the Assistant is locked
+  assert.match(as, /addSearch\(src\);/);                               // one answered search counted
+  assert.match(as, /if \(p\.srch && typeof p\.srch === "object"\) prefs\.srch = p\.srch;/);
+  assert.doesNotMatch(as.slice(as.indexOf("function addSearch"), as.indexOf("function provName")), /\bq\b|query/);
 });
