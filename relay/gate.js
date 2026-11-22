@@ -957,7 +957,25 @@ export function pendHead(n, a, t) {
   } else {
     h.a.refs = refsIn(o).slice(0, 20);
   }
+  const f = queuedName(n, o);
+  if (f) h.f = f;
   return h;
+}
+// GATE-PL11 (Mail thread review 2026-11-22): what a waiting row adds to
+// Claude's folders or to an app's documents, kept in the small header h
+// (key f, apart from a so refsIn/pendingOf never see it), so the closed
+// checks never open the whole rows: files_write path / files_move to
+// → { p }; an edit_in_app create → { app, d: its document's name }.
+export const QUEUED_NAMED = ["files_write", "files_move", "edit_in_app"];
+export function queuedName(n, a) {
+  const o = a && typeof a === "object" ? a : {};
+  if (n === "files_write" || n === "files_move") { const p = filePath(n === "files_write" ? o.path : o.to); return p ? { p } : null; }
+  if (n === "edit_in_app" && Array.isArray(o.steps) && o.steps[0] && o.steps[0].op === "create" && typeof o.app === "string") {
+    const st = o.steps[0], from = typeof st.from === "string" ? st.from : "";
+    const d = String(st.title || (from ? from.slice(from.lastIndexOf("/") + 1).replace(/\.[^.]*$/, "") : "") || "").slice(0, 120);
+    return d ? { app: o.app.toLowerCase().slice(0, 40), d } : null;
+  }
+  return null;
 }
 // The app a waiting change belongs to (refs: from the copy's index or a p- ref).
 export function pendApp(n, a, byRef) {
@@ -2642,16 +2660,22 @@ export class GateBox {
     if (!kRaw) return out;
     const q = await this.st.list({ prefix: "q:" });
     for (const [, v] of q) {
-      let x = null;
-      try { x = JSON.parse(await openText(kRaw, v.c)); } catch (e) { x = null; }
-      if (!x || typeof x.n !== "string" || !x.a || typeof x.a !== "object") continue;
-      if (x.n === "files_write") { const p = filePath(x.a.path); if (p) out.paths.push(p); }
-      if (x.n === "files_move") { const p = filePath(x.a.to); if (p) out.paths.push(p); }
-      if (x.n === "edit_in_app" && Array.isArray(x.a.steps) && x.a.steps[0] && x.a.steps[0].op === "create" && typeof x.a.app === "string") {
-        const st = x.a.steps[0], from = typeof st.from === "string" ? st.from : "";
-        const nm = String(st.title || (from ? from.slice(from.lastIndexOf("/") + 1).replace(/\.[^.]*$/, "") : "") || "").slice(0, 120);
-        if (nm) (out.docs[x.a.app.toLowerCase()] = out.docs[x.a.app.toLowerCase()] || []).push(nm);
-      }
+      // the small header h; the whole row c only for a row from before h.f
+      let f = null;
+      try {
+        const h = typeof v.h === "string" ? JSON.parse(await openText(kRaw, v.h)) : null;
+        if (h && typeof h.n === "string") {
+          if (QUEUED_NAMED.indexOf(h.n) < 0) continue;
+          if (h.f !== undefined) f = h.f;
+          else { const x = JSON.parse(await openText(kRaw, v.c)); f = x && typeof x.n === "string" ? queuedName(x.n, x.a) : null; }
+        } else {
+          const x = JSON.parse(await openText(kRaw, v.c));
+          f = x && typeof x.n === "string" ? queuedName(x.n, x.a) : null;
+        }
+      } catch (e) { f = null; }
+      if (!f || typeof f !== "object") continue;
+      if (typeof f.p === "string") { const p = filePath(f.p); if (p) out.paths.push(p); }
+      if (typeof f.app === "string" && typeof f.d === "string" && f.d) (out.docs[f.app] = out.docs[f.app] || []).push(f.d.slice(0, 120));
     }
     return out;
   }

@@ -1072,6 +1072,21 @@ test("GATE-PL11: edit_in_app and studio_import are checked against the copy with
   // the project a waiting import makes can be named already
   r = await tc("edit_in_app", { app: "studio", dry_run: true, designs: "named", name: "Πλανόδιο 3", steps: [{ op: "project", bpm: 96 }] });
   assert.equal(r.isError, false, r.content[0].text);
+  // Mail thread review: the closed checks read only the small header h (f), never the whole row
+  const rows = [...(await b.st.storage.list({ prefix: "q:" })).entries()], fs = [];
+  for (const [k, v] of rows) {
+    const h = JSON.parse(await G.openText(K, v.h)), x = JSON.parse(await G.openText(K, v.c));
+    fs.push(h.f);
+    assert.equal(JSON.stringify(h.a).indexOf("Podcasts"), -1, "f is kept apart from a");
+    // an old row (h without f) falls back to c; a new one never opens c
+    if (x.a && x.a.title === "Πλανόδιο 3") { delete h.f; await b.st.storage.put(k, Object.assign({}, v, { h: await G.sealText(K, JSON.stringify(h)) })); }
+    else await b.st.storage.put(k, Object.assign({}, v, { c: "not-a-sealed-row" }));
+  }
+  assert.deepEqual(fs.filter(Boolean).map((f) => f.p || f.app + ":" + f.d).sort(), ["/internal/Studio/Podcasts/Ep3.orosstudio", "studio:Ep1", "studio:Πλανόδιο 3"]);
+  const qn = await b.box.queuedNames(K);
+  assert.deepEqual(qn.paths, ["/internal/Studio/Podcasts/Ep3.orosstudio"]);
+  assert.deepEqual(Object.keys(qn.docs), ["studio"]);
+  assert.deepEqual(qn.docs.studio.slice().sort(), ["Ep1", "Πλανόδιο 3"]);
   // other apps and old copies
   r = await tc("edit_in_app", { app: "layout", dry_run: true, steps: [{ op: "set" }] });
   assert.equal(r.isError, true);
