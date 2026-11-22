@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.48.00
+- **Layout: accessible PDF.** Export › Tagged for accessibility (PDF/UA) gives the PDF its structure, so screen readers and phones read it in order: headings, paragraphs, notes, contents and links, picture descriptions and the language. Running heads and page numbers are left out of the reading. E-book PDFs are always tagged.
+
 ## Version 8.47.00
 - **Layout: imposition.** Export › Imposition puts the pages on printer's sheets: a stapled booklet, sections of 8, 16 or 32 pages for a sewn or glued book, or two pages on a sheet, with crop marks and creep. Export › Image can save all pages or all spreads in one .zip, and a book cover can carry an EAN-5 price code beside the ISBN.
 
