@@ -519,7 +519,7 @@
       var v = sel.value;
       sel.innerHTML = "";
       if (none) { var o0 = el("option", "", none); o0.value = ""; sel.appendChild(o0); }
-      list.slice().sort(function (x, y) { return LY.label(x.name).localeCompare(LY.label(y.name)); }).forEach(function (s) {
+      list.slice().sort(function (x, y) { return LY.T.collate(LY.label(x.name), LY.label(y.name)); }).forEach(function (s) {
         var o = el("option", "", LY.label(s.name)); o.value = s.id; sel.appendChild(o);
       });
       sel.value = v;

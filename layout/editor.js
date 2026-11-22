@@ -424,6 +424,19 @@
       }
       ctx.stroke();
     }
+    // loose and tight lines, when asked (LY-W6, as InDesign's H&J
+    // violations): yellow loose, pink tight
+    if (LY.prefs.hjShow === 1 && ED.L) {
+      itemsOfP(P).forEach(function (it) {
+        var fr = it.t === "text" && !it.rot && ED.L.frames[it.id];
+        if (!fr) return;
+        fr.lines.forEach(function (ln) {
+          if (!ln.hj) return;
+          ctx.fillStyle = ln.hj > 0 ? "rgba(255,200,0,0.35)" : "rgba(255,80,160,0.3)";
+          ctx.fillRect(it.x + ln.cx0, it.y + ln.y - ln.h * 0.75, ln.cx1 - ln.cx0, ln.h * 0.75 + ln.d);
+        });
+      });
+    }
     // ruler guides of this owner
     ctx.strokeStyle = "rgba(0,180,220,0.8)";
     doc.guides.forEach(function (g) {

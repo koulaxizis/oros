@@ -144,6 +144,13 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Bibliothek** (`Mehr › Bibliothek…`): Wähle Objekte aus; `Auswahl hinzufügen` bewahrt sie mit Text, Farben und Formaten für jedes Dokument auf diesem Gerät auf; ein Klick platziert eines auf der aktuellen Seite. Dort benennst oder entfernst du sie; `Exportieren…` und `Importieren…` bringen eine Bibliothek als `.oroslib`-Datei auf ein anderes Gerät. Bilder werden genannt, nicht kopiert.
 - **Farbfeldbibliotheken** (Bedienfeld Farben): `Bibliotheken…` fügt fertige Sätze hinzu (Druck-Grundfarben, Meer, Erde, Pastell, Grautöne); `.ase importieren…` liest Farbfelddateien aus InDesign, Illustrator, Photoshop, Affinity oder Scribus (RGB, CMYK, Grau und Lab; Volltonfarben bleiben Volltonfarben); `.ase exportieren` schreibt die Farben des Dokuments für sie. Farben, die schon im Dokument sind, werden übersprungen.
 
+## Griechisch und Satz
+- **Griechisch**: Die Silbentrennung liest auch polytonischen Text (Hauche, Akzente und Iota subscriptum bleiben außen vor: ἄν-θρω-πος); Großbuchstaben verlieren sie und behalten das Trema (ᾠδή → ΩΙΔΗ). Formatlisten sortieren griechisch (ά wie α, ς wie σ).
+- **Glyphenprüfung**: Die Preflight-Prüfung nennt jeden Rahmen mit Zeichen, die seine Schrift nicht hat, und welche.
+- **Satz** (Absatzformat, Satz): `Ganzer Absatz` wägt alle Zeilen eines Absatzes zusammen ab, für gleichmäßige Abstände; Wortabstand mindestens und höchstens (%) und Zeichenabstand höchstens legen fest, wie weit eine Blocksatzzeile gehen darf; `Optischer Randausgleich` lässt Satzzeichen über den Rand hängen; `Flattersatz ausgleichen` gleicht Zeilen ohne Blocksatz an; eine Initiale senkt die ersten Buchstaben über zwei oder mehr Zeilen.
+- **Kapitälchen, hoch- und tiefgestellt**: in einem Zeichenformat.
+- **Lockere und enge Zeilen**: `Mehr › Lockere und enge Zeilen zeigen` markiert Blocksatzzeilen außerhalb der Grenzen (gelb locker, rosa eng).
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

@@ -144,6 +144,13 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Library** (`More › Library…`): select objects and `Add the selection` keeps them, with their text, colours and styles, for any document on this device; click one to place it on the current page. Rename or remove them there; `Export…` and `Import…` take a library to another device as a `.oroslib` file. Pictures are named, not copied.
 - **Swatch libraries** (Colours panel): `Libraries…` adds ready-made sets (print basics, sea, earth, pastel, greys); `Import .ase…` reads swatch files from InDesign, Illustrator, Photoshop, Affinity or Scribus (RGB, CMYK, grey and Lab, spot colours stay spot); `Export .ase` writes the document's colours for them. Colours already in the document are skipped.
 
+## Greek and composition
+- **Greek**: hyphenation also reads polytonic text (breathings, accents and the iota subscript are set aside: ἄν-θρω-πος); all caps drop them and keep the dialytika (ᾠδή → ΩΙΔΗ). Lists of styles sort the Greek way (ά with α, ς with σ).
+- **Glyph check**: Preflight lists every frame with characters its font cannot draw, and which ones.
+- **Composition** (paragraph style, Composition): `Whole paragraph` weighs all lines of a paragraph together, for even spacing; word spacing least and most (%) and letter spacing most set how far a justified line may go; `Optical margins` lets punctuation hang past the edge; `Balance ragged lines` evens out lines that are not justified; a drop cap sinks the first letters through two or more lines.
+- **Small caps, superscript, subscript**: in a character style.
+- **Loose and tight lines**: `More › Show loose and tight lines` marks justified lines whose spaces go past the limits (yellow loose, pink tight).
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

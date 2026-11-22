@@ -517,6 +517,19 @@
       });
     }
     scan(L.frames);
+    // characters the fonts cannot draw (LY-W6): the frame says which
+    var noGlyph = {};
+    if (T.missingGlyphs) Object.keys(L.frames || {}).forEach(function (fid) {
+      (L.frames[fid].lines || []).forEach(function (ln) {
+        ln.runs.forEach(function (r) {
+          if (!r.t || r.f) return;
+          T.missingGlyphs(r.key, String(r.t)).forEach(function (ch) {
+            var a = noGlyph[fid] = noGlyph[fid] || [];
+            if (a.indexOf(ch) === -1 && a.length < 20) a.push(ch);
+          });
+        });
+      });
+    });
     Object.keys(L.master || {}).forEach(function (pid) { scan(L.master[pid]); });
     var bleed = doc.setup.bleed, W = doc.setup.w, H = doc.setup.h, facing = doc.setup.facing;
     var emptyStory = {};
@@ -529,6 +542,7 @@
       }
       if (it.t === "text") {
         if (minSize[it.id] < PF_MIN_PT) add("warn", "small", it);
+        if (noGlyph[it.id]) { add("err", "glyph", it); out[out.length - 1].chars = noGlyph[it.id].join(" "); }
         if (emptyStory[it.story] === undefined) {
           var st = M.story(doc, it.story);
           emptyStory[it.story] = !(st && T.hasText(st));
