@@ -7969,8 +7969,68 @@
     return true;
   }
 
+  // STRUCT-4 (structure review 2026-11-22): one relay address for all
+  // of orOS. It lives where it always did, the synced "oros-mail-data"
+  // relay { url, m } ("" = orOS's shared relay), and every app reads it
+  // here. Settings › Connected services › orOS relay is its only field;
+  // Mail, Feeds and orOS Gate lost theirs.
+  var RELAY_SHARED = "https://oros-mail-relay.koulaxizis.workers.dev";
+  // = mail.js normRelayUrl: https, or a local relay while developing.
+  function relayNorm(u) {
+    u = String(u == null ? "" : u).trim().replace(/\/+$/, "");
+    if (!u) return "";
+    if (/^https:\/\/[a-z0-9.-]+(:\d+)?(\/[\w.~-]*)*$/i.test(u)) return u;
+    if (/^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i.test(u)) return u;
+    return null;
+  }
+  var relayListeners = [];
+  function relayOwn() {
+    var d = mailProxySliceGet(), u = d && d.relay && typeof d.relay.url === "string" ? relayNorm(d.relay.url) : "";
+    return u && u !== RELAY_SHARED ? u : "";
+  }
+  function relaySet(u) {
+    u = relayNorm(u);
+    if (u === null) return false;
+    if (u === RELAY_SHARED) u = "";
+    var d = mailProxySliceGet();
+    if (!d || typeof d !== "object") d = { accounts: [], relay: { url: "", m: 0 } };
+    var r = d.relay && typeof d.relay === "object" ? d.relay : { url: "", m: 0 };
+    if ((relayNorm(r.url) || "") === u) return true;
+    d.relay = { url: u, m: Math.max(Date.now(), (Number(r.m) || 0) + 1) };
+    try { localStorage.setItem(MAIL_CACHE_KEY, JSON.stringify(d)); } catch (e) { return false; }
+    if (window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+    relayListeners.slice().forEach(function (fn) { try { fn(); } catch (e) {} });
+    return true;
+  }
+  window.orosRelay = {
+    v: 1,
+    SHARED: RELAY_SHARED,
+    norm: relayNorm,
+    own: relayOwn,                                   // "" = the shared one
+    url: function () { return relayOwn() || RELAY_SHARED; },
+    mine: function () { return !!relayOwn(); },
+    set: relaySet,                                   // → bool
+    onChange: function (fn) {
+      if (typeof fn !== "function") return function () {};
+      relayListeners.push(fn);
+      return function () { var i = relayListeners.indexOf(fn); if (i >= 0) relayListeners.splice(i, 1); };
+    }
+  };
+  // The Gate's own relay (5.82.00, this device only) becomes the one
+  // address, once; it wins over Mail's (Chris's card, 2026-11-22).
+  function migrateGateRelay() {
+    var raw = null;
+    try { raw = localStorage.getItem("oros-gate-relay"); } catch (e) { return; }
+    if (raw == null) return;
+    var u = null;
+    try { u = JSON.parse(raw); } catch (e) {}
+    if (typeof u === "string" && relayNorm(u) && relaySet(u) === false) return;
+    try { localStorage.removeItem("oros-gate-relay"); } catch (e) {}
+  }
+
   function registerMailProxySlice() {
     migrateMailRelay();
+    migrateGateRelay();
     if (window.orosSync) {
       window.orosSync.registerSlice(
         "mail", mailProxySliceGet, mailProxySliceSet,
@@ -13780,7 +13840,9 @@
     if (!sw || !sw.controller || !window.orosStrict) return;
     var lv = strictLevelNow(), hosts = [];
     try { hosts = lv ? window.orosStrict.hosts() : []; } catch (e) {}
-    try { sw.controller.postMessage({ t: "oros-strict", level: lv, hosts: hosts, relays: lv ? STRICT_RELAYS : [] }); } catch (e) {}
+    var rl = STRICT_RELAYS.slice();
+    try { var own = window.orosRelay.own(); if (own) rl.push(new URL(own).host.toLowerCase()); } catch (e) {}   // STRUCT-4: your own relay too
+    try { sw.controller.postMessage({ t: "oros-strict", level: lv, hosts: hosts, relays: lv ? rl : [] }); } catch (e) {}
   }
   function strictBadge() {
     var bar = document.querySelector("#oros-bar .bar-right");
@@ -13887,6 +13949,7 @@
     strictUpdate();
     window.addEventListener("load", strictUpdate);
     document.addEventListener("visibilitychange", function () { if (!document.hidden) strictTellSW(); });
+    if (window.orosRelay) window.orosRelay.onChange(strictTellSW);
     if (window.orosSync && typeof window.orosSync.onAutoSync === "function") {
       window.orosSync.onAutoSync(function (kind) { if (kind === "start") strictTellSW(); });
     }

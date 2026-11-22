@@ -41,7 +41,7 @@ Wähle in den `Einstellungen` › `Aus FreshRSS oder Miniflux…` deinen Reader 
 Wenn dein Server das nicht erlaubt (eine Browserseite braucht dafür CORS-Header, und er muss über https laufen), exportiere deine Abos als OPML und deine Artikel mit Stern als JSON aus deinem Reader und nutze dann `OPML importieren` und `Stern-Artikel importieren (JSON)` in den `Einstellungen`.
 
 ## Einstellungen
-In den `Einstellungen` legst du fest, wie oft `Nach neuen Artikeln suchen` läuft, die Reihenfolge, den Listenstil, Textgröße und -breite, Bilder, `Beim Scrollen der Liste als gelesen markieren`, `Eine Meldung aus zwei Feeds nur einmal zeigen` und die `Relay-Adresse`.
+In den `Einstellungen` legst du fest, wie oft `Nach neuen Artikeln suchen` läuft, die Reihenfolge, den Listenstil, Textgröße und -breite, Bilder, `Beim Scrollen der Liste als gelesen markieren`, `Eine Meldung aus zwei Feeds nur einmal zeigen` und zeigen das Relay mit `In den Einstellungen ändern`.
 
 ## YouTube-Abos
 `Einstellungen` › `YouTube-Abos` holt die YouTube-Kanäle, die du abonniert hast, einmalig in den Reader. Melde dich im kleinen Fenster bei Google an; orOS liest deine Abos (nur lesend) und gibt den Zugriff sofort an Google zurück: Nichts wird gespeichert, und bei YouTube ändert sich nichts. Hake die Kanäle an, die du willst (alle sind zu Beginn angehakt), und tippe auf `Abonnieren`; mit `In einen Ordner namens „YouTube“ legen` kommen sie in diesen Ordner. Die folgende Meldung hat `Rückgängig`.
@@ -63,7 +63,7 @@ In den `Einstellungen` speichert `orOS-Datei (.orosfeeds)` deine Abos, Ordner, g
 - [[Esc]] schließt die Suche oder geht auf einem schmalen Bildschirm zurück zur Liste.
 
 ## Tipps
-- Viele Websites hindern Browser daran, ihre Feeds zu lesen. Reader nutzt dann das orOS-Relay; ist seine Adresse leer, nimmt er die, die in [Mail](app:mail) eingestellt ist.
+- Viele Websites hindern Browser daran, ihre Feeds zu lesen. Reader nutzt dann ein eigenes Relay, das du einmal für ganz orOS festlegst, in [Einstellungen](app:settings) › Verbundene Dienste › `orOS-Relay`.
 
 ## Grenzen
 - Eine Website, die Browser blockiert, lässt sich ohne Relay nicht lesen.

@@ -1495,28 +1495,15 @@
     // STRUCT-1 (structure review, Chris 2026-11-22): the essentials stay in
     // view; the rest of the Gate sits under one «More options» at the end.
     var mo = moreBox("gate"), m = mo.body;
-    // Own relay (5.82.00): the gate can run on the owner's own Worker.
+    // STRUCT-4: the relay has one field for all of orOS (the «orOS relay»
+    // card below); the Gate says which one it runs on and links there.
     if (typeof G.relayInfo === "function") {
-      var ri = G.relayInfo();
-      (!st.on && !ri.mine ? c : m).appendChild(el("div", "hint", !st.on && !ri.mine ? t("gt.relay.need") : t("gt.relay.now." + ri.kind, { url: ri.url })));
-      var ru = el("input", "dav-input");
-      ru.id = "f-gt-relay";
-      ru.type = "url";
-      ru.autocomplete = "off";
-      ru.spellcheck = false;
-      ru.placeholder = "https://my-relay.example.workers.dev";
-      ru.value = ri.own;
-      m.appendChild(row(t("gt.relay"), ru, { hint: t("gt.relay.hint"), forId: "f-gt-relay", stack: true }));
-      m.appendChild(actions(
-        button(t("gt.relay.save"), "gt.relay.save", function () {
-          var v = ru.value.trim();
-          var go = function (ok) { if (!ok) { gateNote = "gt.relay.bad"; render(); return; }
-            gateNote = G.setOwnRelay(v) ? (v ? (st.on ? "gt.relay.saved.on" : "gt.relay.saved") : "gt.relay.cleared") : "gt.fail"; render(); };
-          if (!v) go(true); else G.testRelay(v).then(go);
-        }),
-        button(t("gt.relay.test"), "gt.relay.test", function () {
-          G.testRelay(ru.value).then(function (ok) { gateNote = ok ? "gt.relay.ok" : "gt.relay.bad"; render(); });
-        })));
+      var ri = G.relayInfo(), need = !st.on && !ri.mine;
+      (need ? c : m).appendChild(el("div", "hint", need ? t("gt.relay.need") : t("gt.relay.now." + ri.kind, { url: ri.url })));
+      (need ? c : m).appendChild(linkRow(t("rl.goto"), "rl-goto", function () {
+        var f = $("f-rl-url");
+        if (f) { if (typeof f.scrollIntoView === "function") f.scrollIntoView({ block: "center" }); f.focus(); }
+      }));
     }
     if (!st.on && typeof G.join === "function") {
       // Another device of the owner already has the gate: join it.
@@ -4754,9 +4741,53 @@
       render();
     });
   }
+  // STRUCT-4 (structure review, Chris 2026-11-22): one relay address for
+  // all of orOS (shell window.orosRelay; empty = orOS's shared relay).
+  // Mail, Feeds, orOS Gate and the other apps read it; they have no field
+  // of their own any more.
+  var relayNote = "";
+  function relayApi() {
+    var p = parentWin();
+    try { return p && p.orosRelay && typeof p.orosRelay.set === "function" ? p.orosRelay : null; } catch (e) { return null; }
+  }
+  function secRelay(host) {
+    var R = relayApi();
+    if (!R) return;
+    var c = card(t("rl.title"), "relay");
+    var own = R.own();
+    c.appendChild(el("p", "hint", own ? t("rl.now.own", { url: own }) : t("rl.now.shared")));
+    var ru = el("input", "dav-input");
+    ru.id = "f-rl-url";
+    ru.type = "url";
+    ru.autocomplete = "off";
+    ru.spellcheck = false;
+    ru.placeholder = R.SHARED;
+    ru.value = own;
+    c.appendChild(row(t("rl.field"), ru, { hint: t("rl.hint"), forId: "f-rl-url", stack: true }));
+    if (relayNote) c.appendChild(el("div", "hint", t(relayNote)));
+    var G = gateApi();
+    var test = function (v) { return G && typeof G.testRelay === "function" ? G.testRelay(v) : Promise.resolve(R.norm(v) !== null); };
+    c.appendChild(actions(
+      button(t("rl.save"), "rl.save", function () {
+        var v = ru.value.trim();
+        if (R.norm(v) === null) { relayNote = "gt.relay.bad"; render(); return; }
+        var go = function (ok) {
+          if (!ok) { relayNote = "gt.relay.bad"; render(); return; }
+          var on = G && G.state && G.state().on;
+          relayNote = R.set(v) ? (R.own() ? (on ? "gt.relay.saved.on" : "rl.saved") : "rl.cleared") : "gt.fail";
+          render();
+        };
+        if (!v || v.replace(/\/+$/, "") === R.SHARED) go(true); else test(v).then(go);
+      }, "primary"),
+      button(t("gt.relay.test"), "gt.relay.test", function () {
+        test(ru.value.trim() || R.SHARED).then(function (ok) { relayNote = ok ? "gt.relay.ok" : "gt.relay.bad"; render(); });
+      })));
+    host.appendChild(c);
+  }
   function secServices(host) {
     secPhoneHealth(host);
     secAiCard(host);
+    secRelay(host);
     var Lk = links();
     if (!Lk) { host.appendChild(el("p", "hint card-note", t("v.unsupported"))); return; }
     var c0 = card(null);

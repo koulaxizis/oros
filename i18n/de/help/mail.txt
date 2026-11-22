@@ -142,7 +142,7 @@ Andersherum öffnen eine E-Mail-Adresse auf einer Kontaktkarte in Kontakte und `
 `Übersetzen` unter einer geöffneten Nachricht übersetzt Betreff und Text auf diesem Gerät mit den Modellen von Mozilla, wie [Text Tools](app:texttools) › Übersetzen. Beim ersten Mal für zwei Sprachen sagt es, wie groß der Download ist; danach geht es auch offline, und die Nachricht verlässt das Gerät nie. `Kopieren` kopiert die Übersetzung; nichts wird gespeichert.
 
 ## Konten und Einstellungen
-Die Zahnradtaste öffnet `Mail-Einstellungen`: deine `Konten` (mit `Bearbeiten`), `Immer als reinen Text zeigen`, `Nachrichten nach Unterhaltung gruppieren` und die `Relay-Adresse`. In einem Konto kannst du die Angaben ändern oder `Konto entfernen`; deine Mails bleiben auf dem Server.
+Die Zahnradtaste öffnet `Mail-Einstellungen`: deine `Konten` (mit `Bearbeiten`), `Immer als reinen Text zeigen`, `Nachrichten nach Unterhaltung gruppieren` und das Relay, das orOS nutzt, mit `In den Einstellungen ändern` (die eine Relay-Adresse für ganz orOS steht in Einstellungen › Verbundene Dienste › `orOS-Relay`). In einem Konto kannst du die Angaben ändern oder `Konto entfernen`; deine Mails bleiben auf dem Server.
 
 ## Synchronisierung und Sicherung
 Deine Konten (ohne Passwörter), deine Regeln, deine Vorlagen, die Zeiten deiner zurückgestellten Nachrichten, die Relay-Adresse und die Absender, deren Bilder du erlaubst, werden über die [orOS-Synchronisierung](help:t/sync) zwischen deinen Geräten synchronisiert. Passwörter bleiben auf jedem Gerät versiegelt und werden nie synchronisiert oder exportiert, darum zeigt ein neues Gerät `Passwort auf diesem Gerät nötig`: Tippe dort einmal auf `Passwort eingeben`. Heruntergeladene Nachrichten, OpenPGP-Schlüssel, der offene Ordner und `Immer als reinen Text zeigen` bleiben auf diesem Gerät.
@@ -158,7 +158,7 @@ Deine Konten (ohne Passwörter), deine Regeln, deine Vorlagen, die Zeiten deiner
 
 ## Tipps
 - Browser können nicht direkt mit Mailservern sprechen, darum geht Mail über das orOS-Mail-Relay. Es leitet deine Mails nur durch und speichert nichts.
-- Das Relay, das du hier einstellst, lässt auch [Reader](app:feeds) und [Podcasts](app:podcasts) Seiten lesen, die Browser blockieren.
+- Dieselbe Relay-Adresse dient ganz orOS: auch [Reader](app:feeds), [Podcasts](app:podcasts) und orOS Gate nutzen sie. Du legst sie einmal fest, in [Einstellungen](app:settings) › Verbundene Dienste › `orOS-Relay`.
 
 ## Grenzen
 - Angehängte Dateien dürfen zusammen bis zu 7 MB groß sein; Vorschauen zeigen Bilder und bis zu 20 Seiten eines PDFs.
