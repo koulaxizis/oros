@@ -83,7 +83,9 @@ test("EAN-5: the price code's parity and its place beside the ISBN", () => {
   const plain = CV.build(spec, { now: 1 }), withAdd = CV.build(Object.assign({}, spec, { addon: "90000" }), { now: 1 });
   const paths = (d) => d.items.filter((it) => it.t === "path");
   assert.equal(paths(plain).length, 1); assert.equal(paths(withAdd).length, 2);
-  const a = paths(withAdd)[1], b = paths(withAdd)[0];
+  // the add-on is the path drawn from addonPath (item order follows random ids)
+  const a = paths(withAdd).find((it) => it.d === CV.addonPath("90000")), b = paths(withAdd).find((it) => it !== a);
+  assert.ok(a && b);
   assert.ok(a.x > b.x + b.w, "the add-on is to the right of the ISBN bars");
   assert.ok(Math.abs((a.y + a.h) - (b.y + b.h)) < 0.01, "both end at the same line");
   const rect = (d) => d.items.find((it) => it.t === "rect" && it.fill === "sw-paper");
