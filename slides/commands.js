@@ -78,7 +78,9 @@
     bg: { kind: "doc", args: { pages: SEL.pages, fill: { t: "color", req: 1 } } },
     notes: { kind: "doc", args: { pages: SEL.pages, text: { t: "str", max: 5000, req: 1 }, append: { t: "bool" } } },
     deck: { kind: "doc", args: { theme: oneOf([""].concat(C.THEME_IDS)), aspect: oneOf(["", "16:9", "4:3"]), footer: { t: "str", max: 80 }, num: ONOFF, date: ONOFF } },
-    rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } }
+    rename: { kind: "doc", args: { title: { t: "str", max: 120, req: 1 } } },
+    // GX-3: the presentation as files into out (nothing in it changes)
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["pdf", "pptx", "png"], def: "pdf" }, handout: { t: "bool" }, out: { t: "str", max: 1030, req: 1 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -105,7 +107,8 @@
     "bg: the background colour of the slides in `pages`: fill",
     "notes: the speaker notes of the slides in `pages` become `text`; append true adds it after the notes there",
     "deck: theme " + C.THEME_IDS.join("|") + " (colours and fonts of the whole presentation), aspect 16:9|4:3, footer (footer text), num on|off (slide numbers), date on|off",
-    "rename: the presentation's name becomes `title`"
+    "rename: the presentation's name becomes `title`",
+    "export: the presentation as files, saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Talks with Files at «may change»; never over a file): fmt pdf (handout true = with the speaker notes) | pptx | png (one picture per slide shown); changes nothing"
   ].join("\n");
 
   // ---------- 1. Checking ----------
@@ -464,6 +467,7 @@
   // how many objects, slides or settings changed. env: { now, newId,
   // notes[] }.
   function apply(w, deckId, st, env) {
+    if (CATALOG[st.op] && CATALOG[st.op].kind === "out") return 0;   // GX-3: assist.js makes the files
     env = env || {};
     var now = env.now || Date.now(), newId = newIdOf(env), deck = w.decks[deckId], k = 0;
     if (!deck) return 0;
@@ -604,6 +608,7 @@
       var k = 0, env = { now: 1, notes: out.notes };
       steps.forEach(function (st) { k += apply(w, id, st, env); });
       if (k) { out.n += k; out.d++; out.per.push({ id: id, name: w.decks[id].t || "", n: k }); }
+      if (R.outFiles(steps, 1)) out.files = (out.files || 0) + R.outFiles(steps, 1);   // GX-3
     });
     return out;
   }

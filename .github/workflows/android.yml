@@ -174,7 +174,7 @@ jobs:
       # in this F-Droid repository, so Koulaxizis Apps lists it).
       - name: Waymark pin
         id: waymark
-        run: grep -E '^(commit|version)=' .github/waymark.env >> "$GITHUB_OUTPUT"
+        run: grep -E '^(commit|version|build)=' .github/waymark.env >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           repository: koulaxizis/waymark
@@ -183,6 +183,7 @@ jobs:
       - name: Build the Waymark app
         env:
           WAYMARK_VERSION: ${{ steps.waymark.outputs.version }}
+          WAYMARK_BUILD: ${{ steps.waymark.outputs.build }}
           KS_B64: ${{ github.event_name != 'pull_request' && secrets.OROS_KEYSTORE_BASE64 || '' }}
           WAYMARK_KEYSTORE_PASSWORD: ${{ secrets.OROS_KEYSTORE_PASSWORD }}
           WAYMARK_KEY_ALIAS: ${{ secrets.OROS_KEY_ALIAS }}

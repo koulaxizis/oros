@@ -587,6 +587,7 @@
     "maps/maps.js",
     "maps/notes.js",
     "maps/offline.js",
+    "maps/offroute.js",
     "maps/osm-callback.js",
     "maps/outdoor.js",
     "maps/overlays-core.js",

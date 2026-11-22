@@ -125,3 +125,10 @@ test("relay budget_refresh: offered, not read-only, refused with orOS closed (no
   assert.deepEqual(R.LIVE_ONLY, ["budget_refresh"]);
   assert.match(read("relay/gate.js"), /if \(name === "budget_refresh"\) return \{ ok: false, c: "orOS is closed: the banks can be read only from an open device/);
 });
+
+test("autoDue, every 6 hours: another device's read counts too (BK-6S, PSD2 ~4 reads a day)", () => {
+  const H = 3600000, now = Date.UTC(2026, 10, 20, 23, 0);
+  assert.equal(K.autoDue({}, [{ bt: now - 2 * H }], now - 7 * H, 0, now), 0, "the computer read 2 hours ago: the phone waits");
+  assert.equal(K.autoDue({}, [{ bt: now - 7 * H }], now - 8 * H, 0, now), now, "6 hours since any read: due");
+  assert.equal(K.autoDue({}, [{ bt: now + H }], 0, 0, now), now, "a read stamped in the future is not counted");
+});
