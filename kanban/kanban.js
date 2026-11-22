@@ -259,6 +259,27 @@
       "pd.why.old":       "released more than 30 days ago",
       "pd.why.max":       "over 500 works",
       "pd.why.nophase":   "its column has no phase",
+      "pd.chipStep":       "Portal · {step}",
+      "pd.chipStepHint":   "Its creator sees step {i} of {n} in the Author Portal",
+      "pd.why.done":       "at a finish: hidden from the creator until the next step",
+      "pd.chipDone":       "Portal · finished",
+      "ap.colEnd":         "Finish: when the book gets here, the creator's bar hides until the next step",
+      "ap.cardDone":       "At a finish ({step}): the creator's bar is hidden until the card reaches the next step.",
+      "pd.why.nostep":     "no step before its column",
+      "ap.title":          "Author Portal",
+      "ap.colOn":          "A step of the creator's production flow",
+      "ap.colHint":        "The creator sees the columns marked as steps, in the board's order, in their Author Portal (Revenue Splitter 1.21.0 or later). Only the name and the explanation below leave orOS; never other columns, notes or comments.",
+      "ap.colName":        "Name for the creator (empty = the column's name)",
+      "ap.colNameEn":      "Name in English (optional)",
+      "ap.colAbout":       "Explanation for the creator (shown on hover or tap)",
+      "ap.colAboutEn":     "Explanation in English (optional)",
+      "ap.colAboutPh":     "e.g. Your book is at the printer and is being printed.",
+      "ap.card":           "Show in its creator's Author Portal",
+      "ap.cardStep":       "The creator sees step {i} of {n}: {step}.",
+      "ap.cardNoStep":     "No column before this one is a step yet (column settings › Author Portal).",
+      "ap.cardWho":        "Creator: {names}",
+      "ap.cardNoWho":      "No creator linked: link the card to the partner in CRM (Cards, notes and files) or add the author to the title in Publishing, and the partner to Revenue Splitter.",
+      "ap.cardOff":        "Not shown to the creator.",
       "export.oros":      "orOS file (.orosboard)",
       "export.json":      "Export board (JSON)",
       "export.csv":       "Export cards (CSV)",
@@ -534,6 +555,27 @@
       "pd.why.old":       "κυκλοφόρησε πριν από πάνω από 30 μέρες",
       "pd.why.max":       "πάνω από 500 έργα",
       "pd.why.nophase":   "η στήλη της δεν έχει φάση",
+      "pd.chipStep":       "Portal · {step}",
+      "pd.chipStepHint":   "Ο δημιουργός βλέπει το βήμα {i} από {n} στο Author Portal",
+      "pd.why.done":       "σε τερματισμό: δεν φαίνεται στον δημιουργό μέχρι το επόμενο βήμα",
+      "pd.chipDone":       "Portal · ολοκληρώθηκε",
+      "ap.colEnd":         "Τερματισμός: όταν το βιβλίο φτάσει εδώ, η μπάρα του δημιουργού κρύβεται μέχρι το επόμενο βήμα",
+      "ap.cardDone":       "Σε τερματισμό ({step}): η μπάρα του δημιουργού κρύβεται μέχρι η κάρτα να φτάσει στο επόμενο βήμα.",
+      "pd.why.nostep":     "δεν υπάρχει βήμα πριν από τη στήλη της",
+      "ap.title":          "Author Portal",
+      "ap.colOn":          "Βήμα της ροής παραγωγής του δημιουργού",
+      "ap.colHint":        "Ο δημιουργός βλέπει στο Author Portal του (Revenue Splitter 1.21.0 ή νεότερο) τις στήλες που σημειώνεις ως βήματα, με τη σειρά του πίνακα. Από το orOS φεύγουν μόνο το όνομα και η επεξήγηση παρακάτω· ποτέ άλλες στήλες, σημειώσεις ή σχόλια.",
+      "ap.colName":        "Όνομα για τον δημιουργό (κενό = το όνομα της στήλης)",
+      "ap.colNameEn":      "Όνομα στα αγγλικά (προαιρετικό)",
+      "ap.colAbout":       "Επεξήγηση για τον δημιουργό (με hover ή πάτημα)",
+      "ap.colAboutEn":     "Επεξήγηση στα αγγλικά (προαιρετική)",
+      "ap.colAboutPh":     "π.χ. Το βιβλίο σας αυτή τη στιγμή βρίσκεται στο τυπογραφείο και εκτυπώνεται.",
+      "ap.card":           "Να φαίνεται στο Author Portal του δημιουργού",
+      "ap.cardStep":       "Ο δημιουργός βλέπει το βήμα {i} από {n}: {step}.",
+      "ap.cardNoStep":     "Καμία στήλη έως εδώ δεν είναι ακόμα βήμα (ρυθμίσεις στήλης › Author Portal).",
+      "ap.cardWho":        "Δημιουργός: {names}",
+      "ap.cardNoWho":      "Δεν έχει συνδεδεμένο δημιουργό: σύνδεσε την κάρτα με τον συνεργάτη στο CRM (Κάρτες, σημειώσεις και αρχεία) ή πρόσθεσε τον συγγραφέα στον τίτλο στις Εκδόσεις, και τον συνεργάτη με το Revenue Splitter.",
+      "ap.cardOff":        "Δεν φαίνεται στον δημιουργό.",
       "export.oros":      "Αρχείο orOS (.orosboard)",
       "export.json":      "Εξαγωγή πίνακα (JSON)",
       "export.csv":       "Εξαγωγή καρτών (CSV)",
@@ -2417,8 +2459,14 @@
       pdCache.data = null;
       try { var d = raw ? JSON.parse(raw) : null; if (d && Array.isArray(d.cust)) pdCache.data = K.norm(d); } catch (e) { pdCache.data = null; }
     }
-    var c = pdCache.data;
-    return c && c.cset && c.cset.pb ? c : null;
+    return pdCache.data;
+  }
+  // AP-FLOW: on when CRM names a board (v1) or a board has step columns (v2)
+  function pdOn(crm) {
+    return !!crm && !!((crm.cset && crm.cset.pb) || window.OrosCrmProd.stepBoards(state).length);
+  }
+  function pdStepBoard(board) {
+    return !!board && !!window.OrosCrmProd && window.OrosCrmProd.stepBoards(state).some(function (b) { return b.id === board.id; });
   }
   function pdJson(key) { try { return JSON.parse(localStorage.getItem(key) || "null"); } catch (e) { return null; } }
   function pdShops(crm) {
@@ -2431,7 +2479,7 @@
     return { list: list.filter(function (a) { return ids[a.id]; }), first: first };
   }
   function pdPlanFor(crm, shopId, first) {
-    var cs = crm.cset;
+    var cs = crm.cset || {};
     return window.OrosCrmProd.plan({ kanban: pdJson(STORAGE_KEY), crm: crm, publish: pdJson("oros-publish-data"), board: cs.pb, map: cs.pm || null,
                                     chosen: cs.pc || [], shopId: shopId, firstShopId: first, today: localDateStr(new Date()) });
   }
@@ -2440,11 +2488,21 @@
     if (pdView) return pdView;
     pdView = { on: false };
     var crm = pdCrm(), board = currentBoard();
-    if (!crm || !board || window.OrosCrmProd.fold(board.name) !== window.OrosCrmProd.fold(crm.cset.pb)) return pdView;
+    if (!crm || !board) return pdView;
+    var v2 = pdStepBoard(board);
+    if (!v2 && !(crm.cset && crm.cset.pb && window.OrosCrmProd.fold(board.name) === window.OrosCrmProd.fold(crm.cset.pb))) return pdView;
     var sh = pdShops(crm), shopId = sh.list[0] ? sh.list[0].id : sh.first, x;
     try { x = pdPlanFor(crm, shopId, sh.first); } catch (e) { return pdView; }
     var chosen = {}, phase = {}, why = {};
-    (crm.cset.pc || []).forEach(function (id) { chosen[id] = 1; });
+    ((crm.cset && crm.cset.pc) || []).forEach(function (id) { chosen[id] = 1; });
+    if (v2) {
+      var pick = {};
+      (board.columns || []).forEach(function (col) { (col.cards || []).forEach(function (c) { if (c.ap === 1 || (c.ap === undefined && chosen[c.id])) pick[c.id] = 1; }); });
+      x.left.forEach(function (l) { why[l.card] = l.why; });
+      x.body.works.forEach(function (w) { delete why[w.id.replace(/-\d+$/, "")]; });
+      pdView = { on: true, v2: true, chosen: pick, at: x.at || {}, why: why };
+      return pdView;
+    }
     x.body.works.forEach(function (w) { var id = w.id.replace(/-\d+$/, ""); phase[id] = w.phase; });
     x.left.forEach(function (l) { if (!phase[l.card]) why[l.card] = l.why; });
     pdView = { on: true, chosen: chosen, phase: phase, why: why };
@@ -2453,7 +2511,14 @@
   function pdChip(card) {
     var v = pdViewNow();
     if (!v.on || !v.chosen[card.id]) return null;
-    var sp = document.createElement("span"), n = v.phase[card.id], why = v.why[card.id] || "nophase";
+    var sp = document.createElement("span"), n = v.v2 ? 0 : v.phase[card.id], why = v.why[card.id] || "nophase";
+    if (v.v2) {
+      var at = v.at[card.id], off = !at || !!v.why[card.id];
+      sp.className = "pd-chip" + (off ? " off" : "");
+      sp.textContent = v.why[card.id] === "done" ? t("pd.chipDone") : (off ? t("pd.chipOff") : t("pd.chipStep", { step: at.step }));
+      sp.title = off ? t("pd.why." + (v.why[card.id] || "nostep")) : t("pd.chipStepHint", { i: at.i, n: at.n });
+      return sp;                          // a click opens the card (its Author Portal section)
+    }
     sp.className = "pd-chip" + (n ? "" : " off");
     sp.textContent = n ? t("pd.chip", { n: n }) : t("pd.chipOff");
     sp.title = n ? t("pd.chipHint") : t("pd.chipWhy", { why: t("pd.why." + why) });
@@ -2466,19 +2531,20 @@
   }
   function pdChanged() {
     var L = linksHost();
-    if (!L || typeof L.hasRsKey !== "function" || !pdCrm()) return;
+    if (!L || typeof L.hasRsKey !== "function" || !pdOn(pdCrm())) return;
     clearTimeout(pdTimer);
     pdTimer = setTimeout(function () {
       var crm = pdCrm(), sent = pdJson(PD_SENT_KEY) || {};
-      if (!crm) return;
+      if (!pdOn(crm)) return;
       var sh = pdShops(crm);
       sh.list.reduce(function (p, shop) {
         var x, json;
         return p.then(function () {
-          // only where CRM has sent before, and only a list that changed
-          if (typeof sent[shop.id] !== "string") return false;
+          // only a list that changed; v1 only where CRM has sent before
+          // (v2: the person marked the steps and ticked the cards here)
           x = pdPlanFor(crm, shop.id, sh.first);
-          json = JSON.stringify(x.body.works);
+          if (typeof sent[shop.id] !== "string" && x.body.v !== 2) return false;
+          json = window.OrosCrmProd.sentKey(x.body);
           if (sent[shop.id] === json) return false;
           return Promise.resolve(L.hasRsKey(shop.id)).catch(function () { return false; });
         }).then(function (k) {
@@ -2825,9 +2891,44 @@
     renderCover(card);
     $("c-lbl-picker").hidden = true;
     renderTsSpent(card);
+    renderCardAp(card);
 
     $("dlg-card").showModal();
     setTimeout(function () { $("c-text").focus(); }, 50);
+  }
+
+  // --- AP-FLOW: the card in its creator's Author Portal ---
+  // Shown on a board with step columns. The tick is the card's own (ap,
+  // group r); without one, CRM's older tick (cset.pc) still counts.
+  function renderCardAp(card) {
+    var box = $("c-ap"), board = currentBoard();
+    if (!box) return;
+    var on = pdStepBoard(board);
+    box.hidden = !on;
+    if (!on) return;
+    var crm = pdCrm(), pc = (crm && crm.cset && crm.cset.pc) || [];
+    var ticked = card.ap === 1 || (card.ap === undefined && pc.indexOf(card.id) >= 0);
+    $("c-ap-on").checked = ticked;
+    var hint = $("c-ap-hint"), lines = [];
+    if (!ticked) lines.push(t("ap.cardOff"));
+    else {
+      pdView = null;
+      var v = pdViewNow(), a = v && v.at && v.at[card.id], who = a && a.who;
+      if (!a && !(v && v.on)) {                    // no CRM data here: the step alone
+        var fl = window.OrosCrmProd.flowOf(board), ci = -1;
+        (board.columns || []).forEach(function (c, i) { if ((c.cards || []).some(function (k) { return k.id === card.id; })) ci = i; });
+        var si = ci >= 0 ? fl.at[ci] : -1;
+        fl.segs.forEach(function (sg) { if (si >= sg.from && si <= sg.to) a = { step: fl.steps[si].name, i: si - sg.from + 1, n: sg.to - sg.from + 1, end: si === sg.to }; });
+      }
+      if (!a) lines.push(t("ap.cardNoStep"));
+      else if (a.end) lines.push(t("ap.cardDone", { step: a.step }));
+      else {
+        lines.push(t("ap.cardStep", { i: a.i, n: a.n, step: a.step }));
+        if (who && who.length) lines.push(t("ap.cardWho", { names: who.join(", ") }));
+        else lines.push(t("ap.cardNoWho"));
+      }
+    }
+    hint.textContent = lines.join(" ");
   }
 
   // --- Labels μέσα στο card dialog (board-scoped: labelById) ---
@@ -3738,6 +3839,16 @@
       ls.appendChild(o);
     });
     ls.value = au.label && labelById(au.label) ? au.label : "";
+    // AP-FLOW: the column as a step of the creator's production flow
+    var ap = col.ap || {};
+    $("col-ap-on").checked = ap.on === 1;
+    $("col-ap-e").checked = ap.e === 1;
+    $("col-ap-n").value = ap.n || "";
+    $("col-ap-n").placeholder = col.name || "";
+    $("col-ap-ne").value = ap.ne || "";
+    $("col-ap-a").value = ap.a || "";
+    $("col-ap-ae").value = ap.ae || "";
+    $("col-ap-box").open = ap.on === 1;
 
     $("dlg-col").showModal();
     setTimeout(function () { $("col-name").focus(); }, 50);
@@ -6428,6 +6539,10 @@
     if ($("col-a-top").checked) na.top = true;
     var oldA = JSON.stringify(col.auto || {});
     if (oldA !== JSON.stringify(na)) { if (Object.keys(na).length) col.auto = na; else delete col.auto; changed = true; }
+    // AP-FLOW: step of the creator's flow (name, explanation; EN optional)
+    var nap = M.colAp({ on: $("col-ap-on").checked ? 1 : 0, e: $("col-ap-e").checked ? 1 : 0, n: $("col-ap-n").value, ne: $("col-ap-ne").value,
+                        a: $("col-ap-a").value, ae: $("col-ap-ae").value });
+    if (JSON.stringify(col.ap ? M.colAp(col.ap) : null) !== JSON.stringify(nap)) { if (nap) col.ap = nap; else delete col.ap; changed = true; }
     if (changed) touch(col);   // header edit = δομικό LWW
     save(); scheduleRender();
     if ($("auto-dlg") && $("auto-dlg").open) renderAutoDlg();
@@ -6882,6 +6997,16 @@
       var v = cDeps.value;
       cDeps.value = "";
       if (v && setDep(v, true)) offerShift(v, "deps.added", true);
+    });
+    var cAp = $("c-ap-on");
+    if (cAp) cAp.addEventListener("change", function () {
+      var card = editingCard();
+      if (!card) return;
+      card.ap = cAp.checked ? 1 : 0;     // an explicit no overrides CRM's older tick
+      stamp(card, ["r"]);
+      save();
+      scheduleRender();
+      renderCardAp(card);
     });
     var cMs = $("c-ms");
     if (cMs) cMs.addEventListener("change", function () {

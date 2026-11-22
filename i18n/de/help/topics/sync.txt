@@ -87,6 +87,9 @@ In `Einstellungen` unter `Synchronisierung` holt `Aus der Cloud holen` die neues
 - [[Ctrl+Alt+Shift+P]] in die Cloud senden
 - [[Ctrl+Alt+Shift+R]] Dropbox verbinden oder neu verbinden
 
+## Speicherplatz in der Cloud
+In `Einstellungen` unter `Synchronisierung` zeigt `Speicherplatz in der Cloud`, wie viel Platz deine Cloud noch hat: einen Balken, den freien Platz und wie viel von wie viel belegt ist. Bei Dropbox gilt das für dein ganzes Dropbox-Konto, nicht nur für orOS. Bei WebDAV oder Nextcloud ist es das, was der Server für dein Konto meldet; ein Server ohne Limit, oder einer, der es nicht sagt, zeigt nur den belegten Platz (oder dass er es nicht sagt). `Aktualisieren` fragt erneut. Wenn die Cloud fast voll ist, werden neue Dateien vielleicht nicht hochgeladen: Schaffe Platz, zum Beispiel mit `Unbenutzte Dateien in der Cloud`. Die Kachel `Gerätespeicher` in der Übersicht ist der Platz im Browser dieses Geräts, nicht in der Cloud.
+
 ## Unbenutzte Dateien in der Cloud
 Dateien, die du in [Dateien](app:files) löschst oder ersetzt, lassen ihre alten verschlüsselten Kopien in deiner Cloud zurück. Niemand kann sie lesen, aber sie belegen Platz. In `Einstellungen` unter `Synchronisierung` zeigt `Unbenutzte Dateien in der Cloud` › `Prüfen`, wie viele es sind und wie viel Platz sie belegen; dabei ändert sich nichts. `Aufräumen` (zweimal tippen) entfernt danach nur Kopien, die keine Datei mehr verwendet und die vor mindestens 30 Tagen gespeichert wurden. Auf deinen Geräten ändert sich nichts.
 

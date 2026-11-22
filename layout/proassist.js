@@ -215,6 +215,13 @@
               // LOCAL-1: also in a local write folder (new names only)
               // Chris 2026-11-18 (P0): with one local write folder open and no
               // out, the proofs go there too (<root>/Proofs), so Claude sees them
+              // GX-1: out may also be a folder of Claude's on the orOS disk
+              if (st.out && !isLocal(st.out)) {
+                return LY.io.saveOut([st.out], safeName(doc.name) + " page-" + nums + ".png", blob, "thumbs").then(function (o) {
+                  if (o.outFail.length) throw { why: o.outFail[0].why, path: st.out };
+                  saved.push.apply(saved, o.saved);
+                });
+              }
               var L = local(), out = st.out && isLocal(st.out) ? st.out : outOf(L);
               if (!out || !L) return;
               return L.write(out, safeName(doc.name) + " page-" + nums + ".png", blob, "thumbs").then(function (lp) { saved.push(lp); }, function (e) { throw { why: localWhy(e), path: out }; });

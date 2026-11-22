@@ -245,7 +245,7 @@ test("mcp: 401 with resource metadata, then initialize and tools/list", async ()
   const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json();
   assert.deepEqual(list.result.tools.map((x) => x.name), ["list_apps", "search_data", "app_summary", "budget_lines",
     "invoice_list", "stock_items", "publish_titles", "budget_add", "budget_change", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_refresh", "budget_delete",
-    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "invoices_record", "files_link", "files_upload", "local_folders_request", "oros_update", "gate_tools", "gate_call"]);
+    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "invoices_record", "files_link", "files_upload", "local_folders_request", "studio_import", "montage_import", "oros_update", "gate_tools", "gate_call"]);
   const ro = list.result.tools.filter((x) => x.annotations.readOnlyHint).map((x) => x.name);
   assert.equal(ro.length, 11, "only the budget_*, kanban_* and invoices_record writers are not read-only (+ files_link, GATE-FILES F2; gate_tools GL-5; oros_update GL-7; files_upload GL-8)");
   assert.equal(list.result.tools.find((x) => x.name === "budget_delete").annotations.destructiveHint, true);

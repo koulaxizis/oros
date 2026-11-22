@@ -177,8 +177,8 @@ test("app: owns no data, palette contract, safe DOM", () => {
   }
   // Inline style only from the shell's own palette / wallpaper CSS.
   for (const m of APP.matchAll(/\.style\.(\w+)\s*=\s*([^;]+);/g)) {
-    // ST-1: Screen time's bars get a clamped percentage from stPct().
-    assert.match(m[2].trim(), /^(k\.color|w\.css|"cover"|"center"|stPct\([^;]*\))$/, m[0]);
+    // ST-1 / SPACE-1: Screen time's and the cloud space bars get a clamped percentage from stPct() / spPct().
+    assert.match(m[2].trim(), /^(k\.color|w\.css|"cover"|"center"|stPct\([^;]*\)|spPct\([^;]*\))$/, m[0]);
   }
 });
 

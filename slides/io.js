@@ -36,7 +36,16 @@
   }
   function today() { return SL.fmtDate(Date.now(), true); }
 
+  // GX-3: while capture runs, an export's files are collected instead of
+  // going to a save dialog (the Assistant's or orOS Gate's export step)
+  var sink = null;
+  function capture(fn) {
+    if (sink) return Promise.resolve([]);
+    var got = sink = [];
+    return Promise.resolve().then(fn).then(function () { sink = null; return got; }, function (e) { sink = null; throw e; });
+  }
   function saveBlob(blob, name, mime, desc, ext) {
+    if (sink) { sink.push({ name: name, blob: blob }); return Promise.resolve(true); }
     var dlg = SL.dialogHost();
     var types = [{ description: desc, accept: {} }];
     types[0].accept[mime] = [ext];
@@ -188,7 +197,7 @@
     var built = D.build(SL.data(), SL.deck, shown.map(function (s) { return s.id; }), { date: today(), handout: !!handout, lang: SL.LANG });
     if (SL.charts) SL.charts.register(built);
     var doc = built.doc, images = {}, JsPDF;
-    loadJsPDF().then(function (J) {
+    return loadJsPDF().then(function (J) {
       JsPDF = J;
       var chain = Promise.resolve();
       doc.items.forEach(function (it) {
@@ -220,7 +229,7 @@
     var b = SL.D.slideDoc(SL.data(), slideId, { lang: SL.LANG });
     SL.charts.register(b);
     Object.keys(b.charts || {}).forEach(function (k) { waits.push(SL.charts.load(k)); });
-    Promise.all(waits).then(function () {
+    return Promise.all(waits).then(function () {
       var cv = SL.renderSlide(slideId, 1920);
       return toBlob(cv, "image/png");
     }).then(function (blob) {
@@ -440,7 +449,7 @@
       }).then(null, function () {});
     });
     var res = null;
-    chain.then(function () {
+    return chain.then(function () {
       res = X().write(SL.data(), deckId, media, { prompts: promptTexts(), lang: SL.LANG });
       var blob = new Blob([res.bytes], { type: X().MIME });
       return saveBlob(blob, deckName(d) + ".pptx", X().MIME, "PowerPoint", ".pptx");
@@ -636,6 +645,6 @@
   SL.io = {
     present: present, exportPdf: exportPdf, exportPng: exportPng,
     exportPackage: exportPackage, importFolder: importFolder, importPackage: importPackage, openFile: openFile, placeImage: placeImage,
-    exportPptx: exportPptx, previewPlan: previewPlan
+    exportPptx: exportPptx, previewPlan: previewPlan, capture: capture
   };
 })();

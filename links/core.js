@@ -677,7 +677,10 @@
       RS_RQ_Q = /^(new|oros|closed|all)$/, RS_MAX = 2000, RS_BYTES = 1000000,
       RS_RELAY_BYTES = 256 * 1024,   // = relay/ext.js: larger lists go only straight to the shop
       // RS-PROD: the production list (POST /rs/production, RS 1.18.0)
-      RS_WORK_KEYS = ["id", "ben", "title", "phase", "since", "release", "note"], RS_WORKS = 500;
+      RS_WORK_KEYS = ["id", "ben", "title", "phase", "since", "release", "note"], RS_WORKS = 500,
+      // AP-FLOW (RS 1.21.0, v 2): the publisher's own steps per board
+      RS_WORK2_KEYS = ["id", "ben", "title", "flow", "step", "since", "release", "note", "products"],
+      RS_STEP_KEYS = ["id", "name", "name_en", "about", "about_en"], RS_FLOWS = 50, RS_STEPS = 60;
   function rsText(v, max) { return typeof v === "string" && v.length > 0 && v.length <= max && v.trim() === v && !/[\u0000-\u001f\u007f<>]/.test(v); }
   function okRsCtr(x) {
     if (!onlyKeys(x, RS_CTR_KEYS.concat("renewals"))) return false;
@@ -696,13 +699,28 @@
   function rsLong(v, max) { return typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f<>]/.test(v); }
   // RS-PROD: one work of the production list
   function okRsWork(x) {
-    if (!onlyKeys(x, RS_WORK_KEYS)) return false;
-    for (var i = 0; i < RS_WORK_KEYS.length; i++) if (!has(x, RS_WORK_KEYS[i])) return false;
+    var v2 = !!x && typeof x === "object" && has(x, "flow"), keys = v2 ? RS_WORK2_KEYS : RS_WORK_KEYS;
+    if (!onlyKeys(x, keys)) return false;
+    for (var i = 0; i < keys.length; i++) if (!has(x, keys[i])) return false;
     if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
-    if (!isInt(x.phase) || x.phase < 1 || x.phase > 7) return false;
+    if (v2) {
+      if (typeof x.flow !== "string" || !RS_ID.test(x.flow) || typeof x.step !== "string" || !RS_ID.test(x.step)) return false;
+      if (!listOf(x.products, 0, 5, function (p) { return isInt(p) && p > 0; })) return false;
+    } else if (!isInt(x.phase) || x.phase < 1 || x.phase > 7) return false;
     if (typeof x.since !== "string" || !RS_DAY.test(x.since)) return false;
     if (x.release !== "" && !(typeof x.release === "string" && RS_DAY.test(x.release))) return false;
     return rsLong(x.note, 1000);
+  }
+  // AP-FLOW: a flow { id, steps[1-60 { id, name ≤ 80, name_en "" | ≤ 80, about / about_en ≤ 600 }] }
+  function okRsStep(x) {
+    if (!onlyKeys(x, RS_STEP_KEYS) || !RS_STEP_KEYS.every(function (k) { return has(x, k); })) return false;
+    return typeof x.id === "string" && RS_ID.test(x.id) && rsText(x.name, 80) && (x.name_en === "" || rsText(x.name_en, 80)) &&
+           rsLong(x.about, 600) && rsLong(x.about_en, 600);
+  }
+  function okRsFlow(x) {
+    if (!onlyKeys(x, ["id", "steps"]) || typeof x.id !== "string" || !RS_ID.test(x.id) || !listOf(x.steps, 1, RS_STEPS, okRsStep)) return false;
+    var seen = {};
+    return x.steps.every(function (s) { if (has(seen, s.id)) return false; seen[s.id] = 1; return true; });
   }
   // UTF-8 bytes of a text (the shop counts bytes)
   function utf8Len(t) {
@@ -733,12 +751,24 @@
     // RS-PF: "oros" alone; done / declined may carry the creator's reply (one line, ≤ 500)
     rspf: function (b) { return has(b, "state") && (b.state !== "oros" || Object.keys(b).length === 1); },
     // RS-PROD: all three parts, unique ids, ≤ 1 MB
+    // AP-FLOW v 2: flows too (unique ids), each work in a flow and a step it names
     rsp: function (b) {
       if (!has(b, "v") || !has(b, "sent") || !has(b, "works")) return false;
-      var seen = {};
+      if ((b.v === 2) !== has(b, "flows")) return false;
+      var seen = {}, steps = {};
+      if (b.v === 2) {
+        for (var f = 0; f < b.flows.length; f++) {
+          if (has(steps, b.flows[f].id)) return false;
+          steps[b.flows[f].id] = {};
+          b.flows[f].steps.forEach(function (s) { steps[b.flows[f].id][s.id] = 1; });
+        }
+      }
       for (var i = 0; i < b.works.length; i++) {
-        if (has(seen, b.works[i].id)) return false;
-        seen[b.works[i].id] = 1;
+        var w = b.works[i];
+        if (has(seen, w.id)) return false;
+        seen[w.id] = 1;
+        if ((b.v === 2) !== has(w, "flow")) return false;
+        if (b.v === 2 && !(has(steps, w.flow) && has(steps[w.flow], w.step))) return false;
       }
       return utf8Len(JSON.stringify(b)) <= RS_BYTES;
     },
@@ -850,7 +880,7 @@
       // RS-PROD (1.18.0): the production stage of the works (the whole
       // list each time, Kanban board → seven public phases)
       ["GET", /^\/rs\/production$/, null, null],
-      ["POST", /^\/rs\/production$/, null, { v: "rsv", sent: "rsday", works: "rsworks" }, "rsp"],
+      ["POST", /^\/rs\/production$/, null, { v: "rspv", sent: "rsday", works: "rsworks", flows: "rsflows" }, "rsp"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
@@ -1033,6 +1063,8 @@
     if (kind === "rspfst") return v === "oros" || v === "done" || v === "declined";
     if (kind === "rsreply") return rsText(v, 500);
     if (kind === "rsworks") return listOf(v, 0, RS_WORKS, okRsWork);
+    if (kind === "rspv") return v === 1 || v === 2;
+    if (kind === "rsflows") return listOf(v, 0, RS_FLOWS, okRsFlow);
     if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
     if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);
     if (kind === "bvrows") return listOf(v, 1, 250, okBvRow);

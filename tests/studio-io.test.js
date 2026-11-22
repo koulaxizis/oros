@@ -127,7 +127,7 @@ test("wiring: settings, recording path, every string in EN/EL/DE and the help", 
   ["io-mode", "io-sec", "io-pair", "io-code", "io-pair-go", "io-on", "io-be", "io-in", "io-ch", "io-out", "io-ex", "io-ex-sec",
     "io-meters", "io-test", "io-refresh", "io-status", "io-off", "io-connect"].forEach((id) => assert.ok(html.includes('id="' + id + '"'), id));
   // the take: rendered at the card's rate, played and recorded by the bridge, placed minus its round trip and the offset
-  assert.match(js, /renderMix\(\{ a: from, b: end \}, j\.sr\)/);
+  assert.match(js, /renderMix\(\{ a: from, b: from \+ songSec \}, j\.sr\)/);      // at most one take long (projects run to three hours)
   assert.match(js, /ioRec\.lat = \(j\.latency \| 0\) \/ j\.sr \+ prefs\.lat \/ 1000;/);
   assert.match(js, /if \(ioOn\(\) && !keysOpen\(\)\) \{/);
   assert.match(js, /if \(recording && ioRec\) \{ stopIoRec\(\); return; \}/);

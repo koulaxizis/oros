@@ -51,7 +51,9 @@
     return o;
   }
 
-  // kind: "doc" (every command edits a project)
+  // kind: "doc" (the command edits a project) | "new" (create: a new
+  // project from a file, Montage's own .orosmontage import; Gate's
+  // montage_import is this command)
   var CATALOG = {
     replace: { kind: "doc", args: sel({ find: { t: "str", max: 500, req: 1 }, repl: { t: "str", max: 500 }, cs: { t: "bool" }, word: { t: "bool" } }) },
     settext: { kind: "doc", args: sel({ text: { t: "str", max: 500, req: 1 } }) },
@@ -68,7 +70,10 @@
     split: { kind: "doc", args: sel({ time: { t: "num", lo: 0, hi: 57600, def: null, req: 1 } }) },
     remove: { kind: "doc", args: sel({}) },
     project: { kind: "doc", args: { ratio: oneOf([""].concat(M.RATIOS)), fps: i(30, 60), back: { t: "color" }, duck: i(0, 90) } },
-    rename: { kind: "doc", args: { title: { t: "str", max: 80, req: 1 } } }
+    rename: { kind: "doc", args: { title: { t: "str", max: 80, req: 1 } } },
+    create: { kind: "new", args: { from: { t: "str", max: 500, req: 1 }, title: { t: "str", max: 80 } } },
+    // GX-3: the project rendered as a file into out (nothing changes)
+    export: { kind: "out", args: { fmt: { t: "enum", v: ["video", "sound", "gif"], def: "video" }, out: { t: "str", max: 1030, req: 1 } } }
   };
   var ORDER = Object.keys(CATALOG);
   var MAX_STEPS = 40;
@@ -89,11 +94,15 @@
     "split: cut the picked clips that run through `time` in two there",
     "remove: delete the picked clips (needs ids, what, row or has)",
     "project: ratio " + M.RATIOS.join("|") + ", fps 30|60, back (the colour behind everything), duck (0-90: how much the music drops under the voice, 0 = off)",
-    "rename: the project's name becomes `title`"
+    "rename: the project's name becomes `title`",
+    "create: open a .orosmontage file from Claude's folders as a NEW project (only as the one command, with designs new): from (its /internal/ path, as files_upload or files_write gave it), title (the new project's name; the file's own name when empty). Nothing that exists changes, the user can undo it, and nothing is published",
+    "export: the project rendered as Export makes it (fmt video: MP4 or WebM, as the device can; sound: the sound alone; gif: a short GIF), saved into `out` (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Videos with Files at «may change»; never over a file); changes nothing; a long video takes as long as its length or more"
   ].join("\n");
 
   // ---------- 1. Checking ----------
   var IDS_RX = /^[\s,a-z0-9]*$/;
+  // a file in the user's orOS disk; no step up or back slash
+  var FROM_RX = /^\/internal\/(?!(?:.*\/)?\.\.?(?:\/|$))[^\\\u0000-\u001f]+\.orosmontage$/i;
   function given(v) { return v !== null && v !== undefined && v !== ""; }
   function picks(st) { return given(st.ids) || given(st.what) || given(st.row) || given(st.has); }
   function wrap(op) { var c = {}; c[op] = CATALOG[op]; return c; }
@@ -125,6 +134,7 @@
     if (st.op === "add" && st.what !== "shape" && !given(st.text)) return { err: "add: a title or card needs text" };
     if (st.op === "move" && !given(st.after) && !given(st.time) && !given(st.x) && !given(st.y) && !given(st.w) && !given(st.h)) return { err: "move: give after, time, x, y, w or h" };
     if (st.op === "transition" && !st.trans && !given(st.secs)) return { err: "transition: give trans or secs" };
+    if (st.op === "create" && !FROM_RX.test(st.from)) return { err: "create: from must be an /internal/ path of a .orosmontage file (files_upload or files_write)" };
     if (st.op === "project" && !st.ratio && !given(st.fps) && !st.back && !given(st.duck)) return { err: "project: give ratio, fps, back or duck" };
     return { step: st };
   }
@@ -139,6 +149,7 @@
       else steps.push(r.step);
     });
     if (errs.length) return { ok: false, err: errs.slice(0, 6).join(". ") };
+    if (steps.length > 1 && steps.some(function (st) { return st.op === "create"; })) return { ok: false, err: "create is the only command of its list (change the new project with a second edit_in_app)" };
     return { ok: true, steps: steps };
   }
 
@@ -193,6 +204,7 @@
   // One command on a project copy (work()) → how many things changed.
   // env: { notes: [], now: ms, newId: () → a fresh clip id }.
   function apply(w, st, env) {
+    if (CATALOG[st.op] && CATALOG[st.op].kind === "out") return 0;   // GX-3: assist.js makes the file
     env = env || {};
     var now = env.now || Date.now(), p = proj(w);
     if (!p) return 0;
@@ -202,6 +214,7 @@
       return diff(before, itemsJson(w)) + (JSON.stringify([p2.name, p2.ar, p2.fps, p2.bg, p2.dk || 0]) !== f0 ? 1 : 0);
     }
     switch (st.op) {
+      case "create": return 0;   // Montage's own import (assist.js)
       case "rename":
         w.data = M.setProject(w.data, w.pid, { name: st.title }, now);
         return done();
@@ -358,7 +371,8 @@
   // project's id. designs: open | named | all.
   function targets(data, folders, open, designs, name) {
     var docs = data && Array.isArray(data.docs) ? data.docs : [];
-    if (designs === "new") return { ok: false, err: "a new video project is made in Montage itself; use open, named or all" };
+    // a new project from a file (create): nothing that exists is picked
+    if (designs === "new") return { ok: true, docs: [{ id: "", name: String(name || "") }], fresh: 1 };
     if (designs === "folder") return { ok: false, err: "Montage has no folders; use open, named or all" };
     if (!docs.length) return { ok: false, err: "the user has no projects in Montage yet" };
     var list = [];
@@ -387,11 +401,14 @@
     var out = { n: 0, d: 0, per: [], cut: 0, notes: [] }, recs = {}, seq = 0;
     ((data && data.docs) || []).forEach(function (d) { recs[d.id] = d.store; });
     var env = { notes: out.notes, now: Date.now(), newId: function () { seq++; return "zzpreview" + seq; } };
+    // create: one new project, read from its file only in Montage
+    if (steps.length && steps[0].op === "create") { out.made = 1; return out; }
     ids.forEach(function (id) {
       if (!recs[id]) return;
       var w = work(recs[id]), k = 0;
       steps.forEach(function (st) { k += apply(w, st, env); });
       if (k) { out.n += k; out.d++; out.per.push({ id: id, name: proj(w).name, n: k }); }
+      if (R.outFiles(steps, 1)) out.files = (out.files || 0) + R.outFiles(steps, 1);   // GX-3
     });
     return out;
   }
@@ -441,7 +458,7 @@
 
   var api = {
     CATALOG: CATALOG, ORDER: ORDER, GUIDE: GUIDE, MAX_STEPS: MAX_STEPS, TRACK: TRACK,
-    check: check, pick: pick, work: work, apply: apply,
+    FROM_RX: FROM_RX, check: check, pick: pick, work: work, apply: apply,
     view: view, targets: targets, preview: preview, outline: outline
   };
   if (node) module.exports = api;

@@ -214,11 +214,28 @@ function okRsCtr(x) {
 // RS-PF / RS-PROD (Revenue Splitter 1.18.0, = links/core.js rsLong, okRsWork)
 const rsLong = (v, max) => typeof v === "string" && v.length <= max && !/[\u0000-\u0009\u000b-\u001f\u007f<>]/.test(v);
 const RS_WORK_KEYS = ["id", "ben", "title", "phase", "since", "release", "note"], RS_WORKS = 500;
+// AP-FLOW (RS 1.21.0, v 2): the publisher's own steps per board (= links/core.js)
+const RS_WORK2_KEYS = ["id", "ben", "title", "flow", "step", "since", "release", "note", "products"];
+const RS_STEP_KEYS = ["id", "name", "name_en", "about", "about_en"], RS_FLOWS = 50, RS_STEPS = 60;
 const rsDay = (v) => typeof v === "string" && RS_DAY.test(v);
+const hasK = (x, k) => Object.prototype.hasOwnProperty.call(x, k);
+function okRsStep(x) {
+  if (!onlyKeys(x, RS_STEP_KEYS) || !RS_STEP_KEYS.every((k) => hasK(x, k))) return false;
+  return typeof x.id === "string" && RS_ID.test(x.id) && rsText(x.name, 80) && (x.name_en === "" || rsText(x.name_en, 80)) &&
+    rsLong(x.about, 600) && rsLong(x.about_en, 600);
+}
+function okRsFlow(x) {
+  if (!onlyKeys(x, ["id", "steps"]) || typeof x.id !== "string" || !RS_ID.test(x.id) || !listOf(x.steps, 1, RS_STEPS, okRsStep)) return false;
+  return new Set(x.steps.map((s) => s.id)).size === x.steps.length;
+}
 function okRsWork(x) {
-  if (!onlyKeys(x, RS_WORK_KEYS) || !RS_WORK_KEYS.every((k) => Object.prototype.hasOwnProperty.call(x, k))) return false;
+  const v2 = !!x && typeof x === "object" && hasK(x, "flow"), keys = v2 ? RS_WORK2_KEYS : RS_WORK_KEYS;
+  if (!onlyKeys(x, keys) || !keys.every((k) => hasK(x, k))) return false;
   if (typeof x.id !== "string" || !RS_ID.test(x.id) || !rsText(x.ben, 200) || !rsText(x.title, 200)) return false;
-  if (!Number.isInteger(x.phase) || x.phase < 1 || x.phase > 7) return false;
+  if (v2) {
+    if (typeof x.flow !== "string" || !RS_ID.test(x.flow) || typeof x.step !== "string" || !RS_ID.test(x.step)) return false;
+    if (!listOf(x.products, 0, 5, (p) => Number.isInteger(p) && p > 0)) return false;
+  } else if (!Number.isInteger(x.phase) || x.phase < 1 || x.phase > 7) return false;
   if (!rsDay(x.since) || !(x.release === "" || rsDay(x.release))) return false;
   return rsLong(x.note, 1000);
 }
@@ -298,8 +315,12 @@ const WHOLE = {
   // RS-PF: "oros" alone; done / declined may carry the creator's reply
   rspf: (b) => "state" in b && (b.state !== "oros" || Object.keys(b).length === 1),
   // RS-PROD: all three parts, unique ids, ≤ 1 MB (UTF-8)
-  rsp: (b) => "v" in b && "sent" in b && "works" in b &&
+  // AP-FLOW v 2: flows too (unique ids), each work in a flow and a step it names
+  rsp: (b) => "v" in b && "sent" in b && "works" in b && (b.v === 2) === ("flows" in b) &&
     new Set(b.works.map((x) => x.id)).size === b.works.length &&
+    (b.v !== 2 || (new Set(b.flows.map((f) => f.id)).size === b.flows.length &&
+      b.works.every((w) => b.flows.some((f) => f.id === w.flow && f.steps.some((s) => s.id === w.step))))) &&
+    b.works.every((w) => (b.v === 2) === ("flow" in w)) &&
     new TextEncoder().encode(JSON.stringify(b)).length <= RS_BYTES,
   // "subscribed" only for new addresses: never over someone who left
   mcbatch: (b) => Array.isArray(b.members) && !(b.members.some((x) => x.status === "subscribed") && b.update_existing !== false),
@@ -359,7 +380,7 @@ export const PLATFORMS = {
       // RS-PF W2: the creator's new photo, GET alone in its call, no query
       ["GET", RS_PHOTO, null, null],
       ["GET", /^\/rs\/production$/, null, null],
-      ["POST", /^\/rs\/production$/, null, { v: "rsv", sent: "rsday", works: "rsworks" }, "rsp"],
+      ["POST", /^\/rs\/production$/, null, { v: "rspv", sent: "rsday", works: "rsworks", flows: "rsflows" }, "rsp"],
       // Budget «Εκδόσεις»: Production Ledger 1.0+ (noxpress), read only
       ["GET", /^\/pl\/records$/, { from: DAY, to: DAY, page: NUM, per_page: /^([1-9][0-9]?|[1-4][0-9]{2}|500)$/ }, null],
       // Publishing «Cost & result» (P15): Production Ledger 1.1+'s report per product, read only
@@ -698,6 +719,8 @@ function okVal(kind, v) {
   if (kind === "rspfst") return v === "oros" || v === "done" || v === "declined";
   if (kind === "rsreply") return rsText(v, 500);
   if (kind === "rsworks") return listOf(v, 0, RS_WORKS, okRsWork);
+  if (kind === "rspv") return v === 1 || v === 2;
+  if (kind === "rsflows") return listOf(v, 0, RS_FLOWS, okRsFlow);
   if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
     Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));
   if (kind === "tolinv") return okInvoice(v);

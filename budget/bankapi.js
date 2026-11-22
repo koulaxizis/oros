@@ -365,7 +365,11 @@
     var mine = typeof bgAt === "number" && isFinite(bgAt) && bgAt <= now ? bgAt : 0;
     if (mode === "off") return 0;
     if (mode === "set") return slotDue(times(st.bat), Math.max(lastRead(rows, devT, st.bam, now), mine), now);
-    var last = Math.max(typeof devT === "number" && isFinite(devT) && devT <= now ? devT : 0, mine);
+    // BK-6S (2026-11-20): every 6 hours counts the last read of ANY
+    // device (the rows' synced bt), not only this one's: a phone and a
+    // computer each reading every 6 hours made 8 unattended reads a day,
+    // and a bank answers about 4 (PSD2), then "too many requests".
+    var last = Math.max(lastRead(rows, devT, 0, now), mine);
     return due(last, now) ? now : 0;
   }
   // Rows of a renewed (or repeated) consent: an account already linked
