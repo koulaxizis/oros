@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.32.00
+- **Free films and shows in Television.** A new `Films & shows` tab brings about 3,500 free films, series, documentaries, cartoons and newsreels from Wikimedia Commons and the Internet Archive. Search by title, director or year, filter by type, genre, decade, country, language, length and sound, keep a `Watchlist`, and `Continue watching` picks up where you stopped, on all your devices. Only titles orOS has checked as free are shown unless you ask for more. The player now has a position bar and back / forward buttons for films. See [Television](help:a/television).
+
 ## Version 8.31.00
 - **Mockups for much more than books.** Books get new bindings, sizes and finishes (foil, embossing, slipcase, belly band, notebook). New products: CD, DVD and Blu-ray, cassette, VHS, vinyl, badges, stickers, keychains, enamel pins, magnets, mugs, posters, cards, T-shirts, tote bags, hoodies, socks and caps, each with a sheet for the printer. Scenes can stand on wood, marble, linen, paper or concrete with a cup, plant or pencil, and `Several in one picture` puts up to 6 mockups together; kits make a whole set from one picture. See [Mockups](help:a/mockups).
 

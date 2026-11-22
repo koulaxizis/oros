@@ -2461,6 +2461,8 @@ var PRECACHE_URLS = [
   "studio/notes.js",
   "studio/roll.js",
   "television/core.js",
+  "television/vod.js",
+  "television/films.js",
   "time/cities.js",
   "time/clock-core.js",
   "today/layout.js",
