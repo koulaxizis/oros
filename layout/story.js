@@ -152,9 +152,11 @@
       d.setAttribute("data-px", key);
       if (p.ext.brk && /^(col|page|odd|even)$/.test(p.ext.brk)) d.setAttribute("data-brk", t("brk." + p.ext.brk));
     }
-    var ps = T.resolvePs(psMap, p.ps);
+    var ps = T.resolvePs(psMap, p.ps), pso = psMap[p.ps];
+    // the style's name in the left column (LY-N3, Style names)
+    d.setAttribute("data-psn", pso ? LY.label(pso.name) : p.ps);
     d.style.fontFamily = familyCss(ps.font);
-    d.style.fontSize = Math.max(13, Math.min(26, ps.size * 1.25)) + "px";
+    d.style.fontSize = Math.round(Math.max(13, Math.min(26, ps.size * 1.25)) * zoom() * 10) / 10 + "px";
     d.style.textAlign = ps.align === "c" ? "center" : ps.align === "r" ? "right" : "left";
     var endsWithBr = false;
     p.runs.forEach(function (r) {
@@ -366,10 +368,15 @@
   }
 
   // ---------- Saving ----------
+  // the Story Editor's text size (LY-N3): 0.8-1.6, on this device
+  function zoom() { var z = Number(LY.prefs.stZoom); return z >= 0.8 && z <= 1.6 ? z : 1; }
   function updateFoot(paras) {
     var st = story(), n = 0;
     paras.forEach(function (p, i) { n += paraLen(p) + (i ? 1 : 0); });
     var over = st && ED.L && ED.L.overset[st.id];
+    // the paragraphs that do not fit in the frames: a red line beside them (LY-N3)
+    var placed = over && ED.L.placed && typeof ED.L.placed[st.id] === "number" ? ED.L.placed[st.id] : Infinity;
+    for (var ci = 0; ci < ed.children.length; ci++) ed.children[ci].classList.toggle("sp-over", ci >= placed);
     foot.textContent = t("story.chars", { n: n }) + (over ? " " + t("story.overset") : "");
     foot.classList.toggle("warn", !!over);
     ed.classList.toggle("is-empty", paras.length === 1 && !paras[0].runs.length);
@@ -558,6 +565,34 @@
       LY.menu(brk, ["col", "page", "odd", "even"].map(function (k) { return { label: t("brk.ins." + k), fn: function () { breakCmd(k); } }; }));
     });
     tools.appendChild(brk);
+    // style names beside the paragraphs, and the text size (LY-N3)
+    var nm = el("button", "icon-btn sf-btn" + (LY.prefs.stNames ? " on" : ""), "¶");
+    nm.type = "button"; nm.title = t("story.names"); nm.setAttribute("aria-label", t("story.names"));
+    nm.setAttribute("aria-pressed", LY.prefs.stNames ? "true" : "false");
+    nm.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    nm.addEventListener("click", function () {
+      if (LY.prefs.stNames) delete LY.prefs.stNames; else LY.prefs.stNames = 1;
+      LY.savePrefs();
+      ed.classList.toggle("names", !!LY.prefs.stNames);
+      nm.classList.toggle("on", !!LY.prefs.stNames);
+      nm.setAttribute("aria-pressed", LY.prefs.stNames ? "true" : "false");
+    });
+    tools.appendChild(nm);
+    [["A−", "story.smaller", -0.1], ["A+", "story.bigger", 0.1]].forEach(function (z) {
+      var b = el("button", "icon-btn sf-btn", z[0]);
+      b.type = "button"; b.title = t(z[1]); b.setAttribute("aria-label", t(z[1]));
+      b.addEventListener("mousedown", function (e) { e.preventDefault(); });
+      b.addEventListener("click", function () {
+        var v = Math.round(Math.max(0.8, Math.min(1.6, zoom() + z[2])) * 10) / 10;
+        if (v === 1) delete LY.prefs.stZoom; else LY.prefs.stZoom = v;
+        LY.savePrefs();
+        flush();
+        var st = story();
+        if (st) { var m = readModel(); render(st.paras, { a: clampPos(st.paras, m.a), b: clampPos(st.paras, m.b) }); }
+      });
+      tools.appendChild(b);
+    });
+    ed.classList.toggle("names", !!LY.prefs.stNames);
   }
   function insertSec() {
     var fb = String(LY.doc.name || "").trim().slice(0, 120) || "§";

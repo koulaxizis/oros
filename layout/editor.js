@@ -1647,6 +1647,10 @@
     });
     if (made.length) ED.select(made);
   }
+  // the selection as a clipboard, and placing one, without touching
+  // the person's own clipboard (the asset library, LY-N3)
+  ED.selClip = function () { var keep = clipboard, c = null; if (copySel()) c = clipboard; clipboard = keep; return c; };
+  ED.pasteClip = function (c) { var keep = clipboard; clipboard = c; try { paste(false); } finally { clipboard = keep; } };
   function duplicate() { if (copySel()) paste(true); }
   ED.duplicate = duplicate;
 

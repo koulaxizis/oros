@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.41.00
+- **Layout: a library for things you reuse, and colour libraries.** Select a logo, a running head or a chapter opener and keep it in the Library (More › Library…) to place it in any document; libraries go to other devices as a file. The Colours panel has ready-made colour sets and reads and writes .ase swatch files from InDesign, Illustrator, Affinity or Scribus. The Story Editor shows each paragraph's style name, can make the text bigger, and marks the text that no longer fits.
+
 ## Version 8.40.00
 - **Layout: find, change, spell-check and finer text flow.** Find/Change… (Ctrl+F) finds words or patterns (GREP) in the whole book or one text, changes them, and can set styles at the same time; it has ready-made clean-ups for a book (double spaces, straight quotes to «», three dots to …) and keeps your own searches. Spelling… checks Greek and English and remembers the words you add with the document. Paragraph styles can now say which style comes after Enter, and give a character style to anything a pattern finds (GREP styles). Also new: column and page breaks in the text (Numpad Enter), a baseline grid that lines up lines across pages, frames that spread their paragraphs to the foot, and object styles.
 

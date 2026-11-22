@@ -335,7 +335,7 @@
     var styles = { ps: doc.pstyles, cs: doc.cstyles, obj: objs };
     var masterIds = {};
     doc.masters.forEach(function (m) { masterIds[m.id] = 1; });
-    var out = { frames: {}, master: {}, overset: {}, pageOf: idx, labels: labels };
+    var out = { frames: {}, master: {}, overset: {}, placed: {}, pageOf: idx, labels: labels };
 
     // wrap objects per owner (page or master)
     var wrapsBy = {};
@@ -419,6 +419,7 @@
       placeAnchored(frames, res, sid);
       Object.keys(res.frames).forEach(function (fid) { out.frames[fid] = res.frames[fid]; });
       if (res.overset) out.overset[sid] = true;
+      out.placed[sid] = res.placedParas;   // paragraphs that fit whole (the Story Editor marks the rest, LY-N3)
     });
     out.anchored = {};
     Object.keys(anchored).forEach(function (id) { var it = anchored[id]; if (it.ext.anc && placedA[id]) out.anchored[id] = { pg: it.pg, x: it.x, y: it.y }; });
