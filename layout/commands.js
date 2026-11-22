@@ -144,7 +144,11 @@
   // symbol (LY-W14): a symbol made, placed, updated, detached, renamed, deleted
   CATALOG.symbol = { kind: "doc", args: { act: { t: "enum", v: ["place", "make", "update", "detach", "rename", "delete"], def: "place" }, name: { t: "str", max: 60, req: 1 },
     frame: { t: "str", max: 400 }, new_name: { t: "str", max: 60 }, page: { t: "int", lo: 1, hi: 9999, def: 1 }, x: MMv(-1, 5000, -1), y: MMv(-1, 5000, -1), w: MMv(-1, 5000, -1) } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index", "effects", "symbol"];
+  // alternate (LY-W16): the same design in another size as a document of
+  // its own, its texts linked to the original's (layout/altlayout.js)
+  CATALOG.alternate = { kind: "doc", args: { mode: { t: "enum", v: ["make", "update", "unlink"], def: "make" }, name: { t: "str", max: 60 },
+    w: MMv(0, 5080, 0), h: MMv(0, 5080, 0), scale_text: { t: "bool", def: 1 } } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index", "effects", "symbol", "alternate"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -204,6 +208,9 @@
     "\nsymbol: a reusable group of objects (a logo, a badge, a series emblem) by `name`: act make = the frames `frame` (ids, comma-separated, one page) become the symbol and its first placement; " +
     "place = a placement on page `page` at x y (mm from the page's top-left corner; -1 = centred) w wide (mm; -1 = its own size); update = the symbol becomes what its placement holding frame `frame` is now and every other placement follows; " +
     "detach = the placement holding `frame` becomes plain objects; rename to new_name; delete = the symbol goes, its placements stay as plain objects" +
+    "\nalternate: an alternate layout, the same design in another size kept as a document of its own (a book page as a square post, an A5 flyer as an A4 poster): " +
+    "mode make (only as the first command, on one document: designs open or named) = a new document called after this one and `name` (e.g. Square post), w × h mm, its pages fitted to the size, text sizes in proportion (scale_text false = they stay), its texts linked to this document's; the commands after it change the new document; " +
+    "mode update (on an alternate) = the texts changed in its original and the styles and colours the original gained come in (a text also changed in the alternate is replaced); mode unlink = the alternate becomes a plain document; read_in_app shows alternate_of" +
     "\nindex: the book's index: terms one entry per word or phrase to mark wherever it stands in the text (any case or accents, whole words): \"word\", \"word = Topic\" or \"word = Topic / Sub-topic\"; " +
     "unmark a topic whose marks go (* = every mark); build true makes the index again from the marks (a new last page with two columns titled `title`, default Index, or its Greek word in a Greek book, when the book has none); pages as the pages show them" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
@@ -261,6 +268,8 @@
     });
     if (errs.length) return { ok: false, err: errs.slice(0, 6).join(". ") };
     if (steps.some(function (st, i) { return st.op === "create" && i > 0; })) return { ok: false, err: "create can only be the first command" };
+    if (steps.some(function (st, i) { return isAltMake(st) && i > 0; })) return { ok: false, err: "alternate mode make can only be the first command" };
+    if (steps.some(function (st) { return isAltMake(st) && (!st.name || !(st.w >= 13) || !(st.h >= 13)); })) return { ok: false, err: "alternate mode make needs name and w and h in mm (at least 13)" };
     if (steps.length > 1 && steps.some(function (st) { return st.op === "cancel"; })) return { ok: false, err: "cancel goes alone" };
     if (steps.some(function (st) { return st.op === "masterfield" && ((st.hide && !S.pageTest(st.hide)) || (st.show && !S.pageTest(st.show))); })) return { ok: false, err: "masterfield: hide and show are page lists such as 1-6,23" };
     var bad = steps.filter(function (st) { return st.op === "images" && !(st.paths && st.paths.length) && !st.folder; });
@@ -312,6 +321,7 @@
     if (st.op === "table") return PRO.addTable(doc, st, now);
     if (st.op === "index") return applyIndex(doc, st, env, now);
     if (st.op === "symbol") return applySymbol(doc, st, env, now);
+    if (st.op === "alternate") return applyAlternate(doc, st, env, now);
     if (st.op === "effects") {
       // shadow_x/y -145 = as it is (an offset can be below 0)
       var ef = Object.assign({}, st);
@@ -425,6 +435,27 @@
     return SY.place(doc, sym.id, pg.id, x, y, now, env.idf, w).length;
   }
 
+  // alternate (LY-W16): make is done before the other commands (altMake,
+  // as create is); update and unlink change the alternate itself
+  function altLib() { return node ? require("./altlayout.js") : root.LY_ALT; }
+  function isAltMake(st) { return st && st.op === "alternate" && (st.mode || "make") === "make"; }
+  function altMake(src, st, now) {
+    var ALT = altLib();
+    if (!ALT || !src) return { err: "engine" };
+    return ALT.make(src, { w: st.w * PT_PER_MM, h: st.h * PT_PER_MM, label: st.name, text: st.scale_text === 0 || st.scale_text === false ? "" : "scale", now: now });
+  }
+  function applyAlternate(doc, st, env, now) {
+    var ALT = altLib();
+    if (!ALT || isAltMake(st)) return 0;
+    var a = ALT.info(doc);
+    if (!a) { if (env.notes && env.notes.indexOf("notAlternate") < 0) env.notes.push("notAlternate"); return 0; }
+    if (st.mode === "unlink") return ALT.unlink(doc, now) ? 1 : 0;
+    var src = (env.docs || []).filter(function (d) { return d && d.id === a.src && !d.del; })[0] || null;
+    if (!src) { if (env.notes && env.notes.indexOf("altGone") < 0) env.notes.push("altGone"); return 0; }
+    var r = ALT.update(doc, src, now);
+    return r.stories + r.styles;
+  }
+
   // A house style document (LY-HS: setup.ext.house) by name, or the
   // only one; never the book itself.
   function isHouse(d) { var h = d && d.setup && d.setup.ext && d.setup.ext.house; return !!(h && typeof h === "object" && Array.isArray(h.rules)); }
@@ -480,6 +511,17 @@
       steps.slice(1).forEach(function (st) { if (st.op === "thumbs") out.files++; else k0 += apply(nd, st, { now: 1, notes: out.notes, grey: {}, docs: docs }); });
       out.n = k0;
       out.per.push({ id: "", name: steps[0].title || "", n: k0 });
+      return out;
+    }
+    if (steps.length && isAltMake(steps[0])) {
+      var from = docs.filter(function (d) { return d.id === ids[0]; })[0];
+      var ad = ids.length === 1 && from ? altMake(from, steps[0], 1) : { err: "one" };
+      if (ad.err) { out.notes.push(ad.err === "one" ? "altOne" : "altBad"); return out; }
+      var k1 = 0;
+      out.made = 1;
+      steps.slice(1).forEach(function (st) { if (st.op === "thumbs") out.files++; else k1 += apply(ad, st, { now: 1, notes: out.notes, grey: {}, docs: docs }); });
+      out.n = k1;
+      out.per.push({ id: "", name: ad.name || "", n: k1 });
       return out;
     }
     ids.forEach(function (id) {
@@ -556,10 +598,20 @@
       else if (k === "paragraph_styles") full.paragraph_styles.forEach(function (e, i) { if (o.paragraph_styles[i]) o.paragraph_styles[i] = Object.assign(e, o.paragraph_styles[i]); });
       else if (!(k in o)) o[k] = full[k];
     });
+    // LY-W16: an alternate layout names its original and what changed there
+    var ALT = altLib(), al = ALT && ALT.info(doc);
+    if (al) {
+      var orig = ((opts && opts.docs) || []).filter(function (d) { return d && d.id === al.src && !d.del; })[0] || null, ast = ALT.status(doc, orig);
+      o.alternate_of = { label: al.n, original: orig ? orig.name || "" : null, texts_changed_there: ast.gone ? 0 : ast.out.length, also_changed_here: ast.gone ? 0 : ast.both.length, new_styles_there: ast.styles };
+      if (ast.gone) o.alternate_of.note = "The original was removed; mode unlink makes this a plain document.";
+    } else if (ALT && opts && opts.docs) {
+      var alts = ALT.alternates(opts.docs, doc.id);
+      if (alts.length) o.alternates = alts.slice(0, 40).map(function (d) { return { name: d.name || "", label: ALT.info(d).n, size_mm: mm(d.setup.w) + " × " + mm(d.setup.h) }; });
+    }
     return o;
   }
 
-  var api = { houseIn: houseIn, fontVars: fontVars, CATALOG: CATALOG, ORDER: ORDER, GUIDE: GUIDE, MAX_STEPS: MAX_STEPS, check: check, apply: apply, targets: targets, preview: preview, outline: outline };
+  var api = { houseIn: houseIn, fontVars: fontVars, altMake: altMake, isAltMake: isAltMake, CATALOG: CATALOG, ORDER: ORDER, GUIDE: GUIDE, MAX_STEPS: MAX_STEPS, check: check, apply: apply, targets: targets, preview: preview, outline: outline };
   if (node) module.exports = api;
   else root.LayoutCommands = api;
 })(typeof window !== "undefined" ? window : this);

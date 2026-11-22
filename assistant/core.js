@@ -3721,6 +3721,7 @@
     if (!chk.ok) return bad(chk.err);
     if (chk.steps[0].op === "create") { designs = "new"; name = chk.steps[0].title || name; }
     else if (designs === "new") return bad("designs new needs create as the first command.");
+    if (chk.steps[0].op === "alternate" && (chk.steps[0].mode || "make") === "make" && designs !== "open" && designs !== "named") return bad("alternate mode make works on one document (designs open or named).");
     if (designs !== "named" && designs !== "open" && designs !== "new" && chk.steps.some(function (s) { return s.op === "rename"; })) return bad("rename works on one " + EDIT_APP[app].noun + " (designs open or named).");
     var r = { ok: true, app: app, designs: designs, name: name, steps: chk.steps };
     if (a.dry_run === true) r.dry = true;

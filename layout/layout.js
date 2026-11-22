@@ -2158,10 +2158,12 @@
   // a document made by the Assistant or orOS Gate (LY-PRO W1 create):
   // kerned and hyphenated as a new one; dropDoc takes it back (Undo),
   // with a tombstone so the removal syncs
-  LY.addNewDoc = function (d) {
+  // asIs: a copy of a document the owner has (an alternate layout,
+  // LY-W16) keeps its styles as they are
+  LY.addNewDoc = function (d, asIs) {
     var base = M.find(d.pstyles, "ps-base");
-    if (base) { base.ext = base.ext || {}; base.ext.kern = 1; }
-    addDoc(hyphOn(d));
+    if (base && !asIs) { base.ext = base.ext || {}; base.ext.kern = 1; }
+    addDoc(asIs ? d : hyphOn(d));
     return !!findDoc(d.id);
   };
   LY.dropDoc = function (id) {

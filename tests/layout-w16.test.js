@@ -151,3 +151,67 @@ test("strings in EN, EL and DE; help; wiring", () => {
   assert.ok(read("sw.js").includes('"layout/altlayout.js"'));
   assert.ok(read("layout/panels.js").includes('t("more.alt")'));
 });
+
+// The alternate command for Claude (Assistant and orOS Gate)
+const CMD = require(path.join(ROOT, "layout/commands.js"));
+const C = require(path.join(ROOT, "assistant/core.js"));
+
+test("command: check, make first on one document, then update and unlink", () => {
+  assert.ok(CMD.ORDER.includes("alternate"));
+  assert.match(CMD.check([{ op: "rename", title: "x" }, { op: "alternate", name: "Post", w: 381, h: 381 }]).err, /only be the first/);
+  assert.match(CMD.check([{ op: "alternate", name: "Post", w: 5, h: 381 }]).err, /needs name and w and h/);
+  assert.match(CMD.check([{ op: "alternate", w: 381, h: 381 }]).err, /needs name/);
+  const ok = CMD.check([{ op: "alternate", name: "Τετράγωνο", w: 381, h: 381 }, { op: "rename", title: "Post" }]);
+  assert.ok(ok.ok, ok.err);
+  assert.ok(CMD.check([{ op: "alternate", mode: "update" }, { op: "alternate", mode: "unlink" }]).ok);
+  // the Assistant's arguments: make needs one document
+  const cats = { layout: CMD };
+  assert.match(C.normEdit({ app: "layout", designs: "all", steps: [{ op: "alternate", name: "P", w: 381, h: 381 }] }, cats).err, /one document/);
+  assert.ok(C.normEdit({ app: "layout", designs: "named", name: "Φυλλάδιο", steps: [{ op: "alternate", name: "P", w: 381, h: 381 }] }, cats).ok);
+  assert.ok(C.normEdit({ app: "layout", designs: "all", steps: [{ op: "alternate", mode: "update" }] }, cats).ok);
+  // altMake in mm, text sizes follow unless scale_text is false
+  const src = original();
+  const st = ok.steps[0];
+  const alt = CMD.altMake(src, st, 5);
+  assert.equal(Math.round(alt.setup.w * 25.4 / 72), 381);
+  assert.equal(ALT.info(alt).n, "Τετράγωνο");
+  assert.ok(ALT.info(alt).k > 1);
+  assert.equal(ALT.info(CMD.altMake(src, CMD.check([{ op: "alternate", name: "x", w: 381, h: 381, scale_text: false }]).steps[0], 5)).k, 1);
+  // preview: a new document, the commands after it on the copy
+  const data = { docs: [src] };
+  const pv = CMD.preview(data, [src.id], ok.steps);
+  assert.equal(pv.made, 1); assert.equal(pv.n, 1); assert.equal(pv.per[0].name, "Post");   // the rename after it
+  assert.deepEqual(CMD.preview({ docs: [src, original()] }, [src.id, "x"], ok.steps).notes, ["altOne"]);
+  // update and unlink through apply
+  setText(src, "st-a", "Νέος τίτλος", 10);
+  const notes = [];
+  assert.equal(CMD.apply(alt, CMD.check([{ op: "alternate", mode: "update" }]).steps[0], { now: 20, docs: [src], notes }), 1);
+  assert.equal(M.find(alt.stories, "st-a").paras[0].runs[0].t, "Νέος τίτλος");
+  assert.equal(CMD.apply(alt, CMD.check([{ op: "alternate", mode: "update" }]).steps[0], { now: 21, docs: [], notes }), 0);
+  assert.deepEqual(notes, ["altGone"]);
+  assert.equal(CMD.apply(src, CMD.check([{ op: "alternate", mode: "unlink" }]).steps[0], { now: 22, docs: [], notes }), 0);
+  assert.ok(notes.includes("notAlternate"));
+  // read_in_app: the alternate names its original, the original its alternates
+  setText(src, "st-b", "Αλλαγή", 30);
+  const o = CMD.outline(alt, null, { docs: [src, alt] });
+  assert.equal(o.alternate_of.original, "Φυλλάδιο");
+  assert.equal(o.alternate_of.texts_changed_there, 1);
+  const o2 = CMD.outline(src, null, { docs: [src, alt] });
+  assert.equal(o2.alternates.length, 1); assert.equal(o2.alternates[0].label, "Τετράγωνο");
+  assert.equal(CMD.apply(alt, CMD.check([{ op: "alternate", mode: "unlink" }]).steps[0], { now: 40, docs: [src] }), 1);
+  assert.equal(ALT.info(alt), null);
+});
+
+test("command wiring: the Assistant loads retrim.js and altlayout.js before commands.js; Layout makes it first", () => {
+  const idx = read("assistant/index.html");
+  const at = (f) => idx.indexOf("../layout/" + f + "?v=");
+  assert.ok(at("retrim.js") > 0 && at("retrim.js") < at("altlayout.js") && at("altlayout.js") < at("commands.js"));
+  const as = read("layout/assist.js");
+  assert.match(as, /C\.altMake\(LY\.findDoc\(ids\[0\]\), steps\[0\], LY\.now\(\)\)/);
+  assert.match(as, /LY\.addNewDoc\(ad, true\)/);
+  assert.match(read("layout/layout.js"), /LY\.addNewDoc = function \(d, asIs\)/);
+  ["ed.note.altOne", "ed.note.altBad", "ed.note.notAlternate", "ed.note.altGone"].forEach((k) => {
+    assert.equal((read("assistant/assistant.js").match(new RegExp('"' + k + '":', "g")) || []).length, 2, k);
+    assert.ok(read("i18n/de/assistant.js").includes('"' + k + '":'), k);
+  });
+});
