@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.6.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.8.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -29,6 +29,13 @@
 //   • 1.6.0: the Dock can sit at the bottom (default), left, right or
 //     top edge (Settings › Dock › Position). Narrow or short screens
 //     (phones) keep it at the bottom whatever is chosen (dockSide).
+//   • 1.8.0 (BADGE-1): a small red count on a desktop shortcut or a
+//     Dock icon = the app's unread notices in the inbox (notifications.js
+//     items by `ns`) plus, for To-Do and Today, the tasks whose day has
+//     passed. Never on a sensitive app (apps.json searchOff, Passwords,
+//     the Assistant, an app with a lock), none at all under Sensitive
+//     work, and none when "Show counts on icons" is off (on by default,
+//     device-local pref `badges`). Pure part: badgeCounts / badgeText.
 //
 // Data (synced, slice "launcher", key oros-launcher-data):
 //   { ver:1, items:[{ id, desk, dock, mtime }] }
@@ -50,7 +57,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.7.0";
+  var VER = "1.8.0";
   var DATA_KEY = "oros-launcher-data";
   var MENU_KEY = "oros-menu-apps";
   var MAX_ITEMS = 500;
@@ -273,10 +280,44 @@
     return (Number(w) >= SIDE_W && Number(h) >= SIDE_H) ? pos : "bottom";
   }
 
+  // ---------- 1c. Count badges (BADGE-1, pure) ----------
+  // Apps that never show a count whatever else says (the Gate's NEVER
+  // list); apps.json searchOff apps and locked apps join them at run time.
+  var BADGE_NEVER = ["assistant", "passwords"];
+  // items   the notification inbox (unread = no readAt; app = ns)
+  // overdue { appId: n } tasks whose day passed (To-Do, Today)
+  // hidden  { appId: true } apps that never show a count
+  // → { appId: n } only the apps with n > 0
+  function badgeCounts(items, overdue, hidden) {
+    var out = {};
+    function add(id, n) {
+      if (typeof id !== "string" || !ID_RE.test(id) || !(n > 0)) return;
+      if (BADGE_NEVER.indexOf(id) >= 0 || (hidden && hidden[id] === true)) return;
+      out[id] = (out[id] || 0) + Math.floor(n);
+    }
+    (Array.isArray(items) ? items : []).forEach(function (it) {
+      if (it && typeof it === "object" && !it.readAt) add(it.ns, 1);
+    });
+    if (overdue && typeof overdue === "object") {
+      Object.keys(overdue).forEach(function (k) { add(k, Number(overdue[k])); });
+    }
+    return out;
+  }
+  function badgeText(n) { return n > 99 ? "99+" : String(n); }
+  // To-Do's agenda rows (orosToday.agenda) → how many tasks are late.
+  function lateTasks(rows, today) {
+    var n = 0;
+    (Array.isArray(rows) ? rows : []).forEach(function (r) {
+      if (r && r.kind === "task" && typeof r.due === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.due) && r.due < today) n++;
+    });
+    return n;
+  }
+
   var model = { normalize: normalize, merge: merge, list: list, isPinned: isPinned, pin: pin, move: move, moveTo: moveTo, VER: VER, DATA_KEY: DATA_KEY,
                 menuNormalize: menuNormalize, menuMerge: menuMerge, menuHiddenIds: menuHiddenIds,
                 menuSetHidden: menuSetHidden, menuPreset: menuPreset, MENU_KEY: MENU_KEY,
-                dockSide: dockSide, POSITIONS: POSITIONS.slice() };
+                dockSide: dockSide, POSITIONS: POSITIONS.slice(),
+                badgeCounts: badgeCounts, badgeText: badgeText, lateTasks: lateTasks, BADGE_NEVER: BADGE_NEVER.slice() };
 
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
@@ -451,13 +492,15 @@
       autohide: p.autohide === true,
       over: (p.over === true || p.over === false) ? p.over : null,
       style: STYLES.indexOf(p.style) >= 0 ? p.style : "classic",
-      pos: POSITIONS.indexOf(p.pos) >= 0 ? p.pos : "bottom"
+      pos: POSITIONS.indexOf(p.pos) >= 0 ? p.pos : "bottom",
+      badges: p.badges !== false                 // BADGE-1: on until turned off
     };
   }
   function savePrefs(p) {
     p.magnify = p.hover === "magnify";
     try { root.localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (e) {}
     paintDock();
+    paintBadges();
   }
   function overApps(p) { return p.over === true; }
 
@@ -503,6 +546,11 @@
     ".ld-tile{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;",
     "background:var(--panel-bg);color:var(--accent);border:1px solid var(--border);box-shadow:0 2px 8px var(--shadow)}",
     ".ld-tile svg{width:28px;height:28px}",
+    // BADGE-1: the count on a shortcut or Dock icon (fixed red + white: 4.98:1 on every skin)
+    ".ld-tile{position:relative}",
+    ".ld-badge{position:absolute;top:-5px;right:-6px;min-width:18px;height:18px;padding:0 5px;box-sizing:border-box;",
+    "border-radius:9px;background:#d32f2f;color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center;",
+    "font-variant-numeric:tabular-nums;pointer-events:none;box-shadow:0 0 0 2px var(--panel-bg)}",
     ".ld-name{font-size:12px;line-height:1.25;text-align:center;max-width:100%;overflow:hidden;display:-webkit-box;",
     "-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:break-word;-webkit-hyphens:auto;hyphens:auto;padding:1px 5px;border-radius:6px;",
     "background:color-mix(in srgb,var(--panel-bg) 72%,transparent)}",
@@ -821,6 +869,7 @@
     sec.appendChild(h);
     function set(k, v) { var q = prefs(); q[k] = v; savePrefs(q); repaintSettings(k); }
     sec.appendChild(switchRow(tr("dockOn"), p.on, function (v) { set("on", v); }, "on"));
+    sec.appendChild(switchRow(tr("badges"), p.badges, function (v) { set("badges", v); }, "badges"));
     if (!p.on) return sec;
 
     var lbl = doc.createElement("div");
@@ -1020,6 +1069,7 @@
       b.setAttribute("role", "listitem");
       b.setAttribute("data-app", id);
       b.title = labelOf(app);
+      b.setAttribute("data-ld-name", labelOf(app));
       b.appendChild(tileFor(app, pos));
       var nm = doc.createElement("span");
       nm.className = "ld-name";
@@ -1028,6 +1078,7 @@
       wireIcon(b, id, "desk");
       grid.appendChild(b);
     });
+    paintBadges();
     if (focusId) focusIcon(focusId, "desk");
   }
 
@@ -1144,6 +1195,7 @@
       b.className = "ld-dk" + (run === id ? " run" : (host.isOpen && host.isOpen(id) ? " open" : ""));
       b.setAttribute("data-app", id);
       b.setAttribute("aria-label", labelOf(app));
+      b.setAttribute("data-ld-name", labelOf(app));
       if (run === id) b.setAttribute("aria-current", "true");
       b.appendChild(tileFor(app, pos));
       var dot = doc.createElement("span");
@@ -1164,7 +1216,90 @@
     if (extra) bar2.appendChild(extra);
     setVars(p, true, side);
     fitColumn();
+    paintBadges();
     if (focusId) focusIcon(focusId, "dock");
+  }
+
+  // ---------- 11b. Count badges (BADGE-1) ----------
+  // Painted onto the icons that are there; never rebuilds them.
+  var overdue = {}, overdueAt = 0, overdueBusy = false, badgeRaf = 0;
+  var OVERDUE_MS = 5 * 60000;
+  function strictOn() {
+    var S = root.orosStrict;
+    try { return !!(S && typeof S.level === "function" && S.level()); } catch (e) { return false; }
+  }
+  function lockedApp(id) {
+    var L = root.orosLock;
+    if (!L || !L.apps || typeof L.apps.state !== "function") return false;
+    try { return !!L.apps.state(id); } catch (e) { return true; }
+  }
+  function countsNow() {
+    if (!prefs().badges || strictOn()) return {};
+    var N = root.orosNotifs, items = [];
+    try { items = (N && typeof N.getSlice === "function" && N.getSlice() && N.getSlice().items) || []; } catch (e) { items = []; }
+    var hidden = {};
+    apps().forEach(function (a) { if (a && a.searchOff === true) hidden[a.id] = true; });
+    var c = badgeCounts(items, overdue, hidden);
+    Object.keys(c).forEach(function (id) { if (lockedApp(id)) delete c[id]; });
+    return c;
+  }
+  function badgeOn(b, n) {
+    var tile = b.querySelector(".ld-tile");
+    if (!tile) return;
+    var el = tile.querySelector(".ld-badge");
+    var name = b.getAttribute("data-ld-name") || "";
+    if (!n) {
+      if (el) el.remove();
+      if (b.classList.contains("ld-dk")) b.setAttribute("aria-label", name); else b.removeAttribute("aria-label");
+      return;
+    }
+    if (!el) {
+      el = doc.createElement("span");
+      el.className = "ld-badge";
+      el.setAttribute("aria-hidden", "true");
+      tile.appendChild(el);
+    }
+    el.textContent = badgeText(n);
+    b.setAttribute("aria-label", name + ", " + tr("badgeAria").replace("{n}", String(n)));
+  }
+  function paintBadges() {
+    if (!host) return;
+    var c = countsNow();
+    var bs = doc.querySelectorAll("#ld-desk .ld-ic[data-app], #ld-dock .ld-dk[data-app]");
+    for (var i = 0; i < bs.length; i++) badgeOn(bs[i], c[bs[i].getAttribute("data-app")] || 0);
+    refreshOverdue(false);
+  }
+  function badgesSoon() {
+    if (badgeRaf) return;
+    badgeRaf = (root.requestAnimationFrame || setTimeout)(function () { badgeRaf = 0; paintBadges(); });
+  }
+  // To-Do: its late tasks (its own Today provider); Today: the summary's
+  // late tasks of every app it shows. Only while one of them has an icon,
+  // at most every 5 minutes (or when an app closes, `force`).
+  function refreshOverdue(force) {
+    var T = root.orosToday;
+    if (overdueBusy || !T || !prefs().badges || strictOn()) return;
+    if (!force && Date.now() - overdueAt < OVERDUE_MS) return;
+    var placed = shown("desk").concat(prefs().on ? shown("dock") : []);
+    var wantTodo = placed.indexOf("todo") >= 0 && typeof T.agenda === "function";
+    var wantToday = placed.indexOf("today") >= 0 && typeof T.build === "function";
+    if (!wantTodo && !wantToday) { overdueAt = Date.now(); return; }
+    overdueBusy = true;
+    var d = new Date(), pad = function (x) { return (x < 10 ? "0" : "") + x; };
+    var today = d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate());
+    var next = {};
+    var jobs = [];
+    if (wantTodo) jobs.push(Promise.resolve().then(function () { return T.agenda("todo", 1); }).then(function (rows) { next.todo = lateTasks(rows, today); }, function () {}));
+    if (wantToday) jobs.push(Promise.resolve().then(function () { return T.build(); }).then(function (res) {
+      next.today = res && res.counts && res.counts.overdue > 0 ? res.counts.overdue : 0;
+    }, function () {}));
+    Promise.all(jobs).then(function () {
+      overdueBusy = false;
+      overdueAt = Date.now();
+      var changed = JSON.stringify(next) !== JSON.stringify(overdue);
+      overdue = next;
+      if (changed) badgesSoon();
+    });
   }
 
   function wireDock(dk, bar) {
@@ -1301,8 +1436,13 @@
     // running app (CSS) — both follow #oros-running.
     var run = doc.getElementById("oros-running");
     if (run && root.MutationObserver) {
-      new root.MutationObserver(function () { paintDock(); }).observe(run, { attributes: true, attributeFilter: ["class"] });
+      new root.MutationObserver(function () { paintDock(); refreshOverdue(true); }).observe(run, { attributes: true, attributeFilter: ["class"] });
     }
+    // BADGE-1: the inbox changed (notifications.js), Sensitive work went
+    // on or off, the tab came back.
+    doc.addEventListener("oros-notifs-changed", badgesSoon);
+    try { if (root.orosStrict && typeof root.orosStrict.onChange === "function") root.orosStrict.onChange(badgesSoon); } catch (e) {}
+    doc.addEventListener("visibilitychange", function () { if (!doc.hidden) paintBadges(); });
     // A window made narrow or short moves a side Dock to the bottom
     // and back; a column that no longer fits starts to scroll.
     var resizeRaf = 0;
@@ -1325,7 +1465,7 @@
              over: overApps(p), style: p.style, styles: STYLES.slice(),
              hover: p.hover, hovers: HOVERS.slice(),
              pos: p.pos, positions: POSITIONS.slice(), side: sideNow(p),
-             fine: finePointer(), pinned: shown("dock").length };
+             fine: finePointer(), pinned: shown("dock").length, badges: p.badges };
   }
   var PREF_OK = {
     on: function (v) { return typeof v === "boolean"; },
@@ -1335,7 +1475,8 @@
     over: function (v) { return typeof v === "boolean" || v === null; },
     style: function (v) { return STYLES.indexOf(v) >= 0; },
     hover: function (v) { return HOVERS.indexOf(v) >= 0; },
-    pos: function (v) { return POSITIONS.indexOf(v) >= 0; }
+    pos: function (v) { return POSITIONS.indexOf(v) >= 0; },
+    badges: function (v) { return typeof v === "boolean"; }
   };
   function setPref(k, v) {
     if (!Object.prototype.hasOwnProperty.call(PREF_OK, k) || !PREF_OK[k](v)) return false;
@@ -1351,6 +1492,7 @@
     attach: attach,
     refresh: paint,
     refreshDock: function () { paintDock(); },     // the Pocket's count changed (POCKET-1)
+    badges: function () { return countsNow(); },   // BADGE-1: { appId: n } shown now
     menuRow: menuRow,
     renderSettings: renderSettings,
     prefs: publicPrefs,

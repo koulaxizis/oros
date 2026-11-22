@@ -452,6 +452,8 @@
       var d = s.dock;
       var c5 = card(t("k.dock"), "dock");
       c5.appendChild(row(t("k.on"), switchBtn(d.on, "dock:on", function (v) { set("dock:on", v); }, t("k.on"))));
+      // BADGE-1: counts on the Dock and desktop shortcuts (also with the Dock off)
+      if (typeof d.badges === "boolean") c5.appendChild(row(t("k.badges"), switchBtn(d.badges, "dock:badges", function (v) { set("dock:badges", v); }, t("k.badges")), { hint: t("k.badges.hint") }));
       if (d.on) {
         var sizeRow = row(t("k.size"), null);
         sizeRow.appendChild(segmented(["s", "m", "l"].map(function (k) {
