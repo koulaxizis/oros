@@ -3,20 +3,23 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
-## Version 8.49.00
+## Version 8.50.00
 - **Layout: versions.** More › Versions… keeps the document under a name, compares any version with now (each changed paragraph with its words struck and added) and brings a version back, keeping the current state first.
 
-## Version 8.48.00
+## Version 8.49.00
 - **Layout: accessible PDF.** Export › Tagged for accessibility (PDF/UA) gives the PDF its structure, so screen readers and phones read it in order: headings, paragraphs, notes, contents and links, picture descriptions and the language. Running heads and page numbers are left out of the reading. E-book PDFs are always tagged.
 
-## Version 8.47.00
+## Version 8.48.00
 - **Layout: imposition.** Export › Imposition puts the pages on printer's sheets: a stapled booklet, sections of 8, 16 or 32 pages for a sewn or glued book, or two pages on a sheet, with crop marks and creep. Export › Image can save all pages or all spreads in one .zip, and a book cover can carry an EAN-5 price code beside the ISBN.
 
-## Version 8.46.00
+## Version 8.47.00
 - **Layout: print colours.** More › Print colours… shows the pages as they print: a soft proof through the print profile, each ink plate, or total ink, with too much ink in pink. Preflight now checks ink, rich black on small text, hairlines and text near the trim. Black overprints, swatches can overprint and tints follow their colour. Export › PDF/X-1a puts everything in CMYK, pictures too, and you can use your printer's own profile.
 
-## Version 8.45.00
+## Version 8.46.00
 - **Layout: a new page size.** Change the page size in Document setup and the contents follow: pictures that bleed still bleed, running heads and page numbers keep their edge, the rest keeps its place in the text area, and pictures and shapes keep their proportions. Text sizes can follow too.
+
+## Version 8.45.00
+- **orOS Gate: Claude asks for a folder of the orOS disk.** When Claude needs a folder in orOS Files (for example Studio/Podcasts, to open a podcast project in Studio), it asks you for it. One tap on «Open for Claude», on any device where orOS is on screen, the phone too, adds it to Claude's folders on all your devices. You can remove it any time in Settings › Connected services › orOS Gate.
 
 ## Version 8.44.01
 - **Notices no longer cover the Dock.** The «Local folders for Claude» bar and pop-up notifications now sit above the Dock, or beside it when the Dock is on the left or right.

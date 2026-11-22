@@ -602,6 +602,25 @@ export const TOOLS = [
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
   },
+  // CF-ASK (Chris 2026-11-22 «Πρόσθεσε τους φακέλους που χρειάζεσαι, σου
+  // δίνω έγκριση»): the same question for a folder of the orOS disk, so
+  // Claude asks for one of «Claude's folders» instead of the owner adding
+  // it in Settings. The owner answers with one tap on any device on screen.
+  {
+    name: "claude_folders_request",
+    description: "Asks the owner to add a folder of the orOS disk to Claude's folders (the folders files_list, files_read, files_write, studio_import, montage_import and export out may use), e.g. \"Studio/Podcasts\". The owner answers with one tap («Open for Claude») on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). The folder need not exist yet: files_write makes it. Never the whole disk, the Trash, or a folder that looks like keys or secrets. Writing there also needs the owner's switch for Files at write. Ask only for the folder the work needs.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        path: { type: "string", description: "The folder on the orOS disk, as Files shows it (\"Studio/Podcasts\") or as an /internal/ path (\"/internal/Studio/Podcasts\")." },
+        access: { type: "string", enum: ["read", "write"], description: "What the work needs there, shown to the owner: read (default) or write (new and changed files; every change is notified and undoable, deletions are asked on the device)." },
+        reason: { type: "string", description: "One line for the owner: what it is for." }
+      },
+      required: ["path"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
+  },
   // ST-IMP (Chris 2026-11-21, dogfooding the podcast «Πλανόδιο»): a
   // project file Claude made opens in Studio or Montage as a NEW project.
   // Each is edit_in_app's create (importCall below), so the owner's
@@ -756,6 +775,8 @@ export function isScreenTool(name, args) {
   if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
   return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
 }
+// TRAY-2, CF-ASK: questions for the owner about a folder, kept for a screen
+const FOLDER_ASKS = ["local_folders_request", "claude_folders_request"];
 const LF_NOTE = "Nobody is at an orOS screen now, so the question waits, encrypted, and is asked the next time orOS is on screen on one of the owner's devices (the phone too). Nothing is opened before the owner allows it. Tell the owner to open orOS (on the phone is enough) and answer; change_history shows it pending, and undo_change with change_id cancels it.";
 const SCREEN_NOTE = "This works on the owner's screen (Layout's own work, an app's form or document), and nobody sees orOS right now. It waits, encrypted, and runs the next time orOS is on screen and unlocked on one of the owner's devices, or (Layout's work and edit_in_app) as soon as orOS runs on the owner's computer in the tray or in a minimised orOS window; its report, proofs and previews come only then (read the result afterwards with read_in_app or change_history). Until then change_history shows it pending; undo_change with change_id cancels it. Tell the owner to bring orOS to the front.";
 // closed copy's switches → why Claude may not keep this screen call, or ""
@@ -2416,7 +2437,7 @@ export class GateBox {
     // when it has them; create_items (the app in args.app) waits in the
     // queue like the relay's own change tools; the others work on items
     // found in a live session or on the owner's screen, so they need orOS open.
-    if (name === "local_folders_request") {             // TRAY-2: a question for the owner, kept for a screen
+    if (FOLDER_ASKS.indexOf(name) >= 0) {             // TRAY-2, CF-ASK: a question for the owner, kept for a screen
       if (typeof cp.hold === "number" && cp.hold > now) return { ok: false, c: "The owner paused Claude's changes until " + new Date(cp.hold).toISOString() + ". Nothing was asked." };
       return await this.queueChange(name, args, kRaw, now, qidWant, LF_NOTE, 1);
     }
@@ -2671,7 +2692,7 @@ export class GateBox {
       // not refused: it waits like a closed-orOS deletion, for the owner's
       // Delete on a device on screen (offered now, and when one comes on screen).
       const kRaw = await this.unwrapK(tok);
-      ans = kRaw && p.name === "local_folders_request" ? await this.queueChange(p.name, args, kRaw, Date.now(), null, LF_NOTE, 1) :
+      ans = kRaw && FOLDER_ASKS.indexOf(p.name) >= 0 ? await this.queueChange(p.name, args, kRaw, Date.now(), null, LF_NOTE, 1) :
             kRaw ? await this.queueChange(p.name, args, kRaw, Date.now(), null, "Nobody answered on the owner's screen, so this deletion waits, encrypted, for the owner's Delete on a device where orOS is on screen (one question for the whole call). Nothing is deleted without it. Tell the owner to look at orOS and confirm. undo_change with change_id cancels it.", 1)
                  : { ok: false, c: "Nobody answered on the owner's screen and the deletion could not be kept for later. Nothing was deleted. Ask the owner to have orOS on screen and try once more." };
       if (ans.ok) await this.sendHeld();
