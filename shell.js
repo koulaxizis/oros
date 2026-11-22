@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.32.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.36.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -63,6 +63,7 @@
     syncMsg:         null,   // { kind: "ok"|"err"|"dim", text: "…" }
     syncBackups:     null,   // A43: { loading, list: [{ name, at, size }], err } once Settings asked
     vaultClean:      null,   // VD-GC: { busy: "check"|"clean"|"", usage, result, code, err } once Settings asked
+    syncSpace:       null,   // SPACE-1: { busy, provider, at, used, total, free, none, err } once Settings asked
     syncRestoring:   null,   // A43: name of the backup being restored
     syncOldPassFor:  null,   // A43: backup that needs its old passphrase
     syncAutoErr:     null,   // SY-L2: why the last background sync failed (cleared by a success)
@@ -8472,6 +8473,7 @@
       state.syncUserEmail = null;
       state.syncBackups = null;
       state.vaultClean = null;
+      state.syncSpace = null;
       renderMenu();
       return;
     }
@@ -8482,9 +8484,42 @@
       state.syncUserEmail = null;
       state.syncBackups = null;
       state.vaultClean = null;
+      state.syncSpace = null;
       state.syncAutoErr = null;
       setSyncMsg("ok", syncDisconnectKey(r));
     });
+  }
+  // SPACE-1: Settings › Sync › Space in the cloud. The page asks when
+  // it shows the card; the answer is kept for SPACE_FRESH_MS (or until
+  // Refresh, another cloud or a disconnect), so re-renders ask nothing.
+  var SPACE_FRESH_MS = 10 * 60 * 1000;
+  function syncSpaceFor() {
+    var S = window.orosSync, k = state.syncSpace;
+    if (!S || !S.isConnected() || !k) return null;
+    if (k.provider !== S.getProvider()) return null;
+    return { busy: !!k.busy, used: k.used, total: k.total, free: k.free, none: !!k.none, err: k.err || null,
+      stale: !k.busy && Date.now() - (k.at || 0) > SPACE_FRESH_MS };
+  }
+  function syncSpaceLoad(force) {
+    var S = window.orosSync;
+    if (!S || typeof S.cloudSpace !== "function" || !S.isConnected()) return;
+    var k = state.syncSpace, pid = S.getProvider();
+    if (k && k.busy) return;
+    if (!force && k && k.provider === pid && Date.now() - (k.at || 0) <= SPACE_FRESH_MS) return;
+    state.syncSpace = { busy: true, provider: pid, at: Date.now(),
+      used: k && k.provider === pid ? k.used : null, total: k && k.provider === pid ? k.total : null,
+      free: k && k.provider === pid ? k.free : null, none: false, err: null };
+    settingsNotify();
+    function num(v) { return typeof v === "number" && isFinite(v) && v >= 0 ? v : null; }
+    S.cloudSpace().then(function (r) {
+      if (!state.syncSpace || state.syncSpace.provider !== pid) return;
+      state.syncSpace = r ? { busy: false, provider: pid, at: Date.now(), used: num(r.used), total: num(r.total), free: num(r.free), none: false, err: null }
+                          : { busy: false, provider: pid, at: Date.now(), used: null, total: null, free: null, none: true, err: null };
+    }, function (err) {
+      if (!state.syncSpace || state.syncSpace.provider !== pid) return;
+      state.syncSpace = { busy: false, provider: pid, at: Date.now(), used: null, total: null, free: null, none: false,
+        err: window.t(S.errorKey ? S.errorKey(err) : "sync.err.generic") };
+    }).then(settingsNotify);
   }
   // VD-GC: Settings › Sync › Unused files in the cloud. Look first
   // (usage: changes nothing), then clean up only on the person's tap.
@@ -13327,6 +13362,8 @@
         canClean: !!(window.orosVault && typeof window.orosVault.cleanUp === "function"),
         clean: (connected && state.vaultClean) ? JSON.parse(JSON.stringify(state.vaultClean)) : null,
         cleanDays: (window.orosVault && window.orosVault.cleanMinAgeDays) || 30,
+        canSpace: !!(S && typeof S.cloudSpace === "function"),
+        space: connected ? syncSpaceFor() : null,
         restoring: state.syncRestoring,
         // SOS-1: { kind: "sos"|"reset", n, verified } when a signal stopped sync here.
         signal: (S && typeof S.cloudSignal === "function") ? S.cloudSignal() : null,
@@ -13570,6 +13607,7 @@
       case "sync.changePass": if (S && S.isConnected() && S.hasPassphrase()) showChangePassDialog(); return;
       case "sync.disconnect": syncDisconnectUser(); return;
       case "sync.backups.load": syncBackupsLoad(); return;
+      case "sync.space":        syncSpaceLoad(!!(arg && arg.force)); return;
       case "sync.clean.check":  if (S && S.isConnected() && S.hasPassphrase()) vaultCleanCheck(); return;
       case "sync.clean.run":    if (S && S.isConnected() && S.hasPassphrase()) vaultCleanRun(); return;
       case "sync.restore":

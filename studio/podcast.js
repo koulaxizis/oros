@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Studio — podcast (v1.2.0; P1 of "Publish as podcast", P2 keepItems, P3 transcripts)
+// orOS Studio — podcast (v1.3.0; P1 of "Publish as podcast", P2 keepItems, P3 transcripts, a file for another host)
 // Pure logic, no DOM, no Web Audio: a show and its episodes, chapter
 // markers, the RSS feed (RSS 2.0 + Apple's itunes: tags + Podcasting
 // 2.0's podcast: tags), the chapters file, a small web page for the
@@ -28,7 +28,7 @@
 
   var LIM = {
     title: 120, author: 120, showDesc: 4000, epDesc: 1500, url: 500, email: 120,
-    markers: 50, mark: 40, epNo: 9999, season: 99, dur: 3600, bytes: 2147483647,
+    markers: 50, mark: 40, epNo: 9999, season: 99, dur: 10800, bytes: 2147483647,
     cues: 3000, cue: 500, vtt: 400000
   };
   var SHOW_RE  = /^h[a-z0-9]{6,20}$/;
@@ -657,6 +657,40 @@
     }
     return out;
   }
+  // ---------- 10. A file for another host (Spotify for Creators and the like) ----------
+  // The show stays where it is; the person uploads the MP3 by hand and
+  // pastes these notes into the episode's description: the show notes,
+  // the chapters as time stamps ("00:00 Title", h:mm:ss past an hour; the
+  // first one always at 00:00, as Spotify and YouTube want it) and the
+  // credits of the sounds used (licence cards). Plain text, no markup.
+  //   hostStamp(sec) → "00:00" | "12:34" | "1:02:03"
+  //   hostNotes(e, { dur, intro, credits, words: { chapters } }) → text
+  function hostStamp(sec) {
+    var s = Math.max(0, Math.floor(sec + 1e-6)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+    var p = function (n) { return (n < 10 ? "0" : "") + n; };
+    return h ? h + ":" + p(m) + ":" + p(r) : p(m) + ":" + p(r);
+  }
+  function hostNotes(e, opts) {
+    opts = opts || {};
+    var w = opts.words || {}, out = [];
+    var desc = String(e.ep.desc || "").replace(/\r/g, "").trim();
+    if (desc) out.push(desc);
+    var chs = chapters(e.mk, opts.dur || e.ep.dur, opts.intro);
+    if (chs.length) {
+      var seen = {}, lines = [];
+      chs.forEach(function (c, i) {
+        var st = hostStamp(c.start);
+        if (seen[st]) return;                       // two chapters in one second: the first one
+        seen[st] = 1;
+        lines.push(st + " " + (line(c.title, LIM.mark) || String(i + 1)));
+      });
+      out.push((w.chapters || "Chapters") + ":\n" + lines.join("\n"));
+    }
+    var cr = String(opts.credits || "").replace(/\r/g, "").trim();
+    if (cr) out.push(cr);
+    return out.join("\n\n") + (out.length ? "\n" : "");
+  }
+
   function guidsOf(eps) { return (eps || []).filter(function (e) { return e.ep && e.ep.guid; }).map(function (e) { return e.ep.guid; }); }
 
   var api = {
@@ -669,7 +703,8 @@
     problems: problems, coverOk: coverOk, files: files, feedXml: feedXml, rfc822: rfc822, pageHtml: pageHtml, fmtDur: fmtDur,
     id3Tags: id3Tags, crc32: crc32, zipParts: zipParts, textBytes: textBytes, utf8: utf8,
     keepItems: keepItems, guidsOf: guidsOf,
-    trPath: trPath, normCues: normCues, vtt: vtt, parseVtt: parseVtt, editText: editText, fromEdit: fromEdit, asrLang: asrLang
+    trPath: trPath, normCues: normCues, vtt: vtt, parseVtt: parseVtt, editText: editText, fromEdit: fromEdit, asrLang: asrLang,
+    hostStamp: hostStamp, hostNotes: hostNotes, epTitle: epTitle
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioPodcast = api;

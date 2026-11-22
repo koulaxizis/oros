@@ -3,6 +3,28 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.36.00
+- **More free films, with subtitles.** `Television` › `Films & shows` now also searches NASA's video library, Europeana and Open Images (with your own free Europeana key, the same one Music uses) and PeerTube (Creative Commons videos). `Filters` › `Sources` turns each source on or off on this device. Films with subtitles get a `Subtitles` list in the player, and subtitles in your language turn on by themselves.
+- **Saved searches.** The bookmark button next to the search box keeps your words and filters as a chip, on all your devices.
+
+## Version 8.35.01
+- **Play starts at the first song.** In Music, the Play button of a playlist, album, artist or genre now always starts at its first song, in order, and turns shuffle off. `Shuffle` still plays it in random order.
+
+## Version 8.35.00
+- **Show your authors where their book is.** In Kanban, `Column settings` › `Author Portal` marks a column as `A step of the creator's production flow`, with a short explanation your author sees on hover, and can mark it as a finish. In a book's card, tick `Show in its creator's Author Portal`: the author then sees a bar with your steps at the top of their Revenue Splitter 1.21.0 portal. At a finish the bar hides, and it comes back when the card moves on to the next step.
+
+## Version 8.34.00
+- **See how much space is left in your cloud.** `Settings` › `Sync` › `Space in the cloud` shows a bar, the free space and how much is used of how much, for Dropbox (your whole account) and for WebDAV or Nextcloud (what the server reports). When it is almost full, it says so and points to `Unused files in the cloud`. The Overview tile is now called `Device storage`, because it is the space on this device, not in the cloud.
+
+## Version 8.33.01
+- **No frame left on the top bar icons.** On a phone, an icon in the top bar (for example the smart cards ✦, the clock or Quick settings) no longer keeps a faint frame after you tap it to close its panel. With a mouse the icons still light up under the pointer, and with the keyboard the focus still shows.
+
+## Version 8.33.00
+- **Studio for long podcasts.** Projects and podcast episodes can now be up to three hours long. Over an hour, Studio mixes, encodes and measures in five-minute parts, so a long episode does not fill the memory. Opus export stays up to one hour.
+- **Markers travel with the project.** A `.orosstudio` file now keeps the project's markers, and its `tracks.txt` lists them.
+- **File for another host.** Each episode can give you its MP3 (with chapters) and a text with the notes, the chapters as `00:00 Title` and the credits, for any podcast host. No feed and no site are made.
+- **Claude can open project files.** Through orOS Gate, Claude can open a `.orosstudio` or `.orosmontage` file it made as a new project in Studio or Montage. You get a notice and can undo it. Claude never publishes.
+
 ## Version 8.32.00
 - **Free films and shows in Television.** A new `Films & shows` tab brings about 3,500 free films, series, documentaries, cartoons and newsreels from Wikimedia Commons and the Internet Archive. Search by title, director or year, filter by type, genre, decade, country, language, length and sound, keep a `Watchlist`, and `Continue watching` picks up where you stopped, on all your devices. Only titles orOS has checked as free are shown unless you ask for more. The player now has a position bar and back / forward buttons for films. See [Television](help:a/television).
 

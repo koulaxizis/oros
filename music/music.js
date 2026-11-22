@@ -2496,8 +2496,11 @@
     if (!rows.length) { showToast(t("play.none")); return; }
     if (!items.length) { showToast(t("missing.toast")); return; }
     if (idx >= 0 && map < 0) { showToast(t("missing.toast")); return; }
-    // The Shuffle button turns shuffle on; Play and a tapped row keep the current setting.
-    var shf = shuffle ? 1 : H.getState().shf;
+    // The Shuffle button turns shuffle on; Play (a whole list) starts at
+    // its first song in order and turns shuffle off (MU-ORDER1: a shuffle
+    // left on from an earlier Shuffle made Play start anywhere); a tapped
+    // row keeps the current setting.
+    var shf = shuffle ? 1 : (idx >= 0 ? H.getState().shf : 0);
     H.playList(items, idx >= 0 ? map : (shf ? -1 : 0), { shf: shf, src: src });
   }
   function toggleLike(x) {
@@ -3336,10 +3339,14 @@
     var bar = el("div", "play-bar");
     var playing = isPlayingFrom(src);
     var go = function (shf) { if (list && list.live) playLive(list, src, shf); else playRows(list, -1, src, shf); };
-    var pb = button(playing ? t("pause") : t("play"), "big-play", function () {
-      if (playing) { H.toggle(); return; }
+    // Playing this list now: the button pauses it. Otherwise (also with
+    // this list's song paused, or back from the last session) it starts
+    // the list from its first song (MU-ORDER1); the player bar resumes.
+    var on = playing && H.getState().playing;
+    var pb = button(on ? t("pause") : t("play"), "big-play", function () {
+      if (isPlayingFrom(src) && H.getState().playing) { H.toggle(); return; }
       go(false);
-    }, playing && H.getState().playing ? I.pause : I.play);
+    }, on ? I.pause : I.play);
     pb.setAttribute("data-src", JSON.stringify(src));
     bar.appendChild(pb);
     bar.appendChild(button(t("shuffle"), "icon-btn", function () { go(true); }, I.shuffle));

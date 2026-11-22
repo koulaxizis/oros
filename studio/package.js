@@ -8,8 +8,11 @@
 //     keys = { src: { sourceId: mediaKey }, fx: { diskPath: mediaKey } }
 //     o    = { fxName(id), instName(id), words {…} } for tracks.txt
 //     content = { kind: "oros-studio-package", ver: 1,
-//       project { id, name, bpm, sig, vol, loop { on, a, b }, fx, bk?, kind? },
-//         (bk, kind: a chapter of a book; kept on import only where that book is)
+//       project { id, name, bpm, sig, vol, loop { on, a, b }, fx, bk?, kind?, mk? },
+//         (bk, kind: a chapter of a book; kept on import only where that book is;
+//          mk: the timeline markers [{ id, t, n }] (the episode's chapters in
+//          "Publish as podcast"), through StudioPodcast.normMarkers both ways,
+//          fresh ids on import; older files without mk open without markers)
 //       tracks  [{ id, name, color, vol, pan, mute, solo, ord, fx,
 //                  inst?, auto? }],
 //       sources [{ id, name, dur, ch, media, lic? }],
@@ -34,6 +37,7 @@
   "use strict";
 
   var C = root.StudioCore || (typeof require === "function" ? require("./core.js") : null);
+  var POD = root.StudioPodcast || (typeof require === "function" ? require("./podcast.js") : null);
   var KIND = "oros-studio-package", VER = 1;
   var KEY_RE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
   var MAX_SOURCES = 500;
@@ -111,6 +115,8 @@
       })
     };
     if (p.bk) { content.project.bk = p.bk; content.project.kind = p.kind; }   // a chapter of a book (wave A2)
+    var mk = POD ? POD.normMarkers(p.mk) : [];
+    if (mk.length) content.project.mk = mk;                                     // the markers (chapters)
     return { content: content, tracksTxt: tracksTxt(content, o) };
   }
 
@@ -126,6 +132,11 @@
     L.push((w.tempo || "Tempo") + ": " + c.project.bpm + " BPM, " + c.project.sig + "/4");
     L.push((w.length || "Length") + ": " + C.fmtTime(end));
     if (c.project.fx.length) L.push((w.master || "Master") + " · " + (w.fx || "Effects") + ": " + c.project.fx.map(function (x) { return fxName(x.id); }).join(", "));
+    var mk = Array.isArray(c.project.mk) ? c.project.mk : [];
+    if (mk.length) {
+      L.push((w.markers || "Markers") + ":");
+      mk.forEach(function (x) { L.push("   " + C.fmtTime(x.t) + "  " + (x.n || "-")); });
+    }
     L.push("");
     c.tracks.forEach(function (t, i) {
       var cl = c.clips.filter(function (x) { return x.t === t.id; });
@@ -198,6 +209,9 @@
     var project = C.normProject({ id: pid, m: now, name: str(P.name, 200) || str(o.title, 200), bpm: P.bpm, sig: P.sig, vol: P.vol, loop: P.loop, fx: pfx,
                                   bk: inBook ? P.bk : undefined, kind: inBook ? P.kind : undefined });
     if (!project) throw new Error("notpackage");
+    // the markers, with fresh ids (the cap and the order are normMarkers')
+    var mk = POD ? POD.normMarkers(POD.normMarkers(P.mk).map(function (x) { return { id: newId("k"), t: x.t, n: x.n }; })) : [];
+    if (mk.length) project.mk = mk;
 
     var tracks = [];
     rawTracks.forEach(function (t) {

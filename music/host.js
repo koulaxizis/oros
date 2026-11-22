@@ -223,13 +223,21 @@
   function fs() { return w.orosFS || null; }
   function sameOrigin(u) { return /^blob:/.test(u) || u.indexOf(w.location.origin + "/") === 0; }
   function revoke(u) { if (/^blob:/.test(u || "")) { try { w.URL.revokeObjectURL(u); } catch (e) {} } }
+  // A seek waiting for a song's metadata belongs to that song only: a
+  // new source drops it (MU-ORDER1: the restored song's place was
+  // applied to the next song loaded on the same deck).
+  function dropSeek(el) {
+    if (el._seek) { el.removeEventListener("loadedmetadata", el._seek); el._seek = null; }
+  }
   function setSrc(el, u) {
+    dropSeek(el);
     if (el._blob && el._blob !== u) revoke(el._blob);
     el._blob = /^blob:/.test(u) ? u : "";
     el._same = sameOrigin(u);
     el.src = u;
   }
   function clearDeck(el) {
+    dropSeek(el);
     try { el.pause(); } catch (e) {}
     try { el.removeAttribute("src"); el.load(); } catch (e) {}
     revoke(el._blob); el._blob = ""; el._same = false; el._fade = 1;
@@ -598,7 +606,12 @@
       gainFor(audio, r[1]);
       var at = +start > 0 ? +start : 0;
       if (at) {
-        var a = audio, seek = function () { a.removeEventListener("loadedmetadata", seek); if (!isFinite(a.duration) || at < a.duration - 2) { try { a.currentTime = at; } catch (e) {} } };
+        var a = audio, seek = function () {
+          dropSeek(a);
+          if (my !== loadSeq || a !== audio) return;
+          if (!isFinite(a.duration) || at < a.duration - 2) { try { a.currentTime = at; } catch (e) {} }
+        };
+        a._seek = seek;
         a.addEventListener("loadedmetadata", seek);
       }
       saveLocal(true);
@@ -1222,6 +1235,9 @@
     if (!q.cur) return;
     var tries = 0;
     var go = function () {
+      // A song started meanwhile wins: the last session's song does not
+      // come back over it (MU-ORDER1).
+      if (loadSeq > 0) return;
       if (fs() || ++tries > 20) { load(q.cur, local.pos, false).then(chip); return; }
       w.setTimeout(go, 250);
     };
