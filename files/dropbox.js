@@ -60,6 +60,7 @@
       "dbx.tree":        "Dropbox",
       "up":          "Go to parent folder",
       "refresh":     "Refresh",
+      "dbx.dupes":   "Find duplicates here",
       "account":     "Dropbox account",
       "disconnect":  "Disconnect Dropbox",
       "disconnected":"Dropbox disconnected on this device",
@@ -164,6 +165,7 @@
       "dbx.tree":        "Dropbox",
       "up":          "Μετάβαση στον γονικό φάκελο",
       "refresh":     "Ανανέωση",
+      "dbx.dupes":   "Εύρεση διπλότυπων εδώ",
       "account":     "Λογαριασμός Dropbox",
       "disconnect":  "Αποσύνδεση Dropbox",
       "disconnected":"Το Dropbox αποσυνδέθηκε σε αυτή τη συσκευή",
@@ -598,6 +600,8 @@
     crumbsNav.id = "dbx-crumbs";
     bar.appendChild(crumbsNav);
     bar.appendChild(btn("tool", ICON.refresh, t("refresh"), function () { if (query !== null) runSearch(query); else go(cwd); }));
+    // Files › Duplicates over this Dropbox folder (DUPES-1 K3).
+    if (ctx && ctx.findDupes) bar.appendChild(btn("tool", '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16V5a2 2 0 0 1 2-2h11"/></svg>', t("dbx.dupes"), function () { ctx.findDupes("dbx:" + cwd, "dropbox"); }));
     var acct = btn("tool", ICON.user, t("account"), function (ev) { ev.stopPropagation(); accountMenu(acct); });
     acct.id = "dbx-acct";
     bar.appendChild(acct);
@@ -1643,7 +1647,44 @@
     finishPending();
   }
 
+  // Files › Duplicates (dupes.js, DUPES-1 K3): what it needs of the
+  // Dropbox. Paths are "dbx:" + the Dropbox path. Every file comes
+  // with Dropbox's content_hash, so nothing is downloaded; orOS sync's
+  // own folder and dot names stay out. A removal is files/delete_v2
+  // with the rev that was compared (Dropbox refuses it when the file
+  // changed since) and lands in Dropbox's deleted files.
+  function dbxPath(p) { return String(p).slice(4); }
+  function dupesSource() {
+    return {
+      kind: "dropbox",
+      list: function (base, all) {
+        return listRecursive(dbxPath(base)).then(function (rows) {
+          return rows.filter(function (r) {
+            if (r.dir || locked(r)) return false;
+            if (!all && r.path.split("/").some(function (x) { return x.charAt(0) === "."; })) return false;
+            return true;
+          }).map(function (r) { return { p: "dbx:" + r.path, s: r.size || 0, m: r.mtime || 0, h: r.hash || "", rev: r.rev || "" }; });
+        });
+      },
+      meta: function (p) {
+        return rpc("files/get_metadata", { path: dbxPath(p) }).then(function (j) {
+          var r = C.mapList([j])[0];
+          return r && !r.dir ? { s: r.size || 0, h: r.hash || "", rev: r.rev || "" } : null;
+        }, function (e) { if (e && e.kind === "notfound") return null; throw e; });
+      },
+      remove: function (x) {
+        var a = { path: dbxPath(x.p) };
+        if (x.rev) a.parent_rev = x.rev;
+        return rpc("files/delete_v2", a);
+      },
+      contentHash: function (bytes) { return C.contentHash(bytes, digest); },
+      open: function (p) { enter(C.parentPath(dbxPath(p))); },
+      label: function (p) { return "Dropbox" + (dbxPath(p) || ""); }
+    };
+  }
+
   window.OrosFilesDropbox = {
+    dupesSource: dupesSource,
     init: init,
     treeNode: treeNode,
     enter: enter,
