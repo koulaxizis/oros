@@ -209,6 +209,12 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Update the index** after the pages move: the index is made again from the marks, its title and any text before the entries stay. The topic list in the same dialog unmarks a topic.
 - **Claude** can mark terms and make the index with the `index` command (Assistant).
 
+## Effects
+- **Properties › Effects** gives any frame or shape a drop shadow, an outer glow and a blend mode (Multiply, Screen, Overlay, Darken, Lighten); a picture can also have soft edges. Shadows and glows follow the shape, the picture's frame or the letters of a text frame without a fill.
+- Colour "none" is black. With a blend mode, the object and its shadow blend with what is under them as one.
+- The PDF, SVG and image exports show the effects; in PDF/X-1a they count as transparency, and the export says so. Older orOS versions show the object without its effects.
+- **Claude** can set them with the `effects` command (Assistant).
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

@@ -647,6 +647,42 @@
   // rows "a | b | c", header rows repeated, after paragraph after_para
   // (0 = the end); replace n = the story's n-th table becomes this one.
   // → 1 placed, 0 not
+  // object effects (LY-W14) on frames by id: a field below 0 (or
+  // null) leaves that part as it is; an opacity of 0 takes a shadow or
+  // glow off, a soft edge of 0 takes it off, blend "normal" takes the
+  // blend mode off. → frames changed
+  function setEffects(doc, ids, st, now) {
+    var n = 0, keep = function (v) { return v === undefined || v === null || v === "" || v < 0; };
+    ids.forEach(function (id) {
+      var it = M.find(doc.items, id);
+      if (!it || it.lock) return;
+      var before = JSON.stringify((it.ext && it.ext.fx) || {});
+      var fx = JSON.parse(before);
+      // fk: the key in ext.fx, pre: the command's field prefix
+      var part = function (fk, pre, def, fields) {
+        // an offset below 0 is a value (the command leaves out one to keep)
+        var kp = function (f) { var v = st[f[0]]; return f[1] === "x" || f[1] === "y" ? v === undefined || v === null || v === "" : keep(v); };
+        var touched = fields.some(function (f) { return !kp(f); }) || !!st[pre + "_color"];
+        if (!touched) return;
+        var o = Object.assign({}, def, fx[fk] || {});
+        fields.forEach(function (f) { if (!kp(f)) o[f[1]] = st[f[0]]; });
+        if (st[pre + "_color"]) { var c = swatchFor(doc, st[pre + "_color"], now); if (c) o.c = c; }
+        if (o.o > 0) fx[fk] = o; else delete fx[fk];
+      };
+      part("sh", "shadow", { x: 3, y: 3, b: 4, c: "", o: 50 }, [["shadow_x", "x"], ["shadow_y", "y"], ["shadow_blur", "b"], ["shadow_opacity", "o"]]);
+      part("gl", "glow", { b: 6, c: "", o: 60 }, [["glow_blur", "b"], ["glow_opacity", "o"]]);
+      if (!keep(st.soft_edges) && it.t === "img") { if (st.soft_edges > 0) fx.fe = st.soft_edges; else delete fx.fe; }
+      if (st.blend) { if (st.blend === "normal") delete fx.bm; else fx.bm = st.blend; }
+      if (JSON.stringify(fx) === before) return;
+      var x = Object.assign({}, it.ext || {});
+      if (Object.keys(fx).length) x.fx = fx; else delete x.fx;
+      if (Object.keys(x).length) it.ext = x; else delete it.ext;
+      M.touch(it, now);
+      n++;
+    });
+    return n;
+  }
+
   function addTable(doc, st, now) {
     var TB = Tb(), sid = st.story, fr = !sid && st.frame ? M.find(doc.items, st.frame) : null;
     if (fr && fr.t === "text") sid = fr.story;
@@ -1111,7 +1147,7 @@
 
   var api = { setPicture: setPicture, setPage: setPage, setWrap: setWrap, anchorItem: anchorItem, releaseItem: releaseItem, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
-              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, masterField: masterField, setStory: setStory, addTable: addTable, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
+              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, masterField: masterField, setStory: setStory, addTable: addTable, setEffects: setEffects, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;
   else root.LayoutPro = api;
 })(typeof window !== "undefined" ? window : this);
