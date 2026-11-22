@@ -3,6 +3,10 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.37.00
+- **See which channels are free-to-air.** In `Television`, a `Free-to-air` badge marks channels their broadcaster gives away for free, as listed by Free-TV.
+- **Free services.** `Films & shows` › `Free services` links to official free services such as ERTFLIX, the ERT Archive, ARTE, the ARD and ZDF Mediatheken, the NFB, WikiFlix and Kanopy. They open on their own sites.
+
 ## Version 8.36.00
 - **More free films, with subtitles.** `Television` › `Films & shows` now also searches NASA's video library, Europeana and Open Images (with your own free Europeana key, the same one Music uses) and PeerTube (Creative Commons videos). `Filters` › `Sources` turns each source on or off on this device. Films with subtitles get a `Subtitles` list in the player, and subtitles in your language turn on by themselves.
 - **Saved searches.** The bookmark button next to the search box keeps your words and filters as a chip, on all your devices.

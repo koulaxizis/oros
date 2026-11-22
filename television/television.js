@@ -185,6 +185,19 @@ var STRINGS = {
     "vod.fwd30": "Forward 30 seconds",
     "vod.cat.old": "Showing the catalogue from {date}; the new one could not be loaded.",
     "vod.count": "{n} titles",
+    "free.badge": "Free-to-air",
+    "free.title": "Its broadcaster provides it for free (listed by Free-TV, which carries only such channels).",
+    "vod.svc": "Free services",
+    "vod.svc.hint": "Official services that are free to watch. They open on their own sites; orOS shows no titles from them and sends them nothing. Some titles play only in their own country.",
+    "vod.svc.open": "Open the site",
+    "vod.svc.ertflix": "ERT, Greece's public broadcaster: films, series, documentaries and children's shows. Some titles only in Greece.",
+    "vod.svc.ertarchive": "ERT's archive: decades of Greek television, news and documentaries.",
+    "vod.svc.arte": "The Franco-German culture channel: documentaries, films, concerts and series, in six languages.",
+    "vod.svc.ard": "German public television: films, series, documentaries. Some titles only in Germany.",
+    "vod.svc.zdf": "German public television: films, series, documentaries. Some titles only in Germany.",
+    "vod.svc.nfb": "The National Film Board of Canada: thousands of documentaries and animated films.",
+    "vod.svc.wikiflix": "Public-domain films from Wikimedia Commons on a site of their own.",
+    "vod.svc.kanopy": "Films and documentaries, free with a card from a library that takes part.",
     "vod.by": "By {name}",
     "vod.lic.nasa": "Public domain (NASA)",
     "vod.src.btn": "Sources",
@@ -408,6 +421,19 @@ var STRINGS = {
     "vod.fwd30": "Μπροστά 30 δευτερόλεπτα",
     "vod.cat.old": "Εμφανίζεται ο κατάλογος της {date}· ο νέος δεν φορτώθηκε.",
     "vod.count": "{n} τίτλοι",
+    "free.badge": "Ελεύθερης λήψης",
+    "free.title": "Ο σταθμός του το δίνει δωρεάν (το έχει η λίστα Free-TV, που κρατά μόνο τέτοια κανάλια).",
+    "vod.svc": "Δωρεάν υπηρεσίες",
+    "vod.svc.hint": "Επίσημες υπηρεσίες με δωρεάν προβολή. Ανοίγουν στις δικές τους σελίδες· το orOS δεν δείχνει τίτλους τους και δεν τους στέλνει τίποτα. Κάποιοι τίτλοι παίζουν μόνο στη χώρα τους.",
+    "vod.svc.open": "Άνοιγμα σελίδας",
+    "vod.svc.ertflix": "Η ΕΡΤ, η δημόσια τηλεόραση: ταινίες, σειρές, ντοκιμαντέρ και παιδικά. Κάποιοι τίτλοι μόνο στην Ελλάδα.",
+    "vod.svc.ertarchive": "Το Αρχείο της ΕΡΤ: δεκαετίες ελληνικής τηλεόρασης, ειδήσεων και ντοκιμαντέρ.",
+    "vod.svc.arte": "Το γαλλογερμανικό κανάλι πολιτισμού: ντοκιμαντέρ, ταινίες, συναυλίες και σειρές, σε έξι γλώσσες.",
+    "vod.svc.ard": "Γερμανική δημόσια τηλεόραση: ταινίες, σειρές, ντοκιμαντέρ. Κάποιοι τίτλοι μόνο στη Γερμανία.",
+    "vod.svc.zdf": "Γερμανική δημόσια τηλεόραση: ταινίες, σειρές, ντοκιμαντέρ. Κάποιοι τίτλοι μόνο στη Γερμανία.",
+    "vod.svc.nfb": "Το Εθνικό Συμβούλιο Κινηματογράφου του Καναδά: χιλιάδες ντοκιμαντέρ και ταινίες κινουμένων σχεδίων.",
+    "vod.svc.wikiflix": "Ταινίες κοινού κτήματος από τα Wikimedia Commons, σε δική τους σελίδα.",
+    "vod.svc.kanopy": "Ταινίες και ντοκιμαντέρ, δωρεάν με κάρτα βιβλιοθήκης που συμμετέχει.",
     "vod.by": "Από: {name}",
     "vod.lic.nasa": "Κοινό κτήμα (NASA)",
     "vod.src.btn": "Πηγές",
@@ -591,7 +617,8 @@ var state = {
   guideIdx: null,            // orosTvCore.buildIndex(...)
   guideDay: "",              // ymd the guides were loaded for
   srcSig: "",                // which sources are loaded (sync pull reload)
-  cards: []                  // [card, channel] of the rendered grid (now/next refresh)
+  cards: [],                 // [card, channel] of the rendered grid (now/next refresh)
+  freeTv: null               // TV-VOD3: Free-TV index { ids, names, n } (official free-to-air badge)
 };
 
 var __orosSyncApi = null;
@@ -1206,6 +1233,47 @@ function fetchBytes(url){
   return p.then(function(b){
     return C.gunzipIfNeeded(b).catch(function(){ throw new SrcError("big"); });
   });
+}
+
+/* --- Official free-to-air badge (TV-VOD3) --- */
+
+// Free-TV/IPTV lists only channels their broadcasters provide for free
+// (its own rule). Its index (ids + country|name keys, ~50 KB) is kept a
+// week; a channel in it gets a small badge. Read only with the
+// directory, never in the background; a failure just means no badges.
+var FREE_TV_URL = "https://raw.githubusercontent.com/Free-TV/IPTV/master/playlist.m3u8";
+var FREE_TV_TTL = 7 * 24 * 3600 * 1000;
+var freeTvBusy = null;
+
+function loadFreeTv(){
+  if(state.freeTv) return Promise.resolve(state.freeTv);
+  if(freeTvBusy) return freeTvBusy;
+  freeTvBusy = csGet("freetv-v1.json").then(function(hit){
+    if(hit && hit.data && hit.data.ids && Date.now() - hit.ts < FREE_TV_TTL) return hit.data;
+    return fetchBytes(FREE_TV_URL).then(bytesToText).then(function(txt){
+      var idx = C.freeTvIndex(txt);
+      if(!idx.n) throw new SrcError("empty");
+      csPut("freetv-v1.json", idx);
+      return idx;
+    }).catch(function(){ return hit && hit.data && hit.data.ids ? hit.data : null; });
+  }).then(function(idx){
+    freeTvBusy = null;
+    if(!idx) return null;
+    state.freeTv = idx;
+    state.cards.forEach(function(pair){ markFree(pair[0], pair[1]); });
+    return idx;
+  });
+  return freeTvBusy;
+}
+
+function markFree(card, channel){
+  if(!state.freeTv || !card || channel.src || card.querySelector(".tv-free")) return;
+  if(!C.isFreeTv(state.freeTv, channel)) return;
+  var b = document.createElement("span");
+  b.className = "tv-free";
+  b.textContent = t("free.badge");
+  b.title = t("free.title");
+  card.appendChild(b);
 }
 
 function bytesToText(b){
@@ -2145,6 +2213,7 @@ function createChannelCard(channel){
     '</div>' +
     (nowHtml ? '<div class="tv-now">' + nowHtml + '</div>' : '');
   state.cards.push([card, channel]);
+  markFree(card, channel);
 
   // Click handler (play)
   card.addEventListener("click", function(e){
@@ -2179,6 +2248,7 @@ function setupFilters(){
 
   // Populate selects once (after catalog loads)
   loadCatalog().then(function(cat){
+    loadFreeTv();
     // Country
     if(countrySelect){
       countrySelect.innerHTML = '<option value="">' + esc(t("filter.allCountries")) + '</option>';

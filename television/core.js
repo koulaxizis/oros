@@ -475,7 +475,32 @@
     return new Response(ds).arrayBuffer().then(function (b) { return new Uint8Array(b); });
   }
 
+  // Free-TV/IPTV (TV-VOD3): a community playlist that, by its own rule,
+  // carries only channels their broadcasters give away for free. Its
+  // tvg-ids mostly match iptv-org ids (case aside; "@feed" dropped);
+  // the rest match by country (the id's suffix) + name. Only the index
+  // is kept, never the playlist's streams.
+  function freeTvIndex(text) {
+    var r = parseM3U(text), ids = {}, names = {}, n = 0;
+    r.channels.forEach(function (c) {
+      var id = str(c.tvgId).replace(/@.*$/, "").toLowerCase();
+      var m = /^[a-z0-9][a-z0-9.+_&-]{0,80}\.([a-z]{2})$/.exec(id);
+      if (!m) return;
+      if (!ids[id]) { ids[id] = 1; n++; }
+      [c.name, c.tvgName].forEach(function (nm) { var k = nameKey(nm); if (k) names[m[1] + "|" + k] = 1; });
+    });
+    return { ids: ids, names: names, n: n };
+  }
+  function isFreeTv(idx, ch) {
+    if (!idx || !idx.ids || !ch) return false;
+    var id = str(ch.id).replace(/@.*$/, "").toLowerCase();
+    if (idx.ids[id]) return true;
+    var cc = str(ch.country).toLowerCase(), k = nameKey(ch.name);
+    return !!(cc && k && idx.names && idx.names[cc + "|" + k]);
+  }
+
   var api = {
+    freeTvIndex: freeTvIndex, isFreeTv: isFreeTv,
     MAX_CHANNELS: MAX_CHANNELS, MAX_PROGS: MAX_PROGS, MAX_SOURCES: MAX_SOURCES,
     hash: hash, httpUrl: httpUrl, safeLogo: safeLogo,
     parseM3U: parseM3U, parseXMLTV: parseXMLTV, xmltvTime: xmltvTime, decodeText: decodeText,
