@@ -1898,7 +1898,7 @@
   // W5 (2026-11-08, Chris: "Ναι, ορατά στην οθόνη"): the documents the
   // Assistant changes with edit_in_app (assistant.js EDIT_SRC). The app
   // opens on the owner's screen and applies the commands there.
-  var DOCS = ["atelier", "layout", "mindmap", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
+  var DOCS = ["atelier", "layout", "mindmap", "mockups", "montage", "photolab", "slides", "spreadsheet", "studio", "whiteboard", "writer"];
   // GATE-FILES F1 (2026-11-13, Chris «Προχώρα, όλα τα κύματα»): Files
   // joins the gate with its own tools (assistant/claudefiles.js), only
   // inside Claude's folders (FILES_KEY, synced). Files stays outside

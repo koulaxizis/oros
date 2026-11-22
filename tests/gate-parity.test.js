@@ -46,6 +46,7 @@ const GATE_ONLY = {
   // ST-IMP (Chris 2026-11-21): the relay runs them as edit_in_app's create
   studio_import: { twin: ["edit_in_app"] },
   montage_import: { twin: ["edit_in_app"] },
+  photolab_import: { twin: ["edit_in_app"] },
   files_upload: { why: "GL-8: brings a file's bytes from Claude's side (outside orOS, e.g. the owner's computer folder) into the box for the next open orOS; the Assistant runs on the device and has the files themselves." },
   files_link: { why: "A one-time download link from the owner's sealed copy is for Claude working from outside with orOS closed; the Assistant runs on the device and reads the live file with files_read." }
 };
