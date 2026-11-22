@@ -161,5 +161,24 @@
     if (have) start();
   }
 
-  PL.subject = { run: run, selOf: selOf };
+  // PL-AI: Remove background without the dialog (the Assistant's and
+  // Claude's nobg): the subject of the whole visible picture becomes L's
+  // mask, one undo step → Promise<true | false (hardly anything left)>.
+  function auto(L) {
+    var d = st.doc;
+    if (!d || !PL.ops.maskable(L)) return Promise.resolve(false);
+    return cutout().then(function (CUT) {
+      var k = Math.min(1, 1024 / Math.max(d.w, d.h));
+      return CUT.cut(PL.view.flatten(null, k), {}).then(function (r) {
+        if (st.doc !== d || C.findLayer(st.doc, L.id) < 0) return false;
+        var alpha = CUT.alphaFor(r.mask, CUT.S, d.w, d.h, CUT.LO, Math.min(1, CUT.LO + SPAN)), kept = 0;
+        for (var i = 0; i < alpha.length; i += 16) if (alpha[i] > 127) kept++;
+        if (kept * 16 < alpha.length * 0.005) return false;
+        maskLayer(st.doc.layers[C.findLayer(st.doc, L.id)], alpha);
+        return true;
+      });
+    });
+  }
+
+  PL.subject = { run: run, selOf: selOf, auto: auto };
 })();
