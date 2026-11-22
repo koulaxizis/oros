@@ -1912,6 +1912,7 @@
   var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
                 "invoices_record",   // INV-EXT
                 "local_folders_request",   // TRAY-2: the owner's answer on a screen
+                "claude_folders_request",   // CF-ASK: the same for a folder of the orOS disk
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact",
                 // GATE-FILES F3: checked against the closed copy's index; deletes wait for the owner's yes here
@@ -1963,7 +1964,7 @@
   }
   // a screen tool that must wait here for a person at the screen
   function screenWait(name, args) {
-    if (name === "local_folders_request") return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());   // TRAY-2: a question for the owner
+    if (name === "local_folders_request" || name === "claude_folders_request") return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());   // TRAY-2: a question for the owner
     if (!screenTool(name, args) || backOk(name)) return false;
     return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());
   }
@@ -2825,7 +2826,7 @@
               if (res === DECL) return res;
               delete cqBusy[it.id];
               if (res && res.ok && res.u) chgTag(res.u, it.id, at, res.made);   // PEND-1: q, p (items by index), at
-              if ((x.n === "files_delete" || x.n === "local_folders_request" || (x.n === "edit_in_app" && !res.ok)) && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
+              if ((x.n === "files_delete" || x.n === "local_folders_request" || x.n === "claude_folders_request" || (x.n === "edit_in_app" && !res.ok)) && askLast === "none") { ranDrop(it.id); cqHeld[it.id] = it; throw HELD; }   // asked, nobody answered
               delete cqHeld[it.id];
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
@@ -3072,6 +3073,39 @@
       });
     });
   }
+  // CF-ASK (Chris 2026-11-22 «Πρόσθεσε τους φακέλους που χρειάζεσαι, σου
+  // δίνω έγκριση»): Claude asks for a folder of the orOS disk among
+  // Claude's folders. Asked on a screen like localAsk; on Yes it joins the
+  // synced list (setFolders), as if the owner added it in Settings.
+  function claudeAsk(args, p) {
+    if (typeof p.hold === "number" && p.hold > Date.now()) return Promise.resolve({ ok: false, c: "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was asked." });
+    return claudeFiles().then(function (CF) {
+      var typed = typeof args.path === "string" ? args.path.trim().slice(0, 1024) : "", path = CF.normPath(typed);
+      if (!path || path === "/internal") return { ok: false, c: "path must be a folder of the orOS disk, e.g. \"Studio/Podcasts\" (not the whole disk). Nothing was asked." };
+      if (CF.secret(path)) return { ok: false, c: "\"" + CF.show(path) + "\" looks like a folder of keys or secrets; it is never opened for Claude. Nothing was asked." };
+      var cur = foldersRead().f, wantW = args.access === "write";
+      var filesW = isObj(p.lv) && p.lv.files === "write", wNote = wantW && !filesW ? " Writing there also needs the owner's switch for Files at write (it is not now)." : "";
+      var has = cur.filter(function (f) { return path === f || path.indexOf(f + "/") === 0; })[0];
+      if (has) return { ok: true, a: [], k: 0, c: "Already one of Claude's folders" + (has === path ? "" : " (inside " + CF.show(has) + ")") + ": " + path + ". Nothing was asked." + wNote };
+      if (cur.length >= 50) return { ok: false, c: "Claude's folders are full (50); the owner removes one in Settings › Connected services › orOS Gate. Nothing was asked." };
+      var why = typeof args.reason === "string" ? args.reason.replace(/\s+/g, " ").trim().slice(0, 300) : "";
+      return new Promise(function (ok) {
+        var settled = false, wrap = null;
+        function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+        if (offScreen() || locked() || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
+        var list = CF.show(path) + (why ? "\n\n" + tr("gate.lf.why").replace("{why}", why) : "");
+        wrap = dialog(tr("gate.cf.title"), tr(wantW ? "gate.cf.bodyW" : "gate.cf.bodyR"), list, tr("gate.lf.no"), tr("gate.lf.yes"),
+          function () { end(false, "no"); }, function () { end(true, "yes"); });
+        setTimeout(function () { end(false, "none"); }, 60000);
+      }).then(function (yes) {
+        if (!yes) return askLast === "none" ? { ok: false, c: "__held" } : { ok: false, c: "The owner did not add that folder to Claude's folders. Nothing was opened." };
+        return api.setFolders(cur.concat([path])).then(function (f) {
+          if (f.indexOf(path) < 0 && !f.some(function (x) { return path.indexOf(x + "/") === 0; })) return { ok: false, c: "The owner allowed it, but the folder could not be added. Nothing was opened." };
+          return { ok: true, a: ["files"], k: 1, c: "The owner added it to Claude's folders: " + path + " (synced to every device; the owner can remove it in Settings › Connected services › orOS Gate). Use paths inside it with files_list, files_write, studio_import and the others." + wNote };
+        }, function () { return { ok: false, c: "The owner allowed it, but the folder list could not be saved on this device. Nothing was opened." }; });
+      });
+    }, function () { return { ok: false, c: "This orOS could not load Claude's folders; ask the owner to update orOS. Nothing was asked." }; });
+  }
   // The relay asks a device whose orOS is on screen first (5.73.00):
   // a phone in the background loses its socket, a computer keeps it.
   function sendVis(sock) {
@@ -3316,6 +3350,7 @@
     if (kop) return kanbanChange(kop, args, p, names, opt.at);
     if (name === "invoices_record") return invoicesChange(args, p, names, okIds, opt.at);
     if (name === "local_folders_request") return localAsk(args, p);   // TRAY-2
+    if (name === "claude_folders_request") return claudeAsk(args, p);   // CF-ASK
     return Promise.resolve({ ok: false, c: "Unknown tool." });
     }
   }
