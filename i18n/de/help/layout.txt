@@ -159,6 +159,10 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Inhaltsverzeichnis in jedem Dokument**: `Mehr › Inhaltsverzeichnis aus Formaten…` wählt die Formate der Überschriften und ihre Ebene, das Format jeder Ebene und was zwischen Titel und Seite steht; gibt es keines, kommt es in einen neuen Rahmen. `Mehr › Inhaltsverzeichnis aktualisieren` folgt später den Seiten.
 - **Bücher**: `Mehr › Buch…` hält Kapitel in getrennten Dokumenten zusammen: ihre Reihenfolge, fortlaufende Seitenzahlen (auf Wunsch jedes Dokument auf einer rechten Seite), Formate und Farben wie im ersten Dokument und ein PDF des ganzen Buchs.
 
+## Neues Seitenformat
+- **Dokument einrichten** mit anderer Breite oder Höhe verschiebt die Inhalte, wie es ein Gestalter täte: was bis an die Ränder reicht, reicht wieder dorthin, Seitenzahlen und Kolumnentitel behalten ihre Kante, alles andere behält seinen Platz im Satzspiegel, Bilder und Formen ihre Proportionen. Ändert sich nur das Format, folgen die Ränder im Verhältnis; `Auch Schriftgrößen im Verhältnis` ändert auch die Formate.
+- Hausstile und ihre vorderen und hinteren Seiten passen sich ebenso jedem Format an.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

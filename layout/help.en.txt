@@ -159,6 +159,10 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Contents in any document**: `More › Contents from styles…` picks the title styles and their levels, each level's style, and what goes between title and page (`Title | σελ. 12`); a new frame takes them when there is none. `More › Update contents` follows the pages later.
 - **Books**: `More › Book…` keeps chapters in separate documents together: their order, page numbers that run on (each document on a right-hand page if you like), styles and colours as the first document's, and one PDF of the whole book.
 
+## A new page size
+- **Document setup** with another width or height moves the contents the way a designer would: frames that run to the edges still do, page numbers and running heads keep their edge, the rest keeps its place in the text area, pictures and shapes keep their proportions. With only the size changed, the margins follow in proportion; `Text sizes in proportion too` also sizes the styles.
+- House styles and their front and back pages fit any trim the same way.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

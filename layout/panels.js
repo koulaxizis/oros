@@ -1775,14 +1775,28 @@
       body.appendChild(gg);
       body.appendChild(check(t("bg.show"), LY.prefs.bgShow === 1, function (v) { if (v) LY.prefs.bgShow = 1; else delete LY.prefs.bgShow; LY.savePrefs(); ED.render(); }));
       body.appendChild(el("p", "hint", t("bg.hint")));
+      // a new size (LY-W8): the contents follow it, as a designer would
+      // move them; the text sizes only when asked
+      var fit = { on: 1, text: 0 }, was = LY.doc.setup;
+      body.appendChild(el("h3", "pn-h", t("setup.fitH")));
+      body.appendChild(check(t("setup.fit"), 1, function (v) { fit.on = v; }));
+      body.appendChild(check(t("setup.fitText"), 0, function (v) { fit.text = v; }));
+      body.appendChild(el("p", "hint", t("setup.fitHint")));
       body.appendChild(el("p", "hint", t("setup.note")));
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
       act.appendChild(btn(t("btn.cancel"), close));
       act.appendChild(btn(t("btn.apply"), function () {
         close();
+        var RT = window.LY_RETRIM;
+        var sized = Math.abs(s.w - was.w) > 0.01 || Math.abs(s.h - was.h) > 0.01;
+        var marg = ["mt", "mb", "mi", "mo"].some(function (k) { return Math.abs(s[k] - was[k]) > 0.01; });
+        // only the size changed: the margins in proportion to it
+        if (sized && !marg && fit.on && RT) { var mg = RT.marginsFor(was, s.w, s.h); Object.keys(mg).forEach(function (k) { s[k] = mg[k]; }); }
         LY.op(function (doc, now) {
-          doc.setup = M.normSetup(s);
+          var ns = M.normSetup(s);
+          if (fit.on && RT && (sized || marg)) RT.retrim(doc, ns, { text: fit.text ? "scale" : "", now: now });
+          doc.setup = ns;
           doc.m = Math.max(now, doc.m + 1);
         });
         setTimeout(function () { ED.fit(); refresh(true); }, 0);
