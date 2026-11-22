@@ -597,6 +597,76 @@
     if (x.nest !== undefined) out.nest = nestOf(x.nest);
     if (x.tabw !== undefined) { var tw = Number(x.tabw); out.tabw = isFinite(tw) ? Math.max(1, Math.min(720, tw)) : 36; }
     if (x.tabs !== undefined) out.tabs = tabsOf(x.tabs);
+    if (x.grep !== undefined) out.grep = grepOf(x.grep);
+  }
+  // GREP styles (LY-W5, ext.grep): [{ re, cs }] up to 10, a JavaScript
+  // regular expression (flag u, at most 200 characters) and the
+  // character style its matches take; a later rule wins where two
+  // overlap. A run with its own character style keeps it (as nested
+  // styles). A pattern that does not compile is left out.
+  var grepCache = {};
+  function grepOf(v) {
+    if (!Array.isArray(v)) return null;
+    var out = v.filter(function (g) { return g && typeof g.re === "string" && g.re && g.re.length <= 200 && typeof g.cs === "string" && g.cs; })
+      .slice(0, 10).map(function (g) { return { re: g.re, cs: g.cs }; })
+      .filter(function (g) { return !!grepRe(g.re); });
+    return out.length ? out : null;
+  }
+  function grepRe(src) {
+    if (Object.prototype.hasOwnProperty.call(grepCache, src)) return grepCache[src];
+    var re = null;
+    try { re = new RegExp(src, "gu"); if (re.test("")) re = null; } catch (e) { re = null; }
+    var keys = Object.keys(grepCache);
+    if (keys.length > 200) delete grepCache[keys[0]];
+    grepCache[src] = re;
+    return re;
+  }
+  function grepCuts(text, rules) {
+    var cuts = [];
+    rules.forEach(function (g) {
+      var re = grepRe(g.re), m, n = 0;
+      if (!re) return;
+      re.lastIndex = 0;
+      while ((m = re.exec(text)) && n++ < 500) {
+        if (!m[0].length) { re.lastIndex++; continue; }
+        cuts.push({ a: m.index, b: m.index + m[0].length, cs: g.cs });
+      }
+    });
+    return cuts;
+  }
+  function textOfRuns(runs) {
+    var text = "";
+    runs.forEach(function (r) { text += r.f ? "\uFFFC" : String(r.t || ""); });
+    return text;
+  }
+  // Runs split at the cuts' edges; a piece inside cuts takes the last
+  // covering cut's character style (runs with their own keep it).
+  function cutRuns(runs, cuts) {
+    if (!cuts.length) return runs;
+    var edges = {};
+    cuts.forEach(function (c) { edges[c.a] = 1; edges[c.b] = 1; });
+    function cover(pos) { var hit = null; cuts.forEach(function (c) { if (pos >= c.a && pos < c.b) hit = c; }); return hit; }
+    var out = [], base = 0;
+    runs.forEach(function (r) {
+      var len = r.f ? 1 : String(r.t || "").length, end = base + len;
+      if (r.cs || r.f || r.ext || !len) {
+        // a field takes the style of the place it is in
+        if (r.f && !r.cs) { var c0 = cover(base); out.push(c0 ? Object.assign({}, r, { cs: c0.cs }) : r); }
+        else out.push(r);
+        base = end; return;
+      }
+      var pos = base, t = String(r.t);
+      while (pos < end) {
+        var stop = end;
+        for (var k = pos + 1; k < end; k++) if (edges[k]) { stop = k; break; }
+        var c = cover(pos), piece = Object.assign({}, r, { t: t.slice(pos - base, stop - base) });
+        if (c) piece.cs = c.cs;
+        out.push(piece);
+        pos = stop;
+      }
+      base = end;
+    });
+    return out;
   }
   // ext.tabs: up to 40 stops in points (0-14400), in order
   function tabsOf(v) {
@@ -615,8 +685,7 @@
     return out.length ? out : null;
   }
   function nestRuns(runs, nest) {
-    var text = "";
-    runs.forEach(function (r) { text += r.f ? "\uFFFC" : String(r.t || ""); });
+    var text = textOfRuns(runs);
     var cuts = [], at = 0;
     for (var i = 0; i < nest.length; i++) {
       var k = text.indexOf(nest[i].to, at);
@@ -783,6 +852,7 @@
   function tokenize(para, ps, csMap) {
     var toks = [], word = null, base = 0;
     var runs = ps.nest && para.runs && para.runs.length ? nestRuns(para.runs, ps.nest) : (para.runs || []);
+    if (ps.grep && runs.length) runs = cutRuns(runs, grepCuts(textOfRuns(runs), ps.grep));
     function flush() { if (word) { toks.push(word); word = null; } }
     function part(t, a, o, n) { if (!word) word = { k: "w", parts: [] }; word.parts.push({ t: caseOf(a, t), a: a, o: o, n: n }); }
     runs.forEach(function (run) {
@@ -1354,7 +1424,7 @@
     parseTTF: parseTTF, register: register, load: load, isLoaded: isLoaded, setBaseUrl: setBaseUrl,
     fontBase64: fontBase64, faceParts: faceParts, metrics: metrics, measure: measure, ascent: ascent, descent: descent,
     resolvePs: resolvePs, resolveCs: resolveCs, runAttrs: runAttrs, byId: byId,
-    nestRuns: nestRuns, layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
+    nestRuns: nestRuns, grepRuns: function (runs, rules) { var g = grepOf(rules); return g ? cutRuns(runs, grepCuts(textOfRuns(runs), g)) : runs; }, layoutChain: layoutChain, freeSegments: freeSegments, plainText: plainText, hasText: hasText, hyphenGreek: hyphenGreek
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   else { root.orosDK = root.orosDK || {}; root.orosDK.text = api; }

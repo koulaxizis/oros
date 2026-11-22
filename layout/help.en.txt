@@ -127,6 +127,12 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **History…** (in the `More` menu, or [[Ctrl+Alt+Z]]): every undo step by name, such as Move, Add 3 objects or Style “Body”, with its time; click one to go back to it, or forward again.
 - **Shortcuts and comfort…** (`More` menu): change any shortcut by clicking it and pressing the new keys. Letters mean the keys' places, so the shortcuts also work with a Greek keyboard. Set how far the arrow keys move ([[Shift]] ten times as far, [[Alt]] a tenth), and switch smart guides, measurements or the toolbar off. Saved on this device.
 
+## Find, change and spelling
+- **Find/Change…** (`More` menu, or [[Ctrl+F]]): find text in the whole document or in one story, optionally only in paragraphs of one style. **Text** finds what you type; **GREP** takes a regular expression (\d a digit, \s a space, ( ) a group; in Change to, $1 is the first group and \n starts a new paragraph). The change can also set a paragraph style or put a character style on what it changes. `Find` lists every hit (click one to open it in the Story Editor), `Next` goes from hit to hit, `Change` changes the one shown, `Change all` changes them all as one undo step. `Queries…` has ready-made clean-ups for a book (double spaces, space before punctuation, a hyphen between spaces to a dash, straight quotes to «», three dots to an ellipsis) and the queries you saved on this device.
+- **Spelling…** (`More` menu): checks every word against the Greek and English dictionaries (the same as Writer's; they load the first time and then work offline). For each unknown word: `Show` it, see `Suggestions` (one click changes it everywhere), `Add to dictionary` (the document's own dictionary, which travels with the document) or `Ignore`. The words of your dictionary in Writer count too.
+- **Next style**: in a paragraph style, `Next style` is the style a new paragraph gets when you press [[Enter]] at the end of one, e.g. Heading → Body.
+- **GREP styles**: in a paragraph style, a character style on everything a regular expression finds, e.g. numbers in another font or the speaker's name in small capitals. Up to 10 per style.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

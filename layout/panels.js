@@ -1151,7 +1151,11 @@
           g3.appendChild(field(t("sty.lvl"), select([["", t("sty.lvlAuto", { n: guess ? t("sty.lvlN", { n: guess }) : t("sty.lvl0") })], ["0", t("sty.lvl0")], ["1", t("sty.lvlN", { n: 1 })], ["2", t("sty.lvlN", { n: 2 })], ["3", t("sty.lvlN", { n: 3 })]],
             st.ext.lvl === undefined ? "" : String(st.ext.lvl), function (v) { if (v === "") delete st.ext.lvl; else st.ext.lvl = +v; })));
         }
+        // next style: what Enter at the end of a paragraph gives (LY-W5)
+        g3.appendChild(field(t("sty.next"), select([["", t("sty.nextSame")]].concat(others.filter(function (x) { return x.id !== "ps-base"; }).map(function (x) { return [x.id, LY.label(x.name)]; })),
+          st.ext.next || "", function (v) { if (v) st.ext.next = v; else delete st.ext.next; })));
         body.appendChild(g3);
+        body.appendChild(grepEditor(st));
       }
       body.appendChild(el("span", "fld-lbl", t("sty.color")));
       var colWrap = el("div");
@@ -1182,6 +1186,50 @@
       }, "primary"));
       body.appendChild(act);
     }, true);
+  }
+  // GREP styles (LY-W5): up to 10 rules { re, cs }, a character style
+  // on every match of a JavaScript regular expression in the paragraph.
+  function grepEditor(st) {
+    var wrap = el("div", "grep-ed");
+    wrap.appendChild(el("span", "fld-lbl", t("sty.grep")));
+    var list = el("div", "grep-list");
+    wrap.appendChild(list);
+    var rules = Array.isArray(st.ext.grep) ? st.ext.grep.map(function (r) { return { re: r.re, cs: r.cs }; }) : [];
+    var css = [["", t("sty.nestNone")]].concat(LY.doc.cstyles.map(function (c) { return [c.id, LY.label(c.name)]; }));
+    function store() {
+      var ok = rules.filter(function (r) { return r.re && r.cs && !window.LY_FIND.compile({ find: r.re, grep: 1, cs: 1 }).error; });
+      if (ok.length) st.ext.grep = ok.slice(0, 10).map(function (r) { return { re: r.re.slice(0, 200), cs: r.cs }; }); else delete st.ext.grep;
+    }
+    function draw() {
+      list.innerHTML = "";
+      rules.forEach(function (r, i) {
+        var row = el("div", "grep-row");
+        var inp = el("input", "inp mono");
+        inp.type = "text"; inp.maxLength = 200; inp.value = r.re; inp.spellcheck = false;
+        inp.placeholder = "\\d+"; inp.setAttribute("aria-label", t("sty.grepRe"));
+        var bad = el("span", "grep-bad");
+        function check() {
+          var c = r.re ? window.LY_FIND.compile({ find: r.re, grep: 1, cs: 1 }) : {};
+          bad.textContent = c.error ? t("sty.grepBad") : "";
+          inp.setAttribute("aria-invalid", c.error ? "true" : "false");
+        }
+        inp.addEventListener("input", function () { r.re = inp.value; check(); store(); });
+        var sel = select(css, r.cs || "", function (v) { r.cs = v; store(); });
+        sel.setAttribute("aria-label", t("sty.grepCs"));
+        var x = LY.iconBtn("close", t("sty.grepDel"), "small");
+        x.addEventListener("click", function () { rules.splice(i, 1); store(); draw(); });
+        row.appendChild(inp); row.appendChild(sel); row.appendChild(x);
+        list.appendChild(row);
+        list.appendChild(bad);
+        check();
+      });
+      add.disabled = rules.length >= 10;
+    }
+    var add = btn(t("sty.grepAdd"), function () { rules.push({ re: "", cs: LY.doc.cstyles[0] ? LY.doc.cstyles[0].id : "" }); draw(); var f = list.querySelectorAll("input"); if (f.length) f[f.length - 1].focus(); });
+    wrap.appendChild(add);
+    wrap.appendChild(el("p", "hint", t("sty.grepHint")));
+    draw();
+    return wrap;
   }
   // A number that may be "as base" (empty).
   function optNum(st, key, min, max) {
@@ -2005,6 +2053,8 @@
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
       { label: t("more.selall"), fn: ED.selectAll },
+      { label: t("more.find"), fn: function () { LY.dlg.find(); } },
+      { label: t("more.spell"), fn: function () { LY.dlg.spell(); } },
       { label: t("more.history"), disabled: !LY.canUndo() && !LY.canRedo(), fn: function () { LY.dlg.history(); } },
       { label: t("more.keys"), fn: function () { LY.dlg.keys(); } },
       { sep: true },

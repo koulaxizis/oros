@@ -1738,6 +1738,8 @@
       case "history": if (LY.dlg.history) LY.dlg.history(); break;
       case "story": if (it && it.t === "text") LY.story.open(it.id); break;
       case "keys": if (LY.dlg.keys) LY.dlg.keys(); break;
+      case "find": if (LY.dlg.find) LY.dlg.find(); break;
+      case "spell": if (LY.dlg.spell) LY.dlg.spell(); break;
     }
   }
   ED.runAction = runAction;

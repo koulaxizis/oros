@@ -89,6 +89,12 @@
     return last ? fmtOf(last) : {};
   }
 
+  // The style a new paragraph after one in `id` takes: ext.next when it names a style.
+  function nextPs(id) {
+    var d = LY.doc, ps = d ? M.find(d.pstyles, id) : null, n = ps && ps.ext && ps.ext.next;
+    return n && n !== id && M.find(d.pstyles, n) ? n : id;
+  }
+
   // Insert plain text (a newline starts a paragraph) or a field run.
   // Returns the caret after it.
   function insertAt(paras, at, text, field) {
@@ -98,8 +104,11 @@
     var tail = p.runs.splice(i);
     if (lines[0]) p.runs.push(withFmt({ t: lines[0] }, fmt));
     var cur = p, caret = { p: at.p, o: at.o + lines[0].length };
+    // Enter at the end of a paragraph: the new one takes its style's next style (LY-W5)
+    var nps = p.ps;
+    if (text === "\n" && !tail.some(function (r) { return runLen(r) > 0; })) nps = nextPs(p.ps);
     for (var k = 1; k < lines.length; k++) {
-      cur = { ps: p.ps, runs: lines[k] ? [withFmt({ t: lines[k] }, fmt)] : [] };
+      cur = { ps: nps, runs: lines[k] ? [withFmt({ t: lines[k] }, fmt)] : [] };
       paras.splice(at.p + k, 0, cur);
       caret = { p: at.p + k, o: lines[k].length };
     }
@@ -562,6 +571,26 @@
     ED.render();
   }
 
+  // Open a story (its first frame) with a range selected: a Find/Change
+  // or spelling hit (LY-W5).
+  function openAt(sid, p, s, e) {
+    var it = null;
+    (LY.doc.items || []).forEach(function (x) { if (!it && x.t === "text" && x.story === sid) it = x; });
+    if (!it) return false;
+    if (S.sid !== sid) open(it.id);
+    if (S.sid !== sid) return false;
+    var st = story();
+    if (!st || !st.paras[p]) return false;
+    var a = clampPos(st.paras, { p: p, o: s }), b = clampPos(st.paras, { p: p, o: e });
+    ed.focus();
+    setRange(a, b);
+    rememberSel();
+    var node = ed.children[a.p];
+    if (node && node.scrollIntoView) node.scrollIntoView({ block: "center" });
+    trackPs();
+    return true;
+  }
+
   function close() {
     if (!S.sid) return;
     flush();
@@ -622,6 +651,8 @@
     ed.addEventListener("keydown", function (e) {
       var mod = e.ctrlKey || e.metaKey;
       if (e.key === "Escape") { e.preventDefault(); close(); return; }
+      // Enter in a style with a next style goes through the model, so it applies (LY-W5)
+      if (e.key === "Enter" && !e.shiftKey && !mod && !e.altKey && !e.isComposing && S.curPs && nextPs(S.curPs) !== S.curPs) { e.preventDefault(); insertText("\n"); return; }
       if (!mod || e.altKey) return;
       var c = e.code;
       if (c === "KeyB") { e.preventDefault(); toggle("b"); }
@@ -630,6 +661,7 @@
       else if (c === "KeyZ") { e.preventDefault(); if (e.shiftKey) LY.redo(); else LY.undo(); }
       else if (c === "KeyY") { e.preventDefault(); LY.redo(); }
       else if (c === "KeyS") { e.preventDefault(); flush(); }
+      else if (c === "KeyF" && LY.dlg && LY.dlg.find) { e.preventDefault(); LY.dlg.find(); }
     });
     document.addEventListener("selectionchange", function () {
       if (!isOpen()) return;
@@ -647,7 +679,7 @@
   }
 
   LY.story = {
-    open: open, close: close, isOpen: isOpen,
+    open: open, openAt: openAt, close: close, isOpen: isOpen, flush: flush, sid: function () { return S.sid; },
     currentPs: function () {
       if (LY.inframe && LY.inframe.isOn()) return LY.inframe.currentPs();
       if (isOpen()) return S.curPs;
@@ -658,6 +690,6 @@
     applyPs: applyPs, applyCs: applyCs
   };
   // paragraph helpers shared with in-frame editing (inframe.js)
-  LY.storyOps = { runLen: runLen, paraLen: paraLen, cut: cut, eachRun: eachRun, deleteRange: deleteRange, fmtAt: fmtAt, insertAt: insertAt };
+  LY.storyOps = { nextPs: nextPs, runLen: runLen, paraLen: paraLen, cut: cut, eachRun: eachRun, deleteRange: deleteRange, fmtAt: fmtAt, insertAt: insertAt };
   LY.on("boot", wire);
 })();
