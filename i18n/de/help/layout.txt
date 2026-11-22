@@ -221,6 +221,12 @@ Mehr › Symbole… bewahrt eine Gruppe von Objekten auf, die du immer wieder br
 
 Ändere eine Platzierung, wähle sie aus und nimm Symbol aus dieser Platzierung aktualisieren: Alle anderen Platzierungen ändern sich mit, jede in ihrer eigenen Größe. Lösen macht eine Platzierung wieder zu einfachen Objekten; wird ein Symbol gelöscht, bleiben seine Platzierungen als einfache Objekte. Auch Claude kann Symbole erstellen, platzieren und aktualisieren.
 
+## Paket für die Druckerei, InDesign und Scribus
+
+Exportieren › Paket für die Druckerei erstellt eine .zip für die Druckerei oder einen Grafiker: das Dokument selbst, ein PDF/X-4 mit Beschnitt und Schnittmarken, dieselben Seiten als InDesign- (.idml) und Scribus-Dateien (.sla), die Bilder in voller Größe in Links, die Schriften in Fonts und einen Bericht über Seiten, Farben, Schriften, Bilder und das, was der Preflight gefunden hat.
+
+Exportieren › Für andere Programme speichert eine einzelne InDesign- oder Scribus-Datei mit den Bildern darin. Seiten, Musterseiten, Formate, Farben, Rahmen mit Spalten und Verkettungen, Formen, Linien, Kurven und Bilder öffnen sich so, wie sie hier sind. Schatten, Schein und weiche Kanten werden zu den Effekten von InDesign; Scribus behält Füllmethode und Deckkraft. Verfolgte Änderungen, Kommentare und Symbole bleiben in orOS (Symbole kommen als Gruppen an).
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

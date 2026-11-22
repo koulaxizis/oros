@@ -2013,6 +2013,17 @@
       body.appendChild(el("h3", "pn-h", t("exp.pkg")));
       body.appendChild(el("p", "hint", t("exp.pkgNote")));
       body.appendChild(btn(t("more.pkg"), function () { close(); LY.io.exportPackage(doc); }, "block"));
+      // LY-W15: for the printer and for other layout programs
+      function xo(fn) { close(); LY.io.script("xout.js", "LY_XOUT").then(function () { LY.xout[fn](); }, function () { LY.toast(t("exp.fail")); }); }
+      body.appendChild(el("h3", "pn-h", t("xo.pkg")));
+      body.appendChild(el("p", "hint", t("xo.pkgNote")));
+      body.appendChild(btn(t("xo.pkgGo"), function () { xo("exportPackage"); }, "block"));
+      body.appendChild(el("h3", "pn-h", t("xo.title")));
+      body.appendChild(el("p", "hint", t("xo.note")));
+      var xr = el("div", "grid2");
+      xr.appendChild(btn(t("xo.idml"), function () { xo("exportIdml"); }, "block"));
+      xr.appendChild(btn(t("xo.sla"), function () { xo("exportSla"); }, "block"));
+      body.appendChild(xr);
     });
   }
   // ---------- Output profiles (LY-OUT) ----------
