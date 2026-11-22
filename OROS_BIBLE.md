@@ -13762,3 +13762,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js, relay/gate.js, tests/gate-queue-keep.test.js (new), tests/gate-relay.test.js, shell.js, help/topics/whatsnew.en/el.txt.
 - **Tests:** gate-queue-keep (Chromium: unknown tool kept, known one held; fails on 8.51.00); gate-relay GQ-VER (minVer, queueFor by version, queueChange sets mv, offered only after `ver:` of a new enough orOS).
 - **Not done:** a change cut off by a reload on a copy from before 8.52.00 can still be lost; the requests lost on 22/11 were sent again live.
+
+### 2026-11-22 — 8.53.00 — Gate: Claude's file copy refreshed after an app's export (GQ-FC)
+- **Why:** 2026-11-22: Atelier saved «Πλανόδιο · εξώφυλλα-1.png» into Studio/Podcasts (one of Claude's folders). files_list (live) showed it, but files_link still answered "not in the copy" minutes later.
+- **What:** `fileCopySoon(ms)` no longer lets a later, longer wait (the queue's 60 s) push back a sooner one (an export's 3 s). A `fileCopy` asked for while one is running sets `fcAgain`, and the copy runs again 2 s after the running one ends.
+- **Files:** gate/gate.js, tests/gate-filecopy-soon.test.js (new), shell.js, help/topics/whatsnew.en/el.txt.
+- **Also answered (no code):** Mockups through the Gate needs the owner's switch for Mockups at «may change» (Settings › Connected services › orOS Gate); apps added to `DOCS` start off. A session that started before 8.46.00 keeps the old edit_in_app schema (no `prompt`); gate_call or a fresh session has it.
