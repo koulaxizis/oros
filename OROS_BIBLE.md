@@ -13900,3 +13900,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** smartbar.js, translations.js, i18n/de/shell.js, appearance help EN/EL/DE, whatsnew EN/EL, tests/smartbar.test.js.
 - **Tests:** smartbar tests (BAT-1); full suite; Chromium through the real shell at 1280 EN and 360 EL with a stubbed battery at 17 % not charging (low colour, in the +N fold on a phone); charging and the Quick settings tap only in unit tests and by reading.
 - **Not tested:** a real laptop or phone battery, Safari and Firefox (no Battery API there: the card stays away).
+
+### 2026-11-22 — 8.70.00 — Now playing card in the smart bar (NOWPLAY-1, smartbar 1.7.0)
+- **What:** kind `playing`: what Music, Podcasts, Radio or the Sound Mixer plays (the shell's `qsMedia()` players, never a locked app's); only while something plays; title hidden under Sensitive work; a tap opens a small player peek (Previous / Play-Pause / Next, Open <app>). Chris asked for it 2026-11-22 18:49Z, lifting the 2026-11-16 decline.
+- **Files:** smartbar.js, shell.js (smart bar host `media`, version), translations.js, i18n/de/shell.js, appearance help EN/EL/DE, whatsnew EN/EL, tests/smartbar.test.js.
+- **Tests:** smartbar tests (NOWPLAY-1); full suite; Chromium through the real shell at 1280 EN and 360 EL with a stubbed Music player (card text, peek controls, pause, next, peek inside the screen).
+- **Not tested:** real audio in Podcasts, Radio and the Sound Mixer, Safari, a real phone.
