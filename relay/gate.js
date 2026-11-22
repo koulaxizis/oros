@@ -922,8 +922,8 @@ export function pendHead(n, a, t) {
   } else {
     h.a.refs = refsIn(o).slice(0, 20);
   }
-  const f = queuedName(n, o);
-  if (f) h.f = f;
+  // null = nothing named (a bad path…), so the whole row is never opened for it
+  if (QUEUED_NAMED.indexOf(n) >= 0) h.f = queuedName(n, o);
   return h;
 }
 // GATE-PL11 (Mail thread review 2026-11-22): what a waiting row adds to
