@@ -18,6 +18,9 @@ orOS is free and made by one person. If it is useful to you, [here are three way
 ## Version 8.45.00
 - **Layout: a new page size.** Change the page size in Document setup and the contents follow: pictures that bleed still bleed, running heads and page numbers keep their edge, the rest keeps its place in the text area, and pictures and shapes keep their proportions. Text sizes can follow too.
 
+## Version 8.44.01
+- **Notices no longer cover the Dock.** The «Local folders for Claude» bar and pop-up notifications now sit above the Dock, or beside it when the Dock is on the left or right.
+
 ## Version 8.44.00
 - **Claude can set up your Author Portal steps.** When you ask, Claude (through orOS Gate) or the Assistant can make a Kanban column a step of your authors' production flow, mark it as a finish, and write the name and explanation your author sees. You see it, and you can undo it like any other change.
 
