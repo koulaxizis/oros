@@ -129,7 +129,9 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
 test("Settings: card, search row, scope, and strings in EN, EL and DE", () => {
   const set = read("settings/settings.js");
   assert.match(set, /if \(s\.smartbar\) \{/);
-  assert.match(set, /set\("smartbar:" \+ w\.id, cb\.checked\)/);
+  // GALLERY-1 + structure review 8: cards are added and ordered only in the widget gallery
+  assert.match(set, /act\("widgets\.gallery"\)/);
+  assert.match(set, /set\("smartbar-look", v\)/);
   const C = require("../settings/core.js");
   assert.strictEqual(C.scopeOf("smartbar"), "device");
   const core = read("settings/core.js");
