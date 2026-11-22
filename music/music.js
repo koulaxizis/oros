@@ -9,7 +9,7 @@
 //     window is only the screen over it
 //   - the music files are on the orOS disk, /internal/Music
 //     (library.js scans them; store.js keeps the device index)
-//   - device-local: prefs "oros-music-prefs" (tab, library view,
+//   - device-local: prefs "oros-music-prefs" (library view; the tab is saved but every start opens on Home,
 //     sort, old-tag encoding, LRCLIB yes/no), lyrics found online
 //     "oros-music-lyrics"; the sound settings live in the host
 //     ("oros-music-sound": equalizer, crossfade, ReplayGain)
@@ -751,7 +751,9 @@
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
-        if (["home", "search", "lib"].indexOf(o.tab) >= 0) p.tab = o.tab;
+        // MU-HOME: every start opens on Home, like Spotify. The last tab is
+        // no longer restored: reopening on Search hid the whole Home
+        // (recommendations, most played, genres) behind the genre grid.
         if (["pl", "songs", "albums", "artists", "genres", "folders", "offline", "servers"].indexOf(o.lib) >= 0) p.lib = o.lib;
         if (["title", "artist", "album", "added"].indexOf(o.sort) >= 0) p.sort = o.sort;
         if (["auto", "el", "latin"].indexOf(o.legacy) >= 0) p.legacy = o.legacy;
