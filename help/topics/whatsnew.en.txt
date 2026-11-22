@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.42.00
+- **Layout: finer Greek typesetting.** Polytonic Greek now hyphenates and goes to capitals the right way, Preflight names any character a font cannot draw, and style lists sort the Greek way. Paragraph styles can set the whole paragraph at once for even spacing, limit how far word and letter spacing may go, let punctuation hang past the margin, balance ragged lines and start with a drop cap. Character styles add small caps, superscript and subscript, and More › Show loose and tight lines marks the lines that need a look.
+
 ## Version 8.41.00
 - **Layout: a library for things you reuse, and colour libraries.** Select a logo, a running head or a chapter opener and keep it in the Library (More › Library…) to place it in any document; libraries go to other devices as a file. The Colours panel has ready-made colour sets and reads and writes .ase swatch files from InDesign, Illustrator, Affinity or Scribus. The Story Editor shows each paragraph's style name, can make the text bigger, and marks the text that no longer fits.
 
