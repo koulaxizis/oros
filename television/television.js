@@ -43,6 +43,8 @@ var FILES_KEY    = "oros-television-files";     // device-local list of opened f
 var GUIDE_ROWS   = 150;                         // timeline rows drawn at most
 var HOUR_MS      = 3600000;
 var C = window.orosTvCore;
+var V = window.orosTvVod;                       // TV-VOD: Films & shows (vod.js)
+var RP_SYNC_MS = 3 * 60 * 1000;                 // resume points: sync at most every 3 minutes
 
 /* ===== I18N (inline STRINGS — Bible Part VI, radio pattern) ===== */
 
@@ -86,6 +88,104 @@ var STRINGS = {
     "notifs.streamfail.body":  "Couldn't play on this device",
     "tab.lists":      "My lists",
     "tab.guide":      "Guide",
+    // TV-VOD (Films & shows)
+    "tab.films": "Films & shows",
+    "vod.discover": "Discover",
+    "vod.continue": "Continue watching",
+    "vod.watch": "Watchlist",
+    "vod.search.ph": "Search films, shows, directors…",
+    "vod.filters": "Filters",
+    "vod.clear": "Clear filters",
+    "vod.f.src": "Source",
+    "vod.src.all": "All sources",
+    "vod.f.ty": "Type",
+    "vod.ty.all": "All types",
+    "vod.ty.film": "Feature films",
+    "vod.ty.short": "Short films",
+    "vod.ty.series": "Series and episodes",
+    "vod.ty.doc": "Documentaries",
+    "vod.ty.anim": "Animation",
+    "vod.ty.news": "Newsreels",
+    "vod.f.g": "Genre",
+    "vod.g.all": "All genres",
+    "vod.g.drama": "Drama",
+    "vod.g.comedy": "Comedy",
+    "vod.g.romance": "Romance",
+    "vod.g.crime": "Crime",
+    "vod.g.noir": "Film noir",
+    "vod.g.horror": "Horror",
+    "vod.g.scifi": "Science fiction",
+    "vod.g.fantasy": "Fantasy",
+    "vod.g.adventure": "Adventure",
+    "vod.g.action": "Action",
+    "vod.g.war": "War",
+    "vod.g.western": "Western",
+    "vod.g.musical": "Musical",
+    "vod.g.history": "History and biography",
+    "vod.g.mystery": "Mystery and thriller",
+    "vod.g.family": "Family and children",
+    "vod.g.propaganda": "Propaganda",
+    "vod.g.education": "Educational",
+    "vod.g.experimental": "Experimental",
+    "vod.f.dec": "Decade",
+    "vod.dec.all": "Any decade",
+    "vod.c.su": "Soviet Union",
+    "vod.l.zxx": "No dialogue",
+    "vod.f.len": "Length",
+    "vod.len.all": "Any length",
+    "vod.len.short": "Under 40 minutes",
+    "vod.len.long": "40 minutes or more",
+    "vod.f.snd": "Sound",
+    "vod.snd.all": "Silent and sound",
+    "vod.snd.silent": "Silent",
+    "vod.snd.sound": "With sound",
+    "vod.f.sort": "Sort",
+    "vod.sort.pop": "Most watched",
+    "vod.sort.old": "Oldest first",
+    "vod.sort.new": "Newest first",
+    "vod.sort.az": "Title A–Z",
+    "vod.all": "Also show Internet Archive titles that orOS has not checked",
+    "vod.unchecked": "Not checked",
+    "vod.loading": "Loading the film catalogue…",
+    "vod.searching": "Searching…",
+    "vod.none": "Nothing found. Try fewer filters.",
+    "vod.err": "{src} could not be reached.",
+    "vod.busy": "{src} is busy. Try again in a minute.",
+    "vod.offline": "You are offline. Films need a connection.",
+    "vod.noIaCountry": "The Internet Archive does not record countries, so only Wikimedia Commons is searched.",
+    "vod.noContinue": "Films you start show up here, so you can pick up where you left off.",
+    "vod.noWatch": "Press Watchlist in a film's details to keep it here.",
+    "vod.play": "Play",
+    "vod.resume": "Resume at {time}",
+    "vod.restart": "From the start",
+    "vod.wl.add": "Watchlist",
+    "vod.wl.on": "On your watchlist",
+    "vod.wl.added": "Added to your watchlist",
+    "vod.wl.removed": "Removed from your watchlist",
+    "vod.cont.drop": "Remove from Continue watching",
+    "vod.cont.dropped": "Removed from Continue watching",
+    "vod.source": "Source page",
+    "vod.parts": "Parts",
+    "vod.part": "Part {n}",
+    "vod.episodes": "Episodes",
+    "vod.min": "{n} min",
+    "vod.left": "{time} left",
+    "vod.dir": "Directed by {name}",
+    "vod.ofSeries": "From {name}",
+    "vod.why.commons": "On Wikimedia Commons, which keeps only freely licensed or public-domain files.",
+    "vod.lic": "Licence: {lic}",
+    "vod.why.age": "Public domain by age: published in {y}, more than 95 years ago.",
+    "vod.why.prelinger": "From the Prelinger Archives, which their owner gave to the public.",
+    "vod.why.listed": "The Internet Archive lists this as public domain, but orOS has not checked it. Rights can differ from country to country.",
+    "vod.err.closed": "This title is no longer available at its source.",
+    "vod.err.format": "This browser can't play any of this title's video formats.",
+    "vod.err.net": "The video could not be loaded. Try again later.",
+    "vod.opening": "Opening…",
+    "vod.seek": "Position",
+    "vod.back10": "Back 10 seconds",
+    "vod.fwd30": "Forward 30 seconds",
+    "vod.cat.old": "Showing the catalogue from {date}; the new one could not be loaded.",
+    "vod.count": "{n} titles",
     "manage":         "Lists & guides",
     "filter.group":   "Group",
     "filter.allGroups": "All groups",
@@ -172,6 +272,104 @@ var STRINGS = {
     "notifs.streamfail.body":  "Αδυναμία αναπαραγωγής σε αυτή τη συσκευή",
     "tab.lists":      "Οι λίστες μου",
     "tab.guide":      "Οδηγός",
+    // TV-VOD (Films & shows)
+    "tab.films": "Ταινίες & εκπομπές",
+    "vod.discover": "Ανακάλυψη",
+    "vod.continue": "Συνέχεια",
+    "vod.watch": "Να δω",
+    "vod.search.ph": "Αναζήτηση ταινιών, εκπομπών, σκηνοθετών…",
+    "vod.filters": "Φίλτρα",
+    "vod.clear": "Καθαρισμός φίλτρων",
+    "vod.f.src": "Πηγή",
+    "vod.src.all": "Όλες οι πηγές",
+    "vod.f.ty": "Είδος",
+    "vod.ty.all": "Όλα τα είδη",
+    "vod.ty.film": "Ταινίες μεγάλου μήκους",
+    "vod.ty.short": "Ταινίες μικρού μήκους",
+    "vod.ty.series": "Σειρές και επεισόδια",
+    "vod.ty.doc": "Ντοκιμαντέρ",
+    "vod.ty.anim": "Κινούμενα σχέδια",
+    "vod.ty.news": "Επίκαιρα",
+    "vod.f.g": "Κατηγορία",
+    "vod.g.all": "Όλες οι κατηγορίες",
+    "vod.g.drama": "Δράμα",
+    "vod.g.comedy": "Κωμωδία",
+    "vod.g.romance": "Ρομαντικές",
+    "vod.g.crime": "Αστυνομικές",
+    "vod.g.noir": "Φιλμ νουάρ",
+    "vod.g.horror": "Τρόμου",
+    "vod.g.scifi": "Επιστημονικής φαντασίας",
+    "vod.g.fantasy": "Φαντασίας",
+    "vod.g.adventure": "Περιπέτειες",
+    "vod.g.action": "Δράσης",
+    "vod.g.war": "Πολεμικές",
+    "vod.g.western": "Γουέστερν",
+    "vod.g.musical": "Μιούζικαλ",
+    "vod.g.history": "Ιστορικές και βιογραφίες",
+    "vod.g.mystery": "Μυστηρίου και θρίλερ",
+    "vod.g.family": "Οικογενειακές και παιδικές",
+    "vod.g.propaganda": "Προπαγάνδα",
+    "vod.g.education": "Εκπαιδευτικές",
+    "vod.g.experimental": "Πειραματικές",
+    "vod.f.dec": "Δεκαετία",
+    "vod.dec.all": "Όλες οι δεκαετίες",
+    "vod.c.su": "Σοβιετική Ένωση",
+    "vod.l.zxx": "Χωρίς διαλόγους",
+    "vod.f.len": "Διάρκεια",
+    "vod.len.all": "Οποιαδήποτε διάρκεια",
+    "vod.len.short": "Κάτω από 40 λεπτά",
+    "vod.len.long": "40 λεπτά και πάνω",
+    "vod.f.snd": "Ήχος",
+    "vod.snd.all": "Βουβές και ομιλούσες",
+    "vod.snd.silent": "Βουβές",
+    "vod.snd.sound": "Ομιλούσες",
+    "vod.f.sort": "Ταξινόμηση",
+    "vod.sort.pop": "Οι πιο δημοφιλείς",
+    "vod.sort.old": "Οι παλαιότερες πρώτα",
+    "vod.sort.new": "Οι νεότερες πρώτα",
+    "vod.sort.az": "Τίτλος Α–Ω",
+    "vod.all": "Δείξε και τίτλους του Internet Archive που δεν έχει ελέγξει το orOS",
+    "vod.unchecked": "Χωρίς έλεγχο",
+    "vod.loading": "Φόρτωση του καταλόγου ταινιών…",
+    "vod.searching": "Αναζήτηση…",
+    "vod.none": "Δεν βρέθηκε τίποτα. Δοκίμασε λιγότερα φίλτρα.",
+    "vod.err": "Δεν ήταν δυνατή η σύνδεση με {src}.",
+    "vod.busy": "Το {src} είναι απασχολημένο. Δοκίμασε ξανά σε ένα λεπτό.",
+    "vod.offline": "Είσαι εκτός σύνδεσης. Οι ταινίες θέλουν σύνδεση.",
+    "vod.noIaCountry": "Το Internet Archive δεν καταγράφει χώρες, γι' αυτό η αναζήτηση γίνεται μόνο στα Wikimedia Commons.",
+    "vod.noContinue": "Οι ταινίες που αρχίζεις εμφανίζονται εδώ, για να συνεχίσεις από εκεί που σταμάτησες.",
+    "vod.noWatch": "Πάτα «Να δω» στις λεπτομέρειες μιας ταινίας για να τη βρίσκεις εδώ.",
+    "vod.play": "Αναπαραγωγή",
+    "vod.resume": "Συνέχεια από {time}",
+    "vod.restart": "Από την αρχή",
+    "vod.wl.add": "Να δω",
+    "vod.wl.on": "Στη λίστα «Να δω»",
+    "vod.wl.added": "Προστέθηκε στη λίστα «Να δω»",
+    "vod.wl.removed": "Αφαιρέθηκε από τη λίστα «Να δω»",
+    "vod.cont.drop": "Αφαίρεση από τη Συνέχεια",
+    "vod.cont.dropped": "Αφαιρέθηκε από τη Συνέχεια",
+    "vod.source": "Σελίδα της πηγής",
+    "vod.parts": "Μέρη",
+    "vod.part": "Μέρος {n}",
+    "vod.episodes": "Επεισόδια",
+    "vod.min": "{n} λεπτά",
+    "vod.left": "Απομένουν {time}",
+    "vod.dir": "Σκηνοθεσία: {name}",
+    "vod.ofSeries": "Από τη σειρά {name}",
+    "vod.why.commons": "Στα Wikimedia Commons, που κρατούν μόνο αρχεία με ελεύθερη άδεια ή κοινού κτήματος.",
+    "vod.lic": "Άδεια: {lic}",
+    "vod.why.age": "Κοινό κτήμα λόγω παλαιότητας: κυκλοφόρησε το {y}, πριν από περισσότερα από 95 χρόνια.",
+    "vod.why.prelinger": "Από τα Prelinger Archives, που ο κάτοχός τους τα έδωσε στο κοινό.",
+    "vod.why.listed": "Το Internet Archive το αναφέρει ως κοινό κτήμα, αλλά το orOS δεν το έχει ελέγξει. Τα δικαιώματα μπορεί να διαφέρουν από χώρα σε χώρα.",
+    "vod.err.closed": "Αυτός ο τίτλος δεν είναι πια διαθέσιμος στην πηγή του.",
+    "vod.err.format": "Αυτός ο περιηγητής δεν μπορεί να παίξει καμία από τις μορφές βίντεο του τίτλου.",
+    "vod.err.net": "Δεν ήταν δυνατή η φόρτωση του βίντεο. Δοκίμασε ξανά αργότερα.",
+    "vod.opening": "Άνοιγμα…",
+    "vod.seek": "Θέση",
+    "vod.back10": "Πίσω 10 δευτερόλεπτα",
+    "vod.fwd30": "Μπροστά 30 δευτερόλεπτα",
+    "vod.cat.old": "Εμφανίζεται ο κατάλογος της {date}· ο νέος δεν φορτώθηκε.",
+    "vod.count": "{n} τίτλοι",
     "manage":         "Λίστες & οδηγοί",
     "filter.group":   "Ομάδα",
     "filter.allGroups": "Όλες οι ομάδες",
@@ -351,6 +549,7 @@ function normalizeState(obj){
   });
   obj.deleted = del;
   C.normSources(obj);        // Wave 43: sources[] / srcDel{} only when non-empty
+  V.normVod(obj);            // TV-VOD: wl{} / rp{} only when non-empty
 }
 
 function sortFavorites(arr){
@@ -416,6 +615,8 @@ function mergeTelevisionStates(remote, local){
   var ms = C.mergeSources(remote, local);
   if(ms.sources) merged.sources = ms.sources;
   if(ms.srcDel) merged.srcDel = ms.srcDel;
+  // TV-VOD: watchlist + resume points, per-key last writer wins
+  V.mergeVod(remote, local, merged);
   normalizeState(merged);   // TV-8: same canonical shape as the getter
   return merged;
 }
@@ -1585,6 +1786,8 @@ function minuteTick(){
 
 /* ===== DOM RENDERERS ===== */
 
+function main0(){ return $("#tv-main"); }
+
 function renderMain(){
   var grid = $("#tv-grid");
   var empty = $("#tv-empty");
@@ -1608,6 +1811,15 @@ function renderMain(){
   var emptyAct = $("#tv-empty-act");
   if(emptyAct) emptyAct.setAttribute("hidden", "");
   updateToolbar();
+
+  // TV-VOD: Films & shows draws its own panel (films.js)
+  var films = $("#tv-films");
+  var isFilms = state.viewMode === "films";
+  if(main0()) main0().classList.toggle("films-mode", isFilms);
+  if(films){
+    if(isFilms){ films.removeAttribute("hidden"); if(window.orosTvFilms) window.orosTvFilms.render(films); }
+    else films.setAttribute("hidden", "");
+  }
 
   // Wave 43: the Guide tab swaps the card grid for the timeline
   var guideBox = $("#tv-guide");
@@ -1669,6 +1881,9 @@ function updateToolbar(){
   });
   var gw = $("#tv-group-wrap");
   if(gw) gw.hidden = !((state.viewMode === "lists" || state.viewMode === "guide") && state.plGroups.length);
+  // TV-VOD: Films & shows has its own search and filters
+  var tools = document.querySelector(".tv-tools");
+  if(tools) tools.hidden = state.viewMode === "films";
 }
 
 function renderLists(container){
@@ -2168,8 +2383,17 @@ function openPlayer(channel){
 
   // Title & meta
   $("tvp-title").textContent = channel.name;
-  $("tvp-meta").textContent = (channel.country && state.catalog && state.catalog.countryNames[channel.country]) || channel.group || "";
-  $("tvp-labels").textContent = (channel.categories && channel.categories.join(", ")) || "";
+  if(channel.vod){
+    $("tvp-meta").textContent = channel.meta || "";
+    $("tvp-labels").textContent = channel.labels || "";
+  }else{
+    vodReset();
+    $("tvp-meta").textContent = (channel.country && state.catalog && state.catalog.countryNames[channel.country]) || channel.group || "";
+    $("tvp-labels").textContent = (channel.categories && channel.categories.join(", ")) || "";
+  }
+  var seek = $("#tvp-seek");
+  if(seek) seek.hidden = !channel.vod;
+  vodSeekUI();
 
   // Restore volume/mute preferences for this session
   applyVolumePrefs();
@@ -2180,7 +2404,7 @@ function openPlayer(channel){
   // Try first stream
   tryStream();
 
-  dlg.showModal();
+  if(!dlg.open) dlg.showModal();
   updatePlayerEpg();
 }
 
@@ -2193,8 +2417,9 @@ function tryStream(){
   }
 
   if(state.streamIdx >= ch.streams.length){
-    showError(t("err.nostreams"));
-    notifyStreamFail(ch);
+    // TV-VOD: a film says why here; no notification (nothing to retry later)
+    showError(ch.vod ? t("vod.err.net") : t("err.nostreams"));
+    if(!ch.vod) notifyStreamFail(ch);
     return;
   }
 
@@ -2344,6 +2569,7 @@ function showError(msg){
 function closePlayer(){
   var video = $("#tvp-video");
   var dlg = $("#tv-player");
+  vodSave(true);
 
   if(state.hls){
     state.hls.destroy();
@@ -2389,7 +2615,10 @@ function updatePlayerUI(){
   }
 
   if(favBtn && state.playerCh){
-    var isFav = isFavorite(state.playerCh.id);
+    var isFav = state.playerCh.vod ? V.watchOn(state.data, state.playerCh.vod.k) : isFavorite(state.playerCh.id);
+    var favLabel = state.playerCh.vod ? (isFav ? t("vod.wl.on") : t("vod.wl.add")) : t("favorite");
+    favBtn.title = favLabel;
+    favBtn.setAttribute("aria-label", favLabel);
     favBtn.innerHTML = isFav
       ? '<svg viewBox="0 0 24 24" fill="currentColor"><polygon points="12,2 15,10 24,10 17,15 20,24 12,18 4,24 7,15 0,10 9,10"/></svg>'
       : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12,2 15,10 24,10 17,15 20,24 12,18 4,24 7,15 0,10 9,10"/></svg>';
@@ -2420,6 +2649,145 @@ function toggleFullscreen(){
     video.requestFullscreen().catch(function(){});
   }
 }
+
+/* ===== TV-VOD: films in the player ===== */
+
+// A film plays in the same player as a channel: one https stream, a
+// position bar, and the place it stopped (resume points, synced: Chris
+// D4 2026-11-21). Positions are written here every 15 seconds and sent
+// to sync at most every 3 minutes, and at once on pause, end or close.
+var vod = { it: null, part: 0, parts: 1, at: 0, saved: 0, synced: 0, drag: false, onEnd: null };
+
+function vodReset(){
+  vod.it = null; vod.part = 0; vod.parts = 1; vod.at = 0; vod.drag = false; vod.onEnd = null;
+}
+
+// o: { it, url, page, title, meta, labels, part, parts, at, onEnd }
+function playVod(o){
+  if(!o || !o.it || !/^https:\/\//i.test(String(o.url || ""))) return;
+  // The next part of a film plays in the open player (closing it would
+  // empty the video after the new one started: close is asynchronous).
+  if(state.playerCh) vodSave(true);
+  if(state.hls){ state.hls.destroy(); state.hls = null; }
+  vod.it = o.it; vod.part = o.part || 0; vod.parts = o.parts || 1; vod.at = o.at || 0;
+  vod.saved = Date.now(); vod.synced = Date.now(); vod.onEnd = typeof o.onEnd === "function" ? o.onEnd : null;
+  openPlayer({
+    id: o.it.k, name: o.title || o.it.t, streams: [{ url: o.url }],
+    website: o.page || "", vod: o.it, meta: o.meta || "", labels: o.labels || ""
+  });
+}
+
+function clock(sec){
+  sec = Math.max(0, Math.floor(sec || 0));
+  var h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s2 = sec % 60;
+  return (h ? h + ":" + (m < 10 ? "0" : "") : "") + m + ":" + (s2 < 10 ? "0" : "") + s2;
+}
+
+function vodSeekUI(){
+  var v = $("#tvp-video"), pos = $("#tvp-pos"), cur = $("#tvp-cur"), dur = $("#tvp-dur");
+  if(!v || !pos || vod.drag) return;
+  var d = isFinite(v.duration) ? v.duration : 0;
+  pos.max = String(Math.floor(d));
+  pos.value = String(Math.floor(v.currentTime || 0));
+  pos.disabled = !d;
+  if(cur) cur.textContent = clock(v.currentTime);
+  if(dur) dur.textContent = d ? clock(d) : "–:––";
+}
+
+function vodSkip(sec){
+  var v = $("#tvp-video");
+  if(!v || !isFinite(v.duration)) return;
+  v.currentTime = Math.max(0, Math.min(v.duration - 1, (v.currentTime || 0) + sec));
+  vodSeekUI();
+}
+
+// R27: stamped only when the position really moved (vod.js setResume).
+function vodSave(sync){
+  var v = $("#tvp-video");
+  if(!vod.it || !state.data || !v || !isFinite(v.duration) || !v.duration) return;
+  var now = Date.now();
+  if(V.setResume(state.data, vod.it, v.currentTime, v.duration, now, vod.part, vod.parts)) saveLocal();
+  vod.saved = now;
+  if(sync || now - vod.synced >= RP_SYNC_MS){
+    vod.synced = now;
+    if(__orosSyncApi) __orosSyncApi.dirty();
+  }
+}
+
+function setupVodPlayer(){
+  var v = $("#tvp-video"), pos = $("#tvp-pos");
+  if(!v) return;
+  // "Loading…" went away only with hls.js (FRAG_LOADED); a direct file
+  // (every film, mp4 channels, Safari's own HLS) kept it over the picture.
+  v.addEventListener("playing", function(){
+    var status = $("#tvp-status");
+    if(status && !status.classList.contains("err") && !castOn()) status.setAttribute("hidden", "");
+  });
+  v.addEventListener("loadedmetadata", function(){
+    if(!vod.it) return;
+    if(vod.at > 0 && isFinite(v.duration) && vod.at < v.duration - 5) v.currentTime = vod.at;
+    vod.at = 0;
+    vodSeekUI();
+  });
+  v.addEventListener("timeupdate", function(){
+    if(!vod.it) return;
+    vodSeekUI();
+    if(Date.now() - vod.saved >= 15000) vodSave(false);
+  });
+  v.addEventListener("pause", function(){ if(vod.it && !v.ended) vodSave(true); });
+  v.addEventListener("ended", function(){
+    if(!vod.it) return;
+    vodSave(true);
+    var next = vod.onEnd;
+    if(next) setTimeout(next, 0);
+  });
+  if(pos){
+    pos.addEventListener("input", function(){
+      vod.drag = true;
+      var cur = $("#tvp-cur");
+      if(cur) cur.textContent = clock(+pos.value);
+    });
+    pos.addEventListener("change", function(){
+      vod.drag = false;
+      if(isFinite(v.duration)) v.currentTime = Math.min(+pos.value, v.duration - 1);
+      vodSeekUI();
+    });
+  }
+  var back = $("#tvp-back"), fwd = $("#tvp-fwd");
+  if(back) back.addEventListener("click", function(){ vodSkip(-10); });
+  if(fwd) fwd.addEventListener("click", function(){ vodSkip(30); });
+}
+
+// Watchlist (synced, vod.js setWatch): the same path as a favourite.
+function toggleWatch(it){
+  if(!state.data || !it) return false;
+  var payload = sliceGet();
+  var on = !V.watchOn(payload, it.k);
+  if(!V.setWatch(payload, it, on, Date.now())) return on;
+  sliceSet(payload);
+  commitLocal();
+  transientNote(t(on ? "vod.wl.added" : "vod.wl.removed"));
+  return on;
+}
+
+function dropResume(k){
+  if(!state.data) return;
+  var payload = sliceGet();
+  if(!V.dropResume(payload, k, Date.now())) return;
+  sliceSet(payload);
+  commitLocal();
+  transientNote(t("vod.cont.dropped"));
+}
+
+// What films.js may use (same frame, same script order).
+window.__orosTvHost = {
+  t: t, lang: activeLang, loc: loc, transient: transientNote,
+  data: function(){ return state.data; },
+  offline: function(){ return state.offline; },
+  playing: function(){ return state.playerCh && state.playerCh.vod ? state.playerCh.vod.k : ""; },
+  playVod: playVod, toggleWatch: toggleWatch, dropResume: dropResume,
+  csGet: csGet, csPut: csPut, clock: clock
+};
 
 /* ===== PLAYER CONTROLS ===== */
 
@@ -2517,7 +2885,8 @@ function setupPlayerControls(){
   if(favBtn){
     favBtn.addEventListener("click", function(){
       if(state.playerCh){
-        favoriteToggle(state.playerCh);
+        if(state.playerCh.vod) toggleWatch(state.playerCh.vod);
+        else favoriteToggle(state.playerCh);
         updatePlayerUI();
       }
     });
@@ -2595,6 +2964,10 @@ function setupPlayerControls(){
         video.volume = Math.max(0, video.volume - 0.05);
         saveVolumePrefs();
         updatePlayerUI();
+      }else if((e.key === "ArrowLeft" || e.key === "ArrowRight") && state.playerCh && state.playerCh.vod){
+        // TV-VOD: ← / → move 10 seconds in a film
+        e.preventDefault();
+        vodSkip(e.key === "ArrowLeft" ? -10 : 10);
       }
     });
   }
@@ -2621,11 +2994,14 @@ function setupPlayerControls(){
   // single teardown hook — idempotent, no duplicate wiring.
   var pdlg = $("#tv-player");
   if(pdlg) pdlg.addEventListener("close", function(){
+    vodSave(true);      // TV-VOD: where the film stopped, before the video is emptied
+    vodReset();
     if(state.hls){ state.hls.destroy(); state.hls = null; }
     var v = $("#tvp-video");
     if(v){ v.pause(); v.removeAttribute("src"); v.load(); }
     saveVolumePrefs();
     state.playerCh = null;
+    if(window.orosTvFilms) window.orosTvFilms.refresh();   // progress bars, Continue watching
   });
 }
 
@@ -2729,7 +3105,9 @@ function applyI18n(){
   var icons = {
     "#tvp-close": SVG_A + '<path d="M6 6l12 12M18 6L6 18"/></svg>',
     "#tvp-ext":   SVG_A + '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>',
-    "#tvp-fs":    SVG_A + '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>'
+    "#tvp-fs":    SVG_A + '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+    "#tvp-back":  SVG_A + '<path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>',
+    "#tvp-fwd":   SVG_A + '<path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>'
   };
   Object.keys(icons).forEach(function(sel){
     var b = $(sel);
@@ -2754,6 +3132,13 @@ function applyI18n(){
 
   var fsBtn = $("#tvp-fs");
   if(fsBtn) fsBtn.setAttribute("title", t("fullscreen"));
+
+  [["#tvp-back", "vod.back10"], ["#tvp-fwd", "vod.fwd30"], ["#tvp-pos", "vod.seek"]].forEach(function(p){
+    var el = $(p[0]);
+    if(!el) return;
+    if(p[0] !== "#tvp-pos") el.setAttribute("title", t(p[1]));
+    el.setAttribute("aria-label", t(p[1]));
+  });
 
   var streamPick = $("#tvp-streampick");
   if(streamPick) streamPick.setAttribute("title", t("stream.alt"));
@@ -2793,6 +3178,7 @@ function wire(){
   setupFilters();
   setupSearch();
   setupPlayerControls();
+  setupVodPlayer();
   setupCast();
   setupSourcesDialog();
   setupProgDialog();
