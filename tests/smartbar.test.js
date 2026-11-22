@@ -118,7 +118,10 @@ test("shell wiring: loaded after widgets.js, attached outside a single app, fit 
   assert.match(sh, /tickSafe\("smartbarTick"/);
   const src = read("smartbar.js");
   // chip text goes in through textContent only; innerHTML is for the fixed icons
-  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = IC.more;", "innerHTML = icon(k);"]);
+  // PEEK-1: the peek panels add the shell's own weather icons (wxIconFor / wxDayIcon, static SVG)
+  assert.deepStrictEqual(src.match(/innerHTML = [^;]+;/g), ["innerHTML = icon(kind);", "innerHTML = IC.more;", "innerHTML = icon(k);",
+    'innerHTML = w.icon || "";', 'innerHTML = d.icon || "";']);
+  assert.match(sh, /icon: wxDayIcon\(r\.code\)/);
   assert.match(src, /if \(strict\(\)\) return null;[\s\S]*if \(strict\(\)\) return null;/);
 });
 
@@ -213,7 +216,7 @@ test("fold: chips that do not fit, and every chip on a phone, go behind one butt
   assert.match(src, /e\.key === "Escape" && pop/);
   assert.match(src, /addEventListener\("touchstart", onPopDown, true\)/);
   // behind the lock nothing unfolds; the desktop bar window has no room for a panel
-  assert.match(src, /if \(lk\) \{ closePop\(\); return; \}/);
+  assert.match(src, /if \(lk\) \{ closePop\(\); closePeek\(\); return; \}/);
   assert.match(src, /html\.barwin \.sb-chip\.sb-more \{ display: none !important; \}/);
 });
 
@@ -338,4 +341,46 @@ test("SB-LIVE wiring: Time's own pause rules, the alarm taken off, Capture in me
   assert.match(tm, /var TMR_KEY = "oros-time-timers";/);
   assert.match(tm, /var SW_KEY = "oros-time-sw";/);
   assert.match(tm, /if \(ev\.key === TMR_KEY\) \{ tmrLoad\(\); tmrRender\(\); \}/);
+});
+
+// PEEK-1 (smartbar 1.4.0): peek panels from the weather chip and the event chip.
+test("PEEK-1 peekRows: timed rows by time, untimed after, no sensitive app, no info rows, at most max", () => {
+  const rows = [
+    { app: "todo", title: "Buy milk", kind: "task" },
+    { app: "calendar", title: "Dentist", time: "15:00", kind: "event" },
+    { app: "calendar", title: "Standup", time: "09:30", kind: "event" },
+    { app: "diary", title: "Secret", time: "08:00", kind: "event" },
+    { app: "weather", title: "Sunny", kind: "info" },
+    { app: "calendar", title: "", time: "10:00", kind: "event" },
+    null
+  ];
+  const out = M.peekRows(rows, { diary: true }, 6).map((r) => r.title);
+  assert.deepStrictEqual(out, ["Standup", "Dentist", "Buy milk"]);
+  assert.strictEqual(M.peekRows(rows, {}, 2).length, 2);
+  assert.deepStrictEqual(M.peekRows(null), []);
+});
+
+test("PEEK-1 hiLo: max / min, one side, nothing", () => {
+  assert.strictEqual(M.hiLo(23.6, 14.2), "24° / 14°");
+  assert.strictEqual(M.hiLo(23.6, null), "24°");
+  assert.strictEqual(M.hiLo(null, -0.4), "0°");
+  assert.strictEqual(M.hiLo(null, null), "");
+});
+
+test("PEEK-1 wiring: the weather chip peeks first, the shell keeps 7 days, panel safety", () => {
+  const sh = read("shell.js"), src = read("smartbar.js");
+  assert.match(sh, /SB\.peek\("weather", chip\)\) return;/);
+  assert.match(sh, /daily: wxDailyOf\(d\.daily\)/);
+  assert.match(sh, /daily: wxDailyRows\(p\.daily\)/);
+  assert.match(sh, /weather: function \(\) \{ return wxPeekData\(\); \}/);
+  assert.match(src, /go: function \(\) \{ peek\("event", chips\.event && chips\.event\.btn\); \}/);
+  // Escape and outside taps close it; nothing behind the lock; titles hide under Sensitive work
+  assert.match(src, /e\.key === "Escape" && peekEl/);
+  assert.match(src, /addEventListener\("touchstart", onPeekDown, true\)/);
+  assert.match(src, /locked\(\)\) return false;/);
+  assert.match(src, /var what = st \? t\("sb\.event\.hidden"\) : r\.title/);
+  ["pk.today", "pk.open", "pk.rain", "pk.none"].forEach((k) => {
+    assert.ok(read("translations.js").split('"' + k + '"').length === 3, k + " EN + EL");
+    assert.ok(read("i18n/de/shell.js").includes('"' + k + '"'), k + " DE");
+  });
 });

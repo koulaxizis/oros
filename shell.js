@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.65.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.66.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -11077,6 +11077,9 @@
         if (state.running && state.running.id === "weather") {
           returnToDesktop(); return;
         }
+        // PEEK-1: the week at a glance first, with "Open Weather" in it.
+        var SB = window.orosSmartBar;
+        if (SB && typeof SB.peek === "function" && SB.peek("weather", chip)) return;
         var wxApp = null;
         for (var i = 0; i < state.apps.length; i++) {
           if (state.apps[i].id === "weather") { wxApp = state.apps[i]; break; }
@@ -11145,6 +11148,48 @@
   // One truth, two consumers: if the Weather app holds NEWER data
   // for this location than we do, adopt it — the tray and the app
   // must never show different numbers for the same place.
+  // PEEK-1: the forecast days kept beside the tray's current weather
+  // (device-local, at most 7): [{ date, code, max, min, pop }], numbers
+  // or null. From Open-Meteo's column arrays, or the Weather app's rows.
+  function wxDailyRows(rows) {
+    var out = [];
+    (Array.isArray(rows) ? rows : []).slice(0, 7).forEach(function (r) {
+      if (!r || typeof r !== "object" || typeof r.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(r.date)) return;
+      var n = function (v) { return typeof v === "number" && isFinite(v) ? v : null; };
+      out.push({ date: r.date, code: n(r.code) || 0, max: n(r.max), min: n(r.min), pop: n(r.pop) });
+    });
+    return out;
+  }
+  function wxDailyOf(dl) {
+    if (!dl || !Array.isArray(dl.time)) return [];
+    var col = function (k, i) { return Array.isArray(dl[k]) ? dl[k][i] : null; };
+    return wxDailyRows(dl.time.map(function (day, i) {
+      return { date: day, code: col("weathercode", i), max: col("temperature_2m_max", i),
+               min: col("temperature_2m_min", i), pop: col("precipitation_probability_max", i) };
+    }));
+  }
+  // The weather peek panel (smartbar.js peek "weather"): the chip's place
+  // and now, plus the days from today on, each with the shell's own icon.
+  // null = nothing to show (offline, stale, no days kept yet).
+  function wxPeekData() {
+    var w = wgWeather();
+    if (!w || w.off) return null;
+    var c = wxCacheFor(wxLoc()), today = (function (d) {
+      return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+    })(new Date());
+    var days = wxDailyRows(c && c.daily).filter(function (r) { return r.date >= today; });
+    if (!days.length) return null;
+    return { temp: w.temp, icon: w.icon, place: w.place, at: w.at,
+             days: days.map(function (r) { return { date: r.date, icon: wxDayIcon(r.code), max: r.max, min: r.min, pop: r.pop }; }) };
+  }
+  // Day icons for the forecast (never the moon).
+  function wxDayIcon(code) {
+    var c = Number(code) || 0;
+    if (c === 0) return WX_SUN;
+    if (c === 1 || c === 2) return WX_PART;
+    return wxIconFor(c);
+  }
+
   function wxAdoptAppCache(w) {
     try {
       var data  = JSON.parse(localStorage.getItem("oros-weatherapp-data"));
@@ -11178,7 +11223,8 @@
         temp: p.current.temp,
         code: p.current.code,
         lat:  w.lat,
-        lon:  w.lon
+        lon:  w.lon,
+        daily: wxDailyRows(p.daily)          // PEEK-1: the app's rows, cleaned
       }));
       return true;
     } catch (e) { return false; }
@@ -11257,7 +11303,8 @@
             temp: d.current_weather.temperature,
             code: d.current_weather.weathercode,
             lat:  w.lat,
-            lon:  w.lon
+            lon:  w.lon,
+            daily: wxDailyOf(d.daily)          // PEEK-1: the 7-day panel
           }));
           // Success is the only path that buys the 30-min throttle.
           localStorage.setItem(WX_LAST_KEY, String(Date.now()));
@@ -18244,7 +18291,9 @@
       toast: function (msg) { scToast("err", msg); },
       changed: function () { settingsNotify(); },
       fit: function () { queueFitBar(); },
-      barwin: function () { return BARWIN; }   // SB-LIVE: no stop buttons in the desktop bar window
+      barwin: function () { return BARWIN; },  // SB-LIVE: no stop buttons in the desktop bar window
+      weather: function () { return wxPeekData(); },                 // PEEK-1
+      openDay: function (ymd) { window.__orosOpenCalendar("-", ymd); }   // PEEK-1: a day of the month
     });
   }
   loadApps();
