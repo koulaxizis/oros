@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.31.00
+- **Mockups for much more than books.** Books get new bindings, sizes and finishes (foil, embossing, slipcase, belly band, notebook). New products: CD, DVD and Blu-ray, cassette, VHS, vinyl, badges, stickers, keychains, enamel pins, magnets, mugs, posters, cards, T-shirts, tote bags, hoodies, socks and caps, each with a sheet for the printer. Scenes can stand on wood, marble, linen, paper or concrete with a cup, plant or pencil, and `Several in one picture` puts up to 6 mockups together; kits make a whole set from one picture. See [Mockups](help:a/mockups).
+
 ## Version 8.30.00
 - **More stations in Radio.** Every list now shows all its stations, 100 at a time, with `More stations`. New `Languages` and `Map` tabs: the map shows stations around the world, and a tap plays one (`Near me` asks for your position once, rounded to about 11 km, and never saves it). Discover can show Top, Trending now, New or updated and Random stations, and a station listed twice shows once. Country lists show their stations again. See [Radio](help:a/radio).
 
