@@ -13683,3 +13683,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js, relay/gate.js, assistant/core.js, assistant/assistant.js, i18n/de/assistant.js, tests/gate-kanban.test.js, tests/gate-relay.test.js, shell.js, help/topics/whatsnew.en/el.txt.
 - **Tests:** full `node --test tests/*.test.js`; gate-kanban (merge into ap, keys left out stay, empty text clears, step false keeps texts, merge wins, undo, rename and portal in one call, kept, refusals), gate-relay (schema, Assistant keys).
   - Not tested: a real Claude session through Gate, a real phone.
+
+### 2026-11-22 — orOS 8.44.01 — The local-folders bar and toasts keep clear of the Dock (DOCK-CLEAR, #1225)
+
+- **Why:** Chris, 2026-11-22 12:16 (screenshot, installed orOS on Windows, 1920 wide): «Η ειδοποίηση για τα Local folders πέφτει πάνω στο dock.» `#oros-local-bar` sat at `bottom: 12px` over a pinned bottom Dock.
+- **Rule (DOCK-CLEAR):** see Part VI, LOCAL-1: the bar sits above a pinned bottom Dock (`--tb-h`) and centres between a left/right Dock (`--ld-sl`/`--ld-sr`); every toast-stack position (`notifications.js` `getPositionStyles`) keeps its distance from a pinned Dock at its edge (`--tb-h`, `--ld-sl`, `--ld-sr`, `--ld-st`). The vars are 0 with the Dock off or auto-hiding.
+- **Files:** style.css, notifications.js, tests/dock-clear.test.js, shell.js, help/topics/whatsnew.en/el.txt.
+- **Tests:** full `node --test tests/*.test.js`; dock-clear (bar rule, all 8 toast positions); real shell (Playwright Chromium, LANG=C.UTF-8, 12 pinned apps): no overlap at 1920x1080 bottom/left/right and 360x740 bottom.
+  - Not tested: a real phone, Safari, installed orOS on Windows; an auto-hiding Dock that is shown can still sit under the bar.
