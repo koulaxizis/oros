@@ -232,6 +232,7 @@
     (para.runs || []).forEach(function (run) {
       var cs = run.cs ? T.resolveCs(csMap, run.cs) : {};
       var a = T.runAttrs(ps, cs, run);
+      if (run.ext && run.ext.del) { base += run.f ? 1 : String(run.t || "").length; return; }   // a tracked deletion (LY-W12) is not read
       if (run.f) { base += 1; return; }   // page-number fields: no pages here
       var txt = String(run.t || ""), html = "";
       keys[a.key] = 1;

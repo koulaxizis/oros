@@ -175,7 +175,18 @@
     var endsWithBr = false;
     p.runs.forEach(function (r) {
       var node;
-      if (r.f) {
+      if (r.ext && r.ext.del) {
+        // a tracked deletion (LY-W12): one piece, struck; it rides by key
+        var dk = "r" + (++S.pextN);
+        S.pext[dk] = r;
+        node = el("del", "sf sdel", r.f ? (r.f === "pn" ? "#" : "##") : r.t);
+        node.contentEditable = "false";
+        node.setAttribute("data-f", "del");
+        node.setAttribute("data-rx", dk);
+        node.setAttribute("data-t", r.f ? "#" : r.t);
+        node.title = revTitle(r.ext.del, "trk.del");
+        endsWithBr = false;
+      } else if (r.f) {
         node = el("span", "sf", r.f === "pn" ? "#" : "##");
         node.contentEditable = "false";
         node.setAttribute("data-f", r.f);
@@ -221,10 +232,11 @@
       if (r.ext && !r.f && !r.ext.fld && !r.ext.sup && node.nodeType === 11) {
         // any other ext of a run (a link, LY-W7, or another program's)
         // rides on a span by key, so typing in it keeps it
-        var xk = "r" + (++S.pextN), sx = el("span", r.ext.href ? "sx slink" : "sx");
+        var xk = "r" + (++S.pextN), sx = el("span", (r.ext.href ? "sx slink" : "sx") + (r.ext.ins ? " sins" : ""));
         S.pext[xk] = r.ext;
         sx.setAttribute("data-rx", xk);
         if (r.ext.href) sx.title = String(r.ext.href);
+        else if (r.ext.ins) sx.title = revTitle(r.ext.ins, "trk.ins");
         sx.appendChild(node); node = sx;
       }
       if (r.u) { var u = document.createElement("u"); u.appendChild(node); node = u; }
@@ -243,6 +255,12 @@
     // placeholder <br> to have a line at all
     if (!p.runs.length || endsWithBr) d.appendChild(document.createElement("br"));
     return d;
+  }
+
+  // who changed it and when (track changes, LY-W12)
+  function revTitle(m, key) {
+    var d = m && m.at ? new Date(m.at) : null;
+    return t(key) + (m && m.by ? " · " + m.by : "") + (d && !isNaN(d) ? " · " + d.toLocaleString() : "");
   }
 
   // a note's number in this story, as the editor shows it
@@ -343,6 +361,7 @@
           delete fx.ext;
           add(withFmt({ t: node.getAttribute("data-t") || "*", ext: JSON.parse(JSON.stringify(S.pext[node.getAttribute("data-rx")])) }, fx)); trailingBr = false;
         }
+        if (f === "del" && S.pext[node.getAttribute("data-rx")]) { add(JSON.parse(JSON.stringify(S.pext[node.getAttribute("data-rx")]))); trailingBr = false; }
         if (f === "sup" && node.getAttribute("data-t")) { add(withFmt({ t: node.getAttribute("data-t"), ext: { sup: 1 } }, fmtFor(node))); trailingBr = false; }
         return;
       }
@@ -383,7 +402,7 @@
           if (atom) {
             if (o === count) { found = { node: n, off: k }; return; }
             if (c.tagName === "BR" && !c.nextSibling && n === d) return;   // placeholder
-            var len = /^(sec|sup|rx)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : c.getAttribute("data-f") === "tbl" ? 0 : 1;   // a table counts nothing   // a running head or a note's mark counts its own text
+            var len = /^(sec|sup|rx|del)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : c.getAttribute("data-f") === "tbl" ? 0 : 1;   // a table counts nothing   // a running head or a note's mark counts its own text
             if (o < count + len) { found = { node: n, off: k + 1 }; return; }
             count += len;
           } else walk(c);
@@ -438,8 +457,18 @@
     ed.classList.toggle("is-empty", paras.length === 1 && !paras[0].runs.length);
   }
 
-  function commitParas(paras) {
+  function commitParas(paras, keepCaret) {
     paras = normParas(paras);
+    // track changes (LY-W12): the new text marked against the saved one
+    var st0 = story();
+    if (st0 && LY.track && LY.track.on() && !S.noTrack) {
+      var m0 = keepCaret ? readModel() : null;
+      var tr = LY.track.mark(st0.paras, paras, m0 ? [m0.a, m0.b] : null);
+      if (keyOf(normParas(tr.paras)) !== keyOf(paras)) {
+        paras = normParas(tr.paras);
+        if (keepCaret) { render(paras, tr.pos ? { a: tr.pos[0], b: tr.pos[1] } : null); rememberSel(); }
+      }
+    }
     var key = keyOf(paras), sid = S.sid, baseM = S.baseM;
     S.lastKey = key;
     S.dirty = false;
@@ -466,7 +495,7 @@
     if (LY.inframe) LY.inframe.flush();
     if (!S.sid || !S.dirty) return;
     var res = parse([]);
-    commitParas(res.paras);
+    commitParas(res.paras, isOpen() && document.activeElement === ed);
   }
   LY.flushStory = flush;
 
@@ -488,7 +517,7 @@
     render(paras, range);
     ed.focus();
     rememberSel();
-    commitParas(paras);
+    commitParas(paras, true);
     trackPs();
   }
 
@@ -623,6 +652,17 @@
         { label: t("note.settings"), fn: function () { flush(); LY.notes.settings(); } }]);
     });
     tools.appendChild(nt);
+    // track changes (LY-W12)
+    var trb = el("button", "icon-btn sf-btn trk-btn", "\u270E");
+    trb.type = "button"; trb.title = t("trk.menu"); trb.setAttribute("aria-label", t("trk.menu"));
+    trb.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    trb.addEventListener("click", function () {
+      if (!LY.track) return;
+      rememberSel(); flush();
+      var st = story();
+      LY.menu(trb, LY.track.menu(settle, st ? st.paras : []));
+    });
+    tools.appendChild(trb);
     // a table (LY-W12)
     var tbb = el("button", "icon-btn sf-btn", "\u25A6");
     tbb.type = "button"; tbb.title = t("tbl.ins"); tbb.setAttribute("aria-label", t("tbl.ins"));
@@ -705,6 +745,30 @@
       });
     });
   }
+  // ---------- Track changes (LY-W12) ----------
+  // accept or reject the changes in the selection (or all), untracked
+  function settle(fn, all) {
+    if (!isOpen()) {
+      selectedStoryOp(function (paras) { var r = fn(paras, null); paras.length = 0; r.paras.forEach(function (p) { paras.push(p); }); });
+      return;
+    }
+    var n = 0;
+    S.noTrack = true;
+    try {
+      modelEdit(function (paras, a, b) {
+        var r = fn(paras, all ? null : { a: a, b: b });
+        n = r.n;
+        if (!n) return false;
+        paras.length = 0;
+        r.paras.forEach(function (p) { paras.push(p); });
+        var c = { p: Math.min(a.p, paras.length - 1), o: 0 };
+        return { a: c, b: c };
+      });
+    } finally { S.noTrack = false; }
+    LY.toast(t(n ? "trk.done" : "trk.none", { n: n }));
+  }
+  function showTrk() { var b = tools && tools.querySelector(".trk-btn"); if (b) { var on = !!(LY.track && LY.track.on()); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); } }
+
   // ---------- Tables (LY-W12) ----------
   // a new table at the caret: before the caret's paragraph when the
   // caret is at its start, after it at its end, else the paragraph
@@ -837,7 +901,7 @@
     S.sid = st.id; S.item = it.id; S.baseM = st.m; S.dirty = false; S.sel = null;
     S.curPs = st.paras[0] ? st.paras[0].ps : "ps-body";
     $("story-title").textContent = t("story.title");
-    buildTools();
+    buildTools(); showTrk();
     fillSelects();
     $("story").hidden = false;
     document.body.classList.add("story-open");
@@ -887,6 +951,7 @@
     var st = story();
     if (!st) { S.dirty = false; close(); return; }
     fillSelects();
+    showTrk();
     if (S.dirty) { updateFoot(parse([]).paras); return; }
     S.baseM = st.m;
     if (keyOf(st.paras) === S.lastKey) { updateFoot(st.paras); return; }

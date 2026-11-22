@@ -22,7 +22,7 @@
     // a table (LY-W12): its cells' text, row by row
     var tb = p.ext && p.ext.tbl;
     if (tb && Array.isArray(tb.rows)) return tb.rows.map(function (r) { return (r && r.c || []).map(function (c) { return c && !c.x && typeof c.t === "string" ? c.t : ""; }).join(" "); }).join(" ").replace(/\s+/g, " ").trim();
-    return (p.runs || []).map(function (r) { return typeof r.t === "string" && !(r.ext && (r.ext.fn || r.ext.xr)) ? r.t : ""; }).join("").replace(/\s+/g, " ").trim();
+    return (p.runs || []).map(function (r) { return typeof r.t === "string" && !(r.ext && (r.ext.fn || r.ext.xr || r.ext.del)) ? r.t : ""; }).join("").replace(/\s+/g, " ").trim();
   }
   function words(s) { return String(s || "").split(/\s+/).filter(Boolean); }
   // { pages, words, frames, pictures, stories }
