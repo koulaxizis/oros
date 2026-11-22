@@ -232,11 +232,12 @@
       if (r.ext && !r.f && !r.ext.fld && !r.ext.sup && node.nodeType === 11) {
         // any other ext of a run (a link, LY-W7, or another program's)
         // rides on a span by key, so typing in it keeps it
-        var xk = "r" + (++S.pextN), sx = el("span", (r.ext.href ? "sx slink" : "sx") + (r.ext.ins ? " sins" : ""));
+        var xk = "r" + (++S.pextN), sx = el("span", (r.ext.href ? "sx slink" : "sx") + (r.ext.ins ? " sins" : "") + (r.ext.ix ? " six" : ""));
         S.pext[xk] = r.ext;
         sx.setAttribute("data-rx", xk);
         if (r.ext.href) sx.title = String(r.ext.href);
         else if (r.ext.ins) sx.title = revTitle(r.ext.ins, "trk.ins");
+        else if (r.ext.ix) sx.title = t("ix.mark") + ": " + (r.ext.ix.t || r.t) + (r.ext.ix.s ? " / " + r.ext.ix.s : "");
         sx.appendChild(node); node = sx;
       }
       if (r.u) { var u = document.createElement("u"); u.appendChild(node); node = u; }
@@ -648,7 +649,7 @@
     nt.addEventListener("mousedown", function (e) { e.preventDefault(); });
     nt.addEventListener("click", function () {
       rememberSel();
-      LY.menu(nt, [{ label: t("note.ins"), fn: insertNote }, { label: t("xr.ins"), fn: insertXref }, { label: t("link.ins"), fn: linkCmd },
+      LY.menu(nt, [{ label: t("note.ins"), fn: insertNote }, { label: t("xr.ins"), fn: insertXref }, { label: t("link.ins"), fn: linkCmd }, { label: t("ix.ins"), fn: insertIx },
         { label: t("note.settings"), fn: function () { flush(); LY.notes.settings(); } }]);
     });
     tools.appendChild(nt);
@@ -745,6 +746,23 @@
       });
     });
   }
+  // ---------- Index entries (LY-W13) ----------
+  // the selected words become an index entry (run ext.ix)
+  function insertIx() {
+    if (!isOpen() || !LY.bookIndex) return;
+    var m = readModel();
+    if (m.a.p === m.b.p && m.a.o === m.b.o) { LY.toast(t("ix.select")); return; }
+    var words = "";
+    eachRun(m.paras, m.a, m.b, function (r) { if (!r.f) words += r.t; });
+    LY.bookIndex.entryDlg(words, function (ix) {
+      modelEdit(function (paras, a, b) {
+        if (a.p === b.p && a.o === b.o) return false;
+        eachRun(paras, a, b, function (r) { if (r.f || (r.ext && (r.ext.fn || r.ext.xr || r.ext.del))) return; r.ext = Object.assign({}, r.ext || {}, { ix: JSON.parse(JSON.stringify(ix)) }); });
+        return { a: a, b: b };
+      });
+    });
+  }
+
   // ---------- Track changes (LY-W12) ----------
   // accept or reject the changes in the selection (or all), untracked
   function settle(fn, all) {

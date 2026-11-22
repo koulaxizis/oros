@@ -2319,6 +2319,7 @@
       { label: t("more.toc"), disabled: !LY.house.hasToc(doc), fn: function () { LY.house.updateToc(); } },
       { label: t("more.contents"), disabled: !LY.notes, fn: function () { LY.notes.toc(); } },
       { label: t("more.notes"), disabled: !LY.notes, fn: function () { LY.notes.settings(); } },
+      { label: t("more.index"), disabled: !LY.bookIndex, fn: function () { LY.bookIndex.dialog(); } },
       { label: t("more.book"), disabled: !LY.book, fn: function () { LY.book.open(); } },
       { label: t("more.print"), disabled: !LY.proof, fn: function () { LY.proof.dialog(); } },
       { label: t("more.versions"), disabled: !LY.versions, fn: function () { LY.versions.dialog(); } },

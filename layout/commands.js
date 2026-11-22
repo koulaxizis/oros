@@ -135,7 +135,9 @@
     header: { t: "int", lo: 0, hi: 20, def: 1 }, repeat: { t: "bool", def: 1 }, after_para: { t: "int", lo: 0, hi: 99999, def: 0 }, replace: { t: "int", lo: 0, hi: 9999, def: 0 },
     widths: { t: "str", max: 200 }, rule: { t: "num", lo: -1, hi: 12, def: -1 }, padding: { t: "num", lo: -1, hi: 36, def: -1 },
     rule_color: { t: "color" }, header_fill: { t: "color" }, style: { t: "str", max: 60 } } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table"];
+  // index (LY-W13): words marked for the book's index, the index made
+  CATALOG.index = { kind: "doc", args: { terms: { t: "list", of: { t: "str", max: 200 }, max: 200 }, unmark: { t: "str", max: 120 }, build: { t: "bool", def: 1 }, title: { t: "str", max: 120 } } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -190,6 +192,8 @@
     "\ntable: a table into the story `story` (or the frame `frame` of it): rows one entry per row, cells separated by | (\\n = a new line in a cell), header the first rows that repeat at the top of each new column or page (repeat false = not repeated), " +
     "after_para after that paragraph (1 = the first; 0 = at the end), replace n = the story's n-th table becomes this one, widths relative column widths (e.g. \"2 1 1\"), rule the rule width in pt (0 = none, -1 = 0.5), padding the cell padding in pt (-1 = 4), " +
     "rule_color and header_fill #rrggbb, style the paragraph style of the cells; rows never split, the owner merges cells in the Story Editor" +
+    "\nindex: the book's index: terms one entry per word or phrase to mark wherever it stands in the text (any case or accents, whole words): \"word\", \"word = Topic\" or \"word = Topic / Sub-topic\"; " +
+    "unmark a topic whose marks go (* = every mark); build true makes the index again from the marks (a new last page with two columns titled `title`, default Index or Ευρετήριο, when the book has none); pages as the pages show them" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
     "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width); " +
     "colour corrections, kept apart from the file (numbers separated by spaces; empty = as it is; values that change nothing take that correction off; applied in this order): " +
@@ -294,6 +298,7 @@
     if (st.op === "frame") return PRO.addFrame(doc, st, now, env.idf) ? 1 : 0;
     if (st.op === "retext") return PRO.setStory(doc, st, now);
     if (st.op === "table") return PRO.addTable(doc, st, now);
+    if (st.op === "index") return applyIndex(doc, st, env, now);
     if (st.op === "house_pages") {
       var house = env.house || houseIn(env.docs, st.house, doc.id);
       if (!house) { if (env.notes && env.notes.indexOf("noHouse") < 0) env.notes.push("noHouse"); return 0; }
@@ -361,6 +366,26 @@
       if (st.op === "pages" && st.flow) st = Object.assign({}, st, { flow: 0 });
     }
     return S.apply(doc, st, now, { grey: env.grey || {} });
+  }
+
+  // index (LY-W13): marks, then the index story (made by Layout when
+  // the text engine is not here: note "indexLater")
+  function applyIndex(doc, st, env, now) {
+    var IX = node ? require("./bookindex.js") : root.LY_INDEX;
+    var terms = (st.terms || []).filter(function (x) { return String(x || "").trim(); });
+    if (!IX) return terms.length + (st.unmark ? 1 : 0) + (st.build ? 1 : 0);
+    var n = 0;
+    if (st.unmark) n += IX.unmark(doc, st.unmark.trim() === "*" ? null : st.unmark, now);
+    terms = terms.map(IX.parseTerm).filter(Boolean);
+    if (terms.length) n += IX.markAll(doc, terms, now);
+    if (!st.build) return n;
+    if (!IX.idxStory(doc)) {
+      var lang = doc.setup.ext && typeof doc.setup.ext.lang === "string" ? doc.setup.ext.lang : "el";
+      if (!IX.place(doc, now, st.title || (/^el/.test(lang) ? "Ευρετήριο" : "Index"), env.idf)) return n;
+      n++;
+    }
+    if (!hasEngine()) { if (env.notes && env.notes.indexOf("indexLater") < 0) env.notes.push("indexLater"); return n + 1; }
+    return n + (IX.update(doc, now) ? 1 : 0);
   }
 
   // A house style document (LY-HS: setup.ext.house) by name, or the
