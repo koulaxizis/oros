@@ -884,7 +884,7 @@ test("GATE-SCREEN: Layout's work with nobody at a screen waits for one, live or 
   assert.equal(rows.length, 1);
   assert.equal(rows[0].hd, 1);
   assert.match((await tc("edit_in_app", { app: "budget", commands: [] })).content[0].text, /may not change budget/);
-  assert.match((await tc("edit_in_app", { app: "layout", dry_run: true, commands: [] })).content[0].text, /dry run needs orOS open/);
+  assert.match((await tc("edit_in_app", { app: "layout", dry_run: true, commands: [] })).content[0].text, /dry run with orOS closed needs a copy made by a newer orOS/, "GATE-PL11: a copy without the commands");
   assert.match((await tc("do_action", { app: "music" })).content[0].text, /needs orOS open/, "do_action is never kept for later");
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 1);
   assert.equal((await tc("edit_in_app", { app: "layout", commands: [{ op: "set" }] })).isError, false);
@@ -1036,6 +1036,94 @@ test("GL-7: oros_update asks every open orOS to update; a device's Update asks t
   assert.match(g, /if \(ev\.data\.indexOf\('\{"upd"'\) === 0\) \{ onUpd\(\); return; \}/);
 });
 
+// GATE-PL11 (Chris 2026-11-22, «Πλανόδιο» item 11): with every orOS closed
+// a dry run is checked against the copy's pack, and so is every edit_in_app
+// (studio_import too) before it waits, so a mistake shows at once.
+test("GATE-PL11: edit_in_app and studio_import are checked against the copy with orOS closed", async () => {
+  const w = world();
+  await newGate(w);
+  const b = w.boxes.get(ID);
+  const K = crypto.randomBytes(32), KS = b64u(K);
+  const sock = { sent: [], closed: false, __g: { th: hex(TOK), v: 0, at: 1 }, send(x) {
+    this.sent.push(x);
+    const q = JSON.parse(x);
+    if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: KS })), 1);
+  }, close() {} };
+  b.socks.push(sock);
+  const t = await tokens(w);
+  const obj = { type: "object", properties: {} };
+  await b.st.storage.put("devtools", ["edit_in_app", "undo_change", "files_write"].map((name) => ({ name, description: "c", inputSchema: obj, annotations: { readOnlyHint: false } })));
+  const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
+  const SC = require("../studio/commands.js"), ops = {};
+  Object.keys(SC.CATALOG).forEach((op) => { ops[op] = JSON.parse(JSON.stringify(SC.CATALOG[op].args || {})); });
+  const pack = { studio: { max: SC.MAX_STEPS, ops, docs: ["Πλανόδιο 1", "Πλανόδιο 2", "Demo"], open: "Demo" } };
+  // a live call first, so the box keeps a key for this link
+  sock.send = function (x) { this.sent.push(x); const q = JSON.parse(x); if (q.q) setTimeout(() => b.box.webSocketMessage(sock, JSON.stringify({ r: q.q, ok: true, c: q.n === "_key" ? KS : "ok" })), 1); };
+  await tc("edit_in_app", { app: "studio", dry_run: true, steps: [{ op: "project", bpm: 90 }] });
+  await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify({ at: 1e12, lv: { studio: "write", files: "write" }, hold: 0, ans: { __edit: JSON.stringify(pack) } })) }));
+  sock.closed = true;
+  b.socks.length = 0;
+  // a good dry run: checked, nothing kept
+  let r = await tc("edit_in_app", { app: "studio", dry_run: true, designs: "named", name: "πλανοδιο 2", steps: [{ op: "project", bpm: 96 }] });
+  assert.equal(r.isError, false, r.content[0].text);
+  let o = JSON.parse(r.content[0].text);
+  assert.equal(o.checked_with_oros_closed, true);
+  assert.deepEqual(o.documents, ["Πλανόδιο 2"]);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0, "a dry run is never kept");
+  // mistakes show at once, for a dry run and a real call alike
+  r = await tc("edit_in_app", { app: "studio", dry_run: true, steps: [{ op: "project", bpm: 9999 }, { op: "nope" }] });
+  assert.equal(r.isError, true);
+  assert.match(r.content[0].text, /command 1 project: bpm 9999 is not allowed[\s\S]*command 2 unknown command "nope"/);
+  r = await tc("edit_in_app", { app: "studio", designs: "named", name: "Ballads", steps: [{ op: "project", bpm: 96 }] });
+  assert.equal(r.isError, true);
+  assert.match(r.content[0].text, /no document is called "Ballads"[\s\S]*Nothing was kept/);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0);
+  // studio_import without a copy of Claude's folders: the file is looked for when it runs
+  r = await tc("studio_import", { path: "/internal/Studio/Podcasts/Ep0.orosstudio" });
+  assert.equal(r.isError, false, r.content[0].text);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 1);
+  await tc("undo_change", { ids: [JSON.parse(r.content[0].text).change_id] });
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 0);
+  // with the copy: the file must be in it or waiting in a files_write
+  const idx = { v: 1, at: 1e12, w: 1, f: ["/internal/Studio/Podcasts"], files: [{ p: "/internal/Studio/Podcasts/Ep1.orosstudio", s: 10, m: 1, v: "0123456789abcdef" }] };
+  await b.st.storage.put("x:0", await G.sealText(K, JSON.stringify(idx)));
+  await b.st.storage.put("fidx", { n: 1, at: 1e12 });
+  r = await tc("studio_import", { path: "/internal/Studio/Podcasts/Ep3.orosstudio" });
+  assert.equal(r.isError, true);
+  assert.match(r.content[0].text, /"Studio\/Podcasts\/Ep3\.orosstudio" is neither in the copy of Claude's folders nor waiting in a files_write/);
+  r = await tc("files_write", { path: "Studio/Podcasts/Ep3.orosstudio", text: "{}" });
+  assert.equal(r.isError, false, r.content[0].text);
+  r = await tc("studio_import", { path: "/internal/Studio/Podcasts/Ep3.orosstudio", title: "Πλανόδιο 3" });
+  assert.equal(r.isError, false, r.content[0].text);
+  r = await tc("studio_import", { path: "/internal/Studio/Podcasts/Ep1.orosstudio" });
+  assert.equal(r.isError, false, r.content[0].text);
+  assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 3);
+  // the project a waiting import makes can be named already
+  r = await tc("edit_in_app", { app: "studio", dry_run: true, designs: "named", name: "Πλανόδιο 3", steps: [{ op: "project", bpm: 96 }] });
+  assert.equal(r.isError, false, r.content[0].text);
+  // Mail thread review: the closed checks read only the small header h (f), never the whole row
+  const rows = [...(await b.st.storage.list({ prefix: "q:" })).entries()], fs = [];
+  for (const [k, v] of rows) {
+    const h = JSON.parse(await G.openText(K, v.h)), x = JSON.parse(await G.openText(K, v.c));
+    fs.push(h.f);
+    assert.equal(JSON.stringify(h.a).indexOf("Podcasts"), -1, "f is kept apart from a");
+    // an old row (h without f) falls back to c; a new one never opens c
+    if (x.a && x.a.title === "Πλανόδιο 3") { delete h.f; await b.st.storage.put(k, Object.assign({}, v, { h: await G.sealText(K, JSON.stringify(h)) })); }
+    else await b.st.storage.put(k, Object.assign({}, v, { c: "not-a-sealed-row" }));
+  }
+  assert.deepEqual(fs.filter(Boolean).map((f) => f.p || f.app + ":" + f.d).sort(), ["/internal/Studio/Podcasts/Ep3.orosstudio", "studio:Ep1", "studio:Πλανόδιο 3"]);
+  assert.equal(G.pendHead("files_write", { path: "../x" }, 1).f, null, "nothing named: null, c never opened");
+  assert.equal(G.pendHead("budget_add", {}, 1).f, undefined);
+  const qn = await b.box.queuedNames(K);
+  assert.deepEqual(qn.paths, ["/internal/Studio/Podcasts/Ep3.orosstudio"]);
+  assert.deepEqual(Object.keys(qn.docs), ["studio"]);
+  assert.deepEqual(qn.docs.studio.slice().sort(), ["Ep1", "Πλανόδιο 3"]);
+  // other apps and old copies
+  r = await tc("edit_in_app", { app: "layout", dry_run: true, steps: [{ op: "set" }] });
+  assert.equal(r.isError, true);
+  assert.match(r.content[0].text, /may not use layout|may not change layout/);
+});
+
 test("GQ-VER: a waiting change that needs a newer orOS goes only to a device that has it (Chris 2026-11-22)", async () => {
   // the phone's cached older orOS dropped a folder question it did not know
   assert.equal(G.minVer("claude_folders_request", {}), 84500);
@@ -1043,7 +1131,7 @@ test("GQ-VER: a waiting change that needs a newer orOS goes only to a device tha
   assert.equal(G.minVer("edit_in_app", { app: "mockups", steps: [] }), 84600);
   assert.equal(G.minVer("edit_in_app", { app: "photolab", steps: [{ op: "fill" }] }), 84600);
   assert.equal(G.minVer("edit_in_app", { app: "photolab", steps: [{ op: "tone" }] }), 0);
-  assert.equal(G.minVer("create_items", { app: "timesheet_project", items: [] }), 85400);
+  assert.equal(G.minVer("create_items", { app: "timesheet_project", items: [] }), 85500);
   assert.equal(G.minVer("create_items", { app: "timesheet", items: [] }), 0);
   assert.equal(G.minVer("edit_in_app", { app: "atelier", steps: [{ op: "create" }] }), 0);
   assert.equal(G.minVer("budget_add", {}), 0);

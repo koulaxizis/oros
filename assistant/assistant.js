@@ -5180,7 +5180,7 @@
     if (!f || typeof f.path !== "string" || typeof f.text !== "string" || !F || typeof F.writeText !== "function") return;
     try { Promise.resolve(F.writeText(f.path, f.text)).catch(function () {}); } catch (e) {}
   }
-  // TS-GATE (8.54.00): change_item's invoice / event on a Timesheet
+  // TS-GATE (8.55.00): change_item's invoice / event on a Timesheet
   // entry are refs; here they become { id, title } / { src, title }
   // (edits2.js timesheetChange), "" stays "" (clears).
   function tsChangeRefs(c, ch) {
@@ -5645,7 +5645,7 @@
     if (crm) CRM_ADD.forEach(function (id) { out.push({ id: id, name: crm.name, icon: crm.icon, of: "crm" }); });
     var tv = apps.filter(function (a) { return a.id === "travel" && have[a.id]; })[0];
     if (tv) TRAVEL_ADD.forEach(function (id) { out.push({ id: id, name: tv.name, icon: tv.icon, of: "travel" }); });
-    // TS-GATE (8.54.00): a Timesheet project (and its client), whenever Timesheet is allowed
+    // TS-GATE (8.55.00): a Timesheet project (and its client), whenever Timesheet is allowed
     var ts = out.filter(function (a) { return a.id === "timesheet"; })[0];
     if (ts) TS_ADD.forEach(function (id) { out.push({ id: id, name: ts.name, icon: ts.icon, of: "timesheet" }); });
     return out;
@@ -5753,7 +5753,7 @@
     }
     return "";
   }
-  // TS-GATE (8.54.00): a Timesheet entry's invoice and event, refs
+  // TS-GATE (8.55.00): a Timesheet entry's invoice and event, refs
   // from search_data (Invoices: { invoice }, Calendar: { id, date }),
   // never a number or a name. The plan card shows their titles.
   function tsRefsOf(c, items) {
@@ -9701,6 +9701,45 @@
       return { ok: true, items: out };
     });
   }
+  // GATE-PL11 (Chris 2026-11-22, dogfooding the podcast «Πλανόδιο», item
+  // 11): what the relay needs to check edit_in_app while every orOS is
+  // closed, sealed in the closed copy (gate.js sendCopy, ans.__edit):
+  // per app Claude may change, its commands with their fields (the
+  // catalog's specs, plain data, never code), the most commands, its
+  // documents' names and the open one's. → Promise<{ app: pack }>.
+  var PACK_SPEC = ["t", "v", "lo", "hi", "req", "max", "min", "def", "of", "f"];
+  function packSpec(sp, d) {
+    if (!sp || typeof sp !== "object" || d > 4) return null;
+    var o = {};
+    PACK_SPEC.forEach(function (k) {
+      if (sp[k] === undefined) return;
+      if (k === "of") { var x = packSpec(sp.of, d + 1); if (x) o.of = x; }
+      else if (k === "f") { var f = {}; Object.keys(sp.f || {}).forEach(function (n) { var y = packSpec(sp.f[n], d + 1); if (y) f[n] = y; }); o.f = f; }
+      else if (k === "v") { if (Array.isArray(sp.v)) o.v = sp.v.filter(function (z) { return typeof z === "string" || typeof z === "number"; }).slice(0, 200); }
+      else if (sp[k] === null || typeof sp[k] === "number" || typeof sp[k] === "boolean" || typeof sp[k] === "string") o[k] = sp[k];   // def may be null
+    });
+    return typeof o.t === "string" ? o : null;
+  }
+  function gateEditPack() {
+    var ga = gateApps(), cats = editCats(ga.write), ids = Object.keys(cats).sort(), out = {};
+    return ids.reduce(function (pr, id) {
+      return pr.then(function () { return EDIT_SRC[id].disk ? diskScan(id) : null; }).then(function () {
+        var mod = cats[id], ops = {}, src = editSource(id), names = [], open = "";
+        Object.keys(mod.CATALOG || {}).forEach(function (op) {
+          var args = {}, def = mod.CATALOG[op] || {};
+          Object.keys(def.args || {}).forEach(function (k) { var x = packSpec(def.args[k], 0); if (x) args[k] = x; });
+          ops[op] = args;
+        });
+        try {
+          var all = mod.targets(src.data, src.folders, src.open, "all", "");
+          if (all && all.ok) names = all.docs.map(function (d) { return String(d && d.name || "").slice(0, 120); }).filter(Boolean).slice(0, 300);
+          var o = mod.targets(src.data, src.folders, src.open, "open", "");
+          if (o && o.ok && o.docs[0]) open = String(o.docs[0].name || "").slice(0, 120);
+        } catch (e) {}
+        out[id] = { max: +mod.MAX_STEPS || 40, ops: ops, docs: names, open: open };
+      }, function () {});
+    }, Promise.resolve()).then(function () { return out; });
+  }
   // 7.44.00: what these refs are ([{ a: app name, t: title }]), for the
   // owner's question before a queued deletion (gate.js askQueued).
   function gatePeek(refs) {
@@ -10113,7 +10152,7 @@
                             var end = function (r) { gateAt = 0; return r; };
                             return gateRun(n, a).then(function (r) { end(); if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; },
                                                       function (e) { end(); throw e; });
-                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText,
+                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText, editPack: gateEditPack,
                           // PEND-1: the ref of an item another device made from a queued create_items
                           ref: function (rec) { if (!rec || typeof rec !== "object" || typeof rec.app !== "string") return ""; gateRefsLoad(); var r = refFor(gateConv, { app: rec.app, target: rec.target, title: String(rec.title || ""), q: String(rec.title || ""), id: rec.id }); gateRefsSave(); return r; },
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };

@@ -1,4 +1,4 @@
-// Timesheet through orOS Gate (TS-GATE, 8.54.00): a new project with
+// Timesheet through orOS Gate (TS-GATE, 8.55.00): a new project with
 // its client, hourly rate, day minimum and overtime (create_items
 // timesheet_project); an entry's billed state, the Invoices document
 // it went on and the Calendar event it was for (create_items and

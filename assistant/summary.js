@@ -413,7 +413,7 @@
       return row;
     });
     if (rep.rows.length > MAX_PROJECTS) out.more_projects = rep.rows.length - MAX_PROJECTS;
-    // TS-GATE (8.54.00): the month's work, entry by entry (what each
+    // TS-GATE (8.55.00): the month's work, entry by entry (what each
     // was charged: its time, overtime and the day minimum's top-up),
     // and per client what is billed and what is still to invoice, so
     // the hours can be checked against invoices, Budget and Calendar.
