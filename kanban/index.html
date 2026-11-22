@@ -142,6 +142,13 @@
         <span data-i18n="card.info.add">Add field</span>
       </button>
 
+      <!-- AP-FLOW: shown to its creator in the Author Portal (only on a board with step columns) -->
+      <div id="c-ap" hidden>
+        <label data-i18n="ap.title">Author Portal</label>
+        <label class="chk"><input type="checkbox" id="c-ap-on"> <span data-i18n="ap.card">Show in its creator's Author Portal</span></label>
+        <div class="dlg-hint" id="c-ap-hint"></div>
+      </div>
+
       <div class="dlg-hint" id="c-ts-spent" hidden></div>
 
       <menu>
@@ -175,6 +182,22 @@
         <label class="chk"><input type="checkbox" id="col-a-top"> <span data-i18n="auto.top">Move it to the top</span></label>
         <label class="chk sel"><span data-i18n="auto.label">Add a label</span> <select id="col-a-label"></select></label>
       </div>
+
+      <!-- AP-FLOW: a step of the creator's production flow (Revenue Splitter Author Portal) -->
+      <details id="col-ap-box" class="ap-box">
+        <summary data-i18n="ap.title">Author Portal</summary>
+        <label class="chk"><input type="checkbox" id="col-ap-on"> <span data-i18n="ap.colOn">A step of the creator's production flow</span></label>
+        <label class="chk"><input type="checkbox" id="col-ap-e"> <span data-i18n="ap.colEnd">Finish: when the book gets here, the creator's bar hides until the next step</span></label>
+        <div class="dlg-hint" data-i18n="ap.colHint">The creator sees the columns marked as steps, in the board's order, in their Author Portal.</div>
+        <label for="col-ap-n" data-i18n="ap.colName">Name for the creator (empty = the column's name)</label>
+        <input id="col-ap-n" type="text" maxlength="80" autocomplete="off">
+        <label for="col-ap-a" data-i18n="ap.colAbout">Explanation for the creator (shown on hover or tap)</label>
+        <textarea id="col-ap-a" rows="3" maxlength="600" data-i18n-ph="ap.colAboutPh"></textarea>
+        <label for="col-ap-ne" data-i18n="ap.colNameEn">Name in English (optional)</label>
+        <input id="col-ap-ne" type="text" maxlength="80" autocomplete="off">
+        <label for="col-ap-ae" data-i18n="ap.colAboutEn">Explanation in English (optional)</label>
+        <textarea id="col-ap-ae" rows="3" maxlength="600"></textarea>
+      </details>
 
       <menu>
         <button type="button" id="col-delete" class="danger" data-i18n="col.delete">Delete column</button>
