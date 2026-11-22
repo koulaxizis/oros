@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.30.00
+- **More stations in Radio.** Every list now shows all its stations, 100 at a time, with `More stations`. New `Languages` and `Map` tabs: the map shows stations around the world, and a tap plays one (`Near me` asks for your position once, rounded to about 11 km, and never saves it). Discover can show Top, Trending now, New or updated and Random stations, and a station listed twice shows once. Country lists show their stations again. See [Radio](help:a/radio).
+
 ## Version 8.29.00
 - **Walk and Bike routes with no network (experimental).** With no network, Maps now works out Walk and Bike routes on the device from your offline maps, using their roads, paths, steps and cycleways. See [Maps](help:a/maps).
 

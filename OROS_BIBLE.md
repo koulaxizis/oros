@@ -13477,6 +13477,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Tests:** full `node --test tests/*.test.js`; Playwright `offroute-e2e.js` (real pack download from a fixture PMTiles source; offline EN, Greek at 360 px, German), `outdoor-e2e.js`, `planner-e2e.js`. Not tested: a real phone with a large pack, long routes.
 - **Next:** the hiking and cycling plan (H1-H8) is complete.
 
+### 2026-11-22 — 8.30.00 — Radio: more stations, Languages, Discover lists, one row per station, stations on a map (RX-MORE W1 + W2) (#1205)
+- **What:** Chris asked for more sources (e.g. Radio Garden) without duplicates. Radio Garden, SomaFM, laut.fm, Radio Paradise, Shoutcast and TuneIn do not let a third-party web app play their stations (Part IX RX-MORE), so the variety comes from radio-browser.info: every list in pages of 100 (`More stations`), a Languages tab, Discover chips (Top, Trending now, New or updated, Random), one row per station (same stream, or homepage + folded name; the heart knows both), and a Map tab (Leaflet from vendor/ on first use, OSM tiles, the best voted 300 around the centre, `Near me` once and rounded to about 11 km). Fixed: country lists asked the country-name endpoint with a code and came back empty.
+- **Files:** radio/radio.js, radio/tools.js (§4), radio/radio.css, radio/index.html, radio/help.en/el.txt, i18n/de/radio.js, .github/qa/budget.json (radio first open), tests/radio-more.test.js (new), tests/radio-net.test.js.
+- **Tests:** full `node --test tests/*.test.js`; Playwright Chromium at 360 px in EN, EL and DE with the directory and tiles mocked (lists, More, duplicates, Languages, Countries with tag chips, Map with an escaped hostile name and a rounded Near me). Live endpoints checked from a real browser. Not tested: a real phone, Safari, real tiles and streams in the container.
+
 ### 2026-11-22 — Docs + tests — Ko-fi gone for good (KOFI-0, no APP_VERSION)
 
 - **Why:** Chris, 2026-11-21: Ko-fi has gone completely (Part IX KOFI-0). The app itself already had no Ko-fi since 7.79.02 (SUP-1); this removes the last current-state mentions.
