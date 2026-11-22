@@ -852,8 +852,11 @@
   // and Obtainium then update them; versions.json next to it lets the
   // app itself say once that a newer APK is out. The APK's start
   // address carries its versionCode (android/tools/gen.js: ?apk=<code>).
+  // The address people add goes through our download counter
+  // (tools/apps-counter), which passes every file on from GitHub Pages
+  // unchanged; versions.json is read from GitHub Pages directly.
   var REPO_SITE = "https://koulaxizis.github.io/oros-fdroid";
-  var REPO = REPO_SITE + "/repo";
+  var REPO = "https://apps.koulaxizis.workers.dev/oros-fdroid/repo";
   var REPO_FP = "2A066758DF27F6AFDF6D96F72D575E3E04844B9F85A22A54B7F2C03905A11846";
   var MAIN_PKG = "online.useoros.twa";
   // Packages whose last word is not the app id (android/solo-apps.json)
