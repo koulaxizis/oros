@@ -3090,7 +3090,7 @@
       var typed = typeof args.path === "string" ? args.path.trim().slice(0, 1024) : "", path = CF.normPath(typed);
       if (!path || path === "/internal") return { ok: false, c: "path must be a folder of the orOS disk, e.g. \"Studio/Podcasts\" (not the whole disk). Nothing was asked." };
       if (CF.secret(path)) return { ok: false, c: "\"" + CF.show(path) + "\" looks like a folder of keys or secrets; it is never opened for Claude. Nothing was asked." };
-      var cur = foldersRead().f, wantW = args.access === "write";
+      var cur = foldersEff(), wantW = args.access === "write";   // GATE-PL9: app folders count
       var filesW = isObj(p.lv) && p.lv.files === "write", wNote = wantW && !filesW ? " Writing there also needs the owner's switch for Files at write (it is not now)." : "";
       var has = cur.filter(function (f) { return path === f || path.indexOf(f + "/") === 0; })[0];
       if (has) return { ok: true, a: [], k: 0, c: "Already one of Claude's folders" + (has === path ? "" : " (inside " + CF.show(has) + ")") + ": " + path + ". Nothing was asked." + wNote };
@@ -4156,7 +4156,8 @@
         // inside another folder of the list is still reachable, not off
         var nd = mine.filter(function (d) { return all.indexOf(d) < 0 && !all.some(function (q) { return d.indexOf(q + "/") === 0; }); })
           .concat((cur.nd || []).filter(function (d) { return mine.indexOf(d) < 0; })).sort();
-        var f = all.filter(function (d) { return !appFolder(d); });
+        // only this device's app folders are computed; another app's stays as listed
+        var f = all.filter(function (d) { return mine.indexOf(d) < 0; });
         if (JSON.stringify(f) === JSON.stringify(cur.f) && JSON.stringify(nd) === JSON.stringify(cur.nd || [])) return all;
         var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: f };
         if (cur.q) next.q = cur.q;
