@@ -165,6 +165,59 @@ test("rename columns: by name or id, header stamp wins the merge, undo gives the
   assert.match(no({ rename_columns: [] }).err, /1 to 20/);
 });
 
+// KB-COLAP (Chris 2026-11-22): Author Portal step settings through kanban_add_columns.
+test("portal columns: step, finish and texts merge into col.ap, win the merge, undo puts the old setting back", () => {
+  const base = data();
+  col(base, "c3").ap = { on: 1, n: "Σελίδες", a: "Παλιό" };
+  const r = G.kanbanWrite(M, "add_columns", base, { board: "Βιβλία", portal_columns: [
+    { column: "Επιμέλεια", step: true, about: "Ο επιμελητής διαβάζει το κείμενό σας.", about_en: "The editor reads your text." },
+    { column: "c3", finish: true, about: "" }] }, NOW, nid);
+  assert.equal(r.ok, true, r.err);
+  assert.deepEqual(col(r.data, "c2").ap, { on: 1, a: "Ο επιμελητής διαβάζει το κείμενό σας.", ae: "The editor reads your text." });
+  assert.deepEqual(col(r.data, "c3").ap, { on: 1, e: 1, n: "Σελίδες" }, "keys left out stay, \"\" clears a text");
+  assert.equal(col(r.data, "c2").mtime, NOW);
+  assert.equal(r.renamed, 2);
+  assert.match(r.text, /Author Portal: "Επιμέλεια" \(step\), "Σελιδοποίηση" \(step, finish\)/);
+  assert.deepEqual(M.mergeKanbanStates(base, r.data, NOW + 10).boards[0].columns[1].ap, col(r.data, "c2").ap, "wins the merge");
+  // step false keeps the texts
+  const off = G.kanbanWrite(M, "add_columns", r.data, { board: "b1", portal_columns: [{ column: "c2", step: false }] }, NOW + 5, nid);
+  assert.equal(off.ok, true, off.err);
+  assert.deepEqual(col(off.data, "c2").ap, { on: 0, a: "Ο επιμελητής διαβάζει το κείμενό σας.", ae: "The editor reads your text." });
+  // undo
+  const u = G.kanbanUndo(M, r.data, r.undo, NOW + 100);
+  assert.deepEqual([u.n, u.kept], [2, 0]);
+  assert.equal(col(u.data, "c2").ap, undefined);
+  assert.deepEqual(col(u.data, "c3").ap, { on: 1, n: "Σελίδες", a: "Παλιό" });
+  assert.equal(M.mergeKanbanStates(r.data, u.data, NOW + 200).boards[0].columns[1].ap, undefined, "the undo wins the merge");
+  // rename and portal on the same column in one call: one stamp, one undo puts both back
+  const both = G.kanbanWrite(M, "add_columns", base, { board: "b1", rename_columns: [{ column: "c2", name: "Επιμέλεια κειμένου" }],
+    portal_columns: [{ column: "c2", step: true }] }, NOW, nid);
+  assert.equal(both.ok, true, both.err);
+  assert.equal(col(both.data, "c2").name, "Επιμέλεια κειμένου");
+  assert.deepEqual(col(both.data, "c2").ap, { on: 1 });
+  const ub = G.kanbanUndo(M, both.data, both.undo, NOW + 100);
+  assert.deepEqual([ub.n, ub.kept], [2, 0]);
+  assert.equal(col(ub.data, "c2").name, "Επιμέλεια");
+  assert.equal(col(ub.data, "c2").ap, undefined);
+  // the owner changed the column since: kept
+  const later = JSON.parse(JSON.stringify(r.data));
+  col(later, "c2").ap.a = "Δικό μου"; col(later, "c2").mtime = NOW + 50;
+  const u2 = G.kanbanUndo(M, later, r.undo, NOW + 100);
+  assert.deepEqual([u2.n, u2.kept], [1, 1]);
+  assert.equal(col(u2.data, "c2").ap.a, "Δικό μου");
+  // refusals
+  const no = (a) => G.kanbanWrite(M, "add_columns", base, Object.assign({ board: "b1" }, a), NOW, nid);
+  assert.match(no({ portal_columns: [{ column: "Nope", step: true }] }).err, /^portal_columns 1: /);
+  assert.match(no({ portal_columns: [{ column: "c2" }] }).err, /give step, finish or a text/);
+  assert.match(no({ portal_columns: [{ column: "c2", step: "yes" }] }).err, /true or false/);
+  assert.match(no({ portal_columns: [{ column: "c2", about: "x".repeat(601) }] }).err, /at most 600/);
+  assert.match(no({ portal_columns: [{ column: "c2", name: 5 }] }).err, /at most 80/);
+  assert.match(no({ portal_columns: [{ column: "c2", step: true }, { column: "Επιμέλεια", finish: true }] }).err, /already set/);
+  assert.match(no({ portal_columns: [{ column: "c3", step: true }] }).err, /^Nothing to change/);
+  assert.match(no({ portal_columns: [] }).err, /1 to 20/);
+  assert.match(no({}).err, /portal_columns/);
+});
+
 // KB-SUB (Chris 2026-11-12): subtasks through kanban_change_card.
 test("subtasks: add at the end, tick or reword by id or text, undo takes back only those", () => {
   const raw = data();

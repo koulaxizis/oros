@@ -116,6 +116,7 @@ orosPack("de", "assistant", {
  "chg.no": "Nicht ändern",
  "chg.showAll": "Alle zeigen ({n} weitere)",
  "chg.storage": "es konnte nicht gespeichert werden (Speicher voll?)",
+ "kbap.step": "ein Schritt", "kbap.nostep": "kein Schritt", "kbap.finish": "Ziel", "kbap.nofinish": "kein Ziel",
  "chg.sum": "Alle {n} Einträge bekommen:",
  "chg.text": "{name} möchte einen deiner Einträge ändern. Prüfe ihn: Nichts ändert sich, bis du auf Übernehmen drückst.",
  "chg.textEach": "{name} möchte {n} deiner Einträge ändern, jeden auf seine Weise. Prüfe sie: Nichts ändert sich, bevor du Übernehmen drückst.",
