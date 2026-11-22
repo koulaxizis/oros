@@ -20,7 +20,7 @@ test.before(async () => { R = await import("../relay/gate.js"); });
 
 test("ACT = the Assistant's create / change apps, less NEVER, SENSITIVE, Budget, Kanban and Files", () => {
   const all = new Set();
-  const add = (id) => all.add(/^crm_/.test(id) ? "crm" : /^travel_/.test(id) ? "travel" : id);
+  const add = (id) => all.add(/^crm_/.test(id) ? "crm" : /^travel_/.test(id) ? "travel" : /^timesheet_/.test(id) ? "timesheet" : id);
   N.APP_IDS.forEach(add); Object.keys(N2.CORES).forEach(add); Object.keys(N3.CORES).forEach(add);
   CR.APP_IDS.forEach(add); E.APP_IDS.forEach(add);
   const want = [...all].filter((id) => G.NEVER.indexOf(id) < 0 && G.SENSITIVE.indexOf(id) < 0 && ["budget", "kanban", "files"].indexOf(id) < 0).sort();
@@ -40,7 +40,7 @@ test("gate tools: only the gate's set, no card or press in any text", () => {
                    "timesheet", "meals", "stickies", "habits", "plants", "petcare", "garage", "travel_plan", "travel_pack"];
   const full = C.toolsFor({ data: true, summary: true, entries: true, changes: true, creates, links: true, partnerLinks: true,
                             history: true, actions: ["timer"], web: true, rebuild: true, house: true, epub: true, recipes: ["layout"], newsletter: true, cover: true, rules: true,
-                            edits: { writer: { CATALOG: [] }, slides: { CATALOG: [] } }, files: "write", fonts: true });
+                            edits: { writer: { CATALOG: [] }, slides: { CATALOG: [] } }, files: "write", fonts: true, mockup: true });
   const g = C.gateTools(full);
   assert.deepEqual(g.map((t) => t.name).sort(), C.GATE_TOOLS.slice().sort());
   assert.deepEqual(C.GATE_TOOLS, G.ACT_TOOLS, "gate.js and core.js name the same tools");
@@ -139,9 +139,9 @@ test("closed orOS: the device runs only the changes the relay may queue", () => 
   assert.ok(G.QUEUED.indexOf("budget_refresh") < 0);
   assert.deepEqual(G.QUEUED.slice().sort(), relayWrites.concat(["create_items"], R.REF_QUEUED, Object.keys(R.FILE_CHANGE), Object.keys(R.SCREEN_TOOLS)).sort(), "5.96.00: changes and links by ref too; F3: Claude's folders; GATE-SCREEN: the screen tools");
   assert.ok(G.QUEUED.indexOf("budget_delete") >= 0 && G.QUEUED.indexOf("budget_transfer") >= 0);
-  assert.deepEqual(Object.keys(R.SCREEN_TOOLS).sort(), G.ACT_OPEN.concat(["edit_in_app"]).sort(), "GATE-SCREEN: the relay keeps the same screen tools the device holds");
+  assert.deepEqual(Object.keys(R.SCREEN_TOOLS).sort(), G.ACT_OPEN.concat(["edit_in_app", "mockup_render"]).sort(), "GATE-SCREEN (GATE-PL10: mockup_render): the relay keeps the same screen tools the device holds");
   const src = require("fs").readFileSync(require("path").join(__dirname, "../gate/gate.js"), "utf8");
-  assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) return \{ ok: false/, "applyQueue checks the list");
+  assert.match(src, /QUEUED\.indexOf\(x\.n\) < 0\) \{ ranDrop\(it\.id\); throw KEEP; \}/, "applyQueue checks the list (GQ-KEEP: one it does not know stays queued for a newer orOS)");
 });
 
 test("closed orOS: a queued deletion of items is asked on the device first, one question per call (7.44.00)", () => {

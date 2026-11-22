@@ -1898,7 +1898,7 @@
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
       "plants (complete = watered today, update: title / note) · " +
       "notes (a page, update: title / text = replace the whole text / text_add = add a paragraph at the end / labels, move: notebook = another notebook, with the pages under it, delete: the pages under it move up one level) · " +
-      "timesheet (an entry, update or reschedule: title / date / start / end, in local time) · " +
+      "timesheet (an entry, update or reschedule: title / date / start / end, in local time / project = a project's name (\"\" = none) / billed / invoice = the ref of the Invoices document it went on (makes it billed; \"\" clears) / event = the ref of the Calendar event it was for (\"\" clears)) · " +
       "invoices (complete = the invoice was paid: amount = only a part, date = the day paid, how) · " +
       "chores (complete / reopen = today's turn of the chore, update: title) · " +
       "meals (a recipe, update: title / note / servings) · " +
@@ -1951,6 +1951,10 @@
         queue: { type: "string", "enum": ["next", "end", "off"], description: "podcasts: the episode goes first in the queue (next), last (end) or out of it (off)." },
         author: { type: "string", description: "library: the book's author." },
         how: { type: "string", "enum": ["bank", "cash", "card", "iris", "paypal", "other"], description: "invoices: how it was paid." },
+        project: { type: "string", description: "timesheet: the name of the project the entry belongs to (\"\" = none)." },
+        billed: { type: "boolean", description: "timesheet: the entry is on an invoice (true) or still to invoice (false)." },
+        invoice: { type: "string", description: "timesheet: the ref of the Invoices document the entry went on (search_data, app invoices; makes it billed); \"\" clears it." },
+        event: { type: "string", description: "timesheet: the ref of the Calendar event the entry was for (search_data or app_summary, app calendar); \"\" clears it." },
         end_date: { type: "string", description: "travel: the trip's last day YYYY-MM-DD." },
         plan_start: { type: "string", description: "kanban: the card's planned first day on the Timeline (Gantt) YYYY-MM-DD, at most its due date; \"\" clears it." },
         milestone: { type: "boolean", description: "kanban: true makes the card a milestone (one day, its due date), false a normal card." },
@@ -2076,7 +2080,9 @@
     crm_deal: "crm_deal = a CRM deal (a sale or job in the pipeline)",
     crm_contract: "crm_contract = a contract with a CRM partner (title, start, end, reminder before it ends)",
     // AS-ADD5 (wave A4, assistant/additems2.js)
-    timesheet: "timesheet = time worked, in Timesheet",
+    timesheet: "timesheet = time worked, in Timesheet (billed, and the refs of the invoice it went on and the event it was for, when known)",
+    // TS-GATE (8.55.00, assistant/additems2.js)
+    timesheet_project: "timesheet_project = a project in Timesheet with its client (a client not there yet is made), hourly rate, day minimum and overtime",
     meals: "meals = a recipe in Meal Planner",
     travel_plan: "travel_plan = an entry in a trip's itinerary in Travel (a flight, stay, visit, meal…)",
     travel_pack: "travel_pack = an item on a trip's packing list in Travel",
@@ -2102,7 +2108,7 @@
   };
   // [field, apps it is for, schema]
   var CR_FIELDS = [
-    ["name", ["contacts", "crm"], { type: "string", description: "Full name (a person), or the company's name (a CRM company)." }],
+    ["name", ["contacts", "crm", "timesheet_project"], { type: "string", description: "Full name (a person), or the company's name (a CRM company). timesheet_project: the project's name (required)." }],
     ["title", ["todo", "calendar", "budget", "notes", "bookmarks", "kanban", "crm_followup", "crm_deal", "crm_contract", "timesheet", "meals", "travel_plan", "travel_pack",
                "habits", "fitness", "garage", "plants", "petcare", "shelf", "publish", "wiki", "split"], { type: "string", description: "The task, event, note, bookmark, card, follow-up, deal, recipe, itinerary entry, packing item, habit, workout, plant, shelf title or published book's title (budget: use note; timesheet: what was done; garage: what was done, e.g. Oil change, or what expires, e.g. Insurance; petcare: the vaccine, medicine or visit reason, none for a weight; split: what was paid for)." }],
     ["days", ["habits"], { type: "array", items: { type: "integer" }, description: "habits: weekdays, 0 = Monday … 6 = Sunday (leave out for any day)." }],
@@ -2236,7 +2242,16 @@
     ["tax_office", ["crm"], { type: "string", description: "crm: tax office (e.g. Greek ΔΟΥ)." }],
     ["contact", ["crm"], { type: "string", description: "crm: the ref of the contact (from search_data or create_items) who is this customer, or its contact person; CRM links them." }],
     ["role", ["crm"], { type: "string", description: "crm with contact: that person's role, e.g. Accounts." }],
-    ["client", ["invoices", "quote"], { type: "string", description: "invoices: the client's name as in Invoices (an unknown one is written on the draft only; the user picks or adds the client before issuing). quote: the client's name as in Quote (an unknown one is added there as a client)." }],
+    ["client", ["invoices", "quote", "timesheet_project"], { type: "string", description: "invoices: the client's name as in Invoices (an unknown one is written on the draft only; the user picks or adds the client before issuing). quote: the client's name as in Quote (an unknown one is added there as a client). timesheet_project: the client's name in Timesheet (a new one is made when none has it)." }],
+    // TS-GATE (8.55.00): a Timesheet project's billing; an entry's billed, invoice and event
+    ["rate", ["timesheet_project"], { type: "number", description: "timesheet_project: the hourly rate in the app's currency, e.g. 20." }],
+    ["day_minimum", ["timesheet_project"], { type: "number", description: "timesheet_project: the least a working day is charged (a day rate), e.g. 200; time up to it is covered." }],
+    ["overtime_after", ["timesheet_project"], { type: "number", description: "timesheet_project: hours of a day after which time is overtime, e.g. 10." }],
+    ["overtime_rate", ["timesheet_project"], { type: "number", description: "timesheet_project: the hourly rate of overtime (leave out for the usual rate)." }],
+    ["billable", ["timesheet_project"], { type: "boolean", description: "timesheet_project: false for time that is not charged (default true)." }],
+    ["billed", ["timesheet"], { type: "boolean", description: "timesheet: true when this time is already on an invoice (or invoiced elsewhere)." }],
+    ["invoice", ["timesheet"], { type: "string", description: "timesheet: the ref of the Invoices document this time went on (search_data, app invoices); makes it billed." }],
+    ["event", ["timesheet"], { type: "string", description: "timesheet: the ref of the Calendar event this time was for (search_data or app_summary, app calendar)." }],
     ["lines", ["invoices", "quote"], { type: "array", description: "invoices, quote: the draft's lines, 1 to 50 (required).",
                items: { type: "object", properties: { text: { type: "string", description: "What was sold or done (200 characters)." },
                                                       qty: { type: "number", description: "Quantity, more than 0." },
@@ -2280,7 +2295,7 @@
         "The user sees one card with every item and a tick on each, and must press Add; nothing is saved before that. " +
         "An item that looks like one already there starts unticked; the result names it with its ref, so change it with change_item instead. " +
         "The result gives a ref for every item made" + (people ? ": use a new contact's ref as contact of a CRM customer, or with link_contact" : "") + ". " +
-        "Lists, notebooks, folders, boards, columns, labels, categories, Timesheet projects, Garage vehicles and pets must be the user's own (search_data or list_apps shows them); " +
+        "Lists, notebooks, folders, boards, columns, labels, categories, Timesheet projects (a new one: timesheet_project), Garage vehicles and pets must be the user's own (search_data or list_apps shows them); " +
         "only a To-Do list is made when none has the name. Give only what the user said or the documents show.",
       params: {
         type: "object",
@@ -3466,6 +3481,79 @@
   // intent, or print / screen), saved under /internal/Layout/PDF/; the
   // report has the path, pages, boxes in mm, size and the preflight.
   var PDF_PRESETS = ["print", "screen", "pdfx4"], PDF_MARKS = ["crop", "bleed", "reg", "bars", "info"];
+  // GATE-PL10 (Chris 2026-11-22, dogfooding «Πλανόδιο», item 10): a
+  // mockup picture from one of the user's mockups and a picture; Mockups
+  // makes it on the device (mockups.js renderFor) and saves it under a
+  // free name, never over a file; the template is never changed.
+  var TOOL_MOCKUP = {
+    name: "mockup_render",
+    description: "Make a mockup picture in Mockups: one of the user's mockups (a book, notebook, CD, T-shirt, mug… as they set it up: size, angle, light, background) is the template, and a picture goes into one of its places (the front cover by default, or the full wrap of a book laid out as one wrap). " +
+      "The picture is saved as a new PNG, JPG or WebP file (never over a file: a taken name gets -2, -3…), by default in Mockups/Claude on the orOS disk. The template mockup is not changed and no mockup is added. " +
+      "The user presses a button on a card first; Mockups makes it on the device and its report (the saved path, size) comes back.",
+    params: {
+      type: "object",
+      properties: {
+        template: { type: "string", description: "The name of one of the user's mockups, as Mockups shows it (the same name, or a part of it that only one has)." },
+        image: { type: "string", description: "The picture to put in: a path on the orOS disk (/internal/…, e.g. in Claude's folders) or local:<root>/<path> in a local folder the user opened; JPG, PNG, WebP, GIF, BMP or AVIF." },
+        slot: { type: "string", description: "Where the picture goes: front (the default), back, spine, wrap (a whole book cover in one picture), or a product's own place (disc, inside, tray, labelA, face…). Left out: front, or wrap when the template is laid out as one wrap." },
+        format: { type: "string", "enum": ["png", "jpg", "webp"], description: "The file type; the template's own when left out." },
+        name: { type: "string", description: "The file's name without its type; \"<template> - <picture>\" when left out." },
+        out: { type: "string", description: "The folder it is saved in: /internal/… on the orOS disk (Mockups/Claude when left out) or local:<root>/<folder> in a local folder the user opened for writing." }
+      },
+      required: ["template", "image"]
+    }
+  };
+  // mockup_render's arguments → { ok, template, image, slot, fmt, name, out } | { ok: false, err }
+  function normMockup(args) {
+    var a = isObj(args) ? args : {};
+    var template = squash(a.template || "").slice(0, 120);
+    if (!template) return bad("template: the name of one of the user's mockups.");
+    var img = typeof a.image === "string" ? a.image.trim() : "";
+    var body = /^local:/i.test(img) ? img.slice(6) : img.indexOf("/internal/") === 0 ? img.slice(10) : null;
+    if (!img || img.length > 1030 || body === null || /[\\\u0000-\u001f\u007f]/.test(img) || body.split("/").some(function (x) { return !x || x === "." || x === ".."; }))
+      return bad("image: a picture's /internal/… path on the orOS disk or local:<root>/<path>.");
+    if (!/\.(jpe?g|png|webp|gif|bmp|avif)$/i.test(img)) return bad("image must be a JPG, PNG, WebP, GIF, BMP or AVIF picture.");
+    var slot = a.slot === undefined || a.slot === "" ? "" : String(a.slot);
+    if (slot && !/^[a-zA-Z]{1,12}$/.test(slot)) return bad("slot: front, back, spine, wrap or a product's own place.");
+    var fmt = a.format === undefined || a.format === "" ? "" : String(a.format);
+    if (fmt && ["png", "jpg", "webp"].indexOf(fmt) < 0) return bad("format must be png, jpg or webp.");
+    var name = squash(a.name || "").replace(/[\\/:*?"<>|]+/g, " ").trim().slice(0, 120);
+    var out = typeof a.out === "string" ? a.out.trim().replace(/\/+$/, "") : "";
+    if (out) {
+      var ob = /^local:/i.test(out) ? out.slice(6) : out.indexOf("/internal/") === 0 ? out.slice(10) : null;
+      if (out.length > 1030 || ob === null || /[\\\u0000-\u001f\u007f]/.test(out) || ob.split("/").some(function (x) { return !x || x === "." || x === ".." || x.charAt(0) === "."; }))
+        return bad("out: a folder /internal/… on the orOS disk or local:<root>/<folder>.");
+    }
+    return { ok: true, template: template, image: img, slot: slot, fmt: fmt, name: name, out: out || "/internal/Mockups/Claude" };
+  }
+  // Mockups' report, kept to plain numbers and paths
+  function mockupReport(rep) {
+    var r = isObj(rep) ? rep : {};
+    if (!r.ok) {
+      var o = { failed: 1, why: /^[a-zA-Z]{1,20}$/.test(String(r.why || "")) ? String(r.why) : "error" };
+      if (Array.isArray(r.names)) o.names = r.names.slice(0, 30).map(function (x) { return String(x).slice(0, 120); });
+      if (Array.isArray(r.slots)) o.slots = r.slots.slice(0, 30).map(String);
+      if (Array.isArray(r.outFail)) o.save_failed = r.outFail.slice(0, 2).map(function (x) { return { to: String(x && x.to || "").slice(0, 300), why: String(x && x.why || "error").slice(0, 30) }; });
+      return o;
+    }
+    var out = { made: true, path: String(r.path || "").slice(0, 1100), template: String(r.template || "").slice(0, 120), kind: String(r.kind || "").slice(0, 20),
+                slot: String(r.slot || "").slice(0, 12), format: String(r.fmt || "").slice(0, 5), width: +r.w || 0, height: +r.h || 0, bytes: +r.bytes || 0 };
+    if (Array.isArray(r.saved) && r.saved.length > 1) out.also_saved = r.saved.slice(1, 2).map(function (x) { return String(x).slice(0, 1100); });
+    if (Array.isArray(r.outFail) && r.outFail.length) out.save_failed = r.outFail.slice(0, 2).map(function (x) { return { to: String(x && x.to || "").slice(0, 300), why: String(x && x.why || "error").slice(0, 30) }; });
+    return out;
+  }
+  var MOCKUP_WHY = {
+    bad: "the request was not valid", busy: "Mockups is busy with something else on the device; try again in a minute",
+    noTemplate: "no mockup has that name", several: "several mockups match that name; give the whole name",
+    badSlot: "that template has no such place for a picture", model: "this template's 3D model is not downloaded on the device (the owner downloads it once in Mockups)",
+    noImage: "the picture could not be read (check the path)", badImage: "the file is not a picture Mockups can use", noBridge: "the local folder is not open on that device",
+    noDisk: "the orOS disk is not ready on the device", nogl: "this device cannot draw 3D (WebGL is off)", save: "the picture could not be saved", error: "something failed on the device"
+  };
+  function mockupText(rep) {
+    var r = mockupReport(rep);
+    if (r.failed) return "Mockups could not make the picture: " + (MOCKUP_WHY[r.why] || MOCKUP_WHY.error) + ". Nothing was saved. Report: " + JSON.stringify(r);
+    return "Mockups made the picture on the device and saved it (never over a file; the template is unchanged). Report: " + JSON.stringify(r);
+  }
   var TOOL_PDF = {
     name: "export_pdf",
     description: "Make a print PDF of a Layout document on the device: preset pdfx4 (PDF/X-4 for the printer: the print profile Coated FOGRA39 as output intent, " +
@@ -3598,7 +3686,7 @@
           designs: { type: "string", "enum": ["open", "named", "folder", "all", "new"], description: "Which documents: open (the one open in the app, the default), named (by name), folder (every design in the Atelier folder `name`), all, or new (a new Atelier design: the first command is create). For Photo Lab the documents are pictures (projects), for Slides presentations, for Writer texts, for Spreadsheet the workbook's sheets, for Montage video projects, for Studio song projects, for Whiteboard boards, for Mind map maps, for Mockups book mockups: open, named or all (Photo Lab and Mockups also new, with create first)." },
           name: { type: "string", description: "designs named or folder: the design's or the folder's name." },
           steps: { type: "array", description: "The commands in order, at most 40.", items: { type: "object", properties: editFields(cats), required: ["op"] } },
-          dry_run: { type: "boolean", description: "Only through orOS Gate: say what the commands would change (per document, with notes) without changing anything." }
+          dry_run: { type: "boolean", description: "Only through orOS Gate: say what the commands would change (per document, with notes) without changing anything. With every orOS closed it checks the commands, fields, values, documents' names and files against the owner's encrypted copy (counts come only with orOS open); every edit_in_app is checked that way before it waits for orOS." }
         },
         required: ["app", "steps"]
       }
@@ -3673,6 +3761,7 @@
     if (opts.rebuild) out.push(TOOL_REBUILD);
     if (opts.house) out.push(TOOL_HS_LEARN, TOOL_HS_BOOK, TOOL_HS_RULE);
     if (opts.epub) out.push(TOOL_EPUB, TOOL_PDF);
+    if (opts.mockup) out.push(TOOL_MOCKUP);   // GATE-PL10
     if (opts.data && opts.changes) out.push(TOOL_CHANGE);
     if (opts.creates && opts.creates.length) out.push(createTool(opts.creates));
     if (opts.data && opts.links) out.push(TOOL_LINK);
@@ -3705,7 +3794,7 @@
   var GATE_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                     "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
                     "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf",
-                    "files_list", "files_read", "files_write", "files_move", "files_delete"];
+                    "files_list", "files_read", "files_write", "files_move", "files_delete", "mockup_render"];
   // GATE-PAR P3 (2026-11-08): the Assistant's tools that hand work to an
   // app's own window. Through the gate the app opens on the owner's
   // screen with it at once (Layout does its work and reports; a form is
@@ -3771,6 +3860,8 @@
       x.description = say(x.description);
       if (GATE_OPEN.indexOf(x.name) >= 0) x.description = (GATE_OPEN_HEAD[x.name] || openSay(x.description)) + GATE_OPEN_SAY;
       if (x.name === "edit_in_app") x.description = x.description.split("\n")[0] + GATE_EDIT_GUIDE;
+      if (x.name === "mockup_render") x.description = x.description.replace("The user presses a button on a card first; Mockups makes it on the device and its report (the saved path, size) comes back.",   // GATE-PL10
+        "Through orOS Gate it needs Mockups allowed (read is enough) and, on the orOS disk, a folder of Claude's folders with Files at «may change» (Mockups/Claude is one by itself); nothing is ever replaced. Bring the picture in first with files_upload and files_write. It runs where orOS is on screen or on the owner's computer in the tray; with nobody there (or orOS closed) it waits, encrypted, after a check against the copy, and its report comes then (files_list shows the picture). The report gives the saved path and size.");
       walk(x.params);
       var ro = /^(search_data|read_item|app_summary|list_fonts|read_in_app|change_history|files_list|files_read)$/.test(x.name);
       return { name: x.name, description: x.description, inputSchema: x.params || { type: "object", properties: {} },
@@ -4075,7 +4166,7 @@
       var CR_WHAT = { contacts: "contacts", crm: "CRM customers or partners", todo: "To-Do tasks", calendar: "Calendar events",
                       budget: "Budget expenses or income", notes: "notes", bookmarks: "bookmarks", kanban: "Kanban cards",
                       crm_activity: "CRM history entries (a call, meeting or note that happened)", crm_followup: "CRM follow-ups", crm_deal: "CRM deals", crm_contract: "CRM contracts",
-                      timesheet: "time worked (Timesheet)", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
+                      timesheet: "time worked (Timesheet)", timesheet_project: "Timesheet projects with their client, rate, day minimum and overtime", meals: "recipes (Meal Planner)", travel_plan: "a trip's itinerary entries", travel_pack: "a trip's packing items",
                       stickies: "sticky notes", habits: "habits", fitness: "finished workouts", garage: "Garage services and renewals",
                       plants: "plants (Plant Care)", petcare: "pet health records", shelf: "Media Shelf titles (books, films, games…)",
                       publish: "titles the user publishes (Publishing; a list or catalogue of titles: all of them in one create_items call, never one card per title)",
@@ -5237,7 +5328,7 @@ normEdit: normEdit, normReadApp: normReadApp, editTool: editTool, readAppTool: r
         normAutomation: normAutomation, normRule: normRule, TOOL_RULE: TOOL_RULE, NL_KINDS: NL_KINDS, NL_MAX: NL_MAX, NL_PROD_MAX: NL_PROD_MAX, NL_SECS: NL_SECS, normNewsletter: normNewsletter,
     normCover: normCover, COVER_SIZES: COVER_SIZES,
     OPEN_FILE_APPS: OPEN_FILE_APPS, normOpenFile: normOpenFile, normRebuild: normRebuild, rebuildReport: rebuildReport, TOOL_REBUILD: TOOL_REBUILD,
-    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, normOut: normOut, outReport: outReport, OUT_SCHEMA: OUT_SCHEMA, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
+    normHouse: normHouse, houseReport: houseReport, normEpub: normEpub, epubReport: epubReport, normPdf: normPdf, pdfReport: pdfReport, normMockup: normMockup, mockupReport: mockupReport, mockupText: mockupText, normOut: normOut, outReport: outReport, OUT_SCHEMA: OUT_SCHEMA, PDF_PRESETS: PDF_PRESETS, EP_LAYOUTS: EP_LAYOUTS, HS_DOES: HS_DOES, BOOK_Q: BOOK_Q, BOOK_SECTIONS: BOOK_SECTIONS, BOOK_PARTS: BOOK_PARTS, HS_FIELDS: HS_FIELDS,
     DEV_MAX: DEV_MAX, DEV_FILE: DEV_FILE, DEV_TOTAL: DEV_TOTAL, DEV_PHONE: DEV_PHONE, checkDev: checkDev
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

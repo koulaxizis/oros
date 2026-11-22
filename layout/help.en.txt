@@ -187,6 +187,52 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Restore**: brings a version back. The current state is kept as a version first, and Undo takes the restore back.
 - **Claude**: before large changes Claude can keep a version too (marked "by Claude").
 
+## Tables
+- **Insert a table**: in the Story Editor, put the caret where the table goes and press `▦`. A table is a paragraph of the story: it flows with the text, from frame to frame and page to page.
+- **Edit it**: click the table in the Story Editor. Type in the cells; click a cell and Shift+click another (on a phone: `Select a range`, then a cell) to select a range, then merge the cells or give them a fill. Add or delete rows and columns, split a merged cell, set the column widths (e.g. `2 1 1`), the padding, the rule width and colour, and the paragraph styles of the cells and the header.
+- **Header rows** repeat at the top of each new column or page (turn that off if you like). A row never splits; rows joined by a merged cell stay together.
+- **From a file**: `From a file…` reads a CSV or TSV file or the first sheet of an .xlsx, .xls or .ods spreadsheet into the table.
+- **Out**: the PDF, the pictures, SVG and EPUB keep the table (in an e-book it is a real table, with its header).
+- **Claude** can put a table into a story too.
+
+## Review: tracked changes and comments
+- **Track changes**: in the Story Editor, `✎` › `Track changes: turn on`. From then on every change to the text, in the Story Editor or typed in the frame, is kept: added words are green and underlined, deleted words stay struck through in the Story Editor and leave the page. Hover a change to see who made it and when.
+- **Accept or reject**: select some text and `✎` › `Accept` or `Reject the changes in the selection`, or settle them all at once. A deleted word goes only when its change is accepted.
+- **Your name**: `✎` › `Your name…` (kept on this device) marks your changes and comments.
+- **Comments on the page**: `More › Comments…` shows the comments as pins. `Add`, then tap the page where it goes. Tap a pin to change it, resolve it or delete it; resolved comments can be hidden.
+- **Proof PDF**: in the comments bar, `Proof PDF` saves the pages with every open comment and every tracked change as a note in the PDF, ready for an author or an editor.
+
+## Index
+- **Mark a word**: in the Story Editor select the words, then `¹` › `Index entry…`. The topic is the words themselves unless you give another; a sub-topic files it under its topic. Marked words have a dotted underline; hover them to see their topic.
+- **Mark them everywhere**: `More › Index…` › one word per line, `word`, `word = Topic` or `word = Topic / Sub-topic`, then `Mark them`. Every whole word is marked, in any case and with or without accents.
+- **Make the index**: `More › Index…` › `Make the index` puts it on a new last page in two columns: topics in the order of the document's language (Greek without accents), a heading per letter, sub-topics under their topic, pages as the pages show them (sections, roman numerals) and runs joined (3–5). Choose its styles there.
+- **Update the index** after the pages move: the index is made again from the marks, its title and any text before the entries stay. The topic list in the same dialog unmarks a topic.
+- **Claude** can mark terms and make the index with the `index` command (Assistant).
+
+## Effects
+- **Properties › Effects** gives any frame or shape a drop shadow, an outer glow and a blend mode (Multiply, Screen, Overlay, Darken, Lighten); a picture can also have soft edges. Shadows and glows follow the shape, the picture's frame or the letters of a text frame without a fill.
+- Colour "none" is black. With a blend mode, the object and its shadow blend with what is under them as one.
+- The PDF, SVG and image exports show the effects; in PDF/X-1a they count as transparency, and the export says so. Older orOS versions show the object without its effects.
+- **Claude** can set them with the `effects` command (Assistant).
+
+## Symbols
+
+More › Symbols… keeps a group of objects you use again and again, such as a logo, a badge or the emblem of a series. Select the objects on a page, give the symbol a name and make it: the selection becomes its first placement. Place puts it on the page in view; drag and resize each placement as you like.
+
+Change one placement, select it and choose Update the symbol from this placement: every other placement changes too, each at its own size, and text keeps its frame. Detach makes a placement plain objects again; deleting a symbol leaves its placements as plain objects. Claude can make, place and update symbols too.
+
+## Package for print, InDesign and Scribus
+
+Export › Package for print makes one .zip for the printer or a designer: the document itself, a PDF/X-4 with bleed and crop marks, the same pages as InDesign (.idml) and Scribus (.sla) files, the pictures at full size in Links, the fonts in Fonts and a report of the pages, colours, fonts, pictures and what Preflight found.
+
+Export › For other programs saves one InDesign or Scribus file on its own, with the pictures inside it. Pages, masters, styles, colours, frames with their columns and threads, shapes, lines, curves and pictures open as they are here. Shadows, glows and soft edges become InDesign's own effects; Scribus keeps the blend mode and the opacity. Tracked changes, comments and symbols stay in orOS (symbols arrive as groups).
+
+## Alternate layouts
+
+More › Alternate layouts… makes the same design in another size: a book page as a square post, an A5 flyer as an A4 poster. Give it a name and a size and choose whether text sizes follow the page. The alternate is a document of its own: its pages are fitted the way a designer would (what runs to the edges still does, what sits in a margin keeps its edge, pictures keep their proportions) and you move, resize and restyle anything in it without touching the original.
+
+Its texts stay linked to the original's. When you change a text in the original, the alternate's dialog says what changed and Update from the original takes the new texts and any new styles and colours; it warns first when a text was also changed in the alternate, because the update replaces it. Frames and pictures stay as you placed them in the alternate. Unlink makes it a plain document.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

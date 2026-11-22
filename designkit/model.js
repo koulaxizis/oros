@@ -47,7 +47,7 @@
   var PT_PER = { pt: 1, mm: 72 / 25.4, in: 72 };
   var MAX_COORD = 20000, MAX_ITEMS = 5000, MAX_PAGES = 999, MAX_TEXT = 400000;
   var HIST = 50;
-  var MODEL_LEVEL = 2;
+  var MODEL_LEVEL = 3;   // 3 (LY-W12): a paragraph's table may be larger (X_MAX_TBL)
 
   // ---------- 1. Presets ----------
   // [id, width mm, height mm] (portrait); "post" is in px at 72 dpi.
@@ -132,7 +132,7 @@
   // A later wave normalizes its own keys and then runs normX, so its
   // output is already what this function keeps.
   var X_KEY = /^[a-z][a-zA-Z0-9]{0,23}$/, X_STR = 4000, X_ARR = 1000, X_DEPTH = 6;
-  var X_MAX = 8192, X_MAX_SETUP = 65536, AXU_MAX = 16384;
+  var X_MAX = 8192, X_MAX_SETUP = 65536, AXU_MAX = 16384, X_MAX_TBL = 262144;
   var X_CTRL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
   function xVal(v, depth) {
     if (v === null || typeof v === "boolean") return v;
@@ -441,7 +441,16 @@
       if (last && sameFmt(last, n)) last.t += n.t;     // coalesce
       else runs.push(n);
     });
-    return withX({ ps: isId(p.ps) ? p.ps : "ps-base", runs: runs }, p);
+    // a table (ext.tbl, LY-W12) may hold more than other bags; a
+    // document with one over X_MAX carries mv 3 (tableLevel)
+    return withX({ ps: isId(p.ps) ? p.ps : "ps-base", runs: runs }, p, p.ext && p.ext.tbl ? X_MAX_TBL : 0);
+  }
+  // the model level a document's tables need: 3 when one is over X_MAX
+  function tableLevel(doc) {
+    var big = (doc && doc.stories || []).some(function (s) {
+      return (s.paras || []).some(function (p) { return !!(p.ext && p.ext.tbl) && JSON.stringify(p.ext).length > X_MAX; });
+    });
+    return big ? 3 : 1;
   }
   function normStory(s) {
     if (!s || !isId(s.id)) return null;
@@ -833,11 +842,42 @@
     return c ? "rgb(" + c.rgb.join(",") + ")" : null;
   }
 
+  // ---------- Object effects (LY-W14) ----------
+  // it.ext.fx { sh: drop shadow { x, y (offset pt), b (blur pt), c (swatch,
+  // "" black), o (opacity %) }, gl: outer glow { b, c, o }, fe: soft edges
+  // of a picture (pt), bm: blend mode }. Kept as written; read checked.
+  var BLENDS = ["multiply", "screen", "overlay", "darken", "lighten"];
+  function fxNum(v, lo, hi, d) { v = Number(v); return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; }
+  function itemFx(it) {
+    var x = it && it.ext && it.ext.fx;
+    if (!x || typeof x !== "object") return null;
+    var o = {}, col = function (c) { return isId(c) ? c : ""; };
+    if (x.sh && typeof x.sh === "object") {
+      var sh = { x: fxNum(x.sh.x, -144, 144, 3), y: fxNum(x.sh.y, -144, 144, 3), b: fxNum(x.sh.b, 0, 72, 4), c: col(x.sh.c), o: fxNum(x.sh.o, 0, 100, 50) };
+      if (sh.o > 0) o.sh = sh;
+    }
+    if (x.gl && typeof x.gl === "object") {
+      var gl = { b: fxNum(x.gl.b, 0.5, 72, 6), c: col(x.gl.c), o: fxNum(x.gl.o, 0, 100, 60) };
+      if (gl.o > 0) o.gl = gl;
+    }
+    if (it.t === "img" && fxNum(x.fe, 0, 144, 0) > 0) o.fe = fxNum(x.fe, 0, 144, 0);
+    if (BLENDS.indexOf(x.bm) >= 0) o.bm = x.bm;
+    return Object.keys(o).length ? o : null;
+  }
+  // how far past its box an item's effects paint (pt)
+  function fxPad(fx) {
+    if (!fx) return 0;
+    var p = 0;
+    if (fx.sh) p = Math.max(p, Math.max(Math.abs(fx.sh.x), Math.abs(fx.sh.y)) + fx.sh.b);
+    if (fx.gl) p = Math.max(p, fx.gl.b);
+    return p;
+  }
+
   function storyOfDoc(doc, id) { return find(doc.stories, id); }
   function docBytes(doc) { return JSON.stringify(doc).length; }
 
   var api = {
-    DATA_VER: DATA_VER, MODEL_LEVEL: MODEL_LEVEL, PT_PER: PT_PER,
+    DATA_VER: DATA_VER, MODEL_LEVEL: MODEL_LEVEL, tableLevel: tableLevel, X_MAX_TBL: X_MAX_TBL, PT_PER: PT_PER,
     normX: normX, unknownX: unknownX, minLevel: minLevel, needsNewer: needsNewer, keepsMore: keepsMore, PRESETS: PRESETS, MAX_ITEMS: MAX_ITEMS, MAX_PAGES: MAX_PAGES,
     preset: preset, toUnit: toUnit, fromUnit: fromUnit, label: label, seedNames: seedNames, nameOf: nameOf,
     newId: newId, touch: touch, isId: isId, cmpStr: cmpStr, setItemExt: setItemExt, parsePath: parsePath, pathText: pathText, normGrad: normGrad,
@@ -846,6 +886,7 @@
     normDoc: normDoc, copyDoc: copyDoc, normData: normData, mergeDoc: mergeDoc, mergeData: mergeData, maxM: maxM,
     newDoc: newDoc, pagesInOrder: pagesInOrder, sideOf: sideOf, firstLeft: firstLeft, bleeds: bleeds, slugOf: slugOf, firstNumber: firstNumber, pageSize: pageSize, creepOf: creepOf, pageLabels: pageLabels, numFmt: numFmt, secOfPage: secOfPage, spreads: spreads, margins: margins,
     itemsOn: itemsOn, masterItems: masterItems, chain: chain, find: find, owner: owner, byZ: byZ,
+    BLENDS: BLENDS, itemFx: itemFx, fxPad: fxPad,
     swatchColor: swatchColor, tintOf: tintOf, cssColor: cssColor, story: storyOfDoc, docBytes: docBytes,
     COLLECTIONS: COLLECTIONS.map(function (c) { return c[0]; })
   };

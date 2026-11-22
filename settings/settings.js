@@ -1686,9 +1686,11 @@
         fb.appendChild(el("div", "pair-label", t("gt.fold.title")));
         fb.appendChild(el("div", "hint", t("gt.fold.hint")));
         if (!fl.length) fb.appendChild(el("div", "hint", t("gt.fold.none")));
+        var afl = typeof G.appFolders === "function" ? G.appFolders() : [];   // GATE-PL9
         fl.forEach(function (f) {
           var ln = el("div", "gt-chg-row");
           ln.appendChild(el("span", "", f.replace(/^\/internal\/?/, "") || "/"));
+          if (afl.indexOf(f) >= 0) ln.appendChild(el("span", "hint", t("gt.fold.app")));
           ln.appendChild(button(t("gt.fold.rm"), "gt.fold.rm:" + f, function () {
             G.setFolders(fl.filter(function (x) { return x !== f; })).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
           }, "btn-sm"));

@@ -24,6 +24,7 @@
   var M = node ? require("../designkit/model.js") : root.orosDK && root.orosDK.model;
   if (!M) return;
   function Rd() { return node ? require("../designkit/render.js") : root.orosDK && root.orosDK.render; }
+  function Tb() { return node ? require("../designkit/table.js") : root.orosDK && root.orosDK.table; }
   var MM = 72 / 25.4;
   var PT_PER = { pt: 1, mm: MM, in: 72, px: 72 / 96 };
 
@@ -642,6 +643,83 @@
     return 1;
   }
 
+  // table (LY-W12): a table into a story (story id, or a frame of it):
+  // rows "a | b | c", header rows repeated, after paragraph after_para
+  // (0 = the end); replace n = the story's n-th table becomes this one.
+  // → 1 placed, 0 not
+  // object effects (LY-W14) on frames by id: a field below 0 (or
+  // null) leaves that part as it is; an opacity of 0 takes a shadow or
+  // glow off, a soft edge of 0 takes it off, blend "normal" takes the
+  // blend mode off. → frames changed
+  function setEffects(doc, ids, st, now) {
+    var n = 0, keep = function (v) { return v === undefined || v === null || v === "" || v < 0; };
+    ids.forEach(function (id) {
+      var it = M.find(doc.items, id);
+      if (!it || it.lock) return;
+      var before = JSON.stringify((it.ext && it.ext.fx) || {});
+      var fx = JSON.parse(before);
+      // fk: the key in ext.fx, pre: the command's field prefix
+      var part = function (fk, pre, def, fields) {
+        // an offset below 0 is a value (the command leaves out one to keep)
+        var kp = function (f) { var v = st[f[0]]; return f[1] === "x" || f[1] === "y" ? v === undefined || v === null || v === "" : keep(v); };
+        var touched = fields.some(function (f) { return !kp(f); }) || !!st[pre + "_color"];
+        if (!touched) return;
+        var o = Object.assign({}, def, fx[fk] || {});
+        fields.forEach(function (f) { if (!kp(f)) o[f[1]] = st[f[0]]; });
+        if (st[pre + "_color"]) { var c = swatchFor(doc, st[pre + "_color"], now); if (c) o.c = c; }
+        if (o.o > 0) fx[fk] = o; else delete fx[fk];
+      };
+      part("sh", "shadow", { x: 3, y: 3, b: 4, c: "", o: 50 }, [["shadow_x", "x"], ["shadow_y", "y"], ["shadow_blur", "b"], ["shadow_opacity", "o"]]);
+      part("gl", "glow", { b: 6, c: "", o: 60 }, [["glow_blur", "b"], ["glow_opacity", "o"]]);
+      if (!keep(st.soft_edges) && it.t === "img") { if (st.soft_edges > 0) fx.fe = st.soft_edges; else delete fx.fe; }
+      if (st.blend) { if (st.blend === "normal") delete fx.bm; else fx.bm = st.blend; }
+      if (JSON.stringify(fx) === before) return;
+      var x = Object.assign({}, it.ext || {});
+      if (Object.keys(fx).length) x.fx = fx; else delete x.fx;
+      if (Object.keys(x).length) it.ext = x; else delete it.ext;
+      M.touch(it, now);
+      n++;
+    });
+    return n;
+  }
+
+  function addTable(doc, st, now) {
+    var TB = Tb(), sid = st.story, fr = !sid && st.frame ? M.find(doc.items, st.frame) : null;
+    if (fr && fr.t === "text") sid = fr.story;
+    var story = sid && M.find(doc.stories, sid);
+    if (!story || !TB) return 0;
+    var grid = (st.rows || []).map(function (r) { return String(r == null ? "" : r).split("|").map(function (c) { return c.trim().replace(/\\n/g, "\n"); }); });
+    var tb = TB.fromGrid(grid, { hdr: st.header > 0 });
+    if (!tb) return 0;
+    tb.hdr = Math.max(0, Math.min(tb.rows.length - 1, st.header | 0));
+    var ws = String(st.widths || "").trim().split(/[\s,;]+/).map(Number).filter(function (v) { return v > 0; });
+    if (ws.length === tb.cols.length) tb.cols = ws;
+    if (st.rule >= 0) tb.bw = st.rule;
+    if (st.padding >= 0) tb.pad = st.padding;
+    if (st.header_fill) { var hf = swatchFor(doc, st.header_fill, now); if (hf) tb.hf = hf; }
+    if (st.rule_color) { var bc = swatchFor(doc, st.rule_color, now); if (bc) tb.bc = bc; }
+    if (st.repeat === 0) tb.rep = 0;
+    tb = TB.norm(tb);
+    if (!tb) return 0;
+    var ps = (st.style && styleNamed(doc.pstyles, st.style)) || null;
+    var paras = story.paras, para = { ps: ps ? ps.id : "ps-base", runs: [], ext: { tbl: tb } };
+    if (st.replace > 0) {
+      var k = 0, at = -1;
+      paras.forEach(function (p, i) { if (p.ext && p.ext.tbl && ++k === st.replace) at = i; });
+      if (at < 0) return 0;
+      if (!ps) para.ps = paras[at].ps;
+      paras[at] = Object.assign({}, paras[at], { ps: para.ps, ext: Object.assign({}, paras[at].ext, { tbl: tb }) });
+    } else {
+      var n = st.after_para > 0 ? Math.min(st.after_para, paras.length) : paras.length;
+      // an empty story's one empty paragraph gives way
+      if (paras.length === 1 && !paras[0].runs.length && !paras[0].ext) { paras.length = 0; n = 0; }
+      paras.splice(n, 0, para);
+    }
+    if (M.tableLevel(doc) > 1) { doc.setup.ext = Object.assign({}, doc.setup.ext || {}); if (!(doc.setup.ext.mv >= 3)) { doc.setup.ext.mv = 3; doc.m = Math.max(now, (doc.m || 0) + 1); } }
+    M.touch(story, now);
+    return 1;
+  }
+
   // house_pages: the front and back pages of a house style document
   // (LY-HS: pages before / after its body page) copied into the book,
   // scaled to its trim, their fields ({title} {author} …) filled from
@@ -1069,7 +1147,7 @@
 
   var api = { setPicture: setPicture, setPage: setPage, setWrap: setWrap, anchorItem: anchorItem, releaseItem: releaseItem, links: links, setSection: setSection, setPageSize: setPageSize, movePages: movePages, dupPages: dupPages, masterPages: masterPages, defMaster: defMaster, natSort: natSort, natCmp: natCmp, normPath: normPath, pathOk: pathOk, makeDoc: makeDoc, frameFor: frameFor, placePictures: placePictures,
               fullPage: fullPage, bleedTargets: bleedTargets, needPx: needPx, applyFill: applyFill, noBleed: noBleed, outline: outline, PIC: PIC,
-              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, masterField: masterField, setStory: setStory, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
+              styleNamed: styleNamed, defStyle: defStyle, fontFor: fontFor, fontKey: fontKey, listFont: listFont, swatchFor: swatchFor, playStyles: playStyles, parseParas: parseParas, addFrame: addFrame, modFrame: modFrame, masterField: masterField, setStory: setStory, addTable: addTable, setEffects: setEffects, clearPage: clearPage, housePages: housePages, PLAY: PLAY };
   if (node) module.exports = api;
   else root.LayoutPro = api;
 })(typeof window !== "undefined" ? window : this);

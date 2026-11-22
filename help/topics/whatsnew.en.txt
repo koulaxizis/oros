@@ -3,6 +3,46 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.64.00
+- **Files: Duplicates.** Duplicates in the Files sidebar finds files that are exactly the same, byte for byte, whatever their names. It also finds identical folders, and pictures or songs that differ only in hidden details such as camera data or tags. One copy of every group always stays, and nothing is removed until you choose Move to Trash, after a last byte-by-byte check. Dropbox and This computer have their own Duplicates button, which also shows copies you already have on the orOS disk. Photos that look alike still open in Photos.
+
+## Version 8.63.00
+- **Layout: alternate layouts.** More › Alternate layouts… makes the same design in another size, such as a book page as a square post or an A5 flyer as an A4 poster. The alternate is a document of its own that you arrange freely, and its texts stay linked: when you change a text in the original, Update brings it over.
+
+## Version 8.62.00
+- **Layout: package for print, InDesign and Scribus.** Export › Package for print makes one .zip for the printer with the document, a print PDF, the pictures, the fonts and a report. Export › For other programs saves an InDesign or Scribus file.
+
+## Version 8.61.00
+- **Layout: symbols.** More › Symbols… keeps a logo or badge as a symbol: place it on any page at any size, change one placement and update the symbol, and every other placement follows.
+
+## Version 8.60.00
+- **Layout: effects.** Properties › Effects adds a drop shadow, an outer glow and a blend mode to frames and shapes, and soft edges to pictures. The PDF shows them as the screen does.
+
+## Version 8.59.00
+- **Layout: index.** Mark words for the book's index in the Story Editor or all at once in More › Index…, then make the index on a new last page, sorted with a heading per letter, sub-topics and page ranges; Update makes it again after the pages move.
+
+## Version 8.58.00
+- **Layout: review.** Track changes in the Story Editor (`✎`) shows added and deleted words, with who and when, to accept or reject. More › Comments… pins comments on the pages, and Proof PDF saves the pages with the comments and changes as notes for the author.
+
+## Version 8.57.00
+- **Layout: tables.** In the Story Editor, `▦` puts a table into the text: merge cells, header rows that repeat on each new page, fills and rules, or read a CSV or spreadsheet file into it. Tables flow from page to page and go out in the PDF and the e-book.
+
+## Version 8.56.00
+- **Mockups made by Claude.** With the Assistant or orOS Gate, Claude can put a picture into one of your mockups (books and goods alike) and save the result in Mockups/Claude, never over a file. Your mockup is never changed: Claude works on a copy that is not kept. With orOS closed the request is checked against your copy and waits until orOS opens.
+
+## Version 8.55.00
+- **Timesheet: Claude keeps your hours with you.** Through orOS Gate, Claude can now make a Timesheet project with its client, hourly rate, day minimum and overtime, mark time as billed with the invoice it went on, and tie each day to its Calendar event. Work that runs past midnight now counts as one working day, with its overtime, instead of a second day with a second minimum.
+
+## Version 8.54.00
+- **orOS Gate: folders for Claude's apps.** Studio/Podcasts, Montage/Projects and Mockups/Claude are Claude's folders by themselves when the app is installed, so Claude can bring a podcast or a project in with no setup. You can take one off in Settings › orOS Gate.
+- **orOS Gate: checked with orOS closed.** When no orOS is open, Claude's edits for an app (and their dry runs) are checked against your encrypted copy first, so a mistake shows at once instead of waiting in the queue.
+
+## Version 8.53.00
+- **orOS Gate: a file an app just saved for Claude is in Claude's copy sooner.** When Photo Lab, Atelier or another app saves a picture into one of Claude's folders, the copy Claude reads while orOS is closed is refreshed a few seconds later, also when another refresh was already running.
+
+## Version 8.52.00
+- **orOS Gate: Claude's waiting requests are no longer lost when orOS updates.** A change or question Claude left while orOS was closed now waits for a device whose orOS knows it, and a device that has just opened finishes its update before it works on them. Before, the older copy a phone runs for a moment before it updates could drop them.
+
 ## Version 8.51.00
 - **Layout: versions.** More › Versions… keeps the document under a name, compares any version with now (each changed paragraph with its words struck and added) and brings a version back, keeping the current state first.
 

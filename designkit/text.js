@@ -961,6 +961,10 @@
     runs.forEach(function (run) {
       var cs = run.cs ? resolveCs(csMap, run.cs) : {};
       var a = runAttrs(ps, cs, run);
+      // a tracked deletion (LY-W12, ext.del): kept in the text until it
+      // is accepted or rejected, never set; its characters keep their
+      // offsets
+      if (run.ext && run.ext.del && typeof run.t === "string") { base += run.t.length; return; }
       if (run.f) {
         if (!word) word = { k: "w", parts: [] };
         word.parts.push({ t: null, f: run.f, a: a, o: base, n: 1 });
@@ -1120,6 +1124,15 @@
       });
     });
     return out;
+  }
+  // a line moved down by dy: its runs and a table row's fills and rules
+  function moveLine(ln, dy) {
+    ln.y += dy;
+    ln.runs.forEach(function (r) { r.y += dy; });
+    if (ln.tb) {
+      ln.tb.fills.forEach(function (f) { f[1] += dy; });
+      ln.tb.rules.forEach(function (r) { r[1] += dy; r[3] += dy; });
+    }
   }
   // a note set on its own, `w` wide → { lines, h }
   function noteBlock(notes, id, w) {
@@ -1371,6 +1384,13 @@
       curPi = pi;
       var pbrk = para.ext && BRK[para.ext.brk] ? para.ext.brk : ps.brk;
       if (pbrk && !startAt(pbrk)) { out.overset = true; break; }
+      // a table (LY-W12): rows in the column, header rows repeated
+      var tbx = para.ext && para.ext.tbl;
+      if (tbx && Array.isArray(tbx.rows) && tbx.rows.length && Array.isArray(tbx.cols) && tbx.cols.length) {
+        if (!placeTable(para, ps, tbx)) { out.overset = true; break; }
+        if (pi < realN) out.placedParas = pi + 1;
+        continue;
+      }
       var S = snap(), got = place(para, ps, {});
       // lines kept together at a column break: the paragraph moves on
       // whole, or the column before it gives lines to the next
@@ -1421,11 +1441,12 @@
         if (free <= 0.5 || ls.length < 2) return;
         var gaps = 0, i;
         for (i = 1; i < ls.length; i++) if (ls[i].p !== ls[i - 1].p) gaps++;
+        if (!gaps && ls.some(function (l) { return l.tb; })) return;   // a table's rows do not spread (LY-W12)
         var byLine = !gaps, step = free / (byLine ? ls.length - 1 : gaps), dy = 0;
         for (i = 1; i < ls.length; i++) {
           if (byLine || ls[i].p !== ls[i - 1].p) dy += step;
           var ln = ls[i], d0 = dy;
-          ln.y += d0; ln.runs.forEach(function (r) { r.y += d0; });
+          moveLine(ln, d0);
         }
       });
     });
@@ -1442,7 +1463,7 @@
         var used = (last.y + last.d) - ins, free = (bottom - ins) - used;
         if (free <= 0) return;
         var dy = f.valign === "c" ? free / 2 : free;
-        ls.forEach(function (ln) { ln.y += dy; ln.runs.forEach(function (r) { r.y += dy; }); });
+        ls.forEach(function (ln) { moveLine(ln, dy); });
       });
     });
     return out;
@@ -1471,6 +1492,103 @@
     }
     // a paragraph laid out → the lines per column it took, or null
     // (no frame left); opt.breakAt: lines in its first column
+    // ---- a table (LY-W12) ----
+    // each cell's text set on its own (as a note is), rows as tall as
+    // their tallest cell, rows a span joins kept in one column; a row
+    // is one line with its cells' runs, fills and rules (line.tb)
+    function cellLines(text, psId, w) {
+      var keepO = curObjs, keepN = curNotes, keepX = curXr;
+      var cp = String(text || "").split("\n").map(function (s) { return { ps: psId, runs: [{ t: s }] }; });
+      var res = layoutChain({ paras: cp }, [{ id: "_tc", w: Math.max(1, w), h: 1e6 }], { ps: styles.ps, cs: styles.cs });
+      curObjs = keepO; curNotes = keepN; curXr = keepX;
+      var ls = res.frames._tc.lines, last = ls[ls.length - 1];
+      return { lines: ls, h: last ? last.y + (last.d || 0) : 0 };
+    }
+    function placeTable(para, ps, tb) {
+      var C = Math.min(30, tb.cols.length), R = Math.min(2000, tb.rows.length);
+      var num = function (v, lo, hi, d) { v = Number(v); return isFinite(v) ? Math.max(lo, Math.min(hi, v)) : d; };
+      var pad = num(tb.pad, 0, 36, 4), bw = num(tb.bw, 0, 12, 0.5);
+      var li = ps.li || 0, ri = ps.ri || 0, W = Math.max(10, geom.x1 - geom.x0 - li - ri);
+      var ws = [], sum = 0, j, i;
+      for (j = 0; j < C; j++) { ws.push(num(tb.cols[j], 0.05, 100, 1)); sum += ws[j]; }
+      var cx = [0];
+      for (j = 0; j < C; j++) cx.push(cx[j] + W * ws[j] / sum);
+      var hdr = Math.max(0, Math.min(R - 1, Math.round(num(tb.hdr, 0, 20, 0))));
+      var cps = typeof tb.cps === "string" && tb.cps ? tb.cps : para.ps, hps = typeof tb.hps === "string" && tb.hps ? tb.hps : cps;
+      var rh = [], cells = [];
+      for (i = 0; i < R; i++) { rh.push(num(tb.rows[i] && tb.rows[i].h, 0, 2000, 0)); cells.push([]); }
+      for (i = 0; i < R; i++) {
+        var row = tb.rows[i] && Array.isArray(tb.rows[i].c) ? tb.rows[i].c : [];
+        for (j = 0; j < C; j++) {
+          var c = row[j];
+          if (!c || c.x) continue;
+          var sp = Math.round(num(c.s, 1, C - j, 1)), rs = Math.round(num(c.r, 1, R - i, 1));
+          var w = cx[j + sp] - cx[j], L = cellLines(typeof c.t === "string" ? c.t.slice(0, 4000) : "", i < hdr ? hps : cps, w - 2 * pad);
+          cells[i].push({ j: j, s: sp, r: rs, w: w, L: L, f: typeof c.f === "string" ? c.f : "" });
+          if (rs === 1) rh[i] = Math.max(rh[i], L.h + 2 * pad);
+        }
+      }
+      // a span's text fits: its last row grows
+      for (i = 0; i < R; i++) cells[i].forEach(function (cl) {
+        if (cl.r < 2) return;
+        var have = 0;
+        for (var a = i; a < i + cl.r; a++) have += rh[a];
+        if (cl.L.h + 2 * pad > have) rh[i + cl.r - 1] += cl.L.h + 2 * pad - have;
+      });
+      for (i = 0; i < R; i++) rh[i] = Math.max(rh[i], 2 * pad + 1);
+      // blocks: rows that a span joins (the header is one block)
+      var blocks = [], start = 0;
+      while (start < R) {
+        var end = start < hdr ? hdr - 1 : start;
+        for (var k = start; k <= end; k++) cells[k].forEach(function (cl) { end = Math.max(end, k + cl.r - 1); });
+        blocks.push([start, end]);
+        start = end + 1;
+      }
+      var headB = hdr ? blocks[0] : null;
+      function bh(b) { var h = 0; for (var a = b[0]; a <= b[1]; a++) h += rh[a]; return h; }
+      function emit(b) {
+        var tx = geom.x0 + li;
+        for (var a = b[0]; a <= b[1]; a++) {
+          var top = y, line = { col: col, frame: geom.f.id, y: y + rh[a], d: 0, h: rh[a], p: curPi, o0: 0, o1: 0, tr: a, runs: [], cx0: geom.x0, cx1: geom.x1, x0: tx, tb: { fills: [], rules: [] } };
+          cells[a].forEach(function (cl) {
+            var H = 0, X = tx + cx[cl.j];
+            for (var q = a; q < a + cl.r; q++) H += rh[q];
+            var fill = cl.f || (a < hdr && typeof tb.hf === "string" ? tb.hf : "");
+            if (fill) line.tb.fills.push([X, top, cl.w, H, fill]);
+            if (bw > 0) {
+              var bc = typeof tb.bc === "string" && tb.bc ? tb.bc : "";
+              line.tb.rules.push([X, top, X + cl.w, top, bc, bw], [X, top + H, X + cl.w, top + H, bc, bw], [X, top, X, top + H, bc, bw], [X + cl.w, top, X + cl.w, top + H, bc, bw]);
+            }
+            cl.L.lines.forEach(function (ln) {
+              ln.runs.forEach(function (r) {
+                var o = {};
+                for (var kk in r) if (kk !== "o" && kk !== "n" && kk !== "p") o[kk] = r[kk];
+                o.x = X + pad + r.x; o.y = top + pad + r.y;
+                line.runs.push(o);
+              });
+            });
+          });
+          y += rh[a];
+          out.frames[geom.f.id].lines.push(line);
+        }
+        colTop = false;
+      }
+      if (!colTop) {
+        // below the line before (its descent), then the space before
+        var prev = out.frames[geom.f.id].lines, pl = prev[prev.length - 1];
+        y += ps.sb + (pl && pl.col === col && !pl.tb ? pl.d || 0 : 0);
+      }
+      for (var bi = 0; bi < blocks.length; bi++) {
+        var b = blocks[bi], need = bh(b);
+        if (y + need > geom.bottom - footRoom() + 0.01 && !colTop) {
+          if (!nextCol()) return false;
+          if (headB && bi > 0 && tb.rep !== 0) emit(headB);
+        }
+        emit(b);
+      }
+      y += ps.sa || 0;
+      return true;
+    }
     function place(para, ps, opt) {
       var toks = tokenize(para, ps, csMap);
       curLen = toks.len;
@@ -1913,7 +2031,10 @@
   // Plain text of a story (search, previews, conflict checks).
   function plainText(story) {
     return (story.paras || []).map(function (p) {
-      return (p.runs || []).map(function (r) { return r.f ? (r.f === "pn" ? "#" : "##") : String(r.t || ""); }).join("");
+      // a table (LY-W12): its cells, tab-separated, row by row
+      var tb = p.ext && p.ext.tbl;
+      if (tb && Array.isArray(tb.rows)) return tb.rows.map(function (r) { return (r && r.c || []).filter(function (c) { return c && !c.x; }).map(function (c) { return String(c.t || "").replace(/\n/g, " "); }).join("\t"); }).join("\n");
+      return (p.runs || []).map(function (r) { return r.ext && r.ext.del ? "" : r.f ? (r.f === "pn" ? "#" : "##") : String(r.t || ""); }).join("");
     }).join("\n");
   }
 

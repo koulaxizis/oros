@@ -127,7 +127,8 @@
 
   function normParas(paras) {
     var out = [];
-    paras.forEach(function (p) { var n = M.normPara(p); if (n) out.push(n); });
+    var TB = window.orosDK && window.orosDK.table;
+    (TB ? TB.unrun(paras) : paras).forEach(function (p) { var n = M.normPara(p); if (n) out.push(n); });
     if (!out.length) out.push({ ps: S.curPs || "ps-body", runs: [] });
     return out;
   }
@@ -155,13 +156,37 @@
     var ps = T.resolvePs(psMap, p.ps), pso = psMap[p.ps];
     // the style's name in the left column (LY-N3, Style names)
     d.setAttribute("data-psn", pso ? LY.label(pso.name) : p.ps);
+    // a table (LY-W12): one piece; a click opens the table dialog
+    var tb = p.ext && p.ext.tbl;
+    if (tb && Array.isArray(tb.rows) && Array.isArray(tb.cols)) {
+      d.className = "sp sp-tbl";
+      d.contentEditable = "false";
+      var tl = el("span", "sf stbl", "\u25A6 " + t("tbl.label", { r: tb.rows.length, c: tb.cols.length }));
+      tl.setAttribute("data-f", "tbl");
+      tl.title = t("tbl.open");
+      var pv = LY.tables && window.orosDK && window.orosDK.table ? window.orosDK.table.text(tb).split("\n")[0].replace(/\t/g, " · ").slice(0, 80) : "";
+      if (pv) tl.appendChild(el("span", "stbl-pv", pv));
+      d.appendChild(tl);
+      return d;
+    }
     d.style.fontFamily = familyCss(ps.font);
     d.style.fontSize = Math.round(Math.max(13, Math.min(26, ps.size * 1.25)) * zoom() * 10) / 10 + "px";
     d.style.textAlign = ps.align === "c" ? "center" : ps.align === "r" ? "right" : "left";
     var endsWithBr = false;
     p.runs.forEach(function (r) {
       var node;
-      if (r.f) {
+      if (r.ext && r.ext.del) {
+        // a tracked deletion (LY-W12): one piece, struck; it rides by key
+        var dk = "r" + (++S.pextN);
+        S.pext[dk] = r;
+        node = el("del", "sf sdel", r.f ? (r.f === "pn" ? "#" : "##") : r.t);
+        node.contentEditable = "false";
+        node.setAttribute("data-f", "del");
+        node.setAttribute("data-rx", dk);
+        node.setAttribute("data-t", r.f ? "#" : r.t);
+        node.title = revTitle(r.ext.del, "trk.del");
+        endsWithBr = false;
+      } else if (r.f) {
         node = el("span", "sf", r.f === "pn" ? "#" : "##");
         node.contentEditable = "false";
         node.setAttribute("data-f", r.f);
@@ -207,10 +232,12 @@
       if (r.ext && !r.f && !r.ext.fld && !r.ext.sup && node.nodeType === 11) {
         // any other ext of a run (a link, LY-W7, or another program's)
         // rides on a span by key, so typing in it keeps it
-        var xk = "r" + (++S.pextN), sx = el("span", r.ext.href ? "sx slink" : "sx");
+        var xk = "r" + (++S.pextN), sx = el("span", (r.ext.href ? "sx slink" : "sx") + (r.ext.ins ? " sins" : "") + (r.ext.ix ? " six" : ""));
         S.pext[xk] = r.ext;
         sx.setAttribute("data-rx", xk);
         if (r.ext.href) sx.title = String(r.ext.href);
+        else if (r.ext.ins) sx.title = revTitle(r.ext.ins, "trk.ins");
+        else if (r.ext.ix) sx.title = t("ix.mark") + ": " + (r.ext.ix.t || r.t) + (r.ext.ix.s ? " / " + r.ext.ix.s : "");
         sx.appendChild(node); node = sx;
       }
       if (r.u) { var u = document.createElement("u"); u.appendChild(node); node = u; }
@@ -229,6 +256,12 @@
     // placeholder <br> to have a line at all
     if (!p.runs.length || endsWithBr) d.appendChild(document.createElement("br"));
     return d;
+  }
+
+  // who changed it and when (track changes, LY-W12)
+  function revTitle(m, key) {
+    var d = m && m.at ? new Date(m.at) : null;
+    return t(key) + (m && m.by ? " · " + m.by : "") + (d && !isNaN(d) ? " · " + d.toLocaleString() : "");
   }
 
   // a note's number in this story, as the editor shows it
@@ -329,6 +362,7 @@
           delete fx.ext;
           add(withFmt({ t: node.getAttribute("data-t") || "*", ext: JSON.parse(JSON.stringify(S.pext[node.getAttribute("data-rx")])) }, fx)); trailingBr = false;
         }
+        if (f === "del" && S.pext[node.getAttribute("data-rx")]) { add(JSON.parse(JSON.stringify(S.pext[node.getAttribute("data-rx")]))); trailingBr = false; }
         if (f === "sup" && node.getAttribute("data-t")) { add(withFmt({ t: node.getAttribute("data-t"), ext: { sup: 1 } }, fmtFor(node))); trailingBr = false; }
         return;
       }
@@ -369,7 +403,7 @@
           if (atom) {
             if (o === count) { found = { node: n, off: k }; return; }
             if (c.tagName === "BR" && !c.nextSibling && n === d) return;   // placeholder
-            var len = /^(sec|sup|rx)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : 1;   // a running head or a note's mark counts its own text
+            var len = /^(sec|sup|rx|del)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : c.getAttribute("data-f") === "tbl" ? 0 : 1;   // a table counts nothing   // a running head or a note's mark counts its own text
             if (o < count + len) { found = { node: n, off: k + 1 }; return; }
             count += len;
           } else walk(c);
@@ -424,8 +458,18 @@
     ed.classList.toggle("is-empty", paras.length === 1 && !paras[0].runs.length);
   }
 
-  function commitParas(paras) {
+  function commitParas(paras, keepCaret) {
     paras = normParas(paras);
+    // track changes (LY-W12): the new text marked against the saved one
+    var st0 = story();
+    if (st0 && LY.track && LY.track.on() && !S.noTrack) {
+      var m0 = keepCaret ? readModel() : null;
+      var tr = LY.track.mark(st0.paras, paras, m0 ? [m0.a, m0.b] : null);
+      if (keyOf(normParas(tr.paras)) !== keyOf(paras)) {
+        paras = normParas(tr.paras);
+        if (keepCaret) { render(paras, tr.pos ? { a: tr.pos[0], b: tr.pos[1] } : null); rememberSel(); }
+      }
+    }
     var key = keyOf(paras), sid = S.sid, baseM = S.baseM;
     S.lastKey = key;
     S.dirty = false;
@@ -452,7 +496,7 @@
     if (LY.inframe) LY.inframe.flush();
     if (!S.sid || !S.dirty) return;
     var res = parse([]);
-    commitParas(res.paras);
+    commitParas(res.paras, isOpen() && document.activeElement === ed);
   }
   LY.flushStory = flush;
 
@@ -474,7 +518,7 @@
     render(paras, range);
     ed.focus();
     rememberSel();
-    commitParas(paras);
+    commitParas(paras, true);
     trackPs();
   }
 
@@ -605,10 +649,27 @@
     nt.addEventListener("mousedown", function (e) { e.preventDefault(); });
     nt.addEventListener("click", function () {
       rememberSel();
-      LY.menu(nt, [{ label: t("note.ins"), fn: insertNote }, { label: t("xr.ins"), fn: insertXref }, { label: t("link.ins"), fn: linkCmd },
+      LY.menu(nt, [{ label: t("note.ins"), fn: insertNote }, { label: t("xr.ins"), fn: insertXref }, { label: t("link.ins"), fn: linkCmd }, { label: t("ix.ins"), fn: insertIx },
         { label: t("note.settings"), fn: function () { flush(); LY.notes.settings(); } }]);
     });
     tools.appendChild(nt);
+    // track changes (LY-W12)
+    var trb = el("button", "icon-btn sf-btn trk-btn", "\u270E");
+    trb.type = "button"; trb.title = t("trk.menu"); trb.setAttribute("aria-label", t("trk.menu"));
+    trb.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    trb.addEventListener("click", function () {
+      if (!LY.track) return;
+      rememberSel(); flush();
+      var st = story();
+      LY.menu(trb, LY.track.menu(settle, st ? st.paras : []));
+    });
+    tools.appendChild(trb);
+    // a table (LY-W12)
+    var tbb = el("button", "icon-btn sf-btn", "\u25A6");
+    tbb.type = "button"; tbb.title = t("tbl.ins"); tbb.setAttribute("aria-label", t("tbl.ins"));
+    tbb.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    tbb.addEventListener("click", insertTable);
+    tools.appendChild(tbb);
     // break characters (LY-W5b)
     var brk = el("button", "icon-btn sf-btn", "⤓");
     brk.type = "button"; brk.title = t("brk.menu"); brk.setAttribute("aria-label", t("brk.menu"));
@@ -685,6 +746,91 @@
       });
     });
   }
+  // ---------- Index entries (LY-W13) ----------
+  // the selected words become an index entry (run ext.ix)
+  function insertIx() {
+    if (!isOpen() || !LY.bookIndex) return;
+    var m = readModel();
+    if (m.a.p === m.b.p && m.a.o === m.b.o) { LY.toast(t("ix.select")); return; }
+    var words = "";
+    eachRun(m.paras, m.a, m.b, function (r) { if (!r.f) words += r.t; });
+    LY.bookIndex.entryDlg(words, function (ix) {
+      modelEdit(function (paras, a, b) {
+        if (a.p === b.p && a.o === b.o) return false;
+        eachRun(paras, a, b, function (r) { if (r.f || (r.ext && (r.ext.fn || r.ext.xr || r.ext.del))) return; r.ext = Object.assign({}, r.ext || {}, { ix: JSON.parse(JSON.stringify(ix)) }); });
+        return { a: a, b: b };
+      });
+    });
+  }
+
+  // ---------- Track changes (LY-W12) ----------
+  // accept or reject the changes in the selection (or all), untracked
+  function settle(fn, all) {
+    if (!isOpen()) {
+      selectedStoryOp(function (paras) { var r = fn(paras, null); paras.length = 0; r.paras.forEach(function (p) { paras.push(p); }); });
+      return;
+    }
+    var n = 0;
+    S.noTrack = true;
+    try {
+      modelEdit(function (paras, a, b) {
+        var r = fn(paras, all ? null : { a: a, b: b });
+        n = r.n;
+        if (!n) return false;
+        paras.length = 0;
+        r.paras.forEach(function (p) { paras.push(p); });
+        var c = { p: Math.min(a.p, paras.length - 1), o: 0 };
+        return { a: c, b: c };
+      });
+    } finally { S.noTrack = false; }
+    LY.toast(t(n ? "trk.done" : "trk.none", { n: n }));
+  }
+  function showTrk() { var b = tools && tools.querySelector(".trk-btn"); if (b) { var on = !!(LY.track && LY.track.on()); b.classList.toggle("on", on); b.setAttribute("aria-pressed", on ? "true" : "false"); } }
+
+  // ---------- Tables (LY-W12) ----------
+  // a new table at the caret: before the caret's paragraph when the
+  // caret is at its start, after it at its end, else the paragraph
+  // splits there
+  function insertTable() {
+    if (!isOpen() || !LY.tables) return;
+    flush();
+    rememberSel();
+    LY.tables.edit(null, function (tb) {
+      if (!tb) return;
+      modelEdit(function (paras, a, b) {
+        deleteRange(paras, a, b);
+        var p = paras[a.p], at;
+        if (a.o === 0 && (paraLen(p) || paras.length > 1)) at = a.p;
+        else if (a.o >= paraLen(p)) at = a.p + 1;
+        else { var c = insertAt(paras, a, "\n", null); at = c.p; }
+        paras.splice(at, 0, { ps: S.curPs || p.ps, runs: [], ext: { tbl: tb } });
+        // an empty story's one paragraph gives way to the table
+        if (paras.length === 2 && at === 1 && !paraLen(paras[0]) && !paras[0].ext) { paras.shift(); at = 0; }
+        var to = Math.min(at + 1, paras.length - 1);
+        if (to === at) { paras.push({ ps: p.ps, runs: [] }); to = at + 1; }
+        return { a: { p: to, o: 0 }, b: { p: to, o: 0 } };
+      });
+      tableLevel();
+    });
+  }
+  function editTableAt(i) {
+    flush();
+    var st = story(), p = st && st.paras[i];
+    if (!p || !p.ext || !p.ext.tbl) return;
+    LY.tables.edit(p.ext.tbl, function (tb) {
+      modelEdit(function (paras) {
+        var q = paras[i];
+        if (!q || !q.ext || !q.ext.tbl) return false;
+        if (!tb) { paras.splice(i, 1); if (!paras.length) paras.push({ ps: q.ps, runs: [] }); return { a: { p: Math.max(0, i - 1), o: 0 }, b: { p: Math.max(0, i - 1), o: 0 } }; }
+        q.ext = Object.assign({}, q.ext, { tbl: tb });
+        return { a: { p: i, o: 0 }, b: { p: i, o: 0 } };
+      });
+      tableLevel();
+    }, { canRemove: true });
+  }
+  // a table over the usual size: the document needs model level 3
+  function tableLevel() { if (M.tableLevel(LY.doc) > 1 && !(LY.doc.setup.ext && LY.doc.setup.ext.mv >= 3)) LY.op(function (doc, now) { LY.tables.level(doc, now); }); }
+
   // a note's text changed or the note removed (null text)
   function setNote(id, txt) {
     modelEdit(function (paras) {
@@ -773,7 +919,7 @@
     S.sid = st.id; S.item = it.id; S.baseM = st.m; S.dirty = false; S.sel = null;
     S.curPs = st.paras[0] ? st.paras[0].ps : "ps-body";
     $("story-title").textContent = t("story.title");
-    buildTools();
+    buildTools(); showTrk();
     fillSelects();
     $("story").hidden = false;
     document.body.classList.add("story-open");
@@ -823,6 +969,7 @@
     var st = story();
     if (!st) { S.dirty = false; close(); return; }
     fillSelects();
+    showTrk();
     if (S.dirty) { updateFoot(parse([]).paras); return; }
     S.baseM = st.m;
     if (keyOf(st.paras) === S.lastKey) { updateFoot(st.paras); return; }
@@ -848,6 +995,8 @@
     ed.addEventListener("click", function (e) {
       var n = e.target && e.target.closest ? e.target.closest(".sfn") : null;
       if (n && ed.contains(n) && LY.notes) { e.preventDefault(); rememberSel(); editNoteAt(n); }
+      var tb = e.target && e.target.closest ? e.target.closest(".sp-tbl") : null;
+      if (tb && ed.contains(tb) && LY.tables) { e.preventDefault(); editTableAt(Array.prototype.indexOf.call(ed.children, tb)); }
     });
     ed.addEventListener("input", onInput);
     ed.addEventListener("blur", flush);

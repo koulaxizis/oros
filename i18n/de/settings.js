@@ -600,6 +600,7 @@ orosPack("de", "settings", {
  "gt.fold.go": "Hinzufügen",
  "gt.fold.hint": "Ordner der orOS-Disk, die Claude auflisten und lesen darf, wenn Dateien oben an ist, und ändern mit «Darf ändern» bei Dateien. Löschen fragt immer zuerst auf diesem Gerät; Schlüssel und Geheimnisse werden nie gezeigt.",
  "gt.fold.none": "Noch kein Ordner.",
+ "gt.fold.app": "(für seine App angelegt; Entfernen nimmt ihn heraus)",
  "gt.fold.rm": "Entfernen",
  "gt.fold.title": "Claudes Ordner",
  "gt.change": "Darf ändern",

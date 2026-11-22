@@ -1033,7 +1033,72 @@
     return o;
   }
 
+  // ---------- GATE-PL10: mockup_render (Claude, the Assistant) ----------
+  // Chris 2026-11-22 (dogfooding the podcast Planodio, item 10): one of the
+  // owner's mockups is the template, a picture goes into one of its
+  // slots, the picture is saved as a new file. The template is never
+  // changed and no project is added.
+  var RENDER_OUT = "/internal/Mockups/Claude";
+  var IMG_EXT = /\.(jpe?g|png|webp|gif|bmp|avif)$/i;
+  function picPath(v) {
+    var s = typeof v === "string" ? v.trim() : "";
+    if (!s || s.length > 1030 || /[\\\u0000-\u001f\u007f]/.test(s)) return "";
+    var body = /^local:/i.test(s) ? s.slice(6) : s.indexOf("/internal/") === 0 ? s.slice(10) : null;
+    if (body === null || body.split("/").some(function (x) { return !x || x === "." || x === ".."; })) return "";
+    return IMG_EXT.test(s) ? s : "";
+  }
+  function outDir(v) {
+    var s = typeof v === "string" ? v.trim().replace(/\/+$/, "") : "";
+    if (!s) return "";
+    if (s.length > 1030 || /[\\\u0000-\u001f\u007f]/.test(s)) return "";
+    var body = /^local:/i.test(s) ? s.slice(6) : s.indexOf("/internal/") === 0 ? s.slice(10) : null;
+    if (body === null || body.split("/").some(function (x) { return !x || x === "." || x === ".." || x.charAt(0) === "."; })) return "";
+    return s;
+  }
+  // The request, checked (the same in assistant/core.js normMockup) → q | null
+  function renderReq(rq) {
+    var r = rq && typeof rq === "object" ? rq : {};
+    var q = { key: typeof r.key === "string" ? r.key.slice(0, 80) : "", template: str(r.template, 120), image: picPath(r.image),
+              slot: typeof r.slot === "string" && /^[a-zA-Z]{1,12}$/.test(r.slot) ? r.slot : "", fmt: FMTS.indexOf(r.fmt) >= 0 ? r.fmt : "",
+              name: str(r.name, 120).replace(/[\\/:*?"<>|]+/g, " ").replace(/\s+/g, " ").trim(), gate: r.gate === 1 || r.gate === true ? 1 : 0 };
+    var outs = (Array.isArray(r.out) ? r.out : typeof r.out === "string" ? [r.out] : []).map(outDir);
+    if (outs.some(function (o) { return !o; })) return null;
+    q.out = outs.length ? outs.slice(0, 2) : [RENDER_OUT];
+    if (!q.template || !q.image) return null;
+    return q;
+  }
+  function foldName(s) { return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, " ").trim(); }
+  // The template among the projects by its name (the same name first,
+  // else a part of it) → { p } | { err: "none" | "several", names }
+  function pickTemplate(list, name, labelOf) {
+    var lab = typeof labelOf === "function" ? labelOf : function (p) { return p.nm || ""; };
+    var live = (Array.isArray(list) ? list : []).filter(function (p) { return p && !p.del && known(p); });
+    var q = foldName(name), names = live.map(lab);
+    var hit = live.filter(function (p) { return foldName(lab(p)) === q; });
+    if (!hit.length) hit = live.filter(function (p) { return q && foldName(lab(p)).indexOf(q) >= 0; });
+    if (!hit.length) return { err: "none", names: names.slice(0, 30) };
+    if (hit.length > 1 && !hit.every(function (p) { return foldName(lab(p)) === foldName(lab(hit[0])); })) return { err: "several", names: hit.map(lab).slice(0, 20) };
+    hit.sort(function (a, b) { return (b.m || 0) - (a.m || 0); });
+    return { p: hit[0] };
+  }
+  // The slot the picture goes into: the one asked for, else the wrap of a
+  // book laid out as one wrap, else the front → slot | "" (not a slot of it)
+  function renderSlot(p, want) {
+    var slots = p && p.kind && p.kind !== "book" ? goodSlots(p.kind) : SLOTS;
+    if (want) return slots.indexOf(want) >= 0 ? want : "";
+    if (p && p.kind === "combo") return "";
+    return p && p.art && p.art.mode === "wrap" && slots.indexOf("wrap") >= 0 ? "wrap" : "front";
+  }
+  // A file name for the picture: "<name or template - image>.<fmt>"
+  function renderName(q, tplName, fmt) {
+    var img = String(q.image || "").split("/").pop().replace(/\.[^.]*$/, "");
+    var base = (q.name || (String(tplName || "mockup") + " - " + img)).replace(/[\\/:*?"<>|\u0000-\u001f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 120) || "mockup";
+    if (base.charAt(0) === ".") base = "mockup " + base;
+    return base + "." + fmt;
+  }
+
   var MockCore = {
+    RENDER_OUT: RENDER_OUT, renderReq: renderReq, pickTemplate: pickTemplate, renderSlot: renderSlot, renderName: renderName,
     VERSION: VERSION, DATA_VER: DATA_VER, DATA_KEY: DATA_KEY, GOODS_KEY: GOODS_KEY,
     addGood: addGood, good: good, goodKinds: function () { return GOOD_ORDER.slice(); }, goodSlots: goodSlots,
     normGoodProject: normGoodProject, blankGood: blankGood, known: known, isGood: isGood,

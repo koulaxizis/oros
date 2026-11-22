@@ -1919,10 +1919,11 @@
                 "files_write", "files_move", "files_delete"]
                 // GATE-SCREEN (Chris 2026-11-19): the tools that work on the owner's screen wait for one
                 .concat(["propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                         "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app"]);
+                         "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app",
+                         "mockup_render"]);   // GATE-PL10: a picture into Claude's folders or a local folder, never over a file
   var ACT_TOOLS = ["search_data", "read_item", "app_summary", "list_fonts", "read_in_app", "edit_in_app", "do_action", "change_item", "create_items", "link_contact", "link_items", "change_history", "undo_change",
                    "propose_entry", "propose_automation", "propose_rule", "newsletter_add", "newsletter_check", "book_cover",
-                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf"].concat(FILE_READ, FILE_WRITE);
+                   "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf"].concat(FILE_READ, FILE_WRITE, ["mockup_render"]);
   // GATE-PAR P3: tools that open an app on the owner's screen with the
   // work (= core.js GATE_OPEN); like do_action they need an app Claude
   // may change, no pause, and the frame checks the target app.
@@ -1938,7 +1939,8 @@
   // (sendHeld, as 7.48.00 does for deletions). do_action is never kept:
   // playing or opening something hours later is not what was asked.
   var SCREEN_HELD = "__screen";
-  function screenTool(name, args) { return ACT_OPEN.indexOf(name) >= 0 || (name === "edit_in_app" && !(isObj(args) && args.dry_run === true)); }
+  // GATE-PL10: mockup_render draws on the device (WebGL), like Layout's work
+  function screenTool(name, args) { return ACT_OPEN.indexOf(name) >= 0 || name === "mockup_render" || (name === "edit_in_app" && !(isObj(args) && args.dry_run === true)); }
   function offScreen() { return away() || document.visibilityState !== "visible"; }
   // TRAY-1 (Chris 2026-11-21 «να δουλεύεις με το orOS κλειστό στο tray»):
   // Layout's book work and edit_in_app need nobody to look at them. On the
@@ -1947,7 +1949,7 @@
   // Portable, its own browser) they run at once; proposals that the owner
   // reads (propose_*, newsletter_*) still wait for a screen, and so does
   // every deletion (askDelete answers "none" off screen → __held).
-  var BACK_OK = ["book_cover", "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app"];
+  var BACK_OK = ["book_cover", "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule", "export_epub", "export_pdf", "edit_in_app", "mockup_render"];
   function deskApp() { return typeof location !== "undefined" && /^http:\/\/(localhost|127\.0\.0\.1):47800$/.test(String(location.origin || "")); }
   // TRAY-3 (Chris 2026-11-21 «εφάρμοσε τις ίδιες δυνατότητες για όλες
   // τις εργασίες του Gate»): in an orOS desktop window that is minimised
@@ -2758,6 +2760,23 @@
           }
           ans.__index = JSON.stringify(list);
           if (n < r.items.length) ans.__ixpart = String(r.items.length);
+          // GATE-PL11: edit_in_app's commands and the documents' names, so
+          // the relay checks a dry run (and every queued edit) with orOS closed
+          if (typeof F.editPack !== "function") return;
+          return F.editPack().then(function (pk) {
+            var txt = isObj(pk) && Object.keys(pk).length ? JSON.stringify(pk) : "", b = utf8Len(txt);
+            if (txt && size + b <= COPY_MAX) { ans.__edit = txt; size += b; }
+            // GATE-PL10: the mockups' names, for mockup_render with orOS closed
+            if (ok.indexOf("mockups") >= 0) {
+              var names = [];
+              ["oros-mockups-data", "oros-mockups-goods"].forEach(function (k) {
+                var d = readStore(k);
+                (isObj(d) && Array.isArray(d.prj) ? d.prj : []).forEach(function (x) { if (isObj(x) && !x.del && typeof x.nm === "string" && x.nm.trim()) names.push(x.nm.trim().slice(0, 120)); });
+              });
+              var mt = JSON.stringify({ tpl: names.slice(0, 300) }), mb = utf8Len(mt);
+              if (size + mb <= COPY_MAX) { ans.__mock = mt; size += mb; }
+            }
+          }, function () {});
         });
       }).then(null, function () { ans.__ixerr = "index failed"; });
     }).then(function () {
@@ -2775,7 +2794,25 @@
   // with the same rules as a live call (the switches and a pause as they
   // are now), then the box is told which ones are done.
   // F3: queued deletions waiting for the owner (id → queue item).
-  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, DECL = { ok: false, c: "declined" };
+  var cqHeld = {}, cqBusy = {}, HELD = { held: 1 }, BUSY = { busy: 1 }, KEEP = { keep: 1 }, DECL = { ok: false, c: "declined" };
+  // GQ-SETTLE (2026-11-22): orOS checks for a new release as it starts and
+  // reloads into it, which cut a queued change off half done (and the new
+  // copy then took it as done). The queue waits until that check is over:
+  // no worker installing or waiting, and 10 s since the page started.
+  var Q_SETTLE_MS = 10000, Q_SETTLE_TRIES = 45;
+  function queueSettled(fn, n) {
+    n = n || 0;
+    var sw = null;
+    try { sw = typeof navigator !== "undefined" && navigator.serviceWorker && typeof navigator.serviceWorker.getRegistration === "function" ? navigator.serviceWorker : null; } catch (e) { sw = null; }
+    if (!sw || n >= Q_SETTLE_TRIES) { fn(); return; }
+    sw.getRegistration().then(function (r) {
+      if (!r) { fn(); return; }                     // no service worker here: nothing reloads it
+      var age = typeof performance !== "undefined" && performance.now ? performance.now() : Q_SETTLE_MS;
+      if (r.installing || r.waiting) { setTimeout(function () { queueSettled(fn, n + 1); }, 2000); return; }
+      if (age < Q_SETTLE_MS) { setTimeout(function () { queueSettled(fn, n + 1); }, Q_SETTLE_MS - age + 50); return; }
+      fn();
+    }, function () { fn(); });
+  }
   function heldAgain() {
     var ids = Object.keys(cqHeld);
     if (!ids.length || !ws || ws.readyState !== 1 || document.visibilityState !== "visible") return;
@@ -2785,7 +2822,7 @@
     var o, k = gateKey();
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
-    whenOpen(function () {
+    queueSettled(function () { whenOpen(function () {
       var done = [], files = false, held = [];
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
@@ -2795,7 +2832,11 @@
           ranAdd(it.id);
           return unseal(k, it.c).then(function (plain) {
             var x = JSON.parse(plain);
-            if (!isObj(x) || typeof x.n !== "string" || QUEUED.indexOf(x.n) < 0) return { ok: false, c: "refused" };
+            if (!isObj(x) || typeof x.n !== "string") return { ok: false, c: "refused" };
+            // GQ-KEEP (2026-11-22): a change this orOS does not know (an older
+            // copy, e.g. the cached one that runs before an update) stays queued
+            // for a newer one, never acknowledged as done
+            if (QUEUED.indexOf(x.n) < 0) { ranDrop(it.id); throw KEEP; }
             // 7.44.00 (Chris 2026-11-11 «Ρύθμισε το gate ώστε να δουλεύεις και με
             // το orOS κλειστό»): a deletion of items (change_item delete, budget_delete)
             // waits like files_delete: always asked here (askQueued, one question per
@@ -2833,7 +2874,7 @@
               writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
               return res;
             });
-          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else done.push(it.id); });   // never in a loop
+          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else if (e !== KEEP) done.push(it.id); });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
         // 7.48.00: cqh = deletions held for the owner here; the box offers them to a device on screen
@@ -2842,7 +2883,7 @@
         copySoon(2000);
         if (files) fileCopySoon(60000);
       });
-    });
+    }); });
   }
   function seatRead() { return seatClean(readJSON(SEAT_KEY)); }
   // GL-8 (Chris 2026-11-21): a file Claude uploaded (relay files_upload),
@@ -3083,7 +3124,7 @@
       var typed = typeof args.path === "string" ? args.path.trim().slice(0, 1024) : "", path = CF.normPath(typed);
       if (!path || path === "/internal") return { ok: false, c: "path must be a folder of the orOS disk, e.g. \"Studio/Podcasts\" (not the whole disk). Nothing was asked." };
       if (CF.secret(path)) return { ok: false, c: "\"" + CF.show(path) + "\" looks like a folder of keys or secrets; it is never opened for Claude. Nothing was asked." };
-      var cur = foldersRead().f, wantW = args.access === "write";
+      var cur = foldersEff(), wantW = args.access === "write";   // GATE-PL9: app folders count
       var filesW = isObj(p.lv) && p.lv.files === "write", wNote = wantW && !filesW ? " Writing there also needs the owner's switch for Files at write (it is not now)." : "";
       var has = cur.filter(function (f) { return path === f || path.indexOf(f + "/") === 0; })[0];
       if (has) return { ok: true, a: [], k: 0, c: "Already one of Claude's folders" + (has === path ? "" : " (inside " + CF.show(has) + ")") + ": " + path + ". Nothing was asked." + wNote };
@@ -3633,7 +3674,43 @@
     }).slice(0, 50).sort();
     var out = { ver: 1, m: Math.floor(x.m), f: f };
     if (typeof x.q === "number" && isFinite(x.q) && x.q >= 52428800) out.q = Math.min(Math.floor(x.q), 1e12);   // F2: the closed copy's quota (bytes)
+    // GATE-PL9: the app folders the owner took off the list
+    var nd = Array.isArray(x.nd) ? x.nd.filter(function (p, i, l) { return appFolder(p) && l.indexOf(p) === i; }).sort() : [];
+    if (nd.length) out.nd = nd;
     return out;
+  }
+  // GATE-PL9 (Chris 2026-11-22, dogfooding the podcast «Πλανόδιο», item 9):
+  // each of these apps, when installed, brings its own folder into
+  // Claude's folders without any setup, so studio_import, montage_import
+  // and mockup_render have a place for their files. They are not stored
+  // in the list (a device that has not pulled the owner's list yet must
+  // not write over it); the owner can take one off (nd, synced), and
+  // writing there follows the Files switch like every other folder.
+  var APP_FOLDERS = { studio: "/internal/Studio/Podcasts", montage: "/internal/Montage/Projects", mockups: "/internal/Mockups/Claude" };
+  function appFolder(p) { return Object.keys(APP_FOLDERS).some(function (id) { return APP_FOLDERS[id] === p; }); }
+  function appFoldersOn(fr) {
+    var have = {}, nd = fr && Array.isArray(fr.nd) ? fr.nd : [];
+    offered().forEach(function (a) { if (a && a.id) have[a.id] = 1; });
+    return Object.keys(APP_FOLDERS).filter(function (id) { return have[id] && nd.indexOf(APP_FOLDERS[id]) < 0; }).map(function (id) { return APP_FOLDERS[id]; });
+  }
+  // The folders Claude may use: the owner's list and the app folders
+  // (cleaned again by claudefiles.js where they are used).
+  function foldersEff() {
+    var fr = foldersRead(), out = fr.f.slice();
+    appFoldersOn(fr).forEach(function (p) { if (out.indexOf(p) < 0) out.push(p); });
+    return out.sort();
+  }
+  // The app folders exist on the disk (made once, empty; never removed).
+  var appDirsDone = {};
+  function appFoldersMake() {
+    var FS = root.orosFS;
+    if (!pref().on || locked() || !FS || typeof FS.mkdir !== "function" || typeof FS.stat !== "function") return Promise.resolve();
+    return appFoldersOn(foldersRead()).filter(function (p) { return !appDirsDone[p]; }).reduce(function (pr, p) {
+      return pr.then(function () {
+        return Promise.resolve().then(function () { return FS.stat(p); }).then(function (st) { return st ? st : FS.mkdir(p); }, function () { return FS.mkdir(p); })
+          .then(function () { appDirsDone[p] = 1; }, function () {});
+      });
+    }, Promise.resolve());
   }
   var cfP = null;
   function claudeFiles() {
@@ -3771,7 +3848,19 @@
   var HOST_TXT = "orOS runs in the background or behind the screen lock on the owner's computer, with nobody at the screen: this needs orOS open and unlocked on a screen. Nothing was done.";
   function fcDrop() { var S = root.orosSync; return S && S.gateDrop && typeof S.gateDrop.available === "function" && S.gateDrop.available() ? S.gateDrop : null; }
   function fcState() { var o = readJSON(FC_KEY); return isObj(o) ? o : {}; }
-  function fileCopySoon(ms) { clearTimeout(fcTimer); fcTimer = setTimeout(fileCopy, typeof ms === "number" ? ms : 60000); }
+  // GQ-FC (2026-11-22: a PNG an app had just saved into Claude's folders
+  // stayed "not in the copy" for files_link): a later, longer wait no
+  // longer pushes back a sooner one, and a copy asked for while one runs
+  // runs again right after it.
+  var fcAt = 0, fcAgain = false;
+  function fileCopySoon(ms) {
+    ms = typeof ms === "number" ? ms : 60000;
+    var at = Date.now() + ms;
+    if (fcTimer && fcAt && fcAt <= at) return;
+    clearTimeout(fcTimer);
+    fcAt = at;
+    fcTimer = setTimeout(function () { fcTimer = null; fcAt = 0; fileCopy(); }, ms);
+  }
   // GX-1 (Chris 2026-11-21 «δώσε στο gate τη δυνατότητα να μπορεί να
   // κάνει εξαγωγή σε τοπικό φάκελο ή/και orOS Files»): an app's export
   // also goes to out, a local write folder the owner opened
@@ -3792,7 +3881,7 @@
       var p = pref(), dir = CF.normPath(out), now = Date.now();
       name = typeof name === "string" ? name.trim() : "";
       var why = !p.on ? "gateOff" : locked() ? "locked" : !isObj(p.lv) || p.lv.files !== "write" || barred("files") ? "notAllowed"
-        : !canWrite(p.lv, p.hold, "files", now) ? "paused" : CF.reach(dir, CF.cleanFolders(foldersRead().f)) ? "outside" : CF.validName(name) ? "badName" : "";
+        : !canWrite(p.lv, p.hold, "files", now) ? "paused" : CF.reach(dir, CF.cleanFolders(foldersEff())) ? "outside" : CF.validName(name) ? "badName" : "";
       if (why) throw { why: why };
       var FS = root.orosFS;
       if (!FS || typeof FS.write !== "function" || typeof FS.stat !== "function") throw { why: "noDisk" };
@@ -3868,14 +3957,15 @@
   // The version files_* tools give (assistant.js cfVer): sha256[0:16]; a
   // file over 32 MB that was not read, from its size and time.
   function fcMetaVer(FC, r) { return FC.sha256(new TextEncoder().encode("size:" + r.s + ":" + (r.m || 0))).then(function (h) { return h.slice(0, 16); }); }
+  function fcLater() { if (fcAgain) { fcAgain = false; fileCopySoon(2000); } }
   function fileCopy() {
     var p = pref(), k = gateKey(), D = fcDrop();
-    if (fcBusy) return Promise.resolve(false);
+    if (fcBusy) { fcAgain = true; return Promise.resolve(false); }
     if (!p.on || !k || !ws || ws.readyState !== 1 || !fcFilesOn(p) || strictOn() || !D) return Promise.resolve(false);
     if (locked()) return Promise.resolve(false);
     if (!root.orosFS) return Promise.resolve(false);
-    var fr = foldersRead();
-    if (!fr.f.length) return Promise.resolve(false);
+    var fr = foldersRead(), eff = foldersEff();      // GATE-PL9: the app folders too
+    if (!eff.length) return Promise.resolve(false);
     fcBusy = true;
     fcErr = "";
     var kRaw = keyBytes(k), gid = p.id, st = fcState(), cache = isObj(st.c) ? st.c : {}, FC, CF;
@@ -3884,7 +3974,7 @@
     return Promise.all([fcMod(), claudeFiles()]).then(function (m) {
       FC = m[0]; CF = m[1];
       known = FC.known(st.idx);
-      return fcWalk(CF, CF.cleanFolders(fr.f));
+      return appFoldersMake().then(function () { return fcWalk(CF, CF.cleanFolders(eff)); });
     }).then(function (r) {
       rows = r;
       // hashes: cloud entries carry theirs; unchanged files keep theirs
@@ -3964,7 +4054,7 @@
       }, Promise.resolve()).then(function () { return pl; });
     }).then(function (pl) {
       var pp = pref();
-      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(fr.f), q: FC.quotaOf(fr.q), used: pl.used, files: files,
+      var idx = { v: 1, at: Date.now(), f: CF.cleanFolders(eff), q: FC.quotaOf(fr.q), used: pl.used, files: files,
                   w: isObj(pp.lv) && pp.lv.files === "write" ? 1 : 0 };   // F3: the relay checks closed changes against these
       if (typeof pp.hold === "number" && pp.hold > Date.now()) idx.hold = pp.hold;
       var text = JSON.stringify(idx);
@@ -3975,7 +4065,7 @@
         writeJSON(FC_KEY, { at: idx.at, c: newCache, idx: { files: files.map(function (e) { return { h: e.h, c: e.c, t: e.t }; }).filter(function (e) { return e.h; }) }, n: Object.keys(names), up: put, used: pl.used, err: fcErr });
         changed();
       });
-    }).then(function () { fcBusy = false; return true; }, function () { fcBusy = false; return false; });
+    }).then(function () { fcBusy = false; fcLater(); return true; }, function () { fcBusy = false; fcLater(); return false; });
   }
   // The box kept the new index: pieces no index names any more go, once
   // they are a day old (another device may still name them for a while).
@@ -4091,26 +4181,37 @@
       var cur = foldersRead(), q = Math.floor(+bytes || 0);
       if (!(q >= 52428800)) return false;
       var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: cur.f, q: q };
+      if (cur.nd) next.nd = cur.nd;
       if (!writeJSON(FILES_KEY, next)) return false;
       dirty(); changed(); fileCopySoon(5000);
       return true;
     },
     refreshFileCopy: function () { return fileCopy(); },
-    // Claude's folders on the orOS disk (synced): [path]
-    folders: function () { return foldersRead().f.slice(); },
+    // Claude's folders on the orOS disk (synced): [path], with the app
+    // folders (GATE-PL9), none inside another one on the list
+    folders: function () { var l = foldersEff(); return l.filter(function (p) { return !l.some(function (q) { return q !== p && p.indexOf(q + "/") === 0; }); }); },
+    // GATE-PL9: the app folders of this device (for Settings to mark them)
+    appFolders: function () { return appFoldersOn({}); },
     exportAll: exportAll,   // GX-2: an app's files to out
     exportTo: exportTo,   // GX-1: an export also into a local folder or Claude's folders on the orOS disk
     EXPORT_WHY: EXPORT_WHY,
     // → Promise<[path] saved> (cleaned: valid, no secrets, none inside another)
     setFolders: function (list) {
       return claudeFiles().then(function (CF) {
-        var cur = foldersRead(), f = CF.cleanFolders(list);
-        if (JSON.stringify(f) === JSON.stringify(cur.f)) return f;
+        var cur = foldersRead(), all = CF.cleanFolders(list), mine = appFoldersOn({});
+        // GATE-PL9: an app folder left off the list is taken off (nd); one
+        // inside another folder of the list is still reachable, not off
+        var nd = mine.filter(function (d) { return all.indexOf(d) < 0 && !all.some(function (q) { return d.indexOf(q + "/") === 0; }); })
+          .concat((cur.nd || []).filter(function (d) { return mine.indexOf(d) < 0; })).sort();
+        // only this device's app folders are computed; another app's stays as listed
+        var f = all.filter(function (d) { return mine.indexOf(d) < 0; });
+        if (JSON.stringify(f) === JSON.stringify(cur.f) && JSON.stringify(nd) === JSON.stringify(cur.nd || [])) return all;
         var next = { ver: 1, m: stampAfter(Date.now(), cur.m), f: f };
         if (cur.q) next.q = cur.q;
+        if (nd.length) next.nd = nd;
         if (!writeJSON(FILES_KEY, next)) throw new Error("save");
         dirty(); changed(); fileCopySoon(5000);
-        return f;
+        return all;
       });
     },
     relayUrl: function () { return relay() + "/mcp"; },
@@ -4479,6 +4580,7 @@
         if (!pref().on) return;                        // a computer without the Gate: nothing to do
         connect();
         chgSlice(0); digSlice(0); foldersSlice(0); seatSlice(0); helperSlice(0); helperApply();
+        setTimeout(appFoldersMake, 12000);             // GATE-PL9
         setInterval(function () { copySoon(0); }, 30 * 60000);
         setInterval(function () { fileCopySoon(0); }, 30 * 60000);
         setInterval(function () { if (strictOn()) { hostSet(false); hostBye(); } }, 60000);
@@ -4529,6 +4631,7 @@
     // SY-AD (5.96.00): data Claude wrote before this version for an app
     // never opened on this device (Publishing, CRM…) reaches sync now.
     setTimeout(adoptWritten, 8000);
+    setTimeout(appFoldersMake, 12000);               // GATE-PL9: the app folders exist on the disk
     setTimeout(digCheck, 60000);
     clearInterval(digTimer);
     digTimer = setInterval(digCheck, 10 * 60000);

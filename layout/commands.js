@@ -130,7 +130,21 @@
   // version (LY-W11, LY-N7): a named version of the document as it is
   // before these commands (assist.js saves it; it changes nothing here)
   CATALOG.version = { kind: "doc", args: { name: { t: "str", max: 80, req: 1 } } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version"];
+  // table (LY-W12): a table into a story
+  CATALOG.table = { kind: "doc", args: { frame: { t: "str", max: 80 }, story: { t: "str", max: 80 }, rows: { t: "list", of: { t: "str", max: 4000 }, max: 1000, req: 1 },
+    header: { t: "int", lo: 0, hi: 20, def: 1 }, repeat: { t: "bool", def: 1 }, after_para: { t: "int", lo: 0, hi: 99999, def: 0 }, replace: { t: "int", lo: 0, hi: 9999, def: 0 },
+    widths: { t: "str", max: 200 }, rule: { t: "num", lo: -1, hi: 12, def: -1 }, padding: { t: "num", lo: -1, hi: 36, def: -1 },
+    rule_color: { t: "color" }, header_fill: { t: "color" }, style: { t: "str", max: 60 } } };
+  // index (LY-W13): words marked for the book's index, the index made
+  // effects (LY-W14): shadow, glow, soft edges, blend mode on frames
+  CATALOG.effects = { kind: "doc", args: { frame: { t: "str", max: 400, req: 1 }, blend: { t: "enum", v: ["", "normal", "multiply", "screen", "overlay", "darken", "lighten"], def: "" },
+    shadow_x: { t: "num", lo: -145, hi: 144, def: -145 }, shadow_y: { t: "num", lo: -145, hi: 144, def: -145 }, shadow_blur: { t: "num", lo: -1, hi: 72, def: -1 }, shadow_opacity: { t: "int", lo: -1, hi: 100, def: -1 }, shadow_color: { t: "color" },
+    glow_blur: { t: "num", lo: -1, hi: 72, def: -1 }, glow_opacity: { t: "int", lo: -1, hi: 100, def: -1 }, glow_color: { t: "color" }, soft_edges: { t: "num", lo: -1, hi: 144, def: -1 } } };
+  CATALOG.index = { kind: "doc", args: { terms: { t: "list", of: { t: "str", max: 200 }, max: 200 }, unmark: { t: "str", max: 120 }, build: { t: "bool", def: 1 }, title: { t: "str", max: 120 } } };
+  // symbol (LY-W14): a symbol made, placed, updated, detached, renamed, deleted
+  CATALOG.symbol = { kind: "doc", args: { act: { t: "enum", v: ["place", "make", "update", "detach", "rename", "delete"], def: "place" }, name: { t: "str", max: 60, req: 1 },
+    frame: { t: "str", max: 400 }, new_name: { t: "str", max: 60 }, page: { t: "int", lo: 1, hi: 9999, def: 1 }, x: MMv(-1, 5000, -1), y: MMv(-1, 5000, -1), w: MMv(-1, 5000, -1) } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table", "index", "effects", "symbol"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -182,6 +196,16 @@
     "source free = a Fontsource family by `family` (e.g. Carlito, as fontsource.org names it; its files are kept on the device for offline use), styles regular|bold|italic|bold italic (or 400, 700, 400i, 700i; default all it has); " +
     "source local = the font file `path` local:<root>/<file>.ttf|.otf in a local folder the owner opened (one file per command: add the bold and italic files too), kept in the owner's fonts" +
     "\nversion: keeps a named version `name` of the document as it is before the other commands (the owner compares and restores it in More › Versions; 30 per document, kept on their device); use it before large changes" +
+    "\ntable: a table into the story `story` (or the frame `frame` of it): rows one entry per row, cells separated by | (\\n = a new line in a cell), header the first rows that repeat at the top of each new column or page (repeat false = not repeated), " +
+    "after_para after that paragraph (1 = the first; 0 = at the end), replace n = the story's n-th table becomes this one, widths relative column widths (e.g. \"2 1 1\"), rule the rule width in pt (0 = none, -1 = 0.5), padding the cell padding in pt (-1 = 4), " +
+    "rule_color and header_fill #rrggbb, style the paragraph style of the cells; rows never split, the owner merges cells in the Story Editor" +
+    "\neffects: on the frames `frame` (ids, comma-separated): blend normal|multiply|screen|overlay|darken|lighten; a drop shadow shadow_x shadow_y (offset in pt, -144..144; -145 = as it is) shadow_blur (pt) shadow_opacity (%, 0 = no shadow) shadow_color #rrggbb (none = black); " +
+    "an outer glow glow_blur glow_opacity (0 = none) glow_color; soft_edges in pt for pictures (0 = none); -1 or empty leaves a field as it is; the PDF and every export show them" +
+    "\nsymbol: a reusable group of objects (a logo, a badge, a series emblem) by `name`: act make = the frames `frame` (ids, comma-separated, one page) become the symbol and its first placement; " +
+    "place = a placement on page `page` at x y (mm from the page's top-left corner; -1 = centred) w wide (mm; -1 = its own size); update = the symbol becomes what its placement holding frame `frame` is now and every other placement follows; " +
+    "detach = the placement holding `frame` becomes plain objects; rename to new_name; delete = the symbol goes, its placements stay as plain objects" +
+    "\nindex: the book's index: terms one entry per word or phrase to mark wherever it stands in the text (any case or accents, whole words): \"word\", \"word = Topic\" or \"word = Topic / Sub-topic\"; " +
+    "unmark a topic whose marks go (* = every mark); build true makes the index again from the marks (a new last page with two columns titled `title`, default Index, or its Greek word in a Greek book, when the book has none); pages as the pages show them" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
     "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width); " +
     "colour corrections, kept apart from the file (numbers separated by spaces; empty = as it is; values that change nothing take that correction off; applied in this order): " +
@@ -245,6 +269,7 @@
     if (steps.some(function (st) { return st.op === "placepage" && !/^local:/i.test(String(st.path).trim()) && !PRO.normPath(st.path); })) return { ok: false, err: "placepage: path is a file on the orOS disk (/internal/… or as files_list shows it) or local:<root>/<file>" };
     if (steps.some(function (st) { return st.op === "placepage" && !/\.(pdf|sla|sla\.gz|idml)$/i.test(String(st.path).trim()); })) return { ok: false, err: "placepage: path is a .pdf, .sla (or .sla.gz) or .idml file (an Affinity .af page: export it as a PDF first)" };
     if (steps.some(function (st) { return st.op === "retext" && !st.frame && !st.story; })) return { ok: false, err: "retext needs frame or story" };
+    if (steps.some(function (st) { return st.op === "table" && !st.frame && !st.story; })) return { ok: false, err: "table needs frame or story" };
     if (steps.some(function (st) { return st.op === "addfont" && st.source === "free" && !st.family; })) return { ok: false, err: "addfont source free needs family (a Fontsource family name, e.g. Carlito)" };
     if (steps.some(function (st) { return st.op === "addfont" && st.source === "local" && !/^local:.+\.(ttf|otf|ttc|otc|woff2?)$/i.test(String(st.path || "").trim()); })) return { ok: false, err: "addfont source local needs path local:<root>/<file>.ttf (or .otf), a file in a local folder the owner opened for Claude" };
     if (steps.some(function (st) { return st.op === "addfont" && (st.styles || []).some(function (v) { return !STYLE_OF[String(v).toLowerCase().replace(/\s+/g, " ").trim()]; }); })) return { ok: false, err: "addfont styles: regular, bold, italic, bold italic (or 400, 700, 400i, 700i)" };
@@ -284,6 +309,16 @@
     if (st.op === "styleset") return PRO.playStyles(doc, st.lang, now);
     if (st.op === "frame") return PRO.addFrame(doc, st, now, env.idf) ? 1 : 0;
     if (st.op === "retext") return PRO.setStory(doc, st, now);
+    if (st.op === "table") return PRO.addTable(doc, st, now);
+    if (st.op === "index") return applyIndex(doc, st, env, now);
+    if (st.op === "symbol") return applySymbol(doc, st, env, now);
+    if (st.op === "effects") {
+      // shadow_x/y -145 = as it is (an offset can be below 0)
+      var ef = Object.assign({}, st);
+      if (ef.shadow_x <= -145) delete ef.shadow_x;
+      if (ef.shadow_y <= -145) delete ef.shadow_y;
+      return PRO.setEffects(doc, String(st.frame).split(/[\s,]+/).filter(Boolean).slice(0, 200), ef, now);
+    }
     if (st.op === "house_pages") {
       var house = env.house || houseIn(env.docs, st.house, doc.id);
       if (!house) { if (env.notes && env.notes.indexOf("noHouse") < 0) env.notes.push("noHouse"); return 0; }
@@ -351,6 +386,43 @@
       if (st.op === "pages" && st.flow) st = Object.assign({}, st, { flow: 0 });
     }
     return S.apply(doc, st, now, { grey: env.grey || {} });
+  }
+
+  // index (LY-W13): marks, then the index story (made by Layout when
+  // the text engine is not here: note "indexLater")
+  function applyIndex(doc, st, env, now) {
+    var IX = node ? require("./bookindex.js") : root.LY_INDEX;
+    var terms = (st.terms || []).filter(function (x) { return String(x || "").trim(); });
+    if (!IX) return terms.length + (st.unmark ? 1 : 0) + (st.build ? 1 : 0);
+    var n = 0;
+    if (st.unmark) n += IX.unmark(doc, st.unmark.trim() === "*" ? null : st.unmark, now);
+    terms = terms.map(IX.parseTerm).filter(Boolean);
+    if (terms.length) n += IX.markAll(doc, terms, now);
+    if (!st.build) return n;
+    if (!IX.idxStory(doc)) {
+      var lang = doc.setup.ext && typeof doc.setup.ext.lang === "string" ? doc.setup.ext.lang : "el";
+      if (!IX.place(doc, now, st.title || (/^el/.test(lang) ? "Ευρετήριο" : "Index"), env.idf)) return n; // i18n-inline-ok: the title written into the book, in the book's language
+      n++;
+    }
+    if (!hasEngine()) { if (env.notes && env.notes.indexOf("indexLater") < 0) env.notes.push("indexLater"); return n + 1; }
+    return n + (IX.update(doc, now) ? 1 : 0);
+  }
+
+  // symbol (LY-W14)
+  function applySymbol(doc, st, env, now) {
+    var SY = node ? require("./symbols.js") : root.LY_SYM;
+    if (!SY) return 0;
+    var ids = String(st.frame || "").split(/[\s,]+/).filter(Boolean).slice(0, 200);
+    if (st.act === "make") { var r = SY.make(doc, ids, st.name, now, env.idf); return r.err ? 0 : r.it.length; }
+    if (st.act === "update") return ids.length ? Math.max(0, SY.redefine(doc, ids[0], now, env.idf)) : 0;
+    if (st.act === "detach") return ids.length ? SY.detach(doc, ids[0], now) : 0;
+    if (st.act === "rename") return SY.rename(doc, st.name, st.new_name, now);
+    if (st.act === "delete") return SY.remove(doc, st.name, now);
+    var sym = SY.find(doc, st.name), pg = M.pagesInOrder(doc)[(st.page || 1) - 1];
+    if (!sym || !pg) return 0;
+    var s = M.pageSize(doc, pg), MM = 72 / 25.4, w = st.w > 0 ? st.w * MM : sym.w, h = sym.h * w / sym.w;
+    var x = st.x >= 0 ? st.x * MM : (s.w - w) / 2, y = st.y >= 0 ? st.y * MM : (s.h - h) / 2;
+    return SY.place(doc, sym.id, pg.id, x, y, now, env.idf, w).length;
   }
 
   // A house style document (LY-HS: setup.ext.house) by name, or the
@@ -435,7 +507,11 @@
   function mm(v) { return Math.round((v || 0) * PT_MM * 10) / 10; }
   function nameOf(n) { return n && typeof n === "object" ? n.en || n.el || n[Object.keys(n)[0]] || "" : String(n || ""); }
   function textOf(st) {
-    return (st && st.paras || []).map(function (p) { return (p.runs || []).map(function (r) { return typeof r.t === "string" ? r.t : ""; }).join(""); }).join(" ").replace(/\s+/g, " ").trim();
+    return (st && st.paras || []).map(function (p) {
+      var tb = p.ext && p.ext.tbl;
+      if (tb && Array.isArray(tb.rows)) return "[table " + tb.rows.length + "×" + (Array.isArray(tb.cols) ? tb.cols.length : 0) + "]";
+      return (p.runs || []).map(function (r) { return typeof r.t === "string" ? r.t : ""; }).join("");
+    }).join(" ").replace(/\s+/g, " ").trim();
   }
   function outline(doc, L, opts) {
     var u = doc.setup || {}, order = M.pagesInOrder(doc), used = {}, msName = {};
