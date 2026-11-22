@@ -66,6 +66,14 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 
 >! `Delete forever`, `Empty Trash` and Shift+Delete can't be undone. Other apps that delete their own files on the disk don't use the Trash.
 
+## Duplicates
+`Duplicates` in the folder tree finds files that are exactly the same, byte for byte, whatever their names, dates or folders. To look in one folder and its subfolders only, right-click it (or select it and use `⋯`) and choose `Find duplicates here`.
+
+- It compares sizes first, then the contents (SHA-256). Files only in the cloud (orOS Drive) are compared with the fingerprint orOS sync already keeps, so nothing is downloaded. The Trash, hidden folders and empty files are left out.
+- The groups that free the most space come first. In each group one copy stays (unticked, marked `Stays`): a favourite, a document, a tagged file or an album photo first, then one on this device, then the oldest. The others are ticked; untick any you want to keep. One copy of every file always stays.
+- `Move to Trash` asks first. Right before each move, the copy that stays and the copy that goes are compared again byte by byte; a copy that changed in the meantime is left alone. Everything goes to the Trash, so you can restore it for 30 days.
+- Tap a name to preview the file, or the folder button to see it in its folder. `Search again` runs a new search; a second search is quick, because the fingerprints are kept on this device.
+
 ## Import, preview and edit
 - Tap `Import files` to pick one or more files, or drop files from your computer onto the list. If a file with the same name already exists, choose `Overwrite` or `Keep both`.
 - Open a file to preview it. Images (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) are shown as pictures. Markdown files are shown formatted, with a `Source` button for the raw text.

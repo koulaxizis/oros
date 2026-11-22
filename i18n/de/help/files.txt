@@ -66,6 +66,14 @@ Links stehen die Ordner, rechts der Inhalt des aktuellen Ordners. Auf dem Handy 
 
 >! `Endgültig löschen`, `Papierkorb leeren` und Umschalt+Entf lassen sich nicht rückgängig machen. Andere Apps, die ihre eigenen Dateien auf der Disk löschen, nutzen den Papierkorb nicht.
 
+## Duplikate
+`Duplikate` im Ordnerbaum findet Dateien, die Byte für Byte genau gleich sind, egal wie sie heißen, wann sie geändert wurden oder in welchem Ordner sie liegen. Um nur in einem Ordner und seinen Unterordnern zu suchen, klicke ihn mit der rechten Maustaste an (oder wähle ihn aus und nutze `⋯`) und wähle `Hier Duplikate finden`.
+
+- Zuerst werden die Größen verglichen, dann die Inhalte (SHA-256). Dateien, die nur in der Cloud liegen (orOS Drive), werden mit dem Fingerabdruck verglichen, den die orOS-Synchronisierung schon kennt; es wird nichts heruntergeladen. Papierkorb, versteckte Ordner und leere Dateien bleiben außen vor.
+- Die Gruppen, die am meisten Platz freigeben, stehen oben. In jeder Gruppe bleibt eine Kopie (ohne Haken, mit `Bleibt` markiert): zuerst ein Favorit, ein Dokument, eine Datei mit Schlagwörtern oder ein Albumfoto, dann eine auf diesem Gerät, dann die älteste. Die anderen sind abgehakt; entferne den Haken bei allem, was du behalten willst. Von jeder Datei bleibt immer eine Kopie.
+- `In den Papierkorb` fragt vorher nach. Direkt vor jedem Verschieben werden die bleibende und die zu entfernende Kopie noch einmal Byte für Byte verglichen; eine Kopie, die sich inzwischen geändert hat, bleibt, wo sie ist. Alles landet im Papierkorb und lässt sich 30 Tage lang wiederherstellen.
+- Tippe auf einen Namen für die Vorschau oder auf die Ordner-Schaltfläche, um die Datei in ihrem Ordner zu sehen. `Erneut suchen` startet eine neue Suche; das zweite Mal geht es schnell, weil die Fingerabdrücke auf diesem Gerät bleiben.
+
 ## Importieren, ansehen und bearbeiten
 - Tippe auf `Dateien importieren`, um eine oder mehrere Dateien auszuwählen, oder zieh Dateien von deinem Computer auf die Liste. Gibt es schon eine Datei mit demselben Namen, wähle `Überschreiben` oder `Beide behalten`.
 - Öffne eine Datei, um ihre Vorschau zu sehen. Bilder (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) werden als Bilder gezeigt. Markdown-Dateien werden formatiert gezeigt, mit einer Taste `Quelltext` für den reinen Text.

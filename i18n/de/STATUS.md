@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 50808 of 50815 (99%)
+- Strings: 52249 of 52277 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,8 +16,8 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 2192 / 2192 |
-| atelier | 100% | 1507 / 1507 |
+| assistant | 100% | 2356 / 2356 |
+| atelier | 100% | 1534 / 1534 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 332 / 332 |
 | baby | 100% | 341 / 341 |
@@ -45,7 +45,7 @@ en and el); translators change them there, not in a pack.
 | connect4 | 100% | 62 / 62 |
 | contacts | 100% | 342 / 342 |
 | converter | 100% | 68 / 68 |
-| crm | 100% | 893 / 893 |
+| crm | 100% | 899 / 899 |
 | crossword | 100% | 171 / 171 |
 | crypt | 100% | 291 / 291 |
 | cycle | 100% | 203 / 203 |
@@ -61,7 +61,7 @@ en and el); translators change them there, not in a pack.
 | feeds | 100% | 328 / 328 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 902 / 902 (25 in the code) |
+| files | 100% | 935 / 935 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -80,9 +80,9 @@ en and el); translators change them there, not in a pack.
 | household | 100% | 143 / 143 |
 | invoices | 100% | 693 / 693 |
 | jigsaw | 100% | 90 / 90 |
-| kanban | 100% | 358 / 358 |
+| kanban | 100% | 379 / 379 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 1435 / 1435 |
+| layout | 100% | 1833 / 1833 |
 | library | 100% | 330 / 330 |
 | lighthouse | 100% | 215 / 215 |
 | lightsout | 100% | 52 / 52 |
@@ -100,11 +100,11 @@ en and el); translators change them there, not in a pack.
 | minesweeper | 100% | 75 / 75 |
 | minimalism | 100% | 1492 / 1492 |
 | mixer | 100% | 59 / 59 |
-| mockups | 100% | 283 / 283 |
-| montage | 100% | 383 / 383 |
+| mockups | 97% | 795 / 816 |
+| montage | 100% | 384 / 384 |
 | mood | 100% | 256 / 256 |
 | museum | 100% | 46 / 46 |
-| music | 100% | 686 / 686 |
+| music | 100% | 689 / 689 |
 | names | 100% | 40 / 40 |
 | netizen | 100% | 175 / 175 |
 | newsletter | 100% | 1061 / 1061 |
@@ -117,7 +117,7 @@ en and el); translators change them there, not in a pack.
 | pet | 100% | 106 / 106 |
 | petcare | 100% | 390 / 390 |
 | petworld | 100% | 256 / 256 |
-| photolab | 100% | 829 / 829 |
+| photolab | 100% | 879 / 879 |
 | pixel | 100% | 101 / 101 |
 | plants | 100% | 236 / 236 |
 | podcasts | 100% | 349 / 349 |
@@ -127,7 +127,7 @@ en and el); translators change them there, not in a pack.
 | publish | 100% | 827 / 827 |
 | qr | 100% | 249 / 249 |
 | quote | 100% | 236 / 236 |
-| radio | 100% | 104 / 104 |
+| radio | 100% | 126 / 126 |
 | realm | 100% | 199 / 199 |
 | recipes | 100% | 178 / 178 |
 | recordpkg | 100% | 21 / 21 |
@@ -139,10 +139,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2025 / 2025 |
+| settings | 100% | 2043 / 2043 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1587 / 1587 |
+| shell | 100% | 1600 / 1600 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -160,9 +160,9 @@ en and el); translators change them there, not in a pack.
 | stickies | 100% | 125 / 125 |
 | stock | 100% | 813 / 813 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 936 / 936 |
+| studio | 100% | 948 / 948 |
 | sudoku | 100% | 139 / 139 |
-| television | 100% | 85 / 85 |
+| television | 100% | 234 / 234 |
 | tetris | 100% | 60 / 60 |
 | texttools | 100% | 432 / 432 |
 | tictactoe | 100% | 54 / 54 |
@@ -176,7 +176,7 @@ en and el); translators change them there, not in a pack.
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |
 | units | 100% | 214 / 214 |
-| wallpaper | 100% | 131 / 131 |
+| wallpaper | 100% | 143 / 143 |
 | water | 100% | 94 / 94 |
 | wayfarers | 100% | 549 / 549 |
 | weather | 100% | 190 / 190 |
@@ -196,5 +196,7 @@ These show English until fixed (usually the English text changed).
 
 - de/clockwork: ms.full must keep the placeholders {g}
 - de/help/clockwork.txt: links or key caps differ from clockwork/help.en.txt
+- de/help/layout.txt: links or key caps differ from layout/help.en.txt
+- de/help/radio.txt: links or key caps differ from radio/help.en.txt
 - de/help/settings.txt: links or key caps differ from settings/help.en.txt
 - de/help/topics/share.txt: links or key caps differ from help/topics/share.en.txt
