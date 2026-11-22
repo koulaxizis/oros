@@ -186,7 +186,7 @@ function build(box){
   box.innerHTML = "";
   var sub = mk("div", "tvf-sub");
   sub.setAttribute("role", "tablist");
-  ["discover", "continue", "watch"].forEach(function(v){
+  ["discover", "continue", "watch", "svc"].forEach(function(v){
     var b = mk("button", "tvf-chip");
     b.type = "button";
     b.dataset.view = v;
@@ -288,7 +288,7 @@ function fillSelect(s, list, allKey){
 function texts(){
   el.q.placeholder = t("vod.search.ph");
   el.q.setAttribute("aria-label", t("vod.search.ph"));
-  ["discover", "continue", "watch"].forEach(function(v){ el["chip_" + v].textContent = t("vod." + v); });
+  ["discover", "continue", "watch", "svc"].forEach(function(v){ el["chip_" + v].textContent = t("vod." + v); });
   Object.keys(el.S).forEach(function(k){ el.S[k].cap.textContent = t(el.S[k].key); el.S[k].sel.setAttribute("aria-label", t(el.S[k].key)); });
   fillSelect(el.S.src, V.SOURCES.map(function(x){ return [x, SRC_NAME[x]]; }), "vod.src.all");
   fillSelect(el.S.ty, V.TYPES.map(function(x){ return [x, t("vod.ty." + x)]; }), "vod.ty.all");
@@ -464,7 +464,7 @@ function render(box){
 }
 
 function draw(){
-  ["discover", "continue", "watch"].forEach(function(v){
+  ["discover", "continue", "watch", "svc"].forEach(function(v){
     var b = el["chip_" + v];
     b.classList.toggle("on", F.view === v);
     b.setAttribute("aria-selected", F.view === v ? "true" : "false");
@@ -477,6 +477,8 @@ function draw(){
   el.bar.hidden = !disc;
   drawSaved();
   if(disc) drawPanel(); else el.panel.hidden = true;
+  el.grid.classList.toggle("tvf-svcs", F.view === "svc");
+  if(F.view === "svc"){ drawServices(); return; }
   if(disc){
     if(!F.items.length && !F.busy && !F.notes.length) search(true);
     else drawResults();
@@ -488,6 +490,37 @@ function draw(){
     el.empty.textContent = t(F.view === "continue" ? "vod.noContinue" : "vod.noWatch");
     el.empty.hidden = list.length > 0;
   }
+}
+
+/* ===== official free services (TV-VOD3): links only ===== */
+
+// Watched on their own sites: orOS lists no titles from them, reads
+// nothing from them and sends them nothing. Fixed https addresses.
+var SERVICES = [
+  { id: "ertflix", name: "ERTFLIX", url: "https://www.ertflix.gr/" },
+  { id: "ertarchive", name: "ERT Archive", url: "https://archive.ert.gr/" },
+  { id: "arte", name: "ARTE", url: "https://www.arte.tv/" },
+  { id: "ard", name: "ARD Mediathek", url: "https://www.ardmediathek.de/" },
+  { id: "zdf", name: "ZDF Mediathek", url: "https://www.zdf.de/" },
+  { id: "nfb", name: "NFB", url: "https://www.nfb.ca/" },
+  { id: "wikiflix", name: "WikiFlix", url: "https://wikiflix.toolforge.org/" },
+  { id: "kanopy", name: "Kanopy", url: "https://www.kanopy.com/" }
+];
+
+function drawServices(){
+  el.note.textContent = t("vod.svc.hint");
+  el.note.hidden = false;
+  el.more.hidden = true;
+  el.empty.hidden = true;
+  el.grid.innerHTML = "";
+  SERVICES.forEach(function(x){
+    var a = mk("a", "tvf-svc");
+    a.href = x.url; a.target = "_blank"; a.rel = "noopener noreferrer";
+    a.appendChild(mk("b", "", x.name));
+    a.appendChild(mk("span", "tvf-srcdesc", t("vod.svc." + x.id)));
+    a.appendChild(mk("span", "tvf-svc-go", t("vod.svc.open") + " ↗"));
+    el.grid.appendChild(a);
+  });
 }
 
 function cards(list){
@@ -528,6 +561,7 @@ function card(it, data){
 }
 
 function drawResults(){
+  if(F.view !== "discover") return;   // a search that ends after the view changed
   cards(F.items);
   var notes = F.notes.slice();
   if(F.busy) notes.unshift(F.wd ? t("vod.searching") : t("vod.loading"));
