@@ -888,7 +888,6 @@
     sec.appendChild(switchRow(tr("dockOn"), p.on, function (v) { set("on", v); }, "on"));
     sec.appendChild(switchRow(tr("badges"), p.badges, function (v) { set("badges", v); }, "badges"));
     if (!p.on) return sec;
-    sec.appendChild(switchRow(tr("cards"), p.cards, function (v) { set("cards", v); }, "cards"));
 
     var lbl = doc.createElement("div");
     lbl.className = "ld-lbl";

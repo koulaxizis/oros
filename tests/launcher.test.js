@@ -319,11 +319,16 @@ test("DOCK-CARDS wiring: one holder, an event when it comes or goes, the smart b
   assert.match(sb, /doc\.addEventListener\("oros-dock-cards"/);
   assert.match(sb, /if \(!box \|\| inDock\(\)\) return false;/);
   assert.match(sb, /placeUp\(peekEl, peekFrom\);/);
-  assert.match(R("settings/settings.js"), /set\("dock:cards", v\)/);
-  const core = R("settings/core.js"), de = R("i18n/de/settings.js"), tr = R("translations.js"), des = R("i18n/de/shell.js");
-  assert.equal((core.match(/"k\.cards": /g) || []).length, 2);
-  assert.equal((core.match(/"k\.cards\.hint": /g) || []).length, 2);
-  assert.ok(de.includes('"k.cards":') && de.includes('"k.cards.hint":'));
-  assert.equal((tr.match(/"ln\.cards": /g) || []).length, 2);
-  assert.ok(des.includes('"ln.cards":'));
+  // structure review 9: one "Bars" choice in Settings › Appearance, no Dock switch
+  const st = R("settings/settings.js"), sh = R("shell.js");
+  assert.match(st, /segmented\(\[\{ value: "two", label: t\("k\.bars\.two"\) \}, \{ value: "one", label: t\("k\.bars\.one"\) \}\]/);
+  assert.match(st, /set\("bars", v\)/);
+  assert.doesNotMatch(st, /"dock:cards"/);
+  assert.doesNotMatch(src, /switchRow\(tr\("cards"\)/);
+  assert.match(sh, /case "bars": \{[\s\S]*?if \(value === "one"\) \{ LB\.setPref\("on", true\); LB\.setPref\("pos", "bottom"\); \}\n\s*LB\.setPref\("cards", value === "one"\);/);
+  const core = R("settings/core.js"), de = R("i18n/de/settings.js");
+  for (const k of ["k.bars", "k.bars.two", "k.bars.one", "k.bars.hint", "w.bars"]) {
+    assert.equal(core.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  }
 });

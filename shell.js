@@ -13614,6 +13614,15 @@
       case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
       case "wpviz:style":   if (wpVizSet(value)) settingsNotify(); return;   // VIZWALL-1
       case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
+      // DOCK-CARDS (structure review 9): "two" = top bar and Dock, "one" = one bar at the bottom
+      case "bars": {
+        var LB = settingsLauncher();
+        if (!LB || (value !== "one" && value !== "two")) return;
+        if (value === "one") { LB.setPref("on", true); LB.setPref("pos", "bottom"); }
+        LB.setPref("cards", value === "one");
+        settingsNotify();
+        return;
+      }
       case "wpaccent:on":   wpAccSetUser("on", value); return;      // WPACC-1, this device
       case "wpaccent:pick": wpAccSetUser("pick", value); return;
     }

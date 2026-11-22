@@ -442,6 +442,18 @@
 
     if (s.seasonal) secSeasonal(host, s.seasonal);
 
+    // DOCK-CARDS + structure review 9 (Chris 2026-11-22): one choice of
+    // bars instead of a Dock switch. "One bar at the bottom" turns the
+    // Dock on at the bottom and puts the top bar's cards in it (wide
+    // screens; elsewhere they stay in the top bar).
+    if (s.dock && typeof s.dock.cards === "boolean") {
+      var cbar = card(t("k.bars"), "dock");
+      var barsNow = s.dock.cards && s.dock.on ? "one" : "two";
+      cbar.appendChild(row(t("k.bars"), segmented([{ value: "two", label: t("k.bars.two") }, { value: "one", label: t("k.bars.one") }],
+        barsNow, "bars", function (v) { set("bars", v); }, t("k.bars")), { stack: true, hint: t("k.bars.hint") }));
+      host.appendChild(cbar);
+    }
+
     if (s.dock) {
       var d = s.dock;
       var c5 = card(t("k.dock"), "dock");
@@ -449,8 +461,6 @@
       // BADGE-1: counts on the Dock and desktop shortcuts (also with the Dock off)
       if (typeof d.badges === "boolean") c5.appendChild(row(t("k.badges"), switchBtn(d.badges, "dock:badges", function (v) { set("dock:badges", v); }, t("k.badges")), { hint: t("k.badges.hint") }));
       if (d.on) {
-        // DOCK-CARDS: the top bar's cards at the end of a bottom Dock (wide screens)
-        if (typeof d.cards === "boolean") c5.appendChild(row(t("k.cards"), switchBtn(d.cards, "dock:cards", function (v) { set("dock:cards", v); }, t("k.cards")), { hint: t("k.cards.hint") }));
         var sizeRow = row(t("k.size"), null);
         sizeRow.appendChild(segmented(["s", "m", "l"].map(function (k) {
           return { value: k, label: t("k.size." + k) };
