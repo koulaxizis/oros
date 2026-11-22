@@ -786,6 +786,10 @@ body.inframe #cv { cursor: text; }
 .ix-row { display: flex; align-items: center; gap: 8px; min-height: 36px; border-bottom: 1px solid var(--border); }
 .ix-row:last-child { border-bottom: 0; }
 .ix-row .ix-t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.sym-list { max-height: 40vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; margin: 10px 0; }
+.sym-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; min-height: 44px; border-bottom: 1px solid var(--border); padding: 4px 0; }
+.sym-row:last-child { border-bottom: 0; }
+.sym-row .sym-n { flex: 1 1 140px; min-width: 0; }
 .ix-terms { width: 100%; min-height: 84px; resize: vertical; }
 .ver-txt ins { text-decoration: none; background: rgba(47, 158, 106, .22); border-radius: 2px; }
 .pc-prof { font-weight: 600; margin-right: 8px; overflow-wrap: anywhere; }
