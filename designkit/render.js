@@ -798,11 +798,31 @@
     return !!ctx.strokeStyle;
   }
 
+  // a table row's cell fills and rules (LY-W12); a rule without a
+  // swatch is black
+  function drawTb(ctx, doc, tb) {
+    tb.fills.forEach(function (f) {
+      var c = rgba(doc, f[4]);
+      if (!c) return;
+      ctx.fillStyle = c;
+      if (view) opMode(ctx, doc, f[4]);
+      ctx.fillRect(f[0], f[1], f[2], f[3]);
+    });
+    if (view) ctx.globalCompositeOperation = "source-over";
+    tb.rules.forEach(function (r) {
+      ctx.strokeStyle = (r[4] && rgba(doc, r[4])) || "#000";
+      if (view) opMode(ctx, doc, r[4] || "sw-black");
+      ctx.lineWidth = r[5];
+      ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(r[0], r[1]); ctx.lineTo(r[2], r[3]); ctx.stroke();
+    });
+  }
   function drawLines(ctx, doc, lines) {
     if (!lines) return;
     ctx.textBaseline = "alphabetic";
     try { ctx.fontKerning = "none"; } catch (e) {}
     lines.forEach(function (ln) {
+      if (ln.tb) { ctx.save(); drawTb(ctx, doc, ln.tb); ctx.restore(); }
       ln.runs.forEach(function (r) {
         if (!r.t) return;
         ctx.font = r.size + "px " + T.cssStack(r.key);

@@ -30,7 +30,8 @@
   function lines() { return C.flow(LY.doc, ED.L, F.sid); }
   function norm(paras) {
     var out = [];
-    paras.forEach(function (p) { var n = M.normPara(p); if (n) out.push(n); });
+    var TB = window.orosDK && window.orosDK.table;
+    (TB ? TB.unrun(paras) : paras).forEach(function (p) { var n = M.normPara(p); if (n) out.push(n); });
     if (!out.length) out.push({ ps: "ps-body", runs: [] });
     return out;
   }
@@ -91,6 +92,10 @@
   function edit(fn) {
     var o = ordered(), r = fn(F.paras, o[0], o[1]);
     if (r === false) return;
+    // text in a table paragraph (LY-W12) becomes the next paragraph:
+    // the caret goes with it
+    function past(c) { var q = F.paras[c.p]; return q && q.ext && q.ext.tbl && q.runs.length ? { p: c.p + 1, o: c.o } : c; }
+    r = { a: past(r.a), b: past(r.b) };
     F.paras = norm(F.paras);
     F.a = clamp(r.a); F.b = clamp(r.b);
     F.goal = null;

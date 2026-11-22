@@ -127,7 +127,8 @@
 
   function normParas(paras) {
     var out = [];
-    paras.forEach(function (p) { var n = M.normPara(p); if (n) out.push(n); });
+    var TB = window.orosDK && window.orosDK.table;
+    (TB ? TB.unrun(paras) : paras).forEach(function (p) { var n = M.normPara(p); if (n) out.push(n); });
     if (!out.length) out.push({ ps: S.curPs || "ps-body", runs: [] });
     return out;
   }
@@ -155,6 +156,19 @@
     var ps = T.resolvePs(psMap, p.ps), pso = psMap[p.ps];
     // the style's name in the left column (LY-N3, Style names)
     d.setAttribute("data-psn", pso ? LY.label(pso.name) : p.ps);
+    // a table (LY-W12): one piece; a click opens the table dialog
+    var tb = p.ext && p.ext.tbl;
+    if (tb && Array.isArray(tb.rows) && Array.isArray(tb.cols)) {
+      d.className = "sp sp-tbl";
+      d.contentEditable = "false";
+      var tl = el("span", "sf stbl", "\u25A6 " + t("tbl.label", { r: tb.rows.length, c: tb.cols.length }));
+      tl.setAttribute("data-f", "tbl");
+      tl.title = t("tbl.open");
+      var pv = LY.tables && window.orosDK && window.orosDK.table ? window.orosDK.table.text(tb).split("\n")[0].replace(/\t/g, " · ").slice(0, 80) : "";
+      if (pv) tl.appendChild(el("span", "stbl-pv", pv));
+      d.appendChild(tl);
+      return d;
+    }
     d.style.fontFamily = familyCss(ps.font);
     d.style.fontSize = Math.round(Math.max(13, Math.min(26, ps.size * 1.25)) * zoom() * 10) / 10 + "px";
     d.style.textAlign = ps.align === "c" ? "center" : ps.align === "r" ? "right" : "left";
@@ -369,7 +383,7 @@
           if (atom) {
             if (o === count) { found = { node: n, off: k }; return; }
             if (c.tagName === "BR" && !c.nextSibling && n === d) return;   // placeholder
-            var len = /^(sec|sup|rx)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : 1;   // a running head or a note's mark counts its own text
+            var len = /^(sec|sup|rx)$/.test(c.getAttribute("data-f")) ? (c.getAttribute("data-t") || "").length : c.getAttribute("data-f") === "tbl" ? 0 : 1;   // a table counts nothing   // a running head or a note's mark counts its own text
             if (o < count + len) { found = { node: n, off: k + 1 }; return; }
             count += len;
           } else walk(c);
@@ -609,6 +623,12 @@
         { label: t("note.settings"), fn: function () { flush(); LY.notes.settings(); } }]);
     });
     tools.appendChild(nt);
+    // a table (LY-W12)
+    var tbb = el("button", "icon-btn sf-btn", "\u25A6");
+    tbb.type = "button"; tbb.title = t("tbl.ins"); tbb.setAttribute("aria-label", t("tbl.ins"));
+    tbb.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    tbb.addEventListener("click", insertTable);
+    tools.appendChild(tbb);
     // break characters (LY-W5b)
     var brk = el("button", "icon-btn sf-btn", "⤓");
     brk.type = "button"; brk.title = t("brk.menu"); brk.setAttribute("aria-label", t("brk.menu"));
@@ -685,6 +705,50 @@
       });
     });
   }
+  // ---------- Tables (LY-W12) ----------
+  // a new table at the caret: before the caret's paragraph when the
+  // caret is at its start, after it at its end, else the paragraph
+  // splits there
+  function insertTable() {
+    if (!isOpen() || !LY.tables) return;
+    flush();
+    rememberSel();
+    LY.tables.edit(null, function (tb) {
+      if (!tb) return;
+      modelEdit(function (paras, a, b) {
+        deleteRange(paras, a, b);
+        var p = paras[a.p], at;
+        if (a.o === 0 && (paraLen(p) || paras.length > 1)) at = a.p;
+        else if (a.o >= paraLen(p)) at = a.p + 1;
+        else { var c = insertAt(paras, a, "\n", null); at = c.p; }
+        paras.splice(at, 0, { ps: S.curPs || p.ps, runs: [], ext: { tbl: tb } });
+        // an empty story's one paragraph gives way to the table
+        if (paras.length === 2 && at === 1 && !paraLen(paras[0]) && !paras[0].ext) { paras.shift(); at = 0; }
+        var to = Math.min(at + 1, paras.length - 1);
+        if (to === at) { paras.push({ ps: p.ps, runs: [] }); to = at + 1; }
+        return { a: { p: to, o: 0 }, b: { p: to, o: 0 } };
+      });
+      tableLevel();
+    });
+  }
+  function editTableAt(i) {
+    flush();
+    var st = story(), p = st && st.paras[i];
+    if (!p || !p.ext || !p.ext.tbl) return;
+    LY.tables.edit(p.ext.tbl, function (tb) {
+      modelEdit(function (paras) {
+        var q = paras[i];
+        if (!q || !q.ext || !q.ext.tbl) return false;
+        if (!tb) { paras.splice(i, 1); if (!paras.length) paras.push({ ps: q.ps, runs: [] }); return { a: { p: Math.max(0, i - 1), o: 0 }, b: { p: Math.max(0, i - 1), o: 0 } }; }
+        q.ext = Object.assign({}, q.ext, { tbl: tb });
+        return { a: { p: i, o: 0 }, b: { p: i, o: 0 } };
+      });
+      tableLevel();
+    }, { canRemove: true });
+  }
+  // a table over the usual size: the document needs model level 3
+  function tableLevel() { if (M.tableLevel(LY.doc) > 1 && !(LY.doc.setup.ext && LY.doc.setup.ext.mv >= 3)) LY.op(function (doc, now) { LY.tables.level(doc, now); }); }
+
   // a note's text changed or the note removed (null text)
   function setNote(id, txt) {
     modelEdit(function (paras) {
@@ -848,6 +912,8 @@
     ed.addEventListener("click", function (e) {
       var n = e.target && e.target.closest ? e.target.closest(".sfn") : null;
       if (n && ed.contains(n) && LY.notes) { e.preventDefault(); rememberSel(); editNoteAt(n); }
+      var tb = e.target && e.target.closest ? e.target.closest(".sp-tbl") : null;
+      if (tb && ed.contains(tb) && LY.tables) { e.preventDefault(); editTableAt(Array.prototype.indexOf.call(ed.children, tb)); }
     });
     ed.addEventListener("input", onInput);
     ed.addEventListener("blur", flush);

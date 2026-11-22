@@ -47,7 +47,7 @@
   var PT_PER = { pt: 1, mm: 72 / 25.4, in: 72 };
   var MAX_COORD = 20000, MAX_ITEMS = 5000, MAX_PAGES = 999, MAX_TEXT = 400000;
   var HIST = 50;
-  var MODEL_LEVEL = 2;
+  var MODEL_LEVEL = 3;   // 3 (LY-W12): a paragraph's table may be larger (X_MAX_TBL)
 
   // ---------- 1. Presets ----------
   // [id, width mm, height mm] (portrait); "post" is in px at 72 dpi.
@@ -132,7 +132,7 @@
   // A later wave normalizes its own keys and then runs normX, so its
   // output is already what this function keeps.
   var X_KEY = /^[a-z][a-zA-Z0-9]{0,23}$/, X_STR = 4000, X_ARR = 1000, X_DEPTH = 6;
-  var X_MAX = 8192, X_MAX_SETUP = 65536, AXU_MAX = 16384;
+  var X_MAX = 8192, X_MAX_SETUP = 65536, AXU_MAX = 16384, X_MAX_TBL = 262144;
   var X_CTRL = /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/;
   function xVal(v, depth) {
     if (v === null || typeof v === "boolean") return v;
@@ -441,7 +441,16 @@
       if (last && sameFmt(last, n)) last.t += n.t;     // coalesce
       else runs.push(n);
     });
-    return withX({ ps: isId(p.ps) ? p.ps : "ps-base", runs: runs }, p);
+    // a table (ext.tbl, LY-W12) may hold more than other bags; a
+    // document with one over X_MAX carries mv 3 (tableLevel)
+    return withX({ ps: isId(p.ps) ? p.ps : "ps-base", runs: runs }, p, p.ext && p.ext.tbl ? X_MAX_TBL : 0);
+  }
+  // the model level a document's tables need: 3 when one is over X_MAX
+  function tableLevel(doc) {
+    var big = (doc && doc.stories || []).some(function (s) {
+      return (s.paras || []).some(function (p) { return !!(p.ext && p.ext.tbl) && JSON.stringify(p.ext).length > X_MAX; });
+    });
+    return big ? 3 : 1;
   }
   function normStory(s) {
     if (!s || !isId(s.id)) return null;
@@ -837,7 +846,7 @@
   function docBytes(doc) { return JSON.stringify(doc).length; }
 
   var api = {
-    DATA_VER: DATA_VER, MODEL_LEVEL: MODEL_LEVEL, PT_PER: PT_PER,
+    DATA_VER: DATA_VER, MODEL_LEVEL: MODEL_LEVEL, tableLevel: tableLevel, X_MAX_TBL: X_MAX_TBL, PT_PER: PT_PER,
     normX: normX, unknownX: unknownX, minLevel: minLevel, needsNewer: needsNewer, keepsMore: keepsMore, PRESETS: PRESETS, MAX_ITEMS: MAX_ITEMS, MAX_PAGES: MAX_PAGES,
     preset: preset, toUnit: toUnit, fromUnit: fromUnit, label: label, seedNames: seedNames, nameOf: nameOf,
     newId: newId, touch: touch, isId: isId, cmpStr: cmpStr, setItemExt: setItemExt, parsePath: parsePath, pathText: pathText, normGrad: normGrad,

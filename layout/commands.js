@@ -130,7 +130,12 @@
   // version (LY-W11, LY-N7): a named version of the document as it is
   // before these commands (assist.js saves it; it changes nothing here)
   CATALOG.version = { kind: "doc", args: { name: { t: "str", max: 80, req: 1 } } };
-  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version"];
+  // table (LY-W12): a table into a story
+  CATALOG.table = { kind: "doc", args: { frame: { t: "str", max: 80 }, story: { t: "str", max: 80 }, rows: { t: "list", of: { t: "str", max: 4000 }, max: 1000, req: 1 },
+    header: { t: "int", lo: 0, hi: 20, def: 1 }, repeat: { t: "bool", def: 1 }, after_para: { t: "int", lo: 0, hi: 99999, def: 0 }, replace: { t: "int", lo: 0, hi: 9999, def: 0 },
+    widths: { t: "str", max: 200 }, rule: { t: "num", lo: -1, hi: 12, def: -1 }, padding: { t: "num", lo: -1, hi: 36, def: -1 },
+    rule_color: { t: "color" }, header_fill: { t: "color" }, style: { t: "str", max: 60 } } };
+  var W3 = ["section", "movepages", "duppages", "masterpages", "defmaster", "pagesize", "picture", "placepage", "framemod", "masterfield", "colormode", "addfont", "cancel", "version", "table"];
   var PRO_OPS = ["create", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"].concat(W3);
   var ORDER = ["create"].concat(OPS, ["rename", "images", "bleedfill", "thumbs", "defstyle", "styleset", "frame", "retext", "house_pages"], W3);
   var MAX_PICS = 400;
@@ -182,6 +187,9 @@
     "source free = a Fontsource family by `family` (e.g. Carlito, as fontsource.org names it; its files are kept on the device for offline use), styles regular|bold|italic|bold italic (or 400, 700, 400i, 700i; default all it has); " +
     "source local = the font file `path` local:<root>/<file>.ttf|.otf in a local folder the owner opened (one file per command: add the bold and italic files too), kept in the owner's fonts" +
     "\nversion: keeps a named version `name` of the document as it is before the other commands (the owner compares and restores it in More › Versions; 30 per document, kept on their device); use it before large changes" +
+    "\ntable: a table into the story `story` (or the frame `frame` of it): rows one entry per row, cells separated by | (\\n = a new line in a cell), header the first rows that repeat at the top of each new column or page (repeat false = not repeated), " +
+    "after_para after that paragraph (1 = the first; 0 = at the end), replace n = the story's n-th table becomes this one, widths relative column widths (e.g. \"2 1 1\"), rule the rule width in pt (0 = none, -1 = 0.5), padding the cell padding in pt (-1 = 4), " +
+    "rule_color and header_fill #rrggbb, style the paragraph style of the cells; rows never split, the owner merges cells in the Story Editor" +
     "\ncancel: alone, stops the commands that keep Layout busy now (what they changed so far stays, with Undo; a run also stops by itself after 60 s without progress)" +
     "\npicture: picture frames by `frame` (ids as the document's frames list shows, comma-separated) or every picture on `pages`: flip none|h|v|hv (mirrored), corner the corner radius in mm (-1 = as it is), fit fit (whole picture) | fill (fills the frame) | frame (the frame takes the picture's proportions, same width); " +
     "colour corrections, kept apart from the file (numbers separated by spaces; empty = as it is; values that change nothing take that correction off; applied in this order): " +
@@ -245,6 +253,7 @@
     if (steps.some(function (st) { return st.op === "placepage" && !/^local:/i.test(String(st.path).trim()) && !PRO.normPath(st.path); })) return { ok: false, err: "placepage: path is a file on the orOS disk (/internal/… or as files_list shows it) or local:<root>/<file>" };
     if (steps.some(function (st) { return st.op === "placepage" && !/\.(pdf|sla|sla\.gz|idml)$/i.test(String(st.path).trim()); })) return { ok: false, err: "placepage: path is a .pdf, .sla (or .sla.gz) or .idml file (an Affinity .af page: export it as a PDF first)" };
     if (steps.some(function (st) { return st.op === "retext" && !st.frame && !st.story; })) return { ok: false, err: "retext needs frame or story" };
+    if (steps.some(function (st) { return st.op === "table" && !st.frame && !st.story; })) return { ok: false, err: "table needs frame or story" };
     if (steps.some(function (st) { return st.op === "addfont" && st.source === "free" && !st.family; })) return { ok: false, err: "addfont source free needs family (a Fontsource family name, e.g. Carlito)" };
     if (steps.some(function (st) { return st.op === "addfont" && st.source === "local" && !/^local:.+\.(ttf|otf|ttc|otc|woff2?)$/i.test(String(st.path || "").trim()); })) return { ok: false, err: "addfont source local needs path local:<root>/<file>.ttf (or .otf), a file in a local folder the owner opened for Claude" };
     if (steps.some(function (st) { return st.op === "addfont" && (st.styles || []).some(function (v) { return !STYLE_OF[String(v).toLowerCase().replace(/\s+/g, " ").trim()]; }); })) return { ok: false, err: "addfont styles: regular, bold, italic, bold italic (or 400, 700, 400i, 700i)" };
@@ -284,6 +293,7 @@
     if (st.op === "styleset") return PRO.playStyles(doc, st.lang, now);
     if (st.op === "frame") return PRO.addFrame(doc, st, now, env.idf) ? 1 : 0;
     if (st.op === "retext") return PRO.setStory(doc, st, now);
+    if (st.op === "table") return PRO.addTable(doc, st, now);
     if (st.op === "house_pages") {
       var house = env.house || houseIn(env.docs, st.house, doc.id);
       if (!house) { if (env.notes && env.notes.indexOf("noHouse") < 0) env.notes.push("noHouse"); return 0; }
@@ -435,7 +445,11 @@
   function mm(v) { return Math.round((v || 0) * PT_MM * 10) / 10; }
   function nameOf(n) { return n && typeof n === "object" ? n.en || n.el || n[Object.keys(n)[0]] || "" : String(n || ""); }
   function textOf(st) {
-    return (st && st.paras || []).map(function (p) { return (p.runs || []).map(function (r) { return typeof r.t === "string" ? r.t : ""; }).join(""); }).join(" ").replace(/\s+/g, " ").trim();
+    return (st && st.paras || []).map(function (p) {
+      var tb = p.ext && p.ext.tbl;
+      if (tb && Array.isArray(tb.rows)) return "[table " + tb.rows.length + "×" + (Array.isArray(tb.cols) ? tb.cols.length : 0) + "]";
+      return (p.runs || []).map(function (r) { return typeof r.t === "string" ? r.t : ""; }).join("");
+    }).join(" ").replace(/\s+/g, " ").trim();
   }
   function outline(doc, L, opts) {
     var u = doc.setup || {}, order = M.pagesInOrder(doc), used = {}, msName = {};

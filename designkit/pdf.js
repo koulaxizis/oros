@@ -233,6 +233,7 @@
     }
     if (it.t === "text" && lines) {
       lines.forEach(function (ln) {
+        if (ln.tb) art(pdf, function () { tableRow(ln.tb); });
         var runs = ln.runs.filter(function (run) { return !!run.t; });
         if (!runs.length) return;
         var all = function () { runs.forEach(drawRun); };
@@ -249,6 +250,22 @@
         });
         mc(pdf, { k: "t", key: lt.key, sid: lt.sid, p: lt.p, note: lt.note, r: lt.r, x: x + x0, y: y + top, w: Math.max(0, x1 - x0), h: Math.max(0, bot - top),
                   t: runs.map(function (run) { return run.t; }).join("").slice(0, 300) }, all);
+      });
+    }
+    // a table row's fills and rules (LY-W12): a rule without a swatch is black
+    function tableRow(tb) {
+      tb.fills.forEach(function (f) {
+        pdf.saveGraphicsState();
+        if (setColor(pdf, doc, f[4], "fill")) pdf.rect(x + f[0], y + f[1], f[2], f[3], "F");
+        pdf.restoreGraphicsState();
+      });
+      tb.rules.forEach(function (r) {
+        pdf.saveGraphicsState();
+        if (!r[4] || !setColor(pdf, doc, r[4], "draw")) { if (pdf.orosRgb) pdf.setDrawColor(0, 0, 0); else pdf.setDrawColor(0, 0, 0, 1); }
+        pdf.setLineWidth(r[5]);
+        pdf.setLineDashPattern([], 0);
+        pdf.line(x + r[0], y + r[1], x + r[2], y + r[3]);
+        pdf.restoreGraphicsState();
       });
     }
     function drawRun(run) {
