@@ -1,7 +1,7 @@
 /* ============================================================
    orOS Mockups — assist.js: the Assistant's and Claude's changes
    (MK-G, v1.0.0)
-   Chris 2026-11-22 «Πρόσθεσε το mockups στο gate». The edit_in_app
+   Chris 2026-11-22: add Mockups to the Gate. The edit_in_app
    card (or the Gate) hands Mockups a list of commands (commands.js):
      __orosOpenAt("mockups", { edit: { key, chat, docs: [ids], steps } })
    Mockups checks them again (it never trusts the request), copies the

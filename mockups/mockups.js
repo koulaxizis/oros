@@ -3538,7 +3538,7 @@
     openPrj(target.id);
     return true;
   }
-  // MK-G (Chris 2026-11-22 «Πρόσθεσε το mockups στο gate»): the
+  // MK-G (Chris 2026-11-22: add Mockups to the Gate): the
   // Assistant's and Claude's changes (assist.js, commands.js), loaded on
   // the first request.
   function claudeFolders() {

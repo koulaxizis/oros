@@ -1,7 +1,7 @@
 // ============================================================
 // orOS Mockups — commands.js: what the Assistant and Claude may change
 // in a book mockup (MK-G, v1.0.0)
-// Chris 2026-11-22 «Πρόσθεσε το mockups στο gate». The fixed catalog of
+// Chris 2026-11-22: add Mockups to the Gate. The fixed catalog of
 // edit_in_app for Mockups, in the step format of the automations
 // (recipes/core.js specs). The same file runs in two places:
 //   - in the Assistant, to check a command list, find the mockups it is
