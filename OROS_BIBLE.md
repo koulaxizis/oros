@@ -13906,3 +13906,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** smartbar.js, shell.js (smart bar host `media`, version), translations.js, i18n/de/shell.js, appearance help EN/EL/DE, whatsnew EN/EL, tests/smartbar.test.js.
 - **Tests:** smartbar tests (NOWPLAY-1); full suite; Chromium through the real shell at 1280 EN and 360 EL with a stubbed Music player (card text, peek controls, pause, next, peek inside the screen).
 - **Not tested:** real audio in Podcasts, Radio and the Sound Mixer, Safari, a real phone.
+
+### 2026-11-22 — 8.70.01 — Music starts on Home and marks the playing song (MU-HOME, MU-NOW, #1243)
+- **Why:** Chris, 2026-11-22 22:26 (Android, screenshot): «Στην αρχική του Music βλέπω πλέον μόνο αυτό!» The app restored the last tab, so after a search it reopened on Search (genre grid only) and Home looked gone. 22:50: «Δεν φαίνεται στη λίστα ποιο κομμάτι παίζει τώρα.» The playing row only took the accent on its title, invisible with a light palette accent.
+- **Rules:** MU-HOME: every Music start opens on Home; `prefs.tab` is still saved but never restored (library view and the other device prefs still are). MU-NOW: `paintPlaying()` gives the playing `.row` the class `now` (tint `--accent-soft`, accent title), `paused` while paused, `aria-current`, and a `.eq` of three moving bars before the title (static under reduced motion); every `.row` list.
+- **Files:** music/music.js, music/music.css, tests/music-home.test.js, shell.js, help/topics/whatsnew.en/el.txt.
+- **Tests:** tests/music-home.test.js; full suite; Playwright Chromium 360px EL: prefs `{tab:"search"}` opens on Home (Search on 8.70.00); mocked Openverse/ccMixter search, tap a song: one row marked (bars, tint, aria-current), the mark moves with the next song.
+- **Not tested:** a real phone, Safari.
