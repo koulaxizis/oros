@@ -529,7 +529,7 @@ orosPack("de", "assistant", {
  "ed.note.big": "Manche Befehle betreffen mehr Zellen, als auf einmal geändert werden können.",
  "ed.note.centre": "Die Mitte einer Map bleibt: Lösche die Map in Mindmap selbst.",
  "ed.note.drums": "Schlagzeugspuren wurden nicht transponiert: Ihre Noten sind Schlagzeugklänge.",
- "ed.note.fitLater": "Layout passt den Text ein, wenn es die Änderungen macht.", "ed.note.indexLater": "Layout erstellt das Register, wenn es die Änderungen macht.",
+ "ed.note.fitLater": "Layout passt den Text ein, wenn es die Änderungen macht.", "ed.op.alternate": "Alternatives Layout", "ed.v.mode.make": "erstellen", "ed.v.mode.update": "aus dem Original aktualisieren", "ed.v.mode.unlink": "vom Original lösen", "ed.f.scale_text": "Textgrößen folgen der Seite", "ed.note.altOne": "Ein alternatives Layout entsteht aus einem Dokument: Nennen Sie es.", "ed.note.altBad": "Das alternative Layout konnte nicht erstellt werden (Name und Größe prüfen).", "ed.note.notAlternate": "Dieses Dokument ist kein alternatives Layout und hat nichts zu aktualisieren oder zu lösen.", "ed.note.altGone": "Das Original dieses alternativen Layouts wurde entfernt; es kann nur gelöst werden.", "ed.note.indexLater": "Layout erstellt das Register, wenn es die Änderungen macht.",
  "ed.note.formulas": "Formeln blieben unverändert; der Assistent ändert eine Formel, indem er sie neu schreibt.",
  "ed.note.frameMax": "Ein Rahmen fasst höchstens 50 Ideen; die ersten 50 sind darin.",
  "ed.note.full": "Manche Objekte wurden nicht hinzugefügt: Ein Board fasst höchstens 2.000.",

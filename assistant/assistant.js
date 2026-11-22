@@ -525,7 +525,7 @@
       "ed.v.brk.col": "in a new column", "ed.v.brk.page": "on a new page", "ed.v.brk.odd": "on a right page", "ed.v.brk.even": "on a left page", "ed.v.hyph.on": "on",
       "ed.v.hyph.off": "off", "ed.v.on.all": "all pages", "ed.v.on.odd": "right pages", "ed.v.on.even": "left pages", "ed.v.mode.set": "start at",
       "ed.v.mode.shift": "move by", "ed.v.mode.fit": "whole picture", "ed.v.mode.fill": "fill the frame",
-      "ed.note.fitLater": "Layout fits the text when it makes the changes.", "ed.note.indexLater": "Layout makes the index when it makes the changes.",
+      "ed.note.fitLater": "Layout fits the text when it makes the changes.", "ed.op.alternate": "Alternate layout", "ed.v.mode.make": "make", "ed.v.mode.update": "update from the original", "ed.v.mode.unlink": "unlink from the original", "ed.f.scale_text": "text sizes follow the page", "ed.note.altOne": "An alternate layout is made from one document: name it.", "ed.note.altBad": "The alternate layout could not be made (check its name and size).", "ed.note.notAlternate": "This document is not an alternate layout, so it has nothing to update or unlink.", "ed.note.altGone": "The original of this alternate layout was removed; it can only be unlinked.", "ed.note.indexLater": "Layout makes the index when it makes the changes.",
       "rc.head": "Automation · {app}", "rc.hint": "Opens in {app} with these steps. You check them and save; nothing runs until you press Run there.",
       "ru.head": "Automation rule · {app}", "ru.hint": "Opens in {app} with this rule. You check it and save it; nothing runs until it is saved there.",
       "ru.notify": "Notice: \u201c{text}\u201d", "ru.only": "Only {when}",
@@ -1205,7 +1205,7 @@
       "ed.v.brk.page": "σε νέα σελίδα", "ed.v.brk.odd": "σε δεξιά σελίδα", "ed.v.brk.even": "σε αριστερή σελίδα", "ed.v.hyph.on": "ναι", "ed.v.hyph.off": "όχι",
       "ed.v.on.all": "όλες οι σελίδες", "ed.v.on.odd": "δεξιές σελίδες", "ed.v.on.even": "αριστερές σελίδες", "ed.v.mode.set": "ξεκινά από",
       "ed.v.mode.shift": "μετακίνηση κατά", "ed.v.mode.fit": "ολόκληρη η εικόνα", "ed.v.mode.fill": "γεμίζει το πλαίσιο",
-      "ed.note.fitLater": "Η Σελιδοποίηση χωράει το κείμενο όταν κάνει τις αλλαγές.", "ed.note.indexLater": "Η Σελιδοποίηση φτιάχνει το ευρετήριο όταν κάνει τις αλλαγές.",
+      "ed.note.fitLater": "Η Σελιδοποίηση χωράει το κείμενο όταν κάνει τις αλλαγές.", "ed.op.alternate": "Εναλλακτική διάταξη", "ed.v.mode.make": "δημιουργία", "ed.v.mode.update": "ενημέρωση από το πρωτότυπο", "ed.v.mode.unlink": "αποσύνδεση από το πρωτότυπο", "ed.f.scale_text": "τα μεγέθη κειμένου ακολουθούν τη σελίδα", "ed.note.altOne": "Η εναλλακτική διάταξη φτιάχνεται από ένα έγγραφο: δώσε το όνομά του.", "ed.note.altBad": "Η εναλλακτική διάταξη δεν φτιάχτηκε (έλεγξε όνομα και μέγεθος).", "ed.note.notAlternate": "Αυτό το έγγραφο δεν είναι εναλλακτική διάταξη, οπότε δεν έχει κάτι να ενημερώσει ή να αποσυνδέσει.", "ed.note.altGone": "Το πρωτότυπο αυτής της εναλλακτικής διάταξης αφαιρέθηκε· μπορεί μόνο να αποσυνδεθεί.", "ed.note.indexLater": "Η Σελιδοποίηση φτιάχνει το ευρετήριο όταν κάνει τις αλλαγές.",
       "rc.head": "Αυτοματισμός · {app}", "rc.hint": "Ανοίγει ({app}) με αυτά τα βήματα. Τα ελέγχεις και αποθηκεύεις· τίποτα δεν τρέχει πριν πατήσεις Εκτέλεση εκεί.",
       "ru.head": "Κανόνας αυτοματισμού · {app}", "ru.hint": "Ανοίγει ({app}) με αυτόν τον κανόνα. Τον ελέγχεις και τον αποθηκεύεις· τίποτα δεν τρέχει πριν αποθηκευτεί εκεί.",
       "ru.notify": "Ειδοποίηση: \u00ab{text}\u00bb", "ru.only": "Μόνο {when}",
@@ -4092,7 +4092,7 @@
     var doc = null;
     ((src.full && src.full.docs) || []).forEach(function (d) { if (d.id === tg.docs[0].id) doc = d; });
     if (!doc) return Promise.resolve({ content: "Error: the " + C.EDIT_APP[n.app].noun + " could not be read from this device's disk yet (it may still be syncing).", err: 1, ui: { k: "editErr" } });
-    var o = n.app === "layout" ? mod.outline(doc, null, { lastExport: lastPdfOf(doc.id), full: n.full, livePf: livePfOf(doc) })
+    var o = n.app === "layout" ? mod.outline(doc, null, { lastExport: lastPdfOf(doc.id), full: n.full, livePf: livePfOf(doc), docs: (src.full && src.full.docs) || [] })
       : mod.outline(doc, EDIT_SRC[n.app].style ? readStore(EDIT_SRC[n.app].style) : null);
     // WR-CAT T2: Writer's book translations (progress, as this device last saw it)
     if (n.app === "writer" && o && typeof mod.translations === "function") {

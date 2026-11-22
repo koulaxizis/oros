@@ -134,6 +134,8 @@
     }
     // LY-PRO W1: create makes the document first (designs new)
     var fresh = chk.ok && chk.steps[0].op === "create";
+    // LY-W16: an alternate layout of one document, made first as create is
+    var altFirst = chk.ok && C.isAltMake && C.isAltMake(chk.steps[0]);
     var ids = rq && Array.isArray(rq.docs) ? rq.docs.filter(function (id) { return typeof id === "string" && LY.findDoc(id); }).slice(0, 500) : [];
     if (!chk.ok || (!ids.length && !fresh) || busy) {
       if (busy) LY.toast(t("as.busy"), t("btn.stop"), function () { stopRun("owner"); });
@@ -155,6 +157,17 @@
       made = 1;
       steps = steps.slice(1);
       snaps.push({ id: nd.id, made: 1 });
+    } else if (altFirst) {
+      var ad = ids.length === 1 ? C.altMake(LY.findDoc(ids[0]), steps[0], LY.now()) : { err: "one" };
+      if (ad.err || !LY.addNewDoc || !LY.addNewDoc(ad, true)) {
+        busy = false;
+        back(key, { failed: 1, why: ad.err ? "bad" : "error", notes: [ad.err === "one" ? "altOne" : "altBad"] });
+        return;
+      }
+      ids = [ad.id];
+      made = 1;
+      steps = steps.slice(1);
+      snaps.push({ id: ad.id, made: 1 });
     }
     var stopToast = function () { stopRun("owner"); };
     if (slow) LY.toast(t("as.working"), t("btn.stop"), stopToast);
