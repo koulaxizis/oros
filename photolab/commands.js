@@ -149,7 +149,7 @@
     "rotate: the whole picture by deg (90, 180, -90 or any angle)",
     "flip: the whole picture, dir h (left-right) | v (top-bottom)",
     "rename: the project's name becomes title",
-    "generate: AI draws a new picture from prompt (English reads best) as a new photo layer on top: style " + AI_STYLES.slice(1).join("|") + ", w, h (its size, the canvas when left out; scaled to cover it), x, y, title (the layer's name)",
+    "generate: AI draws a new picture from the words in prompt, in English (it reads best), as a new photo layer on top: style " + AI_STYLES.slice(1).join("|") + ", w, h (its size, the canvas when left out; scaled to cover it), x, y, title (the layer's name)",
     "nobg: remove the background of the picked photo layers (as a mask, which can be painted further; on this device, nothing is sent)",
     "fill: AI redraws the box x, y, w, h of the picture as prompt says (generative fill), as a new layer over it",
     "expand: AI grows the picture (generative expand / outpaint) to ratio " + RATIOS.join("|") + " or to w, h, the picture anchored at pos, and draws what is beyond its edges (prompt: what is around, optional) on a new bottom layer",
