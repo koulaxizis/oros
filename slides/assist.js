@@ -126,9 +126,12 @@
         try { console.error("[orOS] slides: the Assistant's change failed", e); } catch (x) {}
       }
     });
-    busy = false;
     var rec = snaps.length ? { tok: newTok(), at: Date.now(), decks: snaps } : null;
+    var ex = null;
     (rec ? put(rec) : Promise.resolve()).then(function () {
+      return runExports(ids, chk.steps).then(function (r) { ex = r; });   // GX-3
+    }).then(null, function (e) { try { console.error("[orOS] slides: the export failed", e); } catch (x) {} }).then(function () {
+      busy = false;
       // the changed presentation opens, so the user sees what changed
       if (snaps.length === 1 && SL.deck !== snaps[0].id && !hasDialog()) {
         if (SL.deck) SL.goHome();
@@ -136,6 +139,7 @@
       } else if (!SL.deck) SL.renderHome();
       var rep = err && !snaps.length ? { failed: 1, why: "error" }
         : { ok: 1, n: total, d: snaps.length, per: per.slice(0, 50), cut: 0, notes: notes.slice(), tok: rec ? rec.tok : "" };
+      window.orosRecipes.outRep(rep, ex);
       back(key, rep);
       var msg = !total ? t("as.done0") : snaps.length === 1 ? t("as.done1", { n: total }) : t("as.done", { n: total, d: snaps.length });
       if (rec) SL.toast(msg, t("btn.undo"), function () { undo({ tok: rec.tok }); });
@@ -143,6 +147,23 @@
     });
   }
 
+  // GX-3: the export steps: each presentation opens, its files are made
+  // as by Export and saved into out (recipes/core.js runOuts)
+  function runExports(ids, steps) {
+    return window.orosRecipes.runOuts(ids, steps, function (id, st) {
+      if (!SL.data().decks[id]) return [];
+      if (SL.deck !== id) { if (SL.deck) SL.goHome(); SL.openDeck(id); }
+      return new Promise(function (ok) { setTimeout(ok, 300); }).then(function () {
+        return SL.io.capture(function () {
+          if (st.fmt === "pptx") return SL.io.exportPptx(id);
+          if (st.fmt === "png") {
+            return SL.ed.slides().filter(function (x) { return !x.hid; }).reduce(function (p3, x) { return p3.then(function () { return SL.io.exportPng(x.id); }); }, Promise.resolve());
+          }
+          return SL.io.exportPdf(!!st.handout);
+        });
+      });
+    });
+  }
   function undo(rq) {
     var key = rq && typeof rq.key === "string" ? rq.key : "", tok = rq && typeof rq.tok === "string" ? rq.tok : "";
     return get(tok).then(function (rec) {

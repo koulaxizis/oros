@@ -58,6 +58,7 @@ test("the asset map names a package for every orOS APK", () => {
   assert.equal(a["koulaxizis/oros"]["android-apks"]["oros.apk"], "online.useoros.twa");
   assert.equal(a["koulaxizis/oros"]["koulaxizis-apps"]["koulaxizis-apps.apk"], "gr.koulaxizis.apps");
   assert.equal(a["koulaxizis/oros"]["android-apks"]["oros-glarolykoi.apk"], "net.glarolykoi.android");
+  assert.equal(a["koulaxizis/oros"]["android-apks"]["oros-waymark.apk"], "site.waymarked.app");
 });
 
 test("the worker passes files through and counts one APK download per channel", async () => {

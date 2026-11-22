@@ -2051,6 +2051,7 @@
     try { return (window.parent && window.parent.orosFS) || window.orosFS || null; }
     catch (e) { return window.orosFS || null; }
   }
+  var exportBusyNow = false;   // GX-3: an export step is rendering
   function runExport() {
     var p = cur(), sound = prefs.what === "sound", gif = prefs.what === "gif";
     closeDialog();
@@ -2494,6 +2495,26 @@
     data: function () { return data; },
     pid: function () { return pid; },
     open: function (id) { if (data.projects[id]) openProject(id); },
+    // GX-3: the open project made as Export makes it (what video | sound |
+    // gif, the size of Export's last choice) → { name, blob } | null
+    exportAs: function (what) {
+      var p = cur(), sound = what === "sound", gif = what === "gif";
+      if (!p || !Object.keys(p.items).length || exportBusyNow) return Promise.resolve(null);
+      if (sound && !C.soundPlan(p).length) return Promise.resolve(null);
+      if (gif && C.duration(p) > MX.GIF_MAX_SEC + 0.01) return Promise.resolve(null);
+      var size = C.outputSize(p.ar, prefs.short);
+      exportBusyNow = true;
+      return (gif ? Promise.resolve({ ext: "gif" }) : sound ? MX.pickSoundFormat() : MX.pickFormat(size.w, size.h)).then(function (fmt) {
+        if (!fmt) return null;
+        exportCancel = false;
+        busy(t("exp.working", { p: 0 }), 0, function () { exportCancel = true; });
+        return MX.run({
+          project: p, short: prefs.short, file: MM.get, soundOnly: sound, gif: gif, gifSide: prefs.gif,
+          progress: function (f) { busy(t("exp.working", { p: Math.round(f * 100) }), f, function () { exportCancel = true; }); },
+          cancelled: function () { return exportCancel; }
+        }).then(function (r) { busy(null); return { name: C.exportName(p.name, r.ext), blob: r.blob }; }, function () { busy(null); return null; });
+      }).then(function (x) { exportBusyNow = false; return x; }, function () { exportBusyNow = false; return null; });
+    },
     // next = the whole data; withUndo = the open project changed (one
     // step of Montage's own Undo).
     set: function (next, withUndo) {

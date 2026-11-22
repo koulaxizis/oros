@@ -8,8 +8,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Wallpaper Generator · orOS</title>
 
-  <link rel="stylesheet" href="../fonts.css?v=8.22.00">
-  <link rel="stylesheet" href="wallpaper.css?v=8.22.00">
+  <link rel="stylesheet" href="../fonts.css?v=8.28.00">
+  <link rel="stylesheet" href="wallpaper.css?v=8.28.00">
 
 </head>
 <body>
@@ -37,6 +37,7 @@
       <div id="modes" class="modes" role="tablist">
         <button type="button" role="tab" id="mode-art" aria-controls="art-panel" data-i18n="mode.art">Patterns</button>
         <button type="button" role="tab" id="mode-land" aria-controls="land-panel" data-i18n="mode.land">Living land</button>
+        <button type="button" role="tab" id="mode-viz" aria-controls="viz-panel" data-i18n="mode.viz">Light show</button>
       </div>
       <div id="land-panel" role="tabpanel" aria-labelledby="mode-land" hidden>
         <section class="sec">
@@ -48,6 +49,14 @@
           <h2 data-i18n="sec.favs">Favourites</h2>
           <div id="land-favs"></div>
           <p class="hint" id="land-favs-empty" data-i18n="land.favs.empty">Tap the star to keep a land here.</p>
+        </section>
+      </div>
+      <div id="viz-panel" role="tabpanel" aria-labelledby="mode-viz" hidden>
+        <section class="sec">
+          <h2 data-i18n="sec.style">Style</h2>
+          <div id="viz-styles" class="pick-grid" role="radiogroup"></div>
+          <p class="hint" data-i18n="viz.hint"></p>
+          <p class="hint" data-i18n="viz.calm"></p>
         </section>
       </div>
       <div id="art-panel" role="tabpanel" aria-labelledby="mode-art">
@@ -153,12 +162,13 @@
   <div id="live" class="sr-only" aria-live="polite"></div>
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=8.22.00" data-app="wallpaper"></script>
-  <script src="../trees/core.js?v=8.22.00"></script>
-  <script src="art.js?v=8.22.00"></script>
-  <script src="land.js?v=8.22.00"></script>
-  <script src="wallpaper.js?v=8.22.00"></script>
+  <script src="../i18n.js?v=8.28.00" data-app="wallpaper"></script>
+  <script src="../trees/core.js?v=8.28.00"></script>
+  <script src="art.js?v=8.28.00"></script>
+  <script src="../vizkit.js?v=8.28.00"></script>
+  <script src="land.js?v=8.28.00"></script>
+  <script src="wallpaper.js?v=8.28.00"></script>
 
-  <script src="../pickers.js?v=8.22.00" defer></script>
+  <script src="../pickers.js?v=8.28.00" defer></script>
 </body>
 </html>

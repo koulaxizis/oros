@@ -16,7 +16,7 @@ test("export_epub is offered with Layout, and through the gate", () => {
   assert.ok(!C.toolsFor({}).some((t) => t.name === "export_epub"));
   const tool = C.toolsFor({ epub: true }).find((t) => t.name === "export_epub");
   assert.ok(tool, "offered when Layout is installed");
-  assert.deepEqual(Object.keys(tool.params.properties).sort(), ["document", "edition", "layout", "mark_ready", "title"]);
+  assert.deepEqual(Object.keys(tool.params.properties).sort(), ["document", "edition", "layout", "mark_ready", "out", "title"]);
   assert.deepEqual(tool.params.properties.layout.enum, ["reflowable", "fixed", "pictures"]);
   assert.ok(C.GATE_TOOLS.indexOf("export_epub") >= 0 && C.GATE_OPEN.indexOf("export_epub") >= 0);
   const g = C.gateTools(C.toolsFor({ epub: true })).find((t) => t.name === "export_epub");
@@ -29,7 +29,7 @@ test("normEpub: a document or a title, a known layout", () => {
   assert.equal(C.normEpub({ document: "  " }).ok, false);
   assert.equal(C.normEpub({ document: "Book", layout: "comic" }).ok, false);
   assert.deepEqual(C.normEpub({ document: "  Το   βιβλίο ", layout: "fixed", mark_ready: true, edition: "EPUB" }),
-    { ok: true, doc: "Το βιβλίο", title: "", edition: "EPUB", layout: "fixed", ready: 1 });
+    { ok: true, doc: "Το βιβλίο", title: "", edition: "EPUB", layout: "fixed", ready: 1, out: [] });
   const t = C.normEpub({ title: "Νύχτα", mark_ready: "yes" });
   assert.equal(t.ok, true);
   assert.equal(t.title, "Νύχτα");

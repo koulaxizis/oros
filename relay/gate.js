@@ -654,7 +654,11 @@ TOOLS.forEach((t) => { if (t.annotations && t.annotations.readOnlyHint) READ_ONL
 // conversation still sees the tools. Names that clash with ours, odd
 // names and oversized lists are dropped; the device checks every call.
 export const DEV_TOOL_RE = /^[a-z][a-z_]{2,39}$/;
-export const DEV_TOOLS_MAX = 30, DEV_TOOLS_BYTES = 120000;
+// GL-9 (2026-11-21): 30 / 120 KB dropped the whole list once Files at
+// «may change» brought the device's list to 30 tools and ~131 KB; the box
+// is SQLite-backed (2 MB a value), so there is room, and a list over the
+// cap now loses words of its longest descriptions, never its tools.
+export const DEV_TOOLS_MAX = 60, DEV_TOOLS_BYTES = 400000;
 // Ours come first and are never replaced: a device tool with one of
 // our names is dropped (a stale device list can't hide them).
 export function withDevTools(dev) {
@@ -941,6 +945,22 @@ export function closedSearch(cp, args, when, pend) {
   if (cp.ans.__ixpart) out.note = (out.note ? out.note + " " : "") + "The copy holds part of the items (" + cp.ans.__ixpart + " in all); open orOS for the rest.";
   return { ok: true, c: "[orOS is closed: this is the copy of " + when + "; refs work for change_item, link_items and link_contact, which wait until orOS opens]\n" + JSON.stringify(out) };
 }
+// Shortens the longest descriptions until the list fits in max bytes
+// (as JSON); the names and schemas stay, so every tool still works.
+const SHORT_NOTE = " … (shortened; orOS checks every argument on the device)";
+export function fitDevTools(list, max) {
+  let size = JSON.stringify(list).length;
+  for (let guard = 0; size > max && guard < 200; guard++) {
+    let big = null;
+    for (const t of list) if (!big || t.description.length > big.description.length) big = t;
+    if (!big || big.description.length <= 400) break;
+    const cut = Math.max(400, big.description.length - (size - max) - SHORT_NOTE.length, Math.floor(big.description.length / 2));
+    big.description = big.description.slice(0, cut) + SHORT_NOTE;
+    size = JSON.stringify(list).length;
+  }
+  while (size > max && list.length) { list.pop(); size = JSON.stringify(list).length; }
+  return list;
+}
 export function cleanDevTools(list) {
   if (!Array.isArray(list)) return [];
   const out = [], seen = {};
@@ -956,7 +976,7 @@ export function cleanDevTools(list) {
                // MCP's default for a tool that writes is destructive.
                annotations: { readOnlyHint: a.readOnlyHint === true, destructiveHint: a.readOnlyHint === true ? false : a.destructiveHint !== false } });
   }
-  return JSON.stringify(out).length <= DEV_TOOLS_BYTES ? out : [];
+  return fitDevTools(out, DEV_TOOLS_BYTES);
 }
 
 const INSTRUCTIONS = "orOS Gate reads the owner's orOS (a private, encrypted, local-first workspace) through their own open device, " +
@@ -2453,8 +2473,9 @@ export class GateBox {
         try { list = JSON.parse(ans.c); } catch (e) { list = null; }
         if (Array.isArray(list)) {
           const clean = cleanDevTools(list);
-          await this.st.put("devtools", clean);
-          return clean;
+          // GL-9: a list whose tools all fail the checks never wipes the
+          // kept one (a device that has none answers [] and that is kept).
+          if (clean.length || !list.length) { await this.st.put("devtools", clean); return clean; }
         }
       }
     }

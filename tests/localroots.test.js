@@ -111,18 +111,34 @@ test("imageInfo: pixels and ppi from the first bytes", () => {
 });
 
 test("Gate tools take local: paths and refuse the rest", () => {
-  assert.equal(C.normPdf({ document: "Β", out: "local:Export" }).out, "local:Export");
-  assert.equal(C.normPdf({ document: "Β" }).out, "");
-  assert.equal(C.normPdf({ document: "Β", out: "/internal/Layout" }).ok, false);
+  assert.deepEqual(C.normPdf({ document: "Β", out: "local:Export" }).out, ["local:Export"]);
+  assert.deepEqual(C.normPdf({ document: "Β" }).out, []);
   assert.equal(C.normPdf({ document: "Β", out: "local:Export/../x" }).ok, false);
   const r = C.normRebuild({ pdf: "/internal/Books/a.pdf", folder: "local:Vythos/photos/" }, []);
   assert.equal(r.ok, true);
   assert.equal(r.folder, "local:Vythos/photos");
   assert.equal(C.normRebuild({ pdf: "/internal/Books/a.pdf", folder: "local:Vythos/../x" }, []).ok, false);
-  const rep = C.pdfReport({ doc: "Β", preset: "print", local: "local:Export/Β - print.pdf", localWhy: "nameTaken" });
-  assert.equal(rep.local_copy, "local:Export/Β - print.pdf");
-  assert.equal(rep.local_copy_failed, "nameTaken");
-  assert.equal(C.pdfReport({ doc: "Β", local: "/internal/x.pdf" }).local_copy, undefined);
+});
+
+// GX-1 (Chris 2026-11-21): every export also to a local folder and/or orOS Files
+test("export out: a local folder and/or a folder of Claude's, and what came of it", () => {
+  assert.deepEqual(C.normOut(["local:Export", "Drive/Βιβλία/Proofs/"]), { ok: true, list: ["local:Export", "/internal/Drive/Βιβλία/Proofs"] });
+  assert.deepEqual(C.normOut("Drive › Βιβλία").list, ["/internal/Drive/Βιβλία"]);
+  assert.deepEqual(C.normOut("/internal/Layout/PDF").list, ["/internal/Layout/PDF"]);
+  assert.deepEqual(C.normOut(["local:A", "local:A"]).list, ["local:A"]);
+  ["Drive/../x", "Drive/.hidden", ["a", "b", "c"], 7, "Drive//x\u0001"].forEach((v) => assert.equal(C.normOut(v).ok, false, JSON.stringify(v)));
+  assert.equal(C.normEpub({ document: "Β", out: ["Drive/E"] }).out[0], "/internal/Drive/E");
+  assert.equal(C.normEpub({ document: "Β", out: "../x" }).ok, false);
+  const rep = C.pdfReport({ doc: "Β", preset: "print", saved: ["local:Export/Β - print.pdf", "Drive/Proofs/Β - print.pdf"], outFail: [{ to: "Drive/X", why: "outside" }, { to: "local:Y", why: "<script>" }] });
+  assert.deepEqual(rep.saved, ["local:Export/Β - print.pdf", "Drive/Proofs/Β - print.pdf"]);
+  assert.equal(rep.save_failed[0].why, "outside");
+  assert.match(rep.save_failed[0].means, /Claude's folders/);
+  assert.equal(rep.save_failed[1].why, "error");
+  assert.equal(C.epubReport({ doc: "Β", path: "/internal/Layout/EPUB/Β.epub", saved: ["Drive/E/Β.epub"] }).saved[0], "Drive/E/Β.epub");
+  ["export_pdf", "export_epub"].forEach((n) => {
+    const t = C.toolsFor({ epub: 1 }).find((x) => x.name === n);
+    assert.equal(t.params.properties.out.type, "array", n);
+  });
 });
 
 test("wired in: late bundle, offline cache, Gate log, strings in three languages", () => {
