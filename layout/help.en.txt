@@ -139,6 +139,11 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Justify** (text frame, vertical alignment): the free space at the foot of a column is shared out between its paragraphs, so the columns end at the same height. The last column of a text stays as it is.
 - **Object styles** (properties panel): `New from this` saves a frame's or shape's looks (fill, stroke, corners, opacity, wrap; for text frames inset, columns and alignment) under a name; pick it for other objects; `Redefine from this` changes every object that uses it. They travel with the document.
 
+## Story Editor, library and swatch libraries
+- **Story Editor**: `¶` shows each paragraph's style name in a column beside the text; `A−` and `A+` make the text smaller or bigger (only on screen, remembered on this device). Paragraphs that do not fit in the frames any more are marked from where the overset starts.
+- **Library** (`More › Library…`): select objects and `Add the selection` keeps them, with their text, colours and styles, for any document on this device; click one to place it on the current page. Rename or remove them there; `Export…` and `Import…` take a library to another device as a `.oroslib` file. Pictures are named, not copied.
+- **Swatch libraries** (Colours panel): `Libraries…` adds ready-made sets (print basics, sea, earth, pastel, greys); `Import .ase…` reads swatch files from InDesign, Illustrator, Photoshop, Affinity or Scribus (RGB, CMYK, grey and Lab, spot colours stay spot); `Export .ase` writes the document's colours for them. Colours already in the document are skipped.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

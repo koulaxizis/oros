@@ -139,6 +139,11 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Ausgleichen** (Textrahmen, vertikale Ausrichtung): Der freie Platz am Fuß einer Spalte wird zwischen ihren Absätzen verteilt, damit die Spalten gleich hoch enden. Die letzte Spalte eines Textes bleibt, wie sie ist.
 - **Objektformate** (Eigenschaften): `Neu aus diesem` speichert das Aussehen eines Rahmens oder einer Form (Füllung, Kontur, Ecken, Deckkraft, Umfluss; bei Textrahmen Abstand, Spalten und Ausrichtung) unter einem Namen; wähle es für andere Objekte; `Aus diesem neu definieren` ändert jedes Objekt, das es nutzt. Sie reisen mit dem Dokument.
 
+## Textmodus, Bibliothek und Farbfeldbibliotheken
+- **Textmodus**: `¶` zeigt den Formatnamen jedes Absatzes in einer Spalte neben dem Text; `A−` und `A+` machen die Schrift kleiner oder größer (nur am Bildschirm, auf diesem Gerät gemerkt). Absätze, die nicht mehr in die Rahmen passen, sind ab dem Übersatz markiert.
+- **Bibliothek** (`Mehr › Bibliothek…`): Wähle Objekte aus; `Auswahl hinzufügen` bewahrt sie mit Text, Farben und Formaten für jedes Dokument auf diesem Gerät auf; ein Klick platziert eines auf der aktuellen Seite. Dort benennst oder entfernst du sie; `Exportieren…` und `Importieren…` bringen eine Bibliothek als `.oroslib`-Datei auf ein anderes Gerät. Bilder werden genannt, nicht kopiert.
+- **Farbfeldbibliotheken** (Bedienfeld Farben): `Bibliotheken…` fügt fertige Sätze hinzu (Druck-Grundfarben, Meer, Erde, Pastell, Grautöne); `.ase importieren…` liest Farbfelddateien aus InDesign, Illustrator, Photoshop, Affinity oder Scribus (RGB, CMYK, Grau und Lab; Volltonfarben bleiben Volltonfarben); `.ase exportieren` schreibt die Farben des Dokuments für sie. Farben, die schon im Dokument sind, werden übersprungen.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

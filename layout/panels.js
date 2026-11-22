@@ -1306,9 +1306,67 @@
       r.addEventListener("click", function () { swatchDlg(sw.id); });
       s.appendChild(r);
     });
-    s.appendChild(btn(t("colors.new"), function () { swatchDlg(null); }, "small"));
+    var sr = el("div", "pn-row wrap");
+    sr.appendChild(btn(t("colors.new"), function () { swatchDlg(null); }, "small"));
+    if (window.LY_SWLIB) {
+      sr.appendChild(btn(t("swl.libs"), swatchLibDlg, "small"));
+      sr.appendChild(btn(t("swl.import"), importAse, "small"));
+      var exA = btn(t("swl.export"), exportAse, "small");
+      exA.disabled = !doc.swatches.length;
+      sr.appendChild(exA);
+    }
+    s.appendChild(sr);
     body.appendChild(s);
     body.appendChild(el("p", "hint", t("colors.note")));
+  }
+  // swatch libraries (LY-N3): ready-made ones, and .ase files from
+  // InDesign, Illustrator, Affinity or Scribus; doubles are skipped
+  function addSwatches(list) {
+    var added = 0;
+    LY.op(function (doc, now) {
+      var made = window.LY_SWLIB.merge(doc.swatches, list, function () { return M.newId("sw"); });
+      made.forEach(function (x) { x.m = now; var n = M.normSwatch(x); if (n) { doc.swatches.push(n); added++; } });
+      if (!added) return false;
+    });
+    LY.toast(added ? t("swl.added", { n: added }) : t("swl.none"));
+  }
+  function swatchLibDlg() {
+    var L = window.LY_SWLIB;
+    LY.openDialog(t("swl.title"), function (body, close) {
+      L.LIBS.forEach(function (lib) {
+        var row = el("div", "swl-row");
+        row.appendChild(el("span", "swl-name", t("swl.lib." + lib.id)));
+        var chips = el("span", "swl-chips");
+        var tmp = { swatches: lib.sw.map(function (x, i) { return M.normSwatch({ id: "sw-l" + i, name: x.name, mode: x.mode, v: x.v }); }) };
+        tmp.swatches.forEach(function (x) { var c = el("span", "sw-chip"); c.style.background = M.cssColor(tmp, x.id); c.title = x.name; chips.appendChild(c); });
+        row.appendChild(chips);
+        var b = btn(t("swl.add"), function () { close(); addSwatches(lib.sw); }, "small");
+        b.setAttribute("aria-label", t("swl.add") + ": " + t("swl.lib." + lib.id));
+        row.appendChild(b);
+        body.appendChild(row);
+      });
+      body.appendChild(el("p", "hint", t("swl.hint")));
+      var act = el("div", "dlg-actions");
+      var c = el("button", "btn", t("btn.close")); c.type = "button";
+      c.addEventListener("click", close);
+      act.appendChild(c);
+      body.appendChild(act);
+    });
+  }
+  function importAse() {
+    LY.io.pickFile(".ase,application/octet-stream").then(function (f) {
+      if (!f) return;
+      if (f.size > 2000000) { LY.toast(t("swl.bad")); return; }
+      f.arrayBuffer().then(function (buf) {
+        var r = window.LY_SWLIB.parseASE(buf);
+        if (r.error || !r.swatches.length) { LY.toast(t("swl.bad")); return; }
+        addSwatches(r.swatches);
+      });
+    });
+  }
+  function exportAse() {
+    var doc = LY.doc, bytes = window.LY_SWLIB.writeASE(doc.swatches.map(function (x) { return { name: LY.label(x.name), mode: x.mode, v: x.v, spot: x.ext && x.ext.spot }; }));
+    LY.io.saveBlob(new Blob([bytes], { type: "application/octet-stream" }), LY.io.fileName(doc, ".ase"), "application/octet-stream", "Adobe Swatch Exchange", ".ase");
   }
   function hex2(n) { return ("0" + Math.round(n).toString(16)).slice(-2); }
 
@@ -2090,6 +2148,7 @@
       { label: t("more.selall"), fn: ED.selectAll },
       { label: t("more.find"), fn: function () { LY.dlg.find(); } },
       { label: t("more.spell"), fn: function () { LY.dlg.spell(); } },
+      { label: t("more.lib"), disabled: !LY.dlg.lib, fn: function () { LY.dlg.lib(); } },
       { label: t("more.history"), disabled: !LY.canUndo() && !LY.canRedo(), fn: function () { LY.dlg.history(); } },
       { label: t("more.keys"), fn: function () { LY.dlg.keys(); } },
       { sep: true },
