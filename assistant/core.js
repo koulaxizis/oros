@@ -2081,7 +2081,7 @@
     crm_contract: "crm_contract = a contract with a CRM partner (title, start, end, reminder before it ends)",
     // AS-ADD5 (wave A4, assistant/additems2.js)
     timesheet: "timesheet = time worked, in Timesheet (billed, and the refs of the invoice it went on and the event it was for, when known)",
-    // TS-GATE (8.53.00, assistant/additems2.js)
+    // TS-GATE (8.54.00, assistant/additems2.js)
     timesheet_project: "timesheet_project = a project in Timesheet with its client (a client not there yet is made), hourly rate, day minimum and overtime",
     meals: "meals = a recipe in Meal Planner",
     travel_plan: "travel_plan = an entry in a trip's itinerary in Travel (a flight, stay, visit, meal…)",
@@ -2243,7 +2243,7 @@
     ["contact", ["crm"], { type: "string", description: "crm: the ref of the contact (from search_data or create_items) who is this customer, or its contact person; CRM links them." }],
     ["role", ["crm"], { type: "string", description: "crm with contact: that person's role, e.g. Accounts." }],
     ["client", ["invoices", "quote", "timesheet_project"], { type: "string", description: "invoices: the client's name as in Invoices (an unknown one is written on the draft only; the user picks or adds the client before issuing). quote: the client's name as in Quote (an unknown one is added there as a client). timesheet_project: the client's name in Timesheet (a new one is made when none has it)." }],
-    // TS-GATE (8.53.00): a Timesheet project's billing; an entry's billed, invoice and event
+    // TS-GATE (8.54.00): a Timesheet project's billing; an entry's billed, invoice and event
     ["rate", ["timesheet_project"], { type: "number", description: "timesheet_project: the hourly rate in the app's currency, e.g. 20." }],
     ["day_minimum", ["timesheet_project"], { type: "number", description: "timesheet_project: the least a working day is charged (a day rate), e.g. 200; time up to it is covered." }],
     ["overtime_after", ["timesheet_project"], { type: "number", description: "timesheet_project: hours of a day after which time is overtime, e.g. 10." }],

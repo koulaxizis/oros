@@ -1043,6 +1043,8 @@ test("GQ-VER: a waiting change that needs a newer orOS goes only to a device tha
   assert.equal(G.minVer("edit_in_app", { app: "mockups", steps: [] }), 84600);
   assert.equal(G.minVer("edit_in_app", { app: "photolab", steps: [{ op: "fill" }] }), 84600);
   assert.equal(G.minVer("edit_in_app", { app: "photolab", steps: [{ op: "tone" }] }), 0);
+  assert.equal(G.minVer("create_items", { app: "timesheet_project", items: [] }), 85400);
+  assert.equal(G.minVer("create_items", { app: "timesheet", items: [] }), 0);
   assert.equal(G.minVer("edit_in_app", { app: "atelier", steps: [{ op: "create" }] }), 0);
   assert.equal(G.minVer("budget_add", {}), 0);
   const q = new Map([["q:AAAAAAAAAAAAAAAA", { c: "a", t: 1, s: 1 }], ["q:BBBBBBBBBBBBBBBB", { c: "b", t: 2, s: 2, mv: 84500 }]]);

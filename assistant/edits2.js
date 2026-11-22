@@ -336,7 +336,7 @@
     var h = byId(d.entries, id);
     return h && !h.x.del ? h : null;
   }
-  // TS-GATE (8.53.00): also the project (by name), billed, the Invoices
+  // TS-GATE (8.54.00): also the project (by name), billed, the Invoices
   // document it went on (iv) and the Calendar event it was for (src);
   // invoice / event arrive resolved by assistant.js (tsChangeRefs) as
   // { id, title } / { src, title }, "" clears.

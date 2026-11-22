@@ -5180,7 +5180,7 @@
     if (!f || typeof f.path !== "string" || typeof f.text !== "string" || !F || typeof F.writeText !== "function") return;
     try { Promise.resolve(F.writeText(f.path, f.text)).catch(function () {}); } catch (e) {}
   }
-  // TS-GATE (8.53.00): change_item's invoice / event on a Timesheet
+  // TS-GATE (8.54.00): change_item's invoice / event on a Timesheet
   // entry are refs; here they become { id, title } / { src, title }
   // (edits2.js timesheetChange), "" stays "" (clears).
   function tsChangeRefs(c, ch) {
@@ -5645,7 +5645,7 @@
     if (crm) CRM_ADD.forEach(function (id) { out.push({ id: id, name: crm.name, icon: crm.icon, of: "crm" }); });
     var tv = apps.filter(function (a) { return a.id === "travel" && have[a.id]; })[0];
     if (tv) TRAVEL_ADD.forEach(function (id) { out.push({ id: id, name: tv.name, icon: tv.icon, of: "travel" }); });
-    // TS-GATE (8.53.00): a Timesheet project (and its client), whenever Timesheet is allowed
+    // TS-GATE (8.54.00): a Timesheet project (and its client), whenever Timesheet is allowed
     var ts = out.filter(function (a) { return a.id === "timesheet"; })[0];
     if (ts) TS_ADD.forEach(function (id) { out.push({ id: id, name: ts.name, icon: ts.icon, of: "timesheet" }); });
     return out;
@@ -5753,7 +5753,7 @@
     }
     return "";
   }
-  // TS-GATE (8.53.00): a Timesheet entry's invoice and event, refs
+  // TS-GATE (8.54.00): a Timesheet entry's invoice and event, refs
   // from search_data (Invoices: { invoice }, Calendar: { id, date }),
   // never a number or a name. The plan card shows their titles.
   function tsRefsOf(c, items) {

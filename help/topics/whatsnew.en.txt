@@ -3,8 +3,11 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
-## Version 8.53.00
+## Version 8.54.00
 - **Timesheet: Claude keeps your hours with you.** Through orOS Gate, Claude can now make a Timesheet project with its client, hourly rate, day minimum and overtime, mark time as billed with the invoice it went on, and tie each day to its Calendar event. Work that runs past midnight now counts as one working day, with its overtime, instead of a second day with a second minimum.
+
+## Version 8.53.00
+- **orOS Gate: a file an app just saved for Claude is in Claude's copy sooner.** When Photo Lab, Atelier or another app saves a picture into one of Claude's folders, the copy Claude reads while orOS is closed is refreshed a few seconds later, also when another refresh was already running.
 
 ## Version 8.52.00
 - **orOS Gate: Claude's waiting requests are no longer lost when orOS updates.** A change or question Claude left while orOS was closed now waits for a device whose orOS knows it, and a device that has just opened finishes its update before it works on them. Before, the older copy a phone runs for a moment before it updates could drop them.

@@ -1620,6 +1620,8 @@ export function minVer(name, args) {
     if (app === "mockups") return 84600;
     if (app === "photolab" && Array.isArray(args.steps) && args.steps.some((x) => x && PL_AI_OPS.indexOf(x.op) >= 0)) return 84600;
   }
+  // TS-GATE (8.54.00): a Timesheet project; an older orOS does not know the kind
+  if (name === "create_items" && args && typeof args === "object" && String(args.app || "").toLowerCase() === "timesheet_project") return 85400;
   return 0;
 }
 // "8.13.00" → 81300 (0 when it is not a version)
