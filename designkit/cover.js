@@ -113,6 +113,28 @@
     for (var j = 7; j <= 12; j++) out += EAN_L[+code[j]].replace(/[01]/g, function (c) { return c === "0" ? "1" : "0"; });
     return out + "101";
   }
+  // EAN-5 add-on (LY-N4: the price code books carry beside the ISBN,
+  // e.g. 90000 "no price"): 48 modules, its parity from a checksum
+  var EAN5_P = ["GGLLL", "GLGLL", "GLLGL", "GLLLG", "LGGLL", "LLGGL", "LLLGG", "LGLGL", "LGLLG", "LLGLG"];
+  function ean5(code) {
+    if (!/^\d{5}$/.test(code || "")) return null;
+    var d = code.split("").map(Number), c = (3 * (d[0] + d[2] + d[4]) + 9 * (d[1] + d[3])) % 10, par = EAN5_P[c], out = "01011";
+    for (var i = 0; i < 5; i++) { if (i) out += "01"; out += (par[i] === "L" ? EAN_L : EAN_G)[d[i]]; }
+    return out;
+  }
+  function addonPath(code) {
+    var bars = ean5(code);
+    if (!bars) return "";
+    var f4 = function (n) { return String(Math.round(n * 10000) / 10000); }, out = "", N = bars.length;
+    for (var i = 0; i < N; i++) {
+      if (bars[i] !== "1") continue;
+      var j = i;
+      while (j < N && bars[j] === "1") j++;
+      out += "M" + f4(i / N) + " 0L" + f4(j / N) + " 0L" + f4(j / N) + " 1L" + f4(i / N) + " 1Z";
+      i = j - 1;
+    }
+    return out;
+  }
   // The bars as one outline (fractions of a 95 × 1 box): normal bars
   // stop at `short` (0..1), the guard bars run the full height.
   function barsPath(code, short) {
@@ -152,7 +174,7 @@
 
   // ---------- builder ----------
   // spec: { name, w, h, pages?, sheet?, spine?, flap?, bleed?, title, sub,
-  //         author, blurb, imprint, isbn, price, img: { a, iw, ih, nm },
+  //         author, blurb, imprint, isbn, addon (EAN-5), price, img: { a, iw, ih, nm },
   //         logo: { a, iw, ih, nm } (the publisher's logo: back cover
   //         and the foot of the spine) }
   // opts: { now, lang } → a normalized document (model v1).
@@ -237,11 +259,13 @@
     var lw = logo ? 16 * MM : 0;
     if (logo) setPic(item("img", bx, g.H - m - lw, lw, lw, { fit: "fit" }), logo);
     if (imprint) text(bx + (lw ? lw + 3 * MM : 0), g.H - m - 10 * MM, bw - bcW - 6 * MM - (lw ? lw + 3 * MM : 0), 10 * MM, [["ps-imprint", imprint]], { va: "b" });
-    var code = isbn13(s.isbn);
+    var code = isbn13(s.isbn), add = code && ean5(line(s.addon, 5)) ? line(s.addon, 5) : "";
+    // the add-on: 9 modules of gap and 48 of bars, at the ISBN's module
+    var mod = (bcW - 7 * MM) / 95, addW = add ? 57 * mod + 3.5 * MM : 0;
     if (code) {
-      var gx = g.back.x + g.back.w - m - bcW, gy = g.H - m - bcH, grp = M.newId("gr");
+      var gx = g.back.x + g.back.w - m - bcW - addW, gy = g.H - m - bcH, grp = M.newId("gr");
       var pad = 2 * MM, top2 = 4 * MM, digits = 3.2 * MM, barsH = bcH - top2 - digits - pad;
-      item("rect", gx, gy, bcW, bcH, { fill: "sw-paper", sw: 0, grp: grp });
+      item("rect", gx, gy, bcW + addW, bcH, { fill: "sw-paper", sw: 0, grp: grp });
       var hy = code.slice(0, 3) + "-" + code.slice(3, 12) + "-" + code[12];
       if (s.isbnShown && line(s.isbnShown, 20).replace(/[^\d-]/g, "") === line(s.isbnShown, 20) &&
           line(s.isbnShown, 20).replace(/-/g, "") === code) hy = line(s.isbnShown, 20);
@@ -249,10 +273,15 @@
       var bx0 = gx + 3.5 * MM, bw0 = bcW - 7 * MM;     // quiet zones
       item("path", bx0, gy + top2 + pad * 0.5, bw0, barsH + 1.6 * MM, { d: barsPath(code, barsH / (barsH + 1.6 * MM)), fill: "sw-black", sw: 0, grp: grp });
       text(gx, gy + top2 + pad * 0.5 + barsH + 0.2 * MM, bcW, digits, [["ps-bc", code[0] + "  " + code.slice(1, 7) + "  " + code.slice(7)]], { grp: grp, va: "t" });
+      if (add) {
+        var ax = bx0 + 95 * mod + 9 * mod, aw = 48 * mod, atop = gy + top2 + pad * 0.5;
+        text(ax - 2 * MM, atop, aw + 4 * MM, digits, [["ps-bc", add]], { grp: grp, va: "c" });
+        item("path", ax, atop + digits, aw, barsH + 1.6 * MM - digits, { d: addonPath(add), fill: "sw-black", sw: 0, grp: grp });
+      }
     }
     // the price: its own line just above the barcode (or where the
     // barcode would be), so a long price never crowds the ISBN
-    if (price) text(g.back.x + g.back.w - m - bcW, g.H - m - (code ? bcH : 0) - 6 * MM, bcW, 5 * MM, [["ps-price", price]], { va: "b" });
+    if (price) text(g.back.x + g.back.w - m - bcW - addW, g.H - m - (code ? bcH : 0) - 6 * MM, bcW, 5 * MM, [["ps-price", price]], { va: "b" });
     // fold guides (spine edges, flap folds)
     g.folds.forEach(function (x) { doc.guides.push({ id: M.newId("gd"), m: now, pg: pg.id, o: "v", p: x }); });
     return M.normDoc(doc);
@@ -261,7 +290,7 @@
   var API = {
     SIZES: SIZES, PAPERS: PAPERS, MM: MM, STR: STR,
     spineMm: spineMm, paper: paper, geometry: geometry, build: build,
-    isbn13: isbn13, ean13: ean13, barsPath: barsPath
+    isbn13: isbn13, ean13: ean13, barsPath: barsPath, ean5: ean5, addonPath: addonPath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else { root.orosDK = root.orosDK || {}; root.orosDK.cover = API; }

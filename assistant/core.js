@@ -3486,6 +3486,7 @@
         spreads: { type: "boolean", description: "Facing pages side by side (default false: single pages, as printers want)." },
         downsample: { type: "boolean", description: "Pictures above 450 ppi go down to 300 ppi (default true); false keeps every picture as it is." },
         creep: { type: "number", description: "Creep for a saddle-stitched book in mm, 0-5 (default 0): the innermost pages' content moves this far towards the spine, the outer ones less." },
+        tagged: { type: "boolean", description: "A tagged, accessible PDF (PDF/UA): reading order, headings, notes, picture descriptions, language, link descriptions (default false)." },
         out: OUT_SCHEMA
       }
     }
@@ -3514,7 +3515,7 @@
     if (!out.ok) return out;
     out = out.list;
     return { ok: true, doc: doc, preset: preset, pages: pages === "all" ? "" : pages, bleed: bleed ? 1 : 0, marks: marks,
-             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, out: out };
+             spreads: a.spreads === true ? 1 : 0, down: a.downsample === false ? 0 : 1, creep: Math.round(creep * 100) / 100, tagged: a.tagged === true ? 1 : 0, out: out };
   }
   var PDF_PATH = /^\/internal\/Layout\/PDF\/[^\/]{1,200}\.pdf$/, PF_CODE = /^[a-z][a-zA-Z0-9]{0,19}$/;
   // Layout's report → what the model gets (numbers, codes and pages only).
@@ -3536,6 +3537,7 @@
     });
     o.preflight = { errors: pf.filter(function (p) { return p.severity === "error"; }).length, warnings: pf.filter(function (p) { return p.severity === "warning"; }).length, problems: pf };
     if (rep.down) o.pictures_downsampled = Math.floor(n(rep.down));
+    if (isObj(rep.tagged)) o.tagged = { elements: Math.floor(n(rep.tagged.elems)), figures: Math.floor(n(rep.tagged.figures)), links: Math.floor(n(rep.tagged.links)) };
     return outReport(rep, o);
   }
 

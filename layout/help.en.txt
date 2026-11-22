@@ -159,6 +159,34 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Contents in any document**: `More › Contents from styles…` picks the title styles and their levels, each level's style, and what goes between title and page (`Title | σελ. 12`); a new frame takes them when there is none. `More › Update contents` follows the pages later.
 - **Books**: `More › Book…` keeps chapters in separate documents together: their order, page numbers that run on (each document on a right-hand page if you like), styles and colours as the first document's, and one PDF of the whole book.
 
+## A new page size
+- **Document setup** with another width or height moves the contents the way a designer would: frames that run to the edges still do, page numbers and running heads keep their edge, the rest keeps its place in the text area, pictures and shapes keep their proportions. With only the size changed, the margins follow in proportion; `Text sizes in proportion too` also sizes the styles.
+- House styles and their front and back pages fit any trim the same way.
+
+## Print colours
+- **See the inks**: `More › Print colours…` shows the pages as they print: Proof (the colours through the print profile), one ink plate at a time (Cyan, Magenta, Yellow, Black), or Total ink, in pink where more ink would go than the limit. Click the label over the pages to go back to normal colours.
+- **Print profile**: it is Coated FOGRA39 unless you give the printer's own CMYK profile (.icc). It stays with the document, and the PDF/X uses it.
+- **Print checks**: Preflight warns about too much ink, small text in rich black, lines thinner than 0.25 pt, text too close to the trim and white that overprints. Set the ink limit and the distance from the trim in Print colours.
+- **Overprint and tints**: 100 % black overprints, so black text never shows a white gap around it; switch it off in Print colours. A swatch can overprint too, and a swatch can be a tint of another: change the colour and its tints follow.
+- **PDF/X-1a**: `Export › PDF/X-1a` puts everything in CMYK, pictures too, for printers that ask for it. It holds no transparency: transparent pictures go on white, and the report says what else had to change.
+
+## Imposition and images
+- **Booklets and sections**: `Export › Imposition` puts the pages on printer's sheets: a booklet (one stack folded and stapled), sections of 8, 16 or 32 pages for a sewn or glued book, or two pages on a sheet. Blank pages fill the last sheet; crop marks, the fold and creep go on the sheets.
+- **Every page as an image**: in `Export › Image`, `All pages` or `All spreads` saves them all in one .zip.
+- **Price code**: a book cover can carry an EAN-5 price code beside the ISBN barcode (e.g. 90000).
+
+## Accessible PDF
+- **Tagged PDF**: tick `Export › Tagged for accessibility (PDF/UA)` and the PDF carries its structure: headings (the levels the bookmarks use), paragraphs, footnotes and endnotes, the contents as a list of links, and pictures with their description. Screen readers and reflow on phones read it in order, story by story.
+- **What stays out**: running heads, page numbers, master items, frames, rules and decorative pictures are marked as decoration, so they are not read aloud.
+- **Pictures**: give each picture a `Description` in its settings, or tick `Decorative`. A picture without either is left out of the reading.
+- **Language and title**: the PDF names the book's language (Document setup, else the Publishing title) and shows the document's name as its title. An e-book PDF from an output profile is always tagged. Not with PDF/X-1a or imposition.
+
+## Versions
+- **Keep a version**: `More › Versions…` keeps the whole document under a name (e.g. "Sent to the editor"). The 30 newest versions of each document stay on this device.
+- **Compare**: shows what changed since a version: pages, words, frames, styles, colours, the document's setup, and each changed paragraph with the words taken out struck through and the new words marked. `Show` opens the paragraph.
+- **Restore**: brings a version back. The current state is kept as a version first, and Undo takes the restore back.
+- **Claude**: before large changes Claude can keep a version too (marked "by Claude").
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

@@ -1388,7 +1388,8 @@
       chip.style.background = M.cssColor(doc, sw.id);
       r.appendChild(chip);
       r.appendChild(el("span", "sw-name", swatchName(sw)));
-      r.appendChild(el("span", "sw-val", sw.mode === "cmyk" ? "CMYK " + sw.v.join("/") : "#" + sw.v.map(hex2).join("")));
+      var base = sw.ext && sw.ext.tp ? M.find(doc.swatches, sw.ext.tp) : null;
+      r.appendChild(el("span", "sw-val", (base ? swatchName(base) + " " + sw.ext.tt + " % · " : "") + (sw.mode === "cmyk" ? "CMYK " + sw.v.join("/") : "#" + sw.v.map(hex2).join("")) + (sw.ext && sw.ext.op ? " · " + t("colors.opShort") : "")));
       r.addEventListener("click", function () { swatchDlg(sw.id); });
       s.appendChild(r);
     });
@@ -1511,10 +1512,43 @@
         }));
       }
       drawMode();
+      // a tint of another swatch follows it (LY-W9)
+      sw.ext = sw.ext || {};
+      var bases = doc.swatches.filter(function (x) { return x.id !== sw.id && !(x.ext && x.ext.tp); });
+      var hasKids = doc.swatches.some(function (x) { return x.ext && x.ext.tp === sw.id; });
+      var tintWrap = el("div"), tintRow = el("div");
+      function applyTint() {
+        var b = sw.ext.tp ? M.find(doc.swatches, sw.ext.tp) : null;
+        if (!b) { delete sw.ext.tp; delete sw.ext.tt; return; }
+        sw.mode = b.mode; sw.v = M.tintOf(b, sw.ext.tt);
+      }
+      function drawTint() {
+        tintRow.innerHTML = "";
+        var tinted = !!sw.ext.tp;
+        modeWrap.hidden = tinted; vals.hidden = tinted;
+        if (!tinted) return;
+        var rng = el("input", "rng"); rng.type = "range"; rng.min = 1; rng.max = 100; rng.value = sw.ext.tt;
+        var num = el("span", "rng-v", sw.ext.tt + " %");
+        rng.addEventListener("input", function () { sw.ext.tt = +rng.value; num.textContent = rng.value + " %"; applyTint(); paint(); });
+        var w = el("label", "rng-row");
+        w.appendChild(el("span", "rng-l", t("colors.tint"))); w.appendChild(rng); w.appendChild(num);
+        tintRow.appendChild(w);
+      }
+      if (!hasKids && bases.length) {
+        tintWrap.appendChild(select([["", t("colors.tintNone")]].concat(bases.map(function (x) { return [x.id, swatchName(x)]; })), sw.ext.tp || "", function (v) {
+          if (v) { sw.ext.tp = v; if (!(sw.ext.tt > 0)) sw.ext.tt = 50; } else { delete sw.ext.tp; delete sw.ext.tt; }
+          applyTint(); drawMode(); drawVals(); drawTint();
+        }));
+        body.appendChild(field(t("colors.tintOf"), tintWrap));
+      }
       body.appendChild(field(t("colors.mode"), modeWrap));
       body.appendChild(prev);
       body.appendChild(vals);
+      body.appendChild(tintRow);
       drawVals();
+      drawTint();
+      body.appendChild(check(t("colors.op"), sw.ext.op ? 1 : 0, function (v) { if (v) sw.ext.op = 1; else delete sw.ext.op; }));
+      body.appendChild(el("p", "hint", t("colors.opHint")));
       var act = el("div", "dlg-actions");
       if (src && sw.id !== "sw-black" && sw.id !== "sw-paper") act.appendChild(btn(t("btn.delete"), function () { close(); deleteSwatch(sw.id); }, "danger"));
       act.appendChild(el("span", "spacer"));
@@ -1524,11 +1558,19 @@
         if (src && nm === LY.label(src.name)) sw.name = src.name;
         else sw.name = nm || (sw.mode === "cmyk" ? "C" + sw.v.join(" ") : "#" + sw.v.map(hex2).join(""));
         close();
+        if (sw.ext && !Object.keys(sw.ext).length) delete sw.ext;
         LY.op(function (d2, now) {
           var clean = M.normSwatch(sw);
           clean.m = now;
           var cur = M.find(d2.swatches, sw.id);
           if (cur) d2.swatches[d2.swatches.indexOf(cur)] = clean; else d2.swatches.push(clean);
+          // its tints follow it
+          d2.swatches.forEach(function (x, i) {
+            if (!(x.ext && x.ext.tp === clean.id)) return;
+            var nv = M.tintOf(clean, x.ext.tt);
+            if (x.mode === clean.mode && JSON.stringify(x.v) === JSON.stringify(nv)) return;
+            d2.swatches[i] = Object.assign({}, x, { mode: clean.mode, v: nv, m: now });
+          });
         });
       }, "primary"));
       body.appendChild(act);
@@ -1539,6 +1581,8 @@
     LY.op(function (doc, now) {
       doc.swatches = doc.swatches.filter(function (s) { return s.id !== id; });
       doc.tombs[id] = now;
+      // its tints keep their last values, on their own
+      doc.swatches.forEach(function (s) { if (s.ext && s.ext.tp === id) { delete s.ext.tp; delete s.ext.tt; if (!Object.keys(s.ext).length) delete s.ext; M.touch(s, now); } });
       doc.items.forEach(function (it) {
         var ch = false;
         if (it.fill === id) { it.fill = "sw-black"; ch = true; }
@@ -1775,14 +1819,28 @@
       body.appendChild(gg);
       body.appendChild(check(t("bg.show"), LY.prefs.bgShow === 1, function (v) { if (v) LY.prefs.bgShow = 1; else delete LY.prefs.bgShow; LY.savePrefs(); ED.render(); }));
       body.appendChild(el("p", "hint", t("bg.hint")));
+      // a new size (LY-W8): the contents follow it, as a designer would
+      // move them; the text sizes only when asked
+      var fit = { on: 1, text: 0 }, was = LY.doc.setup;
+      body.appendChild(el("h3", "pn-h", t("setup.fitH")));
+      body.appendChild(check(t("setup.fit"), 1, function (v) { fit.on = v; }));
+      body.appendChild(check(t("setup.fitText"), 0, function (v) { fit.text = v; }));
+      body.appendChild(el("p", "hint", t("setup.fitHint")));
       body.appendChild(el("p", "hint", t("setup.note")));
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
       act.appendChild(btn(t("btn.cancel"), close));
       act.appendChild(btn(t("btn.apply"), function () {
         close();
+        var RT = window.LY_RETRIM;
+        var sized = Math.abs(s.w - was.w) > 0.01 || Math.abs(s.h - was.h) > 0.01;
+        var marg = ["mt", "mb", "mi", "mo"].some(function (k) { return Math.abs(s[k] - was[k]) > 0.01; });
+        // only the size changed: the margins in proportion to it
+        if (sized && !marg && fit.on && RT) { var mg = RT.marginsFor(was, s.w, s.h); Object.keys(mg).forEach(function (k) { s[k] = mg[k]; }); }
         LY.op(function (doc, now) {
-          doc.setup = M.normSetup(s);
+          var ns = M.normSetup(s);
+          if (fit.on && RT && (sized || marg)) RT.retrim(doc, ns, { text: fit.text ? "scale" : "", now: now });
+          doc.setup = ns;
           doc.m = Math.max(now, doc.m + 1);
         });
         setTimeout(function () { ED.fit(); refresh(true); }, 0);
@@ -1794,6 +1852,11 @@
   // ---------- Export dialog ----------
   var imgPrefs = { page: "", dpi: 150, fmt: "png" };
   var expPrefs = { range: "all", custom: "", spreads: 0, bleed: 1, marks: 0, q: "print", cmyk: 1 };
+  function impOf(v) {
+    if (!v) return null;
+    var m = /^sig(\d+)$/.exec(v);
+    return m ? { kind: "sig", sig: +m[1] } : { kind: v };
+  }
   function exportDlg() {
     var doc = LY.doc;
     LY.openDialog(t("exp.title"), function (body, close) {
@@ -1819,11 +1882,18 @@
         cr.addEventListener("input", function () { var v = parseFloat(cr.value); expPrefs.creep = isFinite(v) ? Math.max(0, Math.min(5, v)) : 0; });
         body.appendChild(field(t("exp.creep"), cr));
       }
+      // imposition (LY-W10): a booklet, folded sections or two up
+      if (doc.pages.length >= 2) {
+        var IMP = [["", t("imp.none")], ["saddle", t("imp.saddle")], ["sig16", t("imp.sig", { n: 16 })], ["sig8", t("imp.sig", { n: 8 })], ["sig32", t("imp.sig", { n: 32 })], ["twoUp", t("imp.twoUp")]];
+        body.appendChild(field(t("imp.title"), select(IMP, expPrefs.imp || "", function (v) { expPrefs.imp = v; })));
+        body.appendChild(el("p", "hint", t("imp.hint")));
+      }
       var qWrap = el("div"), x4Wrap = el("div");
       // PDF/X-4 for the printer, its colours in CMYK when asked (LY-PORT-C)
       function drawQ() {
         qWrap.innerHTML = ""; x4Wrap.innerHTML = "";
-        qWrap.appendChild(seg([["print", t("exp.print")], ["x4", t("exp.x4")], ["screen", t("exp.screen")]], expPrefs.q, function (v) { expPrefs.q = v; drawQ(); }));
+        qWrap.appendChild(seg([["print", t("exp.print")], ["x4", t("exp.x4")], ["x1a", t("exp.x1a")], ["screen", t("exp.screen")]], expPrefs.q, function (v) { expPrefs.q = v; drawQ(); }));
+        if (expPrefs.q === "x1a") { x4Wrap.appendChild(el("p", "hint", t("exp.x1aHint", { name: LY.proof ? LY.proof.name(doc) : "Coated FOGRA39" }))); return; }
         if (expPrefs.q !== "x4") return;
         x4Wrap.appendChild(check(t("exp.cmyk"), expPrefs.cmyk, function (v) { expPrefs.cmyk = v; }));
         x4Wrap.appendChild(el("p", "hint", t("exp.cmykHint")));
@@ -1831,6 +1901,14 @@
       drawQ();
       body.appendChild(field(t("exp.quality"), qWrap));
       body.appendChild(x4Wrap);
+      // a tagged, accessible PDF (LY-N6): reading order, headings,
+      // picture descriptions, language, bookmarks
+      body.appendChild(check(t("exp.tag"), !!expPrefs.tag, function (v) { expPrefs.tag = v; }));
+      body.appendChild(el("p", "hint", t("exp.tagHint")));
+      function pdfOpts(pages) {
+        return { pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4,
+                 pdfx: expPrefs.q === "x4", x1a: expPrefs.q === "x1a", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk, impose: impOf(expPrefs.imp), tagged: !!expPrefs.tag };
+      }
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));
       act.appendChild(btn(t("btn.cancel"), close));
@@ -1838,7 +1916,7 @@
         var pages = pickPages(doc);
         if (!pages) { LY.toast(t("exp.badRange")); return; }
         close();
-        LY.io.exportPdf({ pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk });
+        LY.io.exportPdf(pdfOpts(pages));
       }, "primary"));
       body.appendChild(act);
       // the same PDF, saved in Files › Layout › PDF and offered to an app
@@ -1847,7 +1925,7 @@
           var pages = pickPages(doc);
           if (!pages) { LY.toast(t("exp.badRange")); return; }
           close();
-          LY.io.exportPdf({ send: true, pages: pages, spreads: !!(expPrefs.spreads && doc.setup.facing), bleed: !!expPrefs.bleed, marks: !!expPrefs.marks, ppi: expPrefs.q !== "screen" ? 300 : 150, creep: (expPrefs.creep || 0) * 72 / 25.4, pdfx: expPrefs.q === "x4", cmyk: expPrefs.q === "x4" && !!expPrefs.cmyk });
+          LY.io.exportPdf(Object.assign({ send: true }, pdfOpts(pages)));
         }, "block");
         sendB.id = "exp-send";
         sendB.setAttribute("aria-haspopup", "dialog");
@@ -1856,13 +1934,19 @@
       // one page as an image
       body.appendChild(el("h3", "pn-h", t("exp.img")));
       var order = M.pagesInOrder(doc), cur = ED.curPage();
-      var pgSel = select(order.map(function (p, i) { return [p.id, t("pf.page", { n: i + 1 })]; }), cur ? cur.id : order[0].id, function (v) { imgPrefs.page = v; });
+      // all pages or all spreads go out as a .zip (LY-W10)
+      var pgOpts = order.map(function (p, i) { return [p.id, t("pf.page", { n: i + 1 })]; });
+      if (order.length > 1) pgOpts.push(["*", t("imp.allPages")]);
+      if (order.length > 1 && doc.setup.facing) pgOpts.push(["**", t("imp.allSpreads")]);
+      var pgSel = select(pgOpts, imgPrefs.page === "*" || imgPrefs.page === "**" ? imgPrefs.page : cur ? cur.id : order[0].id, function (v) { imgPrefs.page = v; drawImg(); });
       imgPrefs.page = pgSel.value;
       var dpiWrap = el("div"), fmtWrap = el("div");
       function drawImg() {
         dpiWrap.innerHTML = ""; fmtWrap.innerHTML = "";
         dpiWrap.appendChild(seg([["72", "72 dpi"], ["150", "150 dpi"], ["300", "300 dpi"]], String(imgPrefs.dpi), function (v) { imgPrefs.dpi = +v; drawImg(); }));
-        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"], ["svg", "SVG"]], imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
+        var many = imgPrefs.page === "*" || imgPrefs.page === "**";
+        if (many && imgPrefs.fmt === "svg") imgPrefs.fmt = "png";
+        fmtWrap.appendChild(seg([["png", "PNG"], ["jpg", "JPG"]].concat(many ? [] : [["svg", "SVG"]]), imgPrefs.fmt, function (v) { imgPrefs.fmt = v; drawImg(); }));
         if (resField) resField.hidden = imgPrefs.fmt === "svg";   // an SVG has no resolution
       }
       drawImg();
@@ -2180,6 +2264,11 @@
 
   // ---------- Preflight ----------
   function preflightDlg() {
+    // RGB colours are checked for ink through the print profile (LY-W9)
+    if (LY.proof && !LY.proof.conv()) { LY.proof.load().then(function () { ED.recheck(); }, function () {}).then(showPreflight); return; }
+    showPreflight();
+  }
+  function showPreflight() {
     var doc = LY.doc, order = {};
     M.pagesInOrder(doc).forEach(function (p, i) { order[p.id] = i; });
     LY.openDialog(t("pf.title"), function (body, close) {
@@ -2197,7 +2286,7 @@
         var b = el("button", "pf-item " + x.sev);
         b.type = "button";
         b.appendChild(el("span", "pf-dot"));
-        var msg = x.code === "ppi" && it ? t("pf.ppi", { n: Math.round(R.effectivePpi(it)) }) : x.code === "glyph" ? t("pf.glyph", { c: x.chars || "" }) : t("pf." + x.code);
+        var msg = x.code === "ppi" && it ? t("pf.ppi", { n: Math.round(R.effectivePpi(it)) }) : x.code === "glyph" ? t("pf.glyph", { c: x.chars || "" }) : t("pf." + x.code, { n: x.n, m: x.m });
         b.appendChild(el("span", "", msg + (it ? " · " + typeName(it) : "")));
         b.addEventListener("click", function () { close(); ED.gotoItem(x.id); });
         li.appendChild(b);
@@ -2231,6 +2320,8 @@
       { label: t("more.contents"), disabled: !LY.notes, fn: function () { LY.notes.toc(); } },
       { label: t("more.notes"), disabled: !LY.notes, fn: function () { LY.notes.settings(); } },
       { label: t("more.book"), disabled: !LY.book, fn: function () { LY.book.open(); } },
+      { label: t("more.print"), disabled: !LY.proof, fn: function () { LY.proof.dialog(); } },
+      { label: t("more.versions"), disabled: !LY.versions, fn: function () { LY.versions.dialog(); } },
       { label: t("more.sheet"), disabled: !LY.house.hasSheet(doc), fn: function () { LY.house.sheet(); } },
       { label: t("more.merge"), fn: function () { LY.merge.open(); } },
       { label: t("more.recipes"), disabled: !LY.recipes, fn: function () { LY.recipes.open(); } },
