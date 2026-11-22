@@ -961,6 +961,10 @@
     runs.forEach(function (run) {
       var cs = run.cs ? resolveCs(csMap, run.cs) : {};
       var a = runAttrs(ps, cs, run);
+      // a tracked deletion (LY-W12, ext.del): kept in the text until it
+      // is accepted or rejected, never set; its characters keep their
+      // offsets
+      if (run.ext && run.ext.del && typeof run.t === "string") { base += run.t.length; return; }
       if (run.f) {
         if (!word) word = { k: "w", parts: [] };
         word.parts.push({ t: null, f: run.f, a: a, o: base, n: 1 });
@@ -2030,7 +2034,7 @@
       // a table (LY-W12): its cells, tab-separated, row by row
       var tb = p.ext && p.ext.tbl;
       if (tb && Array.isArray(tb.rows)) return tb.rows.map(function (r) { return (r && r.c || []).filter(function (c) { return c && !c.x; }).map(function (c) { return String(c.t || "").replace(/\n/g, " "); }).join("\t"); }).join("\n");
-      return (p.runs || []).map(function (r) { return r.f ? (r.f === "pn" ? "#" : "##") : String(r.t || ""); }).join("");
+      return (p.runs || []).map(function (r) { return r.ext && r.ext.del ? "" : r.f ? (r.f === "pn" ? "#" : "##") : String(r.t || ""); }).join("");
     }).join("\n");
   }
 

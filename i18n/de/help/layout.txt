@@ -195,6 +195,13 @@ Text auf zwei Geräten gleichzeitig geändert? Die andere Fassung wartet unter `
 - **Ausgabe**: PDF, Bilder, SVG und EPUB behalten die Tabelle (im E-Book ist sie eine echte Tabelle mit Kopfzeilen).
 - **Claude** kann ebenfalls eine Tabelle in einen Text setzen.
 
+## Korrektur: Änderungen und Kommentare
+- **Änderungen verfolgen**: im Textmodus `✎` › `Änderungen verfolgen: ein`. Ab dann wird jede Änderung am Text, im Textmodus oder direkt im Rahmen getippt, festgehalten: Eingefügtes ist grün und unterstrichen, Gelöschtes bleibt im Textmodus durchgestrichen und verschwindet von der Seite. Zeige auf eine Änderung, um zu sehen, wer sie wann gemacht hat.
+- **Annehmen oder ablehnen**: Text wählen und `✎` › `Änderungen in der Auswahl annehmen` oder `ablehnen`, oder alle auf einmal. Ein gelöschtes Wort verschwindet erst, wenn seine Änderung angenommen wird.
+- **Dein Name**: `✎` › `Dein Name…` (auf diesem Gerät) kennzeichnet deine Änderungen und Kommentare.
+- **Kommentare auf der Seite**: `Mehr › Kommentare…` zeigt die Kommentare als Stecknadeln. `Hinzufügen`, dann auf die Seite tippen, wo er hinkommt. Eine Nadel antippen, um den Kommentar zu ändern, als erledigt zu markieren oder zu löschen; erledigte lassen sich ausblenden.
+- **Korrektur-PDF**: in der Kommentarleiste speichert `Korrektur-PDF` die Seiten mit jedem offenen Kommentar und jeder verfolgten Änderung als Notiz im PDF, bereit für Autorin, Autor oder Lektorat.
+
 ## Tipps
 - Große Dokumente füllen den Speicher, den alle Apps teilen; Seitenlayout warnt dich, wenn eines groß wird.
 

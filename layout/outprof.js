@@ -153,7 +153,7 @@
   }
 
   function paraText(para) {
-    return (para.runs || []).map(function (r) { return typeof r.t === "string" ? r.t : ""; }).join("").replace(/\s+/g, " ").trim();
+    return (para.runs || []).map(function (r) { return typeof r.t === "string" && !(r.ext && r.ext.del) ? r.t : ""; }).join("").replace(/\s+/g, " ").trim();
   }
   // Page text frames in reading order: by page, then top to bottom,
   // then left to right.

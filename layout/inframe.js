@@ -56,6 +56,13 @@
   function commit() {
     clearTimeout(F.timer); F.timer = null;
     if (!F.on || !F.dirty) return;
+    // track changes (LY-W12): the typed text marked against the saved one
+    var st0 = story();
+    if (st0 && LY.track && LY.track.on()) {
+      var tr = LY.track.mark(st0.paras, norm(F.paras), [F.a, F.b]);
+      F.paras = norm(tr.paras);
+      if (tr.pos) { F.a = clamp(tr.pos[0]); F.b = clamp(tr.pos[1]); }
+    }
     var paras = norm(F.paras), key = keyOf(paras), sid = F.sid, baseM = F.baseM;
     F.dirty = false;
     LY.op(function (doc, now) {

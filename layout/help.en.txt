@@ -195,6 +195,13 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Out**: the PDF, the pictures, SVG and EPUB keep the table (in an e-book it is a real table, with its header).
 - **Claude** can put a table into a story too.
 
+## Review: tracked changes and comments
+- **Track changes**: in the Story Editor, `✎` › `Track changes: turn on`. From then on every change to the text, in the Story Editor or typed in the frame, is kept: added words are green and underlined, deleted words stay struck through in the Story Editor and leave the page. Hover a change to see who made it and when.
+- **Accept or reject**: select some text and `✎` › `Accept` or `Reject the changes in the selection`, or settle them all at once. A deleted word goes only when its change is accepted.
+- **Your name**: `✎` › `Your name…` (kept on this device) marks your changes and comments.
+- **Comments on the page**: `More › Comments…` shows the comments as pins. `Add`, then tap the page where it goes. Tap a pin to change it, resolve it or delete it; resolved comments can be hidden.
+- **Proof PDF**: in the comments bar, `Proof PDF` saves the pages with every open comment and every tracked change as a note in the PDF, ready for an author or an editor.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

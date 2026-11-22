@@ -768,5 +768,17 @@ body.inframe #cv { cursor: text; }
 .tbl-ed td.on { outline: 2px solid var(--accent); outline-offset: -2px; }
 .tbl-cell { width: 100%; min-height: 32px; border: 0; border-radius: 0; resize: vertical; background: transparent; font: inherit; font-weight: inherit; }
 .tbl-set .pn-row { gap: 10px; align-items: flex-end; }
+/* track changes (LY-W12) and comments on the page (LY-N5) */
+.story-ed .sins { color: #2f8f4e; text-decoration: underline; text-decoration-color: #2f8f4e; }
+.story-ed .sdel { color: var(--danger); text-decoration: line-through; cursor: default; }
+.story-tools .trk-btn.on { background: var(--accent); color: var(--accent-ink, #000); }
+.cm-layer { position: absolute; inset: 0; pointer-events: none; z-index: 5; }
+.cm-pin { position: absolute; transform: translate(-4px, -100%); pointer-events: auto; min-width: 28px; height: 28px; padding: 0 6px; border-radius: 14px 14px 14px 2px; border: 1px solid rgba(0,0,0,.35); background: #ffcc33; color: #1a1a1a; font: 600 12px/26px system-ui, sans-serif; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+.cm-pin.ok { background: #9bb59b; opacity: .75; }
+.cm-pin:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cm-bar { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 6; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; justify-content: center; max-width: calc(100% - 32px); padding: 6px 10px; border: 1px solid var(--border); border-radius: 12px; background: var(--panel-bg); color: var(--text); box-shadow: 0 2px 10px rgba(0,0,0,.25); }
+.cm-bar .cm-count { font-size: 12px; padding: 0 4px; }
+.cm-bar.placing .btn.primary { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cm-txt { width: 100%; min-height: 110px; resize: vertical; }
 .ver-txt ins { text-decoration: none; background: rgba(47, 158, 106, .22); border-radius: 2px; }
 .pc-prof { font-weight: 600; margin-right: 8px; overflow-wrap: anywhere; }
