@@ -1604,6 +1604,8 @@ var PRECACHE_URLS = [
   "mockups/goods/cloth3d.js",
   "mockups/goods/combo.js",
   "mockups/mockups.js",
+  "mockups/commands.js",
+  "mockups/assist.js",
   "mockups/search.js",
   "mockups/help.en.txt",
   "mockups/help.el.txt",
