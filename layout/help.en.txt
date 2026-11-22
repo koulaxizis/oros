@@ -133,6 +133,12 @@ Text changed on two devices at once? The other version waits in `Recovered text`
 - **Next style**: in a paragraph style, `Next style` is the style a new paragraph gets when you press [[Enter]] at the end of one, e.g. Heading → Body.
 - **GREP styles**: in a paragraph style, a character style on everything a regular expression finds, e.g. numbers in another font or the speaker's name in small capitals. Up to 10 per style.
 
+## Breaks, baseline grid and object styles
+- **Breaks**: in the Story Editor, `⤓` puts a column, page, odd page or even page break at the caret; the text after it starts there. While typing, [[Numpad Enter]] is a column break and [[Ctrl+Numpad Enter]] a page break. The Story Editor marks each break.
+- **Baseline grid**: in `Document setup…`, set where the first line sits and how far apart the lines are; `Show the baseline grid` draws it. Paragraph styles with `Lock to baseline grid` put every line on it, so the lines of facing pages and columns line up.
+- **Justify** (text frame, vertical alignment): the free space at the foot of a column is shared out between its paragraphs, so the columns end at the same height. The last column of a text stays as it is.
+- **Object styles** (properties panel): `New from this` saves a frame's or shape's looks (fill, stroke, corners, opacity, wrap; for text frames inset, columns and alignment) under a name; pick it for other objects; `Redefine from this` changes every object that uses it. They travel with the document.
+
 ## Tips
 - Large documents fill the storage that every app shares; Layout warns you when one grows big.
 

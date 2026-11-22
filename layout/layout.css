@@ -702,3 +702,5 @@ body.inframe #cv { cursor: text; }
 .grep-bad { display: block; font-size: 12px; color: var(--danger); }
 .grep-bad:empty { display: none; }
 @media (max-width: 480px) { .grep-row { grid-template-columns: minmax(0, 1fr) auto; } .grep-row select { grid-column: 1 / -1; grid-row: 2; } }
+/* a break before a paragraph, in the Story Editor (LY-W5b) */
+.sp[data-brk]::before { content: "⤓ " attr(data-brk); display: block; font: 600 11px system-ui, sans-serif; color: var(--accent); border-top: 1px dashed var(--accent); padding-top: 2px; margin: 4px 0 2px; user-select: none; }

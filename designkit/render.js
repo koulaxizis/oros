@@ -22,6 +22,14 @@
 
   // ---------- 1. Geometry ----------
   function rad(d) { return d * Math.PI / 180; }
+  // The document's baseline grid (LY-W5b, setup.ext.bg { s: first line
+  // from the page top, i: every, in pt}) as seen from a frame's top:
+  // { o, inc }; none for a turned frame.
+  function gridOf(doc, it) {
+    var g = doc && doc.setup && doc.setup.ext && doc.setup.ext.bg;
+    if (!g || !(g.i >= 1 && g.i <= 200) || !(g.s >= 0 && g.s <= 2000) || (it.rot || 0) % 360) return null;
+    return { o: g.s - it.y, inc: g.i };
+  }
   // Item corners in owner (page) coordinates, rotation about the
   // centre.
   function corners(it) {
@@ -387,7 +395,7 @@
     function geom(it, ctx, ex) {
       var tp = pathOf(it);
       if (tp) return { id: it.id, w: tp.wk.len, h: it.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: ctx, story: it.story, one: true };
-      return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story, sfit: !!(it.ext && it.ext.sfit) };
+      return { id: it.id, w: it.w, h: it.h, cols: it.cols, gut: it.gut, inset: it.ins, valign: it.va, excl: ex, ctx: ctx, story: it.story, sfit: !!(it.ext && it.ext.sfit), vj: !!(it.ext && it.ext.vj), bgrid: gridOf(doc, it) };
     }
 
     // page stories
@@ -557,7 +565,7 @@
       var g = frames.map(function (f) {
         var c = { pageLabel: master.pre, pageCount: master.pre + "#" }, tp = pathOf(f);
         if (tp) return { id: f.id, w: tp.wk.len, h: f.h, cols: 1, gut: 0, inset: 0, valign: "t", excl: [], ctx: c, one: true };
-        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c, sfit: !!(f.ext && f.ext.sfit) };
+        return { id: f.id, w: f.w, h: f.h, cols: f.cols, gut: f.gut, inset: f.ins, valign: f.va, excl: [], ctx: c, sfit: !!(f.ext && f.ext.sfit), vj: !!(f.ext && f.ext.vj), bgrid: gridOf(doc, f) };
       });
       var res = T.layoutChain(M.story(doc, sid) || { paras: [] }, g, styles);
       bendAll(frames, res);
@@ -785,7 +793,7 @@
 
   var api = {
     corners: corners, bbox: bbox, itemBox: itemBox, toLocal: toLocal, imageRect: imageRect, flipOf: flipOf, wrapShape: wrapShape, alphaProfile: alphaProfile, adjNorm: adjNorm, adjOf: adjOf, adjKey: adjKey, applyAdj: applyAdj, ADJ_ORDER: ADJ_ORDER, effectivePpi: effectivePpi, uniform: uniform,
-    pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
+    gridOf: gridOf, pathOf: pathOf, computeLayout: computeLayout, computeMasterLayout: computeMasterLayout, preflight: preflight,
     drawItem: drawItem, drawPage: drawPage, pathCmds: pathCmds, gradGeom: gradGeom, drawMaster: drawMaster, renderPage: renderPage, roundRectPath: roundRectPath
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

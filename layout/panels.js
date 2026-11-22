@@ -249,6 +249,8 @@
       s2.appendChild(rc);
     }
     body.appendChild(s2);
+    // object styles (LY-W5b, objstyles.js)
+    if (window.LY_OS) body.appendChild(window.LY_OS.section(items));
 
     if (one && (one.t === "rect" || one.t === "ell" || one.t === "path")) body.appendChild(gradSection(one));
     if (one && one.t === "text") body.appendChild(textSection(one));
@@ -449,7 +451,16 @@
     g.appendChild(field(t("props.ins"), numInput(it.ins, function (v) { editSel(function (x) { if (x.t !== "text") return false; x.ins = Math.max(0, v); }); }, { min: 0 })));
     s.appendChild(g);
     s.appendChild(el("span", "fld-lbl", t("props.va")));
-    s.appendChild(seg([["t", t("props.va.t")], ["c", t("props.va.c")], ["b", t("props.va.b")]], it.va, function (v) { editSel(function (x) { if (x.t !== "text") return false; x.va = v; }); }));
+    // justify = frame ext.vj (LY-W5b): va stays as it was, so an older orOS keeps it
+    var vjOn = !!(it.ext && it.ext.vj);
+    s.appendChild(seg([["t", t("props.va.t")], ["c", t("props.va.c")], ["b", t("props.va.b")], ["j", t("props.va.j")]], vjOn ? "j" : it.va, function (v) {
+      editSel(function (x) {
+        if (x.t !== "text") return false;
+        if (v === "j") { x.ext = x.ext || {}; x.ext.vj = 1; return; }
+        x.va = v;
+        if (x.ext) { delete x.ext.vj; if (!Object.keys(x.ext).length) delete x.ext; }
+      });
+    }));
     if (ch.length > 1) s.appendChild(el("p", "hint", t("props.chain", { i: i + 1, n: ch.length })));
     var tp = it.ext && it.ext.tp, VC = LY.ed.vec, PEs = window.orosDK.pathedit.str;
     if (tp && VC && VC.tpSet) {                     // text on a path (wave V3)
@@ -1128,6 +1139,7 @@
         bk.appendChild(triState(t("sty.hyph"), st.ext, "hyph"));
         bk.appendChild(triState(t("sty.kwn"), st.ext, "kwn"));
         bk.appendChild(triState(t("sty.sec"), st.ext, "sec"));
+        bk.appendChild(triState(t("sty.bl"), st.ext, "bl"));
         body.appendChild(bk);
         var g3 = el("div", "grid2");
         g3.appendChild(field(t("sty.orph"), optNum(st.ext, "orph", 1, 9)));
@@ -1596,6 +1608,29 @@
     var s = JSON.parse(JSON.stringify(LY.doc.setup));
     LY.openDialog(t("setup.title"), function (body, close) {
       setupForm(body, s, false);
+      // the baseline grid (LY-W5b): setup.ext.bg { s, i } in pt
+      body.appendChild(el("h3", "pn-h", t("bg.title")));
+      var bg = s.ext && s.ext.bg ? { s: s.ext.bg.s, i: s.ext.bg.i } : { s: null, i: null };
+      var gg = el("div", "grid2");
+      function bgNum(key, min, max) {
+        var inp = el("input", "inp num");
+        inp.type = "text"; inp.inputMode = "decimal"; inp.placeholder = t("bg.off");
+        inp.value = bg[key] == null ? "" : String(bg[key]);
+        inp.addEventListener("change", function () {
+          var v = parseFloat(String(inp.value).replace(",", "."));
+          bg[key] = inp.value.trim() === "" || !isFinite(v) ? null : Math.min(max, Math.max(min, v));
+          inp.value = bg[key] == null ? "" : String(bg[key]);
+          s.ext = s.ext || {};
+          if (bg.i != null) s.ext.bg = { s: bg.s == null ? 0 : bg.s, i: bg.i }; else delete s.ext.bg;
+          if (!Object.keys(s.ext).length) delete s.ext;
+        });
+        return inp;
+      }
+      gg.appendChild(field(t("bg.start") + " (pt)", bgNum("s", 0, 2000)));
+      gg.appendChild(field(t("bg.every") + " (pt)", bgNum("i", 1, 200)));
+      body.appendChild(gg);
+      body.appendChild(check(t("bg.show"), LY.prefs.bgShow === 1, function (v) { if (v) LY.prefs.bgShow = 1; else delete LY.prefs.bgShow; LY.savePrefs(); ED.render(); }));
+      body.appendChild(el("p", "hint", t("bg.hint")));
       body.appendChild(el("p", "hint", t("setup.note")));
       var act = el("div", "dlg-actions");
       act.appendChild(el("span", "spacer"));

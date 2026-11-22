@@ -19,7 +19,7 @@
   var ED = LY.ed;
   var SAVE_MS = 600;
 
-  var S = { sid: null, item: null, dirty: false, baseM: 0, lastKey: "", timer: null, sel: null, curPs: null };
+  var S = { sid: null, item: null, dirty: false, baseM: 0, lastKey: "", timer: null, sel: null, curPs: null, pext: {}, pextN: 0 };
   var ed, tools, foot, psSel, csSel;
 
   function story() { return S.sid && LY.doc ? M.story(LY.doc, S.sid) : null; }
@@ -95,6 +95,15 @@
     return n && n !== id && M.find(d.pstyles, n) ? n : id;
   }
 
+  // A break character (LY-W5b): the paragraph splits at the caret and
+  // the part after it starts in the next column, on the next page, or
+  // on the next odd or even page (its ext.brk).
+  function insertBreak(paras, at, kind) {
+    var c = insertAt(paras, at, "\n", null), np = paras[c.p];
+    np.ext = Object.assign({}, np.ext || {}, { brk: kind });
+    return c;
+  }
+
   // Insert plain text (a newline starts a paragraph) or a field run.
   // Returns the caret after it.
   function insertAt(paras, at, text, field) {
@@ -135,6 +144,14 @@
   function renderPara(p) {
     var d = el("div", "sp");
     d.setAttribute("data-ps", p.ps);
+    // a paragraph's own ext (a break before it, LY-W5b, or another
+    // program's) rides on the div by key, so typing never drops it
+    if (p.ext) {
+      var key = "x" + (++S.pextN);
+      S.pext[key] = p.ext;
+      d.setAttribute("data-px", key);
+      if (p.ext.brk && /^(col|page|odd|even)$/.test(p.ext.brk)) d.setAttribute("data-brk", t("brk." + p.ext.brk));
+    }
     var ps = T.resolvePs(psMap, p.ps);
     d.style.fontFamily = familyCss(ps.font);
     d.style.fontSize = Math.max(13, Math.min(26, ps.size * 1.25)) + "px";
@@ -191,6 +208,7 @@
 
   function render(paras, range) {
     styleMaps();
+    S.pext = {};
     var frag = document.createDocumentFragment();
     paras.forEach(function (p) { frag.appendChild(renderPara(p)); });
     ed.innerHTML = "";
@@ -207,9 +225,11 @@
   // DOM points to translate into { p, o } model positions.
   function parse(targets) {
     targets = targets || [];
-    var paras = [], cur = null, curLen = 0, lastPs = S.curPs || "ps-body", res = [], trailingBr = false;
-    function open(ps) {
+    var paras = [], cur = null, curLen = 0, lastPs = S.curPs || "ps-body", res = [], trailingBr = false, pxSeen = {};
+    function open(ps, px) {
       cur = { ps: M.isId(ps) ? ps : lastPs, runs: [] };
+      // a div the browser split off by Enter carries the same key: only the first keeps the ext
+      if (px && S.pext[px] && !pxSeen[px]) { pxSeen[px] = 1; cur.ext = JSON.parse(JSON.stringify(S.pext[px])); }
       lastPs = cur.ps; curLen = 0; trailingBr = false;
       paras.push(cur);
     }
@@ -269,7 +289,7 @@
         return;
       }
       var block = BLOCK[tag] && node !== ed;
-      if (block) { close(); open(node.getAttribute("data-ps")); }
+      if (block) { close(); open(node.getAttribute("data-ps"), node.getAttribute("data-px")); }
       var kids = node.childNodes;
       for (var k = 0; k < kids.length; k++) {
         hit(node, k);
@@ -430,6 +450,14 @@
     });
   }
 
+  function breakCmd(kind) {
+    modelEdit(function (paras, a, b) {
+      deleteRange(paras, a, b);
+      var c = insertBreak(paras, a, kind);
+      return { a: c, b: c };
+    });
+  }
+
   function insertField(f) {
     modelEdit(function (paras, a, b) {
       deleteRange(paras, a, b);
@@ -522,6 +550,14 @@
     sec.addEventListener("mousedown", function (e) { e.preventDefault(); });
     sec.addEventListener("click", insertSec);
     tools.appendChild(sec);
+    // break characters (LY-W5b)
+    var brk = el("button", "icon-btn sf-btn", "⤓");
+    brk.type = "button"; brk.title = t("brk.menu"); brk.setAttribute("aria-label", t("brk.menu"));
+    brk.addEventListener("mousedown", function (e) { e.preventDefault(); });
+    brk.addEventListener("click", function () {
+      LY.menu(brk, ["col", "page", "odd", "even"].map(function (k) { return { label: t("brk.ins." + k), fn: function () { breakCmd(k); } }; }));
+    });
+    tools.appendChild(brk);
   }
   function insertSec() {
     var fb = String(LY.doc.name || "").trim().slice(0, 120) || "§";
@@ -651,6 +687,8 @@
     ed.addEventListener("keydown", function (e) {
       var mod = e.ctrlKey || e.metaKey;
       if (e.key === "Escape") { e.preventDefault(); close(); return; }
+      // Numpad Enter: a column break; with Ctrl, a page break (LY-W5b, as in InDesign)
+      if (e.code === "NumpadEnter" && !e.shiftKey && !e.altKey) { e.preventDefault(); breakCmd(mod ? "page" : "col"); return; }
       // Enter in a style with a next style goes through the model, so it applies (LY-W5)
       if (e.key === "Enter" && !e.shiftKey && !mod && !e.altKey && !e.isComposing && S.curPs && nextPs(S.curPs) !== S.curPs) { e.preventDefault(); insertText("\n"); return; }
       if (!mod || e.altKey) return;
@@ -690,6 +728,6 @@
     applyPs: applyPs, applyCs: applyCs
   };
   // paragraph helpers shared with in-frame editing (inframe.js)
-  LY.storyOps = { nextPs: nextPs, runLen: runLen, paraLen: paraLen, cut: cut, eachRun: eachRun, deleteRange: deleteRange, fmtAt: fmtAt, insertAt: insertAt };
+  LY.storyOps = { insertBreak: insertBreak, nextPs: nextPs, runLen: runLen, paraLen: paraLen, cut: cut, eachRun: eachRun, deleteRange: deleteRange, fmtAt: fmtAt, insertAt: insertAt };
   LY.on("boot", wire);
 })();
