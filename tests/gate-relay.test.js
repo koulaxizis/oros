@@ -1083,6 +1083,8 @@ test("GATE-PL11: edit_in_app and studio_import are checked against the copy with
     else await b.st.storage.put(k, Object.assign({}, v, { c: "not-a-sealed-row" }));
   }
   assert.deepEqual(fs.filter(Boolean).map((f) => f.p || f.app + ":" + f.d).sort(), ["/internal/Studio/Podcasts/Ep3.orosstudio", "studio:Ep1", "studio:Πλανόδιο 3"]);
+  assert.equal(G.pendHead("files_write", { path: "../x" }, 1).f, null, "nothing named: null, c never opened");
+  assert.equal(G.pendHead("budget_add", {}, 1).f, undefined);
   const qn = await b.box.queuedNames(K);
   assert.deepEqual(qn.paths, ["/internal/Studio/Podcasts/Ep3.orosstudio"]);
   assert.deepEqual(Object.keys(qn.docs), ["studio"]);
