@@ -22,7 +22,7 @@ Above the forecast you see the official weather warnings for your city's area fr
 - Tap a warning for the details in your language when the weather service gives them (description, what to do), and `Open on MeteoAlarm`.
 - The app guesses your area from the city. `Warnings elsewhere in …` lists the rest of the country; tap `My area` on a warning there to use that area for this city (it syncs with the city). `Forget area` goes back to the guess.
 - In `Cities`, under `Official warnings`: `Show MeteoAlarm warnings` (on by default) and `Notify me`: `Off` (default), `Orange and red` or `All warnings`. orOS then sends one [notification](help:t/notifications) per warning for the taskbar city, also while Weather is closed. Both choices are for this device only.
-- Some browsers can't read MeteoAlarm directly. The app then uses the relay you set up in [Mail](app:mail), if there is one; without it, the `Cities` dialog says so and no warnings show.
+- Some browsers can't read MeteoAlarm directly. The app then uses the orOS relay set in [Settings](app:settings) › Connected services, if there is one; without it, the `Cities` dialog says so and no warnings show.
 
 ## Rain in the next 2 hours
 

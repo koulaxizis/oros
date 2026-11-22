@@ -18,7 +18,7 @@ The search box finds recipes by name. Type ingredients separated by commas (like
 ## Import
 `Import` opens one window with three ways in:
 
-- `Web address of a recipe`: type or paste the page's address and press `Fetch`. Most recipe sites describe their recipes in a standard way (schema.org), and that description is read: title, servings, times, ingredients, steps, tags and the link to the photo. Sites that don't let apps read them go through the orOS relay you set up in [Mail](app:mail) or [Reader](app:feeds); without one, copy the recipe's text instead.
+- `Web address of a recipe`: type or paste the page's address and press `Fetch`. Most recipe sites describe their recipes in a standard way (schema.org), and that description is read: title, servings, times, ingredients, steps, tags and the link to the photo. Sites that don't let apps read them go through the orOS relay you set up in [Settings](app:settings) › Connected services › `orOS relay`; without one, copy the recipe's text instead.
 - `Paste the recipe`: text from anywhere is split into ingredients and steps. You can also paste a page's source (HTML) or its JSON.
 - `Open a file…`: an export from another recipe app (see below), a saved web page (.html) or JSON.
 

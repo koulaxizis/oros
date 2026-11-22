@@ -11,7 +11,7 @@ Tap a cover to read. The `Continue reading` row at the top takes you back to whe
 
 To add another catalogue, type its OPDS address (OPDS 1 or 2) under `Add a catalogue`, with a name if you like. Your own catalogues follow you to your other devices; the bin button next to one removes it.
 
-The first time, Library tells you what goes online: only the pages you open and the words you search for, sent to that catalogue's website. Some sites don't let a browser read them directly; Library then reads them through the orOS relay, if you've set one up in [Mail](app:mail). Without a relay, those catalogues say so and can't be read.
+The first time, Library tells you what goes online: only the pages you open and the words you search for, sent to that catalogue's website. Some sites don't let a browser read them directly; Library then reads them through the orOS relay, if you've set one up in [Settings](app:settings) › Connected services › `orOS relay`. Without a relay, those catalogues say so and can't be read.
 
 ## Find and organise
 The chips filter by `Reading`, `Not started`, `Finished`, `EPUB` or `PDF` (and `FB2` and `Comics` once you have such books). `Search title, author, tag…` ignores accents. Sort by `Recently read`, `Title`, `Author` or `Progress`, and switch between covers and a list.

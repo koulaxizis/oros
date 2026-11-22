@@ -280,7 +280,7 @@ const STR = {
     "chk.done": "Checked {n}: {d} broken, {m} moved, {e} couldn't be checked",
     "chk.stopped": "Stopped after {n} link(s)",
     "chk.offline": "You're offline. Links can't be checked now.",
-    "chk.norelay": "Without a relay (Reader or Mail settings) most sites can't be checked from the browser.",
+    "chk.norelay": "Without a relay of your own (Settings › Connected services) most sites can't be checked from the browser.",
     "chk.none": "No links to check here",
     "chk.busy": "A link check is already running",
     "chk.s.dead": "Broken",

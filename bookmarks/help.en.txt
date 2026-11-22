@@ -34,7 +34,7 @@ Starred bookmarks show up as tiles under `Favorites` at the top of the list. `Op
 - The copy is a file on the orOS disk, in [Files](app:files) › `Bookmarks` › `Archive`. It isn't part of the bookmarks' sync data: it reaches your other devices with Vault Drive, like any other file.
 - `Keep pictures` puts the pictures inside the copy, so they show offline too. Pictures a site doesn't let the browser read stay links that only show online. Without it, the copy is text only.
 - In the reader: `Original page`, `Save again` (for a page that changed) and `Remove copy`. Deleting a bookmark removes its copy too, after the moment for `Undo` has passed.
-- Pages that need the relay: many sites can only be read through the relay set in [Reader](app:feeds) or [Mail](app:mail). Without one, those pages can't be saved.
+- Pages that need the relay: many sites can only be read through the orOS relay set in [Settings](app:settings) › Connected services. Without one, those pages can't be saved.
 
 ## Search, tags and sorting
 

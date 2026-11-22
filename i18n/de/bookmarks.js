@@ -30,7 +30,7 @@ orosPack("de", "bookmarks", {
  "chk.folder": "Links in diesem Ordner prüfen",
  "chk.line": "Link-Prüfung: {s} · {when}",
  "chk.none": "Hier gibt es keine Links zu prüfen",
- "chk.norelay": "Ohne Relay (Einstellungen von Reader oder Mail) lassen sich die meisten Websites vom Browser aus nicht prüfen.",
+ "chk.norelay": "Ohne eigenes Relay (Einstellungen › Verbundene Dienste) lassen sich die meisten Websites vom Browser aus nicht prüfen.",
  "chk.offline": "Du bist offline. Links können jetzt nicht geprüft werden.",
  "chk.one": "Link prüfen",
  "chk.running": "Links werden geprüft… {i} von {n}",
