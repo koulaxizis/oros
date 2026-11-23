@@ -13947,3 +13947,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** shell.js, smartbar.js, style.css, settings/settings.js, settings/core.js, i18n/de/settings.js, tests/a11y-motion.test.js, help/topics/whatsnew.en/el.txt.
 - **Tests:** tests/a11y-motion.test.js; full suite; Playwright Chromium with CDP emulating prefers-reduced-transparency: reduce: attribute and bar blur off by default, back with glass, off again with glass plus own switch; Settings in Greek shows the switch and clicking it restores the blur.
 - **Not tested:** real Windows with Transparency effects off, a real phone, Safari, Firefox.
+
+### 2026-11-23 — 8.74.00 — The relay asks once instead of switches (STRUCT-5, #1247)
+- **Why:** structure review item 5 (Chris, card 2026-11-22 22:45Z, «Ναι, αυτόματα»): remove the remote-work switches; orOS should pick the route itself.
+- **What:** the «Through the orOS relay» switches go (Sync WebDAV, CalDAV/CardDAV, Studio podcast WebDAV, Household folder). orOS tries the server directly; only when the browser is not let in, `orosRelay.ask(server)` asks once, naming the server and the relay host; a yes is kept per host on this device (`oros-relay-ok`), Sensitive work answers no. Rules in Part IX STRUCT-5.
+- **Files:** shell.js, settings/settings.js, settings/core.js, household/app.js, household/index.html, studio/podcastui.js, studio/studio.js, studio/index.html, translations.js, i18n/de (shell, settings, household, studio), help EN/EL/DE (settings, sync, studio, household, sensitive), whatsnew EN/EL, OROS_BIBLE.md, tests/relay-one.test.js.
+- **Tests:** tests/relay-one.test.js; full suite; Playwright Chromium through the real shell, 390 EL and 1280 EN: the question names the server, Allow keeps the host, Escape answers no, no page errors.
+- **Not tested:** a real WebDAV/Nextcloud/CalDAV server behind CORS, a real relay deployment, Safari, a real phone.
