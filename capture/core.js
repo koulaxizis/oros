@@ -6,7 +6,8 @@
 // the disk like any other file), and the options below stay on this
 // device in localStorage "oros-capture-prefs":
 //   { mode: "shot"|"rec", delay: 0|3|5|10, cursor: bool, edit: bool,
-//     sys: bool, mic: bool, montage: bool }
+//     sys: bool, mic: bool, montage: bool,
+//     res: "auto"|"1080"|"720"|"480", fps: 30|60, q: "low"|"std"|"high" }   (CAPQ-1)
 // ============================================================
 (function (root) {
   "use strict";
@@ -34,8 +35,36 @@
       edit: p.edit === true,
       sys: p.sys !== false,
       mic: p.mic === true,
-      montage: p.montage === true
+      montage: p.montage === true,
+      res: RES.indexOf(p.res) >= 0 ? p.res : "auto",
+      fps: p.fps === 60 ? 60 : 30,
+      q: QUALITY.indexOf(p.q) >= 0 ? p.q : "std"
     };
+  }
+
+  // CAPQ-1: recording quality. The picture's height at most (auto = as
+  // shared), 30 or 60 frames a second, and a bitrate from a 1080p 30 fps
+  // Standard of 6 Mbit/s: Low half, High 1.6 times, 60 fps 1.5 times,
+  // 720p 0.45, 480p 0.22. The sound adds 128 kbit/s.
+  var RES = ["auto", "1080", "720", "480"];
+  var QUALITY = ["low", "std", "high"];
+  var BASE_BPS = 6000000, AUDIO_BPS = 128000;
+  function videoBps(p) {
+    var q = p.q === "low" ? 0.5 : p.q === "high" ? 1.6 : 1;
+    var r = p.res === "720" ? 0.45 : p.res === "480" ? 0.22 : 1;
+    var f = p.fps === 60 ? 1.5 : 1;
+    return Math.round(BASE_BPS * q * r * f / 1000) * 1000;
+  }
+  // About how many MB a minute of recording takes (whole MB, at least 1).
+  function mbPerMin(p, sound) {
+    var bps = videoBps(p) + (sound ? AUDIO_BPS : 0);
+    return Math.max(1, Math.round(bps * 60 / 8 / 1000000));
+  }
+  // getDisplayMedia's video constraints for a recording.
+  function recVideo(p) {
+    var v = { cursor: p.cursor ? "always" : "never", frameRate: { ideal: p.fps, max: p.fps } };
+    if (p.res !== "auto") v.height = { max: Number(p.res) };
+    return v;
   }
 
   function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -102,6 +131,7 @@
   }
 
   var API = {
+    RES: RES, QUALITY: QUALITY, AUDIO_BPS: AUDIO_BPS, videoBps: videoBps, mbPerMin: mbPerMin, recVideo: recVideo,
     DELAYS: DELAYS, MIN_CROP: MIN_CROP, FOLDER: FOLDER, VIDEOS: VIDEOS, MAX_BYTES: MAX_BYTES, REC_TYPES: REC_TYPES,
     prefs: prefs, fileName: fileName, pathFor: pathFor, cropRect: cropRect, rectStyle: rectStyle,
     recType: recType, recExt: recExt, clock: clock, size: size

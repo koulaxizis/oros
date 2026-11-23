@@ -7,8 +7,8 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=capture" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Screen Capture · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=8.83.00">
-  <link rel="stylesheet" href="app.css?v=8.83.00">
+  <link rel="stylesheet" href="../fonts.css?v=8.87.00">
+  <link rel="stylesheet" href="app.css?v=8.87.00">
 </head>
 <body>
 
@@ -35,6 +35,31 @@
         <label class="row check rec-only"><input type="checkbox" id="opt-sys"> <span data-i18n="opt.sys">Record the sound of the screen or tab</span></label>
         <label class="row check rec-only"><input type="checkbox" id="opt-mic"> <span data-i18n="opt.mic">Record the microphone</span></label>
         <label class="row check rec-only"><input type="checkbox" id="opt-montage"> <span data-i18n="opt.montage">Open in Montage after saving</span></label>
+        <div class="row rec-only">
+          <label class="lbl" for="opt-res" data-i18n="opt.res">Resolution</label>
+          <select id="opt-res" class="sel">
+            <option value="auto" data-i18n="opt.res.auto">As shared</option>
+            <option value="1080">1080p</option>
+            <option value="720">720p</option>
+            <option value="480">480p</option>
+          </select>
+        </div>
+        <div class="row rec-only">
+          <span class="lbl" id="fps-lbl" data-i18n="opt.fps">Frames a second</span>
+          <div id="fps" class="chips" role="radiogroup" aria-labelledby="fps-lbl">
+            <button type="button" class="chip" data-fps="30" role="radio">30</button>
+            <button type="button" class="chip" data-fps="60" role="radio">60</button>
+          </div>
+        </div>
+        <div class="row rec-only">
+          <label class="lbl" for="opt-q" data-i18n="opt.q">Quality</label>
+          <select id="opt-q" class="sel">
+            <option value="low" data-i18n="opt.q.low">Low (smaller file)</option>
+            <option value="std" data-i18n="opt.q.std">Standard</option>
+            <option value="high" data-i18n="opt.q.high">High (larger file)</option>
+          </select>
+        </div>
+        <p class="hint rec-only" id="q-size"></p>
       </div>
       <button type="button" id="b-start" class="chip pri big" data-i18n="btn.start">Choose what to capture</button>
       <p id="unsupported" class="note" hidden data-i18n="err.unsupported">This browser cannot capture the screen. Phones and tablets do not offer it; use orOS on a computer (Chrome, Edge or Firefox).</p>
@@ -97,10 +122,10 @@
 
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=8.83.00" data-app="capture"></script>
-  <script src="core.js?v=8.83.00"></script>
-  <script src="app.js?v=8.83.00"></script>
+  <script src="../i18n.js?v=8.87.00" data-app="capture"></script>
+  <script src="core.js?v=8.87.00"></script>
+  <script src="app.js?v=8.87.00"></script>
 
-  <script src="../pickers.js?v=8.83.00" defer></script>
+  <script src="../pickers.js?v=8.87.00" defer></script>
 </body>
 </html>

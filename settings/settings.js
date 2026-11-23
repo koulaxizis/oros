@@ -356,7 +356,148 @@
   }
 
   // ---------- 4. Section: Appearance ----------
+  // YOURS-1 (video ideas 2026-11-23 #9): "Make it yours", the look of
+  // orOS on one card with a live preview: wallpaper, colour, bar, Dock,
+  // motion, interface sounds and the lock screen. Every choice is the
+  // same setting as in its own place (below, and Screen lock), so both
+  // stay in step; the controls here carry "y-" keys so focus stays put.
+  var yoursFeel = null, yoursPlayAt = 0;   // the motion feel the preview last showed, when it changed
+  function secYours(host, s) {
+    var c = card(t("my.title"));
+    c.id = "my-card";
+    c.appendChild(el("p", "hint", t("my.hint")));
+    c.appendChild(yoursPreview(s));
+    // Wallpaper: a strip of the drawn ones and Random
+    if (s.wallpapers) {
+      var strip = el("div", "my-walls");
+      strip.setAttribute("role", "radiogroup");
+      strip.setAttribute("aria-label", t("a.wallpaper"));
+      s.wallpapers.forEach(function (w) {
+        if (!w.css) return;
+        var on = w.id === s.wallpaper;
+        var b = el("button", "wall my-wall" + (on ? " on" : ""));
+        b.type = "button";
+        b.setAttribute("role", "radio");
+        b.setAttribute("aria-checked", on ? "true" : "false");
+        b.setAttribute("aria-label", w.name);
+        b.title = w.name;
+        b.setAttribute("data-k", "y-wall:" + w.id);
+        b.style.background = w.css;
+        b.style.backgroundSize = "cover";
+        b.addEventListener("click", function () { set("wallpaper", w.id); });
+        strip.appendChild(b);
+      });
+      var wr = row(t("a.wallpaper"), null, { stack: true });
+      wr.appendChild(strip);
+      wr.appendChild(actions(button(t("a.wallpaper.random"), "y-wallpaper:random", function () { set("wallpaper:random", 1); })));
+      c.appendChild(wr);
+    }
+    // Colour: the skins, and Accent from wallpaper
+    if (s.skins) {
+      var sw = el("div", "swatches my-swatches");
+      sw.setAttribute("role", "radiogroup");
+      sw.setAttribute("aria-label", t("a.skin"));
+      s.skins.forEach(function (k) {
+        var on = k.id === s.skin;
+        var b = el("button", "swatch" + (on ? " on" : ""));
+        b.type = "button";
+        b.setAttribute("role", "radio");
+        b.setAttribute("aria-checked", on ? "true" : "false");
+        b.setAttribute("data-k", "y-skin:" + k.id);
+        b.title = k.name;
+        b.setAttribute("aria-label", k.name);
+        b.style.background = k.color;
+        b.addEventListener("click", function () { set("skin", k.id); });
+        sw.appendChild(b);
+      });
+      var cr = row(t("my.colour"), null, { stack: true });
+      cr.appendChild(sw);
+      c.appendChild(cr);
+      if (s.wpaccent) c.appendChild(row(t("a.wpacc"), switchBtn(!!s.wpaccent.on, "y-wpaccent", function (v) { set("wpaccent:on", v); }, t("a.wpacc"))));
+    }
+    // The top bar's look
+    if (s.smartbar && s.smartbar.looks) {
+      var ls = select(s.smartbar.looks.map(function (v) { return { value: v, label: t("sb.look." + (v || "classic")) }; }),
+        s.smartbar.look || "", "y-sblook", function (v) { set("smartbar-look", v); });
+      c.appendChild(row(t("sb.look"), ls, { forId: ls.id }));
+    }
+    // The Dock: on, and which edge
+    if (s.dock) {
+      c.appendChild(row(t("k.dock"), switchBtn(!!s.dock.on, "y-dock", function (v) { set("dock:on", v); }, t("k.dock"))));
+      if (s.dock.on && s.dock.positions && s.dock.positions.length) {
+        c.appendChild(row(t("k.pos"), segmented(s.dock.positions.map(function (k) { return { value: k, label: t("k.pos." + k) }; }),
+          s.dock.pos, "y-dockpos", function (v) { set("dock:pos", v); }, t("k.pos")), { stack: true }));
+      }
+    }
+    // Motion
+    if (s.zoom && s.zoom.feels) {
+      var fs = select(s.zoom.feels.map(function (f) { return { value: f, label: t("a.feel." + f) }; }), s.zoom.feel, "y-feel",
+        function (v) { set("feel", v); });
+      c.appendChild(row(t("a.feel"), fs, { forId: fs.id }));
+    }
+    // Interface sounds
+    if (s.uisounds) {
+      var u = s.uisounds;
+      c.appendChild(row(t("us.on"), switchBtn(!!u.on, "y-uisnd", function (v) { set("uisnd:on", v); }, t("us.on"))));
+      if (u.on && u.packs) {
+        var ps = select(u.packs.map(function (p) { return { value: p, label: t("us.pack." + p) }; }), u.pack, "y-uipack",
+          function (v) { set("uisnd:pack", v); set("uisnd:try", 1); });
+        c.appendChild(row(t("us.pack"), ps, { forId: ps.id }));
+      }
+    }
+    // The lock screen's look (only while the lock is on)
+    var L = lockApi(), k = null;
+    try { k = L ? L.snapshot() : null; } catch (e) { k = null; }
+    if (k && k.on) {
+      c.appendChild(row(t("l.look"), select([
+        { value: "wall", label: t("l.look.wall") }, { value: "plain", label: t("l.look.plain") }
+      ], k.look === "plain" ? "plain" : "wall", "y-lklook", function (v) { L.option("look", v); render(); }), { forId: "f-y-lklook" }));
+    } else if (L) {
+      c.appendChild(actions(button(t("my.lock"), "y-lock", function () { current = "lock"; saveUi(); render(); $("page").scrollTop = 0; })));
+    }
+    host.appendChild(c);
+  }
+  // A small desktop: the wallpaper, the top bar in its look, an app
+  // window in the accent (it opens again when the motion feel changes)
+  // and the Dock at its edge.
+  function yoursPreview(s) {
+    var w = null;
+    (s.wallpapers || []).forEach(function (x) { if (x.id === s.wallpaper) w = x; });
+    var p = el("div", "my-prev");
+    p.setAttribute("role", "img");
+    p.setAttribute("aria-label", t("my.preview"));
+    if (w && w.css) { p.style.background = w.css; p.style.backgroundSize = "cover"; p.style.backgroundPosition = "center"; }
+    var look = (s.smartbar && s.smartbar.look) || "classic";
+    var bar = el("div", "my-bar my-bar-" + look);
+    ["l", "c", "r"].forEach(function (z) {
+      var g = el("span", "my-bar-" + z);
+      for (var i = 0; i < (z === "r" ? 3 : 1); i++) g.appendChild(el("i"));
+      bar.appendChild(g);
+    });
+    p.appendChild(bar);
+    var feel = (s.zoom && s.zoom.feel) || "lively";
+    var win = el("div", "my-win my-feel-" + feel);
+    win.appendChild(el("b"));
+    win.appendChild(el("i"));
+    win.appendChild(el("i"));
+    if (yoursFeel !== null && yoursFeel !== feel) yoursPlayAt = Date.now();
+    yoursFeel = feel;
+    var since = Date.now() - yoursPlayAt;
+    if (since < 700) {             // a repaint right after the change goes on with the same play
+      win.classList.add("my-play");
+      win.style.setProperty("animation-delay", -since + "ms");
+    }
+    p.appendChild(win);
+    if (s.dock && s.dock.on) {
+      var dock = el("div", "my-dock my-dock-" + (s.dock.pos || "bottom"));
+      for (var j = 0; j < 5; j++) dock.appendChild(el("i"));
+      p.appendChild(dock);
+    }
+    return p;
+  }
+
   function secAppearance(host, s) {
+    secYours(host, s);
     var c1 = card(t("a.theme"), "theme");
     c1.appendChild(segmented([
       { value: "dark", label: t("a.dark") }, { value: "light", label: t("a.light") }
@@ -5856,6 +5997,7 @@
     var all = $("page").querySelectorAll(".card-head h3, .dv-card h3, .row-label, .btn, .link-row > span, .fm-tab");
     for (var i = 0; i < all.length; i++) {
       if (all[i].textContent.trim() !== txt) continue;
+      if (key !== "my.title" && all[i].closest("#my-card")) continue;   // YOURS-1: the setting's own place
       var n = all[i];
       if (n.classList.contains("row-label")) return n.closest(".row") || n;
       if (n.tagName === "H3") return n.closest(".card, .dv-card") || n;

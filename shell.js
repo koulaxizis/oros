@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.83.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.87.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -9996,10 +9996,10 @@
         { name: "hash-wasm 4.12.0 (Argon2)", url: "https://github.com/Daninet/hash-wasm",
           by: "Dani Biró", lic: "MIT",
           k: "cr.hash-wasm" },
-        { name: "libarchive.js 2.0.2 (libarchive 3.7.2)", url: "https://github.com/nika-begiashvili/libarchivejs",
-          by: "Nika Begiashvili; libarchive, zlib, bzip2, liblzma, Comlink, Emscripten and OpenSSL authors", lic: { k: "cr.lic.libarchive-js" },
+        { name: "libarchive.js 2.0.2 (libarchive 3.8.11)", url: "https://github.com/nika-begiashvili/libarchivejs",
+          by: "Nika Begiashvili; libarchive, zlib, bzip2, liblzma, Comlink and Emscripten authors", lic: { k: "cr.lic.libarchive-js" },
           k: "cr.libarchive-js" },
-        { name: "LibRaw 0.22.1 (libraw-wasm 1.6.0)", url: "https://www.libraw.org/",
+        { name: "LibRaw 0.22.3 (libraw-wasm 1.6.0)", url: "https://www.libraw.org/",
           by: "LibRaw LLC; wrapper by Yanis Bouane; Little-CMS, libjpeg (IJG), Emscripten", lic: { k: "cr.lic.libraw-libraw" },
           k: "cr.libraw-libraw" },
         { name: "RNNoise 0.1.1", url: "https://github.com/xiph/rnnoise",
@@ -16800,6 +16800,13 @@
   function closeMenu() {
     document.getElementById("app-menu").classList.remove("open");
   }
+  // CAPQ-1: Screen Capture clears the screen before a recording starts:
+  // the menu, Quick settings and the notifications panel close.
+  window.__orosCalmScreen = function () {
+    try { closeMenu(); } catch (e) {}
+    closeNotifPanel();
+    try { if (window.orosQS && typeof window.orosQS.close === "function") window.orosQS.close(); } catch (e) {}
+  };
 
   // ---------- 12. Wiring & boot ----------
   document.getElementById("btn-menu").addEventListener("click", function (e) {

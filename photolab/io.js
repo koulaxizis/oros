@@ -456,15 +456,20 @@
       }, "image/png");
     });
   }
+  // AI-MARK-2: the project keeps L.ai per layer; with a visible AI layer
+  // the preview image.png and the thumbnail carry the XMP mark too.
   function renderPackage() {
-    var d = st.doc, built = null, image = null;
-    return PL.PKG.build(d, st.surfaces, PL.T, window.OrosBundle.sha256).then(function (b) {
+    var d = st.doc, built = null, image = null, IA = null;
+    return iaIfAI().then(function (ia) {
+      IA = ia;
+      return PL.PKG.build(d, st.surfaces, PL.T, window.OrosBundle.sha256);
+    }).then(function (b) {
       built = b;
       return canvasPng(PL.view.flatten(null, 1));
     }).then(function (png) {
-      image = png;
+      image = markPng(IA, png);
       var k = 512 / Math.max(d.w, d.h);
-      return k >= 1 ? png : canvasPng(PL.view.flatten(null, k));      // small pictures: the picture is the thumbnail
+      return k >= 1 ? image : canvasPng(PL.view.flatten(null, k)).then(function (th) { return markPng(IA, th); });      // small pictures: the picture is the thumbnail
     }).then(function (thumb) {
       return window.OrosBundle.writeBlob({
         mime: PKG_MIME, app: "photolab", schema: "photolab/1", content: built.content,
@@ -616,26 +621,35 @@
     });
   }
   function renderLayered(fmt) {
+    return iaIfAI().then(function (IA) { return renderLayeredWith(fmt, IA); });
+  }
+  // IA set: the PSD gets the XMP as image resource 1060; in an ORA every
+  // AI layer's PNG, the merged image and the thumbnail carry it.
+  function renderLayeredWith(fmt, IA) {
     var d = st.doc, layers = layerPixels(fmt === "psd");
     var mc = PL.view.flatten(null, 1), merged = { w: d.w, h: d.h, data: mc.getContext("2d").getImageData(0, 0, d.w, d.h).data };
     mc.width = mc.height = 0;
     if (fmt === "psd") {
-      return PL.job("psdWrite", { doc: { w: d.w, h: d.h, layers: layers, groups: groupIndex(d).list, merged: merged } }).then(function (bytes) {
+      var pd = { w: d.w, h: d.h, layers: layers, groups: groupIndex(d).list, merged: merged };
+      if (IA) pd.xmp = IA.xmpPacket(AI_INFO);
+      return PL.job("psdWrite", { doc: pd }).then(function (bytes) {
         return new Blob([bytes], { type: MIME.psd });
       });
     }
     var k = Math.min(1, 256 / Math.max(d.w, d.h));
     var out = { w: d.w, h: d.h, layers: [], groups: groupIndex(d).list }, chain = Promise.resolve();
-    layers.forEach(function (L) {
+    layers.forEach(function (L, i) {
+      var src = d.layers[i];
       chain = chain.then(function () { return pngOf(L.img); }).then(function (png) {
+        if (src && src.ai) png = markPng(IA, png);
         out.layers.push({ name: L.name, x: L.img.w ? L.x : 0, y: L.img.w ? L.y : 0, op: L.op, bl: L.bl, vis: L.vis, g: L.g, png: png });
       });
     });
     return chain.then(function () { return pngOf(merged); }).then(function (png) {
-      out.merged = png;
+      out.merged = markPng(IA, png);
       return pngOf(PL.R.resize(merged, d.w * k, d.h * k));
     }).then(function (thumb) {
-      out.thumb = thumb;
+      out.thumb = markPng(IA, thumb);
       return new Blob([PL.ORA.write(out)], { type: MIME.ora });
     });
   }
@@ -659,10 +673,19 @@
     }
     return iaP;
   }
+  var AI_INFO = { src: "edit", tool: "orOS Photo Lab" };
+  function aiOn() { return !!(st.doc && st.doc.layers.some(function (L) { return L.ai && L.vis !== 0; })); }
+  // AI-MARK-2: the layered and orOS files. → Promise<OrosImageAI | null>
+  // (null: no visible AI layer, or imgai.js could not load: unmarked).
+  function iaIfAI() {
+    if (!aiOn()) return Promise.resolve(null);
+    return imageAI().then(function (IA) { return IA; }, function () { return null; });
+  }
+  function markPng(IA, png) { return IA ? IA.markBytes(png, AI_INFO).bytes : png; }
   function aiMark(blob) {
-    var ai = blob && st.doc && st.doc.layers.some(function (L) { return L.ai && L.vis !== 0; });
+    var ai = blob && aiOn();
     if (!ai) return blob;
-    return imageAI().then(function (IA) { return IA.markBlob(blob, { src: "edit", tool: "orOS Photo Lab" }); }, function () { return blob; });
+    return imageAI().then(function (IA) { return IA.markBlob(blob, AI_INFO); }, function () { return blob; });
   }
   function exportImage(fmt, q, scale, toPictures) {
     if (!st.doc) return;

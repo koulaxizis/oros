@@ -166,3 +166,7 @@ html, body {
 @keyframes rec-blink { to { visibility: hidden; } }
 @media (prefers-reduced-motion: reduce) { .rec-status .dot { animation: none; } }
 #clip { display: block; max-width: 100%; max-height: 60vh; }
+/* CAPQ-1: recording quality */
+.sel { min-height: 40px; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: inherit; font: inherit; max-width: 100%; }
+.sel:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#q-size { margin: 0; }
