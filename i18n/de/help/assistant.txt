@@ -332,6 +332,13 @@ Unter `Einstellungen` → `Internet` lässt `Den Assistenten im Internet suchen 
 - Jede Wahl zeigt ihre Schritte unter `So schaltest du es ein`. `Testen` prüft den Schlüssel oder die Adresse. Schlüssel werden wie die KI-Schlüssel aufbewahrt (versiegelt auf diesem Gerät und nur synchronisiert, wenn du die Schlüssel-Synchronisierung einschaltest).
 - Nur deine Beschreibung (und zum Bearbeiten das Bild) geht direkt von diesem Gerät an den Dienst. Kein Google-Dienst wird angeboten.
 
+## Sprechen statt tippen
+Das Mikrofon neben `Senden` macht auf diesem Gerät mit dem Sprachmodell Whisper Text aus dem, was du sagst. Der Ton verlässt das Gerät nie, und der Text wartet im Nachrichtenfeld: Prüf ihn, änder ihn bei Bedarf und tippe dann selbst auf `Senden`.
+- Beim ersten Mal fragt es, welches Modell geladen werden soll: `Klein und schnell` (etwa 53 MB, das auch Montage, Lyric Sync und Notizen nutzen) oder `Genauer, besser für Griechisch` (etwa 88 MB). Es wird einmal geladen und funktioniert danach offline.
+- Tippe auf das Mikrofon, sprich und tippe noch einmal. Eine Aufnahme stoppt nach zwei Minuten von selbst.
+- `Einstellungen` → `Spracheingabe` zeigt das Modell auf diesem Gerät und entfernt es.
+- Es gibt keine Spracherkennung über den Browser oder Google: Nichts, was du sagst, geht an einen Dienst.
+
 ## Briefing
 In einer neuen Unterhaltung fasst `Briefing` deinen Tag in einer Antwort zusammen: die Termine von heute, was überfällig ist, Geburtstage und andere Daten dieser Woche und wie die Ausgaben dieses Monats aussehen. [Heute](app:today) hat dieselbe Schaltfläche (die Funken oben).
 - Es läuft nur, wenn du darauf drückst, nie von selbst, und kostet daher nie etwas, worum du nicht gebeten hast.
@@ -366,7 +373,7 @@ Markiere Text in einer beliebigen orOS-App und klicke ihn mit rechts an, für ei
 - Teile Text oder einen Link aus einer anderen App mit orOS (`Teilen` unter Android): orOS fragt, wohin er soll, und der `Assistent` ist eine der Möglichkeiten. Ein Link kann wie bisher auch zu Lesezeichen, Notizen und den anderen Apps.
 - Mit dem Browser-Add-on `Send to orOS` (ab 1.1) markierst du Text auf einer beliebigen Seite und klickst ihn mit rechts an: `Ask the orOS Assistant about …` öffnet orOS mit dem Text im Feld des Assistenten. Der Text reist hinter dem `#` der Adresse, den Browser nie an einen Server senden.
 - In der Android-App: ein Assistenten-Knopf auf den Widgets `orOS Today` und `orOS quick add` und eine Kachel `orOS Assistant`, die du zu den Schnelleinstellungen hinzufügst (Benachrichtigungen herunterziehen, dann den Stift). Beide öffnen den Assistenten für sich allein, ohne den Desktop.
-- Der Assistent als eigene App: Installiere `orOS Assistent` (Einstellungen › Apps › `Verfügbare Einzel-Apps`, die Download-Seite oder der Manager `Koulaxizis Apps` unter Android). Er hat ein eigenes Symbol und Fenster, dieselben Unterhaltungen, Schlüssel und Freigaben wie der Assistent in orOS, eine Verknüpfung `Briefing` am Symbol, und unter Android nimmt er aus anderen Apps geteilte Texte und Links direkt in sein Nachrichtenfeld.
+- Der Assistent als eigene App: Installiere `orOS Assistent` (Einstellungen › Apps › `Verfügbare Einzel-Apps`, die Download-Seite oder der Manager `Koulaxizis Apps` unter Android). Er hat ein eigenes Symbol und Fenster, dieselben Unterhaltungen, Schlüssel und Freigaben wie der Assistent in orOS, die Verknüpfungen `Sprechen` und `Briefing` am Symbol, und unter Android nimmt er aus anderen Apps geteilte Texte und Links direkt in sein Nachrichtenfeld.
 - Jeder Weg öffnet den Assistenten nur mit dem Text bereit; nichts wird gesendet, bevor du `Senden` drückst.
 
 ## Datenschutz: was dein Gerät verlässt

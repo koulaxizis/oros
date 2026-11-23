@@ -5316,7 +5316,29 @@
   }
   function monthKey(ms) { return ymd(ms).slice(0, 7); }
 
+  // ---------- Voice input (SOLO-AS W2) ----------
+  // Whisper's cues → one line of text: trimmed, joined with spaces,
+  // Whisper's "[music]"-style notes and repeated cues dropped, control
+  // characters out, at most 20000.
+  function voiceText(cues) {
+    var out = [], last = "";
+    (Array.isArray(cues) ? cues : []).forEach(function (c) {
+      var x = String(c && c.text || "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+      if (!x || /^[\[(][^\])]*[\])]$/.test(x) || x === last) return;
+      out.push(x);
+      last = x;
+    });
+    return out.join(" ").slice(0, 20000);
+  }
+  // The text the person said joins what the box already holds.
+  function voiceJoin(box, text) {
+    box = String(box || "");
+    if (!box.trim()) return text;
+    return box.replace(/\s+$/, "") + " " + text;
+  }
+
   var api = {
+    voiceText: voiceText, voiceJoin: voiceJoin,
     DATA_VER: DATA_VER, PROVIDERS: PROVIDERS, PROV_IDS: PROV_IDS,
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
