@@ -100,7 +100,10 @@
       "m.newRk": "New recovery key", "m.settings": "Lock settings", "m.delete": "Delete vault", "m.lock": "Lock now",
       "m.autofill": "Autofill on this phone",
       "af.title": "Autofill on this phone",
-      "af.text": "Fill logins, 2FA codes, cards and addresses in other apps and in your browser on this phone. orOS gives the orOS app a copy sealed with a key that only this phone has; your fingerprint, face or screen lock opens it for each fill. Card PINs, ID numbers and notes are not in it. The copy is renewed each time you unlock or change Passwords here.",
+      "af.text": "Fill logins, 2FA codes, cards and addresses in other apps and in your browser on this phone. orOS gives the orOS app a copy sealed with a key that only this phone has; your fingerprint, face or screen lock opens it for each fill. Tax numbers, IBANs, ID card and passport numbers are filled only when you choose them yourself; card PINs and notes are not in it. The copy is renewed each time you unlock or change Passwords here.",
+      "af.pass": "orOS Passwords fills on this phone. The orOS app hands it the sealed copy, so both stay up to date.",
+      "af.pass.yes": "orOS Passwords is this phone's autofill service.",
+      "af.pass.no": "Choose orOS Passwords as the autofill service in Android's settings.",
       "af.on": "Use autofill on this phone",
       "af.svc.yes": "orOS is this phone's autofill service.",
       "af.svc.no": "Choose orOS as the autofill service in Android's settings.",
@@ -259,6 +262,7 @@
       "id.tax": "Tax number",
       "id.ssn": "Social security number",
       "id.ins": "Insurance number",
+      "id.iban": "IBAN",
       "id.secDocs": "Documents",
       "id.secNums": "Numbers",
       "id.secPerson": "Person",
@@ -349,11 +353,14 @@
       "m.newRk": "Νέο κλειδί ανάκτησης", "m.settings": "Ρυθμίσεις κλειδώματος", "m.delete": "Διαγραφή κρύπτης", "m.lock": "Κλείδωμα τώρα",
       "m.autofill": "Αυτόματη συμπλήρωση στο κινητό",
       "af.title": "Αυτόματη συμπλήρωση στο κινητό",
-      "af.text": "Συμπληρώνει λογαριασμούς, κωδικούς 2FA, κάρτες και διευθύνσεις σε άλλες εφαρμογές και στον browser αυτού του κινητού. Το orOS δίνει στην εφαρμογή orOS ένα αντίγραφο κλειδωμένο με κλειδί που έχει μόνο αυτό το κινητό· το δακτυλικό, το πρόσωπο ή το κλείδωμα οθόνης το ανοίγει σε κάθε συμπλήρωση. Δεν περιέχει PIN καρτών, αριθμούς εγγράφων ή σημειώσεις. Το αντίγραφο ανανεώνεται κάθε φορά που ξεκλειδώνεις ή αλλάζεις κάτι στους Κωδικούς εδώ.",
+      "af.text": "Συμπληρώνει λογαριασμούς, κωδικούς 2FA, κάρτες και διευθύνσεις σε άλλες εφαρμογές και στον browser αυτού του κινητού. Το orOS δίνει στην εφαρμογή orOS ένα αντίγραφο κλειδωμένο με κλειδί που έχει μόνο αυτό το κινητό· το δακτυλικό, το πρόσωπο ή το κλείδωμα οθόνης το ανοίγει σε κάθε συμπλήρωση. ΑΦΜ, IBAN και αριθμοί ταυτότητας ή διαβατηρίου συμπληρώνονται μόνο όταν τους διαλέγεις εσύ· PIN καρτών και σημειώσεις δεν περιέχονται. Το αντίγραφο ανανεώνεται κάθε φορά που ξεκλειδώνεις ή αλλάζεις κάτι στους Κωδικούς εδώ.",
       "af.on": "Αυτόματη συμπλήρωση σε αυτό το κινητό",
       "af.svc.yes": "Το orOS είναι η υπηρεσία αυτόματης συμπλήρωσης του κινητού.",
       "af.svc.no": "Διάλεξε το orOS ως υπηρεσία αυτόματης συμπλήρωσης στις ρυθμίσεις του Android.",
       "af.svc.go": "Ρυθμίσεις Android",
+      "af.pass": "Η αυτόματη συμπλήρωση σε αυτό το κινητό γίνεται από το orOS Passwords. Η εφαρμογή orOS του δίνει το σφραγισμένο αντίγραφο, ώστε να είναι πάντα ενημερωμένο.",
+      "af.pass.yes": "Το orOS Passwords είναι η υπηρεσία αυτόματης συμπλήρωσης του κινητού.",
+      "af.pass.no": "Διάλεξε το orOS Passwords ως υπηρεσία αυτόματης συμπλήρωσης στις ρυθμίσεις του Android.",
       "af.at": "Το αντίγραφο του κινητού ενημερώθηκε {d}",
       "af.never": "Δεν υπάρχει ακόμη αντίγραφο στο κινητό.",
       "af.wait": "Ετοιμάζονται τα κλειδιά του κινητού…",
@@ -508,6 +515,7 @@
       "id.tax": "ΑΦΜ",
       "id.ssn": "ΑΜΚΑ",
       "id.ins": "ΑΜΑ (αριθμός μητρώου ασφάλισης)",
+      "id.iban": "IBAN",
       "id.secDocs": "Έγγραφα",
       "id.secNums": "Αριθμοί",
       "id.secPerson": "Πρόσωπο",
@@ -2630,10 +2638,12 @@
   function afWatch() {
     var p = phone();
     if (!p || afWatchOff) return;
-    var had = !!p.afKeys();
+    // New keys (first time, or orOS Passwords took over or went away,
+    // PW-AF6): seal again for them.
+    var had = p.afKeys() && p.afKeys().idx;
     afWatchOff = p.onChange(function () {
-      var now = !!p.afKeys();
-      if (now && !had) afSoon();
+      var now = p.afKeys() && p.afKeys().idx;
+      if (now && now !== had) afSoon();
       had = now;
     });
   }
@@ -2658,7 +2668,8 @@
         if (info.err) lines.push(t("af.err", { e: info.err }));
         else if (!p.afKeys() && !info.stored) lines.push(t("af.wait"));
         else lines.push(info.at ? t("af.at", { d: fmtDate(info.at) }) : t("af.never"));
-        lines.push(info.svc ? t("af.svc.yes") : t("af.svc.no"));
+        if (info.via === "pass") lines.push(t("af.pass"), info.svc ? t("af.pass.yes") : t("af.pass.no"));
+        else lines.push(info.svc ? t("af.svc.yes") : t("af.svc.no"));
       }
       st.textContent = lines.join(" · ");
       go.hidden = !c.checked || !!info.svc;

@@ -160,6 +160,18 @@ public class PermissionActivity extends Activity {
     /** Passwords autofill (PW-AF2): Android's own screen that makes orOS
      *  the autofill service (Android 8+), else the autofill settings. */
     private void autofill() {
+        // PW-AF6: with orOS Passwords installed, the choice is orOS
+        // Passwords; its own PermissionActivity asks Android for itself.
+        if (AfFeed.sync(this) && getIntent().getData() != null) {
+            try {
+                startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(getIntent().getData().getScheme() + "://autofill"))
+                        .setPackage(AfFeed.passPkg(this)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                finish();
+                return;
+            } catch (android.content.ActivityNotFoundException ignored) {
+                // falls through: this app's own setting
+            }
+        }
         if (android.os.Build.VERSION.SDK_INT >= 26) {
             try {
                 startActivity(new Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE,

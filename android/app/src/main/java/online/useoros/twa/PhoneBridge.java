@@ -48,6 +48,10 @@ import java.util.concurrent.Executors;
  * BioActivity), also in the single app "orOS Passwords": there the
  * port belongs to its top page (solo.js), which relays only
  * {t:"pw-bio"}, and this side takes nothing else either.
+ * v13 (PW-AF6): with orOS Passwords installed, the orOS app's own
+ * autofill is off and af-keys / af-index / clear af go to orOS
+ * Passwords (AfFeed): the page seals for orOS Passwords' keys, this
+ * side only passes ciphertext on; af carries via:"pass".
  */
 public class PhoneBridge {
     private static final String TAG = "orOS/PhoneBridge";
@@ -327,13 +331,26 @@ public class PhoneBridge {
      *  answers {t:"error", what:"af-keys", msg} so the page stops waiting. */
     private void sendAfKeys() {
         try {
-            AfVault.ensureKeys();
             JSONObject o = new JSONObject();
             o.put("t", "af-keys");
-            o.put("idx", AfVault.publicKey(AfVault.ALIAS_INDEX));
-            o.put("names", AfVault.publicKey(AfVault.ALIAS_NAMES));
-            o.put("af", afState());
-            diag("autofill keys sent");
+            if (AfFeed.sync(app)) {
+                // v13 (PW-AF6): orOS Passwords' keys; the page seals for it
+                JSONObject k = AfFeed.keys(app);
+                if (k.has("err")) throw new IllegalStateException("orOS Passwords: " + k.optString("err"));
+                o.put("idx", k.optString("idx"));
+                o.put("names", k.optString("names"));
+                JSONObject a = k.optJSONObject("af");
+                if (a == null) a = new JSONObject();
+                a.put("via", "pass");
+                o.put("af", a);
+                diag("autofill keys of orOS Passwords sent");
+            } else {
+                AfVault.ensureKeys();
+                o.put("idx", AfVault.publicKey(AfVault.ALIAS_INDEX));
+                o.put("names", AfVault.publicKey(AfVault.ALIAS_NAMES));
+                o.put("af", afState());
+                diag("autofill keys sent");
+            }
             send(o);
         } catch (Exception e) {
             Log.w(TAG, "autofill keys failed", e);
@@ -415,24 +432,24 @@ public class PhoneBridge {
 
     /** Passwords autofill (v8): whether orOS is the phone's autofill
      *  service, whether keys and a sealed copy are here, and when the
-     *  copy was made. Public keys only after {t:"af-keys"}. */
+     *  copy was made. Public keys only after {t:"af-keys"}. v13 (PW-AF6):
+     *  in the orOS app with orOS Passwords installed, orOS Passwords'
+     *  state, with via:"pass" (and err when it did not answer). */
     private JSONObject afState() throws JSONException {
-        JSONObject a = new JSONObject();
-        a.put("svc", afService());
-        a.put("keys", AfVault.hasKeys());
-        a.put("stored", AfVault.stored(app));
-        a.put("at", AfVault.storedAt(app));
-        return a;
-    }
-
-    private boolean afService() {
-        if (android.os.Build.VERSION.SDK_INT < 26) return false;
-        try {
-            android.view.autofill.AutofillManager am = app.getSystemService(android.view.autofill.AutofillManager.class);
-            return am != null && am.hasEnabledAutofillServices();
-        } catch (Exception e) {
-            return false;
+        if (AfFeed.sync(app)) {
+            JSONObject r = AfFeed.state(app), a = r.optJSONObject("af");
+            if (a == null) {
+                a = new JSONObject();
+                a.put("svc", false);
+                a.put("keys", false);
+                a.put("stored", false);
+                a.put("at", 0);
+                a.put("err", r.optString("err", "error"));
+            }
+            a.put("via", "pass");
+            return a;
         }
+        return AfVault.state(app);
     }
 
     /** Edits made on the phone in the orOS account go to the page (v2). */
@@ -609,19 +626,38 @@ public class PhoneBridge {
                 case "af-index": {
                     JSONObject idx = m.optJSONObject("idx"), names = m.optJSONObject("names");
                     if (!AfVault.validBlob(idx) || !AfVault.validBlob(names)) throw new IllegalArgumentException("bad blob");
-                    if (!AfVault.hasKeys()) throw new IllegalStateException("no keys");
-                    AfVault.save(app, idx, names, m.optLong("at", System.currentTimeMillis()));
+                    long at = m.optLong("at", System.currentTimeMillis());
+                    String k = m.optString("k", "");
                     JSONObject done = new JSONObject();
                     done.put("t", "done");
                     done.put("what", "af-index");
                     done.put("seq", seq);
-                    done.put("af", afState());
-                    diag("autofill copy stored");
+                    if (AfFeed.sync(app)) {
+                        // v13 (PW-AF6): sealed for orOS Passwords, stored there
+                        JSONObject r = AfFeed.index(app, idx, names, at, k);
+                        if (r.optBoolean("keys")) keyIo.execute(this::sendAfKeys);   // sealed with old keys
+                        if (r.has("err")) throw new IllegalStateException(r.optString("err"));
+                        JSONObject a = r.optJSONObject("af");
+                        if (a == null) a = new JSONObject();
+                        a.put("via", "pass");
+                        done.put("af", a);
+                        diag("autofill copy handed to orOS Passwords");
+                    } else {
+                        if (!AfVault.hasKeys()) throw new IllegalStateException("no keys");
+                        if (!AfFeed.keyFits(k, AfVault.publicKey(AfVault.ALIAS_INDEX))) {
+                            keyIo.execute(this::sendAfKeys);
+                            throw new IllegalStateException("keys changed");
+                        }
+                        AfVault.save(app, idx, names, at);
+                        done.put("af", afState());
+                        diag("autofill copy stored");
+                    }
                     send(done);
                     return;
                 }
                 case "clear":
                     if ("af".equals(what)) {
+                        if (AfFeed.sync(app)) AfFeed.clear(app);   // v13: the switch is one for both apps
                         AfVault.clear(app);
                         AfVault.deleteKeys();
                         send(FULL ? state() : afStateMsg());

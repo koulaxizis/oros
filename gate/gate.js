@@ -1474,13 +1474,16 @@
   // list = [{ name, color? } | "name"] → { add: [{ name, color }] } | { err }; names already on b are skipped
   function kbLabelArgs(b, list, what) {
     if (!Array.isArray(list) || !list.length || list.length > 30) return { err: what + " must hold 1 to 30 labels." };
-    var have = kbLiveLabels(b), seen = {}, add = [], used = have.map(function (l) { return String(l.color || "").toLowerCase(); }), i;
+    var have = kbLiveLabels(b), seen = {}, add = [], recolor = [], used = have.map(function (l) { return String(l.color || "").toLowerCase(); }), i;
     for (i = 0; i < list.length; i++) {
       var o = isObj(list[i]) ? list[i] : { name: list[i] }, tag = what + " " + (i + 1) + ": ";
       var r = kbText(o.name, 40, "text");
       if (r.err || !r.s) return { err: tag + "a label needs a name of at most 40 characters." };
       if (o.color !== undefined && !Object.prototype.hasOwnProperty.call(KB_COLORS, o.color)) return { err: tag + "color must be one of " + Object.keys(KB_COLORS).join(", ") + "." };
-      if (seen[fold(r.s)] || have.some(function (l) { return fold(l.name) === fold(r.s); })) { seen[fold(r.s)] = 1; continue; }
+      var old = have.filter(function (l) { return fold(l.name) === fold(r.s); })[0];
+      // KB-RECOLOR (Chris 2026-11-23): a colour given for a label the board has already changes its colour
+      if (old && o.color && !seen[fold(r.s)] && String(old.color || "").toLowerCase() !== KB_COLORS[o.color]) recolor.push({ l: old, color: KB_COLORS[o.color] });
+      if (seen[fold(r.s)] || old) { seen[fold(r.s)] = 1; continue; }
       seen[fold(r.s)] = 1;
       add.push({ name: r.s, color: o.color ? KB_COLORS[o.color] : "" });
     }
@@ -1491,7 +1494,16 @@
       x.color = free.length ? free[0] : KB_COLOR_LIST[(have.length + used.length) % KB_COLOR_LIST.length];
       used.push(x.color);
     });
-    return { add: add };
+    return { add: add, recolor: recolor };
+  }
+  // KB-RECOLOR: new colours for labels the board has; Undo puts the old colour back while the label is as left
+  function kbRecolor(rc, now, undo) {
+    return rc.map(function (x) {
+      var at = Math.max(now, (x.l.mtime || 0) + 1);
+      if (undo) { if (!isObj(undo.lcol)) undo.lcol = {}; undo.lcol[x.l.id] = { c: x.l.color || "", a: at }; }
+      x.l.color = x.color; x.l.mtime = at;
+      return x.l;
+    });
   }
   function kbMakeLabels(b, add, now, newId, undo) {
     if (!Array.isArray(b.labels)) b.labels = [];
@@ -1724,7 +1736,7 @@
       if (args.add_labels !== undefined) {
         labAdd = kbLabelArgs(b, args.add_labels, "add_labels");
         if (labAdd.err) return { ok: false, err: labAdd.err };
-        if (!labAdd.add.length && args.columns === undefined && !rn.length && !pa.length) return { ok: false, err: "Nothing to change: the board already has these labels." };
+        if (!labAdd.add.length && !labAdd.recolor.length && args.columns === undefined && !rn.length && !pa.length) return { ok: false, err: "Nothing to change: the board already has these labels in these colours." };
       }
       undo.ren = {};
       var renTxt = rn.map(function (x) {
@@ -1759,13 +1771,15 @@
         ids.push(col.id);
       }
       var labs = labAdd && labAdd.add.length ? kbMakeLabels(b, labAdd.add, now, newId, undo) : [];
-      if (ids.length || labs.length) b.om = now;
+      var recs = labAdd && labAdd.recolor.length ? kbRecolor(labAdd.recolor, now, undo) : [];
+      if (ids.length || labs.length || recs.length) b.om = now;
       var said = [];
       if (labs.length) said.push("Made the label" + (labs.length === 1 ? " " : "s ") + labs.map(function (l) { return JSON.stringify(l.name); }).join(", ") + ".");
+      if (recs.length) said.push("New colour for " + recs.map(function (l) { return JSON.stringify(l.name); }).join(", ") + ".");
       if (renTxt.length) said.push("Renamed " + renTxt.join(", ") + ".");
       if (apTxt.length) said.push("Author Portal: " + apTxt.join(", ") + ".");
       if (ids.length) said.push("Added " + ids.length + " column" + (ids.length === 1 ? "" : "s") + " to " + (b.name || "the board") + ".");
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, renamed: renTxt.length + apTxt.length + labs.length, text: said.join(" ") };
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, renamed: renTxt.length + apTxt.length + labs.length + recs.length, text: said.join(" ") };
     }
 
     if (op === "add_cards") {
@@ -1782,7 +1796,8 @@
           if (la.add.length) { kbMakeLabels(b, la.add, now, newId, undo); b.om = now; }
         }
       }
-      var touched = [], updated = [], made = {};
+      if (args.adopt_by_text !== undefined && typeof args.adopt_by_text !== "boolean") return { ok: false, err: "adopt_by_text must be true or false." };
+      var touched = [], updated = [], adopted = [], made = {}, pos = [];      // KB-PREF: pos[i] = card i's id (its p- ref with orOS closed)
       for (i = 0; i < add.length; i++) {
         var a = isObj(add[i]) ? add[i] : {}, tag = "Card " + (i + 1) + ": ";
         var fc = kbFind(kbCols(b), a.column, "column");
@@ -1801,11 +1816,17 @@
         var lb = a.labels === undefined ? null : kbLabels(b, a.labels);
         if (lb && lb.err) return { ok: false, err: tag + lb.err + (args.create_labels ? "" : " (create_labels: true makes missing labels.)") };
         // KB-KEY upsert: a card with this key on the board is brought up to date, not added twice
-        var hitK = null;
+        var hitK = null, adopt = false;
         if (ky.k) {
           hitK = made[ky.k] ? kbCard(b, made[ky.k]) : null;
           var same = hitK ? null : kbAll(b).filter(function (x) { return x.key === ky.k; })[0];
           if (same) hitK = kbCard(b, same.id);
+          // KB-ADOPT (Chris 2026-11-23): a card made before keys, with the same text, takes the key instead of a copy being added
+          if (!hitK && args.adopt_by_text === true) {
+            var twins = kbAll(b).filter(function (x) { return !(typeof x.key === "string" && x.key) && fold(x.text || "") === fold(tx.s); });
+            if (twins.length > 1) return { ok: false, err: tag + twins.length + " cards without a key read " + JSON.stringify(tx.s) + " (" + twins.slice(0, 10).map(function (x) { return x.id; }).join(", ") + "). Give one of them the key with kanban_change_card (card: its id, key), then sync again. Nothing was changed." };
+            if (twins.length === 1) { hitK = kbCard(b, twins[0].id); adopt = true; }
+          }
         }
         if (hitK) {
           var c1 = hitK.card, g1 = [], snap1 = kbSnap(c1, hitK.col, hitK.at);
@@ -1819,9 +1840,9 @@
             if (pa1.err) return { ok: false, err: tag + pa1.err };
             if (JSON.stringify(pa1.p) !== JSON.stringify(kbPlan(c1))) { kbSetPlan(c1, pa1.p); g1.push("g"); }
           }
-          if (lk.l !== undefined) {
-            var ev = { key: ky.k };
-            if (lk.l.length) ev.links = lk.l;
+          if (lk.l !== undefined || adopt) {
+            var ev = { key: ky.k }, evl = lk.l !== undefined ? lk.l : (Array.isArray(c1.links) ? clone(c1.links) : []);
+            if (evl.length) ev.links = evl;
             if (JSON.stringify(ev) !== JSON.stringify(kbLinkVal(c1))) { kbSetLinks(c1, ev); g1.push("e"); }
           }
           if (a.move === true && hitK.col !== fc.x) {
@@ -1838,6 +1859,8 @@
           }
           if (ids.indexOf(c1.id) < 0) ids.push(c1.id);
           if (!isNew && updated.indexOf(c1.id) < 0) updated.push(c1.id);
+          if (adopt) adopted.push(c1.id);
+          pos[i] = c1.id;
           continue;
         }
         var card = { id: newId(), text: tx.s, notes: nt ? nt.s : "", due: du ? du.d : null, labels: lb ? lb.ids : [], subtasks: [], info: [], mtime: now, pos: 0, fm: M.freshFm(now) };
@@ -1852,13 +1875,15 @@
         if (touched.indexOf(fc.x) < 0) touched.push(fc.x);
         undo.cards[card.id] = { b: null, a: now };
         ids.push(card.id);
+        pos[i] = card.id;
       }
       touched.forEach(function (c) { c.om = now; });
       var nAdd = ids.length - updated.length, labs = isObj(undo.labs) ? Object.keys(undo.labs).length : 0;
       // a sync that finds everything as it is: fine, nothing saved
-      if (!nAdd && !labs && !updated.some(function (id) { return undo.cards[id]; })) return { ok: true, noop: true, ids: ids, updated: updated, text: "Nothing to change: the cards with these keys already look like this." };
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, updated: updated,
+      if (!nAdd && !labs && !updated.some(function (id) { return undo.cards[id]; })) return { ok: true, noop: true, ids: ids, pos: pos, updated: updated, text: "Nothing to change: the cards with these keys already look like this." };
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, pos: pos, updated: updated, adopted: adopted.length ? adopted : undefined,
                text: [nAdd ? "Added " + nAdd + " card" + (nAdd === 1 ? "" : "s") + "." : "",
+                      adopted.length ? "Gave the key to " + adopted.length + " card" + (adopted.length === 1 ? "" : "s") + " made before keys (same text)." : "",
                       updated.length ? "Brought " + updated.length + " card" + (updated.length === 1 ? "" : "s") + " with the same key up to date" + (updated.some(function (id) { return !undo.cards[id]; }) ? " (some already were)" : "") + "." : "",
                       labs ? "Made " + labs + " label" + (labs === 1 ? "" : "s") + "." : ""].filter(Boolean).join(" ") };
     }
@@ -2105,6 +2130,14 @@
       if ((l.mtime || 0) !== u.labs[id] || kbAll(b).some(function (k) { return Array.isArray(k.labels) && k.labels.indexOf(id) >= 0; })) { kept++; return; }
       b.labels.splice(b.labels.indexOf(l), 1);
       b.deleted[id] = Math.max(now, (l.mtime || 0) + 1);
+      b.om = now; n++;
+    });
+    // KB-RECOLOR: the old colour comes back while the label is as the change left it
+    if (isObj(u.lcol)) Object.keys(u.lcol).forEach(function (id) {
+      var l = kbLiveLabels(b).filter(function (x) { return x.id === id; })[0], e = u.lcol[id];
+      if (!l || !isObj(e)) return;
+      if ((l.mtime || 0) !== e.a) { kept++; return; }
+      l.color = typeof e.c === "string" ? e.c : ""; l.mtime = Math.max(now, e.a + 1);
       b.om = now; n++;
     });
     oms.forEach(function (c) { c.om = now; });
@@ -2488,13 +2521,43 @@
     return { app: apps.join(", "), list: list };
   }
 
+  // KB-PREF (Chris 2026-11-23): p- refs of a board, its columns or cards that
+  // waited with orOS closed (p-<change id>.<n>) → their ids here, from the
+  // change record of the add that made them (chgTag p: { n: { kb: id } });
+  // find(ref) → that record (the device's pFind).
+  function kbMapP(args, find) {
+    var miss = [];
+    function walk(v) {
+      if (typeof v === "string") {
+        var r = v.trim();
+        if (!P_REF.test(r)) return v;
+        var rec = find(r);
+        if (rec && typeof rec.kb === "string" && rec.kb) return rec.kb;
+        if (miss.indexOf(r) < 0) miss.push(r);
+        return v;
+      }
+      if (Array.isArray(v)) return v.map(walk);
+      if (isObj(v)) { var o = {}; Object.keys(v).forEach(function (k) { o[k] = walk(v[k]); }); return o; }
+      return v;
+    }
+    var out = walk(args);
+    return miss.length ? { miss: miss } : { a: out };
+  }
+  // the ids an add made, by the position its p- ref names
+  function kbMade(op, args, r) {
+    var l = op === "add_cards" ? (Array.isArray(r.pos) ? r.pos : []) : op === "add_board" || op === "add_columns" ? (Array.isArray(r.ids) ? r.ids : []) : [];
+    if (op === "add_columns" && !(isObj(args) && Array.isArray(args.columns))) l = [];
+    var out = [];
+    l.slice(0, 50).forEach(function (id, i) { if (typeof id === "string" && id) out.push({ i: i, rec: { kb: id } }); });
+    return out;
+  }
   var core = { screenTool: screenTool, SCREEN_HELD: SCREEN_HELD, BACK_OK: BACK_OK, delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, bankNowText: bankNowText, BANK_GAP: BANK_GAP, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, invoicesRecord: invoicesRecord, invoicesUndo: invoicesUndo, OWN_WRITES: OWN_WRITES, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
                WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_OPEN: ACT_OPEN, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE,
-               queuedAt: queuedAt, lateIn: lateIn, mapRefs: mapRefs, pRefsIn: pRefsIn, P_REF: P_REF };
+               queuedAt: queuedAt, lateIn: lateIn, mapRefs: mapRefs, pRefsIn: pRefsIn, P_REF: P_REF, kbMapP: kbMapP, kbMade: kbMade };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
   root.orosGateCore = core;
@@ -3812,6 +3875,9 @@
     if (!canWrite(p.lv, p.hold, "kanban", now)) {
       return Promise.resolve({ ok: false, c: closedMsg(p, "kanban", names.kanban || "Kanban") });
     }
+    var mp = kbMapP(args, pFind);
+    if (mp.miss) return Promise.resolve({ ok: false, c: "No board, column or card for " + mp.miss.slice(0, 5).join(", ") + " yet: the change that makes it was not applied (refused, cancelled or still waiting). Use the name (or the card's key), or app_summary kanban boards_only. Nothing was changed." });
+    args = mp.a;
     return kanbanModel().then(function (M) {
       var kd = readStore("oros-kanban-data");
       var r = kanbanWrite(M, op, kd, args, at || Date.now(), kbId);
@@ -3837,7 +3903,9 @@
       var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length + (Array.isArray(r.removed) ? r.removed.length : 0) + (r.renamed || 0));
       var outK = { done: r.text, ids: r.ids };
       if (Array.isArray(r.updated) && r.updated.length) outK.updated = r.updated;      // KB-KEY: cards found by key and brought up to date
-      return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify(outK) };
+      if (Array.isArray(r.adopted) && r.adopted.length) outK.adopted = r.adopted;    // KB-ADOPT: keyless cards that took their key by text
+      var made = kbMade(op, args, r);
+      return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify(outK), made: made.length ? made : undefined };
     }
   }
   // KB-SUBDEL: the texts of the subtasks a kanban_change_card would remove (for the question).

@@ -44,13 +44,18 @@ function sample() {
   ];
 }
 
-test("lists: names hold no secrets; index holds only fill values; never PIN, ID numbers, notes, history, fields", () => {
+test("lists: names hold no secrets; index holds only fill values; never PIN, notes, history, fields", () => {
   const l = A.lists(sample(), K, PC);
   assert.deepEqual(l.names.map((n) => n.t), ["Bank", "GitHub", "Visa", "Me", "Home"]);
   const names = JSON.stringify(l.names);
   for (const s of ["s3cret-pw", "4111", "123456789", "AB1234", SECRET, "0000", "do not send"]) assert.ok(!names.includes(s), "names: " + s);
   const idx = JSON.stringify(l.index);
-  for (const s of ["do not send", "old-pw", "4321", "0000", "123456789", "AB1234", "secret note"]) assert.ok(!idx.includes(s), "index: " + s);
+  for (const s of ["do not send", "old-pw", "4321", "0000", "secret note"]) assert.ok(!idx.includes(s), "index: " + s);
+  // PW-AF6: document numbers only in an identity's x (filled from a pick by hand)
+  const noX = JSON.stringify(l.index.map((r) => Object.assign({}, r, { x: undefined })));
+  for (const s of ["123456789", "AB1234"]) assert.ok(!noX.includes(s), "outside x: " + s);
+  assert.deepEqual(l.index[3].x, { tax: "123456789", pass: "AB1234" });
+  assert.ok(!("x" in l.index[4]), "an address has no document numbers");
   const bank = l.names[0];
   assert.deepEqual(bank.w, ["https://bank.example"]);
   assert.deepEqual(bank.a, ["com.bank.app"]);
@@ -214,7 +219,8 @@ test("PW-AF4: 2FA screens list only codes, matches by name need a confirm, Searc
   assert.match(svc, /if \(!card\) for \(Field x : f\.fields\) if \(x\.kind == AfMatch\.CVV\) x\.kind = AfMatch\.OTP;/);
   assert.match(svc, /"web:" \+ form\.host/);
   assert.match(auth, /if \(otp && e\.optJSONObject\("o"\) == null\) continue;/);
-  assert.match(auth, /dlg\.dismiss\(\);\s*confirm\(e\);/, "a pick also needs the confirm");
+  assert.match(auth, /dlg\.dismiss\(\);\s*then\.accept\(e\);/);
+  assert.match(auth, /chooser\(all, getString\(otp \? R\.string\.af_pick_title_otp : R\.string\.af_pick_title, place\(\)\), this::confirm, false\);/, "a pick also needs the confirm");
   assert.match(auth, /AfMatch\.part\(code, box\+\+, boxes\)/);
   // a browser names the page only by the label before the public suffix
   assert.match(m, /static String domainWord\(String host\)/);
