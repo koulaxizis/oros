@@ -1087,6 +1087,7 @@ export function pendApp(n, a, byRef) {
   if (/^kanban_/.test(n)) return "kanban";
   if (/^invoices_/.test(n)) return "invoices";
   if (/^files_/.test(n)) return "files";
+  if (FOLDER_ASKS.indexOf(n) >= 0) return "files";     // FOLDER-WAIT: a folder question is about the owner's files
   if (SCREEN_TOOLS[n]) return SCREEN_TOOLS[n];         // GATE-SCREEN: Layout's own tools…
   if (n === "edit_in_app") return typeof o.app === "string" ? o.app.toLowerCase() : "";
   const r = refsIn(o)[0];
@@ -1138,7 +1139,7 @@ export function pendNote(pend, apps) {
   const want = (x) => !apps || apps.indexOf(x) >= 0;
   // ≤ PEND_NOTE entries in all, newest first; more = how many were left out
   const all = pend.creates.filter((c) => want(c.app)).map((c) => ({ t: c.t, k: 0, o: { ref: c.ref, app: c.app, title: c.title, pending: true, asked: new Date(c.t).toISOString(), change_id: c.id } }))
-    .concat(pend.changes.filter((c) => c.apps.some(want)).map((c) => ({ t: c.t, k: 1, o: { change_id: c.id, tool: c.tool, app: c.app || undefined, board: c.board, summary: c.sum, refs: c.refs.length ? c.refs.slice(0, 10) : undefined, asked: new Date(c.t).toISOString(), pending: true } })));
+    .concat(pend.changes.filter((c) => (c.apps.length ? c.apps.some(want) : !apps)).map((c) => ({ t: c.t, k: 1, o: { change_id: c.id, tool: c.tool, app: c.app || undefined, board: c.board, summary: c.sum, refs: c.refs.length ? c.refs.slice(0, 10) : undefined, asked: new Date(c.t).toISOString(), pending: true } })));
   if (!all.length) return "";
   const keep = all.slice().sort((x, y) => y.t - x.t).slice(0, PEND_NOTE);
   const added = keep.filter((x) => x.k === 0).map((x) => x.o), changed = keep.filter((x) => x.k === 1).map((x) => x.o);
@@ -1167,6 +1168,19 @@ export function ageText(ms) {
   const h = Math.floor(m / 60);
   return h < 48 ? h + " h" : Math.floor(h / 24) + " days";
 }
+// GATE-WHO: the line every answer with orOS closed ends with
+export function closedWho(gid, seen, dv, now) {
+  const g = String(gid || "").replace(/[^A-Za-z0-9_-]/g, "").slice(0, 6), d = String(dv || "").replace(/[\u0000-\u001f\[\]]/g, " ").trim().slice(0, 40);
+  return "[orOS Gate " + (g || "?") + ": " + (seen ? "an orOS last reached this gate " + copyWhen(seen, now) + (d ? ", from " + d : "") : "no orOS has reached this gate yet") +
+    ". If the owner's orOS is open but this is old, it uses another gate: orOS › Settings › Connected services › orOS Gate shows each device's gate, and the owner reconnects the connector if it differs.]";
+}
+// FOLDER-WAIT: the folder questions waiting for the owner (open orOS, nobody answered yet)
+export function folderWaitNote(pend) {
+  const qs = (pend && Array.isArray(pend.changes) ? pend.changes : []).filter((c) => FOLDER_ASKS.indexOf(c.tool) >= 0);
+  if (!qs.length) return "";
+  return "\n[Questions waiting for the owner's answer on an orOS screen; undo_change with a change_id cancels one]\n" +
+    JSON.stringify({ waiting_questions: qs.slice(-PEND_NOTE).reverse().map((c) => ({ change_id: c.id, tool: c.tool, summary: c.sum, asked: new Date(c.t).toISOString(), pending: true })) });
+}
 export function copyWhen(at, now) {
   return new Date(at).toISOString() + ", " + ageText((now || Date.now()) - at) + " old";
 }
@@ -1194,7 +1208,12 @@ export function pendSum(n, a) {
     case "kanban_add_cards": return "add " + (Array.isArray(o.cards) ? o.cards.length : 0) + " card(s)" + on + ": " + few(o.cards, (c) => t(c && c.text, 40) + (c && c.key ? " [" + t(c.key, 40) + "]" : ""));
     case "kanban_move_cards": return "move " + (Array.isArray(o.moves) ? o.moves.length : 0) + " card(s)" + on + " to " + few(o.moves, (m) => t(m && m.column, 30));
     case "kanban_change_card": return "change card " + t(o.card, 40) + on;
-    case "kanban_add_columns": return "columns" + on + ": " + [Array.isArray(o.columns) ? "add " + few(o.columns, (c) => t(c && c.name, 30)) : "", Array.isArray(o.rename_columns) ? "rename " + few(o.rename_columns, (c) => t(c && c.column, 30) + " → " + t(c && c.name, 30)) : "", Array.isArray(o.portal_columns) ? "portal steps " + o.portal_columns.length : ""].filter(Boolean).join(", ");
+    case "kanban_add_columns": return (Array.isArray(o.columns) || Array.isArray(o.rename_columns) || Array.isArray(o.portal_columns) || !Array.isArray(o.add_labels) ? "columns" : "labels") + on + ": " + [Array.isArray(o.columns) ? "add " + few(o.columns, (c) => t(c && c.name, 30)) : "", Array.isArray(o.rename_columns) ? "rename " + few(o.rename_columns, (c) => t(c && c.column, 30) + " → " + t(c && c.name, 30)) : "", Array.isArray(o.portal_columns) ? "portal steps " + o.portal_columns.length : "",
+      // KB-LABSUM (Chris 2026-11-23): the labels it adds or recolours
+      Array.isArray(o.add_labels) ? (Array.isArray(o.columns) || Array.isArray(o.rename_columns) || Array.isArray(o.portal_columns) ? "labels " : "") + few(o.add_labels, (l) => { const x = l && typeof l === "object" ? l : { name: l }; return t(x.name, 40) + (typeof x.color === "string" && x.color ? " (" + t(x.color, 10) + ")" : ""); }) : ""].filter(Boolean).join(", ");
+    // FOLDER-WAIT: what a waiting folder question asks
+    case "claude_folders_request": return "asks the owner to open " + t(o.path, 120) + " for Claude" + (o.access === "write" ? " (read and write)" : "");
+    case "local_folders_request": return "asks the owner to open " + t(o.path, 120) + " on the computer for Claude" + (o.access === "write" ? " (read and write)" : "");
     default: return "";
   }
 }
@@ -3312,9 +3331,12 @@ export class GateBox {
     const tag = gid ? " (Claude's link is to the gate " + gid + "; orOS › Settings › Connected services › orOS Gate shows each device's gate. If it differs, the owner reconnects the connector.)" : "";
     if (ans.e === "closed") {
       const asleep = this.sockets().length > 0;       // 6.01.02: open, but no sign of life for aliveMs
-      ans = await this.closedCall(p.name, args, await this.unwrapK(tok), now);
+      const kC = await this.unwrapK(tok);
+      ans = await this.closedCall(p.name, args, kC, now);
       if (asleep && typeof ans.c === "string") ans.c = ans.c.split("orOS is closed").join("orOS is asleep in the background on the owner's device (as if closed)");
+      // GATE-WHO (Chris 2026-11-23): which gate this is and when an orOS last reached it
       if (!ans.ok && typeof ans.c === "string") ans.c += tag;
+      { const cpw = kC ? await this.readCopy(kC) : null; ans.who = closedWho(gid, m.seen || 0, cpw && typeof cpw.dv === "string" ? cpw.dv : "", now); }   // its own text part, so a JSON answer stays JSON
     }
     else if (ans.e === "timeout") {
       // 6.01.02: the device did not answer in time (asleep in the
@@ -3353,10 +3375,15 @@ export class GateBox {
                   ans.e === "timeout" && typeof ans.c === "string" ? ans.c.slice(0, 2000) :
                   ans.e === "timeout" ? "orOS did not answer in time. It may be asleep or busy; ask the owner." :
                   typeof ans.c === "string" ? ans.c.slice(0, 2000) : "orOS refused the call.";
-      return jsonRes(200, rpcOk(id, toolText(why, true)));
+      return jsonRes(200, rpcOk(id, toolText(why, true, ans.who)));
     }
     if (!READ_ONLY[p.name] && !(p.name === "edit_in_app" && args.dry_run === true)) await this.wakeAll(m, now);   // GATE-PL11: a dry run changes nothing
-    return jsonRes(200, rpcOk(id, toolText(typeof ans.c === "string" ? ans.c : "", false)));
+    // FOLDER-WAIT (Chris 2026-11-23): with orOS open, change_history also names the folder questions still waiting for the owner's answer on a screen
+    if (p.name === "change_history" && ans.e !== "closed" && typeof ans.c === "string") {
+      const kQ = await this.unwrapK(tok), pq = kQ ? await this.pending(kQ, null) : null;
+      if (pq) ans.c += folderWaitNote(pq);
+    }
+    return jsonRes(200, rpcOk(id, toolText(typeof ans.c === "string" ? ans.c : "", false, ans.who)));
   }
   // After a change: the owner's devices get one generic notification
   // ("Claude changed something in orOS"), at most once per wakeGapMs.
@@ -3380,4 +3407,6 @@ export class GateBox {
     await this.st.put("meta", m);
   }
 }
-export function toolText(text, isErr) { return { content: [{ type: "text", text: text }, { type: "text", text: VER_NOTE }], isError: !!isErr }; }   // GL-VER: each answer names the live tool list
+export function toolText(text, isErr, who) {   // GL-VER: each answer names the live tool list; GATE-WHO: a closed answer the gate
+  return { content: [{ type: "text", text: text }].concat(typeof who === "string" && who ? [{ type: "text", text: who }] : [], [{ type: "text", text: VER_NOTE }]), isError: !!isErr };
+}   // GL-VER: each answer names the live tool list

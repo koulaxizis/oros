@@ -264,6 +264,7 @@ test("tools/call: closed device, then a call answered by the device", async () =
   assert.equal(closed.result.isError, true);
   assert.match(closed.result.content[0].text, /orOS is closed and there is no copy/);
   assert.ok(closed.result.content[0].text.indexOf("the gate " + ID.slice(0, 6) + ";") > 0, "names the gate the link points to (5.90.00)");
+  assert.match(closed.result.content[1].text, new RegExp("^\\[orOS Gate " + ID.slice(0, 6) + ": "), "GATE-WHO: its own part names the gate and the last device");
   const b = w.boxes.get(ID);
   const sock = { sent: [], closed: null, send(m) { this.sent.push(m); setTimeout(() => {
     const q = JSON.parse(m);
