@@ -27,6 +27,9 @@ Take a picture of your whole screen, one window or a browser tab, crop it, and k
 - With `Open in Montage after saving` switched on, the video opens in [Montage](app:montage) to cut it or add music and titles.
 - A recording stays in memory until you save it, and stops by itself at 1 GB. Closing the app before saving loses it.
 
+## From Quick settings
+- Quick settings has a Screenshot button: a tap takes the whole screen, the arrow next to it offers Whole screen or Region. Your browser asks what to share, orOS takes one picture and stops sharing at once, then Screen Capture opens with it. For Region, drag over the part you want to keep, then Save to Pictures.
+
 ## Privacy
 - Nothing leaves this device. orOS only sees what you choose to share, and only while you share it.
 - With orOS sync switched on in [Settings](app:settings), your Pictures and Videos folders follow you to your other devices, encrypted, like any other file.

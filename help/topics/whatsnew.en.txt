@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.77.00
+- **Screenshot and search in Quick settings.** Quick settings has a Screenshot button: one tap takes the whole screen, its arrow offers Whole screen or Region, and Screen Capture opens with the picture to save in Files › Pictures. A search field at the top finds apps, files and settings, like the menu's search.
+
 ## Version 8.76.00
 - **Hot corners.** Push the mouse into a corner of the screen to open Overview, Quick settings or Notifications, or to show the desktop. Each of the four corners gets its own choice, with a short wait so a quick pass does nothing. Off at first, mouse only, this device only: Settings › System › Hot corners.
 

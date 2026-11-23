@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.76.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.77.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -4917,6 +4917,53 @@
     }
     try { sessionStorage.setItem("oros-open-at", JSON.stringify({ app: appId, target: t })); } catch (e) {}
     openApp(app);
+  };
+  // QS-SHOT-1: a screenshot from Quick settings. The browser's own
+  // screen picker opens right away (the tap counts as the gesture, which
+  // an app frame would not get), ONE frame is drawn here before Screen
+  // Capture opens (so the picture never shows Screen Capture itself),
+  // the sharing stops at once, and the picture is handed to Screen
+  // Capture through __orosTakeShot (in memory, once, for one minute).
+  // Screen Capture shows it to crop ("region": with the hint to drag)
+  // and saves it in Files › Pictures as always. No getDisplayMedia (a
+  // phone): Screen Capture opens as it is.
+  var shotHeld = null;
+  function shotTake(kind) {
+    var md = navigator.mediaDevices;
+    if (!md || typeof md.getDisplayMedia !== "function") { window.__orosOpenAt("capture", null); return; }
+    var p;
+    try {
+      p = md.getDisplayMedia({ video: { cursor: "never" }, audio: false, selfBrowserSurface: "include", surfaceSwitching: "exclude" });
+    } catch (e) { p = Promise.reject(e); }
+    p.then(function (st) {
+      var v = document.createElement("video"), done = false;
+      v.muted = true;
+      v.playsInline = true;
+      v.srcObject = st;
+      var stop = function () { st.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} }); v.srcObject = null; };
+      var draw = function () {
+        if (done) return;
+        done = true;
+        var w = v.videoWidth, h = v.videoHeight, cv = null;
+        if (w && h) {
+          cv = document.createElement("canvas");
+          cv.width = w; cv.height = h;
+          try { cv.getContext("2d").drawImage(v, 0, 0, w, h); } catch (e) { cv = null; }
+        }
+        stop();
+        shotHeld = cv ? { kind: kind, canvas: cv, at: Date.now() } : null;
+        window.__orosOpenAt("capture", { shot: kind });
+      };
+      // The picker's own window needs a moment to leave the screen.
+      v.addEventListener("loadeddata", function () { setTimeout(draw, 350); });
+      setTimeout(draw, 4000);
+      try { v.play().catch(function () {}); } catch (e) {}
+    }, function () {});
+  }
+  window.__orosTakeShot = function () {
+    var s = shotHeld;
+    shotHeld = null;
+    return s && Date.now() - s.at < 60000 ? { kind: s.kind, canvas: s.canvas } : null;
   };
   window.__orosTakeTarget = function (appId) {
     try {
@@ -18278,7 +18325,10 @@
         set: function (v) { setThemeUser(v); }
       },
       a11y: { get: a11ySnapshot, set: a11ySetUser },
-      media: qsMedia
+      media: qsMedia,
+      // QS-SHOT-1: the menu search and a screenshot (not in a single app).
+      search: SOLO ? null : function (text) { ovToMenu(String(text || "").slice(0, 200)); },
+      shot: SOLO ? null : function (kind) { if (hasApp("capture")) shotTake(kind === "region" ? "region" : "screen"); }
     });
   }
   // Clipboard history (cliphist.js, CLIP-1): what is copied inside orOS

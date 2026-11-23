@@ -27,6 +27,9 @@ Mach ein Bild von deinem ganzen Bildschirm, einem Fenster oder einem Browser-Tab
 - Mit `Nach dem Speichern in Montage öffnen` öffnet sich das Video in [Montage](app:montage), um es zu schneiden oder Musik und Titel hinzuzufügen.
 - Eine Aufnahme bleibt im Speicher, bis du sie speicherst, und stoppt bei 1 GB von selbst. Schließt du die App vorher, ist sie verloren.
 
+## Aus den Schnelleinstellungen
+- In den Schnelleinstellungen gibt es die Taste Bildschirmfoto: ein Tippen nimmt den ganzen Bildschirm auf, der Pfeil daneben bietet Ganzer Bildschirm oder Bereich. Dein Browser fragt, was du teilst, orOS macht ein Bild und beendet das Teilen sofort, dann öffnet sich die App mit dem Bild. Für Bereich ziehst du über den Teil, den du behalten willst, und tippst auf In Pictures speichern.
+
 ## Privatsphäre
 - Nichts verlässt dieses Gerät. orOS sieht nur, was du freigibst, und nur solange du es freigibst.
 - Ist der orOS-Sync in den [Einstellungen](app:settings) eingeschaltet, folgen dir deine Ordner Pictures und Videos verschlüsselt auf deine anderen Geräte, wie jede andere Datei.
