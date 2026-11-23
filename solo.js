@@ -224,6 +224,16 @@
       shortcuts: [{ do: "new", target: { newBase: true } },
                   { do: "last", target: { lastBase: true } }]
     },
+    // Wave 10 (SOLO-AS, Chris 2026-11-23, thread «Βοηθός από το κινητό
+    // χωρίς orOS»): the Assistant on its own, so a phone reaches it
+    // without the desktop: its icon, the orOS app's Quick Settings tile
+    // and widget button, and the share sheet (a shared text or link
+    // waits in the message box; nothing is sent before Send).
+    assistant: {
+      shortcuts: [{ do: "speak", target: { listen: 1 } },
+                  { do: "brief", target: { brief: 1 } }],
+      share: "ask"
+    },
     // Wave 6: every game in one app (Game Center is its home; a game
     // opened from it gets Back). files: other apps whose file types
     // this app's icon also opens (fileopen.js still routes them).
@@ -334,6 +344,9 @@
           "name.base": "orOS Base",
           "sc.base.new": "New base",
           "sc.base.last": "Last base",
+          "name.assistant": "orOS Assistant",
+          "sc.assistant.speak": "Speak",
+          "sc.assistant.brief": "Briefing",
           "name.gamecenter": "orOS Games",
           "sc.gamecenter.wordle": "Today's Wordle",
           "sc.gamecenter.crossword": "Today's crossword",
@@ -441,6 +454,9 @@
           "name.base": "orOS Βάση",
           "sc.base.new": "Νέα βάση",
           "sc.base.last": "Τελευταία βάση",
+          "name.assistant": "orOS Βοηθός",
+          "sc.assistant.speak": "Μίλα",
+          "sc.assistant.brief": "Ενημέρωση ημέρας",
           "name.gamecenter": "orOS Παιχνίδια",
           "sc.gamecenter.wordle": "Το σημερινό Wordle",
           "sc.gamecenter.crossword": "Το σημερινό σταυρόλεξο",
@@ -648,6 +664,16 @@
     }
     if (kind === "feed" || kind === "podcast") {
       return url ? { app: id, target: { add: { url: url } } } : null;
+    }
+    if (kind === "ask") {
+      // Assistant: the title, the text and the link wait in the message
+      // box (MAX_INPUT, 20000), ready to send.
+      // The link only when the text does not hold it already (Android
+      // puts it in the text; shareFromSearch's copy may end in "/").
+      var bare = url.replace(/\/$/, "");
+      var body = text + (url && text.indexOf(bare) === -1 ? (text ? "\n\n" : "") + url : "");
+      var ask = ((title && body.indexOf(title) !== 0 ? title + "\n\n" : "") + body).trim();
+      return ask ? { app: id, target: { ask: ask.slice(0, 20000) } } : null;
     }
     if (kind === "audio") {
       // Music: the link only; the app decides (song, playlist, feed).

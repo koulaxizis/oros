@@ -332,6 +332,13 @@ In `Settings` → `Internet`, `Let the assistant search the internet when an ans
 - Each choice shows its steps under `How to switch it on`. `Test` checks the key or the address. Keys are kept like the AI keys (sealed on this device, and synced only if you switch on key sync).
 - Only your description (and, to edit, the picture) goes to the service, straight from this device. No Google service is offered.
 
+## Speaking instead of typing
+The microphone next to `Send` turns what you say into text on this device, with the Whisper speech model. The sound never leaves the device, and the text waits in the message box: check it, change it if needed, then press `Send` yourself.
+- The first time it asks which model to download: `Small and quick` (about 53 MB, the one Montage, Lyric Sync and Notes use too) or `More accurate, better for Greek` (about 88 MB). It downloads once and then works offline.
+- Tap the microphone, speak, and tap it again. A recording stops by itself after two minutes.
+- `Settings` → `Voice input` shows the model on this device and removes it.
+- There is no speech recognition through the browser or Google: nothing you say goes to any service.
+
 ## Briefing
 On a new conversation, `Briefing` sums up your day in one answer: today's agenda, what is late, birthdays and other dates this week, and how this month's spending looks. [Today](app:today) has the same button (the sparkles at the top).
 - It runs only when you press it, never by itself, so it never costs anything you didn't ask for.
@@ -362,10 +369,11 @@ Select some text in any orOS app, then right-click it for a menu: `Copy`, `Expla
 - Don't want the button? Untick `Show an Assistant button under text I select` in `Edit this menu…` (per device).
 
 ## From outside orOS
-- On a computer, right-click the orOS icon in the taskbar or dock (on Android, press and hold the orOS app icon): `Ask the Assistant` opens orOS with the small Assistant window.
+- On a computer, right-click the orOS icon in the taskbar or dock (on Android, press and hold the orOS app icon): `Ask the Assistant` opens the Assistant on its own, without the desktop.
 - Share text or a link to orOS from another app (Android's `Share`): orOS asks where it should go, and `Assistant` is one of the choices. A link can also go to Bookmarks, Notes and the other apps as before.
 - With the `Send to orOS` browser add-on (1.1 and later), select text on any web page and right-click it: `Ask the orOS Assistant about …` opens orOS with the text in the Assistant's box. The text travels after the `#` of the address, which browsers never send to a server.
-- In the Android app: an Assistant button on the `orOS Today` and `orOS quick add` widgets, and an `orOS Assistant` tile you can add to Quick Settings (pull down the notifications, then the pencil).
+- In the Android app: an Assistant button on the `orOS Today` and `orOS quick add` widgets, and an `orOS Assistant` tile you can add to Quick Settings (pull down the notifications, then the pencil). Both open the Assistant on its own, without the desktop.
+- The Assistant as its own app: install `orOS Assistant` (Settings › Apps › `Available single apps`, the download page, or the `Koulaxizis Apps` manager on Android). It has its own icon and window, the same conversations, keys and permissions as the Assistant in orOS, a `Speak` and `Briefing` shortcuts on its icon, and on Android it takes texts and links shared from other apps straight into its message box.
 - Each way only opens the Assistant with the text ready; nothing is sent until you press `Send`.
 
 ## Privacy: what leaves your device

@@ -370,6 +370,30 @@ test("wave 9 (gap review proposal 10): orOS Library and orOS Base, file types, s
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
+test("wave 10 (SOLO-AS): orOS Assistant on its own, Briefing shortcut, shares wait in the box", () => {
+  const pk = JSON.parse(read("android/solo-apps.json")).apps;
+  assert.equal(pk.assistant, "online.useoros.assistant");
+  assert.equal(S.pkgOf("assistant"), "online.useoros.assistant");
+  assert.equal(S.nameOf("assistant", "en"), "orOS Assistant");
+  assert.equal(S.nameOf("assistant", "el"), "orOS Βοηθός");
+  assert.deepEqual(S.shortcut("assistant", "brief").target, { brief: 1 });
+  assert.match(read("assistant/assistant.js"), /tg && tg\.brief === 1 && !busy/);
+  // a share: title, text and link wait in the message box, never sent by themselves
+  assert.deepEqual(S.shareTarget("assistant", { url: "https://example.org/", title: "Title", text: "Read https://example.org" }, new Date()),
+    { app: "assistant", target: { ask: "Title\n\nRead https://example.org" } });
+  assert.deepEqual(S.shareTarget("assistant", { url: "https://a.b/x", title: "", text: "" }, new Date()), { app: "assistant", target: { ask: "https://a.b/x" } });
+  assert.equal(S.shareTarget("assistant", { url: "", title: "", text: "  " }, new Date()), null);
+  assert.equal(S.shareTarget("assistant", { url: "", title: "", text: "x".repeat(30000) }, new Date()).target.ask.length, 20000);
+  assert.match(read("assistant/assistant.js"), /if \(tg\.send === 1\) send\(\);/);   // only a menu task sends by itself
+  const m = S.manifestFor("assistant", F.table(), BASE);
+  assert.equal(m.share_target.action, "/assistant/solo.html?share-target");
+  assert.ok(!m.file_handlers, "no file types of its own");
+  // German store texts
+  const t = JSON.parse(read("tools/fdroid/assistant/texts.json"));
+  ["en", "el", "de"].forEach((l) => assert.ok([...t[l].summary].length <= 80 && t[l].description.length > 200, l));
+  assert.equal(t.de.name, "orOS Assistent");
+});
+
 test("the download page lists every single app and its APK, in English and Greek (APP-LISTS L4)", () => {
   const html = read("download/index.html");
   const i = html.indexOf('<article lang="el"');
