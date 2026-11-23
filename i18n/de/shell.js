@@ -1204,6 +1204,7 @@ orosPack("de", "shell", {
  "lock.info.next": "Weiter",
  "lock.info.prev": "Zurück",
  "lock.look.bat": "Akku {n}%",
+ "lock.power": "Ruhezustand, Neustart oder Herunterfahren",
  "lock.look.batCharging": "Lädt · {n}%",
  "lock.enterPin": "Gib deine PIN ein",
  "lock.enterPass": "Gib dein Kennwort ein",
