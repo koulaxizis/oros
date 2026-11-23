@@ -78,6 +78,7 @@ orosPack("de", "time", {
  "pl.you": "Du",
  "pm.break": "Pause",
  "pm.done": "{n} Einheit(en) abgeschlossen",
+ "pm.paused": "Pausiert über den Fokus-Timer auf dem Desktop",
  "pm.log": "Fokus in Zeiterfassung eintragen",
  "pm.log.hint": "Jede Fokuseinheit kommt als Aufgabe „Pomodoro“ in die Zeiterfassung. Hörst du früher auf, werden die Minuten eingetragen, die du fokussiert warst.",
  "pm.log.none": "Kein Projekt",

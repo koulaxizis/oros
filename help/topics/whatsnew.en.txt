@@ -3,6 +3,12 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.82.00
+- **A Focus timer on the desktop.** The new Focus timer widget runs Time's Pomodoro from the desktop: Focus or Break, the minutes left, Start, Pause and Resume, Skip and 5 minutes more or less. Time and the widget always show the same leg.
+
+## Version 8.81.00
+- **Find a wallpaper, Random, and pictures from a folder.** Above the wallpapers, Find a wallpaper narrows them by name and Random puts on another one. From a folder lets the pictures of a folder in Files (Pictures/Wallpapers at first) take turns as your wallpaper, every day or at each start. Nothing syncs.
+
 ## Version 8.80.00
 - **Motion feel.** Choose how apps, menus and panels move: Calm, Lively (as before) or Bouncy. Reduce motion always wins. Settings › Appearance › Motion feel, this device only.
 

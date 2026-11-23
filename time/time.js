@@ -93,6 +93,7 @@
       "pm.start": "Start", "pm.reset": "Reset", "pm.work": "Work", "pm.break": "Break",
       "pm.phase.work": "Focus", "pm.phase.break": "Break",
       "pm.done": "{n} session(s) completed",
+      "pm.paused": "Paused on the desktop Focus timer",
       "pm.log": "Log focus in Timesheet", "pm.log.off": "Don't log", "pm.log.none": "No project",
       "pm.log.hint": "Each focus session is added to Timesheet as the task “Pomodoro”. Stopping early logs the minutes you focused.",
       "sn.title": "Snooze", "sn.5": "5 min", "sn.10": "10 min", "sn.15": "15 min",
@@ -138,6 +139,7 @@
       "pm.start": "Έναρξη", "pm.reset": "Επαναφορά", "pm.work": "Εργασία", "pm.break": "Διάλειμμα",
       "pm.phase.work": "Εστίαση", "pm.phase.break": "Διάλειμμα",
       "pm.done": "{n} ολοκληρωμένες περίοδοι",
+      "pm.paused": "Σε παύση από το χρονόμετρο Εστίασης της επιφάνειας",
       "pm.log": "Καταγραφή στις Ώρες εργασίας", "pm.log.off": "Χωρίς καταγραφή", "pm.log.none": "Χωρίς έργο",
       "pm.log.hint": "Κάθε περίοδος εστίασης προστίθεται στις Ώρες εργασίας ως εργασία «Pomodoro». Αν σταματήσεις νωρίτερα, γράφονται τα λεπτά που δούλεψες.",
       "sn.title": "Αναβολή", "sn.5": "5 λεπτά", "sn.10": "10 λεπτά", "sn.15": "15 λεπτά",
@@ -1560,6 +1562,7 @@
   window.addEventListener("storage", function (ev) {
     if (ev.key === TMR_KEY) { tmrLoad(); tmrRender(); }
     if (ev.key === SW_KEY) { swLoad(); swRender(); }
+    if (ev.key === PMRUN_KEY) pmReload();   // FOCUS-W: the desktop timer
   });
   document.addEventListener("visibilitychange", function () {
     if (document.visibilityState === "visible") { tmrLoad(); tmrReconcile(); tmrRender(); swLoad(); swRender(); }
@@ -1681,6 +1684,7 @@
   /* ---------- 10. Pomodoro ---------- */
   var pmPhase = "work", pmRunning = false, pmEnd = 0, pmAlarmId = null;
   var pmStart = 0, pmLogged = false;   // Wave 7: the focus leg logged in Timesheet
+  var pmLeft = 0;                      // FOCUS-W: ms left of a leg paused on the desktop
 
   /* ---------- 10a. Timesheet link (Timesheet Wave 7, BR-TS-POMO) ---------- */
   // Time never writes Timesheet's data. A focus leg is put in the
@@ -1751,16 +1755,18 @@
   }
   function pmLen() { return (pmPhase === "work" ? state.pmWork : state.pmBreak) * 60 * 1000; }
   function pmPaint() {
-    var left = pmRunning ? Math.max(0, pmEnd - Date.now()) : pmLen();
+    var left = pmRunning ? Math.max(0, pmEnd - Date.now()) : (pmLeft || pmLen());
     var sec = Math.ceil(left / 1000);
     $("pm-display").textContent = pad(Math.floor(sec / 60)) + ":" + pad(sec % 60);
     $("pm-phase").textContent = t(pmPhase === "work" ? "pm.phase.work" : "pm.phase.break");
     $("pm-count").textContent = t("pm.done").replace("{n}", state.pmDone);
     $("pm-start").textContent = t(pmRunning ? "st.stop" : "pm.start");
+    $("pm-paused").hidden = pmRunning || !pmLeft;
   }
   function pmStop() {
     if (pmRunning) pmLogStop();
     pmRunning = false;
+    pmLeft = 0;
     if (pmAlarmId) { alarmsApi.remove(pmAlarmId); pmAlarmId = null; }
     pmRunSave();      // T4: stopped by hand — clear the runtime record
     pmPaint();
@@ -1768,7 +1774,8 @@
   $("pm-start").addEventListener("click", function () {
     if (pmRunning) { pmStop(); return; }
     pmStart = Date.now();
-    pmEnd = pmStart + pmLen();
+    pmEnd = pmStart + (pmLeft || pmLen());   // FOCUS-W: a paused leg goes on
+    pmLeft = 0;
     var id = alarmsApi.add({
       at: pmEnd,
       label: t(pmPhase === "work" ? "pm.phase.break" : "pm.phase.work")
@@ -1822,9 +1829,18 @@
   // never synced.
   var PMRUN_KEY = "oros-time-pmrun";
 
+  // FOCUS-W (desktop Focus timer, widgets.js 1.6.0): the same record
+  // also holds a paused leg { phase, left, paused: 1 } and the next leg
+  // { phase: "break", idle: 1 }, and the widget may add done: n, Focus
+  // legs that ended while Time was closed, which Time counts here.
   function pmRunSave() {
     try {
-      if (!pmRunning) { localStorage.removeItem(PMRUN_KEY); return; }
+      if (!pmRunning) {
+        if (pmLeft) localStorage.setItem(PMRUN_KEY, JSON.stringify({ phase: pmPhase, left: pmLeft, paused: 1 }));
+        else if (pmPhase === "break") localStorage.setItem(PMRUN_KEY, JSON.stringify({ phase: "break", idle: 1 }));
+        else localStorage.removeItem(PMRUN_KEY);
+        return;
+      }
       localStorage.setItem(PMRUN_KEY, JSON.stringify({
         phase: pmPhase, end: pmEnd, alarmId: pmAlarmId, start: pmStart, logged: pmLogged ? 1 : 0
       }));
@@ -1834,7 +1850,22 @@
   function pmRunRestore() {
     var rt = null;
     try { rt = JSON.parse(localStorage.getItem(PMRUN_KEY)); } catch (e) { return; }
-    if (!rt || typeof rt.end !== "number" || !isFinite(rt.end)) return;
+    if (!rt || typeof rt !== "object") return;
+    // FOCUS-W: Focus legs the desktop timer saw end
+    if (typeof rt.done === "number" && rt.done >= 1 && rt.done < 100) {
+      state.pmDone += Math.floor(rt.done);
+      saveState();
+      delete rt.done;
+      try { localStorage.setItem(PMRUN_KEY, JSON.stringify(rt)); } catch (e) {}
+    }
+    if (rt.paused && typeof rt.left === "number" && isFinite(rt.left) && rt.left > 0) {
+      pmPhase = rt.phase === "break" ? "break" : "work";
+      pmLeft = Math.min(120 * 60000, Math.round(rt.left));
+      pmPaint();
+      return;
+    }
+    if (rt.idle) { pmPhase = rt.phase === "break" ? "break" : "work"; pmPaint(); return; }
+    if (typeof rt.end !== "number" || !isFinite(rt.end)) return;
     if (rt.end > Date.now()) {
       // Leg still running: resume only if the engine alarm survived
       var alive = rt.alarmId && alarmsApi.list().some(function (a) {
@@ -1858,7 +1889,13 @@
     pmPhase = rt.phase === "work" ? "break" : "work";
     pmRunning = false;
     pmAlarmId = null;
-    localStorage.removeItem(PMRUN_KEY);
+    pmRunSave();      // FOCUS-W: a Break comes next (kept for the desktop timer)
+    pmPaint();
+  }
+  // FOCUS-W: the desktop timer changed the leg while Time is open.
+  function pmReload() {
+    pmRunning = false; pmAlarmId = null; pmLeft = 0; pmPhase = "work"; pmLogged = false;
+    pmRunRestore();
     pmPaint();
   }
 
