@@ -1,7 +1,7 @@
 # Darstellung
 Gestalte orOS so, wie es dir gefällt: Sprache, helles oder dunkles Design, Farbskin, Hintergrundbild, saisonale Deko, ein Bildschirm-Haustier und das Wetter in der oberen Leiste. Das meiste davon findest du in der App [Einstellungen](app:settings) unter `Darstellung`: Öffne das Menü und wähle `Einstellungen`. Das Wetter in der oberen Leiste stellst du in der Wetter-App ein.
 
-`Mach es zu deinem`, die erste Karte der `Darstellung`, bringt das Aussehen von orOS an einen Ort, mit einer kleinen Vorschau des Desktops: Hintergrund (und `Zufällig`), Farbe, `Akzentfarbe aus dem Hintergrund`, das Aussehen der oberen Leiste, das Dock und seine Seite, das Bewegungsgefühl, die Oberflächenklänge und das Aussehen des Sperrbildschirms. Jede Wahl ist dieselbe Einstellung wie an ihrem eigenen Platz weiter unten (und unter `Bildschirmsperre`); wo du sie auch änderst, beide bleiben gleich.
+`Mach es zu deinem`, die erste Karte der `Darstellung`, bringt das Aussehen von orOS an einen Ort, mit einer kleinen Vorschau des Desktops: `Hintergrundbild wählen` (führt zur Karte `Hintergrund` weiter unten, dem einen Ort, an dem du es wählst), Farbe, `Akzentfarbe aus dem Hintergrund`, das Aussehen der oberen Leiste, das Dock und seine Seite, das Bewegungsgefühl, die Oberflächenklänge und das Aussehen des Sperrbildschirms. Jede Wahl ist dieselbe Einstellung wie an ihrem eigenen Platz weiter unten (und unter `Bildschirmsperre`); wo du sie auch änderst, beide bleiben gleich.
 
 ## Schnelleinstellungen
 Die Schaltfläche am rechten Ende der oberen Leiste (die Symbole für Netzwerk und Ein/Aus) öffnet die Schnelleinstellungen, wie auf einem Linux-Desktop. [[Ctrl+Alt+Shift+M]] öffnet sie ebenfalls.
