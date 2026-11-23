@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.93.00
+- **Claude's questions don't get lost.** When Claude asks to open a folder and you are not at the screen, orOS keeps a notice «Claude is waiting for your answer» (on your phone too) until you answer. Claude also sees which questions are still waiting, and which orOS Gate it talks to and when one of your devices last reached it.
+
 ## Version 8.92.01
 - **Contracts once in Calendar.** A contract you already have as your own event in Calendar no longer shows a second time from CRM on its end day. Your own event and its note stay as they are.
 

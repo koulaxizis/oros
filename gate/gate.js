@@ -3099,7 +3099,7 @@
       if (skipped) ans.__skipped = String(skipped);
       var body = JSON.stringify({ lv: p.lv || {}, hold: typeof p.hold === "number" ? p.hold : 0, ans: ans });
       if (body === copyLast && Date.now() - copyAt < 6 * 3600000) return;      // nothing new
-      return seal(k, JSON.stringify({ at: Date.now(), lv: p.lv || {}, hold: typeof p.hold === "number" ? p.hold : 0, ans: ans })).then(function (sealed) {
+      return seal(k, JSON.stringify({ at: Date.now(), lv: p.lv || {}, hold: typeof p.hold === "number" ? p.hold : 0, ans: ans, dv: devName() })).then(function (sealed) {   // GATE-WHO: the device, in the sealed copy only
         if (!ws || ws.readyState !== 1) return;
         ws.send(JSON.stringify({ snap: sealed }));
         copyLast = body; copyAt = Date.now();
@@ -3400,6 +3400,24 @@
   // Nobody at a screen (hidden, background host, locked) → __held, and
   // the box keeps it for the next device on screen. → Promise of the
   // answer to Claude.
+  // FOLDER-WAIT (Chris 2026-11-23): a folder question nobody answered here
+  // stays as a notice (synced, so the phone shows it too) until it is
+  // answered; it opens Settings › orOS Gate, and orOS on screen asks again.
+  var askNotes = {};
+  function askNotice(kind, shown, how) {
+    try {
+      var N = root.orosNotifs, key = "gate-ask:" + kind + ":" + fold(shown).slice(0, 200) + ":" + Math.floor(Date.now() / 86400000);
+      if (!N) return;
+      if (how === "none") {
+        if (askNotes[key] || typeof N.emit !== "function") return;
+        var id = N.emit({ ns: "system", key: key, type: "gate-ask", title: tr("gate.ask.note"), body: tr("gate.ask.noteBody").replace("{path}", shown), deepLink: "gate:asks", ttlDays: 30 });
+        if (id) askNotes[key] = id;
+      } else if (askNotes[key]) {
+        if (typeof N.markAsRead === "function") N.markAsRead(askNotes[key]);
+        delete askNotes[key];
+      }
+    } catch (e) {}
+  }
   function localAsk(args, p) {
     var L = localL();
     if (!L) return Promise.resolve({ ok: false, c: "This orOS has no local folders yet; ask the owner to update orOS." });
@@ -3413,7 +3431,7 @@
     if (same) return Promise.resolve({ ok: true, a: [], k: 0, c: "Already open for Claude: local:" + same.name + " (" + typed + "), " + (mode === "w" ? "write (new files only)" : "read") + ", until " + new Date(same.exp).toISOString().slice(0, 10) + ". Nothing was asked." });
     return new Promise(function (ok) {
       var settled = false, wrap = null;
-      function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+      function end(v, how) { if (settled) return; settled = true; askLast = how; askNotice("pc", typed, how); if (wrap) wrap.remove(); ok(v); }
       if (offScreen() || locked() || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
       var body = tr(mode === "w" ? "gate.lf.bodyW" : "gate.lf.bodyR").replace("{days}", String(days));
       var list = typed + (why ? "\n\n" + tr("gate.lf.why").replace("{why}", why) : "");
@@ -3448,7 +3466,7 @@
       var why = typeof args.reason === "string" ? args.reason.replace(/\s+/g, " ").trim().slice(0, 300) : "";
       return new Promise(function (ok) {
         var settled = false, wrap = null;
-        function end(v, how) { if (settled) return; settled = true; askLast = how; if (wrap) wrap.remove(); ok(v); }
+        function end(v, how) { if (settled) return; settled = true; askLast = how; askNotice("disk", CF.show(path), how); if (wrap) wrap.remove(); ok(v); }
         if (offScreen() || locked() || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
         var list = CF.show(path) + (why ? "\n\n" + tr("gate.lf.why").replace("{why}", why) : "");
         wrap = dialog(tr("gate.cf.title"), tr(wantW ? "gate.cf.bodyW" : "gate.cf.bodyR"), list, tr("gate.lf.no"), tr("gate.lf.yes"),

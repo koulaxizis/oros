@@ -856,6 +856,11 @@ counter. No orOS data in the clear, no request or answer, nothing logged.
   `add_labels` with a colour recolours a label the board has
   (KB-RECOLOR); `adopt_by_text` gives a key to the one keyless card
   with the same text (KB-ADOPT); both wait for `KB_PREF_MV` when queued.
+- **Closed answers name the gate (GATE-WHO):** with orOS closed every
+  answer has a text part «[orOS Gate abc123: an orOS last reached this
+  gate <time>, from <device>]»; the device name lives only in the sealed
+  copy (`dv`). Folder questions that wait show in waiting_changes and
+  change_history (FOLDER-WAIT).
 - **The tool list's version (GL-VER):** `TOOLS_VER` is a short hash of
   `TOOLS`; `gate_tools`' description names it and every answer carries
   `VER_NOTE` with the live one, so a conversation with an older list
