@@ -1024,6 +1024,20 @@
       return c.to === ymd && !(x && x.end) && byId(data.cust, c.cust);
     }).sort(function (a, b) { return cmpStr(fold(a.t), fold(b.t)) || cmpStr(a.id, b.id); });
   }
+  // CAL-CTR-DUP: does a Calendar event title already name this
+  // contract? (an event someone wrote by hand or through Gate before
+  // CTR-ALL, e.g. «Λήξη: Ισαβέλλα Πρίτσα – «Carpe Noctem» (Έντυπο)»).
+  // Accents, case, ς/σ, quote marks and spaces do not count; the whole
+  // contract title (edition included) must be inside the event title,
+  // so «X» (Έντυπο) never matches «X» (Ψηφιακό) or «X, Χριστούγεννα».
+  // Titles under 4 letters never match.
+  function ctrKey(s) {
+    return fold(s).replace(/[«»"“”„'‘’]/g, "").replace(/\s+/g, " ").trim();
+  }
+  function ctrNamedBy(c, title) {
+    var k = ctrKey(c && c.t);
+    return k.length >= 4 && ctrKey(title).indexOf(k) !== -1;
+  }
   // Revenue Splitter 1.14 (POST /rs/contracts): every contract with an
   // end, under the partner's Revenue Splitter name (its first linked
   // one, else the partner's name). No note, value or file ever leaves.
@@ -1827,7 +1841,7 @@
     SOON_DAYS: SOON_DAYS, CX_KINDS: CX_KINDS, normCx: normCx, normCset: normCset, cxOf: cxOf, cxRow: cxRow, ctrFmt: ctrFmt, ctrBook: ctrBook, addYears: addYears,
     ctrFupId: ctrFupId, ctrSnooze: ctrSnooze, ctrFupDay: ctrFupDay, ctrInfo: ctrInfo, ctrAll: ctrAll, ctrDash: ctrDash, ctrTitle: ctrTitle, ctrForTitle: ctrForTitle,
     RT_RIGHTS: RT_RIGHTS, RT_STATUS: RT_STATUS, normRt: normRt, rtPerp: rtPerp, rtOf: rtOf, rtRow: rtRow, rtStatus: rtStatus, rtCovers: rtCovers, rightsBoard: rightsBoard,
-    ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, portalPayload: portalPayload, portalPlan: portalPlan,
+    ctrHeal: ctrHeal, ctrEndsOn: ctrEndsOn, ctrNamedBy: ctrNamedBy, portalPayload: portalPayload, portalPlan: portalPlan,
     normPt: normPt, ptOf: ptOf, rolesOf: rolesOf, hasRole: hasRole, lnOf: lnOf, rolesRow: rolesRow,
     linksOf: linksOf, linkOwner: linkOwner, linkMove: linkMove
   };
