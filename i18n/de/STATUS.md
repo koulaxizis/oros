@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52581 of 52609 (99%)
+- Strings: 52590 of 52618 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -77,7 +77,7 @@ en and el); translators change them there, not in a pack.
 | help | 100% | 15 / 15 |
 | hexagon | 100% | 60 / 60 |
 | hive | 100% | 186 / 186 |
-| household | 100% | 143 / 143 |
+| household | 100% | 142 / 142 |
 | invoices | 100% | 693 / 693 |
 | jigsaw | 100% | 90 / 90 |
 | kanban | 100% | 379 / 379 |
@@ -139,10 +139,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2053 / 2053 |
+| settings | 100% | 2058 / 2058 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1633 / 1633 |
+| shell | 100% | 1640 / 1640 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -160,7 +160,7 @@ en and el); translators change them there, not in a pack.
 | stickies | 100% | 125 / 125 |
 | stock | 100% | 813 / 813 |
 | storage | 100% | 179 / 179 |
-| studio | 100% | 948 / 948 |
+| studio | 100% | 946 / 946 |
 | sudoku | 100% | 139 / 139 |
 | television | 100% | 234 / 234 |
 | tetris | 100% | 60 / 60 |
