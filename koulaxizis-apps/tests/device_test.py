@@ -110,6 +110,23 @@ def node_with(root, text):
     return None
 
 
+def by_id(root, rid):
+    """The visible node with this resource id (the layout's own name, not its text)."""
+    for n in [] if root is None else root.iter("node"):
+        if (n.get("resource-id") or "").endswith(":id/" + rid):
+            return n
+    return None
+
+
+def page_of(root, name):
+    """An app's page is open with this app's name in its header. Checked by the
+    page's own views, not by "About this app": with screenshots (or a long
+    summary) that heading starts below a small screen and uiautomator does not
+    list it (Remote for Mixers 4.2 got its screenshots on 2026-11-22)."""
+    n = by_id(root, "d_name")
+    return n is not None and n.get("text") == name and by_id(root, "d_action") is not None
+
+
 def search_and_pages():
     """APPS-M5: the search bar filters, a card opens its page, Back goes back."""
     root = dump()
@@ -124,18 +141,22 @@ def search_and_pages():
     root, name = wait_for(lambda r: node_with(r, "Remote for Mixers"), "the search result")
     shot("search")
     adb("shell", "input", "tap", *map(str, center(name)))
-    wait_for(lambda r: "About this app" in texts(r), "the page of Remote for Mixers", 30)
+    wait_for(lambda r: page_of(r, "Remote for Mixers"), "the page of Remote for Mixers", 30)
     shot("app-page")
-    # uiautomator lists only the visible part of the page: scroll down to its Details.
-    for _ in range(10):
-        if any("Package: tech.nulljsfx.remote.mixers" in t for t in texts(dump())):
+    # uiautomator lists only the visible part of the page: scroll down past
+    # "About this app" to its Details.
+    about = False
+    for _ in range(15):
+        t = texts(dump())
+        about = about or "About this app" in t
+        if about and any("Package: tech.nulljsfx.remote.mixers" in x for x in t):
             break
         swipe(True)
         time.sleep(1)
     else:
-        raise SystemExit("no Details with the package on the page of Remote for Mixers")
+        raise SystemExit("no About this app and Details with the package on the page of Remote for Mixers")
     adb("shell", "input", "keyevent", "KEYCODE_BACK")  # closes the page, the search stays
-    wait_for(lambda r: "Remote for Mixers" in texts(r) and "About this app" not in texts(r)
+    wait_for(lambda r: "Remote for Mixers" in texts(r) and by_id(r, "d_name") is None
              and "orOS Drive" not in texts(r), "Back to the search", 30)
     adb("shell", "input", "keyevent", "KEYCODE_BACK")  # empties the search: the home screen again
     wait_for(lambda r: "orOS Drive" in texts(r), "Back to the whole list", 30)
@@ -158,7 +179,7 @@ def search_and_pages():
     shot("app-page-screenshots")
     adb("shell", "input", "keyevent", "KEYCODE_BACK")
     adb("shell", "input", "keyevent", "KEYCODE_BACK")
-    wait_for(lambda r: "orOS Drive" in texts(r) and "About this app" not in texts(r), "the home screen", 30)
+    wait_for(lambda r: "orOS Drive" in texts(r) and by_id(r, "d_name") is None, "the home screen", 30)
 
 
 def main():

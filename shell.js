@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.85.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.90.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -16800,6 +16800,13 @@
   function closeMenu() {
     document.getElementById("app-menu").classList.remove("open");
   }
+  // CAPQ-1: Screen Capture clears the screen before a recording starts:
+  // the menu, Quick settings and the notifications panel close.
+  window.__orosCalmScreen = function () {
+    try { closeMenu(); } catch (e) {}
+    closeNotifPanel();
+    try { if (window.orosQS && typeof window.orosQS.close === "function") window.orosQS.close(); } catch (e) {}
+  };
 
   // ---------- 12. Wiring & boot ----------
   document.getElementById("btn-menu").addEventListener("click", function (e) {

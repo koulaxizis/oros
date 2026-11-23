@@ -7,11 +7,11 @@ const assert = require("node:assert/strict");
 const C = require("../capture/core.js");
 
 test("options: unknown values fall back to the defaults", () => {
-  const def = { mode: "shot", delay: 0, cursor: true, edit: false, sys: true, mic: false, montage: false };
+  const def = { mode: "shot", delay: 0, cursor: true, edit: false, sys: true, mic: false, montage: false, res: "auto", fps: 30, q: "std" };
   assert.deepEqual(C.prefs(null), def);
   assert.deepEqual(C.prefs({ mode: "video", delay: 7, cursor: "no", edit: 1, mic: "yes" }), def);
   assert.deepEqual(C.prefs({ mode: "rec", delay: 5, cursor: false, edit: true, sys: false, mic: true, montage: true }),
-    { mode: "rec", delay: 5, cursor: false, edit: true, sys: false, mic: true, montage: true });
+    { mode: "rec", delay: 5, cursor: false, edit: true, sys: false, mic: true, montage: true, res: "auto", fps: 30, q: "std" });
 });
 
 test("file names sort by time and have no characters Windows refuses", () => {

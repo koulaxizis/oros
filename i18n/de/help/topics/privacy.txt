@@ -23,6 +23,8 @@ Auf einem Computer, den auch andere nutzen, schalte in den [Einstellungen](app:s
 
 Auf einem Android-Handy (orOS-App oder orOS Passwords) öffnet sich die Sperre auch mit Fingerabdruck oder Gesicht, und auf einem Computer mit orOS Portable, der orOS-App oder orOS USB mit Windows Hello oder einem Fingerabdruck; deine PIN funktioniert weiter und wird alle 14 Tage abgefragt.
 
+Auf orOS USB, Portable und dem installierten orOS hat der Sperrbildschirm unten auch `Ruhezustand`, `Neustart` und `Herunterfahren`: einmal tippen, dann innerhalb von 5 Sekunden noch einmal. Im Browser gibt es sie nicht.
+
 ### Zwischenablage-Verlauf
 Der `Zwischenablage-Verlauf` in den [Einstellungen](app:settings) (System) ist aus, bis du ihn einschaltest, auf jedem Gerät. Dann behält orOS den Text, den du in seinen Apps kopierst oder ausschneidest (bis zu 30 Kopien, für 1 Stunde, 1 Tag oder 7 Tage), und [[Ctrl+Alt+Shift+V]] oder `Zwischenablage` in den Schnelleinstellungen zeigt sie; ein Tippen kopiert eine erneut. Er sieht nur Kopien aus orOS-Apps, nie, was du in anderen Programmen kopierst. Er behält nie etwas aus Passwörter oder Einstellungen, aus Passwortfeldern oder 2FA-Links und nichts, solange der Bildschirm gesperrt oder [Sensible Arbeit](help:t/sensitive) an ist (das Einschalten vergisst auch die Liste). Die Liste bleibt auf diesem Gerät: Sie wird nie synchronisiert und ist in keiner Sicherung. Bilder werden nicht behalten. Ausschalten vergisst alles.
 

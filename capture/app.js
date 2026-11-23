@@ -76,6 +76,14 @@
       "opt.sys":       "Record the sound of the screen or tab",
       "opt.mic":       "Record the microphone",
       "opt.montage":   "Open in Montage after saving",
+      "opt.res": "Resolution",
+      "opt.res.auto": "As shared",
+      "opt.fps": "Frames a second",
+      "opt.q": "Quality",
+      "opt.q.low": "Low (smaller file)",
+      "opt.q.std": "Standard",
+      "opt.q.high": "High (larger file)",
+      "opt.size": "About {n} MB a minute. The menu, Quick settings and notifications close when recording starts.",
       "btn.rec":       "Start recording",
       "btn.pause":     "Pause",
       "btn.resume":    "Resume",
@@ -137,6 +145,14 @@
       "opt.sys":       "Εγγραφή του ήχου της οθόνης ή της καρτέλας",
       "opt.mic":       "Εγγραφή του μικροφώνου",
       "opt.montage":   "Άνοιγμα στο Μοντάζ μετά την αποθήκευση",
+      "opt.res": "Ανάλυση",
+      "opt.res.auto": "Όπως μοιράζεται",
+      "opt.fps": "Καρέ ανά δευτερόλεπτο",
+      "opt.q": "Ποιότητα",
+      "opt.q.low": "Χαμηλή (μικρότερο αρχείο)",
+      "opt.q.std": "Κανονική",
+      "opt.q.high": "Υψηλή (μεγαλύτερο αρχείο)",
+      "opt.size": "Περίπου {n} MB το λεπτό. Το μενού, οι Γρήγορες ρυθμίσεις και οι ειδοποιήσεις κλείνουν όταν ξεκινά η εγγραφή.",
       "btn.rec":       "Έναρξη εγγραφής",
       "btn.pause":     "Παύση",
       "btn.resume":    "Συνέχεια",
@@ -275,6 +291,14 @@
     $("opt-sys").checked = prefs.sys;
     $("opt-mic").checked = prefs.mic;
     $("opt-montage").checked = prefs.montage;
+    $("opt-res").value = prefs.res;
+    $("opt-q").value = prefs.q;
+    [].forEach.call($("fps").children, function (b) {
+      var on = Number(b.getAttribute("data-fps")) === prefs.fps;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+    });
+    $("q-size").textContent = t("opt.size", { n: C.mbPerMin(prefs, prefs.sys || prefs.mic) });
     var recMode = prefs.mode === "rec";
     [].forEach.call($("mode").children, function (b) {
       var on = b.getAttribute("data-mode") === prefs.mode;
@@ -322,7 +346,7 @@
     if (!supported()) { renderOptions(); return; }
     var wantSound = prefs.mode === "rec" && prefs.sys;
     var opts = {
-      video: { cursor: prefs.cursor ? "always" : "never" },
+      video: prefs.mode === "rec" ? C.recVideo(prefs) : { cursor: prefs.cursor ? "always" : "never" },   // CAPQ-1
       audio: wantSound,
       selfBrowserSurface: "include",   // orOS itself is a fine thing to capture
       surfaceSwitching: "include"
@@ -413,15 +437,19 @@
 
   function startRec() {
     if (!stream || rec || counting) return;
+    calmScreen();
     countdown(function () {
       if (!stream) return;
+      calmScreen();                 // CAPQ-1: a panel opened during the countdown goes too
       micStream().then(function (mic) {
         if (!stream || rec) { if (mic) mic.getTracks().forEach(function (tr) { tr.stop(); }); return; }
         var type = C.recType(function (x) {
           return typeof MediaRecorder.isTypeSupported !== "function" || MediaRecorder.isTypeSupported(x);
         });
         var parts = recStream(mic), mr;
-        try { mr = new MediaRecorder(parts.stream, type ? { mimeType: type } : {}); }
+        var mo = { videoBitsPerSecond: C.videoBps(prefs), audioBitsPerSecond: C.AUDIO_BPS };   // CAPQ-1
+        if (type) mo.mimeType = type;
+        try { mr = new MediaRecorder(parts.stream, mo); }
         catch (e) {
           if (mic) mic.getTracks().forEach(function (tr) { tr.stop(); });
           if (parts.ctx) parts.ctx.close();
@@ -446,6 +474,11 @@
         $("b-end").focus();
       });
     });
+  }
+
+  // CAPQ-1: the menu, Quick settings and notifications close in orOS.
+  function calmScreen() {
+    try { var p = window.parent; if (p && p !== window && typeof p.__orosCalmScreen === "function") p.__orosCalmScreen(); } catch (e) {}
   }
 
   function recMs(r) {
@@ -786,8 +819,13 @@
     $("b-drop").addEventListener("click", discard);
     $("opt-cursor").addEventListener("change", function () { prefs.cursor = this.checked; savePrefs(); });
     $("opt-edit").addEventListener("change", function () { prefs.edit = this.checked; savePrefs(); });
-    $("opt-sys").addEventListener("change", function () { prefs.sys = this.checked; savePrefs(); });
-    $("opt-mic").addEventListener("change", function () { prefs.mic = this.checked; savePrefs(); });
+    $("opt-sys").addEventListener("change", function () { prefs.sys = this.checked; savePrefs(); renderOptions(); });
+    $("opt-mic").addEventListener("change", function () { prefs.mic = this.checked; savePrefs(); renderOptions(); });
+    $("opt-res").addEventListener("change", function () { prefs.res = this.value; savePrefs(); renderOptions(); });
+    $("opt-q").addEventListener("change", function () { prefs.q = this.value; savePrefs(); renderOptions(); });
+    [].forEach.call($("fps").children, function (b) {
+      b.addEventListener("click", function () { prefs.fps = Number(b.getAttribute("data-fps")) === 60 ? 60 : 30; savePrefs(); renderOptions(); });
+    });
     $("opt-montage").addEventListener("change", function () { prefs.montage = this.checked; savePrefs(); });
     [].forEach.call($("mode").children, function (b) {
       b.addEventListener("click", function () { prefs.mode = b.getAttribute("data-mode"); savePrefs(); renderOptions(); });

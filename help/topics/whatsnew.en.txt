@@ -3,6 +3,25 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.90.00
+- **About this device.** Settings › System › About this device shows the orOS form, browser, system, screen and storage, with Copy details for a problem report; nothing personal is copied.
+
+## Version 8.89.00
+- **Claude keeps Kanban tidy.** Claude can give a card its own key and later update that same card (and move it to another column) instead of adding a copy. It can also make labels, and through orOS Gate it can tell at once when a board does not exist, even while orOS is closed.
+- **Links on Kanban cards.** A card can hold web addresses (https) and paths on the orOS disk. Open a card and find them under «Links». A card with one link shows a button that opens it straight away.
+
+## Version 8.88.00
+- **Sleep, Restart and Shut down on the lock screen.** On orOS USB, Portable and the installed orOS, the lock screen has Sleep, Restart and Shut down at its foot: tap once, then again within 5 seconds.
+
+## Version 8.87.00
+- **Claude can make a Kanban board.** Through orOS Gate, Claude (and the Assistant, after you press Add) can make a new Kanban board with its columns. There is never a second board with the same name, and Undo removes the board while it is still empty and as it was made.
+
+## Version 8.86.00
+- **Screen Capture quality.** Choose the Resolution (as shared, 1080p, 720p or 480p), Frames a second (30 or 60) and Quality (Low, Standard or High); Screen Capture says about how many MB a minute takes. When a recording starts, the menu, Quick settings and notifications close so they stay out of the video.
+
+## Version 8.85.01
+- **Koulaxizis Apps checks.** The automatic phone test of the Koulaxizis Apps manager finds an app's page reliably again, now that the NULL JSFX remotes show screenshots. Nothing changes in the app.
+
 ## Version 8.85.00
 - **Terms of use and Details.** New pages on useoros.online: the terms of use (the free software and the paid services on the Support page) and the Details page with who makes orOS and how to reach them. Both are linked from the privacy policy and the page footers, in English, Greek and German.
 - **AI pictures stay marked when you export.** A picture made by AI in Atelier or Photo Lab keeps its AI mark in PNG, PDF, PowerPoint, PSD and OpenRaster exports.

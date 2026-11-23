@@ -1131,6 +1131,13 @@ dialog textarea { resize: vertical; min-height: 70px; }
 }
 .info-row input[type="text"] { min-width: 0; }
 
+/* KB-LINK: the card's links in the dialog (open | remove) and the add row */
+.link-row { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; margin-bottom: 6px; }
+.link-row .link-open { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: start; }
+.link-add { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: center; }
+.link-add input[type="text"] { min-width: 0; }
+.lane-chip.link-chip { cursor: pointer; background: none; font-family: inherit; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 /* Dashed "+ add" ghost button inside dialogs */
 dialog button.ghost {
   display: inline-flex;

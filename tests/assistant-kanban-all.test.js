@@ -131,7 +131,7 @@ test("wiring: assistant.js builds the kanban summary from every board; core.js t
   const a = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
   assert.match(a, /if \(a\.app === "kanban" && !a\.brief\) return/);       // the Briefing keeps only what is due
   assert.match(a, /days: x\.days, brief: true \}/);
-  assert.match(a, /S\.kanbanBoards\(readStore\("oros-kanban-data"\), \{ board: a\.board, today: today \}\)/);
+  assert.match(a, /S\.kanbanBoards\(readStore\("oros-kanban-data"\), \{ board: a\.board, today: today, boardsOnly: a\.boards_only === true \}\)/);
   const c = fs.readFileSync(path.join(ROOT, "assistant/core.js"), "utf8");
   assert.match(c, /kanban \(EVERY board/);
   assert.match(c, /board: \{ type: "string", description: "kanban: one board's name/);

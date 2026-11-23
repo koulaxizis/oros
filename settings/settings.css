@@ -967,3 +967,4 @@ html[data-oros-motion="reduce"] .my-win.my-play { animation: none; }
 .my-walls { display: flex; gap: 8px; overflow-x: auto; padding: 2px 2px 6px; scrollbar-width: thin; }
 .my-walls .my-wall { flex: 0 0 72px; min-height: 44px; }
 .my-swatches { margin-top: 2px; }
+.ab-val { font-weight: 600; text-align: right; overflow-wrap: anywhere; }

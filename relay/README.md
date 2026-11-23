@@ -844,7 +844,7 @@ counter. No orOS data in the clear, no request or answer, nothing logged.
   `invoice_list`, `stock_items`, `publish_titles`; change tools:
   `budget_add`, `budget_change`, `budget_delete` (destructive),
   `kanban_add_cards`, `kanban_move_cards`, `kanban_change_card`,
-  `kanban_add_columns` (5.72.00). The
+  `kanban_add_columns` (5.72.00), `kanban_add_board` (KB-BOARD). The
   relay only describes them; the device checks every call again (the
   app's level, a pause, the lock) and asks the person itself
   before more than 5 deletions.

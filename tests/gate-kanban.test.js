@@ -31,7 +31,7 @@ const col = (d, id) => d.boards[0].columns.find((c) => c.id === id);
 const cardIn = (d, cid) => col(d, cid).cards.map((k) => k.id);
 
 test("WRITES offers the Kanban tools; templates and archived boards are refused", () => {
-  assert.deepEqual(G.WRITES.kanban, ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"]);
+  assert.deepEqual(G.WRITES.kanban, ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "kanban_add_board"]);
   assert.equal(G.canWrite({ kanban: "write" }, 0, "kanban", NOW), true);
   assert.equal(G.canWrite({ kanban: "read" }, 0, "kanban", NOW), false);
   for (const b of ["Template", "Old", "tpl-x", "Nope"]) {

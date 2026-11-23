@@ -726,7 +726,7 @@
       "do.hint": "Nothing happens until you press the button; then {app} opens.",
       "chg.err": "Could not prepare a change in {app}",
       "chg.storage": "it could not be saved (storage full?)",
-      "kbap.step": "a step", "kbap.nostep": "not a step", "kbap.finish": "finish", "kbap.nofinish": "not a finish",
+      "kb.label": "label", "kbap.step": "a step", "kbap.nostep": "not a step", "kbap.finish": "finish", "kbap.nofinish": "not a finish",
       "chg.conflict": "the item changed meanwhile",
       "chg.ask.many": "Change these {n} items in {app}?",
       "chg.ask.manyDel": "Delete these {n} items from {app}?",
@@ -1409,7 +1409,7 @@
       "do.hint": "Δεν γίνεται τίποτα μέχρι να πατήσεις το κουμπί· τότε ανοίγει: {app}.",
       "chg.err": "Δεν ετοιμάστηκε αλλαγή ({app})",
       "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
-      "kbap.step": "βήμα", "kbap.nostep": "όχι βήμα", "kbap.finish": "τερματισμός", "kbap.nofinish": "όχι τερματισμός",
+      "kb.label": "ετικέτα", "kbap.step": "βήμα", "kbap.nostep": "όχι βήμα", "kbap.finish": "τερματισμός", "kbap.nofinish": "όχι τερματισμός",
       "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
       "chg.ask.many": "Αλλαγή σε αυτά τα {n} στοιχεία ({app});",
       "chg.ask.manyDel": "Διαγραφή αυτών των {n} στοιχείων από: {app};",
@@ -3456,6 +3456,7 @@
     if (call.name === "list_fonts") return listFonts(call.args);
     if (LINE_APPS[call.name]) return lineTool(c, call.name, call.args, apps);
     if (call.name === "kanban_add_columns") return kanbanColumns(c, call.args, apps);
+    if (call.name === "kanban_add_board") return kanbanColumns(c, call.args, apps, "add_board");   // KB-BOARD
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
@@ -3533,6 +3534,11 @@
         var names = [];
         shared.forEach(function (it) { if (names.indexOf(it.appName) < 0) names.push(it.appName); });
         var info = { declined: held, blocked: blocked, unknown: unknown };
+        // KB-FIND (Chris 2026-11-23): boards and columns whose name holds the words
+        if (q && byId.kanban && byId.kanban.perm === "always" && ids.indexOf("kanban") >= 0 && S && typeof S.kanbanNameHits === "function") {
+          var kb = S.kanbanNameHits(readStore("oros-kanban-data"), q);
+          if (kb.length) info.boards = kb;
+        }
         if (lf) {
           info.label = C.isNoLabel(label) ? "none" : label;
           var more = {};
@@ -6776,7 +6782,7 @@
     // Kanban (KB-ALL): every board, not only the one open in Kanban;
     // its cards' due dates are in the list, so no agenda on top. The
     // Briefing (brief) keeps the agenda: only what is due.
-    if (a.app === "kanban" && !a.brief) return Promise.resolve(S.kanbanBoards(readStore("oros-kanban-data"), { board: a.board, today: today }));
+    if (a.app === "kanban" && !a.brief) return Promise.resolve(S.kanbanBoards(readStore("oros-kanban-data"), { board: a.board, today: today, boardsOnly: a.boards_only === true }));   // KB-LIST
     // AS-STRUCT: how the app is organised and its items, with refs.
     // One list of To-Do by name; Notes, Bookmarks, Contacts, Media
     // Shelf and Library always (the Briefing keeps only the agenda).
@@ -6943,19 +6949,23 @@
     return !!gateCore() && chgApps.some(function (a) { return a.id === "kanban"; });
   }
   function kbId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }   // = kanban.js uid
-  function kanbanColumns(c, args, apps) {
+  // op "add_board" (KB-BOARD): a new board, its name on the first row (unticked = nothing), then its columns
+  function kanbanColumns(c, args, apps, op) {
+    op = op === "add_board" ? op : "add_columns";
     var G = gateCore(), app = null;
     changeApps(apps).forEach(function (x) { if (x.id === "kanban") app = x; });
     if (!app || !G) return Promise.resolve({ content: "Error: the user does not let the assistant change Kanban.", err: 1 });
     args = args && typeof args === "object" ? args : {};
     var cols = Array.isArray(args.columns) ? args.columns : [];
-    var rens = Array.isArray(args.rename_columns) ? args.rename_columns : [];   // KB-COLREN
-    var aps = Array.isArray(args.portal_columns) ? args.portal_columns : [];    // KB-COLAP
+    var rens = op === "add_columns" && Array.isArray(args.rename_columns) ? args.rename_columns : [];   // KB-COLREN
+    var aps = op === "add_columns" && Array.isArray(args.portal_columns) ? args.portal_columns : [];    // KB-COLAP
+    var labs = Array.isArray(op === "add_board" ? args.labels : args.add_labels) ? (op === "add_board" ? args.labels : args.add_labels) : [];   // KB-LABEL
+    var nb = op === "add_board" ? 1 : 0;
     return coreOf("OrosKanbanModel", "../kanban/model.js").then(function (M) {
       var key = "oros-kanban-data";
-      var test = G.kanbanWrite(M, "add_columns", readStore(key), args, Date.now(), kbId);
+      var test = G.kanbanWrite(M, op, readStore(key), args, Date.now(), kbId);
       if (!test.ok) return { content: "Error: " + test.err + " Nothing was saved.", err: 1, ui: { k: "chgErr", app: app.name } };
-      var rows = rens.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: "← " + String(x && x.column || "").slice(0, 60) }; })
+      var rows = (nb ? [{ title: String(args.name || "").slice(0, 60), sub: "Kanban" }] : []).concat(rens.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: "← " + String(x && x.column || "").slice(0, 60) }; })
         .concat(aps.map(function (x) {
           x = x && typeof x === "object" ? x : {};
           var bits = [];
@@ -6964,27 +6974,31 @@
           if (typeof x.about === "string" && x.about) bits.push(x.about.slice(0, 80));
           return { title: "Author Portal · " + String(x.column || "").slice(0, 60), sub: bits.join(" · ") };
         }))
-        .concat(cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; }));
+        .concat(cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; }))
+        .concat(labs.map(function (x) { return { title: String(x && x.name || "").slice(0, 40), sub: t("kb.label") + (x && x.color ? " · " + String(x.color) : "") }; })));
       var base = { k: "create", app: app.name, rows: rows };
       return askCreate(app.name, rows, false).then(function (ok) {
         if (!ok) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
-        var pick = { board: args.board }, pr = rens.filter(function (x, i) { return !ok.skip[i]; }),
-          pp = aps.filter(function (x, i) { return !ok.skip[rens.length + i]; }), pc = cols.filter(function (x, i) { return !ok.skip[rens.length + aps.length + i]; });
+        var pick = nb ? { name: args.name } : { board: args.board }, pr = rens.filter(function (x, i) { return !ok.skip[nb + i]; }),
+          pp = aps.filter(function (x, i) { return !ok.skip[nb + rens.length + i]; }), pc = cols.filter(function (x, i) { return !ok.skip[nb + rens.length + aps.length + i]; }),
+          pl = labs.filter(function (x, i) { return !ok.skip[nb + rens.length + aps.length + cols.length + i]; });
+        if (nb && (ok.skip[0] || !pc.length)) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not make the board. Nothing was saved." }), ui: base }; }
         if (pr.length) pick.rename_columns = pr;
         if (pp.length) pick.portal_columns = pp;
         if (pc.length) pick.columns = pc;
-        if (!pr.length && !pp.length && !pc.length) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
-        var res = G.kanbanWrite(M, "add_columns", readStore(key), pick, Date.now(), kbId);
+        if (pl.length) pick[nb ? "labels" : "add_labels"] = pl;
+        if (!pr.length && !pp.length && !pc.length && !pl.length) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
+        var res = G.kanbanWrite(M, op, readStore(key), pick, Date.now(), kbId);
         if (!res.ok) { base.st = "failed"; base.msg = res.err; return { content: "Error: " + res.err + " Nothing was saved.", err: 1, ui: base }; }
         if (!writeStore(key, res.data)) { base.st = "failed"; base.msg = t("chg.storage"); return { content: "Error: the columns could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base }; }
         markAppDirty();
         var uid = newId();
-        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: (pick.rename_columns || []).concat(pick.columns || []).map(function (x) { return String(x.name); })
+        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: (nb ? [{ name: pick.name }] : []).concat(pick.rename_columns || []).concat(pick.columns || []).concat(pick.labels || pick.add_labels || []).map(function (x) { return String(x.name); })
           .concat((pick.portal_columns || []).map(function (x) { return "Author Portal · " + String(x.column); })) });
         base.st = "done";
         base.u = uid;
         base.added = rows.map(function (r, i) { return i; }).filter(function (i) { return !ok.skip[i]; });
-        return { content: JSON.stringify({ app: "kanban", done: res.text, ids: res.ids, note: "The user added the columns. They can undo it." }), ui: base };
+        return { content: JSON.stringify({ app: "kanban", done: res.text, ids: res.ids, note: nb ? "The user made the board. They can undo it." : "The user added the columns. They can undo it." }), ui: base };
       });
     }, function () { return { content: "Error: Kanban could not be loaded; try again in a moment.", err: 1 }; });
   }
@@ -9837,6 +9851,18 @@
       }, function () {});
     }, Promise.resolve()).then(function () { return out; });
   }
+  // KB-HIST (Chris 2026-11-23): change_history with orOS closed applies
+  // its app / from / to to the copy, so the copy keeps the whole list
+  // of these apps (30 days, at most 500, as change_history shows it;
+  // gate.js sendCopy, ans.__hist). → Promise<[entry]>, newest first.
+  function gateHist(ids) {
+    var ok = {};
+    (Array.isArray(ids) ? ids : []).forEach(function (id) { ok[id] = 1; });
+    return histLoad().then(function () {
+      var now = Date.now();
+      return C.histForModel(C.histPrune(histList(), now).keep.filter(function (e) { return ok[e.app]; }), now);
+    });
+  }
   // 7.44.00: what these refs are ([{ a: app name, t: title }]), for the
   // owner's question before a queued deletion (gate.js askQueued).
   function gatePeek(refs) {
@@ -10282,7 +10308,7 @@
                             var end = function (r) { gateAt = 0; return r; };
                             return gateRun(n, a).then(function (r) { end(); if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; },
                                                       function (e) { end(); throw e; });
-                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText, editPack: gateEditPack,
+                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText, editPack: gateEditPack, hist: gateHist,
                           // PEND-1: the ref of an item another device made from a queued create_items
                           ref: function (rec) { if (!rec || typeof rec !== "object" || typeof rec.app !== "string") return ""; gateRefsLoad(); var r = refFor(gateConv, { app: rec.app, target: rec.target, title: String(rec.title || ""), q: String(rec.title || ""), id: rec.id }); gateRefsSave(); return r; },
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };

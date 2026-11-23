@@ -7,9 +7,9 @@
   <script>if (window.top === window.self && (!/[?&]standalone\b/.test(location.search) || localStorage.getItem("oros-lock"))) location.replace("../?open=kanban" + (location.search || location.hash ? "&app-at=" + encodeURIComponent(location.search + location.hash) : ""));</script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Kanban · orOS</title>
-  <link rel="stylesheet" href="../fonts.css?v=8.85.00">
-  <link rel="stylesheet" href="../emptykit.css?v=8.85.00">
-  <link rel="stylesheet" href="kanban.css?v=8.85.00">
+  <link rel="stylesheet" href="../fonts.css?v=8.90.00">
+  <link rel="stylesheet" href="../emptykit.css?v=8.90.00">
+  <link rel="stylesheet" href="kanban.css?v=8.90.00">
 </head>
 <body>
 
@@ -142,6 +142,16 @@
         <span data-i18n="card.info.add">Add field</span>
       </button>
 
+      <!-- KB-LINK: links shown as buttons on the card (https or a path on the orOS disk); KB-KEY: the key a routine gave it -->
+      <label for="c-link-url" data-i18n="card.links">Links</label>
+      <div id="c-links-list"></div>
+      <div class="link-add">
+        <input type="text" id="c-link-url" autocomplete="off" inputmode="url" data-i18n-ph="card.links.ph" placeholder="https://… or /Folder/file">
+        <button type="button" id="c-link-add" class="ghost" data-i18n="card.links.add">Add link</button>
+      </div>
+      <div class="dlg-hint" id="c-link-err" role="alert" hidden></div>
+      <div class="dlg-hint" id="c-key" hidden></div>
+
       <!-- AP-FLOW: shown to its creator in the Author Portal (only on a board with step columns) -->
       <div id="c-ap" hidden>
         <label data-i18n="ap.title">Author Portal</label>
@@ -245,19 +255,19 @@
   <!-- Undo / feedback toast -->
   <div id="toast" role="status"></div>
 
-  <script src="../i18n.js?v=8.85.00" data-app="kanban,links"></script>
-  <script src="../links/core.js?v=8.85.00"></script>
-  <script src="../links/sheets.js?v=8.85.00"></script>
-  <script src="../links/kanban.js?v=8.85.00"></script>
-  <script src="../importkit.js?v=8.85.00"></script>
-  <script src="import.js?v=8.85.00"></script>
-  <script src="model.js?v=8.85.00"></script>
-  <script src="tools.js?v=8.85.00"></script>
-  <script src="../crm/core.js?v=8.85.00"></script>
-  <script src="../crm/rs.js?v=8.85.00"></script>
-  <script src="../bundle.js?v=8.85.00"></script>
-  <script src="../emptykit.js?v=8.85.00"></script>
-  <script src="kanban.js?v=8.85.00"></script>
-  <script src="../pickers.js?v=8.85.00" defer></script>
+  <script src="../i18n.js?v=8.90.00" data-app="kanban,links"></script>
+  <script src="../links/core.js?v=8.90.00"></script>
+  <script src="../links/sheets.js?v=8.90.00"></script>
+  <script src="../links/kanban.js?v=8.90.00"></script>
+  <script src="../importkit.js?v=8.90.00"></script>
+  <script src="import.js?v=8.90.00"></script>
+  <script src="model.js?v=8.90.00"></script>
+  <script src="tools.js?v=8.90.00"></script>
+  <script src="../crm/core.js?v=8.90.00"></script>
+  <script src="../crm/rs.js?v=8.90.00"></script>
+  <script src="../bundle.js?v=8.90.00"></script>
+  <script src="../emptykit.js?v=8.90.00"></script>
+  <script src="kanban.js?v=8.90.00"></script>
+  <script src="../pickers.js?v=8.90.00" defer></script>
 </body>
 </html>
