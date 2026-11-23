@@ -367,41 +367,16 @@
     c.id = "my-card";
     c.appendChild(el("p", "hint", t("my.hint")));
     c.appendChild(yoursPreview(s));
-    // Wallpaper: one picker only, the Wallpaper card below (YOURS-2,
-    // Chris 2026-11-23: the strip here showed the same wallpapers twice).
-    // This button takes you there, to the one that is on.
-    if (s.wallpapers) {
-      c.appendChild(row(t("a.wallpaper"), button(t("my.wall"), "y-wall-go", function () {
-        var g = $("wall-card");
-        if (!g) return;
-        if (typeof g.scrollIntoView === "function") g.scrollIntoView({ block: "start" });
-        var f = g.querySelector(".wall.on") || $("f-wall-find");
-        if (f) { try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); } }
-      })));
-    }
-    // Colour: the skins, and Accent from wallpaper
-    if (s.skins) {
-      var sw = el("div", "swatches my-swatches");
-      sw.setAttribute("role", "radiogroup");
-      sw.setAttribute("aria-label", t("a.skin"));
-      s.skins.forEach(function (k) {
-        var on = k.id === s.skin;
-        var b = el("button", "swatch" + (on ? " on" : ""));
-        b.type = "button";
-        b.setAttribute("role", "radio");
-        b.setAttribute("aria-checked", on ? "true" : "false");
-        b.setAttribute("data-k", "y-skin:" + k.id);
-        b.title = k.name;
-        b.setAttribute("aria-label", k.name);
-        b.style.background = k.color;
-        b.addEventListener("click", function () { set("skin", k.id); });
-        sw.appendChild(b);
-      });
-      var cr = row(t("my.colour"), null, { stack: true });
-      cr.appendChild(sw);
-      c.appendChild(cr);
-      if (s.wpaccent) c.appendChild(row(t("a.wpacc"), switchBtn(!!s.wpaccent.on, "y-wpaccent", function (v) { set("wpaccent:on", v); }, t("a.wpacc"))));
-    }
+    // Wallpaper and colour: one picker each, their own cards below
+    // (YOURS-2, Chris 2026-11-23: the strip and the swatches here showed
+    // the same choices twice). These buttons take you there, to the
+    // choice that is on.
+    if (s.wallpapers) c.appendChild(row(t("a.wallpaper"), button(t("my.wall"), "y-wall-go", function () {
+      yoursGo("wall-card", ".wall.on", "f-wall-find");
+    })));
+    if (s.skins) c.appendChild(row(t("my.colour"), button(t("my.skin"), "y-skin-go", function () {
+      yoursGo("skin-card", ".swatch.on", null);
+    })));
     // The top bar's look
     if (s.smartbar && s.smartbar.looks) {
       var ls = select(s.smartbar.looks.map(function (v) { return { value: v, label: t("sb.look." + (v || "classic")) }; }),
@@ -443,6 +418,15 @@
       c.appendChild(actions(button(t("my.lock"), "y-lock", function () { current = "lock"; saveUi(); render(); $("page").scrollTop = 0; })));
     }
     host.appendChild(c);
+  }
+  // YOURS-2: scroll to a card of this page and focus its chosen item
+  // (else the field `alt`, else the card's first button).
+  function yoursGo(cardId, onSel, alt) {
+    var g = $(cardId);
+    if (!g) return;
+    if (typeof g.scrollIntoView === "function") g.scrollIntoView({ block: "start" });
+    var f = g.querySelector(onSel) || (alt && $(alt)) || g.querySelector("button");
+    if (f) { try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); } }
   }
   // A small desktop: the wallpaper, the top bar in its look, an app
   // window in the accent (it opens again when the motion feel changes)
@@ -494,6 +478,7 @@
     if (s.night) secNight(host, s.night);
 
     var c2 = card(t("a.skin"), "skin");
+    c2.id = "skin-card";                       // YOURS-2: "Make it yours" scrolls here
     var sw = el("div", "swatches");
     sw.setAttribute("role", "radiogroup");
     sw.setAttribute("aria-label", t("a.skin"));
