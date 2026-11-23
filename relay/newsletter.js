@@ -25,7 +25,9 @@ export const NL_LIMITS = {
   lists: 5000,          // lists in all
   pull: 200,            // rows per pull
   pubJson: 1024,        // the public key JWK
-  back: 300             // the "thank you" address
+  back: 300,            // the "thank you" address
+  keepMs: 90 * 86400000, // a sign-up nobody pulled is deleted after 90 days (purgeNl)
+  purgeBatch: 500        // rows per purge statement
 };
 
 export class NlError extends Error {
@@ -36,6 +38,10 @@ export const SQL = {
   list: "CREATE TABLE IF NOT EXISTS nl_list (k TEXT PRIMARY KEY, pub TEXT NOT NULL, sec TEXT NOT NULL, back TEXT, at INTEGER NOT NULL)",
   queue: "CREATE TABLE IF NOT EXISTS nl_q (id INTEGER PRIMARY KEY AUTOINCREMENT, k TEXT NOT NULL, kind TEXT NOT NULL, v TEXT NOT NULL, at INTEGER NOT NULL)",
   index: "CREATE INDEX IF NOT EXISTS nl_q_k ON nl_q (k, id)",
+  indexAt: "CREATE INDEX IF NOT EXISTS nl_q_at ON nl_q (at)",
+  // Only sign-ups ('s') expire; an unsubscribe ('u') waits until its
+  // list pulls it, so nobody stays subscribed because a device was away.
+  purge: "DELETE FROM nl_q WHERE id IN (SELECT id FROM nl_q WHERE at < ?1 AND kind = 's' ORDER BY at LIMIT ?2)",
   getList: "SELECT pub, sec, back, oc FROM nl_list WHERE k = ?1",
   countLists: "SELECT COUNT(*) AS n FROM nl_list",
   addList: "INSERT INTO nl_list (k, pub, sec, back, at, oc) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
@@ -65,7 +71,7 @@ function db(env) {
   if (!d || typeof d.prepare !== "function") throw new NlError("nostore", 503, "sign-ups are not set up on this relay");
   if (schemaFor !== d || !schemaP) {
     schemaFor = d;
-    schemaP = d.batch([d.prepare(SQL.list), d.prepare(SQL.queue), d.prepare(SQL.index)])
+    schemaP = d.batch([d.prepare(SQL.list), d.prepare(SQL.queue), d.prepare(SQL.index), d.prepare(SQL.indexAt)])
       .catch((e) => { schemaP = null; throw e; });
   }
   return schemaP.then(() => d);
@@ -88,6 +94,24 @@ async function withOc(d, fn) {
   }
 }
 function listRow(d, k) { return withOc(d, () => q(d, SQL.getList, k).first()); }
+
+// Hourly cron (worker.js): sign-ups older than NL_LIMITS.keepMs that the
+// list's orOS never pulled leave the database, in batches. No NL_DB, no
+// work; storage trouble is swallowed and nothing about it is logged.
+export async function purgeNl(env, now, rounds) {
+  let gone = 0;
+  if (!env || !env.NL_DB || typeof env.NL_DB.prepare !== "function") return 0;
+  try {
+    const d = await db(env);
+    for (let r = 0; r < (rounds || 10); r++) {
+      const res = await q(d, SQL.purge, now - NL_LIMITS.keepMs, NL_LIMITS.purgeBatch).run();
+      const n = (res && res.meta && res.meta.changes) || 0;
+      gone += n;
+      if (n < NL_LIMITS.purgeBatch) break;
+    }
+  } catch (e) { /* next hour */ }
+  return gone;
+}
 
 // ---------- small helpers ----------
 function b64(bytes) {

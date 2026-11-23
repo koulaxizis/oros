@@ -1,7 +1,7 @@
 # Privacy and offline use
 orOS is built to keep your data yours. It has no accounts, no cookies and no tracking, and it keeps working when you lose your connection.
 
-The full privacy policy is on the web: [useoros.online/privacy.html](https://useoros.online/privacy.html).
+The full privacy policy is on the web: [useoros.online/privacy.html](https://useoros.online/privacy.html). It also lists what the orOS relay keeps and for how long, the legal basis for each use, and your rights.
 
 Working on something sensitive, or with sources? Read [Sensitive work and sources](help:t/sensitive).
 
@@ -29,9 +29,9 @@ On an Android phone (the orOS app or orOS Passwords) the lock can also open with
 In the list, the pin keeps a copy until you unpin it (up to 10; `Clear all` leaves them), the search box finds a copy by its words, and the paste button puts a copy straight into the text field you were last in, in the app on screen. Typing `clipboard` in the command bar opens the list too.
 
 ## Encrypted sync
-Sync is optional and uses your own Dropbox account. orOS only works in its own app folder there.
+Sync is optional and uses your own Dropbox account (orOS only works in its own app folder there) or your own WebDAV or Nextcloud server.
 
-Before anything leaves your device, orOS encrypts it with your encryption passphrase (`Encryption passphrase`). The passphrase never leaves this device, so Dropbox can't read your data. A new passphrase needs at least 10 characters.
+Before anything leaves your device, orOS encrypts it with your encryption passphrase (`Encryption passphrase`). The passphrase never leaves this device, so Dropbox or your server can't read your data. A new passphrase needs at least 10 characters.
 
 - If you tick `Remember on this device`, the passphrase is kept locked inside this browser, so you don't have to type it every time. `Forget on this device` removes it.
 - Nobody can recover a lost passphrase, not even orOS. Write it down somewhere safe.
@@ -62,7 +62,7 @@ orOS itself runs from your device, but some apps need the internet for what they
 - [CRM](app:crm): only if you make a `Web form`, what visitors send with it goes through the orOS relay, encrypted for your CRM, and is kept there at most 30 days until your CRM picks it up.
 - [Assistant](app:assistant): only the AI service you choose, with your own key, straight from your browser.
 - [Chess](app:chess): Chess.com's public data, only when you open `Online accounts`; only the username you type is sent, never a password. Lichess, only when you use it there: you sign in on lichess.org (orOS never sees the password), the sign-in is sealed on this device and never synced, and a game goes to Lichess only when you press `Analyse this game on Lichess` or play on Lichess (after you press `Allow playing`).
-- Sync: Dropbox, only if you connect it.
+- Sync: Dropbox or your own WebDAV or Nextcloud server, only if you connect it. When a WebDAV server doesn't answer browsers, requests pass through the orOS relay, which keeps nothing.
 
 Some apps can also work with accounts you already have elsewhere, but only after you connect them in [Settings](app:settings) › `Connected services`:
 - [Stock](app:stock): your own WooCommerce shop.

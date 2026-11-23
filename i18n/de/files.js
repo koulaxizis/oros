@@ -2,6 +2,8 @@ orosPack("de", "files", {
  "all": "Auf allen meinen Geräten behalten",
  "allKept": "Wird auf allen deinen Geräten behalten",
  "allToast": "Dieser Ordner wird heruntergeladen und auf jedem Gerät behalten, auf dem du orOS nutzt; Änderungen gehen in beide Richtungen mit deinem Computer",
+ "pv.ai": "Mit KI gemacht",
+ "pv.aiTip": "Dieses Bild gibt an, dass es mit KI gemacht oder verändert wurde (in seinen IPTC- oder C2PA-Angaben).",
  "unall": "Nicht mehr auf allen meinen Geräten behalten",
  "account": "Dropbox-Konto",
  "act.delete": "Löschen",

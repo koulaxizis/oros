@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-5BHPhXu7GVIV5ilkaTNAxnGXlV93xlu3A9m00oL6yUQ='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Accessibility · orOS</title>
+  <meta name="description" content="How accessible orOS is, what helps, what is known not to work yet, and how to tell us about a barrier.">
+  <link rel="canonical" href="https://useoros.online/accessibility.html">
+  <!-- Link previews (Open Graph + Twitter/X card); image: icons/og-image.png, 1200x630 -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="orOS">
+  <meta property="og:title" content="orOS accessibility statement">
+  <meta property="og:description" content="How accessible orOS is, what helps, what is known not to work yet, and how to tell us about a barrier.">
+  <meta property="og:url" content="https://useoros.online/accessibility.html">
+  <meta property="og:image" content="https://useoros.online/icons/og-image.png">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="orOS: the desktop with the app menu open, the clock, calendar and Today widgets">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:locale:alternate" content="el_GR">
+  <meta property="og:locale:alternate" content="de_DE">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="orOS accessibility statement">
+  <meta name="twitter:description" content="How accessible orOS is, what helps, what is known not to work yet, and how to tell us about a barrier.">
+  <meta name="twitter:image" content="https://useoros.online/icons/og-image.png">
+  <meta name="twitter:image:alt" content="orOS: the desktop with the app menu open, the clock, calendar and Today widgets">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <style>
+    :root { --bg: #14120d; --panel: #1d1a14; --text: #f0ead9; --dim: #b9b09a; --accent: #d4af37; --border: #3a3428; }
+    @media (prefers-color-scheme: light) {
+      :root { --bg: #faf7ef; --panel: #ffffff; --text: #241f14; --dim: #5d5544; --accent: #8a6d12; --border: #e2dac6; }
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+    header { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    h1 { font-size: 26px; margin: 0; }
+    h2 { font-size: 19px; margin: 28px 0 6px; color: var(--accent); }
+    p, li { color: var(--text); }
+    .dim { color: var(--dim); font-size: 14px; }
+    a { color: var(--accent); }
+    ul { padding-left: 22px; }
+    .lang button { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px;
+      font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
+    .lang button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
+    .box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+    .tw { overflow-x: auto; margin: 12px 0; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    th, td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: var(--panel); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <h1 id="t">orOS accessibility statement</h1>
+    <div class="lang" role="group" aria-label="Language">
+      <button type="button" data-l="en" aria-pressed="true">English</button>
+      <button type="button" data-l="el" aria-pressed="false">Ελληνικά</button>
+      <button type="button" data-l="de" aria-pressed="false">Deutsch</button>
+    </div>
+  </header>
+
+  <article lang="en" id="en">
+    <p class="dim">Applies to orOS at <a href="https://useoros.online">useoros.online</a>, its installed app (PWA), the orOS Android app, orOS Portable and the bootable orOS USB. Prepared on 23 November 2026.</p>
+
+    <div class="box">
+      <p><strong>In short:</strong> orOS aims to meet WCAG 2.2 at level AA. It is <strong>partly</strong> there: every app is checked automatically, and the problems still known are listed in public. If something stops you, tell us and we fix it first.</p>
+    </div>
+
+    <h2>What helps</h2>
+    <ul>
+      <li><code>Large text</code>, <code>High contrast</code> and <code>Dark style</code> switch on with one tap in Quick settings; Settings › Appearance has the full choices.</li>
+      <li>orOS follows your device's reduced-motion setting: moving desktops and fades stay still.</li>
+      <li>Everything can be reached with a keyboard, and the same shortcuts work in every app (Help › Keyboard shortcuts). The shortcuts can be changed.</li>
+      <li>On a touch screen without a keyboard, orOS has its own on-screen keyboard with English, Greek and German layouts.</li>
+      <li>The bootable orOS USB has a screen reader, switched on and off with <kbd>Ctrl+Alt+Shift+J</kbd>.</li>
+      <li>Every app is built to work on a 360 px wide phone screen without sideways scrolling, and in English, Greek and German.</li>
+    </ul>
+
+    <h2>How we check</h2>
+    <p>Every change to orOS, and every night, a quality gate opens every app in a browser at 360 px, in English and in Greek, and runs <a href="https://github.com/dequelabs/axe-core">axe-core</a> against the WCAG 2.0, 2.1 and 2.2 A and AA rules. A new critical or serious problem stops the change. This page, the privacy policy, the terms and the support page are checked the same way.</p>
+
+    <h2>What does not work well yet</h2>
+    <ul>
+      <li>Some apps still have known problems that the check found before it was in place. They are listed, app by app, in the <a href="https://github.com/koulaxizis/oros/blob/main/.github/qa/baseline.json">quality gate baseline</a>; the list may only shrink.</li>
+      <li>Drawing and editing on a canvas (Atelier, Photo Lab, Layout, Montage and similar) and most games depend on seeing the screen and on a pointer. Their menus and dialogs work with a keyboard; the canvas itself has limited support for screen readers.</li>
+      <li>Content from other services that some apps show (map tiles, radio and TV streams, web pages in the Reader) is outside our control.</li>
+      <li>Automatic checks find only part of the barriers. We have not yet had orOS tested by people who use assistive technology every day.</li>
+    </ul>
+
+    <h2>Tell us about a barrier</h2>
+    <p>If you cannot use part of orOS, write to <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a> or open an issue at <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>. Say which app, what you tried and which device, browser or assistive technology you use. We read every message, and a barrier that stops someone comes before new features.</p>
+
+    <h2>About this statement</h2>
+    <p>orOS is free software made by one person. This statement is voluntary and is reviewed whenever the quality gate's list of known problems changes a lot, and at least once a year.</p>
+  </article>
+
+  <article lang="el" id="el" hidden>
+    <p class="dim">Ισχύει για το orOS στο <a href="https://useoros.online">useoros.online</a>, την εγκατεστημένη εφαρμογή του (PWA), την εφαρμογή orOS για Android, το orOS Portable και το bootable orOS USB. Συντάχθηκε στις 23 Νοεμβρίου 2026.</p>
+
+    <div class="box">
+      <p><strong>Με λίγα λόγια:</strong> το orOS στοχεύει στο επίπεδο AA του WCAG 2.2. Το έχει πετύχει <strong>εν μέρει</strong>: κάθε εφαρμογή ελέγχεται αυτόματα, και τα προβλήματα που ξέρουμε ακόμα είναι δημόσια. Αν κάτι σε σταματά, πες μας το και το διορθώνουμε πρώτο.</p>
+    </div>
+
+    <h2>Τι βοηθά</h2>
+    <ul>
+      <li>Τα <code>Μεγάλα γράμματα</code>, η <code>Υψηλή αντίθεση</code> και το <code>Σκούρο θέμα</code> ανοίγουν με ένα πάτημα στις Γρήγορες ρυθμίσεις· οι Ρυθμίσεις › Εμφάνιση έχουν όλες τις επιλογές.</li>
+      <li>Το orOS ακολουθεί τη ρύθμιση λιγότερης κίνησης της συσκευής σου: οι κινούμενες επιφάνειες και τα σβησίματα μένουν ακίνητα.</li>
+      <li>Όλα φτάνονται με πληκτρολόγιο, και οι ίδιες συντομεύσεις δουλεύουν σε κάθε εφαρμογή (Βοήθεια › Συντομεύσεις πληκτρολογίου). Οι συντομεύσεις αλλάζουν.</li>
+      <li>Σε οθόνη αφής χωρίς πληκτρολόγιο, το orOS έχει δικό του πληκτρολόγιο οθόνης με αγγλική, ελληνική και γερμανική διάταξη.</li>
+      <li>Το bootable orOS USB έχει αναγνώστη οθόνης, που ανοίγει και κλείνει με <kbd>Ctrl+Alt+Shift+J</kbd>.</li>
+      <li>Κάθε εφαρμογή φτιάχνεται να δουλεύει σε οθόνη κινητού πλάτους 360 px χωρίς οριζόντια κύλιση, στα ελληνικά, στα αγγλικά και στα γερμανικά.</li>
+    </ul>
+
+    <h2>Πώς ελέγχουμε</h2>
+    <p>Σε κάθε αλλαγή του orOS, και κάθε νύχτα, ένας αυτόματος έλεγχος ποιότητας ανοίγει κάθε εφαρμογή σε browser στα 360 px, στα αγγλικά και στα ελληνικά, και τρέχει το <a href="https://github.com/dequelabs/axe-core">axe-core</a> με τους κανόνες A και AA του WCAG 2.0, 2.1 και 2.2. Ένα νέο κρίσιμο ή σοβαρό πρόβλημα σταματά την αλλαγή. Με τον ίδιο τρόπο ελέγχονται αυτή η σελίδα, η πολιτική απορρήτου, οι όροι χρήσης και η σελίδα στήριξης.</p>
+
+    <h2>Τι δεν δουλεύει καλά ακόμα</h2>
+    <ul>
+      <li>Κάποιες εφαρμογές έχουν ακόμα γνωστά προβλήματα, από πριν μπει ο έλεγχος. Είναι γραμμένα, ανά εφαρμογή, στη <a href="https://github.com/koulaxizis/oros/blob/main/.github/qa/baseline.json">λίστα του ελέγχου ποιότητας</a>· η λίστα μπορεί μόνο να μικραίνει.</li>
+      <li>Το σχέδιο και η επεξεργασία σε καμβά (Atelier, Photo Lab, Σελιδοποίηση, Μοντάζ και παρόμοια) και τα περισσότερα παιχνίδια θέλουν να βλέπεις την οθόνη και ποντίκι ή αφή. Τα μενού και τα παράθυρα διαλόγου τους δουλεύουν με πληκτρολόγιο· ο ίδιος ο καμβάς υποστηρίζει λίγο τους αναγνώστες οθόνης.</li>
+      <li>Περιεχόμενο άλλων υπηρεσιών που δείχνουν κάποιες εφαρμογές (χάρτες, ραδιόφωνο και τηλεόραση, ιστοσελίδες στον Reader) δεν το ελέγχουμε εμείς.</li>
+      <li>Οι αυτόματοι έλεγχοι βρίσκουν μόνο μέρος των εμποδίων. Δεν έχουμε ακόμα δοκιμάσει το orOS με ανθρώπους που χρησιμοποιούν κάθε μέρα υποστηρικτική τεχνολογία.</li>
+    </ul>
+
+    <h2>Πες μας για ένα εμπόδιο</h2>
+    <p>Αν δεν μπορείς να χρησιμοποιήσεις κάποιο μέρος του orOS, γράψε στο <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a> ή άνοιξε ένα issue στο <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>. Πες μας ποια εφαρμογή, τι δοκίμασες και ποια συσκευή, ποιον browser ή ποια υποστηρικτική τεχνολογία χρησιμοποιείς. Διαβάζουμε κάθε μήνυμα, και ένα εμπόδιο που σταματά κάποιον έρχεται πριν από τις νέες λειτουργίες.</p>
+
+    <h2>Για αυτή τη δήλωση</h2>
+    <p>Το orOS είναι δωρεάν λογισμικό που το φτιάχνει ένας άνθρωπος. Η δήλωση είναι εθελοντική και ξαναγράφεται όποτε αλλάζει πολύ η λίστα γνωστών προβλημάτων, και τουλάχιστον μία φορά τον χρόνο.</p>
+  </article>
+
+  <article lang="de" id="de" hidden>
+    <p class="dim">Gilt für orOS auf <a href="https://useoros.online">useoros.online</a>, die installierte App (PWA), die orOS-App für Android, orOS Portable und den bootfähigen orOS-USB-Stick. Erstellt am 23. November 2026.</p>
+
+    <div class="box">
+      <p><strong>Kurz gesagt:</strong> orOS strebt WCAG 2.2 Stufe AA an. Das ist <strong>teilweise</strong> erreicht: Jede App wird automatisch geprüft, und die noch bekannten Probleme sind öffentlich aufgelistet. Wenn dich etwas aufhält, sag es uns, und wir beheben es zuerst.</p>
+    </div>
+
+    <h2>Was hilft</h2>
+    <ul>
+      <li><code>Große Schrift</code>, <code>Hoher Kontrast</code> und <code>Dunkler Stil</code> lassen sich mit einem Tippen in den Schnelleinstellungen einschalten; Einstellungen › Darstellung hat alle Optionen.</li>
+      <li>orOS folgt der Einstellung für reduzierte Bewegung deines Geräts: Bewegte Desktops und Überblendungen bleiben still.</li>
+      <li>Alles ist mit der Tastatur erreichbar, und dieselben Tastenkürzel gelten in jeder App (Hilfe › Tastenkürzel). Die Kürzel lassen sich ändern.</li>
+      <li>Auf einem Touchscreen ohne Tastatur hat orOS eine eigene Bildschirmtastatur mit englischem, griechischem und deutschem Layout.</li>
+      <li>Der bootfähige orOS-USB-Stick hat einen Bildschirmleser, der mit <kbd>Ctrl+Alt+Shift+J</kbd> ein- und ausgeschaltet wird.</li>
+      <li>Jede App ist so gebaut, dass sie auf einem 360 px breiten Handybildschirm ohne seitliches Scrollen funktioniert, auf Englisch, Griechisch und Deutsch.</li>
+    </ul>
+
+    <h2>Wie wir prüfen</h2>
+    <p>Bei jeder Änderung an orOS und jede Nacht öffnet eine automatische Qualitätsprüfung jede App in einem Browser bei 360 px, auf Englisch und Griechisch, und lässt <a href="https://github.com/dequelabs/axe-core">axe-core</a> mit den A- und AA-Regeln von WCAG 2.0, 2.1 und 2.2 laufen. Ein neues kritisches oder ernstes Problem hält die Änderung auf. Diese Seite, die Datenschutzerklärung, die Nutzungsbedingungen und die Unterstützungsseite werden genauso geprüft.</p>
+
+    <h2>Was noch nicht gut funktioniert</h2>
+    <ul>
+      <li>Einige Apps haben noch bekannte Probleme aus der Zeit vor der Prüfung. Sie stehen, App für App, in der <a href="https://github.com/koulaxizis/oros/blob/main/.github/qa/baseline.json">Liste der Qualitätsprüfung</a>; die Liste darf nur kürzer werden.</li>
+      <li>Zeichnen und Bearbeiten auf einer Leinwand (Atelier, Photo Lab, Layout, Montage und ähnliche) und die meisten Spiele setzen voraus, dass man den Bildschirm sieht und ein Zeigegerät nutzt. Ihre Menüs und Dialoge funktionieren mit der Tastatur; die Leinwand selbst unterstützt Bildschirmleser nur wenig.</li>
+      <li>Inhalte anderer Dienste, die manche Apps zeigen (Kartenkacheln, Radio- und TV-Streams, Webseiten im Reader), liegen nicht in unserer Hand.</li>
+      <li>Automatische Prüfungen finden nur einen Teil der Barrieren. orOS wurde noch nicht von Menschen getestet, die täglich assistive Technik nutzen.</li>
+    </ul>
+
+    <h2>Melde uns eine Barriere</h2>
+    <p>Wenn du einen Teil von orOS nicht nutzen kannst, schreib an <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a> oder öffne ein Issue auf <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>. Nenne die App, was du versucht hast und welches Gerät, welchen Browser oder welche assistive Technik du nutzt. Wir lesen jede Nachricht, und eine Barriere, die jemanden aufhält, kommt vor neuen Funktionen.</p>
+
+    <h2>Über diese Erklärung</h2>
+    <p>orOS ist freie Software, die eine Person macht. Diese Erklärung ist freiwillig und wird überarbeitet, wenn sich die Liste bekannter Probleme stark ändert, mindestens einmal im Jahr.</p>
+  </article>
+</main>
+<script>
+(function () {
+  "use strict";
+  var LANGS = ["en", "el", "de"];
+  var TITLE = { en: "orOS accessibility statement", el: "Δήλωση προσβασιμότητας του orOS", de: "orOS-Erklärung zur Barrierefreiheit" };
+  var SHORT = { en: "Accessibility", el: "Προσβασιμότητα", de: "Barrierefreiheit" };
+  function set(l) {
+    if (LANGS.indexOf(l) < 0) l = "en";
+    document.documentElement.lang = l;
+    LANGS.forEach(function (x) { document.getElementById(x).hidden = x !== l; });
+    document.getElementById("t").textContent = TITLE[l];
+    document.title = SHORT[l] + " · orOS";
+    [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-l") === l));
+    });
+  }
+  var m = /[?&]lang=(en|el|de)\b/.exec(location.search);
+  var start = m ? m[1] : location.hash === "#el" ? "el" : location.hash === "#de" ? "de" : "";
+  if (!start) {
+    start = "en";
+    try { var saved = localStorage.getItem("oros-lang"); if (LANGS.indexOf(saved) >= 0) start = saved; } catch (e) {}
+  }
+  set(start);
+  [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
+    b.addEventListener("click", function () { set(b.getAttribute("data-l")); });
+  });
+})();
+</script>
+</body>
+</html>

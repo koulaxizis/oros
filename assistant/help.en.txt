@@ -1,6 +1,8 @@
 # Assistant
 Assistant is a chat with the AI assistant you choose: Claude, ChatGPT, Gemini, Mistral, OpenRouter, a service with a free plan (Groq, Cerebras, GitHub Models, Cohere, Hugging Face, SambaNova), a paid service (Pollinations), a model that runs on your own computer, or the browser's own built-in model. It can search your orOS data to answer questions about your notes, tasks, events and more, but only what you allow. It can also prepare an entry for you, such as a task, an event or an expense, which you check and save yourself in that app. It can also change or delete a task, an event, an expense, a bookmark, a contact, a Kanban card and more that you already have, but only after you see the change and press Apply.
 
+Every answer is written by an AI model, not by a person, and orOS says so: the line above the message box starts with `AI answers` and names the service and model, and each answer carries a small `AI` label with its model. AI can be wrong, so check what matters before you rely on it.
+
 ## Getting started
 1. Open `Assistant` and tap or click `Set up the assistant`.
 2. Under `Assistant`, choose who you want to talk to.
@@ -19,7 +21,7 @@ These need only a free account and a free key, with daily limits. Nothing is cha
 
 `Pollinations` is no longer free: it is paid with Pollen (about $1 for 1 Pollen; free Pollen comes only from its Quests). If you still want it, use a secret key (it starts with `sk_`): at enter.pollinations.ai press `Create` under `Secrets`, not under `Apps` (that one asks for a callback link and is for other apps), and set a spending limit. The same key works for pictures.
 
-Every one of them can search your data, prepare entries and search the internet with orOS's own search. Photos and PDFs go to them as the text orOS reads on this device.
+Every one of them can search your data, prepare entries and search the internet with orOS's own search. Photos and PDFs go to them as the text orOS reads on this device. Free plans may use what you send to train or improve their models: read the service's terms before you share personal data, or use a paid plan or a model on your own device. The service's settings say so too.
 
 ## Local AI on orOS USB
 On orOS USB (on a stick or installed on the computer), the Assistant can use a free AI that runs on the computer itself: no internet, no account, and nothing you write leaves the computer. If no assistant is set up yet, press `Install local AI` on the Assistant's first screen (or in its settings, or in System › Local AI). orOS downloads a model that suits the computer's memory once (a few GB) and checks it; you can keep working meanwhile. When it is ready, the Assistant uses it by itself, with nothing to set up. It is slower than online AI, especially on older computers; `Quick answers (no thinking first)` is on to keep it fast, and you can turn it off under `Local / OpenAI-compatible` for hard questions. Other model sizes, the graphics card and removing it are under System › Local AI › `More choices`. It needs a stick with saved data (persistence) or orOS installed on the computer.

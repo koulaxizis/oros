@@ -23,6 +23,10 @@ const QA = require("./smoke.js");
 
 const BASELINE = path.join(__dirname, "baseline.json");
 const IMPACTS = new Set(["critical", "serious"]);
+// The public legal and support pages (legal audit proposal 10): checked in
+// shard 1 with the shell, in EN and EL through ?lang=, as "page:<path>".
+// A page that does not exist yet (terms.html before it ships) is skipped.
+const PAGES = ["privacy.html", "accessibility.html", "terms.html", "support/index.html", "download/index.html"];
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"];
 
 function axeSource() {
@@ -52,6 +56,8 @@ async function main() {
   let mine = apps.filter((a, i) => i % args.shard[1] === args.shard[0] - 1);
   if (args.only) mine = apps.filter((a) => args.only.includes(a.id));
   const doShell = !args.only && args.shard[0] === 1 || (args.only && args.only.includes("shell"));
+  const pages = PAGES.filter((p) => fs.existsSync(path.join(__dirname, "..", "..", p))).map((p) => "page:" + p)
+    .filter((id) => args.only ? args.only.includes(id) : args.shard[0] === 1);
 
   const srv = await QA.serve();
   const base = "http://127.0.0.1:" + srv.address().port + "/";
@@ -80,17 +86,20 @@ async function main() {
   async function check(id, url) {
     const found = [];
     for (const lang of ["en", "el"]) {
-      for (const v of await audit(url, lang)) {
+      const u = id.startsWith("page:") ? url + (url.includes("?") ? "&" : "?") + "lang=" + lang : url;
+      for (const v of await audit(u, lang)) {
         found.push({ app: id, kind: "a11y", width: 360, lang, detail: v.id, info: v.impact + ", " + v.nodes + " element(s): " + v.help + (v.target ? " e.g. " + v.target[0] : "") });
       }
     }
     return found;
   }
-  const checkOne = (id) => id === "shell" ? check("shell", base + "index.html") : check(id, base + apps.find((a) => a.id === id).url + "?standalone");
+  const checkOne = (id) => id === "shell" ? check("shell", base + "index.html")
+    : id.startsWith("page:") ? check(id, base + id.slice(5))
+    : check(id, base + apps.find((a) => a.id === id).url + "?standalone");
 
   const baseline = fs.existsSync(BASELINE) ? JSON.parse(fs.readFileSync(BASELINE, "utf8")) : { entries: [] };
   const known = new Set(baseline.entries);
-  const ids = new Set(mine.map((a) => a.id).concat(doShell ? ["shell"] : []));
+  const ids = new Set(mine.map((a) => a.id).concat(doShell ? ["shell"] : [], pages));
   const isMine = (k) => { const p = k.split(" | "); return ids.has(p[0]) && p[1] === "a11y"; };
 
   const seen = new Map();
@@ -131,4 +140,4 @@ async function main() {
 
 if (require.main === module) main().catch((e) => { console.error(e); process.exit(2); });
 
-module.exports = { pickViolations, IMPACTS };
+module.exports = { pickViolations, IMPACTS, PAGES };

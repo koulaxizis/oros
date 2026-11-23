@@ -91,14 +91,16 @@
   }
   function bitmap(blob) { return createImageBitmap(blob); }
   // canvas → a new photo layer at x, y (on top, or at the bottom)
-  function addPixels(cv, x, y, name, label, bottom) {
+  // ai: "g" (an AI made it) | "e" (an AI redrew part of the picture) |
+  // "" (no AI, e.g. a file from Claude's folders); exports say so (AI-MARK).
+  function addPixels(cv, x, y, name, label, bottom, ai) {
     var g = cv.getContext("2d"), id = g.getImageData(0, 0, cv.width, cv.height);
     var s = T.create();
     T.writeRect(s, 0, 0, { w: cv.width, h: cv.height, data: id.data });
     // on top of everything (addLayer puts it above the active layer), outside any group
     var top = st.doc.layers[st.doc.layers.length - 1];
     if (top && !bottom) PL.selectLayer(top.id, false);
-    var L = PL.addLayer({ k: "raster", name: name, x: Math.round(x), y: Math.round(y), surface: s, g: 0 }, label);
+    var L = PL.addLayer({ k: "raster", name: name, x: Math.round(x), y: Math.round(y), surface: s, g: 0, ai: ai || "" }, label);
     if (L && bottom) {
       PL.docChange(label, function () {
         var i = C.findLayer(st.doc, L.id);
@@ -176,7 +178,7 @@
     }).then(function (list) { return bitmap(list[0]); }).then(function (bmp) {
       var cv = drawFit(bmp, bmp.width, bmp.height, w, h, "cover");
       var x = s.x !== null && s.x !== undefined ? s.x : (d.w - w) / 2, y = s.y !== null && s.y !== undefined ? s.y : (d.h - h) / 2;
-      return addPixels(cv, x, y, s.title || t("ai.layerGen"), t("ai.stepGen"));
+      return addPixels(cv, x, y, s.title || t("ai.layerGen"), t("ai.stepGen"), false, "g");
     });
   }
   function fill(s) {
@@ -190,7 +192,7 @@
     return ai(s.prov, "mask").then(function (A) {
       return redraw(A, s.prompt, PL.view.flatten(null, 1), region, box, null);
     }).then(function (cv) {
-      return addPixels(keepBox(cv, box.x - region.x, box.y - region.y, box.w, box.h), box.x, box.y, t("ai.layerFill"), t("ai.stepFill"));
+      return addPixels(keepBox(cv, box.x - region.x, box.y - region.y, box.w, box.h), box.x, box.y, t("ai.layerFill"), t("ai.stepFill"), false, "e");
     });
   }
   function expand(s) {
@@ -206,7 +208,7 @@
       var src = canvas(z.w, z.h);
       src.getContext("2d").drawImage(before, ox, oy);
       return redraw(A0, s.prompt || "", src, { x: 0, y: 0, w: z.w, h: z.h }, null, { x: ox, y: oy, w: w0, h: h0 });
-    }).then(function (cv) { return addPixels(cv, 0, 0, t("ai.layerExpand"), t("ai.stepExpand"), true) + 1; });
+    }).then(function (cv) { return addPixels(cv, 0, 0, t("ai.layerExpand"), t("ai.stepExpand"), true, "e") + 1; });
   }
   function upscale(s) {
     var d = st.doc, z = window.PhotoLabCommands.aiSize(d, s);
