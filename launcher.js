@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.8.0)
+// orOS — launcher.js (favourites: desktop shortcuts + Dock, menu apps, v1.9.0)
 // ------------------------------------------------------------
 // A shell component, like pet.js: it runs IN the shell document,
 // keeps its own storage and registers its own sync slice. shell.js
@@ -36,6 +36,10 @@
 //     the Assistant, an app with a lock), none at all under Sensitive
 //     work, and none when "Show counts on icons" is off (on by default,
 //     device-local pref `badges`). Pure part: badgeCounts / badgeText.
+//   • 1.9.0 (DOCK-CARDS): "Cards in the Dock" (pref `cards`, off by
+//     default) puts the smart top bar's cards (smartbar.js) in #ld-cards
+//     at the end of a bottom Dock on windows at least 760 px wide;
+//     elsewhere they stay in the top bar. Pure part: cardsHere.
 //
 // Data (synced, slice "launcher", key oros-launcher-data):
 //   { ver:1, items:[{ id, desk, dock, mtime }] }
@@ -57,7 +61,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.8.0";
+  var VER = "1.9.0";
   var DATA_KEY = "oros-launcher-data";
   var MENU_KEY = "oros-menu-apps";
   var MAX_ITEMS = 500;
@@ -313,11 +317,21 @@
     return n;
   }
 
+  // ---------- 1d. Cards in the Dock (DOCK-CARDS, pure) ----------
+  // The smart top bar's cards sit at the end of the Dock when the person
+  // turned it on, the Dock shows, it lies along the bottom edge and the
+  // window is at least CARDS_W wide; anywhere else they stay in the bar.
+  var CARDS_W = 760;
+  function cardsHere(p, width, side) {
+    return !!(p && p.on && p.cards && side === "bottom" && (Number(width) || 0) >= CARDS_W);
+  }
+
   var model = { normalize: normalize, merge: merge, list: list, isPinned: isPinned, pin: pin, move: move, moveTo: moveTo, VER: VER, DATA_KEY: DATA_KEY,
                 menuNormalize: menuNormalize, menuMerge: menuMerge, menuHiddenIds: menuHiddenIds,
                 menuSetHidden: menuSetHidden, menuPreset: menuPreset, MENU_KEY: MENU_KEY,
                 dockSide: dockSide, POSITIONS: POSITIONS.slice(),
-                badgeCounts: badgeCounts, badgeText: badgeText, lateTasks: lateTasks, BADGE_NEVER: BADGE_NEVER.slice() };
+                badgeCounts: badgeCounts, badgeText: badgeText, lateTasks: lateTasks, BADGE_NEVER: BADGE_NEVER.slice(),
+                cardsHere: cardsHere, CARDS_W: CARDS_W };
 
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (!root || !root.document) return;
@@ -493,7 +507,8 @@
       over: (p.over === true || p.over === false) ? p.over : null,
       style: STYLES.indexOf(p.style) >= 0 ? p.style : "classic",
       pos: POSITIONS.indexOf(p.pos) >= 0 ? p.pos : "bottom",
-      badges: p.badges !== false                 // BADGE-1: on until turned off
+      badges: p.badges !== false,                // BADGE-1: on until turned off
+      cards: p.cards === true                    // DOCK-CARDS: off until turned on
     };
   }
   function savePrefs(p) {
@@ -569,6 +584,8 @@
     ".ld-bar{display:flex;align-items:flex-end;gap:6px;padding:6px calc(8px + var(--ld-mag,0px));border-radius:18px;transition:padding .12s ease;",
     "background:color-mix(in srgb,var(--panel-bg) 86%,transparent);border:1px solid var(--border);",
     "box-shadow:0 8px 28px var(--shadow);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}",
+    "#ld-cards{flex:0 1 auto;min-width:0;align-self:center;display:flex;align-items:center;margin-left:4px;padding-left:8px;border-left:1px solid var(--border);color:var(--text)}",
+    "#ld-cards:empty,#ld-cards:not(:has(.sb-chip:not([hidden]))){display:none}",
     ".ld-dk{position:relative;flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding:0;",
     "background:transparent;border:none;cursor:pointer;color:var(--accent);transform-origin:50% 100%;",
     "transition:transform .12s ease;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation}",
@@ -1118,7 +1135,28 @@
     if (vertical() && bar && bar.scrollHeight > bar.clientHeight + 1) dock.classList.add("ld-scroll");
   }
 
+  // DOCK-CARDS: one holder kept across repaints (smartbar.js moves its
+  // row of chips into it); every time it comes or goes the smart bar
+  // hears "oros-dock-cards" and puts its row where it belongs.
+  // `cardsAt` remembers where it was: a Dock repaint empties the bar
+  // (and so takes the holder out) before this runs.
+  var cardsEl = null, cardsAt = false;
+  function placeCards(bar) {
+    var was = cardsAt;
+    if (bar) {
+      if (!cardsEl) {
+        cardsEl = doc.createElement("div");
+        cardsEl.id = "ld-cards";
+      }
+      bar.appendChild(cardsEl);                       // after the apps and the Pocket
+    } else if (cardsEl) cardsEl.remove();
+    cardsAt = !!bar;
+    if (was !== cardsAt) {
+      try { doc.dispatchEvent(new CustomEvent("oros-dock-cards")); } catch (e) {}
+    }
+  }
   function removeDock() {
+    placeCards(null);
     if (dock) { dock.remove(); dock = null; }
     if (edge) { edge.remove(); edge = null; }
   }
@@ -1214,6 +1252,7 @@
     var extra = null;
     try { extra = host.dockExtra ? host.dockExtra() : null; } catch (e) { extra = null; }
     if (extra) bar2.appendChild(extra);
+    placeCards(cardsHere(p, root.innerWidth, side) ? bar2 : null);
     setVars(p, true, side);
     fitColumn();
     paintBadges();
@@ -1451,8 +1490,9 @@
       resizeRaf = (root.requestAnimationFrame || setTimeout)(function () {
         resizeRaf = 0;
         if (!dock) return;
-        var side = sideNow(prefs());
-        if (side !== dockEdge()) paintDock(); else fitColumn();
+        var p = prefs(), side = sideNow(p);
+        if (side !== dockEdge() || cardsHere(p, root.innerWidth, side) !== cardsAt) paintDock();
+        else fitColumn();
       });
     });
   }
@@ -1465,7 +1505,7 @@
              over: overApps(p), style: p.style, styles: STYLES.slice(),
              hover: p.hover, hovers: HOVERS.slice(),
              pos: p.pos, positions: POSITIONS.slice(), side: sideNow(p),
-             fine: finePointer(), pinned: shown("dock").length, badges: p.badges };
+             fine: finePointer(), pinned: shown("dock").length, badges: p.badges, cards: p.cards };
   }
   var PREF_OK = {
     on: function (v) { return typeof v === "boolean"; },
@@ -1476,7 +1516,8 @@
     style: function (v) { return STYLES.indexOf(v) >= 0; },
     hover: function (v) { return HOVERS.indexOf(v) >= 0; },
     pos: function (v) { return POSITIONS.indexOf(v) >= 0; },
-    badges: function (v) { return typeof v === "boolean"; }
+    badges: function (v) { return typeof v === "boolean"; },
+    cards: function (v) { return typeof v === "boolean"; }
   };
   function setPref(k, v) {
     if (!Object.prototype.hasOwnProperty.call(PREF_OK, k) || !PREF_OK[k](v)) return false;
@@ -1493,6 +1534,8 @@
     refresh: paint,
     refreshDock: function () { paintDock(); },     // the Pocket's count changed (POCKET-1)
     badges: function () { return countsNow(); },   // BADGE-1: { appId: n } shown now
+    // DOCK-CARDS: the holder at the end of the Dock, or null (top bar)
+    cardSlot: function () { return cardsEl && cardsEl.isConnected ? cardsEl : null; },
     menuRow: menuRow,
     renderSettings: renderSettings,
     prefs: publicPrefs,

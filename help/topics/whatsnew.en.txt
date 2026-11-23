@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.73.00
+- **One bar at the bottom.** Settings › Appearance › Bars now offers "Top bar and Dock" (as before) or "One bar at the bottom": the Dock moves to the bottom and the top bar's cards (weather, next event, Now playing and the rest) sit at its end, so everything is in one bar. It needs a screen at least 760 px wide; on narrower screens the cards stay in the top bar.
+
 ## Version 8.72.00
 - **Settings are simpler.** 11 sections instead of 17: Sync and backups, Lock and privacy (with Sensitive work and Users), Apps (menu, default apps, single apps) and System (with Device) now hold what used to be separate. Old links still land in the right place.
 - **The essentials first.** orOS Gate and a connected Sync show what you use every day; the rest is under «More options». The Assistant and Claude share one card in Connected services.
