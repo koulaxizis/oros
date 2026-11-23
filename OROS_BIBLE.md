@@ -14057,3 +14057,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** terms.html, imprint.html, privacy.html, support/index.html, download/index.html, SECURITY.md, atelier/io.js, photolab/io.js, photolab/psd.js, .github/qa/a11y.js, tests/aimark.test.js, shell.js (version), help/topics/whatsnew.en/el.txt.
 - **Tests:** tests/aimark.test.js (PSD 1060 round trip, export wiring); csp.js --check; i18n coverage; axe at 360 px EN+EL on imprint, terms, privacy, support, download (0 new problems); full suite.
 - **Not tested:** Atelier video and GIF exports stay unmarked (open item); a real phone; Safari.
+
+### 2026-11-23 — 8.85.01 — Koulaxizis Apps device test independent of the page layout (#1260)
+- **Why:** the `device` emulator check of koulaxizis-apps was red on main since 2026-11-22 ("timed out waiting for the page of Remote for Mixers"). Remote for Mixers 4.2 is the first NULL JSFX remote with store screenshots; on the 320x640 emulator they push "About this app" below the screen and uiautomator lists only visible nodes. The page had opened; not a manager bug.
+- **What:** `koulaxizis-apps/tests/device_test.py` recognises an app's page by its own views (`d_name` with the app's name, `d_action`), checks "About this app" and the package line while scrolling, and checks Back by `d_name` being gone. No app change, no manager version change.
+- **Files:** koulaxizis-apps/tests/device_test.py, shell.js (version), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md.
+- **Tests:** the PR's `device` check green on the emulator against the live repositories; py_compile; full suite.
+- **Not tested:** a real phone (no app change).
