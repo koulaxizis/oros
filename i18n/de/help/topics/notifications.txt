@@ -82,3 +82,6 @@ Eine App, die du unter `Welche Apps benachrichtigen dürfen` ausgeschaltet hast,
 
 ## Systembenachrichtigungen
 Wenn dein Browser es erlaubt, zeigt orOS Benachrichtigungen auch über dein System an, damit du sie siehst, während orOS im Hintergrund ist. orOS fragt nach dieser Erlaubnis erst, wenn du einen Kalendertermin mit Erinnerung speicherst. Du kannst sie auch jederzeit in den Website-Einstellungen deines Browsers erlauben oder blockieren. Ein Klick auf eine solche Benachrichtigung holt orOS nach vorn und öffnet, worauf sie zeigt, zum Beispiel den Termin. Ohne diese Erlaubnis erscheinen Benachrichtigungen trotzdem in orOS.
+
+## Spielmodus
+Einstellungen › Benachrichtigungen › Spielmodus (anfangs aus, nur auf diesem Gerät). Solange ein Spiel aus der Kategorie Spiele im Vollbild läuft oder sein Fenster den Bildschirm füllt, bleiben Mitteilungen still, und die obere Leiste und das Dock treten zur Seite. Führe den Zeiger an den oberen Rand, um die Leiste drei Sekunden lang zu sehen. Verlässt du das Vollbild, kommt alles zurück.
