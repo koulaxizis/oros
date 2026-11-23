@@ -1196,7 +1196,31 @@
         soft: "rgba(" + rgb.join(", ") + ", " + (dark ? "0.16" : "0.12") + ")"
       };
     }
-    return { swatches: swatches, stops: stops, palette: palette, contrast: contrast, parse: parse };
+    // COVERTINT-1 (video ideas 2026-11-23 #21): the colours a player
+    // takes from its cover's main swatch: a dark panel (bg) where the
+    // fixed light text (ink) reaches 7:1 and the dim text 4.5:1, and a
+    // light tint (progress, play button, dot) at 4.5:1 on that panel,
+    // with its own ink. null when no lightness gets there.
+    var CT_INK = [243, 245, 249], CT_DIM = [196, 203, 214];
+    function coverTint(sw) {
+      if (!sw || typeof sw.h !== "number") return null;
+      var c = Math.max(0.04, Math.min(0.10, (sw.c || 0) * 1.4)), bg = null, L, x;
+      for (L = 0.36; L > 0.08; L -= 0.02) {
+        x = rgbAt(L, c, sw.h);
+        if (contrast(x, CT_INK) >= 7 && contrast(x, CT_DIM) >= 4.5) { bg = x; break; }
+      }
+      if (!bg) return null;
+      var tc = Math.max(0.09, Math.min(0.19, (sw.c || 0) * 2.2)), tint = null;
+      for (L = 0.80; L < 0.99; L += 0.02) {
+        x = rgbAt(L, tc, sw.h);
+        if (contrast(x, bg) >= 4.5) { tint = x; break; }
+      }
+      if (!tint) tint = CT_INK.slice();
+      var tink = contrast(tint, [255, 255, 255]) >= contrast(tint, [20, 20, 20]) ? "#ffffff" : "#141414";
+      return { bg: hex(bg), ink: hex(CT_INK), dim: hex(CT_DIM), tint: hex(tint), tintInk: tink,
+               soft: "rgba(" + tint.join(", ") + ", 0.16)", border: "rgba(255, 255, 255, 0.16)" };
+    }
+    return { swatches: swatches, stops: stops, palette: palette, contrast: contrast, parse: parse, coverTint: coverTint };
   })();
 
   // ---------- 5b'''. Accent from wallpaper (WPACC-1) ----------
@@ -18779,6 +18803,39 @@
     var a = md.artwork && md.artwork[0], src = a && String(a.src || "");
     return /^(blob:|https:\/\/|data:image\/)/i.test(src) ? src : "";
   }
+  // COVERTINT-1: the cover's colours for the Now playing peek, the media
+  // widget and the island. Read once per cover (32×32, WpAcc.swatches),
+  // the 24 newest kept in memory; null while it is read, for a cover
+  // from another site that does not allow reading (no CORS), one with no
+  // clear colour, under high contrast and while Sensitive work is on
+  // (then no cover shows either). The next paint picks it up.
+  var coverTints = {}, coverKeys = [];
+  function coverTint(src) {
+    src = String(src || "");
+    if (!/^(blob:|https:\/\/|data:image\/)/i.test(src)) return null;
+    if (Object.prototype.hasOwnProperty.call(coverTints, src)) return coverTints[src];
+    coverTints[src] = null;
+    coverKeys.push(src);
+    if (coverKeys.length > 24) delete coverTints[coverKeys.shift()];
+    var img = new Image();
+    if (/^https:/i.test(src)) { img.crossOrigin = "anonymous"; img.referrerPolicy = "no-referrer"; }
+    img.onload = function () {
+      try {
+        var cv = document.createElement("canvas");
+        cv.width = cv.height = 32;
+        var g = cv.getContext("2d");
+        g.drawImage(img, 0, 0, 32, 32);
+        var sw = WpAcc.swatches(g.getImageData(0, 0, 32, 32).data, 1);
+        if (Object.prototype.hasOwnProperty.call(coverTints, src)) coverTints[src] = sw.length ? WpAcc.coverTint(sw[0]) : null;
+      } catch (e) {}                                   // a cover that may not be read: no tint
+    };
+    img.src = src;
+    return null;
+  }
+  function coverTintFor(title) {
+    if (strictLevelNow() || document.documentElement.getAttribute("data-oros-contrast") === "high") return null;
+    return coverTint(wgMediaArt(title));
+  }
   // The Media card's little light listens like the wallpaper (passive:
   // it never restarts a stream), as its own listener "widget".
   var wgTap = null;
@@ -19213,6 +19270,7 @@
       weather: wgWeather,
       media: qsMedia,
       mediaArt: wgMediaArt,                 // WG-MEDIA-2: the cover of what plays
+      mediaTint: coverTintFor,              // COVERTINT-1: its colours
       mediaLight: { kit: wpVizKit, tap: wgMediaTap, frame: function () { return wgTap ? wgTap.h.vizFrame() : null; } },
       settings: function (section) { if (window.orosSettings) window.orosSettings.open(section); },
       sync: {
@@ -19246,6 +19304,7 @@
       media: function () { return qsMedia().filter(function (m) { return !appLockSet(m.id); }); },
       // ISLAND-1: the cover of what plays (mediaSession) and Music's synced line now
       art: function (title) { return wgMediaArt(title); },
+      tint: coverTintFor,                   // COVERTINT-1: the cover's colours
       lyric: function (id) {
         if (id !== "music" || appLockSet("music")) return null;
         var mu = hostApi(window.__orosMusicHost);
