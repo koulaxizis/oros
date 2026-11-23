@@ -679,6 +679,11 @@
         cb2.appendChild(row(t("sb.look"), lsel, { forId: lsel.id }));
         cb2.appendChild(el("p", "hint", t("sb.look.hint")));
       }
+      // ISLAND-1: live pills and what plays in one pill at the top centre
+      if (typeof s.smartbar.island === "boolean") {
+        cb2.appendChild(row(t("sb.island"), switchBtn(s.smartbar.island, "smartbar-island", function (v) { set("smartbar-island", v); }, t("sb.island")),
+          { scope: "sb-island", hint: t("sb.island.hint") }));
+      }
       // SBZ-1: where each card sits (left / centre / right) on wide windows.
       if (s.smartbar.zones) {
         var onCards = s.smartbar.list.filter(function (k) { return k.on; });
