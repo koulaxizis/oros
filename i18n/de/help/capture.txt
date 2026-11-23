@@ -20,6 +20,8 @@ Mach ein Bild von deinem ganzen Bildschirm, einem Fenster oder einem Browser-Tab
 - Wähl oben `Aufnahme` und dann `Wählen, was aufgenommen wird`.
 - `Ton des Bildschirms oder Tabs aufnehmen` nimmt auf, was du hörst. In Chrome und Edge hak in der Frage des Browsers die Audiofreigabe an; ein Tab oder der ganze Bildschirm kann Ton freigeben, ein einzelnes Fenster nicht.
 - `Mikrofon aufnehmen` fügt deine Stimme hinzu. Beide Töne werden zu einer Spur gemischt.
+- `Auflösung` (wie geteilt, 1080p, 720p oder 480p), `Bilder pro Sekunde` (30 oder 60) und `Qualität` (Niedrig, Standard oder Hoch) legen fest, wie scharf und flüssig das Video wird; darunter sagt orOS, wie viele MB etwa eine Minute braucht. 60 Bilder und Hoch passen zu Spielen und schnellen Bewegungen; Niedrig und 720p halten lange Aufnahmen klein.
+- Wenn die Aufnahme beginnt, schließen sich das orOS-Menü, die Schnelleinstellungen und der Benachrichtigungsbereich, damit sie nicht im Video sind.
 - Drück `Aufnahme starten` (nach der Verzögerung, falls gewählt). Mit `Pause` und `Weiter` lässt du einen Teil aus; `Aufnahme beenden` beendet sie. Während der Aufnahme kannst du auch Bildschirmfotos machen.
 - Während der Aufnahme zeigt die obere Leiste von orOS einen roten Punkt mit der Zeit; ihre Stopptaste wirkt wie `Aufnahme beenden` und holt Bildschirmfoto nach vorn, damit du speichern kannst.
 - Sieh dir das Video an und drück `In Videos speichern`. Es wird als MP4 gespeichert, wo der Browser das kann, sonst als WebM.
