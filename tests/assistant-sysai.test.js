@@ -80,9 +80,16 @@ const LAN = { m: 1, base: "http://192.168.1.20:11434/v1", model: "llama3:8b", ki
 
 test("sysai 2: the settings for this computer's own local AI", () => {
   const a = C.sysAIConf(LAN, SYS);
-  assert.deepEqual(a, { base: C.LOCAL_KITS.ollama, model: "qwen3:8b", kit: "ollama", fast: 1, vis: 0, nt: 0 });
+  assert.deepEqual(a, { base: C.LOCAL_KITS.ollama, model: "qwen3:8b", kit: "ollama", fast: 1, vis: 0, nt: 0, tm: "" });
   // A model installed here too stays.
   assert.equal(C.sysAIConf(Object.assign({}, LAN, { model: "qwen3:1.7b" }), SYS).model, "qwen3:1.7b");
+  // "No tools" and its tool model (AS-GREEK 2) only with the same model, the tool model installed here.
+  const gr = { base: LAN.base, model: "krikri-el", nt: 1, tm: "qwen3:8b" };
+  const both = { state: "ready", url: "http://127.0.0.1:11434", models: ["krikri-el", "qwen3:8b"] };
+  assert.deepEqual([C.sysAIConf(gr, both).nt, C.sysAIConf(gr, both).tm], [1, "qwen3:8b"]);
+  assert.deepEqual([C.sysAIConf(gr, SYS).model, C.sysAIConf(gr, SYS).nt, C.sysAIConf(gr, SYS).tm], ["qwen3:8b", 0, ""]);
+  const noTm = { state: "ready", url: "http://127.0.0.1:11434", models: ["krikri-el"] };
+  assert.deepEqual([C.sysAIConf(gr, noTm).nt, C.sysAIConf(gr, noTm).tm], [1, ""]);
   // Nothing when it is not ready, or the address already is this computer's.
   assert.equal(C.sysAIConf(LAN, { state: "off", url: "", models: [] }), null);
   assert.equal(C.sysAIConf(LAN, null), null);

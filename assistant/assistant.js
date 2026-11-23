@@ -110,6 +110,15 @@
       "msg.ai": "AI · {model}", "msg.aiNoModel": "AI answer",
       "set.trainFree": "Free plans may use what you send to train or improve their models. Read the terms of {name} before you share personal data, or use a paid plan or a model on your own device.",
       "brief.btn": "Briefing", "brief.hint": "Today's agenda, what is late, birthdays this week and this month's spending, in one answer. It is sent only when you press it.",
+      "vo.btn": "Speak", "vo.stop": "Stop and write it", "vo.rec": "Listening… tap the microphone again when you are done.",
+      "vo.run": "Writing what you said… {p}%", "vo.dl": "Downloading the speech model… {p}%",
+      "vo.title": "Speak to the Assistant", "vo.need": "What you say is turned into text on this device by the Whisper speech model; the sound never leaves the device and nothing is sent before you press Send. The model downloads once and then works offline.",
+      "vo.tiny": "Small and quick ({mb} MB)", "vo.base": "More accurate, better for Greek ({mb} MB)",
+      "vo.go": "Download and start", "vo.none": "Nothing was heard. Try again a little closer to the microphone.",
+      "vo.fail": "Speech could not be turned into text on this device.", "vo.net": "The speech model could not be downloaded. Check the connection and try again.",
+      "vo.mic": "The microphone is not available. Allow it for this app and try again.", "vo.max": "Recording stops by itself after two minutes.",
+      "set.voice": "Voice input","set.voiceNone": "Not downloaded yet: the microphone button asks the first time.",
+      "set.voiceHas": "Downloaded: {name}.", "set.voiceRm": "Remove the speech model", "set.voiceHint": "The text appears in the message box for you to check; nothing is sent by itself. Montage, Lyric Sync and Notes use the small model too, so removing it removes it there as well.",
       "brief.msg": "Briefing for {date}", "brief.title": "Share with {name} for the briefing?",
       "brief.text": "orOS worked these out on this device. Untick what {name} should not see. Only these lines go out, not the entries themselves.",
       "brief.no": "Without these", "brief.shared": "Shared for the briefing: {apps}", "brief.heldOut": "Held back: {apps}",
@@ -226,6 +235,15 @@
       "set.chainMore": "{n} more services not set up here",
       "set.chainHow": "To add one, pick it above as the assistant, save its key and model, then pick your first choice again. It stays connected.",
       "set.ntHint": "For small models that can't call tools: orOS then searches your data itself before each message (with the same card asking what to share) and sends what you allow along with it. It can't prepare entries or change anything.",
+      "set.tm": "Model for actions (optional)",
+      "set.tmHint": "When the model above can't use tools: a model on the same server, such as qwen3:8b, that answers only the messages that add or change something. You keep chatting with the model above and never switch.",
+      "greek.hint": "Greek: two free models that work together on this computer. {chat} (Llama-Krikri 8B by the Athena Research Center's ILSP, made for Greek) chats and writes; {tools} prepares entries and changes. Ollama downloads them itself; nothing passes through orOS.",
+      "greek.get": "Download and set up the Greek models (about {gb} GB)",
+      "greek.step": "Step {n} of {of}: {model}",
+      "greek.net": "Ollama did not answer. Is it running, and does it allow this site (OLLAMA_ORIGINS)?",
+      "greek.cut": "The download stopped before the end. Press the button again: it goes on from where it stopped.",
+      "greek.done": "Ready: {chat} answers, and {tools} takes the messages that add or change something.",
+      "greek.fail": "It didn't work: {why}",
       "err.noTools": "This model can't use tools. Tick \u201cThis model can't use tools\u201d in Settings, or load a model that can (for example Llama 3.1+, Qwen 2.5+ or Mistral).",
       "pre.none": "Searched your data for \u201c{q}\u201d: nothing found.",
       "pre.shared": "Searched your data for \u201c{q}\u201d: {n} shared.",
@@ -791,6 +809,15 @@
       "msg.ai": "AI · {model}", "msg.aiNoModel": "Απάντηση AI",
       "set.trainFree": "Τα δωρεάν προγράμματα μπορεί να χρησιμοποιούν ό,τι στέλνεις για να εκπαιδεύσουν ή να βελτιώσουν τα μοντέλα τους. Διάβασε τους όρους του {name} πριν μοιραστείς προσωπικά δεδομένα, ή χρησιμοποίησε πληρωμένο πρόγραμμα ή μοντέλο στη δική σου συσκευή.",
       "brief.btn": "Ενημέρωση ημέρας", "brief.hint": "Η ατζέντα της ημέρας, τα εκπρόθεσμα, τα γενέθλια της εβδομάδας και τα έξοδα του μήνα, σε μία απάντηση. Στέλνεται μόνο όταν το πατήσεις.",
+      "vo.btn": "Μίλα", "vo.stop": "Τέλος, γράψ' το", "vo.rec": "Ακούω… πάτα ξανά το μικρόφωνο όταν τελειώσεις.",
+      "vo.run": "Γράφω αυτό που είπες… {p}%", "vo.dl": "Λήψη του μοντέλου ομιλίας… {p}%",
+      "vo.title": "Μίλα στον Βοηθό", "vo.need": "Αυτό που λες γίνεται κείμενο σε αυτή τη συσκευή από το μοντέλο ομιλίας Whisper· ο ήχος δεν φεύγει ποτέ από τη συσκευή και τίποτα δεν στέλνεται πριν πατήσεις Αποστολή. Το μοντέλο κατεβαίνει μία φορά και μετά δουλεύει χωρίς σύνδεση.",
+      "vo.tiny": "Μικρό και γρήγορο ({mb} MB)", "vo.base": "Πιο ακριβές, καλύτερο για ελληνικά ({mb} MB)",
+      "vo.go": "Λήψη και έναρξη", "vo.none": "Δεν ακούστηκε τίποτα. Δοκίμασε ξανά λίγο πιο κοντά στο μικρόφωνο.",
+      "vo.fail": "Η ομιλία δεν έγινε κείμενο σε αυτή τη συσκευή.", "vo.net": "Το μοντέλο ομιλίας δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "vo.mic": "Το μικρόφωνο δεν είναι διαθέσιμο. Επίτρεψέ το σε αυτή την εφαρμογή και δοκίμασε ξανά.", "vo.max": "Η ηχογράφηση σταματά μόνη της μετά από δύο λεπτά.",
+      "set.voice": "Φωνητική εισαγωγή","set.voiceNone": "Δεν έχει κατέβει ακόμη: το κουμπί του μικροφώνου ρωτά την πρώτη φορά.",
+      "set.voiceHas": "Έχει κατέβει: {name}.", "set.voiceRm": "Αφαίρεση του μοντέλου ομιλίας", "set.voiceHint": "Το κείμενο εμφανίζεται στο πλαίσιο μηνύματος για να το ελέγξεις· τίποτα δεν στέλνεται μόνο του. Το μικρό μοντέλο το χρησιμοποιούν και το Montage, το Lyric Sync και οι Σημειώσεις, οπότε αν το αφαιρέσεις φεύγει και από εκεί.",
       "brief.msg": "Ενημέρωση για {date}", "brief.title": "Κοινοποίηση στο {name} για την ενημέρωση;",
       "brief.text": "Το orOS τα υπολόγισε σε αυτή τη συσκευή. Ξετσέκαρε ό,τι δεν πρέπει να δει το {name}. Φεύγουν μόνο αυτές οι γραμμές, όχι οι ίδιες οι εγγραφές.",
       "brief.no": "Χωρίς αυτά", "brief.shared": "Κοινοποιήθηκαν για την ενημέρωση: {apps}", "brief.heldOut": "Κρατήθηκαν: {apps}",
@@ -907,6 +934,15 @@
       "set.chainMore": "Άλλες {n} υπηρεσίες δεν έχουν ρυθμιστεί εδώ",
       "set.chainHow": "Για να προσθέσεις μία, διάλεξέ την παραπάνω ως βοηθό, αποθήκευσε κλειδί και μοντέλο και ξαναδιάλεξε την πρώτη σου επιλογή. Μένει συνδεδεμένη.",
       "set.ntHint": "Για μικρά μοντέλα που δεν καλούν εργαλεία: τότε το orOS ψάχνει μόνο του στα δεδομένα σου πριν από κάθε μήνυμα (με την ίδια κάρτα που ρωτά τι θα μοιραστείς) και στέλνει μαζί όσα επιτρέπεις. Δεν ετοιμάζει καταχωρήσεις και δεν αλλάζει τίποτα.",
+      "set.tm": "Μοντέλο για ενέργειες (προαιρετικό)",
+      "set.tmHint": "Όταν το παραπάνω μοντέλο δεν χρησιμοποιεί εργαλεία: ένα μοντέλο στον ίδιο server, π.χ. qwen3:8b, που απαντά μόνο στα μηνύματα που προσθέτουν ή αλλάζουν κάτι. Συνεχίζεις να μιλάς με το παραπάνω μοντέλο, χωρίς εναλλαγές.",
+      "greek.hint": "Ελληνικά: δύο δωρεάν μοντέλα που δουλεύουν μαζί σε αυτόν τον υπολογιστή. Το {chat} (Llama-Krikri 8B του Ινστιτούτου Επεξεργασίας του Λόγου, ΕΚ «Αθηνά», φτιαγμένο για τα ελληνικά) συζητά και γράφει· το {tools} ετοιμάζει καταχωρήσεις και αλλαγές. Το Ollama τα κατεβάζει μόνο του· τίποτα δεν περνά από το orOS.",
+      "greek.get": "Λήψη και ρύθμιση των ελληνικών μοντέλων (περίπου {gb} GB)",
+      "greek.step": "Βήμα {n} από {of}: {model}",
+      "greek.net": "Το Ollama δεν απάντησε. Τρέχει και επιτρέπει αυτή τη σελίδα (OLLAMA_ORIGINS);",
+      "greek.cut": "Η λήψη σταμάτησε πριν το τέλος. Πάτα ξανά το κουμπί: συνεχίζει από εκεί που σταμάτησε.",
+      "greek.done": "Έτοιμο: απαντά το {chat} και τα μηνύματα που προσθέτουν ή αλλάζουν κάτι τα αναλαμβάνει το {tools}.",
+      "greek.fail": "Δεν έγινε: {why}",
       "err.noTools": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία. Τσέκαρε το «Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία» στις Ρυθμίσεις ή φόρτωσε μοντέλο που μπορεί (π.χ. Llama 3.1+, Qwen 2.5+ ή Mistral).",
       "pre.none": "Αναζήτηση στα δεδομένα σου για «{q}»: δεν βρέθηκε τίποτα.",
       "pre.shared": "Αναζήτηση στα δεδομένα σου για «{q}»: μοιράστηκαν {n}.",
@@ -1500,6 +1536,7 @@
     search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     globe: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
+    mic: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     clip: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>',
     file: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></svg>',
     edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
@@ -1507,7 +1544,7 @@
 
   // ---------- 2. Data + prefs ----------
   var data = C.emptyData();
-  var prefs = { open: "", keep: 1, usage: {}, srch: {}, sealOk: {}, gone: {}, clr: {} };
+  var prefs = { open: "", keep: 1, usage: {}, srch: {}, sealOk: {}, gone: {}, clr: {}, voice: "" };
 
   function load() {
     try {
@@ -1536,6 +1573,7 @@
         if (p.sealOk && typeof p.sealOk === "object") prefs.sealOk = p.sealOk;
         prefs.gone = C.normGone(p.gone, Date.now());
         if (p.clr && typeof p.clr === "object") prefs.clr = p.clr;
+        if (p.voice === "tiny" || p.voice === "base") prefs.voice = p.voice;   // SOLO-AS W2, this device
       }
     } catch (e) {}
   }
@@ -1583,7 +1621,7 @@
   function baseOf(pid) { return C.provBase(pid, useConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
-    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0 };
+    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0, tm: cur.tm || "" };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
@@ -1922,7 +1960,11 @@
   // Does the newest question need tools? Only in automatic order and
   // not in chat-only mode (core.needsTools).
   function turnTools(c) {
-    if (!data.set.auto || data.set.chat || !c) return false;
+    if (!data.set.auto) return false;
+    return turnNeeds(c);
+  }
+  function turnNeeds(c) {
+    if (data.set.chat || !c) return false;
     var i = c.msgs.length - 1;
     while (i >= 0 && !(c.msgs[i].r === "user" && !c.msgs[i].cont)) i--;
     var u = i >= 0 ? c.msgs[i] : null, prev = false;
@@ -1945,8 +1987,16 @@
   function chooseProv(c, keep) {
     return (keep ? Promise.resolve(fbUse) : pickNow(c)).then(function (use) {
       fbUse = use;
+      tmUse = C.toolModel(useConf(curProv()), C.PROVIDERS[curProv()] && C.PROVIDERS[curProv()].local && turnNeeds(c));
       noteProv(c);
     });
+  }
+  // This turn's model for actions on a local service without tools
+  // (AS-GREEK 2): krikri-el chats, and a turn that adds or changes
+  // something goes to the model for actions (qwen3:8b) with tools.
+  var tmUse = "";
+  function turnModel(pid) {
+    return tmUse && pid === curProv() && C.PROVIDERS[pid] && C.PROVIDERS[pid].local ? tmUse : "";
   }
   // A note in the chat when the service answering changes.
   // The last "answers from here on" note: taken back when that service
@@ -2032,8 +2082,8 @@
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
       function send(o) {
-        var pc = useConf(pid);
-        var req = C.buildRequest(pid, { key: k && !pc.sys ? k.key : "", base: pc.base, model: pc.model || modelOf(pid), vis: pc.vis, nt: pc.nt, fast: pc.fast }, msgs, o);
+        var pc = useConf(pid), tm = turnModel(pid);
+        var req = C.buildRequest(pid, { key: k && !pc.sys ? k.key : "", base: pc.base, model: tm || pc.model || modelOf(pid), vis: tm ? 0 : pc.vis, nt: tm ? 0 : pc.nt, fast: pc.fast }, msgs, o);
         return fetch(req.url, {
           method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
           credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
@@ -3303,7 +3353,7 @@
         scheduleLive();
       }).then(function (res) {
         addUsage(pid, res.usage);
-        var m = { r: "asst", prov: pid, model: modelOf(pid), text: res.text, raw: res.raw };
+        var m = { r: "asst", prov: pid, model: turnModel(pid) || modelOf(pid), text: res.text, raw: res.raw };
         if (res.tools.length) m.tools = res.tools;
         if (res.cut && !res.tools.length) m.cut = 1;
         c.msgs.push(m);
@@ -3355,7 +3405,7 @@
     first.catch(function (e) {
       if (ctl && ctl.signal.aborted) {
         if (busy && busy.join >= 0) busy.live = busy.live.slice(joinedText(c.msgs, busy.join).length);
-        if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
+        if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: turnModel(pid) || modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
       } else if (C.coolFor(e) && again + 1 < C.chainOrder(data).length &&
                  c.msgs.length === startLen && !(last && last.found && !hadFound)) {
@@ -3382,7 +3432,7 @@
   // the user marked "can't use tools".
   function noTools(pid) {
     var P = C.PROVIDERS[pid];
-    return !!P && (!!P.device || (!!P.local && !!provConf(pid).nt));
+    return !!P && (!!P.device || (!!P.local && !!provConf(pid).nt && !turnModel(pid)));
   }
   // Search the user's data for the words of their message before it
   // goes (one search per word, PRE_WORDS at most), with the same rules
@@ -7578,6 +7628,7 @@
   }
 
   function renderBar() {
+    voDraw();
     var pid = curProv();
     $("bar-title").textContent = chat ? (chat.title || t("chat.untitled")) : t("app");
     var who = $("who");
@@ -7590,7 +7641,7 @@
       var ai = el("span", "who-ai", t("who.ai"));
       ai.title = t("who.aiTip");
       who.appendChild(ai);
-      who.appendChild(el("span", "who-name", C.PROVIDERS[pid].builtin ? provName(pid) : t("who", { name: provName(pid), model: wm ? wm.name : modelOf(pid) })));
+      who.appendChild(el("span", "who-name", C.PROVIDERS[pid].builtin ? provName(pid) : t("who", { name: provName(pid), model: wm ? wm.name : (turnModel(pid) || modelOf(pid)) })));
       who.appendChild(el("span", "who-to", isBi ? t("who.device") : data.set.chat ? t("who.chatOnly") : t("who.to", { host: hostOf(baseOf(pid)) })));
       if (webOn(pid)) who.appendChild(el("span", "who-web", t("who.web")));
       if (!data.set.chat && !isBi) {
@@ -8661,9 +8712,76 @@
         var kitHint = el("p", "dlg-hint kit-hint");
         kitHint.id = "as-kit-hint";
         provBox.appendChild(kitHint);
+        // Greek pair for Ollama (AS-GREEK): one button downloads and
+        // builds krikri-el and qwen3:8b on this computer.
+        var greek = el("div", "kit-greek");
+        greek.id = "as-greek";
+        greek.appendChild(el("p", "dlg-hint", t("greek.hint", { chat: C.GREEK_AI.chat, tools: C.GREEK_AI.tools })));
+        var gbtn = button(t("greek.get", { gb: C.GREEK_AI.gb }), "small", function () { getGreek(); });
+        gbtn.id = "as-greek-get";
+        greek.appendChild(gbtn);
+        var gst = el("p", "dlg-hint");
+        gst.id = "as-greek-st";
+        gst.setAttribute("role", "status");
+        greek.appendChild(gst);
+        provBox.appendChild(greek);
+        var getGreek = function () {
+          var root = C.ollamaRoot(provConf(pid).base || P.defaultBase);
+          var steps = C.greekSteps(root);
+          if (!steps.length) return;
+          gbtn.disabled = true;
+          gst.classList.remove("err", "ok");
+          var run = function (i) {
+            if (i >= steps.length) return Promise.resolve();
+            var s = steps[i];
+            gst.textContent = t("greek.step", { n: i + 1, of: steps.length, model: s.model });
+            return fetch(s.url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(s.body),
+                                  credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" })
+              .catch(function () { throw new Error(t("greek.net")); })
+              .then(function (res) {
+                if (!res.ok || !res.body) return res.text().then(function (x) {
+                  var p = C.ollamaProgress(x);
+                  throw new Error(p && p.error ? p.error : "HTTP " + res.status);
+                });
+                var rd = res.body.getReader(), dec = new TextDecoder(), buf = "", ok = false;
+                var line = function (l) {
+                  var p = C.ollamaProgress(l);
+                  if (!p) return;
+                  if (p.error) throw new Error(p.error);
+                  if (p.done) ok = true;
+                  gst.textContent = t("greek.step", { n: i + 1, of: steps.length, model: s.model }) +
+                    (p.status ? " · " + p.status : "") + (p.pct >= 0 ? " · " + p.pct + "%" : "");
+                };
+                var pump = function () {
+                  return rd.read().then(function (r) {
+                    if (r.done) { line(buf); if (!ok) throw new Error(t("greek.cut")); return; }
+                    buf += dec.decode(r.value, { stream: true });
+                    var parts = buf.split("\n");
+                    buf = parts.pop();
+                    parts.forEach(line);
+                    return pump();
+                  });
+                };
+                return pump();
+              })
+              .then(function () { return run(i + 1); });
+          };
+          run(0).then(function () {
+            setProvConf(pid, { kit: "ollama", model: C.GREEK_AI.chat, nt: 1, vis: 0, tm: C.GREEK_AI.tools });
+            renderAll();
+            drawProv();
+            var st = document.getElementById("as-greek-st");
+            if (st) { st.textContent = t("greek.done", { chat: C.GREEK_AI.chat, tools: C.GREEK_AI.tools }); st.classList.add("ok"); }
+          }, function (e) {
+            gst.textContent = t("greek.fail", { why: String(e && e.message || e).slice(0, 300) });
+            gst.classList.add("err");
+            gbtn.disabled = false;
+          });
+        };
         var paintKit = function () {
           var k = kit.value;
           kitHint.textContent = k ? t("kit." + k, { origin: siteOrigin() }) + " " + t("kit.pna") : "";
+          greek.hidden = !(k === "ollama" || /:11434(\/v1)?$/.test(provConf(pid).base || ""));
         };
         kit.addEventListener("change", function () {
           var k = kit.value;
@@ -8704,6 +8822,21 @@
         });
         nt.parentNode.classList.add("check");
         provBox.appendChild(el("p", "dlg-hint", t("set.ntHint")));
+        // Model for actions (AS-GREEK 2): a second model on the same
+        // server that takes the turns which add or change something.
+        label(provBox, "as-tm", t("set.tm"));
+        var tmIn = el("input", "dlg-input");
+        tmIn.id = "as-tm";
+        tmIn.maxLength = 200;
+        tmIn.autocapitalize = "off";
+        tmIn.spellcheck = false;
+        tmIn.placeholder = C.GREEK_AI.tools;
+        tmIn.value = provConf(pid).tm || "";
+        tmIn.addEventListener("change", function () {
+          setProvConf(pid, { tm: tmIn.value.trim().slice(0, 200) });
+        });
+        provBox.appendChild(tmIn);
+        provBox.appendChild(el("p", "dlg-hint", t("set.tmHint")));
         var fast = checkbox(provBox, "as-fast", t("set.fast"), !!provConf(pid).fast, function (on) {
           setProvConf(pid, { fast: on ? 1 : 0 });
         });
@@ -8810,8 +8943,20 @@
       model.autocapitalize = "off";
       model.spellcheck = false;
       model.value = modelOf(pid);
+      // A local model orOS knows (AS-GREEK) brings its own ticks:
+      // krikri-el without tools or photos, qwen3 with tools.
+      var withTraits = function (m) {
+        var patch = { model: m };
+        var tr = P.local ? C.localTraits(m) : null;
+        if (tr) {
+          patch.nt = tr.nt; patch.vis = tr.vis;
+          if (nt) nt.checked = !!tr.nt;
+          if (vis) vis.checked = !!tr.vis;
+        }
+        return patch;
+      };
       model.addEventListener("change", function () {
-        setProvConf(pid, { model: model.value.trim().slice(0, 200) });
+        setProvConf(pid, withTraits(model.value.trim().slice(0, 200)));
         pick.value = model.value;
         renderAll();
       });
@@ -8829,7 +8974,7 @@
       pick.addEventListener("change", function () {
         if (!pick.value) return;
         model.value = pick.value;
-        setProvConf(pid, { model: pick.value });
+        setProvConf(pid, withTraits(pick.value));
         renderAll();
       });
       provBox.appendChild(pick);
@@ -9456,6 +9601,8 @@
     }
     drawCsHint();
 
+    voSettings(body);
+
     // This device
     var secV = section(body, t("set.device"));
     var keep = checkbox(secV, "as-keep", t("set.keep"), !!prefs.keep, function (on) {
@@ -9701,6 +9848,203 @@
     if (chatSyncOn()) scheduleReconcile();
   }
 
+
+  // ---------- 13a. Voice input (SOLO-AS W2, Chris 2026-11-23) ----------
+  // The microphone button records (MediaRecorder), the Whisper model of
+  // montage/asr.js turns it into text ON THIS DEVICE, and the text joins
+  // the message box for the person to check: nothing is ever sent by
+  // itself. No Web Speech, no Google recognizer, no audio to any AI
+  // service (the Claude API takes no sound anyway). Model "tiny" (shared
+  // with Montage, Lyric Sync, Notes) or "base" (better Greek), chosen the
+  // first time, device-local in prefs.voice.
+  var VO_MAX_MS = 120000;
+  var vo = { st: "", rec: null, stream: null, parts: [], timer: 0, ctl: null };
+  function voCan() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder &&
+      (window.AudioContext || window.webkitAudioContext) && (window.OfflineAudioContext || window.webkitOfflineAudioContext));
+  }
+  function voAsr() {
+    if (window.MontageASR) return Promise.resolve(window.MontageASR);
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      var v = (document.querySelector('script[src*="assistant.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      sc.src = "../montage/asr.js" + (m ? "?v=" + m[1] : "");
+      sc.onload = function () { window.MontageASR ? resolve(window.MontageASR) : reject(new Error("no-asr")); };
+      sc.onerror = function () { reject(new Error("no-asr")); };
+      document.head.appendChild(sc);
+    });
+  }
+  function voLang() { return LANG === "el" || LANG === "de" ? LANG : "en"; }
+  function voDraw(note) {
+    var b = $("mic-btn");
+    if (!b) return;
+    b.hidden = !voCan();
+    b.classList.toggle("rec", vo.st === "rec");
+    b.disabled = vo.st === "run" || (busy && vo.st !== "rec");
+    var lbl = t(vo.st === "rec" ? "vo.stop" : "vo.btn");
+    b.setAttribute("aria-label", lbl);
+    b.title = lbl;
+    b.setAttribute("aria-pressed", vo.st === "rec" ? "true" : "false");
+    var n = $("vo-note");
+    if (n && note !== undefined) { n.hidden = !note; n.textContent = note || ""; }
+  }
+  function voTap() {
+    if (vo.st === "rec") { voStop(); return; }
+    if (vo.st || busy || !voCan()) return;
+    voAsr().then(function (ASR) {
+      var model = prefs.voice;
+      if (!model) { voAsk(ASR); return; }
+      return Promise.resolve(ASR.ready(model)).catch(function () { return false; }).then(function (yes) {
+        if (yes) voStart(); else voAsk(ASR, model);
+      });
+    }, function () { showToast(t("vo.fail")); });
+  }
+  // First use (or a model removed): which model, and its download.
+  function voAsk(ASR, pick) {
+    if (document.querySelector("dialog[open]")) return;
+    var dlg = makeDialog("as-voice");
+    dlg.appendChild(el("div", "dlg-title", t("vo.title")));
+    dlg.appendChild(el("p", "dlg-text", t("vo.need")));
+    var want = pick || (LANG === "el" ? "base" : "tiny");
+    ["tiny", "base"].forEach(function (m) {
+      var l = el("label", "dlg-check check");
+      var r = el("input");
+      r.type = "radio"; r.name = "as-vo-m"; r.value = m; r.checked = m === want;
+      r.addEventListener("change", function () { if (r.checked) want = m; });
+      l.appendChild(r);
+      l.appendChild(document.createTextNode(" " + t("vo." + m, { mb: ASR.mbOf(m) + ASR.RUNTIME_MB })));
+      dlg.appendChild(l);
+    });
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("vo.go"), "primary", function () {
+      dlg.close();
+      prefs.voice = want;
+      savePrefs();
+      voFetch(ASR, want);
+    }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // The model downloads BEFORE the first recording, so nobody speaks
+  // and then waits for it.
+  function voFetch(ASR, model) {
+    if (vo.st) return;
+    vo.st = "run";
+    voDraw(t("vo.dl", { p: 0 }));
+    ASR.prepare(model, function (q) { voDraw(t("vo.dl", { p: Math.round(q * 100) })); }).then(function () {
+      voEnd();
+      voStart();
+    }, function (e) {
+      voEnd();
+      showToast(e && /^http|fetch|network|load/i.test(String(e.message || e)) ? t("vo.net") : t("vo.fail"));
+    });
+  }
+  function voStart() {
+    if (vo.st) return;
+    vo.st = "wait";
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (stream) {
+      vo.stream = stream;
+      vo.parts = [];
+      var rec;
+      try { rec = new MediaRecorder(stream); } catch (e) { voEnd(); showToast(t("vo.mic")); return; }
+      vo.rec = rec;
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) vo.parts.push(e.data); };
+      rec.onstop = function () { voTake(new Blob(vo.parts, { type: rec.mimeType || "audio/webm" })); };
+      rec.start(1000);
+      vo.st = "rec";
+      vo.timer = setTimeout(voStop, VO_MAX_MS);
+      voDraw(t("vo.rec") + " " + t("vo.max"));
+    }, function () { voEnd(); showToast(t("vo.mic")); });
+  }
+  function voStop() {
+    if (vo.st !== "rec" || !vo.rec) return;
+    clearTimeout(vo.timer);
+    vo.st = "run";
+    voDraw(t("vo.run", { p: 0 }));
+    try { vo.rec.stop(); } catch (e) { voEnd(); }
+  }
+  function voRelease() {
+    if (vo.stream) vo.stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+    vo.stream = null;
+    vo.rec = null;
+  }
+  function voEnd(note) {
+    clearTimeout(vo.timer);
+    voRelease();
+    vo.st = "";
+    vo.parts = [];
+    voDraw(note || "");
+  }
+  // Recorded blob → 16 kHz mono → text → the message box.
+  function voTake(blob) {
+    voRelease();
+    var AC = window.AudioContext || window.webkitAudioContext, OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    var ctx = new AC();
+    blob.arrayBuffer().then(function (ab) {
+      return new Promise(function (resolve, reject) { ctx.decodeAudioData(ab, resolve, reject); });
+    }).then(function (buf) {
+      try { ctx.close(); } catch (e) {}
+      var n = Math.max(1, Math.ceil(buf.duration * 16000));
+      var off = new OAC(1, n, 16000), src = off.createBufferSource();
+      src.buffer = buf;
+      src.connect(off.destination);
+      src.start();
+      return off.startRendering();
+    }).then(function (out) {
+      var samples = out.getChannelData(0);
+      return voAsr().then(function (ASR) {
+        return ASR.run(samples, {
+          lang: voLang(), model: prefs.voice || "tiny",
+          progress: function (q, stage) { voDraw(t(stage === "download" ? "vo.dl" : "vo.run", { p: Math.round(q * 100) })); }
+        });
+      });
+    }).then(function (r) {
+      var text = C.voiceText((r && r.cues) || []);
+      if (!text) { voEnd(); showToast(t("vo.none")); return; }
+      var box = $("input");
+      box.value = C.voiceJoin(box.value, text).slice(0, MAX_INPUT);
+      autosize();
+      voEnd();
+      try { box.focus(); box.setSelectionRange(box.value.length, box.value.length); } catch (e) {}
+    }, function (e) {
+      try { ctx.close(); } catch (x) {}
+      voEnd();
+      showToast(e && /^http|fetch|network|load/i.test(String(e.message || e)) ? t("vo.net") : t("vo.fail"));
+    });
+  }
+  // Settings › Voice input: the model on this device, and removing it.
+  function voSettings(body) {
+    if (!voCan()) return;
+    var sec = section(body, t("set.voice"));
+    var st = el("p", "dlg-hint");
+    st.setAttribute("role", "status");
+    sec.appendChild(st);
+    var rm = button(t("set.voiceRm"), "small danger", function () {
+      voAsr().then(function (ASR) { return ASR.forget(prefs.voice); }).then(function () {
+        prefs.voice = "";
+        savePrefs();
+        draw();
+      });
+    });
+    sec.appendChild(rm);
+    sec.appendChild(el("p", "dlg-hint", t("set.voiceHint")));
+    function draw() {
+      rm.hidden = true;
+      st.textContent = t("set.voiceNone");
+      if (!prefs.voice) return;
+      voAsr().then(function (ASR) {
+        return Promise.resolve(ASR.ready(prefs.voice)).then(function (yes) {
+          if (!yes) return;
+          st.textContent = t("set.voiceHas", { name: t("vo." + prefs.voice, { mb: ASR.mbOf(prefs.voice) + ASR.RUNTIME_MB }) });
+          rm.hidden = false;
+        });
+      }).catch(function () {});
+    }
+    draw();
+  }
+
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
@@ -9721,6 +10065,8 @@
     $("wel-icon").innerHTML = ICON.spark;
     $("input").setAttribute("aria-label", t("ph.input"));
     $("att-btn").innerHTML = ICON.clip;
+    $("mic-btn").innerHTML = ICON.mic;
+    voDraw("");
   }
 
   function wire() {
@@ -9735,6 +10081,7 @@
     $("wel-brief").addEventListener("click", startBriefing);
     $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
     $("att-btn").addEventListener("click", attachDialog);
+    $("mic-btn").addEventListener("click", voTap);
     $("att-file").addEventListener("change", function (e) {
       if (e.target.dataset.dev === "1") addDev(e.target.files); else addFiles(e.target.files);
       e.target.value = "";
@@ -9782,6 +10129,9 @@
   // stored conversation. A dialog open or an answer running → ignored.
   function openTarget(tg) {
     if (tg && tg.brief === 1 && !busy && !document.querySelector("dialog[open]")) { startBriefing(); return true; }
+    // { listen: 1 } (the single app's "Speak" shortcut, SOLO-AS W2): a
+    // new conversation with the microphone on; the text waits in the box.
+    if (tg && tg.listen === 1 && !busy && !document.querySelector("dialog[open]")) { newChat(); voTap(); return true; }
     if (tg && typeof tg.chat === "string" && !busy && !document.querySelector("dialog[open]")) {
       for (var i = 0; i < chats.length; i++) if (chats[i].id === tg.chat) { openChat(tg.chat); return true; }
       return false;

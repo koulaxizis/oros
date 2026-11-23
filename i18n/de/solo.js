@@ -52,6 +52,7 @@ orosPack("de", "solo", {
  "name.wiki": "orOS Wiki",
  "name.writer": "orOS Texteditor",
  "sc.assistant.brief": "Briefing",
+ "sc.assistant.speak": "Sprechen",
  "sc.base.last": "Letzte Datenbank",
  "sc.base.new": "Neue Datenbank",
  "sc.bookmarks.add": "Lesezeichen hinzufügen",

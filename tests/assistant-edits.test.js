@@ -297,7 +297,7 @@ test("core: change_item is offered only with data access and an app that takes c
   assert.doesNotMatch(A.systemPrompt({ builtin: true, apps: ["x"], changes: ["x"] }), /change_item/);
 });
 
-test("assistant.js: changes need the user's press, undo is never read from a stored chat, no voice input", () => {
+test("assistant.js: changes need the user's press, undo is never read from a stored chat, no Web Speech", () => {
   const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
   // the write happens only after askChange resolved true
   const fn = src.slice(src.indexOf("function changeItem("), src.indexOf("function undoChange("));
@@ -311,9 +311,11 @@ test("assistant.js: changes need the user's press, undo is never read from a sto
   assert.match(byId, /var e = hist\[id\], mem = undoMem\[id\] \|\| \(C\.canUndo\(e, Date\.now\(\)\) \? e\.undo : null\)/);
   assert.doesNotMatch(src.slice(src.indexOf("function undoCard("), src.indexOf("function histRow(")), /ui\.undo|r\.undo/);
   assert.match(src, /idbAll\("log"\)/);
-  // no speech recognition: in Chrome it streams the audio to Google (removed 2026-10-14)
-  assert.doesNotMatch(src, /SpeechRecognition|voiceOk|mic-btn/);
+  // no Web Speech recognition: in Chrome it streams the audio to Google
+  // (removed 2026-10-14). Voice input came back as local Whisper only
+  // (AS-VOICE2, montage/asr.js), tested in assistant-voice.test.js.
+  assert.doesNotMatch(src, /SpeechRecognition|voiceOk/);
   const html = fs.readFileSync(path.join(ROOT, "assistant/index.html"), "utf8");
   assert.ok(html.indexOf("edits.js") > 0 && html.indexOf("edits.js") < html.indexOf("assistant.js?"));
-  assert.doesNotMatch(html, /mic-btn/);
+  assert.doesNotMatch(html, /SpeechRecognition/);
 });
