@@ -682,7 +682,10 @@
       "imp.keepOff": "Turn on “Keep conversations on this device” first.",
       "imp.from": "Imported from {s} · {d}", "imp.badge": "{s}",
       "entry.invoice": "New invoice · {app}",
-      "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back",
+      "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back", "tool.shopFind": "Products of {shop} for “{q}”: {n}", "tool.shopErr": "The shop could not be asked",
+      "f.pweight": "Weight", "f.length": "Length", "f.width": "Width", "f.height": "Height", "f.saleprice": "Sale price", "f.stock": "In stock", "f.managestock": "Stock counted", "f.stockstatus": "Availability",
+      "v.ms.true": "yes", "v.ms.false": "no", "v.ss.instock": "in stock", "v.ss.outofstock": "out of stock", "v.ss.onbackorder": "on backorder",
+      "shop.moved": "The product changed in the shop while the card was open, so nothing was changed.", "shop.undoMoved": "It was changed again in the shop since, so it was left as it is.", "shop.undoGone": "The product is no longer in the shop.",
       "sum.title": "Share this summary of {app} with {name}?",
       "sum.text": "Worked out on this device. Only these lines are sent, not the entries themselves.",
       "ln.title": "Share {n} rows of {app} with {name}?",
@@ -1385,7 +1388,10 @@
       "imp.keepOff": "Άνοιξε πρώτα το «Να κρατιούνται οι συζητήσεις σε αυτή τη συσκευή».",
       "imp.from": "Ήρθε από {s} · {d}", "imp.badge": "{s}",
       "entry.invoice": "Νέο τιμολόγιο · {app}",
-      "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})",
+      "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})", "tool.shopFind": "Προϊόντα του {shop} για «{q}»: {n}", "tool.shopErr": "Το κατάστημα δεν απάντησε",
+      "f.pweight": "Βάρος", "f.length": "Μήκος", "f.width": "Πλάτος", "f.height": "Ύψος", "f.saleprice": "Τιμή προσφοράς", "f.stock": "Απόθεμα", "f.managestock": "Μέτρηση αποθέματος", "f.stockstatus": "Διαθεσιμότητα",
+      "v.ms.true": "ναι", "v.ms.false": "όχι", "v.ss.instock": "σε απόθεμα", "v.ss.outofstock": "εξαντλημένο", "v.ss.onbackorder": "με προπαραγγελία",
+      "shop.moved": "Το προϊόν άλλαξε στο κατάστημα όσο ήταν ανοιχτή η κάρτα, οπότε δεν άλλαξε τίποτα.", "shop.undoMoved": "Άλλαξε ξανά στο κατάστημα από τότε, οπότε έμεινε όπως είναι.", "shop.undoGone": "Το προϊόν δεν υπάρχει πια στο κατάστημα.",
       "sum.title": "Να δει το {name} αυτή τη σύνοψη ({app});",
       "sum.text": "Υπολογίστηκε σε αυτή τη συσκευή. Στέλνονται μόνο αυτές οι γραμμές, όχι οι ίδιες οι καταχωρήσεις.",
       "ln.title": "Να δει το {name} {n} γραμμές από {app};",
@@ -3305,7 +3311,8 @@
     var fileOn = !builtin && !!installed().writer;
     var rbOn = !builtin && !!installed().layout;
     var edCats = builtin || data.set.chat ? {} : editCats(apps);
-    var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
+    var shops = builtin ? [] : shopAccts(apps);   // AS-SHOP
+    var tools = builtin ? [] : C.toolsFor({ shop: shops.length ? "write" : "", data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn, mockup: !builtin && !!installed().mockups,
@@ -3333,7 +3340,8 @@
       house: rbOn, epub: rbOn,
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       page: wmode === "native",
-      webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
+      webName: wmode && wmode !== "native" ? t("ws." + wmode) : "",
+      shop: shops.length ? "write" : "", shops: shops.map(function (a) { return a.name || a.site; })
     });
     var web = wmode === "native";
     var round = 0, wround = 0, lround = 0, conts = 0;
@@ -3567,6 +3575,8 @@
     if (call.name === "files_write") return filesWrite(c, call.args, apps);
     if (call.name === "files_move") return filesMove(c, call.args, apps);
     if (call.name === "files_delete") return filesDelete(c, call.args, apps);
+    if (call.name === "shop_find") return shopFind(c, call.args, apps);       // AS-SHOP
+    if (call.name === "shop_change") return shopChange(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "create_items") return createItems(c, call.args, apps);
     if (call.name === "link_contact") return linkContact(c, call.args, apps);
@@ -4820,6 +4830,230 @@
       });
     });
   }
+  // ---- AS-SHOP W1 (Chris 2026-11-23): the user's own WooCommerce shop ----
+  // assistant/shop.js plans; the calls go through the shell's Connected
+  // services (links/host.js orosLinks.call, its allowlist), with the
+  // shop's own key on this device. Offered while the Shop app may be
+  // read and a WooCommerce shop with keys is connected. shop_change
+  // reads the product again right before the card and again after
+  // Apply; it writes only when nothing changed in between. Undo (card,
+  // history, undo_change) puts the old values back only while the shop
+  // still shows the Assistant's.
+  var shopMem = {};                      // acct → { at, rows, units, uat }
+  var SHOP_TTL = 5 * 60000;
+  function shopLinks() {
+    var p = shell();
+    try { return p && p.orosLinks && typeof p.orosLinks.call === "function" && typeof p.orosLinks.list === "function" ? p.orosLinks : null; } catch (e) { return null; }
+  }
+  function shopAccts(apps) {
+    if (!apps.some(function (a) { return a.id === "shop"; })) return [];
+    var lk = shopLinks();
+    try { return lk ? (lk.list("woo") || []).map(function (a) { return { id: a.id, name: a.name || "", site: a.site || "" }; }) : []; } catch (e) { return []; }
+  }
+  function shopApp(apps) { var o = null; apps.forEach(function (a) { if (a.id === "shop") o = a; }); return o; }
+  function shopMod() { return window.OrosAssistShop ? Promise.resolve(window.OrosAssistShop) : loadOnce("shop.js").then(function () { return window.OrosAssistShop || null; }); }
+  var SHOP_WHY = {
+    gone: "The shop is no longer in Connected services.", keys: "This device has no key for the shop (Settings › Connected services).",
+    offline: "This device is offline.", auth: "The shop refused the key. To change products the shop's WooCommerce key must be Read/Write (WooCommerce › Settings › Advanced › REST API), added in Settings › Connected services.",
+    denied: "orOS does not send that request to a shop.", notfound: "The shop answered that it does not have that.",
+    network: "The shop could not be reached.", relay: "The shop could not be reached.", server: "The shop answered with an error.", busy: "The shop is busy; try again in a minute."
+  };
+  function shopWhy(code) { return SHOP_WHY[code] || "The shop could not be asked right now."; }
+  function shopErr(msg, title) { return { content: "Error: " + msg, err: 1, ui: { k: "shopErr", title: title || "" } }; }
+  // one request → its answer data, or throws { code }
+  function shopGet(acct, req) {
+    var lk = shopLinks();
+    if (!lk) return Promise.reject({ code: "gone" });
+    return lk.call(acct, [req]).then(function (res) {
+      var r = res && res[0];
+      if (!r) throw { code: "server" };
+      if (r.status === 401 || r.status === 403) throw { code: "auth" };
+      if (r.status === 404) throw { code: "notfound" };
+      if (r.status === 429) throw { code: "busy" };
+      if (r.status < 200 || r.status > 299 || r.err) throw { code: "server" };
+      return r.data;
+    }, function (e) { throw { code: (e && e.code) || "network" }; });
+  }
+  function shopUnits(S, acct) {
+    var m = shopMem[acct] || (shopMem[acct] = {});
+    if (m.units && Date.now() - m.uat < SHOP_TTL) return Promise.resolve(m.units);
+    var rq = S.unitReqs();
+    return Promise.all([shopGet(acct, rq[0]).catch(function () { return null; }), shopGet(acct, rq[1]).catch(function () { return null; })]).then(function (a) {
+      m.units = S.units(a[0], a[1]);
+      m.uat = Date.now();
+      return m.units;
+    });
+  }
+  // every product, page by page (kept 5 minutes for this visit)
+  function shopRows(S, acct) {
+    var m = shopMem[acct] || (shopMem[acct] = {});
+    if (m.rows && Date.now() - m.at < SHOP_TTL) return Promise.resolve(m.rows);
+    var rows = [];
+    function page(n) {
+      return shopGet(acct, S.listReq(n)).then(function (list) {
+        (Array.isArray(list) ? list : []).forEach(function (p) { var r = S.norm(p); if (r) rows.push(r); });
+        if (Array.isArray(list) && list.length >= S.PER_PAGE && n < S.MAX_PAGES) return page(n + 1);
+        m.rows = rows;
+        m.at = Date.now();
+        return rows;
+      });
+    }
+    return page(1);
+  }
+  function shopVars(S, acct, parent) {
+    return shopGet(acct, S.varsReq(parent.id)).then(function (list) {
+      return (Array.isArray(list) ? list : []).map(function (v) { return S.norm(v, parent); }).filter(Boolean);
+    });
+  }
+  function shopFind(c, a, apps) {
+    var app = shopApp(apps);
+    if (!app) return Promise.resolve(shopErr("the user does not let the Assistant read the Shop app any more."));
+    a = a || {};
+    var q = String(a.query == null ? "" : a.query).replace(/\s+/g, " ").trim().slice(0, 120);
+    if (!q) return Promise.resolve({ content: "Error: query is empty.", err: 1, ui: { k: "toolErr", why: "empty" } });
+    return shopMod().then(function (S) {
+      if (!S) return shopErr("the shop tools could not be loaded right now.");
+      var pick = S.pickShop(shopAccts(apps), a.shop);
+      if (pick.err) return shopErr(pick.err);
+      var acct = pick.id, units;
+      return shopUnits(S, acct).then(function (u) {
+        units = u;
+        return shopRows(S, acct);
+      }).then(function (rows) {
+        var hits = S.find(rows, q), more = Math.max(0, hits.length - S.FIND_MAX);
+        hits = hits.slice(0, S.FIND_MAX);
+        var share = app.perm === "always" || !hits.length ? Promise.resolve(hits)
+          : askConsent(q, hits.map(function (r) { return { app: "shop", appName: pick.name, title: r.name, text: r.sku, r: r }; })).then(function (ch) {
+            if (ch && ch.always && ch.always.indexOf("shop") >= 0) setPerm("shop", "always");
+            return (ch && ch.chosen ? ch.chosen : []).map(function (it) { return it.r; });
+          });
+        return share.then(function (shared) {
+          var held = hits.length - shared.length;
+          // a product with variations brings them (the first three such products)
+          var withVars = shared.filter(function (r) { return r.type === "variable"; }).slice(0, 3);
+          return Promise.all(withVars.map(function (r) { return shopVars(S, acct, r).catch(function () { return null; }); })).then(function (vs) {
+            var out = shared.map(function (r) {
+              var o = S.view(r, units), at = withVars.indexOf(r);
+              if (at >= 0 && vs[at]) o.variations = vs[at].slice(0, S.VAR_MAX).map(function (v) { var x = S.view(v, units); delete x.product_id; delete x.name; return x; });
+              return o;
+            });
+            var res = { shop: pick.name, units: units, products: out };
+            if (more) res.more = more + " more match; use more words.";
+            if (held) res.declined = held;
+            if (!hits.length) res.note = "No product of the shop matches. Try other words, the SKU or the id.";
+            return { content: JSON.stringify(res), ui: { k: "shopFind", q: q, n: out.length, shop: pick.name } };
+          });
+        });
+      }, function (e) { return shopErr(shopWhy(e && e.code)); });
+    });
+  }
+  // the product (fresh) and, for a variation, the variation (fresh)
+  function shopTarget(S, acct, t) {
+    var pid = S.wooId(t.q);
+    var first = pid ? Promise.resolve(pid) : shopRows(S, acct).then(function (rows) {
+      var hits = S.find(rows, t.q);
+      if (!hits.length) throw { msg: "No product of the shop matches \"" + t.q.slice(0, 80) + "\". Call shop_find first." };
+      if (hits.length > 1) throw { msg: "Several products match \"" + t.q.slice(0, 80) + "\": " + hits.slice(0, 6).map(function (r) { return r.name + " (id " + r.id + ")"; }).join(", ") + ". Ask the user which one, then give its id." };
+      return hits[0].id;
+    });
+    return first.then(function (id) {
+      return shopGet(acct, S.productReq(id)).catch(function (e) {
+        if (e && e.code === "notfound") throw { msg: "The shop has no product with id " + id + ". Call shop_find first." };
+        throw e;
+      });
+    }).then(function (p) {
+      var prod = S.norm(p);
+      if (!prod) throw { code: "server" };
+      if (!t.vq) return { prod: prod, cur: prod, t: { pid: prod.id, vid: 0 } };
+      if (prod.type !== "variable") throw { msg: "“" + prod.name + "” has no variations; leave variation out." };
+      return shopVars(S, acct, prod).then(function (vars) {
+        var v = S.findVar(vars, t.vq);
+        if (v.length !== 1) throw { msg: (v.length ? "Several" : "No") + " variations of “" + prod.name + "” match \"" + t.vq.slice(0, 60) + "\". Its variations: " + vars.slice(0, 12).map(function (x) { return x.attrs + " (id " + x.id + ")"; }).join(", ") + "." };
+        return { prod: prod, cur: v[0], t: { pid: prod.id, vid: v[0].id } };
+      });
+    });
+  }
+  // the item again, as the shop has it now
+  function shopFresh(S, acct, t, prod) {
+    if (!t.vid) return shopGet(acct, S.productReq(t.pid)).then(function (p) { return S.norm(p); });
+    return shopVars(S, acct, prod || { id: t.pid, name: "" }).then(function (vars) { return vars.filter(function (v) { return v.id === t.vid; })[0] || null; });
+  }
+  function shopChange(c, a, apps) {
+    var app = shopApp(apps);
+    if (!app) return Promise.resolve(shopErr("the user does not let the Assistant read the Shop app any more."));
+    return shopMod().then(function (S) {
+      if (!S) return shopErr("the shop tools could not be loaded right now.");
+      var ch = S.normArgs(a);
+      if (!ch.ok) return shopErr(ch.err);
+      var pick = S.pickShop(shopAccts(apps), a && a.shop);
+      if (pick.err) return shopErr(pick.err);
+      var acct = pick.id, units, tg, p;
+      return shopUnits(S, acct).then(function (u) {
+        units = u;
+        return shopTarget(S, acct, ch.t);
+      }).then(function (x) {
+        tg = x;
+        p = S.plan(tg.cur, ch, units);
+        if (!p.ok) return shopErr(p.err, tg.cur.name);
+        var title = tg.cur.name + (tg.cur.sku ? " · " + tg.cur.sku : "");
+        var base = { k: "change", app: pick.name, act: "update", title: title, rows: p.rows };
+        return askChange(pick.name, { title: title, rows: p.rows }, "update").then(function (ok) {
+          if (!ok) {
+            base.st = "declined";
+            return { content: JSON.stringify({ applied: false, note: "The user did not apply the change. Nothing changed in the shop." }), ui: base };
+          }
+          // the card may have waited: the shop is read again, and the
+          // change goes only if what the card showed is still so
+          return shopFresh(S, acct, tg.t, tg.prod).then(function (now) {
+            var p2 = now ? S.plan(now, ch, units) : { ok: false };
+            if (!p2.ok || JSON.stringify(p2.rows) !== JSON.stringify(p.rows)) {
+              base.st = "failed";
+              base.msg = t("shop.moved");
+              return { content: "Error: the product changed in the shop while the card was open. Nothing was changed; call shop_find again.", err: 1, ui: base };
+            }
+            return shopGet(acct, S.putReq(tg.t, p.body)).then(function (done) {
+              var got = S.norm(done, tg.t.vid ? tg.prod : null), miss = [];
+              if (got) Object.keys(p.after).forEach(function (k) { var w = p.after[k], h = got[k]; if (!(w === h || (w !== "" && h !== "" && +w === +h) || (k === "manage_stock" && h === w))) miss.push(k); });
+              if (shopMem[acct]) shopMem[acct].at = 0;   // the list is read again next time
+              var uid = newId();
+              var undoOk = Object.keys(p.before).length > 0;
+              if (undoOk) {
+                remember(uid, { app: "shop", woo: { acct: acct, t: tg.t, after: p.after, before: p.before, name: tg.cur.name } },
+                         { kind: "change", app: "shop", name: pick.name, act: "update", title: title, items: [title] });
+                base.u = uid;
+              }
+              base.st = "done";
+              var res = { applied: true, product: tg.cur.name, shop: pick.name, changed: p.rows.map(function (r) { return r.k + ": " + (r.b || "none") + " → " + (r.a || "none"); }) };
+              res.note = (undoOk ? "Done in the shop. They can undo it." : "Done in the shop.") +
+                (p.keep.length ? " Undo cannot take the price away again (the shop needs one)." : "") +
+                (miss.length ? " The shop's answer shows other values for " + miss.join(", ") + " (a plugin may change them); call shop_find to check." : "");
+              return { content: JSON.stringify(res), ui: base };
+            }, function (e) {
+              base.st = "failed";
+              base.msg = shopWhy(e && e.code);
+              return { content: "Error: " + shopWhy(e && e.code) + " Nothing was changed.", err: 1, ui: base };
+            });
+          });
+        });
+      }).catch(function (e) {
+        if (e && e.msg) return shopErr(e.msg);
+        return shopErr(shopWhy(e && e.code));
+      });
+    });
+  }
+  function shopUndo(w) {
+    return shopMod().then(function (S) {
+      if (!S || !w || !w.t) return undoFail(t("hist.noMod"));
+      return shopFresh(S, w.acct, w.t, null).then(function (now) {
+        var u = S.undoPlan(now, w);
+        if (!u.ok) return undoFail(t(u.err === "changed" ? "shop.undoMoved" : u.err === "gone" ? "shop.undoGone" : "hist.noMod"));
+        return shopGet(w.acct, S.putReq(w.t, u.body)).then(function () {
+          if (shopMem[w.acct]) shopMem[w.acct].at = 0;
+          return { ok: true };
+        });
+      }).catch(function (e) { return undoFail(shopWhy(e && e.code)); });
+    });
+  }
   // ---- GATE-FILES (F1): files in the folders the owner lets Claude use ----
   // assistant/claudefiles.js plans and checks every step; the folders
   // come from the gate's list (Settings › Connected services › orOS
@@ -5618,6 +5852,8 @@
     if (f === "read") return v ? t("v.read") : t("v.unread");
     if (f === "played") return v ? t("v.played") : t("v.unplayed");
     if (f === "kind") return t("v." + v);
+    if (f === "managestock" && (v === "true" || v === "false" || v === true || v === false)) return t("v.ms." + String(v));   // AS-SHOP
+    if (f === "stockstatus" && /^(instock|outofstock|onbackorder)$/.test(v)) return t("v.ss." + v);
     if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (f === "status" && /^inv:/.test(v) && STRINGS.en["inv." + v.slice(4)] !== undefined) return t("inv." + v.slice(4));
     if (v === "" || v === undefined) return t("v.empty");
@@ -6377,6 +6613,7 @@
     var now = Date.now();
     if (mem.edit) return editUndo(mem.edit);
     if (mem.files) return filesUndo(mem.files);
+    if (mem.woo) return shopUndo(mem.woo);   // AS-SHOP
     if (mem.cf) return cfUndo(mem.cf);
     if (mem.kb) {
       var G = gateCore();
@@ -7899,6 +8136,8 @@
         else if (ui.k === "sum") txt = t("tool.sum", { app: ui.app || "" });
         else if (ui.k === "sumNo") txt = t("tool.sumNo", { app: ui.app || "" });
         else if (ui.k === "chgErr") txt = t("chg.err", { app: ui.app || "" });
+        else if (ui.k === "shopFind") txt = t("tool.shopFind", { q: ui.q || "", n: ui.n || 0, shop: ui.shop || "" });   // AS-SHOP
+        else if (ui.k === "shopErr") txt = t("tool.shopErr");
         else if (ui.k === "toolErr" && /^(args|unknown|empty|off)$/.test(ui.why)) txt = t("tool.err." + ui.why, { name: ui.name || "" });
         else txt = t("tool.err");
         line.appendChild(el("span", "", txt));
