@@ -904,7 +904,7 @@
     render();
   }
 
-  function secNotifications(host) {
+  function secNotifications(host, s) {
     var N = notifs();
     if (!N) { host.appendChild(el("p", "hint", t("n.none"))); return; }
     var on = !!N.getSetting("enabled", true);
@@ -957,6 +957,7 @@
     }), N.getSetting("duration", 5000), "n.duration", function (v) { nSet("duration", parseInt(v, 10)); }),
       { forId: "f-n.duration" }));
     host.appendChild(c2);
+    if (s && s.uisounds) secUiSounds(host, s.uisounds);
 
     secFocus(host, N);
 
@@ -981,6 +982,33 @@
       c4.appendChild(list);
       host.appendChild(c4);
     }
+  }
+
+  // Interface sounds (UISND-1, shell): off by default, this device only;
+  // three packs from oros-sounds, a volume and a Try button.
+  function secUiSounds(host, u) {
+    var c = card(t("us.title"), "uisounds");
+    c.appendChild(el("p", "hint", t("us.hint")));
+    c.appendChild(row(t("us.on"), switchBtn(!!u.on, "uisnd:on", function (v) { set("uisnd:on", v); }, t("us.on"))));
+    if (u.on) {
+      var ps = select(u.packs.map(function (p) { return { value: p, label: t("us.pack." + p) }; }), u.pack, "uisnd-pack",
+        function (v) { set("uisnd:pack", v); });
+      c.appendChild(row(t("us.pack"), ps, { forId: ps.id }));
+      var wrap = el("div", "range");
+      var vol = el("input");
+      vol.type = "range"; vol.min = "0"; vol.max = "100"; vol.step = "5";
+      vol.id = "f-uisnd-vol";
+      vol.setAttribute("data-k", "uisnd:vol");
+      vol.value = String(u.vol);
+      var pct = el("span", "range-val", u.vol + "%");
+      vol.addEventListener("input", function () { pct.textContent = vol.value + "%"; });
+      vol.addEventListener("change", function () { set("uisnd:vol", Number(vol.value)); });
+      wrap.appendChild(vol);
+      wrap.appendChild(pct);
+      c.appendChild(row(t("us.vol"), wrap, { forId: "f-uisnd-vol" }));
+      c.appendChild(actions(button(t("us.try"), "uisnd:try", function () { set("uisnd:try", true); })));
+    }
+    host.appendChild(c);
   }
 
   // Focus modes (FOCUS-1, focus.js in the shell). Do Not Disturb and

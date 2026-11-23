@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.78.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.79.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -12063,6 +12063,158 @@
     } catch (e) {}
     return "beep";
   }
+  // ---------- UISND-1: interface sounds (video ideas 2026-11-23 #5) ----------
+  // Soft sounds for taps, switches and opening and closing apps and
+  // panels. OFF by default; device-local "oros-uisounds" = { on, pack:
+  // "pebble" | "keys" | "crystal", vol: 0..100 }. The packs are five
+  // short MP3s each from koulaxizis/oros-sounds ui/ (CC0, made from its
+  // own VSCO 2 CE files), fetched the first time they are needed and kept
+  // in the Cache Storage "oros-sounds" (Studio's), so they work offline
+  // afterwards; until then nothing plays. Silent while Do Not Disturb or
+  // a Focus mode is on, while the page is hidden, and in a single app.
+  // Only the shell's own buttons sound (an app frame is its own page).
+  var UIS_KEY = "oros-uisounds";
+  var UIS_PACKS = ["pebble", "keys", "crystal"];
+  var UIS_SOUNDS = ["tap", "on", "off", "open", "close"];
+  var UIS_BASE = "https://koulaxizis.github.io/oros-sounds/ui/";
+  function uisParse(raw) {
+    var o = null;
+    try { o = JSON.parse(raw); } catch (e) { o = null; }
+    if (!o || typeof o !== "object" || Array.isArray(o)) o = {};
+    var vol = typeof o.vol === "number" && isFinite(o.vol) ? Math.max(0, Math.min(100, Math.round(o.vol))) : 50;
+    return { on: o.on === true, pack: UIS_PACKS.indexOf(o.pack) !== -1 ? o.pack : "pebble", vol: vol };
+  }
+  // What a click on `el` sounds like after it ran: "on" / "off" for a
+  // switch (aria-pressed, aria-checked, a checkbox), "tap" for any other
+  // button or link, "" for the rest. Pure (tests): el = { tag, type,
+  // role, pressed, checked, disabled }.
+  function uisKind(el) {
+    if (!el || el.disabled) return "";
+    var st = el.pressed != null ? el.pressed : el.checked;
+    if (st === "true" || st === true) return "on";
+    if (st === "false" || st === false) return "off";
+    if (el.tag === "BUTTON" || el.tag === "A" || el.role === "button" || el.role === "tab" || el.role === "menuitem") return "tap";
+    return "";
+  }
+  var uis = { rec: null, ctx: null, buf: {}, pack: "", loading: "", last: 0 };
+  function uisRead() {
+    if (!uis.rec) { try { uis.rec = uisParse(localStorage.getItem(UIS_KEY)); } catch (e) { uis.rec = uisParse(null); } }
+    return uis.rec;
+  }
+  function uisWrite(rec) {
+    uis.rec = uisParse(JSON.stringify(rec));
+    try { localStorage.setItem(UIS_KEY, JSON.stringify(uis.rec)); } catch (e) {}
+  }
+  function uisQuiet() {
+    if (SOLO || document.hidden) return true;
+    try { var d = window.orosNotifs && window.orosNotifs.dnd ? window.orosNotifs.dnd() : null; if (d && d.on) return true; } catch (e) {}
+    try { var F = window.orosFocus; if (F && typeof F.active === "function" && F.active()) return true; } catch (e) {}
+    return false;
+  }
+  function uisFile(url) {
+    var net = function (c) {
+      return fetch(url, { credentials: "omit" }).then(function (r) {
+        if (!r.ok) throw new Error("http " + r.status);
+        if (c) c.put(url, r.clone()).catch(function () {});
+        return r;
+      });
+    };
+    var open;
+    try { open = window.caches ? window.caches.open("oros-sounds") : Promise.resolve(null); } catch (e) { open = Promise.resolve(null); }
+    return open.catch(function () { return null; }).then(function (c) {
+      if (!c) return net(null);
+      return c.match(url).then(function (hit) { return hit || net(c); });
+    });
+  }
+  // The pack's five sounds, decoded once per pack.
+  function uisLoad(pack) {
+    if (uis.pack === pack || uis.loading === pack || !uis.ctx) return;
+    uis.loading = pack;
+    var ctx = uis.ctx, got = {};
+    Promise.all(UIS_SOUNDS.map(function (k) {
+      return uisFile(UIS_BASE + pack + "/" + k + ".mp3").then(function (r) { return r.arrayBuffer(); }).then(function (ab) {
+        return new Promise(function (ok, no) { ctx.decodeAudioData(ab, ok, no); });
+      }).then(function (b) { got[k] = b; }, function () {});
+    })).then(function () {
+      if (uis.loading !== pack) return;
+      uis.loading = "";
+      uis.pack = pack;
+      uis.buf = got;
+    });
+  }
+  function uisCtx() {
+    if (uis.ctx) return uis.ctx;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try { uis.ctx = new AC(); } catch (e) { uis.ctx = null; }
+    return uis.ctx;
+  }
+  // force: the Settings "Try" button (plays even under Focus).
+  function uiSound(kind, force) {
+    var rec = uisRead();
+    if (!rec.on || !rec.vol || UIS_SOUNDS.indexOf(kind) === -1) return;
+    if (!force && uisQuiet()) return;
+    var now = Date.now();
+    if (kind === "tap" && now - uis.last < 120) return;   // an open / close / switch just sounded
+    uis.last = now;
+    var ctx = uisCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") { try { ctx.resume().catch(function () {}); } catch (e) {} }
+    if (uis.pack !== rec.pack) { uisLoad(rec.pack); return; }
+    var b = uis.buf[kind];
+    if (!b) return;
+    try {
+      var src = ctx.createBufferSource(), g = ctx.createGain();
+      src.buffer = b;
+      g.gain.value = Math.pow(rec.vol / 100, 2);
+      src.connect(g);
+      g.connect(ctx.destination);
+      src.start();
+    } catch (e) {}
+  }
+  (function () {
+    if (SOLO) return;
+    document.addEventListener("click", function (e) {
+      if (!uisRead().on) return;
+      var el = e.target && e.target.closest ? e.target.closest("button, a[href], [role=button], [role=tab], [role=menuitem], [role=switch], input[type=checkbox]") : null;
+      if (!el) return;
+      // After the click ran: the switch's new state.
+      setTimeout(function () {
+        var k = uisKind({ tag: el.tagName, role: el.getAttribute("role"), disabled: el.disabled,
+          pressed: el.getAttribute("aria-pressed"), checked: el.type === "checkbox" ? el.checked : el.getAttribute("aria-checked") });
+        if (k) uiSound(k);
+      }, 0);
+    }, true);
+    // Quick settings open and close.
+    document.addEventListener("oros-qs", function (e) {
+      if (e.detail === "open") uiSound("open");
+      else if (e.detail === "close") uiSound("close");
+    });
+    // The first tap makes the audio context (browsers start it only on a
+    // gesture) and loads the pack, so the next sound is ready.
+    var warm = function () {
+      if (!uisRead().on || uisQuiet()) return;
+      if (uisCtx() && uis.pack !== uisRead().pack) uisLoad(uisRead().pack);
+    };
+    document.addEventListener("pointerdown", warm, true);
+    document.addEventListener("keydown", warm, true);
+  })();
+  function uisSnapshot() {
+    if (SOLO) return null;
+    var r = uisRead();
+    return { on: r.on, pack: r.pack, vol: r.vol, packs: UIS_PACKS.slice() };
+  }
+  function uisSet(name, value) {
+    var r = uisRead();
+    if (name === "on") r.on = !!value;
+    else if (name === "pack" && UIS_PACKS.indexOf(value) !== -1) r.pack = value;
+    else if (name === "vol") r.vol = Number(value);
+    else if (name === "try") { uisCtx(); if (uis.pack !== r.pack) uisLoad(r.pack); setTimeout(function () { uiSound("on", true); }, uis.pack === r.pack ? 0 : 900); return; }
+    else return;
+    uisWrite(r);
+    if (r.on) { uisCtx(); uisLoad(r.pack); }
+  }
+
   // A timer can also ring with a Ringtone Composer melody, "rt:<id>"
   // (stickies/host.js window.orosMelodies; gone → the beep).
   var ALARM_RT = /^rt:[A-Za-z0-9_-]{1,64}$/;
@@ -13673,6 +13825,7 @@
       clip: window.orosClip ? window.orosClip.snapshot() : null,
       pocket: !SOLO && window.orosPocket ? window.orosPocket.snapshot() : null,   // POCKET-1, this device
       overview: ovSnapshot(),       // OV-1: hot corner, this device only
+      uisounds: uisSnapshot(),      // UISND-1: interface sounds, this device only
       cont: contSnapshot(),         // CONT-1 + RS-1: this device's switches, its name, the devices seen
       // This computer's files (orOS Portable, desktop apps): null where the
       // launcher does not ask (useoros.online, orOS USB).
@@ -13727,6 +13880,9 @@
       case "cont:reopen": if (!SOLO && window.orosContinue) { window.orosContinue.setPref("reopen", !!value); appsLastNote(false); settingsNotify(); } return;
       case "cont:name":   if (window.orosContinue) { window.orosContinue.setName(String(value || "")); settingsNotify(); } return;
       case "cont:forget": if (window.orosContinue) { window.orosContinue.forget(String(value || "")); settingsNotify(); } return;
+      case "uisnd:on": case "uisnd:pack": case "uisnd:vol": case "uisnd:try":   // UISND-1
+        if (!SOLO) { uisSet(name.slice(6), value); if (name !== "uisnd:try") settingsNotify(); }
+        return;
       case "overview:corner":      // OV-1's switch: the top-left corner
         if (!SOLO) { hcSet("tl", value ? "overview" : ""); settingsNotify(); }
         return;
@@ -15102,6 +15258,7 @@
     if (window.orosSeasonal) window.orosSeasonal.refresh();   // decorations pause under an app
     if (window.orosWxDesk) window.orosWxDesk.refresh();       // WX-DESK-1: weather pauses too
     wpVizRefresh();  // VIZWALL-1: no light under an app
+    uiSound("open");   // UISND-1
     wpLandRefresh();
     zoomOpen(app);   // ZOOM-1: drawn after the work is done
   }
@@ -15131,6 +15288,7 @@
     wpLandRefresh();   // the desktop may have changed while hidden
     wpVizRefresh();    // VIZWALL-1: the light moves again
     tourMaybe();   // a first-run tour put off by a launch-param app
+    if (prev) uiSound("close");      // UISND-1
     tipEnd();
     zoomClose(prev, zoomFromRect);   // ZOOM-1: shrinks into its icon or the Dock
   }
