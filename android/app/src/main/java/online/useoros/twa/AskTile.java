@@ -5,8 +5,8 @@ import android.service.quicksettings.Tile;
 import android.service.quicksettings.TileService;
 
 /** Quick Settings tile "orOS Assistant" (quick access wave 4, AS-OUT):
- *  a tap opens orOS with the Assistant's small window. Nothing is
- *  typed or sent; the tile keeps no data. */
+ *  a tap opens the Assistant on its own (SOLO-AS, no desktop).
+ *  Nothing is typed or sent; the tile keeps no data. */
 public class AskTile extends TileService {
     @Override
     public void onStartListening() {
