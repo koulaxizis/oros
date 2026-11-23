@@ -169,6 +169,106 @@
     koboldcpp: "http://localhost:5001/v1"
   };
   var KIT_IDS = ["ollama", "lmstudio", "llamacpp", "jan", "localai", "vllm", "koboldcpp"];
+
+  // ---------- 1b. Greek local AI pair for Ollama (AS-GREEK) ----------
+  // Two models that work side by side: krikri-el (ILSP's Llama-Krikri
+  // 8B, made for Greek) for chat and writing, and qwen3:8b for the
+  // answers that need tools (entries, changes). Ollama downloads and
+  // builds both on the person's own computer from one button
+  // (/api/pull, /api/create); nothing passes through orOS.
+  var GREEK_RULE = "ΚΑΝΟΝΑΣ ΓΛΩΣΣΑΣ: Απαντάς ΠΑΝΤΑ σε άπταιστα, φυσικά ελληνικά (μονοτονικό), ακόμη κι όταν η ερώτηση, " +
+    "οι οδηγίες ή τα δεδομένα είναι σε άλλη γλώσσα. Άλλη γλώσσα μόνο όταν ο χρήστης τη ζητήσει ρητά ή ζητήσει μετάφραση.";
+  // The newest message ends with a short reminder too: a long English
+  // system prompt otherwise wins over the rule (tested 2026-11-23).
+  var GREEK_NUDGE = "\n\n(Απάντησε στα ελληνικά.)";
+  // Llama 3.1 chat template of the GGUF, with the Greek rule added after
+  // any system prompt (the Assistant sends its own, which replaces the
+  // model's SYSTEM) and a stricter line for raw JSON tool calls.
+  var KRIKRI_TEMPLATE = [
+    "<|start_header_id|>system<|end_header_id|>",
+    "{{- if .System }}", "", "{{ .System }}", "{{- end }}", "",
+    GREEK_RULE,
+    "{{- if .Tools }}", "",
+    "When you receive a tool call response, use the output to format an answer to the orginal user question.", "",
+    "You are a helpful assistant with tool calling capabilities.",
+    "{{- end }}<|eot_id|>",
+    "{{- range $i, $_ := .Messages }}",
+    "{{- $last := eq (len (slice $.Messages $i)) 1 }}",
+    "{{- if eq .Role \"user\" }}<|start_header_id|>user<|end_header_id|>",
+    "{{- if and $.Tools $last }}", "",
+    "You may call one of the following functions. Only when answering needs the user's own data or an action in orOS, " +
+      "respond only with the raw JSON object {\"name\": function name, \"parameters\": dictionary of argument name and its value}, " +
+      "with no Markdown, code fence or other text. Otherwise answer yourself, in Greek. Never invent a function.", "",
+    "{{ range $.Tools }}", "{{- . }}", "{{ end }}",
+    "Question: {{ .Content }}" + GREEK_NUDGE + "<|eot_id|>",
+    "{{- else }}", "", "{{ .Content }}{{ if $last }}" + GREEK_NUDGE + "{{ end }}<|eot_id|>",
+    "{{- end }}{{ if $last }}<|start_header_id|>assistant<|end_header_id|>", "", "{{ end }}",
+    "{{- else if eq .Role \"assistant\" }}<|start_header_id|>assistant<|end_header_id|>",
+    "{{- if .ToolCalls }}",
+    "{{ range .ToolCalls }}",
+    "{\"name\": \"{{ .Function.Name }}\", \"parameters\": {{ .Function.Arguments }}}{{ end }}",
+    "{{- else }}", "", "{{ .Content }}",
+    "{{- end }}{{ if not $last }}<|eot_id|>{{ end }}",
+    "{{- else if eq .Role \"tool\" }}<|start_header_id|>ipython<|end_header_id|>", "",
+    "{{ .Content }}<|eot_id|>{{ if $last }}<|start_header_id|>assistant<|end_header_id|>", "", "{{ end }}",
+    "{{- end }}",
+    "{{- end }}"
+  ].join("\n");
+  var GREEK_AI = {
+    chat: "krikri-el",
+    from: "hf.co/ilsp/Llama-Krikri-8B-Instruct-GGUF:Q4_K_M",
+    tools: "qwen3:8b",
+    gb: 10,   // both downloads together, about 4.7 + 5.2 GB
+    system: "Είσαι το Κρι-Κρι, ένας βοηθός Τεχνητής Νοημοσύνης που τρέχει τοπικά στον υπολογιστή του χρήστη, μέσα στο orOS. " +
+      "Δίνεις σαφείς, περιεκτικές και ακριβείς απαντήσεις. Αν δεν ξέρεις κάτι, το λες· δεν επινοείς στοιχεία. Γράφεις κώδικα σε Markdown.",
+    // 16K: the Assistant's instructions plus a long chat, and still
+    // fits a computer with 16-32 GB of memory.
+    parameters: { num_ctx: 16384, temperature: 0.5, top_p: 0.95, repeat_penalty: 1.1,
+                  stop: ["<|start_header_id|>", "<|end_header_id|>", "<|eot_id|>"] },
+    template: KRIKRI_TEMPLATE
+  };
+  // Ollama's own API root from the Assistant's address
+  // ("http://localhost:11434/v1" → "http://localhost:11434"), or "".
+  function ollamaRoot(base) {
+    var b = normBase(base);
+    var m = /^(https?:\/\/[^\/?#\s]+)(?:\/v1)?$/i.exec(b || "");
+    return m ? m[1] : "";
+  }
+  // The two calls that set the pair up, in order. Each answers with
+  // lines of JSON progress (stream).
+  function greekSteps(root) {
+    if (!root) return [];
+    var G = GREEK_AI;
+    return [
+      { id: "tools", model: G.tools, url: root + "/api/pull", body: { model: G.tools, stream: true } },
+      { id: "base", model: G.from, url: root + "/api/pull", body: { model: G.from, stream: true } },
+      { id: "chat", model: G.chat, url: root + "/api/create",
+        body: { model: G.chat, from: G.from, system: G.system, template: G.template,
+                parameters: JSON.parse(JSON.stringify(G.parameters)), stream: true } }
+    ];
+  }
+  // One line of Ollama's progress → { status, pct (0-100 or -1), done, error }.
+  function ollamaProgress(line) {
+    var o = null;
+    try { o = JSON.parse(String(line || "")); } catch (e) { o = null; }
+    if (!isObj(o)) return null;
+    if (typeof o.error === "string") return { status: "", pct: -1, done: false, error: o.error.slice(0, 300) };
+    var st = typeof o.status === "string" ? o.status.slice(0, 120) : "";
+    var pct = -1;
+    if (typeof o.total === "number" && o.total > 0 && typeof o.completed === "number") {
+      pct = Math.max(0, Math.min(100, Math.floor(o.completed * 100 / o.total)));
+    }
+    return { status: st, pct: pct, done: st === "success", error: "" };
+  }
+  // What a model needs ticked when it is picked for the local service:
+  // krikri cannot choose tools well and sees no photos; qwen3 uses
+  // tools. Other models: null (the person's own ticks stay).
+  function localTraits(model) {
+    var m = String(model || "").toLowerCase();
+    if (/(^|[\/_:-])krikri/.test(m)) return { nt: 1, vis: 0 };
+    if (/^qwen3(:|$)/.test(m)) return { nt: 0, vis: 0 };
+    return null;
+  }
   // Web search services that take a key of their own (section 3e).
   var KEY_EXTRA = ["tavily", "stability", "horde"];   // stability, horde: image AI (imgai.js)
   var KEY_IDS = PROV_IDS.concat(KEY_EXTRA);
@@ -443,7 +543,7 @@
     function there(pid) {
       var P = PROVIDERS[pid], pc = provs[pid] || {};
       if (o.cool && o.cool[pid] > now) return Promise.resolve(false);
-      if (o.tools && (P.device || (P.local && pc.nt))) return Promise.resolve(false);
+      if (o.tools && (P.device || (P.local && pc.nt && !toolModel(pc, true)))) return Promise.resolve(false);
       if (P.device) return Promise.resolve(o.device ? o.device(pid) : false).then(function (v) { return !!v; }, function () { return false; });
       if (!(pc.model || P.model)) return Promise.resolve(false);
       if (P.local) return provBase(pid, pc) ? probeLocal(pid, pc, readKey) : Promise.resolve(false);
@@ -483,7 +583,15 @@
   function normProv(x) {
     if (!isObj(x)) return null;
     return { m: stamp(x.m), base: normBase(x.base), model: str(x.model, 200).trim(), vis: x.vis ? 1 : 0, free: x.free ? 1 : 0,
-             kit: KIT_IDS.indexOf(x.kit) >= 0 ? x.kit : "", nt: x.nt ? 1 : 0, fast: x.fast ? 1 : 0 };
+             kit: KIT_IDS.indexOf(x.kit) >= 0 ? x.kit : "", nt: x.nt ? 1 : 0, fast: x.fast ? 1 : 0,
+             tm: str(x.tm, 200).trim() };
+  }
+  // The model a local service without tools hands a turn that needs
+  // them (AS-GREEK 2: krikri-el chats, qwen3:8b makes the entries), or
+  // "". pc: the service's settings; needs: the turn needs tools.
+  function toolModel(pc, needs) {
+    pc = pc || {};
+    return needs && pc.nt && pc.tm && pc.tm !== pc.model ? pc.tm : "";
   }
   function normPerm(x) {
     if (!isObj(x) || (x.v !== "ask" && x.v !== "always" && x.v !== "never")) return null;
@@ -5413,6 +5521,7 @@
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
+    GREEK_AI: GREEK_AI, ollamaRoot: ollamaRoot, greekSteps: greekSteps, ollamaProgress: ollamaProgress, localTraits: localTraits, toolModel: toolModel,
     sysAIRead: sysAIRead, sysAIModel: sysAIModel, sysAIAdopt: sysAIAdopt,
     fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, pickChain: pickChain, chainOrder: chainOrder, provTier: provTier, isOnline: isOnline, needsTools: needsTools, coolFor: coolFor, COOL: COOL, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
     TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, LAYOUT_ROUNDS: LAYOUT_ROUNDS, layoutRound: layoutRound, lyAutoCall: lyAutoCall, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
