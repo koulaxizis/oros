@@ -2518,6 +2518,7 @@ function transientNote(title, body) {
         start: null,
         end: null,
         _feed: true,
+        _ctr: k,                                 // CAL-CTR-DUP: matched against own events
         _openAt: { app: "crm", target: { ctr: k.id } }
       };
     });
@@ -3596,8 +3597,19 @@ function transientNote(title, body) {
     });
     return out;
   }
+  // CAL-CTR-DUP: a CRM contract row leaves when an event of the
+  // person's own on that day already names the contract (their event
+  // and its note win; nothing stored is changed).
+  function ctrDupFilter(own, rows) {
+    var C = window.OrosCrmCore;
+    if (!own.length || !C || typeof C.ctrNamedBy !== "function") return rows;
+    return rows.filter(function (r) {
+      return !r._ctr || !own.some(function (e) { return C.ctrNamedBy(r._ctr, e.title); });
+    });
+  }
   function eventsOn(dateStr) {
-    return ownOn(dateStr).concat(feedsOn(dateStr))
+    var own = ownOn(dateStr);
+    return own.concat(ctrDupFilter(own, feedsOn(dateStr)))
     .sort(function (a, b) {
       if (a.start === b.start) return 0;
       if (a.start === null) return 1;

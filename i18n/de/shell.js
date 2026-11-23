@@ -17,6 +17,8 @@ orosPack("de", "shell", {
  "gate.lf.no": "Nicht öffnen",
  "gate.lf.yes": "Für Claude öffnen",
  "gate.cf.title": "Einen Ordner zu Claudes Ordnern hinzufügen?",
+ "gate.ask.note": "Claude wartet auf deine Antwort",
+ "gate.ask.noteBody": "Claude möchte {path} öffnen. Öffne orOS auf dem Bildschirm, um zu antworten, oder sieh unter Einstellungen › Verbundene Dienste › orOS Gate nach.",
  "gate.cf.bodyR": "Claude möchte über orOS Gate diesen Ordner der orOS-Festplatte nutzen (um seine Dateien zu lesen). Er wird auf all deinen Geräten zu Claudes Ordnern hinzugefügt; du kannst ihn jederzeit unter Einstellungen › Verbundene Dienste › orOS Gate entfernen.",
  "gate.cf.bodyW": "Claude möchte über orOS Gate diesen Ordner der orOS-Festplatte nutzen (um Dateien zu lesen und neue dort zu speichern). Er wird auf all deinen Geräten zu Claudes Ordnern hinzugefügt; jede Änderung wird gemeldet und kann rückgängig gemacht werden, und du kannst ihn jederzeit unter Einstellungen › Verbundene Dienste › orOS Gate entfernen.",
  "gate.qdel.title": "Löschen, worum Claude gebeten hat?",

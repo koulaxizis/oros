@@ -93,10 +93,14 @@ final class Widgets {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
     }
 
-    /** orOS with the Assistant's small window (quickmenu.js "#quick-ask",
-     *  AS-OUT): the widget's Assistant button and the Quick Settings tile. */
+    /** The Assistant on its own (SOLO-AS, /assistant/solo.html: the
+     *  shell in solo mode, no desktop), for the widget's Assistant button
+     *  and the Quick Settings tile. The address carries no ?apk= / ?mgr=:
+     *  those describe this package, and the single app's page would book
+     *  them for online.useoros.assistant (solo.js apkNotice). */
     static Intent askIntent(Context c) {
-        Uri u = Uri.parse(c.getString(R.string.launchUrl)).buildUpon().fragment("quick-ask").build();
+        Uri l = Uri.parse(c.getString(R.string.launchUrl));
+        Uri u = new Uri.Builder().scheme(l.getScheme()).authority(l.getAuthority()).path("/assistant/solo.html").build();
         return new Intent(c, LauncherActivity.class).setAction(Intent.ACTION_VIEW).setData(u)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
     }
