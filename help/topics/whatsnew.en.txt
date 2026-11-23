@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.90.00
+- **About this device.** Settings › System › About this device shows the orOS form, browser, system, screen and storage, with Copy details for a problem report; nothing personal is copied.
+
 ## Version 8.89.00
 - **Claude keeps Kanban tidy.** Claude can give a card its own key and later update that same card (and move it to another column) instead of adding a copy. It can also make labels, and through orOS Gate it can tell at once when a board does not exist, even while orOS is closed.
 - **Links on Kanban cards.** A card can hold web addresses (https) and paths on the orOS disk. Open a card and find them under «Links». A card with one link shows a button that opens it straight away.
