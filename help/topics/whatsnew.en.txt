@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.73.01
+- **Keep the glass effects.** When your device asks for less transparency (on Windows: Transparency effects or Energy saver off), orOS showed solid bars and panels with no way back. Settings › Accessibility now offers «Keep the glass effects» while that happens, so the glass top bar, Dock and icons stay.
+
 ## Version 8.73.00
 - **One bar at the bottom.** Settings › Appearance › Bars now offers "Top bar and Dock" (as before) or "One bar at the bottom": the Dock moves to the bottom and the top bar's cards (weather, next event, Now playing and the rest) sit at its end, so everything is in one bar. It needs a screen at least 760 px wide; on narrower screens the cards stay in the top bar.
 
