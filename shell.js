@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.98.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.98.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -902,8 +902,10 @@
   // stream for it, so otherwise the light moves calmly on its own.
   // Rules (vizkit.js): at most 30 fps, only while the desktop shows,
   // nothing playing = the still picture and no loop, still with reduced
-  // motion, Energy saver, a low battery or a slow device; softer light
-  // (0.5) so the icons stay readable.
+  // motion, Energy saver, a low battery or a slow device (a slow device
+  // rests a few minutes and tries again, vizkit 1.3.0 VIZ-SLOW); softer
+  // light (0.5) so the icons stay readable. Settings › Wallpaper says
+  // why it is still (wpVizStill, the settings snapshot's viz.still).
   var WP_VIZ_KEY = "oros-wallpaper-viz";
   var WP_VIZ_STYLES = ["glow", "rings", "bars", "wave"];
   var WP_VIZ_TICK_MS = 1500;
@@ -1010,12 +1012,18 @@
         colors: function () { return { a: wpAccent(), bg: wpVizBase(wpAccent()) }; },
         saver: function () { return document.documentElement.getAttribute("data-oros-saver") === "1"; },
         paused: wpVizCovered,
+        onState: function () { settingsNotify(); },   // VIZ-SLOW: Settings shows why it is still
         soft: 0.5,
         rest: true
       });
       C.iv = setInterval(wpVizTick, WP_VIZ_TICK_MS);
       wpVizTick();
     }, function () {});
+  }
+  // Why the Light show is still now ("reduced", "saver", "battery",
+  // "slow") or "" (VIZ-SLOW).
+  function wpVizStill() {
+    try { return wpVizCtl && wpVizCtl.v ? wpVizCtl.v.reason() || "" : ""; } catch (e) { return ""; }
   }
   function wpVizStop() {
     var C = wpVizCtl;
@@ -13871,7 +13879,7 @@
       wallpaper: pic ? "custom" : state.wallpaper,
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
-      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice() } : null,   // VIZWALL-1
+      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill() } : null,   // VIZWALL-1, VIZ-SLOW
       land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;

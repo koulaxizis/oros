@@ -24,8 +24,8 @@ function cut(src, name) {
   return src.slice(i, j + 1);
 }
 
-test("vizkit 1.2.0: Energy saver is a still reason after reduced motion", () => {
-  assert.equal(V.v, "1.2.0");
+test("vizkit 1.2.0+: Energy saver is a still reason after reduced motion", () => {
+  assert.ok(V.v >= "1.2.0");
   assert.equal(V.stillReason({ saver: true }), "saver");
   assert.equal(V.stillReason({ reduced: true, saver: true }), "reduced");
   assert.equal(V.stillReason({ saver: false }), "");
