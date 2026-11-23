@@ -26,4 +26,4 @@ This repository covers orOS itself (useoros.online, the installed app, the Andro
 
 orOS is free software made by one person; there is no paid bug bounty.
 
-The same contact is published in [useoros.online/.well-known/security.txt](https://useoros.online/.well-known/security.txt).
+A personal-data breach is handled by the procedure in `OROS_BIBLE.md` (Part IX, BREACH-1). The same contact is published in [useoros.online/.well-known/security.txt](https://useoros.online/.well-known/security.txt).
