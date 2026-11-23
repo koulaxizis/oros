@@ -504,6 +504,26 @@ export const TOOLS = [
       additionalProperties: false
     },
     annotations: { readOnlyHint: false, destructiveHint: false }
+  },
+  // KB-BOARD (Chris 2026-11-23)
+  {
+    name: "kanban_add_board",
+    description: "Makes a new Kanban board with its columns in order (1 to 20), like Kanban's New board. Look for the board with app_summary (app kanban) first: a name an open or archived board already has is refused, so there is never a second board of that name. Works when the owner lets Claude change Kanban and has not paused changes; with orOS closed it waits and is applied when orOS opens, and cards added to the board by name after it wait behind it. The owner is notified and can undo it from any of their devices while the board is as it was made (no cards, the same columns). Returns the board's id and its columns' ids.",
+    inputSchema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "The board's name, at most 60 characters." },
+        columns: { type: "array", minItems: 1, maxItems: 20, items: {
+          type: "object",
+          properties: { name: { type: "string", description: "At most 60 characters." } },
+          required: ["name"],
+          additionalProperties: false
+        } }
+      },
+      required: ["name", "columns"],
+      additionalProperties: false
+    },
+    annotations: { readOnlyHint: false, destructiveHint: false }
   }
   ,
   {

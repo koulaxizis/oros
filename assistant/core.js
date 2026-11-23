@@ -2952,6 +2952,19 @@
       required: ["board"] }
   };
 
+  // KB-BOARD (Chris 2026-11-23): a new board with its columns, the gate's kanban_add_board
+  var TOOL_KB_BOARD = {
+    name: "kanban_add_board",
+    description: "Make a new Kanban board with its columns in order (1 to 20), like Kanban's New board. Look for the board with app_summary (app kanban) first: " +
+      "a name an open or archived board already has is refused. The user sees the board and its columns on one card and must press Add; nothing is saved before that. The card has Undo.",
+    params: { type: "object", properties: {
+      name: { type: "string", description: "The board's name, at most 60 characters." },
+      columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
+        name: { type: "string", description: "At most 60 characters." } },
+        required: ["name"] } } },
+      required: ["name", "columns"] }
+  };
+
   var TOOL_OPEN_FILE = {
     name: "open_file",
     description: "Open a file the user attached in this conversation in an orOS app, as it is: Writer opens a document " +
@@ -3772,7 +3785,7 @@
     if (opts.files) out.push(TOOL_FILES_LIST, TOOL_FILES_READ);
     if (opts.files === "write") out.push(TOOL_FILES_WRITE, TOOL_FILES_MOVE, TOOL_FILES_DELETE);
     if (opts.data && opts.lines) opts.lines.forEach(function (id) { if (TOOL_LINE[id]) out.push(TOOL_LINE[id]); });
-    if (opts.kbCols) out.push(TOOL_KB_COLS);
+    if (opts.kbCols) out.push(TOOL_KB_COLS, TOOL_KB_BOARD);
     if (opts.data && opts.edits && Object.keys(opts.edits).length) out.push(readAppTool(Object.keys(opts.edits)), editTool(opts.edits));
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
@@ -5313,7 +5326,7 @@
     labelHit: labelHit, filterLabel: filterLabel, isNoLabel: isNoLabel, WIDE: WIDE, LABEL_WIDE: LABEL_WIDE,
     parseMd: parseMd, parseInline: parseInline, linkKind: linkKind,
     systemPrompt: systemPrompt, chatTitle: chatTitle, monthKey: monthKey,
-    toolsFor: toolsFor, GATE_OPEN: GATE_OPEN, TOOL_LINE: TOOL_LINE, TOOL_KB_COLS: TOOL_KB_COLS, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
+    toolsFor: toolsFor, GATE_OPEN: GATE_OPEN, TOOL_LINE: TOOL_LINE, TOOL_KB_COLS: TOOL_KB_COLS, TOOL_KB_BOARD: TOOL_KB_BOARD, gateTools: gateTools, GATE_TOOLS: GATE_TOOLS, GATE_BAD: GATE_BAD, browserPrompts: browserPrompts, INV_CURRENCIES: INV_CURRENCIES, ENTRY_KINDS: ENTRY_KINDS, normEntry: normEntry, entryKinds: entryKinds,
     DO_KINDS: DO_KINDS, normAction: normAction, HIST_DAYS: HIST_DAYS, HIST_MAX: HIST_MAX, histEntry: histEntry, histPrune: histPrune, histQuery: histQuery, histForModel: histForModel, undoPick: undoPick, UNDO_MAX: UNDO_MAX, canUndo: canUndo,
     CHAT_DIR: CHAT_DIR, chatPath: chatPath, chatFile: chatFile, parseChatFile: parseChatFile,
     normChat: normChat, mergeChat: mergeChat, msgSig: msgSig,
