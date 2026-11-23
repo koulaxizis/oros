@@ -60,6 +60,7 @@
       "toast.saved":   "Saved in Files › Pictures as {name}",
       "toast.copied":  "Copied. Paste it in another app.",
       "toast.ended":   "Sharing stopped.",
+      "toast.region":  "Drag over the part you want to keep, then Save to Pictures.",
       "err.unsupported": "This browser cannot capture the screen. Phones and tablets do not offer it; use orOS on a computer (Chrome, Edge or Firefox).",
       "err.denied":    "Sharing was not allowed, so there is nothing to capture.",
       "err.fail":      "The screen could not be captured. Try again.",
@@ -120,6 +121,7 @@
       "toast.saved":   "Αποθηκεύτηκε στα Αρχεία › Pictures ως {name}",
       "toast.copied":  "Αντιγράφηκε. Επικόλλησέ το σε άλλη εφαρμογή.",
       "toast.ended":   "Η κοινή χρήση σταμάτησε.",
+      "toast.region":  "Σύρε πάνω στο κομμάτι που θέλεις να κρατήσεις και πάτα «Αποθήκευση στα Pictures».",
       "err.unsupported": "Αυτός ο browser δεν μπορεί να τραβήξει την οθόνη. Τα κινητά και τα tablet δεν το προσφέρουν· χρησιμοποίησε το orOS σε υπολογιστή (Chrome, Edge ή Firefox).",
       "err.denied":    "Η κοινή χρήση δεν επιτράπηκε, οπότε δεν υπάρχει τι να τραβήξω.",
       "err.fail":      "Η οθόνη δεν τραβήχτηκε. Δοκίμασε ξανά.",
@@ -581,15 +583,36 @@
       cv.width = w; cv.height = h;
       try { cv.getContext("2d").drawImage(v, 0, 0, w, h); }
       catch (e) { toast(t("err.fail")); return; }
-      shot.canvas = cv;
-      shot.crop = null;
-      var view = $("shot");
-      view.width = w; view.height = h;
-      view.getContext("2d").drawImage(cv, 0, 0);
-      paintCrop();
-      show("shot");
-      $("b-save").focus();
+      showShot(cv);
     });
+  }
+  function showShot(cv) {
+    shot.canvas = cv;
+    shot.crop = null;
+    var view = $("shot");
+    view.width = cv.width; view.height = cv.height;
+    view.getContext("2d").drawImage(cv, 0, 0);
+    paintCrop();
+    show("shot");
+    $("b-save").focus();
+  }
+
+  // QS-SHOT-1: a picture Quick settings already took (the shell asked
+  // for the screen on the tap and drew one frame before this app
+  // opened). Taken once from the parent; "region" asks to drag.
+  function takeHeld(target) {
+    if (!target || typeof target !== "object" || (target.shot !== "screen" && target.shot !== "region")) return false;
+    var P = window.parent, held = null;
+    try { held = P && P !== window && typeof P.__orosTakeShot === "function" ? P.__orosTakeShot() : null; } catch (e) { held = null; }
+    var src = held && held.canvas;
+    if (!src || !src.width || !src.height) return false;
+    var cv = document.createElement("canvas");
+    cv.width = src.width; cv.height = src.height;
+    try { cv.getContext("2d").drawImage(src, 0, 0); } catch (e) { return false; }
+    if (prefs.mode !== "shot") { prefs.mode = "shot"; renderOptions(); }
+    showShot(cv);
+    if (target.shot === "region") toast(t("toast.region"));
+    return true;
   }
 
   // ---------- 7. Crop ----------
@@ -799,6 +822,12 @@
     watchPalette();
     renderOptions();
     show("idle");
+    // QS-SHOT-1: opened from Quick settings with a picture, or later
+    // while already open.
+    window.__orosOpenAt = function (target) { takeHeld(target); };
+    var tg = null;
+    try { var P = window.parent; tg = P && P !== window && typeof P.__orosTakeTarget === "function" ? P.__orosTakeTarget("capture") : null; } catch (e) { tg = null; }
+    takeHeld(tg);
   }
   boot();
 })();

@@ -233,6 +233,11 @@
     "  box-shadow: 0 10px 34px var(--shadow, rgba(0,0,0,.4)); font-size: 14px; }",
     "#qs-panel [hidden] { display: none !important; }",
     ".qs-top { display: flex; align-items: center; gap: 6px; margin-bottom: 12px; }",
+    ".qs-search { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding: 0 14px; min-height: 44px; border-radius: 999px;",
+    "  background: rgba(127,127,127,.14); border: 1px solid var(--border); }",
+    ".qs-search svg { width: 16px; height: 16px; flex: none; opacity: .7; }",
+    ".qs-search input { flex: 1; min-width: 0; border: none; background: transparent; color: var(--text); font: inherit; font-size: 14px; outline: none; padding: 10px 0; }",
+    ".qs-search:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }",
     ".qs-top .qs-grow { flex: 1; min-width: 0; }",
     ".qs-batt { display: inline-flex; align-items: center; gap: 6px; padding: 0 12px; height: 40px; border-radius: 999px;",
     "  background: var(--accent-soft); font-size: 13px; white-space: nowrap; }",
@@ -314,7 +319,10 @@
     pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
     music: SV + '<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>',
     cup: SV + '<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3v3M12 3v3"/></svg>',
-    leaf: SV + '<path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15"/><path d="M5 19l8-8"/></svg>'
+    leaf: SV + '<path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15"/><path d="M5 19l8-8"/></svg>',
+    shot: SV + '<path d="M3 8V5a2 2 0 0 1 2-2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.5"/></svg>',
+    region: SV + '<path d="M4 4h4M4 4v4M20 4h-4M20 4v4M4 20h4M4 20v-4M20 20h-4M20 20v-4"/><rect x="8" y="8" width="8" height="8" rx="1" stroke-dasharray="2 2"/></svg>',
+    search: SV + '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
   };
   function batteryIcon(b) {
     var w = Math.max(1, Math.round(batteryPct(b) / 100 * 12));
@@ -489,7 +497,10 @@
     doc.addEventListener("touchstart", onDown, true);
     root.addEventListener("blur", onBlur);
     build();
-    var first = panel.querySelector(".qs-pill-main, .qs-round");
+    // A mouse and keyboard start in the search field; touch keeps its
+    // keyboard closed.
+    var fine = call(function () { return root.matchMedia("(pointer: fine)").matches; });
+    var first = (fine && parts && parts.search) || panel.querySelector(".qs-pill-main, .qs-round");
     if (first) first.focus();
     fire("open");
   }
@@ -536,6 +547,28 @@
     parts.power.setAttribute("aria-expanded", "false");
     top.appendChild(parts.power);
     panel.appendChild(top);
+
+    // QS-SHOT-1: a search field that hands the text to the menu search
+    // (the Overview's way: no second search engine).
+    parts.search = null;
+    if (typeof host.search === "function") {
+      var sbox = el("label", "qs-search", IC.search);
+      var sin = el("input");
+      sin.type = "search";
+      sin.setAttribute("enterkeyhint", "search");
+      sin.setAttribute("autocomplete", "off");
+      sin.placeholder = t("qs.search");
+      sin.setAttribute("aria-label", t("qs.search.label"));
+      sin.addEventListener("input", function () {
+        var v = sin.value;
+        if (!v) return;
+        close();
+        host.search(v);
+      });
+      sbox.appendChild(sin);
+      panel.appendChild(sbox);
+      parts.search = sin;
+    }
 
     parts.powerMenu = el("div", "qs-menu");
     parts.powerMenu.setAttribute("role", "group");
@@ -636,8 +669,19 @@
     parts.awake = pill(IC.cup, function () { setAwake(awake().on ? "" : "on"); },
       function () { setSub(sub === "awake" ? "" : "awake"); }, t("qs.awake.more"));
     parts.saver = pill(IC.leaf, toggleSaver, null);
-    [parts.net, parts.sync, parts.dark, parts.night, parts.bed, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji].forEach(function (p) { grid.appendChild(p.box); });
+    // QS-SHOT-1: Screenshot (tap = the whole screen, › = Screen / Region),
+    // through Screen Capture, saved in Files › Pictures as there.
+    parts.shot = pill(IC.shot, then(function () { host.shot("screen"); }),
+      function () { setSub(sub === "shot" ? "" : "shot"); }, t("qs.shot.more"));
+    [parts.net, parts.sync, parts.dark, parts.night, parts.bed, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji, parts.shot].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
+
+    parts.shotMenu = el("div", "qs-menu");
+    parts.shotMenu.setAttribute("role", "group");
+    parts.shotMenu.appendChild(el("h3")).textContent = t("qs.shot");
+    parts.shotMenu.appendChild(menuItem(IC.shot, t("qs.shot.screen"), then(function () { host.shot("screen"); })));
+    parts.shotMenu.appendChild(menuItem(IC.region, t("qs.shot.region"), then(function () { host.shot("region"); })));
+    panel.appendChild(parts.shotMenu);
 
     parts.dndMenu = el("div", "qs-menu");
     parts.dndMenu.setAttribute("role", "group");
@@ -804,6 +848,11 @@
     parts.awakeMenu.hidden = sub !== "awake" || !ok;
     if (parts.awake.more) parts.awake.more.setAttribute("aria-expanded", sub === "awake" ? "true" : "false");
     parts.awakeOff.hidden = !aw.on;
+    var canShot = typeof host.shot === "function";
+    parts.shot.box.hidden = !canShot;
+    if (canShot) setPill(parts.shot, t("qs.shot"), "", false, false);
+    parts.shotMenu.hidden = sub !== "shot" || !canShot;
+    if (parts.shot.more) parts.shot.more.setAttribute("aria-expanded", sub === "shot" ? "true" : "false");
     var sv = saver();
     setPill(parts.saver, t("qs.saver"), sv.auto ? t("qs.saver.auto") : "", sv.on, true);
 

@@ -32,6 +32,7 @@ orosPack("de", "capture", {
  "size": "{w} × {h} Pixel",
  "toast.copied": "Kopiert. Füge es in einer anderen App ein.",
  "toast.ended": "Die Freigabe wurde beendet.",
+ "toast.region": "Zieh über den Teil, den du behalten willst, dann „In Pictures speichern“.",
  "toast.saved": "In Dateien › Pictures gespeichert als {name}",
  "btn.end": "Aufnahme beenden",
  "btn.pause": "Pause",
