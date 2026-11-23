@@ -1,6 +1,12 @@
 libarchive.js 2.0.2 (npm "libarchive.js", https://github.com/nika-begiashvili/libarchivejs)
-Files: libarchive.js, worker-bundle.js, libarchive.wasm, copied unchanged from the
-package's dist/ folder (sha256 in OROS_BIBLE.md, Library section).
+Files: libarchive.js is the package's unchanged dist/libarchive.js.
+worker-bundle.js and libarchive.wasm are rebuilt from source with
+libarchive 3.8.11 by build/build.sh (2026-11-23; the 2.0.2 package shipped
+libarchive 3.7.2). The rebuild is byte for byte reproducible with the same
+Emscripten (emcc 7.0.1). sha256:
+  libarchive.js     7948329343f4039e3088bb9818af96b2e70fc7dac8a43b878ced4314de0c8f2a
+  worker-bundle.js  bd56d13b368b7ba70e6edbd52cf8511835adabc037f76340a3f03c62e4f51db8
+  libarchive.wasm   82cbf711e8fcacc1f682809289e504d110362f04bc47dadf9883c6615d742e8b
 Used by orOS Library only to open CBR (RAR) comics; loaded on demand, never for
 other books.
 
@@ -9,8 +15,8 @@ Copyright (c) 2018 Nika Begiashvili).
 
 The WebAssembly module and the worker bundle also contain:
 
-- libarchive 3.7.2, https://www.libarchive.org/
-  BSD-2-Clause, Copyright (c) 2003-2023 Tim Kientzle and the libarchive
+- libarchive 3.8.11, https://www.libarchive.org/
+  BSD-2-Clause, Copyright (c) 2003-2026 Tim Kientzle and the libarchive
   contributors. Its RAR 4 and RAR 5 readers are libarchive's own code (not
   the UnRAR source).
 
@@ -34,17 +40,11 @@ The WebAssembly module and the worker bundle also contain:
     (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
     THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-- zlib, https://zlib.net/ : zlib License, Copyright (C) 1995-2023 Jean-loup
+- zlib 1.3.1, https://zlib.net/ : zlib License, Copyright (C) 1995-2024 Jean-loup
   Gailly and Mark Adler.
-- bzip2 / libbzip2, https://sourceware.org/bzip2/ : bzip2 licence (BSD-style),
+- bzip2 / libbzip2 1.0.8, https://sourceware.org/bzip2/ : bzip2 licence (BSD-style),
   Copyright (C) 1996-2019 Julian R Seward.
-- liblzma (XZ Utils), https://tukaani.org/xz/ : public domain / 0BSD.
-- OpenSSL (libcrypto, used by libarchive for encrypted archives),
-  https://www.openssl.org/ : OpenSSL License and original SSLeay License
-  (BSD-style). "This product includes software developed by the OpenSSL
-  Project for use in the OpenSSL Toolkit (http://www.openssl.org/)" and
-  "This product includes cryptographic software written by Eric Young
-  (eay@cryptsoft.com)".
+- liblzma (XZ Utils 5.8.1), https://tukaani.org/xz/ : 0BSD.
 - Comlink, https://github.com/GoogleChromeLabs/comlink : Apache-2.0,
   Copyright 2019 Google LLC.
 - The Emscripten runtime, https://emscripten.org/ : MIT.
