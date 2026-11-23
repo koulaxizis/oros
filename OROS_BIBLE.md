@@ -14040,3 +14040,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** settings/settings.js, settings/settings.css, settings/core.js, i18n/de (settings, help/topics/appearance), help/topics/appearance.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/yours.test.js.
 - **Tests:** tests/yours.test.js; full suite; Playwright Chromium at 360 px and 1280 px: the card, the preview following each choice, no page errors.
 - **Not tested:** Safari, Firefox.
+
+### 2026-11-23 — 8.84.01 — Security updates: libarchive 3.8.11, LibRaw 0.22.3 (DEPS-1123, #1258)
+- **Why:** weekly dependency/CVE check 2026-11-23 (findings 2, 6), Chris «Διόρθωση όλων». libarchive 3.7.2 inside libarchive.js 2.0.2 (Library comics/archives) has published CVEs fixed in 3.8.x; LibRaw 0.21 in libraw-wasm (Photo Lab RAW) has CVE-2026-88387, fixed in 0.22.3.
+- **What:** vendor/libarchive worker-bundle.js + libarchive.wasm rebuilt from pinned, sha256-checked sources (libarchive 3.8.11, zlib 1.3.1, bzip2 1.0.8, liblzma 5.8.1; no OpenSSL) by the new vendor/libarchive/build/build.sh (emsdk 7.0.1, WASM_BIGINT=0, stringToNewUTF8); libarchive.js API unchanged. vendor/libraw/libraw.wasm rebuilt with LibRaw 0.22.3 by vendor/libraw/build.sh (emsdk 5.0.7). koulaxizis-apps unit tests use org.json 20260719. CREDITS, About credits, THIRD-PARTY and licence texts follow.
+- **Files:** vendor/libarchive/*, vendor/libraw/*, photolab/raw.js (comment), CREDITS.md, shell.js (credits, version), koulaxizis-apps/app/build.gradle, tests/vendor-libarchive.test.js, tests/photolab-raw.test.js, help/topics/whatsnew.en/el.txt.
+- **Tests:** tests/vendor-libarchive.test.js (hashes, 3.8.11 in the wasm, no OpenSSL); photolab-raw tests; libarchive.js own test archives extracted in Node with matching checksums; Playwright Chromium: Library standalone opens RAR v4 and v5 test files, 0 console errors; full suite.
+- **Not tested:** Safari, a real phone, real-camera RAW files beyond the test set.
