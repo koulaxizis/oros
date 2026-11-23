@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — widgets.js (desktop widgets, v1.5.0)
+// orOS — widgets.js (desktop widgets, v1.6.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js and qsettings.js: it runs IN the
 // shell document and keeps its own device-local storage. shell.js calls
@@ -41,6 +41,10 @@
 //     Desktop / Top bar and a live preview of every desktop card and
 //     every smart top bar card (smartbar.js preview()), with Add / Remove
 //     and the order arrows. Settings and the desktop menu open it.
+//   • Focus timer (FOCUS-W, 1.6.0): the Time app's Pomodoro on the
+//     desktop: Focus / Break, Start / Pause / Resume, Skip, ±5 min. Same
+//     record as Time (oros-time-pmrun) and the same engine alarm, so
+//     Time, the smart bar's Focus card and this card always agree.
 //
 // Device-local (oros-widgets, never synced: screens differ per device):
 //   { v:1, list: ["clock","calendar",…] [, clock] }   order = list order
@@ -53,13 +57,13 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.5.0";
+  var VER = "1.6.0";
   var KEY = "oros-widgets";
   var START_KEY = "oros-start";
   // First steps, in order. "install" only where the browser offers it
   // or orOS already runs installed.
   var STEPS = ["note", "task", "wall", "icons", "import", "sync", "phone", "assistant", "install"];
-  var KINDS = ["start", "clock", "calendar", "today", "weather", "media", "sync", "phone"];
+  var KINDS = ["start", "clock", "calendar", "today", "pomo", "weather", "media", "sync", "phone"];
   var DEFAULT = ["clock", "calendar", "today", "weather"];
   var WIDE = 760;
 
@@ -188,6 +192,82 @@
     return ["start"].concat(listOf(null, wide, phone));
   }
 
+  // FOCUS-W: the Pomodoro leg shared with Time (oros-time-pmrun).
+  // Stored forms: running { phase, end, alarmId, start, logged } ·
+  // paused { phase, left, paused: 1 } · the next leg { phase, idle: 1 };
+  // absent = Focus, not started. done = Focus legs finished here that
+  // Time has not counted yet (Time adds them to its synced count and
+  // writes the record again without them). Lengths come from Time
+  // (pmWork / pmBreak minutes, 25 / 5 by default).
+  var PM_KEY = "oros-time-pmrun";
+  var PM_MIN = 60000, PM_MAX = 120 * 60000, PM_STEP = 5 * 60000;
+  function pmNorm(r) {
+    var out = { phase: "work", mode: "idle", done: 0 };
+    if (!r || typeof r !== "object" || Array.isArray(r)) return out;
+    out.phase = r.phase === "break" ? "break" : "work";
+    if (typeof r.done === "number" && r.done >= 1 && r.done < 100) out.done = Math.floor(r.done);
+    if (r.paused && typeof r.left === "number" && isFinite(r.left) && r.left > 0) {
+      out.mode = "pause"; out.left = Math.min(PM_MAX, Math.round(r.left));
+    } else if (!r.idle && typeof r.end === "number" && isFinite(r.end)) {
+      out.mode = "run"; out.end = r.end;
+      out.alarmId = typeof r.alarmId === "string" ? r.alarmId : "";
+      out.start = typeof r.start === "number" && isFinite(r.start) ? r.start : 0;
+      out.logged = r.logged ? 1 : 0;
+    }
+    return out;
+  }
+  function pmParse(raw) { try { return pmNorm(JSON.parse(raw)); } catch (e) { return pmNorm(null); } }
+  // What Time keeps; null = remove the key (Focus, not started, nothing to count).
+  function pmRecord(s) {
+    var o;
+    if (s.mode === "run") o = { phase: s.phase, end: s.end, alarmId: s.alarmId || null, start: s.start || 0, logged: s.logged ? 1 : 0 };
+    else if (s.mode === "pause") o = { phase: s.phase, left: s.left, paused: 1 };
+    else if (s.phase === "break" || s.done) o = { phase: s.phase, idle: 1 };
+    else return null;
+    if (s.done) o.done = s.done;
+    return o;
+  }
+  function pmFlip(p) { return p === "work" ? "break" : "work"; }
+  // A running leg whose end has passed is over: the other phase is next
+  // and a Focus leg counts. Shown so at once; kept so on the next action.
+  function pmSettle(s, now) {
+    if (s.mode !== "run" || s.end > now) return s;
+    return { phase: pmFlip(s.phase), mode: "idle", done: s.done + (s.phase === "work" ? 1 : 0) };
+  }
+  function pmLens(raw) {
+    var d = null;
+    try { d = JSON.parse(raw); } catch (e) {}
+    var w = d && typeof d.pmWork === "number" && isFinite(d.pmWork) ? Math.min(120, Math.max(1, d.pmWork)) : 25;
+    var b = d && typeof d.pmBreak === "number" && isFinite(d.pmBreak) ? Math.min(60, Math.max(1, d.pmBreak)) : 5;
+    return { work: w * 60000, "break": b * 60000 };
+  }
+  function pmLeft(s, now, lens) {
+    if (s.mode === "run") return Math.max(0, s.end - now);
+    if (s.mode === "pause") return s.left;
+    return lens[s.phase];
+  }
+  function pmStartOf(s, now, lens) {
+    if (s.mode === "run") return s;
+    return { phase: s.phase, mode: "run", end: now + (s.mode === "pause" ? s.left : lens[s.phase]), start: now, logged: 0, alarmId: "", done: s.done };
+  }
+  function pmPauseOf(s, now) {
+    if (s.mode !== "run") return s;
+    return { phase: s.phase, mode: "pause", left: Math.max(1000, s.end - now), done: s.done };
+  }
+  function pmSkipOf(s) { return { phase: pmFlip(s.phase), mode: "idle", done: s.done }; }
+  // ±5 min on a running or paused leg, never under 1 min or over 2 h.
+  function pmPlusOf(s, now, ms) {
+    function clamp(v) { return Math.min(PM_MAX, Math.max(PM_MIN, v)); }
+    if (s.mode === "run") return { phase: s.phase, mode: "run", end: now + clamp(s.end - now + ms), start: s.start, logged: s.logged, alarmId: s.alarmId, done: s.done };
+    if (s.mode === "pause") return { phase: s.phase, mode: "pause", left: clamp(s.left + ms), done: s.done };
+    return s;
+  }
+  // m:ss
+  function pmClock(ms) {
+    var sec = Math.max(0, Math.ceil(ms / 1000));
+    return Math.floor(sec / 60) + ":" + String(sec % 60).padStart(2, "0");
+  }
+
   // GALLERY-1: search folds case, accents and final sigma ("καιρος"
   // finds "Καιρός"); every word must be in the name or the place.
   function fold(s) {
@@ -202,13 +282,15 @@
     var hay = fold(it.name + " " + (placeName || ""));
     return q.split(/\s+/).every(function (w) { return hay.indexOf(w) !== -1; });
   }
-  var PREVIEW_PAINT = ["clock", "calendar", "today", "weather", "phone", "sync"];
+  var PREVIEW_PAINT = ["clock", "calendar", "today", "pomo", "weather", "phone", "sync"];
 
   var model = { VER: VER, KINDS: KINDS, DEFAULT: DEFAULT, STEPS: STEPS, norm: norm, parse: parse, listOf: listOf,
                 toggle: toggle, move: move, monthGrid: monthGrid, ymdOf: ymdOf,
                 startNorm: startNorm, startRows: startRows, startNext: startNext, startGone: startGone, firstList: firstList,
                 phoneUrlOf: phoneUrlOf, CLOCK_STYLES: CLOCK_STYLES, clockMode: clockMode, GLYPHS: GLYPHS,
-                dotCells: dotCells, hhmm: hhmm, fold: fold, galMatchOf: galMatchOf, PREVIEW_PAINT: PREVIEW_PAINT };
+                dotCells: dotCells, hhmm: hhmm, fold: fold, galMatchOf: galMatchOf, PREVIEW_PAINT: PREVIEW_PAINT,
+                PM_KEY: PM_KEY, PM_STEP: PM_STEP, pmNorm: pmNorm, pmParse: pmParse, pmRecord: pmRecord, pmSettle: pmSettle, pmLens: pmLens,
+                pmLeft: pmLeft, pmStartOf: pmStartOf, pmPauseOf: pmPauseOf, pmSkipOf: pmSkipOf, pmPlusOf: pmPlusOf, pmClock: pmClock };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -319,6 +401,16 @@
     "  align-items: center; justify-content: center; }",
     ".wg-play:hover, .wg-play:focus-visible { background: var(--accent-hover, var(--accent)); }",
     ".wg-play svg { width: 18px; height: 18px; }",
+    // FOCUS-W: the Focus timer
+    ".wg-pm { display: flex; flex-direction: column; gap: 6px; }",
+    ".wg-pm-go { display: flex; flex-direction: column; align-items: flex-start; padding: 2px 4px; width: 100%; text-align: left; }",
+    ".wg-pm-ph { font-size: 13px; font-weight: 700; color: var(--accent-hover, var(--accent)); }",
+    ".wg-pm-t { font-size: 40px; font-weight: 800; line-height: 1.05; letter-spacing: -1px; font-variant-numeric: tabular-nums; }",
+    ".wg-pm-st { font-size: 12px; color: var(--text-dim); min-height: 15px; }",
+    ".wg-pm-ctl { display: flex; align-items: center; gap: 6px; }",
+    ".wg-pm-ctl .wg-btn { min-height: 40px; min-width: 40px; padding: 0 10px; border: 1px solid var(--border); font-size: 13px; }",
+    ".wg-pm-ctl .wg-pm-main { flex: 1; background: var(--accent); color: var(--wg-on, #fff); border-color: var(--accent); font-weight: 700; }",
+    ".wg-pm-ctl .wg-btn:disabled { opacity: .35; cursor: default; }",
     ".wg-sync { display: flex; align-items: center; gap: 10px; }",
     ".wg-sync .wg-what { flex: 1; font-size: 14px; }",
     ".wg-sync .wg-btn.wg-act { padding: 8px 12px; min-height: 40px; border: 1px solid var(--border); }",
@@ -812,6 +904,41 @@
     build(c.body);
   }
 
+  // FOCUS-W: read, change and keep the leg; the engine alarm (shell
+  // orosAlarms, the one Time uses) rings at its end. Nothing else is
+  // written: Time counts the finished Focus legs (done) when it opens.
+  function pmNow(now) {
+    var raw = null;
+    try { raw = localStorage.getItem(PM_KEY); } catch (e) {}
+    return pmSettle(pmParse(raw), now);
+  }
+  function pmLensNow() {
+    var raw = null;
+    try { raw = localStorage.getItem("oros-time-data"); } catch (e) {}
+    return pmLens(raw);
+  }
+  function pmAct(what) {
+    var A = root.orosAlarms, now = Date.now(), raw = null;
+    try { raw = localStorage.getItem(PM_KEY); } catch (e) {}
+    var was = pmParse(raw), s = pmSettle(was, now), next;
+    if (what === "start") next = pmStartOf(s, now, pmLensNow());
+    else if (what === "pause") next = pmPauseOf(s, now);
+    else if (what === "skip") next = pmSkipOf(s);
+    else next = pmPlusOf(s, now, what === "minus" ? -PM_STEP : PM_STEP);
+    if (next === was) return;
+    var id = "";
+    if (next.mode === "run" && next.end !== was.end) {
+      if (!A) return;
+      id = call(function () { return A.add({ at: next.end, label: t(next.phase === "work" ? "wg.pomo.break" : "wg.pomo.work") }); });
+      if (!id) return;                     // the engine said no: nothing changes
+      next.alarmId = id;
+    }
+    if (was.mode === "run" && was.alarmId && was.alarmId !== next.alarmId && A) call(function () { A.remove(was.alarmId); });
+    var rec = pmRecord(next);
+    try { if (rec) localStorage.setItem(PM_KEY, JSON.stringify(rec)); else localStorage.removeItem(PM_KEY); } catch (e) {}
+    if (cards.pomo) { cards.pomo.key = ""; PAINT.pomo(cards.pomo); }
+  }
+
   var startFacts = null, startAt = 0;
   var PAINT = {
     // First steps (START-1). The facts are read again every 5 s at most
@@ -1080,6 +1207,36 @@
         r.appendChild(txt);
         b.appendChild(r);
       });
+    },
+    // FOCUS-W: the time is set in place every second; the buttons are
+    // built again only when the phase, the mode or the language changes.
+    pomo: function (c) {
+      var now = Date.now(), st = pmNow(now), lens = pmLensNow(), left = pmLeft(st, now, lens);
+      var ph = t(st.phase === "break" ? "wg.pomo.break" : "wg.pomo.work");
+      fill(c, st.phase + st.mode + host.lang(), function (b) {
+        var w = el("div", "wg-pm");
+        var go = btn("wg-pm-go", null, function () { host.open("time"); }, t("app.time"));
+        go.appendChild(el("span", "wg-pm-ph", ph));
+        var tm = el("span", "wg-pm-t");
+        go.appendChild(tm);
+        go.appendChild(el("span", "wg-pm-st", st.mode === "pause" ? t("wg.pomo.paused") : st.mode === "run" ? "" : t("wg.pomo.ready")));
+        w.appendChild(go);
+        var ctl = el("div", "wg-pm-ctl");
+        var minus = btn(null, "−5", function () { pmAct("minus"); }, t("wg.pomo.minus"));
+        var main = btn("wg-pm-main", t(st.mode === "run" ? "wg.pomo.pause" : st.mode === "pause" ? "wg.pomo.resume" : "wg.pomo.start"),
+          function () { pmAct(st.mode === "run" ? "pause" : "start"); });
+        var plus = btn(null, "+5", function () { pmAct("plus"); }, t("wg.pomo.plus"));
+        var skip = btn(null, t("wg.pomo.skip"), function () { pmAct("skip"); },
+          t("wg.pomo.skipTo").replace("{p}", t(st.phase === "work" ? "wg.pomo.break" : "wg.pomo.work")));
+        minus.disabled = plus.disabled = st.mode === "idle";
+        [minus, main, plus, skip].forEach(function (x) { ctl.appendChild(x); });
+        w.appendChild(ctl);
+        b.appendChild(w);
+        c.pmT = tm;
+        c.pmGo = go;
+      });
+      if (c.pmT) c.pmT.textContent = pmClock(left);
+      if (c.pmGo) c.pmGo.setAttribute("aria-label", t("app.time") + " · " + ph + " " + pmClock(left));
     },
     sync: function (c) {
       var s = call(function () { return host.sync.state(); }) || "off";
