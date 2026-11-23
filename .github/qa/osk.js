@@ -192,6 +192,10 @@ async function main() {
       if (!(await oskOpen(page))) await page.locator("#osk-btn").tap().catch(() => {});
       ok(await oskOpen(page), "the lock screen's PIN field opens it");
       ok(await page.evaluate(() => !!document.querySelector("dialog#oros-lock #osk")), "it sits inside the lock dialog");
+      ok(await page.evaluate(() => {
+        const r = document.getElementById("oros-lock-input").getBoundingClientRect();
+        return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === document.getElementById("oros-lock-input");
+      }), "the PIN field is not covered by it");
       await page.locator("#osk .osk-sym").first().tap(); await key(page, "2"); await key(page, "4");
       ok(await page.locator("#oros-lock-input").inputValue() === "24", "it types the PIN: " + await page.locator("#oros-lock-input").inputValue());
       await key(page, "6"); await key(page, "8"); await special(page, "enter");

@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — osk.js (on-screen keyboard, v1.0.0)
+// orOS — osk.js (on-screen keyboard, v1.0.1)
 // ------------------------------------------------------------
 // A shell component, like seasonal.js and quickmenu.js: it runs IN
 // the shell document and keeps its own device-local storage. shell.js
@@ -57,7 +57,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.0.1";
   var KEY = "oros-osk";
   var MODES = ["auto", "button", "off"];
   var HW_QUIET = 30 * 60 * 1000;     // a real key this recently: a keyboard is there
@@ -710,7 +710,9 @@
     return n;
   }
   function unlift() {
-    lifted.forEach(function (x) { try { x.el.style.transform = x.old; } catch (e) {} });
+    lifted.forEach(function (x) {
+      try { x.el.style.transform = x.old; if (x.pad !== undefined) x.el.style.paddingBottom = x.pad; } catch (e) {}
+    });
     lifted = [];
   }
   // A modal dialog makes the rest of the page inert: the keyboard goes
@@ -751,6 +753,16 @@
       n = parentOf(n);
     }
     if (!n || n === doc.body || n.nodeType !== 1) return;
+    if (n === parked) {
+      // The modal dialog we sit in: lifting it would lift us too (we are
+      // fixed inside it). Give it room below and scroll the field up.
+      var p = null;
+      lifted.forEach(function (x) { if (x.el === n) p = x; });
+      if (!p) lifted.push(p = { el: n, old: n.style.transform, pad: n.style.paddingBottom, by: 0 });
+      n.style.paddingBottom = (h + 8) + "px";
+      n.scrollTop += r.bottom - topEdge;
+      return;
+    }
     var by = Math.min(r.bottom - topEdge, Math.max(0, r.top - 48));
     if (by <= 0) return;
     var had = null;
