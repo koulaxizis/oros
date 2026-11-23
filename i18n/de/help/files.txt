@@ -80,7 +80,7 @@ Links stehen die Ordner, rechts der Inhalt des aktuellen Ordners. Auf dem Handy 
 
 ## Importieren, ansehen und bearbeiten
 - Tippe auf `Dateien importieren`, um eine oder mehrere Dateien auszuwählen, oder zieh Dateien von deinem Computer auf die Liste. Gibt es schon eine Datei mit demselben Namen, wähle `Überschreiben` oder `Beide behalten`.
-- Öffne eine Datei, um ihre Vorschau zu sehen. Bilder (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) werden als Bilder gezeigt. Markdown-Dateien werden formatiert gezeigt, mit einer Taste `Quelltext` für den reinen Text.
+- Öffne eine Datei, um ihre Vorschau zu sehen. Bilder (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) werden als Bilder gezeigt. Markdown-Dateien werden formatiert gezeigt, mit einer Taste `Quelltext` für den reinen Text. Ein Bild, dessen Angaben sagen, dass eine KI es gemacht oder verändert hat, zeigt `Mit KI gemacht` neben seinem Namen.
 - Tippe auf `Bearbeiten`, um eine Textdatei zu ändern, und auf `Speichern`, um sie auf die Disk zu schreiben. Markdown-Dateien zeigen neben dem Editor eine Live-Vorschau. Schließt du mit ungespeicherten Änderungen, wirst du erst gewarnt; schließ noch einmal, um sie zu verwerfen.
 
 ### Text aus einem Bild kopieren

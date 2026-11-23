@@ -98,8 +98,9 @@
           it.a = r.id; it.nm = nm; it.iw = r.w; it.ih = r.h;
           it.fit = "fill"; it.ix = 0; it.iy = 0; it.isc = 1;
           delete it.ax.cr;
+          it.ax.ai = "g";
         });
-      } else AT.io.placePhoto({ id: r.id, w: r.w, h: r.h, name: nm });
+      } else AT.io.placePhoto({ id: r.id, w: r.w, h: r.h, name: nm, ai: "g" });
       AT.toast(t("im.added"), t("btn.undo"), AT.undo);
     });
   }

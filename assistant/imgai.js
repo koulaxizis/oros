@@ -1,5 +1,14 @@
 // ============================================================
-// orOS — assistant/imgai.js: image AI providers (v1.2.0)
+// orOS — assistant/imgai.js: image AI providers (v1.3.0)
+// v1.3.0 (AI-MARK, EU AI Act art. 50(2)): every picture an AI makes or
+// redraws here comes back marked in a machine-readable way: XMP with
+// the IPTC digital source type (trainedAlgorithmicMedia for a new
+// picture, compositeWithTrainedAlgorithmicMedia for an edit) in PNG,
+// JPEG and WebP. A picture that already carries the provider's own
+// C2PA Content Credentials (OpenAI) is kept byte for byte, since any
+// change would break their signature; they already say it is AI.
+// markBytes / markBlob / isAIBytes are also used by Atelier and Photo
+// Lab when they export a design or picture with AI parts.
 // v1.2.0 (PL-AI): ComfyUI on the owner's computer; WebUI upscale.
 // Shared by the Assistant (Settings › Image AI: choose, key, test)
 // and Atelier (Image from text; Magic edit and Magic expand). The
@@ -249,6 +258,178 @@
     return g;
   }
 
+  // AI-MARK: which mark a request's pictures get ("gen" new, "edit"
+  // redrawn) and who made them, for the XMP.
+  function tagged(req, kind, cf) {
+    if (req) { req.mark = kind; req.by = cf.p.name + (cf.model && cf.p.name.indexOf(cf.model) < 0 ? " " + cf.model : ""); }
+    return req;
+  }
+  function generateReq(cf, key, opts) { return tagged(buildGenerate(cf, key, opts), "gen", cf); }
+  function editReq(cf, key, opts) { return tagged(buildEdit(cf, key, opts), "edit", cf); }
+  function expandReq(cf, key, opts) { return tagged(buildExpand(cf, key, opts), "edit", cf); }
+
+  // ---------- AI-MARK: machine-readable marking ----------
+  var DST = "http://cv.iptc.org/newscodes/digitalsourcetype/";
+  var XMP_NS = "http://ns.adobe.com/xap/1.0/";
+  function xmlEsc(v) {
+    return String(v == null ? "" : v).slice(0, 200).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  // info: { src: "gen" | "edit", tool: "orOS Atelier", by: "OpenAI (gpt-image-1)" }
+  function xmpPacket(info) {
+    info = info || {};
+    var type = info.src === "gen" ? "trainedAlgorithmicMedia" : "compositeWithTrainedAlgorithmicMedia";
+    var what = (info.src === "gen" ? "Made with AI" : "Contains parts made with AI") + (info.by ? " (" + info.by + ")" : "");
+    return '<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>' +
+      '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">' +
+      '<rdf:Description rdf:about="" xmlns:Iptc4xmpExt="http://iptc.org/std/Iptc4xmpExt/2008-02-29/"' +
+      ' xmlns:xmp="' + XMP_NS + '" xmlns:dc="http://purl.org/dc/elements/1.1/"' +
+      ' Iptc4xmpExt:DigitalSourceType="' + DST + type + '"' +
+      ' xmp:CreatorTool="' + xmlEsc(info.tool || "orOS") + '">' +
+      '<dc:description><rdf:Alt><rdf:li xml:lang="x-default">' + xmlEsc(what) + '</rdf:li></rdf:Alt></dc:description>' +
+      '</rdf:Description></rdf:RDF></x:xmpmeta><?xpacket end="r"?>';
+  }
+  function utf8(sv) {
+    if (typeof TextEncoder !== "undefined") return new TextEncoder().encode(sv);
+    var b = unescape(encodeURIComponent(sv)), u = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i);
+    return u;
+  }
+  function ascii(b, o, n) { var r = ""; for (var i = 0; i < n && o + i < b.length; i++) r += String.fromCharCode(b[o + i]); return r; }
+  function u32be(b, o) { return b[o] * 16777216 + ((b[o + 1] << 16) | (b[o + 2] << 8) | b[o + 3]); }
+  function u32le(b, o) { return (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16)) + b[o + 3] * 16777216; }
+  function concat(parts) {
+    var n = 0, i, p = 0;
+    for (i = 0; i < parts.length; i++) n += parts[i].length;
+    var out = new Uint8Array(n);
+    for (i = 0; i < parts.length; i++) { out.set(parts[i], p); p += parts[i].length; }
+    return out;
+  }
+  var CRC = null;
+  function crc32(b) {
+    if (!CRC) {
+      CRC = new Int32Array(256);
+      for (var n = 0; n < 256; n++) { var c = n; for (var k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; CRC[n] = c; }
+    }
+    var x = -1;
+    for (var i = 0; i < b.length; i++) x = CRC[(x ^ b[i]) & 255] ^ (x >>> 8);
+    return (x ^ -1) >>> 0;
+  }
+  function be32(v) { return new Uint8Array([(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255]); }
+  function le32(v) { return new Uint8Array([v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]); }
+  // Already says it is AI: the IPTC term in XMP or in a C2PA manifest.
+  function hasAITerm(b) {
+    var lim = Math.min(b.length, 4 * 1024 * 1024), needle = "rainedAlgorithmicMedia", n = needle.length;
+    outer: for (var i = 1; i + n <= lim; i++) {
+      if (b[i] !== 114) continue;                          // "r"
+      for (var j = 1; j < n; j++) if (b[i + j] !== needle.charCodeAt(j)) continue outer;
+      var t0 = b[i - 1];
+      if (t0 === 116 || t0 === 84) return true;            // "t" / "T"
+    }
+    return false;
+  }
+  function pngMark(b, xmp) {
+    var parts = [b.subarray(0, 8)], p = 8, put = false;
+    var key = utf8("XML:com.adobe.xmp"), body = concat([key, new Uint8Array([0, 0, 0, 0, 0]), utf8(xmp)]);
+    var type = utf8("iTXt"), chunk = concat([be32(body.length), type, body, be32(crc32(concat([type, body])))]);
+    while (p + 12 <= b.length) {
+      var len = u32be(b, p), t = ascii(b, p + 4, 4), end = p + 12 + len;
+      if (end > b.length) return null;
+      if (t === "caBX") return "c2pa";
+      var isXmp = t === "iTXt" && ascii(b, p + 8, 17) === "XML:com.adobe.xmp";
+      if (!isXmp) parts.push(b.subarray(p, end));
+      if (t === "IHDR" && !put) { parts.push(chunk); put = true; }
+      p = end;
+      if (t === "IEND") break;
+    }
+    return put ? concat(parts) : null;
+  }
+  function jpegMark(b, xmp) {
+    var head = utf8(XMP_NS + "\u0000"), body = concat([head, utf8(xmp)]);
+    if (body.length + 2 > 65535) return null;
+    var seg = concat([new Uint8Array([0xff, 0xe1, ((body.length + 2) >> 8) & 255, (body.length + 2) & 255]), body]);
+    var parts = [b.subarray(0, 2)], p = 2, put = false;
+    while (p + 4 <= b.length && b[p] === 0xff) {
+      var m = b[p + 1];
+      if (m === 0xda || m === 0xd9) break;                 // image data: the rest as it is
+      if (m === 0x01 || (m >= 0xd0 && m <= 0xd7)) { parts.push(b.subarray(p, p + 2)); p += 2; continue; }
+      var len = (b[p + 2] << 8) | b[p + 3], end = p + 2 + len;
+      if (end > b.length) return null;
+      if (m === 0xeb && ascii(b, p + 4, Math.min(len, 64)).indexOf("JP") >= 0) return "c2pa";   // APP11 JUMBF
+      var isXmp = m === 0xe1 && ascii(b, p + 4, head.length - 1) === XMP_NS;
+      // after APP0 (JFIF) / APP1 (EXIF), before anything else
+      if (!put && !(m === 0xe0 || (m === 0xe1 && !isXmp))) { parts.push(seg); put = true; }
+      if (!isXmp) parts.push(b.subarray(p, end));
+      p = end;
+    }
+    if (!put) parts.push(seg);
+    parts.push(b.subarray(p));
+    return concat(parts);
+  }
+  function webpMark(b, xmp) {
+    var chunks = [], p = 12, vp8x = -1, img = null;
+    while (p + 8 <= b.length) {
+      var id = ascii(b, p, 4), len = u32le(b, p + 4), end = p + 8 + len + (len & 1);
+      if (p + 8 + len > b.length) return null;
+      if (id === "C2PA") return "c2pa";
+      if (id !== "XMP ") {
+        var c = b.slice(p, Math.min(end, b.length));
+        if (id === "VP8X") vp8x = chunks.length;
+        if ((id === "VP8 " || id === "VP8L") && !img) img = { id: id, d: c.subarray(8) };
+        chunks.push(c);
+      }
+      p = end;
+    }
+    if (vp8x < 0) {
+      if (!img) return null;
+      var w, h, alpha = 0, d = img.d;
+      if (img.id === "VP8 ") {
+        if (d.length < 10) return null;
+        w = (d[6] | (d[7] << 8)) & 0x3fff; h = (d[8] | (d[9] << 8)) & 0x3fff;
+      } else {
+        if (d.length < 5 || d[0] !== 0x2f) return null;
+        var bits = u32le(d, 1);
+        w = (bits & 0x3fff) + 1; h = ((bits >>> 14) & 0x3fff) + 1; alpha = (bits >>> 28) & 1;
+      }
+      var x = new Uint8Array(18);
+      x.set(utf8("VP8X")); x.set(le32(10), 4);
+      x[8] = alpha ? 0x10 : 0;
+      x[12] = (w - 1) & 255; x[13] = ((w - 1) >> 8) & 255; x[14] = ((w - 1) >> 16) & 255;
+      x[15] = (h - 1) & 255; x[16] = ((h - 1) >> 8) & 255; x[17] = ((h - 1) >> 16) & 255;
+      chunks.unshift(x); vp8x = 0;
+    }
+    chunks[vp8x][8] |= 0x04;                               // the XMP flag
+    var data = utf8(xmp), pad = data.length & 1 ? new Uint8Array([0]) : new Uint8Array(0);
+    chunks.push(concat([utf8("XMP "), le32(data.length), data, pad]));
+    var bodyAll = concat(chunks);
+    return concat([utf8("RIFF"), le32(bodyAll.length + 4), utf8("WEBP"), bodyAll]);
+  }
+  // bytes (Uint8Array) → { bytes, how: "xmp" (marked here) | "c2pa" (the
+  // provider's credentials, kept) | "has" (already marked) | "" (a kind
+  // that can't be marked: kept as it is) }
+  function markBytes(b, info) {
+    var none = { bytes: b, how: "" };
+    if (!b || b.length < 12) return none;
+    if (hasAITerm(b)) return { bytes: b, how: "has" };
+    var out = null, xmp = xmpPacket(info);
+    try {
+      if (b[0] === 0x89 && ascii(b, 1, 3) === "PNG") out = pngMark(b, xmp);
+      else if (b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) out = jpegMark(b, xmp);
+      else if (ascii(b, 0, 4) === "RIFF" && ascii(b, 8, 4) === "WEBP") out = webpMark(b, xmp);
+    } catch (e) { out = null; }
+    if (out === "c2pa") return { bytes: b, how: "c2pa" };
+    return out ? { bytes: out, how: "xmp" } : none;
+  }
+  // → Promise<Blob> (the same blob when nothing was added)
+  function markBlob(blob, info) {
+    if (!blob || typeof blob.arrayBuffer !== "function") return Promise.resolve(blob);
+    return blob.arrayBuffer().then(function (ab) {
+      var r = markBytes(new Uint8Array(ab), info);
+      return r.how === "xmp" ? new Blob([r.bytes], { type: blob.type || "image/png" }) : blob;
+    }, function () { return blob; });
+  }
+  function isAIBytes(b) { return !!b && hasAITerm(b); }
+
   function hordeHeaders(key, json) {
     var h = { apikey: key || HORDE_ANON, "Client-Agent": HORDE_AGENT };
     if (json) h["Content-Type"] = "application/json";
@@ -376,9 +557,17 @@
     });
   }
 
-  // → Promise<Blob[]>
+  // → Promise<Blob[]>; a request with a mark (generate, edit, expand)
+  // gives its pictures marked (AI-MARK).
   function run(req, signal, deps) {
     if (!req) return Promise.reject(new ImageError("unsupported"));
+    var go = runRaw(req, signal, deps);
+    if (!req.mark) return go;
+    return go.then(function (list) {
+      return Promise.all((list || []).map(function (b) { return markBlob(b, { src: req.mark, by: req.by, tool: "orOS" }); }));
+    });
+  }
+  function runRaw(req, signal, deps) {
     if (req.reply === "comfy") return comfyRun(req, signal, deps);
     var init = { method: req.method, headers: req.headers || {}, signal: signal, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" };
     if (req.json) init.body = JSON.stringify(req.json);
@@ -419,7 +608,8 @@
     IMG_PREF: IMG_PREF, PROVIDERS: PROVIDERS, IDS: IDS, KEY_EXTRA: KEY_EXTRA,
     normPref: normPref, readPref: readPref, writePref: writePref, conf: conf, use: use,
     STYLES: STYLES, STYLE_IDS: STYLE_IDS, styled: styled, MAX_PROMPT: MAX_PROMPT, sizeFor: sizeFor,
-    buildGenerate: buildGenerate, buildEdit: buildEdit, buildExpand: buildExpand, buildTest: buildTest, buildUpscale: buildUpscale, comfyFlow: comfyFlow,
+    buildGenerate: generateReq, buildEdit: editReq, buildExpand: expandReq, buildTest: buildTest, buildUpscale: buildUpscale, comfyFlow: comfyFlow,
+    xmpPacket: xmpPacket, markBytes: markBytes, markBlob: markBlob, isAIBytes: isAIBytes,
     run: run, ImageError: ImageError, b64Blob: b64Blob, hordeWait: hordeWait, HORDE_ANON: HORDE_ANON
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

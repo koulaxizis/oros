@@ -2,7 +2,7 @@
 Base keeps records with structure, like a small database: a catalogue of your books, a collection, the guests of an event, the tasks of a project. Each base holds tables, each table has fields of a fixed type, and you see the same records as a grid, cards, a gallery, a kanban board, a calendar or a form.
 
 ## Getting started
-- Press `New base` and pick a template, or start with a blank base.
+- Press `New base` and pick a template, or start with a blank base. `Records of processing (GDPR)` gives a business the GDPR Art. 30 record in five linked tables: what personal data you keep and why, work you do for others, your providers, data breaches, and people's requests (answer them within a month).
 - `Import` turns files into a new base: CSV, Excel (.xlsx, .xls) and OpenDocument (.ods) files, or an orOS base file (.orosbase). Base guesses the type of each column (number, date, choice, email…); check them in the column headers.
 - A base can hold many tables. Use the `+` next to the table names to add one.
 

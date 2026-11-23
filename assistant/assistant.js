@@ -105,6 +105,10 @@
       "chats.synced": "Synced to your devices (encrypted)",
       "chats.off": "History is off: conversations are not kept",
       "who": "{name} · {model}", "who.to": "Sent to {host}",
+      // AI-LABEL (EU AI Act art. 50(1)): who answers is always named as an AI.
+      "who.ai": "AI answers", "who.aiTip": "The answers come from an AI model, not from a person. They can be wrong: check what matters.",
+      "msg.ai": "AI · {model}", "msg.aiNoModel": "AI answer",
+      "set.trainFree": "Free plans may use what you send to train or improve their models. Read the terms of {name} before you share personal data, or use a paid plan or a model on your own device.",
       "brief.btn": "Briefing", "brief.hint": "Today's agenda, what is late, birthdays this week and this month's spending, in one answer. It is sent only when you press it.",
       "brief.msg": "Briefing for {date}", "brief.title": "Share with {name} for the briefing?",
       "brief.text": "orOS worked these out on this device. Untick what {name} should not see. Only these lines go out, not the entries themselves.",
@@ -781,6 +785,9 @@
       "chats.synced": "Συγχρονίζονται στις συσκευές σου (κρυπτογραφημένα)",
       "chats.off": "Το ιστορικό είναι κλειστό: οι συζητήσεις δεν κρατιούνται",
       "who": "{name} · {model}", "who.to": "Στέλνεται στο {host}",
+      "who.ai": "Απαντά AI", "who.aiTip": "Οι απαντήσεις έρχονται από ένα μοντέλο AI, όχι από άνθρωπο. Μπορεί να κάνουν λάθος: έλεγξε ό,τι έχει σημασία.",
+      "msg.ai": "AI · {model}", "msg.aiNoModel": "Απάντηση AI",
+      "set.trainFree": "Τα δωρεάν προγράμματα μπορεί να χρησιμοποιούν ό,τι στέλνεις για να εκπαιδεύσουν ή να βελτιώσουν τα μοντέλα τους. Διάβασε τους όρους του {name} πριν μοιραστείς προσωπικά δεδομένα, ή χρησιμοποίησε πληρωμένο πρόγραμμα ή μοντέλο στη δική σου συσκευή.",
       "brief.btn": "Ενημέρωση ημέρας", "brief.hint": "Η ατζέντα της ημέρας, τα εκπρόθεσμα, τα γενέθλια της εβδομάδας και τα έξοδα του μήνα, σε μία απάντηση. Στέλνεται μόνο όταν το πατήσεις.",
       "brief.msg": "Ενημέρωση για {date}", "brief.title": "Κοινοποίηση στο {name} για την ενημέρωση;",
       "brief.text": "Το orOS τα υπολόγισε σε αυτή τη συσκευή. Ξετσέκαρε ό,τι δεν πρέπει να δει το {name}. Φεύγουν μόνο αυτές οι γραμμές, όχι οι ίδιες οι εγγραφές.",
@@ -2232,6 +2239,9 @@
 
   // Providers with a note of their own under the key box.
   var NOTE_PROVS = { github: 1, cohere: 1, pollinations: 1, openrouter: 1 };
+  // AI-LABEL: services with a free plan or free tier (besides P.free ones)
+  // whose terms may let them train on what is sent; the settings say so.
+  var TRAIN_PROVS = { gemini: 1, openrouter: 1 };
   // What a failed connection test means, in plain words.
   function testErr(e, pid, timedOut) {
     if (timedOut) return t("set.testSlow", { name: provName(pid) });
@@ -7520,6 +7530,9 @@
       who.hidden = false;
       var isBi = !!C.PROVIDERS[pid].device;
       var wm = pid === "webllm" && C.webllmModel(modelOf(pid));
+      var ai = el("span", "who-ai", t("who.ai"));
+      ai.title = t("who.aiTip");
+      who.appendChild(ai);
       who.appendChild(el("span", "who-name", C.PROVIDERS[pid].builtin ? provName(pid) : t("who", { name: provName(pid), model: wm ? wm.name : modelOf(pid) })));
       who.appendChild(el("span", "who-to", isBi ? t("who.device") : data.set.chat ? t("who.chatOnly") : t("who.to", { host: hostOf(baseOf(pid)) })));
       if (webOn(pid)) who.appendChild(el("span", "who-web", t("who.web")));
@@ -7716,6 +7729,11 @@
         src.appendChild(ol);
         a.appendChild(src);
       }
+      // AI-LABEL: every answer says it was written by an AI (and which model).
+      var mdl = m.prov === "webllm" && C.webllmModel(m.model) ? C.webllmModel(m.model).name : String(m.model || "");
+      var aiTag = el("span", "msg-ai", mdl ? t("msg.ai", { model: mdl }) : t("msg.aiNoModel"));
+      aiTag.title = t("who.aiTip");
+      a.appendChild(aiTag);
       var cp = button(t("btn.copy"), "msg-copy", function () { copyText(m.text); });
       cp.title = t("btn.copy");
       a.appendChild(cp);
@@ -8712,6 +8730,7 @@
       provBox.appendChild(keyActs);
       if (!P.local) provBox.appendChild(el("p", "dlg-hint", t(P.free ? "set.keyHintFree" : "set.keyHint", { host: hostOf(P.base), name: P.name })));
       if (NOTE_PROVS[pid]) provBox.appendChild(el("p", "dlg-hint", t("set.note." + pid)));
+      if (TRAIN_PROVS[pid] || P.free) provBox.appendChild(el("p", "dlg-hint train-note", t("set.trainFree", { name: P.name })));
       function drawKey() {
         loadKey(pid).then(function (k) {
           var has = !!(k && k.key);

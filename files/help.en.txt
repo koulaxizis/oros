@@ -80,7 +80,7 @@ Folders are on the left, the current folder's contents on the right. On a phone,
 
 ## Import, preview and edit
 - Tap `Import files` to pick one or more files, or drop files from your computer onto the list. If a file with the same name already exists, choose `Overwrite` or `Keep both`.
-- Open a file to preview it. Images (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) are shown as pictures. Markdown files are shown formatted, with a `Source` button for the raw text.
+- Open a file to preview it. Images (PNG, JPG, GIF, WebP, BMP, ICO, AVIF) are shown as pictures. Markdown files are shown formatted, with a `Source` button for the raw text. A picture whose details say an AI made or changed it shows `Made with AI` next to its name.
 - Tap `Edit` to change a text file and `Save` to write it to the disk. Markdown files show a live preview next to the editor. Closing with unsaved changes warns you first; close again to discard them.
 
 ### Copy text from a picture

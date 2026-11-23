@@ -640,11 +640,35 @@
     });
   }
 
+  // AI-MARK (EU AI Act art. 50(2)): a PNG / JPEG / WebP of a picture with
+  // layers an AI made or redrew says so in its XMP (imgai.js markBlob,
+  // loaded here when the AI was used in an earlier session).
+  var iaP = null;
+  function imageAI() {
+    if (window.OrosImageAI) return Promise.resolve(window.OrosImageAI);
+    if (!iaP) {
+      iaP = new Promise(function (ok, fail) {
+        var v = (document.querySelector('script[src*="app.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+        var sc = document.createElement("script");
+        sc.src = "../assistant/imgai.js" + (m ? "?v=" + m[1] : "");
+        sc.onload = function () { if (window.OrosImageAI) ok(window.OrosImageAI); else fail(new Error("imgai")); };
+        sc.onerror = function () { fail(new Error("imgai")); };
+        document.head.appendChild(sc);
+      });
+      iaP.catch(function () { iaP = null; });
+    }
+    return iaP;
+  }
+  function aiMark(blob) {
+    var ai = blob && st.doc && st.doc.layers.some(function (L) { return L.ai && L.vis !== 0; });
+    if (!ai) return blob;
+    return imageAI().then(function (IA) { return IA.markBlob(blob, { src: "edit", tool: "orOS Photo Lab" }); }, function () { return blob; });
+  }
   function exportImage(fmt, q, scale, toPictures) {
     if (!st.doc) return;
     PL.busy(true);
     if (fmt === "oros") fmt = "orosphoto";
-    (fmt === "orosphoto" ? renderPackage() : LAYERED[fmt] ? renderLayered(fmt) : render(fmt, q, scale)).then(function (blob) {
+    (fmt === "orosphoto" ? renderPackage() : LAYERED[fmt] ? renderLayered(fmt) : render(fmt, q, scale).then(aiMark)).then(function (blob) {
       PL.busy(false);
       if (!blob) { PL.toast(t("msg.exportFail")); return; }
       if (fmt === "webp" && blob.type !== "image/webp") { PL.toast(t("msg.noWebp")); fmt = "png"; }

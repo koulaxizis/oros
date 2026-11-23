@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52665 of 52693 (99%)
+- Strings: 52769 of 52797 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,14 +16,14 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 2411 / 2411 |
+| assistant | 100% | 2416 / 2416 |
 | atelier | 100% | 1534 / 1534 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 332 / 332 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
-| base | 100% | 402 / 402 |
+| base | 100% | 493 / 493 |
 | battleship | 100% | 102 / 102 |
 | bookmarks | 100% | 235 / 235 |
 | breakout | 100% | 56 / 56 |
@@ -61,7 +61,7 @@ en and el); translators change them there, not in a pack.
 | feeds | 100% | 329 / 329 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 962 / 962 (25 in the code) |
+| files | 100% | 964 / 964 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -139,7 +139,7 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2113 / 2113 |
+| settings | 100% | 2119 / 2119 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
 | shell | 100% | 1658 / 1658 |

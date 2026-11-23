@@ -4,6 +4,7 @@ import { handle } from "./core.js";
 import { purgeShares } from "./share.js";
 import { purgeShort } from "./short.js";
 import { purgeForms } from "./forms.js";
+import { purgeNl } from "./newsletter.js";
 export { RemoteRoom } from "./remote.js";
 export { PushBox } from "./push.js";
 export { HouseBox } from "./house.js";
@@ -22,10 +23,12 @@ export default {
   // Hourly cron (wrangler.toml [triggers]): expired share links and
   // unfinished uploads leave the database, and so do short links for
   // songs nobody opened for a year (short.js); Forms answers and forms
-  // past their time (forms.js).
+  // past their time (forms.js); Newsletter sign-ups nobody pulled for 90
+  // days (newsletter.js).
   scheduled(event, env, ctx) {
     ctx.waitUntil(purgeShares(env, Date.now()));
     ctx.waitUntil(purgeShort(env, Date.now()));
     ctx.waitUntil(purgeForms(env, Date.now()));
+    ctx.waitUntil(purgeNl(env, Date.now()));
   }
 };

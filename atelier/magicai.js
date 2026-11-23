@@ -291,6 +291,7 @@
               var ok = AT.editItems([id], function (x) {
                 if (x.fit === "custom" && x.iw > 0) x.isc = x.isc * x.iw / r.w;
                 x.a = r.id; x.iw = r.w; x.ih = r.h;
+                x.ax.ai = x.ax.ai === "g" ? "g" : "e";
               });
               if (ok) AT.toast(t("me.done"), t("btn.undo"), AT.undo);
             }, function (e) { stat.textContent = t("mg.fail", { why: MG.why(e) }); use.disabled = go.disabled = false; });
@@ -390,6 +391,7 @@
                 x.a = r.id; x.iw = r.w; x.ih = r.h;
                 x.fit = "fill"; x.ix = 0; x.iy = 0; x.isc = 1;
                 delete x.ax.cr;
+                x.ax.ai = x.ax.ai === "g" ? "g" : "e";
                 if (!frame) {
                   // the frame takes the new shape around the same centre
                   var cy = x.y + x.h / 2;

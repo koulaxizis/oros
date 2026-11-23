@@ -302,6 +302,8 @@
     var fx = k !== "adj" && normFx(raw.fx);
     if (fx) L.fx = fx;
     if (typeof raw.g === "string" && GROUP_RE.test(raw.g)) L.g = raw.g;
+    // AI-MARK: pixels an AI made ("g") or redrew ("e"); exports say so
+    if (k === "raster" && (raw.ai === "g" || raw.ai === "e")) L.ai = raw.ai;
     return L;
   }
 

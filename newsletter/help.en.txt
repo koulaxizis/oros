@@ -167,5 +167,5 @@ Lists, subscribers and issues sync through orOS sync, and pictures through the o
 - Up to 5,000 subscribers in all and 20 lists.
 - Up to 20 RSS feeds and 500 issues.
 - No open or click statistics.
-- The relay holds at most 2,000 sign-ups and unsubscribes per list waiting to be collected.
+- The relay holds at most 2,000 sign-ups and unsubscribes per list waiting to be collected. A sign-up not collected within 90 days is deleted; unsubscribes wait until they are collected.
 - Each call to a provider's API sends up to 10 messages (about 1 MB); bounces older than 7 days before the first read are not fetched.

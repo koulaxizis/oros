@@ -206,6 +206,8 @@
     if ((k === "shape" || k === "photo") && bit(a.bg)) o.bg = 1;
     // guides of a cover template (Mockups): seen in the editor only
     if (k === "photo" && bit(a.tg)) o.tg = 1;
+    // AI-MARK: a picture an AI made ("g") or redrew ("e"); exports say so
+    if (k === "photo" && (a.ai === "g" || a.ai === "e")) o.ai = a.ai;
     var fc = col(a.fc), sc = col(a.sc);
     if (k !== "photo" && k !== "line" && fc) o.fc = fc;
     if ((k === "shape" || k === "icon" || k === "line" || k === "table") && sc) o.sc = sc;

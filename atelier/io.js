@@ -57,6 +57,37 @@
     });
   }
 
+  // AI-MARK (EU AI Act art. 50(2)): a PNG / JPEG of pages with a
+  // picture an AI made or redrew says so in its XMP (imgai.js markBlob).
+  // A PDF carries the same XMP as its document metadata, an SVG inside
+  // <metadata> (pages: page objects or page ids).
+  function aiIn(doc, pages) {
+    var on = {};
+    (pages || []).forEach(function (pg) { on[pg && pg.id || pg] = 1; });
+    return (doc && doc.items || []).some(function (it) { return on[it.pg] && it.ax && it.ax.ai && !it.hide; });
+  }
+  var AI_INFO = { src: "edit", tool: "orOS Atelier" };
+  function aiMark(doc, pages, blob) {
+    var IA = window.OrosImageAI;
+    if (!aiIn(doc, pages) || !blob || !IA || typeof IA.markBlob !== "function") return Promise.resolve(blob);
+    return IA.markBlob(blob, AI_INFO);
+  }
+  function aiMarkPdf(doc, pages, pdf) {
+    var IA = window.OrosImageAI;
+    if (aiIn(doc, pages) && pdf && typeof pdf.addMetadata === "function" && IA && typeof IA.xmpPacket === "function") {
+      pdf.addMetadata(IA.xmpPacket(AI_INFO), true);
+    }
+    return pdf;
+  }
+  function aiMarkSvg(doc, pages, svg) {
+    var IA = window.OrosImageAI;
+    if (!aiIn(doc, pages) || typeof svg !== "string" || !IA || typeof IA.xmpPacket !== "function") return svg;
+    var m = /<svg\b[^>]*>/.exec(svg);
+    if (!m) return svg;
+    var rdf = IA.xmpPacket(AI_INFO).replace(/^<\?xpacket[^>]*\?>/, "").replace(/<\?xpacket[^>]*\?>$/, "");
+    var at = m.index + m[0].length;
+    return svg.slice(0, at) + "<metadata>" + rdf + "</metadata>" + svg.slice(at);
+  }
   function toBlob(cv, type, q) {
     return new Promise(function (resolve, reject) {
       cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error("encode")); }, type, q);
@@ -195,7 +226,7 @@
     });
     return chain.then(function () {
       var pdf = P.build(doc, { pages: ids, title: doc.name || "" }, { jsPDF: J, pictures: pics, plan: plan });
-      return pdf.output("blob");
+      return aiMarkPdf(doc, ids, pdf).output("blob");
     });
   }
 
@@ -237,7 +268,13 @@
       if (!it) return;
       chain = chain.then(function () { return pictureOf(doc, it, p, WEB_DPI); }).then(function (pic) { pics[p.id] = pic; });
     });
-    return chain.then(function () { return WB.svgFile(doc, pg, { ids: ids }, { plan: plan, pictures: pics }); });
+    return chain.then(function () { return WB.svgFile(doc, pg, { ids: ids }, { plan: plan, pictures: pics }); }).then(function (r) {
+      if (r && typeof r.svg === "string") {
+        var picked = ids ? (doc.items || []).filter(function (it) { return ids.indexOf(it.id) >= 0; }) : null;
+        if (!picked || picked.some(function (it) { return it.ax && it.ax.ai && !it.hide; })) r.svg = aiMarkSvg(doc, [pg], r.svg);
+      }
+      return r;
+    });
   }
   function exportSvg(doc, pages) {
     var ok = true, c2 = Promise.resolve();
@@ -290,7 +327,7 @@
       var c2 = Promise.resolve();
       pages.forEach(function (pg, i) {
         c2 = c2.then(function () {
-          return toBlob(renderForExport(doc, pg, o.scale || 1, false), mime, 0.92).then(function (b) {
+          return toBlob(renderForExport(doc, pg, o.scale || 1, false), mime, 0.92).then(function (b) { return aiMark(doc, [pg], b); }).then(function (b) {
             out.push({ name: fileName(doc, ext, pages.length > 1 ? i + 1 : 0), blob: b });
           });
         });
@@ -360,7 +397,7 @@
         pages.forEach(function (pg, i) {
           c2 = c2.then(function () {
             var cv = renderForExport(doc, pg, o.scale, o.type === "png" && o.transparent);
-            return toBlob(cv, mime, 0.92).then(function (b) {
+            return toBlob(cv, mime, 0.92).then(function (b) { return aiMark(doc, [pg], b); }).then(function (b) {
               var ext = o.type === "png" ? ".png" : ".jpg";
               return saveBlob(b, fileName(doc, ext, pages.length > 1 ? i + 1 : 0), mime, o.type.toUpperCase(), ext);
             }).then(function (r) { ok = ok && r; });
@@ -1170,6 +1207,7 @@
     var s = AT.doc.setup, k = Math.min(s.w * 0.6 / res.w, s.h * 0.6 / res.h);
     var spec = { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", w: res.w * k, h: res.h * k, fit: "fill" };
     if (res.gif) spec.ext = { gif: res.gif };
+    if (res.ai === "g" || res.ai === "e") spec.ai = res.ai;
     ED.add(spec);
   }
   // An SVG put on the open page as shapes, in the middle, at most 60%
@@ -1441,7 +1479,7 @@
     var k = Math.min(1, 4096 / Math.max(doc.setup.w, doc.setup.h));
     prepare(doc, safeScale(doc, k)).then(function () {
       return toBlob(renderForExport(doc, pg, k, false), "image/png");
-    }).then(function (b) {
+    }).then(function (b) { return aiMark(doc, [pg], b); }).then(function (b) {
       return savePicture(fs, b, fileName(doc, ".png"));
     }).then(function (p) {
       exporting = false;

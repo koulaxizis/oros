@@ -69,6 +69,38 @@
       "tpl.collection": "Collection", "tpl.collection.t": "Records, stamps, anything: year, condition, value.",
       "tpl.event": "Event guests", "tpl.event.t": "Who is invited, who answered, how many come.",
       "tpl.gear": "Equipment", "tpl.gear.t": "What you own, where it is, warranty until when.",
+      // ROPA (GDPR Art. 30, legal audit 2026-11-23): the records-of-processing template
+      "tpl.ropa": "Records of processing (GDPR)", "tpl.ropa.t": "What personal data you keep and why, your providers, data breaches and people's requests (Art. 30).", "t.ropaAct": "Activities (Art. 30(1))",
+      "t.ropaFor": "For others (Art. 30(2))", "t.ropaProv": "Providers", "t.ropaInc": "Breaches (Art. 33(5))",
+      "t.ropaReq": "Requests", "rf.activity": "Activity", "rf.ref": "ID",
+      "rf.area": "Area", "rf.role": "Role", "rf.purpose": "Purpose",
+      "rf.basis": "Legal basis (Art. 6)", "rf.special": "Special categories (Art. 9)", "rf.basis9": "Art. 9(2) condition",
+      "rf.subjects": "Whose data", "rf.data": "Kinds of data", "rf.source": "Source",
+      "rf.providers": "Providers", "rf.usedBy": "Used in", "rf.retention": "Kept for",
+      "rf.months": "Kept for (months)", "rf.security": "Security measures", "rf.notice": "Privacy notice",
+      "rf.dpia": "Impact assessment (DPIA) needed", "rf.review": "Last checked", "rf.controller": "Controller",
+      "rf.kinds": "Kinds of processing", "rf.subproc": "Sub-processors", "rf.subIn": "Sub-processor in",
+      "rf.transfers": "Transfers outside the EEA", "rf.service": "Service", "rf.country": "Country",
+      "rf.outside": "Outside the EEA", "rf.mech": "Transfer safeguard", "rf.dpa": "Processing agreement (DPA)",
+      "rf.dpaUrl": "Agreement link", "rf.found": "Found on", "rf.what": "What happened",
+      "rf.affData": "Data affected", "rf.affPeople": "People affected", "rf.risk": "Risk to people",
+      "rf.toDpa": "Reported to the authority (72 h)", "rf.toDpaOn": "Reported on", "rf.told": "People told (Art. 34)",
+      "rf.actions": "What was done", "rf.reqType": "Request", "rf.received": "Received on",
+      "rf.answered": "Answered on", "rc.controller": "Controller", "rc.joint": "Joint controller",
+      "rc.processor": "Processor", "rc.b6a": "6(1)(a) Consent", "rc.b6b": "6(1)(b) Contract",
+      "rc.b6c": "6(1)(c) Legal obligation", "rc.b6d": "6(1)(d) Vital interests", "rc.b6e": "6(1)(e) Public task",
+      "rc.b6f": "6(1)(f) Legitimate interests", "rc.customers": "Customers", "rc.donors": "Donors",
+      "rc.subscribers": "Subscribers", "rc.visitors": "Website visitors", "rc.users": "App users",
+      "rc.partners": "Partners", "rc.staff": "Staff", "rc.audience": "Event audience",
+      "rc.dName": "Name", "rc.dContact": "Contact details", "rc.dAddress": "Postal address",
+      "rc.dPay": "Payment details", "rc.dTax": "Tax details", "rc.dTech": "IP address and logs",
+      "rc.dContent": "Messages and content", "rc.dHealth": "Health", "rc.no": "No",
+      "rc.maybe": "Not sure", "rc.yes": "Yes", "rc.mNone": "Not needed (EEA)",
+      "rc.mAdeq": "Adequacy decision", "rc.mDpf": "EU-US Data Privacy Framework", "rc.mScc": "Standard contractual clauses",
+      "rc.rLow": "Unlikely", "rc.rRisk": "Likely", "rc.rHigh": "High",
+      "rc.qAccess": "Access", "rc.qFix": "Correction", "rc.qErase": "Erasure",
+      "rc.qLimit": "Restriction", "rc.qPort": "Portability", "rc.qObject": "Objection",
+      "rc.qConsent": "Consent withdrawn",
       "t.titles": "Titles", "t.books": "Books", "t.tasks": "Tasks", "t.items": "Items", "t.guests": "Guests",
       "f.name": "Name", "f.title": "Title", "f.author": "Author", "f.isbn": "ISBN", "f.status": "Status", "f.pubdate": "Publication date",
       "f.pages": "Pages", "f.price": "Price", "f.notes": "Notes", "f.rating": "Rating", "f.finished": "Finished on",
@@ -263,6 +295,37 @@
       "tpl.collection": "Συλλογή", "tpl.collection.t": "Δίσκοι, γραμματόσημα, ό,τι θες: χρονιά, κατάσταση, αξία.",
       "tpl.event": "Καλεσμένοι εκδήλωσης", "tpl.event.t": "Ποιοι καλούνται, ποιοι απάντησαν, πόσοι έρχονται.",
       "tpl.gear": "Εξοπλισμός", "tpl.gear.t": "Τι έχεις, πού βρίσκεται, μέχρι πότε έχει εγγύηση.",
+      "tpl.ropa": "Αρχείο επεξεργασίας (GDPR)", "tpl.ropa.t": "Ποια προσωπικά δεδομένα κρατάς και γιατί, οι πάροχοί σου, οι διαρροές και τα αιτήματα των ατόμων (άρθ. 30).", "t.ropaAct": "Δραστηριότητες (άρθ. 30(1))",
+      "t.ropaFor": "Για λογαριασμό άλλων (άρθ. 30(2))", "t.ropaProv": "Πάροχοι", "t.ropaInc": "Περιστατικά (άρθ. 33(5))",
+      "t.ropaReq": "Αιτήματα", "rf.activity": "Δραστηριότητα", "rf.ref": "Κωδικός",
+      "rf.area": "Τομέας", "rf.role": "Ρόλος", "rf.purpose": "Σκοπός",
+      "rf.basis": "Νομική βάση (άρθ. 6)", "rf.special": "Ειδικές κατηγορίες (άρθ. 9)", "rf.basis9": "Προϋπόθεση άρθ. 9(2)",
+      "rf.subjects": "Ποιων τα δεδομένα", "rf.data": "Κατηγορίες δεδομένων", "rf.source": "Πηγή",
+      "rf.providers": "Πάροχοι", "rf.usedBy": "Χρησιμοποιείται σε", "rf.retention": "Χρόνος διατήρησης",
+      "rf.months": "Διατήρηση (μήνες)", "rf.security": "Μέτρα ασφαλείας", "rf.notice": "Ενημέρωση απορρήτου",
+      "rf.dpia": "Χρειάζεται εκτίμηση αντικτύπου (DPIA)", "rf.review": "Τελευταίος έλεγχος", "rf.controller": "Υπεύθυνος επεξεργασίας",
+      "rf.kinds": "Είδη επεξεργασίας", "rf.subproc": "Υποεκτελούντες", "rf.subIn": "Υποεκτελών σε",
+      "rf.transfers": "Διαβιβάσεις εκτός ΕΟΧ", "rf.service": "Υπηρεσία", "rf.country": "Χώρα",
+      "rf.outside": "Εκτός ΕΟΧ", "rf.mech": "Μηχανισμός διαβίβασης", "rf.dpa": "Σύμβαση επεξεργασίας (DPA)",
+      "rf.dpaUrl": "Σύνδεσμος σύμβασης", "rf.found": "Εντοπίστηκε στις", "rf.what": "Τι συνέβη",
+      "rf.affData": "Δεδομένα που επηρεάστηκαν", "rf.affPeople": "Άτομα που επηρεάστηκαν", "rf.risk": "Κίνδυνος για τα άτομα",
+      "rf.toDpa": "Γνωστοποιήθηκε στην Αρχή (72 ώρες)", "rf.toDpaOn": "Γνωστοποίηση στις", "rf.told": "Ενημερώθηκαν τα άτομα (άρθ. 34)",
+      "rf.actions": "Τι έγινε", "rf.reqType": "Αίτημα", "rf.received": "Παραλήφθηκε στις",
+      "rf.answered": "Απαντήθηκε στις", "rc.controller": "Υπεύθυνος", "rc.joint": "Από κοινού υπεύθυνος",
+      "rc.processor": "Εκτελών", "rc.b6a": "6(1)(α) Συγκατάθεση", "rc.b6b": "6(1)(β) Σύμβαση",
+      "rc.b6c": "6(1)(γ) Νομική υποχρέωση", "rc.b6d": "6(1)(δ) Ζωτικό συμφέρον", "rc.b6e": "6(1)(ε) Δημόσιο συμφέρον",
+      "rc.b6f": "6(1)(στ) Έννομο συμφέρον", "rc.customers": "Πελάτες", "rc.donors": "Δωρητές",
+      "rc.subscribers": "Συνδρομητές", "rc.visitors": "Επισκέπτες ιστότοπου", "rc.users": "Χρήστες εφαρμογών",
+      "rc.partners": "Συνεργάτες", "rc.staff": "Προσωπικό", "rc.audience": "Κοινό εκδηλώσεων",
+      "rc.dName": "Όνομα", "rc.dContact": "Στοιχεία επικοινωνίας", "rc.dAddress": "Ταχυδρομική διεύθυνση",
+      "rc.dPay": "Στοιχεία πληρωμής", "rc.dTax": "Φορολογικά στοιχεία", "rc.dTech": "Διεύθυνση IP και αρχεία καταγραφής",
+      "rc.dContent": "Μηνύματα και περιεχόμενο", "rc.dHealth": "Υγεία", "rc.no": "Όχι",
+      "rc.maybe": "Ίσως", "rc.yes": "Ναι", "rc.mNone": "Δεν χρειάζεται (ΕΟΧ)",
+      "rc.mAdeq": "Απόφαση επάρκειας", "rc.mDpf": "EU-US Data Privacy Framework", "rc.mScc": "Τυποποιημένες συμβατικές ρήτρες",
+      "rc.rLow": "Απίθανος", "rc.rRisk": "Πιθανός", "rc.rHigh": "Υψηλός",
+      "rc.qAccess": "Πρόσβαση", "rc.qFix": "Διόρθωση", "rc.qErase": "Διαγραφή",
+      "rc.qLimit": "Περιορισμός", "rc.qPort": "Φορητότητα", "rc.qObject": "Εναντίωση",
+      "rc.qConsent": "Ανάκληση συγκατάθεσης",
       "t.titles": "Τίτλοι", "t.books": "Βιβλία", "t.tasks": "Εργασίες", "t.items": "Αντικείμενα", "t.guests": "Καλεσμένοι",
       "f.name": "Όνομα", "f.title": "Τίτλος", "f.author": "Συγγραφέας", "f.isbn": "ISBN", "f.status": "Κατάσταση", "f.pubdate": "Ημερομηνία έκδοσης",
       "f.pages": "Σελίδες", "f.price": "Τιμή", "f.notes": "Σημειώσεις", "f.rating": "Βαθμολογία", "f.finished": "Το τελείωσα στις",
@@ -766,6 +829,50 @@
         ["f.name", "text"], ["f.serial", "text"], ["f.location", "text"], ["f.bought", "date", {}],
         ["f.price", "currency", { dec: 2, sym: "€" }], ["f.warranty", "date", {}], ["f.works", "check", {}]
       ] }] };
+    },
+    // Records of processing (GDPR Art. 30; legal audit 2026-11-23): what
+    // is kept and why (30(1)), work done for others (30(2)), the
+    // providers both link to, breaches (33(5)) and people's requests
+    // (Art. 12, 15-22: answer within a month). A link field is
+    // ["key", "link", { to: index of the table, inv: "key" }].
+    ropa: function () {
+      var dsub = ["rc.customers", "rc.donors", "rc.subscribers", "rc.visitors", "rc.users", "rc.partners", "rc.staff", "rc.audience"];
+      var ddat = ["rc.dName", "rc.dContact", "rc.dAddress", "rc.dPay", "rc.dTax", "rc.dTech", "rc.dContent", "rc.dHealth"];
+      return { name: t("tpl.ropa"), tables: [
+        { name: t("t.ropaAct"), fields: [
+          ["rf.activity", "text"], ["rf.ref", "text"], ["rf.area", "select", { ch: [] }],
+          ["rf.role", "select", ch(["rc.controller", "rc.joint", "rc.processor"], ["blue", "purple", "teal"])],
+          ["rf.purpose", "long", {}],
+          ["rf.basis", "multi", ch(["rc.b6a", "rc.b6b", "rc.b6c", "rc.b6d", "rc.b6e", "rc.b6f"], ["green", "blue", "orange", "red", "brown", "purple"])],
+          ["rf.special", "check", {}], ["rf.basis9", "text"],
+          ["rf.subjects", "multi", ch(dsub, ["blue", "green", "teal", "gray", "purple", "orange", "brown", "yellow"])],
+          ["rf.data", "multi", ch(ddat, ["gray", "blue", "teal", "orange", "brown", "purple", "green", "red"])],
+          ["rf.source", "text"], ["rf.providers", "link", { to: 2, inv: "rf.usedBy" }],
+          ["rf.retention", "text"], ["rf.months", "number", { dec: 0 }], ["rf.security", "long", {}],
+          ["rf.notice", "url", {}], ["rf.dpia", "select", ch(["rc.no", "rc.maybe", "rc.yes"], ["green", "yellow", "red"])],
+          ["rf.review", "date", {}]
+        ] },
+        { name: t("t.ropaFor"), fields: [
+          ["rf.activity", "text"], ["rf.controller", "text"], ["f.email", "email"], ["rf.kinds", "long", {}],
+          ["rf.subproc", "link", { to: 2, inv: "rf.subIn" }], ["rf.transfers", "text"], ["rf.security", "long", {}], ["rf.review", "date", {}]
+        ] },
+        { name: t("t.ropaProv"), fields: [
+          ["f.name", "text"], ["rf.service", "text"], ["rf.country", "text"], ["rf.outside", "check", {}],
+          ["rf.mech", "select", ch(["rc.mNone", "rc.mAdeq", "rc.mDpf", "rc.mScc"], ["green", "teal", "blue", "orange"])],
+          ["rf.dpa", "check", {}], ["rf.dpaUrl", "url", {}], ["f.notes", "long", {}]
+        ] },
+        { name: t("t.ropaInc"), fields: [
+          ["f.title", "text"], ["rf.found", "date", {}], ["rf.what", "long", {}], ["rf.affData", "long", {}],
+          ["rf.affPeople", "number", { dec: 0 }], ["rf.risk", "select", ch(["rc.rLow", "rc.rRisk", "rc.rHigh"], ["green", "orange", "red"])],
+          ["rf.toDpa", "check", {}], ["rf.toDpaOn", "date", {}], ["rf.told", "check", {}], ["rf.actions", "long", {}]
+        ] },
+        { name: t("t.ropaReq"), fields: [
+          ["f.name", "text"], ["rf.reqType", "select", ch(["rc.qAccess", "rc.qFix", "rc.qErase", "rc.qLimit", "rc.qPort", "rc.qObject", "rc.qConsent"],
+            ["blue", "teal", "red", "orange", "purple", "brown", "gray"])],
+          ["rf.received", "date", {}], ["f.due", "date", {}], ["f.status", "select", ch(["c.todo", "c.doing", "c.donec"], ["gray", "blue", "green"])],
+          ["rf.answered", "date", {}], ["f.notes", "long", {}]
+        ] }
+      ] };
     }
   };
   function tableNames() { return { field: t("f.name"), grid: t("v.grid"), cards: t("v.cards"), column: t("fld.defName", { n: "" }).trim() }; }
@@ -773,11 +880,17 @@
     var tpl = TEMPLATES[key](), now = Date.now();
     var bid = C.uid(now);
     var d = C.addBase(data, tpl.name, now, bid);
-    tpl.tables.forEach(function (tb) {
-      var tid = C.uid(now), pf = C.fid();
+    // tables first, so a link field can name any of them (ROPA)
+    var tids = tpl.tables.map(function () { return C.uid(now); });
+    tpl.tables.forEach(function (tb, i) {
       var first = tb.fields[0];
-      d = C.addTable(d, bid, tb.name, now, { field: t(first[0]), grid: t("v.grid"), cards: t("v.cards") }, { t: tid, f: pf, v1: C.uid(now), v2: C.uid(now) });
-      tb.fields.slice(1).forEach(function (f) { d = C.addField(d, tid, t(f[0]), f[1], f[2] || {}, now); });
+      d = C.addTable(d, bid, tb.name, now, { field: t(first[0]), grid: t("v.grid"), cards: t("v.cards") }, { t: tids[i], f: C.fid(), v1: C.uid(now), v2: C.uid(now) });
+    });
+    tpl.tables.forEach(function (tb, i) {
+      tb.fields.slice(1).forEach(function (f) {
+        if (f[1] === "link") d = C.addLinkField(d, tids[i], t(f[0]), tids[f[2].to], now, t(f[2].inv));
+        else d = C.addField(d, tids[i], t(f[0]), f[1], f[2] || {}, now);
+      });
     });
     return { data: d, base: bid };
   }

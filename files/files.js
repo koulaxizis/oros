@@ -201,6 +201,8 @@
       "pv.editHint":     "Editing text file — changes apply directly to the virtual disk.",
       "pv.binary":       "Binary file — no text preview available.",
       "pv.imageFail":    "Image couldn't be loaded.",
+      "pv.ai":           "Made with AI",
+      "pv.aiTip":        "This picture says it was made or changed with AI (its IPTC or C2PA details).",
       "pv.text":         "Text",
       "pv.textTip":      "Copy text from this picture",
       "pv.textFail":     "Text recognition could not start. Try again when online.",
@@ -494,6 +496,8 @@
       "pv.editHint":     "Επεξεργασία αρχείου κειμένου — οι αλλαγές γράφονται απευθείας στον εικονικό δίσκο.",
       "pv.binary":       "Δυαδικό αρχείο — δεν υπάρχει προεπισκόπηση κειμένου.",
       "pv.imageFail":    "Η εικόνα δεν φορτώθηκε.",
+      "pv.ai":           "Φτιαγμένη με AI",
+      "pv.aiTip":        "Η εικόνα δηλώνει ότι φτιάχτηκε ή άλλαξε με AI (στα στοιχεία IPTC ή C2PA της).",
       "pv.text":         "Κείμενο",
       "pv.textTip":      "Αντιγραφή κειμένου από αυτή την εικόνα",
       "pv.textFail":     "Η αναγνώριση κειμένου δεν ξεκίνησε. Δοκίμασε ξανά με σύνδεση.",
@@ -4803,9 +4807,37 @@
       pvActiveUrls.push(url);              // FG5: revoked in pvRevokeAll()
       pvBodySet('<img class="pv-img" alt="" src="' + url + '">');
       injectTextButton(path, name);
+      showAILabel(blob);
     }).catch(function () {
       pvBodySet('<div class="pv-msg">' + escapeHtml(t("pv.imageFail")) + "</div>");
     });
+  }
+
+  // AI-MARK: a picture whose XMP (IPTC digital source type) or C2PA
+  // manifest says an AI made or changed it gets a "Made with AI" label.
+  function looksAI(bytes) {
+    var needle = "rainedAlgorithmicMedia", n = needle.length;
+    for (var i = 1; i + n <= bytes.length; i++) {
+      if (bytes[i] !== 114) continue;
+      var j = 1;
+      while (j < n && bytes[i + j] === needle.charCodeAt(j)) j++;
+      if (j === n && (bytes[i - 1] === 116 || bytes[i - 1] === 84)) return true;
+    }
+    return false;
+  }
+  function showAILabel(blob) {
+    if (!blob || typeof blob.slice !== "function") return;
+    blob.slice(0, 4 * 1024 * 1024).arrayBuffer().then(function (ab) {
+      if (!looksAI(new Uint8Array(ab))) return;
+      var meta = pvOverlay && pvOverlay.querySelector(".pv-meta");
+      if (!meta || meta.querySelector(".pv-ai")) return;
+      var tag = document.createElement("span");
+      tag.className = "pv-ai";
+      tag.textContent = t("pv.ai");
+      tag.title = t("pv.aiTip");
+      meta.appendChild(document.createTextNode(" · "));
+      meta.appendChild(tag);
+    }).catch(function () {});
   }
 
   function bs64ToBlob(b64) {
