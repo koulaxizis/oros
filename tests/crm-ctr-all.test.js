@@ -184,3 +184,15 @@ test("Dashboard counts: in force, need a decision (ended / soon), next end day a
   assert.equal(s.next.ctr.id, "ctr0002");
   assert.equal(C.ctrDash(C.norm({ cust: [cust("aaaaaa1", "A")] }), today).next, null);
 });
+
+test("CAL-CTR-DUP: an own Calendar event that names the contract hides its row", () => {
+  const k = ctr("ctr0001", { t: "«Carpe Noctem» (Έντυπο)" });
+  assert.equal(C.ctrNamedBy(k, "Λήξη: Ισαβέλλα Πρίτσα – «Carpe Noctem» (Έντυπο)"), true);
+  assert.equal(C.ctrNamedBy(k, "ΛΗΞΗ: carpe   noctem (ΕΝΤΥΠΟ)"), true, "case, accents, quotes, spaces");
+  assert.equal(C.ctrNamedBy(k, "Λήξη: «Carpe Noctem» (Ψηφιακό)"), false, "another edition");
+  const m = ctr("ctr0002", { t: "«Το μωράκι και τα σκιουράκια» (Έντυπο)" });
+  assert.equal(C.ctrNamedBy(m, "Λήξη: Χρήστος Καρράς – «Το μωράκι και τα σκιουράκια, Χριστούγεννα» (Έντυπο)"), false, "another book");
+  assert.equal(C.ctrNamedBy(ctr("ctr0003", { t: "«Ως»" }), "Λήξη: «Ως»"), false, "too short to tell");
+  assert.equal(C.ctrNamedBy(ctr("ctr0004", { t: "" }), "anything"), false);
+  assert.equal(C.ctrNamedBy(k, ""), false);
+});
