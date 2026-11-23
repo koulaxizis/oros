@@ -3211,6 +3211,11 @@
       var hsw = switchBtn(k.hidden, "lk-hidden", function (v) { L.option("hidden", v); render(); }, t("l.hidden"));
       if (caps && caps.hidden) hsw.disabled = true;     // Sensitive work keeps it on
       c2.appendChild(row(t("l.hidden"), hsw, { hint: t("l.hidden.hint") }));
+      // LOCKLOOK-1: the person's own wallpaper blurred behind the lock, or plain.
+      c2.appendChild(row(t("l.look"), select([
+        { value: "wall", label: t("l.look.wall") }, { value: "plain", label: t("l.look.plain") }
+      ], k.look === "plain" ? "plain" : "wall", "lk-look", function (v) { L.option("look", v); render(); }),
+        { forId: "f-lk-look", hint: t("l.look.hint") }));
       host.appendChild(c2);
       if (k.info) secLockInfo(host, L, k, strict);
       if (L.apps) secLockApps(host, L, k, s, strict);
@@ -3234,7 +3239,7 @@
       var sw = switchBtn(!!k.info[x[0]], "lk-info-" + x[0], function (v) {
         var o = {}; o[x[0]] = !!v; L.option("info", o); render();
       }, t(x[1]));
-      c.appendChild(row(t(x[1]), sw));
+      c.appendChild(row(t(x[1]), sw, x[0] === "nc" && k.look !== "plain" ? { hint: t("l.info.ncLook") } : null));
     });
     if (strict) c.appendChild(el("p", "hint", t("l.info.strict")));
     host.appendChild(c);
