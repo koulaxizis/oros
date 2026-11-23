@@ -80,7 +80,7 @@ test("installed once per window; the shell can install it in a frame", () => {
 test("shell: fields, setters, marks, CSS, orosMotion, snapshot", () => {
   const s = read("shell.js");
   assert.match(s, /motion: v\.motion === true,\s+transp: v\.transp === true/);
-  assert.match(s, /case "reduceMotion":\s+case "reduceTransparency": a11ySetUser\(name, value\); return;/);
+  assert.match(s, /case "reduceMotion":\s+case "reduceTransparency":\s+case "keepGlass": a11ySetUser\(name, value\); return;/);
   assert.match(s, /a11yAttr\(r, "data-oros-motion", a11y\.motion \? "reduce" : null\);/);
   assert.match(s, /a11yAttr\(r, "data-oros-transparency", a11yLessTransp\(\) \? "reduce" : null\);/);
   assert.match(s, /if \(w && !w\.__orosMotion && window\.__orosMotionShim\)/);
@@ -102,8 +102,21 @@ test("Settings card and strings in EN, EL and DE", () => {
   const core = require("../settings/core.js");
   assert.ok(core.findItem("motion") && core.findItem("transp"));
   const cs = read("settings/core.js"), de = read("i18n/de/settings.js");
-  for (const k of ["ac.motion", "ac.motion.hint", "ac.motion.sys", "ac.transp", "ac.transp.hint", "ac.transp.sys", "w.motion", "w.transp"]) {
+  for (const k of ["ac.motion", "ac.motion.hint", "ac.motion.sys", "ac.transp", "ac.transp.hint", "ac.transp.sys", "ac.glass", "ac.glass.hint", "w.motion", "w.transp"]) {
     assert.equal(cs.split('"' + k + '":').length - 1, 2, k + " EN + EL");
     assert.ok(de.includes('"' + k + '":'), k + " DE");
+  }
+});
+
+test("GLASS-KEEP: the system's less transparency can be overruled, only through the shell's attribute", () => {
+  const s = read("shell.js");
+  assert.match(s, /transp: v\.transp === true,\s+glass: v\.glass === true/);
+  assert.match(s, /function a11yLessTransp\(\) \{ return a11y\.transp \|\| \(!a11y\.glass && a11yMq\("\(prefers-reduced-transparency: reduce\)"\)\); \}/);
+  assert.match(s, /name === "keepGlass"/);
+  assert.match(s, /glass: a11y\.glass/);
+  assert.match(read("settings/settings.js"), /if \(a\.transpSys && "glass" in a\)[\s\S]{0,200}set\("keepGlass", v\)/);
+  // No CSS may follow the system query directly, or "Keep the glass" could not win.
+  for (const f of ["style.css", "smartbar.js", "launcher.js", "widgets.js", "iconpacks.css"]) {
+    assert.ok(!/prefers-reduced-transparency/.test(read(f)), f);
   }
 });
