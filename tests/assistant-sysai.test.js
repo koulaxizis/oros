@@ -73,6 +73,90 @@ test("sysai: quick answers send reasoning_effort none, only to a local server", 
   assert.equal(m.provs.local.fast, 1);
 });
 
+// AS-SYSAI 2: an address synced from another computer that does not
+// answer here gives way to this computer's own local AI, unsaved.
+const SYS = { state: "ready", url: "http://127.0.0.1:11434", models: ["qwen3:1.7b", "qwen3:8b"] };
+const LAN = { m: 1, base: "http://192.168.1.20:11434/v1", model: "llama3:8b", kit: "ollama", fast: 1 };
+
+test("sysai 2: the settings for this computer's own local AI", () => {
+  const a = C.sysAIConf(LAN, SYS);
+  assert.deepEqual(a, { base: C.LOCAL_KITS.ollama, model: "qwen3:8b", kit: "ollama", fast: 1, vis: 0, nt: 0 });
+  // A model installed here too stays.
+  assert.equal(C.sysAIConf(Object.assign({}, LAN, { model: "qwen3:1.7b" }), SYS).model, "qwen3:1.7b");
+  // Nothing when it is not ready, or the address already is this computer's.
+  assert.equal(C.sysAIConf(LAN, { state: "off", url: "", models: [] }), null);
+  assert.equal(C.sysAIConf(LAN, null), null);
+  assert.equal(C.sysAIConf({ base: "http://localhost:11434/v1" }, SYS), null);
+  assert.equal(C.sysAIConf({ base: "http://127.0.0.1:11434" }, SYS), null);
+  assert.equal(C.sysAIConf({ base: "" }, SYS), null);
+});
+
+function fakeFetch(up) {
+  const calls = [];
+  global.fetch = (url, o) => {
+    calls.push({ url: url, auth: (o.headers || {}).Authorization || (o.headers || {}).authorization || "" });
+    return up.some((u) => url.indexOf(u) === 0) ? Promise.resolve({ ok: true, status: 200 }) : Promise.reject(new TypeError("Failed to fetch"));
+  };
+  return calls;
+}
+
+test("sysai 2: a synced address that does not answer gives way, with no key", async () => {
+  C.probeSet("");
+  const calls = fakeFetch(["http://localhost:11434"]);
+  const ok = await C.probeLocal("local", LAN, () => Promise.resolve("secret"), SYS);
+  assert.equal(ok, true);
+  assert.equal(calls.length, 2);
+  assert.match(calls[0].url, /^http:\/\/192\.168\.1\.20:11434\/v1\//);
+  assert.match(calls[1].url, /^http:\/\/localhost:11434\/v1\//);
+  assert.equal(calls[1].auth, "");
+  const use = C.localUse("local", LAN);
+  assert.equal(use.base, C.LOCAL_KITS.ollama);
+  assert.equal(use.model, "qwen3:8b");
+  assert.equal(use.sys, 1);
+  // The synced settings are not touched.
+  assert.equal(LAN.base, "http://192.168.1.20:11434/v1");
+  // Another service is never redirected.
+  assert.equal(C.localUse("groq", { model: "m" }).sys, undefined);
+  // Both checks are kept: the next turn waits for neither.
+  const again = await C.probeLocal("local", LAN, null, SYS);
+  assert.equal(again, true);
+  assert.equal(calls.length, 2);
+  C.probeSet("");
+  assert.equal(C.localUse("local", LAN).sys, undefined);
+});
+
+test("sysai 2: the synced address wins whenever it answers", async () => {
+  C.probeSet("");
+  const calls = fakeFetch(["http://192.168.1.20:11434", "http://localhost:11434"]);
+  assert.equal(await C.probeLocal("local", LAN, null, SYS), true);
+  assert.equal(calls.length, 1);
+  assert.equal(C.localUse("local", LAN).base, LAN.base);
+  // Neither answers: down, and nothing stands in.
+  C.probeSet("");
+  fakeFetch([]);
+  assert.equal(await C.probeLocal("local", LAN, null, SYS), false);
+  assert.equal(C.localUse("local", LAN).sys, undefined);
+  // No local AI on this computer: only the synced address is checked.
+  C.probeSet("");
+  const c2 = fakeFetch([]);
+  assert.equal(await C.probeLocal("local", LAN, null, null), false);
+  assert.equal(c2.length, 1);
+});
+
+test("sysai 2: the order of use takes the local service through it", async () => {
+  C.probeSet("");
+  fakeFetch(["http://localhost:11434"]);
+  const d = data({ prov: "local" }, { local: LAN });
+  const r = await C.pickChain(d, { readKey: () => Promise.resolve(""), sys: SYS });
+  assert.equal(r.pid, "local");
+  assert.equal(C.localUse("local", d.provs.local).sys, 1);
+  C.probeSet("");
+  // Feeds, Atelier and the Assistant all call with it.
+  for (const f of ["feeds/ai.js", "atelier/ai.js"]) assert.match(read(f), /localUse\(pid/, f);
+  assert.match(read("assistant/assistant.js"), /useConf\(pid\)/);
+  for (const f of ["assistant/assistant.js", "i18n/de/assistant.js"]) assert.match(read(f), /"set\.chain\.sys"/, f);
+});
+
 test("sysai: the Assistant watches the page and offers the install", () => {
   const js = read("assistant/assistant.js");
   assert.match(js, /attributeFilter: \["data-oros-sys-ai"/);
