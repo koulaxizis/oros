@@ -72,7 +72,8 @@ test("wiring: page, precache, shell attach, shortcut, bar fit", () => {
   assert.match(sh, /window\.orosQS\.attach\(\{/);
   assert.match(sh, /if \(window\.orosQS\) window\.orosQS\.refresh\(\);/);
   assert.match(sh, /\{ id: "qs",\s+key: "m", label: "sc\.desc\.qs",/);
-  assert.match(sh, /bar\.classList\.toggle\("bar-nolang", lvl >= 7\);/);
+  assert.match(sh, /bar\.classList\.toggle\("bar-nolang", lvl >= 7 && !!document\.getElementById\("qs-btn"\)\);/);
+  assert.match(sh, /if \(lvl === 7 && !qs\) continue;/, "no Quick settings: the language button stays");
   assert.match(read("style.css"), /#oros-bar\.bar-nolang #btn-lang \{ display: none; \}/);
 });
 

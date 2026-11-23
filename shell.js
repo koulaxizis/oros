@@ -2373,11 +2373,18 @@
   //   3 no weekday · 4 numeric dd/mm · 5 menu label hidden (icon
   //   stays) · 6 date hidden (the time button's tooltip carries it) ·
   //   7 language button hidden, only when Quick settings (qsettings.js)
-  //   is in the bar: its panel has the same language button.
+  //   is in the bar: its panel has the same language button ·
+  //   BARFIT-2 (2026-11-23, Chris's phone: the right end was cut off
+  //   with the switcher, smart cards, help and a music chip in the bar):
+  //   8 slim: Quick settings shows only its power symbol (the panel and
+  //   the button's name carry the rest), sync dot and bell narrower ·
+  //   9 weather chip hidden (Weather and the smart cards still have it) ·
+  //   10 help button hidden (Help stays in the menu and in each app).
+  //   After the last level the smart bar folds its last pill too.
   // Re-run by a ResizeObserver on the bar (a chip appears, the text
   // changes width, rotation), never per tick.
   var barFit = 0;
-  var BAR_FIT_MAX = 7;
+  var BAR_FIT_MAX = 10;
 
   function barDateStr(now, lvl) {
     var loc = window.orosI18n ? window.orosI18n.locale(state.lang) : (state.lang === "el" ? "el-GR" : "en-GB");
@@ -2408,7 +2415,10 @@
     bar.classList.toggle("bar-tight", lvl >= 2);
     bar.classList.toggle("bar-nolabel", lvl >= 5);
     bar.classList.toggle("bar-nodate", lvl >= 6);
-    bar.classList.toggle("bar-nolang", lvl >= 7);
+    bar.classList.toggle("bar-nolang", lvl >= 7 && !!document.getElementById("qs-btn"));
+    bar.classList.toggle("bar-slim", lvl >= 8);
+    bar.classList.toggle("bar-nowx", lvl >= 9);
+    bar.classList.toggle("bar-nohelp", lvl >= 10);
     paintBarDate(new Date());
   }
 
@@ -2427,8 +2437,9 @@
       return left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4 <= avail;
     }
     // The first chip stays until the last level: the person asked for it.
-    var max = document.getElementById("qs-btn") ? BAR_FIT_MAX : 6;
+    var max = BAR_FIT_MAX, qs = !!document.getElementById("qs-btn");
     for (var lvl = 0; ; lvl++) {
+      if (lvl === 7 && !qs) continue;        // no Quick settings: the language button stays
       applyBarFit(lvl);
       if (fits()) return;
       if (lvl === 2 && SB) { while (SB.fitDrop(1)) { if (fits()) return; } }

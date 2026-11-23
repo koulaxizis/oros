@@ -24,15 +24,25 @@ test("first on the Appearance page, reachable as 'yours'", () => {
 });
 
 test("the same settings as in their own places, under their own data keys", () => {
-  for (const name of ["wallpaper", "wallpaper:random", "skin", "wpaccent:on", "smartbar-look", "dock:on", "dock:pos", "feel", "uisnd:on", "uisnd:pack"]) {
+  for (const name of ["skin", "wpaccent:on", "smartbar-look", "dock:on", "dock:pos", "feel", "uisnd:on", "uisnd:pack"]) {
     assert.ok(FN.includes('set("' + name + '"'), name);
   }
   assert.match(FN, /L\.option\("look", v\)/, "the lock screen's look through the lock");
   const keys = [...FN.matchAll(/"(y-[a-z:-]+)"/g)].map((m) => m[1]);
-  assert.ok(keys.length >= 9);
+  assert.ok(keys.length >= 8);
   assert.equal(new Set(keys).size, keys.length, "each y- key once");
   assert.doesNotMatch(FN, /data-k", "(wall|skin):/, "no clash with the wallpaper grid or the swatches");
   assert.match(APP, /if \(key !== "my\.title" && all\[i\]\.closest\("#my-card"\)\) continue;/, "search lights up the setting's own place");
+});
+
+test("YOURS-2: one wallpaper picker; Make it yours takes you to it", () => {
+  assert.doesNotMatch(FN, /set\("wallpaper/, "no second wallpaper picker or Random here");
+  assert.doesNotMatch(FN, /my-walls/);
+  assert.match(FN, /button\(t\("my\.wall"\), "y-wall-go"/);
+  assert.match(FN, /var g = \$\("wall-card"\);/);
+  assert.match(FN, /g\.querySelector\("\.wall\.on"\) \|\| \$\("f-wall-find"\)/);
+  assert.match(APP, /c3\.id = "wall-card";/);
+  assert.doesNotMatch(read("settings/settings.css"), /\.my-walls/);
 });
 
 test("the preview: wallpaper, bar look, accent window, Dock edge; it plays only when the feel changes", () => {
@@ -47,7 +57,7 @@ test("the preview: wallpaper, bar look, accent window, Dock edge; it plays only 
 
 test("strings in EN, EL and DE", () => {
   const de = read("i18n/de/settings.js");
-  for (const k of ["my.title", "my.hint", "my.colour", "my.preview", "my.lock", "w.yours"]) {
+  for (const k of ["my.title", "my.hint", "my.colour", "my.preview", "my.lock", "my.wall", "w.yours"]) {
     for (const L of ["en", "el"]) assert.notEqual(C.t(L, k), k, L + " " + k);
     assert.ok(de.includes('"' + k + '"'), "de " + k);
   }
