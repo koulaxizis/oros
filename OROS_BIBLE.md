@@ -14165,3 +14165,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** montage/asr.js, assistant/assistant.js, assistant/core.js, assistant/index.html, assistant/assistant.css, assistant/manifest.webmanifest, assistant/help.en/el.txt, i18n/de/assistant.js, i18n/de/help/assistant.txt, i18n/de/solo.js, solo.js, shell.js, whatsnew EN/EL, OROS_BIBLE.md, tests/assistant-voice.test.js, tests/assistant-edits.test.js.
 - **Tests:** full `node --test tests/*.test.js`; real shell (Playwright Chromium, fake microphone, Whisper stubbed, 360 px, EL and EN): model dialog, prepare before recording, red button and note, text in the box, nothing sent, no page errors, no overflow.
 - **Not tested:** the real whisper-base download (Hugging Face blocked in the sandbox), a real phone and microphone, Safari.
+
+### 2026-11-23 — 8.96.01 — One wallpaper picker in Appearance; the top bar fits narrow phones (YOURS-2, BARFIT-2, #1274)
+- **Why:** Chris's phone screenshots 2026-11-23 (thread «🐞🎨 Διπλά wallpapers και μπάρα που ξεχειλίζει»): the wallpapers showed twice in Settings › Appearance and the right end of the top bar (network, mute, power) was cut off, more with a music chip.
+- **What:** Make it yours has one `Choose a wallpaper` button that scrolls to the Wallpaper card instead of its own strip and Random. `fitBar()` levels 8 `.bar-slim`, 9 `.bar-nowx`, 10 `.bar-nohelp`; level 7 skipped without Quick settings. Rules in Part IX (YOURS-2, BARFIT-2).
+- **Files:** settings/settings.js, settings/settings.css, settings/core.js, i18n/de/settings.js, help/topics/appearance.en/el.txt, i18n/de/help/topics/appearance.txt, shell.js, style.css, whatsnew EN/EL, OROS_BIBLE.md, tests/yours.test.js, tests/barfit.test.js, tests/qsettings.test.js.
+- **Tests:** full suite 9465/0 before the stamp; Playwright Chromium (mobile) bar at 412/360/340 px in classic and islands looks with switcher, smart cards, help, weather, bell and a simulated music chip (overflowed at 360 px before, fits after); Settings › Appearance at 360 px in Greek.
+- **Not tested:** a real Android phone, Safari, Firefox.
