@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.87.00
+- **Claude can make a Kanban board.** Through orOS Gate, Claude (and the Assistant, after you press Add) can make a new Kanban board with its columns. There is never a second board with the same name, and Undo removes the board while it is still empty and as it was made.
+
 ## Version 8.86.00
 - **Screen Capture quality.** Choose the Resolution (as shared, 1080p, 720p or 480p), Frames a second (30 or 60) and Quality (Low, Standard or High); Screen Capture says about how many MB a minute takes. When a recording starts, the menu, Quick settings and notifications close so they stay out of the video.
 

@@ -1532,8 +1532,45 @@
     if (!Array.isArray(col.cards)) col.cards = [];
     if (top) col.cards.unshift(card); else col.cards.push(card);
   }
+  // KB-BOARD (Chris 2026-11-23, card «Νέο εργαλείο Gate»): a new board
+  // with its columns, like Kanban's New board. A name an open or archived
+  // board already has is refused (one board per name, so a routine never
+  // makes a second one). Undo takes the board away only while it is as
+  // made: same name, the same columns, no card.
+  function kbAddBoard(M, raw, args, now, newId) {
+    var d = isObj(raw) && Array.isArray(raw.boards) ? clone(raw) : { om: 0, boardDeleted: {}, boards: [] };
+    args = isObj(args) ? args : {};
+    var nm = kbText(args.name, 60, "name");
+    nm.s = nm.err ? "" : nm.s.replace(/\s+/g, " ").trim();
+    if (!nm.s) return { ok: false, err: "A board needs a name of at most 60 characters." };
+    var gone = isObj(d.boardDeleted) ? d.boardDeleted : {};
+    var same = d.boards.filter(function (b) {
+      return isObj(b) && typeof b.id === "string" && b.id.indexOf("tpl-") !== 0 && fold(b.name) === fold(nm.s) &&
+        !(typeof gone[b.id] === "number" && gone[b.id] >= (b.mtime || 0));
+    })[0];
+    if (same) return { ok: false, err: "A board called " + JSON.stringify(same.name) + " is already there (id " + same.id + (same.archived ? ", archived: the owner can bring it back from Kanban's archive" : "; add columns to it with kanban_add_columns") + "). Nothing was made." };
+    var list = Array.isArray(args.columns) ? args.columns : null;
+    if (!list || !list.length || list.length > KB_COLS) return { ok: false, err: "columns must hold 1 to " + KB_COLS + " columns." };
+    var cols = [], seen = {}, i;
+    for (i = 0; i < list.length; i++) {
+      var r = kbText(isObj(list[i]) ? list[i].name : list[i], 60, "text");
+      if (r.err || !r.s) return { ok: false, err: "Column " + (i + 1) + ": a column needs a name of at most 60 characters." };
+      if (seen[fold(r.s)]) return { ok: false, err: "Column " + (i + 1) + ": two columns are called " + JSON.stringify(r.s) + "." };
+      seen[fold(r.s)] = 1;
+      cols.push({ id: newId(), name: r.s, mtime: now, om: 0, pos: i, cards: [] });
+    }
+    var b = { id: newId(), name: nm.s, mtime: now, om: now, deleted: {}, labels: [], columns: cols };
+    d.boards.push(b);
+    d.om = now;
+    var undo = { k: "kanban", board: b.id, cards: {}, cols: {}, nb: now };
+    cols.forEach(function (c) { undo.cols[c.id] = now; });
+    return { ok: true, data: M.canonState(d, now), undo: undo, ids: [b.id].concat(cols.map(function (c) { return c.id; })),
+             text: "Made the board " + JSON.stringify(b.name) + " (id " + b.id + ") with " + cols.length + " column" + (cols.length === 1 ? "" : "s") + ": " +
+                   cols.map(function (c) { return c.name + " (" + c.id + ")"; }).join(", ") + "." };
+  }
   function kanbanWrite(M, op, raw, args, now, newId) {
     if (!M || typeof M.canonState !== "function") return { ok: false, err: "Kanban is not loaded on the device yet; try again in a moment." };
+    if (op === "add_board") return kbAddBoard(M, raw, args, now, newId);
     var d = isObj(raw) ? clone(raw) : null;
     if (!d || !Array.isArray(d.boards)) return { ok: false, err: "Kanban has no boards yet." };
     args = isObj(args) ? args : {};
@@ -1792,6 +1829,17 @@
     var d = isObj(raw) ? clone(raw) : null;
     if (!d || !Array.isArray(d.boards)) return { ok: false, err: "no board" };
     var b = d.boards.filter(function (x) { return isObj(x) && x.id === u.board; })[0];
+    if (typeof u.nb === "number") {                         // KB-BOARD: the change made this board
+      if (!b) return { ok: true, data: d, n: 0, kept: 0 };
+      var bc = kbCols(b), asMade = (b.mtime || 0) === u.nb && !b.archived && !kbAll(b).length &&
+        bc.length === Object.keys(u.cols).length && bc.every(function (c) { return u.cols[c.id] === (c.mtime || 0); });
+      if (!asMade) return { ok: true, data: d, n: 0, kept: 1 };
+      d.boards.splice(d.boards.indexOf(b), 1);
+      if (!isObj(d.boardDeleted)) d.boardDeleted = {};
+      d.boardDeleted[b.id] = Math.max(now, (b.mtime || 0) + 1);
+      d.om = now;
+      return { ok: true, data: M.canonState(d, now), n: 1, kept: 0 };
+    }
     if (!b) return { ok: true, data: d, n: 0, kept: Object.keys(u.cards).length + Object.keys(u.cols).length };
     if (!isObj(b.deleted)) b.deleted = {};
     var n = 0, kept = 0, oms = [];
@@ -1886,7 +1934,7 @@
   // changes go through the Assistant's tools).
   var OWN_WRITES = { invoices: ["invoices_record"] };
   var WRITES = { budget: ["budget_add", "budget_change", "budget_delete", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_refresh"],
-                 kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns"] };
+                 kanban: ["kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "kanban_add_board"] };
   // GATE-ACT (2026-11-08): the apps Claude may change with the
   // Assistant's own tools, run in a hidden Assistant frame
   // (assistant.js GATE). = the Assistant's create / change apps, less
@@ -1909,7 +1957,7 @@
   // closedCall): its own change tools less budget_delete and
   // budget_transfer (it deletes entries too), and
   // create_items. applyQueue runs nothing else (defence in depth).
-  var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "create_items",
+  var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "kanban_add_board", "create_items",
                 "invoices_record",   // INV-EXT
                 "local_folders_request",   // TRAY-2: the owner's answer on a screen
                 "claude_folders_request",   // CF-ASK: the same for a folder of the orOS disk
@@ -2062,21 +2110,21 @@
           undone: "undone", undo: "To undo one: orOS › Settings › Claude (orOS Gate) › Claude's changes.", items: "{n} items",
           tools: { budget_add: "added Budget entries", budget_change: "changed a Budget entry", budget_delete: "deleted Budget entries", budget_areas: "changed Budget's areas", budget_categories: "changed Budget's categories", budget_transfer: "turned a Budget entry into a transfer", budget_balances: "matched Budget's account balances",
                    kanban_add_cards: "added Kanban cards", kanban_move_cards: "moved Kanban cards", kanban_change_card: "changed a Kanban card",
-                   kanban_add_columns: "added, renamed or set up Kanban columns", invoices_record: "recorded invoices issued elsewhere",
+                   kanban_add_columns: "added, renamed or set up Kanban columns", kanban_add_board: "made a Kanban board", invoices_record: "recorded invoices issued elsewhere",
                    create_items: "added items in {app}", change_item: "changed items in {app}", link_contact: "linked contacts in {app}",
                    link_items: "linked items in {app}", undo_change: "undid changes in {app}", edit_in_app: "changed documents in {app}", files_write: "wrote files", files_move: "moved files", files_delete: "deleted files" } },
     el: { subject: "orOS: οι αλλαγές του Claude στις {day}", intro: "Ο Claude έκανε σήμερα αυτές τις αλλαγές στο orOS σου ({n}):",
           undone: "αναιρέθηκε", undo: "Για αναίρεση: orOS › Ρυθμίσεις › Claude (orOS Gate) › Αλλαγές του Claude.", items: "{n} στοιχεία",
           tools: { budget_add: "πρόσθεσε εγγραφές στο Budget", budget_change: "άλλαξε μια εγγραφή του Budget", budget_delete: "έσβησε εγγραφές του Budget", budget_areas: "άλλαξε τους τομείς του Budget", budget_categories: "άλλαξε τις κατηγορίες του Budget", budget_transfer: "έκανε μια εγγραφή του Budget μεταφορά", budget_balances: "συμφώνησε τα υπόλοιπα λογαριασμών του Budget",
                    kanban_add_cards: "πρόσθεσε κάρτες στο Kanban", kanban_move_cards: "μετακίνησε κάρτες στο Kanban", kanban_change_card: "άλλαξε μια κάρτα του Kanban",
-                   kanban_add_columns: "πρόσθεσε, μετονόμασε ή ρύθμισε στήλες στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
+                   kanban_add_columns: "πρόσθεσε, μετονόμασε ή ρύθμισε στήλες στο Kanban", kanban_add_board: "έφτιαξε πίνακα στο Kanban", invoices_record: "κατέγραψε παραστατικά που εκδόθηκαν αλλού",
                    create_items: "πρόσθεσε εγγραφές ({app})", change_item: "άλλαξε εγγραφές ({app})", link_contact: "συνέδεσε επαφές ({app})",
                    link_items: "συνέδεσε εγγραφές ({app})", undo_change: "αναίρεσε αλλαγές ({app})", edit_in_app: "άλλαξε έγγραφα ({app})", files_write: "έγραψε αρχεία", files_move: "μετακίνησε αρχεία", files_delete: "έσβησε αρχεία" } },
     de: { subject: "orOS: Claudes Änderungen am {day}", intro: "Claude hat heute Folgendes in deinem orOS geändert ({n}):",
           undone: "rückgängig gemacht", undo: "Rückgängig machen: orOS › Einstellungen › Claude (orOS Gate) › Claudes Änderungen.", items: "{n} Einträge",
           tools: { budget_add: "Budget-Einträge hinzugefügt", budget_change: "einen Budget-Eintrag geändert", budget_delete: "Budget-Einträge gelöscht", budget_areas: "die Bereiche im Budget geändert", budget_categories: "die Kategorien im Budget geändert", budget_transfer: "einen Budget-Eintrag in eine Umbuchung verwandelt", budget_balances: "die Kontostände im Budget abgeglichen",
                    kanban_add_cards: "Kanban-Karten hinzugefügt", kanban_move_cards: "Kanban-Karten verschoben", kanban_change_card: "eine Kanban-Karte geändert",
-                   kanban_add_columns: "Kanban-Spalten hinzugefügt, umbenannt oder eingestellt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
+                   kanban_add_columns: "Kanban-Spalten hinzugefügt, umbenannt oder eingestellt", kanban_add_board: "ein Kanban-Board angelegt", invoices_record: "anderswo ausgestellte Rechnungen erfasst",
                    create_items: "Einträge hinzugefügt ({app})", change_item: "Einträge geändert ({app})", link_contact: "Kontakte verknüpft ({app})",
                    link_items: "Einträge verknüpft ({app})", undo_change: "Änderungen rückgängig gemacht ({app})", edit_in_app: "Dokumente geändert ({app})", files_write: "Dateien geschrieben", files_move: "Dateien verschoben", files_delete: "Dateien gelöscht" } }
   };
@@ -3387,7 +3435,7 @@
     }
     var op = { budget_add: "add", budget_change: "change", budget_delete: "delete", budget_areas: "areas", budget_categories: "cats", budget_transfer: "xfer", budget_balances: "bal" }[name];
     if (op) return change(op, args, p, names, opt.at);
-    var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns" }[name];
+    var kop = { kanban_add_cards: "add_cards", kanban_move_cards: "move_cards", kanban_change_card: "change_card", kanban_add_columns: "add_columns", kanban_add_board: "add_board" }[name];
     if (kop) return kanbanChange(kop, args, p, names, opt.at);
     if (name === "invoices_record") return invoicesChange(args, p, names, okIds, opt.at);
     if (name === "local_folders_request") return localAsk(args, p);   // TRAY-2

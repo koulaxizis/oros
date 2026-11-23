@@ -3456,6 +3456,7 @@
     if (call.name === "list_fonts") return listFonts(call.args);
     if (LINE_APPS[call.name]) return lineTool(c, call.name, call.args, apps);
     if (call.name === "kanban_add_columns") return kanbanColumns(c, call.args, apps);
+    if (call.name === "kanban_add_board") return kanbanColumns(c, call.args, apps, "add_board");   // KB-BOARD
     if (call.name === "propose_entry") return Promise.resolve(proposeEntry(call.args));
     if (call.name === "open_file") return Promise.resolve(proposeOpenFile(c, call.args));
     if (call.name === "rebuild_in_layout") return Promise.resolve(proposeRebuild(c, call.args));
@@ -6943,19 +6944,22 @@
     return !!gateCore() && chgApps.some(function (a) { return a.id === "kanban"; });
   }
   function kbId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }   // = kanban.js uid
-  function kanbanColumns(c, args, apps) {
+  // op "add_board" (KB-BOARD): a new board, its name on the first row (unticked = nothing), then its columns
+  function kanbanColumns(c, args, apps, op) {
+    op = op === "add_board" ? op : "add_columns";
     var G = gateCore(), app = null;
     changeApps(apps).forEach(function (x) { if (x.id === "kanban") app = x; });
     if (!app || !G) return Promise.resolve({ content: "Error: the user does not let the assistant change Kanban.", err: 1 });
     args = args && typeof args === "object" ? args : {};
     var cols = Array.isArray(args.columns) ? args.columns : [];
-    var rens = Array.isArray(args.rename_columns) ? args.rename_columns : [];   // KB-COLREN
-    var aps = Array.isArray(args.portal_columns) ? args.portal_columns : [];    // KB-COLAP
+    var rens = op === "add_columns" && Array.isArray(args.rename_columns) ? args.rename_columns : [];   // KB-COLREN
+    var aps = op === "add_columns" && Array.isArray(args.portal_columns) ? args.portal_columns : [];    // KB-COLAP
+    var nb = op === "add_board" ? 1 : 0;
     return coreOf("OrosKanbanModel", "../kanban/model.js").then(function (M) {
       var key = "oros-kanban-data";
-      var test = G.kanbanWrite(M, "add_columns", readStore(key), args, Date.now(), kbId);
+      var test = G.kanbanWrite(M, op, readStore(key), args, Date.now(), kbId);
       if (!test.ok) return { content: "Error: " + test.err + " Nothing was saved.", err: 1, ui: { k: "chgErr", app: app.name } };
-      var rows = rens.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: "← " + String(x && x.column || "").slice(0, 60) }; })
+      var rows = (nb ? [{ title: String(args.name || "").slice(0, 60), sub: "Kanban" }] : []).concat(rens.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: "← " + String(x && x.column || "").slice(0, 60) }; })
         .concat(aps.map(function (x) {
           x = x && typeof x === "object" ? x : {};
           var bits = [];
@@ -6964,27 +6968,28 @@
           if (typeof x.about === "string" && x.about) bits.push(x.about.slice(0, 80));
           return { title: "Author Portal · " + String(x.column || "").slice(0, 60), sub: bits.join(" · ") };
         }))
-        .concat(cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; }));
+        .concat(cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; })));
       var base = { k: "create", app: app.name, rows: rows };
       return askCreate(app.name, rows, false).then(function (ok) {
         if (!ok) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
-        var pick = { board: args.board }, pr = rens.filter(function (x, i) { return !ok.skip[i]; }),
-          pp = aps.filter(function (x, i) { return !ok.skip[rens.length + i]; }), pc = cols.filter(function (x, i) { return !ok.skip[rens.length + aps.length + i]; });
+        var pick = nb ? { name: args.name } : { board: args.board }, pr = rens.filter(function (x, i) { return !ok.skip[nb + i]; }),
+          pp = aps.filter(function (x, i) { return !ok.skip[nb + rens.length + i]; }), pc = cols.filter(function (x, i) { return !ok.skip[nb + rens.length + aps.length + i]; });
+        if (nb && (ok.skip[0] || !pc.length)) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not make the board. Nothing was saved." }), ui: base }; }
         if (pr.length) pick.rename_columns = pr;
         if (pp.length) pick.portal_columns = pp;
         if (pc.length) pick.columns = pc;
         if (!pr.length && !pp.length && !pc.length) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
-        var res = G.kanbanWrite(M, "add_columns", readStore(key), pick, Date.now(), kbId);
+        var res = G.kanbanWrite(M, op, readStore(key), pick, Date.now(), kbId);
         if (!res.ok) { base.st = "failed"; base.msg = res.err; return { content: "Error: " + res.err + " Nothing was saved.", err: 1, ui: base }; }
         if (!writeStore(key, res.data)) { base.st = "failed"; base.msg = t("chg.storage"); return { content: "Error: the columns could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base }; }
         markAppDirty();
         var uid = newId();
-        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: (pick.rename_columns || []).concat(pick.columns || []).map(function (x) { return String(x.name); })
+        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: (nb ? [{ name: pick.name }] : []).concat(pick.rename_columns || []).concat(pick.columns || []).map(function (x) { return String(x.name); })
           .concat((pick.portal_columns || []).map(function (x) { return "Author Portal · " + String(x.column); })) });
         base.st = "done";
         base.u = uid;
         base.added = rows.map(function (r, i) { return i; }).filter(function (i) { return !ok.skip[i]; });
-        return { content: JSON.stringify({ app: "kanban", done: res.text, ids: res.ids, note: "The user added the columns. They can undo it." }), ui: base };
+        return { content: JSON.stringify({ app: "kanban", done: res.text, ids: res.ids, note: nb ? "The user made the board. They can undo it." : "The user added the columns. They can undo it." }), ui: base };
       });
     }, function () { return { content: "Error: Kanban could not be loaded; try again in a moment.", err: 1 }; });
   }
