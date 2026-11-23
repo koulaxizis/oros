@@ -88,6 +88,13 @@
     var at = m.index + m[0].length;
     return svg.slice(0, at) + "<metadata>" + rdf + "</metadata>" + svg.slice(at);
   }
+  // AI-MARK-2: one element's own picture (web page, SVG, PowerPoint)
+  // carries the mark when the element is AI-made (bytes: Uint8Array).
+  function aiMarkItemBytes(it, bytes) {
+    var IA = window.OrosImageAI;
+    if (!it || !it.ax || !it.ax.ai || !bytes || !IA || typeof IA.markBytes !== "function") return bytes;
+    return IA.markBytes(bytes, AI_INFO).bytes;
+  }
   function toBlob(cv, type, q) {
     return new Promise(function (resolve, reject) {
       cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error("encode")); }, type, q);
@@ -164,14 +171,18 @@
     c.rot = 0;
     AT.draw.drawItem(ctx, doc, c, { maxSide: 0, clean: true });
     return toBlob(cv, "image/png").then(function (b) { return b.arrayBuffer(); })
-      .then(function (ab) { return { png: new Uint8Array(ab), pad: pad }; });
+      .then(function (ab) { return { png: aiMarkItemBytes(it, new Uint8Array(ab)), pad: pad }; });
   }
   function exportPptx(doc, pages) {
     var O = window.AtelierPPTXOut, need = O.needs(doc), media = {}, out = null;
     var chain = Promise.resolve();
     need.assets.forEach(function (id) {
       chain = chain.then(function () { return A.blob(id); }).then(function (b) { return b ? b.arrayBuffer() : null; })
-        .then(function (ab) { if (ab) media["a:" + id] = new Uint8Array(ab); });
+        .then(function (ab) {
+          if (!ab) return;
+          var ai = doc.items.filter(function (x) { return x.a === id && x.ax && x.ax.ai && !x.hide; })[0];
+          media["a:" + id] = aiMarkItemBytes(ai, new Uint8Array(ab));
+        });
     });
     var only = {};
     pages.forEach(function (p) { only[p.id] = 1; });
@@ -208,7 +219,7 @@
     AT.draw.drawItem(ctx, doc, c, o);
     var jpeg = p.kind === "photo" ? !/\.png$/.test(it.a || "") : (it.ax.bg && it.ax.k === "shape");
     return toBlob(cv, jpeg ? "image/jpeg" : "image/png", 0.9).then(function (b) { return b.arrayBuffer(); }).then(function (ab) {
-      return { data: new Uint8Array(ab), fmt: jpeg ? "JPEG" : "PNG", x: -pad, y: -pad, w: W, h: H };
+      return { data: aiMarkItemBytes(it, new Uint8Array(ab)), fmt: jpeg ? "JPEG" : "PNG", x: -pad, y: -pad, w: W, h: H };
     });
   }
   function exportPdf(doc, pages, dpi, J) {
@@ -388,7 +399,7 @@
           });
         });
         return c2.then(function () {
-          return saveBlob(pdf.output("blob"), fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
+          return saveBlob(aiMarkPdf(doc, pages, pdf).output("blob"), fileName(doc, ".pdf"), "application/pdf", "PDF", ".pdf");
         });
       });
     } else {

@@ -13,7 +13,7 @@
   // deep links (orosSettings.open("sensitive")), stored ids and search
   // rows still land on the right page and part of it.
   var SECTIONS = ["appearance", "fonts", "accessibility", "notifications", "sync", "lock", "language", "apps", "services", "system", "screentime"];
-  var ALIAS = { backup: "sync", sensitive: "lock", users: "lock", menu: "apps", files: "apps", solo: "apps", device: "system" };
+  var ALIAS = { yours: "appearance", backup: "sync", sensitive: "lock", users: "lock", menu: "apps", files: "apps", solo: "apps", device: "system" };
 
   // Where each setting lives: "all" = travels to every device through
   // sync, "device" = this device only. Mirrors the shell: lang, theme,
@@ -40,6 +40,7 @@
   //        (the app decides: "dock", "phone", "app:weather"…), or null.
   // "w.<id>" holds the other words that find it, in every language.
   var FIND = [
+    ["yours", "appearance", "my.title"],
     ["theme", "appearance", "a.theme"],
     ["night", "appearance", "nl.on", "nl.title", null, "night"],
     ["night-when", "appearance", "nl.when", "nl.title", "nl.on", "night"],
@@ -320,6 +321,12 @@
       "a.icons.round": "Round",
       "a.icons.hint": "Changes how app icons look on the desktop, in the Dock, the menu and search, on all your devices. High contrast always shows Classic.",
       "a.wallpaper.make": "Make your own in Wallpaper Generator",
+      "my.title": "Make it yours",
+      "my.hint": "The look of orOS in one place, with a preview. Each choice is the same setting as in its own place below (and in Screen lock), so changing it either way keeps both in step.",
+      "my.colour": "Colour",
+      "my.preview": "Preview of the desktop with these choices",
+      "my.lock": "Lock screen: turn on the screen lock",
+      "w.yours": "make it yours customise customize personalise personalize look theme rice preview",
       "a.wallpaper.find": "Find a wallpaper",
       "a.wallpaper.find.none": "No wallpaper by that name.",
       "a.wallpaper.random": "Random",
@@ -1981,6 +1988,12 @@
       "a.icons.round": "Στρογγυλό",
       "a.icons.hint": "Αλλάζει την όψη των εικονιδίων των εφαρμογών στην επιφάνεια εργασίας, στο Dock, στο μενού και στην αναζήτηση, σε όλες τις συσκευές σου. Η υψηλή αντίθεση δείχνει πάντα το Κλασικό.",
       "a.wallpaper.make": "Φτιάξε τη δική σου στη Γεννήτρια ταπετσαρίας",
+      "my.title": "Κάν' το δικό σου",
+      "my.hint": "Η εμφάνιση του orOS σε ένα σημείο, με προεπισκόπηση. Κάθε επιλογή είναι η ίδια ρύθμιση με αυτή στη δική της θέση παρακάτω (και στο Κλείδωμα οθόνης), οπότε όπου κι αν την αλλάξεις, μένουν ίδιες.",
+      "my.colour": "Χρώμα",
+      "my.preview": "Προεπισκόπηση της επιφάνειας με αυτές τις επιλογές",
+      "my.lock": "Οθόνη κλειδώματος: άνοιξε το κλείδωμα οθόνης",
+      "w.yours": "κάν' το δικό σου προσαρμογή εξατομίκευση εμφάνιση θέμα προεπισκόπηση",
       "a.wallpaper.find": "Βρες ταπετσαρία",
       "a.wallpaper.find.none": "Καμία ταπετσαρία με αυτό το όνομα.",
       "a.wallpaper.random": "Τυχαία",

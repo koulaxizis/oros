@@ -26,7 +26,7 @@ const IMPACTS = new Set(["critical", "serious"]);
 // The public legal and support pages (legal audit proposal 10): checked in
 // shard 1 with the shell, in EN and EL through ?lang=, as "page:<path>".
 // A page that does not exist yet (terms.html before it ships) is skipped.
-const PAGES = ["privacy.html", "accessibility.html", "terms.html", "support/index.html", "download/index.html"];
+const PAGES = ["privacy.html", "accessibility.html", "terms.html", "imprint.html", "support/index.html", "download/index.html"];
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa", "best-practice"];
 
 function axeSource() {
