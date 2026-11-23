@@ -3,6 +3,10 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.85.00
+- **Terms of use and Details.** New pages on useoros.online: the terms of use (the free software and the paid services on the Support page) and the Details page with who makes orOS and how to reach them. Both are linked from the privacy policy and the page footers, in English, Greek and German.
+- **AI pictures stay marked when you export.** A picture made by AI in Atelier or Photo Lab keeps its AI mark in PNG, PDF, PowerPoint, PSD and OpenRaster exports.
+
 ## Version 8.84.01
 - **Security updates.** The Library now opens .cbr, .cbz and other archives with libarchive 3.8.11, and Photo Lab reads RAW photos with LibRaw 0.22.3. Both versions fix published security flaws in damaged or crafted files. Nothing changes in how you use them.
 

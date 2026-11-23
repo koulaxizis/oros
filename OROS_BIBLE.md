@@ -14050,3 +14050,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** vendor/libarchive/*, vendor/libraw/*, photolab/raw.js (comment), CREDITS.md, shell.js (credits, version), koulaxizis-apps/app/build.gradle, tests/vendor-libarchive.test.js, tests/photolab-raw.test.js, help/topics/whatsnew.en/el.txt.
 - **Tests:** tests/vendor-libarchive.test.js (hashes, 3.8.11 in the wasm, no OpenSSL); photolab-raw tests; libarchive.js own test archives extracted in Node with matching checksums; Playwright Chromium: Library standalone opens RAR v4 and v5 test files, 0 console errors; full suite.
 - **Not tested:** Safari, a real phone, real-camera RAW files beyond the test set.
+
+### 2026-11-23 — 8.85.00 — Legal audit: terms of use, Details page, breach procedure, AI marks in exports (TERMS-1, IMPRINT-1, BREACH-1, AI-MARK-2, #1259)
+- **Why:** legal compliance audit proposals 4, 5, 6 and the AI-MARK open item; Chris approved all proposals («Ναι σε όλα»), the terms text and the breach procedure on cards, and gave the tax number and office for the Details page (2026-11-23).
+- **What:** `terms.html` and `imprint.html` (EN/EL/DE), linked from privacy, the terms, /support/ and /download/ footers; Bible Part IX TERMS-1, IMPRINT-1, BREACH-1; SECURITY.md points to BREACH-1. Atelier marks AI items in PNG, PPTX assets and flat PDF exports; Photo Lab marks PSD (XMP in image resource 1060), ORA (AI layers, merged, thumbnail) and package exports.
+- **Files:** terms.html, imprint.html, privacy.html, support/index.html, download/index.html, SECURITY.md, atelier/io.js, photolab/io.js, photolab/psd.js, .github/qa/a11y.js, tests/aimark.test.js, shell.js (version), help/topics/whatsnew.en/el.txt.
+- **Tests:** tests/aimark.test.js (PSD 1060 round trip, export wiring); csp.js --check; i18n coverage; axe at 360 px EN+EL on imprint, terms, privacy, support, download (0 new problems); full suite.
+- **Not tested:** Atelier video and GIF exports stay unmarked (open item); a real phone; Safari.
