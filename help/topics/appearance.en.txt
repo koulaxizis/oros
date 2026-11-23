@@ -11,6 +11,8 @@ The button at the right end of the top bar (the network and power symbols) opens
 - `Keep awake` keeps the screen on while orOS is on screen: one press until you turn it off, the arrow gives `For one hour`, `For two hours` or `Until you turn it off`. On orOS USB it also keeps the screen from going dark and the computer from sleeping. A cup on the top-bar button shows it is on.
 - `Energy saver` stops what moves on the desktop (live wallpaper, Living land, the Light show, the weather desktop, seasonal decorations, the opening and closing animation of apps) and refreshes widgets once a minute. It turns on by itself when the battery falls under 20 % and is not charging, and off again on the charger; turned off on a low battery, it stays off until the next charge. Sync, notifications, alarms, timers and sound never wait for it. A leaf on the top-bar button shows it is on. Both are set on this device only.
 - `Playing` lists the music, podcast, radio station or Sound Mixer mix that plays, with Play / Pause; tap its name to open the app.
+- `Screenshot` takes a picture of the whole screen with one tap; its arrow offers `Whole screen` or `Region`. Screen Capture opens with the picture, and you save it to Files › Pictures. See [Screen Capture](help:a/capture).
+- The `Search` field at the top hands what you type to the menu's search: apps, files and settings. With a mouse and keyboard the panel opens with the cursor in it; on a touch screen the keyboard stays closed until you tap it.
 - On orOS USB, the panel also has the volume and brightness, Wi-Fi and Bluetooth.
 
 On a narrow screen, when the top bar is full, the language button moves into Quick settings.
