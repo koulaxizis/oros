@@ -252,3 +252,48 @@ test("Atelier PDF and SVG: the same XMP as document metadata and as SVG <metadat
   assert.match(aio, /return aiMarkPdf\(doc, ids, pdf\)\.output\("blob"\)/);
   assert.match(aio, /r\.svg = aiMarkSvg\(doc, \[pg\], r\.svg\)/);
 });
+
+// AI-MARK-2: the formats left after the first wave.
+test("Photo Lab PSD: the XMP goes in as image resource 1060 and the file still reads", async () => {
+  const PSD = require("../photolab/psd.js");
+  const im = { w: 2, h: 2, data: new Uint8ClampedArray(16).fill(200) };
+  const base = { w: 2, h: 2, merged: im, layers: [{ name: "AI", x: 0, y: 0, img: im, op: 100, bl: "normal", vis: 1 }] };
+  const plain = PSD.write(base);
+  assert.equal(IA.isAIBytes(plain), false);
+  const xmp = IA.xmpPacket({ src: "edit", tool: "orOS Photo Lab" });
+  const marked = PSD.write(Object.assign({ xmp }, base));
+  assert.equal(IA.isAIBytes(marked), true);
+  const B = Buffer.from(marked), len = B.readUInt32BE(30);          // after header (26) + colour mode length (4)
+  assert.equal(latin(B.subarray(34, 38)), "8BIM");
+  assert.equal(B.readUInt16BE(38), 1060);
+  assert.equal(B.readUInt16BE(40), 0, "empty Pascal name, padded");
+  const xl = B.readUInt32BE(42);
+  assert.equal(len, 12 + xl + (xl & 1));
+  assert.match(latin(B.subarray(46, 46 + xl)), /compositeWithTrainedAlgorithmicMedia/);
+  const r = await PSD.read(marked);
+  assert.equal(r.layers.length, 1);
+  assert.equal(r.layers[0].name, "AI");
+});
+
+test("Photo Lab ORA, .orosphoto and Atelier pictures: AI parts carry the mark", () => {
+  const pio = read("photolab/io.js");
+  assert.match(pio, /function iaIfAI\(\)/);
+  assert.match(pio, /if \(IA\) pd\.xmp = IA\.xmpPacket\(AI_INFO\)/);
+  assert.match(pio, /if \(src && src\.ai\) png = markPng\(IA, png\)/);
+  assert.match(pio, /out\.merged = markPng\(IA, png\)/);
+  assert.match(pio, /out\.thumb = markPng\(IA, thumb\)/);
+  assert.match(pio, /image = markPng\(IA, png\)/);
+  const aio = read("atelier/io.js");
+  const i = aio.indexOf("  function aiMarkItemBytes(");
+  const j = aio.indexOf("\n  }\n", i);
+  const f = new Function("window", "var AI_INFO = { src: \"edit\", tool: \"orOS Atelier\" };\n" + aio.slice(i, j + 4) + "\nreturn aiMarkItemBytes;")({ OrosImageAI: IA });
+  const p = png();
+  assert.equal(f({ ax: {} }, p), p, "not AI: the same bytes");
+  assert.equal(f(null, p), p);
+  const m = f({ ax: { ai: "g" } }, p);
+  assert.equal(IA.isAIBytes(m), true);
+  assert.match(aio, /return \{ png: aiMarkItemBytes\(it, new Uint8Array\(ab\)\), pad: pad \}/, "PowerPoint rasters");
+  assert.match(aio, /media\["a:" \+ id\] = aiMarkItemBytes\(ai, new Uint8Array\(ab\)\)/, "PowerPoint pictures");
+  assert.match(aio, /data: aiMarkItemBytes\(it, new Uint8Array\(ab\)\)/, "web page and SVG pictures");
+  assert.match(aio, /saveBlob\(aiMarkPdf\(doc, pages, pdf\)\.output\("blob"\)/, "the flat PDF");
+});

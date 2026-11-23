@@ -3,6 +3,16 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.85.00
+- **Terms of use and Details.** New pages on useoros.online: the terms of use (the free software and the paid services on the Support page) and the Details page with who makes orOS and how to reach them. Both are linked from the privacy policy and the page footers, in English, Greek and German.
+- **AI pictures stay marked when you export.** A picture made by AI in Atelier or Photo Lab keeps its AI mark in PNG, PDF, PowerPoint, PSD and OpenRaster exports.
+
+## Version 8.84.01
+- **Security updates.** The Library now opens .cbr, .cbz and other archives with libarchive 3.8.11, and Photo Lab reads RAW photos with LibRaw 0.22.3. Both versions fix published security flaws in damaged or crafted files. Nothing changes in how you use them.
+
+## Version 8.84.00
+- **Make it yours.** The first card of Settings › Appearance puts the look of orOS in one place with a live preview of the desktop: wallpaper (and Random), colour, accent from wallpaper, the top bar, the Dock, motion feel, interface sounds and the lock screen look.
+
 ## Version 8.83.00
 - **A clearer privacy policy, and AI is labelled.** The privacy policy is rewritten in English, Greek and German: who is responsible, what the relay keeps and for how long, the legal basis for each use, and your rights. The Assistant says plainly that its answers come from AI, and pictures and Atelier PDF/SVG files made with AI carry a standard mark that says so. New: an accessibility statement, a page on how to report a security problem, a Base template for a record of processing (ROPA), and Newsletter sign-ups that nobody collected leave the relay after 90 days.
 

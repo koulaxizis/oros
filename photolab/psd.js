@@ -851,7 +851,12 @@
     W.str("8BPS"); W.u16(1); W.bytes(new Uint8Array(6));
     W.u16(4); W.u32(h); W.u32(w); W.u16(8); W.u16(3);
     W.u32(0);                                        // colour mode data
-    W.u32(0);                                        // image resources
+    if (typeof doc.xmp === "string" && doc.xmp) {    // image resources: XMP (1060) only
+      var xb = new TextEncoder().encode(doc.xmp), rs = new Writer();
+      rs.str("8BIM"); rs.u16(1060); rs.u16(0);        // empty Pascal name, padded to even
+      rs.u32(xb.length); rs.bytes(xb); if (xb.length & 1) rs.u8(0);
+      var rb = rs.out(); W.u32(rb.length); W.bytes(rb);
+    } else W.u32(0);                                 // image resources
 
     var recs = new Writer(), chans = new Writer();
     var list = withFolders(doc.layers || [], doc.groups || []);

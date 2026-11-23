@@ -3,8 +3,8 @@
 // A RAW photo (DNG, CR2, CR3, CRW, NEF, NRW, ARW, SRF, SR2, ORF, RAF,
 // RW2, RWL, PEF, SRW, X3F, 3FR, FFF, IIQ, ERF, KDC, DCR, MRW, MOS,
 // MEF) opens in two ways:
-//   1. developed by LibRaw (vendor/libraw/: the unmodified
-//      libraw-wasm 1.6.0 build of LibRaw 0.22.1, LGPL-2.1 or CDDL-1.0,
+//   1. developed by LibRaw (vendor/libraw/: libraw-wasm 1.6.0 with
+//      its wasm rebuilt for LibRaw 0.22.3, LGPL-2.1 or CDDL-1.0,
 //      in its own module worker), loaded only when a RAW file is
 //      opened. Its WebAssembly memory is "shared", which some browsers
 //      allow only on cross-origin-isolated pages: then step 2.
