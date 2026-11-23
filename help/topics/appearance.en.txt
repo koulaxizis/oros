@@ -107,6 +107,8 @@ The coloured dots under `System colour` are skins: each one gives orOS and its a
 
 `Accent from wallpaper`, under the dots, takes the accent colour from your wallpaper instead: the built-in wallpapers, `Living land`, `Mine` and a picture of your own. orOS adjusts its brightness so text on buttons and links stays easy to read in the light and the dark theme; backgrounds, panels and text keep the colours of your skin. When the wallpaper has several clear colours, up to four appear under `Colours from the wallpaper` to pick from; a new wallpaper starts at its strongest colour. Grey wallpapers such as `Monochrome` keep the skin's colour, and high contrast always keeps its own colours. The switch is off at first and works on this device only.
 
+Above the wallpapers, `Find a wallpaper` narrows them by name and `Random` puts on another drawn wallpaper. Under them, `From a folder` makes the pictures of a folder in Files (at first `Pictures/Wallpapers`) take turns as the wallpaper of this device: `Every day` or `At each start`, in name order, so each comes round before one returns; `Next picture now` skips ahead. JPG, PNG, WebP, GIF and AVIF up to 20 MB count. The pictures stay on this device and nothing syncs; picking a wallpaper by hand turns it off.
+
 > Every skin comes with a suggested wallpaper, marked with a ★ under `Wallpaper`. Choosing a skin also switches to its wallpaper, as long as you still have the default wallpaper (`Desert Sand`) or the one suggested for your previous skin. Once you pick another wallpaper yourself, skins leave it alone, and you can still choose any wallpaper with any skin.
 
 ## Wallpapers

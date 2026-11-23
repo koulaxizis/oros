@@ -388,6 +388,19 @@
     if (s.icons) secIcons(host, s.icons);
 
     var c3 = card(t("a.wallpaper"), "wallpaper");
+    // WPDIR-1: find a wallpaper by name (here only) and Random
+    var wfind = el("input", "wall-find");
+    wfind.type = "search";
+    wfind.id = "f-wall-find";
+    wfind.setAttribute("data-k", "wall:find");
+    wfind.placeholder = t("a.wallpaper.find");
+    wfind.setAttribute("aria-label", t("a.wallpaper.find"));
+    wfind.autocomplete = "off";
+    wfind.value = wallQuery;
+    var wtop = el("div", "wall-top");
+    wtop.appendChild(wfind);
+    wtop.appendChild(button(t("a.wallpaper.random"), "wallpaper:random", function () { set("wallpaper:random", 1); }));
+    c3.appendChild(wtop);
     var grid = el("div", "walls");
     grid.setAttribute("role", "radiogroup");
     grid.setAttribute("aria-label", t("a.wallpaper"));
@@ -410,9 +423,24 @@
         b.style.backgroundPosition = "center";
       }
       b.addEventListener("click", function () { set("wallpaper", w.id); });
+      b.setAttribute("data-name", (make ? t("a.wallpaper.make") : w.name || "").toLowerCase());
       grid.appendChild(b);
     });
     c3.appendChild(grid);
+    var wnone = el("p", "hint", t("a.wallpaper.find.none"));
+    c3.appendChild(wnone);
+    function wallFilter() {
+      wallQuery = wfind.value;
+      var q = wallQuery.trim().toLowerCase(), n = 0;
+      [].forEach.call(grid.children, function (b) {
+        var hit = !q || b.getAttribute("data-name").indexOf(q) !== -1;
+        b.hidden = !hit;
+        if (hit) n++;
+      });
+      wnone.hidden = n > 0;
+    }
+    wfind.addEventListener("input", wallFilter);
+    wallFilter();
     if (s.viz) {                                       // Light show (VIZWALL-1): the style
       var vst = (s.viz.styles || ["glow"]).map(function (v) { return { value: v, label: t("a.wallpaper.viz." + v) }; });
       c3.appendChild(row(t("a.wallpaper.viz.style"), segmented(vst, s.viz.style, "wpviz:style",
@@ -436,6 +464,7 @@
       if (s.wxdesk.on && s.wxdesk.none) c3.appendChild(el("p", "hint", t("a.wallpaper.wx.none")));
     }
     if (s.suggested) c3.appendChild(el("p", "hint", t("a.wallpaper.hint")));
+    if (s.wpdir) secWpDir(c3, s.wpdir);                // WPDIR-1
     host.appendChild(c3);
 
     if (s.me) secMe(host, s.me, s.greet, s.tips);
@@ -4669,6 +4698,22 @@
     return own !== "v.err.badkeys." + p ? own : t("v.err.badkeys");
   }
   function pOf(id) { var Lk = links(), a = Lk && Lk.get(id); return a ? a.p : ""; }
+  // WPDIR-1: From a folder (this device): Off / Every day / At each start
+  var wallQuery = "";
+  function secWpDir(c, d) {
+    c.appendChild(el("h4", "sub", t("a.wpdir")));
+    var modes = (d.modes || ["", "day", "start"]).map(function (m) { return { value: m, label: t("a.wpdir.mode." + (m || "off")) }; });
+    c.appendChild(row(t("a.wpdir.when"), select(modes, d.mode, "wpdir:mode", function (v) { set("wpdir:mode", v); })));
+    var dir = textInput("wpdir:dir", d.dir, d.def, function () {}, "text");
+    var inp = dir.querySelector("input");
+    inp.setAttribute("aria-label", t("a.wpdir.folder"));
+    inp.addEventListener("change", function () { set("wpdir:dir", inp.value); });
+    c.appendChild(labelled(t("a.wpdir.folder"), "wpdir:dir", dir));
+    c.appendChild(actions(button(t("a.wpdir.next"), "wpdir:next", function () { set("wpdir:next", 1); })));
+    var msg = d.busy ? "" : d.msg ? t("a.wpdir.msg." + d.msg).replace("{dir}", d.dir).replace("{name}", d.last || "") : "";
+    if (msg) c.appendChild(el("p", "hint", msg));
+    c.appendChild(el("p", "hint", t("a.wpdir.hint").replace("{dir}", d.dir)));
+  }
   function textInput(key, value, ph, onInput, type) {
     var inp = el("input");
     inp.id = "f-" + key;
