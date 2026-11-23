@@ -104,3 +104,50 @@ test("sensitive work also marks your own relay", () => {
   assert.match(sh, /rl\.push\(new URL\(own\)\.host\.toLowerCase\(\)\)/);
   assert.match(sh, /window\.orosRelay\.onChange\(strictTellSW\)/);
 });
+
+// STRUCT-5: no "Through the orOS relay" switches; one question per server.
+function shellAsk(store, strict) {
+  const src = read("shell.js");
+  const a = src.indexOf('  var MAIL_CACHE_KEY = "oros-mail-data";');
+  const b = src.indexOf("  function registerMailProxySlice() {");
+  const ls = { getItem: (k) => (k in store ? store[k] : null), setItem: (k, v) => { store[k] = String(v); }, removeItem: (k) => { delete store[k]; } };
+  const win = { orosSync: { markDirty() {} }, t: (k) => k };
+  const shown = [];
+  const doc = { createElement: () => { throw new Error("no dialog expected"); }, body: { appendChild: (x) => shown.push(x) } };
+  const fn = new Function("window", "localStorage", "document", "strictLevelNow",
+    src.slice(a, b) + "\nreturn window.orosRelay;");
+  return fn(win, ls, doc, () => strict);
+}
+
+test("relay question: Sensitive work answers no without asking; a kept yes answers yes", async () => {
+  const store = { "oros-relay-ok": JSON.stringify({ "dav.example.com": 1 }) };
+  const R = shellAsk(store, "on");
+  assert.equal(await R.ask("https://dav.example.com/remote.php"), false, "Sensitive work: never");
+  const R2 = shellAsk(store, null);
+  assert.equal(await R2.ask("https://dav.example.com/remote.php"), true, "yes kept for that server");
+  assert.equal(R2.allowed("https://DAV.example.com/x"), true);
+  assert.equal(R2.allowed("https://other.example.com/"), false);
+  assert.equal(await R2.ask("not a url"), false);
+});
+
+test("relay question: the switches are gone and each flow asks only when the browser was not let in", () => {
+  const ss = read("settings/settings.js");
+  for (const k of ['"dav-relay"', '"cd-relay"', 't("y.dav.relay")', 't("cd.relay")']) assert.ok(!ss.includes(k), k);
+  assert.match(ss, /function cdNeedsRelay\(e\)/);
+  assert.match(ss, /code === "unreachable" \|\| code === "etag"/);
+  const sh = read("shell.js");
+  assert.match(sh, /function davNeedsRelay\(err\)/);
+  assert.match(sh, /m === "dav-unreachable" \|\| m === "dav-etag"/);
+  assert.equal((sh.match(/window\.orosRelay\.ask\(form\.url\)/g) || []).length, 3, "connect, move, Nextcloud");
+  assert.match(sh, /if \(strictLevelNow\(\)\) return Promise\.resolve\(false\);/);
+  const hh = read("household/app.js"), hhtml = read("household/index.html");
+  assert.ok(!/new-dav-relay/.test(hh + hhtml));
+  assert.match(hh, /code === "dav-cors" && !dav\.relay && R/);
+  const st = read("studio/podcastui.js"), sthtml = read("studio/index.html");
+  assert.ok(!/pod-dav-relay/.test(st + sthtml));
+  assert.match(st, /e\.code === "dav-cors" && !c\.relay && R/);
+  for (const f of ["translations.js", "i18n/de/shell.js"]) {
+    const s = read(f);
+    for (const k of ["relay.ask.title", "relay.ask.text", "relay.ask.yes", "relay.ask.no", "sync.nc.again"]) assert.ok(s.includes('"' + k + '"'), f + " " + k);
+  }
+});

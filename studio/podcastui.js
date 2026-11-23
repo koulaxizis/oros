@@ -673,7 +673,6 @@
       if (davFor !== s.id) {
         davFor = s.id;
         ["url", "share", "user"].forEach(function (k) { $("pod-dav-" + k).value = c[k]; });
-        $("pod-dav-relay").checked = c.relay;
         $("pod-dav-pass").value = "";
       }
       $("pod-dav-pass-set").hidden = !c.pass;
@@ -698,7 +697,10 @@
       c.share = $("pod-dav-share").value.trim();
       c.user = $("pod-dav-user").value.trim();
       if (!c.user) { status("pod-dav-err", t("pod.dav.err.user")); $("pod-dav-user").focus(); return; }
-      c.relay = $("pod-dav-relay").checked;
+      // STRUCT-5: no relay switch. A yes given for this server (here or in
+      // another app) is used; otherwise orOS asks when the browser cannot reach it.
+      var R = relayApi();
+      if (!c.relay && R && R.allowed(c.url)) c.relay = true;
       if (!c.pass) {
         var typed = $("pod-dav-pass").value;
         if (!typed) { status("pod-dav-err", t("pod.dav.err.pass")); $("pod-dav-pass").focus(); return; }
@@ -739,8 +741,23 @@
       }, function (e) {
         busy = false; setBusy();
         if (e && e.code === "dav-auth") { var cc = davConf(s.id); cc.pass = ""; davSave(s.id, cc); renderDav(); }
+        var R = relayApi();
+        if (e && e.code === "dav-cors" && !c.relay && R) {
+          R.ask(c.url).then(function (ok) {
+            if (!ok) { status("pod-dav-err", siteFail(e)); return; }
+            var cr = davConf(s.id);
+            cr.relay = true;
+            davSave(s.id, cr);
+            c.relay = true;
+            davNow(s, fs, eps, c);
+          });
+          return;
+        }
         status("pod-dav-err", siteFail(e));
       });
+    }
+    function relayApi() {
+      try { var p = root.parent; return p && p !== root && p.orosRelay && typeof p.orosRelay.ask === "function" ? p.orosRelay : null; } catch (x) { return null; }
     }
     function forgetDavPass() {
       var s = show();

@@ -20,7 +20,7 @@ Nutze ein App-Passwort, nicht dein Hauptpasswort: In Nextcloud findest du es unt
 Der Server muss orOS die Dateiversionen zeigen (ETag) und verhindern, dass zwei Geräte sich gegenseitig überschreiben; orOS lehnt einen Server ab, der das nicht kann, und sagt, welche Prüfung fehlgeschlagen ist.
 
 ### Server, die den Browser nicht verbinden lassen
-Viele Server (Synology, ownCloud, eine Nextcloud ohne die App WebAppPassword) lassen keine Webseite mit sich sprechen (CORS). Dann meldet `Testen und verbinden`, dass der Server nicht geantwortet hat. Schalte `Über das orOS-Relay` ein und versuch es noch einmal.
+Viele Server (Synology, ownCloud, eine Nextcloud ohne die App WebAppPassword) lassen keine Webseite mit sich sprechen (CORS). Dann meldet `Testen und verbinden`, dass der Server nicht geantwortet hat. orOS fragt dann einmal, ob es über das orOS-Relay gehen darf; ein Ja gilt für diesen Server auf diesem Gerät.
 
 >! Auch mit dem Relay bleiben deine Daten Ende-zu-Ende-verschlüsselt: Das Relay sieht nur unlesbare Dateien. Aber dein App-Passwort geht bei jeder Anfrage durch das orOS-Relay. Es wird dort nie gespeichert oder protokolliert. Willst du das nicht, lass deinen Server orOS direkt zu: Bei Nextcloud erledigt das die kostenlose App WebAppPassword; auf deinem eigenen Server erlaubst du die Adresse von orOS und gibst den ETag-Header frei.
 
@@ -32,7 +32,7 @@ Bei Nextcloud musst du kein App-Passwort selbst erstellen:
 2. Ein Tab öffnet die Anmeldeseite deiner Nextcloud. Melde dich dort an und erlaube orOS den Zugriff.
 3. orOS bekommt ein eigenes App-Passwort und verbindet sich. Dein Hauptpasswort tippst du nur auf der Seite deines Servers ein.
 
-Nextcloud braucht für diesen Schritt meist `Über das orOS-Relay`. Die Freigabe muss innerhalb von 20 Minuten erfolgen; `Anmeldung abbrechen` beendet das Warten.
+Nextcloud braucht für diesen Schritt meist das orOS-Relay (orOS fragt; nach einem Ja drück noch einmal `Mit Nextcloud anmelden`). Die Freigabe muss innerhalb von 20 Minuten erfolgen; `Anmeldung abbrechen` beendet das Warten.
 
 Ein Gerät nutzt immer nur eine Cloud. Wechselt ein Gerät zu einer neuen Cloud, wird bei der nächsten Synchronisierung alles darauf dorthin hochgeladen; die alte Cloud behält ihre Kopie.
 
@@ -45,9 +45,9 @@ Ein Gerät nutzt immer nur eine Cloud. Wechselt ein Gerät zu einer neuen Cloud,
 Die alte Cloud bleibt, wie sie war, samt ihren Sicherungen, bis du sie selbst löschst.
 
 ### Anleitungen für Server
-- **Nextcloud**: Die Adresse ist `https://your.cloud/remote.php/dav/files/USERNAME`. Nutze `Mit Nextcloud anmelden` oder erstelle ein App-Passwort unter Einstellungen › Sicherheit › Geräte & Sitzungen. Mit der App WebAppPassword verbindet sich der Browser direkt; sonst schalte `Über das orOS-Relay` ein.
-- **Synology**: Installiere `WebDAV Server` aus dem Paket-Zentrum und schalte HTTPS ein (Port 5006). Die Adresse ist `https://your-nas-address:5006/`, gefolgt von einem freigegebenen Ordner wie `/home`. Das NAS braucht eine öffentliche Adresse und ein gültiges Zertifikat (zum Beispiel Synology DDNS mit Let's Encrypt), und `Über das orOS-Relay` muss eingeschaltet sein.
-- **ownCloud**: Die Adresse ist `https://your.cloud/remote.php/dav/files/USERNAME`. Erstelle einen App-Passcode unter Einstellungen › Sicherheit und schalte `Über das orOS-Relay` ein.
+- **Nextcloud**: Die Adresse ist `https://your.cloud/remote.php/dav/files/USERNAME`. Nutze `Mit Nextcloud anmelden` oder erstelle ein App-Passwort unter Einstellungen › Sicherheit › Geräte & Sitzungen. Mit der App WebAppPassword verbindet sich der Browser direkt; sonst fragt orOS, ob es das orOS-Relay nutzen darf.
+- **Synology**: Installiere `WebDAV Server` aus dem Paket-Zentrum und schalte HTTPS ein (Port 5006). Die Adresse ist `https://your-nas-address:5006/`, gefolgt von einem freigegebenen Ordner wie `/home`. Das NAS braucht eine öffentliche Adresse und ein gültiges Zertifikat (zum Beispiel Synology DDNS mit Let's Encrypt), und das orOS-Relay muss erlaubt sein, wenn orOS fragt.
+- **ownCloud**: Die Adresse ist `https://your.cloud/remote.php/dav/files/USERNAME`. Erstelle einen App-Passcode unter Einstellungen › Sicherheit und erlaube das orOS-Relay, wenn orOS fragt.
 
 ## Deine Passphrase
 Die Passphrase verschlüsselt deine Daten auf diesem Gerät. Sie verlässt das Gerät nie, und weder Dropbox noch sonst jemand kann deine Daten ohne sie lesen.

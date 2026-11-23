@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.73.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.74.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -8019,12 +8019,83 @@
     url: function () { return relayOwn() || RELAY_SHARED; },
     mine: function () { return !!relayOwn(); },
     set: relaySet,                                   // → bool
+    ask: relayAsk,                                   // (server url) → Promise<bool>
+    allowed: function (u) { var h = relayHostOf(u); return !!h && !!relayOkMap()[h]; },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};
       relayListeners.push(fn);
       return function () { var i = relayListeners.indexOf(fn); if (i >= 0) relayListeners.splice(i, 1); };
     }
   };
+  // STRUCT-5 (structure review 2026-11-22): no "Through the orOS relay"
+  // switches. orOS tries a server directly; only when the browser cannot
+  // reach it this asks once whether it may go through the relay, and a
+  // yes is kept for that server on this device. Sensitive work never
+  // asks (the answer is no).
+  var RELAY_OK_KEY = "oros-relay-ok";
+  function relayOkMap() {
+    try { var o = JSON.parse(localStorage.getItem(RELAY_OK_KEY) || "null"); return o && typeof o === "object" && !Array.isArray(o) ? o : {}; } catch (e) { return {}; }
+  }
+  function relayHostOf(u) { try { return new URL(String(u)).host.toLowerCase(); } catch (e) { return ""; } }
+  var relayAsking = null;
+  function relayAsk(server) {
+    var host = relayHostOf(server);
+    if (!host) return Promise.resolve(false);
+    try { if (strictLevelNow()) return Promise.resolve(false); } catch (e) {}
+    if (relayOkMap()[host]) return Promise.resolve(true);
+    if (relayAsking) return relayAsking;
+    relayAsking = new Promise(function (res) {
+      var dlg = document.createElement("dialog");
+      dlg.id = "relay-ask";
+      dlg.setAttribute("aria-labelledby", "relay-ask-h");
+      dlg.style.cssText = "border:1px solid var(--border);border-radius:12px;background:var(--panel-bg);color:var(--text);padding:20px;width:min(380px,calc(100vw - 32px));";
+      var h = document.createElement("h2");
+      h.id = "relay-ask-h";
+      h.style.cssText = "font-size:16px;margin:0 0 10px;";
+      h.textContent = window.t("relay.ask.title");
+      var p = document.createElement("p");
+      p.style.cssText = "font-size:13px;line-height:1.5;margin:0 0 16px;";
+      p.textContent = window.t("relay.ask.text").split("{server}").join(host).split("{relay}").join(relayHostOf(window.orosRelay.url()));
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;";
+      var no = document.createElement("button");
+      no.type = "button";
+      no.style.cssText = "border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);padding:9px 16px;min-height:40px;font-size:13px;cursor:pointer;";
+      no.textContent = window.t("relay.ask.no");
+      var yes = document.createElement("button");
+      yes.type = "button";
+      yes.style.cssText = "border:1px solid var(--accent);border-radius:8px;background:var(--accent);color:var(--accent-ink, #fff);padding:9px 16px;min-height:40px;font-size:13px;font-weight:600;cursor:pointer;";
+      yes.id = "relay-ask-yes";
+      yes.textContent = window.t("relay.ask.yes");
+      var said = false;
+      function end(ok) {
+        if (said) return;
+        said = true;
+        if (ok) {
+          var m = relayOkMap();
+          m[host] = Date.now();
+          try { localStorage.setItem(RELAY_OK_KEY, JSON.stringify(m)); } catch (e) {}
+        }
+        relayAsking = null;
+        try { if (dlg.open) dlg.close(); } catch (e) {}
+        dlg.remove();
+        res(ok);
+      }
+      no.addEventListener("click", function () { end(false); });
+      yes.addEventListener("click", function () { end(true); });
+      dlg.addEventListener("close", function () { end(false); });
+      row.appendChild(no);
+      row.appendChild(yes);
+      dlg.appendChild(h);
+      dlg.appendChild(p);
+      dlg.appendChild(row);
+      document.body.appendChild(dlg);
+      try { dlg.showModal(); } catch (e) { end(false); return; }
+      setTimeout(function () { yes.focus(); }, 30);
+    });
+    return relayAsking;
+  }
+
   // The Gate's own relay (5.82.00, this device only) becomes the one
   // address, once; it wins over Mail's (Chris's card, 2026-11-22).
   function migrateGateRelay() {
@@ -8476,12 +8547,26 @@
     var S = window.orosSync;
     if (!S || typeof S.connectWebdav !== "function" || S.isConnected()) return;
     setSyncMsgRaw("dim", window.t("sync.dav.testing"));
-    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
+    var relay = !!form.relay || window.orosRelay.allowed(form.url);
+    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: relay })
       .then(function (acc) {
         state.syncUserEmail = (acc && acc.email) || null;
         setSyncMsg("ok", "sync.dav.ok");
       })
-      .catch(handleSyncError);
+      .catch(function (err) {
+        // STRUCT-5: the browser could not reach the server: ask once.
+        if (relay || !davNeedsRelay(err)) { handleSyncError(err); return; }
+        window.orosRelay.ask(form.url).then(function (ok) {
+          if (ok) syncConnectDav(Object.assign({}, form, { relay: true }));
+          else handleSyncError(err);
+        });
+      });
+  }
+  // A WebDAV error that the relay may cure: the server did not answer the
+  // browser at all, or hid the ETag header from it (CORS).
+  function davNeedsRelay(err) {
+    var m = err && err.message;
+    return navigator.onLine !== false && (m === "dav-unreachable" || m === "dav-etag");
   }
 
   // WebDAV W3: Nextcloud Login Flow v2. The window opens on the click
@@ -8495,7 +8580,8 @@
     try { if (w) w.opener = null; } catch (e) {}
     state.ncWaiting = true;
     renderMenu();
-    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay, move: !!form.move }, function (url) {
+    var relay = !!form.relay || window.orosRelay.allowed(form.url);
+    S.connectNextcloud({ url: form.url, dir: form.dir, relay: relay, move: !!form.move }, function (url) {
       setSyncMsgRaw("dim", window.t("sync.nc.waiting"));
       if (w && !w.closed) w.location.href = url;
       else window.open(url, "_blank", "noopener");
@@ -8506,7 +8592,13 @@
     }, function (err) {
       state.ncWaiting = false;
       try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (e) {}
-      handleSyncError(err);
+      // STRUCT-5: a sign-in window only opens on a click, so after a yes
+      // the person presses Sign in with Nextcloud once more.
+      if (relay || !davNeedsRelay(err)) { handleSyncError(err); return; }
+      window.orosRelay.ask(form.url).then(function (ok) {
+        if (ok) setSyncMsg("dim", "sync.nc.again");
+        else handleSyncError(err);
+      });
     });
   }
 
@@ -8517,12 +8609,19 @@
     var S = window.orosSync;
     if (!S || typeof S.moveToWebdav !== "function" || !S.isConnected()) return;
     setSyncMsgRaw("dim", window.t("sync.dav.testing"));
-    S.moveToWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
+    var relay = !!form.relay || window.orosRelay.allowed(form.url);
+    S.moveToWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: relay })
       .then(function (acc) {
         state.syncUserEmail = (acc && acc.email) || null;
         setSyncMsg("ok", "sync.move.ok");
       })
-      .catch(handleSyncError);
+      .catch(function (err) {
+        if (relay || !davNeedsRelay(err)) { handleSyncError(err); return; }
+        window.orosRelay.ask(form.url).then(function (ok) {
+          if (ok) syncMoveDav(Object.assign({}, form, { relay: true }));
+          else handleSyncError(err);
+        });
+      });
   }
   function syncMoveDropbox() {
     var S = window.orosSync;
