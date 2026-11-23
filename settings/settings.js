@@ -5483,6 +5483,42 @@
     }, function () { wait.textContent = t("fm.loadFail"); });
   }
 
+  // DEVINFO-1: About this device, with Copy details (nothing personal).
+  var abStore = null;        // { used, quota } once the browser answered
+  function aboutInfo(s) {
+    var p = parentWin(), plat = "", standalone = false;
+    try { plat = p.document.documentElement.getAttribute("data-oros-sys-platform") || ""; } catch (e) {}
+    try { standalone = (p || window).matchMedia("(display-mode: standalone)").matches || navigator.standalone === true; } catch (e) {}
+    var sc = window.screen || {};
+    return { version: s.version, form: C.formOf(plat, standalone), ua: navigator.userAgent,
+             sw: sc.width, sh: sc.height, dpr: (p || window).devicePixelRatio || 1,
+             used: abStore ? abStore.used : 0, quota: abStore ? abStore.quota : 0 };
+  }
+  function secAbout(host, s) {
+    var c = card(t("ab.title"));
+    c.id = "ab-card";
+    c.appendChild(el("p", "hint", t("ab.hint")));
+    C.aboutRows(LANG, aboutInfo(s)).forEach(function (r) {
+      if (r[0] === "x.version") return;                 // shown just above
+      var rw = row(t(r[0]), null);
+      rw.appendChild(el("div", "version ab-val", r[1]));
+      c.appendChild(rw);
+    });
+    var cp = button(t("ab.copy"), "ab.copy", function () {
+      var txt = C.aboutText(LANG, aboutInfo(s));
+      var done = function () { cp.textContent = t("ab.copied"); setTimeout(function () { cp.textContent = t("ab.copy"); }, 1600); };
+      try { navigator.clipboard.writeText(txt).then(done, function () {}); } catch (e) {}
+    });
+    c.appendChild(actions(cp));
+    host.appendChild(c);
+    if (!abStore && navigator.storage && typeof navigator.storage.estimate === "function") {
+      abStore = { used: 0, quota: 0 };
+      navigator.storage.estimate().then(function (e) {
+        abStore = { used: +e.usage || 0, quota: +e.quota || 0 };
+        if (abStore.quota && (current === "system" || current === "device")) render();
+      }, function () {});
+    }
+  }
   function secSystem(host, s) {
     var c1 = card(null);
     var vr = row(t("x.version"), null);
@@ -5494,6 +5530,7 @@
       c1.appendChild(actions(button(t("x.install"), "x.install", function () { act("install"); }, "primary")));
     }
     host.appendChild(c1);
+    secAbout(host, s);
 
     var c2 = card(t("x.more"));
     c2.appendChild(linkRow(t("x.device"), "x.device", function () { go("device", true); }));   // was the Device Info app
