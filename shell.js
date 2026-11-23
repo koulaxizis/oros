@@ -16800,6 +16800,13 @@
   function closeMenu() {
     document.getElementById("app-menu").classList.remove("open");
   }
+  // CAPQ-1: Screen Capture clears the screen before a recording starts:
+  // the menu, Quick settings and the notifications panel close.
+  window.__orosCalmScreen = function () {
+    try { closeMenu(); } catch (e) {}
+    closeNotifPanel();
+    try { if (window.orosQS && typeof window.orosQS.close === "function") window.orosQS.close(); } catch (e) {}
+  };
 
   // ---------- 12. Wiring & boot ----------
   document.getElementById("btn-menu").addEventListener("click", function (e) {
