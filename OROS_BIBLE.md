@@ -14128,3 +14128,9 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** crm/core.js, calendar/calendar.js, tests/crm-ctr-all.test.js, shell.js (version), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md.
 - **Tests:** full `node --test tests/*.test.js`; real shell (Playwright Chromium, LANG=C.UTF-8, calendar `?standalone`, 360 px): an own «Carpe Noctem» (Έντυπο) event and its contract show once, another contract that day still shows; main showed it twice.
 - **Not tested:** a real phone, Safari, Dropbox sync (no stored data changes).
+
+### 2026-11-23 — 8.93.00 — Gate: waiting folder questions shown and kept as a notice, label summaries, the gate and last device in closed answers (FOLDER-WAIT, KB-LABSUM, GATE-WHO)
+- **What:** Chris 2026-11-23 on cards (16:48Z–16:50Z), from koulaxizis.gr gaps 9–11. A waiting folder question (claude_folders_request, local_folders_request) was in no list (it belonged to no app); now it shows in waiting_changes and change_history, and orOS keeps a synced notice «Claude is waiting for your answer» until it is answered. A label-only kanban_add_columns says which labels. Every answer with orOS closed names the gate and when and from which device an orOS last reached it. Details Part IX.
+- **Files:** relay/gate.js, relay/README.md, gate/gate.js, translations.js, i18n/de/shell.js, shell.js, whatsnew EN/EL, OROS_BIBLE.md, tests/gate-folder-wait.test.js, tests/gate-relay.test.js.
+- **Tests:** full `node --test tests/*.test.js`; Mail-thread review of the relay at 5618e4b1 (the copy opened once) and b2e4fd3b.
+- **Not tested:** the notice on a real phone, a live relay.
