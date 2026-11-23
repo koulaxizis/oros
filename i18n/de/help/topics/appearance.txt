@@ -207,6 +207,8 @@ Das Dock ist eine Leiste mit deinen Lieblings-Apps an einem Rand des Desktops, u
 - `Automatisch ausblenden` versteckt es, bis du die Maus an seinen Bildschirmrand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
 - `Über offenen Apps zeigen` lässt es sichtbar, während eine App offen ist. Es ist aus, bis du es einschaltest, damit Apps den ganzen Bildschirm bekommen.
 
+Gruppen: Zieh eine App im Dock (mit der Maus) auf die Mitte einer anderen App, oder wähle in ihrem Menü (Rechtsklick oder langes Drücken) `In eine Gruppe mit …`, und beide kommen in eine Gruppe. Apps einer Kategorie bekommen deren Namen, zum Beispiel `Spiele`; andere heißen `Gruppe 1`. Tippe auf die Gruppe, um ihr Feld zu öffnen: Tippe auf den Namen, um ihn zu ändern, auf eine App, um sie zu öffnen; `×` nimmt sie heraus, und `Gruppe auflösen` stellt alle Apps zurück ins Dock. Leg eine weitere App auf eine Gruppe, um sie hinzuzufügen. Eine Gruppe mit nur noch einer App verschwindet von selbst. Gruppen werden mit der Reihenfolge des Docks mit deinen anderen Geräten synchronisiert.
+
 ## Bewegungsgefühl
 Unter `Einstellungen › Darstellung` lässt `Öffnen und Schließen von Apps animieren` eine App aus ihrem Symbol wachsen und wieder hineinschrumpfen. `Bewegungsgefühl` legt fest, wie sich Apps, Menüs und Bereiche bewegen: `Ruhig` (langsamer und sanft), `Lebhaft` (wie bisher) oder `Federnd` (mit einer kleinen Feder). Reduzierte Bewegung, in den Bedienungshilfen oder in deinem System, hat immer Vorrang. Nur auf diesem Gerät.
 
