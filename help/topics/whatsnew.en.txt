@@ -3,6 +3,18 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.96.01
+- **Tidier Appearance and top bar.** Make it yours now takes you to the one wallpaper picker instead of repeating it, and the top bar keeps power and Quick settings on screen on narrow phones.
+
+## Version 8.96.00
+- **Speak to the Assistant.** The microphone next to Send turns what you say into text on this device (Whisper; pick the small model or the one that is better at Greek the first time). The text waits in the message box for you to check and send; the sound never leaves the device. The orOS Assistant icon has a `Speak` shortcut.
+
+## Version 8.95.00
+- **The Assistant works in Layout like Claude.** Turn on Assistant › Settings › Data › "Layout work without cards": changes, the cover spread, house style and the print PDF with crop marks and bleed are done at once, and the Assistant checks the result and fixes it in the same answer, with up to 40 rounds of Layout work per question. Undo stays in the change history.
+
+## Version 8.94.00
+- **orOS Assistant on its own.** Install `orOS Assistant` (Settings › Apps, or the Koulaxizis Apps manager on Android) and ask your notes, tasks and calendar anything without opening the desktop first. The Quick Settings tile and the widget button open it too, a `Briefing` shortcut sits on its icon, and texts and links you share from other apps wait in its message box until you press Send.
+
 ## Version 8.93.00
 - **Claude's questions don't get lost.** When Claude asks to open a folder and you are not at the screen, orOS keeps a notice «Claude is waiting for your answer» (on your phone too) until you answer. Claude also sees which questions are still waiting, and which orOS Gate it talks to and when one of your devices last reached it.
 

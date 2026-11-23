@@ -2024,6 +2024,15 @@ body.till-mode #pocket-chip { display: none !important; }
 #oros-bar.bar-nolabel #btn-menu-label { display: none; }
 #oros-bar.bar-nodate #bar-date { display: none; }
 #oros-bar.bar-nolang #btn-lang { display: none; }   /* fit level 7: Quick settings carries it */
+/* BARFIT-2 fit levels 8-10 (shell.js fitBar): narrow phones with many
+   chips. Hit areas stay 44px high and at least 32px wide. */
+#oros-bar.bar-slim #qs-btn > :not(:last-child) { display: none; }   /* level 8: the power symbol only */
+#oros-bar.bar-slim #qs-btn { padding: 0 5px; }
+#oros-bar.bar-slim #sync-dot-btn { width: 34px; min-width: 34px; }
+#oros-bar.bar-slim #oros-taskbar-bell { width: 34px !important; }   /* notifications.js sets 44px inline */
+#oros-bar.bar-slim #mt-btn { min-width: 34px; padding: 0 4px; margin-left: 0; }
+#oros-bar.bar-nowx #wx-chip { display: none; }      /* level 9 */
+#oros-bar.bar-nohelp #help-btn { display: none; }   /* level 10 */
 
 /* ============================================================
    Wave 3 (Calendar) — recurrence, reminders, drag & drop

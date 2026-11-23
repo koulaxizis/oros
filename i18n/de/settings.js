@@ -74,6 +74,7 @@ orosPack("de", "settings", {
  "my.colour": "Farbe",
  "my.preview": "Vorschau des Desktops mit dieser Auswahl",
  "my.lock": "Sperrbildschirm: Bildschirmsperre einschalten",
+ "my.wall": "Hintergrundbild wählen",
  "w.yours": "mach es zu deinem anpassen personalisieren aussehen thema vorschau",
  "a.wallpaper.find": "Hintergrund suchen",
  "a.wallpaper.find.none": "Kein Hintergrund mit diesem Namen.",

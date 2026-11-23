@@ -10,9 +10,14 @@
 //     are fetched once and kept in IndexedDB "oros-montage-ai", so it
 //     works offline from then on; "Remove the speech model" deletes them
 //   - the sound never leaves the device
-//   MontageASR.ready() → Promise<bool> (model on this device?)
-//   MontageASR.run(samples16k, { lang: "auto"|"en"|"el"|…, progress(f, stage),
+//   MontageASR.ready(model?) → Promise<bool> (model on this device?)
+//   MontageASR.prepare(model?, progress(f)?) → Promise<true> (download + load)
+//   MontageASR.run(samples16k, { lang: "auto"|"en"|"el"|…, model?, progress(f, stage),
 //     cancelled() }) → Promise<{ lang, cues: [{ start, end, text }] }>
+//   model: "tiny" (default, what Montage, Lyric Sync and Notes use) or
+//   "base" (SOLO-AS W2, the Assistant's voice input: about 77 MB, better
+//   at Greek). Both share the runtime files; forget() removes every
+//   model, forget("base") only that one.
 // The pure steps (melFilters, logMel, decimate, applyTimestampRules,
 // segmentsFrom, decodeText, splitCue) are unit-tested in node.
 // UMD: module.exports in Node, window.MontageASR in the browser.
@@ -21,7 +26,7 @@
   "use strict";
 
   var SR = 16000, N_FFT = 400, HOP = 160, N_MELS = 80, N_FRAMES = 3000, CHUNK = 30;
-  var LAYERS = 4, HEADS = 6, HEAD_DIM = 64;           // whisper-tiny
+  var LAYERS = 4, HEADS = 6, HEAD_DIM = 64;           // whisper-tiny (the default)
   var EOT = 50257, SOT = 50258, TRANSCRIBE = 50359, NO_TS = 50363, TS0 = 50364, TS_STEP = 0.02;
   var MAX_TOKENS = 224, MAX_INITIAL_TS = 1;
   var HF = "https://huggingface.co/Xenova/whisper-tiny/resolve/main/";
@@ -36,6 +41,26 @@
   };
   var FILES_VER = "ort1.22.0-whisper-tiny-q8";
   var MODEL_MB = 42, RUNTIME_MB = 11;
+  // The models (same file layout on Hugging Face). tiny keeps the names
+  // and version it always had, so a model already downloaded stays
+  // valid; base gets keys of its own ("base.enc" …). The runtime files
+  // (js, mjs, wasm) are shared and keep the tiny version string.
+  var MODELS = {
+    tiny: { hf: HF, layers: LAYERS, heads: HEADS, mb: MODEL_MB, ver: FILES_VER, pre: "" },
+    base: { hf: "https://huggingface.co/Xenova/whisper-base/resolve/main/", layers: 6, heads: 8, mb: 77,
+            ver: "ort1.22.0-whisper-base-q8", pre: "base." }
+  };
+  var RUNTIME = ["js", "mjs", "wasm"];
+  function modelOf(id) { return MODELS[id] ? id : "tiny"; }
+  // → [{ key, url, ver }] of one model (runtime first)
+  function fileList(id) {
+    var md = MODELS[modelOf(id)];
+    return RUNTIME.map(function (k) { return { key: k, url: FILES[k], ver: FILES_VER }; }).concat(
+      [["enc", "onnx/encoder_model_quantized.onnx"], ["dec", "onnx/decoder_model_merged_quantized.onnx"],
+       ["vocab", "vocab.json"], ["gen", "generation_config.json"]].map(function (x) {
+        return { key: md.pre + x[0], url: md.hf + x[1], ver: md.ver, name: x[0] };
+      }));
+  }
 
   // ---------- Sound → log-mel ----------
   // librosa's mel filter bank (Slaney scale and norm), as Whisper uses:
@@ -263,7 +288,8 @@
     var suppress = Array.isArray(gen.suppress_tokens) ? gen.suppress_tokens : [];
     var beginSuppress = Array.isArray(gen.begin_suppress_tokens) ? gen.begin_suppress_tokens : [220, EOT];
     var total = samples.length / SR, seek = 0, cues = [], lang = opts.lang && opts.lang !== "auto" ? opts.lang : null;
-    var emptyPast = function () { return new T("float32", new Float32Array(0), [1, HEADS, 0, HEAD_DIM]); };
+    var layers = m.layers || LAYERS, heads = m.heads || HEADS;
+    var emptyPast = function () { return new T("float32", new Float32Array(0), [1, heads, 0, HEAD_DIM]); };
     while (seek < total - 0.2) {
       if (cancelled()) throw new Error("cancelled");
       var a = Math.floor(seek * SR), win = samples.subarray(a, Math.min(samples.length, a + SR * CHUNK)), winLen = win.length / SR;
@@ -278,7 +304,7 @@
       var hidden = encOut.last_hidden_state;
       // the language: given, or the likeliest language token after SOT
       if (!lang) {
-        var lo = await m.dec.run(decFeeds(T, [SOT], hidden, null, emptyPast));
+        var lo = await m.dec.run(decFeeds(T, [SOT], hidden, null, emptyPast, layers));
         var lg = lo.logits.data, best = -Infinity;
         Object.keys(langIds).forEach(function (k) { var id = langIds[k]; if (lg[id] > best) { best = lg[id]; lang = k.replace(/[<|>]/g, ""); } });
         lang = lang || "en";
@@ -287,7 +313,7 @@
       var prompt = [SOT, langTok, TRANSCRIBE], seq = [], past = null, input = prompt;
       while (seq.length < MAX_TOKENS) {
         if (cancelled()) throw new Error("cancelled");
-        var out = await m.dec.run(decFeeds(T, input, hidden, past, emptyPast));
+        var out = await m.dec.run(decFeeds(T, input, hidden, past, emptyPast, layers));
         var V = out.logits.dims[2], n = out.logits.dims[1];
         var logits = Float32Array.from(out.logits.data.subarray((n - 1) * V, n * V));
         applyTimestampRules(logits, seq, suppress, beginSuppress);
@@ -295,7 +321,7 @@
         for (var i = 0; i < V; i++) if (logits[i] > bv) { bv = logits[i]; tok = i; }
         if (tok === EOT || bv === -Infinity) break;
         seq.push(tok);
-        past = presents(out, past);
+        past = presents(out, past, layers);
         input = [tok];
         if (seq.length % 8 === 0) progress(Math.min(0.99, (seek + Math.min(winLen, lastStamp(seq))) / total), "write");
       }
@@ -312,22 +338,22 @@
   }
   function lastStamp(seq) { for (var i = seq.length - 1; i >= 0; i--) if (seq[i] >= TS0) return (seq[i] - TS0) * TS_STEP; return 0; }
   function pause() { return new Promise(function (r) { setTimeout(r, 0); }); }
-  function decFeeds(T, ids, hidden, past, emptyPast) {
+  function decFeeds(T, ids, hidden, past, emptyPast, layers) {
     var f = {
       input_ids: new T("int64", BigInt64Array.from(ids.map(function (x) { return BigInt(x); })), [1, ids.length]),
       encoder_hidden_states: hidden,
       use_cache_branch: new T("bool", [!!past], [1])
     };
-    for (var l = 0; l < LAYERS; l++) ["decoder.key", "decoder.value", "encoder.key", "encoder.value"].forEach(function (k) {
+    for (var l = 0; l < (layers || LAYERS); l++) ["decoder.key", "decoder.value", "encoder.key", "encoder.value"].forEach(function (k) {
       f["past_key_values." + l + "." + k] = past ? past[l + "." + k] : emptyPast();
     });
     return f;
   }
   // The cache for the next step: the new self-attention keys / values,
   // and the encoder ones from the first step (they never change).
-  function presents(out, past) {
+  function presents(out, past, layers) {
     var p = {};
-    for (var l = 0; l < LAYERS; l++) {
+    for (var l = 0; l < (layers || LAYERS); l++) {
       p[l + ".decoder.key"] = out["present." + l + ".decoder.key"];
       p[l + ".decoder.value"] = out["present." + l + ".decoder.value"];
       p[l + ".encoder.key"] = past ? past[l + ".encoder.key"] : out["present." + l + ".encoder.key"];
@@ -344,7 +370,8 @@
   var pure = {
     melFilters: melFilters, logMel: logMel, decimate3: decimate3, applyTimestampRules: applyTimestampRules,
     segmentsFrom: segmentsFrom, decodeText: decodeText, splitCue: splitCue, transcribe: transcribe, invertVocab: invertVocab,
-    FILES: FILES, MODEL_MB: MODEL_MB, RUNTIME_MB: RUNTIME_MB, TS0: TS0, EOT: EOT
+    FILES: FILES, MODEL_MB: MODEL_MB, RUNTIME_MB: RUNTIME_MB, TS0: TS0, EOT: EOT,
+    MODELS: MODELS, fileList: fileList, modelOf: modelOf
   };
   if (typeof module === "object" && module.exports) { module.exports = pure; return; }
 
@@ -373,13 +400,13 @@
       });
     });
   }
-  function stored(name) {
-    return tx("readonly", function (s) { return s.get(name); }).then(function (rec) {
-      return rec && rec.v === FILES_VER && rec.blob instanceof Blob ? rec.blob : null;
+  function stored(f) {
+    return tx("readonly", function (s) { return s.get(f.key); }).then(function (rec) {
+      return rec && rec.v === f.ver && rec.blob instanceof Blob ? rec.blob : null;
     }, function () { return null; });
   }
-  function ready() {
-    return Promise.all(Object.keys(FILES).map(stored)).then(function (l) { return l.every(Boolean); }, function () { return false; });
+  function ready(model) {
+    return Promise.all(fileList(model).map(stored)).then(function (l) { return l.every(Boolean); }, function () { return false; });
   }
   function fetchFile(url, onBytes, signal) {
     return fetch(url, { cache: "no-cache", signal: signal, credentials: "omit" }).then(function (res) {
@@ -396,23 +423,34 @@
       return pump();
     });
   }
-  function files(onProgress, signal) {
-    var names = Object.keys(FILES), got = {}, done = 0, total = (MODEL_MB + RUNTIME_MB) * 1024 * 1024;
-    return names.reduce(function (p, name) {
+  // → { js, mjs, wasm, enc, dec, vocab, gen } blobs of one model
+  function files(model, onProgress, signal) {
+    var list = fileList(model), got = {}, done = 0, total = (MODELS[modelOf(model)].mb + RUNTIME_MB) * 1024 * 1024;
+    return list.reduce(function (p, f) {
+      var name = f.name || f.key;
       return p.then(function () {
-        return stored(name).then(function (b) {
+        return stored(f).then(function (b) {
           if (b) { got[name] = b; return; }
-          return fetchFile(FILES[name], function (n) { done += n; if (onProgress) onProgress(Math.min(0.99, done / total)); }, signal).then(function (blob) {
+          return fetchFile(f.url, function (n) { done += n; if (onProgress) onProgress(Math.min(0.99, done / total)); }, signal).then(function (blob) {
             got[name] = blob;
-            return tx("readwrite", function (s) { s.put({ v: FILES_VER, blob: blob }, name); }).catch(function () {});
+            return tx("readwrite", function (s) { s.put({ v: f.ver, blob: blob }, f.key); }).catch(function () {});
           });
         });
       });
     }, Promise.resolve()).then(function () { if (onProgress) onProgress(1); return got; });
   }
-  function forget() { modelsP = null; return tx("readwrite", function (s) { s.clear(); }).catch(function () {}); }
+  // forget() = every model and the runtime (Montage's "Remove the speech
+  // model"); forget("base") = only that model's own files.
+  function forget(model) {
+    if (!model) { modelsP = {}; return tx("readwrite", function (s) { s.clear(); }).catch(function () {}); }
+    var id = modelOf(model);
+    delete modelsP[id];
+    return tx("readwrite", function (s) {
+      fileList(id).forEach(function (f) { if (RUNTIME.indexOf(f.key) < 0) s.delete(f.key); });
+    }).catch(function () {});
+  }
 
-  var modelsP = null;
+  var modelsP = {};
   function loadScript(blob) {
     return new Promise(function (resolve, reject) {
       if (root.ort && root.ort.InferenceSession) { resolve(); return; }
@@ -423,9 +461,10 @@
       document.head.appendChild(s);
     });
   }
-  function models(onProgress, signal) {
-    if (modelsP) return modelsP;
-    modelsP = files(onProgress, signal).then(function (f) {
+  function models(model, onProgress, signal) {
+    var id = modelOf(model), md = MODELS[id];
+    if (modelsP[id]) return modelsP[id];
+    var mp = modelsP[id] = files(id, onProgress, signal).then(function (f) {
       return loadScript(f.js).then(function () {
         var ort = root.ort;
         if (!ort || !ort.InferenceSession) throw new Error("runtime");
@@ -437,25 +476,29 @@
         };
         var mk = function (b) { return b.arrayBuffer().then(function (buf) { return ort.InferenceSession.create(new Uint8Array(buf), { executionProviders: ["wasm"] }); }); };
         return Promise.all([mk(f.enc), mk(f.dec), f.vocab.text(), f.gen.text()]).then(function (r) {
-          return { ort: ort, enc: r[0], dec: r[1], vocabInv: invertVocab(JSON.parse(r[2])), gen: JSON.parse(r[3]) };
+          return { ort: ort, enc: r[0], dec: r[1], vocabInv: invertVocab(JSON.parse(r[2])), gen: JSON.parse(r[3]),
+                   layers: md.layers, heads: md.heads };
         });
       });
     });
-    modelsP.catch(function () { modelsP = null; });
-    return modelsP;
+    mp.catch(function () { if (modelsP[id] === mp) delete modelsP[id]; });
+    return mp;
   }
 
   // samples: Float32Array at 16 kHz (decimate3 a 48 kHz mix first)
   function run(samples, opts) {
     opts = opts || {};
     var progress = opts.progress || function () {};
-    return models(function (f) { progress(f, "download"); }, opts.signal).then(function (m) {
+    return models(opts.model, function (f) { progress(f, "download"); }, opts.signal).then(function (m) {
       return transcribe(m, samples, opts);
     });
   }
 
   root.MontageASR = {
     ready: ready, run: run, forget: forget, decimate3: decimate3, MODEL_MB: MODEL_MB, RUNTIME_MB: RUNTIME_MB,
-    melFilters: melFilters, logMel: logMel, splitCue: splitCue
+    melFilters: melFilters, logMel: logMel, splitCue: splitCue,
+    mbOf: function (model) { return MODELS[modelOf(model)].mb; },
+    // download (if needed) and load a model ahead of the first run
+    prepare: function (model, onProgress, signal) { return models(model, onProgress, signal).then(function () { return true; }); }
   };
 })(typeof window !== "undefined" ? window : this);

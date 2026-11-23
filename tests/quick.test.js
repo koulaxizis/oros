@@ -79,7 +79,7 @@ test("QW #quick, #quick-win and their text; #quick-ask stays the Assistant's", (
 test("QW manifest shortcut and the Android tile and widget open #quick", () => {
   const man = JSON.parse(read("manifest.webmanifest"));
   const urls = man.shortcuts.slice(0, 4).map((s) => s.url);
-  assert.ok(urls.includes("/#quick") && urls.includes("/#quick-ask"), urls.join(" "));
+  assert.ok(urls.includes("/#quick") && urls.includes("/assistant/solo.html"), urls.join(" "));
   const tw = "android/app/src/main/java/online/useoros/twa/";
   assert.match(read(tw + "Widgets.java"), /\.fragment\("quick"\)/);
   assert.match(read(tw + "QuickTile.java"), /Widgets\.quickOpen\(this\)/);

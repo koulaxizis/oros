@@ -369,30 +369,17 @@
     c.id = "my-card";
     c.appendChild(el("p", "hint", t("my.hint")));
     c.appendChild(yoursPreview(s));
-    // Wallpaper: a strip of the drawn ones and Random
+    // Wallpaper: one picker only, the Wallpaper card below (YOURS-2,
+    // Chris 2026-11-23: the strip here showed the same wallpapers twice).
+    // This button takes you there, to the one that is on.
     if (s.wallpapers) {
-      var strip = el("div", "my-walls");
-      strip.setAttribute("role", "radiogroup");
-      strip.setAttribute("aria-label", t("a.wallpaper"));
-      s.wallpapers.forEach(function (w) {
-        if (!w.css) return;
-        var on = w.id === s.wallpaper;
-        var b = el("button", "wall my-wall" + (on ? " on" : ""));
-        b.type = "button";
-        b.setAttribute("role", "radio");
-        b.setAttribute("aria-checked", on ? "true" : "false");
-        b.setAttribute("aria-label", w.name);
-        b.title = w.name;
-        b.setAttribute("data-k", "y-wall:" + w.id);
-        b.style.background = w.css;
-        b.style.backgroundSize = "cover";
-        b.addEventListener("click", function () { set("wallpaper", w.id); });
-        strip.appendChild(b);
-      });
-      var wr = row(t("a.wallpaper"), null, { stack: true });
-      wr.appendChild(strip);
-      wr.appendChild(actions(button(t("a.wallpaper.random"), "y-wallpaper:random", function () { set("wallpaper:random", 1); })));
-      c.appendChild(wr);
+      c.appendChild(row(t("a.wallpaper"), button(t("my.wall"), "y-wall-go", function () {
+        var g = $("wall-card");
+        if (!g) return;
+        if (typeof g.scrollIntoView === "function") g.scrollIntoView({ block: "start" });
+        var f = g.querySelector(".wall.on") || $("f-wall-find");
+        if (f) { try { f.focus({ preventScroll: true }); } catch (e) { f.focus(); } }
+      })));
     }
     // Colour: the skins, and Accent from wallpaper
     if (s.skins) {
@@ -531,6 +518,7 @@
     if (s.icons) secIcons(host, s.icons);
 
     var c3 = card(t("a.wallpaper"), "wallpaper");
+    c3.id = "wall-card";                       // YOURS-2: "Make it yours" scrolls here
     // WPDIR-1: find a wallpaper by name (here only) and Random
     var wfind = el("input", "wall-find");
     wfind.type = "search";
