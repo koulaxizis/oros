@@ -16,7 +16,7 @@ test.before(async () => { R = await import("../relay/gate.js"); });
 function assistantTools() {
   return C.toolsFor({ data: 1, summary: 1, entries: 1, openFile: 1, rebuild: 1, house: 1, epub: 1, changes: 1, creates: ["todo"], links: 1,
                       partnerLinks: 1, actions: ["timer"], history: 1, edits: { writer: 1 }, recipes: ["layout"], newsletter: 1,
-                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write", fonts: 1, mockup: 1 });
+                      cover: 1, rules: 1, web: 1, lines: ["budget", "invoices", "stock", "publish"], kbCols: 1, files: "write", fonts: 1, mockup: 1, shop: "write" });
 }
 
 // A tool on one side only: { twin: [tools on the other side that do the
@@ -53,6 +53,10 @@ const GATE_ONLY = {
 const ASSISTANT_ONLY = {
   web_search: { why: "Claude has its own web search; the gate reads and changes orOS, not the web." },
   read_page: { why: "Claude reads pages with its own tools." },
+  // AS-SHOP W1 (Chris 2026-11-23): the Gate twin is wave 2 (GATE-SHOP), with its own
+  // per-app level for the Shop app (read: shop_find, write: shop_change)
+  shop_find: { why: "Wave 2 (GATE-SHOP) offers it through the gate once the owner sets the Shop app; the Assistant reads the shop with this device's own shop key." },
+  shop_change: { why: "Wave 2 (GATE-SHOP) offers it through the gate once the owner sets the Shop app to write; until then only the owner's Apply on the device changes the shop." },
   open_file: { why: "It opens a file attached to the Assistant's conversation; a gate call has no attachments (a file on the orOS disk opens with do_action open)." }
 };
 

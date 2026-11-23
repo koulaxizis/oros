@@ -2993,6 +2993,44 @@
       required: ["name", "columns"] }
   };
 
+  // AS-SHOP W1 (Chris 2026-11-23): the user's own WooCommerce shop of
+  // Connected services (any shop; assistant/shop.js). shop_find reads,
+  // shop_change shows the change card and writes only after Apply.
+  var TOOL_SHOP_FIND = {
+    name: "shop_find",
+    description: "Find products in the user's own online shop (WooCommerce, connected in Settings › Connected services) by words of the name, " +
+      "the SKU or the product id. Each product comes with its id, weight, dimensions, prices and stock, in the shop's units; a product with " +
+      "variations lists them (their id and option). Use it before shop_change, and to answer questions about the shop's products.",
+    params: { type: "object", properties: {
+      query: { type: "string", description: "Words of the product's name (any language, accents do not matter), its SKU or its id." },
+      shop: { type: "string", description: "The shop's name or address, only when the user has several shops." } },
+      required: ["query"] }
+  };
+  var TOOL_SHOP_CHANGE = {
+    name: "shop_change",
+    description: "Change one product (or one variation) in the user's own online shop: weight, dimensions, regular or sale price, stock. " +
+      "Only the fields given change; names, texts, pictures, status and orders never change here, and nothing is deleted. " +
+      "Give a weight or a size with its unit (\"350 g\", \"0.35 kg\", \"21 cm\"): it is converted to the shop's unit. " +
+      "The user sees exactly what would change (before → after) and must press Apply; they may refuse. The result says whether it was applied. " +
+      "The card has Undo, which puts the old values back while the shop still shows the new ones.",
+    params: { type: "object", properties: {
+      product: { type: "string", description: "The product: its id from shop_find (best), its SKU or its exact name." },
+      variation: { type: "string", description: "For a product with variations: the variation's id or its option (e.g. \"Ebook\")." },
+      shop: { type: "string", description: "The shop's name or address, only when the user has several shops." },
+      weight: { type: "string", description: "The new weight with its unit, e.g. \"350 g\"." },
+      length: { type: "string", description: "The new length with its unit, e.g. \"21 cm\"." },
+      width: { type: "string", description: "The new width with its unit." },
+      height: { type: "string", description: "The new height (thickness) with its unit." },
+      regular_price: { type: "string", description: "The new regular price, e.g. \"14.90\" (the shop's currency, no symbol)." },
+      sale_price: { type: "string", description: "A sale price lower than the regular price, e.g. \"11.90\"." },
+      sale_price_clear: { type: "boolean", description: "true ends the sale (the sale price is removed)." },
+      stock_quantity: { type: "integer", description: "The new number in stock (the shop then counts stock)." },
+      stock_change: { type: "integer", description: "How many more (e.g. 5) or fewer (e.g. -2) are in stock, counted from the shop's number now." },
+      manage_stock: { type: "boolean", description: "true: the shop counts this product's stock; false: it does not." },
+      stock_status: { type: "string", "enum": ["instock", "outofstock", "onbackorder"], description: "Only for a product whose stock is not counted." } },
+      required: ["product"] }
+  };
+
   var TOOL_OPEN_FILE = {
     name: "open_file",
     description: "Open a file the user attached in this conversation in an orOS app, as it is: Writer opens a document " +
@@ -3817,6 +3855,8 @@
     if (opts.data && opts.edits && Object.keys(opts.edits).length) out.push(readAppTool(Object.keys(opts.edits)), editTool(opts.edits));
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
+    if (opts.shop) out.push(TOOL_SHOP_FIND);
+    if (opts.shop === "write") out.push(TOOL_SHOP_CHANGE);   // AS-SHOP
     if (opts.cover) out.push(TOOL_COVER);
     if (opts.rules && autoCore()) out.push(TOOL_RULE);
     if (opts.web) out.push(TOOL_WEB, TOOL_PAGE);
@@ -4259,6 +4299,11 @@
     }
     if (!opts.builtin && opts.entries && opts.entries.indexOf("settlement") >= 0) {
       lines.push("For what a book sold, in total or in each bookshop, call app_summary with app stock and the month; consignment shops are places in its answer. To settle with a consignment shop, propose_entry settlement with the shop's name.");
+    }
+    if (!opts.builtin && opts.shop) {
+      lines.push("The user's own online shop is connected (" + (Array.isArray(opts.shops) && opts.shops.length ? opts.shops.join(", ") : "WooCommerce") + "). For its products call shop_find; " +
+        (opts.shop === "write" ? "to change one (weight, size, price, sale, stock) call shop_change with the product's id from shop_find. One product or variation per call: for several, one call each. Say the change is ready on the card, never that it is done before the result says so. " : "") +
+        "Never guess a product, a weight or a price: when shop_find finds several, ask the user which one.");
     }
     if (!opts.builtin && opts.newsletter) {
       lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. An article, interview or book usually fits a picture_text block with the page's main picture (its address from the page text) and a button to the source; a banner is an image block with a url. Use only picture addresses you saw; without one, leave image_url out and the user picks the picture. The user's own products (\"our latest release\", \"our new book\") come from their shop with shop_products, never from a web search; other people's products (other publishers, partners) go in a products block from pages you read, with their own links and only prices the page shows. Write in the language of the issue (the user's, unless they say otherwise). Give each block its section (top for the main story; news; products; promo for banners and offers; end for a closing note) so the issue keeps its order. The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. When the user says the issue is ready or asks to send it, call newsletter_check; sending is always the user's step in Newsletter.");
