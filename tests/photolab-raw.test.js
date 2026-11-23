@@ -212,15 +212,16 @@ test("rgbToRgba: LibRaw's 8-bit RGB, 16-bit RGB and grey", () => {
   assert.deepEqual([...R.rgbToRgba(new Uint8Array([9, 7]), 2, 1, 8, 1)], [9, 9, 9, 255, 7, 7, 7, 255]);
 });
 
-test("vendor/libraw: the unmodified libraw-wasm 1.6.0 files and their licences", () => {
+test("vendor/libraw: the libraw-wasm 1.6.0 files (wasm rebuilt for LibRaw 0.22.3) and their licences", () => {
   const dir = path.join(ROOT, "vendor/libraw");
   const lic = fs.readFileSync(path.join(dir, "LICENSE"), "utf8");
   for (const f of ["index.js", "worker.js", "libraw.js", "libraw.wasm"]) {
     const h = crypto.createHash("sha256").update(fs.readFileSync(path.join(dir, f))).digest("hex");
-    assert.ok(lic.includes(h), f + " is the file the LICENSE names (unmodified)");
+    assert.ok(lic.includes(h), f + " is the file the LICENSE names");
   }
   assert.ok(fs.existsSync(path.join(dir, "LICENSE.LGPL")) && fs.existsSync(path.join(dir, "LICENSE.CDDL")));
-  assert.match(lic, /LibRaw 0\.22\.1/);
+  assert.match(lic, /LibRaw 0\.22\.3/);
+  assert.ok(fs.existsSync(path.join(dir, "build.sh")), "the rebuild is written down");
   // loaded only when a RAW file is opened: not from any page, not precached
   const html = fs.readFileSync(path.join(ROOT, "photolab/index.html"), "utf8");
   assert.doesNotMatch(html, /vendor\/libraw/);

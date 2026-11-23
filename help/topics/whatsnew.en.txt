@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.84.01
+- **Security updates.** The Library now opens .cbr, .cbz and other archives with libarchive 3.8.11, and Photo Lab reads RAW photos with LibRaw 0.22.3. Both versions fix published security flaws in damaged or crafted files. Nothing changes in how you use them.
+
 ## Version 8.84.00
 - **Make it yours.** The first card of Settings › Appearance puts the look of orOS in one place with a live preview of the desktop: wallpaper (and Random), colour, accent from wallpaper, the top bar, the Dock, motion feel, interface sounds and the lock screen look.
 
