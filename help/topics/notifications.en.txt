@@ -15,6 +15,9 @@ Open the menu, choose `Settings` and go to `Notifications`:
 
 These settings travel with [sync](help:t/sync), so they are the same on all your devices.
 
+## Interface sounds
+In `Settings › Notifications › Interface sounds` orOS can play soft sounds when you tap a button, flip a switch or open and close apps and panels. Choose a `Sound pack` (`Pebble`, wood; `Keys`, piano; `Crystal`, bells), set the `Volume` and press `Try`. They are off at first and stay silent while Do Not Disturb or a Focus mode is on. The sounds are a few KB of free CC0 samples, downloaded once when you turn them on and then played offline. This device only.
+
 ## Focus modes
 A focus mode keeps notifications quiet while you work, sleep or have time for yourself. While a mode is on, only the apps it lets through pop up and sound; every other notification still arrives in the bell's list, so nothing is lost.
 

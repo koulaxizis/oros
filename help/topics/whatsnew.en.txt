@@ -3,6 +3,12 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.80.00
+- **Motion feel.** Choose how apps, menus and panels move: Calm, Lively (as before) or Bouncy. Reduce motion always wins. Settings › Appearance › Motion feel, this device only.
+
+## Version 8.79.00
+- **Interface sounds.** orOS can play soft sounds when you tap a button, flip a switch or open and close apps and panels, in three packs: Pebble (wood), Keys (piano) and Crystal (bells). Off at first, silent during Do Not Disturb or a Focus mode, this device only: Settings › Notifications › Interface sounds.
+
 ## Version 8.78.00
 - **Cards on the left, centre or right of the top bar, and Islands.** On wide windows each card of the smart top bar can sit on the left (after the menu button), in the centre or on the right: Settings › Appearance › Top bar › Where the cards sit. The new look `Islands` floats the left side, the centre and the right side as separate rounded groups. On a phone and in the Dock the cards stay together.
 

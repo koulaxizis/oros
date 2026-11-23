@@ -15,6 +15,9 @@ Neue Benachrichtigungen erscheinen für ein paar Sekunden auf dem Bildschirm (st
 
 Diese Einstellungen reisen mit der [Synchronisierung](help:t/sync) mit, sie sind also auf all deinen Geräten gleich.
 
+## Oberflächenklänge
+Unter `Einstellungen › Benachrichtigungen › Oberflächenklänge` kann orOS leise Klänge spielen, wenn du eine Taste drückst, einen Schalter umlegst oder Apps und Bereiche öffnest und schließt. Wähle ein `Klangpaket` (`Kiesel`, Holz; `Tasten`, Klavier; `Kristall`, Glöckchen), stell die `Lautstärke` ein und drück `Ausprobieren`. Sie sind anfangs aus und bleiben still, solange „Nicht stören“ oder ein Fokusmodus an ist. Die Klänge sind wenige KB freier CC0-Samples, werden einmal geladen, wenn du sie einschaltest, und dann offline abgespielt. Nur auf diesem Gerät.
+
 ## Fokus-Modi
 Ein Fokus-Modus hält Benachrichtigungen still, während du arbeitest, schläfst oder Zeit für dich hast. Solange ein Modus an ist, zeigen sich und klingen nur die Apps, die er durchlässt; alle anderen Benachrichtigungen kommen trotzdem in die Liste der Glocke, es geht also nichts verloren.
 

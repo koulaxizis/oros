@@ -61,7 +61,7 @@ test("zoom: Settings › Appearance switch, this device, EN/EL/DE", () => {
   assert.strictEqual(Core.SCOPE.zoom, "device");
   assert.ok(Core.findSettings, "search");
   assert.match(settings, /switchBtn\(!!s\.zoom\.on, "zoom"/);
-  assert.match(shell, /zoom: SOLO \? null : \{ on: zoomOn\(\) \}/);
+  assert.match(shell, /zoom: SOLO \? null : \{ on: zoomOn\(\), feel: feelNow\(\)/);   // FEEL-1 adds the feel
   assert.match(shell, /case "zoom":\s+zoomSetUser\(!!value\); return;/);
   const src = fs.readFileSync(path.join(root, "settings/core.js"), "utf8");
   assert.strictEqual((src.match(/"a\.zoom": /g) || []).length, 2);
