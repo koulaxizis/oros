@@ -50,7 +50,7 @@ import java.util.List;
 public class AfAuthActivity extends Activity {
     static final String X_ID = "af-id", X_PICK = "af-pick", X_PKG = "af-pkg", X_BROWSER = "af-browser",
             X_KINDS = "af-kinds", X_IDS = "af-ids", X_CONFIRM = "af-confirm", X_OTP = "af-otp", X_HOST = "af-host",
-            X_LINK = "af-link", X_GUESS = "af-guess";
+            X_LINK = "af-link", X_GUESS = "af-guess", X_DOC = "af-doc";
     private static final int REQ_CREDENTIAL = 1;
     private boolean asked;
 
@@ -82,7 +82,8 @@ public class AfAuthActivity extends Activity {
             return;
         }
         if (index == null) { done(null); return; }
-        if (getIntent().getBooleanExtra(X_PICK, false)) pick(index);
+        if (getIntent().getBooleanExtra(X_DOC, false)) pickDoc(index);
+        else if (getIntent().getBooleanExtra(X_PICK, false)) pick(index);
         else if (getIntent().getBooleanExtra(X_CONFIRM, false)) confirm(find(index, getIntent().getStringExtra(X_ID)));
         else fill(find(index, getIntent().getStringExtra(X_ID)));
     }
@@ -162,12 +163,44 @@ public class AfAuthActivity extends Activity {
             done(null);
             return;
         }
+        chooser(all, getString(otp ? R.string.af_pick_title_otp : R.string.af_pick_title, place()), this::confirm, false);
+    }
+
+    /** PW-AF6: "Choose from orOS" on a form with a tax number, IBAN,
+     *  ID card or passport field: the identities that hold one of them,
+     *  picked by hand; filled at once, nothing is linked or kept. */
+    private void pickDoc(JSONArray index) {
+        int[] kinds = getIntent().getIntArrayExtra(X_KINDS);
+        final List<JSONObject> all = new ArrayList<>();
+        for (int i = 0; i < index.length(); i++) {
+            JSONObject e = index.optJSONObject(i);
+            if (e == null || !"identity".equals(e.optString("k"))) continue;
+            boolean has = false;
+            for (int k : kinds == null ? new int[0] : kinds) {
+                String v = value(e, k);
+                if (v != null && !v.isEmpty()) has = true;
+            }
+            if (has) all.add(e);
+        }
+        all.sort((a, b) -> a.optString("t").compareToIgnoreCase(b.optString("t")));
+        if (all.isEmpty()) {
+            Toast.makeText(this, R.string.af_none_doc, Toast.LENGTH_LONG).show();
+            done(null);
+            return;
+        }
+        chooser(all, getString(R.string.af_pick_doc_title, place()), this::fill, true);
+    }
+
+    /** A list with a search box; a tap hands the entry to then. doc: the
+     *  second line is the identity's name, not a user name. */
+    private void chooser(final List<JSONObject> all, String title, final java.util.function.Consumer<JSONObject> then, final boolean doc) {
         final List<JSONObject> shown = new ArrayList<>(all);
         final ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, new ArrayList<>());
         final Runnable refresh = () -> {
             adapter.clear();
             for (JSONObject e : shown) {
-                String u = e.optString("u");
+                JSONObject h = e.optJSONObject("h");
+                String u = doc ? (h != null ? h.optString("full") : "") : e.optString("u");
                 adapter.add(e.optString("t") + (u.isEmpty() ? "" : " · " + u));
             }
             adapter.notifyDataSetChanged();
@@ -191,13 +224,16 @@ public class AfAuthActivity extends Activity {
             @Override public void onTextChanged(CharSequence c, int a, int b, int d) { }
             @Override public void afterTextChanged(Editable ed) {
                 shown.clear();
-                for (JSONObject e : all) if (AfMatch.finds(e.optString("t") + " " + e.optString("u"), ed.toString())) shown.add(e);
+                for (JSONObject e : all) {
+                    JSONObject h = e.optJSONObject("h");
+                    String u = doc ? (h != null ? h.optString("full") : "") : e.optString("u");
+                    if (AfMatch.finds(e.optString("t") + " " + u, ed.toString())) shown.add(e);
+                }
                 refresh.run();
             }
         });
-        String place = place();
         final AlertDialog dlg = new AlertDialog.Builder(this, android.R.style.Theme_DeviceDefault_Dialog_Alert)
-                .setTitle(getString(otp ? R.string.af_pick_title_otp : R.string.af_pick_title, place))
+                .setTitle(title)
                 .setView(box)
                 .setNegativeButton(R.string.af_no, (d, w) -> done(null))
                 .setOnCancelListener(d -> done(null))
@@ -207,7 +243,7 @@ public class AfAuthActivity extends Activity {
             JSONObject e = shown.get(which);
             dlg.setOnCancelListener(null);
             dlg.dismiss();
-            confirm(e);
+            then.accept(e);
         });
         dlg.show();
     }
@@ -279,10 +315,11 @@ public class AfAuthActivity extends Activity {
         done(b.build());
     }
 
-    /** One value of the entry for a field kind; never a card PIN,
-     *  document numbers or notes (the page does not even send them). */
+    /** One value of the entry for a field kind; never a card PIN or
+     *  notes (the page does not even send them). Document numbers (x,
+     *  PW-AF6) reach only forms the person filled from "Choose from orOS". */
     static String value(JSONObject e, int kind) {
-        JSONObject c = e.optJSONObject("c"), h = e.optJSONObject("h");
+        JSONObject c = e.optJSONObject("c"), h = e.optJSONObject("h"), x = e.optJSONObject("x");
         switch (kind) {
             case AfMatch.USER: return e.optString("u");
             case AfMatch.PASS: return e.optString("p");
@@ -304,6 +341,10 @@ public class AfAuthActivity extends Activity {
             case AfMatch.ZIP: return h != null ? h.optString("zip") : null;
             case AfMatch.REGION: return h != null ? h.optString("region") : null;
             case AfMatch.COUNTRY: return h != null ? h.optString("country") : null;
+            case AfMatch.TAX: return x != null ? x.optString("tax") : null;
+            case AfMatch.IBAN: return x != null ? x.optString("iban") : null;
+            case AfMatch.ID_NO: return x != null ? x.optString("idno") : null;
+            case AfMatch.PASSPORT: return x != null ? x.optString("pass") : null;
             default: return null;
         }
     }

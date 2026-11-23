@@ -47,8 +47,9 @@
 //                 Connect, see healthOut)
 //               {t:"af-keys"}                  (v8, PW-AF2: Passwords asks
 //                 for the two Keystore public keys)
-//               {t:"af-index", seq, idx, names, at}  (v8: the sealed fill
-//                 lists, passwords/afindex.js; never plain values)
+//               {t:"af-index", seq, idx, names, at, k}  (v8: the sealed fill
+//                 lists, passwords/afindex.js; never plain values; v13:
+//                 k = the end of the index key sealed for)
 //               {t:"clear", what:"af"}         (v8: copies and keys removed)
 //               {t:"applied", what:"af-save", refs}  (v8, PW-AF3: logins
 //                 to save handed to Passwords)
@@ -90,6 +91,9 @@
 //                 none (no secret for kid) | failed)
 //               {t:"af-state", af, pkg}        (v10: what "state" carries
 //                 in af, plus the package for the autofill-setting link)
+// v13 (PW-AF6): in the orOS app with orOS Passwords installed, af-keys
+// are orOS Passwords' keys and af carries via:"pass": the orOS app hands
+// the sealed copy to orOS Passwords, the phone's only autofill.
 // The single app "orOS Passwords" (v10): its top page (solo.js host)
 // relays only pw-bio and the autofill rows above (af-keys, af-index,
 // af-state, af-save, clear/applied/done/error for af); this file then
@@ -1810,8 +1814,12 @@
   // PW-AF2: what the app says about Passwords autofill on this phone.
   function afState(a) {
     if (!a || typeof a !== "object") return null;
+    // via "pass" (v13, PW-AF6): orOS Passwords fills on this phone and
+    // these are its keys and state; the orOS app only passes the copy on.
     return { svc: a.svc === true, keys: a.keys === true, stored: a.stored === true,
-             at: typeof a.at === "number" && a.at > 0 ? a.at : 0, err: "" };
+             at: typeof a.at === "number" && a.at > 0 ? a.at : 0,
+             via: a.via === "pass" ? "pass" : "",
+             err: typeof a.err === "string" ? a.err.slice(0, 120) : "" };
   }
 
   // Phone → orOS: Calendar / Contacts is the data's writer when it is
@@ -1960,7 +1968,8 @@
     afAskKeys: function () { return bioSend({ t: "af-keys" }); },
     afSend: function (sealed) {
       if (!sealed || !sealed.idx || !sealed.names) return false;
-      return bioSend({ t: "af-index", seq: ++seq, idx: sealed.idx, names: sealed.names, at: Date.now() });
+      var k = typeof sealed.k === "string" && /^[A-Za-z0-9+/=]{16,40}$/.test(sealed.k) ? sealed.k : "";
+      return bioSend({ t: "af-index", seq: ++seq, idx: sealed.idx, names: sealed.names, at: Date.now(), k: k });
     },
     afClear: function () { afKeys = null; return bioSend({ t: "clear", what: "af" }); },
     // Must run inside a click (an intent: link, like askPermission).

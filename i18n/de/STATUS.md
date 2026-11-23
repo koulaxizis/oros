@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52778 of 52806 (99%)
+- Strings: 52793 of 52830 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,7 +16,7 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 100% | 2416 / 2416 |
+| assistant | 99% | 2416 / 2417 |
 | atelier | 100% | 1534 / 1534 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 332 / 332 |
@@ -80,7 +80,7 @@ en and el); translators change them there, not in a pack.
 | household | 100% | 142 / 142 |
 | invoices | 100% | 693 / 693 |
 | jigsaw | 100% | 90 / 90 |
-| kanban | 100% | 379 / 379 |
+| kanban | 97% | 379 / 387 |
 | labels | 100% | 88 / 88 |
 | layout | 100% | 2033 / 2033 |
 | library | 100% | 330 / 330 |
@@ -139,7 +139,7 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2119 / 2119 |
+| settings | 100% | 2134 / 2134 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
 | shell | 100% | 1659 / 1659 |

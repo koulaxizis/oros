@@ -43,7 +43,8 @@
       { k: "idno", t: "text", h: 1 }, { k: "idexp", t: "date" },
       { k: "pass", t: "text", h: 1 }, { k: "passexp", t: "date" },
       { k: "lic", t: "text", h: 1 }, { k: "licexp", t: "date" },
-      { k: "tax", t: "text", h: 1 }, { k: "ssn", t: "text", h: 1 }, { k: "ins", t: "text", h: 1 }
+      { k: "tax", t: "text", h: 1 }, { k: "ssn", t: "text", h: 1 }, { k: "ins", t: "text", h: 1 },
+      { k: "iban", t: "text", h: 1 }
     ],
     address: [
       { k: "name", t: "text" }, { k: "street", t: "text" }, { k: "line2", t: "text" }, { k: "floor", t: "text" },
@@ -62,6 +63,7 @@
     "id.idno": "ID card number", "id.idexp": "ID card expiry", "id.pass": "Passport number",
     "id.passexp": "Passport expiry", "id.lic": "License number", "id.licexp": "License expiry",
     "id.tax": "Tax number", "id.ssn": "Social security number", "id.ins": "Insurance number",
+    "id.iban": "IBAN",
     "ad.name": "Recipient", "ad.street": "Address 1", "ad.line2": "Address 2", "ad.floor": "Floor",
     "ad.city": "City", "ad.zip": "Postal code", "ad.region": "State", "ad.country": "Country", "ad.phone": "Phone"
   };
@@ -320,6 +322,7 @@
   lab("identity", "tax", ["tax number", "tax id", "tin", "vat number", "afm"]);
   lab("identity", "ssn", ["ssn", "social security number", "amka", "national insurance number"]);
   lab("identity", "ins", ["insurance number", "ama"]);
+  lab("identity", "iban", ["iban", "bank account", "bank account number"]);
   lab("address", "street", ["address 1", "address1", "address", "street", "address line 1", "street address"]);
   lab("address", "line2", ["address 2", "address2", "address 3", "address3", "address line 2", "address line 3"]);
   lab("address", "floor", ["floor"]);
@@ -422,7 +425,7 @@
         expMonth: p ? String(p.m) : null, expYear: p ? String(p.y) : null, code: d.cvv || null } };
     }
     if (kind === "identity") {
-      ["birth", "idno", "idexp", "passexp", "licexp", "tax", "ins"].forEach(function (k) {
+      ["birth", "idno", "idexp", "passexp", "licexp", "tax", "ins", "iban"].forEach(function (k) {
         var s = specOf("identity").filter(function (x) { return x.k === k; })[0];
         more(k, s && s.h);
       });

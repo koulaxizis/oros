@@ -13,6 +13,9 @@ public class OrosApp extends Application {
         bridge = new PhoneBridge(this);
         if (BuildConfig.DIAG) diagnostics();
         dropOldDriveCache();
+        // PW-AF6: with orOS Passwords installed, its autofill is the
+        // phone's only one; this app's own service follows (AfFeed).
+        if (PhoneBridge.FULL) new Thread(() -> AfFeed.sync(this), "af-feed").start();
     }
 
     /** Until wave 5 (DRIVE-APP) this app held orOS Drive itself; its

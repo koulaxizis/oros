@@ -75,11 +75,12 @@ public class OrosAutofillService extends AutofillService {
             for (Field f : fields) if (f.kind == kind) return true;
             return false;
         }
-        boolean any(int what) {   // 1 login, 2 card, 3 person
+        boolean any(int what) {   // 1 login, 2 card, 3 person, 4 document number
             for (Field f : fields) {
                 if (what == 1 && AfMatch.isLogin(f.kind)) return true;
                 if (what == 2 && AfMatch.isCard(f.kind)) return true;
                 if (what == 3 && AfMatch.isPerson(f.kind)) return true;
+                if (what == 4 && AfMatch.isDoc(f.kind)) return true;
             }
             return false;
         }
@@ -293,7 +294,7 @@ public class OrosAutofillService extends AutofillService {
         }
         if (names == null) names = new JSONArray();                  // nothing to suggest; saving still works
         String webPort = form.port;
-        boolean wantLogin = form.any(1), wantCard = form.any(2), wantPerson = form.any(3);
+        boolean wantLogin = form.any(1), wantCard = form.any(2), wantPerson = form.any(3), wantDoc = false;
         boolean otpOnly = wantLogin && form.has(AfMatch.OTP) && !form.has(AfMatch.USER) && !form.has(AfMatch.PASS);
         if (form.browser && (form.host == null || form.host.isEmpty())) wantLogin = false;   // a page we cannot name
         String linkKey = linkKey(form);
@@ -315,9 +316,11 @@ public class OrosAutofillService extends AutofillService {
                 else if (AfMatch.names(nameText(e), words)) guess.add(e);
             } else if (k.equals("card") && wantCard) cards.add(e);
             else if ((k.equals("identity") || k.equals("address")) && wantPerson) people.add(e);
+            if (k.equals("identity") && form.any(4)) wantDoc = true;
         }
         FillResponse.Builder r = new FillResponse.Builder();
-        int n = 0, room = wantLogin ? MAX_SUGGEST - 1 : MAX_SUGGEST;   // the last place is "Search"
+        // the last places are "Search" and "Choose a document number"
+        int n = 0, room = MAX_SUGGEST - (wantLogin ? 1 : 0) - (wantDoc ? 1 : 0);
         List<JSONObject> sure = new ArrayList<>(exact);
         sure.addAll(sub);
         for (JSONObject e : sure) {
@@ -348,6 +351,13 @@ public class OrosAutofillService extends AutofillService {
         // search box, the name matches first.
         if (wantLogin) {
             Dataset d = dataset(form, "", getString(otpOnly ? R.string.af_pick_otp : R.string.af_pick), "", "login", PICK, n, guessIds, otpOnly);
+            if (d != null) { r.addDataset(d); n++; }
+        }
+        // PW-AF6: tax number, IBAN, ID card or passport number: never a
+        // suggestion of their own; one locked "Choose from orOS" where
+        // the person picks the identity by hand after unlocking.
+        if (wantDoc) {
+            Dataset d = dataset(form, "", getString(R.string.af_pick_doc), "", "doc", PICK, n, null, false);
             if (d != null) { r.addDataset(d); n++; }
         }
         boolean save = addSave(r, form);
@@ -424,6 +434,7 @@ public class OrosAutofillService extends AutofillService {
         for (Field f : form.fields) {
             boolean ok = kind.equals("card") ? AfMatch.isCard(f.kind)
                     : (kind.equals("identity") || kind.equals("address")) ? AfMatch.isPerson(f.kind)
+                    : kind.equals("doc") ? AfMatch.isDoc(f.kind)
                     : AfMatch.isLogin(f.kind);
             if (!ok) continue;
             ids.add(f.id);
@@ -439,6 +450,7 @@ public class OrosAutofillService extends AutofillService {
                 .putExtra(AfAuthActivity.X_PICK, mode == PICK)
                 .putExtra(AfAuthActivity.X_CONFIRM, mode == CONFIRM)
                 .putExtra(AfAuthActivity.X_OTP, otpOnly)
+                .putExtra(AfAuthActivity.X_DOC, kind.equals("doc"))
                 .putExtra(AfAuthActivity.X_PKG, form.pkg)
                 .putExtra(AfAuthActivity.X_HOST, form.browser && form.host != null ? form.host : "")
                 .putExtra(AfAuthActivity.X_LINK, linkKey(form))
