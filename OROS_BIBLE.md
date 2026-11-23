@@ -14149,3 +14149,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** solo.js, i18n/de/solo.js, assistant/solo.html, assistant/manifest.webmanifest, icons/solo/assistant*, android/solo-apps.json, .well-known/assetlinks.json, android Widgets.java + AskTile.java, manifest.webmanifest, download/index.html, tools/fdroid/assistant/, assistant/help.*, i18n/de/help/assistant.txt, sw.js (precache), shell.js, whatsnew EN/EL, OROS_BIBLE.md, tests/solo.test.js, tests/android.test.js, tests/quick.test.js.
 - **Tests:** full `node --test tests/*.test.js`; real shell (Playwright Chromium, 360 px): solo page plain, `?do=brief` and a share; a mocked local OpenAI-compatible model for the store shots.
 - **Not tested:** the Android build on a phone, Safari, Dropbox sync.
+
+### 2026-11-23 — 8.95.00 — The Assistant works in Layout as Claude does through the Gate (LY-AUTO, #1273)
+- **Why:** Chris 2026-11-23 17:06Z: the Assistant (his own paid key) must do in Layout what Claude does: design, arrange, fix, change, suggest, the cover spread, export with crops and bleed.
+- **What:** rounds of Layout work count against `C.LAYOUT_ROUNDS` (40) instead of 6; the setting «Layout work without cards» (`set.ly`, off by default, Settings › Data) runs Layout's tools at once through the gate's own path with the report as the tool's result. Rules in Part IX LY-AUTO.
+- **Files:** assistant/core.js, assistant/assistant.js, i18n/de/assistant.js, whatsnew EN/EL, OROS_BIBLE.md, tests/assistant-ly-auto.test.js, tests/assistant-web.test.js
+- **Tests:** full `node --test tests/*.test.js`; Playwright Chromium 360px: the setting shows, is stored, no page errors, no horizontal scroll.
+- **Not tested:** a real model run with an API key, a real phone, Safari.
+

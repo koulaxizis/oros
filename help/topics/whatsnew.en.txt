@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.95.00
+- **The Assistant works in Layout like Claude.** Turn on Assistant › Settings › Data › "Layout work without cards": changes, the cover spread, house style and the print PDF with crop marks and bleed are done at once, and the Assistant checks the result and fixes it in the same answer, with up to 40 rounds of Layout work per question. Undo stays in the change history.
+
 ## Version 8.94.00
 - **orOS Assistant on its own.** Install `orOS Assistant` (Settings › Apps, or the Koulaxizis Apps manager on Android) and ask your notes, tasks and calendar anything without opening the desktop first. The Quick Settings tile and the widget button open it too, a `Briefing` shortcut sits on its icon, and texts and links you share from other apps wait in its message box until you press Send.
 
