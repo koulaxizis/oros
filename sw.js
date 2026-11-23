@@ -2294,6 +2294,7 @@ var PRECACHE_URLS = [
   "assistant/edits3.js",
   "assistant/edits4.js",
   "assistant/fileops.js",
+  "assistant/shop.js",
   "assistant/additems2.js",
   "assistant/additems3.js",
   "assistant/links.js",
