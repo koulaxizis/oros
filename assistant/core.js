@@ -1788,7 +1788,7 @@
       "kanban (EVERY board, not only " +
       "the one open in Kanban: each board's columns with how many cards they hold, late and due-today cards, " +
       "archived boards by name, and the cards of all boards with board › column, due date, labels and a ref; " +
-      "with board only that board's cards), stock (what sold in a month, per product and " +
+      "with board only that board's cards; boards_only: the boards alone, no cards), stock (what sold in a month, per product and " +
       "per place: the user's own stock and each consignment shop or other warehouse; returns taken off) and, for the other apps " +
       "list_apps marks with summary, what is late, today and in the next days (calendar, habits, " +
       "plants and more; an item may carry end, details, a tip and suggest: the kinds of action Today offers on it). Better than search_data for questions like 'how much did I spend on food " +
@@ -1818,6 +1818,7 @@
         kind: { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"], description: "shelf: only this kind (album = music)." },
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board). whiteboard: one board's name: only its texts." },
+        boards_only: { type: "boolean", description: "kanban: true lists only the boards (id, columns with id and card count, labels) and no cards; with board, only boards whose name holds it. Use it to see whether a board exists." },
         show: { type: "string", description: "studio: one podcast show's title: only its episodes." },
         table: { type: "string", description: "base: one table's name: list its records with every field and a ref (leave out for the bases, tables and fields)." },
         base: { type: "string", description: "base, with table: the base's name, when several bases have a table of that name." },
@@ -4008,7 +4009,9 @@
       out.note = (out.note ? out.note + " " : "") + "The user does not allow these apps to be read: " + info.blocked.join(", ") + ".";
     }
     if (info.unknown && info.unknown.length) out.unknown_apps = info.unknown;
-    if (!shared.length && !out.note) out.note = "Nothing found.";
+    // KB-FIND: Kanban boards and columns by name (ids for the kanban_* tools)
+    if (Array.isArray(info.boards) && info.boards.length) out.kanban_boards = info.boards;
+    if (!shared.length && !out.note && !out.kanban_boards) out.note = "Nothing found.";
     return JSON.stringify(out);
   }
 

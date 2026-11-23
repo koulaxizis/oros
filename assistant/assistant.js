@@ -3534,6 +3534,11 @@
         var names = [];
         shared.forEach(function (it) { if (names.indexOf(it.appName) < 0) names.push(it.appName); });
         var info = { declined: held, blocked: blocked, unknown: unknown };
+        // KB-FIND (Chris 2026-11-23): boards and columns whose name holds the words
+        if (q && byId.kanban && byId.kanban.perm === "always" && ids.indexOf("kanban") >= 0 && S && typeof S.kanbanNameHits === "function") {
+          var kb = S.kanbanNameHits(readStore("oros-kanban-data"), q);
+          if (kb.length) info.boards = kb;
+        }
         if (lf) {
           info.label = C.isNoLabel(label) ? "none" : label;
           var more = {};
@@ -6777,7 +6782,7 @@
     // Kanban (KB-ALL): every board, not only the one open in Kanban;
     // its cards' due dates are in the list, so no agenda on top. The
     // Briefing (brief) keeps the agenda: only what is due.
-    if (a.app === "kanban" && !a.brief) return Promise.resolve(S.kanbanBoards(readStore("oros-kanban-data"), { board: a.board, today: today }));
+    if (a.app === "kanban" && !a.brief) return Promise.resolve(S.kanbanBoards(readStore("oros-kanban-data"), { board: a.board, today: today, boardsOnly: a.boards_only === true }));   // KB-LIST
     // AS-STRUCT: how the app is organised and its items, with refs.
     // One list of To-Do by name; Notes, Bookmarks, Contacts, Media
     // Shelf and Library always (the Briefing keeps only the agenda).
@@ -9842,6 +9847,18 @@
       }, function () {});
     }, Promise.resolve()).then(function () { return out; });
   }
+  // KB-HIST (Chris 2026-11-23): change_history with orOS closed applies
+  // its app / from / to to the copy, so the copy keeps the whole list
+  // of these apps (30 days, at most 500, as change_history shows it;
+  // gate.js sendCopy, ans.__hist). → Promise<[entry]>, newest first.
+  function gateHist(ids) {
+    var ok = {};
+    (Array.isArray(ids) ? ids : []).forEach(function (id) { ok[id] = 1; });
+    return histLoad().then(function () {
+      var now = Date.now();
+      return C.histForModel(C.histPrune(histList(), now).keep.filter(function (e) { return ok[e.app]; }), now);
+    });
+  }
   // 7.44.00: what these refs are ([{ a: app name, t: title }]), for the
   // owner's question before a queued deletion (gate.js askQueued).
   function gatePeek(refs) {
@@ -10287,7 +10304,7 @@
                             var end = function (r) { gateAt = 0; return r; };
                             return gateRun(n, a).then(function (r) { end(); if (!gateRefsSave() && r && r.ok) r.c = String(r.c || "") + "\n(Note: this device could not keep the refs; use them in this conversation only.)"; return r; },
                                                       function (e) { end(); throw e; });
-                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText, editPack: gateEditPack,
+                          }, tools: gateToolList, index: gateIndex, peek: gatePeek, text: cfText, editPack: gateEditPack, hist: gateHist,
                           // PEND-1: the ref of an item another device made from a queued create_items
                           ref: function (rec) { if (!rec || typeof rec !== "object" || typeof rec.app !== "string") return ""; gateRefsLoad(); var r = refFor(gateConv, { app: rec.app, target: rec.target, title: String(rec.title || ""), q: String(rec.title || ""), id: rec.id }); gateRefsSave(); return r; },
                           undo: function (id, mem) { return gateUndoRec(String(id), mem); } };

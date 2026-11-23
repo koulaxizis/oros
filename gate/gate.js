@@ -2759,6 +2759,10 @@
         else if (id !== "kanban") { calls.push(["app_summary", { app: id, month: month }]); calls.push(["app_summary", { app: id, month: prev }]); }
         // each board by its name too (5.96.00: «δουλεύεις και σε κλειστό orOS»)
         else {
+          // KB-LIST (2026-11-23): the boards alone, first (small, so the
+          // copy's size cap never drops it); the relay checks every closed
+          // Kanban change against it (KB-CLOSED)
+          calls.splice(1, 0, ["app_summary", { app: "kanban", boards_only: true }]);
           var kb = readStore("oros-kanban-data"), seen = {};
           (isObj(kb) ? kbBoards(kb) : []).slice(0, 30).forEach(function (b) {
             var nm = String(b.name || "").trim();
@@ -2811,7 +2815,14 @@
           // GATE-PL11: edit_in_app's commands and the documents' names, so
           // the relay checks a dry run (and every queued edit) with orOS closed
           if (typeof F.editPack !== "function") return;
-          return F.editPack().then(function (pk) {
+          // KB-HIST: Claude's changes of the last 30 days as a list, so the
+          // relay answers change_history's app / from / to with orOS closed
+          var hp = typeof F.hist === "function" ? F.hist(ok).then(function (hl) {
+            var all = Array.isArray(hl) ? hl.slice(0, 500) : [], list = all, txt = JSON.stringify(list);
+            while (list.length && size + utf8Len(txt) > COPY_MAX) { list = list.slice(0, Math.floor(list.length / 2)); txt = JSON.stringify(list); }
+            if (list.length || !all.length) { ans.__hist = txt; size += utf8Len(txt); if (list.length < all.length) ans.__histpart = String(all.length); }
+          }, function () {}) : Promise.resolve();
+          return hp.then(function () { return F.editPack(); }).then(function (pk) {
             var txt = isObj(pk) && Object.keys(pk).length ? JSON.stringify(pk) : "", b = utf8Len(txt);
             if (txt && size + b <= COPY_MAX) { ans.__edit = txt; size += b; }
             // GATE-PL10: the mockups' names, for mockup_render with orOS closed
@@ -3401,7 +3412,7 @@
         var out = app === "budget" ? S.budgetMonth(readStore("oros-budget-data"), n.month, lang)
                 : app === "stock" ? S.stockMonth(readStore("oros-stock-data"), n.month, lang)
                 : app === "studio" ? S.studioShows(readStore("oros-studio-data"), { show: n.show })
-                : S.kanbanBoards(readStore("oros-kanban-data"), { board: n.board, today: localDay() });
+                : S.kanbanBoards(readStore("oros-kanban-data"), { board: n.board, today: localDay(), boardsOnly: args.boards_only === true });   // KB-LIST
         if (out && out.ok === false) return { ok: false, c: out.err };
         return { ok: true, a: [app], k: out && out.items ? out.items.length : 1, c: JSON.stringify(out) };
       });

@@ -519,6 +519,10 @@
       if (b.archived) { archived.push(str(b.name, 80) || "—"); return; }
       live.push(b);
     });
+    // KB-LIST (Chris 2026-11-23, routines in every Project): boards_only
+    // lists the boards and nothing else (ids, every column with its id
+    // and card count, the labels), so "does board X exist" needs no cards.
+    if (opts.boardsOnly) return kanbanBoardList(live, archived, opts.board);
     var want = null;
     if (opts.board) {
       var f = foldName(opts.board);
@@ -578,6 +582,60 @@
     out.listed = items.length;
     if (items.length > MAX_EVENTS) out.more_items = items.length - MAX_EVENTS;
     return out;
+  }
+
+  // KB-LIST: the open boards with ids, columns (id, name, cards) and
+  // label names; archived boards by name. With board, only boards whose
+  // name holds those words (case and accents aside).
+  function kanbanBoardList(live, archived, board) {
+    var f = board ? foldName(board) : "";
+    var out = { app: "kanban", boards_only: true, boards: [] };
+    live.forEach(function (b) {
+      var name = str(b.name, 80) || "—";
+      if (f && foldName(name).indexOf(f) < 0) return;
+      var row = { name: name, id: b.id, cards: 0, columns: [] };
+      arr(b.columns).forEach(function (c) {
+        if (!isObj(c) || typeof c.id !== "string") return;
+        var n = arr(c.cards).filter(function (k) { return isObj(k) && typeof k.id === "string"; }).length;
+        row.cards += n;
+        row.columns.push({ name: str(c.name, 60) || "—", id: c.id, cards: n });
+      });
+      if (row.columns.length > MAX_COLS_ONE) { row.more_columns = row.columns.length - MAX_COLS_ONE; row.columns = row.columns.slice(0, MAX_COLS_ONE); }
+      var del = isObj(b.deleted) ? b.deleted : {};
+      var lb = arr(b.labels).filter(function (l) { return isObj(l) && typeof l.id === "string" && str(l.name, 40) && !(typeof del[l.id] === "number" && del[l.id] >= (l.mtime || 0)); })
+        .map(function (l) { return str(l.name, 40); });
+      if (lb.length) row.labels = lb.slice(0, 100);
+      out.boards.push(row);
+    });
+    if (out.boards.length > MAX_BOARDS) { out.more_boards = out.boards.length - MAX_BOARDS; out.boards = out.boards.slice(0, MAX_BOARDS); }
+    var ar = f ? archived.filter(function (n) { return foldName(n).indexOf(f) >= 0; }) : archived;
+    if (ar.length) out.archived_boards = ar.slice(0, MAX_BOARDS);
+    if (f && !out.boards.length) out.note = "No open board's name holds \"" + str(board, 80) + "\".";
+    return out;
+  }
+  // KB-FIND (search_data finds boards and columns by name): every word
+  // of q in a board's or a column's name → [{ kind, board, id, column? }].
+  function kanbanNameHits(raw, q) {
+    var d = isObj(raw) ? raw : {}, words = foldName(q).split(" ").filter(Boolean), out = [];
+    if (!words.length) return out;
+    var gone = isObj(d.boardDeleted) ? d.boardDeleted : {};
+    var has = function (s) { var h = foldName(s); return words.every(function (w) { return h.indexOf(w) >= 0; }); };
+    arr(d.boards).forEach(function (b) {
+      if (!isObj(b) || typeof b.id !== "string" || !b.id || b.id.indexOf("tpl-") === 0) return;
+      if (typeof gone[b.id] === "number" && gone[b.id] >= (b.mtime || 0)) return;
+      var bn = str(b.name, 80) || "—";
+      if (has(bn)) {
+        var hit = { kind: "board", board: bn, id: b.id };
+        if (b.archived) hit.archived = true;
+        else hit.columns = arr(b.columns).filter(function (c) { return isObj(c) && typeof c.id === "string"; }).map(function (c) { return str(c.name, 60) || "—"; }).slice(0, 40);
+        out.push(hit);
+      }
+      if (b.archived) return;
+      arr(b.columns).forEach(function (c) {
+        if (isObj(c) && typeof c.id === "string" && has(c.name)) out.push({ kind: "column", board: bn, column: str(c.name, 60) || "—", id: c.id, board_id: b.id });
+      });
+    });
+    return out.slice(0, 40);
   }
 
   // ---------- Structure of six more apps (AS-STRUCT) ----------
@@ -1696,7 +1754,7 @@
   var API = {
     VERSION: "1.2.0", OWN: OWN, SEED_NAMES: SEED_NAMES,
     normArgs: normArgs, budgetMonth: budgetMonth, timesheetMonth: timesheetMonth, stockMonth: stockMonth,
-    todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, notesBooks: notesBooks,
+    todoLists: todoLists, todoList: todoList, kanbanBoards: kanbanBoards, kanbanNameHits: kanbanNameHits, notesBooks: notesBooks,
     bookmarksFolders: bookmarksFolders, contactsLabels: contactsLabels, shelfItems: shelfItems, libraryBooks: libraryBooks, automationsRules: automationsRules, studioShows: studioShows, calendarEvents: calendarEvents, crmPartner: crmPartner, crmContracts: crmContracts, formsSummary: formsSummary, baseTables: baseTables,
     mealsPlan: mealsPlan, travelTrips: travelTrips, plantsList: plantsList, garageVehicles: garageVehicles, habitsList: habitsList,
     scanpdfSigns: scanpdfSigns, transferHistory: transferHistory, whiteboardBoards: whiteboardBoards, agenda: agenda, preview: preview, addDays: addDays, lastDay: lastDay
