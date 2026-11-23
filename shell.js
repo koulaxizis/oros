@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.80.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.81.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1431,6 +1431,137 @@
                viz: !pic && state.wallpaper === "viz" ? wpVizNow() : null };
     }
   };
+
+  // ---------- 5b-dir. WPDIR-1: Random, and a picture from a folder ----------
+  // Random: one of the drawn wallpapers (never Mine, Living land, Light
+  // show or None), never the one on now; synced like any pick.
+  // From a folder: a Files folder (default Pictures/Wallpapers) gives
+  // THIS device a new picture every day or at each start, through
+  // setImage (nothing syncs). Device-local "oros-wpfolder":
+  // { mode: "" | "day" | "start", dir, day: "YYYY-MM-DD", last: file name }.
+  // The pictures follow each other by name, so all of them come round
+  // before one comes back. Picking a wallpaper by hand turns it off.
+  var WPDIR_KEY = "oros-wpfolder";
+  var WPDIR_DEF = "Pictures/Wallpapers";
+  var WPDIR_MODES = ["", "day", "start"];
+  var WPDIR_IMG = /\.(jpe?g|png|webp|gif|avif)$/i;
+  var WPDIR_MAX = 1000;            // names looked at in one folder
+  var wpdirMsg = "";               // "" | ok | empty | nofolder | big | fail (last run, for Settings)
+  var wpdirBusy = false;
+  function wpdirDir(v) {
+    var s = String(v == null ? "" : v).replace(/\\/g, "/").replace(/\/{2,}/g, "/").replace(/^\/+|\/+$/g, "").replace(/^internal\//, "");
+    if (!s || s.length > 200 || /[\u0000-\u001f]/.test(s)) return null;
+    var parts = s.split("/");
+    for (var i = 0; i < parts.length; i++) if (!parts[i].trim() || parts[i] === "." || parts[i] === "..") return null;
+    return s;
+  }
+  function wpdirParse(raw) {
+    var o = null;
+    try { o = JSON.parse(raw); } catch (e) {}
+    var out = { mode: "", dir: WPDIR_DEF, day: "", last: "" };
+    if (!o || typeof o !== "object" || Array.isArray(o)) return out;
+    if (WPDIR_MODES.indexOf(o.mode) !== -1) out.mode = o.mode;
+    out.dir = wpdirDir(o.dir) || WPDIR_DEF;
+    if (typeof o.day === "string" && /^\d{4}-\d\d-\d\d$/.test(o.day)) out.day = o.day;
+    if (typeof o.last === "string" && o.last.length <= 255 && o.last.indexOf("/") === -1) out.last = o.last;
+    return out;
+  }
+  function wpdirRead() { try { return wpdirParse(localStorage.getItem(WPDIR_KEY)); } catch (e) { return wpdirParse(null); } }
+  function wpdirWrite(c) { try { localStorage.setItem(WPDIR_KEY, JSON.stringify(c)); } catch (e) {} }
+  // The next picture after `last` among the folder's entries, by name
+  // (wraps round); null when the folder holds no picture.
+  function wpdirNext(entries, last) {
+    var names = (entries || []).filter(function (e) {
+      return e && !e.dir && typeof e.name === "string" && WPDIR_IMG.test(e.name) && e.name.charAt(0) !== ".";
+    }).map(function (e) { return e.name; }).slice(0, WPDIR_MAX).sort(function (a, b) { return a < b ? -1 : a > b ? 1 : 0; });
+    if (!names.length) return null;
+    for (var i = 0; i < names.length; i++) if (names[i] > last) return names[i];
+    return names[0];
+  }
+  // Due now? "day": not yet today; "start": once per start.
+  function wpdirDue(c, today, startDone) {
+    if (c.mode === "day") return c.day !== today;
+    if (c.mode === "start") return !startDone;
+    return false;
+  }
+  function wpdirToday() {
+    var d = new Date();
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  var wpdirStarted = false;
+  // → Promise<"ok" | "empty" | "nofolder" | "big" | "fail" | "">
+  function wpdirRun(force) {
+    var c = wpdirRead(), today = wpdirToday();
+    if (wpdirBusy || SOLO) return Promise.resolve("");
+    if (!force && !wpdirDue(c, today, wpdirStarted)) return Promise.resolve("");
+    var F = window.orosFS;
+    if (!F || typeof F.ls !== "function") return Promise.resolve("");
+    wpdirBusy = true;
+    wpdirStarted = true;
+    var dir = "/internal/" + c.dir;
+    return Promise.resolve(F.ls(dir)).then(function (list) {
+      var name = wpdirNext(list, c.last);
+      if (!name) return "empty";
+      return sendWallpaper({ path: dir + "/" + name, max: WP_PIC_MAX }).then(function (r) {
+        if (r === "big") { c.last = name; wpdirWrite(c); return "big"; }   // skip it next time
+        if (!r) return "fail";
+        c.last = name; c.day = today;
+        wpdirWrite(c);
+        return "ok";
+      });
+    }, function () { return "nofolder"; }).catch(function () { return "fail"; }).then(function (r) {
+      wpdirBusy = false;
+      wpdirMsg = r;
+      settingsNotify();
+      return r;
+    });
+  }
+  function wpdirSet(name, value) {
+    var c = wpdirRead();
+    if (name === "mode") {
+      if (WPDIR_MODES.indexOf(value) === -1) return;
+      c.mode = value;
+      if (value) c.day = "";            // turned on: a picture now
+      wpdirWrite(c);
+      wpdirMsg = "";
+      if (value) { wpdirStarted = false; wpdirRun(); }
+    } else if (name === "dir") {
+      var d = wpdirDir(value);
+      if (!d) return;
+      if (d !== c.dir) { c.dir = d; c.last = ""; c.day = ""; wpdirMsg = ""; }
+      wpdirWrite(c);
+    } else if (name === "next") {
+      wpdirRun(true);
+      return;
+    }
+    settingsNotify();
+  }
+  function wpdirOff() {
+    var c = wpdirRead();
+    if (!c.mode) return;
+    c.mode = "";
+    wpdirWrite(c);
+  }
+  function wpdirSnapshot() {
+    var c = wpdirRead();
+    return { mode: c.mode, dir: c.dir, def: WPDIR_DEF, modes: WPDIR_MODES.slice(), last: c.last, msg: wpdirMsg, busy: wpdirBusy };
+  }
+  // A drawn wallpaper other than `cur`; rnd() in [0, 1).
+  function wpRandomId(cur, rnd) {
+    var ids = WALLPAPERS.filter(function (w) { return w.css && w.id !== cur; }).map(function (w) { return w.id; });
+    if (!ids.length) return null;
+    var r = typeof rnd === "function" ? rnd() : Math.random();
+    return ids[Math.min(ids.length - 1, Math.floor(r * ids.length))];
+  }
+  (function () {
+    // after the disk is up; then every half hour for "every day"
+    // (wpdirRun does nothing in an app's own window, SOLO)
+    setTimeout(function () {
+      var F = window.orosFS;
+      Promise.resolve(F && typeof F.ready === "function" ? F.ready() : null).then(function () { wpdirRun(); }, function () {});
+    }, 4000);
+    setInterval(function () { if (wpdirRead().mode === "day") wpdirRun(); }, 30 * 60 * 1000);
+  })();
 
   // Another screen size (rotation, window resize): redraw if needed.
   (function () {
@@ -13724,6 +13855,7 @@
       icons: { pack: iconsPack(state.icons), packs: ICON_PACKS.slice(),   // ICONPACK-1
                own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
+      wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
       viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice() } : null,   // VIZWALL-1
       land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
@@ -13862,8 +13994,21 @@
       case "shortcutsReset": scResetAll(); return;
       case "wallpaper":
         if (value === "custom" && !wpPic() && !(state.wpart && wpArt())) { openAppById("wallpaper"); return; }
+        wpdirOff();                      // WPDIR-1: a pick by hand ends "From a folder"
         setWallpaperUser(value);
+        settingsNotify();
         return;
+      case "wallpaper:random": {         // WPDIR-1
+        var rid = wpRandomId(wpPic() ? "" : state.wallpaper);
+        if (!rid) return;
+        wpdirOff();
+        setWallpaperUser(rid);
+        settingsNotify();
+        return;
+      }
+      case "wpdir:mode": wpdirSet("mode", String(value || "")); return;
+      case "wpdir:dir":  wpdirSet("dir", value); return;
+      case "wpdir:next": wpdirSet("next"); return;
       case "pet":
         if (window.orosPet && typeof window.orosPet.toggle === "function" &&
             !!value !== !!window.orosPet.isEnabled()) {
