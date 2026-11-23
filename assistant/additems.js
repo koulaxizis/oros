@@ -366,8 +366,8 @@
       var ls = [];
       for (var li = 0; li < x.links.length; li++) {
         var u = typeof x.links[li] === "string" ? x.links[li].trim() : "";
-        var web = /^https?:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
-        var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u);
+        var web = /^https:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
+        var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u) && u.charAt(1) !== "/";
         if (!web && !path) return { err: w + "links[" + li + "] must be an https address or a path on the orOS disk starting with /." };
         if (ls.every(function (y) { return y.u !== u; })) ls.push({ u: u });
       }

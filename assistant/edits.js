@@ -238,7 +238,7 @@
       var lks = [];
       for (var li = 0; li < args.links.length; li++) {
         var lx = args.links[li], lo = kbLinkOne(typeof lx === "string" ? { u: lx } : isObj(lx) ? { u: lx.url, t: lx.title } : null);
-        if (!lo) return bad("link " + (li + 1) + " must be an http(s) address or a path on the orOS disk starting with / (no ..).");
+        if (!lo) return bad("link " + (li + 1) + " must be an https address or a path on the orOS disk starting with / (no ..).");
         if (!lks.some(function (y) { return y.u === lo.u; })) lks.push(lo);
       }
       set.links = lks;
@@ -1548,8 +1548,8 @@
   function kbLinkOne(x) {
     if (!isObj(x)) return null;
     var u = typeof x.u === "string" ? x.u.trim() : "";
-    var web = /^https?:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
-    var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u);
+    var web = /^https:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
+    var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u) && u.charAt(1) !== "/";
     if (!web && !path) return null;
     var o = { u: u }, tt = typeof x.t === "string" ? x.t.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) : "";
     if (tt) o.t = tt;

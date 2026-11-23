@@ -1528,7 +1528,7 @@
     var list = v.map(function (x) { return typeof x === "string" ? { u: x } : isObj(x) ? { u: x.url, t: x.title } : null; });
     var ok = M.cleanLinks(list);
     for (var i = 0; i < list.length; i++) {
-      if (!list[i] || !ok.some(function (y) { return y.u === String(list[i].u || "").trim(); })) return { err: tag + "link " + (i + 1) + " must be an http(s) address or a path on the orOS disk starting with / (no ..)." };
+      if (!list[i] || !ok.some(function (y) { return y.u === String(list[i].u || "").trim(); })) return { err: tag + "link " + (i + 1) + " must be an https address or a path on the orOS disk starting with / (no ..)." };
     }
     return { l: ok };
   }

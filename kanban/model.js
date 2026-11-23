@@ -111,8 +111,8 @@
   function cleanLink(x) {
     if (!x || typeof x !== "object") return null;
     var u = typeof x.u === "string" ? x.u.trim() : "";
-    var web = /^https?:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
-    var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u);
+    var web = /^https:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
+    var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u) && u.charAt(1) !== "/";
     if (!web && !path) return null;
     var o = { u: u };
     var tt = typeof x.t === "string" ? x.t.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) : "";

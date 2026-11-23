@@ -67,7 +67,7 @@ test("the same key twice in one call makes one card", () => {
 });
 
 test("bad keys and links change nothing", () => {
-  const bad = [{ key: "x".repeat(121) }, { key: 5 }, { links: ["javascript:alert(1)"] }, { links: ["/a/../b"] }, { links: Array.from({ length: 11 }, (v, i) => "https://x.org/" + i) }, { move: "yes" }];
+  const bad = [{ key: "x".repeat(121) }, { key: 5 }, { links: ["javascript:alert(1)"] }, { links: ["data:text/html,<b>x</b>"] }, { links: ["http://example.org/"] }, { links: [{ url: "JavaScript:alert(1)" }] }, { links: ["//evil.example/x"] }, { links: ["/a/../b"] }, { links: Array.from({ length: 11 }, (v, i) => "https://x.org/" + i) }, { move: "yes" }];
   bad.forEach((extra, i) => {
     const r = G.kanbanWrite(M, "add_cards", data(), { board: "orOS", cards: [Object.assign({ column: "Νέο", text: "t" }, extra)] }, NOW, nid);
     assert.equal(r.ok, false, "case " + i);
@@ -110,4 +110,18 @@ test("labels: create_labels on add_cards, add_labels on add_columns, labels on a
   const nb = G.kanbanWrite(M, "add_board", data(), { name: "Γλαρόλυκοι", columns: [{ name: "Νέο" }], labels: [{ name: "Βιβλίο", color: "teal" }] }, NOW, nid);
   assert.equal(nb.ok, true, nb.err);
   assert.deepEqual(nb.data.boards.find((b) => b.name === "Γλαρόλυκοι").labels.map((l) => l.name), ["Βιβλίο"]);
+});
+
+test("only https addresses and disk paths ever reach a link button (model cleanLinks)", () => {
+  const got = M.cleanLinks([{ u: "javascript:alert(1)" }, { u: "data:text/html,x" }, { u: "http://example.org/" }, { u: "vbscript:x" }, { u: " https://ok.example/a " }, { u: "/Έγγραφα/α.md" }, { u: "/a/../b" }, { u: "//evil.example/x" }]);
+  assert.deepEqual(got.map((l) => l.u), ["https://ok.example/a", "/Έγγραφα/α.md"]);
+  // a stored card with bad links (another device, by hand) loses them in canonState
+  const d = data();
+  d.boards[0].columns[0].cards.push({ id: "x1", text: "t", links: [{ u: "javascript:alert(1)" }, { u: "https://ok.example/" }], mtime: T0 });
+  assert.deepEqual(M.canonState(d, T0).boards[0].columns[0].cards[0].links, [{ u: "https://ok.example/" }]);
+  // the Kanban page renders and opens only through cleanLinks / https
+  const src = require("fs").readFileSync(require("path").join(__dirname, "..", "kanban", "kanban.js"), "utf8");
+  assert.match(src, /M\.cleanLinks\(card\.links\)\.forEach/);
+  assert.match(src, /var lks = M\.cleanLinks\(card\.links\);/);
+  assert.match(src, /if \(\/\^https:\\\/\\\/\/i\.test\(u\)\) \{ try \{ window\.open\(u, "_blank", "noopener,noreferrer"\)/);
 });

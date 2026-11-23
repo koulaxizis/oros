@@ -3334,7 +3334,7 @@
   // --- KB-LINK: the card's links (https or a path on the orOS disk) ---
   // A web address opens in a new tab with no opener; a path opens in Files.
   function openCardLink(u) {
-    if (/^https?:\/\//i.test(u)) { try { window.open(u, "_blank", "noopener,noreferrer"); } catch (e) {} return; }
+    if (/^https:\/\//i.test(u)) { try { window.open(u, "_blank", "noopener,noreferrer"); } catch (e) {} return; }
     if (u.charAt(0) === "/") {
       try { if (window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function") window.parent.__orosOpenAt("files", { path: u }); } catch (e) {}
     }
