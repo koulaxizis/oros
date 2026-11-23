@@ -45,7 +45,10 @@ test("every answer with orOS closed names the gate and the last device", () => {
   assert.match(G.closedWho("", 0, "", T), /^\[orOS Gate \?: no orOS has reached this gate yet/);
   assert.doesNotMatch(G.closedWho("x", T - 1000, "a]b\n[c", T), /a\]b|\n/);
   const src = fs.readFileSync(path.join(__dirname, "..", "relay", "gate.js"), "utf8");
-  assert.match(src, /ans\.who = closedWho\(gid, m\.seen \|\| 0/);
+  assert.match(src, /ans\.who = closedWho\(gid, m\.seen \|\| 0, box\.dv \|\| ""/);
+  // the copy is opened once on the closed path: no second readCopy for dv
+  assert.match(src, /if \(box && cp && typeof cp\.dv === "string"\) box\.dv = cp\.dv;/);
+  assert.doesNotMatch(src, /const cpw = /);
   const a = G.toolText("{}", false, w);
   assert.deepEqual(a.content.map((x) => x.text), ["{}", w, G.VER_NOTE]);
   assert.equal(G.toolText("x", false).content.length, 2);

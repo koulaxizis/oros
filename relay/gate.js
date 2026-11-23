@@ -2948,13 +2948,14 @@ export class GateBox {
   // A call while no device is open: reads from the copy, changes wait
   // in the queue (since 6.05.02 Budget deletions and transfers too;
   // deleting other apps' items by ref still waits for an open device).
-  async closedCall(name, args, kRaw, now, qidWant) {
+  async closedCall(name, args, kRaw, now, qidWant, box) {   // box: GATE-WHO gets the copy's device name (dv) from the copy opened here
     // BK-AO: a bank read needs the device's bank key; it is never queued
     if (name === "budget_refresh") return { ok: false, c: "orOS is closed: the banks can be read only from an open device (the bank key stays there), so nothing was read and nothing waits. When orOS opens, Budget reads the banks by itself (Budget › More › Banks › Automatic updates). Use budget_lines for what is in the copy." };
     if (name === "files_list" || name === "files_read") return await this.closedFiles(name, args, kRaw);
     if (FILE_CHANGE[name]) return await this.closedFileChange(name, args, kRaw, now, qidWant);
     if (!kRaw) return { ok: false, c: "orOS is closed and there is no copy Claude may read yet. Ask the owner to open orOS once on a device with the gate on." };
     const cp = await this.readCopy(kRaw);
+    if (box && cp && typeof cp.dv === "string") box.dv = cp.dv;
     if (!cp || typeof cp.at !== "number" || !cp.ans || typeof cp.ans !== "object") {
       return { ok: false, c: "orOS is closed and there is no copy Claude may read (it is wiped after 7 days without an open device). Ask the owner to open orOS." };
     }
@@ -3332,11 +3333,12 @@ export class GateBox {
     if (ans.e === "closed") {
       const asleep = this.sockets().length > 0;       // 6.01.02: open, but no sign of life for aliveMs
       const kC = await this.unwrapK(tok);
-      ans = await this.closedCall(p.name, args, kC, now);
+      const box = {};
+      ans = await this.closedCall(p.name, args, kC, now, undefined, box);
       if (asleep && typeof ans.c === "string") ans.c = ans.c.split("orOS is closed").join("orOS is asleep in the background on the owner's device (as if closed)");
       // GATE-WHO (Chris 2026-11-23): which gate this is and when an orOS last reached it
       if (!ans.ok && typeof ans.c === "string") ans.c += tag;
-      { const cpw = kC ? await this.readCopy(kC) : null; ans.who = closedWho(gid, m.seen || 0, cpw && typeof cpw.dv === "string" ? cpw.dv : "", now); }   // its own text part, so a JSON answer stays JSON
+      ans.who = closedWho(gid, m.seen || 0, box.dv || "", now);   // its own text part, so a JSON answer stays JSON; the copy is opened once (Mail-thread review)
     }
     else if (ans.e === "timeout") {
       // 6.01.02: the device did not answer in time (asleep in the
