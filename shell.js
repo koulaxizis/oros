@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.72.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.74.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1501,7 +1501,11 @@
   //            the shell and every app, so code that honours the
   //            system setting follows this switch too.
   //   transp   true: reduce transparency (no blur, solid panels);
-  //            also on while the system asks for it.
+  //            also on while the system asks for it, unless glass.
+  //   glass    true: keep the glass even while the system asks for less
+  //            transparency (GLASS-KEEP: Windows asks as soon as its
+  //            Transparency effects or Energy saver go off, which took
+  //            the glass away with no orOS setting changed).
   // A11Y_CSS goes into the shell and into every same-origin app
   // document (on load and on every change) and only acts through the
   // data-oros-* attributes of that document's root, so nothing looks
@@ -1546,13 +1550,14 @@
       last: A11Y_FILTERS.indexOf(v.last) > 0 ? v.last : "grey",
       pointer: A11Y_POINTERS.indexOf(v.pointer) !== -1 ? v.pointer : "normal",
       motion: v.motion === true,
-      transp: v.transp === true
+      transp: v.transp === true,
+      glass: v.glass === true
     };
   }
   function a11yMq(q) {
     try { return !!(window.matchMedia && window.matchMedia(q).matches); } catch (e) { return false; }
   }
-  function a11yLessTransp() { return a11y.transp || a11yMq("(prefers-reduced-transparency: reduce)"); }
+  function a11yLessTransp() { return a11y.transp || (!a11y.glass && a11yMq("(prefers-reduced-transparency: reduce)")); }
   function a11yLessMotion() { return a11y.motion || a11yMq("(prefers-reduced-motion: reduce)"); }
   function a11yHigh() {
     if (a11y.contrast === "on") return true;
@@ -1675,6 +1680,9 @@
     } else if (name === "reduceTransparency") {
       if (!!value === a11y.transp) return;
       a11y.transp = !!value;
+    } else if (name === "keepGlass") {
+      if (!!value === a11y.glass) return;
+      a11y.glass = !!value;
     } else if (name === "pointerSize") {
       if (A11Y_POINTERS.indexOf(value) === -1 || value === a11y.pointer) return;
       a11y.pointer = value;
@@ -1700,7 +1708,8 @@
       // Reduce motion and transparency (W2): the switch, and whether the
       // system already asks for it (the real query, not the switch)
       motion: a11y.motion, motionSys: a11ySysMotion(),
-      transp: a11y.transp, transpSys: a11yMq("(prefers-reduced-transparency: reduce)")
+      transp: a11y.transp, transpSys: a11yMq("(prefers-reduced-transparency: reduce)"),
+      glass: a11y.glass                                    // GLASS-KEEP
     };
   }
   // For other features (Screen time's Bedtime): a temporary filter on
@@ -8010,12 +8019,83 @@
     url: function () { return relayOwn() || RELAY_SHARED; },
     mine: function () { return !!relayOwn(); },
     set: relaySet,                                   // → bool
+    ask: relayAsk,                                   // (server url) → Promise<bool>
+    allowed: function (u) { var h = relayHostOf(u); return !!h && !!relayOkMap()[h]; },
     onChange: function (fn) {
       if (typeof fn !== "function") return function () {};
       relayListeners.push(fn);
       return function () { var i = relayListeners.indexOf(fn); if (i >= 0) relayListeners.splice(i, 1); };
     }
   };
+  // STRUCT-5 (structure review 2026-11-22): no "Through the orOS relay"
+  // switches. orOS tries a server directly; only when the browser cannot
+  // reach it this asks once whether it may go through the relay, and a
+  // yes is kept for that server on this device. Sensitive work never
+  // asks (the answer is no).
+  var RELAY_OK_KEY = "oros-relay-ok";
+  function relayOkMap() {
+    try { var o = JSON.parse(localStorage.getItem(RELAY_OK_KEY) || "null"); return o && typeof o === "object" && !Array.isArray(o) ? o : {}; } catch (e) { return {}; }
+  }
+  function relayHostOf(u) { try { return new URL(String(u)).host.toLowerCase(); } catch (e) { return ""; } }
+  var relayAsking = null;
+  function relayAsk(server) {
+    var host = relayHostOf(server);
+    if (!host) return Promise.resolve(false);
+    try { if (strictLevelNow()) return Promise.resolve(false); } catch (e) {}
+    if (relayOkMap()[host]) return Promise.resolve(true);
+    if (relayAsking) return relayAsking;
+    relayAsking = new Promise(function (res) {
+      var dlg = document.createElement("dialog");
+      dlg.id = "relay-ask";
+      dlg.setAttribute("aria-labelledby", "relay-ask-h");
+      dlg.style.cssText = "border:1px solid var(--border);border-radius:12px;background:var(--panel-bg);color:var(--text);padding:20px;width:min(380px,calc(100vw - 32px));";
+      var h = document.createElement("h2");
+      h.id = "relay-ask-h";
+      h.style.cssText = "font-size:16px;margin:0 0 10px;";
+      h.textContent = window.t("relay.ask.title");
+      var p = document.createElement("p");
+      p.style.cssText = "font-size:13px;line-height:1.5;margin:0 0 16px;";
+      p.textContent = window.t("relay.ask.text").split("{server}").join(host).split("{relay}").join(relayHostOf(window.orosRelay.url()));
+      var row = document.createElement("div");
+      row.style.cssText = "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;";
+      var no = document.createElement("button");
+      no.type = "button";
+      no.style.cssText = "border:1px solid var(--border);border-radius:8px;background:transparent;color:var(--text);padding:9px 16px;min-height:40px;font-size:13px;cursor:pointer;";
+      no.textContent = window.t("relay.ask.no");
+      var yes = document.createElement("button");
+      yes.type = "button";
+      yes.style.cssText = "border:1px solid var(--accent);border-radius:8px;background:var(--accent);color:var(--accent-ink, #fff);padding:9px 16px;min-height:40px;font-size:13px;font-weight:600;cursor:pointer;";
+      yes.id = "relay-ask-yes";
+      yes.textContent = window.t("relay.ask.yes");
+      var said = false;
+      function end(ok) {
+        if (said) return;
+        said = true;
+        if (ok) {
+          var m = relayOkMap();
+          m[host] = Date.now();
+          try { localStorage.setItem(RELAY_OK_KEY, JSON.stringify(m)); } catch (e) {}
+        }
+        relayAsking = null;
+        try { if (dlg.open) dlg.close(); } catch (e) {}
+        dlg.remove();
+        res(ok);
+      }
+      no.addEventListener("click", function () { end(false); });
+      yes.addEventListener("click", function () { end(true); });
+      dlg.addEventListener("close", function () { end(false); });
+      row.appendChild(no);
+      row.appendChild(yes);
+      dlg.appendChild(h);
+      dlg.appendChild(p);
+      dlg.appendChild(row);
+      document.body.appendChild(dlg);
+      try { dlg.showModal(); } catch (e) { end(false); return; }
+      setTimeout(function () { yes.focus(); }, 30);
+    });
+    return relayAsking;
+  }
+
   // The Gate's own relay (5.82.00, this device only) becomes the one
   // address, once; it wins over Mail's (Chris's card, 2026-11-22).
   function migrateGateRelay() {
@@ -8467,12 +8547,26 @@
     var S = window.orosSync;
     if (!S || typeof S.connectWebdav !== "function" || S.isConnected()) return;
     setSyncMsgRaw("dim", window.t("sync.dav.testing"));
-    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
+    var relay = !!form.relay || window.orosRelay.allowed(form.url);
+    S.connectWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: relay })
       .then(function (acc) {
         state.syncUserEmail = (acc && acc.email) || null;
         setSyncMsg("ok", "sync.dav.ok");
       })
-      .catch(handleSyncError);
+      .catch(function (err) {
+        // STRUCT-5: the browser could not reach the server: ask once.
+        if (relay || !davNeedsRelay(err)) { handleSyncError(err); return; }
+        window.orosRelay.ask(form.url).then(function (ok) {
+          if (ok) syncConnectDav(Object.assign({}, form, { relay: true }));
+          else handleSyncError(err);
+        });
+      });
+  }
+  // A WebDAV error that the relay may cure: the server did not answer the
+  // browser at all, or hid the ETag header from it (CORS).
+  function davNeedsRelay(err) {
+    var m = err && err.message;
+    return navigator.onLine !== false && (m === "dav-unreachable" || m === "dav-etag");
   }
 
   // WebDAV W3: Nextcloud Login Flow v2. The window opens on the click
@@ -8486,7 +8580,8 @@
     try { if (w) w.opener = null; } catch (e) {}
     state.ncWaiting = true;
     renderMenu();
-    S.connectNextcloud({ url: form.url, dir: form.dir, relay: !!form.relay, move: !!form.move }, function (url) {
+    var relay = !!form.relay || window.orosRelay.allowed(form.url);
+    S.connectNextcloud({ url: form.url, dir: form.dir, relay: relay, move: !!form.move }, function (url) {
       setSyncMsgRaw("dim", window.t("sync.nc.waiting"));
       if (w && !w.closed) w.location.href = url;
       else window.open(url, "_blank", "noopener");
@@ -8497,7 +8592,13 @@
     }, function (err) {
       state.ncWaiting = false;
       try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (e) {}
-      handleSyncError(err);
+      // STRUCT-5: a sign-in window only opens on a click, so after a yes
+      // the person presses Sign in with Nextcloud once more.
+      if (relay || !davNeedsRelay(err)) { handleSyncError(err); return; }
+      window.orosRelay.ask(form.url).then(function (ok) {
+        if (ok) setSyncMsg("dim", "sync.nc.again");
+        else handleSyncError(err);
+      });
     });
   }
 
@@ -8508,12 +8609,19 @@
     var S = window.orosSync;
     if (!S || typeof S.moveToWebdav !== "function" || !S.isConnected()) return;
     setSyncMsgRaw("dim", window.t("sync.dav.testing"));
-    S.moveToWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: !!form.relay })
+    var relay = !!form.relay || window.orosRelay.allowed(form.url);
+    S.moveToWebdav({ url: form.url, user: form.user, pass: form.pass, dir: form.dir, relay: relay })
       .then(function (acc) {
         state.syncUserEmail = (acc && acc.email) || null;
         setSyncMsg("ok", "sync.move.ok");
       })
-      .catch(handleSyncError);
+      .catch(function (err) {
+        if (relay || !davNeedsRelay(err)) { handleSyncError(err); return; }
+        window.orosRelay.ask(form.url).then(function (ok) {
+          if (ok) syncMoveDav(Object.assign({}, form, { relay: true }));
+          else handleSyncError(err);
+        });
+      });
   }
   function syncMoveDropbox() {
     var S = window.orosSync;
@@ -13337,6 +13445,7 @@
       return { on: !!p.on, size: p.size, magnify: !!p.magnify, autohide: !!p.autohide,
                over: !!p.over, fine: !!p.fine, pinned: Number(p.pinned) || 0,
                badges: p.badges !== false,          // BADGE-1 (launcher 1.8.0): counts on icons
+               cards: p.cards === true,             // DOCK-CARDS (launcher 1.9.0): bar cards in the Dock
                style: typeof p.style === "string" ? p.style : null,
                hover: typeof p.hover === "string" ? p.hover : null,
                pos: typeof p.pos === "string" ? p.pos : null,
@@ -13599,7 +13708,8 @@
       case "filterStrength":
       case "pointerSize":
       case "reduceMotion":
-      case "reduceTransparency": a11ySetUser(name, value); return;
+      case "reduceTransparency":
+      case "keepGlass": a11ySetUser(name, value); return;
       case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
@@ -13613,10 +13723,19 @@
       case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
       case "wpviz:style":   if (wpVizSet(value)) settingsNotify(); return;   // VIZWALL-1
       case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
+      // DOCK-CARDS (structure review 9): "two" = top bar and Dock, "one" = one bar at the bottom
+      case "bars": {
+        var LB = settingsLauncher();
+        if (!LB || (value !== "one" && value !== "two")) return;
+        if (value === "one") { LB.setPref("on", true); LB.setPref("pos", "bottom"); }
+        LB.setPref("cards", value === "one");
+        settingsNotify();
+        return;
+      }
       case "wpaccent:on":   wpAccSetUser("on", value); return;      // WPACC-1, this device
       case "wpaccent:pick": wpAccSetUser("pick", value); return;
     }
-    if (/^dock:(on|size|magnify|autohide|over|style|hover|pos|badges)$/.test(name)) {
+    if (/^dock:(on|size|magnify|autohide|over|style|hover|pos|badges|cards)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
       return;

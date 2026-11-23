@@ -20,7 +20,7 @@ Use an app password, not your main password: in Nextcloud it's under Settings �
 The server has to show orOS file versions (ETag) and protect against two devices overwriting each other; orOS refuses a server that doesn't, and says which check failed.
 
 ### Servers that don't let the browser connect
-Many servers (Synology, ownCloud, a Nextcloud without the WebAppPassword app) don't let a web page talk to them (CORS). Then `Test and connect` says the server did not answer. Turn on `Through the orOS relay` and try again.
+Many servers (Synology, ownCloud, a Nextcloud without the WebAppPassword app) don't let a web page talk to them (CORS). Then `Test and connect` says the server did not answer. orOS then asks once whether it may go through the orOS relay; a yes is kept for that server on this device.
 
 >! With the relay, your data is still end-to-end encrypted: the relay only sees scrambled files. But your app password passes through the orOS relay on every request. It is never stored or logged there. If you'd rather not, let your server allow orOS directly: on Nextcloud the free WebAppPassword app does this; on your own server, allow orOS's address and expose the ETag header.
 
@@ -32,7 +32,7 @@ On Nextcloud you don't have to make an app password yourself:
 2. A tab opens your Nextcloud's sign-in page. Log in there and approve orOS.
 3. orOS gets its own app password and connects. Your main password is typed only on your server's page.
 
-Nextcloud usually needs `Through the orOS relay` for this step. The approval has to happen within 20 minutes; `Cancel sign-in` stops waiting.
+Nextcloud usually needs the orOS relay for this step (orOS asks; after a yes, press `Sign in with Nextcloud` once more). The approval has to happen within 20 minutes; `Cancel sign-in` stops waiting.
 
 One device uses one cloud at a time. When a device moves to a new cloud, everything on it goes up there on the next sync; the old cloud keeps its copy.
 
@@ -45,9 +45,9 @@ One device uses one cloud at a time. When a device moves to a new cloud, everyth
 The old cloud is left as it was, with its backups, until you delete it yourself.
 
 ### Server guides
-- **Nextcloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Use `Sign in with Nextcloud`, or make an app password under Settings › Security › Devices & sessions. With the WebAppPassword app the browser connects directly; otherwise turn on `Through the orOS relay`.
-- **Synology**: install `WebDAV Server` from the Package Center and turn on HTTPS (port 5006). The address is `https://your-nas-address:5006/` followed by a shared folder, such as `/home`. The NAS needs a public address and a valid certificate (for example Synology DDNS with Let's Encrypt), and `Through the orOS relay` turned on.
-- **ownCloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Make an app passcode under Settings › Security, and turn on `Through the orOS relay`.
+- **Nextcloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Use `Sign in with Nextcloud`, or make an app password under Settings › Security › Devices & sessions. With the WebAppPassword app the browser connects directly; otherwise orOS asks to use the orOS relay.
+- **Synology**: install `WebDAV Server` from the Package Center and turn on HTTPS (port 5006). The address is `https://your-nas-address:5006/` followed by a shared folder, such as `/home`. The NAS needs a public address and a valid certificate (for example Synology DDNS with Let's Encrypt), and the orOS relay allowed when orOS asks.
+- **ownCloud**: the address is `https://your.cloud/remote.php/dav/files/USERNAME`. Make an app passcode under Settings › Security, and allow the orOS relay when orOS asks.
 
 ## Your passphrase
 The passphrase encrypts your data on this device. It leaves a device only when you use `Add a browser` or a sign-in link (below), and then end-to-end encrypted to your own new browser. Neither Dropbox nor anyone else can read your data without it.

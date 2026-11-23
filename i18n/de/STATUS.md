@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52572 of 52600 (99%)
+- Strings: 52581 of 52609 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -58,7 +58,7 @@ en and el); translators change them there, not in a pack.
 | download | English for now | 12 / 18 (12 in the code) |
 | enrichui | 100% | 28 / 28 |
 | familytree | 100% | 200 / 200 |
-| feeds | 100% | 328 / 328 |
+| feeds | 100% | 329 / 329 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
 | files | 100% | 962 / 962 (25 in the code) |
@@ -89,7 +89,7 @@ en and el); translators change them there, not in a pack.
 | links | 100% | 2 / 2 |
 | lyricsync | 100% | 299 / 299 |
 | mahjong | 100% | 70 / 70 |
-| mail | 100% | 504 / 504 |
+| mail | 100% | 507 / 507 |
 | mancala | 100% | 61 / 61 |
 | maps | 100% | 1710 / 1710 |
 | mastermind | 100% | 74 / 74 |
@@ -139,7 +139,7 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2048 / 2048 |
+| settings | 100% | 2053 / 2053 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
 | shell | 100% | 1633 / 1633 |

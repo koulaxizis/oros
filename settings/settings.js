@@ -442,6 +442,18 @@
 
     if (s.seasonal) secSeasonal(host, s.seasonal);
 
+    // DOCK-CARDS + structure review 9 (Chris 2026-11-22): one choice of
+    // bars instead of a Dock switch. "One bar at the bottom" turns the
+    // Dock on at the bottom and puts the top bar's cards in it (wide
+    // screens; elsewhere they stay in the top bar).
+    if (s.dock && typeof s.dock.cards === "boolean") {
+      var cbar = card(t("k.bars"), "dock");
+      var barsNow = s.dock.cards && s.dock.on ? "one" : "two";
+      cbar.appendChild(row(t("k.bars"), segmented([{ value: "two", label: t("k.bars.two") }, { value: "one", label: t("k.bars.one") }],
+        barsNow, "bars", function (v) { set("bars", v); }, t("k.bars")), { stack: true, hint: t("k.bars.hint") }));
+      host.appendChild(cbar);
+    }
+
     if (s.dock) {
       var d = s.dock;
       var c5 = card(t("k.dock"), "dock");
@@ -619,7 +631,12 @@
       if (a.motionSys) c7.appendChild(el("p", "hint", t("ac.motion.sys")));
       c7.appendChild(row(t("ac.transp"), switchBtn(a.transp, "reduceTransparency", function (v) { set("reduceTransparency", v); }, t("ac.transp")),
         { scope: "a11y", hint: t("ac.transp.hint") }));
-      if (a.transpSys) c7.appendChild(el("p", "hint", t("ac.transp.sys")));
+      // GLASS-KEEP: while the system asks for less transparency, the
+      // person may keep the glass (an older shell sends no glass).
+      if (a.transpSys && "glass" in a) {
+        c7.appendChild(row(t("ac.glass"), switchBtn(a.glass, "keepGlass", function (v) { set("keepGlass", v); }, t("ac.glass")),
+          { scope: "a11y", hint: t("ac.glass.hint") }));
+      } else if (a.transpSys) c7.appendChild(el("p", "hint", t("ac.transp.sys")));
       host.appendChild(c7);
     }
 
@@ -2082,9 +2099,8 @@
     return wrap;
   }
 
-  // W3: "Through the orOS relay" (servers without CORS, the user's
-  // choice) and "Sign in with Nextcloud" (Login Flow v2: no password
-  // typed here).
+  // W3: "Sign in with Nextcloud" (Login Flow v2: no password typed
+  // here). The relay is asked for only when a server needs it (STRUCT-5).
   function davForm(y) {
     var form = el("form", "pass dav-form");
     form.setAttribute("autocomplete", "off");
@@ -2092,16 +2108,7 @@
     form.appendChild(el("div", "hint", t("y.dav.hint")));
     form.appendChild(davInput("url", t("y.dav.url"), "url", t("y.dav.url.ph"), "url"));
     form.appendChild(davInput("dir", t("y.dav.dir"), "text", "orOS", "off"));
-    var rl = el("label", "check");
-    var rc = el("input");
-    rc.type = "checkbox";
-    rc.setAttribute("data-k", "dav-relay");
-    rc.checked = dav.relay;
-    rc.addEventListener("change", function () { dav.relay = rc.checked; });
-    rl.appendChild(rc);
-    rl.appendChild(el("span", null, t("y.dav.relay")));
-    form.appendChild(rl);
-    form.appendChild(el("div", "hint", t("y.dav.relay.hint")));
+    // STRUCT-5: no relay switch; the shell asks once when a server needs it.
     if (y.ncAvailable) {
       form.appendChild(actions(y.ncWaiting
         ? button(t("y.dav.nc.cancel"), "y.dav.nc.cancel", function () { act("sync.cancelNc"); })
@@ -2682,16 +2689,7 @@
     var form = el("form", "pass dav-form");
     form.setAttribute("autocomplete", "off");
     form.appendChild(cdInput("url", t("cd.url"), "url", t("cd.url.ph"), "url"));
-    var rl = el("label", "check");
-    var rc = el("input");
-    rc.type = "checkbox";
-    rc.setAttribute("data-k", "cd-relay");
-    rc.checked = cd.relay;
-    rc.addEventListener("change", function () { cd.relay = rc.checked; });
-    rl.appendChild(rc);
-    rl.appendChild(el("span", null, t("cd.relay")));
-    form.appendChild(rl);
-    form.appendChild(el("div", "hint", t("cd.relay.hint")));
+    // STRUCT-5: no relay switch; orOS asks once when the server needs it.
     // W6: Nextcloud Login Flow v2 (davkit ncLogin): no password typed here.
     form.appendChild(actions(cd.ncWait
       ? button(t("cd.nc.cancel"), "cd.nc.cancel", function () { D.ncCancel(); })
@@ -2716,10 +2714,16 @@
       cd.busy = true;
       cd.msg = { kind: "dim", key: "cd.working" };
       render();
-      D.connect({ url: cd.url, user: cd.user, relay: cd.relay }, pass).then(function () {
-        cd.busy = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render();
-      }, function (e) {
-        cd.busy = false; cd.msg = cdErr(e); render();
+      var R = relayApi(), relay = !!(R && R.allowed(cd.url));
+      var done = function () { cd.busy = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render(); };
+      var failed = function (e) { cd.busy = false; cd.msg = cdErr(e); render(); };
+      D.connect({ url: cd.url, user: cd.user, relay: relay }, pass).then(done, function (e) {
+        // STRUCT-5: the browser could not reach the server: ask once.
+        if (relay || !R || !cdNeedsRelay(e)) { failed(e); return; }
+        R.ask(cd.url).then(function (ok) {
+          if (!ok) { failed(e); return; }
+          D.connect({ url: cd.url, user: cd.user, relay: true }, pass).then(done, failed);
+        });
       });
     });
     return form;
@@ -2735,7 +2739,8 @@
     cd.ncWait = true;
     cd.msg = { kind: "dim", key: "cd.working" };
     render();
-    D.ncLogin({ url: cd.url, relay: cd.relay }, function (url) {
+    var R = relayApi(), relay = !!(R && R.allowed(cd.url));
+    D.ncLogin({ url: cd.url, relay: relay }, function (url) {
       cd.msg = { kind: "dim", key: "cd.nc.wait" };
       render();
       if (w && !w.closed) w.location.href = url;
@@ -2744,8 +2749,15 @@
       cd.busy = false; cd.ncWait = false; cd.open = false; cd.msg = { kind: "ok", key: "cd.ok" }; render();
     }, function (e) {
       try { if (w && !w.closed && w.location.href === "about:blank") w.close(); } catch (x) {}
-      cd.busy = false; cd.ncWait = false; cd.msg = cdErr(e); render();
+      cd.busy = false; cd.ncWait = false;
+      if (relay || !R || !cdNeedsRelay(e)) { cd.msg = cdErr(e); render(); return; }
+      R.ask(cd.url).then(function (ok) { cd.msg = ok ? { kind: "dim", key: "cd.nc.again" } : cdErr(e); render(); });
     });
+  }
+  // A CalDAV/CardDAV error the relay may cure (the browser was not let in).
+  function cdNeedsRelay(e) {
+    var code = String((e && e.message) || "").replace(/^cd-/, "");
+    return navigator.onLine !== false && (code === "unreachable" || code === "etag");
   }
   // W6: the shell's background pass (shell.js 10e) and its last result.
   function cdBgInfo() {

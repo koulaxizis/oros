@@ -61,13 +61,13 @@
       "new.where": "Keep it in a shared folder (Nextcloud, WebDAV)",
       "new.whereX": "Instead of the orOS relay, the household lives in a folder on your own Nextcloud or WebDAV server: everyone in it needs that folder's address and sign-in, which travel in the invite links. Everything in it stays end-to-end encrypted.",
       "new.davUrl": "Address of the folder (WebDAV)", "new.davUser": "User name", "new.davPass": "App password",
-      "new.davRelay": "Through the orOS relay (for servers that do not answer browsers)",
+     
       "hh.folder": "Kept in a shared folder on {host}. Changes arrive when orOS opens or comes to the front, and every 10 minutes.",
       "inv.folder": "This household is in a shared folder: the link carries the folder's address and sign-in. Give it a password, or send it only to the person it is for.",
       "err.dav-url": "Write the folder's full https address.", "err.dav-auth": "The server did not accept the user name or app password.",
       "err.dav-404": "There is no such folder on the server. Make it first, or check the address.",
       "err.dav-cond": "This server does not keep two people from overwriting each other (If-None-Match), so it cannot hold a household.",
-      "err.dav-cors": "The server does not answer browsers. Tick “Through the orOS relay” and try again.",
+      "err.dav-cors": "The server does not answer browsers, and the orOS relay was not allowed for it.",
       "err.dav-net": "Could not reach the server. Check the address and your connection.",
       "new.go": "Create", "btn.cancel": "Cancel", "btn.save": "Save", "btn.done": "Done", "btn.close": "Close",
       "join.title": "Join a household", "join.link": "Invite link", "join.pw": "Password of the invite", "join.go": "Ask to join",
@@ -141,13 +141,13 @@
       "new.where": "Να μένει σε κοινόχρηστο φάκελο (Nextcloud, WebDAV)",
       "new.whereX": "Αντί για το relay του orOS, το νοικοκυριό μένει σε έναν φάκελο στον δικό σου server Nextcloud ή WebDAV: όλοι όσοι είναι μέσα χρειάζονται τη διεύθυνση και τη σύνδεση του φακέλου, που ταξιδεύουν μέσα στους συνδέσμους πρόσκλησης. Όλα μέσα του μένουν κρυπτογραφημένα από άκρο σε άκρο.",
       "new.davUrl": "Διεύθυνση του φακέλου (WebDAV)", "new.davUser": "Όνομα χρήστη", "new.davPass": "Κωδικός εφαρμογής",
-      "new.davRelay": "Μέσω του relay του orOS (για servers που δεν απαντούν σε browsers)",
+     
       "hh.folder": "Μένει σε κοινόχρηστο φάκελο στο {host}. Οι αλλαγές έρχονται όταν ανοίγει το orOS ή έρχεται μπροστά, και κάθε 10 λεπτά.",
       "inv.folder": "Αυτό το νοικοκυριό είναι σε κοινόχρηστο φάκελο: ο σύνδεσμος περιέχει τη διεύθυνση και τη σύνδεση του φακέλου. Βάλε κωδικό ή στείλ’ τον μόνο σε όποιον προορίζεται.",
       "err.dav-url": "Γράψε την πλήρη διεύθυνση https του φακέλου.", "err.dav-auth": "Ο server δεν δέχτηκε το όνομα χρήστη ή τον κωδικό εφαρμογής.",
       "err.dav-404": "Δεν υπάρχει τέτοιος φάκελος στον server. Φτιάξ’ τον πρώτα ή έλεγξε τη διεύθυνση.",
       "err.dav-cond": "Αυτός ο server δεν εμποδίζει δύο άτομα να γράψουν το ένα πάνω στο άλλο (If-None-Match), οπότε δεν μπορεί να κρατήσει νοικοκυριό.",
-      "err.dav-cors": "Ο server δεν απαντά σε browsers. Τσέκαρε «Μέσω του relay του orOS» και δοκίμασε ξανά.",
+      "err.dav-cors": "Ο server δεν απαντά σε browsers και δεν επιτράπηκε το relay του orOS γι' αυτόν.",
       "err.dav-net": "Δεν βρέθηκε ο server. Έλεγξε τη διεύθυνση και τη σύνδεση.",
       "new.go": "Δημιουργία", "btn.cancel": "Άκυρο", "btn.save": "Αποθήκευση", "btn.done": "Τέλος", "btn.close": "Κλείσιμο",
       "join.title": "Μπες σε νοικοκυριό", "join.link": "Σύνδεσμος πρόσκλησης", "join.pw": "Κωδικός της πρόσκλησης", "join.go": "Ζήτα να μπεις",
@@ -514,13 +514,16 @@
     } catch (e) {}
     return "";
   }
+  // STRUCT-5: the shell's one relay, and its one question per server.
+  function relayApi() {
+    try { var p = window.parent; return p && p !== window && p.orosRelay && typeof p.orosRelay.ask === "function" ? p.orosRelay : null; } catch (e) { return null; }
+  }
   function openNew() {
     $("new-name").value = "";
     $("new-me").value = myName();
     $("new-msg").textContent = "";
     $("new-where").open = false;
     ["new-dav-url", "new-dav-user", "new-dav-pass"].forEach(function (id) { $(id).value = ""; });
-    $("new-dav-relay").checked = false;
     $("new-dlg").showModal();
     $("new-name").focus();
   }
@@ -530,11 +533,25 @@
     if (!C.line(name, 60) || !C.line(me, 40)) { $("new-msg").textContent = t("err.name"); return; }
     var dav = null;
     if ($("new-where").open && $("new-dav-url").value.trim()) {
-      dav = { url: $("new-dav-url").value.trim(), user: $("new-dav-user").value, pass: $("new-dav-pass").value, relay: $("new-dav-relay").checked };
+      dav = { url: $("new-dav-url").value.trim(), user: $("new-dav-user").value, pass: $("new-dav-pass").value, relay: false };
+      var R = relayApi();
+      dav.relay = !!(R && R.allowed(dav.url));
     }
     $("new-go").disabled = true;
     // a folder is tried first (it answers, takes a file only once)
-    Promise.resolve(dav && typeof H.probeFolder === "function" ? H.probeFolder(dav) : "").then(function (code) {
+    function probe() { return Promise.resolve(dav && typeof H.probeFolder === "function" ? H.probeFolder(dav) : ""); }
+    probe().then(function (code) {
+      // STRUCT-5: a server that does not answer browsers: ask once.
+      var R = relayApi();
+      if (code === "dav-cors" && !dav.relay && R) {
+        return R.ask(dav.url).then(function (ok) {
+          if (!ok) return code;
+          dav.relay = true;
+          return probe();
+        });
+      }
+      return code;
+    }).then(function (code) {
       if (code) { var e = new Error(code); e.code = code; throw e; }
       return H.create(name, me, dav || undefined);
     }).then(function (box) {

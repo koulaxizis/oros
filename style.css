@@ -1510,7 +1510,6 @@ body {
   .ov-box { border-radius: 0; border: none; min-height: 100%; padding: 12px 12px calc(12px + env(safe-area-inset-bottom, 0px)); }
   .ov-title { display: none; }
 }
-@media (prefers-reduced-transparency: reduce) { #oros-ov { -webkit-backdrop-filter: none; backdrop-filter: none; } }
 
 /* Multitasking wave M4 — two apps side by side (>= 1024 px, shell.js
    10b/10c). Frames never move in the DOM; the grid order places them. */
