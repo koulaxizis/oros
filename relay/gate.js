@@ -2078,7 +2078,7 @@ export function queueFor(q, now, ver) {
 // before it updates did not know claude_folders_request and dropped it.
 // The orOS a queued change needs at least (verNum), 0 = any.
 const TOOL_MV = { claude_folders_request: 84500, local_folders_request: 81100, mockup_render: 85600 };   // GATE-PL10: 8.56.00
-export const KB_PREF_MV = 89000;               // KB-PREF: the orOS that maps Kanban p- refs (set at stamp)
+export const KB_PREF_MV = 89200;               // KB-PREF: the orOS that maps Kanban p- refs (set at stamp)
 // KB-PREF: every p- ref in a Kanban call's arguments (board, column, after, card)
 export function kbRefsIn(v, out) {
   out = out || [];
