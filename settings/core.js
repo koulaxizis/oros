@@ -154,6 +154,7 @@
     ["gate", "services", "gt.switch", "gt.title"],
     ["hc", "services", "v.hc", null, null, "phone"],
     ["version", "system", "x.version"],
+    ["about-device", "system", "ab.title"],
     ["updates", "system", "x.updates"],
     ["install", "system", "x.install", null, null, "install"],
     ["device", "system", "x.device", "x.more"],
@@ -1223,6 +1224,21 @@
       "v.err.busy.tol": "timologisi.online asks to wait a little. Try again in a minute.",
 
       "x.version": "orOS version", "x.updates": "Check for updates",
+      "ab.title": "About this device",
+      "ab.hint": "What orOS runs on here. Copy details puts these lines on the clipboard for a problem report or a question; nothing personal is in them.",
+      "ab.form": "orOS form",
+      "ab.form.usb": "orOS USB",
+      "ab.form.portable": "orOS Portable or installed (desktop)",
+      "ab.form.app": "Installed web app",
+      "ab.form.browser": "In a browser tab",
+      "ab.browser": "Browser",
+      "ab.os": "System",
+      "ab.screen": "Screen",
+      "ab.storage": "Storage",
+      "ab.storage.v": "{u} used of about {q}",
+      "ab.copy": "Copy details",
+      "ab.copied": "Copied",
+      "w.about-device": "about this device copy details system info browser screen storage version",
       "x.install": "Install orOS as an app", "x.install.hint": "Opens in its own window, works offline, starts from your home screen.",
       "x.shortcuts": "Keyboard shortcuts", "x.more": "More",
       "x.desk": "Desktop features",
@@ -2890,6 +2906,21 @@
       "v.err.busy.tol": "Το timologisi.online ζητά λίγη αναμονή. Δοκίμασε ξανά σε ένα λεπτό.",
 
       "x.version": "Έκδοση orOS", "x.updates": "Έλεγχος για ενημέρωση",
+      "ab.title": "Σχετικά με τη συσκευή",
+      "ab.hint": "Πού τρέχει εδώ το orOS. Η Αντιγραφή στοιχείων βάζει αυτές τις γραμμές στο πρόχειρο για αναφορά προβλήματος ή ερώτηση· δεν περιέχουν τίποτα προσωπικό.",
+      "ab.form": "Μορφή orOS",
+      "ab.form.usb": "orOS USB",
+      "ab.form.portable": "orOS Portable ή εγκατεστημένο (υπολογιστής)",
+      "ab.form.app": "Εγκατεστημένη εφαρμογή ιστού",
+      "ab.form.browser": "Σε καρτέλα browser",
+      "ab.browser": "Browser",
+      "ab.os": "Σύστημα",
+      "ab.screen": "Οθόνη",
+      "ab.storage": "Αποθηκευτικός χώρος",
+      "ab.storage.v": "{u} σε χρήση από περίπου {q}",
+      "ab.copy": "Αντιγραφή στοιχείων",
+      "ab.copied": "Αντιγράφηκε",
+      "w.about-device": "σχετικά με τη συσκευή αντιγραφή στοιχείων πληροφορίες συστήματος browser οθόνη χώρος έκδοση",
       "x.install": "Εγκατάσταση του orOS ως εφαρμογή", "x.install.hint": "Ανοίγει σε δικό του παράθυρο, δουλεύει offline, ξεκινά από την αρχική οθόνη.",
       "x.shortcuts": "Συντομεύσεις πληκτρολογίου", "x.more": "Περισσότερα",
       "x.desk": "Λειτουργίες επιφάνειας εργασίας",
@@ -3550,6 +3581,61 @@
     return STRINGS[l] || root.orosI18n.table(STRINGS, "settings", l);
   }
 
+  // DEVINFO-1: About this device (Settings › System). The browser and
+  // system from the user agent (approximate, the same rules as the
+  // Device page), and the lines "Copy details" puts on the clipboard:
+  // the orOS version and form, browser, system, screen and storage.
+  // Nothing personal: no name, address, account or file names.
+  function uaBrief(ua) {
+    ua = String(ua || "");
+    var b = "", v = "", os = "", m;
+    if ((m = ua.match(/Edg(?:A|iOS)?\/(\d+)/))) { b = "Edge"; v = m[1]; }
+    else if ((m = ua.match(/(?:OPR|Opera)\/(\d+)/))) { b = "Opera"; v = m[1]; }
+    else if ((m = ua.match(/SamsungBrowser\/(\d+)/))) { b = "Samsung Internet"; v = m[1]; }
+    else if ((m = ua.match(/(?:Firefox|FxiOS)\/(\d+)/))) { b = "Firefox"; v = m[1]; }
+    else if ((m = ua.match(/(?:Chrome|CriOS)\/(\d+)/))) { b = "Chrome"; v = m[1]; }
+    else if (/Safari\//.test(ua) && (m = ua.match(/Version\/(\d+)/))) { b = "Safari"; v = m[1]; }
+    if (/iPhone|iPod/.test(ua)) os = "iOS";
+    else if (/iPad/.test(ua)) os = "iPadOS";
+    else if ((m = ua.match(/Android (\d+)/))) os = "Android " + m[1];
+    else if (/CrOS/.test(ua)) os = "ChromeOS";
+    else if (/Windows NT 10/.test(ua)) os = "Windows 10/11";
+    else if (/Windows/.test(ua)) os = "Windows";
+    else if (/Mac OS X/.test(ua)) os = "macOS";
+    else if (/Linux/.test(ua)) os = "Linux";
+    return { browser: b ? b + (v ? " " + v : "") : "", os: os };
+  }
+  var FORMS = ["usb", "portable", "app", "browser"];
+  // The orOS form: the USB stick or Portable / installed (their system
+  // part says which), an installed web app, else a browser tab.
+  function formOf(platform, standalone) {
+    if (platform === "usb" || platform === "portable") return platform;
+    return standalone ? "app" : "browser";
+  }
+  function mb(n, lang) {
+    if (!(n >= 0)) return "";
+    var g = String(Math.round(n / 1e8) / 10);
+    if (lang === "el" || lang === "de") g = g.replace(".", ",");
+    return n >= 1e9 ? g + " GB" : Math.max(1, Math.round(n / 1e6)) + " MB";
+  }
+  // info: { version, form, ua, sw, sh, dpr, used, quota } → [[key, value]]
+  function aboutRows(lang, info) {
+    var u = uaBrief(info.ua), out = [];
+    out.push(["x.version", "v" + String(info.version || "")]);
+    out.push(["ab.form", t(lang, "ab.form." + (FORMS.indexOf(info.form) !== -1 ? info.form : "browser"))]);
+    if (u.browser) out.push(["ab.browser", u.browser]);
+    if (u.os) out.push(["ab.os", u.os]);
+    if (info.sw && info.sh) {
+      var d = +info.dpr || 1;
+      out.push(["ab.screen", Math.round(info.sw) + " × " + Math.round(info.sh) + (d !== 1 ? " @" + (Math.round(d * 100) / 100) + "x" : "")]);
+    }
+    if (info.quota > 0) out.push(["ab.storage", t(lang, "ab.storage.v", { u: mb(info.used || 0, lang), q: mb(info.quota, lang) })]);
+    return out;
+  }
+  function aboutText(lang, info) {
+    return aboutRows(lang, info).map(function (r) { return t(lang, r[0]) + ": " + r[1]; }).join("\n");
+  }
+
   function t(lang, key, vars) {
     var s = tableOf(lang)[key];
     if (s === undefined) s = STRINGS.en[key];
@@ -3752,6 +3838,7 @@
     usersPassOk: usersPassOk,
     stDur: stDur,
     POSITIONS: POSITIONS, STYLES: STYLES, SOUNDS: SOUNDS, DURATIONS: DURATIONS,
+    uaBrief: uaBrief, formOf: formOf, aboutRows: aboutRows, aboutText: aboutText,
     t: t, langOf: langOf, isSection: isSection, resolve: resolve, partOf: partOf, sectionOf: sectionOf, scopeOf: scopeOf,
     hourLabel: hourLabel, quietValue: quietValue, readQuiet: readQuiet,
     intervalLabel: intervalLabel, syncState: syncState, fold: fold, menuGroups: menuGroups, gateFilter: gateFilter, gateBulk: gateBulk,
