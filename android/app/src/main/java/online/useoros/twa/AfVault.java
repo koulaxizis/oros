@@ -121,6 +121,38 @@ final class AfVault {
         }
     }
 
+    /** PW-AF6: only the two fill keys (the orOS app hands autofill to
+     *  orOS Passwords); the key of logins waiting to be saved stays. */
+    static synchronized void deleteFillKeys() {
+        try {
+            KeyStore k = ks();
+            k.deleteEntry(ALIAS_INDEX);
+            k.deleteEntry(ALIAS_NAMES);
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** {svc, keys, stored, at}: whether this app is the phone's autofill
+     *  service, has its keys and a sealed copy, and when it was made. */
+    static JSONObject state(Context c) throws JSONException {
+        JSONObject a = new JSONObject();
+        a.put("svc", isService(c));
+        a.put("keys", hasKeys());
+        a.put("stored", stored(c));
+        a.put("at", storedAt(c));
+        return a;
+    }
+
+    static boolean isService(Context c) {
+        if (Build.VERSION.SDK_INT < 26) return false;
+        try {
+            android.view.autofill.AutofillManager am = c.getSystemService(android.view.autofill.AutofillManager.class);
+            return am != null && am.hasEnabledAutofillServices();
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     // ---- the sealed copies ----
     static SharedPreferences prefs(Context c) {
         return c.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
@@ -144,6 +176,11 @@ final class AfVault {
      *  the per-phone app links. */
     static void clear(Context c) {
         prefs(c).edit().remove("index").remove("names").remove("at").remove("saves").commit();
+    }
+
+    /** PW-AF6: forgets the sealed copies only (saves and links stay). */
+    static void dropCopy(Context c) {
+        prefs(c).edit().remove("index").remove("names").remove("at").commit();
     }
 
     /** Checks the shape the page sends: {w, iv, ct} base64, bounded. */

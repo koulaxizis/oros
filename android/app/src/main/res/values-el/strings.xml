@@ -50,6 +50,9 @@
     <string name="af_guess">Ταιριάζει το όνομα</string>
     <string name="af_link_web_q">Να χρησιμοποιείται το «%1$s» στο %2$s από εδώ και πέρα; Το orOS το θυμάται σε αυτό το κινητό.</string>
     <string name="af_none_otp">Δεν υπάρχουν ακόμη κωδικοί 2FA στο orOS Passwords.</string>
+    <string name="af_pick_doc">Επιλογή αριθμού εγγράφου από το orOS</string>
+    <string name="af_pick_doc_title">Ποια ταυτότητα για %1$s;</string>
+    <string name="af_none_doc">Καμία ταυτότητα στο orOS Passwords δεν έχει ακόμη αυτούς τους αριθμούς.</string>
     <string name="af_link_q">Να χρησιμοποιείται το «%1$s» στο %2$s (%3$s) από εδώ και πέρα; Το orOS το θυμάται σε αυτό το κινητό.</string>
     <string name="af_yes">Χρήση</string>
     <string name="af_no">Άκυρο</string>

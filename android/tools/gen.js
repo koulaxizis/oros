@@ -137,6 +137,11 @@ function build(manifest) {
     <!-- Passwords' fingerprint unlock (PW-BIO) and autofill (PW-AF2):
          BiometricManager and BiometricPrompt throw without it. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- PW-AF6: one autofill on the phone. orOS Passwords' AfFeedProvider
+         answers only apps signed with our key; the orOS app hands it the
+         sealed fill lists (ciphertext only). Both apps define it. -->
+    <permission android:name="\${afFeedPermission}" android:protectionLevel="signature" />
+    <uses-permission android:name="\${afFeedPermission}" />
     <!-- Reminders (BR-PHONE v3): exact times when the person allows it,
          and re-arming after a reboot. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -181,6 +186,8 @@ function build(manifest) {
         <package android:name="online.useoros.drive" />
         <!-- Koulaxizis Apps (APPS-M3): while it is installed, it tells about new APKs. -->
         <package android:name="gr.koulaxizis.apps" />
+        <!-- orOS Passwords (PW-AF6): its autofill feed and its autofill setting. -->
+        <package android:name="\${passPackage}" />
     </queries>
 
     <application
@@ -481,6 +488,13 @@ ${aliases}
             </intent-filter>
             <meta-data android:name="android.autofill" android:resource="@xml/autofill_service" />
         </service>
+        <!-- PW-AF6: orOS Passwords removed: this app's own autofill is back on. -->
+        <receiver android:name=".AfFeedReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.PACKAGE_FULLY_REMOVED" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
         <activity android:name=".AfAuthActivity"
             android:exported="false"
             android:excludeFromRecents="true"
@@ -512,7 +526,7 @@ const REMOVE_NODES = [["activity", ".AddActivity"], ["activity", ".DiagActivity"
   ["receiver", ".ReminderReceiver"], ["activity", ".HealthPermissionActivity"], ["activity", ".HealthPrivacyActivity"],
   ["activity-alias", "ViewPermissionUsageActivity"], ["receiver", ".TodayWidget"], ["receiver", ".QuickWidget"], ["receiver", ".QuickBarWidget"], ["receiver", ".CalendarWidget"], ["receiver", ".TodoWidget"], ["service", ".AskTile"], ["service", ".QuickTile"],
   ["service", ".AuthenticatorService"], ["service", ".ContactsSyncService"], ["service", ".CalendarSyncService"],
-  ["service", ".OrosAutofillService"], ["activity", ".AfAuthActivity"]];
+  ["service", ".OrosAutofillService"], ["activity", ".AfAuthActivity"], ["receiver", ".AfFeedReceiver"]];
 // orOS Passwords keeps its autofill (PW-AF2/3: the service, the
 // confirm screen, and the one link that opens Android's autofill
 // setting); every other single or page app removes them.
@@ -521,6 +535,21 @@ function soloNodes(id, opt) {
   const pw = BIO_APPS.includes(id) && opt.widget;
   if (!pw) return REMOVE_NODES.concat([["activity", ".BioActivity"]]);
   return REMOVE_NODES.filter((n) => !AF_NODES.some((a) => a[0] === n[0] && a[1] === n[1]));
+}
+// PW-AF6: orOS Passwords defines the feed permission and carries the
+// provider the orOS app hands the sealed fill lists to; every other
+// single or page app has neither.
+function feedNodes(id, opt) {
+  const pw = BIO_APPS.includes(id) && opt.widget;
+  if (!pw) return { perm: `
+    <permission android:name="\${afFeedPermission}" tools:node="remove" />`, provider: "" };
+  return { perm: "", provider: `
+        <!-- PW-AF6: the orOS app hands this app its sealed fill lists. -->
+        <provider android:name=".AfFeedProvider"
+            android:authorities="\${applicationId}.affeed"
+            android:exported="true"
+            android:permission="\${afFeedPermission}" />
+` };
 }
 // Single apps that keep BioActivity (PW-BIO): fingerprint unlock is
 // Passwords' alone; every other flavour removes it.
@@ -608,6 +637,7 @@ function buildOverlay(id, pkg, m, main, opt) {
     xmlns:tools="http://schemas.android.com/tools">
 ${REMOVE_PERMS.concat(BIO_APPS.includes(id) && opt.widget ? [] : ["USE_BIOMETRIC"]).map((p) => `
     <uses-permission android:name="android.permission.${p}" tools:node="remove" />`).join("")}
+    <uses-permission android:name="\${afFeedPermission}" tools:node="remove" />${feedNodes(id, opt).perm}
 
     <application>
         <meta-data android:name="web_manifest_url" android:value="https://${HOST}/${opt.dir}/manifest.webmanifest"
@@ -615,7 +645,7 @@ ${REMOVE_PERMS.concat(BIO_APPS.includes(id) && opt.widget ? [] : ["USE_BIOMETRIC
 ${launcher}${aliases}${mainAliases}
 ${soloNodes(id, opt).map((n) => `
         <${n[0]} android:name="${n[1]}" tools:node="remove" />`).join("")}
-${opt.widget ? `
+${feedNodes(id, opt).provider}${opt.widget ? `
         <!-- The app's own widget (wave 7b): its icon and shortcuts. -->
         <receiver android:name=".SoloWidget" android:exported="false" android:label="@string/widget_solo">
             <intent-filter>
@@ -670,4 +700,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { build, buildSolo, buildPage, soloApps, pageApps, flavours, REMOVE_NODES, BIO_APPS, AF_NODES };
+module.exports = { build, buildSolo, buildPage, soloApps, pageApps, flavours, REMOVE_NODES, BIO_APPS, AF_NODES, feedNodes };

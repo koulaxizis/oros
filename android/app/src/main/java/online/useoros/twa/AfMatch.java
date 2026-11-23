@@ -104,7 +104,10 @@ final class AfMatch {
     // ---- fields ----
     static final int NONE = 0, USER = 1, PASS = 2, OTP = 3, CC_NAME = 4, CC_NUM = 5, CC_EXP = 6, CC_MM = 7,
             CC_YY = 8, CVV = 9, FIRST = 10, LAST = 11, FULL = 12, EMAIL = 13, PHONE = 14, COMPANY = 15,
-            STREET = 16, LINE2 = 17, CITY = 18, ZIP = 19, REGION = 20, COUNTRY = 21, NEW_PASS = 22;
+            STREET = 16, LINE2 = 17, CITY = 18, ZIP = 19, REGION = 20, COUNTRY = 21, NEW_PASS = 22,
+            // PW-AF6: document numbers of an identity, filled only from
+            // the person's own pick ("Choose from orOS"), never suggested
+            TAX = 23, IBAN = 24, ID_NO = 25, PASSPORT = 26;
 
     static boolean isLogin(int k) {
         return k == USER || k == PASS || k == OTP;
@@ -116,6 +119,10 @@ final class AfMatch {
 
     static boolean isPerson(int k) {
         return k >= FIRST && k <= COUNTRY;
+    }
+
+    static boolean isDoc(int k) {
+        return k >= TAX && k <= PASSPORT;
     }
 
     /** Android autofill hints (View.AUTOFILL_HINT_* and androidx.autofill HintConstants). */
@@ -188,6 +195,12 @@ final class AfMatch {
     private static final Object[][] RX = {
             {OTP, p("one.?time|\\botp\\b|totp|2fa|mfa|two.?factor|verification|verify|auth.?code|sms.?code|passcode|κωδικ.*(επαληθευσης|μιας)|bestatigungs|einmal")},
             {CVV, p("cvv|cvc|csc|security.?code|κωδικ.*ασφαλειας|pruf")},
+            // PW-AF6 document numbers (before card and user words: "ID card
+            // number", "bank account")
+            {IBAN, p("iban")},
+            {TAX, p("\\bafm\\b|αφμ|α\\.φ\\.μ|vat.?(id|no|num|reg)|tax.?(id|no|num|code|reg)|\\btin\\b|steuer.?(id|nr|nummer|ident)|ust.?id|\\bnif\\b")},
+            {PASSPORT, p("passport|διαβατηριο|reisepass")},
+            {ID_NO, p("id.?card|identity.?(card|no|num)|national.?id|\\bid.?(no|nr|num)|αριθμ.*ταυτοτητ|(?<![α-ω])αδτ(?![α-ω])|ταυτοτητα|personalausweis|ausweis.?(nr|nummer)")},
             {CC_NAME, p("card.?holder|name.?on.?card|cc.?name|κατοχ|karteninhaber")},
             {CC_NUM, p("card.?num|cc.?num|credit.?card|αριθμ.*καρτας|kartennummer")},
             {CC_EXP, p("expir|valid.?thru|ληξη|ablauf|gultig")},

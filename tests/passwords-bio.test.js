@@ -175,7 +175,7 @@ test("PW-BIO Android: BioActivity in the orOS app and orOS Passwords only, its o
   }
   const gradle = read("android", "app", "build.gradle");
   assert.match(gradle, /bioScheme: 'oros-bio-debug'/);
-  assert.match(gradle, /bioScheme: 'oros-bio'\]/);
+  assert.match(gradle, /bioScheme: 'oros-bio'[,\]]/);
 
   const vault = read(...JAVA, "BioVault.java");
   assert.match(vault, /setUserAuthenticationRequired\(true\)/);
