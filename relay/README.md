@@ -443,6 +443,9 @@ CSP, `X-Frame-Options: DENY` and `Referrer-Policy: no-referrer`):
 | `POST /nl/u/<k>/<tok>` | Unsubscribe: RFC 8058 `List-Unsubscribe=One-Click` or the page's button. Stores only the subscriber's random token, once a day |
 
 At most 2,000 rows wait per list; beyond that nothing more is stored.
+A sign-up the list's orOS has not pulled within 90 days is deleted by the
+hourly cron (`purgeNl`, worker.js; `NL_LIMITS.keepMs`); unsubscribes wait
+until the list pulls them.
 
 App operation `POST /v1 { op: "nl", act, k (16 a-z0-9), sec (32 A-Za-z0-9) }`:
 

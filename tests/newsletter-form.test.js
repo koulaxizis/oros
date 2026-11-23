@@ -30,7 +30,7 @@ function fakeD1() {
   function exec(sql, a) {
     const S = NL.SQL;
     switch (sql) {
-      case S.list: case S.queue: case S.index: return {};
+      case S.list: case S.queue: case S.index: case S.indexAt: return {};
       case S.getList: { const l = lists.get(a[0]); return { first: l ? { ...l } : null }; }
       case S.countLists: return { first: { n: lists.size } };
       case S.addList: lists.set(a[0], { pub: a[1], sec: a[2], back: a[3], at: a[4] }); return {};

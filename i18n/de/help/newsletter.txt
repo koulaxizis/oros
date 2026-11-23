@@ -167,5 +167,5 @@ Listen, Abonnenten und Ausgaben werden über die orOS-Synchronisierung abgeglich
 - Bis zu 5.000 Abonnenten insgesamt und 20 Listen.
 - Bis zu 20 RSS-Feeds und 500 Ausgaben.
 - Keine Statistiken zu Öffnungen oder Klicks.
-- Das Relay hält höchstens 2.000 Anmeldungen und Abmeldungen pro Liste, die auf das Abholen warten.
+- Das Relay hält höchstens 2.000 Anmeldungen und Abmeldungen pro Liste, die auf das Abholen warten. Eine Anmeldung, die nicht innerhalb von 90 Tagen abgeholt wird, wird gelöscht; Abmeldungen warten, bis sie abgeholt werden.
 - Jeder Aufruf der API eines Anbieters sendet bis zu 10 Nachrichten (etwa 1 MB); Rückläufer, die vor dem ersten Lesen älter als 7 Tage sind, werden nicht abgerufen.

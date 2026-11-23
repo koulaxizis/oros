@@ -26,7 +26,12 @@ function fakeD1(opts) {
     if (!hasOc && sql === S.addList) throw new Error("D1_ERROR: table nl_list has no column named oc: SQLITE_ERROR");
     if (!hasOc && (sql === S.getList || sql === S.setList)) throw new Error("D1_ERROR: no such column: oc: SQLITE_ERROR");
     switch (sql) {
-      case S.list: case S.queue: case S.index: return { meta: {} };
+      case S.list: case S.queue: case S.index: case S.indexAt: return { meta: {} };
+      case S.purge: {
+        const old = rows.filter((r) => r.at < a[0] && r.kind === "s").sort((x, y) => x.at - y.at).slice(0, a[1]);
+        for (const o of old) rows.splice(rows.indexOf(o), 1);
+        return { meta: { changes: old.length } };
+      }
       case S.addOc:
         if (hasOc) throw new Error("D1_ERROR: duplicate column name: oc: SQLITE_ERROR");
         hasOc = true; lists.forEach((l) => { l.oc = 0; }); return { meta: {} };
@@ -375,4 +380,36 @@ test("oc: anything but 0 or 1 is refused", async () => {
   }
   assert.equal(D.lists.size, 0);
   assert.equal(NL.validNl({ act: "reg", k: K, sec: SEC, pub: kp.pub, back: "", oc: 2 }), "oc");
+});
+
+// Proposal 9 (legal audit): sign-ups nobody pulled leave after 90 days;
+// unsubscribes wait for their list; no NL_DB is no work.
+test("purgeNl: old sign-ups go, unsubscribes and fresh sign-ups stay", async () => {
+  const D = fakeD1();
+  const now = Date.UTC(2026, 10, 23);
+  const DAY = 86400000;
+  D.rows.push({ id: 1, k: K, kind: "s", v: "old", at: now - 91 * DAY });
+  D.rows.push({ id: 2, k: K, kind: "u", v: "oldu", at: now - 400 * DAY });
+  D.rows.push({ id: 3, k: K, kind: "s", v: "fresh", at: now - 89 * DAY });
+  const n = await NL.purgeNl({ NL_DB: D }, now);
+  assert.equal(n, 1);
+  assert.deepEqual(D.rows.map((r) => r.v).sort(), ["fresh", "oldu"]);
+  assert.ok(D.log.includes(NL.SQL.indexAt), "the at index is created with the schema");
+  assert.equal(NL.NL_LIMITS.keepMs, 90 * DAY);
+});
+
+test("purgeNl: batches until fewer than a batch are left", async () => {
+  const D = fakeD1();
+  const now = Date.UTC(2026, 10, 23);
+  for (let i = 0; i < NL.NL_LIMITS.purgeBatch + 7; i++) D.rows.push({ id: i + 1, k: K, kind: "s", v: "x" + i, at: now - 100 * 86400000 + i });
+  assert.equal(await NL.purgeNl({ NL_DB: D }, now), NL.NL_LIMITS.purgeBatch + 7);
+  assert.equal(D.rows.length, 0);
+});
+
+test("purgeNl: no NL_DB does nothing, storage trouble does not throw", async () => {
+  assert.equal(await NL.purgeNl({}, Date.now()), 0);
+  assert.equal(await NL.purgeNl(null, Date.now()), 0);
+  const D = fakeD1();
+  D.prepare = () => { throw new Error("D1 down"); };
+  assert.equal(await NL.purgeNl({ NL_DB: D }, Date.now()), 0);
 });
