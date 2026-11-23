@@ -3350,7 +3350,7 @@
         scheduleLive();
       }).then(function (res) {
         addUsage(pid, res.usage);
-        var m = { r: "asst", prov: pid, model: modelOf(pid), text: res.text, raw: res.raw };
+        var m = { r: "asst", prov: pid, model: turnModel(pid) || modelOf(pid), text: res.text, raw: res.raw };
         if (res.tools.length) m.tools = res.tools;
         if (res.cut && !res.tools.length) m.cut = 1;
         c.msgs.push(m);
@@ -3402,7 +3402,7 @@
     first.catch(function (e) {
       if (ctl && ctl.signal.aborted) {
         if (busy && busy.join >= 0) busy.live = busy.live.slice(joinedText(c.msgs, busy.join).length);
-        if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
+        if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: turnModel(pid) || modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
       } else if (C.coolFor(e) && again + 1 < C.chainOrder(data).length &&
                  c.msgs.length === startLen && !(last && last.found && !hadFound)) {
@@ -7638,7 +7638,7 @@
       var ai = el("span", "who-ai", t("who.ai"));
       ai.title = t("who.aiTip");
       who.appendChild(ai);
-      who.appendChild(el("span", "who-name", C.PROVIDERS[pid].builtin ? provName(pid) : t("who", { name: provName(pid), model: wm ? wm.name : modelOf(pid) })));
+      who.appendChild(el("span", "who-name", C.PROVIDERS[pid].builtin ? provName(pid) : t("who", { name: provName(pid), model: wm ? wm.name : (turnModel(pid) || modelOf(pid)) })));
       who.appendChild(el("span", "who-to", isBi ? t("who.device") : data.set.chat ? t("who.chatOnly") : t("who.to", { host: hostOf(baseOf(pid)) })));
       if (webOn(pid)) who.appendChild(el("span", "who-web", t("who.web")));
       if (!data.set.chat && !isBi) {
