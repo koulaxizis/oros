@@ -1036,7 +1036,7 @@ export function pendHead(n, a, t) {
     h.a.items = items.map((it) => ({ title: itemTitle(it).slice(0, 80), w: itemWords(it).slice(0, 80) }));
     while (h.a.items.length && JSON.stringify(h).length > 2048) h.a.items.pop();
   } else {
-    h.a.refs = refsIn(o).slice(0, 20);
+    h.a.refs = refsIn(o).concat(/^kanban_/.test(n) ? kbRefsIn(o) : []).filter((r, i, l) => l.indexOf(r) === i).slice(0, 20);   // KB-PREF: undo_change of the add takes these too
   }
   // KB-WAIT (Chris 2026-11-23): what the change targets, in one line
   if (/^kanban_/.test(n) && typeof o.board === "string") h.a.kb = o.board.slice(0, 80);
@@ -2061,6 +2061,14 @@ export function queueFor(q, now, ver) {
 // The orOS a queued change needs at least (verNum), 0 = any.
 const TOOL_MV = { claude_folders_request: 84500, local_folders_request: 81100, mockup_render: 85600 };   // GATE-PL10: 8.56.00
 export const KB_PREF_MV = 89000;               // KB-PREF: the orOS that maps Kanban p- refs (set at stamp)
+// KB-PREF: every p- ref in a Kanban call's arguments (board, column, after, card)
+export function kbRefsIn(v, out) {
+  out = out || [];
+  if (typeof v === "string") { const r = v.trim(); if (KB_PREF.test(r) && out.indexOf(r) < 0) out.push(r); }
+  else if (Array.isArray(v)) v.forEach((x) => kbRefsIn(x, out));
+  else if (v && typeof v === "object") Object.keys(v).forEach((k) => kbRefsIn(v[k], out));
+  return out;
+}
 function hasPref(v) { return typeof v === "string" ? KB_PREF.test(v.trim()) : Array.isArray(v) ? v.some(hasPref) : v && typeof v === "object" ? Object.keys(v).some((k) => hasPref(v[k])) : false; }
 const PL_AI_OPS = ["generate", "nobg", "fill", "expand", "upscale", "image", "create"];
 export function minVer(name, args) {

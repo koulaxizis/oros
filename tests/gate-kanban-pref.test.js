@@ -112,3 +112,18 @@ test("the instructions name the newest tools and gate_tools / gate_call; each is
   assert.match(G.INSTRUCTIONS, /p- refs at once too/);
   assert.match(G.TOOLS.find((t) => t.name === "kanban_add_board").description, /with orOS closed, p- refs/);
 });
+
+test("undo_change of a waiting board takes the calls on its p- refs with it (Mail-thread review)", () => {
+  const B = "AAAAAAAAAAAAAAAA", C = "BBBBBBBBBBBBBBBB", D = "CCCCCCCCCCCCCCCC", E = "DDDDDDDDDDDDDDDD";
+  const rows = [
+    { id: B, n: "kanban_add_board", a: G.pendHead("kanban_add_board", { name: "orOS", columns: [{ name: "Νέο" }] }, 1).a, t: 1 },
+    { id: C, n: "kanban_add_cards", a: G.pendHead("kanban_add_cards", { board: "p-" + B + ".0", cards: [{ column: "p-" + B + ".1", text: "a" }] }, 2).a, t: 2 },
+    { id: D, n: "kanban_move_cards", a: G.pendHead("kanban_move_cards", { board: "Βιβλία", moves: [{ card: "p-" + C + ".0", column: "Έγινε" }] }, 3).a, t: 3 },
+    { id: E, n: "kanban_add_cards", a: G.pendHead("kanban_add_cards", { board: "Βιβλία", cards: [{ column: "Νέο", text: "b" }] }, 4).a, t: 4 }
+  ];
+  assert.deepEqual(rows[1].a.refs, ["p-" + B + ".0", "p-" + B + ".1"]);
+  const pend = G.pendingOf(rows, []);
+  assert.deepEqual(G.cancelPlan(pend, { ids: [B] }, 10).ids, [B, C, D], "the board, the cards on it, the move of one of them");
+  assert.deepEqual(G.cancelPlan(pend, { ids: [E] }, 10).ids, [E]);
+  assert.deepEqual(G.kbRefsIn({ board: "x", cards: [{ column: "p-" + B + ".1", text: "p- not a ref" }] }), ["p-" + B + ".1"]);
+});
