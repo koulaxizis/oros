@@ -1440,6 +1440,60 @@
     }
   };
 
+  // ---------- 5b-game. GAMEMODE-1: Game mode ----------
+  // Off by default, this device only ("oros-gamemode" "1"). While a
+  // Games app is in front AND orOS fills the screen (the Fullscreen API,
+  // or a window as large as the screen: F11, the USB kiosk, Portable in
+  // full screen), notifications stay in the bell without a pop-up or a
+  // sound (notifications.js asks __orosGameQuiet) and the top bar and the
+  // Dock step aside (<html data-oros-game="1">). The pointer at the very
+  // top edge brings the bar back for a moment.
+  var GAME_KEY = "oros-gamemode";
+  function gameModeOn() { try { return localStorage.getItem(GAME_KEY) === "1"; } catch (e) { return false; } }
+  // Pure: { on, game, fs, sw, sh, w, h } → active?
+  function gameActive(x) {
+    if (!x || !x.on || !x.game) return false;
+    if (x.fs) return true;
+    return x.sw > 0 && x.sh > 0 && x.w >= x.sw - 2 && x.h >= x.sh - 2;
+  }
+  var gameNow = false, gamePeek = 0;
+  function gameCheck() {
+    var app = state.running;
+    var fs = false;
+    try { fs = !!(document.fullscreenElement || document.webkitFullscreenElement); } catch (e) {}
+    var sc = window.screen || {};
+    var on = !SOLO && gameActive({ on: gameModeOn(), game: !!(app && app.category === "Games"), fs: fs,
+      sw: sc.width || 0, sh: sc.height || 0, w: window.innerWidth || 0, h: window.innerHeight || 0 });
+    if (on === gameNow) return;
+    gameNow = on;
+    if (on) document.documentElement.setAttribute("data-oros-game", "1");
+    else document.documentElement.removeAttribute("data-oros-game");
+  }
+  window.__orosGameQuiet = function () { return gameNow; };
+  function gameModeSet(on) {
+    try { if (on) localStorage.setItem(GAME_KEY, "1"); else localStorage.removeItem(GAME_KEY); } catch (e) {}
+    gameCheck();
+  }
+  (function () {
+    ["fullscreenchange", "webkitfullscreenchange", "resize"].forEach(function (ev) {
+      (ev === "resize" ? window : document).addEventListener(ev, function () { setTimeout(gameCheck, 50); });
+    });
+    setInterval(gameCheck, 2000);          // an app opened or closed
+    // The pointer at the top edge: the bar for 3 s (and while over it).
+    document.addEventListener("pointermove", function (e) {
+      if (!gameNow || e.pointerType !== "mouse") return;
+      var root = document.documentElement;
+      if (e.clientY <= 2) {
+        root.setAttribute("data-oros-game-peek", "1");
+        clearTimeout(gamePeek);
+        gamePeek = setTimeout(function () { root.removeAttribute("data-oros-game-peek"); }, 3000);
+      } else if (root.hasAttribute("data-oros-game-peek") && e.clientY < 48) {
+        clearTimeout(gamePeek);
+        gamePeek = setTimeout(function () { root.removeAttribute("data-oros-game-peek"); }, 3000);
+      }
+    }, { passive: true });
+  })();
+
   // ---------- 5b-icon. MENUICON-1: the menu button's icon ----------
   // Device-local "oros-menuicon": one of MENU_ICONS (default "grid",
   // the four squares in index.html) or "none" (the label alone). Static
@@ -13980,6 +14034,7 @@
                own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
       menuIcon: { now: menuIconNow(), choices: MENU_ICON_IDS.slice() },   // MENUICON-1
+      gamemode: SOLO ? null : { on: gameModeOn(), active: gameNow },     // GAMEMODE-1
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
       viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill() } : null,   // VIZWALL-1, VIZ-SLOW
@@ -14134,6 +14189,7 @@
       case "wpdir:mode": wpdirSet("mode", String(value || "")); return;
       case "wpdir:dir":  wpdirSet("dir", value); return;
       case "wpdir:next": wpdirSet("next"); return;
+      case "gamemode":   if (!SOLO) { gameModeSet(!!value); settingsNotify(); } return;   // GAMEMODE-1
       case "menuicon":   if (!SOLO) { menuIconSet(String(value || "")); settingsNotify(); } return;   // MENUICON-1
       case "pet":
         if (window.orosPet && typeof window.orosPet.toggle === "function" &&

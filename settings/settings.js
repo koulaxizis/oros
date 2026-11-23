@@ -1124,6 +1124,7 @@
     if (s && s.uisounds) secUiSounds(host, s.uisounds);
 
     secFocus(host, N);
+    if (s && s.gamemode) secGameMode(host, s.gamemode);
 
     var known = (typeof N.getKnownApps === "function") ? N.getKnownApps() : [];
     if (known.length) {
@@ -1172,6 +1173,18 @@
       c.appendChild(row(t("us.vol"), wrap, { forId: "f-uisnd-vol" }));
       c.appendChild(actions(button(t("us.try"), "uisnd:try", function () { set("uisnd:try", true); })));
     }
+    host.appendChild(c);
+  }
+
+  // Game mode (GAMEMODE-1): off by default, this device only. While a
+  // game from the Games category runs full screen, notifications stay
+  // silent and the top bar and the Dock step aside.
+  function secGameMode(host, g) {
+    var c = card(t("gm.title"), "gamemode");
+    c.appendChild(el("p", "hint", t("gm.hint")));
+    var r = row(t("gm.on"), switchBtn(!!g.on, "gamemode", function (v) { set("gamemode", v); }, t("gm.on")));
+    if (g.on) r.appendChild(el("div", "hint", t(g.active ? "gm.now.on" : "gm.now.off")));
+    c.appendChild(r);
     host.appendChild(c);
   }
 

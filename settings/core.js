@@ -23,7 +23,7 @@
   // (its key cannot travel) stay on the device.
   // The menu's app list rides in the launcher's "menu" slice.
   var SCOPE = {
-    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device", zoom: "device", wpaccent: "device", menuicon: "device",
+    theme: "all", skin: "all", icons: "all", wallpaper: "all", pet: "all", seasonal: "all", me: "all", greet: "device", tips: "device", zoom: "device", wpaccent: "device", menuicon: "device", gamemode: "device",
     notifications: "all", relay: "all", syncInterval: "all", autoexport: "all", lang: "all", menu: "all",
     folder: "device", search: "device", passphrase: "device", dock: "device", files: "device",
     fopen: "all", keys: "all", multitask: "device", continue: "device", pcfiles: "device", clip: "device", read: "device", textrepl: "all", a11y: "device", lock: "device", sensitive: "device", osk: "device", widgets: "device", smartbar: "device", night: "device", screentime: "device", backupenc: "device", caldav: "device", gate: "device", helper: "all"
@@ -101,6 +101,7 @@
     ["notif-sound", "notifications", "n.sound"],
     ["notif-volume", "notifications", "n.volume"],
     ["uisounds", "notifications", "us.title", null, null, "uisounds"],
+    ["gamemode", "notifications", "gm.title", null, null, "gamemode"],
     ["notif-duration", "notifications", "n.duration"],
     ["focusmodes", "notifications", "n.focus.modes", "n.focus"],
     ["quiet", "notifications", "n.quiet"],
@@ -441,6 +442,12 @@
       "n.test.title": "Test notification", "n.test.body": "This is how notifications look.",
       "n.position": "Position on screen", "n.style": "Style", "n.sound": "Sound",
       "n.volume": "Volume", "n.duration": "Stays on screen",
+      "gm.title": "Game mode",
+      "gm.hint": "While a game from the Games category runs full screen, notifications stay silent and the top bar and the Dock step aside. Move the pointer to the top edge to see the bar for a moment. Off by default. This device only.",
+      "gm.on": "Game mode",
+      "gm.now.on": "A game is running now: notifications are silent.",
+      "gm.now.off": "Starts by itself when a game runs full screen.",
+      "w.gamemode": "game mode gaming play full screen fullscreen quiet notifications hide bar dock",
       "us.title": "Interface sounds",
       "us.hint": "Soft sounds when you tap a button, flip a switch or open and close apps and panels. Silent while Do Not Disturb or a Focus mode is on. The sounds (a few KB, free CC0 samples) are downloaded once and then work offline. This device only.",
       "us.on": "Play interface sounds",
@@ -2109,6 +2116,12 @@
       "n.test.title": "Δοκιμαστική ειδοποίηση", "n.test.body": "Έτσι φαίνονται οι ειδοποιήσεις.",
       "n.position": "Θέση στην οθόνη", "n.style": "Στυλ", "n.sound": "Ήχος",
       "n.volume": "Ένταση", "n.duration": "Μένει στην οθόνη",
+      "gm.title": "Λειτουργία «Παιχνίδι»",
+      "gm.hint": "Όσο ένα παιχνίδι από την κατηγορία Παιχνίδια παίζει σε πλήρη οθόνη, οι ειδοποιήσεις σωπαίνουν και η πάνω μπάρα και το Dock κρύβονται. Φέρε τον δείκτη στην πάνω άκρη για να δεις τη μπάρα για λίγο. Κλειστή αρχικά. Μόνο σε αυτή τη συσκευή.",
+      "gm.on": "Λειτουργία «Παιχνίδι»",
+      "gm.now.on": "Τώρα παίζει ένα παιχνίδι: οι ειδοποιήσεις σωπαίνουν.",
+      "gm.now.off": "Ξεκινά μόνη της όταν ένα παιχνίδι παίζει σε πλήρη οθόνη.",
+      "w.gamemode": "λειτουργία παιχνίδι παιχνίδια gaming πλήρης οθόνη ησυχία ειδοποιήσεις κρύψε μπάρα dock",
       "us.title": "Ήχοι διεπαφής",
       "us.hint": "Απαλοί ήχοι όταν πατάς κουμπί, γυρνάς διακόπτη ή ανοίγεις και κλείνεις εφαρμογές και πάνελ. Σιωπούν όσο είναι ανοιχτό το «Μην ενοχλείτε» ή μια λειτουργία Συγκέντρωσης. Οι ήχοι (λίγα KB, ελεύθερα δείγματα CC0) κατεβαίνουν μία φορά και μετά δουλεύουν χωρίς δίκτυο. Μόνο σε αυτή τη συσκευή.",
       "us.on": "Ήχοι διεπαφής",
