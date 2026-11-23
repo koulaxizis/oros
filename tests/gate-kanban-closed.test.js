@@ -225,6 +225,22 @@ test("relay with orOS closed: refused, deduplicated, listed, found, aged, histor
   assert.deepEqual([JSON.parse(r.content[0].text).already_waiting, JSON.parse(r.content[0].text).change_id], [true, first]);
   assert.equal((await b.st.storage.list({ prefix: "q:" })).size, 1, "no second board waits");
   assert.match((await tc("kanban_add_cards", { board: "babyland", cards: [{ column: "Νέο", text: "Εύρημα 1" }] })).content[0].text, /"queued":true/);
+  // KB-PREF: the board's p- refs at once, and calls that use them
+  const bref = JSON.parse((await tc("kanban_add_board", { name: "Babyland", columns: [{ name: "Νέο" }] })).content[0].text);
+  assert.equal(bref.ref, "p-" + first + ".0");
+  assert.deepEqual(bref.columns.map((c) => c.ref), ["p-" + first + ".1", "p-" + first + ".2"]);
+  r = JSON.parse((await tc("kanban_add_cards", { board: bref.ref, cards: [{ column: bref.columns[1].ref, text: "Εύρημα 2", key: "rc-2" }] })).content[0].text);
+  assert.deepEqual([r.queued, r.refs[0].ref.indexOf("p-" + r.change_id + ".0"), r.refs[0].key], [true, 0, "rc-2"]);
+  assert.match(r.note, /p- refs now/);
+  assert.match((await tc("kanban_add_cards", { board: bref.ref, cards: [{ column: "p-" + first + ".7", text: "x" }] })).content[0].text, /Column not found on "Babyland"/);
+  const q2 = await b.st.storage.list({ prefix: "q:" });
+  assert.equal(q2.get("q:" + r.change_id).mv, G.KB_PREF_MV, "only an orOS that maps p- refs gets it");
+  // KB-NOBOARD: a board the copy does not have
+  r = await tc("app_summary", { app: "kanban", board: "Koulaxizis" });
+  assert.equal(r.isError, false);
+  assert.match(r.content[0].text, /No board named ..Koulaxizis.. in the copy of .*34 min old/);
+  r = await tc("app_summary", { app: "kanban", board: "babyland" });
+  assert.match(r.content[0].text, /"board":"Babyland","ref":"p-/);
   assert.match((await tc("kanban_add_cards", { board: "Babyland", cards: [{ column: "Άλλη", text: "x" }] })).content[0].text, /Column not found/);
   // boards_only from the copy and the queue
   r = await tc("app_summary", { app: "kanban", boards_only: true });

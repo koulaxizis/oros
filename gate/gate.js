@@ -1782,7 +1782,7 @@
           if (la.add.length) { kbMakeLabels(b, la.add, now, newId, undo); b.om = now; }
         }
       }
-      var touched = [], updated = [], made = {};
+      var touched = [], updated = [], made = {}, pos = [];      // KB-PREF: pos[i] = card i's id (its p- ref with orOS closed)
       for (i = 0; i < add.length; i++) {
         var a = isObj(add[i]) ? add[i] : {}, tag = "Card " + (i + 1) + ": ";
         var fc = kbFind(kbCols(b), a.column, "column");
@@ -1838,6 +1838,7 @@
           }
           if (ids.indexOf(c1.id) < 0) ids.push(c1.id);
           if (!isNew && updated.indexOf(c1.id) < 0) updated.push(c1.id);
+          pos[i] = c1.id;
           continue;
         }
         var card = { id: newId(), text: tx.s, notes: nt ? nt.s : "", due: du ? du.d : null, labels: lb ? lb.ids : [], subtasks: [], info: [], mtime: now, pos: 0, fm: M.freshFm(now) };
@@ -1852,12 +1853,13 @@
         if (touched.indexOf(fc.x) < 0) touched.push(fc.x);
         undo.cards[card.id] = { b: null, a: now };
         ids.push(card.id);
+        pos[i] = card.id;
       }
       touched.forEach(function (c) { c.om = now; });
       var nAdd = ids.length - updated.length, labs = isObj(undo.labs) ? Object.keys(undo.labs).length : 0;
       // a sync that finds everything as it is: fine, nothing saved
-      if (!nAdd && !labs && !updated.some(function (id) { return undo.cards[id]; })) return { ok: true, noop: true, ids: ids, updated: updated, text: "Nothing to change: the cards with these keys already look like this." };
-      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, updated: updated,
+      if (!nAdd && !labs && !updated.some(function (id) { return undo.cards[id]; })) return { ok: true, noop: true, ids: ids, pos: pos, updated: updated, text: "Nothing to change: the cards with these keys already look like this." };
+      return { ok: true, data: M.canonState(d, now), undo: undo, ids: ids, pos: pos, updated: updated,
                text: [nAdd ? "Added " + nAdd + " card" + (nAdd === 1 ? "" : "s") + "." : "",
                       updated.length ? "Brought " + updated.length + " card" + (updated.length === 1 ? "" : "s") + " with the same key up to date" + (updated.some(function (id) { return !undo.cards[id]; }) ? " (some already were)" : "") + "." : "",
                       labs ? "Made " + labs + " label" + (labs === 1 ? "" : "s") + "." : ""].filter(Boolean).join(" ") };
@@ -2488,13 +2490,43 @@
     return { app: apps.join(", "), list: list };
   }
 
+  // KB-PREF (Chris 2026-11-23): p- refs of a board, its columns or cards that
+  // waited with orOS closed (p-<change id>.<n>) → their ids here, from the
+  // change record of the add that made them (chgTag p: { n: { kb: id } });
+  // find(ref) → that record (the device's pFind).
+  function kbMapP(args, find) {
+    var miss = [];
+    function walk(v) {
+      if (typeof v === "string") {
+        var r = v.trim();
+        if (!P_REF.test(r)) return v;
+        var rec = find(r);
+        if (rec && typeof rec.kb === "string" && rec.kb) return rec.kb;
+        if (miss.indexOf(r) < 0) miss.push(r);
+        return v;
+      }
+      if (Array.isArray(v)) return v.map(walk);
+      if (isObj(v)) { var o = {}; Object.keys(v).forEach(function (k) { o[k] = walk(v[k]); }); return o; }
+      return v;
+    }
+    var out = walk(args);
+    return miss.length ? { miss: miss } : { a: out };
+  }
+  // the ids an add made, by the position its p- ref names
+  function kbMade(op, args, r) {
+    var l = op === "add_cards" ? (Array.isArray(r.pos) ? r.pos : []) : op === "add_board" || op === "add_columns" ? (Array.isArray(r.ids) ? r.ids : []) : [];
+    if (op === "add_columns" && !(isObj(args) && Array.isArray(args.columns))) l = [];
+    var out = [];
+    l.slice(0, 50).forEach(function (id, i) { if (typeof id === "string" && id) out.push({ i: i, rec: { kb: id } }); });
+    return out;
+  }
   var core = { screenTool: screenTool, SCREEN_HELD: SCREEN_HELD, BACK_OK: BACK_OK, delCount: delCount, refsOf: refsOf, delWhat: delWhat, NEVER: NEVER, SENSITIVE: SENSITIVE, sensitive: sensitive, HELPERS: HELPERS, helperClean: helperClean, helperMerge: helperMerge, budgetLines: budgetLines, bankNowText: bankNowText, BANK_GAP: BANK_GAP, accBals: accBals, dupPairs: dupPairs, bglCopy: bglCopy, invoiceList: invoiceList, invoicesRecord: invoicesRecord, invoicesUndo: invoicesUndo, OWN_WRITES: OWN_WRITES, stockItems: stockItems, publishTitles: publishTitles,
                relayOf: relayOf, RELAY: RELAY, isLate: isLate, budgetWrite: budgetWrite, budgetUndo: budgetUndo, canWrite: canWrite,
                kanbanWrite: kanbanWrite, kanbanUndo: kanbanUndo, lvFrom: lvFrom, joinHash: joinHash, chgMerge: chgMerge, seatMerge: seatMerge, seatClean: seatClean,
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
                WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_OPEN: ACT_OPEN, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE,
-               queuedAt: queuedAt, lateIn: lateIn, mapRefs: mapRefs, pRefsIn: pRefsIn, P_REF: P_REF };
+               queuedAt: queuedAt, lateIn: lateIn, mapRefs: mapRefs, pRefsIn: pRefsIn, P_REF: P_REF, kbMapP: kbMapP, kbMade: kbMade };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
   root.orosGateCore = core;
@@ -3812,6 +3844,9 @@
     if (!canWrite(p.lv, p.hold, "kanban", now)) {
       return Promise.resolve({ ok: false, c: closedMsg(p, "kanban", names.kanban || "Kanban") });
     }
+    var mp = kbMapP(args, pFind);
+    if (mp.miss) return Promise.resolve({ ok: false, c: "No board, column or card for " + mp.miss.slice(0, 5).join(", ") + " yet: the change that makes it was not applied (refused, cancelled or still waiting). Use the name (or the card's key), or app_summary kanban boards_only. Nothing was changed." });
+    args = mp.a;
     return kanbanModel().then(function (M) {
       var kd = readStore("oros-kanban-data");
       var r = kanbanWrite(M, op, kd, args, at || Date.now(), kbId);
@@ -3837,7 +3872,8 @@
       var uid = remember("kanban", "kanban_" + op, r.undo, now, r.ids.length + (Array.isArray(r.removed) ? r.removed.length : 0) + (r.renamed || 0));
       var outK = { done: r.text, ids: r.ids };
       if (Array.isArray(r.updated) && r.updated.length) outK.updated = r.updated;      // KB-KEY: cards found by key and brought up to date
-      return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify(outK) };
+      var made = kbMade(op, args, r);
+      return { ok: true, a: ["kanban"], k: r.ids.length, u: uid, c: JSON.stringify(outK), made: made.length ? made : undefined };
     }
   }
   // KB-SUBDEL: the texts of the subtasks a kanban_change_card would remove (for the question).
