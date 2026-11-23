@@ -105,6 +105,14 @@
       "card.add":         "Add",
       "card.info":        "Extra info",
       "card.info.add":    "Add field",
+      "card.links":       "Links",
+      "card.links.add":   "Add link",
+      "card.links.ph":    "https://… or /Folder/file",
+      "card.links.bad":   "A link is an https:// address or a path on the orOS disk starting with /.",
+      "card.links.full":  "A card holds at most 10 links.",
+      "card.links.open":  "Open {s}",
+      "card.links.n":     "{n} links",
+      "card.key":         "Key: {s} (given by the program that added the card)",
       "card.info.label":  "Field",
       "card.info.value":  "Value",
       "card.delete":      "Delete",
@@ -401,6 +409,14 @@
       "card.add":         "Προσθήκη",
       "card.info":        "Επιπλέον στοιχεία",
       "card.info.add":    "Προσθήκη πεδίου",
+      "card.links":       "Σύνδεσμοι",
+      "card.links.add":   "Προσθήκη συνδέσμου",
+      "card.links.ph":    "https://… ή /Φάκελος/αρχείο",
+      "card.links.bad":   "Σύνδεσμος είναι μια διεύθυνση https:// ή μια διαδρομή στον δίσκο του orOS που αρχίζει με /.",
+      "card.links.full":  "Μια κάρτα κρατά έως 10 συνδέσμους.",
+      "card.links.open":  "Άνοιγμα {s}",
+      "card.links.n":     "{n} σύνδεσμοι",
+      "card.key":         "Κλειδί: {s} (το έδωσε το πρόγραμμα που πρόσθεσε την κάρτα)",
       "card.info.label":  "Πεδίο",
       "card.info.value":  "Τιμή",
       "card.delete":      "Διαγραφή",
@@ -2679,6 +2695,20 @@
     if (cc) meta.appendChild(cc);
     var pc = pdChip(card);
     if (pc) meta.appendChild(pc);
+    // KB-LINK: one link opens straight from the card; more open the card
+    var lks = M.cleanLinks(card.links);
+    if (lks.length) {
+      var lc = document.createElement("button");
+      lc.type = "button";
+      lc.className = "lane-chip link-chip";
+      lc.textContent = "🔗 " + (lks.length === 1 ? linkName(lks[0]).slice(0, 24) : t("card.links.n", { n: lks.length }));
+      lc.title = lks.map(function (l) { return l.u; }).join("\n");
+      if (lks.length === 1) {
+        lc.setAttribute("aria-label", t("card.links.open", { s: lks[0].u }));
+        lc.addEventListener("click", function (e) { e.stopPropagation(); openCardLink(lks[0].u); });
+      }
+      meta.appendChild(lc);
+    }
     if (meta.childNodes.length) el.appendChild(meta);
 
     // Extra info preview: μία dim, περικομμένη γραμμή "label: value · …"
@@ -2847,6 +2877,7 @@
     if (!$("c-lbl-picker").hidden) renderLblPicker();
     renderSubtasks(card);
     renderInfo(card);
+    renderLinks(card);
     renderAtt(card);
     renderCover(card);
     if (focusInfo && focusInfo.cls) {
@@ -2887,6 +2918,7 @@
     renderCardLabels(card);
     renderSubtasks(card);
     renderInfo(card);
+    renderLinks(card);
     renderAtt(card);
     renderCover(card);
     $("c-lbl-picker").hidden = true;
@@ -3297,6 +3329,64 @@
       var l = rows[rows.length - 1].querySelector(".i-label");
       if (l) l.focus();
     }
+  }
+
+  // --- KB-LINK: the card's links (https or a path on the orOS disk) ---
+  // A web address opens in a new tab with no opener; a path opens in Files.
+  function openCardLink(u) {
+    if (/^https:\/\//i.test(u)) { try { window.open(u, "_blank", "noopener,noreferrer"); } catch (e) {} return; }
+    if (u.charAt(0) === "/") {
+      try { if (window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function") window.parent.__orosOpenAt("files", { path: u }); } catch (e) {}
+    }
+  }
+  function linkName(l) { return l.t || l.u.replace(/^https?:\/\//i, ""); }
+  function renderLinks(card) {
+    var host = $("c-links-list");
+    if (!host) return;
+    host.innerHTML = "";
+    M.cleanLinks(card.links).forEach(function (l) {
+      var row = document.createElement("div");
+      row.className = "link-row";
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "ghost link-open";
+      b.textContent = linkName(l);
+      b.title = l.u;
+      b.setAttribute("aria-label", t("card.links.open", { s: l.u }));
+      b.addEventListener("click", function () { openCardLink(l.u); });
+      row.appendChild(b);
+      row.appendChild(makeRemoveBtn(function () {
+        var c = editingCard();
+        if (!c) return;
+        var left = M.cleanLinks(c.links).filter(function (y) { return y.u !== l.u; });
+        if (left.length) c.links = left; else delete c.links;
+        stamp(c, ["e"]);
+        save();
+        scheduleRender();
+        renderLinks(c);
+      }));
+      host.appendChild(row);
+    });
+    var k = $("c-key"), key = M.cleanKey(card.key);
+    if (k) { k.hidden = !key; k.textContent = key ? t("card.key", { s: key }) : ""; }
+    var er = $("c-link-err");
+    if (er) { er.hidden = true; er.textContent = ""; }
+  }
+  function addLink() {
+    var card = editingCard(), inp = $("c-link-url"), er = $("c-link-err");
+    if (!card || !inp) return;
+    var u = inp.value.trim();
+    if (!u) return;
+    var have = M.cleanLinks(card.links), l = M.cleanLinks([{ u: u }])[0];
+    var msg = !l ? t("card.links.bad") : have.length >= M.LINKS_MAX ? t("card.links.full") : "";
+    if (msg) { if (er) { er.textContent = msg; er.hidden = false; } return; }
+    if (!have.some(function (y) { return y.u === l.u; })) have.push(l);
+    card.links = have;
+    stamp(card, ["e"]);
+    save();
+    scheduleRender();
+    inp.value = "";
+    renderLinks(card);
   }
 
   // ---------- 5b. Card dialog: column, lane, attachments, cover (K1) ----------
@@ -3761,6 +3851,8 @@
     copy.info.forEach(function (f) { f.id = uid(); });
     if (card.lane) copy.lane = card.lane;
     if (card.cover) copy.cover = card.cover;
+    var cl = M.cleanLinks(card.links);
+    if (cl.length) copy.links = cl;              // KB-LINK; the key stays the original's own (KB-KEY)
     if (card.att && card.att.length) {           // the same files on the disk (removal checks every card)
       copy.att = JSON.parse(JSON.stringify(card.att));
       copy.att.forEach(function (x) {
@@ -3884,6 +3976,9 @@
     if ((card.notes || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
     if (card.due && card.due.toLowerCase().indexOf(searchQuery) !== -1) return true;
     if (card.lane && card.lane.toLowerCase().indexOf(searchQuery) !== -1) return true;
+    if (typeof card.key === "string" && card.key.toLowerCase().indexOf(searchQuery) !== -1) return true;   // KB-KEY
+    var lk = M.cleanLinks(card.links);                                                                     // KB-LINK
+    for (var li = 0; li < lk.length; li++) if ((lk[li].u + " " + (lk[li].t || "")).toLowerCase().indexOf(searchQuery) !== -1) return true;
     for (var a = 0; a < (card.att || []).length; a++) {
       if (String(card.att[a].name || "").toLowerCase().indexOf(searchQuery) !== -1) return true;
     }
@@ -7091,6 +7186,10 @@
     if (infoAdd) {
       infoAdd.addEventListener("click", addInfo);
     }
+    // KB-LINK
+    var linkAdd = $("c-link-add"), linkUrl = $("c-link-url");
+    if (linkAdd) linkAdd.addEventListener("click", addLink);
+    if (linkUrl) linkUrl.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); addLink(); } });
 
     // K1: column (move), lane, attachments
     var cCol = $("c-col");

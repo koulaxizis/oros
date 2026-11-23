@@ -1788,7 +1788,7 @@
       "kanban (EVERY board, not only " +
       "the one open in Kanban: each board's columns with how many cards they hold, late and due-today cards, " +
       "archived boards by name, and the cards of all boards with board › column, due date, labels and a ref; " +
-      "with board only that board's cards), stock (what sold in a month, per product and " +
+      "with board only that board's cards; boards_only: the boards alone, no cards), stock (what sold in a month, per product and " +
       "per place: the user's own stock and each consignment shop or other warehouse; returns taken off) and, for the other apps " +
       "list_apps marks with summary, what is late, today and in the next days (calendar, habits, " +
       "plants and more; an item may carry end, details, a tip and suggest: the kinds of action Today offers on it). Better than search_data for questions like 'how much did I spend on food " +
@@ -1818,6 +1818,7 @@
         kind: { type: "string", "enum": ["book", "film", "series", "album", "podcast", "game"], description: "shelf: only this kind (album = music)." },
         status: { type: "string", "enum": ["want", "now", "done", "drop", "reading", "finished", "unread"], description: "shelf: want, now (in progress), done, drop. library: reading, finished, unread." },
         board: { type: "string", description: "kanban: one board's name: list only its cards (leave out for every board). whiteboard: one board's name: only its texts." },
+        boards_only: { type: "boolean", description: "kanban: true lists only the boards (id, columns with id and card count, labels) and no cards; with board, only boards whose name holds it. Use it to see whether a board exists." },
         show: { type: "string", description: "studio: one podcast show's title: only its episodes." },
         table: { type: "string", description: "base: one table's name: list its records with every field and a ref (leave out for the bases, tables and fields)." },
         base: { type: "string", description: "base, with table: the base's name, when several bases have a table of that name." },
@@ -1893,7 +1894,7 @@
       "phone, email, website, address = fill when empty, replace with old_phone… / address_replace / note / note_add / roles / rs_beneficiary; bank " +
       "details or a bio go in note_add; a deal, update: title / amount / date = expected close / stage / probability / reason / note, " +
       "reschedule: date; a follow-up, complete, reopen, reschedule: date / start, update: title / date / start; a contract, update: rights) · " +
-      "kanban (reschedule: date = due, update: title / date / note / labels / plan_start / milestone / depends_on, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
+      "kanban (reschedule: date = due, update: title / date / note / labels / plan_start / milestone / depends_on / links, move: column and/or board (to another board: board, column optional, default its first), delete) · " +
       "shelf (update: title / note / status, delete) · " +
       "habits (complete / reopen = today's tick of a yes/no habit, update: title) · " +
       "plants (complete = watered today, update: title / note) · " +
@@ -1959,6 +1960,7 @@
         plan_start: { type: "string", description: "kanban: the card's planned first day on the Timeline (Gantt) YYYY-MM-DD, at most its due date; \"\" clears it." },
         milestone: { type: "boolean", description: "kanban: true makes the card a milestone (one day, its due date), false a normal card." },
         depends_on: { type: "array", items: { type: "string" }, description: "kanban: the whole new list of cards on the same board that must finish before this one starts, by exact title (at most 20; [] clears it)." },
+        links: { type: "array", maxItems: 10, items: { type: "string" }, description: "kanban: the card's whole new list of links (https addresses or paths on the orOS disk starting with /), shown as buttons on the card; [] clears them." },
         next: { type: "string", description: "petcare: next dose or recheck YYYY-MM-DD." },
         servings: { type: "integer", description: "meals: how many servings the recipe makes." },
         km: { type: "integer", description: "garage: what the odometer shows now (km)." },
@@ -2233,6 +2235,8 @@
     ["column", ["kanban"], { type: "string", description: "kanban: an existing column's name (default the first)." }],
     ["plan_start", ["kanban"], { type: "string", description: "kanban: the card's planned first day on the Timeline (Gantt) YYYY-MM-DD, at most its due date (date)." }],
     ["milestone", ["kanban"], { type: "boolean", description: "kanban: true makes the card a milestone (one day, its due date)." }],
+    ["key", ["kanban"], { type: "string", description: "kanban: your own key for the card (at most 120 characters, e.g. a finding's id), kept on the card; a card with the same key on the board starts unticked and the result gives its ref, so change it with change_item." }],
+    ["links", ["kanban"], { type: "array", maxItems: 10, items: { type: "string" }, description: "kanban: links shown as buttons on the card: https addresses or paths on the orOS disk starting with /." }],
     ["label", ["calendar"], { type: "string", description: "calendar: the name of one of the user's labels." }],
     ["labels", ["contacts", "todo", "notes", "bookmarks", "kanban", "timesheet", "meals", "shelf", "flashcards"], { type: "array", items: { type: "string" }, description: "Names of labels the user already has (bookmarks, timesheet, meals, shelf, flashcards: tags, any)." }],
     ["note", ["contacts", "crm", "todo", "calendar", "budget", "bookmarks", "kanban", "crm_activity", "crm_deal", "crm_contract", "meals", "travel_plan", "travel_pack", "fitness", "garage", "plants", "petcare", "publish", "invoices", "quote", "split"], { type: "string", description: "A note (Publishing 4000, only for the user, Invoices and Quote 2000, printed on the document, Contacts 2000 characters, CRM 2000, To-Do 1000, Calendar 500, Budget 140 on one line, Bookmarks 1024, Kanban 20000, recipe 2000, itinerary 1000, packing item 300, workout 1000, Garage 500, plant 500, health record 500). crm_activity: what happened or was said (required)." }],
@@ -2928,7 +2932,7 @@
     name: "kanban_add_columns",
     description: "Add columns to a Kanban board (at most 20 per call), at the end or after a given column, and rename columns " +
       "(rename_columns: each by its id or name, to a new name), and set a column up as a step of the Author Portal production flow " +
-      "(portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay, an empty text clears it). Give any of the three. " +
+      "(portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay, an empty text clears it), and make labels (add_labels). Give any of them. " +
       "The user sees the columns on one card and must press Add; nothing is saved before that. The card has Undo.",
     params: { type: "object", properties: {
       board: { type: "string", description: "The board name or id (app_summary with app kanban)." },
@@ -2948,7 +2952,8 @@
         name_en: { type: "string", description: "The step's name in English (optional), at most 80 characters." },
         about: { type: "string", description: "The short explanation the author sees on hover (Greek), at most 600 characters." },
         about_en: { type: "string", description: "The explanation in English (optional), at most 600 characters." } },
-        required: ["column"] } } },
+        required: ["column"] } },
+      add_labels: { type: "array", minItems: 1, maxItems: 30, items: { type: "object", properties: { name: { type: "string", description: "At most 40 characters." }, color: { type: "string", "enum": ["red", "yellow", "green", "teal", "purple", "pink", "orange", "grey"] } }, required: ["name"] }, description: "New labels for the board (e.g. severity, a routine's name); names it has already are skipped." } },   // KB-LABEL
       required: ["board"] }
   };
 
@@ -2961,7 +2966,8 @@
       name: { type: "string", description: "The board's name, at most 60 characters." },
       columns: { type: "array", minItems: 1, maxItems: 20, items: { type: "object", properties: {
         name: { type: "string", description: "At most 60 characters." } },
-        required: ["name"] } } },
+        required: ["name"] } },
+      labels: { type: "array", minItems: 1, maxItems: 30, items: { type: "object", properties: { name: { type: "string", description: "At most 40 characters." }, color: { type: "string", "enum": ["red", "yellow", "green", "teal", "purple", "pink", "orange", "grey"] } }, required: ["name"] }, description: "The board's labels (e.g. severity: critical, medium, low; the routines' names)." } },   // KB-LABEL
       required: ["name", "columns"] }
   };
 
@@ -4008,7 +4014,9 @@
       out.note = (out.note ? out.note + " " : "") + "The user does not allow these apps to be read: " + info.blocked.join(", ") + ".";
     }
     if (info.unknown && info.unknown.length) out.unknown_apps = info.unknown;
-    if (!shared.length && !out.note) out.note = "Nothing found.";
+    // KB-FIND: Kanban boards and columns by name (ids for the kanban_* tools)
+    if (Array.isArray(info.boards) && info.boards.length) out.kanban_boards = info.boards;
+    if (!shared.length && !out.note && !out.kanban_boards) out.note = "Nothing found.";
     return JSON.stringify(out);
   }
 

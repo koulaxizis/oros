@@ -12,6 +12,9 @@
 //   g plan (Gantt, wave G1): start, ms (milestone), deps
 //   r Author Portal (AP-FLOW): ap = 1 shown to its creator,
 //     0 explicitly not shown (absent = CRM's older choice decides)
+//   e outside links (KB-LINK, 2026-11-23): key (a stable external
+//     key a routine gives its card, unique per board) and links
+//     [{ u: https URL or a /path on the orOS disk, t?: title }]
 // Subtasks and attachments merge per item (`m` stamp on the item,
 // deletions as board tombstones "<cardId>/<itemId>").
 // A card whose fm is missing or whose fm.m differs from its mtime was
@@ -36,6 +39,10 @@
 //     and rebuilds fm without r in a mixed merge; a valid fm without r
 //     counts r at its g stamp (else d), and the mixed result wins the
 //     tie on the older device (tests/kanban-apflow.test.js).
+//   · the links group e (KB-LINK) works the same way: an older version
+//     keeps key / links (unknown card keys on the whole card) and
+//     rebuilds fm without e; a valid fm without e counts e at its n
+//     stamp (tests/kanban-links.test.js).
 //     Columns carry ap = { on, e, n, ne, a, ae } (a step of the creator's
 //     production flow, e = a finish, name, English name, explanation,
 //     English explanation): a column key, last writer of the header wins.
@@ -51,7 +58,7 @@
 
   var DATA_VER = 5;
   var TOMB_LIFETIME_MS = 30 * 24 * 60 * 60 * 1000;
-  var GROUPS = ["a", "c", "d", "g", "k", "l", "n", "p", "r", "s", "t", "x"];
+  var GROUPS = ["a", "c", "d", "e", "g", "k", "l", "n", "p", "r", "s", "t", "x"];
   // group → card field (p is the placement, outside the card object)
   var FIELD = { a: "att", c: "cover", d: "due", k: "lane", l: "labels",
                 n: "notes", r: "ap", s: "subtasks", t: "text", x: "info" };
@@ -73,6 +80,7 @@
       if (typeof v === "number") return v;
       if (g === "g" && typeof card.fm.d === "number") return card.fm.d;   // fm from an older version
       if (g === "r") return typeof card.fm.g === "number" ? card.fm.g : (typeof card.fm.d === "number" ? card.fm.d : 0);
+      if (g === "e") return typeof card.fm.n === "number" ? card.fm.n : 0;
       return 0;
     }
     return card.mtime || 0;
@@ -94,8 +102,40 @@
     });
     return out;
   }
+  // KB-LINK: the links group as one value (only what is set, cleaned)
+  var KEY_MAX = 120, LINKS_MAX = 10;
+  function cleanKey(v) {
+    var s = typeof v === "string" ? v.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim() : "";
+    return s.length <= KEY_MAX ? s : "";
+  }
+  function cleanLink(x) {
+    if (!x || typeof x !== "object") return null;
+    var u = typeof x.u === "string" ? x.u.trim() : "";
+    var web = /^https:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
+    var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u) && u.charAt(1) !== "/";
+    if (!web && !path) return null;
+    var o = { u: u };
+    var tt = typeof x.t === "string" ? x.t.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) : "";
+    if (tt) o.t = tt;
+    return o;
+  }
+  function cleanLinks(list) {
+    var out = [];
+    (Array.isArray(list) ? list : []).forEach(function (x) {
+      var l = cleanLink(x);
+      if (l && out.length < LINKS_MAX && !out.some(function (y) { return y.u === l.u; })) out.push(l);
+    });
+    return out;
+  }
+  function linksOf(card) {
+    var o = {}, k = cleanKey(card.key), l = cleanLinks(card.links);
+    if (k) o.key = k;
+    if (l.length) o.links = l;
+    return o;
+  }
   function fieldVal(card, g) {
     if (g === "g") return planOf(card);
+    if (g === "e") return linksOf(card);
     if (g === "r") return card.ap === 1 || card.ap === 0 ? card.ap : null;
     var v = card[FIELD[g]];
     if (g === "t" || g === "n" || g === "k") return typeof v === "string" ? v : "";
@@ -113,6 +153,12 @@
       return;
     }
     if (g === "r") { if (v === 1 || v === 0) card.ap = v; else delete card.ap; return; }
+    if (g === "e") {
+      var ev = v && typeof v === "object" ? v : {};
+      if (ev.key) card.key = ev.key; else delete card.key;
+      if (ev.links && ev.links.length) card.links = clone(ev.links); else delete card.links;
+      return;
+    }
     // optional keys: only present when set (older cards stay canonical)
     if (g === "k" || g === "c") { if (v) card[f] = v; else delete card[f]; return; }
     if (g === "a") { if (Array.isArray(v) && v.length) card.att = v; else delete card.att; }
@@ -454,6 +500,8 @@
     if (c.ms !== undefined) { if (c.ms === 1 || c.ms === true) c.ms = 1; else delete c.ms; }
     if (c.ap !== undefined && c.ap !== 1 && c.ap !== 0) delete c.ap;
     if (c.deps !== undefined) { var dl = cleanDeps(c.deps, c.id); if (dl.length) c.deps = dl; else delete c.deps; }
+    if (c.key !== undefined) { var ck = cleanKey(c.key); if (ck) c.key = ck; else delete c.key; }
+    if (c.links !== undefined) { var cl = cleanLinks(c.links); if (cl.length) c.links = cl; else delete c.links; }
     return canonOrder(c, CARD_KEYS);
   }
   // A column's Author Portal step (AP-FLOW): { on: 1, n, ne, a, ae },
@@ -503,6 +551,7 @@
     DATA_VER: DATA_VER, TOMB_LIFETIME_MS: TOMB_LIFETIME_MS, GROUPS: GROUPS, colAp: colAp,
     isTpl: isTpl, fmValid: fmValid, eff: eff, stampCard: stampCard, stampItem: stampItem,
     freshFm: freshFm, itemTomb: itemTomb, planOf: planOf, cleanDeps: cleanDeps, PLAN_KEYS: PLAN_KEYS,
+    cleanKey: cleanKey, cleanLinks: cleanLinks, linksOf: linksOf, KEY_MAX: KEY_MAX, LINKS_MAX: LINKS_MAX,
     mergeCard: mergeCard, mergeItems: mergeItems, mergeBoardBody: mergeBoardBody,
     mergeKanbanStates: mergeKanbanStates, canonState: canonState
   };

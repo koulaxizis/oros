@@ -92,13 +92,13 @@
                  website: 1, old_website: 1, address: 1, address_replace: 1, note: 1, note_add: 1, roles: 1, rs_beneficiary: 1 },
     crm_deal:  { title: 1, amount: 1, date: 1, note: 1, stage: 1, probability: 1, reason: 1 },
     crm_fup:   { title: 1, date: 1, start: 1 },
-    kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1, plan_start: 1, milestone: 1, depends_on: 1 },
+    kanban:    { title: 1, date: 1, note: 1, label: 1, labels: 1, plan_start: 1, milestone: 1, depends_on: 1, links: 1 },
     shelf:     { title: 1, note: 1, status: 1 },
     habits:    { title: 1 },
     plants:    { title: 1, note: 1 }
   };
   // The diff's fields, in the order the card shows them.
-  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "plan", "ms", "deps", "start", "end", "project", "billed", "invoice", "event", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "sub", "translator", "illustrator", "editor", "credits", "series", "release", "lang", "format", "royalty", "kw", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "blurb", "bio", "note", "text"];
+  var VIEW_ORDER = ["title", "nickname", "board", "column", "list", "notebook", "folder", "deck", "kind", "roles", "rs", "status", "stage", "done", "read", "played", "queue", "watered", "org", "job", "vat", "taxoffice", "phone", "email", "address", "website", "birthday", "amount", "price", "probability", "date", "close", "due", "plan", "ms", "deps", "links", "start", "end", "project", "billed", "invoice", "event", "category", "location", "label", "priority", "url", "labels", "subtasks", "position", "reason", "author", "by", "sub", "translator", "illustrator", "editor", "credits", "series", "release", "lang", "format", "royalty", "kw", "servings", "km", "next", "paid", "owed", "songs", "front", "back", "blurb", "bio", "note", "text"];
   // Budget's ready categories by the names the model knows (same
   // table as core.js BUDGET_CATS).
   var BUDGET_CATS = {
@@ -231,6 +231,17 @@
     if (has(args, "depends_on") && args.depends_on !== null && args.depends_on !== undefined) {
       if (!Array.isArray(args.depends_on) || args.depends_on.length > 20) return bad("depends_on must be a list of at most 20 card titles ([] clears it).");
       set.depends_on = args.depends_on.map(function (x) { return line(typeof x === "string" ? x : "", 500); }).filter(Boolean);
+    }
+    // KB-LINK (Chris 2026-11-23): a Kanban card's links, the whole new list ([] clears)
+    if (has(args, "links") && args.links !== null && args.links !== undefined) {
+      if (!Array.isArray(args.links) || args.links.length > 10) return bad("links must be a list of at most 10 links ([] clears them).");
+      var lks = [];
+      for (var li = 0; li < args.links.length; li++) {
+        var lx = args.links[li], lo = kbLinkOne(typeof lx === "string" ? { u: lx } : isObj(lx) ? { u: lx.url, t: lx.title } : null);
+        if (!lo) return bad("link " + (li + 1) + " must be an https address or a path on the orOS disk starting with / (no ..).");
+        if (!lks.some(function (y) { return y.u === lo.u; })) lks.push(lo);
+      }
+      set.links = lks;
     }
     if (has(args, "next") && args.next !== null && args.next !== undefined && args.next !== "") {
       var nx = realDate(args.next);
@@ -1490,6 +1501,8 @@
     if (c.ms) v.ms = "\u25c6";
     var dn = kbDepNames(b, c);
     if (dn) v.deps = dn;
+    var lv = kbArr(c.links).filter(isObj).map(function (l) { return String(l.t || l.u || ""); }).filter(Boolean);
+    if (lv.length) v.links = lv.join(", ");
     if (pos) v.position = (col.cards.indexOf(c) + 1) + "/" + col.cards.length;
     if (pos === "board") v.board = kbName(b.name);
     return v;
@@ -1529,7 +1542,18 @@
   }
   function kbRaw(h) {
     return { text: h.card.text, notes: h.card.notes, due: h.card.due === undefined ? null : h.card.due, col: h.col.id,
-             labels: clone(kbArr(h.card.labels)), subtasks: clone(kbArr(h.card.subtasks)), plan: kbPlanOf(h.card) };
+             labels: clone(kbArr(h.card.labels)), subtasks: clone(kbArr(h.card.subtasks)), plan: kbPlanOf(h.card), links: clone(kbArr(h.card.links)) };
+  }
+  // KB-LINK: one link as kanban/model.js cleanLink keeps it, or null
+  function kbLinkOne(x) {
+    if (!isObj(x)) return null;
+    var u = typeof x.u === "string" ? x.u.trim() : "";
+    var web = /^https:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
+    var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u) && u.charAt(1) !== "/";
+    if (!web && !path) return null;
+    var o = { u: u }, tt = typeof x.t === "string" ? x.t.replace(/[\u0000-\u001f\u007f]+/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) : "";
+    if (tt) o.t = tt;
+    return o;
   }
   // KB-GANTT: plan fields (model.js planOf; group g).
   function kbPlanOf(c) {
@@ -1655,6 +1679,10 @@
       }
       if (JSON.stringify(np) !== JSON.stringify(p0)) { kbSetPlan(card, np); groups.push("g"); next.plan = np; }
     }
+    if (has(s, "links") && JSON.stringify(s.links) !== JSON.stringify(kbArr(card.links))) {
+      if (s.links.length) card.links = clone(s.links); else delete card.links;
+      groups.push("e"); next.links = clone(s.links);
+    }
     if (!groups.length) return bad("Nothing would change: the card already looks like that.");
     kbStamp(card, groups, now);
     kbCanon(d, h.bi);
@@ -1778,7 +1806,7 @@
     if (!h) return bad("That card is no longer in Kanban.");
     var cur = kbRaw(h), nx = isObj(u.next) ? u.next : {}, pv = isObj(u.prev) ? u.prev : {};
     cur.subtasks = kbNoM(cur.subtasks);
-    var keys = Object.keys(nx).filter(function (k) { return ["text", "notes", "due", "col", "labels", "subtasks", "plan"].indexOf(k) >= 0; });
+    var keys = Object.keys(nx).filter(function (k) { return ["text", "notes", "due", "col", "labels", "subtasks", "plan", "links"].indexOf(k) >= 0; });
     for (var i = 0; i < keys.length; i++) {
       if (JSON.stringify(cur[keys[i]] === undefined ? null : cur[keys[i]]) !== JSON.stringify(nx[keys[i]])) return bad("The card changed since; nothing was undone.");
     }
@@ -1799,6 +1827,7 @@
     if (has(nx, "labels")) { h.card.labels = clone(kbArr(pv.labels)); groups.push("l"); }
     if (has(nx, "subtasks")) groups.push("s");
     if (has(nx, "plan")) { kbSetPlan(h.card, isObj(pv.plan) ? pv.plan : { start: null, ms: false, deps: [] }); groups.push("g"); }
+    if (has(nx, "links")) { var pl = kbArr(pv.links); if (pl.length) h.card.links = clone(pl); else delete h.card.links; groups.push("e"); }
     if (!groups.length) return bad("bad undo");
     var st = kbStamp(h.card, groups, now);
     // subtasks merge per item on its m: the put-back items carry the new stamp
