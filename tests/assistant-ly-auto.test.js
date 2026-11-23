@@ -31,8 +31,9 @@ test("only Layout's own work runs at once", () => {
 });
 
 test("the setting is off by default and synced", () => {
-  assert.equal(C.normSet({ m: 1 }).ly, 0);
-  assert.equal(C.normSet({ m: 1, ly: 1 }).ly, 1);
+  assert.equal(C.emptyData().set.ly || 0, 0);
+  assert.equal(C.mergeAssist({ set: { m: 5, prov: "anthropic" } }, null).set.ly, 0);
+  assert.equal(C.mergeAssist({ set: { m: 5, prov: "anthropic", ly: 1 } }, { set: { m: 3, ly: 0 } }).set.ly, 1);
   assert.match(SRC, /ly: cur\.ly \? 1 : 0/);
 });
 
