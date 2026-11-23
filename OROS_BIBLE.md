@@ -14120,3 +14120,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** gate/gate.js, relay/gate.js, relay/README.md, kanban/kanban.js, shell.js, whatsnew EN/EL, OROS_BIBLE.md, tests/gate-kanban-pref.test.js, tests/gate-kanban-adopt.test.js, tests/gate-kanban-closed.test.js.
 - **Tests:** full `node --test tests/*.test.js`; the relay round trip with refs; Mail-thread review of the relay at 8a491ec9 and 05b00207.
 - **Not tested:** a real device applying a queued board and then cards by p- ref, a live relay, a disk link opened from a card in the real shell.
+
+### 2026-11-23 — 8.92.01 — Contracts once in Calendar (CAL-CTR-DUP, #1269)
+- **Why:** Chris saw every book contract twice on its end day in Calendar: his own event «Λήξη: author – «title» (edition)» (62 events written through Gate before CTR-ALL, under the label Γλαρόλυκοι) and the CRM contract row «Contract ends: …» (`crmCtrOn`, label `cset.lbl` = the same label).
+- **What:** `crm/core.js` `ctrNamedBy(c, title)`; `calendar/calendar.js` `eventsOn` leaves out a CRM contract row when an own event visible on that day names the whole contract title (folded, quotes and spaces ignored, edition included, ≥ 4 letters). Nothing stored changes. Chris chose to keep the 62 events (decision card, 2026-11-23).
+- **Files:** crm/core.js, calendar/calendar.js, tests/crm-ctr-all.test.js, shell.js (version), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md.
+- **Tests:** full `node --test tests/*.test.js`; real shell (Playwright Chromium, LANG=C.UTF-8, calendar `?standalone`, 360 px): an own «Carpe Noctem» (Έντυπο) event and its contract show once, another contract that day still shows; main showed it twice.
+- **Not tested:** a real phone, Safari, Dropbox sync (no stored data changes).
