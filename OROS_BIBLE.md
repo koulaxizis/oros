@@ -3894,6 +3894,7 @@ Every PR that touches app code, every push to main and every night, CI opens **e
 ## Part IX — Decisions log + doctrinal exemptions
 
 ### Decisions (newest first)
+- **2026-11-23 · Screen Capture quality (CAPQ-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #10). Recording options resolution / fps / bitrate preset (capture/core.js), with an estimated MB a minute; stored in the app on this device. The shell closes its menu, Quick settings and notifications panel when a recording starts. Test `tests/capture-quality.test.js`.
 - **2026-11-23 · Make it yours (YOURS-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #9). A first card in Appearance with a small live preview; each control writes the same setting as its own place (no second copy of any value), so both stay in step. Test `tests/yours.test.js`.
 - **2026-11-23 · Focus timer widget (FOCUS-W):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #8). Widget `pomo` reads and writes Time's own Pomodoro state (the same record Time uses), so one leg runs in both; a leg paused in the widget resumes with Start in Time. Controls: Start / Pause / Resume, Skip, ±5 minutes. Timesheet logging stays Time's. Test `tests/focus-widget.test.js`.
 - **2026-11-23 · Find a wallpaper, Random, and From a folder (WPDIR-1):** Chris (thread «💡 Ιδέες από νέο βίντεο για το orOS», cards 00:32Z–02:30Z, video ideas 2026-11-23 #7). A name filter and `Random` (a drawn wallpaper) above the wallpaper grid. `From a folder`: device-local `oros-wpfolder` (mode `day` | `start`, folder); the pictures of the folder in Files (default `Pictures/Wallpapers`), JPG/PNG/WebP/GIF/AVIF up to 20 MB, in name order, each before any repeats; `Next picture now` skips; the accent follows when Accent from wallpaper is on. Nothing syncs; choosing a wallpaper by hand ends it. Test `tests/wpdir.test.js`.
@@ -14064,3 +14065,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** koulaxizis-apps/tests/device_test.py, shell.js (version), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md.
 - **Tests:** the PR's `device` check green on the emulator against the live repositories; py_compile; full suite.
 - **Not tested:** a real phone (no app change).
+
+### 2026-11-23 — 8.86.00 — Screen Capture quality (CAPQ-1)
+- **Why:** video ideas 2026-11-23 #10 (Chris, approved on cards).
+- **What:** Choose the Resolution (as shared, 1080p, 720p or 480p), Frames a second (30 or 60) and Quality (Low, Standard or High); Screen Capture says about how many MB a minute takes. When a recording starts, the menu, Quick settings and notifications close so they stay out of the video. Rules in Part IX CAPQ-1.
+- **Files:** capture/app.js, capture/core.js, capture/index.html, capture/help.en/el.txt, shell.js, i18n/de (capture, help/capture), whatsnew EN/EL, OROS_BIBLE.md, tests/capture-quality.test.js, tests/capture.test.js.
+- **Tests:** tests/capture-quality.test.js; full suite; Playwright Chromium at 360 px and 1280 px: the options and the size estimate, no page errors.
+- **Not tested:** a real recording (headless), Safari, Firefox.
