@@ -123,7 +123,7 @@ test("Wallpaper Generator: Light show tab, kit loaded, set through setViz", () =
 // ---------- Wave 2: the bigger Playing widget (WG-MEDIA-2) ----------
 test("widget: big row with cover, progress, prev / next, light; text through textContent", () => {
   const w = read("widgets.js");
-  assert.match(w, /var VER = "1\.5\.0";/);
+  assert.match(w, /var VER = "1\.6\.0";/);
   const media = w.slice(w.indexOf("    media: function (c) {"), w.indexOf("    // PHONE-1"));
   assert.match(media, /var main = list2\.filter\(function \(m\) \{ return m\.playing; \}\)\[0\] \|\| list2\[0\] \|\| null;/);
   assert.match(media, /if \(main\.prev\)/);
