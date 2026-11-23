@@ -13959,6 +13959,7 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 ### 2026-11-23 — 8.75.00 — Lock screen look (LOCKLOOK-1, #1249)
 - **Why:** video ideas 2026-11-23 #1 (Chris, card 00:32Z): a lock screen that looks like the person's own desktop.
 - **What:** own wallpaper blurred behind a big clock, greeting, notification count and battery; `Plain` keeps the old look. Rules in Part IX LOCKLOOK-1.
-- **Files:** lock.js, shell.js, style.css, settings/settings.js, settings/core.js, translations.js, i18n/de (shell, settings, help/topics/privacy), help/topics/privacy.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/locklook.test.js, tests/lock.test.js.
+- **Also:** the on-screen keyboard (osk.js 1.0.1) no longer lifts the modal dialog it sits in (it rose with it and covered the taller lock's PIN field); it pads the dialog and scrolls the field above itself. `.github/qa/osk.js` checks the PIN field is not covered.
+- **Files:** lock.js, shell.js, style.css, osk.js, settings/settings.js, settings/core.js, translations.js, i18n/de (shell, settings, help/topics/privacy), help/topics/privacy.en/el.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/locklook.test.js, tests/lock.test.js, .github/qa/osk.js.
 - **Tests:** tests/locklook.test.js; full suite; Playwright Chromium at 360 px and 1280 px in Greek: the wallpaper look, Plain, no name and no count under Sensitive work, no page errors.
 - **Not tested:** a real phone, Safari, Firefox.
