@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.75.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.76.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -13680,8 +13680,11 @@
       case "cont:reopen": if (!SOLO && window.orosContinue) { window.orosContinue.setPref("reopen", !!value); appsLastNote(false); settingsNotify(); } return;
       case "cont:name":   if (window.orosContinue) { window.orosContinue.setName(String(value || "")); settingsNotify(); } return;
       case "cont:forget": if (window.orosContinue) { window.orosContinue.forget(String(value || "")); settingsNotify(); } return;
-      case "overview:corner":
-        if (!SOLO) { ovSetPref(OV_CORNER_KEY, !!value); settingsNotify(); }
+      case "overview:corner":      // OV-1's switch: the top-left corner
+        if (!SOLO) { hcSet("tl", value ? "overview" : ""); settingsNotify(); }
+        return;
+      case "hotcorner:tl": case "hotcorner:tr": case "hotcorner:bl": case "hotcorner:br": case "hotcorner:d":   // HOTC-1
+        if (!SOLO) { hcSet(name.slice(10), name === "hotcorner:d" ? Number(value) : String(value || "")); settingsNotify(); }
         return;
       case "pcfiles":
         if (typeof window.__orosPcFilesSet === "function") window.__orosPcFilesSet(!!value);
@@ -15656,8 +15659,9 @@
   // (mtOpenList / mtClose / mtSideOpen) and the recent files are Files'
   // own device-local journal ("oros-files-recents"), opened in Files.
   // Opens with Ctrl+Alt+Shift+E (SC_DEFS "e"); this device may also
-  // open it from the top-left hot corner ("oros-ov-corner" = "1"), off
-  // by default (a corner can surprise). No Super key: one combo for all.
+  // open it from a hot corner (HOTC-1 below; OV-1's "oros-ov-corner" =
+  // "1" became the top-left one), off by default (a corner can
+  // surprise). No Super key: one combo for all.
   // Never while the screen is locked, in a single app (SOLO) or on a
   // till. Recent file names stay hidden during sensitive work.
   // window.orosMonitor is the read model Settings › Device uses too.
@@ -15666,15 +15670,6 @@
   var OV_RECENTS_MAX = 8;
   var ov = null;            // { el, onKey, back } while the overview is open
 
-  function ovPref(key) {
-    try { return localStorage.getItem(key) === "1"; } catch (e) { return false; }
-  }
-  function ovSetPref(key, on) {
-    try {
-      if (on) localStorage.setItem(key, "1");
-      else localStorage.removeItem(key);
-    } catch (e) {}
-  }
   function ovAllowed() {
     if (SOLO || TILL) return false;
     try { if (window.orosLock && window.orosLock.isLocked && window.orosLock.isLocked()) return false; } catch (e) {}
@@ -16188,23 +16183,92 @@
     (want || inp).focus();
   }
 
-  // Hot corner (opt-in): the pointer pushed into the top-left corner.
-  // Re-arms once it has left the corner area; never with a button held.
+  // Hot corners (HOTC-1, video ideas 2026-11-23 #2; was OV-1's top-left
+  // corner only). Device-local "oros-hotcorners" = { tl, tr, bl, br:
+  // "" | "overview" | "qs" | "notifs" | "desktop", d: 0 | 150 | 300 ms }.
+  // Off by default; a device that had OV-1's corner on keeps it as the
+  // top-left "overview". Mouse only (never touch or pen), never with a
+  // button held, never while locked, in a single app or on a till. The
+  // pointer must stay in the corner for the delay; it re-arms once it
+  // has left the corner area.
+  var HC_KEY = "oros-hotcorners";
+  var HC_CORNERS = ["tl", "tr", "bl", "br"];
+  var HC_ACTIONS = ["", "overview", "qs", "notifs", "desktop"];
+  var HC_DELAYS = [0, 150, 300];
+  function hcParse(raw, legacy) {
+    var o = null;
+    try { o = JSON.parse(raw); } catch (e) { o = null; }
+    var out = { tl: "", tr: "", bl: "", br: "", d: 150 };
+    if (!o || typeof o !== "object" || Array.isArray(o)) {
+      if (legacy) out.tl = "overview";
+      return out;
+    }
+    HC_CORNERS.forEach(function (c) { if (HC_ACTIONS.indexOf(o[c]) !== -1) out[c] = o[c]; });
+    if (HC_DELAYS.indexOf(o.d) !== -1) out.d = o.d;
+    return out;
+  }
+  // Which corner (x, y) sits in, within `px` of the edges, or "".
+  function hcWhich(x, y, w, h, px) {
+    var l = x <= px, r = x >= w - 1 - px, t = y <= px, b = y >= h - 1 - px;
+    return t && l ? "tl" : t && r ? "tr" : b && l ? "bl" : b && r ? "br" : "";
+  }
+  function hcRead() {
+    try { return hcParse(localStorage.getItem(HC_KEY), localStorage.getItem(OV_CORNER_KEY) === "1"); }
+    catch (e) { return hcParse(null, false); }
+  }
+  function hcWrite(rec) {
+    try {
+      localStorage.setItem(HC_KEY, JSON.stringify(rec));
+      localStorage.removeItem(OV_CORNER_KEY);      // the record says it all now
+    } catch (e) {}
+  }
+  function hcSet(corner, action) {
+    var rec = hcRead();
+    if (corner === "d") { if (HC_DELAYS.indexOf(Number(action)) !== -1) rec.d = Number(action); }
+    else if (HC_CORNERS.indexOf(corner) !== -1 && HC_ACTIONS.indexOf(action) !== -1) rec[corner] = action;
+    else return;
+    hcWrite(rec);
+  }
+  function hcRun(action) {
+    if (!ovAllowed()) return;
+    if (action === "overview") { if (!ov) ovOpen(); }
+    else if (action === "qs") { if (window.orosQS) window.orosQS.toggle(); }
+    else if (action === "notifs") {
+      var N = window.orosNotifs;
+      if (N && typeof N.openNotificationPanel === "function") { closeMenu(); N.openNotificationPanel(); }
+    }
+    else if (action === "desktop") { closeMenu(); if (state.running) returnToDesktop(); }
+  }
   (function () {
     if (SOLO) return;
-    var armed = true;
+    var armed = true, timer = 0, at = "";
+    function cancel() { clearTimeout(timer); timer = 0; at = ""; }
     document.addEventListener("pointermove", function (e) {
       if (e.pointerType !== "mouse") return;
-      if (e.clientX > 40 || e.clientY > 40) { armed = true; return; }
-      if (!armed || e.buttons || e.clientX > 1 || e.clientY > 1) return;
-      if (!ovPref(OV_CORNER_KEY) || ov) return;
-      armed = false;
-      ovOpen();
+      var w = window.innerWidth, h = window.innerHeight;
+      if (!hcWhich(e.clientX, e.clientY, w, h, 40)) { armed = true; cancel(); return; }
+      var c = hcWhich(e.clientX, e.clientY, w, h, 1);
+      if (!c || e.buttons) { if (c !== at) cancel(); return; }
+      if (!armed || c === at) return;
+      var rec = hcRead(), action = rec[c];
+      if (!action || !ovAllowed()) return;
+      cancel();
+      at = c;
+      timer = setTimeout(function () {
+        timer = 0;
+        if (at !== c) return;
+        armed = false;
+        at = "";
+        hcRun(action);
+      }, rec.d);
     }, { passive: true });
+    document.addEventListener("pointerleave", cancel, { passive: true });
   })();
   function ovSnapshot() {
     if (SOLO) return null;
-    return { corner: ovPref(OV_CORNER_KEY) };
+    var rec = hcRead();
+    return { corner: rec.tl === "overview", corners: { tl: rec.tl, tr: rec.tr, bl: rec.bl, br: rec.br }, delay: rec.d,
+             actions: HC_ACTIONS.slice(), delays: HC_DELAYS.slice() };
   }
 
   // ---------- 10g. The other screen (SS1, 2026-11-15) ----------

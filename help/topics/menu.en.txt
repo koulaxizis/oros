@@ -36,7 +36,10 @@ You can also search from your browser's address bar. Add a site search (custom s
 - **Recent files**: the last files you opened, saved or downloaded in [Files](app:files) on this device. Click one to open it in Files. During sensitive work they stay hidden.
 - **System**: how many of this device's places for open apps are in use, how much storage orOS uses, and whether sync is up to date or has files waiting. `Details in Settings › Device` opens the full picture.
 
-[[Esc]] closes it. In `Settings › System › Overview` you can also open it by pushing the mouse into the top-left corner; it is off at first and applies to this device only.
+[[Esc]] closes it. You can also open it by pushing the mouse into a corner of the screen: see Hot corners below.
+
+## Hot corners
+In `Settings › System › Hot corners` each corner of the screen can open Overview, Quick settings or Notifications, or show the desktop, when you push the mouse into it. `Wait before opening` (at once, 150 ms or 300 ms) keeps a quick pass to the corner from opening anything. They are off at first, work with a mouse only (never touch, never with a button held), never while orOS is locked, in a single-app window or on a till, and apply to this device only.
 
 ## Commands
 Type what you want to do, in English or Greek, and the first row of the search shows the action. Press [[Enter]] or tap it. Nothing is saved yet: the app opens with the form filled in, and you check it and press `Save`.
