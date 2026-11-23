@@ -101,7 +101,7 @@
     return { v: 1, kind: c.kind, salt: c.salt, hash: c.hash, i: c.i,
              idle: IDLES.indexOf(c.idle) !== -1 ? c.idle : DEFAULT_IDLE,
              hidden: c.hidden === true, scope: c.scope === "apps" ? "apps" : "all",
-             info: parseInfo(c.info) };
+             info: parseInfo(c.info), look: parseLook(c.look) };
   }
 
   // ----- Lock-screen info (APPLOCK-1 wave 4, idea 13) -----
@@ -114,6 +114,32 @@
     if (o && typeof o === "object" && !Array.isArray(o)) INFO_KEYS.forEach(function (k) { out[k] = o[k] === true; });
     return out;
   }
+  // ----- Lock screen look (LOCKLOOK-1, video ideas 2026-11-23 #1) -----
+  // `oros-lock` field `look`: "wall" (default: the person's own desktop
+  // wallpaper blurred and dimmed behind the lock, a big clock in two
+  // lines, a greeting with the ME v1 name, the number of notifications,
+  // the battery) or "plain" (the opaque screen from before). Never the
+  // apps: the dialog's backdrop stays opaque; only the wallpaper is
+  // painted, from the shell's window.__orosLockWall().
+  var LOOKS = ["wall", "plain"];
+  function parseLook(v) { return v === "plain" ? "plain" : "wall"; }
+  // What the look adds now: { wall, greet, name, nc, bat }. Under
+  // Sensitive work (any level) or on a till: the blurred wallpaper and
+  // the battery only (no name, no count).
+  function lookShown(c, level, till) {
+    var wall = !!c && parseLook(c.look) === "wall";
+    var open = wall && !till && !(level && level !== "off");
+    return { wall: wall, greet: wall, name: open, nc: open, bat: wall };
+  }
+  // W4's switches plus what the look adds (the count).
+  function withLook(on, lk) {
+    if (!lk || !lk.nc) return on;
+    var out = on ? { ev: on.ev, mu: on.mu, nc: true } : { ev: false, mu: false, nc: true };
+    return out;
+  }
+  // "morning" | "afternoon" | "evening" (the Start page's and GREET-1's hours).
+  function greetPart(h) { return h >= 5 && h < 12 ? "morning" : (h >= 12 && h < 18 ? "afternoon" : "evening"); }
+
   // What the lock screen may show now: null under Sensitive work (any
   // level) or on a till, or when nothing is switched on.
   function infoShown(c, level, till) {
@@ -333,7 +359,8 @@
     parseDuress: parseDuress, DMS_DAYS: DMS_DAYS, parseDms: parseDms, dmsDue: dmsDue,
     APPS_KEY: APPS_KEY, APPS_OPEN_KEY: APPS_OPEN_KEY, APPS_FREE: APPS_FREE, RELOCK_MS: RELOCK_MS,
     parseApps: parseApps, appState: appState, parseOpen: parseOpen,
-    parseInfo: parseInfo, infoShown: infoShown, nextEvent: nextEvent
+    parseInfo: parseInfo, infoShown: infoShown, nextEvent: nextEvent,
+    LOOKS: LOOKS, parseLook: parseLook, lookShown: lookShown, withLook: withLook, greetPart: greetPart
   };
 
   // ---------- 2. Crypto ----------
@@ -367,7 +394,7 @@
       return { v: 1, kind: kind, salt: b64(salt), hash: hash, i: ITER,
                idle: prev ? prev.idle : DEFAULT_IDLE, hidden: prev ? prev.hidden : false,
                scope: prev && prev.scope === "apps" ? "apps" : "all",
-               info: parseInfo(prev ? prev.info : null) };
+               info: parseInfo(prev ? prev.info : null), look: parseLook(prev ? prev.look : null) };
     });
   }
   function matches(cfg, secret) {
@@ -898,12 +925,72 @@
   function paintClock() {
     if (!ui) return;
     var d = new Date(), loc = locale();
+    if (ui.look && ui.look.wall) paintGreet(d);
     try {
-      ui.time.textContent = d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+      if (ui.hh) {
+        // LOCKLOOK-1: hours over minutes (a 12-hour locale's am/pm small
+        // under them).
+        var parts = new Intl.DateTimeFormat(loc, { hour: "2-digit", minute: "2-digit" }).formatToParts(d);
+        var hh = "", mm = "", ap = "";
+        parts.forEach(function (p) {
+          if (p.type === "hour") hh = p.value;
+          else if (p.type === "minute") mm = p.value;
+          else if (p.type === "dayPeriod") ap = p.value;
+        });
+        if (!hh || !mm) throw new Error("parts");
+        ui.hh.textContent = hh;
+        ui.mm.textContent = mm;
+        ui.ap.textContent = ap;
+        ui.ap.hidden = !ap;
+      } else {
+        ui.time.textContent = d.toLocaleTimeString(loc, { hour: "2-digit", minute: "2-digit" });
+      }
       ui.date.textContent = d.toLocaleDateString(loc, { weekday: "long", day: "numeric", month: "long" });
     } catch (e) {
-      ui.time.textContent = d.toTimeString().slice(0, 5);
+      if (ui.hh) { ui.hh.textContent = d.toTimeString().slice(0, 2); ui.mm.textContent = d.toTimeString().slice(3, 5); ui.ap.hidden = true; }
+      else ui.time.textContent = d.toTimeString().slice(0, 5);
     }
+  }
+  // LOCKLOOK-1: "Good evening, <name>" (no name under Sensitive work or on
+  // a till), and the battery when the browser tells it.
+  function paintGreet(d) {
+    if (!ui || !ui.greet) return;
+    var lk = lookShown(cfg, strictLevel(), tillOn()), name = "";
+    if (lk.name) { try { var M = root.orosMe; name = M && typeof M.name === "function" ? String(M.name() || "").slice(0, 60) : ""; } catch (e) { name = ""; } }
+    ui.greet.textContent = t("greet." + greetPart(d.getHours())) + (name ? ", " + name : "");
+  }
+  function paintBat() {
+    if (!ui || !ui.bat) return;
+    var b = ui.batRec;
+    if (!b || typeof b.level !== "number" || !isFinite(b.level)) { ui.bat.hidden = true; ui.bat.textContent = ""; return; }
+    var pc = Math.max(0, Math.min(100, Math.round(b.level * 100)));
+    ui.bat.hidden = false;
+    ui.bat.textContent = t(b.charging ? "lock.look.batCharging" : "lock.look.bat", { n: pc });
+  }
+  // navigator.getBattery() once per lock; followed while locked.
+  function watchBat() {
+    var nav = root.navigator, U = ui;
+    if (!U || !U.bat || !nav || typeof nav.getBattery !== "function") return;
+    try {
+      nav.getBattery().then(function (b) {
+        if (ui !== U || !b) return;
+        U.batRec = b;
+        U.batOff = function () {
+          ["levelchange", "chargingchange"].forEach(function (ev) { try { b.removeEventListener(ev, paintBat); } catch (e) {} });
+        };
+        ["levelchange", "chargingchange"].forEach(function (ev) { try { b.addEventListener(ev, paintBat); } catch (e) {} });
+        paintBat();
+      }, function () {});
+    } catch (e) {}
+  }
+  // The desktop's own wallpaper (a CSS background from the shell), never
+  // a picture of the apps. Nothing when the shell gives none.
+  function paintWall(bg) {
+    var W = root.__orosLockWall, css = "";
+    try { css = typeof W === "function" ? String(W() || "") : ""; } catch (e) { css = ""; }
+    if (css.length > 4000 || /[;{}<>]|expression\s*\(|javascript:/i.test(css)) css = "";
+    if (css) bg.style.background = css;
+    if (!bg.style.background) bg.style.background = "var(--bg-desktop, var(--bg))";
   }
 
   function say(el, key, kind, vars) {
@@ -938,15 +1025,40 @@
     var dlg = node("dialog", "lk");
     dlg.id = "oros-lock";
     dlg.setAttribute("aria-labelledby", "oros-lock-title");
+    var look = lookShown(cfg, strictLevel(), tillOn());
+    var lkBg = null, hh = null, mm = null, ap = null, greet = null, bat = null;
+    if (look.wall) {
+      dlg.classList.add("lk-wall");
+      lkBg = node("div", "lk-bg");
+      lkBg.setAttribute("aria-hidden", "true");
+      paintWall(lkBg);
+      dlg.appendChild(lkBg);
+    }
     var box = node("div", "lk-box");
     var clock = node("div", "lk-clock");
     var time = node("div", "lk-time");
+    if (look.wall) {
+      time.classList.add("lk-time-big");
+      hh = node("span", "lk-hh");
+      mm = node("span", "lk-mm");
+      ap = node("span", "lk-ap");
+      ap.hidden = true;
+      time.appendChild(hh);
+      time.appendChild(mm);
+      time.appendChild(ap);
+    }
     var date = node("div", "lk-date");
     clock.appendChild(time);
     clock.appendChild(date);
+    if (look.greet) { greet = node("p", "lk-greet"); clock.appendChild(greet); }
     box.appendChild(clock);
     var info = buildInfo();
     box.appendChild(info.box);
+    if (look.bat) {
+      bat = node("p", "lk-info-line lk-bat");
+      bat.hidden = true;
+      box.appendChild(bat);
+    }
     var ico = node("div", "lk-ico");
     ico.innerHTML = LOCK_SVG;                          // static icon
     box.appendChild(ico);
@@ -1005,7 +1117,8 @@
     });
     return { dlg: dlg, time: time, date: date, main: main, input: input, msg: msg, fv: fv,
              kind: kind, recInput: null, recMsg: null, rbtn: null, modal: false, restacking: false,
-             bioBox: bioBox, bioBtn: null, bioBusy: false, bioAsked: false, info: info };
+             bioBox: bioBox, bioBtn: null, bioBusy: false, bioAsked: false, info: info,
+             look: look, hh: hh, mm: mm, ap: ap, greet: greet, bat: bat, batRec: null, batOff: null };
   }
 
   // Lock-screen info (wave 4): three quiet lines under the clock, filled
@@ -1062,6 +1175,7 @@
   function paintInfo() {
     if (!ui || !ui.info) return;
     var I = ui.info, on = infoShown(cfg, strictLevel(), tillOn()), P = infoApi();
+    on = withLook(on, lookShown(cfg, strictLevel(), tillOn()));           // LOCKLOOK-1: the count
     if (!on || !P) {
       I.box.hidden = true;
       I.ev.hidden = I.nc.hidden = I.mu.hidden = true;
@@ -1219,6 +1333,7 @@
     guardStart();
     paintClock();
     paintInfo();
+    watchBat();
     clockTimer = setInterval(function () { paintClock(); paintInfo(); }, 15000);
     bioWatch();
     fillBio();
@@ -1237,6 +1352,7 @@
     guardStop();
     if (ui) {
       var d = ui.dlg;
+      if (ui.batOff) { try { ui.batOff(); } catch (e) {} }
       ui = null;               // the close handler sees no ui and lets it go
       try { if (d.open && typeof d.close === "function") d.close(); } catch (e) {}
       if (d.parentNode) d.parentNode.removeChild(d);
@@ -1622,7 +1738,7 @@
       var c = load();
       return { available: available(), on: !!c, kind: c ? c.kind : null,
                idle: c ? c.idle : DEFAULT_IDLE, hidden: c ? c.hidden : false, scope: c ? c.scope : "all",
-               info: parseInfo(c ? c.info : null), idles: IDLES.slice(), busy: busy, locked: locked, wait: waitMs() };
+               info: parseInfo(c ? c.info : null), look: parseLook(c ? c.look : null), idles: IDLES.slice(), busy: busy, locked: locked, wait: waitMs() };
     },
     // Turn the lock on (no lock yet) with a new PIN / passphrase.
     enable: function (kind, secret) {
@@ -1685,6 +1801,7 @@
         INFO_KEYS.forEach(function (k) { if (typeof value[k] === "boolean") i[k] = value[k]; });
         c.info = i;
       }
+      else if (name === "look" && LOOKS.indexOf(value) !== -1) c.look = value;                 // LOCKLOOK-1
       else return false;
       var ok = save(c);
       lastActive = Date.now();

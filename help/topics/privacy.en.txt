@@ -19,6 +19,8 @@ In the orOS Android app, [Contacts](app:contacts) and [Calendar](app:calendar) c
 ### Screen lock
 On a computer other people use, turn on `Screen lock` in [Settings](app:settings): orOS then asks for a PIN or a passphrase when it starts and after the idle time you choose. It keeps people away from the screen; it does not encrypt your data on the device, so someone who can read the disk or open the browser's developer tools can still get to it.
 
+`Lock screen look` (in the same place): `Wallpaper` (the default) shows your own wallpaper blurred and dimmed behind a big clock, a greeting with your name, the number of notifications waiting and the battery; your apps never show through. `Plain` is the dark screen as before. While Sensitive work is on, the lock screen shows no name and no number.
+
 On an Android phone (the orOS app or orOS Passwords) the lock can also open with your fingerprint or face, and on a computer with orOS Portable, the orOS app or orOS USB with Windows Hello or a fingerprint; your PIN still works and is asked every 14 days.
 
 ### Clipboard history

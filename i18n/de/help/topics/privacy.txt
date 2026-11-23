@@ -19,6 +19,8 @@ In der Android-App von orOS können [Kontakte](app:contacts) und [Kalender](app:
 ### Bildschirmsperre
 Auf einem Computer, den auch andere nutzen, schalte in den [Einstellungen](app:settings) die `Bildschirmsperre` ein: orOS fragt dann beim Start und nach der gewählten Leerlaufzeit nach einer PIN oder einem Kennwort. Sie hält andere vom Bildschirm fern; deine Daten auf dem Gerät verschlüsselt sie nicht, wer also den Datenträger lesen oder die Entwicklertools des Browsers öffnen kann, kommt trotzdem an sie heran.
 
+`Aussehen des Sperrbildschirms` (an derselben Stelle): `Hintergrund` (die Vorgabe) zeigt deinen eigenen Hintergrund unscharf und abgedunkelt hinter einer großen Uhr, einer Begrüßung mit deinem Namen, der Zahl der wartenden Mitteilungen und dem Akku; deine Apps scheinen nie durch. `Schlicht` ist der dunkle Bildschirm wie bisher. Solange Sensible Arbeit an ist, zeigt der Sperrbildschirm keinen Namen und keine Zahl.
+
 Auf einem Android-Handy (orOS-App oder orOS Passwords) öffnet sich die Sperre auch mit Fingerabdruck oder Gesicht, und auf einem Computer mit orOS Portable, der orOS-App oder orOS USB mit Windows Hello oder einem Fingerabdruck; deine PIN funktioniert weiter und wird alle 14 Tage abgefragt.
 
 ### Zwischenablage-Verlauf

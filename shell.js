@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.74.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.75.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -18077,6 +18077,16 @@
       if (c === "toggle") m.toggle();
       else if ((c === "next" || c === "prev") && typeof m[c] === "function") m[c]();
     }
+  };
+  // LOCKLOOK-1 (lock.js paintWall): the desktop's own wallpaper as a CSS
+  // background, for the blurred lock screen. Only the wallpaper: never a
+  // picture of the apps. Animated wallpapers give their still base.
+  window.__orosLockWall = function () {
+    var d = document.getElementById("oros-desktop");
+    if (!d) return "";
+    var bg = d.style.background || "";
+    if (!bg) { try { var cs = getComputedStyle(d); bg = cs.backgroundImage !== "none" ? cs.backgroundImage + " center / cover no-repeat, " + cs.backgroundColor : cs.backgroundColor; } catch (e) { bg = ""; } }
+    return bg;
   };
   // SB2: the Automations step "Pause sounds" (automations/host.js).
   // Pauses every player that is playing; nothing else.

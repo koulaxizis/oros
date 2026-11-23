@@ -1203,6 +1203,8 @@ orosPack("de", "shell", {
  "lock.info.pause": "Pause",
  "lock.info.next": "Weiter",
  "lock.info.prev": "Zurück",
+ "lock.look.bat": "Akku {n}%",
+ "lock.look.batCharging": "Lädt · {n}%",
  "lock.enterPin": "Gib deine PIN ein",
  "lock.enterPass": "Gib dein Kennwort ein",
  "lock.unlock": "Entsperren",

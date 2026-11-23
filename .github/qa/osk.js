@@ -177,10 +177,25 @@ async function main() {
     const on = await page.evaluate(() => window.orosLock && window.orosLock.enable("pin", "2468").then((r) => r.ok && window.orosLock.lock()).then(() => true));
     if (on) {
       await page.waitForTimeout(400);
-      await page.locator("#oros-lock-input").tap(); await page.waitForTimeout(500);
+      await page.locator("#oros-lock-input").tap({ timeout: 8000 }).catch(async (e) => {
+        // Say why the PIN field could not be tapped (what covers it, where it is).
+        const why = await page.evaluate(() => {
+          const i = document.getElementById("oros-lock-input"), d = document.getElementById("oros-lock");
+          if (!i) return "no field";
+          const r = i.getBoundingClientRect(), at = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+          return "field " + Math.round(r.top) + "-" + Math.round(r.bottom) + " of " + innerHeight + ", dialog scroll " + (d ? d.scrollTop + "/" + d.scrollHeight : "-") +
+            ", on top: " + (at ? at.tagName + "#" + at.id + "." + at.className : "none") + (i.closest("[inert]") ? ", inert" : "");
+        });
+        throw new Error("PIN field tap: " + why + " (" + String(e.message || e).split("\n")[0] + ")");
+      });
+      await page.waitForTimeout(500);
       if (!(await oskOpen(page))) await page.locator("#osk-btn").tap().catch(() => {});
       ok(await oskOpen(page), "the lock screen's PIN field opens it");
       ok(await page.evaluate(() => !!document.querySelector("dialog#oros-lock #osk")), "it sits inside the lock dialog");
+      ok(await page.evaluate(() => {
+        const r = document.getElementById("oros-lock-input").getBoundingClientRect();
+        return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2) === document.getElementById("oros-lock-input");
+      }), "the PIN field is not covered by it");
       await page.locator("#osk .osk-sym").first().tap(); await key(page, "2"); await key(page, "4");
       ok(await page.locator("#oros-lock-input").inputValue() === "24", "it types the PIN: " + await page.locator("#oros-lock-input").inputValue());
       await key(page, "6"); await key(page, "8"); await special(page, "enter");
