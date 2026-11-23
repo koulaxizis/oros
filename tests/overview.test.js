@@ -93,8 +93,9 @@ test("places: heavy apps count twice", () => {
 test("never while locked, in a single app or on a till; corner off by default, no Super key", () => {
   assert.match(SEC, /function ovAllowed\(\) \{\s+if \(SOLO \|\| TILL\) return false;[\s\S]{0,200}isLocked\(\)\) return false;/);
   assert.match(SEC, /function ovOpen\(\) \{[\s\S]{0,120}if \(!ovAllowed\(\)\) return;/);
-  assert.match(SEC, /function ovPref\(key\) \{\s+try \{ return localStorage\.getItem\(key\) === "1"; \}/);
-  assert.match(SEC, /if \(!ovPref\(OV_CORNER_KEY\) \|\| ov\) return;/);
+  // HOTC-1: the corners (OV-1's top-left one included) run only when ovAllowed().
+  assert.match(SEC, /if \(!action \|\| !ovAllowed\(\)\) return;/);
+  assert.match(SEC, /function hcRun\(action\) \{\s+if \(!ovAllowed\(\)\) return;/);
   // no Super key (Chris 2026-11-16: one Ctrl+Alt+Shift combo for all)
   assert.doesNotMatch(SHELL, /oros-ov-super|ovWireFrame|overview:super/);
   assert.match(SHELL, /a11yWireFrame\(f\);\s+(?:if \(window\.oros(?:Clip|TextRepl)\) window\.oros(?:Clip|TextRepl)\.wire\(f\);[^\n]*\s+)*return f;/);
@@ -127,9 +128,9 @@ test("window.orosMonitor: snapshot, close, onChange with unsubscribe", () => {
 test("Settings: Overview card (device only) and Running now in Device", () => {
   const core = read("settings/core.js");
   const set = read("settings/settings.js");
-  assert.match(core, /\["overview", "system", "ov\.corner", "ov\.title", null, "overview"\]/);
+  assert.match(core, /\["overview", "system", "ov\.title", null, null, "overview"\]/);
   assert.match(core, /\["dv-running", "device", "dv\.running"\]/);
-  assert.match(set, /switchBtn\(!!s\.overview\.corner, "overview:corner"/);
+  assert.match(set, /set\("hotcorner:" \+ c, v\)/);
   assert.doesNotMatch(set, /superKey/);
   assert.match(SHELL, /case "overview:corner":/);
   const dv = read("device/view.js");

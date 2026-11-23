@@ -5331,8 +5331,21 @@
     if (s.overview) {
       var ovc = card(t("ov.title"), "overview");
       ovc.appendChild(el("p", "hint", t("ov.hint")));
-      ovc.appendChild(row(t("ov.corner"), switchBtn(!!s.overview.corner, "overview:corner", function (v) { set("overview:corner", v); }, t("ov.corner"))));
       host.appendChild(ovc);
+      // HOTC-1: what each corner does when the mouse is pushed into it.
+      if (s.overview.corners) {
+        var hcc = card(t("hc.title"), "hotcorners");
+        hcc.appendChild(el("p", "hint", t("hc.hint")));
+        ["tl", "tr", "bl", "br"].forEach(function (c) {
+          var hs = select(s.overview.actions.map(function (a) { return { value: a, label: t("hc.a." + (a || "none")) }; }),
+            s.overview.corners[c] || "", "hotcorner-" + c, function (v) { set("hotcorner:" + c, v); });
+          hcc.appendChild(row(t("hc.c." + c), hs, { forId: hs.id }));
+        });
+        var hd = select(s.overview.delays.map(function (d) { return { value: d, label: d ? t("hc.ms", { n: d }) : t("hc.now") }; }),
+          s.overview.delay, "hotcorner-d", function (v) { set("hotcorner:d", Number(v)); });
+        hcc.appendChild(row(t("hc.delay"), hd, { forId: hd.id }));
+        host.appendChild(hcc);
+      }
     }
 
     // This computer's files: orOS Portable and the desktop apps only
