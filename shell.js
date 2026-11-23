@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.70.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.71.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -13634,6 +13634,8 @@
         if (arg && typeof arg.url === "string" && typeof arg.pass === "string") syncMoveDav(arg);
         return;
       case "sync.moveDb":     syncMoveDropbox(); return;
+      // GALLERY-1: Settings › Appearance opens the one widget gallery
+      case "widgets.gallery": if (window.orosWidgets && window.orosWidgets.edit) window.orosWidgets.edit(); return;
       case "sync.pair.new":     pairNew(!!(arg && arg.session)); return;
       case "sync.pair.session": if (state.pair && state.pair.role === "new" && state.pair.phase !== "done") pairSet({ session: !!(arg && arg.on) }); return;
       case "sync.pair.join":    if (arg && typeof arg.code === "string") pairJoin(arg.code.slice(0, 200)); return;

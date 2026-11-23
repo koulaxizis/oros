@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — widgets.js (desktop widgets, v1.1.0)
+// orOS — widgets.js (desktop widgets, v1.5.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js and qsettings.js: it runs IN the
 // shell document and keeps its own device-local storage. shell.js calls
@@ -37,6 +37,10 @@
 //     another place.
 //   • Hidden while an app covers the desktop; nothing repaints then.
 //   • Clock style (1.4.0): Automatic / Digits / LED dots (own glyphs).
+//   • One widget gallery (GALLERY-1, 1.5.0): edit() opens a search, All /
+//     Desktop / Top bar and a live preview of every desktop card and
+//     every smart top bar card (smartbar.js preview()), with Add / Remove
+//     and the order arrows. Settings and the desktop menu open it.
 //
 // Device-local (oros-widgets, never synced: screens differ per device):
 //   { v:1, list: ["clock","calendar",…] [, clock] }   order = list order
@@ -49,7 +53,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.4.0";
+  var VER = "1.5.0";
   var KEY = "oros-widgets";
   var START_KEY = "oros-start";
   // First steps, in order. "install" only where the browser offers it
@@ -184,11 +188,27 @@
     return ["start"].concat(listOf(null, wide, phone));
   }
 
+  // GALLERY-1: search folds case, accents and final sigma ("καιρος"
+  // finds "Καιρός"); every word must be in the name or the place.
+  function fold(s) {
+    s = String(s || "").toLowerCase();
+    try { s = s.normalize("NFD").replace(/[\u0300-\u036f]/g, ""); } catch (e) {}
+    return s.replace(/ς/g, "σ");   // i18n-inline-ok: Greek final sigma folds for search
+  }
+  function galMatchOf(it, q, f, placeName) {
+    if (f !== "all" && f !== it.place) return false;
+    q = fold(q).trim();
+    if (!q) return true;
+    var hay = fold(it.name + " " + (placeName || ""));
+    return q.split(/\s+/).every(function (w) { return hay.indexOf(w) !== -1; });
+  }
+  var PREVIEW_PAINT = ["clock", "calendar", "today", "weather", "phone", "sync"];
+
   var model = { VER: VER, KINDS: KINDS, DEFAULT: DEFAULT, STEPS: STEPS, norm: norm, parse: parse, listOf: listOf,
                 toggle: toggle, move: move, monthGrid: monthGrid, ymdOf: ymdOf,
                 startNorm: startNorm, startRows: startRows, startNext: startNext, startGone: startGone, firstList: firstList,
                 phoneUrlOf: phoneUrlOf, CLOCK_STYLES: CLOCK_STYLES, clockMode: clockMode, GLYPHS: GLYPHS,
-                dotCells: dotCells, hhmm: hhmm };
+                dotCells: dotCells, hhmm: hhmm, fold: fold, galMatchOf: galMatchOf, PREVIEW_PAINT: PREVIEW_PAINT };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -326,7 +346,8 @@
     "  border: 1px solid var(--border); box-shadow: 0 8px 26px var(--shadow, rgba(0,0,0,.4)); }",
     ".wg-menu button { display: block; width: 100%; text-align: left; min-height: 40px; padding: 0 12px; }",
     "#wg-dlg { border: 1px solid var(--border); border-radius: 16px; background: var(--panel-bg, var(--bg)); color: var(--text);",
-    "  padding: 16px; width: min(380px, calc(100vw - 32px)); box-sizing: border-box; }",
+    "  padding: 16px; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 32px); box-sizing: border-box; display: flex; flex-direction: column; }",
+    "#wg-dlg:not([open]) { display: none; }",
     "#wg-dlg::backdrop { background: rgba(0,0,0,.45); }",
     "#wg-dlg h2 { margin: 0 0 4px; font-size: 17px; }",
     "#wg-dlg p { margin: 0 0 10px; font-size: 13px; color: var(--text-dim); }",
@@ -335,6 +356,31 @@
     ".wg-pick input { width: 18px; height: 18px; accent-color: var(--accent); }",
     ".wg-pick .wg-btn { width: 36px; height: 36px; }",
     ".wg-pick .wg-btn:disabled { opacity: .3; cursor: default; }",
+    // GALLERY-1: search, All / Desktop / Top bar, one row per card with its preview
+    ".wg-gal-q { width: 100%; box-sizing: border-box; min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--border);",
+    "  background: var(--bg); color: var(--text); font: inherit; margin-bottom: 8px; }",
+    ".wg-gal-seg { display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap; }",
+    ".wg-gal-seg .wg-btn { min-height: 36px; padding: 0 12px; border: 1px solid var(--border); border-radius: 999px; font-size: 13px; }",
+    ".wg-gal-seg .wg-btn[aria-pressed=\"true\"] { background: var(--accent); color: var(--wg-on, #fff); border-color: var(--accent); }",
+    ".wg-gal { overflow-y: auto; min-height: 0; flex: 1; display: flex; flex-direction: column; gap: 8px; padding: 2px; }",
+    ".wg-gi { display: flex; gap: 12px; align-items: center; padding: 8px; border: 1px solid var(--border); border-radius: 14px; }",
+    ".wg-gi.wg-gon { border-color: var(--accent); }",
+    ".wg-prev { flex: 0 0 180px; max-height: 120px; overflow: hidden; pointer-events: none; user-select: none; border-radius: 12px; }",
+    ".wg-prev .wg-card { transform: scale(.6); transform-origin: top left; width: 300px; box-shadow: none; }",
+    ".wg-prev-bar { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-height: 56px; padding: 0 6px;",
+    "  background: var(--panel-bg, var(--bg)); border: 1px solid var(--border); }",
+    ".wg-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }",
+    ".wg-chip-ic svg { display: block; color: var(--accent); }",
+    ".wg-prev-bar small { font-size: 11px; color: var(--text-dim); }",
+    ".wg-gm { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }",
+    ".wg-gn { font-weight: 700; }",
+    ".wg-gt { font-size: 12px; color: var(--text-dim); }",
+    ".wg-ga { display: flex; align-items: center; gap: 4px; margin-top: 4px; flex-wrap: wrap; }",
+    ".wg-ga .wg-gadd { min-height: 36px; padding: 0 12px; border: 1px solid var(--border); font-size: 13px; }",
+    ".wg-ga .wg-gadd[aria-pressed=\"true\"] { border-color: var(--accent); }",
+    ".wg-ga .wg-btn:not(.wg-gadd) { width: 36px; height: 36px; }",
+    ".wg-ga .wg-btn:disabled { opacity: .3; cursor: default; }",
+    "@media (max-width: 480px) { .wg-gi { flex-direction: column; align-items: stretch; } .wg-prev { flex-basis: auto; max-height: 100px; } }",
     ".wg-dlg-foot { display: flex; justify-content: flex-end; margin-top: 12px; }",
     ".wg-dlg-foot .wg-btn { padding: 8px 16px; min-height: 40px; background: var(--accent); color: var(--wg-on, #fff); font-weight: 700; }"
   ].join("\n");
@@ -585,44 +631,142 @@
     paintPicker(d);
     if (!d.open) { try { d.showModal(); } catch (e) { d.setAttribute("open", ""); } }
   }
+  // GALLERY-1 (1.5.0): one gallery for the desktop widgets and the smart
+  // top bar's cards (smartbar.js, when it is attached): a search field,
+  // All / Desktop / Top bar, a live preview of each (a painted copy of
+  // the desktop card, inert; the bar card as it would show now), Add /
+  // Remove, and the arrows that order what is on.
+  var galQ = "", galF = "all";
+  function bar() { var B = root.orosSmartBar; return B && typeof B.snapshot === "function" && B.snapshot() ? B : null; }
+  function galItems() {
+    var l = list(), out = [];
+    l.concat(KINDS.filter(function (k) { return l.indexOf(k) === -1; })).forEach(function (k) {
+      out.push({ place: "desk", id: k, name: nameOf(k), on: l.indexOf(k) !== -1, i: l.indexOf(k), n: l.length });
+    });
+    var B = bar(), snap = B ? B.snapshot() : null;
+    if (snap) {
+      var onIds = snap.list.filter(function (w) { return w.on; }).map(function (w) { return w.id; });
+      snap.list.forEach(function (w) {
+        out.push({ place: "bar", id: w.id, name: w.name, on: w.on, i: onIds.indexOf(w.id), n: onIds.length });
+      });
+    }
+    return out;
+  }
+  function galMatch(it) {
+    return galMatchOf(it, galQ, galF, t(it.place === "desk" ? "wg.gal.desk" : "wg.gal.bar"));
+  }
+  // A desktop card painted once, as a picture (inert: nothing in it
+  // can be pressed or focused). Only cards whose painting reads and
+  // never writes (PREVIEW_PAINT): Playing (its light must never start
+  // from a preview) and First steps (it keeps its own record) show a
+  // line instead.
+  function deskPreview(kind) {
+    var box2 = el("div", "wg-prev");
+    box2.setAttribute("aria-hidden", "true");
+    box2.inert = true;
+    var node = el("article", "wg-card");
+    node.setAttribute("data-wg", kind);
+    var body = el("div", "wg-body");
+    node.appendChild(body);
+    if (PREVIEW_PAINT.indexOf(kind) === -1) body.appendChild(el("div", "wg-empty", t(kind === "media" ? "wg.media.none" : "wg.gal.startPv")));
+    else call(function () { PAINT[kind]({ node: node, body: body, head: el("h2"), kind: kind, key: "" }, true); });
+    box2.appendChild(node);
+    return box2;
+  }
+  function barPreview(kind) {
+    var box2 = el("div", "wg-prev wg-prev-bar");
+    box2.setAttribute("aria-hidden", "true");
+    var p = call(function () { return root.orosSmartBar.preview(kind); }) || {};
+    var chip = el("span", "wg-chip");
+    var ic = el("span", "wg-chip-ic");
+    ic.innerHTML = p.icon || "";                       // smartbar.js's fixed icons
+    chip.appendChild(ic);
+    chip.appendChild(el("b", null, p.v || "—"));
+    if (p.l) chip.appendChild(el("span", null, p.l));
+    box2.appendChild(chip);
+    if (!p.v) box2.appendChild(el("small", null, t("wg.gal.quiet")));
+    return box2;
+  }
+  function galSet(it, on) {
+    if (it.place === "desk") {
+      if (it.id === "start" && on) startReopen();
+      save(toggle(list(), it.id, on));
+    } else call(function () { root.orosSmartBar.set(it.id, on); });
+  }
+  function galMove(it, dir) {
+    if (it.place === "desk") save(move(list(), it.id, it.i + dir));
+    else call(function () { root.orosSmartBar.move(it.id, dir); });
+  }
   function paintPicker(d) {
-    var l = list();
+    var keepFocus = doc.activeElement && d.contains(doc.activeElement) ? doc.activeElement.getAttribute("data-k") : null;
     d.textContent = "";
-    var h = el("h2", null, t("wg.title"));
+    var h = el("h2", null, t("wg.gal.title"));
     h.id = "wg-dlg-h";
     d.appendChild(h);
-    d.appendChild(el("p", null, t("wg.hint")));
-    var order = l.concat(KINDS.filter(function (k) { return l.indexOf(k) === -1; }));
-    order.forEach(function (kind) {
-      var on = l.indexOf(kind) !== -1, i = l.indexOf(kind);
-      var row = el("div", "wg-pick");
-      var lab = el("label");
-      var cb = el("input");
-      cb.type = "checkbox";
-      cb.checked = on;
-      cb.setAttribute("data-k", "wg:" + kind);
-      cb.addEventListener("change", function () {
-        if (kind === "start" && cb.checked) startReopen();
-        save(toggle(list(), kind, cb.checked)); paintPicker(d); focusK(d, "wg:" + kind);
+    d.appendChild(el("p", null, t("wg.gal.hint")));
+    var q = el("input", "wg-gal-q");
+    q.type = "search";
+    q.value = galQ;
+    q.placeholder = t("wg.gal.find");
+    q.setAttribute("aria-label", t("wg.gal.find"));
+    q.setAttribute("data-k", "q");
+    q.addEventListener("input", function () { galQ = q.value.slice(0, 60); paintList(); });
+    d.appendChild(q);
+    var hasBar = !!bar();
+    if (hasBar) {
+      var seg = el("div", "wg-gal-seg");
+      seg.setAttribute("role", "group");
+      seg.setAttribute("aria-label", t("wg.gal.show"));
+      [["all", "wg.gal.all"], ["desk", "wg.gal.desk"], ["bar", "wg.gal.bar"]].forEach(function (f) {
+        var b = btn("", t(f[1]), function () { galF = f[0]; paintPicker(d); focusK(d, "f:" + f[0]); });
+        b.setAttribute("aria-pressed", galF === f[0] ? "true" : "false");
+        b.setAttribute("data-k", "f:" + f[0]);
+        seg.appendChild(b);
       });
-      lab.appendChild(cb);
-      lab.appendChild(el("span", null, nameOf(kind)));
-      row.appendChild(lab);
-      var up = btn("", "", function () { save(move(list(), kind, i - 1)); paintPicker(d); focusK(d, "up:" + kind); }, t("wg.up") + " · " + nameOf(kind));
-      up.innerHTML = IC_UP;
-      up.setAttribute("data-k", "up:" + kind);
-      up.disabled = !on || i === 0;
-      var dn = btn("", "", function () { save(move(list(), kind, i + 1)); paintPicker(d); focusK(d, "down:" + kind); }, t("wg.down") + " · " + nameOf(kind));
-      dn.innerHTML = IC_DOWN;
-      dn.setAttribute("data-k", "down:" + kind);
-      dn.disabled = !on || i === l.length - 1;
-      row.appendChild(up);
-      row.appendChild(dn);
-      d.appendChild(row);
-    });
+      d.appendChild(seg);
+    } else galF = "all";
+    var listEl = el("div", "wg-gal");
+    d.appendChild(listEl);
+    function paintList() {
+      listEl.textContent = "";
+      var items = galItems().filter(galMatch);
+      items.forEach(function (it) {
+        var k = (it.place === "desk" ? "wg:" : "sb:") + it.id;
+        var row = el("div", "wg-gi" + (it.on ? " wg-gon" : ""));
+        row.appendChild(it.place === "desk" ? deskPreview(it.id) : barPreview(it.id));
+        var meta = el("div", "wg-gm");
+        meta.appendChild(el("span", "wg-gn", it.name));
+        meta.appendChild(el("span", "wg-gt", t(it.place === "desk" ? "wg.gal.desk" : "wg.gal.bar")));
+        var acts = el("div", "wg-ga");
+        var add = btn("wg-gadd", t(it.on ? "wg.gal.remove" : (it.place === "desk" ? "wg.gal.addDesk" : "wg.gal.addBar")), function () {
+          galSet(it, !it.on); paintPicker(d); focusK(d, k);
+        }, (it.on ? t("wg.gal.remove") : t(it.place === "desk" ? "wg.gal.addDesk" : "wg.gal.addBar")) + " · " + it.name);
+        add.setAttribute("aria-pressed", it.on ? "true" : "false");
+        add.setAttribute("data-k", k);
+        acts.appendChild(add);
+        if (it.on) {
+          var up = btn("", "", function () { galMove(it, -1); paintPicker(d); focusK(d, "up:" + k); }, t("wg.up") + " · " + it.name);
+          up.innerHTML = IC_UP;
+          up.setAttribute("data-k", "up:" + k);
+          up.disabled = it.i <= 0;
+          var dn = btn("", "", function () { galMove(it, 1); paintPicker(d); focusK(d, "down:" + k); }, t("wg.down") + " · " + it.name);
+          dn.innerHTML = IC_DOWN;
+          dn.setAttribute("data-k", "down:" + k);
+          dn.disabled = it.i >= it.n - 1;
+          acts.appendChild(up);
+          acts.appendChild(dn);
+        }
+        meta.appendChild(acts);
+        row.appendChild(meta);
+        listEl.appendChild(row);
+      });
+      if (!items.length) listEl.appendChild(el("div", "wg-empty", t("wg.gal.none")));
+    }
+    paintList();
     var foot = el("div", "wg-dlg-foot");
     foot.appendChild(btn("", t("wg.done"), function () { d.close(); }));
     d.appendChild(foot);
+    if (keepFocus === "q") { q.focus(); try { q.setSelectionRange(q.value.length, q.value.length); } catch (e) {} }
   }
   function focusK(d, k) {
     var n = d.querySelector('[data-k="' + k + '"]');

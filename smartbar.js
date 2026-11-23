@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.7.0)
+// orOS — smartbar.js (smart top bar, v1.8.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -20,7 +20,9 @@
 //   v1.6.0): percent and charging where the browser reports a battery;
 //   a tap opens Quick settings. The "playing" card (NOWPLAY-1, v1.7.0):
 //   what Music, Podcasts, Radio or the Sound Mixer plays; a tap opens a
-//   peek with Previous / Play-Pause / Next. fitBar() folds the last chips
+//   peek with Previous / Play-Pause / Next. preview(kind) (GALLERY-1,
+//   v1.8.0) gives widgets.js's one widget gallery a card's icon and
+//   text as it would show now. fitBar() folds the last chips
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
@@ -32,7 +34,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.7.0";
+  var VER = "1.8.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
                "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing"];
@@ -1034,6 +1036,14 @@
       save(list(), look);
     },
     wants: function (kind) { return !!host && list().indexOf(kind) !== -1; },
+    // GALLERY-1: what a card would show now, for widgets.js's gallery:
+    // its fixed icon and the same text as the chip (null when locked).
+    // A card with nothing to say gives v "" and the gallery says so.
+    preview: function (kind) {
+      if (!host || KINDS.indexOf(kind) === -1 || locked()) return null;
+      var s = call(function () { return STATE[kind] ? STATE[kind](Date.now()) : null; }) || null;
+      return { icon: icon(kind), v: s ? String(s.v || "") : "", l: s ? String(s.l || "") : "" };
+    },
     // PEEK-1: open the "weather" or "event" peek panel under `from`
     peek: function (kind, from) { return peek(kind, from); },
     set: function (kind, on) {
