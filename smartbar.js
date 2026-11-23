@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.9.0)
+// orOS — smartbar.js (smart top bar, v1.10.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -24,19 +24,25 @@
 //   v1.8.0) gives widgets.js's one widget gallery a card's icon and
 //   text as it would show now. With "Cards in the Dock" (DOCK-CARDS,
 //   v1.9.0, launcher.js cardSlot) the row sits at the end of a bottom
-//   Dock on wide windows and its peeks open upwards. fitBar() folds the last chips
+//   Dock on wide windows and its peeks open upwards. Zones (SBZ-1,
+//   v1.10.0): a card can sit left (after the menu button), in the centre
+//   or right (default) on windows of ZONE_W and more, never in the Dock
+//   (there: left, centre, right in a row); the look "islands" floats the
+//   left side, the centre and the right side as separate rounded groups.
+//   fitBar() folds the last chips
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
 // Device-local (oros-smartbar, never synced: screens differ):
-//   { v:1, list:["event",…] (order), look?, live:false? (no pills) }
+//   { v:1, list:["event",…] (order), look?, live:false? (no pills),
+//     zones?: { <kind>: "l" | "c" } (SBZ-1; right when absent) }
 // Reads only (the live pills' pause button excepted). Pure logic is
 // unit-tested in node (tests/smartbar.test.js).
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.9.0";
+  var VER = "1.10.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
                "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing"];
@@ -45,7 +51,9 @@
   // first time one of them is ticked (start-up stays as it was).
   var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1 };
   var LIVE = ["rec", "tmr", "sw"];          // SB-LIVE pills, in this order, before the chips
-  var LOOKS = ["", "glass", "midnight", "solid"];   // SB3: "" = the classic bar
+  var LOOKS = ["", "glass", "midnight", "solid", "islands"];   // SB3: "" = the classic bar; SBZ-1 "islands"
+  var ZONES = ["l", "c", "r"];              // SBZ-1: left (after the menu button), centre, right (default)
+  var ZONE_W = 1000;                        // zones only on windows at least this wide, never in the Dock
   var FOLD_W = 600;                         // ≤ this width: every chip folds into the button
   var SOON_MIN = 60;                       // countdown from this many minutes before
   var TODAY_MS = 120000;                   // the summary is rebuilt at most every 2 min
@@ -60,7 +68,21 @@
     var o = { v: 1, list: out };
     if (typeof v.look === "string" && v.look && LOOKS.indexOf(v.look) !== -1) o.look = v.look;
     if (v.live === false) o.live = false;
+    // SBZ-1: { kind: "l" | "c" } for chips not on the right (the default)
+    if (v.zones && typeof v.zones === "object" && !Array.isArray(v.zones)) {
+      var z = {};
+      out.forEach(function (k) { if (v.zones[k] === "l" || v.zones[k] === "c") z[k] = v.zones[k]; });
+      if (Object.keys(z).length) o.zones = z;
+    }
     return o;
+  }
+  function zoneOf(stored, kind) { return stored && stored.zones && stored.zones[kind] || "r"; }
+  // The zones with the row's kinds in order: { l: [], c: [], r: [] }.
+  // Live pills always stay on the right; off (narrow, the Dock) = all right.
+  function zonesOf(stored, rowList, on) {
+    var out = { l: [], c: [], r: [] };
+    rowList.forEach(function (k) { out[on && LIVE.indexOf(k) === -1 ? zoneOf(stored, k) : "r"].push(k); });
+    return out;
   }
   function liveOf(stored) { return !(stored && stored.live === false); }
   function lookOf(stored) { return stored && stored.look || ""; }
@@ -242,7 +264,8 @@
                 norm: norm, parse: parse, listOf: listOf, toggle: toggle, step: step, mins: mins,
                 nextEvent: nextEvent, taskCount: taskCount, focusOf: focusOf, clock: clock,
                 monthSpent: monthSpent, money: money, ymdOf: ymdOf, LOOKS: LOOKS, lookOf: lookOf, APPS: APPS,
-                LIVE: LIVE, liveOf: liveOf, rowOf: rowOf, liveWanted: liveWanted };
+                LIVE: LIVE, liveOf: liveOf, rowOf: rowOf, liveWanted: liveWanted,
+                ZONES: ZONES, ZONE_W: ZONE_W, zoneOf: zoneOf, zonesOf: zonesOf };
   if (typeof module !== "undefined" && module.exports) module.exports = model;
   if (typeof document === "undefined") return;
 
@@ -262,11 +285,13 @@
   function stored() { try { return parse(localStorage.getItem(KEY)); } catch (e) { return null; } }
   function list() { return listOf(stored()); }
   function row() { return rowOf(stored()); }
-  function save(l, look, live) {
+  function save(l, look, live, zones) {
     var o = { v: 1, list: l }, cur = stored();
     var lk = look === undefined ? lookOf(cur) : look;
     if (lk) o.look = lk;
     if ((live === undefined ? liveOf(cur) : live) === false) o.live = false;
+    var zs = zones === undefined ? (cur && cur.zones) : zones;
+    if (zs) { var nz = norm({ list: l, zones: zs }); if (nz && nz.zones) o.zones = nz.zones; }
     try { localStorage.setItem(KEY, JSON.stringify(o)); }
     catch (e) { call(function () { host.toast(t("sb.savefail")); }); }
     applyLook();
@@ -310,6 +335,12 @@
     "#oros-bar.bar-tight .sb-chip { padding: 0 5px; }",
     "@media (max-width: 760px) { .sb-chip .sb-l { display: none; } }",
     "body.solo-mode #sb-row, body.till-mode #sb-row { display: none !important; }",
+    // SBZ-1: the left and centre zones (wide windows only, see ZONE_W)
+    "#sb-zone-l, #sb-zone-c { display: inline-flex; align-items: center; gap: 2px; min-width: 0; overflow: hidden; }",
+    "#sb-zone-l { max-width: 30vw; }",
+    "#sb-zone-c { position: absolute; left: 50%; top: env(safe-area-inset-top, 0px); bottom: 0; transform: translateX(-50%); max-width: 32vw; }",
+    "#sb-zone-l[hidden], #sb-zone-c[hidden] { display: none !important; }",
+    "body.solo-mode :is(#sb-zone-l, #sb-zone-c), body.till-mode :is(#sb-zone-l, #sb-zone-c) { display: none !important; }",
     // The fold button and its panel (the chips that are not in the bar).
     ".sb-chip.sb-more { gap: 3px; padding: 0 6px; }",
     ".sb-chip.sb-more .sb-v { font-size: 11.5px; }",
@@ -382,9 +413,18 @@
     "html[data-oros-bar=\"midnight\"]:not([data-oros-contrast=\"high\"]) #oros-bar { --text: #e9edf5; --text-dim: #a3adbd; --accent-soft: rgba(255, 255, 255, 0.09); color: #e9edf5; }",
     "html[data-oros-bar=\"midnight\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: rgba(10, 13, 20, 0.94);",
     "  border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35); }",
-    "html[data-oros-bar=\"solid\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: var(--panel-bg); box-shadow: 0 2px 10px var(--shadow); }"
+    "html[data-oros-bar=\"solid\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: var(--panel-bg); box-shadow: 0 2px 10px var(--shadow); }",
     // The system's "less transparency" reaches the bar through the shell's
     // data-oros-transparency (style.css), which "Keep the glass" can overrule.
+    // SBZ-1 "islands": no strip; the left side, the centre zone and the
+    // right side each float as their own rounded group.
+    "html[data-oros-bar=\"islands\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { display: none; }",
+    "html[data-oros-bar=\"islands\"]:not([data-oros-contrast=\"high\"]) #oros-bar :is(.bar-left, .bar-right, #sb-zone-c:not([hidden])) {",
+    "  background: color-mix(in srgb, var(--bar-bg) 82%, transparent); border: 1px solid var(--border); border-radius: 14px;",
+    "  box-shadow: 0 4px 16px var(--shadow); padding: 0 6px; height: 34px; margin-top: 2px; box-sizing: border-box;",
+    "  backdrop-filter: blur(14px) saturate(1.4); -webkit-backdrop-filter: blur(14px) saturate(1.4); }",
+    "html[data-oros-bar=\"islands\"]:not([data-oros-contrast=\"high\"]) #oros-bar #sb-zone-c { top: calc(env(safe-area-inset-top, 0px) + 1px); bottom: auto; }",
+    "html[data-oros-transparency][data-oros-bar=\"islands\"]:not([data-oros-contrast=\"high\"]) #oros-bar :is(.bar-left, .bar-right, #sb-zone-c) { background: var(--panel-bg); backdrop-filter: none; -webkit-backdrop-filter: none; }"
   ].join("\n");
 
   function applyLook() {
@@ -751,14 +791,37 @@
     if (slot && box.parentNode !== slot) { closePop(); closePeek(); slot.appendChild(box); }
     else if (!slot && box.parentNode !== bar) { closePop(); closePeek(); bar.insertBefore(box, bar.firstChild); }
     Object.keys(chips).forEach(function (k) { if (l.indexOf(k) === -1) { chips[k].el.remove(); delete chips[k]; } });
-    l.forEach(function (k) {
-      if (!chips[k]) chips[k] = makeChip(k);
-      box.appendChild(chips[k].el);                    // list order
-      chips[k].key = "";
-      if (folded() && !isLive(k)) chips[k].el.setAttribute("data-sb-drop", "1");
+    // SBZ-1: left / centre zones on wide windows, never in the Dock (there
+    // the cards keep the order left, centre, right) or on a phone.
+    zonesWide = zonesOn(slot);
+    var zs = zonesOf(stored(), l, zonesWide), boxes = { l: zoneBox("l", zs.l.length), c: zoneBox("c", zs.c.length), r: box };
+    var dz = slot ? zonesOf(stored(), l, true) : null;
+    (dz ? [["r", dz.l.concat(dz.c, dz.r)]] : [["l", zs.l], ["c", zs.c], ["r", zs.r]]).forEach(function (z) {
+      z[1].forEach(function (k) {
+        if (!chips[k]) chips[k] = makeChip(k);
+        (boxes[z[0]] || box).appendChild(chips[k].el);   // list order inside each zone
+        chips[k].key = "";
+        if (folded() && !isLive(k)) chips[k].el.setAttribute("data-sb-drop", "1");
+      });
     });
     box.appendChild(more.el);                          // always last
     paint(true);
+  }
+  // SBZ-1 zones: on when the bar is not in the Dock, not folded, wide.
+  var zonesWide = false;
+  function zonesOn(slot) { return !slot && !folded() && (root.innerWidth || 0) >= ZONE_W; }
+  function zoneBox(z, n) {
+    var id = "sb-zone-" + z, b = doc.getElementById(id);
+    if (!n) { if (b) b.hidden = true; return b; }
+    if (!b) {
+      b = doc.createElement("div");
+      b.id = id;
+      var barEl = doc.getElementById("oros-bar");
+      if (z === "l") { var left = barEl && barEl.querySelector(".bar-left"); if (left) left.appendChild(b); }
+      else if (barEl) barEl.appendChild(b);
+    }
+    b.hidden = false;
+    return b;
   }
 
   // One chip: { v (value), l (label beside it on wide screens),
@@ -1018,6 +1081,12 @@
     render();
     if (root.orosToday && root.orosToday.onChange) root.orosToday.onChange(function () { todayAt = 0; if (apps) apps.stale(); refreshToday(true); paint(false); });
     doc.addEventListener("oros-dock-cards", function () { render(); call(function () { host.fit(); }); });
+    // SBZ-1: crossing the zone width moves the chips between the zones.
+    var rz = 0;
+    root.addEventListener("resize", function () {
+      clearTimeout(rz);
+      rz = setTimeout(function () { if (zonesOn(dockSlot()) !== zonesWide) { render(); call(function () { host.fit(); }); } }, 150);
+    });
   }
 
   root.orosSmartBar = {
@@ -1037,7 +1106,9 @@
         if (ib === -1) return -1;
         return ia - ib;
       });
-      return { list: names, look: lookOf(stored()), looks: LOOKS.slice(), live: liveOf(stored()) };
+      var st = stored(), zones = {};
+      l.forEach(function (k) { zones[k] = zoneOf(st, k); });
+      return { list: names, look: lookOf(st), looks: LOOKS.slice(), live: liveOf(st), zones: zones, zoneW: ZONE_W };
     },
     setLive: function (on) {
       if (!host) return;
@@ -1054,6 +1125,14 @@
     setLook: function (look) {
       if (!host || LOOKS.indexOf(look) === -1) return;
       save(list(), look);
+    },
+    // SBZ-1: where a card sits in the top bar: "l" | "c" | "r"
+    setZone: function (kind, zone) {
+      if (!host || KINDS.indexOf(kind) === -1 || ZONES.indexOf(zone) === -1) return;
+      var st = stored(), z = {};
+      if (st && st.zones) Object.keys(st.zones).forEach(function (k) { z[k] = st.zones[k]; });
+      if (zone === "r") delete z[kind]; else z[kind] = zone;
+      save(list(), undefined, undefined, z);
     },
     wants: function (kind) { return !!host && list().indexOf(kind) !== -1; },
     // GALLERY-1: what a card would show now, for widgets.js's gallery:

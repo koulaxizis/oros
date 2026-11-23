@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.77.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.78.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -13813,6 +13813,10 @@
     }
     if (name === "smartbar-look") {      // smartbar.js SB3: "", glass, midnight, solid
       if (window.orosSmartBar && window.orosSmartBar.setLook) window.orosSmartBar.setLook(String(value || ""));
+      return;
+    }
+    if (/^smartbar-zone:/.test(name)) {  // smartbar.js SBZ-1: "smartbar-zone:<kind>", value "l" | "c" | "r"
+      if (window.orosSmartBar && window.orosSmartBar.setZone) window.orosSmartBar.setZone(name.slice(14), String(value || "r"));
       return;
     }
     if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)

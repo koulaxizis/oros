@@ -520,6 +520,19 @@
         cb2.appendChild(row(t("sb.look"), lsel, { forId: lsel.id }));
         cb2.appendChild(el("p", "hint", t("sb.look.hint")));
       }
+      // SBZ-1: where each card sits (left / centre / right) on wide windows.
+      if (s.smartbar.zones) {
+        var onCards = s.smartbar.list.filter(function (k) { return k.on; });
+        if (onCards.length) {
+          cb2.appendChild(el("h4", "sub", t("sb.zones")));
+          cb2.appendChild(el("p", "hint", t("sb.zones.hint")));
+          onCards.forEach(function (k) {
+            cb2.appendChild(row(k.name, segmented(["l", "c", "r"].map(function (z) {
+              return { value: z, label: t("sb.zone." + z) };
+            }), s.smartbar.zones[k.id] || "r", "smartbar-zone:" + k.id, function (v) { set("smartbar-zone:" + k.id, v); }, k.name), { stack: true }));
+          });
+        }
+      }
       host.appendChild(cb2);
     }
 
