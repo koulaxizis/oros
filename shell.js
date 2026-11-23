@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.79.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.80.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -13812,7 +13812,7 @@
       me: { name: meName(), max: ME_MAX },
       greet: SOLO ? null : { on: greetOn() },
       tips: SOLO ? null : { on: !!tipsRead().on },
-      zoom: SOLO ? null : { on: zoomOn() },   // ZOOM-1 (this device)
+      zoom: SOLO ? null : { on: zoomOn(), feel: feelNow(), feels: ["calm", "lively", "bouncy"] },   // ZOOM-1 + FEEL-1 (this device)
       osk: settingsOsk(),
       widgets: window.orosWidgets && window.orosWidgets.snapshot ? window.orosWidgets.snapshot() : null,
       night: window.orosNight ? window.orosNight.snapshot() : null,   // NIGHT-1, this device
@@ -13921,6 +13921,7 @@
       case "greet":        greetSetUser(!!value); return;
       case "tips":         tipsSetUser(!!value); return;
       case "zoom":         zoomSetUser(!!value); return;   // ZOOM-1
+      case "feel":         feelSetUser(String(value || "")); return;   // FEEL-1
       case "wpland:new":   wpLandNewShape(); settingsNotify(); return;
       case "wpland:style":
         if (WP_LAND_STYLES.indexOf(value) >= 0) { wpLandNewShape({ style: value }); settingsNotify(); }
@@ -15042,6 +15043,33 @@
   // nothing waits for it and no state depends on it: openApp and
   // returnToDesktop do their work first, the motion is drawn after.
   var ZOOM_KEY = "oros-zoom", ZOOM_OPEN_MS = 240, ZOOM_CLOSE_MS = 200;
+  // FEEL-1 (video ideas 2026-11-23 #6): the motion feel, device-local
+  // "oros-feel" = "calm" | "lively" (default: the timings from before) |
+  // "bouncy". One set of timings for the app zoom here and, through
+  // html[data-oros-feel], the CSS of menus and panels (style.css
+  // --oros-pop-*). Reduce motion (orOS or the system) always wins.
+  var FEEL_KEY = "oros-feel";
+  var FEELS = {
+    calm:   { open: 320, close: 260, ease: "cubic-bezier(.25,.8,.25,1)", easeClose: "cubic-bezier(.4,0,.6,1)" },
+    lively: { open: ZOOM_OPEN_MS, close: ZOOM_CLOSE_MS, ease: "cubic-bezier(.2,.8,.2,1)", easeClose: "cubic-bezier(.4,0,.6,1)" },
+    bouncy: { open: 460, close: 240, ease: "cubic-bezier(.34,1.56,.64,1)", easeClose: "cubic-bezier(.5,0,.75,0)" }
+  };
+  function feelNow() {
+    var v = "lively";
+    try { v = localStorage.getItem(FEEL_KEY) || "lively"; } catch (e) {}
+    return FEELS[v] ? v : "lively";
+  }
+  function feelApply() {
+    var de = document.documentElement, f = feelNow();
+    try { if (f === "lively") de.removeAttribute("data-oros-feel"); else de.setAttribute("data-oros-feel", f); } catch (e) {}
+  }
+  function feelSetUser(v) {
+    if (!FEELS[v]) return;
+    try { if (v === "lively") localStorage.removeItem(FEEL_KEY); else localStorage.setItem(FEEL_KEY, v); } catch (e) {}
+    feelApply();
+    settingsNotify();
+  }
+  feelApply();
   var zoom = { from: null, anim: null, ghost: null, lowBat: false, batAsked: false, wired: false };
   function zoomOn() {
     try { return localStorage.getItem(ZOOM_KEY) !== "0"; } catch (e) { return true; }
@@ -15076,6 +15104,7 @@
     if (SOLO || !zoomOn() || zoom.lowBat || document.hidden || zoomReduced()) return false;
     var de = document.documentElement;                           // Energy saver (#1113): html[data-oros-saver="1"]
     if (de && de.getAttribute && de.getAttribute("data-oros-saver") === "1") return false;
+    if (de && de.hasAttribute && de.hasAttribute("data-oros-motion")) return false;   // FEEL-1: orOS's own Reduce motion wins too
     if (mt.side) return false;                                   // side by side: two frames, no zoom
     return typeof Element !== "undefined" && typeof Element.prototype.animate === "function";
   }
@@ -15145,7 +15174,7 @@
         { transformOrigin: "0 0", transform: start, opacity: 0, borderRadius: "18px" },
         { transformOrigin: "0 0", opacity: 1, offset: 0.45 },
         { transformOrigin: "0 0", transform: "none", opacity: 1, borderRadius: "0px" }
-      ], { duration: ZOOM_OPEN_MS, easing: "cubic-bezier(.2,.8,.2,1)" });
+      ], { duration: FEELS[feelNow()].open, easing: FEELS[feelNow()].ease });   // FEEL-1
       var a = zoom.anim;
       a.onfinish = a.oncancel = function () { if (zoom.anim === a) zoom.anim = null; };
     } catch (e) { zoom.anim = null; }
@@ -15184,7 +15213,7 @@
         { transform: "none", opacity: 0.95, borderRadius: "0px" },
         { opacity: 0.85, offset: 0.6 },
         { transform: end, opacity: 0, borderRadius: "40px" }
-      ], { duration: ZOOM_CLOSE_MS, easing: "cubic-bezier(.4,0,.6,1)" });
+      ], { duration: FEELS[feelNow()].close, easing: FEELS[feelNow()].easeClose });   // FEEL-1
       zoom.anim = a;
       a.onfinish = a.oncancel = function () {
         if (zoom.anim === a) zoom.anim = null;

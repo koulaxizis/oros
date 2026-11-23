@@ -201,6 +201,9 @@ Das Dock ist eine Leiste mit deinen Lieblings-Apps an einem Rand des Desktops, u
 - `Automatisch ausblenden` versteckt es, bis du die Maus an seinen Bildschirmrand bewegst oder auf einem Touchscreen auf den kleinen Griff tippst.
 - `Über offenen Apps zeigen` lässt es sichtbar, während eine App offen ist. Es ist aus, bis du es einschaltest, damit Apps den ganzen Bildschirm bekommen.
 
+## Bewegungsgefühl
+Unter `Einstellungen › Darstellung` lässt `Öffnen und Schließen von Apps animieren` eine App aus ihrem Symbol wachsen und wieder hineinschrumpfen. `Bewegungsgefühl` legt fest, wie sich Apps, Menüs und Bereiche bewegen: `Ruhig` (langsamer und sanft), `Lebhaft` (wie bisher) oder `Federnd` (mit einer kleinen Feder). Reduzierte Bewegung, in den Bedienungshilfen oder in deinem System, hat immer Vorrang. Nur auf diesem Gerät.
+
 ## Barrierefreiheit
 In den `Einstellungen` › `Barrierefreiheit`, für orOS und jede App:
 - `Textgröße` macht den Text und alles drumherum größer: `100%`, `115%`, `130%` oder `150%`. Sie gilt in jeder App, in den Einstellungen, in der Hilfe und im Menü, wie ein Zoom der Seite; die obere Leiste und der Desktop behalten ihre Größe (das Dock hat seine eigene `Größe`). Auf einem schmalen Bildschirm vergrößert orOS nur so weit, dass jede App noch hineinpasst (mindestens 320 Pixel breit), und die Karte sagt es dir.
