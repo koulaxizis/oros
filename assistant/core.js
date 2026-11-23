@@ -213,6 +213,28 @@
   // their own, larger budget, so a whole site (a catalog, its sitemap,
   // page after page) can be checked in one question.
   var WEB_ROUNDS = 24;
+  // LY-AUTO (Chris 2026-11-23: the Assistant does in Layout what Claude
+  // does through the gate): rounds that only work on Layout (read,
+  // change, read back, export) count against their own budget, so a
+  // book can be laid out, checked and fixed in one question.
+  var LAYOUT_ROUNDS = 40;
+  var LY_TOOLS = ["list_fonts", "files_list", "files_read", "export_pdf", "export_epub", "book_cover", "rebuild_in_layout",
+                  "learn_house_style", "layout_book", "add_house_rule", "change_history", "undo_change"];
+  // The Layout tools that run at once with the setting «Layout work
+  // without cards» (set.ly), as they do through the gate.
+  var LY_AUTO = ["edit_in_app", "export_pdf", "export_epub", "book_cover", "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+  function isLyCall(x) {
+    if (!x || typeof x.name !== "string") return false;
+    if (x.name === "read_in_app" || x.name === "edit_in_app") return !!(x.args && String(x.args.app || "") === "layout");
+    return LY_TOOLS.indexOf(x.name) >= 0;
+  }
+  function layoutRound(calls) {
+    return Array.isArray(calls) && calls.length > 0 && calls.every(isLyCall);
+  }
+  function lyAutoCall(x) {
+    if (!x || LY_AUTO.indexOf(x.name) < 0) return false;
+    return x.name !== "edit_in_app" || !!(x.args && String(x.args.app || "") === "layout");
+  }
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function str(v, max) { return typeof v === "string" ? v.slice(0, max) : ""; }
@@ -247,7 +269,7 @@
     if (!isObj(x)) return null;
     return { m: stamp(x.m), chat: x.chat ? 1 : 0, prov: PROVIDERS[x.prov] ? x.prov : "", web: x.web ? 1 : 0,
              ws: SEARCH_IDS.indexOf(x.ws) >= 0 ? x.ws : "auto", wsBase: normBase(x.wsBase),
-             fb: fbOk(x.fb) ? x.fb : "", auto: x.auto ? 1 : 0, skip: normSkip(x.skip) };
+             fb: fbOk(x.fb) ? x.fb : "", auto: x.auto ? 1 : 0, skip: normSkip(x.skip), ly: x.ly ? 1 : 0 };
   }
   function normSkip(a) {
     if (!Array.isArray(a)) return [];
@@ -4225,6 +4247,9 @@
     if (!opts.builtin && opts.rules) {
       lines.push("When the user wants something to happen by itself, on a schedule or when something happens in orOS (\"every Monday remind me…\", \"when an urgent mail comes, add a task\", \"after a workout tell me to drink water\"), offer a rule with propose_rule. The user opens it in Automations and saves it there; nothing is set before that, so never say it is set. If the user wants something a rule cannot do, say so plainly.");
     }
+    if (!opts.builtin && opts.cover && opts.lyAuto) {
+      lines.push("Layout work without cards is on (the user's setting): edit_in_app with app layout, export_pdf, export_epub, book_cover, rebuild_in_layout, learn_house_style, layout_book and add_house_rule run at once in Layout and their report is the tool's result (Undo stays in the change history), exactly as for Claude through orOS Gate. Work like a book designer: read_in_app first, change in small batches, read the pages back (read_in_app, thumbs, preflight) and fix what is off before you say it is done; export_pdf preflight tells you what still needs fixing. Removing more than 5 things still comes as a card for the user to confirm. Ignore the sentences about cards and presses in these tools' descriptions.");
+    }
     if (!opts.builtin && opts.cover) {
       lines.push("For a book cover (front, spine and back for print), call book_cover with the details the user gave and the attached pictures: the front picture and, when there is one, the publisher's logo. The user opens it in Layout and edits it there; never say it was made.");
     }
@@ -5345,7 +5370,7 @@
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
     sysAIRead: sysAIRead, sysAIModel: sysAIModel, sysAIAdopt: sysAIAdopt,
     fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, pickChain: pickChain, chainOrder: chainOrder, provTier: provTier, isOnline: isOnline, needsTools: needsTools, coolFor: coolFor, COOL: COOL, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
-    TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
+    TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, LAYOUT_ROUNDS: LAYOUT_ROUNDS, layoutRound: layoutRound, lyAutoCall: lyAutoCall, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
     claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS, crUnknown: crUnknown,
     provBase: provBase, normBase: normBase,
     mergeAssist: mergeAssist, emptyData: emptyData, permFor: permFor,
