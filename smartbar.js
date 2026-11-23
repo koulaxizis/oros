@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — smartbar.js (smart top bar, v1.8.0)
+// orOS — smartbar.js (smart top bar, v1.9.0)
 // ------------------------------------------------------------
 // A shell component, like widgets.js: it runs IN the shell document
 // and keeps its own device-local storage. shell.js calls attach() once
@@ -22,7 +22,9 @@
 //   what Music, Podcasts, Radio or the Sound Mixer plays; a tap opens a
 //   peek with Previous / Play-Pause / Next. preview(kind) (GALLERY-1,
 //   v1.8.0) gives widgets.js's one widget gallery a card's icon and
-//   text as it would show now. fitBar() folds the last chips
+//   text as it would show now. With "Cards in the Dock" (DOCK-CARDS,
+//   v1.9.0, launcher.js cardSlot) the row sits at the end of a bottom
+//   Dock on wide windows and its peeks open upwards. fitBar() folds the last chips
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
@@ -34,7 +36,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.8.0";
+  var VER = "1.9.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
                "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing"];
@@ -706,6 +708,7 @@
     peekEl.setAttribute("role", "dialog");
     peekEl.setAttribute("aria-label", kind === "weather" ? (appName("weather") || "Weather") : kind === "media" ? t("sb.k.playing") : (appName("calendar") || "Calendar"));
     doc.body.appendChild(peekEl);
+    placeUp(peekEl, peekFrom);
     if (peekFrom) peekFrom.setAttribute("aria-expanded", "true");
     doc.addEventListener("keydown", onPeekKey, true);
     doc.addEventListener("mousedown", onPeekDown, true);
@@ -714,10 +717,25 @@
     return true;
   }
 
+  // DOCK-CARDS (v1.9.0): launcher.js offers a holder at the end of a
+  // bottom Dock when "Cards in the Dock" is on and the window is wide;
+  // the row lives there, else in the top bar.
+  function dockSlot() { return call(function () { return root.orosLauncher.cardSlot(); }) || null; }
+  function inDock() { return !!(box && box.parentNode && box.parentNode.id === "ld-cards"); }
+  // A peek opened from a chip in the Dock opens upwards, over the chip.
+  function placeUp(panel, from) {
+    if (!inDock() || !from || !from.getBoundingClientRect) return;
+    var r = from.getBoundingClientRect(), H = root.innerHeight || 0, W = root.innerWidth || 0;
+    panel.style.top = "auto";
+    panel.style.bottom = Math.max(8, Math.round(H - r.top + 8)) + "px";
+    panel.style.right = Math.max(8, Math.round(W - r.right)) + "px";
+    panel.style.maxHeight = Math.max(160, Math.round(r.top - 16)) + "px";
+  }
   function render() {
     if (!host) return;
     var bar = doc.querySelector("#oros-bar .bar-right");
     if (!bar) return;
+    var slot = dockSlot();
     var l = row();
     if (!l.length) {
       closePop();
@@ -728,9 +746,10 @@
     if (!box) {
       box = doc.createElement("div");
       box.id = "sb-row";
-      bar.insertBefore(box, bar.firstChild);
       more = makeMore();
     }
+    if (slot && box.parentNode !== slot) { closePop(); closePeek(); slot.appendChild(box); }
+    else if (!slot && box.parentNode !== bar) { closePop(); closePeek(); bar.insertBefore(box, bar.firstChild); }
     Object.keys(chips).forEach(function (k) { if (l.indexOf(k) === -1) { chips[k].el.remove(); delete chips[k]; } });
     l.forEach(function (k) {
       if (!chips[k]) chips[k] = makeChip(k);
@@ -998,6 +1017,7 @@
     applyLook();
     render();
     if (root.orosToday && root.orosToday.onChange) root.orosToday.onChange(function () { todayAt = 0; if (apps) apps.stale(); refreshToday(true); paint(false); });
+    doc.addEventListener("oros-dock-cards", function () { render(); call(function () { host.fit(); }); });
   }
 
   root.orosSmartBar = {
@@ -1072,7 +1092,7 @@
     // not fit. keep = how many shown chips it leaves (the shell keeps the
     // first one until its last fit level). false = nothing left to hide.
     fitDrop: function (keep) {
-      if (!box) return false;
+      if (!box || inDock()) return false;           // DOCK-CARDS: the Dock is not the bar's to fit
       var shown = Array.prototype.filter.call(box.children, function (el) { return !el.hidden && !(more && el === more.el); });
       if (shown.length <= Math.max(0, keep || 0)) return false;
       var last = shown[shown.length - 1];

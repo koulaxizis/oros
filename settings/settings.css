@@ -246,6 +246,13 @@ button:focus-visible, select:focus-visible, input:focus-visible, .page-title:foc
   color: var(--text-dim);
   margin-right: auto;
 }
+/* STRUCT-6: a former section inside the one that took it in */
+.sec-part { font-size: 17px; font-weight: 700; margin: 14px 2px 0; scroll-margin-top: 8px; }
+/* STRUCT-1/7: «More options» of the Gate and Sync pages */
+.more-opts { border-top: 1px solid var(--border); padding-top: 8px; }
+.more-opts > summary { cursor: pointer; font-weight: 600; color: var(--accent); padding: 6px 0; min-height: 32px; }
+.more-opts[open] > summary { margin-bottom: 8px; }
+.more-opts > .more-body { display: flex; flex-direction: column; gap: 10px; }
 .danger-card { border-color: color-mix(in srgb, var(--danger) 45%, var(--border)); }
 
 .row {

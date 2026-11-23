@@ -66,11 +66,11 @@ test("claude: every string in English and Greek, and in the German pack", () => 
 
 test("claude: the card asks the System extension only through its event", () => {
   const js = read("settings/settings.js");
-  assert.match(js, /secClaude\(host\);\n    secGate\(host\);/);
+  assert.match(js, /claudeInto\(c\);\n      if \(G\) gateInto\(c, G\);/);   // STRUCT-2: one card
   assert.match(js, /new d\.defaultView\.CustomEvent\("oros-claude", \{ detail: what \}\)/);
   assert.match(js, /attributeFilter: \["data-oros-sys-claude", "data-oros-sys-claude-why"\]/);
   // the extension's values never become HTML
-  const fn = js.slice(js.indexOf("function secClaude"), js.indexOf("function secPhoneHealth"));
+  const fn = js.slice(js.indexOf("function claudeInto"), js.indexOf("function secPhoneHealth"));
   assert.doesNotMatch(fn, /innerHTML/);
   assert.match(fn, /window\.open\(C\.CLAUDE_WEB, "_blank", "noopener"\)/);
 });

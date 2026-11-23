@@ -70,7 +70,7 @@ Im Player:
 - Sender und Streams kommen von iptv-org, einer freien Community-Liste. Viele können offline sein, in deinem Land gesperrt oder in einem Format, das dein Browser nicht abspielen kann (`Dieses Streamformat wird hier nicht unterstützt`).
 - Ist das Verzeichnis nicht erreichbar (keine Verbindung oder ein Inhaltsblocker), bleibt die Liste leer.
 - iptv-org veröffentlicht keine fertigen Programmführer, daher kommt das Programm nur aus XMLTV-Adressen oder -Dateien, die du hinzufügst.
-- Viele Playlist- und Programmseiten lassen einen Browser nicht mitlesen (`Diese Website lässt den Browser nicht mitlesen…`). Mit eingerichtetem Mail-Relay liest die App sie darüber (bis zu 5 MB pro Download); andernfalls lade die Datei herunter und öffne sie.
+- Viele Playlist- und Programmseiten lassen einen Browser nicht mitlesen (`Diese Website lässt den Browser nicht mitlesen…`). Mit eingerichtetem orOS-Relay (Einstellungen › Verbundene Dienste) liest die App sie darüber (bis zu 5 MB pro Download); andernfalls lade die Datei herunter und öffne sie.
 - `http://`-Streams spielen nicht, wenn orOS über `https://` läuft, und Streams, die einen besonderen Referrer oder User-Agent brauchen, spielen eventuell gar nicht.
 - Eine geöffnete Programmdatei behält die Sendungen vom Vortag bis eine Woche voraus; öffne danach eine neuere Datei. Die Zeitleiste zeigt nur heute und höchstens 150 Sender auf einmal.
 - Die Wiedergabe stoppt, wenn du den Player oder die App schließt.

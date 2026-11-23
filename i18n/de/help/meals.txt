@@ -18,7 +18,7 @@ Das Suchfeld findet Rezepte nach Namen. Tipp Zutaten mit Kommas getrennt (etwa �
 ## Importieren
 `Importieren` öffnet ein Fenster mit drei Wegen:
 
-- `Webadresse eines Rezepts`: Tipp oder füge die Adresse der Seite ein und drück `Abrufen`. Die meisten Rezeptseiten beschreiben ihre Rezepte auf eine standardisierte Weise (schema.org), und diese Beschreibung wird gelesen: Titel, Portionen, Zeiten, Zutaten, Schritte, Tags und der Link zum Foto. Seiten, die Apps nicht lesen lassen, laufen über das orOS-Relay, das du in [Mail](app:mail) oder [Reader](app:feeds) einrichtest; ohne Relay kopierst du stattdessen den Text des Rezepts.
+- `Webadresse eines Rezepts`: Tipp oder füge die Adresse der Seite ein und drück `Abrufen`. Die meisten Rezeptseiten beschreiben ihre Rezepte auf eine standardisierte Weise (schema.org), und diese Beschreibung wird gelesen: Titel, Portionen, Zeiten, Zutaten, Schritte, Tags und der Link zum Foto. Seiten, die Apps nicht lesen lassen, laufen über das orOS-Relay, das du in [Einstellungen](app:settings) › Verbundene Dienste › `orOS-Relay` einrichtest; ohne Relay kopierst du stattdessen den Text des Rezepts.
 - `Rezept einfügen`: Text von irgendwo wird in Zutaten und Schritte aufgeteilt. Du kannst auch den Quelltext (HTML) einer Seite oder ihr JSON einfügen.
 - `Datei öffnen…`: ein Export aus einer anderen Rezept-App (siehe unten), eine gespeicherte Webseite (.html) oder JSON.
 

@@ -374,7 +374,7 @@ orosPack("de", "calendar", {
  "subs.dup": "Du hast diesen Kalender schon abonniert.",
  "subs.err.big": "Der Kalender ist zu groß zum Lesen (höchstens 5 MB).",
  "subs.err.http": "Der Server hat mit einem Fehler geantwortet ({n}).",
- "subs.err.norelay": "Der Server dieses Kalenders lässt einen Browser nicht direkt lesen. Dafür braucht es das orOS-Relay: Trag seine Adresse in Mail oder in den Einstellungen des Readers ein.",
+ "subs.err.norelay": "Der Server dieses Kalenders lässt einen Browser nicht direkt lesen. Dafür braucht es das orOS-Relay: Trag seine Adresse in Einstellungen › Verbundene Dienste › orOS-Relay ein.",
  "subs.err.notics": "Diese Adresse lieferte keinen Kalender (.ics).",
  "subs.err.offline": "Du bist offline. Die letzte Kopie wird angezeigt.",
  "subs.err.other": "Der Kalender konnte nicht gelesen werden ({e}).",

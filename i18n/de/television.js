@@ -57,7 +57,7 @@ orosPack("de", "television", {
  "src.epg.hint": "Füge einen XMLTV-Programmführer hinzu (.xml oder .xml.gz). Sender werden über tvg-id oder den Namen zugeordnet. Der Programmführer bleibt für den Tag auf diesem Gerät.",
  "src.epgAuto": "Der Programmführer der Playlist wurde auch hinzugefügt",
  "src.err.big": "Zu groß oder nicht lesbar",
- "src.err.cors": "Diese Website lässt den Browser nicht mitlesen. Richte das Mail-Relay ein oder lade die Datei herunter und öffne sie.",
+ "src.err.cors": "Diese Website lässt den Browser nicht mitlesen. Richte das orOS-Relay in Einstellungen › Verbundene Dienste ein oder lade die Datei herunter und öffne sie.",
  "src.err.empty": "Keine Sender oder Sendungen darin gefunden",
  "src.err.gone": "Die Datei ist nicht mehr auf diesem Gerät – öffne sie erneut",
  "src.err.http": "Der Server antwortete mit {n}",

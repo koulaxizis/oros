@@ -57,9 +57,20 @@ test("core: t() falls back and fills variables", () => {
 });
 
 test("core: sections and deep-link targets", () => {
-  assert.deepEqual(C.SECTIONS, ["appearance", "fonts", "accessibility", "menu", "notifications", "sync", "lock", "sensitive", "users", "backup", "language", "files", "solo", "services", "system", "device", "screentime"]);
+  // STRUCT-6: 11 sections; the folded ones are aliases of the section that took them in
+  assert.deepEqual(C.SECTIONS, ["appearance", "fonts", "accessibility", "notifications", "sync", "lock", "language", "apps", "services", "system", "screentime"]);
   assert.equal(C.sectionOf({ section: "sync" }), "sync");
-  assert.equal(C.sectionOf("backup"), "backup");
+  assert.equal(C.sectionOf("backup"), "sync");
+  assert.equal(C.sectionOf({ section: "sensitive" }), "lock");
+  assert.equal(C.sectionOf("users"), "lock");
+  assert.equal(C.sectionOf("menu"), "apps");
+  assert.equal(C.sectionOf("files"), "apps");
+  assert.equal(C.sectionOf("solo"), "apps");
+  assert.equal(C.sectionOf("device"), "system");
+  assert.equal(C.partOf("sensitive"), "sensitive");
+  assert.equal(C.partOf("lock"), null);
+  Object.keys(C.ALIAS).forEach((k) => assert.ok(C.isSection(C.ALIAS[k]) && !C.isSection(k), k));
+  C.FIND.forEach((f) => assert.ok(C.isSection(f[1]), f[0] + " lands on a section"));
   [null, undefined, {}, { section: "nope" }, { section: 3 }, "__proto__", "constructor"]
     .forEach((v) => assert.equal(C.sectionOf(v), null, String(v)));
 });
@@ -102,7 +113,7 @@ test("search provider: every topic opens a real section, in both languages", asy
   assert.deepEqual((await find("σκοτεινό", "el")).slice(0, 1), ["appearance"]);
   assert.deepEqual((await find("συνθηματικο", "el")).slice(0, 1), ["sync"]);
   assert.deepEqual((await find("password", "el")).slice(0, 1), ["sync"]);   // English word, Greek UI
-  assert.ok((await find("backup", "en")).includes("backup"));
+  assert.ok((await find("backup", "en")).includes("sync"));
   assert.deepEqual((await find("pin", "en")).slice(0, 1), ["lock"]);
   assert.deepEqual((await find("κλείδωμα", "el")).slice(0, 1), ["lock"]);
   assert.deepEqual(await find("zzqx", "en"), []);
@@ -117,8 +128,8 @@ test("bridge: every set() and act() name the app uses exists in the shell", () =
   sets.forEach((n) => {
     if (n.endsWith(":")) return;                 // "search:" + id, checked below
     if (/^dock:/.test(n)) {                      // matched by one pattern in the shell
-      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\|style\|hover\|pos\|badges\)\$/);
-      assert.match(n, /^dock:(on|size|magnify|autohide|over|style|hover|pos|badges)$/, n);
+      assert.match(BRIDGE, /\^dock:\(on\|size\|magnify\|autohide\|over\|style\|hover\|pos\|badges\|cards\)\$/);
+      assert.match(n, /^dock:(on|size|magnify|autohide|over|style|hover|pos|badges|cards)$/, n);
       return;
     }
     if (/^seasonal:/.test(n)) {                  // passed on to seasonal.js by prefix
@@ -287,8 +298,8 @@ test("find: matches labels, words in any of en/el, accents and case aside", () =
   assert.ok(!C.findSettings("en", "dock zzqq", all).length);
   // a name that starts with the query comes before words-only matches
   const r = C.findSettings("en", "lock", all).map((h) => h.id);
-  assert.equal(r[0], "lock");
-  assert.ok(r.indexOf("lock-now") < r.indexOf("s:lock"));          // "Lock now" before "Screen lock"
+  assert.deepEqual(r.slice(0, 2), ["s:lock", "lock"]);              // "Lock and privacy", then "Screen lock"
+  assert.ok(r.indexOf("lock-now") > 0);
   // rows this device lacks are left out
   assert.ok(C.findSettings("en", "dock", () => false).every((h) => !/^dock/.test(h.id)));
   assert.ok(C.findSettings("en", "dock", all).some((h) => h.id === "dock-size"));

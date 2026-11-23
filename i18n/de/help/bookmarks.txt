@@ -34,7 +34,7 @@ Lesezeichen mit Stern erscheinen als Kacheln unter `Favoriten` oben in der Liste
 - Die Kopie ist eine Datei auf dem orOS-Speicher, in [Dateien](app:files) › `Bookmarks` › `Archive`. Sie gehört nicht zu den Synchronisierungsdaten der Lesezeichen: Sie erreicht deine anderen Geräte mit Vault Drive, wie jede andere Datei.
 - `Bilder behalten` legt die Bilder in die Kopie, damit sie auch offline erscheinen. Bilder, die eine Website den Browser nicht lesen lässt, bleiben Links, die nur online erscheinen. Ohne diese Option ist die Kopie nur Text.
 - Im Lesemodus: `Originalseite`, `Erneut speichern` (für eine geänderte Seite) und `Kopie entfernen`. Löschst du ein Lesezeichen, wird auch seine Kopie entfernt, sobald die Zeit für `Rückgängig` vorbei ist.
-- Seiten, die das Relay brauchen: Viele Websites lassen sich nur über das Relay lesen, das in [Reader](app:feeds) oder [Mail](app:mail) eingestellt ist. Ohne Relay können diese Seiten nicht gespeichert werden.
+- Seiten, die das Relay brauchen: Viele Websites lassen sich nur über das Relay lesen, das in [Einstellungen](app:settings) › Verbundene Dienste eingestellt ist. Ohne Relay können diese Seiten nicht gespeichert werden.
 
 ## Suche, Tags und Sortierung
 
