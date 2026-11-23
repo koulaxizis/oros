@@ -206,6 +206,8 @@
       "note.noNext": "No other AI is set up on this device to answer instead. In Settings, save a key for a free service (Groq, Mistral, Cerebras and others) and pick its model, and it will answer whenever this one can't.",
       "set.chain": "Connected services and order",
       "set.auto": "Local and free first for each message (instead of your first choice)",
+      "set.ly": "Layout work without cards", "set.lyHint": "On: what you ask in Layout (changes, cover, house style, PDF with crop marks and bleed) is done at once, and the Assistant checks the result and fixes it in the same answer, as Claude does through orOS Gate. Undo stays in the change history; removing many things is still asked. Works best with Layout open in a window of its own next to the Assistant.",
+      "ly.done": "Done in {app}.", "ly.fail": "{app} could not do it.",
       "set.autoHint": "On: for each message, models on your own devices go first (a server on your computer, then this browser), then free online services, then paid ones; your first choice leads its group. Off: your first choice answers first and the rest follow in the order shown. Either way a message that needs tools (adding or changing something, a web search) skips models without tools, a service that is busy, over its free limit or unreachable is passed over for a while, and apps set to “Always share” ask first when an online service stands in for a local one.",
       "set.tier0": "On your computer",
       "set.tier1": "In this browser",
@@ -885,6 +887,8 @@
       "note.noNext": "Δεν υπάρχει άλλο AI ρυθμισμένο σε αυτή τη συσκευή για να απαντήσει στη θέση του. Στις Ρυθμίσεις αποθήκευσε κλειδί για μια δωρεάν υπηρεσία (Groq, Mistral, Cerebras κ.ά.) και διάλεξε μοντέλο, και θα απαντά όποτε αυτό δεν μπορεί.",
       "set.chain": "Συνδεδεμένες υπηρεσίες και σειρά",
       "set.auto": "Πρώτα τοπικά και δωρεάν σε κάθε μήνυμα (αντί για την πρώτη σου επιλογή)",
+      "set.ly": "Δουλειά στο Layout χωρίς κάρτες", "set.lyHint": "Ενεργό: ό,τι ζητάς στο Layout (αλλαγές, εξώφυλλο, οίκος ύφους, PDF με σημάδια κοπής και bleed) γίνεται αμέσως, και ο Βοηθός ελέγχει το αποτέλεσμα και το διορθώνει στην ίδια απάντηση, όπως ο Claude μέσω του orOS Gate. Η Αναίρεση μένει στο ιστορικό αλλαγών· η αφαίρεση πολλών στοιχείων ρωτιέται ακόμη. Δουλεύει καλύτερα με το Layout ανοιχτό σε δικό του παράθυρο δίπλα στον Βοηθό.",
+      "ly.done": "Έγινε στο {app}.", "ly.fail": "Το {app} δεν μπόρεσε να το κάνει.",
       "set.autoHint": "Ενεργό: σε κάθε μήνυμα πρώτα τα μοντέλα στις δικές σου συσκευές (server στον υπολογιστή σου, μετά αυτός ο browser), μετά δωρεάν online υπηρεσίες, μετά οι πληρωμένες· η πρώτη σου επιλογή μπαίνει πρώτη στην ομάδα της. Ανενεργό: απαντά πρώτα η πρώτη σου επιλογή και ακολουθούν οι υπόλοιπες με τη σειρά που φαίνεται. Και στις δύο περιπτώσεις ένα μήνυμα που θέλει εργαλεία (προσθήκη ή αλλαγή, αναζήτηση στο web) παρακάμπτει τα μοντέλα χωρίς εργαλεία, μια υπηρεσία απασχολημένη, πάνω από το δωρεάν όριο ή εκτός δικτύου παρακάμπτεται για λίγο, και οι εφαρμογές στο «Πάντα» ρωτούν πρώτα όταν μια online υπηρεσία απαντά στη θέση τοπικής.",
       "set.tier0": "Στον υπολογιστή σου",
       "set.tier1": "Σε αυτόν τον browser",
@@ -1593,7 +1597,7 @@
     var cur = data.set;
     var next = { m: Math.max(Date.now(), cur.m + 1), chat: cur.chat, prov: cur.prov, web: cur.web ? 1 : 0,
                  ws: cur.ws || "auto", wsBase: cur.wsBase || "", fb: cur.fb || "",
-                 auto: cur.auto ? 1 : 0, skip: (cur.skip || []).slice() };
+                 auto: cur.auto ? 1 : 0, skip: (cur.skip || []).slice(), ly: cur.ly ? 1 : 0 };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.set = next;
     saveData();
@@ -3271,6 +3275,7 @@
       edits: Object.keys(edCats).map(function (id) { return installed()[id] + " (" + id + ")"; }),
       newsletter: nlOn,
       cover: cvOn,
+      lyAuto: cvOn && !!data.set.ly,
       files: builtin ? "" : "pdf",
       openFile: fileOn,
       rebuild: rbOn,
@@ -3280,7 +3285,7 @@
       webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
     });
     var web = wmode === "native";
-    var round = 0, wround = 0, conts = 0;
+    var round = 0, wround = 0, lround = 0, conts = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
     function next() {
       busy.live = "";
@@ -3328,6 +3333,8 @@
           // AS-WEB3: a round that only searched or read pages counts
           // against WEB_ROUNDS, so a whole site can be read.
           var webOnly = res.tools.every(function (x) { return x.name === "web_search" || x.name === "read_page"; });
+          // LY-AUTO: rounds of Layout work have their own, larger budget
+          if (!webOnly && C.layoutRound(res.tools)) { if (++lround >= C.LAYOUT_ROUNDS) { note("info", t("note.rounds")); return null; } return next(); }
           if (webOnly ? ++wround >= C.WEB_ROUNDS : ++round >= C.TOOL_ROUNDS) { note("info", t("note.rounds")); return null; }
           return next();
         });
@@ -3418,13 +3425,45 @@
     if (busy.abort) busy.abort.abort();
   }
 
+  // LY-AUTO (Chris 2026-11-23): with «Layout work without cards» on,
+  // Layout's tools run at once as they do for Claude through the gate,
+  // and their report is the tool's result, so the model can change,
+  // read back and fix in one question. Removing more than 5
+  // things still comes as a card. Undo stays in the change history.
+  var LY_WAIT = 120000;
+  function lyAutoOn(call) { return !GATE && !!data.set.ly && !!installed().layout && C.lyAutoCall(call); }
+  function lyDone(call, res) {
+    return { content: res.ok ? String(res.c || "") : "Error: " + String(res.c || ""), err: res.ok ? 0 : 1,
+             ui: { k: "lyAuto", tool: call.name, ok: res.ok ? 1 : 0 } };
+  }
+  function lyAutoRun(c, call, apps) {
+    var args = call.args && typeof call.args === "object" ? call.args : {};
+    if (call.name === "edit_in_app") {
+      return editLoadFor("layout", args).then(function () {
+        var p = editPlan(args, apps);
+        var removes = p.ok && p.steps.some(function (s) { return s.op === "remove" || s.op === "delpages"; });
+        if (removes && p.pv.n > 5) return runTool(c, call, apps);
+        return gateEdit(args, apps, Date.now() + LY_WAIT, c).then(function (res) { return lyDone(call, res); });
+      });
+    }
+    return runTool(c, call, apps).then(function (r) {
+      if (r.err || !r.ui) return r;
+      return Promise.resolve(gatePress(r.ui, apps, c)).then(function (res) { return lyDone(call, res); });
+    });
+  }
+  function toolNow(c, call, apps) {
+    if (call && !call.bad && lyAutoOn(call) && !(busy && busy.abort && busy.abort.signal.aborted)) {
+      return lyAutoRun(c, call, apps).catch(function () { return { content: "Error: the call failed on the device.", err: 1 }; });
+    }
+    return runTool(c, call, apps);
+  }
   function runTools(c, calls, apps) {
     var out = [];
     var i = 0;
     function step() {
       if (i >= calls.length) return Promise.resolve(out);
       var call = calls[i++];
-      return runTool(c, call, apps).then(function (r) {
+      return toolNow(c, call, apps).then(function (r) {
         r.id = call.id;
         r.name = call.name;
         if (call.nid) r.nid = call.nid;
@@ -7774,6 +7813,7 @@
         if (ui.k === "rule") { drawRule(host, r, c); return; }
         if (ui.k === "ruleErr") return;
         if (ui.k === "edit") { drawEdit(host, r, c); return; }
+        if (ui.k === "lyAuto") { host.appendChild(el("div", "tool-line", t(ui.ok ? "ly.done" : "ly.fail", { app: installed().layout || "Layout" }))); return; }
         if (ui.k === "editErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
         if (ui.k === "nlCheck") { drawNlCheck(host, r, c); return; }
@@ -9119,6 +9159,11 @@
       list.appendChild(r);
     });
     secD.appendChild(list);
+    // LY-AUTO: Layout's work at once, without cards (off by default)
+    if (installed().layout) {
+      checkbox(secD, "as-ly", t("set.ly"), !!data.set.ly, function (on) { setSetting({ ly: on ? 1 : 0 }); }).parentNode.classList.add("check");
+      secD.appendChild(el("p", "dlg-hint", t("set.lyHint")));
+    }
 
     // The desktop menu (shell quickmenu.js): tasks and apps on a
     // right-click or long press of the desktop. Its editor lives in
@@ -10050,15 +10095,17 @@
   // the app (it opens on the owner's screen and checks the commands
   // again); the answer waits for its report until the deadline (the
   // relay waits 25 s), a later report still goes to the change history.
-  function gateEdit(args, apps, deadline) {
-    var app = String(args.app || ""), g0 = gateShell();
+  // own: the in-app Assistant's conversation (LY-AUTO): the same run,
+  // without the gate's own checks (the user is the one asking).
+  function gateEdit(args, apps, deadline, own) {
+    var app = String(args.app || ""), g0 = gateShell(), conv = own || gateConv;
     if (app && !appOf(apps, app)) return Promise.resolve({ ok: false, c: g0 && typeof g0.writeOk === "function" && g0.writeOk(app) || "Claude may not change " + app + "." });
     return editLoadFor(app, args).then(function () {
-      var r0 = proposeEditNow(gateConv, args, apps);
+      var r0 = proposeEditNow(conv, args, apps);
       if (r0.err) return { ok: false, c: String(r0.content || "").replace(/^Error: /, "") };
       var p = editPlan(args, apps), a = appOf(apps, p.app), name = a ? a.name : p.app;
       if (!p.ok || !a) return { ok: false, c: p.err || "Claude may not change this app." };
-      var g = gateShell(), why = g && typeof g.writeOk === "function" ? g.writeOk(p.app) : "orOS Gate is not running.";
+      var g = gateShell(), why = own ? "" : g && typeof g.writeOk === "function" ? g.writeOk(p.app) : "orOS Gate is not running.";
       if (why) return { ok: false, c: why };
       // dry_run (Chris 2026-11-18, P2): what would change, nothing applied
       if (args.dry_run === true) {
@@ -10070,12 +10117,12 @@
         return { ok: true, a: [p.app], k: 0, c: name + ": " + JSON.stringify(dv) };
       }
       var removes = p.steps.some(function (s) { return s.op === "remove" || s.op === "delpages" || s.op === "deltrack"; });
-      var askP = removes && p.pv.n > 5 && typeof g.askDelete === "function" ? Promise.resolve(g.askDelete(p.pv.n)) : Promise.resolve(true);
+      var askP = !own && removes && p.pv.n > 5 && typeof g.askDelete === "function" ? Promise.resolve(g.askDelete(p.pv.n)) : Promise.resolve(true);
       return askP.then(function (yes) {
         if (!yes) return { ok: false, c: "The owner did not confirm removing " + p.pv.n + " things on the device; nothing was changed." };
         var ui = { key: attId() };
         var job = jobNew(ui.key, p.app, name);
-        if (!runEdit(ui, gateConv, p)) return jobEnd(job, { ok: false, c: "The commands could not be handed to " + name + ". Nothing was changed." });
+        if (!runEdit(ui, conv, p)) return jobEnd(job, { ok: false, c: "The commands could not be handed to " + name + ". Nothing was changed." });
         return new Promise(function (resolve) {
           var key = ui.key;
           var timer = setTimeout(function () {
@@ -10154,7 +10201,7 @@
   }
   // GATE-PAR P3: what a card's button does, done at once on the
   // owner's screen (an automation rule comes in off, Chris 13:39).
-  function gatePress(ui, apps) {
+  function gatePress(ui, apps, own) {
     var have = installed(), app = "", call = null, run = null, note = "";
     if (!ui) return { ok: false, c: "The call failed on the device." };
     if (ui.k === "entry") {
@@ -10188,18 +10235,18 @@
       app = "layout"; call = ["layout", { cover: JSON.parse(JSON.stringify(cv.cover)) }];
       note = "Layout's Book cover window is open on the owner's screen with these details, for the owner to create it there.";
     } else if (ui.k === "epub") {
-      return gateEpub(ui, apps, Date.now() + 21000);
+      return gateEpub(ui, apps, Date.now() + 21000, own);
     } else if (ui.k === "pdf") {
-      return gatePdf(ui, apps, Date.now() + 21000);
+      return gatePdf(ui, apps, Date.now() + 21000, own);
     } else if (ui.k === "rebuild" || ui.k === "house") {
       app = "layout";
-      run = function () { return ui.k === "rebuild" ? runRebuild(ui, gateConv) : runHouse(ui, gateConv, false); };
+      run = function () { return ui.k === "rebuild" ? runRebuild(ui, own || gateConv) : runHouse(ui, own || gateConv, false); };
       note = "Layout is doing it on the owner's screen now; its report shows there (read_in_app with app layout reads the result afterwards).";
     } else return { ok: false, c: "The call failed on the device." };
     var rd = {};
     apps.forEach(function (x) { rd[x.id] = 1; });
     if (!rd[app]) return { ok: false, c: "The owner does not let Claude use " + (have[app] || app) + "." };
-    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk(app) : "orOS Gate is not running.";
+    var g = gateShell(), why = own ? "" : g && typeof g.actionOk === "function" ? g.actionOk(app) : "orOS Gate is not running.";
     if (why) return { ok: false, c: why };
     var done = run ? run() : runEntry({ call: { fn: "openAt", args: call } });
     if (!done) return { ok: false, c: "The app could not do it on the device." };
@@ -10208,13 +10255,13 @@
   // export_epub through the gate: Layout opens on the owner's screen,
   // makes the EPUB and its report is the answer (or, past the deadline,
   // a note that it is still working; read_in_app reads it afterwards).
-  function gateEpub(ui, apps, deadline) {
+  function gateEpub(ui, apps, deadline, own) {
     var have = installed(), rd = {};
     apps.forEach(function (x) { rd[x.id] = 1; });
     if (!rd.layout) return Promise.resolve({ ok: false, c: "The owner does not let Claude use " + (have.layout || "Layout") + "." });
-    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
+    var g = gateShell(), why = own ? "" : g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
     if (why) return Promise.resolve({ ok: false, c: why });
-    if (!runEpub(ui, gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
+    if (!runEpub(ui, own || gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
     return new Promise(function (resolve) {
       var key = ui.key;
       var timer = setTimeout(function () {
@@ -10261,13 +10308,13 @@
   // on the owner's screen, makes and saves the PDF; its report is the
   // answer, or past the deadline a note (read_in_app's last_export has
   // the report afterwards).
-  function gatePdf(ui, apps, deadline) {
+  function gatePdf(ui, apps, deadline, own) {
     var have = installed(), rd = {};
     apps.forEach(function (x) { rd[x.id] = 1; });
     if (!rd.layout) return Promise.resolve({ ok: false, c: "The owner does not let Claude use " + (have.layout || "Layout") + "." });
-    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
+    var g = gateShell(), why = own ? "" : g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
     if (why) return Promise.resolve({ ok: false, c: why });
-    if (!runPdf(ui, gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
+    if (!runPdf(ui, own || gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
     return new Promise(function (resolve) {
       var key = ui.key;
       var timer = setTimeout(function () {
