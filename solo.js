@@ -230,7 +230,8 @@
     // and widget button, and the share sheet (a shared text or link
     // waits in the message box; nothing is sent before Send).
     assistant: {
-      shortcuts: [{ do: "brief", target: { brief: 1 } }],
+      shortcuts: [{ do: "speak", target: { listen: 1 } },
+                  { do: "brief", target: { brief: 1 } }],
       share: "ask"
     },
     // Wave 6: every game in one app (Game Center is its home; a game
@@ -344,6 +345,7 @@
           "sc.base.new": "New base",
           "sc.base.last": "Last base",
           "name.assistant": "orOS Assistant",
+          "sc.assistant.speak": "Speak",
           "sc.assistant.brief": "Briefing",
           "name.gamecenter": "orOS Games",
           "sc.gamecenter.wordle": "Today's Wordle",
@@ -453,6 +455,7 @@
           "sc.base.new": "Νέα βάση",
           "sc.base.last": "Τελευταία βάση",
           "name.assistant": "orOS Βοηθός",
+          "sc.assistant.speak": "Μίλα",
           "sc.assistant.brief": "Ενημέρωση ημέρας",
           "name.gamecenter": "orOS Παιχνίδια",
           "sc.gamecenter.wordle": "Το σημερινό Wordle",

@@ -43,6 +43,18 @@
   ],
   "shortcuts": [
     {
+      "name": "Speak",
+      "short_name": "Speak",
+      "url": "/assistant/solo.html?do=speak",
+      "icons": [
+        {
+          "src": "/icons/solo/assistant-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
       "name": "Briefing",
       "short_name": "Briefing",
       "url": "/assistant/solo.html?do=brief",
