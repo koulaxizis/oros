@@ -13934,3 +13934,8 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Tests:** full suite; Playwright Chromium through the real shell, 1280 EN and 390 EL: 11 sections, `open("sensitive")` lands on its part, Gate and Sync `More options`, the relay card (an old Gate relay moves in, saving empty clears it), Mail's settings show the relay with `Change in Settings`, no page errors, no overflow.
 - **Not tested:** a real relay deployment, a real Gate pairing, Mail and Feeds over the network, Safari, a real phone.
 
+### 2026-11-23 — 8.73.00 — One bar at the bottom: the bar cards in the Dock (DOCK-CARDS, launcher 1.9.0, smartbar 1.9.0)
+- **What:** video idea 4 (Chris 2026-11-22 18:49Z) as structure review item 9 (22:47Z): no Dock switch; one choice in Settings › Appearance › Bars, `Top bar and Dock` (default) / `One bar at the bottom` (shell bridge `bars`: Dock on, at the bottom, launcher pref `cards`). The smart bar's `#sb-row` moves into the Dock's `#ld-cards` holder on windows ≥ 760 px, back to the top bar elsewhere; peeks open upwards from the Dock.
+- **Files:** launcher.js, smartbar.js, shell.js (bridge `bars`, version), settings/settings.js, settings/core.js (FIND row `bars`), i18n/de/settings.js, i18n/de/shell.js, translations.js, settings and appearance help EN/EL/DE, whatsnew EN/EL, tests (launcher, settings).
+- **Tests:** full suite 9350/0; Chromium through the real shell on 8.72.00 (11-section Settings), EL at 1280 and EN at 360: at 1280 «One bar at the bottom» moves the cards into the Dock and sets `on/pos bottom/cards`; back to «Top bar and Dock» puts them in the top bar; at 360 they stay in the top bar; no page errors.
+- **Not tested:** Safari, a real phone or tablet.
