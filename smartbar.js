@@ -45,13 +45,13 @@
   var VER = "1.11.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
-               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing", "screen", "storage", "rates"];
+               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing", "screen", "storage", "rates", "mail"];
   var MONEY = { budget: 1, sales: 1, invoices: 1, rates: 1 };
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
-  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1, screen: 1, storage: 1, rates: 1 };
-  // Peek panels painted by smartbar-apps.js (STC-1 Screen time).
-  var APP_PEEK = { screen: 1 };
+  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1, screen: 1, storage: 1, rates: 1, mail: 1 };
+  // Peek panels painted by smartbar-apps.js (STC-1 Screen time, MAILCARD-1 Mail).
+  var APP_PEEK = { screen: 1, mail: 1 };
   var LIVE = ["rec", "tmr", "sw"];          // SB-LIVE pills, in this order, before the chips
   var LOOKS = ["", "glass", "midnight", "solid", "islands"];   // SB3: "" = the classic bar; SBZ-1 "islands"
   var ZONES = ["l", "c", "r"];              // SBZ-1: left (after the menu button), centre, right (default)
@@ -398,6 +398,14 @@
     ".pk-row.pk-st .pk-t { margin-left: auto; width: auto; color: var(--text-dim); }",
     ".pk-bar { flex: 0 0 100%; height: 4px; border-radius: 2px; background: var(--accent-soft); overflow: hidden; }",
     ".pk-bar > span { display: block; height: 100%; border-radius: 2px; background: var(--accent); }",
+    // MAILCARD-1: Unread / Starred, one message per row
+    ".pk-tabs { display: flex; gap: 4px; margin: 0 0 6px; }",
+    ".pk-tab { flex: 1 1 0; min-height: 40px; border: 1px solid var(--border); border-radius: 9px; background: transparent; color: var(--text); font: inherit; font-size: 13px; cursor: pointer; }",
+    ".pk-tab.on { background: var(--accent-soft); border-color: var(--accent); font-weight: 700; }",
+    ".pk-row.pk-msg { flex-direction: column; align-items: stretch; gap: 2px; }",
+    ".pk-msg .pk-who { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    ".pk-msg .pk-w { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }",
+    ".pk-msg.pk-unread .pk-who, .pk-msg.pk-unread .pk-w { font-weight: 700; color: var(--text); }",
     ".pk-open { display: block; width: 100%; min-height: 44px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px;",
     "  background: transparent; color: var(--accent); font: inherit; font-weight: 700; cursor: pointer; }",
     ".pk-mt { font-size: 16px !important; overflow-wrap: anywhere; }",
@@ -1085,6 +1093,8 @@
       if (c.el.hidden && !c.el.hasAttribute("data-sb-drop")) { c.el.hidden = false; changed = true; }
     });
     paintMore();
+    // A card's own peek goes with its card (Sensitive work, an app lock).
+    if (peekEl && APP_PEEK[peekKind] && chips[peekKind] && chips[peekKind].key === "") closePeek();
     if (changed) call(function () { host.fit(); });
   }
 

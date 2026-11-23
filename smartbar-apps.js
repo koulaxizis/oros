@@ -27,6 +27,14 @@
 //                         ECB rates the Calculator / Unit Converter
 //                         already keeps (oros-units-rates): nothing new
 //                         is fetched; a tap opens the converter on it
+//   Mail (MAILCARD-1)     unread in the Inboxes (the count Mail keeps on
+//                         this device); tap: a peek with the unread
+//                         messages first and Starred one tap away, a
+//                         row opens the message in Mail. Read only, from
+//                         Mail's own cache (IndexedDB "oros-mail",
+//                         opened without a version and closed at once,
+//                         never the "keys" / "creds" stores). Nothing
+//                         under Sensitive work or while Mail is locked.
 // ============================================================
 (function (root) {
   "use strict";
@@ -142,6 +150,48 @@
     catch (e) { return String(Math.round(v * 1e4) / 1e4); }
   }
 
+  // MAILCARD-1 (pure): the living accounts of oros-mail-data (as
+  // mail/today.js), the unread count of their Inboxes, and the peek's rows.
+  var ACCT_RE = /^[a-z0-9]{6,40}$/;
+  function mailAccounts(data) {
+    if (!data || typeof data !== "object" || !Array.isArray(data.accounts)) return [];
+    var tombs = data.tombs && typeof data.tombs === "object" ? data.tombs : {};
+    return data.accounts.filter(function (a) {
+      return a && typeof a.id === "string" && ACCT_RE.test(a.id) && typeof a.email === "string" &&
+        !(typeof tombs[a.id] === "number" && typeof a.m === "number" && tombs[a.id] >= a.m);
+    });
+  }
+  function mailUnread(accts, folders) {
+    var n = 0;
+    accts.forEach(function (a) {
+      var rec = folders && folders[a.id];
+      (rec && Array.isArray(rec.list) ? rec.list : []).forEach(function (f) {
+        if (f && f.name === "INBOX" && typeof f.unseen === "number" && f.unseen > 0) n += Math.floor(f.unseen);
+      });
+    });
+    return n;
+  }
+  // heads { acctId: { msgs } } → rows { acct, uid, who, subj, date, seen }:
+  // "unread" = the unread ones, newest first; "starred" = \Flagged ones.
+  function mailRows(accts, heads, mode, max) {
+    var out = [];
+    accts.forEach(function (a) {
+      var rec = heads && heads[a.id];
+      (rec && Array.isArray(rec.msgs) ? rec.msgs : []).forEach(function (m) {
+        if (!m || typeof m.uid !== "number" || m.uid <= 0) return;
+        var fl = Array.isArray(m.flags) ? m.flags : [];
+        if (fl.indexOf("\\Deleted") >= 0) return;
+        var seen = fl.indexOf("\\Seen") >= 0, star = fl.indexOf("\\Flagged") >= 0;
+        if (mode === "starred" ? !star : seen) return;
+        var from = m.from && typeof m.from === "object" ? m.from : {};
+        out.push({ acct: a.id, uid: m.uid, who: String(from.name || from.addr || "").slice(0, 80),
+                   subj: typeof m.subj === "string" ? m.subj.slice(0, 200) : "", date: typeof m.date === "number" ? m.date : 0, seen: seen });
+      });
+    });
+    out.sort(function (x, y) { return (y.date - x.date) || (y.uid - x.uid); });
+    return out.slice(0, max || 8);
+  }
+
   // Icons: fixed markup, never data.
   var IC = {
     habits: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l4 4L20 5"/><path d="M4 20h16"/></svg>',
@@ -158,8 +208,9 @@
   IC.storage = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
   // The cards that are not an app's agenda (OWN): their kinds.
   IC.rates = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></svg>';
-  var OWN = { screen: 1, storage: 1, rates: 1 };
-  var PEEKS = { screen: 1 };
+  IC.mail = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>';
+  var OWN = { screen: 1, storage: 1, rates: 1, mail: 1 };
+  var PEEKS = { screen: 1, mail: 1 };
 
   // api (from smartbar.js): { t, call, strict, appName, clock, ymdOf,
   //   ttl, host(), kinds() (the ticked kinds), repaint(kinds), peek(kind) }
@@ -249,7 +300,85 @@
       }, function () { estBusy = false; estAt = Date.now(); });
       return est;
     }
+    // MAILCARD-1: Mail's cache, read without a version (nothing is
+    // created on a device without Mail) and closed at once.
+    var mailFolders = null, mailAt = 0, mailBusy = false, mailTab = "unread";
+    function mailOff() {
+      if (strict()) return true;
+      var L = root.orosLock;
+      return !!call(function () { return L && L.apps && L.apps.state("mail"); });
+    }
+    function mailData() { try { return JSON.parse(localStorage.getItem("oros-mail-data") || "null"); } catch (e) { return null; } }
+    function mailDb(stores, keys, done) {
+      var idb = null, rq;
+      try { idb = root.indexedDB; } catch (e) {}
+      if (!keys.length || !idb || typeof idb.open !== "function") { done({}); return; }
+      try { rq = idb.open("oros-mail"); } catch (e) { done({}); return; }
+      rq.onupgradeneeded = function () { try { rq.transaction.abort(); } catch (e) {} };
+      rq.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); done({}); };
+      rq.onblocked = function () { done({}); };
+      rq.onsuccess = function () {
+        var db = rq.result, out = {}, left = keys.length;
+        db.onversionchange = function () { db.close(); };
+        if (!db.objectStoreNames.contains(stores)) { db.close(); done({}); return; }
+        var one = function () { if (--left === 0) { db.close(); done(out); } };
+        try {
+          var st = db.transaction(stores, "readonly").objectStore(stores);
+          keys.forEach(function (k) {
+            var g = st.get(k[1]);
+            g.onsuccess = function () { if (g.result) out[k[0]] = g.result; one(); };
+            g.onerror = function (e) { if (e && e.preventDefault) e.preventDefault(); one(); };
+          });
+        } catch (e) { db.close(); done({}); }
+      };
+    }
+    function mailRefresh() {
+      if (mailBusy || Date.now() - mailAt < api.ttl) return;
+      var accts = mailAccounts(mailData());
+      mailBusy = true;
+      mailDb("folders", accts.map(function (a) { return [a.id, a.id]; }), function (recs) {
+        mailBusy = false; mailAt = Date.now(); mailFolders = recs;
+        api.repaint(["mail"]);
+      });
+    }
     var FILL = {
+      mail: function (p, kit) {
+        if (mailOff()) return false;
+        var accts = mailAccounts(mailData());
+        if (!accts.length) return false;
+        var tabs = kit.el("div", "pk-tabs");
+        tabs.setAttribute("role", "group");
+        ["unread", "starred"].forEach(function (k) {
+          var b = kit.pbtn("pk-tab" + (mailTab === k ? " on" : ""), t("sb.mail." + k), function () {
+            mailTab = k; p.textContent = ""; FILL.mail(p, kit);
+            var f = p.querySelector(".pk-tab.on"); if (f) f.focus();
+          });
+          b.setAttribute("aria-pressed", mailTab === k ? "true" : "false");
+          tabs.appendChild(b);
+        });
+        p.appendChild(tabs);
+        var box = kit.el("div", "pk-mail");
+        box.appendChild(kit.el("div", "pk-empty", t("sb.mail.loading")));
+        p.appendChild(box);
+        var tab = mailTab;
+        mailDb("heads", accts.map(function (a) { return [a.id, a.id + "|INBOX"]; }), function (heads) {
+          if (!box.isConnected || tab !== mailTab || mailOff()) return;
+          box.textContent = "";
+          var rows = mailRows(accts, heads, tab, 8);
+          rows.forEach(function (r) {
+            var b = kit.pbtn("pk-row pk-msg" + (r.seen ? "" : " pk-unread"), null, function () {
+              kit.close();
+              call(function () { root.__orosOpenAt("mail", { acct: r.acct, folder: "INBOX", uid: r.uid }); });
+            }, (r.who ? r.who + ": " : "") + (r.subj || t("sb.mail.nosubj")));
+            b.appendChild(kit.el("span", "pk-who", r.who || "—"));
+            b.appendChild(kit.el("span", "pk-w", r.subj || t("sb.mail.nosubj")));
+            box.appendChild(b);
+          });
+          if (!rows.length) box.appendChild(kit.el("div", "pk-empty", t(tab === "starred" ? "sb.mail.nostar" : "sb.mail.none")));
+        });
+        p.appendChild(kit.pbtn("pk-open", t("pk.open").replace("{app}", appName("mail") || "Mail"), function () { kit.open("mail"); }));
+        return true;
+      },
       screen: function (p, kit) {
         var u = screenUse();
         if (!u || !u.on) return false;
@@ -295,6 +424,16 @@
       },
       meal: function (now) { return strict() ? null : lineCard("meal", now); },
       reading: function (now) { return strict() ? null : lineCard("reading", now); },
+      // MAILCARD-1: a count only (never a sender or a subject in the bar).
+      mail: function () {
+        if (mailOff()) return null;
+        mailRefresh();
+        var n = mailFolders ? mailUnread(mailAccounts(mailData()), mailFolders) : 0;
+        if (!n) return null;
+        var v = n > 999 ? "999+" : String(n);
+        return { v: v, l: t(n === 1 ? "sb.mail.one" : "sb.mail.label"), tip: t("sb.mail.tip").replace("{n}", v).replace("{app}", appName("mail") || "Mail"),
+                 go: function () { if (!api.peek || !api.peek("mail")) api.host().open("mail"); } };
+      },
       // RATES-1: hidden under Sensitive work, like the money cards.
       rates: function () {
         if (strict()) return null;
@@ -347,7 +486,7 @@
 
   var EXP = { VER: "1.1.0", AGENDA: AGENDA, OWN: OWN, KINDS: Object.keys(AGENDA).concat(Object.keys(OWN)), agendaCard: agendaCard, dayGap: dayGap,
               durOf: durOf, screenRows: screenRows, storageOf: storageOf, bytesOf: bytesOf, LOW_PCT: LOW_PCT,
-              ratePair: ratePair, rateText: rateText, make: make };
+              ratePair: ratePair, rateText: rateText, mailAccounts: mailAccounts, mailUnread: mailUnread, mailRows: mailRows, make: make };
   if (typeof module !== "undefined" && module.exports) module.exports = EXP;
   root.orosSmartBarApps = EXP;
 })(typeof window !== "undefined" ? window : globalThis);
