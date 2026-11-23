@@ -221,3 +221,34 @@ test("Assistant: who answers is named as an AI, each answer too; free plans warn
   const de = read("i18n/de/assistant.js");
   ["who.ai", "who.aiTip", "msg.ai", "msg.aiNoModel", "set.trainFree"].forEach((k) => assert.ok(de.includes('"' + k + '"'), k));
 });
+
+test("Atelier PDF and SVG: the same XMP as document metadata and as SVG <metadata>", () => {
+  const aio = read("atelier/io.js");
+  const grab = (name) => {
+    const i = aio.indexOf("  function " + name + "(");
+    assert.ok(i >= 0, name);
+    const j = aio.indexOf("\n  }\n", i);
+    return aio.slice(i, j + 4);
+  };
+  const src = "var AI_INFO = { src: \"edit\", tool: \"orOS Atelier\" };\n" + grab("aiIn") + grab("aiMarkPdf") + grab("aiMarkSvg") +
+    "\nreturn { aiIn: aiIn, aiMarkPdf: aiMarkPdf, aiMarkSvg: aiMarkSvg };";
+  const api = new Function("window", src)({ OrosImageAI: IA });
+  const doc = { items: [{ id: "a", pg: "p1", ax: { ai: "g" } }, { id: "b", pg: "p2" }, { id: "c", pg: "p3", ax: { ai: "e" }, hide: true }] };
+  assert.equal(api.aiIn(doc, ["p1"]), true);
+  assert.equal(api.aiIn(doc, [{ id: "p1" }]), true);
+  assert.equal(api.aiIn(doc, ["p2", "p3"]), false, "a hidden AI item does not count");
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="10"><rect/></svg>';
+  const marked = api.aiMarkSvg(doc, ["p1"], svg);
+  assert.match(marked, /^<svg [^>]*><metadata><x:xmpmeta [^]*compositeWithTrainedAlgorithmicMedia[^]*<\/x:xmpmeta><\/metadata><rect\/><\/svg>$/);
+  assert.doesNotMatch(marked, /xpacket/);
+  assert.equal(api.aiMarkSvg(doc, ["p2"], svg), svg);
+  let meta = null;
+  const pdf = { addMetadata(x, raw) { meta = [x, raw]; return this; } };
+  assert.equal(api.aiMarkPdf(doc, ["p1"], pdf), pdf);
+  assert.equal(meta[1], true, "raw XMP, not wrapped by jsPDF");
+  assert.match(meta[0], /Iptc4xmpExt:DigitalSourceType="http:\/\/cv\.iptc\.org\/newscodes\/digitalsourcetype\/compositeWithTrainedAlgorithmicMedia"/);
+  meta = null; api.aiMarkPdf(doc, ["p2"], pdf);
+  assert.equal(meta, null);
+  assert.match(aio, /return aiMarkPdf\(doc, ids, pdf\)\.output\("blob"\)/);
+  assert.match(aio, /r\.svg = aiMarkSvg\(doc, \[pg\], r\.svg\)/);
+});

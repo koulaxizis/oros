@@ -59,12 +59,34 @@
 
   // AI-MARK (EU AI Act art. 50(2)): a PNG / JPEG of pages with a
   // picture an AI made or redrew says so in its XMP (imgai.js markBlob).
+  // A PDF carries the same XMP as its document metadata, an SVG inside
+  // <metadata> (pages: page objects or page ids).
+  function aiIn(doc, pages) {
+    var on = {};
+    (pages || []).forEach(function (pg) { on[pg && pg.id || pg] = 1; });
+    return (doc && doc.items || []).some(function (it) { return on[it.pg] && it.ax && it.ax.ai && !it.hide; });
+  }
+  var AI_INFO = { src: "edit", tool: "orOS Atelier" };
   function aiMark(doc, pages, blob) {
-    var IA = window.OrosImageAI, on = {};
-    (pages || []).forEach(function (pg) { on[pg.id] = 1; });
-    var ai = (doc && doc.items || []).some(function (it) { return on[it.pg] && it.ax && it.ax.ai && !it.hide; });
-    if (!ai || !blob || !IA || typeof IA.markBlob !== "function") return Promise.resolve(blob);
-    return IA.markBlob(blob, { src: "edit", tool: "orOS Atelier" });
+    var IA = window.OrosImageAI;
+    if (!aiIn(doc, pages) || !blob || !IA || typeof IA.markBlob !== "function") return Promise.resolve(blob);
+    return IA.markBlob(blob, AI_INFO);
+  }
+  function aiMarkPdf(doc, pages, pdf) {
+    var IA = window.OrosImageAI;
+    if (aiIn(doc, pages) && pdf && typeof pdf.addMetadata === "function" && IA && typeof IA.xmpPacket === "function") {
+      pdf.addMetadata(IA.xmpPacket(AI_INFO), true);
+    }
+    return pdf;
+  }
+  function aiMarkSvg(doc, pages, svg) {
+    var IA = window.OrosImageAI;
+    if (!aiIn(doc, pages) || typeof svg !== "string" || !IA || typeof IA.xmpPacket !== "function") return svg;
+    var m = /<svg\b[^>]*>/.exec(svg);
+    if (!m) return svg;
+    var rdf = IA.xmpPacket(AI_INFO).replace(/^<\?xpacket[^>]*\?>/, "").replace(/<\?xpacket[^>]*\?>$/, "");
+    var at = m.index + m[0].length;
+    return svg.slice(0, at) + "<metadata>" + rdf + "</metadata>" + svg.slice(at);
   }
   function toBlob(cv, type, q) {
     return new Promise(function (resolve, reject) {
@@ -204,7 +226,7 @@
     });
     return chain.then(function () {
       var pdf = P.build(doc, { pages: ids, title: doc.name || "" }, { jsPDF: J, pictures: pics, plan: plan });
-      return pdf.output("blob");
+      return aiMarkPdf(doc, ids, pdf).output("blob");
     });
   }
 
@@ -246,7 +268,13 @@
       if (!it) return;
       chain = chain.then(function () { return pictureOf(doc, it, p, WEB_DPI); }).then(function (pic) { pics[p.id] = pic; });
     });
-    return chain.then(function () { return WB.svgFile(doc, pg, { ids: ids }, { plan: plan, pictures: pics }); });
+    return chain.then(function () { return WB.svgFile(doc, pg, { ids: ids }, { plan: plan, pictures: pics }); }).then(function (r) {
+      if (r && typeof r.svg === "string") {
+        var picked = ids ? (doc.items || []).filter(function (it) { return ids.indexOf(it.id) >= 0; }) : null;
+        if (!picked || picked.some(function (it) { return it.ax && it.ax.ai && !it.hide; })) r.svg = aiMarkSvg(doc, [pg], r.svg);
+      }
+      return r;
+    });
   }
   function exportSvg(doc, pages) {
     var ok = true, c2 = Promise.resolve();
