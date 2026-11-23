@@ -45,11 +45,11 @@
   var VER = "1.11.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
-               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing", "screen"];
+               "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing", "screen", "storage"];
   var MONEY = { budget: 1, sales: 1, invoices: 1 };
   // SB5: the cards of other apps live in smartbar-apps.js, loaded the
   // first time one of them is ticked (start-up stays as it was).
-  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1, screen: 1 };
+  var APPS = { habits: 1, plants: 1, chores: 1, timer: 1, invoices: 1, trip: 1, kanban: 1, meal: 1, reading: 1, screen: 1, storage: 1 };
   // Peek panels painted by smartbar-apps.js (STC-1 Screen time).
   var APP_PEEK = { screen: 1 };
   var LIVE = ["rec", "tmr", "sw"];          // SB-LIVE pills, in this order, before the chips

@@ -18,6 +18,11 @@
 //   Screen time (STC-1)   today's total; tap: the apps, longest first
 //                         (names hidden under Sensitive work, locked
 //                         apps never listed); off = no card
+//   Storage (STORE-1)     free space: the disk orOS's data is on where
+//                         the orOS USB / Portable host reports it
+//                         (<html data-oros-sys-disk="free total">),
+//                         else the browser's own estimate for orOS;
+//                         the warning colour under 10 %
 // ============================================================
 (function (root) {
   "use strict";
@@ -89,6 +94,29 @@
     return list.slice(0, max || 8).map(function (a) { return { id: a.id, name: a.name || a.id, secs: a.secs, pct: top ? Math.max(4, Math.round(a.secs / top * 100)) : 0 }; });
   }
 
+  // STORE-1: the host's "free total" (bytes), else the browser's
+  // estimate { usage, quota } → { free, total, pct, low, host } or null.
+  var LOW_PCT = 10;
+  function storageOf(attr, est) {
+    var m = /^(\d{1,16}) (\d{1,16})$/.exec(String(attr || ""));
+    var free, total, host = false;
+    if (m && +m[2] > 0 && +m[1] <= +m[2]) { free = +m[1]; total = +m[2]; host = true; }
+    else if (est && typeof est.quota === "number" && est.quota > 0 && typeof est.usage === "number" && est.usage >= 0) {
+      total = est.quota; free = Math.max(0, est.quota - est.usage);
+    } else return null;
+    var pct = Math.round(free / total * 1000) / 10;
+    return { free: free, total: total, pct: pct, low: pct < LOW_PCT, host: host };
+  }
+  // Bytes → "183 GB", "7,4 GB", "512 MB" (decimal units, the language's mark).
+  function bytesOf(n, loc) {
+    var u = n >= 1e12 ? ["TB", 1e12] : n >= 1e9 ? ["GB", 1e9] : ["MB", 1e6];
+    var v = n / u[1], d = v >= 100 ? 0 : 1;
+    var s;
+    try { s = v.toLocaleString(loc || "en", { maximumFractionDigits: d, minimumFractionDigits: 0 }); }
+    catch (e) { s = String(Math.round(v * (d ? 10 : 1)) / (d ? 10 : 1)); }
+    return s + " " + u[0];
+  }
+
   // Icons: fixed markup, never data.
   var IC = {
     habits: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l4 4L20 5"/><path d="M4 20h16"/></svg>',
@@ -102,8 +130,9 @@
     reading: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5.5c3-1.5 6-1.5 9 .5 3-2 6-2 9-.5V19c-3-1.5-6-1.5-9 .5-3-2-6-2-9-.5z"/><path d="M12 6v13.5"/></svg>',
     screen: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v5l3 2"/><path d="M20.5 12a8.5 8.5 0 1 1-2.5-6"/><path d="M20.5 4v4h-4"/></svg>'
   };
+  IC.storage = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
   // The cards that are not an app's agenda (OWN): their kinds.
-  var OWN = { screen: 1 };
+  var OWN = { screen: 1, storage: 1 };
   var PEEKS = { screen: 1 };
 
   // api (from smartbar.js): { t, call, strict, appName, clock, ymdOf,
@@ -181,6 +210,19 @@
     function openScreenTime() {
       call(function () { root.__orosOpenAt("settings", { section: "screentime" }); });
     }
+    // STORE-1: the browser's estimate, asked at most every 10 minutes.
+    var est = null, estAt = 0, estBusy = false;
+    function estimate() {
+      var S = root.navigator && root.navigator.storage;
+      if (estBusy || !S || typeof S.estimate !== "function" || (est && Date.now() - estAt < 600000)) return est;
+      estBusy = true;
+      S.estimate().then(function (e) {
+        estBusy = false; estAt = Date.now();
+        est = e && typeof e === "object" ? { usage: e.usage, quota: e.quota } : null;
+        api.repaint(["storage"]);
+      }, function () { estBusy = false; estAt = Date.now(); });
+      return est;
+    }
     var FILL = {
       screen: function (p, kit) {
         var u = screenUse();
@@ -227,6 +269,18 @@
       },
       meal: function (now) { return strict() ? null : lineCard("meal", now); },
       reading: function (now) { return strict() ? null : lineCard("reading", now); },
+      // STORE-1: free space; the warning colour under 10 %.
+      storage: function () {
+        var attr = call(function () { return root.document.documentElement.getAttribute("data-oros-sys-disk"); });
+        var s = storageOf(attr, attr ? null : estimate());
+        if (!s) return null;
+        var loc = call(function () { return root.orosI18n.locale(api.host().lang ? api.host().lang() : "en"); }) || undefined;
+        var f = bytesOf(s.free, loc), tot = bytesOf(s.total, loc);
+        var pct = call(function () { return s.pct.toLocaleString(loc, { maximumFractionDigits: 0 }); }) || String(Math.round(s.pct));
+        return { v: f, l: t(s.low ? "sb.storage.low" : "sb.storage.label"), cls: s.low ? "sb-soon" : "",
+                 tip: t(s.host ? "sb.storage.tip.disk" : "sb.storage.tip").replace("{f}", f).replace("{t}", tot).replace("{p}", pct),
+                 go: function () { call(function () { root.__orosOpenAt("settings", { section: "system", item: "about-device" }); }); } };
+      },
       // STC-1: only while Screen time is on and today has a minute.
       screen: function () {
         var u = screenUse();
@@ -254,7 +308,7 @@
   }
 
   var EXP = { VER: "1.1.0", AGENDA: AGENDA, OWN: OWN, KINDS: Object.keys(AGENDA).concat(Object.keys(OWN)), agendaCard: agendaCard, dayGap: dayGap,
-              durOf: durOf, screenRows: screenRows, make: make };
+              durOf: durOf, screenRows: screenRows, storageOf: storageOf, bytesOf: bytesOf, LOW_PCT: LOW_PCT, make: make };
   if (typeof module !== "undefined" && module.exports) module.exports = EXP;
   root.orosSmartBarApps = EXP;
 })(typeof window !== "undefined" ? window : globalThis);
