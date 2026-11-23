@@ -700,6 +700,17 @@ body {
   display: none;
 }
 #app-menu.open { display: block; }
+/* FEEL-1 (video ideas 2026-11-23 #6): how panels and menus open, from the
+   motion feel (html[data-oros-feel], shell.js feelApply). Reduce motion
+   (orOS or the system) wins: no animation at all. Individual translate /
+   scale, so a panel's own transform is kept. */
+:root { --oros-pop-ms: 160ms; --oros-pop-ease: cubic-bezier(.2, .8, .2, 1); }
+html[data-oros-feel="calm"] { --oros-pop-ms: 240ms; --oros-pop-ease: cubic-bezier(.25, .8, .25, 1); }
+html[data-oros-feel="bouncy"] { --oros-pop-ms: 300ms; --oros-pop-ease: cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes oros-pop { from { opacity: 0; translate: 0 -6px; scale: .97; } to { opacity: 1; translate: 0 0; scale: 1; } }
+#app-menu.open, #qs-panel, #oros-notif-panel { animation: oros-pop var(--oros-pop-ms) var(--oros-pop-ease) both; transform-origin: top center; }
+@media (prefers-reduced-motion: reduce) { #app-menu.open, #qs-panel, #oros-notif-panel { animation: none; } }
+html[data-oros-motion] :is(#app-menu.open, #qs-panel, #oros-notif-panel) { animation: none !important; }
 
 /* Themed slim scrollbars (menu + desktop) — the browser default
    was eating ~15px of menu width and clashing with every skin. */

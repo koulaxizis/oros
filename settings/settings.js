@@ -541,6 +541,12 @@
       var cz = card(null);
       cz.appendChild(row(t("a.zoom"), switchBtn(!!s.zoom.on, "zoom", function (v) { set("zoom", v); }, t("a.zoom")),
         { scope: "zoom", hint: t("a.zoom.hint") }));
+      // FEEL-1: Calm / Lively / Bouncy for the zoom, menus and panels.
+      if (s.zoom.feels) {
+        var fs = select(s.zoom.feels.map(function (f) { return { value: f, label: t("a.feel." + f) }; }), s.zoom.feel, "feel",
+          function (v) { set("feel", v); });
+        cz.appendChild(row(t("a.feel"), fs, { forId: fs.id, hint: t("a.feel.hint") }));
+      }
       host.appendChild(cz);
     }
 
