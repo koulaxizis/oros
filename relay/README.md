@@ -847,7 +847,19 @@ counter. No orOS data in the clear, no request or answer, nothing logged.
   `kanban_add_columns` (5.72.00), `kanban_add_board` (KB-BOARD). The
   relay only describes them; the device checks every call again (the
   app's level, a pause, the lock) and asks the person itself
-  before more than 5 deletions.
+  before more than 5 deletions. With orOS closed, a queued
+  `kanban_add_board`, `kanban_add_columns` or `kanban_add_cards`
+  answers with p- refs (`p-<change id>.<n>`: board .0, its columns
+  .1…, added columns and cards by position) that the other kanban
+  tools take; the closed checks read them, and the device maps them
+  to the real ids from the change record of the add (KB-PREF).
+  `add_labels` with a colour recolours a label the board has
+  (KB-RECOLOR); `adopt_by_text` gives a key to the one keyless card
+  with the same text (KB-ADOPT); both wait for `KB_PREF_MV` when queued.
+- **The tool list's version (GL-VER):** `TOOLS_VER` is a short hash of
+  `TOOLS`; `gate_tools`' description names it and every answer carries
+  `VER_NOTE` with the live one, so a conversation with an older list
+  sees the difference and looks at `gate_tools`.
 - **The device's tools (GATE-ACT):** on `tools/list` the box also asks
   the open device for its own tools (`{ n: "__tools" }`, 6 s): the
   Assistant's `read_item`, `create_items`, `change_item`,

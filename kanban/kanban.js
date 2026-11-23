@@ -3336,7 +3336,9 @@
   function openCardLink(u) {
     if (/^https:\/\//i.test(u)) { try { window.open(u, "_blank", "noopener,noreferrer"); } catch (e) {} return; }
     if (u.charAt(0) === "/") {
-      try { if (window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function") window.parent.__orosOpenAt("files", { path: u }); } catch (e) {}
+      // a disk path as Claude's tools write it ("/Claude/x/report.md") is under the disk root /internal
+      var p = /^\/internal\//.test(u) ? u : "/internal" + u;
+      try { if (window.parent && window.parent !== window && typeof window.parent.__orosOpenAt === "function") window.parent.__orosOpenAt("files", { path: p }); } catch (e) {}
     }
   }
   function linkName(l) { return l.t || l.u.replace(/^https?:\/\//i, ""); }

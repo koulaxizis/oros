@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.92.00
+- **Kanban and Claude, better together.** When orOS is closed, a board, columns and cards that Claude makes can be used by Claude straight away, and Claude gets a clear answer when a board does not exist. Claude can change a label's colour, give keys to cards made before keys instead of adding copies, and link its reports from a card: they open in Files with one click.
+
 ## Version 8.91.00
 - **One autofill on your phone.** With both the orOS app and orOS Passwords installed, Android autofill now comes only from orOS Passwords, and it stays up to date when you unlock or change Passwords in either app. Tax number, IBAN, ID card and passport number fill only when you choose them from "Choose a document number from orOS". Identities have a new IBAN field.
 
