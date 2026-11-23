@@ -378,8 +378,9 @@
     "html[data-oros-bar=\"midnight\"]:not([data-oros-contrast=\"high\"]) #oros-bar { --text: #e9edf5; --text-dim: #a3adbd; --accent-soft: rgba(255, 255, 255, 0.09); color: #e9edf5; }",
     "html[data-oros-bar=\"midnight\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: rgba(10, 13, 20, 0.94);",
     "  border-color: rgba(255, 255, 255, 0.08); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35); }",
-    "html[data-oros-bar=\"solid\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: var(--panel-bg); box-shadow: 0 2px 10px var(--shadow); }",
-    "@media (prefers-reduced-transparency: reduce) { html[data-oros-bar=\"glass\"] #oros-bar::before { background: var(--panel-bg); backdrop-filter: none; -webkit-backdrop-filter: none; } }"
+    "html[data-oros-bar=\"solid\"]:not([data-oros-contrast=\"high\"]) #oros-bar::before { background: var(--panel-bg); box-shadow: 0 2px 10px var(--shadow); }"
+    // The system's "less transparency" reaches the bar through the shell's
+    // data-oros-transparency (style.css), which "Keep the glass" can overrule.
   ].join("\n");
 
   function applyLook() {

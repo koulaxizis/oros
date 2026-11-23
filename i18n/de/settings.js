@@ -83,6 +83,8 @@ orosPack("de", "settings", {
  "ac.transp": "Transparenz reduzieren",
  "ac.transp.hint": "Feste statt durchsichtiger, unscharfer Hintergründe für die obere Leiste, das Dock, das Menü, Widgets und die Leisten der Apps. Leichter lesbar auf einem bunten Hintergrundbild.",
  "ac.transp.sys": "Dein Gerät verlangt bereits weniger Transparenz, daher folgt orOS dem auch bei ausgeschaltetem Schalter.",
+ "ac.glass": "Glaseffekte behalten",
+ "ac.glass.hint": "Dein Gerät wünscht weniger Transparenz (unter Windows: Transparenzeffekte oder Energiesparmodus aus), deshalb zeigt orOS feste Flächen. Schalte dies ein, um das Glas in orOS trotzdem zu behalten.",
  "ac.filter": "Farbfilter",
  "ac.filter.pick": "Filter",
  "ac.filter.off": "Aus",
