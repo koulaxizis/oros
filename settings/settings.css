@@ -480,6 +480,16 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
 .ip-prev .ld-tile svg { width: 17px; height: 17px; }
 .ip-name { font-size: 12px; font-weight: 700; }
 
+/* WPDIR-1: find a wallpaper + Random */
+.wall-top { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+.wall-find {
+  flex: 1 1 auto; min-width: 0; min-height: 40px; padding: 8px 12px;
+  border-radius: 10px; border: 1px solid var(--border);
+  background: var(--bg); color: inherit; font: inherit;
+}
+.wall-find:focus { border-color: var(--accent); outline: none; }
+.wall-top .btn { flex: 0 0 auto; }
+.wall[hidden] { display: none; }
 .walls {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
