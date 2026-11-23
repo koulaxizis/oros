@@ -1440,6 +1440,43 @@
     }
   };
 
+  // ---------- 5b-icon. MENUICON-1: the menu button's icon ----------
+  // Device-local "oros-menuicon": one of MENU_ICONS (default "grid",
+  // the four squares in index.html) or "none" (the label alone). Static
+  // SVGs from this file only.
+  var MENU_ICON_KEY = "oros-menuicon";
+  var MI_SV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+  var MENU_ICONS = {
+    grid: MI_SV + '<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    dots: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="5" r="2"/><circle cx="12" cy="5" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/><circle cx="5" cy="19" r="2"/><circle cx="12" cy="19" r="2"/><circle cx="19" cy="19" r="2"/></svg>',
+    ring: MI_SV + '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>',
+    spark: MI_SV + '<path d="M12 3l2.2 6.8L21 12l-6.8 2.2L12 21l-2.2-6.8L3 12l6.8-2.2z"/></svg>',
+    leaf: MI_SV + '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l7-7"/></svg>',
+    lines: MI_SV + '<path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+    none: ""
+  };
+  var MENU_ICON_IDS = ["grid", "dots", "ring", "spark", "leaf", "lines", "none"];
+  function menuIconOf(v) { return MENU_ICON_IDS.indexOf(v) !== -1 ? v : "grid"; }
+  function menuIconNow() { try { return menuIconOf(localStorage.getItem(MENU_ICON_KEY)); } catch (e) { return "grid"; } }
+  function menuIconApply() {
+    var mb = document.getElementById("btn-menu");
+    if (!mb) return;
+    var old = mb.querySelector("svg");
+    if (old) old.parentNode.removeChild(old);
+    var id = menuIconNow();
+    if (!MENU_ICONS[id]) return;
+    var tmp = document.createElement("span");
+    tmp.innerHTML = MENU_ICONS[id];            // static icon from this file
+    mb.insertBefore(tmp.firstChild, mb.firstChild);
+  }
+  function menuIconSet(v) {
+    var id = menuIconOf(v);
+    try { if (id === "grid") localStorage.removeItem(MENU_ICON_KEY); else localStorage.setItem(MENU_ICON_KEY, id); } catch (e) {}
+    menuIconApply();
+    if (typeof fitBar === "function") { try { fitBar(); } catch (e) {} }
+  }
+  try { if (menuIconNow() !== "grid") menuIconApply(); } catch (e) {}
+
   // ---------- 5b-dir. WPDIR-1: Random, and a picture from a folder ----------
   // Random: one of the drawn wallpapers (never Mine, Living land, Light
   // show or None), never the one on now; synced like any pick.
@@ -13942,6 +13979,7 @@
       icons: { pack: iconsPack(state.icons), packs: ICON_PACKS.slice(),   // ICONPACK-1
                own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
+      menuIcon: { now: menuIconNow(), choices: MENU_ICON_IDS.slice() },   // MENUICON-1
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
       viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill() } : null,   // VIZWALL-1, VIZ-SLOW
@@ -14096,6 +14134,7 @@
       case "wpdir:mode": wpdirSet("mode", String(value || "")); return;
       case "wpdir:dir":  wpdirSet("dir", value); return;
       case "wpdir:next": wpdirSet("next"); return;
+      case "menuicon":   if (!SOLO) { menuIconSet(String(value || "")); settingsNotify(); } return;   // MENUICON-1
       case "pet":
         if (window.orosPet && typeof window.orosPet.toggle === "function" &&
             !!value !== !!window.orosPet.isEnabled()) {
