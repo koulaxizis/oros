@@ -1583,3 +1583,4 @@ dialog.tag-smart .sf-row label.tag-field { margin: 0; }
   background: var(--panel-bg, #2a2832); border: 1px solid var(--border, #2c2b31);
 }
 .sf-dir button:hover { background: var(--accent-soft, #33313d); }
+.pv-ai { font-weight: 700; color: var(--accent, currentColor); }

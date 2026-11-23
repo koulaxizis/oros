@@ -57,6 +57,15 @@
     });
   }
 
+  // AI-MARK (EU AI Act art. 50(2)): a PNG / JPEG of pages with a
+  // picture an AI made or redrew says so in its XMP (imgai.js markBlob).
+  function aiMark(doc, pages, blob) {
+    var IA = window.OrosImageAI, on = {};
+    (pages || []).forEach(function (pg) { on[pg.id] = 1; });
+    var ai = (doc && doc.items || []).some(function (it) { return on[it.pg] && it.ax && it.ax.ai && !it.hide; });
+    if (!ai || !blob || !IA || typeof IA.markBlob !== "function") return Promise.resolve(blob);
+    return IA.markBlob(blob, { src: "edit", tool: "orOS Atelier" });
+  }
   function toBlob(cv, type, q) {
     return new Promise(function (resolve, reject) {
       cv.toBlob(function (b) { if (b) resolve(b); else reject(new Error("encode")); }, type, q);
@@ -290,7 +299,7 @@
       var c2 = Promise.resolve();
       pages.forEach(function (pg, i) {
         c2 = c2.then(function () {
-          return toBlob(renderForExport(doc, pg, o.scale || 1, false), mime, 0.92).then(function (b) {
+          return toBlob(renderForExport(doc, pg, o.scale || 1, false), mime, 0.92).then(function (b) { return aiMark(doc, [pg], b); }).then(function (b) {
             out.push({ name: fileName(doc, ext, pages.length > 1 ? i + 1 : 0), blob: b });
           });
         });
@@ -360,7 +369,7 @@
         pages.forEach(function (pg, i) {
           c2 = c2.then(function () {
             var cv = renderForExport(doc, pg, o.scale, o.type === "png" && o.transparent);
-            return toBlob(cv, mime, 0.92).then(function (b) {
+            return toBlob(cv, mime, 0.92).then(function (b) { return aiMark(doc, [pg], b); }).then(function (b) {
               var ext = o.type === "png" ? ".png" : ".jpg";
               return saveBlob(b, fileName(doc, ext, pages.length > 1 ? i + 1 : 0), mime, o.type.toUpperCase(), ext);
             }).then(function (r) { ok = ok && r; });
@@ -1170,6 +1179,7 @@
     var s = AT.doc.setup, k = Math.min(s.w * 0.6 / res.w, s.h * 0.6 / res.h);
     var spec = { k: "photo", a: res.id, iw: res.w, ih: res.h, nm: res.name || "", w: res.w * k, h: res.h * k, fit: "fill" };
     if (res.gif) spec.ext = { gif: res.gif };
+    if (res.ai === "g" || res.ai === "e") spec.ai = res.ai;
     ED.add(spec);
   }
   // An SVG put on the open page as shapes, in the middle, at most 60%
@@ -1441,7 +1451,7 @@
     var k = Math.min(1, 4096 / Math.max(doc.setup.w, doc.setup.h));
     prepare(doc, safeScale(doc, k)).then(function () {
       return toBlob(renderForExport(doc, pg, k, false), "image/png");
-    }).then(function (b) {
+    }).then(function (b) { return aiMark(doc, [pg], b); }).then(function (b) {
       return savePicture(fs, b, fileName(doc, ".png"));
     }).then(function (p) {
       exporting = false;

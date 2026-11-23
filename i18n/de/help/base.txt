@@ -2,7 +2,7 @@
 Die Datenbank hält Einträge mit Struktur, wie eine kleine Datenbank eben: den Katalog deiner Bücher, eine Sammlung, die Gäste einer Veranstaltung, die Aufgaben eines Projekts. Jede Datenbank hat Tabellen, jede Tabelle hat Felder mit festem Typ, und dieselben Einträge siehst du als Raster, als Karten, als Galerie, als Kanban-Board, als Kalender oder als Formular.
 
 ## Erste Schritte
-- Drück `Neue Datenbank` und wähle eine Vorlage, oder fang mit einer leeren Datenbank an.
+- Drück `Neue Datenbank` und wähle eine Vorlage, oder fang mit einer leeren Datenbank an. `Verarbeitungsverzeichnis (DSGVO)` gibt einem Unternehmen das Verzeichnis nach Art. 30 DSGVO in fünf verknüpften Tabellen: welche personenbezogenen Daten du hast und warum, was du im Auftrag anderer verarbeitest, deine Anbieter, Datenpannen und Anfragen von Personen (beantworte sie innerhalb eines Monats).
 - `Importieren` macht aus Dateien eine neue Datenbank: CSV-, Excel- (.xlsx, .xls) und OpenDocument-Dateien (.ods) oder eine orOS-Datenbankdatei (.orosbase). Die Datenbank errät den Typ jeder Spalte (Zahl, Datum, Auswahl, E-Mail…); prüfe sie in den Spaltenköpfen.
 - Eine Datenbank kann viele Tabellen haben. Mit dem `+` neben den Tabellennamen fügst du eine hinzu.
 
