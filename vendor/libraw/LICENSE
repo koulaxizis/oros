@@ -1,9 +1,15 @@
 vendor/libraw/ - LibRaw for the browser (used by Photo Lab to open camera RAW files)
 ===================================================================================
 
-The four program files here are the UNMODIFIED "dist" files of the npm package
-libraw-wasm 1.6.0 (https://www.npmjs.com/package/libraw-wasm,
-source: https://github.com/ybouane/LibRaw-Wasm, tag v1.6.0):
+index.js, worker.js and libraw.js are the UNMODIFIED "dist" files of the npm
+package libraw-wasm 1.6.0 (https://www.npmjs.com/package/libraw-wasm,
+source: https://github.com/ybouane/LibRaw-Wasm, tag v1.6.0). libraw.wasm is
+rebuilt (2026-11-23) from that same tag with its own compileLibraw.sh and
+Emscripten 5.0.7 (the version the package's release workflow uses), the one
+change being LibRaw 0.22.3 instead of 0.22.1 (security fixes of 2026-10-24).
+build.sh next to this file repeats it. That build gives the same three
+JavaScript files byte for byte, and the
+package's unit and browser integration tests pass with it:
 
   index.js     the small module that starts the worker
                sha256 3eb710aa5473c58c3b9dec74457b2ad2095d15b9a6df0056c96a3a011b720ca6
@@ -11,9 +17,9 @@ source: https://github.com/ybouane/LibRaw-Wasm, tag v1.6.0):
                sha256 af074781439ddf9c47fcbd3b3f115049ab884fdf61ec49ab358f28a8c42a4d4c
   libraw.js    Emscripten glue (thread helper)
                sha256 e23952fca5b268550af1f84619af5c0c035e5db3bde0e4d5a20300f1614a9487
-  libraw.wasm  LibRaw 0.22.1 + Little-CMS 2.19.1 + libjpeg (Emscripten port),
+  libraw.wasm  LibRaw 0.22.3 + Little-CMS 2.19.1 + libjpeg (Emscripten port),
                compiled to WebAssembly by the package's own build
-               sha256 8947f7e668e488461c3e9defe7007583aa8477b4886aa603b36b407f2f0846ff
+               sha256 91879b471789a7774b09249f039b58ab5df830fe6af6d282c4133793fa588433
 
 They are kept as separate files and loaded only when a RAW file is opened, so
 anyone can replace them with their own build of the same libraries (the
@@ -39,8 +45,8 @@ The parts and their licences
    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-2. LibRaw 0.22.1 (inside libraw.wasm)
-   Source: https://github.com/LibRaw/LibRaw/tree/0.22.1
+2. LibRaw 0.22.3 (inside libraw.wasm)
+   Source: https://github.com/LibRaw/LibRaw/tree/0.22.3
    (also https://www.libraw.org/download)
    Licence: LGPL-2.1 or CDDL-1.0, at your choice. The full texts are in
    LICENSE.LGPL and LICENSE.CDDL next to this file. LibRaw's COPYRIGHT file:
