@@ -235,6 +235,15 @@
       "set.chainMore": "{n} more services not set up here",
       "set.chainHow": "To add one, pick it above as the assistant, save its key and model, then pick your first choice again. It stays connected.",
       "set.ntHint": "For small models that can't call tools: orOS then searches your data itself before each message (with the same card asking what to share) and sends what you allow along with it. It can't prepare entries or change anything.",
+      "set.tm": "Model for actions (optional)",
+      "set.tmHint": "When the model above can't use tools: a model on the same server, such as qwen3:8b, that answers only the messages that add or change something. You keep chatting with the model above and never switch.",
+      "greek.hint": "Greek: two free models that work together on this computer. {chat} (Llama-Krikri 8B by the Athena Research Center's ILSP, made for Greek) chats and writes; {tools} prepares entries and changes. Ollama downloads them itself; nothing passes through orOS.",
+      "greek.get": "Download and set up the Greek models (about {gb} GB)",
+      "greek.step": "Step {n} of {of}: {model}",
+      "greek.net": "Ollama did not answer. Is it running, and does it allow this site (OLLAMA_ORIGINS)?",
+      "greek.cut": "The download stopped before the end. Press the button again: it goes on from where it stopped.",
+      "greek.done": "Ready: {chat} answers, and {tools} takes the messages that add or change something.",
+      "greek.fail": "It didn't work: {why}",
       "err.noTools": "This model can't use tools. Tick \u201cThis model can't use tools\u201d in Settings, or load a model that can (for example Llama 3.1+, Qwen 2.5+ or Mistral).",
       "pre.none": "Searched your data for \u201c{q}\u201d: nothing found.",
       "pre.shared": "Searched your data for \u201c{q}\u201d: {n} shared.",
@@ -925,6 +934,15 @@
       "set.chainMore": "Άλλες {n} υπηρεσίες δεν έχουν ρυθμιστεί εδώ",
       "set.chainHow": "Για να προσθέσεις μία, διάλεξέ την παραπάνω ως βοηθό, αποθήκευσε κλειδί και μοντέλο και ξαναδιάλεξε την πρώτη σου επιλογή. Μένει συνδεδεμένη.",
       "set.ntHint": "Για μικρά μοντέλα που δεν καλούν εργαλεία: τότε το orOS ψάχνει μόνο του στα δεδομένα σου πριν από κάθε μήνυμα (με την ίδια κάρτα που ρωτά τι θα μοιραστείς) και στέλνει μαζί όσα επιτρέπεις. Δεν ετοιμάζει καταχωρήσεις και δεν αλλάζει τίποτα.",
+      "set.tm": "Μοντέλο για ενέργειες (προαιρετικό)",
+      "set.tmHint": "Όταν το παραπάνω μοντέλο δεν χρησιμοποιεί εργαλεία: ένα μοντέλο στον ίδιο server, π.χ. qwen3:8b, που απαντά μόνο στα μηνύματα που προσθέτουν ή αλλάζουν κάτι. Συνεχίζεις να μιλάς με το παραπάνω μοντέλο, χωρίς εναλλαγές.",
+      "greek.hint": "Ελληνικά: δύο δωρεάν μοντέλα που δουλεύουν μαζί σε αυτόν τον υπολογιστή. Το {chat} (Llama-Krikri 8B του Ινστιτούτου Επεξεργασίας του Λόγου, ΕΚ «Αθηνά», φτιαγμένο για τα ελληνικά) συζητά και γράφει· το {tools} ετοιμάζει καταχωρήσεις και αλλαγές. Το Ollama τα κατεβάζει μόνο του· τίποτα δεν περνά από το orOS.",
+      "greek.get": "Λήψη και ρύθμιση των ελληνικών μοντέλων (περίπου {gb} GB)",
+      "greek.step": "Βήμα {n} από {of}: {model}",
+      "greek.net": "Το Ollama δεν απάντησε. Τρέχει και επιτρέπει αυτή τη σελίδα (OLLAMA_ORIGINS);",
+      "greek.cut": "Η λήψη σταμάτησε πριν το τέλος. Πάτα ξανά το κουμπί: συνεχίζει από εκεί που σταμάτησε.",
+      "greek.done": "Έτοιμο: απαντά το {chat} και τα μηνύματα που προσθέτουν ή αλλάζουν κάτι τα αναλαμβάνει το {tools}.",
+      "greek.fail": "Δεν έγινε: {why}",
       "err.noTools": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία. Τσέκαρε το «Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία» στις Ρυθμίσεις ή φόρτωσε μοντέλο που μπορεί (π.χ. Llama 3.1+, Qwen 2.5+ ή Mistral).",
       "pre.none": "Αναζήτηση στα δεδομένα σου για «{q}»: δεν βρέθηκε τίποτα.",
       "pre.shared": "Αναζήτηση στα δεδομένα σου για «{q}»: μοιράστηκαν {n}.",
@@ -1600,7 +1618,7 @@
   function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
-    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0 };
+    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0, tm: cur.tm || "" };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
@@ -1939,7 +1957,11 @@
   // Does the newest question need tools? Only in automatic order and
   // not in chat-only mode (core.needsTools).
   function turnTools(c) {
-    if (!data.set.auto || data.set.chat || !c) return false;
+    if (!data.set.auto) return false;
+    return turnNeeds(c);
+  }
+  function turnNeeds(c) {
+    if (data.set.chat || !c) return false;
     var i = c.msgs.length - 1;
     while (i >= 0 && !(c.msgs[i].r === "user" && !c.msgs[i].cont)) i--;
     var u = i >= 0 ? c.msgs[i] : null, prev = false;
@@ -1962,8 +1984,16 @@
   function chooseProv(c, keep) {
     return (keep ? Promise.resolve(fbUse) : pickNow(c)).then(function (use) {
       fbUse = use;
+      tmUse = C.toolModel(provConf(curProv()), C.PROVIDERS[curProv()] && C.PROVIDERS[curProv()].local && turnNeeds(c));
       noteProv(c);
     });
+  }
+  // This turn's model for actions on a local service without tools
+  // (AS-GREEK 2): krikri-el chats, and a turn that adds or changes
+  // something goes to the model for actions (qwen3:8b) with tools.
+  var tmUse = "";
+  function turnModel(pid) {
+    return tmUse && pid === curProv() && C.PROVIDERS[pid] && C.PROVIDERS[pid].local ? tmUse : "";
   }
   // A note in the chat when the service answering changes.
   // The last "answers from here on" note: taken back when that service
@@ -2049,7 +2079,8 @@
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
       function send(o) {
-        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis, nt: provConf(pid).nt, fast: provConf(pid).fast }, msgs, o);
+        var tm = turnModel(pid);
+        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: tm || modelOf(pid), vis: tm ? 0 : provConf(pid).vis, nt: tm ? 0 : provConf(pid).nt, fast: provConf(pid).fast }, msgs, o);
         return fetch(req.url, {
           method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
           credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
@@ -3398,7 +3429,7 @@
   // the user marked "can't use tools".
   function noTools(pid) {
     var P = C.PROVIDERS[pid];
-    return !!P && (!!P.device || (!!P.local && !!provConf(pid).nt));
+    return !!P && (!!P.device || (!!P.local && !!provConf(pid).nt && !turnModel(pid)));
   }
   // Search the user's data for the words of their message before it
   // goes (one search per word, PRE_WORDS at most), with the same rules
@@ -8678,9 +8709,76 @@
         var kitHint = el("p", "dlg-hint kit-hint");
         kitHint.id = "as-kit-hint";
         provBox.appendChild(kitHint);
+        // Greek pair for Ollama (AS-GREEK): one button downloads and
+        // builds krikri-el and qwen3:8b on this computer.
+        var greek = el("div", "kit-greek");
+        greek.id = "as-greek";
+        greek.appendChild(el("p", "dlg-hint", t("greek.hint", { chat: C.GREEK_AI.chat, tools: C.GREEK_AI.tools })));
+        var gbtn = button(t("greek.get", { gb: C.GREEK_AI.gb }), "small", function () { getGreek(); });
+        gbtn.id = "as-greek-get";
+        greek.appendChild(gbtn);
+        var gst = el("p", "dlg-hint");
+        gst.id = "as-greek-st";
+        gst.setAttribute("role", "status");
+        greek.appendChild(gst);
+        provBox.appendChild(greek);
+        var getGreek = function () {
+          var root = C.ollamaRoot(provConf(pid).base || P.defaultBase);
+          var steps = C.greekSteps(root);
+          if (!steps.length) return;
+          gbtn.disabled = true;
+          gst.classList.remove("err", "ok");
+          var run = function (i) {
+            if (i >= steps.length) return Promise.resolve();
+            var s = steps[i];
+            gst.textContent = t("greek.step", { n: i + 1, of: steps.length, model: s.model });
+            return fetch(s.url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(s.body),
+                                  credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" })
+              .catch(function () { throw new Error(t("greek.net")); })
+              .then(function (res) {
+                if (!res.ok || !res.body) return res.text().then(function (x) {
+                  var p = C.ollamaProgress(x);
+                  throw new Error(p && p.error ? p.error : "HTTP " + res.status);
+                });
+                var rd = res.body.getReader(), dec = new TextDecoder(), buf = "", ok = false;
+                var line = function (l) {
+                  var p = C.ollamaProgress(l);
+                  if (!p) return;
+                  if (p.error) throw new Error(p.error);
+                  if (p.done) ok = true;
+                  gst.textContent = t("greek.step", { n: i + 1, of: steps.length, model: s.model }) +
+                    (p.status ? " · " + p.status : "") + (p.pct >= 0 ? " · " + p.pct + "%" : "");
+                };
+                var pump = function () {
+                  return rd.read().then(function (r) {
+                    if (r.done) { line(buf); if (!ok) throw new Error(t("greek.cut")); return; }
+                    buf += dec.decode(r.value, { stream: true });
+                    var parts = buf.split("\n");
+                    buf = parts.pop();
+                    parts.forEach(line);
+                    return pump();
+                  });
+                };
+                return pump();
+              })
+              .then(function () { return run(i + 1); });
+          };
+          run(0).then(function () {
+            setProvConf(pid, { kit: "ollama", model: C.GREEK_AI.chat, nt: 1, vis: 0, tm: C.GREEK_AI.tools });
+            renderAll();
+            drawProv();
+            var st = document.getElementById("as-greek-st");
+            if (st) { st.textContent = t("greek.done", { chat: C.GREEK_AI.chat, tools: C.GREEK_AI.tools }); st.classList.add("ok"); }
+          }, function (e) {
+            gst.textContent = t("greek.fail", { why: String(e && e.message || e).slice(0, 300) });
+            gst.classList.add("err");
+            gbtn.disabled = false;
+          });
+        };
         var paintKit = function () {
           var k = kit.value;
           kitHint.textContent = k ? t("kit." + k, { origin: siteOrigin() }) + " " + t("kit.pna") : "";
+          greek.hidden = !(k === "ollama" || /:11434(\/v1)?$/.test(provConf(pid).base || ""));
         };
         kit.addEventListener("change", function () {
           var k = kit.value;
@@ -8721,6 +8819,21 @@
         });
         nt.parentNode.classList.add("check");
         provBox.appendChild(el("p", "dlg-hint", t("set.ntHint")));
+        // Model for actions (AS-GREEK 2): a second model on the same
+        // server that takes the turns which add or change something.
+        label(provBox, "as-tm", t("set.tm"));
+        var tmIn = el("input", "dlg-input");
+        tmIn.id = "as-tm";
+        tmIn.maxLength = 200;
+        tmIn.autocapitalize = "off";
+        tmIn.spellcheck = false;
+        tmIn.placeholder = C.GREEK_AI.tools;
+        tmIn.value = provConf(pid).tm || "";
+        tmIn.addEventListener("change", function () {
+          setProvConf(pid, { tm: tmIn.value.trim().slice(0, 200) });
+        });
+        provBox.appendChild(tmIn);
+        provBox.appendChild(el("p", "dlg-hint", t("set.tmHint")));
         var fast = checkbox(provBox, "as-fast", t("set.fast"), !!provConf(pid).fast, function (on) {
           setProvConf(pid, { fast: on ? 1 : 0 });
         });
@@ -8827,8 +8940,20 @@
       model.autocapitalize = "off";
       model.spellcheck = false;
       model.value = modelOf(pid);
+      // A local model orOS knows (AS-GREEK) brings its own ticks:
+      // krikri-el without tools or photos, qwen3 with tools.
+      var withTraits = function (m) {
+        var patch = { model: m };
+        var tr = P.local ? C.localTraits(m) : null;
+        if (tr) {
+          patch.nt = tr.nt; patch.vis = tr.vis;
+          if (nt) nt.checked = !!tr.nt;
+          if (vis) vis.checked = !!tr.vis;
+        }
+        return patch;
+      };
       model.addEventListener("change", function () {
-        setProvConf(pid, { model: model.value.trim().slice(0, 200) });
+        setProvConf(pid, withTraits(model.value.trim().slice(0, 200)));
         pick.value = model.value;
         renderAll();
       });
@@ -8846,7 +8971,7 @@
       pick.addEventListener("change", function () {
         if (!pick.value) return;
         model.value = pick.value;
-        setProvConf(pid, { model: pick.value });
+        setProvConf(pid, withTraits(pick.value));
         renderAll();
       });
       provBox.appendChild(pick);
