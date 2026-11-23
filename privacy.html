@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-+zSzznp1xLa6mQlEcnBSKq8pCLd2B3QQPkRohQ/5Myg='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval' 'sha256-A4F2VtZLRW5ap7sxGFx/qrip93fKqwWb3Uze7lixIzQ='; style-src 'self' 'unsafe-inline'; img-src 'self' https: data: blob:; media-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss: data: blob: http://localhost:* http://127.0.0.1:* ws://127.0.0.1:*; worker-src 'self' blob:; frame-src 'self' https: blob: data:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Privacy policy · orOS</title>
   <meta name="description" content="How orOS (useoros.online) handles your data: no accounts, no cookies, no tracking; your data stays on your device.">
@@ -20,6 +20,7 @@
   <meta property="og:image:alt" content="orOS: the desktop with the app menu open, the clock, calendar and Today widgets">
   <meta property="og:locale" content="en_US">
   <meta property="og:locale:alternate" content="el_GR">
+  <meta property="og:locale:alternate" content="de_DE">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="orOS privacy policy">
   <meta name="twitter:description" content="How orOS (useoros.online) handles your data: no accounts, no cookies, no tracking; your data stays on your device.">
@@ -45,6 +46,10 @@
       font: inherit; font-size: 14px; padding: 6px 12px; cursor: pointer; min-height: 36px; }
     .lang button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
     .box { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; margin: 12px 0; }
+    .tw { overflow-x: auto; margin: 12px 0; }
+    table { border-collapse: collapse; width: 100%; font-size: 14px; }
+    th, td { border: 1px solid var(--border); padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: var(--panel); }
     [hidden] { display: none !important; }
   </style>
 </head>
@@ -55,30 +60,64 @@
     <div class="lang" role="group" aria-label="Language">
       <button type="button" data-l="en" aria-pressed="true">English</button>
       <button type="button" data-l="el" aria-pressed="false">Ελληνικά</button>
+      <button type="button" data-l="de" aria-pressed="false">Deutsch</button>
     </div>
   </header>
 
   <!-- ===================== English ===================== -->
   <article lang="en" id="en">
-    <p class="dim">Applies to orOS at <a href="https://useoros.online">useoros.online</a>, its installed app (PWA), the orOS Android app, orOS Portable and the bootable orOS USB, and orders and donations that support orOS. Last updated: 19 November 2026.</p>
+    <p class="dim">Applies to orOS at <a href="https://useoros.online">useoros.online</a>, its installed app (PWA), the orOS Android app and the single-app Android apps, Koulaxizis Apps, orOS Portable, the bootable orOS USB, orOS Drive, the orOS relay, and the support page (donations and paid services). Last updated: 23 November 2026.</p>
 
     <div class="box">
-      <p><strong>In short:</strong> orOS has no accounts, no cookies, no ads and no tracking or analytics. Everything you create stays in your browser on your own device. orOS has no server that collects or stores your data, and it never sells or shares it.</p>
+      <p><strong>In short:</strong> orOS has no accounts, no cookies, no ads and no tracking or analytics. What you create stays on your own device. The few things that pass through our servers are listed below, with how long they stay.</p>
     </div>
 
-    <h2>Who we are</h2>
-    <p>orOS is free, open-source software (MIT licence) made by Christos Koulaxizis. The source code is public at <a href="https://github.com/koulaxizis/oros">github.com/koulaxizis/oros</a>.</p>
+    <h2>Who is responsible</h2>
+    <p>The controller is Christos Koulaxizis, Dexamenis 3, Ano Liosia, Greece, e-mail <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>. orOS is free, open-source software (MIT licence); the code is public at <a href="https://github.com/koulaxizis/oros">github.com/koulaxizis/oros</a>.</p>
 
     <h2>Your data stays on your device</h2>
-    <p>Notes, contacts, calendars, files and everything else you create are saved in your browser's own storage on your device. Each browser and device keeps its own copy. Clearing the site's data in your browser deletes it from that device.</p>
+    <p>Notes, contacts, calendars, files, health and money records and everything else you create are saved in your browser's storage on your device (on orOS Portable and the orOS USB: on the stick or the computer). orOS uses this storage only to make the apps work; it stores no identifier for tracking. We cannot see this data. Clearing the site's data in your browser deletes it from that device.</p>
+
+    <h2>Health data</h2>
+    <p>Cycle, Mood, Health, Baby, Workouts, Water, Diary and medicines stay on your device like everything else, and in your encrypted sync if you use it. We have no access to them. orOS Gate never reads them, and the Assistant does not search them unless you switch that on yourself for an app; then what it finds goes to the AI service you chose (see Assistant and AI). Health Connect on Android: see below.</p>
 
     <h2>Optional encrypted sync</h2>
-    <p>If you choose to, orOS can sync between your devices through your own Dropbox account, in its own app folder only. Your data is encrypted on your device with your passphrase before it is uploaded, so Dropbox cannot read it. The passphrase never leaves your device. You can disconnect at any time.</p>
+    <p>If you choose to, orOS syncs between your devices through your own Dropbox account (its app folder only) or your own WebDAV or Nextcloud server. Everything is encrypted on your device with your passphrase before it leaves, so the provider cannot read it. The passphrase never leaves your device. When a WebDAV server does not accept calls from a browser, the request passes through the orOS relay, which forwards it and keeps nothing. orOS Drive uses the same encrypted folder.</p>
+
+    <h2>Hosting</h2>
+    <p>useoros.online is served by GitHub Pages (GitHub, Inc., USA). Like any web server, GitHub receives your IP address and browser details when a page or file loads, and may keep them in its logs for security; we do not receive these logs. Updates of orOS Portable, the orOS USB, orOS Drive and the Android apps are downloaded from GitHub only when you or the app's updater ask for them. The download page shows download counts from our counter at apps.koulaxizis.workers.dev (Cloudflare), which counts downloads per app and channel and keeps no address, device or time.</p>
+
+    <h2>The orOS relay</h2>
+    <p>Some features need a small server: a web page cannot speak to mail servers, and some services do not answer browsers. The orOS relay runs on Cloudflare Workers (Cloudflare, Inc., USA). It logs no requests. To stop abuse it counts requests per IP address in memory for a minute, and for a few features keeps a one-way hash of the address for a day. What it keeps:</p>
+    <div class="tw"><table>
+      <thead><tr><th>Feature</th><th>What the relay keeps</th><th>How long</th></tr></thead>
+      <tbody>
+        <tr><td>Mail, Newsletter sending, connected services, Reader, Canva, Maps bus times</td><td>Nothing: it passes the request through</td><td>Only while the request runs</td></tr>
+        <tr><td>Newsletter sign-up and unsubscribe forms</td><td>The sign-up, sealed with the list owner's key so we cannot read it; for unsubscribes only a random token</td><td>Until the owner's orOS picks it up (at most 2,000 per list)</td></tr>
+        <tr><td>CRM contact forms and Forms</td><td>The answers, sealed for the owner's device</td><td>Until picked up, at most 30 days</td></tr>
+        <tr><td>Send to someone (shared files)</td><td>Encrypted pieces</td><td>Until they expire (at most 30 days, signature requests 120) or are revoked</td></tr>
+        <tr><td>Short music links</td><td>The song or list details you share (title, artist, links)</td><td>365 days after the last open</td></tr>
+        <tr><td>Households</td><td>Encrypted shared documents, invites and join requests</td><td>Until removed; a household nobody opens for 180 days is deleted</td></tr>
+        <tr><td>Automations webhooks</td><td>What arrives, encrypted to your device</td><td>Until your device picks it up, at most 7 days without renewal</td></tr>
+        <tr><td>Notifications with orOS closed</td><td>Your reminders, encrypted, until their time</td><td>Until sent; a device silent for 30 days is deleted</td></tr>
+        <tr><td>orOS Gate (your own Claude connector)</td><td>An encrypted copy of your answers and waiting changes</td><td>7 days without an open device, or until you revoke it</td></tr>
+        <tr><td>Studio Remote</td><td>Nothing: it joins two connections</td><td>Only while connected</td></tr>
+      </tbody>
+    </table></div>
+    <p>When you make a public form (Newsletter, CRM, Forms), you decide what it collects and you are responsible for it towards the people who fill it in; the relay only carries it for you.</p>
 
     <h2>Online services some apps use</h2>
-    <p>Some apps need the internet for what they show (for example weather forecasts, maps, radio stations or currency rates). They contact the service only when you use that feature, and send only what the feature needs (for example the city you search for). The full list, by app, is in the orOS Help, under Privacy, and in Settings › About orOS, credits and licences.</p>
-    <p>Some apps can also work with accounts you already have elsewhere (for example your mail provider, your shop or your task manager), only after you connect them yourself. orOS talks to those services from your browser or through the orOS relay, which passes requests through and keeps nothing. Your keys stay on your device.</p>
-    <p>Text recognition (the Contacts card scan), background removal, noise reduction and Montage subtitles run on your device; their models are downloaded once and your pictures and sound never leave the device.</p>
+    <p>Some apps contact a service on the internet when you use a feature that needs it (weather, maps, radio, currency rates, book details and more). They send only what the feature needs, for example the city you search for, and the service sees your IP address. The full list, by app, is in the orOS Help under Privacy, and in Settings › About orOS, credits and licences.</p>
+    <p>Some apps also work with accounts you have elsewhere (your mail provider, your shop, your task manager), only after you connect them. Your keys stay on your device.</p>
+
+    <h2>Notifications with orOS closed (optional)</h2>
+    <p>Off by default and switched on per device. Your reminders are encrypted on your device and sent at their time by Web Push, which goes through your browser maker's push service (Google for Chrome and Edge on Android, Microsoft for Edge on Windows, Mozilla for Firefox, Apple for Safari). They see only an encrypted message.</p>
+
+    <h2>Assistant and AI</h2>
+    <p>The Assistant is a chat with an AI service you choose, with your own key (or a model that runs on your computer). Answers in the Assistant come from AI, and the Assistant says which model and service answered. What you send, and what the Assistant finds in the apps you allow, goes straight from your browser to that service and is covered by its own terms and privacy policy; we never see it. Some free plans may use what you send to train their models: check the service's terms before you send anything private. Pictures made with AI are saved with a label inside the file that says they were made by AI. Text recognition, background removal, noise reduction, translation and Montage subtitles run on your device; your pictures, sound and text do not leave it.</p>
+
+    <h2>orOS Gate</h2>
+    <p>If you connect Claude to your own orOS as a custom connector, Claude reads and changes what you allow through your own open device, via the relay (see the table). Gate never reads Passwords, Mail, Diary, Mood, Cycle, Health, Baby, Assistant or Workouts.</p>
 
     <h2>Importing contacts from Google or Microsoft</h2>
     <p>In Contacts, <em>From an account</em> lets you copy your contacts from your Google account or your Microsoft account (Outlook.com, Hotmail, Microsoft 365) once:</p>
@@ -98,44 +137,96 @@
     <h2>Health Connect (orOS Android app)</h2>
     <p>Only if you switch on <em>Health Connect</em> in Settings › Connected services in the orOS Android app and allow it on your phone, orOS reads your daily step counts, weight, resting heart rate, sleep, blood pressure, blood sugar and blood oxygen readings, drinks and workouts from Health Connect, and writes your orOS Water drinks and Workouts there, for the last 30 days. This data moves only between Health Connect and orOS on that phone. It is never sent to us or to anyone else, and it is not used for advertising. It reaches your other devices only through your own encrypted sync, if you use it. When you switch it off, orOS removes what it wrote to Health Connect. You can also take back the permission in Health Connect at any time.</p>
 
-    <h2>orOS Portable and the bootable orOS USB</h2>
+    <h2>orOS Portable, the bootable orOS USB and orOS Drive</h2>
     <p>orOS Portable runs orOS from a USB stick, and the bootable orOS USB starts a computer straight into orOS. Both work like orOS in the browser: your data stays on the stick, and nothing is sent to us. The browser that comes with them is ungoogled-chromium, which is built not to send data to Google. They go online only for what you use (for example sync, or an app's online service), and they download a newer orOS from GitHub only when you run the update yourself.</p>
+    <p>orOS Drive shows your encrypted orOS files as a drive on your computer or phone; it talks only to the cloud you signed in to and keeps a local cache on your device.</p>
 
-    <h2>Orders and donations</h2>
-    <p>orOS itself is free. orOS t-shirts, mugs and stickers are sold in the shop of Glarolykoi at <a href="https://glarolykoi.net">glarolykoi.net</a>, and that shop's own privacy policy covers those orders: the shop and its payment providers handle the payment, and its print partner prints and ships the products. A one-time donation is paid on the payment page of Viva (Viva Wallet), and Viva's own privacy policy covers that payment; we never see your card details. From a donation we receive only the details you give on that page (such as your name and e-mail address), and use them only to issue the receipt the law requires and to answer your messages. We keep these records for as long as Greek tax law requires and then delete them, and we never use them for advertising or newsletters.</p>
-    <p>You can ask to see, correct or delete these details (except what the law requires us to keep) by e-mail to <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>. You can also complain to the Hellenic Data Protection Authority (<a href="https://www.dpa.gr/">dpa.gr</a>).</p>
+    <h2>Orders, donations and paid services</h2>
+    <p>orOS itself is free. orOS t-shirts, mugs and stickers are sold in the shop of Glarolykoi at <a href="https://glarolykoi.net">glarolykoi.net</a>, whose own privacy policy covers those orders. A one-time donation is paid on Viva's payment page (Viva Wallet, Greece), and Viva's privacy policy covers the payment; we never see your card details. If you write to us, or book a paid service, we use your name, e-mail address, the messages and the details of the work to answer you and carry out the agreement.</p>
+
+    <h2>Why we use your data (legal basis) and for how long</h2>
+    <div class="tw"><table>
+      <thead><tr><th>What</th><th>Legal basis (GDPR)</th><th>How long</th></tr></thead>
+      <tbody>
+        <tr><td>Relay requests and abuse limits</td><td>Our legitimate interest in running the relay safely, art. 6(1)(f)</td><td>As in the relay table</td></tr>
+        <tr><td>Hosting and download counter</td><td>Legitimate interest in serving the site, art. 6(1)(f)</td><td>Download counts only, no personal data</td></tr>
+        <tr><td>Notifications with orOS closed, Health Connect</td><td>Your consent, art. 6(1)(a) and, for health data, 9(2)(a); you can switch them off at any time</td><td>Until sent or switched off</td></tr>
+        <tr><td>Messages to us and GitHub issues</td><td>Legitimate interest in answering you, art. 6(1)(f)</td><td>2 years after the last message; GitHub issues stay public unless you delete them</td></tr>
+        <tr><td>Paid services</td><td>Contract, art. 6(1)(b)</td><td>For the work, then as tax law requires</td></tr>
+        <tr><td>Donation and service records</td><td>Legal obligation, art. 6(1)(c)</td><td>As long as Greek tax law requires</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Who else receives data</h2>
+    <p>GitHub (hosting, downloads) and Cloudflare (relay, counter) process data for us. Both are in the USA; the transfer is protected by the safeguards the GDPR requires (the EU-US Data Privacy Framework or the European Commission's standard contractual clauses), as their own privacy policies describe. Viva is an independent controller for payments. Dropbox, your WebDAV server, AI services and other services you connect are your own accounts and act under their own terms. We never sell or share your data, and we use it for nothing else.</p>
+
+    <h2>Your rights</h2>
+    <p>You can ask to see your data, to correct it, to delete it, to limit its use, to receive it in a common format, and to object to its use; where we rely on your consent, you can withdraw it at any time. Write to <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>; we answer within one month. Most of your orOS data is on your own device, so you can export or delete it yourself at any time. You can also complain to the Hellenic Data Protection Authority (<a href="https://www.dpa.gr/">dpa.gr</a>, Kifisias 1-3, 115 23 Athens).</p>
 
     <h2>Children</h2>
-    <p>orOS collects no personal data from anyone, including children.</p>
+    <p>orOS has no accounts and collects no personal data from anyone, including children. In Greece, under 15 a parent must agree to online services that rely on consent (law 4624/2019, art. 21). If you make a public form or newsletter for children under 15, you need their parents' consent.</p>
 
     <h2 id="disclaimer">Disclaimer: use at your own risk</h2>
     <p>orOS and all its apps, sync, installers, orOS Portable, the bootable orOS USB, orOS Drive and the Android apps are free software, provided "as is", without warranty of any kind, as the <a href="https://github.com/koulaxizis/oros/blob/main/LICENSE">MIT licence</a> says. You are responsible for your own data: keep backups and keep sync turned on. To the fullest extent permitted by law, the makers of orOS and its contributors accept no liability for any loss of data or any other damage arising from the use of orOS.</p>
 
     <h2>Changes and contact</h2>
-    <p>If this policy changes, the new version is published on this page with a new date. Questions and support: e-mail <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>, or open an issue at <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>.</p>
+    <p>If this policy changes, the new version is published on this page with a new date, and important changes are mentioned in What's new. Questions and support: e-mail <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>, or open an issue at <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>.</p>
   </article>
 
   <!-- ===================== Ελληνικά ===================== -->
   <article lang="el" id="el" hidden>
-    <p class="dim">Ισχύει για το orOS στο <a href="https://useoros.online">useoros.online</a>, την εγκατεστημένη εφαρμογή του (PWA), την εφαρμογή orOS για Android, το orOS Portable και το bootable orOS USB, καθώς και τις παραγγελίες και τις δωρεές που στηρίζουν το orOS. Τελευταία ενημέρωση: 19 Νοεμβρίου 2026.</p>
+    <p class="dim">Ισχύει για το orOS στο <a href="https://useoros.online">useoros.online</a>, την εγκατεστημένη εφαρμογή του (PWA), την εφαρμογή orOS για Android και τις μεμονωμένες εφαρμογές Android, τις Εφαρμογές Koulaxizis, το orOS Portable, το bootable orOS USB, το orOS Drive, το relay του orOS και τη σελίδα στήριξης (δωρεές και πληρωμένες υπηρεσίες). Τελευταία ενημέρωση: 23 Νοεμβρίου 2026.</p>
 
     <div class="box">
-      <p><strong>Με λίγα λόγια:</strong> το orOS δεν έχει λογαριασμούς, cookies, διαφημίσεις, παρακολούθηση ή στατιστικά. Ό,τι δημιουργείς μένει στον browser σου, στη δική σου συσκευή. Το orOS δεν έχει server που συλλέγει ή αποθηκεύει τα δεδομένα σου και δεν τα πουλά ούτε τα μοιράζεται ποτέ.</p>
+      <p><strong>Με λίγα λόγια:</strong> το orOS δεν έχει λογαριασμούς, cookies, διαφημίσεις, παρακολούθηση ή στατιστικά. Ό,τι δημιουργείς μένει στη δική σου συσκευή. Τα λίγα που περνούν από τους servers μας τα βλέπεις παρακάτω, μαζί με το πόσο μένουν.</p>
     </div>
 
-    <h2>Ποιοι είμαστε</h2>
-    <p>Το orOS είναι δωρεάν λογισμικό ανοιχτού κώδικα (άδεια MIT) από τον Christos Koulaxizis. Ο κώδικας είναι δημόσιος στο <a href="https://github.com/koulaxizis/oros">github.com/koulaxizis/oros</a>.</p>
+    <h2>Ποιος είναι υπεύθυνος</h2>
+    <p>Υπεύθυνος επεξεργασίας είναι ο Χρήστος Κουλαξίζης, Δεξαμενής 3, Άνω Λιόσια, email <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>. Το orOS είναι δωρεάν λογισμικό ανοιχτού κώδικα (άδεια MIT), με δημόσιο κώδικα στο <a href="https://github.com/koulaxizis/oros">github.com/koulaxizis/oros</a>.</p>
 
     <h2>Τα δεδομένα σου μένουν στη συσκευή σου</h2>
-    <p>Σημειώσεις, επαφές, ημερολόγια, αρχεία και ό,τι άλλο δημιουργείς αποθηκεύονται στον χώρο του browser σου, στη συσκευή σου. Κάθε browser και κάθε συσκευή έχει το δικό του αντίγραφο. Αν σβήσεις τα δεδομένα του ιστότοπου από τον browser, σβήνονται από εκείνη τη συσκευή.</p>
+    <p>Σημειώσεις, επαφές, ημερολόγια, αρχεία, καταγραφές υγείας και οικονομικών και ό,τι άλλο δημιουργείς αποθηκεύονται στον χώρο του browser σου, στη συσκευή σου (στο orOS Portable και στο orOS USB: στο stick ή στον υπολογιστή). Το orOS χρησιμοποιεί αυτόν τον χώρο μόνο για να δουλεύουν οι εφαρμογές και δεν κρατά κανένα αναγνωριστικό για παρακολούθηση. Εμείς δεν βλέπουμε αυτά τα δεδομένα. Αν σβήσεις τα δεδομένα του ιστότοπου από τον browser, σβήνονται από εκείνη τη συσκευή.</p>
+
+    <h2>Δεδομένα υγείας</h2>
+    <p>Ο Κύκλος, Η διάθεσή μου, Η υγεία μου, Το μωρό, Οι προπονήσεις, το Νερό, το Ημερολόγιο και τα φάρμακα μένουν στη συσκευή σου όπως όλα τα άλλα, και στον κρυπτογραφημένο συγχρονισμό αν τον χρησιμοποιείς. Εμείς δεν έχουμε πρόσβαση σε αυτά. Το orOS Gate δεν τα διαβάζει ποτέ, και ο Βοηθός δεν ψάχνει σε αυτά εκτός αν το ανοίξεις εσύ για μια εφαρμογή. Τότε ό,τι βρίσκει πηγαίνει στην υπηρεσία AI που διάλεξες (δες Βοηθός και AI). Για το Health Connect στο Android, δες παρακάτω.</p>
 
     <h2>Προαιρετικός κρυπτογραφημένος συγχρονισμός</h2>
-    <p>Αν το επιλέξεις, το orOS συγχρονίζεται ανάμεσα στις συσκευές σου μέσω του δικού σου λογαριασμού Dropbox, μόνο στον δικό του φάκελο εφαρμογής. Τα δεδομένα κρυπτογραφούνται στη συσκευή σου με τη φράση πρόσβασής σου πριν ανέβουν, οπότε το Dropbox δεν μπορεί να τα διαβάσει. Η φράση δεν φεύγει ποτέ από τη συσκευή σου. Μπορείς να αποσυνδεθείς οποτεδήποτε.</p>
+    <p>Αν το επιλέξεις, το orOS συγχρονίζεται ανάμεσα στις συσκευές σου μέσω του δικού σου λογαριασμού Dropbox (μόνο στον φάκελο εφαρμογής του) ή του δικού σου server WebDAV ή Nextcloud. Όλα κρυπτογραφούνται στη συσκευή σου με τη φράση πρόσβασής σου πριν φύγουν, οπότε ο πάροχος δεν μπορεί να τα διαβάσει. Η φράση δεν φεύγει ποτέ από τη συσκευή σου. Όταν ένας server WebDAV δεν δέχεται κλήσεις από browser, το αίτημα περνά από το relay του orOS, που το προωθεί και δεν κρατά τίποτα. Το orOS Drive χρησιμοποιεί τον ίδιο κρυπτογραφημένο φάκελο.</p>
+
+    <h2>Φιλοξενία</h2>
+    <p>Το useoros.online φιλοξενείται στο GitHub Pages (GitHub, Inc., ΗΠΑ). Όπως κάθε web server, το GitHub λαμβάνει τη διεύθυνση IP και στοιχεία του browser σου όταν φορτώνει μια σελίδα ή ένα αρχείο, και μπορεί να τα κρατά στα αρχεία καταγραφής του για λόγους ασφαλείας. Εμείς δεν λαμβάνουμε αυτά τα αρχεία. Οι ενημερώσεις του orOS Portable, του orOS USB, του orOS Drive και των εφαρμογών Android κατεβαίνουν από το GitHub μόνο όταν τις ζητήσεις εσύ ή η ενημέρωση της εφαρμογής. Η σελίδα λήψης δείχνει πόσες φορές κατέβηκε κάθε εφαρμογή, από τον μετρητή μας στο apps.koulaxizis.workers.dev (Cloudflare), που μετρά λήψεις ανά εφαρμογή και κανάλι και δεν κρατά διεύθυνση, συσκευή ή ώρα.</p>
+
+    <h2>Το relay του orOS</h2>
+    <p>Κάποιες λειτουργίες χρειάζονται έναν μικρό server: μια ιστοσελίδα δεν μπορεί να μιλήσει με servers email, και κάποιες υπηρεσίες δεν απαντούν σε browser. Το relay του orOS τρέχει στο Cloudflare Workers (Cloudflare, Inc., ΗΠΑ). Δεν κρατά αρχείο αιτημάτων. Για να αποτρέπει την κατάχρηση, μετρά τα αιτήματα ανά διεύθυνση IP στη μνήμη για ένα λεπτό, και για λίγες λειτουργίες κρατά ένα μονόδρομο hash της διεύθυνσης για μία μέρα. Τι κρατά:</p>
+    <div class="tw"><table>
+      <thead><tr><th>Λειτουργία</th><th>Τι κρατά το relay</th><th>Για πόσο</th></tr></thead>
+      <tbody>
+        <tr><td>Mail, αποστολή Newsletter, συνδεδεμένες υπηρεσίες, Reader, Canva, λεωφορεία στους Χάρτες</td><td>Τίποτα: προωθεί το αίτημα</td><td>Μόνο όσο τρέχει το αίτημα</td></tr>
+        <tr><td>Φόρμες εγγραφής και διαγραφής Newsletter</td><td>Την εγγραφή, σφραγισμένη με το κλειδί του κατόχου της λίστας ώστε να μην μπορούμε να τη διαβάσουμε· για διαγραφές μόνο ένα τυχαίο token</td><td>Μέχρι να την παραλάβει το orOS του κατόχου (έως 2.000 ανά λίστα)</td></tr>
+        <tr><td>Φόρμες επικοινωνίας CRM και Φόρμες</td><td>Τις απαντήσεις, σφραγισμένες για τη συσκευή του κατόχου</td><td>Μέχρι να τις παραλάβει, έως 30 μέρες</td></tr>
+        <tr><td>Στείλε σε κάποιον (κοινά αρχεία)</td><td>Κρυπτογραφημένα κομμάτια</td><td>Μέχρι να λήξουν (έως 30 μέρες, αιτήματα υπογραφής 120) ή να ανακληθούν</td></tr>
+        <tr><td>Σύντομα links μουσικής</td><td>Τα στοιχεία του τραγουδιού ή της λίστας που μοιράζεσαι (τίτλος, καλλιτέχνης, links)</td><td>365 μέρες μετά το τελευταίο άνοιγμα</td></tr>
+        <tr><td>Νοικοκυριά</td><td>Κρυπτογραφημένα κοινόχρηστα έγγραφα, προσκλήσεις και αιτήματα ένταξης</td><td>Μέχρι να σβηστούν· νοικοκυριό που δεν ανοίγει κανείς για 180 μέρες σβήνεται</td></tr>
+        <tr><td>Webhooks των Αυτοματισμών</td><td>Ό,τι φτάνει, κρυπτογραφημένο για τη συσκευή σου</td><td>Μέχρι να το πάρει η συσκευή σου, έως 7 μέρες χωρίς ανανέωση</td></tr>
+        <tr><td>Ειδοποιήσεις με κλειστό orOS</td><td>Τις υπενθυμίσεις σου, κρυπτογραφημένες, μέχρι την ώρα τους</td><td>Μέχρι να σταλούν· συσκευή που δεν επικοινωνεί 30 μέρες σβήνεται</td></tr>
+        <tr><td>orOS Gate (ο δικός σου connector στο Claude)</td><td>Κρυπτογραφημένο αντίγραφο των απαντήσεων και των αλλαγών που περιμένουν</td><td>7 μέρες χωρίς ανοιχτή συσκευή, ή μέχρι να το ανακαλέσεις</td></tr>
+        <tr><td>Studio Remote</td><td>Τίποτα: ενώνει δύο συνδέσεις</td><td>Μόνο όσο είναι συνδεδεμένες</td></tr>
+      </tbody>
+    </table></div>
+    <p>Όταν φτιάχνεις δημόσια φόρμα (Newsletter, CRM, Φόρμες), αποφασίζεις εσύ τι συλλέγει και είσαι υπεύθυνος για αυτή απέναντι σε όσους τη συμπληρώνουν. Το relay απλώς τη μεταφέρει για σένα.</p>
 
     <h2>Online υπηρεσίες που χρησιμοποιούν κάποιες εφαρμογές</h2>
-    <p>Κάποιες εφαρμογές χρειάζονται internet για όσα δείχνουν (π.χ. πρόγνωση καιρού, χάρτες, ραδιοφωνικούς σταθμούς, ισοτιμίες). Επικοινωνούν με την υπηρεσία μόνο όταν χρησιμοποιείς τη συγκεκριμένη λειτουργία και στέλνουν μόνο ό,τι χρειάζεται (π.χ. την πόλη που ψάχνεις). Η πλήρης λίστα ανά εφαρμογή βρίσκεται στη Βοήθεια του orOS, στο Απόρρητο, και στις Ρυθμίσεις › Σχετικά με το orOS.</p>
-    <p>Κάποιες εφαρμογές δουλεύουν και με λογαριασμούς που ήδη έχεις αλλού (π.χ. τον πάροχο email, το κατάστημά σου ή το πρόγραμμα εργασιών σου), μόνο αφού τους συνδέσεις εσύ. Το orOS μιλά μαζί τους από τον browser σου ή μέσω του relay του orOS, που απλώς προωθεί τα αιτήματα και δεν κρατά τίποτα. Τα κλειδιά σου μένουν στη συσκευή σου.</p>
-    <p>Η αναγνώριση κειμένου (σάρωση κάρτας στις Επαφές), η αφαίρεση φόντου, η μείωση θορύβου και οι υπότιτλοι του Μοντάζ τρέχουν στη συσκευή σου· τα μοντέλα τους κατεβαίνουν μία φορά και οι εικόνες και ο ήχος σου δεν φεύγουν ποτέ από τη συσκευή.</p>
+    <p>Κάποιες εφαρμογές επικοινωνούν με μια υπηρεσία στο internet όταν χρησιμοποιείς λειτουργία που τη χρειάζεται (καιρός, χάρτες, ραδιόφωνο, ισοτιμίες, στοιχεία βιβλίων κ.ά.). Στέλνουν μόνο ό,τι χρειάζεται η λειτουργία, για παράδειγμα την πόλη που ψάχνεις, και η υπηρεσία βλέπει τη διεύθυνση IP σου. Η πλήρης λίστα ανά εφαρμογή είναι στη Βοήθεια του orOS, στο Απόρρητο, και στις Ρυθμίσεις › Σχετικά με το orOS.</p>
+    <p>Κάποιες εφαρμογές δουλεύουν και με λογαριασμούς που έχεις αλλού (πάροχο email, κατάστημα, πρόγραμμα εργασιών), μόνο αφού τους συνδέσεις εσύ. Τα κλειδιά σου μένουν στη συσκευή σου.</p>
+
+    <h2>Ειδοποιήσεις με κλειστό orOS (προαιρετικά)</h2>
+    <p>Κλειστές από προεπιλογή, ανοίγουν χωριστά σε κάθε συσκευή. Οι υπενθυμίσεις σου κρυπτογραφούνται στη συσκευή σου και στέλνονται την ώρα τους με Web Push, που περνά από την υπηρεσία ειδοποιήσεων του browser σου (Google για Chrome και Edge στο Android, Microsoft για Edge στα Windows, Mozilla για Firefox, Apple για Safari). Αυτές βλέπουν μόνο ένα κρυπτογραφημένο μήνυμα.</p>
+
+    <h2>Βοηθός και AI</h2>
+    <p>Ο Βοηθός είναι συνομιλία με μια υπηρεσία AI που διαλέγεις εσύ, με δικό σου κλειδί (ή με μοντέλο που τρέχει στον υπολογιστή σου). Οι απαντήσεις του Βοηθού έρχονται από AI, και ο Βοηθός γράφει ποιο μοντέλο και ποια υπηρεσία απάντησε. Ό,τι στέλνεις, και ό,τι βρίσκει ο Βοηθός στις εφαρμογές που επιτρέπεις, πηγαίνει απευθείας από τον browser σου σε αυτή την υπηρεσία και ισχύουν οι όροι και η πολιτική απορρήτου της· εμείς δεν τα βλέπουμε ποτέ. Κάποια δωρεάν πλάνα μπορεί να χρησιμοποιούν ό,τι στέλνεις για εκπαίδευση των μοντέλων τους: δες τους όρους της υπηρεσίας πριν στείλεις κάτι ιδιωτικό. Οι εικόνες που φτιάχνονται με AI αποθηκεύονται με ετικέτα μέσα στο αρχείο ότι φτιάχτηκαν από AI. Η αναγνώριση κειμένου, η αφαίρεση φόντου, η μείωση θορύβου, η μετάφραση και οι υπότιτλοι του Μοντάζ τρέχουν στη συσκευή σου· οι εικόνες, ο ήχος και το κείμενό σου δεν φεύγουν από αυτήν.</p>
+
+    <h2>orOS Gate</h2>
+    <p>Αν συνδέσεις το Claude με το δικό σου orOS ως custom connector, το Claude διαβάζει και αλλάζει ό,τι επιτρέπεις μέσα από τη δική σου ανοιχτή συσκευή, μέσω του relay (δες τον πίνακα). Το Gate δεν διαβάζει ποτέ Κωδικούς, Mail, Ημερολόγιο, Διάθεση, Κύκλο, Υγεία, Μωρό, Βοηθό ή Προπονήσεις.</p>
 
     <h2>Εισαγωγή επαφών από Google ή Microsoft</h2>
     <p>Στις Επαφές, το <em>Από λογαριασμό</em> αντιγράφει μία φορά τις επαφές σου από τον λογαριασμό σου στο Google ή στη Microsoft (Outlook.com, Hotmail, Microsoft 365):</p>
@@ -155,41 +246,172 @@
     <h2>Health Connect (εφαρμογή orOS για Android)</h2>
     <p>Μόνο αν ανοίξεις το <em>Health Connect</em> στις Ρυθμίσεις › Συνδεδεμένες υπηρεσίες της εφαρμογής orOS για Android και το επιτρέψεις στο κινητό σου, το orOS διαβάζει από το Health Connect τα βήματα κάθε μέρας, τις μετρήσεις βάρους, σφυγμών ηρεμίας, ύπνου, πίεσης, σακχάρου και οξυγόνου, ό,τι έχεις πιει και τις προπονήσεις σου, και γράφει εκεί το νερό από το Νερό και τις Προπονήσεις του orOS, για τις τελευταίες 30 μέρες. Τα δεδομένα αυτά κινούνται μόνο ανάμεσα στο Health Connect και στο orOS σε εκείνο το κινητό. Δεν στέλνονται ποτέ σε εμάς ή σε κανέναν άλλο και δεν χρησιμοποιούνται για διαφημίσεις. Φτάνουν στις άλλες συσκευές σου μόνο μέσα από τον δικό σου κρυπτογραφημένο συγχρονισμό, αν τον χρησιμοποιείς. Όταν το κλείσεις, το orOS σβήνει από το Health Connect ό,τι είχε γράψει. Μπορείς επίσης να πάρεις πίσω την άδεια από το Health Connect όποτε θέλεις.</p>
 
-    <h2>orOS Portable και bootable orOS USB</h2>
+    <h2>orOS Portable, bootable orOS USB και orOS Drive</h2>
     <p>Το orOS Portable τρέχει το orOS από ένα USB stick, και το bootable orOS USB ξεκινά έναν υπολογιστή κατευθείαν στο orOS. Και τα δύο δουλεύουν όπως το orOS στον browser: τα δεδομένα σου μένουν στο stick και τίποτα δεν στέλνεται σε εμάς. Ο browser που έχουν μέσα είναι το ungoogled-chromium, φτιαγμένο ώστε να μη στέλνει δεδομένα στη Google. Συνδέονται στο διαδίκτυο μόνο για ό,τι χρησιμοποιείς (για παράδειγμα τον συγχρονισμό ή την online υπηρεσία μιας εφαρμογής), και κατεβάζουν νεότερο orOS από το GitHub μόνο όταν τρέξεις εσύ την ενημέρωση.</p>
+    <p>Το orOS Drive δείχνει τα κρυπτογραφημένα αρχεία του orOS ως δίσκο στον υπολογιστή ή στο κινητό σου· μιλά μόνο με το cloud που συνδέθηκες και κρατά τοπικό αντίγραφο στη συσκευή σου.</p>
 
-    <h2>Παραγγελίες και δωρεές</h2>
-    <p>Το ίδιο το orOS είναι δωρεάν. Τα t-shirt, οι κούπες και τα αυτοκόλλητα του orOS πωλούνται στο κατάστημα των Γλαρόλυκων στο <a href="https://glarolykoi.net">glarolykoi.net</a>, και για αυτές τις παραγγελίες ισχύει η πολιτική απορρήτου του καταστήματος: την πληρωμή τη διαχειρίζονται το κατάστημα και οι πάροχοι πληρωμών του, και ο συνεργάτης εκτύπωσής του τυπώνει και αποστέλλει τα προϊόντα. Μια εφάπαξ δωρεά πληρώνεται στη σελίδα πληρωμής της Viva (Viva Wallet), και για αυτή την πληρωμή ισχύει η πολιτική απορρήτου της Viva· εμείς δεν βλέπουμε ποτέ τα στοιχεία της κάρτας σου. Από μια δωρεά λαμβάνουμε μόνο τα στοιχεία που δίνεις σε εκείνη τη σελίδα (όπως το όνομα και το email σου), και τα χρησιμοποιούμε μόνο για να εκδώσουμε το παραστατικό που ορίζει ο νόμος και να απαντήσουμε στα μηνύματά σου. Κρατάμε αυτά τα στοιχεία όσο ορίζει η ελληνική φορολογική νομοθεσία και μετά τα σβήνουμε, και δεν τα χρησιμοποιούμε ποτέ για διαφημίσεις ή newsletter.</p>
-    <p>Μπορείς να ζητήσεις να δεις, να διορθώσεις ή να σβήσεις αυτά τα στοιχεία (εκτός από όσα ο νόμος μάς υποχρεώνει να κρατάμε) με email στο <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>. Μπορείς επίσης να υποβάλεις καταγγελία στην Αρχή Προστασίας Δεδομένων Προσωπικού Χαρακτήρα (<a href="https://www.dpa.gr/">dpa.gr</a>).</p>
+    <h2>Παραγγελίες, δωρεές και πληρωμένες υπηρεσίες</h2>
+    <p>Το ίδιο το orOS είναι δωρεάν. Τα t-shirt, οι κούπες και τα αυτοκόλλητα του orOS πωλούνται στο κατάστημα των Γλαρόλυκων στο <a href="https://glarolykoi.net">glarolykoi.net</a>, και για αυτές τις παραγγελίες ισχύει η πολιτική απορρήτου του καταστήματος. Μια εφάπαξ δωρεά πληρώνεται στη σελίδα πληρωμής της Viva (Viva Wallet, Ελλάδα), και για την πληρωμή ισχύει η πολιτική της Viva· δεν βλέπουμε ποτέ τα στοιχεία της κάρτας σου. Αν μας γράψεις ή κλείσεις μια πληρωμένη υπηρεσία, χρησιμοποιούμε το όνομα, το email, τα μηνύματα και τα στοιχεία της δουλειάς για να σου απαντήσουμε και να κάνουμε όσα συμφωνήσαμε.</p>
+
+    <h2>Γιατί χρησιμοποιούμε τα δεδομένα σου (νομική βάση) και για πόσο</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Τι</th><th>Νομική βάση (ΓΚΠΔ)</th><th>Για πόσο</th></tr></thead>
+      <tbody>
+        <tr><td>Αιτήματα στο relay και όρια κατάχρησης</td><td>Έννομο συμφέρον να λειτουργεί το relay με ασφάλεια, άρθ. 6(1)(στ)</td><td>Όπως στον πίνακα του relay</td></tr>
+        <tr><td>Φιλοξενία και μετρητής λήψεων</td><td>Έννομο συμφέρον να λειτουργεί ο ιστότοπος, άρθ. 6(1)(στ)</td><td>Μόνο αριθμοί λήψεων, χωρίς προσωπικά δεδομένα</td></tr>
+        <tr><td>Ειδοποιήσεις με κλειστό orOS, Health Connect</td><td>Η συγκατάθεσή σου, άρθ. 6(1)(α) και για δεδομένα υγείας 9(2)(α)· την ανακαλείς όποτε θέλεις</td><td>Μέχρι να σταλούν ή να τα κλείσεις</td></tr>
+        <tr><td>Μηνύματα προς εμάς και GitHub issues</td><td>Έννομο συμφέρον να σου απαντήσουμε, άρθ. 6(1)(στ)</td><td>2 χρόνια μετά το τελευταίο μήνυμα· τα GitHub issues μένουν δημόσια εκτός αν τα σβήσεις</td></tr>
+        <tr><td>Πληρωμένες υπηρεσίες</td><td>Σύμβαση, άρθ. 6(1)(β)</td><td>Για τη δουλειά, έπειτα όσο ορίζει η φορολογική νομοθεσία</td></tr>
+        <tr><td>Στοιχεία δωρεών και υπηρεσιών</td><td>Νομική υποχρέωση, άρθ. 6(1)(γ)</td><td>Όσο ορίζει η ελληνική φορολογική νομοθεσία</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Ποιοι άλλοι λαμβάνουν δεδομένα</h2>
+    <p>Το GitHub (φιλοξενία, λήψεις) και το Cloudflare (relay, μετρητής) επεξεργάζονται δεδομένα για λογαριασμό μας. Και τα δύο είναι στις ΗΠΑ· η διαβίβαση προστατεύεται με τις εγγυήσεις που ζητά ο ΓΚΠΔ (το Πλαίσιο Προστασίας Δεδομένων ΕΕ-ΗΠΑ ή τις τυποποιημένες συμβατικές ρήτρες της Ευρωπαϊκής Επιτροπής), όπως περιγράφουν οι δικές τους πολιτικές απορρήτου. Η Viva είναι αυτοτελής υπεύθυνος για τις πληρωμές. Το Dropbox, ο server WebDAV σου, οι υπηρεσίες AI και όσες άλλες υπηρεσίες συνδέεις είναι δικοί σου λογαριασμοί και λειτουργούν με τους δικούς τους όρους. Δεν πουλάμε ούτε μοιραζόμαστε ποτέ τα δεδομένα σου, και δεν τα χρησιμοποιούμε για τίποτα άλλο.</p>
+
+    <h2>Τα δικαιώματά σου</h2>
+    <p>Μπορείς να ζητήσεις να δεις τα δεδομένα σου, να τα διορθώσεις, να τα σβήσεις, να περιορίσεις τη χρήση τους, να τα πάρεις σε κοινή μορφή και να αντιταχθείς στη χρήση τους· όπου στηριζόμαστε στη συγκατάθεσή σου, μπορείς να την ανακαλέσεις όποτε θέλεις. Γράψε στο <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>· απαντάμε μέσα σε ένα μήνα. Τα περισσότερα δεδομένα του orOS είναι στη δική σου συσκευή, οπότε μπορείς να τα εξάγεις ή να τα σβήσεις μόνος σου όποτε θέλεις. Μπορείς επίσης να κάνεις καταγγελία στην Αρχή Προστασίας Δεδομένων Προσωπικού Χαρακτήρα (<a href="https://www.dpa.gr/">dpa.gr</a>, Κηφισίας 1-3, 115 23 Αθήνα).</p>
 
     <h2>Παιδιά</h2>
-    <p>Το orOS δεν συλλέγει προσωπικά δεδομένα από κανέναν, ούτε από παιδιά.</p>
+    <p>Το orOS δεν έχει λογαριασμούς και δεν συλλέγει προσωπικά δεδομένα από κανέναν, ούτε από παιδιά. Στην Ελλάδα, κάτω από τα 15 χρειάζεται συγκατάθεση γονέα για διαδικτυακές υπηρεσίες που στηρίζονται σε συγκατάθεση (ν. 4624/2019, άρθ. 21). Αν φτιάξεις δημόσια φόρμα ή newsletter για παιδιά κάτω των 15, χρειάζεσαι τη συγκατάθεση των γονιών τους.</p>
 
     <h2 id="disclaimer-el">Αποποίηση ευθύνης: χρήση με δική σου ευθύνη</h2>
     <p>Το orOS και όλες οι εφαρμογές του, ο συγχρονισμός, τα προγράμματα εγκατάστασης, το orOS Portable, το bootable orOS USB, το orOS Drive και οι εφαρμογές Android είναι δωρεάν λογισμικό που παρέχεται «ως έχει», χωρίς καμία εγγύηση, όπως ορίζει η <a href="https://github.com/koulaxizis/oros/blob/main/LICENSE">άδεια MIT</a>. Την ευθύνη για τα δεδομένα σου την έχεις εσύ: κράτα αντίγραφα ασφαλείας και έχε ενεργό τον συγχρονισμό. Στο μέγιστο βαθμό που επιτρέπει ο νόμος, οι δημιουργοί του orOS και όσοι συνεισφέρουν δεν φέρουν καμία ευθύνη για απώλεια δεδομένων ή οποιαδήποτε άλλη ζημιά από τη χρήση του orOS.</p>
 
     <h2>Αλλαγές και επικοινωνία</h2>
-    <p>Αν αλλάξει αυτή η πολιτική, η νέα εκδοχή δημοσιεύεται σε αυτή τη σελίδα με νέα ημερομηνία. Για ερωτήσεις και υποστήριξη: γράψε στο <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a> ή άνοιξε ένα issue στο <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>.</p>
+    <p>Αν αλλάξει αυτή η πολιτική, η νέα εκδοχή δημοσιεύεται σε αυτή τη σελίδα με νέα ημερομηνία, και οι σημαντικές αλλαγές αναφέρονται στα Νέα. Για ερωτήσεις και υποστήριξη: γράψε στο <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a> ή άνοιξε ένα issue στο <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>.</p>
+  </article>
+
+  <!-- ===================== Deutsch ===================== -->
+  <article lang="de" id="de" hidden>
+    <p class="dim">Gilt für orOS auf <a href="https://useoros.online">useoros.online</a>, die installierte App (PWA), die orOS-App für Android und die einzelnen Android-Apps, Koulaxizis Apps, orOS Portable, den bootfähigen orOS-USB-Stick, orOS Drive, das orOS-Relay und die Unterstützungsseite (Spenden und bezahlte Leistungen). Maßgeblich ist die englische Fassung. Zuletzt aktualisiert: 23. November 2026.</p>
+
+    <div class="box">
+      <p><strong>Kurz gesagt:</strong> orOS hat keine Konten, keine Cookies, keine Werbung und kein Tracking oder Analytics. Was du erstellst, bleibt auf deinem eigenen Gerät. Das Wenige, das über unsere Server läuft, steht unten, zusammen damit, wie lange es bleibt.</p>
+    </div>
+
+    <h2>Verantwortlicher</h2>
+    <p>Verantwortlicher ist Christos Koulaxizis, Dexamenis 3, Ano Liosia, Griechenland, E-Mail <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>. orOS ist freie Open-Source-Software (MIT-Lizenz); der Code ist öffentlich auf <a href="https://github.com/koulaxizis/oros">github.com/koulaxizis/oros</a>.</p>
+
+    <h2>Deine Daten bleiben auf deinem Gerät</h2>
+    <p>Notizen, Kontakte, Kalender, Dateien, Gesundheits- und Finanzeinträge und alles andere, was du erstellst, werden im Speicher deines Browsers auf deinem Gerät gespeichert (bei orOS Portable und dem orOS-USB-Stick: auf dem Stick oder dem Computer). orOS nutzt diesen Speicher nur, damit die Apps funktionieren; es speichert keine Kennung zum Tracking. Wir können diese Daten nicht sehen. Wenn du die Daten der Website in deinem Browser löschst, sind sie auf diesem Gerät gelöscht.</p>
+
+    <h2>Gesundheitsdaten</h2>
+    <p>Zyklus, Stimmung, Gesundheit, Baby, Training, Wasser, Tagebuch und Medikamente bleiben wie alles andere auf deinem Gerät, und in deiner verschlüsselten Synchronisierung, wenn du sie nutzt. Wir haben keinen Zugriff darauf. orOS Gate liest sie nie, und der Assistent durchsucht sie nur, wenn du das selbst für eine App einschaltest; dann geht, was er findet, an den KI-Dienst, den du gewählt hast (siehe Assistent und KI). Health Connect unter Android: siehe unten.</p>
+
+    <h2>Optionale verschlüsselte Synchronisierung</h2>
+    <p>Wenn du willst, synchronisiert orOS zwischen deinen Geräten über dein eigenes Dropbox-Konto (nur dessen App-Ordner) oder deinen eigenen WebDAV- oder Nextcloud-Server. Alles wird auf deinem Gerät mit deiner Passphrase verschlüsselt, bevor es das Gerät verlässt, sodass der Anbieter es nicht lesen kann. Die Passphrase verlässt dein Gerät nie. Wenn ein WebDAV-Server keine Aufrufe aus einem Browser annimmt, läuft die Anfrage über das orOS-Relay, das sie weiterleitet und nichts speichert. orOS Drive nutzt denselben verschlüsselten Ordner.</p>
+
+    <h2>Hosting</h2>
+    <p>useoros.online wird von GitHub Pages (GitHub, Inc., USA) ausgeliefert. Wie jeder Webserver erhält GitHub deine IP-Adresse und Browserangaben, wenn eine Seite oder Datei lädt, und kann sie zur Sicherheit in seinen Protokollen speichern; wir erhalten diese Protokolle nicht. Updates von orOS Portable, dem orOS-USB-Stick, orOS Drive und den Android-Apps werden nur dann von GitHub geladen, wenn du oder die Update-Funktion der App sie anfordern. Die Download-Seite zeigt Downloadzahlen aus unserem Zähler auf apps.koulaxizis.workers.dev (Cloudflare), der Downloads je App und Kanal zählt und keine Adresse, kein Gerät und keine Uhrzeit speichert.</p>
+
+    <h2>Das orOS-Relay</h2>
+    <p>Manche Funktionen brauchen einen kleinen Server: Eine Webseite kann nicht mit Mailservern sprechen, und manche Dienste antworten Browsern nicht. Das orOS-Relay läuft auf Cloudflare Workers (Cloudflare, Inc., USA). Es protokolliert keine Anfragen. Gegen Missbrauch zählt es Anfragen je IP-Adresse eine Minute lang im Arbeitsspeicher und behält für einige Funktionen einen Einweg-Hash der Adresse für einen Tag. Was es speichert:</p>
+    <div class="tw"><table>
+      <thead><tr><th>Funktion</th><th>Was das Relay speichert</th><th>Wie lange</th></tr></thead>
+      <tbody>
+        <tr><td>Mail, Newsletter-Versand, verbundene Dienste, Reader, Canva, Busabfahrten in Karten</td><td>Nichts: Es leitet die Anfrage weiter</td><td>Nur während die Anfrage läuft</td></tr>
+        <tr><td>Newsletter-Anmelde- und Abmeldeformulare</td><td>Die Anmeldung, versiegelt mit dem Schlüssel des Listeninhabers, sodass wir sie nicht lesen können; bei Abmeldungen nur ein zufälliges Token</td><td>Bis das orOS des Inhabers sie abholt (höchstens 2.000 je Liste)</td></tr>
+        <tr><td>CRM-Kontaktformulare und Formulare</td><td>Die Antworten, versiegelt für das Gerät des Inhabers</td><td>Bis sie abgeholt werden, höchstens 30 Tage</td></tr>
+        <tr><td>An jemanden senden (geteilte Dateien)</td><td>Verschlüsselte Teile</td><td>Bis sie ablaufen (höchstens 30 Tage, Signaturanfragen 120) oder widerrufen werden</td></tr>
+        <tr><td>Kurze Musik-Links</td><td>Die Angaben zum Lied oder zur Liste, die du teilst (Titel, Interpret, Links)</td><td>365 Tage nach dem letzten Öffnen</td></tr>
+        <tr><td>Haushalte</td><td>Verschlüsselte gemeinsame Dokumente, Einladungen und Beitrittsanfragen</td><td>Bis sie entfernt werden; ein Haushalt, den 180 Tage niemand öffnet, wird gelöscht</td></tr>
+        <tr><td>Webhooks der Automationen</td><td>Was ankommt, verschlüsselt für dein Gerät</td><td>Bis dein Gerät es abholt, höchstens 7 Tage ohne Erneuerung</td></tr>
+        <tr><td>Benachrichtigungen bei geschlossenem orOS</td><td>Deine Erinnerungen, verschlüsselt, bis zu ihrem Zeitpunkt</td><td>Bis sie gesendet sind; ein Gerät, das sich 30 Tage nicht meldet, wird gelöscht</td></tr>
+        <tr><td>orOS Gate (dein eigener Claude-Connector)</td><td>Eine verschlüsselte Kopie deiner Antworten und wartenden Änderungen</td><td>7 Tage ohne geöffnetes Gerät, oder bis du ihn widerrufst</td></tr>
+        <tr><td>Studio Remote</td><td>Nichts: Es verbindet zwei Verbindungen</td><td>Nur solange sie verbunden sind</td></tr>
+      </tbody>
+    </table></div>
+    <p>Wenn du ein öffentliches Formular erstellst (Newsletter, CRM, Formulare), entscheidest du, was es erhebt, und bist gegenüber den Ausfüllenden dafür verantwortlich; das Relay transportiert es nur für dich.</p>
+
+    <h2>Online-Dienste, die manche Apps nutzen</h2>
+    <p>Manche Apps kontaktieren einen Dienst im Internet, wenn du eine Funktion nutzt, die ihn braucht (Wetter, Karten, Radio, Wechselkurse, Buchangaben und mehr). Sie senden nur, was die Funktion braucht, zum Beispiel die Stadt, nach der du suchst, und der Dienst sieht deine IP-Adresse. Die vollständige Liste je App steht in der orOS-Hilfe unter Datenschutz und in Einstellungen › Über orOS.</p>
+    <p>Manche Apps arbeiten auch mit Konten, die du anderswo hast (dein Mailanbieter, dein Shop, deine Aufgabenverwaltung), aber erst, nachdem du sie selbst verbunden hast. Deine Schlüssel bleiben auf deinem Gerät.</p>
+
+    <h2>Benachrichtigungen bei geschlossenem orOS (optional)</h2>
+    <p>Standardmäßig aus und je Gerät einzuschalten. Deine Erinnerungen werden auf deinem Gerät verschlüsselt und zu ihrem Zeitpunkt per Web Push gesendet, das über den Push-Dienst deines Browserherstellers läuft (Google für Chrome und Edge unter Android, Microsoft für Edge unter Windows, Mozilla für Firefox, Apple für Safari). Diese sehen nur eine verschlüsselte Nachricht.</p>
+
+    <h2>Assistent und KI</h2>
+    <p>Der Assistent ist ein Chat mit einem KI-Dienst deiner Wahl, mit deinem eigenen Schlüssel (oder einem Modell, das auf deinem Computer läuft). Antworten im Assistenten kommen von einer KI, und der Assistent zeigt, welches Modell und welcher Dienst geantwortet hat. Was du sendest und was der Assistent in den Apps findet, die du erlaubst, geht direkt von deinem Browser an diesen Dienst und unterliegt dessen eigenen Bedingungen und Datenschutzerklärung; wir sehen es nie. Manche kostenlosen Tarife können das Gesendete zum Training ihrer Modelle nutzen: Prüfe die Bedingungen des Dienstes, bevor du etwas Privates sendest. Mit KI erstellte Bilder werden mit einer Kennzeichnung in der Datei gespeichert, die sagt, dass sie von KI erstellt wurden. Texterkennung, Hintergrundentfernung, Rauschunterdrückung, Übersetzung und die Untertitel in Montage laufen auf deinem Gerät; deine Bilder, Töne und Texte verlassen es nicht.</p>
+
+    <h2>orOS Gate</h2>
+    <p>Wenn du Claude als benutzerdefinierten Connector mit deinem eigenen orOS verbindest, liest und ändert Claude, was du erlaubst, über dein eigenes geöffnetes Gerät, über das Relay (siehe Tabelle). Gate liest nie Passwörter, Mail, Tagebuch, Stimmung, Zyklus, Gesundheit, Baby, Assistent oder Training.</p>
+
+    <h2>Kontakte aus Google oder Microsoft importieren</h2>
+    <p>In Kontakte kopiert <em>Aus einem Konto</em> deine Kontakte einmalig aus deinem Google-Konto oder Microsoft-Konto (Outlook.com, Hotmail, Microsoft 365):</p>
+    <ul>
+      <li>Du meldest dich im eigenen Fenster von Google oder Microsoft an und gibst nur Lesezugriff auf deine Kontakte (Google-Scope <code>contacts.readonly</code>, Microsoft-Berechtigung <code>Contacts.Read</code>).</li>
+      <li>Dein Browser liest deine Kontakte (Namen, Telefonnummern, E-Mail-Adressen, Postanschriften, Organisationen, Geburtstage und andere Daten, Websites, Notizen und Kontaktgruppen) direkt bei Google oder Microsoft. Nichts läuft über einen orOS-Server.</li>
+      <li>Du prüfst die Kontakte und wählst, welche hinzugefügt oder zusammengeführt werden. Sie werden nur in Kontakte auf deinem Gerät gespeichert (und in deiner verschlüsselten Synchronisierung, wenn du sie nutzt).</li>
+      <li>Der Zugriff endet direkt nach dem Lesen: Das Google-Zugriffstoken wird sofort widerrufen, das von Microsoft verworfen, und es läuft innerhalb einer Stunde von selbst ab. orOS fragt nie nach Offline-Zugriff oder einem Refresh-Token und speichert kein Token und kein Passwort.</li>
+      <li>Die Daten werden nur genutzt, um deine Kontakte in deiner eigenen Kontakte-App anzuzeigen und zu behalten. Sie werden nicht für Werbung genutzt, nicht verkauft, mit niemandem geteilt und nicht zum Training von KI-Modellen verwendet. Niemand bei orOS kann sie sehen.</li>
+    </ul>
+    <p>Die Nutzung und Übertragung von Informationen, die orOS über Google-APIs erhält, entspricht der <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, einschließlich der Limited-Use-Anforderungen.</p>
+    <p>Du kannst den Zugriff von orOS jederzeit in den Einstellungen deines <a href="https://myaccount.google.com/permissions">Google-Kontos</a> oder <a href="https://account.live.com/consent/Manage">Microsoft-Kontos</a> entfernen und jeden importierten Kontakt in Kontakte löschen.</p>
+
+    <h2>Berechtigungen auf deinem Gerät</h2>
+    <p>Standort, Kamera, Mikrofon, Benachrichtigungen und die Kontaktliste des Telefons werden nur genutzt, wenn du eine Funktion verwendest, die sie braucht, und erst nachdem dein Browser oder Telefon dich gefragt hat. In der orOS-App für Android kopiert <em>Auf diesem Telefon</em> deine orOS-Kontakte und -Termine in die Kontakte und den Kalender des Telefons, nur auf diesem Telefon.</p>
+
+    <h2>Health Connect (orOS-App für Android)</h2>
+    <p>Nur wenn du <em>Health Connect</em> in Einstellungen › Verbundene Dienste der orOS-App für Android einschaltest und es auf deinem Telefon erlaubst, liest orOS aus Health Connect deine täglichen Schritte, Gewicht, Ruhepuls, Schlaf, Blutdruck, Blutzucker und Sauerstoffsättigung, Getränke und Trainings, und schreibt deine Getränke aus Wasser und deine Trainings aus orOS dorthin, jeweils für die letzten 30 Tage. Diese Daten bewegen sich nur zwischen Health Connect und orOS auf diesem Telefon. Sie werden nie an uns oder sonst jemanden gesendet und nicht für Werbung genutzt. Auf deine anderen Geräte gelangen sie nur über deine eigene verschlüsselte Synchronisierung, wenn du sie nutzt. Wenn du es ausschaltest, entfernt orOS, was es in Health Connect geschrieben hat. Du kannst die Berechtigung in Health Connect auch jederzeit zurücknehmen.</p>
+
+    <h2>orOS Portable, der bootfähige orOS-USB-Stick und orOS Drive</h2>
+    <p>orOS Portable startet orOS von einem USB-Stick, und der bootfähige orOS-USB-Stick startet einen Computer direkt in orOS. Beide arbeiten wie orOS im Browser: Deine Daten bleiben auf dem Stick, und nichts wird an uns gesendet. Der mitgelieferte Browser ist ungoogled-chromium, der so gebaut ist, dass er keine Daten an Google sendet. Sie gehen nur für das online, was du nutzt (zum Beispiel Synchronisierung oder den Online-Dienst einer App), und laden ein neueres orOS nur dann von GitHub, wenn du das Update selbst startest.</p>
+    <p>orOS Drive zeigt deine verschlüsselten orOS-Dateien als Laufwerk auf deinem Computer oder Telefon; es spricht nur mit der Cloud, bei der du angemeldet bist, und hält einen lokalen Cache auf deinem Gerät.</p>
+
+    <h2>Bestellungen, Spenden und bezahlte Leistungen</h2>
+    <p>orOS selbst ist kostenlos. orOS-T-Shirts, -Tassen und -Aufkleber werden im Shop von Glarolykoi auf <a href="https://glarolykoi.net">glarolykoi.net</a> verkauft, dessen eigene Datenschutzerklärung diese Bestellungen abdeckt. Eine einmalige Spende wird auf der Zahlungsseite von Viva (Viva Wallet, Griechenland) bezahlt, und Vivas Datenschutzerklärung gilt für die Zahlung; wir sehen deine Kartendaten nie. Wenn du uns schreibst oder eine bezahlte Leistung buchst, nutzen wir deinen Namen, deine E-Mail-Adresse, die Nachrichten und die Angaben zur Arbeit, um dir zu antworten und die Vereinbarung zu erfüllen.</p>
+
+    <h2>Warum wir deine Daten nutzen (Rechtsgrundlage) und wie lange</h2>
+    <div class="tw"><table>
+      <thead><tr><th>Was</th><th>Rechtsgrundlage (DSGVO)</th><th>Wie lange</th></tr></thead>
+      <tbody>
+        <tr><td>Relay-Anfragen und Missbrauchsgrenzen</td><td>Unser berechtigtes Interesse am sicheren Betrieb des Relays, Art. 6 Abs. 1 lit. f</td><td>Wie in der Relay-Tabelle</td></tr>
+        <tr><td>Hosting und Download-Zähler</td><td>Berechtigtes Interesse an der Auslieferung der Website, Art. 6 Abs. 1 lit. f</td><td>Nur Downloadzahlen, keine personenbezogenen Daten</td></tr>
+        <tr><td>Benachrichtigungen bei geschlossenem orOS, Health Connect</td><td>Deine Einwilligung, Art. 6 Abs. 1 lit. a und für Gesundheitsdaten Art. 9 Abs. 2 lit. a; du kannst sie jederzeit ausschalten</td><td>Bis gesendet oder ausgeschaltet</td></tr>
+        <tr><td>Nachrichten an uns und GitHub-Issues</td><td>Berechtigtes Interesse, dir zu antworten, Art. 6 Abs. 1 lit. f</td><td>2 Jahre nach der letzten Nachricht; GitHub-Issues bleiben öffentlich, bis du sie löschst</td></tr>
+        <tr><td>Bezahlte Leistungen</td><td>Vertrag, Art. 6 Abs. 1 lit. b</td><td>Für die Arbeit, danach so lange das Steuerrecht es verlangt</td></tr>
+        <tr><td>Spenden- und Leistungsbelege</td><td>Rechtliche Verpflichtung, Art. 6 Abs. 1 lit. c</td><td>So lange das griechische Steuerrecht es verlangt</td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>Wer sonst Daten erhält</h2>
+    <p>GitHub (Hosting, Downloads) und Cloudflare (Relay, Zähler) verarbeiten Daten für uns. Beide sitzen in den USA; die Übermittlung ist durch die Garantien geschützt, die die DSGVO verlangt (den EU-US-Datenschutzrahmen oder die Standardvertragsklauseln der Europäischen Kommission), wie ihre eigenen Datenschutzerklärungen beschreiben. Viva ist für Zahlungen eigenständiger Verantwortlicher. Dropbox, dein WebDAV-Server, KI-Dienste und andere Dienste, die du verbindest, sind deine eigenen Konten und handeln nach ihren eigenen Bedingungen. Wir verkaufen oder teilen deine Daten nie und nutzen sie für nichts anderes.</p>
+
+    <h2>Deine Rechte</h2>
+    <p>Du kannst verlangen, deine Daten einzusehen, sie zu berichtigen, zu löschen, ihre Nutzung einzuschränken, sie in einem gängigen Format zu erhalten und ihrer Nutzung zu widersprechen; wo wir uns auf deine Einwilligung stützen, kannst du sie jederzeit widerrufen. Schreib an <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a>; wir antworten innerhalb eines Monats. Die meisten deiner orOS-Daten liegen auf deinem eigenen Gerät, sodass du sie jederzeit selbst exportieren oder löschen kannst. Du kannst dich auch bei der griechischen Datenschutzbehörde beschweren (<a href="https://www.dpa.gr/">dpa.gr</a>, Kifisias 1-3, 115 23 Athen) oder bei der Aufsichtsbehörde deines Landes.</p>
+
+    <h2>Kinder</h2>
+    <p>orOS hat keine Konten und erhebt von niemandem personenbezogene Daten, auch nicht von Kindern. In Griechenland muss unter 15 Jahren ein Elternteil Online-Diensten zustimmen, die auf Einwilligung beruhen (Gesetz 4624/2019, Art. 21). Wenn du ein öffentliches Formular oder einen Newsletter für Kinder unter 15 erstellst, brauchst du die Einwilligung ihrer Eltern.</p>
+
+    <h2 id="disclaimer-de">Haftungsausschluss: Nutzung auf eigene Gefahr</h2>
+    <p>orOS und alle seine Apps, die Synchronisierung, die Installationsprogramme, orOS Portable, der bootfähige orOS-USB-Stick, orOS Drive und die Android-Apps sind freie Software und werden „wie besehen“ ohne jede Gewährleistung bereitgestellt, wie es die <a href="https://github.com/koulaxizis/oros/blob/main/LICENSE">MIT-Lizenz</a> sagt. Du bist für deine eigenen Daten verantwortlich: Mach Sicherungen und lass die Synchronisierung eingeschaltet. Soweit gesetzlich zulässig, haften die Macher von orOS und alle, die beitragen, nicht für Datenverlust oder andere Schäden aus der Nutzung von orOS.</p>
+
+    <h2>Änderungen und Kontakt</h2>
+    <p>Wenn sich diese Erklärung ändert, wird die neue Fassung auf dieser Seite mit neuem Datum veröffentlicht, und wichtige Änderungen werden in den Neuigkeiten erwähnt. Fragen und Hilfe: E-Mail an <a href="mailto:koulaxizis@glarolykoi.net">koulaxizis@glarolykoi.net</a> oder ein Issue auf <a href="https://github.com/koulaxizis/oros/issues">github.com/koulaxizis/oros/issues</a>.</p>
   </article>
 </main>
 <script>
 (function () {
   "use strict";
-  var TITLE = { en: "orOS privacy policy", el: "Πολιτική απορρήτου του orOS" };
+  var LANGS = ["en", "el", "de"];
+  var TITLE = { en: "orOS privacy policy", el: "Πολιτική απορρήτου του orOS", de: "orOS-Datenschutzerklärung" };
+  var SHORT = { en: "Privacy policy", el: "Πολιτική απορρήτου", de: "Datenschutzerklärung" };
   function set(l) {
-    if (l !== "el") l = "en";
+    if (LANGS.indexOf(l) < 0) l = "en";
     document.documentElement.lang = l;
-    document.getElementById("en").hidden = l !== "en";
-    document.getElementById("el").hidden = l !== "el";
+    LANGS.forEach(function (x) { document.getElementById(x).hidden = x !== l; });
     document.getElementById("t").textContent = TITLE[l];
-    document.title = (l === "el" ? "Πολιτική απορρήτου" : "Privacy policy") + " · orOS";
+    document.title = SHORT[l] + " · orOS";
     [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
       b.setAttribute("aria-pressed", String(b.getAttribute("data-l") === l));
     });
   }
-  var start = /[?&]lang=el\b/.test(location.search) || location.hash === "#el" ? "el" : "en";
-  if (start === "en" && !/[?&]lang=en\b/.test(location.search)) {
-    try { if (localStorage.getItem("oros-lang") === "el") start = "el"; } catch (e) {}
+  var m = /[?&]lang=(en|el|de)\b/.exec(location.search);
+  var start = m ? m[1] : location.hash === "#el" ? "el" : location.hash === "#de" ? "de" : "";
+  if (!start) {
+    start = "en";
+    try { var saved = localStorage.getItem("oros-lang"); if (LANGS.indexOf(saved) >= 0) start = saved; } catch (e) {}
   }
   set(start);
   [].forEach.call(document.querySelectorAll(".lang button"), function (b) {
