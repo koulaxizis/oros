@@ -2150,6 +2150,18 @@ dialog#oros-lock {
 }
 dialog#oros-lock:not([open]) { display: none; }
 dialog#oros-lock::backdrop { background: var(--bg-desktop, var(--bg)); }
+/* LOCKPOW-1: the system part's Sleep / Restart / Shut down, bottom right */
+#oros-lock .lk-power { position: fixed; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom));
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; z-index: 2; max-width: calc(100% - 32px); }
+#oros-lock .lk-power:empty { display: none; }
+#oros-lock .lk-pow { min-height: 40px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--panel-bg, var(--bg)) 80%, transparent); color: inherit; font: inherit; font-size: 13px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; }
+#oros-lock .lk-pow svg { width: 16px; height: 16px; }
+#oros-lock .lk-pow:hover, #oros-lock .lk-pow:focus-visible { border-color: var(--accent); outline: none; }
+#oros-lock .lk-pow.lk-pow-armed { background: var(--danger, #c0392b); border-color: var(--danger, #c0392b); color: #fff; }
+dialog#oros-lock.lk-wall .lk-pow { border-color: rgba(255,255,255,.28); background: rgba(0,0,0,.35); color: #fff; }
+@media (max-width: 480px) { #oros-lock .lk-power { left: 16px; right: 16px; justify-content: center; } }
 :is(#oros-lock, #oros-applock) .lk-box {
   width: 100%; max-width: 340px; display: flex; flex-direction: column; align-items: stretch;
   gap: 12px; text-align: center;
