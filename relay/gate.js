@@ -402,7 +402,8 @@ export const TOOLS = [
           required: ["column", "text"],
           additionalProperties: false
         } },
-        create_labels: { type: "boolean", description: "true: label names the board does not have yet are made (Kanban's colours in turn)." }
+        create_labels: { type: "boolean", description: "true: label names the board does not have yet are made (Kanban's colours in turn)." },
+        adopt_by_text: { type: "boolean", description: "true: a card with a key the board does not have yet takes over the one card without a key whose text is the same (case and accents aside), instead of a copy being added. For boards with cards made before keys. Two or more such cards: refused, with their ids." }
       },
       required: ["board", "cards"],
       additionalProperties: false
@@ -469,7 +470,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_add_columns",
-    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name), and sets a column up as a step of the Author Portal production flow (portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay as they are, an empty text clears it), and makes labels (add_labels). Give any of them. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
+    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name), and sets a column up as a step of the Author Portal production flow (portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay as they are, an empty text clears it), and makes labels or gives an existing label a new colour (add_labels). Give any of them. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
     inputSchema: {
       type: "object",
       properties: {
@@ -492,7 +493,7 @@ export const TOOLS = [
           required: ["column", "name"],
           additionalProperties: false
         } },
-        add_labels: { type: "array", minItems: 1, maxItems: 30, items: { type: "object", properties: { name: { type: "string", description: "At most 40 characters." }, color: { type: "string", enum: ["red", "yellow", "green", "teal", "purple", "pink", "orange", "grey"] } }, required: ["name"], additionalProperties: false }, description: "New labels for the board (e.g. severity, a routine's name); names it has already are skipped." },
+        add_labels: { type: "array", minItems: 1, maxItems: 30, items: { type: "object", properties: { name: { type: "string", description: "At most 40 characters." }, color: { type: "string", enum: ["red", "yellow", "green", "teal", "purple", "pink", "orange", "grey"] } }, required: ["name"], additionalProperties: false }, description: "Labels for the board (e.g. severity, a routine's name). A name it has already is skipped, or gets the color given (recolour)." },
         portal_columns: { type: "array", minItems: 1, maxItems: 20, items: {
           type: "object",
           properties: {
@@ -735,6 +736,21 @@ export const TOOLS = [
   }
 ];
 const TOOL_NAMES = TOOLS.map((t) => t.name);
+// GL-VER (Chris 2026-11-23): the tool list's version, a short hash of the
+// tools themselves (names, descriptions, schemas), so it changes with any
+// new tool or argument and never by hand. gate_tools' description carries
+// it (a client keeps that from the start of its conversation) and every
+// answer says the live one: a conversation that loaded an older list sees
+// the two differ and looks at gate_tools.
+export function toolsVer(list) {
+  const s = JSON.stringify(list);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+  return h.toString(36).padStart(7, "0");
+}
+export const TOOLS_VER = toolsVer(TOOLS);
+TOOLS.filter((t) => t.name === "gate_tools").forEach((t) => { t.description += " This list: version " + TOOLS_VER + "."; });
+export const VER_NOTE = "orOS Gate tools " + TOOLS_VER + " (if the gate_tools description in your list names another version or none, tools or arguments were added since: gate_tools shows them, gate_call runs them).";
 // ST-IMP: studio_import / montage_import → edit_in_app's create, which the
 // device checks again (studio|montage commands.js: an /internal/ path of
 // the app's own file type, the only command, designs new). → the call to
@@ -1537,6 +1553,8 @@ export const INSTRUCTIONS = "orOS Gate reads the owner's orOS (a private, encryp
   "With orOS closed, Kanban changes are checked against the copy's boards and the boards waiting to be made: an unknown board or column is refused at once; app_summary kanban with boards_only lists the boards alone. " +
   "With orOS closed, a new Kanban board, its columns and new cards get p- refs at once too. " +
   "Tools added lately (" + NEW_TOOLS.join(", ") + "): if one is not in your tool list (it was loaded earlier), gate_tools shows it and gate_call runs it by name. " +
+  "Each answer ends with the live tool list's version; when the gate_tools description in your list names another one, look at gate_tools before guessing a tool or argument is missing. " +
+  "A report or other file for the owner goes into one of Claude's folders on the orOS disk with files_write (text) or files_upload (any file), e.g. Claude/<project>/report.md (claude_folders_request asks the owner for a folder files_list does not show yet), and a Kanban card links it as /Claude/<project>/report.md: it opens in orOS Files with one click. A file only in your own workspace cannot be opened from orOS. " +
   "If a call says orOS is closed or locked, tell the owner; do not retry in a loop.";
 
 // ---------- small helpers ----------
@@ -2081,6 +2099,9 @@ export function minVer(name, args) {
   // TS-GATE (8.55.00): a Timesheet project; an older orOS does not know the kind
   if (name === "create_items" && args && typeof args === "object" && String(args.app || "").toLowerCase() === "timesheet_project") return 85500;
   if (/^kanban_/.test(name) && hasPref(args)) return KB_PREF_MV;
+  // KB-ADOPT, KB-RECOLOR: an older orOS would add copies or skip the colour without a word
+  if (name === "kanban_add_cards" && args && args.adopt_by_text === true) return KB_PREF_MV;
+  if (name === "kanban_add_columns" && args && Array.isArray(args.add_labels) && args.add_labels.some((l) => l && typeof l === "object" && l.color)) return KB_PREF_MV;
   return 0;
 }
 // "8.13.00" → 81300 (0 when it is not a version)
@@ -3359,4 +3380,4 @@ export class GateBox {
     await this.st.put("meta", m);
   }
 }
-function toolText(text, isErr) { return { content: [{ type: "text", text: text }], isError: !!isErr }; }
+export function toolText(text, isErr) { return { content: [{ type: "text", text: text }, { type: "text", text: VER_NOTE }], isError: !!isErr }; }   // GL-VER: each answer names the live tool list
