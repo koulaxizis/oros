@@ -1102,6 +1102,16 @@
     fv.hidden = true;
     box.appendChild(fv);
     dlg.appendChild(box);
+    // LOCKPOW-1: Sleep, Restart and Shut down on orOS USB, Portable and
+    // installed. The system part (oros-usb system/extension/content.js)
+    // shares this document: on the DOM event "oros-lock" ("open" /
+    // "close", a string) it fills this box with .lk-pow buttons, as it
+    // fills Quick settings' power menu. In a browser it stays empty.
+    var pow = node("div", "lk-power");
+    pow.id = "lock-power-sys";
+    pow.setAttribute("role", "group");
+    pow.setAttribute("aria-label", t("lock.power"));
+    dlg.appendChild(pow);
 
     main.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -1339,8 +1349,13 @@
     fillBio();
     show("main");
     if (reason === "now" && bc) { try { bc.postMessage("lock"); } catch (e) {} }
+    sysEvent("open");
     emit();
     return true;
+  }
+  // LOCKPOW-1: tell the system part the lock screen opened or closed.
+  function sysEvent(what) {
+    try { doc.dispatchEvent(new CustomEvent("oros-lock", { detail: what })); } catch (e) {}
   }
 
   function unlock() {
@@ -1356,6 +1371,7 @@
       ui = null;               // the close handler sees no ui and lets it go
       try { if (d.open && typeof d.close === "function") d.close(); } catch (e) {}
       if (d.parentNode) d.parentNode.removeChild(d);
+      sysEvent("close");
     }
     lastActive = Date.now();
     markSeen();
