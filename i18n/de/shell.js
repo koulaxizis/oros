@@ -256,6 +256,7 @@ orosPack("de", "shell", {
  "cr.lic.tor-browser": "MPL-2.0, Tors BSD-3-Clause und weitere (in Tor Browser enthalten)",
  "cr.ollama": "Lokale KI des Live-USB: auf Wunsch aus seinem GitHub-Release geladen, Prüfsumme geprüft, nicht Teil der Downloads",
  "cr.qwen3": "Lokale KI des Live-USB: die angebotenen Modelle, auf Wunsch über Ollama geladen",
+ "cr.krikri": "Assistent › griechische lokale KI: das griechische Chat-Modell (krikri-el), auf Wunsch von deinem eigenen Ollama geladen",
  "cr.ai-modules": "Live-USB: entpackt den Ollama-Download",
  "cr.inno-setup": "Die Windows-Installer von orOS und orOS Drive",
  "cr.appimage": "Das Linux-AppImage von orOS",

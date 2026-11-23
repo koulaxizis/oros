@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.96.01";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.97.00";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -10467,6 +10467,9 @@
         { name: "Qwen3 models", url: "https://ollama.com/library/qwen3",
           by: "Qwen team, Alibaba Cloud", lic: "Apache-2.0",
           k: "cr.qwen3" },
+        { name: "Llama-Krikri 8B Instruct", url: "https://huggingface.co/ilsp/Llama-Krikri-8B-Instruct-GGUF",
+          by: "ILSP, Athena Research Center (built on Meta Llama 3.1)", lic: "Llama 3.1 Community License",
+          k: "cr.krikri" },
         { name: "klauspost/compress", url: "https://github.com/klauspost/compress",
           by: "Klaus Post & The Go Authors", lic: "BSD-3-Clause",
           k: "cr.ai-modules" },
