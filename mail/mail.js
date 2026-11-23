@@ -181,7 +181,7 @@
       "dlg.remove": "Remove account", "dlg.removeQ": "Remove {name} from orOS on all your devices? Your mail stays on the server.",
       "dlg.removeOk": "Remove",
       "set.title": "Mail settings", "set.accounts": "Accounts", "set.plain": "Always show plain text", "set.threads": "Group messages by conversation", "uni.title": "All inboxes", "uni.older": "Older messages are in each account's Inbox.", "thr.count": "{n} messages in this conversation",
-      "set.relay": "Relay address", "set.edit": "Edit", "set.close": "Close",
+      "set.relay": "Relay address", "set.relayShared": "orOS's shared relay ({url}).", "set.relayOwn": "Your own relay: {url}.", "set.relayGo": "Change in Settings", "set.edit": "Edit", "set.close": "Close",
       "pass.title": "Password for {email}", "pass.text": "This account came from another device. Enter its password once on this device.",
       "pass.need": "Password needed on this device", "pass.set": "Enter password",
       "err.offline": "You are offline.", "err.norelay": "Set the relay address first.",
@@ -394,7 +394,7 @@
       "dlg.remove": "Αφαίρεση λογαριασμού", "dlg.removeQ": "Να αφαιρεθεί το {name} από το orOS σε όλες τις συσκευές σου; Τα μηνύματα μένουν στον διακομιστή.",
       "dlg.removeOk": "Αφαίρεση",
       "set.title": "Ρυθμίσεις αλληλογραφίας", "set.accounts": "Λογαριασμοί", "set.plain": "Πάντα ως απλό κείμενο", "set.threads": "Ομαδοποίηση μηνυμάτων ανά συζήτηση", "uni.title": "Όλα τα Εισερχόμενα", "uni.older": "Τα παλαιότερα μηνύματα είναι στα Εισερχόμενα κάθε λογαριασμού.", "thr.count": "{n} μηνύματα σε αυτή τη συζήτηση",
-      "set.relay": "Διεύθυνση relay", "set.edit": "Επεξεργασία", "set.close": "Κλείσιμο",
+      "set.relay": "Διεύθυνση relay", "set.relayShared": "Ο κοινός relay του orOS ({url}).", "set.relayOwn": "Ο δικός σου relay: {url}.", "set.relayGo": "Αλλαγή στις Ρυθμίσεις", "set.edit": "Επεξεργασία", "set.close": "Κλείσιμο",
       "pass.title": "Κωδικός για {email}", "pass.text": "Ο λογαριασμός ήρθε από άλλη συσκευή. Δώσε τον κωδικό του μία φορά σε αυτή τη συσκευή.",
       "pass.need": "Χρειάζεται κωδικός σε αυτή τη συσκευή", "pass.set": "Βάλε κωδικό",
       "err.offline": "Δεν υπάρχει σύνδεση.", "err.norelay": "Βάλε πρώτα τη διεύθυνση του relay.",
@@ -2761,8 +2761,22 @@
     var form = el("form");
     form.method = "dialog";
     form.noValidate = true;
-    var fRelay = field(form, "ml-relay2", t("set.relay"), "url", data.relay.url, { maxlength: "300", placeholder: DEFAULT_RELAY || "https://", autocapitalize: "off", spellcheck: "false" });
-    form.appendChild(el("p", "dlg-hint", t("dlg.relayHint")));
+    // STRUCT-4: one relay address for all of orOS, set in Settings ›
+    // Connected services › orOS relay; Mail shows it and links there.
+    form.appendChild(el("div", "dlg-lbl", t("set.relay")));
+    var rrow = el("p", "dlg-hint");
+    rrow.appendChild(document.createTextNode(t(data.relay.url && data.relay.url !== DEFAULT_RELAY ? "set.relayOwn" : "set.relayShared", { url: relayUrl() }) + " "));
+    var rgo = button(t("set.relayGo"), "small", function () {
+      dlg.close();
+      try {
+        var p = window.parent;
+        if (p && p !== window && typeof p.__orosOpenAt === "function") p.__orosOpenAt("settings", { section: "services", item: "relay" });
+      } catch (x) {}
+    });
+    rgo.type = "button";
+    rgo.id = "ml-relay-go";
+    rrow.appendChild(rgo);
+    form.appendChild(rrow);
     var lab = el("label", "check");
     var cb = el("input");
     cb.type = "checkbox";
@@ -2791,13 +2805,6 @@
     form.appendChild(acts);
     form.addEventListener("submit", function (e) {
       e.preventDefault();
-      var ru = normRelayUrl(fRelay.value);
-      if (ru === null || (!ru && !DEFAULT_RELAY && data.accounts.length)) { errP.textContent = t("err.relayUrl"); return; }
-      if (ru !== data.relay.url) {
-        data.relay = { url: ru, m: Math.max(Date.now(), data.relay.m + 1) };
-        data = mergeMail(data, data);
-        saveData();
-      }
       prefs.plain = cb.checked ? 1 : 0;
       prefs.threads = cbT.checked ? 1 : 0;
       prefs.undo = +fUndo.value || 0;
@@ -5930,6 +5937,16 @@
   }
 
   function sliceGet() { return mergeMail(data, data); }   // canonical copy (R26)
+  // STRUCT-4: the relay is set in Settings (shell orosRelay) while Mail
+  // may be open; take a newer one so the next save keeps it.
+  window.addEventListener("storage", function (e) {
+    if (e.key !== STORAGE_KEY || !e.newValue || !data) return;
+    var r = null;
+    try { r = JSON.parse(e.newValue).relay; } catch (x) { return; }
+    if (!r || !isInt(r.m) || r.m <= data.relay.m) return;
+    var u = normRelayUrl(r.url);
+    if (u !== null) data.relay = { url: u, m: r.m };
+  });
 
   function sliceSet(incoming) {
     if (!incoming || typeof incoming !== "object" || !Array.isArray(incoming.accounts)) return;

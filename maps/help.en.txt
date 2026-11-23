@@ -283,7 +283,7 @@ Each pack shows its size, its detail, when you downloaded it and the date of the
 - **Routes**: the OSRM demo server (car) and FOSSGIS (bike and walk, `Standard`). They get the coordinates of your route points.
 - **Walking and cycling route types**: BRouter (brouter.de, or the server you set in `Trail router`) gets the coordinates of your route points and the route type.
 - **Public transport**: Transitous (api.transitous.org). It gets the start and destination of your search, the time, the stop whose departures you open, and the map area when stops or live vehicles are on.
-- **Live bus arrivals (Athens)**: when you open the board of an Athens bus stop, the orOS relay (the one Mail uses) passes that stop's code to OASA Telematics (telematics.oasa.gr). Nothing else is sent, and the relay keeps nothing.
+- **Live bus arrivals (Athens)**: when you open the board of an Athens bus stop, the orOS relay (Settings › Connected services) passes that stop's code to OASA Telematics (telematics.oasa.gr). Nothing else is sent, and the relay keeps nothing.
 - **Sharing**: links are made on your device. Nothing leaves it until you send or open one; a shared link carries the points' coordinates and the destination's name.
 - **Notes**: the OpenStreetMap API. In Mapping mode it gets the area you're looking at. What you write is published under your OpenStreetMap name, with the point you chose. The sign-in key stays on this device.
 - **Places and quests**: the Overpass API (overpass-api.de) gets the area you're looking at to list its places and questions; your edits go to the OpenStreetMap API under your name. Place kinds come from the iD editor's presets.

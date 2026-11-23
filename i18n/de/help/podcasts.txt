@@ -86,7 +86,7 @@ Solange eine Folge geladen ist:
 
 ## Tipps
 - Podcasts werden beim Öffnen der App und jede Stunde, solange sie offen ist, aktualisiert; `Aktualisieren` prüft sofort.
-- Manche Podcast-Seiten blockieren Browser. Wenn du das Relay in [Mail](app:mail) einrichtest, kann Podcasts sie lesen.
+- Manche Podcast-Seiten blockieren Browser. Wenn du das orOS-Relay in [Einstellungen](app:settings) › Verbundene Dienste einrichtest, kann Podcasts sie lesen.
 
 ## Grenzen
 - Suchbegriffe gehen an den gewählten Katalog; schalte die Suche aus, wenn du Podcasts lieber nur per Adresse hinzufügst.

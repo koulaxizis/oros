@@ -22,7 +22,7 @@ Wenn du das Wetter in der oberen Leiste schon eingerichtet hast, wird seine Stad
 - Tippe auf eine Warnung für die Details in deiner Sprache, wenn der Wetterdienst sie liefert (Beschreibung, was zu tun ist), und `Auf MeteoAlarm öffnen`.
 - Die App schätzt dein Gebiet anhand der Stadt. `Warnungen anderswo in …` listet den Rest des Landes; tippe dort bei einer Warnung auf `Mein Gebiet`, um dieses Gebiet für diese Stadt zu verwenden (es wird mit der Stadt synchronisiert). `Gebiet vergessen` kehrt zur Schätzung zurück.
 - In `Städte` unter `Amtliche Warnungen`: `MeteoAlarm-Warnungen zeigen` (standardmäßig an) und `Benachrichtigen`: `Aus` (Standard), `Orange und Rot` oder `Alle Warnungen`. orOS sendet dann pro Warnung eine [Benachrichtigung](help:t/notifications) für die Stadt in der Taskleiste, auch wenn Wetter geschlossen ist. Beide Einstellungen gelten nur für dieses Gerät.
-- Manche Browser können MeteoAlarm nicht direkt lesen. Die App nutzt dann das orOS-Relay, das du in [Mail](app:mail) eingerichtet hast, falls es eines gibt; ohne Relay sagt der Dialog `Städte` das, und es erscheinen keine Warnungen.
+- Manche Browser können MeteoAlarm nicht direkt lesen. Die App nutzt dann das orOS-Relay, das du in [Einstellungen](app:settings) › Verbundene Dienste eingerichtet hast, falls es eines gibt; ohne Relay sagt der Dialog `Städte` das, und es erscheinen keine Warnungen.
 
 ## Regen in den nächsten 2 Stunden
 

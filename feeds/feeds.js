@@ -132,7 +132,7 @@
       "set.sort": "Order", "set.new": "Newest first", "set.old": "Oldest first",
       "set.font": "Text size", "set.f1": "Small", "set.f2": "Normal", "set.f3": "Large",
       "set.relay": "Relay address", "set.relayHint": "The orOS relay (https://…) reads feeds of sites that do not allow it directly. It passes the feed through and keeps nothing.",
-      "set.relayMail": "Empty: the Mail app's relay is used ({url}).",
+      "set.relayOwn": "Uses your orOS relay: {url}.", "set.relayNone": "No relay of your own is set, so feeds that a site blocks wait.", "set.relayGo": "Change in Settings",
       "set.opml": "Move to or from another reader", "set.import": "Import OPML", "set.export": "Export OPML",
       "set.keep": "Articles stay on this device for 60 days (up to 200 per feed). Starred and Read later stay for ever, on every device.",
       "opml.none": "No feeds in this file.", "opml.bad": "This is not an OPML file.",
@@ -146,7 +146,7 @@
       "yt.go": "Subscribe ({n})", "yt.undone": "Import undone.",
       "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.close": "Close", "dlg.ok": "OK", "dlg.delete": "Delete",
       "toast.copied": "Link copied.", "toast.updated": "Up to date.", "toast.storage": "Storage is full: the change was not saved.",
-      "toast.saveFail": "The file was not saved.", "toast.relayBad": "Not a valid relay address (https://…).",
+      "toast.saveFail": "The file was not saved.",
       "err.offline": "You are offline.", "err.cors": "This site does not allow direct reading: it needs the relay.",
       "err.norelay": "This site needs the relay. Set its address in Settings.",
       "err.network": "The site could not be reached.", "err.timeout": "The site took too long to answer.",
@@ -271,7 +271,7 @@
       "set.sort": "Σειρά", "set.new": "Πρώτα τα νεότερα", "set.old": "Πρώτα τα παλαιότερα",
       "set.font": "Μέγεθος κειμένου", "set.f1": "Μικρό", "set.f2": "Κανονικό", "set.f3": "Μεγάλο",
       "set.relay": "Διεύθυνση relay", "set.relayHint": "Το relay του orOS (https://…) διαβάζει feeds από sites που δεν το επιτρέπουν απευθείας. Περνά το feed και δεν κρατά τίποτα.",
-      "set.relayMail": "Κενό: χρησιμοποιείται το relay της Αλληλογραφίας ({url}).",
+      "set.relayOwn": "Χρησιμοποιεί τον relay του orOS που όρισες: {url}.", "set.relayNone": "Δεν έχεις ορίσει δικό σου relay, οπότε οι ροές που μπλοκάρει ένα site περιμένουν.", "set.relayGo": "Αλλαγή στις Ρυθμίσεις",
       "set.opml": "Μεταφορά από ή προς άλλο πρόγραμμα", "set.import": "Εισαγωγή OPML", "set.export": "Εξαγωγή OPML",
       "set.keep": "Τα άρθρα μένουν σε αυτή τη συσκευή 60 ημέρες (έως 200 ανά feed). Όσα έχουν αστέρι ή είναι «Για αργότερα» μένουν για πάντα, σε κάθε συσκευή.",
       "opml.none": "Δεν υπάρχουν feeds σε αυτό το αρχείο.", "opml.bad": "Δεν είναι αρχείο OPML.",
@@ -285,7 +285,7 @@
       "yt.go": "Εγγραφή ({n})", "yt.undone": "Η εισαγωγή αναιρέθηκε.",
       "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.close": "Κλείσιμο", "dlg.ok": "OK", "dlg.delete": "Διαγραφή",
       "toast.copied": "Ο σύνδεσμος αντιγράφηκε.", "toast.updated": "Όλα ενημερωμένα.", "toast.storage": "Ο χώρος γέμισε: η αλλαγή δεν αποθηκεύτηκε.",
-      "toast.saveFail": "Το αρχείο δεν αποθηκεύτηκε.", "toast.relayBad": "Μη έγκυρη διεύθυνση relay (https://…).",
+      "toast.saveFail": "Το αρχείο δεν αποθηκεύτηκε.",
       "err.offline": "Δεν υπάρχει σύνδεση.", "err.cors": "Αυτό το site δεν επιτρέπει απευθείας ανάγνωση: χρειάζεται το relay.",
       "err.norelay": "Αυτό το site χρειάζεται το relay. Βάλε τη διεύθυνσή του στις Ρυθμίσεις.",
       "err.network": "Το site δεν απάντησε.", "err.timeout": "Το site άργησε πολύ να απαντήσει.",
@@ -493,6 +493,17 @@
       var raw = localStorage.getItem(STORAGE_KEY);
       data = raw ? C.merge(JSON.parse(raw), null) : C.emptyData();
     } catch (e) { data = C.emptyData(); }
+  }
+  // STRUCT-4: Feeds' own relay field went; an address set here moves to
+  // the one orOS relay (when none is set there yet) and leaves Feeds.
+  function moveRelay() {
+    var v = C.setting(data, "relay");
+    if (!v) return;
+    var R = null;
+    try { R = window.parent !== window && window.parent.orosRelay; } catch (e) {}
+    if (!R || typeof R.set !== "function") return;
+    if (!R.own() && !R.set(v)) return;
+    if (C.putSetting(data, "relay", "", now())) saveData();
   }
   function saveData() {
     data = C.merge(data, null);   // canonical (R26)
@@ -2406,19 +2417,22 @@
     stb.disabled = !data.feeds.length;
     more.appendChild(stb);
     dlg.appendChild(more);
-    var rl = el("label", "dlg-lbl", t("set.relay"));
-    rl.htmlFor = "set-relay";
-    dlg.appendChild(rl);
-    var relay = el("input");
-    relay.type = "url";
-    relay.id = "set-relay";
-    relay.placeholder = "https://…";
-    relay.value = C.setting(data, "relay");
-    relay.spellcheck = false;
-    dlg.appendChild(relay);
+    // STRUCT-4: one relay address for all of orOS, set in Settings ›
+    // Connected services › orOS relay; Feeds shows it and links there.
+    dlg.appendChild(el("div", "dlg-lbl", t("set.relay")));
     dlg.appendChild(el("p", "dlg-hint", t("set.relayHint")));
-    var mr = F.relayUrl();   // no option given: Mail's relay
-    if (mr) dlg.appendChild(el("p", "dlg-hint dim", t("set.relayMail", { url: mr })));
+    var mr = relayUrl();
+    var rrow = el("p", "dlg-hint dim", t(mr ? "set.relayOwn" : "set.relayNone", { url: mr }) + " ");
+    var rgo = button(t("set.relayGo"), "small", function () {
+      dlg.close();
+      try {
+        var p = window.parent;
+        if (p && p !== window && typeof p.__orosOpenAt === "function") p.__orosOpenAt("settings", { section: "services", item: "relay" });
+      } catch (x) {}
+    });
+    rgo.id = "set-relay-go";
+    rrow.appendChild(rgo);
+    dlg.appendChild(rrow);
     var err = el("p", "dlg-err");
     dlg.appendChild(err);
     dlg.appendChild(el("div", "dlg-lbl", t("set.opml")));
@@ -2457,8 +2471,6 @@
     var acts = el("div", "dlg-actions");
     acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
     acts.appendChild(button(t("dlg.save"), "primary", function () {
-      var ru = C.normRelayUrl(relay.value);
-      if (ru === null) { err.textContent = t("toast.relayBad"); return; }
       var t0 = now(), ch = false;
       ch = C.putSetting(data, "refresh", +rf.value, t0) || ch;
       ch = C.putSetting(data, "sort", so.value, t0) || ch;
@@ -2466,18 +2478,12 @@
       ch = C.putSetting(data, "scroll", sc.checked ? 1 : 0, t0) || ch;
       ch = C.putSetting(data, "dedup", dd.checked ? 1 : 0, t0) || ch;
       ch = C.putSetting(data, "view", vw.value, t0) || ch;
-      var hadRelay = !!relayUrl();
-      ch = C.putSetting(data, "relay", ru, t0) || ch;
       if (ch) saveData();
       prefs.font = +fo.value;
       prefs.width = +wd.value;
       savePrefs();
       dlg.close();
       renderAll();
-      if (!hadRelay && relayUrl()) {   // feeds waiting for the relay: now
-        var waiting = data.feeds.filter(function (f) { var s = fstate[f.id]; return s && s.err === "norelay"; }).map(function (f) { return f.id; });
-        if (waiting.length) refresh(waiting, false);
-      }
     }));
     dlg.appendChild(acts);
     document.body.appendChild(dlg);
@@ -3759,6 +3765,7 @@
 
   function boot() {
     load();
+    moveRelay();
     loadPrefs();
     loadState();
     applyI18n();

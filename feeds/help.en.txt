@@ -41,7 +41,7 @@ In `Settings` › `From FreshRSS or Miniflux…`, pick your reader and type your
 If your server does not allow this (a browser page needs it to send CORS headers, and it must be on https), export your subscriptions as OPML and your starred articles as JSON from your reader, then use `Import OPML` and `Import starred articles (JSON)` in `Settings`.
 
 ## Settings
-`Settings` sets how often to `Check for new articles`, the order, list style, text size and width, pictures, `Mark as read while scrolling the list`, `Show a story that two feeds carry only once`, and the `Relay address`.
+`Settings` sets how often to `Check for new articles`, the order, list style, text size and width, pictures, `Mark as read while scrolling the list`, `Show a story that two feeds carry only once`, and shows the relay with `Change in Settings`.
 
 ## YouTube subscriptions
 `Settings` › `YouTube subscriptions` brings the YouTube channels you subscribe to into the Reader, once. Sign in to Google in the small window; orOS reads your subscriptions (read only) and gives the access back to Google right away: nothing is kept, and nothing changes at YouTube. Tick the channels you want (all start ticked) and press `Subscribe`; with `Put them in a folder named “YouTube”` they go into that folder. The message that follows has `Undo`.
@@ -63,7 +63,7 @@ In `Settings`, `orOS file (.orosfeeds)` saves your subscriptions, folders, saved
 - [[Esc]] closes the search, or goes back to the list on a narrow screen.
 
 ## Tips
-- Many sites block browsers from reading their feeds. Reader then uses the orOS relay; with its address empty, it uses the one set in [Mail](app:mail).
+- Many sites block browsers from reading their feeds. Reader then uses a relay of your own, set once for all of orOS in [Settings](app:settings) › Connected services › `orOS relay`.
 
 ## Limits
 - A site that blocks browsers can't be read without a relay.

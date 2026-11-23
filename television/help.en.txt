@@ -70,7 +70,7 @@ In the player:
 - Channels and streams come from iptv-org, a free community list. Many may be offline, blocked in your country or in a format your browser can't play (`This stream format is not supported here`).
 - If the directory can't be reached (no connection, or a content blocker), the list stays empty.
 - iptv-org publishes no ready programme guides, so the guide comes only from XMLTV addresses or files you add.
-- Many playlist and guide sites don't let a browser read them (`This site doesn't let the browser read it…`). With the Mail relay set up, the app reads them through it (up to 5 MB per download); otherwise download the file and open it.
+- Many playlist and guide sites don't let a browser read them (`This site doesn't let the browser read it…`). With the orOS relay set up (Settings › Connected services), the app reads them through it (up to 5 MB per download); otherwise download the file and open it.
 - `http://` streams don't play when orOS runs on `https://`, and streams that need a special referrer or user agent may not play at all.
 - A guide file you open keeps the programmes from the day before to a week ahead; open a newer file after that. The timeline shows today only, and at most 150 channels at a time.
 - Playback stops when you close the player or the app.

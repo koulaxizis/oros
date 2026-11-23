@@ -11,7 +11,7 @@ Tippe auf ein Cover, um zu lesen. Die Reihe `Weiterlesen` oben bringt dich zurü
 
 Um einen weiteren Katalog hinzuzufügen, gib seine OPDS-Adresse (OPDS 1 oder 2) unter `Katalog hinzufügen` ein, wenn du willst mit einem Namen. Deine eigenen Kataloge folgen dir auf deine anderen Geräte; die Papierkorb-Schaltfläche daneben entfernt einen.
 
-Beim ersten Mal sagt dir die Bibliothek, was online geht: nur die Seiten, die du öffnest, und die Wörter, nach denen du suchst, gesendet an die Website des Katalogs. Manche Websites lassen einen Browser nicht direkt lesen; die Bibliothek liest sie dann über das orOS-Relay, falls du eins in [Mail](app:mail) eingerichtet hast. Ohne Relay sagen diese Kataloge das und lassen sich nicht lesen.
+Beim ersten Mal sagt dir die Bibliothek, was online geht: nur die Seiten, die du öffnest, und die Wörter, nach denen du suchst, gesendet an die Website des Katalogs. Manche Websites lassen einen Browser nicht direkt lesen; die Bibliothek liest sie dann über das orOS-Relay, falls du eins in [Einstellungen](app:settings) › Verbundene Dienste › `orOS-Relay` eingerichtet hast. Ohne Relay sagen diese Kataloge das und lassen sich nicht lesen.
 
 ## Finden und ordnen
 Die Chips filtern nach `Am Lesen`, `Nicht begonnen`, `Gelesen`, `EPUB` oder `PDF` (und `FB2` und `Comics`, sobald du solche Bücher hast). `Titel, Autor, Tag suchen…` ignoriert Akzente. Sortiere nach `Zuletzt gelesen`, `Titel`, `Autor` oder `Fortschritt` und wechsle zwischen Covern und einer Liste.

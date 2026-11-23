@@ -4220,7 +4220,14 @@
       var r = relay(), own = ownRelay();
       return { url: r, own: own, mine: mineRelay(), kind: own && r === own ? "own" : r === RELAY ? "shared" : "mail" };
     },
+    // STRUCT-4: the one orOS relay (shell orosRelay, Settings › Connected
+    // services); this stays for callers of the older name.
     setOwnRelay: function (u) {
+      if (root.orosRelay && typeof root.orosRelay.set === "function") {
+        var done = root.orosRelay.set(u);
+        if (done) { try { localStorage.removeItem(OWN_KEY); } catch (e) {} changed(); }
+        return done;
+      }
       u = String(u || "").trim().replace(/\/+$/, "");
       if (u && !HTTPS_RE.test(u)) return false;
       if (!u) { try { localStorage.removeItem(OWN_KEY); } catch (e) { return false; } changed(); return true; }

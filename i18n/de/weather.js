@@ -182,7 +182,7 @@ orosPack("de", "weather", {
  "warn.set.show": "MeteoAlarm-Warnungen zeigen",
  "warn.set.title": "Amtliche Warnungen",
  "warn.source": "Quelle",
- "warn.st.cors": "Der Browser kann MeteoAlarm nicht direkt lesen. Richte das orOS-Relay in Mail ein, um Warnungen zu erhalten.",
+ "warn.st.cors": "Der Browser kann MeteoAlarm nicht direkt lesen. Richte das orOS-Relay in Einstellungen › Verbundene Dienste ein, um Warnungen zu erhalten.",
  "warn.st.err": "MeteoAlarm war nicht erreichbar.",
  "warn.st.none": "Kein Land für {city} gefunden: Warnungen gibt es nur für Europa.",
  "warn.st.ok": "{c}: {n} Warnungen aktiv, geprüft {t}.",

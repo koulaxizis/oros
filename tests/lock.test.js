@@ -271,7 +271,8 @@ test("sensitive work: every checkup item has its words in EN, EL and DE and a re
   const C = require("../settings/core.js");
   const ss = read("settings/settings.js");
   const go = ss.slice(ss.indexOf("var AUDIT_GO"), ss.indexOf("function secAudit"));
-  for (const m of go.matchAll(/: "([a-z]+)"/g)) assert.ok(C.isSection(m[1]), "section " + m[1]);
+  // STRUCT-6: an old id ("backup") still lands on its section and part.
+  for (const m of go.matchAll(/: "([a-z]+)"/g)) assert.ok(C.resolve(m[1]), "section " + m[1]);
 });
 
 test("sensitive work: widgets and reminders handed to Android carry no titles while the mode is on", () => {
