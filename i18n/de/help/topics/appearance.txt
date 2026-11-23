@@ -68,6 +68,8 @@ Dieselben Zahlen können eine Regel in [Automatisierungen](app:automations) star
 
 Unter `Aussehen der Leiste` kannst du die Leiste als abgerundeten Streifen schweben lassen: `Glas` lässt die Farben dahinter durch, `Mitternacht` bleibt auch in einem hellen Thema dunkel, `Deckend` folgt deinem Thema. `Klassisch` ist die Leiste, wie sie immer war. Hoher Kontrast behält immer die klassische Leiste.
 
+Unter `Wo die Karten sitzen` kann jede Karte, die du nutzt, in breiten Fenstern `Links` (nach der Menütaste), in der `Mitte` oder `Rechts` in der Leiste sitzen. Auf dem Handy und im Dock bleiben die Karten zusammen. Das Aussehen `Inseln` zeigt die linke Seite, die Mitte und die rechte Seite als getrennte schwebende Gruppen.
+
 Unter Windows, mit installiertem orOS, hat das Menü des Symbols im Infobereich „Smarte Leiste auf dem Desktop“: dieselbe Leiste, mit deinen Elementen und deinem Aussehen, bleibt oben am Bildschirm, auch wenn das orOS-Fenster geschlossen ist, und ein Tippen öffnet diese App in orOS.
 
 ## Begrüßung beim Start
