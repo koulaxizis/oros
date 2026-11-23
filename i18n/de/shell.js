@@ -1542,6 +1542,8 @@ orosPack("de", "shell", {
  "sb.storage.low": "frei, fast voll",
  "sb.storage.tip": "Frei für orOS in diesem Browser: {f} von {t} ({p} %)",
  "sb.storage.tip.disk": "Frei auf diesem Datenträger: {f} von {t} ({p} %)",
+ "sb.k.rates": "Wechselkurs",
+ "sb.rates.tip": "1 {f} = {v} {t} · EZB-Referenzkurs vom {d} · {app}",
  "sb.bat.label": "Akku",
  "sb.bat.charging": "lädt",
  "sb.bat.low": "schwach",

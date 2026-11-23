@@ -23,6 +23,10 @@
 //                         (<html data-oros-sys-disk="free total">),
 //                         else the browser's own estimate for orOS;
 //                         the warning colour under 10 %
+//   Exchange rate (RATES-1)  the Unit Converter's currency pair from the
+//                         ECB rates the Calculator / Unit Converter
+//                         already keeps (oros-units-rates): nothing new
+//                         is fetched; a tap opens the converter on it
 // ============================================================
 (function (root) {
   "use strict";
@@ -117,6 +121,27 @@
     return s + " " + u[0];
   }
 
+  // RATES-1: the converter's pair (oros-units-prefs pairs.currency,
+  // default EUR → USD) with the stored ECB rates (EUR-based) →
+  // { f, t, v, date } or null.
+  var CUR_RE = /^[A-Z]{3}$/;
+  function ratePair(rates, prefs) {
+    if (!rates || typeof rates !== "object" || rates.base !== "EUR" || !rates.rates || typeof rates.rates !== "object") return null;
+    var p = prefs && prefs.pairs && prefs.pairs.currency;
+    var f = p && CUR_RE.test(p.f) ? p.f : "EUR", to = p && CUR_RE.test(p.t) ? p.t : "USD";
+    if (f === to) { f = "EUR"; to = "USD"; }
+    var r = function (c) { var v = c === "EUR" ? 1 : rates.rates[c]; return typeof v === "number" && isFinite(v) && v > 0 ? v : null; };
+    var a = r(f), b = r(to);
+    if (!a || !b) return null;
+    return { f: f, t: to, v: b / a, date: /^\d{4}-\d{2}-\d{2}$/.test(rates.date || "") ? rates.date : "" };
+  }
+  // 1.0842, 162.35, 0.0061: 2 decimals from 100 up, else 4.
+  function rateText(v, loc) {
+    var d = v >= 100 ? 2 : 4;
+    try { return v.toLocaleString(loc || "en", { maximumFractionDigits: d }); }
+    catch (e) { return String(Math.round(v * 1e4) / 1e4); }
+  }
+
   // Icons: fixed markup, never data.
   var IC = {
     habits: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l4 4L20 5"/><path d="M4 20h16"/></svg>',
@@ -132,7 +157,8 @@
   };
   IC.storage = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01M7 16.5h.01"/></svg>';
   // The cards that are not an app's agenda (OWN): their kinds.
-  var OWN = { screen: 1, storage: 1 };
+  IC.rates = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h13l-3.5-3.5M20 16H7l3.5 3.5"/></svg>';
+  var OWN = { screen: 1, storage: 1, rates: 1 };
   var PEEKS = { screen: 1 };
 
   // api (from smartbar.js): { t, call, strict, appName, clock, ymdOf,
@@ -269,6 +295,18 @@
       },
       meal: function (now) { return strict() ? null : lineCard("meal", now); },
       reading: function (now) { return strict() ? null : lineCard("reading", now); },
+      // RATES-1: hidden under Sensitive work, like the money cards.
+      rates: function () {
+        if (strict()) return null;
+        var read = function (k) { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+        var r = ratePair(read("oros-units-rates"), read("oros-units-prefs"));
+        if (!r) return null;
+        var loc = call(function () { return root.orosI18n.locale(api.host().lang ? api.host().lang() : "en"); }) || undefined;
+        var v = rateText(r.v, loc), app = appName("units") || appName("calculator");
+        return { v: v, l: r.f + " → " + r.t,
+                 tip: t("sb.rates.tip").replace("{f}", r.f).replace("{v}", v).replace("{t}", r.t).replace("{d}", r.date || "—").replace("{app}", app),
+                 go: function () { call(function () { root.__orosOpenAt("units", { cat: "currency", from: r.f, to: r.t, value: 1 }); }); } };
+      },
       // STORE-1: free space; the warning colour under 10 %.
       storage: function () {
         var attr = call(function () { return root.document.documentElement.getAttribute("data-oros-sys-disk"); });
@@ -308,7 +346,8 @@
   }
 
   var EXP = { VER: "1.1.0", AGENDA: AGENDA, OWN: OWN, KINDS: Object.keys(AGENDA).concat(Object.keys(OWN)), agendaCard: agendaCard, dayGap: dayGap,
-              durOf: durOf, screenRows: screenRows, storageOf: storageOf, bytesOf: bytesOf, LOW_PCT: LOW_PCT, make: make };
+              durOf: durOf, screenRows: screenRows, storageOf: storageOf, bytesOf: bytesOf, LOW_PCT: LOW_PCT,
+              ratePair: ratePair, rateText: rateText, make: make };
   if (typeof module !== "undefined" && module.exports) module.exports = EXP;
   root.orosSmartBarApps = EXP;
 })(typeof window !== "undefined" ? window : globalThis);
