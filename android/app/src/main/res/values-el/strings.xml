@@ -42,6 +42,8 @@
 
     <!-- Passwords autofill (PW-AF2) -->
     <string name="af_service">Κωδικοί orOS</string>
+    <!-- PW-AF6: the orOS app's own service, told apart from orOS Passwords in Android's list -->
+    <string name="af_service_oros">orOS</string>
     <string name="af_pick">Αναζήτηση στο orOS Passwords</string>
     <string name="af_pick_title">Λογαριασμός για %1$s</string>
     <string name="af_pick_otp">Αναζήτηση κωδικών 2FA στο orOS</string>

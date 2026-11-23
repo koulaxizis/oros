@@ -44,6 +44,8 @@
 
     <!-- Passwords autofill (PW-AF2) -->
     <string name="af_service">orOS Passwords</string>
+    <!-- PW-AF6: the orOS app's own service, told apart from orOS Passwords in Android's list -->
+    <string name="af_service_oros">orOS</string>
     <string name="af_pick">Search orOS Passwords</string>
     <string name="af_pick_title">Login for %1$s</string>
     <string name="af_pick_otp">Search 2FA codes in orOS</string>

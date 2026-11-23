@@ -480,7 +480,7 @@ ${aliases}
              system can bind it; a suggestion opens AfAuthActivity
              (fingerprint, face or screen lock) before anything is filled. -->
         <service android:name=".OrosAutofillService"
-            android:label="@string/af_service"
+            android:label="@string/af_service_oros"
             android:exported="true"
             android:permission="android.permission.BIND_AUTOFILL_SERVICE">
             <intent-filter>
@@ -544,6 +544,9 @@ function feedNodes(id, opt) {
   if (!pw) return { perm: `
     <permission android:name="\${afFeedPermission}" tools:node="remove" />`, provider: "" };
   return { perm: "", provider: `
+        <!-- PW-AF6: Android's autofill list names this app "orOS Passwords"
+             and the orOS app's service "orOS". -->
+        <service android:name=".OrosAutofillService" android:label="@string/af_service" tools:replace="android:label" />
         <!-- PW-AF6: the orOS app hands this app its sealed fill lists. -->
         <provider android:name=".AfFeedProvider"
             android:authorities="\${applicationId}.affeed"

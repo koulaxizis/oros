@@ -28,11 +28,14 @@ test("manifests: a signature permission guards the feed; only orOS Passwords has
   assert.match(main, /<package android:name="\$\{passPackage\}" \/>/);
   assert.match(main, /<receiver android:name="\.AfFeedReceiver" android:exported="true">[\s\S]*?PACKAGE_FULLY_REMOVED[\s\S]*?<data android:scheme="package" \/>/);
   assert.ok(!main.includes("<provider android:name=\".AfFeedProvider\""), "the orOS app has no provider");
+  // the two services are told apart in Android's list
+  assert.match(main, /<service android:name="\.OrosAutofillService"\s+android:label="@string\/af_service_oros"/);
 
   const pw = overlay("passwords");
   assert.match(pw, /<provider android:name="\.AfFeedProvider"\s+android:authorities="\$\{applicationId\}\.affeed"\s+android:exported="true"\s+android:permission="\$\{afFeedPermission\}" \/>/);
   assert.ok(!/<permission android:name="\$\{afFeedPermission\}" tools:node="remove"/.test(pw), "orOS Passwords keeps the permission it enforces");
   assert.match(pw, /<uses-permission android:name="\$\{afFeedPermission\}" tools:node="remove" \/>/);
+  assert.match(pw, /<service android:name="\.OrosAutofillService" android:label="@string\/af_service" tools:replace="android:label" \/>/);
   assert.match(pw, /<receiver android:name="\.AfFeedReceiver" tools:node="remove" \/>/);
 
   for (const id of Object.keys(G.soloApps()).filter((x) => x !== "passwords")) {
