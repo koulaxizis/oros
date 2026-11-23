@@ -13815,6 +13815,10 @@
       if (window.orosSmartBar && window.orosSmartBar.setLook) window.orosSmartBar.setLook(String(value || ""));
       return;
     }
+    if (/^smartbar-zone:/.test(name)) {  // smartbar.js SBZ-1: "smartbar-zone:<kind>", value "l" | "c" | "r"
+      if (window.orosSmartBar && window.orosSmartBar.setZone) window.orosSmartBar.setZone(name.slice(14), String(value || "r"));
+      return;
+    }
     if (/^smartbar-move:/.test(name)) {  // smartbar.js: "smartbar-move:<kind>", value -1 (left) / 1 (right)
       if (window.orosSmartBar) window.orosSmartBar.move(name.slice(14), Number(value) < 0 ? -1 : 1);
       return;

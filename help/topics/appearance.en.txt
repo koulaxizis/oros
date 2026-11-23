@@ -68,6 +68,8 @@ The same figures can start a rule in [Automations](app:automations): a few minut
 
 Under `Look of the bar` you can float the bar as a rounded strip: `Glass` lets the colours behind it through, `Midnight` stays dark even in a light theme, `Solid` follows your theme. `Classic` is the bar as it always was. High contrast always keeps the classic bar.
 
+Under `Where the cards sit` each card you use can sit on the `Left` (after the menu button), in the `Centre` or on the `Right` of the bar, on wide windows. On a phone and in the Dock the cards stay together. The look `Islands` shows the left side, the centre and the right side as separate floating groups.
+
 On Windows, with orOS installed, the tray icon's menu has `Smart bar on the desktop`: the same bar, with your chips and look, stays at the top of the screen even when the orOS window is closed, and a tap opens that app in orOS.
 
 ## Greeting at the start

@@ -171,7 +171,7 @@ test("SB3 looks: kept only when known, never under high contrast, wired to Setti
   assert.deepStrictEqual(M.parse('{"v":1,"list":[],"look":""}'), { v: 1, list: [] });
   assert.strictEqual(M.lookOf(null), "");
   assert.strictEqual(M.lookOf({ v: 1, list: [], look: "midnight" }), "midnight");
-  assert.deepStrictEqual(M.LOOKS, ["", "glass", "midnight", "solid"]);
+  assert.deepStrictEqual(M.LOOKS, ["", "glass", "midnight", "solid", "islands"]);
   const src = read("smartbar.js");
   // every look rule is scoped away from high contrast
   src.split("\n").filter((l) => /html\[data-oros-bar/.test(l) && !/prefers-reduced-transparency/.test(l))
@@ -446,4 +446,28 @@ test("NOWPLAY-1 playingOf: only a player that plays, title split from its artist
   const src = read("smartbar.js"), sh = read("shell.js");
   assert.match(sh, /media: function \(\) \{ return qsMedia\(\)\.filter\(function \(m\) \{ return !appLockSet\(m\.id\); \}\); \}/);
   assert.match(src, /var app = p\.m\.name \|\| "", what = strict\(\) \? app : p\.what;/);   // the title hides under Sensitive work
+});
+
+test("SBZ-1 zones: left / centre kept only for listed cards, right by default, live pills stay right", () => {
+  assert.deepStrictEqual(M.parse('{"v":1,"list":["event","tasks"],"zones":{"event":"l","tasks":"c","water":"l","x":"c"}}'),
+    { v: 1, list: ["event", "tasks"], zones: { event: "l", tasks: "c" } });
+  assert.deepStrictEqual(M.parse('{"v":1,"list":["event"],"zones":{"event":"r"}}'), { v: 1, list: ["event"] }, "right is the default, not stored");
+  assert.deepStrictEqual(M.parse('{"v":1,"list":["event"],"zones":["l"]}'), { v: 1, list: ["event"] });
+  const st = M.parse('{"v":1,"list":["event","tasks","water"],"zones":{"event":"l","water":"c"}}');
+  assert.strictEqual(M.zoneOf(st, "event"), "l");
+  assert.strictEqual(M.zoneOf(st, "tasks"), "r");
+  assert.strictEqual(M.zoneOf(null, "tasks"), "r");
+  const row = ["rec", "event", "tasks", "water"];
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(M.zonesOf(st, row, true))), { l: ["event"], c: ["water"], r: ["rec", "tasks"] });
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(M.zonesOf(st, row, false))), { l: [], c: [], r: row }, "narrow or in the Dock: all together");
+  const src = read("smartbar.js");
+  assert.match(src, /function zonesOn\(slot\) \{ return !slot && !folded\(\) && \(root\.innerWidth \|\| 0\) >= ZONE_W; \}/);
+  assert.match(src, /var dz = slot \? zonesOf\(stored\(\), l, true\) : null;/, "in the Dock: left, centre, right in a row");
+  assert.match(read("shell.js"), /window\.orosSmartBar\.setZone\(name\.slice\(14\), String\(value \|\| "r"\)\)/);
+  const set = read("settings/settings.js"), core = read("settings/core.js"), de = read("i18n/de/settings.js");
+  assert.match(set, /set\("smartbar-zone:" \+ k\.id, v\)/);
+  ["sb.zones", "sb.zones.hint", "sb.zone.l", "sb.zone.c", "sb.zone.r", "sb.look.islands", "w.sb-zones"].forEach((k) => {
+    assert.strictEqual(core.split('"' + k + '":').length - 1, 2, k + " in EN and EL");
+    assert.ok(de.includes('"' + k + '":'), k + " in DE");
+  });
 });
