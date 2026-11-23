@@ -10,8 +10,11 @@
    - index: the values to fill, sealed with the "index" key, which
      Android opens only after the fingerprint, face or screen lock.
      The same values as the browser add-on's fill (extension/pmfill.js
-     payload): never a card PIN, document numbers, notes, custom
-     fields or password history.
+     payload): never a card PIN, notes, custom fields or password
+     history. PW-AF6 (1.2.0): an identity also carries x = its tax
+     number, IBAN, ID card and passport numbers (only those set), in
+     the index only; the phone fills them only from the person's own
+     pick ("Choose a document number from orOS"), never as a suggestion.
    Sealing: a fresh AES-256-GCM key per list, wrapped with RSA-OAEP
    (SHA-1, the digest Android Keystore's OAEP supports for MGF1).
    PW-AF3 also keeps here the rules for a login handed over to be
@@ -26,7 +29,8 @@
 })(typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
+  var DOCS = ["tax", "iban", "idno", "pass"];
   var MAX = { title: 120, sub: 120, sites: 20, site: 300, apps: 10 };
   var PKG = /^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/;
 
@@ -103,9 +107,14 @@
         names.push({ i: e.id, k: k, t: title, s: str(K.summary(e), MAX.sub), w: [], a: [], o: 0 });
         index.push({ i: e.id, k: k, t: title, c: c });
       } else if (k === "identity" || k === "address") {
-        var h = person(k, d);
+        var h = person(k, d), row = { i: e.id, k: k, t: title, h: h };
+        if (k === "identity") {
+          var x = {}, any = false;
+          DOCS.forEach(function (f) { var v = str(d[f], 200).trim(); if (v) { x[f] = v; any = true; } });
+          if (any) row.x = x;
+        }
         names.push({ i: e.id, k: k, t: title, s: str(K.summary(e), MAX.sub), w: [], a: [], o: 0 });
-        index.push({ i: e.id, k: k, t: title, h: h });
+        index.push(row);
       }
     });
     return { names: names, index: index };
@@ -196,7 +205,9 @@
   function sealBoth(entries, K, PC, keys) {
     var l = lists(entries, K, PC);
     return Promise.all([seal(l.index, keys.idx), seal(l.names, keys.names)]).then(function (r) {
-      return { idx: r[0], names: r[1], count: l.names.length };
+      // k: the end of the index key sealed for, so the app can tell a
+      // copy sealed for keys it no longer has (PW-AF6)
+      return { idx: r[0], names: r[1], count: l.names.length, k: String(keys.idx).slice(-24) };
     });
   }
 

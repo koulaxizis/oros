@@ -44,6 +44,8 @@
 
     <!-- Passwords autofill (PW-AF2) -->
     <string name="af_service">orOS Passwords</string>
+    <!-- PW-AF6: the orOS app's own service, told apart from orOS Passwords in Android's list -->
+    <string name="af_service_oros">orOS</string>
     <string name="af_pick">Search orOS Passwords</string>
     <string name="af_pick_title">Login for %1$s</string>
     <string name="af_pick_otp">Search 2FA codes in orOS</string>
@@ -52,6 +54,9 @@
     <string name="af_guess">Matches by name</string>
     <string name="af_link_web_q">Use “%1$s” on %2$s from now on? orOS remembers this on this phone.</string>
     <string name="af_none_otp">No 2FA codes in orOS Passwords yet.</string>
+    <string name="af_pick_doc">Choose a document number from orOS</string>
+    <string name="af_pick_doc_title">Which identity for %1$s?</string>
+    <string name="af_none_doc">No identity in orOS Passwords has these numbers yet.</string>
     <string name="af_link_q">Use “%1$s” in %2$s (%3$s) from now on? orOS remembers this on this phone.</string>
     <string name="af_yes">Use it</string>
     <string name="af_no">Cancel</string>
