@@ -102,7 +102,7 @@ Diese Einstellungen bleiben auf diesem Gerät.
 
 Das Licht folgt dem Ton von Songs auf diesem Gerät, von Offline-Kopien und von Songs aus deinem eigenen WebDAV oder Dropbox. Viele Seiten, die Musik streamen, lassen eine Webseite ihren Ton nicht hören; bei diesen bewegt sich das Licht von selbst, und eine Zeile unter der Steuerung sagt das. Alles geschieht auf diesem Gerät: Nichts wird aufgenommen oder gesendet.
 
-Das Licht bleibt still, wenn reduzierte Bewegung an ist, wenn der Akku schwach ist (unter 20 % und nicht am Laden) oder wenn das Gerät zu ausgelastet ist. Es blinkt nie: Es wird sanft heller und dunkler.
+Das Licht bleibt still, wenn reduzierte Bewegung an ist, wenn der Akku schwach ist (unter 20 % und nicht am Laden) oder wenn das Gerät zu ausgelastet ist (dann ruht es ein paar Minuten und bewegt sich von selbst wieder). Es blinkt nie: Es wird sanft heller und dunkler.
 
 ## Auf einem Lautsprecher oder Fernseher abspielen
 Im großen Player wählt die Taste mit dem Bildschirm und den Wellen (`Abspielen auf…`), wo die Musik läuft: eine andere Ausgabe dieses Geräts, ein in den Systemeinstellungen gekoppelter Bluetooth-Lautsprecher, Chromecast oder AirPlay über den Browser oder ein Smart-TV oder Netzwerklautsprecher über orOS Bridge.
