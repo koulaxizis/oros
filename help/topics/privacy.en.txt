@@ -22,6 +22,7 @@ On a computer other people use, turn on `Screen lock` in [Settings](app:settings
 `Lock screen look` (in the same place): `Wallpaper` (the default) shows your own wallpaper blurred and dimmed behind a big clock, a greeting with your name, the number of notifications waiting and the battery; your apps never show through. `Plain` is the dark screen as before. While Sensitive work is on, the lock screen shows no name and no number.
 
 On an Android phone (the orOS app or orOS Passwords) the lock can also open with your fingerprint or face, and on a computer with orOS Portable, the orOS app or orOS USB with Windows Hello or a fingerprint; your PIN still works and is asked every 14 days.
+
 On orOS USB, Portable and the installed orOS, the lock screen also has `Sleep`, `Restart` and `Shut down` at its foot: tap once, then again within 5 seconds. In a browser they are not there.
 
 ### Clipboard history
