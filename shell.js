@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.72.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.73.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -1501,7 +1501,11 @@
   //            the shell and every app, so code that honours the
   //            system setting follows this switch too.
   //   transp   true: reduce transparency (no blur, solid panels);
-  //            also on while the system asks for it.
+  //            also on while the system asks for it, unless glass.
+  //   glass    true: keep the glass even while the system asks for less
+  //            transparency (GLASS-KEEP: Windows asks as soon as its
+  //            Transparency effects or Energy saver go off, which took
+  //            the glass away with no orOS setting changed).
   // A11Y_CSS goes into the shell and into every same-origin app
   // document (on load and on every change) and only acts through the
   // data-oros-* attributes of that document's root, so nothing looks
@@ -1546,13 +1550,14 @@
       last: A11Y_FILTERS.indexOf(v.last) > 0 ? v.last : "grey",
       pointer: A11Y_POINTERS.indexOf(v.pointer) !== -1 ? v.pointer : "normal",
       motion: v.motion === true,
-      transp: v.transp === true
+      transp: v.transp === true,
+      glass: v.glass === true
     };
   }
   function a11yMq(q) {
     try { return !!(window.matchMedia && window.matchMedia(q).matches); } catch (e) { return false; }
   }
-  function a11yLessTransp() { return a11y.transp || a11yMq("(prefers-reduced-transparency: reduce)"); }
+  function a11yLessTransp() { return a11y.transp || (!a11y.glass && a11yMq("(prefers-reduced-transparency: reduce)")); }
   function a11yLessMotion() { return a11y.motion || a11yMq("(prefers-reduced-motion: reduce)"); }
   function a11yHigh() {
     if (a11y.contrast === "on") return true;
@@ -1675,6 +1680,9 @@
     } else if (name === "reduceTransparency") {
       if (!!value === a11y.transp) return;
       a11y.transp = !!value;
+    } else if (name === "keepGlass") {
+      if (!!value === a11y.glass) return;
+      a11y.glass = !!value;
     } else if (name === "pointerSize") {
       if (A11Y_POINTERS.indexOf(value) === -1 || value === a11y.pointer) return;
       a11y.pointer = value;
@@ -1700,7 +1708,8 @@
       // Reduce motion and transparency (W2): the switch, and whether the
       // system already asks for it (the real query, not the switch)
       motion: a11y.motion, motionSys: a11ySysMotion(),
-      transp: a11y.transp, transpSys: a11yMq("(prefers-reduced-transparency: reduce)")
+      transp: a11y.transp, transpSys: a11yMq("(prefers-reduced-transparency: reduce)"),
+      glass: a11y.glass                                    // GLASS-KEEP
     };
   }
   // For other features (Screen time's Bedtime): a temporary filter on
@@ -13436,6 +13445,7 @@
       return { on: !!p.on, size: p.size, magnify: !!p.magnify, autohide: !!p.autohide,
                over: !!p.over, fine: !!p.fine, pinned: Number(p.pinned) || 0,
                badges: p.badges !== false,          // BADGE-1 (launcher 1.8.0): counts on icons
+               cards: p.cards === true,             // DOCK-CARDS (launcher 1.9.0): bar cards in the Dock
                style: typeof p.style === "string" ? p.style : null,
                hover: typeof p.hover === "string" ? p.hover : null,
                pos: typeof p.pos === "string" ? p.pos : null,
@@ -13698,7 +13708,8 @@
       case "filterStrength":
       case "pointerSize":
       case "reduceMotion":
-      case "reduceTransparency": a11ySetUser(name, value); return;
+      case "reduceTransparency":
+      case "keepGlass": a11ySetUser(name, value); return;
       case "uiFont":       uifSetUser(value); return;
       case "me:name":      meSetName(value); return;
       case "greet":        greetSetUser(!!value); return;
@@ -13712,10 +13723,19 @@
       case "wpland:light":  wpLandNewShape({ light: value ? 1 : 0 }); settingsNotify(); return;
       case "wpviz:style":   if (wpVizSet(value)) settingsNotify(); return;   // VIZWALL-1
       case "wxdesk:on":     if (window.orosWxDesk) { window.orosWxDesk.set(!!value); settingsNotify(); } return;
+      // DOCK-CARDS (structure review 9): "two" = top bar and Dock, "one" = one bar at the bottom
+      case "bars": {
+        var LB = settingsLauncher();
+        if (!LB || (value !== "one" && value !== "two")) return;
+        if (value === "one") { LB.setPref("on", true); LB.setPref("pos", "bottom"); }
+        LB.setPref("cards", value === "one");
+        settingsNotify();
+        return;
+      }
       case "wpaccent:on":   wpAccSetUser("on", value); return;      // WPACC-1, this device
       case "wpaccent:pick": wpAccSetUser("pick", value); return;
     }
-    if (/^dock:(on|size|magnify|autohide|over|style|hover|pos|badges)$/.test(name)) {
+    if (/^dock:(on|size|magnify|autohide|over|style|hover|pos|badges|cards)$/.test(name)) {
       var L = settingsLauncher();
       if (L) { L.setPref(name.slice(5), value); settingsNotify(); }
       return;

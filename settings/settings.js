@@ -442,6 +442,18 @@
 
     if (s.seasonal) secSeasonal(host, s.seasonal);
 
+    // DOCK-CARDS + structure review 9 (Chris 2026-11-22): one choice of
+    // bars instead of a Dock switch. "One bar at the bottom" turns the
+    // Dock on at the bottom and puts the top bar's cards in it (wide
+    // screens; elsewhere they stay in the top bar).
+    if (s.dock && typeof s.dock.cards === "boolean") {
+      var cbar = card(t("k.bars"), "dock");
+      var barsNow = s.dock.cards && s.dock.on ? "one" : "two";
+      cbar.appendChild(row(t("k.bars"), segmented([{ value: "two", label: t("k.bars.two") }, { value: "one", label: t("k.bars.one") }],
+        barsNow, "bars", function (v) { set("bars", v); }, t("k.bars")), { stack: true, hint: t("k.bars.hint") }));
+      host.appendChild(cbar);
+    }
+
     if (s.dock) {
       var d = s.dock;
       var c5 = card(t("k.dock"), "dock");
@@ -619,7 +631,12 @@
       if (a.motionSys) c7.appendChild(el("p", "hint", t("ac.motion.sys")));
       c7.appendChild(row(t("ac.transp"), switchBtn(a.transp, "reduceTransparency", function (v) { set("reduceTransparency", v); }, t("ac.transp")),
         { scope: "a11y", hint: t("ac.transp.hint") }));
-      if (a.transpSys) c7.appendChild(el("p", "hint", t("ac.transp.sys")));
+      // GLASS-KEEP: while the system asks for less transparency, the
+      // person may keep the glass (an older shell sends no glass).
+      if (a.transpSys && "glass" in a) {
+        c7.appendChild(row(t("ac.glass"), switchBtn(a.glass, "keepGlass", function (v) { set("keepGlass", v); }, t("ac.glass")),
+          { scope: "a11y", hint: t("ac.glass.hint") }));
+      } else if (a.transpSys) c7.appendChild(el("p", "hint", t("ac.transp.sys")));
       host.appendChild(c7);
     }
 
