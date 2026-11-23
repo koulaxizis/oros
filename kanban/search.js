@@ -2,7 +2,7 @@
 // orOS Kanban — universal search provider (v1.0.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: reads oros-kanban-data, never writes.
-// One hit per card (text; notes, subtasks, extra info, board and
+// One hit per card (text; notes, subtasks, extra info, links, key, board and
 // column as text). The date shown is the due date. Archived boards
 // are skipped (the Kanban deep link refuses them); deleted boards,
 // columns and cards are not in the arrays (tombstone maps).
@@ -52,7 +52,8 @@
               id: k.id,
               title: str(k.text),
               text: [labels.length ? w["srch.labels"] + labels.join(", ") : "", str(k.notes)]
-                .concat(sub, info, [str(k.lane), str(b.name) + " › " + str(c.name)])
+                .concat(sub, info, arr(k.links).map(function (l) { return l ? [str(l.t), str(l.u)].filter(Boolean).join(" ") : ""; }),   // KB-LINK
+                        [str(k.key), str(k.lane), str(b.name) + " › " + str(c.name)])                                                    // KB-KEY
                 .filter(Boolean).join(" · "),
               when: dueMs(k.due),
               target: { board: b.id, col: c.id, card: k.id },

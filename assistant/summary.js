@@ -560,6 +560,9 @@
           if (ln.length) it.labels = ln.slice(0, 10);
           var st = arr(k.subtasks).filter(isObj);
           if (st.length) it.subtasks = st.filter(function (x) { return x.done || x.completed; }).length + "/" + st.length;
+          if (typeof k.key === "string" && k.key) it.key = str(k.key, 120);                                   // KB-KEY
+          var lk = arr(k.links).filter(function (l) { return isObj(l) && typeof l.u === "string"; });
+          if (lk.length) it.links = lk.slice(0, 10).map(function (l) { return str(l.u, 2000); });          // KB-LINK
           it.target = { board: b.id, col: c.id, card: k.id };   // → a ref (assistant.js)
           items.push(it);
         });

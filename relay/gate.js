@@ -379,7 +379,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_add_cards",
-    description: "Adds cards to a Kanban board (at most 50 per call, all or none). Columns by name or id, labels by name (existing labels of that board only). Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new card ids.",
+    description: "Adds cards to a Kanban board (at most 50 per call, all or none). Columns by name or id, labels by name (the board's labels; create_labels: true makes the missing ones). A card with a key (a stable id of your own, e.g. a routine's finding id, unique per board) that the board already has is brought up to date instead of added twice: text, and notes, due, labels, links, start, milestone when given; it changes column only with move: true. So one call syncs a whole list; the answer gives every card's id and which ones were updated. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new card ids.",
     inputSchema: {
       type: "object",
       properties: {
@@ -394,11 +394,15 @@ export const TOOLS = [
             start: { type: "string", description: "The planned first day on the Timeline (Gantt), YYYY-MM-DD, at most the due date." },
             milestone: { type: "boolean", description: "true: a milestone (one day, its due date)." },
             labels: { type: "array", items: { type: "string" }, description: "Label names of this board." },
-            position: { type: "string", enum: ["top", "bottom"], description: "Where in the column (bottom when left out)." }
+            position: { type: "string", enum: ["top", "bottom"], description: "Where in the column (bottom when left out)." },
+            key: { type: "string", description: "Your own stable key for this card (at most 120 characters, unique on the board). kanban_move_cards, kanban_change_card take it in place of the card id." },
+            links: { type: "array", maxItems: 10, items: { type: "object", properties: { url: { type: "string", description: "An https address, or a path on the orOS disk starting with / (e.g. a report in Claude's folders)." }, title: { type: "string", description: "What the button says, at most 80 characters (the address when left out)." } }, required: ["url"], additionalProperties: false }, description: "Links shown as buttons on the card, opened with one click (at most 10)." },
+            move: { type: "boolean", description: "For a card whose key is already on the board: true moves it to column too (left where it is otherwise)." }
           },
           required: ["column", "text"],
           additionalProperties: false
-        } }
+        } },
+        create_labels: { type: "boolean", description: "true: label names the board does not have yet are made (Kanban's colours in turn)." }
       },
       required: ["board", "cards"],
       additionalProperties: false
@@ -415,7 +419,7 @@ export const TOOLS = [
         moves: { type: "array", minItems: 1, maxItems: 100, items: {
           type: "object",
           properties: {
-            card: { type: "string", description: "Card id." },
+            card: { type: "string", description: "Card id, or the card's key." },
             column: { type: "string", description: "Target column name or id." },
             position: { type: "string", enum: ["top", "bottom"], description: "Where in the column (bottom when left out)." }
           },
@@ -435,8 +439,10 @@ export const TOOLS = [
       type: "object",
       properties: {
         board: { type: "string", description: "The board name or id (app_summary with app kanban)." },
-        card: { type: "string", description: "Card id." },
+        card: { type: "string", description: "Card id, or the card's key." },
         text: { type: "string" },
+        links: { type: "array", maxItems: 10, items: { type: "object", properties: { url: { type: "string", description: "An https address, or a path on the orOS disk starting with / (e.g. a report in Claude's folders)." }, title: { type: "string", description: "What the button says, at most 80 characters (the address when left out)." } }, required: ["url"], additionalProperties: false }, description: "The whole new list of links ([] clears them), shown as buttons on the card." },
+        key: { type: "string", description: "Give the card a key (unique on the board; \"\" removes it)." },
         notes: { type: "string" },
         due: { type: "string", description: "YYYY-MM-DD, or \"\" to clear." },
         start: { type: "string", description: "The planned first day on the Timeline (Gantt), YYYY-MM-DD at most the due date, or \"\" to clear." },
@@ -463,7 +469,7 @@ export const TOOLS = [
   },
   {
     name: "kanban_add_columns",
-    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name), and sets a column up as a step of the Author Portal production flow (portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay as they are, an empty text clears it). Give any of the three. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
+    description: "Adds columns to a Kanban board (at most 20 per call), at the end or after a given column, and renames columns (rename_columns: each by its id or name, to a new name), and sets a column up as a step of the Author Portal production flow (portal_columns: step, finish, the name and explanation the author sees, Greek and optional English; keys left out stay as they are, an empty text clears it), and makes labels (add_labels). Give any of them. Works when the owner lets Claude change Kanban and has not paused changes; otherwise the answer says so. The owner is notified and can undo it from any of their devices. Returns the new column ids.",
     inputSchema: {
       type: "object",
       properties: {
@@ -486,6 +492,7 @@ export const TOOLS = [
           required: ["column", "name"],
           additionalProperties: false
         } },
+        add_labels: { type: "array", minItems: 1, maxItems: 30, items: { type: "object", properties: { name: { type: "string", description: "At most 40 characters." }, color: { type: "string", enum: ["red", "yellow", "green", "teal", "purple", "pink", "orange", "grey"] } }, required: ["name"], additionalProperties: false }, description: "New labels for the board (e.g. severity, a routine's name); names it has already are skipped." },
         portal_columns: { type: "array", minItems: 1, maxItems: 20, items: {
           type: "object",
           properties: {
@@ -519,7 +526,8 @@ export const TOOLS = [
           properties: { name: { type: "string", description: "At most 60 characters." } },
           required: ["name"],
           additionalProperties: false
-        } }
+        } },
+        labels: { type: "array", minItems: 1, maxItems: 30, items: { type: "object", properties: { name: { type: "string", description: "At most 40 characters." }, color: { type: "string", enum: ["red", "yellow", "green", "teal", "purple", "pink", "orange", "grey"] } }, required: ["name"], additionalProperties: false }, description: "The board's labels (e.g. severity: critical, medium, low; the routines' names)." }
       },
       required: ["name", "columns"],
       additionalProperties: false

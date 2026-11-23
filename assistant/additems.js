@@ -108,7 +108,7 @@
   var TD_KEYS = ["id", "text", "done", "due", "notes", "labels", "info", "recurrence", "mtime", "om", "pos"];
   var TD_LIST_KEYS = ["id", "name", "mtime", "om", "pos", "recurrence", "lastReset", "nextReset", "items", "fm"];
   // kanban/model.js
-  var KB_GROUPS = ["a", "c", "d", "g", "k", "l", "n", "p", "s", "t", "x"];
+  var KB_GROUPS = ["a", "c", "d", "e", "g", "k", "l", "n", "p", "s", "t", "x"];   // e: key + links (KB-KEY, KB-LINK)
   var KB_CARD_KEYS = ["id", "text", "notes", "due", "labels", "subtasks", "info", "mtime", "pos"];
   var KB_COL_KEYS = ["id", "name", "mtime", "om", "pos", "cards"];
   var KB_BOARD_KEYS = ["id", "name", "archived", "color", "mtime", "om", "pos", "deleted", "labels", "columns"];
@@ -355,7 +355,25 @@
       if (typeof x.milestone !== "boolean") return { err: w + "milestone must be true or false." };
       if (x.milestone) o.ms = 1;
     }
-    return { o: o, key: fold(o.board) + "|" + fold(o.title) };
+    // KB-KEY: the caller's own key (a card with it on the board starts unticked); KB-LINK: links
+    if (has(x, "key") && x.key !== null && x.key !== "") {
+      var ky = typeof x.key === "string" ? one(x.key) : "";
+      if (!ky || ky.length > 120) return { err: w + "key must be a text of at most 120 characters." };
+      o.key = ky;
+    }
+    if (has(x, "links") && x.links !== null) {
+      if (!Array.isArray(x.links) || x.links.length > 10) return { err: w + "links must be a list of at most 10 addresses." };
+      var ls = [];
+      for (var li = 0; li < x.links.length; li++) {
+        var u = typeof x.links[li] === "string" ? x.links[li].trim() : "";
+        var web = /^https?:\/\/[^\s<>"']+$/i.test(u) && u.length <= 2000;
+        var path = /^\/[^\u0000-\u001f\u007f]*$/.test(u) && u.length <= 500 && !/(^|\/)\.\.(\/|$)/.test(u);
+        if (!web && !path) return { err: w + "links[" + li + "] must be an https address or a path on the orOS disk starting with /." };
+        if (ls.every(function (y) { return y.u !== u; })) ls.push({ u: u });
+      }
+      if (ls.length) o.links = ls;
+    }
+    return { o: o, key: o.key ? "key|" + fold(o.board) + "|" + o.key : fold(o.board) + "|" + fold(o.title) };
   }
   // CRM records: customer = a CRM customer's ref (assistant.js turns it
   // into o.cust before plan()), deal = a deal's ref (→ o.deal).
@@ -688,6 +706,8 @@
       if (x.labelName) f.push(["label", x.labelName]);
       if (o.remind) f.push(["reminder", o.remind]);
       if (o.note) f.push(["note", preview(o.note, 200)]);
+      if (o.key) f.push(["key", o.key]);
+      if (o.links) f.push(["links", o.links.map(function (l) { return l.u; }).join(" · ")]);
       return { title: o.title, fields: f, dup: x.dup };
     }) };
   }
@@ -1026,7 +1046,9 @@
       var dup = null;
       cols.forEach(function (c) {
         c.cards.forEach(function (k) {
-          if (!dup && isObj(k) && fold(k.text) === fold(o.title)) dup = { id: k.id, title: k.text, target: { board: b.id, col: c.id, card: k.id } };
+          // KB-KEY: with a key only the same key is the same card; without one, the same title
+          var same = o.key ? isObj(k) && k.key === o.key : isObj(k) && fold(k.text) === fold(o.title);
+          if (!dup && same) dup = { id: k.id, title: k.text, target: { board: b.id, col: c.id, card: k.id } };
         });
       });
       out.push({ b: b, col: col, labelIds: ids, dup: dup });
@@ -1085,6 +1107,8 @@
                    info: [], mtime: s, pos: 0, fm: fm };
       if (o.start) card.start = o.start;
       if (o.ms) card.ms = 1;
+      if (o.key) card.key = o.key;
+      if (o.links) card.links = clone(o.links);
       var k = x.b.id + "|" + x.col.id;
       if (!add[k]) add[k] = { b: x.b, col: x.col, cards: [] };
       add[k].cards.push(card);

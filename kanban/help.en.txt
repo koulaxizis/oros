@@ -17,6 +17,7 @@ The `Card` dialog saves as you type. It has:
 - `Labels`: tap `Add / manage labels` to pick labels or create a new one with a colour. The pencil next to a label opens `Edit label`: change its name or colour, or delete it. Every card that carries it changes with it.
 - `Subtasks`: a checklist. The card shows how many are done, for example 2/5.
 - `Extra info`: your own fields, each with a `Field` name and a `Value`.
+- `Links`: web addresses (https://…) or paths on the orOS disk (/Folder/file). Each opens with one press: a web address in a new tab, a path in Files. A card with one link shows a link button that opens it straight away. A card added by Claude or a routine may also show its `Key`, which it uses to find the card again.
 - `Column`: moves the card to another column, which is handy on a phone.
 - `Lane`: a free name such as "Team A", used by swimlanes (see below).
 - `Attachments` and `Cover`: see below.
@@ -72,7 +73,7 @@ The view button next to `Filter by label` opens `View and board options`. The vi
 - `New board from template…` starts a board from one of your templates or from a built-in one: Personal, Software sprint or Content calendar. You can delete your own templates there.
 
 ## Search and filter
-- `Search…` shows only cards whose text, notes, due date, extra info, lane, attachment names or label names match.
+- `Search…` shows only cards whose text, notes, due date, extra info, links, key, lane, attachment names or label names match.
 - `Filter by label` shows only cards that carry any of the labels you pick. From there the pencil edits a label (name and colour) and the cross deletes it; a deleted label is removed from every card.
 
 ## Sync and backup

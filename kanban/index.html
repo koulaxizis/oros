@@ -142,6 +142,16 @@
         <span data-i18n="card.info.add">Add field</span>
       </button>
 
+      <!-- KB-LINK: links shown as buttons on the card (https or a path on the orOS disk); KB-KEY: the key a routine gave it -->
+      <label for="c-link-url" data-i18n="card.links">Links</label>
+      <div id="c-links-list"></div>
+      <div class="link-add">
+        <input type="text" id="c-link-url" autocomplete="off" inputmode="url" data-i18n-ph="card.links.ph" placeholder="https://… or /Folder/file">
+        <button type="button" id="c-link-add" class="ghost" data-i18n="card.links.add">Add link</button>
+      </div>
+      <div class="dlg-hint" id="c-link-err" role="alert" hidden></div>
+      <div class="dlg-hint" id="c-key" hidden></div>
+
       <!-- AP-FLOW: shown to its creator in the Author Portal (only on a board with step columns) -->
       <div id="c-ap" hidden>
         <label data-i18n="ap.title">Author Portal</label>

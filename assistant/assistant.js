@@ -726,7 +726,7 @@
       "do.hint": "Nothing happens until you press the button; then {app} opens.",
       "chg.err": "Could not prepare a change in {app}",
       "chg.storage": "it could not be saved (storage full?)",
-      "kbap.step": "a step", "kbap.nostep": "not a step", "kbap.finish": "finish", "kbap.nofinish": "not a finish",
+      "kb.label": "label", "kbap.step": "a step", "kbap.nostep": "not a step", "kbap.finish": "finish", "kbap.nofinish": "not a finish",
       "chg.conflict": "the item changed meanwhile",
       "chg.ask.many": "Change these {n} items in {app}?",
       "chg.ask.manyDel": "Delete these {n} items from {app}?",
@@ -1409,7 +1409,7 @@
       "do.hint": "Δεν γίνεται τίποτα μέχρι να πατήσεις το κουμπί· τότε ανοίγει: {app}.",
       "chg.err": "Δεν ετοιμάστηκε αλλαγή ({app})",
       "chg.storage": "δεν αποθηκεύτηκε (γεμάτος χώρος;)",
-      "kbap.step": "βήμα", "kbap.nostep": "όχι βήμα", "kbap.finish": "τερματισμός", "kbap.nofinish": "όχι τερματισμός",
+      "kb.label": "ετικέτα", "kbap.step": "βήμα", "kbap.nostep": "όχι βήμα", "kbap.finish": "τερματισμός", "kbap.nofinish": "όχι τερματισμός",
       "chg.conflict": "το στοιχείο άλλαξε στο μεταξύ",
       "chg.ask.many": "Αλλαγή σε αυτά τα {n} στοιχεία ({app});",
       "chg.ask.manyDel": "Διαγραφή αυτών των {n} στοιχείων από: {app};",
@@ -6959,6 +6959,7 @@
     var cols = Array.isArray(args.columns) ? args.columns : [];
     var rens = op === "add_columns" && Array.isArray(args.rename_columns) ? args.rename_columns : [];   // KB-COLREN
     var aps = op === "add_columns" && Array.isArray(args.portal_columns) ? args.portal_columns : [];    // KB-COLAP
+    var labs = Array.isArray(op === "add_board" ? args.labels : args.add_labels) ? (op === "add_board" ? args.labels : args.add_labels) : [];   // KB-LABEL
     var nb = op === "add_board" ? 1 : 0;
     return coreOf("OrosKanbanModel", "../kanban/model.js").then(function (M) {
       var key = "oros-kanban-data";
@@ -6973,23 +6974,26 @@
           if (typeof x.about === "string" && x.about) bits.push(x.about.slice(0, 80));
           return { title: "Author Portal · " + String(x.column || "").slice(0, 60), sub: bits.join(" · ") };
         }))
-        .concat(cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; })));
+        .concat(cols.map(function (x) { return { title: String(x && x.name || "").slice(0, 60), sub: x && x.after ? "→ " + String(x.after).slice(0, 60) : "" }; }))
+        .concat(labs.map(function (x) { return { title: String(x && x.name || "").slice(0, 40), sub: t("kb.label") + (x && x.color ? " · " + String(x.color) : "") }; })));
       var base = { k: "create", app: app.name, rows: rows };
       return askCreate(app.name, rows, false).then(function (ok) {
         if (!ok) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
         var pick = nb ? { name: args.name } : { board: args.board }, pr = rens.filter(function (x, i) { return !ok.skip[nb + i]; }),
-          pp = aps.filter(function (x, i) { return !ok.skip[nb + rens.length + i]; }), pc = cols.filter(function (x, i) { return !ok.skip[nb + rens.length + aps.length + i]; });
+          pp = aps.filter(function (x, i) { return !ok.skip[nb + rens.length + i]; }), pc = cols.filter(function (x, i) { return !ok.skip[nb + rens.length + aps.length + i]; }),
+          pl = labs.filter(function (x, i) { return !ok.skip[nb + rens.length + aps.length + cols.length + i]; });
         if (nb && (ok.skip[0] || !pc.length)) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not make the board. Nothing was saved." }), ui: base }; }
         if (pr.length) pick.rename_columns = pr;
         if (pp.length) pick.portal_columns = pp;
         if (pc.length) pick.columns = pc;
-        if (!pr.length && !pp.length && !pc.length) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
+        if (pl.length) pick[nb ? "labels" : "add_labels"] = pl;
+        if (!pr.length && !pp.length && !pc.length && !pl.length) { base.st = "declined"; return { content: JSON.stringify({ added: 0, note: "The user did not add them. Nothing was saved." }), ui: base }; }
         var res = G.kanbanWrite(M, op, readStore(key), pick, Date.now(), kbId);
         if (!res.ok) { base.st = "failed"; base.msg = res.err; return { content: "Error: " + res.err + " Nothing was saved.", err: 1, ui: base }; }
         if (!writeStore(key, res.data)) { base.st = "failed"; base.msg = t("chg.storage"); return { content: "Error: the columns could not be saved on the device (storage full?). Nothing was saved.", err: 1, ui: base }; }
         markAppDirty();
         var uid = newId();
-        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: (nb ? [{ name: pick.name }] : []).concat(pick.rename_columns || []).concat(pick.columns || []).map(function (x) { return String(x.name); })
+        remember(uid, { app: "kanban", key: key, kb: res.undo }, { kind: "add", app: "kanban", name: app.name, items: (nb ? [{ name: pick.name }] : []).concat(pick.rename_columns || []).concat(pick.columns || []).concat(pick.labels || pick.add_labels || []).map(function (x) { return String(x.name); })
           .concat((pick.portal_columns || []).map(function (x) { return "Author Portal · " + String(x.column); })) });
         base.st = "done";
         base.u = uid;
