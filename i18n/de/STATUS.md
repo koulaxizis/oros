@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52605 of 52633 (99%)
+- Strings: 52612 of 52640 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -31,7 +31,7 @@ en and el); translators change them there, not in a pack.
 | budget | 100% | 1184 / 1184 |
 | calculator | 100% | 170 / 170 |
 | calendar | 100% | 638 / 638 (49 in the code) |
-| capture | 100% | 58 / 58 |
+| capture | 100% | 59 / 59 |
 | caravan | 100% | 170 / 170 |
 | cardkit | 100% | 9 / 9 |
 | cast | 100% | 36 / 36 |
@@ -142,7 +142,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 2073 / 2073 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1640 / 1640 |
+| shell | 100% | 1646 / 1646 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
