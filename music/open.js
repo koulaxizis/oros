@@ -663,7 +663,7 @@
     var fn = x && typeof x.filename === "string" ? x.filename : "";
     if (!/^[^\/\\<>"?#]{1,200}\.mp3$/i.test(fn)) return null;
     var o = { k: key("km", fn), t: str(x.title) || C.stem(fn), a: "Kevin MacLeod", d: secs(x.length), s: "km",
-      u: KM_MP3 + encodeURIComponent(fn), pg: KM_PAGE, li: "by 4.0", off: 1 };
+      u: KM_MP3 + encodeURIComponent(fn), pg: KM_PAGE, li: "by 4.0" };   // no off: incompetech sends no CORS header (MU-DL)
     var r = ref(o);
     if (!r) return null;
     var y = (String(x.uploaded || "").match(/^\d{4}/) || [""])[0];
@@ -1050,7 +1050,7 @@
     fm: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
     mo: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
     jb: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
-    km: { g: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1, off: 1 },
+    km: { g: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1 },
     dp: { g: 1, cc: 1, lic: 1, y: 1 },
     fw: { g: 1, dur: 1, lic: 1 },
     loc: { g: 1, dur: 1, y: 1 }
@@ -1207,7 +1207,7 @@
   }
 
   var api = {
-    VERSION: "1.8.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.9.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,

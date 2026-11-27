@@ -1239,8 +1239,85 @@
     return tries < 2 ? "retry" : "skip";
   }
 
+  // ---------- Offline copies: the download line (host.js, MU-DL) ----------
+  // Songs saved for offline are fetched by the shell (host.js), one at a
+  // time, so the work goes on when the Music window closes (phones show
+  // one app at a time) and comes back after a reload (the list waits in
+  // device-local storage). A download that receives nothing for STALL ms
+  // is dropped and tried once more; offline it waits for the network.
+  var DL = { STALL: 45000, RETRY: 5000, MAX: 300e6, LIM: 2000 };
+  // Sources whose files a browser cannot read (no CORS header):
+  // incompetech (Kevin MacLeod) answers without Access-Control-Allow-Origin.
+  var NO_DL = { km: 1 };
+  function canKeep(r) { return !!(r && r.off === 1 && isRemote(r) && !NO_DL[r.s]); }
+  // o = { get(url, onBytes(got, size)) -> Promise<Blob>, put(ref, blob) -> Promise,
+  //       save(list) (the waiting songs, current one first), notify(ev, status),
+  //       wait(ms) -> Promise, online() -> bool, whenOnline() -> Promise }
+  // Events: "off" (list or state changed), "bytes", "offOne" (a song
+  // ended, saved or not), "offDone" (the list is empty).
+  function dlLine(o) {
+    var q = [], cur = null, busy = false, waiting = false, n = 0, ok = 0, bad = 0, got = 0, size = 0;
+    function status() {
+      return { busy: busy, wait: waiting, n: n, done: ok + bad, ok: ok, bad: bad, left: q.length,
+        k: cur ? cur.k : "", t: cur ? cur.t : "", got: got, size: size, keys: (cur ? [cur.k] : []).concat(q.map(function (x) { return x.k; })) };
+    }
+    function tell(ev) { try { o.notify(ev, status()); } catch (e) {} }
+    function save() { try { o.save((cur ? [cur] : []).concat(q)); } catch (e) {} }
+    function add(list, have) {
+      have = have || {};
+      var seen = {}, r = { add: 0, have: 0, no: 0 };
+      if (cur) seen[cur.k] = 1;
+      q.forEach(function (x) { seen[x.k] = 1; });
+      (Array.isArray(list) ? list : []).forEach(function (x) {
+        var y = normRef(x);
+        if (!canKeep(y)) { r.no++; return; }
+        if (have[y.k] || seen[y.k]) { r.have++; return; }
+        if (q.length + (cur ? 1 : 0) >= DL.LIM) { r.no++; return; }
+        seen[y.k] = 1; q.push(y); r.add++;
+      });
+      if (r.add) {
+        if (!busy) { n = 0; ok = 0; bad = 0; }
+        n += r.add;
+        save();
+        if (!busy) { busy = true; step(); } else tell("off");
+      }
+      return r;
+    }
+    // The songs still waiting are dropped; the one coming in now ends.
+    function cancel() {
+      if (!q.length) return 0;
+      var k = q.length;
+      n -= k; q = [];
+      save(); tell("off");
+      return k;
+    }
+    function one(r, tries) {
+      var first = o.online() === false ? (waiting = true, tell("off"), o.whenOnline().then(function () { waiting = false; })) : Promise.resolve();
+      return first.then(function () {
+        got = 0; size = 0;
+        return o.get(r.u, function (g, s) { got = g; if (s) size = s; tell("bytes"); });
+      }).then(function (blob) {
+        if (!blob || !blob.size || blob.size > DL.MAX || /^text\//i.test(blob.type || "")) return false;
+        return o.put(r, blob).then(function () { return true; }, function () { return false; });
+      }, function () {
+        if (tries < 1 || o.online() === false) return o.wait(DL.RETRY).then(function () { return one(r, tries + 1); });
+        return false;
+      });
+    }
+    function step() {
+      if (!q.length) { busy = false; cur = null; got = 0; size = 0; save(); tell("offDone"); return; }
+      cur = q.shift();
+      tell("off");
+      one(cur, 0).then(function (saved) {
+        if (saved) ok++; else bad++;
+        cur = null; save(); tell("offOne"); step();
+      });
+    }
+    return { add: add, cancel: cancel, status: status };
+  }
+
   var api = {
-    VERSION: "1.8.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
+    VERSION: "1.9.0", DATA_VER: DATA_VER, LIM: LIM, GENRES: GENRES, REPEAT: REPEAT, AUDIO_EXT: AUDIO_EXT,
     clean: clean, fold: fold, hash: hash, newId: newId, decodeLegacy: decodeLegacy, looksGreek: looksGreek, utf16: utf16,
     sniffImage: sniffImage, genreName: genreName, fromName: fromName, stem: stem,
     id3Size: id3Size, parseId3v2: parseId3v2, parseId3v1: parseId3v1, mp3Duration: mp3Duration,
@@ -1258,7 +1335,7 @@
     byTrackNo: byTrackNo, collator: collator,
     parseLrc: parseLrc, lrcAt: lrcAt, lrclibPick: lrclibPick,
     EQ_HZ: EQ_HZ, EQ_PRESETS: EQ_PRESETS, SLEEP_MIN: SLEEP_MIN, normSound: normSound, rgFactor: rgFactor, eqPreamp: eqPreamp,
-    fadeOut: fadeOut, fadeIn: fadeIn, jmTrackId: jmTrackId, jmFreshAudio: jmFreshAudio, failStep: failStep, normStats: normStats, addStat: addStat, STAT: STAT
+    fadeOut: fadeOut, fadeIn: fadeIn, jmTrackId: jmTrackId, jmFreshAudio: jmFreshAudio, failStep: failStep, DL: DL, canKeep: canKeep, dlLine: dlLine, normStats: normStats, addStat: addStat, STAT: STAT
   };
   root.OrosMusicCore = api;
   if (typeof module !== "undefined" && module.exports) module.exports = { OrosMusicCore: api };
