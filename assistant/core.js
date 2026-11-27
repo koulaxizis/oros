@@ -401,19 +401,19 @@
     if (!isObj(pr) || pr.base !== base) return null;
     return now - pr.at < (pr.ok ? PROBE_UP : PROBE_DOWN) ? !!pr.ok : null;
   }
-  // The last check of a local address in this page (one per page, so
-  // the Assistant, Feeds and Atelier don't each wait for it).
-  var lastProbe = null;
-  function probeSet(base, ok) { lastProbe = base ? { base: base, ok: !!ok, at: Date.now() } : null; }
-  // Does the local server at pid's address answer at all? Any HTTP
-  // answer counts; none within PROBE_MS does not. readKey(pid) →
-  // Promise<string> (its key, "" = none). → Promise<boolean>
-  function probeLocal(pid, pc, readKey) {
-    var base = provBase(pid, pc || {});
-    var known = probeFresh(lastProbe, base, Date.now());
+  // The last check of each local address in this page (one per page,
+  // so the Assistant, Feeds and Atelier don't each wait for it).
+  var probes = {};
+  function probeSet(base, ok) {
+    if (base) probes[base] = { base: base, ok: !!ok, at: Date.now() };
+    else { probes = {}; localAlt = null; }
+  }
+  function probeOne(pid, pc, readKey) {
+    var base = provBase(pid, pc);
+    var known = probeFresh(probes[base], base, Date.now());
     if (known !== null) return Promise.resolve(known);
     return Promise.resolve(readKey ? readKey(pid) : "").then(function (key) {
-      var req = modelsRequest(pid, { key: key || "", base: (pc || {}).base });
+      var req = modelsRequest(pid, { key: key || "", base: pc.base });
       var ctl = typeof AbortController === "function" ? new AbortController() : null;
       var tm = setTimeout(function () { if (ctl) ctl.abort(); }, PROBE_MS);
       var o = { method: "GET", headers: req.headers, credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" };
@@ -421,6 +421,26 @@
       return fetch(req.url, o).then(function () { return true; }, function () { return false; })
         .then(function (ok) { clearTimeout(tm); probeSet(base, ok); return ok; });
     }, function () { return false; });
+  }
+  // Does the local server at pid's address answer at all? Any HTTP
+  // answer counts; none within PROBE_MS does not. readKey(pid) →
+  // Promise<string> (its key, "" = none). When it does not and this
+  // computer's own local AI is ready (sys, default: read from the
+  // shell's page), that one is checked too and, when it answers, used
+  // in its place on this page (localUse, AS-SYSAI 2). → Promise<boolean>
+  function probeLocal(pid, pc, readKey, sys) {
+    pc = pc || {};
+    var P = PROVIDERS[pid];
+    var alt = P && P.local ? sysAIConf(pc, sys === undefined ? sysNow() : sys) : null;
+    var from = provBase(pid, pc);
+    return probeOne(pid, pc, readKey).then(function (ok) {
+      if (ok || !alt) { if (localAlt && localAlt.from === from) localAlt = null; return ok; }
+      // No key: the one saved belongs to the other server.
+      return probeOne(pid, alt, null).then(function (ok2) {
+        localAlt = ok2 ? { from: from, pc: alt } : null;
+        return ok2;
+      });
+    });
   }
   // ---------- 2a. Local AI on this computer (orOS USB, AS-SYSAI) ----------
   // The orOS USB System extension puts on the shell's page the state
@@ -471,6 +491,49 @@
       if (!pc.base) out.prov.fast = 1;
     }
     if (!set.prov) out.set = { prov: "local" };
+    return out;
+  }
+  // ---------- 2a. This computer's own local AI in place of a synced address (AS-SYSAI 2) ----------
+  // The "local" service's address syncs to every device. One set up on
+  // another computer (its network address, LM Studio's port) does not
+  // answer on a computer whose own local AI is ready: there, while that
+  // address does not answer, this computer's Ollama answers in its
+  // place. Nothing is saved, so every other device keeps its setting.
+  // sysAIConf(pc, sys) → the settings for this computer's own local AI,
+  // or null (not ready, or pc already points at it).
+  var SYSAI_BASE = /^http:\/\/(127\.0\.0\.1|localhost):11434(\/v1)?$/;
+  function sysAIConf(pc, sys) {
+    if (!sys || sys.state !== "ready" || !sys.models || !sys.models.length) return null;
+    pc = pc || {};
+    var b = normBase(pc.base);
+    if (!b || SYSAI_BASE.test(b)) return null;
+    var same = sys.models.indexOf(pc.model) >= 0;
+    var model = same ? pc.model : sysAIModel(sys.models);
+    // "No tools" and its tool model (AS-GREEK 2) belong to the synced
+    // model: kept only when it is installed here, the tool model too.
+    var tm = same && pc.nt && sys.models.indexOf(pc.tm) >= 0 ? pc.tm : "";
+    return { base: LOCAL_KITS.ollama, model: model, kit: "ollama", fast: pc.fast ? 1 : 0, vis: pc.vis ? 1 : 0,
+             nt: same && pc.nt ? 1 : 0, tm: tm };
+  }
+  // The local AI the extension shows on the shell's page (or this page).
+  function sysNow() {
+    if (typeof window === "undefined" || !window) return null;
+    var d = null;
+    try { d = window.parent && window.parent !== window ? window.parent.document : window.document; } catch (e) { d = null; }
+    return sysAIRead(d);
+  }
+  // { from: the synced address, pc: sysAIConf } while this computer's
+  // own local AI answers in its place on this page (probeLocal).
+  var localAlt = null;
+  // The settings a call to pid uses on this device: pc, or this
+  // computer's own local AI in its place (out.sys = 1: send no key).
+  function localUse(pid, pc) {
+    pc = pc || {};
+    var P = PROVIDERS[pid];
+    if (!localAlt || !P || !P.local || localAlt.from !== provBase(pid, pc)) return pc;
+    var out = {};
+    Object.keys(localAlt.pc).forEach(function (k) { out[k] = localAlt.pc[k]; });
+    out.sys = 1;
     return out;
   }
 
@@ -529,7 +592,8 @@
   // there on this device. o: { readKey(pid) → Promise<string>,
   // device(pid) → Promise<boolean>|boolean (in-browser and built-in
   // models; absent = not used), tools: the call needs tools,
-  // cool: { pid: until } services to pass over for now }.
+  // cool: { pid: until } services to pass over for now, sys: this
+  // computer's local AI, default read from the page, see probeLocal }.
   // → Promise<{ pid, fb: 0 | 1 }> (fb = not the chosen assistant);
   // when none is there, the first in the order (its error shows).
   function pickChain(d, o) {
@@ -546,7 +610,7 @@
       if (o.tools && (P.device || (P.local && pc.nt && !toolModel(pc, true)))) return Promise.resolve(false);
       if (P.device) return Promise.resolve(o.device ? o.device(pid) : false).then(function (v) { return !!v; }, function () { return false; });
       if (!(pc.model || P.model)) return Promise.resolve(false);
-      if (P.local) return provBase(pid, pc) ? probeLocal(pid, pc, readKey) : Promise.resolve(false);
+      if (P.local) return provBase(pid, pc) ? probeLocal(pid, pc, readKey, o.sys) : Promise.resolve(false);
       if (P.key !== "yes") return Promise.resolve(true);
       return Promise.resolve(readKey(pid)).then(function (k) { return !!k; }, function () { return false; });
     }
@@ -5522,7 +5586,7 @@
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
     GREEK_AI: GREEK_AI, ollamaRoot: ollamaRoot, greekSteps: greekSteps, ollamaProgress: ollamaProgress, localTraits: localTraits, toolModel: toolModel,
-    sysAIRead: sysAIRead, sysAIModel: sysAIModel, sysAIAdopt: sysAIAdopt,
+    sysAIRead: sysAIRead, sysAIModel: sysAIModel, sysAIAdopt: sysAIAdopt, sysAIConf: sysAIConf, localUse: localUse,
     fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, pickChain: pickChain, chainOrder: chainOrder, provTier: provTier, isOnline: isOnline, needsTools: needsTools, coolFor: coolFor, COOL: COOL, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
     TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, LAYOUT_ROUNDS: LAYOUT_ROUNDS, layoutRound: layoutRound, lyAutoCall: lyAutoCall, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
     claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS, crUnknown: crUnknown,
