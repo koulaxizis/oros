@@ -2045,88 +2045,14 @@
     if (m.childNodes.length) c.appendChild(mo.box);
   }
 
-  // LOCAL-1 (temporary, Chris 2026-11-18): folders of this device that
-  // Layout may read through orOS Gate (read roots) and write proofs and
-  // print PDFs to (write roots), picked with the browser's folder
-  // picker; localroots.js in the shell keeps them (this device only).
-  var locRoots = null, locBusy = false, locWired = false, locMsg = "", locPc = null, updMsg = "";
-  function localApi() { var p = parentWin(); try { return p && p.orosLocal ? p.orosLocal : null; } catch (e) { return null; } }
+  // LOCAL-GONE (Chris 2026-11-27): the local folders for Claude (LOCAL-1,
+  // TRAY-2: by the browser's folder picker or a computer path) are gone;
+  // orOS Drive mirrors the computer's folders into /internal/Drive, which
+  // Claude reaches as Claude's folders. What stays here: Layout's proofs
+  // and PDFs among Claude's folders.
+  var updMsg = "";
   function localSection(c, G) {
-    var L = localApi();
-    if (!L) return;
-    if (!locWired) { locWired = true; L.onChange(function () { locRoots = null; render(); }); }
-    if (locRoots === null && !locBusy) {
-      locBusy = true;
-      L.list().then(function (l) { locRoots = l; locBusy = false; render(); }, function () { locRoots = []; locBusy = false; render(); });
-    }
     var box = el("div", "gt-folders");
-    box.appendChild(el("div", "pair-label", t("gt.loc.title")));
-    box.appendChild(el("div", "hint", t("gt.loc.hint")));
-    if (locMsg) box.appendChild(el("div", "hint", locMsg));
-    // orOS Setup / Portable: real folders of the computer by their path
-    if (locPc === null && typeof L.pcOn === "function") { locPc = false; L.pcOn().then(function (v) { if (v) { locPc = true; render(); } }); }
-    var canPick = locPc || typeof window.showDirectoryPicker === "function" && L.supported();
-    if (!canPick) box.appendChild(el("div", "hint", t("gt.loc.unsupported")));
-    (locRoots || []).forEach(function (r) {
-      var ln = el("div", "gt-chg-row gt-loc-row");
-      var when = r.exp ? new Date(r.exp).toLocaleDateString(appLang()) : "";
-      ln.appendChild(el("span", "gt-loc-name", (r.mode === "w" ? t("gt.loc.write") : t("gt.loc.read")) + " · local:" + r.name + (r.label ? " (" + (/^[A-Za-z]:\//.test(r.label) ? r.label.replace(/\//g, "\\") : r.label) + ")" : "") +
-        " · " + (r.expired ? t("gt.loc.expired") : t("gt.loc.until", { when: when })) + (r.granted ? "" : " · " + t(r.elsewhere ? "gt.loc.elsewhere" : "gt.loc.needs")) + (r.by === "claude" ? " · " + t("gt.loc.byClaude") : "")));
-      ln.appendChild(button(t("gt.loc.extend"), "gt.loc.ext:" + r.id, function () { L.extend(r.id, 30); }, "btn-sm"));
-      if (r.mode === "r" && !r.elsewhere) ln.appendChild(button(t("gt.loc.copyIn"), "gt.loc.copy:" + r.id, function () {
-        var F = parentWin() && parentWin().orosFS, dest = "/internal/Local/" + r.name;
-        gateNote = "gt.loc.copying"; render();
-        L.copyIn(r.id, F, dest).then(function (res) {
-          return G.setFolders(G.folders().concat([dest])).then(function () { gateNote = ""; locMsg = t("gt.loc.copied", { n: res.files, path: "Local/" + r.name }); render(); });
-        }, function () { gateNote = "gt.fail"; render(); });
-      }, "btn-sm"));
-      ln.appendChild(button(t("gt.fold.rm"), "gt.loc.rm:" + r.id, function () { L.remove(r.id); }, "btn-sm"));
-      box.appendChild(ln);
-    });
-    // TRAY-2: a folder of the owner's computer by its path, from any device
-    // (the phone too): shared with the gate's other devices, used where
-    // orOS runs on that computer (also in the tray).
-    if (!locPc && typeof L.addPc === "function") {
-      var rp = el("input", "dav-input");
-      rp.id = "f-gt-loc-remote"; rp.type = "text"; rp.autocomplete = "off"; rp.spellcheck = false;
-      rp.placeholder = "C:\\Users\\…\\Final Images";   // i18n-inline-ok: an example path
-      box.appendChild(row(t("gt.loc.remote"), rp, { hint: t("gt.loc.remoteHint"), forId: "f-gt-loc-remote", stack: true }));
-      var addRemote = function (mode) {
-        if (!rp.value.trim()) { gateNote = "gt.loc.pcNeed"; render(); return; }
-        L.addPc(rp.value.trim(), { mode: mode, days: 30, anywhere: true }).then(function () { gateNote = ""; render(); }, function (e) {
-          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && e.why === "riskyPath" ? "gt.loc.risky" : e && /^(badPath|notFolder)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
-        });
-      };
-      box.appendChild(actions(button(t("gt.loc.addRead"), "gt.loc.remR", function () { addRemote("r"); }), button(t("gt.loc.addWrite"), "gt.loc.remW", function () { addRemote("w"); })));
-    }
-    if (!canPick && !(locRoots || []).length) { c.appendChild(box); return; }
-    if (locRoots && !locRoots.length) box.appendChild(el("div", "hint", t("gt.fold.none")));
-    var lab = el("input", "dav-input");
-    lab.id = "f-gt-loc-label"; lab.type = "text"; lab.autocomplete = "off"; lab.spellcheck = false;
-    lab.placeholder = "C:\\Users\\…\\Final Images";   // i18n-inline-ok: an example path
-    if (canPick) box.appendChild(row(t(locPc ? "gt.loc.pcPath" : "gt.loc.label"), lab, { hint: t(locPc ? "gt.loc.pcHint" : "gt.loc.labelHint"), forId: "f-gt-loc-label", stack: true }));
-    function pick(mode) {
-      if (locPc) {
-        if (!lab.value.trim()) { gateNote = "gt.loc.pcNeed"; render(); return; }
-        L.addPc(lab.value.trim(), { mode: mode, days: 30 }).then(function () { gateNote = ""; render(); }, function (e) {
-          gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : e && e.why === "riskyPath" ? "gt.loc.risky" : e && /^(badPath|notFolder|notThere|notAllowedRoot)$/.test(e.why) ? "gt.loc.pcBad" : "gt.fail"; render();
-        });
-        return;
-      }
-      window.showDirectoryPicker({ mode: mode === "w" ? "readwrite" : "read" }).then(function (h) {
-        return L.add(h, { mode: mode, label: lab.value.trim(), days: 30 });
-      }).then(function () { gateNote = ""; render(); }, function (e) {
-        if (e && e.name === "AbortError") return;
-        gateNote = e && e.why === "tooMany" ? "gt.loc.tooMany" : "gt.fail"; render();
-      });
-    }
-    var need = (locRoots || []).some(function (r) { return !r.granted && !r.expired; });
-    box.appendChild(actions(
-      canPick ? button(t("gt.loc.addRead"), "gt.loc.addR", function () { pick("r"); }) : null,
-      canPick ? button(t("gt.loc.addWrite"), "gt.loc.addW", function () { pick("w"); }) : null,
-      need ? button(t("loc.reconnect"), "gt.loc.re", function () { L.reconnect(); }) : null,
-      (locRoots || []).length ? button(L.paused() ? t("loc.resume") : t("loc.pause"), "gt.loc.pause", function () { L.setPaused(!L.paused()); render(); }) : null
-    ));
     // proofs and PDFs back to Claude (files_link reads Claude's folders)
     var fl = G.folders(), want = ["/internal/Layout/Proofs", "/internal/Layout/PDF"];
     if (!want.every(function (w) { return fl.some(function (f) { return f === w || w.indexOf(f + "/") === 0; }); })) {
@@ -2135,7 +2061,7 @@
         G.setFolders(fl.concat(want.filter(function (w) { return !fl.some(function (f) { return f === w || w.indexOf(f + "/") === 0; }); }))).then(function () { render(); }, function () { gateNote = "gt.fail"; render(); });
       })));
     }
-    c.appendChild(box);
+    if (box.childNodes.length) c.appendChild(box);
   }
 
   // CLAUDE-1: Claude in a window, and Claude desktop. On orOS USB and

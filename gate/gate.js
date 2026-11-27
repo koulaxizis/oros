@@ -2186,7 +2186,7 @@
   // create_items. applyQueue runs nothing else (defence in depth).
   var QUEUED = ["budget_add", "budget_change", "budget_areas", "budget_categories", "budget_balances", "budget_delete", "budget_transfer", "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "kanban_add_board", "create_items",
                 "invoices_record",   // INV-EXT
-                "local_folders_request",   // TRAY-2: the owner's answer on a screen
+                "local_folders_request",   // LOCAL-GONE: kept so a queued one is answered (localAsk says it is gone)
                 "claude_folders_request",   // CF-ASK: the same for a folder of the orOS disk
                 // 5.96.00: by refs from the copy's index (kept on the device); never action delete
                 "change_item", "link_items", "link_contact",
@@ -2241,7 +2241,7 @@
   }
   // a screen tool that must wait here for a person at the screen
   function screenWait(name, args) {
-    if (name === "local_folders_request" || name === "claude_folders_request") return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());   // TRAY-2: a question for the owner
+    if (name === "claude_folders_request") return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());   // TRAY-2: a question for the owner
     if (!screenTool(name, args) || backOk(name)) return false;
     return offScreen() || !!(root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked());
   }
@@ -2733,7 +2733,6 @@
       sendVis(sock);
       if (pref().lvd) sendLv(sock);
       else sendBase(sock);
-      lfSend(sock);
       pushReg();
       copySoon(4000);
       fileCopySoon(60000);
@@ -2751,7 +2750,7 @@
       if (typeof ev.data !== "string" || ev.data === "pong") return;
       if (ev.data.indexOf('{"hi"') === 0) { onHi(ev.data); return; }
       if (ev.data.indexOf('{"lv"') === 0) { onLv(ev.data); return; }
-      if (ev.data.indexOf('{"lf"') === 0) { onLf(sock, ev.data); return; }
+      if (ev.data.indexOf('{"lf"') === 0) return;   // TRAY-2 computer folders: removed (LOCAL-GONE)
       if (ev.data.indexOf('{"upd"') === 0) { onUpd(); return; }
       if (ev.data.indexOf('{"cq"') === 0) { applyQueue(sock, ev.data); return; }
       if (ev.data.indexOf('{"snapok"') === 0) return;
@@ -3364,42 +3363,6 @@
     if (lv.kanban === "write") kanbanModel().then(null, function () {});
     changed();
   }
-  // TRAY-2: the computer folders (localroots.js, "oros-local-pc") go to
-  // the gate's other devices sealed with the gate's key: the relay keeps
-  // and passes on a blob it cannot read. Every device sends the list it
-  // has merged, so the newest of each folder wins everywhere; a device
-  // that gets a list missing something it knows answers with its own.
-  function localL() { return root.orosLocal && typeof root.orosLocal.mergeShared === "function" ? root.orosLocal : null; }
-  function lfSend(sock) {
-    var L = localL(), k = gateKey();
-    sock = sock || ws;
-    if (!L || !k || !sock || sock.readyState !== 1) return;
-    var list = L.shared();
-    if (!list.length) return;
-    seal(k, JSON.stringify({ v: 1, l: list })).then(function (sealed) {
-      try { if (sock.readyState === 1) sock.send(JSON.stringify({ lf: sealed })); } catch (e) {}
-    }, function () {});
-  }
-  var lfTimer = 0;
-  root.orosLocalShare = function () { clearTimeout(lfTimer); lfTimer = setTimeout(function () { lfSend(); }, 300); };
-  function onLf(sock, text) {
-    var o, L = localL(), k = gateKey();
-    try { o = JSON.parse(text); } catch (e) { return; }
-    if (!isObj(o) || typeof o.lf !== "string" || !L || !k) return;
-    unseal(k, o.lf).then(function (t) {
-      var d = JSON.parse(t);
-      if (!isObj(d) || d.v !== 1 || !Array.isArray(d.l)) return;
-      return Promise.resolve(L.mergeShared(d.l)).then(function () {
-        // the other side lacks something this device has: send the merged list back
-        if (JSON.stringify(L.shared()) !== JSON.stringify(L.pcMerge(d.l, [], Date.now()))) lfSend(sock);
-      });
-    }).then(null, function () {});
-  }
-  // TRAY-2: Claude asks for a folder of the owner's computer; the owner
-  // allows it on any device where orOS is on screen (the phone too).
-  // Nobody at a screen (hidden, background host, locked) → __held, and
-  // the box keeps it for the next device on screen. → Promise of the
-  // answer to Claude.
   // FOLDER-WAIT (Chris 2026-11-23): a folder question nobody answered here
   // stays as a notice (synced, so the phone shows it too) until it is
   // answered; it opens Settings › orOS Gate, and orOS on screen asks again.
@@ -3418,35 +3381,12 @@
       }
     } catch (e) {}
   }
-  function localAsk(args, p) {
-    var L = localL();
-    if (!L) return Promise.resolve({ ok: false, c: "This orOS has no local folders yet; ask the owner to update orOS." });
-    if (typeof p.hold === "number" && p.hold > Date.now()) return Promise.resolve({ ok: false, c: "The owner paused Claude's changes until " + new Date(p.hold).toISOString() + ". Nothing was asked." });
-    var typed = typeof args.path === "string" ? args.path.trim().slice(0, 400) : "", pc = L.pcPath(typed);
-    if (!pc) return Promise.resolve({ ok: false, c: "path must be a full folder path of the owner's computer, e.g. C:\\Users\\<name>\\Documents\\<folder> (or ~/<folder>). Nothing was asked." });
-    if (L.pcRisky(pc)) return Promise.resolve({ ok: false, c: "That folder cannot be opened for Claude (a whole drive or home folder, or a system, program or key folder). Ask for the folder of the work itself. Nothing was asked." });
-    var mode = args.access === "write" ? "w" : "r", days = Math.max(1, Math.min(90, Math.floor(+args.days || 30)));
-    var why = typeof args.reason === "string" ? args.reason.replace(/\s+/g, " ").trim().slice(0, 300) : "";
-    var now = Date.now(), same = L.shared().filter(function (e) { return !e.gone && e.pc.toLowerCase() === pc.toLowerCase() && e.mode === mode && e.exp > now + days * 86400000 - 86400000; })[0];
-    if (same) return Promise.resolve({ ok: true, a: [], k: 0, c: "Already open for Claude: local:" + same.name + " (" + typed + "), " + (mode === "w" ? "write (new files only)" : "read") + ", until " + new Date(same.exp).toISOString().slice(0, 10) + ". Nothing was asked." });
-    return new Promise(function (ok) {
-      var settled = false, wrap = null;
-      function end(v, how) { if (settled) return; settled = true; askLast = how; askNotice("pc", typed, how); if (wrap) wrap.remove(); ok(v); }
-      if (offScreen() || locked() || (root.orosLock && root.orosLock.isLocked && root.orosLock.isLocked())) { end(false, "none"); return; }
-      var body = tr(mode === "w" ? "gate.lf.bodyW" : "gate.lf.bodyR").replace("{days}", String(days));
-      var list = typed + (why ? "\n\n" + tr("gate.lf.why").replace("{why}", why) : "");
-      wrap = dialog(tr("gate.lf.title"), body, list, tr("gate.lf.no"), tr("gate.lf.yes"),
-        function () { end(false, "no"); }, function () { end(true, "yes"); });
-      setTimeout(function () { end(false, "none"); }, 60000);
-    }).then(function (yes) {
-      if (!yes) return askLast === "none" ? { ok: false, c: "__held" } : { ok: false, c: "The owner did not open that folder for Claude. Nothing was opened." };
-      return Promise.resolve(L.addPc(typed, { mode: mode, days: days, anywhere: true, by: "claude" })).then(function (r) {
-        return { ok: true, a: [], k: 1, c: "The owner opened it for Claude: local:" + r.name + " (" + typed + "), " + (mode === "w" ? "write (new files only, never replacing one)" : "read only") + ", until " + new Date(r.exp).toISOString().slice(0, 10) +
-          ". It works on the owner's computer where orOS runs (a window, minimised, or in the tray); that computer gets it as soon as orOS runs there. Use local:" + r.name + "/<path inside it>." };
-      }, function (e) {
-        return { ok: false, c: "The owner allowed it, but the folder could not be opened" + (e && e.why === "notFolder" ? ": it is not a folder on that computer" : e && e.why === "tooMany" ? ": there are already 8 local folders (the owner closes one in Settings › Connected services › orOS Gate)" : "") + ". Nothing was opened." };
-      });
-    });
+  // LOCAL-GONE (Chris 2026-11-27): computer folders by path (TRAY-2,
+  // LOCAL-1) are gone. orOS Drive mirrors the computer's folders into
+  // /internal/Drive/<device>/<name>, so Claude asks for that folder of
+  // the orOS disk with claude_folders_request instead. Nothing is asked.
+  function localAsk() {
+    return Promise.resolve({ ok: false, c: "Folders of the owner's computer by their path are no longer offered. orOS Drive mirrors the computer's folders into the orOS disk at /internal/Drive/<computer>/<folder>: ask for that folder with claude_folders_request (files_list on /internal/Drive shows the computers and folders). Nothing was asked." });
   }
   // CF-ASK (Chris 2026-11-22 «Πρόσθεσε τους φακέλους που χρειάζεσαι, σου
   // δίνω έγκριση»): Claude asks for a folder of the orOS disk among
@@ -4205,20 +4145,16 @@
   }
   // GX-1 (Chris 2026-11-21 «δώσε στο gate τη δυνατότητα να μπορεί να
   // κάνει εξαγωγή σε τοπικό φάκελο ή/και orOS Files»): an app's export
-  // also goes to out, a local write folder the owner opened
-  // (local:<root>/<folder>, localroots.js) or a folder of Claude's on the
-  // orOS disk while Files is at «may change» and not paused. Never
+  // also goes to out, a folder of Claude's on the orOS disk (an orOS
+  // Drive folder reaches the computer through Drive; local: folders are
+  // gone, LOCAL-GONE) while Files is at «may change» and not paused. Never
   // replaces a file (name-2.ext, -3…). → the saved path, or throws { why }.
   var EXPORT_WHY = ["noBridge", "gateOff", "locked", "notAllowed", "paused", "outside", "badName", "noDisk", "nameTaken", "error"];
   function exportTo(out, name, blob, tool) {
     out = typeof out === "string" ? out.trim() : "";
     var fail = function (why) { return Promise.reject({ why: why }); };
     if (!out || !blob || typeof blob.size !== "number") return fail("error");
-    if (/^local:/i.test(out)) {
-      var L = root.orosLocal;
-      if (!L || typeof L.write !== "function") return fail("noBridge");
-      return Promise.resolve(L.write(out, name, blob, String(tool || "export").slice(0, 40))).then(null, function (e) { throw { why: e && typeof e.why === "string" ? e.why : "error" }; });
-    }
+    if (/^local:/i.test(out)) return fail("noBridge");   // LOCAL-GONE
     return claudeFiles().then(function (CF) {
       var p = pref(), dir = CF.normPath(out), now = Date.now();
       name = typeof name === "string" ? name.trim() : "";
@@ -4808,16 +4744,6 @@
     reconnect: function () { if (!ws) { retry = 0; connect(); } },
     // GATE-HOST: this computer's background Gate (orOS Portable / USB)
     host: { state: function () { return hostState(); }, set: function (on) { return hostSet(on); }, active: function () { return HOST.ok; } },
-    // LOCAL-1: a read or write through the local-folder bridge
-    // (localroots.js): kind list|read|write, the local: path, bytes, the
-    // command that asked
-    localLog: function (e) {
-      if (!isObj(e)) return;
-      var kind = /^(list|read|write)$/.test(e.kind) ? e.kind : "read";
-      writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: "local-" + kind, a: [], k: 1, ok: 1,
-        lp: String(e.path || "").slice(0, 300), sz: Math.max(0, Math.floor(+e.size || 0)), c: String(e.cmd || "").slice(0, 40) }));
-      changed();
-    },
     log: function () { var l = readJSON(LOG_KEY); return Array.isArray(l) ? l.slice().reverse() : []; },
     clearLog: function () { try { localStorage.removeItem(LOG_KEY); } catch (e) {} changed(); },
     onChange: function (fn) {
