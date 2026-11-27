@@ -31,8 +31,8 @@
     "el-joy": {
       lang: "el", name: "Joy", mb: 63, licence: "CC BY-NC 4.0",
       dir: "piper-el-joy/el/el_GR/joy/medium/",
-      model: { file: "el_GR-joy-medium.onnx", sha: "@@SHA_ONNX@@", size: 0 },
-      config: { file: "el_GR-joy-medium.onnx.json", sha: "@@SHA_JSON@@", size: 0 }
+      model: { file: "el_GR-joy-medium.onnx", sha: "31b1d51dc72dd43a5429b67798e27599f8cdcfce8a80265bc6f50d932bf144bc", size: 63516050 },
+      config: { file: "el_GR-joy-medium.onnx.json", sha: "451a8885a0ea72e4432fffe22e65a75bbd2e65f6757273d1a5a9ed8a3419852e", size: 7367 }
     }
   };
   var LANG_VOICE = { el: "el-joy" };

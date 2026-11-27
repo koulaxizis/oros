@@ -14,7 +14,7 @@
   "use strict";
 
   var session = null, config = null;
-  var PAUSE = 0.18;            // seconds of quiet between two sentences
+  var PAUSE = 0.2;             // seconds of quiet between two sentences (the voice's own sentence_silence wins)
 
   function blobUrl(b, type) { return URL.createObjectURL(new Blob([b], { type: type })); }
 
@@ -65,7 +65,9 @@
     if (!session) return Promise.reject(new Error("init"));
     var sr = (config.audio && config.audio.sample_rate) || 22050;
     var list = GreekVoice.sentences(m.text);
-    var chunks = [], total = 0, gap = Math.round(PAUSE * sr);
+    var inf = config.inference || {};
+    var gap = Math.round((typeof inf.sentence_silence === "number" ? inf.sentence_silence : PAUSE) * sr);
+    var chunks = [], total = 0;
     return list.reduce(function (p, s) {
       return p.then(function () {
         return one(s.ph, m.scales).then(function (a) {
