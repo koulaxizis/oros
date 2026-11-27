@@ -4847,9 +4847,9 @@
   }
   function stemsFree(parts) { return C.MAX_TRACKS - tracks().length >= parts; }
   function stemsMinutes(sec, SS) {
-    // one worker does about 2.8 minutes of work per minute of music
+    // one worker does about 3.2 minutes of work per minute of music
     // (measured in Chromium, WebAssembly, one thread); phones are slower
-    var per = 170 * (SS.phone() ? 3 : 1) / SS.workerCount();
+    var per = 190 * (SS.phone() ? 3 : 1) / SS.workerCount();
     return Math.max(1, Math.round(sec / 60 * per / 60));
   }
   function openStems() {

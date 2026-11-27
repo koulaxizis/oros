@@ -230,7 +230,8 @@
 
   // ---------- Files (IndexedDB "oros-studio-ai") ----------
   var MIRROR = "https://koulaxizis.github.io/oros-models-vision/demucs/";
-  var MODEL = { url: MIRROR + "htdemucs.onnx", size: 0, sha: "" };   // MODEL-PIN (filled from demucs/export.json)
+  // demucs/export.json of koulaxizis/oros-models-vision (checkpoint 8726e21a…, checked 52-84 dB against demucs)
+  var MODEL = { url: MIRROR + "htdemucs.onnx", size: 90561712, sha: "621c14f9c9d3d275475955d0caf7f1e5c001dc30a3e40da79df7286a1b82ca13" };
   var ORT_V = "ort1.22.0";
   var FILES = {
     js:   { url: "../vendor/ort/ort.wasm.min.js", v: ORT_V },
