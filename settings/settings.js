@@ -46,6 +46,8 @@
 
   var C = window.SettingsCore;
   var UI_KEY = "oros-settings-ui";
+  // Why a moving wallpaper is still now (vizkit.js / wxdesk.js still reasons, VIZ-SLOW).
+  var WP_STILL = ["reduced", "saver", "battery", "slow"];
   var NARROW = "(max-width: 719px)";
 
   // ---------- 1. Constants, i18n, helpers ----------
@@ -560,6 +562,7 @@
       c3.appendChild(row(t("a.wallpaper.viz.style"), segmented(vst, s.viz.style, "wpviz:style",
         function (v) { set("wpviz:style", v); }, t("a.wallpaper.viz.style")), { stack: true }));
       c3.appendChild(el("p", "hint", t("a.wallpaper.viz.hint")));
+      if (WP_STILL.indexOf(s.viz.still) >= 0) c3.appendChild(el("p", "hint wp-still", t("a.wallpaper.still." + s.viz.still)));   // VIZ-SLOW
     }
     if (s.land) {                                      // Living land: style, motion, another shape
       var lst = (s.land.styles || ["islands"]).map(function (v) { return { value: v, label: t("a.wallpaper.land." + v) }; });
@@ -576,6 +579,7 @@
       c3.appendChild(row(t("a.wallpaper.wx"), switchBtn(!!s.wxdesk.on, "wxdesk:on",
         function (v) { set("wxdesk:on", v); }, t("a.wallpaper.wx")), { hint: t("a.wallpaper.wx.hint") }));
       if (s.wxdesk.on && s.wxdesk.none) c3.appendChild(el("p", "hint", t("a.wallpaper.wx.none")));
+      else if (s.wxdesk.on && WP_STILL.indexOf(s.wxdesk.still) >= 0) c3.appendChild(el("p", "hint wp-still", t("a.wallpaper.still." + s.wxdesk.still)));   // VIZ-SLOW
     }
     if (s.suggested) c3.appendChild(el("p", "hint", t("a.wallpaper.hint")));
     if (s.wpdir) secWpDir(c3, s.wpdir);                // WPDIR-1

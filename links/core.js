@@ -799,7 +799,12 @@
   var LIST_Q = { page: NUM, per_page: PER, orderby: ORDERBY, order: ORD };
   function q(extra) { var o = {}; Object.keys(LIST_Q).forEach(function (k) { o[k] = LIST_Q[k]; }); Object.keys(extra || {}).forEach(function (k) { o[k] = extra[k]; }); return o; }
   // a quantity (Stock), or a price from a supplier's price list (Stock wave P10)
-  var PRODUCT_PUT = { stock_quantity: "int", manage_stock: "bool", regular_price: "money" };
+  var PRODUCT_PUT = { stock_quantity: "int", manage_stock: "bool", regular_price: "money",
+    // AS-SHOP (Assistant shop_change): weight, dimensions, the sale price
+    // ("" ends a sale) and the stock status; "" also puts back an empty
+    // weight or size on Undo. regular_price never "" (the product would
+    // stop being for sale).
+    weight: "dec0", dimensions: "dims0", sale_price: "money0", stock_status: "stst" };
   // Publishing wave P2: a title becomes a DRAFT product (the person
   // publishes it in the shop); found again by its SKU (the ISBN).
   var SKU = /^[A-Za-z0-9_-]{1,40}$/;
@@ -1051,9 +1056,13 @@
     if (kind === "sku") return typeof v === "string" && SKU.test(v);
     if (kind === "money") return typeof v === "string" && /^[0-9]{1,7}(\.[0-9]{1,2})?$/.test(v);
     if (kind === "dec") return typeof v === "string" && /^[0-9]{1,6}(\.[0-9]{1,3})?$/.test(v);
+    if (kind === "dec0" || kind === "money0") return v === "" || okVal(kind.slice(0, -1), v);
+    if (kind === "stst") return v === "instock" || v === "outofstock" || v === "onbackorder";
     if (kind === "desc") return typeof v === "string" && v.length <= 8000;
     if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
       Object.keys(v).every(function (k) { return (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]); });
+    if (kind === "dims0") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
+      Object.keys(v).every(function (k) { return (k === "length" || k === "width" || k === "height") && okVal("dec0", v[k]); });
     if (kind === "tolinv") return okInvoice(v);
     if (kind === "cpns") return listOf(v, 1, 100, okCoupon);
     if (kind === "rsv") return v === 1;

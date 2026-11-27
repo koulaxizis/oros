@@ -77,6 +77,28 @@
     take(out, seen, all, max, max);
     return shuffle(out, rnd);
   }
+  // The Daily mix as the device keeps it for the day (MU-DAY): the
+  // first mix of the day is saved ({ d: day, k: [keys] }) and shown in
+  // the same order until the date changes, so a like, a play or a new
+  // file never reshuffles it. Songs no longer playable here drop out;
+  // when the pool grows (files still loading at start) new songs of
+  // the fresh mix are added at the end, up to `max`.
+  // → { list: [item], save: saved | null (null = nothing to write) }.
+  function keepDaily(saved, now, fresh, pool, max) {
+    max = max || 40;
+    var day = dayOf(now), P = byKey(pool);
+    if (!saved || saved.d !== day || !Array.isArray(saved.k)) {
+      var keys = (fresh || []).map(function (x) { return x.k; });
+      return { list: (fresh || []).slice(0, max), save: keys.length ? { d: day, k: keys.slice(0, max) } : null };
+    }
+    var out = [], seen = {};
+    saved.k.forEach(function (k) { if (typeof k === "string" && P[k] && !seen[k] && out.length < max) { seen[k] = 1; out.push(P[k]); } });
+    var add = [];
+    (fresh || []).forEach(function (x) {
+      if (x && x.k && !seen[x.k] && out.length < max && saved.k.length + add.length < max) { seen[x.k] = 1; out.push(x); add.push(x.k); }
+    });
+    return { list: out, save: add.length ? { d: day, k: saved.k.concat(add) } : null };
+  }
   // Song radio: the song, then more by its artist, songs of its genre,
   // and songs by artists that share playlists with it; mixed, liked
   // and often played songs a little earlier.
@@ -265,7 +287,7 @@
 
   var api = {
     VERSION: "1.0.0", rng: rng, shuffle: shuffle,
-    onRepeat: onRepeat, rewind: rewind, daily: daily, radio: radio, topArtists: topArtists,
+    onRepeat: onRepeat, rewind: rewind, daily: daily, keepDaily: keepDaily, radio: radio, topArtists: topArtists,
     recap: recap, years: years,
     csvRows: csvRows, parseExport: parseExport, normTitle: normTitle, matcher: matcher,
     mbUrl: mbUrl, mbPick: mbPick, caaUrl: caaUrl
