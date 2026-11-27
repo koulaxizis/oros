@@ -378,6 +378,7 @@ orosPack("de", "shell", {
  "cr.mailerlite-mailchimp": "Verbundene Dienste: Abonnenten synchronisieren (Newsletter)",
  "cr.mediabunny": "Videodateien lesen und schreiben (Montage)",
  "cr.meteoalarm": "Amtliche Wetterwarnungen (Wetter)",
+ "cr.demucs": "Ein Lied in Gesang, Schlagzeug, Bass und Rest trennen (Studio)",
  "cr.mi-gan": "Einen Teil eines Bildes füllen: Magischer Radierer und Magischer Griff (Atelier)",
  "cr.musicbrainz": "Albumdetails (Medienregal, Cover in Musik); Künstlerseiten, Diskografie und Titellisten (Musik)",
  "cr.nasa-gibs": "Satelliten-Regenkarte (Wetter)",

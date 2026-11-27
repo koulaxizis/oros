@@ -41,7 +41,9 @@
 // how it may be used: { k, by?, title?, url? }, k = one of LICENCES
 // (cc0, by, by-sa, pd, own, other), by = author, url = its page (http or
 // https only). Kept with the source so a song can list its credits.
-// New fields (sc, auto, inst, MIDI clips, lic) are written only when set, so
+// st (optional, on sources, wave S2): a part separated from another source
+// of the project (stems.js): { of: source id, k: vocals|drums|bass|other|inst }.
+// New fields (sc, auto, inst, MIDI clips, lic, st) are written only when set, so
 // projects made before them keep the very same bytes.
 // Forward safe (wave A0): fields, lists and top-level records this version
 // does not know are kept, bounded, and merged (see "Forward safety").
@@ -174,7 +176,7 @@
     projects: keySet(["id", "m", "name", "bpm", "sig", "vol", "loop", "fx", "bk", "kind"]),
     books: keySet(["id", "m", "name", "ch", "open", "close", "spec", "pub", "meta", "rt", "sample"]),
     tracks: keySet(["id", "m", "p", "name", "color", "vol", "pan", "mute", "solo", "ord", "fx", "inst", "smp", "auto", "br", "lv"]),
-    sources: keySet(["id", "m", "p", "name", "path", "dur", "ch", "lic"]),
+    sources: keySet(["id", "m", "p", "name", "path", "dur", "ch", "lic", "st"]),
     clips: keySet(["id", "m", "p", "t", "s", "at", "off", "len", "gain", "fi", "fo", "name", "n"])
   };
   var TOP_KEYS = keySet(["ver", "projects", "tracks", "sources", "clips", "tombs", "books"]);
@@ -465,6 +467,15 @@
     if (typeof x.url === "string" && URL_RE.test(x.url.trim())) o.url = x.url.trim();
     return o;
   }
+  // st (optional, on sources, Studio wave S2): this sound is a part
+  // separated from another source of the project (stems.js):
+  // { of: source id, k: one of STEMS }. Kept so the Studio can tell
+  // where a stem came from; written only when set.
+  var STEMS = ["vocals", "drums", "bass", "other", "inst"];
+  function normSt(x) {
+    if (!x || typeof x !== "object" || !okId(x.of, "s") || STEMS.indexOf(x.k) < 0) return null;
+    return { of: x.of, k: x.k };
+  }
   function normSource(x) {
     if (!x || typeof x !== "object" || !okId(x.id, "s") || !okM(x.m) || !okId(x.p, "p")) return null;
     if (typeof x.path !== "string" || !PATH_RE.test(x.path) || x.path.indexOf("/..") >= 0) return null;
@@ -477,6 +488,8 @@
     };
     var lic = normLic(x.lic);
     if (lic) o.lic = lic;
+    var st = normSt(x.st);
+    if (st) o.st = st;
     return keepExtras(o, x, KNOWN.sources);
   }
   // The sounds a project's clips play that carry a licence card, in the
@@ -1007,7 +1020,7 @@
     keysOf: keysOf, keyLoops: keyLoops, keyPlan: keyPlan,
     MAX_NOTES: MAX_NOTES, MIN_NOTE: MIN_NOTE, INST_RE: INST_RE, SMP_RE: SMP_RE, cmpNote: cmpNote, normNotes: normNotes,
     isMidi: isMidi, retimeClip: retimeClip, clipNotes: clipNotes, toRtttl: toRtttl,
-    LICENCES: LICENCES, normLic: normLic, credits: credits
+    LICENCES: LICENCES, normLic: normLic, credits: credits, STEMS: STEMS, normSt: normSt
   };
   if (typeof module === "object" && module.exports) module.exports = api;
   else root.StudioCore = api;

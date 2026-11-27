@@ -180,6 +180,44 @@
       "lic.f.title": "Title", "lic.f.by": "Made by", "lic.f.k": "Licence", "lic.f.url": "Link (page of the sound or its licence)", "lic.none": "Not set",
       "lic.cc0": "CC0 (no rights reserved)", "lic.by": "CC BY (name the author)", "lic.by-sa": "CC BY-SA (name the author, share alike)",
       "lic.pd": "Public domain", "lic.own": "My own sound", "lic.other": "Other (follow its own terms)",
+      "stm.btn": "Separate…",
+      "stm.title": "Separate vocals and instruments",
+      "stm.of": "{name} ({t})",
+      "stm.parts4": "4 parts: vocals, drums, bass, the rest",
+      "stm.parts2": "2 parts: vocals and instrumental",
+      "stm.how": "Each part comes as a new track at the same place, from the whole sound of this clip. The clip's own track is muted, not deleted. Everything happens on this device with Demucs (Meta, MIT); nothing is uploaded.",
+      "stm.rights": "Parts of someone else's song are for your own use (practice, karaoke, study) unless its licence allows more.",
+      "stm.download": "The first time, about {mb} MB are downloaded once and kept on this device.",
+      "stm.time": "On this device it takes about {n} min.",
+      "stm.resume": "A separation of this sound stopped at {n}%: it goes on from there.",
+      "stm.long": "A sound longer than {n} minutes cannot be separated. Split it first.",
+      "stm.tracks": "This needs {n} free tracks (a project has up to {max}). Delete a track or choose 2 parts.",
+      "stm.phone": "On a phone it is slow and warm: keep it plugged in and the screen on.",
+      "stm.go": "Separate",
+      "stm.forget": "Remove the model",
+      "stm.forgotten": "The separation model was removed from this device",
+      "stm.keepOpen": "Keep Studio open. If it closes, the next separation of this sound goes on where it stopped.",
+      "stm.prep": "Preparing the sound…",
+      "stm.dl": "Downloading the model, {n}%",
+      "stm.working": "Separating: {n}%",
+      "stm.left": "Separating: {n}%, about {t} left",
+      "stm.save": "Saving {name}…",
+      "stm.done": "Separated into {n} tracks",
+      "stm.stopped": "Stopped. The next separation of this sound goes on from there.",
+      "stm.k.vocals": "Vocals",
+      "stm.k.drums": "Drums",
+      "stm.k.bass": "Bass",
+      "stm.k.other": "Other",
+      "stm.k.inst": "Instrumental",
+      "stm.err.download": "The model could not be downloaded. Check the connection and try again.",
+      "stm.err.hash": "The downloaded model was not the right file, so it was not kept. Try again later.",
+      "stm.err.quota": "There is not enough space on this device for the model or the parts.",
+      "stm.err.long": "This sound is too long to separate.",
+      "stm.err.memory": "This device ran out of memory. Close other apps and tabs and try again.",
+      "stm.err.unavailable": "Separation is not available in this version yet.",
+      "stm.err.missing": "This clip's sound is not on this device yet.",
+      "stm.err.moved": "The project changed while separating. Nothing was added.",
+      "stm.err.engine": "The separation stopped with an error. Try again.",
       "lic.badUrl": "The link must start with http:// or https://", "lic.saved": "Sound info saved",
       "cr.sec": "Credits", "cr.hint": "This song uses sounds whose licences ask for the author to be named. Put this text where you publish it.",
       "cr.hintAll": "Where the song's sounds come from:", "cr.copy": "Copy", "cr.save": "Save as text", "cr.copied": "Credits copied",
@@ -420,6 +458,44 @@
       "lic.f.title": "Τίτλος", "lic.f.by": "Δημιουργός", "lic.f.k": "Άδεια", "lic.f.url": "Σύνδεσμος (σελίδα του ήχου ή της άδειας)", "lic.none": "Δεν έχει οριστεί",
       "lic.cc0": "CC0 (χωρίς δικαιώματα)", "lic.by": "CC BY (αναφορά δημιουργού)", "lic.by-sa": "CC BY-SA (αναφορά δημιουργού, ίδια άδεια)",
       "lic.pd": "Κοινό κτήμα", "lic.own": "Δικός μου ήχος", "lic.other": "Άλλη (ισχύουν οι δικοί της όροι)",
+      "stm.btn": "Διαχωρισμός…",
+      "stm.title": "Διαχωρισμός φωνής και οργάνων",
+      "stm.of": "{name} ({t})",
+      "stm.parts4": "4 μέρη: φωνή, τύμπανα, μπάσο, υπόλοιπα",
+      "stm.parts2": "2 μέρη: φωνή και ορχηστρικό",
+      "stm.how": "Κάθε μέρος μπαίνει σε νέο κανάλι, στην ίδια θέση, από όλο τον ήχο αυτού του clip. Το κανάλι του clip μπαίνει σε σίγαση, δεν σβήνεται. Όλα γίνονται σε αυτή τη συσκευή με το Demucs (Meta, MIT)· τίποτα δεν ανεβαίνει πουθενά.",
+      "stm.rights": "Τα μέρη από τραγούδι άλλου είναι για δική σου χρήση (εξάσκηση, karaoke, μελέτη), εκτός αν η άδειά του επιτρέπει περισσότερα.",
+      "stm.download": "Την πρώτη φορά κατεβαίνουν περίπου {mb} MB, μία φορά, και μένουν σε αυτή τη συσκευή.",
+      "stm.time": "Σε αυτή τη συσκευή θέλει περίπου {n} λεπτά.",
+      "stm.resume": "Ένας διαχωρισμός αυτού του ήχου σταμάτησε στο {n}%: συνεχίζει από εκεί.",
+      "stm.long": "Ήχος πάνω από {n} λεπτά δεν διαχωρίζεται. Κόψ' τον πρώτα σε κομμάτια.",
+      "stm.tracks": "Χρειάζονται {n} ελεύθερα κανάλια (ένα έργο έχει έως {max}). Σβήσε ένα κανάλι ή διάλεξε 2 μέρη.",
+      "stm.phone": "Στο κινητό είναι αργό και ζεσταίνεται: κράτα το στον φορτιστή και την οθόνη ανοιχτή.",
+      "stm.go": "Διαχωρισμός",
+      "stm.forget": "Αφαίρεση μοντέλου",
+      "stm.forgotten": "Το μοντέλο διαχωρισμού αφαιρέθηκε από αυτή τη συσκευή",
+      "stm.keepOpen": "Κράτα το Studio ανοιχτό. Αν κλείσει, ο επόμενος διαχωρισμός αυτού του ήχου συνεχίζει από εκεί που σταμάτησε.",
+      "stm.prep": "Ετοιμάζω τον ήχο…",
+      "stm.dl": "Κατέβασμα μοντέλου: {n}%",
+      "stm.working": "Διαχωρισμός: {n}%",
+      "stm.left": "Διαχωρισμός: {n}%, απομένουν περίπου {t}",
+      "stm.save": "Αποθήκευση: {name}…",
+      "stm.done": "Έγινε διαχωρισμός σε {n} κανάλια",
+      "stm.stopped": "Σταμάτησε. Ο επόμενος διαχωρισμός αυτού του ήχου συνεχίζει από εκεί.",
+      "stm.k.vocals": "Φωνή",
+      "stm.k.drums": "Τύμπανα",
+      "stm.k.bass": "Μπάσο",
+      "stm.k.other": "Υπόλοιπα",
+      "stm.k.inst": "Ορχηστρικό",
+      "stm.err.download": "Το μοντέλο δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "stm.err.hash": "Το αρχείο που κατέβηκε δεν ήταν το σωστό, οπότε δεν κρατήθηκε. Δοκίμασε αργότερα.",
+      "stm.err.quota": "Δεν υπάρχει αρκετός χώρος σε αυτή τη συσκευή για το μοντέλο ή τα μέρη.",
+      "stm.err.long": "Ο ήχος είναι πολύ μεγάλος για διαχωρισμό.",
+      "stm.err.memory": "Η μνήμη της συσκευής δεν έφτασε. Κλείσε άλλες εφαρμογές και καρτέλες και δοκίμασε ξανά.",
+      "stm.err.unavailable": "Ο διαχωρισμός δεν είναι ακόμα διαθέσιμος σε αυτή την έκδοση.",
+      "stm.err.missing": "Ο ήχος αυτού του clip δεν έχει έρθει ακόμα σε αυτή τη συσκευή.",
+      "stm.err.moved": "Το έργο άλλαξε την ώρα του διαχωρισμού. Δεν προστέθηκε τίποτα.",
+      "stm.err.engine": "Ο διαχωρισμός σταμάτησε με σφάλμα. Δοκίμασε ξανά.",
       "lic.badUrl": "Ο σύνδεσμος πρέπει να αρχίζει με http:// ή https://", "lic.saved": "Τα στοιχεία του ήχου αποθηκεύτηκαν",
       "cr.sec": "Αναφορές", "cr.hint": "Το τραγούδι έχει ήχους που η άδειά τους ζητά να αναφέρεται ο δημιουργός. Βάλε αυτό το κείμενο εκεί που θα το δημοσιεύσεις.",
       "cr.hintAll": "Από πού είναι οι ήχοι του τραγουδιού:", "cr.copy": "Αντιγραφή", "cr.save": "Αποθήκευση ως κείμενο", "cr.copied": "Οι αναφορές αντιγράφηκαν",
@@ -715,7 +791,8 @@
       lpT: p.lpT === "slow" || p.lpT === "mid" || p.lpT === "fast" ? p.lpT : "",
       ldT: typeof p.ldT === "string" && /^[a-z]{1,12}$/.test(p.ldT) ? p.ldT : "",
       bkKbps: [192, 256, 320].indexOf(p.bkKbps) >= 0 ? p.bkKbps : 192,
-      bkAac: [64, 96, 128].indexOf(p.bkAac) >= 0 ? p.bkAac : 64
+      bkAac: [64, 96, 128].indexOf(p.bkAac) >= 0 ? p.bkAac : 64,
+      stemParts: p.stemParts === 2 ? 2 : 4
     };
   }
   // { trackId: value } kept for at most 64 tracks
@@ -1453,6 +1530,7 @@
     $("clip-name").textContent = clipName(c);
     $("notes-btn").hidden = !midi;
     $("lic-btn").hidden = midi;
+    $("stems-btn").hidden = midi || !fsApi();
     $("fi-field").hidden = midi;
     $("fo-field").hidden = midi;
     var gi = $("gain-in"), fi = $("fi-in"), fo = $("fo-in");
@@ -4741,6 +4819,168 @@
   }
   function closeLoudness() { ldRefStop(); hideDlg("loud-dlg"); }
 
+  // ---------- 9b. Separate vocals and instruments (stems.js, wave S2) ----------
+  // Demucs on this device splits the source of the selected clip into
+  // vocals, drums, bass and the rest (or vocals and the instrumental).
+  // Each part becomes a 24-bit FLAC on the disk (it syncs like any
+  // Studio sound), a source with st: { of, k } and a clip on a new
+  // track at the very place of the selected clip; the clip's own track
+  // is muted, never deleted, and the whole step is one Undo. A stopped
+  // separation goes on where it stopped (stems.js keeps the finished
+  // stretches). stems.js and flac.js load only when asked.
+  var stm = { parts: 0, src: "", clip: "", ctrl: null };
+  var STEM_ORDER = { 4: ["vocals", "drums", "bass", "other"], 2: ["vocals", "inst"] };
+  var stemsP = null;
+  function stemsLoad() {
+    if (window.StudioStems && window.StudioStems.separate) return Promise.resolve(window.StudioStems);
+    if (!stemsP) {
+      stemsP = new Promise(function (ok, fail) {
+        var s = document.createElement("script");
+        s.src = "stems.js?v=" + VER;
+        s.onload = function () { if (window.StudioStems && window.StudioStems.separate) ok(window.StudioStems); else fail(new Error("stems")); };
+        s.onerror = function () { fail(new Error("stems.js")); };
+        document.head.appendChild(s);
+      });
+      stemsP.catch(function () { stemsP = null; });
+    }
+    return stemsP;
+  }
+  function stemsFree(parts) { return C.MAX_TRACKS - tracks().length >= parts; }
+  function stemsMinutes(sec, SS) {
+    // one worker does about 2.8 minutes of work per minute of music
+    // (measured in Chromium, WebAssembly, one thread); phones are slower
+    var per = 170 * (SS.phone() ? 3 : 1) / SS.workerCount();
+    return Math.max(1, Math.round(sec / 60 * per / 60));
+  }
+  function openStems() {
+    var c = selClip ? C.find(data, "clips", selClip) : null, src = c && !C.isMidi(c) ? sourceOf(c.s) : null;
+    if (!src) return;
+    if (!fsApi()) { showToast(t("toast.noDisk")); return; }
+    stm.src = src.id; stm.clip = c.id;
+    stm.parts = prefs.stemParts === 2 ? 2 : 4;
+    $("stems-src").textContent = t("stm.of", { name: src.name.replace(/\.[a-z0-9]{1,5}$/i, ""), t: C.fmtTime(src.dur).replace(/\.\d+$/, "") });
+    $("stems-opts").hidden = false; $("stems-run").hidden = true;
+    $("stems-go").disabled = true;
+    $("stems-status").textContent = "";
+    showDlg("stems-dlg");
+    stemsLoad().then(function (SS) { renderStems(SS); }, function () { $("stems-info").textContent = t("stm.err.engine"); });
+  }
+  function renderStems(SS) {
+    var src = sourceOf(stm.src);
+    if (!src || !$("stems-dlg").open) return;
+    radioChips($("stems-parts"), [4, 2], stm.parts, function (v) { return t("stm.parts" + v); }, function (v) {
+      stm.parts = v; prefs.stemParts = v; savePrefs(); renderStems(SS);
+    });
+    var lines = [], warn = [];
+    var long = src.dur > SS.MAX_SEC;
+    if (long) warn.push(t("stm.long", { n: Math.round(SS.MAX_SEC / 60) }));
+    if (!stemsFree(stm.parts)) warn.push(t("stm.tracks", { n: stm.parts, max: C.MAX_TRACKS }));
+    if (SS.phone()) warn.push(t("stm.phone"));
+    $("stems-go").disabled = long || !stemsFree(stm.parts) || !SS.MODEL.sha;
+    if (!SS.MODEL.sha) warn.push(t("stm.err.unavailable"));
+    Promise.all([SS.ready(), SS.pending(stm.src, src.dur)]).then(function (r) {
+      if (!$("stems-dlg").open || stm.ctrl) return;
+      if (!r[0]) lines.push(t("stm.download", { mb: SS.APPROX_MB }));
+      lines.push(t("stm.time", { n: stemsMinutes(src.dur, SS) }));
+      if (r[1]) lines.push(t("stm.resume", { n: Math.round(r[1] * 100) }));
+      $("stems-info").textContent = lines.join(" ");
+      $("stems-warn").textContent = warn.join(" ");
+      $("stems-warn").hidden = !warn.length;
+      $("stems-forget").hidden = !r[0];
+    });
+  }
+  function stemsBusy(on) {
+    $("stems-opts").hidden = on; $("stems-run").hidden = !on;
+    $("stems-go").hidden = on; $("stems-forget").hidden = true;
+  }
+  // the source's sound at 44.1 kHz, stereo
+  function stemsInput(buf) {
+    var rate = 44100, n = Math.max(1, Math.round(buf.duration * rate));
+    var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    var oc = new OAC(2, n, rate), node = oc.createBufferSource();
+    node.buffer = buf; node.connect(oc.destination); node.start(0);
+    return oc.startRendering().then(function (r) {
+      var l = r.getChannelData(0), rr = buf.numberOfChannels > 1 ? r.getChannelData(1) : l;
+      return [l, rr];
+    });
+  }
+  function startStems() {
+    var src = sourceOf(stm.src), clip = C.find(data, "clips", stm.clip);
+    if (!src || !clip || stm.ctrl) return;
+    var parts = stm.parts, order = STEM_ORDER[parts];
+    if (!stemsFree(parts)) return;
+    var ctrl = stm.ctrl = new AbortController(), SS = window.StudioStems, pid = proj.id;
+    stemsBusy(true);
+    var status = function (txt, f) { $("stems-status").textContent = txt; if (f != null) $("stems-bar").value = f; };
+    status(t("stm.prep"), 0);
+    var bufP = state[src.id] === "ok" && buffers[src.id] ? Promise.resolve(buffers[src.id]) : loadSource(src).then(function () {
+      if (!buffers[src.id]) throw Object.assign(new Error("missing"), { code: "missing" });
+      return buffers[src.id];
+    });
+    bufP.then(stemsInput).then(function (lr) {
+      return SS.separate(lr[0], lr[1], {
+        job: src.id, signal: ctrl.signal,
+        onDownload: function (f) { status(t("stm.dl", { n: Math.round(f * 100) }), f); },
+        onProgress: function (f, rest) {
+          status(rest == null ? t("stm.working", { n: Math.round(f * 100) }) : t("stm.left", { n: Math.round(f * 100), t: C.fmtTime(rest).replace(/\.\d+$/, "") }), f);
+        }
+      });
+    }).then(function (out) {
+      if (parts === 2) out.inst = SS.inst([out.drums, out.bass, out.other]);
+      return flacLoad().then(function (FL) {
+        var made = [];
+        return order.reduce(function (p, k, i) {
+          return p.then(function () {
+            if (ctrl.signal.aborted) throw Object.assign(new Error("cancelled"), { code: "cancelled" });
+            status(t("stm.save", { name: t("stm.k." + k) }), i / order.length);
+            return flacBlob(FL, out[k], 44100).then(function (blob) {
+              return blob.arrayBuffer().then(decode).then(function (buf) { made.push({ k: k, blob: blob, buf: buf }); });
+            });
+          });
+        }, Promise.resolve()).then(function () { return made; });
+      });
+    }).then(function (made) {
+      if (!proj || proj.id !== pid) throw Object.assign(new Error("moved"), { code: "moved" });
+      var base = src.name.replace(/\.[a-z0-9]{1,5}$/i, "");
+      var before = snapshot(), fs = fsApi(), lic = src.lic;
+      return made.reduce(function (p, m) {
+        return p.then(function () {
+          var name = C.clipLine(base + " - " + t("stm.k." + m.k), 76) + ".flac";
+          var id = C.newId("s", Math.random), path = C.sourcePath(id, name, "flac");
+          return Promise.resolve(fs.writeBlob(path, m.blob)).then(function () {
+            put("sources", C.normSource({ id: id, m: 0, p: pid, name: name, path: path, dur: m.buf.duration, ch: 2, lic: lic, st: { of: src.id, k: m.k } }));
+            keepBuffer(id, m.buf);
+            var tr = addTrack(C.clipLine(t("stm.k." + m.k), C.MAX_NAME));
+            if (!tr) return;
+            put("clips", C.normClip({ id: C.newId("c", Math.random), m: 0, p: pid, t: tr.id, s: id, at: clip.at, off: clip.off, len: clip.len, gain: clip.gain, fi: clip.fi, fo: clip.fo }));
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        var own = C.find(data, "tracks", clip.t);
+        if (own && !own.mute) put("tracks", Object.assign({}, own, { mute: true }));
+        undoStack.push(before); redoStack = [];
+        changed();
+        stm.ctrl = null;
+        hideDlg("stems-dlg");
+        showToast(t("stm.done", { n: made.length }));
+      });
+    }).catch(function (e) {
+      stm.ctrl = null;
+      var code = e && e.code, known = ["cancelled", "download", "hash", "quota", "long", "memory", "unavailable", "missing", "moved"];
+      if (code === "cancelled") { hideDlg("stems-dlg"); showToast(t("stm.stopped")); return; }
+      stemsBusy(false);
+      $("stems-warn").textContent = t("stm.err." + (known.indexOf(code) >= 0 ? code : "engine"));
+      $("stems-warn").hidden = false;
+      $("stems-go").disabled = false;
+    });
+  }
+  function forgetStems() {
+    stemsLoad().then(function (SS) { return SS.forget(); }).then(function () {
+      showToast(t("stm.forgotten"));
+      if (window.StudioStems) renderStems(window.StudioStems);
+    });
+  }
+
   // ---------- 9c. Books (Studio wave A2) ----------
   // A book is chapters, each an ordinary project (bk + kind), with opening
   // and closing credits. Its takes are stored as 24-bit FLAC (flac.js),
@@ -6040,6 +6280,11 @@
     $("export-cr-copy").addEventListener("click", copyCredits);
     $("export-cr-save").addEventListener("click", saveCredits);
     $("lic-btn").addEventListener("click", openLic);
+    $("stems-btn").addEventListener("click", openStems);
+    $("stems-cancel").addEventListener("click", function () { if (stm.ctrl) stm.ctrl.abort(); else hideDlg("stems-dlg"); });
+    $("stems-go").addEventListener("click", startStems);
+    $("stems-forget").addEventListener("click", forgetStems);
+    $("stems-dlg").addEventListener("cancel", function (e) { if (stm.ctrl) e.preventDefault(); });
     $("lic-cancel").addEventListener("click", function () { hideDlg("lic-dlg"); });
     $("lic-form").addEventListener("submit", function (e) { e.preventDefault(); saveLic(); });
     $("export-music").addEventListener("click", function () { doExport("music"); });

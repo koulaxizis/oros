@@ -123,6 +123,13 @@ A small multitrack studio: put audio clips on tracks, write notes for built-in i
 - `Export` lists the sounds of the song that have a card under `Credits`. `Copy` puts the text on the clipboard and `Save as text` saves it as a .txt file, ready to paste where you publish the song.
 >! Studio only keeps what you write. Check a sound's licence where you downloaded it before you publish a song with it.
 
+## Separate vocals and instruments
+- Select an audio clip and press `Separate…`. Choose 4 parts (vocals, drums, bass and the rest) or 2 parts (vocals and instrumental, for karaoke), then `Separate`.
+- Each part comes as a new track at the clip's place, from the whole sound of the clip. The clip's own track is muted, not deleted, and `Undo` takes the whole step back. The parts are 24-bit FLAC files on the orOS disk and sync like any Studio sound.
+- It runs on this device with Demucs (Meta, MIT). The first time about 100 MB are downloaded once (the model and its runtime) and kept on this device; `Remove the model` deletes them. Nothing you separate is uploaded.
+- It is heavy: on a computer about one minute of work per minute of music, longer on older computers and much longer on phones. If Studio closes, the next separation of the same sound goes on where it stopped. A sound can be up to 15 minutes long, and the project needs a free track for each part.
+>! Parts of someone else's song are for your own use (practice, karaoke, study) unless its licence allows more.
+
 ## Remote control
 Control Studio's mixer and transport from a tablet or phone while the sound plays on the PC.
 1. On the PC, open the settings (the three dots at the top) and press `Connect a tablet or phone`, then `Show a code`. Studio shows a 6-digit code and a QR code.

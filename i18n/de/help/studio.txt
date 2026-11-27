@@ -123,6 +123,13 @@ Ein kleines Mehrspur-Studio: Leg Audioclips auf Spuren, schreib Noten für einge
 - `Exportieren` zeigt unter `Quellenangaben` die Klänge des Songs, die eine Karte haben. `Kopieren` legt den Text in die Zwischenablage, `Als Text speichern` speichert ihn als .txt-Datei, bereit für die Stelle, an der du den Song veröffentlichst.
 >! Studio speichert nur, was du einträgst. Prüfe die Lizenz eines Klangs dort, wo du ihn heruntergeladen hast, bevor du einen Song damit veröffentlichst.
 
+## Gesang und Instrumente trennen
+- Wähle einen Audioclip und drücke `Trennen…`. Wähle 4 Teile (Gesang, Schlagzeug, Bass, Rest) oder 2 Teile (Gesang und Instrumental, für Karaoke), dann `Trennen`.
+- Jeder Teil kommt als neue Spur an die Stelle des Clips, aus dem ganzen Klang des Clips. Die Spur des Clips wird stummgeschaltet, nicht gelöscht, und `Rückgängig` nimmt den ganzen Schritt zurück. Die Teile sind 24-Bit-FLAC-Dateien auf dem orOS-Laufwerk und werden wie jeder Studio-Klang synchronisiert.
+- Es läuft auf diesem Gerät mit Demucs (Meta, MIT). Beim ersten Mal werden einmalig etwa 100 MB geladen (das Modell und seine Laufzeit) und auf diesem Gerät behalten; `Modell entfernen` löscht sie. Nichts, was du trennst, wird hochgeladen.
+- Es ist aufwendig: auf einem Computer etwa eine Minute Arbeit pro Minute Musik, länger auf älteren Computern und viel länger auf Handys. Schließt Studio, geht die nächste Trennung desselben Klangs dort weiter, wo sie anhielt. Ein Klang darf bis zu 15 Minuten lang sein, und das Projekt braucht für jeden Teil eine freie Spur.
+>! Teile aus fremden Liedern sind für den eigenen Gebrauch (Üben, Karaoke, Lernen), wenn die Lizenz nicht mehr erlaubt.
+
 ## Fernsteuerung
 Steuere Mixer und Transport von Studio von einem Tablet oder Handy aus, während der Ton am PC spielt.
 1. Öffne am PC die Einstellungen (die drei Punkte oben) und drück `Tablet oder Handy verbinden`, dann `Code anzeigen`. Studio zeigt einen 6-stelligen Code und einen QR-Code.
