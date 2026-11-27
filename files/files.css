@@ -1434,6 +1434,8 @@ body.cmp-mode #status { display: none; }
 .cmp-list .col-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cmp-list .cmp-place .col-name, .cmp-list .cmp-trash-item .col-name { display: flex; flex-direction: column; white-space: normal; }
 .cmp-sub { font-size: 12px; color: var(--text-dim, #999); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cmp-drive { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; background: var(--surface-2, rgba(127,127,127,.15)); vertical-align: middle; }
+.cmp-note { margin: 0 0 10px; font-size: 13px; line-height: 1.4; }
 .cmp-tools { display: inline-flex; align-items: center; gap: 6px; justify-self: end; }
 .cmp-tools button:not(.tool) { padding: 5px 10px; font-size: 13px; }
 .cmp-list .cmp-more { width: 28px; height: 28px; padding: 0; justify-self: end; opacity: .6; }
