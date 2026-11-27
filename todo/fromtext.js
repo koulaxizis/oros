@@ -37,6 +37,7 @@
 //       only a day ("Monday:", "15/12:") gives that day to the tasks
 //       under it;
 //     - a line with two or more ";" is several tasks;
+//     - "p1"…"p3" in a task set its priority, as in the add box;
 //     - days in a task ("tomorrow", "Παρασκευή", "15/12") become its
 //       due date (calendar/quickadd.js, EN + EL) and leave its text; a
 //       time goes into the notes; repeating words stay in the text;
@@ -122,7 +123,10 @@
   }
 
   function finish(t, o, dayDue) {
-    var text = trimEnd(tidy(t.text, 2000)), notes = "", due = "";
+    var text = trimEnd(tidy(t.text, 2000)), notes = "", due = "", prio = 0;
+    // "p1"…"p3" as in the add box (p4 = no priority)
+    text = text.replace(/(^|\s)[pP]([1-4])(?=\s|$)/g, function (m, sp, n) { if (!prio) prio = +n; return sp; }).replace(/\s+/g, " ").trim();
+    if (prio === 4) prio = 0;
     var d = dateOf(text, o);
     if (d && letters(d.text) >= 2) { text = d.text; due = d.date; if (d.time) notes = d.time; }
     else if (d && !letters(d.text)) return null;              // only a day: not a task
@@ -134,7 +138,7 @@
       var x = trimEnd(tidy(s.text, TEXT_LEN));
       if (letters(x) >= 1 && subs.length < SUB_MAX) subs.push({ text: x, done: !!s.done });
     });
-    return { text: text, due: due, notes: notes, done: !!t.done, subs: subs };
+    return { text: text, due: due, notes: notes, done: !!t.done, subs: subs, prio: prio };
   }
 
   function split(text, o) {
@@ -242,7 +246,7 @@
         if (letters(v) >= 1 && subs.length < SUB_MAX) subs.push({ text: v, done: false });
       });
       var due = YMD.test(str(x.due)) && !isNaN(Date.parse(x.due)) ? x.due : "";
-      tasks.push({ text: text, due: due, notes: "", done: false, subs: subs });
+      tasks.push({ text: text, due: due, notes: "", done: false, subs: subs, prio: 0 });
     });
     return tasks.length ? { head: "", tasks: tasks, capped: arr.length > MAX } : null;
   }
@@ -671,6 +675,7 @@
         li.appendChild(cb); li.appendChild(tx); li.appendChild(du);
         if (tk.subs.length) meta.appendChild(el("small", "", t("ft.subs", { s: tk.subs.map(function (s) { return s.text; }).join(" · ") })));
         if (tk.notes) meta.appendChild(el("small", "", tk.notes));
+        if (tk.prio) meta.appendChild(el("small", "", "P" + tk.prio));
         meta.appendChild(info);
         li.appendChild(meta);
         ul.appendChild(li);
@@ -726,7 +731,7 @@
           var due = YMD.test(r.du.value) ? r.du.value : null;
           plan.items.add.push({
             id: uid(), list: listId, text: tidy(r.tx.value, TEXT_LEN), due: due, notes: r.tk.notes || "",
-            labels: [], info: [], prio: 0, done: false,
+            labels: [], info: [], prio: r.tk.prio || 0, done: false,
             subs: r.tk.subs.map(function (s) { return { id: uid(), text: s.text, done: !!s.done, mtime: now }; })
           });
         });

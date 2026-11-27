@@ -38,6 +38,9 @@ Zieh eine Aufgabe an ihrem Griff (die Punkte rechts), um sie innerhalb der Liste
 
 Die Sortier-Schaltfläche (Linien mit Pfeil) ordnet die Ansicht `Nach Priorität`, `Nach Fälligkeit` oder wieder in `Eigene Reihenfolge`. Jede Liste und intelligente Liste merkt sich ihre Wahl auf diesem Gerät. Abgehakte Aufgaben kommen beim Sortieren ans Ende, und die Griffe erscheinen nur in `Eigene Reihenfolge`.
 
+### Tabellenansicht
+Die Tabellen-Schaltfläche (ein Raster, neben der Sortier-Schaltfläche) zeigt die Aufgaben als Tabelle mit den Spalten `Aufgabe`, `Liste`, `Fälligkeit`, `Priorität` und `Labels`; drück sie noch einmal für die Liste. Sie funktioniert in einer Liste, einer intelligenten Liste, einem gespeicherten Filter und in Suchergebnissen; in einer einzelnen Liste fehlt die Spalte `Liste`. Klick auf die Überschrift einer Spalte, um nach ihr zu sortieren, noch einmal für umgekehrt und ein drittes Mal für die eigene Reihenfolge der Ansicht. Abgehakte Aufgaben bleiben am Ende. Hake eine Aufgabe in ihrem Kreis ab oder tippe auf ihren Text, um sie zu öffnen. Die Tabelle und ihre Sortierung werden auf diesem Gerät gemerkt. Auf einem schmalen Bildschirm ist jede Aufgabe eine kleine Karte, und die Überschriften sind Sortier-Schaltflächen darüber.
+
 ## Aufgaben in eine andere Liste verschieben
 - Wähl im Fenster `Aufgabe` eine andere `Liste`; die Aufgabe zieht mit ihren Unteraufgaben um, wenn du das Fenster schließt.
 - Oder klick mit rechts auf eine Aufgabe (auf dem Handy: gedrückt halten) für das Schnellmenü: die Prioritätsflaggen, `Verschieben nach…`, `Öffnen` und `Auswählen`.

@@ -38,6 +38,9 @@ Drag a task by its handle (the dotted grip on the right) to move it within the l
 
 The sort button (lines with an arrow) orders the view `By priority`, `By due date` or back in `Manual order`. Each list and smart list remembers its own choice on this device. Ticked tasks go last when sorted, and the drag handles only show in `Manual order`.
 
+### Table view
+The table button (a grid, next to the sort button) shows the tasks as a table with the columns `Task`, `List`, `Due date`, `Priority` and `Labels`; press it again for the list. It works in a list, a smart list, a saved filter and in search results; in one list the `List` column is left out. Click a column's header to sort by it, again to reverse, a third time to go back to the view's own order. Ticked tasks stay last. Tick a task in its circle, or tap its text to open it. The table and its sort are remembered on this device. On a narrow screen each task is a small card and the headers are sort buttons above them.
+
 ## Move tasks to another list
 - In the `Task` window, pick another `List`; the task moves with its subtasks when you close the window.
 - Or right-click a task (on a phone, press and hold it) for the quick menu: the priority flags, `Move to…`, `Open` and `Select`.

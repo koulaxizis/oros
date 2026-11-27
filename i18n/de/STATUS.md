@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52895 of 52936 (99%)
+- Strings: 52903 of 52944 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -169,7 +169,7 @@ en and el); translators change them there, not in a pack.
 | time | 100% | 411 / 411 |
 | timesheet | 100% | 382 / 382 |
 | today | 100% | 158 / 158 |
-| todo | 100% | 312 / 312 |
+| todo | 100% | 320 / 320 |
 | together | 100% | 303 / 303 |
 | transfer | 100% | 157 / 157 |
 | travel | 100% | 558 / 558 |

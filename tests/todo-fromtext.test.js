@@ -63,6 +63,11 @@ test("days become due dates and leave the text; times go to the notes", () => {
   assert.equal(F.split("Call the bank by Monday", { today: O.today }).tasks[0].due, "");
 });
 
+test("p1–p3 set the priority and leave the text", () => {
+  const r = split("Pay rent p1\np3 call mom\nplain p4\nPlan p2p");
+  assert.deepEqual(r.tasks.map((x) => [x.text, x.prio]), [["Pay rent", 1], ["call mom", 3], ["plain", 0], ["Plan p2p", 0]]);
+});
+
 test("a line with two or more ';' is several tasks", () => {
   assert.deepEqual(texts(split("κουρέας; γυμναστήριο; ταχυδρομείο")), ["κουρέας", "γυμναστήριο", "ταχυδρομείο"]);
   assert.deepEqual(texts(split("Call Anna; ask Bob")), ["Call Anna; ask Bob"]);

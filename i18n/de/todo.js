@@ -310,5 +310,13 @@ orosPack("de", "todo", {
  "ft.due": "Fälligkeitsdatum",
  "ft.text": "Aufgabe",
  "ft.go": "{n} hinzufügen",
- "ft.done": "{n} Aufgaben zu „{list}“ hinzugefügt"
+ "ft.done": "{n} Aufgaben zu „{list}“ hinzugefügt",
+ "tbl.toTable": "Tabellenansicht",
+ "tbl.toList": "Listenansicht",
+ "tbl.caption": "Die Aufgaben als Tabelle",
+ "tbl.task": "Aufgabe",
+ "tbl.list": "Liste",
+ "tbl.labels": "Labels",
+ "tbl.done": "Erledigt",
+ "tbl.sortBy": "Nach {col} sortieren"
 });

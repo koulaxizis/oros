@@ -21,6 +21,8 @@
 //   textMatch(it, q, labelName)  → search over text, notes, info,
 //                                  label names and subtasks
 //   sortRows(rows, mode)         → rows [{ item, list, i }] sorted
+//   tableSort(rows, key, dir, ctx) → rows sorted by a table column
+//                                  (TD-TBL; key text|list|due|prio|labels)
 //   addDaysISO(iso, n), nextAfterDone(todayIso, rec)
 // Exposes window.OrosTodoModel and, under Node, module.exports.
 // ============================================================
@@ -266,12 +268,42 @@
     });
   }
 
+  // TD-TBL: the table view's column sort. key "text" | "list" | "due" |
+  // "prio" | "labels", dir 1 (A→Z, soonest, P1 first) or -1. Open tasks
+  // before ticked ones; an empty cell (no date, no labels) always last;
+  // ties keep the view's order (x.i). ctx.labelName(id) → name.
+  var TABLE_KEYS = ["text", "list", "due", "prio", "labels"];
+  function tableSort(rows, key, dir, ctx) {
+    if (TABLE_KEYS.indexOf(key) < 0) return rows.slice();
+    dir = dir === -1 ? -1 : 1;
+    var lname = ctx && typeof ctx.labelName === "function" ? ctx.labelName : function () { return ""; };
+    var coll = typeof Intl !== "undefined" && Intl.Collator ? new Intl.Collator(ctx && ctx.lang || undefined, { sensitivity: "base", numeric: true }) : null;
+    function cmpText(a, b) { return coll ? coll.compare(a, b) : (a < b ? -1 : a > b ? 1 : 0); }
+    function val(r) {
+      var it = r.item;
+      if (key === "text") return String(it.text || "");
+      if (key === "list") return String(r.list && r.list.name || "");
+      if (key === "due") return validDue(it) || "";
+      if (key === "prio") return prioOf(it);
+      return (Array.isArray(it.labels) ? it.labels : []).map(lname).filter(Boolean).sort(cmpText).join(", ");
+    }
+    return rows.map(function (r) { return { r: r, v: val(r) }; }).sort(function (x, y) {
+      var a = x.r.item, b = y.r.item;
+      if (!!a.done !== !!b.done) return a.done ? 1 : -1;
+      var va = x.v, vb = y.v, c = 0;
+      if (key === "prio") c = (va - vb) * dir;
+      else if (va === "" || vb === "") c = va === vb ? 0 : (va === "" ? 1 : -1);
+      else c = (key === "due" ? (va < vb ? -1 : va > vb ? 1 : 0) : cmpText(va, vb)) * dir;
+      return c || x.r.i - y.r.i;
+    }).map(function (x) { return x.r; });
+  }
+
   var api = {
     SMART: SMART, DUES: DUES, SUB_MAX: SUB_MAX, SUB_TEXT: SUB_TEXT,
     prioOf: prioOf, cleanSubs: cleanSubs, subCount: subCount, mergeSubs: mergeSubs, dropDeadSubs: dropDeadSubs,
     dedupeMoved: dedupeMoved, addDaysISO: addDaysISO, nextAfterDone: nextAfterDone,
     smartMatch: smartMatch, cleanFilter: cleanFilter, filterMatch: filterMatch, textMatch: textMatch,
-    sortRows: sortRows
+    sortRows: sortRows, tableSort: tableSort, TABLE_KEYS: TABLE_KEYS
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosTodoModel = api;
