@@ -253,6 +253,7 @@ exact source of every package.
 | [Inno Setup](https://jrsoftware.org/isinfo.php) and its Greek translation | © Jordan Russell and Martijn Laan; Greek texts by Anastasis Chatzioglou, XhmikosR and Vasileios Karamichail | [Inno Setup License](https://jrsoftware.org/files/is/license.txt) | The Windows setups of orOS and orOS Drive |
 | [appimagetool](https://github.com/AppImage/appimagetool) and the [AppImage runtime](https://github.com/AppImage/type2-runtime) | © probonopd and AppImage contributors | [MIT](https://github.com/AppImage/type2-runtime/blob/main/LICENSE); the runtime is statically linked with libfuse 3 (LGPL-2.1), squashfuse (BSD-2-Clause), zstd (BSD-3-Clause), zlib, mimalloc (MIT) and musl (MIT) | The Linux AppImage of orOS |
 | [Android Browser Helper](https://github.com/GoogleChrome/android-browser-helper) | 2.7.4, © Google LLC | [Apache-2.0](https://github.com/GoogleChrome/android-browser-helper/blob/main/LICENSE) | Android app only: opens orOS full screen |
+| [Shizuku API](https://github.com/RikkaApps/Shizuku-API) (`dev.rikka.shizuku:api` and `:provider`, with `androidx.annotation` compile-time annotations) | 13.1.5, © RikkaW and contributors | [Apache-2.0](https://github.com/RikkaApps/Shizuku-API/blob/master/LICENSE) | Koulaxizis Apps (Android) only: optional installs without questions through the separate [Shizuku](https://shizuku.rikka.app) app, off by default |
 
 ## Ideas from other free apps
 

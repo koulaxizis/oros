@@ -3,7 +3,8 @@
 One place on an Android phone to install and update every app of our
 projects: orOS, NULL JSFX, Noxpress and Glarolykoi. Package `gr.koulaxizis.apps` (permanent). Free and open source
 (MIT), no ads, no account, no Google services. Bible: `OROS_BIBLE.md`
-APPS-M1, APPS-M2, APPS-M3.
+APPS-M1 to APPS-M6. One library: the Shizuku API (Apache-2.0), used only
+when the person turns Shizuku on.
 
 ## How it works
 
@@ -27,6 +28,19 @@ APPS-M1, APPS-M2, APPS-M3.
   match the index's size, SHA-256 and signer (checked on the downloaded
   file too) before Android's PackageInstaller gets it. Android asks before
   every first install. Nothing is ever uninstalled.
+- **Fewer questions** (`Quiet.java`, `Silent.java`, APPS-M6): updates of
+  apps this manager installed go through without Android's question from
+  Android 12 (`USER_ACTION_NOT_REQUIRED` with the
+  `UPDATE_PACKAGES_WITHOUT_USER_ACTION` permission; Android 14+ first
+  installs also ask for update ownership). An app installed elsewhere asks
+  once more, then no more. "Update all" ends with one line on how many
+  updated and how many needed a yes. Menu, both off by default:
+  *Automatic updates* (the daily check installs, on Wi-Fi, the updates
+  that need no question; never a question from the background, never the
+  manager itself) and *Install without questions (Shizuku)* (`pm install`
+  through the separate Shizuku app, no root; falls back to the normal
+  install). *Help* explains the questions that stay and Play Protect,
+  which the manager never bypasses or hides.
 - **Download count** (`Net.apk`, APPS-DL): APKs of our Pages repositories are
   fetched through the counter `https://apps.koulaxizis.workers.dev/<repo>/…`
   (same bytes, same checks; only a number per app and channel is kept), and

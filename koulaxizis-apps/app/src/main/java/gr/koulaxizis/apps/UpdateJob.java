@@ -12,15 +12,22 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.os.Build;
+import android.os.SystemClock;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * The daily check (APPS-M2): about twice a day, with a network and enough
  * battery, read the repositories and, when updates wait, show one quiet
- * notification. It never installs anything by itself. A new set of updates
- * is announced at once; the same set again only after {@link Updates#AGAIN}, so a
- * person who saw them on the screen and left them is reminded, not nagged.
+ * notification. A new set of updates is announced at once; the same set
+ * again only after {@link Updates#AGAIN}, so a person who saw them on the
+ * screen and left them is reminded, not nagged. With automatic updates
+ * (APPS-M6, off by default, menu) it first installs, on Wi-Fi or another
+ * unmetered network, the updates that need no question ({@link Quiet#auto});
+ * the rest stay in the notice. The manager never updates itself this way.
  */
 public final class UpdateJob extends JobService {
     private static final int JOB = 1;
@@ -38,6 +45,14 @@ public final class UpdateJob extends JobService {
     static boolean enabled(Context ctx) {
         return prefs(ctx).getBoolean("daily", true);
     }
+
+    /** Automatic updates (APPS-M6): off until the person turns them on; they need the daily check. */
+    static boolean auto(Context ctx) {
+        return enabled(ctx) && prefs(ctx).getBoolean("auto", false);
+    }
+
+    /** How long the daily check waits for one automatic update. */
+    private static final long AUTO_WAIT = 3L * 60 * 1000;
 
     /** Puts the daily check in place, or takes it away when it is off. */
     static void schedule(Context ctx) {
@@ -89,9 +104,49 @@ public final class UpdateJob extends JobService {
         c.loadCached();
         c.refresh();
         List<AppInfo> list = Updates.pending(Source.ALL, c.apps, pkg -> Installed.of(ctx.getPackageManager(), pkg));
+        if (!list.isEmpty() && auto(ctx) && !metered(ctx)) {
+            autoUpdate(ctx, list);
+            list = Updates.pending(Source.ALL, c.apps, pkg -> Installed.of(ctx.getPackageManager(), pkg));
+        }
         AppInfo self = Updates.self(c.self, ctx.getPackageName().equals(Catalog.OWN)
             ? Installed.of(ctx.getPackageManager(), Catalog.OWN) : null);
         announce(ctx, list, self, true);
+    }
+
+    private static boolean metered(Context ctx) {
+        ConnectivityManager cm = ctx.getSystemService(ConnectivityManager.class);
+        return cm == null || cm.isActiveNetworkMetered();
+    }
+
+    /** One update after the other, each only when no question can come; stops when the job is stopped. */
+    private static void autoUpdate(Context ctx, List<AppInfo> list) {
+        boolean may = Build.VERSION.SDK_INT >= 31 && ctx.getPackageManager().canRequestPackageInstalls();
+        for (AppInfo a : new ArrayList<>(list)) {
+            if (Thread.currentThread().isInterrupted()) return;
+            boolean shizuku = Silent.ready(ctx);
+            if (!Quiet.auto(Installer.quiet(ctx, a.pkg), shizuku, may)) continue;
+            int session;
+            try {
+                session = Installer.install(ctx, a, true);
+            } catch (RepoException e) {
+                continue; // the notice still names it
+            }
+            if (session == Installer.SILENT) continue;
+            long until = SystemClock.elapsedRealtime() + AUTO_WAIT;
+            while (SystemClock.elapsedRealtime() < until) {
+                int s = Installed.state(Installed.of(ctx.getPackageManager(), a.pkg), a);
+                if (s == Installed.CURRENT || s == Installed.NEWER) break;
+                if (Installer.progress(ctx, session) < 0) break; // Android finished or dropped it
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+            int s = Installed.state(Installed.of(ctx.getPackageManager(), a.pkg), a);
+            if (s != Installed.CURRENT && s != Installed.NEWER) Installer.abandon(ctx, session); // left for the notice
+        }
     }
 
     /** The quiet channel of the notice (created once, kept by Android). */

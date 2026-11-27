@@ -261,6 +261,7 @@ orosPack("de", "shell", {
  "cr.inno-setup": "Die Windows-Installer von orOS und orOS Drive",
  "cr.appimage": "Das Linux-AppImage von orOS",
  "cr.android-browser-helper": "Nur in der Android-App: öffnet orOS im Vollbild",
+ "cr.shizuku": "Nur in Koulaxizis Apps (Android): optionale Installationen ohne Rückfrage, standardmäßig aus",
  "cr.lic.chromium": "BSD-3-Clause; seine Bestandteile behalten ihre eigenen Lizenzen (chrome://credits)",
  "cr.lic.debian": "Freie Software, jedes Paket unter seiner eigenen Lizenz (in /usr/share/doc); die Hardware-Firmware ist unfrei, darf aber weitergegeben werden",
  "cr.lic.appimage": "MIT; die Laufzeit enthält libfuse (LGPL-2.1)",

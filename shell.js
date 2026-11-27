@@ -10481,7 +10481,10 @@
           k: "cr.appimage" },
         { name: "Android Browser Helper 2.7.4", url: "https://github.com/GoogleChrome/android-browser-helper",
           by: "Google LLC", lic: "Apache-2.0",
-          k: "cr.android-browser-helper" }
+          k: "cr.android-browser-helper" },
+        { name: "Shizuku API 13.1.5", url: "https://github.com/RikkaApps/Shizuku-API",
+          by: "RikkaW & contributors", lic: "Apache-2.0",
+          k: "cr.shizuku" }
       ]
     },
     {
