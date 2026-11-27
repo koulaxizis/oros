@@ -3689,7 +3689,7 @@ Same thread, Chris 2026-11-13 («όλα τα κύματα»): changes wait in th
 - **`tests.yml` concurrency:** group `tests-<ref>`; `cancel-in-progress` only for `pull_request`, so a newer push to a PR cancels the older run and a push to `main` always finishes.
 - **`tests.yml` job `athens` (CI health 2026-11-24, CIH-TZ):** the same suite with `TZ=Europe/Athens` beside job `sync` (UTC, name unchanged), so a date that is only right in UTC (a day shifted by the offset, a 24 h step across the clock change) fails in CI. Its timeout is 15 like `sync`.
 - **Action versions (CIH-N24):** every `uses:` is pinned by commit SHA with the major in a comment (`# v7`); Node 24 majors: checkout v7, setup-node v7, setup-python v7.1.0, setup-go v6.5.0, setup-java v5, setup-gradle v5, upload-artifact v7, download-artifact v8. The same SHAs in oros-portable, oros-usb, oros-sounds and oros-bridge. A bump takes the new SHA from `git ls-remote --tags https://github.com/<action>`.
-- **Quality gate runner (CIH-PW):** Playwright 1.65.1 in `.github/qa/package.json` (Ubuntu 26.04 needs 1.61+), so `quality.yml` runs on `ubuntu-latest` again (the `ubuntu-24.04` pin is gone).
+- **Quality gate runner (CIH-PW):** Playwright 1.63.0 in `.github/qa/package.json` (Ubuntu 26.04 needs 1.61+; with 1.65.1 the release visit of `boot.js` never saw the new version, run 46064055341), so `quality.yml` runs on `ubuntu-latest` again (the `ubuntu-24.04` pin is gone).
 - **Decided NOT to do (Chris 2026-10-27):** no `cache: npm` / `npm ci` (no lockfiles); `quality.yml` new-apps keeps `fetch-depth: 0`; no `cancel-in-progress` in `android.yml` (main publishes android-apks, runs must finish in order).
 
 ### `apps.json` [verified 2026-10-26]
