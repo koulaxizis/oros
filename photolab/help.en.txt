@@ -53,6 +53,14 @@ On a phone all menus are under the menu button.
 - Both look at the whole visible picture. Move the `Edge` slider to keep more or less around the subject, then `Apply`. One `Undo` takes it back.
 - They use the same on-device tool as Atelier's background remover. The first time, it needs a download of about 16 MB; after that it works offline, and the picture never leaves your device. If Atelier downloaded it already, there is nothing to download.
 
+## Enlarge with AI
+- `Image` › `Enlarge with AI (2×/4×)…` makes the picture 2 or 4 times larger and sharper with an AI model (Real-ESRGAN) that runs on this device. Pick the size and press `Enlarge`. One `Undo` takes it back.
+- Photo layers go through the model; text and shapes grow as they are, masks are resized with the picture.
+- The first time, it needs a download of about 16 MB (5 MB if the background tool is already on this device). The model is checked before it is kept; after that it works offline, and the picture never leaves your device.
+- Without a graphics card it takes a while: on a computer about a minute and a half for every million pixels of the original at 4×, longer on a phone. The window shows how long is left, and `Cancel` stops it with nothing changed.
+- The device's size limit still counts (8192 px a side, 4096 on a phone): a picture too big for the factor is enlarged as far as it allows.
+- The Assistant and Claude can ask for it too: their `Upscale` runs here when no other image AI that can upscale is chosen.
+
 ## From Google Photos
 - On the projects screen, `From Google Photos`: sign in to Google, press `Open Google Photos`, pick one picture and press `Done`. It opens here as a new project.
 - orOS reads only that picture, once, and lets go of the sign-in right away. Videos don't open here.

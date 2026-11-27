@@ -379,6 +379,7 @@ orosPack("de", "shell", {
  "cr.mediabunny": "Videodateien lesen und schreiben (Montage)",
  "cr.meteoalarm": "Amtliche Wetterwarnungen (Wetter)",
  "cr.mi-gan": "Einen Teil eines Bildes füllen: Magischer Radierer und Magischer Griff (Atelier)",
+ "cr.real-esrgan": "Mit KI vergrößern 2×/4× (Photo Lab), auf dem Gerät",
  "cr.musicbrainz": "Albumdetails (Medienregal, Cover in Musik); Künstlerseiten, Diskografie und Titellisten (Musik)",
  "cr.nasa-gibs": "Satelliten-Regenkarte (Wetter)",
  "cr.notion-api": "Verbundene Dienste: Seiten (Notizen) und Datenbanken (Tabelle, Kanban) importieren",

@@ -180,5 +180,5 @@
     });
   }
 
-  PL.subject = { run: run, selOf: selOf, auto: auto };
+  PL.subject = { run: run, selOf: selOf, auto: auto, cutout: cutout };   // cutout: also Enlarge with AI (enlarge.js)
 })();

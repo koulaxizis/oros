@@ -699,6 +699,8 @@ orosPack("de", "assistant", {
  "ed.note.aiNoFile": "Die Bilddatei wurde auf der orOS-Festplatte nicht gefunden.",
  "ed.note.aiLittle": "Das Hintergrund-Werkzeug fand in einer Ebene kaum ein Motiv und ließ sie, wie sie war.",
  "ed.note.aiNoCut": "Das Hintergrund-Werkzeug konnte nicht geladen werden.",
+ "ed.note.aiUpFail": "Das Bild konnte auf diesem Gerät nicht vergrößert werden (das Modell wurde nicht geladen oder lief nicht).",
+ "ed.v.prov.device": "dieses Gerät (Real-ESRGAN)",
  "ed.op.align": "Ausrichten",
  "ed.op.animate": "Animation",
  "ed.op.arrange": "Ebenen",

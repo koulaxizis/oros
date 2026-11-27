@@ -10,7 +10,9 @@
 //   fill      a box redrawn from words (generative fill) → a new layer
 //   expand    the canvas grows and AI draws beyond the edges
 //             (generative expand) → a new bottom layer
-//   upscale   the whole picture larger; with an AI that can (WebUI /
+//   upscale   the whole picture larger: on this device (Real-ESRGAN,
+//             enlarge.js) with prov device or when the owner's image AI
+//             cannot upscale; with an AI that can (WebUI /
 //             Forge) its sharper copy as a top layer
 //   image     a picture file from Claude's folders → a new photo layer
 // The image AI is the one the owner chose in the Assistant (Settings ›
@@ -210,12 +212,19 @@
       return redraw(A0, s.prompt || "", src, { x: 0, y: 0, w: z.w, h: z.h }, null, { x: ox, y: oy, w: w0, h: h0 });
     }).then(function (cv) { return addPixels(cv, 0, 0, t("ai.layerExpand"), t("ai.stepExpand"), true, "e") + 1; });
   }
+  // PL-UP: on this device (Real-ESRGAN, enlarge.js), one undo step.
+  function onDevice(f) {
+    return PL.enlargeTool().then(function (E) { return E.run(f); }).then(function (r) { return r.same ? 0 : 1; },
+      function () { return Promise.reject({ note: "aiUpFail" }); });
+  }
   function upscale(s) {
     var d = st.doc, z = window.PhotoLabCommands.aiSize(d, s);
     if (!z) return Promise.resolve(0);
     var f = z.w / d.w;
+    if (s.prov === "device") return onDevice(f);
     return imageAI().then(function (IA) {
       var cf = s.prov ? IA.conf(s.prov === IA.readPref().prov ? IA.readPref() : { prov: s.prov }) : IA.conf(IA.readPref());
+      if (!s.prov && !(cf && cf.p.upscale)) return onDevice(f);   // PL-UP: rather than a plain resize
       var src = cf && cf.p.upscale ? PL.view.flatten(null, 1) : null;
       return Promise.resolve(PL.ops.resizeImage(z.w, z.h)).then(function () {
         if (!src) return 1;

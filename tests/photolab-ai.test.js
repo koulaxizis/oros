@@ -135,7 +135,7 @@ test("wiring: Photo Lab loads aiedit.js, runs kind ai through it, subject.auto, 
   const as = read("photolab/assist.js");
   assert.match(as, /if \(kind === "ai"\) return PL\.aiedit \? PL\.aiedit\.run\(s, notes\)/);
   assert.match(as, /chk\.steps\[0\]\.op === "create"\) \{ create\(key, chk\.steps\[0\]\)/);
-  assert.match(read("photolab/subject.js"), /PL\.subject = \{ run: run, selOf: selOf, auto: auto \}/);
+  assert.match(read("photolab/subject.js"), /PL\.subject = \{ run: run, selOf: selOf, auto: auto, cutout: cutout \}/);
   const ai = read("photolab/aiedit.js");
   assert.match(ai, /function inFolders\(path\)/, "files only from Claude's folders");
   assert.ok(read("sw.js").indexOf('"photolab/aiedit.js"') > 0);
