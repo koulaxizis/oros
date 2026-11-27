@@ -31,6 +31,7 @@ Take a picture of your whole screen, one window or a browser tab, crop it, and k
 
 ## From Quick settings
 - Quick settings has a Screenshot button: a tap takes the whole screen, the arrow next to it offers Whole screen or Region. Your browser asks what to share, orOS takes one picture and stops sharing at once, then Screen Capture opens with it. For Region, drag over the part you want to keep, then Save to Pictures.
+- Next to it, Screen recording records a video: tap it, choose what to share (tick the browser's sound option to record the sound too), and recording starts at once. Keep working in orOS while it records: opening and closing apps does not stop it. The button then shows the time and a tap stops it; the top bar shows it too, with a stop button, and so does your browser's own "Stop sharing". The video saves itself in Files › Videos (a tap on the message opens it). The arrow next to the button opens the recording options here (quality, frame rate, microphone; the microphone is off unless you turn it on). Phones do not let a web page record the screen, so the button is not there; use your phone's own screen recorder.
 
 ## Privacy
 - Nothing leaves this device. orOS only sees what you choose to share, and only while you share it.

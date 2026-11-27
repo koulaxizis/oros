@@ -42,7 +42,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.10.0";
+  var VER = "1.11.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
                "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing"];
@@ -1114,6 +1114,8 @@
       if (!host) return;
       save(list(), undefined, !!on);
     },
+    // QS-REC-1: the running recording's handle for Quick settings, or null
+    recNow: function () { return recLive; },
     // Screen Capture's recording { state() → { ms, paused }, stop() } | null, in memory
     live: function (kind, h) {
       if (kind !== "rec") return;
