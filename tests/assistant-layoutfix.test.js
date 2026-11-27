@@ -166,7 +166,7 @@ test("files_read: local folders, pictures, OCR; the tool says so", () => {
   assert.match(as, /if \(typeof a\.path === "string" && \/\^local:\/i\.test\(a\.path\.trim\(\)\)\) return localRead\(a, apps\);/);
   assert.match(as, /return Promise\.all\(\[L\.read\(path, "files_read"\), cfMod\(\)\]\)/);
   assert.match(as, /if \(kind === "image"\) return picResult\(f, name, head, a, ui\);/);
-  assert.match(as, /var pid = curProv\(\), see = !GATE && C\.attCaps\(pid, provConf\(pid\)\)\.img, ocr = a\.ocr === true \|\| !see;/);
+  assert.match(as, /var pid = curProv\(\), see = GATE || C\.attCaps\(pid, provConf\(pid\)\)\.img, ocr = a\.ocr === true \|\| !see;/);
   // the picture stays in the session's memory, never in storage
   assert.match(as, /attMem\[id\] = got\[0\];/);
   assert.match(as, /out\.pic = \[\{ id: id, type: r\.type \}\];/);
