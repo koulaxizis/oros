@@ -15,8 +15,8 @@ const path = require("path");
 
 const root = path.join(__dirname, "..");
 
-test("mail-local: mail/wire/ is byte-identical to relay/ (copy relay/imap.js and smtp.js after changing them)", () => {
-  for (const f of ["imap.js", "smtp.js"]) {
+test("mail-local: mail/wire/ is byte-identical to relay/ (copy relay/imap.js, smtp.js and sieve.js after changing them)", () => {
+  for (const f of ["imap.js", "smtp.js", "sieve.js"]) {
     assert.equal(fs.readFileSync(path.join(root, "mail/wire", f), "utf8"),
                  fs.readFileSync(path.join(root, "relay", f), "utf8"), "mail/wire/" + f + " differs from relay/" + f);
   }
@@ -163,4 +163,15 @@ test("mail-local: Proton Mail Bridge accounts (127.0.0.1:1143/1025) and what sta
   const pre = A.presetFor("someone@proton.me");
   assert.ok(pre.bridge && pre.imap === "127.0.0.1" && pre.ip === 1143 && pre.sp === 1025);
   assert.ok(A.presetFor("x@pm.me").bridge && A.presetFor("x@protonmail.com").bridge);
+});
+
+test("mail-local: server rules (ManageSieve) go to the server's port 4190 by name", async () => {
+  const L = await import("../mail/local.js");
+  const seen = [];
+  const connectFn = (host, port, mode) => { seen.push([host, port, mode]); return Promise.reject(new Error("refused")); };
+  await assert.rejects(L.run({ op: "sieve", act: "check", acct: { host: "mail.example.gr", port: 993, sec: "tls", user: "u", pass: "p" } }, connectFn),
+    (e) => e.code === "connect");
+  await assert.rejects(L.run({ op: "sieve", act: "check", host: "sieve.example.gr", acct: { host: "mail.example.gr", port: 993, sec: "tls", user: "u", pass: "p" } }, connectFn),
+    (e) => e.code === "connect");
+  assert.deepEqual(seen, [["mail.example.gr", 4190, "starttls"], ["sieve.example.gr", 4190, "starttls"]]);
 });

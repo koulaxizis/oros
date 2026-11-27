@@ -1095,7 +1095,7 @@
         body.smtp = { host: acct.smtp.host, port: acct.smtp.port, sec: acct.smtp.sec,
                       user: acct.smtp.user || body.acct.user, pass: pw };
       }
-      if (local) return callLocal(acct, body);
+      if (local || viaLauncher()) return callLocal(acct, body);
       var ctl = new AbortController();
       // a large message takes longer to upload, send and file in Sent
       var timer = setTimeout(function () { ctl.abort(); }, (op === "send" || op === "draft") ? SEND_TIMEOUT : CALL_TIMEOUT);
@@ -1137,9 +1137,14 @@
   function loadPin(acctId) { return idbGet("creds", pinKey(acctId)).then(function (v) { return typeof v === "string" ? v : ""; }, function () { return ""; }); }
   function savePin(acctId, fp) { return idbPut("creds", pinKey(acctId), fp); }
   function dropPin(acctId) { return idbDel("creds", pinKey(acctId)).catch(function () {}); }
+  // The orOS on the computer (installed, Portable, USB): the relay serves
+  // no Mail op to this origin, so every account goes through the
+  // launcher (Chris 2026-11-27 «Ναι, μέσω launcher»).
+  function viaLauncher() {
+    return (location.hostname === "localhost" || location.hostname === "127.0.0.1") && location.port === "47800";
+  }
   function callLocal(acct, body) {
-    var here = location.hostname === "localhost" || location.hostname === "127.0.0.1";
-    if (!here || location.port !== "47800") return Promise.reject(new MailError("localonly"));
+    if (!viaLauncher()) return Promise.reject(new MailError("localonly"));
     var timeout = (body.op === "send" || body.op === "draft") ? SEND_TIMEOUT : CALL_TIMEOUT;
     return Promise.all([localMail(), loadPin(acct.id)]).then(function (r) {
       var L = r[0], state = {};

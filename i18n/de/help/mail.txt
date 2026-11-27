@@ -163,7 +163,7 @@ Deine Konten (ohne Passwörter), deine Regeln, deine Vorlagen, die Zeiten deiner
 - Bei der offenen oder den ausgewählten Nachrichten: [[E]] archiviert, [[Delete]] oder [[#]] löscht, [[!]] markiert als Spam (oder kein Spam), [[S]] markiert, [[U]] markiert als gelesen oder ungelesen, [[B]] stellt zurück und [[V]] verschiebt in einen Ordner.
 
 ## Tipps
-- Browser können nicht direkt mit Mailservern sprechen, darum geht Mail über das orOS-Mail-Relay. Es leitet deine Mails nur durch und speichert nichts.
+- Browser können nicht direkt mit Mailservern sprechen, darum geht Mail über das orOS-Mail-Relay. Es leitet deine Mails nur durch und speichert nichts. Im auf einem Computer installierten orOS, in orOS Portable und orOS USB verbindet sich orOS selbst mit dem Mailserver, dort geht also nichts über das Relay.
 - Dieselbe Relay-Adresse dient ganz orOS: auch [Reader](app:feeds), [Podcasts](app:podcasts) und orOS Gate nutzen sie. Du legst sie einmal fest, in [Einstellungen](app:settings) › Verbundene Dienste › `orOS-Relay`.
 
 ## Grenzen

@@ -4,17 +4,20 @@
 // The relay on Cloudflare cannot reach a server that listens only on
 // the person's own computer, such as Proton Mail Bridge (IMAP
 // 127.0.0.1:1143, SMTP 127.0.0.1:1025, STARTTLS, self-signed
-// certificate). In orOS served by the launcher (installed orOS, orOS
-// Portable, orOS USB: http://localhost:47800) the page runs the relay's
-// own IMAP and SMTP code (wire/imap.js, wire/smtp.js: byte-identical
-// copies of relay/, tests/mail-local.test.js checks) over the
-// launcher's WebSocket /__oros/mail/sock (oros-portable
-// launcher/mailsock.go), which carries the bytes and does the TLS with
-// the certificate the person trusted (its SHA-256, "pin", kept on this
-// device only). The password goes from this page to the server on this
-// computer and nowhere else.
+// certificate), and it serves no Mail op to the orOS on the computer
+// (http://localhost:47800) at all. So in orOS served by the launcher
+// (installed orOS, orOS Portable, orOS USB) every account goes this way:
+// the page runs the relay's own IMAP, SMTP and ManageSieve code
+// (wire/imap.js, wire/smtp.js, wire/sieve.js: byte-identical copies of
+// relay/, tests/mail-local.test.js checks) over the launcher's WebSocket
+// /__oros/mail/sock (oros-portable launcher/mailsock.go), which carries
+// the bytes and does the TLS: for a server by name against the
+// system's roots, for this computer with the certificate the person
+// trusted (its SHA-256, "pin", kept on this device only). Nothing goes
+// through the relay.
 //
-// Loaded by mail.js with import() only for such an account.
+// Loaded by mail.js and notify.js with import() only under the launcher
+// (or for a Bridge account, to say it needs that computer).
 //
 //   isLocalHost(h), launcherHere(location)
 //   wsConnect(WebSocket, "ws://localhost:47800", pin, state) → connectFn
@@ -24,6 +27,7 @@
 
 import { withSession, ImapError } from "./wire/imap.js";
 import { withSmtp } from "./wire/smtp.js";
+import { runSieve } from "./wire/sieve.js";
 
 export const SOCK_PATH = "/__oros/mail/sock";
 const FETCH_BYTES = 20 * 1024 * 1024;   // one message source, as the relay
@@ -125,7 +129,11 @@ function b64bin(s) { return atob(s); }
 export async function run(b, connectFn) {
   var acct = { host: b.acct.host, port: +b.acct.port, sec: b.acct.sec, user: b.acct.user, pass: b.acct.pass };
   try {
-    if (b.op === "sieve") throw new ImapError("nosieve", "no server rules on this computer");
+    if (b.op === "sieve") {
+      var sh = b.host || acct.host;
+      if (isLocalHost(sh)) throw new ImapError("nosieve", "no server rules on this computer");
+      return await runSieve(connectFn, { host: sh, port: 4190, user: acct.user, pass: acct.pass }, b);
+    }
     if (b.op === "smtpcheck" || b.op === "send") {
       var smtp = { host: b.smtp.host, port: +b.smtp.port, sec: b.smtp.sec, user: b.smtp.user, pass: b.smtp.pass };
       var bin = b.op === "send" ? b64bin(b.raw) : "";

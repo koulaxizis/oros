@@ -201,11 +201,37 @@
   function snoozeLib() { return load(SNOOZE_SRC, "orosMailSnooze", "plan"); }
 
   // ---------- relay ----------
+  // In the orOS on the computer (localhost:47800) the relay serves no
+  // Mail op, so the check runs Mail's own local.js through the
+  // launcher (MAIL-LOCAL); a Bridge account (127.0.0.1) works only there.
+  function viaLauncher() {
+    var l = null;
+    try { l = root.location; } catch (e) {}
+    return !!l && (l.hostname === "localhost" || l.hostname === "127.0.0.1") && l.port === "47800";
+  }
+  var localMod = null;
+  function local(acct, body, ms) {
+    if (!viaLauncher()) return Promise.reject({ code: "localonly" });
+    if (!localMod) localMod = import("./local.js").catch(function (e) { localMod = null; throw e; });
+    return Promise.all([localMod, openDb().then(function (d) {
+      return d ? get(d, "creds", "pin|" + acct.id).then(function (v) { d.close(); return typeof v === "string" ? v : ""; }, function () { d.close(); return ""; }) : "";
+    })]).then(function (r) {
+      var timer;
+      return Promise.race([
+        r[0].run(body, r[0].wsConnect(root.WebSocket, "ws://" + root.location.host, r[1], {})),
+        new Promise(function (res, rej) { timer = setTimeout(function () { rej({ code: "timeout" }); }, ms || CALL_TIMEOUT); })
+      ]).then(function (d) { clearTimeout(timer); return d; }, function (e) {
+        clearTimeout(timer);
+        throw { code: (e && e.code) || "local" };
+      });
+    }, function () { throw { code: "local" }; });
+  }
   function relay(url, acct, pass, body, ms) {
-    var ctl = new AbortController();
-    var timer = setTimeout(function () { ctl.abort(); }, ms || CALL_TIMEOUT);
     body.acct = { host: acct.imap.host, port: acct.imap.port, sec: acct.imap.sec,
                   user: acct.imap.user || acct.email, pass: pass };
+    if (acct.imap.host === "127.0.0.1" || viaLauncher()) return local(acct, body, ms);
+    var ctl = new AbortController();
+    var timer = setTimeout(function () { ctl.abort(); }, ms || CALL_TIMEOUT);
     return fetch(url + "/v1", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
