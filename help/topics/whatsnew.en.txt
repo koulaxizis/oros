@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.99.00
+- **Your computer's own local AI answers when the synced address can't.** If the [Assistant](app:assistant)'s Local / OpenAI-compatible service points at a server on another device (for example your laptop's address on the home network) and that address does not answer here, the local AI that is ready on this computer (System › Local AI) answers in its place. Nothing is saved: your other devices keep their setting, and the synced address is used again as soon as it answers. Settings › Connected services shows "this computer's local AI answers" while this happens.
+
 ## Version 8.98.03
 - **One colour picker.** Make it yours takes you to System colour instead of showing the colours a second time.
 

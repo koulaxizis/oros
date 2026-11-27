@@ -224,7 +224,7 @@
       "set.tier4": "Paid online",
       "set.chain.ok": "set up here",
       "set.chain.off": "not set up here",
-      "set.chain.down": "not answering now",
+      "set.chain.down": "not answering now", "set.chain.sys": "this computer's local AI answers",
       "set.fbAuto": "The connected services below decide who answers when this server is away.",
       "set.chainHint": "Every service set up on this device can answer. Your assistant above answers first; if it is away, busy or over its limit, the next one below takes over. Untick one to leave it out.",
       "set.chainNow": "{name} answers first; if it can't, the next one below takes over.",
@@ -926,7 +926,7 @@
       "set.tier4": "Πληρωμένα online",
       "set.chain.ok": "ρυθμισμένο εδώ",
       "set.chain.off": "δεν έχει ρυθμιστεί εδώ",
-      "set.chain.down": "δεν απαντά τώρα",
+      "set.chain.down": "δεν απαντά τώρα", "set.chain.sys": "απαντά το τοπικό AI αυτού του υπολογιστή",
       "set.fbAuto": "Οι συνδεδεμένες υπηρεσίες παρακάτω αποφασίζουν ποιος απαντά όταν αυτός ο server λείπει.",
       "set.chainHint": "Κάθε υπηρεσία ρυθμισμένη σε αυτή τη συσκευή μπορεί να απαντήσει. Ο βοηθός σου παραπάνω απαντά πρώτος· αν λείπει, είναι απασχολημένος ή έφτασε το όριό του, συνεχίζει η επόμενη από κάτω. Ξετσέκαρε μία για να μείνει έξω.",
       "set.chainNow": "Πρώτη απαντά η υπηρεσία {name}· αν δεν μπορεί, συνεχίζει η επόμενη από κάτω.",
@@ -1621,7 +1621,10 @@
   function curProv() { return fbUse || data.set.prov; }
   function provConf(pid) { return data.provs[pid] || { m: 0, base: "", model: "" }; }
   function modelOf(pid) { return provConf(pid).model || (C.PROVIDERS[pid] && C.PROVIDERS[pid].model) || ""; }
-  function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
+  // The settings a call uses on this device: this computer's own local
+  // AI may answer in place of a synced address that does not (AS-SYSAI 2).
+  function useConf(pid) { return C.localUse(pid, provConf(pid)); }
+  function baseOf(pid) { return C.provBase(pid, useConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
     var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0, tm: cur.tm || "" };
@@ -1952,7 +1955,7 @@
   function readKey(q) { return loadKey(q).then(function (k) { return k ? k.key : ""; }); }
   // Does the local server answer at all? (core.probeLocal, the same
   // check Feeds and Atelier make)
-  function localUp(pid) { return C.probeLocal(pid, provConf(pid), readKey); }
+  function localUp(pid) { return C.probeLocal(pid, provConf(pid), readKey, sysAI); }
   // Is a model that runs in the browser ready here (no download)?
   function onDevice(pid) {
     var P = C.PROVIDERS[pid];
@@ -1983,14 +1986,14 @@
   function pickNow(c) {
     var order = C.chainOrder(data);
     if (order.length < 2) return Promise.resolve(order[0] && order[0] !== data.set.prov ? order[0] : "");
-    return C.pickChain(data, { readKey: readKey, device: onDevice, tools: turnTools(c), cool: cool }).then(function (r) {
+    return C.pickChain(data, { readKey: readKey, device: onDevice, tools: turnTools(c), cool: cool, sys: sysAI }).then(function (r) {
       return r.pid && r.pid !== data.set.prov ? r.pid : "";
     });
   }
   function chooseProv(c, keep) {
     return (keep ? Promise.resolve(fbUse) : pickNow(c)).then(function (use) {
       fbUse = use;
-      tmUse = C.toolModel(provConf(curProv()), C.PROVIDERS[curProv()] && C.PROVIDERS[curProv()].local && turnNeeds(c));
+      tmUse = C.toolModel(useConf(curProv()), C.PROVIDERS[curProv()] && C.PROVIDERS[curProv()].local && turnNeeds(c));
       noteProv(c);
     });
   }
@@ -2085,8 +2088,8 @@
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
       function send(o) {
-        var tm = turnModel(pid);
-        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: tm || modelOf(pid), vis: tm ? 0 : provConf(pid).vis, nt: tm ? 0 : provConf(pid).nt, fast: provConf(pid).fast }, msgs, o);
+        var pc = useConf(pid), tm = turnModel(pid);
+        var req = C.buildRequest(pid, { key: k && !pc.sys ? k.key : "", base: pc.base, model: tm || pc.model || modelOf(pid), vis: tm ? 0 : pc.vis, nt: tm ? 0 : pc.nt, fast: pc.fast }, msgs, o);
         return fetch(req.url, {
           method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
           credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
@@ -9449,7 +9452,7 @@
         chainBox.textContent = "";
         var here = [], other = [];
         order.forEach(function (q, k) { (st[k] === "off" ? other : here).push({ q: q, st: st[k] }); });
-        var used = here.filter(function (x) { return skip.indexOf(x.q) < 0 && x.st === "ok"; });
+        var used = here.filter(function (x) { return skip.indexOf(x.q) < 0 && (x.st === "ok" || x.st === "sys"); });
         var sum = el("p", "chain-sum");
         sum.id = "as-chain-sum";
         sum.textContent = !used.length ? t("set.chainNone") : t(used.length > 1 ? "set.chainNow" : "set.chainOnly", { name: provName(used[0].q) });
@@ -9470,7 +9473,7 @@
           });
           cb.parentNode.classList.add("check");
           var tag = q === data.set.prov ? t("set.chainFirst") + " · " : "";
-          var stEl = el("span", "chain-st" + (x.st === "ok" ? " ok" : ""), tag + t("set.chain." + x.st));
+          var stEl = el("span", "chain-st" + (x.st === "ok" || x.st === "sys" ? " ok" : ""), tag + t("set.chain." + x.st));
           row.appendChild(stEl);
           chainBox.appendChild(row);
         });
@@ -9489,7 +9492,7 @@
       var P = C.PROVIDERS[q], pc = provConf(q);
       if (P.device) return Promise.resolve(onDevice(q)).then(function (v) { return v ? "ok" : "off"; });
       if (!modelOf(q)) return Promise.resolve("off");
-      if (P.local) return baseOf(q) ? localUp(q).then(function (v) { return v ? "ok" : "down"; }) : Promise.resolve("off");
+      if (P.local) return baseOf(q) ? localUp(q).then(function (v) { return !v ? "down" : useConf(q).sys ? "sys" : "ok"; }) : Promise.resolve("off");
       if (P.key !== "yes") return Promise.resolve("ok");
       return readKey(q).then(function (k) { return k ? "ok" : "off"; });
     }
