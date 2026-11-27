@@ -38,6 +38,9 @@ Drag a task by its handle (the dotted grip on the right) to move it within the l
 
 The sort button (lines with an arrow) orders the view `By priority`, `By due date` or back in `Manual order`. Each list and smart list remembers its own choice on this device. Ticked tasks go last when sorted, and the drag handles only show in `Manual order`.
 
+### Table view
+The table button (a grid, next to the sort button) shows the tasks as a table with the columns `Task`, `List`, `Due date`, `Priority` and `Labels`; press it again for the list. It works in a list, a smart list, a saved filter and in search results; in one list the `List` column is left out. Click a column's header to sort by it, again to reverse, a third time to go back to the view's own order. Ticked tasks stay last. Tick a task in its circle, or tap its text to open it. The table and its sort are remembered on this device. On a narrow screen each task is a small card and the headers are sort buttons above them.
+
 ## Move tasks to another list
 - In the `Task` window, pick another `List`; the task moves with its subtasks when you close the window.
 - Or right-click a task (on a phone, press and hold it) for the quick menu: the priority flags, `Move to…`, `Open` and `Select`.
@@ -72,6 +75,15 @@ The button with four squares beside it (`Send the list to an app…`) sends the 
 In a task, open `Add / manage labels` to create labels with a name and colour, and tap a label to attach it. Tap a label chip in the task to remove it.
 
 The search box looks through every list: task text, notes, extra info, subtasks and label names. The funnel button filters by label; a task shows if it has any of the labels you pick. Results from all lists appear together, each with its list name. You can also delete a label from the filter menu; it's removed from all tasks.
+
+## Tasks from text, a photo or a PDF
+The button next to **+** in the add bar (also `Tasks from text, photo or PDF…` in a list's window) turns notes into tasks. Pasting two lines or more into the add box opens the same window with them.
+- **Text**: paste or type your notes. Each line, bullet (`-`, `*`, `•`), number (`1.`, `2)`) or check box (`[ ]`, `[x]`) becomes a task. A bullet indented under another becomes its subtask, and a line with two or more `;` becomes several tasks.
+- **Photo…**: pick a picture of a whiteboard, a handwritten list or a page. To-Do reads its text on this device with the same recognition as Files (Greek and English); the first time it asks to download the engine once. `Stop` ends a long read.
+- **PDF…**: the text of the PDF is read (up to 20 pages). A scanned PDF without text has its first 5 pages read like a photo. Nothing in the file is ever run.
+- Days in a task, such as `tomorrow`, `friday`, `Παρασκευή` or `15/12`, become its due date and leave the text; a time goes into its notes. A short line ending in a colon, such as `Shopping:`, is a heading: the first one is offered as a new list (or picks the list of that name), and a heading that is only a day, such as `Monday:`, dates the tasks under it.
+- `Find tasks` shows the list before anything is saved. Untick what you do not want, correct the text or the dates and choose the list. Tasks already open in that list, and tasks ticked in the text, start unticked. `Add` puts them at the end of the list; the message that follows has `Undo`.
+- **Split with the Assistant's AI** (off until you tick it, remembered on this device): the AI you set up in the Assistant splits the text instead of the rules. The window says which service reads the text: a model on this device or your own computer, or the online service you chose with your own key. If it does not answer, the rules split the text.
 
 ## Import from Todoist
 - First connect Todoist in [Settings](app:settings) › `Connected services` with your API token (Todoist › Settings › Integrations › Developer).

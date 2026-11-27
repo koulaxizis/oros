@@ -159,6 +159,14 @@
       "recur.after.short": "after done",
       "sort.title":     "Sort",
       "sort.manual":    "Manual order",
+      "tbl.toTable":    "Table view",
+      "tbl.toList":     "List view",
+      "tbl.caption":    "Tasks as a table",
+      "tbl.task":       "Task",
+      "tbl.list":       "List",
+      "tbl.labels":     "Labels",
+      "tbl.done":       "Done",
+      "tbl.sortBy":     "Sort by {col}",
       "sort.prio":      "By priority",
       "sort.due":       "By due date",
       "menu.move":      "Move to…",
@@ -344,6 +352,14 @@
       "recur.after.short": "από την ολοκλήρωση",
       "sort.title":     "Ταξινόμηση",
       "sort.manual":    "Χειροκίνητη σειρά",
+      "tbl.toTable":    "Προβολή πίνακα",
+      "tbl.toList":     "Προβολή λίστας",
+      "tbl.caption":    "Οι εργασίες σε πίνακα",
+      "tbl.task":       "Εργασία",
+      "tbl.list":       "Λίστα",
+      "tbl.labels":     "Ετικέτες",
+      "tbl.done":       "Ολοκληρώθηκε",
+      "tbl.sortBy":     "Ταξινόμηση κατά {col}",
       "sort.prio":      "Κατά προτεραιότητα",
       "sort.due":       "Κατά προθεσμία",
       "menu.move":      "Μετακίνηση σε…",
@@ -989,6 +1005,9 @@
   // "today" | "week" | "nodate" | "p1" | "f:<filter id>" | null) and the
   // sort chosen per view (view.sort { <list id | smart id | f:id>: mode }).
   var view = { activeList: null, hideCompleted: false, smart: null, sort: {} };
+  // TD-TBL (device-local, in the same prefs): view.layout "table" shows
+  // every view as a table; view.tsort { k, d } is the table's column
+  // sort (absent = the view's own order).
   function loadView() {
     var p = null;
     try { p = JSON.parse(localStorage.getItem(PREFS_KEY)); } catch (e) {}
@@ -1002,6 +1021,8 @@
           if (SORT_MODES.indexOf(p.sort[k]) >= 0) view.sort[k] = p.sort[k];
         });
       }
+      if (p.layout === "table") view.layout = "table";
+      if (p.tsort && Mdl.TABLE_KEYS.indexOf(p.tsort.k) >= 0) view.tsort = { k: p.tsort.k, d: p.tsort.d === -1 ? -1 : 1 };
     } else {
       // first run of this version: start from what this device showed last
       view.activeList = (typeof state.activeList === "string") ? state.activeList : null;
@@ -1826,6 +1847,7 @@
     ul.innerHTML = "";
     var cv = currentView();
     updateControls(cv);
+    var rows = [], opts = {}, oneList = false;
 
     if (isSearching()) {
       var results = [];
@@ -1834,40 +1856,187 @@
           if (itemMatchesView(item)) results.push({ list: list, item: item, i: results.length });
         });
       });
-      Mdl.sortRows(results, sortMode()).forEach(function (r) {
-        ul.appendChild(makeItemRow(r.list, r.item, { source: true }));
-      });
-
+      rows = Mdl.sortRows(results, sortMode());
+      opts = { source: true };
       var anyItems = state.lists.some(function (l) { return l.items.length > 0; });
       showEmpty(results.length ? null : (anyItems ? "no-match" : "empty"));
-      return;
-    }
-
-    if (cv) {
+    } else if (cv) {
       // TD-14: a smart list / saved filter — tasks of every list
-      var rows = smartRows(viewMatcher(cv)).filter(function (r) {
+      var srows = smartRows(viewMatcher(cv)).filter(function (r) {
         return !(view.hideCompleted && r.item.done);
       });
-      Mdl.sortRows(rows, sortMode()).forEach(function (r) {
-        ul.appendChild(makeItemRow(r.list, r.item, { source: true }));
+      rows = Mdl.sortRows(srows, sortMode());
+      opts = { source: true };
+      showEmpty(srows.length ? null : "smart-empty");
+    } else {
+      // Browsing mode — the active list, drag handles on (manual order)
+      var list = activeList();
+      var visible = list.items.filter(function (item) {
+        return !(view.hideCompleted && item.done);
       });
-      showEmpty(rows.length ? null : "smart-empty");
+      if (visible.length === 0 && list.items.length > 0) showEmpty("filtered");
+      else showEmpty(list.items.length === 0 ? "empty" : null);
+      var mode = sortMode();
+      rows = Mdl.sortRows(visible.map(function (item, i) { return { list: list, item: item, i: i }; }), mode);
+      opts = { handle: mode === "manual" };
+      oneList = true;
+    }
+    var tbl = $("items-table");
+    if (view.layout === "table") {
+      ul.hidden = true;
+      renderTable(rows, !oneList);
       return;
     }
+    ul.hidden = false;
+    if (tbl) tbl.remove();
+    rows.forEach(function (r) { ul.appendChild(makeItemRow(r.list, r.item, opts)); });
+  }
 
-    // Browsing mode — the active list, drag handles on (manual order)
-    var list = activeList();
-    var visible = list.items.filter(function (item) {
-      return !(view.hideCompleted && item.done);
+  // ---------- TD-TBL: the table view ----------
+  // Columns task / list / due date / priority / labels over the rows the
+  // view shows (list, smart list, saved filter, search); a header click
+  // sorts by it (A→Z, Z→A, then the view's own order again). The list
+  // column is left out in one list. Under 560 px each row is a card
+  // (todo.css). Ticking and opening a task work as in the list.
+  var TBL_COLS = [["text", "tbl.task"], ["list", "tbl.list"], ["due", "item.due"], ["prio", "prio.label"], ["labels", "tbl.labels"]];
+  function renderTable(rows, showList) {
+    var old = $("items-table");
+    if (old) old.remove();
+    if (!rows.length) return;
+    var ts = view.tsort;
+    if (ts && !showList && ts.k === "list") ts = null;
+    var sorted = ts ? Mdl.tableSort(rows.map(function (r, i) { return { list: r.list, item: r.item, i: i }; }), ts.k, ts.d,
+      { lang: LANG, labelName: function (id) { var l = labelById(id); return l ? l.name : ""; } }) : rows;
+    var table = document.createElement("table");
+    table.id = "items-table";
+    table.className = "tbl" + (showList ? "" : " one-list");
+    var cap = document.createElement("caption");
+    cap.className = "sr-only";
+    cap.textContent = t("tbl.caption");
+    table.appendChild(cap);
+    var thead = document.createElement("thead"), hr = document.createElement("tr");
+    var th0 = document.createElement("th");
+    th0.className = "c-check";
+    th0.setAttribute("aria-label", t("tbl.done"));
+    hr.appendChild(th0);
+    TBL_COLS.forEach(function (c) {
+      if (c[0] === "list" && !showList) return;
+      var th = document.createElement("th");
+      th.className = "c-" + c[0];
+      th.scope = "col";
+      var on = ts && ts.k === c[0];
+      th.setAttribute("aria-sort", on ? (ts.d === 1 ? "ascending" : "descending") : "none");
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = t(c[1]);
+      if (on) { var ar = document.createElement("span"); ar.className = "tbl-arrow"; ar.setAttribute("aria-hidden", "true"); ar.textContent = ts.d === 1 ? "\u25b2" : "\u25bc"; b.appendChild(ar); }
+      b.title = t("tbl.sortBy").replace("{col}", t(c[1]));
+      b.addEventListener("click", function () {
+        var cur = view.tsort;
+        if (!cur || cur.k !== c[0]) view.tsort = { k: c[0], d: 1 };
+        else if (cur.d === 1) view.tsort = { k: c[0], d: -1 };
+        else delete view.tsort;
+        saveView();
+        renderItems();
+        var again = document.querySelector("#items-table th.c-" + c[0] + " button");
+        if (again) again.focus();
+      });
+      th.appendChild(b);
+      hr.appendChild(th);
     });
-    if (visible.length === 0 && list.items.length > 0) showEmpty("filtered");
-    else showEmpty(list.items.length === 0 ? "empty" : null);
-
-    var mode = sortMode();
-    var lrows = visible.map(function (item, i) { return { list: list, item: item, i: i }; });
-    Mdl.sortRows(lrows, mode).forEach(function (r) {
-      ul.appendChild(makeItemRow(list, r.item, { handle: mode === "manual" }));
+    thead.appendChild(hr);
+    table.appendChild(thead);
+    var tb = document.createElement("tbody");
+    sorted.forEach(function (r) {
+      var item = r.item, list = r.list, prio = Mdl.prioOf(item);
+      var tr = document.createElement("tr");
+      tr.className = "trow" + (item.done ? " done" : "") + (prio < 4 ? " p" + prio : "");
+      tr.dataset.id = item.id;
+      tr.dataset.list = list.id;
+      var tdc = document.createElement("td");
+      tdc.className = "c-check";
+      var check = document.createElement("input");
+      check.type = "checkbox";
+      check.className = "check";
+      check.checked = item.done;
+      check.setAttribute("aria-label", item.text + (prio < 4 ? " · P" + prio : ""));
+      check.addEventListener("change", function () { setDone(item, check.checked); });
+      tdc.appendChild(check);
+      tr.appendChild(tdc);
+      var tdt = document.createElement("td");
+      tdt.className = "c-text";
+      var open = document.createElement("button");
+      open.type = "button";
+      open.className = "tbl-open";
+      open.textContent = item.text;
+      var sc = Mdl.subCount(item);
+      if (sc.total) {
+        var sct = document.createElement("span");
+        sct.className = "tbl-subs";
+        sct.textContent = sc.done + "/" + sc.total;
+        open.appendChild(sct);
+      }
+      open.addEventListener("click", function () { openItemDialog(list.id, item.id); });
+      tdt.appendChild(open);
+      tr.appendChild(tdt);
+      if (showList) {
+        var tdl = document.createElement("td");
+        tdl.className = "c-list";
+        tdl.textContent = list.name;
+        tr.appendChild(tdl);
+      }
+      var tdd = document.createElement("td");
+      tdd.className = "c-due";
+      if (item.due) {
+        var chip = document.createElement("span");
+        chip.className = "chip-due" + dueClass(item.due);
+        chip.textContent = fmtDue(item.due);
+        chip.title = item.due;
+        tdd.appendChild(chip);
+      }
+      tr.appendChild(tdd);
+      var tdp = document.createElement("td");
+      tdp.className = "c-prio";
+      if (prio < 4) {
+        var pf = document.createElement("span");
+        pf.className = "chip-prio p" + prio;
+        pf.innerHTML = FLAG_SVG;
+        pf.appendChild(document.createTextNode("P" + prio));
+        tdp.appendChild(pf);
+      }
+      tr.appendChild(tdp);
+      var tdg = document.createElement("td");
+      tdg.className = "c-labels";
+      (item.labels || []).forEach(function (lid) {
+        var lb = labelById(lid);
+        if (!lb) return;
+        var c = document.createElement("span");
+        c.className = "chip";
+        c.style.background = lb.color || FALLBACK_COLOR;
+        c.textContent = lb.name;
+        c.title = lb.name;
+        tdg.appendChild(c);
+      });
+      tr.appendChild(tdg);
+      tb.appendChild(tr);
     });
+    table.appendChild(tb);
+    $("items").parentNode.insertBefore(table, $("items").nextSibling);
+  }
+  function setLayout(table) {
+    if (table) view.layout = "table"; else delete view.layout;
+    saveView();
+    paintLayoutBtn();
+    renderItems();
+  }
+  function paintLayoutBtn() {
+    var b = $("layout-btn");
+    if (!b) return;
+    var on = view.layout === "table", k = on ? "tbl.toList" : "tbl.toTable";
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+    b.setAttribute("aria-label", t(k));
+    b.title = t(k);
+    b.classList.toggle("on", on);
   }
 
   // Which controls make sense in this view.
@@ -3958,6 +4127,11 @@
       quickAdd();
       $("quick-add").focus();
     });
+    // TD-TBL: list ⇄ table (device-local)
+    if ($("layout-btn")) {
+      paintLayoutBtn();
+      $("layout-btn").addEventListener("click", function () { setLayout(view.layout !== "table"); });
+    }
 
     // Controls
     $("hide-completed").addEventListener("change", function () {
@@ -4427,6 +4601,47 @@
         FI.open();
       });
     }
+  }
+
+  // Tasks from text, a photo or a PDF (fromtext.js, TD-FT): the text
+  // is split into tasks and shown for review; "Add" is importApply's
+  // one write, with Undo. Opens from the add bar, the list window, and
+  // when more than one line is pasted into the add box.
+  var FT = window.OrosTodoFromText || null;
+  if (FT && FT.has()) {
+    FT.init({ lang: LANG, data: function () { return state; },
+      list: function () { var l = activeList(); return l ? l.id : ""; },
+      apply: importApply,
+      show: function (id) { if (listById(id)) { setActiveList(id); searchQuery = ""; activeFilters = []; updateFilterBtn(); renderAll(); } } });
+    var ftOpen = function (text) {
+      if (editingListId !== null) saveListDialog();
+      editingListId = null;
+      if ($("dlg-list").open) $("dlg-list").close();
+      FT.open({ text: text || "" });
+    };
+    var ftBtn = $("ft-btn"), ftList = $("l-ftext"), qa0 = $("quick-add");
+    if (ftBtn) {
+      ftBtn.hidden = false;
+      ftBtn.setAttribute("aria-label", FT.label());
+      ftBtn.setAttribute("title", FT.label());
+      ftBtn.addEventListener("click", function () { ftOpen(""); });
+    }
+    if (ftList) {
+      ftList.textContent = FT.label();
+      ftList.hidden = false;
+      ftList.addEventListener("click", function () { ftOpen(""); });
+    }
+    // a pasted list (two lines or more) is not one task
+    if (qa0) qa0.addEventListener("paste", function (e) {
+      var txt = "";
+      try { txt = (e.clipboardData || window.clipboardData).getData("text/plain") || ""; } catch (er) { txt = ""; }
+      var n = txt.split(/\r?\n/).filter(function (x) { return x.trim(); }).length;
+      if (n < 2) return;
+      e.preventDefault();
+      var before = qa0.value.trim();
+      qa0.value = "";
+      ftOpen((before ? before + "\n" : "") + txt);
+    });
   }
 
   // .orostasks (OBF-4e): every list, task, subtask and label as one
