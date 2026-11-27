@@ -1637,6 +1637,7 @@ orosPack("de", "shell", {
  "cr.brotli-js": ".woff2-Schriftdateien entpacken (Einstellungen › Schriften, Layout, Atelier)",
  "cr.polygon-clipping": "Formen kombinieren und Konturen in Formen umwandeln (Atelier, Layout)",
  "cr.firefox-translations": "Übersetzungsmodelle Griechisch ↔ Englisch, werden bei Bedarf heruntergeladen (Textwerkzeuge)",
+ "cr.clip": "Bild-und-Wort-Modell für die Fotosuche nach Beschreibung, wird bei Bedarf heruntergeladen (Dateien › Fotos)",
  "sos.locked": "Entsperre zuerst die Synchronisierung mit deiner Passphrase: SOS braucht sie, um die Cloud zu schließen.",
  "sos.wrongpass": "Das ist nicht deine Sync-Passphrase. Es wurde nichts gelöscht.",
  "sos.count.title": "SOS: Alles wird überall gelöscht in",

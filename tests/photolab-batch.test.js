@@ -174,7 +174,9 @@ test("Select subject reuses Atelier's loader and model: no second copy, Atelier 
   assert.ok(!files.some((f) => /\.onnx$|ort/i.test(f)), "no model files in photolab/");
   const cut = require("../atelier/cutout.js");
   assert.equal(cut.S, 320);
-  assert.equal(cut.FILES.model, "../vendor/u2netp/u2netp.onnx", "same relative path from photolab/ and atelier/");
+  assert.equal(cut.FILES.model, "https://koulaxizis.github.io/oros-models-vision/u2netp/u2netp.onnx", "the same copy from photolab/ and atelier/");
+  assert.equal(cut.FILES_VER || "ort1.22.0-u2netp", "ort1.22.0-u2netp");
+  assert.deepEqual(cut.sumOf(cut.FILES.model), { size: 4574861, sha: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8" });
   assert.doesNotMatch(read("photolab/index.html"), /cutout\.js/, "loaded on first use, not at start");
 });
 

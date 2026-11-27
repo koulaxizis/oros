@@ -158,3 +158,20 @@ body.ph-selecting .ph-check { display: block; }
 .ph-tile .tag-dots { position: absolute; right: 4px; top: 4px; margin: 0; padding: 2px 4px; border-radius: 9px; background: rgba(0,0,0,.55); }
 .ph-tile .tag-dots .tag-more { color: #fff; }
 .ph-arow .tag-dot { margin-right: 4px; }
+
+/* PS: search by description (photo-search.js) */
+.ps-title { margin: 0 0 10px; font-size: 17px; }
+.ps-label { display: block; font-size: 13px; margin: 0 0 6px; }
+.ps-input { box-sizing: border-box; width: 100%; padding: 9px 10px; border-radius: 8px; border: 1px solid var(--border, #2c2b31); background: var(--input-bg, transparent); color: inherit; font: inherit; }
+.ps-status { min-height: 1.4em; font-size: 13px; opacity: .8; margin: 8px 0 0; overflow-wrap: anywhere; }
+.ps-dlg p { overflow-wrap: anywhere; }
+.ph-similar { margin-top: 14px; width: 100%; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); background: none; color: #fff; font: inherit; cursor: pointer; }
+.ph-similar:hover, .ph-similar:focus-visible { background: rgba(255,255,255,.1); }
+.ph-found { margin-top: 12px; }
+@media (max-width: 480px) {
+  #bar #ph-bar button.ph-zoom { display: none; }   /* PS: room for the search; tiles keep their size */
+}
+@media (max-width: 380px) {
+  .ph-tab { padding: 4px 5px; font-size: 12px; }
+  body.ph-mode #ph-bar { gap: 4px; }
+}

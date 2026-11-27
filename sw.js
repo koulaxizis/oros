@@ -3309,8 +3309,8 @@ self.addEventListener("fetch", function (event) {
   // this release's own precache copy (releaseCopy). Everything else
   // goes to the network; the loose ignoreSearch match across caches
   // stays in the network-FAILURE branch only (offline best effort).
-  // Atelier's picture tools (vendor/ort + vendor/u2netp + vendor/migan,
-  // about 16 + 27 MB) are fetched once and kept in Atelier's own IndexedDB
+  // Atelier's picture tools (vendor/ort here; u2netp and MI-GAN from
+  // oros-models-vision, about 16 + 27 MB) are fetched once and kept in Atelier's own IndexedDB
   // (atelier/cutout.js): no second copy in the runtime cache. The same
   // for Writer's spelling dictionaries (vendor/hunspell, kept by
   // writer/spell-worker.js in IndexedDB). Other lazy vendor files

@@ -30,7 +30,7 @@ Unter der Wiedergabeleiste ist das Lied als Wellenform gezeichnet, mit einer Mar
 
 ## Grob aus dem Lied synchronisieren
 `Grob synchronisieren` (Tab Sync) hört das Lied auf diesem Gerät mit Whisper, demselben Sprachmodell wie die automatischen Untertitel in Montage, und gibt jeder Zeile einen groben Start. Deine Worte bleiben genau so, wie du sie geschrieben hast; nur die Zeiten werden geschätzt. Spiel das Lied danach ab und korrigiere die Zeilen nach Gehör. Am besten mit klarer Stimme; trag den Sprachcode unter `Liedtext` ein, dann wird es genauer.
-- Beim ersten Mal wird das Sprachmodell einmal geladen (etwa 42 MB von Hugging Face). Montage nutzt dieselbe Kopie, und der Untertitel-Dialog in Montage kann sie löschen. Das Lied selbst wird nirgendwohin gesendet.
+- Beim ersten Mal wird das Sprachmodell einmal geladen (etwa 42 MB von der eigenen Kopie von orOS auf GitHub). Montage nutzt dieselbe Kopie, und der Untertitel-Dialog in Montage kann sie löschen. Das Lied selbst wird nirgendwohin gesendet.
 - Es setzt nur Zeilen ohne Zeit, außer du kreuzt `Auch Zeilen verschieben, die schon eine Zeit haben` an. `Rückgängig` nimmt alles zurück.
 
 ## Eine Zeile korrigieren

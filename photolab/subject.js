@@ -2,7 +2,7 @@
 // orOS Photo Lab — subject.js: Select subject, Remove background
 // (v1.0.0)
 // The same on-device model as Atelier's background tool: U²-Net
-// "u2netp" (vendor/u2netp/) in ONNX Runtime Web (vendor/ort/), through
+// "u2netp" (koulaxizis/oros-models-vision) in ONNX Runtime Web (vendor/ort/), through
 // Atelier's own loader atelier/cutout.js, loaded here only when asked
 // for. The files are fetched once (about 16 MB) into the IndexedDB
 // "oros-atelier-ai" both apps share (same origin), so a download made

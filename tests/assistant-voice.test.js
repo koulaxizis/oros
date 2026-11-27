@@ -22,9 +22,17 @@ test("asr models: tiny keeps its keys and version, base has its own, runtime is 
   tiny.forEach((f) => { assert.equal(f.url, A.FILES[f.key]); assert.equal(f.ver, "ort1.22.0-whisper-tiny-q8"); });
   base.slice(0, 3).forEach((f, i) => assert.deepEqual(f, tiny[i]));
   base.slice(3).forEach((f) => {
-    assert.match(f.url, /^https:\/\/huggingface\.co\/Xenova\/whisper-base\/resolve\/main\//);
+    assert.match(f.url, /^https:\/\/koulaxizis\.github\.io\/oros-models-vision\/whisper-base\//);
     assert.equal(f.ver, "ort1.22.0-whisper-base-q8");
   });
+  // every model file comes from our own copy, with its size and SHA-256
+  tiny.slice(3).concat(base.slice(3)).forEach((f) => {
+    assert.match(f.url, /^https:\/\/koulaxizis\.github\.io\/oros-models-vision\/whisper-(tiny|base)\//);
+    assert.ok(f.size > 1000 && /^[0-9a-f]{64}$/.test(f.sha), f.key);
+  });
+  assert.equal(tiny[3].sha, "fd9d995b9dcb0520f0dbf6cf68651af639fc385f594d9d876e69ca2802dc438e");
+  assert.equal(base[4].sha, "a6beb6baabb66f00b6a686d828c95ffca6146d51900cbad0266cad38f64cf861");
+  assert.doesNotMatch(read("montage/asr.js"), /huggingface\.co/);
   assert.deepEqual(base.slice(3).map((f) => f.name), ["enc", "dec", "vocab", "gen"]);
   assert.equal(A.MODELS.base.layers, 6);
   assert.equal(A.MODELS.base.heads, 8);

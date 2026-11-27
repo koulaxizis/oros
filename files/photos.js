@@ -140,6 +140,10 @@
       "ph.next":        "Next",
       "ph.info":        "Details",
       "ph.edit":        "Edit in Photo Lab",
+      "ph.ps":          "Search by description",
+      "ph.ps.manage":   "Search by description…",
+      "ph.ps.similar":  "Similar photos",
+      "ph.ps.fail":     "The search could not be opened.",
       "ph.text":        "Copy text from this photo",
       "ph.inFolder":    "Show in folder",
       "ph.i.date":      "Taken",
@@ -251,6 +255,10 @@
       "ph.next":        "Επόμενο",
       "ph.info":        "Λεπτομέρειες",
       "ph.edit":        "Επεξεργασία στο Photo Lab",
+      "ph.ps":          "Αναζήτηση με περιγραφή",
+      "ph.ps.manage":   "Αναζήτηση με περιγραφή…",
+      "ph.ps.similar":  "Παρόμοιες φωτογραφίες",
+      "ph.ps.fail":     "Η αναζήτηση δεν άνοιξε.",
       "ph.text":        "Αντιγραφή κειμένου από τη φωτογραφία",
       "ph.inFolder":    "Εμφάνιση στον φάκελο",
       "ph.i.date":      "Λήψη",
@@ -302,6 +310,7 @@
     edit:   SVG('<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>', 20),
     folder: SVG('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>', 20),
     send:   SVG('<path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/>', 20),
+    search: SVG('<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>'),
     text:   SVG('<path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M8 8h8M12 8v8"/>', 20),
     album:  SVG('<rect x="3" y="7" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/>', 20),
     back:   SVG('<path d="M15 18l-6-6 6-6"/>'),
@@ -327,6 +336,7 @@
   var here = null;                             // map: the records of a tapped spot
   var tagId = "";                              // T1: only the photos with this tag (files/tags.js)
   var dupes = null;                            // P4: { busy, i, n, groups }
+  var found = null;                            // PS: { title, keys, note, done() } (photo-search.js)
   var map = null, mapView = null, leafletP = null;
 
   function $(id) { return document.getElementById(id); }
@@ -671,6 +681,12 @@
       if (active) paint();
       return;
     }
+    if (found) {
+      order = found.keys.map(function (k) { return recs[k]; }).filter(function (r) { return r && !isDoc(r); });
+      months = []; flat = [];
+      if (active) paint();
+      return;
+    }
     if (here) {
       var keep = {};
       here.forEach(function (r) { keep[r.k] = true; });
@@ -1006,6 +1022,10 @@
     bar.appendChild(el("span", "ph-gap"));
     bar.appendChild(iconBtn("tool ph-zoom", ICON.minus, t("ph.smaller"), function () { zoom(-1); }));
     bar.appendChild(iconBtn("tool ph-zoom", ICON.plus, t("ph.bigger"), function () { zoom(1); }));
+    var ps = iconBtn("tool", ICON.search, t("ph.ps"), function () { withSearch(function (s) { s.open(); }); });
+    ps.id = "ph-search";
+    ps.hidden = !window.Worker || !window.indexedDB;
+    bar.appendChild(ps);
     var sel = iconBtn("tool", ICON.check, t("ph.select"), function () { setSelecting(!selecting); });
     sel.id = "ph-select";
     bar.appendChild(sel);
@@ -1082,11 +1102,11 @@
   }
 
   function paintHead() {
-    var inAlbum = !!albumId || !!here || !!dupes || !!tagId, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
-    if (ttl) ttl.textContent = dupes ? t("ph.dup.title") : here ? (here.length === 1 ? t("ph.map.hereOne") : t("ph.map.here", { n: here.length })) : tagId ? tagName(tagId) || t("ph.i.tags") : albumId ? albumName(albumId) : t("ph.tree");
+    var inAlbum = !!albumId || !!here || !!dupes || !!tagId || !!found, ttl = $("ph-title"), back = $("ph-back"), tabs = $("ph-tabs");
+    if (ttl) ttl.textContent = found ? found.title : dupes ? t("ph.dup.title") : here ? (here.length === 1 ? t("ph.map.hereOne") : t("ph.map.here", { n: here.length })) : tagId ? tagName(tagId) || t("ph.i.tags") : albumId ? albumName(albumId) : t("ph.tree");
     if (back) {
       back.hidden = !inAlbum;
-      var bl = dupes ? t("ph.dup.back") : here ? t("ph.map.back") : t("ph.al.back");
+      var bl = dupes || found ? t("ph.dup.back") : here ? t("ph.map.back") : t("ph.al.back");
       back.title = bl; back.setAttribute("aria-label", bl);
     }
     if (tabs) tabs.hidden = inAlbum;
@@ -1122,6 +1142,10 @@
       if (cnt) cnt.textContent = "";
       if (!dupes.groups) { m.textContent = t("ph.dup.working", { i: dupes.i || 0, n: dupes.n || 0 }); return; }
       m.textContent = dupes.groups.length === 1 ? t("ph.dup.foundOne") : dupes.groups.length ? t("ph.dup.found", { g: dupes.groups.length }) : t("ph.dup.none");
+      return;
+    }
+    if (found) {
+      if (found.note) m.textContent = found.note; else m.hidden = true;
       return;
     }
     if (tab === "map" && !here) {
@@ -1191,9 +1215,10 @@
     tileObs = typeof IntersectionObserver === "function" ? new IntersectionObserver(function (list) {
       list.forEach(function (en) { if (en.isIntersecting) wantThumb(en.target); });
     }, { root: sc, rootMargin: "600px 0px" }) : null;
-    sc.classList.toggle("map-on", tab === "map" && !here && !dupes);
-    if (tab !== "map" || here || dupes) dropMap();
+    sc.classList.toggle("map-on", tab === "map" && !here && !dupes && !found);
+    if (tab !== "map" || here || dupes || found) dropMap();
     if (dupes) { paintDupes(sc); return; }
+    if (found) { paintFound(sc); return; }
     if (tab === "albums" && !albumId) { paintAlbums(sc); return; }
     if (tab === "map" && !here) { paintMap(sc); return; }
     var sentinel = el("div", "ph-more-sentinel");
@@ -1319,12 +1344,14 @@
     if (x === tab && !albumId) return;
     if (selecting) setSelecting(false);
     tab = x; albumId = ""; here = null; dupes = null; tagId = "";
+    dropFound();
     rebuild();
     var sc = $("ph-scroll");
     if (sc) sc.scrollTop = 0;
   }
   function goBack() {
     if (dupes) { dupes = null; setSelecting(false); rebuild(); return; }
+    if (found) { dropFound(); rebuild(); return; }
     if (here) { if (selecting) setSelecting(false); here = null; rebuild(); return; }
     if (tagId) { if (selecting) setSelecting(false); tagId = ""; rebuild(); return; }
     openAlbum("");
@@ -1728,6 +1755,80 @@
     });
   }
 
+  // ---------- search by description (photo-search.js, PS) ----------
+  // The search shows its answer as a list of paths, best first; Back
+  // (or another tab) ends it. clip-core.js, clip.js and photo-search.js
+  // load the first time the search button is pressed; the models and
+  // the index are photo-search.js's business.
+  function paintFound(sc) {
+    var years = $("ph-years");
+    if (years) years.hidden = true;
+    paintSelBar();
+    var grid = el("div", "ph-grid ph-found");
+    order.forEach(function (r, i) { grid.appendChild(tileFor(r, i)); });
+    sc.appendChild(grid);
+  }
+  function dropFound() {
+    if (!found) return;
+    var f = found;
+    found = null;
+    if (selecting) setSelecting(false);
+    if (f.done) f.done();
+  }
+  var SEARCH_SCRIPTS = ["clip-core.js", "clip.js", "photo-search.js"], searchP = null;
+  function loadSearch() {
+    if (window.OrosPhotoSearch) return Promise.resolve(window.OrosPhotoSearch);
+    if (!searchP) {
+      // The same ?v= stamp Files gave photos.css (files.js loadPhotos).
+      var css = document.getElementById("photos-css"), m = css && /\?v=[^#]*/.exec(css.getAttribute("href") || "");
+      var ver = m ? m[0] : "";
+      searchP = SEARCH_SCRIPTS.reduce(function (p, src) {
+        return p.then(function () {
+          return new Promise(function (resolve, reject) {
+            var s = document.createElement("script");
+            s.src = src + ver;
+            s.onload = resolve;
+            s.onerror = function () { reject(new Error(src)); };
+            document.head.appendChild(s);
+          });
+        });
+      }, Promise.resolve()).then(function () {
+        var S = window.OrosPhotoSearch;
+        if (!S) throw new Error("search");
+        S.attach({
+          recs: function () { return Object.keys(recs).map(function (k) { return recs[k]; }); },
+          isDoc: isDoc, thumbKey: thumbKey, getThumb: getThumb, baseName: baseName, toast: toast,
+          active: function () { return active; },
+          confirm: confirmDlg,
+          // A missing thumbnail, made from the file as a tile in view would.
+          makeThumbOf: function (r) {
+            var fs = disk();
+            if (!fs) return Promise.reject(new Error("disk"));
+            return fs.read(r.k).then(function (blob) { return makeThumb(r, blob); }).then(function (tb) {
+              return putThumb(thumbKey(r), tb).then(function () { return tb; });
+            });
+          },
+          // title null = the search ended (model removed)
+          show: function (title, keys, note, done) {
+            if (!active) return;
+            if (title == null) { dropFound(); rebuild(); return; }
+            var same = found && found.title === title;
+            if (!same) { if (selecting) setSelecting(false); here = null; dupes = null; tagId = ""; albumId = ""; tab = "all"; }
+            var old = found;
+            found = { title: title, keys: keys, note: note, done: done };
+            if (old && old.done && old.done !== done) old.done();
+            rebuild();
+            if (!same) { var sc = $("ph-scroll"); if (sc) sc.scrollTop = 0; }
+          }
+        });
+        return S;
+      });
+      searchP.catch(function () { searchP = null; });
+    }
+    return searchP;
+  }
+  function withSearch(fn) { loadSearch().then(fn, function () { toast(t("ph.ps.fail")); }); }
+
   // ---------- selecting ----------
   function setSelecting(on) {
     selecting = on;
@@ -1905,10 +2006,11 @@
     } else if (tab === "albums") {
       item(t("ph.al.new"), function () { nameDialog(t("ph.al.new"), "", t("ph.al.create")).then(function (n) { if (n) newAlbum(n); }); });
     }
-    if (!albumId && !here && !dupes && !tagId && tab === "all") {
+    if (!albumId && !here && !dupes && !tagId && !found && tab === "all") {
       item(t("ph.dup.find"), findDupes);
       item(t("ph.tg.show"), function () { withTags(tagPicker); });
     }
+    if (window.Worker && window.indexedDB) item(t("ph.ps.manage"), function () { withSearch(function (s) { s.manage(); }); });
     item(t("ph.rescan"), scan);
     item(t("ph.folders"), foldersDialog);
     document.body.appendChild(m);
@@ -2183,6 +2285,16 @@
     row("ph.i.folder", parentOf(r.k).slice(ROOT.length + 1) || "/");
     if (AL) row("ph.i.albums", AL.albumsWith(albums, AL.keyOf(r)).map(albumName).join(", "));
     row("ph.i.tags", tagsOf(r).map(function (x) { return x.n; }).join(", "));
+    if (window.Worker && window.indexedDB) {
+      var sim = el("button", "ph-similar", t("ph.ps.similar"));
+      sim.type = "button";
+      sim.addEventListener("click", function () {
+        var rec = viewer.rec;
+        closeViewer();
+        withSearch(function (s) { s.similar(rec); });
+      });
+      box.appendChild(sim);
+    }
   }
   function toggleInfo() {
     if (!viewer) return;
@@ -2261,6 +2373,10 @@
     ensurePanel();
     paint();
     scan();
+    // PS: the index goes on where it stopped once the model is here.
+    var psOn = false;
+    try { psOn = localStorage.getItem("oros-files-clip-on") === "1"; } catch (e) {}
+    if (psOn) (scanP || Promise.resolve()).then(function () { if (active) loadSearch().then(function (s) { s.resume(); }, function () {}); });
     if (ctx && ctx.afterEnter) ctx.afterEnter();
   }
   function leave() {
@@ -2278,6 +2394,8 @@
     here = null;
     dupes = null;
     tagId = "";
+    dropFound();
+    if (window.OrosPhotoSearch) window.OrosPhotoSearch.stop();
     thumbJobs = []; cloudJobs = [];
     var sc = $("ph-scroll");
     if (sc) { sc.innerHTML = ""; sc._lastDay = null; sc._grid = null; }
@@ -2310,7 +2428,7 @@
     findAlike: function () {
       if (!active) enter();
       if (selecting) setSelecting(false);
-      tab = "all"; albumId = ""; here = null; dupes = null; tagId = "";
+      tab = "all"; albumId = ""; here = null; dupes = null; tagId = ""; dropFound();
       (scanP || Promise.resolve()).then(function () { if (active && !dupes) findDupes(); });
     },
     tagsChanged: tagsChanged,
