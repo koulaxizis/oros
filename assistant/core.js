@@ -660,6 +660,10 @@
   // ---------- 3. Permissions ----------
   // Apps the assistant never reads, whatever the settings say.
   var NEVER_APPS = { mail: 1, passwords: 1, assistant: 1 };
+  // Personal apps that start at "never" here even when their search is
+  // on (GATE-NEVER2, Chris 2026-11-27: the gate's personal apps start
+  // off on both sides; Fitness is one, Chris 2026-11-08).
+  var SENSITIVE_APPS = { baby: 1, cycle: 1, diary: 1, fitness: 1, health: 1, mood: 1 };
   // app = { id, name, sensitive } from the shell (sensitive = the
   // app's search starts switched off: health, finance, cycle…).
   // → "off" (not offered at all), "never", "ask" or "always".
@@ -667,7 +671,7 @@
     if (!app || NEVER_APPS[app.id]) return "off";
     var p = data && data.perm && data.perm[app.id];
     if (p) return p.v;
-    return app.sensitive ? "never" : "ask";
+    return app.sensitive || SENSITIVE_APPS[app.id] ? "never" : "ask";
   }
 
   // ---------- 3b. Attachments (phase 4 wave 3) ----------
@@ -5525,7 +5529,7 @@
     sysAIRead: sysAIRead, sysAIModel: sysAIModel, sysAIAdopt: sysAIAdopt,
     fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, pickChain: pickChain, chainOrder: chainOrder, provTier: provTier, isOnline: isOnline, needsTools: needsTools, coolFor: coolFor, COOL: COOL, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
     TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, LAYOUT_ROUNDS: LAYOUT_ROUNDS, layoutRound: layoutRound, lyAutoCall: lyAutoCall, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
-    claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS, crUnknown: crUnknown,
+    claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS, SENSITIVE_APPS: SENSITIVE_APPS, crUnknown: crUnknown,
     provBase: provBase, normBase: normBase,
     mergeAssist: mergeAssist, emptyData: emptyData, permFor: permFor,
     prepHistory: prepHistory, buildRequest: buildRequest, thinkingRefused: thinkingRefused,

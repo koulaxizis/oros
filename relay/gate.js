@@ -813,9 +813,9 @@ export function withDevTools(dev) {
 }
 // Apps never offered, also refused here for a device tool's app or
 // apps argument (orOS checks again on the device: gate/gate.js NEVER).
-// The personal apps (Mail, Diary, Health…) are the owner's choice since
+// The personal apps (Diary, Health…) are the owner's choice since
 // 5.90.00, behind a warning on the device, and never in the closed copy.
-export const NEVER_APPS = ["assistant", "passwords"];
+export const NEVER_APPS = ["assistant", "mail", "passwords"];   // GATE-NEVER2 (2026-11-27): = gate/gate.js NEVER
 export function neverIn(args) {
   const a = args && typeof args === "object" ? args : {};
   const ids = [].concat(typeof a.app === "string" ? [a.app] : [], Array.isArray(a.apps) ? a.apps : []);

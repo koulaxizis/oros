@@ -149,3 +149,12 @@ test("list_fonts: the Assistant's and the gate's, read only, the same filters", 
   assert.match(src, /summary: summaryIds\(ga\.read\)\.length > 0, fonts: ga\.read\.length > 0,/);
   assert.match(src, /if \(call\.name === "list_fonts"\) return listFonts\(call\.args\);/);
 });
+
+// GATE-NEVER2 (Chris 2026-11-27, card «Ναι, στην αυστηρότερη»): the
+// never list and the personal apps are the same on both sides.
+test("never and personal apps: the same on the gate and in the Assistant", () => {
+  const G = require("../gate/gate.js");
+  assert.deepEqual(G.NEVER.slice().sort(), Object.keys(C.NEVER_APPS).sort(), "the same never list");
+  G.SENSITIVE.forEach((id) => assert.equal(C.permFor(C.emptyData(), { id: id }), "never", id + " starts at Never in the Assistant"));
+  return R.NEVER_APPS.forEach((id) => assert.ok(G.NEVER.indexOf(id) >= 0, "relay " + id));
+});

@@ -717,7 +717,7 @@ orosPack("de", "settings", {
  "gt.log.none": "Noch keine Aufrufe.",
  "gt.log.refused": "abgelehnt",
  "gt.moved": "Das orOS-Relay hat sich geändert. Dieses Gate läuft noch auf dem alten; schalte es aus und ein, um es umzuziehen (und verbinde Claude dann neu).",
- "gt.never": "Passwörter und der Assistent werden nie angeboten, ebenso keine App, die du in der Bildschirmsperre sperrst.",
+ "gt.never": "Passwörter, Mail und der Assistent werden nie angeboten, ebenso keine App, die du in der Bildschirmsperre sperrst.",
  "gt.nosync": "Ein Gerät ohne orOS-Sync?",
  "gt.pair": "Code von Claude",
  "gt.pair.bad": "Der Code ist falsch oder abgelaufen. Beginne in Claude von vorn.",

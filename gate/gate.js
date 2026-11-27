@@ -34,13 +34,14 @@
   var DIG_KEY = "oros-gate-digest", DIG_HOUR = 20, DIG_TRIES = 3;
   var RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js; the gate box lives there
   // Never offered, whatever a setting says (BR-GATE).
-  // Never offered: Passwords (secrets) and the Assistant itself.
-  var NEVER = ["assistant", "passwords"];
+  // Never offered: Passwords (secrets), the Assistant itself and Mail
+  // (GATE-NEVER2, Chris 2026-11-27: the same never list as the Assistant).
+  var NEVER = ["assistant", "mail", "passwords"];
   // Sensitive (5.90.00, Chris 08/11: «ως επιλογή με σαφές warning»):
   // offered only after a clear warning on the device, read only (never
   // changed by Claude), and never in the closed-orOS copy, so they leave
   // the device only while orOS is open and Claude asks.
-  var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mail", "mood"];
+  var SENSITIVE = ["baby", "cycle", "diary", "fitness", "health", "mood"];
   function sensitive(id) { return SENSITIVE.indexOf(id) >= 0; }
   var SUMMARY = { budget: 1, stock: 1, kanban: 1, studio: 1 };   // studio: STUDIO-POD P4, read only
   // AS-SUM8 (2026-11-17): apps outside ACT whose app_summary the frame
