@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 8.98.03
+- **One colour picker.** Make it yours takes you to System colour instead of showing the colours a second time.
+
 ## Version 8.98.02
 - **The Daily mix stays put.** Liking a song in Music no longer reshuffles your Daily mix: it keeps the same songs in the same order all day and changes once a day.
 

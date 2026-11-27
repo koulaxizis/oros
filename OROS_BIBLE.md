@@ -14208,3 +14208,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** music/mixes.js, music/music.js, tests/music-mixes.test.js, shell.js, help/topics/whatsnew.en/el.txt, OROS_BIBLE.md.
 - **Tests:** music-mixes tests; full suite; Playwright Chromium 360px EL + EN through the real shell, 14 local files: Daily mix order unchanged after 4 likes (8.93.00 reshuffled on each), hearts filled in place, same order after Home and back.
 - **Not tested:** a real phone, Safari, a date change at midnight in the shell (covered by the unit test).
+
+### 2026-11-27 — 8.98.03 — One colour picker in Appearance (YOURS-2b, #1281)
+- **Why:** Chris 2026-11-23 20:39Z: the colours were also shown twice in Settings › Appearance ("decide which one stays").
+- **What:** The System colour card stays (with Accent from wallpaper). Make it yours has a `Choose a colour` button that scrolls to it and focuses the colour that is on; its own swatches and Accent switch are gone. Rule in Part IX (YOURS-2b).
+- **Files:** settings/settings.js, settings/settings.css, settings/core.js, i18n/de/settings.js, help/topics/appearance.en/el.txt, i18n/de/help/topics/appearance.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/yours.test.js.
+- **Tests:** full suite 9487/0 before the stamp; Playwright Chromium at 360 px in Greek: two buttons in Make it yours, `Διάλεξε χρώμα` scrolls to System colour and focuses the current swatch.
+- **Not tested:** a real phone, Safari, Firefox.
