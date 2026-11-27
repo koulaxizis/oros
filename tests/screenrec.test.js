@@ -53,7 +53,7 @@ test("the shell asks on the tap, loads the recorder on demand, wires Quick setti
   assert.match(sec, /recLoad\(\)\.then\(function \(api\) \{ api\.start\(st, raw\); \}/);
   assert.match(sh, /recScript\("capture\/core\.js"\)/);
   assert.match(sh, /recScript\("screenrec\.js"\)/);
-  assert.match(sh, /return !!\(md && typeof md\.getDisplayMedia === "function" && window\.MediaRecorder && hasApp\("capture"\)\);/, "hidden where the screen cannot be shared (phones)");
+  assert.match(sh, /return !!\(md && typeof md\.getDisplayMedia === "function" && window\.MediaRecorder && hasApp\("capture"\)\) \|\| recPhone\(\);/, "hidden where the screen cannot be shared (a phone's browser)");
   assert.match(sh, /rec: SOLO \? null : \{\s+can: recOk,/);
   assert.match(read("smartbar.js"), /recNow: function \(\) \{ return recLive; \},/);
   assert.match(read("smartbar-live.js"), /if \(typeof h\.go !== "function"\) call\(function \(\) \{ host\(\)\.open\("capture"\); \}\);/);
@@ -79,4 +79,33 @@ test("Quick settings: the pill next to Screenshot, the time while it runs, its s
   assert.match(read("capture/help.en.txt"), /Screen recording records a video/);
   assert.match(read("capture/help.el.txt"), /η Εγγραφή οθόνης γράφει βίντεο/);
   assert.match(read("i18n/de/help/capture.txt"), /Bildschirmaufnahme ein Video auf/);
+});
+
+test("Android: the orOS app records the phone's screen (consent, foreground service, Movies › orOS)", () => {
+  const sh = read("shell.js"), ph = read("phone.js");
+  assert.match(sh, /if \(recPhone\(\)\) \{ window\.orosPhone\.rec\(recPrefs\(\)\.mic === true\); return; \}/);
+  assert.match(sh, /if \(md && typeof md\.getDisplayMedia === "function"\) return false;/, "a browser that can share the screen records in the page");
+  assert.match(ph, /rec: typeof m\.rec === "boolean" \? m\.rec : null,/);
+  assert.match(ph, /"intent:\/\/start" \+ \(mic \? "\?mic=1" : ""\) \+ "#Intent;scheme=oros-rec;package=online\.useoros\.twa;end"/);
+  const act = read("android/app/src/main/java/online/useoros/twa/ScreenRecordActivity.java");
+  assert.match(act, /if \(!PhoneBridge\.FULL\) \{ finish\(\); return; \}/);
+  assert.match(act, /if \(ScreenRecordService\.running\(\) \|\| "stop"\.equals\(what\)\)/, "the same button stops it");
+  assert.match(act, /pm\.createScreenCaptureIntent\(\)/, "Android's own consent every time");
+  const svc = read("android/app/src/main/java/online/useoros/twa/ScreenRecordService.java");
+  assert.match(svc, /startForeground\(NOTE_REC, n, type\);[\s\S]*pm\.getMediaProjection\(/, "foreground before the projection (Android 14)");
+  assert.match(svc, /RELATIVE_PATH, Environment\.DIRECTORY_MOVIES \+ "\/orOS"/);
+  assert.match(svc, /IS_PENDING, 1/);
+  assert.doesNotMatch(svc, /HttpURLConnection|java\.net\.URL/, "nothing leaves the phone");
+  assert.match(read("android/app/src/main/java/online/useoros/twa/PhoneBridge.java"), /o\.put\("rec", ScreenRecordService\.running\(\)\);/);
+  const gen = require("../android/tools/gen.js");
+  for (const n of [["activity", ".ScreenRecordActivity"], ["service", ".ScreenRecordService"]]) {
+    assert.ok(gen.REMOVE_NODES.some((x) => x[0] === n[0] && x[1] === n[1]), n[1] + " only in the orOS app");
+  }
+  const g = read("android/tools/gen.js");
+  assert.match(g, /android:foregroundServiceType="mediaProjection\|microphone"/);
+  assert.match(g, /<data android:scheme="oros-rec" \/>/);
+  for (const d of ["values", "values-el", "values-de"]) {
+    const s = read("android/app/src/main/res/" + d + "/strings.xml");
+    for (const k of ["channel_screenrec", "rec_running", "rec_running_text", "rec_stop", "rec_saved", "rec_saved_text"]) assert.ok(s.includes('name="' + k + '"'), d + " " + k);
+  }
 });

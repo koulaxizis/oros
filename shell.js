@@ -5120,7 +5120,16 @@
   // when on there). One recording at a time (Screen Capture's own too).
   function recOk() {
     var md = navigator.mediaDevices;
-    return !!(md && typeof md.getDisplayMedia === "function" && window.MediaRecorder && hasApp("capture"));
+    return !!(md && typeof md.getDisplayMedia === "function" && window.MediaRecorder && hasApp("capture")) || recPhone();
+  }
+  // QS-REC-1 Android: Chrome on a phone cannot share the screen with a
+  // page; the orOS app records it (phone.js rec(): its own consent screen,
+  // a notification with Stop, the video in the phone's Movies › orOS).
+  function recPhone() {
+    var md = navigator.mediaDevices;
+    if (md && typeof md.getDisplayMedia === "function") return false;
+    try { return !!(window.orosPhone && typeof window.orosPhone.canRec === "function" && window.orosPhone.canRec()); }
+    catch (e) { return false; }
   }
   function recLive() {
     try { return window.orosSmartBar && typeof window.orosSmartBar.recNow === "function" ? window.orosSmartBar.recNow() : null; }
@@ -5163,6 +5172,7 @@
     return recLoading;
   }
   function recTake() {
+    if (recPhone()) { window.orosPhone.rec(recPrefs().mic === true); return; }   // the app starts or stops it
     if (!recOk() || recLive() || (window.orosScreenRec && window.orosScreenRec.running())) return;
     var raw = recPrefs(), sys = raw.sys !== false, fps = raw.fps === 60 ? 60 : 30;
     var v = { cursor: raw.cursor === false ? "never" : "always", frameRate: { ideal: fps, max: fps } };
