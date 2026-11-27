@@ -14240,3 +14240,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Tests:** full `node --test tests/*.test.js`; Playwright in the real shell at 360px Greek (report survives a reload, a saved conversation's card shows its report and the stored report is taken, export button visible); CI.
 - **Not tested:** real provider calls with pictures, a real local folder through the File System Access picker, the file save of the export.
 
+### 2026-11-27 — 9.00.01 — Sync keeps going on a full phone: the mailbox is stored packed (SY-Z, #1287)
+- **Why:** Chris 2026-11-27: his Android phone said "Sync needs you: storage on this device is full" for ~16 h and did not sync. Measured on his installed orOS (same data): localStorage ~5.0 M of ~5 M characters, the sync mailbox `oros-remote-carry` alone 1.70 M.
+- **What:** the mailbox is written packed past 32 K characters (LZW, lossless, 3.8× on his real data), an old plain one is packed at boot, unknown slices are written once per pull, device caches of internet data are freed before a sync write gives up (SY-Q1 unchanged); `orosSync.carryPeek/carryDrop/carrySizes` for code outside the engine; Space per app shows the mailbox under its apps; the storage notice links to Settings › Device with new EN/EL/DE text; Settings' Device part no longer stuck on "Reading this device…" when opened by link. Part II SY-Z, Part X SY-IDB.
+- **Files:** sync.js, shell.js, pet.js, files/files.js, writer/writer.js, device/{core.js,view.js}, settings/settings.js, translations.js, i18n/de/{shell.js,device.js}, help/topics/whatsnew.{en,el}.txt, tests (sync-carry-pack new; device).
+- **Stamp:** by the owner thread on main 9.00.00.
+- **Tests:** full `node --test tests/*.test.js`; Playwright in the real shell at 360px, Greek and English (a 357 K plain mailbox packed at boot, all entries read back, Space per app lists them under their apps); CI.
+- **Not tested:** a real phone (Brave/Chrome Android), Safari, real Dropbox.
