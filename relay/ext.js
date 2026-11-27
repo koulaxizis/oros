@@ -108,7 +108,12 @@ const NUM = /^[0-9]{1,9}$/, PER = /^([1-9]|[1-9][0-9]|100)$/,
       WORDS = /^[a-z][a-z,-]{0,80}$/, ORDERBY = /^(date|id|modified|title)$/, ORD = /^(asc|desc)$/;
 function q(extra) { return Object.assign({ page: NUM, per_page: PER, orderby: ORDERBY, order: ORD }, extra || {}); }
 // a quantity (Stock), or a price from a supplier's price list (Stock wave P10)
-const PRODUCT_PUT = { stock_quantity: "int", manage_stock: "bool", regular_price: "money" };
+const PRODUCT_PUT = { stock_quantity: "int", manage_stock: "bool", regular_price: "money",
+  // AS-SHOP (Assistant shop_change): weight, dimensions, the sale price
+  // ("" ends a sale) and the stock status; "" also puts back an empty
+  // weight or size on Undo. regular_price never "" (the product would
+  // stop being for sale).
+  weight: "dec0", dimensions: "dims0", sale_price: "money0", stock_status: "stst" };
 // Publishing wave P2: a title becomes a DRAFT product, found again by its SKU.
 const SKU = /^[A-Za-z0-9_-]{1,40}$/;
 const DRAFT_BODY = {
@@ -710,6 +715,8 @@ function okVal(kind, v) {
   if (kind === "sku") return typeof v === "string" && SKU.test(v);
   if (kind === "money") return typeof v === "string" && /^[0-9]{1,7}(\.[0-9]{1,2})?$/.test(v);
   if (kind === "dec") return typeof v === "string" && /^[0-9]{1,6}(\.[0-9]{1,3})?$/.test(v);
+  if (kind === "dec0" || kind === "money0") return v === "" || okVal(kind.slice(0, -1), v);
+  if (kind === "stst") return v === "instock" || v === "outofstock" || v === "onbackorder";
   if (kind === "desc") return typeof v === "string" && v.length <= 8000;
   if (kind === "cpns") return listOf(v, 1, 100, okCoupon);
   if (kind === "rsv") return v === 1;
@@ -723,6 +730,8 @@ function okVal(kind, v) {
   if (kind === "rsflows") return listOf(v, 0, RS_FLOWS, okRsFlow);
   if (kind === "dims") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
     Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec", v[k]));
+  if (kind === "dims0") return !!v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).length > 0 &&
+    Object.keys(v).every((k) => (k === "length" || k === "width" || k === "height") && okVal("dec0", v[k]));
   if (kind === "tolinv") return okInvoice(v);
   if (kind === "mlbatch") return listOf(v, 1, 50, okMlItem);
   if (kind === "mcmembers") return listOf(v, 1, 250, okMcMember);

@@ -110,6 +110,15 @@
       "msg.ai": "AI · {model}", "msg.aiNoModel": "AI answer",
       "set.trainFree": "Free plans may use what you send to train or improve their models. Read the terms of {name} before you share personal data, or use a paid plan or a model on your own device.",
       "brief.btn": "Briefing", "brief.hint": "Today's agenda, what is late, birthdays this week and this month's spending, in one answer. It is sent only when you press it.",
+      "vo.btn": "Speak", "vo.stop": "Stop and write it", "vo.rec": "Listening… tap the microphone again when you are done.",
+      "vo.run": "Writing what you said… {p}%", "vo.dl": "Downloading the speech model… {p}%",
+      "vo.title": "Speak to the Assistant", "vo.need": "What you say is turned into text on this device by the Whisper speech model; the sound never leaves the device and nothing is sent before you press Send. The model downloads once and then works offline.",
+      "vo.tiny": "Small and quick ({mb} MB)", "vo.base": "More accurate, better for Greek ({mb} MB)",
+      "vo.go": "Download and start", "vo.none": "Nothing was heard. Try again a little closer to the microphone.",
+      "vo.fail": "Speech could not be turned into text on this device.", "vo.net": "The speech model could not be downloaded. Check the connection and try again.",
+      "vo.mic": "The microphone is not available. Allow it for this app and try again.", "vo.max": "Recording stops by itself after two minutes.",
+      "set.voice": "Voice input","set.voiceNone": "Not downloaded yet: the microphone button asks the first time.",
+      "set.voiceHas": "Downloaded: {name}.", "set.voiceRm": "Remove the speech model", "set.voiceHint": "The text appears in the message box for you to check; nothing is sent by itself. Montage, Lyric Sync and Notes use the small model too, so removing it removes it there as well.",
       "brief.msg": "Briefing for {date}", "brief.title": "Share with {name} for the briefing?",
       "brief.text": "orOS worked these out on this device. Untick what {name} should not see. Only these lines go out, not the entries themselves.",
       "brief.no": "Without these", "brief.shared": "Shared for the briefing: {apps}", "brief.heldOut": "Held back: {apps}",
@@ -206,6 +215,8 @@
       "note.noNext": "No other AI is set up on this device to answer instead. In Settings, save a key for a free service (Groq, Mistral, Cerebras and others) and pick its model, and it will answer whenever this one can't.",
       "set.chain": "Connected services and order",
       "set.auto": "Local and free first for each message (instead of your first choice)",
+      "set.ly": "Layout work without cards", "set.lyHint": "On: what you ask in Layout (changes, cover, house style, PDF with crop marks and bleed) is done at once, and the Assistant checks the result and fixes it in the same answer, as Claude does through orOS Gate. Undo stays in the change history; removing many things is still asked. Works best with Layout open in a window of its own next to the Assistant.",
+      "ly.done": "Done in {app}.", "ly.fail": "{app} could not do it.",
       "set.autoHint": "On: for each message, models on your own devices go first (a server on your computer, then this browser), then free online services, then paid ones; your first choice leads its group. Off: your first choice answers first and the rest follow in the order shown. Either way a message that needs tools (adding or changing something, a web search) skips models without tools, a service that is busy, over its free limit or unreachable is passed over for a while, and apps set to “Always share” ask first when an online service stands in for a local one.",
       "set.tier0": "On your computer",
       "set.tier1": "In this browser",
@@ -224,6 +235,15 @@
       "set.chainMore": "{n} more services not set up here",
       "set.chainHow": "To add one, pick it above as the assistant, save its key and model, then pick your first choice again. It stays connected.",
       "set.ntHint": "For small models that can't call tools: orOS then searches your data itself before each message (with the same card asking what to share) and sends what you allow along with it. It can't prepare entries or change anything.",
+      "set.tm": "Model for actions (optional)",
+      "set.tmHint": "When the model above can't use tools: a model on the same server, such as qwen3:8b, that answers only the messages that add or change something. You keep chatting with the model above and never switch.",
+      "greek.hint": "Greek: two free models that work together on this computer. {chat} (Llama-Krikri 8B by the Athena Research Center's ILSP, made for Greek) chats and writes; {tools} prepares entries and changes. Ollama downloads them itself; nothing passes through orOS.",
+      "greek.get": "Download and set up the Greek models (about {gb} GB)",
+      "greek.step": "Step {n} of {of}: {model}",
+      "greek.net": "Ollama did not answer. Is it running, and does it allow this site (OLLAMA_ORIGINS)?",
+      "greek.cut": "The download stopped before the end. Press the button again: it goes on from where it stopped.",
+      "greek.done": "Ready: {chat} answers, and {tools} takes the messages that add or change something.",
+      "greek.fail": "It didn't work: {why}",
       "err.noTools": "This model can't use tools. Tick \u201cThis model can't use tools\u201d in Settings, or load a model that can (for example Llama 3.1+, Qwen 2.5+ or Mistral).",
       "pre.none": "Searched your data for \u201c{q}\u201d: nothing found.",
       "pre.shared": "Searched your data for \u201c{q}\u201d: {n} shared.",
@@ -662,7 +682,10 @@
       "imp.keepOff": "Turn on “Keep conversations on this device” first.",
       "imp.from": "Imported from {s} · {d}", "imp.badge": "{s}",
       "entry.invoice": "New invoice · {app}",
-      "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back",
+      "tool.sum": "Summary of {app}", "tool.sumNo": "You kept the summary of {app} back", "tool.shopFind": "Products of {shop} for “{q}”: {n}", "tool.shopErr": "The shop could not be asked",
+      "f.pweight": "Weight", "f.length": "Length", "f.width": "Width", "f.height": "Height", "f.saleprice": "Sale price", "f.stock": "In stock", "f.managestock": "Stock counted", "f.stockstatus": "Availability",
+      "v.ms.true": "yes", "v.ms.false": "no", "v.ss.instock": "in stock", "v.ss.outofstock": "out of stock", "v.ss.onbackorder": "on backorder",
+      "shop.moved": "The product changed in the shop while the card was open, so nothing was changed.", "shop.undoMoved": "It was changed again in the shop since, so it was left as it is.", "shop.undoGone": "The product is no longer in the shop.",
       "sum.title": "Share this summary of {app} with {name}?",
       "sum.text": "Worked out on this device. Only these lines are sent, not the entries themselves.",
       "ln.title": "Share {n} rows of {app} with {name}?",
@@ -789,6 +812,15 @@
       "msg.ai": "AI · {model}", "msg.aiNoModel": "Απάντηση AI",
       "set.trainFree": "Τα δωρεάν προγράμματα μπορεί να χρησιμοποιούν ό,τι στέλνεις για να εκπαιδεύσουν ή να βελτιώσουν τα μοντέλα τους. Διάβασε τους όρους του {name} πριν μοιραστείς προσωπικά δεδομένα, ή χρησιμοποίησε πληρωμένο πρόγραμμα ή μοντέλο στη δική σου συσκευή.",
       "brief.btn": "Ενημέρωση ημέρας", "brief.hint": "Η ατζέντα της ημέρας, τα εκπρόθεσμα, τα γενέθλια της εβδομάδας και τα έξοδα του μήνα, σε μία απάντηση. Στέλνεται μόνο όταν το πατήσεις.",
+      "vo.btn": "Μίλα", "vo.stop": "Τέλος, γράψ' το", "vo.rec": "Ακούω… πάτα ξανά το μικρόφωνο όταν τελειώσεις.",
+      "vo.run": "Γράφω αυτό που είπες… {p}%", "vo.dl": "Λήψη του μοντέλου ομιλίας… {p}%",
+      "vo.title": "Μίλα στον Βοηθό", "vo.need": "Αυτό που λες γίνεται κείμενο σε αυτή τη συσκευή από το μοντέλο ομιλίας Whisper· ο ήχος δεν φεύγει ποτέ από τη συσκευή και τίποτα δεν στέλνεται πριν πατήσεις Αποστολή. Το μοντέλο κατεβαίνει μία φορά και μετά δουλεύει χωρίς σύνδεση.",
+      "vo.tiny": "Μικρό και γρήγορο ({mb} MB)", "vo.base": "Πιο ακριβές, καλύτερο για ελληνικά ({mb} MB)",
+      "vo.go": "Λήψη και έναρξη", "vo.none": "Δεν ακούστηκε τίποτα. Δοκίμασε ξανά λίγο πιο κοντά στο μικρόφωνο.",
+      "vo.fail": "Η ομιλία δεν έγινε κείμενο σε αυτή τη συσκευή.", "vo.net": "Το μοντέλο ομιλίας δεν κατέβηκε. Έλεγξε τη σύνδεση και δοκίμασε ξανά.",
+      "vo.mic": "Το μικρόφωνο δεν είναι διαθέσιμο. Επίτρεψέ το σε αυτή την εφαρμογή και δοκίμασε ξανά.", "vo.max": "Η ηχογράφηση σταματά μόνη της μετά από δύο λεπτά.",
+      "set.voice": "Φωνητική εισαγωγή","set.voiceNone": "Δεν έχει κατέβει ακόμη: το κουμπί του μικροφώνου ρωτά την πρώτη φορά.",
+      "set.voiceHas": "Έχει κατέβει: {name}.", "set.voiceRm": "Αφαίρεση του μοντέλου ομιλίας", "set.voiceHint": "Το κείμενο εμφανίζεται στο πλαίσιο μηνύματος για να το ελέγξεις· τίποτα δεν στέλνεται μόνο του. Το μικρό μοντέλο το χρησιμοποιούν και το Montage, το Lyric Sync και οι Σημειώσεις, οπότε αν το αφαιρέσεις φεύγει και από εκεί.",
       "brief.msg": "Ενημέρωση για {date}", "brief.title": "Κοινοποίηση στο {name} για την ενημέρωση;",
       "brief.text": "Το orOS τα υπολόγισε σε αυτή τη συσκευή. Ξετσέκαρε ό,τι δεν πρέπει να δει το {name}. Φεύγουν μόνο αυτές οι γραμμές, όχι οι ίδιες οι εγγραφές.",
       "brief.no": "Χωρίς αυτά", "brief.shared": "Κοινοποιήθηκαν για την ενημέρωση: {apps}", "brief.heldOut": "Κρατήθηκαν: {apps}",
@@ -885,6 +917,8 @@
       "note.noNext": "Δεν υπάρχει άλλο AI ρυθμισμένο σε αυτή τη συσκευή για να απαντήσει στη θέση του. Στις Ρυθμίσεις αποθήκευσε κλειδί για μια δωρεάν υπηρεσία (Groq, Mistral, Cerebras κ.ά.) και διάλεξε μοντέλο, και θα απαντά όποτε αυτό δεν μπορεί.",
       "set.chain": "Συνδεδεμένες υπηρεσίες και σειρά",
       "set.auto": "Πρώτα τοπικά και δωρεάν σε κάθε μήνυμα (αντί για την πρώτη σου επιλογή)",
+      "set.ly": "Δουλειά στο Layout χωρίς κάρτες", "set.lyHint": "Ενεργό: ό,τι ζητάς στο Layout (αλλαγές, εξώφυλλο, οίκος ύφους, PDF με σημάδια κοπής και bleed) γίνεται αμέσως, και ο Βοηθός ελέγχει το αποτέλεσμα και το διορθώνει στην ίδια απάντηση, όπως ο Claude μέσω του orOS Gate. Η Αναίρεση μένει στο ιστορικό αλλαγών· η αφαίρεση πολλών στοιχείων ρωτιέται ακόμη. Δουλεύει καλύτερα με το Layout ανοιχτό σε δικό του παράθυρο δίπλα στον Βοηθό.",
+      "ly.done": "Έγινε στο {app}.", "ly.fail": "Το {app} δεν μπόρεσε να το κάνει.",
       "set.autoHint": "Ενεργό: σε κάθε μήνυμα πρώτα τα μοντέλα στις δικές σου συσκευές (server στον υπολογιστή σου, μετά αυτός ο browser), μετά δωρεάν online υπηρεσίες, μετά οι πληρωμένες· η πρώτη σου επιλογή μπαίνει πρώτη στην ομάδα της. Ανενεργό: απαντά πρώτα η πρώτη σου επιλογή και ακολουθούν οι υπόλοιπες με τη σειρά που φαίνεται. Και στις δύο περιπτώσεις ένα μήνυμα που θέλει εργαλεία (προσθήκη ή αλλαγή, αναζήτηση στο web) παρακάμπτει τα μοντέλα χωρίς εργαλεία, μια υπηρεσία απασχολημένη, πάνω από το δωρεάν όριο ή εκτός δικτύου παρακάμπτεται για λίγο, και οι εφαρμογές στο «Πάντα» ρωτούν πρώτα όταν μια online υπηρεσία απαντά στη θέση τοπικής.",
       "set.tier0": "Στον υπολογιστή σου",
       "set.tier1": "Σε αυτόν τον browser",
@@ -903,6 +937,15 @@
       "set.chainMore": "Άλλες {n} υπηρεσίες δεν έχουν ρυθμιστεί εδώ",
       "set.chainHow": "Για να προσθέσεις μία, διάλεξέ την παραπάνω ως βοηθό, αποθήκευσε κλειδί και μοντέλο και ξαναδιάλεξε την πρώτη σου επιλογή. Μένει συνδεδεμένη.",
       "set.ntHint": "Για μικρά μοντέλα που δεν καλούν εργαλεία: τότε το orOS ψάχνει μόνο του στα δεδομένα σου πριν από κάθε μήνυμα (με την ίδια κάρτα που ρωτά τι θα μοιραστείς) και στέλνει μαζί όσα επιτρέπεις. Δεν ετοιμάζει καταχωρήσεις και δεν αλλάζει τίποτα.",
+      "set.tm": "Μοντέλο για ενέργειες (προαιρετικό)",
+      "set.tmHint": "Όταν το παραπάνω μοντέλο δεν χρησιμοποιεί εργαλεία: ένα μοντέλο στον ίδιο server, π.χ. qwen3:8b, που απαντά μόνο στα μηνύματα που προσθέτουν ή αλλάζουν κάτι. Συνεχίζεις να μιλάς με το παραπάνω μοντέλο, χωρίς εναλλαγές.",
+      "greek.hint": "Ελληνικά: δύο δωρεάν μοντέλα που δουλεύουν μαζί σε αυτόν τον υπολογιστή. Το {chat} (Llama-Krikri 8B του Ινστιτούτου Επεξεργασίας του Λόγου, ΕΚ «Αθηνά», φτιαγμένο για τα ελληνικά) συζητά και γράφει· το {tools} ετοιμάζει καταχωρήσεις και αλλαγές. Το Ollama τα κατεβάζει μόνο του· τίποτα δεν περνά από το orOS.",
+      "greek.get": "Λήψη και ρύθμιση των ελληνικών μοντέλων (περίπου {gb} GB)",
+      "greek.step": "Βήμα {n} από {of}: {model}",
+      "greek.net": "Το Ollama δεν απάντησε. Τρέχει και επιτρέπει αυτή τη σελίδα (OLLAMA_ORIGINS);",
+      "greek.cut": "Η λήψη σταμάτησε πριν το τέλος. Πάτα ξανά το κουμπί: συνεχίζει από εκεί που σταμάτησε.",
+      "greek.done": "Έτοιμο: απαντά το {chat} και τα μηνύματα που προσθέτουν ή αλλάζουν κάτι τα αναλαμβάνει το {tools}.",
+      "greek.fail": "Δεν έγινε: {why}",
       "err.noTools": "Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία. Τσέκαρε το «Αυτό το μοντέλο δεν χρησιμοποιεί εργαλεία» στις Ρυθμίσεις ή φόρτωσε μοντέλο που μπορεί (π.χ. Llama 3.1+, Qwen 2.5+ ή Mistral).",
       "pre.none": "Αναζήτηση στα δεδομένα σου για «{q}»: δεν βρέθηκε τίποτα.",
       "pre.shared": "Αναζήτηση στα δεδομένα σου για «{q}»: μοιράστηκαν {n}.",
@@ -1345,7 +1388,10 @@
       "imp.keepOff": "Άνοιξε πρώτα το «Να κρατιούνται οι συζητήσεις σε αυτή τη συσκευή».",
       "imp.from": "Ήρθε από {s} · {d}", "imp.badge": "{s}",
       "entry.invoice": "Νέο τιμολόγιο · {app}",
-      "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})",
+      "tool.sum": "Σύνοψη: {app}", "tool.sumNo": "Κράτησες τη σύνοψη ({app})", "tool.shopFind": "Προϊόντα του {shop} για «{q}»: {n}", "tool.shopErr": "Το κατάστημα δεν απάντησε",
+      "f.pweight": "Βάρος", "f.length": "Μήκος", "f.width": "Πλάτος", "f.height": "Ύψος", "f.saleprice": "Τιμή προσφοράς", "f.stock": "Απόθεμα", "f.managestock": "Μέτρηση αποθέματος", "f.stockstatus": "Διαθεσιμότητα",
+      "v.ms.true": "ναι", "v.ms.false": "όχι", "v.ss.instock": "σε απόθεμα", "v.ss.outofstock": "εξαντλημένο", "v.ss.onbackorder": "με προπαραγγελία",
+      "shop.moved": "Το προϊόν άλλαξε στο κατάστημα όσο ήταν ανοιχτή η κάρτα, οπότε δεν άλλαξε τίποτα.", "shop.undoMoved": "Άλλαξε ξανά στο κατάστημα από τότε, οπότε έμεινε όπως είναι.", "shop.undoGone": "Το προϊόν δεν υπάρχει πια στο κατάστημα.",
       "sum.title": "Να δει το {name} αυτή τη σύνοψη ({app});",
       "sum.text": "Υπολογίστηκε σε αυτή τη συσκευή. Στέλνονται μόνο αυτές οι γραμμές, όχι οι ίδιες οι καταχωρήσεις.",
       "ln.title": "Να δει το {name} {n} γραμμές από {app};",
@@ -1496,6 +1542,7 @@
     search: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>',
     x: '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
     globe: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>',
+    mic: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     clip: '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5l-8.6 8.6a5 5 0 0 1-7.1-7.1l8.6-8.6a3.4 3.4 0 0 1 4.8 4.8l-8.6 8.6a1.7 1.7 0 0 1-2.4-2.4l7.9-7.9"/></svg>',
     file: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6v18h12V7z"/><path d="M14 3v4h4"/></svg>',
     edit: '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>'
@@ -1503,7 +1550,7 @@
 
   // ---------- 2. Data + prefs ----------
   var data = C.emptyData();
-  var prefs = { open: "", keep: 1, usage: {}, srch: {}, sealOk: {}, gone: {}, clr: {} };
+  var prefs = { open: "", keep: 1, usage: {}, srch: {}, sealOk: {}, gone: {}, clr: {}, voice: "" };
 
   function load() {
     try {
@@ -1532,6 +1579,7 @@
         if (p.sealOk && typeof p.sealOk === "object") prefs.sealOk = p.sealOk;
         prefs.gone = C.normGone(p.gone, Date.now());
         if (p.clr && typeof p.clr === "object") prefs.clr = p.clr;
+        if (p.voice === "tiny" || p.voice === "base") prefs.voice = p.voice;   // SOLO-AS W2, this device
       }
     } catch (e) {}
   }
@@ -1576,7 +1624,7 @@
   function baseOf(pid) { return C.provBase(pid, provConf(pid)); }
   function setProvConf(pid, patch) {
     var cur = provConf(pid);
-    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0 };
+    var next = { m: Math.max(Date.now(), cur.m + 1), base: cur.base, model: cur.model, vis: cur.vis ? 1 : 0, free: cur.free ? 1 : 0, kit: cur.kit || "", nt: cur.nt ? 1 : 0, fast: cur.fast ? 1 : 0, tm: cur.tm || "" };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.provs[pid] = next;
     saveData();
@@ -1593,7 +1641,7 @@
     var cur = data.set;
     var next = { m: Math.max(Date.now(), cur.m + 1), chat: cur.chat, prov: cur.prov, web: cur.web ? 1 : 0,
                  ws: cur.ws || "auto", wsBase: cur.wsBase || "", fb: cur.fb || "",
-                 auto: cur.auto ? 1 : 0, skip: (cur.skip || []).slice() };
+                 auto: cur.auto ? 1 : 0, skip: (cur.skip || []).slice(), ly: cur.ly ? 1 : 0 };
     Object.keys(patch).forEach(function (k) { next[k] = patch[k]; });
     data.set = next;
     saveData();
@@ -1915,7 +1963,11 @@
   // Does the newest question need tools? Only in automatic order and
   // not in chat-only mode (core.needsTools).
   function turnTools(c) {
-    if (!data.set.auto || data.set.chat || !c) return false;
+    if (!data.set.auto) return false;
+    return turnNeeds(c);
+  }
+  function turnNeeds(c) {
+    if (data.set.chat || !c) return false;
     var i = c.msgs.length - 1;
     while (i >= 0 && !(c.msgs[i].r === "user" && !c.msgs[i].cont)) i--;
     var u = i >= 0 ? c.msgs[i] : null, prev = false;
@@ -1938,8 +1990,16 @@
   function chooseProv(c, keep) {
     return (keep ? Promise.resolve(fbUse) : pickNow(c)).then(function (use) {
       fbUse = use;
+      tmUse = C.toolModel(provConf(curProv()), C.PROVIDERS[curProv()] && C.PROVIDERS[curProv()].local && turnNeeds(c));
       noteProv(c);
     });
+  }
+  // This turn's model for actions on a local service without tools
+  // (AS-GREEK 2): krikri-el chats, and a turn that adds or changes
+  // something goes to the model for actions (qwen3:8b) with tools.
+  var tmUse = "";
+  function turnModel(pid) {
+    return tmUse && pid === curProv() && C.PROVIDERS[pid] && C.PROVIDERS[pid].local ? tmUse : "";
   }
   // A note in the chat when the service answering changes.
   // The last "answers from here on" note: taken back when that service
@@ -2025,7 +2085,8 @@
     return loadKey(pid).then(function (k) {
       if (p.key === "yes" && !(k && k.key)) throw new C.ProviderError("nokey");
       function send(o) {
-        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: modelOf(pid), vis: provConf(pid).vis, nt: provConf(pid).nt, fast: provConf(pid).fast }, msgs, o);
+        var tm = turnModel(pid);
+        var req = C.buildRequest(pid, { key: k ? k.key : "", base: provConf(pid).base, model: tm || modelOf(pid), vis: tm ? 0 : provConf(pid).vis, nt: tm ? 0 : provConf(pid).nt, fast: provConf(pid).fast }, msgs, o);
         return fetch(req.url, {
           method: "POST", headers: req.headers, body: JSON.stringify(req.body), signal: signal,
           credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer"
@@ -3250,7 +3311,8 @@
     var fileOn = !builtin && !!installed().writer;
     var rbOn = !builtin && !!installed().layout;
     var edCats = builtin || data.set.chat ? {} : editCats(apps);
-    var tools = builtin ? [] : C.toolsFor({ data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
+    var shops = builtin ? [] : shopAccts(apps);   // AS-SHOP
+    var tools = builtin ? [] : C.toolsFor({ shop: shops.length ? "write" : "", data: apps.length > 0, summary: sumIds.length > 0, entries: kinds.length > 0,
                                             changes: chgApps.length > 0, creates: crIds, links: lkOn, partnerLinks: plOn, web: !!wmode && wmode !== "native", page: wmode === "native",
                                             actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn, mockup: !builtin && !!installed().mockups,
@@ -3271,16 +3333,18 @@
       edits: Object.keys(edCats).map(function (id) { return installed()[id] + " (" + id + ")"; }),
       newsletter: nlOn,
       cover: cvOn,
+      lyAuto: cvOn && !!data.set.ly,
       files: builtin ? "" : "pdf",
       openFile: fileOn,
       rebuild: rbOn,
       house: rbOn, epub: rbOn,
       web: wmode === "native" ? "native" : wmode ? "tool" : "",
       page: wmode === "native",
-      webName: wmode && wmode !== "native" ? t("ws." + wmode) : ""
+      webName: wmode && wmode !== "native" ? t("ws." + wmode) : "",
+      shop: shops.length ? "write" : "", shops: shops.map(function (a) { return a.name || a.site; })
     });
     var web = wmode === "native";
-    var round = 0, wround = 0, conts = 0;
+    var round = 0, wround = 0, lround = 0, conts = 0;
     function note(kind, text) { c.msgs.push({ r: "note", kind: kind, text: text }); }
     function next() {
       busy.live = "";
@@ -3294,7 +3358,7 @@
         scheduleLive();
       }).then(function (res) {
         addUsage(pid, res.usage);
-        var m = { r: "asst", prov: pid, model: modelOf(pid), text: res.text, raw: res.raw };
+        var m = { r: "asst", prov: pid, model: turnModel(pid) || modelOf(pid), text: res.text, raw: res.raw };
         if (res.tools.length) m.tools = res.tools;
         if (res.cut && !res.tools.length) m.cut = 1;
         c.msgs.push(m);
@@ -3328,6 +3392,8 @@
           // AS-WEB3: a round that only searched or read pages counts
           // against WEB_ROUNDS, so a whole site can be read.
           var webOnly = res.tools.every(function (x) { return x.name === "web_search" || x.name === "read_page"; });
+          // LY-AUTO: rounds of Layout work have their own, larger budget
+          if (!webOnly && C.layoutRound(res.tools)) { if (++lround >= C.LAYOUT_ROUNDS) { note("info", t("note.rounds")); return null; } return next(); }
           if (webOnly ? ++wround >= C.WEB_ROUNDS : ++round >= C.TOOL_ROUNDS) { note("info", t("note.rounds")); return null; }
           return next();
         });
@@ -3344,7 +3410,7 @@
     first.catch(function (e) {
       if (ctl && ctl.signal.aborted) {
         if (busy && busy.join >= 0) busy.live = busy.live.slice(joinedText(c.msgs, busy.join).length);
-        if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: modelOf(pid), text: busy.live });
+        if (busy && busy.live) c.msgs.push({ r: "asst", prov: pid, model: turnModel(pid) || modelOf(pid), text: busy.live });
         note("info", t("note.stopped"));
       } else if (C.coolFor(e) && again + 1 < C.chainOrder(data).length &&
                  c.msgs.length === startLen && !(last && last.found && !hadFound)) {
@@ -3371,7 +3437,7 @@
   // the user marked "can't use tools".
   function noTools(pid) {
     var P = C.PROVIDERS[pid];
-    return !!P && (!!P.device || (!!P.local && !!provConf(pid).nt));
+    return !!P && (!!P.device || (!!P.local && !!provConf(pid).nt && !turnModel(pid)));
   }
   // Search the user's data for the words of their message before it
   // goes (one search per word, PRE_WORDS at most), with the same rules
@@ -3418,13 +3484,45 @@
     if (busy.abort) busy.abort.abort();
   }
 
+  // LY-AUTO (Chris 2026-11-23): with «Layout work without cards» on,
+  // Layout's tools run at once as they do for Claude through the gate,
+  // and their report is the tool's result, so the model can change,
+  // read back and fix in one question. Removing more than 5
+  // things still comes as a card. Undo stays in the change history.
+  var LY_WAIT = 120000;
+  function lyAutoOn(call) { return !GATE && !!data.set.ly && !!installed().layout && C.lyAutoCall(call); }
+  function lyDone(call, res) {
+    return { content: res.ok ? String(res.c || "") : "Error: " + String(res.c || ""), err: res.ok ? 0 : 1,
+             ui: { k: "lyAuto", tool: call.name, ok: res.ok ? 1 : 0 } };
+  }
+  function lyAutoRun(c, call, apps) {
+    var args = call.args && typeof call.args === "object" ? call.args : {};
+    if (call.name === "edit_in_app") {
+      return editLoadFor("layout", args).then(function () {
+        var p = editPlan(args, apps);
+        var removes = p.ok && p.steps.some(function (s) { return s.op === "remove" || s.op === "delpages"; });
+        if (removes && p.pv.n > 5) return runTool(c, call, apps);
+        return gateEdit(args, apps, Date.now() + LY_WAIT, c).then(function (res) { return lyDone(call, res); });
+      });
+    }
+    return runTool(c, call, apps).then(function (r) {
+      if (r.err || !r.ui) return r;
+      return Promise.resolve(gatePress(r.ui, apps, c)).then(function (res) { return lyDone(call, res); });
+    });
+  }
+  function toolNow(c, call, apps) {
+    if (call && !call.bad && lyAutoOn(call) && !(busy && busy.abort && busy.abort.signal.aborted)) {
+      return lyAutoRun(c, call, apps).catch(function () { return { content: "Error: the call failed on the device.", err: 1 }; });
+    }
+    return runTool(c, call, apps);
+  }
   function runTools(c, calls, apps) {
     var out = [];
     var i = 0;
     function step() {
       if (i >= calls.length) return Promise.resolve(out);
       var call = calls[i++];
-      return runTool(c, call, apps).then(function (r) {
+      return toolNow(c, call, apps).then(function (r) {
         r.id = call.id;
         r.name = call.name;
         if (call.nid) r.nid = call.nid;
@@ -3477,6 +3575,8 @@
     if (call.name === "files_write") return filesWrite(c, call.args, apps);
     if (call.name === "files_move") return filesMove(c, call.args, apps);
     if (call.name === "files_delete") return filesDelete(c, call.args, apps);
+    if (call.name === "shop_find") return shopFind(c, call.args, apps);       // AS-SHOP
+    if (call.name === "shop_change") return shopChange(c, call.args, apps);
     if (call.name === "change_item") return changeItem(c, call.args, apps);
     if (call.name === "create_items") return createItems(c, call.args, apps);
     if (call.name === "link_contact") return linkContact(c, call.args, apps);
@@ -4730,6 +4830,230 @@
       });
     });
   }
+  // ---- AS-SHOP W1 (Chris 2026-11-23): the user's own WooCommerce shop ----
+  // assistant/shop.js plans; the calls go through the shell's Connected
+  // services (links/host.js orosLinks.call, its allowlist), with the
+  // shop's own key on this device. Offered while the Shop app may be
+  // read and a WooCommerce shop with keys is connected. shop_change
+  // reads the product again right before the card and again after
+  // Apply; it writes only when nothing changed in between. Undo (card,
+  // history, undo_change) puts the old values back only while the shop
+  // still shows the Assistant's.
+  var shopMem = {};                      // acct → { at, rows, units, uat }
+  var SHOP_TTL = 5 * 60000;
+  function shopLinks() {
+    var p = shell();
+    try { return p && p.orosLinks && typeof p.orosLinks.call === "function" && typeof p.orosLinks.list === "function" ? p.orosLinks : null; } catch (e) { return null; }
+  }
+  function shopAccts(apps) {
+    if (!apps.some(function (a) { return a.id === "shop"; })) return [];
+    var lk = shopLinks();
+    try { return lk ? (lk.list("woo") || []).map(function (a) { return { id: a.id, name: a.name || "", site: a.site || "" }; }) : []; } catch (e) { return []; }
+  }
+  function shopApp(apps) { var o = null; apps.forEach(function (a) { if (a.id === "shop") o = a; }); return o; }
+  function shopMod() { return window.OrosAssistShop ? Promise.resolve(window.OrosAssistShop) : loadOnce("shop.js").then(function () { return window.OrosAssistShop || null; }); }
+  var SHOP_WHY = {
+    gone: "The shop is no longer in Connected services.", keys: "This device has no key for the shop (Settings › Connected services).",
+    offline: "This device is offline.", auth: "The shop refused the key. To change products the shop's WooCommerce key must be Read/Write (WooCommerce › Settings › Advanced › REST API), added in Settings › Connected services.",
+    denied: "orOS does not send that request to a shop.", notfound: "The shop answered that it does not have that.",
+    network: "The shop could not be reached.", relay: "The shop could not be reached.", server: "The shop answered with an error.", busy: "The shop is busy; try again in a minute."
+  };
+  function shopWhy(code) { return SHOP_WHY[code] || "The shop could not be asked right now."; }
+  function shopErr(msg, title) { return { content: "Error: " + msg, err: 1, ui: { k: "shopErr", title: title || "" } }; }
+  // one request → its answer data, or throws { code }
+  function shopGet(acct, req) {
+    var lk = shopLinks();
+    if (!lk) return Promise.reject({ code: "gone" });
+    return lk.call(acct, [req]).then(function (res) {
+      var r = res && res[0];
+      if (!r) throw { code: "server" };
+      if (r.status === 401 || r.status === 403) throw { code: "auth" };
+      if (r.status === 404) throw { code: "notfound" };
+      if (r.status === 429) throw { code: "busy" };
+      if (r.status < 200 || r.status > 299 || r.err) throw { code: "server" };
+      return r.data;
+    }, function (e) { throw { code: (e && e.code) || "network" }; });
+  }
+  function shopUnits(S, acct) {
+    var m = shopMem[acct] || (shopMem[acct] = {});
+    if (m.units && Date.now() - m.uat < SHOP_TTL) return Promise.resolve(m.units);
+    var rq = S.unitReqs();
+    return Promise.all([shopGet(acct, rq[0]).catch(function () { return null; }), shopGet(acct, rq[1]).catch(function () { return null; })]).then(function (a) {
+      m.units = S.units(a[0], a[1]);
+      m.uat = Date.now();
+      return m.units;
+    });
+  }
+  // every product, page by page (kept 5 minutes for this visit)
+  function shopRows(S, acct) {
+    var m = shopMem[acct] || (shopMem[acct] = {});
+    if (m.rows && Date.now() - m.at < SHOP_TTL) return Promise.resolve(m.rows);
+    var rows = [];
+    function page(n) {
+      return shopGet(acct, S.listReq(n)).then(function (list) {
+        (Array.isArray(list) ? list : []).forEach(function (p) { var r = S.norm(p); if (r) rows.push(r); });
+        if (Array.isArray(list) && list.length >= S.PER_PAGE && n < S.MAX_PAGES) return page(n + 1);
+        m.rows = rows;
+        m.at = Date.now();
+        return rows;
+      });
+    }
+    return page(1);
+  }
+  function shopVars(S, acct, parent) {
+    return shopGet(acct, S.varsReq(parent.id)).then(function (list) {
+      return (Array.isArray(list) ? list : []).map(function (v) { return S.norm(v, parent); }).filter(Boolean);
+    });
+  }
+  function shopFind(c, a, apps) {
+    var app = shopApp(apps);
+    if (!app) return Promise.resolve(shopErr("the user does not let the Assistant read the Shop app any more."));
+    a = a || {};
+    var q = String(a.query == null ? "" : a.query).replace(/\s+/g, " ").trim().slice(0, 120);
+    if (!q) return Promise.resolve({ content: "Error: query is empty.", err: 1, ui: { k: "toolErr", why: "empty" } });
+    return shopMod().then(function (S) {
+      if (!S) return shopErr("the shop tools could not be loaded right now.");
+      var pick = S.pickShop(shopAccts(apps), a.shop);
+      if (pick.err) return shopErr(pick.err);
+      var acct = pick.id, units;
+      return shopUnits(S, acct).then(function (u) {
+        units = u;
+        return shopRows(S, acct);
+      }).then(function (rows) {
+        var hits = S.find(rows, q), more = Math.max(0, hits.length - S.FIND_MAX);
+        hits = hits.slice(0, S.FIND_MAX);
+        var share = app.perm === "always" || !hits.length ? Promise.resolve(hits)
+          : askConsent(q, hits.map(function (r) { return { app: "shop", appName: pick.name, title: r.name, text: r.sku, r: r }; })).then(function (ch) {
+            if (ch && ch.always && ch.always.indexOf("shop") >= 0) setPerm("shop", "always");
+            return (ch && ch.chosen ? ch.chosen : []).map(function (it) { return it.r; });
+          });
+        return share.then(function (shared) {
+          var held = hits.length - shared.length;
+          // a product with variations brings them (the first three such products)
+          var withVars = shared.filter(function (r) { return r.type === "variable"; }).slice(0, 3);
+          return Promise.all(withVars.map(function (r) { return shopVars(S, acct, r).catch(function () { return null; }); })).then(function (vs) {
+            var out = shared.map(function (r) {
+              var o = S.view(r, units), at = withVars.indexOf(r);
+              if (at >= 0 && vs[at]) o.variations = vs[at].slice(0, S.VAR_MAX).map(function (v) { var x = S.view(v, units); delete x.product_id; delete x.name; return x; });
+              return o;
+            });
+            var res = { shop: pick.name, units: units, products: out };
+            if (more) res.more = more + " more match; use more words.";
+            if (held) res.declined = held;
+            if (!hits.length) res.note = "No product of the shop matches. Try other words, the SKU or the id.";
+            return { content: JSON.stringify(res), ui: { k: "shopFind", q: q, n: out.length, shop: pick.name } };
+          });
+        });
+      }, function (e) { return shopErr(shopWhy(e && e.code)); });
+    });
+  }
+  // the product (fresh) and, for a variation, the variation (fresh)
+  function shopTarget(S, acct, t) {
+    var pid = S.wooId(t.q);
+    var first = pid ? Promise.resolve(pid) : shopRows(S, acct).then(function (rows) {
+      var hits = S.find(rows, t.q);
+      if (!hits.length) throw { msg: "No product of the shop matches \"" + t.q.slice(0, 80) + "\". Call shop_find first." };
+      if (hits.length > 1) throw { msg: "Several products match \"" + t.q.slice(0, 80) + "\": " + hits.slice(0, 6).map(function (r) { return r.name + " (id " + r.id + ")"; }).join(", ") + ". Ask the user which one, then give its id." };
+      return hits[0].id;
+    });
+    return first.then(function (id) {
+      return shopGet(acct, S.productReq(id)).catch(function (e) {
+        if (e && e.code === "notfound") throw { msg: "The shop has no product with id " + id + ". Call shop_find first." };
+        throw e;
+      });
+    }).then(function (p) {
+      var prod = S.norm(p);
+      if (!prod) throw { code: "server" };
+      if (!t.vq) return { prod: prod, cur: prod, t: { pid: prod.id, vid: 0 } };
+      if (prod.type !== "variable") throw { msg: "“" + prod.name + "” has no variations; leave variation out." };
+      return shopVars(S, acct, prod).then(function (vars) {
+        var v = S.findVar(vars, t.vq);
+        if (v.length !== 1) throw { msg: (v.length ? "Several" : "No") + " variations of “" + prod.name + "” match \"" + t.vq.slice(0, 60) + "\". Its variations: " + vars.slice(0, 12).map(function (x) { return x.attrs + " (id " + x.id + ")"; }).join(", ") + "." };
+        return { prod: prod, cur: v[0], t: { pid: prod.id, vid: v[0].id } };
+      });
+    });
+  }
+  // the item again, as the shop has it now
+  function shopFresh(S, acct, t, prod) {
+    if (!t.vid) return shopGet(acct, S.productReq(t.pid)).then(function (p) { return S.norm(p); });
+    return shopVars(S, acct, prod || { id: t.pid, name: "" }).then(function (vars) { return vars.filter(function (v) { return v.id === t.vid; })[0] || null; });
+  }
+  function shopChange(c, a, apps) {
+    var app = shopApp(apps);
+    if (!app) return Promise.resolve(shopErr("the user does not let the Assistant read the Shop app any more."));
+    return shopMod().then(function (S) {
+      if (!S) return shopErr("the shop tools could not be loaded right now.");
+      var ch = S.normArgs(a);
+      if (!ch.ok) return shopErr(ch.err);
+      var pick = S.pickShop(shopAccts(apps), a && a.shop);
+      if (pick.err) return shopErr(pick.err);
+      var acct = pick.id, units, tg, p;
+      return shopUnits(S, acct).then(function (u) {
+        units = u;
+        return shopTarget(S, acct, ch.t);
+      }).then(function (x) {
+        tg = x;
+        p = S.plan(tg.cur, ch, units);
+        if (!p.ok) return shopErr(p.err, tg.cur.name);
+        var title = tg.cur.name + (tg.cur.sku ? " · " + tg.cur.sku : "");
+        var base = { k: "change", app: pick.name, act: "update", title: title, rows: p.rows };
+        return askChange(pick.name, { title: title, rows: p.rows }, "update").then(function (ok) {
+          if (!ok) {
+            base.st = "declined";
+            return { content: JSON.stringify({ applied: false, note: "The user did not apply the change. Nothing changed in the shop." }), ui: base };
+          }
+          // the card may have waited: the shop is read again, and the
+          // change goes only if what the card showed is still so
+          return shopFresh(S, acct, tg.t, tg.prod).then(function (now) {
+            var p2 = now ? S.plan(now, ch, units) : { ok: false };
+            if (!p2.ok || JSON.stringify(p2.rows) !== JSON.stringify(p.rows)) {
+              base.st = "failed";
+              base.msg = t("shop.moved");
+              return { content: "Error: the product changed in the shop while the card was open. Nothing was changed; call shop_find again.", err: 1, ui: base };
+            }
+            return shopGet(acct, S.putReq(tg.t, p.body)).then(function (done) {
+              var got = S.norm(done, tg.t.vid ? tg.prod : null), miss = [];
+              if (got) Object.keys(p.after).forEach(function (k) { var w = p.after[k], h = got[k]; if (!(w === h || (w !== "" && h !== "" && +w === +h) || (k === "manage_stock" && h === w))) miss.push(k); });
+              if (shopMem[acct]) shopMem[acct].at = 0;   // the list is read again next time
+              var uid = newId();
+              var undoOk = Object.keys(p.before).length > 0;
+              if (undoOk) {
+                remember(uid, { app: "shop", woo: { acct: acct, t: tg.t, after: p.after, before: p.before, name: tg.cur.name } },
+                         { kind: "change", app: "shop", name: pick.name, act: "update", title: title, items: [title] });
+                base.u = uid;
+              }
+              base.st = "done";
+              var res = { applied: true, product: tg.cur.name, shop: pick.name, changed: p.rows.map(function (r) { return r.k + ": " + (r.b || "none") + " → " + (r.a || "none"); }) };
+              res.note = (undoOk ? "Done in the shop. They can undo it." : "Done in the shop.") +
+                (p.keep.length ? " Undo cannot take the price away again (the shop needs one)." : "") +
+                (miss.length ? " The shop's answer shows other values for " + miss.join(", ") + " (a plugin may change them); call shop_find to check." : "");
+              return { content: JSON.stringify(res), ui: base };
+            }, function (e) {
+              base.st = "failed";
+              base.msg = shopWhy(e && e.code);
+              return { content: "Error: " + shopWhy(e && e.code) + " Nothing was changed.", err: 1, ui: base };
+            });
+          });
+        });
+      }).catch(function (e) {
+        if (e && e.msg) return shopErr(e.msg);
+        return shopErr(shopWhy(e && e.code));
+      });
+    });
+  }
+  function shopUndo(w) {
+    return shopMod().then(function (S) {
+      if (!S || !w || !w.t) return undoFail(t("hist.noMod"));
+      return shopFresh(S, w.acct, w.t, null).then(function (now) {
+        var u = S.undoPlan(now, w);
+        if (!u.ok) return undoFail(t(u.err === "changed" ? "shop.undoMoved" : u.err === "gone" ? "shop.undoGone" : "hist.noMod"));
+        return shopGet(w.acct, S.putReq(w.t, u.body)).then(function () {
+          if (shopMem[w.acct]) shopMem[w.acct].at = 0;
+          return { ok: true };
+        });
+      }).catch(function (e) { return undoFail(shopWhy(e && e.code)); });
+    });
+  }
   // ---- GATE-FILES (F1): files in the folders the owner lets Claude use ----
   // assistant/claudefiles.js plans and checks every step; the folders
   // come from the gate's list (Settings › Connected services › orOS
@@ -5528,6 +5852,8 @@
     if (f === "read") return v ? t("v.read") : t("v.unread");
     if (f === "played") return v ? t("v.played") : t("v.unplayed");
     if (f === "kind") return t("v." + v);
+    if (f === "managestock" && (v === "true" || v === "false" || v === true || v === false)) return t("v.ms." + String(v));   // AS-SHOP
+    if (f === "stockstatus" && /^(instock|outofstock|onbackorder)$/.test(v)) return t("v.ss." + v);
     if (f === "status" && STRINGS.en["st." + v] !== undefined) return t("st." + v);
     if (f === "status" && /^inv:/.test(v) && STRINGS.en["inv." + v.slice(4)] !== undefined) return t("inv." + v.slice(4));
     if (v === "" || v === undefined) return t("v.empty");
@@ -6287,6 +6613,7 @@
     var now = Date.now();
     if (mem.edit) return editUndo(mem.edit);
     if (mem.files) return filesUndo(mem.files);
+    if (mem.woo) return shopUndo(mem.woo);   // AS-SHOP
     if (mem.cf) return cfUndo(mem.cf);
     if (mem.kb) {
       var G = gateCore();
@@ -7535,6 +7862,7 @@
   }
 
   function renderBar() {
+    voDraw();
     var pid = curProv();
     $("bar-title").textContent = chat ? (chat.title || t("chat.untitled")) : t("app");
     var who = $("who");
@@ -7547,7 +7875,7 @@
       var ai = el("span", "who-ai", t("who.ai"));
       ai.title = t("who.aiTip");
       who.appendChild(ai);
-      who.appendChild(el("span", "who-name", C.PROVIDERS[pid].builtin ? provName(pid) : t("who", { name: provName(pid), model: wm ? wm.name : modelOf(pid) })));
+      who.appendChild(el("span", "who-name", C.PROVIDERS[pid].builtin ? provName(pid) : t("who", { name: provName(pid), model: wm ? wm.name : (turnModel(pid) || modelOf(pid)) })));
       who.appendChild(el("span", "who-to", isBi ? t("who.device") : data.set.chat ? t("who.chatOnly") : t("who.to", { host: hostOf(baseOf(pid)) })));
       if (webOn(pid)) who.appendChild(el("span", "who-web", t("who.web")));
       if (!data.set.chat && !isBi) {
@@ -7774,6 +8102,7 @@
         if (ui.k === "rule") { drawRule(host, r, c); return; }
         if (ui.k === "ruleErr") return;
         if (ui.k === "edit") { drawEdit(host, r, c); return; }
+        if (ui.k === "lyAuto") { host.appendChild(el("div", "tool-line", t(ui.ok ? "ly.done" : "ly.fail", { app: installed().layout || "Layout" }))); return; }
         if (ui.k === "editErr") return;
         if (ui.k === "nl") { drawNewsletter(host, r, c); return; }
         if (ui.k === "nlCheck") { drawNlCheck(host, r, c); return; }
@@ -7807,6 +8136,8 @@
         else if (ui.k === "sum") txt = t("tool.sum", { app: ui.app || "" });
         else if (ui.k === "sumNo") txt = t("tool.sumNo", { app: ui.app || "" });
         else if (ui.k === "chgErr") txt = t("chg.err", { app: ui.app || "" });
+        else if (ui.k === "shopFind") txt = t("tool.shopFind", { q: ui.q || "", n: ui.n || 0, shop: ui.shop || "" });   // AS-SHOP
+        else if (ui.k === "shopErr") txt = t("tool.shopErr");
         else if (ui.k === "toolErr" && /^(args|unknown|empty|off)$/.test(ui.why)) txt = t("tool.err." + ui.why, { name: ui.name || "" });
         else txt = t("tool.err");
         line.appendChild(el("span", "", txt));
@@ -8617,9 +8948,76 @@
         var kitHint = el("p", "dlg-hint kit-hint");
         kitHint.id = "as-kit-hint";
         provBox.appendChild(kitHint);
+        // Greek pair for Ollama (AS-GREEK): one button downloads and
+        // builds krikri-el and qwen3:8b on this computer.
+        var greek = el("div", "kit-greek");
+        greek.id = "as-greek";
+        greek.appendChild(el("p", "dlg-hint", t("greek.hint", { chat: C.GREEK_AI.chat, tools: C.GREEK_AI.tools })));
+        var gbtn = button(t("greek.get", { gb: C.GREEK_AI.gb }), "small", function () { getGreek(); });
+        gbtn.id = "as-greek-get";
+        greek.appendChild(gbtn);
+        var gst = el("p", "dlg-hint");
+        gst.id = "as-greek-st";
+        gst.setAttribute("role", "status");
+        greek.appendChild(gst);
+        provBox.appendChild(greek);
+        var getGreek = function () {
+          var root = C.ollamaRoot(provConf(pid).base || P.defaultBase);
+          var steps = C.greekSteps(root);
+          if (!steps.length) return;
+          gbtn.disabled = true;
+          gst.classList.remove("err", "ok");
+          var run = function (i) {
+            if (i >= steps.length) return Promise.resolve();
+            var s = steps[i];
+            gst.textContent = t("greek.step", { n: i + 1, of: steps.length, model: s.model });
+            return fetch(s.url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(s.body),
+                                  credentials: "omit", cache: "no-store", referrerPolicy: "no-referrer" })
+              .catch(function () { throw new Error(t("greek.net")); })
+              .then(function (res) {
+                if (!res.ok || !res.body) return res.text().then(function (x) {
+                  var p = C.ollamaProgress(x);
+                  throw new Error(p && p.error ? p.error : "HTTP " + res.status);
+                });
+                var rd = res.body.getReader(), dec = new TextDecoder(), buf = "", ok = false;
+                var line = function (l) {
+                  var p = C.ollamaProgress(l);
+                  if (!p) return;
+                  if (p.error) throw new Error(p.error);
+                  if (p.done) ok = true;
+                  gst.textContent = t("greek.step", { n: i + 1, of: steps.length, model: s.model }) +
+                    (p.status ? " · " + p.status : "") + (p.pct >= 0 ? " · " + p.pct + "%" : "");
+                };
+                var pump = function () {
+                  return rd.read().then(function (r) {
+                    if (r.done) { line(buf); if (!ok) throw new Error(t("greek.cut")); return; }
+                    buf += dec.decode(r.value, { stream: true });
+                    var parts = buf.split("\n");
+                    buf = parts.pop();
+                    parts.forEach(line);
+                    return pump();
+                  });
+                };
+                return pump();
+              })
+              .then(function () { return run(i + 1); });
+          };
+          run(0).then(function () {
+            setProvConf(pid, { kit: "ollama", model: C.GREEK_AI.chat, nt: 1, vis: 0, tm: C.GREEK_AI.tools });
+            renderAll();
+            drawProv();
+            var st = document.getElementById("as-greek-st");
+            if (st) { st.textContent = t("greek.done", { chat: C.GREEK_AI.chat, tools: C.GREEK_AI.tools }); st.classList.add("ok"); }
+          }, function (e) {
+            gst.textContent = t("greek.fail", { why: String(e && e.message || e).slice(0, 300) });
+            gst.classList.add("err");
+            gbtn.disabled = false;
+          });
+        };
         var paintKit = function () {
           var k = kit.value;
           kitHint.textContent = k ? t("kit." + k, { origin: siteOrigin() }) + " " + t("kit.pna") : "";
+          greek.hidden = !(k === "ollama" || /:11434(\/v1)?$/.test(provConf(pid).base || ""));
         };
         kit.addEventListener("change", function () {
           var k = kit.value;
@@ -8660,6 +9058,21 @@
         });
         nt.parentNode.classList.add("check");
         provBox.appendChild(el("p", "dlg-hint", t("set.ntHint")));
+        // Model for actions (AS-GREEK 2): a second model on the same
+        // server that takes the turns which add or change something.
+        label(provBox, "as-tm", t("set.tm"));
+        var tmIn = el("input", "dlg-input");
+        tmIn.id = "as-tm";
+        tmIn.maxLength = 200;
+        tmIn.autocapitalize = "off";
+        tmIn.spellcheck = false;
+        tmIn.placeholder = C.GREEK_AI.tools;
+        tmIn.value = provConf(pid).tm || "";
+        tmIn.addEventListener("change", function () {
+          setProvConf(pid, { tm: tmIn.value.trim().slice(0, 200) });
+        });
+        provBox.appendChild(tmIn);
+        provBox.appendChild(el("p", "dlg-hint", t("set.tmHint")));
         var fast = checkbox(provBox, "as-fast", t("set.fast"), !!provConf(pid).fast, function (on) {
           setProvConf(pid, { fast: on ? 1 : 0 });
         });
@@ -8766,8 +9179,20 @@
       model.autocapitalize = "off";
       model.spellcheck = false;
       model.value = modelOf(pid);
+      // A local model orOS knows (AS-GREEK) brings its own ticks:
+      // krikri-el without tools or photos, qwen3 with tools.
+      var withTraits = function (m) {
+        var patch = { model: m };
+        var tr = P.local ? C.localTraits(m) : null;
+        if (tr) {
+          patch.nt = tr.nt; patch.vis = tr.vis;
+          if (nt) nt.checked = !!tr.nt;
+          if (vis) vis.checked = !!tr.vis;
+        }
+        return patch;
+      };
       model.addEventListener("change", function () {
-        setProvConf(pid, { model: model.value.trim().slice(0, 200) });
+        setProvConf(pid, withTraits(model.value.trim().slice(0, 200)));
         pick.value = model.value;
         renderAll();
       });
@@ -8785,7 +9210,7 @@
       pick.addEventListener("change", function () {
         if (!pick.value) return;
         model.value = pick.value;
-        setProvConf(pid, { model: pick.value });
+        setProvConf(pid, withTraits(pick.value));
         renderAll();
       });
       provBox.appendChild(pick);
@@ -9119,6 +9544,11 @@
       list.appendChild(r);
     });
     secD.appendChild(list);
+    // LY-AUTO: Layout's work at once, without cards (off by default)
+    if (installed().layout) {
+      checkbox(secD, "as-ly", t("set.ly"), !!data.set.ly, function (on) { setSetting({ ly: on ? 1 : 0 }); }).parentNode.classList.add("check");
+      secD.appendChild(el("p", "dlg-hint", t("set.lyHint")));
+    }
 
     // The desktop menu (shell quickmenu.js): tasks and apps on a
     // right-click or long press of the desktop. Its editor lives in
@@ -9407,6 +9837,8 @@
     }
     drawCsHint();
 
+    voSettings(body);
+
     // This device
     var secV = section(body, t("set.device"));
     var keep = checkbox(secV, "as-keep", t("set.keep"), !!prefs.keep, function (on) {
@@ -9652,6 +10084,203 @@
     if (chatSyncOn()) scheduleReconcile();
   }
 
+
+  // ---------- 13a. Voice input (SOLO-AS W2, Chris 2026-11-23) ----------
+  // The microphone button records (MediaRecorder), the Whisper model of
+  // montage/asr.js turns it into text ON THIS DEVICE, and the text joins
+  // the message box for the person to check: nothing is ever sent by
+  // itself. No Web Speech, no Google recognizer, no audio to any AI
+  // service (the Claude API takes no sound anyway). Model "tiny" (shared
+  // with Montage, Lyric Sync, Notes) or "base" (better Greek), chosen the
+  // first time, device-local in prefs.voice.
+  var VO_MAX_MS = 120000;
+  var vo = { st: "", rec: null, stream: null, parts: [], timer: 0, ctl: null };
+  function voCan() {
+    return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder &&
+      (window.AudioContext || window.webkitAudioContext) && (window.OfflineAudioContext || window.webkitOfflineAudioContext));
+  }
+  function voAsr() {
+    if (window.MontageASR) return Promise.resolve(window.MontageASR);
+    return new Promise(function (resolve, reject) {
+      var sc = document.createElement("script");
+      var v = (document.querySelector('script[src*="assistant.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+      sc.src = "../montage/asr.js" + (m ? "?v=" + m[1] : "");
+      sc.onload = function () { window.MontageASR ? resolve(window.MontageASR) : reject(new Error("no-asr")); };
+      sc.onerror = function () { reject(new Error("no-asr")); };
+      document.head.appendChild(sc);
+    });
+  }
+  function voLang() { return LANG === "el" || LANG === "de" ? LANG : "en"; }
+  function voDraw(note) {
+    var b = $("mic-btn");
+    if (!b) return;
+    b.hidden = !voCan();
+    b.classList.toggle("rec", vo.st === "rec");
+    b.disabled = vo.st === "run" || (busy && vo.st !== "rec");
+    var lbl = t(vo.st === "rec" ? "vo.stop" : "vo.btn");
+    b.setAttribute("aria-label", lbl);
+    b.title = lbl;
+    b.setAttribute("aria-pressed", vo.st === "rec" ? "true" : "false");
+    var n = $("vo-note");
+    if (n && note !== undefined) { n.hidden = !note; n.textContent = note || ""; }
+  }
+  function voTap() {
+    if (vo.st === "rec") { voStop(); return; }
+    if (vo.st || busy || !voCan()) return;
+    voAsr().then(function (ASR) {
+      var model = prefs.voice;
+      if (!model) { voAsk(ASR); return; }
+      return Promise.resolve(ASR.ready(model)).catch(function () { return false; }).then(function (yes) {
+        if (yes) voStart(); else voAsk(ASR, model);
+      });
+    }, function () { showToast(t("vo.fail")); });
+  }
+  // First use (or a model removed): which model, and its download.
+  function voAsk(ASR, pick) {
+    if (document.querySelector("dialog[open]")) return;
+    var dlg = makeDialog("as-voice");
+    dlg.appendChild(el("div", "dlg-title", t("vo.title")));
+    dlg.appendChild(el("p", "dlg-text", t("vo.need")));
+    var want = pick || (LANG === "el" ? "base" : "tiny");
+    ["tiny", "base"].forEach(function (m) {
+      var l = el("label", "dlg-check check");
+      var r = el("input");
+      r.type = "radio"; r.name = "as-vo-m"; r.value = m; r.checked = m === want;
+      r.addEventListener("change", function () { if (r.checked) want = m; });
+      l.appendChild(r);
+      l.appendChild(document.createTextNode(" " + t("vo." + m, { mb: ASR.mbOf(m) + ASR.RUNTIME_MB })));
+      dlg.appendChild(l);
+    });
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("btn.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("vo.go"), "primary", function () {
+      dlg.close();
+      prefs.voice = want;
+      savePrefs();
+      voFetch(ASR, want);
+    }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
+  }
+  // The model downloads BEFORE the first recording, so nobody speaks
+  // and then waits for it.
+  function voFetch(ASR, model) {
+    if (vo.st) return;
+    vo.st = "run";
+    voDraw(t("vo.dl", { p: 0 }));
+    ASR.prepare(model, function (q) { voDraw(t("vo.dl", { p: Math.round(q * 100) })); }).then(function () {
+      voEnd();
+      voStart();
+    }, function (e) {
+      voEnd();
+      showToast(e && /^http|fetch|network|load/i.test(String(e.message || e)) ? t("vo.net") : t("vo.fail"));
+    });
+  }
+  function voStart() {
+    if (vo.st) return;
+    vo.st = "wait";
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }).then(function (stream) {
+      vo.stream = stream;
+      vo.parts = [];
+      var rec;
+      try { rec = new MediaRecorder(stream); } catch (e) { voEnd(); showToast(t("vo.mic")); return; }
+      vo.rec = rec;
+      rec.ondataavailable = function (e) { if (e.data && e.data.size) vo.parts.push(e.data); };
+      rec.onstop = function () { voTake(new Blob(vo.parts, { type: rec.mimeType || "audio/webm" })); };
+      rec.start(1000);
+      vo.st = "rec";
+      vo.timer = setTimeout(voStop, VO_MAX_MS);
+      voDraw(t("vo.rec") + " " + t("vo.max"));
+    }, function () { voEnd(); showToast(t("vo.mic")); });
+  }
+  function voStop() {
+    if (vo.st !== "rec" || !vo.rec) return;
+    clearTimeout(vo.timer);
+    vo.st = "run";
+    voDraw(t("vo.run", { p: 0 }));
+    try { vo.rec.stop(); } catch (e) { voEnd(); }
+  }
+  function voRelease() {
+    if (vo.stream) vo.stream.getTracks().forEach(function (tr) { try { tr.stop(); } catch (e) {} });
+    vo.stream = null;
+    vo.rec = null;
+  }
+  function voEnd(note) {
+    clearTimeout(vo.timer);
+    voRelease();
+    vo.st = "";
+    vo.parts = [];
+    voDraw(note || "");
+  }
+  // Recorded blob → 16 kHz mono → text → the message box.
+  function voTake(blob) {
+    voRelease();
+    var AC = window.AudioContext || window.webkitAudioContext, OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+    var ctx = new AC();
+    blob.arrayBuffer().then(function (ab) {
+      return new Promise(function (resolve, reject) { ctx.decodeAudioData(ab, resolve, reject); });
+    }).then(function (buf) {
+      try { ctx.close(); } catch (e) {}
+      var n = Math.max(1, Math.ceil(buf.duration * 16000));
+      var off = new OAC(1, n, 16000), src = off.createBufferSource();
+      src.buffer = buf;
+      src.connect(off.destination);
+      src.start();
+      return off.startRendering();
+    }).then(function (out) {
+      var samples = out.getChannelData(0);
+      return voAsr().then(function (ASR) {
+        return ASR.run(samples, {
+          lang: voLang(), model: prefs.voice || "tiny",
+          progress: function (q, stage) { voDraw(t(stage === "download" ? "vo.dl" : "vo.run", { p: Math.round(q * 100) })); }
+        });
+      });
+    }).then(function (r) {
+      var text = C.voiceText((r && r.cues) || []);
+      if (!text) { voEnd(); showToast(t("vo.none")); return; }
+      var box = $("input");
+      box.value = C.voiceJoin(box.value, text).slice(0, MAX_INPUT);
+      autosize();
+      voEnd();
+      try { box.focus(); box.setSelectionRange(box.value.length, box.value.length); } catch (e) {}
+    }, function (e) {
+      try { ctx.close(); } catch (x) {}
+      voEnd();
+      showToast(e && /^http|fetch|network|load/i.test(String(e.message || e)) ? t("vo.net") : t("vo.fail"));
+    });
+  }
+  // Settings › Voice input: the model on this device, and removing it.
+  function voSettings(body) {
+    if (!voCan()) return;
+    var sec = section(body, t("set.voice"));
+    var st = el("p", "dlg-hint");
+    st.setAttribute("role", "status");
+    sec.appendChild(st);
+    var rm = button(t("set.voiceRm"), "small danger", function () {
+      voAsr().then(function (ASR) { return ASR.forget(prefs.voice); }).then(function () {
+        prefs.voice = "";
+        savePrefs();
+        draw();
+      });
+    });
+    sec.appendChild(rm);
+    sec.appendChild(el("p", "dlg-hint", t("set.voiceHint")));
+    function draw() {
+      rm.hidden = true;
+      st.textContent = t("set.voiceNone");
+      if (!prefs.voice) return;
+      voAsr().then(function (ASR) {
+        return Promise.resolve(ASR.ready(prefs.voice)).then(function (yes) {
+          if (!yes) return;
+          st.textContent = t("set.voiceHas", { name: t("vo." + prefs.voice, { mb: ASR.mbOf(prefs.voice) + ASR.RUNTIME_MB }) });
+          rm.hidden = false;
+        });
+      }).catch(function () {});
+    }
+    draw();
+  }
+
   // ---------- 13. Wiring & boot ----------
   function applyI18n() {
     [].forEach.call(document.querySelectorAll("[data-i18n]"), function (n) {
@@ -9672,6 +10301,8 @@
     $("wel-icon").innerHTML = ICON.spark;
     $("input").setAttribute("aria-label", t("ph.input"));
     $("att-btn").innerHTML = ICON.clip;
+    $("mic-btn").innerHTML = ICON.mic;
+    voDraw("");
   }
 
   function wire() {
@@ -9686,6 +10317,7 @@
     $("wel-brief").addEventListener("click", startBriefing);
     $("send-btn").addEventListener("click", function () { if (busy) stop(); else send(); });
     $("att-btn").addEventListener("click", attachDialog);
+    $("mic-btn").addEventListener("click", voTap);
     $("att-file").addEventListener("change", function (e) {
       if (e.target.dataset.dev === "1") addDev(e.target.files); else addFiles(e.target.files);
       e.target.value = "";
@@ -9733,6 +10365,9 @@
   // stored conversation. A dialog open or an answer running → ignored.
   function openTarget(tg) {
     if (tg && tg.brief === 1 && !busy && !document.querySelector("dialog[open]")) { startBriefing(); return true; }
+    // { listen: 1 } (the single app's "Speak" shortcut, SOLO-AS W2): a
+    // new conversation with the microphone on; the text waits in the box.
+    if (tg && tg.listen === 1 && !busy && !document.querySelector("dialog[open]")) { newChat(); voTap(); return true; }
     if (tg && typeof tg.chat === "string" && !busy && !document.querySelector("dialog[open]")) {
       for (var i = 0; i < chats.length; i++) if (chats[i].id === tg.chat) { openChat(tg.chat); return true; }
       return false;
@@ -10050,15 +10685,17 @@
   // the app (it opens on the owner's screen and checks the commands
   // again); the answer waits for its report until the deadline (the
   // relay waits 25 s), a later report still goes to the change history.
-  function gateEdit(args, apps, deadline) {
-    var app = String(args.app || ""), g0 = gateShell();
+  // own: the in-app Assistant's conversation (LY-AUTO): the same run,
+  // without the gate's own checks (the user is the one asking).
+  function gateEdit(args, apps, deadline, own) {
+    var app = String(args.app || ""), g0 = gateShell(), conv = own || gateConv;
     if (app && !appOf(apps, app)) return Promise.resolve({ ok: false, c: g0 && typeof g0.writeOk === "function" && g0.writeOk(app) || "Claude may not change " + app + "." });
     return editLoadFor(app, args).then(function () {
-      var r0 = proposeEditNow(gateConv, args, apps);
+      var r0 = proposeEditNow(conv, args, apps);
       if (r0.err) return { ok: false, c: String(r0.content || "").replace(/^Error: /, "") };
       var p = editPlan(args, apps), a = appOf(apps, p.app), name = a ? a.name : p.app;
       if (!p.ok || !a) return { ok: false, c: p.err || "Claude may not change this app." };
-      var g = gateShell(), why = g && typeof g.writeOk === "function" ? g.writeOk(p.app) : "orOS Gate is not running.";
+      var g = gateShell(), why = own ? "" : g && typeof g.writeOk === "function" ? g.writeOk(p.app) : "orOS Gate is not running.";
       if (why) return { ok: false, c: why };
       // dry_run (Chris 2026-11-18, P2): what would change, nothing applied
       if (args.dry_run === true) {
@@ -10070,12 +10707,12 @@
         return { ok: true, a: [p.app], k: 0, c: name + ": " + JSON.stringify(dv) };
       }
       var removes = p.steps.some(function (s) { return s.op === "remove" || s.op === "delpages" || s.op === "deltrack"; });
-      var askP = removes && p.pv.n > 5 && typeof g.askDelete === "function" ? Promise.resolve(g.askDelete(p.pv.n)) : Promise.resolve(true);
+      var askP = !own && removes && p.pv.n > 5 && typeof g.askDelete === "function" ? Promise.resolve(g.askDelete(p.pv.n)) : Promise.resolve(true);
       return askP.then(function (yes) {
         if (!yes) return { ok: false, c: "The owner did not confirm removing " + p.pv.n + " things on the device; nothing was changed." };
         var ui = { key: attId() };
         var job = jobNew(ui.key, p.app, name);
-        if (!runEdit(ui, gateConv, p)) return jobEnd(job, { ok: false, c: "The commands could not be handed to " + name + ". Nothing was changed." });
+        if (!runEdit(ui, conv, p)) return jobEnd(job, { ok: false, c: "The commands could not be handed to " + name + ". Nothing was changed." });
         return new Promise(function (resolve) {
           var key = ui.key;
           var timer = setTimeout(function () {
@@ -10154,7 +10791,7 @@
   }
   // GATE-PAR P3: what a card's button does, done at once on the
   // owner's screen (an automation rule comes in off, Chris 13:39).
-  function gatePress(ui, apps) {
+  function gatePress(ui, apps, own) {
     var have = installed(), app = "", call = null, run = null, note = "";
     if (!ui) return { ok: false, c: "The call failed on the device." };
     if (ui.k === "entry") {
@@ -10188,18 +10825,18 @@
       app = "layout"; call = ["layout", { cover: JSON.parse(JSON.stringify(cv.cover)) }];
       note = "Layout's Book cover window is open on the owner's screen with these details, for the owner to create it there.";
     } else if (ui.k === "epub") {
-      return gateEpub(ui, apps, Date.now() + 21000);
+      return gateEpub(ui, apps, Date.now() + 21000, own);
     } else if (ui.k === "pdf") {
-      return gatePdf(ui, apps, Date.now() + 21000);
+      return gatePdf(ui, apps, Date.now() + 21000, own);
     } else if (ui.k === "rebuild" || ui.k === "house") {
       app = "layout";
-      run = function () { return ui.k === "rebuild" ? runRebuild(ui, gateConv) : runHouse(ui, gateConv, false); };
+      run = function () { return ui.k === "rebuild" ? runRebuild(ui, own || gateConv) : runHouse(ui, own || gateConv, false); };
       note = "Layout is doing it on the owner's screen now; its report shows there (read_in_app with app layout reads the result afterwards).";
     } else return { ok: false, c: "The call failed on the device." };
     var rd = {};
     apps.forEach(function (x) { rd[x.id] = 1; });
     if (!rd[app]) return { ok: false, c: "The owner does not let Claude use " + (have[app] || app) + "." };
-    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk(app) : "orOS Gate is not running.";
+    var g = gateShell(), why = own ? "" : g && typeof g.actionOk === "function" ? g.actionOk(app) : "orOS Gate is not running.";
     if (why) return { ok: false, c: why };
     var done = run ? run() : runEntry({ call: { fn: "openAt", args: call } });
     if (!done) return { ok: false, c: "The app could not do it on the device." };
@@ -10208,13 +10845,13 @@
   // export_epub through the gate: Layout opens on the owner's screen,
   // makes the EPUB and its report is the answer (or, past the deadline,
   // a note that it is still working; read_in_app reads it afterwards).
-  function gateEpub(ui, apps, deadline) {
+  function gateEpub(ui, apps, deadline, own) {
     var have = installed(), rd = {};
     apps.forEach(function (x) { rd[x.id] = 1; });
     if (!rd.layout) return Promise.resolve({ ok: false, c: "The owner does not let Claude use " + (have.layout || "Layout") + "." });
-    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
+    var g = gateShell(), why = own ? "" : g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
     if (why) return Promise.resolve({ ok: false, c: why });
-    if (!runEpub(ui, gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
+    if (!runEpub(ui, own || gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
     return new Promise(function (resolve) {
       var key = ui.key;
       var timer = setTimeout(function () {
@@ -10261,13 +10898,13 @@
   // on the owner's screen, makes and saves the PDF; its report is the
   // answer, or past the deadline a note (read_in_app's last_export has
   // the report afterwards).
-  function gatePdf(ui, apps, deadline) {
+  function gatePdf(ui, apps, deadline, own) {
     var have = installed(), rd = {};
     apps.forEach(function (x) { rd[x.id] = 1; });
     if (!rd.layout) return Promise.resolve({ ok: false, c: "The owner does not let Claude use " + (have.layout || "Layout") + "." });
-    var g = gateShell(), why = g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
+    var g = gateShell(), why = own ? "" : g && typeof g.actionOk === "function" ? g.actionOk("layout") : "orOS Gate is not running.";
     if (why) return Promise.resolve({ ok: false, c: why });
-    if (!runPdf(ui, gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
+    if (!runPdf(ui, own || gateConv)) return Promise.resolve({ ok: false, c: "The request could not be handed to Layout. Nothing was made." });
     return new Promise(function (resolve) {
       var key = ui.key;
       var timer = setTimeout(function () {

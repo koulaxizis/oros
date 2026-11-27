@@ -33,7 +33,7 @@
   // anything can open IndexedDB. True = boot halted, clean reload follows.
   if (factoryResetPending()) return;
 
-  var APP_VERSION = "8.93.00";   // bump on every deploy (shows welcome toast)
+  var APP_VERSION = "8.98.01";   // bump on every deploy (shows welcome toast)
   var VERSION_KEY = "oros-last-version";
   // notifications.js reads it to tell an update notice synced from
   // another device (a newer version) from this one's own.
@@ -902,8 +902,10 @@
   // stream for it, so otherwise the light moves calmly on its own.
   // Rules (vizkit.js): at most 30 fps, only while the desktop shows,
   // nothing playing = the still picture and no loop, still with reduced
-  // motion, Energy saver, a low battery or a slow device; softer light
-  // (0.5) so the icons stay readable.
+  // motion, Energy saver, a low battery or a slow device (a slow device
+  // rests a few minutes and tries again, vizkit 1.3.0 VIZ-SLOW); softer
+  // light (0.5) so the icons stay readable. Settings › Wallpaper says
+  // why it is still (wpVizStill, the settings snapshot's viz.still).
   var WP_VIZ_KEY = "oros-wallpaper-viz";
   var WP_VIZ_STYLES = ["glow", "rings", "bars", "wave"];
   var WP_VIZ_TICK_MS = 1500;
@@ -1010,12 +1012,18 @@
         colors: function () { return { a: wpAccent(), bg: wpVizBase(wpAccent()) }; },
         saver: function () { return document.documentElement.getAttribute("data-oros-saver") === "1"; },
         paused: wpVizCovered,
+        onState: function () { settingsNotify(); },   // VIZ-SLOW: Settings shows why it is still
         soft: 0.5,
         rest: true
       });
       C.iv = setInterval(wpVizTick, WP_VIZ_TICK_MS);
       wpVizTick();
     }, function () {});
+  }
+  // Why the Light show is still now ("reduced", "saver", "battery",
+  // "slow") or "" (VIZ-SLOW).
+  function wpVizStill() {
+    try { return wpVizCtl && wpVizCtl.v ? wpVizCtl.v.reason() || "" : ""; } catch (e) { return ""; }
   }
   function wpVizStop() {
     var C = wpVizCtl;
@@ -2373,11 +2381,18 @@
   //   3 no weekday · 4 numeric dd/mm · 5 menu label hidden (icon
   //   stays) · 6 date hidden (the time button's tooltip carries it) ·
   //   7 language button hidden, only when Quick settings (qsettings.js)
-  //   is in the bar: its panel has the same language button.
+  //   is in the bar: its panel has the same language button ·
+  //   BARFIT-2 (2026-11-23, Chris's phone: the right end was cut off
+  //   with the switcher, smart cards, help and a music chip in the bar):
+  //   8 slim: Quick settings shows only its power symbol (the panel and
+  //   the button's name carry the rest), sync dot and bell narrower ·
+  //   9 weather chip hidden (Weather and the smart cards still have it) ·
+  //   10 help button hidden (Help stays in the menu and in each app).
+  //   After the last level the smart bar folds its last pill too.
   // Re-run by a ResizeObserver on the bar (a chip appears, the text
   // changes width, rotation), never per tick.
   var barFit = 0;
-  var BAR_FIT_MAX = 7;
+  var BAR_FIT_MAX = 10;
 
   function barDateStr(now, lvl) {
     var loc = window.orosI18n ? window.orosI18n.locale(state.lang) : (state.lang === "el" ? "el-GR" : "en-GB");
@@ -2408,7 +2423,10 @@
     bar.classList.toggle("bar-tight", lvl >= 2);
     bar.classList.toggle("bar-nolabel", lvl >= 5);
     bar.classList.toggle("bar-nodate", lvl >= 6);
-    bar.classList.toggle("bar-nolang", lvl >= 7);
+    bar.classList.toggle("bar-nolang", lvl >= 7 && !!document.getElementById("qs-btn"));
+    bar.classList.toggle("bar-slim", lvl >= 8);
+    bar.classList.toggle("bar-nowx", lvl >= 9);
+    bar.classList.toggle("bar-nohelp", lvl >= 10);
     paintBarDate(new Date());
   }
 
@@ -2427,8 +2445,9 @@
       return left.getBoundingClientRect().width + right.getBoundingClientRect().width + 4 <= avail;
     }
     // The first chip stays until the last level: the person asked for it.
-    var max = document.getElementById("qs-btn") ? BAR_FIT_MAX : 6;
+    var max = BAR_FIT_MAX, qs = !!document.getElementById("qs-btn");
     for (var lvl = 0; ; lvl++) {
+      if (lvl === 7 && !qs) continue;        // no Quick settings: the language button stays
       applyBarFit(lvl);
       if (fits()) return;
       if (lvl === 2 && SB) { while (SB.fitDrop(1)) { if (fits()) return; } }
@@ -10448,6 +10467,9 @@
         { name: "Qwen3 models", url: "https://ollama.com/library/qwen3",
           by: "Qwen team, Alibaba Cloud", lic: "Apache-2.0",
           k: "cr.qwen3" },
+        { name: "Llama-Krikri 8B Instruct", url: "https://huggingface.co/ilsp/Llama-Krikri-8B-Instruct-GGUF",
+          by: "ILSP, Athena Research Center (built on Meta Llama 3.1)", lic: "Llama 3.1 Community License",
+          k: "cr.krikri" },
         { name: "klauspost/compress", url: "https://github.com/klauspost/compress",
           by: "Klaus Post & The Go Authors", lic: "BSD-3-Clause",
           k: "cr.ai-modules" },
@@ -13857,7 +13879,7 @@
       wallpaper: pic ? "custom" : state.wallpaper,
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
-      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice() } : null,   // VIZWALL-1
+      viz: (!pic && state.wallpaper === "viz") ? { style: wpVizNow().style, styles: WP_VIZ_STYLES.slice(), still: wpVizStill() } : null,   // VIZWALL-1, VIZ-SLOW
       land: (!pic && state.wallpaper === "land") ? { style: wpLandNow().style, motion: !!wpLandNow().motion, light: wpLandNow().light !== 0, styles: WP_LAND_STYLES.slice() } : null,
       wallpapers: WALLPAPERS.map(function (w) {
         var css = w.css;

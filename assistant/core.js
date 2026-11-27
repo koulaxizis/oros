@@ -169,6 +169,106 @@
     koboldcpp: "http://localhost:5001/v1"
   };
   var KIT_IDS = ["ollama", "lmstudio", "llamacpp", "jan", "localai", "vllm", "koboldcpp"];
+
+  // ---------- 1b. Greek local AI pair for Ollama (AS-GREEK) ----------
+  // Two models that work side by side: krikri-el (ILSP's Llama-Krikri
+  // 8B, made for Greek) for chat and writing, and qwen3:8b for the
+  // answers that need tools (entries, changes). Ollama downloads and
+  // builds both on the person's own computer from one button
+  // (/api/pull, /api/create); nothing passes through orOS.
+  var GREEK_RULE = "ΚΑΝΟΝΑΣ ΓΛΩΣΣΑΣ: Απαντάς ΠΑΝΤΑ σε άπταιστα, φυσικά ελληνικά (μονοτονικό), ακόμη κι όταν η ερώτηση, " +
+    "οι οδηγίες ή τα δεδομένα είναι σε άλλη γλώσσα. Άλλη γλώσσα μόνο όταν ο χρήστης τη ζητήσει ρητά ή ζητήσει μετάφραση.";
+  // The newest message ends with a short reminder too: a long English
+  // system prompt otherwise wins over the rule (tested 2026-11-23).
+  var GREEK_NUDGE = "\n\n(Απάντησε στα ελληνικά.)";
+  // Llama 3.1 chat template of the GGUF, with the Greek rule added after
+  // any system prompt (the Assistant sends its own, which replaces the
+  // model's SYSTEM) and a stricter line for raw JSON tool calls.
+  var KRIKRI_TEMPLATE = [
+    "<|start_header_id|>system<|end_header_id|>",
+    "{{- if .System }}", "", "{{ .System }}", "{{- end }}", "",
+    GREEK_RULE,
+    "{{- if .Tools }}", "",
+    "When you receive a tool call response, use the output to format an answer to the orginal user question.", "",
+    "You are a helpful assistant with tool calling capabilities.",
+    "{{- end }}<|eot_id|>",
+    "{{- range $i, $_ := .Messages }}",
+    "{{- $last := eq (len (slice $.Messages $i)) 1 }}",
+    "{{- if eq .Role \"user\" }}<|start_header_id|>user<|end_header_id|>",
+    "{{- if and $.Tools $last }}", "",
+    "You may call one of the following functions. Only when answering needs the user's own data or an action in orOS, " +
+      "respond only with the raw JSON object {\"name\": function name, \"parameters\": dictionary of argument name and its value}, " +
+      "with no Markdown, code fence or other text. Otherwise answer yourself, in Greek. Never invent a function.", "",
+    "{{ range $.Tools }}", "{{- . }}", "{{ end }}",
+    "Question: {{ .Content }}" + GREEK_NUDGE + "<|eot_id|>",
+    "{{- else }}", "", "{{ .Content }}{{ if $last }}" + GREEK_NUDGE + "{{ end }}<|eot_id|>",
+    "{{- end }}{{ if $last }}<|start_header_id|>assistant<|end_header_id|>", "", "{{ end }}",
+    "{{- else if eq .Role \"assistant\" }}<|start_header_id|>assistant<|end_header_id|>",
+    "{{- if .ToolCalls }}",
+    "{{ range .ToolCalls }}",
+    "{\"name\": \"{{ .Function.Name }}\", \"parameters\": {{ .Function.Arguments }}}{{ end }}",
+    "{{- else }}", "", "{{ .Content }}",
+    "{{- end }}{{ if not $last }}<|eot_id|>{{ end }}",
+    "{{- else if eq .Role \"tool\" }}<|start_header_id|>ipython<|end_header_id|>", "",
+    "{{ .Content }}<|eot_id|>{{ if $last }}<|start_header_id|>assistant<|end_header_id|>", "", "{{ end }}",
+    "{{- end }}",
+    "{{- end }}"
+  ].join("\n");
+  var GREEK_AI = {
+    chat: "krikri-el",
+    from: "hf.co/ilsp/Llama-Krikri-8B-Instruct-GGUF:Q4_K_M",
+    tools: "qwen3:8b",
+    gb: 10,   // both downloads together, about 4.7 + 5.2 GB
+    system: "Είσαι το Κρι-Κρι, ένας βοηθός Τεχνητής Νοημοσύνης που τρέχει τοπικά στον υπολογιστή του χρήστη, μέσα στο orOS. " +
+      "Δίνεις σαφείς, περιεκτικές και ακριβείς απαντήσεις. Αν δεν ξέρεις κάτι, το λες· δεν επινοείς στοιχεία. Γράφεις κώδικα σε Markdown.",
+    // 16K: the Assistant's instructions plus a long chat, and still
+    // fits a computer with 16-32 GB of memory.
+    parameters: { num_ctx: 16384, temperature: 0.5, top_p: 0.95, repeat_penalty: 1.1,
+                  stop: ["<|start_header_id|>", "<|end_header_id|>", "<|eot_id|>"] },
+    template: KRIKRI_TEMPLATE
+  };
+  // Ollama's own API root from the Assistant's address
+  // ("http://localhost:11434/v1" → "http://localhost:11434"), or "".
+  function ollamaRoot(base) {
+    var b = normBase(base);
+    var m = /^(https?:\/\/[^\/?#\s]+)(?:\/v1)?$/i.exec(b || "");
+    return m ? m[1] : "";
+  }
+  // The two calls that set the pair up, in order. Each answers with
+  // lines of JSON progress (stream).
+  function greekSteps(root) {
+    if (!root) return [];
+    var G = GREEK_AI;
+    return [
+      { id: "tools", model: G.tools, url: root + "/api/pull", body: { model: G.tools, stream: true } },
+      { id: "base", model: G.from, url: root + "/api/pull", body: { model: G.from, stream: true } },
+      { id: "chat", model: G.chat, url: root + "/api/create",
+        body: { model: G.chat, from: G.from, system: G.system, template: G.template,
+                parameters: JSON.parse(JSON.stringify(G.parameters)), stream: true } }
+    ];
+  }
+  // One line of Ollama's progress → { status, pct (0-100 or -1), done, error }.
+  function ollamaProgress(line) {
+    var o = null;
+    try { o = JSON.parse(String(line || "")); } catch (e) { o = null; }
+    if (!isObj(o)) return null;
+    if (typeof o.error === "string") return { status: "", pct: -1, done: false, error: o.error.slice(0, 300) };
+    var st = typeof o.status === "string" ? o.status.slice(0, 120) : "";
+    var pct = -1;
+    if (typeof o.total === "number" && o.total > 0 && typeof o.completed === "number") {
+      pct = Math.max(0, Math.min(100, Math.floor(o.completed * 100 / o.total)));
+    }
+    return { status: st, pct: pct, done: st === "success", error: "" };
+  }
+  // What a model needs ticked when it is picked for the local service:
+  // krikri cannot choose tools well and sees no photos; qwen3 uses
+  // tools. Other models: null (the person's own ticks stay).
+  function localTraits(model) {
+    var m = String(model || "").toLowerCase();
+    if (/(^|[\/_:-])krikri/.test(m)) return { nt: 1, vis: 0 };
+    if (/^qwen3(:|$)/.test(m)) return { nt: 0, vis: 0 };
+    return null;
+  }
   // Web search services that take a key of their own (section 3e).
   var KEY_EXTRA = ["tavily", "stability", "horde"];   // stability, horde: image AI (imgai.js)
   var KEY_IDS = PROV_IDS.concat(KEY_EXTRA);
@@ -213,6 +313,28 @@
   // their own, larger budget, so a whole site (a catalog, its sitemap,
   // page after page) can be checked in one question.
   var WEB_ROUNDS = 24;
+  // LY-AUTO (Chris 2026-11-23: the Assistant does in Layout what Claude
+  // does through the gate): rounds that only work on Layout (read,
+  // change, read back, export) count against their own budget, so a
+  // book can be laid out, checked and fixed in one question.
+  var LAYOUT_ROUNDS = 40;
+  var LY_TOOLS = ["list_fonts", "files_list", "files_read", "export_pdf", "export_epub", "book_cover", "rebuild_in_layout",
+                  "learn_house_style", "layout_book", "add_house_rule", "change_history", "undo_change"];
+  // The Layout tools that run at once with the setting «Layout work
+  // without cards» (set.ly), as they do through the gate.
+  var LY_AUTO = ["edit_in_app", "export_pdf", "export_epub", "book_cover", "rebuild_in_layout", "learn_house_style", "layout_book", "add_house_rule"];
+  function isLyCall(x) {
+    if (!x || typeof x.name !== "string") return false;
+    if (x.name === "read_in_app" || x.name === "edit_in_app") return !!(x.args && String(x.args.app || "") === "layout");
+    return LY_TOOLS.indexOf(x.name) >= 0;
+  }
+  function layoutRound(calls) {
+    return Array.isArray(calls) && calls.length > 0 && calls.every(isLyCall);
+  }
+  function lyAutoCall(x) {
+    if (!x || LY_AUTO.indexOf(x.name) < 0) return false;
+    return x.name !== "edit_in_app" || !!(x.args && String(x.args.app || "") === "layout");
+  }
 
   function isObj(v) { return !!v && typeof v === "object" && !Array.isArray(v); }
   function str(v, max) { return typeof v === "string" ? v.slice(0, max) : ""; }
@@ -247,7 +369,7 @@
     if (!isObj(x)) return null;
     return { m: stamp(x.m), chat: x.chat ? 1 : 0, prov: PROVIDERS[x.prov] ? x.prov : "", web: x.web ? 1 : 0,
              ws: SEARCH_IDS.indexOf(x.ws) >= 0 ? x.ws : "auto", wsBase: normBase(x.wsBase),
-             fb: fbOk(x.fb) ? x.fb : "", auto: x.auto ? 1 : 0, skip: normSkip(x.skip) };
+             fb: fbOk(x.fb) ? x.fb : "", auto: x.auto ? 1 : 0, skip: normSkip(x.skip), ly: x.ly ? 1 : 0 };
   }
   function normSkip(a) {
     if (!Array.isArray(a)) return [];
@@ -421,7 +543,7 @@
     function there(pid) {
       var P = PROVIDERS[pid], pc = provs[pid] || {};
       if (o.cool && o.cool[pid] > now) return Promise.resolve(false);
-      if (o.tools && (P.device || (P.local && pc.nt))) return Promise.resolve(false);
+      if (o.tools && (P.device || (P.local && pc.nt && !toolModel(pc, true)))) return Promise.resolve(false);
       if (P.device) return Promise.resolve(o.device ? o.device(pid) : false).then(function (v) { return !!v; }, function () { return false; });
       if (!(pc.model || P.model)) return Promise.resolve(false);
       if (P.local) return provBase(pid, pc) ? probeLocal(pid, pc, readKey) : Promise.resolve(false);
@@ -461,7 +583,15 @@
   function normProv(x) {
     if (!isObj(x)) return null;
     return { m: stamp(x.m), base: normBase(x.base), model: str(x.model, 200).trim(), vis: x.vis ? 1 : 0, free: x.free ? 1 : 0,
-             kit: KIT_IDS.indexOf(x.kit) >= 0 ? x.kit : "", nt: x.nt ? 1 : 0, fast: x.fast ? 1 : 0 };
+             kit: KIT_IDS.indexOf(x.kit) >= 0 ? x.kit : "", nt: x.nt ? 1 : 0, fast: x.fast ? 1 : 0,
+             tm: str(x.tm, 200).trim() };
+  }
+  // The model a local service without tools hands a turn that needs
+  // them (AS-GREEK 2: krikri-el chats, qwen3:8b makes the entries), or
+  // "". pc: the service's settings; needs: the turn needs tools.
+  function toolModel(pc, needs) {
+    pc = pc || {};
+    return needs && pc.nt && pc.tm && pc.tm !== pc.model ? pc.tm : "";
   }
   function normPerm(x) {
     if (!isObj(x) || (x.v !== "ask" && x.v !== "always" && x.v !== "never")) return null;
@@ -2971,6 +3101,44 @@
       required: ["name", "columns"] }
   };
 
+  // AS-SHOP W1 (Chris 2026-11-23): the user's own WooCommerce shop of
+  // Connected services (any shop; assistant/shop.js). shop_find reads,
+  // shop_change shows the change card and writes only after Apply.
+  var TOOL_SHOP_FIND = {
+    name: "shop_find",
+    description: "Find products in the user's own online shop (WooCommerce, connected in Settings › Connected services) by words of the name, " +
+      "the SKU or the product id. Each product comes with its id, weight, dimensions, prices and stock, in the shop's units; a product with " +
+      "variations lists them (their id and option). Use it before shop_change, and to answer questions about the shop's products.",
+    params: { type: "object", properties: {
+      query: { type: "string", description: "Words of the product's name (any language, accents do not matter), its SKU or its id." },
+      shop: { type: "string", description: "The shop's name or address, only when the user has several shops." } },
+      required: ["query"] }
+  };
+  var TOOL_SHOP_CHANGE = {
+    name: "shop_change",
+    description: "Change one product (or one variation) in the user's own online shop: weight, dimensions, regular or sale price, stock. " +
+      "Only the fields given change; names, texts, pictures, status and orders never change here, and nothing is deleted. " +
+      "Give a weight or a size with its unit (\"350 g\", \"0.35 kg\", \"21 cm\"): it is converted to the shop's unit. " +
+      "The user sees exactly what would change (before → after) and must press Apply; they may refuse. The result says whether it was applied. " +
+      "The card has Undo, which puts the old values back while the shop still shows the new ones.",
+    params: { type: "object", properties: {
+      product: { type: "string", description: "The product: its id from shop_find (best), its SKU or its exact name." },
+      variation: { type: "string", description: "For a product with variations: the variation's id or its option (e.g. \"Ebook\")." },
+      shop: { type: "string", description: "The shop's name or address, only when the user has several shops." },
+      weight: { type: "string", description: "The new weight with its unit, e.g. \"350 g\"." },
+      length: { type: "string", description: "The new length with its unit, e.g. \"21 cm\"." },
+      width: { type: "string", description: "The new width with its unit." },
+      height: { type: "string", description: "The new height (thickness) with its unit." },
+      regular_price: { type: "string", description: "The new regular price, e.g. \"14.90\" (the shop's currency, no symbol)." },
+      sale_price: { type: "string", description: "A sale price lower than the regular price, e.g. \"11.90\"." },
+      sale_price_clear: { type: "boolean", description: "true ends the sale (the sale price is removed)." },
+      stock_quantity: { type: "integer", description: "The new number in stock (the shop then counts stock)." },
+      stock_change: { type: "integer", description: "How many more (e.g. 5) or fewer (e.g. -2) are in stock, counted from the shop's number now." },
+      manage_stock: { type: "boolean", description: "true: the shop counts this product's stock; false: it does not." },
+      stock_status: { type: "string", "enum": ["instock", "outofstock", "onbackorder"], description: "Only for a product whose stock is not counted." } },
+      required: ["product"] }
+  };
+
   var TOOL_OPEN_FILE = {
     name: "open_file",
     description: "Open a file the user attached in this conversation in an orOS app, as it is: Writer opens a document " +
@@ -3795,6 +3963,8 @@
     if (opts.data && opts.edits && Object.keys(opts.edits).length) out.push(readAppTool(Object.keys(opts.edits)), editTool(opts.edits));
     if (opts.recipes && opts.recipes.length && share()) out.push(recipeTool(opts.recipes));
     if (opts.newsletter) out.push(TOOL_NEWSLETTER, TOOL_NL_CHECK);
+    if (opts.shop) out.push(TOOL_SHOP_FIND);
+    if (opts.shop === "write") out.push(TOOL_SHOP_CHANGE);   // AS-SHOP
     if (opts.cover) out.push(TOOL_COVER);
     if (opts.rules && autoCore()) out.push(TOOL_RULE);
     if (opts.web) out.push(TOOL_WEB, TOOL_PAGE);
@@ -4225,6 +4395,9 @@
     if (!opts.builtin && opts.rules) {
       lines.push("When the user wants something to happen by itself, on a schedule or when something happens in orOS (\"every Monday remind me…\", \"when an urgent mail comes, add a task\", \"after a workout tell me to drink water\"), offer a rule with propose_rule. The user opens it in Automations and saves it there; nothing is set before that, so never say it is set. If the user wants something a rule cannot do, say so plainly.");
     }
+    if (!opts.builtin && opts.cover && opts.lyAuto) {
+      lines.push("Layout work without cards is on (the user's setting): edit_in_app with app layout, export_pdf, export_epub, book_cover, rebuild_in_layout, learn_house_style, layout_book and add_house_rule run at once in Layout and their report is the tool's result (Undo stays in the change history), exactly as for Claude through orOS Gate. Work like a book designer: read_in_app first, change in small batches, read the pages back (read_in_app, thumbs, preflight) and fix what is off before you say it is done; export_pdf preflight tells you what still needs fixing. Removing more than 5 things still comes as a card for the user to confirm. Ignore the sentences about cards and presses in these tools' descriptions.");
+    }
     if (!opts.builtin && opts.cover) {
       lines.push("For a book cover (front, spine and back for print), call book_cover with the details the user gave and the attached pictures: the front picture and, when there is one, the publisher's logo. The user opens it in Layout and edits it there; never say it was made.");
     }
@@ -4234,6 +4407,11 @@
     }
     if (!opts.builtin && opts.entries && opts.entries.indexOf("settlement") >= 0) {
       lines.push("For what a book sold, in total or in each bookshop, call app_summary with app stock and the month; consignment shops are places in its answer. To settle with a consignment shop, propose_entry settlement with the shop's name.");
+    }
+    if (!opts.builtin && opts.shop) {
+      lines.push("The user's own online shop is connected (" + (Array.isArray(opts.shops) && opts.shops.length ? opts.shops.join(", ") : "WooCommerce") + "). For its products call shop_find; " +
+        (opts.shop === "write" ? "to change one (weight, size, price, sale, stock) call shop_change with the product's id from shop_find. One product or variation per call: for several, one call each. Say the change is ready on the card, never that it is done before the result says so. " : "") +
+        "Never guess a product, a weight or a price: when shop_find finds several, ask the user which one.");
     }
     if (!opts.builtin && opts.newsletter) {
       lines.push("The user writes newsletters in the Newsletter app and may hand you content piece by piece. Turn each piece into blocks with newsletter_add: a short heading, a few lines in your own words, and a button to the source when there is a link. For a link, read the page with read_page first (when you have it) and summarise it; quote at most one or two sentences, never a whole article. An article, interview or book usually fits a picture_text block with the page's main picture (its address from the page text) and a button to the source; a banner is an image block with a url. Use only picture addresses you saw; without one, leave image_url out and the user picks the picture. The user's own products (\"our latest release\", \"our new book\") come from their shop with shop_products, never from a web search; other people's products (other publishers, partners) go in a products block from pages you read, with their own links and only prices the page shows. Write in the language of the issue (the user's, unless they say otherwise). Give each block its section (top for the main story; news; products; promo for banners and offers; end for a closing note) so the issue keeps its order. The user picks the draft and the blocks are added only then, so say they are ready to add, never that they were added or sent. When the user says the issue is ready or asks to send it, call newsletter_check; sending is always the user's step in Newsletter.");
@@ -5316,14 +5494,37 @@
   }
   function monthKey(ms) { return ymd(ms).slice(0, 7); }
 
+  // ---------- Voice input (SOLO-AS W2) ----------
+  // Whisper's cues → one line of text: trimmed, joined with spaces,
+  // Whisper's "[music]"-style notes and repeated cues dropped, control
+  // characters out, at most 20000.
+  function voiceText(cues) {
+    var out = [], last = "";
+    (Array.isArray(cues) ? cues : []).forEach(function (c) {
+      var x = String(c && c.text || "").replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+      if (!x || /^[\[(][^\])]*[\])]$/.test(x) || x === last) return;
+      out.push(x);
+      last = x;
+    });
+    return out.join(" ").slice(0, 20000);
+  }
+  // The text the person said joins what the box already holds.
+  function voiceJoin(box, text) {
+    box = String(box || "");
+    if (!box.trim()) return text;
+    return box.replace(/\s+$/, "") + " " + text;
+  }
+
   var api = {
+    voiceText: voiceText, voiceJoin: voiceJoin,
     DATA_VER: DATA_VER, PROVIDERS: PROVIDERS, PROV_IDS: PROV_IDS,
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,
     WEBLLM_MODELS: WEBLLM_MODELS, webllmModel: webllmModel, WEBLLM_CHARS: WEBLLM_CHARS, webllmMessages: webllmMessages,
     LOCAL_KITS: LOCAL_KITS, KIT_IDS: KIT_IDS, TOOLS: TOOLS,
+    GREEK_AI: GREEK_AI, ollamaRoot: ollamaRoot, greekSteps: greekSteps, ollamaProgress: ollamaProgress, localTraits: localTraits, toolModel: toolModel,
     sysAIRead: sysAIRead, sysAIModel: sysAIModel, sysAIAdopt: sysAIAdopt,
     fbOk: fbOk, fbFor: fbFor, probeFresh: probeFresh, probeSet: probeSet, probeLocal: probeLocal, pickProv: pickProv, pickChain: pickChain, chainOrder: chainOrder, provTier: provTier, isOnline: isOnline, needsTools: needsTools, coolFor: coolFor, COOL: COOL, PROBE_MS: PROBE_MS, PROBE_UP: PROBE_UP, PROBE_DOWN: PROBE_DOWN,
-    TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
+    TOOL_ROUNDS: TOOL_ROUNDS, WEB_ROUNDS: WEB_ROUNDS, LAYOUT_ROUNDS: LAYOUT_ROUNDS, layoutRound: layoutRound, lyAutoCall: lyAutoCall, MAX_TOKENS: MAX_TOKENS, CONT_ROUNDS: CONT_ROUNDS, CONT_TEXT: CONT_TEXT,
     claudeMax: claudeMax, maxTokensRefused: maxTokensRefused, NEVER_APPS: NEVER_APPS, crUnknown: crUnknown,
     provBase: provBase, normBase: normBase,
     mergeAssist: mergeAssist, emptyData: emptyData, permFor: permFor,

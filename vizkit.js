@@ -37,8 +37,14 @@
 //   - at most 30 frames a second, nothing while the tab is hidden,
 //     paused and quiet = the loop stops (wake() starts it again);
 //   - reduced motion (watched live), a low battery (< 20 %, not
-//     charging) or a slow device (mean frame gap > 55 ms over 90
-//     frames: still for the session) leave one still picture;
+//     charging) or a slow device leave one still picture;
+//   - slow device (1.3.0, VIZ-SLOW): the median frame gap over 90
+//     frames above 55 ms, counted only after the first 20 s of the
+//     page (start-up work is not the light's fault); the first time
+//     the light goes lighter (15 fps, devicePixelRatio 1), after that
+//     it rests for 1, 2, 4 ... at most 10 minutes and tries again by
+//     itself (it used to stay still for the whole session, so a busy
+//     start on a phone stopped it for good);
 //   - canvas at devicePixelRatio <= 1.25 and <= 1.8 M pixels;
 //   - no flashes: levels rise over ~3 frames and fall over ~12, the
 //     brightest layer stays under 0.85 alpha, no white frames, no
@@ -49,11 +55,12 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.2.0";
+  var VER = "1.3.0";
   var STYLES = ["glow", "rings", "bars", "wave"];
   var FPS_GAP = 1000 / 30;
   var SLOW_MS = 55, SLOW_N = 90;
-  var slowSeen = false;       // a slow device stays still for the session (this page)
+  var BOOT_MS = 20000;        // frame gaps of the page's first 20 s never count
+  var slow = { lite: false, n: 0, until: 0 };   // this page: lighter light, then rests (VIZ-SLOW)
 
   var STR = {
     en: {
@@ -64,7 +71,7 @@
       calm: "This source does not let orOS listen to the sound, so the light moves on its own.",
       reduced: "Reduced motion is on, so the light stays still.",
       battery: "The battery is low, so the light stays still.",
-      slow: "This device is busy, so the light stays still.",
+      slow: "This device is busy, so the light rests for a few minutes and then moves again by itself.",
       saver: "Energy saver is on, so the light stays still."
     },
     el: {
@@ -75,7 +82,7 @@
       calm: "Αυτή η πηγή δεν αφήνει το orOS να ακούσει τον ήχο, γι' αυτό το φως κινείται μόνο του.",
       reduced: "Οι μειωμένες κινήσεις είναι ενεργές, γι' αυτό το φως μένει ακίνητο.",
       battery: "Η μπαταρία είναι χαμηλή, γι' αυτό το φως μένει ακίνητο.",
-      slow: "Η συσκευή είναι φορτωμένη, γι' αυτό το φως μένει ακίνητο.",
+      slow: "Η συσκευή είναι φορτωμένη, γι' αυτό το φως ξεκουράζεται λίγα λεπτά και μετά ξανακινείται μόνο του.",
       saver: "Η Εξοικονόμηση ενέργειας είναι ενεργή, γι' αυτό το φως μένει ακίνητο."
     },
     de: {
@@ -86,7 +93,7 @@
       calm: "Diese Quelle lässt orOS den Ton nicht hören, darum bewegt sich das Licht von selbst.",
       reduced: "Reduzierte Bewegung ist an, darum bleibt das Licht still.",
       battery: "Der Akku ist schwach, darum bleibt das Licht still.",
-      slow: "Dieses Gerät ist ausgelastet, darum bleibt das Licht still.",
+      slow: "Dieses Gerät ist ausgelastet, darum ruht das Licht ein paar Minuten und bewegt sich dann von selbst wieder.",
       saver: "Der Energiesparen ist an, darum bleibt das Licht still."
     }
   };
@@ -153,13 +160,16 @@
     if (o.slow) return "slow";
     return "";
   }
-  // Mean frame gap over the last SLOW_N frames above SLOW_MS?
+  // Median frame gap over the last SLOW_N frames above SLOW_MS? The
+  // median, not the mean: a few long stalls (sync, an app loading)
+  // say nothing about the light, most frames being late does.
   function isSlow(gaps) {
     if (!gaps || gaps.length < SLOW_N) return false;
-    var s = 0, n = 0;
-    for (var i = gaps.length - SLOW_N; i < gaps.length; i++) { s += gaps[i]; n++; }
-    return s / n > SLOW_MS;
+    var a = gaps.slice(gaps.length - SLOW_N).sort(function (x, y) { return x - y; });
+    return (a[(SLOW_N - 1) >> 1] + a[SLOW_N >> 1]) / 2 > SLOW_MS;
   }
+  // How long the n-th rest of a slow device lasts: 1, 2, 4, 8, 10 min.
+  function slowWait(n) { return Math.min(600000, 60000 * Math.pow(2, Math.max(0, (n | 0) - 1))); }
   function hex(c) {
     var m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c || "").trim());
     if (!m) return null;
@@ -348,13 +358,16 @@
     var st = {}, raf = 0, last = 0, prevT = 0, gaps = [], quiet = 0, dead = false, drawT = 0;
     var soft = opts.soft > 0 && opts.soft < 1 ? +opts.soft : 1, rest = !!opts.rest;
     var reason = "", battery = null, mq = null, pal = palette("");
-    var bat = null;
+    var bat = null, slowT = 0;
+    function now() { try { return win.performance.now(); } catch (e) { return Date.now(); } }
 
     function reduced() { return !!(mq && mq.matches); }
     function setReason() {
       var sv = false;
       try { sv = !!(opts.saver && opts.saver()); } catch (e) { sv = false; }
-      var r = stillReason({ reduced: reduced(), saver: sv, battery: battery, slow: slowSeen });
+      var r = stillReason({ reduced: reduced(), saver: sv, battery: battery, slow: now() < slow.until });
+      clearTimeout(slowT);
+      if (r === "slow") slowT = setTimeout(function () { if (!dead) { reason = "-"; if (!setReason()) wake(); } }, Math.max(1000, slow.until - now() + 50));
       if (r !== reason) {
         reason = r;
         try { if (opts.onState) opts.onState(reason); } catch (e) {}
@@ -369,7 +382,7 @@
     }
     function size() {
       var w = canvas.clientWidth || 300, h = canvas.clientHeight || 300;
-      var f = fit(w, h, win.devicePixelRatio);
+      var f = fit(w, h, slow.lite ? 1 : win.devicePixelRatio);
       if (canvas.width !== f.w || canvas.height !== f.h) { canvas.width = f.w; canvas.height = f.h; }
       return f;
     }
@@ -413,11 +426,15 @@
       var doc = canvas.ownerDocument;
       if (doc && doc.hidden) return;                   // visibilitychange wakes it
       if (covered()) { prevT = 0; return; }            // the owner wakes it
-      if (prevT) { gaps.push(t - prevT); if (gaps.length > SLOW_N) gaps.shift(); }
+      if (prevT && t > BOOT_MS) { gaps.push(t - prevT); if (gaps.length > SLOW_N) gaps.shift(); }
       prevT = t;
-      if (!slowSeen && isSlow(gaps)) slowSeen = true;
+      if (isSlow(gaps)) {
+        gaps = [];
+        if (!slow.lite) slow.lite = true;                  // first: a lighter light
+        else { slow.n++; slow.until = now() + slowWait(slow.n); }   // then: rest, try again
+      }
       if (setReason()) { frame(t, true); prevT = 0; return; }
-      if (t - last >= FPS_GAP - 2) { last = t; frame(t, false); }
+      if (t - last >= (slow.lite ? 2 * FPS_GAP : FPS_GAP) - 2) { last = t; frame(t, false); }
       if (quiet > 30) { prevT = 0; return; }         // paused and dark: rest
       raf = win.requestAnimationFrame(loop);
     }
@@ -474,6 +491,7 @@
       reason: function () { return reason; },
       destroy: function () {
         dead = true;
+        clearTimeout(slowT);
         if (raf) { try { win.cancelAnimationFrame(raf); } catch (e) {} raf = 0; }
         try { canvas.ownerDocument.removeEventListener("visibilitychange", onVis); } catch (e) {}
         try { if (mq) { if (mq.removeEventListener) mq.removeEventListener("change", onMq); else if (mq.removeListener) mq.removeListener(onMq); } } catch (e) {}
@@ -612,7 +630,7 @@
 
   var api = {
     v: VER, STYLES: STYLES, create: create, stage: stage, label: label, normStyle: normStyle, nextStyle: nextStyle,
-    bands: bands, smooth: smooth, gain: gain, idle: idle, stillReason: stillReason, isSlow: isSlow, REST: REST, restGap: restGap,
+    bands: bands, smooth: smooth, gain: gain, idle: idle, stillReason: stillReason, isSlow: isSlow, slowWait: slowWait, BOOT_MS: BOOT_MS, REST: REST, restGap: restGap,
     rgb: rgb, palette: palette, fit: fit, bars: bars, STR: STR
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;

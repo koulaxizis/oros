@@ -135,7 +135,7 @@ test("Stock loads the price list and the shop may set a price", () => {
   assert.match(html, /<script src="pricelist\.js/);
   for (const f of ["links/core.js", "relay/ext.js"]) {
     const src = fs.readFileSync(path.join(__dirname, "..", f), "utf8");
-    assert.match(src, /PRODUCT_PUT = \{ stock_quantity: "int", manage_stock: "bool", regular_price: "money" \}/, f);
+    assert.match(src, /PRODUCT_PUT = \{ stock_quantity: "int", manage_stock: "bool", regular_price: "money"[,\s]/, f);   // + AS-SHOP fields
   }
   // a product on sale at or above the new price is left alone (Woo would show an odd "sale")
   const pl = fs.readFileSync(path.join(__dirname, "..", "stock/pricelist.js"), "utf8");

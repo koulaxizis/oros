@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — wallpaper/wxdesk.js (weather on the desktop, v1.0.0, WX-DESK-1)
+// orOS — wallpaper/wxdesk.js (weather on the desktop, v1.1.0, WX-DESK-1)
 // ------------------------------------------------------------
 // A shell component like seasonal.js: it runs IN the shell
 // document, over the wallpaper and UNDER the desktop's icons
@@ -18,19 +18,26 @@
 // an app is open or the tab is hidden. Reduced motion, a low battery
 // (under 20 % and not charging, where the browser tells) or a frame
 // rate that keeps dropping (mean frame > 55 ms) leave one still
-// frame. Our own drawing only: no images, nothing from the net.
+// frame; Energy saver too (its own reason "saver", 1.1.0). Slow
+// (1.1.0, VIZ-SLOW): frames of the page's first 20 s never count
+// (start-up work), and a slow device rests 1, 2, 4 ... at most 10
+// minutes and then tries again by itself, instead of staying still
+// for the whole session. Our own drawing only: no images, nothing
+// from the net.
 //
 // Pure parts (Node, tests/wxdesk.test.js):
 //   kindOf(code, night)        WMO code → sun|stars|part|cloud|fog|rain|snow|storm|""
 //   plan(kind, w, h)           what a kind draws: { clouds, dark, drops, flakes, fog, sun, stars }
-//   stillReason(o)             "reduced" | "battery" | "slow" | ""
+//   stillReason(o)             "reduced" | "saver" | "battery" | "slow" | ""
+//   slowWait(n)                the n-th rest of a slow device in ms
 //   fresh(c, now)              the cache is usable (code, at ≤ 3 h old)
 //   isNight(hours)             h < 6 or h ≥ 21 (the tray's rule)
 // ============================================================
 (function (root) {
   "use strict";
 
-  var VER = "1.0.0";
+  var VER = "1.1.0";
+  var BOOT_MS = 20000;                     // frame gaps of the page's first 20 s never count
   var KEY = "oros-wxdesk";                // "on" | absent (device-local, never synced)
   var STALE_MS = 3 * 60 * 60 * 1000;
 
@@ -75,10 +82,14 @@
   function stillReason(o) {
     o = o || {};
     if (o.reduced) return "reduced";
+    if (o.saver) return "saver";
     if (o.battery) return "battery";
     if (o.slow) return "slow";
     return "";
   }
+
+  // The n-th rest of a slow device: 1, 2, 4, 8, 10 minutes.
+  function slowWait(n) { return Math.min(600000, 60000 * Math.pow(2, Math.max(0, (n | 0) - 1))); }
 
   function fresh(c, now) {
     return !!(c && typeof c === "object" && c.code !== undefined && c.code !== null &&
@@ -94,20 +105,23 @@
   // ---------- 2. Browser ----------
   var host = null, layer = null, canvas = null, ctx = null;
   var shown = "", scene = null, raf = 0, lastTs = 0, ema = 33, slowFrames = 0;
-  var lowBattery = false, slow = false, mqReduce = null, t0 = 0;
+  var lowBattery = false, slowN = 0, slowUntil = 0, mqReduce = null, t0 = 0;
   // Energy saver (qsettings.js 1.3.0): <html data-oros-saver> "1"/"0"
   // replaces the own low-battery rule; missing = the rule as before.
-  function saverOr(low) {
-    var v = typeof document !== "undefined" ? document.documentElement.getAttribute("data-oros-saver") : null;
-    return v === null ? !!low : v === "1";
+  function saverAttr() {
+    return typeof document !== "undefined" ? document.documentElement.getAttribute("data-oros-saver") : null;
   }
+  function now() { try { return root.performance.now(); } catch (e) { return Date.now(); } }
 
   function isOn() {
     try { return localStorage.getItem(KEY) === "on"; } catch (e) { return false; }
   }
   function reduced() { return !!(mqReduce && mqReduce.matches); }
   function running() { return !!(host && host.running && host.running()); }
-  function why() { return stillReason({ reduced: reduced(), battery: saverOr(lowBattery), slow: slow }); }
+  function why() {
+    var v = saverAttr();
+    return stillReason({ reduced: reduced(), saver: v === "1", battery: v === null && lowBattery, slow: now() < slowUntil });
+  }
 
   function current() {
     if (!host || !isOn()) return "";
@@ -275,10 +289,15 @@
     var gap = lastTs ? ts - lastTs : 33;
     lastTs = ts;
     if (!t0) t0 = ts;
-    ema = ema * 0.95 + Math.min(gap, 250) * 0.05;
-    if (ema > 55) {
-      if (++slowFrames > 90) { slow = true; shown = ""; update(); return; }   // still for this session
-    } else slowFrames = 0;
+    if (ts > BOOT_MS) {
+      ema = ema * 0.95 + Math.min(gap, 250) * 0.05;
+      if (ema > 55) {
+        if (++slowFrames > 90) {                       // rest a while, then try again (the minute tick)
+          slowN++; slowUntil = now() + slowWait(slowN); ema = 33; slowFrames = 0;
+          shown = ""; update(); return;
+        }
+      } else slowFrames = 0;
+    }
     render((ts - t0) / 1000, Math.min(gap, 100) / 1000);
     raf = root.requestAnimationFrame(frame);
   }
@@ -302,7 +321,7 @@
 
   function setOn(on) {
     try { if (on) localStorage.setItem(KEY, "on"); else localStorage.removeItem(KEY); } catch (e) {}
-    slow = false; ema = 33; slowFrames = 0;     // a new choice gives a slow device another try
+    slowN = 0; slowUntil = 0; ema = 33; slowFrames = 0;     // a new choice gives a slow device another try
     shown = ""; update();
     return true;
   }
@@ -346,7 +365,7 @@
 
   var api = {
     VER: VER, KEY: KEY,
-    kindOf: kindOf, plan: plan, stillReason: stillReason, fresh: fresh, isNight: isNight,
+    kindOf: kindOf, plan: plan, stillReason: stillReason, slowWait: slowWait, fresh: fresh, isNight: isNight,
     attach: attach,
     refresh: function () { if (host) update(); },
     set: setOn,
