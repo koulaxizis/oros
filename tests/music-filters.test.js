@@ -260,7 +260,7 @@ test("Kevin MacLeod: search and filters on the device", () => {
   let r = O.kmPick(P, {});
   assert.deepEqual(r.tracks.map((x) => x.t), ["Fast Rock", "Slow Piano", "Folk Tune"]);
   const t0 = r.tracks[1];
-  assert.equal(t0.s, "km"); assert.equal(t0.li, "by 4.0"); assert.equal(t0.off, 1); assert.equal(t0.a, "Kevin MacLeod");
+  assert.equal(t0.s, "km"); assert.equal(t0.li, "by 4.0"); assert.equal(t0.off, undefined);   // MU-DL: incompetech sends no CORS header assert.equal(t0.a, "Kevin MacLeod");
   assert.equal(t0.u, "https://incompetech.com/music/royalty-free/mp3-royaltyfree/Slow%20Piano.mp3");
   assert.equal(t0.d, 190); assert.equal(t0.y, 2015);
   assert.deepEqual(O.kmPick(P, { q: "piano" }).tracks.map((x) => x.t), ["Slow Piano", "Fast Rock"]);   // title before description
@@ -270,7 +270,8 @@ test("Kevin MacLeod: search and filters on the device", () => {
   assert.deepEqual(O.kmPick(P, { f: { sp: "veryhigh" } }).tracks.map((x) => x.t), ["Fast Rock"]);
   assert.deepEqual(O.kmPick(P, { f: { dur: "s" } }).tracks.map((x) => x.t), ["Fast Rock"]);
   assert.equal(O.kmPick(P, { f: { pd: 1 } }).tracks.length, 0);
-  assert.equal(O.kmPick(P, { f: { com: 1, mod: 1, off: 1 } }).tracks.length, 3);
+  assert.equal(O.kmPick(P, { f: { com: 1, mod: 1 } }).tracks.length, 3);
+  assert.deepEqual(O.filterMissing("km", { off: 1 }), ["off"]);   // cannot be kept offline
   assert.equal(O.kmSpeed("69"), "verylow"); assert.equal(O.kmSpeed(""), "");
   assert.deepEqual(O.filterMissing("km", { vi: "v" }), ["vi"]);
   assert.deepEqual(O.filterMissing("km", { vi: "i", mood: "romantic" }), ["mood"]);

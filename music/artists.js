@@ -380,13 +380,23 @@
   function O() { return root.OrosMusicOpen; }
   function Err(code) { var O0 = O(); return O0 ? new O0.OpenError(code) : { code: code }; }
   var mbChain = Promise.resolve(), mbLast = 0;
+  // MusicBrainz turns an address away (503) when it asks more than about
+  // once a second; on a phone network many people share one address, so
+  // a refusal is asked again twice, 3 s and then 6 s later (MU-MB503).
+  var MB_RETRY = [3000, 6000];
   function mbGet(url) {
     var run = function () {
-      var wait = Math.max(0, mbLast + MB_GAP - Date.now());
-      return new Promise(function (res) { setTimeout(res, wait); }).then(function () {
-        mbLast = Date.now();
-        return O().getJSON(url, { timeout: 20000 });
-      });
+      var tryAt = function (n) {
+        var wait = Math.max(0, mbLast + MB_GAP - Date.now());
+        return new Promise(function (res) { setTimeout(res, wait); }).then(function () {
+          mbLast = Date.now();
+          return O().getJSON(url, { timeout: 20000 });
+        }).then(null, function (e) {
+          if (!(e && e.code === "busy") || n >= MB_RETRY.length) throw e;
+          return new Promise(function (res) { setTimeout(res, MB_RETRY[n]); }).then(function () { return tryAt(n + 1); });
+        });
+      };
+      return tryAt(0);
     };
     var p = mbChain.then(run, run);
     mbChain = p.catch(function () {});
@@ -520,7 +530,7 @@
   }
 
   var api = {
-    VERSION: "1.0.0", MB_GAP: MB_GAP, TTL: TTL, MBID_RE: MBID_RE, DB: DB,
+    VERSION: "1.1.0", MB_GAP: MB_GAP, MB_RETRY: MB_RETRY, TTL: TTL, MBID_RE: MBID_RE, DB: DB,
     mbId: mbId, nameKey: nameKey, titleKey: titleKey, sameArtist: sameArtist, luceneWords: luceneWords,
     searchUrl: searchUrl, parseSearch: parseSearch, artistUrl: artistUrl, parseArtist: parseArtist, linkOf: linkOf,
     groupsUrl: groupsUrl, parseGroups: parseGroups, shelves: shelves, caa: caa, releasesUrl: releasesUrl, pickRelease: pickRelease, parseRelease: parseRelease,

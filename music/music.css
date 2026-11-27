@@ -508,3 +508,17 @@ dl.info dd { overflow-wrap: anywhere; }
 .ss-item .icon-btn { flex: 0 0 auto; width: 44px; height: 44px; }
 .ss-row { padding-top: 0; }
 .ss-new { border-left: 3px solid var(--accent); padding-left: 10px; margin: 8px 0 12px; }
+
+/* ---------- MU-DL: saving for offline (above the player) ---------- */
+.mu-dl {
+  position: relative; flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+  margin: 0 8px 6px; padding: 6px 10px 8px; min-height: 40px;
+  background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px; font-size: 12px;
+}
+.mu-dl[hidden] { display: none; }
+.mu-dl-t { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-dim); }
+.mu-dl-stop { flex: none; min-height: 32px; }
+.mu-dl-bar { position: absolute; left: 10px; right: 10px; bottom: 3px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.mu-dl-fill { display: block; height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+@media (max-width: 700px) { .mu-dl { order: 8; margin: 0 6px 6px; } }
+@media (prefers-reduced-motion: reduce) { .mu-dl-fill { transition: none; } }

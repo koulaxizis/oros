@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Music — host.js (player + data owner, v1.5.0)
+// orOS Music — host.js (player + data owner, v1.6.0)
 // Runs in the SHELL window (loaded by index.html after core.js and
 // store.js, or injected by the app on first open), so the music,
 // the queue and sync keep going while the Music window is closed.
@@ -28,7 +28,11 @@
 //   - the light show's sound tap (MU-VIZ: viz / vizFrame, an
 //     AnalyserNode after the equalizer, same-origin decks only);
 //   - ListenBrainz listens with the person's own token (lb.js, loaded
-//     only when this device has an account; wave 6d).
+//     only when this device has an account; wave 6d);
+//   - saving songs for offline (MU-DL, core.js dlLine): one at a time,
+//     here and not in the app window, so it goes on when Music closes;
+//     the songs still waiting are kept in device-local
+//     "oros-music-dlq" and picked up again after a reload.
 // Songs on the orOS disk play from a blob: URL read through
 // window.orosFS, so they play offline. The slice changes only when
 // the user likes a song or edits a playlist: playing never uploads.
@@ -53,7 +57,9 @@
       "host.playBtn": "Play", "host.pauseBtn": "Pause", "host.stop": "Stop",
       "host.open": "Open Music", "host.seek": "Position", "host.volume": "Volume",
       "host.mute": "Mute", "host.unmute": "Unmute",
-      "host.like": "Save to Liked songs", "host.unlike": "Remove from Liked songs"
+      "host.like": "Save to Liked songs", "host.unlike": "Remove from Liked songs",
+      "host.offDone": "Saved for offline: {ok} of {n}.",
+      "host.offBad": "{bad} could not be saved: the source did not allow it or the connection dropped."
     },
     el: {
       "host.full": "Ο χώρος αποθήκευσης γέμισε: οι αλλαγές στη Μουσική δεν αποθηκεύτηκαν.",
@@ -64,7 +70,9 @@
       "host.playBtn": "Αναπαραγωγή", "host.pauseBtn": "Παύση", "host.stop": "Διακοπή",
       "host.open": "Άνοιγμα Μουσικής", "host.seek": "Θέση", "host.volume": "Ένταση",
       "host.mute": "Σίγαση", "host.unmute": "Κατάργηση σίγασης",
-      "host.like": "Αποθήκευση στα αγαπημένα", "host.unlike": "Αφαίρεση από τα αγαπημένα"
+      "host.like": "Αποθήκευση στα αγαπημένα", "host.unlike": "Αφαίρεση από τα αγαπημένα",
+      "host.offDone": "Αποθηκεύτηκαν για χωρίς σύνδεση: {ok} από {n}.",
+      "host.offBad": "{bad} δεν αποθηκεύτηκαν: η πηγή δεν το επέτρεψε ή κόπηκε η σύνδεση."
     }
   };
   // orosI18n (../i18n.js, loaded by the shell): the full language
@@ -1145,6 +1153,95 @@
     catch (e) {}
   }
 
+  // ---------- Offline copies (MU-DL) ----------
+  var DLQ_KEY = "oros-music-dlq";
+  // One song from its source, read in pieces: a source that sends
+  // nothing for DL.STALL ms is dropped (a phone that changed network
+  // can leave a download hanging forever).
+  function dlGet(url, onBytes) {
+    return new Promise(function (resolve, reject) {
+      var ctl = typeof w.AbortController === "function" ? new w.AbortController() : null, timer = 0, over = false;
+      function done(fn, v) { if (over) return; over = true; w.clearTimeout(timer); fn(v); }
+      function arm() {
+        w.clearTimeout(timer);
+        timer = w.setTimeout(function () { try { if (ctl) ctl.abort(); } catch (e) {} done(reject, new Error("stall")); }, C.DL.STALL);
+      }
+      arm();
+      var opt = { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer", cache: "no-store" };
+      if (ctl) opt.signal = ctl.signal;
+      w.fetch(url, opt).then(function (res) {
+        if (!res.ok) throw new Error("http");
+        var type = res.headers.get("content-type") || "", size = +res.headers.get("content-length") || 0;
+        if (size > C.DL.MAX) throw new Error("big");
+        if (!res.body || typeof res.body.getReader !== "function") return res.blob();
+        var rd = res.body.getReader(), parts = [], got = 0;
+        onBytes(0, size);
+        var pump = function () {
+          return rd.read().then(function (x) {
+            if (over) return null;
+            if (x.done) return new w.Blob(parts, { type: type });
+            got += x.value.byteLength;
+            if (got > C.DL.MAX) { try { rd.cancel(); } catch (e) {} throw new Error("big"); }
+            parts.push(x.value);
+            arm();
+            onBytes(got, size);
+            return pump();
+          });
+        };
+        return pump();
+      }).then(function (b) { done(resolve, b); }, function (e) { done(reject, e); });
+    });
+  }
+  var dlBytesAt = 0;
+  var dl = C.dlLine ? C.dlLine({
+    get: dlGet,
+    put: function (ref, blob) {
+      if (!ST || typeof ST.putOff !== "function") return Promise.reject(new Error("store"));
+      return ST.putOff({ k: ref.k, blob: blob, sz: blob.size, at: Date.now(), ref: ref });
+    },
+    save: function (list) {
+      try { if (list.length) w.localStorage.setItem(DLQ_KEY, JSON.stringify(list)); else w.localStorage.removeItem(DLQ_KEY); } catch (e) {}
+    },
+    notify: function (ev, st) {
+      if (ev === "bytes") {
+        var now = Date.now();
+        if (now - dlBytesAt < 400) return;
+        dlBytesAt = now;
+      }
+      if (ev === "offDone" && st.n > 0) {
+        note(T("host.offDone", { ok: st.ok, n: st.n }) + (st.bad ? " " + T("host.offBad", { bad: st.bad }) : ""));
+      }
+      host.notify(ev, st);
+    },
+    wait: function (ms) { return new Promise(function (r) { w.setTimeout(r, ms); }); },
+    online: function () { return w.navigator.onLine !== false; },
+    whenOnline: function () {
+      return new Promise(function (r) {
+        if (w.navigator.onLine !== false) { r(); return; }
+        var on = function () { w.removeEventListener("online", on); r(); };
+        w.addEventListener("online", on);
+      });
+    }
+  }) : null;
+  // Songs saved for offline on this device: { key: 1 }.
+  function offHave() {
+    if (!ST || typeof ST.offList !== "function") return Promise.resolve({});
+    return ST.offList().then(function (l) { var m = {}; (l || []).forEach(function (x) { if (x && x.k) m[x.k] = 1; }); return m; }, function () { return {}; });
+  }
+  function offSave(items) {
+    if (!dl || !ST || typeof ST.putOff !== "function") return Promise.resolve({ add: 0, have: 0, no: 0, err: "store" });
+    items = own(items) || [];
+    try { if (w.navigator.storage && w.navigator.storage.persist) w.navigator.storage.persist().catch(function () {}); } catch (e) {}
+    return offHave().then(function (have) { return dl.add(items, have); });
+  }
+  // The songs left waiting by the last page (reload, the phone closing
+  // the browser) start again a few seconds after the shell comes up.
+  w.setTimeout(function () {
+    var list = null;
+    try { list = JSON.parse(w.localStorage.getItem(DLQ_KEY) || "null"); } catch (e) { list = null; }
+    if (Array.isArray(list) && list.length) offSave(list);
+  }, 4000);
+
   // ---------- Subscribers (the app window; may close any time) ----------
   var subs = [];
   var host = {
@@ -1210,6 +1307,10 @@
       host.notify("queue");
     },
     stop: stop,
+    // MU-DL: save songs for offline here, in the shell (see dlLine).
+    offSave: offSave,
+    offCancel: function () { return dl ? dl.cancel() : 0; },
+    offStatus: function () { return dl ? own(dl.status()) : null; },
     upcoming: function (max) { return own(C.qUpcoming(local.q, max || 100)); },
     history: function () { return own(local.hist); },
     getState: function () {

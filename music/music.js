@@ -59,7 +59,7 @@
       "search.ph": "What do you want to listen to?", "search.none": "Nothing found for “{q}”.",
       "search.hint": "Search your songs, albums, artists and playlists.",
       "search.genres": "Browse by genre",
-      "sec.songs": "Songs", "sec.albums": "Albums", "sec.artists": "Artists", "sec.pls": "Playlists", "sec.genres": "Genres",
+      "sec.songs": "Songs", "sec.mine": "In your likes, playlists and recent plays", "sec.albums": "Albums", "sec.artists": "Artists", "sec.pls": "Playlists", "sec.genres": "Genres",
       "lib.pl": "Playlists", "lib.songs": "Songs", "lib.albums": "Albums", "lib.artists": "Artists", "lib.genres": "Genres", "lib.folders": "Folders",
       "lib.newPl": "New playlist", "lib.liked": "Liked songs", "lib.empty": "Nothing here yet.",
       "sort.title": "Title", "sort.artist": "Artist", "sort.album": "Album", "sort.added": "Recently added", "sort.by": "Sort",
@@ -186,7 +186,7 @@
       "src.au": "Free to listen: artists share songs to be heard, mostly without a free licence. Streaming only.",
       "src.eu": "Open-licence recordings of Europe's archives and radios. Needs your own free key.",
       "src.fm": "The Free Music Archive's Creative Commons albums, kept on the Internet Archive.",
-      "src.km": "Kevin MacLeod's 1,400+ instrumental pieces (incompetech), all CC BY 4.0. Can be kept offline.",
+      "src.km": "Kevin MacLeod's 1,400+ instrumental pieces (incompetech), all CC BY 4.0. They stream only: incompetech does not let a browser keep a copy.",
       "src.mo": "Musopen's public-domain classical recordings, kept on the Internet Archive.",
       "src.jb": "The Library of Congress National Jukebox: recordings from 1900 to 1925, public domain.",
       "src.dp": "Open-licence recordings of American libraries and archives. Needs your own free key.",
@@ -253,11 +253,11 @@
       "sh.playAll": "Play all", "sh.savePl": "Save as my playlist",
       "m.credit": "Copy credit", "m.source": "Open on {s}", "m.saveOff": "Save for offline", "m.delOff": "Remove offline copy",
       "m.saveAlbum": "Save album for offline",
-      "toast.copied": "Credit copied.", "toast.offSaving": "Saving {n} for offline…", "toast.offSaved": "{n} saved for offline.",
+      "toast.copied": "Credit copied.", "toast.offSaving": "Saving {n} for offline. It goes on while orOS is open, also when you leave Music.", "toast.offQueued": "Already waiting to be saved.", "toast.offStop": "Stopped. The songs already saved stay.", "toast.offSaved": "{n} saved for offline.",
       "toast.offFail": "{n} could not be saved: the source does not allow downloads from the browser.",
       "toast.offNo": "The licence or the source does not allow an offline copy of this song.", "toast.offHave": "Already saved for offline.",
       "toast.offDel": "Offline copy removed.", "toast.offDels": "Offline copies removed.",
-      "lib.offline": "Offline", "off.empty": "Songs from the free catalogues that you save for offline appear here.", "off.badge": "Saved for offline",
+      "lib.offline": "Offline", "dl.line": "Saving for offline: {d} of {n}", "dl.wait": "Waiting for the network…", "dl.stop": "Stop", "off.empty": "Songs from the free catalogues that you save for offline appear here.", "off.badge": "Saved for offline",
       "s.open": "Free music online (Jamendo, Internet Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Europeana and more)",
       "s.openHint": "Only when you browse or search. The requests go straight to those services, with no account and no tracking.",
       "s.offInfo": "Offline copies: {n} · {s}", "s.offClear": "Delete all offline copies",
@@ -371,7 +371,7 @@
       "search.ph": "Τι θέλεις να ακούσεις;", "search.none": "Δεν βρέθηκε τίποτα για «{q}».",
       "search.hint": "Ψάξε στα τραγούδια, τα άλμπουμ, τους καλλιτέχνες και τις λίστες σου.",
       "search.genres": "Περιήγηση ανά είδος",
-      "sec.songs": "Τραγούδια", "sec.albums": "Άλμπουμ", "sec.artists": "Καλλιτέχνες", "sec.pls": "Λίστες", "sec.genres": "Είδη",
+      "sec.songs": "Τραγούδια", "sec.mine": "Στα αγαπημένα, στις λίστες και σε όσα άκουσες πρόσφατα", "sec.albums": "Άλμπουμ", "sec.artists": "Καλλιτέχνες", "sec.pls": "Λίστες", "sec.genres": "Είδη",
       "lib.pl": "Λίστες", "lib.songs": "Τραγούδια", "lib.albums": "Άλμπουμ", "lib.artists": "Καλλιτέχνες", "lib.genres": "Είδη", "lib.folders": "Φάκελοι",
       "lib.newPl": "Νέα λίστα", "lib.liked": "Αγαπημένα τραγούδια", "lib.empty": "Δεν υπάρχει τίποτα εδώ ακόμα.",
       "sort.title": "Τίτλος", "sort.artist": "Καλλιτέχνης", "sort.album": "Άλμπουμ", "sort.added": "Πρόσφατες προσθήκες", "sort.by": "Ταξινόμηση",
@@ -498,7 +498,7 @@
       "src.au": "Δωρεάν ακρόαση: οι καλλιτέχνες μοιράζονται τραγούδια για να ακουστούν, τα περισσότερα χωρίς ελεύθερη άδεια. Μόνο online.",
       "src.eu": "Ηχογραφήσεις με ανοιχτή άδεια από αρχεία και ραδιόφωνα της Ευρώπης. Θέλει το δικό σου δωρεάν κλειδί.",
       "src.fm": "Τα άλμπουμ Creative Commons του Free Music Archive, σωσμένα στο Internet Archive.",
-      "src.km": "Πάνω από 1.400 ορχηστρικά κομμάτια του Kevin MacLeod (incompetech), όλα CC BY 4.0. Μπορούν να μείνουν offline.",
+      "src.km": "Πάνω από 1.400 ορχηστρικά κομμάτια του Kevin MacLeod (incompetech), όλα CC BY 4.0. Παίζουν μόνο online: το incompetech δεν επιτρέπει σε browser να κρατήσει αντίγραφο.",
       "src.mo": "Ηχογραφήσεις κλασικής μουσικής του Musopen σε κοινό κτήμα, σωσμένες στο Internet Archive.",
       "src.jb": "Το National Jukebox της Library of Congress: ηχογραφήσεις από το 1900 ως το 1925, σε κοινό κτήμα.",
       "src.dp": "Ηχογραφήσεις με ανοιχτή άδεια από αμερικανικές βιβλιοθήκες και αρχεία. Θέλει το δικό σου δωρεάν κλειδί.",
@@ -565,11 +565,11 @@
       "sh.playAll": "Αναπαραγωγή όλων", "sh.savePl": "Αποθήκευση ως δική μου λίστα",
       "m.credit": "Αντιγραφή αναφοράς", "m.source": "Άνοιγμα στο {s}", "m.saveOff": "Αποθήκευση για χωρίς σύνδεση", "m.delOff": "Αφαίρεση αντιγράφου",
       "m.saveAlbum": "Αποθήκευση άλμπουμ για χωρίς σύνδεση",
-      "toast.copied": "Η αναφορά αντιγράφηκε.", "toast.offSaving": "Αποθήκευση: {n} για χωρίς σύνδεση…", "toast.offSaved": "Αποθηκεύτηκαν για χωρίς σύνδεση: {n}.",
+      "toast.copied": "Η αναφορά αντιγράφηκε.", "toast.offSaving": "Αποθήκευση: {n} για χωρίς σύνδεση. Συνεχίζει όσο το orOS είναι ανοιχτό, και όταν βγεις από τη Μουσική.", "toast.offQueued": "Περιμένει ήδη να αποθηκευτεί.", "toast.offStop": "Σταμάτησε. Όσα αποθηκεύτηκαν μένουν.", "toast.offSaved": "Αποθηκεύτηκαν για χωρίς σύνδεση: {n}.",
       "toast.offFail": "Δεν αποθηκεύτηκαν {n}: η πηγή δεν επιτρέπει λήψη από τον browser.",
       "toast.offNo": "Η άδεια ή η πηγή δεν επιτρέπει αντίγραφο χωρίς σύνδεση για αυτό το τραγούδι.", "toast.offHave": "Είναι ήδη αποθηκευμένο για χωρίς σύνδεση.",
       "toast.offDel": "Το αντίγραφο αφαιρέθηκε.", "toast.offDels": "Τα αντίγραφα αφαιρέθηκαν.",
-      "lib.offline": "Χωρίς σύνδεση", "off.empty": "Εδώ εμφανίζονται τα τραγούδια από τους ελεύθερους καταλόγους που αποθηκεύεις για χωρίς σύνδεση.", "off.badge": "Αποθηκευμένο για χωρίς σύνδεση",
+      "lib.offline": "Χωρίς σύνδεση", "dl.line": "Αποθήκευση για χωρίς σύνδεση: {d} από {n}", "dl.wait": "Περιμένει σύνδεση…", "dl.stop": "Διακοπή", "off.empty": "Εδώ εμφανίζονται τα τραγούδια από τους ελεύθερους καταλόγους που αποθηκεύεις για χωρίς σύνδεση.", "off.badge": "Αποθηκευμένο για χωρίς σύνδεση",
       "s.open": "Ελεύθερη μουσική online (Jamendo, Internet Archive, Openverse, ccMixter, Kevin MacLeod, Audius, Europeana και άλλοι)",
       "s.openHint": "Μόνο όταν περιηγείσαι ή ψάχνεις. Τα αιτήματα πάνε κατευθείαν σε αυτές τις υπηρεσίες, χωρίς λογαριασμό και χωρίς παρακολούθηση.",
       "s.offInfo": "Αντίγραφα χωρίς σύνδεση: {n} · {s}", "s.offClear": "Διαγραφή όλων των αντιγράφων",
@@ -1130,13 +1130,26 @@
     if (w) { try { w.opener = null; } catch (e) {} }
   }
   // Offline copies: only songs whose licence and source allow it
-  // (off: 1), fetched straight from the source; one at a time.
+  // (off: 1, and a source a browser can read: C.canKeep), fetched
+  // straight from the source, one at a time, by the shell host
+  // (MU-DL: it goes on when this window closes, which a phone does
+  // when another app opens). An older host: here, as before.
   var offBusy = false;
+  function canKeep(r) { return C.canKeep ? C.canKeep(r) : !!(r && r.off === 1 && C.isRemote(r)); }
   function saveOffline(list) {
-    var allowed = list.filter(function (r) { return r && r.off === 1 && C.isRemote(r); });
+    var allowed = list.filter(canKeep);
     if (!allowed.length) { showToast(t("toast.offNo")); return; }
     var todo = allowed.filter(function (r) { return !offKeys[r.k]; });
     if (!todo.length) { showToast(t("toast.offHave")); return; }
+    if (H && typeof H.offSave === "function") {
+      H.offSave(todo).then(function (r) {
+        if (r && r.add) showToast(t("toast.offSaving", { n: nSongs(r.add) }));
+        else if (r && r.have) showToast(t("toast.offQueued"));
+        else showToast(t("toast.offFail", { n: todo.length }));
+        paintDl(H.offStatus ? H.offStatus() : null);
+      });
+      return;
+    }
     if (offBusy || !ST || typeof ST.putOff !== "function") return;
     offBusy = true;
     try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(function () {}); } catch (e) {}
@@ -1169,6 +1182,30 @@
   function offRows() {
     return Object.keys(offKeys).map(function (k) { return offKeys[k]; }).filter(function (x) { return x.ref; })
       .sort(function (a, b) { return b.at - a.at; }).map(function (x) { return x.ref; });
+  }
+  // MU-DL: the line above the player while songs are being saved.
+  function paintDl(st) {
+    var box = $("mu-dl");
+    if (!st || !st.busy) { if (box) box.hidden = true; return; }
+    if (!box) {
+      box = el("div", "mu-dl"); box.id = "mu-dl"; box.setAttribute("role", "status");
+      var tx = el("span", "mu-dl-t"), bar = el("span", "mu-dl-bar"), fill = el("span", "mu-dl-fill");
+      bar.appendChild(fill);
+      var stop = button(t("dl.stop"), "txt-btn mu-dl-stop", function () {
+        if (H && typeof H.offCancel === "function" && H.offCancel()) showToast(t("toast.offStop"));
+      });
+      box.appendChild(tx); box.appendChild(stop); box.appendChild(bar);
+      var pl = $("player");
+      if (pl && pl.parentNode) pl.parentNode.insertBefore(box, pl); else document.body.appendChild(box);
+    }
+    box.hidden = false;
+    var pct = st.size > 0 ? Math.min(100, Math.round(st.got / st.size * 100)) : 0;
+    var line = t("dl.line", { d: Math.min(st.done + 1, st.n), n: st.n });
+    if (st.wait) line += " · " + t("dl.wait");
+    else if (st.t) line += " · " + st.t + (st.size > 0 ? " · " + pct + "%" : st.got > 0 ? " · " + fmtSize(st.got) : "");
+    box.querySelector(".mu-dl-t").textContent = line;
+    box.querySelector(".mu-dl-fill").style.width = (st.n ? Math.round((st.done + (st.size > 0 ? st.got / st.size : 0)) / st.n * 100) : 0) + "%";
+    box.querySelector(".mu-dl-stop").hidden = !(st.left > 0);
   }
   function offSize() { var n = 0; Object.keys(offKeys).forEach(function (k) { n += offKeys[k].sz || 0; }); return n; }
 
@@ -2298,7 +2335,9 @@
   // new releases of the artists I follow. Home only, while the
   // switch is on.
   function freshCard(r) {
-    return card(cover(r.art || A.caa(r.id), r.n, ""), r.n, [r.a, r.d].filter(Boolean).join(" · "), function () { openView({ kind: "mbr", id: r.id, n: r.n, a: r.a, ai: r.ai }); });
+    // The release's own cover (ListenBrainz names it) is kept for the
+    // album page: a new release group often has no cover of its own yet.
+    return card(cover(r.art || A.caa(r.id), r.n, ""), r.n, [r.a, r.d].filter(Boolean).join(" · "), function () { openView({ kind: "mbr", id: r.id, n: r.n, a: r.a, ai: r.ai, art: r.art || "" }); });
   }
   function discoverSection(m) {
     if (!A || !O || !prefs.mb) return;
@@ -2352,7 +2391,8 @@
     var k = "mbr|" + v.id, f = feed(k, fOne(function () { return A.album(v.id); }));
     var r = f.extra;
     var name = v.a || (r && r.a) || "";
-    var art = cover(A.caa(v.id, 500), (r && r.n) || v.n || "", "big");
+    var relArt = typeof v.art === "string" && /^https:\/\/coverartarchive\.org\/release\/[0-9a-f-]{36}\/front-250$/.test(v.art) ? v.art.replace(/250$/, "500") : "";
+    var art = cover(relArt || A.caa(v.id, 500), (r && r.n) || v.n || "", "big");
     var src = { kind: "mbr", id: v.id, n: (r && r.n) || v.n || "" };
     if (!r) {
       pageHead(m, art, t("kind.album") + " · " + MB_NAME, v.n || "?", null, null, src);
@@ -2948,7 +2988,8 @@
     if (fOn && locMiss.length && tracks.length) box.appendChild(el("p", "dim small o-note fl-skip", t("fl.skipMine", { f: missText(locMiss) })));
     var w = C.words(q);
     var pls = D().pls.filter(function (p) { var f = C.fold(p.n); return w.every(function (x) { return f.indexOf(x) >= 0; }); });
-    if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !openOn() && !svLib().length && !A) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
+    var mine = fOn ? [] : mineMatches(w, r.songs);
+    if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !mine.length && !openOn() && !svLib().length && !A) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
     if (r.songs.length) {
       box.appendChild(el("h2", "sub-h", t("sec.songs")));
       box.appendChild(rowList(r.songs.slice(0, 30), { src: { kind: "search", id: q, n: q } }));
@@ -2961,6 +3002,7 @@
       box.appendChild(el("h2", "sub-h", t("sec.albums")));
       var cb = el("div", "cards"); r.albums.slice(0, 20).forEach(function (a) { cb.appendChild(albumCard(a)); }); box.appendChild(cb);
     }
+    if (mine.length) mineSection(box, mine, q);
     if (pls.length) {
       box.appendChild(el("h2", "sub-h", t("sec.pls")));
       var cp = el("div", "cards"); pls.forEach(function (p) { cp.appendChild(plCard(p)); }); box.appendChild(cp);
@@ -2968,6 +3010,43 @@
     if (SV && q.length >= 2 && !fOn) serverResults(box, q);
     if (A && O && q.length >= 2 && !fOn) mbResults(box, q);
     if (openOn() && q.length >= 2) onlineResults(box, q);
+  }
+  // MU-FIND2: songs of the free catalogues and your servers that you
+  // liked, keep in a playlist or played lately (they are not files on
+  // this device, so the library search above does not see them), and
+  // their artists.
+  function mineMatches(w, have) {
+    var seen = {}, out = [];
+    (have || []).forEach(function (x) { if (x && x.k) seen[x.k] = 1; });
+    var add = function (x) {
+      if (!x || !x.k || seen[x.k] || x.p || !C.matches(x, w)) return;
+      var r = playable(x);
+      if (!r || r.p) return;   // a file on this device is in Songs already
+      seen[x.k] = 1;
+      out.push(r);
+    };
+    C.likedList(D()).forEach(function (l) { if (l.on !== 0) add(l); });
+    D().pls.forEach(function (p) { p.it.forEach(add); });
+    try { var h = H && typeof H.history === "function" ? H.history() : null; if (h && Array.isArray(h.r)) h.r.forEach(add); } catch (e) {}
+    return out.slice(0, 50);
+  }
+  function mineSection(box, mine, q) {
+    var w = C.words(q), arts = [], seenA = {};
+    mine.forEach(function (r) {
+      var id = O && isOpen(r) ? oArtistId(r) : "";
+      if (!id || seenA[id] || !r.a || !w.every(function (x) { return C.fold(r.a).indexOf(x) >= 0; })) return;
+      seenA[id] = 1;
+      arts.push({ id: id, n: r.a, art: r.art });
+    });
+    box.appendChild(el("h2", "sub-h", t("sec.mine")));
+    if (arts.length) {
+      var ca = el("div", "cards");
+      arts.slice(0, 12).forEach(function (a) {
+        ca.appendChild(card(cover(a.art, a.n, "round", I.user), a.n, t("kind.artist"), function () { openView({ kind: "oartist", id: a.id, n: a.n }); }));
+      });
+      box.appendChild(ca);
+    }
+    box.appendChild(rowList(mine, { src: { kind: "search", id: q, n: q } }));
   }
   var onlineQ = "", onlineTimer = null;
   function onlineResults(box, q) {
@@ -3859,7 +3938,7 @@
       if (av && !(view && view.kind === av.kind && view.id === av.id)) items.push([t("m.album"), function () { openView(av); }]);
       var oa = oArtistId(r);
       if (oa && !(view && view.kind === "oartist" && view.id === oa)) items.push([t("m.artist"), function () { openView({ kind: "oartist", id: oa, n: r.a }); }]);
-      if (r.off === 1) items.push(offKeys[r.k] ? [t("m.delOff"), function () { delOffline([r.k]); }] : [t("m.saveOff"), function () { saveOffline([r]); }]);
+      if (canKeep(r)) items.push(offKeys[r.k] ? [t("m.delOff"), function () { delOffline([r.k]); }] : [t("m.saveOff"), function () { saveOffline([r]); }]);
       items.push([t("m.credit"), function () { copyCredit(r); }]);
       if (r.pg) items.push([t("m.source", { s: O.sourceName(r) }), function () { openExt(r.pg); }]);
       items.push([t("m.info"), function () { infoRemote(r); }]);
@@ -4838,6 +4917,16 @@
       return;
     }
     if (ev === "data") { renderKeepScroll(); return; }
+    if (ev === "off" || ev === "bytes") { paintDl(arg); return; }
+    if (ev === "offOne" || ev === "offDone") {
+      paintDl(arg);
+      loadOff().then(renderKeepScroll, function () {});
+      // Standalone (no shell): the host has nowhere to show its notice.
+      if (ev === "offDone" && arg && arg.n && !shellWin()) {
+        showToast((arg.ok ? t("toast.offSaved", { n: nSongs(arg.ok) }) : "") + (arg.bad ? (arg.ok ? " " : "") + t("toast.offFail", { n: arg.bad }) : ""));
+      }
+      return;
+    }
     if (ev === "index") { loadIndex().then(renderKeepScroll); return; }
     if (ev === "error") { var st = H.getState(); if (st.error && st.error !== "NotAllowedError") showToast(arg && arg.skip ? t("toast.skipped", { t: arg.skip }) : t("toast.cant")); }
     paintPlayer();
@@ -4973,6 +5062,7 @@
       if (!api) { $("main").appendChild(el("div", "empty", t("toast.err", { c: "host" }))); return; }
       H = api;
       unsub = H.subscribe(onHost);
+      if (typeof H.offStatus === "function") paintDl(H.offStatus());
       window.addEventListener("pagehide", function () { if (unsub) unsub(); });
       loadEuKey();
       return Promise.all([loadIndex(), loadOff().catch(function () {}), SV ? SV.ready().catch(function () {}) : null]).then(function () {

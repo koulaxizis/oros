@@ -40,6 +40,7 @@
   // Registered by Chris at devportal.jamendo.com (2026-10-16); public,
   // one for every orOS user, non-commercial use.
   var JM_CLIENT = "e04c6e83";
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js, podcasts.js
   var CACHE_MS = 30 * 60 * 1000, CACHE_MAX = 80;
 
   var SOURCES = {
@@ -663,7 +664,7 @@
     var fn = x && typeof x.filename === "string" ? x.filename : "";
     if (!/^[^\/\\<>"?#]{1,200}\.mp3$/i.test(fn)) return null;
     var o = { k: key("km", fn), t: str(x.title) || C.stem(fn), a: "Kevin MacLeod", d: secs(x.length), s: "km",
-      u: KM_MP3 + encodeURIComponent(fn), pg: KM_PAGE, li: "by 4.0", off: 1 };
+      u: KM_MP3 + encodeURIComponent(fn), pg: KM_PAGE, li: "by 4.0" };   // no off: incompetech sends no CORS header (MU-DL)
     var r = ref(o);
     if (!r) return null;
     var y = (String(x.uploaded || "").match(/^\d{4}/) || [""])[0];
@@ -889,14 +890,22 @@
     var FF = root.orosFeedsFetch;
     var p;
     if (FF && typeof FF.fetchOne === "function") {
-      p = FF.fetchOne(url, { accept: "application/json", timeout: (opts && opts.timeout) || 20000 }).then(function (r) {
-        if (r.status === 429) throw new OpenError("busy");
+      // MU-RELAY: a source with no CORS header (ccMixter, Kevin MacLeod's
+      // list) goes through the relay set in Mail, else the default relay,
+      // as Podcasts does: a phone that never opened Mail had no relay, so
+      // those sources answered nothing there.
+      var ro = { accept: "application/json", timeout: (opts && opts.timeout) || 20000,
+        relay: function () { return (typeof FF.relayUrl === "function" && FF.relayUrl()) || DEFAULT_RELAY; } };
+      p = FF.fetchOne(url, ro).then(function (r) {
+        // 503: MusicBrainz turns away an address that asks too often
+        // (a phone network shares one address among many people).
+        if (r.status === 429 || r.status === 503) throw new OpenError("busy");
         if (r.status >= 400 || !r.status) throw new OpenError("http");
         return r.text;
       }, function (e) { throw new OpenError((e && e.code) || "net"); });
     } else if (typeof root.fetch === "function") {
       p = root.fetch(url, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer" }).then(function (r) {
-        if (r.status === 429) throw new OpenError("busy");
+        if (r.status === 429 || r.status === 503) throw new OpenError("busy");
         if (!r.ok) throw new OpenError("http");
         return r.text();
       }, function () { throw new OpenError("net"); });
@@ -1050,7 +1059,7 @@
     fm: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
     mo: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
     jb: { g: 1, cc: 1, lic: 1, y: 1, off: 1, ll: 1 },
-    km: { g: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1, off: 1 },
+    km: { g: 1, dur: 1, lic: 1, y: 1, vi: 1, mood: 1, sp: 1 },
     dp: { g: 1, cc: 1, lic: 1, y: 1 },
     fw: { g: 1, dur: 1, lic: 1 },
     loc: { g: 1, dur: 1, y: 1 }
@@ -1207,7 +1216,7 @@
   }
 
   var api = {
-    VERSION: "1.8.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.10.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,
