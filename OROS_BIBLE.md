@@ -14218,3 +14218,11 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** settings/settings.js, settings/settings.css, settings/core.js, i18n/de/settings.js, help/topics/appearance.en/el.txt, i18n/de/help/topics/appearance.txt, whatsnew EN/EL, OROS_BIBLE.md, tests/yours.test.js.
 - **Tests:** full suite 9487/0 before the stamp; Playwright Chromium at 360 px in Greek: two buttons in Make it yours, `Διάλεξε χρώμα` scrolls to System colour and focuses the current swatch.
 - **Not tested:** a real phone, Safari, Firefox.
+
+### 2026-11-27 — 8.99.00 — Assistant: this computer's local AI stands in for a synced address that does not answer (AS-SYSAI 2, #1278)
+- **Why:** Chris 2026-11-23: on his PC the Assistant showed Local / OpenAI-compatible "not answering now" although System › Local AI was ready; the synced address belonged to another device, and `sysAIAdopt` never rewrites a non-loopback address. Held by Chris until Fri 2026-11-27 22:00 Athens.
+- **What:** `core.probeLocal` checks the synced address first, then `sysAIConf` (Ollama on loopback); `core.localUse` returns that conf (`sys: 1`) for this page only while the synced address does not answer. Nothing saved, no key sent to the stand-in, probe cache per address. Assistant `useConf`, Feeds and Atelier `conf()` use it; `pickChain` passes `o.sys`. Settings chain status EN/EL/DE, help EN/EL/DE, Bible II AS-SYSAI (6), IX, X-B.
+- **Files:** assistant/core.js, assistant/assistant.js, feeds/ai.js, atelier/ai.js, i18n/de/assistant.js, assistant/help.en/el.txt, i18n/de/help/assistant.txt, tests/assistant-sysai.test.js, tests/assistant-chain.test.js, tests/assistant-greek.test.js (regex accepts `tm || pc.model || modelOf(pid)` after the merge with AS-GREEK), shell.js (version), help/topics/whatsnew.en/el.txt, OROS_BIBLE.md.
+- **Stamp:** by the merge thread (owner session could not receive messages), main merged in (8.98.03), no conflicts; one semantic test fix noted above.
+- **Tests:** full `node --test tests/*.test.js` in the merge thread before merge; CI. Owner: real Chromium against a real Ollama with an unreachable LAN address, chat answered from qwen3:8b on localhost, field kept the LAN address, chain row fits at 360px.
+- **Not tested:** the orOS desktop app with this build, a real second device, Android, Safari.
