@@ -34,6 +34,12 @@ The tool bar is on the left (at the bottom on a phone). The bar above the pictur
 - `New adjustment layer…` (the half-filled circle button) changes the colours of every visible layer below it without touching their pixels: `Levels`, `Curves`, `Hue / saturation`, `Colour balance`, `Brightness / contrast`, `Black and white`, `Photo filter`, `Gradient map`, `Invert`, `Threshold`, `Posterize`. Double-click it to change it; its opacity and mask choose how much and where.
 - `Layer style…` (the fx button) adds a `Drop shadow`, `Outer glow`, `Inner glow`, `Stroke` or `Colour overlay` to a layer. Styles follow the layer's pixels and stay editable; a layer with styles shows an fx button in its row.
 
+## Before and after, histogram and vectorscope
+- `View` › `Before / after` (the split-picture button in the status bar, or [[\]]) splits the picture with a line: left of it the picture as you opened it, right of it the picture now. Drag the line to move it; press the button or [[\]] again to stop. Zoom and move around as usual.
+- In an adjustment or filter dialog, the `Before / after` button (or [[\]]) compares the picture without and with the change you are making, before you apply it. When the dialog closes, the view goes back to how it was.
+- After a crop or a new canvas size, the picture as you opened it is shown fitted inside the new one. It is kept at up to 4096 px (2048 px on phones), so very close up it can look softer than the real picture. It is kept only while the picture is open, and is never saved.
+- The `Scopes` tab of the side panel (`View` › `Histogram and vectorscope`) shows the whole picture's histogram (red, green and blue, and brightness as a white line) and its vectorscope: each colour sits at an angle by its hue and further from the centre the stronger it is, with the six colour boxes (R, Y, G, C, B, M) and the dashed skin-tone line. Skin looks natural when it falls on that line. `×2` spreads weak colours further out. Both follow your changes and the live preview of a dialog. `Levels…` also shows a small vectorscope beside its histogram.
+
 ## Menus
 - `Image`: `Image size…`, `Canvas size…`, rotate, flip, `Crop to selection`, `Trim transparent edges`, `Copy text from picture…`.
 - `Copy text from picture…` reads the text of the picture as it looks (all visible layers), or of the selection's area when there is one, on this device, and shows it with the words marked: drag over them or tap a line, then `Copy`, `Copy all`, `Text` (all of it in a box you can correct) or `Send to…`. Nothing in the picture changes. The first time orOS asks before it downloads its text recognition engine (about 7 MB, Greek and English, shared with Files and Scanner & PDF); after that it works offline. Esc closes it. Links, days, e-mail addresses and phone numbers in it become buttons, as in Files.
@@ -116,6 +122,7 @@ Ask the Assistant to change your pictures in words, such as "make it black and w
 - [[Alt+T]]: free transform. [[Alt+Shift+N]]: new layer. [[Ctrl+J]]: layer via copy. [[Ctrl+E]]: merge down.
 - [[Ctrl+U]]: hue / saturation. [[Ctrl+L]]: levels. [[Ctrl+I]]: invert. [[Ctrl+\]]: edit the mask or the pixels.
 - [[Ctrl+=]], [[Ctrl+-]], [[Ctrl+0]], [[Ctrl+1]]: zoom in, zoom out, fit, 100%.
+- [[\]]: before / after.
 - [[Ctrl+Alt+R]]: rulers. [[Ctrl+;]]: guides. [[Ctrl+']]: grid. [[Ctrl+Shift+;]]: snap.
 - Tools: [[V]] move, [[M]] marquee, [[L]] lasso, [[W]] magic wand, [[C]] crop, [[B]] brush, [[E]] eraser, [[S]] clone stamp, [[J]] healing brush, [[O]] dodge / burn / sponge, [[R]] smudge, [[G]] paint bucket ([[Shift+G]] gradient), [[I]] eyedropper, [[T]] text, [[U]] shape, [[H]] hand, [[Z]] zoom.
 - [[X]] swaps the colours, [[D]] resets them, `[` and `]` change the brush size. Hold [[Space]] to move around.

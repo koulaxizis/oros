@@ -330,6 +330,15 @@ body.side-open #side { display: flex; }
 .prop-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .prop-row input { flex: 1 1 auto; }
 .prop-row output { width: 38px; text-align: right; color: var(--text); font-variant-numeric: tabular-nums; }
+/* Scopes tab (PL-CMP): dark scopes in both themes */
+.scopes { overflow-y: auto; overscroll-behavior: contain; padding: 8px 10px; gap: 6px; scrollbar-width: thin; }
+.scope-h { margin: 4px 0 0; font-size: 12px; font-weight: 700; color: var(--text-dim); }
+.scope-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.scope-histo, .scope-vec { display: block; width: 100%; border: 1px solid var(--border); border-radius: 6px; background: #111; flex-shrink: 0; }
+.scope-histo { aspect-ratio: 256 / 110; height: auto; }
+.scope-vec { max-width: 240px; aspect-ratio: 1; height: auto; align-self: center; }
+.scope-note { margin: 2px 0 0; }
+#sc-zoom[aria-pressed="true"], #cmp-btn[aria-pressed="true"], .cmp-dlg[aria-pressed="true"] { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .layers, .history { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 4px; scrollbar-width: thin; }
 .lrow {
   display: flex;
@@ -470,6 +479,10 @@ button.lthumb { padding: 0; cursor: pointer; color: inherit; }
 .rng-top output { color: var(--text); font-variant-numeric: tabular-nums; }
 .rng input { width: 100%; }
 .histo { width: 100%; height: 60px; border: 1px solid var(--border); border-radius: 4px; background: var(--bg); }
+/* PL-CMP: Levels shows a small vectorscope beside its histogram */
+.dlg-scopes { display: flex; gap: 8px; align-items: stretch; }
+.dlg-scopes .histo { flex: 1 1 auto; min-width: 0; height: 72px; }
+.vec-mini { flex: 0 0 auto; width: 72px; height: 72px; border: 1px solid var(--border); border-radius: 4px; }
 .looks { display: flex; flex-wrap: wrap; gap: 6px; }
 .anchor-grid { display: grid; grid-template-columns: repeat(3, 34px); gap: 4px; }
 .anchor {

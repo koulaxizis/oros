@@ -236,6 +236,7 @@
 
   // ---------- Undo plumbing ----------
   PL.pushStep = function (step) {
+    if (PL.view && PL.view.beforeStep) PL.view.beforeStep(step);   // PL-CMP: "before" = as opened
     st.hist.push(step);
     if (st.hist.dropped()) PL.toast(PL.t("msg.histDropped"));
     PL.emit("history");
@@ -429,7 +430,7 @@
     st.doc = doc; st.surfaces = surfaces || {};
     st.active = doc.layers.length ? doc.layers[doc.layers.length - 1].id : null;
     st.sel = null; st.hist.clear(); st.dirty = false; st.missing = 0;
-    PL.view.resetCaches(); PL.view.selChanged();
+    PL.view.resetCaches(); PL.view.selChanged(); PL.view.newBefore();
   }
   PL.showEditor = function () {
     document.body.classList.add("editing");

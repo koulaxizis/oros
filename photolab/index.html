@@ -58,6 +58,7 @@
         <span id="status-size"></span>
         <span id="status-pos" class="pos"></span>
         <span class="spacer"></span>
+        <button type="button" id="cmp-btn" class="icon-btn small"></button>
         <button type="button" id="zoom-out" class="icon-btn small"></button>
         <button type="button" id="zoom-btn" class="zoom-btn"></button>
         <button type="button" id="zoom-in" class="icon-btn small"></button>
@@ -67,6 +68,7 @@
       <div class="tabs" role="tablist">
         <button type="button" id="tab-layers" class="tab" role="tab" aria-controls="pane-layers"></button>
         <button type="button" id="tab-history" class="tab" role="tab" aria-controls="pane-history"></button>
+        <button type="button" id="tab-scopes" class="tab" role="tab" aria-controls="pane-scopes"></button>
       </div>
       <div id="pane-layers" class="pane" role="tabpanel" aria-labelledby="tab-layers">
         <div class="layer-props">
@@ -90,6 +92,13 @@
       </div>
       <div id="pane-history" class="pane" role="tabpanel" aria-labelledby="tab-history" hidden>
         <ul id="history-list" class="history"></ul>
+      </div>
+      <div id="pane-scopes" class="pane scopes" role="tabpanel" aria-labelledby="tab-scopes" hidden>
+        <h3 id="sc-histo-h" class="scope-h"></h3>
+        <canvas id="sc-histo" class="scope-histo" width="256" height="110" role="img"></canvas>
+        <div class="scope-row"><h3 id="sc-vec-h" class="scope-h"></h3><button type="button" id="sc-zoom" class="btn ghost small"></button></div>
+        <canvas id="sc-vec" class="scope-vec" width="240" height="240" role="img"></canvas>
+        <p id="sc-note" class="hint scope-note" aria-live="polite"></p>
       </div>
     </aside>
   </section>
