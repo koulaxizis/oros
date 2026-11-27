@@ -2033,6 +2033,7 @@ orosPack("de", "assistant", {
  "set.bi.ok": "Bereit auf diesem Gerät. Es funktioniert offline. Es ist kleiner als die Online-Assistenten: orOS durchsucht vor jeder Nachricht deine Daten dafür (du wählst, was geteilt wird), und es kann keine Einträge vorbereiten.",
  "set.chain": "Verbundene Dienste und Reihenfolge",
  "set.chain.down": "antwortet gerade nicht",
+ "set.chain.sys": "die lokale KI dieses Computers antwortet",
  "set.chain.off": "hier nicht eingerichtet",
  "set.chain.ok": "hier eingerichtet",
  "set.chainEmpty": "Wähle oben einen Dienst, speichere Schlüssel oder Adresse und Modell, dann erscheint er hier.",
