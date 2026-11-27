@@ -2380,6 +2380,15 @@
   // the time Claude asked (at), not the time it runs. The time is kept
   // within the box's 7 days and never after now.
   var AT_SPAN = 8 * 86400000;
+  // KB-QRES (Chris 2026-11-27, Noxpress gap 11): a queued change's result,
+  // as change_history shows it: applied (with the start of its answer, e.g.
+  // the new board's id), late (the owner changed it since) or refused (why).
+  function qOutcome(res) {
+    var c = res && typeof res.c === "string" ? res.c.replace(/\s+/g, " ").trim().slice(0, 300) : "";
+    var o = { how: res && res.ok ? "applied" : res && res.late ? "late" : "refused" };
+    if (c && !(res && res.late)) o.c = c;
+    return o;
+  }
   function queuedAt(t, now) {
     return typeof t === "number" && isFinite(t) && t > now - AT_SPAN ? Math.min(Math.floor(t), now) : 0;
   }
@@ -2557,7 +2566,7 @@
                stableArgs: stableArgs, digMerge: digMerge, digClean: digClean, digDue: digDue, digText: digText, ymd: ymd,
                WRITES: WRITES, ACT: ACT, DOCS: DOCS, QUEUED: QUEUED, actable: actable, ACT_TOOLS: ACT_TOOLS, ACT_OPEN: ACT_OPEN, ACT_WRITE: ACT_WRITE, writable: writable, ASK_OVER: ASK_OVER, packHits: packHits, allowed: allowed, toolsOf: toolsOf,
                pushLog: pushLog, cents: cents, LOG_MAX: LOG_MAX, PAGE: PAGE,
-               queuedAt: queuedAt, lateIn: lateIn, mapRefs: mapRefs, pRefsIn: pRefsIn, P_REF: P_REF, kbMapP: kbMapP, kbMade: kbMade };
+               queuedAt: queuedAt, qOutcome: qOutcome, lateIn: lateIn, mapRefs: mapRefs, pRefsIn: pRefsIn, P_REF: P_REF, kbMapP: kbMapP, kbMade: kbMade };
   if (typeof module !== "undefined" && module.exports) module.exports = core;
   if (!root || !root.document) return;
   root.orosGateCore = core;
@@ -3139,7 +3148,7 @@
     try { o = JSON.parse(text); } catch (e) { return; }
     if (!isObj(o) || !Array.isArray(o.cq) || !k || !pref().on) return;
     queueSettled(function () { whenOpen(function () {
-      var done = [], files = false, held = [];
+      var done = [], files = false, held = [], outs = {};   // KB-QRES: outs = what became of each, for change_history
       o.cq.slice(0, 50).reduce(function (chain, it) {
         return chain.then(function () {
           if (!isObj(it) || typeof it.id !== "string") return;
@@ -3174,6 +3183,7 @@
               if (how === "no") {                       // Keep: dropped, logged, nothing deleted
                 delete cqBusy[it.id]; delete cqHeld[it.id];
                 writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), { t: Date.now(), n: String(x.n).slice(0, 20), a: [], k: 0, ok: 0, q: 1 }));
+                outs[it.id] = { how: "declined" };
                 return DECL;
               }
               preYes = nDel;                            // the owner just said Delete to these: no second question
@@ -3188,13 +3198,27 @@
               var entry = { t: Date.now(), n: String(x.n).slice(0, 20), a: (res.a || []).slice(0, 10), k: res.k || 0, ok: res.ok ? 1 : 0, q: 1 };
               if (res.u) entry.u = res.u;
               writeJSON(LOG_KEY, pushLog(readJSON(LOG_KEY), entry));
+              outs[it.id] = qOutcome(res);
               return res;
             });
-          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) { delete cqBusy[it.id]; if (e === HELD) held.push(it.id); else if (e !== KEEP) done.push(it.id); });   // never in a loop
+          }).then(function (r) { if (r !== BUSY) done.push(it.id); }, function (e) {
+            delete cqBusy[it.id];
+            if (e === HELD) held.push(it.id);
+            else if (e !== KEEP) { done.push(it.id); if (!outs[it.id]) outs[it.id] = { how: "failed", c: String(e && e.message || e || "").slice(0, 200) }; }
+          });   // never in a loop
         });
       }, Promise.resolve()).then(function () {
+        // KB-QRES: cqr = each one's outcome, sealed with the gate key (the box keeps it for change_history)
+        var cqr = {};
+        return Promise.all(done.filter(function (id) { return outs[id]; }).map(function (id) {
+          return seal(k, JSON.stringify(outs[id])).then(function (x) { cqr[id] = x; }, function () {});
+        })).then(function () { return cqr; });
+      }).then(function (cqr) {
         // 7.48.00: cqh = deletions held for the owner here; the box offers them to a device on screen
-        try { if (sock.readyState === 1) sock.send(JSON.stringify(held.length ? { cqa: done, cqh: held } : { cqa: done })); } catch (e) {}
+        var msg = { cqa: done };
+        if (held.length) msg.cqh = held;
+        if (Object.keys(cqr).length) msg.cqr = cqr;
+        try { if (sock.readyState === 1) sock.send(JSON.stringify(msg)); } catch (e) {}
         changed();
         copySoon(2000);
         if (files) fileCopySoon(60000);
