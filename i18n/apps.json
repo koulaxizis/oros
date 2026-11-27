@@ -1178,6 +1178,7 @@
   {
    "app": "todo",
    "files": [
+    "todo/fromtext.js",
     "todo/gtasks.js",
     "todo/import.js",
     "todo/package.js",

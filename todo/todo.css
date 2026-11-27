@@ -906,6 +906,60 @@ dialog menu button.danger:hover {
 #todo-add .add-dup:empty { display: none; }
 #todo-add menu button:disabled { opacity: 0.5; cursor: default; }
 
+/* Tasks from text, a photo or a PDF (todo/fromtext.js, TD-FT) */
+#ft-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  min-height: 42px;
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-dim);
+  cursor: pointer;
+}
+#ft-btn:hover, #ft-btn:focus-visible { color: var(--accent); border-color: var(--accent); }
+#ft-btn[hidden] { display: none; }
+#todo-ft { width: min(640px, calc(100vw - 24px)); }
+#todo-ft textarea.ft-text { width: 100%; min-height: 140px; box-sizing: border-box; }
+#todo-ft .ft-src { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+#todo-ft .ft-src button.ghost { margin-top: 0; }
+#todo-ft .ft-status { min-height: 1.2em; margin-top: 8px; font-size: 13px; color: var(--text-dim); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+#todo-ft .ft-status p { margin: 0; color: var(--text); }
+#todo-ft button.ft-stop { margin-top: 0; padding: 4px 10px; }
+#todo-ft label.ft-ai {
+  display: flex; gap: 8px; align-items: center; margin-top: 10px;
+  font-size: 13.5px; letter-spacing: 0; text-transform: none; color: var(--text); cursor: pointer;
+}
+#todo-ft label.ft-ai input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+#todo-ft .ft-aihint:empty { display: none; }
+#todo-ft select {
+  width: 100%; min-height: 38px; padding: 6px 10px; font-size: 13.5px;
+  color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 6px;
+}
+#todo-ft select:focus { border-color: var(--accent); outline: none; }
+#todo-ft .ft-items {
+  list-style: none; margin: 12px 0 0; padding: 0;
+  max-height: min(48vh, 380px); overflow-y: auto; border-top: 1px solid var(--border);
+}
+#todo-ft li.ft-row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 8px; row-gap: 2px;
+  align-items: center; padding: 6px 2px; border-bottom: 1px solid var(--border);
+}
+#todo-ft li.ft-row > input[type="checkbox"] { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+#todo-ft li.ft-row input.ft-t, #todo-ft li.ft-row input.ft-d { min-width: 0; margin: 0; padding: 6px 8px; }
+#todo-ft li.ft-row input.ft-d { width: 9.5em; }
+#todo-ft .ft-meta { grid-column: 2 / 4; display: flex; flex-direction: column; gap: 2px; }
+#todo-ft .ft-meta small { font-size: 11.5px; color: var(--text-dim); overflow-wrap: anywhere; }
+#todo-ft .ft-meta small:empty, #todo-ft .ft-meta:empty { display: none; }
+#todo-ft menu button:disabled { opacity: 0.5; cursor: default; }
+@media (max-width: 480px) {
+  #todo-ft li.ft-row { grid-template-columns: auto minmax(0, 1fr); }
+  #todo-ft li.ft-row input.ft-d { grid-column: 2; width: 100%; box-sizing: border-box; }
+  #todo-ft .ft-meta { grid-column: 2; }
+}
+
 /* ---------- 9. Toast ---------- */
 #toast {
   position: fixed;

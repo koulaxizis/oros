@@ -4429,6 +4429,47 @@
     }
   }
 
+  // Tasks from text, a photo or a PDF (fromtext.js, TD-FT): the text
+  // is split into tasks and shown for review; "Add" is importApply's
+  // one write, with Undo. Opens from the add bar, the list window, and
+  // when more than one line is pasted into the add box.
+  var FT = window.OrosTodoFromText || null;
+  if (FT && FT.has()) {
+    FT.init({ lang: LANG, data: function () { return state; },
+      list: function () { var l = activeList(); return l ? l.id : ""; },
+      apply: importApply,
+      show: function (id) { if (listById(id)) { setActiveList(id); searchQuery = ""; activeFilters = []; updateFilterBtn(); renderAll(); } } });
+    var ftOpen = function (text) {
+      if (editingListId !== null) saveListDialog();
+      editingListId = null;
+      if ($("dlg-list").open) $("dlg-list").close();
+      FT.open({ text: text || "" });
+    };
+    var ftBtn = $("ft-btn"), ftList = $("l-ftext"), qa0 = $("quick-add");
+    if (ftBtn) {
+      ftBtn.hidden = false;
+      ftBtn.setAttribute("aria-label", FT.label());
+      ftBtn.setAttribute("title", FT.label());
+      ftBtn.addEventListener("click", function () { ftOpen(""); });
+    }
+    if (ftList) {
+      ftList.textContent = FT.label();
+      ftList.hidden = false;
+      ftList.addEventListener("click", function () { ftOpen(""); });
+    }
+    // a pasted list (two lines or more) is not one task
+    if (qa0) qa0.addEventListener("paste", function (e) {
+      var txt = "";
+      try { txt = (e.clipboardData || window.clipboardData).getData("text/plain") || ""; } catch (er) { txt = ""; }
+      var n = txt.split(/\r?\n/).filter(function (x) { return x.trim(); }).length;
+      if (n < 2) return;
+      e.preventDefault();
+      var before = qa0.value.trim();
+      qa0.value = "";
+      ftOpen((before ? before + "\n" : "") + txt);
+    });
+  }
+
   // .orostasks (OBF-4e): every list, task, subtask and label as one
   // orOS file (../recordpkg.js + package.js). Opening ADDS what this
   // device lacks, with its ids; a task already here (or deleted here)

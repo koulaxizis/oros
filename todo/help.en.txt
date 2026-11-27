@@ -73,6 +73,15 @@ In a task, open `Add / manage labels` to create labels with a name and colour, a
 
 The search box looks through every list: task text, notes, extra info, subtasks and label names. The funnel button filters by label; a task shows if it has any of the labels you pick. Results from all lists appear together, each with its list name. You can also delete a label from the filter menu; it's removed from all tasks.
 
+## Tasks from text, a photo or a PDF
+The button next to **+** in the add bar (also `Tasks from text, photo or PDF…` in a list's window) turns notes into tasks. Pasting two lines or more into the add box opens the same window with them.
+- **Text**: paste or type your notes. Each line, bullet (`-`, `*`, `•`), number (`1.`, `2)`) or check box (`[ ]`, `[x]`) becomes a task. A bullet indented under another becomes its subtask, and a line with two or more `;` becomes several tasks.
+- **Photo…**: pick a picture of a whiteboard, a handwritten list or a page. To-Do reads its text on this device with the same recognition as Files (Greek and English); the first time it asks to download the engine once. `Stop` ends a long read.
+- **PDF…**: the text of the PDF is read (up to 20 pages). A scanned PDF without text has its first 5 pages read like a photo. Nothing in the file is ever run.
+- Days in a task, such as `tomorrow`, `friday`, `Παρασκευή` or `15/12`, become its due date and leave the text; a time goes into its notes. A short line ending in a colon, such as `Shopping:`, is a heading: the first one is offered as a new list (or picks the list of that name), and a heading that is only a day, such as `Monday:`, dates the tasks under it.
+- `Find tasks` shows the list before anything is saved. Untick what you do not want, correct the text or the dates and choose the list. Tasks already open in that list, and tasks ticked in the text, start unticked. `Add` puts them at the end of the list; the message that follows has `Undo`.
+- **Split with the Assistant's AI** (off until you tick it, remembered on this device): the AI you set up in the Assistant splits the text instead of the rules. The window says which service reads the text: a model on this device or your own computer, or the online service you chose with your own key. If it does not answer, the rules split the text.
+
 ## Import from Todoist
 - First connect Todoist in [Settings](app:settings) › `Connected services` with your API token (Todoist › Settings › Integrations › Developer).
 - Then `List settings` (the ⋮ button) › `Import from Todoist or GitHub…` › `Read the account` shows what will come in; `Import` brings it, and `Undo` in the message takes it back.

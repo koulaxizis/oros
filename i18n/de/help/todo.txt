@@ -73,6 +73,15 @@ Die Schaltfläche mit den vier Quadraten daneben (`Liste an eine App senden…`)
 
 Die Suche durchsucht jede Liste: Aufgabentext, Notizen, weitere Angaben, Unteraufgaben und Labelnamen. Die Trichter-Schaltfläche filtert nach Label; eine Aufgabe erscheint, wenn sie eines der gewählten Labels hat. Treffer aus allen Listen erscheinen zusammen, jeweils mit ihrem Listennamen. Im Filtermenü kannst du auch ein Label löschen; es wird von allen Aufgaben entfernt.
 
+## Aufgaben aus Text, Foto oder PDF
+Die Schaltfläche neben **+** in der Eingabeleiste (auch `Aufgaben aus Text, Foto oder PDF…` im Fenster einer Liste) macht aus Notizen Aufgaben. Fügst du zwei Zeilen oder mehr in das Eingabefeld ein, öffnet sich dasselbe Fenster mit ihnen.
+- **Text**: Füge deine Notizen ein oder tippe sie. Jede Zeile, jeder Aufzählungspunkt (`-`, `*`, `•`), jede Nummer (`1.`, `2)`) und jedes Kästchen (`[ ]`, `[x]`) wird eine Aufgabe. Ein Punkt, der unter einem anderen eingerückt ist, wird dessen Unteraufgabe, und eine Zeile mit zwei oder mehr `;` wird zu mehreren Aufgaben.
+- **Foto…**: Wähle ein Bild einer Tafel, einer handgeschriebenen Liste oder einer Seite. Aufgaben liest den Text auf diesem Gerät mit derselben Erkennung wie Dateien (Griechisch und Englisch); beim ersten Mal fragt es, ob es die Erkennung einmal herunterladen darf. `Stopp` beendet ein langes Lesen.
+- **PDF…**: Der Text des PDFs wird gelesen (bis zu 20 Seiten). Bei einem gescannten PDF ohne Text werden die ersten 5 Seiten wie ein Foto gelesen. Nichts in der Datei wird je ausgeführt.
+- Tage in einer Aufgabe, etwa `tomorrow`, `friday`, `αύριο` oder `15/12`, werden ihr Fälligkeitsdatum und verschwinden aus dem Text; eine Uhrzeit kommt in die Notizen. Eine kurze Zeile mit Doppelpunkt am Ende, etwa `Einkauf:`, ist eine Überschrift: Die erste wird als neue Liste angeboten (oder wählt die Liste mit diesem Namen), und eine Überschrift, die nur ein Tag ist, etwa `Monday:`, gibt den Aufgaben darunter diesen Tag.
+- `Aufgaben finden` zeigt die Liste, bevor etwas gespeichert wird. Hake ab, was du nicht willst, korrigiere Text oder Daten und wähle die Liste. Aufgaben, die in dieser Liste schon offen sind, und im Text abgehakte Aufgaben beginnen ohne Haken. `Hinzufügen` setzt sie ans Ende der Liste; die folgende Meldung hat `Rückgängig`.
+- **Mit der KI des Assistenten aufteilen** (aus, bis du es anhakst, auf diesem Gerät gemerkt): Die KI, die du im Assistenten eingerichtet hast, teilt den Text statt der Regeln auf. Das Fenster sagt, welcher Dienst den Text liest: ein Modell auf diesem Gerät oder deinem eigenen Computer oder der Online-Dienst, den du mit deinem eigenen Schlüssel gewählt hast. Antwortet er nicht, teilen die Regeln den Text auf.
+
 ## Aus Todoist importieren
 - Verbinde zuerst Todoist unter [Einstellungen](app:settings) › `Verbundene Dienste` mit deinem API-Token (Todoist › Einstellungen › Integrationen › Entwickler).
 - Dann zeigt `Listeneinstellungen` (die Schaltfläche ⋮) › `Aus Todoist oder GitHub importieren…` › `Konto lesen`, was kommen wird; `Importieren` holt es, und `Rückgängig` in der Meldung nimmt es zurück.
