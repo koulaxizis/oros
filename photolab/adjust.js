@@ -17,6 +17,8 @@
 //                         "gradmap" (p.c0 shadows → p.c1 highlights)
 //   masked(before, after, mask, ox, oy)  mixes by the selection:
 //                         after = before where the mask is 0
+//   histogram(img), histograms(img), vectorscope(img, n), leanOf()
+//                         the scopes (read only, PL-CMP)
 //
 // Alpha is never changed. UMD: module.exports in Node (tests),
 // window.PhotoLab.adjust in the app.
@@ -226,8 +228,76 @@
     return hist;
   }
 
+  // ---------- Scopes (PL-CMP, read only) ----------
+  // Every k-th pixel so a scope never reads more than ~250,000.
+  function strideOf(img) { return Math.max(1, Math.ceil(img.w * img.h / 250000)); }
+
+  // Red, green, blue and luminance histograms (256 bins each) of the
+  // opaque-ish pixels; n = pixels counted.
+  function histograms(img) {
+    var r = new Uint32Array(256), g = new Uint32Array(256), b = new Uint32Array(256), l = new Uint32Array(256);
+    var d = img.data, k = strideOf(img) * 4, n = 0;
+    for (var i = 0; i < d.length; i += k) {
+      if (d[i + 3] < 128) continue;
+      r[d[i]]++; g[d[i + 1]]++; b[d[i + 2]]++;
+      l[Math.round(lum(d[i], d[i + 1], d[i + 2]))]++;
+      n++;
+    }
+    return { r: r, g: g, b: b, l: l, n: n };
+  }
+
+  // BT.709 colour difference of one pixel (0–255 in), each in −0.5…0.5.
+  function chroma(R, G, B) {
+    var y = lum(R, G, B) / 255;
+    return { cb: (B / 255 - y) / 1.8556, cr: (R / 255 - y) / 1.5748 };
+  }
+  // The six colour targets of the graticule (100 % colours).
+  var TARGETS = [["r", 255, 0, 0], ["y", 255, 255, 0], ["g", 0, 255, 0], ["c", 0, 255, 255], ["b", 0, 0, 255], ["m", 255, 0, 255]]
+    .map(function (t) { var c = chroma(t[1], t[2], t[3]); return { id: t[0], cb: c.cb, cr: c.cr, rgb: [t[1], t[2], t[3]] }; });
+  // The skin-tone line (the "I" line of a vectorscope), in degrees from
+  // +Cb towards +Cr.
+  var SKIN_DEG = 123;
+
+  // Vectorscope: an n × n grid of how many pixels have each chroma
+  // (x = Cb left → right, y = Cr bottom → top, the centre is grey);
+  // gain 2 spreads weak colours twice as far (the edge clips).
+  // Returns { n, bins, max, count, cb, cr } with the mean chroma
+  // (always without the gain).
+  function vectorscope(img, n, gain) {
+    n = Math.max(16, Math.min(512, n | 0 || 128));
+    gain = gain > 0 ? gain : 1;
+    var bins = new Uint32Array(n * n), d = img.data, k = strideOf(img) * 4;
+    var max = 0, count = 0, scb = 0, scr = 0, m = n - 1;
+    for (var i = 0; i < d.length; i += k) {
+      if (d[i + 3] < 128) continue;
+      var c = chroma(d[i], d[i + 1], d[i + 2]);
+      var x = Math.round((c.cb * gain + 0.5) * m), y = Math.round((0.5 - c.cr * gain) * m);
+      count++; scb += c.cb; scr += c.cr;
+      if (x < 0 || y < 0 || x > m || y > m) continue;    // past the edge with a gain
+      var v = ++bins[y * n + x];
+      if (v > max) max = v;
+    }
+    return { n: n, bins: bins, max: max, count: count, cb: count ? scb / count : 0, cr: count ? scr / count : 0 };
+  }
+
+  // Which way the colours lean, from a vectorscope's mean chroma:
+  // { id: "none" | "r" | "y" | "g" | "c" | "b" | "m", amt 0…1, skin }.
+  // skin = the lean lies within 12° of the skin-tone line.
+  function leanOf(v) {
+    var amt = Math.hypot(v.cb, v.cr);
+    if (amt < 0.02) return { id: "none", amt: amt, skin: false };
+    var a = Math.atan2(v.cr, v.cb), best = null, bd = 9;
+    TARGETS.forEach(function (t) {
+      var dd = Math.abs(Math.atan2(Math.sin(a - Math.atan2(t.cr, t.cb)), Math.cos(a - Math.atan2(t.cr, t.cb))));
+      if (dd < bd) { bd = dd; best = t.id; }
+    });
+    var sk = Math.abs(Math.atan2(Math.sin(a - SKIN_DEG * Math.PI / 180), Math.cos(a - SKIN_DEG * Math.PI / 180)));
+    return { id: best, amt: Math.min(1, amt / 0.5), skin: sk <= 12 * Math.PI / 180 };
+  }
+
   var API = { IDS: IDS, run: run, masked: masked, histogram: histogram, toHsl: toHsl, fromHsl: fromHsl, levelsLut: levelsLut,
-    curvesLut: curvesLut, bcLut: bcLut };
+    curvesLut: curvesLut, bcLut: bcLut,
+    histograms: histograms, chroma: chroma, vectorscope: vectorscope, leanOf: leanOf, TARGETS: TARGETS, SKIN_DEG: SKIN_DEG };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else { root.PhotoLab = root.PhotoLab || {}; root.PhotoLab.adjust = API; }

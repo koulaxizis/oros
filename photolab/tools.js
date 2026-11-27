@@ -1039,6 +1039,7 @@
     if (e.button === 2) return;
     var sp = view().screenPoint(e.clientX, e.clientY), ax = view().rulerAt(sp);
     if (ax) { op = guideOp(ax, -1, ax === "x" ? p.x : p.y); return; }
+    if (view().compareAt(sp)) { op = compareOp(); return; }
     if (st.tool === "move" || st.tool === "hand") {
       var gh = view().guideAt(sp);
       if (gh) { op = guideOp(gh.axis, gh.i, gh.v); return; }
@@ -1083,6 +1084,12 @@
       cancel: function () { view().setGuideDrag(null); PL.setDocRecord(JSON.parse(before)); }
     };
   }
+  // Drags the before / after line (PL-CMP); nothing in the picture changes.
+  function compareOp() {
+    function at(ev) { var sp = view().screenPoint(ev.clientX, ev.clientY); view().setCompareX(sp.x / Math.max(1, view().size().w)); }
+    return { move: function (q, ev) { at(ev); }, up: function (q, ev) { at(ev); }, cancel: function () {} };
+  }
+  var onLine = false;
   function onMove(e) {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pinch && pointers.size === 2) {
@@ -1096,6 +1103,10 @@
     }
     var p = view().toDoc(e.clientX, e.clientY);
     hoverPt = e.pointerType === "touch" ? null : p;
+    if (!op && e.pointerType !== "touch") {
+      var line = view().compareAt(view().screenPoint(e.clientX, e.clientY));
+      if (line !== onLine) { onLine = line; e.currentTarget.style.cursor = line ? "ew-resize" : cursor(); }
+    }
     PL.emit("pointer", p);
     if (op) {
       var evs = e.getCoalescedEvents ? e.getCoalescedEvents() : null;

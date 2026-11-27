@@ -21,6 +21,15 @@
 // the colours and mixes the result back by opacity × mask.
 //
 // Coordinates: doc px → screen CSS px: sx = x * z + ox.
+//
+// Before / after (PL-CMP): with compare on, a vertical line splits the
+// view; right of it the picture as it is, left of it the picture
+// before. While an adjustment or filter dialog previews, "before" is
+// the picture without that preview (PL.compareLive gives the preview
+// hook to draw it with); otherwise it is the picture as it was opened
+// this session, kept as one canvas (long side ≤ 4096 px, 2048 on a
+// phone) taken when the editor opens or, at the latest, just before
+// the first undo step. Nothing of it is stored.
 // ============================================================
 (function () {
   "use strict";
@@ -36,6 +45,8 @@
   var vecCache = {};                     // layerId → { sig, cv, x, y, w, h }
   var selPath = null;
   var checker = null;
+  var befBuf = null, befCtx = null, befDirty = true;
+  var cmp = { on: false, x: 0.5, snap: null, w: 0, h: 0, pending: 0 };
 
   var FONTS = {
     sans: 'system-ui, "Segoe UI", Roboto, "Noto Sans", sans-serif',
@@ -391,8 +402,9 @@
   }
 
   // The whole picture (or a rect of it) at a scale, as a canvas.
-  // layers: optional list to composite instead of the document's.
-  function flatten(rect, scale, layers) {
+  // layers: optional list to composite instead of the document's;
+  // preview: optional tool preview hook (the Scopes tab, PL-CMP).
+  function flatten(rect, scale, layers, preview) {
     var d = PL.st.doc;
     rect = rect || { x: 0, y: 0, w: d.w, h: d.h };
     scale = scale || 1;
@@ -400,7 +412,7 @@
     var out = canvas(w, h), g = out.getContext("2d"), lb = canvas(w, h);
     g.imageSmoothingQuality = "high";
     g.setTransform(scale, 0, 0, scale, -rect.x * scale, -rect.y * scale);
-    composite(g, lb, rect, null, layers);
+    composite(g, lb, rect, preview || null, layers);
     lb.width = lb.height = 0;
     freePool();
     return out;
@@ -442,6 +454,7 @@
     W = Math.max(1, Math.round(r.width)); H = Math.max(1, Math.round(r.height));
     cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
     docBuf.width = layBuf.width = cv.width; docBuf.height = layBuf.height = cv.height;
+    if (befBuf) { befBuf.width = cv.width; befBuf.height = cv.height; befDirty = true; }
     checker = null;
     docDirty = true; schedule();
   }
@@ -584,6 +597,50 @@
   function schedule() { if (!raf) raf = requestAnimationFrame(paint); }
   function invalidate() { docDirty = true; schedule(); }
 
+  // ---------- Before / after (PL-CMP) ----------
+  // The picture as it is now, kept as "before" (see the header).
+  function takeBefore() {
+    var d = PL.st.doc;
+    clearTimeout(cmp.pending); cmp.pending = 0;
+    if (!d) return;
+    var k = Math.min(1, (PL.phone ? 2048 : 4096) / Math.max(d.w, d.h));
+    if (cmp.snap) cmp.snap.width = cmp.snap.height = 0;
+    cmp.snap = flatten(null, k); cmp.w = d.w; cmp.h = d.h;
+  }
+  // A new document: forget the old "before", take the new one soon.
+  function newBefore() {
+    if (cmp.snap) cmp.snap.width = cmp.snap.height = 0;
+    cmp.snap = null;
+    if (cmp.on) { cmp.on = false; PL.emit("compare", false); }
+    clearTimeout(cmp.pending);
+    cmp.pending = setTimeout(function () { cmp.pending = 0; if (!cmp.snap && PL.st.doc) takeBefore(); }, 400);
+  }
+  // Called just before an undo step goes in: the first one of a
+  // document whose "before" is not taken yet takes it from the state
+  // the step undoes.
+  function beforeStep(step) {
+    if (cmp.snap || !PL.st.doc || !step) return;
+    if (PL.st.hist.canUndo() || PL.st.hist.canRedo()) return;
+    try { step.undo(); takeBefore(); } finally { step.redo(); }
+  }
+  function setCompare(on) {
+    on = !!on;
+    if (on === cmp.on) return;
+    if (on && !cmp.snap && !(PL.compareLive && PL.compareLive())) takeBefore();
+    cmp.on = on;
+    if (!on && befBuf) { befBuf.width = befBuf.height = 0; befBuf = befCtx = null; }
+    schedule();
+    PL.emit("compare", on);
+  }
+  function setCompareX(f) { cmp.x = Math.max(0, Math.min(1, f)); schedule(); }
+  // Is a screen point (CSS px) on the split line?
+  function compareAt(sp) {
+    if (!cmp.on || !PL.st.doc) return false;
+    var tol = PL.phone ? 22 : 12;
+    return Math.abs(sp.x - cmp.x * W) <= tol && sp.y >= 0 && sp.y <= H;
+  }
+  function liveBefore() { return cmp.on && PL.compareLive ? PL.compareLive() : null; }
+
   function checkerPattern() {
     if (checker) return checker;
     var c = canvas(16, 16), g = c.getContext("2d");
@@ -607,19 +664,8 @@
     if (!cv || !d) return;
     var dx = vw.ox * DPR, dy = vw.oy * DPR, z = vw.z * DPR;
     if (docDirty) {
-      docDirty = false;
-      docCtx.setTransform(1, 0, 0, 1, 0, 0);
-      docCtx.clearRect(0, 0, docBuf.width, docBuf.height);
-      var vis = visibleDocRect();
-      if (vis.w > 0 && vis.h > 0) {
-        docCtx.save();
-        docCtx.setTransform(z, 0, 0, z, dx, dy);
-        docCtx.beginPath(); docCtx.rect(0, 0, d.w, d.h); docCtx.clip();
-        docCtx.imageSmoothingEnabled = vw.z < 2;
-        docCtx.imageSmoothingQuality = "medium";
-        composite(docCtx, layBuf, vis, PL.tools && PL.tools.preview);
-        docCtx.restore();
-      }
+      docDirty = false; befDirty = true;
+      renderInto(docCtx, PL.tools && PL.tools.preview, d, dx, dy, z);
     }
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
@@ -629,7 +675,8 @@
     ctx.fillStyle = checkerPattern();
     ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.restore();
-    ctx.drawImage(docBuf, 0, 0);
+    if (cmp.on) drawCompare(d, dx, dy, z);
+    else ctx.drawImage(docBuf, 0, 0);
     // picture edge
     ctx.strokeStyle = "rgba(0,0,0,0.5)"; ctx.lineWidth = 1;
     ctx.strokeRect(Math.round(dx) - 0.5, Math.round(dy) - 0.5, Math.round(d.w * z) + 1, Math.round(d.h * z) + 1);
@@ -663,6 +710,82 @@
       drawRulers(ctx);
       ctx.restore();
     }
+    if (cmp.on) {
+      ctx.save();
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      drawSplit(ctx, P.rulers ? RULER : 0);
+      ctx.restore();
+    }
+  }
+  // The visible part of the picture, composited into a screen buffer.
+  function renderInto(bctx, preview, d, dx, dy, z) {
+    bctx.setTransform(1, 0, 0, 1, 0, 0);
+    bctx.clearRect(0, 0, bctx.canvas.width, bctx.canvas.height);
+    var vis = visibleDocRect();
+    if (vis.w > 0 && vis.h > 0) {
+      bctx.save();
+      bctx.setTransform(z, 0, 0, z, dx, dy);
+      bctx.beginPath(); bctx.rect(0, 0, d.w, d.h); bctx.clip();
+      bctx.imageSmoothingEnabled = vw.z < 2;
+      bctx.imageSmoothingQuality = "medium";
+      composite(bctx, layBuf, vis, preview);
+      bctx.restore();
+    }
+  }
+  // After right of the line, before left of it.
+  function drawCompare(d, dx, dy, z) {
+    var sx = Math.round(cmp.x * cv.width);
+    ctx.save();
+    ctx.beginPath(); ctx.rect(sx, 0, cv.width - sx, cv.height); ctx.clip();
+    ctx.drawImage(docBuf, 0, 0);
+    ctx.restore();
+    if (sx <= 0) return;
+    ctx.save();
+    ctx.beginPath(); ctx.rect(0, 0, sx, cv.height); ctx.clip();
+    var live = liveBefore();
+    if (live) {
+      if (!befBuf) { befBuf = canvas(cv.width, cv.height); befCtx = befBuf.getContext("2d"); befDirty = true; }
+      if (befDirty) { befDirty = false; renderInto(befCtx, live, d, dx, dy, z); }
+      ctx.drawImage(befBuf, 0, 0);
+    } else if (cmp.snap) {
+      // the picture's area; a "before" of another shape (crop, canvas
+      // size) is fitted inside it, centred
+      ctx.beginPath(); ctx.rect(dx, dy, d.w * z, d.h * z); ctx.clip();
+      var k = Math.min(d.w / cmp.w, d.h / cmp.h), bw = cmp.w * k, bh = cmp.h * k;
+      if (Math.abs(cmp.w / cmp.h - d.w / d.h) < 0.002) { bw = d.w; bh = d.h; }
+      var bx = (d.w - bw) / 2, by = (d.h - bh) / 2;
+      // pixels stay sharp when zoomed in past the kept size
+      ctx.imageSmoothingEnabled = cmp.snap.width / (bw * z) > 0.5;
+      ctx.imageSmoothingQuality = "medium";
+      ctx.drawImage(cmp.snap, dx + bx * z, dy + by * z, bw * z, bh * z);
+    } else ctx.drawImage(docBuf, 0, 0);
+    ctx.restore();
+  }
+  // The line, its handle and the two labels (CSS px).
+  function drawSplit(g, top) {
+    var x = Math.round(cmp.x * W) + 0.5, cy = Math.round(top + (H - top) / 2), r = PL.phone ? 16 : 13;
+    g.lineWidth = 3; g.strokeStyle = "rgba(0,0,0,0.45)";
+    g.beginPath(); g.moveTo(x, top); g.lineTo(x, H); g.stroke();
+    g.lineWidth = 1.5; g.strokeStyle = "#fff";
+    g.beginPath(); g.moveTo(x, top); g.lineTo(x, H); g.stroke();
+    g.fillStyle = "#fff"; g.strokeStyle = "rgba(0,0,0,0.45)"; g.lineWidth = 1;
+    g.beginPath(); g.arc(x, cy, r, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.fillStyle = "#222";
+    g.beginPath(); g.moveTo(x - 3, cy - 5); g.lineTo(x - 8, cy); g.lineTo(x - 3, cy + 5); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(x + 3, cy - 5); g.lineTo(x + 8, cy); g.lineTo(x + 3, cy + 5); g.closePath(); g.fill();
+    g.font = "600 12px system-ui, sans-serif"; g.textBaseline = "middle";
+    function pill(text, px, right) {
+      var w = Math.ceil(g.measureText(text).width) + 16, h = 22, y = top + 8;
+      var bx = right ? px + 8 : px - 8 - w;
+      if (bx < 4 || bx + w > W - 4) return;
+      g.fillStyle = "rgba(0,0,0,0.6)";
+      g.beginPath();
+      if (g.roundRect) g.roundRect(bx, y, w, h, 11); else g.rect(bx, y, w, h);
+      g.fill();
+      g.fillStyle = "#fff"; g.textAlign = "left"; g.fillText(text, bx + 8, y + h / 2 + 0.5);
+    }
+    pill(PL.t("cmp.before"), x, false);
+    pill(PL.t("cmp.after"), x, true);
   }
 
   PL.view = {
@@ -676,6 +799,10 @@
     fxBounds: fxBounds, renderLayer: renderLayer, drawMask: drawMask,
     RULER: RULER, rulerAt: rulerAt, guideAt: guideAt,
     setGuideDrag: function (gdr) { guideDrag = gdr; schedule(); },
-    renderText: renderText, shapePath: shapePath, canvas: canvas, vector: vector
+    renderText: renderText, shapePath: shapePath, canvas: canvas, vector: vector,
+    // before / after (PL-CMP)
+    takeBefore: takeBefore, newBefore: newBefore, beforeStep: beforeStep, setCompare: setCompare,
+    setCompareX: setCompareX, compareAt: compareAt, compare: function () { return cmp.on; },
+    hasBefore: function () { return !!cmp.snap; }
   };
 })();

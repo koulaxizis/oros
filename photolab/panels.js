@@ -5,8 +5,8 @@
 //     phone), undo / redo, save state, panel toggle
 //   - tool bar (left on desktop, bottom on a phone) + colours
 //   - options bar for the current tool
-//   - side panel: Layers and History (a bottom sheet on a phone)
-//   - status bar: zoom, size
+//   - side panel: Layers, History and Scopes (histogram + vectorscope)
+//   - status bar: before / after, zoom, size
 //   - centred dialogs (R32) for New, Resize, Canvas size, Rotate,
 //     Feather, Grow / shrink, Text, Export and the adjustments
 //   - shortcuts (Photoshop letters; Ctrl+Alt+Shift goes to the shell)
@@ -65,7 +65,8 @@
     quick: svg('<path d="M4 20l7-7"/><circle cx="15" cy="9" r="5" stroke-dasharray="2.5 2.5"/>'),
     mask: svg('<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="12" cy="12" r="5" fill="currentColor"/>'),
     adj: svg('<circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor"/>'),
-    fx: svg('<path d="M10 20l1-8M6 12h7M14 4h-1a3 3 0 0 0-3 3l-1 5"/><path d="M15 13l5 6M20 13l-5 6"/>')
+    fx: svg('<path d="M10 20l1-8M6 12h7M14 4h-1a3 3 0 0 0-3 3l-1 5"/><path d="M15 13l5 6M20 13l-5 6"/>'),
+    compare: svg('<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M12 2v20"/><path d="M3 15l4-4 5 5" />')
   };
   PL.ICON = ICON;
 
@@ -313,6 +314,7 @@
       if (isF) return ops().filtered(tg, kind, p);
       return ops().adjusted(tg, kind === "looks" ? "preset" : kind, p).then(function (img) { return { r: tg.r, img: img }; });
     }
+    var scopes = null;                                   // Levels: histogram + vectorscope, live
     function preview() {
       clearTimeout(timer);
       timer = setTimeout(function () {
@@ -322,6 +324,8 @@
           var img = res.img, c = PL.view.canvas(img.w, img.h);
           c.getContext("2d").putImageData(new ImageData(img.data, img.w, img.h), 0, 0);
           adjPreview.cv = c; adjPreview.r = res.r; PL.view.invalidate();
+          if (scopes) scopes.draw(img);
+          PL.emit("preview");
         }, function () {});
       }, isF ? 120 : 60);
     }
@@ -336,7 +340,8 @@
       p.g = 1;
       body.push(range(t("adj.gamma"), 100, 10, 300, function (x) { p.g = x / 100; preview(); }));
       slider("ob", t("adj.outBlack"), 0, 0, 255); slider("ow", t("adj.outWhite"), 255, 0, 255);
-      body.unshift(histogram(tg.img));
+      scopes = dialogScopes(tg.img);
+      body.unshift(scopes.node);
     } else if (kind === "threshold") slider("t", t("adj.threshold"), 128, 0, 255);
     else if (kind === "posterize") slider("n", t("adj.levels"), 4, 2, 32);
     else if (kind === "looks") {
@@ -372,14 +377,19 @@
     var title = t(isF ? "fk." + kind : "adjk." + kind);
     if (isF) body.push(hint(t("hint.filter")));
     adjPreview = { L: tg.L, r: tg.r, cv: null };
+    // Before / after (PL-CMP): here "before" is the picture without
+    // this dialog's change; the view goes back as it was on closing.
+    var cmpWas = PL.view.compare();
+    var cmpB = compareToggle("btn ghost small cmp-dlg", t("btn.cmpDlg"));
+    function done() { adjPreview = null; PL.view.setCompare(cmpWas); PL.view.invalidate(); PL.emit("preview"); }
     PL.dialog({
-      title: title, ok: t("btn.apply"), body: body, wide: kind === "fx",
+      title: title, ok: t("btn.apply"), body: body, wide: kind === "fx", extra: [cmpB],
       onOk: function () {
-        adjPreview = null;
+        done();
         if (isF) ops().applyFilter(tg, kind, p, title);
         else ops().applyAdjust(tg, kind === "looks" ? "preset" : kind, p, title);
       },
-      onCancel: function () { adjPreview = null; PL.view.invalidate(); }
+      onCancel: done
     });
     if (isF) preview();
   }
@@ -394,6 +404,140 @@
     for (var j = 0; j < 256; j++) { var v = Math.round(h[j] / mx * 60); g.fillRect(j, 60 - v, 1, v); }
     c.className = "histo";
     return c;
+  }
+
+  // ---------- Before / after + scopes (PL-CMP) ----------
+  // A button that turns before / after on and off and shows its state.
+  var cmpButtons = [];
+  function compareToggle(cls, label) {
+    var b = el("button", cls, label);
+    b.type = "button";
+    b.setAttribute("aria-pressed", PL.view.compare() ? "true" : "false");
+    b.addEventListener("click", function () { toggleCompare(); });
+    cmpButtons = cmpButtons.filter(function (x) { return x.isConnected; });
+    cmpButtons.push(b);
+    return b;
+  }
+  function toggleCompare() {
+    if (!st.doc) return;
+    var on = !PL.view.compare();
+    PL.view.setCompare(on);
+    PL.live(t(on ? "live.cmpOn" : "live.cmpOff"));
+  }
+  PL.compareLive = function () { return adjPreview ? basePreview : null; };
+
+  // The histogram (red, green, blue added up, brightness as a line)
+  // and the vectorscope, drawn on dark ground in both themes.
+  var SCOPE_BG = "#111111";
+  function drawHisto(c, hs) {
+    var g = c.getContext("2d"), w = c.width, h = c.height, mx = 1;
+    g.globalCompositeOperation = "source-over";
+    g.fillStyle = SCOPE_BG; g.fillRect(0, 0, w, h);
+    if (!hs || !hs.n) return;
+    // the tallest bin but the two ends (pure black / white) sets the scale
+    ["r", "g", "b", "l"].forEach(function (k) { for (var i = 1; i < 255; i++) mx = Math.max(mx, hs[k][i]); });
+    var sx = w / 256;
+    g.globalCompositeOperation = "lighter";
+    [["r", "rgba(230,60,60,0.85)"], ["g", "rgba(60,200,80,0.85)"], ["b", "rgba(70,110,255,0.85)"]].forEach(function (ch) {
+      g.fillStyle = ch[1];
+      g.beginPath(); g.moveTo(0, h);
+      for (var i = 0; i < 256; i++) g.lineTo(i * sx, h - Math.min(1, hs[ch[0]][i] / mx) * (h - 2));
+      g.lineTo(w, h); g.closePath(); g.fill();
+    });
+    g.globalCompositeOperation = "source-over";
+    g.strokeStyle = "rgba(235,235,235,0.9)"; g.lineWidth = 1;
+    g.beginPath();
+    for (var j = 0; j < 256; j++) { var y = h - Math.min(1, hs.l[j] / mx) * (h - 2); if (j) g.lineTo(j * sx, y); else g.moveTo(0, y); }
+    g.stroke();
+  }
+  function drawVec(c, v, gain) {
+    var g = c.getContext("2d"), N = c.width, n = v ? v.n : 0;
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.fillStyle = SCOPE_BG; g.fillRect(0, 0, N, N);
+    if (v && v.max) {
+      var im = g.createImageData(n, n), d = im.data, lm = Math.log(1 + v.max), m = n - 1;
+      for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+        var cnt = v.bins[y * n + x];
+        if (!cnt) continue;
+        var cb = (x / m - 0.5) / gain, cr = (0.5 - y / m) / gain, L = 0.62;
+        var R = L + 1.5748 * cr, B = L + 1.8556 * cb, G = (L - 0.2126 * R - 0.0722 * B) / 0.7152;
+        var k = 0.35 + 0.65 * Math.log(1 + cnt) / lm, i = (y * n + x) * 4;
+        d[i] = Math.max(0, Math.min(255, (R * 0.6 + 0.4) * 255 * k));
+        d[i + 1] = Math.max(0, Math.min(255, (G * 0.6 + 0.4) * 255 * k));
+        d[i + 2] = Math.max(0, Math.min(255, (B * 0.6 + 0.4) * 255 * k));
+        d[i + 3] = 255;
+      }
+      var tmp = PL.view.canvas(n, n);
+      tmp.getContext("2d").putImageData(im, 0, 0);
+      g.imageSmoothingEnabled = false;
+      g.drawImage(tmp, 0, 0, N, N);
+    }
+    // graticule: rings, cross, the skin-tone line and the six colours
+    var cx = N / 2, R0 = N / 2 - 1, s = N - 1;
+    g.strokeStyle = "rgba(200,200,200,0.35)"; g.lineWidth = 1;
+    [0.25, 0.5, 0.75, 1].forEach(function (f) { g.beginPath(); g.arc(cx, cx, R0 * f, 0, Math.PI * 2); g.stroke(); });
+    g.beginPath(); g.moveTo(cx, 0); g.lineTo(cx, N); g.moveTo(0, cx); g.lineTo(N, cx); g.stroke();
+    var a = PL.A.SKIN_DEG * Math.PI / 180;
+    g.strokeStyle = "rgba(240,190,150,0.7)"; g.setLineDash([4, 3]);
+    g.beginPath(); g.moveTo(cx, cx); g.lineTo(cx + Math.cos(a) * R0, cx - Math.sin(a) * R0); g.stroke();
+    g.setLineDash([]);
+    g.font = "600 10px system-ui, sans-serif"; g.textAlign = "center"; g.textBaseline = "middle";
+    PL.A.TARGETS.forEach(function (T0) {
+      var px = (T0.cb * gain + 0.5) * s, py = (0.5 - T0.cr * gain) * s;
+      if (px < -4 || py < -4 || px > N + 4 || py > N + 4) return;   // ×2 pushes them out
+      g.strokeStyle = "rgb(" + T0.rgb.join(",") + ")";
+      g.strokeRect(px - 5, py - 5, 10, 10);
+      if (N < 160) return;                                           // no letters on the small one
+      var ox = px - cx, oy = py - cx, l = Math.hypot(ox, oy) || 1;    // the letter inside its box
+      g.fillStyle = "rgba(235,235,235,0.85)";
+      g.fillText(T0.id.toUpperCase(), px - ox / l * 14, py - oy / l * 14);
+    });
+  }
+  function leanText(v) {
+    var ln = PL.A.leanOf(v);
+    if (ln.id === "none") return t("sc.neutral");
+    return t("sc.lean", { c: t("sc.c." + ln.id) }) + (ln.skin ? " " + t("sc.skin") : "");
+  }
+  // Levels: the histogram (as before) and a small vectorscope beside it.
+  function dialogScopes(img) {
+    var row = el("div", "dlg-scopes"), h = histogram(img), vc = PL.view.canvas(72, 72);
+    vc.className = "vec-mini"; vc.setAttribute("role", "img");
+    row.appendChild(h); row.appendChild(vc);
+    function draw(im) {
+      var hh = PL.A.histogram(im), g = h.getContext("2d"), mx = 1;
+      for (var i = 0; i < 256; i++) mx = Math.max(mx, hh[i]);
+      g.clearRect(0, 0, 256, 60);
+      g.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--text-dim") || "#999";
+      for (var j = 0; j < 256; j++) { var vv = Math.round(hh[j] / mx * 60); g.fillRect(j, 60 - vv, 1, vv); }
+      var v = PL.A.vectorscope(im, 72);
+      drawVec(vc, v, 1);
+      vc.setAttribute("aria-label", t("sc.vecAria") + " " + leanText(v));
+    }
+    draw(img);
+    return { node: row, draw: draw };
+  }
+
+  // The Scopes tab: the whole picture as it looks (with a dialog's
+  // preview), at most 360 px long, redrawn 200 ms after a change while
+  // the tab is showing. Nothing is stored.
+  var scopeTimer = null, vecGain = 1;
+  function scopesShowing() { return document.body.classList.contains("side-open") && pr().panel === "scopes"; }
+  function scopesSoon() { if (!scopesShowing()) return; clearTimeout(scopeTimer); scopeTimer = setTimeout(renderScopes, 200); }
+  function renderScopes() {
+    clearTimeout(scopeTimer);
+    var hc = $("sc-histo"), vc = $("sc-vec"), note = $("sc-note");
+    if (!st.doc) { drawHisto(hc, null); drawVec(vc, null, vecGain); note.textContent = t("sc.empty"); return; }
+    var d = st.doc, k = Math.min(1, 360 / Math.max(d.w, d.h));
+    var c = PL.view.flatten(null, k, null, PL.tools && PL.tools.preview), g = c.getContext("2d");
+    var im = g.getImageData(0, 0, c.width, c.height);
+    c.width = c.height = 0;
+    var img = { w: im.width, h: im.height, data: im.data };
+    var hs = PL.A.histograms(img), v = PL.A.vectorscope(img, 120, vecGain);
+    drawHisto(hc, hs); drawVec(vc, v, vecGain);
+    var lt = leanText(v);
+    note.textContent = lt;
+    hc.setAttribute("aria-label", t("sc.histoAria"));
+    vc.setAttribute("aria-label", t("sc.vecAria") + " " + lt);
   }
   // The adjustment preview replaces the target area while the dialog is open.
   var basePreview = null;
@@ -844,6 +988,8 @@
       { id: "zoomOut", k: "Ctrl+-", run: function () { PL.view.zoomStep(-1); }, on: has },
       { id: "fit", k: "Ctrl+0", run: function () { PL.view.fit(); }, on: has },
       { id: "actual", k: "Ctrl+1", run: function () { var s = PL.view.size(); PL.view.zoomAt(1, s.w / 2, s.h / 2); }, on: has },
+      { id: "compare", k: "\\", checked: function () { return PL.view.compare(); }, run: toggleCompare, on: has },
+      { id: "scopes", run: function () { setPanel(true); setTab("scopes"); }, on: has },
       "-",
       { id: "rulers", k: "Ctrl+Alt+R", checked: function () { return pr().rulers; }, run: function () { togglePref("rulers"); PL.view.fit(); }, on: has },
       { id: "guides", k: "Ctrl+;", checked: function () { return pr().guides; }, run: function () { togglePref("guides"); }, on: has },
@@ -1102,13 +1248,15 @@
     $("panel-btn").setAttribute("aria-expanded", open ? "true" : "false");
     pr().panelOpen = open; PL.savePrefs();
     setTimeout(function () { PL.view.resize(); }, 0);
+    if (open) scopesSoon();
   }
   function setTab(id) {
     pr().panel = id; PL.savePrefs();
-    ["layers", "history"].forEach(function (k) {
+    ["layers", "history", "scopes"].forEach(function (k) {
       $("tab-" + k).setAttribute("aria-selected", k === id ? "true" : "false");
       $("pane-" + k).hidden = k !== id;
     });
+    if (id === "scopes") renderScopes();
   }
   var thumbs = {};
   function layerThumb(L) {
@@ -1284,6 +1432,7 @@
     if (/^Digit\d$/.test(e.code)) k = e.code.slice(5);
     if (e.code === "Semicolon") k = ";";                                      // Greek layout puts ΄ here
     if (e.code === "Quote") k = "'";
+    if (e.code === "Backslash") k = "\\";
     return (e.ctrlKey || e.metaKey ? "ctrl+" : "") + (e.altKey ? "alt+" : "") + (e.shiftKey ? "shift+" : "") + k;
   }
   function wireKeys() {
@@ -1295,7 +1444,11 @@
       if (p && p !== window && p.orosShortcuts && typeof p.orosShortcuts.handle === "function" && p.orosShortcuts.handle(e)) e.stopPropagation();
     }, true);
     document.addEventListener("keydown", function (e) {
-      if (document.querySelector("dialog[open]")) return;
+      if (document.querySelector("dialog[open]")) {
+        // \ still compares while an adjustment or filter previews (PL-CMP)
+        if (adjPreview && !typing(e) && comboOf(e) === "\\") { e.preventDefault(); toggleCompare(); }
+        return;
+      }
       if (e.key === "Escape" && openMenu) { closeMenus(); return; }
       if (!st.doc) {
         var c0 = comboOf(e);
@@ -1365,10 +1518,23 @@
       b.addEventListener("pointerenter", function () { if (openMenu && openMenu.btn !== b) showMenu(m, b); });
       bar.appendChild(b);
     });
-    ["layers", "history"].forEach(function (k) {
+    ["layers", "history", "scopes"].forEach(function (k) {
       $("tab-" + k).textContent = t("tab." + k);
       $("tab-" + k).addEventListener("click", function () { setTab(k); });
     });
+    $("sc-histo-h").textContent = t("sc.histo"); $("sc-vec-h").textContent = t("sc.vec");
+    var zb = $("sc-zoom");
+    zb.textContent = "×2"; PL.setLabel(zb, t("sc.zoom")); zb.setAttribute("aria-pressed", "false");
+    zb.addEventListener("click", function () {
+      vecGain = vecGain === 1 ? 2 : 1;
+      zb.setAttribute("aria-pressed", vecGain === 2 ? "true" : "false");
+      renderScopes();
+    });
+    var cb0 = $("cmp-btn");
+    cb0.innerHTML = ICON.compare; PL.setLabel(cb0, t("btn.compare"));
+    cb0.setAttribute("aria-pressed", "false");
+    cb0.addEventListener("click", toggleCompare);
+    cmpButtons.push(cb0);
     var acts = [["add-layer", ICON.plus, "btn.newLayer", function () { ops().newLayer(); }],
                 ["dup-layer", ICON.dup, "btn.duplicate", function () { ops().duplicate(); }],
                 ["up-layer", ICON.up, "btn.up", function () { ops().moveBy(1); }],
@@ -1408,7 +1574,12 @@
 
     PL.on("layers", renderLayers);
     PL.on("doc", function () { renderHead(); renderLayersSoon(); });
-    PL.on("history", function () { renderHistory(); renderLayersSoon(); });
+    PL.on("history", function () { renderHistory(); renderLayersSoon(); scopesSoon(); });
+    PL.on("layers", scopesSoon);
+    PL.on("preview", scopesSoon);
+    PL.on("compare", function (on) {
+      cmpButtons.forEach(function (b) { b.setAttribute("aria-pressed", on ? "true" : "false"); });
+    });
     PL.on("dirty", renderHead);
     PL.on("view", renderZoom);
     PL.on("colors", renderTools);
@@ -1425,7 +1596,7 @@
     wireKeys();
     document.body.classList.toggle("side-open", !!pr().panelOpen);
     $("panel-btn").setAttribute("aria-expanded", pr().panelOpen ? "true" : "false");
-    setTab(pr().panel === "history" ? "history" : "layers");
+    setTab(pr().panel === "history" || pr().panel === "scopes" ? pr().panel : "layers");
     renderTools(); renderOptions();
     PL.home.build();
     PL.io.wire();
