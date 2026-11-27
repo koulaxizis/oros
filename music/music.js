@@ -11,7 +11,7 @@
 //     (library.js scans them; store.js keeps the device index)
 //   - device-local: prefs "oros-music-prefs" (library view; the tab is saved but every start opens on Home,
 //     sort, old-tag encoding, LRCLIB yes/no), lyrics found online
-//     "oros-music-lyrics"; the sound settings live in the host
+//     "oros-music-lyrics", today's Daily mix order "oros-music-daily"; the sound settings live in the host
 //     ("oros-music-sound": equalizer, crossfade, ReplayGain)
 // Sections:
 //   1. Constants, i18n, helpers
@@ -1634,6 +1634,7 @@
   // (oros-music-stats, written by the host once per counted play).
   var MX = window.OrosMusicMixes || null;
   var STATS_KEY = "oros-music-stats";
+  var DAILY_KEY = "oros-music-daily";        // device-local: today's Daily mix order { d, k } (MU-DAY)
   function stats() { try { return C.normStats(JSON.parse(localStorage.getItem(STATS_KEY) || "null")); } catch (e) { return C.normStats(null); } }
   function likedMap() { var m = {}; C.likedList(D()).forEach(function (l) { if (l.on !== 0) m[l.k] = 1; }); return m; }
   // Every song that can play here: the device's files, liked songs,
@@ -1655,7 +1656,13 @@
     if (!MX) return [];
     pool = pool || mixPool();
     var h = (H && H.history()) || {}, now = Date.now();
-    if (id === "daily") return MX.daily(pool, h, likedMap(), now, 40);
+    if (id === "daily") {
+      var fresh = MX.daily(pool, h, likedMap(), now, 40), kd;
+      if (!MX.keepDaily) return fresh;
+      try { kd = MX.keepDaily(JSON.parse(localStorage.getItem(DAILY_KEY) || "null"), now, fresh, pool, 40); } catch (e) { kd = MX.keepDaily(null, now, fresh, pool, 40); }
+      if (kd.save) { try { localStorage.setItem(DAILY_KEY, JSON.stringify(kd.save)); } catch (e) {} }
+      return kd.list;
+    }
     if (id === "repeat") return MX.onRepeat(pool, h, now, 30);
     if (id === "rewind") return MX.rewind(pool, h, now, 30);
     if (id === "radio" && seed) return MX.radio(playable(seed) || seed, pool, D().pls, h, likedMap(), now, 50);

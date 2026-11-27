@@ -90,6 +90,43 @@ test("mixes: On repeat, Repeat rewind, Daily mix (stable for the day), Song radi
   assert.deepEqual(M.daily([], hist, {}, NOW), []);
 });
 
+test("Daily mix kept for the day: a like or a play never reshuffles it (MU-DAY)", () => {
+  const pool = [];
+  for (let i = 0; i < 60; i++) pool.push(song(i, "Artist " + (i % 6)));
+  const hist = { c: {}, l: {} };
+  pool.slice(0, 5).forEach((x) => { hist.c[x.k] = 4; hist.l[x.k] = NOW - DAY; });
+  const first = M.keepDaily(null, NOW, M.daily(pool, hist, {}, NOW, 40), pool, 40);
+  assert.equal(first.list.length, 40);
+  assert.equal(first.save.k.length, 40);
+  const keys = first.list.map((x) => x.k);
+  // A like and more plays change the fresh mix, not the kept one.
+  const liked = {}; pool.slice(30, 50).forEach((x) => { liked[x.k] = 1; });
+  hist.c[pool[40].k] = 9; hist.l[pool[40].k] = NOW;
+  const fresh = M.daily(pool, hist, liked, NOW + 3600000, 40);
+  assert.notDeepEqual(fresh.map((x) => x.k), keys, "the fresh mix moved");
+  const again = M.keepDaily(first.save, NOW + 3600000, fresh, pool, 40);
+  assert.deepEqual(again.list.map((x) => x.k), keys, "same order all day");
+  assert.equal(again.save, null, "nothing to write");
+  // A song gone from the pool drops out; the rest keep their order.
+  const gone = keys[3], less = pool.filter((x) => x.k !== gone);
+  const dropped = M.keepDaily(first.save, NOW, fresh, less, 40);
+  assert.deepEqual(dropped.list.map((x) => x.k), keys.filter((k) => k !== gone));
+  // Started with few songs (files still loading): kept ones stay first, new ones are added at the end.
+  const small = pool.slice(0, 10), early = M.keepDaily(null, NOW, M.daily(small, hist, {}, NOW, 40), small, 40);
+  assert.equal(early.list.length, 10);
+  const grown = M.keepDaily(early.save, NOW, M.daily(pool, hist, {}, NOW, 40), pool, 40);
+  assert.deepEqual(grown.list.slice(0, 10).map((x) => x.k), early.list.map((x) => x.k));
+  assert.equal(grown.list.length, 40);
+  assert.equal(grown.save.k.length, 40);
+  assert.equal(M.keepDaily(grown.save, NOW, fresh, pool, 40).save, null);
+  // A new day makes a new mix; hostile saved data is ignored.
+  const next = M.keepDaily(first.save, NOW + 2 * DAY, M.daily(pool, hist, {}, NOW + 2 * DAY, 40), pool, 40);
+  assert.notDeepEqual(next.list.map((x) => x.k), keys);
+  assert.equal(M.keepDaily({ d: "x", k: "nope" }, NOW, fresh, pool, 40).list.length, 40);
+  assert.equal(M.keepDaily(Object.assign({}, first.save, { k: [1, null, {}, keys[0]] }), NOW, [], pool, 40).list.length, 1);
+  assert.equal(M.keepDaily(null, NOW, [], [], 40).save, null);
+});
+
 test("Spotify export: Playlist JSON, YourLibrary JSON, CSV (Exportify and others)", () => {
   const pl = JSON.stringify({ playlists: [
     { name: "Καλοκαίρι", lastModifiedDate: "2024-01-01", items: [
