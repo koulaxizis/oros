@@ -56,6 +56,7 @@ orosPack("de", "settings", {
  "a.wallpaper.viz.rings": "Ringe",
  "a.wallpaper.viz.bars": "Balken",
  "a.wallpaper.viz.wave": "Welle",
+ "a.wallpaper.viz.calm": "Das gerade laufende Lied kommt von einem Server, der orOS seinen Ton nicht hören lässt, darum bewegt sich das Licht ruhig von selbst. Lieder auf diesem Gerät und Streams von Servern, die es erlauben, bewegen es im Takt.",
  "a.wallpaper.still.reduced": "Gerade still: Reduzierte Bewegung ist an (Einstellungen › Bedienungshilfen oder die Einstellung des Geräts selbst, etwa Animationen entfernen auf Android).",
  "a.wallpaper.still.saver": "Gerade still: Energiesparen ist an (Schnelleinstellungen).",
  "a.wallpaper.still.battery": "Gerade still: Der Akku ist unter 20 % und lädt nicht.",

@@ -100,7 +100,7 @@ Diese Einstellungen bleiben auf diesem Gerät.
 ## Lichtshow
 `Lichtshow` (die Sonnen-Schaltfläche oben im großen Player) füllt das Fenster mit Licht, das sich mit der Musik bewegt. `Licht:` wählt den Stil: Leuchten, Ringe, Balken oder Welle. `Nur das Licht` blendet die Steuerung aus; tippe irgendwohin oder drücke eine Taste, um sie zurückzuholen. Musik merkt sich deine Wahl auf diesem Gerät.
 
-Das Licht folgt dem Ton von Songs auf diesem Gerät, von Offline-Kopien und von Songs aus deinem eigenen WebDAV oder Dropbox. Viele Seiten, die Musik streamen, lassen eine Webseite ihren Ton nicht hören; bei diesen bewegt sich das Licht von selbst, und eine Zeile unter der Steuerung sagt das. Alles geschieht auf diesem Gerät: Nichts wird aufgenommen oder gesendet.
+Das Licht folgt dem Ton von Songs auf diesem Gerät, von Offline-Kopien und von Songs aus deinem eigenen WebDAV oder Dropbox. Ein gestreamter Song bewegt es auch, wenn seine Seite eine Webseite den Ton hören lässt (Musik fragt die Seite einmal, bevor der Song beginnt); viele Seiten tun das nicht, und bei diesen bewegt sich das Licht von selbst, und eine Zeile unter der Steuerung sagt das. Mit echtem Ton antwortet das Licht auf jeden Schlag: Es schwillt an, startet einen Ring, die Balken springen oder die Welle wächst. Alles geschieht auf diesem Gerät: Nichts wird aufgenommen oder gesendet.
 
 Das Licht bleibt still, wenn reduzierte Bewegung an ist, wenn der Akku schwach ist (unter 20 % und nicht am Laden) oder wenn das Gerät zu ausgelastet ist (dann ruht es ein paar Minuten und bewegt sich von selbst wieder). Es blinkt nie: Es wird sanft heller und dunkler.
 
