@@ -361,7 +361,7 @@
       own.forEach(function (O) {
         var c = content(O);
         if (!c) return;
-        jobs.push(jobFor(c).then(function (img) { return { L: O, img: img, c: c }; }));
+        jobs.push(jobFor(c, O).then(function (img) { return { L: O, img: img, c: c }; }));
       });
     });
     PL.busy(true);
@@ -374,17 +374,23 @@
         st.sel = null; view().selChanged();
       }, "all");
       view().fit();
-    }, function () { PL.busy(false); PL.toast(t("msg.failed")); });
+    }, function (e) { PL.busy(false); if (!(e && e.quiet)) PL.toast(t("msg.failed")); });
   }
-  function resizeImage(w, h) {
+  // o (optional, Enlarge with AI): { label, job(c, O, w, h) → Promise<img>
+  // | null } — a photo layer's pixels (O.k "raster") go through job when
+  // it gives a promise; masks and the rest are resampled as usual. A
+  // rejection with { quiet: true } leaves the message to the caller.
+  function resizeImage(w, h, o) {
     var d = st.doc;
     var fit = C.fitSize(w, h, PL.limits);
     if (fit.scaled) PL.toast(t("msg.scaled", { w: fit.w, h: fit.h }));
     w = fit.w; h = fit.h;
     if (w === d.w && h === d.h) return Promise.resolve();
     var kx = w / d.w, ky = h / d.h;
-    return eachRaster(t("step.resize"), function (c) {
-      return PL.job("resize", { img: c.img, w: Math.max(1, Math.round(c.img.w * kx)), h: Math.max(1, Math.round(c.img.h * ky)) });
+    return eachRaster((o && o.label) || t("step.resize"), function (c, O) {
+      var tw = Math.max(1, Math.round(c.img.w * kx)), th = Math.max(1, Math.round(c.img.h * ky));
+      var p = o && o.job && O && O.k === "raster" ? o.job(c, O, tw, th) : null;
+      return p || PL.job("resize", { img: c.img, w: tw, h: th });
     }, function (c) { return { x: Math.round(c.x * kx), y: Math.round(c.y * ky) }; }, function (L) {
       L.x = Math.round(L.x * kx); L.y = Math.round(L.y * ky);
       if (L.k === "text") L.tx.z = Math.max(4, Math.min(2000, Math.round(L.tx.z * Math.min(kx, ky))));

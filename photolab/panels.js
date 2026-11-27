@@ -151,6 +151,30 @@
   function hint(text) { return el("p", "hint", text); }
   PL.ui = { field: field, numIn: numIn, textIn: textIn, select: select, check: check, range: range, hint: hint };
 
+  // PL-UP: Enlarge with AI loads on first use (upscale.js + enlarge.js),
+  // so a plain Photo Lab open stays inside its first-open budget.
+  var enlargeP = null;
+  PL.enlargeTool = function () {
+    if (PL.enlarge) return Promise.resolve(PL.enlarge);
+    if (!enlargeP) {
+      var m = ((document.querySelector('script[src*="app.js?v="]') || {}).src || "").match(/[?&]v=([^&#]+)/);
+      var load = function (f) {
+        return new Promise(function (ok, fail) {
+          var sc = document.createElement("script");
+          sc.src = f + (m ? "?v=" + m[1] : "");
+          sc.onload = ok; sc.onerror = function () { fail(new Error(f)); };
+          document.head.appendChild(sc);
+        });
+      };
+      enlargeP = load("upscale.js").then(function () { return load("enlarge.js"); }).then(function () {
+        if (!PL.enlarge) throw new Error("enlarge");
+        return PL.enlarge;
+      });
+      enlargeP.catch(function () { enlargeP = null; });
+    }
+    return enlargeP;
+  };
+
   // ---------- Dialogs ----------
   function newDialog() {
     var presets = C.PRESETS.map(function (p) { return [p.id, PL.listName("preset", p)]; });
@@ -755,6 +779,7 @@
     { id: "image", items: [
       { id: "resize", k: "Ctrl+Alt+I", run: resizeDialog, on: has },
       { id: "canvas", k: "Ctrl+Alt+C", run: canvasDialog, on: has },
+      { id: "enlarge", run: function () { PL.enlargeTool().then(function (E) { E.open(); }, function () { PL.toast(t("msg.upFail", { why: t("subject.noLoader") })); }); }, on: has },
       "-",
       { id: "rotCw", run: function () { ops().rotateImage(1); }, on: has },
       { id: "rotCcw", run: function () { ops().rotateImage(3); }, on: has },

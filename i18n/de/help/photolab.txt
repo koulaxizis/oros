@@ -53,6 +53,14 @@ Auf dem Handy sind alle Menüs unter der Menü-Taste.
 - Beide betrachten das ganze sichtbare Bild. Bewege den Regler `Kante`, um mehr oder weniger um das Motiv zu behalten, dann `Anwenden`. Ein `Rückgängig` nimmt es zurück.
 - Sie nutzen dasselbe Werkzeug auf dem Gerät wie der Hintergrund-Entferner im Atelier. Beim ersten Mal ist ein Download von etwa 16 MB nötig; danach geht es offline, und das Bild verlässt nie dein Gerät. Hat das Atelier es schon geladen, musst du nichts laden.
 
+## Mit KI vergrößern
+- `Bild` › `Mit KI vergrößern (2×/4×)…` macht das Bild 2- oder 4-mal größer und schärfer, mit einem KI-Modell (Real-ESRGAN), das auf diesem Gerät läuft. Wähle die Größe und tippe auf `Vergrößern`. Ein `Rückgängig` nimmt es zurück.
+- Fotoebenen gehen durch das Modell; Texte und Formen wachsen, wie sie sind, Masken werden mit dem Bild skaliert.
+- Beim ersten Mal ist ein Download von etwa 16 MB nötig (5 MB, wenn das Hintergrund-Werkzeug schon auf dem Gerät ist). Das Modell wird geprüft, bevor es behalten wird; danach funktioniert es offline, und das Bild verlässt nie dein Gerät.
+- Ohne Grafikkarte dauert es etwas: auf einem Computer etwa anderthalb Minuten pro Million Pixel des Originals bei 4×, auf einem Handy länger. Das Fenster zeigt, wie lange es noch dauert, und `Abbrechen` stoppt es, ohne etwas zu ändern.
+- Die Größengrenze des Geräts gilt weiter (8192 px pro Seite, 4096 auf einem Handy): ein zu großes Bild wird so weit vergrößert, wie sie erlaubt.
+- Auch der Assistent und Claude können es anfordern: ihr `Vergrößern` läuft hier, wenn keine andere Bild-KI gewählt ist, die vergrößern kann.
+
 ## Aus Google Fotos
 - Auf dem Projekte-Bildschirm `Aus Google Fotos`: Melde dich bei Google an, tippe auf `Google Fotos öffnen`, wähle ein Bild und tippe auf `Fertig`. Es öffnet sich hier als neues Projekt.
 - orOS liest nur dieses Bild, einmal, und gibt die Anmeldung sofort wieder frei. Videos öffnen sich hier nicht.

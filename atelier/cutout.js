@@ -9,6 +9,8 @@
 //     service worker's caches are renewed on every release), so it
 //     works offline from then on
 //   - pure steps (prep / toMask / alphaFor) are unit-tested in node
+//   - a file spec with sha (SHA-256) is kept only when it matches
+//     (Photo Lab's Enlarge with AI model, from oros-models-vision)
 // Exposes window.AtelierCutout (browser) or module.exports.
 // ============================================================
 (function (root) {
@@ -162,6 +164,19 @@
       return pump();
     });
   }
+  // A file whose spec has a sha (SHA-256, hex) is kept only when its
+  // bytes match it; otherwise the download fails with "hash" (and
+  // nothing is stored). No Web Crypto (not a secure page) = no check
+  // possible = fails too.
+  function checkSha(blob, want) {
+    var sub = root.crypto && root.crypto.subtle;
+    if (!sub) return Promise.reject(new Error("hash"));
+    return blob.arrayBuffer().then(function (buf) { return sub.digest("SHA-256", buf); }).then(function (h) {
+      var hex = Array.prototype.map.call(new Uint8Array(h), function (b) { return (b < 16 ? "0" : "") + b.toString(16); }).join("");
+      if (hex !== String(want).toLowerCase()) throw new Error("hash");
+      return blob;
+    });
+  }
   // → { name: Blob } for every file. onProgress(0..1) while downloading
   // (mb: about how much a first download is).
   function filesOf(spec, mb, onProgress, signal) {
@@ -174,6 +189,8 @@
             done += n;
             if (onProgress) onProgress(Math.min(0.99, done / total));
           }, signal).then(function (blob) {
+            return spec[name].sha ? checkSha(blob, spec[name].sha) : blob;
+          }).then(function (blob) {
             got[name] = blob;
             return tx("readwrite", function (s) { s.put({ v: spec[name].v, blob: blob }, name); }).catch(function () {});
           });
@@ -275,6 +292,7 @@
     S: S, prep: prep, toMask: toMask, alphaFor: alphaFor, applyAlpha: applyAlpha,
     LO: LO, ready: ready, cut: cut, forget: forget, APPROX_MB: APPROX_MB,
     // for the other picture tools (inpaint.js)
-    FILES: FILES, FILES_VER: FILES_VER, list: list, readyOf: readyOf, sessionOf: sessionOf, scaled: scaled
+    FILES: FILES, FILES_VER: FILES_VER, list: list, readyOf: readyOf, sessionOf: sessionOf, scaled: scaled,
+    filesOf: filesOf   // Photo Lab's Enlarge with AI (its own worker runs the model)
   };
 })(typeof window !== "undefined" ? window : this);
