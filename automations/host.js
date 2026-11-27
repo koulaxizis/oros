@@ -303,18 +303,33 @@
     }
     soonSignals(now);
   }
+  // Minutes from this minute to today's HH:MM, counted in real time,
+  // so the night the clocks change still counts right: in March 03:02
+  // does not exist and is 04:02 (3 min after 02:59); in October the
+  // hour 03:00-03:59 comes twice and the second pass is tried too.
+  // -1 when it is past or more than SOON_MAX away.
+  function soonLeft(d, h, mi, base) {
+    var at = new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, mi).getTime();
+    var tries = [at], again = new Date(at + 3600000);
+    if (again.getHours() === h && again.getMinutes() === mi) tries.push(again.getTime());
+    for (var i = 0; i < tries.length; i++) {
+      var left = Math.round((tries[i] - base) / 60000);
+      if (left >= 0 && left <= C.SOON_MAX) return left;
+    }
+    return -1;
+  }
   function soonSignals(now) {
     var res = todayRes;
     if (!res || !res.groups || res.today !== C.ymdOf(now)) return;
     var hidden = {};
     (res.apps || []).forEach(function (a) { if (a.sensitive) hidden[a.id] = true; });
-    var d = new Date(now), nowMin = d.getHours() * 60 + d.getMinutes(), quiet = strictOn();
+    var d = new Date(now), base = now - now % 60000, quiet = strictOn();
     (res.groups.today || []).forEach(function (r) {
       if (!r || r.kind === "info" || hidden[r.app] || C.BLOCKED_APPS[r.app]) return;
       var m = /^(\d{2}):(\d{2})$/.exec(r.time || "");
       if (!m) return;
-      var left = +m[1] * 60 + +m[2] - nowMin;
-      if (left < 0 || left > C.SOON_MAX) return;
+      var left = soonLeft(d, +m[1], +m[2], base);
+      if (left < 0) return;
       signal("event", "event.soon", "soon:" + r.key + ":" + res.today + ":" + r.time, quiet ? "" : r.title + " · " + r.time, null, left);
     });
   }

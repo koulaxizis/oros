@@ -1135,7 +1135,7 @@
       esc(t("ci.cycle").replace("{n}", ""));
     var pr = nextPrediction();
     if (pr) {
-      var daysLeft = Math.ceil((pr.start - todayTs()) / DAY_MS);
+      var daysLeft = Math.round((pr.start - todayTs()) / DAY_MS);   // midnights; a 23/25 h day rounds away
       if (daysLeft >= 0) {
         html += ' · <span class="dim">' + esc(t("ci.next")) +
           " ~" + daysLeft + "</span>";
