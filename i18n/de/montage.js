@@ -30,7 +30,7 @@ orosPack("de", "montage", {
  "asr.lang": "Sprache",
  "asr.long": "Nur die ersten {m} Minuten werden angehört.",
  "asr.mixing": "Ton wird gelesen… {p}%",
- "asr.need": "Beim ersten Mal lädt Montage das Sprachmodell (Whisper, etwa {mb} MB, von Hugging Face) und die Sprach-Laufzeit (etwa {rt} MB, von dieser Seite) herunter und behält sie auf diesem Gerät. Danach funktioniert es offline.",
+ "asr.need": "Beim ersten Mal lädt Montage das Sprachmodell (Whisper, etwa {mb} MB, von der eigenen Kopie von orOS auf GitHub) und die Sprach-Laufzeit (etwa {rt} MB, von dieser Seite) herunter und behält sie auf diesem Gerät. Danach funktioniert es offline.",
  "asr.net": "Das Sprachmodell konnte nicht geladen werden. Prüfe die Verbindung und versuch es noch einmal.",
  "asr.none": "Im Ton wurde keine Sprache gefunden.",
  "asr.ready": "Das Sprachmodell ist auf diesem Gerät.",

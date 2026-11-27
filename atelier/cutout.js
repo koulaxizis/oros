@@ -1,8 +1,10 @@
 // ============================================================
 // orOS Atelier — cutout.js: remove a picture's background (v1.0.0)
 // On the device, no key, no upload: the U²-Net "u2netp" model
-// (Apache-2.0, vendor/u2netp/) runs in ONNX Runtime Web (MIT,
-// vendor/ort/, WebAssembly, one thread). The model finds the main
+// (Apache-2.0; rembg's ONNX copy, kept unchanged in our own
+// koulaxizis/oros-models-vision on GitHub Pages and checked against the
+// SHA-256 below) runs in ONNX Runtime Web (MIT, vendor/ort/,
+// WebAssembly, one thread). The model finds the main
 // subject; everything else becomes transparent.
 //   - the files (about 16 MB) are fetched once, on the first use,
 //     and kept in this app's IndexedDB "oros-atelier-ai" (the
@@ -20,8 +22,15 @@
     js:   "../vendor/ort/ort.wasm.min.js",
     mjs:  "../vendor/ort/ort-wasm-simd-threaded.mjs",
     wasm: "../vendor/ort/ort-wasm-simd-threaded.wasm",
-    model: "../vendor/u2netp/u2netp.onnx"
+    model: "https://koulaxizis.github.io/oros-models-vision/u2netp/u2netp.onnx"
   };
+  // size = bytes, sha = SHA-256 of the model files (oros-models-vision
+  // index.json); a downloaded file is kept only when it matches.
+  var SUMS = {
+    "u2netp.onnx": { size: 4574861, sha: "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8" },
+    "migan512.onnx": { size: 26639447, sha: "8cf778c94b2b20d93ee7dca47d85468e71f2d6a07f0f91323d3b886d1ef69ab1" }
+  };
+  function sumOf(url) { return SUMS[String(url).split("/").pop()] || null; }
   var FILES_VER = "ort1.22.0-u2netp";           // a new value fetches them again
   var APPROX_MB = 16;
   var LO = 0.12, SPAN = 0.76;                   // the soft edge: below LO gone, above LO + SPAN kept
@@ -98,7 +107,7 @@
     return n ? kept / n : 0;
   }
 
-  var pure = { S: S, LO: LO, prep: prep, toMask: toMask, alphaFor: alphaFor, applyAlpha: applyAlpha, FILES: FILES, APPROX_MB: APPROX_MB };
+  var pure = { S: S, LO: LO, prep: prep, toMask: toMask, alphaFor: alphaFor, applyAlpha: applyAlpha, FILES: FILES, APPROX_MB: APPROX_MB, SUMS: SUMS, sumOf: sumOf };
   if (typeof module !== "undefined" && module.exports) { module.exports = pure; return; }
 
   // ---------- Files (IndexedDB) ----------
@@ -162,6 +171,21 @@
       return pump();
     });
   }
+  // A model file must be exactly the copy named in SUMS before it is
+  // used or kept; the runtime files come from this site.
+  function hex(buf) {
+    var b = new Uint8Array(buf), out = "";
+    for (var i = 0; i < b.length; i++) out += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+    return out;
+  }
+  function checked(blob, sum) {
+    if (!sum) return blob;
+    if (blob.size !== sum.size) throw new Error("hash");
+    return blob.arrayBuffer().then(function (buf) { return crypto.subtle.digest("SHA-256", buf); }).then(function (d) {
+      if (hex(d) !== sum.sha) throw new Error("hash");
+      return blob;
+    });
+  }
   // → { name: Blob } for every file. onProgress(0..1) while downloading
   // (mb: about how much a first download is).
   function filesOf(spec, mb, onProgress, signal) {
@@ -174,6 +198,8 @@
             done += n;
             if (onProgress) onProgress(Math.min(0.99, done / total));
           }, signal).then(function (blob) {
+            return checked(blob, sumOf(spec[name].url));
+          }).then(function (blob) {
             got[name] = blob;
             return tx("readwrite", function (s) { s.put({ v: spec[name].v, blob: blob }, name); }).catch(function () {});
           });

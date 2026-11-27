@@ -10024,7 +10024,7 @@
         { name: "RNNoise 0.1.1", url: "https://github.com/xiph/rnnoise",
           by: "Jean-Marc Valin, Xiph.Org Foundation, Mozilla, Amazon", lic: "BSD-3-Clause",
           k: "cr.rnnoise" },
-        { name: "Whisper tiny (ONNX export by Xenova)", url: "https://huggingface.co/Xenova/whisper-tiny",
+        { name: "Whisper tiny and base (ONNX export by Xenova)", url: "https://huggingface.co/Xenova/whisper-tiny",
           by: "OpenAI; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
           k: "cr.whisper-tiny" },
         { name: "Bergamot translator 0.4.9", url: "https://github.com/browsermt/bergamot-translator",

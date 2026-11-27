@@ -70,8 +70,11 @@ test("wiring: files, precache, model credits and both languages", () => {
   const sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
   assert.ok(sw.includes('"atelier/inpaint.js"') && sw.includes('"atelier/magic.js"'));
   assert.match(sw, /vendor\\\/\(ort\|u2netp\|migan/);
-  assert.ok(fs.existsSync(path.join(ROOT, INP.MODEL.url.replace(/^\.\.\//, ""))), "model file");
-  assert.ok(fs.existsSync(path.join(ROOT, "vendor/migan/LICENSE")));
+  assert.equal(INP.MODEL.url, "https://koulaxizis.github.io/oros-models-vision/migan/migan512.onnx", "our own copy");
+  assert.equal(INP.MODEL.v, "migan512-places2-1", "a model already downloaded stays valid");
+  const CUT = require("../atelier/cutout.js");
+  assert.deepEqual(CUT.sumOf(INP.MODEL.url), { size: 26639447, sha: "8cf778c94b2b20d93ee7dca47d85468e71f2d6a07f0f91323d3b886d1ef69ab1" });
+  assert.ok(!fs.existsSync(path.join(ROOT, "vendor/migan")), "no second copy in this repo");
   assert.match(fs.readFileSync(path.join(ROOT, "CREDITS.md"), "utf8"), /MI-GAN/);
   assert.match(fs.readFileSync(path.join(ROOT, "shell.js"), "utf8"), /MI-GAN/);
   ["en", "el"].forEach((l) => {

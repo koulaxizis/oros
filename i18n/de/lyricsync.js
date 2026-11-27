@@ -8,7 +8,7 @@ orosPack("de", "lyricsync", {
  "au.go": "Start",
  "au.hint": "Liedtext-Sync hört das Lied auf diesem Gerät (Whisper, wie die automatischen Untertitel in Montage) und gibt jeder Zeile einen groben Start. Deine Worte bleiben, wie du sie geschrieben hast. Spiel das Lied danach ab und korrigiere die Zeilen nach Gehör. Am besten mit klarer Stimme.",
  "au.listening": "Hört zu… {p}%",
- "au.need": "Beim ersten Mal wird das Sprachmodell einmal geladen (etwa {mb} MB von Hugging Face, dazu {rt} MB von orOS). Montage nutzt dieselbe Kopie. Das Lied wird nirgendwohin gesendet.",
+ "au.need": "Beim ersten Mal wird das Sprachmodell einmal geladen (etwa {mb} MB von der eigenen Kopie von orOS auf GitHub, dazu {rt} MB von orOS). Montage nutzt dieselbe Kopie. Das Lied wird nirgendwohin gesendet.",
  "au.needText": "Schreib zuerst den Liedtext.",
  "au.net": "Das Sprachmodell konnte nicht geladen werden. Prüfe die Verbindung und versuche es noch einmal.",
  "au.noRun": "Grobe Synchronisierung funktioniert in diesem Browser nicht.",

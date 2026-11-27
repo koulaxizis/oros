@@ -1,6 +1,7 @@
 // ============================================================
 // orOS Atelier — inpaint.js: fill a part of a picture (v1.0.0)
-// MI-GAN 512 Places2 (Picsart AI Research, MIT, vendor/migan/) runs in
+// MI-GAN 512 Places2 (Picsart AI Research, MIT; our unchanged copy in
+// koulaxizis/oros-models-vision, SHA-256 checked by cutout.js) runs in
 // the same ONNX Runtime Web as the background tool (cutout.js), on
 // this device. It is used by the Magic eraser (paint over something,
 // it is gone) and the Magic grab (the subject becomes its own element
@@ -16,7 +17,7 @@
   "use strict";
 
   var S = 512, MARGIN = 128, CELL = 8;
-  var MODEL = { url: "../vendor/migan/migan512.onnx", v: "migan512-places2-1" };
+  var MODEL = { url: "https://koulaxizis.github.io/oros-models-vision/migan/migan512.onnx", v: "migan512-places2-1" };
   var APPROX_MB = 40;                           // runtime + model, the first time
 
   // ---------- Pure steps ----------

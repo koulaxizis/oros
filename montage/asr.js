@@ -6,8 +6,9 @@
 // the sound → log-mel picture, the greedy decoding with Whisper's
 // timestamp rules and the byte-level BPE text are written here.
 //   - nothing is downloaded until the user asks: then the runtime
-//     (vendor/ort, this site) and the model (Hugging Face, about 42 MB)
-//     are fetched once and kept in IndexedDB "oros-montage-ai", so it
+//     (vendor/ort, this site) and the model (about 42 MB, from our own
+//     unchanged copy on GitHub Pages, koulaxizis/oros-models-vision,
+//     checked against the SHA-256 written below) are fetched once and kept in IndexedDB "oros-montage-ai", so it
 //     works offline from then on; "Remove the speech model" deletes them
 //   - the sound never leaves the device
 //   MontageASR.ready(model?) → Promise<bool> (model on this device?)
@@ -29,7 +30,25 @@
   var LAYERS = 4, HEADS = 6, HEAD_DIM = 64;           // whisper-tiny (the default)
   var EOT = 50257, SOT = 50258, TRANSCRIBE = 50359, NO_TS = 50363, TS0 = 50364, TS_STEP = 0.02;
   var MAX_TOKENS = 224, MAX_INITIAL_TS = 1;
-  var HF = "https://huggingface.co/Xenova/whisper-tiny/resolve/main/";
+  // Our own unchanged copy of Xenova's export (koulaxizis/oros-models-vision,
+  // index.json): size = bytes, sha = SHA-256, checked before a file is kept.
+  var MIRROR = "https://koulaxizis.github.io/oros-models-vision/";
+  var HF = MIRROR + "whisper-tiny/";
+  var VOCAB = { size: 1036584, sha: "50d6a919f0a0601d56a04eb583c780d18553aa388254ba3158eb6a00f13e2c1a" };
+  var SUMS = {
+    tiny: {
+      enc: { size: 10124910, sha: "fd9d995b9dcb0520f0dbf6cf68651af639fc385f594d9d876e69ca2802dc438e" },
+      dec: { size: 30727765, sha: "6c0c125986b007d2e3734bec84c18bda0152071b90b87fadac6d7764499927a0" },
+      vocab: VOCAB,
+      gen: { size: 3716, sha: "68ac791fcb4999461a313472125042934656240ba1cba7d1c2627fcbb19ac24c" }
+    },
+    base: {
+      enc: { size: 23200850, sha: "3e345e977b55620a37c0c2b2af0644e019afdfad562dcf71eb929bb7274285f9" },
+      dec: { size: 53707539, sha: "a6beb6baabb66f00b6a686d828c95ffca6146d51900cbad0266cad38f64cf861" },
+      vocab: VOCAB,
+      gen: { size: 3776, sha: "3bba359e33fdd6dc1c10f71846a477d339b0242f462f70ea1dd73274caa38d05" }
+    }
+  };
   var FILES = {
     js:   "../vendor/ort/ort.wasm.min.js",
     mjs:  "../vendor/ort/ort-wasm-simd-threaded.mjs",
@@ -41,14 +60,15 @@
   };
   var FILES_VER = "ort1.22.0-whisper-tiny-q8";
   var MODEL_MB = 42, RUNTIME_MB = 11;
-  // The models (same file layout on Hugging Face). tiny keeps the names
-  // and version it always had, so a model already downloaded stays
-  // valid; base gets keys of its own ("base.enc" …). The runtime files
-  // (js, mjs, wasm) are shared and keep the tiny version string.
+  // The models (same file layout as on Hugging Face). tiny keeps the
+  // names and version it always had, so a model already downloaded
+  // stays valid (the bytes are the same); base gets keys of its own
+  // ("base.enc" …). The runtime files (js, mjs, wasm) are shared and
+  // keep the tiny version string.
   var MODELS = {
-    tiny: { hf: HF, layers: LAYERS, heads: HEADS, mb: MODEL_MB, ver: FILES_VER, pre: "" },
-    base: { hf: "https://huggingface.co/Xenova/whisper-base/resolve/main/", layers: 6, heads: 8, mb: 77,
-            ver: "ort1.22.0-whisper-base-q8", pre: "base." }
+    tiny: { hf: HF, layers: LAYERS, heads: HEADS, mb: MODEL_MB, ver: FILES_VER, pre: "", sums: SUMS.tiny },
+    base: { hf: MIRROR + "whisper-base/", layers: 6, heads: 8, mb: 77,
+            ver: "ort1.22.0-whisper-base-q8", pre: "base.", sums: SUMS.base }
   };
   var RUNTIME = ["js", "mjs", "wasm"];
   function modelOf(id) { return MODELS[id] ? id : "tiny"; }
@@ -58,7 +78,8 @@
     return RUNTIME.map(function (k) { return { key: k, url: FILES[k], ver: FILES_VER }; }).concat(
       [["enc", "onnx/encoder_model_quantized.onnx"], ["dec", "onnx/decoder_model_merged_quantized.onnx"],
        ["vocab", "vocab.json"], ["gen", "generation_config.json"]].map(function (x) {
-        return { key: md.pre + x[0], url: md.hf + x[1], ver: md.ver, name: x[0] };
+        var c = md.sums[x[0]];
+        return { key: md.pre + x[0], url: md.hf + x[1], ver: md.ver, name: x[0], size: c.size, sha: c.sha };
       }));
   }
 
@@ -423,6 +444,21 @@
       return pump();
     });
   }
+  // A model file must be exactly the copy named in SUMS (size and
+  // SHA-256) before it is kept; the runtime files come from this site.
+  function hex(buf) {
+    var b = new Uint8Array(buf), out = "";
+    for (var i = 0; i < b.length; i++) out += (b[i] < 16 ? "0" : "") + b[i].toString(16);
+    return out;
+  }
+  function checked(blob, f) {
+    if (!f.sha) return blob;
+    if (blob.size !== f.size) throw new Error("hash");
+    return blob.arrayBuffer().then(function (buf) { return crypto.subtle.digest("SHA-256", buf); }).then(function (d) {
+      if (hex(d) !== f.sha) throw new Error("hash");
+      return blob;
+    });
+  }
   // → { js, mjs, wasm, enc, dec, vocab, gen } blobs of one model
   function files(model, onProgress, signal) {
     var list = fileList(model), got = {}, done = 0, total = (MODELS[modelOf(model)].mb + RUNTIME_MB) * 1024 * 1024;
@@ -432,6 +468,8 @@
         return stored(f).then(function (b) {
           if (b) { got[name] = b; return; }
           return fetchFile(f.url, function (n) { done += n; if (onProgress) onProgress(Math.min(0.99, done / total)); }, signal).then(function (blob) {
+            return checked(blob, f);
+          }).then(function (blob) {
             got[name] = blob;
             return tx("readwrite", function (s) { s.put({ v: f.ver, blob: blob }, f.key); }).catch(function () {});
           });

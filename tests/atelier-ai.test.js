@@ -171,12 +171,12 @@ test("toMask + alphaFor + applyAlpha: subject kept, background gone, soft edge",
 
 // ---------- wiring ----------
 test("the tool files exist, ship with their licences and are not precached", () => {
-  Object.values(CUT.FILES).forEach((rel) => {
+  Object.values(CUT.FILES).filter((rel) => !/^https:/.test(rel)).forEach((rel) => {
     const p = path.join(ROOT, "atelier", rel);
     assert.ok(fs.existsSync(p), rel);
   });
   assert.ok(fs.existsSync(path.join(ROOT, "vendor/ort/LICENSE")));
-  assert.ok(fs.existsSync(path.join(ROOT, "vendor/u2netp/LICENSE")));
+  assert.ok(!fs.existsSync(path.join(ROOT, "vendor/u2netp")), "the model is our oros-models-vision copy");
   const sw = fs.readFileSync(path.join(ROOT, "sw.js"), "utf8");
   assert.doesNotMatch(sw, /"vendor\/(ort|u2netp)\//, "16 MB stays out of the precache");
   ["atelier/aitext.js", "atelier/cutout.js", "atelier/ai.js"].forEach((f) => assert.ok(sw.includes('"' + f + '"'), f));
