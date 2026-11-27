@@ -10033,6 +10033,9 @@
         { name: "Firefox Translations models", url: "https://github.com/mozilla/translations",
           by: "Mozilla", lic: "MPL-2.0",
           k: "cr.firefox-translations" },
+        { name: "CLIP ViT-B/32 (ONNX export by Xenova)", url: "https://github.com/openai/CLIP",
+          by: "OpenAI; ONNX export by Joshua Lochner", lic: "MIT; Apache-2.0 (export)",
+          k: "cr.clip" },
         { name: "NULL JSFX", url: "https://nulljsfx.tech",
           by: "Christos Koulaxizis", lic: "MIT",
           k: "cr.null-jsfx" },
@@ -11104,7 +11107,7 @@
       reloaded = true;
       location.reload();
     }
-    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-files-photos", "oros-files-thumbs", "oros-files-dupes", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
+    ["oros-vault", "oros-fs", "oros-ofs", "oros-wallpaper", "oros-mail", "oros-feeds", "oros-museum", "oros-jigsaw", "oros-montage-media", "oros-montage-thumbs", "oros-maps-rec", "oros-links", "oros-chess", "oros-files-dbx", "oros-files-photos", "oros-files-thumbs", "oros-files-clip", "oros-files-dupes", "oros-time-stage", "oros-podcasts", "oros-podcasts-sync", "oros-music", "oros-music-meta", "oros-music-srv", "oros-music-lb", "oros-lyricsync", "oros-dav", "oros-pad", "oros-assistant", "oros-legacy"].forEach(function (name) {
       try {
         var req = indexedDB.deleteDatabase(name);
         req.onsuccess = function () { setTimeout(bail, 50); };
