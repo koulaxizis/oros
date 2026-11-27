@@ -40,6 +40,7 @@
   // Registered by Chris at devportal.jamendo.com (2026-10-16); public,
   // one for every orOS user, non-commercial use.
   var JM_CLIENT = "e04c6e83";
+  var DEFAULT_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js, podcasts.js
   var CACHE_MS = 30 * 60 * 1000, CACHE_MAX = 80;
 
   var SOURCES = {
@@ -889,14 +890,22 @@
     var FF = root.orosFeedsFetch;
     var p;
     if (FF && typeof FF.fetchOne === "function") {
-      p = FF.fetchOne(url, { accept: "application/json", timeout: (opts && opts.timeout) || 20000 }).then(function (r) {
-        if (r.status === 429) throw new OpenError("busy");
+      // MU-RELAY: a source with no CORS header (ccMixter, Kevin MacLeod's
+      // list) goes through the relay set in Mail, else the default relay,
+      // as Podcasts does: a phone that never opened Mail had no relay, so
+      // those sources answered nothing there.
+      var ro = { accept: "application/json", timeout: (opts && opts.timeout) || 20000,
+        relay: function () { return (typeof FF.relayUrl === "function" && FF.relayUrl()) || DEFAULT_RELAY; } };
+      p = FF.fetchOne(url, ro).then(function (r) {
+        // 503: MusicBrainz turns away an address that asks too often
+        // (a phone network shares one address among many people).
+        if (r.status === 429 || r.status === 503) throw new OpenError("busy");
         if (r.status >= 400 || !r.status) throw new OpenError("http");
         return r.text;
       }, function (e) { throw new OpenError((e && e.code) || "net"); });
     } else if (typeof root.fetch === "function") {
       p = root.fetch(url, { mode: "cors", credentials: "omit", referrerPolicy: "no-referrer" }).then(function (r) {
-        if (r.status === 429) throw new OpenError("busy");
+        if (r.status === 429 || r.status === 503) throw new OpenError("busy");
         if (!r.ok) throw new OpenError("http");
         return r.text();
       }, function () { throw new OpenError("net"); });
@@ -1207,7 +1216,7 @@
   }
 
   var api = {
-    VERSION: "1.9.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
+    VERSION: "1.10.0", SOURCES: SOURCES, OV_VIA: OV_VIA, PAGE: PAGE, BROWSE: BROWSE, OPEN_GENRES: OPEN_GENRES, MOODS: MOODS, LI_RE: LI_RE,
     JM_CLIENT: JM_CLIENT, jmTracksUrl: jmTracksUrl, jmAlbumsUrl: jmAlbumsUrl, jmAlbumTracksUrl: jmAlbumTracksUrl, jmRadiosUrl: jmRadiosUrl,
     jmRadioStreamUrl: jmRadioStreamUrl, jmParseTracks: jmParseTracks, jmParseAlbums: jmParseAlbums, jmParseAlbum: jmParseAlbum,
     jmParseRadios: jmParseRadios, jmRadioItem: jmRadioItem, moodOf: moodOf, jmArtistUrl: jmArtistUrl, jmParseArtist: jmParseArtist, jmMoodQueries: jmMoodQueries,

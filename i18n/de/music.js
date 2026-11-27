@@ -388,6 +388,7 @@ orosPack("de", "music", {
  "sec.artists": "Künstler",
  "sec.genres": "Genres",
  "sec.pls": "Playlists",
+ "sec.mine": "In deinen Lieblingssongs, Playlists und zuletzt gehört",
  "sec.songs": "Songs",
  "seek": "Position",
  "shuffle": "Zufällig",

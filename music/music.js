@@ -59,7 +59,7 @@
       "search.ph": "What do you want to listen to?", "search.none": "Nothing found for “{q}”.",
       "search.hint": "Search your songs, albums, artists and playlists.",
       "search.genres": "Browse by genre",
-      "sec.songs": "Songs", "sec.albums": "Albums", "sec.artists": "Artists", "sec.pls": "Playlists", "sec.genres": "Genres",
+      "sec.songs": "Songs", "sec.mine": "In your likes, playlists and recent plays", "sec.albums": "Albums", "sec.artists": "Artists", "sec.pls": "Playlists", "sec.genres": "Genres",
       "lib.pl": "Playlists", "lib.songs": "Songs", "lib.albums": "Albums", "lib.artists": "Artists", "lib.genres": "Genres", "lib.folders": "Folders",
       "lib.newPl": "New playlist", "lib.liked": "Liked songs", "lib.empty": "Nothing here yet.",
       "sort.title": "Title", "sort.artist": "Artist", "sort.album": "Album", "sort.added": "Recently added", "sort.by": "Sort",
@@ -371,7 +371,7 @@
       "search.ph": "Τι θέλεις να ακούσεις;", "search.none": "Δεν βρέθηκε τίποτα για «{q}».",
       "search.hint": "Ψάξε στα τραγούδια, τα άλμπουμ, τους καλλιτέχνες και τις λίστες σου.",
       "search.genres": "Περιήγηση ανά είδος",
-      "sec.songs": "Τραγούδια", "sec.albums": "Άλμπουμ", "sec.artists": "Καλλιτέχνες", "sec.pls": "Λίστες", "sec.genres": "Είδη",
+      "sec.songs": "Τραγούδια", "sec.mine": "Στα αγαπημένα, στις λίστες και σε όσα άκουσες πρόσφατα", "sec.albums": "Άλμπουμ", "sec.artists": "Καλλιτέχνες", "sec.pls": "Λίστες", "sec.genres": "Είδη",
       "lib.pl": "Λίστες", "lib.songs": "Τραγούδια", "lib.albums": "Άλμπουμ", "lib.artists": "Καλλιτέχνες", "lib.genres": "Είδη", "lib.folders": "Φάκελοι",
       "lib.newPl": "Νέα λίστα", "lib.liked": "Αγαπημένα τραγούδια", "lib.empty": "Δεν υπάρχει τίποτα εδώ ακόμα.",
       "sort.title": "Τίτλος", "sort.artist": "Καλλιτέχνης", "sort.album": "Άλμπουμ", "sort.added": "Πρόσφατες προσθήκες", "sort.by": "Ταξινόμηση",
@@ -2335,7 +2335,9 @@
   // new releases of the artists I follow. Home only, while the
   // switch is on.
   function freshCard(r) {
-    return card(cover(r.art || A.caa(r.id), r.n, ""), r.n, [r.a, r.d].filter(Boolean).join(" · "), function () { openView({ kind: "mbr", id: r.id, n: r.n, a: r.a, ai: r.ai }); });
+    // The release's own cover (ListenBrainz names it) is kept for the
+    // album page: a new release group often has no cover of its own yet.
+    return card(cover(r.art || A.caa(r.id), r.n, ""), r.n, [r.a, r.d].filter(Boolean).join(" · "), function () { openView({ kind: "mbr", id: r.id, n: r.n, a: r.a, ai: r.ai, art: r.art || "" }); });
   }
   function discoverSection(m) {
     if (!A || !O || !prefs.mb) return;
@@ -2389,7 +2391,8 @@
     var k = "mbr|" + v.id, f = feed(k, fOne(function () { return A.album(v.id); }));
     var r = f.extra;
     var name = v.a || (r && r.a) || "";
-    var art = cover(A.caa(v.id, 500), (r && r.n) || v.n || "", "big");
+    var relArt = typeof v.art === "string" && /^https:\/\/coverartarchive\.org\/release\/[0-9a-f-]{36}\/front-250$/.test(v.art) ? v.art.replace(/250$/, "500") : "";
+    var art = cover(relArt || A.caa(v.id, 500), (r && r.n) || v.n || "", "big");
     var src = { kind: "mbr", id: v.id, n: (r && r.n) || v.n || "" };
     if (!r) {
       pageHead(m, art, t("kind.album") + " · " + MB_NAME, v.n || "?", null, null, src);
@@ -2985,7 +2988,8 @@
     if (fOn && locMiss.length && tracks.length) box.appendChild(el("p", "dim small o-note fl-skip", t("fl.skipMine", { f: missText(locMiss) })));
     var w = C.words(q);
     var pls = D().pls.filter(function (p) { var f = C.fold(p.n); return w.every(function (x) { return f.indexOf(x) >= 0; }); });
-    if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !openOn() && !svLib().length && !A) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
+    var mine = fOn ? [] : mineMatches(w, r.songs);
+    if (!r.songs.length && !r.albums.length && !r.artists.length && !pls.length && !mine.length && !openOn() && !svLib().length && !A) { box.appendChild(el("p", "empty", t("search.none", { q: q }))); return; }
     if (r.songs.length) {
       box.appendChild(el("h2", "sub-h", t("sec.songs")));
       box.appendChild(rowList(r.songs.slice(0, 30), { src: { kind: "search", id: q, n: q } }));
@@ -2998,6 +3002,7 @@
       box.appendChild(el("h2", "sub-h", t("sec.albums")));
       var cb = el("div", "cards"); r.albums.slice(0, 20).forEach(function (a) { cb.appendChild(albumCard(a)); }); box.appendChild(cb);
     }
+    if (mine.length) mineSection(box, mine, q);
     if (pls.length) {
       box.appendChild(el("h2", "sub-h", t("sec.pls")));
       var cp = el("div", "cards"); pls.forEach(function (p) { cp.appendChild(plCard(p)); }); box.appendChild(cp);
@@ -3005,6 +3010,43 @@
     if (SV && q.length >= 2 && !fOn) serverResults(box, q);
     if (A && O && q.length >= 2 && !fOn) mbResults(box, q);
     if (openOn() && q.length >= 2) onlineResults(box, q);
+  }
+  // MU-FIND2: songs of the free catalogues and your servers that you
+  // liked, keep in a playlist or played lately (they are not files on
+  // this device, so the library search above does not see them), and
+  // their artists.
+  function mineMatches(w, have) {
+    var seen = {}, out = [];
+    (have || []).forEach(function (x) { if (x && x.k) seen[x.k] = 1; });
+    var add = function (x) {
+      if (!x || !x.k || seen[x.k] || x.p || !C.matches(x, w)) return;
+      var r = playable(x);
+      if (!r || r.p) return;   // a file on this device is in Songs already
+      seen[x.k] = 1;
+      out.push(r);
+    };
+    C.likedList(D()).forEach(function (l) { if (l.on !== 0) add(l); });
+    D().pls.forEach(function (p) { p.it.forEach(add); });
+    try { var h = H && typeof H.history === "function" ? H.history() : null; if (h && Array.isArray(h.r)) h.r.forEach(add); } catch (e) {}
+    return out.slice(0, 50);
+  }
+  function mineSection(box, mine, q) {
+    var w = C.words(q), arts = [], seenA = {};
+    mine.forEach(function (r) {
+      var id = O && isOpen(r) ? oArtistId(r) : "";
+      if (!id || seenA[id] || !r.a || !w.every(function (x) { return C.fold(r.a).indexOf(x) >= 0; })) return;
+      seenA[id] = 1;
+      arts.push({ id: id, n: r.a, art: r.art });
+    });
+    box.appendChild(el("h2", "sub-h", t("sec.mine")));
+    if (arts.length) {
+      var ca = el("div", "cards");
+      arts.slice(0, 12).forEach(function (a) {
+        ca.appendChild(card(cover(a.art, a.n, "round", I.user), a.n, t("kind.artist"), function () { openView({ kind: "oartist", id: a.id, n: a.n }); }));
+      });
+      box.appendChild(ca);
+    }
+    box.appendChild(rowList(mine, { src: { kind: "search", id: q, n: q } }));
   }
   var onlineQ = "", onlineTimer = null;
   function onlineResults(box, q) {
