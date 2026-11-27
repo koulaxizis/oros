@@ -852,9 +852,12 @@
       // W2: a voice per language, from this device's own voices, with Test
       if (r.on && r.voices && r.voices.length) {
         r.voices.forEach(function (g) {
-          var vr = row(t("ac.read.voice." + g.lang), null, g.list.length ? null : { hint: t("ac.read.novoices") });
-          if (g.list.length) {
-            var opts = [{ value: "", label: t("ac.read.auto") }].concat(g.list.map(function (v) {
+          // VOICE-1: orOS's own natural voice for this language, if there is one
+          var nv = (r.natural || []).filter(function (n) { return n.lang === g.lang; })[0] || null;
+          var natOpt = nv && nv.ready ? [{ value: "oros:" + nv.id, label: t("ac.read.nat.opt", { name: nv.name }) }] : [];
+          var vr = row(t("ac.read.voice." + g.lang), null, g.list.length || natOpt.length ? null : { hint: t("ac.read.novoices") });
+          if (g.list.length || natOpt.length) {
+            var opts = [{ value: "", label: t("ac.read.auto") }].concat(natOpt, g.list.map(function (v) {
               return { value: v.uri, label: v.name + (v.lang ? " (" + v.lang + ")" : "") };
             }));
             var sel = select(opts, g.pick, "readVoice-" + g.lang, function (val) { set("readVoice", { lang: g.lang, uri: val }); });
@@ -862,12 +865,32 @@
             vr.appendChild(actions(sel, button(t("ac.read.test"), "readTest-" + g.lang, function () { act("read.test", g.lang); })));
           }
           c7.appendChild(vr);
+          if (nv) c7.appendChild(natRow(nv));
         });
         c7.appendChild(el("p", "hint", t("ac.read.voices.hint")));
       }
       if (!r.available) c7.appendChild(el("p", "hint", t("ac.read.none")));
       if (r.strict) c7.appendChild(el("p", "hint", t("ac.read.strict")));
       host.appendChild(c7);
+    }
+
+    // VOICE-1: download, progress and removal of a natural voice. The
+    // licence is said before the download (CC BY-NC 4.0 for Joy).
+    function natRow(nv) {
+      var hint = nv.err ? t("ac.read.nat.err") : nv.ready ? t("ac.read.nat.ready", { licence: nv.licence })
+        : t("ac.read.nat.hint", { mb: nv.mb, licence: nv.licence });
+      var nr = row(t("ac.read.nat", { name: nv.name }), null, { hint: hint });
+      var btns;
+      if (nv.pct != null) {
+        btns = actions(el("span", "hint", t("ac.read.nat.pct", { pct: nv.pct })),
+          button(t("ac.read.nat.cancel"), "readNatCancel-" + nv.lang, function () { act("read.natCancel"); }));
+      } else if (nv.ready) {
+        btns = actions(button(t("ac.read.nat.remove"), "readNatRemove-" + nv.lang, function () { act("read.natRemove", nv.lang); }));
+      } else {
+        btns = actions(button(t("ac.read.nat.get", { mb: nv.mb }), "readNatGet-" + nv.lang, function () { act("read.natGet", nv.lang); }, "primary"));
+      }
+      nr.appendChild(btns);
+      return nr;
     }
 
     // FM-5: the font of orOS (chosen on a font's page in Fonts)

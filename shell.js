@@ -9985,6 +9985,9 @@
         { name: "ONNX Runtime Web 1.22.0", url: "https://onnxruntime.ai/",
           by: "Microsoft Corporation", lic: "MIT",
           k: "cr.onnx-runtime" },
+        { name: "Piper voice el_GR-joy-medium", url: "https://huggingface.co/rhasspy/piper-voices",
+          by: "Piper voices project (rhasspy) & the recordings in its model card", lic: "CC BY-NC 4.0",
+          k: "cr.piper-joy" },
         { name: "U²-Net (u2netp model)", url: "https://github.com/xuebinqin/U-2-Net",
           by: "Xuebin Qin & contributors", lic: "Apache-2.0",
           k: "cr.u2-net" },
@@ -14199,6 +14202,9 @@
       case "pocket.open":     if (window.orosPocket) window.orosPocket.open(); return;    // POCKET-1
       case "pocket.clear":    if (window.orosPocket) window.orosPocket.clear(); return;
       case "read.test":       if (window.orosRead) window.orosRead.test(String(arg)); return;   // READ-1 W2
+      case "read.natGet":     if (window.orosRead) window.orosRead.natGet(String(arg)); return;      // VOICE-1
+      case "read.natCancel":  if (window.orosRead) window.orosRead.natCancel(); return;
+      case "read.natRemove":  if (window.orosRead) window.orosRead.natRemove(String(arg)); return;
       case "caldav.bg":       // CalDAV W6 (10e): the background pass switch, this device only
         davBgSetOn(!!(arg && arg.on));
         settingsNotify();
@@ -18814,13 +18820,90 @@
       }
     } catch (e) {}
     function raAvailable() { return !!(window.speechSynthesis && typeof window.SpeechSynthesisUtterance === "function"); }
+    // VOICE-1: orOS's own natural voices (voicekit/voicekit.js, loaded
+    // only when Settings or a reading needs it). nat[id] = { ready, pct, err }
+    // on this device; the download is the person's own click in Settings.
+    var NAT = { el: "el-joy" }, nat = {}, vkLoading = null, natAbort = null;
+    function vkLoad() {
+      if (window.OrosVoice) return Promise.resolve(window.OrosVoice);
+      if (!vkLoading) vkLoading = new Promise(function (res, rej) {
+        var sc = document.createElement("script");
+        sc.src = "voicekit/voicekit.js?v=" + encodeURIComponent(APP_VERSION);
+        sc.onload = function () { if (window.OrosVoice) res(window.OrosVoice); else { vkLoading = null; rej(new Error("voicekit")); } };
+        sc.onerror = function () { vkLoading = null; sc.remove(); rej(new Error("voicekit")); };
+        document.head.appendChild(sc);
+      });
+      return vkLoading;
+    }
+    function natCheck() {
+      return vkLoad().then(function (OV) {
+        return Promise.all(Object.keys(NAT).map(function (l) {
+          var id = NAT[l];
+          return OV.ready(id).then(function (r) {
+            var was = nat[id] && nat[id].ready;
+            nat[id] = nat[id] || {};
+            if (nat[id].pct == null) nat[id].ready = r;
+            if (was !== nat[id].ready) settingsNotify();
+          });
+        }));
+      }).catch(function () {});
+    }
+    // the natural voice that reads lang now: downloaded, and chosen or Automatic
+    function natFor(l) {
+      var id = NAT[l];
+      if (!id || !nat[id] || !nat[id].ready) return "";
+      var pick = raPrefs().vo[l] || "";
+      return !pick || pick === "oros:" + id ? id : (raAvailable() ? "" : id);
+    }
+    function natSnap() {
+      return Object.keys(NAT).map(function (l) {
+        var id = NAT[l], n = nat[id] || {}, V = window.OrosVoice && window.OrosVoice.VOICES[id];
+        return { lang: l, id: id, name: V ? V.name : "Joy", mb: V ? V.mb : 63, licence: V ? V.licence : "CC BY-NC 4.0",
+                 ready: !!n.ready, pct: n.pct == null ? null : n.pct, err: !!n.err };
+      });
+    }
+    function natGet(l) {
+      var id = NAT[l];
+      if (!id || (nat[id] && nat[id].pct != null)) return;
+      nat[id] = { ready: false, pct: 0 };
+      settingsNotify();
+      natAbort = typeof AbortController === "function" ? new AbortController() : null;
+      var last = 0;
+      vkLoad().then(function (OV) {
+        return OV.prepare(id, function (f) {
+          var pct = Math.round(f * 100);
+          if (pct !== last) { last = pct; nat[id].pct = pct; settingsNotify(); }
+        }, natAbort && natAbort.signal);
+      }).then(function () {
+        nat[id] = { ready: true, pct: null };
+        settingsNotify();
+      }, function () {
+        nat[id] = { ready: false, pct: null, err: true };
+        settingsNotify();
+      });
+    }
+    function natCancel() { if (natAbort) { try { natAbort.abort(); } catch (e) {} natAbort = null; } }
+    function natRemove(l) {
+      var id = NAT[l];
+      if (!id) return;
+      natCancel();
+      if (raEngine) raEngine.stop();
+      vkLoad().then(function (OV) { return OV.forget(id); }).then(function () {
+        nat[id] = { ready: false, pct: null };
+        var p = raPrefs();
+        if (p.vo[l] === "oros:" + id) { delete p.vo[l]; raWrite(p); }
+        settingsNotify();
+      }, function () {});
+    }
     var raEngine = null, raLoading = null;
     var raHost = {
       frames: function () { return appFrames(); },
       lang: function () { return state.lang; },
       rate: function () { return raPrefs().rate; },
       setRate: function (r) { var p = raPrefs(); if (p.on && RA_RATES.indexOf(r) !== -1) { p.rate = r; raWrite(p); settingsNotify(); } },
-      voice: function (l) { return raPrefs().vo[l] || ""; },
+      voice: function (l) { var v = raPrefs().vo[l] || ""; return /^oros:/.test(v) ? "" : v; },
+      natural: natFor,
+      voices: vkLoad,
       toast: function (kind, msg) { scToast(kind, msg); },
       changed: function () { settingsNotify(); }
     };
@@ -18846,7 +18929,8 @@
         return;
       }
       if (strictLevelNow()) { scToast("err", window.t("ra.strict")); return; }
-      raLoad().then(fn, function () { scToast("err", window.t("ra.loadfail")); });
+      // VOICE-1: know whether a natural voice is on this device before reading
+      Promise.all([raLoad(), natCheck()]).then(function (r) { fn(r[0]); }, function () { scToast("err", window.t("ra.loadfail")); });
     }
     window.orosRead = {
       isOn: function () { return raPrefs().on && !strictLevelNow(); },
@@ -18864,8 +18948,9 @@
       // Settings › Accessibility
       snapshot: function () {
         var p = raPrefs();
+        if (p.on && !vkLoading && !window.OrosVoice) natCheck();
         return { on: p.on, rate: p.rate, rates: RA_RATES.slice(), strict: !!strictLevelNow(), available: raAvailable(),
-                 voices: p.on ? raVoices() : [] };
+                 voices: p.on ? raVoices() : [], natural: p.on ? natSnap() : [] };
       },
       setOn: function (on) {
         var p = raPrefs();
@@ -18884,6 +18969,10 @@
         settingsNotify();
       },
       test: function (l) { if (RA_LANGS.indexOf(l) !== -1) raThen(function (e) { e.test(l, raPrefs().vo[l] || ""); }); },
+      // VOICE-1: download (the person's click), cancel, remove a natural voice
+      natGet: function (l) { if (raPrefs().on && NAT[l]) natGet(l); },
+      natCancel: function () { natCancel(); },
+      natRemove: function (l) { if (NAT[l]) natRemove(l); },
       refresh: function () { if (raEngine) raEngine.refresh(); }
     };
   })();
