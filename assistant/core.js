@@ -1215,7 +1215,33 @@
       // A "tool" entry is consumed with its call above; one without a
       // native call before it (another provider's) is dropped.
     }
-    return out;
+    return toolPics(out, pid, conf);
+  }
+  // AS-SEE (Chris 2026-11-27: «να μπορείς να βλέπεις / διαβάζεις /
+  // αναγνωρίζεις τις εικόνες»): a tool result may carry pictures
+  // (r.pics [{ type, data }], files_read of a picture). They go to a
+  // provider that sees pictures (attCaps img), the newest TOOL_PICS of
+  // the conversation only; an older one, or one for a model that can't
+  // see, stays out and the result says so.
+  var TOOL_PICS = 8, PIC_TYPES = { "image/jpeg": 1, "image/png": 1, "image/webp": 1, "image/gif": 1 };
+  function toolPics(hist, pid, conf) {
+    var see = attCaps(pid, conf).img, left = see ? TOOL_PICS : 0;
+    for (var i = hist.length - 1; i >= 0; i--) {
+      var h = hist[i];
+      if (h.r !== "tool" || !Array.isArray(h.results)) continue;
+      var any = h.results.some(function (r) { return r && Array.isArray(r.pics) && r.pics.length; });
+      if (!any) continue;
+      h.results = h.results.map(function (r) {
+        if (!r || !Array.isArray(r.pics) || !r.pics.length) return r;
+        var keep = r.pics.filter(function (x) { return isObj(x) && PIC_TYPES[x.type] && typeof x.data === "string" && x.data && B64.test(x.data.slice(0, 200)); });
+        var o = {};
+        Object.keys(r).forEach(function (k) { if (k !== "pics") o[k] = r[k]; });
+        if (keep.length && left >= keep.length) { o.pics = keep; left -= keep.length; }
+        else o.content = String(r.content || "") + (see ? " [The picture was shown earlier and is no longer attached: read the file again to see it.]" : "");
+        return o;
+      });
+    }
+    return hist;
   }
 
   // conf = { key, base, model }; tools = neutral tool list (section 7).
@@ -1325,6 +1351,11 @@
       } else if (h.r === "tool") {
         messages.push({ role: "user", content: h.results.map(function (r) {
           var b = { type: "tool_result", tool_use_id: r.id, content: String(r.content || "") };
+          if (Array.isArray(r.pics) && r.pics.length) {
+            b.content = [{ type: "text", text: b.content }].concat(r.pics.map(function (x) {
+              return { type: "image", source: { type: "base64", media_type: x.type, data: x.data } };
+            }));
+          }
           if (r.err) b.is_error = true;
           return b;
         }) });
@@ -1362,9 +1393,18 @@
         if (h.raw && isObj(h.raw.msg)) messages.push(h.raw.msg);
         else if (h.text) messages.push({ role: "assistant", content: h.text });
       } else if (h.r === "tool") {
+        var pics = [];
         h.results.forEach(function (r) {
           messages.push({ role: "tool", tool_call_id: r.id, content: String(r.content || "") });
+          if (Array.isArray(r.pics)) pics = pics.concat(r.pics);
         });
+        // a tool message holds text only: its pictures follow as the user's (AS-SEE)
+        if (pics.length) {
+          messages.push({ role: "user", content: [{ type: "text", text: "The pictures the tool results above returned, in their order." }].concat(pics.map(function (x) {
+            var url = "data:" + x.type + ";base64," + x.data;
+            return { type: "image_url", image_url: pid === "mistral" ? url : { url: url } };
+          })) });
+        }
       }
     });
     var body = { model: model, messages: messages, stream: true };
@@ -1399,11 +1439,13 @@
         if (h.raw && Array.isArray(h.raw.parts) && h.raw.parts.length) add("model", h.raw.parts);
         else if (h.text) add("model", [{ text: h.text }]);
       } else if (h.r === "tool") {
+        var gp = [];
         add("user", h.results.map(function (r) {
           var fr = { name: r.name, response: { result: String(r.content || "") } };
           if (r.nid) fr.id = r.nid;
+          if (Array.isArray(r.pics)) gp = gp.concat(r.pics);
           return { functionResponse: fr };
-        }));
+        }).concat(gp.map(function (x) { return { inlineData: { mimeType: x.type, data: x.data } }; })));
       }
     });
     var body = { contents: contents };
@@ -2555,11 +2597,14 @@
     name: "files_read",
     description: "Read one file on the orOS disk as text: text files as they are; Word, LibreOffice, spreadsheets, slides and e-books by their text; PDFs by their text layer (a scan is read with OCR, the first pages). " +
       "100,000 characters a call: pass next_offset as offset for the rest. Also returns version: pass it as if_version to files_write, files_move or files_delete. " +
-      "Pictures, audio and video give their size and type only." + FILES_WHERE,
+      "A picture (JPG, PNG, WebP, GIF, BMP, TIFF, AVIF) is shown to you to look at when your model sees pictures, with its pixels; with ocr true (or a model that can't see) its text is also read on the device (Greek and English OCR). " +
+      "This is how you look at a page: Layout's thumbs command saves page pictures, then read them here; never say you can't see a picture before trying. Audio and video give their size and type only. " +
+      "Also reads a file of a local folder the owner opened for Claude: path local:<root>/<path> (files_list shows them), read-only." + FILES_WHERE,
     params: {
       type: "object",
       properties: {
-        path: { type: "string", description: "The file, e.g. \"Drive/ckdesktop/Χειρόγραφα/Νέο.docx\"." },
+        path: { type: "string", description: "The file, e.g. \"Drive/ckdesktop/Χειρόγραφα/Νέο.docx\" or \"local:Vythos/Final Images/26m.jpg\"." },
+        ocr: { type: "boolean", description: "A picture: also read its text on the device (for proofreading text set in a picture)." },
         offset: { type: "integer", minimum: 0, description: "First character (0 = the start)." },
         length: { type: "integer", minimum: 1, maximum: 100000, description: "Characters to return (at most 100,000)." }
       },
@@ -4297,7 +4342,13 @@
       "You are the assistant inside orOS, an offline-first personal operating system that runs in the browser, with apps for notes, tasks, calendar, contacts, documents, money, health and more.",
       "Now: " + when + ". The orOS interface language is " + ({ el: "Greek", de: "German" }[opts.lang] || "English") +
         "; answer in the language the user writes in.",
-      "Keep answers short and practical. You may use simple Markdown: **bold**, lists, `code`, code blocks. No tables, no images, no HTML."
+      "Keep answers short and practical. You may use simple Markdown: **bold**, lists, `code`, code blocks. No tables, no images, no HTML.",
+      // AS-EL (Chris 2026-11-27: «σπορά λέξεων», «Κάλλιστα κατάσταση», «ο στυλ»)
+      "When you write Greek, write natural, correct modern Greek with the right gender and article, and never coin words. Words of typesetting: hyphenation = ο συλλαβισμός (never «σπορά λέξεων»), justified = πλήρης στοίχιση, " +
+        "leading = το διάστιχο, tracking = η αραίωση των γραμμάτων, style = το στυλ (τα στυλ), colophon = ο κολοφώνας, spread = το δισέλιδο (a cover spread: το ανάπτυγμα), endpaper = το εσώφυλλο, trim = το μέγεθος κοπής, bleed = η αιμορραγία, " +
+        "overset text = κείμενο που περισσεύει, widow / orphan = χήρα / ορφανή γραμμή, preflight = ο προέλεγχος. «All fine» is «Όλα εντάξει» or «Σε καλή κατάσταση». Quotes «…», the question mark ;.",
+      // AS-EXP
+      "The user saves a whole conversation as a Markdown file with the download button next to it in the list of conversations (the menu at the top left); tell them so when they ask to export it."
     ];
     if (opts.builtin && opts.pre) {
       lines.push("You have no tools. When a question may need the user's own data, orOS searches it before the message reaches you and adds only what the user agreed to share, marked as data. Answer from that; if it is missing or not enough, say so and suggest other words to ask with. Never invent the user's data. You can't open, add, change or delete anything in orOS; when asked to, say which app does it and offer text the user can paste.");
@@ -4387,7 +4438,13 @@
     }
     if (!opts.builtin && opts.edits && opts.edits.length) {
       lines.push("To change anything in the user's documents in " + opts.edits.join(", ") + " (texts, fonts, colours, photos, positions, layers, pages, backgrounds, bleed), read the document with read_in_app and change it with edit_in_app; never give the user manual steps for what a command does. " +
-        "The user presses Apply on the card, so never say it is changed before the result says so; after it, say what changed in a sentence. A command that does not exist cannot be done: say so plainly. Use propose_automation only when the user wants steps to run again later.");
+        "The user presses Apply on the card, so never say it is changed before the result says so; after it, say what changed in a sentence. A command that does not exist cannot be done: say so plainly. Use propose_automation only when the user wants steps to run again later. " +
+        // AS-RB2: a card whose result still says "nothing is made yet"
+        "A card's result is replaced by the app's report once the user applies it; when the user says they applied a card whose result still says it is only shown, believe them and read the document again with read_in_app instead of asking them to press it. " +
+        // AS-LOOK: pages and pictures are looked at, never guessed
+        "To check how pages look (text set inside pictures, a picture's colours, a cover), save page pictures with the thumbs command and look at them with files_read; files_read also shows any picture file. " +
+        // AS-DUP: two documents of the same name
+        "When two documents have the same name, name the one you mean by its id from read_in_app, and ask the user which one before changing either.");
     }
     if (!opts.builtin && opts.recipes && opts.recipes.length) {
       lines.push("For work the user repeats (the same edits on many designs, documents or photos) in these apps: " + opts.recipes.join(", ") + ", offer an automation with propose_automation. The user opens it in the app, checks the steps and presses Run; nothing runs before that, so never say it ran. Use only the steps the tool lists; if the user wants something they cannot do, say so plainly.");
@@ -5515,7 +5572,52 @@
     return box.replace(/\s+$/, "") + " " + text;
   }
 
+  // AS-EXP (Chris 2026-11-27: «Χρειάζομαι export αυτής της συζήτησης»):
+  // a conversation as Markdown, for the user to keep or hand to someone
+  // who fixes things: the user's and the AI's words, files by name, the
+  // notes, and each tool step with its result (the user's own data: it
+  // goes only into the file they save). w: { title, you, ai, tools,
+  // files, when(ms) → text, model(m) → text }.
+  var EXP_TOOL = 4000;
+  function chatMarkdown(c, w) {
+    c = isObj(c) ? c : {};
+    w = isObj(w) ? w : {};
+    function fence(x) { var s = String(x == null ? "" : x); var f = "```"; while (s.indexOf(f) >= 0) f += "`"; return f + "\n" + s + "\n" + f; }
+    var out = ["# " + String(c.title || w.title || "").replace(/[\r\n]+/g, " ").trim()];
+    if (typeof c.m === "number" && typeof w.when === "function") out.push("_" + w.when(c.m) + "_");
+    (Array.isArray(c.msgs) ? c.msgs : []).forEach(function (m) {
+      if (!isObj(m)) return;
+      if (m.r === "user" && !m.cont) {
+        var head = "## " + (w.you || "You");
+        var body = String(m.text || "");
+        if (Array.isArray(m.att) && m.att.length) body += (body ? "\n\n" : "") + "_" + (w.files || "Files") + ": " + m.att.map(function (a) { return isObj(a) ? String(a.name || "") : ""; }).filter(Boolean).join(", ") + "_";
+        out.push(head + "\n\n" + body);
+      } else if (m.r === "asst") {
+        var who = "## " + (w.ai || "AI") + (typeof w.model === "function" && w.model(m) ? " · " + w.model(m) : "");
+        var txt = String(m.text || "");
+        if (txt) out.push(who + "\n\n" + txt);
+        if (Array.isArray(m.tools) && m.tools.length) {
+          out.push("> " + (w.tools || "Tools") + ": " + m.tools.map(function (x) {
+            var a = "";
+            try { a = JSON.stringify(x.args || {}); } catch (e) { a = ""; }
+            return "`" + String(x.name || "") + "` " + a.slice(0, EXP_TOOL);
+          }).join("\n> "));
+        }
+      } else if (m.r === "tool" && Array.isArray(m.results)) {
+        m.results.forEach(function (r) {
+          if (!isObj(r)) return;
+          var txt2 = String(r.content || "");
+          out.push("> `" + String(r.name || "") + "`" + (r.err ? " ✗" : "") + "\n\n" + fence(txt2.length > EXP_TOOL ? txt2.slice(0, EXP_TOOL) + " […]" : txt2));
+        });
+      } else if (m.r === "note" && m.text) {
+        out.push("> " + String(m.text).replace(/\n/g, "\n> "));
+      }
+    });
+    return out.join("\n\n") + "\n";
+  }
+
   var api = {
+    chatMarkdown: chatMarkdown,
     voiceText: voiceText, voiceJoin: voiceJoin,
     DATA_VER: DATA_VER, PROVIDERS: PROVIDERS, PROV_IDS: PROV_IDS,
     searchWords: searchWords, mergeHits: mergeHits, PRE_WORDS: PRE_WORDS, FOUND_MAX: FOUND_MAX, BRIEF_DEV: BRIEF_DEV,

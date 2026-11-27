@@ -6094,6 +6094,64 @@
       return JSON.parse(JSON.stringify(groups || []));
     });
   };
+  // AS-RB2 (Chris 2026-11-27, «Οι κάρτες εφαρμόστηκαν, δεν ξέρω γιατί
+  // δεν έφυγαν»): an app's report for an Assistant card (rb[key]) is also
+  // kept on this device (localStorage "oros-assist-rb", never synced, 7
+  // days, at most 200), so a report written while the Assistant was not
+  // in this frame, in another orOS window or before a reload still
+  // reaches its card and the model. Another window's report arrives by
+  // the "storage" event and wakes the open Assistant (rb's onRb).
+  function assistReports() {
+    var KEY = "oros-assist-rb", KEEP = 7 * 864e5, MAX = 200, mem = {};
+    function load() {
+      var raw = null;
+      try { raw = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { raw = null; }
+      return raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+    }
+    function save(all) {
+      var now = Date.now(), keys = Object.keys(all).filter(function (k) {
+        var x = all[k];
+        return x && typeof x === "object" && typeof x.at === "number" && now - x.at < KEEP;
+      }).sort(function (a, b) { return all[b].at - all[a].at; }).slice(0, MAX), out = {};
+      keys.forEach(function (k) { out[k] = all[k]; });
+      try { localStorage.setItem(KEY, JSON.stringify(out)); } catch (e) {}
+      return out;
+    }
+    function fill(all) {
+      Object.keys(all).forEach(function (k) {
+        var x = all[k];
+        if (x && typeof x === "object" && x.rep && typeof x.rep === "object" && !(k in mem)) mem[k] = x.rep;
+      });
+    }
+    fill(save(load()));
+    if (typeof Proxy !== "function") return mem;
+    var rb = new Proxy(mem, {
+      set: function (o, k, v) {
+        o[k] = v;
+        if (typeof k === "string" && k !== "onRb" && v && typeof v === "object") {
+          var all = load();
+          all[k.slice(0, 80)] = { at: Date.now(), rep: v };
+          save(all);
+        }
+        return true;
+      },
+      deleteProperty: function (o, k) {
+        delete o[k];
+        if (typeof k === "string") { var all = load(); if (k in all) { delete all[k]; save(all); } }
+        return true;
+      }
+    });
+    window.addEventListener("storage", function (e) {
+      if (e.key !== KEY) return;
+      var before = Object.keys(mem).length;
+      fill(load());
+      var st = window.orosAssistAtt;
+      if (Object.keys(mem).length !== before && st && typeof st.onRb === "function") {
+        try { st.onRb(""); } catch (x) {}
+      }
+    });
+    return rb;
+  }
   // The Assistant's attached files (AS-ATT-MEM): base64, text read on
   // the device and PDF page counts, kept here in memory while orOS is
   // open, so an app opened from the Assistant (it takes the Assistant's
@@ -6101,7 +6159,7 @@
   // when the tab closes. assistant.js owns what goes in. blob: files
   // for an app only (AS-DEV), as Files; rb: Layout's rebuild reports
   // for the Assistant's cards (AS-RB, written by layout.js).
-  window.orosAssistAtt = { mem: {}, text: {}, pages: {}, blob: {}, rb: {} };
+  window.orosAssistAtt = { mem: {}, text: {}, pages: {}, blob: {}, rb: assistReports() };
   window.orosAssistOpen = function (appId, target) {
     openSearchHit(String(appId || ""), { target: target === undefined ? null : target });
   };
