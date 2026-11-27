@@ -202,6 +202,20 @@
       "fw.note": "Funkwhale: only songs whose uploader chose a free licence are listed; the rest stay on open.audio.",
       "sv.free": "Free-music servers:",
       "src.more": "More free music elsewhere",
+      "em.sc": "SoundCloud", "em.bc": "Bandcamp",
+      "em.badge": "Plays in the service's own player, inside Music. Not in the queue, not offline.",
+      "em.play": "Play in the {s} player",
+      "em.player": "{s} player",
+      "em.add": "Bandcamp or SoundCloud link",
+      "em.addLabel": "Paste the address of a Bandcamp album or song, or of a SoundCloud song or playlist",
+      "em.go": "Play",
+      "em.bad": "This is not a Bandcamp album or song, or a SoundCloud song or playlist.",
+      "em.busy": "Opening the player…",
+      "em.fail": "The player could not be opened. Check the address and the connection.",
+      "em.turnOn": "Turn on and play",
+      "em.more": "Show the songs", "em.less": "Hide the songs",
+      "s.emb": "Bandcamp and SoundCloud players",
+      "s.embHint": "Paste a Bandcamp or SoundCloud link (or type it in Search) and it plays here, in the service's own player. Like it or add it to a playlist like any song. The service sees what you play, as on its own site; a Bandcamp page is read once through the orOS relay to find its player. It is not in the queue, has no equalizer, does not play offline and stops when Music closes.",
       "src.moby": "mobygratis: Moby's free instrumentals for your own non-commercial videos, films and remixes, under its own licence. Opens the site; it does not play here.",
       "fl.sort.dig": "Deep dig: rarely played, best rated (Internet Archive)",
       "fl.ll": "Lossless only (FLAC)",
@@ -514,6 +528,20 @@
       "fw.note": "Funkwhale: εμφανίζονται μόνο τραγούδια για τα οποία ο ανεβάζων διάλεξε ελεύθερη άδεια· τα υπόλοιπα μένουν στο open.audio.",
       "sv.free": "Servers ελεύθερης μουσικής:",
       "src.more": "Κι άλλη ελεύθερη μουσική αλλού",
+      "em.sc": "SoundCloud", "em.bc": "Bandcamp",
+      "em.badge": "Παίζει στον δικό του player της υπηρεσίας, μέσα στο Music. Όχι στην ουρά, όχι εκτός σύνδεσης.",
+      "em.play": "Αναπαραγωγή στον player του {s}",
+      "em.player": "Player του {s}",
+      "em.add": "Σύνδεσμος Bandcamp ή SoundCloud",
+      "em.addLabel": "Επικόλλησε τη διεύθυνση ενός άλμπουμ ή τραγουδιού του Bandcamp, ή ενός τραγουδιού ή μιας λίστας του SoundCloud",
+      "em.go": "Αναπαραγωγή",
+      "em.bad": "Αυτό δεν είναι άλμπουμ ή τραγούδι του Bandcamp, ούτε τραγούδι ή λίστα του SoundCloud.",
+      "em.busy": "Άνοιγμα του player…",
+      "em.fail": "Ο player δεν άνοιξε. Έλεγξε τη διεύθυνση και τη σύνδεση.",
+      "em.turnOn": "Ενεργοποίηση και αναπαραγωγή",
+      "em.more": "Εμφάνιση των τραγουδιών", "em.less": "Απόκρυψη των τραγουδιών",
+      "s.emb": "Players του Bandcamp και του SoundCloud",
+      "s.embHint": "Επικόλλησε έναν σύνδεσμο Bandcamp ή SoundCloud (ή γράψ' τον στην Αναζήτηση) και παίζει εδώ, στον δικό του player της υπηρεσίας. Βάλ' τον στα αγαπημένα ή σε λίστα όπως κάθε τραγούδι. Η υπηρεσία βλέπει τι ακούς, όπως και στον δικό της ιστότοπο· μια σελίδα του Bandcamp διαβάζεται μία φορά μέσω του relay του orOS για να βρεθεί ο player της. Δεν μπαίνει στην ουρά, δεν έχει ισοσταθμιστή, δεν παίζει εκτός σύνδεσης και σταματά όταν κλείσει το Music.",
       "src.moby": "mobygratis: δωρεάν ορχηστρικά του Moby για τα δικά σου μη εμπορικά βίντεο, ταινίες και remix, με δική του άδεια. Ανοίγει τον ιστότοπο· δεν παίζει εδώ.",
       "fl.sort.dig": "Βαθύ σκάψιμο: σπάνια ακουσμένα, τα καλύτερα πρώτα (Internet Archive)",
       "fl.ll": "Μόνο lossless (FLAC)",
@@ -747,7 +775,7 @@
 
   // Device-local view prefs (R10): never synced.
   var prefs = (function () {
-    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, viz: { on: false, st: "glow" }, fl: {}, soff: [] };
+    var p = { tab: "home", lib: "pl", sort: "title", legacy: "auto", open: true, osrc: "all", ly: "", mb: false, emb: false, viz: { on: false, st: "glow" }, fl: {}, soff: [] };
     try {
       var o = JSON.parse(localStorage.getItem(PREFS_KEY) || "null");
       if (o && typeof o === "object") {
@@ -765,6 +793,8 @@
         if (Array.isArray(o.soff)) p.soff = o.soff.filter(function (x) { return SO.indexOf(x) >= 0; });
         if (o.ly === "on" || o.ly === "off") p.ly = o.ly;
         if (o.mb === true) p.mb = true;
+        // MU-EMB: Bandcamp / SoundCloud players (off until the person turns them on).
+        if (o.emb === true) p.emb = true;
         // MU-FIND1: the search filters (open.js normFilter).
         if (o.fl && typeof o.fl === "object" && window.OrosMusicOpen) p.fl = window.OrosMusicOpen.normFilter(o.fl);
         // MU-VIZ: the light show of the full player (on, style).
@@ -853,6 +883,9 @@
     if (C.isServer(x)) return svOn(x.sh) ? svShow(x) : null;
     return C.isRemote(x) ? x : null;
   }
+  // What a list shows: a playable song, or a Bandcamp / SoundCloud
+  // entry (MU-EMB), which plays in the service's own player instead.
+  function shown(x) { return playable(x) || (C.isEmbed(x) ? x : null); }
   // A song of the open catalogues (not a link, not a server).
   function isOpen(r) { return !!(r && r.s && O && O.SOURCES[r.s]); }
   function srcName(s) { return O && O.SOURCES[s] ? O.SOURCES[s].name : ""; }
@@ -1737,7 +1770,7 @@
     });
     m.appendChild(big);
     if (r.topMonth >= 0) m.appendChild(el("p", "rc-line", t("recap.month", { m: monthName(r.topMonth, true) })));
-    var rows = r.songs.map(function (s) { var x = playable(s.ref); return x ? Object.assign({}, x, { _ref: s.ref }) : Object.assign({ _missing: 1 }, s.ref); });
+    var rows = r.songs.map(function (s) { var x = shown(s.ref); return x ? Object.assign({}, x, { _ref: s.ref }) : Object.assign({ _missing: 1 }, s.ref); });
     var src = { kind: "recap", id: String(y), n: t("recap.titleY", { y: y }) };
     var sec = section(m, t("recap.topSongs"));
     sec.appendChild(rowList(rows, { src: src, numbers: true }));
@@ -2510,6 +2543,13 @@
     return list.map(function (x) { var r = playable(x); return r ? C.itemOf(r) : null; }).filter(Boolean);
   }
   function playRows(rows, idx, src, shuffle) {
+    // A Bandcamp / SoundCloud entry plays in its own player (MU-EMB);
+    // Play on a list skips them, unless the list has nothing else.
+    if (idx >= 0 && C.isEmbed(rows[idx])) { embedPlay(rows[idx]); return; }
+    if (idx < 0 && rows.length && !rows.some(function (x) { return !!playable(x); })) {
+      var e0 = rows.filter(function (x) { return C.isEmbed(x); })[0];
+      if (e0) { embedPlay(e0); return; }
+    }
     if (!H) return;
     var items = [], map = -1;
     rows.forEach(function (x, i) {
@@ -2601,8 +2641,154 @@
       [t("empty.folder"), function () { pickFiles(true); }],
       [t("lib.newPl"), function () { newPlaylist([], function (id) { openView({ kind: "pl", id: id }); }); }]
     ].concat(SV ? [[t("sv.connect"), function () { connectDlg(); }], [t("sv.import"), importMenu], [t("sv.feedAdd"), feedDlg]] : [])
-      .concat(MX ? [[t("imp.spotify"), spotifyDlg]] : []));
+      .concat(MX ? [[t("imp.spotify"), spotifyDlg]] : [])
+      .concat([[t("em.add"), embedAddDlg]]));
   }
+  // ---------- Bandcamp / SoundCloud players (MU-EMB, 2026-11-27) ----------
+  // A link the person pastes plays in the service's own player, inside
+  // Music: neither service lets other apps stream its audio. The player
+  // is a sandboxed frame (it cannot move or script this page); it stops
+  // when the Music window closes and is not part of the queue. Off until
+  // the person turns it on, since the service sees what plays.
+  // SoundCloud: title, artist and cover from its oEmbed answer.
+  // Bandcamp: the player needs the page's own id, read from the album or
+  // song page through the relay's "web" op (only that one page).
+  // The person's own Mail relay when set, else orOS's (= enrich.js relayAddr).
+  var EM_RELAY = "https://oros-mail-relay.koulaxizis.workers.dev";   // = mail.js DEFAULT_RELAY
+  function emRelay() {
+    try {
+      var m = JSON.parse(localStorage.getItem("oros-mail-data") || "null");
+      var u = m && m.relay && m.relay.url;
+      if (typeof u === "string" && /^https:\/\/[^\s]+$/.test(u)) return u.replace(/\/+$/, "");
+    } catch (e) {}
+    return EM_RELAY;
+  }
+  function emFetch(url, accept, via) {
+    var FF = window.orosFeedsFetch;
+    if (!FF || typeof FF.fetchOne !== "function") return Promise.reject(new Error("net"));
+    return FF.fetchOne(url, { accept: accept, timeout: 20000, via: via, relay: emRelay }).then(function (r) {
+      if (!r || r.status >= 400 || !r.status) throw new Error("http");
+      return r.text || "";
+    });
+  }
+  function embedResolve(u) {
+    var e = C.embedUrl(u);
+    if (!e) return Promise.reject(new Error("url"));
+    if (e.kind === "sc") {
+      return emFetch(C.scOembedUrl(e.u), "application/json").then(function (txt) {
+        var j = null;
+        try { j = JSON.parse(txt); } catch (x) {}
+        return C.scParse(j, e.u) || C.scBare(e.u);
+      }, function () { return C.scBare(e.u); });
+    }
+    return emFetch(e.u, "text/html", "relay").then(function (html) {
+      var r = C.bcParse(html, e.u);
+      if (!r) throw new Error("parse");
+      return r;
+    });
+  }
+  // Turned off: one tap explains what changes and turns it on.
+  function embedAsk(then) {
+    if (prefs.emb) { then(); return; }
+    menuDlg([[t("em.turnOn"), function () { prefs.emb = true; savePrefs(); then(); }]], t("s.emb"), t("s.embHint"));
+  }
+  function embedOpen(u) {
+    if (!C.embedUrl(u)) { showToast(t("em.bad")); return; }
+    embedAsk(function () {
+      showToast(t("em.busy"));
+      embedResolve(u).then(function (r) { if (r) embedPlay(r); else showToast(t("em.fail")); }, function () { showToast(t("em.fail")); });
+    });
+  }
+  function embedAddDlg() {
+    promptDlg(t("em.add"), t("em.addLabel"), "", t("em.go"), embedOpen, 1000);
+  }
+  // Search: a pasted Bandcamp / SoundCloud address shows that one entry.
+  var emFound = {};
+  function embedFound(box, q) {
+    var e = C.embedUrl(q);
+    box.appendChild(el("h2", "sub-h", t("em." + e.kind)));
+    if (!prefs.emb) {
+      box.appendChild(el("p", "dim small o-note", t("s.embHint")));
+      box.appendChild(el("div", "menu-col")).appendChild(button(t("em.turnOn"), "", function () { prefs.emb = true; savePrefs(); renderKeepScroll(); }));
+      return;
+    }
+    var hit = emFound[e.u];
+    if (hit && hit.r) { box.appendChild(rowList([hit.r], { src: { kind: "song", id: hit.r.k, n: hit.r.t } })); return; }
+    if (hit && hit.err) { box.appendChild(el("p", "dim small o-note", t("em.fail"))); return; }
+    box.appendChild(el("p", "dim small o-note", t("em.busy")));
+    if (hit) return;
+    emFound[e.u] = { busy: 1 };
+    embedResolve(e.u).then(function (r) { emFound[e.u] = r ? { r: r } : { err: 1 }; }, function () { emFound[e.u] = { err: 1 }; })
+      .then(function () { if (C.embedUrl(searchQ.trim()) && C.embedUrl(searchQ.trim()).u === e.u) renderKeepScroll(); });
+  }
+  function emLook() {
+    var dark = false, col = "";
+    try {
+      var bg = getComputedStyle(document.body).backgroundColor.match(/\d+(\.\d+)?/g);
+      if (bg && bg.length >= 3) dark = (0.2126 * bg[0] + 0.7152 * bg[1] + 0.0722 * bg[2]) < 128;
+      var ac = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+      var m = /^#([0-9a-f]{6})$/i.exec(ac) || /^#([0-9a-f])([0-9a-f])([0-9a-f])$/i.exec(ac);
+      if (m) col = m.length === 2 ? m[1] : m[1] + m[1] + m[2] + m[2] + m[3] + m[3];
+    } catch (x) {}
+    return { dark: dark, color: col };
+  }
+  function embedClose() {
+    var d = $("emb");
+    if (d) d.remove();
+    document.body.classList.remove("has-emb");
+  }
+  function embedPlay(x, small) {
+    var r = C.normRef(x && x._ref ? x._ref : x);
+    if (!r || !C.isEmbed(r)) { showToast(t("em.fail")); return; }
+    embedAsk(function () {
+      // A phone starts small (the list stays in view); the expand button
+      // shows the album's or playlist's songs.
+      var look = emLook();
+      look.small = typeof small === "boolean" ? small : window.innerWidth <= 700;
+      var src = C.embedSrc(r, look);
+      if (!src) { showToast(t("em.fail")); return; }
+      if (H && H.getState().playing) { try { H.pause(); } catch (e) {} }
+      embedClose();
+      var box = el("section", "emb");
+      box.id = "emb";
+      box.setAttribute("aria-label", t("em.player", { s: t("em." + C.embedKind(r)) }));
+      var head = el("div", "emb-head");
+      head.appendChild(cover(r.art, r.al || r.t, "xs"));
+      var tx = el("span", "row-text");
+      tx.appendChild(el("span", "row-t", r.t || "?"));
+      tx.appendChild(el("span", "row-s dim", [t("em." + C.embedKind(r)), r.a].filter(Boolean).join(" · ")));
+      head.appendChild(tx);
+      var liked = C.isLiked(D(), r.k);
+      head.appendChild(button(liked ? t("unlike") : t("like"), "icon-btn like" + (liked ? " on" : ""), function () {
+        toggleLike(r);
+        var on = C.isLiked(D(), r.k);
+        this.className = "icon-btn like" + (on ? " on" : ""); this.innerHTML = on ? I.heartOn : I.heart;
+        this.setAttribute("aria-label", on ? t("unlike") : t("like")); this.title = on ? t("unlike") : t("like");
+        renderKeepScroll();
+      }, liked ? I.heartOn : I.heart));
+      head.appendChild(button(t("m.addPl"), "icon-btn", function () { addToPlaylist([r]); }, I.plus));
+      if (C.embedGrows(r)) {
+        var gb = button(look.small ? t("em.more") : t("em.less"), "icon-btn", function () { embedPlay(r, !look.small); }, I.expand);
+        gb.setAttribute("aria-pressed", look.small ? "false" : "true");
+        head.appendChild(gb);
+      }
+      head.appendChild(button(t("close"), "icon-btn", embedClose, I.x));
+      box.appendChild(head);
+      var fr = el("iframe", "emb-frame");
+      fr.title = t("em.player", { s: t("em." + C.embedKind(r)) });
+      fr.setAttribute("sandbox", "allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox");
+      fr.setAttribute("allow", "autoplay; encrypted-media");
+      fr.setAttribute("referrerpolicy", "no-referrer");
+      fr.setAttribute("loading", "eager");
+      fr.style.height = C.embedHeight(r, look.small) + "px";
+      fr.src = src;
+      box.appendChild(fr);
+      var pl = $("player");
+      pl.parentNode.insertBefore(box, pl);
+      document.body.classList.add("has-emb");
+    });
+  }
+
   function openInFiles() {
     var F = LIB.fs();
     Promise.resolve(F ? F.mkdir(LIB.ROOT).catch(function () {}) : null).then(function () {
@@ -2908,6 +3094,7 @@
   }
   function searchResults(box) {
     var q = searchQ.trim();
+    if (C.embedUrl(q)) { embedFound(box, q); return; }
     if (!q && O && O.filterOn(FL())) { exploreResults(box); return; }
     if (!q) {
       if (O && openOn()) savedSection(box);
@@ -3454,14 +3641,14 @@
       var p = C.findPl(D(), v.id);
       if (!p) { view = null; renderAll(); return; }
       src = { kind: "pl", id: p.id, n: p.n };
-      var rows = p.it.map(function (r) { var x = playable(r); return x ? Object.assign({}, x, { _ref: r }) : Object.assign({ _missing: 1 }, r); });
+      var rows = p.it.map(function (r) { var x = shown(r); return x ? Object.assign({}, x, { _ref: r }) : Object.assign({ _missing: 1 }, r); });
       pageHead(m, collage(rows, "big"), t("kind.pl"), p.n, el("div", "ph-sub dim", [nSongs(p.it.length), totalTime(rows.filter(function (r) { return !r._missing; }))].filter(Boolean).join(" · ")),
         rows, src, [button(t("more"), "icon-btn", function () { plMenu(p); }, I.more)]);
       if (!rows.length) m.appendChild(el("p", "empty", t("pl.emptyRows")));
       m.appendChild(rowList(rows, { src: src, pl: p }));
     } else if (v.kind === "liked") {
       src = { kind: "liked", id: "", n: t("lib.liked") };
-      var lk = C.likedList(D()).map(function (l) { var r = playable(l); return r || Object.assign({ _missing: 1 }, l); });
+      var lk = C.likedList(D()).map(function (l) { var r = shown(l); return r || Object.assign({ _missing: 1 }, l); });
       pageHead(m, likedCover("big"), t("kind.pl"), t("lib.liked"), el("div", "ph-sub dim", nSongs(lk.length)), lk, src);
       if (!lk.length) m.appendChild(el("p", "empty", t("liked.empty")));
       m.appendChild(rowList(lk, { src: src }));
@@ -3804,10 +3991,12 @@
       if (r.li) { var lb0 = el("span", "lic", O.licShort(r.li)); lb0.title = O.licLabel(r.li, LANG); subEl.insertBefore(lb0, subEl.firstChild); }
       else if (r.s === "au") { var lb1 = el("span", "lic lic-free", t("au.free")); lb1.title = t("au.freeLong"); subEl.insertBefore(lb1, subEl.firstChild); }
     }
+    if (C.isEmbed(r) && !r._missing) { var lb2 = el("span", "lic lic-free", t("em." + C.embedKind(r))); lb2.title = t("em.badge"); subEl.insertBefore(lb2, subEl.firstChild); }
     tx.appendChild(subEl);
     main.appendChild(tx);
     main.addEventListener("click", function () {
       if (r._missing) { showToast(r.s === "sv" ? t("missing.svToast") : t("missing.toast")); return; }
+      if (C.isEmbed(r)) { embedPlay(r); return; }
       var st = H && H.getState();
       if (st && st.cur && st.cur.k === k && st.src && opts.src && st.src.kind === opts.src.kind && st.src.id === opts.src.id) { H.toggle(); return; }
       playRows(rows, i, opts.src, undefined);
@@ -3850,6 +4039,7 @@
       if (sr && !(view && view.kind === "svr" && view.id === sr.id)) items.push([t("m.artist"), function () { openView(sr); }]);
       items.push([t("m.info"), function () { infoServer(r); }]);
     }
+    if (C.isEmbed(r) && !r._missing) items.unshift([t("em.play", { s: t("em." + C.embedKind(r)) }), function () { embedPlay(r); }]);
     if (r.s === "ln" && !r.p && !r._missing) {
       if (r.pg) items.push([t("m.page"), function () { openExt(r.pg); }]);
       items.push([t("m.info"), function () { infoServer(r); }]);
@@ -4679,6 +4869,14 @@
         dlg.appendChild(ml);
         dlg.appendChild(el("p", "dim small", t("s.mbHint")));
       }
+      var el2 = el("label", "check");
+      var ec = el("input");
+      ec.type = "checkbox"; ec.checked = !!prefs.emb;
+      ec.addEventListener("change", function () { prefs.emb = ec.checked; savePrefs(); if (!ec.checked) embedClose(); renderKeepScroll(); });
+      el2.appendChild(ec);
+      el2.appendChild(el("span", "", t("s.emb")));
+      dlg.appendChild(el2);
+      dlg.appendChild(el("p", "dim small", t("s.embHint")));
       var nOff = Object.keys(offKeys).length;
       if (nOff) {
         dlg.appendChild(el("p", "dim small", t("s.offInfo", { n: nSongs(nOff), s: fmtSize(offSize()) })));
@@ -4831,6 +5029,7 @@
   }
   var paintTimer = null;
   function onHost(ev, arg) {
+    if (ev === "play") embedClose();
     if ((ev === "play" || ev === "load") && castCtl) castFollow();
     if (ev === "time") {
       if (paintTimer) return;
@@ -4883,6 +5082,7 @@
   // feed dialog filled in, so nothing is added before a tap.
   function addUrlTarget(o) {
     var u = o && typeof o.url === "string" ? o.url.trim().slice(0, 1000) : "";
+    if (C.embedUrl(u)) { embedOpen(u); return; }
     if (!/^https?:\/\/[^\s]+$/i.test(u) || !SV) { showToast(t("toast.cant")); return; }
     var bare = u.split(/[?#]/)[0];
     if (SV.AUDIO_RE.test(bare)) {

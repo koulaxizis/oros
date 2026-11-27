@@ -249,6 +249,16 @@ dl.info dd { word-break: break-word; }
   background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px;
   box-shadow: 0 -2px 18px var(--shadow);
 }
+/* MU-EMB: Bandcamp / SoundCloud player, docked above the player bar. */
+.emb {
+  flex: 0 0 auto; margin: 0 8px 8px; padding: 6px 8px 8px;
+  background: var(--panel-bg); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 -2px 18px var(--shadow); max-height: 55vh; max-height: 55dvh; overflow: auto;
+}
+.emb-head { display: flex; align-items: center; gap: 8px; min-width: 0; margin-bottom: 6px; }
+.emb-head .row-text { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; }
+.emb-head .row-t, .emb-head .row-s { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.emb-frame { display: block; width: 100%; border: 0; border-radius: 6px; background: transparent; }
 #player.err .pl-sub { color: var(--danger); }
 .pl-prog { position: absolute; left: 10px; right: 10px; bottom: 2px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
 #pl-prog { height: 100%; width: 0; background: var(--accent); }
@@ -343,6 +353,7 @@ dl.info dd { overflow-wrap: anywhere; }
   #tabs button span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
   #tabs button.on { background: transparent; }
   #player { order: 9; margin: 0 6px 6px; }
+  .emb { order: 8; margin: 0 6px 6px; max-height: 45vh; max-height: 45dvh; }
   #main { order: 1; padding: 6px 12px 18px; }
   .page-head { flex-direction: column; align-items: flex-start; gap: 12px; }
   .cover.big { width: 160px; height: 160px; align-self: center; }
