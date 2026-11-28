@@ -24,7 +24,7 @@ orosPack("de", "device", {
  "a._other": "Andere (nicht orOS)",
  "a._pet": "Bildschirm-Haustier",
  "a._shell": "orOS (Desktop, Einstellungen, Synchronisierung)",
- "a.hint": "Lokaler Speicher pro App. Tippe auf eine App, um sie zu öffnen.",
+ "a.hint": "Lokaler Speicher pro App. Tippe auf eine App, um sie zu öffnen. Auch eine App, die du hier nie geöffnet hast, kann Platz brauchen: Die Synchronisierung bewahrt ihre Daten auf diesem Gerät für deine anderen Geräte auf.",
  "a.showAll": "Alle zeigen ({n})",
  "a.showLess": "Weniger zeigen",
  "about": "Nur lesen: Dieser Bereich ändert nichts und sendet nichts. Alles beschreibt dieses Gerät.",
