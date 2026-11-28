@@ -12,6 +12,10 @@
 //             (generative expand) → a new bottom layer
 //   upscale   the whole picture larger; with an AI that can (WebUI /
 //             Forge) its sharper copy as a top layer
+//   smartselect  the object at x, y → a new layer or the selection (on
+//             this device: smart.js, SlimSAM)
+//   colorize  colours for a black-and-white photo → a new top layer (on
+//             this device: smart.js, DDColor)
 //   image     a picture file from Claude's folders → a new photo layer
 // The image AI is the one the owner chose in the Assistant (Settings ›
 // Pictures, assistant/imgai.js: AI Horde free, Hugging Face, OpenAI,
@@ -276,7 +280,17 @@
     });
   }
 
-  var RUN = { generate: generate, fill: fill, expand: expand, upscale: upscale, nobg: nobg, image: image };
+  // SC: Smart select and Colourize on this device (smart.js)
+  function smartselect(s) {
+    if (typeof PL.smartLoad !== "function") return Promise.reject({ note: "aiNoSmart" });
+    return PL.smartLoad().then(function (M) { return M.autoSelect(s); }).then(function (n) { if (!n) throw { note: "aiNoObject" }; return n; });
+  }
+  function colorize(s) {
+    if (typeof PL.smartLoad !== "function") return Promise.reject({ note: "aiNoSmart" });
+    return PL.smartLoad().then(function (M) { return M.autoColor(s); });
+  }
+
+  var RUN = { generate: generate, fill: fill, expand: expand, upscale: upscale, nobg: nobg, smartselect: smartselect, colorize: colorize, image: image };
   function run(s, notes) {
     var f = RUN[s.op];
     if (!f) return Promise.resolve(0);

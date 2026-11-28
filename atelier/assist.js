@@ -30,7 +30,7 @@
   var STR = {
     en: {
       "as.working": "The Assistant is changing {n} designs…", "as.working1": "The Assistant is changing the design…",
-      "as.cutting": "Background {i} of {n}…", "as.stop": "Stop",
+      "as.cutting": "Background {i} of {n}…", "as.coloring": "Colouring {i} of {n}…", "as.stop": "Stop",
       "as.done": "The Assistant changed {n} things in {d} designs.", "as.done1": "The Assistant changed {n} things in the design.",
       "as.done0": "Nothing needed changing.", "as.bad": "The Assistant's request could not be read. Nothing was changed.",
       "as.undone": "The Assistant's change was undone.", "as.changed": "These designs were changed since, so the Assistant's change was not undone.",
@@ -40,7 +40,7 @@
     },
     el: {
       "as.working": "Ο Βοηθός αλλάζει {n} σχέδια…", "as.working1": "Ο Βοηθός αλλάζει το σχέδιο…",
-      "as.cutting": "Φόντο {i} από {n}…", "as.stop": "Διακοπή",
+      "as.cutting": "Φόντο {i} από {n}…", "as.coloring": "Χρωματισμός {i} από {n}…", "as.stop": "Διακοπή",
       "as.done": "Ο Βοηθός άλλαξε {n} στοιχεία σε {d} σχέδια.", "as.done1": "Ο Βοηθός άλλαξε {n} στοιχεία στο σχέδιο.",
       "as.done0": "Δεν χρειάστηκε καμία αλλαγή.", "as.bad": "Το αίτημα του Βοηθού δεν διαβάστηκε. Δεν άλλαξε τίποτα.",
       "as.undone": "Η αλλαγή του Βοηθού αναιρέθηκε.", "as.changed": "Τα σχέδια άλλαξαν στο μεταξύ, γι' αυτό η αλλαγή του Βοηθού δεν αναιρέθηκε.",
@@ -237,6 +237,23 @@
               });
             });
             return c3;
+          }
+          if (st.op === "colorize") {
+            // SC: colours on the device (smartpick.js, loaded when needed)
+            var cj = [];
+            works.forEach(function (o) { C.pick(o.w, st).forEach(function (it) { if (it.ax.k === "photo" && !it.ax.vid && it.a) cj.push({ o: o, it: it }); }); });
+            if (!cj.length || !CUT || !AT.ai || !AT.ai.smart) { if (cj.length && notes.indexOf("noCut") < 0) notes.push("noCut"); return; }
+            return AT.ai.smart().then(function (SP) {
+              var c4 = Promise.resolve();
+              cj.forEach(function (j, i) {
+                c4 = c4.then(function () {
+                  if (ctl.signal.aborted) return;
+                  if (stat) stat.textContent = t("as.coloring", { i: i + 1, n: cj.length });
+                  return SP.colorOne(j.it, st, ctl.signal).then(function (ok) { if (ok) j.o.k++; });
+                });
+              });
+              return c4;
+            }, function () { if (notes.indexOf("noCut") < 0) notes.push("noCut"); });
           }
           if (!CUT || !cutOne) { if (notes.indexOf("noCut") < 0) notes.push("noCut"); return; }
           var jobs = [];

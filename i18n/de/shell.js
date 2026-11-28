@@ -381,6 +381,8 @@ orosPack("de", "shell", {
  "cr.mediabunny": "Videodateien lesen und schreiben (Montage)",
  "cr.meteoalarm": "Amtliche Wetterwarnungen (Wetter)",
  "cr.mi-gan": "Einen Teil eines Bildes füllen: Magischer Radierer und Magischer Griff (Atelier)",
+ "cr.slimsam": "Das angeklickte Objekt auswählen: Intelligente Auswahl (Photo Lab) und Objekt herauslösen (Atelier)",
+ "cr.ddcolor": "Farben für Schwarzweißfotos: Einfärben (Photo Lab, Atelier)",
  "cr.musicbrainz": "Albumdetails (Medienregal, Cover in Musik); Künstlerseiten, Diskografie und Titellisten (Musik)",
  "cr.nasa-gibs": "Satelliten-Regenkarte (Wetter)",
  "cr.notion-api": "Verbundene Dienste: Seiten (Notizen) und Datenbanken (Tabelle, Kanban) importieren",

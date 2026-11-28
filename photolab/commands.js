@@ -108,6 +108,9 @@
     generate: { kind: "ai", args: { prompt: { t: "str", max: 2000, req: 1 }, style: oneOf(AI_STYLES), prov: oneOf(PROVS),
       w: num(64, MAX_SIDE), h: num(64, MAX_SIDE), x: num(-32768, 32768), y: num(-32768, 32768), title: { t: "str", max: 80 } } },
     nobg: { kind: "ai", args: sel({}) },
+    // SC (smart.js, on this device): the object at x, y; colours for a black-and-white picture
+    smartselect: { kind: "ai", args: { x: { t: "num", lo: 0, hi: MAX_SIDE, def: null, req: 1 }, y: { t: "num", lo: 0, hi: MAX_SIDE, def: null, req: 1 }, to: { t: "enum", v: ["layer", "sel"], def: "layer" }, only: { t: "bool", def: 0 } } },
+    colorize: { kind: "ai", args: { amt: { t: "int", lo: 0, hi: 150, def: 100 }, fast: { t: "bool", def: 0 } } },
     fill: { kind: "ai", args: { prompt: { t: "str", max: 2000, req: 1 }, x: { t: "num", lo: 0, hi: MAX_SIDE, def: null, req: 1 }, y: { t: "num", lo: 0, hi: MAX_SIDE, def: null, req: 1 },
       w: { t: "num", lo: 8, hi: MAX_SIDE, def: null, req: 1 }, h: { t: "num", lo: 8, hi: MAX_SIDE, def: null, req: 1 }, prov: oneOf(PROVS) } },
     expand: { kind: "ai", args: { ratio: oneOf([""].concat(RATIOS)), w: num(1, MAX_SIDE), h: num(1, MAX_SIDE), pos: { t: "enum", v: POS, def: "c" },
@@ -151,6 +154,8 @@
     "rename: the project's name becomes title",
     "generate: AI draws a new picture from the words in prompt, in English (it reads best), as a new photo layer on top: style " + AI_STYLES.slice(1).join("|") + ", w, h (its size, the canvas when left out; scaled to cover it), x, y, title (the layer's name)",
     "nobg: remove the background of the picked photo layers (as a mask, which can be painted further; on this device, nothing is sent)",
+    "smartselect: the object at the canvas point x, y (a person, a cup, a car; Segment Anything on this device, nothing is sent): to layer (default: a copy of the object, background transparent, as a new top layer) | sel (it becomes the selection); only (true: only the part clicked, such as a shirt, not the whole person)",
+    "colorize: colours for a black-and-white or faded photo (the whole visible picture; DDColor on this device, nothing is sent), laid on its own lightness at full size as a new top layer: amt (strength 0-150 %, 100 by default), fast (true: four times faster, a little less good)",
     "fill: AI redraws the box x, y, w, h of the picture as prompt says (generative fill), as a new layer over it",
     "expand: AI grows the picture (generative expand / outpaint) to ratio " + RATIOS.join("|") + " or to w, h, the picture anchored at pos, and draws what is beyond its edges (prompt: what is around, optional) on a new bottom layer",
     "upscale: the whole picture f 2|3|4 times larger (at most " + MAX_SIDE + " px a side); with an AI that can (Stable Diffusion WebUI / Forge, ComfyUI) its sharper copy comes as a top layer",

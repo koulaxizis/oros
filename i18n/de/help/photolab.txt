@@ -12,6 +12,7 @@ Die Werkzeugleiste ist links (auf dem Handy unten). Die Leiste über dem Bild ze
 - `Auswahlrechteck` und `Lasso`: wählen einen Bereich aus. Tippe noch mal auf das Werkzeug, um zwischen `Rechteck` und `Ellipse` zu wechseln, oder zwischen Freihand- und Punkt-für-Punkt-Lasso. Halte Shift, um zur Auswahl hinzuzufügen, Alt, um abzuziehen.
 - `Zauberstab`: wählt ähnliche Farben aus; stell die `Toleranz` ein und ob nur `Benachbart` liegende Pixel zählen.
 - `Schnellauswahl`: Male über das, was du willst, und die Auswahl wächst bis zu den Kanten; Alt+Ziehen nimmt weg. [[Shift+W]] wechselt zwischen ihr und dem Zauberstab.
+- `Intelligente Auswahl`: Klicke auf ein Objekt (eine Person, eine Tasse, ein Auto), und es wird ausgewählt; Umschalt+Klick fügt ein weiteres hinzu, Alt+Klick nimmt eines weg (auf dem Handy über `Modus`). `Auswahl` › `Ganzes Objekt` oder `Teil davon` (ein Hemd, nicht die ganze Person). [[Shift+W]] geht von der Schnellauswahl weiter zu ihr. Siehe unten „Intelligente Auswahl und Einfärben“.
 - `Pinsel` und `Radiergummi`: `Größe`, `Härte`, `Deckkraft` und `Fluss`. Ein Stift malt breiter, wenn du fester drückst.
 - `Kopierstempel`: Alt+Klick (oder `Quelle setzen`, dann tippen) dorthin, wovon kopiert wird, dann male dort, wo die Kopie hin soll. `Reparaturpinsel` macht dasselbe, behält aber die Farbe rund um die Stelle, für Hautunreinheiten und Staub; seine Art `Rote Augen` macht rote Pupillen dunkel.
 - `Abwedeln / Nachbelichten / Schwamm`: `Abwedeln` hellt auf und `Nachbelichten` dunkelt ab, in den `Tiefen`, `Mitteltöne` oder `Lichter`; `Schwamm` nimmt Farbe weg oder fügt sie hinzu. `Wischfinger` verschmiert Farbe wie ein Finger in nasser Farbe.
@@ -52,6 +53,11 @@ Auf dem Handy sind alle Menüs unter der Menü-Taste.
 - `Ebene` › `Hintergrund entfernen…` macht dasselbe und verbirgt alles andere mit einer Ebenenmaske auf der aktuellen Ebene. Nichts wird gelöscht: Male auf die Maske, um eine Kante zu korrigieren, oder lösche die Maske, um den Hintergrund zurückzubekommen.
 - Beide betrachten das ganze sichtbare Bild. Bewege den Regler `Kante`, um mehr oder weniger um das Motiv zu behalten, dann `Anwenden`. Ein `Rückgängig` nimmt es zurück.
 - Sie nutzen dasselbe Werkzeug auf dem Gerät wie der Hintergrund-Entferner im Atelier. Beim ersten Mal ist ein Download von etwa 16 MB nötig; danach geht es offline, und das Bild verlässt nie dein Gerät. Hat das Atelier es schon geladen, musst du nichts laden.
+
+## Intelligente Auswahl und Einfärben
+- Das Werkzeug `Intelligente Auswahl` (auch `Auswahl` › `Intelligente Auswahl`) liest das ganze sichtbare Bild einmal, was ein paar Sekunden dauert; danach wählt jeder Klick sofort ein Objekt aus. Es nutzt deinen Auswahl-`Modus` und die `Weiche Kante`.
+- `Filter` › `Einfärben…` errät die Farben eines Schwarzweiß- oder verblassten Fotos. Wähle die `Qualität` (`Beste`, oder `Schneller` auf langsamen Geräten), prüfe die Vorschau, stell die `Stärke` ein, dann `Anwenden`: Die Farben kommen auf eine neue Ebene darüber, auf Licht und Schatten des Bildes selbst in voller Größe. Mit einer Auswahl wird nur dieser Teil eingefärbt. Die Farben sind geschätzt: Senke die Deckkraft der Ebene oder male eine Ebenenmaske, wo sie nicht stimmen. Ein `Rückgängig` nimmt es zurück.
+- Beides läuft auf diesem Gerät und wird einmal heruntergeladen, nur wenn du es zum ersten Mal nutzt: die intelligente Auswahl etwa 14 MB, das Einfärben etwa 136 MB (plus etwa 12 MB, die es mit dem Hintergrund-Werkzeug teilt). Danach geht es offline, und das Bild verlässt nie dein Gerät.
 
 ## Aus Google Fotos
 - Auf dem Projekte-Bildschirm `Aus Google Fotos`: Melde dich bei Google an, tippe auf `Google Fotos öffnen`, wähle ein Bild und tippe auf `Fertig`. Es öffnet sich hier als neues Projekt.

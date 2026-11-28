@@ -45,7 +45,7 @@
       "ai.cutNeed": "Runs on this device: the picture is not sent anywhere. The first time, Atelier downloads the tool (about {mb} MB); after that it works offline.",
       "ai.cutGo": "Download and remove", "ai.cutLoad": "Downloading the tool… {p}%", "ai.cutRun": "Removing the background…",
       "ai.cutEdge": "Keep more · keep less", "ai.cutDone": "Background removed", "ai.cutFail": "The background could not be removed ({why}).",
-      "ai.cutVideo": "Not for videos.", "ai.cutLittle": "Hardly anything was left: try “Keep more”.",
+      "ai.cutVideo": "Not for videos.", "sp.pickBtn": "Pick an object", "sp.colorBtn": "Colourize", "ai.cutLittle": "Hardly anything was left: try “Keep more”.",
       "ai.cutReady": "The background tool is on this device ({mb} MB).", "ai.cutForget": "Remove the picture tools",
       "ai.cutGone": "The picture tools were removed from this device.", "ai.cutMissing": "Downloads once (about {mb} MB) the first time you use it.",
       "ai.err": "{name} did not answer: {why}",
@@ -77,7 +77,7 @@
       "ai.cutNeed": "Γίνεται σε αυτή τη συσκευή: η εικόνα δεν στέλνεται πουθενά. Την πρώτη φορά το Ατελιέ κατεβάζει το εργαλείο (περίπου {mb} MB)· μετά δουλεύει και χωρίς σύνδεση.",
       "ai.cutGo": "Λήψη και αφαίρεση", "ai.cutLoad": "Λήψη του εργαλείου… {p}%", "ai.cutRun": "Αφαιρώ το φόντο…",
       "ai.cutEdge": "Κράτα περισσότερο · λιγότερο", "ai.cutDone": "Το φόντο αφαιρέθηκε", "ai.cutFail": "Το φόντο δεν αφαιρέθηκε ({why}).",
-      "ai.cutVideo": "Όχι για βίντεο.", "ai.cutLittle": "Δεν έμεινε σχεδόν τίποτα: δοκίμασε «Κράτα περισσότερο».",
+      "ai.cutVideo": "Όχι για βίντεο.", "sp.pickBtn": "Πιάσε αντικείμενο", "sp.colorBtn": "Χρωματισμός", "ai.cutLittle": "Δεν έμεινε σχεδόν τίποτα: δοκίμασε «Κράτα περισσότερο».",
       "ai.cutReady": "Το εργαλείο φόντου είναι σε αυτή τη συσκευή ({mb} MB).", "ai.cutForget": "Αφαίρεση των εργαλείων εικόνας",
       "ai.cutGone": "Τα εργαλεία εικόνας αφαιρέθηκαν από τη συσκευή.", "ai.cutMissing": "Κατεβαίνει μία φορά (περίπου {mb} MB) την πρώτη φορά που θα το χρησιμοποιήσεις.",
       "ai.err": "Το {name} δεν απάντησε: {why}",
@@ -630,6 +630,25 @@
     });
   }
 
+  // ---------- 5b. Pick an object, Colourize (smartpick.js, loaded when first used) ----------
+  var spP = null;
+  function smart() {
+    if (AT.smartPick) return Promise.resolve(AT.smartPick);
+    if (!spP) {
+      spP = new Promise(function (ok, fail) {
+        var v = (document.querySelector('script[src*="core.js?v="]') || {}).src || "", m = v.match(/[?&]v=([^&#]+)/);
+        var s = document.createElement("script");
+        s.src = "smartpick.js" + (m ? "?v=" + m[1] : "");
+        s.onload = function () { if (AT.smartPick) ok(AT.smartPick); else fail(new Error("smartpick")); };
+        s.onerror = function () { fail(new Error("smartpick")); };
+        document.head.appendChild(s);
+      });
+      spP.catch(function () { spP = null; });
+    }
+    return spP;
+  }
+  function smartFail(e) { AT.toast(t("ai.cutFail", { why: String(e && e.message || e).slice(0, 120) })); }
+
   // ---------- 6. The AI tab ----------
   function sec(title, hint) {
     var s = el("div", "pn-sec");
@@ -704,6 +723,8 @@
     var s3 = sec(t("ai.pics"));
     if (one && one.ax.k === "photo" && !one.ax.vid) {
       s3.appendChild(button("btn primary block", t("ai.cut"), function () { cutout(one.id); }));
+      s3.appendChild(button("btn block", t("sp.pickBtn"), function () { smart().then(function (SP) { SP.pick(one.id); }, smartFail); }));
+      s3.appendChild(button("btn block", t("sp.colorBtn"), function () { smart().then(function (SP) { SP.colorize(one.id); }, smartFail); }));
       if (AT.magic) {
         s3.appendChild(button("btn block", t("ai.erase"), function () { AT.magic.erase(one.id); }));
         s3.appendChild(button("btn block", t("ai.grab"), function () { AT.magic.grab(one.id); }));
@@ -741,6 +762,6 @@
   }
   AT.registerView("ai", view);
 
-  AT.ai = { textMenu: textMenu, rewriteText: rewriteText, newText: newText, cutout: cutout, conf: conf, pick: pick, readKey: readKey,
+  AT.ai = { textMenu: textMenu, rewriteText: rewriteText, newText: newText, cutout: cutout, smart: smart, conf: conf, pick: pick, readKey: readKey,
     need: need, ask: ask, errText: errText, openAssistant: openAssistant };
 })();
