@@ -12,8 +12,10 @@ import java.util.List;
  * "installer of record"). From Android 14 an app may also name the one
  * store that owns its updates. A first install always asks, unless the
  * person turned on Shizuku ({@link Silent}). Some phones (Xiaomi/Redmi)
- * add their own question on top; that cannot be known here. Pure, for
- * unit tests.
+ * add their own question on top; HyperOS even refuses a session that asks
+ * for no question (STATUS_FAILURE_ABORTED, "Permission denied", before any
+ * question shows). Once seen, this phone counts as one that always asks
+ * ({@link #refused}) until its system is updated. Pure, for unit tests.
  */
 final class Quiet {
     /** Android asks before every update. */
@@ -30,11 +32,27 @@ final class Quiet {
      * @param me this manager's package
      * @param installer the package that installed the app last, or null
      * @param owner the package that owns its updates (API 34+), or null
+     * @param refused this phone's system refused a quiet update before
      */
-    static int update(int sdk, String me, String installer, String owner) {
-        if (sdk < 31) return ASKS;
+    static int update(int sdk, String me, String installer, String owner, boolean refused) {
+        if (sdk < 31 || refused) return ASKS;
         if (owner != null && !owner.equals(me)) return ASKS;
         return me.equals(installer) ? QUIET : ONCE_MORE;
+    }
+
+    /** PackageInstaller.STATUS_FAILURE_ABORTED. */
+    static final int ABORTED = 3;
+
+    /**
+     * The system refused a session that asked for no question (HyperOS):
+     * aborted before the person was asked anything, or with HyperOS's
+     * "Permission denied". A "Cancel" on Android's question always comes
+     * after a question, so it never counts.
+     */
+    static boolean refused(int status, boolean triedQuiet, boolean asked, String message) {
+        if (status != ABORTED || !triedQuiet) return false;
+        if (!asked) return true;
+        return message != null && message.toLowerCase(java.util.Locale.ROOT).contains("permission denied");
     }
 
     /**
