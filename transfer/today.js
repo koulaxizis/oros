@@ -60,7 +60,7 @@
       });
       var last = ctx.addDays(ctx.today, ctx.horizon);
       C.cleanLinks(ctx.readJSON(C.LINKS_KEY), now).items.forEach(function (l) {
-        if (ymd(l.exp) > last) return;
+        if (!l.exp || ymd(l.exp) > last) return;          // TR-UNL: a link kept until deleted never ends
         var row = { id: "end-" + l.id, due: ymd(l.exp), time: hm(l.exp), kind: "event",
                     title: veil || !l.what ? tr(L, "td.endsAny") : tr(L, "td.ends", { what: l.what }),
                     target: { tab: "hist" } };

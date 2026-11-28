@@ -429,13 +429,39 @@ test("a wrong code never meets the sender; a third browser cannot join", async (
   const u = pair(files);
   u.sender.start(); u.receiver.start();
   await until(() => u.rLast().p === "offer");
-  const third = new E.Transfer({ role: "receiver", code: u.code, relay: "https://relay.test", WebSocket: u.relay.WebSocket(), RTCPeerConnection: u.rtc.PC, onState: (p, i) => { third.last = Object.assign({ p }, i); } });
+  const third = new E.Transfer({ role: "receiver", code: u.code, relay: "https://relay.test", busyTries: 0, WebSocket: u.relay.WebSocket(), RTCPeerConnection: u.rtc.PC, onState: (p, i) => { third.last = Object.assign({ p }, i); } });
   third.start();
   await until(() => third.last && third.last.p === "error", 20000);
   assert.equal(third.last.e, "noroom");
   assert.ok(u.relay.full >= 1);
   u.receiver.accept(memSink());
   await until(() => u.rLast().p === "done");
+});
+
+test("TR-UNL wave 2: one link, one person after another: the next one waits its turn (busy), then gets every file", async () => {
+  assert.equal(E.BUSY_GAP_MS * E.BUSY_TRIES, 600000, "a receiver waits up to 10 minutes");
+  const files = randomFiles([["a.bin", C.PIECE * 3 + 5], ["b.txt", 9]]);
+  const u = pair(files);
+  u.sender.start(); u.receiver.start();
+  await until(() => u.rLast().p === "offer");
+  const nextLog = [];
+  const second = new E.Transfer({ role: "receiver", code: u.code, relay: "https://relay.test", busyGapMs: 30, dev: "Safari · iOS",
+    WebSocket: u.relay.WebSocket(), RTCPeerConnection: u.rtc.PC, onState: (p, i) => nextLog.push(Object.assign({ p }, i)) });
+  second.start();
+  await until(() => nextLog.some((x) => x.p === "busy"), 20000);
+  assert.ok(!nextLog.some((x) => x.p === "error"), "it waits instead of failing");
+  u.receiver.accept(memSink());
+  await until(() => u.rLast().p === "done" && u.sLast().p === "done");
+  // the app starts a new session on the same code for the next person (app.js session())
+  const sender2 = new E.Transfer({ role: "sender", code: u.code, relay: "https://relay.test", dev: "Chrome · Linux", files: u.manifest,
+    WebSocket: u.relay.WebSocket(), RTCPeerConnection: u.rtc.PC, read: (i, a, b) => Promise.resolve(new Uint8Array(files[i].bytes.subarray(a, b))),
+    onState: (p, i) => { sender2.last = Object.assign({ p }, i); } });
+  sender2.start();
+  await until(() => nextLog.length && nextLog[nextLog.length - 1].p === "offer", 20000);
+  const sink = memSink();
+  second.accept(sink);
+  await until(() => nextLog[nextLog.length - 1].p === "done" && sender2.last && sender2.last.p === "done", 20000);
+  files.forEach((f, i) => assert.ok(sink.out[i].data.equals(f.bytes), f.path));
 });
 
 test("a link that does not come back ends both sides as lost", async () => {

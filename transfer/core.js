@@ -27,13 +27,15 @@
    1.2.0 (D1): cleanMeta, the sender's title and message (TRANSFER-META).
    1.3.0 (D3): picType / BG_MAX, the sender's own background picture (TRANSFER-BG).
    1.4.0 (TR-LATER): okEmail, the address of a scheduled email.
+   1.5.0 (TR-UNL): MAX_FILES 100,000; a waiting link may have exp 0
+         (kept until deleted) and its link; LINKS_MAX 1,000.
 
    window.OrosTransferCore (browser) / module.exports (Node).
    ============================================================ */
 (function (root) {
   "use strict";
 
-  var VERSION = "1.4.0";
+  var VERSION = "1.5.0";
   var PROTO = 2;                      // 2: relay path, resume (W2)
   var NS = "oros-transfer/v1";
   var ALPHA = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
@@ -43,7 +45,7 @@
   var PIECE = 61440;                  // plain bytes per piece (60 KiB: fits every browser's data channel)
   var HEAD = 12;                      // header bytes of a binary piece
   var MAX_CTRL = 60000;               // characters of one sealed control message
-  var MAX_FILES = 10000;              // files in one transfer
+  var MAX_FILES = 100000;             // files in one transfer (TR-UNL)
   var MAX_NAME = 255;                 // bytes are not counted; characters are
   var MAX_PATH = 1024;
   var MAX_SIZE = Math.pow(2, 50);     // a sanity bound, not a limit anyone meets
@@ -546,24 +548,32 @@
 
   // ----- Links that wait in this device's Dropbox (TODAY-GAP) -----
   // Device-local (R10, never synced): "oros-transfer-links" =
-  // { v: 1, items: [{ id, exp, what, n }] }, one per "Through my
-  // Dropbox" send made on this device, so Today can say when a link
-  // stops working. Written when the link is ready, removed on "Delete
-  // now"; a passed expiry is dropped when read. At most LINKS_MAX.
-  var LINKS_KEY = "oros-transfer-links", LINKS_MAX = 50;
+  // { v: 1, items: [{ id, exp, what, n, at?, bytes?, url? }] }, one per
+  // "Through my Dropbox" send made on this device, so Today can say
+  // when a link stops working and Links (TR-UNL) can name it and copy
+  // it again. Written when the link is ready, removed on "Delete"; a
+  // passed expiry is dropped when read; exp 0 = kept until deleted
+  // (never dropped by time). url is the receive link (it holds the
+  // code, so it stays on this device). At most LINKS_MAX, the ones that
+  // end soonest first, the kept ones after them.
+  var LINKS_KEY = "oros-transfer-links", LINKS_MAX = 1000;
+  function okUrl(u) { return typeof u === "string" && u.length <= 4000 && /^https?:\/\/[^\s#]+#d=[0-9A-Za-z._-]+$/.test(u); }
   function cleanLinks(raw, now) {
     now = now || Date.now();
     var out = [], seen = {};
+    var num = function (v) { v = +v; return v >= 0 && Math.floor(v) === v ? v : 0; };
     (raw && Array.isArray(raw.items) ? raw.items : []).forEach(function (x) {
       if (!x || typeof x !== "object") return;
       var id = String(x.id || ""), exp = +x.exp;
-      if (!/^[a-z0-9]{6,40}$/.test(id) || seen[id] || !(exp > now) || Math.floor(exp) !== exp) return;
+      if (!/^[a-z0-9]{6,40}$/.test(id) || seen[id] || !(exp === 0 || exp > now) || Math.floor(exp) !== exp) return;
       seen[id] = true;
-      var n = +x.n;
-      out.push({ id: id, exp: exp, what: String(x.what || "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 120),
-                 n: n >= 0 && Math.floor(n) === n ? n : 0 });
+      var o = { id: id, exp: exp, what: String(x.what || "").replace(/[\u0000-\u001f\u007f]/g, "").slice(0, 120), n: num(x.n) };
+      if (num(x.at)) o.at = num(x.at);
+      if (num(x.bytes)) o.bytes = num(x.bytes);
+      if (okUrl(x.url)) o.url = x.url;
+      out.push(o);
     });
-    out.sort(function (a, b) { return (a.exp - b.exp) || (a.id < b.id ? -1 : 1); });
+    out.sort(function (a, b) { return ((a.exp || Infinity) - (b.exp || Infinity)) || (a.id < b.id ? -1 : 1); });
     return { v: 1, items: out.slice(0, LINKS_MAX) };
   }
   function addLink(raw, link, now) {

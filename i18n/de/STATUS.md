@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52914 of 52963 (99%)
+- Strings: 53097 of 53146 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,10 +16,10 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 2483 / 2484 |
+| assistant | 99% | 2615 / 2616 |
 | atelier | 100% | 1534 / 1534 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 332 / 332 |
+| automations | 100% | 337 / 337 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
@@ -30,7 +30,7 @@ en and el); translators change them there, not in a pack.
 | bubble | 100% | 54 / 54 |
 | budget | 100% | 1184 / 1184 |
 | calculator | 100% | 170 / 170 |
-| calendar | 100% | 638 / 638 (49 in the code) |
+| calendar | 100% | 650 / 650 (49 in the code) |
 | capture | 100% | 67 / 67 |
 | caravan | 100% | 170 / 170 |
 | cardkit | 100% | 9 / 9 |
@@ -142,7 +142,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 2130 / 2130 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1698 / 1698 |
+| shell | 100% | 1701 / 1701 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -171,7 +171,7 @@ en and el); translators change them there, not in a pack.
 | today | 100% | 158 / 158 |
 | todo | 100% | 273 / 273 |
 | together | 100% | 303 / 303 |
-| transfer | 100% | 157 / 157 |
+| transfer | 100% | 188 / 188 |
 | travel | 100% | 558 / 558 |
 | typewriter | 100% | 46 / 46 |
 | typing | 100% | 170 / 170 |

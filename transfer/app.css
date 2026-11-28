@@ -146,11 +146,15 @@ h2.big { overflow-wrap: anywhere; }
 .rows .name.link { background: none; border: 0; color: var(--text); font: inherit; text-align: left; cursor: pointer; padding: 6px 0; }
 .rows .name.link:hover { color: var(--accent); }
 .rows input[type="checkbox"] { width: 20px; height: 20px; flex: none; accent-color: var(--accent); }
-#hist-list li { border-color: var(--glass-line); background: var(--well); }
-#hist-list .arrow { font-weight: 800; color: var(--accent); }
-#hist-list .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-#hist-list .what { font-weight: 700; overflow-wrap: anywhere; }
-#hist-list .meta { font-size: 12.5px; color: var(--text-dim); }
+#hist-list li, #links-list li { border-color: var(--glass-line); background: var(--well); }
+#hist-list .arrow, #links-list .arrow { font-weight: 800; color: var(--accent); }
+#hist-list .body, #links-list .body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+#hist-list .what, #links-list .what { font-weight: 700; overflow-wrap: anywhere; }
+#hist-list .meta, #links-list .meta { font-size: 12.5px; color: var(--text-dim); }
+/* TR-UNL: two buttons per link wrap under the text on a phone */
+#links-list li { flex-wrap: wrap; }
+#links-list .body { flex-basis: 60%; }
+#links-list .chip.small { flex: none; }
 #hist-list .meta.warn { color: var(--danger); }
 
 /* ---------- fields and buttons ---------- */
