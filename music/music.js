@@ -214,6 +214,12 @@
       "em.fail": "The player could not be opened. Check the address and the connection.",
       "em.turnOn": "Turn on and play",
       "em.more": "Show the songs", "em.less": "Hide the songs",
+      "em.onBc": "On Bandcamp", "em.onSc": "On SoundCloud", "em.scPlay": "Play: {n} on SoundCloud",
+      "em.bcNone": "MusicBrainz knows no Bandcamp album of {n} yet.",
+      "em.offNote": "These play here in the Bandcamp and SoundCloud players, once you turn them on.", "em.turnOn0": "Turn on",
+      "em.tagBtn": "Bandcamp and SoundCloud", "em.tagOpen": "{g}: artists on Bandcamp and SoundCloud",
+      "em.tagSub": "Artists with this genre on MusicBrainz. A badge shows who has Bandcamp or SoundCloud; their page plays it.",
+      "em.checking": "Looking for their Bandcamp and SoundCloud pages…",
       "s.emb": "Bandcamp and SoundCloud players",
       "s.embHint": "Paste a Bandcamp or SoundCloud link (or type it in Search) and it plays here, in the service's own player. Like it or add it to a playlist like any song. The service sees what you play, as on its own site; a Bandcamp page is read once through the orOS relay to find its player. It is not in the queue, has no equalizer, does not play offline and stops when Music closes.",
       "src.moby": "mobygratis: Moby's free instrumentals for your own non-commercial videos, films and remixes, under its own licence. Opens the site; it does not play here.",
@@ -540,6 +546,12 @@
       "em.fail": "Ο player δεν άνοιξε. Έλεγξε τη διεύθυνση και τη σύνδεση.",
       "em.turnOn": "Ενεργοποίηση και αναπαραγωγή",
       "em.more": "Εμφάνιση των τραγουδιών", "em.less": "Απόκρυψη των τραγουδιών",
+      "em.onBc": "Στο Bandcamp", "em.onSc": "Στο SoundCloud", "em.scPlay": "Αναπαραγωγή: {n} στο SoundCloud",
+      "em.bcNone": "Το MusicBrainz δεν έχει ακόμα άλμπουμ στο Bandcamp για: {n}.",
+      "em.offNote": "Αυτά παίζουν εδώ στους players του Bandcamp και του SoundCloud, μόλις τους ενεργοποιήσεις.", "em.turnOn0": "Ενεργοποίηση",
+      "em.tagBtn": "Bandcamp και SoundCloud", "em.tagOpen": "{g}: καλλιτέχνες στο Bandcamp και στο SoundCloud",
+      "em.tagSub": "Καλλιτέχνες με αυτό το είδος στο MusicBrainz. Ένα σήμα δείχνει ποιος έχει Bandcamp ή SoundCloud· η σελίδα του τα παίζει.",
+      "em.checking": "Ψάχνω τις σελίδες τους στο Bandcamp και στο SoundCloud…",
       "s.emb": "Players του Bandcamp και του SoundCloud",
       "s.embHint": "Επικόλλησε έναν σύνδεσμο Bandcamp ή SoundCloud (ή γράψ' τον στην Αναζήτηση) και παίζει εδώ, στον δικό του player της υπηρεσίας. Βάλ' τον στα αγαπημένα ή σε λίστα όπως κάθε τραγούδι. Η υπηρεσία βλέπει τι ακούς, όπως και στον δικό της ιστότοπο· μια σελίδα του Bandcamp διαβάζεται μία φορά μέσω του relay του orOS για να βρεθεί ο player της. Δεν μπαίνει στην ουρά, δεν έχει ισοσταθμιστή, δεν παίζει εκτός σύνδεσης και σταματά όταν κλείσει το Music.",
       "src.moby": "mobygratis: δωρεάν ορχηστρικά του Moby για τα δικά σου μη εμπορικά βίντεο, ταινίες και remix, με δική του άδεια. Ανοίγει τον ιστότοπο· δεν παίζει εδώ.",
@@ -2220,6 +2232,85 @@
     links.forEach(function (l) { row.appendChild(button(linkLabel(l), "chip", function () { openExt(l.u); })); });
     box.appendChild(row);
   }
+  // ---------- Bandcamp / SoundCloud through MusicBrainz (MU-EMB2) ----------
+  // The artist page: "On Bandcamp" (releases whose Bandcamp album page
+  // MusicBrainz knows) and "On SoundCloud" (the artist's own page).
+  // Nothing goes to Bandcamp or SoundCloud before a tap; with the
+  // players off, the shelves offer to turn them on.
+  function embedShelves(m, a, name) {
+    var sc = A.scOf(a.links), bcAny = a.links.some(function (l) { return l.n === "Bandcamp"; });
+    if (!sc && !bcAny) return;
+    if (!prefs.emb) {
+      m.appendChild(el("h2", "sub-h", t("em.tagBtn")));
+      var p = el("div", "o-note");
+      p.appendChild(el("span", "dim small", t("em.offNote")));
+      p.appendChild(button(t("em.turnOn0"), "pill small-pill", function () { prefs.emb = true; savePrefs(); renderKeepScroll(); }));
+      m.appendChild(p);
+      return;
+    }
+    if (bcAny) {
+      var k = "mbbc|" + a.id, f = feed(k, fOne(function () { return A.onBandcamp(a.id); }));
+      var list = f.extra || [];
+      m.appendChild(el("h2", "sub-h", t("em.onBc")));
+      if (list.length) {
+        var cb = el("div", "cards");
+        list.slice(0, 60).forEach(function (x) {
+          cb.appendChild(card(cover(x.cv, x.t, ""), x.t, [t("em.bc"), x.y].filter(Boolean).join(" · "), function () { embedOpen(x.u); }));
+        });
+        m.appendChild(cb);
+      } else if (oneStatus(m, k, MB_NAME) && f.extra) m.appendChild(el("p", "dim small o-note", t("em.bcNone", { n: name })));
+    }
+    if (sc) {
+      m.appendChild(el("h2", "sub-h", t("em.onSc")));
+      var row = el("div", "menu-col");
+      row.appendChild(button(t("em.scPlay", { n: name }), "", function () { embedOpen(sc); }));
+      m.appendChild(row);
+    }
+  }
+  // A genre (MusicBrainz tag): its artists, each marked once its links
+  // are read (one MusicBrainz request a second, the first 12 only).
+  var emLinks = {}, emBusy = false;
+  function emCheck(list) {
+    if (emBusy) return;
+    var todo = list.filter(function (a) { return !emLinks[a.id]; }).slice(0, 12);
+    if (!todo.length) return;
+    emBusy = true;
+    var next = function () {
+      var a = todo.shift();
+      if (!a) { emBusy = false; return; }
+      A.embedLinks(a.id).then(function (x) { emLinks[a.id] = x; }, function () { emLinks[a.id] = { bc: false, sc: "", err: 1 }; })
+        .then(function () { if (view && view.kind === "mbtag") renderKeepScroll(); next(); });
+    };
+    next();
+  }
+  function renderMbTag(m, v) {
+    var name = v.n || v.id;
+    pageHead(m, cover("", name, "big", I.globe), t("kind.genre") + " · " + MB_NAME, name, el("div", "ph-sub dim", t("em.tagSub")), null, null);
+    if (!prefs.mb) { mbOffNote(m); return; }
+    var k = "mbt|" + v.id, f = feed(k, fOne(function () { return A.byTag(v.id, LANG); }));
+    var list = f.extra || [];
+    if (!list.length) { if (!oneStatus(m, k, MB_NAME)) m.appendChild(el("p", "dim small o-note", t("o.none"))); return; }
+    if (!prefs.emb) {
+      var p = el("div", "o-note");
+      p.appendChild(el("span", "dim small", t("em.offNote")));
+      p.appendChild(button(t("em.turnOn0"), "pill small-pill", function () { prefs.emb = true; savePrefs(); renderKeepScroll(); }));
+      m.appendChild(p);
+    } else emCheck(list);
+    var with1 = [], rest = [];
+    list.forEach(function (a) { var x = emLinks[a.id]; ((x && (x.bc || x.sc)) ? with1 : rest).push(a); });
+    var g = el("div", "grid");
+    with1.concat(rest).forEach(function (a) {
+      var x = emLinks[a.id], c = mbArtistCard(a);
+      if (x && (x.bc || x.sc)) {
+        var sub = c.querySelector(".card-s");
+        var badge = el("span", "lic lic-free", [x.bc ? t("em.bc") : "", x.sc ? t("em.sc") : ""].filter(Boolean).join(" · "));
+        if (sub) sub.insertBefore(badge, sub.firstChild); else c.querySelector(".card-main").appendChild(badge);
+      }
+      g.appendChild(c);
+    });
+    m.appendChild(g);
+    if (prefs.emb && list.some(function (a, i) { return i < 12 && !emLinks[a.id]; })) m.appendChild(el("p", "dim small o-note", t("em.checking")));
+  }
   function renderMb(m, v) {
     if (!A.mbId(v.id)) { m.appendChild(el("p", "empty", t("lib.empty"))); return; }
     if (!prefs.mb) {
@@ -2260,7 +2351,8 @@
     pageHead(m, cover(img, name, "big round", I.user), t("kind.artist") + " · " + MB_NAME, name, sub, pool.songs.length ? pool.songs : null, src, extra);
     if (a.g.length) {
       var gc = el("div", "chips wrap");
-      a.g.forEach(function (g) { gc.appendChild(el("span", "chip static", g)); });
+      // MU-EMB2: a genre opens the MusicBrainz artists with that tag.
+      a.g.forEach(function (g) { gc.appendChild(button(g, "chip", function () { openView({ kind: "mbtag", id: g, n: g }); })); });
       m.appendChild(gc);
     }
     if (w && w.x) {
@@ -2284,6 +2376,7 @@
     }
     if (pool.busy) m.appendChild(el("p", "dim small o-note", t("o.loading")));
     else if (!pool.songs.length && !pool.albums.length) m.appendChild(el("p", "dim small o-note", t(openOn() ? "mb.noneFree" : "mb.noneFreeOff", { n: name })));
+    embedShelves(m, a, name);
     var full = a.links.filter(function (l) { return l.k !== "info"; });
     if (full.length) { m.appendChild(el("h2", "sub-h", t("mb.listenFull"))); chipLinks(m, full); }
     // Members / member of.
@@ -3665,6 +3758,8 @@
       renderLbPl(m, v);
     } else if (A && O && (v.kind === "mba" || v.kind === "mbr")) {
       renderMb(m, v);
+    } else if (A && O && v.kind === "mbtag") {
+      renderMbTag(m, v);
     } else if (SV && /^(sv|svall|svar|sva|svr|svp|svf)$/.test(v.kind)) {
       renderServer(m, v);
     } else if (SV && v.kind === "rss") {
@@ -3836,6 +3931,11 @@
         if (x[2].list.length) m.appendChild(rowList(x[2].list, { src: src }));
         feedStatus(m, x[1], srcName(x[0]));
       });
+      // MU-EMB2: artists of the genre on Bandcamp and SoundCloud (MusicBrainz tags).
+      if (A) {
+        m.appendChild(el("h2", "sub-h", t("em.tagBtn")));
+        m.appendChild(el("div", "menu-col")).appendChild(button(t("em.tagOpen", { g: gn }), "", function () { openView({ kind: "mbtag", id: word, n: gn }); }));
+      }
     } else if (v.kind === "lma" || v.kind === "labels") {
       lmaBandsPage(m, v.kind === "labels" ? "netlabels" : "etree");
     } else if (v.kind === "label") {

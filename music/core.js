@@ -1041,6 +1041,11 @@
     if (m && !/^(discover|search|you|pages|stream|upload|charts|messages|notifications|settings|people|terms-of-use|imprint)$/i.test(m[1]) && (m[2] || !SC_RESERVED.test(m[3]))) {
       return { kind: "sc", vi: "sc", u: "https://soundcloud.com/" + m[1] + "/" + (m[2] ? "sets/" : "") + m[3] };
     }
+    // An artist's own page (MU-EMB2): the widget plays its songs.
+    m = /^https?:\/\/(?:www\.|m\.)?soundcloud\.com\/([A-Za-z0-9_-]{1,100})$/i.exec(b);
+    if (m && !/^(discover|search|you|pages|stream|upload|charts|messages|notifications|settings|people|terms-of-use|imprint|oembed|mobile|login|signin|signup|logout|jobs|press|creators|pro|go|connect|apps|feed|home|tags|tracks|sets|playlists)$/i.test(m[1])) {
+      return { kind: "sc", vi: "sc", u: "https://soundcloud.com/" + m[1] };
+    }
     m = /^https?:\/\/([a-z0-9][a-z0-9-]{0,62})\.bandcamp\.com\/(album|track)\/([a-z0-9][a-z0-9-]{0,199})$/i.exec(b);
     if (m && !/^(www|daily|blog|get|f\d*|s\d*)$/i.test(m[1])) {
       return { kind: "bc", vi: m[2].toLowerCase(), u: "https://" + m[1].toLowerCase() + ".bandcamp.com/" + m[2].toLowerCase() + "/" + m[3].toLowerCase() };
@@ -1123,9 +1128,11 @@
     return "https://bandcamp.com/EmbeddedPlayer/" + r.vi + "=" + r.ai + "/size=large/bgcol=" + (o.dark ? "333333" : "ffffff") +
       "/linkcol=" + (col || "0687f5") + "/tracklist=" + (r.vi === "album" && !o.small ? "true" : "false") + "/artwork=small/transparent=true/";
   }
-  function embedHeight(r, small) { return small ? (r.vi === "sc" ? 166 : 120) : r.vi === "sc" ? (/\/sets\//.test(r.u) ? 340 : 166) : r.vi === "album" ? 400 : 120; }
-  // Only these two players grow: a Bandcamp album and a SoundCloud playlist.
-  function embedGrows(r) { return !!r && (r.vi === "album" || (r.vi === "sc" && /\/sets\//.test(r.u || ""))); }
+  // A SoundCloud playlist or an artist's page lists songs, like a Bandcamp album.
+  function scList(r) { return /\/sets\//.test(r.u || "") || /^https:\/\/soundcloud\.com\/[^/]+$/.test(r.u || ""); }
+  function embedHeight(r, small) { return small ? (r.vi === "sc" ? 166 : 120) : r.vi === "sc" ? (scList(r) ? 340 : 166) : r.vi === "album" ? 400 : 120; }
+  // Only these players grow: a Bandcamp album, a SoundCloud playlist or artist page.
+  function embedGrows(r) { return !!r && (r.vi === "album" || (r.vi === "sc" && scList(r))); }
   function isServer(r) { return !!(r && r.s === "sv" && SH_RE.test(r.sh) && svId(r.ii, 1000)); }
   // Listening history on this device: { c: {k: plays}, r: [item] recent, l: {k: last ms} }
   function addPlay(h, item, now) {
