@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.04.00
+- **Dock groups.** Drag an app onto another app in the Dock, or choose Put in a group with… in its menu, and both go into a named group (apps of one category get its name). Tap the group to open, rename, take apps out or ungroup. Groups sync with the Dock order.
+
 ## Version 9.03.01
 - **Claude no longer offers local folders.** Claude and the apps' exports work with Claude's folders on the orOS disk, where orOS Drive brings your computer's folders (Drive › your computer › the folder).
 
