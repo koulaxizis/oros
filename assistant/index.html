@@ -30,8 +30,10 @@
     <!-- Conversations (device-local) -->
     <nav id="side" aria-label="Conversations">
       <button type="button" class="side-new" id="side-new"></button>
+      <input type="search" id="chat-q" class="chat-q" autocomplete="off" spellcheck="false" hidden>
       <div id="chats"></div>
       <p id="chats-foot" class="hint pad"></p>
+      <button type="button" class="side-hist" id="side-rt"></button>
       <button type="button" class="side-hist" id="side-hist"></button>
     </nav>
     <div id="scrim" hidden></div>
@@ -46,6 +48,7 @@
             <p id="wel-text"></p>
             <button type="button" class="dlg-btn primary" id="wel-local" data-i18n="sys.install" hidden>Install local AI</button>
             <button type="button" class="dlg-btn primary" id="wel-setup" data-i18n="btn.setup">Set up the assistant</button>
+            <button type="button" class="dlg-btn wel-resume" id="wel-resume" hidden></button>
             <button type="button" class="dlg-btn primary" id="wel-brief" data-i18n="brief.btn" hidden>Briefing</button>
             <p id="wel-brief-hint" class="hint" data-i18n="brief.hint" hidden></p>
           </div>
@@ -85,6 +88,7 @@
   <script src="../layout/commands.js?v=9.14.00"></script>
   <script src="../photolab/commands.js?v=9.14.00"></script>
   <script src="../automations/core.js?v=9.14.00"></script>
+  <script src="routines.js?v=9.14.00"></script>
   <script src="doctext.js?v=9.14.00"></script>
   <script src="core.js?v=9.14.00"></script>
   <script src="imgai.js?v=9.14.00"></script>
@@ -92,6 +96,7 @@
   <script src="edits.js?v=9.14.00"></script>
   <script src="create.js?v=9.14.00"></script>
   <script src="import.js?v=9.14.00"></script>
+  <script src="threads.js?v=9.14.00"></script>
   <script src="assistant.js?v=9.14.00"></script>
 
   <script src="../pickers.js?v=9.14.00" defer></script>

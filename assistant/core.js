@@ -709,7 +709,7 @@
   function mergeAssist(a, b) {
     a = isObj(a) ? a : {};
     b = isObj(b) ? b : {};
-    return {
+    var out = {
       ver: DATA_VER,
       set: better(normSet(a.set), normSet(b.set)) || { m: 0, chat: 0, prov: "", web: 0, ws: "auto", wsBase: "", fb: "", auto: 0, skip: [] },
       provs: mergeMap(a.provs, b.provs, normProv, isProv, PROV_IDS.length),
@@ -718,6 +718,23 @@
       cs: better(normCs(a.cs), normCs(b.cs)) || { m: 0, on: 0 },
       keys: mergeMap(a.keys, b.keys, normKey, isKeyId, KEY_IDS.length)
     };
+    // AS-RT (routines.js): definitions, run states, "Pause all". When the
+    // module is missing (a stale page), what is there is carried as it
+    // is, never dropped.
+    var R = routinesMod();
+    if (R) {
+      out.rt = R.mergeRt(a.rt, b.rt);
+      out.rr = R.mergeRr(a.rr, b.rr, out.rt);
+      out.rp = better(R.normPause(a.rp), R.normPause(b.rp)) || { m: 0, on: 0 };
+    } else {
+      ["rt", "rr", "rp"].forEach(function (k) { var v = isObj(a[k]) ? a[k] : isObj(b[k]) ? b[k] : null; if (v) out[k] = v; });
+    }
+    return out;
+  }
+  function routinesMod() {
+    if (root.OrosAssistRoutines) return root.OrosAssistRoutines;
+    if (typeof module !== "undefined" && module.exports) { try { return require("./routines.js"); } catch (e) { return null; } }
+    return null;
   }
   function emptyData() { return mergeAssist(null, null); }
 
@@ -4416,7 +4433,7 @@
         "leading = το διάστιχο, tracking = η αραίωση των γραμμάτων, style = το στυλ (τα στυλ), colophon = ο κολοφώνας, spread = το δισέλιδο (a cover spread: το ανάπτυγμα), endpaper = το εσώφυλλο, trim = το μέγεθος κοπής, bleed = η αιμορραγία, " +
         "overset text = κείμενο που περισσεύει, widow / orphan = χήρα / ορφανή γραμμή, preflight = ο προέλεγχος. «All fine» is «Όλα εντάξει» or «Σε καλή κατάσταση». Quotes «…», the question mark ;.",
       // AS-EXP
-      "The user saves a whole conversation as a Markdown file with the download button next to it in the list of conversations (the menu at the top left); tell them so when they ask to export it."
+      "The user saves a whole conversation as a Markdown file with Export as Markdown in the More (⋯) menu on its row in the list of conversations (the menu at the top left); tell them so when they ask to export it."
     ];
     if (opts.builtin && opts.pre) {
       lines.push("You have no tools. When a question may need the user's own data, orOS searches it before the message reaches you and adds only what the user agreed to share, marked as data. Answer from that; if it is missing or not enough, say so and suggest other words to ask with. Never invent the user's data. You can't open, add, change or delete anything in orOS; when asked to, say which app does it and offer text the user can paste.");
@@ -5423,12 +5440,17 @@
       return tb;
     }
     if (!Array.isArray(x.msgs)) return null;
-    return {
+    var out = {
       id: x.id, m: m, title: str(x.title, 200),
       msgs: x.msgs.filter(isObj),
       refs: isObj(x.refs) ? x.refs : {},
       refN: stamp(x.refN)
     };
+    // AS-THREADS: pinned to the top of the list (on every device)
+    if (x.pin === 1) out.pin = 1;
+    // AS-RT: the conversation of a routine (its runs and the talk about them)
+    if (typeof x.rt === "string" && /^r[a-z0-9]{6,24}$/.test(x.rt)) out.rt = x.rt;
+    return out;
   }
   function chatFile(c) {
     var n = normChat(c);

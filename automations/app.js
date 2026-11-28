@@ -45,7 +45,9 @@
       "ed.ph": "In texts, {date}, {weekday}, {month} and {year} become the day of the run.",
       "a.notify": "Show a notice", "a.todo": "Add tasks to To-Do", "a.event": "Add an event to Calendar",
       "a.note": "Write a note", "a.mail": "Write an e-mail", "a.budget": "Add to Budget", "a.open": "Open an app",
-      "a.timer": "Start a timer", "a.ask": "Ask the Assistant", "a.track": "Timesheet timer",
+      "a.timer": "Start a timer", "a.ask": "Ask the Assistant", "a.routine": "Run an Assistant routine",
+      "x.routine": "Routine", "x.noRoutine": "Make a routine in the Assistant first.",
+      "x.routineHint": "Runs by itself on the device that sends the notice, only reading; the report goes to the routine's conversation.", "a.track": "Timesheet timer",
       "x.trackDo": "Do", "x.trackStart": "Start a timer", "x.trackStop": "Stop the running timer", "x.project": "Project (name, optional)",
       "a.push": "Push to my phone (ntfy, Gotify)", "a.hook": "Send to a webhook (n8n, Home Assistant…)",
       "x.svc": "Service", "x.url": "Address (https)", "x.urlHintPush": "ntfy: https://ntfy.sh/your-secret-topic · Gotify: https://your-server/message?token=…",
@@ -122,7 +124,9 @@
       "ed.ph": "Στα κείμενα, τα {date}, {weekday}, {month} και {year} γίνονται η μέρα της εκτέλεσης.",
       "a.notify": "Εμφάνιση ειδοποίησης", "a.todo": "Εργασίες στο To-Do", "a.event": "Γεγονός στο Ημερολόγιο",
       "a.note": "Νέα σημείωση", "a.mail": "Νέο e-mail", "a.budget": "Καταχώριση στον Προϋπολογισμό", "a.open": "Άνοιγμα εφαρμογής",
-      "a.timer": "Έναρξη χρονομέτρου", "a.ask": "Ερώτηση στον Βοηθό", "a.track": "Χρονόμετρο Timesheet",
+      "a.timer": "Έναρξη χρονομέτρου", "a.ask": "Ερώτηση στον Βοηθό", "a.routine": "Εκτέλεση ρουτίνας του Βοηθού",
+      "x.routine": "Ρουτίνα", "x.noRoutine": "Φτιάξε πρώτα μια ρουτίνα στον Βοηθό.",
+      "x.routineHint": "Τρέχει μόνη της στη συσκευή που στέλνει την ειδοποίηση, μόνο για ανάγνωση· η αναφορά πάει στη συζήτηση της ρουτίνας.", "a.track": "Χρονόμετρο Timesheet",
       "x.trackDo": "Τι να γίνει", "x.trackStart": "Έναρξη χρονομέτρου", "x.trackStop": "Διακοπή του χρονομέτρου που μετράει", "x.project": "Έργο (όνομα, προαιρετικά)",
       "a.push": "Ειδοποίηση στο κινητό (ntfy, Gotify)", "a.hook": "Αποστολή σε webhook (n8n, Home Assistant…)",
       "x.svc": "Υπηρεσία", "x.url": "Διεύθυνση (https)", "x.urlHintPush": "ntfy: https://ntfy.sh/το-μυστικό-σου-θέμα · Gotify: https://ο-server-σου/message?token=…",
@@ -349,6 +353,15 @@
   var editing = null;          // { id, acts: [action draft] }
   var WD_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
+  // AS-RT: the Assistant's routines (its synced slice, read only here)
+  function routineList() {
+    try {
+      var d = JSON.parse(localStorage.getItem("oros-assistant-data") || "null"), rt = d && d.rt && typeof d.rt === "object" ? d.rt : {};
+      return Object.keys(rt).filter(function (id) { return /^r[a-z0-9]{6,24}$/.test(id) && rt[id] && !rt[id].del && typeof rt[id].name === "string"; })
+        .map(function (id) { return { id: id, name: String(rt[id].name).slice(0, 80) }; })
+        .sort(function (x, y) { return x.name.localeCompare(y.name, LANG); });
+    } catch (e) { return []; }
+  }
   function actionChoices() {
     var apps = installed();
     var withFile = $("f-when").value === "event" && C.bridgeEvent($("f-ev").value);
@@ -557,6 +570,19 @@
         inp = field(tbox, t("x.project"), textIn(a.project, 80)); inp.addEventListener("input", set("project"));
       } else if (a.a === "ask") {
         inp = field(li, t("x.question"), area(a.text, 2000, 3)); inp.addEventListener("input", set("text"));
+      } else if (a.a === "routine") {           // AS-RT wave 4
+        var rts = routineList(), rs = el("select");
+        if (!rts.length) li.appendChild(el("p", "hint", t("x.noRoutine")));
+        rts.forEach(function (r) { rs.appendChild(new Option(r.name, r.id)); });
+        if (a.r && !rts.some(function (r) { return r.id === a.r; })) rs.appendChild(new Option(a.name || a.r, a.r));
+        if (!a.r && rts.length) { a.r = rts[0].id; a.name = rts[0].name; }
+        rs.value = a.r || "";
+        field(li, t("x.routine"), rs).addEventListener("change", function (ev) {
+          a.r = ev.target.value;
+          var hit = rts.filter(function (r) { return r.id === a.r; })[0];
+          a.name = hit ? hit.name : "";
+        });
+        li.appendChild(el("p", "hint", t("x.routineHint")));
       } else if (a.a === "card") {             // BR-EV-2 tap steps
         inp = field(li, t("x.title"), textIn(a.title, 200)); inp.addEventListener("input", set("title"));
         inp = field(li, t("x.board"), textIn(a.board, 80)); inp.addEventListener("input", set("board"));
@@ -737,9 +763,9 @@
     rule["do"].forEach(function (a) {
       var li = el("li", "act");
       if (a.a === "notify") { li.appendChild(el("span", "", t("run.notice", { text: C.fill(a.text, at, BASE, h && h.said ? h.said(key) : "") }))); ul.appendChild(li); return; }
-      if (C.LOCAL[a.a] && rule.id !== "try") { li.appendChild(el("span", "", t("run.local", { step: t("a." + a.a) }))); ul.appendChild(li); return; }
-      if (C.LOCAL[a.a]) {
-        li.appendChild(el("span", "grow", t("a." + a.a)));
+      if ((C.LOCAL[a.a] || C.SELF[a.a]) && rule.id !== "try") { li.appendChild(el("span", "", t("run.local", { step: t("a." + a.a) }))); ul.appendChild(li); return; }
+      if (C.LOCAL[a.a] || C.SELF[a.a]) {
+        li.appendChild(el("span", "grow", C.SELF[a.a] ? C.actText(a, BASE, appName) : t("a." + a.a)));
         var lb = el("button", "chip pri", t("btn.now"));
         lb.type = "button";
         lb.disabled = !h;

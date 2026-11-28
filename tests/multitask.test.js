@@ -607,7 +607,7 @@ test("AS-KEEP: the Assistant pauses its microphone, says when it is busy, and dr
   assert.match(A, /if \(MINI \|\| GATE\) return null;/, "never in the mini window or the gate frame");
   // its own key written elsewhere is read back in the full app too (MT_SELF_MERGE)
   const reg = A.slice(A.indexOf("  function registerSync() {"), A.indexOf("  function sliceGet()"));
-  assert.ok(reg.indexOf('window.addEventListener("storage"') < reg.indexOf("if (MINI) return;"));
+  assert.ok(reg.indexOf('window.addEventListener("storage"') < reg.indexOf("if (MINI || RTN) return;"));
   const html = fs.readFileSync(path.join(ROOT, "assistant/index.html"), "utf8");
   assert.match(html, /id="beside-btn"[^>]*hidden/);
   const de = fs.readFileSync(path.join(ROOT, "i18n/de/assistant.js"), "utf8");
