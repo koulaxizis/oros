@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.17.00
+- **The Assistant reads GitHub and counts exactly.** With a GitHub account in Connected services, the Assistant can read releases and how often they were downloaded, files such as updates.json, Actions runs, pull requests, commits and issues. It only reads, and it never sees the token. A routine reads GitHub only when you tick its switch. Totals, VAT, percentages, dates and loans now come from Spreadsheet's formulas instead of mental arithmetic, and the Assistant can give a file's SHA-256 to check a download.
+
 ## Version 9.16.00
 - **Claude and orOS find your computer's folders.** The folders orOS Drive mirrors from a computer (orOS Drive › the computer › the folder) now show on every device, even when the computer has tens of thousands of files. A computer folder given to Claude as `C:/…` now counts as its orOS Drive mirror, and Claude says clearly when a folder has not reached orOS yet.
 
