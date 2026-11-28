@@ -203,6 +203,24 @@
       "gps.gpx": "Export GPX", "gps.noTrack": "No route was recorded.",
       "gps.screen": "Keep the screen on and Workouts open: most browsers stop the location when the screen turns off or the app goes to the background, and the route then jumps in a straight line.",
       "gps.perH": "{u}/h",
+      "cam.btn": "Count with camera", "cam.btnHold": "Time with camera",
+      "cam.intro": "The camera watches your movement on this device only. Nothing is recorded, kept or sent.",
+      "cam.download": "The first time, the movement model (about {mb} MB) is downloaded once and kept on this device.",
+      "cam.start": "Start the camera", "cam.loading": "Downloading the model… {p}%", "cam.preparing": "Getting ready…",
+      "cam.noCam": "The camera could not be opened. Check that orOS may use the camera.",
+      "cam.failed": "The model could not be loaded. Try again with a connection.",
+      "cam.hash": "The downloaded model was not the expected file, so it was not used.",
+      "cam.notSeen": "Step back so your whole body is in the picture.",
+      "cam.learn": "Do two reps and I learn the movement.", "cam.ready": "Ready. Start when you like.",
+      "cam.holdReady": "Get into position.", "cam.reps": "reps",
+      "cam.flip": "Switch camera", "cam.voice": "Count out loud", "cam.auto": "Finish by itself when I stop",
+      "cam.done": "Done", "cam.cancel": "Cancel",
+      "cam.voiceNone": "This device has no voice of its own for this language.",
+      "cam.saved": "{n} reps in set {s}", "cam.savedHold": "{t} in set {s}",
+      "cam.forget": "Remove the camera counting model", "cam.forgotten": "The camera counting model was removed from this device.",
+      "cam.setTitle": "Camera counting",
+      "cam.setHint": "Reps and holds counted from the camera on this device only. The model (about {mb} MB) is kept here after the first use.",
+      "hint.deeper": "A little more range", "hint.full": "Come all the way back", "hint.line": "Keep your body straight",
       "pic.show": "Show picture", "pic.loading": "Looking on wger.de…", "pic.none": "wger.de has no picture for this exercise.",
       "pic.offline": "You're offline. Pictures come from wger.de.", "pic.fail": "Could not reach wger.de. Try again later.",
       "pic.by": "Picture: {author}", "pic.byNone": "Picture: wger.de contributors", "pic.src": "Source: wger.de · {name}",
@@ -338,6 +356,24 @@
       "gps.gpx": "Εξαγωγή GPX", "gps.noTrack": "Δεν καταγράφηκε διαδρομή.",
       "gps.screen": "Κράτα την οθόνη αναμμένη και την Προπόνηση ανοιχτή: τα περισσότερα προγράμματα περιήγησης σταματούν την τοποθεσία όταν σβήνει η οθόνη ή η εφαρμογή πάει στο παρασκήνιο, και τότε η διαδρομή κάνει άλμα σε ευθεία γραμμή.",
       "gps.perH": "{u}/ώ",
+      "cam.btn": "Μέτρηση με κάμερα", "cam.btnHold": "Χρόνος με κάμερα",
+      "cam.intro": "Η κάμερα βλέπει την κίνησή σου μόνο σε αυτή τη συσκευή. Τίποτα δεν καταγράφεται, δεν κρατιέται και δεν στέλνεται.",
+      "cam.download": "Την πρώτη φορά κατεβαίνει μία φορά το μοντέλο κίνησης (περίπου {mb} MB) και μένει σε αυτή τη συσκευή.",
+      "cam.start": "Άνοιγμα κάμερας", "cam.loading": "Λήψη του μοντέλου… {p}%", "cam.preparing": "Προετοιμασία…",
+      "cam.noCam": "Η κάμερα δεν άνοιξε. Έλεγξε ότι το orOS επιτρέπεται να χρησιμοποιεί την κάμερα.",
+      "cam.failed": "Το μοντέλο δεν φορτώθηκε. Δοκίμασε ξανά με σύνδεση.",
+      "cam.hash": "Το μοντέλο που κατέβηκε δεν ήταν το αναμενόμενο αρχείο, οπότε δεν χρησιμοποιήθηκε.",
+      "cam.notSeen": "Κάνε πίσω ώστε να φαίνεται όλο σου το σώμα.",
+      "cam.learn": "Κάνε δύο επαναλήψεις για να μάθω την κίνηση.", "cam.ready": "Έτοιμο. Ξεκίνα όποτε θέλεις.",
+      "cam.holdReady": "Πάρε θέση.", "cam.reps": "επαναλήψεις",
+      "cam.flip": "Αλλαγή κάμερας", "cam.voice": "Μέτρηση φωναχτά", "cam.auto": "Τέλος μόνο του όταν σταματήσω",
+      "cam.done": "Τέλος", "cam.cancel": "Ακύρωση",
+      "cam.voiceNone": "Η συσκευή δεν έχει δική της φωνή για αυτή τη γλώσσα.",
+      "cam.saved": "{n} επαναλήψεις στο σετ {s}", "cam.savedHold": "{t} στο σετ {s}",
+      "cam.forget": "Αφαίρεση του μοντέλου μέτρησης με κάμερα", "cam.forgotten": "Το μοντέλο μέτρησης με κάμερα αφαιρέθηκε από τη συσκευή.",
+      "cam.setTitle": "Μέτρηση με κάμερα",
+      "cam.setHint": "Επαναλήψεις και στάσεις μετρημένες από την κάμερα, μόνο σε αυτή τη συσκευή. Το μοντέλο (περίπου {mb} MB) μένει εδώ μετά την πρώτη χρήση.",
+      "hint.deeper": "Λίγο μεγαλύτερο εύρος κίνησης", "hint.full": "Γύρνα μέχρι τέρμα", "hint.line": "Κράτα το σώμα ίσιο",
       "pic.show": "Εμφάνιση εικόνας", "pic.loading": "Αναζήτηση στο wger.de…", "pic.none": "Το wger.de δεν έχει εικόνα γι' αυτή την άσκηση.",
       "pic.offline": "Είσαι εκτός σύνδεσης. Οι εικόνες έρχονται από το wger.de.", "pic.fail": "Δεν ήταν δυνατή η σύνδεση με το wger.de. Δοκίμασε αργότερα.",
       "pic.by": "Εικόνα: {author}", "pic.byNone": "Εικόνα: συντελεστές του wger.de", "pic.src": "Πηγή: wger.de · {name}",
@@ -456,6 +492,8 @@
       "seed.x-burpee": "Burpee",
       "seed.x-kbswing": "Kettlebell swing",
       "seed.x-clean": "Power clean",
+      "seed.x-situp": "Sit-up",
+      "seed.x-jacks": "Jumping jacks",
       "seed.p-full": "Full Body 3×",
       "seed.p-ul": "Upper / Lower",
       "seed.p-ppl": "Push / Pull / Legs",
@@ -521,6 +559,8 @@
       "seed.x-burpee": "Burpees",
       "seed.x-kbswing": "Αιωρήσεις kettlebell",
       "seed.x-clean": "Power clean",
+      "seed.x-situp": "Κοιλιακοί (sit-up)",
+      "seed.x-jacks": "Ψαλιδάκια (jumping jacks)",
       "seed.p-full": "Όλο το σώμα 3×",
       "seed.p-ul": "Πάνω / Κάτω",
       "seed.p-ppl": "Ώθηση / Έλξη / Πόδια",
@@ -553,7 +593,8 @@
     ["x-twist", "core", "r"], ["x-abwheel", "core", "r"], ["x-run", "cardio", "dt"],
     ["x-walk", "cardio", "dt"], ["x-bike", "cardio", "dt"], ["x-rowerg", "cardio", "dt"],
     ["x-swim", "cardio", "dt"], ["x-rope", "cardio", "t"], ["x-burpee", "full", "r"],
-    ["x-kbswing", "full", "wr"], ["x-clean", "full", "wr"]
+    ["x-kbswing", "full", "wr"], ["x-clean", "full", "wr"], ["x-situp", "core", "r"],
+    ["x-jacks", "full", "r"]
   ].map(function (r) { return r.concat([SEED_STR.en["seed." + r[0]], SEED_STR.el["seed." + r[0]]]); });
   var SEED_MAP = {};
   SEED_EX.forEach(function (r) { SEED_MAP[r[0]] = { id: r[0], g: r[1], k: r[2], en: r[3], el: r[4], key: "seed." + r[0] }; });
@@ -1542,7 +1583,9 @@
       snd: p.snd === 0 ? 0 : 1,
       vib: p.vib === 0 ? 0 : 1,
       rest: p.rest && isInt(p.rest.end) && isInt(p.rest.total) ? { end: p.rest.end, total: p.rest.total, ex: normStr(p.rest.ex, NAME_LEN) } : null,
-      gps: typeof p.gps === "string" && ID_RE.test(p.gps) ? p.gps : ""    // outdoor session recording on this device
+      gps: typeof p.gps === "string" && ID_RE.test(p.gps) ? p.gps : "",   // outdoor session recording on this device
+      camVoice: p.camVoice === true,          // camera counting: count out loud (off by default)
+      camAuto: p.camAuto !== false            // camera counting: finish by itself when you stop
     };
   }
   var prefsTimer = null;
@@ -1577,6 +1620,7 @@
     pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
     skip: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4l10 8-10 8z"/><path d="M19 5v14"/></svg>',
     download: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>',
+    camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h3l2-3h6l2 3h3a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="4"/></svg>',
     walk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="13" cy="4" r="2"/><path d="M11 21l2-6-3-3 1-5 3 3h3M9 9l-3 3M13 15l2 6"/></svg>',
     run: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="4" r="2"/><path d="M4 17l4 1 2-4M10 14l3 2-1 5M13 16l-1-6 4 1 3 3M12 10L8 9l-2 3"/></svg>',
     ride: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="17" r="3.5"/><circle cx="18.5" cy="17" r="3.5"/><circle cx="15" cy="5" r="1.5"/><path d="M5.5 17l4-7h5l4 7M9.5 10L12 17h-1M12 10l2-3"/></svg>'
@@ -2188,6 +2232,8 @@
     var foot = el("div", "ex-foot");
     foot.appendChild(txtBtn("link-btn", UI.plus, t("wo.addSet"), function () { addSet(w.id, ei, false); }));
     foot.appendChild(txtBtn("link-btn dim", UI.plus, t("wo.warm"), function () { addSet(w.id, ei, true); }));
+    var camPr = !w.en && window.OrosFitnessCamera && core("OrosFitnessReps") ? core("OrosFitnessReps").profileFor(e.e, info.k) : null;
+    if (camPr) foot.appendChild(txtBtn("link-btn cam-btn", UI.camera, t(camPr.hold ? "cam.btnHold" : "cam.btn"), function () { cameraCount(w.id, ei); }));
     card.appendChild(foot);
     return card;
   }
@@ -2246,6 +2292,39 @@
     ok.setAttribute("aria-pressed", isDone(s) ? "true" : "false");
     row.appendChild(ok);
     return row;
+  }
+
+  // Count with the camera (camera.js + reps-core.js, on this device
+  // only): the result goes into the first set not ticked yet (a new
+  // set when all are), and that set is ticked, which starts the rest.
+  function cameraCount(woId, ei) {
+    var x = findRow("wo", woId), Cam = window.OrosFitnessCamera, Reps = core("OrosFitnessReps");
+    if (!x || !x.x[ei] || !Cam || !Reps) return;
+    var e = x.x[ei], info = exInfo(data, e.e), pr = Reps.profileFor(e.e, info.k);
+    if (!pr) return;
+    Cam.open({
+      ui: { t: t, el: el, button: button, makeDialog: makeDialog, openDialog: openDialog, live: live, lang: LANG },
+      exName: info.name, kind: info.k, profile: pr, fmtTime: fmtTime,
+      prefs: { get: function (k) { return prefs[k]; }, set: function (k, v) { prefs[k] = !!v; savePrefs(); } },
+      onDone: function (r) {
+        var y = findRow("wo", woId);
+        if (!y || !y.x[ei] || y.x[ei].e !== e.e) return;
+        var en = y.x[ei], si = -1;
+        en.s.forEach(function (s, i) { if (si < 0 && !isWarm(s) && !isDone(s)) si = i; });
+        if (si < 0) {
+          if (en.s.length >= MAX_SETS) return;
+          addSet(woId, ei, false);
+          y = findRow("wo", woId); en = y.x[ei]; si = en.s.length - 1;
+        }
+        var n = 0;
+        for (var i = 0; i <= si; i++) if (!isWarm(en.s[i])) n++;
+        if (pr.hold) en.s[si][2] = Math.min(r.sec, MAX_T);
+        else en.s[si][1] = Math.min(r.reps, MAX_R);
+        woChanged(y, true);
+        toggleSet(woId, ei, si);
+        showToast(pr.hold ? t("cam.savedHold", { t: fmtTime(r.sec), s: n }) : t("cam.saved", { n: r.reps, s: n }));
+      }
+    });
   }
 
   function toggleSet(woId, ei, si) {
@@ -4315,6 +4394,22 @@
       rest.classList.toggle("bad", isNaN(n) || n > 3600);
       if (!isNaN(n) && n <= 3600 && n !== settings().rest) editSettings({ rest: n });
     });
+    var Cam = window.OrosFitnessCamera;
+    if (Cam) {
+      dlg.appendChild(el("div", "dlg-sub", t("cam.setTitle")));
+      dlg.appendChild(hint(t("cam.setHint", { mb: Cam.APPROX_MB })));
+      check(t("cam.voice"), prefs.camVoice, function (v) { prefs.camVoice = v; savePrefs(); });
+      check(t("cam.auto"), prefs.camAuto, function (v) { prefs.camAuto = v; savePrefs(); });
+      var camRow = el("div", "btn-col");
+      var forgetBtn = button(t("cam.forget"), "", function () {
+        Cam.forget().then(function () { forgetBtn.disabled = true; showToast(t("cam.forgotten")); });
+      });
+      forgetBtn.id = "fit-camforget";
+      forgetBtn.disabled = true;
+      Cam.ready().then(function (y) { forgetBtn.disabled = !y; });
+      camRow.appendChild(forgetBtn);
+      dlg.appendChild(camRow);
+    }
     dlg.appendChild(el("div", "dlg-sub", t("set.export")));
     var ex = el("div", "btn-col");
     ex.appendChild(button(t("set.csv"), "", exportCsv));

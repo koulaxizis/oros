@@ -46,6 +46,16 @@ Wähle unter `Trainieren` bei `Outdoor-Aktivität` `Spaziergang`, `Lauf` oder `R
 ## Übungsbilder
 `Bild zeigen` (der Bild-Knopf an einer Übung, auch in der `Übungsbibliothek`) sucht auf [wger.de](https://wger.de), einer freien Übungsdatenbank, nach einem Bild der Übung. Es wird nur auf deinen Wunsch geholt und dann auf diesem Gerät behalten. Urheber und Lizenz (CC BY-SA) stehen neben dem Bild, mit einem Link zur Quelle. Die Suche geht nach dem Namen, das Bild kann also eine Variante zeigen; `Von diesem Gerät entfernen` vergisst es.
 
+## Mit der Kamera zählen
+Während eines Trainings zählt `Mit Kamera zählen` unter einer Übung deine Wiederholungen mit der Kamera dieses Geräts, und `Zeit mit Kamera` misst Unterarmstütz und Seitstütz, solange dein Körper eine gerade Linie bildet. Beim ersten Mal fragt es, bevor es das Bewegungsmodell lädt (etwa 21 MB, einmal); danach funktioniert es auch offline. Das Bild verlässt nie das Gerät, nichts wird aufgezeichnet oder behalten: Aus jedem Bild werden nur 17 Körperpunkte gelesen, und nur die Zahl kommt in den Satz.
+
+Stell das Gerät so auf, dass es deinen ganzen Körper sieht: von der Seite für Kniebeugen, Liegestütze und Stütz, von vorn für Hampelmänner und Drücken. Du siehst die Punkte über dem Bild und darüber den Zähler. Kniebeugen, Ausfallschritte, Liegestütze, Dips, Drücken, Klimmzüge, Curls, Seitheben, Kreuzheben, Brücken, Sit-ups, Beinheben und Hampelmänner werden über das Gelenk gezählt, das sich bewegt; bei jeder anderen Übung mach zuerst zwei Wiederholungen, dann lernt es die Bewegung. Eine halbe Bewegung zählt nicht.
+- `Fertig` schreibt die Zahl in den ersten nicht abgehakten Satz (oder einen neuen), hakt ihn ab und startet den Pausentimer. Die Zahl kannst du immer ändern.
+- `Von selbst beenden, wenn ich aufhöre` (an, außer du schaltest es aus) macht dasselbe ein paar Sekunden nachdem du dich nicht mehr bewegst.
+- `Laut zählen` sagt jede Wiederholung mit einer Stimme dieses Geräts (aus, außer du schaltest es ein). Hat das Gerät keine eigene Stimme für deine Sprache, bleibt es still.
+- Beim Training erscheinen kurze Tipps: `Etwas mehr Bewegungsumfang`, `Ganz zurück`, `Körper gerade halten`.
+- In den `Einstellungen` behält `Zählen mit der Kamera` diese beiden Wahlen, und `Modell für das Zählen mit der Kamera entfernen` löscht das Modell von diesem Gerät.
+
 ## Trainings importieren
 Bring deinen Verlauf aus einer anderen Trainings-App oder von deiner Uhr mit. Wähle in den `Einstellungen` `Trainings importieren (Strong, Hevy, FitNotes, JEFIT, FIT, TCX, GPX)` und dann die Datei. So exportierst du (die Namen sind die der jeweiligen App):
 - **Strong**: `Settings` › `Export Strong Data` (CSV).
@@ -84,6 +94,7 @@ Speichere unter `Einstellungen` › `Exportieren` `Alle Sätze (CSV)` oder eine 
 - Körpergewichte erscheinen auch in [Gesundheit](app:health).
 
 ## Grenzen
+- Das Zählen mit der Kamera braucht gutes Licht und den ganzen Körper im Bild; bei falschem Winkel kann es eine Wiederholung verpassen oder zu viel zählen, also prüf die Zahl, bevor du weitermachst.
 - Der Pausentimer läuft nur auf dem Gerät, auf dem du trainierst.
 - Der Gewichtsvorschlag ist nur ein Hinweis für Übungen mit `Gewicht × Wdh.`.
 - Outdoor-Einheiten zeichnen nur auf, solange Training auf dem Bildschirm offen ist; der Browser kann den Standort stoppen, wenn der Bildschirm aus ist. Die Routenvorschau ist eine Linie ohne Karte darunter.

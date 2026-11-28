@@ -46,6 +46,16 @@ On `Train`, under `Outdoor activity`, choose `Walk`, `Run` or `Ride`. Workouts r
 ## Exercise pictures
 `Show picture` (the picture button on an exercise, also in the `Exercise library`) looks for a picture of the exercise on [wger.de](https://wger.de), a free exercise database. It is fetched only when you ask, then kept on this device. The author and licence (CC BY-SA) show next to the picture with a link to the source. The match is by name, so the picture may show a variation; `Remove from this device` forgets it.
 
+## Count with the camera
+During a workout, `Count with camera` under an exercise counts your reps with this device's camera, and `Time with camera` times a plank or side plank while your body stays in a straight line. The first time it asks before it downloads the movement model (about 21 MB, once); then it works offline. The picture never leaves the device and nothing is recorded or kept: only 17 body points are read from each frame, and only the number goes into the set.
+
+Put the device where it sees your whole body, from the side for squats, push-ups and planks, from the front for jumping jacks and presses. You see the points over the picture and the count above them. Squats, lunges, push-ups, dips, presses, pull-ups, curls, lateral raises, deadlifts, bridges, sit-ups, leg raises and jumping jacks are counted from the joint that moves; for any other exercise, do two reps first and it learns the movement. A half movement doesn't count.
+- `Done` writes the count into the first set that isn't ticked (or a new set), ticks it and starts the rest timer. You can always change the number.
+- `Finish by itself when I stop` (on unless you turn it off) does the same a few seconds after you stop moving.
+- `Count out loud` says each rep with a voice of this device (off unless you turn it on). If the device has no voice of its own for your language, it stays silent.
+- Short tips appear while you train: `A little more range`, `Come all the way back`, `Keep your body straight`.
+- In `Settings`, `Camera counting` keeps these two choices and `Remove the camera counting model` deletes the model from this device.
+
 ## Import workouts
 Bring your history over from another training app or from your watch. In `Settings`, choose `Import workouts (Strong, Hevy, FitNotes, JEFIT, FIT, TCX, GPX)` and pick the file. How to export:
 - **Strong**: `Settings` › `Export Strong Data` (CSV).
@@ -84,6 +94,7 @@ In `Settings` › `Export`, save `All sets (CSV)` or a `Backup (JSON)`. `Restore
 - Body weights also appear in [Health](app:health).
 
 ## Limits
+- Camera counting needs good light and the whole body in the picture; a wrong angle can miss or add a rep, so check the number before you go on.
 - The rest timer only runs on the device you're training on.
 - The weight suggestion is a hint for `Weight × reps` exercises only.
 - Outdoor sessions record only while Workouts is open on screen; the browser may stop the location when the screen is off. The route preview is a line without a map underneath.
