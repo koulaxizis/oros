@@ -230,6 +230,20 @@ $("addonGet").addEventListener("click", (ev) => {
   api.tabs.create({ url: OrosExt.DOWNLOAD_URL }).then(() => window.close());
 });
 
+/* PW-AF7: suggestions inside page forms need the add-on on all https
+   sites; one click here asks the browser (background.js registers
+   inline.js when the permission arrives). Off in the options: no ask. */
+const ALL_SITES = "https://*/*";
+Promise.all([
+  api.storage.sync.get({ pmInline: true }).catch(() => ({ pmInline: true })),
+  api.permissions.contains({ origins: [ALL_SITES] }).catch(() => true)
+]).then(([g, has]) => { $("inlineAsk").hidden = g.pmInline === false || has; });
+$("inlineYes").addEventListener("click", () => {
+  api.permissions.request({ origins: [ALL_SITES] }).then((ok) => {
+    if (ok) { $("inlineAsk").hidden = true; say(msg("popInlineOn")); }
+  }, () => {});
+});
+
 let triedFirst = false;
 async function start() {
   say("");

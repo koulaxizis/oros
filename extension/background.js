@@ -8,12 +8,13 @@
    (forget the vault key) when the lock time is reached, re-read open
    orOS tabs every few minutes and, when the popup asks, open orOS in
    a background tab so its sync brings the newest vault, and (PW-AF3)
-   hand a login the person chose to save to the orOS tab. */
+   hand a login the person chose to save to the orOS tab, and (PW-AF7)
+   serve the suggestions inside page forms (inline.js, inline.html). */
 "use strict";
 
 if (typeof OrosExt === "undefined" && typeof importScripts === "function") {
   // Chrome/Edge service worker; Firefox loads the same list from the manifest
-  importScripts("core.js", "pm/pmcrypto.js", "pm/pmcore.js", "pm/pmkinds.js", "pmvault.js");
+  importScripts("core.js", "pm/pmcrypto.js", "pm/pmcore.js", "pm/pmkinds.js", "pmvault.js", "pmfill.js");
 }
 
 const api = typeof browser !== "undefined" ? browser : chrome;
@@ -248,6 +249,185 @@ api.runtime.onMessage.addListener((m, sender, reply) => {
   reply({ ok: true });
   deliverSave(item);
   return false;
+});
+
+/* ---------- Passwords PW-AF7: suggestions inside page forms ----------
+   With the add-on allowed on all https sites (one click in its window or
+   options) and the option on (default), inline.js is registered on
+   https pages, top frame only. A click into a login, card or address
+   field asks "ii-open"; the answer is only whether to show the list, a
+   token and a row count. The list page (inline.html, the add-on's own
+   origin) gets the names with the token; a pick fills the top frame of
+   that tab with fillInPage() after inline.js confirms the list was
+   really on screen. Logins only where OrosFill.fits the tab's address
+   at the moment of the fill; never on the orOS address; tokens live in
+   storage.session (not readable by content scripts) for 10 minutes. */
+const ALL_SITES = "https://*/*";
+const II_ID = "oros-inline";
+const II_TTL = 10 * 60000;
+
+async function inlineWanted() {
+  const g = await api.storage.sync.get({ pmInline: true }).catch(() => ({ pmInline: true }));
+  if (g.pmInline === false) return false;
+  return api.permissions.contains({ origins: [ALL_SITES] }).catch(() => false);
+}
+let syncingInline = null;
+async function syncInline(injectOpen) {
+  const want = await inlineWanted();
+  let have = [];
+  try { have = await api.scripting.getRegisteredContentScripts({ ids: [II_ID] }); } catch (e) { have = []; }
+  if (want && !have.length) {
+    try {
+      await api.scripting.registerContentScripts([{ id: II_ID, matches: [ALL_SITES], js: ["inline.js"], runAt: "document_idle", allFrames: false, persistAcrossSessions: true }]);
+    } catch (e) { return; }
+    if (injectOpen) {
+      // pages already open get it too (inline.js runs once per page)
+      const tabs = await api.tabs.query({ url: ALL_SITES }).catch(() => []);
+      for (const t of tabs || []) {
+        if (!t.discarded) api.scripting.executeScript({ target: { tabId: t.id }, files: ["inline.js"] }).catch(() => {});
+      }
+    }
+  } else if (!want && have.length) {
+    await api.scripting.unregisterContentScripts({ ids: [II_ID] }).catch(() => {});
+  }
+}
+function syncInlineSoon(injectOpen) {
+  syncingInline = (syncingInline || Promise.resolve()).then(() => syncInline(injectOpen)).catch(() => {});
+  return syncingInline;
+}
+api.runtime.onInstalled.addListener(() => syncInlineSoon(true));
+if (api.runtime.onStartup) api.runtime.onStartup.addListener(() => syncInlineSoon(false));
+if (api.permissions.onAdded) api.permissions.onAdded.addListener(() => syncInlineSoon(true));
+if (api.permissions.onRemoved) api.permissions.onRemoved.addListener(() => syncInlineSoon(false));
+api.storage.onChanged.addListener((ch, area) => { if (area === "sync" && ch.pmInline) syncInlineSoon(true); });
+
+const randHex = () => Array.from(crypto.getRandomValues(new Uint8Array(16)), (x) => x.toString(16).padStart(2, "0")).join("");
+async function tokens() {
+  const g = await api.storage.session.get("iiTok").catch(() => ({}));
+  const all = (g && g.iiTok) || {};
+  const now = Date.now();
+  Object.keys(all).forEach((k) => { if (!(all[k].at > now - II_TTL)) delete all[k]; });
+  return all;
+}
+async function tokenOf(id) { const all = await tokens(); return Object.prototype.hasOwnProperty.call(all, id) ? all[id] : null; }
+async function saveToken(id, v) { const all = await tokens(); if (v) all[id] = v; else delete all[id]; await api.storage.session.set({ iiTok: all }).catch(() => {}); }
+
+/* the entries the list may show for a kind on this page, best first */
+function inlineEntries(entries, kind, url) {
+  if (kind === "login") return OrosFill.matches(entries, url, PmKinds);
+  const want = kind === "card" ? ["card"] : kind === "person" ? ["identity", "address"] : [];
+  return (entries || []).filter((e) => want.indexOf(PmKinds.kindOf(e)) >= 0)
+    .sort((a, b) => ((b.fav ? 1 : 0) - (a.fav ? 1 : 0)) || String(a.title || "").localeCompare(String(b.title || "")));
+}
+function inlineRow(e) {
+  const k = PmKinds.kindOf(e);
+  const sub = k === "login" || k === "otp"
+    ? [e.user, k === "otp" ? msg("pmCodeOnly") : (e.totp ? msg("pm2fa") : "")].filter(Boolean).join(" · ")
+    : [msg("pmKind_" + k), PmKinds.summary(e)].filter(Boolean).join(" · ");
+  return { id: String(e.id), title: String(e.title || "").slice(0, 200), sub: sub.slice(0, 200), fav: !!e.fav };
+}
+async function isOrosPage(url) {
+  try { return new URL(url).origin === new URL(await getBase()).origin; } catch (e) { return true; }
+}
+const inlinePage = () => api.runtime.getURL("inline.html");
+function fromInlinePage(sender) {
+  return sender.id === api.runtime.id && sender.tab && typeof sender.url === "string" && sender.url.indexOf(inlinePage()) === 0;
+}
+function fromContentTop(sender) {
+  return sender.id === api.runtime.id && sender.tab && sender.frameId === 0 && typeof sender.url === "string" && /^https:/.test(sender.url);
+}
+
+async function inlineOpen(m, sender) {
+  const kind = m && m.kind;
+  if (["login", "card", "person"].indexOf(kind) < 0 || !(await inlineWanted()) || (await isOrosPage(sender.url))) return { show: false };
+  const copy = await OrosVault.getCopy();
+  if (!copy || copy.future || !PmVault.primaryKid(copy.slice)) return { show: false };
+  const data = await OrosVault.open().catch(() => null);
+  let rows = 0;
+  if (data) {
+    rows = inlineEntries(data.entries, kind, sender.url).length;
+    if (!rows) return { show: false };
+  }
+  const id = randHex();
+  await saveToken(id, { tab: sender.tab.id, origin: new URL(sender.url).origin, kind: kind, at: Date.now() });
+  return { show: true, token: id, locked: !data, rows: Math.min(rows, 4) };
+}
+
+async function inlineList(m, sender) {
+  const tk = await tokenOf(m.token);
+  if (!tk || tk.tab !== sender.tab.id) return { ok: false };
+  const tab = await api.tabs.get(tk.tab).catch(() => null);
+  if (!tab || !tab.url || (() => { try { return new URL(tab.url).origin !== tk.origin; } catch (e) { return true; } })()) return { ok: false };
+  const data = await OrosVault.open().catch(() => null);
+  if (!data) return { ok: true, locked: true };
+  return { ok: true, rows: inlineEntries(data.entries, tk.kind, tab.url).slice(0, 20).map(inlineRow) };
+}
+
+async function inlineFill(m, sender) {
+  const tk = await tokenOf(m.token);
+  if (!tk || tk.tab !== sender.tab.id || typeof m.id !== "string") return { ok: false };
+  // inline.js must confirm the list was really on screen (clickjacking guard)
+  let seen = null;
+  try { seen = await api.tabs.sendMessage(tk.tab, { t: "ii-check", token: m.token }, { frameId: 0 }); } catch (e) { seen = null; }
+  if (!seen || seen.ok !== true) return { ok: false, why: "hidden" };
+  const tab = await api.tabs.get(tk.tab).catch(() => null);
+  if (!tab || !tab.url) return { ok: false };
+  let origin;
+  try { origin = new URL(tab.url).origin; } catch (e) { return { ok: false }; }
+  if (origin !== tk.origin || (await isOrosPage(tab.url))) return { ok: false };
+  const data = await OrosVault.open().catch(() => null);
+  if (!data) return { ok: false, why: "locked" };
+  const e = inlineEntries(data.entries, tk.kind, tab.url).find((x) => String(x.id) === m.id);
+  if (!e) return { ok: false };
+  let code = "";
+  if (e.totp && ["login", "otp"].indexOf(PmKinds.kindOf(e)) >= 0) {
+    const o = PmCore.parseOtp(e.totp);
+    if (!o.error) code = (await PmCore.totp(o)).code;
+  }
+  const p = OrosFill.payload(e, PmKinds, code);
+  if (!p) return { ok: false };
+  p.origin = tk.origin;
+  let n = 0;
+  try {
+    const res = await api.scripting.executeScript({ target: { tabId: tk.tab, frameIds: [0] }, func: OrosFill.fillInPage, args: [p] });
+    n = res && res[0] ? res[0].result : 0;
+  } catch (x) { n = 0; }
+  await saveToken(m.token, null);
+  api.tabs.sendMessage(tk.tab, { t: "ii-done", token: m.token, refocus: false }, { frameId: 0 }).catch(() => {});
+  return { ok: n > 0 };
+}
+
+async function inlineUnlock(m, sender) {
+  const tk = await tokenOf(m.token);
+  if (!tk || tk.tab !== sender.tab.id) return { ok: false };
+  try {
+    if (api.windows && typeof sender.tab.windowId === "number") await api.windows.update(sender.tab.windowId, { focused: true }).catch(() => {});
+    await api.action.openPopup();
+  } catch (e) { return { ok: false }; }
+  await saveToken(m.token, null);
+  api.tabs.sendMessage(tk.tab, { t: "ii-done", token: m.token, refocus: false }, { frameId: 0 }).catch(() => {});
+  return { ok: true };
+}
+
+api.runtime.onMessage.addListener((m, sender, reply) => {
+  if (!m || typeof m.t !== "string" || m.t.indexOf("ii-") !== 0) return false;
+  let job = null;
+  if (m.t === "ii-open" && fromContentTop(sender)) job = inlineOpen(m, sender);
+  else if (m.t === "ii-close" && fromContentTop(sender) && typeof m.token === "string") job = saveToken(m.token, null).then(() => ({ ok: true }));
+  else if (typeof m.token === "string" && fromInlinePage(sender)) {
+    if (m.t === "ii-list") job = inlineList(m, sender);
+    else if (m.t === "ii-fill") job = inlineFill(m, sender);
+    else if (m.t === "ii-unlock") job = inlineUnlock(m, sender);
+    else if (m.t === "ii-done") {
+      job = tokenOf(m.token).then((tk) => {
+        if (tk && tk.tab === sender.tab.id) api.tabs.sendMessage(tk.tab, { t: "ii-done", token: m.token, refocus: !!m.refocus }, { frameId: 0 }).catch(() => {});
+        return { ok: true };
+      });
+    }
+  }
+  if (!job) return false;
+  job.then(reply, () => reply({ ok: false }));
+  return true;
 });
 
 api.contextMenus.onClicked.addListener(async (info, tab) => {

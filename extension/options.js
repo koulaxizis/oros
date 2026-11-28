@@ -52,3 +52,24 @@ document.getElementById("forgetRem").addEventListener("click", () => {
 document.getElementById("forget").addEventListener("click", () => {
   OrosVault.forget().then(() => { remRow.hidden = true; document.getElementById("pmStatus").textContent = msg("optForgot"); });
 });
+
+/* PW-AF7: suggestions inside page forms (on by default; they need the
+   add-on on all https sites, which only the browser's own prompt grants). */
+const ALL_SITES = "https://*/*";
+const inl = document.getElementById("inline");
+const inlAsk = document.getElementById("inlineAskRow");
+async function showInline() {
+  const g = await api.storage.sync.get({ pmInline: true }).catch(() => ({ pmInline: true }));
+  const has = await api.permissions.contains({ origins: [ALL_SITES] }).catch(() => false);
+  inl.checked = g.pmInline !== false;
+  inlAsk.hidden = !inl.checked || has;
+}
+showInline();
+inl.addEventListener("change", () => {
+  const on = inl.checked;
+  const ask = on ? api.permissions.request({ origins: [ALL_SITES] }).catch(() => false) : Promise.resolve(true);
+  ask.then(() => api.storage.sync.set({ pmInline: on })).then(() => { say(msg("optSaved")); showInline(); });
+});
+document.getElementById("inlineAllow").addEventListener("click", () => {
+  api.permissions.request({ origins: [ALL_SITES] }).then(showInline, showInline);
+});

@@ -223,5 +223,29 @@
   },
   "addonGet": {
     "message": "Download"
+  },
+  "popInlineAsk": {
+    "message": "Show orOS suggestions inside page forms?"
+  },
+  "popInlineOn": {
+    "message": "Done: click into a login, card or address field to see your orOS suggestions."
+  },
+  "iiLocked": {
+    "message": "orOS Passwords is locked."
+  },
+  "iiUnlockHint": {
+    "message": "Press the orOS button in the toolbar (Ctrl+Shift+L) to unlock, then click the field again."
+  },
+  "optInline": {
+    "message": "Suggest logins, cards and addresses inside page forms"
+  },
+  "optInlineHint": {
+    "message": "A click into a login, card or address field shows a short list under it; nothing fills until you pick an entry. The page never sees the list. It needs the add-on to be allowed on all sites."
+  },
+  "optInlineAllow": {
+    "message": "Allow on all sites"
+  },
+  "optHow7": {
+    "message": "Inside a page: click into a login, card or address field (or press the down arrow there) and pick an entry from the orOS list under it."
   }
 }
