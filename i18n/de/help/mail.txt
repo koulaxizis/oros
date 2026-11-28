@@ -6,6 +6,12 @@ Tippe auf `Konto hinzufügen`, gib `Dein Name`, `E-Mail-Adresse` und `Passwort` 
 
 Gmail, iCloud und Yahoo brauchen ein App-Passwort: Erstelle eins in den Sicherheitseinstellungen deines Kontos und nutze es statt deines normalen Passworts.
 
+### Proton Mail (Proton Mail Bridge)
+Proton Mail läuft über [Proton Mail Bridge](https://proton.me/mail/bridge), Protons eigenes Programm auf deinem Computer (es braucht einen bezahlten Proton-Tarif). Installiere es, melde dich dort an und füge das Konto dann in Mail mit deiner Proton-Adresse hinzu: Der Server wird von selbst eingetragen (`127.0.0.1`, Ports 1143 und 1025). Nimm das Passwort, das Bridge für das Konto zeigt, nicht dein Proton-Passwort.
+- Beim ersten Mal zeigt Mail den Fingerabdruck von Bridges eigenem Zertifikat und fragt, ob du ihm vertraust; tippe auf `Vertrauen`. Wird Bridge neu installiert, macht es ein neues, und Mail fragt wieder.
+- Es geht im orOS, das auf diesem Computer installiert ist, in orOS Portable und orOS USB, solange Bridge läuft. Auf useoros.online im Browser, auf einem anderen Computer oder auf dem Handy zeigt das Konto, dass es diesen Computer braucht. Mail spricht mit Bridge im Computer selbst, also gehen weder deine Mails noch das Passwort über das orOS-Relay.
+- Bridge legt gesendete Nachrichten selbst in `Gesendet` ab und hat keine Regeln auf dem Server.
+
 ## Mails lesen
 - Die Seitenleiste zeigt deine Konten und ihre Ordner (`Posteingang`, `Gesendet`, `Entwürfe`, `Spam`, `Papierkorb` und die übrigen) mit der Zahl der ungelesenen Nachrichten. Auf dem Telefon öffnest du sie mit der Menütaste oben links.
 - Die neuesten Nachrichten stehen oben; ungelesene haben einen Punkt. `Ältere Nachrichten laden` ganz unten holt weitere.
@@ -157,7 +163,7 @@ Deine Konten (ohne Passwörter), deine Regeln, deine Vorlagen, die Zeiten deiner
 - Bei der offenen oder den ausgewählten Nachrichten: [[E]] archiviert, [[Delete]] oder [[#]] löscht, [[!]] markiert als Spam (oder kein Spam), [[S]] markiert, [[U]] markiert als gelesen oder ungelesen, [[B]] stellt zurück und [[V]] verschiebt in einen Ordner.
 
 ## Tipps
-- Browser können nicht direkt mit Mailservern sprechen, darum geht Mail über das orOS-Mail-Relay. Es leitet deine Mails nur durch und speichert nichts.
+- Browser können nicht direkt mit Mailservern sprechen, darum geht Mail über das orOS-Mail-Relay. Es leitet deine Mails nur durch und speichert nichts. Im auf einem Computer installierten orOS, in orOS Portable und orOS USB verbindet sich orOS selbst mit dem Mailserver, dort geht also nichts über das Relay.
 - Dieselbe Relay-Adresse dient ganz orOS: auch [Reader](app:feeds), [Podcasts](app:podcasts) und orOS Gate nutzen sie. Du legst sie einmal fest, in [Einstellungen](app:settings) › Verbundene Dienste › `orOS-Relay`.
 
 ## Grenzen
