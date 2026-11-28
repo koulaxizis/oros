@@ -1,5 +1,5 @@
 "use strict";
-// TRAY-1 + TRAY-2 (Chris 2026-11-21 «να δουλεύεις με το orOS κλειστό στο
+// TRAY-1 (+ LOCAL-GONE: TRAY-2 removed 2026-11-27) (Chris 2026-11-21 «να δουλεύεις με το orOS κλειστό στο
 // tray … και πρόσβαση στους φακέλους ακόμη και με έγκριση από κινητό»):
 // an orOS desktop window (the launcher's origin, localhost:47800) runs
 // Layout's work while hidden and tells the box "b1"; Claude asks for a
@@ -15,7 +15,6 @@ const fs = require("fs");
 const path = require("path");
 const http = require("http");
 const ROOT = path.join(__dirname, "..");
-const L = require(path.join(ROOT, "localroots.js"));
 
 function chromium() {
   for (const mod of ["playwright", "/opt/node22/lib/node_modules/playwright"]) {
@@ -80,7 +79,7 @@ function sealWith(K, obj) { const iv = crypto.randomBytes(12); const c = crypto.
 
 const opt = { skip: PW ? false : "Playwright / Chromium not installed", timeout: 180000 };
 
-test("TRAY-2: Claude asks for a computer folder; hidden it is held, on screen the owner allows it and it is shared sealed; a removal from another device closes it", opt, async () => {
+test("LOCAL-GONE: local_folders_request answers at once that computer folders by path are gone; nothing is asked or shared", opt, async () => {
   const K = crypto.randomBytes(32), srv = await serve(0);
   const br = await PW.chromium.launch({ args: ["--no-sandbox"] });
   try {
@@ -88,40 +87,22 @@ test("TRAY-2: Claude asks for a computer folder; hidden it is held, on screen th
     const args = { path: "C:\\Users\\Chris\\Books\\Vythos", access: "read", days: 20, reason: "Pictures for the book" };
     o.sock().send(JSON.stringify({ q: "H".repeat(16), n: "local_folders_request", a: args, dl: Date.now() + 25000 }));
     for (let i = 0; i < 20 && !o.got.some((x) => x.r === "H".repeat(16)); i++) await o.page.waitForTimeout(250);
-    const held = o.got.find((x) => x.r === "H".repeat(16));
-    assert.ok(held && held.ok === false && held.c === "__held", "nobody at the screen: kept for one " + JSON.stringify(held));
-    // a risky folder is refused at once
-    o.sock().send(JSON.stringify({ q: "R".repeat(16), n: "local_folders_request", a: { path: "C:\\Users\\Chris" }, dl: Date.now() + 25000 }));
-    for (let i = 0; i < 20 && !o.got.some((x) => x.r === "R".repeat(16)); i++) await o.page.waitForTimeout(250);
-    assert.match(o.got.find((x) => x.r === "R".repeat(16)).c, /cannot be opened for Claude/);
-    // on screen: asked, the owner allows
+    const hidden = o.got.find((x) => x.r === "H".repeat(16));
+    assert.ok(hidden && hidden.ok === false, JSON.stringify(hidden));
+    assert.match(hidden.c, /no longer offered/);
+    assert.match(hidden.c, /\/internal\/Drive\//);
+    assert.match(hidden.c, /claude_folders_request/);
     await o.page.evaluate(() => { window.__vis = "visible"; document.dispatchEvent(new Event("visibilitychange")); });
     o.sock().send(JSON.stringify({ q: "A".repeat(16), n: "local_folders_request", a: args, dl: Date.now() + 25000 }));
-    const yes = o.page.getByRole("button", { name: "Open for Claude" });
-    await yes.waitFor({ timeout: 10000 });
-    assert.ok(await o.page.getByText("C:\\Users\\Chris\\Books\\Vythos").first().isVisible());
-    await yes.click();
     for (let i = 0; i < 20 && !o.got.some((x) => x.r === "A".repeat(16)); i++) await o.page.waitForTimeout(250);
-    const ans = o.got.find((x) => x.r === "A".repeat(16));
-    assert.ok(ans && ans.ok, JSON.stringify(ans));
-    assert.match(ans.c, /local:Vythos/);
-    for (let i = 0; i < 20 && !o.got.some((x) => x.lf); i++) await o.page.waitForTimeout(250);
-    const lf = o.got.filter((x) => x.lf).pop();
-    assert.ok(lf, "the list went to the box, sealed");
-    assert.ok(lf.lf.indexOf("Vythos") < 0, "the relay cannot read it");
-    const d = unsealWith(K, lf.lf);
-    assert.equal(d.v, 1);
-    assert.equal(d.l.length, 1);
-    assert.deepEqual([d.l[0].pc, d.l[0].mode, d.l[0].by, d.l[0].name], ["/disks/C/Users/Chris/Books/Vythos", "r", "claude", "Vythos"]);
-    // the same again: already open, nothing asked
-    o.sock().send(JSON.stringify({ q: "B".repeat(16), n: "local_folders_request", a: { path: "C:\\Users\\Chris\\Books\\Vythos", days: 5 }, dl: Date.now() + 25000 }));
-    for (let i = 0; i < 20 && !o.got.some((x) => x.r === "B".repeat(16)); i++) await o.page.waitForTimeout(250);
-    assert.match(o.got.find((x) => x.r === "B".repeat(16)).c, /^Already open/);
-    // another device closed it
-    o.sock().send(JSON.stringify({ lf: sealWith(K, { v: 1, l: [{ id: d.l[0].id, m: d.l[0].m + 5, gone: 1 }] }) }));
-    for (let i = 0; i < 20; i++) { const n = await o.page.evaluate(() => window.orosLocal.names().length); if (!n) break; await o.page.waitForTimeout(250); }
-    assert.equal(await o.page.evaluate(() => window.orosLocal.names().length), 0);
-    assert.deepEqual(await o.page.evaluate(() => JSON.parse(localStorage.getItem("oros-local-pc")).map((e) => !!e.gone)), [true]);
+    assert.match(o.got.find((x) => x.r === "A".repeat(16)).c, /no longer offered/);
+    assert.equal(await o.page.getByRole("button", { name: "Open for Claude" }).count(), 0, "no question on screen");
+    // a list from an older device is ignored; nothing is sent back
+    o.sock().send(JSON.stringify({ lf: sealWith(K, { v: 1, l: [] }) }));
+    await o.page.waitForTimeout(800);
+    assert.equal(o.got.filter((x) => x.lf).length, 0);
+    assert.equal(await o.page.evaluate(() => typeof window.orosLocal), "undefined", "localroots.js is not loaded");
+    assert.equal(await o.page.locator("#oros-local-bar").count(), 0, "no bar about local folders");
     assert.deepEqual(o.errs, []);
   } finally { await br.close(); srv.close(); }
 });
@@ -142,21 +123,4 @@ test("TRAY-1/3: an orOS desktop window runs Layout's work and proposals while hi
     assert.ok(p && p.c !== "__screen", "TRAY-3: a proposal opens in the minimised window: " + JSON.stringify(p));
     assert.deepEqual(o.errs, []);
   } finally { await br.close(); srv.close(); }
-});
-
-test("TRAY-2 pure: the shared list merges by newest change, keeps removals, refuses risky folders", () => {
-  const now = 1790000000000, D = 86400000;
-  const a = { id: "lrabc123", pc: "/disks/C/Users/Chris/Books/Vythos", label: "C:/Users/Chris/Books/Vythos", name: "Vythos", mode: "r", exp: now + 30 * D, m: now };
-  assert.deepEqual(L.pcMerge([a], [], now).map((e) => e.id), ["lrabc123"]);
-  const later = Object.assign({}, a, { exp: now + 60 * D, m: now + 10 });
-  assert.equal(L.pcMerge([a], [later], now)[0].exp, now + 60 * D, "the newest change wins");
-  assert.equal(L.pcMerge([later], [a], now)[0].exp, now + 60 * D, "either order");
-  const gone = { id: "lrabc123", m: now + 10, gone: 1 };
-  assert.deepEqual(L.pcMerge([later], [gone], now)[0], gone, "a tie: the removal");
-  assert.deepEqual(L.pcMerge([gone], [], now + 91 * D), [], "old removals are forgotten");
-  assert.equal(L.pcMerge([Object.assign({}, a, { pc: "/disks/C/Users/Chris" })], [], now).length, 0, "the home folder is never kept");
-  assert.equal(L.pcMerge([Object.assign({}, a, { pc: "/disks/C/x/../y" })], [], now).length, 0);
-  assert.equal(L.pcMerge([Object.assign({}, a, { id: "evil" })], [], now).length, 0);
-  for (const p of ["/disks/C", "/disks/D", "/disks/C/Users", "/disks/C/Users/Chris", "/home/chris", "/disks/C/Users/Chris/AppData/Roaming/x", "/disks/C/Windows/System32", "/home/chris/.ssh", "/disks/C/Program Files/x"]) assert.equal(L.pcRisky(p), true, p);
-  for (const p of ["/disks/C/Users/Chris/Documents/Εκδόσεις", "/disks/D/Books", "/home/chris/Books"]) assert.equal(L.pcRisky(p), false, p);
 });

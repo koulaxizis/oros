@@ -80,7 +80,7 @@ test("the wiring: the card hands the request to Layout, which runs it and report
   const as = read("assistant/assistant.js");
   assert.match(as, /if \(\/\^\(learn_house_style\|layout_book\|add_house_rule\)\$\/\.test\(call\.name\)\) return Promise\.resolve\(proposeHouse\(c, call\.name, call\.args\)\);/);
   assert.match(as, /p\.__orosOpenAt\("layout", \{ house: rq \}\)/);
-  assert.match(as, /r\.ui\.k === "house" && takeHouse\(r, chat\)/);
+  assert.match(as, /r\.ui\.k === "house" && takeHouse\(r, c\)/);
   assert.match(as, /if \(ui\.k === "house"\) \{ drawHouse\(host, r, c\); return; \}/);
   assert.match(as, /rebuild: rbOn, house: rbOn[,\s}]/);
   const ly = read("layout/layout.js");

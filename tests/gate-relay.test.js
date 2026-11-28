@@ -245,7 +245,7 @@ test("mcp: 401 with resource metadata, then initialize and tools/list", async ()
   const list = await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 2, method: "tools/list" })).json();
   assert.deepEqual(list.result.tools.map((x) => x.name), ["list_apps", "search_data", "app_summary", "budget_lines",
     "invoice_list", "stock_items", "publish_titles", "budget_add", "budget_change", "budget_areas", "budget_categories", "budget_transfer", "budget_balances", "budget_refresh", "budget_delete",
-    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "kanban_add_board", "invoices_record", "files_link", "files_upload", "local_folders_request", "claude_folders_request", "studio_import", "montage_import", "photolab_import", "oros_update", "gate_tools", "gate_call"]);
+    "kanban_add_cards", "kanban_move_cards", "kanban_change_card", "kanban_add_columns", "kanban_add_board", "invoices_record", "files_link", "files_upload", "claude_folders_request", "studio_import", "montage_import", "photolab_import", "oros_update", "gate_tools", "gate_call"]);
   const ro = list.result.tools.filter((x) => x.annotations.readOnlyHint).map((x) => x.name);
   assert.equal(ro.length, 11, "only the budget_*, kanban_* and invoices_record writers are not read-only (+ files_link, GATE-FILES F2; gate_tools GL-5; oros_update GL-7; files_upload GL-8)");
   assert.equal(list.result.tools.find((x) => x.name === "budget_delete").annotations.destructiveHint, true);
@@ -944,13 +944,13 @@ test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passe
   await newGate(w);
   const b = w.boxes.get(ID);
   const K = crypto.randomBytes(32), KS = b64u(K);
-  // (ver: an orOS that knows local_folders_request, GQ-VER)
+  // (ver: an orOS that knows claude_folders_request, GQ-VER)
   const mk = (th) => ({ sent: [], closed: false, __g: { th, v: 0, at: 1, ver: 85200 }, send(x) {
     this.sent.push(x);
     let q = {};
     try { q = JSON.parse(x); } catch (e) {}
     if (q.q && q.n === "_key") setTimeout(() => b.box.webSocketMessage(this, JSON.stringify({ r: q.q, ok: true, c: KS })), 1);
-    else if (q.q && q.n === "local_folders_request") setTimeout(() => b.box.webSocketMessage(this, JSON.stringify({ r: q.q, ok: false, c: "__held" })), 1);
+    else if (q.q && q.n === "claude_folders_request") setTimeout(() => b.box.webSocketMessage(this, JSON.stringify({ r: q.q, ok: false, c: "__held" })), 1);
   }, close() {} });
   const sock = mk(hex(TOK));
   b.socks.push(sock);
@@ -958,7 +958,7 @@ test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passe
   const tc = async (name, args) => (await (await rpc(w, t.access_token, { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args || {} } })).json()).result;
   const cqs = (s) => s.sent.map((x) => { try { return JSON.parse(x); } catch (e) { return {}; } }).filter((o) => Array.isArray(o.cq));
   // live, nobody at a screen: the question is kept for one
-  let r = await tc("local_folders_request", { path: "C:\\Users\\Chris\\Books\\Vythos", reason: "pictures" });
+  let r = await tc("claude_folders_request", { path: "Drive/ckDesktop/Vythos", reason: "pictures" });
   assert.equal(r.isError, false, r.content[0].text);
   let out = JSON.parse(r.content[0].text);
   assert.equal(out.queued, true);
@@ -966,7 +966,7 @@ test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passe
   let rows = [...(await b.st.storage.list({ prefix: "q:" })).values()];
   assert.equal(rows.length, 1);
   assert.equal(rows[0].hd, 1);
-  assert.equal(JSON.parse(await G.openText(K, rows[0].c)).n, "local_folders_request");
+  assert.equal(JSON.parse(await G.openText(K, rows[0].c)).n, "claude_folders_request");
   assert.equal(cqs(sock).length, 0);
   // b1 (tray host / desktop window): it is offered the kept calls
   await b.box.webSocketMessage(sock, "b1");
@@ -989,24 +989,20 @@ test("TRAY-1/2: b1 gets the calls kept for a screen; lf is kept sealed and passe
   // orOS closed: the question waits too, unless Claude's changes are paused
   await b.box.webSocketMessage(sock, JSON.stringify({ snap: await G.sealText(K, JSON.stringify({ at: 1e12, lv: {}, hold: 0, ans: {} })) }));
   sock.closed = true; other.closed = true;
+  // LOCAL-GONE (9.02.00): local_folders_request is no longer a tool
   r = await tc("local_folders_request", { path: "C:\\Users\\Chris\\Books\\Vythos" });
-  assert.equal(r.isError, false, r.content[0].text);
-  rows = [...(await b.st.storage.list({ prefix: "q:" })).values()];
-  assert.equal(rows.length, 1);
-  assert.equal(rows[0].hd, 1);
-  const tool = G.TOOLS.find((x) => x.name === "local_folders_request");
-  assert.deepEqual(tool.inputSchema.required, ["path"]);
-  assert.deepEqual(tool.inputSchema.properties.access.enum, ["read", "write"]);
-  // CF-ASK (Chris 2026-11-22): a folder of the orOS disk for Claude's folders waits for a screen the same way
+  assert.ok(!G.TOOLS.some((x) => x.name === "local_folders_request"));
+  assert.equal([...(await b.st.storage.list({ prefix: "q:" })).values()].length, 0, "nothing is kept for it");
+  // CF-ASK (Chris 2026-11-22): a folder of the orOS disk for Claude's folders waits for a screen
   r = await tc("claude_folders_request", { path: "Studio/Podcasts", access: "write", reason: "studio_import" });
   assert.equal(r.isError, false, r.content[0].text);
   out = JSON.parse(r.content[0].text);
   assert.equal(out.queued, true);
   assert.match(out.note, /Nothing is opened before the owner allows it/);
   rows = [...(await b.st.storage.list({ prefix: "q:" })).values()];
-  assert.equal(rows.length, 2);
+  assert.equal(rows.length, 1);
   const cf = await Promise.all(rows.map(async (x) => JSON.parse(await G.openText(K, x.c))));
-  assert.deepEqual(cf.map((x) => x.n).sort(), ["claude_folders_request", "local_folders_request"]);
+  assert.deepEqual(cf.map((x) => x.n), ["claude_folders_request"]);
   assert.ok(rows.every((x) => x.hd === 1));
   const ct = G.TOOLS.find((x) => x.name === "claude_folders_request");
   assert.deepEqual(ct.inputSchema.required, ["path"]);

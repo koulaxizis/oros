@@ -103,6 +103,11 @@ export function extCap(b) {
   return Math.max(EXT_LIMITS.reqs * EXT_LIMITS.reqBytes, bodyCap(p, b && b.reqs)) * 2;
 }
 
+// AS-GH: GitHub repository routes the Assistant reads (= relay/ext.js)
+const GH_RP = "^\\/repos\\/[A-Za-z0-9-]{1,39}\\/[A-Za-z0-9._-]{1,100}\\/";
+function GH_REPO(rest) { return new RegExp(GH_RP + rest + "$"); }
+const GH_CONTENTS = new RegExp(GH_RP + "contents(\\/(?!\\.\\.?(\\/|$))[A-Za-z0-9._-]{1,100}){1,12}$");
+const GH_REF = /^(?!.*\.\.)[A-Za-z0-9._\/-]{1,100}$/;
 const NUM = /^[0-9]{1,9}$/, PER = /^([1-9]|[1-9][0-9]|100)$/,
       DT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/,
       WORDS = /^[a-z][a-z,-]{0,80}$/, ORDERBY = /^(date|id|modified|title)$/, ORD = /^(asc|desc)$/;
@@ -601,7 +606,16 @@ export const PLATFORMS = {
       ["GET", /^\/user\/repos$/, { per_page: PER, page: NUM, sort: /^updated$/ }, null],
       ["GET", /^\/repos\/[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}\/issues$/, { state: /^(open|all)$/, per_page: PER, page: NUM }, null],
       // the open issues assigned to the token's owner, across repositories (wave 6G, To-Do)
-      ["GET", /^\/issues$/, { filter: /^assigned$/, state: /^open$/, per_page: PER, page: NUM }, null]
+      ["GET", /^\/issues$/, { filter: /^assigned$/, state: /^open$/, per_page: PER, page: NUM }, null],
+      // AS-GH (Assistant wave 6, AH-5 / AH-PNoxpress-1 / AH-PWaymark-3):
+      // the Assistant reads releases, files on a branch, Actions runs,
+      // pull requests and commits. GET only; nothing here writes.
+      ["GET", GH_REPO("releases"), { per_page: PER, page: NUM }, null],
+      ["GET", GH_REPO("releases\\/latest"), null, null],
+      ["GET", GH_CONTENTS, { ref: GH_REF }, null],
+      ["GET", GH_REPO("actions\\/runs"), { per_page: PER, page: NUM, branch: GH_REF, status: /^(completed|in_progress|queued|success|failure)$/ }, null],
+      ["GET", GH_REPO("pulls"), { state: /^(open|closed|all)$/, per_page: PER, page: NUM }, null],
+      ["GET", GH_REPO("commits"), { per_page: PER, sha: GH_REF }, null]
     ]
   },
   // Wave 6C, read-only: Raindrop.io collections and bookmarks → Bookmarks

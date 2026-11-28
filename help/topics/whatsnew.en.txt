@@ -3,6 +3,85 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.17.00
+- **The Assistant reads GitHub and counts exactly.** With a GitHub account in Connected services, the Assistant can read releases and how often they were downloaded, files such as updates.json, Actions runs, pull requests, commits and issues. It only reads, and it never sees the token. A routine reads GitHub only when you tick its switch. Totals, VAT, percentages, dates and loans now come from Spreadsheet's formulas instead of mental arithmetic, and the Assistant can give a file's SHA-256 to check a download.
+
+## Version 9.16.00
+- **Claude and orOS find your computer's folders.** The folders orOS Drive mirrors from a computer (orOS Drive › the computer › the folder) now show on every device, even when the computer has tens of thousands of files. A computer folder given to Claude as `C:/…` now counts as its orOS Drive mirror, and Claude says clearly when a folder has not reached orOS yet.
+
+## Version 9.15.00
+- **The Assistant keeps your conversations like threads, and does routines.** Search your conversations, pin, rename and export them; the ones waiting for you stand at the top, and a new conversation offers to continue the last one. With sync set up they follow you to every device. New `Routines`: jobs the Assistant does by itself on a schedule or when a file lands in a folder, each with its own conversation for its reports. A routine only reads; when it needs you it leaves a card to go ahead, answer or send to Kanban. An Automations rule can start a routine too.
+
+## Version 9.14.00
+- **The Assistant stays open, or works side by side.** On a computer the Assistant no longer closes when you go to the desktop or open another app: it waits with the open apps and comes back with your conversation, and an answer goes on. A new button in its bar puts it beside the app you used last. The small Assistant window can be minimised to a round button, or moved beside the app you are in.
+
+## Version 9.13.00
+- **Cover colours.** The island, the Now playing player in the top bar and the media widget on the desktop take their colours from the cover of what plays: a dark shade behind light text that stays easy to read, a lighter one for the progress and the play button. Never under high contrast or while Sensitive work is on.
+
+## Version 9.12.00
+- **Bandcamp and SoundCloud in Music.** Paste a Bandcamp album or song, or a SoundCloud song or playlist, into Search (or press + › Bandcamp or SoundCloud link) and it plays inside Music, in the service's own player. Like it or add it to a playlist like any song. Off at first: Music's settings › Bandcamp and SoundCloud players.
+
+## Version 9.11.00
+- **Island in the centre.** The top bar can gather the live pills and what plays into one dark pill at the top centre: a thin line with the line being sung (Music's synced lyrics) or the title, growing on hover or tap into the cover, the time played and left, Previous, Play and Next. Off at first, windows at least 760 px wide, this device only: Settings › Appearance › Top bar › Island in the centre.
+
+## Version 9.10.01
+- **Koulaxizis Apps 1.4.0 (Android): fewer questions.** On Android 12 and newer, apps that Koulaxizis Apps installed now update without Android's question, one by one or with Update all, which ends with one line on what it did. In its menu, both off at first: Automatic updates (on Wi-Fi, the updates that need no question install by themselves) and Install without questions (Shizuku) for first installs. Its new Help explains the questions that stay and Google Play Protect, which it never bypasses.
+
+## Version 9.10.00
+- **Mail in the top bar, with a peek.** A new Mail card shows how many emails are unread in your Inboxes; tap it for the unread messages and Starred, and a message opens in Mail. Never a sender or subject in the bar, hidden during Sensitive work or while Mail is locked.
+
+## Version 9.09.01
+- **Dates in spreadsheets and Cycle.** Spreadsheet: dates from Excel and Calc files no longer gain an hour. Cycle: the expected start stays on the right day across the October clock change.
+
+## Version 9.09.00
+- **Exchange rate in the top bar, and countries in the currency search.** A new Exchange rate card shows your currency pair from the Calculator's stored ECB rates (nothing new is fetched); tap it to convert. In the currency list you can type a country, such as Greece or Japan, and its currency shows with the country beside it.
+
+## Version 9.08.01
+- **Studio effects from NULL JSFX 4.2.** 6 new plugins: Band Spin, Bass Presence, Hit Layer and Step Filter in the effects, Music Box as an instrument, and Beat Gen for instrument tracks. The other effects have the 4.1 and 4.2 improvements. See [Studio](help:a/studio).
+
+## Version 9.08.00
+- **Storage in the top bar.** A new Storage card shows how much space is free: the disk on orOS USB, Portable or installed, or the browser's space for orOS. It turns to the warning colour under 10 %; tap it for About this device.
+
+## Version 9.07.00
+- **Screen recording in Quick settings.** Next to Screenshot, one tap records your screen. It keeps going while you open and close apps; the button and the top bar show the time and stop it. The video saves itself in Files › Videos. On an Android phone the orOS app records it, into the phone's Movies › orOS. See [Screen Capture](help:a/capture).
+
+## Version 9.06.00
+- **Screen time in the top bar.** A new Screen time card shows how long you used orOS today; tap it for today's apps, longest first. Names stay hidden during Sensitive work.
+
+## Version 9.05.00
+- **The Light show follows the beat.** The [Light show](app:wallpaper) wallpaper and Music's Light show now answer each beat of the music: the glow swells, a ring starts, the bars jump, the wave grows. Songs that stream move it too when their server lets orOS listen; when it does not, Settings › Appearance › Wallpaper says so and the light moves calmly on its own.
+
+## Version 9.04.00
+- **Dock groups.** Drag an app onto another app in the Dock, or choose Put in a group with… in its menu, and both go into a named group (apps of one category get its name). Tap the group to open, rename, take apps out or ungroup. Groups sync with the Dock order.
+
+## Version 9.03.01
+- **Claude no longer offers local folders.** Claude and the apps' exports work with Claude's folders on the orOS disk, where orOS Drive brings your computer's folders (Drive › your computer › the folder).
+
+## Version 9.03.00
+- **Game mode.** While a game from the Games category runs full screen, notifications stay silent and the top bar and the Dock step aside; move the pointer to the top edge to see the bar. Off at first, this device only: Settings › Notifications › Game mode.
+
+## Version 9.02.00
+- **Folders orOS Drive mirrors open straight in orOS.** In Files › This computer, a folder that orOS Drive mirrors shows an orOS Drive badge, and its files open from the orOS copy, with nothing to copy (needs orOS for Windows/Linux 0.9.9+).
+- **Local folders for Claude are gone, and so is their bar.** orOS Drive brings your computer's folders into orOS, where Claude works with them as Claude's folders.
+
+## Version 9.01.00
+- **Choose the menu button's icon.** Settings › Appearance › Menu button icon: four squares, nine dots, a ring, a spark, a leaf, three lines or no icon. This device only.
+
+## Version 9.00.03
+- **The same private apps are off-limits to Claude and to the Assistant.** orOS Gate no longer offers Mail to Claude, the same as the Assistant. In the Assistant, Diary, Fitness, Health, Mood, Cycle and Baby start at `Never`, the same as in orOS Gate. You can still let either one read them.
+
+## Version 9.00.02
+- **Claude sees your pictures through orOS Gate.** When Claude reads a picture or a page image of yours through orOS Gate, it now gets the picture itself, not only the text in it. Pictures from Mail and Passwords never go.
+
+## Version 9.00.01
+- **Sync keeps going when a phone runs out of room.** The copies orOS keeps for your other devices (apps you never opened on this one) now take about a quarter of the space, so a full phone syncs again by itself, without you exporting or deleting anything. If space still runs out, the notice opens Settings › Device, where Space per app shows which apps take the room.
+
+## Version 9.00.00
+- **The Assistant pages books better.** After you press Apply on a Layout card, the Assistant now always hears what changed, even from another window. It can make words into links that keep their look, show one half of a picture in a frame, look at page images with a service that sees pictures, and read Word, OpenDocument and PDF files from a local folder you allowed. A replacement that empties a line removes it, two documents with the same name are asked about, and a conversation can be downloaded as Markdown from the list. Saved conversations now show again after the Assistant is reopened.
+
+## Version 8.99.00
+- **Your computer's own local AI answers when the synced address can't.** If the [Assistant](app:assistant)'s Local / OpenAI-compatible service points at a server on another device (for example your laptop's address on the home network) and that address does not answer here, the local AI that is ready on this computer (System › Local AI) answers in its place. Nothing is saved: your other devices keep their setting, and the synced address is used again as soon as it answers. Settings › Connected services shows "this computer's local AI answers" while this happens.
+
 ## Version 8.98.03
 - **One colour picker.** Make it yours takes you to System colour instead of showing the colours a second time.
 

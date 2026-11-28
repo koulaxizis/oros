@@ -33,7 +33,11 @@
 //                 READ-1, only while it is on for this device: reads
 //                 the text selected in the app in front, or stops),
 //                 Keep awake (1.3.0: › = 1 hour, 2 hours, until I
-//                 turn it off), Energy saver (1.3.0, see "Power");
+//                 turn it off), Energy saver (1.3.0, see "Power"),
+//                 Screenshot (1.6.0, QS-SHOT-1) and Screen recording
+//                 (1.7.0, QS-REC-1: tap = record, while it runs tap =
+//                 stop, › = its options in Screen Capture; hidden where
+//                 the browser cannot share the screen, e.g. phones);
 //       playing   one row per sound that plays in the shell (Music,
 //                 Podcasts, Radio, Sound Mixer) with Play / Pause.
 //     Every switch goes through the shell's own setter (theme,
@@ -79,7 +83,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.6.0";
+  var VER = "1.7.0";
   var HOUR = 3600000;
 
   // ---------- 1. Model (pure) ----------
@@ -198,7 +202,16 @@
     return stored === "off-low" && b && b.charging ? "" : (stored || "");
   }
 
-  var model = { VER: VER, dndUntil: dndUntil, dndSub: dndSub, syncKey: syncKey,
+  // QS-REC-1: the running recording's line ("1:05", "Paused 1:05").
+  function recSub(st, t) {
+    if (!st || !(st.ms >= 0)) return "";
+    var s = Math.floor(st.ms / 1000), m = Math.floor(s / 60), h = Math.floor(m / 60);
+    s %= 60;
+    var c = h ? h + ":" + (m % 60 < 10 ? "0" : "") + (m % 60) + ":" + (s < 10 ? "0" : "") + s : m + ":" + (s < 10 ? "0" : "") + s;
+    return st.paused ? t("qs.rec.paused").replace("{t}", c) : c;
+  }
+
+  var model = { VER: VER, recSub: recSub, dndUntil: dndUntil, dndSub: dndSub, syncKey: syncKey,
                 batteryShown: batteryShown, batteryPct: batteryPct, batteryAttr: batteryAttr, bigOn: bigOn, onAccent: onAccent, nightSub: nightSub,
                 awakeUntil: awakeUntil, awakeState: awakeState, awakeSub: awakeSub, lowBattery: lowBattery,
                 saverState: saverState, saverToggle: saverToggle, saverStored: saverStored, bedSub: bedSub };
@@ -207,7 +220,7 @@
 
   // ---------- 2. Shell side ----------
   var doc = document;
-  var host = null, btn = null, panel = null, sub = "", battery = null;
+  var host = null, btn = null, panel = null, sub = "", battery = null, recTick = 0;
   var lastFocus = null;
 
   function t(k) { return typeof root.t === "function" ? root.t(k) : k; }
@@ -321,6 +334,7 @@
     cup: SV + '<path d="M4 9h13v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5z"/><path d="M17 11h1.5a2.5 2.5 0 0 1 0 5H17"/><path d="M8 3v3M12 3v3"/></svg>',
     leaf: SV + '<path d="M5 19c0-9 6-14 15-14 0 9-5 15-14 15"/><path d="M5 19l8-8"/></svg>',
     shot: SV + '<path d="M3 8V5a2 2 0 0 1 2-2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M21 16v3a2 2 0 0 1-2 2h-3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="12" cy="12" r="3.5"/></svg>',
+    rec: SV + '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4" fill="currentColor"/></svg>',
     region: SV + '<path d="M4 4h4M4 4v4M20 4h-4M20 4v4M4 20h4M4 20v-4M20 20h-4M20 20v-4"/><rect x="8" y="8" width="8" height="8" rx="1" stroke-dasharray="2 2"/></svg>',
     search: SV + '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>'
   };
@@ -673,7 +687,18 @@
     // through Screen Capture, saved in Files › Pictures as there.
     parts.shot = pill(IC.shot, then(function () { host.shot("screen"); }),
       function () { setSub(sub === "shot" ? "" : "shot"); }, t("qs.shot.more"));
-    [parts.net, parts.sync, parts.dark, parts.night, parts.bed, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji, parts.shot].forEach(function (p) { grid.appendChild(p.box); });
+    // QS-REC-1: Screen recording, next to Screenshot (tap = the browser
+    // asks what to share and the recording starts; while it runs, tap =
+    // stop; › = the recording options in Screen Capture). Saved in
+    // Files › Videos by Screen Capture, as there.
+    parts.rec = pill(IC.rec, function () {
+      var R = host.rec;
+      if (!R) return;
+      if (call(function () { return R.state(); })) { call(function () { R.stop(); }); setTimeout(paint, 50); return; }
+      close();
+      R.start();
+    }, then(function () { host.rec.settings(); }), t("qs.rec.more"));
+    [parts.net, parts.sync, parts.dark, parts.night, parts.bed, parts.dnd, parts.awake, parts.saver, parts.gate, parts.big, parts.contrast, parts.filter, parts.osk, parts.clip, parts.read, parts.emoji, parts.shot, parts.rec].forEach(function (p) { grid.appendChild(p.box); });
     panel.appendChild(grid);
 
     parts.shotMenu = el("div", "qs-menu");
@@ -853,6 +878,12 @@
     if (canShot) setPill(parts.shot, t("qs.shot"), "", false, false);
     parts.shotMenu.hidden = sub !== "shot" || !canShot;
     if (parts.shot.more) parts.shot.more.setAttribute("aria-expanded", sub === "shot" ? "true" : "false");
+    var R = host.rec, canRec = !!(R && call(function () { return R.can(); }));
+    var rs = canRec ? call(function () { return R.state(); }) : null;
+    parts.rec.box.hidden = !canRec;
+    if (canRec) setPill(parts.rec, t(rs ? "qs.rec.stop" : "qs.rec"), recSub(rs, t), !!rs, true);
+    clearTimeout(recTick);
+    recTick = rs ? setTimeout(paint, 1000) : 0;   // the time runs while the panel is open
     var sv = saver();
     setPill(parts.saver, t("qs.saver"), sv.auto ? t("qs.saver.auto") : "", sv.on, true);
 

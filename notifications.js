@@ -321,6 +321,8 @@
   // this app (focus.js; quiet hours are the Sleep mode's schedule),
   // else the old rule. Silent = inbox + badge, no pop-up, no sound.
   function quietFor(ns, now) {
+    // GAMEMODE-1: a fullscreen game in Game mode (shell.js, this device)
+    try { if (typeof window.__orosGameQuiet === 'function' && window.__orosGameQuiet()) return true; } catch (e) {}
     var F = focusApi();
     if (F && state.slice) {
       try { return F.silent(ns, now); } catch (e) {}
@@ -721,6 +723,11 @@
       if (key === 'open') { if (typeof window.__orosOpenAt === 'function') window.__orosOpenAt('automations', null); return; }
       var A = window.orosAutomations;
       if (/^[A-Za-z0-9_-]{1,64}@\d{8,12}$/.test(String(key)) && A && typeof A.openRun === 'function') A.openRun(String(key));
+    },
+    // Assistant routines (AS-RT) — "assistant:chat:<chat id>": a run's
+    // notice opens the routine's own conversation.
+    assistant: function (id) {
+      if (/^c[a-z0-9]{6,40}$/.test(String(id)) && typeof window.__orosOpenAt === 'function') window.__orosOpenAt('assistant', { chat: String(id) });
     },
     // Sticky Notes — "stickies:<noteId>": a ring opens the desktop
     // with that note in front (its editor on a phone).

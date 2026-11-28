@@ -110,7 +110,7 @@ test("greek: the setup and the model for actions are wired in the Assistant, in 
   assert.ok(js.includes("C.greekSteps("));
   assert.ok(js.includes("C.localTraits("));
   assert.ok(js.includes("tm: C.GREEK_AI.tools"));
-  assert.match(js, /model: tm \|\| modelOf\(pid\)/);
+  assert.match(js, /model: tm \|\| (pc\.model \|\| )?modelOf\(pid\)/);
 });
 
 test("greek: Krikri and Qwen3 are credited", () => {

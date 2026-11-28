@@ -109,7 +109,7 @@ function sandbox(opts) {
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(SHELL.slice(start, end) +
-    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll, mtSideOpen, mtSideEnd, mt, mtOwns, mtOn };" +
+    "\nthis.h = { appFrames, appFrameOf, appLive, mtSlots, mtSwitch, mtLeave, mtKeepable, mtSetUser, mtSnapshot, mtActive, mtList, mtOpenList, mtClose, mtCloseAll, mtSideOpen, mtSideEnd, mt, mtOwns, mtOn, mtBesideMe, mtBesideState, mtOpenBeside, mtFit };" +
     // the parts of openApp / returnToDesktop that touch frames
     "\nthis.open = function (app, at) { var prev = state.running; state.running = app; if (mtActive()) mtSwitch(prev, app, at); else document.getElementById('app-frame').src = app.url + (at || ''); };" +
     "\nthis.home = function () { var prev = state.running; state.running = null; if (!(mtActive() && mtLeave(prev))) document.getElementById('app-frame').src = 'about:blank'; };" +
@@ -484,4 +484,141 @@ test("shell: multitasking is on by default on computers, off on phones; a choice
   assert.equal(c.h.mtOn(), false);
   c.h.mtSetUser(true);
   assert.equal(c.localStorage.getItem("oros-multitask"), "1");
+});
+
+// AS-KEEP (Chris 2026-11-28): the Assistant stays live when you leave
+// it, never closes for room while it works, and goes side by side from
+// its own button.
+test("shell AS-KEEP: the Assistant is kept alive when you leave it, and a write of its own key by another window leaves it alone", async () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, apps: ["assistant", "notes"] });
+  const h = c.h;
+  assert.equal(h.mtKeepable(app("assistant")), true);
+  c.open(app("assistant"));
+  const as = c.running.children[0];
+  c.open(app("notes"));
+  assert.equal(h.appLive("assistant"), true);
+  assert.equal(as.style.display, "none");
+  storageIn(as, "oros-assistant-data");   // the mini window or another tab: the Assistant merges it itself
+  await tick();
+  assert.equal(h.appLive("assistant"), true);
+  assert.equal(h.mtOwns("assistant", "oros-assistant-data"), false);
+  c.home();
+  c.open(app("assistant"));
+  assert.equal(h.appFrameOf("assistant"), as);
+  assert.deepEqual(as.loads, ["assistant/"], "no reload: the conversation is as it was");
+  assert.match(SHELL, /var MT_CLOSE_ON_LEAVE = \{[^}]*\}/);
+  assert.doesNotMatch(/var MT_CLOSE_ON_LEAVE = \{([^}]*)\}/.exec(SHELL)[1], /assistant/);
+});
+
+test("shell AS-KEEP: an app that says it is busy is never the one closed for room", () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 2 });   // 3 slots
+  const h = c.h;
+  c.open(app("assistant"));                 // heavy: 2
+  const as = c.running.children[0];
+  as.contentWindow.__orosAppBusy = () => true;
+  c.open(app("notes"));
+  c.open(app("todo"));                      // 2 + 1 + 1 > 3: the oldest would go
+  assert.equal(h.appLive("assistant"), true, "busy: kept");
+  assert.equal(h.appLive("notes"), false, "the next oldest went instead");
+  as.contentWindow.__orosAppBusy = () => false;
+  c.open(app("writer"));
+  assert.equal(h.appLive("assistant"), false, "done: it may go like any other");
+});
+
+test("shell AS-KEEP: the Assistant's button puts it beside the app used last, and back to the whole screen", () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, width: 1280, apps: ["assistant", "notes", "todo"] });
+  const h = c.h;
+  c.open(app("todo"));
+  c.open(app("notes"));
+  const notes = h.appFrameOf("notes");
+  h.mtList().forEach((r) => { r.at -= 1000; });
+  c.open(app("assistant"));
+  const as = h.appFrameOf("assistant");
+  assert.deepEqual({ ...h.mtBesideState("assistant") }, { can: true, where: "front", split: false });
+  assert.equal(h.mtBesideMe("assistant"), "split");
+  assert.equal(c.state.running.id, "notes", "the app used last comes in front");
+  assert.equal(c.document.getElementById("app-frame"), notes);
+  assert.equal(as.getAttribute("data-oros-side"), "assistant");
+  assert.equal(as.id, "");
+  assert.equal(as.style.display, "");
+  assert.equal(c.running.classList.contains("mt-split"), true);
+  assert.deepEqual(as.loads, ["assistant/"], "no reload");
+  assert.deepEqual(notes.loads, ["notes/"], "no reload");
+  assert.deepEqual({ ...h.mtBesideState("assistant") }, { can: true, where: "side", split: true });
+  // another app from the menu: the Assistant stays beside
+  c.open(app("todo"));
+  assert.equal(h.mt.side.app.id, "assistant");
+  assert.equal(h.appLive("notes"), true, "kept behind");
+  // whole screen: the Assistant comes in front, the other app waits behind
+  assert.equal(h.mtBesideMe("assistant"), "full");
+  assert.equal(c.state.running.id, "assistant");
+  assert.equal(c.document.getElementById("app-frame"), as);
+  assert.equal(h.mt.side, null);
+  assert.equal(c.running.classList.contains("mt-split"), false);
+  assert.equal(h.appLive("todo"), true);
+  assert.deepEqual(as.loads, ["assistant/"]);
+  // in front with an app beside: the button ends side by side
+  h.mtSideOpen(app("notes"));
+  assert.equal(h.mtBesideMe("assistant"), "full");
+  assert.equal(h.mt.side, null);
+  assert.equal(h.appLive("notes"), true);
+});
+
+test("shell AS-KEEP: with no app behind the menu picks one; narrow screens and multitasking off say no", () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, width: 1280, apps: ["assistant"] });
+  let menu = 0;
+  c.openMenuSearch = () => { menu++; };
+  c.open(app("assistant"));
+  assert.equal(c.h.mtBesideMe("assistant"), "pick");
+  assert.equal(c.h.mt.pickSide, "swap");
+  assert.equal(menu, 1);
+  const narrow = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, width: 900 });
+  narrow.open(app("notes"));
+  narrow.open(app("assistant"));
+  assert.equal(narrow.h.mtBesideMe("assistant"), "no");
+  assert.equal(narrow.h.mtBesideState("assistant").can, false);
+  const off = sandbox({ storage: { "oros-multitask": "0" }, width: 1280 });
+  off.open(app("assistant"));
+  assert.equal(off.h.mtBesideMe("assistant"), "no");
+  // the openApp of shell.js takes the swap pick: the pick in front, the asker beside
+  const oa = SHELL.slice(SHELL.indexOf("  function openApp(app, at) {"), SHELL.indexOf("  function returnToDesktop() {"));
+  assert.match(oa, /pick && pickMode === "swap"[^\n]*\n[^\n]*\n\s*mtAsSide = true;\s*try \{ openApp\(app, at\); \} finally \{ mtAsSide = false; \}/);
+});
+
+test("shell AS-KEEP: the mini window hands over to the full Assistant beside the app in front", () => {
+  const c = sandbox({ storage: { "oros-multitask": "1" }, mem: 8, width: 1280, apps: ["assistant", "notes"] });
+  const h = c.h;
+  assert.equal(h.mtOpenBeside("assistant", { chat: "c1" }), false, "no app in front");
+  c.open(app("notes"));
+  assert.equal(h.mtOpenBeside("assistant", { chat: "c1" }), true);
+  assert.equal(h.mt.side.app.id, "assistant");
+  assert.equal(c.state.running.id, "notes");
+  assert.equal(h.mtOpenBeside("nope"), false);
+  // the quickmenu host offers it only where it can happen
+  assert.match(SHELL, /canBeside: function \(\) \{ return mtActive\(\) && mtSplitFits\(\) && !!state\.running && state\.running\.type === "internal" && state\.running\.id !== "assistant"; \},/);
+  assert.match(SHELL, /beside: function \(id, target\) \{ return mtOpenBeside\(id, target\); \},/);
+});
+
+test("AS-KEEP: the Assistant pauses its microphone, says when it is busy, and draws its side-by-side button", () => {
+  const A = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  assert.match(A, /window\.__orosAppPause = function \(\) \{ if \(vo\.st === "rec"\) voStop\(\); \};/);
+  assert.match(A, /window\.__orosAppBusy = function \(\) \{ return !!busy \|\| vo\.st === "run"; \};/);
+  assert.match(A, /window\.__orosMtNote = besideDraw;/);
+  assert.match(A, /if \(MINI \|\| GATE\) return null;/, "never in the mini window or the gate frame");
+  // its own key written elsewhere is read back in the full app too (MT_SELF_MERGE)
+  const reg = A.slice(A.indexOf("  function registerSync() {"), A.indexOf("  function sliceGet()"));
+  assert.ok(reg.indexOf('window.addEventListener("storage"') < reg.indexOf("if (MINI || RTN) return;"));
+  const html = fs.readFileSync(path.join(ROOT, "assistant/index.html"), "utf8");
+  assert.match(html, /id="beside-btn"[^>]*hidden/);
+  const de = fs.readFileSync(path.join(ROOT, "i18n/de/assistant.js"), "utf8");
+  ["btn.beside", "btn.full"].forEach((k) => {
+    assert.equal(A.split('"' + k + '": ').length - 1, 2, k + " EN + EL");
+    assert.ok(de.includes('"' + k + '"'), k + " DE");
+  });
+  const tr = fs.readFileSync(path.join(ROOT, "translations.js"), "utf8");
+  const deShell = fs.readFileSync(path.join(ROOT, "i18n/de/shell.js"), "utf8");
+  ["qm.miniBeside", "qm.miniMin", "qm.miniRestore"].forEach((k) => {
+    assert.equal(tr.split('"' + k + '"').length - 1, 2, k + " EN + EL");
+    assert.ok(deShell.includes('"' + k + '"'), k + " DE");
+  });
 });

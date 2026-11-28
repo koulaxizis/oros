@@ -157,7 +157,7 @@
     "image: a picture file from Claude's folders on the orOS disk (path, an /internal/ path as files_write or files_upload gave it; Claude's own pictures, ComfyUI's or any other) as a new photo layer: x, y, w, h, fit contain|cover (the canvas), title",
     "create: open a picture file from Claude's folders as a NEW Photo Lab project (only as the one command, with designs new): from (its /internal/ path), title",
     "prov (generate, fill, expand, upscale): the image AI to use, " + PROVS.slice(1).join("|") + "; left out, the one the owner chose in the Assistant (Settings › Pictures). It must be set up there (key or address); fill and expand need openai, stability, sdwebui or comfyui. What is sent goes straight from the owner's device to that AI (the box or picture, and the prompt)",
-    "export: save the picture into the Pictures folder: fmt jpg|png|webp, quality (10-100, jpg and webp); out (a local write folder local:<root>/<folder>, or a folder of Claude's on the orOS disk such as Drive/Photos with Files at «may change») also saves it there, never over a file, and the answer lists the paths"
+    "export: save the picture into the Pictures folder: fmt jpg|png|webp, quality (10-100, jpg and webp); out (a folder of Claude's on the orOS disk such as Drive/Photos with Files at «may change») also saves it there, never over a file, and the answer lists the paths"
   ].join("\n");
 
   // ---------- 1. Checking ----------

@@ -5,9 +5,12 @@ Installs the debug APK, opens it and checks that every project's signed
 repository was read (orOS, NULL JSFX and Noxpress headers with their
 apps), that the search bar filters the list and a card opens the app's own
 page with its description and screenshots (APPS-M5), that the daily check posts its update notice for an older app
-that was left after the screen showed it, then installs one small real app through the manager, answering
-Android's own confirmation, and checks that Android has it. Screenshots
-and UI dumps go to the output folder.
+that was left after the screen showed it, updates that older app (which
+names the manager as its installer) without any question from Android
+(APPS-M6, UPDATE_PACKAGES_WITHOUT_USER_ACTION), then installs one small
+real app through the manager, answering Android's own confirmation, checks
+that Android has it with the manager as its installer, and opens the Help.
+Screenshots and UI dumps go to the output folder.
 
     python3 koulaxizis-apps/tests/device_test.py <debug.apk> <out dir>
 """
@@ -127,6 +130,45 @@ def page_of(root, name):
     return n is not None and n.get("text") == name and by_id(root, "d_action") is not None
 
 
+def confirm(root):
+    """Android's own install question ("Do you want to install/update this app?")."""
+    for n in [] if root is None else root.iter("node"):
+        # Android's package installer, not the manager's own button.
+        if n.get("text", "").lower() in ("install", "update") and n.get("package", "") != PKG \
+                and n.get("clickable") == "true":
+            return n
+    return None
+
+
+def version_of(pkg):
+    m = re.search(r"versionCode=(\d+)", adb("shell", "dumpsys", "package", pkg, check=False))
+    return m.group(1) if m else None
+
+
+def row_button(name, want):
+    """The button of an app's row in the list, which must say want."""
+    # The name can show at the bottom edge with its row's button still off
+    # screen, so move the list up a little and look again before giving up.
+    row = None
+    for _ in range(4):
+        root, node = scroll_to(name)
+        for parent in root.iter("node"):
+            kids = list(parent.iter("node"))
+            if node in kids and any(k.get("class") == "android.widget.Button" for k in kids) and len(kids) < 12:
+                row = parent
+        if row is not None:
+            break
+        w, h = screen()
+        adb("shell", "input", "swipe", str(w // 2), str(h * 2 // 3), str(w // 2), str(h // 3), "300")
+        time.sleep(1)
+    if row is None:
+        raise SystemExit(f"no row for {name}")
+    button = [k for k in row.iter("node") if k.get("class") == "android.widget.Button"][0]
+    if button.get("text", "").lower() != want:  # Material buttons show it in capitals
+        raise SystemExit(f"{name}: button says {button.get('text')!r}, expected {want}")
+    return button
+
+
 def search_and_pages():
     """APPS-M5: the search bar filters, a card opens its page, Back goes back."""
     root = dump()
@@ -189,7 +231,15 @@ def main():
     adb("install", "-r", sys.argv[1])
     old = os.path.join(OUT, "old-daws.apk")
     urllib.request.urlretrieve(OLD_APK, old)
-    adb("install", old)
+    # Installed with the manager named as its installer, as if the manager
+    # had installed it: its update must then go without a question (APPS-M6).
+    adb("push", old, "/data/local/tmp/old-daws.apk")
+    said = adb("shell", "pm", "install", "-i", PKG, "/data/local/tmp/old-daws.apk")
+    if "Success" not in said:
+        raise SystemExit(f"old Remote for DAWs not installed: {said}")
+    perms = adb("shell", "dumpsys", "package", PKG)
+    if not re.search(r"android\.permission\.UPDATE_PACKAGES_WITHOUT_USER_ACTION: granted=true", perms):
+        raise SystemExit("UPDATE_PACKAGES_WITHOUT_USER_ACTION is not granted, so every update would ask")
     # The one-time "install unknown apps" switch the person turns on.
     adb("shell", "appops", "set", PKG, "REQUEST_INSTALL_PACKAGES", "allow")
     # Android 13+ asks once for notices (the daily check); answered here.
@@ -266,40 +316,33 @@ def main():
     # Glarolykoi is its own section at the end, read from the orOS repository (APPS-M3).
     scroll_to("Glarolykoi")
     shot("list-glarolykoi")
-    # Back up to NULL JSFX and install Remote for Mixers through the manager.
+    # Back up to NULL JSFX: update Remote for DAWs without a question (APPS-M6).
     for _ in range(40):
         swipe(False)
-    # The name can show at the bottom edge with its row's button still off
-    # screen (the list is longer since Waymark has its own section), so move
-    # the list up a little and look again before giving up.
-    row = None
-    for _ in range(4):
-        root, node = scroll_to("Remote for Mixers")
-        for parent in root.iter("node"):
-            kids = list(parent.iter("node"))
-            if node in kids and any(k.get("class") == "android.widget.Button" for k in kids) and len(kids) < 12:
-                row = parent
-        if row is not None:
+    before = version_of(OLD)
+    button = row_button("Remote for DAWs", "update")
+    adb("shell", "input", "tap", *map(str, center(button)))
+    shot("update-tapped")
+    end = time.time() + 180
+    while time.time() < end:
+        if confirm(dump()) is not None:
+            shot("update-asked")
+            raise SystemExit("Android asked before updating an app the manager installed")
+        if version_of(OLD) != before:
             break
-        w, h = screen()
-        adb("shell", "input", "swipe", str(w // 2), str(h * 2 // 3), str(w // 2), str(h // 3), "300")
-        time.sleep(1)
-    if row is None:
-        raise SystemExit("no row for Remote for Mixers")
-    button = [k for k in row.iter("node") if k.get("class") == "android.widget.Button"][0]
-    if button.get("text", "").lower() != "install":  # Material buttons show it in capitals
-        raise SystemExit(f"button says {button.get('text')!r}, expected Install")
+        time.sleep(2)
+    else:
+        shot("not-updated")
+        raise SystemExit(f"{OLD} was not updated (still {before})")
+    print("ok: Remote for DAWs updated from", before, "to", version_of(OLD), "without a question")
+    adb("shell", "am", "start", "-W", "-n", f"{PKG}/gr.koulaxizis.apps.MainActivity")
+    for _ in range(40):
+        swipe(False)
+
+    # Install Remote for Mixers through the manager: a first install asks once.
+    button = row_button("Remote for Mixers", "install")
     adb("shell", "input", "tap", *map(str, center(button)))
     shot("install-tapped")
-
-    # Android's own confirmation ("Do you want to install this app?").
-    def confirm(root):
-        for n in [] if root is None else root.iter("node"):
-            # Android's package installer, not the manager's own button.
-            if n.get("text", "").lower() in ("install", "update") and n.get("package", "") != PKG \
-                    and n.get("clickable") == "true":
-                return n
-        return None
 
     _, ok = wait_for(confirm, "Android's install confirmation", 180)
     shot("android-confirm")
@@ -314,10 +357,23 @@ def main():
         shot("not-installed")
         raise SystemExit(f"{TARGET} was not installed")
     time.sleep(3)
+    info = adb("shell", "dumpsys", "package", TARGET)
+    if f"installerPackageName={PKG}" not in info:
+        print(info[-3000:])
+        raise SystemExit(f"{TARGET} does not name the manager as its installer")
+    owner = re.search(r"updateOwnerPackageName=(\S*)", info)
+    print("update owner of", TARGET, "=", owner.group(1) if owner else "(not shown)")
     adb("shell", "am", "start", "-W", "-n", f"{PKG}/gr.koulaxizis.apps.MainActivity")
     root, node = scroll_to("Remote for Mixers")
     shot("installed")
-    print("ok: lists verified and", TARGET, "installed through the manager")
+    # The Help (menu) explains the questions that stay and Play Protect.
+    adb("shell", "input", "keyevent", "KEYCODE_MENU")
+    _, item = wait_for(lambda r: node_with(r, "Help"), "the Help menu item", 30)
+    adb("shell", "input", "tap", *map(str, center(item)))
+    wait_for(lambda r: any("Which questions stay" in x for x in texts(r)), "the Help", 30)
+    shot("help")
+    adb("shell", "input", "keyevent", "KEYCODE_BACK")
+    print("ok: lists verified,", OLD, "updated quietly and", TARGET, "installed through the manager")
 
 
 if __name__ == "__main__":

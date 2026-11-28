@@ -45,6 +45,40 @@
     <string name="lost_text">Die Frage von Android zur Installation von %1$s wurde geschlossen, bevor Sie geantwortet haben (auf manchen Handys verdeckt sie eine Sicherheitsprüfung).</string>
     <string name="show_again">Erneut anzeigen</string>
     <string name="skip">Überspringen</string>
+    <!-- Fewer questions (APPS-M6). -->
+    <string name="asks_once">Android fragt noch einmal, danach nie mehr</string>
+    <plurals name="update_all_quiet">
+        <item quantity="one">%d App aktualisiert, ohne Rückfrage.</item>
+        <item quantity="other">%d Apps aktualisiert, ohne Rückfrage.</item>
+    </plurals>
+    <string name="update_all_done">%1$d von %2$d Apps aktualisiert; %3$d brauchten Ihre Zustimmung.</string>
+    <string name="auto_updates">Automatische Updates</string>
+    <string name="auto_on">Automatische Updates sind an: zweimal am Tag, im WLAN, installieren sich Updates ohne Rückfrage von selbst.</string>
+    <string name="auto_off">Automatische Updates sind aus.</string>
+    <string name="shizuku_menu">Ohne Rückfrage installieren (Shizuku)</string>
+    <string name="shizuku">Shizuku</string>
+    <string name="shizuku_missing">Shizuku läuft nicht. Installieren Sie die Shizuku-App, starten Sie sie (siehe Hilfe) und schalten Sie dies dann erneut ein.</string>
+    <string name="shizuku_on">Shizuku ist an: Installationen und Updates laufen ohne Rückfrage, solange Shizuku läuft.</string>
+    <string name="shizuku_refused">Shizuku hat es nicht erlaubt, daher hat sich nichts geändert.</string>
+    <string name="help">Hilfe</string>
+    <string name="always_asks_title">Dieses Telefon fragt immer</string>
+    <string name="always_asks">Das System dieses Telefons (HyperOS/MIUI) erlaubt Updates ohne Frage nur aus dem eigenen Store, daher fragt Android vor jedem Update. „Alle aktualisieren“ läuft trotzdem durch alle Apps, mit einer Frage pro App. Ganz ohne Fragen: im Menü „Ohne Rückfrage installieren (Shizuku)“ einschalten; die Hilfe erklärt, wie.</string>
+    <string name="help_text"><![CDATA[<b>Welche Rückfragen bleiben</b><br>
+• <b>Erste Installation:</b> Android fragt einmal für jede neue App. Das ist Androids Regel für jeden Store.<br>
+• <b>Updates (Android 12 und neuer):</b> Apps, die Koulaxizis Apps installiert hat, werden ohne Rückfrage aktualisiert, einzeln oder mit <i>Alle aktualisieren</i>.<br>
+• <b>Anderswo installierte Apps</b> (Browser, F-Droid, Droid-ify): das erste Update hier fragt einmal („Android fragt noch einmal“); danach ist Koulaxizis Apps ihr Installer und spätere Updates laufen ohne Rückfrage.<br>
+• <b>Android 11 und älter:</b> jedes Update fragt.<br>
+• <b>Xiaomi, Redmi, POCO (HyperOS, MIUI):</b> Das System lehnt Updates ohne Frage von anderen Stores als dem eigenen ab, dort fragt also jedes Update; Koulaxizis Apps erkennt das und fragt sofort. Ganz ohne Fragen geht es dort nur mit Shizuku (unten). Manche Telefone legen zusätzlich eine eigene Sicherheitsprüfung darüber.<br><br>
+<b>Automatische Updates</b> (Menü, anfangs aus)<br>
+Zweimal am Tag, im WLAN und mit genug Akku, installiert die tägliche Prüfung die Updates ohne Rückfrage. Die anderen warten in der Benachrichtigung. Koulaxizis Apps zeigt nie von selbst eine Frage und aktualisiert sich so nie selbst.<br><br>
+<b>Ohne Rückfrage installieren (Shizuku)</b> (Menü, anfangs aus)<br>
+Shizuku ist eine kostenlose App, mit der andere Apps die Rechte der Android-Entwicklertools nutzen können, ohne Root. Damit laufen auch erste Installationen ohne Rückfrage. Jede App wird weiterhin geprüft (Signatur des Repositorys, Größe, SHA-256, Signaturschlüssel), bevor sie installiert wird.<br>
+1. Installieren Sie Shizuku (shizuku.rikka.app).<br>
+2. Schalten Sie die Entwickleroptionen und das kabellose Debugging (Android 11+) ein und starten Sie Shizuku in seiner eigenen App. Nach jedem Neustart des Telefons starten Sie es erneut. Auf Xiaomi, Redmi und POCO schalten Sie in den Entwickleroptionen auch <i>Über USB installieren</i> und <i>USB-Debugging (Sicherheitseinstellungen)</i> ein.<br>
+3. Schalten Sie hier <i>Ohne Rückfrage installieren (Shizuku)</i> ein und erlauben Sie es.<br>
+Läuft Shizuku nicht, wird ganz normal mit Androids Rückfrage installiert.<br><br>
+<b>Google Play Protect</b><br>
+Auf Telefonen mit Google Play kann Play Protect anbieten, eine App zu scannen, die nicht aus dem Play Store kommt, oder vor ihr warnen. Koulaxizis Apps umgeht oder versteckt Play Protect nie. Wenn Sie wollen, können Sie den Scan selbst abschalten: Play Store › Ihr Profilbild › Play Protect › ⚙ › <i>Apps mit Play Protect scannen</i>. Dann prüft Google keine App auf dem Telefon mehr; Sie können ihn jederzeit wieder einschalten. Unsere Apps sind mit unserem eigenen Schlüssel signiert, und Koulaxizis Apps prüft jede Datei, bevor Android sie installiert.<br><br><small>Koulaxizis Apps ist freie Software (MIT). Es nutzt die Shizuku-API von RikkaW (Apache-2.0, github.com/RikkaApps/Shizuku-API).</small>]]></string>
     <!-- Search and an app's own page (APPS-M5). -->
     <string name="search_hint">Apps suchen</string>
     <string name="search_clear">Suche leeren</string>

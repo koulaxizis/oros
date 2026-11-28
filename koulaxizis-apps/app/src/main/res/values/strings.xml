@@ -45,6 +45,40 @@
     <string name="lost_text">Android\'s question about installing %1$s closed before you answered (on some phones a security scan covers it).</string>
     <string name="show_again">Show again</string>
     <string name="skip">Skip</string>
+    <!-- Fewer questions (APPS-M6). -->
+    <string name="asks_once">Android asks once more, then no more</string>
+    <plurals name="update_all_quiet">
+        <item quantity="one">%d app updated, no questions asked.</item>
+        <item quantity="other">%d apps updated, no questions asked.</item>
+    </plurals>
+    <string name="update_all_done">%1$d of %2$d apps updated; %3$d needed your yes.</string>
+    <string name="auto_updates">Automatic updates</string>
+    <string name="auto_on">Automatic updates are on: twice a day, on Wi-Fi, updates that need no question install by themselves.</string>
+    <string name="auto_off">Automatic updates are off.</string>
+    <string name="shizuku_menu">Install without questions (Shizuku)</string>
+    <string name="shizuku">Shizuku</string>
+    <string name="shizuku_missing">Shizuku is not running. Install the Shizuku app, start it (see Help), then turn this on again.</string>
+    <string name="shizuku_on">Shizuku is on: installs and updates go without questions while Shizuku runs.</string>
+    <string name="shizuku_refused">Shizuku did not allow it, so nothing changed.</string>
+    <string name="help">Help</string>
+    <string name="always_asks_title">This phone always asks</string>
+    <string name="always_asks">This phone\'s system (HyperOS/MIUI) does not allow updates without a question from stores other than its own, so Android will ask before every update. Update all still runs through all apps, one question each. For no questions at all, turn on Install without questions (Shizuku) in the menu; the Help says how.</string>
+    <string name="help_text"><![CDATA[<b>Which questions stay</b><br>
+• <b>First install:</b> Android asks once for every new app. That is Android’s rule for every store.<br>
+• <b>Updates (Android 12 and newer):</b> apps that Koulaxizis Apps installed update without a question, one by one or with <i>Update all</i>.<br>
+• <b>Apps installed elsewhere</b> (browser, F-Droid, Droid-ify): the first update here asks once (“Android asks once more”); after it, Koulaxizis Apps is their installer and later updates go without a question.<br>
+• <b>Android 11 and older:</b> every update asks.<br>
+• <b>Xiaomi, Redmi, POCO (HyperOS, MIUI):</b> the system refuses updates without a question from stores other than its own, so every update asks there; Koulaxizis Apps notices this and asks at once. Without questions there only with Shizuku (below). Some phones also add their own security check.<br><br>
+<b>Automatic updates</b> (menu, off at first)<br>
+Twice a day, on Wi-Fi and with enough battery, the daily check installs the updates that need no question. The others wait in the notification. Koulaxizis Apps never shows a question by itself and never updates itself this way.<br><br>
+<b>Install without questions (Shizuku)</b> (menu, off at first)<br>
+Shizuku is a free app that lets other apps use the rights of Android’s developer tools, without root. With it, first installs go without a question too. Every app is still checked (repository signature, size, SHA-256, signing key) before it is installed.<br>
+1. Install Shizuku (shizuku.rikka.app).<br>
+2. Turn on Developer options and Wireless debugging (Android 11+), then start Shizuku from its own screen. After each restart of the phone, start it again. On Xiaomi, Redmi and POCO also turn on <i>Install via USB</i> and <i>USB debugging (Security settings)</i> in Developer options.<br>
+3. Here, turn on <i>Install without questions (Shizuku)</i> and allow it.<br>
+When Shizuku is not running, installs go the normal way with Android’s question.<br><br>
+<b>Google Play Protect</b><br>
+On phones with Google Play, Play Protect may ask to scan an app that does not come from the Play Store, or warn about it. Koulaxizis Apps never bypasses or hides Play Protect. If you want, you can turn its scan off yourself: Play Store › your profile picture › Play Protect › ⚙ › <i>Scan apps with Play Protect</i>. Then Google no longer checks any app on the phone; you can turn it back on at any time. Our apps are signed with our own key, and Koulaxizis Apps checks every file before Android installs it.<br><br><small>Koulaxizis Apps is free software (MIT). It uses the Shizuku API by RikkaW (Apache-2.0, github.com/RikkaApps/Shizuku-API).</small>]]></string>
     <!-- Search and an app's own page (APPS-M5). -->
     <string name="search_hint">Search apps</string>
     <string name="search_clear">Clear the search</string>

@@ -68,7 +68,8 @@ export const GATE_LIMITS = {
   aliveMs: 150000,
   lateMs: 120000,                 // a timed-out change waits this long before another device gets it
   // GATE-FILES F2: Claude's folders while orOS is closed
-  fidxChars: 900 * 1024,         // the sealed file index (base64url)
+  fidxChars: 900 * 1024,         // the sealed file index (base64url); one message, opened on every closed files call (Mail-thread review of GATE-PC: CPU per call)
+  faddMs: 7 * 86400000,          // GATE-PC: a folder added while the copy is older counts this long
   linkMs: 15 * 60000,            // a files_link download link lives this long, for one download
   links: 20,                     // download links waiting per gate
   pieceBytes: 1048576 + 28,      // one sealed piece: 1 MiB + IV + tag
@@ -616,29 +617,17 @@ export const TOOLS = [
     // like files_link: it only makes an address; the change itself is files_write
     annotations: { readOnlyHint: true }
   },
-  {
-    name: "local_folders_request",
-    description: "Asks the owner to open a folder of their computer for Claude (Layout's pictures and texts to read, or a folder to save proofs and PDFs into), for the local:<root>/<path> paths edit_in_app and files_list take. The owner answers on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). Once allowed, it works where orOS runs on that computer, in a window, minimised or in the tray, and the owner can close it any time. Never a whole drive or home folder, nor system, program or key folders. Ask only for the folder the work needs.",
-    inputSchema: {
-      type: "object",
-      properties: {
-        path: { type: "string", description: "The folder's full path on the owner's computer, as Windows shows it (C:\\Users\\<name>\\Documents\\<folder>), or ~/<folder>." },
-        access: { type: "string", enum: ["read", "write"], description: "read (default): only read; write: only new files are saved there, nothing is replaced or deleted." },
-        days: { type: "integer", minimum: 1, maximum: 90, description: "How long, 30 when left out." },
-        reason: { type: "string", description: "One line for the owner: what it is for." }
-      },
-      required: ["path"],
-      additionalProperties: false
-    },
-    annotations: { readOnlyHint: false, destructiveHint: false }
-  },
+  // LOCAL-GONE (Chris 2026-11-27, 9.02.00): local_folders_request is gone.
+  // orOS Drive mirrors the computer's folders into /internal/Drive/<computer>/<folder>,
+  // which Claude asks for with claude_folders_request. A question still
+  // waiting is answered by the device (FOLDER_ASKS keeps it a files question).
   // CF-ASK (Chris 2026-11-22 «Πρόσθεσε τους φακέλους που χρειάζεσαι, σου
   // δίνω έγκριση»): the same question for a folder of the orOS disk, so
   // Claude asks for one of «Claude's folders» instead of the owner adding
   // it in Settings. The owner answers with one tap on any device on screen.
   {
     name: "claude_folders_request",
-    description: "Asks the owner to add a folder of the orOS disk to Claude's folders (the folders files_list, files_read, files_write, studio_import, montage_import and export out may use), e.g. \"Studio/Podcasts\". The owner answers with one tap («Open for Claude») on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). The folder need not exist yet: files_write makes it. Never the whole disk, the Trash, or a folder that looks like keys or secrets. Writing there also needs the owner's switch for Files at write. Ask only for the folder the work needs.",
+    description: "Asks the owner to add a folder of the orOS disk to Claude's folders (the folders files_list, files_read, files_write, studio_import, montage_import and export out may use), e.g. \"Studio/Podcasts\". A folder of the owner's computer is on the disk as orOS Drive's mirror, Drive/<computer>/<folder> (C:\\Users\\<name>\\Documents\\Invoices = Drive/<computer>/Documents/Invoices); a computer path (C:/…) is asked for as that mirror, or refused with the reason when no mirror is synced yet. The owner answers with one tap («Open for Claude») on any device where orOS is on screen, the phone too; with nobody at a screen the question waits, encrypted, for the next one (one question per call). The folder need not exist yet: files_write makes it. Never the whole disk, the Trash, or a folder that looks like keys or secrets. Writing there also needs the owner's switch for Files at write. Ask only for the folder the work needs.",
     inputSchema: {
       type: "object",
       properties: {
@@ -813,9 +802,9 @@ export function withDevTools(dev) {
 }
 // Apps never offered, also refused here for a device tool's app or
 // apps argument (orOS checks again on the device: gate/gate.js NEVER).
-// The personal apps (Mail, Diary, Health…) are the owner's choice since
+// The personal apps (Diary, Health…) are the owner's choice since
 // 5.90.00, behind a warning on the device, and never in the closed copy.
-export const NEVER_APPS = ["assistant", "passwords"];
+export const NEVER_APPS = ["assistant", "mail", "passwords"];   // GATE-NEVER2 (2026-11-27): = gate/gate.js NEVER
 export function neverIn(args) {
   const a = args && typeof args === "object" ? args : {};
   const ids = [].concat(typeof a.app === "string" ? [a.app] : [], Array.isArray(a.apps) ? a.apps : []);
@@ -838,6 +827,8 @@ export function isScreenTool(name, args) {
   if (!Object.prototype.hasOwnProperty.call(SCREEN_TOOLS, name)) return false;
   return !(name === "edit_in_app" && args && typeof args === "object" && args.dry_run === true);
 }
+// LOCAL-GONE: local:<root>/<path> paths are gone with local folders for Claude
+const LOCAL_GONE = "local:… paths are gone: orOS Drive mirrors the computer's folders into /internal/Drive/<computer>/<folder>; ask for that folder with claude_folders_request and use its /internal/ path";
 // TRAY-2, CF-ASK: questions for the owner about a folder, kept for a screen
 const FOLDER_ASKS = ["local_folders_request", "claude_folders_request"];
 const LF_NOTE = "Nobody is at an orOS screen now, so the question waits, encrypted, and is asked the next time orOS is on screen on one of the owner's devices (the phone too). Nothing is opened before the owner allows it. Tell the owner to open orOS (on the phone is enough) and answer; change_history shows it pending, and undo_change with change_id cancels it.";
@@ -978,17 +969,19 @@ export function mockupCheck(mock, args, idx, queued, lv) {
   }
   const img = typeof a.image === "string" ? a.image.trim() : "";
   if (!img) errs.push("image: the picture's path");
-  else if (!/^local:/i.test(img)) {
+  else if (/^local:/i.test(img)) errs.push(LOCAL_GONE);
+  else {
     const fp = filePath(img);
-    if (!fp) errs.push("image: a /internal/… path on the orOS disk or local:<root>/<path>");
+    if (!fp) errs.push("image: a /internal/… path on the orOS disk");
     else if (idx && Array.isArray(idx.files) && !(Array.isArray(queued) && queued.indexOf(fp) >= 0) && !idx.files.some((x) => x && x.p === fp)) {
       errs.push("image: " + JSON.stringify(fileShow(fp).slice(0, 200)) + " is neither in the copy of Claude's folders nor waiting in a files_write (bring it in with files_upload and files_write first)");
     }
   }
   const out = typeof a.out === "string" && a.out.trim() ? a.out.trim() : "/internal/Mockups/Claude";
-  if (!/^local:/i.test(out)) {
+  if (/^local:/i.test(out)) errs.push(LOCAL_GONE);
+  else {
     const op = filePath(out);
-    if (!op) errs.push("out: a folder /internal/… on the orOS disk or local:<root>/<folder>");
+    if (!op) errs.push("out: a folder /internal/… on the orOS disk");
     else {
       if (!(lv && lv.files === "write")) errs.push("saving on the orOS disk needs Files at «may change» (the owner's switch)");
       if (idx && Array.isArray(idx.f) && !idx.f.some((d) => underDir(op, d))) errs.push("out: " + JSON.stringify(fileShow(op)) + " is outside Claude's folders: " + idx.f.map(fileShow).join(", "));
@@ -1670,6 +1663,23 @@ export function filePath(f) {
 function fileShow(p) { return String(p).replace(/^\/internal\/?/, "") || "/"; }
 function underDir(p, d) { return p === d || p.indexOf(d + "/") === 0; }
 // files_list from the index: the same shape as the open answer (assistant/claudefiles.js listOut) plus as_of.
+// GATE-PC: an index of version 2 lists each folder once (d) and a file by
+// its folder's number (d) and name (n); this gives every file its path (p)
+// back. Version 1 (a path per file) is kept as it is.
+export function fileIndexOpen(o) {
+  if (!o || typeof o !== "object" || !Array.isArray(o.files)) return null;
+  if (o.v !== 2) return o;
+  const dirs = (Array.isArray(o.d) ? o.d : []).map((d) => (typeof d === "string" && d !== "/internal" && filePath(d) === d ? d : null));
+  o.files = o.files.map((e) => {
+    if (!e || typeof e !== "object" || typeof e.n !== "string" || !Number.isInteger(e.d) || typeof dirs[e.d] !== "string" || !e.n || e.n.indexOf("/") >= 0 || e.n.charAt(0) === "." || /[\u0000-\u001f]/.test(e.n)) return null;
+    const x = {};
+    Object.keys(e).forEach((k) => { if (k !== "d" && k !== "n") x[k] = e[k]; });
+    x.p = dirs[e.d] + "/" + e.n;
+    return x;
+  }).filter(Boolean);
+  delete o.d;
+  return o;
+}
 export function filesListFrom(idx, args, when) {
   const folders = Array.isArray(idx.f) ? idx.f : [];
   const a = args && typeof args === "object" ? args : {};
@@ -1686,6 +1696,12 @@ export function filesListFrom(idx, args, when) {
     for (let i = 1; i < segs.length && i <= depth; i++) dirs[p + "/" + segs.slice(0, i).join("/")] = 1;
     if (e.p.split("/").length <= lim) rows.push(e);
   });
+  // GATE-PC: say why a granted folder shows nothing, instead of a bare empty list
+  const added = (Array.isArray(idx.fnew) ? idx.fnew : []).find((x) => underDir(p, x.p) || underDir(x.p, p));
+  if (!rows.length && !Object.keys(dirs).length && added) {
+    return { ok: true, c: JSON.stringify({ path: fileShow(p), as_of: when, folders: folders.map(fileShow), entries: [], total: 0, offset: 0, next_offset: null,
+      note: "orOS is closed. The owner added " + fileShow(added.p) + " to Claude's folders at " + new Date(added.at).toISOString() + ", after this copy (" + when + "), so the copy has no files of it yet. They come with the next copy, which an orOS makes when it is open with the gate on." }) };
+  }
   if (!rows.length && !Object.keys(dirs).length && !folders.some((f) => underDir(f, p) || underDir(p, f))) return { ok: false, c: "\"" + fileShow(p) + "\" is not in the copy of " + when + "." };
   const all = Object.keys(dirs).sort().map((d) => ({ name: d.slice(p.length + 1), kind: "folder" }))
     .concat(rows.sort((x, y) => (x.p < y.p ? -1 : 1)).map((e) => {
@@ -1697,8 +1713,11 @@ export function filesListFrom(idx, args, when) {
       return o;
     }));
   const off = Math.max(0, Math.floor(Number(a.offset) || 0)), part = all.slice(off, off + 200);
+  let note = "orOS is closed: this is the copy of " + when + ". Changes wait until orOS opens (files_write and the other changes say so).";
+  if (!all.length) note += " The copy has no files in " + fileShow(p) + ": it is empty, or its files are not on the orOS disk yet (a computer folder mirrored by orOS Drive shows once orOS Drive has uploaded it and an open orOS has made a new copy).";
+  if (idx.cut) note += " The copy lists only part of Claude's folders (" + idx.cut + " files left out for size, from the folders with the most files" + (Array.isArray(idx.cutIn) && idx.cutIn.length ? ": " + idx.cutIn.filter((x) => typeof x === "string").slice(0, 10).map(fileShow).join(", ") : "") + "); ask the owner to give Claude smaller folders, or open orOS for live answers.";
   return { ok: true, c: JSON.stringify({ path: fileShow(p), as_of: when, folders: folders.map(fileShow), entries: part, total: all.length, offset: off,
-    next_offset: off + part.length < all.length ? off + part.length : null, note: "orOS is closed: this is the copy of " + when + ". Changes wait until orOS opens (files_write and the other changes say so)." }) };
+    next_offset: off + part.length < all.length ? off + part.length : null, note: note }) };
 }
 export function fileEntry(idx, path) {
   const folders = Array.isArray(idx.f) ? idx.f : [];
@@ -2695,7 +2714,7 @@ export class GateBox {
   async dropCopy(wraps) {
     const keys = [];
     for (const pre of wraps ? ["s:", "q:", "kw:", "x:", "lk:"] : ["s:", "q:", "x:", "lk:"]) (await this.st.list({ prefix: pre })).forEach((v, k) => keys.push(k));
-    keys.push("copy", "fidx");
+    keys.push("copy", "fidx", "fadd");
     for (let i = 0; i < keys.length; i += 128) await this.st.delete(keys.slice(i, i + 128));
   }
   // A device sends the encrypted copy of what Claude may read (the
@@ -2743,7 +2762,30 @@ export class GateBox {
     if (!c || !kRaw) return null;
     const parts = [];
     for (let i = 0; i < c.n; i++) { const x = await this.st.get("x:" + i); if (typeof x !== "string") return null; parts.push(x); }
-    try { const o = JSON.parse(await openText(kRaw, parts.join(""))); return o && typeof o === "object" && Array.isArray(o.files) ? o : null; } catch (e) { return null; }
+    let o = null;
+    try { o = fileIndexOpen(JSON.parse(await openText(kRaw, parts.join("")))); } catch (e) { return null; }
+    if (!o) return null;
+    // GATE-PC: folders the owner added after this copy was made count now
+    // (their files come with the next copy); never the ones the copy has
+    const fa = await this.readGrants(kRaw);
+    if (fa && Array.isArray(fa.f)) {
+      const at = +o.at || 0, add = fa.f.filter((x) => x && typeof x.p === "string" && x.at > at && x.at > Date.now() - GATE_LIMITS.faddMs && !(o.f || []).some((f) => underDir(x.p, f)));
+      if (add.length) { o.f = (o.f || []).concat(add.map((x) => x.p)).sort(); o.fnew = add; }
+    }
+    return o;
+  }
+  // GATE-PC: the folders the owner added through claude_folders_request,
+  // sealed with the gate key (the box never keeps them readable).
+  async readGrants(kRaw) {
+    const g = await this.st.get("fadd");
+    if (typeof g !== "string" || !kRaw) return null;
+    try { const o = JSON.parse(await openText(kRaw, g)); return o && Array.isArray(o.f) ? o : null; } catch (e) { return null; }
+  }
+  async addGrant(kRaw, path, now) {
+    if (!kRaw || typeof path !== "string" || path === "/internal" || filePath(path) !== path || IMG_NEVER_RE.test(path)) return;   // never Mail's, Passwords' or the Assistant's folders
+    const old = await this.readGrants(kRaw);
+    const f = (old ? old.f : []).filter((x) => x && x.p !== path && x.at > now - GATE_LIMITS.faddMs).concat([{ p: path, at: now }]).slice(-50);
+    await this.st.put("fadd", await sealText(kRaw, JSON.stringify({ f: f })));
   }
   // A device drops Claude's closed copy now (Sensitive work, the owner).
   async dropFromDevice(ws) {
@@ -3326,6 +3368,14 @@ export class GateBox {
       return jsonRes(200, rpcOk(id, toolText(fl.c, !fl.ok)));
     }
     let ans = await this.ask(p.name, args);
+    // GATE-IMG: pictures only from this open device's answer, taken out of it at once
+    const pics = ans && ans.ok === true && !ans.e ? gateImages(p.name, args, ans.img) : { imgs: [], dropped: 0 };
+    if (ans && ans.img !== undefined) delete ans.img;
+    // GATE-PC: a folder the owner just added counts for calls made with orOS closed before the next copy
+    if (ans && ans.fadd !== undefined) {
+      if (p.name === "claude_folders_request" && ans.ok === true && typeof ans.fadd === "string") { try { await this.addGrant(await this.unwrapK(tok), ans.fadd, now); } catch (e) {} }
+      delete ans.fadd;
+    }
     // The gate this link points to (5.90.00): its first 6 characters, the
     // id orOS › Settings › orOS Gate shows, so a link to an old gate shows.
     const gid = String(request.headers.get("X-Gid") || "").slice(0, 6);
@@ -3385,7 +3435,7 @@ export class GateBox {
       const kQ = await this.unwrapK(tok), pq = kQ ? await this.pending(kQ, null) : null;
       if (pq) ans.c += folderWaitNote(pq);
     }
-    return jsonRes(200, rpcOk(id, toolText(typeof ans.c === "string" ? ans.c : "", false, ans.who)));
+    return jsonRes(200, rpcOk(id, toolText(typeof ans.c === "string" ? ans.c : "", false, ans.who, pics.imgs.concat(imgNote(pics.dropped)))));
   }
   // After a change: the owner's devices get one generic notification
   // ("Claude changed something in orOS"), at most once per wakeGapMs.
@@ -3409,6 +3459,43 @@ export class GateBox {
     await this.st.put("meta", m);
   }
 }
-export function toolText(text, isErr, who) {   // GL-VER: each answer names the live tool list; GATE-WHO: a closed answer the gate
-  return { content: [{ type: "text", text: text }].concat(typeof who === "string" && who ? [{ type: "text", text: who }] : [], [{ type: "text", text: VER_NOTE }]), isError: !!isErr };
+export function toolText(text, isErr, who, imgs) {   // GL-VER: each answer names the live tool list; GATE-WHO: a closed answer the gate; GATE-IMG: pictures after the text
+  return { content: [{ type: "text", text: text }].concat(Array.isArray(imgs) ? imgs : [], typeof who === "string" && who ? [{ type: "text", text: who }] : [], [{ type: "text", text: VER_NOTE }]), isError: !!isErr };
+}
+// GATE-IMG (Chris 2026-11-27, Mail thread's conditions): a picture files_read
+// returns goes to Claude as an MCP image part, only from an open device's
+// answer, never stored (not in q:, qr: or the copy). Only png, jpeg, webp
+// and gif whose first bytes match; at most IMG_MAX per answer, each at most
+// 512 KB decoded, judged by the base64 length (nothing is decoded in full).
+// Never for the apps that are never offered (NEVER_APPS) or Mail's,
+// Passwords' or the Assistant's folders. Anything else stays text.
+export const IMG_TOOLS = ["files_read"];
+export const IMG_MAX = 3;
+export const IMG_B64 = 699052;                   // ceil(512 KB / 3) * 4
+const IMG_B64_RE = /^[A-Za-z0-9+/]+={0,2}$/;
+const IMG_HEAD = {
+  "image/png": (h) => h.charCodeAt(0) === 0x89 && h.slice(1, 4) === "PNG",
+  "image/jpeg": (h) => h.charCodeAt(0) === 0xFF && h.charCodeAt(1) === 0xD8 && h.charCodeAt(2) === 0xFF,
+  "image/gif": (h) => h.slice(0, 4) === "GIF8",
+  "image/webp": (h) => h.slice(0, 4) === "RIFF" && h.slice(8, 12) === "WEBP"
+};
+const IMG_NEVER_RE = /^(\/?internal\/)?(mail|passwords|assistant)(\/|$)/i;
+export function gateImages(name, args, list) {
+  const out = { imgs: [], dropped: 0 };
+  if (!Array.isArray(list) || !list.length) return out;
+  const a = args && typeof args === "object" ? args : {};
+  if (IMG_TOOLS.indexOf(name) < 0 || neverIn(a) || IMG_NEVER_RE.test(String(a.path || "").trim().replace(/^(\.\/)+/, ""))) { out.dropped = list.length; return out; }
+  for (const x of list) {
+    const d = x && typeof x.data === "string" ? x.data : "", mt = x && typeof x.mimeType === "string" ? x.mimeType : "";
+    let ok = out.imgs.length < IMG_MAX && !!IMG_HEAD[mt] && d.length >= 16 && d.length <= IMG_B64 && d.length % 4 === 0;
+    if (ok) {
+      try { ok = IMG_HEAD[mt](atob(d.slice(0, 16))) && IMG_B64_RE.test(d); } catch (e) { ok = false; }
+    }
+    if (ok) out.imgs.push({ type: "image", data: d, mimeType: mt });
+    else out.dropped++;
+  }
+  return out;
+}
+export function imgNote(dropped) {
+  return dropped ? [{ type: "text", text: dropped === 1 ? "One picture could not be passed through orOS Gate (type, size or more than " + IMG_MAX + "); read it again with ocr: true for its text." : dropped + " pictures could not be passed through orOS Gate (type, size or more than " + IMG_MAX + "); read them again with ocr: true for their text." }] : [];
 }   // GL-VER: each answer names the live tool list

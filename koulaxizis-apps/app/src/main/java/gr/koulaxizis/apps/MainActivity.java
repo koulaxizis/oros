@@ -56,7 +56,10 @@ import java.util.concurrent.Executors;
  * never stays on "Working" (APPS-M2 fix 1.2.2). A search bar on top
  * filters the list, and a tap on a card opens the app's own page with its
  * whole description and screenshots (APPS-M5); the home screen itself is
- * unchanged.
+ * unchanged. Updates go without Android's question where it allows it
+ * ({@link Quiet}), "Update all" ends with one line on what it did, the menu
+ * has automatic updates and Shizuku (both off by default) and the Help
+ * (APPS-M6).
  */
 public final class MainActivity extends Activity implements InstallReceiver.Listener {
     private final ExecutorService work = Executors.newSingleThreadExecutor();
@@ -68,6 +71,10 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         /** Android's question, while it waits for a yes. */
         Intent confirm;
         boolean shown;
+        /** Android asked for a yes at least once (for the "Update all" line). */
+        boolean asked;
+        /** Started again after the system refused a quiet update (at most once). */
+        boolean retried;
         /** When the phase last changed (elapsedRealtime). */
         long since = SystemClock.elapsedRealtime();
 
@@ -98,6 +105,18 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     private Object backCallback;
     /** Updates waiting their turn after "Update all" (main thread only). */
     private final Deque<AppInfo> queue = new ArrayDeque<>();
+    /** What the running "Update all" did, or null when none runs. */
+    private Quiet.Tally tally;
+    /** Shizuku's answer to our permission request. */
+    private final rikka.shizuku.Shizuku.OnRequestPermissionResultListener shizukuAnswer = (code, result) -> {
+        if (code != Silent.REQUEST) return;
+        runOnUiThread(() -> {
+            boolean yes = result == PackageManager.PERMISSION_GRANTED;
+            Silent.set(this, yes);
+            invalidateOptionsMenu();
+            Toast.makeText(this, yes ? R.string.shizuku_on : R.string.shizuku_refused, Toast.LENGTH_LONG).show();
+        });
+    };
     private List<AppInfo> pending = new ArrayList<>();
     /** The manager as the repositories offer it, and that offer when it is newer than this copy. */
     private AppInfo self, mine;
@@ -158,6 +177,11 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         // Set for the screen's whole life: results arrive while Android's
         // own question is on top and this screen is paused.
         InstallReceiver.listener = this;
+        try {
+            rikka.shizuku.Shizuku.addRequestPermissionResultListener(shizukuAnswer);
+        } catch (Throwable t) {
+            // Shizuku's part is optional; the app works without it.
+        }
         UpdateJob.schedule(this);
         askNotificationsOnce();
         refresh(true);
@@ -191,6 +215,11 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         ui.removeCallbacksAndMessages(null);
         if (asking != null) asking.dismiss();
         if (InstallReceiver.listener == this) InstallReceiver.listener = null;
+        try {
+            rikka.shizuku.Shizuku.removeRequestPermissionResultListener(shizukuAnswer);
+        } catch (Throwable t) {
+            // Never added.
+        }
         work.shutdown();
         super.onDestroy();
     }
@@ -230,6 +259,8 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         menu.findItem(R.id.daily).setChecked(UpdateJob.enabled(this));
+        menu.findItem(R.id.auto).setChecked(UpdateJob.auto(this));
+        menu.findItem(R.id.shizuku).setChecked(Silent.on(this));
         return true;
     }
 
@@ -250,6 +281,32 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             UpdateJob.schedule(this);
             if (on) askNotificationsOnce();
             updateNotesBar();
+            invalidateOptionsMenu(); // automatic updates follow the daily check
+            return true;
+        }
+        if (item.getItemId() == R.id.auto) {
+            boolean on = !item.isChecked();
+            // Automatic updates run in the daily check, so turning them on turns it on.
+            UpdateJob.prefs(this).edit().putBoolean("auto", on).apply();
+            if (on) UpdateJob.prefs(this).edit().putBoolean("daily", true).apply();
+            UpdateJob.schedule(this);
+            if (on) askNotificationsOnce();
+            updateNotesBar();
+            invalidateOptionsMenu();
+            Toast.makeText(this, on ? R.string.auto_on : R.string.auto_off, Toast.LENGTH_LONG).show();
+            return true;
+        }
+        if (item.getItemId() == R.id.shizuku) {
+            if (item.isChecked()) {
+                Silent.set(this, false);
+                invalidateOptionsMenu();
+            } else {
+                turnOnShizuku();
+            }
+            return true;
+        }
+        if (item.getItemId() == R.id.help) {
+            showHelp();
             return true;
         }
         if (item.getItemId() == R.id.support) {
@@ -352,6 +409,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         if (!mayInstall()) return;
         queue.clear();
         for (AppInfo a : pending) if (!busy.containsKey(a.pkg)) queue.add(a);
+        tally = queue.isEmpty() ? null : new Quiet.Tally();
         next();
     }
 
@@ -360,9 +418,69 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         AppInfo a = queue.poll();
         if (a != null) act(a, Installed.UPDATE);
         updateBars();
+        if (a == null && tally != null && busy.isEmpty()) {
+            Quiet.Tally t = tally;
+            tally = null;
+            if (t.total() > 0) {
+                String line = t.allQuiet()
+                    ? getResources().getQuantityString(R.plurals.update_all_quiet, t.quiet, t.quiet)
+                    : getString(R.string.update_all_done, t.done(), t.total(), t.asked);
+                Toast.makeText(this, line, Toast.LENGTH_LONG).show();
+            }
+            if (t.asked > 0) toldAlwaysAsks();
+        }
+    }
+
+    /**
+     * Once per system build: this phone (HyperOS) asks before every update
+     * whatever the manager does; Shizuku is the way without questions.
+     */
+    private void toldAlwaysAsks() {
+        if (!Installer.refused(this) || Silent.ready(this)) return;
+        String key = "told_" + android.os.Build.FINGERPRINT;
+        if (UpdateJob.prefs(this).getBoolean(key, false)) return;
+        UpdateJob.prefs(this).edit().putBoolean(key, true).apply();
+        new AlertDialog.Builder(this).setTitle(R.string.always_asks_title).setMessage(R.string.always_asks)
+            .setPositiveButton(R.string.help, (d, w) -> showHelp())
+            .setNegativeButton(android.R.string.ok, null).show();
+    }
+
+    /** Shizuku must run and allow us; otherwise the Help says how to set it up. */
+    private void turnOnShizuku() {
+        if (!Silent.running()) {
+            new AlertDialog.Builder(this).setTitle(R.string.shizuku).setMessage(R.string.shizuku_missing)
+                .setPositiveButton(R.string.help, (d, w) -> showHelp())
+                .setNegativeButton(android.R.string.cancel, null).show();
+            return;
+        }
+        if (Silent.allowed()) {
+            Silent.set(this, true);
+            invalidateOptionsMenu();
+            Toast.makeText(this, R.string.shizuku_on, Toast.LENGTH_LONG).show();
+            return;
+        }
+        try {
+            rikka.shizuku.Shizuku.requestPermission(Silent.REQUEST);
+        } catch (Throwable t) {
+            Toast.makeText(this, R.string.shizuku_missing, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /** Which questions stay and why, automatic updates, Shizuku and Play Protect (APPS-M6). */
+    private void showHelp() {
+        TextView t = new TextView(this);
+        int pad = (int) (20 * getResources().getDisplayMetrics().density);
+        t.setPadding(pad, pad / 2, pad, pad);
+        t.setTextIsSelectable(true);
+        t.setText(Html.fromHtml(getString(R.string.help_text), Html.FROM_HTML_MODE_LEGACY));
+        android.widget.ScrollView sv = new android.widget.ScrollView(this);
+        sv.addView(t);
+        new AlertDialog.Builder(this).setTitle(R.string.help).setView(sv)
+            .setPositiveButton(android.R.string.ok, null).show();
     }
 
     private boolean mayInstall() {
+        if (Silent.ready(this)) return true; // Shizuku needs no "install unknown apps" switch
         if (getPackageManager().canRequestPackageInstalls()) return true;
         new AlertDialog.Builder(this).setTitle(R.string.allow_title).setMessage(R.string.allow_text)
             .setPositiveButton(R.string.allow_open, (d, w) -> startActivity(new Intent(
@@ -372,6 +490,10 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     }
 
     private void act(AppInfo app, int state) {
+        act(app, state, false);
+    }
+
+    private void act(AppInfo app, int state, boolean retry) {
         if (state == Installed.CURRENT || state == Installed.NEWER) {
             Intent open = getPackageManager().getLaunchIntentForPackage(app.pkg);
             if (open != null) startActivity(open);
@@ -385,9 +507,11 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         if (busy.containsKey(app.pkg)) return;
         if (!mayInstall()) {
             queue.clear();
+            tally = null;
             return;
         }
         Job job = new Job(app);
+        job.retried = retry;
         busy.put(app.pkg, job);
         updateBars();
         changed();
@@ -395,7 +519,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             String err = null;
             int id = -1;
             try {
-                id = Installer.install(this, app);
+                id = Installer.install(this, app, false);
             } catch (RepoException e) {
                 err = e.code;
             }
@@ -405,6 +529,8 @@ public final class MainActivity extends Activity implements InstallReceiver.List
                 if (busy.get(app.pkg) != job) return;
                 if (code != null) {
                     done(job, false, getString(R.string.install_failed, app.name, note(code)));
+                } else if (session == Installer.SILENT) {
+                    done(job, true, null); // Shizuku installed it, no question
                 } else if (job.session < 0) {
                     // Android's question may have come first and named the session already.
                     job.session = session;
@@ -428,6 +554,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             return;
         }
         if (session >= 0) job.session = session;
+        job.asked = true;
         job.confirm = confirm;
         job.shown = false;
         job.since = SystemClock.elapsedRealtime();
@@ -438,7 +565,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     }
 
     @Override
-    public void onInstallResult(String pkg, int session, boolean ok, String message) {
+    public void onInstallResult(String pkg, int session, boolean ok, String message, boolean quiet, int status) {
         Job job = busy.get(pkg);
         if (job == null) {
             changed();
@@ -446,7 +573,18 @@ public final class MainActivity extends Activity implements InstallReceiver.List
         }
         // An answer for a session given up before belongs to no one now.
         if (session >= 0 && job.session >= 0 && session != job.session) return;
+        if (!job.retried && Quiet.refused(status, quiet, job.asked, message)) {
+            // HyperOS refused the quiet update before asking anything: this
+            // phone asks from now on, and this app is tried again with the
+            // question at once (it used to count as a "no" and "Update all"
+            // ran through the rest without installing them, APPS-M6 fix 1.4.1).
+            Installer.markRefused(this);
+            busy.remove(pkg);
+            act(job.app, Installed.UPDATE, true);
+            return;
+        }
         String toast = null;
+        if (status == Quiet.ABORTED) message = null; // the person said no
         if (!ok && message != null) toast = getString(R.string.install_failed, job.app.name, message);
         done(job, ok, toast);
     }
@@ -455,6 +593,7 @@ public final class MainActivity extends Activity implements InstallReceiver.List
     private void done(Job job, boolean ok, String toast) {
         if (busy.get(job.app.pkg) != job) return;
         busy.remove(job.app.pkg);
+        if (tally != null) tally.add(ok, job.asked);
         if (askingFor == job && asking != null) asking.dismiss();
         changed();
         if (toast != null) Toast.makeText(this, toast, Toast.LENGTH_LONG).show();
@@ -795,7 +934,11 @@ public final class MainActivity extends Activity implements InstallReceiver.List
             : getString(R.string.version_size, app.versionName, size);
         Installed have = Installed.of(getPackageManager(), app.pkg);
         int state = Installed.state(have, app);
-        if (state == Installed.UPDATE) line += " · " + getString(R.string.installed_version, have.versionName);
+        if (state == Installed.UPDATE) {
+            line += " · " + getString(R.string.installed_version, have.versionName);
+            // Installed by another app: Android asks this once more (APPS-M6).
+            if (!Silent.ready(this) && Installer.quiet(this, app.pkg) == Quiet.ONCE_MORE) line += " · " + getString(R.string.asks_once);
+        }
         if (state == Installed.OTHER_KEY) line += " · " + getString(R.string.other_key);
         return line;
     }

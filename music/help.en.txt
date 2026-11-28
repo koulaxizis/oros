@@ -62,6 +62,13 @@ Filters work with words or without: with an empty search field and filters on, `
 - **Saved searches**: `Save search` under the search box keeps the words, the filters and the chosen catalogue. They appear under `Search` (with nothing typed) on all your devices. Opening one again shows first what is new since your last visit on this device.
 - **Credits**: a playlist's ⋯ › `Copy credits` copies a credit line (title, artist, licence, source) for each song from the open catalogues, ready to paste where you reuse them.
 
+## Bandcamp and SoundCloud
+Turn on `Bandcamp and SoundCloud players` in the settings (⚙). Then paste the address of a Bandcamp album or song, or of a SoundCloud song or playlist, into `Search`, or press **+** › `Bandcamp or SoundCloud link`. It plays here, inside Music, in the service's own player, docked above the player bar; ✕ closes it.
+- Like it or add it to a playlist like any song; it then appears on your other devices too. A tap on it opens the player again.
+- Neither service lets other apps stream its music, so it does not join the queue, has no equalizer or crossfade, cannot be kept offline and stops when Music closes. Starting a song of Music closes the player.
+- The service sees what you play, as on its own site. To find the player of a Bandcamp page, orOS reads that one page once through its relay. SoundCloud's title and cover come from SoundCloud itself.
+- Only addresses of the form `name.bandcamp.com/album/…` or `/track/…` and `soundcloud.com/name/…` work; short links and artists' own domains do not.
+
 ## Your own servers
 If your music lives on a server of your own, Music plays it from there. Press **+** and `Connect a server`, or go to `Your library › Servers`:
 - **Subsonic / Navidrome**: Navidrome, Airsonic, Gonic, Ampache and other servers with the Subsonic (OpenSubsonic) API. Enter the address, your user name and password. Music keeps a salted token, not the password itself.
@@ -100,7 +107,7 @@ These settings stay on this device.
 ## Light show
 `Light show` (the sun button at the top of the full player) fills the window with light that moves with the music. `Light:` picks the style: Glow, Rings, Bars or Wave. `Light only` hides the controls; tap anywhere or press a key to bring them back. Music remembers your choice on this device.
 
-The light follows the sound of songs on this device, offline copies and songs from your own WebDAV or Dropbox. Many sites that stream music do not let a web page listen to their sound; with those the light moves on its own, and a line under the controls says so. Everything happens on this device: nothing is recorded or sent.
+The light follows the sound of songs on this device, offline copies and songs from your own WebDAV or Dropbox. A streamed song moves it too when its site lets a web page listen to the sound (Music asks the site once, before the song starts); many sites do not, and with those the light moves on its own, and a line under the controls says so. With real sound the light answers each beat: it swells, starts a ring, the bars jump or the wave grows. Everything happens on this device: nothing is recorded or sent.
 
 The light stays still when reduced motion is on, when the battery is low (under 20 % and not charging) or when the device is too busy (then it rests for a few minutes and moves again by itself). It never flashes: it brightens and fades smoothly.
 

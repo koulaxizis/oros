@@ -221,3 +221,10 @@ test("progress runs from 0 up to 1", async () => {
   assert.equal(seen[seen.length - 1], 1);
   assert.ok(seen.every((x, i) => i === 0 || x >= seen[i - 1]));
 });
+
+test("Excel dates keep their day and time in every time zone (SheetJS UTC-faithful dates)", () => {
+  const SI = require(path.join(ROOT, "spreadsheet/sheetimport.js"));
+  assert.equal(SI.xlDateStr(new Date(Date.UTC(2024, 2, 1))), "2024-03-01");
+  assert.equal(SI.xlDateStr(new Date(Date.UTC(2024, 2, 1, 14, 5))), "2024-03-01 14:05");
+  assert.equal(SI.xlDateStr(new Date(Date.UTC(2024, 11, 31, 23, 30))), "2024-12-31 23:30");
+});

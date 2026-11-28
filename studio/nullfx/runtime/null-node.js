@@ -51,6 +51,7 @@
       var m = e.data || {};
       if (m.type === "pdc") { self.pdc = m.samples; if (self.onpdc) self.onpdc(m.samples); }
       else if (m.type === "live") { var w = self.waiting[m.req]; if (w) { delete self.waiting[m.req]; w(m); } }
+      else if (m.type === "state") { var ws = self.waiting[m.req]; if (ws) { delete self.waiting[m.req]; ws(m.data); } }
       else if (m.type === "error") { if (self.onerror) self.onerror(m); }
       else if (m.type === "missing") { if (self.onmissing) self.onmissing(m); }
     };
@@ -80,6 +81,12 @@
   Chain.prototype.peek = function (uid) {
     var self = this, req = ++this.req;
     return new Promise(function (res) { self.waiting[req] = res; self.send({ type: "peek", uid: uid, req: req }); });
+  };
+  // resolves with what the effect saves now (Effect.getState(): @serialize, e.g. a profile Noise
+  // Reduction learnt while it played), or null; store it with the project for setState()
+  Chain.prototype.getState = function (uid) {
+    var self = this, req = ++this.req;
+    return new Promise(function (res) { self.waiting[req] = res; self.send({ type: "getstate", uid: uid, req: req }); });
   };
   Chain.prototype.disconnect = function () { try { this.node.disconnect(); } catch (e) { /* not connected */ } this.node.port.onmessage = null; };
 

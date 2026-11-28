@@ -197,8 +197,9 @@
         return { v: lr.paused ? t("sb.rec.paused") + " " + r : r, l: "", cls: "sb-rec" + (lr.paused ? " sb-paused" : ""),
                  tip: t(lr.paused ? "sb.rec.tip.p" : "sb.rec.tip").replace("{r}", r).replace("{app}", app),
                  stop: t("sb.rec.stop"),
-                 halt: function () { call(function () { h.stop(); }); ctx.rec(null); call(function () { host().open("capture"); }); },
-                 go: function () { host().open("capture"); } };
+                 // QS-REC-1: a recording of the shell's own (screenrec.js) brings its go()
+                 halt: function () { call(function () { h.stop(); }); ctx.rec(null); if (typeof h.go !== "function") call(function () { host().open("capture"); }); },
+                 go: function () { if (typeof h.go === "function") call(function () { h.go(); }); else host().open("capture"); } };
       }
     };
     // smartbar.js paint(): the stop button of a pill (none in the desktop bar window).
