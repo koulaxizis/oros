@@ -14451,3 +14451,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** assistant/core.js, assistant.js, routines.js, help EN/EL, links/core.js, relay/ext.js, i18n/de (assistant, help), whatsnew EN/EL, shell.js, OROS_BIBLE.md, tests (assistant-github, assistant-calc, linkskanban, gate-parity, fonts-list).
 - **Tests:** full `node --test tests/*.test.js`; relay owner's ext/links tests (115 pass). Relay deploy through Workers Builds from main.
 - **Not tested:** a real GitHub call with a real token.
+
+### 2026-11-28 — 9.18.00 — Calendar: time zones side by side (CZ-1, #1294)
+- **Why:** Chris 2026-11-27 approved evolution idea 2026-11 #2 (source: Google Workspace updates 2026-09-21): up to 3 extra time zones next to the Calendar's hours, from the Time app's World clock, synced, EN/EL/DE, from 360px.
+- **What:** `More › Time zones…` picks up to 3 World clock places (read only from `oros-time-data`); Day view hour columns with +1/−1 day marks, Week view offsets line, event tooltips with the time in each place; new synced slice `calzones` (`oros-calendar-zones`, newer wins, canonical). Schema in the CALENDAR entry ("Time zones side by side (CZ-1 …)"). The Week view has no hour column, so it shows the line instead (stated to Chris).
+- **Files:** calendar/zones.js (new), calendar/calendar.js, calendar.css, index.html, help EN/EL, i18n/de/calendar.js, i18n/de/help/calendar.txt, sw.js (precache), shell.js, help/topics/whatsnew EN/EL, OROS_BIBLE.md; tests calendar-zones (new).
+- **Tests:** full `node --test tests/*.test.js`; calendar-zones under several TZ (St_Johns, Kolkata, Kiritimati, Tokyo, Athens, UTC); Playwright Chromium (LANG=C.UTF-8) two devices with fake Dropbox: desktop EN + 360px EL, pick 3 of 4, Day columns and Week line, slice synced, 0 idle uploads, no errors, no overflow.
+- **Not tested:** a real phone, Safari, real Dropbox.
