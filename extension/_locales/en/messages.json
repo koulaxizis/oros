@@ -60,7 +60,7 @@
     "message": "Select text, right-click it: Ask the orOS Assistant. orOS opens its Assistant with the text in the message box; nothing is sent until you press Send."
   },
   "optPrivacy": {
-    "message": "This add-on collects nothing. Once a day it reads the add-on's version number from your orOS address, to tell you when a new version is out. Saving opens orOS with the page's address and title, or with the text you selected for the Assistant (in the part of the address that never leaves your browser). For passwords it keeps an encrypted copy of your vault, read from your orOS tab (when the copy is over an hour old it opens orOS in a background tab for one sync and closes it). Your master password is never stored; the opened vault key is kept in memory until the lock time or until the browser closes, or, only if you choose \"Remember on this device\", also on this device, encrypted with a key that cannot be copied out of this browser, until you press Lock."
+    "message": "This add-on collects nothing. Once a day it reads the add-on's version number from your orOS address, to tell you when a new version is out. Saving opens orOS with the page's address and title, or with the text you selected for the Assistant (in the part of the address that never leaves your browser). For passwords it keeps an encrypted copy of your vault, read from your orOS tab (when the copy is over an hour old it opens orOS in a background tab for one sync and closes it). Your master password is never stored; the opened vault key is kept in memory until the lock time or until the browser closes, or, only if you choose \"Remember on this device\", also on this device, encrypted with a key that cannot be copied out of this browser, until you press Lock. With suggestions inside forms on, a small script of the add-on runs on https pages: it only notices a click into a login, card or address field and shows the add-on's own list there, which the page cannot read; it sends nothing anywhere."
   },
   "popTitle": {
     "message": "orOS: save this page, fill a password"
@@ -247,5 +247,8 @@
   },
   "optHow7": {
     "message": "Inside a page: click into a login, card or address field (or press the down arrow there) and pick an entry from the orOS list under it."
+  },
+  "popInlineYes": {
+    "message": "Yes, allow"
   }
 }

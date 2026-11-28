@@ -107,7 +107,7 @@ test("background.js: list and fill only for the add-on's list page with a token;
 test("locales: EN and EL have every new string", () => {
   const en = JSON.parse(fs.readFileSync(path.join(DIR, "_locales/en/messages.json"), "utf8"));
   const el = JSON.parse(fs.readFileSync(path.join(DIR, "_locales/el/messages.json"), "utf8"));
-  ["popInlineAsk", "popInlineOn", "iiLocked", "iiUnlockHint", "optInline", "optInlineHint", "optInlineAllow", "optHow7"].forEach((k) => {
+  ["popInlineAsk", "popInlineYes", "popInlineOn", "iiLocked", "iiUnlockHint", "optInline", "optInlineHint", "optInlineAllow", "optHow7"].forEach((k) => {
     assert.ok(en[k] && en[k].message, "en " + k);
     assert.ok(el[k] && el[k].message && el[k].message !== en[k].message, "el " + k);
   });
