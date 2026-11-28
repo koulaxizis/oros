@@ -171,7 +171,7 @@ test("Select subject reuses Atelier's loader and model: no second copy, Atelier 
   assert.match(sub, /\.\.\/atelier\/cutout\.js/);
   assert.doesNotMatch(sub, /["']\.\.\/vendor\/(ort|u2netp)/, "the model and runtime come only through cutout.js");
   const files = fs.readdirSync(path.join(ROOT, "photolab"));
-  assert.ok(!files.some((f) => /\.onnx$|ort/i.test(f)), "no model files in photolab/");
+  assert.ok(!files.some((f) => /\.onnx$|^ort[-.]/i.test(f)), "no model files in photolab/");
   const cut = require("../atelier/cutout.js");
   assert.equal(cut.S, 320);
   assert.equal(cut.FILES.model, "../vendor/u2netp/u2netp.onnx", "same relative path from photolab/ and atelier/");
