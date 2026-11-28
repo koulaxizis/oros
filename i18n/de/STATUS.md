@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52881 of 52922 (99%)
+- Strings: 52847 of 52896 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -61,7 +61,7 @@ en and el); translators change them there, not in a pack.
 | feeds | 100% | 329 / 329 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 100% | 964 / 964 (25 in the code) |
+| files | 99% | 964 / 972 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -139,10 +139,10 @@ en and el); translators change them there, not in a pack.
 | rps | 100% | 60 / 60 |
 | scanpdf | 100% | 558 / 558 |
 | scores | 100% | 147 / 147 |
-| settings | 100% | 2149 / 2149 |
+| settings | 100% | 2126 / 2126 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1662 / 1662 |
+| shell | 100% | 1651 / 1651 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
