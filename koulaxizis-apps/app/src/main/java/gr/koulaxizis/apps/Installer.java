@@ -28,8 +28,21 @@ final class Installer {
     static final String EXTRA_PKG = "pkg";
     /** The daily check's own install: a question is dropped, never shown. */
     static final String EXTRA_AUTO = "auto";
+    /** The session asked Android for no question (USER_ACTION_NOT_REQUIRED). */
+    static final String EXTRA_QUIET = "quiet";
     /** {@link #install} result: Shizuku installed it, there is no session. */
     static final int SILENT = -2;
+    /** The system build on which a quiet update was refused (HyperOS), see {@link Quiet#refused}. */
+    private static final String REFUSED = "quiet_refused";
+
+    /** This phone's system refused a quiet update: ask for no quiet ones until its system changes. */
+    static boolean refused(Context ctx) {
+        return Build.FINGERPRINT.equals(UpdateJob.prefs(ctx).getString(REFUSED, null));
+    }
+
+    static void markRefused(Context ctx) {
+        UpdateJob.prefs(ctx).edit().putString(REFUSED, Build.FINGERPRINT).apply();
+    }
 
     /** Whether Android will ask before updating this installed app ({@link Quiet}). */
     @SuppressWarnings("deprecation")
@@ -47,7 +60,7 @@ final class Installer {
         } catch (PackageManager.NameNotFoundException | RuntimeException e) {
             // Not installed or not visible: Android will ask.
         }
-        return Quiet.update(Build.VERSION.SDK_INT, ctx.getPackageName(), installer, owner);
+        return Quiet.update(Build.VERSION.SDK_INT, ctx.getPackageName(), installer, owner, refused(ctx));
     }
 
     /** The session's progress (0..1), or -1 when Android no longer has it. */
@@ -100,12 +113,13 @@ final class Installer {
         PackageInstaller.SessionParams p = new PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL);
         p.setAppPackageName(app.pkg);
         p.setSize(apk.length());
-        if (Build.VERSION.SDK_INT >= 31) {
-            // Updates of apps this manager installed go through without a
-            // question where Android allows it; a first install always asks.
-            // Needs UPDATE_PACKAGES_WITHOUT_USER_ACTION in the manifest, or Android ignores it.
-            p.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
-        }
+        // Updates of apps this manager installed go through without a
+        // question where Android allows it; a first install always asks, so
+        // it never asks for none (HyperOS would refuse it). Not on a phone
+        // whose system refused one already (Quiet.refused).
+        // Needs UPDATE_PACKAGES_WITHOUT_USER_ACTION in the manifest, or Android ignores it.
+        boolean quiet = Build.VERSION.SDK_INT >= 31 && !first && !refused(ctx);
+        if (quiet) p.setRequireUserAction(PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED);
         if (first && Build.VERSION.SDK_INT >= 34) {
             // This manager owns the app's updates (ENFORCE_UPDATE_OWNERSHIP),
             // so another store cannot take them over without a question and
@@ -122,7 +136,7 @@ final class Installer {
                     s.fsync(out);
                 }
                 // Explicit, to our own receiver (not exported).
-                Intent status = new Intent(ctx, InstallReceiver.class).setAction(ACTION_STATUS).putExtra(EXTRA_PKG, app.pkg).putExtra(EXTRA_AUTO, auto);
+                Intent status = new Intent(ctx, InstallReceiver.class).setAction(ACTION_STATUS).putExtra(EXTRA_PKG, app.pkg).putExtra(EXTRA_AUTO, auto).putExtra(EXTRA_QUIET, quiet);
                 int flags = PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 31 ? PendingIntent.FLAG_MUTABLE : 0);
                 PendingIntent pend = PendingIntent.getBroadcast(ctx, id, status, flags);
                 s.commit(pend.getIntentSender());

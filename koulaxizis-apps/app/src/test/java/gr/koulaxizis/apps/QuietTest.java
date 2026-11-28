@@ -13,23 +13,39 @@ public class QuietTest {
     private static final String ME = "gr.koulaxizis.apps";
 
     @Test public void android11AndOlderAlwaysAsk() {
-        assertEquals(Quiet.ASKS, Quiet.update(30, ME, ME, null));
-        assertEquals(Quiet.ASKS, Quiet.update(26, ME, ME, null));
+        assertEquals(Quiet.ASKS, Quiet.update(30, ME, ME, null, false));
+        assertEquals(Quiet.ASKS, Quiet.update(26, ME, ME, null, false));
     }
 
     @Test public void ourOwnInstallsUpdateQuietlyFromAndroid12() {
-        assertEquals(Quiet.QUIET, Quiet.update(31, ME, ME, null));
-        assertEquals(Quiet.QUIET, Quiet.update(36, ME, ME, ME));
+        assertEquals(Quiet.QUIET, Quiet.update(31, ME, ME, null, false));
+        assertEquals(Quiet.QUIET, Quiet.update(36, ME, ME, ME, false));
     }
 
     @Test public void anotherInstallerAsksOnceMore() {
-        assertEquals(Quiet.ONCE_MORE, Quiet.update(34, ME, "org.fdroid.fdroid", null));
-        assertEquals(Quiet.ONCE_MORE, Quiet.update(31, ME, null, null)); // adb or a browser download
+        assertEquals(Quiet.ONCE_MORE, Quiet.update(34, ME, "org.fdroid.fdroid", null, false));
+        assertEquals(Quiet.ONCE_MORE, Quiet.update(31, ME, null, null, false)); // adb or a browser download
     }
 
     @Test public void anotherUpdateOwnerAlwaysAsks() {
-        assertEquals(Quiet.ASKS, Quiet.update(34, ME, ME, "com.looker.droidify"));
-        assertEquals(Quiet.ASKS, Quiet.update(34, ME, "com.android.vending", "com.android.vending"));
+        assertEquals(Quiet.ASKS, Quiet.update(34, ME, ME, "com.looker.droidify", false));
+        assertEquals(Quiet.ASKS, Quiet.update(34, ME, "com.android.vending", "com.android.vending", false));
+    }
+
+    @Test public void aPhoneThatRefusedOnceAlwaysAsks() {
+        assertEquals(Quiet.ASKS, Quiet.update(36, ME, ME, null, true));
+    }
+
+    @Test public void hyperOsRefusalIsNotACancel() {
+        // HyperOS aborts a quiet session before any question.
+        assertTrue(Quiet.refused(Quiet.ABORTED, true, false, "INSTALL_FAILED_ABORTED: Permission denied"));
+        assertTrue(Quiet.refused(Quiet.ABORTED, true, false, null));
+        assertTrue(Quiet.refused(Quiet.ABORTED, true, true, "Permission denied"));
+        // "Cancel" on Android's question, a session that asked for a question, other failures.
+        assertFalse(Quiet.refused(Quiet.ABORTED, true, true, null));
+        assertFalse(Quiet.refused(Quiet.ABORTED, true, true, "User rejected permissions"));
+        assertFalse(Quiet.refused(Quiet.ABORTED, false, false, "Permission denied"));
+        assertFalse(Quiet.refused(1, true, false, "Permission denied"));
     }
 
     @Test public void theDailyCheckInstallsOnlyWhatNeedsNoQuestion() {

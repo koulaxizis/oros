@@ -19,7 +19,12 @@ public final class InstallReceiver extends BroadcastReceiver {
         /** Android needs the person's yes for this session. */
         void onInstallConfirm(String pkg, int session, Intent confirm);
 
-        void onInstallResult(String pkg, int session, boolean ok, String message);
+        /**
+         * @param quiet the session asked for no question
+         * @param status PackageInstaller's status
+         * @param message its message, null for a "Cancel"
+         */
+        void onInstallResult(String pkg, int session, boolean ok, String message, boolean quiet, int status);
     }
 
     /** The open screen, if any (main thread only). */
@@ -52,7 +57,9 @@ public final class InstallReceiver extends BroadcastReceiver {
         }
         boolean ok = status == PackageInstaller.STATUS_SUCCESS;
         String msg = intent.getStringExtra(PackageInstaller.EXTRA_STATUS_MESSAGE);
-        if (status == PackageInstaller.STATUS_FAILURE_ABORTED) msg = null; // the person said no
-        if (listener != null) listener.onInstallResult(pkg, session, ok, msg);
+        boolean quiet = intent.getBooleanExtra(Installer.EXTRA_QUIET, false);
+        // HyperOS refuses a session that asks for no question; the next ones ask (APPS-M6 fix 1.4.1).
+        if (Quiet.refused(status, quiet, true, msg)) Installer.markRefused(ctx);
+        if (listener != null) listener.onInstallResult(pkg, session, ok, msg, quiet, status);
     }
 }
