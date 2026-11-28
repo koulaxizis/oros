@@ -467,7 +467,7 @@
     // theme; high contrast gives it the theme's colours and a border.
     "#sb-island { position: absolute; z-index: 5; left: 50%; top: calc(env(safe-area-inset-top, 0px) + 4px); transform: translateX(-50%);",
     "  display: flex; flex-direction: row; align-items: center; gap: 4px; min-width: 120px; max-width: min(34vw, 420px); box-sizing: border-box;",
-    "  padding: 0 6px; border-radius: 16px; background: rgba(8, 10, 16, 0.96); color: #eef1f7; box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);",
+    "  padding: 0 6px; border-radius: 16px; background: var(--sbi-bg, rgba(8, 10, 16, 0.96)); color: var(--text); box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);",
     "  --text: #eef1f7; --text-dim: #aab3c2; --accent-soft: rgba(255, 255, 255, 0.10); --border: rgba(255, 255, 255, 0.14);",
     "  transition: max-width var(--oros-pop-ms, 200ms) var(--oros-pop-ease, ease), border-radius var(--oros-pop-ms, 200ms) ease; }",
     "#sb-island[hidden] { display: none !important; }",
@@ -499,10 +499,10 @@
     "#sb-island .sbi-b { width: 44px; height: 44px; border: none; border-radius: 50%; background: transparent; color: inherit; cursor: pointer;",
     "  display: inline-flex; align-items: center; justify-content: center; padding: 0; }",
     "#sb-island .sbi-b svg { width: 22px; height: 22px; }",
-    "#sb-island .sbi-b.sbi-play { background: #eef1f7; color: #0b0e14; }",
+    "#sb-island .sbi-b.sbi-play { background: var(--sbi-tint, #eef1f7); color: var(--sbi-tint-ink, #0b0e14); }",
     "#sb-island .sbi-open { display: block; width: 100%; min-height: 40px; margin-top: 8px; border: 1px solid var(--border); border-radius: 12px;",
     "  background: transparent; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }",
-    "@media (hover: hover) { #sb-island :is(.sbi-b, .sbi-open):hover { background: var(--accent-soft); } #sb-island .sbi-b.sbi-play:hover { background: #fff; } }",
+    "@media (hover: hover) { #sb-island :is(.sbi-b, .sbi-open):hover { background: var(--accent-soft); } #sb-island .sbi-b.sbi-play:hover { background: var(--sbi-tint, #fff); filter: brightness(1.08); } }",
     "#sb-island :is(.sbi-b, .sbi-open):focus-visible { outline: 2px solid #eef1f7; outline-offset: 2px; }",
     "html[data-oros-contrast=\"high\"] #sb-island { background: var(--bg); color: var(--text); border: 2px solid var(--text); box-shadow: none; --text: inherit; --text-dim: inherit; }",
     "@media (prefers-reduced-motion: reduce) { #sb-island { transition: none; } }",
@@ -781,6 +781,11 @@
     if (!m) return false;
     mediaShown = m.id;
     var parts = String(m.title || "").split(" · "), st = strict();
+    // COVERTINT-1: the player takes the cover's colours (contrast checked in the shell)
+    var tn = st ? null : call(function () { return host.tint ? host.tint(m.title) : null; });
+    [["--panel-bg", "bg"], ["--text", "ink"], ["--text-dim", "dim"], ["--accent", "tint"], ["--accent-ink", "tintInk"], ["--accent-soft", "soft"], ["--border", "border"]].forEach(function (v) {
+      if (tn && typeof tn.bg === "string") p.style.setProperty(v[0], tn[v[1]]); else p.style.removeProperty(v[0]);
+    });
     var h = el("div", "pk-h");
     var tx = el("div");
     tx.appendChild(el("b", "pk-mt", st ? m.name : (parts[0] || m.name)));
