@@ -88,7 +88,11 @@ test("search, Today, notifications, the Assistant and orOS Gate leave a locked a
   assert.match(host, /building = build\(true\)/, "the daily notice (it syncs) never names a locked app");
   assert.match(host, /A\.run\(\[p\], ctx, \{ lockSet: true \}\)/, "the Assistant's agenda");
   const n = read("notifications.js");
-  assert.match(n, /new Notification\('orOS — ' \+ shownTitle\(item, true\), \{\n\s+body: shownBody\(item, true\),/);
+  // NOTIF-OS: both computer paths (the tray, the browser's own) take osText
+  assert.match(n, /if \(lockHidesNs\(item\.ns, true\)\) return true;/);
+  assert.match(n, /return \{ title: shownTitle\(item, true\), body: shownBody\(item, true\) \};/);
+  assert.match(n, /new Notification\('orOS — ' \+ tx\.title, \{\n\s+body: tx\.body,/);
+  assert.match(n, /var osTx = osText\(item\);/);
   assert.match(n, /escapeHtml\(shownTitle\(item\)\)/);
   assert.ok(!/escapeHtml\(item\.title\)/.test(n), "no notice shows its raw title");
   assert.match(n, /lockHidesNs\(item\.ns, true\) \? lockNotice\(\)/, "automation rules never read a locked app's text");

@@ -417,6 +417,126 @@
     });
   }
 
+  // ===== NOTIF-OS — THE COMPUTER'S OWN NOTIFICATIONS =====
+  // Private apps: the computer's notification names the app only ("New
+  // notification"), unless the owner allows their text (Settings ›
+  // Notifications). Locked apps always stay without text (APPLOCK-1).
+  var PRIVATE_NS = ['passwords', 'diary', 'mood', 'cycle', 'health', 'baby', 'mail', 'assistant', 'fitness'];
+  function osPrivate(item) {
+    if (!item) return true;
+    if (lockHidesNs(item.ns, true)) return true;
+    return PRIVATE_NS.indexOf(item.ns) >= 0 && getSetting('osShowPrivate', false) !== true;
+  }
+  function osText(item) {
+    if (osPrivate(item)) return { title: lockAppName(item.ns), body: lockNotice() };
+    return { title: shownTitle(item, true), body: shownBody(item, true) };
+  }
+  // The background orOS of the tray (headless, ?gate-host=<nonce>): it
+  // has no screen, so every notice it makes goes to the computer.
+  var BG = { n: '', on: false };
+  (function () {
+    try {
+      var m = /[?&]gate-host=([A-Za-z0-9_-]{16,64})(?:&|$)/.exec(location.search || '');
+      if (m && /HeadlessChrome/.test(navigator.userAgent || '')) BG.n = m[1];
+    } catch (e) {}
+  })();
+  function lookingAt() {
+    if (BG.n) return false;
+    try { return document.visibilityState === 'visible' && document.hasFocus(); } catch (e) { return true; }
+  }
+  // The launcher of orOS on the computer (oros-portable /__oros/notify).
+  var desk = { ok: false, at: 0 };
+  function deskOrigin() {
+    try { return /^http:\/\/(localhost|127\.0\.0\.1):47800$/.test(String(location.origin || '')); } catch (e) { return false; }
+  }
+  function deskCheck() {
+    if (!deskOrigin() || typeof fetch !== 'function') return;
+    var now = Date.now();
+    if (now - desk.at < 60000) return;
+    desk.at = now;
+    fetch('/__oros/notify', { cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (o) { desk.ok = !!(o && o.ok === true); }, function () { desk.ok = false; });
+  }
+  var APP_RE = /^[a-z0-9-]{1,40}$/;
+  function deskSend(item, tx) {
+    var app = item && typeof item.ns === 'string' && item.ns !== 'system' && APP_RE.test(item.ns) && !lockHidesNs(item.ns, true) ? item.ns : '';
+    var body = JSON.stringify({ title: String(tx.title || 'orOS'), body: String(tx.body || ''), app: app, tag: String(item.dedupKey || '').slice(0, 160) });
+    return fetch('/__oros/notify', { method: 'POST', cache: 'no-store', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-Oros-Notify': '1' }, body: body })
+      .then(function (r) {
+        if (r.status === 503) desk.ok = false;   // the tray went away: the browser's own until the next check
+        return r.ok;
+      }, function () { desk.ok = false; return false; });
+  }
+  // Wave 6 — the browser's own notification: ONLY when permission was
+  // ALREADY granted (the module never asks; Calendar Save and alarms do).
+  // tag = dedupKey → the OS coalesces dupes.
+  function webNotify(item, tx, toast) {
+    if (BG.n || !('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+      var wn = new Notification('orOS — ' + tx.title, {
+        body: tx.body,
+        tag: item.dedupKey || undefined
+      });
+      // A click on the OS notification lands where the in-tab one
+      // does (it used to only focus the tab, Chris 2026-10-13).
+      wn.onclick = function () {
+        window.focus();
+        try { wn.close(); } catch (e2) {}
+        openTarget(item);
+        markItemRead(item);
+        if (toast && toast.parentNode) toast.remove();
+      };
+    } catch (e) { /* in-tab toast stands alone */ }
+  }
+  // Reminders with orOS closed (NOTIF-OS wave 2): the tray says
+  // "notifyHost" when it runs this background orOS for them. A window
+  // that wants the profile makes it "yield": the notices are on disk
+  // by then (saveSliceNow), and after a short wait it says bye so the
+  // tray can end it (unless the Gate, running here too, says it).
+  // Settings: the switch of the tray's background orOS for reminders
+  // (oros-portable /__oros/gate-host "notify"). → { can, on } or null.
+  function bgState() {
+    if (!deskOrigin() || typeof fetch !== 'function') return Promise.resolve(null);
+    return fetch('/__oros/gate-host', { cache: 'no-store', credentials: 'same-origin' })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (o) {
+        if (!o || typeof o.can !== 'boolean') return null;
+        return { can: o.can === true && o.bg === true && typeof o.notify === 'boolean', on: o.notify === true };
+      }, function () { return null; });
+  }
+  function bgSet(on) {
+    if (typeof fetch !== 'function') return Promise.resolve(false);
+    return fetch('/__oros/gate-host', { method: 'POST', cache: 'no-store', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-Oros-Gate': '1' }, body: JSON.stringify({ notify: !!on }) })
+      .then(function (r) { return r.ok; }, function () { return false; });
+  }
+  function bgStart() {
+    if (!BG.n || typeof fetch !== 'function') return;
+    var url = '/__oros/gate-host?n=' + encodeURIComponent(BG.n);
+    var get = function () {
+      return fetch(url, { cache: 'no-store', credentials: 'same-origin' }).then(function (r) { return r.ok ? r.json() : null; }, function () { return null; });
+    };
+    get().then(function (h) {
+      if (!h || h.notifyHost !== true) return;
+      BG.on = true;
+      var t = setInterval(function () {
+        get().then(function (h2) {
+          if (h2 && !h2.yield && h2.notifyHost === true) return;
+          clearInterval(t);
+          BG.on = false;
+          saveSliceNow();
+          var gate = window.orosGate;
+          var gateHere = false;
+          try { gateHere = !!(gate && gate.host && gate.host.active()); } catch (e) {}
+          if (gateHere) return;   // the Gate says bye for both
+          setTimeout(function () { fetch(url + '&bye=1', { cache: 'no-store', credentials: 'same-origin' }).then(null, function () {}); }, 6000);
+        });
+      }, 2000);
+    });
+  }
+
   function fireToast(item, isCatchUp = false) {
     if (!state.ready) return;
     
@@ -532,26 +652,23 @@
     // given (orosPhone.handles) itself; a second OS one would double it.
     var phoneRings = false;
     try { phoneRings = !!(window.orosPhone && window.orosPhone.handles && window.orosPhone.handles(item.dedupKey)); } catch (e) {}
-    if (!isCatchUp && item.type !== 'transient' && !phoneRings &&
-        'Notification' in window &&
-        Notification.permission === 'granted') {
-      try {
-        var wn = new Notification('orOS — ' + shownTitle(item, true), {
-          body: shownBody(item, true),
-          tag: item.dedupKey || undefined
-        });
-        // A click on the OS notification lands where the in-tab one
-        // does (it used to only focus the tab, Chris 2026-10-13).
-        wn.onclick = function () {
-          window.focus();
-          try { wn.close(); } catch (e2) {}
-          openTarget(item);
-          markItemRead(item);
-          if (toast.parentNode) toast.remove();
-        };
-      } catch (e) { /* in-tab toast stands alone */ }
+    // NOTIF-OS (Chris 2026-11-28): "On the device's notifications" can
+    // switch both computer paths off. Under orOS on the computer (the
+    // launcher at localhost:47800) the notice goes to the tray, which
+    // shows it as the system's own; only when nobody is looking at this
+    // window (the in-tab toast is enough then), and the browser's own
+    // notification stays the fallback. Private apps go without text.
+    if (!isCatchUp && item.type !== 'transient' && !phoneRings && getSetting('osNotify', true) !== false) {
+      var osTx = osText(item);
+      if (desk.ok) {
+        if (!lookingAt()) {
+          deskSend(item, osTx).then(function (sent) { if (!sent) webNotify(item, osTx, toast); });
+        }
+      } else {
+        webNotify(item, osTx, toast);
+      }
     }
-    
+
     // Append to stack FIRST (newest-first) — must precede the
     // observer, which attaches to the stack itself.
     if (!toastStack) {
@@ -1480,6 +1597,12 @@
       try { var F = focusApi(); if (F) F.changed(); } catch (e) {}
     },
     
+    // NOTIF-OS: the computer's notifications (Settings shows its switches)
+    desk: () => ({ ok: desk.ok, origin: deskOrigin() }),
+    bgState: bgState,
+    bgSet: bgSet,
+    osText: (item) => osText(item),
+
     // Direct access (for debugging)
     getState: () => state,
     getSlice: () => state.slice
@@ -1519,6 +1642,8 @@
     state.ready = true;
     migrateDnd();
     bootSweep();
+    deskCheck();   // NOTIF-OS: the tray of orOS on the computer
+    bgStart();
 
     // NO setInterval(60000) — shell doctrine: "no idle timers".
     // The 60s sweep piggybacks the shell's 1s clock tick via
@@ -1536,6 +1661,7 @@
     if (now - (state._lastTick || 0) < 60000) return;
     state._lastTick = now;
     scheduledSweep();
+    deskCheck();   // NOTIF-OS: the tray may have started or quit
     try { var F = focusApi(); if (F) F.changed(); } catch (e) {}   // a schedule or an "until" ran out
   };
 

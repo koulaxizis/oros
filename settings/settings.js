@@ -1089,6 +1089,7 @@
     host.appendChild(c1);
     secPhoneReminders(host);
     secWebPush(host);
+    secComputer(host, N);
 
     var c2 = card(null);
     c2.appendChild(row(t("n.position"), select(C.POSITIONS.map(function (p) {
@@ -1564,6 +1565,43 @@
   function isBrave() {
     try { return !!(navigator.brave && typeof navigator.brave.isBrave === "function"); } catch (e) { return false; }
   }
+  // NOTIF-OS (Chris 2026-11-28): the device's own notifications. Under
+  // orOS on a computer the tray shows them; private apps go without text
+  // unless allowed; the tray can keep orOS running for reminders while
+  // every window is closed (installed copies, off by default).
+  var bgNotif = null, bgNotifAt = 0, bgNotifNote = "";
+  function secComputer(host, N) {
+    var c = card(null);
+    var D = typeof N.desk === "function" ? N.desk() : { ok: false, origin: false };
+    c.appendChild(row(t("n.os"), switchBtn(N.getSetting("osNotify", true) !== false, "n.os", function (v) { nSet("osNotify", v); }, t("n.os")),
+      { hint: t(D.ok ? "n.os.hint.desk" : "n.os.hint.web") }));
+    c.appendChild(row(t("n.os.private"), switchBtn(N.getSetting("osShowPrivate", false) === true, "n.os.private", function (v) { nSet("osShowPrivate", v); }, t("n.os.private")),
+      { hint: t("n.os.private.hint") }));
+    if (D.origin && typeof N.bgState === "function") {
+      if (Date.now() - bgNotifAt > 5000) {
+        bgNotifAt = Date.now();
+        N.bgState().then(function (st) {
+          var was = JSON.stringify(bgNotif);
+          bgNotif = st;
+          if (JSON.stringify(st) !== was) render();
+        });
+      }
+      if (bgNotif && bgNotif.can) {
+        c.appendChild(row(t("n.os.bg"), switchBtn(bgNotif.on, "n.os.bg", function (v) {
+          bgNotifNote = "";
+          N.bgSet(v).then(function (ok) {
+            if (ok) bgNotif = { can: true, on: !!v };
+            else bgNotifNote = "n.os.bg.failed";
+            bgNotifAt = 0;
+            render();
+          });
+        }, t("n.os.bg")), { hint: t("n.os.bg.hint") }));
+        if (bgNotifNote) c.appendChild(el("div", "hint", t(bgNotifNote)));
+      }
+    }
+    host.appendChild(c);
+  }
+
   function secWebPush(host) {
     var W = webPush();
     if (!W || phone()) return;
@@ -5908,6 +5946,7 @@
     if (need === "a11yfx") return !!(s.a11y && s.a11y.fx);
     if (need === "a11yfine") return !!(s.a11y && s.a11y.fx && s.a11y.fine);
     if (need === "push") return !!webPush() && !phone();
+    if (need === "deskbg") return !!(bgNotif && bgNotif.can);
     if (need === "translate") return !!(window.orosI18n && window.orosI18n.LANGS.some(function (l) { return l.code !== "en" && l.code !== "el"; }));
     return !!s[need];
   }
