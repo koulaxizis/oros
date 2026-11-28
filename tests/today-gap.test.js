@@ -134,7 +134,7 @@ test("Transfer: open goes to the received folder in Files, else to History; a ba
   assert.deepEqual(calls, [["files", { path: "/internal/Transfers/2026-11-17 09.00", dir: true }],
     ["transfer", { tab: "hist" }], ["transfer", { tab: "hist" }]]);
   const app = read("transfer/app.js");
-  assert.match(app, /keepLink\(r\.id, r\.exp, manifest\);/);
+  assert.match(app, /keepLink\(r\.id, r\.exp, manifest(, url, need)?\);/);
   assert.match(app, /job\.gone = true;\s*forgetLink\(job\.id\);/);
   assert.match(app, /target\.tab === "hist"\) \{ if \(\$\("tab-hist"\)\) tab\("hist"\); return; \}/);
 });

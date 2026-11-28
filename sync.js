@@ -1627,6 +1627,20 @@
       throw err;
     });
   }
+  // Every entry under /transfer, following has_more (at most 200 pages).
+  function dropPages(recursive) {
+    var all = [];
+    function page(res) {
+      if (res.status === 409) return all;
+      if (!res.ok) throw new Error("list failed: " + res.status);
+      return res.json().then(function (j) {
+        all = all.concat(j.entries || []);
+        if (j.has_more && j.cursor && all.length < 200 * 2000) return rpc("files/list_folder/continue", { cursor: j.cursor }).then(page);
+        return all;
+      });
+    }
+    return dropReady().then(function () { return rpc("files/list_folder", { path: DROP_ROOT, recursive: !!recursive, limit: 2000 }); }).then(page);
+  }
   var cloudDrop = {
     available: function () { return provider.id === "dropbox" && isConnected() && !suspended; },
     put: function (name, blob) {
@@ -1683,15 +1697,32 @@
         throw new Error("delete failed: " + res.status);
       });
     },
-    // [{ id, modified }] for the folders under /transfer (one page is plenty).
+    // [{ id }] for the folders under /transfer, every page (TR-UNL: links
+    // kept until deleted can grow past one page; a sweep must see them all).
     list: function () {
-      return dropReady().then(function () { return rpc("files/list_folder", { path: DROP_ROOT, limit: 500 }); }).then(function (res) {
-        if (res.status === 409) return { entries: [] };
-        if (!res.ok) throw new Error("list failed: " + res.status);
-        return res.json();
-      }).then(function (j) {
-        return (j.entries || []).filter(function (e) { return e && e[".tag"] === "folder" && /^[a-z0-9]{8,40}$/.test(e.name || ""); })
+      return dropPages(false).then(function (entries) {
+        return entries.filter(function (e) { return e && e[".tag"] === "folder" && /^[a-z0-9]{8,40}$/.test(e.name || ""); })
           .map(function (e) { return { id: e.name }; });
+      });
+    },
+    // TR-UNL Links: [{ id, bytes, at, done }] per folder under /transfer (the
+    // sealed files' sizes added up, at = the oldest upload's time, done =
+    // its sealed index is there, so the upload finished).
+    details: function () {
+      return dropPages(true).then(function (entries) {
+        var by = {};
+        entries.forEach(function (e) {
+          var m = e && /^\/transfer\/([a-z0-9]{8,40})(\/[a-z0-9.-]{1,40})?$/.exec(String(e.path_lower || ""));
+          if (!m) return;
+          var x = by[m[1]] || (by[m[1]] = { id: m[1], bytes: 0, at: 0, done: false });
+          if (e[".tag"] === "file") {
+            if (m[2] === "/index") x.done = true;
+            x.bytes += +e.size || 0;
+            var t = Date.parse(e.server_modified || "") || 0;
+            if (t && (!x.at || t < x.at)) x.at = t;
+          }
+        });
+        return Object.keys(by).map(function (k) { return by[k]; });
       });
     },
     // Removes the folders whose time has passed (see DROP_SWEEP_MS).

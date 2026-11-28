@@ -29,6 +29,14 @@
    hourly dropSweep on every open orOS, and the 4-hour builds) removes
    every hold on time. Or at once with "Delete now".
 
+   TR-UNL (unlimited sharing): longer holds (7, 14 and 30 days) and
+   FOREVER (0, "until I delete it"). A forever folder's T is the
+   largest 8-character base-36 time (FOREVER_T, the year 2059), so no
+   sweep of any build removes it; its sealed index says exp 0 (the
+   receive page has always read 0 as "no end"). Only "Delete" in the
+   app (or the person in Dropbox) removes it. INDEX_MAX and the pack
+   count grew with core.js MAX_FILES (100,000 files).
+
    TR-LATER (scheduled email): send({ start }) with start in the future
    (≤ LATER_MAX) counts the hold from start instead of now (T and exp
    both move) and always uses shared links, because the email may go
@@ -51,13 +59,16 @@
   var LINK_MS = 4 * 3600000;        // Dropbox temporary links last 4 hours
   var LINK_SAFE = LINK_MS - 10 * 60000;   // what we promise: 3 h 50 min after the links were made
   var SWEEP_MS = LINK_MS + 15 * 60000;
-  var HOLDS = [4, 12, 24, 48, 60, 72, 84, 96];   // hours the sender may choose
+  var FOREVER = 0;                  // TR-UNL: "until I delete it"
+  var HOLDS = [4, 12, 24, 48, 60, 72, 84, 96, 168, 336, 720, FOREVER];   // hours the sender may choose
+  var FOREVER_T = parseInt("zzzzzzzz", 36);   // the largest 8-character id time: no sweep ever reaches it
   var HOUR = 3600000;
   var UPLOAD_ALLOW = 2 * HOUR;      // uploads that take longer shorten the promise, never the sweep's margin
   var LATER_MAX = 14 * 24 * HOUR;   // TR-LATER: a scheduled email at most 14 days ahead
   var READ = 16 * 61440;            // bytes read from a source file at a time
   var RETRIES = 3;
-  var INDEX_MAX = 8 * 1048576;
+  var INDEX_MAX = 48 * 1048576;     // 100,000 files with paths, hashes and the picture
+  var PACKS_MAX = 40000;            // about 10 TB in packs of PACK_MAX
 
   // ----- links and fragments -----
   function b64url(u8) { return C.b64(u8).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
@@ -94,17 +105,27 @@
     if (cur.length) packs.push(cur);
     return packs;
   }
-  function okHold(h) { return HOLDS.indexOf(+h) !== -1 ? +h : 4; }
+  // FOREVER only when asked for by name (0 or "0"): a missing value is never "keep forever".
+  function okHold(h) {
+    if (h === FOREVER || h === String(FOREVER)) return FOREVER;
+    h = +h;
+    return h > 0 && HOLDS.indexOf(h) !== -1 ? h : 4;
+  }
   // T (see the header): the time the sweep counts from.
-  function sweepBase(start, hold) { return start + (okHold(hold) - 4) * HOUR + UPLOAD_ALLOW; }
+  function sweepBase(start, hold) {
+    hold = okHold(hold);
+    return hold === FOREVER ? FOREVER_T : start + (hold - 4) * HOUR + UPLOAD_ALLOW;
+  }
   function newId(now, hold) {
     var r = WC.getRandomValues(new Uint8Array(6));
     return sweepBase(now || Date.now(), hold).toString(36) + C.hex(r);
   }
   // What the link promises: the links' own life, and never past T + 4 h (the sweep comes 15 min later).
   // shared: the links do not end by themselves (wave 5 holds, and every scheduled email)
+  // FOREVER: 0, no end.
   function expiry(id, linksAt, hold, shared) {
     hold = okHold(hold);
+    if (hold === FOREVER) return 0;
     var life = hold === 4 && !shared ? LINK_SAFE : hold * HOUR;
     return Math.min(linksAt + life, idTime(id) + LINK_MS);
   }
@@ -135,7 +156,7 @@
     return WC.subtle.decrypt({ name: "AES-GCM", iv: u8.subarray(0, 12), additionalData: enc.encode(C.NS + "/index") }, key, u8.subarray(12))
       .then(function (plain) {
         var o = JSON.parse(dec.decode(plain));
-        if (!o || o.v !== 1 || !Array.isArray(o.files) || !Array.isArray(o.packs) || !o.packs.length || o.packs.length > 1000) return null;
+        if (!o || o.v !== 1 || !Array.isArray(o.files) || !Array.isArray(o.packs) || !o.packs.length || o.packs.length > PACKS_MAX) return null;
         var ok = C.checkManifest(o.files);
         if (!ok) return null;
         var hs = [], ks = [];
@@ -200,7 +221,7 @@
     // then and the links must outlive it (shared links, also for 4 h).
     var now0 = o.now ? o.now() : Date.now();
     var start = o.start > now0 ? Math.min(+o.start, now0 + LATER_MAX) : 0;
-    var hold = okHold(o.hold), shared = hold > 4 || !!start;
+    var hold = okHold(o.hold), shared = hold !== 4 || !!start;
     var id = newId(start || now0, hold), files = o.files, packs = plan(files, o.packMax), hashes = [], keyP = C.derive(o.code);
     var total = files.reduce(function (s, f) { return s + f.s; }, 0), done = 0;
     function stop() { if (o.cancelled && o.cancelled()) throw err("cancelled"); }
@@ -419,6 +440,7 @@
   }
 
   var api = {
+    FOREVER: FOREVER, FOREVER_T: FOREVER_T, INDEX_MAX: INDEX_MAX, PACKS_MAX: PACKS_MAX,
     PACK_MAX: PACK_MAX, LINK_MS: LINK_MS, LINK_SAFE: LINK_SAFE, SWEEP_MS: SWEEP_MS, HOLDS: HOLDS, UPLOAD_ALLOW: UPLOAD_ALLOW, LATER_MAX: LATER_MAX,
     okHold: okHold, expiry: expiry,
     fragment: fragment, parseFragment: parseFragment, okLink: okLink, plan: plan, cipherLen: cipherLen, packLen: packLen,

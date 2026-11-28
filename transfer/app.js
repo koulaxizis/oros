@@ -60,7 +60,7 @@
       "send.counting": "Counting…",
       "btn.makeLink": "Create link",
       "btn.makeCloud": "Send through my Dropbox", "btn.cloudDel": "Delete now",
-      "hold.lab": "Keep in Dropbox for", "hold.h": "{n} hours",
+      "hold.lab": "Keep in Dropbox for", "hold.h": "{n} hours", "hold.d": "{n} days", "hold.forever": "Until I delete it",
       "later.lab": "Email the link at a set day and time", "later.to": "To (email address)", "later.at": "Day and time",
       "later.copy": "Send me a copy too, as confirmation",
       "later.hint": "orOS Mail sends it with your own account, from this device: orOS must be open here at that time (any app), else it goes the next time orOS opens. The hours above count from then.",
@@ -70,6 +70,18 @@
       "later.subj": "Files for you",
       "later.body": "Hello,\n\n{msg}I am sending you files with orOS Transfer. Open this link to download them (no account needed):\n\n{link}\n\nThe link works until {until}. Anyone who has it can download the files, so please do not forward it.",
       "later.ready": "Ready. The email waits in Mail: check it and press “Send: {when}”. The files stay until {t}. If you delete them now, the link in the email will not work.",
+      "later.bodyKeep": "Hello,\n\n{msg}I am sending you files with orOS Transfer. Open this link to download them (no account needed):\n\n{link}\n\nThe link works until I delete the files. Anyone who has it can download them, so please do not forward it.",
+      "later.readyKeep": "Ready. The email waits in Mail: check it and press “Send: {when}”. The files stay until you delete them. If you delete them, the link in the email will not work.",
+      "cloud.readyKeep": "Ready. The files stay in your Dropbox, encrypted, until you delete them (History › Links in my Dropbox). You can close this page.",
+      "cloud.keepKeep": "Anyone with this link can download the files, as many times as they like, until you delete them. Send it only to the people they are for.",
+      "offer.cloudKeep": "Through the sender's Dropbox, end-to-end encrypted. The link works until the sender deletes the files.",
+      "btn.toCloud": "Send through my Dropbox instead",
+      "nodirect.cloud": "You can send the same files through your Dropbox instead: no size limit, and the link works for as many people as you like.",
+      "links.head": "Links in my Dropbox", "links.loading": "Reading your Dropbox…", "links.none": "No files wait in your Dropbox.",
+      "links.sum": "{n} links · {s} in your Dropbox", "links.sum1": "1 link · {s} in your Dropbox",
+      "links.other": "Sent from another device", "links.partial": "Upload not finished (no link works)", "links.made": "sent {when}", "links.until": "until {t}", "links.keep": "until you delete it",
+      "links.copy": "Copy link", "links.del": "Delete", "links.sure": "Press again to delete",
+      "links.gone": "Deleted. That link no longer works.", "links.err": "Could not read your Dropbox. Check Settings › Sync, then try again.", "links.refresh": "Refresh",
       "btn.resign": "Sign in to Dropbox again",
       "err.scope": "Keeping files longer than 4 hours needs a new Dropbox permission. Sign in to Dropbox again once (your data stays as it is), then send again. 4 hours works without it.",
       "err.sharecheck": "Dropbox did not let this browser download a test file through a shared link, so only 4 hours works here. Nothing was uploaded.",
@@ -173,7 +185,7 @@
       "send.counting": "Μέτρηση…",
       "btn.makeLink": "Δημιουργία συνδέσμου",
       "btn.makeCloud": "Αποστολή μέσω του Dropbox μου", "btn.cloudDel": "Διαγραφή τώρα",
-      "hold.lab": "Διατήρηση στο Dropbox για", "hold.h": "{n} ώρες",
+      "hold.lab": "Διατήρηση στο Dropbox για", "hold.h": "{n} ώρες", "hold.d": "{n} ημέρες", "hold.forever": "Μέχρι να τα σβήσω",
       "later.lab": "Αποστολή του συνδέσμου με email σε ορισμένη μέρα και ώρα", "later.to": "Προς (διεύθυνση email)", "later.at": "Μέρα και ώρα",
       "later.copy": "Στείλε κι εμένα αντίγραφο, ως επιβεβαίωση",
       "later.hint": "Η Αλληλογραφία του orOS το στέλνει με τον δικό σου λογαριασμό, από αυτή τη συσκευή: το orOS πρέπει να είναι ανοιχτό εδώ εκείνη την ώρα (οποιαδήποτε εφαρμογή), αλλιώς φεύγει μόλις ξανανοίξει. Οι ώρες παραπάνω μετρούν από τότε.",
@@ -183,6 +195,18 @@
       "later.subj": "Αρχεία για σένα",
       "later.body": "Γεια σου,\n\n{msg}Σου στέλνω αρχεία με το orOS Transfer. Άνοιξε αυτόν τον σύνδεσμο για να τα κατεβάσεις (χωρίς λογαριασμό):\n\n{link}\n\nΟ σύνδεσμος ισχύει έως {until}. Όποιος τον έχει μπορεί να κατεβάσει τα αρχεία, γι' αυτό μην τον προωθήσεις.",
       "later.ready": "Έτοιμο. Το email περιμένει στην Αλληλογραφία: έλεγξέ το και πάτησε «Αποστολή: {when}». Τα αρχεία μένουν έως {t}. Αν τα σβήσεις τώρα, ο σύνδεσμος στο email δεν θα δουλεύει.",
+      "later.bodyKeep": "Γεια σου,\n\n{msg}Σου στέλνω αρχεία με το orOS Transfer. Άνοιξε αυτόν τον σύνδεσμο για να τα κατεβάσεις (χωρίς λογαριασμό):\n\n{link}\n\nΟ σύνδεσμος ισχύει μέχρι να σβήσω τα αρχεία. Όποιος τον έχει μπορεί να τα κατεβάσει, γι' αυτό μην τον προωθήσεις.",
+      "later.readyKeep": "Έτοιμο. Το email περιμένει στην Αλληλογραφία: έλεγξέ το και πάτησε «Αποστολή: {when}». Τα αρχεία μένουν μέχρι να τα σβήσεις. Αν τα σβήσεις, ο σύνδεσμος στο email δεν θα δουλεύει.",
+      "cloud.readyKeep": "Έτοιμο. Τα αρχεία μένουν στο Dropbox σου, κρυπτογραφημένα, μέχρι να τα σβήσεις (Ιστορικό › Σύνδεσμοι στο Dropbox μου). Μπορείς να κλείσεις τη σελίδα.",
+      "cloud.keepKeep": "Όποιος έχει αυτόν τον σύνδεσμο μπορεί να κατεβάσει τα αρχεία, όσες φορές θέλει, μέχρι να τα σβήσεις. Στείλ' τον μόνο σε όσους είναι για αυτούς.",
+      "offer.cloudKeep": "Μέσω του Dropbox του αποστολέα, κρυπτογραφημένα από άκρο σε άκρο. Ο σύνδεσμος ισχύει μέχρι ο αποστολέας να σβήσει τα αρχεία.",
+      "btn.toCloud": "Αποστολή μέσω του Dropbox μου",
+      "nodirect.cloud": "Μπορείς να στείλεις τα ίδια αρχεία μέσω του Dropbox σου: χωρίς όριο μεγέθους, και ο σύνδεσμος ανοίγει για όσους θέλεις.",
+      "links.head": "Σύνδεσμοι στο Dropbox μου", "links.loading": "Διαβάζω το Dropbox σου…", "links.none": "Δεν περιμένουν αρχεία στο Dropbox σου.",
+      "links.sum": "{n} σύνδεσμοι · {s} στο Dropbox σου", "links.sum1": "1 σύνδεσμος · {s} στο Dropbox σου",
+      "links.other": "Στάλθηκε από άλλη συσκευή", "links.partial": "Ανέβασμα που δεν τελείωσε (κανένας σύνδεσμος)", "links.made": "στάλθηκε {when}", "links.until": "έως {t}", "links.keep": "μέχρι να τα σβήσεις",
+      "links.copy": "Αντιγραφή συνδέσμου", "links.del": "Διαγραφή", "links.sure": "Πάτα ξανά για διαγραφή",
+      "links.gone": "Σβήστηκε. Ο σύνδεσμος δεν δουλεύει πια.", "links.err": "Δεν διαβάστηκε το Dropbox σου. Έλεγξε τις Ρυθμίσεις › Συγχρονισμός και δοκίμασε ξανά.", "links.refresh": "Ανανέωση",
       "btn.resign": "Σύνδεση ξανά στο Dropbox",
       "err.scope": "Για διατήρηση πάνω από 4 ώρες χρειάζεται μια νέα άδεια του Dropbox. Συνδέσου ξανά στο Dropbox μία φορά (τα δεδομένα σου μένουν ως έχουν) και στείλε ξανά. Οι 4 ώρες δουλεύουν και χωρίς αυτήν.",
       "err.sharecheck": "Το Dropbox δεν άφησε αυτόν τον browser να κατεβάσει ένα δοκιμαστικό αρχείο μέσω κοινόχρηστου συνδέσμου, οπότε εδώ δουλεύουν μόνο οι 4 ώρες. Δεν ανέβηκε τίποτα.",
@@ -712,7 +736,7 @@
     var svg = qrSvg(link);
     if (svg) qr.appendChild(svg);
     show("pick", false); show("share", true);
-    show("send-again", false); show("send-cancel", true); show("send-prog", false);
+    show("send-again", false); show("send-cancel", true); show("send-prog", false); show("to-cloud", false);
     cloudShare(false);
     $("send-detail").textContent = "";
     var blobs = {};
@@ -752,10 +776,13 @@
           end();
         } else if (p === "error") {
           busy = false; stayAwake(false);
-          st.textContent = errText(info.e);
+          // TR-UNL: no direct link and too big for the relay → the same files through the sender's own Dropbox, one press
+          var viaCloud = info.e === "nodirect" && !!cloudApi() && !!X;
+          st.textContent = errText(info.e) + (viaCloud ? " " + t("nodirect.cloud") : "");
           st.className = "status warn";
           log("stopped", []);
           end();
+          show("to-cloud", viaCloud);
         }
       },
       onProgress: function (pr) {
@@ -804,11 +831,12 @@
     var el = $("hold");
     if (!el || !X || !X.HOLDS) return;
     var keep = 4;
-    try { keep = X.okHold(+localStorage.getItem(HOLD_KEY) || 4); } catch (e) {}
+    try { keep = X.okHold(localStorage.getItem(HOLD_KEY) || 4); } catch (e) {}
     el.textContent = "";
     X.HOLDS.forEach(function (h) {
       var op = document.createElement("option");
-      op.value = String(h); op.textContent = t("hold.h", { n: h });
+      op.value = String(h);
+      op.textContent = h === X.FOREVER ? t("hold.forever") : h >= 168 && h % 24 === 0 ? t("hold.d", { n: h / 24 }) : t("hold.h", { n: h });
       if (h === keep) op.selected = true;
       el.appendChild(op);
     });
@@ -856,7 +884,7 @@
     try {
       p.__orosOpenAt("mail", { compose: {
         to: lt.to, subject: (meta && meta.t ? meta.t : t("later.subj")).slice(0, 300),
-        body: t("later.body", { msg: msg, link: url, until: when(exp) }).slice(0, 20000),
+        body: (exp ? t("later.body", { msg: msg, link: url, until: when(exp) }) : t("later.bodyKeep", { msg: msg, link: url })).slice(0, 20000),
         sendAt: lt.at, bccSelf: lt.copy
       } });
     } catch (e) {}
@@ -887,7 +915,8 @@
       return p.then(function (bl) { return bl.slice(a, b).arrayBuffer(); }).then(function (buf) { return new Uint8Array(buf); });
     }
     var need = manifest.reduce(function (n, f) { return n + X.packLen(f.s); }, 0);
-    var hold = holdNow(), shared = hold > 4 || !!lt, okKey = shared ? SHARE_OK : CLOUD_OK;
+    var hold = holdNow(), shared = hold !== 4 || !!lt, okKey = shared ? SHARE_OK : CLOUD_OK;
+    show("to-cloud", false);
     show("resign", false);
     var checked = false;
     try { checked = localStorage.getItem(okKey) === "1"; } catch (e) {}
@@ -916,25 +945,27 @@
       var qr = $("share-qr"), svg = qrSvg(url);
       qr.textContent = "";
       if (svg) qr.appendChild(svg);
-      st.textContent = t("cloud.ready", { t: hhmm(r.exp) });
+      // TR-UNL: exp 0 = the files stay until the person deletes them
+      st.textContent = r.exp ? t("cloud.ready", { t: hhmm(r.exp) }) : t("cloud.readyKeep");
       st.className = "status ok";
-      $("share-keep").textContent = t("cloud.keep", { t: hhmm(r.exp) });
+      $("share-keep").textContent = r.exp ? t("cloud.keep", { t: hhmm(r.exp) }) : t("cloud.keepKeep");
       show("send-cancel", false); show("cloud-del", true); show("send-again", true);
       if (lt) {
-        st.textContent = t("later.ready", { when: when(lt.at), t: hhmm(r.exp) });
+        st.textContent = r.exp ? t("later.ready", { when: when(lt.at), t: hhmm(r.exp) }) : t("later.readyKeep", { when: when(lt.at) });
         show("later-mail", true); show("later-out", true);
         $("later-mail").onclick = function () { laterCompose(lt, url, r.exp, meta); };
         laterCompose(lt, url, r.exp, meta);
       }
       busy = false; stayAwake(false);
       record({ dir: "sent", files: manifest, dev: "", mode: "cloud", end: "done" });
-      keepLink(r.id, r.exp, manifest);
+      keepLink(r.id, r.exp, manifest, url, need);
       cloudSend = null;
-      setTimeout(function () { if (job.id && !job.gone) drop.remove(job.id).catch(function () {}); }, Math.max(0, r.exp - Date.now() + 10 * 60000));
+      if (r.exp) setTimeout(function () { if (job.id && !job.gone) drop.remove(job.id).catch(function () {}); }, Math.max(0, r.exp - Date.now() + 10 * 60000));
       $("cloud-del").onclick = function () {
         drop.remove(job.id).then(function () {
           job.gone = true;
           forgetLink(job.id);
+          linksShown = false;
           st.textContent = t("cloud.deleted"); st.className = "status";
           $("share-link").value = ""; $("share-qr").textContent = ""; $("share-keep").textContent = "";
           shareNative("", null);
@@ -964,8 +995,82 @@
     show("share-match", false); shareNative("", null);
     artSeed = Math.floor(Math.random() * 4294967296); paintArt(true);
     clearBg();
-    show("share", false); show("pick", true);
+    show("share", false); show("pick", true); show("to-cloud", false);
     renderChosen(); renderDisk();
+  }
+
+  function copyText(v) {
+    try { navigator.clipboard.writeText(v).then(function () { toast(t("copied")); }, function () { toast(v); }); }
+    catch (e) { toast(v); }
+  }
+  // ---------- 6c. Links in my Dropbox (TR-UNL) ----------
+  // Every folder under /transfer in the person's Dropbox (all devices,
+  // every page of the listing), named from this device's list of links
+  // where it made them; the others say "Sent from another device" (their
+  // names and codes are sealed). Delete asks twice. Only the History tab.
+  var linksShown = false, linksBusy = false, linksArmed = "";
+  function linkEnd(id) {
+    var tt = X.idTime(id);
+    return tt === X.FOREVER_T ? 0 : tt + X.LINK_MS;          // the sweep's promise: never past T + 4 h
+  }
+  function renderLinks(force) {
+    var box = $("links-box"), drop = cloudApi();
+    if (!box) return;
+    box.hidden = !drop || !X;
+    if (box.hidden || linksBusy || (linksShown && !force)) return;
+    var list = $("links-list"), sum = $("links-sum"), st = $("links-status");
+    linksBusy = true;
+    st.textContent = t("links.loading"); st.className = "status";
+    drop.details().then(function (rows) {
+      var mine = {};
+      try { C.cleanLinks(JSON.parse(localStorage.getItem(C.LINKS_KEY) || "null"), 1).items.forEach(function (x) { mine[x.id] = x; }); } catch (e) {}
+      rows = rows.filter(function (r) { var tt = X.idTime(r.id); return tt && (tt === X.FOREVER_T || tt + X.SWEEP_MS > Date.now()); });
+      rows.sort(function (a, b) { return (b.at - a.at) || (a.id < b.id ? -1 : 1); });
+      list.textContent = "";
+      var total = 0;
+      rows.forEach(function (r) {
+        total += r.bytes;
+        var x = mine[r.id], exp = x ? x.exp : linkEnd(r.id), li = el("li");
+        li.appendChild(el("span", "arrow", "\u2191"));
+        var body = el("div", "body");
+        // a folder without its sealed index is an upload that never finished (no link works): only Delete
+        body.appendChild(el("span", "what", !r.done ? t("links.partial") : x && x.what ? x.what : t("links.other")));
+        var parts = [];
+        if (r.at) parts.push(t("links.made", { when: when(r.at) }));
+        parts.push(size(r.bytes));
+        parts.push(exp ? t("links.until", { t: hhmm(exp) }) : t("links.keep"));
+        body.appendChild(el("span", "meta", parts.join(" \u00b7 ")));
+        li.appendChild(body);
+        if (x && x.url && r.done) {
+          var cp = el("button", "chip small", t("links.copy"));
+          cp.type = "button";
+          cp.addEventListener("click", function () { copyText(x.url); });
+          li.appendChild(cp);
+        }
+        var del = el("button", "chip small", t("links.del"));
+        del.type = "button";
+        del.addEventListener("click", function () {
+          if (linksArmed !== r.id) { linksArmed = r.id; del.textContent = t("links.sure"); return; }
+          linksArmed = ""; del.disabled = true;
+          drop.remove(r.id).then(function () {
+            forgetLink(r.id);
+            if (cloudSend === null && $("share-link") && $("share-link").value && x && x.url === $("share-link").value) {
+              $("share-link").value = ""; $("share-qr").textContent = ""; show("cloud-del", false);
+            }
+            toast(t("links.gone"));
+            renderLinks(true);
+          }, function () { del.disabled = false; del.textContent = t("links.del"); toast(t("err.dropbox")); });
+        });
+        li.appendChild(del);
+        list.appendChild(li);
+      });
+      sum.textContent = rows.length === 1 ? t("links.sum1", { s: size(total) }) : t("links.sum", { n: rows.length, s: size(total) });
+      sum.hidden = !rows.length;
+      st.textContent = rows.length ? "" : t("links.none");
+      linksShown = true;
+    }, function () {
+      st.textContent = t("links.err"); st.className = "status warn";
+    }).then(function () { linksBusy = false; });
   }
 
   // ---------- 7. Receive ----------
@@ -1043,7 +1148,7 @@
     show("recv-cancel", false);           // Decline is the way out here
     showHead(o.meta, t(o.files.length === 1 ? "offer.sum1" : "offer.sum", { n: o.files.length, s: size(o.total), dev: dev || "?" }));
     show("offer-relay", o.mode === "relay" || o.mode === "cloud");
-    $("offer-relay").textContent = o.mode === "cloud" ? t("offer.cloud", { t: hhmm(o.exp) }) : t("offer.relay");
+    $("offer-relay").textContent = o.mode === "cloud" ? (o.exp ? t("offer.cloud", { t: hhmm(o.exp) }) : t("offer.cloudKeep")) : t("offer.relay");
     var list = $("offer-list");
     list.textContent = "";
     o.files.slice(0, SHOW_MAX).forEach(function (f) {
@@ -1172,13 +1277,15 @@
   }
   // Device-local list of links waiting in this device's Dropbox, for
   // Today ("Signing link ends" style rows; core.js cleanLinks).
-  function keepLink(id, exp, files) {
+  function keepLink(id, exp, files, url, bytes) {
     if (PAGE !== "app") return;
     try {
       var item = C.historyItem({ dir: "sent", files: files || [] });
       var cur = JSON.parse(localStorage.getItem(C.LINKS_KEY) || "null");
-      localStorage.setItem(C.LINKS_KEY, JSON.stringify(C.addLink(cur, { id: id, exp: exp, what: item ? item.what : "", n: item ? item.n : 0 })));
+      localStorage.setItem(C.LINKS_KEY, JSON.stringify(C.addLink(cur, { id: id, exp: exp, what: item ? item.what : "", n: item ? item.n : 0,
+        at: Date.now(), bytes: bytes || 0, url: url || "" })));
     } catch (e) {}
+    linksShown = false;
   }
   function forgetLink(id) {
     try {
@@ -1279,6 +1386,7 @@
       b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on));
       show(k, on);
     });
+    if (which === "hist") renderLinks(false);
   }
   function codeFromHash(h) {
     if (/^#d=/.test(String(h || ""))) return "";
@@ -1298,6 +1406,8 @@
       $("tab-recv").addEventListener("click", function () { tab("recv"); });
       $("tab-hist").addEventListener("click", function () { tab("hist"); });
       $("hist-clear").addEventListener("click", clearHist);
+      if ($("links-refresh")) $("links-refresh").addEventListener("click", function () { renderLinks(true); });
+      if ($("to-cloud")) $("to-cloud").addEventListener("click", function () { if (!sender && !cloudSend) startCloud(); });
       $("add-local").addEventListener("click", addLocal);
       $("add-big").addEventListener("click", function () { if (FS()) openDisk(); else addLocal(); });
       $("bg-pick").addEventListener("click", function () { $("bg-file").click(); });
