@@ -144,10 +144,11 @@ test("wiring: only the four accent variables, high contrast keeps its own, skin 
   assert.match(cutBlock("  function wpShow("), /wpAccRefresh\(\)/);
 });
 
-test("this device only: the choice never rides in the shell slice", () => {
+test("never in the shell slice; between computers in the look slice (LOOK-1)", () => {
   assert.match(SRC, /var WPACC_KEY = "oros-wpaccent";/);
   const core = fs.readFileSync(path.join(ROOT, "settings", "core.js"), "utf8");
-  assert.match(core, /wpaccent: "device"/);
+  assert.match(core, /wpaccent: "computers"/);
+  assert.match(SRC, /wpaccent: "oros-wpaccent"/, "LOOK-1 carries it between computers");
   for (const f of ["shellSliceGet", "shellSliceSet", "shellMerge"])
     assert.doesNotMatch(cutBlock("  function " + f + "("), /wpacc|WPACC|wpAcc/i, f);
 });

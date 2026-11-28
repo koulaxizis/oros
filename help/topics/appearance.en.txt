@@ -3,6 +3,14 @@ Make orOS look the way you like: language, light or dark theme, colour skin, wal
 
 `Make it yours`, the first card of `Appearance`, puts the look of orOS in one place with a small preview of the desktop: `Choose a wallpaper` (it takes you to the `Wallpaper` card below, the one place to pick it), `Choose a colour` (it takes you to `System colour`, with `Accent from wallpaper`), the look of the top bar, the Dock and its edge, the motion feel, interface sounds and the look of the lock screen. Each choice is the same setting as in its own place further down (and in `Screen lock`), so changing it either way keeps both in step.
 
+## Same look on all computers
+`Same look on all my computers`, near the top of `Settings › Appearance`, is on at first on a computer. Then the top bar's cards and look, the Dock settings (size, style, what an icon does under the mouse, hiding), the desktop widgets, the menu button icon, the font of orOS, the motion feel and the app animation, the interface sounds and `Accent from wallpaper` are the same on every computer where you use orOS with [sync](help:t/sync): in the browser, installed, Portable and on the orOS USB stick. Change one of them on any computer and the others follow at their next sync; for each setting the latest change wins.
+- Phones and tablets keep their own look, because their screen is another one. They pass the computers' look on untouched.
+- The first time, the computer that had this version of orOS first keeps its look and a computer that joins later (a new orOS USB stick, for example) takes it.
+- Turn the switch off and this computer keeps its own look from then on. Turn it on again and it takes the look of your other computers.
+- A computer with an older orOS keeps what a newer one chose and shows it once it is updated.
+- The label next to each setting says where it applies: `All devices`, `Computers` or `This device`. `Settings › Sync › What syncs` lists everything.
+
 ## Quick settings
 The button at the right end of the top bar (the network and power symbols) opens Quick settings, as on a Linux desktop. [[Ctrl+Alt+Shift+M]] opens it too.
 
@@ -38,7 +46,7 @@ Cards on the desktop that show your day at a glance: `Clock`, `Calendar` (a mont
 - Right-click an empty spot of the desktop and choose `Widgets and cards…` to open the gallery: every desktop card and every top bar card, each with a live preview of what it would show now. Search by name, show `All`, `Desktop` or `Top bar`, press `Add to desktop` or `Add to top bar` (or `Remove`), and set the order with the arrows. It is the one place for them: `Settings`, under `Appearance`, opens the same gallery with its `Widgets and cards…` button.
 - Right-click a card (long press on a touch screen) or use its `⋯` button to move it up or down or remove it. With a mouse you can also drag a card by its title.
 - The Clock card's menu also sets its style: `Clock: digits`, `Clock: LED dots` or `Clock: automatic` (the start: LED dots with the Signal skin, digits with the others). The dots are drawn by orOS itself and never blink; with high contrast only the lit dots show.
-- A computer starts with Clock, Calendar, Today and Weather; a phone starts with none. Your choice stays on this device.
+- A computer starts with Clock, Calendar, Today and Weather; a phone starts with none. Your choice follows you to your other computers (see `Same look on all computers` below); a phone keeps its own.
 
 ### First steps
 When you start orOS for the first time, a `First steps` card waits on the desktop: write your first note, add a task, choose a wallpaper or a Living land, pick an icon pack, turn on sync, meet the Assistant and, where your browser offers it, install orOS as an app. Tap a line to go there. Each line ticks itself once you have really done it, so there is nothing to tick by hand. `Hide` takes the card away; when everything is done it says so and leaves the next day. You can bring it back with `Widgets and cards…`.
@@ -46,7 +54,7 @@ When you start orOS for the first time, a `First steps` card waits on the deskto
 On a computer, First steps also has `Use orOS on your phone too`. It adds an `On your phone` card with a QR code: scan it with the phone's camera to open orOS there. The code holds only the address of orOS (this site, or useoros.online when orOS runs from a local copy), never your data. To see the same things on both, turn on sync on each device with the same passphrase. The card can be removed like any widget.
 
 ## Smart top bar
-The top bar can show a few live items next to the clock. Add them and set their order in the gallery: `Widgets and cards…` in `Settings › Appearance`, or on the desktop's right-click menu. None is on at first, and your choice stays on this device.
+The top bar can show a few live items next to the clock. Add them and set their order in the gallery: `Widgets and cards…` in `Settings › Appearance`, or on the desktop's right-click menu. None is on at first. Your cards and the bar's look follow you to your other computers; a phone keeps its own.
 - `Next event`: the next timed item of today from [Today](app:today) (your Calendar events and the other apps that give Today a time). From an hour before, it counts down ("in 20 min"); while it runs it says `Now`. Tap it for this month and today's items at a glance: tap a day to open it in the Calendar, a line to open it, or `Open Calendar`.
 - `Focus timer`: the minutes left of the Pomodoro running in [Time](app:time), focus or break.
 - `Tasks for today`: how many tasks are late or due today.
@@ -116,9 +124,9 @@ The coloured dots under `System colour` are skins: each one gives orOS and its a
 
 `Signal`, the last dot, is not named after a system: it gives orOS the look of an LED dot display, black with white text and a red light (in the light theme, white paper with a deep red). Its wallpaper is `Dot Matrix`, a fine grid of dots, and the Clock widget shows the time in LED dots while Signal is on.
 
-`Menu button icon`, under the colours, changes the symbol on the menu button at the left of the top bar: four squares (the first), nine dots, a ring, a spark, a leaf, three lines or no icon. It is set on this device only.
+`Menu button icon`, under the colours, changes the symbol on the menu button at the left of the top bar: four squares (the first), nine dots, a ring, a spark, a leaf, three lines or no icon. It follows you to your other computers.
 
-`Accent from wallpaper`, under the dots, takes the accent colour from your wallpaper instead: the built-in wallpapers, `Living land`, `Mine` and a picture of your own. orOS adjusts its brightness so text on buttons and links stays easy to read in the light and the dark theme; backgrounds, panels and text keep the colours of your skin. When the wallpaper has several clear colours, up to four appear under `Colours from the wallpaper` to pick from; a new wallpaper starts at its strongest colour. Grey wallpapers such as `Monochrome` keep the skin's colour, and high contrast always keeps its own colours. The switch is off at first and works on this device only.
+`Accent from wallpaper`, under the dots, takes the accent colour from your wallpaper instead: the built-in wallpapers, `Living land`, `Mine` and a picture of your own. orOS adjusts its brightness so text on buttons and links stays easy to read in the light and the dark theme; backgrounds, panels and text keep the colours of your skin. When the wallpaper has several clear colours, up to four appear under `Colours from the wallpaper` to pick from; a new wallpaper starts at its strongest colour. Grey wallpapers such as `Monochrome` keep the skin's colour, and high contrast always keeps its own colours. The switch is off at first; it and the colour you picked follow you to your other computers.
 
 Above the wallpapers, `Find a wallpaper` narrows them by name and `Random` puts on another drawn wallpaper. Under them, `From a folder` makes the pictures of a folder in Files (at first `Pictures/Wallpapers`) take turns as the wallpaper of this device: `Every day` or `At each start`, in name order, so each comes round before one returns; `Next picture now` skips ahead. JPG, PNG, WebP, GIF and AVIF up to 20 MB count. The pictures stay on this device and nothing syncs; picking a wallpaper by hand turns it off.
 

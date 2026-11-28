@@ -29,7 +29,7 @@ Just start drawing on the canvas. Each stroke is added to the work; `Undo` and `
 ## Download, replay and wallpaper
 - Choose `Screen size` or `Double` and tap `PNG` to download the picture.
 - `Replay` paints the work again, stroke by stroke, the way you made it. Tap the canvas or `Stop replay` to stop.
-- `As wallpaper` makes the work the orOS wallpaper of this device. It shows as `Mine` in Settings here; other devices keep their own wallpaper. Picking another wallpaper on this device puts the work away again.
+- `As wallpaper` makes the work your orOS wallpaper. It shows as `Mine` in Settings. The picture is saved in Files under `Pictures/My wallpaper` (up to 20 MB) and, with sync on, your other devices show it once they have downloaded it. Picking another wallpaper puts the work away again, on every device.
 
 ## Sync and backup
 - `My works` follow you to all your devices through orOS sync. Works are kept as strokes, not pictures, so they redraw sharply on every screen.

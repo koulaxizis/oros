@@ -577,15 +577,26 @@
   var wpShown = null;        // { key, w, h, url } of the picture on the desktop
   var wpGen = 0;             // newer request = older drawing is dropped
 
-  // A finished picture (Aura Painter, setImage): THIS device only,
-  // never synced, and it never changes state.wallpaper (the synced
-  // choice), so other devices keep theirs. The picture sits in the
-  // same IndexedDB under "picture"; WP_PIC_KEY ({ at, bg }) says it
-  // is on, and then it is the desktop here, shown as "Mine" in
+  // A finished picture (Aura Painter, setImage, Files): it never
+  // changes state.wallpaper (the synced choice). The picture sits in
+  // the same IndexedDB under "picture"; WP_PIC_KEY ({ at, bg, path? })
+  // says it is on, and then it is the desktop here, shown as "Mine" in
   // Settings. Picking another wallpaper here, or making a recipe in
   // the Generator (setCustom), takes it away.
+  // WPPIC-1 (Chris 2026-11-28, proposal 7 of the sync check): the
+  // picture is also written to the orOS disk (WP_PIC_DIR, so Vault
+  // Drive carries it, up to 20 MB) and the choice travels in the shell
+  // slice as the field `wppic` { at, bg, path } | null; another device
+  // shows it once Vault Drive has brought the file (WP_PIC_WAIT_KEY
+  // holds the choice until then). A picture the disk could not take
+  // stays on this device only, as before.
   var WP_PIC_KEY = "oros-wallpaper-pic";
   var WP_PIC_MAX = 20 * 1024 * 1024;
+  var WP_PIC_DIR = "/internal/Pictures/My wallpaper";
+  var WP_PIC_WAIT_KEY = "oros-wallpaper-pic-wait";
+  var WP_PIC_PATH_RE = /^\/internal\/Pictures\/My wallpaper\/wallpaper-[0-9]{1,15}\.(jpg|png|webp|gif|avif)$/;
+  var WP_PIC_EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" };
+  var WP_PIC_MIME = { jpg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", avif: "image/avif" };
 
   function wpPic() {
     try {
@@ -593,9 +604,99 @@
       return (p && typeof p.at === "number" && /^#[0-9a-f]{6}$/i.test(p.bg)) ? p : null;
     } catch (e) { return null; }
   }
-  function wpPicClear() {
-    try { localStorage.removeItem(WP_PIC_KEY); } catch (e) {}
+  // A picture is on here, or one from another device is on its way.
+  function wpPicOn() { return !!(wpPic() || wppicWait()); }
+  // pulled = the removal came from another device (its file is gone
+  // there already); otherwise this device's own synced file goes too.
+  function wpPicClear(pulled) {
+    var p = wpPic();
+    try { localStorage.removeItem(WP_PIC_KEY); localStorage.removeItem(WP_PIC_WAIT_KEY); } catch (e) {}
     wpCacheDel("picture");
+    if (!pulled && p && wppicCanon(p) && window.orosFS) window.orosFS.rm(p.path).catch(function () {});
+  }
+  // WPPIC-1: the synced form of the picture choice, or undefined.
+  function wppicCanon(v) {
+    if (v === null) return null;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    if (typeof v.at !== "number" || !isFinite(v.at) || v.at <= 0 || Math.floor(v.at) !== v.at) return undefined;
+    if (typeof v.bg !== "string" || !/^#[0-9a-f]{6}$/.test(v.bg)) return undefined;
+    if (typeof v.path !== "string" || !WP_PIC_PATH_RE.test(v.path)) return undefined;
+    return { at: v.at, bg: v.bg, path: v.path };
+  }
+  function wppicWait() {
+    try { var w = wppicCanon(JSON.parse(localStorage.getItem(WP_PIC_WAIT_KEY))); return w || null; } catch (e) { return null; }
+  }
+  // What this device shows (or waits to show) as the synced choice.
+  function wppicNow() {
+    var w = wppicWait();
+    if (w) return w;
+    var p = wpPic();
+    if (p && p.local) return wppicCanon(p.keep) || null;      // From a folder: the synced choice waits
+    return (p && wppicCanon(p)) || null;
+  }
+  // A choice pulled from another device (shellSliceSet).
+  function wppicPulled(v) {
+    var cur = wpPic();
+    if (cur && cur.local) {
+      // WPDIR-1 "From a folder" shows this device's own picture: the
+      // synced choice is kept beside it, not shown.
+      var c2 = { at: cur.at, bg: cur.bg, local: 1 };
+      if (v) c2.keep = v;
+      try { localStorage.setItem(WP_PIC_KEY, JSON.stringify(c2)); localStorage.removeItem(WP_PIC_WAIT_KEY); } catch (e) {}
+      return;
+    }
+    if (v === null) {
+      try { localStorage.removeItem(WP_PIC_WAIT_KEY); } catch (e) {}
+      if (cur && wppicCanon(cur)) wpPicClear(true);
+      return;
+    }
+    if (cur && cur.at === v.at && cur.path === v.path) {
+      try { localStorage.removeItem(WP_PIC_WAIT_KEY); } catch (e) {}
+      return;
+    }
+    try { localStorage.setItem(WP_PIC_WAIT_KEY, JSON.stringify(v)); } catch (e) { return; }
+    wppicFetch();
+  }
+  // A picture set before WPPIC-1 (on this device only) goes to the
+  // orOS disk once, so it syncs like a new one.
+  function wppicMigrate() {
+    var p = wpPic();
+    if (!p || p.path || p.local || !window.orosFS) return;
+    wpCacheGet("picture").then(function (rec) {
+      var b = rec && rec.key === "pic:" + p.at ? rec.blob : null;
+      var ext = b ? WP_PIC_EXT[b.type] : "";
+      if (!ext || !b.size || b.size > WP_PIC_MAX) return;
+      var path = WP_PIC_DIR + "/wallpaper-" + p.at + "." + ext;
+      return window.orosFS.write(path, b).then(function () {
+        var now = wpPic();
+        if (!now || now.at !== p.at || now.path) return;
+        localStorage.setItem(WP_PIC_KEY, JSON.stringify({ at: p.at, bg: p.bg, path: path }));
+        noteLocalChange();
+      });
+    }).catch(function () {});
+  }
+  // The waiting picture from the orOS disk, once Vault Drive brought it.
+  var wppicBusy = false;
+  function wppicFetch() {
+    var w = wppicWait();
+    if (!w || wppicBusy || !window.orosFS) return;
+    wppicBusy = true;
+    window.orosFS.read(w.path).then(function (b) {
+      if (!b || !b.size || b.size > WP_PIC_MAX) return null;
+      var mime = WP_PIC_MIME[w.path.split(".").pop()];
+      var blob = new Blob([b], { type: mime });
+      return wpCachePut({ key: "pic:" + w.at, w: 0, h: 0, blob: blob }, "picture").then(function (ok) {
+        var now = wppicWait();
+        if (!ok || !now || now.at !== w.at) return null;
+        localStorage.setItem(WP_PIC_KEY, JSON.stringify(w));
+        localStorage.removeItem(WP_PIC_WAIT_KEY);
+        applyWallpaper();
+        settingsNotify();
+        return null;
+      });
+    }).catch(function () { /* not here yet: the next Vault Drive sync tries again */ }).then(function () {
+      wppicBusy = false;
+    });
   }
 
   function wpArt() { return window.OrosWallArt || null; }
@@ -704,6 +805,14 @@
     wpCacheGet("picture").then(function (rec) {
       if (gen !== wpGen) return;
       if (rec && rec.key === key && rec.blob) { wpShow(desktop, rec, pic.bg); return; }
+      // WPPIC-1: a synced picture comes back from the orOS disk (the
+      // choice stays: removing it here would remove it everywhere).
+      var syn = wppicCanon(pic) || (pic.local ? wppicCanon(pic.keep) : undefined);
+      if (syn) {
+        try { localStorage.setItem(WP_PIC_WAIT_KEY, JSON.stringify(syn)); localStorage.removeItem(WP_PIC_KEY); } catch (e) {}
+        wppicFetch();
+        return;
+      }
       try { localStorage.removeItem(WP_PIC_KEY); } catch (e) {}   // picture gone: back to the choice
       applyWallpaper();
     });
@@ -1062,7 +1171,7 @@
     if (WP_VIZ_STYLES.indexOf(style) < 0) return false;
     state.wpviz = wpvizCanon({ style: style });
     wpVizWrite(state.wpviz);
-    if (wpPic()) wpPicClear();
+    if (wpPicOn()) wpPicClear();
     if (state.wallpaper !== "viz") {
       state.wallpaper = "viz";
       localStorage.setItem("oros-wallpaper", state.wallpaper);
@@ -1225,8 +1334,8 @@
 
   // ---------- 5b'''. Accent from wallpaper (WPACC-1) ----------
   // Settings › Appearance › System colour: off by default and THIS
-  // device only, never synced (the "Mine" picture is per device too,
-  // WPACC-1 decision 3). On, the four accent variables of the shell
+  // device only (the "Mine" picture is per device too, WPACC-1
+  // decision 3); since LOOK-1 the switch and pick travel between computers. On, the four accent variables of the shell
   // root come from the wallpaper on screen (inline style beats the
   // skin's block); backgrounds, panels, text and borders stay the
   // skin's. Apps copy them with inheritPalette, which watchPalette
@@ -1406,7 +1515,7 @@
       }
       var r = A ? A.normRecipe(src) : null;
       if (!r) return false;
-      if (wpPic()) wpPicClear();  // a recipe made here replaces the device picture
+      if (wpPicOn()) wpPicClear();  // a recipe made here replaces the device picture
       state.wpart = r;
       wpArtWrite(r);
       state.wallpaper = "custom";
@@ -1431,23 +1540,42 @@
       noteLocalChange();
       return true;
     },
-    // A finished picture (Blob, image/*) → the wallpaper of THIS
-    // device ("Mine" in Settings). opts.bg = colour around the
-    // picture. Resolves true once it is stored and shown. Nothing
-    // syncs: not the picture, not the choice.
+    // A finished picture (Blob, image/*) → the wallpaper ("Mine" in
+    // Settings). opts.bg = colour around the picture. Resolves true
+    // once it is stored and shown. WPPIC-1: it is also written to the
+    // orOS disk and the choice syncs; if the disk cannot take it, it
+    // stays on this device only.
     setImage: function (blob, opts) {
       var bg = opts && typeof opts.bg === "string" ? opts.bg.toLowerCase() : "#000000";
       // duck-typed: a Blob made in the app's frame is another realm's Blob
       if (!blob || typeof blob.size !== "number" || typeof blob.slice !== "function" ||
           typeof blob.type !== "string" || !/^image\//.test(blob.type) ||
           !blob.size || blob.size > WP_PIC_MAX || !/^#[0-9a-f]{6}$/.test(bg)) return Promise.resolve(false);
-      var at = Date.now();
-      return wpCachePut({ key: "pic:" + at, w: 0, h: 0, blob: blob }, "picture").then(function (ok) {
+      var at = Date.now(), old = wpPic(), local = !!(opts && opts.local);
+      var ext = WP_PIC_EXT[blob.type], path = ext && !local ? WP_PIC_DIR + "/wallpaper-" + at + "." + ext : "";
+      var own = new Blob([blob], { type: blob.type });
+      return wpCachePut({ key: "pic:" + at, w: 0, h: 0, blob: own }, "picture").then(function (ok) {
         if (!ok) return false;
-        try { localStorage.setItem(WP_PIC_KEY, JSON.stringify({ at: at, bg: bg })); }
-        catch (e) { return false; }
-        applyWallpaper();
-        return true;
+        if (local) {
+          // WPDIR-1 (From a folder): this device only; the synced choice waits beside it
+          var keep = wppicNow(), lr = { at: at, bg: bg, local: 1 };
+          if (keep) lr.keep = keep;
+          try { localStorage.setItem(WP_PIC_KEY, JSON.stringify(lr)); localStorage.removeItem(WP_PIC_WAIT_KEY); }
+          catch (e) { return false; }
+          applyWallpaper();
+          return true;
+        }
+        var onDisk = (path && window.orosFS) ? window.orosFS.write(path, own).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
+        return onDisk.then(function (written) {
+          var rec = written ? { at: at, bg: bg, path: path } : { at: at, bg: bg };
+          try { localStorage.setItem(WP_PIC_KEY, JSON.stringify(rec)); localStorage.removeItem(WP_PIC_WAIT_KEY); }
+          catch (e) { return false; }
+          // the picture it replaces leaves the disk (only our own file)
+          if (old && wppicCanon(old) && old.path !== path && window.orosFS) window.orosFS.rm(old.path).catch(function () {});
+          applyWallpaper();
+          noteLocalChange();
+          return true;
+        });
       });
     },
     // { style, seed } → the Living land wallpaper, selected; gentle
@@ -1456,7 +1584,7 @@
       if (!l || typeof l !== "object" || Array.isArray(l)) return false;
       var c = wplandCanon({ style: l.style, seed: l.seed, motion: wpLandNow().motion, light: wpLandNow().light });
       if (!c || c.style !== l.style || c.seed !== l.seed) return false;
-      if (wpPic()) wpPicClear();  // a land picked here replaces the device picture
+      if (wpPicOn()) wpPicClear();  // a land picked here replaces the device picture
       wpLandNewShape({ style: c.style, seed: c.seed });
       return true;
     },
@@ -1533,7 +1661,7 @@
   })();
 
   // ---------- 5b-icon. MENUICON-1: the menu button's icon ----------
-  // Device-local "oros-menuicon": one of MENU_ICONS (default "grid",
+  // "oros-menuicon" (between computers since LOOK-1): one of MENU_ICONS (default "grid",
   // the four squares in index.html) or "none" (the label alone). Static
   // SVGs from this file only.
   var MENU_ICON_KEY = "oros-menuicon";
@@ -1639,7 +1767,7 @@
     return Promise.resolve(F.ls(dir)).then(function (list) {
       var name = wpdirNext(list, c.last);
       if (!name) return "empty";
-      return sendWallpaper({ path: dir + "/" + name, max: WP_PIC_MAX }).then(function (r) {
+      return sendWallpaper({ path: dir + "/" + name, max: WP_PIC_MAX }, true).then(function (r) {
         if (r === "big") { c.last = name; wpdirWrite(c); return "big"; }   // skip it next time
         if (!r) return "fail";
         c.last = name; c.day = today;
@@ -2002,7 +2130,7 @@
   };
   // ---------- The font of orOS (FM-5, uifont.js) ----------
   // A family of the person's (Settings › Fonts) instead of Nunito, on
-  // this device only (like the text size). uifont.js and the designkit
+  // this device (between computers since LOOK-1). uifont.js and the designkit
   // font files load only while one is set.
   var UIF_KEY = "oros-uifont";
   var UIF_FILE = /^[0-9a-f]{64}\.ttf$/;
@@ -5809,13 +5937,14 @@
       return true;
     }, function () { return false; });
   }
-  // Wallpaper: the sheet already asked; THIS device only (setImage).
-  function sendWallpaper(pic) {
+  // Wallpaper: the sheet already asked (setImage; WPPIC-1: it syncs).
+  // local = From a folder (WPDIR-1): this device only.
+  function sendWallpaper(pic, local) {
     return sendDiskBlob(pic).then(function (b) {
       if (b === "big" || !b) return b === "big" ? "big" : false;
       var ext = String(pic.path).toLowerCase().replace(/^.*\./, "");
       var type = /^image\//.test(b.type || "") ? b.type : "image/" + (ext === "jpg" ? "jpeg" : ext);
-      return window.orosWallpaper.setImage(b.slice(0, b.size, type), { bg: "#000000" });
+      return window.orosWallpaper.setImage(b.slice(0, b.size, type), { bg: "#000000", local: !!local });
     }, function () { return false; });
   }
   window.orosSend = {
@@ -7563,10 +7692,10 @@
 
   function setWallpaperUser(id) {
     if (!findWallpaper(id)) return;
-    if (wpPic()) {                     // the device picture gives way to the pick
-      if (id === "custom") return;     // "Mine" = the picture: already on
+    if (wpPicOn()) {                   // the picture gives way to the pick
+      if (id === "custom" && wpPic()) return;   // "Mine" = the picture: already on
       wpPicClear();
-      if (state.wallpaper === id) { applyWallpaper(); renderMenu(); return; }
+      if (state.wallpaper === id) { applyWallpaper(); noteLocalChange(); renderMenu(); return; }   // WPPIC-1: the removal syncs
     }
     if (state.wallpaper === id) return;
     state.wallpaper = id;
@@ -7651,7 +7780,7 @@
     } catch (e) {}
   }
 
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "wpviz", "icons", "fopen", "keys"];
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "wpviz", "icons", "fopen", "keys", "wppic"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -7668,6 +7797,7 @@
       case "icons":        return "classic";
       case "fopen":        return {};
       case "keys":         return {};
+      case "wppic":        return null;                     // WPPIC-1
       default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
     }
   }
@@ -7697,6 +7827,7 @@
       case "icons":        return iconsCanon(v);
       case "fopen":        return fopenCanon(v);
       case "keys":         return keysCanon(v);
+      case "wppic":        return wppicCanon(v);            // WPPIC-1
       default:
         if (!v || typeof v !== "object") return undefined;
         return {
@@ -7720,7 +7851,7 @@
       wallpaper: state.wallpaper, syncInterval: syncInterval,
       autoexport: state.autoexport, weather: wxRead(),
       wpart: state.wpart, wpland: state.wpland, wpviz: state.wpviz, icons: state.icons,
-      fopen: fopenRead(), keys: keysRead()
+      fopen: fopenRead(), keys: keysRead(), wppic: wppicNow()
     };
     var out = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
@@ -7888,16 +8019,35 @@
     x = (x && typeof x === "object") ? x : {};
     var legacy = !(x.sm && typeof x.sm === "object");
     var f = {};
+    function stampOf(n) {
+      return legacy ? 1
+           : (aheadOwn(x.sm, n) && typeof x.sm[n] === "number" && isFinite(x.sm[n]) && x.sm[n] >= 0) ? x.sm[n] : 0;
+    }
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
       var n = SHELL_FIELDS[i];
       var v = shellCanon(n, x[n]);
-      if (v === undefined) { f[n] = { v: shellDefault(n), t: 0 }; continue; }
-      var t = legacy ? 1
-            : (typeof x.sm[n] === "number" && isFinite(x.sm[n]) && x.sm[n] >= 0) ? x.sm[n] : 0;
+      var t = stampOf(n);
+      if (v === undefined) {
+        // FWD-1: a value this version cannot read (a newer orOS's
+        // wallpaper, skin, pack…) that someone chose (stamp > 0)
+        // keeps its place in the merge instead of turning into the
+        // default here, so it is never overwritten from this device.
+        var av = (x[n] === null) ? undefined : aheadVal(x[n]);
+        if (av !== undefined && t > 0) { f[n] = { v: av, t: t, ahead: true }; continue; }
+        f[n] = { v: shellDefault(n), t: 0 };
+        continue;
+      }
       f[n] = { v: v, t: t };
     }
+    // FWD-1: fields a newer orOS added, carried as they came.
+    var ex = {};
+    Object.keys(x).filter(aheadName).sort().slice(0, AHEAD_MAX).forEach(function (k) {
+      var av = aheadVal(x[k]);
+      if (av !== undefined) ex[k] = { v: av, t: stampOf(k) };
+    });
     return {
       f: f,
+      ex: ex,
       alarms: Array.isArray(x.alarms) ? x.alarms : [],
       // Expired tombstones are dropped per side, BEFORE the union: an
       // entry that is already dead must not lend its stamp to a live
@@ -7906,11 +8056,89 @@
     };
   }
 
+  // ----- FWD-1: what a newer orOS sends survives this one -----
+  // An older orOS (a Live USB image, a Portable copy or a phone not
+  // updated yet) used to read a wallpaper, skin or pack it did not
+  // know as "the default, stamp 0", and a field it did not know not
+  // at all. Its merge then differed from the cloud, so it uploaded
+  // the default; the newer device won again and uploaded its value;
+  // and so on at every sync (Chris 2026-11-28: the theme "never
+  // synced" to orOS USB, whose orOS was older than the Light show
+  // wallpaper). Now such a value or field keeps its stamp, wins or
+  // loses like any other, and when it wins it is kept here in
+  // "oros-shell-ahead" { <field>: { v, t } } (device-local, never
+  // applied) and sent on unchanged, so the merge equals the cloud
+  // and nothing is uploaded. Once this device's orOS knows the
+  // value (after an update) it is applied (aheadPromote).
+  var SHELL_AHEAD_KEY = "oros-shell-ahead";
+  var AHEAD_MAX = 32;            // fields of a newer orOS kept at most
+  var AHEAD_VMAX = 8192;         // characters of JSON per value at most
+  var AHEAD_NAME_RE = /^[a-z][a-zA-Z0-9]{0,31}$/;
+  var SHELL_RESERVED = ["alarms", "ver", "sm", "alarmTombs"];
+
+  function aheadOwn(o, k) { return !!o && typeof o === "object" && Object.prototype.hasOwnProperty.call(o, k); }
+  // A field name a newer orOS may have added (not ours, not reserved).
+  function aheadName(k) {
+    return AHEAD_NAME_RE.test(k) && SHELL_FIELDS.indexOf(k) < 0 && SHELL_RESERVED.indexOf(k) < 0;
+  }
+  // A plain-data copy of a value small enough to carry, or undefined.
+  // Never applied, never executed: it only travels.
+  function aheadVal(v) {
+    if (v === undefined || typeof v === "function") return undefined;
+    var s;
+    try { s = JSON.stringify(v); } catch (e) { return undefined; }
+    if (typeof s !== "string" || s.length > AHEAD_VMAX) return undefined;
+    return JSON.parse(s);
+  }
+  // Same order as shellMerge: newer stamp, then the larger JSON.
+  function aheadWins(e, mine) {
+    if (e.t !== mine.t) return e.t > mine.t;
+    return JSON.stringify(e.v) >= JSON.stringify(mine.v);
+  }
+  function aheadRead() {
+    var out = {};
+    try {
+      var raw = JSON.parse(localStorage.getItem(SHELL_AHEAD_KEY));
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) return out;
+      Object.keys(raw).sort().forEach(function (k) {
+        if (Object.keys(out).length >= AHEAD_MAX) return;
+        if (SHELL_FIELDS.indexOf(k) < 0 && !aheadName(k)) return;
+        var e = raw[k];
+        if (!e || typeof e !== "object" || typeof e.t !== "number" || !isFinite(e.t) || e.t < 0) return;
+        var v = aheadVal(e.v);
+        if (v === undefined) return;
+        out[k] = { v: v, t: e.t };
+      });
+    } catch (e2) {}
+    return out;
+  }
+  function aheadWrite(ah) {
+    try {
+      if (Object.keys(ah).length) localStorage.setItem(SHELL_AHEAD_KEY, JSON.stringify(ah));
+      else localStorage.removeItem(SHELL_AHEAD_KEY);
+    } catch (e) {}
+  }
+  // A value kept for a newer orOS that this orOS now knows (it was
+  // updated, or the module that checks it has loaded): apply it as a
+  // pull would, with its stamp. Never a push (the cloud has it).
+  var aheadPromoting = false;
+  function aheadPromote() {
+    if (aheadPromoting) return;
+    aheadPromoting = true;
+    setTimeout(function () {
+      aheadPromoting = false;
+      try { shellSliceSet(shellSliceGet()); } catch (e) {}
+    }, 0);
+  }
+
   // Canonical slice object — ONE builder for the getter and the merge.
-  function shellBuild(vals, stamps, alarms, tombs) {
+  // `extras` (FWD-1): fields of a newer orOS, after the known ones,
+  // sorted; absent when there are none, so the slice of a device
+  // without them is exactly what it was before FWD-1.
+  function shellBuild(vals, stamps, alarms, tombs, extras) {
     var sm = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) sm[SHELL_FIELDS[i]] = stamps[SHELL_FIELDS[i]];
-    return {
+    var out = {
       lang:         vals.lang,
       theme:        vals.theme,
       skin:         vals.skin,
@@ -7925,17 +8153,39 @@
       icons:        vals.icons,   // icon pack (ICONPACK-1)
       fopen:        vals.fopen,   // default apps per file type (DEF-APPS D1)
       keys:         vals.keys,    // the person's own shortcut keys (DEF-APPS D2)
+      wppic:        vals.wppic,   // your own picture on the orOS disk (WPPIC-1)
       ver:          2,
       sm:           sm,
       alarmTombs:   tombs
     };
+    if (extras) {
+      Object.keys(extras).sort().forEach(function (k) {
+        out[k] = extras[k].v;
+        sm[k] = extras[k].t;
+      });
+    }
+    return out;
   }
 
   function shellSliceGet() {
     var now = Date.now();
     var stamps = shellStampsRefresh();
     var tombs = alarmTombsLive(alarmTombsRead(), now);
-    return shellBuild(shellNow(), stamps, alarmsCanonical(alarmsRead(), tombs, now), tombs);
+    var vals = shellNow();
+    // FWD-1: what is kept for a newer orOS goes out as it came, where
+    // it still wins over this device's own choice.
+    var ah = aheadRead(), extras = null, drop = false, promote = false;
+    Object.keys(ah).forEach(function (n) {
+      var e = ah[n];
+      if (SHELL_FIELDS.indexOf(n) < 0) { (extras = extras || {})[n] = e; return; }
+      if (!aheadWins(e, { v: vals[n], t: stamps[n] })) { delete ah[n]; drop = true; return; }
+      vals[n] = e.v;
+      stamps[n] = e.t;
+      if (shellCanon(n, e.v) !== undefined) promote = true;
+    });
+    if (drop) aheadWrite(ah);
+    if (promote) aheadPromote();
+    return shellBuild(vals, stamps, alarmsCanonical(alarmsRead(), tombs, now), tombs, extras);
   }
 
   // mergeFn(local, remote) — symmetric: shellMerge(a, b) and
@@ -7952,6 +8202,14 @@
       vals[n] = w.v;
       stamps[n] = w.t;
     }
+    // FWD-1: fields of a newer orOS, the same rule per field.
+    var extras = null;
+    Object.keys(A.ex).concat(Object.keys(B.ex)).sort().forEach(function (k) {
+      if (extras && aheadOwn(extras, k)) return;
+      var p = aheadOwn(A.ex, k) ? A.ex[k] : null, q = aheadOwn(B.ex, k) ? B.ex[k] : null;
+      var w = (!p || !q) ? (p || q) : (aheadWins(p, q) ? p : q);
+      if (Object.keys(extras || {}).length < AHEAD_MAX) (extras = extras || {})[k] = w;
+    });
     var tombs = {};
     [A.tombs, B.tombs].forEach(function (src) {
       Object.keys(src).forEach(function (id) {
@@ -7966,7 +8224,7 @@
       });
     });
     tombs = alarmTombsLive(tombs, now);
-    return shellBuild(vals, stamps, alarmsCanonical(A.alarms.concat(B.alarms), tombs, now), tombs);
+    return shellBuild(vals, stamps, alarmsCanonical(A.alarms.concat(B.alarms), tombs, now), tombs, extras);
   }
 
   function shellSliceSet(data) {
@@ -7990,6 +8248,9 @@
       state.wpviz = shellCanon("wpviz", data.wpviz);
       wpVizWrite(state.wpviz);
     }
+    // WPPIC-1: your own picture; shown once Vault Drive brought the
+    // file (no push from a pull).
+    if (data.wppic !== undefined && wppicCanon(data.wppic) !== undefined) wppicPulled(wppicCanon(data.wppic));
     // Default apps (DEF-APPS D1): pulled, written for fileopen.js only
     // (no push from a pull).
     if (data.fopen !== undefined && fopenCanon(data.fopen) !== undefined) {
@@ -8056,6 +8317,14 @@
     // pull-fed path, NO markDirty.
     var nowSet = Date.now();
     var side = shellSide(data, nowSet);
+    // FWD-1: keep (never apply) what only a newer orOS can read.
+    var ahNew = {};
+    for (var ah = 0; ah < SHELL_FIELDS.length; ah++) {
+      var an = SHELL_FIELDS[ah];
+      if (side.f[an].ahead) ahNew[an] = { v: side.f[an].v, t: side.f[an].t };
+    }
+    Object.keys(side.ex).forEach(function (k) { ahNew[k] = side.ex[k]; });
+    aheadWrite(ahNew);
     if (Array.isArray(data.alarms)) {
       var tombsNew = alarmTombsLive(side.tombs, nowSet);
       var keep = alarmsCanonical(side.alarms, tombsNew, nowSet);
@@ -8214,6 +8483,234 @@
       fopenHooked = true;
       window.orosFileOpen.onChange(noteLocalChange);
     }
+  }
+
+  // ---------- 9e-look. LOOK-1: the same look on every computer ----------
+  // Chris 2026-11-28 (proposals 3, 4, 8 of the sync check «Τι
+  // συγχρονίζεται στο orOS»): the smart bar's cards and look, the Dock
+  // settings, the desktop widgets, the menu icon, the font of orOS, the
+  // motion (feel and the app zoom), the interface sounds and Accent from wallpaper travel
+  // between COMPUTERS (web on a computer, installed, Portable, USB);
+  // phones and tablets keep their own (the screen is another one).
+  // Settings › Appearance has the switch, on by default.
+  //
+  // Slice "look" = { v: 1, e: { <name>: { v: <stored text> | null, t } } }:
+  // each entry is the module's own localStorage text, carried verbatim
+  // (null = not set = the module's default), with its own ms stamp; the
+  // newer stamp wins, a tie goes to the larger JSON (shellMerge's rule).
+  // Verbatim text is FWD-1 by construction: a value a newer orOS wrote
+  // (a new card, Dock style or pack) is kept and sent on unchanged by an
+  // older one, which reads it with its own validation and never writes
+  // it back unless the person changes that setting here. An entry name
+  // this orOS does not know (a newer orOS's) is kept in "oros-look-ahead"
+  // and sent on; it is never written to any other key.
+  //
+  // Stamps ("oros-look-stamps" { since, e: { <name>: { t, h } } }, h = a
+  // hash of the stored text): a change is seen when the text differs
+  // from h (at every get, and after every Settings change), whoever
+  // wrote it. A value found the first time gets a SEED stamp, below
+  // every real one and the higher the earlier this computer started
+  // (LOOK_SEED − since in s): the computer that had this version first
+  // keeps its look, a newly joined one (orOS USB) takes it. Not set =
+  // stamp 0. Turning the switch on again starts a new `since`, so this
+  // computer takes the common look.
+  //
+  // Not registered at all on a phone or tablet, or while the switch is
+  // off at start: sync.js then carries the slice on untouched (unknown
+  // slice), as every older orOS does. Turned off while running: the
+  // slice hands back the cloud copy it was last given ("oros-look-pass")
+  // and applies nothing. Tests tests/look-sync.test.js.
+  var LOOK_OFF_KEY = "oros-look";          // "0" = this computer keeps its own look
+  var LOOK_STAMPS_KEY = "oros-look-stamps";
+  var LOOK_AHEAD_KEY = "oros-look-ahead";
+  var LOOK_PASS_KEY = "oros-look-pass";
+  var LOOK_ENTRIES = {
+    dock: "oros-launcher-prefs", feel: "oros-feel", menuicon: "oros-menuicon", smartbar: "oros-smartbar",
+    uifont: "oros-uifont", uisounds: "oros-uisounds", widgets: "oros-widgets", wpaccent: "oros-wpaccent",
+    zoom: "oros-zoom"
+  };
+  var LOOK_NAMES = Object.keys(LOOK_ENTRIES).sort();
+  var LOOK_VMAX = 16384;                   // characters per entry at most (larger: stays here)
+  var LOOK_MAX = 64;                       // entries at most
+  var LOOK_NAME_RE = /^[a-z][a-z0-9]{0,31}$/;
+  var LOOK_SEED = 1e12;                    // every real stamp (Date.now()) is above it
+  var lookReg = false;
+
+  function lookComputer() {
+    try {
+      var sc = window.screen || {};
+      return !!(window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) &&
+        Math.max(sc.width || 0, sc.height || 0) >= 1024;
+    } catch (e) { return false; }
+  }
+  var LOOK_HERE = lookComputer();
+  function lookOn() { try { return localStorage.getItem(LOOK_OFF_KEY) !== "0"; } catch (e) { return true; } }
+  function lookActive() { return LOOK_HERE && lookOn(); }
+  function lookHash(s) {
+    if (s === null) return "-";
+    var h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h.toString(36) + ":" + s.length;
+  }
+  function lookSeed(since) { return Math.max(1, LOOK_SEED - Math.floor(since / 1000)); }
+  function lookRaw(n) {
+    var v = null;
+    try { v = localStorage.getItem(LOOK_ENTRIES[n]); } catch (e) { v = null; }
+    return typeof v === "string" ? v : null;
+  }
+  function lookJson(k) {
+    try { var o = JSON.parse(localStorage.getItem(k)); return (o && typeof o === "object" && !Array.isArray(o)) ? o : null; }
+    catch (e) { return null; }
+  }
+  function lookEntry(e) {
+    if (!e || typeof e !== "object" || typeof e.t !== "number" || !isFinite(e.t) || e.t < 0) return null;
+    if (e.v !== null && (typeof e.v !== "string" || e.v.length > LOOK_VMAX)) return null;
+    return { v: e.v, t: e.t };
+  }
+  // A slice (from the cloud, a merge or this device) → { <name>: { v, t } }.
+  function lookSide(x) {
+    var out = {}, e = (x && typeof x === "object" && x.e && typeof x.e === "object" && !Array.isArray(x.e)) ? x.e : {};
+    Object.keys(e).filter(function (k) { return LOOK_NAME_RE.test(k); }).sort().slice(0, LOOK_MAX).forEach(function (k) {
+      var c = lookEntry(e[k]);
+      if (c) out[k] = c;
+    });
+    return out;
+  }
+  function lookWins(a, b) {
+    if (a.t !== b.t) return a.t > b.t;
+    return JSON.stringify(a.v) >= JSON.stringify(b.v);
+  }
+  function lookBuild(map) {
+    var e = {};
+    Object.keys(map).sort().slice(0, LOOK_MAX).forEach(function (k) { e[k] = { v: map[k].v, t: map[k].t }; });
+    return { v: 1, e: e };
+  }
+  function lookMerge(a, b) {
+    var A = lookSide(a), B = lookSide(b), out = {};
+    Object.keys(A).concat(Object.keys(B)).forEach(function (k) {
+      if (out[k]) return;
+      var p = A[k], q = B[k];
+      out[k] = (!p || !q) ? (p || q) : (lookWins(p, q) ? p : q);
+    });
+    return lookBuild(out);
+  }
+  // Stamps: a stored text that differs from what was last seen is a
+  // change made here, now. → { st, changed }
+  function lookStamps(now) {
+    var st = lookJson(LOOK_STAMPS_KEY) || {}, dirty = false, write = false;
+    if (typeof st.since !== "number" || !isFinite(st.since) || st.since <= 0) { st.since = now; st.e = {}; write = true; }
+    if (!st.e || typeof st.e !== "object" || Array.isArray(st.e)) { st.e = {}; write = true; }
+    LOOK_NAMES.forEach(function (n) {
+      var raw = lookRaw(n), h = lookHash(raw), r = st.e[n];
+      if (!r || typeof r.t !== "number" || !isFinite(r.t) || typeof r.h !== "string") {
+        st.e[n] = { t: raw === null ? 0 : lookSeed(st.since), h: h };
+        write = true;
+      } else if (r.h !== h) {
+        st.e[n] = { t: Math.max(now, r.t + 1), h: h };
+        write = dirty = true;
+      }
+    });
+    if (write) { try { localStorage.setItem(LOOK_STAMPS_KEY, JSON.stringify(st)); } catch (e) {} }
+    return { st: st, changed: dirty };
+  }
+  // This computer's look, with the entries kept for a newer orOS.
+  function lookOwn() {
+    var st = lookStamps(Date.now()).st, map = {};
+    var ah = lookSide({ e: lookJson(LOOK_AHEAD_KEY) || {} });
+    Object.keys(ah).forEach(function (k) { if (!LOOK_ENTRIES[k]) map[k] = ah[k]; });
+    LOOK_NAMES.forEach(function (n) {
+      var raw = lookRaw(n);
+      if (raw !== null && raw.length > LOOK_VMAX) return;      // too large to carry: stays here
+      map[n] = { v: raw, t: st.e[n].t };
+    });
+    return lookBuild(map);
+  }
+  function lookSliceGet() {
+    if (!lookActive()) {
+      var pass = lookJson(LOOK_PASS_KEY);
+      return pass ? lookBuild(lookSide(pass)) : lookOwn();
+    }
+    return lookOwn();
+  }
+  function lookSliceSet(data) {
+    var side = lookSide(data);
+    if (!lookActive()) {
+      try { localStorage.setItem(LOOK_PASS_KEY, JSON.stringify(lookBuild(side))); } catch (e) {}
+      return;
+    }
+    var st = lookStamps(Date.now()).st, ahead = {}, changed = [];
+    Object.keys(side).forEach(function (n) {
+      var e = side[n];
+      if (!LOOK_ENTRIES[n]) { ahead[n] = e; return; }
+      var raw = lookRaw(n);
+      if (raw !== null && raw.length > LOOK_VMAX) return;
+      if (!lookWins(e, { v: raw, t: st.e[n].t })) return;     // ours is newer: it goes up
+      if (e.v !== raw) {
+        try {
+          if (e.v === null) localStorage.removeItem(LOOK_ENTRIES[n]);
+          else localStorage.setItem(LOOK_ENTRIES[n], e.v);
+        } catch (x) { return; }                                // not stored: keep our stamp
+        changed.push(n);
+      }
+      st.e[n] = { t: e.t, h: lookHash(e.v) };
+    });
+    try { localStorage.setItem(LOOK_STAMPS_KEY, JSON.stringify(st)); } catch (e) {}
+    try {
+      if (Object.keys(ahead).length) localStorage.setItem(LOOK_AHEAD_KEY, JSON.stringify(lookBuild(ahead).e));
+      else localStorage.removeItem(LOOK_AHEAD_KEY);
+    } catch (e) {}
+    if (changed.length) lookApply(changed);
+  }
+  // Show what a pull changed, as each module does after its own save.
+  function lookApply(names) {
+    var has = function (n) { return names.indexOf(n) !== -1; };
+    var step = function (fn) { try { fn(); } catch (e) {} };
+    if (has("menuicon")) step(function () { menuIconApply(); });
+    if (has("feel")) step(feelApply);
+    if (has("zoom")) step(function () { if (!zoomOn()) zoomStop(); });
+    if (has("uifont")) step(uifApply);
+    if (has("uisounds")) step(function () { uis.rec = null; });
+    if (has("wpaccent")) step(function () { if (wpAccPref().on) wpAccRefresh(); else wpAccPoke(); });
+    if (has("dock")) step(function () { var L = window.orosLauncher; if (L) { L.refreshDock(); L.refresh(); } });
+    if (has("smartbar")) step(function () { var B = window.orosSmartBar; if (B && typeof B.reload === "function") B.reload(); });
+    if (has("widgets")) step(function () { var W = window.orosWidgets; if (W) W.refresh(); });
+    if (typeof fitBar === "function") step(fitBar);
+    settingsNotify();
+  }
+  // After a change made here (Settings, the gallery…): stamp it and ask
+  // for an upload. Cheap: nine small reads.
+  function lookPoke() {
+    if (!lookReg || !lookActive()) return;
+    var r = lookStamps(Date.now());
+    if (r.changed && window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+  }
+  function registerLookSlice() {
+    if (lookReg || !lookActive() || !window.orosSync || typeof window.orosSync.registerSlice !== "function") return;
+    try { localStorage.removeItem(LOOK_PASS_KEY); } catch (e) {}
+    try { lookStamps(Date.now()); } catch (e) {}
+    lookReg = true;
+    window.orosSync.registerSlice("look", lookSliceGet, lookSliceSet, null, lookMerge);
+  }
+  // Settings › Appearance › "Same look on all computers".
+  function lookSetUser(on) {
+    if (!LOOK_HERE || on === lookOn()) return;
+    try {
+      if (on) {
+        localStorage.removeItem(LOOK_OFF_KEY);
+        localStorage.removeItem(LOOK_PASS_KEY);
+        localStorage.removeItem(LOOK_STAMPS_KEY);   // a new `since`: this computer takes the common look
+      } else {
+        localStorage.setItem(LOOK_PASS_KEY, JSON.stringify(lookOwn()));
+        localStorage.setItem(LOOK_OFF_KEY, "0");
+      }
+    } catch (e) {}
+    if (on) {
+      if (!lookReg) registerLookSlice();
+      else { try { lookStamps(Date.now()); } catch (e) {} }
+      var S = window.orosSync;
+      if (S && typeof S.reconcile === "function" && S.isConnected && S.isConnected()) { try { S.reconcile("look"); } catch (e) {} }
+    }
+    settingsNotify();
   }
 
   // ---------- 9f. Files disk — backups + legacy cleanup (FILES-V) ----------
@@ -12276,6 +12773,12 @@
   function initSyncIntegration() {
     registerShellSlice();
     registerMeSlice();
+    registerLookSlice();     // LOOK-1: computers only, while the switch is on
+    // WPPIC-1: a pulled picture shows once Vault Drive brought its file
+    if (window.orosVault && typeof window.orosVault.onStatus === "function") {
+      window.orosVault.onStatus(function (k) { if (k === "done" || k === "fetched") wppicFetch(); });
+    }
+    setTimeout(function () { wppicFetch(); wppicMigrate(); }, 2500);
     // CONT-1 (continue.js): the "continue" slice, lazy flush
     if (window.orosContinue) {
       window.orosContinue.init({
@@ -12499,7 +13002,7 @@
   }
   // ---------- UISND-1: interface sounds (video ideas 2026-11-23 #5) ----------
   // Soft sounds for taps, switches and opening and closing apps and
-  // panels. OFF by default; device-local "oros-uisounds" = { on, pack:
+  // panels. OFF by default; "oros-uisounds" (between computers, LOOK-1) = { on, pack:
   // "pebble" | "keys" | "crystal", vol: 0..100 }. The packs are five
   // short MP3s each from koulaxizis/oros-sounds ui/ (CC0, made from its
   // own VSCO 2 CE files), fetched the first time they are needed and kept
@@ -14049,6 +14552,7 @@
   var settingsNotifyQueued = false;
 
   function settingsNotify() {
+    try { lookPoke(); } catch (e) {}     // LOOK-1: a look change made here goes up
     if (settingsNotifyQueued || !settingsListeners.length) return;
     settingsNotifyQueued = true;
     setTimeout(function () {
@@ -14159,6 +14663,7 @@
                own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
       menuIcon: { now: menuIconNow(), choices: MENU_ICON_IDS.slice() },   // MENUICON-1
+      look: { here: LOOK_HERE, on: lookOn(), active: lookActive() },      // LOOK-1
       gamemode: SOLO ? null : { on: gameModeOn(), active: gameNow },     // GAMEMODE-1
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
@@ -14316,6 +14821,7 @@
       case "wpdir:next": wpdirSet("next"); return;
       case "gamemode":   if (!SOLO) { gameModeSet(!!value); settingsNotify(); } return;   // GAMEMODE-1
       case "menuicon":   if (!SOLO) { menuIconSet(String(value || "")); settingsNotify(); } return;   // MENUICON-1
+      case "look":       lookSetUser(!!value); return;                     // LOOK-1
       case "pet":
         if (window.orosPet && typeof window.orosPet.toggle === "function" &&
             !!value !== !!window.orosPet.isEnabled()) {
@@ -15581,7 +16087,7 @@
   // nothing waits for it and no state depends on it: openApp and
   // returnToDesktop do their work first, the motion is drawn after.
   var ZOOM_KEY = "oros-zoom", ZOOM_OPEN_MS = 240, ZOOM_CLOSE_MS = 200;
-  // FEEL-1 (video ideas 2026-11-23 #6): the motion feel, device-local
+  // FEEL-1 (video ideas 2026-11-23 #6): the motion feel (between computers since LOOK-1)
   // "oros-feel" = "calm" | "lively" (default: the timings from before) |
   // "bouncy". One set of timings for the app zoom here and, through
   // html[data-oros-feel], the CSS of menus and panels (style.css

@@ -94,7 +94,7 @@
       "toast.full": "This work is full ({max} points). Save it and start a new one.",
       "toast.mineFull": "You have {n} works, the most there can be",
       "toast.saveFail": "Could not save: storage is full", "toast.file": "Saved",
-      "toast.dup": "Copy made", "toast.wall": "Set as the wallpaper of this device",
+      "toast.dup": "Copy made", "toast.wall": "Set as your wallpaper",
       "toast.wallFail": "Could not set the wallpaper",
       "toast.surprise": "A surprise work. Save it if you like it.",
       "live.replay": "Replaying the work", "live.replayDone": "Replay finished"
@@ -135,7 +135,7 @@
       "toast.full": "Το έργο γέμισε ({max} σημεία). Αποθήκευσέ το και ξεκίνα νέο.",
       "toast.mineFull": "Έχεις {n} έργα, όσα χωράνε",
       "toast.saveFail": "Δεν αποθηκεύτηκε: ο χώρος είναι γεμάτος", "toast.file": "Αποθηκεύτηκε",
-      "toast.dup": "Έγινε αντίγραφο", "toast.wall": "Έγινε ταπετσαρία αυτής της συσκευής",
+      "toast.dup": "Έγινε αντίγραφο", "toast.wall": "Έγινε η ταπετσαρία σου",
       "toast.wallFail": "Δεν έγινε ταπετσαρία",
       "toast.surprise": "Ένα έργο-έκπληξη. Αποθήκευσέ το αν σου αρέσει.",
       "live.replay": "Το έργο ξαναζωγραφίζεται", "live.replayDone": "Η επανάληψη τελείωσε"

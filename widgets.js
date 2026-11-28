@@ -48,7 +48,8 @@
 //     record as Time (oros-time-pmrun) and the same engine alarm, so
 //     Time, the smart bar's Focus card and this card always agree.
 //
-// Device-local (oros-widgets, never synced: screens differ per device):
+// oros-widgets (device-local; since LOOK-1 shared between computers by the
+// shell's "look" slice, phones keep their own):
 //   { v:1, list: ["clock","calendar",…] [, clock] }   order = list order
 //   Absent = the default: clock, calendar, today, weather on a wide
 //   screen that is not a phone; none on a phone or a narrow window.

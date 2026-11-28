@@ -667,8 +667,9 @@
     try { return !!root.localStorage.getItem(MENU_KEY); } catch (e) { return false; }
   }
 
-  // ---------- 3. Dock preferences (DEVICE-LOCAL, never synced) ----------
-  // A phone and a PC want different docks, so only the pins travel.
+  // ---------- 3. Dock preferences (device-local; LOOK-1: between computers) ----------
+  // A phone and a PC want different docks: the pins travel everywhere,
+  // these prefs only between computers (the shell's "look" slice).
   // oros-launcher-prefs = { on, size: s|m|l, magnify, autohide, over, style, pos }
   // pos: the edge (POSITIONS, launcher 1.6.0); unknown = "bottom".
   // over: null = never chosen = off (Chris 2026-10-10; it used to follow

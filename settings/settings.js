@@ -152,8 +152,12 @@
     return r;
   }
 
+  // LOOK-1: "computers" (the shell's look slice) reads "This device"
+  // on a phone or tablet and while the switch is off here.
+  var lookNow = null;
   function scopeBadge(name) {
     var scope = C.scopeOf(name);
+    if (scope === "computers" && !(lookNow && lookNow.active)) scope = "device";
     var b = el("span", "scope scope-" + scope, t("scope." + scope));
     b.title = t("scope." + scope + ".title");
     return b;
@@ -476,6 +480,14 @@
 
   function secAppearance(host, s) {
     secYours(host, s);
+    // LOOK-1: the same look on every computer (computers only)
+    if (s.look && s.look.here) {
+      var cl = card(t("a.look"), "look");
+      cl.id = "look-card";
+      cl.appendChild(row(t("a.look.on"), switchBtn(!!s.look.on, "look", function (v) { set("look", v); }, t("a.look.on")),
+        { hint: t(s.look.on ? "a.look.hint" : "a.look.off") }));
+      host.appendChild(cl);
+    }
     var c1 = card(t("a.theme"), "theme");
     c1.appendChild(segmented([
       { value: "dark", label: t("a.dark") }, { value: "light", label: t("a.light") }
@@ -5787,6 +5799,27 @@
     h.id = "part-" + id;
     host.appendChild(h);
   }
+  // LOOK-1 / proposal 4 (Chris 2026-11-28): what travels between
+  // devices and what stays here, in three groups, folded by default.
+  var WS_GROUPS = [["all", 8], ["pc", 1], ["dev", 5]];
+  function secWhatSyncs(host, s) {
+    var c = card(t("ws.title"));
+    c.id = "ws-card";
+    var d = el("details", "ws");
+    d.appendChild(el("summary", "ws-sum", t("ws.open")));
+    d.appendChild(el("p", "hint", t("ws.hint")));
+    var pc = !!(s.look && s.look.active);
+    WS_GROUPS.forEach(function (g) {
+      d.appendChild(el("h4", "sub", t("ws." + g[0])));
+      if (g[0] === "pc") d.appendChild(el("p", "hint", t(pc ? "ws.pc.on" : s.look && s.look.here ? "ws.pc.off" : "ws.pc.phone")));
+      var ul = el("ul", "ws-list");
+      for (var i = 1; i <= g[1]; i++) ul.appendChild(el("li", null, t("ws." + g[0] + "." + i)));
+      d.appendChild(ul);
+    });
+    c.appendChild(d);
+    host.appendChild(c);
+  }
+
   function both(first, rest) {
     return function (host, s) {
       first(host, s);
@@ -5795,7 +5828,7 @@
   }
   var SECTION_FN = {
     appearance: secAppearance, fonts: secFonts, accessibility: secAccessibility, notifications: secNotifications,
-    sync: both(secSync, [["backup", secBackup]]),
+    sync: both(function (host, s) { secSync(host, s); secWhatSyncs(host, s); }, [["backup", secBackup]]),
     lock: both(secLock, [["sensitive", secSensitive], ["users", secUsers]]),
     language: secLanguage,
     apps: both(function (host, s) { part(host, "menu"); secMenu(host, s); }, [["files", secFiles], ["solo", secSolo]]),
@@ -5845,6 +5878,7 @@
   // the user is typing the passphrase or holding a select).
   function render() {
     var s = snap();
+    lookNow = s ? s.look || null : null;
     var page = $("page");
     var body = document.body;
     if (!s) {
@@ -5904,6 +5938,7 @@
   function findOk(s, need) {
     if (need.indexOf("app:") === 0) return (s.apps || []).indexOf(need.slice(4)) !== -1;
     if (need === "phone") return !!phone();
+    if (need === "computer") return !!(s.look && s.look.here);      // LOOK-1
     if (need === "textrepl") return !!textRepl();
     if (need === "a11yfx") return !!(s.a11y && s.a11y.fx);
     if (need === "a11yfine") return !!(s.a11y && s.a11y.fx && s.a11y.fine);

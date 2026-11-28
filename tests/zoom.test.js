@@ -58,7 +58,7 @@ test("zoom: targets are rectangles (icon, Dock bar, edge), never a side", () => 
 });
 
 test("zoom: Settings › Appearance switch, this device, EN/EL/DE", () => {
-  assert.strictEqual(Core.SCOPE.zoom, "device");
+  assert.strictEqual(Core.SCOPE.zoom, "computers");   // LOOK-1: shared between computers
   assert.ok(Core.findSettings, "search");
   assert.match(settings, /switchBtn\(!!s\.zoom\.on, "zoom"/);
   assert.match(shell, /zoom: SOLO \? null : \{ on: zoomOn\(\), feel: feelNow\(\)/);   // FEEL-1 adds the feel

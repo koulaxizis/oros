@@ -83,7 +83,8 @@ test("Random: a drawn wallpaper, never Mine, Living land, Light show, None or th
 });
 
 test("wiring: the folder runs through setImage (this device only); a pick by hand ends it", () => {
-  assert.match(SEC, /sendWallpaper\(\{ path: dir \+ "\/" \+ name, max: WP_PIC_MAX \}\)/);
+  // WPPIC-1: `true` = this device only (setImage local: no disk copy, the synced choice waits)
+  assert.match(SEC, /sendWallpaper\(\{ path: dir \+ "\/" \+ name, max: WP_PIC_MAX \}, true\)/);
   assert.match(SEC, /if \(wpdirBusy \|\| SOLO\) return/);
   assert.match(SHELL, /case "wallpaper":[\s\S]{0,200}wpdirOff\(\);[\s\S]{0,120}setWallpaperUser\(value\)/);
   assert.match(SHELL, /case "wallpaper:random":[\s\S]{0,200}wpRandomId\(/);
