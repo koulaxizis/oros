@@ -575,7 +575,7 @@ orosPack("de", "photolab", {
  "msg.subjectSel": "Das Motiv ist ausgewählt.",
  "msg.tooBig": "Bilder bis 50 MB können geöffnet werden.",
  "msg.top": "Diese Ebene ist schon ganz oben.",
- "msg.wallpaper": "Als Hintergrundbild dieses Geräts gesetzt.",
+ "msg.wallpaper": "Als dein Hintergrundbild gesetzt.",
  "msg.wallpaperFail": "Das Hintergrundbild konnte nicht gesetzt werden.",
  "msg.xmpBad": "Das ist kein Lightroom- oder Camera-Raw-Preset (.xmp).",
  "msg.xmpDone": "Lightroom-Preset „{name}“: {n} Einstellungsebenen hinzugefügt.",

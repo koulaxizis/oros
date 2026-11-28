@@ -5801,7 +5801,7 @@
   }
   // LOOK-1 / proposal 4 (Chris 2026-11-28): what travels between
   // devices and what stays here, in three groups, folded by default.
-  var WS_GROUPS = [["all", 8], ["pc", 1], ["dev", 6]];
+  var WS_GROUPS = [["all", 8], ["pc", 1], ["dev", 5]];
   function secWhatSyncs(host, s) {
     var c = card(t("ws.title"));
     c.id = "ws-card";

@@ -577,15 +577,26 @@
   var wpShown = null;        // { key, w, h, url } of the picture on the desktop
   var wpGen = 0;             // newer request = older drawing is dropped
 
-  // A finished picture (Aura Painter, setImage): THIS device only,
-  // never synced, and it never changes state.wallpaper (the synced
-  // choice), so other devices keep theirs. The picture sits in the
-  // same IndexedDB under "picture"; WP_PIC_KEY ({ at, bg }) says it
-  // is on, and then it is the desktop here, shown as "Mine" in
+  // A finished picture (Aura Painter, setImage, Files): it never
+  // changes state.wallpaper (the synced choice). The picture sits in
+  // the same IndexedDB under "picture"; WP_PIC_KEY ({ at, bg, path? })
+  // says it is on, and then it is the desktop here, shown as "Mine" in
   // Settings. Picking another wallpaper here, or making a recipe in
   // the Generator (setCustom), takes it away.
+  // WPPIC-1 (Chris 2026-11-28, proposal 7 of the sync check): the
+  // picture is also written to the orOS disk (WP_PIC_DIR, so Vault
+  // Drive carries it, up to 20 MB) and the choice travels in the shell
+  // slice as the field `wppic` { at, bg, path } | null; another device
+  // shows it once Vault Drive has brought the file (WP_PIC_WAIT_KEY
+  // holds the choice until then). A picture the disk could not take
+  // stays on this device only, as before.
   var WP_PIC_KEY = "oros-wallpaper-pic";
   var WP_PIC_MAX = 20 * 1024 * 1024;
+  var WP_PIC_DIR = "/internal/Pictures/My wallpaper";
+  var WP_PIC_WAIT_KEY = "oros-wallpaper-pic-wait";
+  var WP_PIC_PATH_RE = /^\/internal\/Pictures\/My wallpaper\/wallpaper-[0-9]{1,15}\.(jpg|png|webp|gif|avif)$/;
+  var WP_PIC_EXT = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp", "image/gif": "gif", "image/avif": "avif" };
+  var WP_PIC_MIME = { jpg: "image/jpeg", png: "image/png", webp: "image/webp", gif: "image/gif", avif: "image/avif" };
 
   function wpPic() {
     try {
@@ -593,9 +604,99 @@
       return (p && typeof p.at === "number" && /^#[0-9a-f]{6}$/i.test(p.bg)) ? p : null;
     } catch (e) { return null; }
   }
-  function wpPicClear() {
-    try { localStorage.removeItem(WP_PIC_KEY); } catch (e) {}
+  // A picture is on here, or one from another device is on its way.
+  function wpPicOn() { return !!(wpPic() || wppicWait()); }
+  // pulled = the removal came from another device (its file is gone
+  // there already); otherwise this device's own synced file goes too.
+  function wpPicClear(pulled) {
+    var p = wpPic();
+    try { localStorage.removeItem(WP_PIC_KEY); localStorage.removeItem(WP_PIC_WAIT_KEY); } catch (e) {}
     wpCacheDel("picture");
+    if (!pulled && p && wppicCanon(p) && window.orosFS) window.orosFS.rm(p.path).catch(function () {});
+  }
+  // WPPIC-1: the synced form of the picture choice, or undefined.
+  function wppicCanon(v) {
+    if (v === null) return null;
+    if (!v || typeof v !== "object" || Array.isArray(v)) return undefined;
+    if (typeof v.at !== "number" || !isFinite(v.at) || v.at <= 0 || Math.floor(v.at) !== v.at) return undefined;
+    if (typeof v.bg !== "string" || !/^#[0-9a-f]{6}$/.test(v.bg)) return undefined;
+    if (typeof v.path !== "string" || !WP_PIC_PATH_RE.test(v.path)) return undefined;
+    return { at: v.at, bg: v.bg, path: v.path };
+  }
+  function wppicWait() {
+    try { var w = wppicCanon(JSON.parse(localStorage.getItem(WP_PIC_WAIT_KEY))); return w || null; } catch (e) { return null; }
+  }
+  // What this device shows (or waits to show) as the synced choice.
+  function wppicNow() {
+    var w = wppicWait();
+    if (w) return w;
+    var p = wpPic();
+    if (p && p.local) return wppicCanon(p.keep) || null;      // From a folder: the synced choice waits
+    return (p && wppicCanon(p)) || null;
+  }
+  // A choice pulled from another device (shellSliceSet).
+  function wppicPulled(v) {
+    var cur = wpPic();
+    if (cur && cur.local) {
+      // WPDIR-1 "From a folder" shows this device's own picture: the
+      // synced choice is kept beside it, not shown.
+      var c2 = { at: cur.at, bg: cur.bg, local: 1 };
+      if (v) c2.keep = v;
+      try { localStorage.setItem(WP_PIC_KEY, JSON.stringify(c2)); localStorage.removeItem(WP_PIC_WAIT_KEY); } catch (e) {}
+      return;
+    }
+    if (v === null) {
+      try { localStorage.removeItem(WP_PIC_WAIT_KEY); } catch (e) {}
+      if (cur && wppicCanon(cur)) wpPicClear(true);
+      return;
+    }
+    if (cur && cur.at === v.at && cur.path === v.path) {
+      try { localStorage.removeItem(WP_PIC_WAIT_KEY); } catch (e) {}
+      return;
+    }
+    try { localStorage.setItem(WP_PIC_WAIT_KEY, JSON.stringify(v)); } catch (e) { return; }
+    wppicFetch();
+  }
+  // A picture set before WPPIC-1 (on this device only) goes to the
+  // orOS disk once, so it syncs like a new one.
+  function wppicMigrate() {
+    var p = wpPic();
+    if (!p || p.path || p.local || !window.orosFS) return;
+    wpCacheGet("picture").then(function (rec) {
+      var b = rec && rec.key === "pic:" + p.at ? rec.blob : null;
+      var ext = b ? WP_PIC_EXT[b.type] : "";
+      if (!ext || !b.size || b.size > WP_PIC_MAX) return;
+      var path = WP_PIC_DIR + "/wallpaper-" + p.at + "." + ext;
+      return window.orosFS.write(path, b).then(function () {
+        var now = wpPic();
+        if (!now || now.at !== p.at || now.path) return;
+        localStorage.setItem(WP_PIC_KEY, JSON.stringify({ at: p.at, bg: p.bg, path: path }));
+        noteLocalChange();
+      });
+    }).catch(function () {});
+  }
+  // The waiting picture from the orOS disk, once Vault Drive brought it.
+  var wppicBusy = false;
+  function wppicFetch() {
+    var w = wppicWait();
+    if (!w || wppicBusy || !window.orosFS) return;
+    wppicBusy = true;
+    window.orosFS.read(w.path).then(function (b) {
+      if (!b || !b.size || b.size > WP_PIC_MAX) return null;
+      var mime = WP_PIC_MIME[w.path.split(".").pop()];
+      var blob = new Blob([b], { type: mime });
+      return wpCachePut({ key: "pic:" + w.at, w: 0, h: 0, blob: blob }, "picture").then(function (ok) {
+        var now = wppicWait();
+        if (!ok || !now || now.at !== w.at) return null;
+        localStorage.setItem(WP_PIC_KEY, JSON.stringify(w));
+        localStorage.removeItem(WP_PIC_WAIT_KEY);
+        applyWallpaper();
+        settingsNotify();
+        return null;
+      });
+    }).catch(function () { /* not here yet: the next Vault Drive sync tries again */ }).then(function () {
+      wppicBusy = false;
+    });
   }
 
   function wpArt() { return window.OrosWallArt || null; }
@@ -704,6 +805,14 @@
     wpCacheGet("picture").then(function (rec) {
       if (gen !== wpGen) return;
       if (rec && rec.key === key && rec.blob) { wpShow(desktop, rec, pic.bg); return; }
+      // WPPIC-1: a synced picture comes back from the orOS disk (the
+      // choice stays: removing it here would remove it everywhere).
+      var syn = wppicCanon(pic) || (pic.local ? wppicCanon(pic.keep) : undefined);
+      if (syn) {
+        try { localStorage.setItem(WP_PIC_WAIT_KEY, JSON.stringify(syn)); localStorage.removeItem(WP_PIC_KEY); } catch (e) {}
+        wppicFetch();
+        return;
+      }
       try { localStorage.removeItem(WP_PIC_KEY); } catch (e) {}   // picture gone: back to the choice
       applyWallpaper();
     });
@@ -1062,7 +1171,7 @@
     if (WP_VIZ_STYLES.indexOf(style) < 0) return false;
     state.wpviz = wpvizCanon({ style: style });
     wpVizWrite(state.wpviz);
-    if (wpPic()) wpPicClear();
+    if (wpPicOn()) wpPicClear();
     if (state.wallpaper !== "viz") {
       state.wallpaper = "viz";
       localStorage.setItem("oros-wallpaper", state.wallpaper);
@@ -1406,7 +1515,7 @@
       }
       var r = A ? A.normRecipe(src) : null;
       if (!r) return false;
-      if (wpPic()) wpPicClear();  // a recipe made here replaces the device picture
+      if (wpPicOn()) wpPicClear();  // a recipe made here replaces the device picture
       state.wpart = r;
       wpArtWrite(r);
       state.wallpaper = "custom";
@@ -1431,23 +1540,42 @@
       noteLocalChange();
       return true;
     },
-    // A finished picture (Blob, image/*) → the wallpaper of THIS
-    // device ("Mine" in Settings). opts.bg = colour around the
-    // picture. Resolves true once it is stored and shown. Nothing
-    // syncs: not the picture, not the choice.
+    // A finished picture (Blob, image/*) → the wallpaper ("Mine" in
+    // Settings). opts.bg = colour around the picture. Resolves true
+    // once it is stored and shown. WPPIC-1: it is also written to the
+    // orOS disk and the choice syncs; if the disk cannot take it, it
+    // stays on this device only.
     setImage: function (blob, opts) {
       var bg = opts && typeof opts.bg === "string" ? opts.bg.toLowerCase() : "#000000";
       // duck-typed: a Blob made in the app's frame is another realm's Blob
       if (!blob || typeof blob.size !== "number" || typeof blob.slice !== "function" ||
           typeof blob.type !== "string" || !/^image\//.test(blob.type) ||
           !blob.size || blob.size > WP_PIC_MAX || !/^#[0-9a-f]{6}$/.test(bg)) return Promise.resolve(false);
-      var at = Date.now();
-      return wpCachePut({ key: "pic:" + at, w: 0, h: 0, blob: blob }, "picture").then(function (ok) {
+      var at = Date.now(), old = wpPic(), local = !!(opts && opts.local);
+      var ext = WP_PIC_EXT[blob.type], path = ext && !local ? WP_PIC_DIR + "/wallpaper-" + at + "." + ext : "";
+      var own = new Blob([blob], { type: blob.type });
+      return wpCachePut({ key: "pic:" + at, w: 0, h: 0, blob: own }, "picture").then(function (ok) {
         if (!ok) return false;
-        try { localStorage.setItem(WP_PIC_KEY, JSON.stringify({ at: at, bg: bg })); }
-        catch (e) { return false; }
-        applyWallpaper();
-        return true;
+        if (local) {
+          // WPDIR-1 (From a folder): this device only; the synced choice waits beside it
+          var keep = wppicNow(), lr = { at: at, bg: bg, local: 1 };
+          if (keep) lr.keep = keep;
+          try { localStorage.setItem(WP_PIC_KEY, JSON.stringify(lr)); localStorage.removeItem(WP_PIC_WAIT_KEY); }
+          catch (e) { return false; }
+          applyWallpaper();
+          return true;
+        }
+        var onDisk = (path && window.orosFS) ? window.orosFS.write(path, own).then(function () { return true; }, function () { return false; }) : Promise.resolve(false);
+        return onDisk.then(function (written) {
+          var rec = written ? { at: at, bg: bg, path: path } : { at: at, bg: bg };
+          try { localStorage.setItem(WP_PIC_KEY, JSON.stringify(rec)); localStorage.removeItem(WP_PIC_WAIT_KEY); }
+          catch (e) { return false; }
+          // the picture it replaces leaves the disk (only our own file)
+          if (old && wppicCanon(old) && old.path !== path && window.orosFS) window.orosFS.rm(old.path).catch(function () {});
+          applyWallpaper();
+          noteLocalChange();
+          return true;
+        });
       });
     },
     // { style, seed } → the Living land wallpaper, selected; gentle
@@ -1456,7 +1584,7 @@
       if (!l || typeof l !== "object" || Array.isArray(l)) return false;
       var c = wplandCanon({ style: l.style, seed: l.seed, motion: wpLandNow().motion, light: wpLandNow().light });
       if (!c || c.style !== l.style || c.seed !== l.seed) return false;
-      if (wpPic()) wpPicClear();  // a land picked here replaces the device picture
+      if (wpPicOn()) wpPicClear();  // a land picked here replaces the device picture
       wpLandNewShape({ style: c.style, seed: c.seed });
       return true;
     },
@@ -1639,7 +1767,7 @@
     return Promise.resolve(F.ls(dir)).then(function (list) {
       var name = wpdirNext(list, c.last);
       if (!name) return "empty";
-      return sendWallpaper({ path: dir + "/" + name, max: WP_PIC_MAX }).then(function (r) {
+      return sendWallpaper({ path: dir + "/" + name, max: WP_PIC_MAX }, true).then(function (r) {
         if (r === "big") { c.last = name; wpdirWrite(c); return "big"; }   // skip it next time
         if (!r) return "fail";
         c.last = name; c.day = today;
@@ -5809,13 +5937,14 @@
       return true;
     }, function () { return false; });
   }
-  // Wallpaper: the sheet already asked; THIS device only (setImage).
-  function sendWallpaper(pic) {
+  // Wallpaper: the sheet already asked (setImage; WPPIC-1: it syncs).
+  // local = From a folder (WPDIR-1): this device only.
+  function sendWallpaper(pic, local) {
     return sendDiskBlob(pic).then(function (b) {
       if (b === "big" || !b) return b === "big" ? "big" : false;
       var ext = String(pic.path).toLowerCase().replace(/^.*\./, "");
       var type = /^image\//.test(b.type || "") ? b.type : "image/" + (ext === "jpg" ? "jpeg" : ext);
-      return window.orosWallpaper.setImage(b.slice(0, b.size, type), { bg: "#000000" });
+      return window.orosWallpaper.setImage(b.slice(0, b.size, type), { bg: "#000000", local: !!local });
     }, function () { return false; });
   }
   window.orosSend = {
@@ -7563,10 +7692,10 @@
 
   function setWallpaperUser(id) {
     if (!findWallpaper(id)) return;
-    if (wpPic()) {                     // the device picture gives way to the pick
-      if (id === "custom") return;     // "Mine" = the picture: already on
+    if (wpPicOn()) {                   // the picture gives way to the pick
+      if (id === "custom" && wpPic()) return;   // "Mine" = the picture: already on
       wpPicClear();
-      if (state.wallpaper === id) { applyWallpaper(); renderMenu(); return; }
+      if (state.wallpaper === id) { applyWallpaper(); noteLocalChange(); renderMenu(); return; }   // WPPIC-1: the removal syncs
     }
     if (state.wallpaper === id) return;
     state.wallpaper = id;
@@ -7651,7 +7780,7 @@
     } catch (e) {}
   }
 
-  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "wpviz", "icons", "fopen", "keys"];
+  var SHELL_FIELDS = ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "weather", "wpart", "wpland", "wpviz", "icons", "fopen", "keys", "wppic"];
   var TOMB_GRACE_MS = 24 * 60 * 60 * 1000;      // a once-alarm tombstone outlives its alarm by a day (clock skew)
 
   function shellDefault(name) {
@@ -7668,6 +7797,7 @@
       case "icons":        return "classic";
       case "fopen":        return {};
       case "keys":         return {};
+      case "wppic":        return null;                     // WPPIC-1
       default:             return { on: false, auto: false, lat: null, lon: null, label: "" };   // weather
     }
   }
@@ -7697,6 +7827,7 @@
       case "icons":        return iconsCanon(v);
       case "fopen":        return fopenCanon(v);
       case "keys":         return keysCanon(v);
+      case "wppic":        return wppicCanon(v);            // WPPIC-1
       default:
         if (!v || typeof v !== "object") return undefined;
         return {
@@ -7720,7 +7851,7 @@
       wallpaper: state.wallpaper, syncInterval: syncInterval,
       autoexport: state.autoexport, weather: wxRead(),
       wpart: state.wpart, wpland: state.wpland, wpviz: state.wpviz, icons: state.icons,
-      fopen: fopenRead(), keys: keysRead()
+      fopen: fopenRead(), keys: keysRead(), wppic: wppicNow()
     };
     var out = {};
     for (var i = 0; i < SHELL_FIELDS.length; i++) {
@@ -8022,6 +8153,7 @@
       icons:        vals.icons,   // icon pack (ICONPACK-1)
       fopen:        vals.fopen,   // default apps per file type (DEF-APPS D1)
       keys:         vals.keys,    // the person's own shortcut keys (DEF-APPS D2)
+      wppic:        vals.wppic,   // your own picture on the orOS disk (WPPIC-1)
       ver:          2,
       sm:           sm,
       alarmTombs:   tombs
@@ -8116,6 +8248,9 @@
       state.wpviz = shellCanon("wpviz", data.wpviz);
       wpVizWrite(state.wpviz);
     }
+    // WPPIC-1: your own picture; shown once Vault Drive brought the
+    // file (no push from a pull).
+    if (data.wppic !== undefined && wppicCanon(data.wppic) !== undefined) wppicPulled(wppicCanon(data.wppic));
     // Default apps (DEF-APPS D1): pulled, written for fileopen.js only
     // (no push from a pull).
     if (data.fopen !== undefined && fopenCanon(data.fopen) !== undefined) {
@@ -12639,6 +12774,11 @@
     registerShellSlice();
     registerMeSlice();
     registerLookSlice();     // LOOK-1: computers only, while the switch is on
+    // WPPIC-1: a pulled picture shows once Vault Drive brought its file
+    if (window.orosVault && typeof window.orosVault.onStatus === "function") {
+      window.orosVault.onStatus(function (k) { if (k === "done" || k === "fetched") wppicFetch(); });
+    }
+    setTimeout(function () { wppicFetch(); wppicMigrate(); }, 2500);
     // CONT-1 (continue.js): the "continue" slice, lazy flush
     if (window.orosContinue) {
       window.orosContinue.init({

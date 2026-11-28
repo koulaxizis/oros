@@ -43,12 +43,12 @@ function device(knows) {
     line(/var AHEAD_VMAX = [^;]+;/),
     line(/var AHEAD_NAME_RE = [^;]+;/),
     line(/var SHELL_RESERVED = [^;]+;/),
-    `function shellDefault(n) { return { lang: "en", theme: "dark", skin: "oros", wallpaper: "dusk", syncInterval: 3, autoexport: "off", wpart: null, wpland: null, wpviz: null, icons: "classic", fopen: {}, keys: {} }[n] || { on: false, auto: false, lat: null, lon: null, label: "" }; }`,
+    `function shellDefault(n) { var d = { lang: "en", theme: "dark", skin: "oros", wallpaper: "dusk", syncInterval: 3, autoexport: "off", wpart: null, wpland: null, wpviz: null, icons: "classic", fopen: {}, keys: {}, wppic: null }; return Object.prototype.hasOwnProperty.call(d, n) ? d[n] : { on: false, auto: false, lat: null, lon: null, label: "" }; }`,
     `function shellCanon(n, v) {
        if (n === "wallpaper") return (typeof v === "string" && KNOWS.indexOf(v) >= 0) ? v : undefined;
        if (n === "weather") return (v && typeof v === "object") ? { on: !!v.on, auto: !!v.auto, lat: null, lon: null, label: "" } : undefined;
        if (n === "fopen" || n === "keys") return (v && typeof v === "object" && !Array.isArray(v)) ? v : undefined;
-       if (n === "wpart" || n === "wpland" || n === "wpviz") return v === null ? null : undefined;
+       if (n === "wpart" || n === "wpland" || n === "wpviz" || n === "wppic") return v === null ? null : undefined;
        if (n === "syncInterval") return typeof v === "number" ? v : undefined;
        return typeof v === "string" ? v : undefined;
      }`,
@@ -64,7 +64,7 @@ function device(knows) {
   ].join("\n");
   const api = new Function("localStorage", "KNOWS", "ENV", src)(localStorage, knows, env);
   const defaults = { lang: "en", theme: "dark", skin: "oros", wallpaper: "dusk", syncInterval: 3, autoexport: "off",
-    weather: { on: false, auto: false, lat: null, lon: null, label: "" }, wpart: null, wpland: null, wpviz: null,
+    weather: { on: false, auto: false, lat: null, lon: null, label: "" }, wpart: null, wpland: null, wpviz: null, wppic: null,
     icons: "classic", fopen: {}, keys: {} };
   env.vals = JSON.parse(JSON.stringify(defaults));
   env.stamps = Object.fromEntries(Object.keys(defaults).map((k) => [k, 0]));
@@ -167,7 +167,7 @@ test("without anything from a newer orOS the slice is exactly what it was", () =
   const d = device(ALL);
   const s = d.shellSliceGet();
   assert.deepEqual(Object.keys(s), ["lang", "theme", "skin", "wallpaper", "syncInterval", "autoexport", "alarms",
-    "weather", "wpart", "wpland", "wpviz", "icons", "fopen", "keys", "ver", "sm", "alarmTombs"]);
+    "weather", "wpart", "wpland", "wpviz", "icons", "fopen", "keys", "wppic", "ver", "sm", "alarmTombs"]);
   assert.deepEqual(Object.keys(s.sm), d.SHELL_FIELDS);
   assert.equal(d.store.has("oros-shell-ahead"), false);
 });

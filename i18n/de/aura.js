@@ -79,7 +79,7 @@ orosPack("de", "aura", {
  "toast.saved": "Werk gespeichert",
  "toast.surprise": "Ein Überraschungswerk. Speichere es, wenn es dir gefällt.",
  "toast.undo": "Rückgängig",
- "toast.wall": "Als Hintergrundbild dieses Geräts festgelegt",
+ "toast.wall": "Als dein Hintergrundbild festgelegt",
  "toast.wallFail": "Hintergrundbild konnte nicht festgelegt werden",
  "tune.hide": "Pinsel ausblenden",
  "tune.show": "Pinsel"

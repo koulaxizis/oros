@@ -213,14 +213,15 @@ test("wiring: app, palette, sync, wallpaper picture, help", () => {
   assert.ok(html.indexOf("core.js") < html.indexOf("aura.js"));
   assert.ok(html.includes('id="cv"') && read("aura/aura.css").includes("touch-action: none"));
   for (const f of ["help.en.txt", "help.el.txt"]) assert.ok(fs.existsSync(path.join(__dirname, "..", "aura", f)));
-  // the shell: a device picture as "Mine", never in the synced fields
+  // the shell: the picture as "Mine"; since WPPIC-1 the picture goes to the
+  // orOS disk (Vault Drive) and the choice syncs as `wppic`, never state.wallpaper
   const sh = read("shell.js");
   assert.ok(sh.includes("setImage: function (blob, opts)"));
   assert.ok(sh.includes('var WP_PIC_KEY = "oros-wallpaper-pic"'));
-  assert.ok(/var SHELL_FIELDS = \[[^\]]*\]/.exec(sh)[0].indexOf("pic") < 0, "the picture does not sync");
-  assert.ok(sh.includes("if (wpPic()) wpPicClear();"), "a recipe made here replaces the picture");
+  assert.ok(/var SHELL_FIELDS = \[[^\]]*\]/.exec(sh)[0].includes('"wppic"'), "the choice syncs (WPPIC-1)");
+  assert.ok(sh.includes("if (wpPicOn()) wpPicClear();"), "a recipe made here replaces the picture (WPPIC-1: one on its way too)");
   const setImage = sh.slice(sh.indexOf("setImage: function"), sh.indexOf("get: function", sh.indexOf("setImage: function")));
-  assert.ok(!setImage.includes("noteLocalChange") && !setImage.includes("state.wallpaper ="), "nothing of it syncs");
+  assert.ok(setImage.includes("window.orosFS.write(path, own)") && !setImage.includes("state.wallpaper ="), "the file goes to the disk, the drawn choice stays");
   assert.ok(sh.includes('if (w.id === "custom" || wpPic()) { wpLandStop(); wpVizStop(); wpCustomApply(desktop); }'), "the picture wins over every wallpaper, Living land and the Light show too");
   assert.ok(sh.includes("wallpaper: pic ? \"custom\" : state.wallpaper"), "Settings shows it as Mine");
   // apps that check "is this my wallpaper" know about the picture
