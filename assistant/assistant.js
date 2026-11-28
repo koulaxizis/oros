@@ -5218,7 +5218,7 @@
   }
   function cfErr(msg) { return { content: "Error: " + msg, err: 1, ui: { k: "toolErr", why: "cf" } }; }
   // LOCAL-1 (temporary): the local folders the owner opened for Claude
-  // (localroots.js in the shell), listed read-only; Layout or Files must
+  // (removed in 9.02.00, LOCAL-GONE), listed read-only; Layout or Files must
   // be readable for Claude.
   function localBridge() { try { var p = window.parent && window.parent !== window ? window.parent : window; return p.orosLocal || null; } catch (e) { return null; } }
   // LOCAL-1: what a local-folder error means and the path form to use
