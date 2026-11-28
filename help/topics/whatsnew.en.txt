@@ -3,6 +3,9 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.00.02
+- **Claude sees your pictures through orOS Gate.** When Claude reads a picture or a page image of yours through orOS Gate, it now gets the picture itself, not only the text in it. Pictures from Mail and Passwords never go.
+
 ## Version 9.00.01
 - **Sync keeps going when a phone runs out of room.** The copies orOS keeps for your other devices (apps you never opened on this one) now take about a quarter of the space, so a full phone syncs again by itself, without you exporting or deleting anything. If space still runs out, the notice opens Settings › Device, where Space per app shows which apps take the room.
 

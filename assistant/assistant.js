@@ -5332,11 +5332,12 @@
   }
   function picResult(blob, name, head, a, ui) {
     var ext = String(name).slice(String(name).lastIndexOf(".") + 1).toLowerCase(), type = PIC_KIND[ext] || blob.type || "image/jpeg";
-    var pid = curProv(), see = !GATE && C.attCaps(pid, provConf(pid)).img, ocr = a.ocr === true || !see;
+    var pid = curProv(), see = GATE || C.attCaps(pid, provConf(pid)).img, ocr = a.ocr === true || !see;   // GATE-IMG: through the Gate it goes as a picture
     if (blob.size > 60 * 1024 * 1024) { head.note = "Only the details: the picture is over 60 MB."; return Promise.resolve({ content: JSON.stringify(head), ui: ui }); }
     return picDims(blob).then(function (dims) {
       if (dims) head.pixels = dims;
       var prep = otherPhoto(type) || !C.attKind(type) ? redraw(blob, type).then(function (r) { return shrink(r.blob, r.type); }) : shrink(blob, type);
+      if (GATE) prep = prep.then(gateFit);
       return prep.then(function (r) {
         var jobs = [see ? readB64(r.blob) : Promise.resolve(""), ocr ? ocrImage(r.blob).catch(function () { return null; }) : Promise.resolve(null)];
         return Promise.all(jobs).then(function (got) {
@@ -5347,7 +5348,7 @@
             attTrim();
             out.pic = [{ id: id, type: r.type }];
             head.shown = "The picture is attached to this result for you to look at" + (r.blob.size < blob.size ? " (made smaller to send)." : ".");
-          } else head.shown = GATE ? "Pictures do not pass through orOS Gate; its text was read on the device instead." : "This model can't see pictures; its text was read on the device instead.";
+          } else head.shown = "This model can't see pictures; its text was read on the device instead.";
           if (got[1] !== null) {
             var txt = String(got[1] || "").replace(/[ \t]+\n/g, "\n").trim();
             head.ocr_text = txt ? txt.slice(0, 20000) : "";
@@ -5358,6 +5359,29 @@
         });
       });
     }).catch(function () { head.note = "The picture could not be opened on this device."; return { content: JSON.stringify(head), ui: ui }; });
+  }
+  // GATE-IMG: through orOS Gate a picture must stay under the relay's
+  // 512 KB (and three of them within one answer): a bigger one is drawn
+  // again smaller as JPEG, 1600 then 1100 then 800 px on the long side.
+  var GATE_PIC = 260 * 1024;
+  function gateFit(r) {
+    if (!r || !r.blob || r.blob.size <= GATE_PIC || typeof createImageBitmap !== "function") return r;
+    var edges = [1600, 1100, 800];
+    return createImageBitmap(r.blob).then(function (bmp) {
+      var step = function (i) {
+        var k = Math.min(1, edges[i] / Math.max(bmp.width, bmp.height)), cv = document.createElement("canvas");
+        cv.width = Math.max(1, Math.round(bmp.width * k)); cv.height = Math.max(1, Math.round(bmp.height * k));
+        var g = cv.getContext("2d");
+        g.fillStyle = "#fff"; g.fillRect(0, 0, cv.width, cv.height);
+        g.drawImage(bmp, 0, 0, cv.width, cv.height);
+        return new Promise(function (res) { cv.toBlob(res, "image/jpeg", 0.8); }).then(function (b) {
+          if (b && b.size <= GATE_PIC) return { blob: b, type: "image/jpeg" };
+          if (i + 1 < edges.length) return step(i + 1);
+          return b && b.size <= 500 * 1024 ? { blob: b, type: "image/jpeg" } : r;
+        });
+      };
+      return step(0).then(function (x) { if (bmp.close) bmp.close(); return x; });
+    }, function () { return r; });
   }
   // files_read of local:<root>/<path> (LOCAL-1): a local folder the owner
   // opened for Claude, read-only (Chris 2026-11-27: .docx and .odt of the
@@ -10780,7 +10804,9 @@
         var rec = m && m.ref ? gateConv.refs[m.ref] : null;
         return rec ? { i: m.i, rec: { app: rec.app, target: rec.target, title: String(rec.title || "").slice(0, 160), id: rec.id } } : null;
       }).filter(Boolean) : undefined;
-      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0, made: made };
+      // GATE-IMG: a picture files_read made goes with the answer (gate.js and the relay check it again)
+      var img = name === "files_read" && Array.isArray(r.pic) ? r.pic.map(function (p) { return attMem[p.id] ? { data: attMem[p.id], mimeType: p.type } : null; }).filter(Boolean).slice(0, 3) : [];
+      return { ok: true, c: text, u: u, x: gateMem(u), ud: Array.isArray(r.ud) ? r.ud : undefined, a: used, k: r.ui && typeof r.ui.n === "number" ? r.ui.n : 0, made: made, img: img.length ? img : undefined };
     }, function () { return { ok: false, c: "The call failed on the device." }; });
   }
   // The results speak of "the user" pressing; through the gate nobody did.
