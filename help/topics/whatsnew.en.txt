@@ -3,6 +3,12 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.13.00
+- **Cover colours.** The island, the Now playing player in the top bar and the media widget on the desktop take their colours from the cover of what plays: a dark shade behind light text that stays easy to read, a lighter one for the progress and the play button. Never under high contrast or while Sensitive work is on.
+
+## Version 9.12.00
+- **Bandcamp and SoundCloud in Music.** Paste a Bandcamp album or song, or a SoundCloud song or playlist, into Search (or press + › Bandcamp or SoundCloud link) and it plays inside Music, in the service's own player. Like it or add it to a playlist like any song. Off at first: Music's settings › Bandcamp and SoundCloud players.
+
 ## Version 9.11.00
 - **Island in the centre.** The top bar can gather the live pills and what plays into one dark pill at the top centre: a thin line with the line being sung (Music's synced lyrics) or the title, growing on hover or tap into the cover, the time played and left, Previous, Play and Next. Off at first, windows at least 760 px wide, this device only: Settings › Appearance › Top bar › Island in the centre.
 

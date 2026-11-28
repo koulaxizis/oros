@@ -62,6 +62,13 @@ Filter wirken mit oder ohne Suchwörter: Mit leerem Suchfeld und aktiven Filtern
 - **Gespeicherte Suchen**: `Suche speichern` unter dem Suchfeld behält Wörter, Filter und gewählten Katalog. Sie erscheinen unter `Suche` (ohne Eingabe) auf allen deinen Geräten. Öffnest du eine wieder, siehst du zuerst, was seit deinem letzten Besuch auf diesem Gerät neu ist.
 - **Credits**: ⋯ einer Playlist › `Credits kopieren` kopiert für jeden Song aus den offenen Katalogen eine Quellenzeile (Titel, Künstler, Lizenz, Quelle), bereit zum Einfügen, wo du sie weiterverwendest.
 
+## Bandcamp und SoundCloud
+Schalte in den Einstellungen (⚙) `Bandcamp- und SoundCloud-Player` ein. Füge dann die Adresse eines Bandcamp-Albums oder -Songs oder eines SoundCloud-Songs oder einer -Playlist in `Suche` ein, oder tippe **+** › `Bandcamp- oder SoundCloud-Link`. Sie spielt hier, in Musik, im eigenen Player des Dienstes, über der Wiedergabeleiste; ✕ schließt ihn.
+- Like sie oder füge sie wie jeden Song einer Playlist hinzu; dann erscheint sie auch auf deinen anderen Geräten. Ein Tippen darauf öffnet den Player wieder.
+- Keiner der beiden Dienste lässt andere Apps seine Musik streamen. Darum kommt sie nicht in die Warteschlange, hat keinen Equalizer und kein Crossfade, kann nicht offline gespeichert werden und stoppt, wenn Musik geschlossen wird. Startet ein Song von Musik, schließt sich der Player.
+- Der Dienst sieht, was du hörst, wie auf seiner eigenen Website. Um den Player einer Bandcamp-Seite zu finden, liest orOS genau diese Seite einmal über sein Relay. Titel und Cover von SoundCloud kommen von SoundCloud selbst.
+- Nur Adressen der Form `name.bandcamp.com/album/…` oder `/track/…` und `soundcloud.com/name/…` funktionieren; Kurzlinks und eigene Domains von Künstlern nicht.
+
 ## Deine eigenen Server
 Wenn deine Musik auf einem eigenen Server liegt, spielt Musik sie von dort. Drücke **+** und `Server verbinden`, oder geh zu `Deine Bibliothek › Server`:
 - **Subsonic / Navidrome**: Navidrome, Airsonic, Gonic, Ampache und andere Server mit der Subsonic-API (OpenSubsonic). Gib Adresse, Benutzername und Passwort ein. Musik speichert ein gesalzenes Token, nicht das Passwort selbst.

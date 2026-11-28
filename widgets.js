@@ -1,5 +1,5 @@
 // ============================================================
-// orOS — widgets.js (desktop widgets, v1.6.0)
+// orOS — widgets.js (desktop widgets, v1.7.0)
 // ------------------------------------------------------------
 // A shell component, like launcher.js and qsettings.js: it runs IN the
 // shell document and keeps its own device-local storage. shell.js calls
@@ -17,7 +17,9 @@
 //     Live), Previous / Play-Pause / Next and a small light (vizkit.js
 //     bars) that moves with the sound; "Hide the light" in the card's
 //     menu (device-local oros-wg-light "0"). The light listens only
-//     while the desktop shows and never restarts a stream.
+//     while the desktop shows and never restarts a stream. Since 1.7.0
+//     (COVERTINT-1) it takes the cover's colours (the shell's mediaTint,
+//     contrast checked there), none under high contrast or Sensitive work.
 //   • First steps (START-1, 1.1.0): a few first things to do, each
 //     ticked by itself from what the person has really done (a note, a
 //     task, a wallpaper, an icon pack, sync, the Assistant, installing);
@@ -57,7 +59,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.6.0";
+  var VER = "1.7.0";
   var KEY = "oros-widgets";
   var START_KEY = "oros-start";
   // First steps, in order. "install" only where the browser offers it
@@ -379,6 +381,11 @@
     ".wg-media { display: flex; align-items: center; gap: 8px; }",
     // WG-MEDIA-2: the big row of the player that plays
     ".wg-mbig { display: flex; flex-direction: column; gap: 8px; padding: 2px 2px 6px; }",
+    // COVERTINT-1: the cover's colours, as a rounded panel
+    ".wg-mbig.wg-tinted { background: var(--wg-tint-bg); color: var(--text); border-radius: 14px; padding: 10px; }",
+    ".wg-mbig.wg-tinted button { color: var(--text); }",
+    ".wg-mbig.wg-tinted .wg-play { background: var(--accent); color: var(--wg-on); }",
+    ".wg-mbig.wg-tinted .wg-bar { background: rgba(255, 255, 255, 0.18); }",
     ".wg-mtop { display: flex; align-items: center; gap: 10px; min-width: 0; }",
     ".wg-cover { flex: none; width: 56px; height: 56px; border-radius: 10px; background: var(--accent-soft, rgba(127,127,127,.2)) center / cover no-repeat;",
     "  display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 800; color: var(--accent); }",
@@ -1166,7 +1173,7 @@
           rowEl.appendChild(p2);
           b.appendChild(rowEl);
         });
-        c.mp = { cov: cov, art: "", pr: pr, cur: cur, len: len, cv: cv, playing: !!main.playing };
+        c.mp = { cov: cov, art: "", pr: pr, cur: cur, len: len, cv: cv, playing: !!main.playing, big: big, tint: "" };
         if (cv) mediaLightStart(c);
       });
       // In place, every paint: the cover once it is known, the progress.
@@ -1177,6 +1184,16 @@
         mp.art = art;
         mp.cov.style.backgroundImage = art ? 'url("' + art.replace(/["\\\n\r]/g, "") + '")' : "";
         mp.cov.classList.toggle("wg-cover-img", !!art);
+      }
+      // COVERTINT-1: the player takes the cover's colours (contrast checked in the shell)
+      var tn = call(function () { return host.mediaTint ? host.mediaTint(main.title) : null; });
+      tn = tn && typeof tn.bg === "string" ? tn : null;
+      if ((tn ? tn.bg + tn.tint : "") !== mp.tint) {
+        mp.tint = tn ? tn.bg + tn.tint : "";
+        [["--wg-tint-bg", "bg"], ["--text", "ink"], ["--text-dim", "dim"], ["--accent", "tint"], ["--wg-on", "tintInk"], ["--accent-soft", "soft"], ["--border", "border"]].forEach(function (v) {
+          if (tn) mp.big.style.setProperty(v[0], tn[v[1]]); else mp.big.style.removeProperty(v[0]);
+        });
+        mp.big.classList.toggle("wg-tinted", !!tn);
       }
       if (mp.pr) {
         var d = +main.dur || 0, at = Math.max(0, Math.min(d, +main.pos || 0));

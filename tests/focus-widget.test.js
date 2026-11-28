@@ -19,7 +19,7 @@ const LENS = { work: 25 * MIN, break: 5 * MIN };
 const plain = (o) => JSON.parse(JSON.stringify(o));
 
 test("the card is a desktop widget kind, painted in the gallery too", () => {
-  assert.equal(W.VER, "1.6.0");
+  assert.equal(W.VER, "1.7.0");
   assert.ok(W.KINDS.includes("pomo"));
   assert.ok(!W.DEFAULT.includes("pomo"), "not on the desktop until added");
   assert.ok(W.PREVIEW_PAINT.includes("pomo"));

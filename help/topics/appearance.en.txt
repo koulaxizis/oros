@@ -79,6 +79,8 @@ Under `Where the cards sit` each card you use can sit on the `Left` (after the m
 
 `Island in the centre` (off at first, on this device) gathers the live pills and what plays into one dark pill at the top centre, on windows at least 760 px wide. While something plays it shows a thin line with the line being sung, when [Music](app:music) has synced lyrics for the song on this device (from its .lrc file, its tags or LRCLIB once you allowed it), else the title and the artist. Point at it or tap it and it grows: the cover, the time played and left, Previous, Play / Pause and Next, and `Open` the app. It shrinks back when the pointer leaves, on `Esc` or a tap elsewhere. A paused song stays half a minute, then the island lets go. Cards you put in the `Centre` move to the right while it is on. On a phone, in the Dock and in the desktop bar of orOS USB the bar stays as it is. While `Sensitive work` is on it shows only the app's name: no title, lyric or cover.
 
+The island, the `Now playing` player and the media widget on the desktop take their colours from the cover of what plays, when the cover has a clear colour: a dark shade of it behind light text that stays easy to read, and a lighter one for the progress and the play button. Never under high contrast or while Sensitive work is on.
+
 On Windows, with orOS installed, the tray icon's menu has `Smart bar on the desktop`: the same bar, with your chips and look, stays at the top of the screen even when the orOS window is closed, and a tap opens that app in orOS.
 
 ## Greeting at the start
