@@ -6,6 +6,12 @@ Press `Add account`, enter `Your name`, `E-mail address` and `Password`, and pre
 
 Gmail, iCloud and Yahoo need an app password: create one in your account's security settings and use it instead of your normal password.
 
+### Proton Mail (Proton Mail Bridge)
+Proton Mail works through [Proton Mail Bridge](https://proton.me/mail/bridge), Proton's own program, which runs on your computer (it needs a paid Proton plan). Install it, sign in to it, then add the account in Mail with your Proton address: the server fills in by itself (`127.0.0.1`, ports 1143 and 1025). Use the password Bridge shows for the account, not your Proton password.
+- The first time, Mail shows the fingerprint of Bridge's own certificate and asks you to trust it; press `Trust`. If Bridge is reinstalled it makes a new one and Mail asks again.
+- It works in orOS installed on that computer, orOS Portable and orOS USB, while Bridge runs. On useoros.online in a browser, on another computer or on a phone the account shows that it needs that computer. Mail talks to Bridge on the computer itself, so neither your mail nor the password goes through the orOS relay.
+- Bridge files sent messages in `Sent` by itself, and has no rules on the server.
+
 ## Read your mail
 - The side panel lists your accounts and their folders (`Inbox`, `Sent`, `Drafts`, `Spam`, `Trash` and the rest) with unread counts. On a phone, open it with the menu button at the top left.
 - Messages are listed newest first; unread ones have a dot. `Load older messages` at the bottom fetches more.
@@ -157,7 +163,7 @@ Your accounts (without passwords), your rules, your templates, your snoozed mess
 - On the open message, or on the selected ones: [[E]] archives, [[Delete]] or [[#]] deletes, [[!]] marks as spam (or not spam), [[S]] stars, [[U]] marks as read or unread, [[B]] snoozes and [[V]] moves to a folder.
 
 ## Tips
-- Browsers can't talk to mail servers directly, so Mail goes through the orOS mail relay. It passes your mail through and keeps nothing.
+- Browsers can't talk to mail servers directly, so Mail goes through the orOS mail relay. It passes your mail through and keeps nothing. In orOS installed on a computer, orOS Portable and orOS USB, orOS itself connects to the mail server instead, so nothing goes through the relay there.
 - The same relay address serves all of orOS: [Reader](app:feeds), [Podcasts](app:podcasts) and orOS Gate use it too. You set it once, in [Settings](app:settings) › Connected services › `orOS relay`.
 
 ## Limits

@@ -174,6 +174,19 @@
       "dlg.connect": "Connect", "dlg.save": "Save", "dlg.cancel": "Cancel", "dlg.checking": "Checking…",
       "dlg.appPass": "{svc} needs an app password: create one in your {svc} account security settings and use it here.",
       "dlg.oauth": "Outlook.com / Hotmail no longer accept passwords from other apps. Support needs a later update.",
+      "dlg.bridge": "Proton Mail works through Proton Mail Bridge on this computer: install and sign in to it, then use the password Bridge shows (not your Proton password). Works in installed orOS, orOS Portable and orOS USB.",
+      "dlg.thisPc": "this computer",
+      "cert.title": "Trust this certificate?",
+      "cert.new": "The mail server on this computer (Proton Mail Bridge) uses its own certificate. orOS Mail will trust only this one:",
+      "cert.changed": "The mail server on this computer now shows another certificate. This happens after Proton Mail Bridge is reinstalled or resets its certificate. Trust the new one?",
+      "cert.fp": "Certificate fingerprint (SHA-256)",
+      "cert.hint": "Trust it only if Proton Mail Bridge runs on this computer. The connection never leaves the computer.",
+      "cert.trust": "Trust",
+      "err.certnew": "The certificate of the mail server on this computer is not trusted yet. Open the account (✎) to check it.",
+      "err.cert": "The mail server on this computer shows another certificate. Open the account (✎) to check it.",
+      "err.localonly": "This account uses a mail server on a computer (Proton Mail Bridge). It works in orOS installed on that computer, orOS Portable or orOS USB.",
+      "err.localPort": "Ports 1143 and 1025 are for a mail server on this computer (127.0.0.1), and 127.0.0.1 takes only them, for both servers.",
+      "err.nosieve": "This mail server has no server rules.",
       "dlg.generic": "Most providers (Papaki among them) use mail.{domain}. If the connection fails, check the server name in your provider's panel.",
       "dlg.passDevice": "The password stays sealed on this device and is never synced. Enter it once on each device.",
       "sigIn.title": "Use this signature?", "sigIn.text": "The signature \"{name}\" from Email signatures replaces the signature of the account you pick, on all your devices.", "sigIn.acct": "Account", "sigIn.ok": "Use", "sigIn.none": "Add a mail account first, then use the signature again.", "sigIn.done": "Signature saved for {email}",
@@ -387,6 +400,19 @@
       "dlg.connect": "Σύνδεση", "dlg.save": "Αποθήκευση", "dlg.cancel": "Άκυρο", "dlg.checking": "Έλεγχος…",
       "dlg.appPass": "Το {svc} θέλει κωδικό εφαρμογής: φτιάξε έναν στις ρυθμίσεις ασφαλείας του λογαριασμού σου στο {svc} και βάλ' τον εδώ.",
       "dlg.oauth": "Το Outlook.com / Hotmail δεν δέχεται πια κωδικούς από άλλες εφαρμογές. Θα υποστηριχτεί σε επόμενη ενημέρωση.",
+      "dlg.bridge": "Το Proton Mail δουλεύει μέσω του Proton Mail Bridge σε αυτόν τον υπολογιστή: εγκατέστησέ το, συνδέσου, και βάλε τον κωδικό που δείχνει το Bridge (όχι τον κωδικό του Proton). Δουλεύει στο εγκατεστημένο orOS, στο orOS Portable και στο orOS USB.",
+      "dlg.thisPc": "αυτός ο υπολογιστής",
+      "cert.title": "Να εμπιστευτώ αυτό το πιστοποιητικό;",
+      "cert.new": "Ο διακομιστής αλληλογραφίας σε αυτόν τον υπολογιστή (Proton Mail Bridge) έχει δικό του πιστοποιητικό. Το orOS Mail θα εμπιστεύεται μόνο αυτό:",
+      "cert.changed": "Ο διακομιστής αλληλογραφίας σε αυτόν τον υπολογιστή δείχνει τώρα άλλο πιστοποιητικό. Συμβαίνει όταν το Proton Mail Bridge εγκατασταθεί ξανά ή αλλάξει το πιστοποιητικό του. Να εμπιστευτώ το νέο;",
+      "cert.fp": "Αποτύπωμα πιστοποιητικού (SHA-256)",
+      "cert.hint": "Εμπιστέψου το μόνο αν το Proton Mail Bridge τρέχει σε αυτόν τον υπολογιστή. Η σύνδεση δεν βγαίνει ποτέ από τον υπολογιστή.",
+      "cert.trust": "Εμπιστοσύνη",
+      "err.certnew": "Το πιστοποιητικό του διακομιστή σε αυτόν τον υπολογιστή δεν είναι ακόμη έμπιστο. Άνοιξε τον λογαριασμό (✎) για να το ελέγξεις.",
+      "err.cert": "Ο διακομιστής σε αυτόν τον υπολογιστή δείχνει άλλο πιστοποιητικό. Άνοιξε τον λογαριασμό (✎) για να το ελέγξεις.",
+      "err.localonly": "Αυτός ο λογαριασμός χρησιμοποιεί διακομιστή σε έναν υπολογιστή (Proton Mail Bridge). Δουλεύει στο orOS που είναι εγκατεστημένο σε εκείνον τον υπολογιστή, στο orOS Portable ή στο orOS USB.",
+      "err.localPort": "Οι θύρες 1143 και 1025 είναι για διακομιστή σε αυτόν τον υπολογιστή (127.0.0.1), και το 127.0.0.1 δέχεται μόνο αυτές, και για τους δύο διακομιστές.",
+      "err.nosieve": "Αυτός ο διακομιστής δεν έχει κανόνες στον διακομιστή.",
       "dlg.generic": "Οι περισσότεροι πάροχοι (και το Papaki) χρησιμοποιούν mail.{domain}. Αν η σύνδεση αποτύχει, δες το όνομα του διακομιστή στο panel του παρόχου σου.",
       "dlg.passDevice": "Ο κωδικός μένει σφραγισμένος σε αυτή τη συσκευή και δεν συγχρονίζεται. Τον δίνεις μία φορά σε κάθε συσκευή.",
       "sigIn.title": "Χρήση αυτής της υπογραφής;", "sigIn.text": "Η υπογραφή «{name}» από τις Υπογραφές email αντικαθιστά την υπογραφή του λογαριασμού που θα διαλέξεις, σε όλες τις συσκευές σου.", "sigIn.acct": "Λογαριασμός", "sigIn.ok": "Χρήση", "sigIn.none": "Πρόσθεσε πρώτα έναν λογαριασμό email και μετά χρησιμοποίησε ξανά την υπογραφή.", "sigIn.done": "Η υπογραφή αποθηκεύτηκε για το {email}",
@@ -670,7 +696,11 @@
   })();
 
   // ---------- 2. Data model: accounts, merge ----------
-  var SECS = { 993: "tls", 143: "starttls", 465: "tls", 587: "starttls" };
+  // 1143 / 1025: Proton Mail Bridge's ports, only on this computer
+  // (MAIL-LOCAL, local.js).
+  var SECS = { 993: "tls", 143: "starttls", 465: "tls", 587: "starttls", 1143: "starttls", 1025: "starttls" };
+  var LOCAL_PORTS = { 1143: 1, 1025: 1 };
+  var LOCAL_HOST = "127.0.0.1";
 
   function normHost(h) {
     h = String(h || "").trim().toLowerCase().replace(/\.$/, "");
@@ -679,10 +709,17 @@
     if (/^[0-9.]+$/.test(h)) return "";
     return h;
   }
+  // A server name, or this computer ("localhost" is kept as 127.0.0.1).
+  function normSrvHost(h) {
+    var l = String(h || "").trim().toLowerCase();
+    return l === LOCAL_HOST || l === "localhost" ? LOCAL_HOST : normHost(l);
+  }
+  function isLocalAcct(acct) { return !!acct && !!acct.imap && acct.imap.host === LOCAL_HOST; }
   function normServer(s, ports) {
     if (!s || typeof s !== "object") return null;
-    var host = normHost(s.host), port = +s.port;
+    var host = normSrvHost(s.host), port = +s.port;
     if (!host || ports.indexOf(port) < 0) return null;
+    if (!LOCAL_PORTS[port] !== (host !== LOCAL_HOST)) return null;   // Bridge's ports only on this computer, and only they
     var user = typeof s.user === "string" ? s.user.trim().slice(0, 320) : "";
     return { host: host, port: port, sec: SECS[port], user: user };
   }
@@ -694,12 +731,13 @@
     if (!a || typeof a !== "object" || typeof a.id !== "string" || !/^[a-z0-9]{6,40}$/.test(a.id)) return null;
     if (!isInt(a.m) || a.m < 0) return null;
     var email = normEmail(a.email);
-    var imap = normServer(a.imap, [993, 143]);
+    var imap = normServer(a.imap, [993, 143, 1143]);
     if (!email || !imap) return null;
     if (!imap.user) imap.user = email;
     var out = { id: a.id, m: a.m, name: String(a.name || "").replace(/\s+/g, " ").trim().slice(0, 80),
                 email: email, imap: imap };
-    var smtp = normServer(a.smtp, [465, 587]);
+    var smtp = normServer(a.smtp, [465, 587, 1025]);
+    if (smtp && (smtp.host === LOCAL_HOST) !== (imap.host === LOCAL_HOST)) smtp = null;   // both on this computer, or neither
     if (smtp) { if (!smtp.user) smtp.user = imap.user; out.smtp = smtp; }
     var sig = normSig(a.sig);
     if (sig) out.sig = sig;
@@ -845,6 +883,8 @@
     { d: ["yahoo.com", "yahoo.gr", "ymail.com", "rocketmail.com"], imap: "imap.mail.yahoo.com", smtp: "smtp.mail.yahoo.com", sp: 465, svc: "Yahoo" },
     { d: ["gmx.com", "gmx.net", "gmx.de"], imap: "imap.gmx.com", smtp: "mail.gmx.com", sp: 587 },
     { d: ["zoho.com", "zohomail.com"], imap: "imap.zoho.com", smtp: "smtp.zoho.com", sp: 465 },
+    // Proton Mail only through Proton Mail Bridge on this computer (MAIL-LOCAL)
+    { d: ["proton.me", "protonmail.com", "protonmail.ch", "pm.me"], imap: LOCAL_HOST, ip: 1143, smtp: LOCAL_HOST, sp: 1025, bridge: true },
     { d: ["outlook.com", "hotmail.com", "live.com", "msn.com", "hotmail.gr", "outlook.com.gr", "live.gr"], oauth: true }
   ];
   function presetFor(email) {
@@ -1041,8 +1081,9 @@
   // args.smtp === true → the account's outgoing server goes along (same password).
   function call(op, acct, args, pass) {
     if (!navigator.onLine) return Promise.reject(new MailError("offline"));
+    var local = isLocalAcct(acct);
     var url = relayUrl();
-    if (!url) return Promise.reject(new MailError("norelay"));
+    if (!url && !local) return Promise.reject(new MailError("norelay"));
     var pp = pass !== undefined ? Promise.resolve(pass) : loadPass(acct.id);
     return pp.then(function (pw) {
       if (!pw) throw new MailError("nopass");
@@ -1054,6 +1095,7 @@
         body.smtp = { host: acct.smtp.host, port: acct.smtp.port, sec: acct.smtp.sec,
                       user: acct.smtp.user || body.acct.user, pass: pw };
       }
+      if (local || viaLauncher()) return callLocal(acct, body);
       var ctl = new AbortController();
       // a large message takes longer to upload, send and file in Sent
       var timer = setTimeout(function () { ctl.abort(); }, (op === "send" || op === "draft") ? SEND_TIMEOUT : CALL_TIMEOUT);
@@ -1080,6 +1122,47 @@
         throw e;
       });
     });
+  }
+
+  // A mail server on this computer (Proton Mail Bridge): the page talks
+  // to it through the orOS launcher's socket (local.js, MAIL-LOCAL),
+  // never through the relay. The certificate the person trusted (its
+  // SHA-256) is kept on this device only, like the password.
+  var localMod = null;
+  function localMail() {
+    if (!localMod) localMod = import("./local.js").catch(function (e) { localMod = null; throw e; });
+    return localMod;
+  }
+  function pinKey(acctId) { return "pin|" + acctId; }
+  function loadPin(acctId) { return idbGet("creds", pinKey(acctId)).then(function (v) { return typeof v === "string" ? v : ""; }, function () { return ""; }); }
+  function savePin(acctId, fp) { return idbPut("creds", pinKey(acctId), fp); }
+  function dropPin(acctId) { return idbDel("creds", pinKey(acctId)).catch(function () {}); }
+  // The orOS on the computer (installed, Portable, USB): the relay serves
+  // no Mail op to this origin, so every account goes through the
+  // launcher (Chris 2026-11-27 «Ναι, μέσω launcher»).
+  function viaLauncher() {
+    return (location.hostname === "localhost" || location.hostname === "127.0.0.1") && location.port === "47800";
+  }
+  function callLocal(acct, body) {
+    if (!viaLauncher()) return Promise.reject(new MailError("localonly"));
+    var timeout = (body.op === "send" || body.op === "draft") ? SEND_TIMEOUT : CALL_TIMEOUT;
+    return Promise.all([localMail(), loadPin(acct.id)]).then(function (r) {
+      var L = r[0], state = {};
+      var connectFn = L.wsConnect(WebSocket, "ws://" + location.host, r[1], state);
+      var timer;
+      return Promise.race([
+        L.run(body, connectFn),
+        new Promise(function (res, rej) { timer = setTimeout(function () { rej({ code: "timeout" }); }, timeout); })
+      ]).then(function (d) { clearTimeout(timer); return d; }, function (e) {
+        clearTimeout(timer);
+        if (state.cert) {
+          var me = new MailError(state.cert.code === "cert-new" ? "certnew" : "cert");
+          me.fp = state.cert.fp;
+          throw me;
+        }
+        throw new MailError((e && e.code) || "local", e && e.msg);
+      });
+    }, function () { throw new MailError("localonly"); });
   }
 
   // ---------- 6. Folders + message cache ----------
@@ -2437,10 +2520,10 @@
     var det = el("details", "srv");
     det.appendChild(el("summary", "", t("dlg.server")));
     var fImap = field(det, "ml-imap", t("dlg.imap"), "text", existing ? existing.imap.host : "", { maxlength: "253", autocapitalize: "off", spellcheck: "false" });
-    var fPort = portSelect(det, "ml-port", t("dlg.port"), [[993, "993 · SSL/TLS"], [143, "143 · STARTTLS"]], existing ? existing.imap.port : 993);
+    var fPort = portSelect(det, "ml-port", t("dlg.port"), [[993, "993 · SSL/TLS"], [143, "143 · STARTTLS"], [1143, "1143 · STARTTLS · " + t("dlg.thisPc")]], existing ? existing.imap.port : 993);
     var fUser = field(det, "ml-user", t("dlg.user"), "text", existing ? existing.imap.user : "", { maxlength: "320", autocapitalize: "off", spellcheck: "false" });
     var fSmtp = field(det, "ml-smtp", t("dlg.smtp"), "text", existing && existing.smtp ? existing.smtp.host : "", { maxlength: "253", autocapitalize: "off", spellcheck: "false" });
-    var fSport = portSelect(det, "ml-sport", t("dlg.port"), [[465, "465 · SSL/TLS"], [587, "587 · STARTTLS"]], existing && existing.smtp ? existing.smtp.port : 465);
+    var fSport = portSelect(det, "ml-sport", t("dlg.port"), [[465, "465 · SSL/TLS"], [587, "587 · STARTTLS"], [1025, "1025 · STARTTLS · " + t("dlg.thisPc")]], existing && existing.smtp ? existing.smtp.port : 465);
     det.appendChild(el("p", "dlg-hint", t("dlg.smtpNote")));
     form.appendChild(det);
 
@@ -2454,6 +2537,7 @@
     errP.setAttribute("role", "alert");
     form.appendChild(errP);
 
+    var acctId = existing ? existing.id : newId();   // one id per dialog: a trusted certificate is kept under it
     var touched = { imap: !!existing, user: !!existing, smtp: !!existing };
     fImap.addEventListener("input", function () { touched.imap = true; });
     fUser.addEventListener("input", function () { touched.user = true; });
@@ -2463,10 +2547,11 @@
       hint.textContent = "";
       if (!pre) return;
       if (pre.oauth) { hint.textContent = t("dlg.oauth"); return; }
-      if (!touched.imap) { fImap.value = pre.imap; fPort.value = "993"; }
+      if (!touched.imap) { fImap.value = pre.imap; fPort.value = String(pre.ip || 993); }
       if (!touched.smtp) { fSmtp.value = pre.smtp; fSport.value = String(pre.sp); }
       if (!touched.user) fUser.value = fMail.value.trim();
-      if (pre.svc) hint.textContent = t("dlg.appPass", { svc: pre.svc });
+      if (pre.bridge) hint.textContent = t("dlg.bridge");
+      else if (pre.svc) hint.textContent = t("dlg.appPass", { svc: pre.svc });
       else if (pre.generic) hint.textContent = t("dlg.generic", { domain: pre.generic });
     }
     fMail.addEventListener("input", applyPreset);
@@ -2487,7 +2572,7 @@
       e.preventDefault();
       errP.textContent = "";
       var email = normEmail(fMail.value);
-      var host = normHost(fImap.value);
+      var host = normSrvHost(fImap.value);
       var pass = fPass.value;
       if (!email || (!pass && !existing) || !fImap.value.trim()) { errP.textContent = t("err.fields"); return; }
       if (!host) { errP.textContent = t("err.host"); return; }
@@ -2501,7 +2586,7 @@
         data.relay = { url: ru, m: Math.max(Date.now(), data.relay.m + 1) };
       }
       var acct = {
-        id: existing ? existing.id : newId(),
+        id: acctId,
         m: existing ? Math.max(Date.now(), existing.m + 1) : Date.now(),
         name: fName.value, email: email,
         imap: { host: host, port: +fPort.value, user: fUser.value.trim() || email },
@@ -2512,13 +2597,19 @@
       var sg = sigEd.get(false);
       acct.sig = sg.text.slice(0, MAX_SIG);
       if (sg.rich && sg.html.length <= MAX_SIG_HTML) acct.sigHtml = sg.html;
-      var smtpHost = normHost(fSmtp.value);
+      var smtpHost = normSrvHost(fSmtp.value);
+      if (!LOCAL_PORTS[+fPort.value] !== (host !== LOCAL_HOST) ||
+          (smtpHost && (!LOCAL_PORTS[+fSport.value] !== (smtpHost !== LOCAL_HOST) || (smtpHost === LOCAL_HOST) !== (host === LOCAL_HOST)))) {
+        errP.textContent = t("err.localPort");
+        return;
+      }
       if (smtpHost) acct.smtp = { host: smtpHost, port: +fSport.value, user: fUser.value.trim() || email };
       var n = normAccount(acct);
       if (!n) { errP.textContent = t("err.host"); return; }
       var serverChanged = !existing || existing.imap.host !== n.imap.host || existing.imap.port !== n.imap.port ||
                           existing.imap.user !== n.imap.user;
-      var needCheck = !!pass || serverChanged;
+      // a server on this computer is checked at every save: its certificate may have changed
+      var needCheck = !!pass || serverChanged || isLocalAcct(n);
       var es = existing && existing.smtp;
       var smtpChanged = !!n.smtp && (!es || es.host !== n.smtp.host || es.port !== n.smtp.port || es.user !== n.smtp.user);
       var needSmtp = !!n.smtp && (!!pass || smtpChanged);
@@ -2553,7 +2644,8 @@
       }).catch(function (err) {
         ok.disabled = false;
         ok.textContent = t(existing ? "dlg.save" : "dlg.connect");
-        errP.textContent = errText(err);
+        if (err && err.fp) trustDialog(err, function () { savePin(n.id, err.fp).then(function () { form.requestSubmit(); }); });
+        else errP.textContent = errText(err);
       });
     });
     dlg.appendChild(form);
@@ -2594,13 +2686,32 @@
       }, function (err) {
         ok.disabled = false;
         ok.textContent = t("dlg.connect");
-        errP.textContent = errText(err);
+        if (err && err.fp) trustDialog(err, function () { savePin(acct.id, err.fp).then(function () { form.requestSubmit(); }); });
+        else errP.textContent = errText(err);
       });
     });
     dlg.appendChild(form);
     document.body.appendChild(dlg);
     dlg.showModal();
     inp.focus();
+  }
+
+  // The certificate of a mail server on this computer (Proton Mail
+  // Bridge makes its own): shown once, trusted by the person.
+  function trustDialog(err, onTrust) {
+    var dlg = makeDialog("ml-cert");
+    dlg.appendChild(el("div", "dlg-title", t("cert.title")));
+    dlg.appendChild(el("p", "dlg-text", t(err.code === "certnew" ? "cert.new" : "cert.changed")));
+    var fp = el("p", "dlg-fp", err.fp.toUpperCase().match(/.{4}/g).join(" "));
+    fp.setAttribute("aria-label", t("cert.fp"));
+    dlg.appendChild(fp);
+    dlg.appendChild(el("p", "dlg-hint", t("cert.hint")));
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("dlg.cancel"), "", function () { dlg.close(); }));
+    acts.appendChild(button(t("cert.trust"), "primary", function () { dlg.close(); onTrust(); }));
+    dlg.appendChild(acts);
+    document.body.appendChild(dlg);
+    dlg.showModal();
   }
 
   function removeDialog(acct) {
@@ -2677,6 +2788,7 @@
   // Drops this device's password and cache of an account.
   function forgetAccount(id) {
     dropPass(id);
+    dropPin(id);
     delete folders[id];
     delete needPass[id];
     idbDel("folders", id).catch(function () {});
@@ -2851,6 +2963,7 @@
   // itself, so no copy there (it would show twice).
   function sentFolder(acct) {
     if (/(^|\.)gmail\.com$/.test(acct.smtp.host)) return "";
+    if (acct.smtp.host === LOCAL_HOST) return "";   // Proton Mail Bridge files sent mail itself too
     var list = folders[acct.id] || [];
     for (var i = 0; i < list.length; i++) if (folderRole(list[i]) === "sent") return list[i].name;
     return "";
