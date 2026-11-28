@@ -2667,12 +2667,12 @@
     name: "files_list",
     description: "List a folder on the orOS disk: subfolders first, then files with kind (text, document, pdf, image, media, other), size and modified time; " +
       "on_device false = a file of an orOS Drive folder that is in the cloud only (files_read still reads it)." + FILES_WHERE +
-      " Without path: the owner's folders for Claude, and the local folders of the owner's device opened for Claude (temporary, local_folders): list one with path local:<root>/<folder>; " +
-      "its pictures also give pixels and ppi. Layout commands take those local: paths and copy what they use into the document.",
+      " Without path: the owner's folders for Claude. A computer's folders are orOS Drive's mirror at Drive/<computer>/<folder> " +
+      "(C:\\Users\\<name>\\Documents\\Invoices = Drive/<computer>/Documents/Invoices), never a C:/… path.",
     params: {
       type: "object",
       properties: {
-        path: { type: "string", description: "A folder, e.g. \"Drive/ckdesktop/Τιμολόγια/2026\" (the /internal/ in front may be left out)." },
+        path: { type: "string", description: "A folder, e.g. \"Drive/ckDesktop/Documents/Τιμολόγια/2026\" (the /internal/ in front may be left out)." },
         depth: { type: "integer", minimum: 1, maximum: 3, description: "1 (default) = this folder; 2 or 3 also lists inside its subfolders (paths relative to path)." },
         offset: { type: "integer", minimum: 0, description: "200 entries a page: next_offset of the last answer." }
       }
