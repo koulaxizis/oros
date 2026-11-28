@@ -195,7 +195,7 @@ test("the routine frame only reads (assistant.js wiring)", () => {
   const names = m[1].match(/[a-z_]+(?=:)/g);
   ["undo_change", "change_item", "create_items", "files_write", "files_move", "files_delete", "edit_in_app", "do_action",
    "kanban_add_cards", "propose_entry", "shop_change", "budget_change"].forEach((n) => assert.ok(names.indexOf(n) < 0, n + " is not a reading tool"));
-  assert.match(src, /if \(ro\) tools = tools\.filter\(function \(x\) \{ return !!RT_READ\[x\.name\]; \}\);/);
+  assert.match(src, /if \(ro\) tools = tools\.filter\(function \(x\) \{ return !!RT_READ\[x\.name\]; \}\)\.concat/);
   assert.match(src, /if \(rtCtx && !RT_READ\[call\.name\]\) return Promise\.resolve\(\{ content: "Error: a routine only reads\./);
   assert.match(src, /if \(rtCtx\) return rtApps\(\);/);
   assert.match(src, /a\.perm !== "never" && !C\.NEVER_APPS\[a\.id\]/);
@@ -207,4 +207,20 @@ test("the routine frame only reads (assistant.js wiring)", () => {
   assert.match(auto, /add\("assistant\/routines\.js"/);
   const nt = fs.readFileSync(path.join(ROOT, "notifications.js"), "utf8");
   assert.match(nt, /assistant: function \(id\) \{\s*if \(\/\^c\[a-z0-9\]\{6,40\}\$\/\.test/);
+});
+
+test("wave 3 (AH-2): ask_owner / notify_owner are the only extra tools, and they only leave a card or a notice", () => {
+  assert.deepStrictEqual(R.TOOLS.map((x) => x.name), ["ask_owner", "notify_owner"]);
+  assert.deepStrictEqual(R.normAsk({ title: " Reorder\nbook ", text: "Stock 2", ask: "Add a task" }), { ok: true, title: "Reorder book", text: "Stock 2", ask: "Add a task" });
+  assert.strictEqual(R.normAsk({ title: "x" }).ok, false);
+  assert.strictEqual(R.normNotify({ text: "x".repeat(300) }).text.length, 200);
+  assert.strictEqual(R.normNotify({}).ok, false);
+  const fs = require("fs");
+  const src = fs.readFileSync(path.join(ROOT, "assistant/assistant.js"), "utf8");
+  assert.match(src, /\.concat\(builtin \? \[\] : RT\.TOOLS\)/);
+  assert.match(src, /ui: \{ k: "prop", st: "", title: a\.title, text: a\.text, ask: a\.ask/);
+  // Go ahead is the owner's own message in a normal turn (consent and Apply cards as always)
+  assert.match(src, /if \(busy \|\| chat !== c\) return;\s*ui\.st = "accepted";/);
+  const TH = require(path.join(ROOT, "assistant/threads.js"));
+  assert.strictEqual(TH.WAIT_KINDS.prop, 1, "a card the owner has not answered puts the conversation under Waiting");
 });

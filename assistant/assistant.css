@@ -870,3 +870,5 @@ body.as-mini #toolbar, body.as-mini #side, body.as-mini #scrim { display: none !
 .rt-run-head { font-weight: 600; color: var(--text); }
 .rt-run-det summary { cursor: pointer; margin-top: 2px; }
 .rt-run-text { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; margin: 6px 0 0; max-height: 280px; overflow-y: auto; }
+.rt-prop { border-left: 3px solid var(--accent); }
+.rt-prop-text { white-space: pre-wrap; overflow-wrap: anywhere; margin: 6px 0; }

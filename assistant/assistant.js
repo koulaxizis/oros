@@ -195,6 +195,18 @@
       "rt.why.rounds": "rounds used up",
       "rt.why.tok": "token budget used up",
       "rt.why.empty": "no answer",
+      "rt.noted": "Notice sent: {text}",
+      "rt.nNow": "Routine: {name}",
+      "rt.ask.head": "The routine needs you",
+      "rt.ask.will": "Go ahead sends: {ask}",
+      "rt.ask.st.dismissed": "Dismissed.",
+      "rt.ask.st.answered": "You answered below.",
+      "rt.ask.st.accepted": "You went ahead.",
+      "rt.ask.answer": "Answer",
+      "rt.ask.go": "Go ahead",
+      "rt.ask.goText": "Go ahead: {title}",
+      "rt.nWait": "Routine needs you: {name}",
+      "rt.nWaitBody": "{n} card(s) wait for your answer in its conversation.",
       "chats.synced": "Synced to your devices (encrypted)",
       "chats.off": "History is off: conversations are not kept",
       "who": "{name} · {model}", "who.to": "Sent to {host}",
@@ -987,6 +999,18 @@
       "rt.why.rounds": "τελείωσαν οι γύροι",
       "rt.why.tok": "τελείωσε το όριο tokens",
       "rt.why.empty": "χωρίς απάντηση",
+      "rt.noted": "Στάλθηκε ειδοποίηση: {text}",
+      "rt.nNow": "Ρουτίνα: {name}",
+      "rt.ask.head": "Η ρουτίνα σε χρειάζεται",
+      "rt.ask.will": "Το «Προχώρα» στέλνει: {ask}",
+      "rt.ask.st.dismissed": "Απορρίφθηκε.",
+      "rt.ask.st.answered": "Απάντησες παρακάτω.",
+      "rt.ask.st.accepted": "Προχώρησες.",
+      "rt.ask.answer": "Απάντηση",
+      "rt.ask.go": "Προχώρα",
+      "rt.ask.goText": "Προχώρα: {title}",
+      "rt.nWait": "Η ρουτίνα σε χρειάζεται: {name}",
+      "rt.nWaitBody": "{n} κάρτα(-ες) περιμένουν απάντηση στη συζήτησή της.",
       "chats.synced": "Συγχρονίζονται στις συσκευές σου (κρυπτογραφημένα)",
       "chats.off": "Το ιστορικό είναι κλειστό: οι συζητήσεις δεν κρατιούνται",
       "who": "{name} · {model}", "who.to": "Στέλνεται στο {host}",
@@ -3558,7 +3582,7 @@
                                             actions: acts, history: hiOn,
                                             recipes: rcApps.map(function (a) { return a.id; }), rules: ruOn, newsletter: nlOn, cover: cvOn, openFile: fileOn, edits: edCats, rebuild: rbOn, house: rbOn, epub: rbOn, mockup: !builtin && !!installed().mockups,
                                             lines: lineIds(apps), kbCols: kbColsOn(chgApps), files: cfOn(apps, chgApps), fonts: !data.set.chat && !ro });
-    if (ro) tools = tools.filter(function (x) { return !!RT_READ[x.name]; });
+    if (ro) tools = tools.filter(function (x) { return !!RT_READ[x.name]; }).concat(builtin ? [] : RT.TOOLS);
     var system = C.systemPrompt({
       lang: LANG, now: Date.now(), chatOnly: !!data.set.chat, builtin: builtin, pre: preApps.length > 0,
       tz: (function () { try { return Intl.DateTimeFormat().resolvedOptions().timeZone || ""; } catch (e) { return ""; } })(),
@@ -3786,6 +3810,7 @@
     }
     if (call.bad) return Promise.resolve({ content: "Error: the arguments were not valid JSON.", err: 1, ui: { k: "toolErr", why: "args" } });
     // AS-RT: a routine only reads, whatever the model asks for
+    if (rtCtx && (call.name === "ask_owner" || call.name === "notify_owner")) return Promise.resolve(rtOwnerTool(call));
     if (rtCtx && !RT_READ[call.name]) return Promise.resolve({ content: "Error: a routine only reads. Write what you would change as a numbered proposal in the report.", err: 1, ui: { k: "toolErr", why: "ro" } });
     if (call.name === "list_apps") {
       var sum = {};
@@ -8598,6 +8623,8 @@
         if (ui.k === "recipeErr") return;
         if (ui.k === "rule") { drawRule(host, r, c); return; }
         if (ui.k === "ruleErr") return;
+        if (ui.k === "prop") { drawProp(host, r, c); return; }
+        if (ui.k === "ownNote") { host.appendChild(el("div", "tool-line", t("rt.noted", { text: String(ui.text || "") }))); return; }
         if (ui.k === "edit") { drawEdit(host, r, c); return; }
         if (ui.k === "lyAuto") { host.appendChild(el("div", "tool-line", t(ui.ok ? "ly.done" : "ly.fail", { app: installed().layout || "Layout" }))); return; }
         if (ui.k === "editErr") return;
@@ -11345,6 +11372,69 @@
       });
     });
   }
+  // AH-2 (wave 3): ask_owner leaves a card that waits for the owner;
+  // notify_owner sends a notice now (NOTE_MAX a run).
+  function rtOwnerTool(call) {
+    var x = rtCtx;
+    if (call.name === "notify_owner") {
+      var nn = RT.normNotify(call.args);
+      if (!nn.ok) return { content: "Error: text is empty.", err: 1, ui: { k: "toolErr", why: "args" } };
+      if ((x.notes = (x.notes || 0) + 1) > RT.NOTE_MAX) return { content: "Error: no more notices in this run; put it in the report.", err: 1, ui: { k: "toolErr", why: "limit" } };
+      rtNotice("rt:" + String(x.job.key || "") + ":n" + x.notes, t("rt.nNow", { name: x.r.name }), nn.text, x.c.id);
+      return { content: "Sent to the owner.", ui: { k: "ownNote", text: nn.text } };
+    }
+    var a = RT.normAsk(call.args);
+    if (!a.ok) return { content: "Error: title and text are needed.", err: 1, ui: { k: "toolErr", why: "args" } };
+    if ((x.asks = (x.asks || 0) + 1) > RT.ASK_MAX) return { content: "Error: no more cards in this run; put the rest in the report.", err: 1, ui: { k: "toolErr", why: "limit" } };
+    return { content: "Card saved for the owner; they answer later in this conversation. Go on with the report.",
+             ui: { k: "prop", st: "", title: a.title, text: a.text, ask: a.ask, at: Date.now() } };
+  }
+  function rtNotice(key, title, body, chatId) {
+    try {
+      var N = shell() && shell().orosNotifs;
+      if (N && typeof N.emit === "function") N.emit({ ns: "assistant", key: String(key).slice(0, 240), type: "reminder", title: title, body: body, deepLink: "assistant:chat:" + chatId });
+    } catch (e) {}
+  }
+  // The card in the routine's conversation. Go ahead = the owner's own
+  // message (prepared by the routine) in this conversation: a normal
+  // turn, with consent and Apply cards as always.
+  function drawProp(host, r, c) {
+    var ui = r.ui;
+    var card = el("section", "entry-card rt-prop");
+    card.appendChild(el("h3", "entry-head", t("rt.ask.head")));
+    card.appendChild(el("p", "entry-title", String(ui.title || "")));
+    card.appendChild(el("p", "rt-prop-text", String(ui.text || "")));
+    if (ui.ask) {
+      var q = el("p", "dlg-hint", t("rt.ask.will", { ask: String(ui.ask) }));
+      card.appendChild(q);
+    }
+    if (ui.st) {
+      card.appendChild(el("p", "entry-state", t("rt.ask.st." + ui.st)));
+      host.appendChild(card);
+      return;
+    }
+    var acts = el("div", "dlg-actions");
+    acts.appendChild(button(t("entry.dismiss"), "", function () { ui.st = "dismissed"; saveChat(c); renderAll(); }));
+    acts.appendChild(button(t("rt.ask.answer"), ui.ask ? "" : "primary", function () {
+      ui.st = "answered";
+      saveChat(c);
+      renderAll();
+      var box = $("input");
+      if (box) { box.focus(); }
+    }));
+    if (ui.ask) acts.appendChild(button(t("rt.ask.go"), "primary", function () {
+      if (busy || chat !== c) return;
+      ui.st = "accepted";
+      saveChat(c);
+      var box = $("input");
+      box.value = (t("rt.ask.goText", { title: String(ui.title || "") }) + "\n\n" + String(ui.ask)).slice(0, MAX_INPUT);
+      autosize();
+      send();
+    }));
+    card.appendChild(acts);
+    host.appendChild(card);
+  }
+
   // The turn ended (runTurnNow / runTurn): the run state, the report
   // line, the notice.
   function rtEnd(c) {
@@ -11373,14 +11463,10 @@
     c.msgs.push({ r: "note", kind: "info", text: t("rt.done", { tok: fmtNum(x.tok) }) });
     saveChat(c);
     rtBroadcast(c.id);
-    try {
-      var N = shell() && shell().orosNotifs;
-      if (N && typeof N.emit === "function") {
-        N.emit({ ns: "assistant", key: "rt:" + String(x.job.key || x.r.id).slice(0, 200), type: "reminder",
-                 title: t(stopped ? "rt.nStop" : ok ? "rt.nOk" : "rt.nFail", { name: x.r.name }),
-                 body: t("rt.nBody"), deepLink: "assistant:chat:" + c.id });
-      }
-    } catch (e) {}
+    var waiting = x.asks ? Math.min(x.asks, RT.ASK_MAX) : 0;
+    rtNotice("rt:" + String(x.job.key || x.r.id).slice(0, 200),
+             t(stopped ? "rt.nStop" : waiting ? "rt.nWait" : ok ? "rt.nOk" : "rt.nFail", { name: x.r.name }),
+             waiting ? t("rt.nWaitBody", { n: waiting }) : t("rt.nBody"), c.id);
     x.resolve({ ok: ok, why: why });
   }
 

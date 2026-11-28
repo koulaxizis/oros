@@ -339,13 +339,57 @@
     return parts.join("\n\n");
   }
 
+  // ---------- Wave 3 (AH-2): the routine asks or tells the owner ----------
+  // ask_owner leaves a card in the routine's conversation that waits for
+  // the owner (threads.js WAIT_KINDS "prop"): Go ahead sends the
+  // prepared message as the owner's own (a normal turn, with the usual
+  // Apply cards), Answer lets them write, Dismiss closes it. Nothing is
+  // changed by the routine itself.
+  var ASK_MAX = 5, NOTE_MAX = 2;
+  var TOOL_ASK = {
+    name: "ask_owner",
+    description: "Leave a card for the owner in this routine's conversation when something needs their decision or a change you cannot make " +
+      "(you only read). They answer later, from any device. Give a short title, what you found and why it needs them, and in ask the exact " +
+      "message the owner would send you to go ahead (e.g. \"Move the card 'Reorder book X' to Done in Kanban\"). At most " + ASK_MAX + " cards a run.",
+    params: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "Short title, under 100 characters." },
+        text: { type: "string", description: "What you found and why it needs the owner. No customer personal data." },
+        ask: { type: "string", description: "Optional: the message the owner sends to go ahead. Leave it out for a question only they can answer." }
+      },
+      required: ["title", "text"]
+    }
+  };
+  var TOOL_NOTIFY = {
+    name: "notify_owner",
+    description: "Send the owner a short notice now, only for something urgent (a site down, a payment failed, a deadline today). " +
+      "The report already sends one notice at the end; at most " + NOTE_MAX + " more a run. No customer personal data.",
+    params: {
+      type: "object",
+      properties: { text: { type: "string", description: "One sentence, under 200 characters." } },
+      required: ["text"]
+    }
+  };
+  function normAsk(a) {
+    a = isObj(a) ? a : {};
+    var title = line(a.title, 120), text = str(a.text, 1500).trim(), ask = str(a.ask, 2000).trim();
+    if (!title || !text) return { ok: false };
+    return { ok: true, title: title, text: text, ask: ask };
+  }
+  function normNotify(a) {
+    var text = line(isObj(a) ? a.text : "", 200);
+    return text ? { ok: true, text: text } : { ok: false };
+  }
+
   var api = {
     RT_MAX: RT_MAX, NAME_MAX: NAME_MAX, TEXT_MAX: TEXT_MAX, ROUNDS_DEF: ROUNDS_DEF, ROUNDS_MAX: ROUNDS_MAX,
     TOK_DEF: TOK_DEF, CATCH_UP: CATCH_UP, RUN_STALE: RUN_STALE, RETRY: RETRY, FAIL_STOP: FAIL_STOP, NEVER: NEVER,
     isId: isId, chatIdOf: chatIdOf, normSched: normSched, normApps: normApps, normRoutine: normRoutine, normRun: normRun,
     normPause: normPause, mergeRt: mergeRt, mergeRr: mergeRr, lastOcc: lastOcc, nextOcc: nextOcc, ymdhm: ymdhm,
     FILE_DAY_MAX: FILE_DAY_MAX, normDir: normDir, normRefs: normRefs, REFS_MAX: REFS_MAX, fits: fits, filesDue: filesDue,
-    due: due, claim: claim, finish: finish, fileDone: fileDone, shouldStop: shouldStop, runPrompt: runPrompt
+    due: due, claim: claim, finish: finish, fileDone: fileDone,
+    TOOLS: [TOOL_ASK, TOOL_NOTIFY], ASK_MAX: ASK_MAX, NOTE_MAX: NOTE_MAX, normAsk: normAsk, normNotify: normNotify, shouldStop: shouldStop, runPrompt: runPrompt
   };
   if (typeof module !== "undefined" && module.exports) module.exports = api;
   if (root && root.document) root.OrosAssistRoutines = api;
