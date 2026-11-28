@@ -281,6 +281,11 @@ a.btn { text-decoration: none; color: inherit; display: inline-flex; align-items
   white-space: nowrap;
 }
 .scope-all { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 45%, var(--border)); }
+.scope-computers { color: var(--text); border-color: color-mix(in srgb, var(--accent) 30%, var(--border)); }
+/* LOOK-1: Settings › Sync › What syncs */
+.ws-sum { cursor: pointer; min-height: 44px; display: flex; align-items: center; color: var(--accent); font-weight: 600; }
+.ws-list { margin: 4px 0 6px; padding-left: 20px; font-size: 13px; color: var(--text); }
+.ws-list li { margin: 3px 0; overflow-wrap: anywhere; }
 
 /* ---------- 5. Controls ---------- */
 .actions { display: flex; flex-wrap: wrap; gap: 8px; }

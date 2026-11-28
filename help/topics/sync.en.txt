@@ -75,6 +75,12 @@ Tap or click the dot to sync right now. If sync is not connected or locked, the 
 ## When sync runs
 Sync runs on its own: when orOS starts, a few seconds after you change something, when you come back to the tab, when your connection returns, and every few minutes (`Sync automatically`, every 3 min by default, or `Off`). When you leave the tab, orOS sends your latest changes. If you try to close orOS with changes not yet sent, your browser asks you first.
 
+## What syncs
+`Settings › Sync › What syncs` shows the whole list. In short:
+- To all your devices: language, theme, system colour, icon pack, wallpaper, the weather place, alarms, sync and backup settings, default apps, keyboard shortcuts, your name, festive days, text replacement, the Quick menu, which apps are on the desktop and in the Dock, the data of every app and the files of the orOS disk, Passwords and Mail accounts.
+- To your computers only (with `Same look on all my computers` on): the top bar's cards and look, the Dock settings, desktop widgets, the menu icon, the font of orOS, motion, interface sounds and Accent from wallpaper. Phones and tablets keep their own.
+- This device only: your own picture as wallpaper, accessibility, multitasking, Night light, energy saver, the on-screen keyboard, read aloud, views inside apps and your sign-ins.
+
 ## Conflicts
 You can edit on two devices at once, even offline. When they meet, orOS merges the changes instead of letting one device overwrite the other. If the same note or file was changed in two places, both versions are kept.
 

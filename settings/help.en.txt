@@ -8,7 +8,7 @@ Settings gathers the options of orOS itself in one place: how it looks, notifica
 
 On a phone, Settings first shows the list of sections. Tap one to open it, and `Back` takes you to the list again.
 
-Next to each card you'll see where it applies: `All devices` means it travels with [sync](help:t/sync), `This device` means it stays on this device only.
+Next to each card you'll see where it applies: `All devices` means it travels with [sync](help:t/sync), `Computers` means it travels to your other computers but not to phones and tablets (`Same look on all my computers` in Appearance), `This device` means it stays on this device only. `Sync › What syncs` lists everything.
 
 To find one option quickly, type in `Search settings` at the top of the list: a word from its name or a related word (dark, password, keyboard, ringtone…) in English or Greek. The list shows the matching sections and options; pick one and Settings opens there, scrolls to the option and lights it up for a moment. If the option needs something switched on first (the Dock, the lock, sync), the switch that turns it on lights up instead. `Escape` or × clears the search.
 

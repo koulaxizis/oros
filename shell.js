@@ -1225,8 +1225,8 @@
 
   // ---------- 5b'''. Accent from wallpaper (WPACC-1) ----------
   // Settings › Appearance › System colour: off by default and THIS
-  // device only, never synced (the "Mine" picture is per device too,
-  // WPACC-1 decision 3). On, the four accent variables of the shell
+  // device only (the "Mine" picture is per device too, WPACC-1
+  // decision 3); since LOOK-1 the switch and pick travel between computers. On, the four accent variables of the shell
   // root come from the wallpaper on screen (inline style beats the
   // skin's block); backgrounds, panels, text and borders stay the
   // skin's. Apps copy them with inheritPalette, which watchPalette
@@ -1533,7 +1533,7 @@
   })();
 
   // ---------- 5b-icon. MENUICON-1: the menu button's icon ----------
-  // Device-local "oros-menuicon": one of MENU_ICONS (default "grid",
+  // "oros-menuicon" (between computers since LOOK-1): one of MENU_ICONS (default "grid",
   // the four squares in index.html) or "none" (the label alone). Static
   // SVGs from this file only.
   var MENU_ICON_KEY = "oros-menuicon";
@@ -2002,7 +2002,7 @@
   };
   // ---------- The font of orOS (FM-5, uifont.js) ----------
   // A family of the person's (Settings › Fonts) instead of Nunito, on
-  // this device only (like the text size). uifont.js and the designkit
+  // this device (between computers since LOOK-1). uifont.js and the designkit
   // font files load only while one is set.
   var UIF_KEY = "oros-uifont";
   var UIF_FILE = /^[0-9a-f]{64}\.ttf$/;
@@ -8350,6 +8350,234 @@
     }
   }
 
+  // ---------- 9e-look. LOOK-1: the same look on every computer ----------
+  // Chris 2026-11-28 (proposals 3, 4, 8 of the sync check «Τι
+  // συγχρονίζεται στο orOS»): the smart bar's cards and look, the Dock
+  // settings, the desktop widgets, the menu icon, the font of orOS, the
+  // motion (feel and the app zoom), the interface sounds and Accent from wallpaper travel
+  // between COMPUTERS (web on a computer, installed, Portable, USB);
+  // phones and tablets keep their own (the screen is another one).
+  // Settings › Appearance has the switch, on by default.
+  //
+  // Slice "look" = { v: 1, e: { <name>: { v: <stored text> | null, t } } }:
+  // each entry is the module's own localStorage text, carried verbatim
+  // (null = not set = the module's default), with its own ms stamp; the
+  // newer stamp wins, a tie goes to the larger JSON (shellMerge's rule).
+  // Verbatim text is FWD-1 by construction: a value a newer orOS wrote
+  // (a new card, Dock style or pack) is kept and sent on unchanged by an
+  // older one, which reads it with its own validation and never writes
+  // it back unless the person changes that setting here. An entry name
+  // this orOS does not know (a newer orOS's) is kept in "oros-look-ahead"
+  // and sent on; it is never written to any other key.
+  //
+  // Stamps ("oros-look-stamps" { since, e: { <name>: { t, h } } }, h = a
+  // hash of the stored text): a change is seen when the text differs
+  // from h (at every get, and after every Settings change), whoever
+  // wrote it. A value found the first time gets a SEED stamp, below
+  // every real one and the higher the earlier this computer started
+  // (LOOK_SEED − since in s): the computer that had this version first
+  // keeps its look, a newly joined one (orOS USB) takes it. Not set =
+  // stamp 0. Turning the switch on again starts a new `since`, so this
+  // computer takes the common look.
+  //
+  // Not registered at all on a phone or tablet, or while the switch is
+  // off at start: sync.js then carries the slice on untouched (unknown
+  // slice), as every older orOS does. Turned off while running: the
+  // slice hands back the cloud copy it was last given ("oros-look-pass")
+  // and applies nothing. Tests tests/look-sync.test.js.
+  var LOOK_OFF_KEY = "oros-look";          // "0" = this computer keeps its own look
+  var LOOK_STAMPS_KEY = "oros-look-stamps";
+  var LOOK_AHEAD_KEY = "oros-look-ahead";
+  var LOOK_PASS_KEY = "oros-look-pass";
+  var LOOK_ENTRIES = {
+    dock: "oros-launcher-prefs", feel: "oros-feel", menuicon: "oros-menuicon", smartbar: "oros-smartbar",
+    uifont: "oros-uifont", uisounds: "oros-uisounds", widgets: "oros-widgets", wpaccent: "oros-wpaccent",
+    zoom: "oros-zoom"
+  };
+  var LOOK_NAMES = Object.keys(LOOK_ENTRIES).sort();
+  var LOOK_VMAX = 16384;                   // characters per entry at most (larger: stays here)
+  var LOOK_MAX = 64;                       // entries at most
+  var LOOK_NAME_RE = /^[a-z][a-z0-9]{0,31}$/;
+  var LOOK_SEED = 1e12;                    // every real stamp (Date.now()) is above it
+  var lookReg = false;
+
+  function lookComputer() {
+    try {
+      var sc = window.screen || {};
+      return !!(window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches) &&
+        Math.max(sc.width || 0, sc.height || 0) >= 1024;
+    } catch (e) { return false; }
+  }
+  var LOOK_HERE = lookComputer();
+  function lookOn() { try { return localStorage.getItem(LOOK_OFF_KEY) !== "0"; } catch (e) { return true; } }
+  function lookActive() { return LOOK_HERE && lookOn(); }
+  function lookHash(s) {
+    if (s === null) return "-";
+    var h = 0x811c9dc5;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+    return h.toString(36) + ":" + s.length;
+  }
+  function lookSeed(since) { return Math.max(1, LOOK_SEED - Math.floor(since / 1000)); }
+  function lookRaw(n) {
+    var v = null;
+    try { v = localStorage.getItem(LOOK_ENTRIES[n]); } catch (e) { v = null; }
+    return typeof v === "string" ? v : null;
+  }
+  function lookJson(k) {
+    try { var o = JSON.parse(localStorage.getItem(k)); return (o && typeof o === "object" && !Array.isArray(o)) ? o : null; }
+    catch (e) { return null; }
+  }
+  function lookEntry(e) {
+    if (!e || typeof e !== "object" || typeof e.t !== "number" || !isFinite(e.t) || e.t < 0) return null;
+    if (e.v !== null && (typeof e.v !== "string" || e.v.length > LOOK_VMAX)) return null;
+    return { v: e.v, t: e.t };
+  }
+  // A slice (from the cloud, a merge or this device) → { <name>: { v, t } }.
+  function lookSide(x) {
+    var out = {}, e = (x && typeof x === "object" && x.e && typeof x.e === "object" && !Array.isArray(x.e)) ? x.e : {};
+    Object.keys(e).filter(function (k) { return LOOK_NAME_RE.test(k); }).sort().slice(0, LOOK_MAX).forEach(function (k) {
+      var c = lookEntry(e[k]);
+      if (c) out[k] = c;
+    });
+    return out;
+  }
+  function lookWins(a, b) {
+    if (a.t !== b.t) return a.t > b.t;
+    return JSON.stringify(a.v) >= JSON.stringify(b.v);
+  }
+  function lookBuild(map) {
+    var e = {};
+    Object.keys(map).sort().slice(0, LOOK_MAX).forEach(function (k) { e[k] = { v: map[k].v, t: map[k].t }; });
+    return { v: 1, e: e };
+  }
+  function lookMerge(a, b) {
+    var A = lookSide(a), B = lookSide(b), out = {};
+    Object.keys(A).concat(Object.keys(B)).forEach(function (k) {
+      if (out[k]) return;
+      var p = A[k], q = B[k];
+      out[k] = (!p || !q) ? (p || q) : (lookWins(p, q) ? p : q);
+    });
+    return lookBuild(out);
+  }
+  // Stamps: a stored text that differs from what was last seen is a
+  // change made here, now. → { st, changed }
+  function lookStamps(now) {
+    var st = lookJson(LOOK_STAMPS_KEY) || {}, dirty = false, write = false;
+    if (typeof st.since !== "number" || !isFinite(st.since) || st.since <= 0) { st.since = now; st.e = {}; write = true; }
+    if (!st.e || typeof st.e !== "object" || Array.isArray(st.e)) { st.e = {}; write = true; }
+    LOOK_NAMES.forEach(function (n) {
+      var raw = lookRaw(n), h = lookHash(raw), r = st.e[n];
+      if (!r || typeof r.t !== "number" || !isFinite(r.t) || typeof r.h !== "string") {
+        st.e[n] = { t: raw === null ? 0 : lookSeed(st.since), h: h };
+        write = true;
+      } else if (r.h !== h) {
+        st.e[n] = { t: Math.max(now, r.t + 1), h: h };
+        write = dirty = true;
+      }
+    });
+    if (write) { try { localStorage.setItem(LOOK_STAMPS_KEY, JSON.stringify(st)); } catch (e) {} }
+    return { st: st, changed: dirty };
+  }
+  // This computer's look, with the entries kept for a newer orOS.
+  function lookOwn() {
+    var st = lookStamps(Date.now()).st, map = {};
+    var ah = lookSide({ e: lookJson(LOOK_AHEAD_KEY) || {} });
+    Object.keys(ah).forEach(function (k) { if (!LOOK_ENTRIES[k]) map[k] = ah[k]; });
+    LOOK_NAMES.forEach(function (n) {
+      var raw = lookRaw(n);
+      if (raw !== null && raw.length > LOOK_VMAX) return;      // too large to carry: stays here
+      map[n] = { v: raw, t: st.e[n].t };
+    });
+    return lookBuild(map);
+  }
+  function lookSliceGet() {
+    if (!lookActive()) {
+      var pass = lookJson(LOOK_PASS_KEY);
+      return pass ? lookBuild(lookSide(pass)) : lookOwn();
+    }
+    return lookOwn();
+  }
+  function lookSliceSet(data) {
+    var side = lookSide(data);
+    if (!lookActive()) {
+      try { localStorage.setItem(LOOK_PASS_KEY, JSON.stringify(lookBuild(side))); } catch (e) {}
+      return;
+    }
+    var st = lookStamps(Date.now()).st, ahead = {}, changed = [];
+    Object.keys(side).forEach(function (n) {
+      var e = side[n];
+      if (!LOOK_ENTRIES[n]) { ahead[n] = e; return; }
+      var raw = lookRaw(n);
+      if (raw !== null && raw.length > LOOK_VMAX) return;
+      if (!lookWins(e, { v: raw, t: st.e[n].t })) return;     // ours is newer: it goes up
+      if (e.v !== raw) {
+        try {
+          if (e.v === null) localStorage.removeItem(LOOK_ENTRIES[n]);
+          else localStorage.setItem(LOOK_ENTRIES[n], e.v);
+        } catch (x) { return; }                                // not stored: keep our stamp
+        changed.push(n);
+      }
+      st.e[n] = { t: e.t, h: lookHash(e.v) };
+    });
+    try { localStorage.setItem(LOOK_STAMPS_KEY, JSON.stringify(st)); } catch (e) {}
+    try {
+      if (Object.keys(ahead).length) localStorage.setItem(LOOK_AHEAD_KEY, JSON.stringify(lookBuild(ahead).e));
+      else localStorage.removeItem(LOOK_AHEAD_KEY);
+    } catch (e) {}
+    if (changed.length) lookApply(changed);
+  }
+  // Show what a pull changed, as each module does after its own save.
+  function lookApply(names) {
+    var has = function (n) { return names.indexOf(n) !== -1; };
+    var step = function (fn) { try { fn(); } catch (e) {} };
+    if (has("menuicon")) step(function () { menuIconApply(); });
+    if (has("feel")) step(feelApply);
+    if (has("zoom")) step(function () { if (!zoomOn()) zoomStop(); });
+    if (has("uifont")) step(uifApply);
+    if (has("uisounds")) step(function () { uis.rec = null; });
+    if (has("wpaccent")) step(function () { if (wpAccPref().on) wpAccRefresh(); else wpAccPoke(); });
+    if (has("dock")) step(function () { var L = window.orosLauncher; if (L) { L.refreshDock(); L.refresh(); } });
+    if (has("smartbar")) step(function () { var B = window.orosSmartBar; if (B && typeof B.reload === "function") B.reload(); });
+    if (has("widgets")) step(function () { var W = window.orosWidgets; if (W) W.refresh(); });
+    if (typeof fitBar === "function") step(fitBar);
+    settingsNotify();
+  }
+  // After a change made here (Settings, the gallery…): stamp it and ask
+  // for an upload. Cheap: nine small reads.
+  function lookPoke() {
+    if (!lookReg || !lookActive()) return;
+    var r = lookStamps(Date.now());
+    if (r.changed && window.orosSync && typeof window.orosSync.markDirty === "function") window.orosSync.markDirty();
+  }
+  function registerLookSlice() {
+    if (lookReg || !lookActive() || !window.orosSync || typeof window.orosSync.registerSlice !== "function") return;
+    try { localStorage.removeItem(LOOK_PASS_KEY); } catch (e) {}
+    try { lookStamps(Date.now()); } catch (e) {}
+    lookReg = true;
+    window.orosSync.registerSlice("look", lookSliceGet, lookSliceSet, null, lookMerge);
+  }
+  // Settings › Appearance › "Same look on all computers".
+  function lookSetUser(on) {
+    if (!LOOK_HERE || on === lookOn()) return;
+    try {
+      if (on) {
+        localStorage.removeItem(LOOK_OFF_KEY);
+        localStorage.removeItem(LOOK_PASS_KEY);
+        localStorage.removeItem(LOOK_STAMPS_KEY);   // a new `since`: this computer takes the common look
+      } else {
+        localStorage.setItem(LOOK_PASS_KEY, JSON.stringify(lookOwn()));
+        localStorage.setItem(LOOK_OFF_KEY, "0");
+      }
+    } catch (e) {}
+    if (on) {
+      if (!lookReg) registerLookSlice();
+      else { try { lookStamps(Date.now()); } catch (e) {} }
+      var S = window.orosSync;
+      if (S && typeof S.reconcile === "function" && S.isConnected && S.isConnected()) { try { S.reconcile("look"); } catch (e) {} }
+    }
+    settingsNotify();
+  }
+
   // ---------- 9f. Files disk — backups + legacy cleanup (FILES-V) ----------
   // The Files disk no longer travels as one snapshot inside the sync
   // blob (slice "files-disk", staged in localStorage): it syncs PER
@@ -12410,6 +12638,7 @@
   function initSyncIntegration() {
     registerShellSlice();
     registerMeSlice();
+    registerLookSlice();     // LOOK-1: computers only, while the switch is on
     // CONT-1 (continue.js): the "continue" slice, lazy flush
     if (window.orosContinue) {
       window.orosContinue.init({
@@ -12633,7 +12862,7 @@
   }
   // ---------- UISND-1: interface sounds (video ideas 2026-11-23 #5) ----------
   // Soft sounds for taps, switches and opening and closing apps and
-  // panels. OFF by default; device-local "oros-uisounds" = { on, pack:
+  // panels. OFF by default; "oros-uisounds" (between computers, LOOK-1) = { on, pack:
   // "pebble" | "keys" | "crystal", vol: 0..100 }. The packs are five
   // short MP3s each from koulaxizis/oros-sounds ui/ (CC0, made from its
   // own VSCO 2 CE files), fetched the first time they are needed and kept
@@ -14183,6 +14412,7 @@
   var settingsNotifyQueued = false;
 
   function settingsNotify() {
+    try { lookPoke(); } catch (e) {}     // LOOK-1: a look change made here goes up
     if (settingsNotifyQueued || !settingsListeners.length) return;
     settingsNotifyQueued = true;
     setTimeout(function () {
@@ -14293,6 +14523,7 @@
                own: iconsOwn(state.icons) || iconsOwn(ICON_OWN_DEFAULT), choices: ICON_OWN },   // ICONPACK-3
       wallpaper: pic ? "custom" : state.wallpaper,
       menuIcon: { now: menuIconNow(), choices: MENU_ICON_IDS.slice() },   // MENUICON-1
+      look: { here: LOOK_HERE, on: lookOn(), active: lookActive() },      // LOOK-1
       gamemode: SOLO ? null : { on: gameModeOn(), active: gameNow },     // GAMEMODE-1
       wpdir: wpdirSnapshot(),                 // WPDIR-1
       suggested: skinWallpaper(state.skin),   // SKIN-WP: marked in the grid
@@ -14450,6 +14681,7 @@
       case "wpdir:next": wpdirSet("next"); return;
       case "gamemode":   if (!SOLO) { gameModeSet(!!value); settingsNotify(); } return;   // GAMEMODE-1
       case "menuicon":   if (!SOLO) { menuIconSet(String(value || "")); settingsNotify(); } return;   // MENUICON-1
+      case "look":       lookSetUser(!!value); return;                     // LOOK-1
       case "pet":
         if (window.orosPet && typeof window.orosPet.toggle === "function" &&
             !!value !== !!window.orosPet.isEnabled()) {
@@ -15715,7 +15947,7 @@
   // nothing waits for it and no state depends on it: openApp and
   // returnToDesktop do their work first, the motion is drawn after.
   var ZOOM_KEY = "oros-zoom", ZOOM_OPEN_MS = 240, ZOOM_CLOSE_MS = 200;
-  // FEEL-1 (video ideas 2026-11-23 #6): the motion feel, device-local
+  // FEEL-1 (video ideas 2026-11-23 #6): the motion feel (between computers since LOOK-1)
   // "oros-feel" = "calm" | "lively" (default: the timings from before) |
   // "bouncy". One set of timings for the app zoom here and, through
   // html[data-oros-feel], the CSS of menus and panels (style.css

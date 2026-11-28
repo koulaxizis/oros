@@ -39,7 +39,8 @@
 //   into #sb-more ("+N") before the date goes; on a phone (<= 600 px)
 //   all fold. Full list: help/topics/appearance.en.txt "Smart top bar".
 //
-// Device-local (oros-smartbar, never synced: screens differ):
+// oros-smartbar (device-local; since LOOK-1 shared between computers by
+// the shell's "look" slice, phones keep their own):
 //   { v:1, list:["event",…] (order), look?, live:false? (no pills),
 //     zones?: { <kind>: "l" | "c" } (SBZ-1; right when absent),
 //     island?: true (ISLAND-1) }
@@ -49,7 +50,7 @@
 (function (root) {
   "use strict";
 
-  var VER = "1.12.0";
+  var VER = "1.13.0";
   var KEY = "oros-smartbar";
   var KINDS = ["event", "focus", "tasks", "water", "budget", "sales",
                "habits", "plants", "chores", "timer", "invoices", "trip", "kanban", "meal", "reading", "continue", "ai", "battery", "playing", "screen", "storage", "rates", "mail"];
@@ -1257,6 +1258,14 @@
     model: model,
     attach: attach,
     tick: function () { paint(false); },
+    // LOOK-1: the stored chips and look changed elsewhere (a pull from
+    // another computer): show them as a save here would.
+    reload: function () {
+      if (!host) return;
+      applyLook();
+      render();
+      call(function () { host.fit(); });
+    },
     // Settings › Appearance › Top bar
     snapshot: function () {
       if (!host) return null;

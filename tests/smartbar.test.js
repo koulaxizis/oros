@@ -133,7 +133,7 @@ test("Settings: card, search row, scope, and strings in EN, EL and DE", () => {
   assert.match(set, /act\("widgets\.gallery"\)/);
   assert.match(set, /set\("smartbar-look", v\)/);
   const C = require("../settings/core.js");
-  assert.strictEqual(C.scopeOf("smartbar"), "device");
+  assert.strictEqual(C.scopeOf("smartbar"), "computers");   // LOOK-1: shared between computers
   const core = read("settings/core.js");
   assert.match(core, /\["smartbar", "appearance", "sb\.title", null, null, "smartbar"\]/);
   const de = read("i18n/de/settings.js");

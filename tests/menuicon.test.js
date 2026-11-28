@@ -38,7 +38,7 @@ test("stored on this device, set from Settings, the bar refits", () => {
   assert.match(SHELL, /case "menuicon":   if \(!SOLO\) \{ menuIconSet\(String\(value \|\| ""\)\); settingsNotify\(\); \} return;/);
   assert.match(SHELL, /menuIcon: \{ now: menuIconNow\(\), choices: MENU_ICON_IDS\.slice\(\) \}/);
   const C = require(path.join(ROOT, "settings/core.js"));
-  assert.equal(C.scopeOf("menuicon"), "device");
+  assert.equal(C.scopeOf("menuicon"), "computers");   // LOOK-1: shared between computers
   const S = read("settings/settings.js");
   assert.match(S, /"menuicon",\n        function \(v\) \{ set\("menuicon", v\); \}\);/);
   assert.match(S, /"y-menuicon",/);
