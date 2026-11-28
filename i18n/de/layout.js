@@ -494,6 +494,8 @@ orosPack("de", "layout", {
  "sty.lvl0": "Keine Überschrift",
  "sty.lvlN": "Ebene {n}",
  "props.alt": "Beschreibung (Alt-Text)",
+ "props.altAuto": "Automatisch beschreiben",
+ "props.altFail": "Die Beschreibung konnte nicht erstellt werden.",
  "props.altEg": "Was das Bild zeigt, für Leser, die es nicht sehen",
  "props.deco": "Dekorativ (keine Beschreibung nötig)",
  "exp.merge": "Datenzusammenführung",

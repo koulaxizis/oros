@@ -2183,6 +2183,19 @@
     row("ph.i.folder", parentOf(r.k).slice(ROOT.length + 1) || "/");
     if (AL) row("ph.i.albums", AL.albumsWith(albums, AL.keyOf(r)).map(albumName).join(", "));
     row("ph.i.tags", tagsOf(r).map(function (x) { return x.n; }).join(", "));
+    // CAPTION: the photo's description (photo-caption.js); the same
+    // node while the photo stays, so a repaint never drops what is typed.
+    var PC = window.OrosPhotoCaption;
+    if (PC) {
+      if (!viewer.cap || viewer.cap.k !== r.k) viewer.cap = { k: r.k, node: PC.section(r, function () { return blobOf(r); }) };
+      box.appendChild(viewer.cap.node);
+    }
+  }
+  // The shown photo's bytes (the viewer's picture, else the disk).
+  function blobOf(r) {
+    var img = viewer && viewer.rec === r ? viewer.stage.querySelector("img") : null;
+    if (img && img.src) return fetch(img.src).then(function (res) { return res.blob(); });
+    return Promise.reject(new Error("image"));
   }
   function toggleInfo() {
     if (!viewer) return;
@@ -2287,6 +2300,7 @@
 
   function init(c) {
     ctx = c || {};
+    if (window.OrosPhotoCaption) window.OrosPhotoCaption.init({ toast: toast });
     var v = readView();
     if (v) {
       view.size = v.size >= 0 && v.size < SIZES.length ? v.size | 0 : 1;

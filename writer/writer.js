@@ -372,6 +372,9 @@ const STRINGS = {
     'tpl.builtinBadge': 'Built-in',
     'tpl.deleted': 'Template deleted',
     'img.caption': 'Caption',
+    'img.alt': 'Alternative text (read by screen readers)',
+    'img.altAuto': 'Describe automatically',
+    'img.altFail': 'The description could not be made.',
     'meta.tagAddBtn': 'Add tag',
     'cmt.needSel': 'Select some text first, then add the comment.',
     'cmt.oneBlock': 'A comment must stay within one paragraph — select less text.',
@@ -953,6 +956,9 @@ const STRINGS = {
     'tpl.builtinBadge': 'Ενσωματωμένο',
     'tpl.deleted': 'Το πρότυπο διαγράφηκε',
     'img.caption': 'Λεζάντα',
+    'img.alt': 'Εναλλακτικό κείμενο (το διαβάζουν οι αναγνώστες οθόνης)',
+    'img.altAuto': 'Αυτόματη περιγραφή',
+    'img.altFail': 'Η περιγραφή δεν μπόρεσε να γίνει.',
     'meta.tagAddBtn': 'Προσθήκη ετικέτας',
     'cmt.needSel': 'Επίλεξε πρώτα κείμενο και μετά πρόσθεσε το σχόλιο.',
     'cmt.oneBlock': 'Το σχόλιο πρέπει να μένει μέσα σε μία παράγραφο — επίλεξε λιγότερο κείμενο.',
@@ -3986,12 +3992,18 @@ function openImageDialog() {
       <input type="url" class="w-field" id="img-url" placeholder="https://…">
       <input type="file" accept="image/*" id="img-file" class="w-field" style="height:auto;padding:6px;">
       <input type="text" class="w-field" id="img-cap" placeholder="${escAttr(t('img.caption'))}">
+      <textarea class="w-field" id="img-alt" rows="2" maxlength="600" style="height:auto;resize:vertical;" placeholder="${escAttr(t('img.alt'))}" aria-label="${escAttr(t('img.alt'))}"></textarea>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;">
+        <button type="button" class="fb-btn" id="img-alt-auto">${esc(t('img.altAuto'))}</button>
+        <span id="img-alt-note" role="status" style="font-size:12px;color:var(--text-dim);flex:1 1 200px;"></span>
+      </div>
     </div>
   `, [
     { class: 'fb-btn', label: t('wx.cancel'), onClick: () => dlg.close() },
     { class: 'fb-btn primary', label: t('wx.done'), onClick: () => { doInsertImage(dlg); } }
   ]);
 
+  dlg.querySelector('#img-alt-auto').addEventListener('click', () => suggestAltText(dlg));
   dlg.querySelector('#img-file').addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -4014,15 +4026,68 @@ function openImageDialog() {
   }, true);
 }
 
+// CAPTION (Chris 2026-11-28): the picture's alt text, written or
+// suggested on the device (../caption/ui.js, Florence-2). The
+// suggestion only fills the field; the person checks it and inserts.
+let captionUiP = null;
+function captionUi() {
+  if (window.OrosCaptionUI) return Promise.resolve(window.OrosCaptionUI);
+  if (!captionUiP) {
+    const own = document.querySelector('script[src*="writer.js"]');
+    const v = own && /\?v=[^#]*/.exec(own.getAttribute('src') || '');
+    captionUiP = new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.src = '../caption/ui.js' + (v ? v[0] : '');
+      sc.onload = () => (window.OrosCaptionUI ? resolve(window.OrosCaptionUI) : reject(new Error('load')));
+      sc.onerror = () => reject(new Error('load'));
+      document.head.appendChild(sc);
+    });
+    captionUiP.catch(() => { captionUiP = null; });
+  }
+  return captionUiP;
+}
+function suggestAltText(dlg) {
+  const url = dlg.querySelector('#img-url').value.trim();
+  const note = dlg.querySelector('#img-alt-note'), btn = dlg.querySelector('#img-alt-auto');
+  const ta = dlg.querySelector('#img-alt');
+  if (!url) { dlg.querySelector('#img-url').focus(); return; }
+  if (btn.disabled) return;
+  btn.disabled = true;
+  let ui = null;
+  captionUi().then(u => {
+    ui = u;
+    return fetch(url).then(r => { if (!r.ok) throw Object.assign(new Error('image'), { code: 'image' }); return r.blob(); },
+      () => { throw Object.assign(new Error('image'), { code: 'image' }); });
+  }).then(blob => ui.suggest(blob, {
+    lang: window.orosLang, task: 'short',
+    confirm: (text, ok) => wConfirm(text, { ok: ok }),
+    status: (txt) => { note.textContent = txt; },
+    cancelled: () => !dlg.isConnected || !dlg.open
+  })).then(r => {
+    btn.disabled = false;
+    if (!r) { note.textContent = ''; return; }
+    ta.value = r.text;
+    note.textContent = r.note;
+    ta.focus();
+  }, e => {
+    btn.disabled = false;
+    note.textContent = '';
+    if (e && e.code === 'cancelled') return;
+    showToast(ui ? ui.failText(e, window.orosLang) : t('img.altFail'));
+  });
+}
+
 function doInsertImage(dlg) {
   const url = dlg.querySelector('#img-url').value.trim();
   const cap = dlg.querySelector('#img-cap').value.trim();
+  const alt = dlg.querySelector('#img-alt').value.replace(/\s+/g, ' ').trim().slice(0, 600);
   if (!url) return;
   const fig = document.createElement('figure');
   fig.style.margin = '1em 0';
   fig.style.textAlign = 'center';
   const img = document.createElement('img');
   img.src = url;
+  img.alt = alt;
   img.style.maxWidth = '100%';
   fig.appendChild(img);
   if (cap) {

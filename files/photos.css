@@ -158,3 +158,16 @@ body.ph-selecting .ph-check { display: block; }
 .ph-tile .tag-dots { position: absolute; right: 4px; top: 4px; margin: 0; padding: 2px 4px; border-radius: 9px; background: rgba(0,0,0,.55); }
 .ph-tile .tag-dots .tag-more { color: #fff; }
 .ph-arow .tag-dot { margin-right: 4px; }
+/* CAPTION: a photo's description in Details (photo-caption.js) */
+.ph-cap .ph-cap-body { display: flex; flex-direction: column; gap: 8px; margin-top: 2px; }
+.ph-cap .ph-cap-none, .ph-cap .ph-cap-wait { color: #bbb; font-style: italic; }
+.ph-cap p { margin: 0; }
+.ph-cap-text { white-space: pre-wrap; }
+.ph-cap-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.ph-cap-btn { min-height: 36px; padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.08); color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.ph-cap-btn:hover { background: rgba(255,255,255,.16); }
+.ph-cap-btn.primary { background: var(--accent, #6d4aff); border-color: transparent; color: var(--accent-ink, #fff); }
+.ph-cap-ta { width: 100%; box-sizing: border-box; min-height: 84px; resize: vertical; padding: 8px; border-radius: 8px; border: 1px solid rgba(255,255,255,.3); background: rgba(0,0,0,.35); color: #fff; font: inherit; font-size: 13px; }
+.ph-cap-note { font-size: 12px; color: #ccc; }
+.ph-cap-link { align-self: flex-start; min-height: 32px; padding: 4px 0; border: 0; background: none; color: #aaa; font: inherit; font-size: 12px; text-decoration: underline; cursor: pointer; }
+@media (pointer: coarse) { .ph-cap-btn, .ph-cap-link { min-height: 44px; } }

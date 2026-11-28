@@ -1739,7 +1739,7 @@
   // Files open stays inside its first-open budget (.github/qa). Until
   // then the tree shows this stand-in node with the same look.
   var PHOTOS_VIEW_KEY = "oros-files-photos-view";
-  var PHOTOS_SCRIPTS = ["photos-core.js", "albums-core.js", "photos.js"];
+  var PHOTOS_SCRIPTS = ["photos-core.js", "albums-core.js", "captions-core.js", "../caption/ui.js", "photo-caption.js", "photos.js"];
   var photosLoading = null;
   function photosWasOpen() {
     try { var v = JSON.parse(localStorage.getItem(PHOTOS_VIEW_KEY) || "null"); return !!(v && v.on); }

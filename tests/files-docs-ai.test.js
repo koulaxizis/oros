@@ -83,7 +83,7 @@ test("Files search provider: documents first, texts read in the background, neve
     readText: async (p) => { reads.push(p); return "Rent 900 EUR a month"; }
   };
   const { P, ctx } = provider(disk, raw);
-  assert.deepStrictEqual(P.keys, ["oros-files-docs", "oros-files-tags"]);
+  assert.deepStrictEqual(P.keys, ["oros-files-docs", "oros-files-tags", "oros-files-captions"]);
   let hits = await P.search(ctx("lease"));
   assert.deepStrictEqual(hits.map((h) => h.id), ["doc:d-a", "/internal/Documents", "/internal/Documents/lease.pdf"]);
   await tick();

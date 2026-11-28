@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 52914 of 52963 (99%)
+- Strings: 53060 of 53109 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,10 +16,10 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 2483 / 2484 |
+| assistant | 99% | 2603 / 2604 |
 | atelier | 100% | 1534 / 1534 |
 | aura | 100% | 84 / 84 |
-| automations | 100% | 332 / 332 |
+| automations | 100% | 337 / 337 |
 | baby | 100% | 341 / 341 |
 | backgammon | 100% | 92 / 92 |
 | banner | 100% | 284 / 284 |
@@ -61,7 +61,7 @@ en and el); translators change them there, not in a pack.
 | feeds | 100% | 329 / 329 |
 | fieldwarden | 100% | 330 / 330 |
 | fileopen | 100% | 6 / 6 |
-| files | 99% | 964 / 972 (25 in the code) |
+| files | 99% | 977 / 985 (25 in the code) |
 | fitness | 100% | 413 / 413 |
 | flashcards | 100% | 263 / 263 |
 | flow | 100% | 75 / 75 |
@@ -82,7 +82,7 @@ en and el); translators change them there, not in a pack.
 | jigsaw | 100% | 90 / 90 |
 | kanban | 97% | 379 / 387 |
 | labels | 100% | 88 / 88 |
-| layout | 100% | 2033 / 2033 |
+| layout | 100% | 2035 / 2035 |
 | library | 100% | 330 / 330 |
 | lighthouse | 100% | 215 / 215 |
 | lightsout | 100% | 52 / 52 |
@@ -142,7 +142,7 @@ en and el); translators change them there, not in a pack.
 | settings | 100% | 2130 / 2130 |
 | share | 100% | 222 / 222 |
 | shelf | 100% | 291 / 291 |
-| shell | 100% | 1698 / 1698 |
+| shell | 100% | 1701 / 1701 |
 | shop | 100% | 102 / 102 |
 | signature | 100% | 219 / 219 |
 | simon | 100% | 53 / 53 |
@@ -186,7 +186,7 @@ en and el); translators change them there, not in a pack.
 | wiki | 100% | 404 / 404 |
 | wordle | 100% | 77 / 77 |
 | wordsearch | 100% | 112 / 112 |
-| writer | 100% | 601 / 601 |
+| writer | 100% | 604 / 604 |
 | xeri | 100% | 108 / 108 |
 | zen | 100% | 91 / 91 |
 

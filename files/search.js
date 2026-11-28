@@ -1,5 +1,5 @@
 // ============================================================
-// orOS Files — universal search provider (v1.2.0)
+// orOS Files — universal search provider (v1.3.0)
 // Loaded by the shell on the first menu search (apps.json
 // "search"). Read-only: lists the local disk through the shell's
 // window.orosFS (ls only; file contents are never read). One hit
@@ -19,6 +19,9 @@
 // also carries its tag names ("Tags: …", OrosDocsDue.fileTags), so a
 // search for a tag finds its files. Names only; a private document's
 // file never gets any.
+// CAPTION (CAPTION v1, Chris 2026-11-28): a photo's saved description
+// (slice "files-captions", files/captions-core.js) goes into its hit's
+// text ("Description: …"), so a search for words in it finds the photo.
 // ============================================================
 (function (root) {
   "use strict";
@@ -90,9 +93,22 @@
     return D.searchHits(raw, ctx.code || ctx.lang, function (id) { return snips[id] ? snips[id].s : ""; });
   }
 
+  // path → saved description (live rows only, newest per path).
+  var CAP_WORD = { en: "Description", el: "Περιγραφή", de: "Beschreibung" };   // i18n-inline-ok: the shell's search provider has no app string table (like OrosDocsDue.tagsWord)
+  function captions(raw) {
+    var out = Object.create(null), at = Object.create(null);
+    var items = raw && Array.isArray(raw.items) ? raw.items : [];
+    items.forEach(function (r) {
+      if (!r || typeof r.d !== "string" || !r.d || typeof r.p !== "string" || !r.p) return;
+      var m = typeof r.m === "number" ? r.m : 0;
+      if (!(r.p in at) || m > at[r.p]) { out[r.p] = r.d.slice(0, 600); at[r.p] = m; }
+    });
+    return out;
+  }
+
   var PROVIDER = {
     id: "files",
-    keys: ["oros-files-docs", "oros-files-tags"],
+    keys: ["oros-files-docs", "oros-files-tags", "oros-files-captions"],
     search: function (ctx) {
       var fs = root.orosFS, docs = [];
       try { docs = docHits(ctx, fs); } catch (e) { docs = []; }
@@ -112,13 +128,16 @@
             word = D.tagsWord ? D.tagsWord(ctx.code || ctx.lang) : word;
           }
         } catch (e) { tg = {}; }
+        var caps = captions(ctx.readJSON("oros-files-captions")), capWord = CAP_WORD[ctx.code || ctx.lang] || CAP_WORD.en;
         return docs.concat(l.map(function (e) {
           var where = e.parent === ROOT ? "/" : e.parent.slice(ROOT.length);
           var names = Object.prototype.hasOwnProperty.call(tg, e.path) ? tg[e.path] : null;
+          var text = names && names.length ? where + "\n" + word + ": " + names.join(", ") : where;
+          if (!e.dir && caps[e.path]) text += "\n" + capWord + ": " + caps[e.path];
           return {
             id: e.path,
             title: e.name + (e.dir ? "/" : ""),
-            text: names && names.length ? where + "\n" + word + ": " + names.join(", ") : where,
+            text: text,
             target: { path: e.path, dir: e.dir }
           };
         }));
