@@ -14467,3 +14467,10 @@ Improvement item 15 wave 3 (approved plan). Kids mode (shorter lessons with kids
 - **Files:** assistant/core.js, assistant.js, help EN/EL, i18n/de (assistant, help), whatsnew EN/EL, shell.js, OROS_BIBLE.md, tests (assistant-webcheck, assistant-github, assistant-calc, fonts-list, gate-parity).
 - **Tests:** full `node --test tests/*.test.js`.
 - **Not tested:** real relay and Cloudflare calls from a browser.
+
+### 2026-11-28 — 9.20.00 — The Assistant reads pictures and scans on the orOS disk (AS-OCR, #1338)
+- **Why:** Chris 2026-11-28, approved Assistant plan wave 5b (OCR of pictures and scans on the orOS disk for the Assistant and routines). Found while doing it: attached PDFs had no reader since 9.00.00 (the composer stayed busy).
+- **What:** `files_read` reads scanned PDF pages (whole scans and the scanned pages of mixed PDFs, `core.ocrPlan`; 5, 15 with `ocr: true`), cloud-only pictures up to 60 MB; attached PDFs read again (`pdfAttText`). Rule in Part II (AS-OCR).
+- **Files:** assistant/core.js, assistant.js, help EN/EL, i18n/de/help/assistant.txt, whatsnew EN/EL, shell.js, OROS_BIBLE.md, tests/assistant-ocr.test.js (new).
+- **Tests:** full `node --test tests/*.test.js`; real Chromium with vendored PDF.js + pdf-lib: a text, picture and blank page PDF plans only the picture page.
+- **Not tested:** Tesseract on a real scan inside the Assistant page, a real phone.

@@ -3,6 +3,10 @@ The newest changes come first. When orOS updates itself, the update notice opens
 
 orOS is free and made by one person. If it is useful to you, [here are three ways to support it](https://useoros.online/support/): an orOS t-shirt, mug or sticker, a one-time donation, or hiring me. Nothing is unlocked: everything stays free.
 
+## Version 9.20.00
+- **The Assistant reads the text in pictures and scans.** Ask about a receipt, a scanned letter or a photo of a page on the orOS disk, also in a routine: its text is read on your device (Greek and English). In a PDF only the scanned pages are read, up to 15 when you ask for more, and pictures in orOS Drive folders that are only in the cloud are fetched first.
+- **Fixed:** a PDF attached to the Assistant was not read and the message could not be sent.
+
 ## Version 9.19.00
 - **The Assistant checks web sites.** With web search on, ask "is noxpress.tech up?", "what are the MX records of my domain?" or "how many pages does its sitemap list?". The page is checked through the orOS relay and DNS through Cloudflare, and only sites you named are checked. A routine that may search the web can check your sites on its own schedule.
 
