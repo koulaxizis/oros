@@ -167,6 +167,7 @@ async function vaultDevice(dropbox, name, opts) {
     TextEncoder, TextDecoder, URL, URLSearchParams, Uint8Array, ArrayBuffer, Blob,
     btoa, atob, Promise, JSON, Date, Math, Error, TypeError, Object, Array
   };
+  if (opts.idb) ctx.indexedDB = opts.idb;   // VD-ODB: a fake IndexedDB (tests/vault-od-idb.test.js)
   ctx.window = ctx;
   vm.createContext(ctx);
   vm.runInContext(SYNC_SRC, ctx, { filename: "sync.js" });
