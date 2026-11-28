@@ -2,7 +2,7 @@
 
 Written by `node .github/i18n/coverage.js`; do not edit by hand.
 
-- Strings: 53106 of 53155 (99%)
+- Strings: 53118 of 53167 (99%)
 - Help pages: 164 of 164 (100%)
 - Shown in the language list: yes
 
@@ -16,7 +16,7 @@ en and el); translators change them there, not in a pack.
 
 | App | Translated | Strings |
 |---|---|---|
-| assistant | 99% | 2609 / 2610 |
+| assistant | 99% | 2621 / 2622 |
 | atelier | 100% | 1559 / 1559 |
 | aura | 100% | 84 / 84 |
 | automations | 100% | 337 / 337 |
